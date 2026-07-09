@@ -247,7 +247,9 @@ export function BusinessDashboard() {
 
   const operationalPulse = useDevDemo
     ? devMockBusinessOperationalPulse()
-    : (heroStats?.operationalPulse ?? displayStats?.operationalPulse);
+    : analyticsTimeframe === "month"
+      ? (displayStats?.operationalPulse ?? heroStats?.operationalPulse)
+      : (heroStats?.operationalPulse ?? displayStats?.operationalPulse);
 
   const hasTipActivityInPeriod = useDevDemo || (displayMetrics?.totalTips ?? 0) > 0;
 

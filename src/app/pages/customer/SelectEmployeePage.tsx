@@ -137,9 +137,11 @@ export function SelectEmployeePage() {
         selectedEmployee ? (
           <div className={cf.fixedBottomBar}>
             <div className={cf.fixedBottomInner}>
-              <button type="button" onClick={handleContinue} className={cf.btnPrimaryLg}>
-                {t("tipFlow.tipAmount.continuePayment")}
-              </button>
+              <div className={cf.journeyCtaStack}>
+                <button type="button" onClick={handleContinue} className={cf.btnPrimaryLg}>
+                  {t("tipFlow.tipAmount.continuePayment")}
+                </button>
+              </div>
             </div>
           </div>
         ) : undefined

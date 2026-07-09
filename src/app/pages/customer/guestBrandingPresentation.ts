@@ -35,11 +35,11 @@ export function guestPrimaryButtonStyle(branding?: PublicGuestBranding | null): 
   };
 }
 
-/** Primary CTA on success page — accent to deep neutral gradient. */
+/** Primary CTA on success page — CareTip orange gradient with depth. */
 export function guestSuccessPrimaryButtonStyle(branding?: PublicGuestBranding | null): CSSProperties {
   const accent = guestBrandAccentColor(branding);
   return {
-    background: `linear-gradient(135deg, ${accent} 0%, #c45f12 42%, #1a1a1a 100%)`,
+    background: `linear-gradient(135deg, #e9781c 0%, ${accent} 42%, #c45f12 78%, #1a1a1a 100%)`,
     borderColor: "transparent",
     boxShadow: `0 14px 32px -12px ${accent}66`,
   };

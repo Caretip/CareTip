@@ -84,6 +84,7 @@ import {
   type QrManagementCardItem,
   type QrAssetMetadata,
 } from "@/app/components/business/QrManagementCard";
+import { BusinessConfirmDialog } from "@/app/components/business/BusinessConfirmDialog";
 import { cn } from "@/lib/utils";
 
 const TOAST_OK = { style: { background: "hsl(var(--primary))", color: "hsl(var(--primary-foreground))" } } as const;
@@ -126,10 +127,16 @@ export function QRCodeManagementPage({
   const [loading, setLoading] = useState(true);
   const [qrImages, setQrImages] = useState<Record<string, string>>({});
   const [storefrontQr, setStorefrontQr] = useState<string>("");
+  const [storefrontQrGenerating, setStorefrontQrGenerating] = useState(false);
   const [qrScanMeta, setQrScanMeta] = useState<
     Record<string, { grade: QrQualityGrade; exportAllowed: boolean }>
   >({});
   const [regeneratingId, setRegeneratingId] = useState<string | null>(null);
+  const [pendingDestructiveAction, setPendingDestructiveAction] = useState<
+    | { kind: "regenerate-business" }
+    | { kind: "regenerate-employee"; employee: EmployeeItem }
+    | null
+  >(null);
   const [bulkPdfLoading, setBulkPdfLoading] = useState(false);
   const [businessSlug, setBusinessSlug] = useState<string | null>(null);
   const [businessDisplayName, setBusinessDisplayName] = useState<string | null>(null);
@@ -142,6 +149,7 @@ export function QRCodeManagementPage({
   const [qrBrandingOpts, setQrBrandingOpts] = useState<QrBrandingOptions | null>(null);
   const [assetsSyncedAt, setAssetsSyncedAt] = useState<string | null>(null);
   const employeeQrCacheKeyRef = useRef("");
+  const storefrontQrCacheKeyRef = useRef("");
   const venueQrCacheKeyRef = useRef("");
 
   const brandingFingerprint = useMemo(() => qrBrandingFingerprint(qrBrandingOpts), [qrBrandingOpts]);
@@ -190,6 +198,7 @@ export function QRCodeManagementPage({
   useEffect(() => {
     const onBrandingChanged = () => {
       employeeQrCacheKeyRef.current = "";
+      storefrontQrCacheKeyRef.current = "";
       venueQrCacheKeyRef.current = "";
       void loadQrBranding();
     };
@@ -199,6 +208,31 @@ export function QRCodeManagementPage({
 
   const qrBrand = qrBrandingOpts ?? undefined;
 
+  const venueName = useMemo(
+    () =>
+      String(businessDisplayName ?? "").trim() ||
+      user?.businessName ||
+      t("business.qrPage.fallbackBusinessName"),
+    [businessDisplayName, user?.businessName, t],
+  );
+
+  const storefrontQrItem = useMemo((): QrManagementCardItem | null => {
+    if (!user?.businessId) return null;
+    return {
+      id: "storefront",
+      name: venueName,
+      qrUrl: businessSlug ? businessDirectoryUrl(businessSlug) : qrLandingUrl(user.businessId),
+    };
+  }, [businessSlug, user?.businessId, venueName]);
+
+  const requestRegenerateEmployeeQr = (employee: EmployeeItem) => {
+    setPendingDestructiveAction({ kind: "regenerate-employee", employee });
+  };
+
+  const requestRegenerateBusinessQr = () => {
+    setPendingDestructiveAction({ kind: "regenerate-business" });
+  };
+
   const handleRegenerateBusinessQr = async () => {
     if (!authHydrated || !sessionValidated) return;
     if (qrLocked) return;
@@ -207,6 +241,7 @@ export function QRCodeManagementPage({
     try {
       const r = await regenerateBusinessSlug();
       setBusinessSlug(r.slug);
+      storefrontQrCacheKeyRef.current = "";
       toast.success(t("business.qrPage.toastBusinessRegenerated"), TOAST_OK);
     } catch (err) {
       logClientError("QRCodeManagementPage.regenerateBusinessQr", err);
@@ -373,12 +408,13 @@ export function QRCodeManagementPage({
   ]);
 
   useEffect(() => {
-    if (!needsEmployeeData) return;
+    if (viewMode !== "employees") return;
     const businessId = user?.businessId;
     if (!businessId || !brandingFingerprint) return;
-    const cacheKey = `${businessId}|${businessSlug ?? ""}|${employeeQrFingerprint}|${brandingFingerprint}`;
-    if (employeeQrCacheKeyRef.current === cacheKey) return;
+    const cacheKey = `${businessId}|${businessSlug ?? ""}|${brandingFingerprint}`;
+    if (storefrontQrCacheKeyRef.current === cacheKey) return;
     let cancelled = false;
+    setStorefrontQrGenerating(true);
     (async () => {
       const storeUrl = businessSlug
         ? businessDirectoryUrl(businessSlug)
@@ -386,6 +422,7 @@ export function QRCodeManagementPage({
       try {
         const { canvas, report } = await validateBrandedQrReliability(storeUrl, qrBrand);
         if (!cancelled) {
+          storefrontQrCacheKeyRef.current = cacheKey;
           setStorefrontQr(canvas?.toDataURL("image/png") ?? "");
           if (report) {
             setQrScanMeta((prev) => ({
@@ -395,10 +432,25 @@ export function QRCodeManagementPage({
           }
         }
       } catch (err) {
-        logClientError("QRCodeManagementPage", err);
+        logClientError("QRCodeManagementPage.storefrontQr", err);
         if (!cancelled) setStorefrontQr("");
+      } finally {
+        if (!cancelled) setStorefrontQrGenerating(false);
       }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [viewMode, user?.businessId, businessSlug, qrBrand, brandingFingerprint]);
 
+  useEffect(() => {
+    if (!needsEmployeeData) return;
+    const businessId = user?.businessId;
+    if (!businessId || !brandingFingerprint) return;
+    const cacheKey = `${businessId}|${businessSlug ?? ""}|${employeeQrFingerprint}|${brandingFingerprint}`;
+    if (employeeQrCacheKeyRef.current === cacheKey) return;
+    let cancelled = false;
+    (async () => {
       const next: Record<string, string> = {};
       const meta: Record<string, { grade: QrQualityGrade; exportAllowed: boolean }> = {};
       const withSlug = safeEmployees.filter((e) => e.slug);
@@ -674,6 +726,17 @@ export function QRCodeManagementPage({
     }
   };
 
+  const handleConfirmDestructiveAction = async () => {
+    if (!pendingDestructiveAction) return;
+    const action = pendingDestructiveAction;
+    setPendingDestructiveAction(null);
+    if (action.kind === "regenerate-business") {
+      await handleRegenerateBusinessQr();
+      return;
+    }
+    await handleGenerateNew(action.employee);
+  };
+
   const buildVenueQrDataUrl = async (
     item: CardItem,
     previewDataUrl: string | undefined
@@ -833,7 +896,7 @@ export function QRCodeManagementPage({
 
   const onEmployeeRegenerateCard = (item: QrManagementCardItem) => {
     const emp = safeEmployees.find((e) => e.id === item.id);
-    if (emp) void handleGenerateNew(emp);
+    if (emp) requestRegenerateEmployeeQr(emp);
   };
 
   if (!user) return <BusinessSubPageShellSkeleton />;
@@ -845,11 +908,13 @@ export function QRCodeManagementPage({
 
   const qrLocked = !canUseQr;
 
+  const resolvedOnboardingVerificationStatus =
+    onboardingVerificationStatus ?? user.onboardingVerificationStatus;
   const awaitingOnboardingStatus =
     !user.impersonation &&
     user.role === "business" &&
     Boolean(user.businessId) &&
-    user.onboardingVerificationStatus == null;
+    resolvedOnboardingVerificationStatus == null;
 
   if (awaitingOnboardingStatus) {
     return <BusinessSubPageShellSkeleton />;
@@ -1052,7 +1117,7 @@ export function QRCodeManagementPage({
                         onVenuePrintPdf={(item, venueType, url) =>
                           void handleVenuePrintPdf(item as CardItem, venueType, url)
                         }
-                        onRegenerateBusinessQr={() => void handleRegenerateBusinessQr()}
+                        onRegenerateBusinessQr={requestRegenerateBusinessQr}
                         exportBlocked={isQrExportBlocked(asset.exportKey)}
                       />
                     ))}
@@ -1099,10 +1164,59 @@ export function QRCodeManagementPage({
             ) : null}
 
             {viewMode === "employees" ? (
-              loading && safeEmployees.length === 0 ? (
-                <DashboardListSkeleton rows={5} minHeightClass="min-h-[240px]" />
-              ) : (
-                <div>
+              <div className="space-y-8">
+                {storefrontQrItem ? (
+                  <div className="space-y-4">
+                    <div>
+                      <h2 className="text-base font-semibold text-foreground">
+                        {t("business.qrPage.storefrontQrHeading", { name: venueName })}
+                      </h2>
+                      <p className="mt-1 text-sm text-muted-foreground">
+                        {t("business.qrPage.storefrontQrDesc")}
+                      </p>
+                    </div>
+                    {storefrontQrGenerating && !storefrontQr ? (
+                      <div
+                        className={cn(businessUi.cardStatic, businessUi.cardPad, "animate-pulse")}
+                        aria-busy="true"
+                        aria-label={t("business.qrPage.storefrontQrHeading", { name: venueName })}
+                      >
+                        <div className="flex min-w-0 flex-col gap-4 sm:flex-row sm:gap-6">
+                          <div className="mx-auto aspect-square w-full max-w-[10.5rem] rounded-xl bg-muted sm:max-w-[12rem] lg:mx-0 lg:h-44 lg:w-44" />
+                          <div className="flex-1 space-y-4">
+                            <div className="space-y-2">
+                              <div className="h-3 w-28 rounded bg-muted" />
+                              <div className="h-4 w-full max-w-md rounded bg-muted" />
+                            </div>
+                            <div className="h-16 rounded-lg bg-muted" />
+                            <div className="flex flex-wrap justify-end gap-2">
+                              <div className="h-9 w-28 rounded bg-muted" />
+                              <div className="h-9 w-24 rounded bg-muted" />
+                              <div className="h-9 w-32 rounded bg-muted" />
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ) : (
+                      <QrManagementCard
+                        item={storefrontQrItem}
+                        type="storefront"
+                        previewDataUrl={storefrontQr}
+                        copiedId={copiedId}
+                        qrLocked={qrLocked}
+                        regeneratingId={regeneratingId}
+                        onCopy={handleCopy}
+                        onRegenerateBusinessQr={requestRegenerateBusinessQr}
+                        exportBlocked={isQrExportBlocked("storefront")}
+                      />
+                    )}
+                  </div>
+                ) : null}
+
+                {loading && safeEmployees.length === 0 ? (
+                  <DashboardListSkeleton rows={5} minHeightClass="min-h-[240px]" />
+                ) : (
+                  <div>
                   <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                     <div>
                       <h2 className="text-base font-semibold text-foreground">
@@ -1168,8 +1282,9 @@ export function QRCodeManagementPage({
                       ))}
                     </div>
                   )}
-                </div>
-              )
+                  </div>
+                )}
+              </div>
             ) : null}
 
             {viewMode === "locations" ? (
@@ -1218,6 +1333,33 @@ export function QRCodeManagementPage({
           </div>
         </div>
       </TracingBeam>
+
+      <BusinessConfirmDialog
+        open={pendingDestructiveAction != null}
+        title={
+          pendingDestructiveAction?.kind === "regenerate-business"
+            ? t("business.qrPage.regenerateBusinessConfirmTitle")
+            : t("business.qrPage.regenerateEmployeeConfirmTitle")
+        }
+        body={
+          pendingDestructiveAction?.kind === "regenerate-business"
+            ? t("business.qrPage.regenerateBusinessConfirmBody")
+            : t("business.qrPage.regenerateEmployeeConfirmBody", {
+                name: pendingDestructiveAction?.kind === "regenerate-employee"
+                  ? pendingDestructiveAction.employee.name
+                  : "",
+              })
+        }
+        cancelLabel={t("business.staffPage.modalCancel")}
+        confirmLabel={
+          pendingDestructiveAction?.kind === "regenerate-business"
+            ? t("business.qrPage.regenerateBusinessQr")
+            : t("business.qrPage.regenerateEmployeeQr")
+        }
+        confirming={regeneratingId != null}
+        onCancel={() => setPendingDestructiveAction(null)}
+        onConfirm={() => void handleConfirmDestructiveAction()}
+      />
     </div>
   );
 }

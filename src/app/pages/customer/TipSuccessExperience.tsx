@@ -1,9 +1,10 @@
 import { motion, useReducedMotion } from "motion/react";
-import type { ReactNode } from "react";
+import { useCallback, useState, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { Check, Lock, Receipt, ShieldCheck, Users } from "lucide-react";
 import { BusinessLogoMark } from "../../components/business/BusinessLogoMark";
 import { ProfileAvatar } from "../../components/ui/profile-avatar";
+import { LoadingSpinner } from "../../components/ui/loading-spinner";
 import { CustomerJourneyCareTipAttribution } from "./CustomerJourneyCareTipAttribution";
 import type { CustomerJourneyVenueBrand } from "./customerJourneyBrand";
 import { guestBrandAccentColor } from "../../lib/businessBranding";
@@ -13,6 +14,7 @@ import {
   guestSuccessPrimaryButtonStyle,
 } from "./guestBrandingPresentation";
 import type { TipSuccessEmployeeProfile } from "./useTipSuccessEmployeeProfile";
+import { customerFlowUi as cf } from "./customerFlowUi";
 import { cn } from "@/lib/utils";
 
 export type TipSuccessExperienceProps = {
@@ -89,7 +91,7 @@ function SuccessHeroIcon({ accent, compact }: { accent: string; compact?: boolea
           compact ? "size-[3.5rem] sm:size-[3.75rem]" : "size-[4.75rem] sm:size-[5.25rem]",
         )}
         style={{
-          background: `linear-gradient(145deg, ${accent} 0%, ${accent}dd 100%)`,
+          background: `linear-gradient(145deg, ${accent} 0%, #e9781c 55%, #c45f12 100%)`,
           boxShadow: `0 18px 40px -14px ${accent}88, 0 0 0 10px ${accent}14`,
         }}
       >
@@ -118,6 +120,7 @@ export function TipSuccessExperience({
 }: TipSuccessExperienceProps) {
   const { t } = useTranslation();
   const reduceMotion = useReducedMotion();
+  const [actionBusy, setActionBusy] = useState<"primary" | "secondary" | null>(null);
   const branding = venue.branding;
   const accent = guestBrandAccentColor(branding);
   const displayHeadline = headline ?? t("tipFlow.success.celebrationHeadline");
@@ -127,6 +130,15 @@ export function TipSuccessExperience({
         initial: { y: 16, opacity: 0 },
         animate: { y: 0, opacity: 1 },
       };
+
+  const runAction = useCallback(
+    (which: "primary" | "secondary", fn: () => void) => {
+      if (embedded || actionBusy) return;
+      setActionBusy(which);
+      fn();
+    },
+    [actionBusy, embedded],
+  );
 
   return (
     <div
@@ -230,8 +242,8 @@ export function TipSuccessExperience({
                   {t("tipFlow.success.trustPoweredBy")}
                 </li>
                 {showReceipt && receiptNumber ? (
-                  <li>
-                    <Receipt className="size-4 shrink-0 text-muted-foreground" aria-hidden />
+                  <li className="customer-flow-success-summary__receipt">
+                    <Receipt className="size-4 shrink-0" aria-hidden />
                     <span className="min-w-0 truncate text-sm tabular-nums">
                       {t("tipFlow.success.receiptReference", { code: receiptNumber })}
                     </span>
@@ -241,32 +253,45 @@ export function TipSuccessExperience({
             </motion.div>
           ) : null}
 
-          <motion.div
-            className={cn("customer-flow-success-actions", embedded ? "mt-6" : "mt-7 sm:mt-8")}
-            {...fadeUp}
-            transition={{ delay: 0.48, duration: 0.4 }}
-          >
+          <div className={cn(cf.completionActions, embedded ? "mt-6" : "mt-7 sm:mt-8")}>
             <button
               type="button"
-              onClick={onPrimary}
-              className="customer-flow-success-primary-btn"
+              onClick={() => runAction("primary", onPrimary)}
+              disabled={actionBusy != null || embedded}
+              className={cn(
+                "customer-flow-success-primary-btn",
+                actionBusy === "primary" && "customer-flow-success-primary-btn--busy",
+              )}
               style={guestSuccessPrimaryButtonStyle(branding)}
               tabIndex={embedded ? -1 : undefined}
-              aria-disabled={embedded || undefined}
+              aria-disabled={embedded || actionBusy != null || undefined}
+              aria-busy={actionBusy === "primary"}
             >
-              {primaryIcon ?? <Users className="size-5 shrink-0" aria-hidden />}
+              {actionBusy === "primary" ? (
+                <LoadingSpinner size="sm" className="shrink-0 text-white" />
+              ) : (
+                primaryIcon ?? <Users className="size-5 shrink-0" aria-hidden />
+              )}
               {primaryLabel}
             </button>
             <button
               type="button"
-              onClick={onSecondary}
-              className="customer-flow-success-secondary-btn"
+              onClick={() => runAction("secondary", onSecondary)}
+              disabled={actionBusy != null || embedded}
+              className={cn(
+                "customer-flow-success-secondary-btn",
+                actionBusy === "secondary" && "customer-flow-success-secondary-btn--busy",
+              )}
               tabIndex={embedded ? -1 : undefined}
-              aria-disabled={embedded || undefined}
+              aria-disabled={embedded || actionBusy != null || undefined}
+              aria-busy={actionBusy === "secondary"}
             >
+              {actionBusy === "secondary" ? (
+                <LoadingSpinner size="sm" className="shrink-0" />
+              ) : null}
               {secondaryLabel}
             </button>
-          </motion.div>
+          </div>
 
           {!embedded ? (
             <footer className="customer-flow-success-trust mt-6 text-center sm:mt-7">

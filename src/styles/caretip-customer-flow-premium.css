@@ -6,6 +6,22 @@
   -webkit-font-smoothing: antialiased;
 }
 
+.customer-flow .caretip-btn-primary,
+.customer-flow .caretip-btn-secondary,
+.customer-flow .caretip-btn-ghost,
+.customer-flow .customer-flow-pay-cta {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+@media (min-width: 640px) {
+  .customer-flow .caretip-btn-primary,
+  .customer-flow .caretip-btn-secondary,
+  .customer-flow .customer-flow-pay-cta {
+    width: 100%;
+  }
+}
+
 /* —— Customer journey header —— */
 .customer-flow .customer-journey-header {
   max-width: 100%;
@@ -265,6 +281,7 @@
 
 .customer-flow-success-card__brand {
   padding-bottom: 0.125rem;
+  border-bottom: 1px solid color-mix(in srgb, var(--success-accent, #e9781c) 14%, transparent);
 }
 
 .customer-flow-success-confirmation {
@@ -468,16 +485,27 @@
 
 .customer-flow-success-summary {
   border-radius: 1.125rem;
-  border: 1px solid hsl(var(--border) / 0.72);
-  background: hsl(var(--muted) / 0.3);
+  border: 1px solid color-mix(in srgb, var(--success-accent, #e9781c) 16%, hsl(var(--border)));
+  background: linear-gradient(
+    165deg,
+    color-mix(in srgb, var(--success-accent, #e9781c) 5%, #fff) 0%,
+    #fff 55%,
+    color-mix(in srgb, var(--success-accent, #e9781c) 3%, #faf8f5) 100%
+  );
   padding: 1.125rem 1.25rem;
-  box-shadow: 0 10px 28px -22px rgb(0 0 0 / 0.35);
+  box-shadow: 0 10px 28px -22px color-mix(in srgb, var(--success-accent, #e9781c) 40%, black);
 }
 
 :root:not(.dark) .customer-flow-success-summary {
-  border: 1px solid rgba(0, 0, 0, 0.06);
-  background: linear-gradient(180deg, #fcfcfb 0%, #f8f7f4 100%);
-  box-shadow: 0 10px 28px -22px rgba(15, 23, 42, 0.35);
+  border: 1px solid color-mix(in srgb, var(--success-accent, #e9781c) 18%, rgba(0, 0, 0, 0.08));
+}
+
+.dark .customer-flow-success-summary {
+  background: linear-gradient(
+    165deg,
+    color-mix(in srgb, var(--success-accent, #e9781c) 8%, hsl(var(--card))) 0%,
+    hsl(var(--card)) 100%
+  );
 }
 
 .customer-flow-success-summary__amount-row {
@@ -519,24 +547,29 @@
   color: hsl(var(--muted-foreground));
 }
 
+.customer-flow-success-summary__receipt {
+  margin-top: 0.125rem;
+  padding-top: 0.625rem;
+  border-top: 1px dashed color-mix(in srgb, var(--success-accent, #e9781c) 22%, hsl(var(--border)));
+  font-weight: 600;
+  color: hsl(var(--foreground) / 0.88);
+}
+
+.customer-flow-success-summary__receipt svg {
+  color: color-mix(in srgb, var(--success-accent, #e9781c) 72%, hsl(var(--muted-foreground)));
+}
+
 .customer-flow-success-actions {
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
 }
 
-@media (min-width: 640px) {
-  .customer-flow-success-actions {
-    flex-direction: row;
-    align-items: stretch;
-  }
-}
-
 .customer-flow-success-primary-btn,
 .customer-flow-success-secondary-btn {
   display: inline-flex;
+  width: 100%;
   min-height: 3rem;
-  flex: 1;
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
@@ -545,11 +578,16 @@
   font-size: 0.9375rem;
   font-weight: 700;
   letter-spacing: -0.01em;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
   transition:
-    transform 0.18s ease,
-    box-shadow 0.18s ease,
-    background-color 0.18s ease,
-    border-color 0.18s ease;
+    transform 0.1s ease,
+    box-shadow 0.12s ease,
+    background-color 0.12s ease,
+    border-color 0.12s ease,
+    opacity 0.12s ease;
 }
 
 .customer-flow-success-primary-btn {
@@ -557,13 +595,15 @@
   border: none;
 }
 
-.customer-flow-success-primary-btn:hover {
-  transform: translateY(-2px);
+.customer-flow-success-primary-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
   box-shadow: 0 18px 36px -16px color-mix(in srgb, var(--success-accent, #e9781c) 55%, black);
 }
 
-.customer-flow-success-primary-btn:active {
-  transform: translateY(0);
+.customer-flow-success-primary-btn:active:not(:disabled),
+.customer-flow-success-primary-btn--busy {
+  transform: scale(0.98);
+  opacity: 0.94;
 }
 
 .customer-flow-success-secondary-btn {
@@ -572,11 +612,24 @@
   color: hsl(var(--foreground));
 }
 
-.customer-flow-success-secondary-btn:hover {
+.customer-flow-success-secondary-btn:hover:not(:disabled) {
   transform: translateY(-1px);
   border-color: hsl(var(--border));
   background: hsl(var(--muted) / 0.45);
   box-shadow: 0 8px 20px -16px rgb(0 0 0 / 0.35);
+}
+
+.customer-flow-success-secondary-btn:active:not(:disabled),
+.customer-flow-success-secondary-btn--busy {
+  transform: scale(0.98);
+  opacity: 0.92;
+}
+
+.customer-flow-success-primary-btn:disabled,
+.customer-flow-success-secondary-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.65;
+  pointer-events: none;
 }
 
 :root:not(.dark) .customer-flow-success-secondary-btn {
@@ -584,7 +637,7 @@
   background: rgba(255, 255, 255, 0.85);
 }
 
-:root:not(.dark) .customer-flow-success-secondary-btn:hover {
+:root:not(.dark) .customer-flow-success-secondary-btn:hover:not(:disabled) {
   border-color: rgba(0, 0, 0, 0.16);
   background: #fff;
   box-shadow: 0 8px 20px -16px rgba(15, 23, 42, 0.35);

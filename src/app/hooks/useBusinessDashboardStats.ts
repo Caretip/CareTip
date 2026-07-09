@@ -40,6 +40,7 @@ import {
 } from "../lib/businessAnalytics";
 import {
   patchLiveTipAcrossTimeframes,
+  patchDashboardStatsForLiveTip,
   subscribeAnalyticsPatch,
 } from "../lib/realtime/patchAnalyticsLive";
 import { trackSocketPatchApplied } from "../lib/realtime/realtimeMetrics";
@@ -208,13 +209,16 @@ export function useBusinessDashboardStats(
     });
   }, [persistSwr]);
 
-  const applyHeroFromMonth = useCallback((tf: AnalyticsTimeframe) => {
-    if (tf !== "month") return;
+  const syncHeroPulseFromMonth = useCallback(() => {
     const merged = mergeBusinessDashboardStats(
       summaryPartialRef.current.get("month"),
       analyticsPartialRef.current.get("month"),
     );
-    if (merged) setHeroStats(merged);
+    if (!merged?.operationalPulse) return;
+    setHeroStats((prev) => {
+      if (!prev) return merged;
+      return { ...prev, operationalPulse: merged.operationalPulse };
+    });
   }, []);
 
   const applyCachedToUi = useCallback(
@@ -535,7 +539,7 @@ export function useBusinessDashboardStats(
             }
             commitUiStats(tf, seq, true);
           }
-          applyHeroFromMonth(tf);
+          syncHeroPulseFromMonth();
           if (tf === "month") devSetHydrationPhase("hero", "ready");
 
           if (!stillActive()) return;
@@ -611,7 +615,7 @@ export function useBusinessDashboardStats(
       enabled,
       sessionValidated,
       commitUiStats,
-      applyHeroFromMonth,
+      syncHeroPulseFromMonth,
       hydrateFromSwr,
       hydratePeriodSessionCache,
       isPeriodSessionReady,
@@ -891,11 +895,16 @@ export function useBusinessDashboardStats(
   useEffect(() => {
     if (!enabled || !sessionValidated) return;
     return subscribeBusinessAnalyticsRefresh(() => {
-      void loadStatsForRef.current(tfRef.current, {
+      const tf = tfRef.current;
+      void loadStatsForRef.current(tf, {
         affectsUi: true,
         soft: true,
         silent: true,
+        forceNetwork: true,
       });
+      if (tf !== "month") {
+        void loadHeroMonthSummaryRef.current();
+      }
     });
   }, [enabled, sessionValidated]);
 
@@ -910,13 +919,16 @@ export function useBusinessDashboardStats(
       if (tf === tfRef.current) {
         commitUiStats(tf, uiRequestSeqRef.current, false);
       }
-      if (tf === "month") applyHeroFromMonth("month");
+      syncHeroPulseFromMonth();
     });
-  }, [enabled, sessionValidated, commitUiStats, applyHeroFromMonth]);
+  }, [enabled, sessionValidated, commitUiStats, syncHeroPulseFromMonth]);
 
   const refetchLive = useCallback(() => {
-    invalidateBusinessAnalytics(tfRef.current);
-    void loadStatsFor(tfRef.current, { affectsUi: true, soft: true, silent: true });
+    invalidateBusinessAnalytics("all");
+    void loadStatsFor(tfRef.current, { affectsUi: true, soft: true, silent: true, forceNetwork: true });
+    if (tfRef.current !== "month") {
+      void loadHeroMonthSummaryRef.current();
+    }
   }, [loadStatsFor]);
 
   useDashboardTabRefocus(refetchLive, enabled && sessionValidated);
@@ -950,8 +962,19 @@ export function useBusinessDashboardStats(
     }
     tipReconcileTimerRef.current = setTimeout(() => {
       tipReconcileTimerRef.current = null;
-      invalidateBusinessAnalytics(tfRef.current);
-      void loadStatsFor(tfRef.current, { affectsUi: true, soft: true, silent: true });
+      invalidateBusinessAnalytics("all");
+      businessSwrStore.delete(swrKey("month"));
+      networkSettledTfsRef.current.delete("month");
+      const activeTf = tfRef.current;
+      void loadStatsFor(activeTf, {
+        affectsUi: true,
+        soft: true,
+        silent: true,
+        forceNetwork: true,
+      });
+      if (activeTf !== "month") {
+        void loadHeroMonthSummaryRef.current();
+      }
     }, 2_500);
   }, [loadStatsFor]);
 
@@ -968,18 +991,24 @@ export function useBusinessDashboardStats(
     (p: LiveNewTipPayload) => {
       if (!enabled || !sessionValidated) return;
       patchLiveTipAcrossTimeframes(p, p.employeeName);
-      trackSocketPatchApplied();
       syncPartialsFromAnalyticsBundles();
+      for (const tf of ["week", "month", "year"] as AnalyticsTimeframe[]) {
+        if (getBusinessAnalyticsBundle(tf)) continue;
+        const current = summaryPartialRef.current.get(tf);
+        if (!current) continue;
+        summaryPartialRef.current.set(tf, patchDashboardStatsForLiveTip(current, p));
+      }
+      trackSocketPatchApplied();
       const tf = tfRef.current;
       commitUiStats(tf, uiRequestSeqRef.current, false);
-      applyHeroFromMonth(tf);
+      syncHeroPulseFromMonth();
       scheduleTipReconcile();
     },
     [
       enabled,
       sessionValidated,
       commitUiStats,
-      applyHeroFromMonth,
+      syncHeroPulseFromMonth,
       scheduleTipReconcile,
       syncPartialsFromAnalyticsBundles,
     ],

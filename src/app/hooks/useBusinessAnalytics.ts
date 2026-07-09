@@ -409,7 +409,7 @@ export function useBusinessAnalytics(
 
       reconcileTimerRef.current = null;
 
-      invalidateBusinessAnalytics(timeframeRef.current);
+      invalidateBusinessAnalytics("all");
 
     }, RECONCILE_DEBOUNCE_MS);
 

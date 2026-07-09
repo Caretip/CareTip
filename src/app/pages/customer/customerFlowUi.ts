@@ -69,7 +69,11 @@ export const customerFlowUi = {
 
   fixedBottomBar:
     "fixed bottom-0 left-0 right-0 z-30 border-t border-black/[0.06] bg-white/92 backdrop-blur-md supports-[backdrop-filter]:bg-white/88 dark:border-white/10 dark:bg-background/95 shadow-[0_-12px_40px_-20px_rgba(15,23,42,0.1)]",
-  fixedBottomInner: "caretip-container mx-auto max-w-xl py-4",
+  /** Centers journey CTAs on desktop; full width on mobile. */
+  fixedBottomInner:
+    "caretip-container mx-auto flex max-w-xl justify-center px-4 py-4 sm:px-6",
+  /** Wrap fixed-bottom or inline primary actions — mobile full width, desktop capped. */
+  journeyCtaStack: "flex w-full max-w-sm flex-col gap-3",
 
   card: premiumCard,
 
@@ -130,9 +134,9 @@ export const customerFlowUi = {
   dashedCustomTrigger:
     "w-full rounded-[1.125rem] border-2 border-dashed border-black/[0.1] bg-[#fafaf8] py-6 transition-[border-color,background-color,transform] duration-150 hover:-translate-y-0.5 hover:border-primary/35 hover:bg-primary/[0.03] dark:border-white/15 dark:bg-muted/15",
 
-  btnPrimaryLg: caretipBtnPrimaryFull,
-  btnSecondaryLg: caretipBtnSecondaryFull,
-  btnAccentLg: cn(caretipBtnPrimaryFull, "customer-flow-pay-cta"),
+  btnPrimaryLg: cn(caretipBtnPrimary, "w-full sm:max-w-sm"),
+  btnSecondaryLg: cn(caretipBtnSecondary, "w-full sm:max-w-sm"),
+  btnAccentLg: cn(caretipBtnPrimary, "w-full sm:max-w-sm", "customer-flow-pay-cta"),
 
   paymentSummary: cn(premiumCard, "customer-flow-payment-summary overflow-hidden"),
   paymentAmountDisplay:
@@ -170,9 +174,9 @@ export const customerFlowUi = {
     "flex min-h-[2.75rem] w-full items-center justify-center rounded-xl text-sm font-medium text-muted-foreground/90 transition-colors duration-150 hover:text-foreground",
 
   /** Post-completion actions — narrow, centered (not full-bleed commitment CTAs). */
-  completionActions: "mx-auto flex w-full max-w-md flex-col items-center gap-3",
-  completionPrimaryBtn: cn(caretipBtnPrimary, "w-full max-w-sm"),
-  completionSecondaryBtn: cn(caretipBtnSecondary, "w-full max-w-sm"),
+  completionActions: "mx-auto flex w-full max-w-sm flex-col items-stretch gap-3",
+  completionPrimaryBtn: cn(caretipBtnPrimary, "w-full"),
+  completionSecondaryBtn: cn(caretipBtnSecondary, "w-full"),
   completionTextAction:
     "inline-flex min-h-[2.75rem] items-center justify-center rounded-xl px-4 text-sm font-medium text-muted-foreground/90 transition-colors duration-150 hover:text-foreground",
 

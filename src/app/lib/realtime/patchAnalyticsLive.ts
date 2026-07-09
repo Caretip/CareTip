@@ -41,10 +41,52 @@ function patchBundle(
   notifyPatchListeners(timeframe);
 }
 
+/** Optimistic dashboard summary patch when analytics bundle is not hydrated yet. */
+export function patchDashboardStatsForLiveTip(
+  stats: Partial<BusinessDashboardStats>,
+  payload: LiveNewTipPayload,
+): Partial<BusinessDashboardStats> {
+  const status = String(payload.tip.status ?? "").toLowerCase();
+  if (status && status !== "success") return stats;
+
+  const amount = Number(payload.tip.amount || 0);
+  if (!Number.isFinite(amount) || amount <= 0) return stats;
+
+  const pulse = stats.operationalPulse ?? {
+    tipsLast60m: { amount: 0, count: 0 },
+    tipsToday: { amount: 0, count: 0 },
+    tippingReadyEmployees: 0,
+    rosterTotal: 0,
+    employeesMissingQr: 0,
+    goalsTracked: 0,
+    goalsOnTrackOrBetter: 0,
+  };
+
+  return {
+    ...stats,
+    totalTips: (stats.totalTips ?? 0) + amount,
+    tipCount: (stats.tipCount ?? 0) + 1,
+    operationalPulse: {
+      ...pulse,
+      tipsLast60m: {
+        amount: pulse.tipsLast60m.amount + amount,
+        count: pulse.tipsLast60m.count + 1,
+      },
+      tipsToday: {
+        amount: pulse.tipsToday.amount + amount,
+        count: pulse.tipsToday.count + 1,
+      },
+    },
+  };
+}
+
 export function patchLiveTipAcrossTimeframes(
   payload: LiveNewTipPayload,
   employeeName?: string | null,
 ): void {
+  const status = String(payload.tip.status ?? "").toLowerCase();
+  if (status && status !== "success") return;
+
   const row: TipActivityRow = {
     id: payload.tip.id,
     amount: payload.tip.amount,

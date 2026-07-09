@@ -417,9 +417,11 @@ export function QRLandingPage() {
           selectedAmount ? (
             <motion.div initial={{ y: 24, opacity: 0 }} animate={{ y: 0, opacity: 1 }} className={cf.fixedBottomBar}>
               <div className={cf.fixedBottomInner}>
-                <button type="button" onClick={handleContinueToPayment} className={cf.btnPrimaryLg}>
-                  {t("tipFlow.qrLanding.continuePayment")}
-                </button>
+                <div className={cf.journeyCtaStack}>
+                  <button type="button" onClick={handleContinueToPayment} className={cf.btnPrimaryLg}>
+                    {t("tipFlow.qrLanding.continuePayment")}
+                  </button>
+                </div>
               </div>
             </motion.div>
           ) : undefined

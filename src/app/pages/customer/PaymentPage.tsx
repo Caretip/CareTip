@@ -271,21 +271,23 @@ export function PaymentPage() {
         showCheckout ? (
           <div className={cf.fixedBottomBar}>
             <div className={cf.fixedBottomInner}>
-              <button
-                type="button"
-                onClick={handlePayment}
-                disabled={processing}
-                className={cf.btnAccentLg}
-              >
-                {processing ? (
-                  <>
-                    <span className="inline-block size-5 animate-spin rounded-full border-2 border-white/35 border-t-white" />
-                    {stripeRedirectMessage}
-                  </>
-                ) : (
-                  t("tipFlow.payment.payAmount", { amount: formatEur(totalAmount) })
-                )}
-              </button>
+              <div className={cf.journeyCtaStack}>
+                <button
+                  type="button"
+                  onClick={handlePayment}
+                  disabled={processing}
+                  className={cf.btnAccentLg}
+                >
+                  {processing ? (
+                    <>
+                      <span className="inline-block size-5 animate-spin rounded-full border-2 border-white/35 border-t-white" />
+                      {stripeRedirectMessage}
+                    </>
+                  ) : (
+                    t("tipFlow.payment.payAmount", { amount: formatEur(totalAmount) })
+                  )}
+                </button>
+              </div>
             </div>
           </div>
         ) : undefined

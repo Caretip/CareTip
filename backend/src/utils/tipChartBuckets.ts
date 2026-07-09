@@ -374,13 +374,37 @@ export async function queryBusinessDashboardMetaAndSummaryMetrics(opts: {
     process.env.NODE_ENV !== "production" || process.env.DASHBOARD_TIMING === "1";
   const t0 = performance.now();
   const [row] = await prisma.$queryRaw<BusinessDashboardMetaSummaryRow[]>(Prisma.sql`
-    WITH scoped AS (
+    WITH period_scoped AS (
       SELECT amount, created_at
       FROM tips
       WHERE business_id = ${opts.businessId}
         AND status = 'success'
         AND created_at >= ${opts.scanStart}
         AND created_at <= ${opts.scanEnd}
+    ),
+    pulse AS (
+      SELECT
+        COALESCE(SUM(amount) FILTER (WHERE created_at >= ${opts.sixtyAgo}), 0)::float AS last60_amount,
+        COUNT(*) FILTER (WHERE created_at >= ${opts.sixtyAgo})::int AS last60_count,
+        COALESCE(SUM(amount) FILTER (
+          WHERE created_at >= ${opts.todayStart} AND created_at <= ${opts.todayEnd}
+        ), 0)::float AS today_amount,
+        COUNT(*) FILTER (
+          WHERE created_at >= ${opts.todayStart} AND created_at <= ${opts.todayEnd}
+        )::int AS today_count
+      FROM tips
+      WHERE business_id = ${opts.businessId}
+        AND status = 'success'
+    ),
+    period_agg AS (
+      SELECT
+        COALESCE(SUM(amount) FILTER (
+          WHERE created_at >= ${opts.rangeStart} AND created_at <= ${opts.rangeEnd}
+        ), 0)::float AS period_amount,
+        COUNT(*) FILTER (
+          WHERE created_at >= ${opts.rangeStart} AND created_at <= ${opts.rangeEnd}
+        )::int AS period_count
+      FROM period_scoped
     ),
     roster AS (
       SELECT
@@ -406,33 +430,17 @@ export async function queryBusinessDashboardMetaAndSummaryMetrics(opts: {
       r.roster_total,
       r.tipping_ready,
       r.missing_qr,
-      COALESCE(SUM(s.amount) FILTER (
-        WHERE s.created_at >= ${opts.rangeStart} AND s.created_at <= ${opts.rangeEnd}
-      ), 0)::float AS period_amount,
-      COUNT(*) FILTER (
-        WHERE s.created_at >= ${opts.rangeStart} AND s.created_at <= ${opts.rangeEnd}
-      )::int AS period_count,
-      COALESCE(SUM(s.amount) FILTER (WHERE s.created_at >= ${opts.sixtyAgo}), 0)::float AS last60_amount,
-      COUNT(*) FILTER (WHERE s.created_at >= ${opts.sixtyAgo})::int AS last60_count,
-      COALESCE(SUM(s.amount) FILTER (
-        WHERE s.created_at >= ${opts.todayStart} AND s.created_at <= ${opts.todayEnd}
-      ), 0)::float AS today_amount,
-      COUNT(*) FILTER (
-        WHERE s.created_at >= ${opts.todayStart} AND s.created_at <= ${opts.todayEnd}
-      )::int AS today_count
+      pa.period_amount,
+      pa.period_count,
+      pulse.last60_amount,
+      pulse.last60_count,
+      pulse.today_amount,
+      pulse.today_count
     FROM businesses b
     CROSS JOIN roster r
-    LEFT JOIN scoped s ON true
+    CROSS JOIN period_agg pa
+    CROSS JOIN pulse
     WHERE b.id = ${opts.businessId}
-    GROUP BY
-      b.id,
-      b.name,
-      b.slug,
-      b.verification_status,
-      b.timezone,
-      r.roster_total,
-      r.tipping_ready,
-      r.missing_qr
   `);
 
   if (!row) {
@@ -667,30 +675,47 @@ export async function queryBusinessDashboardSummaryMetrics(opts: {
       today_count: number;
     }>
   >(Prisma.sql`
-    WITH scoped AS (
+    WITH period_scoped AS (
       SELECT amount, created_at
       FROM tips
       WHERE business_id = ${opts.businessId}
         AND status = 'success'
         AND created_at >= ${opts.scanStart}
         AND created_at <= ${opts.scanEnd}
+    ),
+    pulse AS (
+      SELECT
+        COALESCE(SUM(amount) FILTER (WHERE created_at >= ${opts.sixtyAgo}), 0)::float AS last60_amount,
+        COUNT(*) FILTER (WHERE created_at >= ${opts.sixtyAgo})::int AS last60_count,
+        COALESCE(SUM(amount) FILTER (
+          WHERE created_at >= ${opts.todayStart} AND created_at <= ${opts.todayEnd}
+        ), 0)::float AS today_amount,
+        COUNT(*) FILTER (
+          WHERE created_at >= ${opts.todayStart} AND created_at <= ${opts.todayEnd}
+        )::int AS today_count
+      FROM tips
+      WHERE business_id = ${opts.businessId}
+        AND status = 'success'
+    ),
+    period_agg AS (
+      SELECT
+        COALESCE(SUM(amount) FILTER (
+          WHERE created_at >= ${opts.rangeStart} AND created_at <= ${opts.rangeEnd}
+        ), 0)::float AS period_amount,
+        COUNT(*) FILTER (
+          WHERE created_at >= ${opts.rangeStart} AND created_at <= ${opts.rangeEnd}
+        )::int AS period_count
+      FROM period_scoped
     )
     SELECT
-      COALESCE(SUM(amount) FILTER (
-        WHERE created_at >= ${opts.rangeStart} AND created_at <= ${opts.rangeEnd}
-      ), 0)::float AS period_amount,
-      COUNT(*) FILTER (
-        WHERE created_at >= ${opts.rangeStart} AND created_at <= ${opts.rangeEnd}
-      )::int AS period_count,
-      COALESCE(SUM(amount) FILTER (WHERE created_at >= ${opts.sixtyAgo}), 0)::float AS last60_amount,
-      COUNT(*) FILTER (WHERE created_at >= ${opts.sixtyAgo})::int AS last60_count,
-      COALESCE(SUM(amount) FILTER (
-        WHERE created_at >= ${opts.todayStart} AND created_at <= ${opts.todayEnd}
-      ), 0)::float AS today_amount,
-      COUNT(*) FILTER (
-        WHERE created_at >= ${opts.todayStart} AND created_at <= ${opts.todayEnd}
-      )::int AS today_count
-    FROM scoped
+      pa.period_amount,
+      pa.period_count,
+      pulse.last60_amount,
+      pulse.last60_count,
+      pulse.today_amount,
+      pulse.today_count
+    FROM period_agg pa
+    CROSS JOIN pulse
   `);
 
   const tSql = Math.round(performance.now() - t0);

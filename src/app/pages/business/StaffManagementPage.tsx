@@ -64,7 +64,13 @@ import {
   DASH_EMPTY_STATE,
 } from "@/components/ui/dashboard-styles";
 import { businessUi } from "@/app/components/business/businessDashboardUi";
-import { STAFF_ROLE_OPTIONS } from "../../lib/businessVenueOptions";
+import {
+  STAFF_ROLE_OPTIONS,
+  STAFF_ROLE_OTHER_VALUE,
+  formatStaffRoleLabel,
+  resolveStaffRoleForForm,
+  resolveStaffRoleForSave,
+} from "../../lib/businessVenueOptions";
 
 const TOAST_OK = { style: { background: "hsl(var(--primary))", color: "hsl(var(--primary-foreground))" } } as const;
 const TOAST_ERR = { style: { background: "#d4183d", color: "#ffffff" } } as const;
@@ -113,6 +119,30 @@ function StaffRoleSelectOptions() {
       {t(opt.labelKey)}
     </option>
   ));
+}
+
+function StaffCustomRoleField({
+  value,
+  onChange,
+}: {
+  value: string;
+  onChange: (value: string) => void;
+}) {
+  const { t } = useTranslation();
+  return (
+    <div>
+      <label className="mb-1 block text-sm text-muted-foreground">
+        {t("business.staffPage.labelCustomRole")}
+      </label>
+      <input
+        type="text"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={t("business.staffPage.phCustomRole")}
+        className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+      />
+    </div>
+  );
 }
 
 type StaffRow = {
@@ -193,6 +223,7 @@ export function StaffManagementPage() {
   const [addForm, setAddForm] = useState({
     name: "",
     role: "Server",
+    customRole: "",
     email: "",
     phone: "",
     locationId: "",
@@ -208,6 +239,7 @@ export function StaffManagementPage() {
     id: "",
     name: "",
     role: "Server",
+    customRole: "",
     email: "",
     monthlyGoal: "" as string,
     isActive: true,
@@ -452,8 +484,13 @@ export function StaffManagementPage() {
     }
     const name = addForm.name.trim();
     const email = addForm.email.trim();
+    const role = resolveStaffRoleForSave(addForm.role, addForm.customRole);
     if (!name || !email) {
       toastErr(t("business.staffPage.toastNameEmailRequired"));
+      return;
+    }
+    if (!role) {
+      toastErr(t("business.staffPage.toastCustomRoleRequired"));
       return;
     }
     setIsSubmitting(true);
@@ -461,7 +498,7 @@ export function StaffManagementPage() {
       const inviteLocale = i18n.resolvedLanguage?.toLowerCase().startsWith("de") ? "de" : "en";
       const created = await createEmployee({
         name,
-        role: addForm.role,
+        role,
         email,
         phone: addForm.phone.trim() || undefined,
         locationId: addForm.locationId.trim() ? addForm.locationId : null,
@@ -472,6 +509,7 @@ export function StaffManagementPage() {
       setAddForm({
         name: "",
         role: "Server",
+        customRole: "",
         email: "",
         phone: "",
         locationId: "",
@@ -488,10 +526,12 @@ export function StaffManagementPage() {
   };
 
   const openEdit = (employee: StaffRow) => {
+    const resolved = resolveStaffRoleForForm(employee.role);
     setEditForm({
       id: employee.id,
       name: employee.name,
-      role: employee.role,
+      role: resolved.role,
+      customRole: resolved.customRole,
       email: employee.email,
       monthlyGoal:
         employee.monthlyGoal != null ? String(employee.monthlyGoal) : "",
@@ -506,8 +546,13 @@ export function StaffManagementPage() {
     if (!editForm.id) return;
     const name = editForm.name.trim();
     const email = editForm.email.trim();
+    const role = resolveStaffRoleForSave(editForm.role, editForm.customRole);
     if (!name || !email) {
       toastErr(t("business.staffPage.toastNameEmailRequired"));
+      return;
+    }
+    if (!role) {
+      toastErr(t("business.staffPage.toastCustomRoleRequired"));
       return;
     }
     let monthlyGoal: number | null | undefined = undefined;
@@ -525,7 +570,7 @@ export function StaffManagementPage() {
     try {
       await updateEmployee(editForm.id, {
         name,
-        role: editForm.role,
+        role,
         email,
         monthlyGoal,
         isActive: editForm.isActive,
@@ -904,7 +949,7 @@ export function StaffManagementPage() {
                     </div>
                   </td>
                   <td className="px-6 py-4">
-                    <span className="text-sm text-foreground">{employee.role}</span>
+                    <span className="text-sm text-foreground">{formatStaffRoleLabel(employee.role, t)}</span>
                   </td>
                   <td className="px-6 py-4 max-w-[200px]">
                     <p className="text-sm text-foreground truncate">
@@ -1045,7 +1090,7 @@ export function StaffManagementPage() {
                   />
                   <div className="min-w-0">
                     <h3 className="font-semibold text-foreground truncate">{employee.name}</h3>
-                    <p className="text-sm text-muted-foreground">{employee.role}</p>
+                    <p className="text-sm text-muted-foreground">{formatStaffRoleLabel(employee.role, t)}</p>
                     {rosterNote ? (
                       <p className={rosterNoteClassName(rosterKey)}>{rosterNote}</p>
                     ) : null}
@@ -1190,13 +1235,25 @@ export function StaffManagementPage() {
                       <label className="mb-1 block text-sm text-muted-foreground">{t("business.staffPage.labelRole")}</label>
                       <select
                         value={addForm.role}
-                        onChange={(e) => setAddForm((f) => ({ ...f, role: e.target.value }))}
+                        onChange={(e) =>
+                          setAddForm((f) => ({
+                            ...f,
+                            role: e.target.value,
+                            customRole: e.target.value === STAFF_ROLE_OTHER_VALUE ? f.customRole : "",
+                          }))
+                        }
                         className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
                       >
                         <StaffRoleSelectOptions />
                       </select>
                     </div>
                   </div>
+                  {addForm.role === STAFF_ROLE_OTHER_VALUE ? (
+                    <StaffCustomRoleField
+                      value={addForm.customRole}
+                      onChange={(customRole) => setAddForm((f) => ({ ...f, customRole }))}
+                    />
+                  ) : null}
                   <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                     <div className="min-w-0 sm:col-span-1">
                       <label className="mb-1 block text-sm text-muted-foreground">{t("business.staffPage.labelEmailRequired")}</label>
@@ -1330,13 +1387,25 @@ export function StaffManagementPage() {
                     <label className="mb-1 block text-sm text-muted-foreground">{t("business.staffPage.labelRole")}</label>
                     <select
                       value={editForm.role}
-                      onChange={(e) => setEditForm((f) => ({ ...f, role: e.target.value }))}
+                      onChange={(e) =>
+                        setEditForm((f) => ({
+                          ...f,
+                          role: e.target.value,
+                          customRole: e.target.value === STAFF_ROLE_OTHER_VALUE ? f.customRole : "",
+                        }))
+                      }
                       className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
                     >
                       <StaffRoleSelectOptions />
                     </select>
                   </div>
                 </div>
+                {editForm.role === STAFF_ROLE_OTHER_VALUE ? (
+                  <StaffCustomRoleField
+                    value={editForm.customRole}
+                    onChange={(customRole) => setEditForm((f) => ({ ...f, customRole }))}
+                  />
+                ) : null}
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                   <div className="min-w-0">
                     <label className="mb-1 block text-sm text-muted-foreground">{t("business.staffPage.labelEmail")}</label>

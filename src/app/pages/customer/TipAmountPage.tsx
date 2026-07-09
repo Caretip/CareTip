@@ -240,14 +240,16 @@ export function TipAmountPage() {
         selectedAmount ? (
           <div className={cf.fixedBottomBar}>
             <div className={cf.fixedBottomInner}>
-              <button
-                type="button"
-                onClick={handleContinue}
-                disabled={!businessId}
-                className={cf.btnPrimaryLg}
-              >
-                {t("tipFlow.tipAmount.continuePayment")}
-              </button>
+              <div className={cf.journeyCtaStack}>
+                <button
+                  type="button"
+                  onClick={handleContinue}
+                  disabled={!businessId}
+                  className={cf.btnPrimaryLg}
+                >
+                  {t("tipFlow.tipAmount.continuePayment")}
+                </button>
+              </div>
             </div>
           </div>
         ) : undefined
