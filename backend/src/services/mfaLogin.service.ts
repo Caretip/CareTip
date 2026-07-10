@@ -1,15 +1,9 @@
-import jwt from "jsonwebtoken";
 import speakeasy from "speakeasy";
 import type { User } from "@prisma/client";
 import { prisma } from "../prisma.js";
+import { signJwt, verifyJwt } from "../lib/jwtConfig.js";
 
 const PENDING_MFA_PURPOSE = "mfa_login_pending";
-
-function getJwtSecret(): string {
-  const secret = process.env.JWT_SECRET?.trim();
-  if (!secret) throw new Error("JWT_SECRET not configured");
-  return secret;
-}
 
 export function isPlatformAdminAccount(
   user: Pick<User, "role" | "isPlatformAdmin">,
@@ -18,18 +12,14 @@ export function isPlatformAdminAccount(
 }
 
 export function signPendingMfaLoginToken(userId: string): string {
-  return jwt.sign(
-    { userId, purpose: PENDING_MFA_PURPOSE },
-    getJwtSecret(),
-    { expiresIn: "10m" },
-  );
+  return signJwt({ userId, purpose: PENDING_MFA_PURPOSE }, "10m");
 }
 
 export function userIdFromPendingMfaLoginToken(token: string): string | null {
   const raw = String(token ?? "").trim();
   if (!raw) return null;
   try {
-    const decoded = jwt.verify(raw, getJwtSecret()) as { userId?: string; purpose?: string };
+    const decoded = verifyJwt<{ userId?: string; purpose?: string }>(raw);
     if (decoded.purpose !== PENDING_MFA_PURPOSE) return null;
     const userId = decoded.userId?.trim();
     return userId || null;

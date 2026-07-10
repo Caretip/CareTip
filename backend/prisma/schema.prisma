@@ -204,6 +204,10 @@ model User {
    * UI + transactional email language: `en` or `de`. Null until user picks a language or registers with a locale hint.
    */
   preferredLocale        String?   @map("preferred_locale")
+  /**
+   * Incremented on password change and refresh-token reuse — access JWT `tv` must match.
+   */
+  authTokenVersion       Int       @default(0) @map("auth_token_version")
   createdAt              DateTime  @default(now()) @map("created_at")
   updatedAt              DateTime  @updatedAt @map("updated_at")
 

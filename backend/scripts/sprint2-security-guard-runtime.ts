@@ -172,11 +172,10 @@ async function main() {
 
       // Forge a JWT as if register had issued one — API must still 403 via requireVerifiedEmail
       const forgedToken = signAuthJwt({
-        userId: registered.user.id,
-        id: registered.user.id,
-        email: empEmail,
+        sub: registered.user.id,
         role: "EMPLOYEE",
-        roleLabel: "EMPLOYEE",
+        type: "access",
+        tv: 0,
       });
 
       const meRes = await fetch(`${apiBase}/api/employees/me`, {

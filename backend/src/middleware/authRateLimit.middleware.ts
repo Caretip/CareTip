@@ -33,9 +33,8 @@ function bodyActivationToken(req: Request): string {
   return typeof body?.token === "string" ? body.token.trim() : "";
 }
 
-function sessionEmail(req: Request): string {
-  const raw = req.user?.email ?? "";
-  return normalizeLoginEmail(raw);
+function sessionUserId(req: Request): string {
+  return (req.user?.sub ?? req.user?.userId ?? req.user?.id ?? "").trim();
 }
 
 function keyIp(scope: string, ip: string): string {
@@ -158,16 +157,20 @@ export const resendVerificationRateLimit = createSyncLimiter((req) => {
   return layers;
 }, RESEND_MSG, "resend-verification");
 
-/** Session resend (JWT): email from token + IP. Run after authMiddleware. */
+/** Session resend (JWT): user id from token + IP. Run after authMiddleware. */
 export const resendVerificationSessionRateLimit = createSyncLimiter((req) => {
   const ip = clientIp(req);
-  const email = sessionEmail(req);
+  const userId = sessionUserId(req);
   const { resendVerification: lim } = authRateLimits;
   const layers: RateLimitLayer[] = [
     { name: "ip", key: keyIp("resend-verification", ip), ...lim.ip },
   ];
-  if (email) {
-    layers.push({ name: "email", key: keyEmail("resend-verification", email), ...lim.email });
+  if (userId) {
+    layers.push({
+      name: "user",
+      key: `auth:resend-verification:user:${userId}`,
+      ...lim.email,
+    });
   }
   return layers;
 }, RESEND_MSG, "resend-verification-session");

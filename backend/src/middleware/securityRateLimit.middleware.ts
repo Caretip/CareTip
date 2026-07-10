@@ -1,6 +1,5 @@
 import type { Request, Response, NextFunction, RequestHandler } from "express";
-import jwt from "jsonwebtoken";
-import type { JwtPayload } from "../middleware/auth.middleware.js";
+import { resolveJwtSubject, verifyJwt, type DecodedAccessClaims } from "../lib/jwtConfig.js";
 import { securityRateLimits } from "../config/securityRateLimit.config.js";
 import type { RateLimitLayer } from "../utils/layeredRateLimit.js";
 import { enforceRateLimitLayersDistributed } from "../utils/rateLimitStore.js";
@@ -11,16 +10,15 @@ function clientIp(req: Request): string {
 }
 
 function userIdFromReq(req: Request): string {
+  if (req.user?.sub) return req.user.sub;
   if (req.user?.userId) return req.user.userId;
   if (req.user?.id) return req.user.id;
   const authHeader = req.headers.authorization;
   const token = authHeader?.startsWith("Bearer ") ? authHeader.slice(7) : null;
   if (!token) return "";
   try {
-    const secret = process.env.JWT_SECRET;
-    if (!secret) return "";
-    const decoded = jwt.verify(token, secret) as JwtPayload;
-    return decoded.userId ?? decoded.id ?? "";
+    const decoded = verifyJwt<DecodedAccessClaims>(token);
+    return resolveJwtSubject(decoded) ?? "";
   } catch {
     return "";
   }

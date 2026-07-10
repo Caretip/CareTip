@@ -1,9 +1,13 @@
-import jwt, { type SignOptions } from "jsonwebtoken";
 import bcrypt from "bcrypt";
 import { type BusinessVerificationStatus, type Role, type User } from "@prisma/client";
 import { prisma } from "../prisma.js";
 import { validatePassword } from "../utils/passwordValidation.js";
 import { EmailNotVerifiedLoginError } from "../utils/httpErrors.js";
+import {
+  ACCESS_JWT_TYPE,
+  IMPERSONATION_JWT_TYPE,
+  signJwt,
+} from "../lib/jwtConfig.js";
 import { generateUniqueBusinessSlugForName } from "./business.service.js";
 import { isSubscriptionBasicDefaultEnabled } from "../config/featureFlags.js";
 import { provisionInternalBasicSubscription } from "./subscription.service.js";
@@ -79,52 +83,38 @@ export function parseLoginIntendedRole(raw: unknown): AuthIntendedRole | null {
   return null;
 }
 
-function roleLabel(role: Role): "MANAGER" | "EMPLOYEE" | "SUPER_ADMIN" {
-  if (role === "MANAGER") return "MANAGER";
-  if (role === "EMPLOYEE") return "EMPLOYEE";
-  return "SUPER_ADMIN";
-}
+export type AuthSessionContext = {
+  /** Links access JWT to the active refresh session — invalidated on logout / rotation revoke. */
+  refreshSessionId?: string;
+};
 
-function getJwtSecret(): string {
-  const secret = process.env.JWT_SECRET?.trim();
-  if (!secret) {
-    throw new Error("JWT_SECRET not configured");
-  }
-  return secret;
-}
-
-function jwtExpiresIn(): SignOptions["expiresIn"] {
+function jwtExpiresIn() {
   // Short-lived access token (15m default); override with `JWT_EXPIRES_IN` if needed.
-  return (process.env.JWT_EXPIRES_IN?.trim() || "15m") as SignOptions["expiresIn"];
+  return (process.env.JWT_EXPIRES_IN?.trim() || "15m") as import("jsonwebtoken").SignOptions["expiresIn"];
 }
 
-function impersonationJwtExpiresIn(): SignOptions["expiresIn"] {
-  return (process.env.JWT_IMPERSONATION_EXPIRES_IN?.trim() || "12h") as SignOptions["expiresIn"];
+function impersonationJwtExpiresIn() {
+  return (process.env.JWT_IMPERSONATION_EXPIRES_IN?.trim() || "12h") as import("jsonwebtoken").SignOptions["expiresIn"];
 }
 
 /** Exported for security regression scripts that simulate client JWT misuse. */
 export function signAuthJwt(payload: Record<string, unknown>): string {
-  const opts: SignOptions = { expiresIn: jwtExpiresIn() };
-  return jwt.sign(payload, getJwtSecret(), opts);
+  return signJwt(payload, jwtExpiresIn());
 }
 
 export function signImpersonationToken(
   targetUserId: string,
-  targetEmail: string,
+  _targetEmail: string,
   platformAdminUserId: string
 ): string {
-  const opts: SignOptions = { expiresIn: impersonationJwtExpiresIn() };
-  return jwt.sign(
+  return signJwt(
     {
-      userId: targetUserId,
-      id: targetUserId,
-      email: targetEmail,
+      sub: targetUserId,
       role: "MANAGER",
-      roleLabel: "MANAGER",
+      type: IMPERSONATION_JWT_TYPE,
       impersonatedBy: platformAdminUserId,
     },
-    getJwtSecret(),
-    opts
+    impersonationJwtExpiresIn(),
   );
 }
 
@@ -272,14 +262,19 @@ function buildAuthUserDto(user: UserForAuthResult): AuthUserDto {
   return dto;
 }
 
-function jwtPayloadForUser(user: UserForAuthResult): Record<string, unknown> {
-  return {
-    userId: user.id,
-    id: user.id,
-    email: user.email,
+function jwtPayloadForUser(
+  user: UserForAuthResult,
+  ctx?: AuthSessionContext,
+): Record<string, unknown> {
+  const payload: Record<string, unknown> = {
+    sub: user.id,
     role: user.role,
-    roleLabel: roleLabel(user.role),
+    type: ACCESS_JWT_TYPE,
+    tv: user.authTokenVersion ?? 0,
   };
+  const sid = ctx?.refreshSessionId?.trim();
+  if (sid) payload.sid = sid;
+  return payload;
 }
 
 /** Registration response only — never includes a session token. */
@@ -290,9 +285,12 @@ export function pendingVerificationResultForUserRecord(user: UserForAuthResult):
   };
 }
 
-export function authResultForUserRecord(user: UserForAuthResult): AuthResult {
+export function authResultForUserRecord(
+  user: UserForAuthResult,
+  ctx?: AuthSessionContext,
+): AuthResult {
   return {
-    token: signAuthJwt(jwtPayloadForUser(user)),
+    token: signAuthJwt(jwtPayloadForUser(user, ctx)),
     user: buildAuthUserDto(user),
   };
 }
@@ -326,7 +324,10 @@ async function loadUserForAuthResult(userId: string): Promise<UserForAuthResult>
 }
 
 /** Used by refresh-token flow to re-issue an access token and user payload. */
-export async function authResultForUserId(userId: string): Promise<AuthResult> {
+export async function authResultForUserId(
+  userId: string,
+  ctx?: AuthSessionContext,
+): Promise<AuthResult> {
   const user = await loadUserForAuthResult(userId);
   if (!user || user.isActive !== true) {
     throw new Error("Authentication required");
@@ -338,7 +339,7 @@ export async function authResultForUserId(userId: string): Promise<AuthResult> {
     throw new EmailNotVerifiedLoginError();
   }
   await assertPlatformAdminMfaSessionAllowed(user);
-  return authResultForUserRecord(user);
+  return authResultForUserRecord(user, ctx);
 }
 
 async function sendVerificationEmailBestEffort(

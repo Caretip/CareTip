@@ -1,5 +1,6 @@
 import crypto from "crypto";
 import { prisma } from "../prisma.js";
+import { bumpAuthTokenVersion } from "./authTokenVersion.service.js";
 
 const COOKIE_NAME = "caretip_refresh";
 
@@ -73,11 +74,13 @@ export function clearRefreshCookie(
   });
 }
 
-export async function issueRefreshToken(userId: string): Promise<{ token: string; expiresAt: Date }> {
+export async function issueRefreshToken(
+  userId: string,
+): Promise<{ id: string; token: string; expiresAt: Date }> {
   const token = crypto.randomBytes(48).toString("base64url");
   const tokenHash = sha256Hex(token);
   const expiresAt = nowPlusDays(refreshTokenTtlDays());
-  await prisma.refreshToken.create({
+  const row = await prisma.refreshToken.create({
     data: {
       tokenHash,
       userId,
@@ -85,8 +88,9 @@ export async function issueRefreshToken(userId: string): Promise<{ token: string
       revokedAt: null,
       replacedByTokenId: null,
     },
+    select: { id: true },
   });
-  return { token, expiresAt };
+  return { id: row.id, token, expiresAt };
 }
 
 /** Revoke all active refresh sessions for a user (e.g. reused / stolen refresh token). */
@@ -95,6 +99,7 @@ export async function revokeAllRefreshTokensForUser(userId: string): Promise<voi
     where: { userId, revokedAt: null },
     data: { revokedAt: new Date() },
   });
+  await bumpAuthTokenVersion(userId);
 }
 
 /**
@@ -103,7 +108,7 @@ export async function revokeAllRefreshTokensForUser(userId: string): Promise<voi
  */
 export async function rotateRefreshToken(
   token: string
-): Promise<{ userId: string; newToken: string; newExpiresAt: Date } | null> {
+): Promise<{ userId: string; newId: string; newToken: string; newExpiresAt: Date } | null> {
   const raw = String(token ?? "").trim();
   if (!raw) return null;
   const tokenHash = sha256Hex(raw);
@@ -158,7 +163,7 @@ export async function rotateRefreshToken(
       return null;
     }
 
-    return { userId: existing.userId, newToken: newPlain, newExpiresAt };
+    return { userId: existing.userId, newId: created.id, newToken: newPlain, newExpiresAt };
   } catch (e) {
     console.warn("[refreshToken.rotate]", e);
     return null;

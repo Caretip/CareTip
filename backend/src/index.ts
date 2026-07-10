@@ -81,6 +81,14 @@ async function assertEnvForAuth(): Promise<void> {
     );
     process.exit(1);
   }
+  if (process.env.NODE_ENV === "production") {
+    const expiredRefresh = process.env.ALLOW_EXPIRED_ACCESS_TOKEN_REFRESH?.trim().toLowerCase();
+    if (expiredRefresh === "true" || expiredRefresh === "1") {
+      console.warn(
+        "[auth] ALLOW_EXPIRED_ACCESS_TOKEN_REFRESH is set but permanently disabled in production.",
+      );
+    }
+  }
   try {
     await prisma.$connect();
   } catch (e) {

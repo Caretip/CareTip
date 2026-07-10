@@ -1,9 +1,14 @@
 import { Server } from "socket.io";
 import type { Server as HttpServer } from "http";
-import jwt from "jsonwebtoken";
 import { Role } from "@prisma/client";
 import { prisma } from "../prisma.js";
 import { socketCorsOptions } from "../config/cors.js";
+import {
+  isAllowedAccessJwtType,
+  resolveJwtSubject,
+  verifyJwt,
+  type DecodedAccessClaims,
+} from "../lib/jwtConfig.js";
 
 import { businessIdFromPublicSocketRoomToken } from "../services/publicSocketToken.service.js";
 
@@ -12,10 +17,7 @@ let io: Server | null = null;
 /** Maps socket.id → userId for observability (optional). */
 const socketUserMap = new Map<string, string>();
 
-interface JwtLike {
-  userId?: string;
-  id?: string;
-  email?: string;
+interface JwtLike extends DecodedAccessClaims {
   role: Role;
 }
 
@@ -53,20 +55,27 @@ export function initSocketServer(httpServer: HttpServer): Server {
         return next();
       }
 
-      const secret = process.env.JWT_SECRET;
-      if (!secret) {
-        return next(new Error("Server misconfigured"));
+      const decoded = verifyJwt<JwtLike>(token);
+      if (!isAllowedAccessJwtType(decoded.type)) {
+        return next(new Error("Unauthorized"));
       }
-      const decoded = jwt.verify(token, secret) as JwtLike;
-      const userId = decoded.userId ?? decoded.id;
+      const userId = resolveJwtSubject(decoded);
       if (!userId) {
         return next(new Error("Unauthorized"));
       }
 
-      socket.data.userId = userId;
-      socket.data.role = decoded.role;
+      const userRow = await prisma.user.findUnique({
+        where: { id: userId },
+        select: { role: true, isActive: true },
+      });
+      if (!userRow || userRow.isActive !== true) {
+        return next(new Error("Unauthorized"));
+      }
 
-      if (decoded.role === "EMPLOYEE") {
+      socket.data.userId = userId;
+      socket.data.role = userRow.role;
+
+      if (userRow.role === "EMPLOYEE") {
         const emp = await prisma.employee.findUnique({
           where: { userId },
           select: { id: true },
@@ -75,7 +84,7 @@ export function initSocketServer(httpServer: HttpServer): Server {
           return next(new Error("Forbidden"));
         }
         socket.data.employeeId = emp.id;
-      } else if (decoded.role === "MANAGER") {
+      } else if (userRow.role === "MANAGER") {
         const biz = await prisma.business.findUnique({
           where: { userId },
           select: { id: true },
@@ -84,7 +93,7 @@ export function initSocketServer(httpServer: HttpServer): Server {
           return next(new Error("Forbidden"));
         }
         socket.data.businessId = biz.id;
-      } else if (decoded.role === "SUPER_ADMIN") {
+      } else if (userRow.role === "SUPER_ADMIN") {
         const row = await prisma.user.findUnique({
           where: { id: userId },
           select: { role: true, isPlatformAdmin: true, isActive: true },

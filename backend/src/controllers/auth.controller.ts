@@ -1,5 +1,4 @@
 import type { Request, Response } from "express";
-import jwt from "jsonwebtoken";
 import { Prisma } from "@prisma/client";
 import * as authService from "../services/auth.service.js";
 import * as businessService from "../services/business.service.js";
@@ -47,8 +46,8 @@ async function issueRefreshSessionForUser(
   res: Response,
   userId: string,
 ): Promise<import("../services/auth.service.js").AuthResult> {
-  const result = await authService.authResultForUserId(userId);
   const rt = await issueRefreshToken(userId);
+  const result = await authService.authResultForUserId(userId, { refreshSessionId: rt.id });
   setRefreshCookie(res, rt.token, { maxAgeMs: refreshCookieMaxAgeMs(rt.expiresAt) });
   return result;
 }
@@ -76,14 +75,16 @@ async function respondAfterPasswordLogin(
     });
   }
 
-  const result = await authService.authResultForUserRecord(user);
   try {
-    const rt = await issueRefreshToken(result.user.id);
+    const rt = await issueRefreshToken(user.id);
+    const result = authService.authResultForUserRecord(user, { refreshSessionId: rt.id });
     setRefreshCookie(res, rt.token, { maxAgeMs: refreshCookieMaxAgeMs(rt.expiresAt) });
+    return res.json(result);
   } catch (e) {
     logServerError("auth.login.issueRefreshToken", e);
+    const result = authService.authResultForUserRecord(user);
+    return res.json(result);
   }
-  return res.json(result);
 }
 
 function parseClientTimeZone(body: Record<string, unknown>): string | undefined {
@@ -763,38 +764,42 @@ export async function oauth(req: Request, res: Response) {
     }
     try {
       const rt = await issueRefreshToken(result.user.id);
+      const session = await authService.authResultForUserId(result.user.id, {
+        refreshSessionId: rt.id,
+      });
       setRefreshCookie(res, rt.token, { maxAgeMs: refreshCookieMaxAgeMs(rt.expiresAt) });
+      if (isLogin) {
+        const oauthClientLocale =
+          locale === "en" || locale === "de" ? locale : undefined;
+        void (async () => {
+          try {
+            const { ip, userAgent } = extractLoginRequestContext(req);
+            await handlePostLoginNotifications({
+              userId: session.user.id,
+              email: session.user.email,
+              ip,
+              userAgent,
+              explicitLocale: oauthClientLocale,
+              clientTimeZone: parseClientTimeZone(body),
+            });
+          } catch (e) {
+            logServerError("auth.oauth.loginSecurityAlert", e);
+          }
+        })();
+      }
+      console.info(
+        "[oauth] success",
+        JSON.stringify({
+          userId: session.user.id,
+          role: session.user.role,
+          isLogin,
+        }),
+      );
+      return res.status(isLogin ? 200 : 201).json(session);
     } catch (e) {
       logServerError("auth.oauth.issueRefreshToken", e);
+      return res.status(503).json({ message: CLIENT_FALLBACK.loginUnexpected });
     }
-    if (isLogin) {
-      const oauthClientLocale =
-        locale === "en" || locale === "de" ? locale : undefined;
-      void (async () => {
-        try {
-          const { ip, userAgent } = extractLoginRequestContext(req);
-          await handlePostLoginNotifications({
-            userId: result.user.id,
-            email: result.user.email,
-            ip,
-            userAgent,
-            explicitLocale: oauthClientLocale,
-            clientTimeZone: parseClientTimeZone(body),
-          });
-        } catch (e) {
-          logServerError("auth.oauth.loginSecurityAlert", e);
-        }
-      })();
-    }
-    console.info(
-      "[oauth] success",
-      JSON.stringify({
-        userId: result.user.id,
-        role: result.user.role,
-        isLogin,
-      }),
-    );
-    return res.status(isLogin ? 200 : 201).json(result);
   } catch (err) {
     if (err instanceof EmailNotVerifiedLoginError) {
       return res.status(403).json({
@@ -863,7 +868,9 @@ export async function refresh(req: Request, res: Response) {
       const rotated = await rotateRefreshToken(rtCookie);
       if (rotated) {
         try {
-          const result = await authService.authResultForUserId(rotated.userId);
+          const result = await authService.authResultForUserId(rotated.userId, {
+            refreshSessionId: rotated.newId,
+          });
           setRefreshCookie(res, rotated.newToken, { maxAgeMs: refreshCookieMaxAgeMs(rotated.newExpiresAt) });
           return res.json(result);
         } catch (inner) {
@@ -888,8 +895,8 @@ export async function refresh(req: Request, res: Response) {
       const userId = userIdFromAccessTokenForRefresh(bearer);
       if (userId) {
         try {
-          const result = await authService.authResultForUserId(userId);
           const rt = await issueRefreshToken(userId);
+          const result = await authService.authResultForUserId(userId, { refreshSessionId: rt.id });
           setRefreshCookie(res, rt.token, { maxAgeMs: refreshCookieMaxAgeMs(rt.expiresAt) });
           return res.json(result);
         } catch (inner) {
@@ -1036,8 +1043,8 @@ export async function changePassword(req: Request, res: Response) {
 
 export async function patchMe(req: Request, res: Response) {
   try {
-    const userId = req.user?.userId ?? req.user?.id;
-    const role = req.user?.role ?? req.user?.roleLabel;
+    const userId = req.user?.sub ?? req.user?.userId ?? req.user?.id;
+    const role = req.user?.role;
     if (!userId) {
       return res.status(401).json({ message: "Authentication required" });
     }
@@ -1084,10 +1091,9 @@ export async function patchMe(req: Request, res: Response) {
       await submitBusinessOnboardingForReview(userId);
     }
 
-    // Re-issue a fresh auth payload so the client immediately routes correctly.
-    const result = await authService.authResultForUserId(userId);
+    const rt = await issueRefreshToken(userId);
+    const result = await authService.authResultForUserId(userId, { refreshSessionId: rt.id });
     try {
-      const rt = await issueRefreshToken(result.user.id);
       setRefreshCookie(res, rt.token, { maxAgeMs: refreshCookieMaxAgeMs(rt.expiresAt) });
     } catch (e) {
       logServerError("auth.patchMe.issueRefreshToken", e);
@@ -1115,7 +1121,11 @@ export async function activateEmployee(req: Request, res: Response) {
     const result = await authService.activateEmployee(token, password);
     try {
       const rt = await issueRefreshToken(result.user.id);
+      const session = await authService.authResultForUserId(result.user.id, {
+        refreshSessionId: rt.id,
+      });
       setRefreshCookie(res, rt.token, { maxAgeMs: refreshCookieMaxAgeMs(rt.expiresAt) });
+      return res.status(200).json(session);
     } catch (e) {
       logServerError("auth.activateEmployee.issueRefreshToken", e);
     }
