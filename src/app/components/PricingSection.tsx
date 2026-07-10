@@ -62,20 +62,12 @@ export function PricingSection({
           const isPro = tier.tierKey === "business";
 
           const footer = isPro ? (
-            <div className="flex w-full flex-col gap-2">
-              <Link
-                to={tierSignupHref("business", billingCycle, true)}
-                className={cn(pricingPageUi.cardCtaPrimary, "w-full text-center")}
-              >
-                {t("staticPages.pricing.tiers.business.trialButton")}
-              </Link>
-              <Link
-                to={tierSignupHref("business", billingCycle, false)}
-                className={cn(pricingPageUi.cardCtaSecondary, "w-full text-center")}
-              >
-                {t("staticPages.pricing.tiers.business.subscribeButton")}
-              </Link>
-            </div>
+            <Link
+              to={tierSignupHref("business", billingCycle, false)}
+              className={cn(pricingPageUi.cardCtaPrimary, "w-full text-center")}
+            >
+              {t("staticPages.pricing.tiers.business.subscribeButton")}
+            </Link>
           ) : (
             <Link
               to={tierSignupHref(tier.tierKey, billingCycle)}
