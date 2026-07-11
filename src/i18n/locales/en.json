@@ -5126,7 +5126,6 @@
       "upgrade": "Upgrade",
       "upgradeToPlan": "Upgrade to {{plan}}",
       "downgrade": "Downgrade",
-      "downgradeUnavailable": "Contact support to downgrade",
       "contactSales": "Contact sales",
       "currentPlanBadge": "Current plan",
       "subscriptionSummary": {
@@ -5148,7 +5147,7 @@
         "subscribeToPro": "Subscribe to Pro",
         "basicActive": "{{price}} · Active",
         "downgradeToPlan": "Downgrade to {{plan}}",
-        "downgradeViaPortal": "Plan changes apply at the end of your billing period.",
+        "downgradeViaPortal": "Your downgrade will take effect at the end of your current billing period.",
         "renewsOn": "Renews {{date}}",
         "trialEnds": "Trial ends {{date}}",
         "cancelScheduled": "Access until {{date}}"

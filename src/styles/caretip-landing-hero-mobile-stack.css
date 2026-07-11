@@ -259,12 +259,18 @@
     font-size: 0.46875rem;
   }
 
-  /* Shared lower-right stack — aligned to mobile gutter grid */
-  .caretip-landing .caretip-hero-section--full-bg[data-hero-slide="wyo"] .caretip-hero-metric-card--card-a,
+  /* Lower-right stack — card-a nudged per slide */
   .caretip-landing .caretip-hero-section--full-bg[data-hero-slide="wyc"] .caretip-hero-metric-card--card-a {
     left: auto;
     right: var(--caretip-hero-mobile-gutter, 1.25rem);
-    bottom: calc(var(--caretip-hero-mobile-gutter, 1.25rem) + 2.875rem + 0.5rem);
+    bottom: calc(var(--caretip-hero-mobile-gutter, 1.25rem) + 2.875rem + 1.75rem);
+    top: auto;
+  }
+
+  .caretip-landing .caretip-hero-section--full-bg[data-hero-slide="wyo"] .caretip-hero-metric-card--card-a {
+    left: auto;
+    right: var(--caretip-hero-mobile-gutter, 1.25rem);
+    bottom: calc(var(--caretip-hero-mobile-gutter, 1.25rem) + 2.875rem + 0.125rem);
     top: auto;
   }
 

@@ -5,6 +5,8 @@ import { Navigation } from "../components/Navigation";
 import { CareTipLandingHero } from "@/components/landing/CareTipLandingHero";
 import { Footer } from "../components/Footer";
 import { LandingPageBelowFold } from "./LandingPageBelowFold";
+import "@/styles/bundles/marketing-shell.css";
+import "@/styles/bundles/landing.css";
 
 /** Landing has no email/password forms; autofill mitigations live on `AuthPage` (login/signup). */
 export function LandingPage() {

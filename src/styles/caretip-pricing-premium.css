@@ -121,6 +121,14 @@ html.dark .caretip-pricing-hero-v2__glow {
   margin-bottom: 1rem;
 }
 
+.caretip-pricing-hero-v2__card-inner {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-block: clamp(2rem, 5vw, 3rem);
+}
+
 .caretip-pricing-hero-v2__badge {
   display: inline-flex;
   align-items: center;

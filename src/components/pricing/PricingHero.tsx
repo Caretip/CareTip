@@ -2,6 +2,7 @@ import { Gift, Lock, Shield, Sparkles, Zap } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import type { PricingCopyScope } from "@/app/data/pricingCopy";
 import { PublicPageBackLink } from "@/components/public/PublicPageBackLink";
+import { PublicPageHeroCard } from "@/components/public/PublicPageHeroCard";
 import { cn } from "@/lib/utils";
 
 const FEATURE_KEYS = ["stripe", "ready", "gdpr", "trial"] as const;
@@ -31,6 +32,7 @@ export function PricingHero({ copyScope, className }: PricingHeroProps) {
       <div className="caretip-pricing-hero-v2__inner">
         <PublicPageBackLink className="caretip-pricing-hero-v2__back mx-auto w-fit" />
 
+        <PublicPageHeroCard innerClassName="caretip-pricing-hero-v2__card-inner">
         <div className="caretip-pricing-hero-v2__badge caretip-pricing-hero-v2__anim">
           <Sparkles className="size-3.5 shrink-0" aria-hidden />
           <span>{t(`${heroNs}.badge`, { defaultValue: t("staticPages.pricing.hero.badge") })}</span>
@@ -88,6 +90,7 @@ export function PricingHero({ copyScope, className }: PricingHeroProps) {
             </li>
           ))}
         </ul>
+        </PublicPageHeroCard>
       </div>
     </section>
   );

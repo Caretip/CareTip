@@ -1,5 +1,6 @@
 import { Link } from "react-router";
 import { useTranslation } from "react-i18next";
+import "@/styles/bundles/marketing-pages.css";
 import { PublicPageShell } from "@/components/public/PublicPageShell";
 import { AboutPageHero } from "@/components/public/about/AboutPageHero";
 import { AboutCompanyStorySection } from "@/components/public/about/AboutCompanyStorySection";

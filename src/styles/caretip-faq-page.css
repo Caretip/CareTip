@@ -32,26 +32,6 @@
   margin-bottom: 1rem;
 }
 
-.caretip-faq-hero-wise__band {
-  margin-inline: var(--caretip-wise-inset-margin);
-  border-radius: var(--caretip-wise-inset-radius);
-  overflow: hidden;
-  background: linear-gradient(
-    180deg,
-    rgb(var(--caretip-faq-accent-rgb) / 0.22) 0%,
-    rgb(var(--caretip-faq-accent-rgb) / 0.14) 100%
-  );
-  border: 1px solid rgb(var(--caretip-faq-accent-rgb) / 0.18);
-}
-
-html.dark .caretip-faq-hero-wise__band {
-  background: linear-gradient(
-    180deg,
-    rgb(var(--caretip-faq-accent-rgb) / 0.18) 0%,
-    rgb(var(--caretip-faq-dark-rgb) / 0.85) 100%
-  );
-}
-
 .caretip-faq-hero-wise__inner {
   padding-block: clamp(3rem, 7vw, 4.75rem);
   text-align: center;

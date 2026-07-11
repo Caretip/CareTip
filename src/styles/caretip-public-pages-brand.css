@@ -64,6 +64,99 @@
   overflow: hidden;
 }
 
+/* —— Shared hero card shell (Pricing standard) —— */
+.caretip-public-page-hero-card {
+  --caretip-page-hero-card-accent-rgb: 235 153 44;
+  --caretip-page-hero-card-dark-rgb: 22 20 18;
+  background: linear-gradient(
+    180deg,
+    rgb(var(--caretip-page-hero-card-accent-rgb) / 0.22) 0%,
+    rgb(var(--caretip-page-hero-card-accent-rgb) / 0.14) 100%
+  );
+}
+
+html.dark .caretip-public-page-hero-card {
+  background: linear-gradient(
+    180deg,
+    rgb(var(--caretip-page-hero-card-accent-rgb) / 0.18) 0%,
+    rgb(var(--caretip-page-hero-card-dark-rgb) / 0.85) 100%
+  );
+}
+
+.caretip-public-page-header-hero-card__inner {
+  padding-block: clamp(2.5rem, 6vw, 4rem);
+}
+
+/* —— Shared marketing page hero (Features, About, FAQ, Pricing) —— */
+.caretip-public-marketing-hero-wise {
+  --caretip-marketing-hero-accent-rgb: 235 153 44;
+  --caretip-marketing-hero-dark-rgb: 22 20 18;
+  margin-bottom: 0;
+}
+
+.caretip-public-marketing-hero-wise__back {
+  margin-bottom: 1rem;
+}
+
+.caretip-public-marketing-hero-wise__title {
+  margin: 0;
+  margin-inline: auto;
+  max-width: min(100%, 22ch);
+  font-size: clamp(2.125rem, 5.2vw, 3.375rem);
+  font-weight: 800;
+  line-height: 1.06;
+  letter-spacing: -0.038em;
+  text-wrap: balance;
+  text-align: center;
+}
+
+@media (min-width: 1024px) {
+  .caretip-public-marketing-hero-wise__title {
+    font-size: var(--caretip-section-size);
+    line-height: 1.1;
+    letter-spacing: -0.028em;
+  }
+}
+
+.caretip-public-marketing-hero-wise__eyebrow {
+  margin: 0 0 clamp(0.875rem, 2vw, 1.125rem);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: rgb(var(--caretip-marketing-hero-accent-rgb));
+}
+
+.caretip-public-marketing-hero-wise__subtitle {
+  margin: clamp(0.75rem, 2vw, 1.125rem) auto 0;
+  max-width: min(100%, 36rem);
+  font-size: clamp(1rem, 2vw, 1.125rem);
+  font-weight: 500;
+  line-height: 1.65;
+  text-wrap: pretty;
+  color: hsl(var(--foreground) / 0.82);
+}
+
+.caretip-public-marketing-hero-wise__lead {
+  margin: clamp(1.25rem, 3vw, 1.75rem) auto 0;
+  max-width: min(100%, 42rem);
+  font-size: clamp(1rem, 2vw, 1.1875rem);
+  font-weight: 600;
+  line-height: 1.65;
+  text-wrap: pretty;
+  color: hsl(var(--foreground) / 0.9);
+}
+
+.caretip-public-marketing-hero-wise__body {
+  margin: clamp(0.875rem, 2vw, 1.125rem) auto 0;
+  max-width: min(100%, 42rem);
+  font-size: clamp(1rem, 2vw, 1.0625rem);
+  font-weight: 500;
+  line-height: 1.72;
+  text-wrap: pretty;
+  color: hsl(var(--foreground) / 0.78);
+}
+
 /* —— Wise inset dark CTA (bottom page bands) —— */
 .caretip-features-cta-wise,
 .caretip-about-cta-wise,

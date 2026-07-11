@@ -19,6 +19,7 @@
   .caretip-public-warm-dark-cta__title,
   .caretip-features-hero-v2__title,
   .caretip-how-hero-v2__title,
+  .caretip-public-marketing-hero-wise__title,
   .caretip-pricing-hero-v2__title,
   .caretip-pricing-plans-intro__title,
   .caretip-pricing-faq__title {
@@ -35,6 +36,7 @@
   .caretip-features-hero-v2__lead,
   .caretip-features-hero-v2__body,
   .caretip-how-hero-v2__subtitle,
+  .caretip-public-marketing-hero-wise__subtitle,
   .caretip-pricing-hero-v2__subtitle,
   .caretip-pricing-plans-intro__subtitle {
     max-width: min(100%, 36rem);
@@ -347,6 +349,7 @@
   .caretip-public-marketing-hero .caretip-public-page-hero > h1,
   .caretip-features-hero-v2__title,
   .caretip-how-hero-v2__title,
+  .caretip-public-marketing-hero-wise__title,
   .caretip-pricing-hero-v2__title {
     font-size: 1.625rem;
   }

@@ -411,7 +411,8 @@ const routes: RouteObject[] = [
   {
     path: '/platform-admin',
     lazy: async () => {
-      const [{ PlatformAdminRoute }, { SuperAdminLayout }] = await Promise.all([
+      const [, { PlatformAdminRoute }, { SuperAdminLayout }] = await Promise.all([
+        import("@/styles/bundles/dashboard.css"),
         import('./components/PlatformAdminRoute'),
         import('./layouts/SuperAdminLayout'),
       ]);

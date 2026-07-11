@@ -2,6 +2,7 @@ import { ArrowLeft } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import type { ContactIntent } from "@/components/contact/contactTypes";
 import { ContactSocialProof } from "@/components/contact/ContactSocialProof";
+import { PublicPageHeroCard } from "@/components/public/PublicPageHeroCard";
 import { contactPageUi } from "@/components/contact/contactPageUi";
 import { cn } from "@/lib/utils";
 
@@ -31,11 +32,13 @@ export function ContactIntentChooser({ onSelect, className }: ContactIntentChoos
   return (
     <div className={cn("caretip-contact-chooser", className)}>
       <div className={contactPageUi.layout}>
-        <header className={contactPageUi.intro}>
-          <p className="caretip-contact-eyebrow">{t("staticPages.contact.eyebrow")}</p>
-          <h1 className={contactPageUi.headline}>{t("staticPages.contact.headline")}</h1>
-          <p className={contactPageUi.subhead}>{t("staticPages.contact.supportingText")}</p>
-        </header>
+        <PublicPageHeroCard innerClassName="caretip-contact-intro-hero-card__inner">
+          <header className={contactPageUi.intro}>
+            <p className="caretip-contact-eyebrow">{t("staticPages.contact.eyebrow")}</p>
+            <h1 className={contactPageUi.headline}>{t("staticPages.contact.headline")}</h1>
+            <p className={contactPageUi.subhead}>{t("staticPages.contact.supportingText")}</p>
+          </header>
+        </PublicPageHeroCard>
 
         <div className={contactPageUi.cards} role="list">
           {options.map((option) => (

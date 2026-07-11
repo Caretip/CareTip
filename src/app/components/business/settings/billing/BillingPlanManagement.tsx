@@ -54,7 +54,6 @@ export function BillingPlanManagement({ billing, billingCycle, onChanged }: Prop
 
   const canCheckout = billing.billingEnabled && billing.stripeConfigured;
   const canPortal = canCheckout && Boolean(billing.stripeCustomerId);
-  const canDowngradeViaPortal = canPortal && billing.hasStripeBilling;
 
   const checkoutRedirecting = busyPlan !== null && busyPlan !== "cancel";
   useAppLoadingRegistration(
@@ -193,24 +192,6 @@ export function BillingPlanManagement({ billing, billingCycle, onChanged }: Prop
       );
     }
 
-    if (planKey === "basic") {
-      if (!isCurrent) return null;
-      return (
-        <button
-          type="button"
-          disabled
-          className={cn(
-            pricingPageUi.cardCtaSecondary,
-            "inline-flex cursor-default items-center justify-center gap-2 opacity-70",
-          )}
-          aria-disabled="true"
-        >
-          <CheckCircle2 className="size-4 shrink-0" aria-hidden />
-          {t("business.billing.currentPlanBadge")}
-        </button>
-      );
-    }
-
     if (isCurrent) {
       return (
         <button
@@ -280,47 +261,26 @@ export function BillingPlanManagement({ billing, billingCycle, onChanged }: Prop
     }
 
     if (currentPlanKey && isDowngrade(currentPlanKey, planKey)) {
-      if (canDowngradeViaPortal) {
-        return (
-          <div className="flex w-full flex-col gap-2">
-            <button
-              type="button"
-              disabled={busyPlan !== null}
-              onClick={() => void handlePortal()}
-              className={cn(
-                pricingPageUi.cardCtaSecondary,
-                "inline-flex items-center justify-center disabled:opacity-60",
-              )}
-              aria-busy={busyPlan === "portal" || undefined}
-            >
-              {busyPlan === "portal" ? (
-                <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
-              ) : (
-                t("business.billing.planCard.downgradeToPlan", { plan: tierName })
-              )}
-            </button>
-            <p className="text-center text-xs leading-snug text-muted-foreground">
-              {t("business.billing.planCard.downgradeViaPortal")}
-            </p>
-          </div>
-        );
-      }
-
       return (
         <div className="flex w-full flex-col gap-2">
           <button
             type="button"
-            disabled
+            disabled={!canPortal || busyPlan !== null}
+            onClick={() => void handlePortal()}
             className={cn(
               pricingPageUi.cardCtaSecondary,
-              "inline-flex items-center justify-center opacity-60",
+              "inline-flex items-center justify-center disabled:opacity-60",
             )}
-            aria-disabled="true"
+            aria-busy={busyPlan === "portal" || undefined}
           >
-            {t("business.billing.downgrade")}
+            {busyPlan === "portal" ? (
+              <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+            ) : (
+              t("business.billing.planCard.downgradeToPlan", { plan: tierName })
+            )}
           </button>
           <p className="text-center text-xs leading-snug text-muted-foreground">
-            {t("business.billing.downgradeUnavailable")}
+            {t("business.billing.planCard.downgradeViaPortal")}
           </p>
         </div>
       );

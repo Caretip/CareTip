@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import "@/styles/bundles/onboarding.css";
 import { useNavigate } from "react-router";
 import { AnimatePresence, motion } from "motion/react";
 import { useTranslation } from "react-i18next";

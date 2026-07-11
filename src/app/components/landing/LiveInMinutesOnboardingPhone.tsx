@@ -34,15 +34,24 @@ export function LiveInMinutesOnboardingPhone({
     Math.max(0, activeIndex),
     LIVE_MINUTES_ONBOARDING_STEP_COUNT - 1,
   );
+  const [sourcesReady, setSourcesReady] = React.useState(
+    () => getLiveMinutesOnboardingScreenSources(locale).length > 0,
+  );
   const screenSources = React.useMemo(
     () => getLiveMinutesOnboardingScreenSources(locale),
-    [locale],
+    [locale, sourcesReady],
   );
   const activeSrc = getLiveMinutesOnboardingScreenSrc(locale, clampedIndex);
   const [failedSources, setFailedSources] = React.useState<ReadonlySet<string>>(() => new Set());
 
   React.useEffect(() => {
-    void preloadLiveMinutesOnboardingScreens([locale, locale === "en" ? "de" : "en"]);
+    let cancelled = false;
+    void preloadLiveMinutesOnboardingScreens(locale).then(() => {
+      if (!cancelled) setSourcesReady(true);
+    });
+    return () => {
+      cancelled = true;
+    };
   }, [locale]);
 
   const markFailed = React.useCallback((src: string) => {

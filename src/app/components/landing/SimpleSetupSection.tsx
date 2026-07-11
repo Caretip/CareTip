@@ -24,7 +24,7 @@ export function SimpleSetupSection() {
 
   useEffect(() => {
     const locale = resolveLiveMinutesOnboardingLocale(i18n.language);
-    void preloadLiveMinutesOnboardingScreens([locale, "en", "de"]);
+    void preloadLiveMinutesOnboardingScreens(locale);
   }, [i18n.language]);
 
   useEffect(() => {

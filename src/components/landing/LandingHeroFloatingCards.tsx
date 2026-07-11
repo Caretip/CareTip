@@ -1,3 +1,4 @@
+import type { CSSProperties } from "react";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
 import {
@@ -41,7 +42,13 @@ export function LandingHeroFloatingCards({
               `caretip-hero-metric-card--${card.slot}` as `caretip-hero-metric-card--${HeroMetricCardId}`,
               "caretip-hero-metric-card--enter",
             )}
-            style={{ animationDelay: `${index * 90}ms` }}
+            style={
+              {
+                "--metric-enter-delay": `${index * 90}ms`,
+                "--metric-float-duration": index === 0 ? "5.5s" : "6.75s",
+                "--metric-float-rotate": index === 0 ? "-0.5deg" : "0.45deg",
+              } as CSSProperties
+            }
           >
             <span className="caretip-hero-metric-card__icon" aria-hidden>
               <Icon className="caretip-hero-metric-card__icon-svg" strokeWidth={2.25} />

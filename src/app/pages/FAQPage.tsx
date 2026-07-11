@@ -2,6 +2,7 @@ import { Link, useSearchParams } from "react-router";
 import { Search } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useEffect, useMemo, useState } from "react";
+import "@/styles/bundles/marketing-pages.css";
 import { PublicPageShell } from "@/components/public/PublicPageShell";
 import { FaqPageHero } from "@/components/public/faq/FaqPageHero";
 import { FaqAccordionItem } from "@/components/public/faq/FaqAccordionItem";

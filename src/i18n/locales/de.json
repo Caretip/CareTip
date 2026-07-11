@@ -5123,7 +5123,6 @@
       "upgrade": "Upgraden",
       "upgradeToPlan": "Upgrade auf {{plan}}",
       "downgrade": "Downgraden",
-      "downgradeUnavailable": "Support kontaktieren zum Downgrade",
       "contactSales": "Vertrieb kontaktieren",
       "currentPlanBadge": "Aktueller Plan",
       "subscriptionSummary": {
@@ -5145,7 +5144,7 @@
         "subscribeToPro": "Pro abonnieren",
         "basicActive": "{{price}} · Aktiv",
         "downgradeToPlan": "Auf {{plan}} downgraden",
-        "downgradeViaPortal": "Planänderungen gelten zum Ende Ihres Abrechnungszeitraums.",
+        "downgradeViaPortal": "Ihr Downgrade wird zum Ende Ihrer aktuellen Abrechnungsperiode wirksam.",
         "renewsOn": "Verlängert sich am {{date}}",
         "trialEnds": "Testphase endet am {{date}}",
         "cancelScheduled": "Zugang bis {{date}}"

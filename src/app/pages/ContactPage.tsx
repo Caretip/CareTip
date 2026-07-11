@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useSearchParams } from "react-router";
 import { useTranslation } from "react-i18next";
+import "@/styles/bundles/marketing-pages.css";
 import { PublicPageShell } from "@/components/public/PublicPageShell";
 import { ContactIntentChooser } from "@/components/contact/ContactIntentChooser";
 import { ContactDemoForm } from "@/components/contact/ContactDemoForm";

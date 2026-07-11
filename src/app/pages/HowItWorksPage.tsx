@@ -1,6 +1,7 @@
 import { Link } from "react-router";
 import { Shield, Zap } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import "@/styles/bundles/marketing-pages.css";
 import { PublicPageShell } from "@/components/public/PublicPageShell";
 import { HowItWorksPageHero } from "@/components/public/howItWorks/HowItWorksPageHero";
 import { HowItWorksStepContent } from "@/components/public/HowItWorksStepContent";

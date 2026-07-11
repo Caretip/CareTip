@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import "@/styles/bundles/marketing-shell.css";
 import { Navigation } from "@/app/components/Navigation";
 import { Footer } from "@/app/components/Footer";
 import { AuthLikePageBackground } from "@/app/components/AuthLikePageBackground";

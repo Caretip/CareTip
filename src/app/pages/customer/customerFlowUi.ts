@@ -2,6 +2,7 @@
  * Public customer tipping journey — premium fintech-style presentation tokens.
  * Presentation only — no flow or payment logic.
  */
+import "@/styles/bundles/customer.css";
 
 import { cn } from "@/lib/utils";
 import {

@@ -1,74 +1,20 @@
 import { useCallback, useEffect, useRef, useState, type ImgHTMLAttributes } from "react";
 import { usePrefersReducedMotion } from "@/lib/usePrefersReducedMotion";
+import {
+  LCP_HERO_STORY_FRAME,
+  loadDeferredHeroStoryFrame,
+  preloadHeroFrame,
+  type HeroStoryFrame,
+} from "@/lib/landingHeroStoryAssets";
 
 import { LandingHeroFloatingCards } from "@/components/landing/LandingHeroFloatingCards";
 import { landingUi } from "@/components/landing/landingUi";
 import { cn } from "@/lib/utils";
 
-import wycWebp from "../../../images/wyc.webp";
-import wycAvif from "../../../images/wyc.avif";
-import wyoWebp from "../../../images/wyo.webp";
-import wyoAvif from "../../../images/wyo.avif";
-import formobile01Jpeg from "../../../images/formobile01.jpeg";
-import formobile01Webp from "../../../images/formobile01.webp";
-import formobile02Jpeg from "../../../images/formobile02.jpeg";
-import formobile02Webp from "../../../images/formobile02.webp";
-
-type HeroStoryFrame = {
-  key: string;
-  src: string;
-  avif?: string;
-  webp?: string;
-  mobileSrc?: string;
-  mobileWebp?: string;
-};
-
-const STORY_FRAMES: readonly HeroStoryFrame[] = [
-  {
-    key: "wyc",
-    src: wycWebp,
-    webp: wycWebp,
-    avif: wycAvif,
-    mobileSrc: formobile01Jpeg,
-    mobileWebp: formobile01Webp,
-  },
-  {
-    key: "wyo",
-    src: wyoWebp,
-    webp: wyoWebp,
-    avif: wyoAvif,
-    mobileSrc: formobile02Jpeg,
-    mobileWebp: formobile02Webp,
-  },
-];
-
 const STORY_CYCLE_MS = 5600;
 const BG_CROSSFADE_MS = 900;
 const HERO_IMAGE_SIZES_CARD = "(max-width: 1023px) min(90vw, 448px), 672px";
 const HERO_IMAGE_SIZES_BACKGROUND = "100vw";
-
-function heroFramePreloadSrc(frame: HeroStoryFrame) {
-  if (typeof window !== "undefined" && window.matchMedia("(max-width: 767px)").matches) {
-    return frame.mobileWebp ?? frame.mobileSrc ?? frame.webp ?? frame.src;
-  }
-  return frame.webp ?? frame.src;
-}
-
-function preloadHeroFrame(
-  frame: HeroStoryFrame,
-  onReady?: () => void,
-) {
-  const img = new Image();
-  const finish = () => onReady?.();
-  img.onload = finish;
-  img.onerror = () => {
-    const fallback = new Image();
-    fallback.onload = finish;
-    fallback.onerror = finish;
-    fallback.src = frame.webp ?? frame.mobileWebp ?? frame.mobileSrc ?? frame.src;
-  };
-  img.src = heroFramePreloadSrc(frame);
-}
 
 type LandingHeroStoryShowcaseProps = {
   alt: string;
@@ -91,14 +37,19 @@ export function LandingHeroStoryShowcase({
 }: LandingHeroStoryShowcaseProps) {
   const isBackground = variant === "background";
   const reduceMotion = usePrefersReducedMotion();
+  const [storyFrames, setStoryFrames] = useState<readonly HeroStoryFrame[]>(() => [
+    LCP_HERO_STORY_FRAME,
+  ]);
   const [activeIndex, setActiveIndex] = useState(0);
   const [displayedIndex, setDisplayedIndex] = useState(0);
   const [incomingIndex, setIncomingIndex] = useState<number | null>(null);
   const [frameReady, setFrameReady] = useState<Record<string, boolean>>({});
+  const [lcpComplete, setLcpComplete] = useState(false);
   const frameReadyRef = useRef(frameReady);
-  const transitionTimerRef = useRef<number | null>(null);
+  const transitionTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const deferredFrameLoadRef = useRef<Promise<void> | null>(null);
   const imageSizes = isBackground ? HERO_IMAGE_SIZES_BACKGROUND : HERO_IMAGE_SIZES_CARD;
-  const activeFrameKey = STORY_FRAMES[activeIndex]?.key ?? STORY_FRAMES[0].key;
+  const activeFrameKey = storyFrames[activeIndex]?.key ?? LCP_HERO_STORY_FRAME.key;
 
   const markFrameReady = useCallback((key: string) => {
     setFrameReady((prev) => {
@@ -109,6 +60,11 @@ export function LandingHeroStoryShowcase({
     });
   }, []);
 
+  const handleLcpFrameLoad = useCallback(() => {
+    markFrameReady(LCP_HERO_STORY_FRAME.key);
+    setLcpComplete(true);
+  }, [markFrameReady]);
+
   useEffect(() => {
     frameReadyRef.current = frameReady;
   }, [frameReady]);
@@ -118,32 +74,41 @@ export function LandingHeroStoryShowcase({
   }, [activeFrameKey, onActiveFrameChange]);
 
   useEffect(() => {
-    if (reduceMotion) return;
+    if (lcpComplete) return;
 
-    const preloadSecondary = () => {
-      STORY_FRAMES.forEach((frame, index) => {
-        if (index === 0) return;
-        preloadHeroFrame(frame, () => markFrameReady(frame.key));
-      });
-    };
-
-    if ("requestIdleCallback" in window) {
-      const idleId = window.requestIdleCallback(preloadSecondary, { timeout: 4000 });
-      return () => window.cancelIdleCallback(idleId);
+    const lcpPicture = document.querySelector('[data-hero-frame="wyc"] img');
+    if (
+      lcpPicture instanceof HTMLImageElement &&
+      lcpPicture.complete &&
+      lcpPicture.naturalWidth > 0
+    ) {
+      handleLcpFrameLoad();
     }
-
-    const timer = window.setTimeout(preloadSecondary, 2000);
-    return () => window.clearTimeout(timer);
-  }, [markFrameReady, reduceMotion]);
+  }, [handleLcpFrameLoad, lcpComplete]);
 
   useEffect(() => {
-    if (reduceMotion || STORY_FRAMES.length < 2) return;
+    if (reduceMotion || !lcpComplete || storyFrames.length > 1) return;
 
-    const timer = window.setInterval(() => {
+    if (!deferredFrameLoadRef.current) {
+      deferredFrameLoadRef.current = loadDeferredHeroStoryFrame()
+        .then((deferredFrame) => {
+          setStoryFrames([LCP_HERO_STORY_FRAME, deferredFrame]);
+          preloadHeroFrame(deferredFrame, () => markFrameReady(deferredFrame.key));
+        })
+        .catch(() => undefined);
+    }
+  }, [lcpComplete, markFrameReady, reduceMotion, storyFrames.length]);
+
+  useEffect(() => {
+    if (reduceMotion || storyFrames.length < 2) return;
+
+    const timer = globalThis.setInterval(() => {
       if (isBackground && incomingIndex !== null) return;
 
-      const nextIndex = (activeIndex + 1) % STORY_FRAMES.length;
-      const nextFrame = STORY_FRAMES[nextIndex];
+      const nextIndex = (activeIndex + 1) % storyFrames.length;
+      const nextFrame = storyFrames[nextIndex];
+      if (!nextFrame) return;
+
       if (!frameReadyRef.current[nextFrame.key]) {
         preloadHeroFrame(nextFrame, () => markFrameReady(nextFrame.key));
         return;
@@ -153,9 +118,9 @@ export function LandingHeroStoryShowcase({
         setIncomingIndex(nextIndex);
         setActiveIndex(nextIndex);
         if (transitionTimerRef.current !== null) {
-          window.clearTimeout(transitionTimerRef.current);
+          globalThis.clearTimeout(transitionTimerRef.current);
         }
-        transitionTimerRef.current = window.setTimeout(() => {
+        transitionTimerRef.current = globalThis.setTimeout(() => {
           setDisplayedIndex(nextIndex);
           setIncomingIndex(null);
           transitionTimerRef.current = null;
@@ -165,18 +130,18 @@ export function LandingHeroStoryShowcase({
       }
     }, STORY_CYCLE_MS);
 
-    return () => window.clearInterval(timer);
-  }, [reduceMotion, markFrameReady, activeIndex, incomingIndex, isBackground]);
+    return () => globalThis.clearInterval(timer);
+  }, [reduceMotion, markFrameReady, activeIndex, incomingIndex, isBackground, storyFrames]);
 
   useEffect(() => {
     return () => {
       if (transitionTimerRef.current !== null) {
-        window.clearTimeout(transitionTimerRef.current);
+        globalThis.clearTimeout(transitionTimerRef.current);
       }
     };
   }, []);
 
-  const frames = reduceMotion ? STORY_FRAMES.slice(0, 1) : STORY_FRAMES;
+  const frames = reduceMotion ? storyFrames.slice(0, 1) : storyFrames;
 
   return (
     <div
@@ -213,6 +178,7 @@ export function LandingHeroStoryShowcase({
               const isIncoming = isBackground && index === incomingIndex;
               const isReady = frameReady[frame.key] ?? index === 0;
               const isVisible = isDisplayed || isIncoming || isCardActive;
+              const isLcpFrame = index === 0;
 
               if (
                 index > 0 &&
@@ -254,11 +220,11 @@ export function LandingHeroStoryShowcase({
                       !isBackground && isCardActive && "caretip-hero-story-frame--active",
                       isReady && "caretip-hero-story-frame--ready",
                     )}
-                    loading={index === 0 ? "eager" : "lazy"}
+                    loading={isLcpFrame ? "eager" : "lazy"}
                     decoding="async"
                     sizes={imageSizes}
-                    onLoad={() => markFrameReady(frame.key)}
-                    {...(index === 0
+                    onLoad={isLcpFrame ? handleLcpFrameLoad : () => markFrameReady(frame.key)}
+                    {...(isLcpFrame
                       ? ({ fetchpriority: "high" } as ImgHTMLAttributes<HTMLImageElement>)
                       : ({ fetchpriority: "low" } as ImgHTMLAttributes<HTMLImageElement>))}
                   />

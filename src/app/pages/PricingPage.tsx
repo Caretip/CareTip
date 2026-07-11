@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router";
 import { useTranslation } from "react-i18next";
+import "@/styles/bundles/marketing-pages.css";
 import {
   DEFAULT_PRICING_UI_STATE,
   YEARLY_BILLING_ENABLED,

@@ -1,5 +1,6 @@
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
+import "@/styles/bundles/marketing-pages.css";
 import { PublicPageShell } from "@/components/public/PublicPageShell";
 import { FeaturesPageHero } from "@/components/public/features/FeaturesPageHero";
 import { FeaturesPageFinalCta } from "@/components/public/features/FeaturesPageFinalCta";
