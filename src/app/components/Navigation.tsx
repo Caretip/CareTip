@@ -63,7 +63,9 @@ export const Navigation = memo(function Navigation({ variant = "default" }: { va
   useEffect(() => {
     if (!mobileMenuOpen) return;
     const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") closeMobileMenu("immediate");
+      if (e.key !== "Escape") return;
+      if (document.querySelector('[data-mobile-nav-toolbar-menu-open="true"]')) return;
+      closeMobileMenu("immediate");
     };
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
@@ -112,27 +114,31 @@ export const Navigation = memo(function Navigation({ variant = "default" }: { va
                 "dark:shadow-[12px_0_48px_-16px_rgba(0,0,0,0.65)]",
               )}
             >
-              <div className="flex shrink-0 items-center justify-between gap-3 px-5 pb-3 pt-[max(1rem,env(safe-area-inset-top))]">
+              <div className="relative shrink-0 overflow-visible px-5 pb-3 pt-[max(1rem,env(safe-area-inset-top))]">
+                <div className="flex items-center justify-between gap-2">
                 <Link
                   to="/"
                   onClick={() => closeMobileMenu("navigate")}
-                  className="flex min-h-11 min-w-0 items-center rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+                  className="flex min-h-11 min-w-0 flex-1 items-center rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
                 >
                   <CareTipLogo size="nav" />
                 </Link>
-                <button
-                  type="button"
-                  onClick={() => closeMobileMenu("toggle")}
-                  className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-foreground transition-colors hover:bg-muted/70 active:bg-muted"
-                  aria-label={t("nav.closeMenu")}
+                <div
+                  className="caretip-public-mobile-nav-drawer__toolbar relative z-30 flex shrink-0 items-center gap-2"
+                  onClick={(e) => e.stopPropagation()}
                 >
-                  <X className="h-5 w-5" aria-hidden />
-                </button>
-              </div>
-
-              <div className="shrink-0 px-5 pb-4 space-y-3">
-                <LanguageSwitcher variant="drawer" />
-                <ThemeQuickToggle variant="drawer" />
+                  <LanguageSwitcher variant="drawer" />
+                  <ThemeQuickToggle variant="drawer" />
+                  <button
+                    type="button"
+                    onClick={() => closeMobileMenu("toggle")}
+                    className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-border/70 bg-card text-foreground shadow-sm transition-colors hover:bg-muted/70 active:bg-muted"
+                    aria-label={t("nav.closeMenu")}
+                  >
+                    <X className="h-5 w-5" aria-hidden />
+                  </button>
+                </div>
+                </div>
               </div>
 
               <div className="mx-5 shrink-0 border-t border-border/60" />

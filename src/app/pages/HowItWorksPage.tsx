@@ -15,10 +15,10 @@ export function HowItWorksPage() {
   const { t } = useTranslation();
 
   return (
-    <PublicPageShell maxWidth="wide">
+    <PublicPageShell maxWidth="wide" className="bg-background">
       <main
         id="how-it-works"
-        className={cn(howItWorksPageUi.page, publicPagesBrandUi.pageAccent)}
+        className={howItWorksPageUi.page}
         aria-label={t("nav.howItWorks")}
       >
       <HowItWorksPageHero className={howItWorksPageUi.hero} />

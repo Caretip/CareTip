@@ -14,6 +14,7 @@ const PUBLIC_ROUTE_IMPORTERS: Record<string, RouteImporter> = {
   "/privacy": () => import("../pages/PrivacyPage"),
   "/terms": () => import("../pages/TermsPage"),
   "/cookies": () => import("../pages/CookiesPage"),
+  "/imprint": () => import("../pages/ImprintPage"),
 };
 
 const prefetched = new Set<string>();

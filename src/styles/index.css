@@ -22,6 +22,9 @@
 @import "./caretip-landing-hero-layout.css";
 @import "./caretip-landing-hero-media.css";
 @import "./caretip-landing-hero-visual-refine.css";
+@import "./caretip-landing-hero-metric-cards.css";
+@import "./caretip-landing-hero-fullbg.css";
+@import "./caretip-landing-hero-mobile-stack.css";
 @import "./caretip-landing-hero-story.css";
 @import "./caretip-landing-feature-rhythm.css";
 @import "./caretip-landing-features-refine.css";
@@ -42,6 +45,7 @@
 @import "./caretip-landing-content-density.css";
 @import "./caretip-landing-saas-polish.css";
 @import "./caretip-landing-optical-consistency.css";
+@import "./caretip-landing-hero-image.css";
 @import "./business-dashboard-polish.css";
 @import "./business-dashboard-sidebar.css";
 @import "./caretip-dashboard-mobile.css";

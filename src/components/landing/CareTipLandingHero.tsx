@@ -1,12 +1,14 @@
 import { Link } from "react-router";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import { landingCopyVisible, landingUi } from "@/components/landing/landingUi";
 import { landingHeroHeadlineWithHighlight } from "@/components/landing/landingHeroHeadline";
 import { LandingHeroAnimatedWord } from "@/components/landing/LandingHeroAnimatedWord";
+import { LandingHeroFloatingCards } from "@/components/landing/LandingHeroFloatingCards";
 import { LandingHeroStoryShowcase } from "@/components/landing/LandingHeroStoryShowcase";
 import { LandingCopySentences } from "@/components/landing/LandingCopySentences";
+import { useMediaQuery } from "@/hooks/use-media-query";
 import { cn } from "@/lib/utils";
 
 export type CareTipLandingHeroProps = {
@@ -17,7 +19,7 @@ export type CareTipLandingHeroProps = {
   className?: string;
 };
 
-/** Hero copy + showcase — plain HTML for instant first paint (no Framer Motion). */
+/** Full-bleed hospitality hero — background photo, overlay, layered copy + metrics. */
 export function CareTipLandingHero({
   id,
   imageAlt,
@@ -25,6 +27,7 @@ export function CareTipLandingHero({
   className,
 }: CareTipLandingHeroProps) {
   const { t, i18n } = useTranslation();
+  const [activeFrameKey, setActiveFrameKey] = useState("wyc");
 
   const heroRotatingWords = useMemo(() => {
     const raw = t("landing.showcase.heroRotatingWords", { returnObjects: true });
@@ -36,7 +39,23 @@ export function CareTipLandingHero({
   }, [t, i18n.language]);
 
   const heroDescription = t("landing.showcase.description");
+  const heroDescriptionMobile = t("landing.showcase.descriptionMobile");
   const heroHeadline = t("landing.showcase.heroHeadline");
+  const heroHeadlineMobile = t("landing.showcase.heroHeadlineMobile");
+  const isMobileHeadline = useMediaQuery("(max-width: 767px)");
+  const activeHeadline =
+    isMobileHeadline && landingCopyVisible(heroHeadlineMobile) ? heroHeadlineMobile : heroHeadline;
+  const activeDescription =
+    isMobileHeadline && landingCopyVisible(heroDescriptionMobile)
+      ? heroDescriptionMobile
+      : heroDescription;
+  const mobileDescriptionLines =
+    isMobileHeadline && activeDescription.includes("\n")
+      ? activeDescription
+          .split("\n")
+          .map((line) => line.trim())
+          .filter(Boolean)
+      : null;
   const heroHeadlineHighlight = t("landing.showcase.heroHeadlineHighlight");
   const heroHeadlineHighlightsRaw = t("landing.showcase.heroHeadlineHighlights", { returnObjects: true });
   const heroHeadlineHighlights =
@@ -54,41 +73,68 @@ export function CareTipLandingHero({
       id={id}
       data-hero-art={isDe ? "de" : "en"}
       className={cn(
-        "caretip-hero-section relative isolate w-full min-w-0 overflow-x-hidden",
+        "caretip-hero-section caretip-hero-section--full-bg relative isolate w-full min-w-0 overflow-hidden",
         "scroll-mt-[80px]",
         landingUi.heroSectionCinematic,
         className,
       )}
+      data-hero-slide={activeFrameKey}
     >
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-x-0 top-0 h-full min-h-0 bg-[radial-gradient(ellipse_120%_60%_at_50%_-8%,rgba(17,17,17,0.03),transparent_58%)] dark:opacity-40"
-      />
+      <div className="caretip-hero-visual-band" aria-hidden>
+        <div className="caretip-hero-bg-layer">
+          <LandingHeroStoryShowcase
+            alt={imageAlt}
+            variant="background"
+            onActiveFrameChange={setActiveFrameKey}
+          />
+        </div>
 
-      <div
-        className={cn(
-          "caretip-hero-grid caretip-hero-split relative z-[1] mx-auto w-full max-w-[100rem] px-4 sm:px-6 lg:px-8",
-          landingUi.heroSplitRowDesktop,
-        )}
-      >
-        <div
-          className={cn(
-            "caretip-hero-grid__message caretip-hero-copy caretip-hero-copy-block",
-            landingUi.heroCopyDesktop,
-          )}
-        >
+        <div className="caretip-hero-bg-overlay" />
+
+        <div className={cn(landingUi.heroFloatLayer, "caretip-hero-float-layer--full-bg")}>
+          <LandingHeroFloatingCards activeFrameKey={activeFrameKey} variant="full-bg" />
+        </div>
+      </div>
+
+      <div className="caretip-hero-full-bg-inner relative z-[3] w-full">
+        <div className="caretip-hero-full-bg-content caretip-hero-copy caretip-hero-copy-block">
           <h1
             className={cn(landingUi.heroHeadline, "mt-0")}
             data-hero-headline-mode={headlineMode}
           >
             {useStaticHeadline ? (
-              <span className={cn(landingUi.heroHeadlineLine, "caretip-hero-headline-line--static")}>
-                {landingHeroHeadlineWithHighlight(
-                  heroHeadline,
-                  heroHeadlineHighlights,
-                  landingUi.heroHeadlineEmphasis,
-                )}
-              </span>
+              activeHeadline.includes("\n") ? (
+                activeHeadline.split("\n").map((line, index) => (
+                  <span
+                    key={`${index}-${line}`}
+                    className={cn(
+                      landingUi.heroHeadlineLine,
+                      "caretip-hero-headline-line--controlled",
+                      index === 0 && "caretip-hero-headline-line--static",
+                    )}
+                  >
+                    {landingHeroHeadlineWithHighlight(
+                      line,
+                      heroHeadlineHighlights,
+                      landingUi.heroHeadlineEmphasis,
+                    )}
+                  </span>
+                ))
+              ) : (
+                <span
+                  className={cn(
+                    landingUi.heroHeadlineLine,
+                    "caretip-hero-headline-line--static",
+                    "caretip-hero-headline-line--controlled",
+                  )}
+                >
+                  {landingHeroHeadlineWithHighlight(
+                    activeHeadline,
+                    heroHeadlineHighlights,
+                    landingUi.heroHeadlineEmphasis,
+                  )}
+                </span>
+              )
             ) : (
               <>
                 <span className={landingUi.heroHeadlineLine}>
@@ -129,16 +175,31 @@ export function CareTipLandingHero({
             )}
           </h1>
 
-          {landingCopyVisible(heroDescription) ? (
-            <LandingCopySentences
-              text={heroDescription}
-              layout="paragraphs"
-              className={cn(
-                landingUi.heroSubtitle,
-                "caretip-hero-subtitle caretip-hero-description-block",
-              )}
-              sentenceClassName="caretip-hero-description-line m-0"
-            />
+          {landingCopyVisible(activeDescription) ? (
+            mobileDescriptionLines ? (
+              <div
+                className={cn(
+                  landingUi.heroSubtitle,
+                  "caretip-hero-subtitle caretip-hero-description-block caretip-hero-description-block--mobile-lines",
+                )}
+              >
+                {mobileDescriptionLines.map((line, index) => (
+                  <p key={`${index}-${line}`} className="caretip-hero-description-line m-0">
+                    {line}
+                  </p>
+                ))}
+              </div>
+            ) : (
+              <LandingCopySentences
+                text={activeDescription}
+                layout="paragraphs"
+                className={cn(
+                  landingUi.heroSubtitle,
+                  "caretip-hero-subtitle caretip-hero-description-block",
+                )}
+                sentenceClassName="caretip-hero-description-line m-0"
+              />
+            )
           ) : null}
 
           <div className={cn(landingUi.heroCtaRow, "caretip-hero-cta-cluster")}>
@@ -151,37 +212,6 @@ export function CareTipLandingHero({
                 {t("landing.showcase.primaryCta")}
               </Link>
             </div>
-          </div>
-        </div>
-
-        <div
-          className={cn(
-            "caretip-hero-grid__showcase caretip-hero-showcase-col",
-            landingUi.heroShowcaseColDesktop,
-          )}
-        >
-          <div
-            aria-hidden
-            className={cn(
-              "caretip-hero-showcase-radial pointer-events-none absolute inset-0",
-              "max-lg:bg-[linear-gradient(105deg,#ffffff_0%,#ffffff_14%,rgba(255,255,255,0.98)_24%,rgba(255,255,255,0.88)_36%,rgba(255,255,255,0.45)_50%,transparent_62%)]",
-              "lg:bg-transparent",
-            )}
-          />
-
-          <div className={cn("caretip-hero-showcase-stage", landingUi.heroShowcaseDesktopStage)}>
-            <div
-              aria-hidden
-              className="caretip-hero-warm-ambience pointer-events-none absolute inset-0 z-0"
-            />
-            <LandingHeroStoryShowcase
-              alt={imageAlt}
-              className={cn(
-                "relative z-[1] mx-auto flex w-full justify-center",
-                landingUi.heroShowcaseMobileShell,
-                landingUi.heroShowcaseDesktopShell,
-              )}
-            />
           </div>
         </div>
       </div>

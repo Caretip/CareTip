@@ -34,7 +34,7 @@
     background: transparent !important;
   }
 
-  .caretip-landing .caretip-hero-media-clip .caretip-hero-showcase-img {
+  .caretip-landing .caretip-hero-media-clip .caretip-hero-showcase-img:not(.caretip-hero-story-frame--bg-cover) {
     width: 100% !important;
     height: 100% !important;
     object-fit: cover !important;

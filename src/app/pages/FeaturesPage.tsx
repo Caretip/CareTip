@@ -5,8 +5,6 @@ import { FeaturesPageHero } from "@/components/public/features/FeaturesPageHero"
 import { FeaturesPageFinalCta } from "@/components/public/features/FeaturesPageFinalCta";
 import { FeatureShowcaseCard } from "@/components/public/features/FeatureShowcaseCard";
 import { FEATURES_PAGE_ITEMS } from "@/components/public/features/featuresPageConfig";
-import { publicPagesBrandUi } from "@/components/public/publicPagesBrandUi";
-import { cn } from "@/lib/utils";
 import { usePublicMountProbe } from "@/lib/publicMountProbe";
 
 function FeaturesStandardGrid({
@@ -54,10 +52,10 @@ export function FeaturesPage() {
   const standard = items.filter((f) => !f.featured);
 
   return (
-    <PublicPageShell maxWidth="full" contentClassName="pb-0">
+    <PublicPageShell maxWidth="full" contentClassName="pb-0" className="bg-background">
       <main
         id="features"
-        className={cn("caretip-features-page caretip-features-page--wise", publicPagesBrandUi.pageAccent)}
+        className="caretip-features-page caretip-features-page--wise"
         aria-label={t("nav.features")}
       >
         <FeaturesPageHero />

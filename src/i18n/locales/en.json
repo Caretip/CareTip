@@ -565,6 +565,7 @@
         "paymentNote": "Payment details required before the trial begins.",
         "conversionNote": "After the trial, your plan renews automatically on your selected billing cycle until cancelled."
       },
+      "transactionFeeNotice": "plus transaction fee",
       "tiers": {
         "starter": {
           "name": "Basic",
@@ -1100,6 +1101,35 @@
       "footerLastLabel": "Last Updated:",
       "footerLastDate": "March 24, 2026",
       "footerContact": "Questions? Contact us at legal@caretip.com"
+    },
+    "imprint": {
+      "title": "Imprint",
+      "tmgTitle": "Information pursuant to Sect. 5 German Telemedia Act (TMG) / German Digital Services Act (DDG)",
+      "companyName": "CareTip UG",
+      "addressLine1": "Kolonnenstraße 8",
+      "addressLine2": "10827 Berlin",
+      "addressCountry": "Germany",
+      "directorsTitle": "Represented by the Managing Directors",
+      "director0": "Albertina Bazonga",
+      "director1": "Fanny Makimuena",
+      "contactTitle": "Contact",
+      "contactEmailLabel": "E-mail:",
+      "contactEmail": "info@caretip.de",
+      "registerTitle": "Register Entry",
+      "registerBody": "Commercial Register Entry.",
+      "registerCourtLabel": "Registration Court:",
+      "registerCourt": "District Court of Berlin-Charlottenburg",
+      "registerNumberLabel": "Commercial Register Number:",
+      "registerNumber": "",
+      "vatTitle": "VAT ID",
+      "vatDescription": "Value added tax identification number pursuant to Sect. 27a German Value Added Tax Act:",
+      "vatId": "",
+      "euDisputeTitle": "EU Dispute Resolution",
+      "euDisputeIntro": "The European Commission provides a platform for online dispute resolution (ODR):",
+      "euDisputeEmailNote": "Our e-mail address can be found above in this legal notice.",
+      "euDisputeBody": "",
+      "consumerDisputeTitle": "Consumer Dispute Resolution / Universal Arbitration Board",
+      "consumerDisputeBody": "We are not willing or obliged to participate in dispute resolution proceedings before a consumer arbitration board."
     },
     "faq": {
       "pageEyebrow": "HELP CENTER",
@@ -2452,7 +2482,8 @@
     "showcase": {
       "tagline": "Earn. Serve. Smile.",
       "title": "Tip in seconds. Reward great service instantly.",
-      "description": "QR code tips, fast, cashless, and tax free. Real time tracking for teams, full control for owners.",
+      "description": "QR code tips, fast, cashless, and tax free.",
+      "descriptionMobile": "Fast QR code tips.\nCashless. Tax-free.",
       "statLive": "Instant QR tipping",
       "statPos": "No POS setup required",
       "statSecure": "Secure tip records",
@@ -2486,19 +2517,52 @@
       "floatCardValue": "+18%",
       "floatCardLabel": "Team tips today",
       "heroFloatPillTip": "€12 tip received",
+      "heroSubtleTipNotice": "€12 tip received",
       "heroFloatPillRating": "5★ rating",
       "heroFloatPillStaff": "+3 staff online",
-      "heroFloatTipValue": "€12",
+      "heroMetricCards": {
+        "wyo": {
+          "tipSent": {
+            "title": "Tip Sent",
+            "subtitle": "€12 Successfully Paid"
+          },
+          "guestRating": {
+            "title": "Guest Rating",
+            "subtitle": "5.0 · Payment Complete"
+          }
+        },
+        "wyc": {
+          "revenue": {
+            "title": "Today's Revenue",
+            "subtitle": "€1,248 · +18%"
+          },
+          "teamTips": {
+            "title": "Team Tips",
+            "subtitle": "€642 · 12 Employees"
+          }
+        }
+      },
+      "heroFloatTipValue": "€12.00",
+      "heroFloatTipTitle": "New tip received",
+      "heroFloatTipMeta": "Just now",
       "heroFloatTipLabel": "Tip received",
-      "heroFloatReviewValue": "5★",
-      "heroFloatReviewLabel": "Guest review",
+      "heroFloatReviewValue": "★★★★★",
+      "heroFloatReviewTitle": "5.0 rating",
+      "heroFloatReviewMeta": "From guests",
+      "heroFloatReviewLabel": "Rating",
+      "heroProductLabel": "CareTip QR tipping on mobile",
+      "heroProductVenue": "Sunny Café",
+      "heroProductTitle": "Scan QR & leave a tip",
+      "heroProductSubtitle": "Table 12 · Contactless",
+      "heroProductPayCta": "Pay now",
       "heroFloatPayoutValue": "Done",
       "heroFloatPayoutLabel": "Tip recorded",
       "heroFloatStaffValue": "3",
       "heroFloatStaffLabel": "Staff active",
       "heroFloatAnalyticsValue": "Live",
       "heroFloatAnalyticsLabel": "Analytics updated",
-      "heroHeadline": "More tips for your team. Zero effort for your business.",
+      "heroHeadline": "More tips for your team.\nZero effort for your business.",
+      "heroHeadlineMobile": "More tips for your team.\nZero effort for your business.",
       "heroHeadlineHighlight": "tips",
       "heroHeadlineHighlights": [
         "tips",
@@ -3095,7 +3159,8 @@
     "platformAdmin": "Platform admin",
     "privacy": "Privacy",
     "terms": "Terms",
-    "cookies": "Cookies"
+    "cookies": "Cookies",
+    "imprint": "Imprint"
   },
   "employee": {
     "earnings_today": "Today",

@@ -1427,6 +1427,19 @@ textarea::placeholder {
     box-sizing: border-box;
     text-align: center;
   }
+
+  .caretip-public-mobile-nav-drawer .caretip-public-mobile-nav-drawer__toolbar {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .caretip-public-mobile-nav-drawer .caretip-public-mobile-nav-drawer__toolbar :is(a, button) {
+    width: auto;
+    min-height: 2.5rem;
+    margin-inline: 0;
+    text-align: center;
+  }
 }
 
 /* Dashboard mobile drawer — GPU-friendly, instant open, respects prefers-reduced-motion */

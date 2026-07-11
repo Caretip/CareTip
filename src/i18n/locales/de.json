@@ -565,6 +565,7 @@
         "paymentNote": "Zahlungsdaten werden vor Beginn der Testphase benötigt.",
         "conversionNote": "Nach der Testphase verlängert sich Ihr Plan automatisch im gewählten Abrechnungsrhythmus, bis Sie kündigen."
       },
+      "transactionFeeNotice": "zzgl. Transaktionsgebühr",
       "tiers": {
         "starter": {
           "name": "Basic",
@@ -1100,6 +1101,35 @@
       "footerLastLabel": "Zuletzt aktualisiert:",
       "footerLastDate": "24. März 2026",
       "footerContact": "Fragen? legal@caretip.com"
+    },
+    "imprint": {
+      "title": "Impressum",
+      "tmgTitle": "Angaben gemäß § 5 TMG",
+      "companyName": "CareTip UG",
+      "addressLine1": "Kolonnenstraße 8",
+      "addressLine2": "10827 Berlin",
+      "addressCountry": "Deutschland",
+      "directorsTitle": "Vertreten durch die Geschäftsführerinnen",
+      "director0": "Albertina Bazonga",
+      "director1": "Fanny Makimuena",
+      "contactTitle": "Kontakt",
+      "contactEmailLabel": "E-Mail:",
+      "contactEmail": "info@caretip.de",
+      "registerTitle": "Registereintrag",
+      "registerBody": "Eintragung im Handelsregister.",
+      "registerCourtLabel": "Registergericht:",
+      "registerCourt": "Amtsgericht Berlin-Charlottenburg",
+      "registerNumberLabel": "Registernummer:",
+      "registerNumber": "",
+      "vatTitle": "Umsatzsteuer-ID",
+      "vatDescription": "Umsatzsteuer-Identifikationsnummer gemäß § 27 a Umsatzsteuergesetz:",
+      "vatId": "",
+      "euDisputeTitle": "EU-Streitschlichtung",
+      "euDisputeIntro": "Die Europäische Kommission stellt eine Plattform zur Online-Streitbeilegung (OS) bereit:",
+      "euDisputeEmailNote": "",
+      "euDisputeBody": "Wir sind nicht verpflichtet und grundsätzlich nicht bereit, an Streitbeilegungsverfahren vor einer Verbraucherschlichtungsstelle teilzunehmen.",
+      "consumerDisputeTitle": "",
+      "consumerDisputeBody": ""
     },
     "faq": {
       "pageEyebrow": "HILFE-CENTER",
@@ -2452,7 +2482,8 @@
     "showcase": {
       "tagline": "Verdienen. Servieren. Lächeln.",
       "title": "In Sekunden tippen. Hervorragenden Service sofort belohnen.",
-      "description": "Trinkgeld per QR-Code, schnell, kontaktlos und steuerfrei. Teams verfolgen Erfolge in Echtzeit, Unternehmen behalten den Überblick.",
+      "description": "Trinkgeld per QR-Code, schnell, kontaktlos und steuerfrei.",
+      "descriptionMobile": "Schnelle QR-Trinkgelder.\nKontaktlos. Steuerfrei.",
       "statLive": "Sofort per QR tippen",
       "statPos": "Keine POS-Anbindung nötig",
       "statSecure": "Sichere Trinkgeld-Belege",
@@ -2486,19 +2517,52 @@
       "floatCardValue": "+18 %",
       "floatCardLabel": "Team-Trinkgelder heute",
       "heroFloatPillTip": "12 € Trinkgeld",
+      "heroSubtleTipNotice": "€12 Trinkgeld erhalten",
       "heroFloatPillRating": "5★ Bewertung",
       "heroFloatPillStaff": "+3 Team online",
-      "heroFloatTipValue": "12 €",
+      "heroMetricCards": {
+        "wyo": {
+          "tipSent": {
+            "title": "Trinkgeld gesendet",
+            "subtitle": "12 € erfolgreich bezahlt"
+          },
+          "guestRating": {
+            "title": "Gästebewertung",
+            "subtitle": "5,0 · Zahlung abgeschlossen"
+          }
+        },
+        "wyc": {
+          "revenue": {
+            "title": "Umsatz heute",
+            "subtitle": "1.248 € · +18 %"
+          },
+          "teamTips": {
+            "title": "Team-Trinkgelder",
+            "subtitle": "642 € · 12 Mitarbeitende"
+          }
+        }
+      },
+      "heroFloatTipValue": "€12.00",
+      "heroFloatTipTitle": "Neues Trinkgeld erhalten",
+      "heroFloatTipMeta": "Gerade eben",
       "heroFloatTipLabel": "Trinkgeld erhalten",
-      "heroFloatReviewValue": "5★",
-      "heroFloatReviewLabel": "Gästebewertung",
+      "heroFloatReviewValue": "★★★★★",
+      "heroFloatReviewTitle": "5.0 Bewertung",
+      "heroFloatReviewMeta": "Von Kunden",
+      "heroFloatReviewLabel": "Bewertung",
+      "heroProductLabel": "CareTip QR-Trinkgeld auf dem Smartphone",
+      "heroProductVenue": "Café Sonnenschein",
+      "heroProductTitle": "QR scannen & Trinkgeld geben",
+      "heroProductSubtitle": "Tisch 12 · Kontaktlos",
+      "heroProductPayCta": "Jetzt bezahlen",
       "heroFloatPayoutValue": "Fertig",
       "heroFloatPayoutLabel": "Trinkgeld erfasst",
       "heroFloatStaffValue": "3",
       "heroFloatStaffLabel": "Aktive Mitarbeitende",
       "heroFloatAnalyticsValue": "Aktiv",
       "heroFloatAnalyticsLabel": "Analysen aktualisiert",
-      "heroHeadline": "Mehr Trinkgeld für dein Team. Null Aufwand für dein Business.",
+      "heroHeadline": "Mehr Trinkgeld für dein Team.\nNull Aufwand für dein Business.",
+      "heroHeadlineMobile": "Mehr Trinkgeld für dein Team.\nNull Aufwand für dein Business.",
       "heroHeadlineHighlight": "Trinkgeld",
       "heroHeadlineHighlights": ["Trinkgeld", "Business"],
       "heroTagline": ""
@@ -3092,7 +3156,8 @@
     "platformAdmin": "Plattformadmin",
     "privacy": "Datenschutz",
     "terms": "AGB",
-    "cookies": "Cookies"
+    "cookies": "Cookies",
+    "imprint": "Impressum"
   },
   "employee": {
     "earnings_today": "Heute",

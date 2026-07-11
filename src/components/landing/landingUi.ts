@@ -43,7 +43,7 @@ function cnHeroSubtitle(layout: string) {
 
 /** Clears fixed nav + compact gap below nav (mobile includes safe-area). */
 const heroSectionPadTop =
-  "max-lg:pt-[calc(4.875rem+env(safe-area-inset-top,0px)+0.5rem)] max-lg:pb-3 lg:pt-[calc(6.5rem+1.2rem)] lg:pb-6 xl:pb-8";
+  "max-lg:pt-[calc(4.875rem+env(safe-area-inset-top,0px)+0.5rem)] max-lg:pb-2 lg:pt-[calc(6.5rem+1.2rem)] lg:pb-6 xl:pb-8";
 /** Mobile-first stack rhythm between headline, lead, actions, and mockup. */
 const heroStackGapMobile = "mt-6 md:mt-7";
 /** Tighter gap above product shot on stacked mobile hero */

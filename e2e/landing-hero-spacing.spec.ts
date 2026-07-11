@@ -27,9 +27,9 @@ test.describe("Landing hero spacing polish", () => {
 
       const spacing = await copy.evaluate(() => {
         const headline = document.querySelector(".caretip-hero-headline");
-        const subtitle = document.querySelector(".caretip-hero-subtitle.caretip-landing-copy-paragraphs");
+        const subtitle = document.querySelector(".caretip-hero-subtitle");
         const cta = document.querySelector(".caretip-hero-cta-cluster");
-        const showcase = document.querySelector(".caretip-hero-grid__showcase");
+        const showcase = document.querySelector(".caretip-hero-bg-layer");
         const paras = subtitle?.querySelectorAll("p") ?? [];
 
         const rect = (el: Element | null) => el?.getBoundingClientRect();
@@ -42,6 +42,9 @@ test.describe("Landing hero spacing polish", () => {
         const p1 = rect(paras[1] ?? null);
 
         return {
+          viewportHeight: window.innerHeight,
+          headlineTopPx: h ? Math.round(h.top) : null,
+          ctaBottomPx: c ? Math.round(c.bottom) : null,
           headlineToBodyPx: h && s ? Math.round(s.top - h.bottom) : null,
           paragraphGapPx:
             p0 && p1 ? Math.round(p1.top - p0.bottom) : null,
@@ -53,9 +56,13 @@ test.describe("Landing hero spacing polish", () => {
 
       expect(spacing.headlineToBodyPx).toBeGreaterThanOrEqual(22);
       expect(spacing.bodyToCtaPx).toBeGreaterThanOrEqual(26);
-      if (viewport.width < 1024) {
-        expect(spacing.ctaToVisualPx).toBeGreaterThanOrEqual(28);
-        expect(spacing.ctaToVisualPx).toBeLessThanOrEqual(48);
+      if (viewport.width < 768 && spacing.headlineTopPx != null && spacing.ctaBottomPx != null) {
+        expect(spacing.headlineTopPx).toBeLessThan(viewport.height * 0.42);
+        expect(spacing.ctaBottomPx).toBeLessThanOrEqual(viewport.height + 8);
+      }
+      if (viewport.width < 1024 && spacing.ctaToVisualPx != null) {
+        // Full-bleed hero: copy sits above the background layer (negative gap is expected).
+        expect(spacing.ctaToVisualPx).toBeLessThanOrEqual(28);
       }
       if (spacing.paragraphGapPx != null) {
         expect(spacing.paragraphGapPx).toBeGreaterThanOrEqual(18);

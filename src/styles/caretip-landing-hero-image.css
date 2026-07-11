@@ -1,0 +1,194 @@
+/**
+ * Hero image frame — container-owned dimensions; image fills via object-fit.
+ * Fixes intrinsic-size / fit-content layout coupling and premium height: auto overrides.
+ */
+
+.caretip-landing .caretip-hero-grid {
+  --caretip-hero-frame-aspect: 4 / 5;
+  --caretip-hero-frame-width: min(100%, 20.5rem);
+  --caretip-hero-focal-x: 56%;
+  --caretip-hero-focal-y: 46%;
+}
+
+@media (min-width: 640px) {
+  .caretip-landing .caretip-hero-grid {
+    --caretip-hero-frame-width: min(100%, 22.5rem);
+  }
+}
+
+@media (min-width: 768px) and (max-width: 1023px) {
+  .caretip-landing .caretip-hero-grid {
+    --caretip-hero-frame-width: min(100%, 24rem);
+  }
+}
+
+@media (min-width: 1024px) {
+  .caretip-landing .caretip-hero-grid {
+    --caretip-hero-frame-width: min(100%, 29rem);
+    --caretip-hero-focal-x: 58%;
+    --caretip-hero-focal-y: 45%;
+  }
+}
+
+@media (min-width: 1280px) {
+  .caretip-landing .caretip-hero-grid {
+    --caretip-hero-frame-width: min(100%, 31rem);
+  }
+}
+
+@media (min-width: 1440px) {
+  .caretip-landing .caretip-hero-grid {
+    --caretip-hero-frame-width: min(100%, 32.5rem);
+  }
+}
+
+/* Stage + frame — layout size from tokens, not image intrinsic dimensions */
+.caretip-landing .caretip-hero-showcase-stage {
+  width: 100%;
+  max-width: var(--caretip-hero-frame-width);
+}
+
+.caretip-landing .caretip-hero-image-frame {
+  position: relative;
+  width: 100%;
+  max-width: var(--caretip-hero-frame-width);
+  margin-inline: auto;
+}
+
+.caretip-landing .caretip-hero-story-showcase-root,
+.caretip-landing .caretip-hero-media-shell,
+.caretip-landing .caretip-hero-showcase-composition,
+.caretip-landing .caretip-hero-media-wrap {
+  width: 100%;
+  max-width: 100%;
+}
+
+.caretip-landing .caretip-hero-media-wrap {
+  display: block;
+}
+
+/* Clip — sole sizing authority for the art card */
+.caretip-landing .caretip-hero-image-frame .caretip-hero-media-clip {
+  width: 100%;
+  max-width: 100%;
+  aspect-ratio: var(--caretip-hero-frame-aspect);
+  height: auto;
+  max-height: none;
+  min-height: 0;
+}
+
+/* Image must fill the clip (overrides premium marketing-img height: auto) */
+.caretip-landing .caretip-hero-media-clip .caretip-hero-showcase-img,
+.caretip-landing .caretip-hero-media-clip .caretip-hero-story-frame,
+.caretip-landing.caretip-landing--premium .caretip-hero-media-clip .caretip-marketing-img,
+.caretip-landing.caretip-landing--premium .caretip-hero-media-clip .caretip-hero-showcase-img {
+  width: 100% !important;
+  height: 100% !important;
+  max-width: none;
+  max-height: none;
+  object-fit: cover;
+  object-position: var(--caretip-hero-focal-x) var(--caretip-hero-focal-y);
+}
+
+/* Per-frame focal points — subject stays in frame across crossfade */
+.caretip-landing .caretip-hero-media-clip picture[data-hero-frame="wyc"] img {
+  object-position: 52% 46%;
+}
+
+.caretip-landing .caretip-hero-media-clip picture[data-hero-frame="wyo"] img {
+  object-position: 62% 44%;
+}
+
+@media (min-width: 1024px) {
+  .caretip-landing .caretip-hero-media-clip picture[data-hero-frame="wyc"] img {
+    object-position: 54% 44%;
+  }
+
+  .caretip-landing .caretip-hero-media-clip picture[data-hero-frame="wyo"] img {
+    object-position: 64% 42%;
+  }
+}
+
+@media (max-width: 1023px) {
+  .caretip-landing .caretip-hero-media-clip .caretip-hero-showcase-img,
+  .caretip-landing .caretip-hero-media-clip .caretip-hero-story-frame {
+    transform: none !important;
+  }
+
+  .caretip-landing .caretip-hero-media-clip picture[data-hero-frame="wyc"] img {
+    object-position: 52% 46% !important;
+  }
+
+  .caretip-landing .caretip-hero-media-clip picture[data-hero-frame="wyo"] img {
+    object-position: 60% 44% !important;
+  }
+}
+
+/* Lighter decode fade — avoid washed-out hero */
+.caretip-landing .caretip-hero-media-clip .caretip-marketing-img {
+  filter: blur(3px);
+  transform: scale(1.004);
+}
+
+.caretip-landing .caretip-hero-media-clip .caretip-marketing-img--ready {
+  filter: blur(0);
+  transform: none;
+}
+
+/* Premium card — slightly larger radius + refined elevation */
+.caretip-landing .caretip-hero-image-frame {
+  --caretip-hero-media-radius: 1.375rem;
+}
+
+@media (min-width: 1024px) {
+  .caretip-landing .caretip-hero-image-frame {
+    --caretip-hero-media-radius: 1.5rem;
+  }
+
+  .caretip-landing .caretip-hero-image-frame .caretip-hero-media-wrap::before {
+    box-shadow:
+      0 28px 56px -30px rgba(26, 22, 18, 0.18),
+      0 12px 28px -16px rgba(26, 22, 18, 0.08);
+  }
+}
+
+/* Subtle warm edge tone — no heavy blur wash */
+.caretip-landing .caretip-hero-image-frame .caretip-hero-media-clip .caretip-hero-media-tone {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  border-radius: inherit;
+  pointer-events: none;
+  background:
+    linear-gradient(105deg, rgba(255, 248, 240, 0.06) 0%, transparent 42%),
+    linear-gradient(180deg, transparent 62%, rgba(22, 16, 12, 0.1) 100%);
+}
+
+html.dark .caretip-landing .caretip-hero-image-frame .caretip-hero-media-clip .caretip-hero-media-tone {
+  background:
+    linear-gradient(105deg, rgba(233, 120, 28, 0.05) 0%, transparent 40%),
+    linear-gradient(180deg, transparent 64%, rgba(0, 0, 0, 0.22) 100%);
+}
+
+/* Reduce ambient glow blur behind the card */
+.caretip-landing .caretip-hero-image-frame .caretip-hero-showcase-ambient {
+  filter: blur(14px);
+  opacity: 0.24;
+}
+
+@media (min-width: 1024px) {
+  .caretip-landing .caretip-hero-image-frame .caretip-hero-showcase-ambient {
+    filter: blur(16px);
+    opacity: 0.2;
+  }
+}
+
+.caretip-landing .caretip-hero-showcase-stage .caretip-hero-warm-ambience {
+  opacity: 0.55;
+}
+
+@media (min-width: 1024px) {
+  .caretip-landing .caretip-hero-showcase-stage .caretip-hero-warm-ambience {
+    opacity: 0.42;
+  }
+}

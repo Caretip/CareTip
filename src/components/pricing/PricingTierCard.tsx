@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils";
 import type { BillingCycle } from "@/app/data/pricingTypes";
 import { scheduleIdleWork } from "@/lib/publicRouteDefer";
 import { resolveTierDescription, resolveTierPricing } from "./pricingTierPresentation";
+import { PricingTransactionFeeNotice } from "./PricingTransactionFeeNotice";
 import type { PricingTierViewModel } from "@/app/data/pricingPlanCatalog";
 import type { PricingCopyScope } from "@/app/data/pricingCopy";
 
@@ -186,6 +187,7 @@ export function PricingTierCard({
           />
         ) : null}
       </div>
+      <PricingTransactionFeeNotice />
       {tier.tagline ? <p className="caretip-pricing-tier-card__tagline">{tier.tagline}</p> : null}
     </div>
   );

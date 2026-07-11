@@ -12,8 +12,41 @@
   opacity: 1;
 }
 
+/* Full-bleed background — stacked cover frames */
+.caretip-landing .caretip-hero-bg-layer .caretip-hero-bg-frame-layer {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+}
+
+.caretip-landing .caretip-hero-bg-layer .caretip-hero-story-frame--bg-cover {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  transition: opacity 0.9s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.caretip-landing .caretip-hero-bg-layer .caretip-hero-story-frame--displayed {
+  z-index: 1;
+  opacity: 1;
+}
+
+.caretip-landing .caretip-hero-bg-layer .caretip-hero-story-frame--incoming {
+  z-index: 2;
+  opacity: 1;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .caretip-landing .caretip-hero-media-clip .caretip-hero-story-frame {
+    transition: none !important;
+  }
+
+  .caretip-landing .caretip-hero-bg-layer .caretip-hero-story-frame--bg-cover {
     transition: none !important;
   }
 }

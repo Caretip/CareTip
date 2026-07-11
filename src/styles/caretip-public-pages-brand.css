@@ -11,6 +11,17 @@
     rgb(233 120 28 / 0.14) 0%,
     transparent 58%
   );
+  --caretip-wise-inset-margin: clamp(1.25rem, 4vw, 2.5rem);
+  --caretip-wise-inset-radius: 1.25rem;
+  --caretip-wise-editorial-radius: 1rem;
+  --caretip-wise-cta-inner-max: min(100%, 72rem);
+  --caretip-wise-cta-accent-muted: #f5d9b3;
+}
+
+@media (min-width: 1024px) {
+  :root {
+    --caretip-wise-inset-radius: 1.5rem;
+  }
 }
 
 /* —— Page atmosphere —— */
@@ -42,14 +53,122 @@
   z-index: 1;
 }
 
+.caretip-how-it-works-page {
+  background: hsl(var(--background));
+}
+
+/* —— Wise inset band (Features hero reference) —— */
+.caretip-wise-inset-band {
+  margin-inline: var(--caretip-wise-inset-margin);
+  border-radius: var(--caretip-wise-inset-radius);
+  overflow: hidden;
+}
+
+/* —— Wise inset dark CTA (bottom page bands) —— */
+.caretip-features-cta-wise,
+.caretip-about-cta-wise,
+.caretip-pricing-cta-wise,
+.caretip-faq-cta-wise {
+  background: transparent;
+  color: rgb(250 250 250);
+  margin-top: 0;
+  padding-inline: var(--caretip-wise-inset-margin);
+  padding-block: clamp(1.5rem, 4vw, 2.5rem);
+}
+
+.caretip-features-cta-wise__inner,
+.caretip-about-cta-wise__inner,
+.caretip-pricing-cta-wise__inner,
+.caretip-faq-cta-wise__inner {
+  width: 100%;
+  max-width: var(--caretip-wise-cta-inner-max);
+  margin-inline: auto;
+  padding-inline: clamp(1.25rem, 4vw, 2.5rem);
+  padding-block: clamp(3.5rem, 8vw, 5.5rem);
+  border-radius: var(--caretip-wise-inset-radius);
+  overflow: hidden;
+  text-align: center;
+}
+
+.caretip-faq-page__inner.caretip-faq-cta-wise__inner,
+.caretip-pricing-page__inner.caretip-pricing-cta-wise__inner {
+  max-width: var(--caretip-wise-cta-inner-max);
+}
+
+.caretip-features-cta-wise__inner {
+  background: var(--caretip-features-dark, #161412);
+}
+
+.caretip-about-cta-wise__inner {
+  background: var(--caretip-about-dark, #161412);
+}
+
+.caretip-pricing-cta-wise__inner {
+  background: var(--caretip-pricing-dark, #161412);
+}
+
+.caretip-faq-cta-wise__inner {
+  background: var(--caretip-faq-dark, #161412);
+}
+
+.caretip-features-cta-wise__title,
+.caretip-about-cta-wise__title,
+.caretip-pricing-cta-wise__title,
+.caretip-faq-cta-wise__title {
+  margin: 0 auto;
+  max-width: min(100%, 36rem);
+  font-family: var(--font-hero-display, inherit);
+  font-size: clamp(1.5rem, 4vw, 2.5rem);
+  font-weight: 800;
+  line-height: 1.12;
+  letter-spacing: -0.03em;
+  text-transform: uppercase;
+  text-wrap: balance;
+  color: var(--caretip-wise-cta-accent-muted);
+}
+
+.caretip-pricing-cta-wise__body,
+.caretip-faq-cta-wise__body {
+  margin: clamp(0.875rem, 2vw, 1.125rem) auto 0;
+  max-width: min(100%, 36rem);
+  font-size: clamp(1rem, 2vw, 1.0625rem);
+  font-weight: 500;
+  line-height: 1.72;
+  text-wrap: pretty;
+  color: rgb(250 250 250 / 0.78);
+}
+
+.caretip-features-cta-wise__actions,
+.caretip-about-cta-wise__actions,
+.caretip-pricing-cta-wise__actions,
+.caretip-faq-cta-wise__actions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.875rem;
+  margin-top: clamp(1.75rem, 4vw, 2.25rem);
+}
+
+@media (min-width: 640px) {
+  .caretip-features-cta-wise__actions,
+  .caretip-about-cta-wise__actions,
+  .caretip-pricing-cta-wise__actions,
+  .caretip-faq-cta-wise__actions {
+    flex-direction: row;
+    gap: 1rem;
+  }
+}
+
 /* —— Warm-dark CTA panel —— */
 .caretip-public-warm-dark-cta {
   position: relative;
   overflow: hidden;
   margin-inline: auto;
-  max-width: 40rem;
-  padding: 2.5rem 1.75rem;
-  border-radius: 1.25rem;
+  width: 100%;
+  max-width: var(--caretip-wise-cta-inner-max);
+  padding: clamp(3.5rem, 8vw, 5.5rem) clamp(1.25rem, 4vw, 2.5rem);
+  border-radius: var(--caretip-wise-inset-radius);
   border: 1px solid var(--caretip-warm-dark-border);
   background: var(--caretip-warm-dark-bg);
   text-align: center;
@@ -77,22 +196,28 @@ html.dark .caretip-public-warm-dark-cta {
 .caretip-public-warm-dark-cta__title {
   position: relative;
   z-index: 1;
+  margin: 0 auto;
+  max-width: min(100%, 36rem);
   font-family: var(--font-hero-display, inherit);
-  font-size: clamp(1.5rem, 3.2vw, 2rem);
-  font-weight: 700;
-  letter-spacing: -0.025em;
-  color: rgb(250 250 250);
+  font-size: clamp(1.5rem, 4vw, 2.5rem);
+  font-weight: 800;
+  line-height: 1.12;
+  letter-spacing: -0.03em;
+  text-transform: uppercase;
+  text-wrap: balance;
+  color: var(--caretip-wise-cta-accent-muted);
 }
 
 .caretip-public-warm-dark-cta__body {
   position: relative;
   z-index: 1;
-  margin-top: 0.75rem;
-  margin-inline: auto;
-  max-width: 32rem;
-  font-size: 1rem;
-  line-height: 1.65;
-  color: rgb(163 163 163);
+  margin: clamp(0.875rem, 2vw, 1.125rem) auto 0;
+  max-width: min(100%, 36rem);
+  font-size: clamp(1rem, 2vw, 1.0625rem);
+  font-weight: 500;
+  line-height: 1.72;
+  text-wrap: pretty;
+  color: rgb(250 250 250 / 0.78);
 }
 
 .caretip-public-warm-dark-cta__actions {
@@ -102,14 +227,14 @@ html.dark .caretip-public-warm-dark-cta {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 0.75rem;
-  margin-top: 1.75rem;
+  gap: 0.875rem;
+  margin-top: clamp(1.75rem, 4vw, 2.25rem);
 }
 
 @media (min-width: 640px) {
   .caretip-public-warm-dark-cta__actions {
     flex-direction: row;
-    gap: 0.875rem;
+    gap: 1rem;
   }
 }
 
@@ -239,7 +364,7 @@ html.dark .caretip-public-warm-dark-trust-strip .caretip-public-hero-pills__list
   width: 100%;
   max-width: 36rem;
   padding: 1rem 1.125rem;
-  border-radius: 1rem;
+  border-radius: var(--caretip-wise-inset-radius);
   border: 1px solid var(--caretip-warm-dark-border);
   background: var(--caretip-warm-dark-bg);
   box-shadow:

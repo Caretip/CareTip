@@ -47,20 +47,17 @@ html.dark .caretip-landing .caretip-hero-media-wrap::before {
     0 10px 24px -14px rgba(0, 0, 0, 0.28);
 }
 
-/* Clip parent — sole owner of corner curvature; square card hugs art bounds */
+/* Clip parent — sole owner of corner curvature; dimensions from hero-image.css */
 .caretip-landing .caretip-hero-media-clip {
   position: relative;
   z-index: 1;
   display: grid;
   overflow: hidden;
   border-radius: var(--caretip-hero-media-radius);
-  width: min(
-    100%,
-    var(--caretip-hero-art-max-w),
-    var(--caretip-hero-art-max-h)
-  );
-  aspect-ratio: var(--caretip-hero-art-aspect-ratio, 1);
-  max-height: var(--caretip-hero-art-max-h);
+  width: 100%;
+  max-width: min(100%, var(--caretip-hero-art-max-w, 100%));
+  aspect-ratio: var(--caretip-hero-frame-aspect, var(--caretip-hero-art-aspect-ratio, 4 / 5));
+  max-height: var(--caretip-hero-art-max-h, none);
   background: #ffffff;
   transform: translateZ(0);
   -webkit-backface-visibility: hidden;
@@ -116,7 +113,7 @@ html.dark .caretip-landing .caretip-hero-media-clip::after {
   border-radius: 0 !important;
   outline: none;
   object-fit: cover;
-  object-position: center;
+  object-position: var(--caretip-hero-focal-x, center) var(--caretip-hero-focal-y, center);
 }
 
 /* Legacy aliases — defer to clip (no nested radius) */
@@ -151,14 +148,14 @@ html.dark .caretip-landing .caretip-hero-media-clip::after {
     rgba(233, 120, 28, 0.04) 48%,
     transparent 72%
   );
-  filter: blur(28px);
-  opacity: 0.45;
+  filter: blur(14px);
+  opacity: 0.28;
 }
 
 @media (min-width: 1024px) {
   .caretip-landing .caretip-hero-showcase-ambient {
-    opacity: 0.32;
-    filter: blur(32px);
+    opacity: 0.22;
+    filter: blur(16px);
   }
 }
 

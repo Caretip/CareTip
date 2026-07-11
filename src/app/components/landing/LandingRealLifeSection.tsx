@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import { Trans, useTranslation } from "react-i18next";
-import logyWebp from "../../../../images/logy.webp";
-import logyAvif from "../../../../images/logy.avif";
+import fromfanny002Webp from "../../../../images/fromfanny002.webp";
+import fromfanny002Avif from "../../../../images/fromfanny002.avif";
 import repWebp from "../../../../images/rep.webp";
 import repAvif from "../../../../images/rep.avif";
 import newMidWebp from "../../../../images/new-mid.webp";
@@ -32,7 +32,7 @@ export function LandingRealLifeSection() {
           tag: t("landing.realLife.s1Tag"),
           textKey: "landing.realLife.s1Text" as const,
           detail: t("landing.realLife.s1Detail"),
-          image: { src: logyWebp, webp: logyWebp, avif: logyAvif } satisfies ScenarioImage,
+          image: { src: fromfanny002Webp, webp: fromfanny002Webp, avif: fromfanny002Avif } satisfies ScenarioImage,
           alt: t("landing.realLife.s1Alt"),
           imageFit: "cover" as const,
           imagePosition: undefined,

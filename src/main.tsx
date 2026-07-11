@@ -1,10 +1,11 @@
+import "./styles/caretip-inter-vite.css";
 import "./lib/fonts/inter";
 import "./app/lib/pwaInstallDeferred";
 import React from "react";
 import { createRoot } from "react-dom/client";
-import { registerSW } from "virtual:pwa-register";
 import App from "./app/App";
 import { GlobalErrorBoundary } from "./app/components/GlobalErrorBoundary";
+import { dismissHtmlMarketingBootBridge } from "./app/lib/htmlMarketingBootBridge";
 import { wakeRemoteApi, migrateLegacyAccessTokenFromStorage } from "./app/lib/api";
 import { scheduleMobileDeferredWork } from "./lib/mobilePerf";
 import { ensureI18nReady } from "./i18n/i18n";
@@ -39,19 +40,26 @@ initSentry();
 migrateLegacyAccessTokenFromStorage();
 scheduleMobileDeferredWork(() => wakeRemoteApi(), { mobileTimeoutMs: 3500, desktopTimeoutMs: 900 });
 
-const updateSW = registerSW({
-  immediate: true,
-  onNeedRefresh() {
-    // Keep production in sync with latest CSS/images. Without this, a deployed
-    // update can sit idle until the user manually reloads or closes all tabs.
-    updateSW(true);
-  },
-});
+if (import.meta.env.PROD) {
+  void import("virtual:pwa-register").then(({ registerSW }) => {
+    const updateSW = registerSW({
+      immediate: true,
+      onNeedRefresh() {
+        updateSW(true);
+      },
+    });
+  });
+}
 
-void ensureI18nReady().then(() => {
-  createRoot(document.getElementById("root")!).render(
-    <GlobalErrorBoundary>
-      <App />
-    </GlobalErrorBoundary>,
-  );
-});
+void ensureI18nReady()
+  .then(() => {
+    createRoot(document.getElementById("root")!).render(
+      <GlobalErrorBoundary>
+        <App />
+      </GlobalErrorBoundary>,
+    );
+  })
+  .catch((error) => {
+    console.error("[CareTip] Bootstrap failed:", error);
+    dismissHtmlMarketingBootBridge();
+  });

@@ -519,6 +519,11 @@ const routes: RouteObject[] = [
     errorElement: <ErrorBoundary />,
   },
   {
+    path: '/imprint',
+    lazy: routeLazy(() => import('./pages/ImprintPage'), 'ImprintPage'),
+    errorElement: <ErrorBoundary />,
+  },
+  {
     path: '/about',
     lazy: routeLazy(() => import('./pages/AboutPage'), 'AboutPage'),
     errorElement: <ErrorBoundary />,

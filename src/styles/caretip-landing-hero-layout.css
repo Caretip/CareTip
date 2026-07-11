@@ -1,5 +1,5 @@
 /**
- * Landing hero layout — translation-safe grid; showcase card shrink-wraps to image.
+ * Landing hero layout — translation-safe grid; showcase frame sized in hero-image.css.
  */
 
 /* Marketing narrative rhythm — headline → lead copy → lines → action (landing + public pages). */
@@ -61,9 +61,9 @@
   --caretip-hero-gap-headline-body: var(--caretip-narrative-gap-headline-lead);
   --caretip-hero-gap-body-copy: var(--caretip-narrative-gap-lead-lines);
   --caretip-hero-gap-body-cta: var(--caretip-narrative-gap-lead-action);
-  --caretip-hero-art-max-w: min(100%, 20rem);
-  --caretip-hero-art-max-h: min(34rem, 70vh);
-  --caretip-hero-art-aspect-ratio: 1;
+  --caretip-hero-art-max-w: min(100%, 20.5rem);
+  --caretip-hero-art-max-h: none;
+  --caretip-hero-art-aspect-ratio: 4 / 5;
   container-type: inline-size;
   container-name: caretip-hero;
 }
@@ -92,30 +92,20 @@
   justify-content: center;
 }
 
-/* Showcase — card hugs intrinsic image size (no empty aspect box) */
+/* Showcase — frame width from hero-image.css tokens */
 .caretip-landing .caretip-hero-showcase-stage {
   position: relative;
-  width: fit-content;
-  max-width: 100%;
+  width: 100%;
+  max-width: var(--caretip-hero-frame-width, min(100%, 20.5rem));
   margin-inline: auto;
   overflow: visible;
-}
-
-.caretip-landing .caretip-hero-media-shell,
-.caretip-landing .caretip-hero-showcase-composition,
-.caretip-landing .caretip-hero-media-wrap,
-.caretip-landing .caretip-hero-showcase-stage {
-  width: fit-content;
-  max-width: 100%;
-  height: auto;
 }
 
 @media (min-width: 640px) {
   .caretip-landing .caretip-hero-grid {
     --caretip-hero-headline-measure: min(100%, 23rem);
     --caretip-hero-body-measure: min(100%, 36rem);
-    --caretip-hero-art-max-w: min(100%, 22rem);
-    --caretip-hero-art-max-h: min(36rem, 72vh);
+    --caretip-hero-art-max-w: min(100%, 22.5rem);
   }
 }
 
@@ -124,7 +114,6 @@
     --caretip-hero-headline-measure: min(100%, 24.5rem);
     --caretip-hero-body-measure: min(100%, 36rem);
     --caretip-hero-art-max-w: min(100%, 24rem);
-    --caretip-hero-art-max-h: min(34rem, 58vh);
   }
 }
 
@@ -132,8 +121,7 @@
   .caretip-landing .caretip-hero-grid {
     --caretip-hero-headline-measure: min(100%, 30ch);
     --caretip-hero-body-measure: min(100%, 36rem);
-    --caretip-hero-art-max-w: min(100%, 28rem);
-    --caretip-hero-art-max-h: min(44rem, 82vh);
+    --caretip-hero-art-max-w: min(100%, 29rem);
     display: grid;
     grid-template-columns: minmax(0, 0.96fr) minmax(0, 1.04fr);
     align-items: center;
@@ -160,8 +148,7 @@
   .caretip-landing .caretip-hero-grid {
     --caretip-hero-headline-measure: min(100%, 31ch);
     --caretip-hero-body-measure: min(100%, 37.5rem);
-    --caretip-hero-art-max-w: min(100%, 30rem);
-    --caretip-hero-art-max-h: min(46rem, 84vh);
+    --caretip-hero-art-max-w: min(100%, 31rem);
     column-gap: clamp(2rem, 4vw, 3.5rem);
   }
 }
@@ -169,8 +156,7 @@
 @media (min-width: 1440px) {
   .caretip-landing .caretip-hero-grid {
     --caretip-hero-headline-measure: min(100%, 30ch);
-    --caretip-hero-art-max-w: min(100%, 32rem);
-    --caretip-hero-art-max-h: min(48rem, 86vh);
+    --caretip-hero-art-max-w: min(100%, 32.5rem);
   }
 }
 

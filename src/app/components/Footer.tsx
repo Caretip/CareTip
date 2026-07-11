@@ -38,13 +38,6 @@ export const Footer = memo(function Footer({
         { name: t("footer.linkPricing"), to: "/pricing" },
         { name: t("footer.linkHowItWorks"), to: "/how-it-works" },
       ],
-      industries: [
-        { name: t("footer.linkIndustryHospitality"), to: "/#industries" },
-        { name: t("footer.linkIndustryHealthcare"), to: "/#industries" },
-        { name: t("footer.linkIndustryDelivery"), to: "/#industries" },
-        { name: t("footer.linkIndustryBeauty"), to: "/#industries" },
-        { name: t("footer.linkIndustryTrades"), to: "/#industries" },
-      ],
       company: [
         { name: t("footer.linkAbout"), to: "/about" },
         { name: t("footer.linkContact"), to: "/contact" },
@@ -53,6 +46,7 @@ export const Footer = memo(function Footer({
         { name: t("footer.privacy"), to: "/privacy" },
         { name: t("footer.terms"), to: "/terms" },
         { name: t("footer.cookies"), to: "/cookies" },
+        { name: t("footer.imprint"), to: "/imprint" },
       ],
     }),
     [t, i18n.language],
@@ -103,8 +97,8 @@ export const Footer = memo(function Footer({
       />
 
       <div className="relative mx-auto max-w-7xl px-4 py-12 sm:px-6 sm:py-16 lg:px-8">
-        <div className="caretip-site-footer-columns mb-12 grid grid-cols-2 gap-9 sm:mb-16 sm:gap-11 md:grid-cols-3 lg:grid-cols-12 lg:gap-8">
-          <div className="col-span-2 space-y-6 lg:col-span-4">
+        <div className="caretip-site-footer-columns mb-12 grid grid-cols-2 gap-9 sm:mb-16 sm:gap-11 lg:grid-cols-12 lg:gap-10">
+          <div className="col-span-2 space-y-6 lg:col-span-5">
             <h3 className="text-xl font-bold text-white">{t("footer.brandTitle")}</h3>
             <LandingCopySentences
               text={t("footer.brandBlurb")}
@@ -147,31 +141,32 @@ export const Footer = memo(function Footer({
             </div>
           </div>
 
-          {(
-            [
-              { key: "product", title: t("footer.colProduct"), links: footerColumns.product },
-              { key: "industries", title: t("footer.colIndustries"), links: footerColumns.industries },
-              { key: "company", title: t("footer.colCompany"), links: footerColumns.company },
-              { key: "legal", title: t("footer.colLegal"), links: footerColumns.legal },
-            ] as const
-          ).map((col) => (
-            <div key={col.key} className="caretip-site-footer-col space-y-5 lg:col-span-2">
-              <h4 className="text-sm font-semibold uppercase tracking-wider text-white">{col.title}</h4>
-              <ul className="space-y-3.5">
-                {col.links.map((link) => (
-                  <li key={`${col.key}-${link.to}-${link.name}`}>
-                    <PrefetchLink
-                      to={link.to}
-                      className="caretip-site-footer-link inline-block text-sm text-neutral-400 transition-[color,opacity] duration-300 ease-out hover:text-white/95 touch-manipulation"
-                      onClick={link.to.startsWith("/#") ? undefined : handleLinkClick}
-                    >
-                      {link.name}
-                    </PrefetchLink>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ))}
+          <div className="caretip-site-footer-link-columns col-span-2 grid grid-cols-1 gap-9 sm:grid-cols-2 sm:gap-11 lg:col-span-7 lg:grid-cols-3 lg:gap-12">
+            {(
+              [
+                { key: "product", title: t("footer.colProduct"), links: footerColumns.product },
+                { key: "company", title: t("footer.colCompany"), links: footerColumns.company },
+                { key: "legal", title: t("footer.colLegal"), links: footerColumns.legal },
+              ] as const
+            ).map((col) => (
+              <div key={col.key} className="caretip-site-footer-col space-y-5">
+                <h4 className="text-sm font-semibold uppercase tracking-wider text-white">{col.title}</h4>
+                <ul className="space-y-3.5">
+                  {col.links.map((link) => (
+                    <li key={`${col.key}-${link.to}-${link.name}`}>
+                      <PrefetchLink
+                        to={link.to}
+                        className="caretip-site-footer-link inline-block text-sm text-neutral-400 transition-[color,opacity] duration-300 ease-out hover:text-white/95 touch-manipulation"
+                        onClick={handleLinkClick}
+                      >
+                        {link.name}
+                      </PrefetchLink>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </div>
         </div>
 
         <div className="caretip-site-footer-bottom border-t border-white/[0.06] pt-8">

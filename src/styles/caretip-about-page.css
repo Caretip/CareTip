@@ -12,6 +12,7 @@
   --caretip-about-dark-rgb: 22 20 18;
   --caretip-about-inner-max: min(100%, 72rem);
   --caretip-about-prose-max: min(100%, 40rem);
+  background: hsl(var(--background));
 }
 
 .caretip-about-page--wise > * {
@@ -39,6 +40,9 @@
 }
 
 .caretip-about-hero-wise__band {
+  margin-inline: var(--caretip-wise-inset-margin);
+  border-radius: var(--caretip-wise-inset-radius);
+  overflow: hidden;
   background: linear-gradient(
     180deg,
     rgb(var(--caretip-about-accent-rgb) / 0.22) 0%,
@@ -96,11 +100,11 @@ html.dark .caretip-about-hero-wise__band {
 }
 
 .caretip-about-split--product {
-  background: hsl(var(--secondary) / 0.28);
+  background: hsl(var(--background));
 }
 
 html.dark .caretip-about-split--product {
-  background: hsl(var(--secondary) / 0.18);
+  background: hsl(var(--background));
 }
 
 .caretip-about-split__grid {
@@ -185,7 +189,7 @@ html.dark .caretip-about-split--product {
   width: 100%;
   max-width: min(100%, 22rem);
   height: auto;
-  border-radius: 0.25rem;
+  border-radius: var(--caretip-wise-editorial-radius);
   object-fit: cover;
   aspect-ratio: 4 / 3;
 }
@@ -355,11 +359,11 @@ html.dark .caretip-about-split--product {
 /* —— Numbered belief cards (template: THREE THINGS) —— */
 .caretip-about-beliefs {
   padding-block: clamp(3.5rem, 8vw, 5.5rem);
-  background: hsl(var(--secondary) / 0.35);
+  background: hsl(var(--background));
 }
 
 html.dark .caretip-about-beliefs {
-  background: hsl(var(--secondary) / 0.2);
+  background: hsl(var(--background));
 }
 
 .caretip-about-beliefs--trust {
@@ -401,7 +405,7 @@ html.dark .caretip-about-beliefs {
   flex-direction: column;
   min-height: 100%;
   padding: clamp(1.5rem, 3vw, 2rem);
-  border-radius: 0.25rem;
+  border-radius: var(--caretip-wise-editorial-radius);
   background: hsl(var(--card));
   border: 1px solid hsl(var(--border) / 0.7);
   box-shadow: 0 1px 2px rgb(15 23 42 / 0.04);
@@ -433,46 +437,6 @@ html.dark .caretip-about-beliefs {
 }
 
 /* —— CTA dark band (template: SEE HOW OUR CUSTOMERS) —— */
-.caretip-about-cta-wise {
-  background: var(--caretip-about-dark);
-  color: rgb(250 250 250);
-  margin-top: 0;
-}
-
-.caretip-about-cta-wise__inner {
-  padding-block: clamp(3.5rem, 8vw, 5.5rem);
-  text-align: center;
-}
-
-.caretip-about-cta-wise__title {
-  margin: 0 auto;
-  max-width: min(100%, 36rem);
-  font-family: var(--font-hero-display, inherit);
-  font-size: clamp(1.5rem, 4vw, 2.5rem);
-  font-weight: 800;
-  line-height: 1.12;
-  letter-spacing: -0.03em;
-  text-transform: uppercase;
-  text-wrap: balance;
-  color: var(--caretip-about-accent-muted);
-}
-
-.caretip-about-cta-wise__actions {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 0.875rem;
-  margin-top: clamp(1.75rem, 4vw, 2.25rem);
-}
-
-@media (min-width: 640px) {
-  .caretip-about-cta-wise__actions {
-    flex-direction: row;
-    gap: 1rem;
-  }
-}
-
 .caretip-about-cta-wise__secondary {
   display: inline-flex;
   align-items: center;

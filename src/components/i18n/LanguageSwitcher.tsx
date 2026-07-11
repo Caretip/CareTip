@@ -1,4 +1,4 @@
-import { useState, useCallback, memo } from "react";
+import { useState, useCallback, memo, useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { Check, Globe } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -25,17 +25,18 @@ export const LanguageSwitcher = memo(function LanguageSwitcher({
   const isInline = variant === "inline";
   const isDrawer = variant === "drawer";
   const isDashboard = variant === "dashboard";
+  const useSemanticSurface = isDashboard || isDrawer;
 
   const triggerBase =
     "touch-manipulation inline-flex min-h-10 items-center gap-2 rounded-full border px-3 py-2 text-[15px] font-semibold tracking-tight transition-[colors,opacity,box-shadow] outline-none focus-visible:ring-2 focus-visible:ring-offset-2 active:opacity-90 lg:min-h-9 lg:text-sm lg:px-3.5";
 
-  const triggerStyles = isDashboard
+  const triggerStyles = useSemanticSurface
     ? "border-border bg-card text-foreground shadow-sm hover:bg-muted/60 focus-visible:ring-ring focus-visible:ring-offset-background"
     : isInline
     ? "border-white/25 bg-white/10 text-white shadow-[0_1px_0_rgba(255,255,255,0.08)_inset] hover:border-white/35 hover:bg-white/[0.14] focus-visible:ring-white/40 focus-visible:ring-offset-neutral-950"
     : "border-neutral-200/90 bg-white text-neutral-900 shadow-[0_1px_0_rgba(255,255,255,0.9)_inset,0_4px_14px_rgba(15,23,42,0.06)] hover:border-neutral-300 hover:bg-neutral-50/90 focus-visible:ring-[#e9781c]/35 focus-visible:ring-offset-background";
 
-  const menuSurface = isDashboard
+  const menuSurface = useSemanticSurface
     ? "border-border bg-popover p-1.5 text-popover-foreground shadow-xl"
     : isInline
     ? "border-white/15 bg-neutral-950/98 p-1.5 text-white shadow-xl backdrop-blur-md"
@@ -44,13 +45,13 @@ export const LanguageSwitcher = memo(function LanguageSwitcher({
   const rowBase =
     "flex w-full items-center justify-between gap-3 rounded-lg px-3 py-2.5 text-left text-[15px] font-semibold transition-colors lg:text-sm";
 
-  const rowIdle = isDashboard
+  const rowIdle = useSemanticSurface
     ? "text-muted-foreground hover:bg-muted"
     : isInline
     ? "text-neutral-200 hover:bg-white/10"
     : "text-neutral-700 hover:bg-neutral-100";
 
-  const rowActive = isDashboard
+  const rowActive = useSemanticSurface
     ? "bg-primary/10 text-foreground"
     : isInline
     ? "bg-white/12 text-white"
@@ -75,25 +76,59 @@ export const LanguageSwitcher = memo(function LanguageSwitcher({
       .finally(() => setPendingLang(null));
   }, []);
 
+  const closeMenu = useCallback(() => setOpen(false), []);
+  const drawerRootRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!isDrawer || !open) return;
+
+    const onPointerDown = (event: PointerEvent) => {
+      if (!drawerRootRef.current?.contains(event.target as Node)) closeMenu();
+    };
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        event.stopPropagation();
+        closeMenu();
+      }
+    };
+
+    document.addEventListener("pointerdown", onPointerDown);
+    window.addEventListener("keydown", onKeyDown, true);
+    return () => {
+      document.removeEventListener("pointerdown", onPointerDown);
+      window.removeEventListener("keydown", onKeyDown, true);
+    };
+  }, [isDrawer, open, closeMenu]);
+
   if (isDrawer) {
     return (
-      <div className={cn("w-full", className)}>
+      <div
+        ref={drawerRootRef}
+        className={cn("relative shrink-0", className)}
+        data-mobile-nav-toolbar-menu-open={open ? "true" : undefined}
+      >
         <button
           type="button"
           className={cn(
-            "caretip-public-mobile-nav-drawer__lang-trigger",
-            "flex w-full min-h-12 items-center gap-3 rounded-xl px-1 text-left text-base font-medium text-foreground transition-colors hover:bg-muted/50 active:bg-muted/70",
+            triggerBase,
+            triggerStyles,
+            "caretip-public-mobile-nav-drawer__lang-trigger min-h-10 min-w-10 shrink-0 px-3",
           )}
           aria-label={t("nav.language")}
           aria-expanded={open}
-          onClick={() => setOpen((v) => !v)}
+          aria-haspopup="listbox"
+          onClick={() => setOpen((value) => !value)}
         >
-          <Globe className="h-5 w-5 shrink-0 text-muted-foreground" aria-hidden />
+          <Globe className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden />
           <span className="tabular-nums">{displayLang === "de" ? "DE" : "EN"}</span>
         </button>
         {open ? (
           <div
-            className="mt-1 flex flex-col gap-0.5 rounded-xl border border-border/60 bg-muted/30 p-1"
+            className={cn(
+              "absolute right-0 top-[calc(100%+0.5rem)] z-20 flex min-w-[12.5rem] flex-col gap-0.5 rounded-xl border p-1.5 shadow-xl",
+              menuSurface,
+            )}
             role="listbox"
             aria-label={t("nav.language")}
           >
@@ -101,30 +136,24 @@ export const LanguageSwitcher = memo(function LanguageSwitcher({
               type="button"
               role="option"
               aria-selected={displayLang === "en"}
-              className={cn(
-                "flex min-h-11 w-full items-center justify-between rounded-lg px-3 text-left text-[15px] font-semibold transition-colors",
-                displayLang === "en" ? "bg-[#fff6e8] text-neutral-900" : "text-neutral-700 hover:bg-muted/80",
-              )}
+              className={cn(rowBase, displayLang === "en" ? rowActive : rowIdle)}
               onClick={() => setLang("en")}
             >
               <span>{t("nav.languageEnglish")}</span>
               {displayLang === "en" ? (
-                <Check className="h-4 w-4 shrink-0 text-[#b45309]" strokeWidth={2.5} aria-hidden />
+                <Check className="h-4 w-4 shrink-0 text-primary" strokeWidth={2.5} aria-hidden />
               ) : null}
             </button>
             <button
               type="button"
               role="option"
               aria-selected={displayLang === "de"}
-              className={cn(
-                "flex min-h-11 w-full items-center justify-between rounded-lg px-3 text-left text-[15px] font-semibold transition-colors",
-                displayLang === "de" ? "bg-[#fff6e8] text-neutral-900" : "text-neutral-700 hover:bg-muted/80",
-              )}
+              className={cn(rowBase, displayLang === "de" ? rowActive : rowIdle)}
               onClick={() => setLang("de")}
             >
               <span>{t("nav.languageGerman")}</span>
               {displayLang === "de" ? (
-                <Check className="h-4 w-4 shrink-0 text-[#b45309]" strokeWidth={2.5} aria-hidden />
+                <Check className="h-4 w-4 shrink-0 text-primary" strokeWidth={2.5} aria-hidden />
               ) : null}
             </button>
           </div>
@@ -143,7 +172,7 @@ export const LanguageSwitcher = memo(function LanguageSwitcher({
           aria-expanded={open}
           aria-haspopup="dialog"
         >
-          <Globe className={cn("h-4 w-4 shrink-0 opacity-90", isInline ? "text-white/90" : isDashboard ? "text-muted-foreground" : "text-neutral-600")} aria-hidden />
+          <Globe className={cn("h-4 w-4 shrink-0 opacity-90", isInline ? "text-white/90" : useSemanticSurface ? "text-muted-foreground" : "text-neutral-600")} aria-hidden />
           <span className="tabular-nums">{displayLang === "de" ? "DE" : "EN"}</span>
         </button>
       </PopoverTrigger>
@@ -164,7 +193,7 @@ export const LanguageSwitcher = memo(function LanguageSwitcher({
             <span>{t("nav.languageEnglish")}</span>
             {displayLang === "en" ? (
               <Check
-                className={cn("h-4 w-4 shrink-0", isInline ? "text-amber-300" : isDashboard ? "text-primary" : "text-[#b45309]")}
+                className={cn("h-4 w-4 shrink-0", isInline ? "text-amber-300" : useSemanticSurface ? "text-primary" : "text-[#b45309]")}
                 strokeWidth={2.5}
                 aria-hidden
               />
@@ -180,7 +209,7 @@ export const LanguageSwitcher = memo(function LanguageSwitcher({
             <span>{t("nav.languageGerman")}</span>
             {displayLang === "de" ? (
               <Check
-                className={cn("h-4 w-4 shrink-0", isInline ? "text-amber-300" : isDashboard ? "text-primary" : "text-[#b45309]")}
+                className={cn("h-4 w-4 shrink-0", isInline ? "text-amber-300" : useSemanticSurface ? "text-primary" : "text-[#b45309]")}
                 strokeWidth={2.5}
                 aria-hidden
               />

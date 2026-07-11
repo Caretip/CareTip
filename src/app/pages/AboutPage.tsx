@@ -6,7 +6,6 @@ import { AboutCompanyStorySection } from "@/components/public/about/AboutCompany
 import { AboutMissionSection } from "@/components/public/about/AboutMissionSection";
 import { AboutTrustSection } from "@/components/public/about/AboutTrustSection";
 import { publicPagesBrandUi } from "@/components/public/publicPagesBrandUi";
-import { cn } from "@/lib/utils";
 import { usePublicMountProbe } from "@/lib/publicMountProbe";
 
 export function AboutPage() {
@@ -14,10 +13,10 @@ export function AboutPage() {
   const { t } = useTranslation();
 
   return (
-    <PublicPageShell maxWidth="full" contentClassName="pb-0">
+    <PublicPageShell maxWidth="full" contentClassName="pb-0" className="bg-background">
       <main
         id="about"
-        className={cn("caretip-about-page caretip-about-page--wise", publicPagesBrandUi.pageAccent)}
+        className="caretip-about-page caretip-about-page--wise"
         aria-label={t("staticPages.about.pageAria")}
       >
         <AboutPageHero />

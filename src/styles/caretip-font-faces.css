@@ -1,9 +1,8 @@
 /**
- * Self-hosted Inter + Manrope — loaded before app CSS via index.css.
- * Files live in public/fonts/ (see scripts/sync-font-assets.mjs).
+ * Self-hosted Manrope + metric fallbacks for index.html first paint.
+ * Inter loads via Vite bundle: src/styles/caretip-inter-vite.css
  */
 
-/* Metric-matched fallbacks — reduce layout shift when webfonts swap in */
 @font-face {
   font-family: "Inter Fallback";
   src: local("Segoe UI"), local("Arial"), local("Helvetica Neue"), local("Helvetica");
@@ -20,46 +19,6 @@
   ascent-override: 91%;
   descent-override: 23%;
   line-gap-override: 0%;
-}
-
-@font-face {
-  font-family: "Inter";
-  font-style: normal;
-  font-weight: 400;
-  font-display: swap;
-  src: url("/fonts/inter/inter-latin-400.woff2") format("woff2");
-}
-
-@font-face {
-  font-family: "Inter";
-  font-style: normal;
-  font-weight: 500;
-  font-display: swap;
-  src: url("/fonts/inter/inter-latin-500.woff2") format("woff2");
-}
-
-@font-face {
-  font-family: "Inter";
-  font-style: normal;
-  font-weight: 600;
-  font-display: swap;
-  src: url("/fonts/inter/inter-latin-600.woff2") format("woff2");
-}
-
-@font-face {
-  font-family: "Inter";
-  font-style: normal;
-  font-weight: 700;
-  font-display: swap;
-  src: url("/fonts/inter/inter-latin-700.woff2") format("woff2");
-}
-
-@font-face {
-  font-family: "Inter";
-  font-style: normal;
-  font-weight: 800;
-  font-display: swap;
-  src: url("/fonts/inter/inter-latin-800.woff2") format("woff2");
 }
 
 @font-face {

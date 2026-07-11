@@ -9,7 +9,8 @@
 .caretip-how-hero-v2__shell {
   position: relative;
   overflow: hidden;
-  border-radius: 1.25rem;
+  margin-inline: var(--caretip-wise-inset-margin);
+  border-radius: var(--caretip-wise-inset-radius);
   border: 1px solid rgb(229 229 229 / 0.85);
   background: linear-gradient(
     165deg,
@@ -611,10 +612,6 @@ html.dark .caretip-how-hero-v2__feature-label {
 }
 
 @media (max-width: 639px) {
-  .caretip-how-hero-v2__shell {
-    border-radius: 1rem;
-  }
-
   .caretip-how-hero-v2__title {
     max-width: 12ch;
   }

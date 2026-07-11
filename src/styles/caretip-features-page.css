@@ -9,6 +9,7 @@
   --caretip-features-dark: #161412;
   --caretip-features-dark-rgb: 22 20 18;
   --caretip-features-inner-max: min(100%, 72rem);
+  background: hsl(var(--background));
 }
 
 .caretip-features-page--wise > * {
@@ -36,6 +37,9 @@
 }
 
 .caretip-features-hero-wise__band {
+  margin-inline: var(--caretip-wise-inset-margin);
+  border-radius: var(--caretip-wise-inset-radius);
+  overflow: hidden;
   background: linear-gradient(
     180deg,
     rgb(var(--caretip-features-accent-rgb) / 0.22) 0%,
@@ -103,11 +107,11 @@ html.dark .caretip-features-hero-wise__band {
 }
 
 .caretip-features-grid-wise--standard {
-  background: hsl(var(--secondary) / 0.28);
+  background: hsl(var(--background));
 }
 
 html.dark .caretip-features-grid-wise--standard {
-  background: hsl(var(--secondary) / 0.18);
+  background: hsl(var(--background));
 }
 
 .caretip-features-grid-wise__grid {
@@ -141,7 +145,7 @@ html.dark .caretip-features-grid-wise--standard {
 
 /* Editorial card polish (About belief-card feel) */
 .caretip-features-page--wise .caretip-feature-showcase-card {
-  border-radius: 0.25rem;
+  border-radius: var(--caretip-wise-editorial-radius);
   border-color: hsl(var(--border) / 0.7);
   box-shadow: 0 1px 2px rgb(15 23 42 / 0.04);
 }
@@ -154,46 +158,6 @@ html.dark .caretip-features-grid-wise--standard {
 }
 
 /* —— CTA dark band —— */
-.caretip-features-cta-wise {
-  background: var(--caretip-features-dark);
-  color: rgb(250 250 250);
-  margin-top: 0;
-}
-
-.caretip-features-cta-wise__inner {
-  padding-block: clamp(3.5rem, 8vw, 5.5rem);
-  text-align: center;
-}
-
-.caretip-features-cta-wise__title {
-  margin: 0 auto;
-  max-width: min(100%, 36rem);
-  font-family: var(--font-hero-display, inherit);
-  font-size: clamp(1.5rem, 4vw, 2.5rem);
-  font-weight: 800;
-  line-height: 1.12;
-  letter-spacing: -0.03em;
-  text-transform: uppercase;
-  text-wrap: balance;
-  color: var(--caretip-features-accent-muted);
-}
-
-.caretip-features-cta-wise__actions {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 0.875rem;
-  margin-top: clamp(1.75rem, 4vw, 2.25rem);
-}
-
-@media (min-width: 640px) {
-  .caretip-features-cta-wise__actions {
-    flex-direction: row;
-    gap: 1rem;
-  }
-}
-
 .caretip-features-cta-wise__secondary {
   display: inline-flex;
   align-items: center;

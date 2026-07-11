@@ -132,22 +132,8 @@
 
 /* —— Warm-dark CTA (mobile) —— */
 @media (max-width: 639px) {
-  .caretip-public-warm-dark-cta {
-    padding: 2rem 1.25rem;
-    border-radius: 1rem;
-  }
-
   .caretip-public-warm-dark-cta__title {
-    font-size: 1.5rem;
-    line-height: 1.1;
-    max-width: 14ch;
-    margin-inline: auto;
-  }
-
-  .caretip-public-warm-dark-cta__body {
-    font-size: 0.9375rem;
-    line-height: 1.6;
-    max-width: 28ch;
+    max-width: min(100%, 36rem);
   }
 }
 

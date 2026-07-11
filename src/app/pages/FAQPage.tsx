@@ -6,7 +6,6 @@ import { PublicPageShell } from "@/components/public/PublicPageShell";
 import { FaqPageHero } from "@/components/public/faq/FaqPageHero";
 import { FaqAccordionItem } from "@/components/public/faq/FaqAccordionItem";
 import { publicPagesBrandUi } from "@/components/public/publicPagesBrandUi";
-import { cn } from "@/lib/utils";
 
 function FaqAnswerWithLead({ lead, body }: { lead: string; body: string }) {
   return (
@@ -85,10 +84,10 @@ export function FAQPage() {
   };
 
   return (
-    <PublicPageShell maxWidth="full" contentClassName="pb-0">
+    <PublicPageShell maxWidth="full" contentClassName="pb-0" className="bg-background">
       <main
         id="faq"
-        className={cn("caretip-faq-page caretip-faq-page--wise", publicPagesBrandUi.pageAccent)}
+        className="caretip-faq-page caretip-faq-page--wise"
         aria-label={t("staticPages.faq.pageTitle")}
       >
         <FaqPageHero />
@@ -135,14 +134,16 @@ export function FAQPage() {
         </section>
 
         <section className="caretip-faq-cta-wise" aria-labelledby="faq-cta-title">
-          <div className="caretip-faq-page__inner caretip-faq-cta-wise__inner">
+          <div className="caretip-faq-cta-wise__inner">
             <h2 id="faq-cta-title" className="caretip-faq-cta-wise__title">
               {t("staticPages.faq.ctaTitle")}
             </h2>
             <p className="caretip-faq-cta-wise__body">{t("staticPages.faq.ctaBody")}</p>
-            <Link to="/contact" className={publicPagesBrandUi.ctaButtonPrimary}>
-              {t("staticPages.faq.ctaButton")}
-            </Link>
+            <div className="caretip-faq-cta-wise__actions">
+              <Link to="/contact" className={publicPagesBrandUi.ctaButtonPrimary}>
+                {t("staticPages.faq.ctaButton")}
+              </Link>
+            </div>
           </div>
         </section>
       </main>
