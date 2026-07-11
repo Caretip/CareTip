@@ -4,20 +4,35 @@ import { ExternalLink, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { createBillingPortalSession } from "../../../../lib/api";
 import { toUserFriendlyMessage } from "../../../../lib/errorMessages";
+import {
+  APP_LOADING_PRIORITY,
+  useAppLoadingRegistration,
+} from "../../../../lib/globalAppLoading";
+import { performExternalStripeRedirect } from "../../../../lib/externalStripeRedirect";
 import { Button } from "@/components/ui/button";
 
 export function BillingInvoicesPanel() {
   const { t } = useTranslation();
   const [busy, setBusy] = useState(false);
 
+  useAppLoadingRegistration(
+    "billing-invoices-portal",
+    APP_LOADING_PRIORITY.APP_INIT,
+    busy,
+    t("common.loading.checkout"),
+  );
+
   async function openPortal() {
     setBusy(true);
     try {
       const { url } = await createBillingPortalSession();
-      window.location.assign(url);
+      const redirect = performExternalStripeRedirect(url, "portal");
+      if (!redirect.ok) {
+        toast.error(t("business.billing.portalError"));
+        setBusy(false);
+      }
     } catch (err) {
       toast.error(toUserFriendlyMessage(err) || t("business.billing.portalError"));
-    } finally {
       setBusy(false);
     }
   }

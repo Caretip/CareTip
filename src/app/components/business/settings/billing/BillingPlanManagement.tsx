@@ -32,6 +32,7 @@ import {
   useAppLoadingRegistration,
 } from "../../../../lib/globalAppLoading";
 import { formatBillingDate, resolveBillingLocale } from "./billingFormatters";
+import { performExternalStripeRedirect } from "../../../../lib/externalStripeRedirect";
 
 type Props = {
   billing: BillingStatus;
@@ -73,14 +74,13 @@ export function BillingPlanManagement({ billing, billingCycle, onChanged }: Prop
         includeTrial,
         checkoutFlow: "billing",
       });
-      if (session.url) {
-        window.location.assign(session.url);
-        return;
+      const redirect = performExternalStripeRedirect(session.url, "checkout");
+      if (!redirect.ok) {
+        toast.error(t("business.billing.checkoutNoUrl"));
+        setBusyPlan(null);
       }
-      toast.error(t("business.billing.checkoutNoUrl"));
     } catch (err) {
       toast.error(toUserFriendlyMessage(err) || t("business.billing.checkoutError"));
-    } finally {
       setBusyPlan(null);
     }
   }
@@ -89,10 +89,13 @@ export function BillingPlanManagement({ billing, billingCycle, onChanged }: Prop
     setBusyPlan("portal");
     try {
       const { url } = await createBillingPortalSession();
-      window.location.assign(url);
+      const redirect = performExternalStripeRedirect(url, "portal");
+      if (!redirect.ok) {
+        toast.error(t("business.billing.portalError"));
+        setBusyPlan(null);
+      }
     } catch (err) {
       toast.error(toUserFriendlyMessage(err) || t("business.billing.portalError"));
-    } finally {
       setBusyPlan(null);
     }
   }

@@ -20,6 +20,7 @@ import { isOnboardingCompleted, resolveResumeOnboardingStep } from "../lib/onboa
 import { toUserFriendlyMessage } from "../lib/errorMessages";
 import { isApiSubscriptionRequiredError } from "../lib/apiError";
 import { logClientError } from "../lib/clientLog";
+import { performExternalStripeRedirect } from "../lib/externalStripeRedirect";
 import { cn } from "@/lib/utils";
 import type { OnboardingStep } from "../components/business/BusinessOnboardingProgress";
 import {
@@ -228,6 +229,7 @@ export function BusinessOnboardingPage() {
       if (step !== 3) {
         await saveStep(step);
         setStep((s) => (s === 1 ? 2 : 3));
+        setBusy(false);
         return;
       }
       const updated = await setHasCompletedOnboarding(true);
@@ -235,6 +237,7 @@ export function BusinessOnboardingPage() {
       if (!refreshed) {
         toast.success(t("business.onboarding.toastSavedLoadingDashboard"));
         navigate("/dashboard", { replace: true });
+        setBusy(false);
         return;
       }
 
@@ -253,8 +256,8 @@ export function BusinessOnboardingPage() {
             checkoutFlow: "onboarding",
           });
           clearCheckoutIntent();
-          if (session.url) {
-            window.location.assign(session.url);
+          const redirect = performExternalStripeRedirect(session.url, "checkout");
+          if (redirect.ok) {
             return;
           }
           toast.error(t("business.billing.checkoutNoUrl"));
@@ -264,14 +267,15 @@ export function BusinessOnboardingPage() {
       }
 
       navigate(getPostAuthRedirect(refreshed), { replace: true });
+      setBusy(false);
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
       if (msg.includes("Authentication required") || msg.includes("Invalid or expired token")) {
         handleAuthFailure();
+        setBusy(false);
         return;
       }
       toast.error(toUserFriendlyMessage(err));
-    } finally {
       setBusy(false);
     }
   };

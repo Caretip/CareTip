@@ -21,6 +21,7 @@ import {
   DialogTitle,
 } from "@/app/components/ui/dialog";
 import { dashboardWorkspaceUi } from "@/app/components/dashboard/dashboardWorkspaceUi";
+import { performExternalStripeRedirect } from "@/app/lib/externalStripeRedirect";
 
 type BillingTrialPlanDialogProps = {
   open: boolean;
@@ -53,14 +54,13 @@ export function BillingTrialPlanDialog({
         includeTrial: true,
         checkoutFlow: "billing",
       });
-      if (session.url) {
-        window.location.assign(session.url);
-        return;
+      const redirect = performExternalStripeRedirect(session.url, "checkout");
+      if (!redirect.ok) {
+        toast.error(t("business.billing.checkoutNoUrl"));
+        setBusy(false);
       }
-      toast.error(t("business.billing.checkoutNoUrl"));
     } catch (err) {
       toast.error(toUserFriendlyMessage(err) || t("business.billing.checkoutError"));
-    } finally {
       setBusy(false);
     }
   }
@@ -203,14 +203,13 @@ function BillingTrialExpiredUpgrade({ billingCycle }: { billingCycle: "monthly" 
         includeTrial: false,
         checkoutFlow: "billing",
       });
-      if (session.url) {
-        window.location.assign(session.url);
-        return;
+      const redirect = performExternalStripeRedirect(session.url, "checkout");
+      if (!redirect.ok) {
+        toast.error(t("business.billing.checkoutNoUrl"));
+        setBusy(false);
       }
-      toast.error(t("business.billing.checkoutNoUrl"));
     } catch (err) {
       toast.error(toUserFriendlyMessage(err) || t("business.billing.checkoutError"));
-    } finally {
       setBusy(false);
     }
   }

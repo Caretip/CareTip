@@ -7,6 +7,11 @@ import { createBillingCheckoutSession } from "@/app/lib/api";
 import { toUserFriendlyMessage } from "@/app/lib/errorMessages";
 import { useBillingStatus } from "@/app/hooks/useBillingStatus";
 import { BILLING_SUBSCRIPTION_PATH } from "@/app/lib/activateCareTipNavigation";
+import {
+  APP_LOADING_PRIORITY,
+  useAppLoadingRegistration,
+} from "@/app/lib/globalAppLoading";
+import { performExternalStripeRedirect } from "@/app/lib/externalStripeRedirect";
 import { cn } from "@/lib/utils";
 
 const PRO_UPGRADE_FEATURE_KEYS = [
@@ -28,6 +33,13 @@ export function ProUpgradeCard({ className }: ProUpgradeCardProps) {
   const { data: billing } = useBillingStatus();
   const [checkoutBusy, setCheckoutBusy] = useState(false);
 
+  useAppLoadingRegistration(
+    "pro-upgrade-checkout",
+    APP_LOADING_PRIORITY.APP_INIT,
+    checkoutBusy,
+    t("common.loading.checkout"),
+  );
+
   const trialEligible = Boolean(
     billing?.trialEligible && billing.billingEnabled && billing.stripeConfigured,
   );
@@ -42,14 +54,13 @@ export function ProUpgradeCard({ className }: ProUpgradeCardProps) {
         includeTrial,
         checkoutFlow: "billing",
       });
-      if (session.url) {
-        window.location.assign(session.url);
-        return;
+      const redirect = performExternalStripeRedirect(session.url, "checkout");
+      if (!redirect.ok) {
+        toast.error(t("business.billing.checkoutNoUrl"));
+        setCheckoutBusy(false);
       }
-      toast.error(t("business.billing.checkoutNoUrl"));
     } catch (err) {
       toast.error(toUserFriendlyMessage(err) || t("business.billing.checkoutError"));
-    } finally {
       setCheckoutBusy(false);
     }
   }

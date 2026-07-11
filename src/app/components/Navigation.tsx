@@ -11,7 +11,6 @@ import { useTheme } from "../context/ThemeContext";
 import { LanguageSwitcher } from "@/components/i18n/LanguageSwitcher";
 import { ThemeQuickToggle } from "@/app/components/theme/ThemeQuickToggle";
 import { PrefetchLink } from "./PrefetchLink";
-import { prefetchDashboardRoutes } from "../lib/prefetchAuthenticatedRoutes";
 import { prefetchPrimaryNavRoutes } from "../lib/prefetchPublicRoutes";
 import { usePublicMountProbe } from "@/lib/publicMountProbe";
 import { scheduleMobileDeferredWork } from "@/lib/mobilePerf";
@@ -41,7 +40,6 @@ export const Navigation = memo(function Navigation({ variant = "default" }: { va
     primaryNavPrefetchScheduled = true;
     scheduleMobileDeferredWork(() => {
       prefetchPrimaryNavRoutes();
-      prefetchDashboardRoutes();
     });
   }, []);
 

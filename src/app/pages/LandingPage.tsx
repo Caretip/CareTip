@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { isAiAssistantEnabled } from "../lib/featureFlags";
+import { useLandingShellReady } from "../lib/useLandingShellReady";
 import { Navigation } from "../components/Navigation";
 import { CareTipLandingHero } from "@/components/landing/CareTipLandingHero";
 import { Footer } from "../components/Footer";
@@ -13,6 +14,8 @@ export function LandingPage() {
   const { t, i18n } = useTranslation();
   const [landingRoot, setLandingRoot] = useState<HTMLDivElement | null>(null);
   const isDe = i18n.language?.toLowerCase().startsWith("de");
+
+  useLandingShellReady("about-section");
 
   return (
     <div

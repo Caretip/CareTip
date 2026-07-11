@@ -124,13 +124,22 @@ export function ActivationPlanButtons({
   const navigate = useNavigate();
   const [busy, setBusy] = useState<ActivationCheckoutPlan | null>(null);
 
+  useAppLoadingRegistration(
+    "activation-plan-checkout",
+    APP_LOADING_PRIORITY.APP_INIT,
+    busy === "pro",
+    t("common.loading.checkout"),
+  );
+
   async function handle(plan: ActivationCheckoutPlan) {
     setBusy(plan);
     try {
-      await startActivationCheckout(plan, t, { navigate });
+      const result = await startActivationCheckout(plan, t, { navigate });
+      if (result !== "stripe_navigated") {
+        setBusy(null);
+      }
     } catch (err) {
       toast.error(activationCheckoutErrorMessage(err, t));
-    } finally {
       setBusy(null);
     }
   }

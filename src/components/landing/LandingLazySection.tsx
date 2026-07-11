@@ -2,11 +2,14 @@ import {
   createElement,
   lazy,
   Suspense,
+  useCallback,
   useEffect,
+  useLayoutEffect,
   useRef,
   useState,
   type ComponentType,
   type LazyExoticComponent,
+  type ReactNode,
 } from "react";
 import { isNearViewport, PUBLIC_DEFER_ROOT_MARGIN } from "@/lib/publicRouteDefer";
 
@@ -39,6 +42,21 @@ function getLazySection<P extends object>(
   return LazyComponent;
 }
 
+/** Signals when a lazy section has committed to the DOM (Suspense resolved). */
+function LazySectionMountLatch({
+  onMounted,
+  children,
+}: {
+  onMounted: () => void;
+  children: ReactNode;
+}) {
+  useLayoutEffect(() => {
+    onMounted();
+  }, [onMounted]);
+
+  return children;
+}
+
 /**
  * Mount a landing section only when it nears the viewport.
  * Combines IntersectionObserver gating with React.lazy code-splitting.
@@ -52,7 +70,12 @@ export function LandingLazySection<P extends object>({
 }: LandingLazySectionProps<P>) {
   const hostRef = useRef<HTMLDivElement>(null);
   const [visible, setVisible] = useState(false);
+  const [resolved, setResolved] = useState(false);
   const LazyComponent = getLazySection(load);
+
+  const handleMounted = useCallback(() => {
+    setResolved(true);
+  }, []);
 
   useEffect(() => {
     const node = hostRef.current;
@@ -82,19 +105,25 @@ export function LandingLazySection<P extends object>({
     return () => observer.disconnect();
   }, [rootMargin]);
 
+  const reserveHeight = Boolean(minHeight && !resolved);
+  const heightStyle = reserveHeight ? { minHeight } : undefined;
+
   return (
     <div
       ref={hostRef}
+      data-landing-lazy-host=""
       className={className}
-      style={minHeight && !visible ? { minHeight } : undefined}
-      aria-hidden={!visible ? true : undefined}
+      style={heightStyle}
+      aria-hidden={!visible || !resolved ? true : undefined}
     >
       {visible ? (
         <Suspense fallback={null}>
-          {createElement(
-            LazyComponent as unknown as ComponentType<P>,
-            (props ?? {}) as P & Record<string, unknown>,
-          )}
+          <LazySectionMountLatch onMounted={handleMounted}>
+            {createElement(
+              LazyComponent as unknown as ComponentType<P>,
+              (props ?? {}) as P & Record<string, unknown>,
+            )}
+          </LazySectionMountLatch>
         </Suspense>
       ) : null}
     </div>

@@ -1,14 +1,16 @@
 import i18n from "i18next";
 import { initReactI18next } from "react-i18next";
-import en from "./locales/en.json";
 import { I18N_STORAGE_KEY } from "./constants";
 import {
   beginAppLanguageChange,
   endAppLanguageChange,
 } from "../app/lib/appLanguageLoading";
 import { registerI18nIntegrityDev } from "./i18nIntegrityDev";
+import { scheduleMobileDeferredWork } from "../lib/mobilePerf";
 
 export type AppLanguage = "de" | "en";
+
+type TranslationBundle = Record<string, unknown>;
 
 export function readStoredLanguage(): AppLanguage {
   if (typeof window === "undefined") return "de";
@@ -23,11 +25,23 @@ export function readStoredLanguage(): AppLanguage {
 
 let initPromise: Promise<typeof i18n> | null = null;
 
-async function loadLocaleBundle(lng: AppLanguage): Promise<typeof en> {
-  if (lng === "en") return en;
-  const mod = await import("./locales/de.json");
-  const bundle = (mod as { default?: typeof en }).default ?? (mod as unknown as typeof en);
-  return bundle;
+async function loadLocaleBundle(lng: AppLanguage): Promise<TranslationBundle> {
+  const mod =
+    lng === "en"
+      ? await import("./locales/en.json")
+      : await import("./locales/de.json");
+  return (mod as { default?: TranslationBundle }).default ?? (mod as TranslationBundle);
+}
+
+function scheduleFallbackLocaleLoad(activeLng: AppLanguage): void {
+  const fallbackLng: AppLanguage = activeLng === "de" ? "en" : "de";
+  scheduleMobileDeferredWork(() => {
+    void (async () => {
+      if (i18n.hasResourceBundle(fallbackLng, "translation")) return;
+      const bundle = await loadLocaleBundle(fallbackLng);
+      i18n.addResourceBundle(fallbackLng, "translation", bundle, true, true);
+    })();
+  });
 }
 
 /** Ensure translation resources exist before switching language. */
@@ -55,7 +69,7 @@ export async function changeAppLanguage(lng: AppLanguage): Promise<void> {
 
 /**
  * Initialize i18n before first React render.
- * English ships in the main bundle; German loads as a separate chunk when needed.
+ * Active locale loads first; the alternate locale is deferred to idle.
  */
 export function ensureI18nReady(): Promise<typeof i18n> {
   if (i18n.isInitialized) return Promise.resolve(i18n);
@@ -63,12 +77,10 @@ export function ensureI18nReady(): Promise<typeof i18n> {
 
   initPromise = (async () => {
     const lng = readStoredLanguage();
-    const resources: Record<string, { translation: typeof en }> = {
-      en: { translation: en },
+    const primary = await loadLocaleBundle(lng);
+    const resources: Record<string, { translation: TranslationBundle }> = {
+      [lng]: { translation: primary },
     };
-    if (lng === "de") {
-      resources.de = { translation: await loadLocaleBundle("de") };
-    }
 
     await i18n.use(initReactI18next).init({
       resources,
@@ -78,6 +90,8 @@ export function ensureI18nReady(): Promise<typeof i18n> {
       interpolation: { escapeValue: false },
       react: { useSuspense: false },
     });
+
+    scheduleFallbackLocaleLoad(lng);
 
     i18n.on("languageChanged", (nextLng) => {
       try {

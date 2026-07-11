@@ -1,0 +1,105 @@
+/**
+ * Real-life industry cards — per-image editorial crop (presentation only).
+ * Preserves cover fit, equal media heights, lazy loading, and card chrome.
+ */
+
+/* Unified media frame — slightly taller than 16:10 for faces + interaction bands */
+.caretip-landing #real-life .caretip-real-life-card-image {
+  aspect-ratio: 16 / 11;
+}
+
+/* Card 1 — Doorstep delivery: van grille, windshield QR, front wheel */
+.caretip-landing #real-life .caretip-real-life-card-image--doorstep img {
+  object-fit: cover;
+  object-position: 56% 42%;
+}
+
+/* Card 2 — Hotel reception: both faces + CareTip QR sign on counter */
+.caretip-landing #real-life .caretip-real-life-card-image--reception img {
+  object-fit: cover;
+  object-position: 50% 28%;
+}
+
+/* Card 3 — Independent midwives: caregiver, mother, phone, bassinet */
+.caretip-landing #real-life .caretip-real-life-card-image--midwife {
+  margin-bottom: -1.5rem;
+}
+
+.caretip-landing #real-life .caretip-real-life-card-image--midwife img {
+  object-fit: cover;
+  object-position: 50% 24%;
+  transform: scale(1.06);
+  transform-origin: 50% 20%;
+}
+
+/* Card 4 — Field services: face, smartphone, tool belt */
+.caretip-landing #real-life .caretip-real-life-card-image--field-services img {
+  object-fit: cover;
+  object-position: 50% 38%;
+}
+
+/* Tablet — 2-column grid, moderate horizontal crop */
+@media (min-width: 640px) and (max-width: 1023px) {
+  .caretip-landing #real-life .caretip-real-life-card-image--doorstep img {
+    object-position: 54% 40%;
+  }
+
+  .caretip-landing #real-life .caretip-real-life-card-image--reception img {
+    object-position: 50% 26%;
+  }
+
+  .caretip-landing #real-life .caretip-real-life-card-image--midwife img {
+    object-position: 50% 22%;
+    transform: scale(1.05);
+  }
+
+  .caretip-landing #real-life .caretip-real-life-card-image--field-services img {
+    object-position: 50% 36%;
+  }
+}
+
+/* Mobile — single column, protect lateral subjects */
+@media (max-width: 639px) {
+  .caretip-landing #real-life .caretip-real-life-card-image--doorstep img {
+    object-position: 52% 38%;
+  }
+
+  .caretip-landing #real-life .caretip-real-life-card-image--reception img {
+    object-position: 50% 24%;
+  }
+
+  .caretip-landing #real-life .caretip-real-life-card-image--midwife img {
+    object-position: 48% 20%;
+    transform: scale(1.04);
+  }
+
+  .caretip-landing #real-life .caretip-real-life-card-image--field-services img {
+    object-position: 50% 34%;
+  }
+}
+
+/* Desktop — wider tiles, fine-tune vertical anchor */
+@media (min-width: 1024px) {
+  .caretip-landing #real-life .caretip-real-life-card-image--doorstep img {
+    object-position: 58% 44%;
+  }
+
+  .caretip-landing #real-life .caretip-real-life-card-image--reception img {
+    object-position: 50% 30%;
+  }
+
+  .caretip-landing #real-life .caretip-real-life-card-image--midwife img {
+    object-position: 50% 26%;
+    transform: scale(1.07);
+  }
+
+  .caretip-landing #real-life .caretip-real-life-card-image--field-services img {
+    object-position: 50% 40%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .caretip-landing #real-life .caretip-real-life-card-image--midwife img {
+    transform: none;
+  }
+}

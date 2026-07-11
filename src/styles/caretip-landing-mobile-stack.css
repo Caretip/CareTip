@@ -85,10 +85,6 @@
     border-radius: 0;
   }
 
-  .caretip-landing #real-life .caretip-real-life-card-image {
-    aspect-ratio: 16 / 10;
-  }
-
   .caretip-landing #real-life .caretip-expandable-info-card__media img {
     display: block;
     width: 100%;
@@ -209,19 +205,7 @@
   }
 }
 
-/* Midwife real-life card — all breakpoints */
-.caretip-landing #real-life .caretip-real-life-card-image--midwife {
-  aspect-ratio: 16 / 11;
-  margin-bottom: -1.5rem;
-}
-
-.caretip-landing #real-life .caretip-real-life-card-image--midwife img {
-  object-fit: cover;
-  object-position: 50% 24%;
-  transform: scale(1.08);
-  transform-origin: 50% 18%;
-}
-
+/* Midwife real-life card — body overlap (image crop lives in real-life-image-composition.css) */
 .caretip-landing #real-life .caretip-real-life-card--midwife .caretip-expandable-info-card__body {
   position: relative;
   z-index: 1;
@@ -242,10 +226,4 @@ html.dark .caretip-landing #real-life .caretip-real-life-card--midwife .caretip-
     rgb(10 10 10 / 0.96) 0.75rem,
     rgb(10 10 10 / 1) 1.25rem
   );
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .caretip-landing #real-life .caretip-real-life-card-image--midwife img {
-    transform: none;
-  }
 }

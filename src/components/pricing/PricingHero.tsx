@@ -1,8 +1,10 @@
 import { Gift, Lock, Shield, Sparkles, Zap } from "lucide-react";
+import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import type { PricingCopyScope } from "@/app/data/pricingCopy";
 import { PublicPageBackLink } from "@/components/public/PublicPageBackLink";
 import { PublicPageHeroCard } from "@/components/public/PublicPageHeroCard";
+import { publicPageUi } from "@/components/public/publicPageUi";
 import { cn } from "@/lib/utils";
 
 const FEATURE_KEYS = ["stripe", "ready", "gdpr", "trial"] as const;
@@ -16,6 +18,15 @@ const FEATURE_ICONS = {
 
 const TRUST_ROW_KEYS = ["noHiddenFees", "cancelAnytime", "secureOnboarding", "trustedPayments"] as const;
 
+function splitHeroSubtitle(text: string): { lead: string; body: string } {
+  const match = text.match(/^(.+?[.!?])\s+(.+)$/s);
+  if (!match) {
+    return { lead: text, body: "" };
+  }
+
+  return { lead: match[1], body: match[2] };
+}
+
 type PricingHeroProps = {
   copyScope?: PricingCopyScope;
   className?: string;
@@ -26,72 +37,68 @@ export function PricingHero({ copyScope, className }: PricingHeroProps) {
   const scope = copyScope ?? "staticPages.pricing.audience.general";
   const heroNs = "staticPages.pricing.hero";
 
-  return (
-    <section className={cn("caretip-pricing-hero-v2", className)} aria-labelledby="pricing-hero-title">
-      <div className="caretip-pricing-hero-v2__glow" aria-hidden />
-      <div className="caretip-pricing-hero-v2__inner">
-        <PublicPageBackLink className="caretip-pricing-hero-v2__back mx-auto w-fit" />
+  const pageSubtitle = t(`${scope}.pageSubtitle`, {
+    defaultValue: t("staticPages.pricing.pageSubtitle"),
+  });
+  const { lead, body } = useMemo(() => splitHeroSubtitle(pageSubtitle), [pageSubtitle]);
 
-        <PublicPageHeroCard innerClassName="caretip-pricing-hero-v2__card-inner">
-        <div className="caretip-pricing-hero-v2__badge caretip-pricing-hero-v2__anim">
+  return (
+    <>
+      <section className={cn("caretip-pricing-hero-wise", className)} aria-labelledby="pricing-hero-title">
+        <PublicPageBackLink className="caretip-pricing-hero-wise__back" />
+
+        <div className="caretip-pricing-hero-wise__badge">
           <Sparkles className="size-3.5 shrink-0" aria-hidden />
           <span>{t(`${heroNs}.badge`, { defaultValue: t("staticPages.pricing.hero.badge") })}</span>
         </div>
 
-        <h1 id="pricing-hero-title" className="caretip-pricing-hero-v2__title caretip-pricing-hero-v2__anim">
-          {t("staticPages.pricing.pageTitle")}
-        </h1>
-
-        <p className="caretip-pricing-hero-v2__subtitle caretip-pricing-hero-v2__anim">
-          {t(`${scope}.pageSubtitle`, {
-            defaultValue: t("staticPages.pricing.pageSubtitle"),
-          })}
-        </p>
-
-        <ul
-          className="caretip-pricing-hero-v2__features caretip-pricing-hero-v2__features--flat"
-          aria-label={t(`${heroNs}.featuresAria`)}
-        >
-          {FEATURE_KEYS.map((key, index) => {
-            const Icon = FEATURE_ICONS[key];
-            return (
-              <li
-                key={key}
-                className="caretip-pricing-hero-v2__feature caretip-pricing-hero-v2__anim"
-                style={{ animationDelay: `${120 + index * 55}ms` }}
-              >
-                <span className="caretip-pricing-hero-v2__feature-icon" aria-hidden>
-                  <Icon className="size-[1.125rem]" strokeWidth={2.1} />
-                </span>
-                <div className="min-w-0 text-left">
-                  <p className="caretip-pricing-hero-v2__feature-title">
-                    {t(`${heroNs}.features.${key}.title`)}
-                  </p>
-                  <p className="caretip-pricing-hero-v2__feature-body">
-                    {t(`${heroNs}.features.${key}.body`)}
-                  </p>
-                </div>
-              </li>
-            );
-          })}
-        </ul>
-
-        <ul
-          className="caretip-pricing-hero-v2__trust caretip-pricing-hero-v2__anim"
-          style={{ animationDelay: "340ms" }}
-          aria-label={t(`${heroNs}.trustRow.aria`)}
-        >
-          {TRUST_ROW_KEYS.map((key) => (
-            <li key={key} className="caretip-pricing-hero-v2__trust-item">
-              <span className="caretip-pricing-hero-v2__trust-check" aria-hidden>
-                ✓
-              </span>
-              <span>{t(`${heroNs}.trustRow.${key}`)}</span>
-            </li>
-          ))}
-        </ul>
+        <PublicPageHeroCard innerClassName="caretip-pricing-hero-wise__shell caretip-pricing-hero-wise__inner">
+          <h1
+            id="pricing-hero-title"
+            className={cn(publicPageUi.title, "caretip-pricing-hero-wise__title")}
+          >
+            {t("staticPages.pricing.pageTitle")}
+          </h1>
+          <p className="caretip-pricing-hero-wise__lead">{lead}</p>
+          {body ? <p className="caretip-pricing-hero-wise__body">{body}</p> : null}
         </PublicPageHeroCard>
-      </div>
-    </section>
+      </section>
+
+      <section className="caretip-pricing-highlights" aria-label={t(`${heroNs}.featuresAria`)}>
+        <div className="caretip-pricing-page__inner">
+          <ul className="caretip-pricing-highlights__grid">
+            {FEATURE_KEYS.map((key) => {
+              const Icon = FEATURE_ICONS[key];
+              return (
+                <li key={key} className="caretip-pricing-highlights__item">
+                  <span className="caretip-pricing-highlights__icon" aria-hidden>
+                    <Icon className="size-[1.125rem]" strokeWidth={2.1} />
+                  </span>
+                  <div className="min-w-0 text-left">
+                    <p className="caretip-pricing-highlights__title">{t(`${heroNs}.features.${key}.title`)}</p>
+                    <p className="caretip-pricing-highlights__body">{t(`${heroNs}.features.${key}.body`)}</p>
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      </section>
+
+      <section className="caretip-pricing-trust" aria-label={t(`${heroNs}.trustRow.aria`)}>
+        <div className="caretip-pricing-page__inner caretip-pricing-trust__inner">
+          <ul className="caretip-pricing-trust__grid">
+            {TRUST_ROW_KEYS.map((key) => (
+              <li key={key} className="caretip-pricing-trust__item">
+                <span className="caretip-pricing-trust__check" aria-hidden>
+                  ✓
+                </span>
+                <span>{t(`${heroNs}.trustRow.${key}`)}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </section>
+    </>
   );
 }

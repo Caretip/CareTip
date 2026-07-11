@@ -34,11 +34,49 @@
 }
 
 /* —— Hero band —— */
+.caretip-pricing-hero-wise {
+  margin-bottom: 0;
+  text-align: center;
+}
+
 .caretip-pricing-hero-wise__back {
-  max-width: var(--caretip-pricing-inner-max);
+  max-width: min(100%, 72rem);
   margin-inline: auto;
   padding-inline: clamp(1.25rem, 4vw, 2.5rem);
   margin-bottom: 1rem;
+}
+
+.caretip-pricing-hero-wise__badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  margin: 0 auto 1rem;
+  border-radius: 9999px;
+  border: 1px solid rgb(var(--caretip-pricing-accent-rgb) / 0.28);
+  background: linear-gradient(
+    135deg,
+    rgb(var(--caretip-pricing-accent-rgb) / 0.14) 0%,
+    rgb(var(--caretip-pricing-accent-rgb) / 0.06) 100%
+  );
+  padding: 0.375rem 0.75rem;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgb(194 65 12);
+}
+
+html.dark .caretip-pricing-hero-wise__badge {
+  border-color: rgb(var(--caretip-pricing-accent-rgb) / 0.35);
+  background: linear-gradient(135deg, rgb(69 26 3 / 0.85) 0%, rgb(120 53 15 / 0.55) 100%);
+  color: rgb(253 186 116);
+}
+
+.caretip-pricing-hero-wise__shell {
+  width: 100%;
+  max-width: min(100%, 72rem);
+  margin-inline: auto;
+  padding-inline: clamp(1.25rem, 4vw, 2.5rem);
 }
 
 .caretip-pricing-hero-wise__band {
@@ -68,7 +106,7 @@ html.dark .caretip-pricing-hero-wise__band {
 .caretip-pricing-hero-wise__title {
   margin: 0;
   margin-inline: auto;
-  max-width: min(100%, 18ch);
+  max-width: min(100%, 22ch);
   font-size: clamp(2.125rem, 5.2vw, 3.375rem);
   font-weight: 800;
   line-height: 1.06;
@@ -85,14 +123,24 @@ html.dark .caretip-pricing-hero-wise__band {
   }
 }
 
-.caretip-pricing-hero-wise__subtitle {
-  margin: clamp(0.75rem, 2vw, 1.125rem) auto 0;
-  max-width: min(100%, 36rem);
-  font-size: clamp(1rem, 2vw, 1.125rem);
-  font-weight: 500;
+.caretip-pricing-hero-wise__lead {
+  margin: clamp(1.25rem, 3vw, 1.75rem) auto 0;
+  max-width: min(100%, 42rem);
+  font-size: clamp(1rem, 2vw, 1.1875rem);
+  font-weight: 600;
   line-height: 1.65;
   text-wrap: pretty;
-  color: hsl(var(--foreground) / 0.82);
+  color: hsl(var(--foreground) / 0.9);
+}
+
+.caretip-pricing-hero-wise__body {
+  margin: clamp(0.875rem, 2vw, 1.125rem) auto 0;
+  max-width: min(100%, 42rem);
+  font-size: clamp(1rem, 2vw, 1.0625rem);
+  font-weight: 500;
+  line-height: 1.72;
+  text-wrap: pretty;
+  color: hsl(var(--foreground) / 0.78);
 }
 
 /* —— Trust chips strip —— */
@@ -105,6 +153,42 @@ html.dark .caretip-pricing-hero-wise__band {
 .caretip-pricing-trust__inner {
   display: flex;
   justify-content: center;
+}
+
+.caretip-pricing-trust__grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem clamp(0.75rem, 4vw, 1.5rem);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  width: 100%;
+  max-width: 56rem;
+}
+
+@media (min-width: 768px) {
+  .caretip-pricing-trust__grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 1rem 1.5rem;
+  }
+}
+
+.caretip-pricing-trust__item {
+  display: inline-flex;
+  align-items: flex-start;
+  gap: 0.375rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  line-height: 1.45;
+  color: hsl(var(--foreground) / 0.72);
+}
+
+.caretip-pricing-trust__check {
+  flex-shrink: 0;
+  margin-top: 0.125rem;
+  font-size: 0.75rem;
+  font-weight: 800;
+  color: var(--caretip-pricing-accent);
 }
 
 /* —— Hero highlights (feature grid) —— */

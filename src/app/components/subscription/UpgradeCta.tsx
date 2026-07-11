@@ -11,6 +11,11 @@ import {
   closeOverlayThenNavigate,
   type CloseBeforeNavigate,
 } from "@/app/lib/activateCareTipNavigation";
+import {
+  APP_LOADING_PRIORITY,
+  useAppLoadingRegistration,
+} from "@/app/lib/globalAppLoading";
+import { performExternalStripeRedirect } from "@/app/lib/externalStripeRedirect";
 import { cn } from "@/lib/utils";
 
 type UpgradeCtaProps = {
@@ -37,6 +42,14 @@ export function UpgradeCta({
   const { t } = useTranslation();
   const navigate = useNavigate();
   const [busy, setBusy] = useState(false);
+
+  useAppLoadingRegistration(
+    "upgrade-cta-checkout",
+    APP_LOADING_PRIORITY.APP_INIT,
+    busy,
+    t("common.loading.checkout"),
+  );
+
   const requiredTier = featureKey ? getFeatureCatalog(featureKey).requiredTier : "premium";
 
   const baseClass = cn(
@@ -68,17 +81,17 @@ export function UpgradeCta({
           planKey: "premium",
           billingCycle: billing.billingCycle ?? "monthly",
         });
-        if (session.url) {
-          window.location.assign(session.url);
-          return;
+        const redirect = performExternalStripeRedirect(session.url, "checkout");
+        if (!redirect.ok) {
+          toast.error(t("business.billing.checkoutNoUrl"));
+          setBusy(false);
         }
-        toast.error(t("business.billing.checkoutNoUrl"));
         return;
       }
       await closeOverlayThenNavigate(navigate, { closeBeforeNavigate, closeAnimationMs });
+      setBusy(false);
     } catch (err) {
       toast.error(toUserFriendlyMessage(err) || t("business.billing.checkoutError"));
-    } finally {
       setBusy(false);
     }
   }

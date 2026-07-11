@@ -25,7 +25,7 @@ import {
 } from "./CustomerJourneyHeader";
 import { venueBrandFromFields, useCustomerVenueBrand } from "./customerJourneyBrand";
 import { headerCompletePaymentFor } from "./customerJourneyHeaderCopy";
-import { redirectToStripeCheckoutUrl } from "../../lib/safeCheckoutRedirect";
+import { performExternalStripeRedirect } from "../../lib/safeCheckoutRedirect";
 import {
   APP_LOADING_PRIORITY,
   useAppLoadingRegistration,
@@ -227,7 +227,11 @@ export function PaymentPage() {
         employeeName: employeeName ?? null,
         amount: tipAmountVal,
       });
-      redirectToStripeCheckoutUrl(url);
+      const redirect = performExternalStripeRedirect(url, "checkout");
+      if (!redirect.ok) {
+        toast.error(t("tipFlow.payment.checkoutStartError"));
+        setProcessing(false);
+      }
     } catch (err) {
       logClientError("PaymentPage.checkout", err);
       toast.error(toUserFriendlyMessage(err));

@@ -36,7 +36,7 @@ export function LandingRealLifeSection() {
           alt: t("landing.realLife.s1Alt"),
           imageFit: "cover" as const,
           imagePosition: undefined,
-          imageMediaClassName: undefined,
+          imageMediaClassName: "caretip-real-life-card-image--doorstep",
           cardClassName: undefined,
         },
         {
@@ -48,7 +48,7 @@ export function LandingRealLifeSection() {
           alt: t("landing.realLife.s2Alt"),
           imageFit: "cover" as const,
           imagePosition: undefined,
-          imageMediaClassName: undefined,
+          imageMediaClassName: "caretip-real-life-card-image--reception",
           cardClassName: undefined,
         },
         {
@@ -59,8 +59,8 @@ export function LandingRealLifeSection() {
           image: { src: newMidWebp, webp: newMidWebp, avif: newMidAvif } satisfies ScenarioImage,
           alt: t("landing.realLife.s4Alt"),
           imageFit: "cover" as const,
-          imagePosition: "50% 24%",
-          imageMediaClassName: "aspect-[16/11] caretip-real-life-card-image--midwife",
+          imagePosition: undefined,
+          imageMediaClassName: "caretip-real-life-card-image--midwife",
           cardClassName: "caretip-real-life-card--midwife",
         },
         {
@@ -76,7 +76,7 @@ export function LandingRealLifeSection() {
           alt: t("landing.realLife.s5Alt"),
           imageFit: "cover" as const,
           imagePosition: undefined,
-          imageMediaClassName: undefined,
+          imageMediaClassName: "caretip-real-life-card-image--field-services",
           cardClassName: undefined,
         },
       ],
