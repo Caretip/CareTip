@@ -103,18 +103,22 @@ export function BusinessWorkflowVerificationPanels({
         </div>
       </section>
 
-      <section className="rounded-lg border border-dashed border-border/80 bg-muted/5 p-4 space-y-2">
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <h3 className="text-sm font-semibold text-foreground">{t("admin.kycComingSoon.title")}</h3>
-          <span className="inline-flex rounded-full bg-muted px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
-            {t("admin.kycComingSoon.badge")}
-          </span>
+      <section className="rounded-xl border border-border/70 bg-card p-5 text-center sm:p-6">
+        <div className="mx-auto mb-3 flex h-11 w-11 items-center justify-center rounded-xl bg-primary/10 ring-1 ring-primary/15">
+          <ShieldCheck className="h-5 w-5 text-primary" aria-hidden />
         </div>
-        <p className="text-xs text-muted-foreground leading-relaxed">{t("admin.kycComingSoon.body")}</p>
+        <span className="inline-flex rounded-full border border-primary/25 bg-primary/[0.08] px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-[0.12em] text-primary">
+          {t("admin.kycComingSoon.badge")}
+        </span>
+        <h3 className="mt-3 text-sm font-semibold text-foreground">{t("admin.kycComingSoon.title")}</h3>
+        <p className="mt-1.5 text-xs leading-relaxed text-muted-foreground">{t("admin.kycComingSoon.body")}</p>
+        <p className="mt-2 text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/75">
+          {t("common.comingSoonInDevelopment")}
+        </p>
         {!MVP_KYC_ADMIN_MANAGEMENT_ENABLED ? (
           <Link
             to={`${PLATFORM_BUSINESS_BASE}/kyc-verification`}
-            className="inline-block text-xs font-medium text-primary hover:underline"
+            className="mt-3 inline-block text-xs font-semibold text-primary hover:underline"
           >
             {t("admin.kycComingSoon.learnMore")}
           </Link>

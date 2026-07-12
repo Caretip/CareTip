@@ -1,4 +1,5 @@
 import { useState, useRef, useCallback, useEffect, useSyncExternalStore } from "react";
+import { flushSync } from "react-dom";
 import { useNavigate, Link, useLocation } from "react-router";
 import { useTranslation } from "react-i18next";
 import { Eye, EyeOff, Loader2, ShieldCheck } from "lucide-react";
@@ -75,8 +76,10 @@ export function PlatformAdminLoginPage() {
     const target = "/platform-admin/dashboard";
     if (postAuthRedirectRef.current === target) return;
     postAuthRedirectRef.current = target;
-    setAuthFlowInProgress(true);
-    beginAuthPostLoginTransition(target);
+    flushSync(() => {
+      setAuthFlowInProgress(true);
+      beginAuthPostLoginTransition(target);
+    });
     navigate(target, { replace: true });
   }, [navigate]);
 
@@ -210,7 +213,10 @@ export function PlatformAdminLoginPage() {
                         return;
                       }
                       const target = getPostAuthRedirect(user);
-                      beginAuthPostLoginTransition(target);
+                      flushSync(() => {
+                        setAuthFlowInProgress(true);
+                        beginAuthPostLoginTransition(target);
+                      });
                       navigate(target, { replace: true });
                     }}
                     className={cn(caretipBtnPrimaryCompact, "h-9 min-h-9 px-3 text-xs disabled:opacity-50")}

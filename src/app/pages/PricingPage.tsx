@@ -21,6 +21,8 @@ import { PricingYearlyNotice } from "@/components/pricing/PricingYearlyNotice";
 import { PricingTrialCta } from "@/components/pricing/PricingTrialCta";
 import { usePublicMountProbe } from "@/lib/publicMountProbe";
 
+const CTA_TRUST_KEYS = ["noCreditCard", "gdpr", "cancelAnytime"] as const;
+
 export function PricingPage() {
   usePublicMountProbe("PricingPage");
   const { t } = useTranslation();
@@ -45,7 +47,7 @@ export function PricingPage() {
           aria-label={t("staticPages.pricing.plansAria")}
         >
           <div className="caretip-pricing-page__inner caretip-pricing-page__inner--plans caretip-pricing-plans-wise__inner">
-            <div className="caretip-pricing-controls-shell">
+            <div className="caretip-pricing-controls-shell caretip-pricing-controls-shell--above-cards">
               <PricingControlsPanel
                 billingCycle={billingCycle}
                 onBillingCycleChange={setBillingCycle}
@@ -64,12 +66,15 @@ export function PricingPage() {
               </div>
             </div>
 
-            <PricingTrialCta className="mx-auto max-w-3xl" billingCycle={billingCycle} />
+            <PricingTrialCta
+              className="caretip-pricing-trial-cta mx-auto max-w-3xl"
+              billingCycle={billingCycle}
+            />
           </div>
         </section>
 
         <section className="caretip-pricing-cta-wise" aria-labelledby="pricing-cta-title">
-          <div className="caretip-pricing-cta-wise__inner">
+          <div className="caretip-pricing-page__inner caretip-pricing-cta-wise__inner">
             <h2 id="pricing-cta-title" className="caretip-pricing-cta-wise__title">
               {t("staticPages.pricing.ctaTitle")}
             </h2>
@@ -82,6 +87,17 @@ export function PricingPage() {
                 {t("nav.becomePartner")}
               </Link>
             </div>
+            <ul
+              className="caretip-pricing-cta-wise__trust"
+              aria-label={t("staticPages.pricing.ctaTrust.aria")}
+            >
+              {CTA_TRUST_KEYS.map((key) => (
+                <li key={key} className="caretip-pricing-cta-wise__trust-item">
+                  <span className="caretip-pricing-cta-wise__trust-dot" aria-hidden />
+                  <span>{t(`staticPages.pricing.ctaTrust.${key}`)}</span>
+                </li>
+              ))}
+            </ul>
           </div>
         </section>
       </main>

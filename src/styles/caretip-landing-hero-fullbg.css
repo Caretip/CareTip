@@ -17,20 +17,20 @@ html:not(.dark) .caretip-landing.caretip-landing--premium .caretip-hero-section-
 
 .caretip-landing .caretip-hero-section--full-bg {
   --caretip-hero-fullbg-min-h: clamp(32rem, 88vh, 52rem);
-  --caretip-hero-fullbg-content-max: min(100%, 38rem);
+  --caretip-hero-fullbg-content-max: min(100%, 36rem);
   --caretip-hero-fullbg-headline-size: clamp(2.75rem, 4.4vw + 1.35rem, 5.375rem);
   --caretip-hero-fullbg-body-size: clamp(1.0625rem, 0.35vw + 0.98rem, 1.375rem);
   --caretip-hero-fullbg-body-lh: 1.55;
   --caretip-hero-body-size: var(--caretip-hero-fullbg-body-size);
   --caretip-hero-body-lh: var(--caretip-hero-fullbg-body-lh);
-  --caretip-hero-gap-headline-body: clamp(1.375rem, 2vh, 1.625rem);
-  --caretip-hero-gap-body-cta: clamp(1.625rem, 2.5vh, 2rem);
+  --caretip-hero-gap-headline-body: clamp(1.75rem, 2.5vh, 2.125rem);
+  --caretip-hero-gap-body-cta: clamp(1.875rem, 2.75vh, 2.375rem);
   --caretip-hero-line-gap: 0.375rem;
   --caretip-hero-bg-focal: 56% 46%;
   min-height: var(--caretip-hero-fullbg-min-h);
   display: flex;
   align-items: center;
-  padding-bottom: clamp(2rem, 4vw, 3rem) !important;
+  padding-bottom: clamp(2.5rem, 5vw, 3.75rem) !important;
 }
 
 .caretip-landing .caretip-hero-bg-layer {
@@ -40,32 +40,32 @@ html:not(.dark) .caretip-landing.caretip-landing--premium .caretip-hero-section-
   overflow: hidden;
 }
 
-/* Light veil — lets the photo read clearly; copy legibility from localized scrim + type scale */
+/* Directional cream veil — strong on the left for copy, clear on the right for the photo */
 .caretip-landing .caretip-hero-bg-overlay {
   position: absolute;
   inset: 0;
   z-index: 1;
   pointer-events: none;
   background: linear-gradient(
-    105deg,
-    rgb(255 255 255 / 0.3) 0%,
-    rgb(255 255 255 / 0.24) 20%,
-    rgb(255 255 255 / 0.18) 42%,
-    rgb(255 255 255 / 0.12) 62%,
-    rgb(255 255 255 / 0.08) 82%,
-    rgb(255 255 255 / 0.04) 100%
+    92deg,
+    rgb(255 248 240 / 0.78) 0%,
+    rgb(255 248 240 / 0.62) 18%,
+    rgb(255 248 240 / 0.32) 42%,
+    rgb(255 248 240 / 0.1) 68%,
+    rgb(255 248 240 / 0.04) 84%,
+    transparent 100%
   );
 }
 
 html.dark .caretip-landing .caretip-hero-bg-overlay {
   background: linear-gradient(
-    105deg,
-    rgb(9 9 11 / 0.34) 0%,
-    rgb(9 9 11 / 0.28) 20%,
+    92deg,
+    rgb(9 9 11 / 0.72) 0%,
+    rgb(9 9 11 / 0.5) 18%,
     rgb(9 9 11 / 0.22) 42%,
-    rgb(9 9 11 / 0.16) 62%,
-    rgb(9 9 11 / 0.12) 82%,
-    rgb(9 9 11 / 0.08) 100%
+    rgb(9 9 11 / 0.08) 68%,
+    rgb(9 9 11 / 0.03) 84%,
+    transparent 100%
   );
 }
 
@@ -138,7 +138,8 @@ html.dark .caretip-landing .caretip-hero-bg-overlay {
   object-fit: cover;
   object-position: var(--caretip-hero-bg-focal);
   transform: none !important;
-  filter: none !important;
+  /* Slightly richer photo for readability without a heavy overlay */
+  filter: brightness(0.92) contrast(1.08) !important;
   border-radius: 0 !important;
 }
 
@@ -159,11 +160,10 @@ html.dark .caretip-landing .caretip-hero-bg-overlay {
   padding-inline-start: clamp(6%, 7vw, 8%);
 }
 
+/* Mobile copy/image stack: caretip-landing-hero-mobile-stack.css */
 @media (max-width: 767px) {
   .caretip-landing .caretip-hero-section--full-bg .caretip-hero-full-bg-inner {
     min-height: 0;
-    max-height: 50%;
-    flex: 0 1 50%;
   }
 }
 
@@ -178,19 +178,18 @@ html.dark .caretip-landing .caretip-hero-bg-overlay {
   text-align: left;
 }
 
-/* Localized scrim — readability behind copy only, not the full hero image */
+/* Light residual scrim only — primary readability comes from the directional overlay */
 .caretip-landing .caretip-hero-section--full-bg .caretip-hero-full-bg-content::before {
   content: "";
   position: absolute;
-  inset: -1.25rem -2.5rem -1.25rem -1.75rem;
+  inset: -1.5rem -2rem -1.75rem -1.5rem;
   z-index: -1;
   pointer-events: none;
-  border-radius: 1.125rem;
+  border-radius: 0;
   background: linear-gradient(
     95deg,
-    rgb(255 255 255 / 0.52) 0%,
-    rgb(255 255 255 / 0.36) 42%,
-    rgb(255 255 255 / 0.14) 68%,
+    rgb(255 248 240 / 0.28) 0%,
+    rgb(255 248 240 / 0.1) 55%,
     transparent 100%
   );
 }
@@ -198,9 +197,8 @@ html.dark .caretip-landing .caretip-hero-bg-overlay {
 html.dark .caretip-landing .caretip-hero-section--full-bg .caretip-hero-full-bg-content::before {
   background: linear-gradient(
     95deg,
-    rgb(9 9 11 / 0.58) 0%,
-    rgb(9 9 11 / 0.4) 42%,
-    rgb(9 9 11 / 0.16) 68%,
+    rgb(9 9 11 / 0.28) 0%,
+    rgb(9 9 11 / 0.1) 55%,
     transparent 100%
   );
 }
@@ -209,14 +207,15 @@ html.dark .caretip-landing .caretip-hero-section--full-bg .caretip-hero-full-bg-
 .caretip-landing .caretip-hero-section--full-bg[data-hero-art="en"] .caretip-hero-headline[data-hero-headline-mode="composed"] {
   --caretip-hero-headline-size: var(--caretip-hero-fullbg-headline-size);
   font-size: var(--caretip-hero-fullbg-headline-size);
-  --caretip-hero-headline-lh: 1.08;
-  --caretip-hero-headline-track: -0.038em;
-  --caretip-hero-headline-measure: min(100%, 19ch);
+  --caretip-hero-headline-lh: 1.12;
+  --caretip-hero-headline-track: -0.036em;
+  --caretip-hero-headline-measure: min(100%, 34rem);
+  max-width: min(100%, 34.5rem); /* ~552px */
   text-align: left;
   color: rgb(12 12 14);
   text-shadow:
-    0 1px 2px rgb(255 255 255 / 0.72),
-    0 0 28px rgb(255 255 255 / 0.38);
+    0 1px 2px rgb(255 255 255 / 0.55),
+    0 0 24px rgb(255 248 240 / 0.28);
 }
 
 html.dark .caretip-landing .caretip-hero-section--full-bg .caretip-hero-headline {
@@ -229,7 +228,7 @@ html.dark .caretip-landing .caretip-hero-section--full-bg .caretip-hero-headline
 .caretip-landing .caretip-hero-section--full-bg .caretip-hero-headline-line--controlled,
 .caretip-landing .caretip-hero-section--full-bg .caretip-hero-headline-line--static,
 .caretip-landing .caretip-hero-section--full-bg .caretip-hero-headline-rotating-stack {
-  max-width: min(100%, 19ch);
+  max-width: min(100%, 34.5rem);
   text-align: left;
 }
 
@@ -286,10 +285,23 @@ html.dark .caretip-landing .caretip-hero-section--full-bg .caretip-hero-descript
 @media (min-width: 1024px) {
   .caretip-landing .caretip-hero-section--full-bg {
     --caretip-hero-fullbg-min-h: clamp(34rem, 90vh, 56rem);
-    --caretip-hero-fullbg-content-max: min(46%, 40rem);
-    --caretip-hero-fullbg-headline-size: clamp(3.25rem, 3.8vw + 1.5rem, 5.375rem);
+    /* Left content column ~520–580px */
+    --caretip-hero-fullbg-content-max: min(42%, 36rem);
+    --caretip-hero-fullbg-headline-size: clamp(3.0625rem, 3.5vw + 1.4rem, 5rem);
     --caretip-hero-fullbg-body-size: clamp(1.1875rem, 0.4vw + 1.05rem, 1.5rem);
+    --caretip-hero-gap-headline-body: clamp(2rem, 2.75vh, 2.375rem);
+    --caretip-hero-gap-body-cta: clamp(2.125rem, 3vh, 2.625rem);
     --caretip-hero-bg-focal: 62% 44%;
+    padding-bottom: clamp(3rem, 5.5vw, 4.25rem) !important;
+  }
+
+  .caretip-landing .caretip-hero-section--full-bg .caretip-hero-full-bg-content {
+    padding-block: clamp(2rem, 6.5vh, 3.25rem);
+  }
+
+  .caretip-landing .caretip-hero-section--full-bg .caretip-hero-headline {
+    line-height: 1.12;
+    max-width: min(100%, 34.5rem);
   }
 
   .caretip-landing .caretip-hero-bg-layer picture[data-hero-frame="wyc"] img {
@@ -303,7 +315,8 @@ html.dark .caretip-landing .caretip-hero-section--full-bg .caretip-hero-descript
 
 @media (min-width: 1280px) {
   .caretip-landing .caretip-hero-section--full-bg {
-    --caretip-hero-fullbg-headline-size: clamp(3.5rem, 3.2vw + 1.75rem, 5.5rem);
+    --caretip-hero-fullbg-content-max: min(40%, 36rem);
+    --caretip-hero-fullbg-headline-size: clamp(3.25rem, 2.95vw + 1.55rem, 5.125rem);
     --caretip-hero-fullbg-body-size: clamp(1.25rem, 0.35vw + 1.1rem, 1.5rem);
   }
 }
@@ -331,5 +344,51 @@ html.dark .caretip-landing .caretip-hero-section--full-bg .caretip-hero-descript
 @media (prefers-reduced-motion: reduce) {
   .caretip-landing .caretip-hero-bg-layer .caretip-hero-story-frame--bg-cover {
     transition: none !important;
+  }
+}
+
+/* —— Landing nav: ~12% slimmer so more hero image shows —— */
+.caretip-landing .caretip-public-nav nav {
+  padding-top: 0.375rem;
+  padding-bottom: 0.375rem;
+}
+
+@media (min-width: 640px) {
+  .caretip-landing .caretip-public-nav nav {
+    padding-top: 0.4375rem;
+    padding-bottom: 0.4375rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .caretip-landing .caretip-public-nav nav {
+    padding-top: 0.5rem;
+    padding-bottom: 0.5rem;
+  }
+}
+
+.caretip-landing .caretip-public-nav nav a[href="/"] {
+  height: 3.125rem;
+  min-height: 3.125rem;
+}
+
+@media (min-width: 768px) {
+  .caretip-landing .caretip-public-nav nav a[href="/"] {
+    height: 3.375rem;
+    min-height: 3.375rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .caretip-landing .caretip-public-nav nav a[href="/"] {
+    height: 3.5rem;
+    min-height: 3.5rem;
+  }
+}
+
+@media (min-width: 1280px) {
+  .caretip-landing .caretip-public-nav nav a[href="/"] {
+    height: 3.625rem;
+    min-height: 3.625rem;
   }
 }

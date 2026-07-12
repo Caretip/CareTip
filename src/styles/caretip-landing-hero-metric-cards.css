@@ -140,85 +140,88 @@ html.dark .caretip-landing .caretip-hero-metric-card__subtitle {
 }
 
 /*
- * Desktop composition — middle-right stagger in open corridors only.
- * Face-safe: keep cards above/beside the subject, never over heads or QR focal points.
+ * Per-slide metric anchors — prefer negative space; never cover faces.
+ * Spacing between cards stays equal via --caretip-hero-metric-group-card-step.
  */
 
-/* Business slide (wyc) — revenue above shoulder line; team tips lower-right */
+/* Business slide (wyc) — mid-right at arm/torso, never over the head */
+.caretip-landing .caretip-hero-section--full-bg[data-hero-slide="wyc"] {
+  --caretip-hero-metric-group-top: clamp(44%, 46vh, 50%);
+  --caretip-hero-metric-group-right: clamp(5%, 6vw, 7%);
+  --caretip-hero-metric-group-gap: 0.875rem;
+  --caretip-hero-metric-group-card-step: calc(4.5rem + var(--caretip-hero-metric-group-gap));
+}
+
 .caretip-landing .caretip-hero-section--full-bg[data-hero-slide="wyc"] .caretip-hero-metric-card--card-a {
-  top: clamp(14%, 16vh, 20%);
-  right: clamp(5%, 6vw, 8%);
+  top: var(--caretip-hero-metric-group-top);
+  right: var(--caretip-hero-metric-group-right);
   left: auto;
   bottom: auto;
   z-index: 32;
 }
 
 .caretip-landing .caretip-hero-section--full-bg[data-hero-slide="wyc"] .caretip-hero-metric-card--card-b {
-  top: clamp(58%, 60vh, 64%);
-  right: clamp(10%, 12vw, 14%);
+  top: calc(var(--caretip-hero-metric-group-top) + var(--caretip-hero-metric-group-card-step));
+  right: var(--caretip-hero-metric-group-right);
   left: auto;
   bottom: auto;
   z-index: 31;
 }
 
-/* Customer slide (wyo) — metrics beside guest, clear of face and QR stand */
+/* Customer / restaurant slide (wyo) — mid-lower right negative space */
+.caretip-landing .caretip-hero-section--full-bg[data-hero-slide="wyo"] {
+  --caretip-hero-metric-group-top: clamp(40%, 42vh, 46%);
+  --caretip-hero-metric-group-right: clamp(5.5%, 6.5vw, 7.5%);
+  --caretip-hero-metric-group-gap: 0.875rem;
+  --caretip-hero-metric-group-card-step: calc(4.5rem + var(--caretip-hero-metric-group-gap));
+}
+
 .caretip-landing .caretip-hero-section--full-bg[data-hero-slide="wyo"] .caretip-hero-metric-card--card-a {
-  top: clamp(28%, 30vh, 34%);
-  right: clamp(6%, 7vw, 9%);
+  top: var(--caretip-hero-metric-group-top);
+  right: var(--caretip-hero-metric-group-right);
   left: auto;
   bottom: auto;
   z-index: 32;
 }
 
 .caretip-landing .caretip-hero-section--full-bg[data-hero-slide="wyo"] .caretip-hero-metric-card--card-b {
-  top: clamp(56%, 58vh, 62%);
-  right: clamp(11%, 13vw, 16%);
+  top: calc(var(--caretip-hero-metric-group-top) + var(--caretip-hero-metric-group-card-step));
+  right: var(--caretip-hero-metric-group-right);
   left: auto;
   bottom: auto;
   z-index: 31;
 }
 
 @media (min-width: 1024px) {
-  .caretip-landing .caretip-hero-section--full-bg[data-hero-slide="wyc"] .caretip-hero-metric-card--card-a {
-    top: clamp(15%, 17vh, 19%);
-    right: clamp(5.5%, 7vw, 8.5%);
+  .caretip-landing .caretip-hero-section--full-bg .caretip-hero-metric-card {
+    width: 13.25rem;
   }
 
-  .caretip-landing .caretip-hero-section--full-bg[data-hero-slide="wyc"] .caretip-hero-metric-card--card-b {
-    top: clamp(59%, 61vh, 63%);
-    right: clamp(10%, 12vw, 14%);
+  .caretip-landing .caretip-hero-section--full-bg[data-hero-slide="wyc"] {
+    /* Arm/side corridor — below head, beside torso */
+    --caretip-hero-metric-group-top: 46%;
+    --caretip-hero-metric-group-right: 5.5%;
+    --caretip-hero-metric-group-gap: 0.875rem;
+    --caretip-hero-metric-group-card-step: calc(4.375rem + var(--caretip-hero-metric-group-gap));
   }
 
-  .caretip-landing .caretip-hero-section--full-bg[data-hero-slide="wyo"] .caretip-hero-metric-card--card-a {
-    top: clamp(29%, 31vh, 33%);
-    right: clamp(6.5%, 8vw, 9.5%);
-  }
-
-  .caretip-landing .caretip-hero-section--full-bg[data-hero-slide="wyo"] .caretip-hero-metric-card--card-b {
-    top: clamp(57%, 59vh, 61%);
-    right: clamp(11%, 13vw, 15%);
+  .caretip-landing .caretip-hero-section--full-bg[data-hero-slide="wyo"] {
+    --caretip-hero-metric-group-top: 42%;
+    --caretip-hero-metric-group-right: 6.25%;
+    --caretip-hero-metric-group-gap: 0.875rem;
+    --caretip-hero-metric-group-card-step: calc(4.375rem + var(--caretip-hero-metric-group-gap));
   }
 }
 
 @media (min-width: 1280px) {
-  .caretip-landing .caretip-hero-section--full-bg[data-hero-slide="wyc"] .caretip-hero-metric-card--card-a {
-    top: 16%;
-    right: 6.5%;
+  .caretip-landing .caretip-hero-section--full-bg[data-hero-slide="wyc"] {
+    --caretip-hero-metric-group-top: 45%;
+    --caretip-hero-metric-group-right: 6%;
   }
 
-  .caretip-landing .caretip-hero-section--full-bg[data-hero-slide="wyc"] .caretip-hero-metric-card--card-b {
-    top: 60%;
-    right: 11.5%;
-  }
-
-  .caretip-landing .caretip-hero-section--full-bg[data-hero-slide="wyo"] .caretip-hero-metric-card--card-a {
-    top: 30%;
-    right: 7.5%;
-  }
-
-  .caretip-landing .caretip-hero-section--full-bg[data-hero-slide="wyo"] .caretip-hero-metric-card--card-b {
-    top: 58%;
-    right: 12.5%;
+  .caretip-landing .caretip-hero-section--full-bg[data-hero-slide="wyo"] {
+    --caretip-hero-metric-group-top: 41%;
+    --caretip-hero-metric-group-right: 6.75%;
   }
 }
 
@@ -233,13 +236,13 @@ html.dark .caretip-landing .caretip-hero-metric-card__subtitle {
   }
 
   .caretip-landing .caretip-hero-section--full-bg[data-hero-slide="wyc"] .caretip-hero-metric-card--card-a {
-    top: clamp(16%, 18vh, 21%);
-    right: clamp(4.5%, 6vw, 7%);
+    top: clamp(42%, 44vh, 48%);
+    right: clamp(5%, 6.5vw, 7.5%);
   }
 
   .caretip-landing .caretip-hero-section--full-bg[data-hero-slide="wyc"] .caretip-hero-metric-card--card-b {
-    top: clamp(56%, 58vh, 61%);
-    right: clamp(8%, 10vw, 12%);
+    top: calc(clamp(42%, 44vh, 48%) + 3.75rem + 0.75rem);
+    right: clamp(5%, 6.5vw, 7.5%);
   }
 
   .caretip-landing .caretip-hero-section--full-bg[data-hero-slide="wyo"] .caretip-hero-metric-card--card-a {
@@ -253,13 +256,7 @@ html.dark .caretip-landing .caretip-hero-metric-card__subtitle {
   }
 }
 
-@media (max-width: 767px) {
-  .caretip-landing .caretip-hero-section--full-bg .caretip-hero-metric-card {
-    width: min(100%, 7.75rem);
-    min-height: 2.125rem;
-    max-height: 2.875rem;
-  }
-}
+/* Mobile metric stack sizing/placement: caretip-landing-hero-mobile-stack.css */
 
 @media (max-width: 480px) {
   .caretip-landing .caretip-hero-float-cards[data-hero-float-variant="card"] .caretip-hero-metric-card {

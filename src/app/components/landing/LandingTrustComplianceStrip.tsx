@@ -4,7 +4,7 @@ import { useTranslation } from "react-i18next";
 import { LandingReveal } from "@/components/landing/LandingReveal";
 import { cn } from "@/lib/utils";
 
-const TRUST_KEYS = ["gdpr", "auth", "rbac", "analytics", "payments"] as const;
+const TRUST_KEYS = ["gdpr", "auth", "rbac", "payments"] as const;
 
 export function LandingTrustComplianceStrip({ className }: { className?: string }) {
   const { t, i18n } = useTranslation();

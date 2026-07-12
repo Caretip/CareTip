@@ -364,7 +364,7 @@ const routes: RouteObject[] = [
         children: [
           { index: true, element: <Navigate to="/dashboard/customers/feedback" replace /> },
           { path: 'feedback', lazy: routeLazy(() => import('./pages/business/customers/BusinessCustomersFeedbackPage'), 'BusinessCustomersFeedbackPage') },
-          { path: 'reviews', lazy: routeLazy(() => import('./pages/business/customers/BusinessCustomersReviewsPage'), 'BusinessCustomersReviewsPage') },
+          { path: 'reviews', element: <Navigate to="/dashboard/customers/feedback" replace /> },
         ],
       },
       /* —— Billing module —— */

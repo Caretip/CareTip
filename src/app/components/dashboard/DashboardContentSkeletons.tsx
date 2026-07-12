@@ -51,25 +51,29 @@ export function NotificationInboxListSkeleton({
   const aria = useDashboardShellAria();
 
   return (
-    <ul className={cn("space-y-2", className)} role="status" aria-busy="true" aria-label={aria.loading}>
-      {Array.from({ length: rows }).map((_, i) => (
-        <li
-          key={i}
-          className="flex gap-3 rounded-lg border border-border bg-card p-3.5 shadow-sm sm:p-4"
-        >
-          <ShimmerBar className="h-10 w-10 shrink-0 rounded-lg sm:h-11 sm:w-11" />
-          <div className="min-w-0 flex-1 space-y-2">
-            <div className="flex items-start justify-between gap-2">
-              <ShimmerBar className="h-3 w-16 rounded-full" />
-              <ShimmerBar className="h-3 w-10 shrink-0" />
+    <div
+      className={cn("overflow-hidden rounded-2xl border border-border/80 bg-card shadow-sm", className)}
+      role="status"
+      aria-busy="true"
+      aria-label={aria.loading}
+    >
+      <ul className="divide-y divide-border/70">
+        {Array.from({ length: rows }).map((_, i) => (
+          <li key={i} className="flex gap-3 px-3.5 py-3.5 sm:gap-4 sm:px-5 sm:py-4">
+            <ShimmerBar className="h-10 w-10 shrink-0 rounded-xl sm:h-11 sm:w-11" />
+            <div className="min-w-0 flex-1 space-y-2">
+              <div className="flex items-start justify-between gap-2">
+                <ShimmerBar className="h-3 w-16 rounded-full" />
+                <ShimmerBar className="h-3 w-10 shrink-0" />
+              </div>
+              <ShimmerBar className="h-4 w-[72%] max-w-[14rem]" />
+              <ShimmerBar className="h-3 w-[90%] max-w-[18rem]" />
+              <ShimmerBar className="mt-1 h-8 w-24 rounded-md" />
             </div>
-            <ShimmerBar className="h-4 w-[72%] max-w-[14rem]" />
-            <ShimmerBar className="h-3 w-[90%] max-w-[18rem]" />
-            <ShimmerBar className="mt-1 h-8 w-24 rounded-md" />
-          </div>
-        </li>
-      ))}
-    </ul>
+          </li>
+        ))}
+      </ul>
+    </div>
   );
 }
 

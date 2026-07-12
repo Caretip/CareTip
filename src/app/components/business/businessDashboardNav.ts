@@ -99,15 +99,11 @@ export const teamSubNavItems = [
 ] as const;
 
 export const CUSTOMERS_BASE = "/dashboard/customers" as const;
+/** @deprecated Reviews merged into Customer Feedback — kept for any legacy imports. */
 export const customersSubNavItems = [
   {
     labelKey: "business.customers.nav.feedback",
     href: `${CUSTOMERS_BASE}/feedback`,
-    featureKey: "customerFeedback" as FeatureKey,
-  },
-  {
-    labelKey: "business.customers.nav.reviews",
-    href: `${CUSTOMERS_BASE}/reviews`,
     featureKey: "customerFeedback" as FeatureKey,
   },
 ] as const;
@@ -167,12 +163,11 @@ export const businessSidebarNavEntries: readonly BusinessSidebarNavEntry[] = [
     icon: "locations",
   },
   {
-    type: "group",
+    type: "link",
     id: "customers",
     labelKey: "dashboardNav.business.customers",
+    href: CUSTOMERS_BASE,
     icon: "inbox",
-    defaultHref: `${CUSTOMERS_BASE}/feedback`,
-    children: customersSubNavItems,
   },
   {
     type: "group",

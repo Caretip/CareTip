@@ -60,10 +60,17 @@ export function resolveMinOverlayVisibleMs(winnerKey: string | null | undefined)
   return DEFAULT_MIN_OVERLAY_VISIBLE_MS;
 }
 
-/** Cold-load HTML bridge → React overlay handoff — no show threshold gap. */
+/**
+ * Handoffs that must cover the next paint immediately — no 200ms uncovered window for
+ * Sign In chrome, Sign Out chrome, or guest nav.
+ */
 export function shouldBypassOverlayShowThreshold(
   winnerKey: string | null | undefined,
   initialColdBootPending: boolean,
 ): boolean {
-  return initialColdBootPending && winnerKey === "app-boot";
+  if (initialColdBootPending && winnerKey === "app-boot") return true;
+  return (
+    winnerKey === "auth-post-login-transition" ||
+    winnerKey === "auth-logout-transition"
+  );
 }

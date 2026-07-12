@@ -301,13 +301,16 @@ export function AppLoadingManagerProvider({ children }: { children: React.ReactN
       if (
         shouldBypassOverlayShowThreshold(winnerKey, initialColdBootPendingRef.current)
       ) {
-        initialColdBootPendingRef.current = false;
+        if (winnerKey === BOOTSTRAP_KEY) {
+          initialColdBootPendingRef.current = false;
+        }
+        const resolvedKey = winnerKey ?? BOOTSTRAP_KEY;
         overlayShownAtRef.current = Date.now();
-        lastShownWinnerKeyRef.current = BOOTSTRAP_KEY;
-        lastWinnerKeyRef.current = BOOTSTRAP_KEY;
+        lastShownWinnerKeyRef.current = resolvedKey;
+        lastWinnerKeyRef.current = resolvedKey;
         setOverlayPhase("visible");
         if (import.meta.env.DEV) {
-          console.info("[GlobalAppLoading] Overlay active — app-boot (cold handoff)");
+          console.info(`[GlobalAppLoading] Overlay active — ${resolvedKey} (immediate handoff)`);
         }
         return;
       }

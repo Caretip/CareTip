@@ -86,12 +86,12 @@ function NotificationCard({
   return (
     <article
       className={cn(
-        "group relative flex gap-3 rounded-xl border transition-[box-shadow,border-color,background-color]",
-        "p-3.5 sm:gap-4 sm:p-4",
+        "group relative flex gap-3 px-3.5 py-3.5 transition-colors sm:gap-4 sm:px-5 sm:py-4",
         notification.read
-          ? "border-border/70 bg-card shadow-sm hover:border-border hover:shadow-md"
-          : "border-primary/25 bg-gradient-to-br from-primary/[0.06] to-card shadow-[0_8px_24px_-16px_rgba(233,120,28,0.35)] hover:shadow-md",
-        !notification.read && "before:absolute before:inset-y-2 before:left-0 before:w-[3px] before:rounded-full before:bg-primary",
+          ? "bg-transparent hover:bg-muted/35"
+          : "bg-primary/[0.035] hover:bg-primary/[0.055]",
+        !notification.read &&
+          "before:absolute before:inset-y-2.5 before:left-0 before:w-[3px] before:rounded-full before:bg-primary",
       )}
     >
       <div
@@ -371,125 +371,132 @@ export function NotificationInboxFeed({
         })}
       </p>
 
-      <div className="rounded-2xl border border-border/80 bg-card p-4 shadow-sm sm:p-5">
-        <form
-          className="flex gap-2"
-          onSubmit={(e) => {
-            e.preventDefault();
-            setAppliedSearch(searchInput);
-          }}
-        >
-          <div className="relative min-w-0 flex-1">
-            <Search
-              className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
-              aria-hidden
-            />
-            <Input
-              className="h-10 border-border/80 bg-background/80 pl-9"
-              value={searchInput}
-              onChange={(e) => setSearchInput(e.target.value)}
-              placeholder={t("notifications.inbox.searchPlaceholder")}
-              aria-label={t("notifications.inbox.searchAria")}
-            />
-          </div>
-          <Button type="submit" variant="secondary" size="sm" className="h-10 shrink-0 px-4">
-            {t("notifications.inbox.search")}
-          </Button>
-        </form>
+      <div className="overflow-hidden rounded-2xl border border-border/80 bg-card shadow-sm">
+        <div className="border-b border-border/70 px-3.5 py-3.5 sm:px-5 sm:py-4">
+          <form
+            className="flex gap-2"
+            onSubmit={(e) => {
+              e.preventDefault();
+              setAppliedSearch(searchInput);
+            }}
+          >
+            <div className="relative min-w-0 flex-1">
+              <Search
+                className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
+                aria-hidden
+              />
+              <Input
+                className="h-10 border-border/70 bg-background/70 pl-9"
+                value={searchInput}
+                onChange={(e) => setSearchInput(e.target.value)}
+                placeholder={t("notifications.inbox.searchPlaceholder")}
+                aria-label={t("notifications.inbox.searchAria")}
+              />
+            </div>
+            <Button type="submit" variant="secondary" size="sm" className="h-10 shrink-0 px-4">
+              {t("notifications.inbox.search")}
+            </Button>
+          </form>
 
-        <div className="mt-3 flex gap-2 overflow-x-auto snap-x snap-mandatory scroll-px-1 pb-0.5 [-webkit-overflow-scrolling:touch] [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-          {INBOX_FILTER_CHIPS.map((chip) => {
-            const active = categoryFilter === chip;
-            const chipUnread = chip === "unread" ? unreadCount : 0;
-            return (
-              <button
-                key={chip}
-                type="button"
-                onClick={() => setCategoryFilter(chip)}
-                className={cn(
-                  "inline-flex min-h-[44px] shrink-0 snap-start touch-manipulation items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors",
-                  active
-                    ? "border-primary/40 bg-primary text-primary-foreground shadow-sm"
-                    : "border-border/80 bg-background/60 text-muted-foreground hover:border-border hover:text-foreground",
-                )}
-              >
-                {filterChipLabel(chip, t)}
-                {chip === "unread" && chipUnread > 0 ? (
-                  <span
-                    className={cn(
-                      "rounded-full px-1.5 py-px text-[10px] font-bold tabular-nums",
-                      active ? "bg-primary-foreground/20 text-primary-foreground" : "bg-primary/15 text-primary",
-                    )}
-                  >
-                    {chipUnread > 99 ? "99+" : chipUnread}
-                  </span>
-                ) : null}
-              </button>
-            );
-          })}
+          <div className="mt-3 flex gap-2 overflow-x-auto snap-x snap-mandatory scroll-px-1 pb-0.5 [-webkit-overflow-scrolling:touch] [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            {INBOX_FILTER_CHIPS.map((chip) => {
+              const active = categoryFilter === chip;
+              const chipUnread = chip === "unread" ? unreadCount : 0;
+              return (
+                <button
+                  key={chip}
+                  type="button"
+                  onClick={() => setCategoryFilter(chip)}
+                  className={cn(
+                    "inline-flex min-h-[40px] shrink-0 snap-start touch-manipulation items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors",
+                    active
+                      ? "border-primary/40 bg-primary text-primary-foreground shadow-sm"
+                      : "border-border/70 bg-background/50 text-muted-foreground hover:border-border hover:text-foreground",
+                  )}
+                >
+                  {filterChipLabel(chip, t)}
+                  {chip === "unread" && chipUnread > 0 ? (
+                    <span
+                      className={cn(
+                        "rounded-full px-1.5 py-px text-[10px] font-bold tabular-nums",
+                        active ? "bg-primary-foreground/20 text-primary-foreground" : "bg-primary/15 text-primary",
+                      )}
+                    >
+                      {chipUnread > 99 ? "99+" : chipUnread}
+                    </span>
+                  ) : null}
+                </button>
+              );
+            })}
+          </div>
         </div>
+
+        {isRefreshing ? (
+          <div
+            className="flex items-center justify-center gap-2 border-b border-border/60 bg-muted/25 px-3 py-2 text-xs font-medium text-muted-foreground"
+            role="status"
+            aria-live="polite"
+          >
+            <InlineSpinner />
+            {t("dashboard.refresh.updating")}
+          </div>
+        ) : null}
+
+        {isInitialLoad ? (
+          <NotificationInboxListSkeleton rows={5} className="rounded-none border-0 shadow-none" />
+        ) : filteredList.length === 0 ? (
+          rawList.length === 0 ? (
+            <div className="px-6 py-12">
+              <InboxEmptyState />
+            </div>
+          ) : (
+            <div className="px-6 py-12 text-center">
+              <Bell className="mx-auto mb-2 h-7 w-7 text-muted-foreground/60" aria-hidden />
+              <p className="text-sm font-medium text-foreground">{t("notifications.inbox.filterEmptyTitle")}</p>
+              <p className="mt-1 text-sm text-muted-foreground">{t("notifications.inbox.filterEmptyBody")}</p>
+              <Button
+                type="button"
+                variant="link"
+                size="sm"
+                className="mt-2"
+                onClick={() => setCategoryFilter("all")}
+              >
+                {t("notifications.inbox.clearFilters")}
+              </Button>
+            </div>
+          )
+        ) : (
+          <div>
+            {grouped.map(({ bucket, items: bucketItems }, groupIndex) => (
+              <section
+                key={bucket}
+                aria-label={dateGroupLabel(bucket, t)}
+                className={cn(groupIndex > 0 && "border-t border-border/60")}
+              >
+                <h2 className="bg-muted/20 px-3.5 py-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground sm:px-5">
+                  {dateGroupLabel(bucket, t)}
+                </h2>
+                <ul className="divide-y divide-border/60">
+                  {bucketItems.map((n) => (
+                    <li key={n.id}>
+                      <NotificationCard
+                        notification={n}
+                        navOpts={navOpts}
+                        onOpenDetail={() => openDetail(n)}
+                        onAction={() => openAction(n)}
+                        onDelete={() => handleDelete(n)}
+                      />
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            ))}
+          </div>
+        )}
       </div>
 
-      {isRefreshing ? (
-        <div
-          className="flex items-center justify-center gap-2 rounded-lg bg-muted/40 px-3 py-2 text-xs font-medium text-muted-foreground"
-          role="status"
-          aria-live="polite"
-        >
-          <InlineSpinner />
-          {t("dashboard.refresh.updating")}
-        </div>
-      ) : null}
-
-      {/* Feed */}
-      {isInitialLoad ? (
-        <NotificationInboxListSkeleton rows={5} />
-      ) : filteredList.length === 0 ? (
-        rawList.length === 0 ? (
-          <InboxEmptyState />
-        ) : (
-          <div className="rounded-xl border border-dashed border-border bg-muted/20 px-6 py-10 text-center">
-            <Bell className="mx-auto mb-2 h-7 w-7 text-muted-foreground/60" aria-hidden />
-            <p className="text-sm font-medium text-foreground">{t("notifications.inbox.filterEmptyTitle")}</p>
-            <p className="mt-1 text-sm text-muted-foreground">{t("notifications.inbox.filterEmptyBody")}</p>
-            <Button
-              type="button"
-              variant="link"
-              size="sm"
-              className="mt-2"
-              onClick={() => setCategoryFilter("all")}
-            >
-              {t("notifications.inbox.clearFilters")}
-            </Button>
-          </div>
-        )
-      ) : (
-        <div className="space-y-5 sm:space-y-6">
-          {grouped.map(({ bucket, items: bucketItems }) => (
-            <section key={bucket} aria-label={dateGroupLabel(bucket, t)}>
-              <h2 className="mb-2 px-0.5 text-xs font-bold uppercase tracking-[0.14em] text-muted-foreground">
-                {dateGroupLabel(bucket, t)}
-              </h2>
-              <ul className="space-y-2.5 sm:space-y-3">
-                {bucketItems.map((n) => (
-                  <li key={n.id}>
-                    <NotificationCard
-                      notification={n}
-                      navOpts={navOpts}
-                      onOpenDetail={() => openDetail(n)}
-                      onAction={() => openAction(n)}
-                      onDelete={() => handleDelete(n)}
-                    />
-                  </li>
-                ))}
-              </ul>
-            </section>
-          ))}
-        </div>
-      )}
-
       {nextCursor ? (
-        <div className="flex justify-center pt-2">
+        <div className="flex justify-center pt-1">
           <Button
             type="button"
             variant="outline"

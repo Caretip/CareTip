@@ -24,6 +24,7 @@ import {
   resolveBillingPlanKey,
 } from "../../../../lib/billingDisplayState";
 import { PricingTierCard, type PricingTierCardBadge } from "@/components/pricing/PricingTierCard";
+import { PricingBillingToggle } from "@/components/pricing/PricingBillingToggle";
 import { pricingPageUi } from "@/components/pricing/pricingPageUi";
 import { dashboardWorkspaceUi } from "@/app/components/dashboard/dashboardWorkspaceUi";
 import { cn } from "@/lib/utils";
@@ -37,10 +38,16 @@ import { performExternalStripeRedirect } from "../../../../lib/externalStripeRed
 type Props = {
   billing: BillingStatus;
   billingCycle: SubscriptionBillingCycle;
+  onBillingCycleChange: (cycle: SubscriptionBillingCycle) => void;
   onChanged: () => void;
 };
 
-export function BillingPlanManagement({ billing, billingCycle, onChanged }: Props) {
+export function BillingPlanManagement({
+  billing,
+  billingCycle,
+  onBillingCycleChange,
+  onChanged,
+}: Props) {
   const { t, i18n } = useTranslation();
   const locale = resolveBillingLocale(i18n.language);
   const emptyDate = t("business.billing.notApplicable");
@@ -310,35 +317,43 @@ export function BillingPlanManagement({ billing, billingCycle, onChanged }: Prop
   }
 
   return (
-    <div className="space-y-4">
-      <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
-        {canPortal ? (
-          <button
-            type="button"
-            disabled={busyPlan !== null}
-            onClick={() => void handlePortal()}
-            className={cn(dashboardWorkspaceUi.btnSecondary, "justify-center disabled:opacity-60")}
-            aria-busy={busyPlan === "portal" || undefined}
-          >
-            {busyPlan === "portal" ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : null}
-            {t("business.billing.manageBilling")}
-          </button>
-        ) : null}
-        {canCheckout && billing.hasStripeBilling && !billing.cancelAtPeriodEnd ? (
-          <button
-            type="button"
-            disabled={busyPlan !== null}
-            onClick={() => void handleCancel()}
-            className={cn(
-              dashboardWorkspaceUi.btnGhost,
-              "justify-center border border-red-200 text-red-700 hover:bg-red-50 disabled:opacity-60 dark:border-red-900/40 dark:text-red-300 dark:hover:bg-red-950/30",
-            )}
-            aria-busy={busyPlan === "cancel" || undefined}
-          >
-            {busyPlan === "cancel" ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : null}
-            {t("business.billing.cancelSubscription")}
-          </button>
-        ) : null}
+    <div className="billing-plan-management space-y-6">
+      <div className="billing-plan-management__controls flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="min-w-0">
+          <h3 id="billing-cycle-heading" className={dashboardWorkspaceUi.subsectionTitle}>
+            {t("business.billing.billingCycle")}
+          </h3>
+          {billingCycle === "yearly" ? (
+            <p className="mt-1 text-sm font-medium text-primary">
+              {t("staticPages.pricing.billing.saveBadge")}
+            </p>
+          ) : null}
+        </div>
+
+        <div className="flex flex-col gap-2.5 sm:flex-row sm:flex-wrap sm:items-center sm:justify-end">
+          <PricingBillingToggle
+            value={billingCycle}
+            onChange={onBillingCycleChange}
+            className={cn("caretip-pricing-billing-toggle--in-panel w-full sm:w-auto sm:max-w-[16.5rem]")}
+            aria-labelledby="billing-cycle-heading"
+          />
+
+          {canCheckout && billing.hasStripeBilling && !billing.cancelAtPeriodEnd ? (
+            <button
+              type="button"
+              disabled={busyPlan !== null}
+              onClick={() => void handleCancel()}
+              className={cn(
+                dashboardWorkspaceUi.btnGhost,
+                "justify-center border border-red-200 text-red-700 hover:bg-red-50 disabled:opacity-60 dark:border-red-900/40 dark:text-red-300 dark:hover:bg-red-950/30",
+              )}
+              aria-busy={busyPlan === "cancel" || undefined}
+            >
+              {busyPlan === "cancel" ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : null}
+              {t("business.billing.cancelSubscription")}
+            </button>
+          ) : null}
+        </div>
       </div>
 
       {!canCheckout ? (
@@ -358,7 +373,7 @@ export function BillingPlanManagement({ billing, billingCycle, onChanged }: Prop
       >
         <div className="caretip-pricing-tiers__grid">
           {tiers.map((tier) => (
-            <div key={tier.tierKey} role="listitem" className="min-w-0">
+            <div key={tier.tierKey} role="listitem" className="flex h-full min-h-0 min-w-0">
               <PricingTierCard
                 tier={tier}
                 billingCycle={billingCycle}

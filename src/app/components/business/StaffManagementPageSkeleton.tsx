@@ -27,8 +27,8 @@ export function StaffManagementPageSkeleton() {
       <Card className={businessUi.atAGlanceCard}>
         <CardContent className={businessUi.atAGlanceContent}>
           <ShimmerBar className="h-3 w-24" />
-          <div className="mt-3 grid grid-cols-3 gap-4 text-center">
-            {[1, 2, 3].map((i) => (
+          <div className="mt-3 grid grid-cols-2 gap-4 text-center sm:grid-cols-4">
+            {[1, 2, 3, 4].map((i) => (
               <div key={i} className="space-y-2">
                 <ShimmerBar className="mx-auto h-3 w-16" />
                 <ShimmerBar className="mx-auto h-7 w-12" />

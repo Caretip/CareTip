@@ -15,7 +15,6 @@ import { BillingPlanManagement } from "./billing/BillingPlanManagement";
 import { BillingTrialSection, BILLING_START_TRIAL_HASH } from "./billing/BillingTrialSection";
 import { BillingSubscriptionLifecycle } from "./billing/BillingSubscriptionLifecycle";
 import { BillingSubscriptionSummary } from "./billing/BillingSubscriptionSummary";
-import { PricingBillingToggle } from "@/components/pricing/PricingBillingToggle";
 import { dashboardWorkspaceUi } from "@/app/components/dashboard/dashboardWorkspaceUi";
 import { cn } from "@/lib/utils";
 import { BILLING_PLANS_SECTION_ID, scrollToBillingPlansSection } from "../../../lib/activateCareTipNavigation";
@@ -109,22 +108,25 @@ export function BusinessSettingsBillingPanel() {
     <div className="billing-settings-panel space-y-8">
       <BillingSubscriptionSummary
         billing={data}
-        onManagePayment={canOpenPortal && !portalBusy ? () => void openBillingPortal() : undefined}
+        onManageBilling={canOpenPortal ? () => void openBillingPortal() : undefined}
+        manageBillingBusy={portalBusy}
       />
 
       <BillingSubscriptionLifecycle billing={data} />
 
       {data.accessSource !== "sponsored" ? (
-        <section id="billing-plans" className="billing-settings-panel__plans space-y-5">
+        <section id="billing-plans" className="billing-settings-panel__plans space-y-6">
           <div className="flex flex-wrap items-end justify-between gap-3">
             <div>
-              <h2 className={dashboardWorkspaceUi.sectionTitle}>{t("business.billing.planManagement")}</h2>
-              <p className={dashboardWorkspaceUi.pageDescription}>{t("business.billing.planManagementDesc")}</p>
+              <h2 className={dashboardWorkspaceUi.sectionTitle}>{t("business.billing.planComparisonTitle")}</h2>
+              <p className={cn(dashboardWorkspaceUi.pageDescription, "mt-1")}>
+                {t("business.billing.planComparisonDesc")}
+              </p>
             </div>
             {hasBillingHistory ? (
               <Link
                 to={BILLING_HISTORY_PATH}
-                className={cn(dashboardWorkspaceUi.btnGhost, "text-sm shrink-0")}
+                className={cn(dashboardWorkspaceUi.btnGhost, "shrink-0 text-sm")}
               >
                 {t("business.billing.viewBillingHistory")}
               </Link>
@@ -138,26 +140,12 @@ export function BusinessSettingsBillingPanel() {
             onAutoOpenHandled={() => setTrialAutoOpen(false)}
           />
 
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-            <div>
-              <h3 id="billing-cycle-heading" className={dashboardWorkspaceUi.subsectionTitle}>
-                {t("business.billing.billingCycle")}
-              </h3>
-              {billingCycle === "yearly" ? (
-                <p className="mt-1 text-sm font-medium text-primary">
-                  {t("staticPages.pricing.billing.saveBadge")}
-                </p>
-              ) : null}
-            </div>
-            <PricingBillingToggle
-              value={billingCycle}
-              onChange={setBillingCycle}
-              className={cn("caretip-pricing-billing-toggle--in-panel sm:max-w-xs")}
-              aria-labelledby="billing-cycle-heading"
-            />
-          </div>
-
-          <BillingPlanManagement billing={data} billingCycle={billingCycle} onChanged={() => void reload()} />
+          <BillingPlanManagement
+            billing={data}
+            billingCycle={billingCycle}
+            onBillingCycleChange={setBillingCycle}
+            onChanged={() => void reload()}
+          />
         </section>
       ) : null}
     </div>

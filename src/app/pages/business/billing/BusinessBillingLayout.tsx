@@ -3,6 +3,7 @@ import { Outlet, useSearchParams } from "react-router";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { CreditCard } from "lucide-react";
+import "@/styles/caretip-pricing-premium.css";
 import { trackGoogleAdsConversion } from "../../../lib/googleAdsConversion";
 import { processBillingCheckoutSuccess } from "../../../lib/subscriptionActivationNotification";
 import { BusinessModuleWorkspaceHeader } from "../../../components/business/BusinessModuleWorkspaceHeader";

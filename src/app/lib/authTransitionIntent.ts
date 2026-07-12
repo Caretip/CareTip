@@ -26,7 +26,7 @@ export function isIntentionalUserLogout(): boolean {
   );
 }
 
-/** Block session bootstrap while logout or post-login transition owns the overlay. */
+/** Block session bootstrap overlay while logout or post-login transition owns the global overlay. */
 export function shouldSuppressSessionBootstrapOverlay(): boolean {
   return isIntentionalUserLogout() || isAuthPostLoginTransitionActive();
 }

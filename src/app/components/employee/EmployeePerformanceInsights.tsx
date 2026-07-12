@@ -36,12 +36,12 @@ export function EmployeePerformanceInsights({
       </CardHeader>
       <CardContent>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <div className="rounded-xl border border-border/60 bg-muted/20 p-4">
-            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-              {t("employee.performance.rank")}
+          <div className="rounded-xl border border-dashed border-border/70 bg-muted/15 p-4 text-center">
+            <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-primary">
+              {t("common.comingSoonBadge")}
             </p>
             <p className="mt-2 text-sm font-semibold text-foreground">{t("kpiTrust.leaderboardComingSoon")}</p>
-            <p className="mt-1 text-xs text-muted-foreground">{t("kpiTrust.leaderboardComingSoonBody")}</p>
+            <p className="mt-1 text-xs leading-relaxed text-muted-foreground">{t("kpiTrust.leaderboardComingSoonBody")}</p>
           </div>
           <div className="rounded-xl border border-border/60 bg-muted/20 p-4">
             <div className="mb-2 flex items-center gap-2 text-muted-foreground">

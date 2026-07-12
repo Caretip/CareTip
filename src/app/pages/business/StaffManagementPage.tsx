@@ -18,6 +18,7 @@ import {
   Trash2,
   Users,
   MapPin,
+  Plus,
 } from "lucide-react";
 import { useRequireAuth } from "../../hooks/useRequireAuth";
 import { useMinWidthMedia } from "@/lib/motionPerf";
@@ -717,6 +718,11 @@ export function StaffManagementPage() {
 
   const activeCount = employees.filter(isFullyOnboardedDashboardStaff).length;
   const tipsMonthTotal = employees.reduce((s, e) => s + (e.tips ?? 0), 0);
+  const pendingInviteCount = employees.filter(
+    (e) =>
+      e.activationStatus === "pending_activation" ||
+      e.activationStatus === "pending_verification",
+  ).length;
 
   return (
     <div className="space-y-4 pt-2 sm:space-y-5 sm:pt-4">
@@ -725,90 +731,103 @@ export function StaffManagementPage() {
       ) : (
       <Card className={cn(businessUi.cardStatic, "w-full")}>
         <CardContent className="p-4 sm:p-5">
-          <div className="flex items-start justify-between gap-3">
-            <div className="min-w-0">
-              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                {t("business.staffPage.inviteCodeLabel")}
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between sm:gap-6">
+            <div className="min-w-0 flex-1">
+              <p className="text-xs font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+                {t("business.staffPage.inviteTeamTitle")}
+              </p>
+              <p className="mt-1.5 max-w-md text-sm text-muted-foreground">
+                {t("business.staffPage.inviteTeamDesc")}
               </p>
               {inviteCode ? (
-                <>
-                  <p className="mt-2 select-all break-all font-mono text-2xl font-bold tracking-[0.24em] text-foreground sm:text-3xl">
+                <div className="mt-4 rounded-lg border border-border/70 bg-muted/30 px-3 py-3 sm:px-4">
+                  <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                    {t("business.staffPage.inviteCodeLabel")}
+                  </p>
+                  <p className="mt-1.5 select-all break-all font-mono text-xl font-bold tracking-[0.2em] text-foreground sm:text-2xl">
                     {inviteCode}
                   </p>
                   {inviteExpiresAt ? (
-                    <p className="mt-2 text-xs text-muted-foreground">
+                    <p className="mt-1.5 text-xs text-muted-foreground">
                       {t("business.staffPage.inviteExpires", {
                         date: formatExpiresAt(inviteExpiresAt) ?? "",
                       })}
                     </p>
                   ) : null}
-                </>
-              ) : (
-                <p className="mt-2 text-sm text-muted-foreground">{t("business.staffPage.inviteHint")}</p>
-              )}
+                </div>
+              ) : null}
             </div>
-          </div>
 
-          <div className="mt-3.5 flex w-full flex-col items-stretch gap-2 sm:items-center max-lg:mt-3">
-            {inviteCode ? (
-              <div className="grid w-full grid-cols-2 gap-2 sm:max-w-md">
-                <HeroPanelButton
-                  type="button"
-                  variant="outline"
-                  className={cn(businessUi.btnSecondary, "min-w-0 px-3 sm:px-4")}
-                  onClick={handleCopyCode}
-                >
-                  <HeroPanelButtonIcon>
-                    <Copy aria-hidden />
-                  </HeroPanelButtonIcon>
-                  <span className="min-w-0 leading-snug">{t("business.staffPage.copy")}</span>
-                </HeroPanelButton>
-                <HeroPanelButton
-                  type="button"
-                  className={cn(businessUi.btnPrimary, "min-w-0 px-3 sm:px-4")}
-                  onClick={handleRegenerate}
-                  disabled={isGenerating}
-                >
-                  <HeroPanelButtonIcon>
-                    <RefreshCw className={cn(isGenerating && "animate-spin")} aria-hidden />
-                  </HeroPanelButtonIcon>
-                  <span className="min-w-0 leading-snug">{t("business.staffPage.regenerate")}</span>
-                </HeroPanelButton>
-              </div>
-            ) : (
-              <HeroPanelButton
-                type="button"
-                contentSized
-                className={businessUi.btnPrimary}
-                onClick={handleGenerateInvite}
-                disabled={!isBusiness || isGenerating}
-              >
-                {isGenerating ? (
+            <div className="flex w-full shrink-0 flex-col gap-2 sm:w-auto sm:items-end">
+              <div className="flex w-full flex-col-reverse gap-2 sm:w-auto sm:flex-row sm:justify-end">
+                {inviteCode ? (
                   <>
-                    <HeroPanelButtonIcon>
-                      <RefreshCw className="animate-spin" aria-hidden />
-                    </HeroPanelButtonIcon>
-                    <span className="leading-snug">{t("business.staffPage.generating")}</span>
+                    <HeroPanelButton
+                      type="button"
+                      variant="outline"
+                      contentSized
+                      className={cn(businessUi.btnSecondary, "sm:w-auto")}
+                      onClick={handleCopyCode}
+                    >
+                      <HeroPanelButtonIcon>
+                        <Copy aria-hidden />
+                      </HeroPanelButtonIcon>
+                      <span className="leading-snug">{t("business.staffPage.copy")}</span>
+                    </HeroPanelButton>
+                    <HeroPanelButton
+                      type="button"
+                      variant="outline"
+                      contentSized
+                      className={cn(businessUi.btnSecondary, "sm:w-auto")}
+                      onClick={handleRegenerate}
+                      disabled={isGenerating}
+                    >
+                      <HeroPanelButtonIcon>
+                        <RefreshCw className={cn(isGenerating && "animate-spin")} aria-hidden />
+                      </HeroPanelButtonIcon>
+                      <span className="leading-snug">{t("business.staffPage.regenerate")}</span>
+                    </HeroPanelButton>
                   </>
                 ) : (
-                  <>
-                    <HeroPanelButtonIcon>
-                      <KeyRound aria-hidden />
-                    </HeroPanelButtonIcon>
-                    <span className="leading-snug">{t("business.staffPage.generateInvite")}</span>
-                  </>
+                  <HeroPanelButton
+                    type="button"
+                    variant="outline"
+                    contentSized
+                    className={cn(businessUi.btnSecondary, "sm:w-auto")}
+                    onClick={handleGenerateInvite}
+                    disabled={!isBusiness || isGenerating}
+                  >
+                    {isGenerating ? (
+                      <>
+                        <HeroPanelButtonIcon>
+                          <RefreshCw className="animate-spin" aria-hidden />
+                        </HeroPanelButtonIcon>
+                        <span className="leading-snug">{t("business.staffPage.generating")}</span>
+                      </>
+                    ) : (
+                      <>
+                        <HeroPanelButtonIcon>
+                          <KeyRound aria-hidden />
+                        </HeroPanelButtonIcon>
+                        <span className="leading-snug">{t("business.staffPage.generateInvite")}</span>
+                      </>
+                    )}
+                  </HeroPanelButton>
                 )}
-              </HeroPanelButton>
-            )}
-            <HeroPanelButton
-              type="button"
-              variant="outline"
-              className={businessUi.btnSecondary}
-              onClick={() => isBusiness && setShowAddModal(true)}
-              disabled={!isBusiness}
-            >
-              <span className="leading-snug">{t("business.staffPage.addEmployee")}</span>
-            </HeroPanelButton>
+                <HeroPanelButton
+                  type="button"
+                  contentSized
+                  className={cn(businessUi.btnPrimary, "sm:w-auto")}
+                  onClick={() => isBusiness && setShowAddModal(true)}
+                  disabled={!isBusiness}
+                >
+                  <HeroPanelButtonIcon>
+                    <Plus aria-hidden />
+                  </HeroPanelButtonIcon>
+                  <span className="leading-snug">{t("business.staffPage.addEmployee")}</span>
+                </HeroPanelButton>
+              </div>
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -817,7 +836,7 @@ export function StaffManagementPage() {
       <Card className={businessUi.atAGlanceCard}>
           <CardContent className={businessUi.atAGlanceContent}>
             <p className={businessUi.atAGlanceLabel}>{t("business.qrPage.atAGlance")}</p>
-            <div className={businessUi.atAGlanceGrid}>
+            <div className={cn(businessUi.atAGlanceGrid, "sm:grid-cols-2 lg:grid-cols-4")}>
               <div>
                 <p className={businessUi.atAGlanceStatLabel}>{t("business.staffPage.glanceTeam")}</p>
                 <p className={businessUi.atAGlanceStatValue}>{employees.length}</p>
@@ -829,6 +848,10 @@ export function StaffManagementPage() {
               <div>
                 <p className={businessUi.atAGlanceStatLabel}>{t("business.staffPage.labelTipsMonth")}</p>
                 <p className={businessUi.atAGlanceStatValue}>{formatEur(tipsMonthTotal)}</p>
+              </div>
+              <div>
+                <p className={businessUi.atAGlanceStatLabel}>{t("business.staffPage.glancePending")}</p>
+                <p className={businessUi.atAGlanceStatValue}>{pendingInviteCount}</p>
               </div>
             </div>
           </CardContent>

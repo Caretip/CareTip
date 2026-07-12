@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef, useSyncExternalStore } from 'react';
+import { flushSync } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import { Link, useNavigate, useLocation } from 'react-router';
 import { AuthFieldGroup } from './auth/AuthFieldGroup';
@@ -146,8 +147,11 @@ export function AuthPage() {
       if (location.pathname === target) return;
       if (postAuthRedirectRef.current === target) return;
       postAuthRedirectRef.current = target;
-      setAuthFlowInProgress(true);
-      beginAuthPostLoginTransition(target);
+      // Paint AuthBootstrapShell before the route swap so Sign In chrome never flashes.
+      flushSync(() => {
+        setAuthFlowInProgress(true);
+        beginAuthPostLoginTransition(target);
+      });
       navigate(target, { replace: true });
     },
     [location.pathname, navigate],
@@ -568,7 +572,9 @@ export function AuthPage() {
           isLogin={isLogin}
           onToggleMode={toggleAuthMode}
           formBusy={isSubmitting || authFlowInProgress}
-          sessionActive={showAuthenticatedSessionHint}
+          sessionActive={
+            showAuthenticatedSessionHint || authFlowInProgress || postLoginTransitionActive
+          }
           authLane={authLane}
           modeScope={isEmployeeJoinSignup ? 'signup-only' : 'both'}
           employeeVenueName={inviteContext?.businessName}

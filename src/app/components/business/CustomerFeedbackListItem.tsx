@@ -17,7 +17,13 @@ function StarRating({ rating, className }: { rating: number | null; className?: 
   if (rating == null) return null;
   const rounded = Math.max(1, Math.min(5, Math.round(rating)));
   return (
-    <div className={cn("business-dashboard-feedback-item__rating flex items-center gap-0.5", className)} aria-label={`${rating} / 5`}>
+    <div
+      className={cn(
+        "business-dashboard-feedback-item__rating flex items-center gap-0.5",
+        className,
+      )}
+      aria-label={`${rating} / 5`}
+    >
       {Array.from({ length: 5 }, (_, i) => (
         <Star
           key={i}
@@ -46,39 +52,50 @@ export function CustomerFeedbackListItem({ item, className }: CustomerFeedbackLi
     return `${comment.slice(0, PREVIEW_MAX_CHARS).trimEnd()}…`;
   }, [comment, expanded, hasLongComment]);
 
-  const submittedAt = useMemo(() => {
+  const visitDate = useMemo(() => {
     try {
-      return format(new Date(item.createdAt), "PPp", { locale: dateLocale });
+      return format(new Date(item.createdAt), "PP", { locale: dateLocale });
     } catch {
       return item.createdAt;
     }
   }, [item.createdAt, dateLocale]);
 
   const customerLabel =
-    item.customerName?.trim() ||
-    t("business.customerFeedback.anonymousGuest");
+    item.customerName?.trim() || t("business.customerFeedback.anonymousGuest");
 
   return (
-    <article className={cn("business-dashboard-feedback-item", className)}>
+    <article
+      className={cn(
+        "business-dashboard-feedback-item group rounded-xl border border-border/70 bg-card p-4 shadow-sm transition-[border-color,box-shadow,transform] duration-200 hover:-translate-y-0.5 hover:border-border hover:shadow-md sm:p-5",
+        className,
+      )}
+    >
       <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0 flex-1 space-y-1.5">
           <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
             <h3 className="business-dashboard-feedback-item__guest">{customerLabel}</h3>
             <p className="business-dashboard-feedback-item__staff">
-              <span aria-hidden>· </span>
+              <span className="text-muted-foreground/70">
+                {t("business.customerFeedback.servedBy")}{" "}
+              </span>
               {item.employeeName}
             </p>
           </div>
           <StarRating rating={item.rating} />
         </div>
-        <time className="business-dashboard-feedback-item__time shrink-0" dateTime={item.createdAt}>
-          {submittedAt}
+        <time
+          className="business-dashboard-feedback-item__time shrink-0"
+          dateTime={item.createdAt}
+        >
+          {t("business.customerFeedback.visitDate", { date: visitDate })}
         </time>
       </div>
 
       {comment ? (
-        <div className="space-y-2">
-          <p className="business-dashboard-feedback-item__comment whitespace-pre-wrap">{displayComment}</p>
+        <div className="mt-3 space-y-2">
+          <p className="business-dashboard-feedback-item__comment whitespace-pre-wrap">
+            {displayComment}
+          </p>
           {hasLongComment ? (
             <button
               type="button"
@@ -94,11 +111,14 @@ export function CustomerFeedbackListItem({ item, className }: CustomerFeedbackLi
       ) : null}
 
       {item.tags.length > 0 ? (
-        <ul className="mt-2.5 flex flex-wrap gap-1.5" aria-label={t("business.customerFeedback.tagsAria")}>
+        <ul
+          className="mt-3 flex flex-wrap gap-1.5"
+          aria-label={t("business.customerFeedback.tagsAria")}
+        >
           {item.tags.map((tag) => (
             <li
               key={tag}
-              className="rounded-full bg-muted/80 px-2 py-0.5 text-[0.6875rem] font-medium text-muted-foreground"
+              className="rounded-full bg-muted/80 px-2.5 py-0.5 text-[0.6875rem] font-medium text-muted-foreground"
             >
               {tag}
             </li>

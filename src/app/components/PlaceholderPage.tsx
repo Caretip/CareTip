@@ -1,4 +1,5 @@
 import { Link } from 'react-router';
+import { Sparkles } from 'lucide-react';
 import { Navigation } from './Navigation';
 import { Footer } from './Footer';
 import AnimatedShaderBackground from './ui/animated-shader-background';
@@ -14,34 +15,36 @@ export function PlaceholderPage({ title, description }: PlaceholderPageProps) {
       <AnimatedShaderBackground />
       <div className="relative z-10">
         <Navigation />
-        
-        <main className="min-h-[70vh] flex items-center justify-center px-6 py-20">
-          <div className="max-w-3xl mx-auto text-center space-y-8">
-            <Link 
-              to="/" 
-              className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors mb-8"
+
+        <main className="flex min-h-[70vh] items-center justify-center px-6 py-20">
+          <div className="mx-auto w-full max-w-xl text-center">
+            <Link
+              to="/"
+              className="mb-8 inline-flex items-center gap-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
             >
-              <span className="text-sm">Back to Home</span>
+              Back to Home
             </Link>
-            
-            <div className="space-y-4">
-              <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold text-foreground">
-                {title}
-              </h1>
-              {description && (
-                <p className="text-lg sm:text-xl text-muted-foreground max-w-2xl mx-auto">
-                  {description}
-                </p>
-              )}
+
+            <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/10 ring-1 ring-primary/15">
+              <Sparkles className="h-8 w-8 text-primary" aria-hidden />
             </div>
 
-            <div className="pt-8">
-              <div className="p-8 rounded-2xl bg-card border border-border">
-                <p className="text-muted-foreground">
-                  Content will be updated later
-                </p>
-              </div>
-            </div>
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-primary/25 bg-primary/[0.08] px-3 py-1 text-[11px] font-bold uppercase tracking-[0.14em] text-primary">
+              <Sparkles className="h-3 w-3" aria-hidden />
+              Coming soon
+            </span>
+
+            <h1 className="mt-5 font-hero-display text-3xl font-bold tracking-tight text-foreground sm:text-4xl md:text-5xl">
+              {title}
+            </h1>
+            {description ? (
+              <p className="mx-auto mt-4 max-w-md text-base leading-relaxed text-muted-foreground sm:text-lg">
+                {description}
+              </p>
+            ) : null}
+            <p className="mt-5 text-xs font-medium uppercase tracking-[0.12em] text-muted-foreground/80">
+              Currently in development
+            </p>
           </div>
         </main>
 
