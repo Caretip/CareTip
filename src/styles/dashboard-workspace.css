@@ -358,10 +358,12 @@
   transform: none !important;
 }
 
-/* —— Sidebar active state (no glow) —— */
-.caretip-dashboard-shell .business-dash-nav-link--active {
-  box-shadow: none !important;
-  background: hsl(var(--primary) / 0.08) !important;
+/* —— Sidebar active state (muted orange wash + left rail) —— */
+.caretip-dashboard-shell .business-dash-nav-link--active,
+.caretip-dashboard-shell .employee-dash-nav-link--active {
+  box-shadow: 0 1px 2px rgb(28 25 23 / 0.05) !important;
+  background: hsl(var(--primary) / 0.1) !important;
+  color: hsl(var(--foreground)) !important;
 }
 
 /* —— Billing subscription summary (Netlify-style plan card) —— */

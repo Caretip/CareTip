@@ -5,7 +5,7 @@
 
 .caretip-dashboard-shell.business-dashboard,
 .caretip-dashboard-shell.employee-dashboard {
-  --dashboard-card-radius: 1.125rem;
+  --dashboard-card-radius: 0.625rem;
   --dashboard-section-gap: 1.25rem;
   --dashboard-block-gap: 1.5rem;
 }
@@ -38,7 +38,7 @@
 @media (hover: hover) {
   .caretip-dashboard-shell .business-card:hover,
   .caretip-dashboard-shell .employee-card:hover {
-    border-color: rgba(226, 232, 240, 0.95);
+    border-color: hsl(var(--border));
   }
 }
 
@@ -157,10 +157,8 @@
 .caretip-dashboard-shell .employee-stat-card--featured,
 .caretip-dashboard-shell .platform-admin-stat-card--featured,
 .caretip-dashboard-shell .dashboard-metric-stat-card--featured {
-  border-color: hsl(var(--primary) / 0.22);
-  box-shadow:
-    0 10px 36px -14px rgba(15, 23, 42, 0.1),
-    inset 0 1px 0 0 hsl(var(--primary) / 0.06);
+  border-color: hsl(var(--primary) / 0.2);
+  box-shadow: none;
 }
 
 .caretip-dashboard-shell .dashboard-metric-stat-card__label-row {
@@ -232,21 +230,21 @@
 .caretip-dashboard-shell .dashboard-chart-card .dashboard-chart-frame,
 .caretip-dashboard-shell .business-dashboard-chart-card .business-dashboard-chart-frame,
 .caretip-dashboard-shell .business-dashboard-chart-card .dashboard-chart-frame {
-  border-radius: 0.75rem;
-  background: linear-gradient(180deg, rgba(248, 250, 252, 0.65) 0%, rgba(255, 255, 255, 0) 100%);
-  padding: 0.35rem 0.15rem 0.15rem;
+  border-radius: 0.5rem;
+  background: transparent;
+  padding: 0.25rem 0.1rem 0.1rem;
 }
 
 .caretip-dashboard-shell .dashboard-chart-card [class*="recharts-cartesian-grid"] line,
 .caretip-dashboard-shell .business-dashboard-chart-card [class*="recharts-cartesian-grid"] line {
-  stroke: rgba(148, 163, 184, 0.28);
+  stroke: hsl(var(--border) / 0.55);
 }
 
 .caretip-dashboard-shell .dashboard-chart-insight,
 .caretip-dashboard-shell .business-dashboard-chart-insight {
   margin-top: 0.75rem;
   padding-top: 0.65rem;
-  border-top: 1px solid rgba(226, 232, 240, 0.85);
+  border-top: 1px solid hsl(var(--border) / 0.75);
   font-size: 0.75rem;
   line-height: 1.45;
   color: hsl(var(--muted-foreground));
@@ -257,8 +255,8 @@
 .caretip-dashboard-shell .business-dashboard-chart-empty {
   position: relative;
   overflow: hidden;
-  border-radius: 0.75rem;
-  background: linear-gradient(180deg, rgba(248, 250, 252, 0.9) 0%, rgba(255, 255, 255, 0.4) 100%);
+  border-radius: 0.5rem;
+  background: hsl(var(--muted) / 0.35);
 }
 
 .caretip-dashboard-shell .dashboard-chart-empty::before,
@@ -266,11 +264,11 @@
   content: "";
   position: absolute;
   inset: 0;
-  opacity: 0.45;
+  opacity: 0.35;
   background-image: repeating-linear-gradient(
     90deg,
-    rgba(25, 114, 120, 0.08) 0,
-    rgba(25, 114, 120, 0.08) 1px,
+    hsl(var(--primary) / 0.08) 0,
+    hsl(var(--primary) / 0.08) 1px,
     transparent 1px,
     transparent 12%
   );
@@ -292,8 +290,8 @@
   .caretip-dashboard-shell .dashboard-list-row:hover,
   .caretip-dashboard-shell .employee-list-item:hover,
   .caretip-dashboard-shell .business-dashboard-top-performer-row:hover {
-    border-color: rgba(226, 232, 240, 1);
-    box-shadow: 0 8px 28px -14px rgba(15, 23, 42, 0.1);
+    border-color: hsl(var(--border));
+    box-shadow: 0 2px 10px -6px hsl(var(--foreground) / 0.08);
   }
 }
 
@@ -329,7 +327,7 @@
 
 /* Sub-page tables */
 .caretip-dashboard-shell .dashboard-table-panel thead {
-  background: rgba(248, 250, 252, 0.85);
+  background: hsl(var(--muted) / 0.45);
 }
 
 .caretip-dashboard-shell .dashboard-table-panel tbody tr {
@@ -338,7 +336,7 @@
 
 @media (hover: hover) {
   .caretip-dashboard-shell .dashboard-table-panel tbody tr:hover {
-    background: rgba(248, 250, 252, 0.55);
+    background: hsl(var(--muted) / 0.35);
   }
 }
 
@@ -352,19 +350,19 @@
 
 @media (hover: hover) {
   .caretip-dashboard-shell .dashboard-notification-card:hover {
-    border-color: rgba(226, 232, 240, 0.95);
-    box-shadow: 0 8px 28px -14px rgba(15, 23, 42, 0.08);
+    border-color: hsl(var(--border));
+    box-shadow: 0 2px 10px -6px hsl(var(--foreground) / 0.08);
   }
 }
 
 /* Employee page header matches card system */
 .caretip-dashboard-shell .employee-page-header {
   border-color: hsl(var(--border) / 0.88);
-  box-shadow: 0 10px 36px -14px hsl(220 20% 10% / 0.1);
+  box-shadow: var(--dash-card-shadow, 0 1px 2px rgb(0 0 0 / 0.04));
 }
 
 .dark .caretip-dashboard-shell .employee-page-header {
-  box-shadow: 0 10px 36px -14px hsl(0 0% 0% / 0.35);
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.28);
 }
 
 .caretip-dashboard-shell .employee-settings-section {

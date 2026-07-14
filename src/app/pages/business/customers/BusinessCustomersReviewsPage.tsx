@@ -13,6 +13,7 @@ import { cn } from "@/lib/utils";
 import { FeatureGate } from "@/app/components/subscription/FeatureGate";
 import { useSubscriptionEntitlements } from "@/app/hooks/useSubscriptionEntitlements";
 import { isApiSubscriptionRequiredError } from "@/app/lib/apiError";
+import { useBusinessPageBoot } from "@/app/lib/useBusinessPageBoot";
 
 function BusinessCustomersReviewsPageContent() {
   const { t } = useTranslation();
@@ -45,6 +46,9 @@ function BusinessCustomersReviewsPageContent() {
   useEffect(() => {
     void load();
   }, [load]);
+
+  const isInitialReviewsLoad = loading && items.length === 0;
+  const { showInitialSkeleton } = useBusinessPageBoot("customers-reviews", isInitialReviewsLoad);
 
   return (
     <div className="space-y-6 pt-6">
@@ -86,7 +90,7 @@ function BusinessCustomersReviewsPageContent() {
           <CardTitle className="text-base">{t("business.customers.reviews.recentTitle")}</CardTitle>
         </CardHeader>
         <CardContent className="divide-y divide-border/60 p-0">
-          {loading && items.length === 0 ? (
+          {showInitialSkeleton ? (
             <p className="px-4 py-10 text-center text-sm text-muted-foreground">{t("business.branding.loading")}</p>
           ) : items.length === 0 ? (
             <p className="px-4 py-10 text-center text-sm text-muted-foreground">{t("business.customers.reviews.empty")}</p>

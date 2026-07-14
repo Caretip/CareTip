@@ -12,7 +12,7 @@ import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
 import { format } from "date-fns";
 import { de, enUS } from "date-fns/locale";
-import { useRegisterPagePaintReady } from "../../lib/globalAppLoading";
+import { useBusinessPageBoot } from "../../lib/useBusinessPageBoot";
 import { useRequireAuth } from "../../hooks/useRequireAuth";
 import { useSocket, useDeferSocketConnect } from "../../hooks/useSocket";
 import { useRealtimeFallback } from "../../hooks/useRealtimeFallback";
@@ -117,7 +117,6 @@ export function BusinessDashboard() {
   );
   const { user, logout, isBusiness, exitImpersonation, sessionValidated, authReady } =
     useRequireAuth();
-  useRegisterPagePaintReady("business-dashboard-paint");
 
   const handleLogout = () => {
     if (user?.impersonation) {
@@ -342,11 +341,15 @@ export function BusinessDashboard() {
     (displayStats?.employees ?? []).length > 0 &&
     (displayStats?.employees ?? []).some((e) => e.slug == null || e.slug === "");
 
-  const showMetricsSkeleton = isMetricsInitialLoad && !useDevDemo;
+  const metricsBootBlocking = isMetricsInitialLoad && !useDevDemo;
+  const {
+    showInitialSkeleton: showMetricsSkeleton,
+    coveredByGlobalLoader: globalLoaderCoversBoot,
+  } = useBusinessPageBoot("overview", metricsBootBlocking);
   const periodMetricsLoading = showMetricsSkeleton || (!useDevDemo && !displayMetrics);
   const heroPulseLoading =
     !useDevDemo && !isMetricsSettled && !operationalPulse;
-  const showGoalsLoading = isGoalsInitialLoad && !useDevDemo;
+  const showGoalsLoading = isGoalsInitialLoad && !useDevDemo && !globalLoaderCoversBoot;
   const periodRefreshingLabel = t("dashboard.refresh.updating");
   const isLargeScreen = useMinWidthMedia(1024);
 

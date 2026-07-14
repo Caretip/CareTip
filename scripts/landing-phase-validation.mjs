@@ -25,7 +25,7 @@ function analyzeBundle() {
     indexJsKb: fileKb(files.find((f) => f.startsWith("index-") && f.endsWith(".js"))),
     hospitalityChunkKb: fileKb(pick("HospitalityTeamsUnifiedSection-")),
     simpleSetupChunkKb: fileKb(pick("SimpleSetupSection-")),
-    heroImages: files.filter((f) => /^(wyc|wyo|formobile0[12])-/.test(f)),
+    heroImages: files.filter((f) => /^(wyc|wyo|formemobile0[12])-/.test(f)),
   };
 }
 
@@ -40,11 +40,11 @@ function isBelowFoldChunk(url) {
 }
 
 function isSecondaryHero(url) {
-  return /wyo-|formobile02-/i.test(url);
+  return /wyo-|formemobile02-/i.test(url);
 }
 
 function isLcpHero(url) {
-  return /wyc-|formobile01-/i.test(url);
+  return /wyc-|formemobile01-/i.test(url);
 }
 
 const browser = await chromium.launch();

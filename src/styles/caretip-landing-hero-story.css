@@ -28,7 +28,8 @@
   width: 100%;
   height: 100%;
   opacity: 0;
-  transition: opacity 0.9s cubic-bezier(0.22, 1, 0.36, 1);
+  /* No transition on first paint — otherwise LCP fades in after the headline. */
+  transition: none;
 }
 
 .caretip-landing .caretip-hero-bg-layer .caretip-hero-story-frame--displayed {
@@ -39,6 +40,11 @@
 .caretip-landing .caretip-hero-bg-layer .caretip-hero-story-frame--incoming {
   z-index: 2;
   opacity: 1;
+}
+
+/* Crossfade only while swapping story frames (not on initial mount). */
+.caretip-landing .caretip-hero-bg-layer:has([data-hero-crossfading="1"]) .caretip-hero-story-frame--bg-cover {
+  transition: opacity 0.9s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 @media (prefers-reduced-motion: reduce) {

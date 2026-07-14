@@ -11,6 +11,7 @@ import {
   resolveAppLoadingContextMessage,
   type AppLoadingContext,
 } from "../lib/appLoadingContexts";
+import { isAppShellInteractive } from "../lib/appShellLifecycle";
 
 /** Text-only “CareTip” mark for loading states (no logo image). */
 export function CareTipLoadingTitle({
@@ -65,6 +66,7 @@ export function CareTipPageLoader({
 }: CareTipPageLoaderProps) {
   const { t } = useTranslation();
   const autoKey = useId();
+  const softNav = isAppShellInteractive();
   const isFullScreen = variant === "wait" || variant === "fullscreen";
   const resolvedMessage =
     message ?? (context ? resolveAppLoadingContextMessage(context, t) : undefined);
@@ -73,7 +75,7 @@ export function CareTipPageLoader({
   useAppLoadingRegistration(
     registrationKey ?? `caretip-page-loader:${autoKey}`,
     APP_LOADING_PRIORITY.ROUTE_GUARD,
-    isFullScreen,
+    isFullScreen && !softNav,
     resolvedMessage,
   );
 
@@ -86,7 +88,8 @@ export function CareTipPageLoader({
           ? "flex flex-col items-center justify-center gap-6 py-16 px-4"
           : "flex flex-col items-center justify-center gap-4";
 
-  if (isFullScreen) {
+  /* Cold entry: stay under the global CareTip overlay. Soft SPA: local wait only. */
+  if (isFullScreen && !softNav) {
     return <GlobalAppLoadingHold className={className} />;
   }
 
@@ -97,7 +100,7 @@ export function CareTipPageLoader({
       aria-busy="true"
       aria-live="polite"
     >
-      <CareTipLoadingTitle compact={variant === "compact"} />
+      <CareTipLoadingTitle compact={variant === "compact" || isFullScreen} />
       <div className="flex flex-col items-center gap-3">
         <LoadingSpinner size={spinnerSize} />
         {resolvedMessage ? (

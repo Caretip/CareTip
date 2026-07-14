@@ -148,3 +148,16 @@
     transform: none;
   }
 }
+
+/* —— Notification center panel —— */
+.caretip-notification-panel {
+  will-change: transform, opacity;
+  transform: translateZ(0);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .caretip-notification-panel {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}

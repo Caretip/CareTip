@@ -45,6 +45,7 @@ import { useSubscriptionEntitlements } from "../../hooks/useSubscriptionEntitlem
 import { TeamGrowthUpgradeNotice } from "../../components/subscription/TeamGrowthUpgradeNotice";
 import { isApiSubscriptionRequiredError } from "../../lib/apiError";
 import { StaffRosterTableSkeleton, InlineSpinner } from "../../components/dashboard/DashboardSectionLoading";
+import { useBusinessPageBoot } from "../../lib/useBusinessPageBoot";
 import { ProfileAvatar } from "../../components/ui/profile-avatar";
 import { toUserFriendlyMessage } from "../../lib/errorMessages";
 import { canUseProductionQr } from "../../lib/businessVerificationCapabilities";
@@ -711,6 +712,7 @@ export function StaffManagementPage() {
 
   const isInitialStaffLoad = loading && employees.length === 0;
   const isBackgroundStaffRefresh = loading && employees.length > 0;
+  const { showInitialSkeleton } = useBusinessPageBoot("staff", isInitialStaffLoad);
 
   if (!user) {
     return null;
@@ -901,7 +903,7 @@ export function StaffManagementPage() {
           </div>
         ) : null}
 
-        {isInitialStaffLoad ? (
+        {showInitialSkeleton ? (
           <StaffRosterTableSkeleton rows={6} />
         ) : isLargeScreen ? (
         <div className={cn(businessUi.tablePanel)}>

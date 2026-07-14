@@ -11,6 +11,7 @@ import {
   isEntitlementsSessionPrimed,
   sessionHasFeature,
 } from "../../../lib/subscriptionEntitlementFastPath";
+import { useBusinessPageBoot } from "../../../lib/useBusinessPageBoot";
 
 /** Team → Performance: executive insights — health, trends, recommendations. Gated at layout level. */
 export function BusinessTeamPerformancePage() {
@@ -31,6 +32,11 @@ export function BusinessTeamPerformancePage() {
     true,
   );
 
+  const { showInitialSkeleton } = useBusinessPageBoot(
+    "team-performance",
+    data.isInitialAnalyticsLoading,
+  );
+
   return (
     <div className="space-y-4 pt-2 sm:space-y-5 sm:pt-4">
       <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:justify-end">
@@ -41,7 +47,9 @@ export function BusinessTeamPerformancePage() {
           </Link>
         </Button>
       </div>
-      <BusinessExecutivePerformance data={data} />
+      <BusinessExecutivePerformance
+        data={{ ...data, loading: showInitialSkeleton }}
+      />
     </div>
   );
 }

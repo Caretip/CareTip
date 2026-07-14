@@ -17,6 +17,7 @@ export type AppBrandedLoadingScreenProps = {
 
 /**
  * Global CareTip loader — branded mark, warm pulse, workspace copy.
+ * Soft navigations / auth transitions only. Cold URL boot uses `#caretip-html-boot`.
  */
 export function AppBrandedLoadingScreen({
   className,

@@ -46,9 +46,9 @@ import { resetAllClientSessionCaches } from "../lib/resetAllClientSessionCaches"
 import { performClientLogoutCleanup, captureLogoutSnapshot } from "../lib/clientLogout";
 import {
   beginAuthLogoutTransition,
-  endAuthLogoutTransition,
   isAuthLogoutTransitionActive,
 } from "../lib/authLogoutTransition";
+import { prefetchAuthLoginRoute } from "../routing/routeLazy";
 import { markClientSessionHint } from "../lib/authSessionHint";
 import { setMemoryAccessToken } from "../lib/accessTokenStore";
 import { authDebug } from "../lib/authDebugLog";
@@ -459,17 +459,20 @@ export function useAuth() {
     const clickStartedAt = performance.now();
     authDebug("logout_click", { t: clickStartedAt });
 
-    beginAuthLogoutTransition();
-    markLogoutPending();
-
     const snapshot = captureLogoutSnapshot();
+    beginAuthLogoutTransition(snapshot.loginPath);
+    markLogoutPending();
+    // Warm the same lazy promise RR will await so logout overlay covers chunk+CSS load.
+    prefetchAuthLoginRoute(snapshot.loginPath);
+
+    // Clear session before route swap so AuthPage never paints authenticated chrome mid-handoff.
+    const { clientCleanupMs } = performClientLogoutCleanup(snapshot);
 
     flushSync(() => {
       navigate(snapshot.loginPath, { replace: true });
     });
 
-    const { clientCleanupMs } = performClientLogoutCleanup(snapshot);
-    endAuthLogoutTransition();
+    // Overlay ends when the login surface paints (signalLogoutAuthPageReady) — not here.
     authDebug("logout_navigate", {
       loginPath: snapshot.loginPath,
       clientCleanupMs: Math.round(clientCleanupMs),

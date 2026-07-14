@@ -1,27 +1,27 @@
 /**
- * Landing hero floating metric widgets — premium SaaS glass cards, per-slide placement.
+ * Landing hero in-scene CareTip tipping panel — glass product preview (non-interactive).
  */
 
-@keyframes caretip-hero-metric-enter {
+@keyframes caretip-hero-tip-panel-enter {
   from {
     opacity: 0;
-    transform: translate3d(0, 10px, 0) rotate(var(--metric-float-rotate, 0deg));
+    transform: translate3d(0, 10px, 0);
   }
 
   to {
     opacity: 1;
-    transform: translate3d(0, 0, 0) rotate(var(--metric-float-rotate, 0deg));
+    transform: translate3d(0, 0, 0);
   }
 }
 
-@keyframes caretip-hero-metric-float {
+@keyframes caretip-hero-tip-panel-float {
   0%,
   100% {
-    transform: translate3d(0, 0, 0) rotate(var(--metric-float-rotate, 0deg));
+    transform: translate3d(0, 0, 0);
   }
 
   50% {
-    transform: translate3d(0, -5px, 0) rotate(calc(var(--metric-float-rotate, 0deg) + 0.35deg));
+    transform: translate3d(0, -2px, 0);
   }
 }
 
@@ -34,282 +34,299 @@
   pointer-events: none;
 }
 
-.caretip-landing .caretip-hero-metric-card {
+.caretip-landing .caretip-hero-tip-panel {
   position: absolute;
-  z-index: 31;
-  display: flex;
-  align-items: center;
-  gap: 0.625rem;
-  width: min(100%, 13.75rem);
-  min-height: 3.5rem;
-  max-height: 4.5rem;
-  padding: 0.5625rem 0.75rem;
-  border-radius: 1.25rem;
-  border: 1px solid rgb(255 255 255 / 0.72);
-  background: rgb(255 255 255 / 0.93);
-  backdrop-filter: blur(14px) saturate(1.08);
-  -webkit-backdrop-filter: blur(14px) saturate(1.08);
-  box-shadow:
-    0 10px 28px -12px rgb(15 23 42 / 0.16),
-    0 4px 10px -6px rgb(15 23 42 / 0.07),
-    0 1px 2px rgb(15 23 42 / 0.04);
-  pointer-events: none;
-  will-change: transform;
-}
-
-.caretip-landing .caretip-hero-metric-card--enter {
-  animation:
-    caretip-hero-metric-enter 620ms ease-out var(--metric-enter-delay, 0ms) both,
-    caretip-hero-metric-float var(--metric-float-duration, 6s) ease-in-out
-      calc(var(--metric-enter-delay, 0ms) + 680ms) infinite;
-}
-
-.caretip-landing .caretip-hero-metric-card__icon {
-  display: inline-flex;
-  flex-shrink: 0;
-  align-items: center;
-  justify-content: center;
-  width: 1.75rem;
-  height: 1.75rem;
-  border-radius: 0.5rem;
-  background: rgb(233 120 28 / 0.1);
-  color: rgb(194 65 12);
-}
-
-.caretip-landing .caretip-hero-metric-card__icon-svg {
-  width: 0.9375rem;
-  height: 0.9375rem;
-}
-
-.caretip-landing .caretip-hero-metric-card__copy {
-  min-width: 0;
+  z-index: 32;
   display: flex;
   flex-direction: column;
-  gap: 0.125rem;
+  align-items: stretch;
+  gap: 0.625rem;
+  width: min(100%, 12.5rem);
+  padding: 0.875rem 0.9375rem 0.9375rem;
+  border-radius: 1.4375rem; /* 23px */
+  border: 1px solid rgb(255 255 255 / 0.58);
+  background: rgb(255 255 255 / 0.68);
+  backdrop-filter: blur(16px) saturate(1.1);
+  -webkit-backdrop-filter: blur(16px) saturate(1.1);
+  box-shadow:
+    0 10px 28px -18px rgb(15 23 42 / 0.16),
+    0 3px 10px -6px rgb(15 23 42 / 0.08),
+    inset 0 1px 0 rgb(255 255 255 / 0.72);
+  pointer-events: none;
+  user-select: none;
+  will-change: transform, opacity;
 }
 
-.caretip-landing .caretip-hero-metric-card__title {
+.caretip-landing .caretip-hero-tip-panel--enter {
+  animation: caretip-hero-tip-panel-float 8s ease-in-out 0.6s infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .caretip-landing .caretip-hero-tip-panel--enter {
+    animation: none;
+  }
+}
+
+.caretip-landing .caretip-hero-tip-panel__title {
   margin: 0;
-  font-size: 0.6875rem;
-  font-weight: 600;
-  line-height: 1.2;
-  letter-spacing: -0.01em;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  line-height: 1.3;
+  letter-spacing: -0.02em;
   color: rgb(23 23 23);
 }
 
-.caretip-landing .caretip-hero-metric-card__subtitle {
-  margin: 0;
-  font-size: 0.625rem;
-  font-weight: 500;
-  line-height: 1.25;
+.caretip-landing .caretip-hero-tip-panel__rating {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.375rem 0.5rem;
+  margin-top: 0.0625rem;
+}
+
+.caretip-landing .caretip-hero-tip-panel__stars {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.1rem;
+  color: rgb(233 120 28);
+}
+
+.caretip-landing .caretip-hero-tip-panel__star {
+  width: 0.6875rem;
+  height: 0.6875rem;
+}
+
+.caretip-landing .caretip-hero-tip-panel__rating-label {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
   color: rgb(82 82 82);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 
-html.dark .caretip-landing .caretip-hero-metric-card {
-  border-color: rgb(255 255 255 / 0.14);
-  background: rgb(24 24 27 / 0.9);
+.caretip-landing .caretip-hero-tip-panel__amounts {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.375rem;
+  margin-top: 0.125rem;
+}
+
+.caretip-landing .caretip-hero-tip-panel__amount {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 1.875rem;
+  padding: 0.25rem 0.15rem;
+  border-radius: 0.625rem;
+  border: 1px solid rgb(15 23 42 / 0.08);
+  background: rgb(255 255 255 / 0.72);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.5);
+  font-size: 0.625rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: rgb(64 64 64);
+}
+
+.caretip-landing .caretip-hero-tip-panel__amount--selected {
+  border-color: rgb(233 120 28 / 0.85);
+  background: rgb(233 120 28 / 0.12);
+  color: rgb(154 52 18);
   box-shadow:
-    0 12px 32px -14px rgb(0 0 0 / 0.48),
-    0 4px 10px -6px rgb(0 0 0 / 0.24),
-    0 1px 2px rgb(0 0 0 / 0.2);
+    inset 0 1px 0 rgb(255 255 255 / 0.45),
+    0 0 0 1px rgb(233 120 28 / 0.18);
+  font-weight: 700;
 }
 
-html.dark .caretip-landing .caretip-hero-metric-card__icon {
-  background: rgb(233 120 28 / 0.18);
-  color: rgb(251 191 36);
+html.dark .caretip-landing .caretip-hero-tip-panel {
+  border-color: rgb(255 255 255 / 0.14);
+  background: rgb(24 24 27 / 0.66);
+  box-shadow:
+    0 10px 28px -18px rgb(0 0 0 / 0.4),
+    0 3px 10px -6px rgb(0 0 0 / 0.22),
+    inset 0 1px 0 rgb(255 255 255 / 0.08);
 }
 
-html.dark .caretip-landing .caretip-hero-metric-card__title {
+html.dark .caretip-landing .caretip-hero-tip-panel__title {
   color: rgb(250 250 250);
 }
 
-html.dark .caretip-landing .caretip-hero-metric-card__subtitle {
+html.dark .caretip-landing .caretip-hero-tip-panel__rating-label {
   color: rgb(163 163 163);
 }
 
-/* —— Full-bleed hero: slide-specific anchors —— */
-.caretip-landing .caretip-hero-float-layer--full-bg .caretip-hero-metric-card--card-a,
-.caretip-landing .caretip-hero-float-layer--full-bg .caretip-hero-metric-card--card-b {
-  left: auto;
-  right: auto;
-  top: auto;
-  bottom: auto;
+html.dark .caretip-landing .caretip-hero-tip-panel__amount {
+  border-color: rgb(255 255 255 / 0.1);
+  background: rgb(39 39 42 / 0.72);
+  color: rgb(212 212 216);
+  box-shadow: none;
+}
+
+html.dark .caretip-landing .caretip-hero-tip-panel__amount--selected {
+  border-color: rgb(251 191 36 / 0.9);
+  background: rgb(233 120 28 / 0.22);
+  color: rgb(254 243 199);
+  box-shadow: 0 0 0 1px rgb(233 120 28 / 0.22);
 }
 
 /*
- * Per-slide metric anchors — prefer negative space; never cover faces.
- * Spacing between cards stays equal via --caretip-hero-metric-group-card-step.
+ * Placement — product preview overlapping the photo, clear of
+ * left copy / CTA. Soft right anchor near the service moment.
  */
-
-/* Business slide (wyc) — mid-right at arm/torso, never over the head */
-.caretip-landing .caretip-hero-section--full-bg[data-hero-slide="wyc"] {
-  --caretip-hero-metric-group-top: clamp(44%, 46vh, 50%);
-  --caretip-hero-metric-group-right: clamp(5%, 6vw, 7%);
-  --caretip-hero-metric-group-gap: 0.875rem;
-  --caretip-hero-metric-group-card-step: calc(4.5rem + var(--caretip-hero-metric-group-gap));
-}
-
-.caretip-landing .caretip-hero-section--full-bg[data-hero-slide="wyc"] .caretip-hero-metric-card--card-a {
-  top: var(--caretip-hero-metric-group-top);
-  right: var(--caretip-hero-metric-group-right);
+.caretip-landing .caretip-hero-section--full-bg[data-hero-slide="wyc"] .caretip-hero-tip-panel {
+  top: 48%;
   left: auto;
   bottom: auto;
-  z-index: 32;
+  right: clamp(0.875rem, 1.75vw, 1.625rem);
 }
 
-.caretip-landing .caretip-hero-section--full-bg[data-hero-slide="wyc"] .caretip-hero-metric-card--card-b {
-  top: calc(var(--caretip-hero-metric-group-top) + var(--caretip-hero-metric-group-card-step));
-  right: var(--caretip-hero-metric-group-right);
+.caretip-landing .caretip-hero-section--full-bg[data-hero-slide="wyo"] .caretip-hero-tip-panel {
+  top: 50%;
   left: auto;
   bottom: auto;
-  z-index: 31;
-}
-
-/* Customer / restaurant slide (wyo) — mid-lower right negative space */
-.caretip-landing .caretip-hero-section--full-bg[data-hero-slide="wyo"] {
-  --caretip-hero-metric-group-top: clamp(40%, 42vh, 46%);
-  --caretip-hero-metric-group-right: clamp(5.5%, 6.5vw, 7.5%);
-  --caretip-hero-metric-group-gap: 0.875rem;
-  --caretip-hero-metric-group-card-step: calc(4.5rem + var(--caretip-hero-metric-group-gap));
-}
-
-.caretip-landing .caretip-hero-section--full-bg[data-hero-slide="wyo"] .caretip-hero-metric-card--card-a {
-  top: var(--caretip-hero-metric-group-top);
-  right: var(--caretip-hero-metric-group-right);
-  left: auto;
-  bottom: auto;
-  z-index: 32;
-}
-
-.caretip-landing .caretip-hero-section--full-bg[data-hero-slide="wyo"] .caretip-hero-metric-card--card-b {
-  top: calc(var(--caretip-hero-metric-group-top) + var(--caretip-hero-metric-group-card-step));
-  right: var(--caretip-hero-metric-group-right);
-  left: auto;
-  bottom: auto;
-  z-index: 31;
+  right: clamp(0.875rem, 2vw, 1.75rem);
 }
 
 @media (min-width: 1024px) {
-  .caretip-landing .caretip-hero-section--full-bg .caretip-hero-metric-card {
-    width: 13.25rem;
+  .caretip-landing .caretip-hero-section--full-bg .caretip-hero-tip-panel {
+    width: 12.75rem;
+    padding: 0.9375rem 1rem 1rem;
+    gap: 0.6875rem;
+    border-radius: 1.5rem; /* 24px */
   }
 
-  .caretip-landing .caretip-hero-section--full-bg[data-hero-slide="wyc"] {
-    /* Arm/side corridor — below head, beside torso */
-    --caretip-hero-metric-group-top: 46%;
-    --caretip-hero-metric-group-right: 5.5%;
-    --caretip-hero-metric-group-gap: 0.875rem;
-    --caretip-hero-metric-group-card-step: calc(4.375rem + var(--caretip-hero-metric-group-gap));
+  .caretip-landing .caretip-hero-section--full-bg .caretip-hero-tip-panel__title {
+    font-size: 0.8125rem;
   }
 
-  .caretip-landing .caretip-hero-section--full-bg[data-hero-slide="wyo"] {
-    --caretip-hero-metric-group-top: 42%;
-    --caretip-hero-metric-group-right: 6.25%;
-    --caretip-hero-metric-group-gap: 0.875rem;
-    --caretip-hero-metric-group-card-step: calc(4.375rem + var(--caretip-hero-metric-group-gap));
+  .caretip-landing .caretip-hero-section--full-bg .caretip-hero-tip-panel__amount {
+    min-height: 1.9375rem;
+    font-size: 0.6875rem;
+  }
+
+  .caretip-landing .caretip-hero-section--full-bg[data-hero-slide="wyc"] .caretip-hero-tip-panel {
+    top: 47%;
+    bottom: auto;
+    right: 1.375rem;
+  }
+
+  .caretip-landing .caretip-hero-section--full-bg[data-hero-slide="wyo"] .caretip-hero-tip-panel {
+    top: 49%;
+    bottom: auto;
+    right: 1.5rem;
   }
 }
 
 @media (min-width: 1280px) {
-  .caretip-landing .caretip-hero-section--full-bg[data-hero-slide="wyc"] {
-    --caretip-hero-metric-group-top: 45%;
-    --caretip-hero-metric-group-right: 6%;
+  .caretip-landing .caretip-hero-section--full-bg .caretip-hero-tip-panel {
+    width: 13rem;
   }
 
-  .caretip-landing .caretip-hero-section--full-bg[data-hero-slide="wyo"] {
-    --caretip-hero-metric-group-top: 41%;
-    --caretip-hero-metric-group-right: 6.75%;
+  .caretip-landing .caretip-hero-section--full-bg[data-hero-slide="wyc"] .caretip-hero-tip-panel {
+    top: 46%;
+    bottom: auto;
+    right: 1.5rem;
+  }
+
+  .caretip-landing .caretip-hero-section--full-bg[data-hero-slide="wyo"] .caretip-hero-tip-panel {
+    top: 48%;
+    bottom: auto;
+    right: 1.75rem;
   }
 }
 
-/* Tablet — tighter stagger, slightly smaller cards, still mid-right */
 @media (min-width: 768px) and (max-width: 1023px) {
-  .caretip-landing .caretip-hero-metric-card {
-    width: min(100%, 10.75rem);
-    min-height: 3.125rem;
-    max-height: 3.875rem;
-    padding: 0.5rem 0.6875rem;
-    border-radius: 1.125rem;
+  .caretip-landing .caretip-hero-section--full-bg .caretip-hero-tip-panel {
+    width: 11.25rem;
+    padding: 0.75rem 0.8125rem 0.8125rem;
+    gap: 0.5625rem;
+    border-radius: 1.375rem;
   }
 
-  .caretip-landing .caretip-hero-section--full-bg[data-hero-slide="wyc"] .caretip-hero-metric-card--card-a {
-    top: clamp(42%, 44vh, 48%);
-    right: clamp(5%, 6.5vw, 7.5%);
+  .caretip-landing .caretip-hero-section--full-bg .caretip-hero-tip-panel__title {
+    font-size: 0.75rem;
   }
 
-  .caretip-landing .caretip-hero-section--full-bg[data-hero-slide="wyc"] .caretip-hero-metric-card--card-b {
-    top: calc(clamp(42%, 44vh, 48%) + 3.75rem + 0.75rem);
-    right: clamp(5%, 6.5vw, 7.5%);
+  .caretip-landing .caretip-hero-section--full-bg .caretip-hero-tip-panel__amount {
+    min-height: 1.6875rem;
+    font-size: 0.5625rem;
   }
 
-  .caretip-landing .caretip-hero-section--full-bg[data-hero-slide="wyo"] .caretip-hero-metric-card--card-a {
-    top: clamp(30%, 32vh, 35%);
-    right: clamp(5%, 7vw, 8%);
-  }
-
-  .caretip-landing .caretip-hero-section--full-bg[data-hero-slide="wyo"] .caretip-hero-metric-card--card-b {
-    top: clamp(54%, 56vh, 59%);
-    right: clamp(9%, 11vw, 13%);
+  .caretip-landing .caretip-hero-section--full-bg[data-hero-slide="wyc"] .caretip-hero-tip-panel,
+  .caretip-landing .caretip-hero-section--full-bg[data-hero-slide="wyo"] .caretip-hero-tip-panel {
+    top: 52%;
+    bottom: auto;
+    right: 0.625rem;
   }
 }
 
-/* Mobile metric stack sizing/placement: caretip-landing-hero-mobile-stack.css */
-
-@media (max-width: 480px) {
-  .caretip-landing .caretip-hero-float-cards[data-hero-float-variant="card"] .caretip-hero-metric-card {
-    width: min(100%, 10.5rem);
+@media (max-width: 767px) {
+  /*
+   * ~12% smaller than prior mobile panel — lower-right product preview,
+   * clear of headline / bullets / primary CTA.
+   */
+  .caretip-landing .caretip-hero-section--full-bg .caretip-hero-tip-panel {
+    top: auto;
+    bottom: max(0.875rem, calc(env(safe-area-inset-bottom, 0px) + 0.625rem));
+    right: 0.625rem;
+    left: auto;
+    width: min(9.375rem, 36vw);
+    padding: 0.6875rem 0.75rem 0.75rem;
     gap: 0.5rem;
+    border-radius: 1.375rem; /* 22px */
+    box-shadow:
+      0 8px 22px -16px rgb(15 23 42 / 0.18),
+      0 2px 8px -5px rgb(15 23 42 / 0.1),
+      inset 0 1px 0 rgb(255 255 255 / 0.72);
   }
 
-  .caretip-landing .caretip-hero-float-cards[data-hero-float-variant="card"] .caretip-hero-metric-card__title {
+  .caretip-landing .caretip-hero-section--full-bg .caretip-hero-tip-panel__title {
+    font-size: 0.6875rem;
+    line-height: 1.28;
+  }
+
+  .caretip-landing .caretip-hero-section--full-bg .caretip-hero-tip-panel__star {
+    width: 0.625rem;
+    height: 0.625rem;
+  }
+
+  .caretip-landing .caretip-hero-section--full-bg .caretip-hero-tip-panel__rating-label {
     font-size: 0.625rem;
   }
 
-  .caretip-landing .caretip-hero-float-cards[data-hero-float-variant="card"] .caretip-hero-metric-card__subtitle {
-    font-size: 0.5625rem;
+  .caretip-landing .caretip-hero-section--full-bg .caretip-hero-tip-panel__amounts {
+    gap: 0.3rem;
+    margin-top: 0.0625rem;
+  }
+
+  .caretip-landing .caretip-hero-section--full-bg .caretip-hero-tip-panel__amount {
+    min-height: 1.5rem;
+    padding: 0.2rem 0.06rem;
+    font-size: 0.5rem;
+    border-radius: 0.5rem;
+  }
+
+  .caretip-landing .caretip-hero-section--full-bg[data-hero-slide="wyc"] .caretip-hero-tip-panel,
+  .caretip-landing .caretip-hero-section--full-bg[data-hero-slide="wyo"] .caretip-hero-tip-panel {
+    top: auto;
+    bottom: max(0.875rem, calc(env(safe-area-inset-bottom, 0px) + 0.625rem));
+    right: 0.625rem;
   }
 }
 
-/* —— Framed showcase variant (legacy card hero) —— */
-.caretip-landing .caretip-hero-float-layer--on-art[data-hero-slide="wyc"] .caretip-hero-metric-card--card-a,
-.caretip-landing .caretip-hero-float-cards[data-hero-slide="wyc"][data-hero-float-variant="card"] .caretip-hero-metric-card--card-a {
+/* Legacy framed showcase — compact corner demo */
+.caretip-landing .caretip-hero-float-layer--on-art .caretip-hero-tip-panel,
+.caretip-landing .caretip-hero-float-cards[data-hero-float-variant="card"] .caretip-hero-tip-panel {
   top: clamp(0.75rem, 8%, 1.25rem);
   right: clamp(0.625rem, 6%, 1rem);
   left: auto;
-}
-
-.caretip-landing .caretip-hero-float-layer--on-art[data-hero-slide="wyc"] .caretip-hero-metric-card--card-b,
-.caretip-landing .caretip-hero-float-cards[data-hero-slide="wyc"][data-hero-float-variant="card"] .caretip-hero-metric-card--card-b {
-  bottom: clamp(0.75rem, 10%, 1.25rem);
-  right: clamp(0.625rem, 8%, 1rem);
-  left: auto;
-  top: auto;
-}
-
-.caretip-landing .caretip-hero-float-layer--on-art[data-hero-slide="wyo"] .caretip-hero-metric-card--card-a,
-.caretip-landing .caretip-hero-float-cards[data-hero-slide="wyo"][data-hero-float-variant="card"] .caretip-hero-metric-card--card-a {
-  top: clamp(0.75rem, 8%, 1.25rem);
-  left: clamp(0.625rem, 6%, 1rem);
-  right: auto;
-}
-
-.caretip-landing .caretip-hero-float-layer--on-art[data-hero-slide="wyo"] .caretip-hero-metric-card--card-b,
-.caretip-landing .caretip-hero-float-cards[data-hero-slide="wyo"][data-hero-float-variant="card"] .caretip-hero-metric-card--card-b {
-  bottom: clamp(0.75rem, 10%, 1.25rem);
-  left: clamp(0.625rem, 8%, 1rem);
-  right: auto;
-  top: auto;
+  bottom: auto;
+  width: min(100%, 12.5rem);
+  padding: 0.875rem 0.9375rem 0.9375rem;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .caretip-landing .caretip-hero-metric-card--enter {
-    animation: caretip-hero-metric-enter 620ms ease-out var(--metric-enter-delay, 0ms) both;
-  }
-
-  .caretip-landing .caretip-hero-metric-card {
-    will-change: auto;
+  .caretip-landing .caretip-hero-tip-panel--enter {
+    animation: none;
+    opacity: 1;
+    transform: none;
   }
 }

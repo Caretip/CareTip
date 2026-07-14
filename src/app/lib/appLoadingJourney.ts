@@ -3,6 +3,7 @@ import {
   GLOBAL_OVERLAY_PRIORITIES,
   type AppLoadingPriority,
 } from "./appLoadingPriority";
+import { isAppShellInteractive } from "./appShellLifecycle";
 import { isPublicAuthenticationPath } from "./authSession";
 import { isPublicMarketingPath } from "./publicRoutes";
 
@@ -227,8 +228,10 @@ export function isCustomerJourneyPath(pathname: string): boolean {
 
 /**
  * Branded route navigation only for meaningful cold/marketing entry — never in-app dashboard hops.
+ * After the app shell is interactive, SPA soft navigations never register.
  */
 export function shouldRegisterBrandedRouteNavigation(pathname: string): boolean {
+  if (isAppShellInteractive()) return false;
   const p = normalizePath(pathname);
   if (isAuthenticatedInAppShellPath(p)) return false;
   if (isCustomerJourneyPath(p)) return false;
@@ -246,6 +249,8 @@ export function shouldRegisterBrandedRouteGuard(gate: {
   pathname: string;
 }): boolean {
   if (!gate.guardBlocking) return false;
+  /* Soft SPA: keep shell mounted — never reopen branded overlay for routine guard waits. */
+  if (isAppShellInteractive()) return false;
   if (gate.user && !gate.authBlocking && isAuthenticatedInAppShellPath(gate.pathname)) {
     return false;
   }

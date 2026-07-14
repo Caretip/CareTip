@@ -9,6 +9,7 @@ import {
   isEntitlementsSessionPrimed,
   sessionHasFeature,
 } from "../../../lib/subscriptionEntitlementFastPath";
+import { useBusinessPageBoot } from "../../../lib/useBusinessPageBoot";
 
 /** Tips → Analytics: sole owner of reporting, exports, and drill-downs. Gated at layout level. */
 export function BusinessTipsAnalyticsPage() {
@@ -31,6 +32,11 @@ export function BusinessTipsAnalyticsPage() {
     revenueTimeframe,
   );
 
+  const { showInitialSkeleton } = useBusinessPageBoot(
+    "tips-analytics",
+    data.isInitialAnalyticsLoading,
+  );
+
   const handleRevenueTimeframeChange = (timeframe: AnalyticsTimeframe) => {
     setRevenueTimeframe(timeframe);
     setQrTimeframe(timeframe);
@@ -39,7 +45,10 @@ export function BusinessTipsAnalyticsPage() {
   return (
     <div className="space-y-6 pt-6">
       <BusinessAnalyticsReporting
-        data={data}
+        data={{
+          ...data,
+          isInitialAnalyticsLoading: showInitialSkeleton,
+        }}
         revenueTimeframe={revenueTimeframe}
         onRevenueTimeframeChange={handleRevenueTimeframeChange}
         qrTimeframe={qrTimeframe}

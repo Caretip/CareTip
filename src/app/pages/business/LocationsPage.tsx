@@ -12,6 +12,7 @@ import { toUserFriendlyMessage } from "../../lib/errorMessages";
 import { logClientError } from "../../lib/clientLog";
 import { LoadingSpinner } from "../../components/ui/loading-spinner";
 import { LocationCardGridSkeleton } from "../../components/dashboard/DashboardSectionLoading";
+import { useBusinessPageBoot } from "../../lib/useBusinessPageBoot";
 import {
   Dialog,
   DialogContent,
@@ -85,6 +86,9 @@ export function LocationsPage() {
   const atSingleLocationCap =
     ready && limits.maxLocations != null && locations.length >= limits.maxLocations;
 
+  const isInitialLocationsLoad = loading && locations.length === 0;
+  const { showInitialSkeleton } = useBusinessPageBoot("locations", isInitialLocationsLoad);
+
   const handleSave = async () => {
     const trimmed = name.trim();
     if (!trimmed) {
@@ -143,7 +147,7 @@ export function LocationsPage() {
       </div>
 
       <div className={cn(businessUi.subPageMain, "dashboard-page-contained max-w-5xl")}>
-        {loading ? (
+        {showInitialSkeleton ? (
           <LocationCardGridSkeleton />
         ) : locations.length === 0 ? (
           <div className={cn(businessUi.cardStatic, "py-16 text-center text-muted-foreground border-dashed")}>

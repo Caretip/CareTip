@@ -4,6 +4,7 @@ import {
   LCP_HERO_STORY_FRAME,
   loadDeferredHeroStoryFrame,
   preloadHeroFrame,
+  warmLandingHeroLcpImage,
   type HeroStoryFrame,
 } from "@/lib/landingHeroStoryAssets";
 
@@ -23,6 +24,8 @@ type LandingHeroStoryShowcaseProps = {
   variant?: "background" | "card";
   /** Notified when the visible story frame changes (for synced float metrics). */
   onActiveFrameChange?: (frameKey: string) => void;
+  /** Fired once the LCP frame is loaded/decoded (or already complete). */
+  onLcpReady?: () => void;
 };
 
 /**
@@ -34,6 +37,7 @@ export function LandingHeroStoryShowcase({
   className,
   variant = "card",
   onActiveFrameChange,
+  onLcpReady,
 }: LandingHeroStoryShowcaseProps) {
   const isBackground = variant === "background";
   const reduceMotion = usePrefersReducedMotion();
@@ -48,8 +52,13 @@ export function LandingHeroStoryShowcase({
   const frameReadyRef = useRef(frameReady);
   const transitionTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const deferredFrameLoadRef = useRef<Promise<void> | null>(null);
+  const onLcpReadyRef = useRef(onLcpReady);
   const imageSizes = isBackground ? HERO_IMAGE_SIZES_BACKGROUND : HERO_IMAGE_SIZES_CARD;
   const activeFrameKey = storyFrames[activeIndex]?.key ?? LCP_HERO_STORY_FRAME.key;
+
+  useEffect(() => {
+    onLcpReadyRef.current = onLcpReady;
+  }, [onLcpReady]);
 
   const markFrameReady = useCallback((key: string) => {
     setFrameReady((prev) => {
@@ -63,6 +72,7 @@ export function LandingHeroStoryShowcase({
   const handleLcpFrameLoad = useCallback(() => {
     markFrameReady(LCP_HERO_STORY_FRAME.key);
     setLcpComplete(true);
+    onLcpReadyRef.current?.();
   }, [markFrameReady]);
 
   useEffect(() => {
@@ -72,6 +82,10 @@ export function LandingHeroStoryShowcase({
   useEffect(() => {
     onActiveFrameChange?.(activeFrameKey);
   }, [activeFrameKey, onActiveFrameChange]);
+
+  useEffect(() => {
+    void warmLandingHeroLcpImage();
+  }, []);
 
   useEffect(() => {
     if (lcpComplete) return;
@@ -142,6 +156,7 @@ export function LandingHeroStoryShowcase({
   }, []);
 
   const frames = reduceMotion ? storyFrames.slice(0, 1) : storyFrames;
+  const isCrossfading = isBackground && incomingIndex !== null;
 
   return (
     <div
@@ -150,6 +165,7 @@ export function LandingHeroStoryShowcase({
         isBackground && "caretip-hero-story-showcase-root--background",
         className,
       )}
+      data-hero-crossfading={isCrossfading ? "1" : undefined}
     >
       <div
         className={cn(
@@ -196,6 +212,9 @@ export function LandingHeroStoryShowcase({
                   className={isBackground ? "caretip-hero-bg-frame-layer" : "contents"}
                   data-hero-frame={frame.key}
                 >
+                  {frame.mobileAvif ? (
+                    <source media="(max-width: 767px)" type="image/avif" srcSet={frame.mobileAvif} />
+                  ) : null}
                   {frame.mobileWebp ? (
                     <source media="(max-width: 767px)" type="image/webp" srcSet={frame.mobileWebp} />
                   ) : null}
@@ -221,7 +240,7 @@ export function LandingHeroStoryShowcase({
                       isReady && "caretip-hero-story-frame--ready",
                     )}
                     loading={isLcpFrame ? "eager" : "lazy"}
-                    decoding="async"
+                    decoding={isLcpFrame ? "sync" : "async"}
                     sizes={imageSizes}
                     onLoad={isLcpFrame ? handleLcpFrameLoad : () => markFrameReady(frame.key)}
                     {...(isLcpFrame

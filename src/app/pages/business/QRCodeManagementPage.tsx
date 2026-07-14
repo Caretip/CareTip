@@ -34,6 +34,7 @@ import {
 } from "../../lib/pageSessionCache";
 import { DashboardListSkeleton } from "../../components/dashboard/DashboardSectionLoading";
 import { BusinessSubPageShellSkeleton } from "../../components/dashboard/BusinessSubPageShellSkeleton";
+import { useBusinessPageBoot } from "../../lib/useBusinessPageBoot";
 import {
   renderBrandedQRToDataUrl,
   renderBrandedQRToDataUrlLegacy,
@@ -899,6 +900,9 @@ export function QRCodeManagementPage({
     if (emp) requestRegenerateEmployeeQr(emp);
   };
 
+  const isInitialQrLoad = loading && safeEmployees.length === 0;
+  const { showInitialSkeleton } = useBusinessPageBoot("qr", isInitialQrLoad);
+
   if (!user) return <BusinessSubPageShellSkeleton />;
 
   const canUseQr = canUseProductionQr(
@@ -1213,7 +1217,7 @@ export function QRCodeManagementPage({
                   </div>
                 ) : null}
 
-                {loading && safeEmployees.length === 0 ? (
+                {showInitialSkeleton ? (
                   <DashboardListSkeleton rows={5} minHeightClass="min-h-[240px]" />
                 ) : (
                   <div>

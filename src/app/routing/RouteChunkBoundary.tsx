@@ -1,6 +1,7 @@
 import { Suspense, type ReactNode } from "react";
 import { useLocation } from "react-router";
 import { shouldRegisterBrandedRouteNavigation } from "../lib/appLoadingJourney";
+import { isAppShellInteractive } from "../lib/appShellLifecycle";
 import { useRegisterGlobalAppInit } from "../lib/globalAppLoading";
 import {
   DashboardOutletFallback,
@@ -29,7 +30,9 @@ function RouteChunkSuspenseFallback({
 }) {
   const { pathname } = useLocation();
   const brandedChunk =
-    variant !== "shell" && shouldRegisterBrandedRouteNavigation(pathname);
+    !isAppShellInteractive() &&
+    variant !== "shell" &&
+    shouldRegisterBrandedRouteNavigation(pathname);
 
   useRegisterGlobalAppInit(`${registrationKey}-chunk`, brandedChunk);
 

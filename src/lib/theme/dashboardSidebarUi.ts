@@ -16,7 +16,7 @@ export const dashboardSidebarNavLinkIdle =
   "text-sidebar-foreground/90 hover:bg-sidebar-accent hover:text-sidebar-foreground";
 
 export const dashboardSidebarNavLinkActive =
-  "bg-primary font-semibold text-primary-foreground";
+  "font-semibold text-foreground shadow-[0_1px_2px_rgb(15_23_42/0.04)]";
 
 export const dashboardSidebarIconButtonIdle =
   "transition-colors hover:bg-sidebar-accent";

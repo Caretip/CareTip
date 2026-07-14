@@ -2492,6 +2492,12 @@
       "title": "In Sekunden tippen. Hervorragenden Service sofort belohnen.",
       "description": "Trinkgeld per QR-Code, schnell, kontaktlos und steuerfrei.",
       "descriptionMobile": "Schnelle QR-Trinkgelder.\nKontaktlos. Steuerfrei.",
+      "heroBenefits": [
+        "Trinkgeld per QR-Code",
+        "schnell",
+        "kontaktlos",
+        "steuerfrei"
+      ],
       "statLive": "Sofort per QR tippen",
       "statPos": "Keine POS-Anbindung nötig",
       "statSecure": "Sichere Trinkgeld-Belege",
@@ -2528,25 +2534,45 @@
       "heroSubtleTipNotice": "€12 Trinkgeld erhalten",
       "heroFloatPillRating": "5★ Bewertung",
       "heroFloatPillStaff": "+3 Team online",
+      "heroTipPanel": {
+        "title": "Scannen & Trinkgeld geben",
+        "ratingLabel": "Ausgezeichneter Service",
+        "amountsAria": "Trinkgeldbetrag",
+        "amount2": "2 €",
+        "amount5": "5 €",
+        "amount10": "10 €",
+        "amountOther": "Andere",
+        "continue": "Weiter"
+      },
       "heroMetricCards": {
         "wyo": {
-          "tipSent": {
-            "title": "Trinkgeld gesendet",
-            "subtitle": "12 € erfolgreich bezahlt"
+          "eyebrow": "Live · Hotel-Etage",
+          "todaysTips": {
+            "label": "Trinkgeld heute",
+            "value": "428 €"
           },
-          "guestRating": {
-            "title": "Gästebewertung",
-            "subtitle": "5,0 · Zahlung abgeschlossen"
+          "teamTips": {
+            "label": "Team-Trinkgelder",
+            "value": "642 € · 8 Mitarbeitende"
+          },
+          "activeStaff": {
+            "label": "Aktive Mitarbeitende",
+            "value": "8 im Dienst"
           }
         },
         "wyc": {
-          "revenue": {
-            "title": "Umsatz heute",
-            "subtitle": "1.248 € · +18 %"
+          "eyebrow": "Live · Café-Bereich",
+          "todaysTips": {
+            "label": "Trinkgeld heute",
+            "value": "286 €"
           },
-          "teamTips": {
-            "title": "Team-Trinkgelder",
-            "subtitle": "642 € · 12 Mitarbeitende"
+          "todaysRevenue": {
+            "label": "Umsatz heute",
+            "value": "1.248 € · +18 %"
+          },
+          "activeStaff": {
+            "label": "Aktive Mitarbeitende",
+            "value": "6 im Dienst"
           }
         }
       },
@@ -3068,6 +3094,10 @@
       },
       "petCare": {
         "name": "Tierpflege & Services",
+        "role": ""
+      },
+      "restaurant": {
+        "name": "Restaurants & Cafés",
         "role": ""
       }
     },

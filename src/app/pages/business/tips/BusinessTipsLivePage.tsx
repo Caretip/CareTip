@@ -4,6 +4,7 @@ import { useRequireAuth } from "../../../hooks/useRequireAuth";
 import { useSubscriptionEntitlements } from "../../../hooks/useSubscriptionEntitlements";
 import { useBusinessTipsModuleData } from "../../../hooks/useBusinessTipsModuleData";
 import { useLiveActivityStream } from "../../../hooks/useLiveActivityStream";
+import { useBusinessPageBoot } from "../../../lib/useBusinessPageBoot";
 import { LiveActivityCenter } from "../../../components/business/insights/LiveActivityCenter";
 
 /** Live Tips — operational activity stream (Sprint 5C). */
@@ -28,13 +29,15 @@ export function BusinessTipsLivePage() {
     t,
   });
 
+  const { showInitialSkeleton } = useBusinessPageBoot("tips-live", data.isInitialAnalyticsLoading);
+
   return (
     <div className="space-y-6 pt-6">
       <p className="text-sm text-muted-foreground">{t("business.tips.liveDesc")}</p>
       <LiveActivityCenter
         items={items}
         liveIds={liveIds}
-        loading={data.isInitialAnalyticsLoading}
+        loading={showInitialSkeleton}
         refreshing={data.isAnalyticsRefreshing}
       />
     </div>

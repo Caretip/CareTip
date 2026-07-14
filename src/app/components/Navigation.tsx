@@ -1,4 +1,4 @@
-import { Link, useLocation } from "react-router";
+import { useLocation } from "react-router";
 import { memo, useEffect, useMemo } from "react";
 import { createPortal } from "react-dom";
 import { useMobileMenuState } from "../hooks/useMobileMenuState";
@@ -11,7 +11,7 @@ import { useTheme } from "../context/ThemeContext";
 import { LanguageSwitcher } from "@/components/i18n/LanguageSwitcher";
 import { ThemeQuickToggle } from "@/app/components/theme/ThemeQuickToggle";
 import { PrefetchLink } from "./PrefetchLink";
-import { prefetchPrimaryNavRoutes } from "../lib/prefetchPublicRoutes";
+import { prefetchLandingRoute, prefetchPrimaryNavRoutes } from "../lib/prefetchPublicRoutes";
 import { usePublicMountProbe } from "@/lib/publicMountProbe";
 import { scheduleMobileDeferredWork } from "@/lib/mobilePerf";
 
@@ -42,6 +42,16 @@ export const Navigation = memo(function Navigation({ variant = "default" }: { va
       prefetchPrimaryNavRoutes();
     });
   }, []);
+
+  useEffect(() => {
+    if (location.pathname === "/") return;
+    scheduleMobileDeferredWork(
+      () => {
+        prefetchLandingRoute();
+      },
+      { desktopTimeoutMs: 1200, mobileTimeoutMs: 2200 },
+    );
+  }, [location.pathname]);
 
   useEffect(() => {
     if (!mobileMenuOpen) return;
@@ -114,13 +124,13 @@ export const Navigation = memo(function Navigation({ variant = "default" }: { va
             >
               <div className="relative shrink-0 overflow-visible px-5 pb-3 pt-[max(1rem,env(safe-area-inset-top))]">
                 <div className="flex items-center justify-between gap-2">
-                <Link
+                <PrefetchLink
                   to="/"
                   onClick={() => closeMobileMenu("navigate")}
                   className="flex min-h-11 min-w-0 flex-1 items-center rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
                 >
                   <CareTipLogo size="nav" />
-                </Link>
+                </PrefetchLink>
                 <div
                   className="caretip-public-mobile-nav-drawer__toolbar relative z-30 flex shrink-0 items-center gap-2"
                   onClick={(e) => e.stopPropagation()}
@@ -229,7 +239,7 @@ export const Navigation = memo(function Navigation({ variant = "default" }: { va
           aria-label={t("nav.mainNav")}
         >
           <div className="relative flex min-h-0 min-w-0 max-w-full items-center justify-between gap-2 sm:gap-4">
-            <Link
+            <PrefetchLink
               to="/"
               className={cn(
                 "relative z-[2] flex h-[3.5rem] min-h-[3.5rem] min-w-0 items-center overflow-hidden rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-primary/40 sm:h-[3.5rem] sm:min-h-[3.5rem] md:h-16 md:min-h-[4rem] lg:h-16 lg:min-h-[4rem] xl:h-[4.25rem] xl:min-h-[4.25rem]",
@@ -239,7 +249,7 @@ export const Navigation = memo(function Navigation({ variant = "default" }: { va
               )}
             >
               <CareTipLogo size="nav" />
-            </Link>
+            </PrefetchLink>
 
             <div
               className="pointer-events-none absolute left-1/2 top-1/2 z-[1] hidden -translate-x-1/2 -translate-y-1/2 items-center gap-6 lg:pointer-events-auto lg:flex xl:gap-8"

@@ -37,14 +37,22 @@ export const employeeLayoutLazy = async (): Promise<LazyRouteResult> => {
   return { Component: mod.EmployeeLayout as ComponentType<unknown> };
 };
 
+/** Shared with {@link prefetchAuthLoginRoute} so logout can warm the same promise RR awaits. */
+let authPageLazyPromise: Promise<LazyRouteResult> | null = null;
+let platformAdminLoginLazyPromise: Promise<LazyRouteResult> | null = null;
+
 /** Auth flows — lazy JS + auth CSS off the landing critical path. */
-export const authPageLazy = async (): Promise<LazyRouteResult> => {
-  const [, mod] = await Promise.all([
-    import("@/styles/bundles/auth.css"),
-    import("../components/AuthPage"),
-  ]);
-  return { Component: mod.AuthPage as ComponentType<unknown> };
-};
+export function authPageLazy(): Promise<LazyRouteResult> {
+  if (!authPageLazyPromise) {
+    authPageLazyPromise = Promise.all([
+      import("@/styles/bundles/auth.css"),
+      import("../components/AuthPage"),
+    ]).then(([, mod]) => ({
+      Component: mod.AuthPage as ComponentType<unknown>,
+    }));
+  }
+  return authPageLazyPromise;
+}
 export const joinPageLazy = async (): Promise<LazyRouteResult> => {
   const [, mod] = await Promise.all([
     import("@/styles/bundles/auth.css"),
@@ -81,13 +89,30 @@ export const checkEmailPageLazy = async (): Promise<LazyRouteResult> => {
   ]);
   return { Component: mod.CheckEmailPage as ComponentType<unknown> };
 };
-export const platformAdminLoginPageLazy = async (): Promise<LazyRouteResult> => {
-  const [, mod] = await Promise.all([
-    import("@/styles/bundles/auth.css"),
-    import("../pages/platform/PlatformAdminLoginPage"),
-  ]);
-  return { Component: mod.PlatformAdminLoginPage as ComponentType<unknown> };
-};
+export function platformAdminLoginPageLazy(): Promise<LazyRouteResult> {
+  if (!platformAdminLoginLazyPromise) {
+    platformAdminLoginLazyPromise = Promise.all([
+      import("@/styles/bundles/auth.css"),
+      import("../pages/platform/PlatformAdminLoginPage"),
+    ]).then(([, mod]) => ({
+      Component: mod.PlatformAdminLoginPage as ComponentType<unknown>,
+    }));
+  }
+  return platformAdminLoginLazyPromise;
+}
+
+/**
+ * Warm the same lazy auth module (+ CSS) React Router will load on logout navigate.
+ * Safe to call repeatedly — promises are shared with the route lazy loaders.
+ */
+export function prefetchAuthLoginRoute(loginPath: string): void {
+  const path = loginPath.split("?")[0]?.split("#")[0] ?? loginPath;
+  if (path === "/platform-admin/login") {
+    void platformAdminLoginPageLazy();
+    return;
+  }
+  void authPageLazy();
+}
 export const unauthorizedPageLazy = routeLazy(
   () => import("../pages/UnauthorizedPage"),
   "UnauthorizedPage",

@@ -9,6 +9,7 @@ import {
 } from "../context/AppLoadingManager";
 import { resolveRouteLoadingMessage } from "../lib/appLoadingContexts";
 import { shouldRegisterBrandedRouteNavigation } from "../lib/appLoadingJourney";
+import { isAppShellInteractive } from "../lib/appShellLifecycle";
 import { isPublicMarketingPath } from "../lib/publicRoutes";
 
 function isStandaloneDisplayMode(): boolean {
@@ -20,18 +21,21 @@ function isStandaloneDisplayMode(): boolean {
 }
 
 /**
- * Shows the global branded overlay while React Router resolves lazy route modules.
- * Marketing cold-load `app-boot` is released only after the route is idle and painted,
- * so AppLoadingManager can enforce the existing minimum visible duration.
+ * Cold entry only: branded overlay while React Router resolves the first paint.
+ * After the shell is interactive, SPA navigations never re-register the global loader.
+ *
+ * Landing (`/`) keeps `app-boot` until `landing-shell-ready` owns the overlay on cold boot.
  */
 export function RouteNavigationLoadingRegistrar({ children }: { children: ReactNode }) {
   const navigation = useNavigation();
   const { pathname } = useLocation();
   const { t } = useTranslation();
   const pending = navigation.state === "loading";
+  const softNav = isAppShellInteractive();
   const brandedRouteNavigation =
-    pending && shouldRegisterBrandedRouteNavigation(pathname);
+    !softNav && pending && shouldRegisterBrandedRouteNavigation(pathname);
   const releaseAppBootOverlay = useReleaseAppBootOverlay();
+  const pathOnly = pathname.split("?")[0]?.split("#")[0] ?? pathname;
 
   useAppLoadingRegistration(
     "route-navigation",
@@ -41,6 +45,9 @@ export function RouteNavigationLoadingRegistrar({ children }: { children: ReactN
   );
 
   useEffect(() => {
+    /* Landing readiness owns the cold handoff — never drop app-boot here. */
+    if (pathOnly === "/") return;
+
     const shouldReleaseBoot =
       isPublicMarketingPath(pathname) || isStandaloneDisplayMode();
     if (!shouldReleaseBoot) return;
@@ -59,7 +66,7 @@ export function RouteNavigationLoadingRegistrar({ children }: { children: ReactN
       window.cancelAnimationFrame(raf1);
       window.cancelAnimationFrame(raf2);
     };
-  }, [navigation.state, pathname, releaseAppBootOverlay]);
+  }, [navigation.state, pathname, pathOnly, releaseAppBootOverlay]);
 
   return <>{children}</>;
 }

@@ -1,17 +1,12 @@
 import { BellRing, Check, Clock } from "lucide-react";
-import { useState, type ReactNode } from "react";
+import { memo, useCallback, type ReactNode } from "react";
 
-import {
-  AlertDialog,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/app/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/app/components/ui/popover";
 import { cn } from "@/lib/utils";
 
 export type NotificationAlertItem = {
@@ -38,11 +33,12 @@ export type NotificationAlertDialogProps = {
   items: NotificationAlertItem[];
   unreadCount: number;
   loading?: boolean;
+  open: boolean;
   className?: string;
   trigger?: ReactNode;
   previewCount?: number;
   labels: NotificationAlertDialogLabels;
-  onOpenChange?: (open: boolean) => void;
+  onOpenChange: (open: boolean) => void;
   onViewAll: () => void;
   onMarkRead: (id: string) => void;
   onMarkAllRead: () => void;
@@ -56,7 +52,7 @@ function initialsFromTitle(title: string): string {
   return `${parts[0]![0] ?? ""}${parts[1]![0] ?? ""}`.toUpperCase();
 }
 
-function NotificationRow({
+const NotificationRow = memo(function NotificationRow({
   notification,
   onSelect,
   readLabel,
@@ -78,10 +74,10 @@ function NotificationRow({
         }
       }}
       className={cn(
-        "flex w-full min-w-0 cursor-pointer gap-3 overflow-hidden rounded-md p-3 transition-all duration-200",
+        "flex w-full min-w-0 cursor-pointer gap-3 overflow-hidden rounded-md p-3 transition-colors duration-150",
         notification.read
-          ? "bg-muted/60"
-          : "border border-primary/15 bg-primary/5 shadow-sm dark:bg-primary/10",
+          ? "bg-muted/60 hover:bg-muted/80"
+          : "border border-primary/15 bg-primary/5 shadow-sm hover:bg-primary/[0.08] dark:bg-primary/10",
       )}
       onClick={onSelect}
     >
@@ -123,15 +119,20 @@ function NotificationRow({
       ) : null}
     </div>
   );
-}
+});
 
+/**
+ * Bell notification panel — Popover (not modal AlertDialog) so open feels instant
+ * and anchored to the trigger without a full-screen overlay wait.
+ */
 export function NotificationAlertDialog({
   items,
   unreadCount,
   loading = false,
+  open,
   className,
   trigger,
-  previewCount = 2,
+  previewCount = 5,
   labels,
   onOpenChange,
   onViewAll,
@@ -139,29 +140,28 @@ export function NotificationAlertDialog({
   onMarkAllRead,
   onItemActivate,
 }: NotificationAlertDialogProps) {
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-
-  const handleOpenChange = (open: boolean) => {
-    setIsDialogOpen(open);
-    onOpenChange?.(open);
-  };
-
-  const handleViewAll = () => {
-    setIsDialogOpen(false);
-    onOpenChange?.(false);
+  const handleViewAll = useCallback(() => {
+    onOpenChange(false);
     onViewAll();
-  };
+  }, [onOpenChange, onViewAll]);
 
-  const handleSelect = (id: string) => {
-    onMarkRead(id);
-    onItemActivate?.(id);
-  };
+  const handleMarkAllRead = useCallback(() => {
+    onMarkAllRead();
+  }, [onMarkAllRead]);
+
+  const handleSelect = useCallback(
+    (id: string) => {
+      onMarkRead(id);
+      onItemActivate?.(id);
+    },
+    [onMarkRead, onItemActivate],
+  );
 
   const previewItems = items.slice(0, previewCount);
 
   return (
-    <AlertDialog open={isDialogOpen} onOpenChange={handleOpenChange}>
-      <AlertDialogTrigger asChild>
+    <Popover open={open} onOpenChange={onOpenChange}>
+      <PopoverTrigger asChild>
         {trigger ?? (
           <Button
             type="button"
@@ -179,37 +179,56 @@ export function NotificationAlertDialog({
             ) : null}
           </Button>
         )}
-      </AlertDialogTrigger>
-      <AlertDialogContent className="flex max-h-[min(92dvh,32rem)] w-[min(100vw-2rem,28rem)] max-w-[calc(100vw-2rem)] flex-col gap-0 overflow-hidden border-2 border-primary/20 bg-background p-0 sm:max-w-md">
+      </PopoverTrigger>
+      <PopoverContent
+        align="end"
+        side="bottom"
+        sideOffset={8}
+        collisionPadding={12}
+        onOpenAutoFocus={(e) => e.preventDefault()}
+        className={cn(
+          "caretip-notification-panel flex max-h-[min(92dvh,32rem)] w-[min(100vw-2rem,28rem)] flex-col gap-0 overflow-hidden border-2 border-primary/20 bg-background p-0 shadow-lg",
+          "data-[state=open]:animate-in data-[state=closed]:animate-out",
+          "data-[state=open]:fade-in-0 data-[state=closed]:fade-out-0",
+          "data-[state=open]:zoom-in-95 data-[state=closed]:zoom-out-95",
+          "data-[side=bottom]:slide-in-from-top-2 data-[side=top]:slide-in-from-bottom-2",
+          "duration-200 origin-[var(--radix-popover-content-transform-origin)]",
+        )}
+      >
         <div className="flex min-h-0 flex-1 flex-col overflow-hidden px-4 pt-4">
-          <AlertDialogHeader className="shrink-0 space-y-2 text-left">
+          <div className="shrink-0 space-y-2 text-left">
             <div className="flex flex-wrap items-start justify-between gap-x-2 gap-y-1">
               <div className="flex min-w-0 items-center gap-2">
                 <BellRing className="h-5 w-5 shrink-0 text-primary" aria-hidden />
-                <AlertDialogTitle className="truncate">{labels.title}</AlertDialogTitle>
+                <h2 className="truncate text-lg font-semibold leading-none tracking-tight">
+                  {labels.title}
+                </h2>
               </div>
               {unreadCount > 0 ? (
                 <Button
                   type="button"
                   variant="ghost"
                   size="sm"
-                  onClick={onMarkAllRead}
+                  onClick={handleMarkAllRead}
                   className="h-auto max-w-full shrink-0 px-2 py-1 text-xs text-primary hover:text-primary/80"
                 >
                   <span className="truncate">{labels.markAllRead}</span>
                 </Button>
               ) : null}
             </div>
-            <AlertDialogDescription className="break-words text-left">
+            <p className="break-words text-sm text-muted-foreground">
               {labels.unreadSummary(unreadCount)}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <div className="min-h-0 flex-1 overflow-y-auto py-3">
+            </p>
+          </div>
+          <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain py-3">
             <div className="space-y-2">
               {loading ? (
-                <div className="space-y-2" aria-busy>
-                  {[0, 1].map((i) => (
-                    <div key={i} className="h-[72px] animate-pulse rounded-md bg-muted" />
+                <div className="space-y-2" aria-busy aria-live="polite">
+                  {[0, 1, 2].map((i) => (
+                    <div
+                      key={i}
+                      className="h-[72px] animate-pulse rounded-md bg-muted/80"
+                    />
                   ))}
                 </div>
               ) : previewItems.length === 0 ? (
@@ -227,10 +246,15 @@ export function NotificationAlertDialog({
             </div>
           </div>
         </div>
-        <AlertDialogFooter className="shrink-0 gap-2 border-t border-border p-4 sm:flex-row sm:justify-stretch">
-          <AlertDialogCancel className="mt-0 w-full min-w-0 border-primary/25 text-primary hover:bg-primary/5 sm:flex-1">
+        <div className="flex shrink-0 flex-col-reverse gap-2 border-t border-border p-4 sm:flex-row sm:justify-stretch">
+          <Button
+            type="button"
+            variant="outline"
+            className="mt-0 w-full min-w-0 border-primary/25 text-primary hover:bg-primary/5 sm:flex-1"
+            onClick={() => onOpenChange(false)}
+          >
             <span className="truncate">{labels.close}</span>
-          </AlertDialogCancel>
+          </Button>
           <Button
             type="button"
             className="w-full min-w-0 bg-primary text-primary-foreground hover:bg-primary/90 sm:flex-1"
@@ -238,8 +262,8 @@ export function NotificationAlertDialog({
           >
             <span className="truncate">{labels.viewAll}</span>
           </Button>
-        </AlertDialogFooter>
-      </AlertDialogContent>
-    </AlertDialog>
+        </div>
+      </PopoverContent>
+    </Popover>
   );
 }

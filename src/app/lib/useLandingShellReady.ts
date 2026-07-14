@@ -5,11 +5,19 @@ import {
   useAppLoadingRegistration,
 } from "../context/AppLoadingManager";
 import { resolveAppLoadingContextMessage } from "./appLoadingContexts";
+import { isAppShellInteractive } from "./appShellLifecycle";
+import {
+  isLandingHeroLcpWarm,
+  warmLandingHeroLcpImage,
+} from "@/lib/landingHeroStoryAssets";
 
 export const LANDING_SHELL_READY_KEY = "landing-shell-ready";
 
 /** Floor for a below-fold host to count as reserving space (well below the first section's 52rem). */
 const PLACEHOLDER_RESERVE_FLOOR_PX = 100;
+
+/** Cap so a stalled image never leaves the branded overlay forever. */
+const HERO_LCP_WAIT_MS = 2500;
 
 function reservedHostHeightPx(host: HTMLElement): number {
   const offset = host.offsetHeight;
@@ -47,28 +55,36 @@ function isLandingShellLayoutStable(heroId: string): boolean {
   return main.scrollHeight >= heroHeight + reservedPx;
 }
 
+function isHeroLcpPainted(): boolean {
+  if (isLandingHeroLcpWarm()) return true;
+  const img = document.querySelector('[data-hero-frame="wyc"] img');
+  return img instanceof HTMLImageElement && img.complete && img.naturalWidth > 0;
+}
+
 /**
- * Holds the global branded overlay until the landing shell is visually ready:
- * navigation + hero painted, and below-fold placeholders preserve document height.
+ * Holds the global branded overlay until the landing shell is visually ready —
+ * cold URL entry only. Soft SPA remounts of `/` must never reopen the overlay.
  */
 export function useLandingShellReady(heroId = "about-section"): void {
   const { t } = useTranslation();
-  const [shellReady, setShellReady] = useState(false);
+  const softNav = isAppShellInteractive();
+  const [shellReady, setShellReady] = useState(softNav);
 
   useAppLoadingRegistration(
     LANDING_SHELL_READY_KEY,
     APP_LOADING_PRIORITY.ROUTE_GUARD,
-    !shellReady,
+    !softNav && !shellReady,
     resolveAppLoadingContextMessage("landing", t),
   );
 
   useLayoutEffect(() => {
-    if (shellReady) return;
+    if (softNav || shellReady) return;
 
     let cancelled = false;
+    let raf1 = 0;
     let raf2 = 0;
-    let raf3 = 0;
-    let raf4 = 0;
+    let pollId = 0;
+    let forceTimer = 0;
     const releasedRef = { current: false };
 
     const release = (): void => {
@@ -79,22 +95,27 @@ export function useLandingShellReady(heroId = "about-section"): void {
 
     const tryRelease = (): void => {
       if (cancelled || releasedRef.current) return;
-      if (isLandingShellLayoutStable(heroId)) {
+      if (isLandingShellLayoutStable(heroId) && isHeroLcpPainted()) {
         release();
       }
     };
 
-    const raf1 = window.requestAnimationFrame(() => {
+    void warmLandingHeroLcpImage().then(() => {
+      if (!cancelled) tryRelease();
+    });
+
+    raf1 = window.requestAnimationFrame(() => {
       raf2 = window.requestAnimationFrame(() => {
         tryRelease();
-        if (!cancelled && !releasedRef.current) {
-          raf3 = window.requestAnimationFrame(() => {
-            tryRelease();
-            if (!cancelled && !releasedRef.current) {
-              raf4 = window.requestAnimationFrame(release);
-            }
-          });
-        }
+        if (cancelled || releasedRef.current) return;
+
+        pollId = window.setInterval(() => {
+          tryRelease();
+        }, 50);
+
+        forceTimer = window.setTimeout(() => {
+          release();
+        }, HERO_LCP_WAIT_MS);
       });
     });
 
@@ -102,8 +123,8 @@ export function useLandingShellReady(heroId = "about-section"): void {
       cancelled = true;
       window.cancelAnimationFrame(raf1);
       window.cancelAnimationFrame(raf2);
-      window.cancelAnimationFrame(raf3);
-      window.cancelAnimationFrame(raf4);
+      if (pollId) window.clearInterval(pollId);
+      if (forceTimer) window.clearTimeout(forceTimer);
     };
-  }, [heroId, shellReady]);
+  }, [heroId, shellReady, softNav]);
 }

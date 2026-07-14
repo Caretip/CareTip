@@ -2,8 +2,8 @@
 
 import { dashboardChartTooltipStyle, readThemeHsl } from "@/lib/theme/readThemeColor";
 
-export const DASHBOARD_CHART_GRID = "hsl(var(--border) / 0.45)";
-export const DASHBOARD_CHART_AXIS = "hsl(var(--muted-foreground))";
+export const DASHBOARD_CHART_GRID = "hsl(var(--border) / 0.4)";
+export const DASHBOARD_CHART_AXIS = "hsl(var(--muted-foreground) / 0.9)";
 export const DASHBOARD_CHART_BAR = "hsl(var(--chart-3))";
 export const DASHBOARD_CHART_BAR_SOFT = "hsl(var(--chart-3) / 0.72)";
 export const DASHBOARD_CHART_AREA_STROKE = "hsl(var(--primary))";

@@ -13,7 +13,9 @@ import { cn } from "@/lib/utils";
 import { PushNotificationSync } from "../components/PushNotificationSync";
 import { NotificationInboxSync } from "../components/NotificationInboxSync";
 import { RouteChunkBoundary } from "../routing/RouteChunkBoundary";
-import { useDashboardLayoutPaintReady } from "../lib/globalAppLoading";
+import { useDashboardLayoutPaintReady, useGlobalAppLoadingActive } from "../lib/globalAppLoading";
+import { useWarmPrefetchAuthLoginRoute } from "../lib/useWarmPrefetchAuthLoginRoute";
+import { useWarmPrefetchLandingRoute } from "../lib/useWarmPrefetchLandingRoute";
 import { VerificationPendingBanner } from "../components/business/VerificationPendingBanner";
 import { useBusinessVerificationRealtime } from "../hooks/useBusinessVerificationRealtime";
 import { useMobileMenuState } from "../hooks/useMobileMenuState";
@@ -35,9 +37,12 @@ export function BusinessLayout() {
   const showDemoRibbon = isWalkthroughDemoManager(user);
   const isAppReady = authStatus === "authenticated" && user?.role === "business";
   const isLargeScreen = useMinWidthMedia(1024);
+  const globalLoaderActive = useGlobalAppLoadingActive();
 
   useBusinessVerificationRealtime(isAppReady && !user?.impersonation);
-  useDashboardLayoutPaintReady("business-layout-paint");
+  useDashboardLayoutPaintReady("business-layout-paint", isAppReady);
+  useWarmPrefetchAuthLoginRoute("/login", isAppReady);
+  useWarmPrefetchLandingRoute(isAppReady);
   useCommercialPageTracking(isAppReady && !user?.impersonation);
 
   useEffect(() => {
@@ -65,7 +70,11 @@ export function BusinessLayout() {
       {/* Suppressed on /dashboard — inline card there; see businessVerificationNotice.ts */}
       <VerificationPendingBanner />
       <div className="relative z-10">
-        {isAppReady ? (isLargeScreen ? <BusinessSidebar /> : null) : isLargeScreen ? <SidebarSkeleton /> : null}
+        {isAppReady ? (
+          isLargeScreen ? <BusinessSidebar /> : null
+        ) : isLargeScreen && !globalLoaderActive ? (
+          <SidebarSkeleton />
+        ) : null}
         <BusinessMobileSidebar isOpen={mobileMenuOpen} onClose={closeMobileMenu} />
         <div
           className={cn(

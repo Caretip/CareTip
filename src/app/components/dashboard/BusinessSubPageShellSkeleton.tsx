@@ -1,5 +1,7 @@
 import { useDashboardShellAria } from "@/app/hooks/useDashboardShellAria";
 import { businessUi } from "@/app/components/business/businessDashboardUi";
+import { GlobalAppLoadingHold } from "@/app/components/GlobalAppLoadingHold";
+import { useGlobalAppLoadingActive } from "@/app/lib/globalAppLoading";
 import { cn } from "@/lib/utils";
 
 type BusinessSubPageShellSkeletonProps = {
@@ -7,9 +9,17 @@ type BusinessSubPageShellSkeletonProps = {
   narrow?: boolean;
 };
 
-/** Page chrome while auth session hydrates inside `BusinessLayout` (no full-screen hold). */
+/**
+ * Page chrome while auth/session hydrates inside `BusinessLayout`.
+ * Hidden under the global CareTip overlay (avoids skeleton after boot).
+ */
 export function BusinessSubPageShellSkeleton({ narrow = false }: BusinessSubPageShellSkeletonProps) {
   const aria = useDashboardShellAria();
+  const globalLoaderActive = useGlobalAppLoadingActive();
+
+  if (globalLoaderActive) {
+    return <GlobalAppLoadingHold />;
+  }
 
   return (
     <main className={businessUi.modulePageShell} aria-busy="true" aria-label={aria.loading}>

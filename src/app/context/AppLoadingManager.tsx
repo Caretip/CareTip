@@ -19,8 +19,12 @@ import {
   traceGlobalLoaderReady,
   traceGlobalOverlayDismissed,
 } from "../lib/globalAppLoadingTrace";
-import { dismissHtmlMarketingBootBridge } from "../lib/htmlMarketingBootBridge";
-import { isPublicMarketingPath, isPublicShellPath } from "../lib/publicRoutes";
+import {
+  beginHtmlBootBridgeExit,
+  dismissHtmlMarketingBootBridge,
+  isHtmlBootBridgeActive,
+  setHtmlBootBridgeMessage,
+} from "../lib/htmlMarketingBootBridge";
 import { resolveInitialBootLoadingMessage } from "../lib/appLoadingContexts";
 import i18n from "@/i18n/i18n";
 import { traceLoaderRegistration, warnLoaderDiagDeadlock } from "../lib/loaderDiagFlags";
@@ -36,7 +40,10 @@ import {
   pickOverlayWinner,
   isTechnicalOverlayRegistration,
 } from "../lib/appLoadingJourney";
-
+import {
+  markAppShellInteractive,
+  shouldSuppressSoftNavGlobalOverlay,
+} from "../lib/appShellLifecycle";
 /** Block APP_INIT from re-opening the overlay shortly after a full dismiss (paint-ready race). */
 const OVERLAY_REENTRY_LOCK_MS = 600;
 
@@ -94,23 +101,11 @@ function readInitialPathname(): string {
   return window.location.pathname.split("?")[0]?.split("#")[0] ?? "/";
 }
 
-function isStandaloneDisplayMode(): boolean {
-  if (typeof window === "undefined") return false;
-  return (
-    window.matchMedia?.("(display-mode: standalone)")?.matches === true ||
-    (window.navigator as Navigator & { standalone?: boolean }).standalone === true
-  );
-}
-
 /**
- * Initial bootstrap overlay for cold loads.
- * PWA, marketing, and protected shells show the branded loader immediately.
- * Auth form shells skip React boot (HTML bridge dismisses on first paint).
+ * Initial bootstrap overlay for every cold load (URL entry, refresh, deep link).
+ * Always registers so React matches the HTML CareTip boot — no path-based gap.
  */
-function shouldRegisterInitialAppBoot(pathname: string): boolean {
-  if (isStandaloneDisplayMode()) return true;
-  if (isPublicMarketingPath(pathname)) return true;
-  if (isPublicShellPath(pathname)) return false;
+function shouldRegisterInitialAppBoot(_pathname: string): boolean {
   return true;
 }
 
@@ -136,6 +131,13 @@ export function AppLoadingManagerProvider({ children }: { children: React.ReactN
   const initialColdBootPending = createInitialOverlayPhase() === "visible";
   const [registrations, setRegistrations] = useState<Map<string, Registration>>(createInitialRegistrations);
   const [overlayPhase, setOverlayPhase] = useState<OverlayPhase>(createInitialOverlayPhase);
+  /**
+   * Cold URL entry: HTML `#caretip-html-boot` is the only visual loader until fade-out.
+   * React tracks readiness but must not mount a second CareTip screen on top.
+   */
+  const [htmlBootOwnsVisual, setHtmlBootOwnsVisual] = useState(() => isHtmlBootBridgeActive());
+  const htmlBootOwnsVisualRef = useRef(htmlBootOwnsVisual);
+  htmlBootOwnsVisualRef.current = htmlBootOwnsVisual;
   const lastWinnerKeyRef = useRef<string | null>(initialColdBootPending ? BOOTSTRAP_KEY : null);
   const lastShownWinnerKeyRef = useRef<string | null>(initialColdBootPending ? BOOTSTRAP_KEY : null);
   const winnerRequestedRef = useRef(false);
@@ -159,6 +161,14 @@ export function AppLoadingManagerProvider({ children }: { children: React.ReactN
       }
 
       if (active) {
+        if (shouldSuppressSoftNavGlobalOverlay(key)) {
+          if (import.meta.env.DEV) {
+            console.info(
+              `[GlobalAppLoading] Suppressed soft-nav overlay registration "${key}"`,
+            );
+          }
+          return;
+        }
         setRegistrations((prev) => {
           if (
             priority === APP_LOADING_PRIORITY.APP_INIT &&
@@ -213,7 +223,7 @@ export function AppLoadingManagerProvider({ children }: { children: React.ReactN
   );
 
   const releaseAppBootOverlay = useCallback(() => {
-    dismissHtmlMarketingBootBridge();
+    /* Clears app-boot registration only. HTML dismiss is owned by the overlay exit effect. */
     setRegistrations((prev) => {
       if (!prev.has(BOOTSTRAP_KEY)) return prev;
       const next = new Map(prev);
@@ -301,9 +311,7 @@ export function AppLoadingManagerProvider({ children }: { children: React.ReactN
       if (
         shouldBypassOverlayShowThreshold(winnerKey, initialColdBootPendingRef.current)
       ) {
-        if (winnerKey === BOOTSTRAP_KEY) {
-          initialColdBootPendingRef.current = false;
-        }
+        initialColdBootPendingRef.current = false;
         const resolvedKey = winnerKey ?? BOOTSTRAP_KEY;
         overlayShownAtRef.current = Date.now();
         lastShownWinnerKeyRef.current = resolvedKey;
@@ -337,9 +345,7 @@ export function AppLoadingManagerProvider({ children }: { children: React.ReactN
     if (showThresholdTimerRef.current !== null) {
       window.clearTimeout(showThresholdTimerRef.current);
       showThresholdTimerRef.current = null;
-      if (overlayPhase === "hidden") {
-        dismissHtmlMarketingBootBridge();
-      }
+      /* Never tear down an active HTML cold boot when a soft show timer cancels. */
     }
 
     if (overlayPhase === "hidden") return;
@@ -389,19 +395,36 @@ export function AppLoadingManagerProvider({ children }: { children: React.ReactN
 
   useEffect(() => {
     if (overlayPhase !== "exiting") return;
+
+    if (htmlBootOwnsVisualRef.current) {
+      beginHtmlBootBridgeExit();
+    }
+
     const id = window.setTimeout(() => {
+      if (htmlBootOwnsVisualRef.current) {
+        dismissHtmlMarketingBootBridge();
+        setHtmlBootOwnsVisual(false);
+      }
       setOverlayPhase("hidden");
       lastWinnerKeyRef.current = null;
       lastJourneyMessageRef.current = undefined;
+      /* Cold boot complete — SPA navigations must not reopen the branded loader. */
+      markAppShellInteractive();
     }, OVERLAY_FADE_MS);
     return () => window.clearTimeout(id);
   }, [overlayPhase]);
+
+  useEffect(() => {
+    if (!htmlBootOwnsVisual) return;
+    setHtmlBootBridgeMessage(displayOverlayMessage);
+  }, [htmlBootOwnsVisual, displayOverlayMessage]);
 
   useEffect(() => {
     if (!import.meta.env.DEV) return;
     console.debug("[GlobalAppLoading] state", {
       winnerRequested,
       overlayPhase,
+      htmlBootOwnsVisual,
       winner: winner?.key ?? null,
       winnerPriority: winner?.priority ?? null,
       activeKeys: [...registrations.keys()],
@@ -413,7 +436,7 @@ export function AppLoadingManagerProvider({ children }: { children: React.ReactN
         activeKeys: [...registrations.keys()],
       });
     }
-  }, [winnerRequested, overlayPhase, winner, registrations]);
+  }, [winnerRequested, overlayPhase, winner, registrations, htmlBootOwnsVisual]);
 
   useEffect(() => {
     if (!import.meta.env.DEV || !winnerRequested) return;
@@ -439,23 +462,27 @@ export function AppLoadingManagerProvider({ children }: { children: React.ReactN
     [register, releaseAppBootOverlay, winnerRequested, overlayPresented],
   );
 
-  const renderOverlay = overlayPresented;
-
-  /* Handoff: React branded overlay owns the screen — drop the HTML first-paint bridge. */
-  useLayoutEffect(() => {
-    if (!renderOverlay) return;
-    dismissHtmlMarketingBootBridge();
-  }, [renderOverlay]);
+  /* React CareTip screen only after HTML cold boot is gone (soft nav / auth transitions). */
+  const renderReactOverlay = overlayPresented && !htmlBootOwnsVisual;
 
   useEffect(() => {
-    const id = window.setTimeout(() => dismissHtmlMarketingBootBridge(), 8_000);
+    /* Safety: if HTML somehow stays after we already moved on, force-clear after long stall. */
+    if (!htmlBootOwnsVisual) return;
+    const id = window.setTimeout(() => {
+      if (!htmlBootOwnsVisualRef.current) return;
+      if (import.meta.env.DEV) {
+        console.warn("[GlobalAppLoading] HTML boot safety dismiss after 20s");
+      }
+      dismissHtmlMarketingBootBridge();
+      setHtmlBootOwnsVisual(false);
+    }, 20_000);
     return () => window.clearTimeout(id);
-  }, []);
+  }, [htmlBootOwnsVisual]);
 
   return (
     <AppLoadingManagerContext.Provider value={value}>
       {children}
-      {renderOverlay ? (
+      {renderReactOverlay ? (
         <AppBrandedLoadingScreen
           fixed
           message={displayOverlayMessage}

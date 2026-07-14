@@ -26,6 +26,7 @@ import {
 import { cn } from "@/lib/utils";
 import { DashboardListSkeleton, InlineSpinner } from "@/app/components/dashboard/DashboardSectionLoading";
 import { BusinessSubPageShellSkeleton } from "@/app/components/dashboard/BusinessSubPageShellSkeleton";
+import { useBusinessPageBoot } from "@/app/lib/useBusinessPageBoot";
 import { businessUi } from "@/app/components/business/businessDashboardUi";
 import {
   getPageSessionCache,
@@ -114,10 +115,11 @@ export function BusinessSupportPage() {
     }
   };
 
-  if (!user || user.role !== "business") return <BusinessSubPageShellSkeleton narrow />;
-
   const isInitialTicketLoad = loading && tickets.length === 0;
   const isBackgroundTicketRefresh = loading && tickets.length > 0;
+  const { showInitialSkeleton } = useBusinessPageBoot("support", isInitialTicketLoad);
+
+  if (!user || user.role !== "business") return <BusinessSubPageShellSkeleton narrow />;
 
   return (
     <main className="bg-background px-4 pb-20 pt-5 sm:px-6 lg:px-8">
@@ -227,7 +229,7 @@ export function BusinessSupportPage() {
             </div>
           ) : null}
 
-          {isInitialTicketLoad ? (
+          {showInitialSkeleton ? (
             <DashboardListSkeleton rows={4} minHeightClass="min-h-0 py-4" />
           ) : tickets.length === 0 ? (
             <p className="rounded-xl border border-dashed px-4 py-10 text-center text-sm text-muted-foreground">

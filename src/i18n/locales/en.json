@@ -2492,6 +2492,12 @@
       "title": "Tip in seconds. Reward great service instantly.",
       "description": "QR code tips, fast, cashless, and tax free.",
       "descriptionMobile": "Fast QR code tips.\nCashless. Tax-free.",
+      "heroBenefits": [
+        "Tips via QR code",
+        "fast",
+        "contactless",
+        "tax-free"
+      ],
       "statLive": "Instant QR tipping",
       "statPos": "No POS setup required",
       "statSecure": "Secure tip records",
@@ -2528,25 +2534,45 @@
       "heroSubtleTipNotice": "€12 tip received",
       "heroFloatPillRating": "5★ rating",
       "heroFloatPillStaff": "+3 staff online",
+      "heroTipPanel": {
+        "title": "Scan to leave a tip",
+        "ratingLabel": "Excellent Service",
+        "amountsAria": "Tip amount",
+        "amount2": "€2",
+        "amount5": "€5",
+        "amount10": "€10",
+        "amountOther": "Other",
+        "continue": "Continue"
+      },
       "heroMetricCards": {
         "wyo": {
-          "tipSent": {
-            "title": "Tip Sent",
-            "subtitle": "€12 Successfully Paid"
+          "eyebrow": "Live · Hotel floor",
+          "todaysTips": {
+            "label": "Today's Tips",
+            "value": "€428"
           },
-          "guestRating": {
-            "title": "Guest Rating",
-            "subtitle": "5.0 · Payment Complete"
+          "teamTips": {
+            "label": "Team Tips",
+            "value": "€642 · 8 staff"
+          },
+          "activeStaff": {
+            "label": "Active Staff",
+            "value": "8 on shift"
           }
         },
         "wyc": {
-          "revenue": {
-            "title": "Today's Revenue",
-            "subtitle": "€1,248 · +18%"
+          "eyebrow": "Live · Café floor",
+          "todaysTips": {
+            "label": "Today's Tips",
+            "value": "€286"
           },
-          "teamTips": {
-            "title": "Team Tips",
-            "subtitle": "€642 · 12 Employees"
+          "todaysRevenue": {
+            "label": "Today's Revenue",
+            "value": "€1,248 · +18%"
+          },
+          "activeStaff": {
+            "label": "Active Staff",
+            "value": "6 on shift"
           }
         }
       },
@@ -3071,6 +3097,10 @@
       },
       "petCare": {
         "name": "Pet Care & Services (Pet Care)",
+        "role": ""
+      },
+      "restaurant": {
+        "name": "Restaurants & Cafés",
         "role": ""
       }
     },

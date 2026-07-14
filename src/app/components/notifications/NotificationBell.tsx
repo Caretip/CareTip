@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { CareIcon } from "@/components/icons";
 import {
   NotificationAlertDialog,
@@ -60,11 +60,11 @@ export function NotificationBell({ className }: NotificationBellProps) {
     loading,
     markRead,
     markAllRead,
-  } = useNotifications({ enabled, loadList: open });
+  } = useNotifications({ enabled, loadList: true });
 
   const badge = unreadCount > 0;
   const inboxPath = inboxPathForRole(role);
-  const list = items ?? [];
+  const list = items;
 
   const alertItems = useMemo((): NotificationAlertItem[] => {
     return list.map((n) => ({
@@ -89,38 +89,58 @@ export function NotificationBell({ className }: NotificationBellProps) {
     [t],
   );
 
+  const handleMarkRead = useCallback(
+    (id: string) => {
+      void markRead(id);
+    },
+    [markRead],
+  );
+
+  const handleMarkAllRead = useCallback(() => {
+    void markAllRead();
+  }, [markAllRead]);
+
+  const handleViewAll = useCallback(() => {
+    setOpen(false);
+    navigate(inboxPath);
+  }, [navigate, inboxPath]);
+
+  const handleItemActivate = useCallback(
+    (id: string) => {
+      const n = list.find((item) => item.id === id);
+      const dest = n
+        ? resolveInboxNotificationDestination(n, {
+            role,
+            isPlatformAdmin: role === "platform_admin",
+          })
+        : null;
+      if (dest) navigate(dest);
+      setOpen(false);
+    },
+    [list, role, navigate],
+  );
+
   if (!enabled) return null;
 
   return (
     <NotificationAlertDialog
       className={className}
+      open={open}
+      onOpenChange={setOpen}
       items={alertItems}
       unreadCount={unreadCount}
       loading={loading && list.length === 0}
       labels={alertLabels}
-      onOpenChange={setOpen}
-      onViewAll={() => {
-        setOpen(false);
-        navigate(inboxPath);
-      }}
-      onMarkRead={(id) => void markRead(id)}
-      onMarkAllRead={() => void markAllRead()}
-      onItemActivate={(id) => {
-        const n = list.find((item) => item.id === id);
-        const dest = n
-          ? resolveInboxNotificationDestination(n, {
-              role,
-              isPlatformAdmin: role === "platform_admin",
-            })
-          : null;
-        if (dest) navigate(dest);
-        setOpen(false);
-      }}
+      onViewAll={handleViewAll}
+      onMarkRead={handleMarkRead}
+      onMarkAllRead={handleMarkAllRead}
+      onItemActivate={handleItemActivate}
       trigger={
         <button
           type="button"
           className={cn(
-            "relative inline-flex min-h-[44px] min-w-[44px] touch-manipulation items-center justify-center rounded-xl p-2 transition-colors hover:bg-muted active:opacity-90",
+            "relative inline-flex min-h-[44px] min-w-[44px] touch-manipulation items-center justify-center rounded-xl p-2 transition-colors hover:bg-muted active:scale-[0.97] active:opacity-90",
+            open && "bg-muted",
             className,
           )}
           aria-label={

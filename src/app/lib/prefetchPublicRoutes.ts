@@ -3,6 +3,7 @@
 type RouteImporter = () => Promise<unknown>;
 
 const PUBLIC_ROUTE_IMPORTERS: Record<string, RouteImporter> = {
+  "/": () => import("../pages/LandingPage"),
   "/how-it-works": () => import("../pages/HowItWorksPage"),
   "/features": () => import("../pages/FeaturesPage"),
   "/about": () => import("../pages/AboutPage"),
@@ -19,6 +20,12 @@ const PUBLIC_ROUTE_IMPORTERS: Record<string, RouteImporter> = {
 
 const prefetched = new Set<string>();
 
+function warmLandingHeroAssets(): void {
+  void import("@/lib/landingHeroStoryAssets").then((mod) => {
+    void mod.warmLandingHeroLcpImage();
+  });
+}
+
 export function prefetchPublicRoute(path: string) {
   const normalized = path.split("#")[0].split("?")[0];
   if (!normalized || prefetched.has(normalized)) return;
@@ -26,6 +33,15 @@ export function prefetchPublicRoute(path: string) {
   if (!factory) return;
   prefetched.add(normalized);
   void factory();
+  if (normalized === "/") {
+    warmLandingHeroAssets();
+  }
+}
+
+/** Warm the landing page chunk + LCP hero image for instant returns to `/`. */
+export function prefetchLandingRoute(): void {
+  prefetchPublicRoute("/");
+  warmLandingHeroAssets();
 }
 
 /** Warm high-traffic nav targets after landing is idle. */

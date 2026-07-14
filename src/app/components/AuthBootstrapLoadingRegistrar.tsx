@@ -11,8 +11,7 @@ import {
   useAppLoadingRegistration,
   useReleaseAppBootOverlay,
 } from "../context/AppLoadingManager";
-import { isPublicShellPath, isPublicMarketingPath } from "../lib/publicRoutes";
-import { dismissHtmlMarketingBootBridge } from "../lib/htmlMarketingBootBridge";
+import { isPublicShellPath } from "../lib/publicRoutes";
 import { resolveRouteLoadingMessage } from "../lib/appLoadingContexts";
 import {
   GLOBAL_LOADER_STUCK_WARN_MS,
@@ -44,6 +43,9 @@ function shouldBlockGlobalAuthLoader(
 /**
  * Registers global auth/session bootstrap with the loading overlay.
  * Intentional logout suppresses bootstrap — logout navigates directly to login.
+ *
+ * HTML first-paint dismiss is owned by AppLoadingManager on overlay exit —
+ * never dismiss HTML here (avoids white gap → second loader).
  */
 export function AuthBootstrapLoadingRegistrar({ children }: { children: ReactNode }) {
   const { t } = useTranslation();
@@ -61,11 +63,12 @@ export function AuthBootstrapLoadingRegistrar({ children }: { children: ReactNod
     resolveRouteLoadingMessage(pathname, t),
   );
 
+  /* On auth forms, drop orphan app-boot only after session bootstrap has finished. */
   useEffect(() => {
     if (!isPublicAuthenticationPath(pathname)) return;
+    if (authBootstrapBlocking) return;
     releaseAppBootOverlay();
-    dismissHtmlMarketingBootBridge();
-  }, [pathname, releaseAppBootOverlay]);
+  }, [pathname, authBootstrapBlocking, releaseAppBootOverlay]);
 
   useEffect(() => {
     if (authBootstrapBlocking) {

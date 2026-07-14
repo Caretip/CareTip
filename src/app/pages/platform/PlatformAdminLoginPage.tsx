@@ -16,6 +16,7 @@ import {
   isAuthPostLoginTransitionActive,
   subscribeAuthPostLoginTransition,
 } from "@/app/lib/authPostLoginTransition";
+import { useSignalLogoutAuthPageReady } from "@/app/lib/useSignalLogoutAuthPageReady";
 import { AuthMinimalFooter } from "@/app/components/auth/AuthMinimalFooter";
 import { caretipBtnPrimaryCompact, caretipBtnPrimaryFull } from "@/lib/caretipButtonSystem";
 import { cn } from "@/lib/utils";
@@ -67,6 +68,13 @@ export function PlatformAdminLoginPage() {
   );
   const authTransitionPending =
     postLoginTransitionActive || (authFlowInProgress && Boolean(postAuthRedirectRef.current));
+
+  const loginChromeReady = !shouldShowAuthBootstrapShell({
+    authStatus,
+    authTransitionPending,
+    allowImmediateLoginPaint: true,
+  });
+  useSignalLogoutAuthPageReady(loginChromeReady);
 
   const loginSubmitBlocked = Boolean(
     user && !sessionValidated && isPlatformAdminSessionRole(user.role) && !forceLogin,
@@ -183,13 +191,7 @@ export function PlatformAdminLoginPage() {
     redirectAfterAuth();
   }, [authFlowInProgress, authStatus, forceLogin, redirectAfterAuth, sessionValidated, submitting, user]);
 
-  if (
-    shouldShowAuthBootstrapShell({
-      authStatus,
-      authTransitionPending,
-      allowImmediateLoginPaint: true,
-    })
-  ) {
+  if (!loginChromeReady) {
     return <AuthBootstrapShell />;
   }
 

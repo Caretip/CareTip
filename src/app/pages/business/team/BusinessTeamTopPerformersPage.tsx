@@ -15,6 +15,7 @@ import {
   isEntitlementsSessionPrimed,
   sessionHasFeature,
 } from "../../../lib/subscriptionEntitlementFastPath";
+import { useBusinessPageBoot } from "../../../lib/useBusinessPageBoot";
 
 /** Team → Top performers. Gated at layout level. */
 export function BusinessTeamTopPerformersPage() {
@@ -33,6 +34,11 @@ export function BusinessTeamTopPerformersPage() {
   const data = useBusinessTipsModuleData(
     Boolean(sessionValidated && user?.role === "business" && analyticsAllowed),
     true,
+  );
+
+  const { showInitialSkeleton } = useBusinessPageBoot(
+    "team-top-performers",
+    data.isInitialAnalyticsLoading,
   );
 
   const rankingCategories = useMemo(() => {
@@ -120,7 +126,11 @@ export function BusinessTeamTopPerformersPage() {
 
       <div className="grid gap-6 lg:grid-cols-3">
         <div className="lg:col-span-2">
-          <TeamLeaderboard employees={data.employees} goals={data.employeeGoals} loading={data.loading} />
+          <TeamLeaderboard
+            employees={data.employees}
+            goals={data.employeeGoals}
+            loading={showInitialSkeleton}
+          />
         </div>
         <Card className={businessUi.cardStatic}>
           <CardHeader className="border-b border-neutral-100/90">

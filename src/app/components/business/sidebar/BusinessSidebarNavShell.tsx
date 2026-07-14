@@ -65,7 +65,7 @@ function SidebarLink({
         className={cn(
           "business-dash-nav-link flex items-center gap-3 px-3 py-2.5 text-sm font-medium",
           isActive
-            ? "business-dash-nav-link--active bg-primary font-semibold text-primary-foreground"
+            ? "business-dash-nav-link--active font-semibold text-foreground"
             : dashboardSidebarNavLinkIdle,
         )}
         aria-current={isActive ? "page" : undefined}

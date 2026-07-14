@@ -3,7 +3,6 @@ import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import {
   Building2,
-  HeartPulse,
   Scissors,
   Truck,
   UtensilsCrossed,
@@ -15,14 +14,14 @@ import { landingImageFrameClassName } from "@/components/ui/landing-image-frame"
 import { landingUi } from "@/components/landing/landingUi";
 import { cn } from "@/lib/utils";
 
-import healthcareNursingImg from "../../../images/healthcare and nursing.webp";
-import log01Img from "../../../images/Log01.webp";
-import hotelsImg from "../../../images/Hotels.webp";
-import salonSpaImg from "../../../images/salon and spa.webp";
-import tradeAndHomeImg from "../../../images/trade and home services.webp";
-import petCareImg from "../../../images/petcare and services.webp";
+/** Approved industry photos — 960×960 WebP (AVIF companions on disk). */
+import logistikImg from "../../../images/Log01.webp";
+import bedienungThekeImg from "../../../images/Hotels.webp";
+import beautySalonImg from "../../../images/salon and spa.webp";
+import handwerkerImg from "../../../images/trade and home services.webp";
+import restaurantBerlinImg from "../../../images/petcare and services.webp";
 
-type IndustryId = "care" | "delivery" | "hospitality" | "beauty" | "craftHome" | "petCare";
+type IndustryId = "delivery" | "hospitality" | "beauty" | "craftHome" | "restaurant";
 
 type MarqueeSpec = {
   id: IndustryId;
@@ -32,34 +31,29 @@ type MarqueeSpec = {
 
 const MARQUEE_SPECS: MarqueeSpec[] = [
   {
-    id: "care",
-    image: healthcareNursingImg,
-    Icon: HeartPulse,
-  },
-  {
-    id: "delivery",
-    image: log01Img,
-    Icon: Truck,
-  },
-  {
-    id: "hospitality",
-    image: hotelsImg,
+    id: "restaurant",
+    image: restaurantBerlinImg,
     Icon: UtensilsCrossed,
   },
   {
+    id: "hospitality",
+    image: bedienungThekeImg,
+    Icon: Building2,
+  },
+  {
+    id: "delivery",
+    image: logistikImg,
+    Icon: Truck,
+  },
+  {
     id: "beauty",
-    image: salonSpaImg,
+    image: beautySalonImg,
     Icon: Scissors,
   },
   {
     id: "craftHome",
-    image: tradeAndHomeImg,
+    image: handwerkerImg,
     Icon: Wrench,
-  },
-  {
-    id: "petCare",
-    image: petCareImg,
-    Icon: Building2,
   },
 ];
 

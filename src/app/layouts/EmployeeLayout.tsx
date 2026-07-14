@@ -13,7 +13,9 @@ import { cn } from "@/lib/utils";
 import { PushNotificationSync } from "../components/PushNotificationSync";
 import { NotificationInboxSync } from "../components/NotificationInboxSync";
 import { RouteChunkBoundary } from "../routing/RouteChunkBoundary";
-import { useDashboardLayoutPaintReady } from "../lib/globalAppLoading";
+import { useDashboardLayoutPaintReady, useGlobalAppLoadingActive } from "../lib/globalAppLoading";
+import { useWarmPrefetchAuthLoginRoute } from "../lib/useWarmPrefetchAuthLoginRoute";
+import { useWarmPrefetchLandingRoute } from "../lib/useWarmPrefetchLandingRoute";
 import { useMinWidthMedia } from "@/lib/motionPerf";
 
 type EmployeeBusinessBranding = {
@@ -29,6 +31,7 @@ export function EmployeeLayout() {
   const { user, authStatus } = useAuth();
   const isAppReady = authStatus === "authenticated" && user?.role === "employee";
   const isLargeScreen = useMinWidthMedia(1024);
+  const globalLoaderActive = useGlobalAppLoadingActive();
   const [branding, setBranding] = useState<EmployeeBusinessBranding | null>(null);
 
   useEffect(() => {
@@ -52,7 +55,9 @@ export function EmployeeLayout() {
     };
   }, [authStatus, user?.role]);
 
-  useDashboardLayoutPaintReady("employee-layout-paint");
+  useDashboardLayoutPaintReady("employee-layout-paint", isAppReady);
+  useWarmPrefetchAuthLoginRoute("/login", isAppReady);
+  useWarmPrefetchLandingRoute(isAppReady);
 
   return (
     <div className="relative min-h-screen bg-background">
@@ -61,7 +66,7 @@ export function EmployeeLayout() {
       <div className="relative z-10">
         {isAppReady ? (
           isLargeScreen ? <EmployeeSidebar businessBranding={branding} /> : null
-        ) : isLargeScreen ? (
+        ) : isLargeScreen && !globalLoaderActive ? (
           <SidebarSkeleton />
         ) : null}
         <EmployeeMobileSidebar

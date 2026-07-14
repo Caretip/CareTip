@@ -45,6 +45,12 @@ export function CareTipLandingHero({
   const isMobileHeadline = useMediaQuery("(max-width: 767px)");
   const activeHeadline =
     isMobileHeadline && landingCopyVisible(heroHeadlineMobile) ? heroHeadlineMobile : heroHeadline;
+
+  const heroBenefitsRaw = t("landing.showcase.heroBenefits", { returnObjects: true });
+  const heroBenefits =
+    Array.isArray(heroBenefitsRaw) && heroBenefitsRaw.every((item) => typeof item === "string")
+      ? (heroBenefitsRaw as string[]).filter((item) => landingCopyVisible(item))
+      : [];
   const activeDescription =
     isMobileHeadline && landingCopyVisible(heroDescriptionMobile)
       ? heroDescriptionMobile
@@ -80,8 +86,8 @@ export function CareTipLandingHero({
       )}
       data-hero-slide={activeFrameKey}
     >
-      <div className="caretip-hero-visual-band" aria-hidden>
-        <div className="caretip-hero-bg-layer">
+      <div className="caretip-hero-visual-band">
+        <div className="caretip-hero-bg-layer" aria-hidden>
           <LandingHeroStoryShowcase
             alt={imageAlt}
             variant="background"
@@ -89,7 +95,7 @@ export function CareTipLandingHero({
           />
         </div>
 
-        <div className="caretip-hero-bg-overlay" />
+        <div className="caretip-hero-bg-overlay" aria-hidden />
 
         <div className={cn(landingUi.heroFloatLayer, "caretip-hero-float-layer--full-bg")}>
           <LandingHeroFloatingCards activeFrameKey={activeFrameKey} variant="full-bg" />
@@ -175,7 +181,25 @@ export function CareTipLandingHero({
             )}
           </h1>
 
-          {landingCopyVisible(activeDescription) ? (
+          {heroBenefits.length > 0 ? (
+            <ul
+              className={cn(
+                landingUi.heroSubtitle,
+                "caretip-hero-subtitle caretip-hero-benefits",
+              )}
+            >
+              {heroBenefits.map((benefit, index) => (
+                <li key={`${index}-${benefit}`} className="caretip-hero-benefits__item">
+                  {index > 0 ? (
+                    <span className="caretip-hero-benefits__sep" aria-hidden>
+                      •
+                    </span>
+                  ) : null}
+                  <span className="caretip-hero-benefits__label">{benefit}</span>
+                </li>
+              ))}
+            </ul>
+          ) : landingCopyVisible(activeDescription) ? (
             mobileDescriptionLines ? (
               <div
                 className={cn(

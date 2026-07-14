@@ -1,5 +1,5 @@
 /**
- * Synchronous client-side logout cleanup — runs after navigation begins.
+ * Synchronous client-side logout cleanup — runs under the logout overlay before navigate.
  * Server refresh invalidation runs separately via {@link logoutAPIWithTimeout}.
  */
 

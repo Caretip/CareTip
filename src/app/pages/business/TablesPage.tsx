@@ -17,6 +17,7 @@ import { logClientError } from "../../lib/clientLog";
 import { qrTableUrl } from "../../lib/appPublicUrl";
 import { LoadingSpinner } from "../../components/ui/loading-spinner";
 import { TablesListSkeleton } from "../../components/dashboard/DashboardSectionLoading";
+import { useBusinessPageBoot } from "../../lib/useBusinessPageBoot";
 import {
   Dialog,
   DialogContent,
@@ -144,6 +145,9 @@ export function TablesPage({ embedded = false }: { embedded?: boolean } = {}) {
     }
   };
 
+  const isInitialTablesLoad = !ready || loading;
+  const { showInitialSkeleton } = useBusinessPageBoot("tables", isInitialTablesLoad);
+
   return (
     <div className={cn(embedded ? "text-foreground" : "min-h-screen bg-background")}>
       {!embedded ? (
@@ -202,7 +206,7 @@ export function TablesPage({ embedded = false }: { embedded?: boolean } = {}) {
           <div className="mb-6">
             <LockedFeatureCard featureKey="multiLocation" tier={tier} />
           </div>
-        ) : !ready || loading ? (
+        ) : showInitialSkeleton ? (
           <div className={cn(businessUi.tablePanel, "-mx-4 px-4 sm:mx-0 sm:px-0")}>
             <TablesListSkeleton />
           </div>

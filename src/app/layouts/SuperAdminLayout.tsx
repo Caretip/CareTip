@@ -12,7 +12,9 @@ import { PushNotificationSync } from "../components/PushNotificationSync";
 import { NotificationInboxSync } from "../components/NotificationInboxSync";
 import { RouteChunkBoundary } from "../routing/RouteChunkBoundary";
 import { cn } from "@/lib/utils";
-import { useDashboardLayoutPaintReady } from "../lib/globalAppLoading";
+import { useDashboardLayoutPaintReady, useGlobalAppLoadingActive } from "../lib/globalAppLoading";
+import { useWarmPrefetchAuthLoginRoute } from "../lib/useWarmPrefetchAuthLoginRoute";
+import { useWarmPrefetchLandingRoute } from "../lib/useWarmPrefetchLandingRoute";
 import { useMobileMenuState } from "../hooks/useMobileMenuState";
 import { useMinWidthMedia } from "@/lib/motionPerf";
 /**
@@ -26,8 +28,11 @@ export function SuperAdminLayout() {
   const showDemoRibbon = isWalkthroughDemoPlatformAdmin(user);
   const isAppReady = authStatus === "authenticated" && user?.role === "platform_admin";
   const isLargeScreen = useMinWidthMedia(1024);
+  const globalLoaderActive = useGlobalAppLoadingActive();
 
-  useDashboardLayoutPaintReady("platform-admin-layout-paint");
+  useDashboardLayoutPaintReady("platform-admin-layout-paint", isAppReady);
+  useWarmPrefetchAuthLoginRoute("/platform-admin/login", isAppReady);
+  useWarmPrefetchLandingRoute(isAppReady);
 
   return (
     <div className="relative min-h-screen bg-background">
@@ -42,7 +47,11 @@ export function SuperAdminLayout() {
         </div>
       ) : null}
       <div className="relative z-10">
-        {isAppReady ? (isLargeScreen ? <AdminSidebar /> : null) : isLargeScreen ? <SidebarSkeleton /> : null}
+        {isAppReady ? (
+          isLargeScreen ? <AdminSidebar /> : null
+        ) : isLargeScreen && !globalLoaderActive ? (
+          <SidebarSkeleton />
+        ) : null}
         <AdminMobileSidebar isOpen={mobileMenuOpen} onClose={closeMobileMenu} />
         <div
           className={cn(

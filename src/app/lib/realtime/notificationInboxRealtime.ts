@@ -11,7 +11,23 @@ import {
 export type NotificationInboxPatch =
   | { type: "created"; notification: InboxNotification; unreadCount?: number }
   | { type: "unread_count"; unreadCount: number }
-  | { type: "sync_request" };
+  | { type: "sync_request" }
+  /** Client-side optimistic / reconciled mutations — keep bell + inbox in sync. */
+  | { type: "read"; id: string; unreadCount: number; readAt: string }
+  | { type: "read_all"; unreadCount: number; readAt: string }
+  | { type: "deleted"; id: string; unreadCount: number }
+  /** Roll back a failed optimistic mark-read / delete. */
+  | {
+      type: "restore";
+      notification: InboxNotification;
+      unreadCount: number;
+    }
+  /** Full list restore after a failed mark-all. */
+  | {
+      type: "snapshot";
+      items: InboxNotification[];
+      unreadCount: number;
+    };
 
 type PatchListener = (patch: NotificationInboxPatch) => void;
 
@@ -39,6 +55,11 @@ export function subscribeNotificationInboxPatches(listener: PatchListener): () =
 export function requestNotificationInboxSync(unreadCount: number): void {
   notifyPatch({ type: "unread_count", unreadCount });
   notifyPatch({ type: "sync_request" });
+}
+
+/** Publish a local inbox mutation so every `useNotifications` subscriber updates instantly. */
+export function publishNotificationInboxPatch(patch: NotificationInboxPatch): void {
+  notifyPatch(patch);
 }
 
 function logNotificationDelivery(

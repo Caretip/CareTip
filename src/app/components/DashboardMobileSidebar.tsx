@@ -57,8 +57,9 @@ export function DashboardMobileSidebar({ isOpen, onClose }: DashboardMobileSideb
                   className={cn(
                     "flex items-center gap-3 rounded-lg px-3 py-2.5 transition-colors",
                     isActive
-                      ? "bg-primary font-semibold text-primary-foreground shadow-md"
+                      ? "admin-dash-nav-link--active font-semibold text-foreground"
                       : "text-muted-foreground hover:bg-muted hover:text-foreground",
+                    "admin-dash-nav-link",
                   )}
                 >
                   <CareIcon name={item.icon} size="md" />

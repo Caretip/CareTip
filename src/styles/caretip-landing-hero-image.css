@@ -90,22 +90,22 @@
   object-position: var(--caretip-hero-focal-x) var(--caretip-hero-focal-y);
 }
 
-/* Per-frame focal points — subject stays in frame across crossfade */
+/* Per-frame focal points — checkout interaction / hospitality subjects */
 .caretip-landing .caretip-hero-media-clip picture[data-hero-frame="wyc"] img {
-  object-position: 52% 46%;
+  object-position: 70% 50%;
 }
 
 .caretip-landing .caretip-hero-media-clip picture[data-hero-frame="wyo"] img {
-  object-position: 62% 44%;
+  object-position: 58% 42%;
 }
 
 @media (min-width: 1024px) {
   .caretip-landing .caretip-hero-media-clip picture[data-hero-frame="wyc"] img {
-    object-position: 54% 44%;
+    object-position: 74% 52%;
   }
 
   .caretip-landing .caretip-hero-media-clip picture[data-hero-frame="wyo"] img {
-    object-position: 64% 42%;
+    object-position: 60% 42%;
   }
 }
 
@@ -115,12 +115,19 @@
     transform: none !important;
   }
 
-  .caretip-landing .caretip-hero-media-clip picture[data-hero-frame="wyc"] img {
-    object-position: 52% 46% !important;
+  /* Framed showcase only — full-bleed mobile crops are owned by mobile-stack.css */
+  .caretip-landing
+    .caretip-hero-media-clip:not(.caretip-hero-media-clip--background)
+    picture[data-hero-frame="wyc"]
+    img {
+    object-position: 68% 50% !important;
   }
 
-  .caretip-landing .caretip-hero-media-clip picture[data-hero-frame="wyo"] img {
-    object-position: 60% 44% !important;
+  .caretip-landing
+    .caretip-hero-media-clip:not(.caretip-hero-media-clip--background)
+    picture[data-hero-frame="wyo"]
+    img {
+    object-position: 56% 42% !important;
   }
 }
 

@@ -2640,6 +2640,8 @@ export type NotificationsListResponse = {
   unreadCount: number;
 };
 
+const notificationsListInflight = new Map<string, Promise<NotificationsListResponse>>();
+
 export async function fetchMyNotifications(params?: {
   limit?: number;
   cursor?: string;
@@ -2659,23 +2661,38 @@ export async function fetchMyNotifications(params?: {
   if (params?.supportStatus?.trim()) q.set("supportStatus", params.supportStatus.trim());
   if (params?.locale) q.set("locale", params.locale);
   const suffix = q.toString() ? `?${q.toString()}` : "";
-  const raw = await apiRequest<
-    NotificationsListResponse & { notifications?: InboxNotification[] }
-  >(apiPath(`/api/me/notifications${suffix}`), {
-    method: "GET",
-    headers: getHeaders(),
-    credentials: "include",
+  const cacheKey = suffix || "default";
+
+  const existing = notificationsListInflight.get(cacheKey);
+  if (existing) return existing;
+
+  const promise = (async (): Promise<NotificationsListResponse> => {
+    const raw = await apiRequest<
+      NotificationsListResponse & { notifications?: InboxNotification[] }
+    >(apiPath(`/api/me/notifications${suffix}`), {
+      method: "GET",
+      headers: getHeaders(),
+      credentials: "include",
+      caretipSilentErrors: true,
+    } as CaretipRequestInit);
+    const items = Array.isArray(raw.items)
+      ? raw.items
+      : Array.isArray(raw.notifications)
+        ? raw.notifications
+        : [];
+    return {
+      items,
+      nextCursor: raw.nextCursor ?? null,
+      unreadCount: typeof raw.unreadCount === "number" ? raw.unreadCount : 0,
+    };
+  })().finally(() => {
+    if (notificationsListInflight.get(cacheKey) === promise) {
+      notificationsListInflight.delete(cacheKey);
+    }
   });
-  const items = Array.isArray(raw.items)
-    ? raw.items
-    : Array.isArray(raw.notifications)
-      ? raw.notifications
-      : [];
-  return {
-    items,
-    nextCursor: raw.nextCursor ?? null,
-    unreadCount: typeof raw.unreadCount === "number" ? raw.unreadCount : 0,
-  };
+
+  notificationsListInflight.set(cacheKey, promise);
+  return promise;
 }
 
 const UNREAD_COUNT_CACHE_MS = 3_000;

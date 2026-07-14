@@ -61,16 +61,21 @@ export function resolveMinOverlayVisibleMs(winnerKey: string | null | undefined)
 }
 
 /**
- * Handoffs that must cover the next paint immediately — no 200ms uncovered window for
- * Sign In chrome, Sign Out chrome, or guest nav.
+ * Handoffs that must cover the next paint immediately — no 200ms uncovered window.
+ * Cold boot + intentional auth journeys keep one continuous CareTip surface.
+ * Soft SPA remounts (landing-shell-ready, etc.) never bypass — they must not show.
  */
 export function shouldBypassOverlayShowThreshold(
   winnerKey: string | null | undefined,
   initialColdBootPending: boolean,
 ): boolean {
-  if (initialColdBootPending && winnerKey === "app-boot") return true;
+  if (initialColdBootPending) return true;
   return (
+    winnerKey === "app-boot" ||
+    winnerKey === "app-auth-bootstrap" ||
     winnerKey === "auth-post-login-transition" ||
-    winnerKey === "auth-logout-transition"
+    winnerKey === "auth-logout-transition" ||
+    winnerKey === "auth-login-submit" ||
+    winnerKey === "auth-signup-submit"
   );
 }

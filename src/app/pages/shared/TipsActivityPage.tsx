@@ -28,6 +28,7 @@ import {
   setPageSessionCache,
   PAGE_CACHE_TTL_HIGH_MS,
 } from "@/app/lib/pageSessionCache";
+import { useBusinessPageBoot } from "@/app/lib/useBusinessPageBoot";
 
 type TipsActivityCache = {
   items: TipActivityRow[];
@@ -179,6 +180,16 @@ export function TipsActivityPage({ variant = "default", embedded = false }: Tips
   const ui = isEmployeeHistory || user?.role === "employee" ? employeeUi : businessUi;
   const showStaffColumn = !isEmployeeHistory;
   const subtitle = copy("subtitle");
+
+  const isBusinessTipsPage = !isEmployeeHistory && user?.role === "business";
+  const isInitialTipsLoad = isBusinessTipsPage && loading && items.length === 0;
+  const { showInitialSkeleton } = useBusinessPageBoot(
+    embedded ? "tips-transactions" : "tips-activity",
+    isInitialTipsLoad,
+  );
+  const showTipsSkeleton = isEmployeeHistory
+    ? loading
+    : showInitialSkeleton || (loading && items.length > 0);
 
   return (
     <main className={cn(ui.page, !embedded && ui.pageShell, "overflow-x-hidden")}>
@@ -342,7 +353,7 @@ export function TipsActivityPage({ variant = "default", embedded = false }: Tips
         animate={{ y: 0, opacity: 1 }}
         transition={{ duration: 0.5, delay: 0.2 }}
       >
-        {loading ? (
+        {showTipsSkeleton ? (
           <div className={cn(ui.tablePanel, "overflow-hidden")}>
             <TipsActivityTableSkeleton />
           </div>

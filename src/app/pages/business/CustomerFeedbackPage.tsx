@@ -19,6 +19,7 @@ import { useRequireAuth } from "@/app/hooks/useRequireAuth";
 import { EmployeeEmptyState } from "@/app/components/employee/EmployeeEmptyState";
 import { BusinessSubPageShellSkeleton } from "@/app/components/dashboard/BusinessSubPageShellSkeleton";
 import { DashboardListSkeleton } from "@/app/components/dashboard/DashboardSectionLoading";
+import { useBusinessPageBoot } from "@/app/lib/useBusinessPageBoot";
 import { CustomerFeedbackListItem } from "@/app/components/business/CustomerFeedbackListItem";
 import { BusinessStatCard } from "@/app/components/business/BusinessStatCard";
 import { CountUpMetric } from "@/app/components/dashboard/CountUpMetric";
@@ -279,6 +280,9 @@ export function CustomerFeedbackPage() {
 
   const maxBucket = Math.max(1, ...insights.ratingBuckets);
 
+  const isInitialFeedbackLoad = loading && items.length === 0;
+  const { showInitialSkeleton } = useBusinessPageBoot("feedback", isInitialFeedbackLoad);
+
   if (!authReady) {
     return <BusinessSubPageShellSkeleton />;
   }
@@ -409,7 +413,7 @@ export function CustomerFeedbackPage() {
         </div>
       </div>
 
-      {loading && items.length === 0 ? (
+      {showInitialSkeleton ? (
         <DashboardListSkeleton minHeightClass="min-h-[280px]" />
       ) : error ? (
         <EmployeeEmptyState

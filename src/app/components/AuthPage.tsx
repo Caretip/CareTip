@@ -6,6 +6,7 @@ import { AuthFieldGroup } from './auth/AuthFieldGroup';
 import { AuthEmployeeVenueBanner } from './auth/AuthEmployeeVenueBanner';
 import { AuthTrustStrip } from './auth/AuthTrustStrip';
 import { beginAuthPostLoginTransition, isAuthPostLoginTransitionActive, subscribeAuthPostLoginTransition } from '../lib/authPostLoginTransition';
+import { useSignalLogoutAuthPageReady } from '../lib/useSignalLogoutAuthPageReady';
 import { AuthOAuthButtons } from './AuthOAuthButtons';
 import { SignInCard2, type AuthRole } from '@/components/ui/sign-in-card-2';
 import { useAuth, type User, parseUser } from '../hooks/useAuth';
@@ -180,6 +181,11 @@ export function AuthPage() {
 
   useEffect(() => {
     scheduleIdleWork(() => prefetchDashboardRoutes(), 1500);
+    scheduleIdleWork(() => {
+      void import("../lib/prefetchPublicRoutes").then(({ prefetchLandingRoute }) => {
+        prefetchLandingRoute();
+      });
+    }, 1800);
   }, []);
 
   /** Business signup must not accept employee invite params — send to /join. */
@@ -500,15 +506,18 @@ export function AuthPage() {
   const authTransitionPending =
     postLoginTransitionActive || (authFlowInProgress && Boolean(postAuthRedirectRef.current));
 
+  const loginChromeReady =
+    !inviteGateBlocking &&
+    !shouldShowAuthBootstrapShell({
+      authStatus,
+      authTransitionPending,
+    });
+  useSignalLogoutAuthPageReady(loginChromeReady);
+
   if (inviteGateBlocking) {
     return <AuthBootstrapShell />;
   }
-  if (
-    shouldShowAuthBootstrapShell({
-      authStatus,
-      authTransitionPending,
-    })
-  ) {
+  if (!loginChromeReady) {
     return <AuthBootstrapShell />;
   }
 

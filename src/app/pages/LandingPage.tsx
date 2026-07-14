@@ -6,8 +6,12 @@ import { Navigation } from "../components/Navigation";
 import { CareTipLandingHero } from "@/components/landing/CareTipLandingHero";
 import { Footer } from "../components/Footer";
 import { LandingPageBelowFold } from "./LandingPageBelowFold";
+import { warmLandingHeroLcpImage } from "@/lib/landingHeroStoryAssets";
 import "@/styles/bundles/marketing-shell.css";
 import "@/styles/bundles/landing.css";
+
+/** Begin LCP warm as soon as the landing chunk evaluates (SPA + cold). */
+void warmLandingHeroLcpImage();
 
 /** Landing has no email/password forms; autofill mitigations live on `AuthPage` (login/signup). */
 export function LandingPage() {
@@ -30,7 +34,7 @@ export function LandingPage() {
         <div className="fixed top-0 left-0 right-0 z-50 w-full max-w-[100vw] overflow-x-clip">
           <Navigation />
         </div>
-        <main className="caretip-landing-main caretip-page-enter w-full min-w-0 overflow-x-hidden">
+        <main className="caretip-landing-main w-full min-w-0 overflow-x-hidden">
           <CareTipLandingHero
             id="about-section"
             imageAlt={t("landing.showcase.tabQrAlt")}

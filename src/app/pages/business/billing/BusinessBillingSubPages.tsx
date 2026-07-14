@@ -1,4 +1,5 @@
 import { useBillingStatus } from "../../../hooks/useBillingStatus";
+import { useBusinessPageBoot } from "../../../lib/useBusinessPageBoot";
 import { BillingHistoryPanel } from "../../../components/business/settings/billing/BillingHistoryPanel";
 import { BillingInvoicesPanel } from "../../../components/business/settings/billing/BillingInvoicesPanel";
 import { BillingPaymentMethodsPanel } from "../../../components/business/settings/billing/BillingPaymentMethodsPanel";
@@ -6,11 +7,13 @@ import { BusinessSettingsPanelShell } from "../../../components/business/setting
 
 export function BusinessBillingHistoryPage() {
   const { data, loading, error, reload } = useBillingStatus();
+  const isInitialHistoryLoad = loading && !(data?.events?.length);
+  const { showInitialSkeleton } = useBusinessPageBoot("billing-history", isInitialHistoryLoad);
 
   return (
     <BusinessSettingsPanelShell embedded>
       <BillingHistoryPanel
-        loading={loading}
+        loading={showInitialSkeleton}
         error={error}
         events={data?.events ?? null}
         onRetry={() => void reload()}

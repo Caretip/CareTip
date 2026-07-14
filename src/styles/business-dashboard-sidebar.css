@@ -86,6 +86,7 @@
 
   .caretip-dashboard-shell .caretip-mobile-drawer-panel .business-dash-nav-link:not(.business-dash-nav-link--active),
   .caretip-dashboard-shell .caretip-mobile-drawer-panel .employee-dash-nav-link:not(.employee-dash-nav-link--active),
+  .caretip-dashboard-shell .caretip-mobile-drawer-panel .admin-dash-nav-link:not(.admin-dash-nav-link--active),
   .caretip-dashboard-shell .caretip-mobile-drawer-panel .platform-admin-dash-nav-link:not([aria-current="page"]) {
     color: hsl(var(--sidebar-foreground) / 0.94);
   }
@@ -96,8 +97,16 @@
 
   .caretip-dashboard-shell .caretip-mobile-drawer-panel .business-dash-nav-link--active,
   .caretip-dashboard-shell .caretip-mobile-drawer-panel .employee-dash-nav-link--active,
+  .caretip-dashboard-shell .caretip-mobile-drawer-panel .admin-dash-nav-link--active,
   .caretip-dashboard-shell .caretip-mobile-drawer-panel .platform-admin-dash-nav-link[aria-current="page"] {
-    color: hsl(var(--primary-foreground));
+    color: hsl(25 20% 14%);
+  }
+
+  .dark .caretip-dashboard-shell .caretip-mobile-drawer-panel .business-dash-nav-link--active,
+  .dark .caretip-dashboard-shell .caretip-mobile-drawer-panel .employee-dash-nav-link--active,
+  .dark .caretip-dashboard-shell .caretip-mobile-drawer-panel .admin-dash-nav-link--active,
+  .dark .caretip-dashboard-shell .caretip-mobile-drawer-panel .platform-admin-dash-nav-link[aria-current="page"] {
+    color: hsl(var(--foreground));
   }
 
   .caretip-dashboard-shell .caretip-mobile-drawer-panel .dashboard-sidebar-sign-out,

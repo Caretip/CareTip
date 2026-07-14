@@ -1,3 +1,5 @@
+import { isAppShellInteractive } from "../lib/appShellLifecycle";
+
 /**
  * In-layout lazy-route hold — background only; login/refresh use the global overlay spinner.
  */
@@ -10,7 +12,14 @@ export function DashboardOutletFallback() {
   return <div className="min-h-[min(50vh,420px)] w-full bg-background" aria-hidden />;
 }
 
-/** Top-level public route chunk hold — matches global overlay background during lazy auth loads. */
+/**
+ * Top-level public route chunk hold.
+ * Cold entry: full-viewport surface under the branded loader.
+ * Soft SPA nav: invisible — never flash a blank full page over the live shell.
+ */
 export function MinimalRouteFallback() {
+  if (isAppShellInteractive()) {
+    return null;
+  }
   return <div className="min-h-[100dvh] w-full bg-background" aria-hidden />;
 }

@@ -25,6 +25,8 @@ import {
   setPageSessionCache,
   PAGE_CACHE_TTL_LOW_MS,
 } from "../../lib/pageSessionCache";
+import { useBusinessPageBoot } from "../../lib/useBusinessPageBoot";
+import { GlobalAppLoadingHold } from "../../components/GlobalAppLoadingHold";
 import {
   OnboardingVerificationStatusChip,
 } from "../../components/verification/VerificationWorkflowStatusChip";
@@ -190,11 +192,20 @@ export function BusinessProfilePage({ embedded = false }: { embedded?: boolean }
     }
   };
 
+  const isInitialProfileLoad = loadState === "loading" && !profile;
+  const { showInitialSkeleton, coveredByGlobalLoader } = useBusinessPageBoot(
+    "profile",
+    isInitialProfileLoad,
+  );
+
   if (!user?.businessId || user.role !== "business") {
     return null;
   }
 
-  if (loadState === "loading" && !profile) {
+  if (isInitialProfileLoad) {
+    if (coveredByGlobalLoader || !showInitialSkeleton) {
+      return <GlobalAppLoadingHold />;
+    }
     return (
       <div className="dashboard-page-narrow mx-auto flex w-full max-w-3xl flex-col items-center justify-center gap-3 px-4 py-24 sm:px-6">
         <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" aria-hidden />

@@ -47,7 +47,7 @@
         gap: 1.25rem;
         margin: 0;
         padding: 0 1.5rem;
-        background-color: #ffffff;
+        background-color: #fcfbf8;
         color: #0a0a0a;
         font-family: Inter, "Inter Fallback", ui-sans-serif, system-ui, sans-serif;
         -webkit-font-smoothing: antialiased;
@@ -60,7 +60,7 @@
 
       html.caretip-html-boot-active,
       html.caretip-html-boot-active body {
-        background-color: #ffffff;
+        background-color: #fcfbf8;
       }
 
       html.dark.caretip-html-boot-active,
@@ -70,6 +70,27 @@
 
       html.caretip-html-boot-active #caretip-html-boot {
         display: flex;
+      }
+
+      #caretip-html-boot.caretip-html-boot--exiting {
+        animation: caretip-html-boot-fade-out 0.18s ease-in forwards;
+        pointer-events: none;
+      }
+
+      @keyframes caretip-html-boot-fade-out {
+        from {
+          opacity: 1;
+        }
+        to {
+          opacity: 0;
+        }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        #caretip-html-boot.caretip-html-boot--exiting {
+          animation: none;
+          opacity: 0;
+        }
       }
 
       .caretip-html-boot__mark {
@@ -184,9 +205,9 @@
     />
     <link
       rel="preload"
-      href="./images/formobile01.webp"
+      href="./images/formemobile01.avif"
       as="image"
-      type="image/webp"
+      type="image/avif"
       media="(max-width: 767px)"
       fetchpriority="high"
     />
@@ -197,7 +218,7 @@
     <script src="/theme-init.js"></script>
   </head>
 
-  <body style="margin: 0; background-color: #ffffff">
+  <body style="margin: 0; background-color: #fcfbf8">
     <div id="caretip-html-boot" role="status" aria-label="CareTip" aria-busy="true" hidden>
       <div class="caretip-html-boot__mark" aria-hidden="true">
         <p class="caretip-html-boot__title">

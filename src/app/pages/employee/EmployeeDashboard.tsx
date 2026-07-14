@@ -7,6 +7,8 @@ import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
 import { translateChartWeekdayLabel } from "@/lib/chartAxisLabels";
 import { useRegisterPagePaintReady } from "../../lib/globalAppLoading";
+import { useExtendGlobalLoaderUntilReady } from "../../lib/useExtendGlobalLoaderUntilReady";
+import { resolveAppLoadingContextMessage } from "../../lib/appLoadingContexts";
 import { runWithViewportScrollPreserved } from "../../lib/dashboardScrollStability";
 import { toUserFriendlyMessage } from "../../lib/errorMessages";
 import { logClientError } from "../../lib/clientLog";
@@ -248,6 +250,13 @@ export function EmployeeDashboard() {
 
   const showHeroMetricsLoading =
     !useDevDemo && !displayAccountSummary.loaded && isMetricsInitialLoad;
+
+  const globalLoaderCoversBoot = useExtendGlobalLoaderUntilReady(
+    "employee-dashboard-metrics-boot",
+    showHeroMetricsLoading,
+    resolveAppLoadingContextMessage("dashboard", t),
+  );
+  const showHeroMetricsSkeleton = showHeroMetricsLoading && !globalLoaderCoversBoot;
 
   const chartPayload = displayPayload ?? displayPayloadOrLatest;
   const displayChartSeries = useDevDemo
@@ -516,16 +525,16 @@ export function EmployeeDashboard() {
               <dl
                 className={cn(
                   "employee-hero-account-stats dashboard-swr-swap",
-                  showHeroMetricsLoading && "dashboard-hero-account-stats--loading",
+                  showHeroMetricsSkeleton && "dashboard-hero-account-stats--loading",
                   analyticsPeriodRefreshing && "dashboard-swr-swap--revalidating",
                 )}
                 aria-label={t("employee.hero.accountOverviewLabel")}
-                aria-busy={showHeroMetricsLoading}
+                aria-busy={showHeroMetricsSkeleton}
               >
                 <div>
                   <dt>{t("employee.hero.statTotalEarnings")}</dt>
                   <dd>
-                    {showHeroMetricsLoading ? (
+                    {showHeroMetricsSkeleton ? (
                       <DashboardHeroMetricSkeleton variant="currency" />
                     ) : (
                       <span className="dashboard-hero-metric-value--live">
@@ -543,7 +552,7 @@ export function EmployeeDashboard() {
                 <div>
                   <dt>{t("employee.hero.statMonthEarnings")}</dt>
                   <dd>
-                    {showHeroMetricsLoading ? (
+                    {showHeroMetricsSkeleton ? (
                       <DashboardHeroMetricSkeleton variant="currency" />
                     ) : (
                       <span className="dashboard-hero-metric-value--live">
@@ -555,7 +564,7 @@ export function EmployeeDashboard() {
                 <div>
                   <dt>{t("employee.hero.statTotalSupporters")}</dt>
                   <dd>
-                    {showHeroMetricsLoading ? (
+                    {showHeroMetricsSkeleton ? (
                       <DashboardHeroMetricSkeleton variant="count" />
                     ) : (
                       <span className="dashboard-hero-metric-value--live">
