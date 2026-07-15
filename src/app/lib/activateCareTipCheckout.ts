@@ -12,6 +12,7 @@ import type { TFunction } from "i18next";
 import type { NavigateFunction } from "react-router";
 import { toast } from "sonner";
 import { performExternalStripeRedirect } from "@/app/lib/externalStripeRedirect";
+import { withIdleSuppress } from "@/app/lib/idleSuppress";
 
 export type ActivationCheckoutPlan = "trial" | "pro";
 
@@ -47,18 +48,20 @@ export async function startActivationCheckout(
     return "trial_navigated";
   }
 
-  primeCheckoutSyncExpectation("premium");
-  const session = await createBillingCheckoutSession({
-    planKey: "premium",
-    billingCycle: "monthly",
-    checkoutFlow: "billing",
+  return withIdleSuppress("billing-checkout-create", async () => {
+    primeCheckoutSyncExpectation("premium");
+    const session = await createBillingCheckoutSession({
+      planKey: "premium",
+      billingCycle: "monthly",
+      checkoutFlow: "billing",
+    });
+    const redirect = performExternalStripeRedirect(session.url, "checkout");
+    if (!redirect.ok) {
+      toast.error(t("business.billing.checkoutNoUrl"));
+      return "failed";
+    }
+    return "stripe_navigated";
   });
-  const redirect = performExternalStripeRedirect(session.url, "checkout");
-  if (!redirect.ok) {
-    toast.error(t("business.billing.checkoutNoUrl"));
-    return "failed";
-  }
-  return "stripe_navigated";
 }
 
 export function activationCheckoutErrorMessage(err: unknown, t: TFunction): string {

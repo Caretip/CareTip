@@ -32,8 +32,6 @@ import { cn } from "@/lib/utils";
 import { businessUi } from "@/app/components/business/businessDashboardUi";
 import { toUserFriendlyMessage } from "../../lib/errorMessages";
 
-const TOAST_OK = { style: { background: "hsl(var(--primary))", color: "hsl(var(--primary-foreground))" } } as const;
-
 type QrDesignExportStudioProps = {
   baseBranding: QrBrandingOptions;
   sampleQrUrl: string;
@@ -96,7 +94,6 @@ export function QrDesignExportStudio({
       const parsed = await readQrExportDesignFile(file);
       setCustomization(parsed.customization);
       setPresetName(parsed.presetName);
-      toast.success(t("business.qrPage.designStudio.toastImported"), TOAST_OK);
     } catch (err) {
       toast.error(toUserFriendlyMessage(err));
     }

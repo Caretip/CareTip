@@ -7,6 +7,7 @@
 
 import { publicEmployeeTipUrl, qrEmployeeLegacyUrl } from "./appPublicUrl";
 import { resolveMediaUrl } from "./mediaUrl";
+import { withIdleSuppress } from "./idleSuppress";
 import {
   CARETIP_QR_BRAND_HEX,
   type QrBrandingOptions,
@@ -272,19 +273,21 @@ export async function downloadBrandedQR(
   employeeName: string,
   branding?: Partial<QrBrandingOptions>,
 ): Promise<boolean> {
-  const url = publicEmployeeTipUrl(businessSlug, employeeSlug);
-  const { canvas, report } = await validateBrandedQrReliability(url, branding);
-  if (!canvas || !isQrExportAllowed(report)) return false;
-  const filename = `caretip-${employeeSlug}-${employeeName.replace(/\s+/g, "-").toLowerCase()}.png`;
-  canvas.toBlob((blob) => {
-    if (!blob) return;
-    const a = document.createElement("a");
-    a.href = URL.createObjectURL(blob);
-    a.download = filename;
-    a.click();
-    URL.revokeObjectURL(a.href);
-  }, "image/png");
-  return true;
+  return withIdleSuppress("qr-branded-export", async () => {
+    const url = publicEmployeeTipUrl(businessSlug, employeeSlug);
+    const { canvas, report } = await validateBrandedQrReliability(url, branding);
+    if (!canvas || !isQrExportAllowed(report)) return false;
+    const filename = `caretip-${employeeSlug}-${employeeName.replace(/\s+/g, "-").toLowerCase()}.png`;
+    canvas.toBlob((blob) => {
+      if (!blob) return;
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = filename;
+      a.click();
+      URL.revokeObjectURL(a.href);
+    }, "image/png");
+    return true;
+  });
 }
 
 export async function downloadBrandedQRLegacy(

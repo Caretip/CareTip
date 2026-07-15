@@ -27,7 +27,15 @@
     "test:secret-exposure": "npm --prefix backend run test:secret-exposure",
     "test:subscription-entitlements-frontend": "node ./backend/node_modules/tsx/dist/cli.mjs ./scripts/subscription-entitlements-frontend-runtime.ts",
     "test:subscription-billing-ux-frontend": "node ./backend/node_modules/tsx/dist/cli.mjs ./scripts/subscription-billing-ux-frontend-runtime.ts",
-    "test:subscription-migration-frontend": "node ./backend/node_modules/tsx/dist/cli.mjs ./scripts/subscription-migration-frontend-runtime.ts"
+    "test:subscription-migration-frontend": "node ./backend/node_modules/tsx/dist/cli.mjs ./scripts/subscription-migration-frontend-runtime.ts",
+    "test:idle-session-infra": "node ./backend/node_modules/tsx/dist/cli.mjs ./scripts/idle-session-infra-runtime.ts",
+    "test:idle-session-activity": "node ./backend/node_modules/tsx/dist/cli.mjs ./scripts/idle-session-activity-runtime.ts",
+    "test:idle-session-warning": "node ./backend/node_modules/tsx/dist/cli.mjs ./scripts/idle-session-warning-runtime.ts",
+    "test:idle-session-auth-gate": "node ./backend/node_modules/tsx/dist/cli.mjs ./scripts/idle-session-auth-gate-runtime.ts",
+    "test:idle-session-multitab": "node ./backend/node_modules/tsx/dist/cli.mjs ./scripts/idle-session-multitab-runtime.ts",
+    "test:idle-session-ops": "node ./backend/node_modules/tsx/dist/cli.mjs ./scripts/idle-session-ops-runtime.ts",
+    "test:idle-session": "npm run test:idle-session-infra && npm run test:idle-session-activity && npm run test:idle-session-warning && npm run test:idle-session-auth-gate && npm run test:idle-session-multitab && npm run test:idle-session-ops",
+    "test:activity-center-architecture": "node ./backend/node_modules/tsx/dist/cli.mjs ./scripts/activity-center-architecture-runtime.ts"
   },
   "dependencies": {
     "@fontsource/inter": "^5.2.8",

@@ -15,6 +15,7 @@ import {
 } from "@prisma/client";
 import { mapBusinessTierToPlanKey } from "../src/lib/subscription/mapSubscriptionPlanKey.js";
 import { seedPlatformAdminTeam } from "./seedPlatformAdminTeam.js";
+import { seedDemoActivityCenter } from "./seedDemoActivityCenter.js";
 
 export const DEMO_PASSWORD = "Demo1234!";
 export const DEMO_ADMIN_EMAIL = "admin@caretip.de".toLowerCase();
@@ -897,6 +898,8 @@ export async function seedDemoEnvironment(prisma: PrismaClient): Promise<void> {
       employeeUserId: primaryEmployeeUserId,
     });
   }
+
+  await seedDemoActivityCenter(prisma);
 
   await prisma.auditLog.deleteMany({
     where: { userId: adminUser.id, action: { startsWith: "walkthrough_demo." } },

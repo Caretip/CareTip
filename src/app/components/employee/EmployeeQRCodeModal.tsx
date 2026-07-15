@@ -110,7 +110,6 @@ export function EmployeeQRCodeModal({
   const copyLink = async () => {
     try {
       await navigator.clipboard.writeText(shareUrl);
-      toast.success(t("employee.qrModal.toastLinkCopied"));
     } catch (err) {
       logClientError("EmployeeQRCodeModal", err);
       toast.error(t("employee.qrModal.toastCopyFailed"));

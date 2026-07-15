@@ -1,8 +1,13 @@
 import type { Request } from "express";
+import { ActivityEventSource } from "@prisma/client";
 import { prisma } from "../../prisma.js";
 import { logServerError } from "../../utils/httpErrors.js";
 import { isPrismaUniqueViolation } from "../../utils/prismaErrors.js";
 import { emitQrScannedCanonical } from "../../socket/realtimeContracts.js";
+import {
+  ACTIVITY_EVENT_TYPES,
+  projectBusinessActivityEvent,
+} from "../activity/businessActivityEvent.service.js";
 import {
   buildScanDedupeKey,
   parseDeviceType,
@@ -101,6 +106,26 @@ export async function persistQrScanEvent(input: RecordQrScanEventInput): Promise
         sessionId,
       },
     );
+
+    /** Activity Center projection — coexists with qr.scanned; UI migrates in Phase C. */
+    projectBusinessActivityEvent({
+      businessId,
+      type: ACTIVITY_EVENT_TYPES.QR_SCANNED,
+      source: ActivityEventSource.QR,
+      occurredAt: row.scannedAt,
+      dedupeKey: `scan:${row.id}:scanned`,
+      subjectType: "scan",
+      subjectId: row.id,
+      actorEmployeeId: row.employeeId,
+      locationId: row.locationId,
+      tableId: row.tableId,
+      summary: {
+        scanType: row.scanType,
+        deviceType: row.deviceType,
+        qrSlug: row.qrSlug,
+        sessionId,
+      },
+    });
 
     return { inserted: true, scanId: row.id };
   } catch (err) {

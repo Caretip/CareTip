@@ -2020,6 +2020,58 @@ export async function listBusinessTips(params: {
   return apiRequest(apiPath(`/api/tips/business${qs ? `?${qs}` : ""}`), { headers: getHeaders(), credentials: "include" });
 }
 
+/** Activity Center — SSOT feed from BusinessActivityEvent (cursor + source filter). */
+export type ActivityEventSource =
+  | "TIPS"
+  | "QR"
+  | "GOALS"
+  | "STAFF"
+  | "PAYMENTS"
+  | "SYSTEM";
+
+export type ActivityEventPriority = "LOW" | "NORMAL" | "HIGH";
+
+export type BusinessActivityFeedItem = {
+  id: string;
+  type: string;
+  source: ActivityEventSource;
+  priority: ActivityEventPriority;
+  occurredAt: string;
+  titleKey: string;
+  params: Record<string, unknown>;
+  subject: { type: string; id: string } | null;
+  actorEmployeeId: string | null;
+  locationId: string | null;
+  tableId: string | null;
+};
+
+export type BusinessActivityListResult = {
+  items: BusinessActivityFeedItem[];
+  nextCursor: string | null;
+};
+
+export async function fetchBusinessActivity(params?: {
+  limit?: number;
+  cursor?: string | null;
+  source?: ActivityEventSource | "all";
+}): Promise<BusinessActivityListResult> {
+  const q = new URLSearchParams();
+  if (params?.limit != null) q.set("limit", String(params.limit));
+  if (params?.cursor) q.set("cursor", params.cursor);
+  if (params?.source && params.source !== "all") q.set("source", params.source);
+  const suffix = q.toString() ? `?${q.toString()}` : "";
+  const raw = await apiRequest<BusinessActivityListResult>(apiPath(`/api/business/activity${suffix}`), {
+    method: "GET",
+    headers: getHeaders(),
+    credentials: "include",
+    caretipSilentErrors: true,
+  } as CaretipRequestInit);
+  return {
+    items: Array.isArray(raw.items) ? raw.items : [],
+    nextCursor: raw.nextCursor ?? null,
+  };
+}
+
 export async function listEmployeeTips(params: {
   take?: number;
   skip?: number;

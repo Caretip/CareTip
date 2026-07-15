@@ -112,9 +112,7 @@ export function RatingPage() {
       return;
     }
     if (rating <= 0 && comment.trim().length === 0 && selectedTags.length === 0) {
-      toast.message(t("tipFlow.rating.optionalTitle"), {
-        description: t("tipFlow.rating.optionalDesc"),
-      });
+      // Stay on page; Skip is available — no toast for empty optional feedback.
       return;
     }
 

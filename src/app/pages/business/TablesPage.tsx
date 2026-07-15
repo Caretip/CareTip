@@ -40,8 +40,6 @@ import {
 
 type TablesPageCache = { locations: LocationDTO[]; tables: TableDTO[] };
 
-const TOAST_OK = { style: { background: "#e9932f", color: "#ffffff" } } as const;
-
 export function TablesPage({ embedded = false }: { embedded?: boolean } = {}) {
   const { t } = useTranslation();
   const { isBusiness } = useRequireAuth();
@@ -116,7 +114,6 @@ export function TablesPage({ embedded = false }: { embedded?: boolean } = {}) {
 
   const copyLink = (tableId: string) => {
     void navigator.clipboard.writeText(tableUrl(tableId));
-    toast.success(t("business.tablesPage.toastCopied"), TOAST_OK);
   };
 
   const handleSave = async () => {
@@ -132,7 +129,6 @@ export function TablesPage({ embedded = false }: { embedded?: boolean } = {}) {
     setSaving(true);
     try {
       await createTableAPI({ name: trimmed, locationId });
-      toast.success(t("business.tablesPage.toastCreated"), TOAST_OK);
       setModalOpen(false);
       setTableName("");
       invalidateVenueCatalog();

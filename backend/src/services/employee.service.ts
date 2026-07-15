@@ -921,6 +921,18 @@ export async function createEmployeeWithActivation(
     });
   });
 
+  void import("./activity/staffActivity.helpers.js").then(
+    ({ scheduleEmployeeInvitedEmailProjection }) => {
+      scheduleEmployeeInvitedEmailProjection({
+        businessId,
+        employeeId: employee.id,
+        employeeName: employee.name,
+        employeeEmail: trimmedEmail,
+        actorUserId: business.userId,
+      });
+    },
+  );
+
   return {
     id: employee.id,
     name: employee.name,

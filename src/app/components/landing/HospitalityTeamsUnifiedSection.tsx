@@ -1,24 +1,18 @@
 import { useMemo } from "react";
-import { Trans, useTranslation } from "react-i18next";
+import { useTranslation } from "react-i18next";
 
-import HospitalityBusinessesMarquee from "@/components/ui/team";
 import { HospitalityFeatureList } from "@/components/landing/HospitalityFeatureList";
-import { LandingSectionAccent } from "@/components/landing/LandingSectionAccent";
 import { LandingReveal } from "@/components/landing/LandingReveal";
 import { landingCopyVisible, landingUi } from "@/components/landing/landingUi";
+import HospitalityBusinessesMarquee from "@/components/ui/team";
 import { landingStaggerDelay } from "@/lib/landingMotion";
 import { cn } from "@/lib/utils";
-
-function introCopyVisible(t: (key: string) => string): boolean {
-  return ["subtitle1", "subtitle2", "subtitle3", "subtitle4", "subtitle5"].some((key) =>
-    landingCopyVisible(t(`landing.hospitality.${key}`)),
-  );
-}
 
 export function HospitalityTeamsUnifiedSection() {
   const { t, i18n } = useTranslation();
   const isDe = i18n.language?.toLowerCase().startsWith("de");
-  const features = useMemo(
+
+  const outcomes = useMemo(
     () =>
       [
         { title: t("landing.hospitality.f1Title"), text: t("landing.hospitality.f1Text") },
@@ -28,13 +22,10 @@ export function HospitalityTeamsUnifiedSection() {
     [t, i18n.language],
   );
 
-  const hasLead = landingCopyVisible(t("landing.hospitality.subtitle1"));
-  const hasBody =
-    landingCopyVisible(t("landing.hospitality.subtitle2")) ||
-    landingCopyVisible(t("landing.hospitality.subtitle3"));
-  const hasClosing =
-    landingCopyVisible(t("landing.hospitality.subtitle4")) ||
-    landingCopyVisible(t("landing.hospitality.subtitle5"));
+  const lead = t("landing.hospitality.lead");
+  const hasLead = landingCopyVisible(lead);
+  const industriesTitle = t("landing.industries.title");
+  const hasIndustriesTitle = landingCopyVisible(industriesTitle);
 
   return (
     <section
@@ -43,145 +34,42 @@ export function HospitalityTeamsUnifiedSection() {
       lang={isDe ? "de" : "en"}
       className={cn(landingUi.hospitalitySection, "caretip-landing-hospitality")}
     >
-      <div className="mx-auto w-full max-w-7xl min-w-0">
-        <header
-          className={cn(
-            landingUi.hospitalityIntro,
-            "caretip-hospitality-intro",
-            "mx-auto max-w-4xl text-center",
-          )}
-        >
-          {landingCopyVisible(t("landing.hospitality.eyebrow")) ? (
-            <div className={cn(landingUi.sectionAccentRow, "mb-4")}>
-              <LandingSectionAccent variant="spark">{t("landing.hospitality.eyebrow")}</LandingSectionAccent>
-            </div>
-          ) : null}
-          <h2
-            className={cn(
-              landingUi.hospitalityTitle,
-              "caretip-hospitality-title",
-              "mx-auto max-w-3xl text-balance",
-              "text-3xl font-bold tracking-tight leading-tight text-neutral-950 md:text-4xl lg:text-5xl",
-              "dark:text-neutral-50",
-              isDe && "text-pretty hyphens-auto",
-            )}
-          >
-            {t("landing.hospitality.title")}
-          </h2>
-          {introCopyVisible(t) ? (
-            <div className="caretip-hospitality-intro-copy">
-              {hasLead ? (
+      <div className="caretip-hospitality-shell mx-auto w-full max-w-7xl min-w-0">
+        <LandingReveal delay={landingStaggerDelay(0)} className="caretip-hospitality-editorial">
+          <header className="caretip-hospitality-intro">
+            <h2
+              className={cn(
+                "caretip-hospitality-title",
+                isDe && "text-pretty hyphens-auto",
+              )}
+            >
+              {t("landing.hospitality.title")}
+            </h2>
+            {hasLead ? (
+              <p className={cn("caretip-hospitality-lead", isDe && "text-pretty")}>{lead}</p>
+            ) : null}
+          </header>
+
+          <div className="caretip-hospitality-visual">
+            <div className="caretip-hospitality-showcase">
+              <div className="caretip-hospitality-showcase-visual">
+                <HospitalityBusinessesMarquee />
+              </div>
+              {hasIndustriesTitle ? (
                 <p
                   className={cn(
-                    "caretip-hospitality-lead",
-                    "mx-auto text-center text-balance",
-                    "text-base font-semibold leading-snug text-neutral-700 md:text-lg lg:text-xl dark:text-neutral-300",
+                    "caretip-hospitality-showcase-footer",
+                    isDe && "text-pretty hyphens-auto",
                   )}
                 >
-                  {t("landing.hospitality.subtitle1")}
+                  {industriesTitle}
                 </p>
               ) : null}
-
-              {hasBody ? (
-                <div
-                  className={cn(
-                    "caretip-hospitality-body",
-                    "mx-auto flex flex-col items-center text-center",
-                    !hasLead && "caretip-hospitality-body--solo",
-                  )}
-                >
-                  {landingCopyVisible(t("landing.hospitality.subtitle2")) ? (
-                    <p
-                      className={cn(
-                        "caretip-hospitality-body__p",
-                        "m-0 text-pretty text-neutral-500 dark:text-neutral-400",
-                      )}
-                    >
-                      {t("landing.hospitality.subtitle2")}
-                    </p>
-                  ) : null}
-                  {landingCopyVisible(t("landing.hospitality.subtitle3")) ? (
-                    <p
-                      className={cn(
-                        "caretip-hospitality-body__p",
-                        "m-0 text-pretty text-neutral-500 dark:text-neutral-400",
-                      )}
-                    >
-                      {t("landing.hospitality.subtitle3")}
-                    </p>
-                  ) : null}
-                </div>
-              ) : null}
-
-              {hasClosing ? (
-                <div className="caretip-hospitality-closing flex w-full flex-col items-center text-center">
-                  {landingCopyVisible(t("landing.hospitality.subtitle4")) ? (
-                    <div
-                      className={cn(
-                        landingUi.sectionAccentRow,
-                        "caretip-hospitality-closing__accent w-full justify-center lg:justify-center",
-                      )}
-                    >
-                      <LandingSectionAccent
-                        variant="spark"
-                        className="caretip-hospitality-brand-accent mx-auto lg:mx-auto"
-                      >
-                        <Trans
-                          i18nKey="landing.hospitality.subtitle4"
-                          components={{ bold: <span /> }}
-                        />
-                      </LandingSectionAccent>
-                    </div>
-                  ) : null}
-                  {landingCopyVisible(t("landing.hospitality.subtitle5")) ? (
-                    <p
-                      className={cn(
-                        "caretip-hospitality-closing__p",
-                        "mx-auto text-pretty text-neutral-500 dark:text-neutral-400",
-                        !landingCopyVisible(t("landing.hospitality.subtitle4")) &&
-                          "caretip-hospitality-closing__p--solo",
-                      )}
-                    >
-                      {t("landing.hospitality.subtitle5")}
-                    </p>
-                  ) : null}
-                </div>
-              ) : null}
             </div>
-          ) : null}
-        </header>
+          </div>
 
-        <LandingReveal
-          delay={landingStaggerDelay(1)}
-          className={cn(landingUi.hospitalityGrid, "caretip-hospitality-split")}
-        >
-          <HospitalityFeatureList features={features} />
-          <div className="caretip-hospitality-showcase">
-            {landingCopyVisible(t("landing.industries.title")) ? (
-              <div className="caretip-hospitality-showcase-header">
-                <div
-                  className={cn(
-                    landingUi.sectionAccentRow,
-                    "caretip-hospitality-showcase-accent w-full justify-center lg:justify-center",
-                  )}
-                >
-                  <LandingSectionAccent
-                    variant="spark"
-                    className={cn(
-                      "caretip-hospitality-brand-accent mx-auto lg:mx-auto",
-                      isDe && "max-w-[min(100%,36rem)]",
-                    )}
-                  >
-                    <span className={isDe ? "text-pretty hyphens-auto" : undefined}>
-                      {t("landing.industries.title")}
-                    </span>
-                  </LandingSectionAccent>
-                </div>
-              </div>
-            ) : null}
-            <div className="caretip-hospitality-showcase-visual">
-              <HospitalityBusinessesMarquee />
-            </div>
+          <div className="caretip-hospitality-outcomes-wrap">
+            <HospitalityFeatureList features={outcomes} />
           </div>
         </LandingReveal>
       </div>

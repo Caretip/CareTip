@@ -48,6 +48,7 @@ import {
   beginAuthLogoutTransition,
   isAuthLogoutTransitionActive,
 } from "../lib/authLogoutTransition";
+import { isIdleLogoutInFlight } from "../lib/idleSessionStore";
 import { prefetchAuthLoginRoute } from "../routing/routeLazy";
 import { markClientSessionHint } from "../lib/authSessionHint";
 import { setMemoryAccessToken } from "../lib/accessTokenStore";
@@ -358,11 +359,13 @@ export function useAuth() {
     const id = window.setTimeout(() => {
       void (async () => {
         if (cancelled) return;
+        // Idle logout in flight: do not refresh / resurrect the session being torn down.
+        if (isIdleLogoutInFlight()) return;
         try {
           const data = await refreshSessionAPI();
           bumpSessionEpoch();
           const u = persistAuthResponse(data);
-          if (!cancelled) commitAuthUser(u);
+          if (!cancelled && !isIdleLogoutInFlight()) commitAuthUser(u);
         } catch {
           // Leave handling to the next API 401 + silent refresh, or bootstrap on reload.
         }

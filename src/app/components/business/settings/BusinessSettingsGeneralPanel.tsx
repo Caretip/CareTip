@@ -8,8 +8,6 @@ import { toUserFriendlyMessage } from "../../../lib/errorMessages";
 import { BusinessSettingsPanelShell } from "./BusinessSettingsPanelShell";
 import type { useBusinessSettingsData } from "./useBusinessSettingsData";
 
-const TEAL = "#e9781c";
-
 type Props = Pick<
   ReturnType<typeof useBusinessSettingsData>,
   "user" | "loading" | "contactPhone" | "setContactPhone" | "initialPhone" | "setInitialPhone"
@@ -39,9 +37,6 @@ export function BusinessSettingsGeneralPanel({
       });
       setInitialPhone(contactPhone);
       setEditing(false);
-      toast.success(t("business.accountSettings.toastProfileSaved"), {
-        style: { background: TEAL, color: "#fff" },
-      });
     } catch (e) {
       logClientError("BusinessSettingsGeneralPanel.save", e);
       toast.error(toUserFriendlyMessage(e));

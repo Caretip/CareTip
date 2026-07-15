@@ -765,6 +765,16 @@ export async function activateEmployee(token: string, password: string): Promise
     onEmployeeAccountActivated(resolvedUserId, businessName);
   });
 
+  void import("./activity/staffActivity.helpers.js").then(({ scheduleEmployeeJoinedProjection }) => {
+    scheduleEmployeeJoinedProjection({
+      businessId: employee.businessId,
+      employeeId: employee.id,
+      employeeName: employee.name,
+      employeeEmail: email,
+      channel: "activate",
+    });
+  });
+
   const refreshed = await loadUserForAuthResult(resolvedUserId);
   return authResultForUserRecord(refreshed);
 }

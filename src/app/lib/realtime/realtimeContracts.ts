@@ -7,6 +7,8 @@ export const REALTIME_EVENTS = {
   EMPLOYEE_UPDATED: "employee.updated",
   NOTIFICATION_CREATED: "notification.created",
   BILLING_UPDATED: "billing.updated",
+  /** Activity Center live channel — Phase C FE listens to this only for the feed. */
+  ACTIVITY_CREATED: "activity.created",
 } as const;
 
 export type RealtimeEntityIds = {

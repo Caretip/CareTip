@@ -8,10 +8,7 @@ import {
   HelpCircle,
 } from "lucide-react";
 import { CareIcon } from "@/components/icons";
-import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
-import { format } from "date-fns";
-import { de, enUS } from "date-fns/locale";
 import { useBusinessPageBoot } from "../../lib/useBusinessPageBoot";
 import { useRequireAuth } from "../../hooks/useRequireAuth";
 import { useSocket, useDeferSocketConnect } from "../../hooks/useSocket";
@@ -95,8 +92,6 @@ import bizzyHeroAvif from "../../../../images/bizzy001.avif";
 import { BusinessDashboardMobileHero } from "../../components/business/BusinessDashboardMobileHero";
 import { BusinessDashboardHeroActions } from "../../components/business/BusinessDashboardHeroActions";
 
-const TOAST_OK = { style: { background: "hsl(var(--primary))", color: "hsl(var(--primary-foreground))" } } as const;
-
 function goalStatusClass(s: EmployeeGoalProgressStatus): string {
   if (s === "achieved") return "text-[#34D399]";
   if (s === "on_track") return "text-primary";
@@ -104,8 +99,7 @@ function goalStatusClass(s: EmployeeGoalProgressStatus): string {
 }
 
 export function BusinessDashboard() {
-  const { t, i18n } = useTranslation();
-  const timeLocale = i18n.language?.toLowerCase().startsWith("de") ? de : enUS;
+  const { t } = useTranslation();
   const goalPeriodLabels = useMemo(
     () =>
       ({
@@ -204,19 +198,10 @@ export function BusinessDashboard() {
     return subscribeTipReceived(socket, (payload, eventId) => {
       if (!shouldProcessRealtimeEvent(eventId)) return;
       if (payload.businessId !== user.businessId) return;
-      const who = payload.employeeName?.trim() || t("business.dashboard.toastTeamMember");
-      const timeStr = format(new Date(payload.tip.createdAt), "p", { locale: timeLocale });
-      toast.success(
-        t("business.dashboard.toastNewTip", {
-          who,
-          amount: formatEur(Number(payload.tip.amount)),
-          time: timeStr,
-        }),
-        TOAST_OK,
-      );
+      // Tip feedback: live dashboard metrics + inbox toast (avoid duplicate Sonner).
       applyLiveTip(payload);
     });
-  }, [socket, user?.role, user?.businessId, t, timeLocale, applyLiveTip]);
+  }, [socket, user?.role, user?.businessId, applyLiveTip]);
 
   const employees = displayStats?.employees;
   const activeRosterCount = useMemo(

@@ -119,6 +119,18 @@ export async function createEmployeeInviteForManager(userId: string): Promise<{
     inviteId: result.id,
   });
 
+  void import("./activity/staffActivity.helpers.js").then(
+    ({ scheduleEmployeeInvitedCodeProjection }) => {
+      scheduleEmployeeInvitedCodeProjection({
+        businessId: business.id,
+        inviteId: result.id,
+        inviteCode: result.inviteCode,
+        expiresAt: expiresAt,
+        actorUserId: userId,
+      });
+    },
+  );
+
   return {
     inviteId: result.id,
     inviteCode: result.inviteCode,
@@ -529,6 +541,20 @@ export async function registerEmployeeWithInvite(input: RegisterWithInviteInput)
     inviteeEmail: email,
     inviteeName: name,
   });
+
+  if (input.activationStatus === "active" && result.created.employee) {
+    void import("./activity/staffActivity.helpers.js").then(
+      ({ scheduleEmployeeJoinedProjection }) => {
+        scheduleEmployeeJoinedProjection({
+          businessId: result.created.employee!.businessId,
+          employeeId: result.created.employee!.id,
+          employeeName: result.created.employee!.name,
+          employeeEmail: email,
+          channel: input.registrationChannel === "oauth" ? "oauth" : "email_verify",
+        });
+      },
+    );
+  }
 
   return result.created;
 }

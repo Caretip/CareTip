@@ -235,7 +235,6 @@ export function BusinessOnboardingPage() {
       const updated = await setHasCompletedOnboarding(true);
       const refreshed = (await refetchUser()) ?? updated;
       if (!refreshed) {
-        toast.success(t("business.onboarding.toastSavedLoadingDashboard"));
         navigate("/dashboard", { replace: true });
         setBusy(false);
         return;

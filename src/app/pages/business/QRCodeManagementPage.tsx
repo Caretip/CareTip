@@ -88,8 +88,6 @@ import {
 import { BusinessConfirmDialog } from "@/app/components/business/BusinessConfirmDialog";
 import { cn } from "@/lib/utils";
 
-const TOAST_OK = { style: { background: "hsl(var(--primary))", color: "hsl(var(--primary-foreground))" } } as const;
-
 type QrStudioViewMode = "gallery" | "employees" | "locations";
 
 function resolveEmbeddedQrMode(pathname: string): QrStudioViewMode {
@@ -243,7 +241,6 @@ export function QRCodeManagementPage({
       const r = await regenerateBusinessSlug();
       setBusinessSlug(r.slug);
       storefrontQrCacheKeyRef.current = "";
-      toast.success(t("business.qrPage.toastBusinessRegenerated"), TOAST_OK);
     } catch (err) {
       logClientError("QRCodeManagementPage.regenerateBusinessQr", err);
       toast.error(t("business.qrPage.toastBusinessRegenerateFail"));
@@ -718,7 +715,6 @@ export function QRCodeManagementPage({
           : await renderBrandedQRToDataUrlLegacy(updated.id, qrBrand);
         setQrImages((prev) => ({ ...prev, [employee.id]: dataUrl }));
       }
-      toast.success(t("business.qrPage.toastQrReady"), TOAST_OK);
     } catch (err) {
       logClientError("QRCodeManagementPage", err);
       toast.error(t("business.qrPage.toastQrGenerateFail"));
@@ -775,8 +771,7 @@ export function QRCodeManagementPage({
         : type === "table"
           ? `caretip-table-${safe}-${item.id.slice(0, 8)}`
           : `caretip-location-${safe}-${item.id.slice(0, 8)}`;
-    if (!downloadQrDataUrlPng(dataUrl, `${prefix}.png`, { exportAllowed: true })) return;
-    toast.success(t("business.qrPage.toastQrDownloaded"), TOAST_OK);
+    downloadQrDataUrlPng(dataUrl, `${prefix}.png`, { exportAllowed: true });
   };
 
   const handleVenueQrPrint = async (
@@ -823,7 +818,6 @@ export function QRCodeManagementPage({
         branding: qrBrand,
         resolveCardDataUrl: (id) => qrImages[id] ?? null,
       });
-      toast.success(t("business.qrPage.toastPdfReady"), TOAST_OK);
     } catch (err) {
       logClientError("QRCodeManagementPage", err);
       toast.error(t("business.qrPage.toastPdfFail"));

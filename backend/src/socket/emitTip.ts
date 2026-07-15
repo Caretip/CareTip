@@ -1,5 +1,11 @@
+import { ActivityEventSource } from "@prisma/client";
 import { getSocketIO } from "./socketServer.js";
 import { emitTipReceivedCanonical } from "./realtimeContracts.js";
+import {
+  ACTIVITY_EVENT_TYPES,
+  projectBusinessActivityEvent,
+} from "../services/activity/businessActivityEvent.service.js";
+import { scheduleGoalAchievedProjectionsForTip } from "../services/activity/goalActivity.projection.js";
 
 export interface NewTipPayload {
   tip: {
@@ -32,6 +38,34 @@ export function emitNewTip(payload: NewTipPayload): void {
     io.to(`employee:${payload.employeeId}`).emit("tip_received", payload);
     io.to(`business:${payload.businessId}`).emit("tip_received", payload);
   }
+
+  /** Activity Center projection — coexists with tip sockets; UI migrates in Phase C. */
+  projectBusinessActivityEvent({
+    businessId: payload.businessId,
+    type: ACTIVITY_EVENT_TYPES.TIP_RECEIVED,
+    source: ActivityEventSource.TIPS,
+    occurredAt: new Date(payload.tip.createdAt),
+    dedupeKey: `tip:${payload.tip.id}:received`,
+    subjectType: "tip",
+    subjectId: payload.tip.id,
+    actorEmployeeId: payload.employeeId,
+    summary: {
+      amountEur: payload.tip.amount,
+      employeeName: payload.employeeName,
+      customerName: payload.customerName ?? null,
+      status: payload.tip.status,
+    },
+  });
+
+  /** Phase B — goal.achieved on threshold cross (isolated; never fails tip path). */
+  scheduleGoalAchievedProjectionsForTip({
+    tipId: payload.tip.id,
+    tipAmount: payload.tip.amount,
+    tipCreatedAt: new Date(payload.tip.createdAt),
+    employeeId: payload.employeeId,
+    employeeName: payload.employeeName,
+    businessId: payload.businessId,
+  });
 
   void import("../services/push/notification.triggers.js").then(({ onTipReceived }) => {
     onTipReceived(payload);

@@ -1,8 +1,7 @@
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, ArrowRight, CalendarDays, Check, Handshake, LifeBuoy } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import type { ContactIntent } from "@/components/contact/contactTypes";
-import { ContactSocialProof } from "@/components/contact/ContactSocialProof";
-import { PublicPageHeroCard } from "@/components/public/PublicPageHeroCard";
+import { CONTACT_TRUST_KEYS } from "@/components/contact/contactTypes";
 import { contactPageUi } from "@/components/contact/contactPageUi";
 import { cn } from "@/lib/utils";
 
@@ -11,55 +10,92 @@ type ContactIntentChooserProps = {
   className?: string;
 };
 
+const SERVICE_OPTIONS = [
+  {
+    id: "demo" as const,
+    icon: CalendarDays,
+    titleKey: "staticPages.contact.intent.demo.title",
+    bodyKey: "staticPages.contact.intent.demo.description",
+  },
+  {
+    id: "support" as const,
+    icon: LifeBuoy,
+    titleKey: "staticPages.contact.intent.support.title",
+    bodyKey: "staticPages.contact.intent.support.description",
+  },
+  {
+    id: "sales" as const,
+    icon: Handshake,
+    titleKey: "staticPages.contact.intent.sales.title",
+    bodyKey: "staticPages.contact.intent.sales.description",
+  },
+] as const;
+
 export function ContactIntentChooser({ onSelect, className }: ContactIntentChooserProps) {
   const { t } = useTranslation();
 
-  const options = [
-    {
-      id: "demo" as const,
-      title: t("staticPages.contact.intent.demo.title"),
-      body: t("staticPages.contact.intent.demo.description"),
-      featured: true,
-    },
-    {
-      id: "support" as const,
-      title: t("staticPages.contact.intent.support.title"),
-      body: t("staticPages.contact.intent.support.description"),
-      featured: false,
-    },
-  ];
-
   return (
     <div className={cn("caretip-contact-chooser", className)}>
-      <div className={contactPageUi.layout}>
-        <PublicPageHeroCard innerClassName="caretip-contact-intro-hero-card__inner">
-          <header className={contactPageUi.intro}>
-            <p className="caretip-contact-eyebrow">{t("staticPages.contact.eyebrow")}</p>
-            <h1 className={contactPageUi.headline}>{t("staticPages.contact.headline")}</h1>
-            <p className={contactPageUi.subhead}>{t("staticPages.contact.supportingText")}</p>
-          </header>
-        </PublicPageHeroCard>
-
-        <div className={contactPageUi.cards} role="list">
-          {options.map((option) => (
-            <button
-              key={option.id}
-              type="button"
-              role="listitem"
-              className={cn(
-                contactPageUi.card,
-                option.featured && "caretip-contact-intent-card--primary",
-              )}
-              onClick={() => onSelect(option.id)}
-            >
-              <span className={contactPageUi.cardTitle}>{option.title}</span>
-              <span className={contactPageUi.cardBody}>{option.body}</span>
-            </button>
-          ))}
+      <header className={contactPageUi.intro}>
+        <div className="caretip-contact-reveal caretip-contact-reveal--1">
+          <p className="caretip-contact-eyebrow">{t("staticPages.contact.eyebrow")}</p>
+          <h1 className={contactPageUi.headline}>{t("staticPages.contact.headline")}</h1>
         </div>
-      </div>
+        <p className={cn(contactPageUi.subhead, "caretip-contact-reveal caretip-contact-reveal--2")}>
+          {t("staticPages.contact.supportingText")}
+        </p>
+      </header>
 
-      <ContactSocialProof />
+      <div
+        className="caretip-contact-hero-rule caretip-contact-reveal caretip-contact-reveal--3"
+        aria-hidden
+      />
+
+      <ul
+        className="caretip-contact-hero-trust caretip-contact-reveal caretip-contact-reveal--4"
+        aria-label={t("staticPages.contact.trust.aria")}
+      >
+        {CONTACT_TRUST_KEYS.map((key) => (
+          <li key={key} className="caretip-contact-hero-trust__item">
+            <Check className="caretip-contact-hero-trust__icon" strokeWidth={2} aria-hidden />
+            <span>{t(`staticPages.contact.trust.${key}`)}</span>
+          </li>
+        ))}
+      </ul>
+
+      <section className="caretip-contact-services" aria-label={t("staticPages.contact.servicesAria")}>
+        <ul className={contactPageUi.cards}>
+          {SERVICE_OPTIONS.map((option, index) => {
+            const Icon = option.icon;
+            return (
+              <li
+                key={option.id}
+                className={cn(
+                  "caretip-contact-reveal",
+                  `caretip-contact-reveal--service-${index + 1}`,
+                )}
+              >
+                <button
+                  type="button"
+                  className={contactPageUi.card}
+                  onClick={() => onSelect(option.id)}
+                >
+                  <span className="caretip-contact-service__icon" aria-hidden>
+                    <Icon className="size-[1.125rem]" strokeWidth={1.75} />
+                  </span>
+                  <span className="caretip-contact-service__copy">
+                    <span className={contactPageUi.cardTitle}>{t(option.titleKey)}</span>
+                    <span className={contactPageUi.cardBody}>{t(option.bodyKey)}</span>
+                  </span>
+                  <span className="caretip-contact-service__arrow" aria-hidden>
+                    <ArrowRight className="size-4" strokeWidth={1.75} />
+                  </span>
+                </button>
+              </li>
+            );
+          })}
+        </ul>
+      </section>
     </div>
   );
 }

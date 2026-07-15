@@ -21,6 +21,7 @@ import {
   type QrLayoutVariantId,
   type QrStudioDesignExtras,
 } from "../lib/qrDesignSystem";
+import { withIdleSuppress } from "../lib/idleSuppress";
 import {
   DEFAULT_QR_BACKGROUND_COLOR,
   DEFAULT_QR_BORDER_STYLE,
@@ -288,11 +289,13 @@ export function useQrStudioDesign(opts: {
   ]);
 
   const uploadLogo = useCallback(async (file: File) => {
-    await uploadMyBusinessLogo(file);
-    await refresh();
-    setLogoBust((n) => n + 1);
-    notifyBusinessBrandingChanged();
-    trackBrandingClientEvent("branding_logo_uploaded");
+    await withIdleSuppress("qr-studio-logo-upload", async () => {
+      await uploadMyBusinessLogo(file);
+      await refresh();
+      setLogoBust((n) => n + 1);
+      notifyBusinessBrandingChanged();
+      trackBrandingClientEvent("branding_logo_uploaded");
+    });
   }, [refresh]);
 
   return {

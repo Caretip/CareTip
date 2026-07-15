@@ -4,8 +4,6 @@ import { useTranslation } from "react-i18next";
 import { format } from "date-fns";
 import { de, enUS } from "date-fns/locale";
 import { ChevronDown, CreditCard, Download, Search } from "lucide-react";
-import { toast } from "sonner";
-
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/app/components/ui/EmptyState";
 import { cn } from "@/lib/utils";
@@ -29,6 +27,7 @@ import {
   PAGE_CACHE_TTL_HIGH_MS,
 } from "@/app/lib/pageSessionCache";
 import { useBusinessPageBoot } from "@/app/lib/useBusinessPageBoot";
+import { withIdleSuppressSync } from "@/app/lib/idleSuppress";
 
 type TipsActivityCache = {
   items: TipActivityRow[];
@@ -324,8 +323,9 @@ export function TipsActivityPage({ variant = "default", embedded = false }: Tips
                     .join("\n");
                   const dateStr = new Date().toISOString().slice(0, 10);
                   const tzSlug = (dataTimezone ?? "local").replace(/\//g, "_");
-                  downloadCsv(`tips_activity_${dateStr}_${tzSlug}.csv`, csv);
-                  toast.success(t("business.tipsActivity.toastExportDone"));
+                  withIdleSuppressSync("tips-csv-export", () => {
+                    downloadCsv(`tips_activity_${dateStr}_${tzSlug}.csv`, csv);
+                  });
                 } finally {
                   setExporting(false);
                 }

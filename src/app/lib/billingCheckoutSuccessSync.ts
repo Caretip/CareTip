@@ -14,6 +14,7 @@ import {
   clearSubscriptionTierSession,
   primeSubscriptionEntitlementsFromSession,
 } from "./subscriptionSessionCache";
+import { withIdleSuppress } from "./idleSuppress";
 
 export const BILLING_CHECKOUT_SYNCED_EVENT = "caretip:billing-checkout-synced";
 
@@ -40,28 +41,30 @@ async function primeEntitlementsFromProfile(): Promise<void> {
 export async function runBillingCheckoutSuccessSync(opts?: {
   expectedPlan?: SubscriptionPlanKey;
 }): Promise<boolean> {
-  const expectedPlan = opts?.expectedPlan ?? getCheckoutSyncExpectation() ?? undefined;
+  return withIdleSuppress("billing-checkout-sync", async () => {
+    const expectedPlan = opts?.expectedPlan ?? getCheckoutSyncExpectation() ?? undefined;
 
-  for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt += 1) {
-    try {
-      const result = await fetchBillingSyncStatus(expectedPlan);
-      if (result.synced) {
-        clearCheckoutSyncExpectation();
-        clearBusinessProfileClientCache();
-        clearSubscriptionTierSession();
-        try {
-          await primeEntitlementsFromProfile();
-        } catch {
-          primeEntitlementsFromSyncStatus(result);
+    for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt += 1) {
+      try {
+        const result = await fetchBillingSyncStatus(expectedPlan);
+        if (result.synced) {
+          clearCheckoutSyncExpectation();
+          clearBusinessProfileClientCache();
+          clearSubscriptionTierSession();
+          try {
+            await primeEntitlementsFromProfile();
+          } catch {
+            primeEntitlementsFromSyncStatus(result);
+          }
+          window.dispatchEvent(new CustomEvent(BILLING_CHECKOUT_SYNCED_EVENT));
+          return true;
         }
-        window.dispatchEvent(new CustomEvent(BILLING_CHECKOUT_SYNCED_EVENT));
-        return true;
+      } catch {
+        // Webhook may still be in flight.
       }
-    } catch {
-      // Webhook may still be in flight.
+      await new Promise((resolve) => window.setTimeout(resolve, POLL_INTERVAL_MS));
     }
-    await new Promise((resolve) => window.setTimeout(resolve, POLL_INTERVAL_MS));
-  }
 
-  return false;
+    return false;
+  });
 }

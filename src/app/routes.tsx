@@ -14,6 +14,7 @@ import { AuthPostLoginTransitionRegistrar } from "./components/AuthPostLoginTran
 import { AuthLogoutTransitionRegistrar } from "./components/AuthLogoutTransitionRegistrar";
 import { LanguageChangeLoadingRegistrar } from "./components/LanguageChangeLoadingRegistrar";
 import { RouteNavigationLoadingRegistrar } from "./components/RouteNavigationLoadingRegistrar";
+import { IdleSessionController } from "./components/IdleSessionController";
 import { useMarkAppShellReadyOptional } from "./context/AppLoadingSplashContext";
 import { RouteChunkBoundary } from "./routing/RouteChunkBoundary";
 import {
@@ -107,6 +108,7 @@ function RootLayout() {
           <LoaderDiagRuntime />
         </React.Suspense>
       ) : null}
+      <IdleSessionController />
       <ScrollToTop />
       <RouteNavigationLoadingRegistrar>
         <AuthBootstrapLoadingRegistrar>
@@ -325,7 +327,7 @@ const routes: RouteObject[] = [
         lazy: routeLazy(() => import('./pages/business/tips/BusinessTipsLayout'), 'BusinessTipsLayout'),
         children: [
           { index: true, element: <Navigate to="/dashboard/tips/transactions" replace /> },
-          { path: 'live', lazy: routeLazy(() => import('./pages/business/tips/BusinessTipsLivePage'), 'BusinessTipsLivePage') },
+          { path: 'live', lazy: routeLazy(() => import('./pages/business/tips/BusinessActivityCenterPage'), 'BusinessActivityCenterPage') },
           { path: 'transactions', lazy: routeLazy(() => import('./pages/business/tips/BusinessTipsTransactionsPage'), 'BusinessTipsTransactionsPage') },
           { path: 'analytics', lazy: routeLazy(() => import('./pages/business/tips/BusinessTipsAnalyticsPage'), 'BusinessTipsAnalyticsPage') },
         ],

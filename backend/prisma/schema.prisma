@@ -154,6 +154,23 @@ enum NotificationPriority {
   high
 }
 
+/// Activity Center — event origin module (filter chip / future domain scalability).
+enum ActivityEventSource {
+  TIPS
+  QR
+  GOALS
+  STAFF
+  PAYMENTS
+  SYSTEM
+}
+
+/// Activity Center — visual/notification weight; does not reorder chronological feed.
+enum ActivityEventPriority {
+  LOW
+  NORMAL
+  HIGH
+}
+
 enum SupportTicketStatus {
   OPEN
   PENDING
@@ -551,6 +568,7 @@ model Business {
   qrScanEvents   QrScanEvent[]
   qrFunnelEvents QrFunnelEvent[]
   featureUtilizationDaily FeatureUtilizationDaily[]
+  activityEvents BusinessActivityEvent[]
 
   @@index([verificationStatus], map: "businesses_verification_status_idx")
   @@index([onboardingVerificationStatus], map: "businesses_onboarding_verification_status_idx")
@@ -925,4 +943,31 @@ model FeatureUtilizationDaily {
   @@unique([businessId, featureKey, day])
   @@index([businessId, day])
   @@map("feature_utilization_daily")
+}
+
+/// Activity Center SSOT — operational event projection (feed never joins domain tables at read time).
+model BusinessActivityEvent {
+  id               String                @id @default(cuid())
+  businessId       String                @map("business_id")
+  type             String                @db.VarChar(64)
+  source           ActivityEventSource
+  priority         ActivityEventPriority @default(NORMAL)
+  occurredAt       DateTime              @map("occurred_at")
+  actorEmployeeId  String?               @map("actor_employee_id")
+  actorUserId      String?               @map("actor_user_id")
+  locationId       String?               @map("location_id")
+  tableId          String?               @map("table_id")
+  subjectType      String?               @map("subject_type") @db.VarChar(32)
+  subjectId        String?               @map("subject_id") @db.VarChar(64)
+  dedupeKey        String                @map("dedupe_key") @db.VarChar(191)
+  summary          Json
+  createdAt        DateTime              @default(now()) @map("created_at")
+
+  business Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  @@unique([businessId, dedupeKey])
+  @@index([businessId, occurredAt(sort: Desc)])
+  @@index([businessId, source, occurredAt(sort: Desc)])
+  @@index([businessId, type, occurredAt(sort: Desc)])
+  @@map("business_activity_events")
 }

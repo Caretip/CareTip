@@ -102,7 +102,6 @@ export function BusinessAnalyticsReporting({
     setExporting(true);
     try {
       await downloadBusinessTransactionsExport();
-      toast.success(t("business.tips.analytics.reporting.exportSuccess"));
     } catch (e) {
       toast.error(toUserFriendlyMessage(e));
     } finally {

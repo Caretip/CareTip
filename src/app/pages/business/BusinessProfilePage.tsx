@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import { Building2, Check, Loader2, MapPin, Save, Tag, Upload, X } from "lucide-react";
 import { toast } from "sonner";
 import { useRequireAuth } from "../../hooks/useRequireAuth";
+import { useIdleDirty } from "../../hooks/useIdleDirty";
 import {
   fetchBusinessProfile,
   putBusinessProfile,
@@ -31,7 +32,6 @@ import {
   OnboardingVerificationStatusChip,
 } from "../../components/verification/VerificationWorkflowStatusChip";
 
-const TOAST_OK = { style: { background: "hsl(var(--primary))", color: "hsl(var(--primary-foreground))" } } as const;
 const LOGO_MAX_BYTES = 5 * 1024 * 1024;
 const LOCATION_MAX = 2000;
 
@@ -135,6 +135,8 @@ export function BusinessProfilePage({ embedded = false }: { embedded?: boolean }
     return false;
   }, [profile, name, location, businessType, pendingLogo]);
 
+  useIdleDirty("business-profile", isDirty);
+
   const pickLogo = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     e.target.value = "";
@@ -183,7 +185,6 @@ export function BusinessProfilePage({ embedded = false }: { embedded?: boolean }
       applyProfileToForm(fresh);
       if (hadPendingLogo) setLogoBust((b) => b + 1);
       window.dispatchEvent(new Event("caretip-business-profile-changed"));
-      toast.success(t("business.profilePage.toastSaved"), TOAST_OK);
     } catch (e) {
       logClientError("BusinessProfilePage.save", e);
       toast.error(toUserFriendlyMessage(e));

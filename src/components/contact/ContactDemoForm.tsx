@@ -86,17 +86,11 @@ export function ContactDemoForm({
   }
 
   return (
-    <div className={cn(contactPageUi.flow, className)}>
+    <div className={cn(contactPageUi.flow, "caretip-contact-enter", className)}>
       <ContactFlowBack onBack={onBack} />
 
       <div className={cn(contactPageUi.layout, "caretip-contact-layout--form")}>
-        <aside
-          className={cn(
-            contactPageUi.flowAside,
-            "caretip-contact-flow__aside--brand",
-            "caretip-contact-flow__aside--compact",
-          )}
-        >
+        <aside className={cn(contactPageUi.flowAside, "caretip-contact-flow__aside--editorial")}>
           <h2 className={contactPageUi.flowTitle}>{t("staticPages.contact.demo.title")}</h2>
           <ul className={contactPageUi.flowList}>
             {bullets.map((item) => (

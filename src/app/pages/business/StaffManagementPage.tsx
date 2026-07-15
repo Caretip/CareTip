@@ -472,7 +472,6 @@ export function StaffManagementPage() {
     if (!inviteCode) return;
     try {
       await navigator.clipboard.writeText(inviteCode);
-      toastOk(t("business.staffPage.toastCopied"));
     } catch (err) {
       logClientError("StaffManagementPage", err);
       toastErr(t("business.staffPage.toastCopyFailed"));

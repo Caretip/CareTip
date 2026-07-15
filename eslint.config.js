@@ -55,5 +55,119 @@ export default tseslint.config(
         },
       ],
     },
+  },
+  {
+    files: [
+      "src/app/pages/business/tips/BusinessActivityCenterPage.tsx",
+      "src/app/hooks/useActivityCenterFeed.ts",
+      "src/app/components/business/insights/ActivityCenterFeed.tsx",
+      "src/app/lib/realtime/subscribeActivityCreated.ts",
+    ],
+    rules: {
+      "no-restricted-imports": [
+        "error",
+        {
+          paths: [
+            {
+              name: "@/app/hooks/useBusinessTipsModuleData",
+              message:
+                "Activity Center must not use tip-module analytics. See docs/ARCHITECTURE_ACTIVITY_CENTER.md",
+            },
+            {
+              name: "../../../hooks/useBusinessTipsModuleData",
+              message:
+                "Activity Center must not use tip-module analytics. See docs/ARCHITECTURE_ACTIVITY_CENTER.md",
+            },
+            {
+              name: "../../hooks/useBusinessTipsModuleData",
+              message:
+                "Activity Center must not use tip-module analytics. See docs/ARCHITECTURE_ACTIVITY_CENTER.md",
+            },
+            {
+              name: "../hooks/useBusinessTipsModuleData",
+              message:
+                "Activity Center must not use tip-module analytics. See docs/ARCHITECTURE_ACTIVITY_CENTER.md",
+            },
+            {
+              name: "./useBusinessTipsModuleData",
+              message:
+                "Activity Center must not use tip-module analytics. See docs/ARCHITECTURE_ACTIVITY_CENTER.md",
+            },
+            {
+              name: "@/app/hooks/useBusinessAnalytics",
+              message:
+                "Activity Center must not depend on analytics. See docs/ARCHITECTURE_ACTIVITY_CENTER.md",
+            },
+            {
+              name: "../../../hooks/useBusinessAnalytics",
+              message:
+                "Activity Center must not depend on analytics. See docs/ARCHITECTURE_ACTIVITY_CENTER.md",
+            },
+            {
+              name: "../../hooks/useBusinessAnalytics",
+              message:
+                "Activity Center must not depend on analytics. See docs/ARCHITECTURE_ACTIVITY_CENTER.md",
+            },
+            {
+              name: "../hooks/useBusinessAnalytics",
+              message:
+                "Activity Center must not depend on analytics. See docs/ARCHITECTURE_ACTIVITY_CENTER.md",
+            },
+            {
+              name: "./useBusinessAnalytics",
+              message:
+                "Activity Center must not depend on analytics. See docs/ARCHITECTURE_ACTIVITY_CENTER.md",
+            },
+            {
+              name: "@/app/hooks/useLiveActivityStream",
+              message: "useLiveActivityStream was removed; Activity Center uses activity.created only.",
+            },
+            {
+              name: "../../../hooks/useLiveActivityStream",
+              message: "useLiveActivityStream was removed; Activity Center uses activity.created only.",
+            },
+            {
+              name: "../../hooks/useLiveActivityStream",
+              message: "useLiveActivityStream was removed; Activity Center uses activity.created only.",
+            },
+            {
+              name: "../hooks/useLiveActivityStream",
+              message: "useLiveActivityStream was removed; Activity Center uses activity.created only.",
+            },
+            {
+              name: "./useLiveActivityStream",
+              message: "useLiveActivityStream was removed; Activity Center uses activity.created only.",
+            },
+            {
+              name: "@/app/lib/realtime/subscribeTipReceived",
+              message:
+                "Activity Center must not subscribe to tip.received. Use subscribeActivityCreated.",
+            },
+            {
+              name: "../../lib/realtime/subscribeTipReceived",
+              message:
+                "Activity Center must not subscribe to tip.received. Use subscribeActivityCreated.",
+            },
+            {
+              name: "../lib/realtime/subscribeTipReceived",
+              message:
+                "Activity Center must not subscribe to tip.received. Use subscribeActivityCreated.",
+            },
+            {
+              name: "./subscribeTipReceived",
+              message:
+                "Activity Center must not subscribe to tip.received. Use subscribeActivityCreated.",
+            },
+          ],
+          patterns: [
+            {
+              group: ["**/useLiveActivityStream*", "**/LiveTipFeed*", "**/ActivityTimeline*", "**/TipsOverviewMetricCards*"],
+              message:
+                "Legacy Live Tips modules are removed. Activity Center uses BusinessActivityEvent only.",
+            },
+          ],
+        },
+      ],
+    },
   }
 );

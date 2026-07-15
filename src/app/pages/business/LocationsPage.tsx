@@ -101,9 +101,6 @@ export function LocationsPage() {
         name: trimmed,
         description: description.trim() || undefined,
       });
-      toast.success(t("business.locationsPage.toastCreated"), {
-        style: { background: ACTION_TEAL, color: "#fff" },
-      });
       setModalOpen(false);
       setName("");
       setDescription("");

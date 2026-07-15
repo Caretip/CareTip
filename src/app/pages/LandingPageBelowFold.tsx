@@ -5,7 +5,7 @@ export const SHOW_LANDING_SOCIAL_PROOF = false;
 
 /** Approximate section heights — reserve space before lazy sections mount (CLS guard). */
 const LAZY_SECTION_MIN_HEIGHT = {
-  hospitality: "52rem",
+  hospitality: "48rem",
   splitShowcase: "44rem",
   features: "48rem",
   realLife: "56rem",

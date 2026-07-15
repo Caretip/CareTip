@@ -24,6 +24,25 @@
   "status": {
     "live": "Live"
   },
+  "activity": {
+    "tip": {
+      "received": "Tip received"
+    },
+    "qr": {
+      "scanned": "QR code scanned"
+    },
+    "goal": {
+      "achieved": "Goal achieved"
+    },
+    "payment": {
+      "failed": "Payment failed",
+      "refunded": "Payment refunded"
+    },
+    "employee": {
+      "invited": "Employee invited",
+      "joined": "Employee joined"
+    }
+  },
   "theme": {
     "appearance": {
       "title": "Appearance",
@@ -143,6 +162,16 @@
       }
     }
   },
+  "idleSession": {
+    "warningTitle": "Still there?",
+    "warningBody": "You’ll be signed out in {{seconds}}s for security. Stay signed in to continue.",
+    "staySignedIn": "Stay signed in",
+    "logOutNow": "Log out now",
+    "countdownLive": "Signing out in {{seconds}} seconds",
+    "unsavedTitle": "You have unsaved changes",
+    "unsavedBody": "Your session will end in {{seconds}}s. Save your work or stay signed in.",
+    "logOutAnyway": "Log out anyway"
+  },
   "join": {
     "eyebrow": "Join your team",
     "title": "Enter your invite code",
@@ -196,14 +225,15 @@
     "contact": {
       "pageAria": "Contact CareTip",
       "eyebrow": "Contact",
-      "headline": "How can we help?",
-      "supportingText": "We're here to help hospitality teams get the most from CareTip.",
+      "headline": "Let's help your business succeed.",
+      "supportingText": "Whether you need a demo, have product questions, or need technical support, our team is here to help.",
       "backToChooser": "Back to contact options",
+      "servicesAria": "How we can help",
       "trust": {
         "aria": "Contact trust indicators",
-        "response24h": "Response within 24 hours",
+        "response24h": "Usually replies within 24 hours",
         "gdpr": "GDPR compliant",
-        "stripe": "Secure Stripe-powered platform",
+        "stripe": "Stripe-secured platform",
         "trusted": "Trusted by hospitality teams"
       },
       "socialProof": {
@@ -232,23 +262,27 @@
       "intent": {
         "demo": {
           "title": "Request a Demo",
-          "description": "For restaurants, hotels, cafés, bars, salons, midwives and service teams looking to grow tips and team recognition."
+          "description": "See how CareTip works for your business."
         },
         "support": {
           "title": "Contact Support",
-          "description": "Get help with your account, payments, onboarding, technical questions or product feedback."
+          "description": "Need help with your account or a technical issue?"
+        },
+        "sales": {
+          "title": "Sales & Partnerships",
+          "description": "Interested in enterprise pricing or partnerships?"
         }
       },
       "demo": {
-        "title": "Request a demo",
+        "title": "Demo Request",
         "bullets": [
-          "See CareTip tailored to your venue",
-          "Learn how QR tipping works in practice",
-          "Understand team recognition workflows",
-          "Explore reporting and analytics",
-          "Review pricing and rollout options"
+          "Experience CareTip live",
+          "QR tipping workflow",
+          "Team recognition features",
+          "Reporting & Analytics",
+          "Rollout guidance"
         ],
-        "altPrompt": "Need help with an existing account?",
+        "altPrompt": "Need support instead?",
         "viewPricing": "View pricing & plans",
         "pricingPlanInterest": "You are interested in the {{plan}} plan from our pricing page.",
         "fields": {
@@ -276,13 +310,13 @@
         "submit": "Request demo"
       },
       "support": {
-        "title": "Contact support",
+        "title": "Support",
         "bullets": [
           "Ask product or account questions",
           "Report issues or unexpected behaviour",
           "Share feedback to help us improve CareTip"
         ],
-        "altPrompt": "Interested in plans, pricing, or a demo?",
+        "altPrompt": "Interested in a demo instead?",
         "fields": {
           "name": "Name",
           "email": "Email",
@@ -306,6 +340,21 @@
           "other": "Other"
         },
         "submit": "Send message"
+      },
+      "sales": {
+        "title": "Sales & Partnerships",
+        "bullets": [
+          "Enterprise pricing & volume plans",
+          "Multi-location rollouts",
+          "Partnership opportunities",
+          "Custom onboarding support"
+        ],
+        "altDemo": "Prefer a product demo?",
+        "altSupport": "Need technical help?",
+        "panelTitle": "Talk with our team",
+        "panelBody": "Share your goals, location count, or partnership idea — we'll follow up with a clear next step.",
+        "email": "sales@caretip.de",
+        "responseTime": "Usually replies within 24 hours"
       },
       "form": {
         "submitting": "Sending…",
@@ -2716,19 +2765,21 @@
     "hospitality": {
       "eyebrow": "",
       "title": "Take your team to the next level.",
-      "subtitle": "Higher motivation. Lower turnover. Fully staffed shifts. Digital tips via QR code make your business highly attractive to top talent. Your guests reward outstanding service cashless and tax-free, completely hassle-free and with zero extra effort for your business. <bold>Because Caring is Tipping.</bold> Look after your team today, and secure your success tomorrow.",
-      "subtitle1": "Higher motivation. Lower turnover. Fully staffed shifts.",
-      "subtitle2": "Digital tips via QR code make your business highly attractive to top talent.",
-      "subtitle3": "Your guests reward outstanding service cashless and tax-free, completely hassle-free and with zero extra effort for your business.",
-      "subtitle4": "<bold>Because Caring is Tipping.</bold>",
-      "subtitle5": "Look after your team today, and secure your success tomorrow.",
-      "pill": "Empowering excellence, wherever people care.",
-      "f1Title": "Reward service instantly",
-      "f1Text": "Guests tip in seconds with one quick scan, with table, location, and staff QR ready to print and go.",
-      "f2Title": "Live team visibility",
-      "f2Text": "Shift performance without payout confusion.",
-      "f3Title": "Trusted checkout & motivated shifts",
-      "f3Text": "Secure payments guests already trust, with clear numbers teams act on every shift.",
+      "lead": "Recognition that keeps talent, fills shifts, and strengthens every service moment.",
+      "subtitle": "",
+      "subtitle1": "",
+      "subtitle2": "",
+      "subtitle3": "",
+      "subtitle4": "",
+      "subtitle5": "",
+      "pill": "",
+      "f1Title": "Attract top talent",
+      "f1Text": "Cashless tips make your venue a place people want to work.",
+      "f2Title": "Motivate every shift",
+      "f2Text": "Guests reward great service the moment it happens.",
+      "f3Title": "Grow with clarity",
+      "f3Text": "Fair visibility without extra admin for your business.",
+      "imageAlt": "Hospitality team delivering elevated guest service",
       "floatTip": "+€12 tip received",
       "floatReview": "5★ review",
       "floatShift": "Shift complete",
@@ -4587,42 +4638,65 @@
         "flyer": "Flyer export"
       }
     },
-    "liveActivity": {
-      "centerTitle": "Live activity",
-      "streamLabel": "Operational",
-      "empty": "Activity appears here as guests tip, scan QR codes, or your team changes.",
-      "qrScanned": "QR code scanned",
-      "goalAchieved": "Goal achieved",
-      "goalUpdated": "Goal updated",
-      "employeeJoined": "Employee joined",
-      "employeeInvited": "Employee invited",
-      "employeeUpdated": "Team updated",
-      "locationCreated": "Location created",
-      "billingUpdated": "Billing updated",
-      "kind": {
-        "tip_received": "Tip received",
-        "qr_scanned": "QR scan",
-        "goal_achieved": "Goal achieved",
-        "goal_updated": "Goal progress",
-        "employee_joined": "Employee joined",
-        "employee_invited": "Invitation sent",
-        "employee_updated": "Team change",
-        "location_created": "New location",
-        "billing_updated": "Billing change"
+    "activityCenter": {
+      "centerTitle": "Activity Center",
+      "streamLabel": "Live",
+      "empty": "Nothing yet. Tips, QR scans, goals, staff, and payments will appear here as they happen.",
+      "loadOlder": "Load older",
+      "loadingOlder": "Loading…",
+      "filter": {
+        "all": "All Activity",
+        "tips": "Tips",
+        "qr": "QR Scans",
+        "goals": "Goals",
+        "staff": "Staff",
+        "payments": "Payments",
+        "system": "System"
+      },
+      "filterLabel": "Filter activity by type",
+      "source": {
+        "TIPS": "Tips",
+        "QR": "QR Scans",
+        "GOALS": "Goals",
+        "STAFF": "Staff",
+        "PAYMENTS": "Payments",
+        "SYSTEM": "System"
+      },
+      "type": {
+        "tip.received": "Tip received",
+        "qr.scanned": "QR code scanned",
+        "goal.achieved": "Goal achieved",
+        "payment.failed": "Payment failed",
+        "payment.refunded": "Payment refunded",
+        "employee.invited": "Employee invited",
+        "employee.joined": "Employee joined"
+      },
+      "channel": {
+        "code": "Invite code",
+        "email": "Email invite",
+        "oauth": "Google sign-up",
+        "email_verify": "Email verified",
+        "activate": "Activation",
+        "bypass": "Verified"
+      },
+      "reason": {
+        "eligibility_failure": "Eligibility refund",
+        "payment_intent_failed": "Payment declined",
+        "canceled": "Canceled"
       }
     },
     "tips": {
       "eyebrow": "Revenue",
       "title": "Tips",
-      "subtitle": "Live tipping activity, transactions, and real-time revenue pulse.",
+      "subtitle": "Activity Center, tip transactions, and revenue analytics.",
       "analyticsHeaderSubtitle": "Executive reporting on revenue, trends, exports, and business intelligence.",
       "navAria": "Tips sections",
       "nav": {
-        "live": "Live Tips",
+        "live": "Activity Center",
         "transactions": "Transactions",
         "analytics": "Analytics"
       },
-      "liveDesc": "Operational stream: tips, QR scans, goals, and team events as they happen.",
+      "liveDesc": "What is happening right now: tips, scans, goals, staff, and payments in chronological order.",
       "analyticsDesc": "Deep-dive reporting on revenue, QR, employees, locations, and trends. Filter by period and export data.",
       "live": {
         "cards": {
@@ -4632,14 +4706,7 @@
           "average": "Average tip",
           "tipCount": "{{count}} tips",
           "averageHint": "Based on this month"
-        },
-        "feedTitle": "Live feed",
-        "feedEmpty": "Tips will appear here as guests pay.",
-        "anonymousGuest": "Guest tip",
-        "venueDefault": "Main venue",
-        "liveBadge": "Live",
-        "timelineTitle": "Activity timeline",
-        "mostRecent": "most recent"
+        }
       },
       "analytics": {
         "periodAria": "Analytics period",
@@ -5260,11 +5327,11 @@
       "checkoutCanceled": "Checkout canceled. No changes were made.",
       "activationToast": {
         "trialTitle": "Trial started",
-        "trialBody": "🎉 Your 4-week {{plan}} trial is now active.",
+        "trialBody": "Your 4-week {{plan}} trial is now active.",
         "subscriptionTitle": "Subscription activated",
-        "subscriptionBody": "🎉 Your {{plan}} subscription is now active.",
+        "subscriptionBody": "Your {{plan}} subscription is now active.",
         "planUpdatedTitle": "Plan updated",
-        "planUpdatedBody": "Your subscription has been updated successfully."
+        "planUpdatedBody": "Your subscription has been updated."
       },
       "subscriptionSuccess": {
         "pollingTitle": "Activating your subscription…",

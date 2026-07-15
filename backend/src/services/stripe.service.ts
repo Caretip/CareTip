@@ -12,6 +12,10 @@ import {
 import { recordCheckoutFunnelEvent } from "./checkoutFunnelMetrics.service.js";
 import { QR_FUNNEL_EVENT_TYPES, recordQrFunnelEvent } from "./qr/qrFunnelEvent.service.js";
 import { allocateTipReceiptNumber } from "./tipReceipt.service.js";
+import {
+  schedulePaymentFailedAfterPendingUpdate,
+  schedulePaymentRefundedProjection,
+} from "./activity/paymentActivity.projection.js";
 
 let stripeSingleton: Stripe | null = null;
 
@@ -393,24 +397,30 @@ export async function createTipCheckoutSession(
 /**
  * Refund a captured tip when post-payment eligibility checks fail (employee deactivated, venue unverified, etc.).
  * Best-effort — logs and alerts ops if Stripe refund fails.
+ * Returns Stripe refund id on success; null on failure (callers must not project payment.refunded).
  */
 async function refundTipPaymentForEligibilityFailure(
   paymentIntentId: string,
   context: Record<string, unknown>,
   eligibilityErr: unknown,
-): Promise<void> {
+): Promise<string | null> {
   const source = typeof context.source === "string" ? context.source : "stripe.eligibility_refund";
   logTipPaymentEligibilityBlocked(source, { paymentIntentId, ...context }, eligibilityErr);
 
   try {
     const stripe = getStripe();
-    const refund = await stripe.refunds.create({
-      payment_intent: paymentIntentId,
-      metadata: {
-        caretip_refund_reason: "eligibility_failure",
-        caretip_context: source,
+    const refund = await stripe.refunds.create(
+      {
+        payment_intent: paymentIntentId,
+        metadata: {
+          caretip_refund_reason: "eligibility_failure",
+          caretip_context: source,
+        },
       },
-    });
+      {
+        idempotencyKey: `eligibility_refund:${paymentIntentId}`,
+      },
+    );
     console.warn("[stripe.refund.eligibility_failure] refunded", {
       paymentIntentId,
       refundId: refund.id,
@@ -422,6 +432,7 @@ async function refundTipPaymentForEligibilityFailure(
       refundId: refund.id,
       ...context,
     });
+    return refund.id;
   } catch (refundErr) {
     logServerError("stripe.refund.eligibility_failure", refundErr, {
       paymentIntentId,
@@ -432,6 +443,7 @@ async function refundTipPaymentForEligibilityFailure(
       paymentIntentId,
       ...context,
     });
+    return null;
   }
 }
 
@@ -472,16 +484,31 @@ export async function handlePaymentSuccess(paymentIntentId: string): Promise<voi
   try {
     await assertEmployeeEligibleForTipPayment(pending.employeeId, pending.businessId);
   } catch (err) {
-    await refundTipPaymentForEligibilityFailure(paymentIntentId, {
+    await prisma.transaction.updateMany({
+      where: { id: pending.id, status: "pending" },
+      data: { status: "failed" },
+    });
+    const refundId = await refundTipPaymentForEligibilityFailure(paymentIntentId, {
       source: "handlePaymentSuccess",
       employeeId: pending.employeeId,
       businessId: pending.businessId,
       transactionId: pending.id,
     }, err);
-    await prisma.transaction.updateMany({
-      where: { id: pending.id, status: "pending" },
-      data: { status: "failed" },
-    });
+    if (refundId) {
+      const emp = await prisma.employee.findUnique({
+        where: { id: pending.employeeId },
+        select: { name: true },
+      });
+      schedulePaymentRefundedProjection({
+        paymentIntentId,
+        refundId,
+        transactionId: pending.id,
+        businessId: pending.businessId,
+        employeeId: pending.employeeId,
+        amountEur: Number(pending.amount),
+        employeeName: emp?.name ?? null,
+      });
+    }
     return;
   }
 
@@ -531,10 +558,11 @@ export async function handlePaymentSuccess(paymentIntentId: string): Promise<voi
 }
 
 export async function handlePaymentFailed(paymentIntentId: string): Promise<void> {
-  await prisma.transaction.updateMany({
+  const result = await prisma.transaction.updateMany({
     where: { stripePaymentIntentId: paymentIntentId, status: "pending" },
     data: { status: "failed" },
   });
+  schedulePaymentFailedAfterPendingUpdate(paymentIntentId, result.count, "payment_intent_failed");
 }
 
 /**
@@ -640,15 +668,10 @@ export async function handleSuccessfulTipPayment(session: Stripe.Checkout.Sessio
   try {
     await assertEmployeeEligibleForTipPayment(employeeId, businessId);
   } catch (err) {
-    await refundTipPaymentForEligibilityFailure(piId, {
-      source: "handleSuccessfulTipPayment",
-      sessionId: session.id,
-      employeeId,
-      businessId,
-      amountEur: confirmedEur,
-    }, err);
+    let transactionId: string | null = null;
+    let amountEur = confirmedEur;
     try {
-      await prisma.transaction.create({
+      const failedTip = await prisma.transaction.create({
         data: {
           amount: confirmedEur,
           status: "failed",
@@ -657,12 +680,55 @@ export async function handleSuccessfulTipPayment(session: Stripe.Checkout.Sessio
           businessId,
         },
       });
+      transactionId = failedTip.id;
+      amountEur = Number(failedTip.amount);
     } catch (ledgerErr) {
       const code = (ledgerErr as { code?: string })?.code;
       if (code !== "P2002") {
         console.error("[stripe.handleSuccessfulTipPayment] failed ledger insert", ledgerErr);
+      } else {
+        const existing = await prisma.transaction.findUnique({
+          where: { stripePaymentIntentId: piId },
+          select: { id: true, amount: true, status: true },
+        });
+        if (existing) {
+          transactionId = existing.id;
+          amountEur = Number(existing.amount);
+          if (existing.status !== "failed") {
+            await prisma.transaction.update({
+              where: { id: existing.id },
+              data: { status: "failed" },
+            });
+          }
+        }
       }
     }
+
+    const refundId = await refundTipPaymentForEligibilityFailure(piId, {
+      source: "handleSuccessfulTipPayment",
+      sessionId: session.id,
+      employeeId,
+      businessId,
+      amountEur: confirmedEur,
+      transactionId,
+    }, err);
+
+    if (refundId && transactionId) {
+      const emp = await prisma.employee.findUnique({
+        where: { id: employeeId },
+        select: { name: true },
+      });
+      schedulePaymentRefundedProjection({
+        paymentIntentId: piId,
+        refundId,
+        transactionId,
+        businessId,
+        employeeId,
+        amountEur,
+        employeeName: emp?.name ?? null,
+      });
+    }
+
     console.log("SKIP REASON: employee or venue not eligible for tips (refund attempted)");
     return;
   }

@@ -36,7 +36,6 @@ export const Footer = memo(function Footer({
       product: [
         { name: t("footer.linkFeatures"), to: "/features" },
         { name: t("footer.linkPricing"), to: "/pricing" },
-        { name: t("footer.linkHowItWorks"), to: "/how-it-works" },
       ],
       company: [
         { name: t("footer.linkAbout"), to: "/about" },

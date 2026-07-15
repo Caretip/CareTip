@@ -14,8 +14,6 @@ import {
 import { Label } from "../ui/label";
 import { Switch } from "../ui/switch";
 
-const TEAL = "#e9781c";
-
 export function PlatformSettingsNotificationsPanel() {
   const { t } = useTranslation();
   const [loading, setLoading] = useState(true);
@@ -71,9 +69,6 @@ export function PlatformSettingsNotificationsPanel() {
       } else {
         await unregisterFcmDeviceToken();
       }
-      toast.success(t("admin.platformSettings.notifications.toastSaved"), {
-        style: { background: TEAL, color: "#fff" },
-      });
     } catch (e) {
       logClientError("PlatformSettingsNotificationsPanel.save", e);
       toast.error(toUserFriendlyMessage(e));

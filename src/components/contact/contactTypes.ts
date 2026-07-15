@@ -1,4 +1,4 @@
-export type ContactIntent = "choose" | "demo" | "support";
+export type ContactIntent = "choose" | "demo" | "support" | "sales";
 
 export type ContactSupportCategory =
   | "account_login"
@@ -30,3 +30,5 @@ export const CONTACT_TEAM_SIZES = ["1-10", "11-50", "51-200", "200plus"] as cons
 export type ContactTeamSize = (typeof CONTACT_TEAM_SIZES)[number];
 
 export const DEMO_BULLET_COUNT = 5;
+
+export const SALES_BULLET_COUNT = 4;

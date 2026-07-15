@@ -148,7 +148,6 @@ export function EmployeeSettingsPage() {
         await unregisterFcmDeviceToken();
       }
       updateUser({ name: updated.name, avatar: updated.avatar ?? undefined });
-      toast.success(t("employee.settings.toastProfileSaved"), { style: { background: TEAL, color: "#fff" } });
     } catch (e) {
       logClientError("EmployeeSettingsPage", e);
       toast.error(toUserFriendlyMessage(e, { audience: "employee" }));
@@ -171,7 +170,6 @@ export function EmployeeSettingsPage() {
       const { avatar } = await uploadEmployeeAvatar(file);
       const base = avatar.split("?")[0];
       updateUser({ avatar: `${base}?v=${Date.now()}` });
-      toast.success(t("employee.settings.toastPhotoUpdated"), { style: { background: TEAL, color: "#fff" } });
     } catch (err) {
       logClientError("EmployeeSettingsPage", err);
       toast.error(toUserFriendlyMessage(err, { audience: "employee" }));

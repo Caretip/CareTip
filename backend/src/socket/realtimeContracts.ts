@@ -9,6 +9,8 @@ export const REALTIME_EVENTS = {
   EMPLOYEE_UPDATED: "employee.updated",
   NOTIFICATION_CREATED: "notification.created",
   BILLING_UPDATED: "billing.updated",
+  /** Activity Center live channel — alongside domain tip/QR events during migration. */
+  ACTIVITY_CREATED: "activity.created",
 } as const;
 
 export type RealtimeEntityIds = {
@@ -84,6 +86,16 @@ export function emitTipReceivedCanonical(
 ): void {
   const targets = [businessRoom(businessId), employeeRoom(employeeId)];
   emitRealtimeEvent(targets, REALTIME_EVENTS.TIP_RECEIVED, { businessId, employeeId }, payload);
+}
+
+/** Activity Center — emit only after BusinessActivityEvent insert (SSOT). */
+export function emitActivityCreatedCanonical(businessId: string, payload: unknown) {
+  return emitRealtimeEvent(
+    [businessRoom(businessId)],
+    REALTIME_EVENTS.ACTIVITY_CREATED,
+    { businessId },
+    payload,
+  );
 }
 
 export function emitQrScannedCanonical(

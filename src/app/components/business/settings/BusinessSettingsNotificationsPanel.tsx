@@ -9,8 +9,6 @@ import { toUserFriendlyMessage } from "../../../lib/errorMessages";
 import { BusinessSettingsPanelShell } from "./BusinessSettingsPanelShell";
 import type { useBusinessSettingsData } from "./useBusinessSettingsData";
 
-const TEAL = "#e9781c";
-
 type Props = Pick<
   ReturnType<typeof useBusinessSettingsData>,
   | "loading"
@@ -100,9 +98,6 @@ export function BusinessSettingsNotificationsPanel({
       } else {
         await unregisterFcmDeviceToken();
       }
-      toast.success(t("business.accountSettings.toastPrefsSaved"), {
-        style: { background: TEAL, color: "#fff" },
-      });
     } catch (e) {
       logClientError("BusinessSettingsNotificationsPanel.save", e);
       toast.error(toUserFriendlyMessage(e));

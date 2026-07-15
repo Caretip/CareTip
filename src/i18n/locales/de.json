@@ -24,6 +24,25 @@
   "status": {
     "live": "Aktiv"
   },
+  "activity": {
+    "tip": {
+      "received": "Trinkgeld erhalten"
+    },
+    "qr": {
+      "scanned": "QR-Code gescannt"
+    },
+    "goal": {
+      "achieved": "Ziel erreicht"
+    },
+    "payment": {
+      "failed": "Zahlung fehlgeschlagen",
+      "refunded": "Zahlung erstattet"
+    },
+    "employee": {
+      "invited": "Mitarbeiter eingeladen",
+      "joined": "Mitarbeiter beigetreten"
+    }
+  },
   "theme": {
     "appearance": {
       "title": "Darstellung",
@@ -143,6 +162,16 @@
       }
     }
   },
+  "idleSession": {
+    "warningTitle": "Noch da?",
+    "warningBody": "Sie werden in {{seconds}}s aus Sicherheitsgründen abgemeldet. Bleiben Sie angemeldet, um fortzufahren.",
+    "staySignedIn": "Angemeldet bleiben",
+    "logOutNow": "Jetzt abmelden",
+    "countdownLive": "Abmeldung in {{seconds}} Sekunden",
+    "unsavedTitle": "Ungespeicherte Änderungen",
+    "unsavedBody": "Ihre Sitzung endet in {{seconds}}s. Speichern Sie Ihre Arbeit oder bleiben Sie angemeldet.",
+    "logOutAnyway": "Trotzdem abmelden"
+  },
   "join": {
     "eyebrow": "Tritt deinem Team bei",
     "title": "Gib deinen Einladungscode ein",
@@ -196,14 +225,15 @@
     "contact": {
       "pageAria": "CareTip kontaktieren",
       "eyebrow": "Kontakt",
-      "headline": "Wie können wir helfen?",
-      "supportingText": "Wir unterstützen Gastronomie-Teams dabei, das Beste aus CareTip herauszuholen.",
+      "headline": "Lassen Sie uns Ihrem Betrieb zum Erfolg verhelfen.",
+      "supportingText": "Ob Demo, Produktfragen oder technischer Support — unser Team ist für Sie da.",
       "backToChooser": "Zurück zu den Kontaktoptionen",
+      "servicesAria": "Wie wir helfen können",
       "trust": {
         "aria": "Vertrauenssignale Kontakt",
-        "response24h": "Antwort innerhalb von 24 Stunden",
+        "response24h": "Antwort meist innerhalb von 24 Stunden",
         "gdpr": "DSGVO-konform",
-        "stripe": "Sichere Stripe-Plattform",
+        "stripe": "Stripe-gesicherte Plattform",
         "trusted": "Vertraut von Gastronomie-Teams"
       },
       "socialProof": {
@@ -232,23 +262,27 @@
       "intent": {
         "demo": {
           "title": "Demo anfordern",
-          "description": "Für Restaurants, Hotels, Cafés, Bars, Salons, Hebammen und Service-Teams, die Trinkgelder und Anerkennung im Team stärken möchten."
+          "description": "Sehen Sie, wie CareTip für Ihren Betrieb funktioniert."
         },
         "support": {
           "title": "Support kontaktieren",
-          "description": "Hilfe zu Konto, Zahlungen, Onboarding, technischen Fragen oder Produktfeedback."
+          "description": "Hilfe zu Ihrem Konto oder einem technischen Problem?"
+        },
+        "sales": {
+          "title": "Vertrieb & Partnerschaften",
+          "description": "Interesse an Enterprise-Preisen oder Partnerschaften?"
         }
       },
       "demo": {
-        "title": "Demo anfordern",
+        "title": "Demo-Anfrage",
         "bullets": [
-          "CareTip passend zu Ihrem Betrieb erleben",
-          "QR-Trinkgeld in der Praxis verstehen",
-          "Anerkennungs-Workflows für Ihr Team kennenlernen",
-          "Reporting und Analysen erkunden",
-          "Preise und Rollout-Optionen besprechen"
+          "CareTip live erleben",
+          "QR-Trinkgeld-Workflow",
+          "Team-Anerkennung",
+          "Reporting & Analysen",
+          "Rollout-Begleitung"
         ],
-        "altPrompt": "Sie brauchen Hilfe mit einem bestehenden Konto?",
+        "altPrompt": "Lieber Support?",
         "viewPricing": "Preise & Tarife ansehen",
         "pricingPlanInterest": "Sie interessieren sich für den {{plan}}-Tarif auf unserer Preisseite.",
         "fields": {
@@ -276,13 +310,13 @@
         "submit": "Demo anfordern"
       },
       "support": {
-        "title": "Support kontaktieren",
+        "title": "Support",
         "bullets": [
           "Produkt- oder Kontofragen stellen",
           "Probleme oder unerwartetes Verhalten melden",
           "Feedback geben, um CareTip zu verbessern"
         ],
-        "altPrompt": "Interesse an Tarifen, Preisen oder einer Demo?",
+        "altPrompt": "Lieber eine Demo?",
         "fields": {
           "name": "Name",
           "email": "E-Mail",
@@ -306,6 +340,21 @@
           "other": "Sonstiges"
         },
         "submit": "Nachricht senden"
+      },
+      "sales": {
+        "title": "Vertrieb & Partnerschaften",
+        "bullets": [
+          "Enterprise-Preise & Volumenmodelle",
+          "Rollouts für mehrere Standorte",
+          "Partnerschaftsmöglichkeiten",
+          "Individuelles Onboarding"
+        ],
+        "altDemo": "Lieber eine Produktdemo?",
+        "altSupport": "Technische Hilfe nötig?",
+        "panelTitle": "Sprechen Sie mit unserem Team",
+        "panelBody": "Teilen Sie Ihre Ziele, Standortanzahl oder Partnerschaftsidee — wir melden uns mit dem nächsten Schritt.",
+        "email": "sales@caretip.de",
+        "responseTime": "Antwort meist innerhalb von 24 Stunden"
       },
       "form": {
         "submitting": "Wird gesendet…",
@@ -2713,19 +2762,21 @@
     "hospitality": {
       "eyebrow": "",
       "title": "Bring dein Team aufs nächste Level.",
-      "subtitle": "Mehr Motivation. Weniger Fluktuation. Volle Schichten. Digitales Trinkgeld per QR-Code macht deinen Betrieb maximal attraktiv für Top-Talente. Deine Gäste belohnen herausragenden Service bargeldlos und steuerfrei, ganz ohne Extra-Aufwand für dein Business. <bold>Denn Caring is Tipping.</bold> Wer sich heute um sein Team kümmert, sorgt für den Erfolg von morgen.",
-      "subtitle1": "Mehr Motivation. Weniger Fluktuation. Volle Schichten.",
-      "subtitle2": "Digitales Trinkgeld per QR-Code macht deinen Betrieb maximal attraktiv für Top-Talente.",
-      "subtitle3": "Deine Gäste belohnen herausragenden Service bargeldlos und steuerfrei, ganz ohne Extra-Aufwand für dein Business.",
-      "subtitle4": "<bold>Denn Caring is Tipping.</bold>",
-      "subtitle5": "Wer sich heute um sein Team kümmert, sorgt für den Erfolg von morgen.",
-      "pill": "Überall dort im Einsatz, wo Menschen Großartiges leisten",
-      "f1Title": "QR-Codes, die sich Ihrem Alltag anpassen",
-      "f1Text": "Ob am Tisch, auf Station oder direkt auf der Tour: Ausdrucken, aufstellen und Gäste belohnen mit einem schnellen Scan.",
-      "f2Title": "Voller Durchblick & sicheres Checkout",
-      "f2Text": "Erfolge gemeinsam feiern, live sehen, was Ihr Team leistet, für faire Auszahlung. Sicher, vertraut und blitzschnell für Ihre Kunden.",
-      "f3Title": "Der tägliche Motivations-Boost",
-      "f3Text": "Echte Zahlen, echte Anerkennung. Verwandeln Sie jede Schicht in ein Erfolgserlebnis, das Ihr Team zusammenschweißt.",
+      "lead": "Anerkennung, die Talente hält, Schichten füllt und jeden Service-Moment stärkt.",
+      "subtitle": "",
+      "subtitle1": "",
+      "subtitle2": "",
+      "subtitle3": "",
+      "subtitle4": "",
+      "subtitle5": "",
+      "pill": "",
+      "f1Title": "Top-Talente anziehen",
+      "f1Text": "Bargeldloses Trinkgeld macht Ihren Betrieb zum Wunscharbeitsplatz.",
+      "f2Title": "Jede Schicht motivieren",
+      "f2Text": "Gäste belohnen starken Service genau in dem Moment.",
+      "f3Title": "Klar skalieren",
+      "f3Text": "Faire Transparenz ohne Extra-Aufwand für Ihr Business.",
+      "imageAlt": "Hospitality-Team bei herausragendem Gästeservice",
       "floatTip": "+12€ Tip erhalten",
       "floatReview": "5★ Bewertung",
       "floatShift": "Schicht abgeschlossen",
@@ -4624,42 +4675,65 @@
         "flyer": "Flyer-Export"
       }
     },
-    "liveActivity": {
-      "centerTitle": "Live-Aktivität",
-      "streamLabel": "Operativ",
-      "empty": "Aktivität erscheint hier bei Trinkgeldern, QR-Scans oder Team-Änderungen.",
-      "qrScanned": "QR-Code gescannt",
-      "goalAchieved": "Ziel erreicht",
-      "goalUpdated": "Ziel aktualisiert",
-      "employeeJoined": "Mitarbeiter beigetreten",
-      "employeeInvited": "Mitarbeiter eingeladen",
-      "employeeUpdated": "Team aktualisiert",
-      "locationCreated": "Standort erstellt",
-      "billingUpdated": "Abrechnung aktualisiert",
-      "kind": {
-        "tip_received": "Trinkgeld erhalten",
-        "qr_scanned": "QR-Scan",
-        "goal_achieved": "Ziel erreicht",
-        "goal_updated": "Zielfortschritt",
-        "employee_joined": "Beitritt",
-        "employee_invited": "Einladung gesendet",
-        "employee_updated": "Team-Änderung",
-        "location_created": "Neuer Standort",
-        "billing_updated": "Abrechnungsänderung"
+    "activityCenter": {
+      "centerTitle": "Aktivitätscenter",
+      "streamLabel": "Live",
+      "empty": "Noch nichts. Trinkgelder, QR-Scans, Ziele, Team und Zahlungen erscheinen hier chronologisch.",
+      "loadOlder": "Ältere laden",
+      "loadingOlder": "Laden…",
+      "filter": {
+        "all": "Alle Aktivitäten",
+        "tips": "Trinkgelder",
+        "qr": "QR-Scans",
+        "goals": "Ziele",
+        "staff": "Team",
+        "payments": "Zahlungen",
+        "system": "System"
+      },
+      "filterLabel": "Aktivität nach Typ filtern",
+      "source": {
+        "TIPS": "Trinkgelder",
+        "QR": "QR-Scans",
+        "GOALS": "Ziele",
+        "STAFF": "Team",
+        "PAYMENTS": "Zahlungen",
+        "SYSTEM": "System"
+      },
+      "type": {
+        "tip.received": "Trinkgeld erhalten",
+        "qr.scanned": "QR-Code gescannt",
+        "goal.achieved": "Ziel erreicht",
+        "payment.failed": "Zahlung fehlgeschlagen",
+        "payment.refunded": "Zahlung erstattet",
+        "employee.invited": "Mitarbeiter eingeladen",
+        "employee.joined": "Mitarbeiter beigetreten"
+      },
+      "channel": {
+        "code": "Einladungscode",
+        "email": "E-Mail-Einladung",
+        "oauth": "Google-Anmeldung",
+        "email_verify": "E-Mail bestätigt",
+        "activate": "Aktivierung",
+        "bypass": "Verifiziert"
+      },
+      "reason": {
+        "eligibility_failure": "Erstattung (Berechtigung)",
+        "payment_intent_failed": "Zahlung abgelehnt",
+        "canceled": "Abgebrochen"
       }
     },
     "tips": {
       "eyebrow": "Umsatz",
       "title": "Trinkgelder",
-      "subtitle": "Live-Trinkgeldaktivität, Transaktionen und Echtzeit-Umsatzimpuls.",
+      "subtitle": "Aktivitätscenter, Transaktionen und Umsatzanalysen.",
       "analyticsHeaderSubtitle": "Executive-Reporting zu Umsatz, Trends, Exporten und Business Intelligence.",
       "navAria": "Trinkgeld-Bereiche",
       "nav": {
-        "live": "Live-Trinkgelder",
+        "live": "Aktivitätscenter",
         "transactions": "Transaktionen",
         "analytics": "Analysen"
       },
-      "liveDesc": "Operativer Stream: Trinkgelder, QR-Scans, Ziele und Team-Ereignisse in Echtzeit.",
+      "liveDesc": "Was gerade passiert: Trinkgelder, Scans, Ziele, Team und Zahlungen in chronologischer Reihenfolge.",
       "analyticsDesc": "Tiefenanalyse zu Umsatz, QR, Mitarbeiter, Standorte und Trends. Nach Zeitraum filtern und exportieren.",
       "live": {
         "cards": {
@@ -4669,14 +4743,7 @@
           "average": "Durchschnittliches Trinkgeld",
           "tipCount": "{{count}} Trinkgelder",
           "averageHint": "Basierend auf diesem Monat"
-        },
-        "feedTitle": "Live-Feed",
-        "feedEmpty": "Trinkgelder erscheinen hier, sobald Gäste zahlen.",
-        "anonymousGuest": "Gast-Trinkgeld",
-        "venueDefault": "Hauptbereich",
-        "liveBadge": "Aktiv",
-        "timelineTitle": "Aktivitäts-Timeline",
-        "mostRecent": "zuletzt"
+        }
       },
       "analytics": {
         "periodAria": "Analysezeitraum",
@@ -5257,11 +5324,11 @@
       "checkoutCanceled": "Checkout abgebrochen. Keine Änderungen.",
       "activationToast": {
         "trialTitle": "Testphase gestartet",
-        "trialBody": "🎉 Ihre 4-wöchige {{plan}}-Testphase ist jetzt aktiv.",
+        "trialBody": "Ihre 4-wöchige {{plan}}-Testphase ist jetzt aktiv.",
         "subscriptionTitle": "Abo aktiviert",
-        "subscriptionBody": "🎉 Ihr {{plan}}-Abo ist jetzt aktiv.",
+        "subscriptionBody": "Ihr {{plan}}-Abo ist jetzt aktiv.",
         "planUpdatedTitle": "Tarif aktualisiert",
-        "planUpdatedBody": "Ihr Abo wurde erfolgreich aktualisiert."
+        "planUpdatedBody": "Ihr Abo wurde aktualisiert."
       },
       "subscriptionSuccess": {
         "pollingTitle": "Abo wird aktiviert…",

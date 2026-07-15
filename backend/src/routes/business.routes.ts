@@ -4,6 +4,7 @@ import { authMiddleware, requireRole, requireVerifiedEmail } from "../middleware
 import { requireBusinessVerificationCapability } from "../middleware/requireBusinessVerificationCapability.middleware.js";
 import { requireCompletedOnboarding } from "../middleware/requireCompletedOnboarding.middleware.js";
 import * as businessController from "../controllers/business.controller.js";
+import * as activityController from "../controllers/activity.controller.js";
 import { businessUploadLogo, businessUploadVerification, businessUploadBanner } from "../middleware/businessUpload.middleware.js";
 import { requireBusinessLogoUpload } from "../middleware/requireBusinessLogoUpload.middleware.js";
 import { requireFeature } from "../services/subscriptionEntitlement.service.js";
@@ -172,6 +173,16 @@ router.get(
   requireRole(Role.MANAGER),
   requireCompletedOnboarding,
   businessController.getMyStats,
+);
+
+/** Activity Center — SSOT feed from BusinessActivityEvent (must precede /:businessId). */
+router.get(
+  "/activity",
+  authMiddleware,
+  requireVerifiedEmail,
+  requireRole(Role.MANAGER),
+  requireCompletedOnboarding,
+  activityController.listActivity,
 );
 
 router.get("/:businessId", businessController.getById);

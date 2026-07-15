@@ -194,6 +194,14 @@ export async function verifyEmailWithToken(plainToken: string): Promise<void> {
   }
 
   // Verify user first, then promote employees — never leave `active` without `email_verified`.
+  const pendingEmployees = await prisma.employee.findMany({
+    where: {
+      userId: row.userId,
+      activationStatus: "pending_verification",
+    },
+    select: { id: true, name: true, businessId: true },
+  });
+
   await prisma.$transaction(async (tx) => {
     await tx.user.update({
       where: { id: row.userId },
@@ -208,6 +216,20 @@ export async function verifyEmailWithToken(plainToken: string): Promise<void> {
     });
     await tx.emailVerificationToken.delete({ where: { id: row.id } });
   });
+
+  if (pendingEmployees.length > 0) {
+    void import("./activity/staffActivity.helpers.js").then(({ scheduleEmployeeJoinedProjection }) => {
+      for (const emp of pendingEmployees) {
+        scheduleEmployeeJoinedProjection({
+          businessId: emp.businessId,
+          employeeId: emp.id,
+          employeeName: emp.name,
+          employeeEmail: row.user.email,
+          channel: "email_verify",
+        });
+      }
+    });
+  }
 
   const email = row.user.email?.trim().toLowerCase();
   if (email) {

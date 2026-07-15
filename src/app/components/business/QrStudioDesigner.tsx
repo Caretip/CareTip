@@ -48,7 +48,6 @@ import { businessUi } from "@/app/components/business/businessDashboardUi";
 import { BusinessLogoMark } from "./BusinessLogoMark";
 import { resolveMediaUrl } from "../../lib/mediaUrl";
 
-const TOAST_OK = { style: { background: "hsl(var(--primary))", color: "hsl(var(--primary-foreground))" } } as const;
 const LOGO_MAX = 5 * 1024 * 1024;
 
 type StudioSection = "design" | "branding" | "qr" | "content" | "export";
@@ -99,8 +98,7 @@ export function QrStudioDesigner({ businessId, businessName, canEdit }: QrStudio
 
   const handleSave = async () => {
     const ok = await studio.save();
-    if (ok) toast.success(t("business.branding.toastSaved"), TOAST_OK);
-    else toast.error(t("business.branding.toastSaveError"));
+    if (!ok) toast.error(t("business.branding.toastSaveError"));
   };
 
   const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -113,7 +111,6 @@ export function QrStudioDesigner({ businessId, businessName, canEdit }: QrStudio
     }
     try {
       await studio.uploadLogo(file);
-      toast.success(t("business.branding.toastLogoSaved"), TOAST_OK);
     } catch (err) {
       toast.error(toUserFriendlyMessage(err));
     }

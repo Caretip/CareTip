@@ -327,9 +327,6 @@ export function AuthPage() {
         if (authLane === 'employee') {
           clearValidatedInviteContext();
         }
-        toast.success(t('auth.page.toastAccountCreated'), {
-          style: ROLE_MISMATCH_TOAST_STYLE,
-        });
         navigate('/verify-email', {
           replace: true,
           state: { pendingEmail: created.email, pendingRole: created.role },

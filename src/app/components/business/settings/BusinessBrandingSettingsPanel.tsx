@@ -49,7 +49,6 @@ import { isQrExportAllowed, type QrReliabilityReport } from "../../../lib/qrBran
 import { isQrModuleContrastSafe } from "../../../lib/qrReliability";
 import { QR_TEMPLATE_PRESETS } from "../../../lib/qrTemplateStyles";
 
-const TOAST_OK = { style: { background: "hsl(var(--primary))", color: "hsl(var(--primary-foreground))" } } as const;
 const LOGO_MAX = 5 * 1024 * 1024;
 const BANNER_MAX = 8 * 1024 * 1024;
 const QR_RELIABILITY_SAMPLE_URL = "https://caretip.app/qr-studio-scan-check";
@@ -219,7 +218,6 @@ export function BusinessBrandingSettingsPanel({ businessName, canEdit }: Busines
       await load();
       window.dispatchEvent(new Event("caretip-business-profile-changed"));
       notifyBusinessBrandingChanged();
-      toast.success(t("business.branding.toastLogoSaved"), TOAST_OK);
     } catch (err) {
       toast.error(toUserFriendlyMessage(err));
     }
@@ -242,7 +240,6 @@ export function BusinessBrandingSettingsPanel({ businessName, canEdit }: Busines
       trackBrandingClientEvent("branding_banner_uploaded");
       setBannerBust((b) => b + 1);
       await load();
-      toast.success(t("business.branding.toastBannerSaved"), TOAST_OK);
     } catch (err) {
       toast.error(toUserFriendlyMessage(err));
     }
@@ -326,7 +323,6 @@ export function BusinessBrandingSettingsPanel({ businessName, canEdit }: Busines
         trackBrandingClientEvent("branding_qr_v2_updated", { qrTemplate: next.qrTemplate });
       }
       notifyBusinessBrandingChanged();
-      toast.success(t("business.branding.toastSaved"), TOAST_OK);
     } catch (e) {
       toast.error(toUserFriendlyMessage(e));
     } finally {

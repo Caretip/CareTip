@@ -75,8 +75,6 @@ import {
 } from "../../lib/devAnalyticsMocks";
 import { isWalkthroughDemoEmployee } from "../../lib/walkthroughDemo";
 
-const TOAST_OK = { style: { background: "hsl(var(--primary))", color: "hsl(var(--primary-foreground))" } } as const;
-
 type AnalyticsTimeframe = "today" | "week" | "month";
 
 interface NewTipPayload {
@@ -207,9 +205,9 @@ export function EmployeeDashboard() {
       }, 900);
 
       playChaChingSound();
-      toast.success(t("employee.dashboard.toastNewTip"), TOAST_OK);
+      // Tip feedback: live metrics + sound + inbox toast (avoid duplicate Sonner).
     });
-  }, [socket, user?.role, user?.employeeId, refreshDashboardQuiet, t, applyLiveTip]);
+  }, [socket, user?.role, user?.employeeId, refreshDashboardQuiet, applyLiveTip]);
 
   const heroPayload = displayPayloadOrLatest ?? displayPayload;
 
@@ -365,7 +363,6 @@ export function EmployeeDashboard() {
         setEmployeeBusinessSlug(p.businessSlug ?? null);
         if (s) {
           setQrModalOpen(true);
-          toast.success(t("employee.dashboard.toastLinkReady"));
         } else {
           toast.error(t("employee.dashboard.toastLinkFail"));
         }

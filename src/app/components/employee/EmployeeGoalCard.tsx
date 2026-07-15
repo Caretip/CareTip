@@ -142,7 +142,6 @@ export const EmployeeGoalCard = forwardRef<EmployeeGoalCardHandle, Props>(functi
         goalPeriod: period,
         startDate: startDate.trim(),
       });
-      toast.success(t("employee.goalCard.toastGoalSaved"));
       setOpen(false);
       onUpdated();
     } catch (e) {
@@ -160,7 +159,6 @@ export const EmployeeGoalCard = forwardRef<EmployeeGoalCardHandle, Props>(functi
     setDeleting(true);
     try {
       await deleteEmployeeGoal();
-      toast.success(t("employee.goalCard.toastGoalRemoved"));
       setOpen(false);
       onUpdated();
     } catch (e) {
@@ -187,7 +185,6 @@ export const EmployeeGoalCard = forwardRef<EmployeeGoalCardHandle, Props>(functi
         goalPeriod: goal.goalPeriod,
         startDate: goal.startDate,
       });
-      toast.success(t("employee.goalCard.toastMarkedAchieved"));
       onUpdated();
     } catch (e) {
       logClientError("EmployeeGoalCard.markAchieved", e);

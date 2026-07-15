@@ -2,7 +2,8 @@ import { useBusinessAnalytics } from "./useBusinessAnalytics";
 import type { AnalyticsTimeframe } from "../lib/businessAnalytics";
 
 /**
- * @deprecated Prefer `useBusinessAnalytics` — retained for Live Tips and Top Performers activity slices.
+ * @deprecated Prefer `useBusinessAnalytics` — retained for Top Performers (and similar) analytics slices.
+ * Must NOT be used by the Activity Center (`/dashboard/tips/live`).
  */
 export type TipsPeriodSnapshot = import("../lib/businessAnalytics").AnalyticsPeriodSnapshot;
 

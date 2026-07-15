@@ -89,6 +89,14 @@ export async function applyEmailVerificationBypassIfEligible(
   if (row.emailVerified === true) return false;
   if (!qualifiesEmailVerificationBypass(row)) return false;
 
+  const pendingEmployees = await prisma.employee.findMany({
+    where: {
+      userId: row.id,
+      activationStatus: "pending_verification",
+    },
+    select: { id: true, name: true, businessId: true },
+  });
+
   await prisma.$transaction(async (tx) => {
     await tx.user.update({
       where: { id: row.id },
@@ -103,5 +111,19 @@ export async function applyEmailVerificationBypassIfEligible(
     });
     await tx.emailVerificationToken.deleteMany({ where: { userId: row.id } });
   });
+
+  if (pendingEmployees.length > 0) {
+    void import("./activity/staffActivity.helpers.js").then(({ scheduleEmployeeJoinedProjection }) => {
+      for (const emp of pendingEmployees) {
+        scheduleEmployeeJoinedProjection({
+          businessId: emp.businessId,
+          employeeId: emp.id,
+          employeeName: emp.name,
+          employeeEmail: row.email,
+          channel: "bypass",
+        });
+      }
+    });
+  }
   return true;
 }
