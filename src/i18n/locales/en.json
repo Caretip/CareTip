@@ -2651,7 +2651,16 @@
         "tips",
         "business"
       ],
-      "heroTagline": "Caring is Tipping"
+      "heroTagline": "Caring is Tipping",
+      "heroTrust": {
+        "aria": "Why businesses trust CareTip",
+        "items": [
+          "Secure payments",
+          "Contactless tipping",
+          "GDPR compliant",
+          "No setup fees"
+        ]
+      }
     },
     "simpleSetup": {
       "pill": "Setup in minutes",

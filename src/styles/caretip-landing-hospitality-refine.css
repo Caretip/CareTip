@@ -6,7 +6,7 @@
 .caretip-landing #built-for-hospitality.caretip-landing-hospitality {
   position: relative;
   isolation: isolate;
-  padding-top: clamp(3.5rem, 8vw, 6.5rem);
+  padding-top: clamp(4.75rem, 10vw, 8rem);
   padding-bottom: clamp(4rem, 9vw, 7rem);
   margin-top: 0;
 }

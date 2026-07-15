@@ -205,9 +205,13 @@ html.dark .caretip-landing .caretip-hero-float-pill svg {
   align-items: center;
   justify-content: center;
   text-align: center;
-  height: 2.625rem;
-  min-height: 2.625rem;
+  height: 3rem;
+  min-height: 3rem;
   line-height: 1.15;
+  border-radius: 0.875rem;
+  box-shadow:
+    0 1px 2px rgb(180 90 20 / 0.1),
+    0 6px 16px rgb(233 120 28 / 0.16);
 }
 
 .caretip-landing .caretip-hero-cta-unit {

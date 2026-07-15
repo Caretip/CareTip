@@ -31,7 +31,7 @@ export const CARETIP_LOGO_SIZE_CLASS = {
   small: "w-[72px] max-w-[80px] h-auto",
   medium: "w-[112px] h-auto max-w-full",
   large: "w-[148px] h-auto max-w-full",
-  nav: "w-[112px] lg:w-[148px] h-auto max-w-full",
+  nav: "w-[118px] lg:w-[156px] h-auto max-w-full",
   /** Marketing nav with tagline — slightly wider for legibility */
   navTagline: "w-[132px] lg:w-[172px] h-auto max-w-full",
   sidebar: "w-[128px] h-auto max-w-full",

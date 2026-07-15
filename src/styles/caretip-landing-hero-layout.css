@@ -56,7 +56,7 @@
 .caretip-landing .caretip-hero-grid {
   --caretip-hero-headline-measure: min(100%, 21.5rem);
   --caretip-hero-body-measure: min(100%, 36rem);
-  --caretip-hero-gap-tagline: clamp(0.75rem, 1.5vw, 1.25rem);
+  --caretip-hero-gap-tagline: clamp(1rem, 1.75vw, 1.5rem);
   --caretip-hero-tagline-size: var(--caretip-tagline-size);
   --caretip-hero-gap-headline-body: var(--caretip-narrative-gap-headline-lead);
   --caretip-hero-gap-body-copy: var(--caretip-narrative-gap-lead-lines);

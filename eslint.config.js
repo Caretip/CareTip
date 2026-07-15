@@ -23,6 +23,7 @@ export default tseslint.config(
       "public/firebase-messaging-sw.js",
       "public/fcm-sw-handler.js",
       "public/theme-init.js",
+      "public/boot-locale.js",
     ],
   },
   eslint.configs.recommended,

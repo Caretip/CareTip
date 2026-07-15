@@ -41,9 +41,9 @@ function cnHeroSubtitle(layout: string) {
   return `${landingLeadCopy} ${layout}`;
 }
 
-/** Clears fixed nav + compact gap below nav (mobile includes safe-area). */
+/** Clears fixed nav + premium breathing room below nav (mobile includes safe-area). */
 const heroSectionPadTop =
-  "max-lg:pt-[calc(4.875rem+env(safe-area-inset-top,0px)+0.5rem)] max-lg:pb-2 lg:pt-[calc(6.5rem+1.2rem)] lg:pb-6 xl:pb-8";
+  "max-lg:pt-[calc(5.25rem+env(safe-area-inset-top,0px)+0.75rem)] max-lg:pb-4 lg:pt-[calc(6.75rem+1.75rem)] lg:pb-10 xl:pb-12";
 /** Mobile-first stack rhythm between headline, lead, actions, and mockup. */
 const heroStackGapMobile = "mt-6 md:mt-7";
 /** Tighter gap above product shot on stacked mobile hero */
@@ -89,7 +89,7 @@ function cnCta(layout: string) {
 
 /** Primary / secondary CTA sizing — shared across hero, sections, and nav. */
 const ctaPrimarySize =
-  "h-11 min-h-11 lg:h-12 lg:min-h-12 px-7 lg:px-8 max-lg:min-w-[12.75rem] max-lg:max-w-[min(100%,280px)] lg:min-w-[12.5rem]";
+  "h-12 min-h-12 lg:h-[3.25rem] lg:min-h-[3.25rem] px-8 lg:px-9 max-lg:min-w-[12.75rem] max-lg:max-w-[min(100%,280px)] lg:min-w-[13rem]";
 const ctaSecondarySize =
   "h-11 min-h-11 lg:h-12 lg:min-h-12 px-6 max-lg:min-w-[11.5rem] max-lg:max-w-[min(100%,260px)] lg:min-w-[10.5rem]";
 
@@ -234,9 +234,9 @@ export const landingUi = {
   heroTagline:
     "caretip-hero-brand-tagline caretip-hero-message__tagline inline-flex w-fit max-w-full items-center gap-2.5 text-left",
   heroTaglineText:
-    "caretip-hero-brand-tagline__text font-sans font-medium text-[0.8125rem] leading-snug tracking-[0.08em] text-primary dark:text-primary sm:text-sm sm:tracking-[0.09em]",
+    "caretip-hero-brand-tagline__text font-sans font-medium text-[0.8125rem] leading-snug tracking-[0.1em] text-primary dark:text-primary sm:text-[0.875rem] sm:tracking-[0.11em]",
   heroTaglineAccent:
-    "caretip-hero-brand-tagline__accent h-px w-5 shrink-0 bg-gradient-to-r from-primary via-primary/70 to-transparent sm:w-6",
+    "caretip-hero-brand-tagline__accent size-1.5 shrink-0 rounded-full bg-primary shadow-[0_0_0_3px_rgba(233,120,28,0.16)]",
   heroHeadline: cnHeroHeadline(
     "caretip-hero-headline caretip-hero-headline-anchor w-full antialiased text-left max-lg:mx-0",
   ),
@@ -258,11 +258,13 @@ export const landingUi = {
   heroActionCluster:
     `relative z-10 flex w-full flex-col items-start ${heroStackGapMobile} max-md:gap-0 max-md:pb-0 md:!mt-4 md:max-w-none md:gap-4`,
   heroBenefits:
-    "!mt-0 w-full max-md:gap-2.5 max-md:[&_li]:!text-feature-copy max-md:[&_li]:!font-medium max-md:[&_li]:leading-snug md:max-w-none md:gap-2.5 md:[&_li]:!font-medium md:[&_li]:!text-feature-copy",
+    "caretip-hero-benefits !mt-0 w-full",
+  heroTrust:
+    "caretip-hero-trust",
   heroCtaRow:
     "caretip-hero-cta-row caretip-landing-cta-row relative z-10 flex w-full flex-col gap-2 [&_a]:no-underline max-lg:items-center max-lg:justify-center lg:items-start",
   heroCtaUnit:
-    "caretip-hero-cta-unit caretip-landing-cta-unit flex w-full max-w-[min(100%,17.5rem)] flex-col items-stretch gap-0.5 max-lg:mx-auto lg:max-w-[15rem]",
+    "caretip-hero-cta-unit caretip-landing-cta-unit flex w-full max-w-[min(100%,18.5rem)] flex-col items-stretch gap-0.5 max-lg:mx-auto lg:max-w-[16.5rem]",
   heroCtaHint:
     "caretip-hero-cta-hint caretip-landing-cta-hint w-full text-center text-[10px] font-medium leading-[1.25] tracking-[0.02em] text-muted-foreground sm:text-[11px] sm:leading-[1.3]",
   sectionCtaCluster:
@@ -276,7 +278,7 @@ export const landingUi = {
     `${caretipBtnSecondary} caretip-section-cta-button inline-flex items-center justify-center gap-1.5 text-center no-underline ${sectionCtaSize} ${sectionCtaWidth}`,
   ),
   heroCtaPrimary: cnCtaPrimary(
-    `${caretipBtnPrimary} caretip-hero-cta-button w-full min-w-0 items-center justify-center text-center no-underline ${ctaPrimarySize} max-lg:mx-auto max-lg:max-w-[min(100%,17.5rem)] lg:max-w-none`,
+    `${caretipBtnPrimary} caretip-hero-cta-button w-full min-w-0 items-center justify-center text-center no-underline ${ctaPrimarySize} max-lg:mx-auto max-lg:max-w-[min(100%,18.5rem)] lg:max-w-none`,
   ),
   navCtaPrimary: cnCtaPrimary(`${caretipBtnPrimaryCompact} no-underline`),
   heroCtaSecondary: cnCta(

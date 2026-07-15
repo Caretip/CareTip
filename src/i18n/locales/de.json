@@ -2648,7 +2648,16 @@
       "heroHeadlineMobile": "Mehr Trinkgeld für dein Team.\nNull Aufwand für dein Business.",
       "heroHeadlineHighlight": "Trinkgeld",
       "heroHeadlineHighlights": ["Trinkgeld", "Business"],
-      "heroTagline": "Caring is Tipping"
+      "heroTagline": "Caring is Tipping",
+      "heroTrust": {
+        "aria": "Warum Betriebe CareTip vertrauen",
+        "items": [
+          "Sichere Zahlungen",
+          "Kontaktloses Trinkgeld",
+          "DSGVO-konform",
+          "Keine Einrichtungsgebühr"
+        ]
+      }
     },
     "simpleSetup": {
       "pill": "Einrichtung in Minuten",

@@ -82,7 +82,7 @@ export const Navigation = memo(function Navigation({ variant: _variant = "defaul
   );
 
   const linkClass = cn(
-    "caretip-public-nav-link text-sm font-semibold text-foreground transition-[color,background-color,opacity] duration-200",
+    "caretip-public-nav-link text-sm font-semibold tracking-[-0.01em] text-foreground transition-[color,background-color,opacity] duration-200",
     "hover:text-primary active:opacity-85 rounded-lg px-2.5 py-1.5 hover:bg-muted/60",
   );
 
@@ -232,15 +232,15 @@ export const Navigation = memo(function Navigation({ variant: _variant = "defaul
         )}
       >
         <nav
-          className="relative mx-auto max-w-7xl min-h-0 min-w-0 px-4 py-2 sm:px-6 sm:py-2.5 lg:px-8 lg:py-3.5"
+          className="relative mx-auto max-w-7xl min-h-0 min-w-0 px-4 py-2.5 sm:px-6 sm:py-3 lg:px-8 lg:py-3.5"
           aria-label={t("nav.mainNav")}
         >
-          <div className="relative flex min-h-0 min-w-0 max-w-full items-center justify-between gap-2 sm:gap-4">
+          <div className="relative flex min-h-0 min-w-0 max-w-full items-center justify-between gap-3 sm:gap-5">
             <PrefetchLink
               to="/"
               className={cn(
                 "relative z-[2] flex h-[3.5rem] min-h-[3.5rem] min-w-0 items-center overflow-hidden rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-primary/40 sm:h-[3.5rem] sm:min-h-[3.5rem] md:h-16 md:min-h-[4rem] lg:h-16 lg:min-h-[4rem] xl:h-[4.25rem] xl:min-h-[4.25rem]",
-                "max-w-[calc(100%-5.5rem)] shrink-0 md:max-w-[min(240px,42vw)] lg:max-w-[min(260px,36vw)]",
+                "max-w-[calc(100%-5.5rem)] shrink-0 md:max-w-[min(248px,42vw)] lg:max-w-[min(268px,36vw)]",
                 "touch-manipulation",
               )}
             >
@@ -248,7 +248,7 @@ export const Navigation = memo(function Navigation({ variant: _variant = "defaul
             </PrefetchLink>
 
             <div
-              className="pointer-events-none absolute left-1/2 top-1/2 z-[1] hidden -translate-x-1/2 -translate-y-1/2 items-center gap-6 lg:pointer-events-auto lg:flex xl:gap-8"
+              className="pointer-events-none absolute left-1/2 top-1/2 z-[1] hidden -translate-x-1/2 -translate-y-1/2 items-center gap-7 lg:pointer-events-auto lg:flex xl:gap-9"
               aria-hidden={false}
             >
               {navLinks.map((link) => (
@@ -265,7 +265,7 @@ export const Navigation = memo(function Navigation({ variant: _variant = "defaul
               ))}
             </div>
 
-            <div className="relative z-[2] hidden items-center gap-3 lg:flex shrink-0">
+            <div className="relative z-[2] hidden items-center gap-3.5 lg:flex shrink-0">
               <ThemeQuickToggle />
               <LanguageSwitcher />
               <PrefetchLink

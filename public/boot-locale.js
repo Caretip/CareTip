@@ -13,7 +13,7 @@
     try {
       var v = global.localStorage.getItem(STORAGE_KEY);
       if (v === "en" || v === "de") return v;
-    } catch (_) {
+    } catch {
       /* ignore */
     }
     return "de";
@@ -49,4 +49,8 @@
       return COPY[lng === "en" ? "en" : "de"];
     },
   };
-})(typeof window !== "undefined" ? window : this);
+})(
+  typeof globalThis !== "undefined" && typeof globalThis.window !== "undefined"
+    ? globalThis.window
+    : globalThis,
+);

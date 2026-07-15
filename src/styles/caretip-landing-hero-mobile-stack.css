@@ -48,17 +48,18 @@
    */
   .caretip-landing .caretip-hero-section--full-bg {
     --caretip-hero-mobile-gutter: 1.25rem;
-    --caretip-hero-fullbg-min-h: clamp(22rem, 82vh, 88vh);
-    --caretip-hero-fullbg-content-max: min(100%, 20.5rem);
+    --caretip-hero-fullbg-min-h: clamp(24rem, 84vh, 90vh);
+    --caretip-hero-fullbg-content-max: min(100%, 21rem);
     --caretip-hero-fullbg-headline-size: clamp(2.1875rem, 7.4vw, 2.75rem);
     --caretip-hero-body-size: clamp(1rem, 2.8vw, 1.0625rem);
     --caretip-hero-body-lh: 1.55;
-    --caretip-hero-gap-headline-body: 0.875rem;
-    --caretip-hero-gap-body-cta: 1.625rem;
-    --caretip-hero-subtitle-measure: min(100%, 15.75rem);
-    --caretip-hero-line-gap: 0.2rem;
-    /* Reserved band for tip panel under CTA (generous clearance) */
-    --caretip-hero-mobile-tip-clearance: clamp(6.25rem, 20vh, 8.5rem);
+    --caretip-hero-gap-tagline: 0.875rem;
+    --caretip-hero-gap-headline-body: 0.9375rem;
+    --caretip-hero-gap-body-cta: 1.5rem;
+    --caretip-hero-gap-cta-trust: 0.875rem;
+    --caretip-hero-gap-trust-benefits: 1.125rem;
+    --caretip-hero-subtitle-measure: min(100%, 18rem);
+    --caretip-hero-line-gap: 0.25rem;
     min-height: var(--caretip-hero-fullbg-min-h);
     height: auto;
     max-height: none;
@@ -66,10 +67,8 @@
     flex-direction: column;
     align-items: stretch;
     justify-content: flex-start;
-    padding-top: calc(4.875rem + env(safe-area-inset-top, 0px)) !important;
-    padding-bottom: calc(
-      var(--caretip-hero-mobile-tip-clearance) + env(safe-area-inset-bottom, 0px)
-    ) !important;
+    padding-top: calc(5.5rem + env(safe-area-inset-top, 0px)) !important;
+    padding-bottom: calc(2.75rem + env(safe-area-inset-bottom, 0px)) !important;
     overflow: hidden;
   }
 
@@ -151,21 +150,31 @@
 
   .caretip-landing .caretip-hero-section--full-bg .caretip-hero-benefits {
     font-size: 0.875rem;
-    gap: 0.0625rem;
-    line-height: 1.28;
+    gap: 0.5rem;
+    line-height: 1.3;
+    margin-top: var(--caretip-hero-gap-trust-benefits);
   }
 
   .caretip-landing .caretip-hero-section--full-bg .caretip-hero-benefits__item {
     white-space: normal;
   }
 
+  .caretip-landing .caretip-hero-section--full-bg .caretip-hero-trust {
+    gap: 0.5rem 0.875rem;
+    max-width: min(100%, 18rem);
+  }
+
+  .caretip-landing .caretip-hero-section--full-bg .caretip-hero-trust__item {
+    font-size: 0.6875rem;
+  }
+
   .caretip-landing .caretip-hero-section--full-bg .caretip-hero-brand-tagline {
-    --caretip-hero-gap-tagline: 0.75rem;
+    --caretip-hero-gap-tagline: 0.875rem;
   }
 
   .caretip-landing .caretip-hero-section--full-bg .caretip-hero-brand-tagline__text {
     font-size: 0.75rem;
-    letter-spacing: 0.085em;
+    letter-spacing: 0.1em;
   }
 
   .caretip-landing .caretip-hero-section--full-bg .caretip-hero-headline {
@@ -287,13 +296,7 @@
 @media (max-width: 380px) {
   .caretip-landing .caretip-hero-section--full-bg {
     --caretip-hero-fullbg-headline-size: 2.125rem;
-    --caretip-hero-fullbg-min-h: clamp(20.5rem, 80vh, 86vh);
-    --caretip-hero-mobile-tip-clearance: clamp(5.75rem, 22vh, 7.75rem);
-  }
-
-  .caretip-landing .caretip-hero-section--full-bg .caretip-hero-tip-panel {
-    width: min(8.75rem, 38vw);
-    right: 0.5rem;
+    --caretip-hero-fullbg-min-h: clamp(22rem, 80vh, 88vh);
   }
 }
 
