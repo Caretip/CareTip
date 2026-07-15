@@ -3,7 +3,7 @@ import { flushSync } from "react-dom";
 import { useNavigate, Link, useLocation } from "react-router";
 import { useTranslation } from "react-i18next";
 import { Eye, EyeOff, Loader2, ShieldCheck } from "lucide-react";
-import { CareTipLogo, CARE_TIP_LOGO_AUTH_SURFACE_CLASS } from "../../components/CareTipLogo";
+import { AuthCardBrandMark } from "@/app/components/auth/AuthCardBrandMark";
 import { useAuth, getPostAuthRedirect } from "../../hooks/useAuth";
 import { toUserFriendlyMessage } from "../../lib/errorMessages";
 import { isApiRequestError, EMAIL_NOT_VERIFIED_CODE } from "../../lib/apiError";
@@ -245,11 +245,7 @@ export function PlatformAdminLoginPage() {
             <AuthBackToHomeNav className="caretip-auth-back-home--standalone" showLogo={false} />
             <div className="caretip-auth-card">
               <div className="caretip-auth-header !mb-5">
-                <div
-                  className={cn(CARE_TIP_LOGO_AUTH_SURFACE_CLASS, "caretip-auth-logo-wrap caretip-auth-logo-wrap--card")}
-                >
-                  <CareTipLogo size="auth" align="center" className="caretip-auth-marketing__logo" />
-                </div>
+                <AuthCardBrandMark />
                 <h1 className="caretip-auth-title">{t("admin.loginPage.title")}</h1>
                 <div className="mt-2 flex flex-wrap items-center justify-center gap-2">
                   <span className="inline-flex items-center gap-1 rounded-full border border-primary/20 bg-primary/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-primary">

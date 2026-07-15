@@ -3,7 +3,7 @@
  * Used by preview, PNG export, and PDF export (via qrBranded).
  */
 
-import caretipLogoUrl from "@/assets/brand/company_logo.png";
+import caretipLogoUrl from "@/assets/brand/App-Icon_L.png";
 import {
   maxSafeLogoWidth,
   QR_ERROR_CORRECTION_LEVEL,

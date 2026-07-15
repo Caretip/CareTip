@@ -98,7 +98,7 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        padding: 0.25rem;
+        padding: 0.35rem;
       }
 
       .caretip-html-boot__mark::before {
@@ -116,34 +116,21 @@
         pointer-events: none;
       }
 
-      .caretip-html-boot__title {
+      .caretip-html-boot__mark img {
         position: relative;
         z-index: 1;
-        margin: 0;
-        font-size: 1.5rem;
-        font-weight: 700;
-        line-height: 1;
-        letter-spacing: -0.025em;
-        user-select: none;
+        width: 4rem;
+        height: 4rem;
+        object-fit: contain;
+        display: block;
         animation: caretip-html-boot-pulse 2.2s ease-in-out infinite;
       }
 
       @media (min-width: 640px) {
-        .caretip-html-boot__title {
-          font-size: 1.875rem;
+        .caretip-html-boot__mark img {
+          width: 4.5rem;
+          height: 4.5rem;
         }
-      }
-
-      .caretip-html-boot__care {
-        color: #eb992c;
-      }
-
-      .caretip-html-boot__tip {
-        color: #525252;
-      }
-
-      html.dark .caretip-html-boot__tip {
-        color: #a3a3a3;
       }
 
       .caretip-html-boot__copy {
@@ -188,7 +175,7 @@
 
       @media (prefers-reduced-motion: reduce) {
         .caretip-html-boot__mark::before,
-        .caretip-html-boot__title {
+        .caretip-html-boot__mark img {
           animation: none;
         }
       }
@@ -212,22 +199,25 @@
       fetchpriority="high"
     />
     <link rel="stylesheet" href="/caretip-font-faces.css" />
+    <link rel="icon" type="image/svg+xml" href="/brand/caretip-app-icon.svg" />
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
     <link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png" />
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+    <meta property="og:image" content="/brand/caretip-logo-tagline.png" />
+    <meta name="twitter:image" content="/brand/caretip-logo-tagline.png" />
     <script src="/theme-init.js"></script>
+    <script src="/boot-locale.js"></script>
   </head>
 
   <body style="margin: 0; background-color: #fcfbf8">
     <div id="caretip-html-boot" role="status" aria-label="CareTip" aria-busy="true" hidden>
       <div class="caretip-html-boot__mark" aria-hidden="true">
-        <p class="caretip-html-boot__title">
-          <span class="caretip-html-boot__care">Care</span><span class="caretip-html-boot__tip">Tip</span>
-        </p>
+        <img src="/brand/caretip-app-icon.svg" width="72" height="72" alt="" />
       </div>
       <div class="caretip-html-boot__copy">
-        <p class="caretip-html-boot__message" id="caretip-html-boot-message">Preparing your experience…</p>
-        <p class="caretip-html-boot__sub">This will only take a moment.</p>
+        <!-- Filled synchronously from boot-locale.js before reveal — never English-then-DE. -->
+        <p class="caretip-html-boot__message" id="caretip-html-boot-message"></p>
+        <p class="caretip-html-boot__sub" id="caretip-html-boot-sub"></p>
       </div>
     </div>
     <script>
@@ -310,22 +300,30 @@
           return false;
         }
 
-        function customerBootMessage(path) {
-          if (path === "/payment") return "Preparing secure checkout...";
-          if (path === "/success" || path === "/rating") return "Confirming your tip...";
-          if (path === "/tip-complete") return "Finishing up...";
-          return "Opening your tip page...";
+        function customerBootKey(path) {
+          if (path === "/payment") return "checkout";
+          if (path === "/success" || path === "/rating") return "stripeReturn";
+          if (path === "/tip-complete") return "finishing";
+          return "tipPage";
         }
 
-        function resolveBootMessage(path, standalone) {
-          if (standalone) return "Starting CareTip...";
-          if (isCustomerPath(path)) return customerBootMessage(path);
-          if (MARKETING[path]) return "Preparing your experience…";
-          if (AUTH[path] || path.indexOf("/reset-password/") === 0) {
-            return "Checking your session...";
-          }
-          if (path.indexOf("/platform-admin") === 0) return "Checking your session...";
-          return "Starting CareTip...";
+        function resolveBootKey(path, standalone) {
+          if (standalone) return "starting";
+          if (isCustomerPath(path)) return customerBootKey(path);
+          if (MARKETING[path]) return "landing";
+          if (AUTH[path] || path.indexOf("/reset-password/") === 0) return "sessionCheck";
+          if (path.indexOf("/platform-admin") === 0) return "sessionCheck";
+          return "starting";
+        }
+
+        var bootLocale = window.CareTipBootLocale;
+        var lng = bootLocale ? bootLocale.readBootLanguage() : "de";
+        var copy = bootLocale ? bootLocale.getCopy(lng) : null;
+
+        try {
+          document.documentElement.setAttribute("lang", lng);
+        } catch (_) {
+          /* ignore */
         }
 
         var path = pathOnly();
@@ -333,9 +331,14 @@
         if (!el) return;
 
         var standalone = isStandalone();
+        var key = resolveBootKey(path, standalone);
         var messageEl = document.getElementById("caretip-html-boot-message");
-        if (messageEl) {
-          messageEl.textContent = resolveBootMessage(path, standalone);
+        var subEl = document.getElementById("caretip-html-boot-sub");
+        if (messageEl && copy) {
+          messageEl.textContent = copy[key] || copy.starting;
+        }
+        if (subEl && copy) {
+          subEl.textContent = copy.onlyAMoment;
         }
 
         el.removeAttribute("hidden");

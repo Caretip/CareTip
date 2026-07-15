@@ -2,6 +2,7 @@ import { Link } from "react-router";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
 import { AuthSplitLayout } from "./AuthSplitLayout";
+import { AuthCardBrandMark } from "./AuthCardBrandMark";
 import type { AuthLane, AuthMarketingScene } from "./authMarketingContent";
 
 type AuthRecoveryLayoutProps = {
@@ -43,6 +44,7 @@ export function AuthRecoveryLayout({
       >
         <div className="caretip-auth-recovery-inner">
           <div className="caretip-auth-card caretip-auth-card--stable caretip-auth-card--recovery caretip-auth-card--verify-email">
+            <AuthCardBrandMark />
             {title ? (
               <div className="caretip-auth-header caretip-auth-header--verify !mb-3">
                 <h1 className="caretip-auth-title !pt-0">{title}</h1>

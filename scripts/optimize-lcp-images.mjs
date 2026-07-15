@@ -18,7 +18,6 @@ const EXPLICIT_TARGETS = [
   { inPath: "images/wyo.png", maxWidth: 1344 },
   { inPath: "images/formemobile01.jpeg", maxWidth: 960 },
   { inPath: "images/formemobile02.jpeg", maxWidth: 960 },
-  { inPath: "src/assets/brand/company_logo.png", maxWidth: 640, logoPng: true },
   { inPath: "images/caring002.png", maxWidth: 1200 },
   { inPath: "images/payment-infrastructure.png", maxWidth: 1200 },
   { inPath: "images/payment002.png", maxWidth: 960 },

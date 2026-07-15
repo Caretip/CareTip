@@ -226,7 +226,7 @@
       "pageAria": "CareTip kontaktieren",
       "eyebrow": "Kontakt",
       "headline": "Lassen Sie uns Ihrem Betrieb zum Erfolg verhelfen.",
-      "supportingText": "Ob Demo, Produktfragen oder technischer Support — unser Team ist für Sie da.",
+      "supportingText": "Ob Demo, Produktfragen oder technischer Support, unser Team ist für Sie da.",
       "backToChooser": "Zurück zu den Kontaktoptionen",
       "servicesAria": "Wie wir helfen können",
       "trust": {
@@ -2648,7 +2648,7 @@
       "heroHeadlineMobile": "Mehr Trinkgeld für dein Team.\nNull Aufwand für dein Business.",
       "heroHeadlineHighlight": "Trinkgeld",
       "heroHeadlineHighlights": ["Trinkgeld", "Business"],
-      "heroTagline": ""
+      "heroTagline": "Caring is Tipping"
     },
     "simpleSetup": {
       "pill": "Einrichtung in Minuten",
@@ -3576,7 +3576,6 @@
       "action": "QR Links beheben"
     },
     "shell": {
-      "demoRibbon": "Demo-Tour: Beispielbetrieb, Team, Tische und Trinkgelder dienen nur Produkttouren und betreffen keine anderen Konten.",
       "sidebarAria": "Unternehmens-Dashboard-Navigation",
       "navAria": "Hauptnavigation"
     },

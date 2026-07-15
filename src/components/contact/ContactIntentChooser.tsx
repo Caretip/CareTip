@@ -46,13 +46,8 @@ export function ContactIntentChooser({ onSelect, className }: ContactIntentChoos
         </p>
       </header>
 
-      <div
-        className="caretip-contact-hero-rule caretip-contact-reveal caretip-contact-reveal--3"
-        aria-hidden
-      />
-
       <ul
-        className="caretip-contact-hero-trust caretip-contact-reveal caretip-contact-reveal--4"
+        className="caretip-contact-hero-trust caretip-contact-reveal caretip-contact-reveal--3"
         aria-label={t("staticPages.contact.trust.aria")}
       >
         {CONTACT_TRUST_KEYS.map((key) => (

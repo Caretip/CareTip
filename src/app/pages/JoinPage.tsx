@@ -5,6 +5,7 @@ import { KeyRound } from "lucide-react";
 import { AuthErrorSlot, AuthStableSubmitButton } from "@/app/components/auth/AuthFormStability";
 import { AuthFieldGroup } from "@/app/components/auth/AuthFieldGroup";
 import { AuthSplitLayout } from "@/app/components/auth/AuthSplitLayout";
+import { AuthCardBrandMark } from "@/app/components/auth/AuthCardBrandMark";
 import { AuthTrustStrip } from "@/app/components/auth/AuthTrustStrip";
 import { validateInviteCode } from "../lib/api";
 import { toUserFriendlyMessage } from "../lib/errorMessages";
@@ -49,6 +50,7 @@ export function JoinPage() {
       <AuthSplitLayout authLane="employee" marketingScene="invite">
         <div className="caretip-auth-card-wrap">
           <div className="caretip-auth-card caretip-auth-card--stable caretip-auth-card--recovery">
+            <AuthCardBrandMark />
             <div className="caretip-auth-header">
               <p className="text-sm font-semibold text-primary">{t("join.eyebrow")}</p>
               <h1 className="caretip-auth-title !pt-2">{t("join.title")}</h1>

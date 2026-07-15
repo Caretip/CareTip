@@ -1,7 +1,7 @@
-import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
 import { AuthSplitLayout } from "@/app/components/auth/AuthSplitLayout";
+import { AuthCardBrandMark } from "@/app/components/auth/AuthCardBrandMark";
 
 export type AuthRole = "business" | "employee";
 
@@ -87,6 +87,8 @@ export function SignInCard2({
             sessionActive && "caretip-auth-card--session-resume",
           )}
         >
+          <AuthCardBrandMark />
+
           {showFormHeadline ? (
             <div className="caretip-auth-header">
               <h1 className="caretip-auth-title">{title}</h1>

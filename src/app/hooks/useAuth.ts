@@ -463,7 +463,10 @@ export function useAuth() {
     authDebug("logout_click", { t: clickStartedAt });
 
     const snapshot = captureLogoutSnapshot();
-    beginAuthLogoutTransition(snapshot.loginPath);
+    // Force AppLoadingManager + guards to commit overlay cover before session teardown / RR transition.
+    flushSync(() => {
+      beginAuthLogoutTransition(snapshot.loginPath);
+    });
     markLogoutPending();
     // Warm the same lazy promise RR will await so logout overlay covers chunk+CSS load.
     prefetchAuthLoginRoute(snapshot.loginPath);

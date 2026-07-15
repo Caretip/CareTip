@@ -55,6 +55,25 @@ ${inner}
 }
 
 export function emailBrandMark(brand: string): string {
+  const origin = (
+    process.env.FRONTEND_URL ||
+    process.env.NEXT_PUBLIC_APP_URL ||
+    process.env.VITE_APP_URL ||
+    process.env.BASE_URL ||
+    ""
+  )
+    .trim()
+    .replace(/\/$/, "");
+  const logoSrc = origin
+    ? `${origin}/brand/caretip-logo-primary.png`
+    : "";
+
+  if (logoSrc) {
+    return `<tr><td style="padding:0 0 20px;text-align:center;">
+<img src="${esc(logoSrc)}" width="160" height="50" alt="${esc(brand)}" style="display:inline-block;width:160px;max-width:48%;height:auto;border:0;outline:none;text-decoration:none;" />
+</td></tr>`;
+  }
+
   return `<tr><td style="padding:0 0 20px;text-align:center;">
 <span style="font-size:12px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:${EMAIL.brandOrange};">${esc(brand)}</span>
 </td></tr>`;

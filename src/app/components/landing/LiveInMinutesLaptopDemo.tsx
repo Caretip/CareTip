@@ -6,7 +6,7 @@ import { useMinWidthMedia } from "@/lib/motionPerf";
 import { usePrefersReducedMotion } from "@/lib/usePrefersReducedMotion";
 import { landingCopyVisible } from "@/components/landing/landingUi";
 import { LandingReveal } from "@/components/landing/LandingReveal";
-import caretipLogo from "@/assets/brand/company_logo.png";
+import caretipLogo from "@/assets/brand/CareTip_Primary.svg";
 import { LiveInMinutesOnboardingPhone } from "@/app/components/landing/LiveInMinutesOnboardingPhone";
 
 export const LIVE_DEMO_SLIDE_IDS = ["signup", "team", "qr", "dashboard"] as const;

@@ -56,7 +56,7 @@
 .caretip-landing .caretip-hero-grid {
   --caretip-hero-headline-measure: min(100%, 21.5rem);
   --caretip-hero-body-measure: min(100%, 36rem);
-  --caretip-hero-gap-tagline: 0.5rem;
+  --caretip-hero-gap-tagline: clamp(0.75rem, 1.5vw, 1.25rem);
   --caretip-hero-tagline-size: var(--caretip-tagline-size);
   --caretip-hero-gap-headline-body: var(--caretip-narrative-gap-headline-lead);
   --caretip-hero-gap-body-copy: var(--caretip-narrative-gap-lead-lines);
@@ -164,7 +164,21 @@
   margin-bottom: var(--caretip-hero-gap-tagline);
 }
 
-/* Hero tagline — identical EN + DE (design-system tagline scale, not 11px accent default) */
+/* Premium brand label — “Caring is Tipping” (eyebrow, not a second headline) */
+.caretip-landing .caretip-hero-brand-tagline {
+  margin: 0; /* bottom gap via .caretip-hero-message__tagline */
+  opacity: 0.96;
+}
+
+.caretip-landing .caretip-hero-section--full-bg .caretip-hero-brand-tagline__text {
+  text-shadow: 0 1px 0 rgb(255 248 240 / 0.35);
+}
+
+html.dark .caretip-landing .caretip-hero-section--full-bg .caretip-hero-brand-tagline__text {
+  text-shadow: none;
+}
+
+/* Legacy: LandingSectionAccent-based hero tagline (grid hero) */
 .caretip-landing .caretip-hero-message__tagline [data-landing-accent] > span:last-child {
   font-size: var(--caretip-hero-tagline-size) !important;
   letter-spacing: 0.06em !important;

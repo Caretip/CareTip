@@ -6,8 +6,9 @@
   "scripts": {
     "generate-pwa-icons": "node scripts/generate-pwa-icons.mjs",
     "sync-font-assets": "node scripts/sync-font-assets.mjs",
-    "prebuild": "node scripts/generate-pwa-icons.mjs && node scripts/sync-font-assets.mjs && node scripts/optimize-lcp-images.mjs && node scripts/generate-fcm-sw.mjs",
-    "predev": "node scripts/sync-font-assets.mjs && node scripts/generate-fcm-sw.mjs",
+    "sync-brand-assets": "node scripts/sync-brand-public-assets.mjs",
+    "prebuild": "node scripts/sync-brand-public-assets.mjs && node scripts/generate-pwa-icons.mjs && node scripts/sync-font-assets.mjs && node scripts/optimize-lcp-images.mjs && node scripts/generate-fcm-sw.mjs",
+    "predev": "node scripts/sync-brand-public-assets.mjs && node scripts/sync-font-assets.mjs && node scripts/generate-fcm-sw.mjs",
     "build": "vite build",
     "dev": "vite",
     "dev:api": "npm --prefix backend run dev",

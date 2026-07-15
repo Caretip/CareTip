@@ -7,6 +7,7 @@ import React, {
   useMemo,
   useRef,
   useState,
+  useSyncExternalStore,
 } from "react";
 import { AppBrandedLoadingScreen } from "../components/AppBrandedLoadingScreen";
 import {
@@ -24,6 +25,7 @@ import {
   dismissHtmlMarketingBootBridge,
   isHtmlBootBridgeActive,
   setHtmlBootBridgeMessage,
+  setHtmlBootBridgeSub,
 } from "../lib/htmlMarketingBootBridge";
 import { resolveInitialBootLoadingMessage } from "../lib/appLoadingContexts";
 import i18n from "@/i18n/i18n";
@@ -44,6 +46,14 @@ import {
   markAppShellInteractive,
   shouldSuppressSoftNavGlobalOverlay,
 } from "../lib/appShellLifecycle";
+import {
+  isAuthLogoutTransitionActive,
+  subscribeAuthLogoutTransition,
+} from "../lib/authLogoutTransition";
+import {
+  isAuthPostLoginTransitionActive,
+  subscribeAuthPostLoginTransition,
+} from "../lib/authPostLoginTransition";
 /** Block APP_INIT from re-opening the overlay shortly after a full dismiss (paint-ready race). */
 const OVERLAY_REENTRY_LOCK_MS = 600;
 
@@ -127,6 +137,30 @@ function createInitialOverlayPhase(): OverlayPhase {
   return "visible";
 }
 
+function subscribeAuthIntentOverlay(onStoreChange: () => void): () => void {
+  const unsubLogout = subscribeAuthLogoutTransition(onStoreChange);
+  const unsubPostLogin = subscribeAuthPostLoginTransition(onStoreChange);
+  return () => {
+    unsubLogout();
+    unsubPostLogin();
+  };
+}
+
+/** Intentional auth handoffs — must cover the next paint (no useEffect gap). */
+function getAuthIntentOverlayKey(): "auth-logout-transition" | "auth-post-login-transition" | null {
+  if (isAuthLogoutTransitionActive()) return "auth-logout-transition";
+  if (isAuthPostLoginTransitionActive()) return "auth-post-login-transition";
+  return null;
+}
+
+function resolveAuthIntentOverlayMessage(
+  key: "auth-logout-transition" | "auth-post-login-transition",
+): string {
+  return key === "auth-logout-transition"
+    ? i18n.t("common.signingOut")
+    : i18n.t("common.loading.signingIn");
+}
+
 export function AppLoadingManagerProvider({ children }: { children: React.ReactNode }) {
   const initialColdBootPending = createInitialOverlayPhase() === "visible";
   const [registrations, setRegistrations] = useState<Map<string, Registration>>(createInitialRegistrations);
@@ -149,6 +183,17 @@ export function AppLoadingManagerProvider({ children }: { children: React.ReactN
   const initialColdBootPendingRef = useRef(initialColdBootPending);
   const initialBootMessage = createInitialRegistrations().get(BOOTSTRAP_KEY)?.message;
   const lastJourneyMessageRef = useRef<string | undefined>(initialBootMessage);
+
+  /**
+   * Soft-nav SPA work made MinimalRouteFallback transparent once the shell is interactive.
+   * Logout/post-login must cover the previous route during RR transitions before layout-effect
+   * registrars run — subscribe to the intent stores directly.
+   */
+  const authIntentOverlayKey = useSyncExternalStore(
+    subscribeAuthIntentOverlay,
+    getAuthIntentOverlayKey,
+    () => null,
+  );
 
   const register = useCallback(
     (key: string, priority: AppLoadingPriority, active: boolean, message?: string) => {
@@ -249,14 +294,29 @@ export function AppLoadingManagerProvider({ children }: { children: React.ReactN
     return () => window.clearTimeout(id);
   }, []);
 
+  const mergedRegistrations = useMemo(() => {
+    if (!authIntentOverlayKey) return registrations;
+    if (registrations.has(authIntentOverlayKey)) return registrations;
+    const next = new Map(registrations);
+    next.set(authIntentOverlayKey, {
+      key: authIntentOverlayKey,
+      priority: APP_LOADING_PRIORITY.AUTH,
+      message: resolveAuthIntentOverlayMessage(authIntentOverlayKey),
+    });
+    if (next.has(BOOTSTRAP_KEY)) {
+      next.delete(BOOTSTRAP_KEY);
+    }
+    return next;
+  }, [registrations, authIntentOverlayKey]);
+
   const winner = useMemo(
-    () => pickOverlayWinner(registrations),
-    [registrations],
+    () => pickOverlayWinner(mergedRegistrations),
+    [mergedRegistrations],
   );
 
   const overlayMessage = useMemo(
-    () => pickOverlayMessage(registrations),
-    [registrations],
+    () => pickOverlayMessage(mergedRegistrations),
+    [mergedRegistrations],
   );
 
   const displayOverlayMessage = useMemo(() => {
@@ -280,6 +340,33 @@ export function AppLoadingManagerProvider({ children }: { children: React.ReactN
       lastWinnerKeyRef.current = winner.key;
     }
   }, [winner?.key]);
+
+  /**
+   * Auth intent overlays must paint in the same frame as begin*Transition().
+   * useEffect show-threshold was one paint late after soft-nav made Suspense keep dashboard UI.
+   */
+  useLayoutEffect(() => {
+    if (!authIntentOverlayKey) return;
+    if (overlayPhase === "visible") return;
+    if (showThresholdTimerRef.current !== null) {
+      window.clearTimeout(showThresholdTimerRef.current);
+      showThresholdTimerRef.current = null;
+    }
+    if (exitDebounceRef.current !== null) {
+      window.clearTimeout(exitDebounceRef.current);
+      exitDebounceRef.current = null;
+    }
+    initialColdBootPendingRef.current = false;
+    overlayShownAtRef.current = Date.now();
+    lastShownWinnerKeyRef.current = authIntentOverlayKey;
+    lastWinnerKeyRef.current = authIntentOverlayKey;
+    setOverlayPhase("visible");
+    if (import.meta.env.DEV) {
+      console.info(
+        `[GlobalAppLoading] Overlay active — ${authIntentOverlayKey} (auth-intent layout)`,
+      );
+    }
+  }, [authIntentOverlayKey, overlayPhase]);
 
   useEffect(() => {
     if (winnerRequested) {
@@ -417,6 +504,7 @@ export function AppLoadingManagerProvider({ children }: { children: React.ReactN
   useEffect(() => {
     if (!htmlBootOwnsVisual) return;
     setHtmlBootBridgeMessage(displayOverlayMessage);
+    setHtmlBootBridgeSub(i18n.t("common.onlyAMoment"));
   }, [htmlBootOwnsVisual, displayOverlayMessage]);
 
   useEffect(() => {
@@ -425,23 +513,31 @@ export function AppLoadingManagerProvider({ children }: { children: React.ReactN
       winnerRequested,
       overlayPhase,
       htmlBootOwnsVisual,
+      authIntentOverlayKey,
       winner: winner?.key ?? null,
       winnerPriority: winner?.priority ?? null,
-      activeKeys: [...registrations.keys()],
+      activeKeys: [...mergedRegistrations.keys()],
       showThresholdArmed: showThresholdTimerRef.current !== null,
     });
     if (winnerRequested && winner?.key?.includes("paint")) {
       console.info("[LoaderDiag] overlay winner is paint-ready", {
         key: winner.key,
-        activeKeys: [...registrations.keys()],
+        activeKeys: [...mergedRegistrations.keys()],
       });
     }
-  }, [winnerRequested, overlayPhase, winner, registrations, htmlBootOwnsVisual]);
+  }, [
+    winnerRequested,
+    overlayPhase,
+    winner,
+    mergedRegistrations,
+    htmlBootOwnsVisual,
+    authIntentOverlayKey,
+  ]);
 
   useEffect(() => {
     if (!import.meta.env.DEV || !winnerRequested) return;
     const id = window.setTimeout(() => {
-      const keys = [...registrations.keys()];
+      const keys = [...mergedRegistrations.keys()];
       if (keys.length === 0) return;
       warnLoaderDiagDeadlock(winner?.key ?? null, keys, {
         overlayPhase,
@@ -449,7 +545,7 @@ export function AppLoadingManagerProvider({ children }: { children: React.ReactN
       });
     }, 10_000);
     return () => window.clearTimeout(id);
-  }, [winnerRequested, winner?.key, registrations, overlayPhase]);
+  }, [winnerRequested, winner?.key, mergedRegistrations, overlayPhase]);
 
   const overlayPresented = overlayPhase === "visible" || overlayPhase === "exiting";
 
@@ -457,9 +553,15 @@ export function AppLoadingManagerProvider({ children }: { children: React.ReactN
     () => ({
       register,
       releaseAppBootOverlay,
-      overlayVisible: overlayPresented || winnerRequested,
+      overlayVisible: overlayPresented || winnerRequested || Boolean(authIntentOverlayKey),
     }),
-    [register, releaseAppBootOverlay, winnerRequested, overlayPresented],
+    [
+      register,
+      releaseAppBootOverlay,
+      winnerRequested,
+      overlayPresented,
+      authIntentOverlayKey,
+    ],
   );
 
   /* React CareTip screen only after HTML cold boot is gone (soft nav / auth transitions). */

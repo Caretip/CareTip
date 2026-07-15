@@ -7,7 +7,6 @@ import { useTranslation } from "react-i18next";
 import { landingUi } from "@/components/landing/landingUi";
 import { cn } from "@/lib/utils";
 import { CareTipLogo } from "./CareTipLogo";
-import { useTheme } from "../context/ThemeContext";
 import { LanguageSwitcher } from "@/components/i18n/LanguageSwitcher";
 import { ThemeQuickToggle } from "@/app/components/theme/ThemeQuickToggle";
 import { PrefetchLink } from "./PrefetchLink";
@@ -26,14 +25,12 @@ const NAV_ROUTES = [
 
 export type NavigationVariant = "default" | "dark";
 
-export const Navigation = memo(function Navigation({ variant = "default" }: { variant?: NavigationVariant }) {
+export const Navigation = memo(function Navigation({ variant: _variant = "default" }: { variant?: NavigationVariant }) {
   usePublicMountProbe("Navigation");
   const { t, i18n } = useTranslation();
   const { mobileMenuOpen, toggleMobileMenu, closeMobileMenu, backdropDismissible } =
     useMobileMenuState();
   const location = useLocation();
-  const { resolvedTheme } = useTheme();
-  const isDark = resolvedTheme === "dark" || variant === "dark";
 
   useEffect(() => {
     if (primaryNavPrefetchScheduled) return;
@@ -129,7 +126,7 @@ export const Navigation = memo(function Navigation({ variant = "default" }: { va
                   onClick={() => closeMobileMenu("navigate")}
                   className="flex min-h-11 min-w-0 flex-1 items-center rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
                 >
-                  <CareTipLogo size="nav" />
+                  <CareTipLogo size="nav" variant="wordmark" />
                 </PrefetchLink>
                 <div
                   className="caretip-public-mobile-nav-drawer__toolbar relative z-30 flex shrink-0 items-center gap-2"
@@ -245,10 +242,9 @@ export const Navigation = memo(function Navigation({ variant = "default" }: { va
                 "relative z-[2] flex h-[3.5rem] min-h-[3.5rem] min-w-0 items-center overflow-hidden rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-primary/40 sm:h-[3.5rem] sm:min-h-[3.5rem] md:h-16 md:min-h-[4rem] lg:h-16 lg:min-h-[4rem] xl:h-[4.25rem] xl:min-h-[4.25rem]",
                 "max-w-[calc(100%-5.5rem)] shrink-0 md:max-w-[min(240px,42vw)] lg:max-w-[min(260px,36vw)]",
                 "touch-manipulation",
-                isDark && "rounded-xl bg-card px-2 py-1 shadow-sm ring-1 ring-border/60",
               )}
             >
-              <CareTipLogo size="nav" />
+              <CareTipLogo size="nav" variant="wordmark" />
             </PrefetchLink>
 
             <div

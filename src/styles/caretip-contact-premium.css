@@ -166,29 +166,6 @@ html.dark .caretip-contact-subhead {
   color: rgb(163 163 163);
 }
 
-/* Editorial divider */
-.caretip-contact-hero-rule {
-  width: 100%;
-  height: 1px;
-  margin: 0.25rem 0;
-  border: 0;
-  background: linear-gradient(
-    90deg,
-    rgb(212 212 212 / 0.95) 0%,
-    rgb(229 229 229 / 0.75) 55%,
-    rgb(229 229 229 / 0.2) 100%
-  );
-}
-
-html.dark .caretip-contact-hero-rule {
-  background: linear-gradient(
-    90deg,
-    rgb(82 82 82 / 0.95) 0%,
-    rgb(64 64 64 / 0.7) 55%,
-    rgb(64 64 64 / 0.15) 100%
-  );
-}
-
 /* Premium trust signals */
 .caretip-contact-hero-trust {
   display: flex;

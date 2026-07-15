@@ -13,7 +13,7 @@ import {
 } from "../lib/appLoadingContexts";
 import { isAppShellInteractive } from "../lib/appShellLifecycle";
 
-/** Text-only “CareTip” mark for loading states (no logo image). */
+/** Branded CareTip mark for loading states — app icon (constrained space). */
 export function CareTipLoadingTitle({
   compact,
   className,
@@ -22,22 +22,19 @@ export function CareTipLoadingTitle({
   className?: string;
 }) {
   return (
-    <h1
+    <img
+      src="/brand/caretip-app-icon.svg"
+      alt="CareTip"
+      width={compact ? 48 : 72}
+      height={compact ? 48 : 72}
+      decoding="async"
       className={cn(
-        "select-none font-sans font-bold leading-none tracking-tight",
-        compact
-          ? "text-2xl sm:text-3xl"
-          : "text-[clamp(2rem,8vw,3.25rem)]",
-        className
+        "select-none object-contain",
+        compact ? "h-12 w-12" : "h-[4.5rem] w-[4.5rem] sm:h-[5rem] sm:w-[5rem]",
+        className,
       )}
-      style={{
-        textRendering: "geometricPrecision",
-        WebkitFontSmoothing: "antialiased",
-      }}
-    >
-      <span className="text-primary">Care</span>
-      <span className="text-neutral-600 dark:text-neutral-400">Tip</span>
-    </h1>
+      draggable={false}
+    />
   );
 }
 

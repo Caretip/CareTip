@@ -72,7 +72,7 @@ function DashboardHeaderBar({
 
           {!isBusinessManager ? (
             <div className="min-w-0 shrink overflow-hidden lg:hidden">
-              <CareTipLogo size="drawer" />
+              <CareTipLogo size="iconMd" variant="icon" />
             </div>
           ) : null}
 

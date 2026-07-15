@@ -39,7 +39,7 @@ export function AuthMarketingPanel({
       aria-label={t(`${prefix}.panelAria`)}
     >
       <div className="caretip-auth-marketing__inner">
-        {showBackToHome ? <AuthBackToHomeNav variant="marketing" /> : null}
+        {showBackToHome ? <AuthBackToHomeNav variant="marketing" showLogo={false} /> : null}
         <div className="caretip-auth-marketing__content">
           <h2 className="caretip-auth-marketing__headline">{t(`${prefix}.headline`)}</h2>
           <p className="caretip-auth-marketing__body">{t(`${prefix}.body`)}</p>

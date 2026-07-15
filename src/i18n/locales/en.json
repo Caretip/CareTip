@@ -2651,7 +2651,7 @@
         "tips",
         "business"
       ],
-      "heroTagline": ""
+      "heroTagline": "Caring is Tipping"
     },
     "simpleSetup": {
       "pill": "Setup in minutes",
@@ -3579,7 +3579,6 @@
       "action": "Fix QR links"
     },
     "shell": {
-      "demoRibbon": "Walkthrough demo: sample venue, staff, tables, and tips are for product tours only and do not affect other accounts.",
       "sidebarAria": "Business dashboard navigation",
       "navAria": "Main navigation"
     },

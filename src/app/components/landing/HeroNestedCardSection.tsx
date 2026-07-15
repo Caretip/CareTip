@@ -47,7 +47,7 @@ export function HeroNestedCardSection({
               <div className="pointer-events-auto mx-auto flex w-full items-center justify-between gap-3 rounded-full bg-black px-4 py-2.5 text-white shadow-[0_18px_50px_rgba(0,0,0,0.30)] sm:px-5">
                 <div className="flex items-center gap-3">
                   <div className="flex items-center rounded-xl bg-white px-2 py-1">
-                    <CareTipLogo size="badge" align="left" />
+                    <CareTipLogo size="badge" variant="wordmark" align="left" />
                   </div>
                 </div>
 

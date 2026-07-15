@@ -70,6 +70,7 @@ export async function changeAppLanguage(lng: AppLanguage): Promise<void> {
 /**
  * Initialize i18n before first React render.
  * Active locale loads first; the alternate locale is deferred to idle.
+ * Locale preference matches public/boot-locale.js (default `de`).
  */
 export function ensureI18nReady(): Promise<typeof i18n> {
   if (i18n.isInitialized) return Promise.resolve(i18n);

@@ -1,13 +1,25 @@
 import type { ImgHTMLAttributes } from "react";
 import { useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
-import companyLogoWebp from "@/assets/brand/company_logo.webp";
-import companyLogoAvif from "@/assets/brand/company_logo.avif";
+import {
+  resolveCareTipBrandSrc,
+  type CareTipLogoTone,
+  type CareTipLogoVariant,
+} from "@/lib/caretipBrandAssets";
 import {
   CARETIP_LOGO_SIZE_CLASS,
   resolveCareTipLogoSizeToken,
   type CareTipLogoSizeToken,
 } from "@/lib/caretipLogoSizes";
+
+/**
+ * ARCHITECTURE — CareTip brand mark
+ * ---------------------------------
+ * Official package (images/ → src/assets/brand/):
+ *   Primary / TagLine / Black / White / Orange (+ plate) SVGs + App-Icon.
+ * Prefer SVG. Do not use deprecated company_logo.* for UI.
+ * See docs/BRANDING_LOGO_MIGRATION_REPORT.md
+ */
 
 export type CareTipLogoSize =
   | CareTipLogoSizeToken
@@ -25,24 +37,15 @@ export type CareTipLogoSize =
 
 export type CareTipLogoAlign = "left" | "center";
 
-/**
- * Solid white surface for logo rows (nav, auth cards, sidebars, QR strips).
- * Use with border-b so the mark sits on a clean, consistent ground.
- */
 export const CARE_TIP_LOGO_SURFACE_CLASS =
   "bg-background border-b border-border/80";
 
-/**
- * Dashboard sidebar branding strip — semantic surface (light + dark).
- */
 export const DASHBOARD_SIDEBAR_BRAND_CLASS =
-  "flex shrink-0 items-center border-b border-sidebar-border bg-sidebar px-4 py-2 lg:px-5 lg:py-2";
+  "flex shrink-0 items-center border-b border-sidebar-border bg-sidebar px-4 py-2.5 lg:px-5 lg:py-3";
 
-/** Shared nav region — sits close to branding without extra top gap. */
 export const DASHBOARD_SIDEBAR_NAV_CLASS =
   "flex-1 min-h-0 overflow-y-auto px-3 pt-1.5 pb-4";
 
-/** Mobile drawer header row: logo + close control. */
 export const DASHBOARD_SIDEBAR_MOBILE_BRAND_CLASS = cn(
   DASHBOARD_SIDEBAR_BRAND_CLASS,
   "justify-between gap-2 min-h-[3.25rem]",
@@ -54,7 +57,6 @@ export {
   CUSTOMER_JOURNEY_HEADER_LOGO_CLASS,
 } from "@/lib/caretipLogoSizes";
 
-/** Auth logo surface — circular glass on marketing hero; soft capsule on login cards. */
 export const CARE_TIP_LOGO_AUTH_SURFACE_CLASS = "caretip-auth-logo-surface";
 
 const alignClass: Record<CareTipLogoAlign, string> = {
@@ -65,12 +67,17 @@ const alignClass: Record<CareTipLogoAlign, string> = {
 export type CareTipLogoProps = {
   className?: string;
   size?: CareTipLogoSize;
-  /** Horizontal alignment for `object-position` (default: left for nav). */
   align?: CareTipLogoAlign;
   alt?: string;
   /**
-   * @deprecated Width tokens handle nav sizing; no isolated double-scale slot.
+   * wordmark — CareTip without tagline (default app logo)
+   * tagline — + “Caring is tipping” (marketing)
+   * icon — app icon mark only (compact / splash / favicon contexts)
    */
+  variant?: CareTipLogoVariant;
+  /** Color treatment; `auto` swaps primary ↔ white for light/dark. */
+  tone?: CareTipLogoTone;
+  /** @deprecated */
   layoutIsolatedDouble?: boolean;
   /** @deprecated */
   visualScale?: number;
@@ -79,21 +86,25 @@ export type CareTipLogoProps = {
 };
 
 const imgBase =
-  "block shrink-0 contrast-[1.06] drop-shadow-[0_1px_2px_rgba(0,0,0,0.14)] object-contain h-auto max-w-full";
+  "block shrink-0 object-contain h-auto max-w-full select-none w-full";
 
-type LogoPictureProps = {
+type LogoImgProps = {
+  src: string;
   alt: string;
   className?: string;
   loading?: ImgHTMLAttributes<HTMLImageElement>["loading"];
   priority?: boolean;
+  decorative?: boolean;
 };
 
-function CareTipLogoPicture({
+function CareTipLogoImg({
+  src,
   alt,
   className,
   loading = "lazy",
   priority = false,
-}: LogoPictureProps) {
+  decorative = false,
+}: LogoImgProps) {
   const imgRef = useRef<HTMLImageElement>(null);
   const [ready, setReady] = useState(priority);
 
@@ -102,59 +113,99 @@ function CareTipLogoPicture({
     if (img?.complete && img.naturalWidth > 0) {
       setReady(true);
     }
-  }, []);
+  }, [src]);
 
   return (
-    <span className={cn("caretip-image-frame block max-w-full", className)}>
-      {!ready ? <span className="caretip-image-frame__shimmer" aria-hidden /> : null}
-      <picture className="block max-w-full">
-        <source type="image/avif" srcSet={companyLogoAvif} />
-        <source type="image/webp" srcSet={companyLogoWebp} />
-        <img
-          ref={imgRef}
-          src={companyLogoWebp}
-          alt={alt}
-          width={640}
-          height={240}
-          className={cn(
-            imgBase,
-            "caretip-marketing-img relative z-[2]",
-            ready && "caretip-marketing-img--ready",
-          )}
-          loading={priority ? "eager" : loading}
-          decoding="async"
-          onLoad={() => setReady(true)}
-          {...(priority ? ({ fetchpriority: "high" } as ImgHTMLAttributes<HTMLImageElement>) : {})}
-        />
-      </picture>
-    </span>
+    <img
+      ref={imgRef}
+      src={src}
+      alt={decorative ? "" : alt}
+      aria-hidden={decorative || undefined}
+      className={cn(
+        imgBase,
+        "caretip-marketing-img relative z-[2]",
+        ready && "caretip-marketing-img--ready",
+        className,
+      )}
+      loading={priority ? "eager" : loading}
+      decoding="async"
+      draggable={false}
+      onLoad={() => setReady(true)}
+      {...(priority ? ({ fetchpriority: "high" } as ImgHTMLAttributes<HTMLImageElement>) : {})}
+    />
   );
 }
 
 /**
- * Full wordmark from optimized `company_logo` assets. Width tokens preserve tagline legibility.
+ * Official CareTip logo. Defaults to Primary wordmark (no tagline).
  */
 export function CareTipLogo({
   className,
   size = "sidebar",
   align = "left",
   alt = "CareTip",
+  variant = "wordmark",
+  tone = "auto",
   layoutIsolatedDouble: _layoutIsolatedDouble,
 }: CareTipLogoProps) {
   const token = resolveCareTipLogoSizeToken(size);
-  const sizeClass = CARETIP_LOGO_SIZE_CLASS[token];
-  const priority = token === "nav" || token === "large";
+  const sizeClass =
+    variant === "tagline" && token === "nav"
+      ? CARETIP_LOGO_SIZE_CLASS.navTagline
+      : CARETIP_LOGO_SIZE_CLASS[token];
+  const priority =
+    token === "nav" ||
+    token === "navTagline" ||
+    token === "large" ||
+    token === "iconSplash";
+
+  const frameClass = cn(
+    "caretip-image-frame block max-w-full",
+    align === "center" && "mx-auto",
+    alignClass[align],
+    sizeClass,
+    className,
+  );
+
+  if (variant === "icon") {
+    return (
+      <span className={frameClass}>
+        <CareTipLogoImg
+          src={resolveCareTipBrandSrc("icon", "primary")}
+          alt={alt}
+          priority={priority}
+        />
+      </span>
+    );
+  }
+
+  if (tone === "auto") {
+    return (
+      <span className={frameClass}>
+        <CareTipLogoImg
+          src={resolveCareTipBrandSrc(variant, "primary")}
+          alt={alt}
+          priority={priority}
+          className="dark:hidden"
+        />
+        <CareTipLogoImg
+          src={resolveCareTipBrandSrc(variant, "white")}
+          alt={alt}
+          priority={priority}
+          decorative
+          className="hidden dark:block"
+        />
+      </span>
+    );
+  }
 
   return (
-    <CareTipLogoPicture
-      alt={alt}
-      priority={priority}
-      className={cn(
-        align === "center" && "mx-auto",
-        alignClass[align],
-        sizeClass,
-        className,
-      )}
-    />
+    <span className={frameClass}>
+      <CareTipLogoImg
+        src={resolveCareTipBrandSrc(variant, tone)}
+        alt={alt}
+        priority={priority}
+      />
+    </span>
   );
 }

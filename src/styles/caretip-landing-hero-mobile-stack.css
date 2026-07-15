@@ -159,6 +159,15 @@
     white-space: normal;
   }
 
+  .caretip-landing .caretip-hero-section--full-bg .caretip-hero-brand-tagline {
+    --caretip-hero-gap-tagline: 0.75rem;
+  }
+
+  .caretip-landing .caretip-hero-section--full-bg .caretip-hero-brand-tagline__text {
+    font-size: 0.75rem;
+    letter-spacing: 0.085em;
+  }
+
   .caretip-landing .caretip-hero-section--full-bg .caretip-hero-headline {
     --caretip-hero-headline-lh: 1.15;
     --caretip-hero-headline-track: -0.028em;

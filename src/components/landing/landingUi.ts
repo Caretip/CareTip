@@ -231,7 +231,12 @@ export const landingUi = {
     "mx-auto relative z-[1] grid w-full min-w-0 max-w-7xl grid-cols-1 gap-9 overflow-x-hidden px-4 pb-8 pt-6 max-md:gap-y-0 sm:gap-10 sm:px-6 sm:pb-10 md:grid-cols-[minmax(0,1.06fr)_minmax(0,0.94fr)] md:items-center md:gap-x-6 md:gap-y-0 md:px-8 md:pb-12 md:pt-7 lg:gap-x-7 xl:gap-x-8",
   heroCopy:
     "caretip-hero-copy-block relative z-10 order-1 flex min-w-0 w-full max-w-full flex-col items-start text-left max-md:space-y-0 max-md:pt-0 md:max-w-[540px] md:space-y-0",
-  heroTagline: `inline-flex w-fit items-center ${landingType.tagline}`,
+  heroTagline:
+    "caretip-hero-brand-tagline caretip-hero-message__tagline inline-flex w-fit max-w-full items-center gap-2.5 text-left",
+  heroTaglineText:
+    "caretip-hero-brand-tagline__text font-sans font-medium text-[0.8125rem] leading-snug tracking-[0.08em] text-primary dark:text-primary sm:text-sm sm:tracking-[0.09em]",
+  heroTaglineAccent:
+    "caretip-hero-brand-tagline__accent h-px w-5 shrink-0 bg-gradient-to-r from-primary via-primary/70 to-transparent sm:w-6",
   heroHeadline: cnHeroHeadline(
     "caretip-hero-headline caretip-hero-headline-anchor w-full antialiased text-left max-lg:mx-0",
   ),

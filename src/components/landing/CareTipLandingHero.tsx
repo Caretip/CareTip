@@ -5,7 +5,6 @@ import { useTranslation } from "react-i18next";
 import { landingCopyVisible, landingUi } from "@/components/landing/landingUi";
 import { landingHeroHeadlineWithHighlight } from "@/components/landing/landingHeroHeadline";
 import { LandingHeroAnimatedWord } from "@/components/landing/LandingHeroAnimatedWord";
-import { LandingHeroFloatingCards } from "@/components/landing/LandingHeroFloatingCards";
 import { LandingHeroStoryShowcase } from "@/components/landing/LandingHeroStoryShowcase";
 import { LandingCopySentences } from "@/components/landing/LandingCopySentences";
 import { useMediaQuery } from "@/hooks/use-media-query";
@@ -63,6 +62,7 @@ export function CareTipLandingHero({
           .filter(Boolean)
       : null;
   const heroHeadlineHighlight = t("landing.showcase.heroHeadlineHighlight");
+  const heroBrandTagline = t("landing.showcase.heroTagline");
   const heroHeadlineHighlightsRaw = t("landing.showcase.heroHeadlineHighlights", { returnObjects: true });
   const heroHeadlineHighlights =
     Array.isArray(heroHeadlineHighlightsRaw) &&
@@ -96,14 +96,16 @@ export function CareTipLandingHero({
         </div>
 
         <div className="caretip-hero-bg-overlay" aria-hidden />
-
-        <div className={cn(landingUi.heroFloatLayer, "caretip-hero-float-layer--full-bg")}>
-          <LandingHeroFloatingCards activeFrameKey={activeFrameKey} variant="full-bg" />
-        </div>
       </div>
 
       <div className="caretip-hero-full-bg-inner relative z-[3] w-full">
         <div className="caretip-hero-full-bg-content caretip-hero-copy caretip-hero-copy-block">
+          {landingCopyVisible(heroBrandTagline) ? (
+            <p className={landingUi.heroTagline} data-hero-brand-tagline="">
+              <span className={landingUi.heroTaglineAccent} aria-hidden />
+              <span className={landingUi.heroTaglineText}>{heroBrandTagline}</span>
+            </p>
+          ) : null}
           <h1
             className={cn(landingUi.heroHeadline, "mt-0")}
             data-hero-headline-mode={headlineMode}
