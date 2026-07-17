@@ -124,7 +124,8 @@ html.dark .caretip-industry-card__icon {
   color: rgb(217 106 20);
 }
 
-html:not(.dark) .caretip-landing-final-cta .caretip-trust-strip__item {
+html:not(.dark) .caretip-landing-final-cta .caretip-trust-strip__item,
+html:not(.dark) .caretip-landing-cta-wise .caretip-trust-strip__item {
   color: hsl(var(--foreground) / 0.8);
 }
 

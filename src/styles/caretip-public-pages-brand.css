@@ -192,7 +192,8 @@ html.dark .caretip-public-page-hero-card {
 .caretip-features-cta-wise,
 .caretip-about-cta-wise,
 .caretip-pricing-cta-wise,
-.caretip-faq-cta-wise {
+.caretip-faq-cta-wise,
+.caretip-landing-cta-wise {
   background: transparent;
   color: hsl(var(--foreground));
   margin-top: 0;
@@ -203,7 +204,8 @@ html.dark .caretip-public-page-hero-card {
 .caretip-features-cta-wise__inner,
 .caretip-about-cta-wise__inner,
 .caretip-pricing-cta-wise__inner,
-.caretip-faq-cta-wise__inner {
+.caretip-faq-cta-wise__inner,
+.caretip-landing-cta-wise__inner {
   width: 100%;
   max-width: var(--caretip-wise-cta-inner-max);
   margin-inline: auto;
@@ -220,7 +222,8 @@ html.dark .caretip-public-page-hero-card {
 html.dark .caretip-features-cta-wise__inner,
 html.dark .caretip-about-cta-wise__inner,
 html.dark .caretip-pricing-cta-wise__inner,
-html.dark .caretip-faq-cta-wise__inner {
+html.dark .caretip-faq-cta-wise__inner,
+html.dark .caretip-landing-cta-wise__inner {
   background: rgb(24 24 27);
   border-color: rgb(63 63 70 / 0.9);
   box-shadow: var(--caretip-wise-cta-elev-shadow-dark);
@@ -261,7 +264,8 @@ html.dark .caretip-faq-cta-wise__inner {
 .caretip-features-cta-wise__actions,
 .caretip-about-cta-wise__actions,
 .caretip-pricing-cta-wise__actions,
-.caretip-faq-cta-wise__actions {
+.caretip-faq-cta-wise__actions,
+.caretip-landing-cta-wise .caretip-features-cta-wise__actions {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -274,10 +278,15 @@ html.dark .caretip-faq-cta-wise__inner {
   .caretip-features-cta-wise__actions,
   .caretip-about-cta-wise__actions,
   .caretip-pricing-cta-wise__actions,
-  .caretip-faq-cta-wise__actions {
+  .caretip-faq-cta-wise__actions,
+  .caretip-landing-cta-wise .caretip-features-cta-wise__actions {
     flex-direction: row;
     gap: 1rem;
   }
+}
+
+.caretip-landing-cta-wise__trust {
+  margin-top: clamp(1.5rem, 3.5vw, 2rem);
 }
 
 /* —— Light elevated CTA panel —— */
