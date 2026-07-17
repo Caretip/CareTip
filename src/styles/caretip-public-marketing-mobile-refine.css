@@ -22,7 +22,12 @@
   .caretip-public-marketing-hero-wise__title,
   .caretip-pricing-hero-v2__title,
   .caretip-pricing-plans-intro__title,
-  .caretip-pricing-faq__title {
+  .caretip-pricing-faq__title,
+  .caretip-features-page .caretip-section-intro > h1,
+  .caretip-features-page .caretip-landing-features-section h1,
+  .caretip-contact-page .caretip-contact-headline,
+  .caretip-faq-hero-wise__title,
+  .caretip-industry-page__headline {
     max-width: min(100%, 22rem);
     margin-inline: auto;
     font-size: clamp(1.75rem, 7.2vw, 2.25rem);

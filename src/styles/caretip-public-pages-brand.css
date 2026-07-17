@@ -16,6 +16,15 @@
   --caretip-wise-editorial-radius: 1rem;
   --caretip-wise-cta-inner-max: min(100%, 72rem);
   --caretip-wise-cta-accent-muted: #f5d9b3;
+  /* Soft elevation so Final CTA cards lift off cream marketing surfaces */
+  --caretip-wise-cta-elev-shadow:
+    0 1px 2px rgb(15 23 42 / 0.05),
+    0 10px 28px -14px rgb(15 23 42 / 0.14),
+    0 32px 72px -28px rgb(15 23 42 / 0.32);
+  --caretip-wise-cta-elev-shadow-dark:
+    0 1px 2px rgb(0 0 0 / 0.28),
+    0 12px 32px -14px rgb(0 0 0 / 0.45),
+    0 36px 72px -24px rgb(0 0 0 / 0.65);
 }
 
 @media (min-width: 1024px) {
@@ -121,7 +130,8 @@ html.dark .caretip-public-page-hero-card {
 .caretip-public-marketing-hero-wise__title {
   margin: 0;
   margin-inline: auto;
-  max-width: min(100%, 22ch);
+  max-width: none;
+  width: 100%;
   font-size: clamp(2.125rem, 5.2vw, 3.375rem);
   font-weight: 800;
   line-height: 1.06;
@@ -149,7 +159,8 @@ html.dark .caretip-public-page-hero-card {
 
 .caretip-public-marketing-hero-wise__subtitle {
   margin: clamp(0.75rem, 2vw, 1.125rem) auto 0;
-  max-width: min(100%, 36rem);
+  max-width: none;
+  width: 100%;
   font-size: clamp(1rem, 2vw, 1.125rem);
   font-weight: 500;
   line-height: 1.65;
@@ -203,9 +214,7 @@ html.dark .caretip-public-page-hero-card {
   text-align: center;
   background: rgb(255 255 255);
   border: 1px solid rgb(228 228 231 / 0.9);
-  box-shadow:
-    0 1px 2px rgb(15 23 42 / 0.04),
-    0 18px 48px -28px rgb(15 23 42 / 0.22);
+  box-shadow: var(--caretip-wise-cta-elev-shadow);
 }
 
 html.dark .caretip-features-cta-wise__inner,
@@ -214,6 +223,7 @@ html.dark .caretip-pricing-cta-wise__inner,
 html.dark .caretip-faq-cta-wise__inner {
   background: rgb(24 24 27);
   border-color: rgb(63 63 70 / 0.9);
+  box-shadow: var(--caretip-wise-cta-elev-shadow-dark);
 }
 
 .caretip-faq-page__inner.caretip-faq-cta-wise__inner,
@@ -282,9 +292,7 @@ html.dark .caretip-faq-cta-wise__inner {
   border: 1px solid rgb(228 228 231 / 0.9);
   background: rgb(255 255 255);
   text-align: center;
-  box-shadow:
-    0 1px 2px rgb(15 23 42 / 0.04),
-    0 18px 48px -28px rgb(15 23 42 / 0.22);
+  box-shadow: var(--caretip-wise-cta-elev-shadow);
 }
 
 .caretip-public-warm-dark-cta::before {
@@ -294,9 +302,7 @@ html.dark .caretip-faq-cta-wise__inner {
 html.dark .caretip-public-warm-dark-cta {
   border-color: rgb(63 63 70 / 0.9);
   background: rgb(24 24 27);
-  box-shadow:
-    0 1px 2px rgb(0 0 0 / 0.2),
-    0 18px 48px -24px rgb(0 0 0 / 0.55);
+  box-shadow: var(--caretip-wise-cta-elev-shadow-dark);
 }
 
 .caretip-public-warm-dark-cta__title {

@@ -1,11 +1,11 @@
-import restaurantWebp from "../../../images/Restaurant berlin(1).webp";
-import restaurantAvif from "../../../images/Restaurant berlin(1).avif";
+import restaurantWebp from "../../../images/gastronomy01.webp";
+import restaurantAvif from "../../../images/gastronomy01.avif";
 import logisticsWebp from "../../../images/Logistik.webp";
 import logisticsAvif from "../../../images/Logistik.avif";
 import midwivesWebp from "../../../images/new-mid.webp";
 import midwivesAvif from "../../../images/new-mid.avif";
-import fairsWebp from "../../../images/fromfanny002.webp";
-import fairsAvif from "../../../images/fromfanny002.avif";
+import fairsWebp from "../../../images/event001.webp";
+import fairsAvif from "../../../images/event001.avif";
 import fieldServiceWebp from "../../../images/Handwerker.webp";
 import fieldServiceAvif from "../../../images/Handwerker.avif";
 import repWebp from "../../../images/rep.webp";

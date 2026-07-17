@@ -15,20 +15,19 @@ html.dark .caretip-landing .caretip-landing-final-cta {
 }
 
 .caretip-landing .caretip-final-cta-card {
-  border-radius: 1.35rem;
+  border-radius: var(--caretip-wise-inset-radius, 1.25rem);
   border: 1px solid rgb(228 228 231 / 0.9);
   background: rgb(255 255 255);
-  box-shadow:
-    0 1px 2px rgb(15 23 42 / 0.04),
-    0 18px 48px -28px rgb(15 23 42 / 0.22);
+  box-shadow: var(--caretip-wise-cta-elev-shadow);
+  max-width: min(100%, 42rem);
+  padding-block: clamp(3rem, 7vw, 4.5rem);
+  padding-inline: clamp(1.25rem, 4vw, 2.5rem);
 }
 
 html.dark .caretip-landing .caretip-final-cta-card {
   border-color: rgb(63 63 70 / 0.9);
   background: rgb(24 24 27);
-  box-shadow:
-    0 1px 2px rgb(0 0 0 / 0.2),
-    0 18px 48px -24px rgb(0 0 0 / 0.55);
+  box-shadow: var(--caretip-wise-cta-elev-shadow-dark);
 }
 
 /* Atmosphere layers — shared with .caretip-premium-backdrop__* in caretip-premium-visual.css */
@@ -126,13 +125,20 @@ html.dark .caretip-landing .caretip-final-cta-card {
 }
 
 .caretip-landing .caretip-final-cta-button {
-  min-height: 2.875rem;
-  padding-inline: 2rem !important;
+  min-height: 2.75rem;
+  padding-inline: 1.75rem !important;
   transition:
     transform 0.35s cubic-bezier(0.22, 1, 0.36, 1),
     box-shadow 0.35s cubic-bezier(0.22, 1, 0.36, 1) !important;
   background: var(--caretip-premium-cta-gradient) !important;
   box-shadow: var(--caretip-premium-cta-shadow) !important;
+}
+
+@media (min-width: 1024px) {
+  .caretip-landing .caretip-final-cta-button {
+    min-height: 3rem;
+    padding-inline: 2rem !important;
+  }
 }
 
 @media (hover: hover) {

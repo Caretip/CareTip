@@ -428,7 +428,7 @@ html.dark .caretip-about-beliefs {
   justify-content: center;
   min-height: 2.75rem;
   padding: 0.625rem 1.25rem;
-  border-radius: 9999px;
+  border-radius: 0.75rem;
   border: 1px solid rgb(228 228 231);
   background: transparent;
   font-size: 0.9375rem;

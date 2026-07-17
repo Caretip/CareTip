@@ -1,0 +1,131 @@
+/**
+ * Align Features / Pricing / FAQ / Contact page surfaces with Industry pages.
+ * Hero + body share the same soft cream → background treatment.
+ */
+
+:root {
+  --caretip-industry-hero-bg:
+    radial-gradient(ellipse 70% 55% at 90% 10%, rgb(233 120 28 / 0.1), transparent 55%),
+    linear-gradient(180deg, rgb(255 252 247) 0%, hsl(var(--background)) 100%);
+  --caretip-industry-hero-bg-dark:
+    radial-gradient(ellipse 70% 55% at 90% 10%, rgb(233 120 28 / 0.12), transparent 55%),
+    linear-gradient(180deg, rgb(24 24 27) 0%, hsl(var(--background)) 100%);
+  --caretip-industry-body-bg: hsl(var(--background));
+}
+
+.caretip-features-page,
+.caretip-pricing-page--wise,
+.caretip-faq-page--wise,
+.caretip-contact-page {
+  background: var(--caretip-industry-hero-bg);
+  color: hsl(var(--foreground));
+}
+
+html.dark .caretip-features-page,
+html.dark .caretip-pricing-page--wise,
+html.dark .caretip-faq-page--wise,
+html.dark .caretip-contact-page {
+  background: var(--caretip-industry-hero-bg-dark);
+}
+
+/* Shared public hero band → same industry surface (no orange wash) */
+.caretip-features-page .caretip-public-page-hero-card,
+.caretip-pricing-page--wise .caretip-public-page-hero-card,
+.caretip-faq-page--wise .caretip-public-page-hero-card,
+.caretip-pricing-hero-v2 .caretip-public-page-hero-card,
+.caretip-pricing-hero-wise__band {
+  background: transparent !important;
+  border: none;
+  box-shadow: none;
+}
+
+html.dark .caretip-features-page .caretip-public-page-hero-card,
+html.dark .caretip-pricing-page--wise .caretip-public-page-hero-card,
+html.dark .caretip-faq-page--wise .caretip-public-page-hero-card,
+html.dark .caretip-pricing-hero-v2 .caretip-public-page-hero-card,
+html.dark .caretip-pricing-hero-wise__band {
+  background: transparent !important;
+}
+
+/* Features — stay on shared page surface */
+.caretip-features-page .caretip-landing-features-section,
+.caretip-features-page .caretip-landing-surface,
+.caretip-features-page .caretip-features-hero-v2__shell {
+  background: transparent !important;
+  border-color: transparent;
+  box-shadow: none;
+}
+
+.caretip-features-page .caretip-features-hero-v2__backdrop {
+  background: transparent;
+}
+
+/* Pricing / FAQ section bands — same surface */
+.caretip-pricing-plans-wise,
+.caretip-pricing-page--wise .caretip-pricing-cta-wise,
+.caretip-faq-trust,
+.caretip-faq-content {
+  background: transparent !important;
+}
+
+/* Contact — full-bleed surface like Features/FAQ; content on page background */
+.caretip-contact-page::before {
+  display: none;
+}
+
+.caretip-contact-page .caretip-contact-flow,
+.caretip-contact-page .caretip-contact-chooser,
+.caretip-contact-page .caretip-contact-form-stage,
+.caretip-contact-page .caretip-contact-sales-panel,
+.caretip-contact-page .caretip-contact-reassurance {
+  background: transparent;
+  box-shadow: none;
+}
+
+/* Soften legacy pricing premium page gradient */
+.caretip-pricing-page:not(.caretip-pricing-page--wise) {
+  background: var(--caretip-industry-hero-bg);
+}
+
+html.dark .caretip-pricing-page:not(.caretip-pricing-page--wise) {
+  background: var(--caretip-industry-hero-bg-dark);
+}
+
+.caretip-pricing-page:not(.caretip-pricing-page--wise)::before {
+  display: none;
+}
+
+/* —— Full-width hero copy on desktop/tablet (mobile keeps readable measure) —— */
+@media (min-width: 640px) {
+  .caretip-features-page .caretip-section-title,
+  .caretip-features-page h1,
+  .caretip-features-page .caretip-landing-features-section h1,
+  .caretip-pricing-page--wise .caretip-pricing-hero-v2__title,
+  .caretip-pricing-page--wise .caretip-pricing-hero-v2__subtitle,
+  .caretip-faq-page--wise .caretip-faq-hero-wise__title,
+  .caretip-faq-page--wise .caretip-faq-hero-wise__subtitle,
+  .caretip-contact-page .caretip-contact-headline,
+  .caretip-contact-page .caretip-contact-subhead {
+    max-width: none;
+    width: 100%;
+  }
+
+  .caretip-features-page .caretip-landing-features-section .caretip-section-intro,
+  .caretip-features-page .caretip-landing-features-section h1,
+  .caretip-features-page .caretip-landing-features-section p {
+    max-width: none;
+  }
+}
+
+.caretip-pricing-hero-v2__card-inner,
+.caretip-faq-page .caretip-public-page-hero-card__inner,
+.caretip-faq-hero-wise .caretip-faq-page__inner {
+  max-width: min(100%, 72rem) !important;
+  width: 100%;
+  margin-inline: auto;
+}
+
+.caretip-contact-chooser {
+  width: min(100%, 72rem) !important;
+  max-width: min(100%, 72rem) !important;
+}

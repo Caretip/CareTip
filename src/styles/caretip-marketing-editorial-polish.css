@@ -335,8 +335,6 @@ html.dark .caretip-landing #payments-trust .caretip-landing-feature-icon {
 .caretip-pricing-page .caretip-btn-primary,
 .caretip-features-page .caretip-btn-primary {
   min-height: 2.75rem;
-  border-radius: 0.75rem;
-  font-weight: 600;
   letter-spacing: -0.01em;
 }
 

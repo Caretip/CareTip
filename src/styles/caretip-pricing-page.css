@@ -8,7 +8,7 @@
   --caretip-pricing-accent-muted: #f5d9b3;
   --caretip-pricing-dark: #161412;
   --caretip-pricing-dark-rgb: 22 20 18;
-  --caretip-pricing-inner-max: min(100%, 48rem);
+  --caretip-pricing-inner-max: min(100%, 72rem);
   --caretip-pricing-plans-inner-max: min(100%, 72rem);
   background: hsl(var(--background));
 }
@@ -68,7 +68,8 @@ html.dark .caretip-pricing-hero-wise__band {
 .caretip-pricing-hero-wise__title {
   margin: 0;
   margin-inline: auto;
-  max-width: min(100%, 18ch);
+  max-width: none;
+  width: 100%;
   font-size: clamp(2.125rem, 5.2vw, 3.375rem);
   font-weight: 800;
   line-height: 1.06;
@@ -87,7 +88,8 @@ html.dark .caretip-pricing-hero-wise__band {
 
 .caretip-pricing-hero-wise__subtitle {
   margin: clamp(0.75rem, 2vw, 1.125rem) auto 0;
-  max-width: min(100%, 36rem);
+  max-width: none;
+  width: 100%;
   font-size: clamp(1rem, 2vw, 1.125rem);
   font-weight: 500;
   line-height: 1.65;

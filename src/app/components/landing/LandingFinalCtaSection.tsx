@@ -20,7 +20,7 @@ export function LandingFinalCtaSection() {
     >
       <LandingReveal
         data-polish-view
-        className="caretip-final-cta-stage caretip-final-cta-card relative z-[1] mx-auto w-full min-w-0 max-w-3xl px-5 py-10 text-center sm:px-10 sm:py-12 max-lg:max-w-full"
+        className="caretip-final-cta-stage caretip-final-cta-card relative z-[1] mx-auto w-full min-w-0 text-center"
       >
         <p className="caretip-final-cta-eyebrow font-sans text-[11px] font-semibold uppercase tracking-[0.2em] text-primary sm:text-xs">
           {t("landing.finalCta.eyebrow")}

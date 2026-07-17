@@ -63,7 +63,7 @@ export function FeaturesPage() {
             "caretip-landing-features-section relative overflow-hidden",
           )}
         >
-          <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="caretip-features-optical-rail relative mx-auto px-4 sm:px-6 lg:px-8">
             <div className={landingUi.sectionIntro}>
               {landingCopyVisible(t("landing.features.eyebrow")) ? (
                 <div className={landingUi.sectionAccentRow}>

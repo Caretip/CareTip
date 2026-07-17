@@ -8,7 +8,8 @@
   --caretip-faq-accent-muted: #f5d9b3;
   --caretip-faq-dark: #161412;
   --caretip-faq-dark-rgb: 22 20 18;
-  --caretip-faq-inner-max: min(100%, 48rem);
+  --caretip-faq-inner-max: min(100%, 72rem);
+  --caretip-faq-hero-inner-max: min(100%, 72rem);
   background: hsl(var(--background));
 }
 
@@ -26,14 +27,18 @@
 
 /* —— Hero band —— */
 .caretip-faq-hero-wise__back {
-  max-width: var(--caretip-faq-inner-max);
+  max-width: var(--caretip-faq-hero-inner-max);
   margin-inline: auto;
   padding-inline: clamp(1.25rem, 4vw, 2.5rem);
   margin-bottom: 1rem;
 }
 
 .caretip-faq-hero-wise__inner {
+  width: 100%;
+  max-width: var(--caretip-faq-hero-inner-max);
+  margin-inline: auto;
   padding-block: clamp(3rem, 7vw, 4.75rem);
+  padding-inline: clamp(1.25rem, 4vw, 2.5rem);
   text-align: center;
 }
 
@@ -49,7 +54,8 @@
 .caretip-faq-hero-wise__title {
   margin: 0;
   margin-inline: auto;
-  max-width: min(100%, 22ch);
+  max-width: none;
+  width: 100%;
   font-size: clamp(2.125rem, 5.2vw, 3.375rem);
   font-weight: 800;
   line-height: 1.06;
@@ -68,7 +74,8 @@
 
 .caretip-faq-hero-wise__subtitle {
   margin: clamp(0.75rem, 2vw, 1.125rem) auto 0;
-  max-width: min(100%, 36rem);
+  max-width: none;
+  width: 100%;
   font-size: clamp(1rem, 2vw, 1.125rem);
   font-weight: 500;
   line-height: 1.65;
@@ -90,8 +97,7 @@
 
 /* —— FAQ content area —— */
 .caretip-faq-content {
-  padding-block: clamp(3rem, 7vw, 4.5rem);
-  padding-top: clamp(3.25rem, 7.5vw, 5rem);
+  padding-block: clamp(3.25rem, 7vw, 5rem);
   background: hsl(var(--background));
 }
 

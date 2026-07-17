@@ -44,7 +44,8 @@
 .caretip-features-hero-wise__title {
   margin: 0;
   margin-inline: auto;
-  max-width: min(100%, 22ch);
+  max-width: none;
+  width: 100%;
   font-size: clamp(2.125rem, 5.2vw, 3.375rem);
   font-weight: 800;
   line-height: 1.06;
@@ -63,7 +64,8 @@
 
 .caretip-features-hero-wise__lead {
   margin: clamp(1.25rem, 3vw, 1.75rem) auto 0;
-  max-width: min(100%, 42rem);
+  max-width: none;
+  width: 100%;
   font-size: clamp(1rem, 2vw, 1.1875rem);
   font-weight: 600;
   line-height: 1.65;
@@ -73,7 +75,8 @@
 
 .caretip-features-hero-wise__body {
   margin: clamp(0.875rem, 2vw, 1.125rem) auto 0;
-  max-width: min(100%, 42rem);
+  max-width: none;
+  width: 100%;
   font-size: clamp(1rem, 2vw, 1.0625rem);
   font-weight: 500;
   line-height: 1.72;
@@ -145,7 +148,7 @@ html.dark .caretip-features-grid-wise--standard {
   justify-content: center;
   min-height: 2.75rem;
   padding: 0.625rem 1.25rem;
-  border-radius: 9999px;
+  border-radius: 0.75rem;
   border: 1px solid rgb(var(--caretip-features-accent-rgb) / 0.45);
   background: transparent;
   font-size: 0.9375rem;

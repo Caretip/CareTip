@@ -135,7 +135,7 @@ export function FAQPage() {
         </section>
 
         <section className="caretip-faq-cta-wise" aria-labelledby="faq-cta-title">
-          <div className="caretip-faq-cta-wise__inner">
+          <div className="caretip-faq-page__inner caretip-faq-cta-wise__inner">
             <h2 id="faq-cta-title" className="caretip-faq-cta-wise__title">
               {t("staticPages.faq.ctaTitle")}
             </h2>

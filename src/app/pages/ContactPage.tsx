@@ -47,7 +47,7 @@ export function ContactPage() {
   }, [setSearchParams]);
 
   return (
-    <PublicPageShell maxWidth="wide">
+    <PublicPageShell maxWidth="full" contentClassName="pb-0" className="bg-background">
       <main id="contact" className={contactPageUi.page} aria-label={t("staticPages.contact.pageAria")}>
         {intent === "choose" ? <ContactIntentChooser onSelect={selectIntent} /> : null}
         {intent === "demo" ? (

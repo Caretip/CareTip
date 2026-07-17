@@ -16,7 +16,7 @@ export function HowItWorksPage() {
   const { t } = useTranslation();
 
   return (
-    <PublicPageShell maxWidth="wide" className="bg-background">
+    <PublicPageShell maxWidth="full" contentClassName="pb-0" className="bg-background">
       <main
         id="how-it-works"
         className={howItWorksPageUi.page}
