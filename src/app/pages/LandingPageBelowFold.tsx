@@ -18,6 +18,16 @@ const loadLandingIndustriesTeaserSection = () =>
     default: mod.LandingIndustriesTeaserSection,
   }));
 
+const loadBusinessLandingSection = () =>
+  import("../components/landing/BusinessLandingSection").then((mod) => ({
+    default: mod.BusinessLandingSection,
+  }));
+
+const loadEmployeeLandingSection = () =>
+  import("../components/landing/EmployeeLandingSection").then((mod) => ({
+    default: mod.EmployeeLandingSection,
+  }));
+
 const loadPaymentsSection = () =>
   import("../components/landing/PaymentsSection").then((mod) => ({
     default: mod.PaymentsSection,
@@ -54,6 +64,15 @@ export function LandingPageBelowFold() {
       <LandingLazySection
         load={loadLandingIndustriesTeaserSection}
         minHeight={LAZY_SECTION_MIN_HEIGHT.industriesTeaser}
+      />
+
+      <LandingLazySection
+        load={loadBusinessLandingSection}
+        minHeight={LAZY_SECTION_MIN_HEIGHT.splitShowcase}
+      />
+      <LandingLazySection
+        load={loadEmployeeLandingSection}
+        minHeight={LAZY_SECTION_MIN_HEIGHT.splitShowcase}
       />
 
       <LandingLazySection
