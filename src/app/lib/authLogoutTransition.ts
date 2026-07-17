@@ -1,8 +1,8 @@
 import { clearLogoutPending } from "./api";
 import { authDebug } from "./authDebugLog";
 
-/** Visual polish — overlay stays up at least this long after logout begins. */
-const POST_LOGOUT_MIN_VISIBLE_MS = 400;
+/** Visual polish — end as soon as the login surface is ready (no dedicated logout screen). */
+const POST_LOGOUT_MIN_VISIBLE_MS = 0;
 
 const POST_LOGOUT_MAX_MS = 15_000;
 

@@ -38,6 +38,16 @@ export function CareTipLoadingTitle({
   );
 }
 
+const TIP_PROGRESS_CONTEXTS = new Set<AppLoadingContext>([
+  "tipPage",
+  "findingRecipient",
+  "checkout",
+  "stripeRedirect",
+  "stripeReturn",
+  "finishing",
+  "receipt",
+]);
+
 export type CareTipPageLoaderProps = {
   message?: string;
   /** Action-aware copy when `message` is omitted. */
@@ -46,10 +56,10 @@ export type CareTipPageLoaderProps = {
   /** Stable key for global overlay registration (fullscreen / wait). */
   registrationKey?: string;
   /**
-   * fullscreen — full-viewport branded (dashboards / rare full-page module loads).
+   * fullscreen — full-viewport (cold entry under global overlay; soft nav = icon only).
    * section — in-page blocks (lists, settings body).
    * compact — tables, overlays, modals (smaller title + md spinner).
-   * wait — full-viewport branded wait (QR resolve, guards, data hydration).
+   * wait — full-viewport wait (QR resolve, guards, data hydration).
    */
   variant?: "fullscreen" | "section" | "compact" | "wait";
 };
@@ -65,6 +75,8 @@ export function CareTipPageLoader({
   const autoKey = useId();
   const softNav = isAppShellInteractive();
   const isFullScreen = variant === "wait" || variant === "fullscreen";
+  const keepProgressCopy =
+    Boolean(message) || (context != null && TIP_PROGRESS_CONTEXTS.has(context));
   const resolvedMessage =
     message ?? (context ? resolveAppLoadingContextMessage(context, t) : undefined);
   const spinnerSize = variant === "compact" ? "md" : "lg";
@@ -73,7 +85,7 @@ export function CareTipPageLoader({
     registrationKey ?? `caretip-page-loader:${autoKey}`,
     APP_LOADING_PRIORITY.ROUTE_GUARD,
     isFullScreen && !softNav,
-    resolvedMessage,
+    keepProgressCopy ? resolvedMessage : undefined,
   );
 
   const variantClass =
@@ -85,9 +97,28 @@ export function CareTipPageLoader({
           ? "flex flex-col items-center justify-center gap-6 py-16 px-4"
           : "flex flex-col items-center justify-center gap-4";
 
-  /* Cold entry: stay under the global CareTip overlay. Soft SPA: local wait only. */
+  /* Cold entry: stay under the global CareTip overlay. */
   if (isFullScreen && !softNav) {
     return <GlobalAppLoadingHold className={className} />;
+  }
+
+  /* Soft SPA: tip/payment keep progress copy; dashboards get icon-only (no status text). */
+  if (isFullScreen && softNav && !keepProgressCopy) {
+    return (
+      <div
+        className={cn(
+          "app-branded-loader flex min-h-[40vh] flex-col items-center justify-center bg-background px-6",
+          className,
+        )}
+        role="status"
+        aria-busy="true"
+        aria-label="CareTip"
+      >
+        <div className="app-branded-loader__mark" aria-hidden>
+          <CareTipLoadingTitle compact className="app-branded-loader__title" />
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -97,10 +128,12 @@ export function CareTipPageLoader({
       aria-busy="true"
       aria-live="polite"
     >
-      <CareTipLoadingTitle compact={variant === "compact" || isFullScreen} />
+      {keepProgressCopy ? null : (
+        <CareTipLoadingTitle compact={variant === "compact" || isFullScreen} />
+      )}
       <div className="flex flex-col items-center gap-3">
         <LoadingSpinner size={spinnerSize} />
-        {resolvedMessage ? (
+        {keepProgressCopy && resolvedMessage ? (
           <p className="max-w-sm text-center text-sm text-muted-foreground">
             {resolvedMessage}
           </p>

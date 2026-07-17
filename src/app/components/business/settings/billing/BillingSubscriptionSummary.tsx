@@ -159,23 +159,13 @@ export function BillingSubscriptionSummary({
           </h2>
         </div>
         <div className="flex shrink-0 flex-wrap items-center justify-end gap-2">
-          <a
-            href={`#${BILLING_PLANS_SECTION_ID}`}
-            onClick={(e) => {
-              e.preventDefault();
-              scrollToBillingPlansSection("smooth");
-            }}
-            className={cn(dashboardWorkspaceUi.btnPrimary, "inline-flex")}
-          >
-            {t("business.billing.managePlan")}
-          </a>
           {showManageBilling ? (
             <button
               type="button"
               onClick={onManageBilling}
               disabled={manageBillingBusy}
               className={cn(
-                dashboardWorkspaceUi.btnSecondary,
+                dashboardWorkspaceUi.btnPrimary,
                 "inline-flex gap-2 disabled:opacity-60",
               )}
               aria-busy={manageBillingBusy || undefined}
@@ -187,7 +177,18 @@ export function BillingSubscriptionSummary({
               )}
               {t("business.billing.manageBilling")}
             </button>
-          ) : null}
+          ) : (
+            <a
+              href={`#${BILLING_PLANS_SECTION_ID}`}
+              onClick={(e) => {
+                e.preventDefault();
+                scrollToBillingPlansSection("smooth");
+              }}
+              className={cn(dashboardWorkspaceUi.btnPrimary, "inline-flex")}
+            >
+              {t("business.billing.managePlan")}
+            </a>
+          )}
         </div>
       </div>
 

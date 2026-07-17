@@ -54,6 +54,7 @@ import {
   APP_LOADING_PRIORITY,
   useAppLoadingRegistration,
 } from "../lib/globalAppLoading";
+import { isAppShellInteractive } from "../lib/appShellLifecycle";
 
 const ROLE_MISMATCH_TOAST_STYLE = { background: '#000000', color: '#ffffff' } as const;
 
@@ -120,24 +121,11 @@ export function AuthPage() {
   /** Suppresses session-resume UI during fresh sign-in before navigation completes. */
   const [authFlowInProgress, setAuthFlowInProgress] = useState(false);
 
-  const signupSubmitting = isSubmitting && !isLogin;
-  const loginSubmitting = isSubmitting && isLogin;
-  useAppLoadingRegistration(
-    "auth-signup-submit",
-    APP_LOADING_PRIORITY.AUTH,
-    signupSubmitting,
-    t("common.creatingWorkspace"),
-  );
-  useAppLoadingRegistration(
-    "auth-login-submit",
-    APP_LOADING_PRIORITY.AUTH,
-    loginSubmitting,
-    t("common.loading.signingIn"),
-  );
+  // Form buttons keep local busy state — never reopen the global brand overlay for sign-in/up.
   useAppLoadingRegistration(
     "auth-invite-gate",
     APP_LOADING_PRIORITY.AUTH,
-    inviteGateBlocking,
+    inviteGateBlocking && !isAppShellInteractive(),
     t("common.loading.sessionCheck"),
   );
 

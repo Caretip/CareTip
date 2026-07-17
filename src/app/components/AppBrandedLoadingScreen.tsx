@@ -1,5 +1,4 @@
 import { useEffect } from "react";
-import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
 import { traceGlobalOverlayMounted } from "../lib/globalAppLoadingTrace";
 import { CareTipLoadingTitle } from "./CareTipPageLoader";
@@ -8,32 +7,36 @@ export type AppBrandedLoadingScreenProps = {
   className?: string;
   /** Full-viewport fixed overlay (global manager). */
   fixed?: boolean;
+  /**
+   * Optional status line — only for intentional payment/checkout waits.
+   * Cold entry never shows copy.
+   */
   message?: string;
-  /** When true and message is empty, show cold-start copy (app-boot only). */
+  /** When true, never render status copy (cold boot / auth). */
+  suppressStatusMessage?: boolean;
+  /** @deprecated Ignored — kept for call-site compatibility. */
   allowStartupFallback?: boolean;
   /** Fade-out when global overlay is dismissing. */
   exiting?: boolean;
 };
 
 /**
- * Global CareTip loader — branded mark, warm pulse, workspace copy.
- * Soft navigations / auth transitions only. Cold URL boot uses `#caretip-html-boot`.
+ * Application entry / intentional overlay — CareTip icon with optional payment status.
+ * No rotating messages, no “only a moment” filler.
  */
 export function AppBrandedLoadingScreen({
   className,
   fixed = false,
   message,
-  allowStartupFallback = false,
+  suppressStatusMessage = true,
   exiting = false,
 }: AppBrandedLoadingScreenProps) {
-  const { t } = useTranslation();
-  const resolvedMessage =
-    message ?? (allowStartupFallback ? t("common.loading.starting") : undefined);
-
   useEffect(() => {
     if (!fixed || exiting) return;
     traceGlobalOverlayMounted();
   }, [fixed, exiting]);
+
+  const status = !suppressStatusMessage && message?.trim() ? message.trim() : null;
 
   return (
     <div
@@ -45,17 +48,15 @@ export function AppBrandedLoadingScreen({
       )}
       role="status"
       aria-busy={!exiting}
+      aria-label={status ?? "CareTip"}
       aria-live="polite"
     >
       <div className="app-branded-loader__mark" aria-hidden>
         <CareTipLoadingTitle compact className="app-branded-loader__title" />
       </div>
-      <div className="flex max-w-sm flex-col items-center gap-1 text-center">
-        {resolvedMessage ? (
-          <p className="text-sm font-medium text-foreground">{resolvedMessage}</p>
-        ) : null}
-        <p className="text-xs text-muted-foreground">{t("common.onlyAMoment")}</p>
-      </div>
+      {status ? (
+        <p className="max-w-sm text-center text-sm font-medium text-foreground">{status}</p>
+      ) : null}
     </div>
   );
 }

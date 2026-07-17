@@ -15,9 +15,6 @@ export const PREMIUM_MIN_OVERLAY_VISIBLE_MS = 720;
 
 const PREMIUM_OVERLAY_KEYS = new Set([
   "app-boot",
-  "app-auth-bootstrap",
-  "auth-logout-transition",
-  "auth-post-login-transition",
   "billing-plan-checkout",
   "billing-trial-checkout",
   "onboarding-submit",
@@ -72,10 +69,8 @@ export function shouldBypassOverlayShowThreshold(
   if (initialColdBootPending) return true;
   return (
     winnerKey === "app-boot" ||
-    winnerKey === "app-auth-bootstrap" ||
-    winnerKey === "auth-post-login-transition" ||
-    winnerKey === "auth-logout-transition" ||
-    winnerKey === "auth-login-submit" ||
-    winnerKey === "auth-signup-submit"
+    winnerKey === "payment-stripe-redirect" ||
+    winnerKey === "payment-page-checkout" ||
+    (typeof winnerKey === "string" && winnerKey.includes("checkout"))
   );
 }

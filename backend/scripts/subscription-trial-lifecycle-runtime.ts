@@ -239,7 +239,50 @@ async function testExpiredProTrialReturnsBasic(): Promise<boolean> {
     return false;
   }
 
+  if (!billing.trialUsed || billing.trialEligible) {
+    fail("expired trial billing must report trialUsed=true and trialEligible=false");
+    return false;
+  }
+
   pass("expired Pro trial returns Basic active with preserved history");
+  return true;
+}
+
+async function testActiveProTrialDoesNotReportTrialUsed(): Promise<boolean> {
+  if (!billingPrereqsOk()) {
+    pass("active Pro trial trialUsed — SKIP (billing/stripe/trial env not fully enabled)");
+    return true;
+  }
+
+  const tag = `c2-active-trial-${Date.now()}`;
+  const trialStart = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+  const trialEnd = new Date(Date.now() + 21 * 24 * 60 * 60 * 1000);
+  const business = await createManagerBusiness(tag, {
+    planKey: "premium",
+    status: SubscriptionStatus.trialing,
+    stripeSubscriptionId: `sub_${tag}`,
+    trialStartedAt: trialStart,
+    trialEndsAt: trialEnd,
+    isTrial: true,
+  });
+
+  const eligibility = await resolveTrialEligibilityForBusiness(business.id);
+  if (eligibility.eligible || eligibility.reason !== "trialing_pro") {
+    fail(`active trial should be trialing_pro, got reason=${eligibility.reason}`);
+    return false;
+  }
+  if (eligibility.trialUsed) {
+    fail("active Pro trial must not set trialUsed=true (UI treats that as expired)");
+    return false;
+  }
+
+  const billing = await getBillingStatusForBusiness(business.id);
+  if (!billing.isTrial || billing.trialUsed) {
+    fail("active trial billing must be isTrial with trialUsed=false");
+    return false;
+  }
+
+  pass("active Pro trial does not report trialUsed");
   return true;
 }
 
@@ -305,6 +348,7 @@ async function main() {
   ok = (await testActiveProCannotStartTrial()) && ok;
   ok = (await testPremiumCannotStartTrial()) && ok;
   ok = (await testExpiredProTrialReturnsBasic()) && ok;
+  ok = (await testActiveProTrialDoesNotReportTrialUsed()) && ok;
   ok = (await testTrialCannotBeRepeated()) && ok;
 
   console.log("Commit 2 — Pro trial lifecycle runtime checks\n");

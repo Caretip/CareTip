@@ -10,8 +10,10 @@ import {
   useAppLoadingRegistration,
 } from "@/app/context/AppLoadingManager";
 import { GlobalAppLoadingHold } from "@/app/components/GlobalAppLoadingHold";
+import { LoadingSpinner } from "@/app/components/ui/loading-spinner";
 import type { AppLoadingContext } from "@/app/lib/appLoadingContexts";
 import { resolveAppLoadingContextMessage } from "@/app/lib/appLoadingContexts";
+import { isAppShellInteractive } from "@/app/lib/appShellLifecycle";
 
 type CustomerFlowShellProps = {
   headerLeading?: ReactNode;
@@ -34,7 +36,7 @@ type CustomerFlowShellProps = {
 
 /**
  * Persistent customer journey shell — header stays mounted while body loads.
- * Full-page async work uses the global branded overlay (not inline spinners).
+ * Cold entry uses the global brand overlay; in-journey waits keep progress copy in-shell.
  */
 export function CustomerFlowShell({
   headerLeading,
@@ -55,6 +57,7 @@ export function CustomerFlowShell({
   bottomBar,
 }: CustomerFlowShellProps) {
   const { t } = useTranslation();
+  const softNav = isAppShellInteractive();
   const overlayMessage =
     loadingMessage ??
     resolveAppLoadingContextMessage(loadingContext, t);
@@ -62,7 +65,7 @@ export function CustomerFlowShell({
   useAppLoadingRegistration(
     loadingRegistrationKey,
     APP_LOADING_PRIORITY.ROUTE_GUARD,
-    loading,
+    loading && !softNav,
     overlayMessage,
   );
 
@@ -79,7 +82,23 @@ export function CustomerFlowShell({
 
       <div className={cn(cf.main, mainClassName)}>
         {loading ? (
-          <GlobalAppLoadingHold className="min-h-[40vh] py-16 sm:py-20" />
+          softNav ? (
+            <div
+              className="flex min-h-[40vh] flex-col items-center justify-center gap-3 py-16 sm:py-20"
+              role="status"
+              aria-busy="true"
+              aria-live="polite"
+            >
+              <LoadingSpinner size="lg" />
+              {overlayMessage ? (
+                <p className="max-w-sm text-center text-sm text-muted-foreground">
+                  {overlayMessage}
+                </p>
+              ) : null}
+            </div>
+          ) : (
+            <GlobalAppLoadingHold className="min-h-[40vh] py-16 sm:py-20" />
+          )
         ) : (
           children
         )}

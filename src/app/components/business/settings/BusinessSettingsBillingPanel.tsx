@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link, useLocation } from "react-router";
+import { useLocation } from "react-router";
 import { useTranslation } from "react-i18next";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
@@ -20,8 +20,6 @@ import { BillingSubscriptionSummary } from "./billing/BillingSubscriptionSummary
 import { dashboardWorkspaceUi } from "@/app/components/dashboard/dashboardWorkspaceUi";
 import { cn } from "@/lib/utils";
 import { BILLING_PLANS_SECTION_ID, scrollToBillingPlansSection } from "../../../lib/activateCareTipNavigation";
-
-const BILLING_HISTORY_PATH = "/dashboard/billing/history";
 
 export function BusinessSettingsBillingPanel() {
   const { t } = useTranslation();
@@ -112,8 +110,6 @@ export function BusinessSettingsBillingPanel() {
 
   if (!data) return null;
 
-  const hasBillingHistory = data.events.length > 0;
-
   return (
     <div className="billing-settings-panel space-y-8">
       <BillingSubscriptionSummary
@@ -126,21 +122,11 @@ export function BusinessSettingsBillingPanel() {
 
       {data.accessSource !== "sponsored" ? (
         <section id="billing-plans" className="billing-settings-panel__plans space-y-6">
-          <div className="flex flex-wrap items-end justify-between gap-3">
-            <div>
-              <h2 className={dashboardWorkspaceUi.sectionTitle}>{t("business.billing.planComparisonTitle")}</h2>
-              <p className={cn(dashboardWorkspaceUi.pageDescription, "mt-1")}>
-                {t("business.billing.planComparisonDesc")}
-              </p>
-            </div>
-            {hasBillingHistory ? (
-              <Link
-                to={BILLING_HISTORY_PATH}
-                className={cn(dashboardWorkspaceUi.btnGhost, "shrink-0 text-sm")}
-              >
-                {t("business.billing.viewBillingHistory")}
-              </Link>
-            ) : null}
+          <div>
+            <h2 className={dashboardWorkspaceUi.sectionTitle}>{t("business.billing.planComparisonTitle")}</h2>
+            <p className={cn(dashboardWorkspaceUi.pageDescription, "mt-1")}>
+              {t("business.billing.planComparisonDesc")}
+            </p>
           </div>
 
           <BillingTrialSection

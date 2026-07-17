@@ -21,27 +21,22 @@ export function resetAppShellInteractiveForTests(): void {
 }
 
 /**
- * Intentional overlays that may still cover the UI after the shell is interactive
- * (login/logout, checkout). Routine route/landing/chunk keys must never reopen it.
+ * Intentional overlays that may still cover the UI after the shell is interactive.
+ * Payment / checkout only — never logout, post-login, or routine route keys.
  */
 const SOFT_NAV_ALLOWED_KEYS = new Set([
-  "app-auth-bootstrap",
-  "auth-login-submit",
-  "auth-signup-submit",
-  "auth-logout-transition",
-  "auth-post-login-transition",
-  "auth-invite-gate",
   "billing-plan-checkout",
   "billing-trial-checkout",
+  "billing-trial-expired-checkout",
   "onboarding-submit",
   "activate-caretip",
   "payment-stripe-redirect",
   "payment-page-checkout",
   "upgrade-cta-checkout",
+  "pro-upgrade-checkout",
 ]);
 
 const SOFT_NAV_ALLOWED_PREFIXES = [
-  "auth-",
   "billing-",
   "payment-",
 ] as const;
@@ -49,7 +44,7 @@ const SOFT_NAV_ALLOWED_PREFIXES = [
 export function isIntentionalPostShellOverlayKey(key: string): boolean {
   if (SOFT_NAV_ALLOWED_KEYS.has(key)) return true;
   if (SOFT_NAV_ALLOWED_PREFIXES.some((prefix) => key.startsWith(prefix))) return true;
-  if (key.includes("checkout") && !key.includes("chunk")) return true;
+  if (key.includes("checkout") && !key.includes("chunk") && !key.startsWith("auth-")) return true;
   return false;
 }
 

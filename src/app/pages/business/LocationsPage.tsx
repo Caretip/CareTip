@@ -148,10 +148,12 @@ export function LocationsPage() {
         {showInitialSkeleton ? (
           <LocationCardGridSkeleton />
         ) : locations.length === 0 ? (
-          <div className={cn(businessUi.cardStatic, "py-16 text-center text-muted-foreground border-dashed")}>
-            <MapPin className="w-10 h-10 mx-auto mb-3 opacity-50" />
-            <p>{t("business.locationsPage.empty")}</p>
-          </div>
+          showBasicUpgradeCard ? null : (
+            <div className={cn(businessUi.cardStatic, "py-16 text-center text-muted-foreground border-dashed")}>
+              <MapPin className="w-10 h-10 mx-auto mb-3 opacity-50" />
+              <p>{t("business.locationsPage.empty")}</p>
+            </div>
+          )
         ) : (
           <ul className="grid gap-3 sm:grid-cols-2">
             {locations.map((loc) => (
@@ -176,7 +178,7 @@ export function LocationsPage() {
           </ul>
         )}
         {showBasicUpgradeCard ? (
-          <div className="mt-8">
+          <div className={showInitialSkeleton || locations.length > 0 ? "mt-8" : undefined}>
             <LocationsMultiLocationUpgradeCard />
           </div>
         ) : null}

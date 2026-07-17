@@ -43,6 +43,7 @@ import {
   isTechnicalOverlayRegistration,
 } from "../lib/appLoadingJourney";
 import {
+  isIntentionalPostShellOverlayKey,
   markAppShellInteractive,
   shouldSuppressSoftNavGlobalOverlay,
 } from "../lib/appShellLifecycle";
@@ -146,19 +147,15 @@ function subscribeAuthIntentOverlay(onStoreChange: () => void): () => void {
   };
 }
 
-/** Intentional auth handoffs — must cover the next paint (no useEffect gap). */
-function getAuthIntentOverlayKey(): "auth-logout-transition" | "auth-post-login-transition" | null {
-  if (isAuthLogoutTransitionActive()) return "auth-logout-transition";
-  if (isAuthPostLoginTransitionActive()) return "auth-post-login-transition";
+/** Intentional auth handoffs — no branded overlay; destination renders naturally. */
+function getAuthIntentOverlayKey(): null {
   return null;
 }
 
 function resolveAuthIntentOverlayMessage(
-  key: "auth-logout-transition" | "auth-post-login-transition",
+  _key: "auth-logout-transition" | "auth-post-login-transition",
 ): string {
-  return key === "auth-logout-transition"
-    ? i18n.t("common.signingOut")
-    : i18n.t("common.loading.signingIn");
+  return "";
 }
 
 export function AppLoadingManagerProvider({ children }: { children: React.ReactNode }) {
@@ -588,7 +585,12 @@ export function AppLoadingManagerProvider({ children }: { children: React.ReactN
         <AppBrandedLoadingScreen
           fixed
           message={displayOverlayMessage}
-          allowStartupFallback={winner?.key === BOOTSTRAP_KEY && !displayOverlayMessage}
+          suppressStatusMessage={
+            winner?.key === BOOTSTRAP_KEY ||
+            !winner?.key ||
+            !isIntentionalPostShellOverlayKey(winner.key)
+          }
+          allowStartupFallback={false}
           exiting={overlayPhase === "exiting"}
         />
       ) : null}

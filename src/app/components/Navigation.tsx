@@ -252,12 +252,12 @@ export const Navigation = memo(function Navigation({ variant: _variant = "defaul
           className="relative mx-auto max-w-7xl min-h-0 min-w-0 px-4 py-2.5 sm:px-6 sm:py-3 lg:px-8 lg:py-3.5"
           aria-label={t("nav.mainNav")}
         >
-          <div className="relative flex min-h-0 min-w-0 max-w-full items-center justify-between gap-3 sm:gap-5">
+          <div className="relative grid min-h-0 min-w-0 max-w-full grid-cols-[minmax(0,auto)_minmax(0,1fr)_minmax(0,auto)] items-center gap-2 sm:gap-3 lg:gap-4">
             <PrefetchLink
               to="/"
               className={cn(
                 "relative z-[2] flex h-[3.5rem] min-h-[3.5rem] min-w-0 items-center overflow-hidden rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-primary/40 sm:h-[3.5rem] sm:min-h-[3.5rem] md:h-16 md:min-h-[4rem] lg:h-16 lg:min-h-[4rem] xl:h-[4.25rem] xl:min-h-[4.25rem]",
-                "max-w-[calc(100%-5.5rem)] shrink-0 md:max-w-[min(248px,42vw)] lg:max-w-[min(268px,36vw)]",
+                "max-w-[min(248px,42vw)] shrink-0 lg:max-w-[min(268px,28vw)]",
                 "touch-manipulation",
               )}
             >
@@ -265,7 +265,7 @@ export const Navigation = memo(function Navigation({ variant: _variant = "defaul
             </PrefetchLink>
 
             <div
-              className="pointer-events-none absolute left-1/2 top-1/2 z-[1] hidden -translate-x-1/2 -translate-y-1/2 items-center gap-7 lg:pointer-events-auto lg:flex xl:gap-9"
+              className="hidden min-w-0 items-center justify-center gap-1.5 overflow-x-clip lg:flex xl:gap-3 2xl:gap-5"
               aria-hidden={false}
             >
               {NAV_ROUTES_BEFORE_INDUSTRIES.map((route) => (
@@ -274,19 +274,21 @@ export const Navigation = memo(function Navigation({ variant: _variant = "defaul
                   to={route.to}
                   className={cn(
                     linkClass,
+                    "shrink-0 whitespace-nowrap px-1.5 xl:px-2.5",
                     location.pathname === route.to && "text-primary bg-primary/[0.06] dark:bg-primary/[0.1]",
                   )}
                 >
                   {t(route.nameKey)}
                 </PrefetchLink>
               ))}
-              <IndustriesNavDropdown variant="desktop" linkClass={linkClass} />
+              <IndustriesNavDropdown variant="desktop" linkClass={cn(linkClass, "shrink-0 whitespace-nowrap px-1.5 xl:px-2.5")} />
               {NAV_ROUTES_AFTER_INDUSTRIES.map((route) => (
                 <PrefetchLink
                   key={route.to}
                   to={route.to}
                   className={cn(
                     linkClass,
+                    "shrink-0 whitespace-nowrap px-1.5 xl:px-2.5",
                     location.pathname === route.to && "text-primary bg-primary/[0.06] dark:bg-primary/[0.1]",
                   )}
                 >
@@ -295,30 +297,32 @@ export const Navigation = memo(function Navigation({ variant: _variant = "defaul
               ))}
             </div>
 
-            <div className="relative z-[2] hidden items-center gap-3.5 lg:flex shrink-0">
-              <ThemeQuickToggle />
-              <LanguageSwitcher />
-              <PrefetchLink
-                to="/join"
-                className={cn(
-                  linkClass,
-                  location.pathname === "/join" && "text-primary bg-primary/[0.06] dark:bg-primary/[0.1]",
-                )}
-              >
-                {t("nav.staffPortal")}
-              </PrefetchLink>
-              <PrefetchLink
-                to="/login"
-                className={cn(
-                  linkClass,
-                  location.pathname === "/login" && "text-primary bg-primary/[0.06] dark:bg-primary/[0.1]",
-                )}
-              >
-                {t("nav.logIn")}
-              </PrefetchLink>
-            </div>
+            <div className="relative z-[2] flex shrink-0 items-center justify-end gap-2 sm:gap-2.5 lg:gap-2.5 xl:gap-3.5">
+              <div className="hidden items-center gap-2 lg:flex xl:gap-3">
+                <ThemeQuickToggle />
+                <LanguageSwitcher />
+                <PrefetchLink
+                  to="/join"
+                  className={cn(
+                    linkClass,
+                    "whitespace-nowrap",
+                    location.pathname === "/join" && "text-primary bg-primary/[0.06] dark:bg-primary/[0.1]",
+                  )}
+                >
+                  {t("nav.staffPortal")}
+                </PrefetchLink>
+                <PrefetchLink
+                  to="/login"
+                  className={cn(
+                    linkClass,
+                    "whitespace-nowrap",
+                    location.pathname === "/login" && "text-primary bg-primary/[0.06] dark:bg-primary/[0.1]",
+                  )}
+                >
+                  {t("nav.logIn")}
+                </PrefetchLink>
+              </div>
 
-            <div className="relative z-[2] flex items-center gap-2 lg:hidden">
               <button
                 type="button"
                 onClick={(e) => {
@@ -327,7 +331,7 @@ export const Navigation = memo(function Navigation({ variant: _variant = "defaul
                   toggleMobileMenu();
                 }}
                 className={cn(
-                  "relative shrink-0 touch-manipulation rounded-lg p-2.5 transition-colors active:opacity-90",
+                  "relative shrink-0 touch-manipulation rounded-lg p-2.5 transition-colors active:opacity-90 lg:hidden",
                   "hover:bg-muted/80 active:bg-muted",
                 )}
                 style={{ color: "hsl(var(--foreground))" }}

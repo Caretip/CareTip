@@ -111,9 +111,10 @@ export async function resolveTrialEligibilityForBusiness(
 
   if (entitled) {
     if (sub.status === SubscriptionStatus.trialing || sub.isTrial) {
+      // Trial is in progress — do not mark as "used" for UI (history still blocks repeats via checkout).
       return {
         eligible: false,
-        trialUsed: true,
+        trialUsed: false,
         reason: "trialing_pro",
         lastTrialPlanKey: sub.planKey,
       };
@@ -122,7 +123,8 @@ export async function resolveTrialEligibilityForBusiness(
     if (sub.planKey === SubscriptionPlanKey.enterprise) {
       return {
         eligible: false,
-        trialUsed,
+        // Paid Premium: trial history may exist, but "used" messaging is for Basic post-expiry only.
+        trialUsed: false,
         reason: "premium",
         lastTrialPlanKey,
       };
@@ -131,7 +133,8 @@ export async function resolveTrialEligibilityForBusiness(
     if (!isInternalBasicSubscription(sub)) {
       return {
         eligible: false,
-        trialUsed,
+        // Paid Pro after conversion: suppress "trial used" upgrade nag; checkout still blocked by eligible=false.
+        trialUsed: false,
         reason: sub.planKey === SubscriptionPlanKey.premium ? "active_pro" : "premium",
         lastTrialPlanKey,
       };

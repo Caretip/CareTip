@@ -10,7 +10,10 @@ import {
   APP_LOADING_PRIORITY,
   useAppLoadingRegistration,
 } from "@/app/lib/globalAppLoading";
-import { shouldShowTrialExpiredUpgrade } from "@/app/lib/billingDisplayState";
+import {
+  isBillingTrialActive,
+  shouldShowTrialExpiredUpgrade,
+} from "@/app/lib/billingDisplayState";
 import { cn } from "@/lib/utils";
 import {
   Dialog,
@@ -128,6 +131,11 @@ export function BillingTrialSection({
 
   if (billing.accessSource === "sponsored") return null;
 
+  // Active Pro trial: keep features unlocked; status lives in BillingSubscriptionSummary / TrialSummary.
+  if (isBillingTrialActive(billing)) {
+    return null;
+  }
+
   if (shouldShowTrialExpiredUpgrade(billing)) {
     return <BillingTrialExpiredUpgrade billingCycle={billingCycle} />;
   }
@@ -172,14 +180,6 @@ export function BillingTrialSection({
     );
   }
 
-  if (billing.trialUsed && !billing.trialEligible) {
-    return (
-      <section className={cn(dashboardWorkspaceUi.card, dashboardWorkspaceUi.cardPad)}>
-        <p className={dashboardWorkspaceUi.helperText}>{t("business.billing.trialFlow.alreadyUsed")}</p>
-      </section>
-    );
-  }
-
   return null;
 }
 
@@ -217,6 +217,9 @@ function BillingTrialExpiredUpgrade({ billingCycle }: { billingCycle: "monthly" 
   return (
     <section className={cn(dashboardWorkspaceUi.card, dashboardWorkspaceUi.cardPad)}>
       <h3 className={dashboardWorkspaceUi.sectionTitle}>{t("business.billing.trialFlow.expiredTitle")}</h3>
+      <p className={cn(dashboardWorkspaceUi.helperText, "mt-1.5")}>
+        {t("business.billing.trialFlow.alreadyUsed")}
+      </p>
       <p className={cn(dashboardWorkspaceUi.helperText, "mt-1.5")}>
         {t("business.billing.trialFlow.expiredBody")}
       </p>
