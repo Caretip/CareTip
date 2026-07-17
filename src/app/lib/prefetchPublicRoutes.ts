@@ -16,6 +16,12 @@ const PUBLIC_ROUTE_IMPORTERS: Record<string, RouteImporter> = {
   "/terms": () => import("../pages/TermsPage"),
   "/cookies": () => import("../pages/CookiesPage"),
   "/imprint": () => import("../pages/ImprintPage"),
+  "/industries/gastronomy": () => import("../pages/IndustryPage"),
+  "/industries/hotels": () => import("../pages/IndustryPage"),
+  "/industries/logistics": () => import("../pages/IndustryPage"),
+  "/industries/midwives": () => import("../pages/IndustryPage"),
+  "/industries/fairs": () => import("../pages/IndustryPage"),
+  "/industries/field-service": () => import("../pages/IndustryPage"),
 };
 
 const prefetched = new Set<string>();

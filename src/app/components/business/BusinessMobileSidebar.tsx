@@ -15,8 +15,10 @@ import {
 } from "../CareTipLogo";
 import { BusinessSidebarNavShell } from "./sidebar/BusinessSidebarNavShell";
 import { BusinessSidebarUpgradeCta } from "./sidebar/BusinessSidebarUpgradeCta";
+import { useBusinessGuidelines } from "@/app/contexts/BusinessGuidelinesContext";
 import { MobileDrawer } from "../ui/MobileDrawer";
 import { dashboardSidebarIconButtonIdle, dashboardSidebarSignOutButton } from "@/lib/theme/dashboardSidebarUi";
+import { Rocket } from "lucide-react";
 
 interface BusinessMobileSidebarProps {
   isOpen: boolean;
@@ -26,6 +28,7 @@ interface BusinessMobileSidebarProps {
 export function BusinessMobileSidebar({ isOpen, onClose }: BusinessMobileSidebarProps) {
   const { t } = useTranslation();
   const { user, logout, exitImpersonation } = useAuth();
+  const { openGuidelines } = useBusinessGuidelines();
   const signingOut = useSyncExternalStore(
     subscribeAuthLogoutTransition,
     isAuthLogoutTransitionActive,
@@ -61,6 +64,17 @@ export function BusinessMobileSidebar({ isOpen, onClose }: BusinessMobileSidebar
 
       <div className="shrink-0 border-t border-sidebar-border px-3 pt-2 pb-4">
         <BusinessSidebarUpgradeCta />
+        <button
+          type="button"
+          onClick={() => {
+            openGuidelines();
+            onClose();
+          }}
+          className={cn(dashboardSidebarSignOutButton, "mb-1")}
+        >
+          <Rocket className="h-[1.125rem] w-[1.125rem] shrink-0 opacity-90" aria-hidden />
+          <span className="text-sm font-medium">{t("business.dashboard.quickStartNavLabel")}</span>
+        </button>
         <button
           type="button"
           disabled={signingOut}

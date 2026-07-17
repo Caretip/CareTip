@@ -5,33 +5,17 @@ export const SHOW_LANDING_SOCIAL_PROOF = false;
 
 /** Approximate section heights — reserve space before lazy sections mount (CLS guard). */
 const LAZY_SECTION_MIN_HEIGHT = {
-  hospitality: "48rem",
+  industriesTeaser: "52rem",
   splitShowcase: "44rem",
-  features: "48rem",
-  realLife: "56rem",
+  payments: "16rem",
   liveMinutes: "48rem",
   socialProof: "36rem",
-  finalCta: "28rem",
+  finalCta: "22rem",
 } as const;
 
-const loadHospitalityTeamsUnifiedSection = () =>
-  import("../components/landing/HospitalityTeamsUnifiedSection").then((mod) => ({
-    default: mod.HospitalityTeamsUnifiedSection,
-  }));
-
-const loadBusinessLandingSection = () =>
-  import("../components/landing/BusinessLandingSection").then((mod) => ({
-    default: mod.BusinessLandingSection,
-  }));
-
-const loadEmployeeLandingSection = () =>
-  import("../components/landing/EmployeeLandingSection").then((mod) => ({
-    default: mod.EmployeeLandingSection,
-  }));
-
-const loadLandingFeaturesSection = () =>
-  import("../components/landing/LandingFeaturesSection").then((mod) => ({
-    default: mod.LandingFeaturesSection,
+const loadLandingIndustriesTeaserSection = () =>
+  import("../components/landing/LandingIndustriesTeaserSection").then((mod) => ({
+    default: mod.LandingIndustriesTeaserSection,
   }));
 
 const loadPaymentsSection = () =>
@@ -39,19 +23,14 @@ const loadPaymentsSection = () =>
     default: mod.PaymentsSection,
   }));
 
-const loadLandingRealLifeSection = () =>
-  import("../components/landing/LandingRealLifeSection").then((mod) => ({
-    default: mod.LandingRealLifeSection,
+const loadSimpleSetupSection = () =>
+  import("../components/landing/SimpleSetupSection").then((mod) => ({
+    default: mod.SimpleSetupSection,
   }));
 
 const loadLandingMotivationSection = () =>
   import("../components/landing/LandingMotivationSection").then((mod) => ({
     default: mod.LandingMotivationSection,
-  }));
-
-const loadSimpleSetupSection = () =>
-  import("../components/landing/SimpleSetupSection").then((mod) => ({
-    default: mod.SimpleSetupSection,
   }));
 
 const loadLandingSocialProofSection = () =>
@@ -64,45 +43,32 @@ const loadLandingFinalCtaSection = () =>
     default: mod.LandingFinalCtaSection,
   }));
 
-/** Below-the-fold landing sections — viewport-gated + code-split. Hero stays eager in LandingPage. */
+/**
+ * Below-the-fold landing — teaser homepage IA.
+ * Features live on /features; industry detail on /industries/*.
+ * Order: setup (live in minutes) before recognition (motivation).
+ */
 export function LandingPageBelowFold() {
   return (
     <>
       <LandingLazySection
-        load={loadHospitalityTeamsUnifiedSection}
-        minHeight={LAZY_SECTION_MIN_HEIGHT.hospitality}
+        load={loadLandingIndustriesTeaserSection}
+        minHeight={LAZY_SECTION_MIN_HEIGHT.industriesTeaser}
       />
 
-      <LandingLazySection
-        load={loadBusinessLandingSection}
-        minHeight={LAZY_SECTION_MIN_HEIGHT.splitShowcase}
-      />
-      <LandingLazySection
-        load={loadEmployeeLandingSection}
-        minHeight={LAZY_SECTION_MIN_HEIGHT.splitShowcase}
-      />
-
-      <LandingLazySection
-        load={loadLandingFeaturesSection}
-        minHeight={LAZY_SECTION_MIN_HEIGHT.features}
-      />
       <LandingLazySection
         load={loadPaymentsSection}
-        minHeight={LAZY_SECTION_MIN_HEIGHT.splitShowcase}
-      />
-
-      <LandingLazySection
-        load={loadLandingRealLifeSection}
-        minHeight={LAZY_SECTION_MIN_HEIGHT.realLife}
-      />
-      <LandingLazySection
-        load={loadLandingMotivationSection}
-        minHeight={LAZY_SECTION_MIN_HEIGHT.splitShowcase}
+        minHeight={LAZY_SECTION_MIN_HEIGHT.payments}
       />
 
       <LandingLazySection
         load={loadSimpleSetupSection}
         minHeight={LAZY_SECTION_MIN_HEIGHT.liveMinutes}
+      />
+
+      <LandingLazySection
+        load={loadLandingMotivationSection}
+        minHeight={LAZY_SECTION_MIN_HEIGHT.splitShowcase}
       />
 
       {SHOW_LANDING_SOCIAL_PROOF ? (

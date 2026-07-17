@@ -1,5 +1,5 @@
 import { motion } from "motion/react";
-import { useState, useEffect, useCallback, useRef, type ComponentProps, type ReactNode } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef, type ComponentProps, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { useTranslation } from "react-i18next";
 import { format } from "date-fns";
@@ -67,9 +67,11 @@ import {
 } from "@/components/ui/dashboard-styles";
 import { businessUi } from "@/app/components/business/businessDashboardUi";
 import {
-  STAFF_ROLE_OPTIONS,
   STAFF_ROLE_OTHER_VALUE,
+  STANDARD_STAFF_ROLE_OPTIONS,
+  collectCustomStaffRoles,
   formatStaffRoleLabel,
+  isPresetStaffRole,
   resolveStaffRoleForForm,
   resolveStaffRoleForSave,
 } from "../../lib/businessVenueOptions";
@@ -114,13 +116,47 @@ function HeroPanelButtonIcon({ children }: { children: ReactNode }) {
   );
 }
 
-function StaffRoleSelectOptions() {
+function StaffRoleSelectOptions({
+  canCreateCustom,
+  customRoles,
+  lockedCustomRole,
+}: {
+  canCreateCustom: boolean;
+  customRoles: readonly string[];
+  /** Basic: keep showing an employee’s existing custom title without offering create. */
+  lockedCustomRole?: string;
+}) {
   const { t } = useTranslation();
-  return STAFF_ROLE_OPTIONS.map((opt) => (
-    <option key={opt.value} value={opt.value}>
-      {t(opt.labelKey)}
-    </option>
-  ));
+  const locked = lockedCustomRole?.trim() ?? "";
+  const showLocked =
+    Boolean(locked) &&
+    !canCreateCustom &&
+    !customRoles.some((r) => r.toLowerCase() === locked.toLowerCase());
+
+  return (
+    <>
+      <optgroup label={t("business.staffPage.roleStandardGroup")}>
+        {STANDARD_STAFF_ROLE_OPTIONS.map((opt) => (
+          <option key={opt.value} value={opt.value}>
+            {t(opt.labelKey)}
+          </option>
+        ))}
+      </optgroup>
+      {canCreateCustom && customRoles.length > 0 ? (
+        <optgroup label={t("business.staffPage.roleCustomGroup")}>
+          {customRoles.map((role) => (
+            <option key={role} value={role}>
+              {role}
+            </option>
+          ))}
+        </optgroup>
+      ) : null}
+      {showLocked ? <option value={locked}>{locked}</option> : null}
+      {canCreateCustom ? (
+        <option value={STAFF_ROLE_OTHER_VALUE}>{t("business.staffPage.roleOther")}</option>
+      ) : null}
+    </>
+  );
 }
 
 function StaffCustomRoleField({
@@ -220,6 +256,7 @@ export function StaffManagementPage() {
   });
   const brandingTier = tier ?? "basic";
   const canGrowTeam = hasFeature("teamManagement");
+  const canCreateCustomJobTitles = hasFeature("customJobTitles");
   const [searchQuery, setSearchQuery] = useState("");
   const [showAddModal, setShowAddModal] = useState(false);
   const [addForm, setAddForm] = useState({
@@ -236,6 +273,10 @@ export function StaffManagementPage() {
   const [inviteExpiresAt, setInviteExpiresAt] = useState<string | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [employees, setEmployees] = useState<StaffRow[]>([]);
+  const teamCustomRoles = useMemo(
+    () => collectCustomStaffRoles(employees.map((e) => e.role)),
+    [employees],
+  );
   const [showEditModal, setShowEditModal] = useState(false);
   const [editForm, setEditForm] = useState({
     id: "",
@@ -494,6 +535,10 @@ export function StaffManagementPage() {
       toastErr(t("business.staffPage.toastCustomRoleRequired"));
       return;
     }
+    if (!isPresetStaffRole(role) && !canCreateCustomJobTitles) {
+      toastErr(t("business.staffPage.toastCustomRoleProRequired"));
+      return;
+    }
     setIsSubmitting(true);
     try {
       const inviteLocale = i18n.resolvedLanguage?.toLowerCase().startsWith("de") ? "de" : "en";
@@ -527,12 +572,24 @@ export function StaffManagementPage() {
   };
 
   const openEdit = (employee: StaffRow) => {
-    const resolved = resolveStaffRoleForForm(employee.role);
+    const resolved = resolveStaffRoleForForm(
+      employee.role,
+      canCreateCustomJobTitles ? teamCustomRoles : [],
+    );
+    const roleForSelect =
+      !canCreateCustomJobTitles &&
+      resolved.role === STAFF_ROLE_OTHER_VALUE &&
+      resolved.customRole
+        ? resolved.customRole
+        : resolved.role;
     setEditForm({
       id: employee.id,
       name: employee.name,
-      role: resolved.role,
-      customRole: resolved.customRole,
+      role: roleForSelect,
+      customRole:
+        canCreateCustomJobTitles && resolved.role === STAFF_ROLE_OTHER_VALUE
+          ? resolved.customRole
+          : "",
       email: employee.email,
       monthlyGoal:
         employee.monthlyGoal != null ? String(employee.monthlyGoal) : "",
@@ -554,6 +611,14 @@ export function StaffManagementPage() {
     }
     if (!role) {
       toastErr(t("business.staffPage.toastCustomRoleRequired"));
+      return;
+    }
+    const previousRole = employees.find((e) => e.id === editForm.id)?.role ?? "";
+    const keepingExistingCustom =
+      !isPresetStaffRole(role) &&
+      previousRole.trim().toLowerCase() === role.toLowerCase();
+    if (!isPresetStaffRole(role) && !canCreateCustomJobTitles && !keepingExistingCustom) {
+      toastErr(t("business.staffPage.toastCustomRoleProRequired"));
       return;
     }
     let monthlyGoal: number | null | undefined = undefined;
@@ -1268,11 +1333,14 @@ export function StaffManagementPage() {
                         }
                         className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
                       >
-                        <StaffRoleSelectOptions />
+                        <StaffRoleSelectOptions
+                          canCreateCustom={canCreateCustomJobTitles}
+                          customRoles={teamCustomRoles}
+                        />
                       </select>
                     </div>
                   </div>
-                  {addForm.role === STAFF_ROLE_OTHER_VALUE ? (
+                  {canCreateCustomJobTitles && addForm.role === STAFF_ROLE_OTHER_VALUE ? (
                     <StaffCustomRoleField
                       value={addForm.customRole}
                       onChange={(customRole) => setAddForm((f) => ({ ...f, customRole }))}
@@ -1420,11 +1488,19 @@ export function StaffManagementPage() {
                       }
                       className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
                     >
-                      <StaffRoleSelectOptions />
+                      <StaffRoleSelectOptions
+                        canCreateCustom={canCreateCustomJobTitles}
+                        customRoles={teamCustomRoles}
+                        lockedCustomRole={
+                          !canCreateCustomJobTitles && !isPresetStaffRole(editForm.role)
+                            ? editForm.role
+                            : undefined
+                        }
+                      />
                     </select>
                   </div>
                 </div>
-                {editForm.role === STAFF_ROLE_OTHER_VALUE ? (
+                {canCreateCustomJobTitles && editForm.role === STAFF_ROLE_OTHER_VALUE ? (
                   <StaffCustomRoleField
                     value={editForm.customRole}
                     onChange={(customRole) => setEditForm((f) => ({ ...f, customRole }))}

@@ -7,6 +7,7 @@ import { PrefetchLink } from "@/app/components/PrefetchLink";
 import { usePublicMountProbe } from "@/lib/publicMountProbe";
 import { LandingCopySentences } from "@/components/landing/LandingCopySentences";
 import { FacebookIcon, InstagramIcon, TikTokIcon } from "@/components/social/SocialBrandIcons";
+import { INDUSTRY_NAV_ITEMS } from "@/app/data/industryPages";
 
 const SOCIAL_FACEBOOK_URL = (import.meta.env.VITE_SOCIAL_FACEBOOK_URL as string | undefined)?.trim() || "";
 const SOCIAL_INSTAGRAM_URL = (import.meta.env.VITE_SOCIAL_INSTAGRAM_URL as string | undefined)?.trim() || "";
@@ -37,6 +38,10 @@ export const Footer = memo(function Footer({
         { name: t("footer.linkFeatures"), to: "/features" },
         { name: t("footer.linkPricing"), to: "/pricing" },
       ],
+      industries: INDUSTRY_NAV_ITEMS.map((item) => ({
+        name: t(item.labelKey),
+        to: item.path,
+      })),
       company: [
         { name: t("footer.linkAbout"), to: "/about" },
         { name: t("footer.linkContact"), to: "/contact" },
@@ -140,10 +145,11 @@ export const Footer = memo(function Footer({
             </div>
           </div>
 
-          <div className="caretip-site-footer-link-columns col-span-2 grid grid-cols-1 gap-9 sm:grid-cols-2 sm:gap-11 lg:col-span-7 lg:grid-cols-3 lg:gap-12">
+          <div className="caretip-site-footer-link-columns col-span-2 grid grid-cols-1 gap-9 sm:grid-cols-2 sm:gap-11 lg:col-span-7 lg:grid-cols-4 lg:gap-8">
             {(
               [
                 { key: "product", title: t("footer.colProduct"), links: footerColumns.product },
+                { key: "industries", title: t("footer.colIndustries"), links: footerColumns.industries },
                 { key: "company", title: t("footer.colCompany"), links: footerColumns.company },
                 { key: "legal", title: t("footer.colLegal"), links: footerColumns.legal },
               ] as const

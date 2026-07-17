@@ -108,6 +108,14 @@ const CATALOG: Record<FeatureKey, FeatureCatalogEntry> = {
     featureListCount: 3,
     requiredTier: "premium",
   },
+  customJobTitles: {
+    featureKey: "customJobTitles",
+    titleKey: "subscription.features.customJobTitles.title",
+    benefitKey: "subscription.features.customJobTitles.benefit",
+    featureListPrefix: "subscription.features.customJobTitles",
+    featureListCount: 3,
+    requiredTier: "premium",
+  },
   brandingCustomization: {
     featureKey: "brandingCustomization",
     titleKey: "subscription.features.brandingCustomization.title",

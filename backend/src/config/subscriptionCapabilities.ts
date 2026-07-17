@@ -14,7 +14,8 @@ export type SubscriptionCapability =
   | "advancedAnalytics"
   | "csvExport"
   | "multiLocation"
-  | "employeeGoals";
+  | "employeeGoals"
+  | "customJobTitles";
 
 /** Phase B.2 — canonical feature key (1:1 with SubscriptionCapability). */
 export type FeatureKey = SubscriptionCapability;
@@ -37,6 +38,7 @@ const PRO_CAPABILITIES: SubscriptionCapability[] = [
   "multiLocation",
   "employeeGoals",
   "customerFeedback",
+  "customJobTitles",
 ];
 
 const ENTERPRISE_CAPABILITIES: SubscriptionCapability[] = [...PRO_CAPABILITIES];

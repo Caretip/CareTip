@@ -19,7 +19,16 @@
     "becomePartner": "Create Account",
     "staffPortal": "Join Team",
     "mobileNavigationSection": "Navigation",
-    "mobileAccountSection": "Account"
+    "mobileAccountSection": "Account",
+    "industries": "Industries",
+    "industriesMenu": {
+      "gastronomy": "Gastronomy",
+      "hotels": "Hotels",
+      "logistics": "Logistics",
+      "midwives": "Midwives",
+      "fairs": "Events",
+      "field-service": "Field service"
+    }
   },
   "status": {
     "live": "Live"
@@ -2198,13 +2207,23 @@
         "f2": "Timezone-aware exports"
       },
       "multiLocation": {
-        "title": "Multi-location support",
-        "benefit": "Manage tipping across multiple venues from one dashboard.",
-        "f0": "Unlimited locations on Pro",
-        "f1": "Per-location QR codes",
-        "f2": "Location-level reporting"
-      },
-      "tableQr": {
+    "title": "Multi-location support",
+    "benefit": "Manage tipping across multiple venues and branches from a single dashboard.",
+    "f0": "Unlimited locations",
+    "f1": "Individual QR codes per location",
+    "f2": "Advanced location-level analytics",
+    "upgradeRequired": "🔒 Upgrade required",
+    "footer": "Upgrade to Pro to unlock multi-location management, advanced team tools, and centralized analytics.",
+    "upgradeCta": "⚡ Upgrade to Pro"
+  },
+  "customJobTitles": {
+    "title": "Custom job titles",
+    "benefit": "Create and reuse your own roles alongside CareTip’s standard job titles.",
+    "f0": "Add custom roles for your venue",
+    "f1": "Reuse titles across your team",
+    "f2": "Included on Pro and above"
+  },
+  "tableQr": {
         "title": "Table QR codes",
         "benefit": "Let guests tip by table with dedicated QR codes.",
         "f0": "Table-level QR codes",
@@ -3002,9 +3021,10 @@
       "s5Alt": "Field and mobile service tipping via link or QR code on site"
     },
     "paymentsTrust": {
-      "pill": "Secure payment",
-      "title": "Trusted & Secure Payment Infrastructure",
-      "subtitle": "CareTip is your reliable platform for digital tipping. All payments are processed securely via our partner Stripe. CareTip never stores any sensitive card details.",
+      "pill": "",
+      "title": "Secure & GDPR-compliant processing",
+      "subtitle": "",
+      "body": "CareTip never stores sensitive bank details at any point.",
       "principleLabel": "",
       "principle": "",
       "stripeBadge": "Powered by Stripe",
@@ -3220,6 +3240,26 @@
           "time": "32 min ago"
         }
       }
+    },
+    "industriesTeaser": {
+      "headline": "Take your team to the next level.",
+      "subheadline": "More motivation. Less turnover. Full shifts.",
+      "benefitsAria": "Core CareTip benefits",
+      "b1Title": "Everyday usability",
+      "b1Body": "Use QR codes at tables, stations, or directly on the go.",
+      "b2Title": "Full transparency",
+      "b2Body": "Track tips in real-time & pay out securely via Apple/Google Pay.",
+      "b3Title": "Motivation boost",
+      "b3Body": "Boost appreciation for every shift and the entire team.",
+      "teasersLabel": "Perfect for mobile teams…",
+      "teasersAria": "Featured industries",
+      "teaser1Title": "Midwife care",
+      "teaser1Body": "Cashless tips during postpartum home visits – simple and easy via a custom QR code.",
+      "teaser1Alt": "Midwife visiting a family with a CareTip QR business card",
+      "teaser2Title": "Field service & care",
+      "teaser2Body": "The perfect tip solution for mobile teams, crafts, and on-site care workers.",
+      "teaser2Alt": "Field service professional with CareTip QR for on-site tipping",
+      "learnMore": "Learn more"
     }
   },
   "footer": {
@@ -3943,6 +3983,11 @@
       "needHelpTitle": "Need help?",
       "needHelpDesc": "Learn how to maximize your team's earnings and keep guests tipping smoothly.",
       "viewGuidelines": "View guidelines",
+      "quickStartBannerTitle": "Quick Start Guide",
+      "quickStartBannerBody": "Follow these practical steps to get your team set up and start growing your tips.",
+      "quickStartBannerCta": "Open guide",
+      "quickStartBannerDismiss": "Dismiss Quick Start Guide",
+      "quickStartNavLabel": "Quick Start Guide",
       "proUpgrade": {
         "title": "Unlock more with CareTip Pro",
         "subtitle": "Access advanced tools to understand performance and grow your business.",
@@ -3997,21 +4042,21 @@
         "actionBilling": "Billing",
         "actionSettings": "Settings"
       },
-      "guidelinesDialogTitle": "CareTip usage guidelines",
-      "guidelinesDialogDesc": "Practical steps to get your team set up and grow tips. This is a quick reference you can save or print for your staff room.",
-      "guidelinesSectionOnboardTitle": "Onboard your staff",
-      "guidelinesSectionOnboardLi1": "Invite team members from <highlight>Team</highlight> using your business invite code or add them directly with name and role.",
-      "guidelinesSectionOnboardLi2": "Ask each staff member to complete their profile and confirm they can sign in to the employee dashboard.",
-      "guidelinesSectionOnboardLi3": "Deactivate former staff promptly so tips and QR codes stay accurate.",
+      "guidelinesDialogTitle": "Quick Start Guide",
+      "guidelinesDialogDesc": "Practical steps to get your team set up and grow tips. Your quick reference to save or print for the staff room.",
+      "guidelinesSectionOnboardTitle": "Add your team",
+      "guidelinesSectionOnboardLi1": "Invite your staff via <highlight>Team Management</highlight> with your business invite code, or add them directly with name and role.",
+      "guidelinesSectionOnboardLi2": "Ask each person to complete their profile and test signing in to the employee dashboard.",
+      "guidelinesSectionOnboardLi3": "Deactivate former staff promptly so tips and QR codes stay up to date.",
       "guidelinesSectionPrintTitle": "Print QR tags",
-      "guidelinesSectionPrintLi1": "Open <highlight>QR codes</highlight> and download each staff member's branded QR.",
-      "guidelinesSectionPrintLi2": "Print on durable cards or tent cards; place them where guests naturally look (reception, tables, checkout).",
-      "guidelinesSectionPrintLi3": "Re-print when names or roles change so scans always match the right person.",
-      "guidelinesSectionTipsTitle": "Best practices for increasing tips",
-      "guidelinesSectionTipsLi1": "Train staff to mention CareTip at key moments: end of service, checkout, or when guests thank them.",
-      "guidelinesSectionTipsLi2": "Keep QR codes visible and unobstructed; a quick \"scan to tip\" sign boosts completion rates.",
-      "guidelinesSectionTipsLi3": "Review your dashboard regularly, recognize top performers, and share feedback with the team.",
-      "guidelinesFooter": "A full PDF guideline may be added later; for now this page is your in-app reference."
+      "guidelinesSectionPrintLi1": "Open <highlight>QR Studio</highlight> and download each person's branded QR code.",
+      "guidelinesSectionPrintLi2": "Print on durable cards or table tents; place them where guests can easily see them (reception, tables, checkout).",
+      "guidelinesSectionPrintLi3": "Reprint when names or roles change so scans always match the right person.",
+      "guidelinesSectionTipsTitle": "Best practices for more tips",
+      "guidelinesSectionTipsLi1": "Train your team to mention CareTip at the right moments: end of service, at checkout, or when guests thank them.",
+      "guidelinesSectionTipsLi2": "Keep QR codes visible and clear; a short “Scan to tip” note improves completion rates.",
+      "guidelinesSectionTipsLi3": "Check the dashboard regularly, recognize top performers, and give your team feedback.",
+      "guidelinesFooter": ""
     },
     "locationsPage": {
       "backAria": "Back to dashboard",
@@ -4230,10 +4275,13 @@
       "roleDriver": "Driver",
       "roleTourGuide": "Tour Guide",
       "roleTechnician": "Technician",
-      "roleOther": "Other (custom)",
-      "labelCustomRole": "Custom role",
+      "roleOther": "Add new role",
+      "labelCustomRole": "New job title",
       "phCustomRole": "e.g. Massage Therapist, Personal Trainer",
-      "toastCustomRoleRequired": "Enter a custom role when Other is selected.",
+      "toastCustomRoleRequired": "Enter a job title when adding a new role.",
+      "toastCustomRoleProRequired": "Custom job titles require Pro. Choose a standard role or upgrade.",
+      "roleCustomGroup": "Your custom roles",
+      "roleStandardGroup": "Standard roles",
       "removeStaffTitle": "Remove staff member",
       "qrTitleInactive": "Activate this profile to enable QR downloads.",
       "qrTitleActive": "Download branded QR (app URL /qr/employee/…)",
@@ -4522,6 +4570,11 @@
         "decorations": "Decorative layers",
         "decorationsHint": "Premium frames, corners, and accents outside the scan zone.",
         "brandName": "Brand name",
+        "venueNameLabel": "Venue name",
+        "venueNameHint": "Shown on guest QR cards. Edit to update how your venue appears to tippers.",
+        "editVenueName": "Edit",
+        "doneEditingVenueName": "Done",
+        "resetVenueName": "Reset to business name",
         "address": "Business address",
         "addressPlaceholder": "12 Oxford Street, London",
         "addressHint": "Uses your registered business address from profile. Shown below your name on QR cards.",
@@ -6798,5 +6851,271 @@
       }
     },
     "fallbackAdminName": "Admin"
+  },
+  "industries": {
+    "shared": {
+      "benefitsEyebrow": "Why CareTip",
+      "faqTitle": "Top FAQs",
+      "trustAria": "Trust and compliance",
+      "trust": {
+        "gdpr": "GDPR-ready",
+        "tax": "Tax-compliant tips",
+        "stripe": "Secure payments via Stripe"
+      },
+      "moreIndustriesTitle": "Explore other industries",
+      "moreIndustriesBody": "See how CareTip fits teams like yours.",
+      "finalCtaTitle": "Ready to get started?",
+      "finalCtaBody": "Create your free account and set up your first QR in minutes.",
+      "finalCtaButton": "Start for free",
+      "finalCtaSecondary": "View pricing"
+    },
+    "pages": {
+      "gastronomy": {
+        "pageAria": "CareTip for gastronomy and service teams",
+        "eyebrow": "For gastronomy & service teams",
+        "headline": "More tips for your team. Zero hassle for your restaurant.",
+        "subhead": "Delight your guests with cashless tipping via QR code directly at the table. 100% tax-free, lightning-fast, and without any expensive additional hardware.",
+        "cta": "Start for free now",
+        "heroAlt": "A smiling waiter in a restaurant showing a guest a receipt with the CareTip QR code",
+        "stepsTitle": "The process",
+        "steps": {
+          "s1Title": "Place the QR code",
+          "s1Body": "On the table, the receipt, or as a counter display.",
+          "s2Title": "Guest scans & pays",
+          "s2Body": "No app download required, works directly with Apple Pay, Google Pay, or Creditcard.",
+          "s3Title": "Real-time payout",
+          "s3Body": "The tip goes directly and tax-free to the waiter."
+        },
+        "benefitsTitle": "The 3 top benefits",
+        "benefitsAlt": "CareTip QR code ready for table-side tipping in a restaurant",
+        "benefits": {
+          "b1Title": "Faster service",
+          "b1Body": "No more waiting around to process tips on card terminals.",
+          "b2Title": "Happier staff",
+          "b2Body": "Significantly higher tips due to the easy, frictionless cashless option.",
+          "b3Title": "100% Tax-free",
+          "b3Body": "Fully automated, tax-compliant allocation directly to individual staff accounts."
+        },
+        "faq": {
+          "q1": "Does the guest need to download an app?",
+          "a1": "No. A simple scan with their smartphone camera is all it takes.",
+          "q2": "How are tips distributed?",
+          "a2": "You decide: Either directly to the specific waiter or pooled for the whole team."
+        },
+        "floats": {
+          "f1Title": "Payment success",
+          "f1Value": "Tip paid",
+          "f2Title": "Tip received",
+          "f2Value": "€8.50",
+          "f3Title": "Tonight",
+          "f3Value": "+24% tips"
+        }
+      },
+      "hotels": {
+        "pageAria": "CareTip for hotels",
+        "eyebrow": "For hotels",
+        "headline": "Discrete appreciation at the front desk and in housekeeping.",
+        "subhead": "Provide your guests with a classy, digital way to tip your concierge, cleaning staff, and reception team. Seamlessly integrated on counter displays or key card sleeves.",
+        "cta": "Register your hotel now",
+        "heroAlt": "An elegant hotel reception desk with a subtle CareTip display next to the payment terminal while a guest is checking in",
+        "stepsTitle": "The process",
+        "steps": {
+          "s1Title": "Discreet placement",
+          "s1Body": "As a stylish display at reception or placed subtly in the guest rooms.",
+          "s2Title": "Simple scan",
+          "s2Body": "Guests reward the service directly via their smartphones.",
+          "s3Title": "Central management",
+          "s3Body": "Hotel management maintains full transparency over all departments in the dashboard."
+        },
+        "benefitsTitle": "The 3 top benefits",
+        "benefitsAlt": "Hotel reception desk ready for cashless guest tipping",
+        "benefits": {
+          "b1Title": "More appreciation for housekeeping",
+          "b1Body": "Guests can finally tip the cleaning crew digitally.",
+          "b2Title": "Seamless integration",
+          "b2Body": "Fits perfectly with your hotel's aesthetic – no clunky hardware.",
+          "b3Title": "Zero bureaucracy",
+          "b3Body": "Automated, one-click exports for accounting."
+        },
+        "faq": {
+          "q1": "Can guests tip specific departments?",
+          "a1": "Yes. You can generate separate QR codes for reception, housekeeping, or valet.",
+          "q2": "Is the system secure for international guests?",
+          "a2": "Absolutely. We support global payment methods including Visa, Mastercard, Apple Pay, and Google Pay."
+        },
+        "floats": {
+          "f1Title": "Check-out tip",
+          "f1Value": "Confirmed",
+          "f2Title": "Housekeeping",
+          "f2Value": "€12.00",
+          "f3Title": "This week",
+          "f3Value": "148 tips"
+        }
+      },
+      "logistics": {
+        "pageAria": "CareTip for logistics and delivery services",
+        "eyebrow": "For logistics & delivery services",
+        "headline": "A digital \"Thank you\" right at the doorstep.",
+        "subhead": "Give your drivers and delivery agents the recognition they deserve. With a quick scan on the package, vehicle, or handheld scanner, they receive their tips directly on their smartphones.",
+        "cta": "Register your depot now",
+        "heroAlt": "A friendly delivery driver in front of their delivery van with a clearly visible CareTip QR code sticker on it",
+        "stepsTitle": "The process",
+        "steps": {
+          "s1Title": "Visible placement",
+          "s1Body": "Stick the QR code on the vehicle, the parcel, via E-Mail or the driver's badge.",
+          "s2Title": "Split-second scan",
+          "s2Body": "The customer scans the code at the doorstep or on the go.",
+          "s3Title": "Instant joy",
+          "s3Body": "The tip is credited to the driver immediately."
+        },
+        "benefitsTitle": "The 3 top benefits",
+        "benefitsAlt": "Branded CareTip QR code for delivery and logistics teams",
+        "benefits": {
+          "b1Title": "Staff booster",
+          "b1Body": "Drastically increases driver motivation through direct feedback and extra earnings.",
+          "b2Title": "No cash required",
+          "b2Body": "Customers no longer need to scramble for coins when the doorbell rings.",
+          "b3Title": "Safe and quick",
+          "b3Body": "Zero distraction – the scan takes less than 3 seconds."
+        },
+        "faq": {
+          "q1": "Does this work with subcontractors?",
+          "a1": "Yes. You can flexibly assign drivers and manage routes with ease.",
+          "q2": "Can customers leave feedback?",
+          "a2": "Yes, alongside the tip, customers can leave a star rating to highlight outstanding service."
+        },
+        "floats": {
+          "f1Title": "Delivery tip",
+          "f1Value": "Received",
+          "f2Title": "Driver payout",
+          "f2Value": "€5.00",
+          "f3Title": "Live route",
+          "f3Value": "On track"
+        }
+      },
+      "midwives": {
+        "pageAria": "CareTip for freelance midwives",
+        "eyebrow": "For midwives",
+        "headline": "More appreciation for your dedication – cashless during home visits.",
+        "subhead": "Receive tips and tokens of appreciation from grateful families contactlessly via QR code on your business card. 100% secure, tax-free, and without the hassle of carrying cash.",
+        "cta": "Start as a midwife now",
+        "heroAlt": "A midwife visiting a happy young family at home, smiling and presenting her business card with the integrated QR code",
+        "stepsTitle": "The process",
+        "steps": {
+          "s1Title": "Hand over your card",
+          "s1Body": "Your personal QR code is elegantly integrated on your business card or info folder.",
+          "s2Title": "Relaxed scanning",
+          "s2Body": "Grateful families scan the code in their own time from the comfort of their couch.",
+          "s3Title": "Tax-free payouts",
+          "s3Body": "Tokens of appreciation arrive directly in your bank account, fully documented."
+        },
+        "benefitsTitle": "The 3 top benefits",
+        "benefitsAlt": "Business card with CareTip QR code for midwife home visits",
+        "benefits": {
+          "b1Title": "No awkward cash talk",
+          "b1Body": "Families can say thank you without searching for cash or paper envelopes.",
+          "b2Title": "GDPR-compliant",
+          "b2Body": "Maximum data security and privacy for you and the families you care for.",
+          "b3Title": "Fits in your pocket",
+          "b3Body": "No heavy hardware required – just your QR code on paper or your phone screen."
+        },
+        "faq": {
+          "q1": "Are these tips tax-free?",
+          "a1": "Yes, personal gifts and voluntary tips for midwife professionals are tax-free in Germany.",
+          "q2": "Can families see my bank details?",
+          "a2": "No. The payment process is completely anonymized via Stripe. Your bank details remain strictly private."
+        },
+        "floats": {
+          "f1Title": "Visit complete",
+          "f1Value": "Thank you",
+          "f2Title": "Family tip",
+          "f2Value": "€20.00",
+          "f3Title": "This month",
+          "f3Value": "Secure payout"
+        }
+      },
+      "fairs": {
+        "pageAria": "CareTip for events, hostesses, and trade shows",
+        "eyebrow": "For events",
+        "headline": "Reward peak performance at events, trade shows, and promotions.",
+        "subhead": "Make outstanding service at major events instantly rewardable. Your event staff collects tips and feedback in real-time using personalized badges or QR codes at the counters.",
+        "cta": "Set up event team now",
+        "heroAlt": "Professionally dressed trade show hostesses at a stylish reception counter with subtle QR code badges on their uniforms",
+        "stepsTitle": "The process",
+        "steps": {
+          "s1Title": "Personalized badge",
+          "s1Body": "Each team member wears a subtle QR code on their name tag.",
+          "s2Title": "Instant feedback",
+          "s2Body": "Visitors scan the code at the booth right after an interaction.",
+          "s3Title": "Live analytics",
+          "s3Body": "Project managers track team performance and feedback in real-time."
+        },
+        "benefitsTitle": "The 3 top benefits",
+        "benefitsAlt": "Mobile tipping experience for event and trade-show teams",
+        "benefits": {
+          "b1Title": "Make performance visible",
+          "b1Body": "Instantly identify which team members are driving the most engagement.",
+          "b2Title": "Digital feedback loop",
+          "b2Body": "Use the ratings tool to measure visitor satisfaction live on the show floor.",
+          "b3Title": "Rapid onboarding",
+          "b3Body": "Set up profiles for rotating event crews within minutes."
+        },
+        "faq": {
+          "q1": "How long does setup take for an event?",
+          "a1": "Less than 5 minutes. Just upload your team list, and the QR codes are ready to print or display.",
+          "q2": "Can we customize the branding?",
+          "a2": "Yes. Starting from the Pro Package the tipping pages can be customized to match the corporate design of the exhibiting client."
+        },
+        "floats": {
+          "f1Title": "Booth tip",
+          "f1Value": "Paid",
+          "f2Title": "Hostess team",
+          "f2Value": "€9.00",
+          "f3Title": "Fair day",
+          "f3Value": "Live"
+        }
+      },
+      "field-service": {
+        "pageAria": "CareTip for field service and trades",
+        "eyebrow": "For field service & trades",
+        "headline": "Appreciation that travels with you — cashless on every job.",
+        "subhead": "Give customers an easy way to tip after on-site work. Show a QR on your phone, van, or card — no cash, no awkward moments.",
+        "cta": "Start for free now",
+        "heroAlt": "Field service professional ready for on-site tipping with CareTip",
+        "stepsTitle": "The process",
+        "steps": {
+          "s1Title": "Show your QR",
+          "s1Body": "On your phone, van door, or business card after the job is done.",
+          "s2Title": "Customer scans & pays",
+          "s2Body": "No app download — Apple Pay, Google Pay, or card in seconds.",
+          "s3Title": "Tip lands with you",
+          "s3Body": "Funds go to the right technician, documented and transparent."
+        },
+        "benefitsTitle": "The 3 top benefits",
+        "benefitsAlt": "CareTip QR ready for on-site field service visits",
+        "benefits": {
+          "b1Title": "On-site tipping",
+          "b1Body": "Show a QR when the work is finished — tip in the moment of appreciation.",
+          "b2Title": "Per-technician codes",
+          "b2Body": "Keep tips fair across solo pros and multi-van crews.",
+          "b3Title": "Light setup",
+          "b3Body": "Go live without terminals or heavy hardware — paper or phone is enough."
+        },
+        "faq": {
+          "q1": "Does the customer need an app?",
+          "a1": "No. A smartphone camera scan is enough.",
+          "q2": "Can each technician have their own QR?",
+          "a2": "Yes. Create individual codes or a shared crew pool — you choose."
+        },
+        "floats": {
+          "f1Title": "Job done",
+          "f1Value": "Tip ready",
+          "f2Title": "On-site tip",
+          "f2Value": "€15.00",
+          "f3Title": "Crew today",
+          "f3Value": "Synced"
+        }
+      }
+    }
   }
 }

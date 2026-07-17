@@ -567,6 +567,16 @@ const routes: RouteObject[] = [
     errorElement: <ErrorBoundary />,
   },
   {
+    path: '/industries/events',
+    element: <Navigate to="/industries/fairs" replace />,
+    errorElement: <ErrorBoundary />,
+  },
+  {
+    path: '/industries/:industryId',
+    lazy: routeLazy(() => import('./pages/IndustryPage'), 'IndustryPage'),
+    errorElement: <ErrorBoundary />,
+  },
+  {
     path: '/how-it-works',
     lazy: routeLazy(() => import('./pages/HowItWorksPage'), 'HowItWorksPage'),
     errorElement: <ErrorBoundary />,

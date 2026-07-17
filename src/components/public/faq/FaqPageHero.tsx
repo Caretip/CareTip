@@ -11,7 +11,7 @@ export function FaqPageHero() {
     <section className="caretip-faq-hero-wise" aria-labelledby="faq-hero-title">
       <PublicPageBackLink className="caretip-faq-hero-wise__back" />
 
-      <PublicPageHeroCard innerClassName="caretip-faq-page__inner caretip-faq-hero-wise__inner">
+      <PublicPageHeroCard variant="fullBleed" innerClassName="caretip-faq-page__inner caretip-faq-hero-wise__inner">
         <p className="caretip-faq-hero-wise__eyebrow">{t("staticPages.faq.pageEyebrow")}</p>
 
         <h1 id="faq-hero-title" className={cn(publicPageUi.title, "caretip-faq-hero-wise__title")}>

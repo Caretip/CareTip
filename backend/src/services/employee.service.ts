@@ -17,6 +17,7 @@ import {
 import { resolveUserPreferredLocale } from "../emails/i18nEmail.js";
 import { absolutizePublicMediaPath } from "../utils/publicMediaUrl.js";
 import { getSubscriptionTierForBusinessId, resolveSubscriptionEntitlements } from "./subscriptionEntitlement.service.js";
+import { isPresetStaffRole } from "../config/staffRolePresets.js";
 
 import {
   GO_LIVE_REQUIRED_MESSAGE,
@@ -24,6 +25,35 @@ import {
 } from "../config/businessVerificationCapabilities.js";
 
 const VERIFICATION_REQUIRED_MSG = GO_LIVE_REQUIRED_MESSAGE;
+
+const CUSTOM_JOB_TITLE_PRO_REQUIRED =
+  "Custom job titles require CareTip Pro. Choose a standard role or upgrade.";
+
+/**
+ * Basic: standard titles only (existing custom title on the same employee may be kept).
+ * Pro+: any non-empty title.
+ */
+export async function assertJobTitleAllowedForBusiness(
+  businessId: string,
+  jobTitle: string,
+  previousJobTitle?: string | null,
+): Promise<void> {
+  const trimmed = jobTitle.trim();
+  if (!trimmed) {
+    throw new Error("Name, email, and role are required");
+  }
+  if (isPresetStaffRole(trimmed)) return;
+
+  const previous = previousJobTitle?.trim() ?? "";
+  if (previous && previous.toLowerCase() === trimmed.toLowerCase()) {
+    return;
+  }
+
+  const entitlements = await resolveSubscriptionEntitlements(businessId);
+  if (!entitlements.capabilities.includes("customJobTitles")) {
+    throw new Error(CUSTOM_JOB_TITLE_PRO_REQUIRED);
+  }
+}
 
 /** Validates location/tables belong to the business; infers location from tables when unset. */
 export async function resolveStaffAssignments(
@@ -280,6 +310,10 @@ export async function updateEmployeeForBusiness(
     if (!newName) {
       throw new Error("Name cannot be empty");
     }
+  }
+
+  if (jobTitle !== undefined && jobTitle.trim()) {
+    await assertJobTitleAllowedForBusiness(businessId, jobTitle, emp.jobTitle);
   }
 
   if (email !== undefined && email.trim()) {
@@ -822,6 +856,7 @@ export async function createEmployeeWithActivation(
   if (!name?.trim() || !email?.trim() || !jobTitle?.trim()) {
     throw new Error("Name, email, and role are required");
   }
+  await assertJobTitleAllowedForBusiness(businessId, jobTitle);
   const trimmedEmail = email.trim().toLowerCase();
 
   // Verify email is not already registered

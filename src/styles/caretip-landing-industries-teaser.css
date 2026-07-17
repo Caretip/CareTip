@@ -1,0 +1,186 @@
+/**
+ * Homepage industries teaser — compact benefits + dual industry cards.
+ */
+
+.caretip-landing .caretip-industries-teaser {
+  padding-block: clamp(3.5rem, 8vw, 6.5rem);
+}
+
+.caretip-landing .caretip-industries-teaser__inner {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(2rem, 4vw, 3rem);
+}
+
+.caretip-landing .caretip-industries-teaser__header {
+  max-width: min(100%, 40rem);
+  margin-inline: auto;
+  text-align: center;
+}
+
+.caretip-landing .caretip-industries-teaser__sub {
+  margin-top: 0.75rem;
+  color: hsl(var(--muted-foreground));
+}
+
+.caretip-landing .caretip-industries-teaser__benefits {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.25rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+@media (min-width: 768px) {
+  .caretip-landing .caretip-industries-teaser__benefits {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 1.5rem;
+  }
+}
+
+.caretip-landing .caretip-industries-teaser__benefit {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.625rem;
+  padding: 1.25rem 1.35rem;
+  border-radius: 1rem;
+  border: 1px solid rgb(228 228 231 / 0.9);
+  background: rgb(255 252 247 / 0.72);
+}
+
+html.dark .caretip-landing .caretip-industries-teaser__benefit {
+  border-color: rgb(63 63 70 / 0.9);
+  background: rgb(24 24 27 / 0.55);
+}
+
+.caretip-landing .caretip-industries-teaser__benefit-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 0.65rem;
+  color: rgb(217 106 20);
+  background: rgb(233 120 28 / 0.12);
+}
+
+.caretip-landing .caretip-industries-teaser__benefit-icon svg {
+  width: 1.125rem;
+  height: 1.125rem;
+}
+
+.caretip-landing .caretip-industries-teaser__benefit-title {
+  margin: 0;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: hsl(var(--foreground));
+}
+
+.caretip-landing .caretip-industries-teaser__benefit-body {
+  margin: 0;
+  font-size: 0.9375rem;
+  line-height: 1.5;
+  color: hsl(var(--muted-foreground));
+}
+
+.caretip-landing .caretip-industries-teaser__teasers-label {
+  margin: 0.5rem 0 0;
+  text-align: center;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgb(233 120 28);
+}
+
+.caretip-landing .caretip-industries-teaser__cards {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.5rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+@media (min-width: 900px) {
+  .caretip-landing .caretip-industries-teaser__cards {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1.75rem;
+  }
+}
+
+.caretip-landing .caretip-industries-teaser__card {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+  border-radius: 1.15rem;
+  border: 1px solid rgb(228 228 231 / 0.95);
+  background: hsl(var(--card));
+  box-shadow: 0 10px 30px -22px rgb(15 23 42 / 0.35);
+}
+
+html.dark .caretip-landing .caretip-industries-teaser__card {
+  border-color: rgb(63 63 70 / 0.95);
+  box-shadow: 0 12px 32px -20px rgb(0 0 0 / 0.55);
+}
+
+.caretip-landing .caretip-industries-teaser__card-media {
+  aspect-ratio: 16 / 10;
+  overflow: hidden;
+  background: rgb(245 245 244);
+}
+
+.caretip-landing .caretip-industries-teaser__card-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  display: block;
+}
+
+.caretip-landing .caretip-industries-teaser__card-copy {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 0.65rem;
+  padding: 1.25rem 1.35rem 1.4rem;
+}
+
+.caretip-landing .caretip-industries-teaser__card-title {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: hsl(var(--foreground));
+}
+
+.caretip-landing .caretip-industries-teaser__card-body {
+  margin: 0;
+  flex: 1;
+  font-size: 0.9375rem;
+  line-height: 1.55;
+  color: hsl(var(--muted-foreground));
+}
+
+.caretip-landing .caretip-industries-teaser__card-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-top: 0.35rem;
+  width: fit-content;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: rgb(217 106 20);
+  text-decoration: none;
+  transition: color 0.2s ease, gap 0.2s ease;
+}
+
+.caretip-landing .caretip-industries-teaser__card-cta:hover {
+  color: rgb(180 83 9);
+  gap: 0.55rem;
+}

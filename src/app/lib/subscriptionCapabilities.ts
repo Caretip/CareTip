@@ -24,7 +24,8 @@ export type SubscriptionCapability =
   | "advancedAnalytics"
   | "csvExport"
   | "multiLocation"
-  | "employeeGoals";
+  | "employeeGoals"
+  | "customJobTitles";
 
 /** Enterprise-only capabilities (placeholders — enforced when product ships). */
 export type EnterpriseFeatureKey =
@@ -61,6 +62,7 @@ const PRO_CAPABILITIES: SubscriptionCapability[] = [
   "multiLocation",
   "employeeGoals",
   "customerFeedback",
+  "customJobTitles",
 ];
 
 const ENTERPRISE_FEATURES: EnterpriseFeatureKey[] = [

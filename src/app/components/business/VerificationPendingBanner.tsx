@@ -1,5 +1,5 @@
 import { Link, useLocation } from "react-router";
-import { Clock, ShieldAlert } from "lucide-react";
+import { ArrowRight, Clock, ShieldAlert } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import {
   getBusinessVerificationNoticeLabels,
@@ -26,42 +26,39 @@ export function VerificationPendingBanner({ className }: { className?: string })
   return (
     <div
       className={cn(
-        "business-verification-bar relative z-20 border-b bg-background/95 px-4 py-2.5 backdrop-blur-sm",
-        rejected ? "border-destructive/15" : "border-border",
+        "business-verification-bar relative z-20 border-b bg-white px-4 py-3 dark:bg-zinc-950",
+        rejected ? "border-destructive/20" : "border-border/80",
         className,
       )}
       role="status"
       aria-live="polite"
     >
-      <div className="mx-auto flex max-w-7xl items-center gap-2.5 sm:gap-3">
-        <div className="flex min-w-0 flex-1 items-center gap-2.5">
+      <div className="mx-auto flex max-w-7xl flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
+        <div className="flex min-w-0 flex-1 items-start gap-3">
           <span
             className={cn(
-              "inline-flex shrink-0 items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] font-medium",
+              "mt-0.5 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full border",
               rejected
                 ? "border-destructive/20 bg-destructive/5 text-destructive"
-                : "border-amber-200/90 bg-amber-50 text-amber-800 dark:border-amber-900/50 dark:bg-amber-950/35 dark:text-amber-200",
+                : "border-amber-200 bg-amber-50 text-amber-800 dark:border-amber-900/50 dark:bg-amber-950/40 dark:text-amber-200",
             )}
+            aria-hidden
           >
-            {rejected ? (
-              <ShieldAlert className="h-3 w-3" aria-hidden />
-            ) : (
-              <Clock className="h-3 w-3" aria-hidden />
-            )}
-            {rejected
-              ? t("business.awaitingApproval.badgeRejected")
-              : t("business.awaitingApproval.badgePending")}
+            {rejected ? <ShieldAlert className="h-4 w-4" /> : <Clock className="h-4 w-4" />}
           </span>
           <div className="min-w-0 flex-1">
-            <p className="truncate text-xs font-medium text-foreground">{labels.title}</p>
-            <p className="hidden truncate text-xs text-muted-foreground sm:block">{labels.description}</p>
+            <p className="text-sm font-semibold tracking-tight text-foreground">{labels.title}</p>
+            <p className="mt-0.5 text-xs leading-relaxed text-muted-foreground sm:text-[13px]">
+              {labels.description}
+            </p>
           </div>
         </div>
         <Link
           to="/awaiting-approval"
-          className="shrink-0 text-xs font-semibold text-foreground underline-offset-2 transition-colors hover:underline"
+          className="inline-flex shrink-0 items-center gap-1.5 self-start rounded-lg border border-border bg-background px-3 py-2 text-xs font-semibold text-foreground shadow-sm transition-colors hover:bg-muted sm:self-center"
         >
           {labels.cta}
+          <ArrowRight className="h-3.5 w-3.5 opacity-70" aria-hidden />
         </Link>
       </div>
     </div>

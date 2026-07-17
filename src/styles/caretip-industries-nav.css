@@ -1,0 +1,41 @@
+/* Industries nav dropdown (desktop panel + mobile accordion). */
+
+.caretip-industries-nav--desktop {
+  /* Keep dropdown above neighboring nav links while open */
+  z-index: 1;
+}
+
+.caretip-industries-nav--desktop:hover,
+.caretip-industries-nav--desktop:focus-within {
+  z-index: 70;
+}
+
+.caretip-industries-nav__mobile-list {
+  margin: 0 0 0.35rem;
+  padding: 0.15rem 0 0.35rem 0.65rem;
+  list-style: none;
+  border-left: 2px solid rgb(233 120 28 / 0.35);
+}
+
+.caretip-industries-nav__mobile-link {
+  display: flex;
+  align-items: center;
+  min-height: 2.75rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.65rem;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: hsl(var(--foreground) / 0.88);
+  text-decoration: none;
+  transition: color 0.15s ease, background-color 0.15s ease;
+}
+
+.caretip-industries-nav__mobile-link:hover {
+  color: hsl(var(--primary));
+  background: hsl(var(--muted) / 0.55);
+}
+
+.caretip-industries-nav__mobile-link--active {
+  color: hsl(var(--primary));
+  background: hsl(var(--primary) / 0.08);
+}

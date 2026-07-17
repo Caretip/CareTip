@@ -117,15 +117,15 @@ html.dark .caretip-industry-card__icon {
   font-size: 0.75rem;
   font-weight: 500;
   letter-spacing: 0.01em;
-  color: rgba(245, 245, 245, 0.72);
+  color: hsl(var(--muted-foreground));
 }
 
 .caretip-trust-strip__check {
-  color: rgba(251, 146, 60, 0.9);
+  color: rgb(217 106 20);
 }
 
 html:not(.dark) .caretip-landing-final-cta .caretip-trust-strip__item {
-  color: rgba(245, 245, 245, 0.78);
+  color: hsl(var(--muted-foreground));
 }
 
 @media (prefers-reduced-motion: reduce) {

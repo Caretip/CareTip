@@ -5,7 +5,6 @@ import { Link, Navigate } from "react-router";
 import { MarketingPicture } from "@/lib/marketingPicture";
 import {
   Sparkles,
-  HelpCircle,
 } from "lucide-react";
 import { CareIcon } from "@/components/icons";
 import { useTranslation } from "react-i18next";
@@ -43,7 +42,7 @@ import type {
   EmployeeGoalProgressStatus,
   GoalPeriod,
 } from "../../lib/api";
-import { CareTipUsageGuidelinesDialog } from "../../components/business/CareTipUsageGuidelinesDialog";
+import { QuickStartGuideBanner } from "../../components/business/QuickStartGuideBanner";
 import { ProfileAvatar } from "../../components/ui/profile-avatar";
 import { cn } from "@/lib/utils";
 import { DashboardHero } from "@/components/ui/dashboard-hero";
@@ -172,7 +171,6 @@ export function BusinessDashboard() {
     user?.onboardingVerificationStatus === "rejected",
   );
 
-  const [guidelinesOpen, setGuidelinesOpen] = useState(false);
   const [employeeGoalsExpanded, setEmployeeGoalsExpanded] = useState(true);
   const socketReady = useDeferSocketConnect(authReady && user?.role === "business");
   const { socket, connected, connectionStatus } = useSocket(socketReady);
@@ -396,6 +394,7 @@ export function BusinessDashboard() {
 
   return (
     <div className={cn(businessUi.page, "business-dashboard-overview overflow-x-hidden")}>
+      <QuickStartGuideBanner className="mb-4" />
       {statsLoadFailed && !isMetricsInitialLoad && !showStatsSkeleton && (
         <div className="mb-4 rounded-lg border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm text-destructive">
           <p className="font-medium">{statsLoadFailed}</p>
@@ -859,42 +858,8 @@ export function BusinessDashboard() {
               <RecentCustomerFeedbackPanel enabled={isBusiness && sessionValidated} />
             </FeatureGate>
           </motion.div>
-
-          {/* Help */}
-          <motion.div
-            {...dashboardBlockMotion}
-            transition={{ delay: 0.6 }}
-            className="business-dashboard-block business-dashboard-block--tertiary"
-          >
-            <Card className={cn(businessUi.cardStatic, "business-dashboard-help-card business-dashboard-panel-card w-full max-w-md")}>
-                <CardHeader className="business-dashboard-panel-card__header !pb-2">
-                  <div className="business-dashboard-help-head">
-                    <div
-                      className={cn(businessUi.iconTileMuted, "business-dash-icon-tile--slate")}
-                      aria-hidden
-                    >
-                      <HelpCircle className="h-5 w-5" />
-                    </div>
-                    <div className="business-dashboard-help-copy space-y-1">
-                      <CardTitle className="text-base leading-snug">{t("business.dashboard.needHelpTitle")}</CardTitle>
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent className="pt-0">
-                  <Button
-                    type="button"
-                    className={cn(businessUi.btnPrimary, "w-full transition-transform active:scale-[0.99]")}
-                    onClick={() => setGuidelinesOpen(true)}
-                  >
-                    {t("business.dashboard.viewGuidelines")}
-                  </Button>
-                </CardContent>
-              </Card>
-          </motion.div>
         </div>
       </TracingBeam>
-
-      <CareTipUsageGuidelinesDialog open={guidelinesOpen} onOpenChange={setGuidelinesOpen} />
     </div>
   );
 }

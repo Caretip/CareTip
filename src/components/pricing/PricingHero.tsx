@@ -28,7 +28,7 @@ export function PricingHero({ copyScope, className }: PricingHeroProps) {
     <section className={cn("caretip-pricing-hero-v2", className)} aria-labelledby="pricing-hero-title">
       <PublicPageBackLink className="caretip-pricing-hero-v2__back" />
 
-      <PublicPageHeroCard innerClassName="caretip-pricing-hero-v2__card-inner">
+      <PublicPageHeroCard variant="fullBleed" innerClassName="caretip-pricing-hero-v2__card-inner">
         <div className="caretip-pricing-hero-v2__glow" aria-hidden />
 
         <div className="caretip-pricing-hero-v2__content">

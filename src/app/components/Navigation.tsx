@@ -1,5 +1,5 @@
 import { useLocation } from "react-router";
-import { memo, useEffect, useMemo } from "react";
+import { memo, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { useMobileMenuState } from "../hooks/useMobileMenuState";
 import { Menu, X } from "lucide-react";
@@ -10,14 +10,18 @@ import { CareTipLogo } from "./CareTipLogo";
 import { LanguageSwitcher } from "@/components/i18n/LanguageSwitcher";
 import { ThemeQuickToggle } from "@/app/components/theme/ThemeQuickToggle";
 import { PrefetchLink } from "./PrefetchLink";
+import { IndustriesNavDropdown } from "./IndustriesNavDropdown";
 import { prefetchLandingRoute, prefetchPrimaryNavRoutes } from "../lib/prefetchPublicRoutes";
 import { usePublicMountProbe } from "@/lib/publicMountProbe";
 import { scheduleMobileDeferredWork } from "@/lib/mobilePerf";
 
 let primaryNavPrefetchScheduled = false;
 
-const NAV_ROUTES = [
+const NAV_ROUTES_BEFORE_INDUSTRIES = [
   { to: "/features" as const, nameKey: "nav.features" },
+] as const;
+
+const NAV_ROUTES_AFTER_INDUSTRIES = [
   { to: "/pricing" as const, nameKey: "nav.pricing" },
   { to: "/faq" as const, nameKey: "nav.faq" },
   { to: "/contact" as const, nameKey: "nav.contact" },
@@ -27,7 +31,7 @@ export type NavigationVariant = "default" | "dark";
 
 export const Navigation = memo(function Navigation({ variant: _variant = "default" }: { variant?: NavigationVariant }) {
   usePublicMountProbe("Navigation");
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const { mobileMenuOpen, toggleMobileMenu, closeMobileMenu, backdropDismissible } =
     useMobileMenuState();
   const location = useLocation();
@@ -75,11 +79,6 @@ export const Navigation = memo(function Navigation({ variant: _variant = "defaul
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [mobileMenuOpen, closeMobileMenu]);
-
-  const navLinks = useMemo(
-    () => NAV_ROUTES.map((r) => ({ ...r, label: t(r.nameKey) })),
-    [t, i18n.language],
-  );
 
   const linkClass = cn(
     "caretip-public-nav-link text-sm font-semibold tracking-[-0.01em] text-foreground transition-[color,background-color,opacity] duration-200",
@@ -150,17 +149,35 @@ export const Navigation = memo(function Navigation({ variant: _variant = "defaul
 
               <div className="flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-contain px-5 py-5">
                 <nav className="flex flex-col gap-0.5" aria-label={t("nav.mobileNavigationSection")}>
-                  {navLinks.map((link) => (
+                  {NAV_ROUTES_BEFORE_INDUSTRIES.map((route) => (
                     <PrefetchLink
-                      key={link.to}
-                      to={link.to}
+                      key={route.to}
+                      to={route.to}
                       className={cn(
                         "caretip-public-mobile-nav-drawer__nav-link min-h-14",
-                        location.pathname === link.to && "caretip-public-mobile-nav-drawer__nav-link--active",
+                        location.pathname === route.to && "caretip-public-mobile-nav-drawer__nav-link--active",
                       )}
                       onClick={() => closeMobileMenu("navigate")}
                     >
-                      {link.label}
+                      {t(route.nameKey)}
+                    </PrefetchLink>
+                  ))}
+                  <IndustriesNavDropdown
+                    variant="mobile"
+                    linkClass={linkClass}
+                    onNavigate={() => closeMobileMenu("navigate")}
+                  />
+                  {NAV_ROUTES_AFTER_INDUSTRIES.map((route) => (
+                    <PrefetchLink
+                      key={route.to}
+                      to={route.to}
+                      className={cn(
+                        "caretip-public-mobile-nav-drawer__nav-link min-h-14",
+                        location.pathname === route.to && "caretip-public-mobile-nav-drawer__nav-link--active",
+                      )}
+                      onClick={() => closeMobileMenu("navigate")}
+                    >
+                      {t(route.nameKey)}
                     </PrefetchLink>
                   ))}
                 </nav>
@@ -251,16 +268,29 @@ export const Navigation = memo(function Navigation({ variant: _variant = "defaul
               className="pointer-events-none absolute left-1/2 top-1/2 z-[1] hidden -translate-x-1/2 -translate-y-1/2 items-center gap-7 lg:pointer-events-auto lg:flex xl:gap-9"
               aria-hidden={false}
             >
-              {navLinks.map((link) => (
+              {NAV_ROUTES_BEFORE_INDUSTRIES.map((route) => (
                 <PrefetchLink
-                  key={link.to}
-                  to={link.to}
+                  key={route.to}
+                  to={route.to}
                   className={cn(
                     linkClass,
-                    location.pathname === link.to && "text-primary bg-primary/[0.06] dark:bg-primary/[0.1]",
+                    location.pathname === route.to && "text-primary bg-primary/[0.06] dark:bg-primary/[0.1]",
                   )}
                 >
-                  {link.label}
+                  {t(route.nameKey)}
+                </PrefetchLink>
+              ))}
+              <IndustriesNavDropdown variant="desktop" linkClass={linkClass} />
+              {NAV_ROUTES_AFTER_INDUSTRIES.map((route) => (
+                <PrefetchLink
+                  key={route.to}
+                  to={route.to}
+                  className={cn(
+                    linkClass,
+                    location.pathname === route.to && "text-primary bg-primary/[0.06] dark:bg-primary/[0.1]",
+                  )}
+                >
+                  {t(route.nameKey)}
                 </PrefetchLink>
               ))}
             </div>

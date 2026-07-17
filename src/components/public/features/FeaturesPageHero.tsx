@@ -11,7 +11,7 @@ export function FeaturesPageHero() {
     <section className="caretip-features-hero-wise" aria-labelledby="features-hero-title">
       <PublicPageBackLink className="caretip-features-hero-wise__back" />
 
-      <PublicPageHeroCard innerClassName="caretip-features-page__inner caretip-features-hero-wise__inner">
+      <PublicPageHeroCard variant="fullBleed" innerClassName="caretip-features-page__inner caretip-features-hero-wise__inner">
         <h1
           id="features-hero-title"
           className={cn(publicPageUi.title, "caretip-features-hero-wise__title")}

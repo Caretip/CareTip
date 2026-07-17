@@ -19,7 +19,16 @@
     "becomePartner": "Konto erstellen",
     "staffPortal": "Team beitreten",
     "mobileNavigationSection": "Navigation",
-    "mobileAccountSection": "Konto"
+    "mobileAccountSection": "Konto",
+    "industries": "Branchen",
+    "industriesMenu": {
+      "gastronomy": "Gastronomie",
+      "hotels": "Hotellerie",
+      "logistics": "Logistik",
+      "midwives": "Hebammen",
+      "fairs": "Events & Messen",
+      "field-service": "Außendienst"
+    }
   },
   "status": {
     "live": "Aktiv"
@@ -78,7 +87,7 @@
       "conversionTrend": "Conversion-Trend",
       "growthValue": "{{percent}} % vs. Monatsdurchschnitt",
       "scanWeekValue": "{{count}} Scans diese Woche",
-      "conversionHint": "Scan-zu-Tip-Rate"
+      "conversionHint": "Scan-zu-Trinkgeld-Rate"
     },
     "health": {
       "status": "Geschäftsstatus",
@@ -2198,11 +2207,21 @@
         "f2": "Zeitzonenbewusste Exporte"
       },
       "multiLocation": {
-        "title": "Multi-Standort-Unterstützung",
-        "benefit": "Trinkgeld an mehreren Standorten aus einem Dashboard verwalten.",
-        "f0": "Unbegrenzte Standorte mit Pro",
-        "f1": "QR-Codes pro Standort",
-        "f2": "Berichte pro Standort"
+        "title": "Multi-Standort-Support",
+        "benefit": "Verwalte das Trinkgeld für mehrere Filialen und Standorte über ein einziges Dashboard.",
+        "f0": "Unbegrenzte Standorte",
+        "f1": "Individuelle QR-Codes pro Standort",
+        "f2": "Erweiterte Analysen je Standort",
+        "upgradeRequired": "🔒 Upgrade erforderlich",
+        "footer": "Wechsle zum Pro-Tarif, um die Verwaltung mehrerer Standorte, erweiterte Team-Tools und zentrale Analysen freizuschalten.",
+        "upgradeCta": "⚡ Auf Pro upgraden"
+      },
+      "customJobTitles": {
+        "title": "Eigene Jobtitel",
+        "benefit": "Erstelle und nutze eigene Rollen zusätzlich zu den CareTip-Standardtiteln.",
+        "f0": "Eigene Rollen für dein Lokal anlegen",
+        "f1": "Titel im Team wiederverwenden",
+        "f2": "Enthalten ab Pro"
       },
       "tableQr": {
         "title": "Tisch-QR-Codes",
@@ -2323,7 +2342,7 @@
     },
     "business": {
       "overview": "Dashboard",
-      "tips": "Trinkgelder",
+      "tips": "Trinkgeld",
       "team": "Teamverwaltung",
       "qrStudio": "QR Studio",
       "locations": "Standorte",
@@ -2401,7 +2420,7 @@
     },
     "tooltip": {
       "earnings": "Einnahmen",
-      "tips": "Trinkgelder"
+      "tips": "Trinkgeld"
     }
   },
   "shell": {
@@ -2422,7 +2441,7 @@
     "nav": {
       "overview": "Überblick",
       "businessProfile": "Unternehmensprofil",
-      "tipsActivity": "Trinkgelder & Aktivität",
+      "tipsActivity": "Trinkgeld & Aktivität",
       "notifications": "Benachrichtigungen",
       "support": "Support",
       "settings": "Einstellungen"
@@ -2447,20 +2466,20 @@
     "chartMonthlySubtitle": "Letzte 7 Monate",
     "viewDetails": "Details ansehen",
     "chartGuestScansTitle": "Gäste QR Scans",
-    "chartGuestScansSubtitle": "Öffnungen Ihres Tipp-Flows",
+    "chartGuestScansSubtitle": "Öffnungen Ihres Trinkgeld-Flows",
     "export": "Export",
-    "legendTips": "Trinkgelder",
+    "legendTips": "Trinkgeld",
     "legendAvgTip": "Ø Trinkgeld (€)",
     "legendScans": "Scans",
     "teamTitle": "Wem Gäste getippt haben",
-    "tipsActivityLink": "Trinkgelder & Aktivität",
+    "tipsActivityLink": "Trinkgeld & Aktivität",
     "viewAll": "Alle ansehen",
     "lastTipPrefix": "Letztes Trinkgeld",
     "recentActivity": "Letzte Aktivität",
     "overviewHeroTitle": "Willkommen zurück",
     "overviewHeroBody": "Mit CareTip können Gäste Trinkgelder direkt an Ihr Team senden. Teilen Sie Ihre QR Links und behalten Sie jedes Trinkgeld transparent im Blick.",
     "overviewHeroPill": "Nur einmalige Trinkgelder, kein Abo",
-    "overviewCtaTips": "Trinkgelder & Aktivität ansehen",
+    "overviewCtaTips": "Trinkgeld & Aktivität ansehen",
     "overviewCtaQr": "QR Codes verwalten",
     "statTipsMonth": "Trinkgelder diesen Monat",
     "statSampleNote": "Beispieldaten im Dashboard",
@@ -2647,7 +2666,10 @@
       "heroHeadline": "Mehr Trinkgeld für dein Team.\nNull Aufwand für dein Business.",
       "heroHeadlineMobile": "Mehr Trinkgeld für dein Team.\nNull Aufwand für dein Business.",
       "heroHeadlineHighlight": "Trinkgeld",
-      "heroHeadlineHighlights": ["Trinkgeld", "Business"],
+      "heroHeadlineHighlights": [
+        "Trinkgeld",
+        "Business"
+      ],
       "heroTagline": "Caring is Tipping",
       "heroTrust": {
         "aria": "Warum Betriebe CareTip vertrauen",
@@ -2733,7 +2755,7 @@
       "qrLabel3": "Lobby",
       "qrFooter": "PNG laden, PDF drucken",
       "dashToday": "Heute",
-      "dashTipsSub": "Trinkgelder & Aktivität",
+      "dashTipsSub": "Trinkgeld & Aktivität",
       "tipsReceived": "Erhaltene Trinkgelder",
       "dashScans": "Scans",
       "dashDelta": "+12 % vs. gestern",
@@ -2786,7 +2808,7 @@
       "f3Title": "Klar skalieren",
       "f3Text": "Faire Transparenz ohne Extra-Aufwand für Ihr Business.",
       "imageAlt": "Hospitality-Team bei herausragendem Gästeservice",
-      "floatTip": "+12€ Tip erhalten",
+      "floatTip": "+12€ Trinkgeld erhalten",
       "floatReview": "5★ Bewertung",
       "floatShift": "Schicht abgeschlossen",
       "floatTeam": "Live Team-Status"
@@ -2884,7 +2906,7 @@
       },
       "float": {
         "secure": "PCI-sicher",
-        "instant": "Sofort-Tipp",
+        "instant": "Sofort-Trinkgeld",
         "newTip": "Neues Trinkgeld"
       },
       "labels": {
@@ -2999,9 +3021,10 @@
       "s5Alt": "Trinkgeld per Link oder QR-Code bei mobilem Außendienst und Hausbesuchen"
     },
     "paymentsTrust": {
-      "pill": "Sichere Zahlung",
-      "title": "Sichere & vertraute Infrastruktur",
-      "subtitle": "CareTip ist deine zuverlässige Plattform für digitales Trinkgeld. Alle Transaktionen werden absolut sicher und DSGVO-konform über unseren Partner Stripe abgewickelt. CareTip selbst speichert zu keinem Zeitpunkt sensible Bank- oder Kreditkartendaten.",
+      "pill": "",
+      "title": "Sichere & DSGVO-konforme Abwicklung",
+      "subtitle": "",
+      "body": "CareTip speichert zu keinem Zeitpunkt sensible Bankdaten.",
       "principleLabel": "",
       "principle": "",
       "stripeBadge": "Powered by Stripe",
@@ -3217,6 +3240,26 @@
           "time": "vor 32 Min."
         }
       }
+    },
+    "industriesTeaser": {
+      "headline": "Bring dein Team aufs nächste Level.",
+      "subheadline": "Mehr Motivation. Weniger Fluktuation. Volle Schichten.",
+      "benefitsAria": "Zentrale CareTip-Vorteile",
+      "b1Title": "Alltagstauglich",
+      "b1Body": "QR-Codes für Tisch, Station oder direkt auf Tour nutzen.",
+      "b2Title": "Voller Durchblick",
+      "b2Body": "Trinkgelder in Echtzeit sehen & sicher auszahlen per Apple/Google Pay.",
+      "b3Title": "Motivations-Boost",
+      "b3Body": "Mehr Anerkennung für jede Schicht und das gesamte Team.",
+      "teasersLabel": "Überall dort im Einsatz…",
+      "teasersAria": "Ausgewählte Branchen",
+      "teaser1Title": "Hebammen-Betreuung",
+      "teaser1Body": "Trinkgeld im Wochenbett nach dem Hausbesuch – komplett bargeldlos per QR-Code.",
+      "teaser1Alt": "Hebamme bei einer Familie mit CareTip-QR-Visitenkarte",
+      "teaser2Title": "Außendienst & Pflege",
+      "teaser2Body": "Die perfekte Lösung für mobile Teams, Handwerk & Pflegekräfte vor Ort.",
+      "teaser2Alt": "Außendienst-Profi mit CareTip-QR für Trinkgeld vor Ort",
+      "learnMore": "Mehr erfahren"
     }
   },
   "footer": {
@@ -3469,7 +3512,7 @@
       "analyticsSectionDesc": "Diagramme, Kennzahlen und letzte Trinkgelder für {{period}}.",
       "analyticsPeriodAria": "Zeitraum für die Analysen unten wählen",
       "toastNewTip": "Sie haben gerade ein Trinkgeld erhalten!",
-      "toastLinkReady": "Ihr Tipp-Link ist bereit",
+      "toastLinkReady": "Ihr Trinkgeld-Link ist bereit",
       "toastLinkFail": "Link konnte nicht erstellt werden. Bitte erneut versuchen.",
       "fixPhotoTitle": "Profilfoto hinzufügen",
       "fixPhotoDesc": "Foto hinzufügen, damit Gäste Sie erkennen.",
@@ -3940,6 +3983,11 @@
       "needHelpTitle": "Brauchen Sie Hilfe?",
       "needHelpDesc": "So steigern Sie die Einnahmen Ihres Teams und halten das Tippen für Gäste einfach.",
       "viewGuidelines": "Richtlinien ansehen",
+      "quickStartBannerTitle": "Erste Schritte",
+      "quickStartBannerBody": "Folge diesen praktischen Schritten, um dein Team einzurichten und Trinkgelder zu steigern.",
+      "quickStartBannerCta": "Leitfaden öffnen",
+      "quickStartBannerDismiss": "Erste-Schritte-Banner schließen",
+      "quickStartNavLabel": "Erste Schritte",
       "proUpgrade": {
         "title": "Mehr mit CareTip Pro freischalten",
         "subtitle": "Erweiterte Tools für Leistungseinblicke und Wachstum Ihres Betriebs.",
@@ -3994,21 +4042,21 @@
         "actionBilling": "Abrechnung",
         "actionSettings": "Einstellungen"
       },
-      "guidelinesDialogTitle": "CareTip Nutzungsrichtlinien",
-      "guidelinesDialogDesc": "Praktische Schritte, um Ihr Team einzurichten und Trinkgelder zu steigern. Kurzreferenz zum Speichern oder Ausdrucken für die Personalräume.",
-      "guidelinesSectionOnboardTitle": "Team einbinden",
-      "guidelinesSectionOnboardLi1": "Laden Sie Mitarbeitende über <highlight>Team</highlight> mit Ihrem Unternehmens-Einladungscode ein oder fügen Sie sie direkt mit Name und Rolle hinzu.",
-      "guidelinesSectionOnboardLi2": "Bitten Sie jede Person, das Profil zu vervollständigen und die Anmeldung im Mitarbeitenden-Dashboard zu testen.",
-      "guidelinesSectionOnboardLi3": "Deaktivieren Sie ausgeschiedene Mitarbeitende zeitnah, damit Trinkgelder und QR-Codes stimmen.",
+      "guidelinesDialogTitle": "Erste Schritte",
+      "guidelinesDialogDesc": "Praktische Schritte, um dein Team einzurichten und Trinkgelder zu steigern. Deine Kurzreferenz zum Speichern oder Ausdrucken für den Personalraum.",
+      "guidelinesSectionOnboardTitle": "Team hinzufügen",
+      "guidelinesSectionOnboardLi1": "Lade deine Mitarbeitenden über <highlight>Team-Management</highlight> mit deinem Unternehmens-Einladungscode ein oder füge sie direkt mit Namen und Rolle hinzu.",
+      "guidelinesSectionOnboardLi2": "Bitte jede Person, ihr Profil zu vervollständigen und die Anmeldung im Mitarbeitenden-Dashboard zu testen.",
+      "guidelinesSectionOnboardLi3": "Deaktiviere ausgeschiedene Mitarbeitende zeitnah, damit Trinkgelder und QR-Codes up to date sind.",
       "guidelinesSectionPrintTitle": "QR-Tags drucken",
-      "guidelinesSectionPrintLi1": "Öffnen Sie <highlight>QR Codes</highlight> und laden Sie den gebrandeten QR-Code jeder Person herunter.",
-      "guidelinesSectionPrintLi2": "Drucken Sie auf robuste Karten oder Tischaufsteller; platzieren Sie sie, wo Gäste sie natürlich sehen (Empfang, Tische, Kasse).",
-      "guidelinesSectionPrintLi3": "Drucken Sie neu, wenn sich Namen oder Rollen ändern, damit Scans immer der richtigen Person zugeordnet sind.",
+      "guidelinesSectionPrintLi1": "Öffne das <highlight>QR Studio</highlight> und lade den gebrandeten QR-Code jeder Person herunter.",
+      "guidelinesSectionPrintLi2": "Drucke sie auf robuste Karten oder Tischaufsteller; platziere sie dort, wo sie für Gäste gut sichtbar sind (Empfang, Tische, Kasse).",
+      "guidelinesSectionPrintLi3": "Drucke sie neu aus, wenn sich Namen oder Rollen ändern, damit Scans immer der richtigen Person zugeordnet sind.",
       "guidelinesSectionTipsTitle": "Best Practices für mehr Trinkgeld",
-      "guidelinesSectionTipsLi1": "Schulen Sie das Team, CareTip an passenden Momenten zu erwähnen: am Ende des Services, an der Kasse oder wenn Gäste sich bedanken.",
-      "guidelinesSectionTipsLi2": "Halten Sie QR-Codes sichtbar und frei; ein kurzer Hinweis „Zum Tippen scannen“ verbessert die Abschlussquote.",
-      "guidelinesSectionTipsLi3": "Schauen Sie regelmäßig ins Dashboard, würdigen Sie Top-Performer und geben Sie dem Team Feedback.",
-      "guidelinesFooter": "Eine vollständige PDF-Richtlinie kann später ergänzt werden; vorerst dient diese Ansicht als Referenz in der App."
+      "guidelinesSectionTipsLi1": "Schule dein Team, CareTip in den richtigen Momenten zu erwähnen: am Ende des Services, an der Kasse oder wenn Gäste sich bedanken.",
+      "guidelinesSectionTipsLi2": "Halte QR-Codes sichtbar und frei; ein kurzer Hinweis „Zum Tippen scannen“ verbessert die Abschlussquote.",
+      "guidelinesSectionTipsLi3": "Schaue regelmäßig ins Dashboard, würdige Top-Performer und gib deinem Team Feedback.",
+      "guidelinesFooter": ""
     },
     "locationsPage": {
       "backAria": "Zurück zum Dashboard",
@@ -4100,7 +4148,7 @@
       "statusPending": "Ausstehend"
     },
     "tipsActivity": {
-      "title": "Trinkgelder & Aktivität",
+      "title": "Trinkgeld & Aktivität",
       "subtitle": "Echte Trinkgeldaktivität für Ihr Konto.",
       "searchPlaceholder": "Team, Standort/Tisch oder Trinkgeld-ID suchen…",
       "statusAll": "Alle Status",
@@ -4227,10 +4275,13 @@
       "roleDriver": "Fahrer",
       "roleTourGuide": "Reiseführer",
       "roleTechnician": "Techniker",
-      "roleOther": "Sonstiges (eigene Bezeichnung)",
-      "labelCustomRole": "Eigene Rolle",
+      "roleOther": "Neue Rolle hinzufügen",
+      "labelCustomRole": "Neuer Jobtitel",
       "phCustomRole": "z. B. Masseur, Personal Trainer",
-      "toastCustomRoleRequired": "Bitte geben Sie eine eigene Rolle ein, wenn Sie „Sonstiges“ wählen.",
+      "toastCustomRoleRequired": "Bitte einen Jobtitel eingeben, wenn Sie eine neue Rolle hinzufügen.",
+      "toastCustomRoleProRequired": "Eigene Jobtitel erfordern Pro. Wähle eine Standardrolle oder upgrade.",
+      "roleCustomGroup": "Eure eigenen Rollen",
+      "roleStandardGroup": "Standardrollen",
       "removeStaffTitle": "Mitarbeitende entfernen",
       "qrTitleInactive": "Profil aktivieren, um QR-Downloads zu ermöglichen.",
       "qrTitleActive": "Marken-QR herunterladen (App-URL /qr/employee/…)",
@@ -4421,10 +4472,10 @@
         "3": {
           "title": "Trinkgeld abgeschlossen",
           "message": "Ein Trinkgeld von 12 € wurde erfolgreich abgeschlossen: einmalige Zahlung, kein Abo.",
-          "action": "Trinkgelder & Aktivität"
+          "action": "Trinkgeld & Aktivität"
         },
         "4": {
-          "title": "Persönliche Tipp-Links teilen",
+          "title": "Persönliche Trinkgeld-Links teilen",
           "message": "Jede Person erhält einen Link, damit Stammgäste nach gutem Service direkt tippen können.",
           "action": "Teamverwaltung"
         },
@@ -4435,7 +4486,7 @@
         },
         "6": {
           "title": "Wöchentliche Trinkgeld-Zusammenfassung",
-          "message": "Diese Woche 48 erfolgreiche Trinkgelder. Details unter Trinkgelder & Aktivität."
+          "message": "Diese Woche 48 erfolgreiche Trinkgelder. Details unter Trinkgeld & Aktivität."
         }
       }
     },
@@ -4559,6 +4610,11 @@
         "decorations": "Dekorative Ebenen",
         "decorationsHint": "Premium-Rahmen, Ecken und Akzente außerhalb der Scan-Zone.",
         "brandName": "Markenname",
+        "venueNameLabel": "Lokalname",
+        "venueNameHint": "Wird auf Gäste-QR-Karten angezeigt. Bearbeiten, um zu ändern, wie Ihr Lokal erscheint.",
+        "editVenueName": "Bearbeiten",
+        "doneEditingVenueName": "Fertig",
+        "resetVenueName": "Auf Firmennamen zurücksetzen",
         "address": "Geschäftsadresse",
         "addressPlaceholder": "Musterstraße 12, Berlin",
         "addressHint": "Verwendet Ihre registrierte Geschäftsadresse aus dem Profil. Wird unter dem Namen auf QR-Karten angezeigt.",
@@ -4691,7 +4747,7 @@
       "loadingOlder": "Laden…",
       "filter": {
         "all": "Alle Aktivitäten",
-        "tips": "Trinkgelder",
+        "tips": "Trinkgeld",
         "qr": "QR-Scans",
         "goals": "Ziele",
         "staff": "Team",
@@ -4700,7 +4756,7 @@
       },
       "filterLabel": "Aktivität nach Typ filtern",
       "source": {
-        "TIPS": "Trinkgelder",
+        "TIPS": "Trinkgeld",
         "QR": "QR-Scans",
         "GOALS": "Ziele",
         "STAFF": "Team",
@@ -4732,7 +4788,7 @@
     },
     "tips": {
       "eyebrow": "Umsatz",
-      "title": "Trinkgelder",
+      "title": "Trinkgeld",
       "subtitle": "Aktivitätscenter, Transaktionen und Umsatzanalysen.",
       "analyticsHeaderSubtitle": "Executive-Reporting zu Umsatz, Trends, Exporten und Business Intelligence.",
       "navAria": "Trinkgeld-Bereiche",
@@ -4783,7 +4839,7 @@
         "rankingsHint": "Vollständige Rankings, Auszeichnungen und Bestenlisten finden Sie unter",
         "reporting": {
           "name": "Name",
-          "tips": "Trinkgelder",
+          "tips": "Trinkgeld",
           "count": "Anzahl",
           "share": "Anteil",
           "export": "Transaktionen exportieren",
@@ -5195,7 +5251,7 @@
         "logo_too_large": "Center-Logo überschreitet die sichere 20%-Fläche.",
         "circle_shape_sanitized": "Kreis-Stil wird als sicheres abgerundetes Quadrat gerendert, um Finder-Muster zu schützen.",
         "decode_failed": "Eine Kamera konnte diesen QR nicht decodieren. Er scannt in Produktion möglicherweise nicht.",
-        "url_mismatch": "Decodierter Inhalt stimmt nicht mit der erwarteten Tipp-URL überein.",
+        "url_mismatch": "Decodierter Inhalt stimmt nicht mit der erwarteten Trinkgeld-URL überein.",
         "composite_decode_fallback": "Karten-Extrakt fehlgeschlagen — Matrix-Fallback bestätigte die QR-Nutzlast; Compositing ist scan-sicher."
       }
     },
@@ -5510,7 +5566,7 @@
       "toastPrefsSaved": "Einstellungen gespeichert.",
       "toastImageOnly": "Bitte eine Bilddatei wählen.",
       "heroBodyLong": "Einmalige Trinkgelder per QR-Code und Mitarbeiterlinks. Zahlungen nutzen Stripe Payment Intents. Basic ist kostenlos — auf Pro upgraden für erweiterte Funktionen.",
-      "linkTipsActivity": "Trinkgelder & Aktivität ansehen",
+      "linkTipsActivity": "Trinkgeld & Aktivität ansehen",
       "linkFeeDetails": "Gebühren",
       "labelEmailReadonly": "E-Mail-Adresse (nur lesen)",
       "labelContactPhone": "Kontakttelefon",
@@ -6049,26 +6105,74 @@
           "description": "Keine Ergebnisse für „{{q}}“. Versuchen Sie einen anderen Namen, Inhaber oder Kontakt."
         },
         "status": {
-          "draft": { "title": "Keine Entwürfe im Onboarding", "description": "Passen Sie die Filter an." },
-          "submitted": { "title": "Keine eingereichten Anfragen", "description": "Neue Einreichungen erscheinen hier." },
-          "approved": { "title": "Keine freigegebenen Unternehmen", "description": "Filter erweitern für mehr Ergebnisse." },
-          "rejected": { "title": "Keine abgelehnten Anfragen", "description": "" },
-          "suspended": { "title": "Keine gesperrten Unternehmen", "description": "" },
-          "inactive": { "title": "Keine inaktiven Unternehmen", "description": "" }
+          "draft": {
+            "title": "Keine Entwürfe im Onboarding",
+            "description": "Passen Sie die Filter an."
+          },
+          "submitted": {
+            "title": "Keine eingereichten Anfragen",
+            "description": "Neue Einreichungen erscheinen hier."
+          },
+          "approved": {
+            "title": "Keine freigegebenen Unternehmen",
+            "description": "Filter erweitern für mehr Ergebnisse."
+          },
+          "rejected": {
+            "title": "Keine abgelehnten Anfragen",
+            "description": ""
+          },
+          "suspended": {
+            "title": "Keine gesperrten Unternehmen",
+            "description": ""
+          },
+          "inactive": {
+            "title": "Keine inaktiven Unternehmen",
+            "description": ""
+          }
         },
         "date": {
-          "today": { "title": "Heute keine Registrierungen", "description": "Zeitraum erweitern." },
-          "last_7": { "title": "Keine Registrierungen in 7 Tagen", "description": "Zeitraum erweitern." },
-          "last_30": { "title": "Keine Registrierungen in 30 Tagen", "description": "Zeitraum erweitern." },
-          "this_month": { "title": "Diesen Monat keine Registrierungen", "description": "Zeitraum erweitern." },
-          "last_month": { "title": "Letzten Monat keine Registrierungen", "description": "Zeitraum erweitern." },
-          "custom": { "title": "Keine Unternehmen in diesem Zeitraum", "description": "Daten anpassen oder Filter löschen." }
+          "today": {
+            "title": "Heute keine Registrierungen",
+            "description": "Zeitraum erweitern."
+          },
+          "last_7": {
+            "title": "Keine Registrierungen in 7 Tagen",
+            "description": "Zeitraum erweitern."
+          },
+          "last_30": {
+            "title": "Keine Registrierungen in 30 Tagen",
+            "description": "Zeitraum erweitern."
+          },
+          "this_month": {
+            "title": "Diesen Monat keine Registrierungen",
+            "description": "Zeitraum erweitern."
+          },
+          "last_month": {
+            "title": "Letzten Monat keine Registrierungen",
+            "description": "Zeitraum erweitern."
+          },
+          "custom": {
+            "title": "Keine Unternehmen in diesem Zeitraum",
+            "description": "Daten anpassen oder Filter löschen."
+          }
         },
         "tips": {
-          "zero": { "title": "Keine Unternehmen mit 0 €", "description": "Anderen Volumenfilter wählen." },
-          "1_500": { "title": "Keine Unternehmen in dieser Spanne", "description": "Anderen Volumenfilter wählen." },
-          "501_5000": { "title": "Keine Unternehmen in dieser Spanne", "description": "Anderen Volumenfilter wählen." },
-          "5001_plus": { "title": "Keine Unternehmen in dieser Spanne", "description": "Anderen Volumenfilter wählen." }
+          "zero": {
+            "title": "Keine Unternehmen mit 0 €",
+            "description": "Anderen Volumenfilter wählen."
+          },
+          "1_500": {
+            "title": "Keine Unternehmen in dieser Spanne",
+            "description": "Anderen Volumenfilter wählen."
+          },
+          "501_5000": {
+            "title": "Keine Unternehmen in dieser Spanne",
+            "description": "Anderen Volumenfilter wählen."
+          },
+          "5001_plus": {
+            "title": "Keine Unternehmen in dieser Spanne",
+            "description": "Anderen Volumenfilter wählen."
+          }
         }
       }
     },
@@ -6747,5 +6851,271 @@
       }
     },
     "fallbackAdminName": "Admin"
+  },
+  "industries": {
+    "shared": {
+      "benefitsEyebrow": "Warum CareTip",
+      "faqTitle": "Die Top-FAQs",
+      "trustAria": "Vertrauen und Compliance",
+      "trust": {
+        "gdpr": "DSGVO-konform",
+        "tax": "Steuerkonforme Trinkgelder",
+        "stripe": "Sichere Zahlungen über Stripe"
+      },
+      "moreIndustriesTitle": "Weitere Branchen entdecken",
+      "moreIndustriesBody": "So passt CareTip zu Teams wie deinem.",
+      "finalCtaTitle": "Bereit loszulegen?",
+      "finalCtaBody": "Erstelle dein kostenloses Konto und richte deinen ersten QR in Minuten ein.",
+      "finalCtaButton": "Jetzt kostenlos starten",
+      "finalCtaSecondary": "Preise ansehen"
+    },
+    "pages": {
+      "gastronomy": {
+        "pageAria": "CareTip für Gastronomie und Service-Teams",
+        "eyebrow": "Für Gastronomie & Service-Teams",
+        "headline": "Mehr Trinkgeld für dein Team. Null Aufwand für dein Restaurant.",
+        "subhead": "Begeistere deine Gäste mit bargeldlosem Bezahlen per QR-Code direkt am Tisch. Garantiert steuerfrei, sekundenschnell und ohne teure Zusatz-Hardware.",
+        "cta": "Jetzt kostenlos starten",
+        "heroAlt": "Ein lächelnder Kellner im Restaurant zeigt einem Gast einen Beleg mit dem CareTip-QR-Code",
+        "stepsTitle": "Der Ablauf",
+        "steps": {
+          "s1Title": "QR-Code platzieren",
+          "s1Body": "Am Tisch, auf der Rechnung oder als Aufsteller.",
+          "s2Title": "Gast scannt & zahlt",
+          "s2Body": "Ohne App-Download, direkt mit Apple Pay, Google Pay oder Kreditkarte.",
+          "s3Title": "Echtzeit-Auszahlung",
+          "s3Body": "Das Trinkgeld landet direkt und steuerfrei beim Kellner."
+        },
+        "benefitsTitle": "Die 3 Top-Vorteile",
+        "benefitsAlt": "CareTip-QR-Code bereit für Trinkgeld am Tisch",
+        "benefits": {
+          "b1Title": "Schnellerer Service",
+          "b1Body": "Keine Wartezeiten mehr beim Suchen nach dem EC-Gerät für Trinkgelder.",
+          "b2Title": "Glücklicheres Personal",
+          "b2Body": "Deutlich höhere Trinkgelder durch die einfache, bargeldlose Option.",
+          "b3Title": "100% Steuerfrei",
+          "b3Body": "Vollautomatische, finanzamtskonforme Zuordnung direkt auf die Mitarbeiterkonten."
+        },
+        "faq": {
+          "q1": "Muss der Gast eine App herunterladen?",
+          "a1": "Nein. Ein einfacher Scan mit der Smartphone-Kamera genügt.",
+          "q2": "Wie wird das Trinkgeld aufgeteilt?",
+          "a2": "Du entscheidest: Entweder geht es direkt an den Kellner des Tisches, oder es fließt in einen gemeinsamen Team-Pool."
+        },
+        "floats": {
+          "f1Title": "Zahlung erfolgreich",
+          "f1Value": "Trinkgeld bezahlt",
+          "f2Title": "Trinkgeld erhalten",
+          "f2Value": "8,50 €",
+          "f3Title": "Heute Abend",
+          "f3Value": "+24 % Trinkgeld"
+        }
+      },
+      "hotels": {
+        "pageAria": "CareTip für Hotellerie",
+        "eyebrow": "Für Hotellerie",
+        "headline": "Diskrete Wertschätzung am Front Desk und im Zimmerservice.",
+        "subhead": "Ermögliche deinen Hotelgästen ein stilvolles, digitales Trinkgeld für Concierge, Housekeeping und Rezeption. Nahtlos integriert als Aufsteller oder auf der Zimmerkarte.",
+        "cta": "Jetzt Hotel anmelden",
+        "heroAlt": "Elegante Hotelrezeption mit dezentem CareTip-Aufsteller neben dem Zahlungsterminal beim Check-in",
+        "stepsTitle": "Der Ablauf",
+        "steps": {
+          "s1Title": "Dezent platzieren",
+          "s1Body": "Als stylischer Aufsteller an der Rezeption oder diskret im Zimmer.",
+          "s2Title": "Einfach scannen",
+          "s2Body": "Gäste belohnen den Service direkt über ihr Smartphone.",
+          "s3Title": "Zentral verwalten",
+          "s3Body": "Die Hotelleitung behält im Dashboard die volle Transparenz über alle Stationen."
+        },
+        "benefitsTitle": "Die 3 Top-Vorteile",
+        "benefitsAlt": "Hotelrezeption bereit für bargeldloses Gäste-Trinkgeld",
+        "benefits": {
+          "b1Title": "Mehr Wertschätzung fürs Housekeeping",
+          "b1Body": "Endlich können Gäste auch dem Reinigungsteam digital danken.",
+          "b2Title": "Nahtlose Integration",
+          "b2Body": "Passt perfekt zum Design deines Hotels – ohne störende Fremdkörper.",
+          "b3Title": "Kein bürokratischer Aufwand",
+          "b3Body": "Automatische Exporte für die Buchhaltung auf Knopfdruck."
+        },
+        "faq": {
+          "q1": "Können Gäste bestimmten Abteilungen Trinkgeld geben?",
+          "a1": "Ja. Du kannst separate QR-Codes für Rezeption, Housekeeping oder Gepäckservice erstellen.",
+          "q2": "Ist das System sicher für internationale Gäste?",
+          "a2": "Absolut. Wir unterstützen globale Zahlungsmittel wie Visa, Mastercard, Apple Pay und Google Pay."
+        },
+        "floats": {
+          "f1Title": "Check-out-Trinkgeld",
+          "f1Value": "Bestätigt",
+          "f2Title": "Housekeeping",
+          "f2Value": "12,00 €",
+          "f3Title": "Diese Woche",
+          "f3Value": "148 Tipps"
+        }
+      },
+      "logistics": {
+        "pageAria": "CareTip für Logistik und Lieferdienste",
+        "eyebrow": "Für Logistik & Lieferdienste",
+        "headline": "Ein digitales „Danke“ direkt an der Haustür.",
+        "subhead": "Gib deinen Fahrern und Zustellern die Anerkennung, die sie verdienen. Mit einem schnellen Scan auf dem Paket, dem Fahrzeug, Handscanner oder per E-Mail erhalten sie ihr Trinkgeld direkt aufs Smartphone.",
+        "cta": "Depot jetzt registrieren",
+        "heroAlt": "Ein freundlicher Paketbote vor seinem Lieferfahrzeug mit gut sichtbarem CareTip-QR-Code",
+        "stepsTitle": "Der Ablauf",
+        "steps": {
+          "s1Title": "Sichtbar anbringen",
+          "s1Body": "QR-Code auf dem Zustellfahrzeug, dem Paket oder der Jacke platzieren.",
+          "s2Title": "Sekundenschneller Scan",
+          "s2Body": "Der Kunde scannt den Code an der Haustür oder im Vorbeigehen.",
+          "s3Title": "Direkte Freude",
+          "s3Body": "Das Trinkgeld wird dem Fahrer sofort gutgeschrieben."
+        },
+        "benefitsTitle": "Die 3 Top-Vorteile",
+        "benefitsAlt": "Branded CareTip-QR-Code für Delivery- und Logistikteams",
+        "benefits": {
+          "b1Title": "Mitarbeiter-Booster",
+          "b1Body": "Extrem hohe Motivation für Fahrer durch direktes Feedback und extra Einnahmen.",
+          "b2Title": "Kein Bargeld-Zwang",
+          "b2Body": "Kunden müssen nicht mehr panisch nach Münzen suchen, wenn das Paket kommt.",
+          "b3Title": "Sicher im Straßenverkehr",
+          "b3Body": "Keine Ablenkung – der Scan dauert nur 3 Sekunden."
+        },
+        "faq": {
+          "q1": "Funktioniert das auch bei Subunternehmern?",
+          "a1": "Ja. Du kannst Fahrer flexibel zuweisen und Routen unkompliziert verwalten.",
+          "q2": "Können Kunden Feedback hinterlassen?",
+          "a2": "Ja, neben dem Trinkgeld können Kunden eine Sternebewertung abgeben, um die Servicequalität sichtbar zu machen."
+        },
+        "floats": {
+          "f1Title": "Delivery-Trinkgeld",
+          "f1Value": "Erhalten",
+          "f2Title": "Fahrer-Auszahlung",
+          "f2Value": "5,00 €",
+          "f3Title": "Live-Tour",
+          "f3Value": "Im Plan"
+        }
+      },
+      "midwives": {
+        "pageAria": "CareTip für selbstständige Hebammen",
+        "eyebrow": "Für selbstständige Hebammen",
+        "headline": "Mehr Wertschätzung für deine Fürsorge – bargeldlos im Hausbesuch.",
+        "subhead": "Empfange Aufmerksamkeiten von dankbaren Familien, ganz einfach kontaktlos per QR-Code auf deiner Visitenkarte. Komplett sicher, steuerfrei und ganz ohne Bargeldstress unterwegs.",
+        "cta": "Jetzt als Hebamme starten",
+        "heroAlt": "Hebamme bei einer glücklichen jungen Familie zu Hause mit Visitenkarte und integriertem QR-Code",
+        "stepsTitle": "Der Ablauf",
+        "steps": {
+          "s1Title": "Visitenkarte übergeben",
+          "s1Body": "Dein persönlicher QR-Code ist elegant auf deiner Karte oder Infomappe integriert.",
+          "s2Title": "Entspanntes Scannen",
+          "s2Body": "Die Familie scannt den Code in Ruhe vom Sofa aus.",
+          "s3Title": "Steuerfrei empfangen",
+          "s3Body": "Aufmerksamkeiten landen direkt auf deinem Bankkonto – lückenlos dokumentiert."
+        },
+        "benefitsTitle": "Die 3 Top-Vorteile",
+        "benefitsAlt": "Visitenkarte mit CareTip-QR-Code für Hebammenbesuche",
+        "benefits": {
+          "b1Title": "Kein unangenehmes Bargeld-Thema",
+          "b1Body": "Familien können sich ohne Umschläge und Bargeld-Suche bedanken.",
+          "b2Title": "Absolut DSGVO-konform",
+          "b2Body": "Höchste Datensicherheit für dich und die betreuten Familien.",
+          "b3Title": "Passt in die Tasche",
+          "b3Body": "Keine schwere Hardware – dein QR-Code auf Papier oder auf dem Smartphone reicht."
+        },
+        "faq": {
+          "q1": "Sind die Trinkgelder steuerfrei?",
+          "a1": "Ja, persönliche Schenkungen und Trinkgelder für freiberufliche Hebammen sind in Deutschland steuerfrei.",
+          "q2": "Sehen die Familien meine Bankdaten?",
+          "a2": "Nein. Der Bezahlvorgang läuft komplett anonymisiert über Stripe. Deine Kontodaten bleiben absolut geheim."
+        },
+        "floats": {
+          "f1Title": "Besuch abgeschlossen",
+          "f1Value": "Danke",
+          "f2Title": "Familien-Trinkgeld",
+          "f2Value": "20,00 €",
+          "f3Title": "Diesen Monat",
+          "f3Value": "Sichere Auszahlung"
+        }
+      },
+      "fairs": {
+        "pageAria": "CareTip für Messen, Events und Hostessen",
+        "eyebrow": "Für Messen, Events & Hostessen",
+        "headline": "Belohne Spitzenleistung auf Events, Messen und Promotions.",
+        "subhead": "Mach hervorragenden Service bei Großveranstaltungen sofort belohnbar. Dein Event-Team sammelt Trinkgelder und Feedback in Echtzeit über personalisierte Badges oder QR-Codes am Counter.",
+        "cta": "Jetzt Event-Team anlegen",
+        "heroAlt": "Professionell gekleidete Messe-Hostessen an einem stilvollen Counter mit dezenten QR-Code-Badges",
+        "stepsTitle": "Der Ablauf",
+        "steps": {
+          "s1Title": "Personalisiertes Badge",
+          "s1Body": "Jedes Teammitglied trägt einen diskreten QR-Code auf dem Namensschild.",
+          "s2Title": "Schnelles Feedback",
+          "s2Body": "Besucher scannen den Code am Messestand nach einem Gespräch.",
+          "s3Title": "Live-Statistiken",
+          "s3Body": "Projektleiter sehen Performance und Feedback in Echtzeit im Dashboard."
+        },
+        "benefitsTitle": "Die 3 Top-Vorteile",
+        "benefitsAlt": "Mobiles Tippen für Event- und Messe-Teams",
+        "benefits": {
+          "b1Title": "Leistung sichtbar machen",
+          "b1Body": "Erkenne sofort, welche Mitarbeiter auf der Messefläche am aktivsten sind.",
+          "b2Title": "Digitaler Lead-Magnet",
+          "b2Body": "Nutze das Feedback-Tool, um die Service-Zufriedenheit live zu messen.",
+          "b3Title": "Einfaches Onboarding",
+          "b3Body": "Profile können innerhalb von Minuten für wechselnde Event-Teams angelegt werden."
+        },
+        "faq": {
+          "q1": "Wie lange dauert die Einrichtung für ein Event?",
+          "a1": "Weniger als 5 Minuten. Du lädst dein Team hoch und die QR-Codes sind sofort einsatzbereit.",
+          "q2": "Können wir das Branding anpassen?",
+          "a2": "Ja, ab dem Pro-Paket können die Trinkgeldseiten an das Corporate Design des Messekunden angepasst werden. (Im Basic-Paket leider nicht möglich.)"
+        },
+        "floats": {
+          "f1Title": "Stand-Trinkgeld",
+          "f1Value": "Bezahlt",
+          "f2Title": "Hostessen-Team",
+          "f2Value": "9,00 €",
+          "f3Title": "Messetag",
+          "f3Value": "Live"
+        }
+      },
+      "field-service": {
+        "pageAria": "CareTip für Außendienst und Handwerk",
+        "eyebrow": "Für Außendienst & Handwerk",
+        "headline": "Wertschätzung, die mitgeht — bargeldlos nach jedem Einsatz.",
+        "subhead": "Gib Kundinnen und Kunden eine einfache Möglichkeit, nach dem Vor-Ort-Termin Trinkgeld zu geben. QR auf Handy, Fahrzeug oder Karte — ohne Bargeld und ohne peinliche Momente.",
+        "cta": "Jetzt kostenlos starten",
+        "heroAlt": "Außendienst-Profi bereit für Trinkgeld vor Ort mit CareTip",
+        "stepsTitle": "Der Ablauf",
+        "steps": {
+          "s1Title": "QR zeigen",
+          "s1Body": "Auf dem Handy, der Fahrzeugtür oder der Visitenkarte nach dem Einsatz.",
+          "s2Title": "Kunde scannt & zahlt",
+          "s2Body": "Ohne App — Apple Pay, Google Pay oder Karte in Sekunden.",
+          "s3Title": "Trinkgeld kommt an",
+          "s3Body": "Das Geld landet bei der richtigen Person — dokumentiert und transparent."
+        },
+        "benefitsTitle": "Die 3 Top-Vorteile",
+        "benefitsAlt": "CareTip-QR bereit für Vor-Ort-Einsätze im Außendienst",
+        "benefits": {
+          "b1Title": "Trinkgeld vor Ort",
+          "b1Body": "QR zeigen, wenn die Arbeit erledigt ist — Wertschätzung im Moment.",
+          "b2Title": "Codes pro Techniker",
+          "b2Body": "Fair und klar für Einzelprofis und Mehrwagen-Teams.",
+          "b3Title": "Leichtes Setup",
+          "b3Body": "Ohne Terminals oder schwere Hardware — Papier oder Handy reicht."
+        },
+        "faq": {
+          "q1": "Braucht der Kunde eine App?",
+          "a1": "Nein. Ein Scan mit der Smartphone-Kamera genügt.",
+          "q2": "Kann jede Person einen eigenen QR haben?",
+          "a2": "Ja. Individuelle Codes oder ein gemeinsamer Team-Pool — du entscheidest."
+        },
+        "floats": {
+          "f1Title": "Auftrag erledigt",
+          "f1Value": "Trinkgeld bereit",
+          "f2Title": "Vor-Ort-Trinkgeld",
+          "f2Value": "15,00 €",
+          "f3Title": "Crew heute",
+          "f3Value": "Synchron"
+        }
+      }
+    }
   }
 }

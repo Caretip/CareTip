@@ -96,10 +96,6 @@ export function CareTipUsageGuidelinesDialog({
               <li>{t("business.dashboard.guidelinesSectionTipsLi3")}</li>
             </ul>
           </section>
-
-          <p className="text-xs text-center pt-2" style={{ color: P.gray }}>
-            {t("business.dashboard.guidelinesFooter")}
-          </p>
         </div>
       </DialogContent>
     </Dialog>

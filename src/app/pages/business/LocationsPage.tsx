@@ -5,7 +5,7 @@ import { MapPin } from "lucide-react";
 import { toast } from "sonner";
 import { useRequireAuth } from "../../hooks/useRequireAuth";
 import { useSubscriptionEntitlements } from "../../hooks/useSubscriptionEntitlements";
-import { LockedFeatureCard } from "../../components/subscription/LockedFeatureCard";
+import { LocationsMultiLocationUpgradeCard } from "../../components/business/LocationsMultiLocationUpgradeCard";
 import { fetchLocationsCached, invalidateVenueCatalog } from "../../lib/businessVenueCatalog";
 import { createLocationAPI, type LocationDTO } from "../../lib/api";
 import { toUserFriendlyMessage } from "../../lib/errorMessages";
@@ -37,7 +37,7 @@ const ACTION_TEAL = "#e9781c";
 export function LocationsPage() {
   const { t } = useTranslation();
   const { isBusiness } = useRequireAuth();
-  const { tier, ready, limits } = useSubscriptionEntitlements({
+  const { ready, limits, hasFeature } = useSubscriptionEntitlements({
     enabled: isBusiness,
     role: "business",
   });
@@ -85,6 +85,7 @@ export function LocationsPage() {
 
   const atSingleLocationCap =
     ready && limits.maxLocations != null && locations.length >= limits.maxLocations;
+  const showBasicUpgradeCard = ready && !hasFeature("multiLocation");
 
   const isInitialLocationsLoad = loading && locations.length === 0;
   const { showInitialSkeleton } = useBusinessPageBoot("locations", isInitialLocationsLoad);
@@ -174,9 +175,9 @@ export function LocationsPage() {
             ))}
           </ul>
         )}
-        {atSingleLocationCap ? (
+        {showBasicUpgradeCard ? (
           <div className="mt-8">
-            <LockedFeatureCard featureKey="multiLocation" tier={tier} />
+            <LocationsMultiLocationUpgradeCard />
           </div>
         ) : null}
       </div>

@@ -19,6 +19,7 @@ import { useBusinessVerificationRealtime } from "../hooks/useBusinessVerificatio
 import { useMobileMenuState } from "../hooks/useMobileMenuState";
 import { useCommercialPageTracking } from "../hooks/useCommercialPageTracking";
 import { BusinessEntitlementsProvider } from "../contexts/BusinessEntitlementsContext";
+import { BusinessGuidelinesProvider } from "../contexts/BusinessGuidelinesContext";
 import { BusinessFeatureInfoDrawerProvider } from "../components/business/BusinessFeatureInfoDrawerProvider";
 import { sessionHasActiveEntitlements } from "../lib/subscriptionEntitlementFastPath";
 import { useMinWidthMedia } from "@/lib/motionPerf";
@@ -52,37 +53,39 @@ export function BusinessLayout() {
   }, [isAppReady, user?.impersonation]);
 
   return (
-    <div className="relative min-h-screen bg-background">
-      <PushNotificationSync />
-      <NotificationInboxSync />
-      {/* Suppressed on /dashboard — inline card there; see businessVerificationNotice.ts */}
-      <VerificationPendingBanner />
-      <div className="relative z-10">
-        {isAppReady ? (
-          isLargeScreen ? <BusinessSidebar /> : null
-        ) : isLargeScreen && !globalLoaderActive ? (
-          <SidebarSkeleton />
-        ) : null}
-        <BusinessMobileSidebar isOpen={mobileMenuOpen} onClose={closeMobileMenu} />
-        <div
-          className={cn(
-            "caretip-dashboard-shell dashboard-workspace font-sans flex min-h-screen min-w-0 flex-col overflow-x-hidden lg:pl-64",
-            BUSINESS_DASHBOARD_ROOT,
-          )}
-        >
-          <DashboardHeader onMenuClick={openMobileMenu} />
-          <main className="caretip-dashboard-page-enter min-w-0 flex-1 overflow-x-clip">
-            <RouteChunkBoundary variant="shell" registrationKey="business-outlet">
-              <BusinessEntitlementsProvider>
-                <BusinessFeatureInfoDrawerProvider>
-                  <RouteOutletTransition />
-                </BusinessFeatureInfoDrawerProvider>
-              </BusinessEntitlementsProvider>
-            </RouteChunkBoundary>
-          </main>
-          <Footer variant="minimal" />
+    <BusinessGuidelinesProvider>
+      <div className="relative min-h-screen bg-background">
+        <PushNotificationSync />
+        <NotificationInboxSync />
+        {/* Suppressed on /dashboard — inline card there; see businessVerificationNotice.ts */}
+        <VerificationPendingBanner />
+        <div className="relative z-10">
+          {isAppReady ? (
+            isLargeScreen ? <BusinessSidebar /> : null
+          ) : isLargeScreen && !globalLoaderActive ? (
+            <SidebarSkeleton />
+          ) : null}
+          <BusinessMobileSidebar isOpen={mobileMenuOpen} onClose={closeMobileMenu} />
+          <div
+            className={cn(
+              "caretip-dashboard-shell dashboard-workspace font-sans flex min-h-screen min-w-0 flex-col overflow-x-hidden lg:pl-64",
+              BUSINESS_DASHBOARD_ROOT,
+            )}
+          >
+            <DashboardHeader onMenuClick={openMobileMenu} />
+            <main className="caretip-dashboard-page-enter min-w-0 flex-1 overflow-x-clip">
+              <RouteChunkBoundary variant="shell" registrationKey="business-outlet">
+                <BusinessEntitlementsProvider>
+                  <BusinessFeatureInfoDrawerProvider>
+                    <RouteOutletTransition />
+                  </BusinessFeatureInfoDrawerProvider>
+                </BusinessEntitlementsProvider>
+              </RouteChunkBoundary>
+            </main>
+            <Footer variant="minimal" />
+          </div>
         </div>
       </div>
-    </div>
+    </BusinessGuidelinesProvider>
   );
 }

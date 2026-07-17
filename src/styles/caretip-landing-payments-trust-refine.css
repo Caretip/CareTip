@@ -1,6 +1,10 @@
 /**
- * Payments & trust (#payments-trust) — card visual + feature grid.
+ * Payments & trust (#payments-trust) — compact Stripe trust strip.
  */
+
+.caretip-landing #payments-trust.caretip-payments-trust--compact {
+  padding-block: clamp(2.5rem, 5vw, 3.75rem);
+}
 
 .caretip-landing #payments-trust .caretip-payments-trust-ambient {
   background: radial-gradient(

@@ -1,10 +1,11 @@
-import { useCallback, useEffect, useId, useState } from "react";
+import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
   Brush,
   Download,
   FileImage,
   Loader2,
+  Pencil,
   Palette,
   QrCode,
   Save,
@@ -75,6 +76,8 @@ export function QrStudioDesigner({ businessId, businessName, canEdit }: QrStudio
   const [previewUrl, setPreviewUrl] = useState("");
   const [previewLoading, setPreviewLoading] = useState(false);
   const [reliabilityReport, setReliabilityReport] = useState<QrReliabilityReport | null>(null);
+  const [editingVenueName, setEditingVenueName] = useState(false);
+  const venueNameInputRef = useRef<HTMLInputElement>(null);
 
   const refreshPreview = useCallback(async () => {
     setPreviewLoading(true);
@@ -291,16 +294,73 @@ export function QrStudioDesigner({ businessId, businessName, canEdit }: QrStudio
                       </Button>
                     </div>
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="brand-name">{t("business.qrStudio.design.brandName")}</Label>
-                    <Input
-                      id="brand-name"
-                      value={studio.brandDisplayName}
-                      onChange={(e) => studio.setBrandDisplayName(e.target.value)}
-                      placeholder={businessName}
-                      maxLength={80}
-                      disabled={!canEdit}
-                    />
+                  <div className="space-y-3 rounded-2xl border border-orange-200/70 bg-[linear-gradient(180deg,rgb(255_247_237)_0%,rgb(255_255_255)_100%)] p-4 shadow-sm dark:border-orange-900/40 dark:bg-[linear-gradient(180deg,rgb(67_32_11_/_0.28)_0%,rgb(24_24_27)_100%)] sm:p-5">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <Label htmlFor="brand-name" className="text-[13px] font-semibold tracking-wide text-foreground">
+                          {t("business.qrStudio.design.venueNameLabel")}
+                        </Label>
+                        <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+                          {t("business.qrStudio.design.venueNameHint")}
+                        </p>
+                      </div>
+                      {canEdit && !editingVenueName ? (
+                        <Button
+                          type="button"
+                          size="sm"
+                          className="h-9 shrink-0 gap-1.5 rounded-lg bg-[#e9781c] px-3.5 text-sm font-semibold text-white shadow-sm hover:bg-[#d96a14]"
+                          onClick={() => {
+                            setEditingVenueName(true);
+                            requestAnimationFrame(() => venueNameInputRef.current?.focus());
+                          }}
+                        >
+                          <Pencil className="h-3.5 w-3.5" aria-hidden />
+                          {t("business.qrStudio.design.editVenueName")}
+                        </Button>
+                      ) : null}
+                    </div>
+                    {editingVenueName || !canEdit ? (
+                      <div className="space-y-2.5">
+                        <Input
+                          ref={venueNameInputRef}
+                          id="brand-name"
+                          value={studio.brandDisplayName}
+                          onChange={(e) => studio.setBrandDisplayName(e.target.value)}
+                          placeholder={businessName}
+                          maxLength={80}
+                          disabled={!canEdit}
+                          className="h-11 rounded-xl border-orange-200/80 bg-white text-base font-semibold shadow-sm dark:border-orange-900/50 dark:bg-zinc-950"
+                        />
+                        {canEdit ? (
+                          <div className="flex flex-wrap gap-2">
+                            <Button
+                              type="button"
+                              size="sm"
+                              className="h-9 rounded-lg bg-[#e9781c] px-3.5 font-semibold text-white hover:bg-[#d96a14]"
+                              onClick={() => setEditingVenueName(false)}
+                            >
+                              {t("business.qrStudio.design.doneEditingVenueName")}
+                            </Button>
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant="ghost"
+                              className="h-9 rounded-lg font-medium"
+                              onClick={() => {
+                                studio.setBrandDisplayName(businessName);
+                                setEditingVenueName(false);
+                              }}
+                            >
+                              {t("business.qrStudio.design.resetVenueName")}
+                            </Button>
+                          </div>
+                        ) : null}
+                      </div>
+                    ) : (
+                      <p className="truncate text-lg font-semibold tracking-tight text-foreground">
+                        {studio.brandDisplayName.trim() || businessName}
+                      </p>
+                    )}
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="brand-address">{t("business.qrStudio.design.address")}</Label>
