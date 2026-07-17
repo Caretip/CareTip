@@ -292,13 +292,6 @@ export function TipSuccessExperience({
               {secondaryLabel}
             </button>
           </div>
-
-          {!embedded ? (
-            <footer className="customer-flow-success-trust mt-6 text-center sm:mt-7">
-              <p>{t("tipFlow.success.trustPoweredBy")}</p>
-              <p>{t("tipFlow.success.trustCompleted")}</p>
-            </footer>
-          ) : null}
         </motion.article>
 
         {showAttribution && !embedded ? (

@@ -1485,11 +1485,14 @@ textarea::placeholder {
   }
 }
 
-/* Public marketing mobile nav — full-height slide-over from the left */
+/* Public marketing mobile nav — full-screen overlay */
 .caretip-public-mobile-nav-drawer {
   touch-action: manipulation;
   overscroll-behavior: contain;
   isolation: isolate;
+  width: 100%;
+  max-width: none;
+  inset: 0;
 }
 
 .caretip-public-mobile-nav-drawer__section-label {

@@ -38,12 +38,24 @@ export function HowItWorksHeroVisual({ className }: HowItWorksHeroVisualProps) {
           </div>
           <ArrowRight className="caretip-how-hero-v2__visual-arrow" strokeWidth={2} aria-hidden />
           <div className="caretip-how-hero-v2__visual-node caretip-how-hero-v2__visual-node--phone">
-            <img src={hw05} alt="" className="caretip-how-hero-v2__visual-img" loading="lazy" />
+            <img
+              src={hw05}
+              alt=""
+              className="caretip-how-hero-v2__visual-img"
+              loading="eager"
+              decoding="async"
+            />
             <span className="caretip-how-hero-v2__visual-caption">{t("staticPages.howItWorks.visual.customerTip")}</span>
           </div>
           <ArrowRight className="caretip-how-hero-v2__visual-arrow" strokeWidth={2} aria-hidden />
           <div className="caretip-how-hero-v2__visual-node">
-            <img src={hw07} alt="" className="caretip-how-hero-v2__visual-img" loading="lazy" />
+            <img
+              src={hw07}
+              alt=""
+              className="caretip-how-hero-v2__visual-img"
+              loading="eager"
+              decoding="async"
+            />
             <span className="caretip-how-hero-v2__visual-caption">{t("staticPages.howItWorks.visual.analytics")}</span>
           </div>
         </div>

@@ -32,9 +32,22 @@ function warmLandingHeroAssets(): void {
   });
 }
 
+function warmIndustryHeroAssets(path: string): void {
+  void import("@/lib/industryHeroAssets").then((mod) => {
+    mod.warmIndustryHeroFromPath(path);
+  });
+}
+
 export function prefetchPublicRoute(path: string) {
   const normalized = path.split("#")[0].split("?")[0];
-  if (!normalized || prefetched.has(normalized)) return;
+  if (!normalized) return;
+
+  // Industry heroes must re-warm on every hover — chunk prefetch alone is a no-op after first visit.
+  if (normalized.startsWith("/industries/")) {
+    warmIndustryHeroAssets(normalized);
+  }
+
+  if (prefetched.has(normalized)) return;
   const factory = PUBLIC_ROUTE_IMPORTERS[normalized];
   if (!factory) return;
   prefetched.add(normalized);
@@ -55,4 +68,16 @@ export function prefetchPrimaryNavRoutes() {
   for (const path of ["/features", "/pricing", "/faq", "/contact", "/login", "/signup"]) {
     prefetchPublicRoute(path);
   }
+  // Industry page chunk + heroes — hover then feels instant.
+  for (const path of [
+    "/industries/gastronomy",
+    "/industries/hotels",
+    "/industries/midwives",
+    "/industries/field-service",
+  ]) {
+    prefetchPublicRoute(path);
+  }
+  void import("@/lib/industryHeroAssets").then((mod) => {
+    mod.warmAllIndustryHeroesIdle();
+  });
 }

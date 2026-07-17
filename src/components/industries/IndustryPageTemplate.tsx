@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router";
 import { useTranslation } from "react-i18next";
 import {
@@ -15,9 +15,11 @@ import {
 import type { IndustryPageId } from "@/app/data/industryPages";
 import { INDUSTRY_MEDIA } from "@/app/data/industryMedia";
 import { IndustryHeroFloatBadges } from "@/components/industries/IndustryHeroFloatBadges";
+import { IndustryHeroMedia } from "@/components/industries/IndustryHeroMedia";
 import { FaqAccordionItem } from "@/components/public/faq/FaqAccordionItem";
 import { PublicPageShell } from "@/components/public/PublicPageShell";
 import { publicPagesBrandUi } from "@/components/public/publicPagesBrandUi";
+import { warmAllIndustryHeroesIdle } from "@/lib/industryHeroAssets";
 import { cn } from "@/lib/utils";
 
 const STEP_ICONS = [QrCode, Smartphone, Wallet] as const;
@@ -37,6 +39,14 @@ export function IndustryPageTemplate({ industryId }: IndustryPageTemplateProps) 
   const prefix = `industries.pages.${industryId}`;
   const media = INDUSTRY_MEDIA[industryId];
   const [openFaq, setOpenFaq] = useState<number | null>(0);
+
+  useEffect(() => {
+    setOpenFaq(0);
+  }, [industryId]);
+
+  useEffect(() => {
+    warmAllIndustryHeroesIdle(industryId);
+  }, [industryId]);
 
   const steps = useMemo(
     () =>
@@ -93,18 +103,11 @@ export function IndustryPageTemplate({ industryId }: IndustryPageTemplateProps) 
             </div>
             <div className="caretip-industry-page__hero-media-wrap">
               <div className="caretip-industry-page__hero-media">
-                <picture>
-                  <source srcSet={media.hero.avif} type="image/avif" />
-                  <source srcSet={media.hero.webp} type="image/webp" />
-                  <img
-                    src={media.hero.webp}
-                    alt={t(`${prefix}.heroAlt`)}
-                    width={720}
-                    height={540}
-                    decoding="async"
-                    className="caretip-industry-page__hero-img"
-                  />
-                </picture>
+                <IndustryHeroMedia
+                  key={industryId}
+                  industryId={industryId}
+                  alt={t(`${prefix}.heroAlt`)}
+                />
               </div>
               <IndustryHeroFloatBadges industryId={industryId} />
             </div>
@@ -137,7 +140,7 @@ export function IndustryPageTemplate({ industryId }: IndustryPageTemplateProps) 
         <section className="caretip-industry-page__benefits" aria-labelledby="industry-benefits-title">
           <div className="caretip-industry-page__inner caretip-industry-page__benefits-grid">
             <div className="caretip-industry-page__benefits-media">
-              <picture>
+              <picture key={`${industryId}-benefits`}>
                 <source srcSet={media.benefits.avif} type="image/avif" />
                 <source srcSet={media.benefits.webp} type="image/webp" />
                 <img

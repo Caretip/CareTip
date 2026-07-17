@@ -113,9 +113,8 @@ export const Navigation = memo(function Navigation({ variant: _variant = "defaul
               aria-label={t("nav.mainNav")}
               className={cn(
                 "caretip-public-mobile-nav-drawer caretip-mobile-drawer-panel--open-left",
-                "fixed left-0 top-0 z-[250] flex h-[100dvh] w-[88vw] max-w-[90vw] flex-col",
-                "border-r border-border/50 bg-background shadow-[12px_0_48px_-16px_rgba(15,23,42,0.28)] lg:hidden",
-                "dark:shadow-[12px_0_48px_-16px_rgba(0,0,0,0.65)]",
+                "fixed inset-0 z-[250] flex h-[100dvh] w-full max-w-none flex-col",
+                "bg-background lg:hidden",
               )}
             >
               <div className="relative shrink-0 overflow-visible px-5 pb-3 pt-[max(1rem,env(safe-area-inset-top))]">

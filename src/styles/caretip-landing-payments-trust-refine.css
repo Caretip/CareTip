@@ -1,200 +1,180 @@
 /**
- * Payments & trust (#payments-trust) — compact Stripe trust strip.
+ * Payments trust (#payments-trust) — Propina-level polish.
+ * Large, instantly recognizable marks · one spacious row · Stripe secondary below.
  */
 
-.caretip-landing #payments-trust.caretip-payments-trust--compact {
-  padding-block: clamp(2.5rem, 5vw, 3.75rem);
-}
-
-.caretip-landing #payments-trust .caretip-payments-trust-ambient {
-  background: radial-gradient(
-    ellipse 80% 50% at 50% 0%,
-    rgba(233, 120, 28, 0.04) 0%,
-    transparent 55%
-  );
-  opacity: 0.85;
-}
-
-html.dark .caretip-landing #payments-trust .caretip-payments-trust-ambient {
-  background: radial-gradient(
-    ellipse 75% 45% at 50% 0%,
-    rgba(233, 120, 28, 0.07) 0%,
-    transparent 58%
-  );
-  opacity: 0.55;
-}
-
-.caretip-landing #payments-trust .caretip-payments-trust-stripe-badge {
-  align-self: center;
-}
-
-.caretip-landing #payments-trust .caretip-stripe-trust-badge {
-  box-shadow:
-    0 1px 0 rgba(255, 255, 255, 0.6) inset,
-    0 4px 14px -8px rgba(15, 23, 42, 0.12);
-}
-
-html.dark .caretip-landing #payments-trust .caretip-stripe-trust-badge {
-  box-shadow:
-    0 1px 0 rgba(255, 255, 255, 0.05) inset,
-    0 6px 16px -10px rgba(0, 0, 0, 0.35);
-}
-
-.caretip-landing #payments-trust .caretip-payments-trust-body {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  align-items: center;
-  gap: 2rem;
-}
-
-.caretip-landing #payments-trust .caretip-payments-trust-visual {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
-  max-width: 26rem;
-  margin-inline: auto;
-}
-
-.caretip-landing #payments-trust .caretip-payments-trust-visual-image {
-  display: block;
-  width: 100%;
-  height: auto;
-  border: 1px solid rgba(15, 23, 42, 0.06);
-  box-shadow:
-    0 22px 40px -20px rgba(0, 0, 0, 0.28),
-    0 16px 32px -18px rgba(233, 120, 28, 0.18);
-}
-
-html.dark .caretip-landing #payments-trust .caretip-payments-trust-visual-image {
-  border-color: rgba(255, 255, 255, 0.08);
-  box-shadow:
-    0 24px 44px -18px rgba(0, 0, 0, 0.5),
-    0 14px 28px -16px rgba(233, 120, 28, 0.12);
-}
-
-.caretip-landing #payments-trust .caretip-payments-trust-card {
-  width: 100%;
-  position: relative;
-}
-
-.caretip-landing #payments-trust .caretip-payments-trust-card::before {
-  content: "";
-  position: absolute;
-  inset: 8% 0 -6%;
-  z-index: 0;
-  pointer-events: none;
-  border-radius: 2rem;
-  background: radial-gradient(
-    ellipse 85% 70% at 50% 55%,
-    rgba(233, 120, 28, 0.28) 0%,
-    rgba(233, 120, 28, 0.1) 42%,
-    transparent 72%
-  );
-}
-
-.caretip-landing #payments-trust .caretip-payments-trust-card .caretip-interactive-credit-card {
-  position: relative;
-  z-index: 1;
-}
-
-.caretip-landing #payments-trust .caretip-payments-trust-card .caretip-interactive-credit-card__stage {
-  filter: drop-shadow(0 26px 44px rgba(0, 0, 0, 0.22)) drop-shadow(0 20px 36px rgba(233, 120, 28, 0.24));
-}
-
-html.dark .caretip-landing #payments-trust .caretip-payments-trust-card .caretip-interactive-credit-card__stage {
-  filter: drop-shadow(0 28px 48px rgba(0, 0, 0, 0.35)) drop-shadow(0 18px 32px rgba(233, 120, 28, 0.18));
-}
-
-.caretip-landing #payments-trust .caretip-interactive-credit-card__grain {
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.55'/%3E%3C/svg%3E");
-  background-size: 180px 180px;
-}
-
-.caretip-landing #payments-trust .caretip-payments-trust-card-hint {
-  margin: 0.75rem 0 0;
-  text-align: center;
-  font-size: 0.75rem;
-  line-height: 1.4;
-  color: hsl(var(--muted-foreground));
-}
-
-.caretip-landing #payments-trust .caretip-payments-trust-grid {
-  width: 100%;
-  min-width: 0;
-}
-
-.caretip-landing #payments-trust .caretip-payments-trust-list-shell {
-  width: 100%;
-  max-width: 42rem;
-  margin-inline: auto;
-  text-align: left;
-}
-
-.caretip-landing #payments-trust .caretip-payments-trust-intro-lead {
-  max-width: min(100%, 40rem);
-}
-
-.caretip-landing #payments-trust .caretip-payments-trust-item {
-  cursor: default;
-  text-align: left;
-}
-
-.caretip-landing #payments-trust .caretip-payments-trust-item h3,
-.caretip-landing #payments-trust .caretip-payments-trust-item p,
-.caretip-landing #payments-trust .caretip-payments-trust-item div {
-  text-align: left;
-  text-wrap: pretty;
-}
-
-.caretip-landing #payments-trust .caretip-payments-trust-principle {
-  margin: 2rem auto 0;
-  max-width: min(100%, 40rem);
-  text-align: center;
-  font-family: inherit;
-  font-size: inherit;
-  line-height: 1.65;
-  color: hsl(var(--muted-foreground));
-  text-wrap: pretty;
+.caretip-landing #payments-trust.caretip-payments-trust--marks {
+  /* Shared mark height — bold, equal for every brand */
+  --caretip-payment-mark-h: 4rem;
+  --caretip-payment-mark-gap: clamp(2.25rem, 5vw, 3.75rem);
+  --caretip-payment-stripe-h: 1.75rem;
+  padding-block: clamp(3.5rem, 8vw, 6rem);
 }
 
 @media (min-width: 768px) {
-  .caretip-landing #payments-trust .caretip-payments-trust-body {
-    grid-template-columns: minmax(280px, 400px) minmax(0, 1fr);
-    gap: 2.5rem 3rem;
-    align-items: start;
-  }
-
-  .caretip-landing #payments-trust .caretip-payments-trust-list-shell {
-    justify-self: center;
-    width: min(100%, 42rem);
-  }
-
-  .caretip-landing #payments-trust .caretip-payments-trust-visual {
-    margin-inline: 0;
-    justify-self: center;
-    max-width: none;
-    padding-inline: 0.5rem;
-  }
-
-  .caretip-landing #payments-trust .caretip-payments-trust-card-hint {
-    font-size: 0.8125rem;
+  .caretip-landing #payments-trust.caretip-payments-trust--marks {
+    --caretip-payment-mark-h: 4.75rem;
+    --caretip-payment-mark-gap: clamp(2.75rem, 4.5vw, 4rem);
+    --caretip-payment-stripe-h: 1.875rem;
   }
 }
 
 @media (min-width: 1024px) {
-  .caretip-landing #payments-trust .caretip-payments-trust-body {
-    grid-template-columns: minmax(300px, 420px) minmax(0, 1fr);
-    gap: 2.75rem 4rem;
+  .caretip-landing #payments-trust.caretip-payments-trust--marks {
+    --caretip-payment-mark-h: 5.5rem;
+    --caretip-payment-mark-gap: 4rem;
+    --caretip-payment-stripe-h: 2rem;
+  }
+}
+
+.caretip-landing #payments-trust .caretip-payments-trust__inner {
+  max-width: min(100%, 72rem);
+}
+
+.caretip-landing #payments-trust .caretip-payments-trust__content {
+  gap: 0;
+}
+
+.caretip-landing #payments-trust .caretip-payments-trust__title {
+  margin: 0;
+  /* Let landingUi.sectionTitle control width — long trust headline needs room */
+  max-width: none;
+}
+
+.caretip-landing #payments-trust .caretip-payments-trust__marks {
+  margin-top: clamp(2.5rem, 5.5vw, 3.75rem);
+  width: 100%;
+}
+
+/* —— Accepted methods: full-width, evenly spaced —— */
+.caretip-landing .caretip-payments-accepted {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: clamp(2rem, 4vw, 2.75rem);
+  width: 100%;
+}
+
+.caretip-landing .caretip-payments-accepted__methods {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  justify-content: space-between;
+  column-gap: 0;
+  row-gap: clamp(1.5rem, 3vw, 2rem);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  width: 100%;
+  max-width: 100%;
+}
+
+.caretip-landing .caretip-payments-accepted__item {
+  display: flex;
+  flex: 1 1 0;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+  padding: 0;
+  height: var(--caretip-payment-mark-h);
+  min-width: 0;
+}
+
+.caretip-landing .caretip-payments-accepted__logo {
+  display: block;
+  width: auto;
+  height: var(--caretip-payment-mark-h);
+  max-height: var(--caretip-payment-mark-h);
+  max-width: calc(var(--caretip-payment-mark-h) * 2.4);
+  object-fit: contain;
+  object-position: center;
+  image-rendering: auto;
+  -webkit-user-drag: none;
+  user-select: none;
+}
+
+/* SVG stays crisp on Retina — prefer auto for continuous-tone marks */
+.caretip-landing .caretip-payments-accepted__logo[src$=".svg"],
+.caretip-landing .caretip-payments-accepted__logo[src*=".svg?"] {
+  image-rendering: auto;
+}
+
+/*
+ * Google Pay keeps full --caretip-payment-mark-h (SVG includes pill padding).
+ * Mastercard / Apple Pay scale to the same optical mark height as G Pay’s pill.
+ */
+.caretip-landing .caretip-payments-accepted__logo--mastercard,
+.caretip-landing .caretip-payments-accepted__logo--apple-pay {
+  height: calc(var(--caretip-payment-mark-h) * 0.54);
+  max-height: calc(var(--caretip-payment-mark-h) * 0.54);
+  max-width: calc(var(--caretip-payment-mark-h) * 1.45);
+}
+
+/* Visa wordmark reads taller — nudge down so it aligns with the other marks */
+.caretip-landing .caretip-payments-accepted__logo--visa {
+  height: calc(var(--caretip-payment-mark-h) * 0.42);
+  max-height: calc(var(--caretip-payment-mark-h) * 0.42);
+  max-width: calc(var(--caretip-payment-mark-h) * 1.55);
+}
+
+/* Powered by Stripe — secondary trust cue below the row */
+.caretip-landing .caretip-payments-accepted__stripe {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: clamp(0.35rem, 1.5vw, 0.75rem);
+}
+
+.caretip-landing .caretip-payments-accepted__stripe-badge {
+  display: block;
+  width: auto;
+  height: var(--caretip-payment-stripe-h);
+  max-width: 11rem;
+  object-fit: contain;
+  object-position: center;
+  opacity: 0.9;
+}
+
+html.dark .caretip-landing .caretip-payments-accepted__stripe-badge {
+  filter: invert(1) grayscale(1) brightness(1.15);
+  opacity: 0.88;
+}
+
+/* —— Tablet: slightly tighter; still full-width row —— */
+@media (min-width: 640px) and (max-width: 1023px) {
+  .caretip-landing #payments-trust.caretip-payments-trust--marks {
+    --caretip-payment-mark-gap: 2.5rem;
+  }
+}
+
+/* —— Mobile: full-width row; wrap only on very narrow screens —— */
+@media (max-width: 639px) {
+  .caretip-landing #payments-trust.caretip-payments-trust--marks {
+    --caretip-payment-mark-h: 3.25rem;
+    --caretip-payment-mark-gap: 1.75rem;
+    --caretip-payment-stripe-h: 1.625rem;
   }
 
-  .caretip-landing #payments-trust .caretip-payments-trust-visual {
-    justify-self: end;
-    padding-inline-end: 0.75rem;
+  .caretip-landing .caretip-payments-accepted__methods {
+    flex-wrap: nowrap;
+    justify-content: space-between;
+    width: 100%;
+    max-width: 100%;
+  }
+}
+
+@media (max-width: 379px) {
+  .caretip-landing #payments-trust.caretip-payments-trust--marks {
+    --caretip-payment-mark-h: 2.875rem;
   }
 
-  .caretip-landing #payments-trust .caretip-payments-trust-grid {
-    align-self: start;
+  .caretip-landing .caretip-payments-accepted__methods {
+    flex-wrap: wrap;
+    justify-content: space-evenly;
+    row-gap: 1.25rem;
+  }
+
+  .caretip-landing .caretip-payments-accepted__item {
+    flex: 1 1 40%;
   }
 }

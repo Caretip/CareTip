@@ -1,10 +1,10 @@
-import { Link } from "react-router";
 import { useTranslation } from "react-i18next";
 import { ArrowRight, Eye, Rocket, Zap } from "lucide-react";
 import newMidWebp from "../../../../images/new-mid.webp";
 import newMidAvif from "../../../../images/new-mid.avif";
 import handwerkerWebp from "../../../../images/Handwerker.webp";
 import handwerkerAvif from "../../../../images/Handwerker.avif";
+import { PrefetchLink } from "@/app/components/PrefetchLink";
 import { landingUi } from "@/components/landing/landingUi";
 import { LandingReveal } from "@/components/landing/LandingReveal";
 import { industryPath } from "@/app/data/industryPages";
@@ -116,13 +116,13 @@ export function LandingIndustriesTeaserSection() {
                 <p className="caretip-industries-teaser__card-body">
                   {t(`${prefix}.${teaser.bodyKey}`)}
                 </p>
-                <Link
+                <PrefetchLink
                   to={industryPath(teaser.id)}
                   className="caretip-industries-teaser__card-cta"
                 >
                   {t(`${prefix}.learnMore`)}
                   <ArrowRight className="size-4" strokeWidth={2} aria-hidden />
-                </Link>
+                </PrefetchLink>
               </div>
             </LandingReveal>
           ))}

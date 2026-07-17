@@ -1,3 +1,6 @@
+import applePayMarkUrl from "../../../../images/SVG/Apple_Pay_Mark_RGB_041619.svg?url";
+import googlePayMarkUrl from "../../../../images/google-pay-mark_800.svg?url";
+
 export type PaymentMethodMarkId = "apple-pay" | "google-pay" | "card";
 
 /** Brand assets live in `/payment_logo` at repo root (png, svg, webp, jpg). */
@@ -23,6 +26,12 @@ function findLogoUrl(candidates: string[]): string | undefined {
   return undefined;
 }
 
+/** Same official marks as the landing Payments Infrastructure section. */
+const LANDING_OFFICIAL_MARKS: Partial<Record<PaymentMethodMarkId, string>> = {
+  "apple-pay": applePayMarkUrl,
+  "google-pay": googlePayMarkUrl,
+};
+
 const LOGO_CANDIDATES: Record<PaymentMethodMarkId, string[]> = {
   "apple-pay": ["applepay", "apple-pay", "apple_pay", "apple"],
   "google-pay": ["googlepay", "google-pay", "google_pay", "google"],
@@ -30,5 +39,7 @@ const LOGO_CANDIDATES: Record<PaymentMethodMarkId, string[]> = {
 };
 
 export function paymentLogoUrl(id: PaymentMethodMarkId): string | undefined {
+  const official = LANDING_OFFICIAL_MARKS[id];
+  if (official) return official;
   return findLogoUrl(LOGO_CANDIDATES[id]);
 }
