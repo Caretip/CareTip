@@ -38,6 +38,22 @@ export function CareTipLoadingTitle({
   );
 }
 
+/** Shared logo + orbit spinner used by all branded loading surfaces. */
+export function CareTipBrandedLoaderMark({
+  compact = true,
+  className,
+}: {
+  compact?: boolean;
+  className?: string;
+}) {
+  return (
+    <div className={cn("app-branded-loader__mark", className)} aria-hidden>
+      <CareTipLoadingTitle compact={compact} className="app-branded-loader__title" />
+      <span className="app-branded-loader__spinner" />
+    </div>
+  );
+}
+
 const TIP_PROGRESS_CONTEXTS = new Set<AppLoadingContext>([
   "tipPage",
   "findingRecipient",
@@ -102,7 +118,7 @@ export function CareTipPageLoader({
     return <GlobalAppLoadingHold className={className} />;
   }
 
-  /* Soft SPA: tip/payment keep progress copy; dashboards get icon-only (no status text). */
+  /* Soft SPA: tip/payment keep progress copy; dashboards get icon + orbit spinner. */
   if (isFullScreen && softNav && !keepProgressCopy) {
     return (
       <div
@@ -114,9 +130,7 @@ export function CareTipPageLoader({
         aria-busy="true"
         aria-label="CareTip"
       >
-        <div className="app-branded-loader__mark" aria-hidden>
-          <CareTipLoadingTitle compact className="app-branded-loader__title" />
-        </div>
+        <CareTipBrandedLoaderMark />
       </div>
     );
   }
@@ -129,10 +143,10 @@ export function CareTipPageLoader({
       aria-live="polite"
     >
       {keepProgressCopy ? null : (
-        <CareTipLoadingTitle compact={variant === "compact" || isFullScreen} />
+        <CareTipBrandedLoaderMark compact={variant === "compact" || isFullScreen} />
       )}
       <div className="flex flex-col items-center gap-3">
-        <LoadingSpinner size={spinnerSize} />
+        {keepProgressCopy ? <LoadingSpinner size={spinnerSize} /> : null}
         {keepProgressCopy && resolvedMessage ? (
           <p className="max-w-sm text-center text-sm text-muted-foreground">
             {resolvedMessage}

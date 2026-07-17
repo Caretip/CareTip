@@ -1,4 +1,4 @@
-import { CareTipLoadingTitle } from "@/app/components/CareTipPageLoader";
+import { CareTipBrandedLoaderMark } from "@/app/components/CareTipPageLoader";
 import { cn } from "@/lib/utils";
 
 /**
@@ -16,9 +16,7 @@ export function AuthBootstrapShell({ className }: { className?: string }) {
       aria-busy="true"
       aria-label="CareTip"
     >
-      <div className="app-branded-loader__mark" aria-hidden>
-        <CareTipLoadingTitle compact className="app-branded-loader__title" />
-      </div>
+      <CareTipBrandedLoaderMark />
     </div>
   );
 }

@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { traceGlobalOverlayMounted } from "../lib/globalAppLoadingTrace";
-import { CareTipLoadingTitle } from "./CareTipPageLoader";
+import { CareTipBrandedLoaderMark } from "./CareTipPageLoader";
 
 export type AppBrandedLoadingScreenProps = {
   className?: string;
@@ -51,9 +51,7 @@ export function AppBrandedLoadingScreen({
       aria-label={status ?? "CareTip"}
       aria-live="polite"
     >
-      <div className="app-branded-loader__mark" aria-hidden>
-        <CareTipLoadingTitle compact className="app-branded-loader__title" />
-      </div>
+      <CareTipBrandedLoaderMark />
       {status ? (
         <p className="max-w-sm text-center text-sm font-medium text-foreground">{status}</p>
       ) : null}

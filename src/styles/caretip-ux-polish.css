@@ -2,7 +2,7 @@
  * UX polish — branded loaders, image frames, route motion, action feedback.
  */
 
-/* —— Branded global loader —— */
+/* —— Branded global loader (logo + orbit spinner) —— */
 .app-branded-loader__mark {
   position: relative;
   display: flex;
@@ -11,6 +11,7 @@
   padding: 0.25rem;
 }
 
+/* Soft ambient glow — static, does not imply progress by itself */
 .app-branded-loader__mark::before {
   content: "";
   position: absolute;
@@ -18,34 +19,44 @@
   border-radius: 9999px;
   background: radial-gradient(
     ellipse at center,
-    rgba(235, 153, 44, 0.28) 0%,
-    rgba(235, 153, 44, 0.08) 45%,
+    rgba(235, 153, 44, 0.22) 0%,
+    rgba(235, 153, 44, 0.06) 45%,
     transparent 72%
   );
-  animation: caretip-brand-loader-pulse 2.2s ease-in-out infinite;
   pointer-events: none;
 }
 
 .app-branded-loader__title {
   position: relative;
   z-index: 1;
-  animation: caretip-brand-loader-pulse 2.2s ease-in-out infinite;
 }
 
-@keyframes caretip-brand-loader-pulse {
-  0%,
-  100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.72;
+/* Thin orbit spinner — active loading cue around the CareTip icon */
+.app-branded-loader__spinner {
+  position: absolute;
+  inset: -0.8rem;
+  z-index: 2;
+  border-radius: 9999px;
+  border: 1.5px solid rgba(235, 153, 44, 0.14);
+  border-top-color: rgb(235, 153, 44);
+  border-right-color: rgba(235, 153, 44, 0.45);
+  animation: caretip-brand-loader-spin 0.85s linear infinite;
+  pointer-events: none;
+  box-sizing: border-box;
+}
+
+@keyframes caretip-brand-loader-spin {
+  to {
+    transform: rotate(360deg);
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .app-branded-loader__mark::before,
-  .app-branded-loader__title {
+  .app-branded-loader__spinner {
     animation: none;
+    border-color: rgba(235, 153, 44, 0.35);
+    border-top-color: rgb(235, 153, 44);
+    opacity: 0.85;
   }
 }
 
