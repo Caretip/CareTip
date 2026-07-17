@@ -1381,19 +1381,15 @@ html.dark .caretip-pricing-trust--subtle .caretip-pricing-trust__icon {
 
 .caretip-pricing-tier-card--enterprise {
   overflow: hidden;
-  border-color: var(--caretip-pricing-warm-dark-border);
-  background: var(--caretip-pricing-warm-dark-bg);
+  border-color: rgb(229 229 229 / 0.95);
+  background: rgb(255 255 255);
   box-shadow:
-    inset 0 1px 0 rgb(255 255 255 / 0.04),
-    0 24px 56px -20px rgb(14 13 11 / 0.5);
+    0 1px 2px rgb(15 23 42 / 0.03),
+    0 14px 40px -18px rgb(15 23 42 / 0.1);
 }
 
 .caretip-pricing-tier-card--enterprise::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  background: var(--caretip-pricing-warm-dark-glow);
+  display: none;
 }
 
 .caretip-pricing-tier-card--enterprise > * {
@@ -1402,10 +1398,10 @@ html.dark .caretip-pricing-trust--subtle .caretip-pricing-trust__icon {
 }
 
 .caretip-pricing-tier-card--enterprise:hover {
-  border-color: rgb(233 120 28 / 0.42);
+  border-color: rgb(212 212 212);
   box-shadow:
-    inset 0 1px 0 rgb(255 255 255 / 0.05),
-    0 28px 60px -18px rgb(233 120 28 / 0.18);
+    0 2px 4px rgb(15 23 42 / 0.04),
+    0 20px 48px -16px rgb(15 23 42 / 0.14);
 }
 
 html.dark .caretip-pricing-tier-card {
@@ -1420,8 +1416,8 @@ html.dark .caretip-pricing-tier-card--featured {
 }
 
 html.dark .caretip-pricing-tier-card--enterprise {
-  border-color: rgb(233 120 28 / 0.32);
-  background: linear-gradient(180deg, #111010 0%, #0c0c0c 42%, #0a0a0a 78%, #090909 100%);
+  border-color: rgb(64 64 64);
+  background: rgb(23 23 23);
 }
 
 .caretip-pricing-tiers[data-billing-cycle] .caretip-pricing-tier-card {
@@ -1509,7 +1505,7 @@ html.dark .caretip-pricing-tier-card--enterprise {
 }
 
 .caretip-pricing-tier-card--enterprise .caretip-pricing-tier-card__transaction-fee-notice {
-  color: var(--caretip-brand-orange-light, #ff9e2d);
+  color: var(--caretip-brand-orange, #e9781c);
 }
 
 html.dark .caretip-pricing-tier-card__transaction-fee-notice {
@@ -1517,7 +1513,7 @@ html.dark .caretip-pricing-tier-card__transaction-fee-notice {
 }
 
 .caretip-pricing-tier-card--enterprise .caretip-pricing-tier-card__name {
-  color: rgb(250 250 250);
+  color: rgb(23 23 23);
 }
 
 html.dark .caretip-pricing-tier-card__name {
@@ -1532,7 +1528,7 @@ html.dark .caretip-pricing-tier-card__name {
 }
 
 .caretip-pricing-tier-card--enterprise .caretip-pricing-tier-card__tagline {
-  color: rgb(233 120 28 / 0.88);
+  color: rgb(115 115 115);
 }
 
 html.dark .caretip-pricing-tier-card__tagline {
@@ -1546,7 +1542,7 @@ html.dark .caretip-pricing-tier-card__tagline {
 }
 
 .caretip-pricing-tier-card--enterprise .caretip-pricing-tier-card__divider {
-  background: rgb(255 255 255 / 0.1);
+  background: rgb(229 229 229 / 0.9);
 }
 
 html.dark .caretip-pricing-tier-card__divider {
@@ -1566,7 +1562,7 @@ html.dark .caretip-pricing-tier-card__divider {
 }
 
 .caretip-pricing-tier-card--enterprise .caretip-pricing-tier-card__fee {
-  color: rgb(250 250 250);
+  color: rgb(23 23 23);
 }
 
 html.dark .caretip-pricing-tier-card__fee {
@@ -1580,7 +1576,7 @@ html.dark .caretip-pricing-tier-card__fee {
 }
 
 .caretip-pricing-tier-card--enterprise .caretip-pricing-tier-card__fee-note {
-  color: rgb(163 163 163);
+  color: rgb(115 115 115);
 }
 
 html.dark .caretip-pricing-tier-card__fee-note {
@@ -1607,7 +1603,7 @@ html.dark .caretip-pricing-tier-card__fee-note {
 }
 
 .caretip-pricing-tier-card--enterprise .caretip-pricing-tier-card__desc {
-  color: rgb(212 212 212);
+  color: rgb(82 82 82);
 }
 
 html.dark .caretip-pricing-tier-card__desc {
@@ -1657,7 +1653,7 @@ html.dark .caretip-pricing-tier-card__desc {
 }
 
 .caretip-pricing-tier-card--enterprise .caretip-pricing-tier-features__item {
-  color: rgb(229 229 229);
+  color: rgb(38 38 38);
 }
 
 html.dark .caretip-pricing-tier-features__item {
@@ -1678,8 +1674,8 @@ html.dark .caretip-pricing-tier-features__item {
 }
 
 .caretip-pricing-tier-card--enterprise .caretip-pricing-tier-features__check {
-  background: rgb(233 120 28 / 0.2);
-  color: rgb(251 191 36);
+  background: rgb(233 120 28 / 0.12);
+  color: rgb(217 119 6);
 }
 
 .caretip-pricing-card-cta {
@@ -1806,7 +1802,7 @@ html.dark .caretip-pricing-faq__answer p {
   color: rgb(163 163 163);
 }
 
-/* —— Final CTA (orange-black, matches landing) —— */
+/* —— Final CTA (light elevated card) —— */
 .caretip-pricing-final-cta {
   position: relative;
   overflow: hidden;
@@ -1815,28 +1811,24 @@ html.dark .caretip-pricing-faq__answer p {
   max-width: var(--caretip-wise-cta-inner-max);
   padding: clamp(3.5rem, 8vw, 5.5rem) clamp(1.25rem, 4vw, 2.5rem);
   border-radius: var(--caretip-wise-inset-radius);
-  border: 1px solid var(--caretip-pricing-warm-dark-border);
-  background: var(--caretip-pricing-warm-dark-bg);
+  border: 1px solid rgb(228 228 231 / 0.9);
+  background: rgb(255 255 255);
   text-align: center;
   box-shadow:
-    inset 0 1px 0 rgb(255 255 255 / 0.04),
-    0 20px 48px -20px rgb(14 13 11 / 0.45);
+    0 1px 2px rgb(15 23 42 / 0.04),
+    0 18px 48px -28px rgb(15 23 42 / 0.22);
 }
 
 .caretip-pricing-final-cta::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  background: var(--caretip-pricing-warm-dark-glow);
+  display: none;
 }
 
 html.dark .caretip-pricing-final-cta {
-  border-color: var(--caretip-premium-border-strong);
-  background: var(--caretip-premium-gradient-dark);
+  border-color: rgb(63 63 70 / 0.9);
+  background: rgb(24 24 27);
   box-shadow:
-    inset 0 1px 0 rgb(255 255 255 / 0.03),
-    0 20px 48px -20px rgb(0 0 0 / 0.5);
+    0 1px 2px rgb(0 0 0 / 0.2),
+    0 18px 48px -24px rgb(0 0 0 / 0.55);
 }
 
 .caretip-pricing-final-cta__title {
@@ -1848,10 +1840,10 @@ html.dark .caretip-pricing-final-cta {
   font-size: clamp(1.5rem, 4vw, 2.5rem);
   font-weight: 800;
   line-height: 1.12;
-  letter-spacing: -0.03em;
-  text-transform: uppercase;
+  letter-spacing: -0.028em;
+  text-transform: none;
   text-wrap: balance;
-  color: var(--caretip-wise-cta-accent-muted, rgb(245 217 179));
+  color: hsl(var(--foreground));
 }
 
 .caretip-pricing-final-cta__body {
@@ -1863,7 +1855,7 @@ html.dark .caretip-pricing-final-cta {
   font-weight: 500;
   line-height: 1.72;
   text-wrap: pretty;
-  color: rgb(250 250 250 / 0.78);
+  color: hsl(var(--muted-foreground));
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -1938,34 +1930,30 @@ html.dark .caretip-pricing-final-cta {
   transform: translateY(-2px);
 }
 
-/* Billing dashboard: match public pricing Enterprise orange-black card */
+/* Billing dashboard: light Enterprise card (no orange-black gradient) */
 .caretip-pricing-tiers--billing .caretip-pricing-tier-card--enterprise {
   overflow: hidden;
-  border-color: var(--caretip-pricing-warm-dark-border);
-  background: var(--caretip-pricing-warm-dark-bg);
+  border-color: rgb(229 229 229 / 0.95);
+  background: rgb(255 255 255);
   box-shadow:
-    inset 0 1px 0 rgb(255 255 255 / 0.04),
-    0 24px 56px -20px rgb(14 13 11 / 0.5);
+    0 1px 2px rgb(15 23 42 / 0.03),
+    0 14px 40px -18px rgb(15 23 42 / 0.1);
 }
 
 .caretip-pricing-tiers--billing .caretip-pricing-tier-card--enterprise::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  background: var(--caretip-pricing-warm-dark-glow);
+  display: none;
 }
 
 .caretip-pricing-tiers--billing .caretip-pricing-tier-card--enterprise:hover {
-  border-color: rgb(233 120 28 / 0.42);
+  border-color: rgb(212 212 212);
   box-shadow:
-    inset 0 1px 0 rgb(255 255 255 / 0.05),
-    0 28px 60px -18px rgb(233 120 28 / 0.18);
+    0 2px 4px rgb(15 23 42 / 0.04),
+    0 20px 48px -16px rgb(15 23 42 / 0.14);
 }
 
 html.dark .caretip-pricing-tiers--billing .caretip-pricing-tier-card--enterprise {
-  border-color: rgb(233 120 28 / 0.32);
-  background: linear-gradient(180deg, #111010 0%, #0c0c0c 42%, #0a0a0a 78%, #090909 100%);
+  border-color: rgb(64 64 64);
+  background: rgb(23 23 23);
 }
 
 /* —— Billing subscription management cards —— */
@@ -1991,7 +1979,7 @@ html.dark .caretip-pricing-tiers--billing .caretip-pricing-tier-card--enterprise
 }
 
 .caretip-pricing-tier-card--enterprise .caretip-pricing-tier-card__footer-divider {
-  background: rgb(255 255 255 / 0.12);
+  background: rgb(229 229 229 / 0.95);
 }
 
 html.dark .caretip-pricing-tier-card__footer-divider {
@@ -2011,7 +1999,7 @@ html.dark .caretip-pricing-tier-card__footer-divider {
 }
 
 .caretip-pricing-tier-card--enterprise .caretip-pricing-tier-card__subscription-info {
-  color: rgb(163 163 163);
+  color: rgb(115 115 115);
 }
 
 html.dark .caretip-pricing-tier-card__subscription-info {
@@ -2040,8 +2028,8 @@ html.dark .caretip-pricing-tier-card__subscription-line--muted {
   height: 2rem;
   flex-shrink: 0;
   border-radius: 0.625rem;
-  background: rgb(233 120 28 / 0.18);
-  color: rgb(251 191 36);
+  background: rgb(233 120 28 / 0.12);
+  color: rgb(217 119 6);
 }
 
 .caretip-pricing-tier-card__fee--animated {

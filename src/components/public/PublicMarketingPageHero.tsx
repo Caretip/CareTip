@@ -32,6 +32,7 @@ export function PublicMarketingPageHero({
       />
 
       <PublicPageHeroCard
+        variant="fullBleed"
         innerClassName={cn(pageInnerClassName, innerClassName)}
       >
         {children}

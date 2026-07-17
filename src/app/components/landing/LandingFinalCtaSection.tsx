@@ -1,6 +1,5 @@
 import { Link } from "react-router";
 import { useTranslation } from "react-i18next";
-import { FinalCtaBackdrop } from "@/app/components/landing/FinalCtaBackdrop";
 import { LandingTrustComplianceStrip } from "@/app/components/landing/LandingTrustComplianceStrip";
 import { LandingReveal } from "@/components/landing/LandingReveal";
 import { LandingCopySentences } from "@/components/landing/LandingCopySentences";
@@ -15,21 +14,19 @@ export function LandingFinalCtaSection() {
     <section
       id="final-cta"
       className={cn(
-        "caretip-landing-final-cta relative scroll-mt-[80px] overflow-hidden",
+        "caretip-landing-final-cta caretip-landing-final-cta--light relative scroll-mt-[80px]",
         "px-4 py-14 sm:px-6 sm:py-16 lg:px-8 lg:py-[4.5rem]",
       )}
     >
-      <FinalCtaBackdrop />
-
       <LandingReveal
         data-polish-view
-        className="caretip-final-cta-stage relative z-[1] mx-auto w-full min-w-0 max-w-3xl px-0.5 text-center max-lg:max-w-full"
+        className="caretip-final-cta-stage caretip-final-cta-card relative z-[1] mx-auto w-full min-w-0 max-w-3xl px-5 py-10 text-center sm:px-10 sm:py-12 max-lg:max-w-full"
       >
-        <p className="caretip-final-cta-eyebrow font-sans text-[11px] font-semibold uppercase tracking-[0.2em] text-primary/90 sm:text-xs">
+        <p className="caretip-final-cta-eyebrow font-sans text-[11px] font-semibold uppercase tracking-[0.2em] text-primary sm:text-xs">
           {t("landing.finalCta.eyebrow")}
         </p>
 
-        <h2 className="caretip-final-cta-headline font-sans text-balance text-neutral-50">
+        <h2 className="caretip-final-cta-headline font-sans text-balance text-foreground">
           {t("landing.finalCta.title")}
         </h2>
 
@@ -37,14 +34,13 @@ export function LandingFinalCtaSection() {
           <LandingCopySentences
             text={sectionSubtitle}
             layout="paragraphs"
-            className="caretip-final-cta-subtitle mx-auto max-w-md text-pretty font-sans"
-            sentenceClassName="caretip-final-cta-subtitle mx-auto max-w-md text-pretty font-sans m-0"
+            className="caretip-final-cta-subtitle mx-auto max-w-md text-pretty font-sans text-muted-foreground"
+            sentenceClassName="caretip-final-cta-subtitle mx-auto max-w-md text-pretty font-sans text-muted-foreground m-0"
           />
         ) : null}
 
         <div className="caretip-final-cta-actions w-full min-w-0 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
           <div className={cn(landingUi.sectionCtaUnit, "caretip-final-cta-action relative")}>
-            <div aria-hidden className="caretip-final-cta-button-glow pointer-events-none" />
             <Link
               to="/contact?intent=demo"
               className={cn(

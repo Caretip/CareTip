@@ -5,7 +5,7 @@ export type PublicPageHeroCardProps = {
   children: ReactNode;
   className?: string;
   innerClassName?: string;
-  /** `fullBleed` = edge-to-edge orange band (Features/Pricing/FAQ). `inset` = rounded card with side margins. */
+  /** `fullBleed` = edge-to-edge orange band. `inset` = rounded card with side margins. */
   variant?: "inset" | "fullBleed";
 };
 
@@ -17,7 +17,7 @@ export function PublicPageHeroCard({
   children,
   className,
   innerClassName,
-  variant = "inset",
+  variant = "fullBleed",
 }: PublicPageHeroCardProps) {
   return (
     <div

@@ -299,10 +299,14 @@ html.dark .caretip-about-split--product {
   }
 }
 
-/* —— Quote / mission dark band (template: OUR MISSION) —— */
+/* —— Quote / mission band (light surface, no card) —— */
 .caretip-about-quote-band {
-  background: var(--caretip-about-dark);
-  color: rgb(250 250 250);
+  background: hsl(var(--background));
+  color: hsl(var(--foreground));
+}
+
+html.dark .caretip-about-quote-band {
+  background: hsl(var(--background));
 }
 
 .caretip-about-quote-band__inner {
@@ -325,7 +329,7 @@ html.dark .caretip-about-split--product {
   line-height: 1.35;
   letter-spacing: -0.025em;
   text-wrap: pretty;
-  color: var(--caretip-about-accent-muted);
+  color: hsl(var(--foreground));
 }
 
 .caretip-about-quote-band__footer {
@@ -334,7 +338,7 @@ html.dark .caretip-about-split--product {
   font-weight: 600;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: rgb(163 163 163);
+  color: hsl(var(--muted-foreground));
 }
 
 /* —— Numbered belief cards (template: THREE THINGS) —— */
@@ -417,7 +421,7 @@ html.dark .caretip-about-beliefs {
   color: hsl(var(--muted-foreground));
 }
 
-/* —— CTA dark band (template: SEE HOW OUR CUSTOMERS) —— */
+/* —— CTA secondary on light panel —— */
 .caretip-about-cta-wise__secondary {
   display: inline-flex;
   align-items: center;
@@ -425,11 +429,11 @@ html.dark .caretip-about-beliefs {
   min-height: 2.75rem;
   padding: 0.625rem 1.25rem;
   border-radius: 9999px;
-  border: 1px solid rgb(var(--caretip-about-accent-rgb) / 0.45);
+  border: 1px solid rgb(228 228 231);
   background: transparent;
   font-size: 0.9375rem;
   font-weight: 600;
-  color: var(--caretip-about-accent-muted);
+  color: hsl(var(--foreground));
   text-decoration: none;
   transition:
     background 0.2s ease,
@@ -438,9 +442,9 @@ html.dark .caretip-about-beliefs {
 }
 
 .caretip-about-cta-wise__secondary:hover {
-  background: rgb(var(--caretip-about-accent-rgb) / 0.12);
-  border-color: rgb(var(--caretip-about-accent-rgb) / 0.65);
-  color: rgb(255 251 247);
+  background: rgb(250 250 250);
+  border-color: rgb(212 212 216);
+  color: hsl(var(--foreground));
 }
 
 @media (max-width: 767px) {

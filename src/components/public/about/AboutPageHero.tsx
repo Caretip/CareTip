@@ -11,7 +11,7 @@ export function AboutPageHero() {
     <section className="caretip-about-hero-wise" aria-labelledby="about-hero-title">
       <PublicPageBackLink className="caretip-about-hero-wise__back" />
 
-      <PublicPageHeroCard innerClassName="caretip-about-page__inner caretip-about-hero-wise__inner">
+      <PublicPageHeroCard variant="fullBleed" innerClassName="caretip-about-page__inner caretip-about-hero-wise__inner">
         <h1
           id="about-hero-title"
           className={cn(publicPageUi.title, "caretip-about-hero-wise__title")}

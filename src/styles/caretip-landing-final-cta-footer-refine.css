@@ -3,15 +3,32 @@
  * Scoped to `.caretip-landing`; preserves section shell, not footer structure.
  */
 
-/* —— CTA band: layered depth (not flat black) —— */
+/* —— CTA band: light elevated card (no black/orange gradient) —— */
 .caretip-landing .caretip-landing-final-cta {
-  background: var(--caretip-premium-gradient) !important;
+  background: transparent !important;
   border-top: none !important;
-  box-shadow: var(--caretip-premium-shadow-inset);
+  box-shadow: none;
 }
 
 html.dark .caretip-landing .caretip-landing-final-cta {
-  background: var(--caretip-premium-gradient-dark) !important;
+  background: transparent !important;
+}
+
+.caretip-landing .caretip-final-cta-card {
+  border-radius: 1.35rem;
+  border: 1px solid rgb(228 228 231 / 0.9);
+  background: rgb(255 255 255);
+  box-shadow:
+    0 1px 2px rgb(15 23 42 / 0.04),
+    0 18px 48px -28px rgb(15 23 42 / 0.22);
+}
+
+html.dark .caretip-landing .caretip-final-cta-card {
+  border-color: rgb(63 63 70 / 0.9);
+  background: rgb(24 24 27);
+  box-shadow:
+    0 1px 2px rgb(0 0 0 / 0.2),
+    0 18px 48px -24px rgb(0 0 0 / 0.55);
 }
 
 /* Atmosphere layers — shared with .caretip-premium-backdrop__* in caretip-premium-visual.css */
@@ -51,26 +68,14 @@ html.dark .caretip-landing .caretip-landing-final-cta {
   opacity: 0.7;
 }
 
-/* Fade into footer — no hard cut */
+/* No dark fade into footer on light CTA */
 .caretip-landing .caretip-landing-final-cta::after {
-  content: "";
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  z-index: 2;
-  height: 5rem;
-  pointer-events: none;
-  background: linear-gradient(180deg, transparent 0%, rgba(14, 13, 11, 0.85) 72%, #0e0d0b 100%);
-}
-
-html.dark .caretip-landing .caretip-landing-final-cta::after {
-  background: linear-gradient(180deg, transparent 0%, rgba(10, 10, 10, 0.9) 70%, #090909 100%);
+  display: none;
 }
 
 /* —— Content hierarchy —— */
 .caretip-landing .caretip-final-cta-eyebrow {
-  color: rgba(233, 120, 28, 0.92);
+  color: hsl(var(--primary));
 }
 
 .caretip-landing .caretip-final-cta-headline {
@@ -79,7 +84,7 @@ html.dark .caretip-landing .caretip-landing-final-cta::after {
   font-weight: 700;
   line-height: 1.06;
   letter-spacing: -0.038em;
-  color: #fafafa;
+  color: hsl(var(--foreground));
 }
 
 .caretip-landing .caretip-final-cta-subtitle {
@@ -87,7 +92,7 @@ html.dark .caretip-landing .caretip-landing-final-cta::after {
   font-size: clamp(0.9375rem, 1.6vw, 1.0625rem);
   line-height: 1.62;
   font-weight: 400;
-  color: rgba(250, 250, 250, 0.62);
+  color: hsl(var(--muted-foreground));
   letter-spacing: -0.01em;
 }
 
@@ -235,9 +240,9 @@ html.dark .caretip-landing .caretip-final-cta-button {
   }
 }
 
-/* Legacy overrides from atmosphere.css — keep headline legible on dark band */
+/* Legacy overrides — light CTA uses foreground */
 html:not(.dark) .caretip-landing .caretip-landing-final-cta h2.caretip-final-cta-headline {
-  color: #fafafa !important;
+  color: hsl(var(--foreground)) !important;
 }
 
 /* —— Final CTA: mobile visibility + overflow (max-lg only) —— */

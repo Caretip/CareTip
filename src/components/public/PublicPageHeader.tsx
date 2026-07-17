@@ -47,7 +47,7 @@ export function PublicPageHeader({
     <header className={cn(publicPageUi.header, centered && "text-center", className)}>
       <PublicPageBackLink />
 
-      <PublicPageHeroCard innerClassName="caretip-public-page-header-hero-card__inner">
+      <PublicPageHeroCard variant="fullBleed" innerClassName="caretip-public-page-header-hero-card__inner">
         <div className={introClassName}>
           <h1 className={cn(publicPageUi.title, centered && "w-full")}>{title}</h1>
           {subtitle ? (
