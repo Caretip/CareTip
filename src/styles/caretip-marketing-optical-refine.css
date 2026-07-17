@@ -1,0 +1,227 @@
+/**
+ * Marketing optical refine — spacing, rhythm, card/icon balance.
+ * Presentation only: no layout redesign, no color-system changes, no copy edits.
+ */
+
+.caretip-marketing-page,
+.caretip-landing {
+  --caretip-optical-section-y: clamp(3.25rem, 7vw, 5rem);
+  --caretip-optical-section-y-tight: clamp(2.5rem, 5.5vw, 3.75rem);
+  --caretip-optical-card-gap: clamp(1rem, 2.2vw, 1.35rem);
+  --caretip-optical-intro-gap: clamp(0.75rem, 1.6vw, 1rem);
+}
+
+/* —— Shared section breathing room —— */
+.caretip-features-page .caretip-landing-features-section,
+.caretip-faq-page .caretip-faq-content,
+.caretip-pricing-page--wise .caretip-pricing-plans-section,
+.caretip-about-page .caretip-about-beliefs,
+.caretip-about-page .caretip-about-split {
+  padding-block: var(--caretip-optical-section-y);
+}
+
+.caretip-industry-page__steps,
+.caretip-industry-page__benefits,
+.caretip-industry-page__faq {
+  padding-block: var(--caretip-optical-section-y-tight);
+}
+
+/* —— Features cards (text-only): tighter, more premium internal rhythm —— */
+.caretip-features-page .caretip-landing-features-grid {
+  gap: var(--caretip-optical-card-gap);
+}
+
+.caretip-features-page .caretip-landing-feature-card {
+  box-shadow:
+    0 1px 2px rgb(15 23 42 / 0.03),
+    0 10px 28px -14px rgb(15 23 42 / 0.1);
+  transition:
+    border-color 0.28s cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 0.28s cubic-bezier(0.22, 1, 0.36, 1),
+    transform 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@media (hover: hover) {
+  .caretip-features-page .caretip-landing-feature-card:hover {
+    border-color: rgb(233 120 28 / 0.28);
+    box-shadow:
+      0 2px 4px rgb(15 23 42 / 0.04),
+      0 18px 40px -16px rgb(233 120 28 / 0.14);
+    transform: translateY(-2px);
+  }
+}
+
+.caretip-features-page .caretip-landing-feature-card > div {
+  gap: 0;
+}
+
+.caretip-features-page .caretip-landing-feature-accent {
+  margin-bottom: 0.85rem;
+}
+
+.caretip-features-page .caretip-landing-feature-card h2 {
+  line-height: 1.25;
+  letter-spacing: -0.015em;
+}
+
+.caretip-features-page .caretip-landing-feature-card p {
+  margin-top: 0.35rem;
+  line-height: 1.65;
+}
+
+/* —— Industry page optical balance —— */
+.caretip-industry-page__section-title {
+  margin-bottom: clamp(1.25rem, 3vw, 1.75rem);
+  letter-spacing: -0.022em;
+}
+
+.caretip-industry-page__benefit {
+  gap: 0.85rem;
+}
+
+.caretip-industry-page__benefit-title {
+  letter-spacing: -0.015em;
+  line-height: 1.3;
+}
+
+.caretip-industry-page__benefit-body {
+  margin-top: 0.3rem;
+  line-height: 1.62;
+}
+
+.caretip-industry-page__trust-item {
+  font-size: 0.84375rem;
+  font-weight: 650;
+  color: hsl(var(--foreground) / 0.78);
+  padding: 0.6rem 0.95rem;
+}
+
+.caretip-industry-page__final-cta {
+  margin-top: clamp(2rem, 4vw, 2.75rem);
+}
+
+.caretip-industry-page__final-cta-title {
+  line-height: 1.25;
+}
+
+.caretip-industry-page__final-cta-body {
+  line-height: 1.65;
+}
+
+/* —— FAQ accordion comfort —— */
+.caretip-faq-page .caretip-faq-item-wise,
+.caretip-pricing-page--wise .caretip-faq-item-wise {
+  transition:
+    border-color 0.25s ease,
+    box-shadow 0.25s ease;
+}
+
+.caretip-faq-page .caretip-faq-content__inner {
+  gap: clamp(1.35rem, 3vw, 1.85rem);
+}
+
+.caretip-faq-page .caretip-faq-item-wise + .caretip-faq-item-wise {
+  margin-top: 0.15rem;
+}
+
+/* —— Pricing plan card internal rhythm —— */
+.caretip-pricing-tier-card {
+  padding: 1.5rem 1.35rem 1.35rem;
+}
+
+.caretip-pricing-tier-card--featured {
+  padding: 2.85rem 1.55rem 1.7rem;
+}
+
+.caretip-pricing-tier-features {
+  gap: 0.625rem;
+}
+
+.caretip-pricing-tier-card__desc {
+  line-height: 1.55;
+}
+
+/* —— Contact form optical spacing —— */
+.caretip-contact-page .caretip-contact-form-grid,
+.caretip-contact-page form {
+  row-gap: clamp(1rem, 2.2vw, 1.25rem);
+}
+
+.caretip-contact-page label + input,
+.caretip-contact-page label + textarea,
+.caretip-contact-page label + select,
+.caretip-contact-page [class*="FormField"] {
+  margin-top: 0.35rem;
+}
+
+/* —— Public hero card content measure —— */
+.caretip-public-page-hero-card__inner {
+  padding-block: clamp(2.75rem, 6.5vw, 4.25rem);
+}
+
+.caretip-public-marketing-hero-wise__subtitle,
+.caretip-public-marketing-hero-wise__body {
+  line-height: 1.68;
+}
+
+/* —— Landing section intros: slightly clearer lead measure —— */
+.caretip-landing .caretip-section-intro p,
+.caretip-landing [class*="sectionSubtitle"] {
+  max-width: min(100%, 38rem);
+  line-height: 1.68;
+}
+
+/* —— Landing trust / final CTA strip visibility —— */
+.caretip-landing .caretip-trust-strip__item {
+  font-weight: 600;
+  color: hsl(var(--foreground) / 0.78);
+}
+
+.caretip-landing .caretip-trust-strip__check {
+  color: rgb(233 120 28);
+}
+
+/* —— Mobile breathing room —— */
+@media (max-width: 639px) {
+  .caretip-features-page .caretip-landing-features-section,
+  .caretip-faq-page .caretip-faq-content,
+  .caretip-pricing-page--wise .caretip-pricing-plans-section {
+    padding-block: clamp(2.75rem, 10vw, 3.5rem);
+  }
+
+  .caretip-features-page .caretip-landing-feature-card > div {
+    padding: 1.15rem 1.1rem;
+  }
+
+  .caretip-industry-page__hero {
+    padding-block: clamp(2.25rem, 8vw, 3.25rem) clamp(2.5rem, 9vw, 3.75rem);
+  }
+
+  .caretip-pricing-cta-wise__trust {
+    gap: 0.65rem 1.15rem;
+  }
+
+  .caretip-pricing-cta-wise__trust-item {
+    font-size: 0.8125rem;
+  }
+}
+
+/* —— Tablet: avoid stretched card gaps —— */
+@media (min-width: 640px) and (max-width: 1023px) {
+  .caretip-features-page .caretip-landing-features-grid {
+    gap: 1.15rem;
+  }
+
+  .caretip-industry-page__benefits-grid,
+  .caretip-industry-page__steps-grid {
+    gap: 1.35rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .caretip-features-page .caretip-landing-feature-card,
+  .caretip-features-page .caretip-landing-feature-card:hover {
+    transition: none;
+    transform: none;
+  }
+}

@@ -3,8 +3,8 @@ import { useTranslation } from "react-i18next";
 import { ArrowRight, Eye, Rocket, Zap } from "lucide-react";
 import newMidWebp from "../../../../images/new-mid.webp";
 import newMidAvif from "../../../../images/new-mid.avif";
-import fieldServicesWebp from "../../../../images/trade and home services.webp";
-import fieldServicesAvif from "../../../../images/trade and home services.avif";
+import handwerkerWebp from "../../../../images/Handwerker.webp";
+import handwerkerAvif from "../../../../images/Handwerker.avif";
 import { landingUi } from "@/components/landing/landingUi";
 import { LandingReveal } from "@/components/landing/LandingReveal";
 import { industryPath } from "@/app/data/industryPages";
@@ -27,7 +27,7 @@ const TEASERS = [
   },
   {
     id: "field-service" as const,
-    image: { webp: fieldServicesWebp, avif: fieldServicesAvif },
+    image: { webp: handwerkerWebp, avif: handwerkerAvif },
     titleKey: "teaser2Title",
     bodyKey: "teaser2Body",
     altKey: "teaser2Alt",

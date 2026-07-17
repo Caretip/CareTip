@@ -5,8 +5,6 @@ import "@/styles/bundles/marketing-pages.css";
 import "@/styles/bundles/landing.css";
 import { PublicPageShell } from "@/components/public/PublicPageShell";
 import { FeaturesPageFinalCta } from "@/components/public/features/FeaturesPageFinalCta";
-import { FeatureProductVisual } from "@/components/public/features/FeatureProductVisual";
-import type { FeatureVisualVariant } from "@/components/public/features/featuresPageConfig";
 import { LandingReveal } from "@/components/landing/LandingReveal";
 import { LandingSectionAccent, type LandingAccentVariant } from "@/components/landing/LandingSectionAccent";
 import { landingCopyVisible, landingUi } from "@/components/landing/landingUi";
@@ -14,15 +12,6 @@ import { landingType } from "@/components/landing/landingTypography";
 import { landingStaggerDelay } from "@/lib/landingMotion";
 import { usePublicMountProbe } from "@/lib/publicMountProbe";
 import { cn } from "@/lib/utils";
-
-const FEATURE_VISUALS: FeatureVisualVariant[] = [
-  "qr",
-  "employee",
-  "analytics",
-  "security",
-  "realtime",
-  "locations",
-];
 
 const FEATURE_ICONS = [QrCode, Activity, BarChart3, History, Wallet, Star] as const;
 
@@ -41,7 +30,7 @@ const cardClassName = cn(
 );
 
 /**
- * Features / Funktionen page — landing modern grid + real app visuals.
+ * Features / Funktionen page — text + cards only (no product imagery).
  */
 export function FeaturesPage() {
   usePublicMountProbe("FeaturesPage");
@@ -53,7 +42,6 @@ export function FeaturesPage() {
       ([1, 2, 3, 4, 5, 6] as const).map((n, idx) => ({
         key: `i${n}`,
         Icon: FEATURE_ICONS[idx]!,
-        visual: FEATURE_VISUALS[idx]!,
         title: t(`landing.features.i${n}Title`),
         text: t(`landing.features.i${n}Text`),
         tag: t(`landing.features.i${n}Tag`),
@@ -105,11 +93,7 @@ export function FeaturesPage() {
                     className="h-full"
                   >
                     <article className={cardClassName}>
-                      <FeatureProductVisual
-                        variant={item.visual}
-                        className="m-3 mb-0 sm:m-4 sm:mb-0"
-                      />
-                      <div className="flex flex-1 flex-col p-4 pt-3 sm:p-5 sm:pt-4">
+                      <div className="flex flex-1 flex-col p-4 sm:p-5">
                         <LandingSectionAccent
                           variant={featureAccentVariants[idx % featureAccentVariants.length]}
                           className="caretip-landing-feature-accent mb-2.5 sm:mb-3"

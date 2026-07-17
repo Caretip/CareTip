@@ -30,8 +30,8 @@ export const publicPageUi = {
     "rounded-2xl border border-border/80 bg-card p-6 text-center shadow-[0_8px_32px_-12px_rgba(15,23,42,0.12)] sm:p-8",
   ctaPrimary: `${caretipBtnPrimary} no-underline`,
   trustChip:
-    "inline-flex items-center gap-1.5 rounded-full border border-border/80 bg-card/95 px-3 py-1.5 text-micro font-semibold uppercase tracking-[0.14em] text-muted-foreground shadow-[0_1px_4px_rgba(15,23,42,0.04)] sm:text-kpi-label",
-  trustChipDot: "h-1.5 w-1.5 shrink-0 rounded-full bg-primary/80",
+    "inline-flex items-center gap-1.5 rounded-full border border-border/80 bg-card px-3.5 py-1.5 text-[0.6875rem] font-semibold uppercase tracking-[0.12em] text-foreground/80 shadow-[0_1px_4px_rgba(15,23,42,0.05)] sm:text-xs",
+  trustChipDot: "h-1.5 w-1.5 shrink-0 rounded-full bg-primary",
   proseWrap: "mx-auto max-w-4xl",
   wideWrap: "mx-auto max-w-5xl",
   pricingWrap: "mx-auto max-w-7xl",

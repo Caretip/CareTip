@@ -114,10 +114,10 @@ html.dark .caretip-industry-card__icon {
   display: inline-flex;
   align-items: center;
   gap: 0.375rem;
-  font-size: 0.75rem;
-  font-weight: 500;
+  font-size: 0.8125rem;
+  font-weight: 600;
   letter-spacing: 0.01em;
-  color: hsl(var(--muted-foreground));
+  color: hsl(var(--foreground) / 0.78);
 }
 
 .caretip-trust-strip__check {
@@ -125,7 +125,7 @@ html.dark .caretip-industry-card__icon {
 }
 
 html:not(.dark) .caretip-landing-final-cta .caretip-trust-strip__item {
-  color: hsl(var(--muted-foreground));
+  color: hsl(var(--foreground) / 0.8);
 }
 
 @media (prefers-reduced-motion: reduce) {

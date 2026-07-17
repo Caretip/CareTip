@@ -361,13 +361,13 @@
         "altDemo": "Prefer a product demo?",
         "altSupport": "Need technical help?",
         "panelTitle": "Talk with our team",
-        "panelBody": "Share your goals, location count, or partnership idea — we'll follow up with a clear next step.",
+        "panelBody": "Share your goals, location count, or partnership idea. We'll follow up with a clear next step.",
         "email": "sales@caretip.de",
         "responseTime": "Usually replies within 24 hours"
       },
       "form": {
         "submitting": "Sending…",
-        "successTitle": "Thank you — we received your message",
+        "successTitle": "Thank you. We received your message",
         "demoSuccess": "Our team will reach out within one business day to schedule your demo.",
         "supportSuccess": "Our support team will follow up shortly with next steps.",
         "validation": "Please complete all required fields before submitting."
@@ -1219,7 +1219,7 @@
           "a": "Yes, fully. CareTip was built from the ground up with privacy at its core. We comply with all requirements of the GDPR and give users full control over their data at all times, including the right to access and deletion."
         },
         {
-          "q": "How does CareTip work – how do customers leave a tip?",
+          "q": "How does CareTip work? How do customers leave a tip?",
           "a": "Customers simply scan a QR code or type the URL directly into their browser, with no download, no registration, and no app required. After scanning, they select an amount and pay via credit card, Apple Pay or Google Pay. The tip goes directly and transparently to the team. The whole process takes under 30 seconds."
         },
         {
@@ -3254,7 +3254,7 @@
       "teasersLabel": "Perfect for mobile teams…",
       "teasersAria": "Featured industries",
       "teaser1Title": "Midwife care",
-      "teaser1Body": "Cashless tips during postpartum home visits – simple and easy via a custom QR code.",
+      "teaser1Body": "Cashless tips during postpartum home visits: simple and easy via a custom QR code.",
       "teaser1Alt": "Midwife visiting a family with a CareTip QR business card",
       "teaser2Title": "Field service & care",
       "teaser2Body": "The perfect tip solution for mobile teams, crafts, and on-site care workers.",
@@ -6933,7 +6933,7 @@
           "b1Title": "More appreciation for housekeeping",
           "b1Body": "Guests can finally tip the cleaning crew digitally.",
           "b2Title": "Seamless integration",
-          "b2Body": "Fits perfectly with your hotel's aesthetic – no clunky hardware.",
+          "b2Body": "Fits perfectly with your hotel's aesthetic, with no clunky hardware.",
           "b3Title": "Zero bureaucracy",
           "b3Body": "Automated, one-click exports for accounting."
         },
@@ -6976,7 +6976,7 @@
           "b2Title": "No cash required",
           "b2Body": "Customers no longer need to scramble for coins when the doorbell rings.",
           "b3Title": "Safe and quick",
-          "b3Body": "Zero distraction – the scan takes less than 3 seconds."
+          "b3Body": "Zero distraction. The scan takes less than 3 seconds."
         },
         "faq": {
           "q1": "Does this work with subcontractors?",
@@ -6996,7 +6996,7 @@
       "midwives": {
         "pageAria": "CareTip for freelance midwives",
         "eyebrow": "For midwives",
-        "headline": "More appreciation for your dedication – cashless during home visits.",
+        "headline": "More appreciation for your dedication, cashless during home visits.",
         "subhead": "Receive tips and tokens of appreciation from grateful families contactlessly via QR code on your business card. 100% secure, tax-free, and without the hassle of carrying cash.",
         "cta": "Start as a midwife now",
         "heroAlt": "A midwife visiting a happy young family at home, smiling and presenting her business card with the integrated QR code",
@@ -7017,7 +7017,7 @@
           "b2Title": "GDPR-compliant",
           "b2Body": "Maximum data security and privacy for you and the families you care for.",
           "b3Title": "Fits in your pocket",
-          "b3Body": "No heavy hardware required – just your QR code on paper or your phone screen."
+          "b3Body": "No heavy hardware required: just your QR code on paper or your phone screen."
         },
         "faq": {
           "q1": "Are these tips tax-free?",
@@ -7078,8 +7078,8 @@
       "field-service": {
         "pageAria": "CareTip for field service and trades",
         "eyebrow": "For field service & trades",
-        "headline": "Appreciation that travels with you — cashless on every job.",
-        "subhead": "Give customers an easy way to tip after on-site work. Show a QR on your phone, van, or card — no cash, no awkward moments.",
+        "headline": "Appreciation that travels with you, cashless on every job.",
+        "subhead": "Give customers an easy way to tip after on-site work. Show a QR on your phone, van, or card. No cash, no awkward moments.",
         "cta": "Start for free now",
         "heroAlt": "Field service professional ready for on-site tipping with CareTip",
         "stepsTitle": "The process",
@@ -7087,7 +7087,7 @@
           "s1Title": "Show your QR",
           "s1Body": "On your phone, van door, or business card after the job is done.",
           "s2Title": "Customer scans & pays",
-          "s2Body": "No app download — Apple Pay, Google Pay, or card in seconds.",
+          "s2Body": "No app download. Apple Pay, Google Pay, or card in seconds.",
           "s3Title": "Tip lands with you",
           "s3Body": "Funds go to the right technician, documented and transparent."
         },
@@ -7095,17 +7095,17 @@
         "benefitsAlt": "CareTip QR ready for on-site field service visits",
         "benefits": {
           "b1Title": "On-site tipping",
-          "b1Body": "Show a QR when the work is finished — tip in the moment of appreciation.",
+          "b1Body": "Show a QR when the work is finished, and tip in the moment of appreciation.",
           "b2Title": "Per-technician codes",
           "b2Body": "Keep tips fair across solo pros and multi-van crews.",
           "b3Title": "Light setup",
-          "b3Body": "Go live without terminals or heavy hardware — paper or phone is enough."
+          "b3Body": "Go live without terminals or heavy hardware. Paper or phone is enough."
         },
         "faq": {
           "q1": "Does the customer need an app?",
           "a1": "No. A smartphone camera scan is enough.",
           "q2": "Can each technician have their own QR?",
-          "a2": "Yes. Create individual codes or a shared crew pool — you choose."
+          "a2": "Yes. Create individual codes or a shared crew pool. You choose."
         },
         "floats": {
           "f1Title": "Job done",

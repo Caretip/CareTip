@@ -74,7 +74,7 @@ const enPages = {
       b1Title: "More appreciation for housekeeping",
       b1Body: "Guests can finally tip the cleaning crew digitally.",
       b2Title: "Seamless integration",
-      b2Body: "Fits perfectly with your hotel's aesthetic – no clunky hardware.",
+      b2Body: "Fits perfectly with your hotel's aesthetic, with no clunky hardware.",
       b3Title: "Zero bureaucracy",
       b3Body: "Automated, one-click exports for accounting.",
     },
@@ -120,7 +120,7 @@ const enPages = {
       b2Title: "No cash required",
       b2Body: "Customers no longer need to scramble for coins when the doorbell rings.",
       b3Title: "Safe and quick",
-      b3Body: "Zero distraction – the scan takes less than 3 seconds.",
+      b3Body: "Zero distraction. The scan takes less than 3 seconds.",
     },
     faq: {
       q1: "Does this work with subcontractors?",
@@ -140,7 +140,7 @@ const enPages = {
   midwives: {
     pageAria: "CareTip for freelance midwives",
     eyebrow: "For midwives",
-    headline: "More appreciation for your dedication – cashless during home visits.",
+    headline: "More appreciation for your dedication, cashless during home visits.",
     subhead:
       "Receive tips and tokens of appreciation from grateful families contactlessly via QR code on your business card. 100% secure, tax-free, and without the hassle of carrying cash.",
     cta: "Start as a midwife now",
@@ -164,7 +164,7 @@ const enPages = {
       b2Title: "GDPR-compliant",
       b2Body: "Maximum data security and privacy for you and the families you care for.",
       b3Title: "Fits in your pocket",
-      b3Body: "No heavy hardware required – just your QR code on paper or your phone screen.",
+      b3Body: "No heavy hardware required: just your QR code on paper or your phone screen.",
     },
     faq: {
       q1: "Are these tips tax-free?",
@@ -296,7 +296,7 @@ const dePages = {
       b1Title: "Mehr Wertschätzung fürs Housekeeping",
       b1Body: "Endlich können Gäste auch dem Reinigungsteam digital danken.",
       b2Title: "Nahtlose Integration",
-      b2Body: "Passt perfekt zum Design deines Hotels – ohne störende Fremdkörper.",
+      b2Body: "Passt perfekt zum Design deines Hotels, ohne störende Fremdkörper.",
       b3Title: "Kein bürokratischer Aufwand",
       b3Body: "Automatische Exporte für die Buchhaltung auf Knopfdruck.",
     },
@@ -342,7 +342,7 @@ const dePages = {
       b2Title: "Kein Bargeld-Zwang",
       b2Body: "Kunden müssen nicht mehr panisch nach Münzen suchen, wenn das Paket kommt.",
       b3Title: "Sicher im Straßenverkehr",
-      b3Body: "Keine Ablenkung – der Scan dauert nur 3 Sekunden.",
+      b3Body: "Keine Ablenkung. Der Scan dauert nur 3 Sekunden.",
     },
     faq: {
       q1: "Funktioniert das auch bei Subunternehmern?",
@@ -362,7 +362,7 @@ const dePages = {
   midwives: {
     pageAria: "CareTip für selbstständige Hebammen",
     eyebrow: "Für selbstständige Hebammen",
-    headline: "Mehr Wertschätzung für deine Fürsorge – bargeldlos im Hausbesuch.",
+    headline: "Mehr Wertschätzung für deine Fürsorge, bargeldlos im Hausbesuch.",
     subhead:
       "Empfange Aufmerksamkeiten von dankbaren Familien, ganz einfach kontaktlos per QR-Code auf deiner Visitenkarte. Komplett sicher, steuerfrei und ganz ohne Bargeldstress unterwegs.",
     cta: "Jetzt als Hebamme starten",
@@ -376,7 +376,7 @@ const dePages = {
       s2Title: "Entspanntes Scannen",
       s2Body: "Die Familie scannt den Code in Ruhe vom Sofa aus.",
       s3Title: "Steuerfrei empfangen",
-      s3Body: "Aufmerksamkeiten landen direkt auf deinem Bankkonto – lückenlos dokumentiert.",
+      s3Body: "Aufmerksamkeiten landen direkt auf deinem Bankkonto, lückenlos dokumentiert.",
     },
     benefitsTitle: "Die 3 Top-Vorteile",
     benefitsAlt: "Visitenkarte mit CareTip-QR-Code für Hebammenbesuche",
@@ -386,7 +386,7 @@ const dePages = {
       b2Title: "Absolut DSGVO-konform",
       b2Body: "Höchste Datensicherheit für dich und die betreuten Familien.",
       b3Title: "Passt in die Tasche",
-      b3Body: "Keine schwere Hardware – dein QR-Code auf Papier oder auf dem Smartphone reicht.",
+      b3Body: "Keine schwere Hardware: dein QR-Code auf Papier oder auf dem Smartphone reicht.",
     },
     faq: {
       q1: "Sind die Trinkgelder steuerfrei?",

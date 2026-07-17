@@ -361,13 +361,13 @@
         "altDemo": "Lieber eine Produktdemo?",
         "altSupport": "Technische Hilfe nötig?",
         "panelTitle": "Sprechen Sie mit unserem Team",
-        "panelBody": "Teilen Sie Ihre Ziele, Standortanzahl oder Partnerschaftsidee — wir melden uns mit dem nächsten Schritt.",
+        "panelBody": "Teilen Sie Ihre Ziele, Standortanzahl oder Partnerschaftsidee. Wir melden uns mit dem nächsten Schritt.",
         "email": "sales@caretip.de",
         "responseTime": "Antwort meist innerhalb von 24 Stunden"
       },
       "form": {
         "submitting": "Wird gesendet…",
-        "successTitle": "Danke — wir haben Ihre Nachricht erhalten",
+        "successTitle": "Danke. Wir haben Ihre Nachricht erhalten",
         "demoSuccess": "Unser Team meldet sich innerhalb eines Werktags, um Ihre Demo zu planen.",
         "supportSuccess": "Unser Support-Team meldet sich in Kürze mit den nächsten Schritten.",
         "validation": "Bitte füllen Sie alle Pflichtfelder aus, bevor Sie absenden."
@@ -513,7 +513,7 @@
       "plansBullet3": "Skalierbar mit Ihrem Wachstum",
       "popular": "Am beliebtesten",
       "ctaTitle": "Bereit für digitales Trinkgeld in Ihrem Team?",
-      "ctaBody": "Ob Salon oder Hotelgruppe — unser Team hilft beim Start mit QR-Trinkgeld, beim Onboarding Ihrer Mitarbeitenden und bei der Tarifwahl.",
+      "ctaBody": "Ob Salon oder Hotelgruppe: unser Team hilft beim Start mit QR-Trinkgeld, beim Onboarding Ihrer Mitarbeitenden und bei der Tarifwahl.",
       "ctaTrust": {
         "aria": "Preisgarantien",
         "noCreditCard": "Keine Kreditkarte",
@@ -1219,7 +1219,7 @@
           "a": "Ja, vollständig. CareTip wurde von Grund auf mit Datenschutz im Mittelpunkt entwickelt. Wir erfüllen alle Anforderungen der DSGVO und des BDSG und geben unseren Nutzern jederzeit volle Kontrolle über ihre Daten, inklusive Auskunfts- und Löschrecht."
         },
         {
-          "q": "Wie funktioniert CareTip – wie geben Kunden Trinkgeld?",
+          "q": "Wie funktioniert CareTip? Wie geben Kunden Trinkgeld?",
           "a": "Kunden scannen einfach einen QR-Code oder geben die URL einfach manuell in den Browser ein, ohne Download, Registrierung oder App. Nach dem die Seite aufgerufen ist, wählen sie einen Betrag und zahlen per Kreditkarte, Apple Pay oder Google Pay. Das Trinkgeld landet direkt und transparent beim Team. Der ganze Vorgang dauert unter 30 Sekunden."
         },
         {
@@ -3254,7 +3254,7 @@
       "teasersLabel": "Überall dort im Einsatz…",
       "teasersAria": "Ausgewählte Branchen",
       "teaser1Title": "Hebammen-Betreuung",
-      "teaser1Body": "Trinkgeld im Wochenbett nach dem Hausbesuch – komplett bargeldlos per QR-Code.",
+      "teaser1Body": "Trinkgeld im Wochenbett nach dem Hausbesuch: komplett bargeldlos per QR-Code.",
       "teaser1Alt": "Hebamme bei einer Familie mit CareTip-QR-Visitenkarte",
       "teaser2Title": "Außendienst & Pflege",
       "teaser2Body": "Die perfekte Lösung für mobile Teams, Handwerk & Pflegekräfte vor Ort.",
@@ -6933,7 +6933,7 @@
           "b1Title": "Mehr Wertschätzung fürs Housekeeping",
           "b1Body": "Endlich können Gäste auch dem Reinigungsteam digital danken.",
           "b2Title": "Nahtlose Integration",
-          "b2Body": "Passt perfekt zum Design deines Hotels – ohne störende Fremdkörper.",
+          "b2Body": "Passt perfekt zum Design deines Hotels, ohne störende Fremdkörper.",
           "b3Title": "Kein bürokratischer Aufwand",
           "b3Body": "Automatische Exporte für die Buchhaltung auf Knopfdruck."
         },
@@ -6976,7 +6976,7 @@
           "b2Title": "Kein Bargeld-Zwang",
           "b2Body": "Kunden müssen nicht mehr panisch nach Münzen suchen, wenn das Paket kommt.",
           "b3Title": "Sicher im Straßenverkehr",
-          "b3Body": "Keine Ablenkung – der Scan dauert nur 3 Sekunden."
+          "b3Body": "Keine Ablenkung. Der Scan dauert nur 3 Sekunden."
         },
         "faq": {
           "q1": "Funktioniert das auch bei Subunternehmern?",
@@ -6996,7 +6996,7 @@
       "midwives": {
         "pageAria": "CareTip für selbstständige Hebammen",
         "eyebrow": "Für selbstständige Hebammen",
-        "headline": "Mehr Wertschätzung für deine Fürsorge – bargeldlos im Hausbesuch.",
+        "headline": "Mehr Wertschätzung für deine Fürsorge, bargeldlos im Hausbesuch.",
         "subhead": "Empfange Aufmerksamkeiten von dankbaren Familien, ganz einfach kontaktlos per QR-Code auf deiner Visitenkarte. Komplett sicher, steuerfrei und ganz ohne Bargeldstress unterwegs.",
         "cta": "Jetzt als Hebamme starten",
         "heroAlt": "Hebamme bei einer glücklichen jungen Familie zu Hause mit Visitenkarte und integriertem QR-Code",
@@ -7007,7 +7007,7 @@
           "s2Title": "Entspanntes Scannen",
           "s2Body": "Die Familie scannt den Code in Ruhe vom Sofa aus.",
           "s3Title": "Steuerfrei empfangen",
-          "s3Body": "Aufmerksamkeiten landen direkt auf deinem Bankkonto – lückenlos dokumentiert."
+          "s3Body": "Aufmerksamkeiten landen direkt auf deinem Bankkonto, lückenlos dokumentiert."
         },
         "benefitsTitle": "Die 3 Top-Vorteile",
         "benefitsAlt": "Visitenkarte mit CareTip-QR-Code für Hebammenbesuche",
@@ -7017,7 +7017,7 @@
           "b2Title": "Absolut DSGVO-konform",
           "b2Body": "Höchste Datensicherheit für dich und die betreuten Familien.",
           "b3Title": "Passt in die Tasche",
-          "b3Body": "Keine schwere Hardware – dein QR-Code auf Papier oder auf dem Smartphone reicht."
+          "b3Body": "Keine schwere Hardware: dein QR-Code auf Papier oder auf dem Smartphone reicht."
         },
         "faq": {
           "q1": "Sind die Trinkgelder steuerfrei?",
@@ -7078,8 +7078,8 @@
       "field-service": {
         "pageAria": "CareTip für Außendienst und Handwerk",
         "eyebrow": "Für Außendienst & Handwerk",
-        "headline": "Wertschätzung, die mitgeht — bargeldlos nach jedem Einsatz.",
-        "subhead": "Gib Kundinnen und Kunden eine einfache Möglichkeit, nach dem Vor-Ort-Termin Trinkgeld zu geben. QR auf Handy, Fahrzeug oder Karte — ohne Bargeld und ohne peinliche Momente.",
+        "headline": "Wertschätzung, die mitgeht, bargeldlos nach jedem Einsatz.",
+        "subhead": "Gib Kundinnen und Kunden eine einfache Möglichkeit, nach dem Vor-Ort-Termin Trinkgeld zu geben. QR auf Handy, Fahrzeug oder Karte. Ohne Bargeld und ohne peinliche Momente.",
         "cta": "Jetzt kostenlos starten",
         "heroAlt": "Außendienst-Profi bereit für Trinkgeld vor Ort mit CareTip",
         "stepsTitle": "Der Ablauf",
@@ -7087,25 +7087,25 @@
           "s1Title": "QR zeigen",
           "s1Body": "Auf dem Handy, der Fahrzeugtür oder der Visitenkarte nach dem Einsatz.",
           "s2Title": "Kunde scannt & zahlt",
-          "s2Body": "Ohne App — Apple Pay, Google Pay oder Karte in Sekunden.",
+          "s2Body": "Ohne App. Apple Pay, Google Pay oder Karte in Sekunden.",
           "s3Title": "Trinkgeld kommt an",
-          "s3Body": "Das Geld landet bei der richtigen Person — dokumentiert und transparent."
+          "s3Body": "Das Geld landet bei der richtigen Person, dokumentiert und transparent."
         },
         "benefitsTitle": "Die 3 Top-Vorteile",
         "benefitsAlt": "CareTip-QR bereit für Vor-Ort-Einsätze im Außendienst",
         "benefits": {
           "b1Title": "Trinkgeld vor Ort",
-          "b1Body": "QR zeigen, wenn die Arbeit erledigt ist — Wertschätzung im Moment.",
+          "b1Body": "QR zeigen, wenn die Arbeit erledigt ist: Wertschätzung im Moment.",
           "b2Title": "Codes pro Techniker",
           "b2Body": "Fair und klar für Einzelprofis und Mehrwagen-Teams.",
           "b3Title": "Leichtes Setup",
-          "b3Body": "Ohne Terminals oder schwere Hardware — Papier oder Handy reicht."
+          "b3Body": "Ohne Terminals oder schwere Hardware. Papier oder Handy reicht."
         },
         "faq": {
           "q1": "Braucht der Kunde eine App?",
           "a1": "Nein. Ein Scan mit der Smartphone-Kamera genügt.",
           "q2": "Kann jede Person einen eigenen QR haben?",
-          "a2": "Ja. Individuelle Codes oder ein gemeinsamer Team-Pool — du entscheidest."
+          "a2": "Ja. Individuelle Codes oder ein gemeinsamer Team-Pool. Du entscheidest."
         },
         "floats": {
           "f1Title": "Auftrag erledigt",
