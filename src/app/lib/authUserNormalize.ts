@@ -53,6 +53,23 @@ export function normalizeStoredUser(raw: unknown): User | null {
       ? (onboardingStepRaw as 1 | 2 | 3)
       : undefined;
 
+  const onboardingVerificationStatus =
+    o.onboardingVerificationStatus === "draft" ||
+    o.onboardingVerificationStatus === "submitted" ||
+    o.onboardingVerificationStatus === "approved" ||
+    o.onboardingVerificationStatus === "rejected"
+      ? o.onboardingVerificationStatus
+      : undefined;
+
+  const kycVerificationStatus =
+    o.kycVerificationStatus === "not_started" ||
+    o.kycVerificationStatus === "awaiting_upload" ||
+    o.kycVerificationStatus === "pending_review" ||
+    o.kycVerificationStatus === "verified" ||
+    o.kycVerificationStatus === "rejected"
+      ? o.kycVerificationStatus
+      : undefined;
+
   return {
     id: o.id,
     name: typeof o.name === "string" ? o.name : o.email,
@@ -71,5 +88,7 @@ export function normalizeStoredUser(raw: unknown): User | null {
     impersonation: o.impersonation === true,
     impersonatedBy: typeof o.impersonatedBy === "string" ? o.impersonatedBy : undefined,
     preferredLocale: typeof o.preferredLocale === "string" ? o.preferredLocale : null,
+    onboardingVerificationStatus,
+    kycVerificationStatus,
   };
 }
