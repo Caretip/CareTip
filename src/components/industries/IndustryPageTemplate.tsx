@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router";
 import { useTranslation } from "react-i18next";
+import type { LucideIcon } from "lucide-react";
 import {
   Lock,
   Scale,
@@ -8,9 +9,30 @@ import {
   QrCode,
   Smartphone,
   Wallet,
+  Rocket,
+  Heart,
   Sparkles,
-  Eye,
+  Puzzle,
+  Zap,
+  ShieldCheck,
+  Smile,
+  BarChart3,
+  Star,
+  UserPlus,
+  MapPin,
+  Users,
+  Feather,
+  BanknoteX,
+  ScanLine,
+  LayoutDashboard,
+  Tag,
+  PartyPopper,
+  IdCard,
   HeartHandshake,
+  Landmark,
+  Badge,
+  MessageCircle,
+  Activity,
 } from "lucide-react";
 import type { IndustryPageId } from "@/app/data/industryPages";
 import { INDUSTRY_MEDIA } from "@/app/data/industryMedia";
@@ -22,8 +44,26 @@ import { publicPagesBrandUi } from "@/components/public/publicPagesBrandUi";
 import { warmAllIndustryHeroesIdle } from "@/lib/industryHeroAssets";
 import { cn } from "@/lib/utils";
 
-const STEP_ICONS = [QrCode, Smartphone, Wallet] as const;
-const BENEFIT_ICONS = [Sparkles, Eye, HeartHandshake] as const;
+/** Process-step icons matched to each industry’s three flow points. */
+const INDUSTRY_STEP_ICONS: Record<IndustryPageId, readonly [LucideIcon, LucideIcon, LucideIcon]> = {
+  gastronomy: [QrCode, ScanLine, Wallet],
+  hotels: [Tag, ScanLine, LayoutDashboard],
+  logistics: [Tag, Smartphone, PartyPopper],
+  midwives: [IdCard, HeartHandshake, Landmark],
+  fairs: [Badge, MessageCircle, Activity],
+  "field-service": [QrCode, CreditCard, Wallet],
+};
+
+/** Benefit icons matched to each industry’s three benefit points. */
+const INDUSTRY_BENEFIT_ICONS: Record<IndustryPageId, readonly [LucideIcon, LucideIcon, LucideIcon]> = {
+  gastronomy: [Rocket, Heart, Scale],
+  hotels: [Sparkles, Puzzle, Scale],
+  logistics: [Zap, BanknoteX, ShieldCheck],
+  midwives: [Smile, ShieldCheck, Smartphone],
+  fairs: [BarChart3, Star, UserPlus],
+  "field-service": [MapPin, Users, Feather],
+};
+
 const TRUST_ICONS = [Lock, Scale, CreditCard] as const;
 
 type IndustryPageTemplateProps = {
@@ -77,6 +117,8 @@ export function IndustryPageTemplate({ industryId }: IndustryPageTemplateProps) 
     [prefix, t],
   );
 
+  const stepIcons = INDUSTRY_STEP_ICONS[industryId];
+  const benefitIcons = INDUSTRY_BENEFIT_ICONS[industryId];
   const trustKeys = ["gdpr", "tax", "stripe"] as const;
 
   return (
@@ -121,7 +163,7 @@ export function IndustryPageTemplate({ industryId }: IndustryPageTemplateProps) 
             </h2>
             <ol className="caretip-industry-page__steps-grid">
               {steps.map((step, index) => {
-                const Icon = STEP_ICONS[index] ?? QrCode;
+                const Icon = stepIcons[index] ?? QrCode;
                 return (
                   <li key={step.n} className="caretip-industry-page__step">
                     <span className="caretip-industry-page__step-icon" aria-hidden>
@@ -161,7 +203,7 @@ export function IndustryPageTemplate({ industryId }: IndustryPageTemplateProps) 
               </h2>
               <ul className="caretip-industry-page__benefits-list">
                 {benefits.map((benefit, index) => {
-                  const Icon = BENEFIT_ICONS[index] ?? Sparkles;
+                  const Icon = benefitIcons[index] ?? Sparkles;
                   return (
                     <li key={benefit.n} className="caretip-industry-page__benefit">
                       <span className="caretip-industry-page__benefit-icon" aria-hidden>
