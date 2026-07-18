@@ -4,7 +4,6 @@ import type { ImgHTMLAttributes } from "react";
 import {
   getLiveMinutesOnboardingScreenAlt,
   getLiveMinutesOnboardingScreenSources,
-  getLiveMinutesOnboardingScreenSrc,
   LIVE_MINUTES_ONBOARDING_STEP_COUNT,
   preloadLiveMinutesOnboardingScreens,
   resolveLiveMinutesOnboardingLocale,
@@ -18,7 +17,6 @@ type LiveInMinutesOnboardingPhoneProps = {
   reduceMotion: boolean | null;
   caption: string;
   demoAriaLabel: string;
-  fallback: React.ReactNode;
 };
 
 export function LiveInMinutesOnboardingPhone({
@@ -27,58 +25,17 @@ export function LiveInMinutesOnboardingPhone({
   reduceMotion,
   caption,
   demoAriaLabel,
-  fallback,
 }: LiveInMinutesOnboardingPhoneProps) {
   const locale = React.useMemo(() => resolveLiveMinutesOnboardingLocale(language), [language]);
   const clampedIndex = Math.min(
     Math.max(0, activeIndex),
     LIVE_MINUTES_ONBOARDING_STEP_COUNT - 1,
   );
-  const [sourcesReady, setSourcesReady] = React.useState(
-    () => getLiveMinutesOnboardingScreenSources(locale).length > 0,
-  );
-  const screenSources = React.useMemo(
-    () => getLiveMinutesOnboardingScreenSources(locale),
-    [locale, sourcesReady],
-  );
-  const activeSrc = getLiveMinutesOnboardingScreenSrc(locale, clampedIndex);
-  const [failedSources, setFailedSources] = React.useState<ReadonlySet<string>>(() => new Set());
+  const screenSources = getLiveMinutesOnboardingScreenSources(locale);
 
   React.useEffect(() => {
-    let cancelled = false;
-    void preloadLiveMinutesOnboardingScreens(locale).then(() => {
-      if (!cancelled) setSourcesReady(true);
-    });
-    return () => {
-      cancelled = true;
-    };
+    void preloadLiveMinutesOnboardingScreens(locale);
   }, [locale]);
-
-  const markFailed = React.useCallback((src: string) => {
-    setFailedSources((prev) => {
-      if (prev.has(src)) return prev;
-      const next = new Set(prev);
-      next.add(src);
-      return next;
-    });
-  }, []);
-
-  const availableSources = React.useMemo(
-    () => screenSources.filter((src) => src && !failedSources.has(src)),
-    [failedSources, screenSources],
-  );
-
-  const useScreenshots = availableSources.length > 0;
-  const activeAvailable = Boolean(activeSrc && !failedSources.has(activeSrc));
-
-  if (!useScreenshots || !activeAvailable) {
-    if (import.meta.env.DEV && !activeSrc) {
-      console.warn(
-        `[Live in Minutes] No onboarding screenshot for ${locale} step ${clampedIndex + 1}; using placeholder.`,
-      );
-    }
-    return <>{fallback}</>;
-  }
 
   return (
     <div
@@ -91,7 +48,6 @@ export function LiveInMinutesOnboardingPhone({
         aria-label={demoAriaLabel || getLiveMinutesOnboardingScreenAlt(locale, clampedIndex)}
       >
         {screenSources.map((src, index) => {
-          if (!src || failedSources.has(src)) return null;
           const isActive = index === clampedIndex;
           return (
             <img
@@ -114,7 +70,6 @@ export function LiveInMinutesOnboardingPhone({
                     `[Live in Minutes] Failed to load onboarding screenshot (${locale} step ${index + 1}).`,
                   );
                 }
-                markFailed(src);
               }}
             />
           );

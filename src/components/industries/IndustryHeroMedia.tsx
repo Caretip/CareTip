@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ImgHTMLAttributes } from "react";
 import { INDUSTRY_MEDIA } from "@/app/data/industryMedia";
 import type { IndustryPageId } from "@/app/data/industryPages";
 import {
@@ -50,8 +50,8 @@ export function IndustryHeroMedia({ industryId, alt }: IndustryHeroMediaProps) {
         width={720}
         height={540}
         loading="eager"
-        fetchPriority="high"
         decoding="async"
+        {...({ fetchpriority: "high" } as ImgHTMLAttributes<HTMLImageElement>)}
         className={cn(
           "caretip-industry-page__hero-img",
           ready && "caretip-industry-page__hero-img--ready",

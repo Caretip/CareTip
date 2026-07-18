@@ -1,10 +1,11 @@
-import { BellRing, CheckCircle2, TrendingUp } from "lucide-react";
+import { CheckCircle2, TrendingUp } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import type { IndustryPageId } from "@/app/data/industryPages";
 import { usePrefersReducedMotion } from "@/lib/usePrefersReducedMotion";
 import { cn } from "@/lib/utils";
 
-const FLOAT_ICONS = [CheckCircle2, BellRing, TrendingUp] as const;
+const FLOAT_ICONS = [CheckCircle2, TrendingUp] as const;
+const FLOAT_SLOTS = [1, 3] as const;
 
 type IndustryHeroFloatBadgesProps = {
   industryId: IndustryPageId;
@@ -26,7 +27,7 @@ export function IndustryHeroFloatBadges({ industryId, className }: IndustryHeroF
       data-reduce-motion={reduceMotion ? "true" : "false"}
       aria-hidden
     >
-      {([1, 2, 3] as const).map((n, index) => {
+      {FLOAT_SLOTS.map((n, index) => {
         const Icon = FLOAT_ICONS[index] ?? CheckCircle2;
         return (
           <div

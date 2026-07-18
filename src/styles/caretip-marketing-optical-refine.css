@@ -106,13 +106,22 @@
 /* —— Features cards —— */
 .caretip-features-page .caretip-landing-features-grid {
   gap: var(--caretip-optical-card-gap);
+  align-items: stretch;
+}
+
+.caretip-features-page .caretip-landing-features-grid > li {
+  display: flex;
+  height: 100%;
 }
 
 .caretip-features-page .caretip-landing-feature-card {
+  height: 100%;
+  width: 100%;
   border-radius: var(--caretip-optical-card-radius);
+  border-color: rgb(212 212 216 / 0.98);
   box-shadow: var(
     --caretip-marketing-shadow-card,
-    0 1px 2px rgb(15 23 42 / 0.03),
+    0 1px 2px rgb(15 23 42 / 0.04),
     0 10px 28px -14px rgb(15 23 42 / 0.1)
   );
   transition:
@@ -121,34 +130,59 @@
     transform 0.28s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
+html.dark .caretip-features-page .caretip-landing-feature-card {
+  border-color: rgb(82 82 91 / 0.95);
+}
+
 @media (hover: hover) {
   .caretip-features-page .caretip-landing-feature-card:hover {
-    border-color: rgb(233 120 28 / 0.28);
-    box-shadow: var(
-      --caretip-marketing-shadow-card-hover,
-      0 2px 4px rgb(15 23 42 / 0.04),
-      0 18px 40px -16px rgb(233 120 28 / 0.14)
-    );
-    transform: translateY(-2px);
+    border-color: rgb(233 120 28 / 0.26);
+    box-shadow:
+      0 1px 2px rgb(15 23 42 / 0.04),
+      0 14px 32px -18px rgb(15 23 42 / 0.12),
+      0 8px 20px -16px rgb(233 120 28 / 0.12);
+    transform: translateY(-1px);
   }
 }
 
 .caretip-features-page .caretip-landing-feature-card > div {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
   gap: 0;
-  padding: var(--caretip-marketing-card-pad, 1.5rem);
+  /* Slightly more breathing room; keep card footprint intentional */
+  padding: 1.6rem 1.55rem 1.7rem;
+}
+
+@media (min-width: 640px) {
+  .caretip-features-page .caretip-landing-feature-card > div {
+    padding: 1.7rem 1.65rem 1.8rem;
+  }
 }
 
 .caretip-features-page .caretip-landing-feature-accent {
-  margin-bottom: 0.85rem;
+  margin-bottom: 1rem;
+}
+
+/* Icon + heading row — shared top baseline across the grid */
+.caretip-features-page .caretip-landing-feature-card > div > .mb-2 {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  margin-top: 0.1rem;
+  margin-bottom: 0.7rem;
+  padding-left: 0.1rem;
+  min-height: 1.5rem;
 }
 
 .caretip-features-page .caretip-landing-feature-card h2 {
+  margin: 0;
   line-height: 1.25;
   letter-spacing: -0.015em;
 }
 
 .caretip-features-page .caretip-landing-feature-card p {
-  margin-top: 0.35rem;
+  margin-top: 0;
   line-height: 1.65;
 }
 
@@ -162,15 +196,65 @@
   letter-spacing: -0.022em;
 }
 
+.caretip-industry-page__steps-grid {
+  align-items: stretch;
+}
+
 .caretip-industry-page__step {
-  padding: 1.5rem 1.4rem;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  padding: 1.6rem 1.55rem 1.7rem;
   border-radius: var(--caretip-optical-card-radius);
+  border-color: rgb(212 212 216 / 0.98);
+  box-shadow:
+    0 1px 2px rgb(15 23 42 / 0.04),
+    0 10px 28px -16px rgb(15 23 42 / 0.1);
+  transition:
+    border-color 0.28s cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 0.28s cubic-bezier(0.22, 1, 0.36, 1),
+    transform 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+html.dark .caretip-industry-page__step {
+  border-color: rgb(82 82 91 / 0.95);
+}
+
+@media (hover: hover) {
+  .caretip-industry-page__step:hover {
+    border-color: rgb(233 120 28 / 0.26);
+    box-shadow:
+      0 1px 2px rgb(15 23 42 / 0.04),
+      0 14px 32px -18px rgb(15 23 42 / 0.12),
+      0 8px 20px -16px rgb(233 120 28 / 0.12);
+    transform: translateY(-1px);
+  }
 }
 
 .caretip-industry-page__step-icon {
   width: 2.5rem;
   height: 2.5rem;
+  margin-top: 0.1rem;
+  margin-left: 0.1rem;
   border-radius: var(--caretip-marketing-icon-radius, 0.875rem);
+}
+
+.caretip-industry-page__step-num {
+  margin-top: 0.15rem;
+  min-height: 1rem;
+}
+
+.caretip-industry-page__step-title {
+  margin: 0;
+  min-height: 1.5em;
+  line-height: 1.3;
+  letter-spacing: -0.015em;
+}
+
+.caretip-industry-page__step-body {
+  margin: 0;
+  line-height: 1.6;
 }
 
 .caretip-industry-page__benefit {

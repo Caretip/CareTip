@@ -146,8 +146,6 @@ export function IndustryPageTemplate({ industryId }: IndustryPageTemplateProps) 
                 <img
                   src={media.benefits.webp}
                   alt={t(`${prefix}.benefitsAlt`)}
-                  width={640}
-                  height={520}
                   loading="lazy"
                   decoding="async"
                   className="caretip-industry-page__benefits-img"

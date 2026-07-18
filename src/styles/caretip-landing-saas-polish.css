@@ -197,7 +197,7 @@ html:not(.dark) .caretip-landing.caretip-landing--premium {
 @media (hover: hover) {
   .caretip-landing.caretip-landing--premium .caretip-landing-card:not(.caretip-landing-ecosystem-card):hover,
   .caretip-landing.caretip-landing--premium .caretip-split-showcase-content-panel--mobile:hover {
-    transform: translateY(-3px);
+    transform: translateY(-1px);
     box-shadow: var(--caretip-saas-shadow-hover);
   }
 }

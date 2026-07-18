@@ -1,5 +1,5 @@
-import restaurantWebp from "../../../images/gastronomy01.webp";
-import restaurantAvif from "../../../images/gastronomy01.avif";
+import restaurantWebp from "../../../images/new-gastronomy001.webp";
+import restaurantAvif from "../../../images/new-gastronomy001.avif";
 import logisticsWebp from "../../../images/Logistik.webp";
 import logisticsAvif from "../../../images/Logistik.avif";
 import midwivesWebp from "../../../images/new-mid.webp";
@@ -12,6 +12,12 @@ import repWebp from "../../../images/rep.webp";
 import repAvif from "../../../images/rep.avif";
 import industryBenefitWebp from "../../../images/industry-benefit.webp";
 import industryBenefitAvif from "../../../images/industry-benefit.avif";
+import mockupAdjusted002Webp from "../../../images/mockupadjusted-002.webp";
+import mockupAdjusted002Avif from "../../../images/mockupadjusted-002.avif";
+import freelanMidwivesWebp from "../../../images/freelan-midwives.webp";
+import freelanMidwivesAvif from "../../../images/freelan-midwives.avif";
+import mockupBenefit002Webp from "../../../images/mockup-benefit002.webp";
+import mockupBenefit002Avif from "../../../images/mockup-benefit002.avif";
 import type { IndustryPageId } from "@/app/data/industryPages";
 
 export type IndustryMedia = {
@@ -20,6 +26,9 @@ export type IndustryMedia = {
 };
 
 const INDUSTRY_BENEFIT = { webp: industryBenefitWebp, avif: industryBenefitAvif };
+const HOTELS_BENEFIT = { webp: mockupBenefit002Webp, avif: mockupBenefit002Avif };
+const MOCKUP_ADJUSTED_002 = { webp: mockupAdjusted002Webp, avif: mockupAdjusted002Avif };
+const FREELAN_MIDWIVES_BENEFIT = { webp: freelanMidwivesWebp, avif: freelanMidwivesAvif };
 
 /** Shared media map — layout identical; assets differ per industry. */
 export const INDUSTRY_MEDIA: Record<IndustryPageId, IndustryMedia> = {
@@ -29,15 +38,15 @@ export const INDUSTRY_MEDIA: Record<IndustryPageId, IndustryMedia> = {
   },
   hotels: {
     hero: { webp: repWebp, avif: repAvif },
-    benefits: INDUSTRY_BENEFIT,
+    benefits: HOTELS_BENEFIT,
   },
   logistics: {
     hero: { webp: logisticsWebp, avif: logisticsAvif },
-    benefits: INDUSTRY_BENEFIT,
+    benefits: MOCKUP_ADJUSTED_002,
   },
   midwives: {
     hero: { webp: midwivesWebp, avif: midwivesAvif },
-    benefits: INDUSTRY_BENEFIT,
+    benefits: FREELAN_MIDWIVES_BENEFIT,
   },
   fairs: {
     hero: { webp: fairsWebp, avif: fairsAvif },
@@ -45,6 +54,6 @@ export const INDUSTRY_MEDIA: Record<IndustryPageId, IndustryMedia> = {
   },
   "field-service": {
     hero: { webp: fieldServiceWebp, avif: fieldServiceAvif },
-    benefits: INDUSTRY_BENEFIT,
+    benefits: MOCKUP_ADJUSTED_002,
   },
 };

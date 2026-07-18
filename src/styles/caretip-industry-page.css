@@ -260,15 +260,19 @@ html.dark .caretip-industry-page__float {
 .caretip-industry-page__step {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
-  padding: 1.35rem 1.4rem;
+  gap: 0.55rem;
+  height: 100%;
+  padding: 1.6rem 1.55rem 1.7rem;
   border-radius: 1rem;
-  border: 1px solid rgb(228 228 231 / 0.95);
+  border: 1px solid rgb(212 212 216 / 0.98);
   background: hsl(var(--card));
+  box-shadow:
+    0 1px 2px rgb(15 23 42 / 0.04),
+    0 10px 28px -16px rgb(15 23 42 / 0.1);
 }
 
 html.dark .caretip-industry-page__step {
-  border-color: rgb(63 63 70 / 0.95);
+  border-color: rgb(82 82 91 / 0.95);
 }
 
 .caretip-industry-page__step-icon {
@@ -277,6 +281,8 @@ html.dark .caretip-industry-page__step {
   justify-content: center;
   width: 2.5rem;
   height: 2.5rem;
+  margin-top: 0.1rem;
+  margin-left: 0.1rem;
   border-radius: var(--caretip-marketing-icon-radius, 0.875rem);
   color: var(--industry-accent);
   background: rgb(233 120 28 / 0.12);
@@ -399,24 +405,39 @@ html.dark .caretip-industry-page__benefits {
 }
 
 .caretip-industry-page__benefits-media {
-  overflow: hidden;
-  border-radius: 1.25rem;
-  border: 1px solid rgb(228 228 231 / 0.95);
-  aspect-ratio: 5 / 4;
-  background: rgb(245 245 244);
-  box-shadow: 0 16px 36px -26px rgb(15 23 42 / 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+  /* No card chrome — phone mockups render as the visual themselves */
+  overflow: visible;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  aspect-ratio: auto;
 }
 
 html.dark .caretip-industry-page__benefits-media {
-  border-color: rgb(63 63 70 / 0.95);
-  background: rgb(39 39 42);
+  border: none;
+  background: transparent;
 }
 
 .caretip-industry-page__benefits-img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
+  width: auto;
+  max-width: min(100%, 26rem);
+  height: auto;
+  max-height: min(72vh, 38rem);
+  object-fit: contain;
+  object-position: center;
   display: block;
+}
+
+@media (min-width: 900px) {
+  .caretip-industry-page__benefits-img {
+    max-width: min(100%, 30rem);
+    max-height: min(78vh, 42rem);
+  }
 }
 
 /* —— FAQ —— */
