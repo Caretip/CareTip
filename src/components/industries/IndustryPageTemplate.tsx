@@ -169,7 +169,6 @@ export function IndustryPageTemplate({ industryId }: IndustryPageTemplateProps) 
                     <span className="caretip-industry-page__step-icon" aria-hidden>
                       <Icon strokeWidth={1.75} />
                     </span>
-                    <p className="caretip-industry-page__step-num">{step.n}</p>
                     <h3 className="caretip-industry-page__step-title">{step.title}</h3>
                     <p className="caretip-industry-page__step-body">{step.body}</p>
                   </li>

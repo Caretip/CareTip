@@ -41,10 +41,10 @@
 }
 
 .caretip-landing .caretip-industries-teaser__benefit {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 0.95rem;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: start;
+  gap: 0.85rem 1rem;
   height: 100%;
   padding: 0.25rem 0.15rem;
   border: none;
@@ -75,11 +75,11 @@ html.dark .caretip-landing .caretip-industries-teaser__benefit {
 .caretip-landing .caretip-industries-teaser__benefit-icon {
   display: inline-flex;
   margin-top: 0.1rem;
-  margin-left: 0.1rem;
   align-items: center;
   justify-content: center;
   width: 2.75rem;
   height: 2.75rem;
+  flex-shrink: 0;
   border-radius: 0.875rem;
   color: var(--caretip-marketing-icon-chip-fg, rgb(24 24 27));
   background: var(--caretip-marketing-icon-chip-bg, rgb(233 120 28));
@@ -99,9 +99,15 @@ html.dark .caretip-landing .caretip-industries-teaser__benefit-icon {
   height: 1.25rem;
 }
 
+.caretip-landing .caretip-industries-teaser__benefit-copy {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
 .caretip-landing .caretip-industries-teaser__benefit-title {
   margin: 0;
-  min-height: 1.5em;
   font-size: 1.0625rem;
   font-weight: 700;
   letter-spacing: -0.02em;
@@ -112,7 +118,6 @@ html.dark .caretip-landing .caretip-industries-teaser__benefit-icon {
 
 .caretip-landing .caretip-industries-teaser__benefit-body {
   margin: 0;
-  flex: 1;
   font-size: 0.9375rem;
   line-height: 1.6;
   color: hsl(var(--muted-foreground));

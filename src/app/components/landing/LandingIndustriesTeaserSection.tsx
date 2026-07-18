@@ -74,12 +74,14 @@ export function LandingIndustriesTeaserSection() {
                 <span className="caretip-industries-teaser__benefit-icon" aria-hidden>
                   <Icon strokeWidth={1.75} />
                 </span>
-                <h3 className="caretip-industries-teaser__benefit-title">
-                  {t(`${prefix}.${benefit.titleKey}`)}
-                </h3>
-                <p className="caretip-industries-teaser__benefit-body">
-                  {t(`${prefix}.${benefit.bodyKey}`)}
-                </p>
+                <div className="caretip-industries-teaser__benefit-copy">
+                  <h3 className="caretip-industries-teaser__benefit-title">
+                    {t(`${prefix}.${benefit.titleKey}`)}
+                  </h3>
+                  <p className="caretip-industries-teaser__benefit-body">
+                    {t(`${prefix}.${benefit.bodyKey}`)}
+                  </p>
+                </div>
               </LandingReveal>
             );
           })}
