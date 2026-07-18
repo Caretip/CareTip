@@ -262,17 +262,15 @@ html.dark .caretip-industry-page__float {
   flex-direction: column;
   gap: 0.55rem;
   height: 100%;
-  padding: 1.6rem 1.55rem 1.7rem;
-  border-radius: 1rem;
-  border: 1px solid rgb(212 212 216 / 0.98);
-  background: hsl(var(--card));
-  box-shadow:
-    0 1px 2px rgb(15 23 42 / 0.04),
-    0 10px 28px -16px rgb(15 23 42 / 0.1);
+  padding: 0.25rem 0.15rem;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
 }
 
 html.dark .caretip-industry-page__step {
-  border-color: rgb(82 82 91 / 0.95);
+  border-color: transparent;
 }
 
 .caretip-industry-page__step-icon {
@@ -284,8 +282,8 @@ html.dark .caretip-industry-page__step {
   margin-top: 0.1rem;
   margin-left: 0.1rem;
   border-radius: var(--caretip-marketing-icon-radius, 0.875rem);
-  color: var(--industry-accent);
-  background: rgb(233 120 28 / 0.12);
+  color: var(--caretip-marketing-icon-chip-fg, rgb(24 24 27));
+  background: var(--caretip-marketing-icon-chip-bg, rgb(233 120 28));
 }
 
 .caretip-industry-page__step-icon svg {
@@ -381,8 +379,8 @@ html.dark .caretip-industry-page__benefits {
   width: 2.25rem;
   height: 2.25rem;
   border-radius: 0.65rem;
-  color: var(--industry-accent);
-  background: rgb(233 120 28 / 0.12);
+  color: var(--caretip-marketing-icon-chip-fg, rgb(24 24 27));
+  background: var(--caretip-marketing-icon-chip-bg, rgb(233 120 28));
 }
 
 .caretip-industry-page__benefit-icon svg {

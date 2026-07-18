@@ -21,14 +21,14 @@ export function JourneyPillarIcon({ iconKey, className, variant = "default" }: J
   const shellClass = cn(
     variant === "obsidian"
       ? "caretip-public-obsidian-icon"
-      : "flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-primary/[0.12] ring-1 ring-primary/15 sm:h-8 sm:w-8",
+      : "caretip-marketing-icon-chip flex h-7 w-7 shrink-0 items-center justify-center rounded-lg sm:h-8 sm:w-8",
     className,
   );
 
   const iconClass =
     variant === "obsidian"
       ? "h-3.5 w-3.5 sm:h-4 sm:w-4"
-      : "h-4 w-4 text-primary/95 sm:h-[1.125rem] sm:w-[1.125rem]";
+      : "h-4 w-4 sm:h-[1.125rem] sm:w-[1.125rem]";
 
   const Lucide = JOURNEY_PILLAR_LUCIDE[iconKey];
   if (Lucide) {
@@ -42,11 +42,7 @@ export function JourneyPillarIcon({ iconKey, className, variant = "default" }: J
   if (isCareIconName(iconKey)) {
     return (
       <span className={shellClass} aria-hidden>
-        <CareIcon
-          name={iconKey}
-          size="sm"
-          className={variant === "obsidian" ? undefined : "text-primary/95"}
-        />
+        <CareIcon name={iconKey} size="sm" />
       </span>
     );
   }

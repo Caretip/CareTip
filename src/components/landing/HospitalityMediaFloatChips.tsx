@@ -101,8 +101,8 @@ export function HospitalityMediaFloatChips() {
             }
           >
             <div className="flex items-center gap-1.5 sm:gap-2">
-              <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-md bg-primary/10 ring-1 ring-primary/12 sm:h-6 sm:w-6">
-                <Icon className="h-2.5 w-2.5 text-primary sm:h-3 sm:w-3" strokeWidth={2.25} />
+              <span className="caretip-marketing-icon-chip flex h-5 w-5 shrink-0 items-center justify-center rounded-md sm:h-6 sm:w-6">
+                <Icon className="h-2.5 w-2.5 sm:h-3 sm:w-3" strokeWidth={2.25} />
               </span>
               <span className="block font-sans text-[10px] font-medium leading-snug text-neutral-800 sm:text-[11px] dark:text-neutral-100">
                 {t(chip.labelKey)}

@@ -63,8 +63,8 @@ export function AccountSetupMoment({ className }: { className?: string }) {
       <div className="flex h-full flex-col justify-center gap-3 p-5 sm:p-6">
         <div className="rounded-xl border border-neutral-200/80 bg-white p-4 shadow-sm dark:border-neutral-700 dark:bg-neutral-900">
           <div className="mb-3 flex items-center gap-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10">
-              <Building2 className="h-4 w-4 text-primary" />
+            <div className="caretip-marketing-icon-chip flex h-8 w-8 items-center justify-center rounded-lg">
+              <Building2 className="h-4 w-4" />
             </div>
             <span className="text-xs font-semibold uppercase tracking-[0.12em] text-neutral-500">
               {t("staticPages.howItWorks.mock.workspace")}
@@ -139,8 +139,8 @@ export function EmployeeTipMoment({ className, imageSrc }: { className?: string;
       <div className="relative flex h-full flex-col justify-between p-4 sm:p-5">
         <div className="ml-auto max-w-[88%] rounded-2xl border border-neutral-200/80 bg-white p-3 shadow-[0_8px_28px_-8px_rgba(15,23,42,0.15)] dark:border-neutral-700 dark:bg-neutral-900">
           <div className="flex items-start gap-2.5">
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/12">
-              <Bell className="h-4 w-4 text-primary" />
+            <div className="caretip-marketing-icon-chip flex h-9 w-9 shrink-0 items-center justify-center rounded-full">
+              <Bell className="h-4 w-4" />
             </div>
             <div className="min-w-0">
               <p className="text-[11px] font-semibold text-neutral-900 dark:text-neutral-50">

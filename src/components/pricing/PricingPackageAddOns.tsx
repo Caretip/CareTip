@@ -27,7 +27,7 @@ export function PricingPackageAddOns({ className }: PricingPackageAddOnsProps) {
       aria-labelledby="pricing-additional-services-heading"
     >
       <div className="flex items-start gap-3">
-        <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+        <span className="caretip-marketing-icon-chip mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg">
           <Briefcase className="h-4 w-4" aria-hidden />
         </span>
         <div>

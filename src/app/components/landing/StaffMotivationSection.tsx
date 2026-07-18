@@ -483,11 +483,7 @@ export function StaffMotivationSection() {
                     ].join(" ")}
                   >
                     <div className="flex items-start gap-4">
-                      <div
-                        className={[
-                          "relative flex h-12 w-12 items-center justify-center rounded-3xl ring-1 ring-black/[0.08] bg-primary/10",
-                        ].join(" ")}
-                      >
+                      <div className="caretip-marketing-icon-chip relative flex h-12 w-12 items-center justify-center rounded-3xl">
                         {feature.title === "Personal goals" ? (
                           <Orb3D />
                         ) : feature.title === "Recognition" ? (
@@ -495,7 +491,7 @@ export function StaffMotivationSection() {
                         ) : feature.title === "Guest ratings" ? (
                           <Orb3D />
                         ) : (
-                          <feature.icon className="h-6 w-6 text-primary" />
+                          <feature.icon className="h-6 w-6" />
                         )}
                       </div>
 

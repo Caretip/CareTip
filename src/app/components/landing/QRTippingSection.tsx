@@ -106,8 +106,8 @@ export function QRTippingSection() {
                     transition={{ duration: 0.5, delay: index * 0.1 }}
                     className="flex items-start gap-4"
                   >
-                    <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center flex-shrink-0">
-                      <Icon className="w-6 h-6 text-primary" />
+                    <div className="caretip-marketing-icon-chip w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0">
+                      <Icon className="w-6 h-6" />
                     </div>
                     <div>
                       <h3 className="text-lg font-semibold text-neutral-900 dark:text-neutral-100 mb-1">
@@ -170,8 +170,8 @@ export function QRTippingSection() {
               className="relative mt-4 sm:absolute sm:mt-0 sm:-bottom-6 sm:-left-6 sm:max-w-[calc(100vw-2rem)] bg-white rounded-3xl p-4 shadow-[0_10px_30px_rgba(0,0,0,0.06)] border border-gray-200 dark:border-neutral-800 dark:bg-neutral-900"
             >
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-primary/10 rounded-2xl flex items-center justify-center">
-                  <CheckCircle className="w-5 h-5 text-primary" />
+                <div className="caretip-marketing-icon-chip w-10 h-10 rounded-2xl flex items-center justify-center">
+                  <CheckCircle className="w-5 h-5" />
                 </div>
                 <div>
                   <p className="text-xs text-neutral-600 dark:text-neutral-400">Typical guest flow</p>

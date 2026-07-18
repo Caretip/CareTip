@@ -70,8 +70,8 @@ export function HowItWorksPage() {
           </div>
 
           <div className={cn(publicPageUi.card, publicPageUi.cardPad)}>
-            <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-xl bg-primary/10">
-              <Zap className="h-5 w-5 text-primary" aria-hidden />
+            <div className="caretip-marketing-icon-chip mb-4 flex h-11 w-11 items-center justify-center rounded-xl">
+              <Zap className="h-5 w-5" aria-hidden />
             </div>
             <h3 className="mb-2 text-lg font-semibold text-foreground">
               {t("staticPages.howItWorks.trust2Title")}

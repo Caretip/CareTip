@@ -52,7 +52,7 @@ export function LandingSpeedSection() {
             />
             <div className="absolute bottom-4 left-4 right-4 flex items-center justify-between gap-3 rounded-2xl border border-gray-200 bg-white/95 p-4 shadow-[0_10px_30px_rgba(0,0,0,0.06)] backdrop-blur-sm sm:left-6 sm:right-6 sm:bottom-6 dark:border-neutral-800 dark:bg-neutral-900/95">
               <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                <div className="caretip-marketing-icon-chip flex h-10 w-10 items-center justify-center rounded-xl">
                   <Timer className="h-5 w-5" />
                 </div>
                 <div>

@@ -32,8 +32,8 @@ export function FeedbackSection() {
             {/* Features */}
             <div className="space-y-6">
               <div className="flex items-start gap-4">
-                <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center flex-shrink-0">
-                  <Star className="w-6 h-6 text-primary" />
+                <div className="caretip-marketing-icon-chip w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0">
+                  <Star className="w-6 h-6" />
                 </div>
                 <div>
                   <h3 className="text-lg font-semibold text-black mb-1">
@@ -46,8 +46,8 @@ export function FeedbackSection() {
               </div>
 
               <div className="flex items-start gap-4">
-                <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center flex-shrink-0">
-                  <MessageSquare className="w-6 h-6 text-primary" />
+                <div className="caretip-marketing-icon-chip w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0">
+                  <MessageSquare className="w-6 h-6" />
                 </div>
                 <div>
                   <h3 className="text-lg font-semibold text-black mb-1">
@@ -60,8 +60,8 @@ export function FeedbackSection() {
               </div>
 
               <div className="flex items-start gap-4">
-                <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center flex-shrink-0">
-                  <TrendingUp className="w-6 h-6 text-primary" />
+                <div className="caretip-marketing-icon-chip w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0">
+                  <TrendingUp className="w-6 h-6" />
                 </div>
                 <div>
                   <h3 className="text-lg font-semibold text-black mb-1">
@@ -170,8 +170,8 @@ export function FeedbackSection() {
                     <p className="mb-1 text-sm text-black/60">Average Rating</p>
                     <p className="text-4xl font-bold text-black">N/A</p>
                   </div>
-                  <div className="flex h-16 w-16 items-center justify-center rounded-3xl bg-primary/10">
-                    <Star className="h-8 w-8 fill-primary text-primary" />
+                  <div className="caretip-marketing-icon-chip flex h-16 w-16 items-center justify-center rounded-3xl">
+                    <Star className="h-8 w-8" />
                   </div>
                 </div>
                 <div className="flex items-center gap-4 text-sm">

@@ -1,0 +1,87 @@
+/**
+ * Shared marketing icon chips — solid CareTip orange background, black glyph.
+ * Use `.caretip-marketing-icon-chip` in TSX, or match the listed selectors.
+ */
+
+:root {
+  --caretip-marketing-icon-chip-bg: rgb(233 120 28);
+  --caretip-marketing-icon-chip-fg: rgb(24 24 27);
+}
+
+.caretip-marketing-icon-chip,
+.caretip-industry-page__step-icon,
+.caretip-industry-page__benefit-icon,
+.caretip-industry-card__icon,
+.caretip-industries-teaser__benefit-icon,
+.caretip-hospitality-feature-icon,
+.caretip-marketing-icon-wrap,
+.caretip-features-hero-v2__chip-icon,
+.caretip-features-hero-v2__visual-card-icon--live,
+.caretip-how-hero-v2__timeline-icon,
+.caretip-pricing-hero-v2__feature-icon,
+.caretip-pricing-trust--subtle .caretip-pricing-trust__icon,
+.caretip-pricing-tier-card__tier-icon,
+.caretip-pricing-tier-features__check,
+.caretip-pricing-highlights__icon,
+.caretip-landing .caretip-hero-benefits__check,
+.caretip-motivation-activity__icon--tip {
+  background: var(--caretip-marketing-icon-chip-bg) !important;
+  color: var(--caretip-marketing-icon-chip-fg) !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+}
+
+.caretip-marketing-icon-chip svg,
+.caretip-industry-page__step-icon svg,
+.caretip-industry-page__benefit-icon svg,
+.caretip-industry-card__icon svg,
+.caretip-industries-teaser__benefit-icon svg,
+.caretip-hospitality-feature-icon svg,
+.caretip-marketing-icon-wrap svg,
+.caretip-features-hero-v2__chip-icon svg,
+.caretip-features-hero-v2__visual-card-icon--live svg,
+.caretip-how-hero-v2__timeline-icon svg,
+.caretip-pricing-hero-v2__feature-icon svg,
+.caretip-pricing-trust--subtle .caretip-pricing-trust__icon svg,
+.caretip-pricing-tier-card__tier-icon svg,
+.caretip-pricing-tier-features__check svg,
+.caretip-pricing-highlights__icon svg,
+.caretip-landing .caretip-hero-benefits__check svg,
+.caretip-motivation-activity__icon--tip svg,
+.caretip-marketing-icon-chip .lucide {
+  color: var(--caretip-marketing-icon-chip-fg) !important;
+  stroke: var(--caretip-marketing-icon-chip-fg);
+}
+
+html.dark .caretip-marketing-icon-chip,
+html.dark .caretip-industry-page__step-icon,
+html.dark .caretip-industry-page__benefit-icon,
+html.dark .caretip-industry-card__icon,
+html.dark .caretip-industries-teaser__benefit-icon,
+html.dark .caretip-hospitality-feature-icon,
+html.dark .caretip-marketing-icon-wrap,
+html.dark .caretip-features-hero-v2__chip-icon,
+html.dark .caretip-features-hero-v2__visual-card-icon--live,
+html.dark .caretip-how-hero-v2__timeline-icon,
+html.dark .caretip-pricing-hero-v2__feature-icon,
+html.dark .caretip-pricing-trust--subtle .caretip-pricing-trust__icon,
+html.dark .caretip-pricing-tier-card__tier-icon,
+html.dark .caretip-pricing-tier-features__check,
+html.dark .caretip-pricing-highlights__icon,
+html.dark .caretip-landing .caretip-hero-benefits__check,
+html.dark .caretip-motivation-activity__icon--tip {
+  background: var(--caretip-marketing-icon-chip-bg) !important;
+  color: var(--caretip-marketing-icon-chip-fg) !important;
+}
+
+/* Flat pricing hero icons stay glyph-only (no filled chip). */
+.caretip-pricing-hero-v2__features--flat .caretip-pricing-hero-v2__feature-icon {
+  background: transparent !important;
+  color: var(--caretip-marketing-icon-chip-fg) !important;
+  box-shadow: none !important;
+}
+
+html.dark .caretip-pricing-hero-v2__features--flat .caretip-pricing-hero-v2__feature-icon {
+  background: transparent !important;
+  color: var(--caretip-marketing-icon-chip-fg) !important;
+}
