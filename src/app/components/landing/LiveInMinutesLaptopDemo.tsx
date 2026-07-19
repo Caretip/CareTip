@@ -77,7 +77,7 @@ export function LiveInMinutesLaptopDemo({
         </LandingReveal>
 
         {landingCopyVisible(caption) ? (
-          <p className="caretip-live-minutes-caption mt-1 font-sans text-[12px] leading-snug tracking-tight text-neutral-600 dark:text-neutral-400 sm:mt-1.5 sm:text-[13px] lg:text-sm">
+          <p className="caretip-live-minutes-caption font-sans text-[12px] leading-snug tracking-tight text-neutral-600 dark:text-neutral-400 sm:text-[13px] lg:text-sm">
             {caption}
           </p>
         ) : null}

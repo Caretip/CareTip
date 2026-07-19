@@ -65,19 +65,51 @@ type QrStudioDesignerProps = {
   businessId: string | null | undefined;
   businessName: string;
   canEdit: boolean;
+  /** Which studio step to open (e.g. branding route → `"branding"`). */
+  initialSection?: StudioSection;
 };
 
-export function QrStudioDesigner({ businessId, businessName, canEdit }: QrStudioDesignerProps) {
+function isStudioSection(value: string | null | undefined): value is StudioSection {
+  return value === "design" || value === "branding" || value === "qr" || value === "content" || value === "export";
+}
+
+export function QrStudioDesigner({
+  businessId,
+  businessName,
+  canEdit,
+  initialSection = "design",
+}: QrStudioDesignerProps) {
   const { t } = useTranslation();
   const logoInputId = useId();
   const studio = useQrStudioDesign({ businessId, businessName, canEdit });
+  const sectionPanelRef = useRef<HTMLDivElement>(null);
 
-  const [section, setSection] = useState<StudioSection>("design");
+  const [section, setSection] = useState<StudioSection>(initialSection);
   const [previewUrl, setPreviewUrl] = useState("");
   const [previewLoading, setPreviewLoading] = useState(false);
   const [reliabilityReport, setReliabilityReport] = useState<QrReliabilityReport | null>(null);
   const [editingVenueName, setEditingVenueName] = useState(false);
   const venueNameInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (!isStudioSection(initialSection)) return;
+    setSection(initialSection);
+  }, [initialSection]);
+
+  const selectSection = useCallback((id: StudioSection) => {
+    setSection(id);
+    window.requestAnimationFrame(() => {
+      sectionPanelRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+  }, []);
+
+  useEffect(() => {
+    if (initialSection !== "branding") return;
+    const timer = window.setTimeout(() => {
+      sectionPanelRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 80);
+    return () => window.clearTimeout(timer);
+  }, [initialSection, studio.loading]);
 
   const refreshPreview = useCallback(async () => {
     setPreviewLoading(true);
@@ -169,13 +201,14 @@ export function QrStudioDesigner({ businessId, businessName, canEdit }: QrStudio
               <button
                 key={id}
                 type="button"
-                onClick={() => setSection(id)}
+                onClick={() => selectSection(id)}
                 className={cn(
                   "flex min-h-[44px] shrink-0 touch-manipulation items-center gap-2 rounded-lg border px-3 py-2 text-left text-sm font-medium transition-colors xl:shrink xl:min-h-0",
                   section === id
                     ? "border-primary/40 bg-primary/[0.06] text-foreground"
                     : "border-transparent bg-muted/40 text-muted-foreground hover:bg-muted/70 hover:text-foreground",
                 )}
+                aria-current={section === id ? "page" : undefined}
               >
                 <Icon className="h-4 w-4 shrink-0" aria-hidden />
                 {t(labelKey)}
@@ -184,6 +217,11 @@ export function QrStudioDesigner({ businessId, businessName, canEdit }: QrStudio
             </nav>
           </div>
 
+          <div
+            ref={sectionPanelRef}
+            id={`qr-studio-section-${section}`}
+            className="min-w-0 scroll-mt-24"
+          >
           <Card className={cn(businessUi.cardStatic, "min-w-0 overflow-hidden")}>
             <CardHeader className="space-y-1 border-b border-neutral-100/90 px-4 pb-3 pt-4 sm:px-6">
               <div className="flex items-start gap-2.5">
@@ -581,6 +619,7 @@ export function QrStudioDesigner({ businessId, businessName, canEdit }: QrStudio
               ) : null}
             </CardContent>
           </Card>
+          </div>
         </aside>
 
         <main className="order-1 row-start-1 min-w-0 w-full max-w-full xl:col-start-2 xl:row-start-1">

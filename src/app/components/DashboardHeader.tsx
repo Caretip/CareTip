@@ -8,6 +8,8 @@ import { BusinessLogoMark } from "./business/BusinessLogoMark";
 import { ProfileAvatar } from "./ui/profile-avatar";
 import { useBusinessVenueBrand } from "../hooks/useBusinessVenueBrand";
 import { NotificationBell } from "@/app/components/notifications/NotificationBell";
+import { ThemeQuickToggle } from "@/app/components/theme/ThemeQuickToggle";
+import { LanguageSwitcher } from "@/components/i18n/LanguageSwitcher";
 import {
   DashboardHeaderSearchDesktop,
   DashboardHeaderSearchMobileToggle,
@@ -23,6 +25,10 @@ interface DashboardHeaderProps {
 
 const headerIconBtn =
   "caretip-dashboard-header-icon-btn inline-flex shrink-0 touch-manipulation items-center justify-center rounded-lg transition-colors hover:bg-muted active:bg-muted/80";
+
+/** Desktop-only polish for theme/language pills (never shown below lg). */
+const headerControlBtn =
+  "max-lg:min-h-9 max-lg:min-w-9 max-lg:rounded-lg max-lg:px-2 max-lg:py-1.5 max-lg:text-xs";
 
 function DashboardHeaderBar({
   onMenuClick,
@@ -86,6 +92,12 @@ function DashboardHeaderBar({
                 "relative min-h-9 min-w-9 p-1.5 lg:min-h-11 lg:min-w-11 lg:rounded-xl lg:p-2",
               )}
             />
+          ) : null}
+          {showShellControls ? (
+            <div className="hidden lg:contents">
+              <ThemeQuickToggle className={headerControlBtn} />
+              <LanguageSwitcher variant="dashboard" className={headerControlBtn} />
+            </div>
           ) : null}
 
           {isBusinessManager ? (

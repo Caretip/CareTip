@@ -14,6 +14,7 @@ export function QrStudioBrandingPage() {
         businessId={user?.businessId}
         businessName={user?.businessName ?? t("dashboard.venueDashboardFallback")}
         canEdit
+        initialSection="branding"
       />
     </FeatureGate>
   );

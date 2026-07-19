@@ -646,7 +646,7 @@ html.dark .caretip-landing #how-it-works .caretip-live-minutes-step--active {
   }
 
   .caretip-landing #how-it-works .caretip-live-minutes-caption {
-    margin-top: 0.375rem;
+    margin-top: -0.125rem;
     font-size: 0.75rem;
   }
 
@@ -728,7 +728,7 @@ html.dark .caretip-landing #how-it-works .caretip-live-minutes-step--active {
 .caretip-landing #how-it-works .caretip-live-minutes-caption {
   width: 100%;
   max-width: var(--caretip-onboarding-slot-w);
-  margin-top: 0.375rem;
+  margin-top: -0.125rem;
   margin-inline: auto;
   text-align: center;
   text-wrap: balance;
@@ -812,7 +812,7 @@ html.dark .caretip-landing #how-it-works .caretip-live-minutes-step--active {
   }
 
   .caretip-landing #how-it-works .caretip-live-minutes-caption {
-    margin-top: 0.375rem;
+    margin-top: -0.25rem;
   }
 }
 

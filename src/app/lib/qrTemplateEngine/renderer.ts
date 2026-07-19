@@ -3,7 +3,6 @@
  * Used by preview, PNG export, and PDF export (via qrBranded).
  */
 
-import caretipLogoUrl from "@/assets/brand/App-Icon_L.png";
 import {
   maxSafeLogoWidth,
   QR_ERROR_CORRECTION_LEVEL,
@@ -523,8 +522,9 @@ async function drawLogoField(
   canvasW: number,
   canvasH: number,
 ): Promise<void> {
-  const src = logoUrl ?? caretipLogoUrl;
-  const img = await loadImage(src);
+  // Business logo only — never substitute CareTip branding on the QR card.
+  if (!logoUrl) return;
+  const img = await loadImage(logoUrl);
   if (!img?.naturalWidth) return;
   const { x, y, w, h } = absPosition(pos, canvasW, canvasH);
   const ratio = img.naturalHeight / img.naturalWidth;
@@ -663,14 +663,47 @@ function drawTextFieldAt(
   }
 }
 
+/** Neutral mark when a business has not uploaded a logo — never CareTip. */
+function drawNeutralBusinessLogoPlaceholder(
+  ctx: CanvasRenderingContext2D,
+  rect: { x: number; y: number; w: number; h: number },
+  businessName: string,
+): void {
+  const size = Math.min(rect.w, rect.h);
+  const x = rect.x + (rect.w - size) / 2;
+  const y = rect.y + (rect.h - size) / 2;
+  const radius = Math.max(6, size * 0.18);
+
+  roundRect(ctx, x, y, size, size, radius);
+  ctx.fillStyle = "rgba(148, 163, 184, 0.18)";
+  ctx.fill();
+  ctx.strokeStyle = "rgba(148, 163, 184, 0.45)";
+  ctx.lineWidth = Math.max(1, size * 0.03);
+  ctx.stroke();
+
+  const initial = (businessName.trim().charAt(0) || "?").toUpperCase();
+  ctx.fillStyle = "rgba(100, 116, 139, 0.85)";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.font = `600 ${Math.round(size * 0.42)}px ${FONT_STACK}`;
+  ctx.fillText(initial, x + size / 2, y + size / 2 + size * 0.02);
+}
+
 async function drawLogoInRect(
   ctx: CanvasRenderingContext2D,
   logoUrl: string | null,
   rect: { x: number; y: number; w: number; h: number },
+  businessName?: string,
 ): Promise<void> {
-  const src = logoUrl ?? caretipLogoUrl;
-  const img = await loadImage(src);
-  if (!img?.naturalWidth) return;
+  if (!logoUrl) {
+    if (businessName) drawNeutralBusinessLogoPlaceholder(ctx, rect, businessName);
+    return;
+  }
+  const img = await loadImage(logoUrl);
+  if (!img?.naturalWidth) {
+    if (businessName) drawNeutralBusinessLogoPlaceholder(ctx, rect, businessName);
+    return;
+  }
   const ratio = img.naturalHeight / img.naturalWidth;
   let lw = rect.w;
   let lh = ratio * lw;
@@ -730,7 +763,7 @@ async function renderBrandingZone(
       y: cursorY,
       w: rect.w,
       h: logoH,
-    });
+    }, payload.businessName);
     cursorY += logoH + gap;
   }
 
