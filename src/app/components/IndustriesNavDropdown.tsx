@@ -76,7 +76,7 @@ export function IndustriesNavDropdown({
         <button
           type="button"
           className={cn(
-            "caretip-public-mobile-nav-drawer__nav-link min-h-14 w-full justify-between",
+            "caretip-public-mobile-nav-drawer__nav-link caretip-public-mobile-nav-drawer__nav-link--accent min-h-14 w-full justify-between",
             isIndustryRoute && "caretip-public-mobile-nav-drawer__nav-link--active",
           )}
           aria-expanded={open}

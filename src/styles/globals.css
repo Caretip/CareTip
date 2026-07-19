@@ -1533,6 +1533,22 @@ html[data-auth-sign-in-handoff] .caretip-dashboard-page-enter {
   color: hsl(var(--primary));
 }
 
+.caretip-public-mobile-nav-drawer__nav-link--accent {
+  color: hsl(var(--primary));
+  font-weight: 600;
+}
+
+.caretip-public-mobile-nav-drawer__nav-link--accent:hover,
+.caretip-public-mobile-nav-drawer__nav-link--accent:focus-visible {
+  color: hsl(var(--primary));
+  background-color: hsl(var(--primary) / 0.08);
+}
+
+.caretip-public-mobile-nav-drawer__nav-link--accent.caretip-public-mobile-nav-drawer__nav-link--active {
+  color: hsl(var(--primary));
+  background-color: hsl(var(--primary) / 0.1);
+}
+
 .caretip-public-mobile-nav-drawer__account-link {
   display: flex;
   min-height: 3.5rem;

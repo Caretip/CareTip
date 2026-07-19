@@ -25,6 +25,7 @@ const NAV_ROUTES_AFTER_INDUSTRIES = [
   { to: "/pricing" as const, nameKey: "nav.pricing" },
   { to: "/faq" as const, nameKey: "nav.faq" },
   { to: "/contact" as const, nameKey: "nav.contact" },
+  { to: "/join" as const, nameKey: "nav.staffPortal", accent: true },
 ] as const;
 
 export type NavigationVariant = "default" | "dark";
@@ -172,6 +173,7 @@ export const Navigation = memo(function Navigation({ variant: _variant = "defaul
                       to={route.to}
                       className={cn(
                         "caretip-public-mobile-nav-drawer__nav-link min-h-14",
+                        "accent" in route && route.accent && "caretip-public-mobile-nav-drawer__nav-link--accent",
                         location.pathname === route.to && "caretip-public-mobile-nav-drawer__nav-link--active",
                       )}
                       onClick={() => closeMobileMenu("navigate")}
@@ -184,17 +186,6 @@ export const Navigation = memo(function Navigation({ variant: _variant = "defaul
                 <div className="my-5 border-t border-border/60" />
 
                 <div className="flex flex-col gap-0.5" aria-label={t("nav.mobileAccountSection")}>
-                  <PrefetchLink
-                    to="/join"
-                    onClick={() => closeMobileMenu("navigate")}
-                    className={cn(
-                      landingUi.heroCtaPrimary,
-                      "caretip-public-mobile-nav-drawer__cta-primary !mx-0 mt-1 w-full max-w-none",
-                      location.pathname === "/join" && "ring-2 ring-primary/30",
-                    )}
-                  >
-                    {t("nav.staffPortal")}
-                  </PrefetchLink>
                   <PrefetchLink
                     to="/login"
                     onClick={() => closeMobileMenu("navigate")}
@@ -289,6 +280,7 @@ export const Navigation = memo(function Navigation({ variant: _variant = "defaul
                   className={cn(
                     linkClass,
                     "shrink-0 whitespace-nowrap px-1.5 xl:px-2.5",
+                    "accent" in route && route.accent && "text-primary",
                     location.pathname === route.to && "text-primary bg-primary/[0.06] dark:bg-primary/[0.1]",
                   )}
                 >
@@ -301,16 +293,6 @@ export const Navigation = memo(function Navigation({ variant: _variant = "defaul
               <div className="hidden items-center gap-2 lg:flex xl:gap-3">
                 <ThemeQuickToggle />
                 <LanguageSwitcher />
-                <PrefetchLink
-                  to="/join"
-                  className={cn(
-                    landingUi.navCtaPrimary,
-                    "whitespace-nowrap",
-                    location.pathname === "/join" && "ring-2 ring-primary/25",
-                  )}
-                >
-                  {t("nav.staffPortal")}
-                </PrefetchLink>
                 <PrefetchLink
                   to="/login"
                   className={cn(

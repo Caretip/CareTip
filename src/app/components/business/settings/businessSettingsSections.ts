@@ -24,8 +24,8 @@ export const BUSINESS_SETTINGS_SECTIONS: readonly BusinessSettingsSection[] = [
   },
   {
     id: "appearance",
-    labelKey: "business.settings.sections.appearance",
-    descriptionKey: "business.settings.sections.appearanceDesc",
+    labelKey: "business.settings.sections.preferences",
+    descriptionKey: "business.settings.sections.preferencesDesc",
     icon: "settings",
   },
   {
@@ -60,7 +60,8 @@ const LEGACY_SECTION_REDIRECTS: Record<string, BusinessSettingsSectionId | "exte
   profile: "business",
   account: "general",
   "profile-settings": "general",
-  language: "general",
+  language: "appearance",
+  preferences: "appearance",
   team: "external",
   billing: "external",
   branding: "external",

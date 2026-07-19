@@ -17,8 +17,6 @@ import { useBusinessGuidelines } from "@/app/contexts/BusinessGuidelinesContext"
 import { useBusinessVenueBrand } from "@/app/hooks/useBusinessVenueBrand";
 import { BUSINESS_TYPE_I18N } from "@/app/lib/businessVenueOptions";
 import { MobileDrawer } from "../ui/MobileDrawer";
-import { LanguageSwitcher } from "@/components/i18n/LanguageSwitcher";
-import { ThemeQuickToggle } from "@/app/components/theme/ThemeQuickToggle";
 import { dashboardSidebarIconButtonIdle, dashboardSidebarSignOutButton } from "@/lib/theme/dashboardSidebarUi";
 
 interface BusinessMobileSidebarProps {
@@ -91,15 +89,6 @@ export function BusinessMobileSidebar({ isOpen, onClose }: BusinessMobileSidebar
       </nav>
 
       <div className="shrink-0 border-t border-sidebar-border px-3 pt-2 pb-4">
-        <div className="caretip-mobile-drawer-preferences mb-2 flex items-center justify-between gap-2 rounded-lg border border-sidebar-border/80 bg-sidebar-accent/40 px-2.5 py-2">
-          <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-sidebar-foreground/60">
-            {t("shell.drawer.preferences")}
-          </span>
-          <div className="flex items-center gap-1.5">
-            <ThemeQuickToggle variant="drawer" className="!min-h-8 !min-w-8 !rounded-lg !border-sidebar-border !bg-sidebar !px-2 !py-1.5 !shadow-none" />
-            <LanguageSwitcher variant="drawer" className="!min-h-8 !min-w-8 !rounded-lg !px-2 !py-1.5" />
-          </div>
-        </div>
         <BusinessSidebarUpgradeCta />
         <button
           type="button"

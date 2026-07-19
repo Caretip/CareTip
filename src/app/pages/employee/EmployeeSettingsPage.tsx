@@ -22,10 +22,12 @@ import { toUserFriendlyMessage } from "../../lib/errorMessages";
 import { logClientError } from "../../lib/clientLog";
 import { registerFcmDeviceToken, unregisterFcmDeviceToken } from "../../lib/fcmPush";
 import { ThemeAppearanceControl } from "@/app/components/theme/ThemeAppearanceControl";
+import { changeAppLanguage, type AppLanguage } from "@/i18n/i18n";
 import { EmployeeSettingsFormSkeleton } from "../../components/dashboard/DashboardSectionLoading";
 import { Input } from "../../components/ui/input";
 import { Label } from "../../components/ui/label";
 import { Switch } from "../../components/ui/switch";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../components/ui/select";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -60,7 +62,7 @@ type EmployeeSettingsCache = {
 const TEAL = "#e9781c";
 
 export function EmployeeSettingsPage() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { user, logout, updateUser } = useRequireAuth();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
@@ -386,7 +388,28 @@ export function EmployeeSettingsPage() {
         </section>
 
         <section className={employeeUi.settingsSection}>
+          <h3 className={employeeUi.settingsHeading}>
+            {t("employee.settings.displayPrefsSection")}
+          </h3>
+          <p className="text-xs text-muted-foreground">{t("employee.settings.displayPrefsHint")}</p>
           <ThemeAppearanceControl variant="inline" />
+          <div className="max-w-sm space-y-2 pt-2">
+            <Label htmlFor="employee-settings-language">{t("employee.settings.languageLabel")}</Label>
+            <Select
+              value={i18n.language?.startsWith("de") ? "de" : "en"}
+              onValueChange={(lng) => {
+                void changeAppLanguage(lng as AppLanguage);
+              }}
+            >
+              <SelectTrigger id="employee-settings-language">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="en">{t("business.settings.language.en")}</SelectItem>
+                <SelectItem value="de">{t("business.settings.language.de")}</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </section>
 
         <section className={employeeUi.settingsSection}>
