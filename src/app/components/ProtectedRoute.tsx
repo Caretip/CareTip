@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { useSyncExternalStore } from "react";
+import { useEffect, useSyncExternalStore } from "react";
 import { useTranslation } from "react-i18next";
 import { Navigate } from "react-router";
 import { isClientSessionRevoked } from "../lib/api";
@@ -13,12 +13,15 @@ import { useProtectedRouteGate } from "../hooks/useProtectedRouteGate";
 import {
   isAuthLogoutTransitionActive,
   isAuthPostLoginTransitionActive,
+  isAuthSignInHandoffActive,
   subscribeAuthLogoutTransition,
   subscribeAuthPostLoginTransition,
+  subscribeAuthSignInHandoff,
 } from "../lib/authTransitionIntent";
 import { AppRouteGateShell } from "./AppRouteGateShell";
 import { resolveRouteLoadingMessage } from "../lib/appLoadingContexts";
 import { shouldRegisterBrandedRouteGuard } from "../lib/appLoadingJourney";
+import { markPostLoginTrace } from "../lib/postLoginRuntimeTrace";
 
 export function ProtectedRoute({
   allowedRoles,
@@ -40,6 +43,28 @@ export function ProtectedRoute({
     isAuthPostLoginTransitionActive,
     () => false,
   );
+  const signInHandoffActive = useSyncExternalStore(
+    subscribeAuthSignInHandoff,
+    isAuthSignInHandoffActive,
+    () => false,
+  );
+
+  useEffect(() => {
+    if (!import.meta.env.DEV) return;
+    markPostLoginTrace("ProtectedRoute_render", {
+      pathname: gate.pathname,
+      signInHandoffActive,
+      blocking: gate.blocking,
+      hasUser: Boolean(gate.user),
+      decision: gate.decision?.kind ?? null,
+    });
+  }, [
+    gate.pathname,
+    gate.blocking,
+    gate.user,
+    gate.decision?.kind,
+    signInHandoffActive,
+  ]);
 
   useAppLoadingRegistration(
     `protected-route-guard:${rolesKey}:${gate.pathname}`,
@@ -47,12 +72,36 @@ export function ProtectedRoute({
     gate.guardBlocking &&
       !logoutTransitionActive &&
       !postLoginTransitionActive &&
+      !signInHandoffActive &&
       shouldRegisterBrandedRouteGuard(gate),
     resolveRouteLoadingMessage(gate.pathname, t),
   );
 
   if (logoutTransitionActive) {
     return null;
+  }
+
+  /**
+   * Sign In handoff cover owns the viewport. Never paint AppRouteGateShell (blank white).
+   * Mount children as soon as the gate can allow so Dashboard can paint under the cover.
+   */
+  if (signInHandoffActive) {
+    if (gate.blocking || !gate.user) {
+      if (import.meta.env.DEV) {
+        markPostLoginTrace("ProtectedRoute_handoff_null", {
+          blocking: gate.blocking,
+          hasUser: Boolean(gate.user),
+          authBlocking: gate.authBlocking,
+          storedSessionSync: gate.storedSessionSync,
+          guardBlocking: gate.guardBlocking,
+        });
+      }
+      return null;
+    }
+    if (gate.decision?.kind === "redirect") {
+      return <Navigate to={gate.decision.to} replace state={{ from: gate.pathname }} />;
+    }
+    return <>{children}</>;
   }
 
   if (gate.blocking) {
@@ -73,7 +122,11 @@ export function ProtectedRoute({
 
   if (!gate.user) {
     if (!isClientSessionRevoked() && gate.storedSessionSync) {
-      navFlashLog("guard_started", { path: gate.pathname, guard: "ProtectedRoute", reason: "stored_session_sync" });
+      navFlashLog("guard_started", {
+        path: gate.pathname,
+        guard: "ProtectedRoute",
+        reason: "stored_session_sync",
+      });
       return <AppRouteGateShell />;
     }
     authDebug("route_guard", {

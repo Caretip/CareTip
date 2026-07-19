@@ -8,6 +8,7 @@ import { businessUi } from "./businessDashboardUi";
 import { DASHBOARD_PERIOD_METRICS_GRID } from "../dashboard/dashboardPeriodUi";
 import { cn } from "@/lib/utils";
 import type { AnalyticsTimeframe } from "../../hooks/useBusinessDashboardStats";
+import { useDashboardKpiProfile } from "../../hooks/useDashboardRuntimeProfile";
 
 export type BusinessDashboardMetrics = {
   totalTips: number;
@@ -23,6 +24,8 @@ type BusinessDashboardMetricsGridProps = {
   refreshingLabel: ReactNode;
   hasTipActivityInPeriod: boolean;
   topPerformersCount: number;
+  /** When true, records first_kpi + KpiSurface probe for this memoized surface only. */
+  kpiReady?: boolean;
 };
 
 function BusinessDashboardMetricsGridInner({
@@ -33,7 +36,9 @@ function BusinessDashboardMetricsGridInner({
   refreshingLabel,
   hasTipActivityInPeriod,
   topPerformersCount,
+  kpiReady = false,
 }: BusinessDashboardMetricsGridProps) {
+  useDashboardKpiProfile("business", kpiReady);
   const { t } = useTranslation();
   const cardsLoading = loading || metrics == null;
   const cardsRefreshing = isPeriodRefreshing && !cardsLoading;

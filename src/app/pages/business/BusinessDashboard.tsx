@@ -1,6 +1,7 @@
+import type { ComponentType } from "react";
 import { motion } from "motion/react";
 import { dashboardBlockMotion, useMinWidthMedia } from "@/lib/motionPerf";
-import { useState, useEffect, useCallback, useMemo, useRef, lazy } from "react";
+import { useState, useMemo, lazy, memo } from "react";
 import { Link, Navigate } from "react-router";
 import { MarketingPicture } from "@/lib/marketingPicture";
 import {
@@ -9,14 +10,14 @@ import {
 import { CareIcon } from "@/components/icons";
 import { useTranslation } from "react-i18next";
 import { useBusinessPageBoot } from "../../lib/useBusinessPageBoot";
+import {
+  useDashboardPageFullyLoaded,
+  useDashboardRenderProbe,
+} from "../../hooks/useDashboardRuntimeProfile";
 import { useRequireAuth } from "../../hooks/useRequireAuth";
-import { useSocket, useDeferSocketConnect } from "../../hooks/useSocket";
-import { useRealtimeFallback } from "../../hooks/useRealtimeFallback";
-import { subscribeTipReceived } from "../../lib/realtime/subscribeTipReceived";
-import { shouldProcessRealtimeEvent } from "../../lib/realtime/realtimeEventDedupe";
-import { DashboardStatusStrip } from "../../components/dashboard/DashboardStatusStrip";
 import { DashboardRefreshIndicator } from "../../components/dashboard/DashboardRefreshIndicator";
-import { deriveBusinessDashboardStatus } from "../../lib/dashboardStatus/deriveDashboardStatus";
+import { DashboardRealtimeStatusStrip } from "../../components/dashboard/DashboardRealtimeStatusStrip";
+import { BusinessDashboardRealtimeSync } from "../../components/business/BusinessDashboardRealtimeSync";
 import { FixPrompt } from "../../components/FixPrompt";
 import { useBusinessDashboardStats } from "../../hooks/useBusinessDashboardStats";
 import { useSubscriptionEntitlements } from "../../hooks/useSubscriptionEntitlements";
@@ -97,7 +98,7 @@ function goalStatusClass(s: EmployeeGoalProgressStatus): string {
   return "text-amber-700";
 }
 
-export function BusinessDashboard() {
+export const BusinessDashboard: ComponentType<unknown> = memo(function BusinessDashboard() {
   const { t } = useTranslation();
   const goalPeriodLabels = useMemo(
     () =>
@@ -172,34 +173,6 @@ export function BusinessDashboard() {
   );
 
   const [employeeGoalsExpanded, setEmployeeGoalsExpanded] = useState(true);
-  const socketReady = useDeferSocketConnect(authReady && user?.role === "business");
-  const { socket, connected, connectionStatus } = useSocket(socketReady);
-
-  useRealtimeFallback(connected, () => {
-    refreshStatsQuiet();
-  });
-
-  useEffect(() => {
-    if (!socket || user?.role !== "business") return;
-    const sync = () => refreshStatsQuiet();
-    socket.on("business_data_updated", sync);
-    socket.on("verification_updated", sync);
-    return () => {
-      socket.off("business_data_updated", sync);
-      socket.off("verification_updated", sync);
-    };
-  }, [socket, user?.role, refreshStatsQuiet]);
-
-  useEffect(() => {
-    if (!socket || user?.role !== "business" || !user?.businessId) return;
-
-    return subscribeTipReceived(socket, (payload, eventId) => {
-      if (!shouldProcessRealtimeEvent(eventId)) return;
-      if (payload.businessId !== user.businessId) return;
-      // Tip feedback: live dashboard metrics + inbox toast (avoid duplicate Sonner).
-      applyLiveTip(payload);
-    });
-  }, [socket, user?.role, user?.businessId, applyLiveTip]);
 
   const employees = displayStats?.employees;
   const activeRosterCount = useMemo(
@@ -329,12 +302,35 @@ export function BusinessDashboard() {
     showInitialSkeleton: showMetricsSkeleton,
     coveredByGlobalLoader: globalLoaderCoversBoot,
   } = useBusinessPageBoot("overview", metricsBootBlocking);
+
   const periodMetricsLoading = showMetricsSkeleton || (!useDevDemo && !displayMetrics);
   const heroPulseLoading =
     !useDevDemo && !isMetricsSettled && !operationalPulse;
   const showGoalsLoading = isGoalsInitialLoad && !useDevDemo && !globalLoaderCoversBoot;
   const periodRefreshingLabel = t("dashboard.refresh.updating");
   const isLargeScreen = useMinWidthMedia(1024);
+
+  useDashboardRenderProbe("business:BusinessDashboard");
+  useDashboardPageFullyLoaded(
+    "business",
+    !periodMetricsLoading && isMetricsSettled && (isAnalyticsSettled || !advancedAnalyticsEnabled),
+  );
+
+  const kpiUsable =
+    !periodMetricsLoading && (Boolean(displayMetrics) || hasVisibleMetrics || useDevDemo);
+  // Gate Motion on KPI usability (same commit as metrics) — avoid idle flip adding a render.
+  const blockMotion = useMemo(
+    () =>
+      kpiUsable
+        ? dashboardBlockMotion
+        : ({
+            initial: false as const,
+            animate: { opacity: 1, y: 0 },
+            transition: { duration: 0 },
+          } as const),
+    [kpiUsable],
+  );
+  const motionReady = kpiUsable;
 
   const dashboardMetrics = useMemo(() => {
     if (useDevDemo && devPeriod) {
@@ -352,32 +348,6 @@ export function BusinessDashboard() {
     };
   }, [useDevDemo, devPeriod, displayMetrics, activeRosterCount]);
 
-  const dashboardStatusItems = useMemo(
-    () =>
-      deriveBusinessDashboardStatus(
-        {
-          isPeriodSyncing,
-          isMetricsSettled,
-          hasPeriodActivity,
-          hasVisibleMetrics,
-          pendingVerification: showOnboardingReviewNotice,
-          statsLoadFailed,
-          socketStatus: connectionStatus,
-        },
-        t,
-      ),
-    [
-      isPeriodSyncing,
-      isMetricsSettled,
-      hasPeriodActivity,
-      hasVisibleMetrics,
-      showOnboardingReviewNotice,
-      statsLoadFailed,
-      connectionStatus,
-      t,
-    ],
-  );
-
   // ProtectedRoute guarantees user; avoid a second full-screen hold under layout chrome.
   if (!user) {
     return null;
@@ -394,6 +364,12 @@ export function BusinessDashboard() {
 
   return (
     <div className={cn(businessUi.page, "business-dashboard-overview overflow-x-hidden")}>
+      <BusinessDashboardRealtimeSync
+        enabled={authReady && user?.role === "business"}
+        businessId={user?.businessId}
+        refreshStatsQuiet={refreshStatsQuiet}
+        applyLiveTip={applyLiveTip}
+      />
       <QuickStartGuideBanner className="mb-4" />
       {statsLoadFailed && !isMetricsInitialLoad && !showStatsSkeleton && (
         <div className="mb-4 rounded-lg border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm text-destructive">
@@ -493,9 +469,9 @@ export function BusinessDashboard() {
           description={t("business.hero.sub")}
           image={
             <motion.div
-              initial={{ opacity: 0, y: 8 }}
+              initial={motionReady ? { opacity: 0, y: 8 } : false}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.45, ease: "easeOut" }}
+              transition={motionReady ? { duration: 0.45, ease: "easeOut" } : { duration: 0 }}
               className="business-hero-visual relative flex w-full max-w-full flex-col items-center justify-center touch-manipulation max-lg:mx-auto lg:items-start lg:justify-start lg:justify-self-stretch"
             >
               <div className="business-hero-illustration-card w-full overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
@@ -516,9 +492,11 @@ export function BusinessDashboard() {
           actions={
             <motion.div
               className="business-hero-cta-block"
-              initial={{ opacity: 0, y: 6 }}
+              initial={motionReady ? { opacity: 0, y: 6 } : false}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.4, delay: 0.08, ease: "easeOut" }}
+              transition={
+                motionReady ? { duration: 0.4, delay: 0.08, ease: "easeOut" } : { duration: 0 }
+              }
             >
               <BusinessDashboardHeroActions
                 isPreviewMode={isPreviewMode}
@@ -636,7 +614,15 @@ export function BusinessDashboard() {
                 refreshFailed={Boolean(statsLoadFailed && hasVisibleMetrics)}
               />
             </div>
-            <DashboardStatusStrip items={dashboardStatusItems} />
+            <DashboardRealtimeStatusStrip
+              role="business"
+              isPeriodSyncing={isPeriodSyncing}
+              isMetricsSettled={isMetricsSettled}
+              hasPeriodActivity={hasPeriodActivity}
+              hasVisibleMetrics={hasVisibleMetrics}
+              pendingVerification={showOnboardingReviewNotice}
+              statsLoadFailed={statsLoadFailed}
+            />
           </div>
           <DashboardAnalyticsPeriodToggle
             ariaLabel={t("business.dashboard.analyticsPeriodAria")}
@@ -666,7 +652,7 @@ export function BusinessDashboard() {
           ) : null}
 
           <motion.div
-            {...dashboardBlockMotion}
+            {...blockMotion}
             className={cn(
               "business-dashboard-block business-dashboard-block--primary dashboard-swr-swap",
               isPeriodRefreshing && "dashboard-swr-swap--revalidating",
@@ -683,12 +669,13 @@ export function BusinessDashboard() {
               refreshingLabel={periodRefreshingLabel}
               hasTipActivityInPeriod={hasTipActivityInPeriod}
               topPerformersCount={employeePerformance.length}
+              kpiReady={kpiUsable}
             />
           </motion.div>
 
           {showProUpgradePromo ? (
             <motion.div
-              {...dashboardBlockMotion}
+              {...blockMotion}
               transition={{ delay: 0.3 }}
               className="business-dashboard-block business-dashboard-block--primary"
             >
@@ -700,7 +687,7 @@ export function BusinessDashboard() {
           ) : null}
 
           <motion.div
-            {...dashboardBlockMotion}
+            {...blockMotion}
             transition={{ delay: 0.32 }}
             className="business-dashboard-block business-dashboard-block--primary"
           >
@@ -726,7 +713,7 @@ export function BusinessDashboard() {
           </motion.div>
 
           <motion.div
-            {...dashboardBlockMotion}
+            {...blockMotion}
             transition={{ delay: 0.35 }}
             className="business-dashboard-block business-dashboard-block--secondary"
           >
@@ -853,7 +840,7 @@ export function BusinessDashboard() {
           </motion.div>
 
           {/* Recent customer feedback */}
-          <motion.div {...dashboardBlockMotion} transition={{ delay: 0.55 }} className="business-dashboard-block business-dashboard-block--secondary">
+          <motion.div {...blockMotion} transition={{ delay: 0.55 }} className="business-dashboard-block business-dashboard-block--secondary">
             <FeatureGate featureKey="customerFeedback" role="business" enabled={isBusiness}>
               <RecentCustomerFeedbackPanel enabled={isBusiness && sessionValidated} />
             </FeatureGate>
@@ -862,4 +849,4 @@ export function BusinessDashboard() {
       </TracingBeam>
     </div>
   );
-}
+});

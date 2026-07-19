@@ -1,5 +1,5 @@
 import { motion } from "motion/react";
-import { useSyncExternalStore } from "react";
+import { memo, useSyncExternalStore } from "react";
 import { Link, useLocation, useNavigate } from "react-router";
 import { CareIcon } from "@/components/icons";
 import { Lock, Loader2 } from "lucide-react";
@@ -22,6 +22,7 @@ import {
   showEmployeeNavSubscriptionLock,
 } from "./employeeDashboardNav";
 import { useSubscriptionEntitlements } from "../../hooks/useSubscriptionEntitlements";
+import { useDashboardRenderProbe } from "../../hooks/useDashboardRuntimeProfile";
 import {
   DASHBOARD_SIDEBAR_SHELL_CLASS,
   dashboardSidebarNavLinkActive,
@@ -37,11 +38,12 @@ type EmployeeBusinessBranding = {
   businessName: string;
 };
 
-export function EmployeeSidebar({
+export const EmployeeSidebar = memo(function EmployeeSidebar({
   businessBranding,
 }: {
   businessBranding?: EmployeeBusinessBranding | null;
 }) {
+  useDashboardRenderProbe("employee:EmployeeSidebar");
   const { t } = useTranslation();
   const location = useLocation();
   const navigate = useNavigate();
@@ -138,4 +140,4 @@ export function EmployeeSidebar({
       </div>
     </motion.aside>
   );
-}
+});

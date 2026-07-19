@@ -18,8 +18,8 @@ const DASHBOARD_SHELL_POST_LOGIN_PATHS = new Set([
 ]);
 
 /**
- * Owns post-login handoff without a branded “Signing you in…” overlay.
- * Destination dashboard shell + skeletons take over as soon as they paint.
+ * Owns post-login soft-nav handoff without a branded CareTip overlay.
+ * Destination dashboard shell + local skeletons take over after prefetched paint.
  */
 export function AuthPostLoginTransitionRegistrar({ children }: { children: ReactNode }) {
   const active = useSyncExternalStore(

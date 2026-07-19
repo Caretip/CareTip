@@ -1,5 +1,5 @@
 import { motion } from "motion/react";
-import { useSyncExternalStore } from "react";
+import { memo, useSyncExternalStore } from "react";
 import { useTranslation } from "react-i18next";
 import { Loader2 } from "lucide-react";
 import { CareIcon } from "@/components/icons";
@@ -15,8 +15,10 @@ import { useBusinessGuidelines } from "@/app/contexts/BusinessGuidelinesContext"
 import { DASHBOARD_SIDEBAR_SHELL_CLASS, dashboardSidebarSignOutButton } from "@/lib/theme/dashboardSidebarUi";
 import { cn } from "@/lib/utils";
 import { Rocket } from "lucide-react";
+import { useDashboardRenderProbe } from "../../hooks/useDashboardRuntimeProfile";
 
-export function BusinessSidebar() {
+export const BusinessSidebar = memo(function BusinessSidebar() {
+  useDashboardRenderProbe("business:BusinessSidebar");
   const { t } = useTranslation();
   const { user, logout, exitImpersonation } = useAuth();
   const { openGuidelines } = useBusinessGuidelines();
@@ -74,4 +76,4 @@ export function BusinessSidebar() {
       </div>
     </motion.aside>
   );
-}
+});

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, type Dispatch, type SetStateAction } from "react";
 import { useTranslation } from "react-i18next";
 import {
   fetchMyNotifications,
@@ -15,7 +15,7 @@ import {
 import { isProtectedApiReady } from "../lib/authRestore";
 import { isApiConnectivityError } from "../lib/errorMessages";
 import { logClientError } from "../lib/clientLog";
-import { useSocket, useDeferSocketConnect } from "./useSocket";
+import { useSocketInstance, useDeferSocketConnect } from "./useSocket";
 import { trackNotificationRefetch } from "../lib/realtime/realtimeMetrics";
 import {
   publishNotificationInboxPatch,
@@ -27,7 +27,13 @@ import {
   readInboxSessionCache,
   writeInboxSessionCache,
 } from "../lib/notificationInboxCache";
-import { runWhenIdle } from "../lib/runWhenIdle";
+
+function setUnreadIfChanged(
+  setUnreadCount: Dispatch<SetStateAction<number>>,
+  next: number,
+): void {
+  setUnreadCount((prev) => (prev === next ? prev : next));
+}
 
 export type NotificationListFilters = {
   kind?: "support" | "other";
@@ -44,8 +50,6 @@ type UseNotificationsOptions = {
   listFilters?: NotificationListFilters;
 };
 
-const PREFETCH_IDLE_MS = 1_600;
-
 export function useNotifications({
   enabled,
   loadList = false,
@@ -56,8 +60,12 @@ export function useNotifications({
   const apiReady = isProtectedApiReady();
   const active = enabled && apiReady;
   const socketReady = useDeferSocketConnect(active);
-  const { connected } = useSocket(socketReady);
-  const [unreadCount, setUnreadCount] = useState(0);
+  // Interest only — do not subscribe to socket status (avoids Bell re-renders on connect).
+  useSocketInstance(socketReady);
+  const [unreadCount, setUnreadCount] = useState(() => {
+    const cached = readInboxSessionCache(JSON.stringify({}));
+    return cached?.unreadCount ?? 0;
+  });
   const [items, setItems] = useState<InboxNotification[]>([]);
   const [loading, setLoading] = useState(false);
   const [nextCursor, setNextCursor] = useState<string | null>(null);
@@ -74,7 +82,7 @@ export function useNotifications({
     try {
       trackNotificationRefetch();
       const { unreadCount: count } = await fetchMyUnreadNotificationCount();
-      setUnreadCount(count);
+      setUnreadIfChanged(setUnreadCount, count);
       devSetHydrationPhase("notifications", "ready");
     } catch (err) {
       if (!isApiConnectivityError(err)) {
@@ -102,7 +110,7 @@ export function useNotifications({
 
       if (useCachedFirst && cachedInbox) {
         setItems(localizeInboxNotifications(cachedInbox.items, t, i18n.language));
-        setUnreadCount(cachedInbox.unreadCount);
+        setUnreadIfChanged(setUnreadCount, cachedInbox.unreadCount);
         setNextCursor(cachedInbox.nextCursor);
         setLoading(false);
         loadedRef.current = true;
@@ -119,7 +127,7 @@ export function useNotifications({
           supportStatus: listFilters?.supportStatus,
           locale: uiLocale,
         });
-        setUnreadCount(res.unreadCount);
+        setUnreadIfChanged(setUnreadCount, res.unreadCount);
         setNextCursor(res.nextCursor);
         const nextItems = localizeInboxNotifications(res.items, t, i18n.language);
         setItems((prev) =>
@@ -169,7 +177,7 @@ export function useNotifications({
 
       try {
         const res = await markNotificationReadApi(id, uiLocale);
-        setUnreadCount(res.unreadCount);
+        setUnreadIfChanged(setUnreadCount, res.unreadCount);
         const localized = localizeInboxNotification(res.notification, t, i18n.language);
         setItems((prev) =>
           prev.map((n) =>
@@ -218,7 +226,7 @@ export function useNotifications({
 
     try {
       const res = await markAllNotificationsReadApi();
-      setUnreadCount(res.unreadCount);
+      setUnreadIfChanged(setUnreadCount, res.unreadCount);
       publishNotificationInboxPatch({
         type: "unread_count",
         unreadCount: res.unreadCount,
@@ -251,7 +259,7 @@ export function useNotifications({
 
     try {
       const res = await deleteNotificationApi(id);
-      setUnreadCount(res.unreadCount);
+      setUnreadIfChanged(setUnreadCount, res.unreadCount);
       publishNotificationInboxPatch({
         type: "unread_count",
         unreadCount: res.unreadCount,
@@ -285,33 +293,21 @@ export function useNotifications({
     void refreshUnread();
   }, [active, refreshUnread]);
 
-  /* Warm list after login / idle so the bell opens with content, not a spinner. */
+  /* Phase 1: closed bell — unread badge only; do not hydrate list into Bell state. */
   useEffect(() => {
     if (!active || loadList) return;
-    if (loadedRef.current || itemsRef.current.length > 0) return;
-    let cancelled = false;
-    runWhenIdle(() => {
-      if (cancelled || loadedRef.current) return;
-      const cached = readInboxSessionCache(filterKey);
-      if (cached) {
-        setItems(localizeInboxNotifications(cached.items, t, i18n.language));
-        setUnreadCount(cached.unreadCount);
-        setNextCursor(cached.nextCursor);
-        loadedRef.current = true;
-      }
-      void loadNotificationsRef.current({ reset: true, quiet: true });
-    }, PREFETCH_IDLE_MS);
-    return () => {
-      cancelled = true;
-    };
-  }, [active, loadList, filterKey, t, i18n.language]);
+    const cached = readInboxSessionCache(filterKey);
+    if (cached) {
+      setUnreadIfChanged(setUnreadCount, cached.unreadCount);
+    }
+  }, [active, loadList, filterKey]);
 
   useEffect(() => {
     if (!active || !loadList) return;
     const cachedInbox = readInboxSessionCache(filterKey);
     if (cachedInbox) {
       setItems(localizeInboxNotifications(cachedInbox.items, t, i18n.language));
-      setUnreadCount(cachedInbox.unreadCount);
+      setUnreadIfChanged(setUnreadCount, cachedInbox.unreadCount);
       setNextCursor(cachedInbox.nextCursor);
       loadedRef.current = true;
     }
@@ -324,11 +320,12 @@ export function useNotifications({
 
     return subscribeNotificationInboxPatches((patch) => {
       if (patch.type === "unread_count") {
-        setUnreadCount(patch.unreadCount);
+        setUnreadIfChanged(setUnreadCount, patch.unreadCount);
         return;
       }
       if (patch.type === "read") {
-        setUnreadCount(patch.unreadCount);
+        setUnreadIfChanged(setUnreadCount, patch.unreadCount);
+        if (!loadList) return;
         setItems((prev) =>
           prev.map((n) =>
             n.id === patch.id ? { ...n, read: true, readAt: patch.readAt } : n,
@@ -337,7 +334,8 @@ export function useNotifications({
         return;
       }
       if (patch.type === "read_all") {
-        setUnreadCount(patch.unreadCount);
+        setUnreadIfChanged(setUnreadCount, patch.unreadCount);
+        if (!loadList) return;
         setItems((prev) =>
           prev.map((n) => ({
             ...n,
@@ -348,12 +346,14 @@ export function useNotifications({
         return;
       }
       if (patch.type === "deleted") {
-        setUnreadCount(patch.unreadCount);
+        setUnreadIfChanged(setUnreadCount, patch.unreadCount);
+        if (!loadList) return;
         setItems((prev) => prev.filter((n) => n.id !== patch.id));
         return;
       }
       if (patch.type === "restore") {
-        setUnreadCount(patch.unreadCount);
+        setUnreadIfChanged(setUnreadCount, patch.unreadCount);
+        if (!loadList) return;
         setItems((prev) => {
           const localized = localizeInboxNotification(patch.notification, t, i18n.language);
           const idx = prev.findIndex((n) => n.id === localized.id);
@@ -365,14 +365,16 @@ export function useNotifications({
         return;
       }
       if (patch.type === "snapshot") {
-        setUnreadCount(patch.unreadCount);
+        setUnreadIfChanged(setUnreadCount, patch.unreadCount);
+        if (!loadList) return;
         setItems(localizeInboxNotifications(patch.items, t, i18n.language));
         return;
       }
       if (patch.type === "created") {
         if (typeof patch.unreadCount === "number") {
-          setUnreadCount(patch.unreadCount);
+          setUnreadIfChanged(setUnreadCount, patch.unreadCount);
         }
+        if (!loadList) return;
         const localized = localizeInboxNotification(patch.notification, t, i18n.language);
         setItems((prev) => {
           if (prev.some((n) => n.id === localized.id)) return prev;
@@ -406,7 +408,7 @@ export function useNotifications({
     items,
     loading,
     nextCursor,
-    connected,
+    connected: false,
     refreshUnread,
     loadNotifications,
     markRead,

@@ -13,7 +13,7 @@ import {
 } from "../lib/realtime/notificationInboxRealtime";
 import { trackNotificationRefetch } from "../lib/realtime/realtimeMetrics";
 import { useAuth } from "../hooks/useAuth";
-import { useDeferSocketConnect, useSocket } from "../hooks/useSocket";
+import { useDeferSocketConnect, useSocketInstance, useSocketStatus } from "../hooks/useSocket";
 import { useRealtimeFallback } from "../hooks/useRealtimeFallback";
 import { useDashboardTabRefocus } from "../hooks/useDashboardTabRefocus";
 import { useSocketCatchUp } from "../lib/realtime/useRealtimeReconnect";
@@ -23,6 +23,7 @@ const NOTIFICATION_ROLES = new Set(["employee", "business", "platform_admin"]);
 /**
  * Headless singleton for inbox notification realtime:
  * one socket listener, reconnect/tab catch-up, and foreground toasts.
+ * Isolated from layout — socket status updates do not re-render shell chrome.
  */
 export function NotificationInboxSync() {
   const { t, i18n } = useTranslation();
@@ -36,7 +37,8 @@ export function NotificationInboxSync() {
     isProtectedApiReady();
 
   const socketReady = useDeferSocketConnect(enabled);
-  const { socket, connected } = useSocket(socketReady);
+  const { socket } = useSocketInstance(socketReady);
+  const { connected } = useSocketStatus();
 
   const catchUp = useCallback(async () => {
     if (!enabled) return;

@@ -3,7 +3,7 @@ import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { useAuth } from "./useAuth";
 import { fetchBusinessProfile } from "../lib/api";
-import { useSocket } from "./useSocket";
+import { useSocketInstance } from "./useSocket";
 import { logClientError } from "../lib/clientLog";
 import type { OnboardingVerificationStatus } from "../lib/api";
 import { resolveOnboardingVerificationOutcomeToast } from "../lib/onboardingVerificationOutcomeNotification";
@@ -12,11 +12,13 @@ import { resolveOnboardingVerificationOutcomeToast } from "../lib/onboardingVeri
  * Syncs split verification fields and surfaces onboarding outcome toasts once per
  * new approved/rejected result (acked in localStorage until status returns to draft/submitted).
  * KYC toasts are suppressed while document upload remains behind MVP flag.
+ *
+ * Uses useSocketInstance (not status) so reconnect flags do not re-render the host tree.
  */
 export function useBusinessVerificationRealtime(enabled: boolean): void {
   const { t } = useTranslation();
   const { user, updateUser } = useAuth();
-  const { socket } = useSocket(enabled);
+  const { socket } = useSocketInstance(enabled);
 
   useEffect(() => {
     if (!enabled || !user || user.role !== "business" || user.impersonation) return;

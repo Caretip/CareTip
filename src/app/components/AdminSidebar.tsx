@@ -1,5 +1,5 @@
 import { motion } from 'motion/react';
-import { useSyncExternalStore } from 'react';
+import { memo, useSyncExternalStore } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Loader2 } from 'lucide-react';
 import { CareIcon } from '@/components/icons';
@@ -15,8 +15,10 @@ import {
 } from "@/lib/theme/dashboardSidebarUi";
 import { CareTipLogo, DASHBOARD_SIDEBAR_BRAND_CLASS, DASHBOARD_SIDEBAR_NAV_CLASS } from './CareTipLogo';
 import { PlatformSidebarNavShell } from './platform/PlatformSidebarNavShell';
+import { useDashboardRenderProbe } from '../hooks/useDashboardRuntimeProfile';
 
-export function AdminSidebar() {
+export const AdminSidebar = memo(function AdminSidebar() {
+  useDashboardRenderProbe('platform_admin:AdminSidebar');
   const { t } = useTranslation();
   const { user, logout } = useAuth();
   const signingOut = useSyncExternalStore(
@@ -73,4 +75,4 @@ export function AdminSidebar() {
       </div>
     </motion.aside>
   );
-}
+});

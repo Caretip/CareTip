@@ -4,11 +4,14 @@ import {
   useAppLoadingRegistration,
   useGlobalAppLoadingActive,
 } from "./globalAppLoading";
+import { isAppShellInteractive } from "./appShellLifecycle";
+import { isAuthPostLoginTransitionActive } from "./authPostLoginTransition";
+import { isAuthSignInHandoffActive } from "./authSignInHandoff";
 
 /**
- * While a global CareTip overlay is already covering the screen, keep it up until
- * critical first-paint data is ready — avoids overlay → skeleton → content double load.
- * Soft navigations (no overlay) are unaffected and may use local skeletons.
+ * While a global CareTip overlay is already covering the screen (cold boot / refresh),
+ * keep it up until critical first-paint data is ready — avoids overlay → skeleton → content.
+ * Soft navigations and Sign In handoffs must never latch/extend the branded overlay.
  */
 export function useExtendGlobalLoaderUntilReady(
   key: string,
@@ -17,15 +20,21 @@ export function useExtendGlobalLoaderUntilReady(
 ): boolean {
   const overlayVisible = useGlobalAppLoadingActive();
   const latchedRef = useRef(false);
+  const softNav =
+    isAppShellInteractive() ||
+    isAuthPostLoginTransitionActive() ||
+    isAuthSignInHandoffActive();
 
-  if (blocking && overlayVisible) {
+  if (softNav) {
+    latchedRef.current = false;
+  } else if (blocking && overlayVisible) {
     latchedRef.current = true;
   }
   if (!blocking) {
     latchedRef.current = false;
   }
 
-  const hold = blocking && (overlayVisible || latchedRef.current);
+  const hold = !softNav && blocking && (overlayVisible || latchedRef.current);
   useAppLoadingRegistration(key, APP_LOADING_PRIORITY.ROUTE_GUARD, hold, message);
-  return hold || overlayVisible;
+  return softNav ? false : hold || overlayVisible;
 }

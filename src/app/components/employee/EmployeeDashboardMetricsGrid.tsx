@@ -9,6 +9,7 @@ import { CountUpMetric } from "../dashboard/CountUpMetric";
 import { formatEur } from "../../lib/formatEur";
 import { employeeUi } from "./employeeDashboardUi";
 import { DASHBOARD_PERIOD_METRICS_GRID } from "../dashboard/dashboardPeriodUi";
+import { useDashboardKpiProfile } from "../../hooks/useDashboardRuntimeProfile";
 import { cn } from "@/lib/utils";
 
 export type EmployeePeriodMetrics = {
@@ -27,6 +28,7 @@ type EmployeeDashboardMetricsGridProps = {
   /** True only after the active period fetch finished (avoids empty-state flash). */
   metricsSettledForPeriod: boolean;
   metrics: EmployeePeriodMetrics;
+  kpiReady?: boolean;
 };
 
 function EmployeeDashboardMetricsGridInner({
@@ -35,7 +37,9 @@ function EmployeeDashboardMetricsGridInner({
   refreshingLabel,
   metricsSettledForPeriod,
   metrics,
+  kpiReady = false,
 }: EmployeeDashboardMetricsGridProps) {
+  useDashboardKpiProfile("employee", kpiReady);
   const { t } = useTranslation();
   const { periodTipCount, periodAmountEur, goalPct, rating, ratingCount, tipStreakDays } = metrics;
   const cardsLoading = loading;

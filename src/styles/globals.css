@@ -138,6 +138,12 @@ textarea::placeholder {
   animation: caretip-page-enter 0.28s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
+/* Post-login soft-nav: paint dashboard at full opacity immediately (no blank fade-in). */
+html[data-auth-post-login] .caretip-dashboard-page-enter,
+html[data-auth-sign-in-handoff] .caretip-dashboard-page-enter {
+  animation: none;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .caretip-dashboard-page-enter {
     animation: none;

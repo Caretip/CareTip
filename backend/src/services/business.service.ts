@@ -29,8 +29,10 @@ import {
 } from "../utils/businessTime.js";
 import {
   getCachedOrLoad,
+  getCachedIfFresh,
   invalidateCacheKey,
   invalidateCacheKeyPrefix,
+  primeCachedValue,
 } from "../utils/shortLivedCache.js";
 import { runSerializedByKey } from "../utils/serializedByKey.js";
 import { logDashboardPhase } from "../utils/dashboardTiming.js";
@@ -38,6 +40,7 @@ import { inferManagerOnboardingStep } from "./onboardingProgress.service.js";
 import { queryEmployeeRatingAggregates } from "./feedback.service.js";
 import {
   buildBusinessDailyTipDistribution,
+  queryBusinessDashboardMetaAndSummaryMetrics,
   queryBusinessDashboardSqlBundle,
   queryBusinessDashboardSummaryMetrics,
   type BusinessDashboardSqlBundle,
@@ -48,6 +51,8 @@ const BUSINESS_STATS_CACHE_TTL_MS = 30_000;
 const BUSINESS_META_ROSTER_CACHE_TTL_MS = 10 * 60_000;
 /** Per-timeframe tips CTE bundle — keep warm for timeframe switching. */
 const BUSINESS_SQL_BUNDLE_CACHE_TTL_MS = 90_000;
+/** KPI-only summary metrics (no chart/employee aggregates). */
+const BUSINESS_SUMMARY_METRICS_CACHE_TTL_MS = 90_000;
 /** Manager lookup caching for stats endpoints. */
 const BUSINESS_MANAGER_ID_CACHE_TTL_MS = 60_000;
 /** Employees + goals — timeframe independent. */
@@ -419,22 +424,23 @@ async function loadBusinessDashboardContextImpl(businessId: string): Promise<Bus
     throw new StatsFetchError("Business not found", { businessId, reason: "missing_business_id" });
   }
 
-  // Sequential: transaction pooler is often connection_limit=1 (parallel queries contend).
-  const business = await logDashboardPhase("business.myStats.summary", "metaBusinessRow", () =>
-    prisma.business.findUnique({
-      where: { id: businessId },
-      select: {
-        id: true,
-        name: true,
-        slug: true,
-        onboardingVerificationStatus: true,
-        kycVerificationStatus: true,
-        timezone: true,
-      },
-    }),
-  );
-  const countsRows = await logDashboardPhase("business.myStats.summary", "metaRosterSql", () =>
-    prisma.$queryRaw<BusinessRosterCountsRow[]>(Prisma.sql`
+  // Parallel: transaction pooler uses connection_limit=5 (independent meta queries).
+  const [business, countsRows] = await Promise.all([
+    logDashboardPhase("business.myStats.summary", "metaBusinessRow", () =>
+      prisma.business.findUnique({
+        where: { id: businessId },
+        select: {
+          id: true,
+          name: true,
+          slug: true,
+          onboardingVerificationStatus: true,
+          kycVerificationStatus: true,
+          timezone: true,
+        },
+      }),
+    ),
+    logDashboardPhase("business.myStats.summary", "metaRosterSql", () =>
+      prisma.$queryRaw<BusinessRosterCountsRow[]>(Prisma.sql`
     SELECT
       (SELECT COUNT(*)::int FROM employees e WHERE e.business_id = ${businessId}) AS roster_total,
       (SELECT COUNT(*)::int
@@ -451,7 +457,8 @@ async function loadBusinessDashboardContextImpl(businessId: string): Promise<Bus
          AND (e.slug IS NULL OR TRIM(e.slug) = '')
       ) AS missing_qr
   `),
-  );
+    ),
+  ]);
 
   if (!business) {
     throw new StatsFetchError("Business not found", { businessId, reason: "business_row_missing" });
@@ -538,6 +545,68 @@ function loadBusinessSqlBundleSliceCached(
       const meta = await loadBusinessDashboardContextCached(businessId);
       return runBusinessDashboardDb(businessId, () =>
         loadBusinessSqlBundleSlice(businessId, timeframe, meta),
+      );
+    },
+  );
+}
+
+type BusinessSummaryMetricsSlice = {
+  summary: BusinessDashboardSqlBundle["summary"];
+  timeframe: BusinessDashboardTimeframe;
+  ctx: { businessId: string; timeframe: BusinessDashboardTimeframe };
+};
+
+/**
+ * KPI-only path: period + pulse totals without tipsByEmployee / chart buckets.
+ * Used by scope=summary so first KPI is not blocked on analytics SQL.
+ */
+async function loadBusinessSummaryMetricsSlice(
+  businessId: string,
+  timeframe: BusinessDashboardTimeframe,
+  meta: BusinessDashboardContext,
+): Promise<BusinessSummaryMetricsSlice> {
+  const { tz } = meta;
+  const ctx = { businessId, timeframe };
+  const now = new Date();
+  const range = businessUtcRangeForTimeframe(timeframe === "all" ? "all" : timeframe, tz);
+  const rangeStart = range?.startUtc ?? new Date(0);
+  const rangeEnd = range?.endUtc ?? now;
+  const scanStart = timeframe === "all" ? new Date(0) : rangeStart;
+  const scanEnd = rangeEnd;
+  const todayRange = businessUtcRangeForTimeframe("today", tz) ?? {
+    startUtc: new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate())),
+    endUtc: now,
+  };
+  const sixtyAgo = new Date(Date.now() - 60 * 60 * 1000);
+
+  const summary = await logDashboardPhase("business.myStats.summary", "summarySqlOnly", () =>
+    queryBusinessDashboardSummaryMetrics({
+      businessId,
+      timeframe,
+      rangeStart,
+      rangeEnd,
+      scanStart,
+      scanEnd,
+      sixtyAgo,
+      todayStart: todayRange.startUtc,
+      todayEnd: todayRange.endUtc,
+    }),
+  );
+
+  return { summary, timeframe, ctx };
+}
+
+function loadBusinessSummaryMetricsSliceCached(
+  businessId: string,
+  timeframe: BusinessDashboardTimeframe,
+): Promise<BusinessSummaryMetricsSlice> {
+  return getCachedOrLoad(
+    `biz-dash-summary:${businessId}:${timeframe}`,
+    BUSINESS_SUMMARY_METRICS_CACHE_TTL_MS,
+    async () => {
+      const meta = await loadBusinessDashboardContextCached(businessId);
+      return runBusinessDashboardDb(businessId, () =>
+        loadBusinessSummaryMetricsSlice(businessId, timeframe, meta),
       );
     },
   );
@@ -698,9 +767,11 @@ async function loadBusinessAnalyticsExtras(
   opts?: { includeAssignments?: boolean },
 ): Promise<BusinessAnalyticsExtras> {
   const includeAssignments = opts?.includeAssignments === true;
-  // Sequential: Supabase transaction pool is often connection_limit=1.
-  const employees = await loadBusinessAnalyticsEmployeesCached(businessId, includeAssignments);
-  const employeeGoals = await loadBusinessAnalyticsGoalsCached(businessId);
+  // Parallel: pooler connection_limit=5 supports concurrent independent reads.
+  const [employees, employeeGoals] = await Promise.all([
+    loadBusinessAnalyticsEmployeesCached(businessId, includeAssignments),
+    loadBusinessAnalyticsGoalsCached(businessId),
+  ]);
   return { employees, employeeGoals };
 }
 
@@ -746,25 +817,12 @@ function mapEmployeesToStats(
   });
 }
 
-async function getBusinessStatsSummaryImpl(
-  businessId: string,
-  timeframe: BusinessDashboardTimeframe = "month",
+function composeBusinessStatsSummaryPayload(
+  business: BusinessDashboardContext["business"],
+  roster: BusinessDashboardContext["roster"],
+  timeframe: BusinessDashboardTimeframe,
+  summaryMetrics: BusinessDashboardSqlBundle["summary"],
 ) {
-  const { business, roster } = await loadBusinessDashboardContextCached(businessId);
-  const { bundle, ctx } = await loadBusinessSqlBundleSliceCached(businessId, timeframe);
-  const summaryMetrics = bundle.summary;
-  logStatsPhase("summary_start", ctx);
-
-  const totalTips = summaryMetrics.periodAmount;
-  const tipCount = summaryMetrics.periodCount;
-
-  logStatsPhase("summary_ok", {
-    ...ctx,
-    totalTips,
-    tipCount,
-    employeeCount: roster.tipping_ready,
-  });
-
   return {
     id: business.id,
     name: business.name,
@@ -772,8 +830,8 @@ async function getBusinessStatsSummaryImpl(
     onboardingVerificationStatus: business.onboardingVerificationStatus,
     kycVerificationStatus: business.kycVerificationStatus,
     timeframe,
-    totalTips,
-    tipCount,
+    totalTips: summaryMetrics.periodAmount,
+    tipCount: summaryMetrics.periodCount,
     employeeCount: roster.tipping_ready,
     operationalPulse: {
       tipsLast60m: { amount: summaryMetrics.last60Amount, count: summaryMetrics.last60Count },
@@ -785,6 +843,109 @@ async function getBusinessStatsSummaryImpl(
       goalsOnTrackOrBetter: 0,
     },
   };
+}
+
+/**
+ * Cold KPI path: one SQL round trip for business + roster + period/pulse totals.
+ * Primes context + summary metric caches for subsequent scopes/timeframes.
+ */
+async function loadBusinessStatsSummaryColdCombined(
+  businessId: string,
+  timeframe: BusinessDashboardTimeframe,
+) {
+  const now = new Date();
+  const sixtyAgo = new Date(Date.now() - 60 * 60 * 1000);
+
+  const row = await logDashboardPhase("business.myStats.summary", "metaSummarySql", () =>
+    queryBusinessDashboardMetaAndSummaryMetrics({
+      businessId,
+      timeframe,
+      sixtyAgo,
+      todayEnd: now,
+    }),
+  );
+
+  const tz = sanitizeIanaTimezone(row.timezone);
+  const summaryMetrics: BusinessDashboardSqlBundle["summary"] = {
+    periodAmount: Number(row.period_amount ?? 0),
+    periodCount: Number(row.period_count ?? 0),
+    last60Amount: Number(row.last60_amount ?? 0),
+    last60Count: Number(row.last60_count ?? 0),
+    todayAmount: Number(row.today_amount ?? 0),
+    todayCount: Number(row.today_count ?? 0),
+  };
+
+  const ctx: BusinessDashboardContext = {
+    business: {
+      id: row.id,
+      name: row.name,
+      slug: row.slug,
+      onboardingVerificationStatus: row.onboarding_verification_status,
+      kycVerificationStatus: row.kyc_verification_status,
+      timezone: row.timezone,
+    },
+    tz,
+    roster: {
+      roster_total: Number(row.roster_total ?? 0),
+      tipping_ready: Number(row.tipping_ready ?? 0),
+      missing_qr: Number(row.missing_qr ?? 0),
+    },
+  };
+
+  primeCachedValue(`biz-dash-context:${businessId}`, BUSINESS_META_ROSTER_CACHE_TTL_MS, ctx);
+  primeCachedValue(
+    `biz-dash-summary:${businessId}:${timeframe}`,
+    BUSINESS_SUMMARY_METRICS_CACHE_TTL_MS,
+    {
+      summary: summaryMetrics,
+      timeframe,
+      ctx: { businessId, timeframe },
+    } satisfies BusinessSummaryMetricsSlice,
+  );
+
+  return composeBusinessStatsSummaryPayload(ctx.business, ctx.roster, timeframe, summaryMetrics);
+}
+
+async function getBusinessStatsSummaryImpl(
+  businessId: string,
+  timeframe: BusinessDashboardTimeframe = "month",
+) {
+  const warmCtx = getCachedIfFresh<BusinessDashboardContext>(`biz-dash-context:${businessId}`);
+  if (!warmCtx) {
+    // Cold: one round trip for KPI cards (business + roster + tip totals).
+    const payload = await runBusinessDashboardDb(businessId, () =>
+      loadBusinessStatsSummaryColdCombined(businessId, timeframe),
+    );
+    logStatsPhase("summary_ok", {
+      businessId,
+      timeframe,
+      totalTips: payload.totalTips,
+      tipCount: payload.tipCount,
+      employeeCount: payload.employeeCount,
+      path: "metaSummaryCombined",
+    });
+    return payload;
+  }
+
+  const { summary: summaryMetrics, ctx } = await loadBusinessSummaryMetricsSliceCached(
+    businessId,
+    timeframe,
+  );
+  logStatsPhase("summary_start", ctx);
+  const payload = composeBusinessStatsSummaryPayload(
+    warmCtx.business,
+    warmCtx.roster,
+    timeframe,
+    summaryMetrics,
+  );
+  logStatsPhase("summary_ok", {
+    ...ctx,
+    totalTips: payload.totalTips,
+    tipCount: payload.tipCount,
+    employeeCount: payload.employeeCount,
+    path: "summarySqlOnly",
+  });
+  return payload;
 }
 
 async function getBusinessStatsAnalyticsImpl(
@@ -850,19 +1011,49 @@ async function getBusinessStatsImpl(
   const ctx = { businessId, timeframe };
   logStatsPhase("start", ctx);
   try {
-    const summary = await getBusinessStatsSummaryImpl(businessId, timeframe);
-    const analytics = await getBusinessStatsAnalyticsImpl(businessId, timeframe);
-    const pulseGoals = analytics.operationalPulse;
-    const payload = {
-      ...summary,
+    // Single sql-bundle load for full scope (avoids summary→analytics double tips scans).
+    const { business, roster, tz, bundle, rangeStart } = await loadBusinessSqlBundleCached(
+      businessId,
       timeframe,
-      dailyTipDistribution: analytics.dailyTipDistribution,
-      employees: analytics.employees,
-      employeeGoals: analytics.employeeGoals,
+    );
+    const summaryMetrics = bundle.summary;
+    const totalTips = summaryMetrics.periodAmount;
+    const tipCount = summaryMetrics.periodCount;
+
+    const { employees, employeeGoals } = await runSerializedByKey(
+      `biz-dash-analytics-extras:${businessId}:${timeframe === "all" ? "all" : "charts"}`,
+      () => loadBusinessAnalyticsExtras(businessId, { includeAssignments: timeframe === "all" }),
+    );
+    const dailyTipDistribution = buildChartFromSqlBundle(timeframe, rangeStart, tz, bundle);
+    const ratingsByEmployee = await queryEmployeeRatingAggregates(businessId);
+    const employeeStats = mapEmployeesToStats(employees, bundle.tipsByEmployee, ratingsByEmployee);
+
+    const goalsTracked = employeeGoals.length;
+    const goalsOnTrackOrBetter = employeeGoals.filter(
+      (g) => g.status === "on_track" || g.status === "achieved",
+    ).length;
+
+    const payload = {
+      id: business.id,
+      name: business.name,
+      slug: business.slug,
+      onboardingVerificationStatus: business.onboardingVerificationStatus,
+      kycVerificationStatus: business.kycVerificationStatus,
+      timeframe,
+      totalTips,
+      tipCount,
+      employeeCount: roster.tipping_ready,
+      dailyTipDistribution,
+      employees: employeeStats,
+      employeeGoals,
       operationalPulse: {
-        ...summary.operationalPulse,
-        goalsTracked: pulseGoals.goalsTracked,
-        goalsOnTrackOrBetter: pulseGoals.goalsOnTrackOrBetter,
+        tipsLast60m: { amount: summaryMetrics.last60Amount, count: summaryMetrics.last60Count },
+        tipsToday: { amount: summaryMetrics.todayAmount, count: summaryMetrics.todayCount },
+        tippingReadyEmployees: roster.tipping_ready,
+        rosterTotal: roster.roster_total,
+        employeesMissingQr: roster.missing_qr,
+        goalsTracked,
+        goalsOnTrackOrBetter,
       },
     };
     logStatsPhase("ok", {

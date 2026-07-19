@@ -3,6 +3,7 @@ import {
   useContext,
   useState,
   useCallback,
+  useMemo,
   type ReactNode,
 } from "react";
 
@@ -136,17 +137,30 @@ export function TipFlowProvider({ children }: { children: ReactNode }) {
     setState(defaultState);
   }, []);
 
-  const value: TipFlowContextValue = {
-    ...state,
-    setBusinessId,
-    setEmployee,
-    setStaffProfileSlug,
-    setStaffTipReturnPath,
-    setTippingVenue,
-    setAmount,
-    setBillAmount,
-    reset,
-  };
+  const value = useMemo<TipFlowContextValue>(
+    () => ({
+      ...state,
+      setBusinessId,
+      setEmployee,
+      setStaffProfileSlug,
+      setStaffTipReturnPath,
+      setTippingVenue,
+      setAmount,
+      setBillAmount,
+      reset,
+    }),
+    [
+      state,
+      setBusinessId,
+      setEmployee,
+      setStaffProfileSlug,
+      setStaffTipReturnPath,
+      setTippingVenue,
+      setAmount,
+      setBillAmount,
+      reset,
+    ],
+  );
 
   return (
     <TipFlowContext.Provider value={value}>{children}</TipFlowContext.Provider>

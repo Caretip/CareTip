@@ -119,7 +119,7 @@ export function useSubscriptionEntitlements(opts: {
 
       if (opts.role === "business") {
 
-        const profile = await fetchBusinessProfile({ silent: true, revalidate: true });
+        const profile = await fetchBusinessProfile({ silent: true });
 
         const nextTier = resolveSubscriptionTier(profile.subscriptionTier);
 

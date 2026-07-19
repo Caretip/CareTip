@@ -17,13 +17,13 @@ export function BusinessEntitlementsProvider({ children }: { children: ReactNode
 
   const value = useMemo(
     () => entitlements,
+    // Intentionally primitive-only: function identities (hasFeature/hasCapability) must not
+    // invalidate the shell/outlet on every entitlements hook render.
     [
       entitlements.tier,
       entitlements.status,
       entitlements.accessSource,
       entitlements.isSponsored,
-      entitlements.capabilities,
-      entitlements.limits,
       entitlements.hasActiveEntitlements,
       entitlements.ready,
       entitlements.isNone,
@@ -31,8 +31,8 @@ export function BusinessEntitlementsProvider({ children }: { children: ReactNode
       entitlements.isPremium,
       entitlements.isEnterprise,
       entitlements.advancedAnalyticsEnabled,
-      entitlements.hasFeature,
-      entitlements.hasCapability,
+      entitlements.limits,
+      entitlements.capabilities,
     ],
   );
 

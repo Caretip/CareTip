@@ -16,8 +16,6 @@ import { useDashboardTabRefocus } from "./useDashboardTabRefocus";
 import { devSetHydrationPhase } from "../lib/dashboardDevDebug";
 import {
   abortTimeframeControllers,
-  BUSINESS_HERO_MONTH_DEFER_MS,
-  DASHBOARD_INACTIVE_PREFETCH_DELAY_MS,
 } from "../lib/dashboardTimeframeOrchestration";
 import {
   hasBusinessDashboardVisibleContent,
@@ -45,6 +43,7 @@ import {
 } from "../lib/realtime/patchAnalyticsLive";
 import { trackSocketPatchApplied } from "../lib/realtime/realtimeMetrics";
 import type { LiveNewTipPayload } from "../lib/realtime/realtimeContracts";
+import { consumePostLoginDashboardWarm } from "../lib/authPostLoginTransition";
 
 export type { AnalyticsTimeframe };
 
@@ -71,6 +70,13 @@ function hasMetricValues(data: BusinessDashboardStats | null | undefined): boole
   return data.totalTips != null || data.tipCount != null || data.employeeCount != null;
 }
 
+/** Sync read of post-login warm cache so first paint is not empty/skeleton. */
+function readWarmPeriodStats(tf: AnalyticsTimeframe): BusinessDashboardStats | null {
+  const bundle = getBusinessAnalyticsBundle(tf);
+  if (!bundle?.periodStats || !hasMetricValues(bundle.periodStats)) return null;
+  return bundle.periodStats;
+}
+
 export function useBusinessDashboardStats(
   enabled: boolean,
   sessionValidated: boolean,
@@ -78,26 +84,40 @@ export function useBusinessDashboardStats(
 ) {
   const [analyticsTimeframe, setAnalyticsTimeframeState] = useState<AnalyticsTimeframe>("week");
   const [heroStats, setHeroStats] = useState<BusinessDashboardStats | null>(null);
-  const [stats, setStats] = useState<BusinessDashboardStats | null>(null);
-  const [statsTimeframe, setStatsTimeframe] = useState<AnalyticsTimeframe | null>(null);
-  const [summaryLoading, setSummaryLoading] = useState(true);
-  const [analyticsLoading, setAnalyticsLoading] = useState(true);
+  const [stats, setStats] = useState<BusinessDashboardStats | null>(() => readWarmPeriodStats("week"));
+  const [statsTimeframe, setStatsTimeframe] = useState<AnalyticsTimeframe | null>(() =>
+    readWarmPeriodStats("week") ? "week" : null,
+  );
+  const [summaryLoading, setSummaryLoading] = useState(() => !readWarmPeriodStats("week"));
+  const [analyticsLoading, setAnalyticsLoading] = useState(() => !readWarmPeriodStats("week"));
   const [isRevalidating, setIsRevalidating] = useState(false);
   const [statsLoadFailed, setStatsLoadFailed] = useState<string | null>(null);
   const [pendingVerification, setPendingVerification] = useState(false);
-  const [lastUpdatedAt, setLastUpdatedAt] = useState<number | null>(null);
+  const [lastUpdatedAt, setLastUpdatedAt] = useState<number | null>(() =>
+    readWarmPeriodStats("week") ? Date.now() : null,
+  );
   const [dataRevision, setDataRevision] = useState(0);
   const [refetchTick, setRefetchTick] = useState(0);
   const [lastKnownGoodMetrics, setLastKnownGoodMetrics] = useState<{
     totalTips: number;
     tipCount: number;
     employeeCount: number;
-  } | null>(null);
+  } | null>(() => {
+    const warm = readWarmPeriodStats("week");
+    if (!warm) return null;
+    return {
+      totalTips: typeof warm.totalTips === "number" ? warm.totalTips : 0,
+      tipCount: typeof warm.tipCount === "number" ? warm.tipCount : 0,
+      employeeCount: typeof warm.employeeCount === "number" ? warm.employeeCount : 0,
+    };
+  });
 
   const tfRef = useRef(analyticsTimeframe);
   tfRef.current = analyticsTimeframe;
   const statsRef = useRef(stats);
   statsRef.current = stats;
+  const statsTimeframeRef = useRef(statsTimeframe);
+  statsTimeframeRef.current = statsTimeframe;
   const lastKnownGoodMetricsRef = useRef(lastKnownGoodMetrics);
   lastKnownGoodMetricsRef.current = lastKnownGoodMetrics;
   const uiRequestSeqRef = useRef(0);
@@ -195,13 +215,21 @@ export function useBusinessDashboardStats(
     if (!merged) return;
     if (!isBusinessSummaryFetched(merged)) return;
     persistSwr(tf);
+    const prev = statsRef.current;
+    const sameKpis =
+      prev != null &&
+      prev.totalTips === merged.totalTips &&
+      prev.tipCount === merged.tipCount &&
+      prev.employeeCount === merged.employeeCount &&
+      statsTimeframeRef.current === tf;
     setStats(merged);
     setStatsTimeframe(tf);
     upsertBusinessAnalyticsStatsBundle(tf, merged);
     setPendingVerification(false);
     setStatsLoadFailed(null);
     setLastUpdatedAt(Date.now());
-    if (fromNetwork) setDataRevision((n) => n + 1);
+    // Avoid chart-payload follow-ups bumping revision when KPI numbers are unchanged.
+    if (fromNetwork && !sameKpis) setDataRevision((n) => n + 1);
     setLastKnownGoodMetrics({
       totalTips: typeof merged.totalTips === "number" ? merged.totalTips : 0,
       tipCount: typeof merged.tipCount === "number" ? merged.tipCount : 0,
@@ -254,14 +282,9 @@ export function useBusinessDashboardStats(
   }, []);
 
   const scheduleDeferredHeroMonth = useCallback(() => {
-    if (tfRef.current === "month") return;
+    // Phase 1: do not auto-fetch month for hero — only active timeframe loads on overview.
     cancelDeferredHeroMonth();
-    heroDeferTimerRef.current = setTimeout(() => {
-      heroDeferTimerRef.current = null;
-      if (tfRef.current === "month" || !sessionValidated || !enabled) return;
-      void loadHeroMonthSummaryRef.current();
-    }, BUSINESS_HERO_MONTH_DEFER_MS);
-  }, [cancelDeferredHeroMonth, enabled, sessionValidated]);
+  }, [cancelDeferredHeroMonth]);
 
   const abortInactiveTimeframes = useCallback((activeTf: AnalyticsTimeframe) => {
     abortTimeframeControllers(abortByTfRef.current, activeTf);
@@ -703,37 +726,13 @@ export function useBusinessDashboardStats(
   loadHeroMonthSummaryRef.current = loadHeroMonthSummary;
 
   const prefetchQueueRef = useRef<number | null>(null);
-  const scheduleInactivePrefetch = useCallback(
-    (activeTf: AnalyticsTimeframe) => {
-      if (prefetchQueueRef.current != null) {
-        window.clearTimeout(prefetchQueueRef.current);
-      }
-      // Year is switched often but was previously prefetched last; prioritize it after the active period.
-      const prefetchOrder: AnalyticsTimeframe[] =
-        activeTf === "month"
-          ? ["year", "week"]
-          : activeTf === "week"
-            ? ["month", "year"]
-            : ["month", "week"];
-      const others = prefetchOrder.filter((t) => t !== activeTf);
-      let idx = 0;
-      const step = () => {
-        if (idx >= others.length) return;
-        const nextTf = others[idx++]!;
-        if (nextTf === tfRef.current) {
-          step();
-          return;
-        }
-        void loadStatsFor(nextTf, { affectsUi: false, silent: true }).finally(step);
-      };
-      prefetchQueueRef.current = window.setTimeout(() => {
-        prefetchQueueRef.current = null;
-        if (!sessionValidated || !enabled) return;
-        step();
-      }, DASHBOARD_INACTIVE_PREFETCH_DELAY_MS);
-    },
-    [enabled, sessionValidated, loadStatsFor],
-  );
+  /** Phase 1: load only the active timeframe — no month/year background prefetch. */
+  const scheduleInactivePrefetch = useCallback((_activeTf: AnalyticsTimeframe) => {
+    if (prefetchQueueRef.current != null) {
+      window.clearTimeout(prefetchQueueRef.current);
+      prefetchQueueRef.current = null;
+    }
+  }, []);
       scheduleInactivePrefetchRef.current = scheduleInactivePrefetch;
 
   const setAnalyticsTimeframe = useCallback(
@@ -842,27 +841,41 @@ export function useBusinessDashboardStats(
   useEffect(() => {
     if (!sessionValidated || !enabled) return;
     const generation = ++statsMountGenerationRef.current;
+    const tf = analyticsTimeframe;
+    const postLoginWarm = consumePostLoginDashboardWarm();
+    const warmStats = readWarmPeriodStats(tf);
+
     if (!hasSettledLiveUiRef.current) {
-      clearBusinessAnalyticsStore();
-      networkSettledTfsRef.current.clear();
+      if (postLoginWarm && warmStats) {
+        summaryPartialRef.current.set(tf, warmStats);
+        analyticsPartialRef.current.set(tf, warmStats);
+        networkSettledTfsRef.current.add(tf);
+        markDashboardLiveSettled(hasSettledLiveUiRef);
+        persistSwr(tf);
+      } else if (!warmStats) {
+        clearBusinessAnalyticsStore();
+        networkSettledTfsRef.current.clear();
+      }
     }
+
     const handle = window.setTimeout(() => {
       if (statsMountGenerationRef.current !== generation) return;
-      const tf = analyticsTimeframe;
       const warmMount =
         hasSettledLiveUiRef.current &&
         (isPeriodSessionReady(tf) || hasBusinessDashboardVisibleContent(statsRef.current));
+      const softWarm = warmMount || Boolean(warmStats);
       void loadStatsForRef.current(tf, {
         affectsUi: true,
-        soft: warmMount,
-        silent: warmMount,
-        forceNetwork: !hasSettledLiveUiRef.current,
+        soft: softWarm,
+        silent: softWarm,
+        forceNetwork: !softWarm,
       });
     }, 0);
     return () => {
       window.clearTimeout(handle);
       statsMountGenerationRef.current += 1;
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- mount/bootstrap only; period changes use setAnalyticsTimeframe
   }, [enabled, sessionValidated, refetchTick]);
 
   useEffect(() => {

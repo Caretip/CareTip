@@ -344,6 +344,8 @@ export type BusinessDashboardMetaSummaryRow = {
   name: string;
   slug: string | null;
   verification_status: string;
+  onboarding_verification_status: string;
+  kyc_verification_status: string;
   timezone: string | null;
   roster_total: number;
   tipping_ready: number;
@@ -357,54 +359,94 @@ export type BusinessDashboardMetaSummaryRow = {
 };
 
 /**
- * Business row + roster pulse + period summary in one round trip (summary scope).
+ * Business + roster + tip KPIs in one round trip.
+ * Period windows are computed in SQL from `businesses.timezone` (no prior tz fetch).
  */
 export async function queryBusinessDashboardMetaAndSummaryMetrics(opts: {
   businessId: string;
   timeframe: BusinessDashboardTimeframe;
-  rangeStart: Date;
-  rangeEnd: Date;
-  scanStart: Date;
-  scanEnd: Date;
+  /** Optional explicit ranges — when omitted, SQL derives bounds from business timezone. */
+  rangeStart?: Date;
+  rangeEnd?: Date;
+  scanStart?: Date;
+  scanEnd?: Date;
   sixtyAgo: Date;
-  todayStart: Date;
+  todayStart?: Date;
   todayEnd: Date;
 }): Promise<BusinessDashboardMetaSummaryRow> {
   const shouldLog =
     process.env.NODE_ENV !== "production" || process.env.DASHBOARD_TIMING === "1";
   const t0 = performance.now();
-  const [row] = await prisma.$queryRaw<BusinessDashboardMetaSummaryRow[]>(Prisma.sql`
-    WITH period_scoped AS (
-      SELECT amount, created_at
-      FROM tips
-      WHERE business_id = ${opts.businessId}
-        AND status = 'success'
-        AND created_at >= ${opts.scanStart}
-        AND created_at <= ${opts.scanEnd}
-    ),
-    pulse AS (
+
+  const useSqlBounds = opts.rangeStart == null || opts.rangeEnd == null;
+
+  const [row] = await prisma.$queryRaw<BusinessDashboardMetaSummaryRow[]>(
+    useSqlBounds
+      ? Prisma.sql`
+    WITH biz AS (
       SELECT
-        COALESCE(SUM(amount) FILTER (WHERE created_at >= ${opts.sixtyAgo}), 0)::float AS last60_amount,
-        COUNT(*) FILTER (WHERE created_at >= ${opts.sixtyAgo})::int AS last60_count,
-        COALESCE(SUM(amount) FILTER (
-          WHERE created_at >= ${opts.todayStart} AND created_at <= ${opts.todayEnd}
-        ), 0)::float AS today_amount,
-        COUNT(*) FILTER (
-          WHERE created_at >= ${opts.todayStart} AND created_at <= ${opts.todayEnd}
-        )::int AS today_count
-      FROM tips
-      WHERE business_id = ${opts.businessId}
-        AND status = 'success'
+        b.id,
+        b.name,
+        b.slug,
+        b.verification_status,
+        b.onboarding_verification_status,
+        b.kyc_verification_status,
+        b.timezone,
+        COALESCE(NULLIF(TRIM(b.timezone), ''), 'UTC') AS tz
+      FROM businesses b
+      WHERE b.id = ${opts.businessId}
     ),
-    period_agg AS (
+    bounds AS (
       SELECT
-        COALESCE(SUM(amount) FILTER (
-          WHERE created_at >= ${opts.rangeStart} AND created_at <= ${opts.rangeEnd}
+        CASE
+          WHEN ${opts.timeframe} = 'all' THEN TIMESTAMPTZ '1970-01-01'
+          WHEN ${opts.timeframe} = 'year' THEN (date_trunc('year', now() AT TIME ZONE biz.tz) AT TIME ZONE biz.tz)
+          WHEN ${opts.timeframe} = 'month' THEN (date_trunc('month', now() AT TIME ZONE biz.tz) AT TIME ZONE biz.tz)
+          WHEN ${opts.timeframe} = 'week' THEN (date_trunc('week', now() AT TIME ZONE biz.tz) AT TIME ZONE biz.tz)
+          ELSE (date_trunc('day', now() AT TIME ZONE biz.tz) AT TIME ZONE biz.tz)
+        END AS range_start,
+        CASE
+          WHEN ${opts.timeframe} = 'all' THEN ${opts.todayEnd}
+          WHEN ${opts.timeframe} = 'year' THEN ((date_trunc('year', now() AT TIME ZONE biz.tz) + INTERVAL '1 year' - INTERVAL '1 microsecond') AT TIME ZONE biz.tz)
+          WHEN ${opts.timeframe} = 'month' THEN ((date_trunc('month', now() AT TIME ZONE biz.tz) + INTERVAL '1 month' - INTERVAL '1 microsecond') AT TIME ZONE biz.tz)
+          WHEN ${opts.timeframe} = 'week' THEN ((date_trunc('week', now() AT TIME ZONE biz.tz) + INTERVAL '7 days' - INTERVAL '1 microsecond') AT TIME ZONE biz.tz)
+          ELSE ((date_trunc('day', now() AT TIME ZONE biz.tz) + INTERVAL '1 day' - INTERVAL '1 microsecond') AT TIME ZONE biz.tz)
+        END AS range_end,
+        (date_trunc('day', now() AT TIME ZONE biz.tz) AT TIME ZONE biz.tz) AS today_start,
+        biz.tz
+      FROM biz
+    ),
+    tip_scoped AS (
+      SELECT t.amount, t.created_at
+      FROM tips t
+      CROSS JOIN bounds bd
+      WHERE t.business_id = ${opts.businessId}
+        AND t.status = 'success'
+        AND t.created_at >= LEAST(bd.range_start, ${opts.sixtyAgo}, bd.today_start)
+        AND t.created_at <= GREATEST(bd.range_end, ${opts.todayEnd})
+    ),
+    tip_agg AS (
+      SELECT
+        COALESCE(SUM(ts.amount) FILTER (
+          WHERE ts.created_at >= bd.range_start AND ts.created_at <= bd.range_end
         ), 0)::float AS period_amount,
-        COUNT(*) FILTER (
-          WHERE created_at >= ${opts.rangeStart} AND created_at <= ${opts.rangeEnd}
-        )::int AS period_count
-      FROM period_scoped
+        (COUNT(*) FILTER (
+          WHERE ts.created_at >= bd.range_start AND ts.created_at <= bd.range_end
+        ))::int AS period_count,
+        COALESCE(SUM(ts.amount) FILTER (
+          WHERE ts.created_at >= ${opts.sixtyAgo}
+        ), 0)::float AS last60_amount,
+        (COUNT(*) FILTER (
+          WHERE ts.created_at >= ${opts.sixtyAgo}
+        ))::int AS last60_count,
+        COALESCE(SUM(ts.amount) FILTER (
+          WHERE ts.created_at >= bd.today_start AND ts.created_at <= ${opts.todayEnd}
+        ), 0)::float AS today_amount,
+        (COUNT(*) FILTER (
+          WHERE ts.created_at >= bd.today_start AND ts.created_at <= ${opts.todayEnd}
+        ))::int AS today_count
+      FROM tip_scoped ts
+      CROSS JOIN bounds bd
     ),
     roster AS (
       SELECT
@@ -415,7 +457,82 @@ export async function queryBusinessDashboardMetaAndSummaryMetrics(opts: {
             AND u.email_verified = true
         )::int AS tipping_ready,
         COUNT(e.id) FILTER (
-          WHERE e.slug IS NULL OR e.slug = ''
+          WHERE e.slug IS NULL OR TRIM(e.slug) = ''
+        )::int AS missing_qr
+      FROM employees e
+      LEFT JOIN "User" u ON u.id = e.user_id
+      WHERE e.business_id = ${opts.businessId}
+    )
+    SELECT
+      biz.id,
+      biz.name,
+      biz.slug,
+      biz.verification_status,
+      biz.onboarding_verification_status,
+      biz.kyc_verification_status,
+      biz.timezone,
+      r.roster_total,
+      r.tipping_ready,
+      r.missing_qr,
+      ta.period_amount,
+      ta.period_count,
+      ta.last60_amount,
+      ta.last60_count,
+      ta.today_amount,
+      ta.today_count
+    FROM biz
+    CROSS JOIN roster r
+    CROSS JOIN tip_agg ta
+  `
+      : Prisma.sql`
+    WITH tip_scoped AS (
+      SELECT amount, created_at
+      FROM tips
+      WHERE business_id = ${opts.businessId}
+        AND status = 'success'
+        AND created_at >= ${new Date(
+          Math.min(
+            (opts.scanStart ?? opts.rangeStart)!.getTime(),
+            opts.sixtyAgo.getTime(),
+            (opts.todayStart ?? opts.rangeStart)!.getTime(),
+          ),
+        )}
+        AND created_at <= ${new Date(
+          Math.max((opts.scanEnd ?? opts.rangeEnd)!.getTime(), opts.todayEnd.getTime()),
+        )}
+    ),
+    tip_agg AS (
+      SELECT
+        COALESCE(SUM(amount) FILTER (
+          WHERE created_at >= ${opts.rangeStart!} AND created_at <= ${opts.rangeEnd!}
+        ), 0)::float AS period_amount,
+        (COUNT(*) FILTER (
+          WHERE created_at >= ${opts.rangeStart!} AND created_at <= ${opts.rangeEnd!}
+        ))::int AS period_count,
+        COALESCE(SUM(amount) FILTER (
+          WHERE created_at >= ${opts.sixtyAgo}
+        ), 0)::float AS last60_amount,
+        (COUNT(*) FILTER (
+          WHERE created_at >= ${opts.sixtyAgo}
+        ))::int AS last60_count,
+        COALESCE(SUM(amount) FILTER (
+          WHERE created_at >= ${opts.todayStart!} AND created_at <= ${opts.todayEnd}
+        ), 0)::float AS today_amount,
+        (COUNT(*) FILTER (
+          WHERE created_at >= ${opts.todayStart!} AND created_at <= ${opts.todayEnd}
+        ))::int AS today_count
+      FROM tip_scoped
+    ),
+    roster AS (
+      SELECT
+        COUNT(e.id)::int AS roster_total,
+        COUNT(e.id) FILTER (
+          WHERE e.is_active = true
+            AND e.activation_status = 'active'
+            AND u.email_verified = true
+        )::int AS tipping_ready,
+        COUNT(e.id) FILTER (
+          WHERE e.slug IS NULL OR TRIM(e.slug) = ''
         )::int AS missing_qr
       FROM employees e
       LEFT JOIN "User" u ON u.id = e.user_id
@@ -426,22 +543,24 @@ export async function queryBusinessDashboardMetaAndSummaryMetrics(opts: {
       b.name,
       b.slug,
       b.verification_status,
+      b.onboarding_verification_status,
+      b.kyc_verification_status,
       b.timezone,
       r.roster_total,
       r.tipping_ready,
       r.missing_qr,
-      pa.period_amount,
-      pa.period_count,
-      pulse.last60_amount,
-      pulse.last60_count,
-      pulse.today_amount,
-      pulse.today_count
+      ta.period_amount,
+      ta.period_count,
+      ta.last60_amount,
+      ta.last60_count,
+      ta.today_amount,
+      ta.today_count
     FROM businesses b
     CROSS JOIN roster r
-    CROSS JOIN period_agg pa
-    CROSS JOIN pulse
+    CROSS JOIN tip_agg ta
     WHERE b.id = ${opts.businessId}
-  `);
+  `,
+  );
 
   if (!row) {
     throw new Error("Business not found");
@@ -451,7 +570,7 @@ export async function queryBusinessDashboardMetaAndSummaryMetrics(opts: {
   if (shouldLog) {
     console.info(
       `[dashboard.timing] business.myStats.${opts.timeframe}.metaSummarySql ${tSql}ms`,
-      { businessId: opts.businessId },
+      { businessId: opts.businessId, sqlBounds: useSqlBounds },
     );
   }
 
@@ -576,8 +695,9 @@ export async function queryEmployeeDashboardSummaryMetrics(opts: {
 }
 
 /**
- * One tips-table scan (CTE) for summary hero metrics + analytics chart/employee aggregates.
- * Mirrors employee `loadEmployeeSqlBundleSlice` / `queryEmployeeDashboardSummaryMetrics`.
+ * Analytics chart/employee aggregates + summary metrics.
+ * Runs summary first, then period-scoped employee/chart queries sequentially
+ * (Supabase transaction pooler is often connection_limit=1).
  */
 export async function queryBusinessDashboardSqlBundle(opts: {
   businessId: string;
@@ -610,37 +730,51 @@ export async function queryBusinessDashboardSqlBundle(opts: {
     todayEnd: opts.todayEnd,
   });
 
+  const tEmp0 = performance.now();
   const tipsByEmployee = await queryBusinessTipsByEmployee({
     businessId: opts.businessId,
     startUtc: periodStart,
     endUtc: periodEnd,
   });
+  const tipsByEmployeeMs = Math.round(performance.now() - tEmp0);
 
   let dailyByYmd = new Map<string, number>();
+  let dailyBucketsMs = 0;
   if (opts.timeframe === "week" || opts.timeframe === "month") {
+    const tDaily0 = performance.now();
     dailyByYmd = await queryDailyTipBuckets({
       businessId: opts.businessId,
       startUtc: periodStart,
       endUtc: periodEnd,
       timezone: tz,
     });
+    dailyBucketsMs = Math.round(performance.now() - tDaily0);
   }
 
   let monthTotals: number[] | null = null;
+  let monthTotalsMs = 0;
   if (opts.timeframe === "year") {
+    const tMonth0 = performance.now();
     monthTotals = await queryMonthlyTipTotalsForRange({
       businessId: opts.businessId,
       startUtc: periodStart,
       endUtc: periodEnd,
       timezone: tz,
     });
+    monthTotalsMs = Math.round(performance.now() - tMonth0);
   }
 
   const tSql = Math.round(performance.now() - t0);
   if (shouldLog) {
     console.info(
       `[dashboard.timing] business.myStats.${opts.timeframe}.sqlBundle ${tSql}ms`,
-      { businessId: opts.businessId },
+      {
+        businessId: opts.businessId,
+        tipsByEmployeeMs,
+        dailyBucketsMs,
+        monthTotalsMs,
+        sequentialQueries: 2 + (dailyBucketsMs > 0 || monthTotalsMs > 0 ? 1 : 0),
+      },
     );
   }
 
@@ -648,8 +782,8 @@ export async function queryBusinessDashboardSqlBundle(opts: {
 }
 
 /**
- * Hero/summary cards only — same period + pulse totals as the full bundle, without
- * per-employee or chart JSON aggregates (cheaper on a single-connection pool).
+ * Hero/summary cards only — one bounded tips scan (period + pulse).
+ * Does not load per-employee or chart aggregates.
  */
 export async function queryBusinessDashboardSummaryMetrics(opts: {
   businessId: string;
@@ -665,6 +799,15 @@ export async function queryBusinessDashboardSummaryMetrics(opts: {
   const shouldLog =
     process.env.NODE_ENV !== "production" || process.env.DASHBOARD_TIMING === "1";
   const t0 = performance.now();
+
+  // Bound the scan to period ∪ pulse windows — never scan the full tips history for KPIs.
+  const lowerBound = new Date(
+    Math.min(opts.scanStart.getTime(), opts.sixtyAgo.getTime(), opts.todayStart.getTime()),
+  );
+  const upperBound = new Date(
+    Math.max(opts.scanEnd.getTime(), opts.todayEnd.getTime()),
+  );
+
   const [row] = await prisma.$queryRaw<
     Array<{
       period_amount: number;
@@ -675,47 +818,30 @@ export async function queryBusinessDashboardSummaryMetrics(opts: {
       today_count: number;
     }>
   >(Prisma.sql`
-    WITH period_scoped AS (
-      SELECT amount, created_at
-      FROM tips
-      WHERE business_id = ${opts.businessId}
-        AND status = 'success'
-        AND created_at >= ${opts.scanStart}
-        AND created_at <= ${opts.scanEnd}
-    ),
-    pulse AS (
-      SELECT
-        COALESCE(SUM(amount) FILTER (WHERE created_at >= ${opts.sixtyAgo}), 0)::float AS last60_amount,
-        COUNT(*) FILTER (WHERE created_at >= ${opts.sixtyAgo})::int AS last60_count,
-        COALESCE(SUM(amount) FILTER (
-          WHERE created_at >= ${opts.todayStart} AND created_at <= ${opts.todayEnd}
-        ), 0)::float AS today_amount,
-        COUNT(*) FILTER (
-          WHERE created_at >= ${opts.todayStart} AND created_at <= ${opts.todayEnd}
-        )::int AS today_count
-      FROM tips
-      WHERE business_id = ${opts.businessId}
-        AND status = 'success'
-    ),
-    period_agg AS (
-      SELECT
-        COALESCE(SUM(amount) FILTER (
-          WHERE created_at >= ${opts.rangeStart} AND created_at <= ${opts.rangeEnd}
-        ), 0)::float AS period_amount,
-        COUNT(*) FILTER (
-          WHERE created_at >= ${opts.rangeStart} AND created_at <= ${opts.rangeEnd}
-        )::int AS period_count
-      FROM period_scoped
-    )
     SELECT
-      pa.period_amount,
-      pa.period_count,
-      pulse.last60_amount,
-      pulse.last60_count,
-      pulse.today_amount,
-      pulse.today_count
-    FROM period_agg pa
-    CROSS JOIN pulse
+      COALESCE(SUM(amount) FILTER (
+        WHERE created_at >= ${opts.rangeStart} AND created_at <= ${opts.rangeEnd}
+      ), 0)::float AS period_amount,
+      (COUNT(*) FILTER (
+        WHERE created_at >= ${opts.rangeStart} AND created_at <= ${opts.rangeEnd}
+      ))::int AS period_count,
+      COALESCE(SUM(amount) FILTER (
+        WHERE created_at >= ${opts.sixtyAgo}
+      ), 0)::float AS last60_amount,
+      (COUNT(*) FILTER (
+        WHERE created_at >= ${opts.sixtyAgo}
+      ))::int AS last60_count,
+      COALESCE(SUM(amount) FILTER (
+        WHERE created_at >= ${opts.todayStart} AND created_at <= ${opts.todayEnd}
+      ), 0)::float AS today_amount,
+      (COUNT(*) FILTER (
+        WHERE created_at >= ${opts.todayStart} AND created_at <= ${opts.todayEnd}
+      ))::int AS today_count
+    FROM tips
+    WHERE business_id = ${opts.businessId}
+      AND status = 'success'
+      AND created_at >= ${lowerBound}
+      AND created_at <= ${upperBound}
   `);
 
   const tSql = Math.round(performance.now() - t0);

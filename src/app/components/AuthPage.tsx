@@ -6,6 +6,16 @@ import { AuthFieldGroup } from './auth/AuthFieldGroup';
 import { AuthEmployeeVenueBanner } from './auth/AuthEmployeeVenueBanner';
 import { AuthTrustStrip } from './auth/AuthTrustStrip';
 import { beginAuthPostLoginTransition, isAuthPostLoginTransitionActive, subscribeAuthPostLoginTransition } from '../lib/authPostLoginTransition';
+import {
+  beginAuthSignInHandoff,
+  markSignInHandoffAuthCompleted,
+  markSignInHandoffNavigating,
+  isAuthSignInHandoffActive,
+  subscribeAuthSignInHandoff,
+  endAuthSignInHandoff,
+  formatSignInHandoffTimingReport,
+  getSignInHandoffTimingSnapshot,
+} from '../lib/authSignInHandoff';
 import { useSignalLogoutAuthPageReady } from '../lib/useSignalLogoutAuthPageReady';
 import { AuthOAuthButtons } from './AuthOAuthButtons';
 import { SignInCard2, type AuthRole } from '@/components/ui/sign-in-card-2';
@@ -49,7 +59,7 @@ import {
   type ValidatedInviteContext,
 } from '../lib/inviteContextStore';
 import { scheduleIdleWork } from "@/lib/publicRouteDefer";
-import { prefetchDashboardRoutes } from "../lib/prefetchAuthenticatedRoutes";
+import { prefetchDashboardRoutes, preparePostAuthDestination } from "../lib/prefetchAuthenticatedRoutes";
 import {
   APP_LOADING_PRIORITY,
   useAppLoadingRegistration,
@@ -129,19 +139,34 @@ export function AuthPage() {
     t("common.loading.sessionCheck"),
   );
 
-  /** Single post-auth navigation — only after explicit login/OAuth/continue (never on mount/back). */
+  /** Single post-auth navigation — cover stays until dashboard shell paints (not widgets). */
   const redirectAfterAuth = useCallback(
-    (sessionUser: User) => {
+    async (sessionUser: User) => {
       const target = getPostAuthRedirect(sessionUser);
       if (location.pathname === target) return;
       if (postAuthRedirectRef.current === target) return;
       postAuthRedirectRef.current = target;
-      // Paint AuthBootstrapShell before the route swap so Sign In chrome never flashes.
+      if (!isAuthSignInHandoffActive()) {
+        beginAuthSignInHandoff();
+      }
+      setAuthFlowInProgress(true);
+      setIsSubmitting(true);
+      markSignInHandoffAuthCompleted();
+      try {
+        await preparePostAuthDestination(target);
+      } catch {
+        /* Still navigate — cover stays until layout shell commits. */
+      }
+      // Cover mounts at root before AuthPage unmounts; soft-nav clears branded overlays.
       flushSync(() => {
-        setAuthFlowInProgress(true);
+        markSignInHandoffNavigating(target);
         beginAuthPostLoginTransition(target);
       });
       navigate(target, { replace: true });
+      if (import.meta.env.DEV) {
+        // Snapshot mid-flight; final report logs when handoff ends.
+        console.info("[AuthHandoff] navigate issued\n" + formatSignInHandoffTimingReport(getSignInHandoffTimingSnapshot()));
+      }
     },
     [location.pathname, navigate],
   );
@@ -254,7 +279,8 @@ export function AuthPage() {
     if (user != null && !sessionValidated) return;
     if (user != null && sessionValidated) {
       setAuthFlowInProgress(true);
-      redirectAfterAuth(user);
+      setIsSubmitting(true);
+      await redirectAfterAuth(user);
       return;
     }
 
@@ -289,6 +315,7 @@ export function AuthPage() {
 
     if (authInFlightRef.current) return;
     authInFlightRef.current = true;
+    beginAuthSignInHandoff();
     setAuthFlowInProgress(true);
     setIsSubmitting(true);
 
@@ -296,10 +323,12 @@ export function AuthPage() {
       if (isLogin) {
         const result = await login(email, password);
         if (isMfaLoginChallenge(result)) {
+          endAuthSignInHandoff("AuthPage_mfa_challenge");
           navigate('/platform-admin/login', { replace: true });
           return;
         }
-        redirectAfterAuth(parseUser(result.user));
+        await redirectAfterAuth(parseUser(result.user));
+        return;
       } else {
         const payload = {
           email,
@@ -315,13 +344,27 @@ export function AuthPage() {
         if (authLane === 'employee') {
           clearValidatedInviteContext();
         }
-        navigate('/verify-email', {
+        const verifyTarget = '/verify-email';
+        postAuthRedirectRef.current = verifyTarget;
+        markSignInHandoffAuthCompleted();
+        try {
+          await preparePostAuthDestination(verifyTarget);
+        } catch {
+          /* cover until page paints */
+        }
+        flushSync(() => {
+          markSignInHandoffNavigating(verifyTarget);
+          beginAuthPostLoginTransition(verifyTarget);
+        });
+        navigate(verifyTarget, {
           replace: true,
           state: { pendingEmail: created.email, pendingRole: created.role },
         });
+        return;
       }
     } catch (err) {
       logClientError('AuthPage', err);
+      endAuthSignInHandoff("AuthPage_submit_error");
       if (isApiRequestError(err) && err.code === EMAIL_NOT_VERIFIED_CODE) {
         // Ensure we don't keep a stale session from a previous login when backend rejects unverified access.
         try {
@@ -348,8 +391,9 @@ export function AuthPage() {
       }
     } finally {
       authInFlightRef.current = false;
-      setIsSubmitting(false);
+      // Keep button spinner until unmount when a post-auth redirect is in flight.
       if (!postAuthRedirectRef.current) {
+        setIsSubmitting(false);
         setAuthFlowInProgress(false);
       }
     }
@@ -404,7 +448,8 @@ export function AuthPage() {
   const runGoogleOAuth = async (idToken: string) => {
     if (user != null && sessionValidated) {
       setAuthFlowInProgress(true);
-      redirectAfterAuth(user);
+      setIsSubmitting(true);
+      await redirectAfterAuth(user);
       return;
     }
     if (!isLogin && authLane === 'employee') {
@@ -419,6 +464,7 @@ export function AuthPage() {
     }
     if (authInFlightRef.current) return;
     authInFlightRef.current = true;
+    beginAuthSignInHandoff();
     setAuthFlowInProgress(true);
     setIsSubmitting(true);
     setError('');
@@ -441,9 +487,11 @@ export function AuthPage() {
       if (!isLogin && authLane === 'employee') {
         clearValidatedInviteContext();
       }
-      redirectAfterAuth(loggedIn);
+      await redirectAfterAuth(loggedIn);
+      return;
     } catch (err) {
       logClientError('AuthPage.oauth', err);
+      endAuthSignInHandoff("AuthPage_oauth_error");
       if (isApiRequestError(err) && err.code === GOOGLE_ACCOUNT_NOT_REGISTERED_CODE) {
         setIsLogin(false);
         setError(toUserFriendlyMessage(err));
@@ -461,8 +509,8 @@ export function AuthPage() {
       }
     } finally {
       authInFlightRef.current = false;
-      setIsSubmitting(false);
       if (!postAuthRedirectRef.current) {
+        setIsSubmitting(false);
         setAuthFlowInProgress(false);
       }
     }
@@ -488,8 +536,15 @@ export function AuthPage() {
     isAuthPostLoginTransitionActive,
     () => false,
   );
+  const signInHandoffActive = useSyncExternalStore(
+    subscribeAuthSignInHandoff,
+    isAuthSignInHandoffActive,
+    () => false,
+  );
   const authTransitionPending =
-    postLoginTransitionActive || (authFlowInProgress && Boolean(postAuthRedirectRef.current));
+    postLoginTransitionActive ||
+    signInHandoffActive ||
+    (authFlowInProgress && Boolean(postAuthRedirectRef.current));
 
   const loginChromeReady =
     !inviteGateBlocking &&
@@ -540,7 +595,11 @@ export function AuthPage() {
           <button
             type="button"
             disabled={!user}
-            onClick={() => user && redirectAfterAuth(user)}
+            onClick={() => {
+              if (!user) return;
+              beginAuthSignInHandoff();
+              void redirectAfterAuth(user);
+            }}
             className={cn(caretipBtnPrimaryCompact, "min-h-10 w-full px-4 text-sm sm:w-auto sm:min-w-[10rem] disabled:opacity-50")}
           >
             {t('auth.page.crossSessionContinue')}

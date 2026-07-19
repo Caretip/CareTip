@@ -65,6 +65,14 @@ export function primeCachedValue<T>(key: string, ttlMs: number, value: T): void 
   cache.set(key, { expiresAt: Date.now() + ttlMs, value });
 }
 
+/** Read a fresh cache entry without loading (undefined on miss/expiry). */
+export function getCachedIfFresh<T>(key: string): T | undefined {
+  const hit = cache.get(key);
+  if (hit && hit.expiresAt > Date.now()) return hit.value as T;
+  if (hit) cache.delete(key);
+  return undefined;
+}
+
 export function invalidateCacheKey(key: string): void {
   cache.delete(key);
   inflight.delete(key);

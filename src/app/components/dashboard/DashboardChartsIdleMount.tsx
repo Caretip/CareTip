@@ -1,4 +1,5 @@
 import { Suspense, useCallback, useEffect, useRef, useState, type ReactNode } from "react";
+import { markDashboardChartMounted } from "@/app/lib/dashboardRuntimeProfiler";
 import { isDashboardChartSlotNearViewport } from "@/app/lib/dashboardAnalyticsLifecycle";
 import { scheduleIdleWork } from "@/lib/publicRouteDefer";
 
@@ -111,6 +112,11 @@ export function DashboardChartsIdleMount({
     onReadyFiredRef.current = true;
     onReady();
   }, [ready, onReady]);
+
+  useEffect(() => {
+    if (!ready) return;
+    markDashboardChartMounted({ whenVisible, timeoutMs });
+  }, [ready, whenVisible, timeoutMs]);
 
   if (!ready) {
     return (

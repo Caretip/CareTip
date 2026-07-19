@@ -17,6 +17,7 @@ import {
   subscribeAuthPostLoginTransition,
 } from "@/app/lib/authPostLoginTransition";
 import { useSignalLogoutAuthPageReady } from "@/app/lib/useSignalLogoutAuthPageReady";
+import { preparePostAuthDestination } from "@/app/lib/prefetchAuthenticatedRoutes";
 import { AuthMinimalFooter } from "@/app/components/auth/AuthMinimalFooter";
 import { caretipBtnPrimaryCompact, caretipBtnPrimaryFull } from "@/lib/caretipButtonSystem";
 import { cn } from "@/lib/utils";
@@ -80,12 +81,18 @@ export function PlatformAdminLoginPage() {
     user && !sessionValidated && isPlatformAdminSessionRole(user.role) && !forceLogin,
   );
 
-  const redirectAfterAuth = useCallback(() => {
+  const redirectAfterAuth = useCallback(async () => {
     const target = "/platform-admin/dashboard";
     if (postAuthRedirectRef.current === target) return;
     postAuthRedirectRef.current = target;
+    setAuthFlowInProgress(true);
+    setSubmitting(true);
+    try {
+      await preparePostAuthDestination(target);
+    } catch {
+      /* still navigate */
+    }
     flushSync(() => {
-      setAuthFlowInProgress(true);
       beginAuthPostLoginTransition(target);
     });
     navigate(target, { replace: true });
@@ -134,7 +141,8 @@ export function PlatformAdminLoginPage() {
         return;
       }
       completeAuthLogin(result);
-      redirectAfterAuth();
+      await redirectAfterAuth();
+      return;
     } catch (err) {
       logClientError("PlatformAdminLoginPage", err);
       if (isApiRequestError(err) && err.code === EMAIL_NOT_VERIFIED_CODE) {
@@ -144,8 +152,8 @@ export function PlatformAdminLoginPage() {
       }
     } finally {
       authInFlightRef.current = false;
-      setSubmitting(false);
       if (!postAuthRedirectRef.current) {
+        setSubmitting(false);
         setAuthFlowInProgress(false);
       }
     }
@@ -170,14 +178,15 @@ export function PlatformAdminLoginPage() {
           ? await loginMfaEnableAPI(pendingMfaToken, code)
           : await loginMfaVerifyAPI(pendingMfaToken, code);
       completeAuthLogin(data);
-      redirectAfterAuth();
+      await redirectAfterAuth();
+      return;
     } catch (err) {
       logClientError("PlatformAdminLoginPage.mfa", err);
       setError(toUserFriendlyMessage(err));
     } finally {
       authInFlightRef.current = false;
-      setSubmitting(false);
       if (!postAuthRedirectRef.current) {
+        setSubmitting(false);
         setAuthFlowInProgress(false);
       }
     }
@@ -210,16 +219,24 @@ export function PlatformAdminLoginPage() {
                     disabled={!user}
                     onClick={() => {
                       if (!user) return;
-                      if (isPlatformAdminSessionRole(user.role)) {
-                        redirectAfterAuth();
-                        return;
-                      }
-                      const target = getPostAuthRedirect(user);
-                      flushSync(() => {
+                      void (async () => {
+                        if (isPlatformAdminSessionRole(user.role)) {
+                          await redirectAfterAuth();
+                          return;
+                        }
+                        const target = getPostAuthRedirect(user);
                         setAuthFlowInProgress(true);
-                        beginAuthPostLoginTransition(target);
-                      });
-                      navigate(target, { replace: true });
+                        setSubmitting(true);
+                        try {
+                          await preparePostAuthDestination(target);
+                        } catch {
+                          /* still navigate */
+                        }
+                        flushSync(() => {
+                          beginAuthPostLoginTransition(target);
+                        });
+                        navigate(target, { replace: true });
+                      })();
                     }}
                     className={cn(caretipBtnPrimaryCompact, "h-9 min-h-9 px-3 text-xs disabled:opacity-50")}
                   >

@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo, useState, memo, useSyncExternalStore } from "react";
 import { CareIcon } from "@/components/icons";
 import {
   NotificationAlertDialog,
@@ -8,8 +8,11 @@ import type { TFunction } from "i18next";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router";
 import { useNotifications } from "@/app/hooks/useNotifications";
-import { useAuth } from "@/app/hooks/useAuth";
+import { useDashboardRenderProbe } from "@/app/hooks/useDashboardRuntimeProfile";
 import { resolveInboxNotificationDestination } from "@/app/lib/notificationNavigation";
+import { getAuthUser, subscribeAuthUser } from "@/app/lib/authUserStore";
+import { getAuthSessionFlags, subscribeAuthSessionFlags } from "@/app/lib/authSessionBootstrap";
+import { resolveAuthStatus } from "@/app/lib/authSession";
 import { cn } from "@/lib/utils";
 
 function formatGroupTime(iso: string, locale: string, t: TFunction): string {
@@ -38,21 +41,61 @@ function unreadSummaryText(count: number, t: TFunction): string {
   return t("notifications.bell.unreadSummary", { count });
 }
 
-type NotificationBellProps = {
-  className?: string;
+type BellAuthGate = {
+  enabled: boolean;
+  role: string | undefined;
 };
 
-export function NotificationBell({ className }: NotificationBellProps) {
-  const { t, i18n } = useTranslation();
-  const navigate = useNavigate();
-  const { user, authStatus, authReady } = useAuth();
-  const [open, setOpen] = useState(false);
+let bellAuthSnapshot: BellAuthGate = { enabled: false, role: undefined };
+
+function readBellAuthGate(): BellAuthGate {
+  const user = getAuthUser();
+  const { authHydrated, sessionValidated } = getAuthSessionFlags();
+  const authReady = authHydrated && sessionValidated;
+  const authStatus = resolveAuthStatus(user, {
+    authHydrated,
+    sessionValidated,
+    pendingStoredSession: false,
+  });
   const role = user?.role;
   const enabled =
     authReady &&
     authStatus === "authenticated" &&
     Boolean(user) &&
     (role === "employee" || role === "business" || role === "platform_admin");
+  if (bellAuthSnapshot.enabled === enabled && bellAuthSnapshot.role === role) {
+    return bellAuthSnapshot;
+  }
+  bellAuthSnapshot = { enabled, role };
+  return bellAuthSnapshot;
+}
+
+/** Auth gate for the bell — ignores access-token rotation (unlike full `useAuth`). */
+function useNotificationBellAuth(): BellAuthGate {
+  return useSyncExternalStore(
+    (onStoreChange) => {
+      const unsubUser = subscribeAuthUser(onStoreChange);
+      const unsubFlags = subscribeAuthSessionFlags(onStoreChange);
+      return () => {
+        unsubUser();
+        unsubFlags();
+      };
+    },
+    readBellAuthGate,
+    () => ({ enabled: false, role: undefined }),
+  );
+}
+
+type NotificationBellProps = {
+  className?: string;
+};
+
+export const NotificationBell = memo(function NotificationBell({ className }: NotificationBellProps) {
+  useDashboardRenderProbe("shell:NotificationBell");
+  const { t, i18n } = useTranslation();
+  const navigate = useNavigate();
+  const { enabled, role } = useNotificationBellAuth();
+  const [open, setOpen] = useState(false);
 
   const {
     unreadCount,
@@ -60,7 +103,7 @@ export function NotificationBell({ className }: NotificationBellProps) {
     loading,
     markRead,
     markAllRead,
-  } = useNotifications({ enabled, loadList: true });
+  } = useNotifications({ enabled, loadList: open });
 
   const badge = unreadCount > 0;
   const inboxPath = inboxPathForRole(role);
@@ -162,4 +205,4 @@ export function NotificationBell({ className }: NotificationBellProps) {
       }
     />
   );
-}
+});

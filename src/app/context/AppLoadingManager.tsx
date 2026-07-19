@@ -48,13 +48,12 @@ import {
   shouldSuppressSoftNavGlobalOverlay,
 } from "../lib/appShellLifecycle";
 import {
-  isAuthLogoutTransitionActive,
   subscribeAuthLogoutTransition,
 } from "../lib/authLogoutTransition";
 import {
-  isAuthPostLoginTransitionActive,
   subscribeAuthPostLoginTransition,
 } from "../lib/authPostLoginTransition";
+import { registerAuthSoftNavColdBootDismiss, shouldBlockOverlayDuringSignInHandoff } from "../lib/authSoftNavHandoff";
 /** Block APP_INIT from re-opening the overlay shortly after a full dismiss (paint-ready race). */
 const OVERLAY_REENTRY_LOCK_MS = 600;
 
@@ -203,6 +202,14 @@ export function AppLoadingManagerProvider({ children }: { children: React.ReactN
       }
 
       if (active) {
+        if (shouldBlockOverlayDuringSignInHandoff(key)) {
+          if (import.meta.env.DEV) {
+            console.info(
+              `[GlobalAppLoading] Blocked overlay during Sign In handoff "${key}"`,
+            );
+          }
+          return;
+        }
         if (shouldSuppressSoftNavGlobalOverlay(key)) {
           if (import.meta.env.DEV) {
             console.info(
@@ -271,6 +278,52 @@ export function AppLoadingManagerProvider({ children }: { children: React.ReactN
       const next = new Map(prev);
       next.delete(BOOTSTRAP_KEY);
       return next;
+    });
+  }, []);
+
+  /** Login/logout soft-nav: instantly clear cold-boot overlay so it cannot flash after auth. */
+  useEffect(() => {
+    return registerAuthSoftNavColdBootDismiss(() => {
+      if (showThresholdTimerRef.current !== null) {
+        window.clearTimeout(showThresholdTimerRef.current);
+        showThresholdTimerRef.current = null;
+      }
+      if (exitDebounceRef.current !== null) {
+        window.clearTimeout(exitDebounceRef.current);
+        exitDebounceRef.current = null;
+      }
+      if (minVisibleTimerRef.current !== null) {
+        window.clearTimeout(minVisibleTimerRef.current);
+        minVisibleTimerRef.current = null;
+      }
+      initialColdBootPendingRef.current = false;
+      overlayDismissedAtRef.current = Date.now();
+      lastWinnerKeyRef.current = null;
+      lastShownWinnerKeyRef.current = null;
+      lastJourneyMessageRef.current = undefined;
+      setRegistrations((prev) => {
+        if (prev.size === 0) return prev;
+        const next = new Map(prev);
+        next.delete(BOOTSTRAP_KEY);
+        next.delete("app-auth-bootstrap");
+        next.delete("route-navigation");
+        for (const key of [...next.keys()]) {
+          if (
+            key.startsWith("protected-route-guard") ||
+            key.startsWith("platform-admin-route-guard") ||
+            key.startsWith("role-protected-route-guard") ||
+            key.endsWith("-boot") ||
+            key.endsWith("-paint") ||
+            key.endsWith("-chunk")
+          ) {
+            next.delete(key);
+          }
+        }
+        return next;
+      });
+      setOverlayPhase("hidden");
+      setHtmlBootOwnsVisual(false);
+      markAppShellInteractive();
     });
   }, []);
 

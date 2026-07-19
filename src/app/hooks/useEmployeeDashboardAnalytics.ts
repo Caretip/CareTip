@@ -16,7 +16,6 @@ import {
   deriveDashboardMetricLoading,
   markDashboardLiveSettled,
 } from "../lib/dashboardHydration";
-import { DASHBOARD_INACTIVE_PREFETCH_DELAY_MS } from "../lib/dashboardTimeframeOrchestration";
 import { isAbortError, isApiConnectivityError, toUserFriendlyMessage } from "../lib/errorMessages";
 import { logClientError } from "../lib/clientLog";
 import {
@@ -1070,56 +1069,13 @@ export function useEmployeeDashboardAnalytics(
 
   loadForRef.current = loadFor;
 
-  const scheduleInactivePrefetch = useCallback(
-    (activeTf: EmployeeAnalyticsTimeframe) => {
-      if (prefetchQueueRef.current != null) {
-        window.clearTimeout(prefetchQueueRef.current);
-      }
-      const others: EmployeeAnalyticsTimeframe[] = (["today", "week", "month"] as const).filter(
-        (t) => t !== activeTf,
-      );
-      let idx = 0;
-      const step = () => {
-        if (idx >= others.length) return;
-        const nextTf = others[idx++]!;
-        if (nextTf === tfRef.current) {
-          step();
-          return;
-        }
-        void loadFor(nextTf, {
-          affectsUi: false,
-          silent: true,
-          soft: true,
-          stopAfterSummary: true,
-        })
-          .finally(() => {
-            if (!isActiveRef.current) return;
-            debugEmployeeAnalytics("prefetch_summary_done", { period: nextTf });
-            return loadFor(nextTf, {
-              affectsUi: false,
-              silent: true,
-              soft: true,
-              analyticsOnly: true,
-            });
-          })
-          .finally(() => {
-            debugEmployeeAnalytics("prefetch_analytics_done", { period: nextTf });
-            step();
-          });
-      };
-      prefetchQueueRef.current = window.setTimeout(() => {
-        prefetchQueueRef.current = null;
-        if (!isActiveRef.current) return;
-        debugEmployeeAnalytics("prefetch_start", {
-          activePeriod: tfRef.current,
-          prefetchTargets: others,
-          delayMs: DASHBOARD_INACTIVE_PREFETCH_DELAY_MS,
-        });
-        step();
-      }, DASHBOARD_INACTIVE_PREFETCH_DELAY_MS);
-    },
-    [loadFor],
-  );
+  /** Phase 1: load only the active employee timeframe — no week/month background prefetch. */
+  const scheduleInactivePrefetch = useCallback((_activeTf: EmployeeAnalyticsTimeframe) => {
+    if (prefetchQueueRef.current != null) {
+      window.clearTimeout(prefetchQueueRef.current);
+      prefetchQueueRef.current = null;
+    }
+  }, []);
   scheduleInactivePrefetchRef.current = scheduleInactivePrefetch;
 
   useEffect(() => {

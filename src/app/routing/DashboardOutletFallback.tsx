@@ -18,14 +18,17 @@ export function DashboardOutletFallback() {
  * Top-level public route chunk hold.
  * Cold entry: full-viewport surface under the branded loader.
  * Soft SPA nav: invisible — never flash a blank full page over the live shell.
- * Auth handoffs: opaque hold so dashboard never peeks through a transparent Suspense fallback
- * while the branded overlay mounts (defense alongside AppLoadingManager auth-intent sync).
+ * Sign In handoff: null — Login cover owns the viewport (never blank white under it).
+ * Logout: opaque hold while the login route mounts (no branded CareTip overlay).
  */
 export function MinimalRouteFallback() {
-  if (isAuthLogoutTransitionActive() || isAuthPostLoginTransitionActive()) {
+  if (typeof document !== "undefined" && document.documentElement.dataset.authSignInHandoff === "1") {
+    return null;
+  }
+  if (isAuthLogoutTransitionActive()) {
     return <div className="min-h-[100dvh] w-full bg-background" aria-hidden />;
   }
-  if (isAppShellInteractive()) {
+  if (isAuthPostLoginTransitionActive() || isAppShellInteractive()) {
     return null;
   }
   return <div className="min-h-[100dvh] w-full bg-background" aria-hidden />;

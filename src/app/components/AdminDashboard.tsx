@@ -1,4 +1,4 @@
-import { lazy, Suspense, useCallback, useEffect, useMemo, useState } from "react";
+import { lazy, Suspense, useEffect, useMemo, useState, memo, type ComponentType } from "react";
 import { Link, Navigate } from "react-router";
 import { useTranslation } from "react-i18next";
 import {
@@ -37,6 +37,11 @@ import {
   PLATFORM_SYSTEM_BASE,
 } from "./platform/platformAdminNav";
 import { cn } from "@/lib/utils";
+import {
+  useDashboardKpiProfile,
+  useDashboardPageFullyLoaded,
+  useDashboardRenderProbe,
+} from "../hooks/useDashboardRuntimeProfile";
 
 const PlatformOverviewSummaryCharts = lazy(() =>
   import("./platform/PlatformOverviewSummaryCharts").then((mod) => ({
@@ -57,7 +62,7 @@ function computeNewBusinessesThisWeek(analytics: PlatformAnalytics | null): numb
   return (analytics?.growth ?? []).slice(-7).reduce((sum, row) => sum + row.newBusinesses, 0);
 }
 
-export function AdminDashboard() {
+export const AdminDashboard: ComponentType<unknown> = memo(function AdminDashboard() {
   const { t, i18n } = useTranslation();
   const { user, authHydrated, sessionValidated } = useAuth();
   const [health, setHealth] = useState<PlatformHealthResponse | null>(null);
@@ -72,78 +77,121 @@ export function AdminDashboard() {
     atRisk: number;
   } | null>(null);
   const [recentLogs, setRecentLogs] = useState<Array<{ action: string; at: string; email?: string | null }>>([]);
-  const [loading, setLoading] = useState(true);
 
-  const load = useCallback(async () => {
-    setLoading(true);
-    try {
-      const [
-        healthRes,
-        statsRes,
-        analyticsRes,
-        onboardingRes,
-        onboardingSubmittedRes,
-        subRes,
-        logsRes,
-        commercialRes,
-      ] = await Promise.all([
-        fetchPlatformHealth().catch(() => null),
-        fetchPlatformStats().catch(() => null),
-        fetchPlatformAnalytics(30).catch(() => null),
-        fetchOnboardingQueueMetrics().catch(() => null),
-        fetchPlatformBusinesses({
-          workflow: "onboarding",
-          status: "submitted",
-          take: VERIFICATION_TEASER_LIMIT,
-          sort: "newest",
-        }).catch(() => ({ businesses: [] as PlatformBusinessRow[] })),
-        fetchPlatformSubscriptionMonitoring(30).catch(() => null),
-        fetchPlatformAuditLogs({ take: RECENT_ACTIVITY_LIMIT, skip: 0 }).catch(() => ({ items: [], total: 0 })),
-        fetchPlatformCommercialIntelligence().catch(() => null),
-      ]);
+  /** Stage 1 — health + stats (KPI / hero). */
+  const [criticalLoading, setCriticalLoading] = useState(true);
+  /** Stage 2 — onboarding metrics, recent businesses, audit logs. */
+  const [secondaryLoading, setSecondaryLoading] = useState(true);
+  /** Stage 3 — commercial intelligence, subscriptions, 30d analytics. */
+  const [heavyLoading, setHeavyLoading] = useState(true);
 
-      if (healthRes) setHealth(healthRes);
-      if (statsRes) setStats(statsRes);
-      if (analyticsRes) setAnalytics(analyticsRes);
-      if (onboardingRes) setOnboardingMetrics(onboardingRes);
-
-      const onboardingQueue = (onboardingSubmittedRes.businesses ?? [])
-        .sort(
-          (a, b) =>
-            onboardingTeaserPriority(a.onboardingVerificationStatus) -
-              onboardingTeaserPriority(b.onboardingVerificationStatus) ||
-            a.name.localeCompare(b.name, undefined, { sensitivity: "base" }),
-        )
-        .slice(0, VERIFICATION_TEASER_LIMIT);
-      setOnboardingTeaser(onboardingQueue);
-
-      if (subRes) setSubscriptionMonitoring(subRes);
-
-      setRecentLogs(
-        (logsRes.items ?? []).map((row) => ({
-          action: row.action,
-          at: row.createdAt,
-          email: row.userEmail,
-        })),
-      );
-
-      if (commercialRes?.segments) {
-        setCommercialSummary({
-          upgrades: commercialRes.segments.premiumOpportunities?.length ?? 0,
-          trials: commercialRes.segments.growthCandidates?.length ?? 0,
-          atRisk: commercialRes.segments.atRisk?.length ?? 0,
-        });
-      }
-    } catch (e) {
-      logClientError("AdminDashboard.load", e);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  useDashboardRenderProbe("platform_admin:AdminDashboard");
+  // First KPI when critical stage settles — do not wait for heavy APIs.
+  useDashboardKpiProfile("platform_admin", !criticalLoading);
+  useDashboardPageFullyLoaded(
+    "platform_admin",
+    !criticalLoading && !secondaryLoading && !heavyLoading,
+  );
 
   useEffect(() => {
-    void load();
-  }, [load]);
+    let cancelled = false;
+
+    const loadCritical = async () => {
+      setCriticalLoading(true);
+      try {
+        const [healthRes, statsRes] = await Promise.all([
+          fetchPlatformHealth().catch(() => null),
+          fetchPlatformStats().catch(() => null),
+        ]);
+        if (cancelled) return;
+        if (healthRes) setHealth(healthRes);
+        if (statsRes) setStats(statsRes);
+      } catch (e) {
+        logClientError("AdminDashboard.loadCritical", e);
+      } finally {
+        if (!cancelled) setCriticalLoading(false);
+      }
+    };
+
+    const loadSecondary = async () => {
+      setSecondaryLoading(true);
+      try {
+        const [onboardingRes, onboardingSubmittedRes, logsRes] = await Promise.all([
+          fetchOnboardingQueueMetrics().catch(() => null),
+          fetchPlatformBusinesses({
+            workflow: "onboarding",
+            status: "submitted",
+            take: VERIFICATION_TEASER_LIMIT,
+            sort: "newest",
+          }).catch(() => ({ businesses: [] as PlatformBusinessRow[] })),
+          fetchPlatformAuditLogs({ take: RECENT_ACTIVITY_LIMIT, skip: 0 }).catch(() => ({
+            items: [],
+            total: 0,
+          })),
+        ]);
+        if (cancelled) return;
+
+        if (onboardingRes) setOnboardingMetrics(onboardingRes);
+
+        const onboardingQueue = (onboardingSubmittedRes.businesses ?? [])
+          .sort(
+            (a, b) =>
+              onboardingTeaserPriority(a.onboardingVerificationStatus) -
+                onboardingTeaserPriority(b.onboardingVerificationStatus) ||
+              a.name.localeCompare(b.name, undefined, { sensitivity: "base" }),
+          )
+          .slice(0, VERIFICATION_TEASER_LIMIT);
+        setOnboardingTeaser(onboardingQueue);
+
+        setRecentLogs(
+          (logsRes.items ?? []).map((row) => ({
+            action: row.action,
+            at: row.createdAt,
+            email: row.userEmail,
+          })),
+        );
+      } catch (e) {
+        logClientError("AdminDashboard.loadSecondary", e);
+      } finally {
+        if (!cancelled) setSecondaryLoading(false);
+      }
+    };
+
+    const loadHeavy = async () => {
+      setHeavyLoading(true);
+      try {
+        const [analyticsRes, subRes, commercialRes] = await Promise.all([
+          fetchPlatformAnalytics(30).catch(() => null),
+          fetchPlatformSubscriptionMonitoring(30).catch(() => null),
+          fetchPlatformCommercialIntelligence().catch(() => null),
+        ]);
+        if (cancelled) return;
+
+        if (analyticsRes) setAnalytics(analyticsRes);
+        if (subRes) setSubscriptionMonitoring(subRes);
+        if (commercialRes?.segments) {
+          setCommercialSummary({
+            upgrades: commercialRes.segments.premiumOpportunities?.length ?? 0,
+            trials: commercialRes.segments.growthCandidates?.length ?? 0,
+            atRisk: commercialRes.segments.atRisk?.length ?? 0,
+          });
+        }
+      } catch (e) {
+        logClientError("AdminDashboard.loadHeavy", e);
+      } finally {
+        if (!cancelled) setHeavyLoading(false);
+      }
+    };
+
+    // Fire stages together; each section settles on its own loading flag (no global gate).
+    void loadCritical();
+    void loadSecondary();
+    void loadHeavy();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const activeBusinessesCount = onboardingMetrics?.approved ?? 0;
   const pendingOnboardingCount = onboardingMetrics?.submitted ?? 0;
@@ -162,7 +210,7 @@ export function AdminDashboard() {
       });
     }
 
-    if (pendingOnboardingCount > 0) {
+    if (!secondaryLoading && pendingOnboardingCount > 0) {
       alerts.push({
         id: "onboarding",
         message: t("admin.overview.alerts.pendingOnboarding", { count: pendingOnboardingCount }),
@@ -171,7 +219,7 @@ export function AdminDashboard() {
       });
     }
 
-    if (failedPaymentsToday > 0) {
+    if (!heavyLoading && failedPaymentsToday > 0) {
       alerts.push({
         id: "failed-payments",
         message: t("admin.overview.alerts.failedPaymentsToday", {
@@ -182,7 +230,7 @@ export function AdminDashboard() {
       });
     }
 
-    if ((commercialSummary?.atRisk ?? 0) > 0) {
+    if (!heavyLoading && (commercialSummary?.atRisk ?? 0) > 0) {
       alerts.push({
         id: "at-risk",
         message: t("admin.overview.alerts.atRiskSubscriptions", { count: commercialSummary?.atRisk ?? 0 }),
@@ -192,10 +240,20 @@ export function AdminDashboard() {
     }
 
     return alerts;
-  }, [commercialSummary?.atRisk, failedPaymentsToday, health, pendingOnboardingCount, t]);
+  }, [
+    commercialSummary?.atRisk,
+    failedPaymentsToday,
+    health,
+    heavyLoading,
+    pendingOnboardingCount,
+    secondaryLoading,
+    t,
+  ]);
 
   if (!authHydrated || !sessionValidated || !user) return null;
   if (user.role !== "platform_admin") return <Navigate to="/unauthorized" replace />;
+
+  const kpiGridBusy = criticalLoading || secondaryLoading;
 
   return (
     <div className={cn(platformUi.page, "platform-dashboard-overview overflow-x-hidden")}>
@@ -210,30 +268,30 @@ export function AdminDashboard() {
               {t("admin.overview.kpisTitle")}
             </h2>
           </div>
-          <div className={cn(platformUi.overviewKpiGrid, loading && "platform-admin-stat-grid--loading")}>
+          <div className={cn(platformUi.overviewKpiGrid, kpiGridBusy && "platform-admin-stat-grid--loading")}>
             <PlatformStatCard
               label={t("admin.overview.kpi.activeBusinesses")}
               value={String(activeBusinessesCount)}
               numericValue={activeBusinessesCount}
-              loading={loading}
+              loading={secondaryLoading}
             />
             <PlatformStatCard
               label={t("admin.overview.kpi.staff")}
               value={String(stats?.employeesCount ?? 0)}
               numericValue={stats?.employeesCount ?? 0}
-              loading={loading}
+              loading={criticalLoading}
             />
             <PlatformStatCard
               label={t("admin.overview.kpi.transactions")}
               value={String(stats?.successTransactionCount ?? 0)}
               numericValue={stats?.successTransactionCount ?? 0}
-              loading={loading}
+              loading={criticalLoading}
             />
             <PlatformStatCard
               label={t("admin.overview.kpi.pendingOnboarding")}
               value={String(pendingOnboardingCount)}
               numericValue={pendingOnboardingCount}
-              loading={loading}
+              loading={secondaryLoading}
               featured={pendingOnboardingCount > 0}
             />
           </div>
@@ -247,7 +305,7 @@ export function AdminDashboard() {
             <PlatformOverviewSummaryCharts
               analytics={analytics}
               subscriptionMonitoring={subscriptionMonitoring}
-              loading={loading}
+              loading={heavyLoading}
             />
           </Suspense>
         </DashboardChartsIdleMount>
@@ -261,11 +319,12 @@ export function AdminDashboard() {
               title={t("admin.overview.businessGrowth.title")}
               viewAllHref={`${PLATFORM_BUSINESS_BASE}/all`}
               viewAllLabel={t("admin.overview.viewAll")}
+              loading={criticalLoading}
               metrics={[
                 { label: t("admin.overview.kpi.totalBusinesses"), value: String(stats?.businessesCount ?? 0) },
                 {
                   label: t("admin.overview.businessGrowth.newThisWeek"),
-                  value: String(newBusinessesWeek),
+                  value: heavyLoading ? "—" : String(newBusinessesWeek),
                 },
                 {
                   label: t("admin.overview.kpi.staff"),
@@ -278,6 +337,7 @@ export function AdminDashboard() {
               title={t("admin.sections.verificationQueue.title")}
               viewAllHref={`${PLATFORM_BUSINESS_BASE}/onboarding-verification`}
               viewAllLabel={t("admin.verificationTeaser.viewAll")}
+              loading={secondaryLoading}
               metrics={[
                 {
                   label: t("admin.onboardingVerificationPage.kpi.submitted"),
@@ -289,7 +349,9 @@ export function AdminDashboard() {
                 },
               ]}
             >
-              {onboardingTeaser.length === 0 ? (
+              {secondaryLoading ? (
+                <p className="text-sm text-muted-foreground">{t("admin.overview.verification.empty")}</p>
+              ) : onboardingTeaser.length === 0 ? (
                 <p className="text-sm text-muted-foreground">{t("admin.overview.verification.empty")}</p>
               ) : (
                 <ul className="space-y-2">
@@ -317,6 +379,7 @@ export function AdminDashboard() {
               title={t("admin.sections.commercialIntelligence.title")}
               viewAllHref={`${PLATFORM_REPORTS_BASE}/commercial`}
               viewAllLabel={t("admin.overview.viewAll")}
+              loading={heavyLoading}
               metrics={
                 commercialSummary
                   ? [
@@ -335,9 +398,12 @@ export function AdminDashboard() {
           viewAllHref={`${PLATFORM_REPORTS_BASE}/audit-logs`}
           viewAllLabel={t("admin.overview.viewAll")}
           metrics={[]}
+          loading={secondaryLoading}
           className="max-w-3xl"
         >
-          {recentLogs.length === 0 ? (
+          {secondaryLoading ? (
+            <p className="text-sm text-muted-foreground">{t("admin.overview.recentActivity.empty")}</p>
+          ) : recentLogs.length === 0 ? (
             <p className="text-sm text-muted-foreground">{t("admin.overview.recentActivity.empty")}</p>
           ) : (
             <ul className="space-y-2">
@@ -363,4 +429,4 @@ export function AdminDashboard() {
       </div>
     </div>
   );
-}
+});

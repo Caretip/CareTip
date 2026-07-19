@@ -17,17 +17,10 @@ export function requiresAuthBootstrapBeforeLoginPaint(): boolean {
 }
 
 /**
- * Full-page neutral shell while bootstrap runs or a post-login redirect is in flight.
- * During submit (before redirect target is chosen), keep the login form visible with its own spinner.
+ * Full-page neutral shell only for cold session bootstrap on auth surfaces.
  *
- * Order matters:
- * 1. `authTransitionPending` always wins — Continue / post-login must never re-paint Sign In chrome.
- * 2. Intentional logout owns its own transition and should reach the login form, not this shell.
- * 3. Cold bootstrap still waits here unless anonymous immediate paint is allowed.
- *
- * Do not reuse {@link shouldSuppressSessionBootstrapOverlay} here — that flag exists to keep the
- * *global* `app-auth-bootstrap` overlay from competing with post-login/logout overlays. Suppressing
- * this shell during post-login was the Continue-to-Dashboard Sign In flash.
+ * Post-login / Sign In handoffs keep the login form (or handoff cover) with button spinner —
+ * never swap to this CareTip shell.
  */
 export function shouldShowAuthBootstrapShell(options: {
   authStatus: AuthStatus;
@@ -35,8 +28,13 @@ export function shouldShowAuthBootstrapShell(options: {
   /** Cold anonymous visits may paint the form while bootstrap settles in the background. */
   allowImmediateLoginPaint?: boolean;
 }): boolean {
-  if (options.authTransitionPending) return true;
+  // Keep the form + button spinner during post-auth navigation preparation / handoff.
+  if (options.authTransitionPending) return false;
   if (isIntentionalUserLogout()) return false;
+  // Dynamic import avoided — handoff flag lives on document for sync checks during SSR-less SPA.
+  if (typeof document !== "undefined" && document.documentElement.dataset.authSignInHandoff === "1") {
+    return false;
+  }
   if (
     options.authStatus === "initializing" &&
     options.allowImmediateLoginPaint &&

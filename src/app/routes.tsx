@@ -37,6 +37,8 @@ import { ApprovedBusinessGate } from './components/ApprovedBusinessGate';
 import { PendingVerificationAllowedGate } from './components/PendingVerificationAllowedGate';
 import { PendingVerification } from './components/PendingVerification';
 import { logClientError } from './lib/clientLog';
+import { SignInHandoffCover } from "./components/auth/SignInHandoffCover";
+import { DashboardProfilerRoot } from "./hooks/useDashboardRuntimeProfile";
 import { useNavigationFlashProbe } from './hooks/useNavigationFlashProbe';
 
 const LoaderDiagRuntime = import.meta.env.DEV
@@ -110,6 +112,8 @@ function RootLayout() {
       ) : null}
       <IdleSessionController />
       <ScrollToTop />
+      <SignInHandoffCover />
+      <DashboardProfilerRoot />
       <RouteNavigationLoadingRegistrar>
         <AuthBootstrapLoadingRegistrar>
           <AuthLogoutTransitionRegistrar>

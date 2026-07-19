@@ -29,19 +29,23 @@ export type SocketConnectionStatus =
   | "disconnected"
   | "reconnecting";
 
-type SocketContextValue = {
+type SocketInstanceContextValue = {
   socket: Socket | null;
-  connected: boolean;
-  connectionStatus: SocketConnectionStatus;
   registerInterest: () => () => void;
 };
 
-const SocketContext = createContext<SocketContextValue | null>(null);
+type SocketStatusContextValue = {
+  connected: boolean;
+  connectionStatus: SocketConnectionStatus;
+};
+
+const SocketInstanceContext = createContext<SocketInstanceContextValue | null>(null);
+const SocketStatusContext = createContext<SocketStatusContextValue | null>(null);
 
 /**
  * Single authenticated Socket.IO connection shared across the app.
- * Consumers call registerInterest() while they need realtime; connection
- * closes when the last consumer releases (e.g. logout / unmount).
+ * Instance vs status are split so connection-flag churn does not re-render
+ * consumers that only need the socket handle (tip listeners, verification sync).
  */
 export function SocketProvider({ children }: { children: ReactNode }) {
   const interestRef = useRef(0);
@@ -82,7 +86,6 @@ export function SocketProvider({ children }: { children: ReactNode }) {
     const { io } = await import("socket.io-client");
     const s = io(url, {
       auth: { token },
-      // Polling first: Render cold starts often reject the initial WebSocket upgrade.
       transports: ["polling", "websocket"],
       reconnection: true,
       reconnectionAttempts: Infinity,
@@ -125,6 +128,15 @@ export function SocketProvider({ children }: { children: ReactNode }) {
     s.io.on("reconnect_attempt", onReconnectAttempt);
     s.io.on("reconnect", onReconnect);
 
+    void import("../lib/dashboardRuntimeProfiler").then(
+      ({ isDashboardProfilerEnabled, markDashboardSocketMessage }) => {
+        if (!isDashboardProfilerEnabled()) return;
+        s.onAny((eventName: string) => {
+          markDashboardSocketMessage(String(eventName));
+        });
+      },
+    );
+
     socketRef.current = s;
     setSocket(s);
   }, []);
@@ -151,25 +163,61 @@ export function SocketProvider({ children }: { children: ReactNode }) {
     };
   }, [connect, disconnect]);
 
-  const value = useMemo(
-    () => ({ socket, connected, connectionStatus, registerInterest }),
-    [socket, connected, connectionStatus, registerInterest],
+  const instanceValue = useMemo(
+    () => ({ socket, registerInterest }),
+    [socket, registerInterest],
+  );
+  const statusValue = useMemo(
+    () => ({ connected, connectionStatus }),
+    [connected, connectionStatus],
   );
 
-  return <SocketContext.Provider value={value}>{children}</SocketContext.Provider>;
+  return (
+    <SocketInstanceContext.Provider value={instanceValue}>
+      <SocketStatusContext.Provider value={statusValue}>{children}</SocketStatusContext.Provider>
+    </SocketInstanceContext.Provider>
+  );
+}
+
+function useSocketInstanceContext(): SocketInstanceContextValue {
+  const ctx = useContext(SocketInstanceContext);
+  if (!ctx) throw new Error("useSocket must be used within SocketProvider");
+  return ctx;
+}
+
+function useSocketStatusContext(): SocketStatusContextValue {
+  const ctx = useContext(SocketStatusContext);
+  if (!ctx) throw new Error("useSocket must be used within SocketProvider");
+  return ctx;
+}
+
+/** Connection flags only — does not re-render when the socket instance is assigned. */
+export function useSocketStatus(): SocketStatusContextValue {
+  return useSocketStatusContext();
 }
 
 /**
- * Subscribe to the shared authenticated socket while `enabled` is true.
- * Does not create a new connection — ref-counted via SocketProvider.
+ * Socket handle + interest registration. Does not re-render on connect/disconnect
+ * status flips (use useSocketStatus for badges / fallbacks).
+ */
+export function useSocketInstance(enabled: boolean): { socket: Socket | null } {
+  const { socket, registerInterest } = useSocketInstanceContext();
+
+  useEffect(() => {
+    if (!enabled) return;
+    return registerInterest();
+  }, [enabled, registerInterest]);
+
+  return { socket: enabled ? socket : null };
+}
+
+/**
+ * Full socket subscription (instance + status). Prefer useSocketInstance /
+ * useSocketStatus when a consumer only needs one half.
  */
 export function useSocket(enabled: boolean) {
-  const ctx = useContext(SocketContext);
-  if (!ctx) {
-    throw new Error("useSocket must be used within SocketProvider");
-  }
-
-  const { socket, connected, connectionStatus, registerInterest } = ctx;
+  const { socket, registerInterest } = useSocketInstanceContext();
+  const { connected, connectionStatus } = useSocketStatusContext();
 
   useEffect(() => {
     if (!enabled) return;

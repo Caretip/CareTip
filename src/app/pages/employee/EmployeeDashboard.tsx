@@ -1,6 +1,6 @@
 import { motion } from "motion/react";
 import { dashboardBlockMotion } from "@/lib/motionPerf";
-import { lazy, useState, useEffect, useMemo, useCallback, useRef } from "react";
+import { lazy, useState, useEffect, useMemo, useCallback, memo, type ComponentType } from "react";
 import type { ImgHTMLAttributes } from "react";
 import { Link, useLocation, useNavigate } from "react-router";
 import { toast } from "sonner";
@@ -8,6 +8,10 @@ import { useTranslation } from "react-i18next";
 import { translateChartWeekdayLabel } from "@/lib/chartAxisLabels";
 import { useRegisterPagePaintReady } from "../../lib/globalAppLoading";
 import { useExtendGlobalLoaderUntilReady } from "../../lib/useExtendGlobalLoaderUntilReady";
+import {
+  useDashboardPageFullyLoaded,
+  useDashboardRenderProbe,
+} from "../../hooks/useDashboardRuntimeProfile";
 import { resolveAppLoadingContextMessage } from "../../lib/appLoadingContexts";
 import { runWithViewportScrollPreserved } from "../../lib/dashboardScrollStability";
 import { toUserFriendlyMessage } from "../../lib/errorMessages";
@@ -30,14 +34,9 @@ const EmployeeDashboardEarningsChart = lazy(() =>
   })),
 );
 import { useRequireAuth } from "../../hooks/useRequireAuth";
-import { isProtectedApiReady } from "../../lib/authRestore";
-import { useSocket, useDeferSocketConnect } from "../../hooks/useSocket";
-import { useRealtimeFallback } from "../../hooks/useRealtimeFallback";
-import { subscribeTipReceived } from "../../lib/realtime/subscribeTipReceived";
-import { useDashboardTabRefocus } from "../../hooks/useDashboardTabRefocus";
-import { DashboardStatusStrip } from "../../components/dashboard/DashboardStatusStrip";
+import { DashboardRealtimeStatusStrip } from "../../components/dashboard/DashboardRealtimeStatusStrip";
 import { DashboardRefreshIndicator } from "../../components/dashboard/DashboardRefreshIndicator";
-import { deriveEmployeeDashboardStatus } from "../../lib/dashboardStatus/deriveDashboardStatus";
+import { EmployeeDashboardRealtimeSync } from "../../components/employee/EmployeeDashboardRealtimeSync";
 import { getEmployeeProfile, ensureEmployeeSlug } from "../../lib/api";
 import { useEmployeeDashboardAnalytics } from "../../hooks/useEmployeeDashboardAnalytics";
 import { useSubscriptionEntitlements } from "../../hooks/useSubscriptionEntitlements";
@@ -45,11 +44,8 @@ import { FeatureGate } from "../../components/subscription/FeatureGate";
 import { EmployeeDashboardMetricsGrid } from "../../components/employee/EmployeeDashboardMetricsGrid";
 import { DashboardAnalyticsPeriodToggle } from "../../components/dashboard/DashboardAnalyticsPeriodToggle";
 import { formatEur } from "../../lib/formatEur";
-import type { TipItem, EmployeeGoalProgress } from "../../lib/api";
-import { playChaChingSound } from "../../lib/tipSounds";
 import { FixPrompt } from "../../components/FixPrompt";
 import { EmployeeQRCodeModal } from "../../components/employee/EmployeeQRCodeModal";
-import { recordNewEmployeeTip } from "../../lib/employeeNotificationStore";
 import employeeHeroWebp from "../../../../images/foremployee.webp";
 import employeeHeroAvif from "../../../../images/foremployee.avif";
 import { MarketingPicture } from "@/lib/marketingPicture";
@@ -77,16 +73,7 @@ import { isWalkthroughDemoEmployee } from "../../lib/walkthroughDemo";
 
 type AnalyticsTimeframe = "today" | "week" | "month";
 
-interface NewTipPayload {
-  tip: TipItem;
-  employeeId: string;
-  employeeName?: string;
-  businessId: string;
-  currentMonthTotal: number;
-  monthlyGoal: number | null;
-}
-
-export function EmployeeDashboard() {
+export const EmployeeDashboard: ComponentType<unknown> = memo(function EmployeeDashboard() {
   const { t, i18n } = useTranslation();
   const { user, authHydrated, sessionValidated, authReady, updateUser } = useRequireAuth();
   useRegisterPagePaintReady("employee-dashboard-paint");
@@ -143,15 +130,6 @@ export function EmployeeDashboard() {
   const [employeeRecordId, setEmployeeRecordId] = useState<string | null>(null);
   const [qrModalOpen, setQrModalOpen] = useState(false);
   const [generatingSlug, setGeneratingSlug] = useState(false);
-  const refreshTimerRef = useRef<number | null>(null);
-
-  const socketReady = useDeferSocketConnect(
-    isProtectedApiReady() && user?.role === "employee",
-  );
-  const { socket, connected, connectionStatus } = useSocket(socketReady);
-
-  useRealtimeFallback(connected, refreshDashboardQuiet);
-  useDashboardTabRefocus(refreshDashboardQuiet, dashboardDataReady);
 
   useEffect(() => {
     if (!authHydrated || !sessionValidated || !user || user.role !== "employee") return;
@@ -181,33 +159,6 @@ export function EmployeeDashboard() {
   useEffect(() => {
     if (analyticsError) setError(analyticsError);
   }, [analyticsError]);
-
-  useEffect(() => {
-    const employeeId = user?.role === "employee" ? user.employeeId : undefined;
-    if (!socket || !employeeId) return;
-
-    return subscribeTipReceived(socket, (payload) => {
-      if (payload.employeeId !== employeeId) return;
-
-      recordNewEmployeeTip(employeeId, payload.tip);
-
-      applyLiveTip({
-        tip: payload.tip,
-        employeeId: payload.employeeId,
-        currentMonthTotal: payload.currentMonthTotal ?? 0,
-        monthlyGoal: payload.monthlyGoal ?? null,
-      });
-
-      if (refreshTimerRef.current != null) window.clearTimeout(refreshTimerRef.current);
-      refreshTimerRef.current = window.setTimeout(() => {
-        refreshTimerRef.current = null;
-        void refreshDashboardQuiet();
-      }, 900);
-
-      playChaChingSound();
-      // Tip feedback: live metrics + sound + inbox toast (avoid duplicate Sonner).
-    });
-  }, [socket, user?.role, user?.employeeId, refreshDashboardQuiet, applyLiveTip]);
 
   const heroPayload = displayPayloadOrLatest ?? displayPayload;
 
@@ -255,6 +206,26 @@ export function EmployeeDashboard() {
     resolveAppLoadingContextMessage("dashboard", t),
   );
   const showHeroMetricsSkeleton = showHeroMetricsLoading && !globalLoaderCoversBoot;
+
+  useDashboardRenderProbe("employee:EmployeeDashboard");
+  useDashboardPageFullyLoaded(
+    "employee",
+    useDevDemo || (displayAccountSummary.loaded && !isMetricsInitialLoad),
+  );
+
+  const kpiUsable = useDevDemo || displayAccountSummary.loaded || !showHeroMetricsLoading;
+  const blockMotion = useMemo(
+    () =>
+      kpiUsable
+        ? dashboardBlockMotion
+        : ({
+            initial: false as const,
+            animate: { opacity: 1, y: 0 },
+            transition: { duration: 0 },
+          } as const),
+    [kpiUsable],
+  );
+  const motionReady = kpiUsable;
 
   const chartPayload = displayPayload ?? displayPayloadOrLatest;
   const displayChartSeries = useDevDemo
@@ -322,30 +293,6 @@ export function EmployeeDashboard() {
   const showChartLoading = isAnalyticsInitialLoad;
   const metricsSettledForPeriod = isMetricsSettled;
   const periodRefreshingLabel = t("dashboard.refresh.updating");
-
-  const dashboardStatusItems = useMemo(
-    () =>
-      deriveEmployeeDashboardStatus(
-        {
-          isPeriodSyncing,
-          isMetricsSettled,
-          hasPeriodActivity,
-          hasVisibleMetrics,
-          statsLoadFailed: analyticsError,
-          socketStatus: connectionStatus,
-        },
-        t,
-      ),
-    [
-      isPeriodSyncing,
-      isMetricsSettled,
-      hasPeriodActivity,
-      hasVisibleMetrics,
-      analyticsError,
-      connectionStatus,
-      t,
-    ],
-  );
 
   const slugLoading = staffSlug === undefined;
   const hasSlug = Boolean(staffSlug);
@@ -417,6 +364,13 @@ export function EmployeeDashboard() {
 
   return (
     <div className={cn(employeeUi.page, "overflow-x-hidden")}>
+      <EmployeeDashboardRealtimeSync
+        enabled={user?.role === "employee"}
+        employeeId={user?.employeeId}
+        dashboardDataReady={dashboardDataReady}
+        refreshDashboardQuiet={refreshDashboardQuiet}
+        applyLiveTip={applyLiveTip}
+      />
       <div className={employeeUi.pageInner}>
         <PremiumPageHero className="employee-dashboard-hero mb-7 sm:mb-8 lg:mb-7">
         <DashboardHero
@@ -450,12 +404,12 @@ export function EmployeeDashboard() {
           description={t("employee.hero.sub")}
           image={
             <motion.div
-              initial={{ opacity: 0, y: 8 }}
+              initial={motionReady ? { opacity: 0, y: 8 } : false}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.45, ease: "easeOut" }}
+              transition={motionReady ? { duration: 0.45, ease: "easeOut" } : { duration: 0 }}
               className="employee-hero-visual relative mx-auto flex w-full max-w-full flex-col items-center justify-center touch-manipulation lg:justify-self-center"
             >
-              <motion.div
+              <div
                 className={cn(
                   "employee-hero-chart-frame employee-hero-chart-frame--photo",
                   "dashboard-hero-media-frame relative mx-auto w-full max-w-full min-h-0 overflow-hidden",
@@ -474,16 +428,18 @@ export function EmployeeDashboard() {
                   fadeIn={false}
                   decoding="async"
                 />
-              </motion.div>
+              </div>
             </motion.div>
           }
           imageOverlay={false}
           actions={
             <motion.div
               className="employee-hero-cta-block"
-              initial={{ opacity: 0, y: 6 }}
+              initial={motionReady ? { opacity: 0, y: 6 } : false}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.4, delay: 0.08, ease: "easeOut" }}
+              transition={
+                motionReady ? { duration: 0.4, delay: 0.08, ease: "easeOut" } : { duration: 0 }
+              }
             >
               <div className="employee-hero-cta-row">
                 <Button
@@ -604,7 +560,14 @@ export function EmployeeDashboard() {
                 refreshFailed={Boolean(analyticsError && hasVisibleMetrics)}
               />
             </div>
-            <DashboardStatusStrip items={dashboardStatusItems} />
+            <DashboardRealtimeStatusStrip
+              role="employee"
+              isPeriodSyncing={isPeriodSyncing}
+              isMetricsSettled={isMetricsSettled}
+              hasPeriodActivity={hasPeriodActivity}
+              hasVisibleMetrics={hasVisibleMetrics}
+              statsLoadFailed={analyticsError}
+            />
           </div>
           <DashboardAnalyticsPeriodToggle
             ariaLabel={t("employee.dashboard.analyticsPeriodAria")}
@@ -637,7 +600,7 @@ export function EmployeeDashboard() {
           />
 
           <motion.div
-            {...dashboardBlockMotion}
+            {...blockMotion}
             className={cn(
               "dashboard-swr-swap",
               analyticsPeriodRefreshing && "dashboard-swr-swap--revalidating",
@@ -652,6 +615,7 @@ export function EmployeeDashboard() {
               refreshingLabel={periodRefreshingLabel}
               metricsSettledForPeriod={metricsSettledForPeriod}
               metrics={periodMetrics}
+              kpiReady={kpiUsable}
             />
           </motion.div>
 
@@ -686,4 +650,4 @@ export function EmployeeDashboard() {
       )}
     </div>
   );
-}
+});

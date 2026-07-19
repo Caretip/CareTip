@@ -1,5 +1,6 @@
 import { clearLogoutPending } from "./api";
 import { authDebug } from "./authDebugLog";
+import { prepareAuthSoftNavHandoff } from "./authSoftNavHandoff";
 
 /** Visual polish — end as soon as the login surface is ready (no dedicated logout screen). */
 const POST_LOGOUT_MIN_VISIBLE_MS = 0;
@@ -62,6 +63,8 @@ export function isPostLogoutBootstrapSuppress(): boolean {
 export function beginAuthLogoutTransition(loginPath = "/login"): void {
   if (active) return;
   const normalized = loginPath.split("?")[0]?.split("#")[0] ?? loginPath;
+  // Drop residual cold-boot CareTip overlay — logout must not reopen the branded screen.
+  prepareAuthSoftNavHandoff();
   active = true;
   targetLoginPath = normalized;
   authPageReady = false;

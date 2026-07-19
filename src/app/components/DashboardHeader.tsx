@@ -1,5 +1,6 @@
 import { Link } from "react-router";
 import { Menu } from "lucide-react";
+import { memo } from "react";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "../hooks/useAuth";
 import { CareTipLogo } from "./CareTipLogo";
@@ -145,7 +146,7 @@ function DashboardHeaderBar({
   );
 }
 
-export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
+export const DashboardHeader = memo(function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
   const { t } = useTranslation();
   const { user } = useAuth();
   const isPlatformAdmin = user?.role === "platform_admin";
@@ -188,4 +189,4 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
       )}
     </header>
   );
-}
+});

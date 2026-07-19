@@ -1,6 +1,7 @@
 import { useLayoutEffect, useRef } from "react";
 import { motion, useAnimation, useReducedMotion } from "motion/react";
 import { Outlet, useLocation } from "react-router";
+import { isAuthPostLoginTransitionActive } from "../lib/authPostLoginTransition";
 
 const PAGE_ENTER = {
   duration: 0.26,
@@ -9,8 +10,8 @@ const PAGE_ENTER = {
 
 /**
  * Subtle fade + lift when dashboard child routes change.
- * Animates via motion controls (no React key on the outlet wrapper) so child
- * routes swap without forcing a full outlet subtree remount.
+ * First paint (including post-login) is fully opaque — never start at opacity 0
+ * (that was the blank flash between Login and Dashboard).
  */
 export function RouteOutletTransition() {
   const location = useLocation();
@@ -30,6 +31,12 @@ export function RouteOutletTransition() {
     }
 
     if (pathnameRef.current === location.pathname) return;
+    // Soft-nav from login: keep fully painted (no fade from empty).
+    if (isAuthPostLoginTransitionActive()) {
+      pathnameRef.current = location.pathname;
+      void controls.set({ opacity: 1, y: 0 });
+      return;
+    }
     pathnameRef.current = location.pathname;
 
     void controls.set({ opacity: 0, y: 10 });
@@ -43,7 +50,7 @@ export function RouteOutletTransition() {
   return (
     <motion.div
       className="caretip-route-outlet min-h-0 min-w-0"
-      initial={{ opacity: 0, y: 10 }}
+      initial={false}
       animate={controls}
     >
       <Outlet />
