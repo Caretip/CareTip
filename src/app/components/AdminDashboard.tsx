@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, useMemo, useState, memo, type ComponentType } from "react";
+import { lazy, Suspense, useEffect, useMemo, useState, memo } from "react";
 import { Link, Navigate } from "react-router";
 import { useTranslation } from "react-i18next";
 import {
@@ -62,7 +62,7 @@ function computeNewBusinessesThisWeek(analytics: PlatformAnalytics | null): numb
   return (analytics?.growth ?? []).slice(-7).reduce((sum, row) => sum + row.newBusinesses, 0);
 }
 
-export const AdminDashboard: ComponentType<unknown> = memo(function AdminDashboard() {
+export const AdminDashboard = memo(function AdminDashboard() {
   const { t, i18n } = useTranslation();
   const { user, authHydrated, sessionValidated } = useAuth();
   const [health, setHealth] = useState<PlatformHealthResponse | null>(null);

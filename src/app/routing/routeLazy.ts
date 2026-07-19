@@ -1,7 +1,8 @@
 import type { ComponentType } from "react";
 
-type NamedModule = Record<string, ComponentType<unknown>>;
-type LazyRouteResult = { Component: ComponentType<unknown> };
+/** Route modules export page components; `memo` yields ExoticComponent<object>, so allow any props shape. */
+type NamedModule = Record<string, ComponentType<any>>;
+type LazyRouteResult = { Component: ComponentType<any> };
 
 /** React Router `lazy` route loader — avoids `React.lazy` + vite preload on the entry graph. */
 export function routeLazy<M extends NamedModule>(

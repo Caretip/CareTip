@@ -1,4 +1,3 @@
-import type { ComponentType } from "react";
 import { motion } from "motion/react";
 import { dashboardBlockMotion, useMinWidthMedia } from "@/lib/motionPerf";
 import { useState, useMemo, lazy, memo } from "react";
@@ -98,7 +97,7 @@ function goalStatusClass(s: EmployeeGoalProgressStatus): string {
   return "text-amber-700";
 }
 
-export const BusinessDashboard: ComponentType<unknown> = memo(function BusinessDashboard() {
+export const BusinessDashboard = memo(function BusinessDashboard() {
   const { t } = useTranslation();
   const goalPeriodLabels = useMemo(
     () =>

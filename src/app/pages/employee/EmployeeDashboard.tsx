@@ -1,6 +1,6 @@
 import { motion } from "motion/react";
 import { dashboardBlockMotion } from "@/lib/motionPerf";
-import { lazy, useState, useEffect, useMemo, useCallback, memo, type ComponentType } from "react";
+import { lazy, useState, useEffect, useMemo, useCallback, memo } from "react";
 import type { ImgHTMLAttributes } from "react";
 import { Link, useLocation, useNavigate } from "react-router";
 import { toast } from "sonner";
@@ -73,7 +73,7 @@ import { isWalkthroughDemoEmployee } from "../../lib/walkthroughDemo";
 
 type AnalyticsTimeframe = "today" | "week" | "month";
 
-export const EmployeeDashboard: ComponentType<unknown> = memo(function EmployeeDashboard() {
+export const EmployeeDashboard = memo(function EmployeeDashboard() {
   const { t, i18n } = useTranslation();
   const { user, authHydrated, sessionValidated, authReady, updateUser } = useRequireAuth();
   useRegisterPagePaintReady("employee-dashboard-paint");
