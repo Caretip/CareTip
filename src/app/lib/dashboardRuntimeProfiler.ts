@@ -539,7 +539,7 @@ function buildRenderStats(): Record<string, DashRenderStats> {
 
 function paintMetrics(): { fcpMs: number | null; lcpMs: number | null } {
   let fcpMs: number | null = null;
-  let lcpMs: number | null = null;
+  const lcpMs: number | null = null;
   try {
     for (const e of performance.getEntriesByType("paint")) {
       if (e.name === "first-contentful-paint") fcpMs = Math.round(e.startTime);
