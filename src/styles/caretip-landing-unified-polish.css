@@ -139,21 +139,13 @@ html.dark .caretip-landing .caretip-landing-cta-hint {
   color: rgb(163 163 163);
 }
 
-/* —— Unified benefit check markers (all landing feature/benefit bullets) —— */
+/* —— Unified benefit check markers — styled via caretip-feature-check.css (pricing match) —— */
 .caretip-landing .caretip-landing-benefit-check {
   display: inline-flex;
-  height: 1.375rem;
-  width: 1.375rem;
   flex-shrink: 0;
   align-items: center;
   justify-content: center;
-  margin-top: 0.125rem;
-  color: hsl(var(--primary));
-}
-
-.caretip-landing .caretip-landing-benefit-check__glyph {
-  height: 0.875rem;
-  width: 0.875rem;
+  margin-top: 0.15rem;
 }
 
 .caretip-landing .caretip-landing-benefit-row {

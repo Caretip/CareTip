@@ -72,7 +72,7 @@ export function ContactSupportForm({ onBack, onSwitchToDemo, className }: Contac
           <ul className={contactPageUi.flowList}>
             {bullets.map((item) => (
               <li key={item}>
-                <Check className="size-3.5 shrink-0" strokeWidth={2.5} aria-hidden />
+                <Check className="caretip-feature-check shrink-0" strokeWidth={2.75} aria-hidden />
                 <span>{item}</span>
               </li>
             ))}

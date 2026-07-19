@@ -1,0 +1,86 @@
+/**
+ * Canonical feature/check marker — matches pricing tier cards exactly.
+ * One style only: soft orange circle + centered check. Do not invent variants.
+ */
+
+:root {
+  --caretip-feature-check-size: 1.125rem;
+  --caretip-feature-check-glyph: 0.75rem;
+  --caretip-feature-check-bg: rgb(233 120 28 / 0.12);
+  --caretip-feature-check-fg: rgb(217 119 6);
+  --caretip-feature-check-bg-dark: rgb(233 120 28 / 0.2);
+  --caretip-feature-check-fg-dark: rgb(251 191 36);
+}
+
+.caretip-pricing-tier-features__check,
+.caretip-landing .caretip-landing-benefit-check,
+.caretip-landing .caretip-hero-benefits__check,
+.caretip-trust-strip__check,
+.caretip-contact-trust__icon,
+.caretip-contact-hero-trust__icon,
+.caretip-dashboard-shell .pro-upgrade-card__check,
+.caretip-dashboard-shell .basic-plan-status-card__check,
+.caretip-feature-check {
+  display: inline-flex !important;
+  width: var(--caretip-feature-check-size) !important;
+  height: var(--caretip-feature-check-size) !important;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  margin-top: 0.15rem;
+  border-radius: 9999px !important;
+  background: var(--caretip-feature-check-bg) !important;
+  color: var(--caretip-feature-check-fg) !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+}
+
+.caretip-pricing-tier-features__check svg,
+.caretip-landing .caretip-landing-benefit-check svg,
+.caretip-landing .caretip-landing-benefit-check__glyph,
+.caretip-landing .caretip-hero-benefits__check svg,
+.caretip-trust-strip__check,
+.caretip-contact-trust__icon,
+.caretip-contact-hero-trust__icon,
+.caretip-dashboard-shell .pro-upgrade-card__check,
+.caretip-dashboard-shell .basic-plan-status-card__check,
+.caretip-feature-check,
+.caretip-feature-check svg {
+  width: var(--caretip-feature-check-glyph) !important;
+  height: var(--caretip-feature-check-glyph) !important;
+  color: inherit !important;
+  stroke: currentColor !important;
+}
+
+/* When the check class is on the SVG itself, size the SVG to the chip. */
+svg.caretip-pricing-tier-features__check,
+svg.caretip-trust-strip__check,
+svg.caretip-contact-trust__icon,
+svg.caretip-contact-hero-trust__icon,
+svg.caretip-feature-check,
+.caretip-dashboard-shell svg.pro-upgrade-card__check,
+.caretip-dashboard-shell svg.basic-plan-status-card__check {
+  width: var(--caretip-feature-check-size) !important;
+  height: var(--caretip-feature-check-size) !important;
+  padding: 0.1875rem !important;
+  box-sizing: border-box;
+}
+
+.caretip-pricing-tier-card--enterprise .caretip-pricing-tier-features__check {
+  background: var(--caretip-feature-check-bg) !important;
+  color: var(--caretip-feature-check-fg) !important;
+}
+
+html.dark .caretip-pricing-tier-features__check,
+html.dark .caretip-landing .caretip-landing-benefit-check,
+html.dark .caretip-landing .caretip-hero-benefits__check,
+html.dark .caretip-trust-strip__check,
+html.dark .caretip-contact-trust__icon,
+html.dark .caretip-contact-hero-trust__icon,
+html.dark .caretip-dashboard-shell .pro-upgrade-card__check,
+html.dark .caretip-dashboard-shell .basic-plan-status-card__check,
+html.dark .caretip-feature-check {
+  background: var(--caretip-feature-check-bg-dark) !important;
+  color: var(--caretip-feature-check-fg-dark) !important;
+}

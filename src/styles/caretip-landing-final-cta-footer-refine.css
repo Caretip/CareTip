@@ -168,15 +168,22 @@ html.dark .caretip-landing .caretip-final-cta-button {
     0 0 32px -8px rgba(233, 120, 28, 0.22) !important;
 }
 
+/* —— Final CTA → footer breathing room —— */
+.caretip-landing #final-cta.caretip-landing-cta-wise,
+.caretip-landing .caretip-landing-cta-wise {
+  padding-bottom: clamp(2.75rem, 6vw, 4.5rem);
+}
+
 /* —— Landing footer blend (structure unchanged) —— */
 .caretip-landing .caretip-landing-footer {
   border-top: none !important;
+  margin-top: 0;
 }
 
 @media (min-width: 1024px) {
   .caretip-landing .caretip-landing-footer {
-    margin-top: -2.5rem;
-    padding-top: 0.5rem;
+    margin-top: 0;
+    padding-top: clamp(1.25rem, 3vw, 2rem);
   }
 }
 

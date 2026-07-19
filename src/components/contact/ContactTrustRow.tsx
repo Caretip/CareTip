@@ -17,7 +17,7 @@ export function ContactTrustRow({ className }: ContactTrustRowProps) {
     >
       {CONTACT_TRUST_KEYS.map((key) => (
         <li key={key} className="caretip-contact-trust__item">
-          <Check className="caretip-contact-trust__icon" strokeWidth={2.5} aria-hidden />
+          <Check className="caretip-contact-trust__icon" strokeWidth={2.75} aria-hidden />
           <span>{t(`staticPages.contact.trust.${key}`)}</span>
         </li>
       ))}

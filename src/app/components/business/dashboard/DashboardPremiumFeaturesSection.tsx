@@ -56,7 +56,7 @@ export function DashboardPremiumFeaturesSection({ className }: DashboardPremiumF
             <ul className="grid gap-2 sm:grid-cols-2">
               {PREMIUM_FEATURE_KEYS.map((key) => (
                 <li key={key} className="flex items-start gap-2.5 text-sm text-foreground/90">
-                  <Check className="mt-0.5 h-4 w-4 shrink-0 text-primary" aria-hidden />
+                  <Check className="caretip-feature-check mt-0.5 shrink-0" strokeWidth={2.75} aria-hidden />
                   <span>{t(key)}</span>
                 </li>
               ))}

@@ -10,11 +10,11 @@ export const landingBenefitRowClass =
 /** @deprecated Use `landingBenefitRowClass` */
 export const landingLiveMinutesRowClass = landingBenefitRowClass;
 
-/** Single primary check — canonical marker for all landing benefit points. */
+/** Single primary check — same marker as pricing tier feature bullets. */
 export function LandingBenefitCheckMark({ className }: { className?: string }) {
   return (
-    <span className={cn("caretip-landing-benefit-check", className)} aria-hidden>
-      <Check className="caretip-landing-benefit-check__glyph" strokeWidth={2.5} />
+    <span className={cn("caretip-pricing-tier-features__check caretip-landing-benefit-check", className)} aria-hidden>
+      <Check className="size-3 caretip-landing-benefit-check__glyph" strokeWidth={2.75} />
     </span>
   );
 }

@@ -22,7 +22,7 @@ export function LandingTrustComplianceStrip({ className }: { className?: string 
     >
       {items.map((label) => (
         <span key={label} className="caretip-trust-strip__item" role="listitem">
-          <Check className="caretip-trust-strip__check h-3.5 w-3.5 shrink-0" strokeWidth={2.5} aria-hidden />
+          <Check className="caretip-trust-strip__check shrink-0" strokeWidth={2.75} aria-hidden />
           {label}
         </span>
       ))}

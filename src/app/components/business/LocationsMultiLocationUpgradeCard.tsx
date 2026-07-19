@@ -41,7 +41,7 @@ export function LocationsMultiLocationUpgradeCard({
       <ul className="mt-4 space-y-2" aria-label={t("subscription.locked.includesAria")}>
         {featureKeys.map((key) => (
           <li key={key} className="flex items-start gap-2 text-sm text-foreground">
-            <Check className="mt-0.5 h-4 w-4 shrink-0 text-[#e9781c]" aria-hidden />
+            <Check className="caretip-feature-check mt-0.5 shrink-0" strokeWidth={2.75} aria-hidden />
             <span>{t(`subscription.features.multiLocation.${key}`)}</span>
           </li>
         ))}

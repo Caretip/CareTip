@@ -26,7 +26,7 @@ html:not(.dark) .caretip-landing.caretip-landing--premium .caretip-hero-section-
   --caretip-hero-body-lh: var(--caretip-hero-fullbg-body-lh);
   --caretip-hero-gap-tagline: clamp(1rem, 1.8vh, 1.5rem);
   --caretip-hero-gap-headline-body: clamp(1rem, 1.5vh, 1.35rem);
-  --caretip-hero-gap-body-cta: clamp(1.75rem, 2.5vh, 2.25rem);
+  --caretip-hero-gap-body-cta: clamp(2.125rem, 3.25vh, 2.875rem);
   --caretip-hero-gap-cta-trust: clamp(1rem, 1.5vh, 1.25rem);
   --caretip-hero-gap-trust-benefits: clamp(1.125rem, 1.75vh, 1.5rem);
   --caretip-hero-line-gap: 0.4rem;
@@ -280,17 +280,13 @@ html.dark .caretip-landing .caretip-hero-section--full-bg .caretip-hero-headline
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 1.125rem;
-  height: 1.125rem;
   flex-shrink: 0;
-  border-radius: 9999px;
-  background: rgb(233 120 28 / 0.12);
-  color: rgb(217 106 20);
+  /* Size/color via caretip-feature-check.css (matches pricing) */
 }
 
 .caretip-landing .caretip-hero-benefits__check svg {
-  width: 0.7rem;
-  height: 0.7rem;
+  width: 0.75rem;
+  height: 0.75rem;
 }
 
 .caretip-landing .caretip-hero-benefits__label {
@@ -305,11 +301,6 @@ html.dark .caretip-landing .caretip-hero-section--full-bg .caretip-hero-headline
 html.dark .caretip-landing .caretip-hero-benefits {
   color: rgb(228 228 231);
   text-shadow: 0 1px 2px rgb(0 0 0 / 0.3);
-}
-
-html.dark .caretip-landing .caretip-hero-benefits__check {
-  background: rgb(233 120 28 / 0.2);
-  color: rgb(251 191 36);
 }
 
 /* Compact trust strip — confidence without competing with the CTA */
@@ -366,15 +357,15 @@ html.dark .caretip-landing .caretip-hero-section--full-bg .caretip-hero-descript
 
 @media (min-width: 768px) {
   .caretip-landing .caretip-hero-section--full-bg .caretip-hero-cta-button {
-    min-height: 3.25rem !important;
+    min-height: 2.875rem !important;
     height: auto !important;
-    padding-inline: 2.125rem !important;
-    font-size: 1.0625rem !important;
+    padding-inline: 1.75rem !important;
+    font-size: 1rem !important;
     font-weight: 600 !important;
-    border-radius: 0.875rem !important;
+    border-radius: 0.8125rem !important;
     box-shadow:
-      0 1px 2px rgb(180 90 20 / 0.12),
-      0 8px 20px rgb(233 120 28 / 0.18) !important;
+      0 1px 2px rgb(180 90 20 / 0.1),
+      0 6px 16px rgb(233 120 28 / 0.14) !important;
     transition:
       transform 0.2s ease,
       box-shadow 0.2s ease,
@@ -385,8 +376,8 @@ html.dark .caretip-landing .caretip-hero-section--full-bg .caretip-hero-descript
   .caretip-landing .caretip-hero-section--full-bg .caretip-hero-cta-button:hover {
     transform: translateY(-1px);
     box-shadow:
-      0 2px 4px rgb(180 90 20 / 0.14),
-      0 12px 28px rgb(233 120 28 / 0.24) !important;
+      0 2px 4px rgb(180 90 20 / 0.12),
+      0 10px 22px rgb(233 120 28 / 0.2) !important;
   }
 
   .caretip-landing .caretip-hero-section--full-bg .caretip-hero-cta-button:active {
@@ -398,15 +389,15 @@ html.dark .caretip-landing .caretip-hero-section--full-bg .caretip-hero-descript
     box-shadow:
       0 0 0 2px rgb(255 248 240),
       0 0 0 4px rgb(233 120 28 / 0.55),
-      0 8px 20px rgb(233 120 28 / 0.18) !important;
+      0 6px 16px rgb(233 120 28 / 0.14) !important;
   }
 }
 
 @media (min-width: 1024px) {
   .caretip-landing .caretip-hero-section--full-bg .caretip-hero-cta-button {
-    min-height: 3.375rem !important;
-    padding-inline: 2.25rem !important;
-    font-size: 1.125rem !important;
+    min-height: 3rem !important;
+    padding-inline: 1.875rem !important;
+    font-size: 1.0625rem !important;
   }
 }
 
@@ -426,7 +417,7 @@ html.dark .caretip-landing .caretip-hero-section--full-bg .caretip-hero-descript
     --caretip-hero-fullbg-body-size: clamp(1.1875rem, 0.4vw + 1.05rem, 1.5rem);
     --caretip-hero-gap-tagline: clamp(1.125rem, 2vh, 1.625rem);
     --caretip-hero-gap-headline-body: clamp(1.125rem, 1.75vh, 1.5rem);
-    --caretip-hero-gap-body-cta: clamp(1.875rem, 2.75vh, 2.5rem);
+    --caretip-hero-gap-body-cta: clamp(2.25rem, 3.25vh, 3rem);
     --caretip-hero-bg-focal: 76% 50%;
     padding-top: clamp(7.5rem, 13vh, 10rem) !important;
     padding-bottom: clamp(4rem, 6.5vw, 5.75rem) !important;
@@ -464,7 +455,7 @@ html.dark .caretip-landing .caretip-hero-section--full-bg .caretip-hero-descript
     --caretip-hero-fullbg-headline-size: clamp(2.625rem, 5.8vw + 0.85rem, 3.875rem);
     --caretip-hero-fullbg-body-size: clamp(1.0625rem, 0.5vw + 0.95rem, 1.25rem);
     --caretip-hero-gap-headline-body: clamp(1.375rem, 2vh, 1.75rem);
-    --caretip-hero-gap-body-cta: clamp(2.125rem, 2.85vh, 2.625rem);
+    --caretip-hero-gap-body-cta: clamp(2.375rem, 3.1vh, 2.875rem);
     --caretip-hero-bg-focal: 68% 50%;
   }
 

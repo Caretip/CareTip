@@ -206,10 +206,10 @@ html:not(.dark) .caretip-landing.caretip-landing--premium {
 .caretip-landing.caretip-landing--premium .caretip-hero-cta-button,
 .caretip-landing.caretip-landing--premium .caretip-section-cta-button,
 .caretip-landing.caretip-landing--premium .caretip-final-cta-button {
-  min-height: 2.75rem;
-  height: 2.75rem;
-  padding-inline: 1.875rem;
-  border-radius: 0.875rem;
+  min-height: 2.625rem;
+  height: 2.625rem;
+  padding-inline: 1.625rem;
+  border-radius: 0.8125rem;
   transition:
     transform var(--caretip-saas-transition),
     box-shadow var(--caretip-saas-transition),
@@ -222,9 +222,9 @@ html:not(.dark) .caretip-landing.caretip-landing--premium {
   .caretip-landing.caretip-landing--premium .caretip-hero-cta-button,
   .caretip-landing.caretip-landing--premium .caretip-section-cta-button,
   .caretip-landing.caretip-landing--premium .caretip-final-cta-button {
-    min-height: 3rem;
-    height: 3rem;
-    padding-inline: 2rem;
+    min-height: 2.875rem;
+    height: 2.875rem;
+    padding-inline: 1.75rem;
   }
 }
 

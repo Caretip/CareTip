@@ -198,14 +198,19 @@ html.dark .caretip-features-page .caretip-landing-feature-card {
 
 .caretip-industry-page__steps-grid {
   align-items: stretch;
+  margin-inline: auto;
+  max-width: min(100%, 64rem);
+  width: 100%;
 }
 
 .caretip-industry-page__step {
   height: 100%;
   display: flex;
   flex-direction: column;
+  align-items: center;
+  text-align: center;
   gap: 0.55rem;
-  padding: 0.25rem 0.15rem;
+  padding: 0.35rem 0.25rem;
   border: none;
   border-radius: 0;
   background: transparent;
@@ -225,11 +230,9 @@ html.dark .caretip-industry-page__step {
 }
 
 .caretip-industry-page__step-icon {
-  width: 2.5rem;
-  height: 2.5rem;
-  margin-top: 0.1rem;
-  margin-left: 0.1rem;
-  border-radius: var(--caretip-marketing-icon-radius, 0.875rem);
+  width: 2.75rem;
+  height: 2.75rem;
+  margin: 0;
 }
 
 .caretip-industry-page__step-title {
@@ -237,11 +240,15 @@ html.dark .caretip-industry-page__step {
   min-height: 0;
   line-height: 1.3;
   letter-spacing: -0.015em;
+  text-align: center;
 }
 
 .caretip-industry-page__step-body {
   margin: 0;
+  margin-inline: auto;
+  max-width: min(100%, 28ch);
   line-height: 1.6;
+  text-align: center;
 }
 
 .caretip-industry-page__benefit {

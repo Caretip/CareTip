@@ -325,7 +325,7 @@ html.dark .caretip-landing #payments-trust .caretip-landing-feature-icon:not(.ca
 .caretip-public-page .caretip-marketing-cta,
 .caretip-pricing-page .caretip-btn-primary,
 .caretip-features-page .caretip-btn-primary {
-  min-height: 2.75rem;
+  min-height: 2.625rem;
   letter-spacing: -0.01em;
 }
 
@@ -333,7 +333,7 @@ html.dark .caretip-landing #payments-trust .caretip-landing-feature-icon:not(.ca
   .caretip-landing .caretip-section-cta-button,
   .caretip-landing .caretip-hero-cta-button,
   .caretip-public-page .caretip-marketing-cta {
-    min-height: 3rem;
+    min-height: 2.875rem;
   }
 }
 

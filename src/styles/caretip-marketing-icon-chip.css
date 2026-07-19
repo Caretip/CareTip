@@ -1,6 +1,7 @@
 /**
  * Shared marketing icon chips — solid CareTip orange background, black glyph.
  * Use `.caretip-marketing-icon-chip` in TSX, or match the listed selectors.
+ * Feature/check bullets use `caretip-feature-check.css` (pricing soft-circle) — not this chip.
  */
 
 :root {
@@ -21,14 +22,25 @@
 .caretip-pricing-hero-v2__feature-icon,
 .caretip-pricing-trust--subtle .caretip-pricing-trust__icon,
 .caretip-pricing-tier-card__tier-icon,
-.caretip-pricing-tier-features__check,
 .caretip-pricing-highlights__icon,
-.caretip-landing .caretip-hero-benefits__check,
-.caretip-motivation-activity__icon--tip {
+.caretip-motivation-activity__icon--tip,
+.caretip-brand-accent-icon {
   background: var(--caretip-marketing-icon-chip-bg) !important;
   color: var(--caretip-marketing-icon-chip-fg) !important;
   border-color: transparent !important;
   box-shadow: none !important;
+}
+
+/* When `.caretip-brand-accent-icon` is on the SVG itself (section accents) */
+svg.caretip-brand-accent-icon,
+.caretip-brand-accent-icon:is(svg) {
+  display: inline-flex !important;
+  width: 1.25rem !important;
+  height: 1.25rem !important;
+  padding: 0.2rem !important;
+  box-sizing: border-box;
+  border-radius: 9999px !important;
+  flex-shrink: 0;
 }
 
 .caretip-marketing-icon-chip svg,
@@ -44,11 +56,10 @@
 .caretip-pricing-hero-v2__feature-icon svg,
 .caretip-pricing-trust--subtle .caretip-pricing-trust__icon svg,
 .caretip-pricing-tier-card__tier-icon svg,
-.caretip-pricing-tier-features__check svg,
 .caretip-pricing-highlights__icon svg,
-.caretip-landing .caretip-hero-benefits__check svg,
 .caretip-motivation-activity__icon--tip svg,
-.caretip-marketing-icon-chip .lucide {
+.caretip-marketing-icon-chip .lucide,
+.caretip-brand-accent-icon svg {
   color: var(--caretip-marketing-icon-chip-fg) !important;
   stroke: var(--caretip-marketing-icon-chip-fg);
 }
@@ -66,12 +77,90 @@ html.dark .caretip-how-hero-v2__timeline-icon,
 html.dark .caretip-pricing-hero-v2__feature-icon,
 html.dark .caretip-pricing-trust--subtle .caretip-pricing-trust__icon,
 html.dark .caretip-pricing-tier-card__tier-icon,
-html.dark .caretip-pricing-tier-features__check,
 html.dark .caretip-pricing-highlights__icon,
-html.dark .caretip-landing .caretip-hero-benefits__check,
-html.dark .caretip-motivation-activity__icon--tip {
+html.dark .caretip-motivation-activity__icon--tip,
+html.dark .caretip-brand-accent-icon {
   background: var(--caretip-marketing-icon-chip-bg) !important;
   color: var(--caretip-marketing-icon-chip-fg) !important;
+}
+
+/* —— Badge icons (section accents, hero badges) — same solid orange chip —— */
+[data-landing-accent] > svg:first-of-type,
+.caretip-pricing-hero-v2__badge > svg,
+.caretip-how-step__badge > svg,
+.caretip-features-hero-v2__badge > svg {
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  width: 1.25rem !important;
+  height: 1.25rem !important;
+  padding: 0.2rem !important;
+  box-sizing: border-box;
+  flex-shrink: 0;
+  border-radius: 9999px !important;
+  background: var(--caretip-marketing-icon-chip-bg) !important;
+  color: var(--caretip-marketing-icon-chip-fg) !important;
+  stroke: var(--caretip-marketing-icon-chip-fg) !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+/* Muted accent arrows stay glyph-only */
+[data-landing-accent] > svg.opacity-80,
+[data-landing-accent] svg[class*="sectionAccentIconMuted"],
+[data-landing-accent] .text-muted-foreground\/80 {
+  background: transparent !important;
+  padding: 0 !important;
+  width: 0.75rem !important;
+  height: 0.75rem !important;
+  color: hsl(var(--muted-foreground) / 0.8) !important;
+  stroke: currentColor !important;
+}
+
+html.dark [data-landing-accent] > svg:first-of-type,
+html.dark .caretip-pricing-hero-v2__badge > svg,
+html.dark .caretip-how-step__badge > svg,
+html.dark .caretip-features-hero-v2__badge > svg {
+  background: var(--caretip-marketing-icon-chip-bg) !important;
+  color: var(--caretip-marketing-icon-chip-fg) !important;
+  stroke: var(--caretip-marketing-icon-chip-fg) !important;
+}
+
+/* Soft primary/10 icon wells used as badge/icon containers → solid orange */
+.caretip-marketing-page .bg-primary\/10.rounded-2xl,
+.caretip-marketing-page .bg-primary\/10.rounded-xl,
+.caretip-marketing-page .bg-primary\/10.rounded-lg,
+.caretip-landing .bg-primary\/10.rounded-2xl,
+.caretip-landing .bg-primary\/10.rounded-xl,
+.caretip-landing .bg-primary\/10.rounded-lg,
+.caretip-public-page .bg-primary\/10.rounded-2xl,
+.caretip-public-page .bg-primary\/10.rounded-xl,
+.caretip-public-page .bg-primary\/10.rounded-lg,
+.caretip-dashboard-shell .bg-primary\/10.rounded-2xl,
+.caretip-dashboard-shell .bg-primary\/10.rounded-xl,
+.caretip-dashboard-shell .bg-primary\/10.rounded-lg,
+.caretip-dashboard-shell span.flex.h-9.w-9.items-center.justify-center.rounded-lg.bg-primary\/10 {
+  background: var(--caretip-marketing-icon-chip-bg) !important;
+  color: var(--caretip-marketing-icon-chip-fg) !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+}
+
+.caretip-marketing-page .bg-primary\/10.rounded-2xl svg,
+.caretip-marketing-page .bg-primary\/10.rounded-xl svg,
+.caretip-marketing-page .bg-primary\/10.rounded-lg svg,
+.caretip-landing .bg-primary\/10.rounded-2xl svg,
+.caretip-landing .bg-primary\/10.rounded-xl svg,
+.caretip-landing .bg-primary\/10.rounded-lg svg,
+.caretip-public-page .bg-primary\/10.rounded-2xl svg,
+.caretip-public-page .bg-primary\/10.rounded-xl svg,
+.caretip-public-page .bg-primary\/10.rounded-lg svg,
+.caretip-dashboard-shell .bg-primary\/10.rounded-2xl svg,
+.caretip-dashboard-shell .bg-primary\/10.rounded-xl svg,
+.caretip-dashboard-shell .bg-primary\/10.rounded-lg svg,
+.caretip-dashboard-shell span.flex.h-9.w-9.items-center.justify-center.rounded-lg.bg-primary\/10 svg {
+  color: var(--caretip-marketing-icon-chip-fg) !important;
+  stroke: var(--caretip-marketing-icon-chip-fg);
 }
 
 /* Flat pricing hero icons stay glyph-only (no filled chip). */

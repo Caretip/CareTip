@@ -1,0 +1,729 @@
+/**
+ * Mobile optical balancing & visual hierarchy (premium SaaS polish).
+ * Mobile/tablet only — uses existing breakpoints (639 / 767 / 1023). Does not change
+ * colors, fonts, breakpoints, animations, or desktop (≥1024) layouts.
+ */
+
+/* =============================================================================
+   1. Shared marketing chrome — gutters, section rhythm, CTA breathing room
+   ============================================================================= */
+@media (max-width: 767px) {
+  .caretip-marketing-page,
+  .caretip-landing,
+  .caretip-public-page,
+  .caretip-pricing-page,
+  .caretip-features-page,
+  .caretip-how-it-works-page,
+  .caretip-contact-page,
+  .caretip-faq-page,
+  .caretip-industry-page {
+    --caretip-mobile-gutter: 1.125rem;
+    --caretip-mobile-section-gap: clamp(2.75rem, 8vw, 3.5rem);
+    --caretip-mobile-cta-stack-gap: 0.75rem;
+  }
+
+  .caretip-landing .caretip-landing-main > section[id],
+  .caretip-public-page main > section,
+  .caretip-pricing-page main > section,
+  .caretip-features-page main > section {
+    scroll-margin-top: 4.5rem;
+  }
+
+  /* Footer: calm top breathing room after final CTA */
+  .caretip-landing .caretip-landing-footer,
+  .caretip-public-page .caretip-site-footer,
+  .caretip-pricing-page .caretip-site-footer,
+  .caretip-features-page .caretip-site-footer {
+    margin-top: 0;
+    padding-top: 1.5rem;
+  }
+
+  .caretip-site-footer .caretip-site-footer-columns {
+    gap: 1.75rem 1.25rem;
+  }
+
+  .caretip-site-footer .caretip-site-footer-blurb {
+    max-width: min(100%, 34ch);
+    line-height: 1.7;
+  }
+}
+
+/* =============================================================================
+   2. Public mobile navigation — premium drawer rhythm
+   ============================================================================= */
+@media (max-width: 767px) {
+  .caretip-public-nav nav {
+    padding-inline: var(--caretip-mobile-gutter, 1.125rem);
+    min-height: 3.5rem;
+  }
+
+  /* Logo + hamburger row — optical vertical center */
+  .caretip-public-nav nav > div {
+    align-items: center;
+  }
+
+  .caretip-public-nav nav a[href="/"] {
+    display: inline-flex;
+    align-items: center;
+  }
+
+  .caretip-public-nav nav button[aria-controls="mobile-main-nav"] {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    align-self: center;
+    min-width: 2.75rem;
+    min-height: 2.75rem;
+    padding: 0.5rem;
+    /* Nudge slightly above geometric center for optical balance with the wordmark */
+    margin-top: -0.1875rem;
+    line-height: 0;
+  }
+
+  .caretip-public-nav nav button[aria-controls="mobile-main-nav"] svg {
+    display: block;
+    width: 1.375rem;
+    height: 1.375rem;
+    margin: 0;
+    flex-shrink: 0;
+  }
+
+  /* Trailing cluster sits on the same optical midline as the logo */
+  .caretip-public-nav nav > div > div:last-child {
+    display: flex;
+    align-items: center;
+    align-self: center;
+    height: 100%;
+  }
+
+  .caretip-public-mobile-nav-drawer {
+    padding-block: 0.5rem 1.25rem;
+  }
+
+  .caretip-public-mobile-nav-drawer__section-label {
+    margin-top: 1.25rem;
+    margin-bottom: 0.375rem;
+    padding-inline: 0.5rem;
+  }
+
+  .caretip-public-mobile-nav-drawer__section-label:first-child {
+    margin-top: 0.25rem;
+  }
+
+  .caretip-public-mobile-nav-drawer .caretip-public-mobile-nav-links {
+    display: flex;
+    flex-direction: column;
+    gap: 0.125rem;
+    padding-inline: 0.375rem;
+  }
+
+  .caretip-public-mobile-nav-drawer .caretip-public-mobile-nav-links a,
+  .caretip-public-mobile-nav-drawer__nav-link {
+    min-height: 3rem;
+    padding-block: 0.625rem;
+    padding-inline: 0.75rem;
+    border-radius: 0.75rem;
+    letter-spacing: -0.015em;
+  }
+
+  .caretip-public-mobile-nav-drawer .caretip-public-mobile-nav-actions {
+    margin-top: 1.5rem;
+    padding-inline: 0.75rem;
+    padding-top: 1.25rem;
+    gap: 0.625rem;
+    border-top: 1px solid hsl(var(--border) / 0.65);
+  }
+
+  .caretip-public-mobile-nav-drawer .caretip-public-mobile-nav-actions :is(a, button) {
+    min-height: 3rem;
+    border-radius: 0.8125rem;
+  }
+
+  /* Primary CTA first — secondary slightly quieter via spacing only */
+  .caretip-public-mobile-nav-drawer__cta-primary {
+    order: 0;
+  }
+
+  .caretip-public-mobile-nav-drawer__cta-secondary {
+    order: 1;
+    margin-top: 0.125rem;
+  }
+
+  .caretip-public-mobile-nav-drawer .caretip-public-mobile-nav-drawer__toolbar {
+    gap: 0.625rem;
+    padding-inline: 0.75rem;
+    margin-bottom: 0.75rem;
+    align-items: center;
+  }
+
+  .caretip-public-mobile-nav-drawer .caretip-public-mobile-nav-drawer__toolbar > button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: -0.125rem;
+  }
+
+  .caretip-public-mobile-nav-drawer .caretip-public-mobile-nav-drawer__toolbar > button svg {
+    display: block;
+  }
+}
+
+/* =============================================================================
+   3. Landing — hero, sections, industries, wise CTA, checks
+   ============================================================================= */
+@media (max-width: 767px) {
+  .caretip-landing .caretip-hero-section--full-bg {
+    --caretip-hero-gap-body-cta: 1.875rem;
+    --caretip-hero-gap-cta-trust: 1rem;
+    --caretip-hero-gap-trust-benefits: 1.25rem;
+  }
+
+  .caretip-landing .caretip-hero-section--full-bg .caretip-hero-full-bg-content {
+    padding-inline: 0.125rem;
+  }
+
+  .caretip-landing .caretip-hero-cta-row {
+    width: 100%;
+    max-width: min(100%, 19rem);
+    margin-inline: auto;
+    gap: 0.75rem;
+  }
+
+  .caretip-landing .caretip-hero-cta-unit {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .caretip-landing .caretip-hero-section--full-bg .caretip-hero-cta-button {
+    width: 100%;
+    min-height: 2.875rem !important;
+    padding-inline: 1.375rem !important;
+    font-size: 0.9875rem !important;
+  }
+
+  .caretip-landing .caretip-hero-trust {
+    justify-content: center;
+    gap: 0.625rem 1rem;
+    padding-inline: 0.25rem;
+  }
+
+  .caretip-landing .caretip-hero-benefits {
+    justify-content: center;
+    gap: 0.5rem 0.875rem;
+    padding-inline: 0.25rem;
+  }
+
+  .caretip-landing .caretip-hero-benefits__item {
+    gap: 0.4rem;
+  }
+
+  /* Industries teaser — optical center under headline */
+  .caretip-landing .caretip-industries-teaser {
+    padding-block: clamp(2.75rem, 7vw, 3.75rem);
+  }
+
+  .caretip-landing .caretip-industries-teaser__inner {
+    gap: 2rem;
+    padding-inline: var(--caretip-mobile-gutter, 1.125rem);
+  }
+
+  .caretip-landing .caretip-industries-teaser__header {
+    padding-inline: 0.25rem;
+  }
+
+  .caretip-landing .caretip-industries-teaser__sub {
+    margin-top: 0.875rem;
+    max-width: min(100%, 32ch);
+    margin-inline: auto;
+  }
+
+  .caretip-landing .caretip-industries-teaser__benefits {
+    gap: 1.375rem;
+    margin-top: 0.25rem;
+  }
+
+  .caretip-landing .caretip-industries-teaser__benefit {
+    column-gap: 0.875rem;
+    padding: 0.25rem 0.125rem;
+  }
+
+  .caretip-landing .caretip-industries-teaser__benefit-icon {
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: 0.75rem;
+  }
+
+  .caretip-landing .caretip-industries-teaser__benefit-icon svg {
+    width: 1.125rem;
+    height: 1.125rem;
+  }
+
+  .caretip-landing .caretip-industries-teaser__benefit-copy {
+    padding-top: 0.25rem;
+    gap: 0.375rem;
+  }
+
+  .caretip-landing .caretip-industries-teaser__cards {
+    gap: 1rem;
+  }
+
+  .caretip-landing .caretip-industries-teaser__card {
+    border-radius: 1rem;
+  }
+
+  .caretip-landing .caretip-industries-teaser__card-copy {
+    padding: 1.125rem 1.125rem 1.25rem;
+  }
+
+  /* Feature / benefit rows — check optically aligned with first text line */
+  .caretip-landing .caretip-landing-benefit-row {
+    gap: 0.75rem;
+  }
+
+  .caretip-landing .caretip-pricing-tier-features__check,
+  .caretip-landing .caretip-landing-benefit-check {
+    margin-top: 0.2rem;
+  }
+
+  /* Split showcase panels */
+  .caretip-landing .caretip-split-showcase-content-panel--mobile {
+    padding: 1.375rem 1.125rem;
+    border-radius: 1.125rem;
+  }
+
+  .caretip-landing .caretip-landing-section-cta {
+    margin-top: 1.25rem;
+  }
+
+  .caretip-landing .caretip-landing-cta-unit--section {
+    width: min(100%, 18.5rem);
+  }
+
+  .caretip-landing .caretip-section-cta-button {
+    width: 100%;
+    min-height: 2.875rem;
+  }
+
+  /* Wise final CTA — edge breathing room + stacked hierarchy */
+  .caretip-landing .caretip-landing-cta-wise,
+  .caretip-landing .caretip-features-cta-wise {
+    padding-inline: var(--caretip-mobile-gutter, 1.125rem);
+    padding-block: 1.75rem 2.5rem;
+  }
+
+  .caretip-landing .caretip-landing-cta-wise__inner,
+  .caretip-landing .caretip-features-cta-wise__inner {
+    padding-inline: 1.25rem;
+    padding-block: 2.25rem 2rem;
+    border-radius: 1.25rem;
+  }
+
+  .caretip-landing .caretip-features-cta-wise__actions {
+    gap: var(--caretip-mobile-cta-stack-gap, 0.75rem);
+    margin-top: 1.5rem;
+    width: 100%;
+    max-width: 18.5rem;
+    margin-inline: auto;
+  }
+
+  .caretip-landing .caretip-features-cta-wise__actions > a {
+    width: 100%;
+    min-height: 2.875rem;
+  }
+
+  .caretip-landing .caretip-landing-cta-wise__trust {
+    margin-top: 1.375rem;
+  }
+
+  .caretip-landing .caretip-trust-strip {
+    gap: 0.625rem 1rem;
+    justify-content: center;
+  }
+
+  /* Live minutes / motivation cards */
+  .caretip-landing .caretip-landing-feature-card {
+    padding: 1.125rem 1rem;
+    border-radius: 1rem;
+  }
+
+  .caretip-landing .caretip-landing-features-grid {
+    gap: 0.875rem;
+  }
+}
+
+/* =============================================================================
+   4. Pricing — mobile card hierarchy (Premium draws eye without looking huge)
+   ============================================================================= */
+@media (max-width: 639px) {
+  .caretip-pricing-page {
+    --caretip-pricing-card-min-h: auto;
+  }
+
+  .caretip-pricing-cards-stage {
+    margin-top: 1.75rem;
+    padding-inline: 0.125rem;
+  }
+
+  .caretip-pricing-tiers__grid {
+    gap: 1.125rem;
+  }
+
+  .caretip-pricing-tier-card {
+    padding: 1.5rem 1.25rem 1.375rem;
+    border-radius: 1.125rem;
+  }
+
+  .caretip-pricing-tier-card--featured,
+  .caretip-pricing-tier-card--has-badge {
+    padding: 2.375rem 1.375rem 1.5rem;
+    transform: none;
+  }
+
+  .caretip-pricing-tier-card--featured:hover {
+    transform: none;
+  }
+
+  .caretip-pricing-tier-card__header {
+    padding-bottom: 0.5rem;
+  }
+
+  .caretip-pricing-tier-card__divider {
+    margin-block: 1rem;
+  }
+
+  .caretip-pricing-tier-card__price {
+    padding-bottom: 0.5rem;
+  }
+
+  .caretip-pricing-tier-card__desc {
+    margin-bottom: 1.375rem;
+  }
+
+  .caretip-pricing-tier-features {
+    gap: 0.8125rem;
+    margin-bottom: 1.375rem;
+  }
+
+  .caretip-pricing-tier-card--featured .caretip-pricing-tier-features {
+    gap: 0.875rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .caretip-pricing-tier-card__actions {
+    margin-top: auto;
+    padding-top: 0.25rem;
+  }
+
+  .caretip-pricing-card-cta,
+  .caretip-pricing-tier-card__actions .caretip-btn-primary,
+  .caretip-pricing-tier-card__actions .caretip-btn-secondary {
+    min-height: 2.875rem;
+    width: 100%;
+  }
+
+  .caretip-pricing-controls-wrap {
+    margin-top: 1.25rem;
+    padding-inline: 0.25rem;
+  }
+
+  .caretip-pricing-plans-intro__title,
+  .caretip-pricing-plans-intro__subtitle {
+    padding-inline: 0.375rem;
+  }
+
+  .caretip-pricing-faq__trigger {
+    min-height: 3rem;
+    padding-block: 1.0625rem;
+  }
+
+  .caretip-features-cta-wise,
+  .caretip-pricing-cta-wise,
+  .caretip-faq-cta-wise,
+  .caretip-about-cta-wise {
+    padding-inline: 1.125rem;
+    padding-block: 1.5rem 2.25rem;
+  }
+
+  .caretip-features-cta-wise__inner,
+  .caretip-pricing-cta-wise__inner,
+  .caretip-faq-cta-wise__inner,
+  .caretip-about-cta-wise__inner {
+    padding-inline: 1.25rem;
+    padding-block: 2rem;
+    border-radius: 1.25rem;
+  }
+
+  .caretip-features-cta-wise__actions,
+  .caretip-pricing-cta-wise__actions,
+  .caretip-faq-cta-wise__actions,
+  .caretip-about-cta-wise__actions {
+    gap: 0.75rem;
+    width: 100%;
+    max-width: 18.5rem;
+    margin-inline: auto;
+  }
+
+  .caretip-features-cta-wise__actions > a,
+  .caretip-pricing-cta-wise__actions > a,
+  .caretip-faq-cta-wise__actions > a,
+  .caretip-about-cta-wise__actions > a {
+    width: 100%;
+    min-height: 2.875rem;
+  }
+}
+
+/* =============================================================================
+   5. Public marketing pages — Features / How / Contact forms
+   ============================================================================= */
+@media (max-width: 639px) {
+  .caretip-how-hero-v2__actions,
+  .caretip-features-hero-v2__actions {
+    gap: 0.75rem;
+    width: 100%;
+    max-width: 18.5rem;
+  }
+
+  .caretip-how-hero-v2__actions > a,
+  .caretip-how-hero-v2__actions > button,
+  .caretip-features-hero-v2__actions > a,
+  .caretip-features-hero-v2__actions > button {
+    min-height: 2.875rem;
+  }
+
+  .caretip-feature-showcase-card {
+    border-radius: 1.125rem;
+  }
+
+  .caretip-how-step__title {
+    margin-top: 0.25rem;
+  }
+
+  .caretip-how-step__body {
+    margin-top: 0.5rem;
+  }
+
+  /* Contact — form optical balance */
+  .caretip-contact-page .caretip-contact-layout--form {
+    gap: 1.75rem;
+  }
+
+  .caretip-contact-page .caretip-contact-flow__aside--editorial {
+    padding-inline: 0.125rem;
+  }
+
+  .caretip-contact-page .caretip-contact-flow__list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .caretip-contact-page .caretip-contact-flow__list li {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.625rem;
+  }
+
+  .caretip-contact-page .caretip-contact-form-stage,
+  .caretip-contact-page .caretip-contact-flow__form {
+    padding: 0;
+  }
+
+  .caretip-contact-page .caretip-contact-sales-panel {
+    padding: 1.25rem 1.125rem 1.375rem;
+    border-radius: 1.125rem;
+  }
+
+  .caretip-contact-page .caretip-contact-trust {
+    gap: 0.5rem 0.875rem;
+    margin-bottom: 1.125rem;
+    justify-content: center;
+  }
+
+  .caretip-contact-page .caretip-contact-form,
+  .caretip-contact-page .caretip-contact-form--primary {
+    display: flex;
+    flex-direction: column;
+    gap: 1.0625rem;
+  }
+
+  .caretip-contact-page .caretip-contact-field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4375rem;
+  }
+
+  .caretip-contact-page .caretip-contact-label {
+    margin-bottom: 0;
+  }
+
+  .caretip-contact-page .caretip-contact-submit {
+    margin-top: 0.625rem;
+    min-height: 2.875rem;
+    width: 100%;
+  }
+
+  .caretip-contact-page .caretip-feature-check,
+  .caretip-contact-page .caretip-contact-trust__icon {
+    margin-top: 0.125rem;
+  }
+}
+
+/* =============================================================================
+   6. Auth forms — spacing only (no behavior / branding changes)
+   ============================================================================= */
+@media (max-width: 639px) {
+  .caretip-auth-page .caretip-auth-card,
+  .caretip-auth-split-layout .caretip-auth-card {
+    padding: 1.5rem 1.25rem 1.625rem;
+    border-radius: 1.125rem;
+  }
+
+  .caretip-auth-page .caretip-auth-field + .caretip-auth-field,
+  .caretip-auth-split-layout .caretip-auth-field + .caretip-auth-field {
+    margin-top: 1rem;
+  }
+
+  .caretip-auth-page .caretip-auth-submit.caretip-btn-primary,
+  .caretip-auth-split-layout .caretip-auth-submit.caretip-btn-primary {
+    margin-top: 0.375rem;
+    min-height: 2.875rem;
+    width: 100%;
+  }
+
+  .caretip-auth-page .caretip-auth-form-footer,
+  .caretip-auth-split-layout .caretip-auth-form-footer {
+    margin-top: 1.25rem;
+  }
+
+  .caretip-auth-trust {
+    margin-top: 1.125rem;
+    gap: 0.5rem 0.75rem;
+    justify-content: center;
+  }
+}
+
+/* =============================================================================
+   7. Dashboard mobile — cards, CTAs, drawer, hierarchy
+   ============================================================================= */
+@media (max-width: 767px) {
+  .caretip-dashboard-shell .caretip-container,
+  .caretip-dashboard-shell .business-page,
+  .caretip-dashboard-shell .employee-page {
+    padding-inline: 1rem;
+  }
+
+  .caretip-dashboard-shell .premium-workspace-header__inner {
+    padding: 1.125rem 1.125rem 1.25rem;
+    gap: 0.875rem;
+  }
+
+  .caretip-dashboard-shell .premium-workspace-header__actions {
+    gap: 0.5rem;
+  }
+
+  .caretip-dashboard-shell .premium-workspace-header__actions :is(a, button, .btn) {
+    min-height: 2.625rem;
+  }
+
+  .caretip-dashboard-shell .business-stat-card,
+  .caretip-dashboard-shell .employee-stat-card,
+  .caretip-dashboard-shell .dashboard-metric-stat-card,
+  .caretip-dashboard-shell .business-dashboard-panel-card {
+    border-radius: 0.875rem;
+  }
+
+  .caretip-dashboard-shell .business-dashboard-stats-grid,
+  .caretip-dashboard-shell .employee-dashboard-stats-grid {
+    gap: 0.75rem;
+  }
+
+  .caretip-dashboard-shell .dashboard-period-metrics-grid {
+    gap: 0.75rem;
+  }
+
+  .caretip-dashboard-shell .dashboard-metric-stat-card,
+  .caretip-dashboard-shell .business-stat-card,
+  .caretip-dashboard-shell .employee-stat-card {
+    padding: 0.9375rem 0.9375rem 1rem;
+  }
+
+  .caretip-dashboard-shell .dashboard-hero-actions {
+    gap: 0.625rem;
+  }
+
+  .caretip-dashboard-shell .dashboard-hero-actions :is(a, button) {
+    min-height: 2.625rem;
+  }
+
+  .caretip-dashboard-shell .pro-upgrade-card__inner,
+  .caretip-dashboard-shell .basic-plan-status-card {
+    padding: 1.125rem 1.125rem 1.25rem;
+  }
+
+  .caretip-dashboard-shell .pro-upgrade-card__features,
+  .caretip-dashboard-shell .basic-plan-status-card__features {
+    gap: 0.625rem;
+    margin-top: 0.875rem;
+  }
+
+  .caretip-dashboard-shell .pro-upgrade-card__feature,
+  .caretip-dashboard-shell .basic-plan-status-card__feature {
+    gap: 0.625rem;
+  }
+
+  .caretip-dashboard-shell .pro-upgrade-card__actions {
+    margin-top: 1.125rem;
+    padding-top: 1rem;
+    gap: 0.625rem;
+  }
+
+  .caretip-dashboard-shell .pro-upgrade-card__cta {
+    width: 100%;
+    min-height: 2.625rem;
+  }
+
+  .caretip-dashboard-shell .dashboard-filter-panel {
+    padding: 1.125rem;
+    border-radius: 0.875rem;
+  }
+
+  .caretip-mobile-drawer-panel {
+    padding-block: 0.75rem 1.25rem;
+  }
+
+  .caretip-mobile-drawer-panel nav a,
+  .caretip-mobile-drawer-panel [data-sidebar] a {
+    min-height: 2.75rem;
+  }
+}
+
+@media (max-width: 430px) {
+  .caretip-dashboard-shell .caretip-container {
+    padding-inline: 0.875rem;
+  }
+
+  .caretip-dashboard-header-bar {
+    padding-inline: 0.75rem;
+  }
+}
+
+/* =============================================================================
+   8. Narrow phones — prevent cramped edges without changing breakpoints
+   ============================================================================= */
+@media (max-width: 374px) {
+  .caretip-landing .caretip-hero-cta-row,
+  .caretip-landing .caretip-features-cta-wise__actions,
+  .caretip-public-warm-dark-cta__actions {
+    max-width: 100%;
+  }
+
+  .caretip-pricing-tier-card,
+  .caretip-pricing-tier-card--featured {
+    padding-inline: 1.125rem;
+  }
+
+  .caretip-landing .caretip-landing-cta-wise__inner,
+  .caretip-landing .caretip-features-cta-wise__inner {
+    padding-inline: 1.125rem;
+  }
+}

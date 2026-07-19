@@ -331,7 +331,7 @@ export const Navigation = memo(function Navigation({ variant: _variant = "defaul
                 }}
                 className={cn(
                   "relative shrink-0 touch-manipulation rounded-lg p-2.5 transition-colors active:opacity-90 lg:hidden",
-                  "hover:bg-muted/80 active:bg-muted",
+                  "inline-flex items-center justify-center hover:bg-muted/80 active:bg-muted",
                 )}
                 style={{ color: "hsl(var(--foreground))" }}
                 aria-expanded={mobileMenuOpen}

@@ -252,13 +252,26 @@
     padding-inline: 1rem;
   }
 
+  .caretip-public-nav nav > div {
+    align-items: center;
+  }
+
   .caretip-public-nav nav button[aria-controls="mobile-main-nav"] {
     display: inline-flex;
     align-items: center;
     justify-content: center;
+    align-self: center;
     min-width: 2.75rem;
     min-height: 2.75rem;
     margin-inline: -0.125rem;
+    margin-top: -0.1875rem;
+    padding: 0.5rem;
+    line-height: 0;
+  }
+
+  .caretip-public-nav nav button[aria-controls="mobile-main-nav"] svg {
+    display: block;
+    margin: 0;
   }
 }
 

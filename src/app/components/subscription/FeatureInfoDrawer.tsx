@@ -101,7 +101,7 @@ export function FeatureInfoDrawer({
                     )}
                   >
                     {included ? (
-                      <Check className="h-4 w-4 shrink-0 text-primary" aria-hidden />
+                      <Check className="caretip-feature-check shrink-0" strokeWidth={2.75} aria-hidden />
                     ) : (
                       <Minus className="h-4 w-4 shrink-0 opacity-40" aria-hidden />
                     )}

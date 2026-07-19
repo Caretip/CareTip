@@ -144,7 +144,7 @@ export const landingUi = {
   sectionAccentTextMuted:
     "text-[11px] font-medium uppercase tracking-[0.15em] text-muted-foreground",
   sectionAccentIcon:
-    "h-3 w-3 shrink-0 text-primary",
+    "h-3 w-3 shrink-0 text-primary caretip-brand-accent-icon",
   sectionAccentIconMuted:
     "h-3 w-3 shrink-0 text-muted-foreground/80",
   sectionAccentGlow:
@@ -152,7 +152,7 @@ export const landingUi = {
   sectionAccentLine:
     "h-px w-6 shrink-0 bg-gradient-to-r from-primary/60 via-primary/35 to-transparent",
   brandAccentIconWrap:
-    "inline-flex shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary dark:bg-primary/15",
+    "caretip-brand-accent-icon inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg",
 
   copyStack: `caretip-copy-stack flex w-full flex-col items-start max-lg:items-center max-lg:text-center lg:items-start lg:text-left ${sectionIntroChildRhythm}`,
   eyebrowSecondary: cnSectionLead(
