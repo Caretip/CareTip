@@ -188,8 +188,9 @@ export const Navigation = memo(function Navigation({ variant: _variant = "defaul
                     to="/join"
                     onClick={() => closeMobileMenu("navigate")}
                     className={cn(
-                      "caretip-public-mobile-nav-drawer__account-link min-h-14",
-                      location.pathname === "/join" && "text-primary",
+                      landingUi.heroCtaPrimary,
+                      "caretip-public-mobile-nav-drawer__cta-primary !mx-0 mt-1 w-full max-w-none",
+                      location.pathname === "/join" && "ring-2 ring-primary/30",
                     )}
                   >
                     {t("nav.staffPortal")}
@@ -303,9 +304,9 @@ export const Navigation = memo(function Navigation({ variant: _variant = "defaul
                 <PrefetchLink
                   to="/join"
                   className={cn(
-                    linkClass,
+                    landingUi.navCtaPrimary,
                     "whitespace-nowrap",
-                    location.pathname === "/join" && "text-primary bg-primary/[0.06] dark:bg-primary/[0.1]",
+                    location.pathname === "/join" && "ring-2 ring-primary/25",
                   )}
                 >
                   {t("nav.staffPortal")}

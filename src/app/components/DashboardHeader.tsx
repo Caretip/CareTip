@@ -71,11 +71,9 @@ function DashboardHeaderBar({
             <Menu className="h-[1.125rem] w-[1.125rem] text-foreground" />
           </button>
 
-          {!isBusinessManager ? (
-            <div className="min-w-0 shrink overflow-hidden lg:hidden">
-              <CareTipLogo size="iconMd" variant="icon" />
-            </div>
-          ) : null}
+          <div className="caretip-dashboard-header-brand min-w-0 shrink-0 overflow-hidden lg:hidden">
+            <CareTipLogo size="iconHeader" variant="icon" />
+          </div>
 
           {!isBusinessManager ? (
             <div className="hidden min-w-0 flex-1 lg:block">
@@ -95,10 +93,11 @@ function DashboardHeaderBar({
             />
           ) : null}
 
-          {showShellControls ? <ThemeQuickToggle className={headerControlBtn} /> : null}
-
           {showShellControls ? (
-            <LanguageSwitcher variant="dashboard" className={headerControlBtn} />
+            <div className="hidden lg:contents">
+              <ThemeQuickToggle className={headerControlBtn} />
+              <LanguageSwitcher variant="dashboard" className={headerControlBtn} />
+            </div>
           ) : null}
 
           {isBusinessManager ? (

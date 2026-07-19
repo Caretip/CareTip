@@ -322,17 +322,24 @@ html.dark .caretip-landing #payments-trust .caretip-landing-feature-icon:not(.ca
 /* —— CTA consistency across marketing —— */
 .caretip-landing .caretip-section-cta-button,
 .caretip-landing .caretip-hero-cta-button,
+.caretip-landing .caretip-final-cta-button,
 .caretip-public-page .caretip-marketing-cta,
 .caretip-pricing-page .caretip-btn-primary,
 .caretip-features-page .caretip-btn-primary {
-  min-height: 2.625rem;
+  min-height: 2.5rem;
   letter-spacing: -0.01em;
 }
 
 @media (min-width: 1024px) {
   .caretip-landing .caretip-section-cta-button,
   .caretip-landing .caretip-hero-cta-button,
-  .caretip-public-page .caretip-marketing-cta {
+  .caretip-landing .caretip-final-cta-button {
+    min-height: 2.625rem;
+  }
+
+  .caretip-public-page .caretip-marketing-cta,
+  .caretip-pricing-page .caretip-btn-primary,
+  .caretip-features-page .caretip-btn-primary {
     min-height: 2.875rem;
   }
 }

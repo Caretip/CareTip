@@ -8,7 +8,6 @@ import { PrefetchLink } from "@/app/components/PrefetchLink";
 import { landingUi } from "@/components/landing/landingUi";
 import { LandingReveal } from "@/components/landing/LandingReveal";
 import { industryPath } from "@/app/data/industryPages";
-import { publicPagesBrandUi } from "@/components/public/publicPagesBrandUi";
 import { landingStaggerDelay } from "@/lib/landingMotion";
 import { cn } from "@/lib/utils";
 
@@ -122,7 +121,7 @@ export function LandingIndustriesTeaserSection() {
                 <PrefetchLink
                   to={industryPath(teaser.id)}
                   className={cn(
-                    publicPagesBrandUi.ctaButtonSecondary,
+                    landingUi.sectionCtaSecondary,
                     "caretip-industries-teaser__card-cta",
                   )}
                 >

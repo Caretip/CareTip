@@ -3,6 +3,8 @@ import { Settings } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { ProfileAvatar } from "../ui/profile-avatar";
 import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
+import { LanguageSwitcher } from "@/components/i18n/LanguageSwitcher";
+import { ThemeQuickToggle } from "@/app/components/theme/ThemeQuickToggle";
 import { cn } from "@/lib/utils";
 
 type DashboardHeaderMobileProfileProps = {
@@ -60,7 +62,7 @@ export function DashboardHeaderMobileProfile({
             </div>
           </div>
         </div>
-        <div className="p-1.5">
+        <div className="space-y-2 p-1.5">
           <Link
             to={settingsHref}
             className="flex min-h-10 w-full items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium text-foreground transition-colors hover:bg-muted"
@@ -68,6 +70,15 @@ export function DashboardHeaderMobileProfile({
             <Settings className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden />
             {t("shell.nav.settings")}
           </Link>
+          <div className="caretip-dashboard-header-profile-secondary flex items-center justify-between gap-2 rounded-lg border border-border/70 bg-muted/30 px-2.5 py-2">
+            <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-muted-foreground">
+              {t("shell.drawer.preferences")}
+            </span>
+            <div className="flex items-center gap-1.5">
+              <ThemeQuickToggle className="!min-h-8 !min-w-8 !rounded-lg !px-2 !py-1.5 !shadow-none" />
+              <LanguageSwitcher variant="dashboard" className="!min-h-8 !min-w-8 !rounded-lg !px-2 !py-1.5" />
+            </div>
+          </div>
         </div>
       </PopoverContent>
     </Popover>

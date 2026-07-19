@@ -446,14 +446,14 @@ html.dark .caretip-industry-page__final-cta-secondary:hover {
 }
 
 .caretip-landing .caretip-final-cta-button {
-  min-height: 2.75rem;
-  padding-inline: 1.75rem !important;
+  min-height: 2.5rem;
+  padding-inline: 1.25rem !important;
 }
 
 @media (min-width: 1024px) {
   .caretip-landing .caretip-final-cta-button {
-    min-height: 3rem;
-    padding-inline: 2rem !important;
+    min-height: 2.625rem;
+    padding-inline: 1.5rem !important;
   }
 }
 

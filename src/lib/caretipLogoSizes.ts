@@ -15,6 +15,7 @@ export const CARETIP_LOGO_WIDTH_PX = {
   badge: 72,
   badgeMax: 80,
   iconSm: 28,
+  iconHeader: 32,
   iconMd: 36,
   iconLg: 48,
   iconSplash: 64,
@@ -41,6 +42,8 @@ export const CARETIP_LOGO_SIZE_CLASS = {
   badge: "w-[72px] max-w-[80px] h-auto",
   /** Icon-only sizes (square) */
   iconSm: "h-7 w-7",
+  /** Auth dashboard mobile header — ~32px brand mark */
+  iconHeader: "h-8 w-8",
   iconMd: "h-9 w-9",
   iconLg: "h-12 w-12",
   iconSplash: "h-16 w-16 sm:h-[4.5rem] sm:w-[4.5rem]",

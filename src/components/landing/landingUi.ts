@@ -87,17 +87,17 @@ function cnCta(layout: string) {
   return `${landingType.cta} ${layout}`;
 }
 
-/** Primary / secondary CTA sizing — shared across hero, sections, and nav. */
-const ctaPrimarySize =
-  "h-12 min-h-12 lg:h-[3.25rem] lg:min-h-[3.25rem] px-8 lg:px-9 max-lg:min-w-[12.75rem] max-lg:max-w-[min(100%,280px)] lg:min-w-[13rem]";
-const ctaSecondarySize =
-  "h-11 min-h-11 lg:h-12 lg:min-h-12 px-6 max-lg:min-w-[11.5rem] max-lg:max-w-[min(100%,260px)] lg:min-w-[10.5rem]";
-
-/** Section CTAs — premium fixed width (260–300px), centered at all breakpoints. */
-const sectionCtaSize =
-  "h-11 min-h-11 lg:h-12 lg:min-h-12 px-7 lg:px-8";
-const sectionCtaWidth =
-  "w-full min-w-0 max-w-full";
+/**
+ * Landing CTA footprint — one size for hero + every landing section/final button.
+ * Height matches the label (text-sm / 0.9375rem); do not drift above or below.
+ */
+const landingCtaSize =
+  "h-10 min-h-10 lg:h-11 lg:min-h-11 px-5 lg:px-6 text-sm lg:text-[0.9375rem] font-semibold";
+const heroCtaPrimarySize = `${landingCtaSize} max-lg:min-w-[11.5rem] max-lg:max-w-[min(100%,16.5rem)] lg:min-w-[12.5rem]`;
+const sectionCtaSize = landingCtaSize;
+const sectionCtaWidth = "w-full min-w-0 max-w-full";
+/** Showcase / legacy primary row — same height as hero, slightly wider min. */
+const ctaPrimarySize = `${landingCtaSize} max-lg:min-w-[11.5rem] max-lg:max-w-[min(100%,17.5rem)] lg:min-w-[12.5rem]`;
 
 export const landingUi = {
   /** Section surface — background from caretip-landing-section-flow.css (light). */
@@ -204,7 +204,7 @@ export const landingUi = {
     "caretip-hospitality-feature-panel caretip-landing-feature-rhythm w-full flex flex-col gap-7 sm:gap-9",
   showcaseBenefits: "mt-0 w-full max-lg:self-start",
   showcaseCta: cnCtaPrimary(
-    `caretip-cta-primary mt-0 inline-flex self-start transition-[transform,box-shadow,background-color] duration-200 active:scale-[0.99] lg:inline-flex ${ctaPrimarySize}`,
+    `${caretipBtnPrimary} caretip-cta-primary caretip-section-cta-button mt-0 inline-flex self-start transition-[transform,box-shadow,background-color] duration-200 active:scale-[0.99] lg:inline-flex ${ctaPrimarySize}`,
   ),
   showcaseVisualCol:
     "flex w-full min-w-0 max-w-full flex-col items-center justify-center max-lg:max-w-lg lg:max-w-none lg:justify-self-center",
@@ -262,9 +262,9 @@ export const landingUi = {
   heroTrust:
     "caretip-hero-trust",
   heroCtaRow:
-    "caretip-hero-cta-row caretip-landing-cta-row relative z-10 flex w-full flex-col gap-2 [&_a]:no-underline max-lg:items-center max-lg:justify-center lg:items-start",
+    "caretip-hero-cta-row caretip-landing-cta-row relative z-10 flex w-full flex-col gap-2 [&_a]:no-underline max-lg:items-start max-lg:justify-start lg:items-start",
   heroCtaUnit:
-    "caretip-hero-cta-unit caretip-landing-cta-unit flex w-full max-w-[min(100%,18.5rem)] flex-col items-stretch gap-0.5 max-lg:mx-auto lg:max-w-[16.5rem]",
+    "caretip-hero-cta-unit caretip-landing-cta-unit flex w-full max-w-[min(100%,18.5rem)] flex-col items-stretch gap-0.5 max-lg:mx-0 lg:max-w-[16.5rem]",
   heroCtaHint:
     "caretip-hero-cta-hint caretip-landing-cta-hint w-full text-center text-[10px] font-medium leading-[1.25] tracking-[0.02em] text-muted-foreground sm:text-[11px] sm:leading-[1.3]",
   sectionCtaCluster:
@@ -278,11 +278,11 @@ export const landingUi = {
     `${caretipBtnSecondary} caretip-section-cta-button inline-flex items-center justify-center gap-1.5 text-center no-underline ${sectionCtaSize} ${sectionCtaWidth}`,
   ),
   heroCtaPrimary: cnCtaPrimary(
-    `${caretipBtnPrimary} caretip-hero-cta-button w-full min-w-0 items-center justify-center text-center no-underline ${ctaPrimarySize} max-lg:mx-auto max-lg:max-w-[min(100%,18.5rem)] lg:max-w-none`,
+    `${caretipBtnPrimary} caretip-hero-cta-button w-full min-w-0 items-center justify-center text-center no-underline ${heroCtaPrimarySize} max-lg:mx-0 max-lg:max-w-[min(100%,16.5rem)] lg:max-w-none`,
   ),
   navCtaPrimary: cnCtaPrimary(`${caretipBtnPrimaryCompact} no-underline`),
   heroCtaSecondary: cnCta(
-    `${caretipBtnSecondary} caretip-hero-cta-button w-full min-w-0 items-center justify-center gap-1.5 text-center no-underline ${ctaPrimarySize} max-lg:mx-auto max-lg:max-w-[min(100%,17.5rem)] lg:max-w-none`,
+    `${caretipBtnSecondary} caretip-hero-cta-button w-full min-w-0 items-center justify-center gap-1.5 text-center no-underline ${ctaPrimarySize} max-lg:mx-0 max-lg:max-w-[min(100%,17.5rem)] lg:max-w-none`,
   ),
   heroMediaCol:
     `relative z-0 order-2 flex min-h-0 w-full min-w-0 max-w-full items-stretch justify-center px-0 ${heroStackGapMediaMobile} max-md:pt-0 max-md:pb-0 md:mt-0 md:justify-center md:self-center`,

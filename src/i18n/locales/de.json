@@ -2445,6 +2445,12 @@
       "notifications": "Benachrichtigungen",
       "support": "Support",
       "settings": "Einstellungen"
+    },
+    "drawer": {
+      "employeeWorkspace": "Team",
+      "businessFallbackType": "Betrieb",
+      "platformWorkspace": "Administration",
+      "preferences": "Einstellungen"
     }
   },
   "sampleDashboard": {

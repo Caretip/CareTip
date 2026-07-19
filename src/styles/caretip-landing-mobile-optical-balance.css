@@ -141,12 +141,13 @@
 
   .caretip-landing .caretip-hero-cta-row {
     gap: 0.625rem;
-    align-items: center;
+    align-items: flex-start;
+    justify-content: flex-start;
   }
 
   .caretip-landing .caretip-hero-cta-unit {
-    max-width: min(100%, 17.5rem);
-    margin-inline: auto;
+    max-width: min(100%, 16.5rem);
+    margin-inline: 0;
   }
 
   .caretip-landing .caretip-landing-cta-unit--section {

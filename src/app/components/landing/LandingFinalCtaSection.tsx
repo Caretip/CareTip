@@ -3,9 +3,7 @@ import { useTranslation } from "react-i18next";
 import { LandingTrustComplianceStrip } from "@/app/components/landing/LandingTrustComplianceStrip";
 import { LandingReveal } from "@/components/landing/LandingReveal";
 import { LandingCopySentences } from "@/components/landing/LandingCopySentences";
-import { landingCopyVisible } from "@/components/landing/landingUi";
-import { publicPagesBrandUi } from "@/components/public/publicPagesBrandUi";
-import { cn } from "@/lib/utils";
+import { landingCopyVisible, landingUi } from "@/components/landing/landingUi";
 
 /**
  * Landing closing CTA — same Wise elevated band as Features / Pricing / FAQ / About.
@@ -37,13 +35,13 @@ export function LandingFinalCtaSection() {
         <div className="caretip-features-cta-wise__actions">
           <Link
             to="/contact?intent=demo"
-            className={cn(publicPagesBrandUi.ctaButtonPrimary)}
+            className={landingUi.heroCtaPrimary}
           >
             {t("landing.finalCta.cta")}
           </Link>
           <Link
             to="/signup"
-            className={cn(publicPagesBrandUi.ctaButtonSecondary)}
+            className={landingUi.heroCtaSecondary}
           >
             {t("landing.finalCta.secondary")}
           </Link>

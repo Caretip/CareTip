@@ -202,14 +202,15 @@ html:not(.dark) .caretip-landing.caretip-landing--premium {
   }
 }
 
-/* —— Buttons — taller, premium gradient, micro-interaction —— */
+/* —— Buttons — hero footprint shared by section + final CTAs —— */
 .caretip-landing.caretip-landing--premium .caretip-hero-cta-button,
 .caretip-landing.caretip-landing--premium .caretip-section-cta-button,
 .caretip-landing.caretip-landing--premium .caretip-final-cta-button {
-  min-height: 2.625rem;
-  height: 2.625rem;
-  padding-inline: 1.625rem;
-  border-radius: 0.8125rem;
+  min-height: 2.5rem;
+  height: 2.5rem;
+  padding-inline: 1.25rem;
+  font-size: 0.875rem;
+  border-radius: 0.75rem;
   transition:
     transform var(--caretip-saas-transition),
     box-shadow var(--caretip-saas-transition),
@@ -222,9 +223,10 @@ html:not(.dark) .caretip-landing.caretip-landing--premium {
   .caretip-landing.caretip-landing--premium .caretip-hero-cta-button,
   .caretip-landing.caretip-landing--premium .caretip-section-cta-button,
   .caretip-landing.caretip-landing--premium .caretip-final-cta-button {
-    min-height: 2.875rem;
-    height: 2.875rem;
-    padding-inline: 1.75rem;
+    min-height: 2.625rem;
+    height: 2.625rem;
+    padding-inline: 1.5rem;
+    font-size: 0.9375rem;
   }
 }
 

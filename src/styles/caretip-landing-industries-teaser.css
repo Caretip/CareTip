@@ -221,7 +221,8 @@ html.dark .caretip-landing .caretip-industries-teaser__card {
 
 .caretip-landing .caretip-industries-teaser__card-cta {
   margin-top: 0.5rem;
-  width: fit-content;
+  width: fit-content !important;
+  max-width: 100%;
   min-width: 0;
   gap: 0.45rem;
 }

@@ -1,0 +1,63 @@
+/**
+ * Landing CTA size lock — every marketing button matches the hero primary.
+ * Loads last in the landing bundle so earlier polish layers cannot drift taller/shorter.
+ */
+
+.caretip-landing {
+  --caretip-landing-cta-h: 2.5rem;
+  --caretip-landing-cta-px: 1.25rem;
+  --caretip-landing-cta-fs: 0.875rem;
+  --caretip-landing-cta-fw: 600;
+  --caretip-landing-cta-radius: 0.75rem;
+}
+
+@media (max-width: 767px) {
+  .caretip-landing {
+    --caretip-landing-cta-h: 2.375rem;
+    --caretip-landing-cta-px: 1rem;
+    --caretip-landing-cta-fs: 0.8125rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .caretip-landing {
+    --caretip-landing-cta-h: 2.625rem;
+    --caretip-landing-cta-px: 1.5rem;
+    --caretip-landing-cta-fs: 0.9375rem;
+  }
+}
+
+.caretip-landing .caretip-hero-cta-button,
+.caretip-landing .caretip-section-cta-button,
+.caretip-landing .caretip-final-cta-button,
+.caretip-landing .caretip-cta-primary,
+.caretip-landing .caretip-features-cta-wise__actions > a,
+.caretip-landing .caretip-industries-teaser__card-cta {
+  box-sizing: border-box;
+  height: var(--caretip-landing-cta-h) !important;
+  min-height: var(--caretip-landing-cta-h) !important;
+  max-height: var(--caretip-landing-cta-h);
+  padding-block: 0 !important;
+  padding-inline: var(--caretip-landing-cta-px) !important;
+  font-size: var(--caretip-landing-cta-fs) !important;
+  font-weight: var(--caretip-landing-cta-fw) !important;
+  line-height: 1.15 !important;
+  letter-spacing: -0.01em;
+  border-radius: var(--caretip-landing-cta-radius) !important;
+}
+
+/* Final CTA — short hero-width buttons (no full-bleed stretch / clip) */
+.caretip-landing .caretip-landing-cta-wise .caretip-features-cta-wise__actions {
+  width: fit-content;
+  max-width: min(100%, 22rem);
+  margin-inline: auto;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.caretip-landing .caretip-landing-cta-wise .caretip-features-cta-wise__actions > a {
+  width: auto !important;
+  max-width: min(100%, 16.5rem) !important;
+  min-width: 0 !important;
+  flex: 0 1 auto;
+}

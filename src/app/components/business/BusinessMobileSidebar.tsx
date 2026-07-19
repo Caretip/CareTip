@@ -1,5 +1,6 @@
-import { useSyncExternalStore } from "react";
-import { Loader2, X } from "lucide-react";
+import { useMemo, useSyncExternalStore } from "react";
+import { Link } from "react-router";
+import { Loader2, Rocket, X } from "lucide-react";
 import { CareIcon } from "@/components/icons";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "../../hooks/useAuth";
@@ -8,17 +9,17 @@ import {
   subscribeAuthLogoutTransition,
 } from "../../lib/authLogoutTransition";
 import { cn } from "@/lib/utils";
-import {
-  CareTipLogo,
-  DASHBOARD_SIDEBAR_MOBILE_BRAND_CLASS,
-  DASHBOARD_SIDEBAR_NAV_CLASS,
-} from "../CareTipLogo";
+import { DASHBOARD_SIDEBAR_NAV_CLASS } from "../CareTipLogo";
+import { BusinessLogoMark } from "./BusinessLogoMark";
 import { BusinessSidebarNavShell } from "./sidebar/BusinessSidebarNavShell";
 import { BusinessSidebarUpgradeCta } from "./sidebar/BusinessSidebarUpgradeCta";
 import { useBusinessGuidelines } from "@/app/contexts/BusinessGuidelinesContext";
+import { useBusinessVenueBrand } from "@/app/hooks/useBusinessVenueBrand";
+import { BUSINESS_TYPE_I18N } from "@/app/lib/businessVenueOptions";
 import { MobileDrawer } from "../ui/MobileDrawer";
+import { LanguageSwitcher } from "@/components/i18n/LanguageSwitcher";
+import { ThemeQuickToggle } from "@/app/components/theme/ThemeQuickToggle";
 import { dashboardSidebarIconButtonIdle, dashboardSidebarSignOutButton } from "@/lib/theme/dashboardSidebarUi";
-import { Rocket } from "lucide-react";
 
 interface BusinessMobileSidebarProps {
   isOpen: boolean;
@@ -29,28 +30,55 @@ export function BusinessMobileSidebar({ isOpen, onClose }: BusinessMobileSidebar
   const { t } = useTranslation();
   const { user, logout, exitImpersonation } = useAuth();
   const { openGuidelines } = useBusinessGuidelines();
+  const { venueName, logo, businessType } = useBusinessVenueBrand();
   const signingOut = useSyncExternalStore(
     subscribeAuthLogoutTransition,
     isAuthLogoutTransitionActive,
     () => false,
   );
 
+  const typeLabel = useMemo(() => {
+    if (!businessType) return t("shell.drawer.businessFallbackType");
+    const key = BUSINESS_TYPE_I18N[businessType];
+    return key ? t(key) : businessType;
+  }, [businessType, t]);
+
   return (
     <MobileDrawer isOpen={isOpen} onClose={onClose} ariaLabel={t("shell.header.menuButtonAria")}>
-      <div className={DASHBOARD_SIDEBAR_MOBILE_BRAND_CLASS}>
-        <div className="min-w-0 flex-1">
-          <CareTipLogo size="drawer" />
+      <div className="caretip-mobile-drawer-workspace shrink-0 border-b border-sidebar-border bg-sidebar px-4 pb-3.5 pt-3">
+        <div className="flex items-start justify-between gap-2">
+          <Link
+            to="/dashboard"
+            onClick={onClose}
+            className="caretip-mobile-drawer-workspace__identity flex min-w-0 flex-1 flex-col gap-2.5 rounded-lg outline-none ring-sidebar-ring transition-colors hover:bg-sidebar-accent/60 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-sidebar"
+          >
+            <BusinessLogoMark
+              key={`${logo ?? "no-logo"}-${venueName}`}
+              logoPathOrUrl={logo}
+              businessName={venueName}
+              size="dashboard"
+              className="shrink-0"
+            />
+            <div className="min-w-0 pr-1">
+              <p className="truncate text-[0.9375rem] font-semibold leading-snug text-sidebar-foreground">
+                {venueName}
+              </p>
+              <p className="mt-0.5 truncate text-xs font-medium text-sidebar-foreground/65">
+                {typeLabel}
+              </p>
+            </div>
+          </Link>
+          <button
+            type="button"
+            onClick={onClose}
+            className={cn(
+              "touch-manipulation inline-flex min-h-[44px] min-w-[44px] shrink-0 items-center justify-center rounded-xl p-2.5",
+              dashboardSidebarIconButtonIdle,
+            )}
+          >
+            <X className="h-5 w-5 text-sidebar-foreground" />
+          </button>
         </div>
-        <button
-          type="button"
-          onClick={onClose}
-          className={cn(
-            "touch-manipulation inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-xl p-2.5",
-            dashboardSidebarIconButtonIdle,
-          )}
-        >
-          <X className="h-5 w-5 text-sidebar-foreground" />
-        </button>
       </div>
 
       <nav
@@ -59,10 +87,19 @@ export function BusinessMobileSidebar({ isOpen, onClose }: BusinessMobileSidebar
           "min-h-0 flex-1 overflow-y-auto overscroll-contain px-0",
         )}
       >
-        <BusinessSidebarNavShell onNavigate={onClose} />
+        <BusinessSidebarNavShell onNavigate={onClose} showSubscriptionStatus={false} />
       </nav>
 
       <div className="shrink-0 border-t border-sidebar-border px-3 pt-2 pb-4">
+        <div className="caretip-mobile-drawer-preferences mb-2 flex items-center justify-between gap-2 rounded-lg border border-sidebar-border/80 bg-sidebar-accent/40 px-2.5 py-2">
+          <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-sidebar-foreground/60">
+            {t("shell.drawer.preferences")}
+          </span>
+          <div className="flex items-center gap-1.5">
+            <ThemeQuickToggle variant="drawer" className="!min-h-8 !min-w-8 !rounded-lg !border-sidebar-border !bg-sidebar !px-2 !py-1.5 !shadow-none" />
+            <LanguageSwitcher variant="drawer" className="!min-h-8 !min-w-8 !rounded-lg !px-2 !py-1.5" />
+          </div>
+        </div>
         <BusinessSidebarUpgradeCta />
         <button
           type="button"

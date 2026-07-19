@@ -55,7 +55,7 @@
     --caretip-hero-body-lh: 1.55;
     --caretip-hero-gap-tagline: 0.875rem;
     --caretip-hero-gap-headline-body: 0.9375rem;
-    --caretip-hero-gap-body-cta: 1.875rem;
+    --caretip-hero-gap-body-cta: 2.25rem;
     --caretip-hero-gap-cta-trust: 0.875rem;
     --caretip-hero-gap-trust-benefits: 1.125rem;
     --caretip-hero-subtitle-measure: min(100%, 18rem);
@@ -253,13 +253,13 @@
   }
 
   .caretip-landing .caretip-hero-section--full-bg .caretip-hero-cta-button {
-    width: 100% !important;
+    width: auto !important;
     min-width: 0 !important;
-    max-width: 13.75rem !important;
-    min-height: 3.1875rem !important;
-    height: 3.1875rem !important;
+    max-width: 13.25rem !important;
+    min-height: 2.375rem !important;
+    height: 2.375rem !important;
     padding: 0 1rem !important;
-    font-size: 1rem !important;
+    font-size: 0.8125rem !important;
     font-weight: 600 !important;
     line-height: 1 !important;
     letter-spacing: -0.01em;

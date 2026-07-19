@@ -41,6 +41,7 @@ export function useBusinessVenueBrand() {
   return {
     venueName,
     logo: profile?.logo ?? null,
+    businessType: profile?.type?.trim() || null,
     profile,
   };
 }

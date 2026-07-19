@@ -1,4 +1,4 @@
-import { Link, useLocation, useNavigate } from "react-router";
+import { Link, useLocation } from "react-router";
 import { useSyncExternalStore } from "react";
 import { Lock, Loader2, X } from "lucide-react";
 import { CareIcon } from "@/components/icons";
@@ -10,10 +10,7 @@ import {
   subscribeAuthLogoutTransition,
 } from "../../lib/authLogoutTransition";
 import { cn } from "@/lib/utils";
-import {
-  DASHBOARD_SIDEBAR_MOBILE_BRAND_CLASS,
-  DASHBOARD_SIDEBAR_NAV_CLASS,
-} from "../CareTipLogo";
+import { DASHBOARD_SIDEBAR_NAV_CLASS } from "../CareTipLogo";
 import { BusinessLogoMark } from "../business/BusinessLogoMark";
 import {
   employeeDashboardNavItems,
@@ -48,7 +45,6 @@ export function EmployeeMobileSidebar({
 }: EmployeeMobileSidebarProps) {
   const { t } = useTranslation();
   const location = useLocation();
-  const navigate = useNavigate();
   const { logout, user } = useAuth();
   const signingOut = useSyncExternalStore(
     subscribeAuthLogoutTransition,
@@ -65,39 +61,52 @@ export function EmployeeMobileSidebar({
 
   return (
     <MobileDrawer isOpen={isOpen} onClose={onClose} ariaLabel={t("shell.header.menuButtonAria")}>
-      <div className={DASHBOARD_SIDEBAR_MOBILE_BRAND_CLASS}>
-        <Link
-          to={EMPLOYEE_DASHBOARD_HOME}
-          onClick={onClose}
-          className="flex min-h-[2.75rem] min-w-0 flex-1 items-center gap-2 rounded-lg pr-2 outline-none ring-sidebar-ring transition-colors hover:bg-sidebar-accent focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-sidebar"
-        >
-          {businessBranding ? (
-            <>
+      <div className="caretip-mobile-drawer-workspace shrink-0 border-b border-sidebar-border bg-sidebar px-4 pb-3.5 pt-3">
+        <div className="flex items-start justify-between gap-2">
+          <Link
+            to={EMPLOYEE_DASHBOARD_HOME}
+            onClick={onClose}
+            className="caretip-mobile-drawer-workspace__identity flex min-w-0 flex-1 flex-col gap-2.5 rounded-lg outline-none ring-sidebar-ring transition-colors hover:bg-sidebar-accent/60 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-sidebar"
+          >
+            {businessBranding ? (
               <BusinessLogoMark
                 logoPathOrUrl={businessBranding.businessLogo}
                 businessName={venueName}
                 size="dashboard"
                 className="shrink-0"
               />
-              <span className="min-w-0 truncate text-xs font-semibold text-sidebar-foreground">{venueName}</span>
-            </>
-          ) : (
-            <>
-              <div className="h-9 w-9 shrink-0 animate-pulse rounded-lg bg-muted" />
-              <div className="h-3 min-w-0 max-w-[8rem] flex-1 rounded bg-muted animate-pulse" />
-            </>
-          )}
-        </Link>
-        <button
-          type="button"
-          onClick={onClose}
-          className={cn(
-            "touch-manipulation inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-xl p-2.5",
-            dashboardSidebarIconButtonIdle,
-          )}
-        >
-          <X className="h-5 w-5 text-sidebar-foreground" />
-        </button>
+            ) : (
+              <div className="h-12 w-12 shrink-0 animate-pulse rounded-lg bg-muted" />
+            )}
+            <div className="min-w-0 pr-1">
+              {businessBranding ? (
+                <>
+                  <p className="truncate text-[0.9375rem] font-semibold leading-snug text-sidebar-foreground">
+                    {venueName}
+                  </p>
+                  <p className="mt-0.5 truncate text-xs font-medium text-sidebar-foreground/65">
+                    {t("shell.drawer.employeeWorkspace")}
+                  </p>
+                </>
+              ) : (
+                <>
+                  <div className="h-3.5 w-36 max-w-full animate-pulse rounded bg-muted" />
+                  <div className="mt-1.5 h-2.5 w-20 animate-pulse rounded bg-muted" />
+                </>
+              )}
+            </div>
+          </Link>
+          <button
+            type="button"
+            onClick={onClose}
+            className={cn(
+              "touch-manipulation inline-flex min-h-[44px] min-w-[44px] shrink-0 items-center justify-center rounded-xl p-2.5",
+              dashboardSidebarIconButtonIdle,
+            )}
+          >
+            <X className="h-5 w-5 text-sidebar-foreground" />
+          </button>
+        </div>
       </div>
 
       <nav className={DASHBOARD_SIDEBAR_NAV_CLASS}>

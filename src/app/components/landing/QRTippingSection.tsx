@@ -7,7 +7,8 @@ import { LandingImageFrame } from "@/components/ui/landing-image-frame";
 import newly01Webp from "../../../../images/newly01.webp";
 import newly01Avif from "../../../../images/newly01.avif";
 import { MarketingPicture } from "@/lib/marketingPicture";
-import { caretipBtnPrimary } from "@/lib/caretipButtonSystem";
+import { landingUi } from "@/components/landing/landingUi";
+import { cn } from "@/lib/utils";
 
 /** Unsplash: people at a table paying with phone / card (original left-panel image) */
 const IMG_PEOPLE_PAYMENT = newly01Webp;
@@ -125,7 +126,7 @@ export function QRTippingSection() {
             <div className="pt-4">
               <Link
                 to="/contact?intent=demo"
-                className={caretipBtnPrimary}
+                className={cn(landingUi.sectionCtaPrimary)}
               >
                 {t("nav.requestDemo")}
               </Link>

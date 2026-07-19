@@ -5,7 +5,6 @@ import { useAuth } from '../hooks/useAuth';
 import { cn } from '@/lib/utils';
 import {
   CareTipLogo,
-  DASHBOARD_SIDEBAR_MOBILE_BRAND_CLASS,
   DASHBOARD_SIDEBAR_NAV_CLASS,
 } from './CareTipLogo';
 import {
@@ -27,21 +26,31 @@ export function AdminMobileSidebar({ isOpen, onClose }: AdminMobileSidebarProps)
 
   return (
     <MobileDrawer isOpen={isOpen} onClose={onClose} ariaLabel={t("admin.sidebar.closeMenuAria")}>
-      <div className={DASHBOARD_SIDEBAR_MOBILE_BRAND_CLASS}>
-        <div className="min-w-0 flex-1">
-          <CareTipLogo size="drawer" />
+      <div className="caretip-mobile-drawer-workspace shrink-0 border-b border-sidebar-border bg-sidebar px-4 pb-3.5 pt-3">
+        <div className="flex items-start justify-between gap-2">
+          <div className="caretip-mobile-drawer-workspace__identity flex min-w-0 flex-1 flex-col gap-2.5">
+            <CareTipLogo size="iconHeader" variant="icon" />
+            <div className="min-w-0 pr-1">
+              <p className="truncate text-[0.9375rem] font-semibold leading-snug text-sidebar-foreground">
+                {t("admin.sidebar.productLabel")}
+              </p>
+              <p className="mt-0.5 truncate text-xs font-medium text-sidebar-foreground/65">
+                {t("shell.drawer.platformWorkspace")}
+              </p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className={cn(
+              "touch-manipulation flex min-h-[44px] min-w-[44px] shrink-0 items-center justify-center rounded-xl p-2.5",
+              dashboardSidebarIconButtonIdle,
+            )}
+            aria-label={t("admin.sidebar.closeMenuAria")}
+          >
+            <X className="h-5 w-5 text-sidebar-foreground" />
+          </button>
         </div>
-        <button
-          type="button"
-          onClick={onClose}
-          className={cn(
-            "touch-manipulation flex min-h-[44px] min-w-[44px] items-center justify-center rounded-xl p-2.5",
-            dashboardSidebarIconButtonIdle,
-          )}
-          aria-label={t("admin.sidebar.closeMenuAria")}
-        >
-          <X className="h-5 w-5 text-sidebar-foreground" />
-        </button>
       </div>
 
       <nav className={cn(DASHBOARD_SIDEBAR_NAV_CLASS, "min-h-0 flex-1 overflow-y-auto overscroll-contain px-0")}>
