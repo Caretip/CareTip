@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import "@/styles/bundles/onboarding.css";
 import { useNavigate } from "react-router";
 import { AnimatePresence, motion } from "motion/react";
@@ -7,6 +7,16 @@ import { Loader2, MapPin, Palette } from "lucide-react";
 import { useAuth, getPostAuthRedirect } from "../hooks/useAuth";
 import { getAuthSessionFlags } from "../lib/authSessionBootstrap";
 import { useRegisterGlobalAppInit, useAppLoadingRegistration, APP_LOADING_PRIORITY } from "../lib/globalAppLoading";
+import {
+  isAuthPostLoginTransitionActive,
+  signalPostLoginDashboardShellReady,
+  subscribeAuthPostLoginTransition,
+} from "../lib/authPostLoginTransition";
+import {
+  isAuthSignInHandoffActive,
+  subscribeAuthSignInHandoff,
+} from "../lib/authSignInHandoff";
+import { AuthBootstrapShell } from "../components/auth/AuthBootstrapShell";
 import { GlobalAppLoadingHold } from "../components/GlobalAppLoadingHold";
 import { toast } from "sonner";
 import { fetchBusinessProfile, patchBusinessProfile, uploadMyBusinessLogo, createBillingCheckoutSession } from "../lib/api";
@@ -282,13 +292,63 @@ export function BusinessOnboardingPage() {
   const redirectingToDashboard = Boolean(user && isOnboardingCompleted(user));
   const pageInitBlocking = syncingOnboarding || redirectingToDashboard;
 
+  const postLoginActive = useSyncExternalStore(
+    subscribeAuthPostLoginTransition,
+    isAuthPostLoginTransitionActive,
+    () => false,
+  );
+  const signInHandoffActive = useSyncExternalStore(
+    subscribeAuthSignInHandoff,
+    isAuthSignInHandoffActive,
+    () => false,
+  );
+  const postAuthHandoffActive = postLoginActive || signInHandoffActive;
+  const handoffPaintSignaledRef = useRef(false);
+  /** Skip entrance fade when releasing Sign In cover so Business Details is visible immediately. */
+  const skipEntranceMotionRef = useRef(false);
+  if (pageInitBlocking && postAuthHandoffActive) {
+    skipEntranceMotionRef.current = true;
+  }
+
   useRegisterGlobalAppInit("onboarding-init", pageInitBlocking);
 
+  /**
+   * Post-login CareTip cover must stay until Business Details has committed a frame.
+   * Matches dashboard paint-latch philosophy — not pathname match.
+   */
+  useLayoutEffect(() => {
+    if (pageInitBlocking) {
+      handoffPaintSignaledRef.current = false;
+      return;
+    }
+    if (!postLoginActive && !signInHandoffActive) return;
+    if (handoffPaintSignaledRef.current) return;
+
+    let cancelled = false;
+    const frame = window.requestAnimationFrame(() => {
+      window.requestAnimationFrame(() => {
+        if (cancelled || handoffPaintSignaledRef.current) return;
+        handoffPaintSignaledRef.current = true;
+        signalPostLoginDashboardShellReady();
+      });
+    });
+
+    return () => {
+      cancelled = true;
+      window.cancelAnimationFrame(frame);
+    };
+  }, [pageInitBlocking, postLoginActive, signInHandoffActive]);
+
   if (pageInitBlocking) {
+    // Keep CareTip branding if the Sign In cover ends early (timeout / race).
+    if (postAuthHandoffActive) {
+      return <AuthBootstrapShell />;
+    }
     return <GlobalAppLoadingHold />;
   }
 
   const isReviewStep = step === 3;
+  const skipEntranceMotion = skipEntranceMotionRef.current;
 
   return (
     <div className="business-onboarding-page flex min-h-screen flex-col">
@@ -296,7 +356,7 @@ export function BusinessOnboardingPage() {
 
       <main className="business-onboarding-main flex-1">
         <motion.div
-          initial={{ opacity: 0, y: 12 }}
+          initial={skipEntranceMotion ? false : { opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
           className="business-onboarding-shell mx-auto w-full max-w-6xl px-4 sm:px-6 lg:px-8"

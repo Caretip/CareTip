@@ -18,6 +18,12 @@ const DASHBOARD_SHELL_POST_LOGIN_PATHS = new Set([
 ]);
 
 /**
+ * Onboarding signals shell ready from {@link BusinessOnboardingPage} after init + first paint.
+ * Must not use the pathname double-rAF fallback (causes white blank under a dropped cover).
+ */
+const ONBOARDING_POST_LOGIN_PATH = "/onboarding";
+
+/**
  * Owns post-login soft-nav handoff without a branded CareTip overlay.
  * Destination dashboard shell + local skeletons take over after prefetched paint.
  */
@@ -30,12 +36,13 @@ export function AuthPostLoginTransitionRegistrar({ children }: { children: React
   const { pathname } = useLocation();
   const targetPath = getAuthPostLoginTargetPath();
 
-  /** Fallback for post-auth pages without a dashboard layout (onboarding, verify-email). */
+  /** Fallback for post-auth pages without a dashboard layout (e.g. verify-email). */
   useLayoutEffect(() => {
     if (!active || !targetPath) return;
     const path = pathname.split("?")[0]?.split("#")[0] ?? pathname;
     if (path !== targetPath) return;
     if (DASHBOARD_SHELL_POST_LOGIN_PATHS.has(path)) return;
+    if (path === ONBOARDING_POST_LOGIN_PATH) return;
 
     let cancelled = false;
     const frame = window.requestAnimationFrame(() => {
