@@ -1,5 +1,6 @@
 import { Router } from "express";
 import * as tippingContextController from "../controllers/tippingContext.controller.js";
+import { tippingContextQrSlugLimiter } from "../middleware/tippingContextQrSlugRateLimit.middleware.js";
 
 const router = Router();
 
@@ -7,6 +8,6 @@ const router = Router();
 router.get("/location/:locationId", tippingContextController.getLocationById);
 router.get("/table/:tableId", tippingContextController.getTableById);
 
-router.get("/:qrSlug", tippingContextController.getByQrSlug);
+router.get("/:qrSlug", tippingContextQrSlugLimiter, tippingContextController.getByQrSlug);
 
 export default router;

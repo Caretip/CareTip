@@ -24,6 +24,23 @@ type ChartContextProps = {
 
 const ChartContext = React.createContext<ChartContextProps | null>(null);
 
+function sanitizeChartCssVarKey(key: string): string | null {
+  // Keep variable keys bounded to characters that cannot break out of CSS declarations.
+  if (!/^[a-zA-Z0-9_-]+$/.test(key)) return null;
+  return key;
+}
+
+function sanitizeChartCssColor(color: unknown): string | null {
+  if (typeof color !== "string") return null;
+  const c = color.trim();
+
+  // Allow only a small set of color syntaxes used in our app charts.
+  if (/^#([0-9a-fA-F]{3,4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/.test(c)) return c;
+  if (/^(rgb|rgba|hsl|hsla)\(\s*[0-9., %]+\s*\)$/.test(c)) return c;
+
+  return null;
+}
+
 function useChart() {
   const context = React.useContext(ChartContext);
 
@@ -47,7 +64,9 @@ function ChartContainer({
   >["children"];
 }) {
   const uniqueId = React.useId();
-  const chartId = `chart-${id || uniqueId.replace(/:/g, "")}`;
+  const rawChartId = `chart-${id || uniqueId.replace(/:/g, "")}`;
+  // Ensure the CSS selector / attribute match stays bounded.
+  const chartId = rawChartId.replace(/[^a-zA-Z0-9_-]/g, "");
 
   return (
     <ChartContext.Provider value={{ config }}>
@@ -78,27 +97,30 @@ const ChartStyle = ({ id, config }: { id: string; config: ChartConfig }) => {
     return null;
   }
 
-  return (
-    <style
-      dangerouslySetInnerHTML={{
-        __html: Object.entries(THEMES)
-          .map(
-            ([theme, prefix]) => `
+  const cssText = Object.entries(THEMES)
+    .map(
+      ([theme, prefix]) => `
 ${prefix} [data-chart=${id}] {
 ${colorConfig
   .map(([key, itemConfig]) => {
+    const safeKey = sanitizeChartCssVarKey(key);
+    if (!safeKey) return null;
+
     const color =
       itemConfig.theme?.[theme as keyof typeof itemConfig.theme] ||
       itemConfig.color;
-    return color ? `  --color-${key}: ${color};` : null;
+
+    const safeColor = sanitizeChartCssColor(color);
+    return safeColor ? `  --color-${safeKey}: ${safeColor};` : null;
   })
   .join("\n")}
 }
 `,
-          )
-          .join("\n"),
-      }}
-    />
+    )
+    .join("\n");
+
+  return (
+    <style>{cssText}</style>
   );
 };
 

@@ -94,8 +94,18 @@ export async function createTableForBusinessUser(
 }
 
 export async function getTippingContextByQrSlug(qrSlug: string) {
-  const decoded = decodeURIComponent(qrSlug).trim();
+  let decoded: string;
+  try {
+    decoded = decodeURIComponent(qrSlug).trim();
+  } catch {
+    return null;
+  }
   if (!decoded) {
+    return null;
+  }
+
+  // Defensive validation: keep public slug lookups bounded and predictable.
+  if (!/^[a-zA-Z0-9_-]{3,128}$/.test(decoded)) {
     return null;
   }
   const table = await prisma.table.findUnique({

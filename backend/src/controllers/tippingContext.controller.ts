@@ -1,4 +1,5 @@
 import type { Request, Response } from "express";
+import { createHmac, timingSafeEqual } from "crypto";
 import * as tablesService from "../services/tables.service.js";
 import * as tippingContextService from "../services/tippingContext.service.js";
 import { logServerError, clientSafeMessage, CLIENT_FALLBACK } from "../utils/httpErrors.js";
@@ -86,9 +87,55 @@ export async function getByQrSlug(req: Request, res: Response) {
     if (!qrSlug || typeof qrSlug !== "string") {
       return res.status(400).json({ message: "qrSlug is required" });
     }
-    const ctx = await tablesService.getTippingContextByQrSlug(qrSlug);
+
+    // QR slug enumeration resistance:
+    // - Reject obviously invalid formats with the same response as locked/unverified QR.
+    // - Support optional signed QR tokens (format: `st-${inner}.${hexSig}`) when `QR_TOKEN_SECRET` is configured.
+    const raw = qrSlug.trim();
+    let lookupQrSlug = raw;
+
+    const secret = process.env.QR_TOKEN_SECRET?.trim();
+    if (raw.startsWith("st-") && raw.includes(".")) {
+      if (!secret) {
+        return res.status(403).json({ message: VERIFICATION_REQUIRED_MSG });
+      }
+
+      const payload = raw.slice(3); // remove `st-`
+      const dotIdx = payload.indexOf(".");
+      if (dotIdx <= 0) {
+        return res.status(403).json({ message: VERIFICATION_REQUIRED_MSG });
+      }
+
+      const inner = payload.slice(0, dotIdx);
+      const sig = payload.slice(dotIdx + 1);
+
+      if (!inner || !sig) {
+        return res.status(403).json({ message: VERIFICATION_REQUIRED_MSG });
+      }
+
+      const expectedHex = createHmac("sha256", secret).update(inner, "utf8").digest("hex");
+      // Constant-time compare to reduce trivial timing differences.
+      const expectedBuf = Buffer.from(expectedHex, "hex");
+      const sigBuf = Buffer.from(sig, "hex");
+      if (
+        expectedBuf.length !== sigBuf.length ||
+        !timingSafeEqual(expectedBuf, sigBuf)
+      ) {
+        return res.status(403).json({ message: VERIFICATION_REQUIRED_MSG });
+      }
+
+      lookupQrSlug = inner;
+    } else {
+      // Generated slugs are alphanumeric with -/_ and within a small length window.
+      if (!/^[a-zA-Z0-9_-]{3,128}$/.test(raw)) {
+        return res.status(403).json({ message: VERIFICATION_REQUIRED_MSG });
+      }
+    }
+
+    const ctx = await tablesService.getTippingContextByQrSlug(lookupQrSlug);
     if (!ctx) {
-      return res.status(404).json({ message: "Table not found for this code" });
+      // Hide whether a slug exists (avoid 404-vs-403 oracle).
+      return res.status(403).json({ message: VERIFICATION_REQUIRED_MSG });
     }
     if ("locked" in ctx) {
       return res.status(403).json({ message: VERIFICATION_REQUIRED_MSG });

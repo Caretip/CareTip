@@ -106,6 +106,10 @@ export function optionalAuthMiddleware(req: Request, res: Response, next: NextFu
       if (!isAllowedAccessJwtType(decoded.type)) return next();
       const payload = normalizeJwtPayload(decoded);
       if (!payload) return next();
+      // Even for optional-auth endpoints, never trust a stale/revoked/disabled session.
+      const staleCode = await assertAccessJwtStillValid(payload);
+      if (staleCode) return next();
+
       req.user = payload;
     } catch {
       // ignore invalid optional token
