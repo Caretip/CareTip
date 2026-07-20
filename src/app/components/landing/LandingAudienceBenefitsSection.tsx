@@ -8,6 +8,7 @@ import {
 } from "lucide-react";
 import { PrefetchLink } from "@/app/components/PrefetchLink";
 import { LandingReveal } from "@/components/landing/LandingReveal";
+import { LandingSectionAccent } from "@/components/landing/LandingSectionAccent";
 import { landingUi } from "@/components/landing/landingUi";
 import { landingStaggerDelay } from "@/lib/landingMotion";
 import { cn } from "@/lib/utils";
@@ -87,12 +88,11 @@ export function LandingAudienceBenefitsSection() {
       <div className={cn(landingUi.sectionShell, "caretip-audience-benefits__inner px-4 sm:px-6 lg:px-8")}>
         <LandingReveal>
           <header className={cn(landingUi.sectionIntro, "caretip-audience-benefits__header mb-0")}>
-            <p
-              data-landing-accent
-              className="caretip-audience-benefits__eyebrow"
-            >
-              {t(`${prefix}.eyebrow`)}
-            </p>
+            <div className={cn(landingUi.sectionAccentRow, "justify-center lg:justify-center")}>
+              <LandingSectionAccent variant="spark" className="mx-auto lg:mx-auto">
+                {t(`${prefix}.eyebrow`)}
+              </LandingSectionAccent>
+            </div>
             <h2 id="audience-benefits-heading" className={landingUi.sectionTitle}>
               {t(`${prefix}.headline`)}
             </h2>

@@ -13,17 +13,6 @@
   gap: clamp(2rem, 4vw, 3rem);
 }
 
-.caretip-landing .caretip-audience-benefits__eyebrow {
-  margin: 0;
-  font-size: 0.6875rem;
-  font-weight: 700;
-  letter-spacing: 0.17em;
-  text-transform: uppercase;
-  color: rgb(233 120 28);
-  background: none;
-  -webkit-text-fill-color: rgb(233 120 28);
-}
-
 .caretip-landing .caretip-audience-benefits__grid {
   display: grid;
   grid-template-columns: 1fr;

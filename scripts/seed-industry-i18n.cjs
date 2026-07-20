@@ -150,47 +150,73 @@ const sharedDe = {
 };
 
 const teaserEn = {
-  headline: "Take your team to the next level.",
-  subheadline: "More motivation. Less turnover. Full shifts.",
-  benefitsAria: "Core CareTip benefits",
-  b1Title: "Everyday usability",
-  b1Body: "Use QR codes at tables, stations, or directly on the go.",
-  b2Title: "Full transparency",
-  b2Body: "Track tips in real-time & pay out securely via Apple/Google Pay.",
-  b3Title: "Motivation boost",
-  b3Body: "Boost appreciation for every shift and the entire team.",
-  teasersLabel: "Perfect for mobile teams…",
-  teasersAria: "Featured industries",
-  teaser1Title: "Midwife care",
-  teaser1Body:
-    "Cashless tips during postpartum home visits: simple and easy via a custom QR code.",
-  teaser1Alt: "Midwife visiting a family with a CareTip QR business card",
-  teaser2Title: "Field service & care",
-  teaser2Body: "The perfect tip solution for mobile teams, crafts, and on-site care workers.",
-  teaser2Alt: "Field service professional with CareTip QR for on-site tipping",
+  eyebrow: "IN USE EVERYWHERE...",
+  overviewHeadline: "CareTip adapts to your industry.",
+  overviewSubheadline:
+    "Discover how easy digital tipping works in your field.\nClick on any industry to see the details.",
+  teasersAria: "All industries",
   learnMore: "Learn more",
+  cards: {
+    gastronomy: {
+      title: "Gastronomy",
+      body: "Fast tipping via QR code directly at table.",
+    },
+    hotels: {
+      title: "Hotels & Hospitality",
+      body: "For room service, front desk & concierge staff.",
+    },
+    logistics: {
+      title: "Logistics",
+      body: "Rewards for couriers and delivery drivers.",
+    },
+    midwives: {
+      title: "Midwives",
+      body: "Easy appreciation after home visits.",
+    },
+    fairs: {
+      title: "Trade Fairs & Events",
+      body: "Perfect for on-site service teams.",
+    },
+    "field-service": {
+      title: "Field Service & Care",
+      body: "The mobile solution for crews out in the field.",
+    },
+  },
 };
 
 const teaserDe = {
-  headline: "Bring dein Team aufs nächste Level.",
-  subheadline: "Mehr Motivation. Weniger Fluktuation. Volle Schichten.",
-  benefitsAria: "Zentrale CareTip-Vorteile",
-  b1Title: "Alltagstauglich",
-  b1Body: "QR-Codes für Tisch, Station oder direkt auf Tour nutzen.",
-  b2Title: "Voller Durchblick",
-  b2Body: "Trinkgelder in Echtzeit sehen & sicher auszahlen per Apple/Google Pay.",
-  b3Title: "Motivations-Boost",
-  b3Body: "Mehr Anerkennung für jede Schicht und das gesamte Team.",
-  teasersLabel: "Überall dort im Einsatz…",
-  teasersAria: "Ausgewählte Branchen",
-  teaser1Title: "Hebammen-Betreuung",
-  teaser1Body:
-    "Trinkgeld im Wochenbett nach dem Hausbesuch: komplett bargeldlos per QR-Code.",
-  teaser1Alt: "Hebamme bei einer Familie mit CareTip-QR-Visitenkarte",
-  teaser2Title: "Außendienst & Pflege",
-  teaser2Body: "Die perfekte Lösung für mobile Teams, Handwerk & Pflegekräfte vor Ort.",
-  teaser2Alt: "Außendienst-Profi mit CareTip-QR für Trinkgeld vor Ort",
+  eyebrow: "ÜBERALL DORT IM EINSATZ...",
+  overviewHeadline: "CareTip passt sich Ihrer Branche an.",
+  overviewSubheadline:
+    "Entdecken Sie, wie einfach digitales Trinkgeld in Ihrem Bereich funktioniert.\nEin Klick bringt Sie zu den Details.",
+  teasersAria: "Alle Branchen",
   learnMore: "Mehr erfahren",
+  cards: {
+    gastronomy: {
+      title: "Gastronomie",
+      body: "Trinkgeld per QR-Code direkt am Tisch.",
+    },
+    hotels: {
+      title: "Hotellerie",
+      body: "Für Zimmerservice, Rezeption & Concierge.",
+    },
+    logistics: {
+      title: "Logistik",
+      body: "Belohnung für Paketboten & Lieferdienste.",
+    },
+    midwives: {
+      title: "Hebammen",
+      body: "Wertschätzung nach dem Hausbesuch.",
+    },
+    fairs: {
+      title: "Messen & Events",
+      body: "Perfekt für temporäre Service-Teams vor Ort.",
+    },
+    "field-service": {
+      title: "Außendienst & Pflege",
+      body: "Die mobile Lösung für Kräfte im Einsatz.",
+    },
+  },
 };
 
 function patch(file, lang) {

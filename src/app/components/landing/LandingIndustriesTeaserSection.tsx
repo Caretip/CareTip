@@ -2,18 +2,16 @@ import { useTranslation } from "react-i18next";
 import {
   BedDouble,
   BriefcaseMedical,
-  Eye,
   HeartHandshake,
-  Rocket,
   Ticket,
   Truck,
   UtensilsCrossed,
-  Zap,
   type LucideIcon,
 } from "lucide-react";
 import { PrefetchLink } from "@/app/components/PrefetchLink";
 import { landingUi } from "@/components/landing/landingUi";
 import { LandingReveal } from "@/components/landing/LandingReveal";
+import { LandingSectionAccent } from "@/components/landing/LandingSectionAccent";
 import {
   ALL_INDUSTRY_PAGE_IDS,
   industryPath,
@@ -21,12 +19,6 @@ import {
 } from "@/app/data/industryPages";
 import { landingStaggerDelay } from "@/lib/landingMotion";
 import { cn } from "@/lib/utils";
-
-const CORE_BENEFITS = [
-  { icon: Zap, titleKey: "b1Title", bodyKey: "b1Body" },
-  { icon: Eye, titleKey: "b2Title", bodyKey: "b2Body" },
-  { icon: Rocket, titleKey: "b3Title", bodyKey: "b3Body" },
-] as const;
 
 const INDUSTRY_ICONS: Record<IndustryPageId, LucideIcon> = {
   gastronomy: UtensilsCrossed,
@@ -38,7 +30,7 @@ const INDUSTRY_ICONS: Record<IndustryPageId, LucideIcon> = {
 };
 
 /**
- * Homepage: level-up benefits, then compact 6-industry overview grid.
+ * Homepage: compact 6-industry overview grid.
  */
 export function LandingIndustriesTeaserSection() {
   const { t } = useTranslation();
@@ -48,55 +40,17 @@ export function LandingIndustriesTeaserSection() {
     <section
       id="industries"
       className={cn(landingUi.sectionWhite, "caretip-industries-teaser scroll-mt-[80px]")}
-      aria-labelledby="industries-levelup-heading"
+      aria-labelledby="industries-overview-heading"
     >
       <div className={cn(landingUi.sectionShell, "caretip-industries-teaser__inner px-4 sm:px-6 lg:px-8")}>
-        <LandingReveal>
-          <header className={cn(landingUi.sectionIntro, "caretip-industries-teaser__header mb-0")}>
-            <h2 id="industries-levelup-heading" className={landingUi.sectionTitle}>
-              {t(`${prefix}.headline`)}
-            </h2>
-            <p className={cn(landingUi.sectionSubtitle, "caretip-industries-teaser__sub")}>
-              {t(`${prefix}.subheadline`)}
-            </p>
-          </header>
-        </LandingReveal>
-
-        <ul className="caretip-industries-teaser__benefits" aria-label={t(`${prefix}.benefitsAria`)}>
-          {CORE_BENEFITS.map((benefit, index) => {
-            const Icon = benefit.icon;
-            return (
-              <LandingReveal
-                key={benefit.titleKey}
-                as="li"
-                className="caretip-industries-teaser__benefit"
-                delay={landingStaggerDelay(index + 1)}
-              >
-                <span className="caretip-industries-teaser__benefit-icon" aria-hidden>
-                  <Icon strokeWidth={1.75} />
-                </span>
-                <div className="caretip-industries-teaser__benefit-copy">
-                  <h3 className="caretip-industries-teaser__benefit-title">
-                    {t(`${prefix}.${benefit.titleKey}`)}
-                  </h3>
-                  <p className="caretip-industries-teaser__benefit-body">
-                    {t(`${prefix}.${benefit.bodyKey}`)}
-                  </p>
-                </div>
-              </LandingReveal>
-            );
-          })}
-        </ul>
-
         <div className="caretip-industries-teaser__overview">
           <LandingReveal>
             <header className="caretip-industries-teaser__overview-header">
-              <p
-                data-landing-accent
-                className="caretip-industries-teaser__eyebrow"
-              >
-                {t(`${prefix}.eyebrow`)}
-              </p>
+              <div className={cn(landingUi.sectionAccentRow, "justify-center lg:justify-center")}>
+                <LandingSectionAccent variant="spark" className="mx-auto lg:mx-auto">
+                  {t(`${prefix}.eyebrow`)}
+                </LandingSectionAccent>
+              </div>
               <h2 id="industries-overview-heading" className={landingUi.sectionTitle}>
                 {t(`${prefix}.overviewHeadline`)}
               </h2>
