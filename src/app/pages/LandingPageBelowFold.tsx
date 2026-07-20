@@ -5,12 +5,13 @@ export const SHOW_LANDING_SOCIAL_PROOF = false;
 
 /** Approximate section heights — reserve space before lazy sections mount (CLS guard). */
 const LAZY_SECTION_MIN_HEIGHT = {
-  industriesTeaser: "52rem",
-  splitShowcase: "44rem",
+  industriesTeaser: "48rem",
+  audienceBenefits: "36rem",
   payments: "16rem",
   liveMinutes: "48rem",
   socialProof: "36rem",
   finalCta: "22rem",
+  splitShowcase: "44rem",
 } as const;
 
 const loadLandingIndustriesTeaserSection = () =>
@@ -18,14 +19,9 @@ const loadLandingIndustriesTeaserSection = () =>
     default: mod.LandingIndustriesTeaserSection,
   }));
 
-const loadBusinessLandingSection = () =>
-  import("../components/landing/BusinessLandingSection").then((mod) => ({
-    default: mod.BusinessLandingSection,
-  }));
-
-const loadEmployeeLandingSection = () =>
-  import("../components/landing/EmployeeLandingSection").then((mod) => ({
-    default: mod.EmployeeLandingSection,
+const loadLandingAudienceBenefitsSection = () =>
+  import("../components/landing/LandingAudienceBenefitsSection").then((mod) => ({
+    default: mod.LandingAudienceBenefitsSection,
   }));
 
 const loadPaymentsSection = () =>
@@ -54,9 +50,7 @@ const loadLandingFinalCtaSection = () =>
   }));
 
 /**
- * Below-the-fold landing — teaser homepage IA.
- * Features live on /features; industry detail on /industries/*.
- * Order: setup (live in minutes) before recognition (motivation).
+ * Below-the-fold landing — industry overview + combined audience benefits + product sections.
  */
 export function LandingPageBelowFold() {
   return (
@@ -67,12 +61,8 @@ export function LandingPageBelowFold() {
       />
 
       <LandingLazySection
-        load={loadBusinessLandingSection}
-        minHeight={LAZY_SECTION_MIN_HEIGHT.splitShowcase}
-      />
-      <LandingLazySection
-        load={loadEmployeeLandingSection}
-        minHeight={LAZY_SECTION_MIN_HEIGHT.splitShowcase}
+        load={loadLandingAudienceBenefitsSection}
+        minHeight={LAZY_SECTION_MIN_HEIGHT.audienceBenefits}
       />
 
       <LandingLazySection

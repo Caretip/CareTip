@@ -32,6 +32,22 @@ html:not(.dark) .caretip-landing.caretip-landing--premium .caretip-hero-section-
   --caretip-hero-line-gap: 0.4rem;
   /* Keep subject on the right; leave calmer negative space behind copy */
   --caretip-hero-bg-focal: 74% 48%;
+  /*
+   * Cinematic left illumination — one invisible brightening veil.
+   * Stop positions only change by breakpoint (mobile narrower).
+   */
+  --caretip-hero-veil-0: rgba(255, 255, 255, 0.68);
+  --caretip-hero-veil-1: rgba(255, 255, 255, 0.56);
+  --caretip-hero-veil-2: rgba(255, 255, 255, 0.38);
+  --caretip-hero-veil-3: rgba(255, 255, 255, 0.16);
+  --caretip-hero-veil-4: rgba(255, 255, 255, 0.05);
+  --caretip-hero-veil-5: rgba(255, 255, 255, 0);
+  --caretip-hero-veil-p0: 0%;
+  --caretip-hero-veil-p1: 20%;
+  --caretip-hero-veil-p2: 38%;
+  --caretip-hero-veil-p3: 55%;
+  --caretip-hero-veil-p4: 68%;
+  --caretip-hero-veil-p5: 80%;
   min-height: var(--caretip-hero-fullbg-min-h);
   display: flex;
   align-items: flex-start;
@@ -47,33 +63,41 @@ html:not(.dark) .caretip-landing.caretip-landing--premium .caretip-hero-section-
   overflow: hidden;
 }
 
-/* Soft L→R veil — readable type, photo stays bright and premium */
+/*
+ * Cinematic left illumination — full-height veil between image and copy.
+ * Softly brightens the left; right side of the photo stays untouched.
+ * No backdrop-filter, mask, border, or glass panel.
+ */
 .caretip-landing .caretip-hero-bg-overlay {
   position: absolute;
   inset: 0;
   z-index: 1;
   pointer-events: none;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  -webkit-mask-image: none;
+  mask-image: none;
   background: linear-gradient(
-    94deg,
-    rgb(255 248 240 / 0.88) 0%,
-    rgb(255 248 240 / 0.72) 16%,
-    rgb(255 248 240 / 0.42) 34%,
-    rgb(255 248 240 / 0.16) 52%,
-    rgb(255 248 240 / 0.05) 68%,
-    transparent 100%
+    90deg,
+    var(--caretip-hero-veil-0) var(--caretip-hero-veil-p0),
+    var(--caretip-hero-veil-1) var(--caretip-hero-veil-p1),
+    var(--caretip-hero-veil-2) var(--caretip-hero-veil-p2),
+    var(--caretip-hero-veil-3) var(--caretip-hero-veil-p3),
+    var(--caretip-hero-veil-4) var(--caretip-hero-veil-p4),
+    var(--caretip-hero-veil-5) var(--caretip-hero-veil-p5)
   );
 }
 
-html.dark .caretip-landing .caretip-hero-bg-overlay {
-  background: linear-gradient(
-    94deg,
-    rgb(9 9 11 / 0.78) 0%,
-    rgb(9 9 11 / 0.58) 16%,
-    rgb(9 9 11 / 0.3) 34%,
-    rgb(9 9 11 / 0.1) 52%,
-    rgb(9 9 11 / 0.03) 68%,
-    transparent 100%
-  );
+html.dark .caretip-landing .caretip-hero-section--full-bg {
+  --caretip-hero-veil-0: rgba(9, 9, 11, 0.62);
+  --caretip-hero-veil-1: rgba(9, 9, 11, 0.48);
+  --caretip-hero-veil-2: rgba(9, 9, 11, 0.3);
+  --caretip-hero-veil-3: rgba(9, 9, 11, 0.12);
+  --caretip-hero-veil-4: rgba(9, 9, 11, 0.04);
+  --caretip-hero-veil-5: rgba(9, 9, 11, 0);
 }
 
 .caretip-landing .caretip-hero-story-showcase-root--background,
@@ -186,29 +210,10 @@ html.dark .caretip-landing .caretip-hero-bg-overlay {
   text-align: left;
 }
 
-/* Light residual scrim only — primary readability comes from the directional overlay */
+/* Single full-height veil owns readability — no second layer behind copy */
 .caretip-landing .caretip-hero-section--full-bg .caretip-hero-full-bg-content::before {
-  content: "";
-  position: absolute;
-  inset: -1.75rem -2.25rem -2rem -1.75rem;
-  z-index: -1;
-  pointer-events: none;
-  border-radius: 0;
-  background: linear-gradient(
-    95deg,
-    rgb(255 248 240 / 0.36) 0%,
-    rgb(255 248 240 / 0.12) 55%,
-    transparent 100%
-  );
-}
-
-html.dark .caretip-landing .caretip-hero-section--full-bg .caretip-hero-full-bg-content::before {
-  background: linear-gradient(
-    95deg,
-    rgb(9 9 11 / 0.34) 0%,
-    rgb(9 9 11 / 0.12) 55%,
-    transparent 100%
-  );
+  content: none;
+  display: none;
 }
 
 .caretip-landing .caretip-hero-section--full-bg .caretip-hero-headline,

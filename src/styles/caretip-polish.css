@@ -75,7 +75,7 @@
     isolation: isolate;
   }
 
-  /* Slide uses top/opacity — never transform on bg-clip-text (WebKit orange halo) */
+  /* Slide uses opacity + translateY only — never transform conflict with bg-clip-text */
   .caretip-landing .caretip-hero-animated-word__slide {
     left: 0;
     right: auto;
@@ -83,7 +83,6 @@
     max-width: 100%;
     filter: none !important;
     text-shadow: none !important;
-    transform: none !important;
   }
 
   /* Sizing ghosts only — no gradient clip on hidden measure layer (prevents orange subpixel halo) */

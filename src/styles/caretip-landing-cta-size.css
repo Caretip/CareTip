@@ -31,8 +31,7 @@
 .caretip-landing .caretip-section-cta-button,
 .caretip-landing .caretip-final-cta-button,
 .caretip-landing .caretip-cta-primary,
-.caretip-landing .caretip-features-cta-wise__actions > a,
-.caretip-landing .caretip-industries-teaser__card-cta {
+.caretip-landing .caretip-features-cta-wise__actions > a {
   box-sizing: border-box;
   height: var(--caretip-landing-cta-h) !important;
   min-height: var(--caretip-landing-cta-h) !important;

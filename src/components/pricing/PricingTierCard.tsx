@@ -79,7 +79,7 @@ function CardBadge({ badge, inline = false }: { badge: PricingTierCardBadge; inl
   if (badge.kind === "popular") {
     return (
       <div className={className}>
-        <Sparkles className="size-3 shrink-0" aria-hidden />
+        <Sparkles className="size-2.5 shrink-0" aria-hidden />
         {t("staticPages.pricing.popular")}
       </div>
     );

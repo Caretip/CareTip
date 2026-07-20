@@ -60,6 +60,13 @@
     --caretip-hero-gap-trust-benefits: 1.125rem;
     --caretip-hero-subtitle-measure: min(100%, 18rem);
     --caretip-hero-line-gap: 0.25rem;
+    /* Same cinematic veil — ~65–70% width so copy stays readable */
+    --caretip-hero-veil-p0: 0%;
+    --caretip-hero-veil-p1: 16%;
+    --caretip-hero-veil-p2: 32%;
+    --caretip-hero-veil-p3: 46%;
+    --caretip-hero-veil-p4: 58%;
+    --caretip-hero-veil-p5: 68%;
     min-height: var(--caretip-hero-fullbg-min-h);
     height: auto;
     max-height: none;
@@ -90,55 +97,6 @@
     max-width: var(--caretip-hero-fullbg-content-max);
     padding-block: 0.15rem 0;
     gap: 0;
-  }
-
-  /* Soft left veil on copy only — does not crush the photo subject */
-  .caretip-landing .caretip-hero-section--full-bg .caretip-hero-full-bg-content::before {
-    inset: -0.65rem -1.15rem -0.75rem -0.85rem;
-    border-radius: 1rem;
-    background: linear-gradient(
-      96deg,
-      rgb(255 252 247 / 0.78) 0%,
-      rgb(255 252 247 / 0.5) 42%,
-      rgb(255 252 247 / 0.16) 72%,
-      transparent 100%
-    );
-  }
-
-  html.dark .caretip-landing .caretip-hero-section--full-bg .caretip-hero-full-bg-content::before {
-    background: linear-gradient(
-      96deg,
-      rgb(9 9 11 / 0.7) 0%,
-      rgb(9 9 11 / 0.42) 42%,
-      rgb(9 9 11 / 0.14) 72%,
-      transparent 100%
-    );
-  }
-
-  /*
-   * Full-bleed left readability wash — subtle, fades before the subject’s face
-   * so hospitality interaction stays clear on the right / center-right.
-   */
-  .caretip-landing .caretip-hero-section--full-bg .caretip-hero-visual-band .caretip-hero-bg-overlay {
-    background: linear-gradient(
-      102deg,
-      rgb(255 248 240 / 0.78) 0%,
-      rgb(255 248 240 / 0.48) 18%,
-      rgb(255 248 240 / 0.2) 38%,
-      rgb(255 248 240 / 0.06) 55%,
-      transparent 72%
-    );
-  }
-
-  html.dark .caretip-landing .caretip-hero-section--full-bg .caretip-hero-visual-band .caretip-hero-bg-overlay {
-    background: linear-gradient(
-      102deg,
-      rgb(9 9 11 / 0.72) 0%,
-      rgb(9 9 11 / 0.44) 18%,
-      rgb(9 9 11 / 0.18) 38%,
-      rgb(9 9 11 / 0.05) 55%,
-      transparent 72%
-    );
   }
 
   .caretip-landing .caretip-hero-section--full-bg .caretip-hero-headline,

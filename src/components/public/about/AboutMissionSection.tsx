@@ -28,6 +28,7 @@ function AboutBeliefCard({ index, title, body, delay = 0 }: BeliefCardProps) {
   );
 }
 
+/** Trust grid — “What we stand for” (template: 3-column product & trust grid). */
 export function AboutMissionSection() {
   const { t, i18n } = useTranslation();
   const headerReveal = usePublicScrollReveal<HTMLDivElement>(0);
@@ -58,6 +59,7 @@ export function AboutMissionSection() {
           style={headerReveal.style}
           className={cn(headerReveal.className, "caretip-about-beliefs__head")}
         >
+          <p className="caretip-about-beliefs__eyebrow">{t("staticPages.about.missionSection.eyebrow")}</p>
           <h2 id="about-mission-title" className="caretip-about-beliefs__title">
             {t("staticPages.about.missionSection.title")}
           </h2>

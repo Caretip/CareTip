@@ -159,8 +159,9 @@ export function CareTipLogo({
     token === "large" ||
     token === "iconSplash";
 
+  /* Brand marks must stay plate-free — never use caretip-image-frame (muted gradient box). */
   const frameClass = cn(
-    "caretip-image-frame block max-w-full",
+    "caretip-brand-logo block max-w-full bg-transparent",
     align === "center" && "mx-auto",
     alignClass[align],
     sizeClass,

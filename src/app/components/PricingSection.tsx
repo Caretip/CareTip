@@ -63,7 +63,7 @@ export function PricingSection({
 
           const footer = isPro ? (
             <Link
-              to={tierSignupHref("business", billingCycle, false)}
+              to={tierSignupHref("business", billingCycle, true)}
               className={cn(pricingPageUi.cardCtaPrimary, "w-full text-center")}
             >
               {t("staticPages.pricing.tiers.business.subscribeButton")}

@@ -1,6 +1,6 @@
 /**
- * About page — Wise-inspired fintech editorial layout (template folder).
- * CareTip orange (#EB992C) replaces Wise green; all copy in i18n.
+ * About page — story + trust grid + CTA (template: Final Changes 20.07).
+ * White hero (no banner). Story 60/40 desktop. Trust grid 3-col @1024px.
  */
 
 .caretip-about-page--wise {
@@ -27,86 +27,36 @@
   padding-inline: clamp(1.25rem, 4vw, 2.5rem);
 }
 
-/* —— Hero band (template: THE WISE STORY) —— */
+/* —— White hero (no banner) —— */
 .caretip-about-hero-wise {
   margin-bottom: 0;
+  background: hsl(var(--background));
+  padding-top: clamp(0.75rem, 2vw, 1.25rem);
 }
 
 .caretip-about-hero-wise__back {
   max-width: var(--caretip-about-inner-max);
   margin-inline: auto;
   padding-inline: clamp(1.25rem, 4vw, 2.5rem);
-  margin-bottom: 1rem;
 }
 
-.caretip-about-hero-wise__inner {
-  padding-block: clamp(2.5rem, 6vw, 4rem);
-  text-align: center;
-}
-
-.caretip-about-hero-wise__title {
-  margin: 0;
-  margin-inline: auto;
-  max-width: min(100%, 22ch);
-  font-size: clamp(2.125rem, 5.2vw, 3.375rem);
-  font-weight: 800;
-  line-height: 1.06;
-  letter-spacing: -0.038em;
-  text-wrap: balance;
-  text-align: center;
-}
-
-@media (min-width: 1024px) {
-  .caretip-about-hero-wise__title {
-    font-size: var(--caretip-section-size);
-    line-height: 1.1;
-    letter-spacing: -0.028em;
-  }
-}
-
-.caretip-about-hero-wise__mission {
-  margin: clamp(1.25rem, 3vw, 1.75rem) auto 0;
-  max-width: min(100%, 42rem);
-  font-size: clamp(1rem, 2vw, 1.1875rem);
-  font-weight: 500;
-  line-height: 1.65;
-  text-wrap: pretty;
-  color: hsl(var(--foreground) / 0.82);
-}
-
-/* —— Split story sections (template: founder story + product) —— */
+/* —— Story split: text 60% / graphic 40% (desktop) —— */
 .caretip-about-split {
-  padding-block: clamp(3.5rem, 8vw, 6rem);
-  background: hsl(var(--background));
-}
-
-.caretip-about-split--product {
-  background: hsl(var(--background));
-}
-
-html.dark .caretip-about-split--product {
+  padding-block: clamp(2.5rem, 6vw, 4.5rem) clamp(3.5rem, 8vw, 5.5rem);
   background: hsl(var(--background));
 }
 
 .caretip-about-split__grid {
   display: grid;
   grid-template-columns: 1fr;
-  gap: clamp(2rem, 5vw, 4rem);
+  gap: clamp(2rem, 5vw, 3.5rem);
   align-items: center;
 }
 
 @media (min-width: 1024px) {
-  .caretip-about-split:not(.caretip-about-split--product) .caretip-about-split__grid {
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-    gap: clamp(3rem, 5vw, 5rem);
-  }
-}
-
-@media (min-width: 768px) {
-  .caretip-about-split--product .caretip-about-split__grid {
-    grid-template-columns: minmax(0, 1.18fr) minmax(0, 0.82fr);
-    gap: clamp(2rem, 4vw, 3.5rem);
-    align-items: center;
+  .caretip-about-split__grid {
+    grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
+    gap: clamp(2.5rem, 5vw, 4.5rem);
   }
 }
 
@@ -122,20 +72,11 @@ html.dark .caretip-about-split--product {
 .caretip-about-split__headline {
   margin: 0 0 clamp(1.25rem, 3vw, 1.75rem);
   font-family: var(--font-hero-display, inherit);
-  font-size: clamp(1.875rem, 4.5vw, 3rem);
+  font-size: clamp(1.625rem, 3.8vw, 2.375rem);
   font-weight: 800;
-  line-height: 1.08;
-  letter-spacing: -0.034em;
+  line-height: 1.12;
+  letter-spacing: -0.03em;
   text-wrap: balance;
-  color: hsl(var(--foreground));
-}
-
-.caretip-about-split__subhead {
-  margin: clamp(1.75rem, 4vw, 2.5rem) 0 1rem;
-  font-family: var(--font-hero-display, inherit);
-  font-size: clamp(1.25rem, 2.8vw, 1.625rem);
-  font-weight: 700;
-  letter-spacing: -0.02em;
   color: hsl(var(--foreground));
 }
 
@@ -154,15 +95,16 @@ html.dark .caretip-about-split--product {
   color: hsl(var(--muted-foreground));
 }
 
-.caretip-about-split__closing {
-  font-weight: 600;
-  color: hsl(var(--foreground)) !important;
-}
-
 .caretip-about-split__media {
   display: flex;
   justify-content: center;
   align-items: center;
+}
+
+@media (min-width: 1024px) {
+  .caretip-about-split__media {
+    justify-content: flex-end;
+  }
 }
 
 .caretip-about-split__photo {
@@ -173,185 +115,30 @@ html.dark .caretip-about-split--product {
   border-radius: var(--caretip-wise-editorial-radius);
   object-fit: cover;
   aspect-ratio: 4 / 3;
+  box-shadow:
+    0 1px 2px rgb(15 23 42 / 0.04),
+    0 18px 40px -20px rgb(15 23 42 / 0.18);
 }
 
-.caretip-about-split__media--product {
-  width: 100%;
-  justify-content: center;
-  align-items: center;
+@media (min-width: 1024px) {
+  .caretip-about-split__photo {
+    max-width: min(100%, 26rem);
+  }
 }
 
-/* Product showcase — vision section */
-.caretip-about-split__showcase {
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: clamp(220px, 72vw, 280px);
-  margin-inline: auto;
-  padding: 0.75rem;
-}
-
-.caretip-about-split__showcase-glow {
-  pointer-events: none;
-  position: absolute;
-  inset: 6% 4% 2%;
-  border-radius: 9999px;
-  background: radial-gradient(
-    ellipse at center,
-    rgb(var(--caretip-about-accent-rgb) / 0.22) 0%,
-    rgb(var(--caretip-about-accent-rgb) / 0.08) 45%,
-    transparent 72%
-  );
-  filter: blur(28px);
-}
-
-.caretip-about-split__product {
-  position: relative;
-  z-index: 1;
-  display: block;
-  width: 100%;
-  max-width: 100%;
-  height: auto;
-  object-fit: contain;
-  object-position: center;
-  filter: drop-shadow(0 18px 40px rgb(15 23 42 / 0.12)) drop-shadow(0 8px 20px rgb(var(--caretip-about-accent-rgb) / 0.1));
-}
-
-/* Mobile: image below copy (single column), 220–280px wide */
-@media (max-width: 767px) {
-  .caretip-about-split--product .caretip-about-split__copy {
+@media (max-width: 1023px) {
+  .caretip-about-split__copy {
     order: 1;
   }
 
-  .caretip-about-split--product .caretip-about-split__media--product {
+  .caretip-about-split__media {
     order: 2;
-    margin-top: 0.25rem;
   }
 }
 
-/* Tablet: 320–380px container, 350–420px image height */
-@media (min-width: 768px) and (max-width: 1023px) {
-  .caretip-about-split__showcase {
-    width: clamp(320px, 38vw, 380px);
-    padding: 1rem;
-  }
-
-  .caretip-about-split__product {
-    max-height: clamp(350px, 42vw, 420px);
-  }
-}
-
-/* Desktop: ~58% copy / ~42% visual, 420–480px container, 420–500px image */
-@media (min-width: 1024px) {
-  .caretip-about-split__photo {
-    max-width: min(100%, 24rem);
-  }
-
-  .caretip-about-split--product .caretip-about-split__grid {
-    grid-template-columns: minmax(0, 1.2fr) minmax(0, 0.8fr);
-    gap: clamp(2.5rem, 4vw, 4rem);
-  }
-
-  .caretip-about-split__media--product {
-    justify-content: flex-end;
-    padding-inline-end: 0.5rem;
-  }
-
-  .caretip-about-split__showcase {
-    width: clamp(420px, 36vw, 480px);
-    max-width: 100%;
-    padding: 1.125rem 1rem;
-  }
-
-  .caretip-about-split__product {
-    max-height: clamp(420px, 44vh, 500px);
-  }
-}
-
-/* Vision mission image — larger showcase, text column unchanged */
-.caretip-about-split__showcase--mission {
-  width: clamp(280px, 82vw, 360px);
-}
-
-@media (min-width: 768px) and (max-width: 1023px) {
-  .caretip-about-split__showcase--mission {
-    width: clamp(400px, 44vw, 480px);
-  }
-
-  .caretip-about-split__product--mission {
-    max-height: clamp(460px, 50vw, 560px);
-  }
-}
-
-@media (min-width: 1024px) {
-  .caretip-about-split--product .caretip-about-split__grid {
-    grid-template-columns: minmax(0, 1.12fr) minmax(0, 0.88fr);
-  }
-
-  .caretip-about-split__showcase--mission {
-    width: clamp(520px, 42vw, 620px);
-    padding: 1.25rem 1rem;
-  }
-
-  .caretip-about-split__product--mission {
-    max-height: clamp(540px, 52vh, 640px);
-  }
-}
-
-/* —— Quote / mission band (light surface, no card) —— */
-.caretip-about-quote-band {
-  background: hsl(var(--background));
-  color: hsl(var(--foreground));
-}
-
-html.dark .caretip-about-quote-band {
-  background: hsl(var(--background));
-}
-
-.caretip-about-quote-band__inner {
-  padding-block: clamp(3.5rem, 8vw, 5.5rem);
-  text-align: center;
-}
-
-.caretip-about-quote-band__quote {
-  margin: 0 auto;
-  max-width: min(100%, 46rem);
-  border: 0;
-  padding: 0;
-}
-
-.caretip-about-quote-band__quote p {
-  margin: 0;
-  font-family: var(--font-hero-display, inherit);
-  font-size: clamp(1.375rem, 3.5vw, 2.125rem);
-  font-weight: 700;
-  line-height: 1.35;
-  letter-spacing: -0.025em;
-  text-wrap: pretty;
-  color: hsl(var(--foreground));
-}
-
-.caretip-about-quote-band__footer {
-  margin-top: clamp(1.25rem, 3vw, 1.75rem);
-  font-size: 0.8125rem;
-  font-weight: 600;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: hsl(var(--muted-foreground));
-}
-
-/* —— Numbered belief cards (template: THREE THINGS) —— */
+/* —— Trust grid —— */
 .caretip-about-beliefs {
   padding-block: clamp(3.5rem, 8vw, 5.5rem);
-  background: hsl(var(--background));
-}
-
-html.dark .caretip-about-beliefs {
-  background: hsl(var(--background));
-}
-
-.caretip-about-beliefs--trust {
   background: hsl(var(--background));
 }
 
@@ -360,14 +147,23 @@ html.dark .caretip-about-beliefs {
   text-align: center;
 }
 
-.caretip-about-beliefs__title {
-  margin: 0;
-  font-family: var(--font-hero-display, inherit);
-  font-size: clamp(1.375rem, 3.2vw, 2rem);
-  font-weight: 800;
-  line-height: 1.12;
-  letter-spacing: -0.02em;
+.caretip-about-beliefs__eyebrow {
+  margin: 0 0 0.75rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
+  color: var(--caretip-about-accent);
+}
+
+.caretip-about-beliefs__title {
+  margin: 0 auto;
+  max-width: min(100%, 28rem);
+  font-family: var(--font-hero-display, inherit);
+  font-size: clamp(1.5rem, 3.5vw, 2.125rem);
+  font-weight: 800;
+  line-height: 1.15;
+  letter-spacing: -0.028em;
   text-wrap: balance;
   color: hsl(var(--foreground));
 }
@@ -385,6 +181,12 @@ html.dark .caretip-about-beliefs {
   }
 }
 
+@media (min-width: 1024px) {
+  .caretip-about-beliefs__grid {
+    gap: 2rem;
+  }
+}
+
 .caretip-about-belief-card {
   display: flex;
   flex-direction: column;
@@ -398,7 +200,7 @@ html.dark .caretip-about-beliefs {
 
 .caretip-about-belief-card__index {
   font-family: var(--font-hero-display, inherit);
-  font-size: clamp(3rem, 6vw, 4.5rem);
+  font-size: clamp(2.5rem, 5vw, 3.75rem);
   font-weight: 800;
   line-height: 1;
   letter-spacing: -0.04em;
@@ -421,41 +223,9 @@ html.dark .caretip-about-beliefs {
   color: hsl(var(--muted-foreground));
 }
 
-/* —— CTA secondary on light panel —— */
-.caretip-about-cta-wise__secondary {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 2.75rem;
-  padding: 0.625rem 1.25rem;
-  border-radius: 0.75rem;
-  border: 1px solid rgb(228 228 231);
-  background: transparent;
-  font-size: 0.9375rem;
-  font-weight: 600;
-  color: hsl(var(--foreground));
-  text-decoration: none;
-  transition:
-    background 0.2s ease,
-    border-color 0.2s ease,
-    color 0.2s ease;
-}
-
-.caretip-about-cta-wise__secondary:hover {
-  background: rgb(250 250 250);
-  border-color: rgb(212 212 216);
-  color: hsl(var(--foreground));
-}
-
 @media (max-width: 767px) {
   .caretip-about-belief-card {
     max-width: min(100%, 24rem);
     margin-inline: auto;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .caretip-about-cta-wise__secondary {
-    transition: none;
   }
 }

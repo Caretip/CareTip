@@ -376,45 +376,30 @@
     "about": {
       "pageAria": "About CareTip",
       "hero": {
-        "badge": "About CareTip",
-        "title": "About CareTip",
-        "mission": "We make tipping simpler, fairer, and more transparent for hospitality teams, so great service is recognised when it happens."
+        "title": "About us"
       },
       "story": {
         "eyebrow": "About us",
-        "title": "Two cities. One mission: appreciation that truly lands.",
-        "intro": "Behind CareTip are [Name 1] & [Name 2], two founders from Berlin, united by a shared vision and two of Europe's most dynamic cities.",
-        "origin": "When one of us moved her life to London, the idea for CareTip was born. In the UK, daily life is already digital: paying cashlessly and tipping effortlessly with a scan is simply normal. Back in Germany, one thing was clear, our hospitality and service culture needed this upgrade too. Urgently.",
-        "visionTitle": "Our vision: More than software",
-        "visionP1": "We all feel it in everyday life and see it in the news: society depends on people in service and care roles. They keep our routines running, create unforgettable evenings, and do hard work on the front line. Yet the recognition they deserve, financial and emotional, often never arrives. Staff shortages and unfilled shifts are the painful result.",
-        "visionP2": "At the same time, cash is fading fast. Teams pay the price: when guests have no notes in their pocket, well-earned tips never make it through.",
-        "quote": "We refuse to watch excellent service go unrewarded. CareTip is our answer: we're reinventing tipping to give service teams back the appreciation and financial boost they deserve.",
-        "quoteAttribution": "[Name 1] & [Name 2], Co-founders of CareTip",
-        "driveTitle": "What drives us",
-        "driveBody": "CareTip isn't just a tech project for us. It's a tool for fair success, stronger teams, and future-ready businesses. We bridge modern digital convenience, 100% reliable infrastructure, highest data security, and genuine human recognition.",
-        "driveClosing": "Because Caring is Tipping: contactless, direct, and tax-free."
+        "title": "Two cities. One mission: Appreciation you can actually feel on your account.",
+        "p1": "Behind CareTip are the two of us: Albertina & Fanny—two Berliners who share a deep love for hospitality and service. However, the idea for CareTip was born thousands of miles away when one of us relocated to London.",
+        "p2": "There, we experienced a real culture shock in the best possible way: digital payment via scan had long been part of everyday life—and tips landed directly with the teams in seconds, without any hassle. Looking back at Germany, it almost hurt. We saw amazing service staff, midwives, and healthcare workers giving their best every day, but coming up empty-handed simply because guests no longer carried cash.",
+        "p3": "Right then, it clicked: we didn't want to be silent bystanders anymore. Our service culture urgently needs an upgrade. CareTip isn't just a software project; it's our passion project. We built it to give the people on the frontline of service the real, financial appreciation they deserve every single day.",
+        "p4": "",
+        "imageAlt": "Albertina and Fanny, co-founders of CareTip"
       },
       "missionSection": {
-        "title": "What we stand for",
-        "m1Title": "Teams get rewarded",
-        "m1Body": "Hospitality and service staff deserve recognition that reaches them directly, not lost in cashless moments or admin friction.",
-        "m2Title": "Digital tipping made simple",
-        "m2Body": "Guests scan, tip, and go. No app downloads, no awkward cash exchanges, just a smooth flow built for real venues.",
-        "m3Title": "Transparent team management",
-        "m3Body": "Managers see clear records, fair distribution, and live activity, so trust stays high across every shift."
+        "eyebrow": "What we stand for",
+        "title": "Built on trust. Made for teams.",
+        "m1Title": "Teams are Rewarded 💎",
+        "m1Body": "Service staff deserve recognition that reaches them directly. Cashless, without detours, and with zero administrative overhead.",
+        "m2Title": "Stripe-Secured Payments 🔒",
+        "m2Body": "Every tip runs securely through the trusted Stripe Checkout. Safe, transparent from scan to payout, and optimized for European businesses.",
+        "m3Title": "Transparent Management 📊",
+        "m3Body": "Managers get clear, live records and fair distribution. No black box, just trust in every single shift."
       },
-      "trustSection": {
-        "title": "Built on trust",
-        "t1Title": "Stripe-powered payments",
-        "t1Body": "Every tip runs through Stripe's trusted checkout, encrypted, familiar, and built for European businesses.",
-        "t2Title": "Transparency by design",
-        "t2Body": "Clear records for teams and leadership. No black boxes, just accountable tipping from scan to payout.",
-        "t3Title": "Made for modern hospitality",
-        "t3Body": "From restaurants and hotels to field services, CareTip fits how European teams work today."
-      },
-      "ctaTitle": "Ready to bring fair tipping to your team?",
-      "ctaPrimary": "Get started",
-      "ctaSecondary": "View pricing"
+      "ctaTitle": "Ready for fair tipping in your team?",
+      "ctaPrimary": "Get Started",
+      "ctaSecondary": "View Pricing"
     },
     "features": {
       "title": "Caring is Tipping",
@@ -652,10 +637,10 @@
           "name": "Pro",
           "tagline": "",
           "feeMonthly": "€29 per month",
-          "feeYearly": "€290 per year",
-          "feeNoteMonthly": "or €290/year",
+          "feeYearly": "€278.40 per year",
+          "feeNoteMonthly": "or €278.40/year",
           "feeNoteYearly": "or €29/month",
-          "feeNote": "or €290/year",
+          "feeNote": "or €278.40/year",
           "description": "For growing companies and teams requiring more flexibility and branding options.",
           "f0": "All features from Basic",
           "f1": "Use of custom branding / logo on the landing page",
@@ -664,7 +649,7 @@
           "f4": "Dedicated onboarding support",
           "button": "Upgrade to Pro",
           "trialButton": "Start 4-week trial",
-          "subscribeButton": "Subscribe to Pro"
+          "subscribeButton": "Start 30-day free trial"
         },
         "enterprise": {
           "name": "Premium",
@@ -2869,6 +2854,30 @@
         "role": "Locations and tables, staff mapping, consistent reporting"
       }
     },
+    "audienceBenefits": {
+      "eyebrow": "BENEFITS AT A GLANCE",
+      "headline": "Full control for owners. More motivation for teams.",
+      "businessRole": "For business owners",
+      "businessTitle": "Full transparency over your team",
+      "businessBody": "Manage locations, QR codes, and payouts from a single dashboard.",
+      "businessP1Title": "Real-Time Team Performance",
+      "businessP1Body": "Track tip trends across shifts.",
+      "businessP2Title": "Fair Distribution",
+      "businessP2Body": "Keep a precise overview of funds.",
+      "businessP3Title": "1-Click Tax Exports",
+      "businessP3Body": "Ready for payroll & audits.",
+      "businessCta": "Request Demo",
+      "teamsRole": "For service teams",
+      "teamsTitle": "Track your success. Every day.",
+      "teamsBody": "See your hard work pay off live and make your strong performance visible.",
+      "teamsP1Title": "Live Earnings Tracking",
+      "teamsP1Body": "See tips arrive instantly.",
+      "teamsP2Title": "Shift Insights",
+      "teamsP2Body": "Know your peak earning hours.",
+      "teamsP3Title": "History & Ratings",
+      "teamsP3Body": "Collect tips & feedback in 1 spot.",
+      "teamsCta": "Join Team"
+    },
     "employeeSection": {
       "pill": "For frontline staff",
       "titleLine1": "Track your success.",
@@ -3252,21 +3261,43 @@
       "headline": "Take your team to the next level.",
       "subheadline": "More motivation. Less turnover. Full shifts.",
       "benefitsAria": "Core CareTip benefits",
-      "b1Title": "Everyday usability",
-      "b1Body": "Use QR codes at tables, stations, or directly on the go.",
-      "b2Title": "Full transparency",
-      "b2Body": "Track tips in real-time & pay out securely via Apple/Google Pay.",
+      "b1Title": "Suitable for everyday use",
+      "b1Body": "Use QR codes for tables, stations, or directly on the tour.",
+      "b2Title": "Full view",
+      "b2Body": "View tips in real time and pay them out securely via Apple/Google Pay.",
       "b3Title": "Motivation boost",
-      "b3Body": "Boost appreciation for every shift and the entire team.",
-      "teasersLabel": "Perfect for mobile teams…",
-      "teasersAria": "Featured industries",
-      "teaser1Title": "Midwife care",
-      "teaser1Body": "Cashless tips during postpartum home visits: simple and easy via a custom QR code.",
-      "teaser1Alt": "Midwife visiting a family with a CareTip QR business card",
-      "teaser2Title": "Field service & care",
-      "teaser2Body": "The perfect tip solution for mobile teams, crafts, and on-site care workers.",
-      "teaser2Alt": "Field service professional with CareTip QR for on-site tipping",
-      "learnMore": "Learn more"
+      "b3Body": "More recognition for every shift and the entire team.",
+      "eyebrow": "IN USE EVERYWHERE...",
+      "overviewHeadline": "CareTip adapts to your industry.",
+      "overviewSubheadline": "Discover how easy digital tipping works in your field.\nClick on any industry to see the details.",
+      "teasersAria": "All industries",
+      "learnMore": "Learn more",
+      "cards": {
+        "gastronomy": {
+          "title": "Gastronomy",
+          "body": "Fast tipping via QR code directly at table."
+        },
+        "hotels": {
+          "title": "Hotels & Hospitality",
+          "body": "For room service, front desk & concierge staff."
+        },
+        "logistics": {
+          "title": "Logistics",
+          "body": "Rewards for couriers and delivery drivers."
+        },
+        "midwives": {
+          "title": "Midwives",
+          "body": "Easy appreciation after home visits."
+        },
+        "fairs": {
+          "title": "Trade Fairs & Events",
+          "body": "Perfect for on-site service teams."
+        },
+        "field-service": {
+          "title": "Field Service & Care",
+          "body": "The mobile solution for crews out in the field."
+        }
+      }
     }
   },
   "footer": {

@@ -7,18 +7,18 @@
 .caretip-marketing-page {
   --caretip-marketing-measure: min(100%, 36rem);
   --caretip-marketing-measure-wide: min(100%, 42rem);
-  --caretip-marketing-card-radius: 1rem;
-  --caretip-marketing-card-pad: 1.5rem;
-  --caretip-marketing-card-pad-lg: 1.75rem;
-  --caretip-marketing-icon-size: 2.875rem;
-  --caretip-marketing-icon-size-lg: 3.375rem;
-  --caretip-marketing-icon-radius: 0.875rem;
+  --caretip-marketing-card-radius: 1.25rem;
+  --caretip-marketing-card-pad: 1.75rem;
+  --caretip-marketing-card-pad-lg: 2rem;
+  --caretip-marketing-icon-size: 3rem;
+  --caretip-marketing-icon-size-lg: 3.25rem;
+  --caretip-marketing-icon-radius: 1rem;
   --caretip-marketing-shadow-card:
-    0 1px 2px rgba(15, 23, 42, 0.03),
-    0 8px 24px -8px rgba(15, 23, 42, 0.07);
+    0 1px 2px rgba(0, 0, 0, 0.04),
+    0 10px 30px rgba(0, 0, 0, 0.06);
   --caretip-marketing-shadow-card-hover:
-    0 2px 4px rgba(15, 23, 42, 0.04),
-    0 16px 40px -10px rgba(15, 23, 42, 0.09);
+    0 2px 4px rgba(0, 0, 0, 0.04),
+    0 16px 40px rgba(0, 0, 0, 0.09);
 }
 
 /* —— Section intros: headlines always visible (never opacity-gated) —— */

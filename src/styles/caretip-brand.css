@@ -6,3 +6,24 @@
   --caretip-brand-orange: #e9781c;
   --caretip-brand-orange-hover: #ffb04a;
 }
+
+/**
+ * Official CareTip logo mark — transparent plate only.
+ * Never inherit .caretip-image-frame muted gradients / loading boxes.
+ */
+.caretip-brand-logo {
+  position: relative;
+  display: block;
+  overflow: visible;
+  background: transparent !important;
+  background-image: none !important;
+  box-shadow: none !important;
+  border: 0 !important;
+}
+
+.caretip-brand-logo img,
+.caretip-site-footer .caretip-brand-logo,
+.caretip-site-footer-brand .caretip-brand-logo {
+  background: transparent !important;
+  box-shadow: none !important;
+}

@@ -52,7 +52,7 @@ export const INDUSTRY_NAV_ITEMS: IndustryNavItem[] = [
   },
 ];
 
-/** Homepage teaser cards (only two featured). */
+/** Homepage featured subset (legacy); landing overview now uses all industry pages. */
 export const INDUSTRY_TEASER_IDS = ["midwives", "field-service"] as const;
 
 /** All pages that share the industry template (nav + teaser destinations). */

@@ -1,9 +1,9 @@
-import { Link } from "react-router";
 import { useMemo, memo } from "react";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
 import { LanguageSwitcher } from "@/components/i18n/LanguageSwitcher";
 import { PrefetchLink } from "@/app/components/PrefetchLink";
+import { CareTipLogo } from "@/app/components/CareTipLogo";
 import { usePublicMountProbe } from "@/lib/publicMountProbe";
 import { LandingCopySentences } from "@/components/landing/LandingCopySentences";
 import { FacebookIcon, InstagramIcon, TikTokIcon } from "@/components/social/SocialBrandIcons";
@@ -103,7 +103,14 @@ export const Footer = memo(function Footer({
       <div className="relative mx-auto max-w-7xl px-4 py-12 sm:px-6 sm:py-16 lg:px-8">
         <div className="caretip-site-footer-columns mb-12 grid grid-cols-2 gap-9 sm:mb-16 sm:gap-11 lg:grid-cols-12 lg:gap-10">
           <div className="col-span-2 space-y-6 lg:col-span-5">
-            <h3 className="text-xl font-bold text-white">{t("footer.brandTitle")}</h3>
+            <PrefetchLink
+              to="/"
+              className="caretip-site-footer-brand inline-flex max-w-[min(220px,70vw)] items-center outline-none focus-visible:ring-2 focus-visible:ring-white/40"
+              onClick={handleLinkClick}
+              aria-label={t("footer.brandTitle")}
+            >
+              <CareTipLogo size="drawer" variant="wordmark" tone="white" />
+            </PrefetchLink>
             <LandingCopySentences
               text={t("footer.brandBlurb")}
               layout="paragraphs"

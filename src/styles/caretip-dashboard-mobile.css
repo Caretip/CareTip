@@ -44,13 +44,6 @@
     line-height: 0;
   }
 
-  /* Dashboard header — logo should be icon-only (no gradient “card/box” behind it). */
-  .caretip-dashboard-header-bar
-    .caretip-dashboard-header-brand
-    .caretip-image-frame {
-    background: transparent !important;
-  }
-
   .caretip-dashboard-header-bar .caretip-dashboard-header-trailing {
     flex-shrink: 0;
     gap: 0.5rem;

@@ -168,20 +168,52 @@
   }
 }
 
-/* —— Hero animated word reel —— */
-@keyframes caretip-hero-word-enter {
-  from {
-    top: 100%;
-    opacity: 0;
-  }
-  to {
-    top: 0%;
-    opacity: 1;
-  }
+/* —— Hero animated word reel — sequential exit → enter (one word visible) —— */
+.caretip-hero-animated-word__slide {
+  opacity: 1;
+  transform: translateY(0);
+  text-shadow: none;
+  filter: none;
+  will-change: opacity, transform;
+}
+
+.caretip-hero-animated-word__slide--idle {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.caretip-hero-animated-word__slide--exit {
+  opacity: 0;
+  transform: translateY(-35%);
+  transition:
+    opacity 0.32s cubic-bezier(0.22, 1, 0.36, 1),
+    transform 0.32s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .caretip-hero-animated-word__slide--enter {
-  animation: caretip-hero-word-enter 0.95s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  animation: caretip-hero-word-enter-y 0.42s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes caretip-hero-word-enter-y {
+  from {
+    opacity: 0;
+    transform: translateY(40%);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .caretip-hero-animated-word__slide,
+  .caretip-hero-animated-word__slide--exit,
+  .caretip-hero-animated-word__slide--enter {
+    transition: none !important;
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
 }
 
 /* —— Hero float pills —— */

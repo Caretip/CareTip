@@ -18,7 +18,6 @@ import { PricingControlsPanel } from "@/components/pricing/PricingControlsPanel"
 import { PricingHero } from "@/components/pricing/PricingHero";
 import { PricingCardsHotels } from "@/components/pricing/PricingCardsHotels";
 import { PricingYearlyNotice } from "@/components/pricing/PricingYearlyNotice";
-import { PricingTrialCta } from "@/components/pricing/PricingTrialCta";
 import { usePublicMountProbe } from "@/lib/publicMountProbe";
 
 const CTA_TRUST_KEYS = ["noCreditCard", "gdpr", "cancelAnytime"] as const;
@@ -65,11 +64,6 @@ export function PricingPage() {
                 />
               </div>
             </div>
-
-            <PricingTrialCta
-              className="caretip-pricing-trial-cta mx-auto max-w-3xl"
-              billingCycle={billingCycle}
-            />
           </div>
         </section>
 

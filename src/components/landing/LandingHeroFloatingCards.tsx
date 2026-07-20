@@ -24,7 +24,7 @@ export function LandingHeroFloatingCards({
       data-hero-slide={activeFrameKey}
       data-hero-float-variant={variant}
     >
-      <LandingHeroTipExperiencePanel key={activeFrameKey} />
+      <LandingHeroTipExperiencePanel />
     </div>
   );
 }
