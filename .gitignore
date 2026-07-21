@@ -54,53 +54,9 @@ Desktop.ini
 *.njsproj
 *.sln
 
-# --- Markdown: local audits only; allowlisted docs stay tracked ---
+# --- Markdown: README only; all other *.md stay local / untracked ---
 *.md
 !/README.md
-!/github-cleanup-audit.md
-!/disabled-workflows-report.md
-!/dashboard-ux-audit.md
-!/mobile-dashboard-audit-v2.md
-!/dashboard-mobile-responsiveness-audit.md
-!/navigation-flash-redirect-audit.md
-!/content-reduction-report.md
-!/auth-root-cause-analysis.md
-!/auth-navigation-audit-v2.md
-!/auth-mobile-consistency-audit.md
-!/auth-performance-report-v2.md
-!/docs/PERFORMANCE_AUDIT_REPORT.md
-!/docs/PERFORMANCE_OPTIMIZATION_ROADMAP.md
-!/docs/PERFORMANCE_IMPLEMENTATION_REPORT.md
-!/docs/SPRINT81_PERFORMANCE_REFINEMENT_REPORT.md
-!/docs/MOBILE_EXPERIENCE_AUDIT.md
-!/docs/HERO_PERSONALITY_SYSTEM.md
-!/docs/PREMIUM_DESIGN_LANGUAGE_AUDIT.md
-!/docs/UX_REFINEMENT_REPORT.md
-!/docs/DEV_PERFORMANCE_AUDIT.md
-!/docs/QR_TEMPLATE_GALLERY_REFINEMENT.md
-!/docs/QR_SCAN_VALIDATION_ROOT_CAUSE_REPORT.md
-!/docs/PDF_EXPORT_PARITY_FIX_REPORT.md
-!/docs/EMPLOYEE_ENTITLEMENT_FLASH_FIX_REPORT.md
-!/docs/BUSINESS_ENTITLEMENT_FLICKER_FIX.md
-!/docs/MOBILE_INTERACTION_FIXES.md
-!/docs/DASHBOARD_FILTER_UX_AUDIT.md
-!/docs/QR_STUDIO_PERFORMANCE_OPTIMIZATION.md
-!/docs/QR_ANALYTICS_CONSOLIDATION.md
-!/FINAL_DASHBOARD_AUDIT.md
-!/PHASE1_RESULTS.md
-!/PHASE2_RESULTS.md
-!/PHASE3_RESULTS.md
-!/PHASE4_RESULTS.md
-!/PHASE10_TEST_SUITE_STABILIZATION_REPORT.md
-!/PHASE11_GLOBAL_TRANSACTIONS_AUDIT.md
-!/PHASE11_GLOBAL_TRANSACTIONS_TIMESTAMP_IMPLEMENTATION.md
-!/DASHBOARD_OPTIMIZATION_PLAN.md
-!/DASHBOARD_PERFORMANCE_EVIDENCE.md
-!/DASHBOARD_PERFORMANCE_AUDIT.md
-!/DASHBOARD_RUNTIME_PROFILER.md
-!/POST_LOGIN_RENDER_PROFILING.md
-!/POST_LOGIN_DASHBOARD_RENDER_AUDIT.md
-!/POST_LOGIN_DASHBOARD_RENDER_IMPLEMENTATION.md
 
 # --- Local restore / accidental paste dumps ---
 .restore_*.txt
