@@ -381,8 +381,8 @@
       "story": {
         "eyebrow": "About us",
         "title": "Two cities. One mission: Appreciation you can actually feel on your account.",
-        "p1": "Behind CareTip are the two of us: Albertina & Fanny—two Berliners who share a deep love for hospitality and service. However, the idea for CareTip was born thousands of miles away when one of us relocated to London.",
-        "p2": "There, we experienced a real culture shock in the best possible way: digital payment via scan had long been part of everyday life—and tips landed directly with the teams in seconds, without any hassle. Looking back at Germany, it almost hurt. We saw amazing service staff, midwives, and healthcare workers giving their best every day, but coming up empty-handed simply because guests no longer carried cash.",
+        "p1": "Behind CareTip are the two of us: Albertina & Fanny, two Berliners who share a deep love for hospitality and service. However, the idea for CareTip was born thousands of miles away when one of us relocated to London.",
+        "p2": "There, we experienced a real culture shock in the best possible way: digital payment via scan had long been part of everyday life, and tips landed directly with the teams in seconds, without any hassle. Looking back at Germany, it almost hurt. We saw amazing service staff, midwives, and healthcare workers giving their best every day, but coming up empty-handed simply because guests no longer carried cash.",
         "p3": "Right then, it clicked: we didn't want to be silent bystanders anymore. Our service culture urgently needs an upgrade. CareTip isn't just a software project; it's our passion project. We built it to give the people on the frontline of service the real, financial appreciation they deserve every single day.",
         "p4": "",
         "imageAlt": "Albertina and Fanny, co-founders of CareTip"
@@ -390,11 +390,11 @@
       "missionSection": {
         "eyebrow": "What we stand for",
         "title": "Built on trust. Made for teams.",
-        "m1Title": "Teams are Rewarded 💎",
+        "m1Title": "Teams are Rewarded",
         "m1Body": "Service staff deserve recognition that reaches them directly. Cashless, without detours, and with zero administrative overhead.",
-        "m2Title": "Stripe-Secured Payments 🔒",
+        "m2Title": "Stripe-Secured Payments",
         "m2Body": "Every tip runs securely through the trusted Stripe Checkout. Safe, transparent from scan to payout, and optimized for European businesses.",
-        "m3Title": "Transparent Management 📊",
+        "m3Title": "Transparent Management",
         "m3Body": "Managers get clear, live records and fair distribution. No black box, just trust in every single shift."
       },
       "ctaTitle": "Ready for fair tipping in your team?",
@@ -2675,7 +2675,7 @@
     "simpleSetup": {
       "pill": "Setup in minutes",
       "pillSub": "",
-      "title": "A quick journey from setup to tips",
+      "title": "A quick journey from <hl>setup to tips</hl>",
       "subtitle": "Four steps from signup to your first tip. No hardware, no IT project.",
       "step1Title": "Create your account",
       "step1Desc": "Your workspace is ready in under a minute.",
@@ -2856,7 +2856,7 @@
     },
     "audienceBenefits": {
       "eyebrow": "BENEFITS AT A GLANCE",
-      "headline": "Full control for owners. More motivation for teams.",
+      "headline": "Full control for owners. <hl>More motivation</hl> for teams.",
       "businessRole": "For business owners",
       "businessTitle": "Full transparency over your team",
       "businessBody": "Manage locations, QR codes, and payouts from a single dashboard.",
@@ -2984,7 +2984,7 @@
     },
     "features": {
       "eyebrow": "Platform ecosystem",
-      "title": "One connected tipping platform",
+      "title": "One connected <hl>tipping platform</hl>",
       "subtitle": "QR codes, live analytics, and multi-location control working together so hospitality runs smoother.",
       "i1Title": "QR tipping pages",
       "i1Text": "Branded guest flows that reward great service in one scan.",
@@ -3201,7 +3201,7 @@
       }
     },
     "motivation": {
-      "title": "Finally the recognition your team deserves.",
+      "title": "Finally the <hl>recognition</hl> your team deserves.",
       "subtitle": "Anyone who gives their all every day deserves to be seen. CareTip makes performance visible, in real time, for your team and your leadership.",
       "pill": "LIVE RECOGNITION",
       "feedLabel": "ACTIVITY IN YOUR BUSINESS",
@@ -3259,7 +3259,7 @@
     },
     "industriesTeaser": {
       "eyebrow": "IN USE EVERYWHERE...",
-      "overviewHeadline": "CareTip adapts to your industry.",
+      "overviewHeadline": "CareTip adapts to <hl>your industry</hl>.",
       "overviewSubheadline": "Discover how easy digital tipping works in your field.\nClick on any industry to see the details.",
       "teasersAria": "All industries",
       "learnMore": "Learn more",
@@ -6418,6 +6418,7 @@
       "hintLiveSearch": "Results update as you type.",
       "colTransaction": "Transaction",
       "colBusiness": "Business",
+      "colDateTime": "Date & time",
       "colAmountEur": "Amount (EUR)",
       "colCaretipFee": "CareTip fee",
       "colNetToStaff": "Net to staff",

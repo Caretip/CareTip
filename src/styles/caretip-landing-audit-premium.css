@@ -220,8 +220,12 @@ html.dark .caretip-landing.caretip-landing--premium .caretip-section-intro > p {
   font-weight: 800;
 }
 
-.caretip-landing.caretip-landing--premium [data-landing-accent] .caretip-landing-accent-text {
-  letter-spacing: 0.19em;
+.caretip-landing.caretip-landing--premium [data-landing-accent-eyebrow] .caretip-landing-accent-text {
+  letter-spacing: 0.18em;
+}
+
+.caretip-landing.caretip-landing--premium [data-landing-accent-compact] .caretip-landing-accent-text {
+  letter-spacing: 0.14em;
 }
 
 /* —— Hero — tighter CTA cluster after hint removal —— */

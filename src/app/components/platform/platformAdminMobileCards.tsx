@@ -16,9 +16,23 @@ function payoutStatusLabel(status: string, t: TFunction) {
   return label === key ? status.replace(/_/g, " ") : label;
 }
 
+/** Align with platform analytics day buckets (cross-business list has no per-row TZ). */
+const PLATFORM_TX_TIMEZONE = "Europe/Berlin";
+
+function formatTransactionAt(iso: string, locale: string): string {
+  try {
+    return new Date(iso).toLocaleString(locale, {
+      dateStyle: "medium",
+      timeStyle: "short",
+      timeZone: PLATFORM_TX_TIMEZONE,
+    });
+  } catch {
+    return iso;
+  }
+}
 
 export function PlatformTransactionMobileCard({ row }: { row: GlobalTransactionRow }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const payoutClass =
     row.payoutStatus === "paid"
       ? "bg-success text-success-foreground"
@@ -40,6 +54,9 @@ export function PlatformTransactionMobileCard({ row }: { row: GlobalTransactionR
         <p className="mt-1 truncate font-mono text-[10px] text-muted-foreground">{row.stripePaymentIntentId}</p>
       ) : null}
       <p className="mt-2 text-sm font-semibold text-foreground">{row.businessName}</p>
+      <p className="mt-1 text-xs tabular-nums text-muted-foreground" title={row.createdAt}>
+        {formatTransactionAt(row.createdAt, i18n.language)}
+      </p>
       <dl className="mt-3 grid grid-cols-2 gap-x-3 gap-y-2 text-xs">
         <div>
           <dt className="font-medium uppercase tracking-wide text-muted-foreground">

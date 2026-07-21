@@ -43,7 +43,6 @@ import type {
 
 export type BusinessDashboardAnalyticsChartsProps = {
   showChartsLoading: boolean;
-  useDevDemo: boolean;
   hasTipActivityInPeriod: boolean;
   tipDistributionChartData: TipPerformanceChartRow[];
   tipDistributionTotal: number;
@@ -58,7 +57,6 @@ const CHART_SLOT_EMPTY_MIN_HEIGHT = "min-h-0";
 
 export const BusinessDashboardAnalyticsCharts = memo(function BusinessDashboardAnalyticsCharts({
   showChartsLoading,
-  useDevDemo,
   hasTipActivityInPeriod,
   tipDistributionChartData,
   tipDistributionTotal,
@@ -96,7 +94,7 @@ export const BusinessDashboardAnalyticsCharts = memo(function BusinessDashboardA
             )}
           >
             <DashboardStableChartSlot
-              loading={showChartsLoading && !useDevDemo}
+              loading={showChartsLoading}
               minHeightClass={CHART_SLOT_MIN_HEIGHT}
               contentMinHeightClass={tipsChartEmpty ? CHART_SLOT_EMPTY_MIN_HEIGHT : CHART_SLOT_MIN_HEIGHT}
               skeleton={<DashboardChartSkeleton minHeightClass="h-full min-h-0" className="h-full" />}
@@ -108,7 +106,7 @@ export const BusinessDashboardAnalyticsCharts = memo(function BusinessDashboardA
                   description={t("emptyState.chart.description")}
                 />
               ) : (
-                <DeferredContentFade show={!showChartsLoading || useDevDemo}>
+                <DeferredContentFade show={!showChartsLoading}>
                   <div className="business-dashboard-chart-frame flex h-[260px] w-full min-w-0 items-center justify-center sm:h-[290px]">
                     <ResponsiveContainer width="100%" height="100%" minWidth={0} key={`${chartRenderKey}-tips`}>
                       <AreaChart
@@ -177,7 +175,7 @@ export const BusinessDashboardAnalyticsCharts = memo(function BusinessDashboardA
             )}
           >
             <DashboardStableChartSlot
-              loading={showChartsLoading && !useDevDemo}
+              loading={showChartsLoading}
               minHeightClass={CHART_SLOT_MIN_HEIGHT}
               contentMinHeightClass={employeeChartEmpty ? CHART_SLOT_EMPTY_MIN_HEIGHT : CHART_SLOT_MIN_HEIGHT}
               skeleton={<DashboardChartSkeleton minHeightClass="h-full min-h-0" className="h-full" />}
@@ -201,7 +199,7 @@ export const BusinessDashboardAnalyticsCharts = memo(function BusinessDashboardA
                   description={t("emptyState.chart.description")}
                 />
               ) : (
-                <DeferredContentFade show={!showChartsLoading || useDevDemo}>
+                <DeferredContentFade show={!showChartsLoading}>
                   <div className="business-dashboard-chart-frame flex h-[260px] w-full min-w-0 items-center justify-center sm:h-[290px]">
                     <ResponsiveContainer width="100%" height="100%" minWidth={0} key={`${chartRenderKey}-team`}>
                       <BarChart

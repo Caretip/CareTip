@@ -104,13 +104,18 @@ export function AnimatedTestimonials({
           <motion.div variants={itemVariants} className="flex flex-col justify-center">
             <div className="space-y-6">
               {badgeText ? (
-                <div className="inline-flex items-center rounded-full bg-primary/10 px-3 py-1 text-sm font-medium text-primary">
-                  <Star className="mr-1 h-3.5 w-3.5 fill-primary" />
-                  <span>{badgeText}</span>
+                <div className="inline-flex items-center gap-2">
+                  <span
+                    aria-hidden
+                    className="h-1.5 w-1.5 shrink-0 rounded-full bg-[#EB992C] shadow-[0_0_0_3px_rgba(235,153,44,0.16)]"
+                  />
+                  <span className="text-xs font-semibold uppercase tracking-[0.18em] text-[#EB992C]">
+                    {badgeText}
+                  </span>
                 </div>
               ) : null}
 
-              <h2 className="text-3xl font-bold tracking-tighter text-foreground sm:text-4xl md:text-5xl">
+              <h2 className="text-3xl font-bold tracking-tight leading-[1.2] text-foreground sm:text-4xl md:text-5xl">
                 {title}
               </h2>
 

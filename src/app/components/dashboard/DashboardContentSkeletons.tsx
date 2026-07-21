@@ -144,6 +144,9 @@ export function GlobalTransactionsTableSkeleton({
             <ShimmerBar className="h-4 w-32" />
           </td>
           <td className="px-4 py-3.5">
+            <ShimmerBar className="h-4 w-28" />
+          </td>
+          <td className="px-4 py-3.5">
             <ShimmerBar className="ml-auto h-4 w-16" />
           </td>
           <td className="px-4 py-3.5">

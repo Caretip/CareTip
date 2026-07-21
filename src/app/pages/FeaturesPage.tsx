@@ -95,6 +95,7 @@ export function FeaturesPage() {
                     <article className={cardClassName}>
                       <div className="flex flex-1 flex-col p-4 sm:p-5">
                         <LandingSectionAccent
+                          compact
                           variant={featureAccentVariants[idx % featureAccentVariants.length]}
                           className="caretip-landing-feature-accent mb-2.5 sm:mb-3"
                         >

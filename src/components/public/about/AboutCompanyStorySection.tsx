@@ -1,7 +1,6 @@
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
-import aboutTeamWebp from "../../../../images/about-team.webp";
-import aboutTeamAvif from "../../../../images/about-team.avif";
+import aboutUsWebp from "../../../../images/about-us.webp";
 import { MarketingPicture } from "@/lib/marketingPicture";
 import { cn } from "@/lib/utils";
 import { usePublicScrollReveal } from "@/lib/usePublicScrollReveal";
@@ -46,9 +45,8 @@ export function AboutCompanyStorySection() {
           className={cn(visualReveal.className, "caretip-about-split__media")}
         >
           <MarketingPicture
-            src={aboutTeamWebp}
-            webpSrc={aboutTeamWebp}
-            avifSrc={aboutTeamAvif}
+            src={aboutUsWebp}
+            webpSrc={aboutUsWebp}
             alt={t("staticPages.about.story.imageAlt")}
             className="caretip-about-split__photo"
             priority

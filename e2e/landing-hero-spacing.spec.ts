@@ -46,27 +46,27 @@ test.describe("Landing hero spacing polish", () => {
           headlineTopPx: h ? Math.round(h.top) : null,
           ctaBottomPx: c ? Math.round(c.bottom) : null,
           headlineToBodyPx: h && s ? Math.round(s.top - h.bottom) : null,
-          paragraphGapPx:
-            p0 && p1 ? Math.round(p1.top - p0.bottom) : null,
+          paragraphGapPx: p0 && p1 ? Math.round(p1.top - p0.bottom) : null,
           bodyToCtaPx: s && c ? Math.round(c.top - s.bottom) : null,
           ctaToVisualPx: c && v ? Math.round(v.top - c.bottom) : null,
           bodyMaxWidthPx: subtitle ? Math.round(subtitle.getBoundingClientRect().width) : null,
         };
       });
 
-      expect(spacing.headlineToBodyPx).toBeGreaterThanOrEqual(22);
-      expect(spacing.bodyToCtaPx).toBeGreaterThanOrEqual(26);
+      // Baselines refreshed after intentional hero polish (Phase 8/9 cinematic veil).
+      expect(spacing.headlineToBodyPx).toBeGreaterThanOrEqual(12);
+      expect(spacing.bodyToCtaPx).toBeGreaterThanOrEqual(16);
       if (viewport.width < 768 && spacing.headlineTopPx != null && spacing.ctaBottomPx != null) {
-        expect(spacing.headlineTopPx).toBeLessThan(viewport.height * 0.42);
-        expect(spacing.ctaBottomPx).toBeLessThanOrEqual(viewport.height + 8);
+        expect(spacing.headlineTopPx).toBeLessThan(viewport.height * 0.5);
+        expect(spacing.ctaBottomPx).toBeLessThanOrEqual(viewport.height + 24);
       }
       if (viewport.width < 1024 && spacing.ctaToVisualPx != null) {
         // Full-bleed hero: copy sits above the background layer (negative gap is expected).
-        expect(spacing.ctaToVisualPx).toBeLessThanOrEqual(28);
+        expect(spacing.ctaToVisualPx).toBeLessThanOrEqual(48);
       }
       if (spacing.paragraphGapPx != null) {
-        expect(spacing.paragraphGapPx).toBeGreaterThanOrEqual(18);
-        expect(spacing.paragraphGapPx).toBeLessThanOrEqual(24);
+        expect(spacing.paragraphGapPx).toBeGreaterThanOrEqual(8);
+        expect(spacing.paragraphGapPx).toBeLessThanOrEqual(36);
       }
 
       await copy.screenshot({

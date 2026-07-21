@@ -110,11 +110,11 @@
 .caretip-about-split__photo {
   display: block;
   width: 100%;
-  max-width: min(100%, 22rem);
+  max-width: min(100%, 25rem);
   height: auto;
   border-radius: var(--caretip-wise-editorial-radius);
   object-fit: cover;
-  aspect-ratio: 4 / 3;
+  aspect-ratio: 4 / 4.8;
   box-shadow:
     0 1px 2px rgb(15 23 42 / 0.04),
     0 18px 40px -20px rgb(15 23 42 / 0.18);
@@ -122,7 +122,7 @@
 
 @media (min-width: 1024px) {
   .caretip-about-split__photo {
-    max-width: min(100%, 26rem);
+    max-width: min(100%, 29rem);
   }
 }
 
@@ -198,13 +198,18 @@
   box-shadow: 0 1px 2px rgb(15 23 42 / 0.04);
 }
 
-.caretip-about-belief-card__index {
-  font-family: var(--font-hero-display, inherit);
-  font-size: clamp(2.5rem, 5vw, 3.75rem);
-  font-weight: 800;
-  line-height: 1;
-  letter-spacing: -0.04em;
-  color: hsl(var(--muted-foreground) / 0.22);
+.caretip-about-belief-card__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  color: var(--caretip-about-accent);
+}
+
+.caretip-about-belief-card__icon-svg {
+  width: 1.5rem;
+  height: 1.5rem;
 }
 
 .caretip-about-belief-card__title {

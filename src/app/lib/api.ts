@@ -335,7 +335,12 @@ function requestUsesCaretipProtectedApi(url: string): boolean {
  */
 function attachLatestBearer(init?: RequestInit): RequestInit {
   try {
-    if (typeof localStorage !== "undefined" && localStorage.getItem("caretip_auth_debug") === "1") {
+    // Diagnostic: never run in production builds (avoids any opt-in debug output from shipping).
+    if (
+      import.meta.env.DEV &&
+      typeof localStorage !== "undefined" &&
+      localStorage.getItem("caretip_auth_debug") === "1"
+    ) {
       const t = getToken();
       console.log("Auth token:", t && t.trim() ? "present (memory)" : "absent");
     }

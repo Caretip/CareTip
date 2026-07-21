@@ -2,34 +2,32 @@ import { test, expect } from "@playwright/test";
 import fs from "node:fs";
 import path from "node:path";
 
-const OUT_DIR = path.join(
-  "test-results",
-  "hospitality-mobile-timeline",
-  "screenshots",
-);
+const OUT_DIR = path.join("test-results", "hospitality-mobile-timeline", "screenshots");
 
 const MOBILE_WIDTHS = [320, 375, 430] as const;
 
-async function loadWhyCareTip(page: import("@playwright/test").Page) {
+/** Current landing sections that replace the retired #built-for-hospitality block. */
+const SECTION_IDS = ["industries", "business-section", "how-it-works", "recognition"] as const;
+
+async function loadLandingSections(page: import("@playwright/test").Page) {
   await page.goto("/", { waitUntil: "domcontentloaded" });
   await page.waitForSelector(".caretip-hero-section", { timeout: 20_000 });
-  await page.waitForTimeout(1200);
+  await page.waitForTimeout(800);
 
-  for (let pass = 0; pass < 12; pass += 1) {
-    const found = await page.locator("#built-for-hospitality").count();
-    if (found > 0) break;
+  for (let pass = 0; pass < 14; pass += 1) {
+    const found = await page.evaluate((ids) => ids.filter((id) => document.getElementById(id)).length, [
+      ...SECTION_IDS,
+    ]);
+    if (found >= 2) break;
     await page.evaluate(() => window.scrollBy(0, window.innerHeight * 0.9));
-    await page.waitForTimeout(450);
+    await page.waitForTimeout(400);
   }
 
-  const section = page.locator("#built-for-hospitality");
-  await expect(section).toBeAttached({ timeout: 25_000 });
-  await section.scrollIntoViewIfNeeded();
-  await page.waitForTimeout(400);
-  return section;
+  await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
+  await page.waitForTimeout(500);
 }
 
-test.describe("Why CareTip mobile feature list", () => {
+test.describe("Landing mobile section layout", () => {
   test.beforeAll(() => {
     fs.mkdirSync(OUT_DIR, { recursive: true });
   });
@@ -37,27 +35,22 @@ test.describe("Why CareTip mobile feature list", () => {
   for (const width of MOBILE_WIDTHS) {
     test(`layout at ${width}px`, async ({ page }) => {
       await page.setViewportSize({ width, height: 800 });
-      const section = await loadWhyCareTip(page);
+      await loadLandingSections(page);
 
-      const timelineVisible = await section
-        .locator(".caretip-hospitality-feature-timeline")
-        .first()
-        .evaluate((el) => getComputedStyle(el).display !== "none")
-        .catch(() => false);
-
-      expect(timelineVisible).toBe(false);
-
-      const featureList = section.locator(".caretip-hospitality-feature-list");
-      await expect(featureList).toBeVisible();
-      await expect(featureList.locator("li")).not.toHaveCount(0);
+      for (const id of SECTION_IDS) {
+        const section = page.locator(`#${id}`);
+        await expect(section).toBeAttached({ timeout: 20_000 });
+        await section.scrollIntoViewIfNeeded();
+        await expect(section).toBeVisible();
+      }
 
       const overflow = await page.evaluate(() => {
         return document.documentElement.scrollWidth > window.innerWidth + 1;
       });
       expect(overflow).toBe(false);
 
-      await featureList.screenshot({
-        path: path.join(OUT_DIR, `why-caretip-feature-list--${width}px.png`),
+      await page.locator("#business-section").screenshot({
+        path: path.join(OUT_DIR, `business-section--${width}px.png`),
       });
     });
   }

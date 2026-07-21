@@ -4,8 +4,8 @@ import { Sparkles } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
 import { MarketingPicture } from "@/lib/marketingPicture";
-import bizzyHeroWebp from "../../../../images/bizzy001.webp";
-import bizzyHeroAvif from "../../../../images/bizzy001.avif";
+import bizzyHeroWebp from "../../../../images/finalbizzy-hero.webp";
+import bizzyHeroAvif from "../../../../images/finalbizzy-hero.avif";
 import {
   BusinessHeroPulseMetrics,
   type BusinessHeroOperationalPulse,
@@ -65,8 +65,10 @@ export const BusinessDashboardMobileHero = memo(function BusinessDashboardMobile
               width={320}
               height={240}
               priority
+              loading="eager"
+              fetchPriority="high"
               fadeIn={false}
-              decoding="async"
+              decoding="sync"
             />
           </div>
         </div>

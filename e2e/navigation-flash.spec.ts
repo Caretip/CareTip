@@ -63,7 +63,9 @@ test.describe("Navigation flash regression", () => {
 
     await page.goto("/staff/preview-slug?preview=1", { waitUntil: "domcontentloaded" });
     await assertNoNotFoundFlash(page, 3000);
-    await expect(page.getByRole("heading", { name: "Preview Staff" })).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByRole("heading", { name: "Preview Staff" }).first()).toBeVisible({
+      timeout: 10_000,
+    });
   });
 
   test("canonical public path auto-redirect never flashes not-found", async ({ page }) => {

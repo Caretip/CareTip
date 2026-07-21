@@ -37,7 +37,7 @@ test.describe("Performance change stability validation", () => {
 
     await expect(page.locator(".caretip-hero-section, .caretip-hero-copy h1").first()).toBeVisible();
 
-    const belowFoldBefore = page.locator("#how-it-works, #built-for-hospitality, #business-section").first();
+    const belowFoldBefore = page.locator("#how-it-works, #business-section, #industries, #recognition").first();
     const countBefore = await belowFoldBefore.count();
     if (countBefore === 0) {
       await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight * 0.35));
@@ -46,7 +46,7 @@ test.describe("Performance change stability validation", () => {
 
     await page.evaluate(() => window.scrollTo(0, Math.min(document.body.scrollHeight * 0.55, 2400)));
     await expect(
-      page.locator("#how-it-works, #built-for-hospitality, #business-section, #for-employees").first(),
+      page.locator("#how-it-works, #business-section, #industries, #recognition, #for-employees").first(),
     ).toBeVisible({ timeout: 12_000 });
   });
 

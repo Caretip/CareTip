@@ -38,7 +38,6 @@ import { DashboardChartsIdleMount } from "../../components/dashboard/DashboardCh
 import { runWithViewportScrollPreserved } from "../../lib/dashboardScrollStability";
 import { formatEur } from "../../lib/formatEur";
 import type {
-  BusinessDashboardStats,
   EmployeeGoalProgressStatus,
   GoalPeriod,
 } from "../../lib/api";
@@ -59,13 +58,6 @@ import { DashboardViewAllLink } from "../../components/dashboard/DashboardViewAl
 import { EmployeeGoalMobileCard } from "../../components/business/businessDashboardMobileCards";
 
 import {
-  devMockBusinessOperationalPulse,
-  devMockBusinessPeriodStats,
-  devMockBusinessTipDistribution,
-  devMockBusinessEmployeePerformance,
-  shouldUseBusinessDashboardDevDemo,
-} from "../../lib/devAnalyticsMocks";
-import {
   buildEmployeePerformanceChartRows,
   buildFallbackTipPerformanceChartData,
   buildTipPerformanceChartData,
@@ -73,7 +65,6 @@ import {
   resolveBusinessDashboardChartStats,
   sumTipPerformanceTotal,
 } from "../../lib/businessDashboardChartData";
-import { dashboardChartBarFill } from "../../components/dashboard/dashboardChartTheme";
 import { DASHBOARD_EMPLOYEE_TEASER_LIMIT } from "../../components/business/insights/TopPerformersTeaser";
 import { BusinessDashboardChartsFallback } from "./BusinessDashboardChartsFallback";
 
@@ -84,10 +75,9 @@ const BusinessDashboardAnalyticsCharts = lazy(() =>
 );
 import { getAuthSessionFlags } from "../../lib/authSessionBootstrap";
 import { isOnboardingCompleted } from "../../lib/onboardingProgress";
-import { isWalkthroughDemoManager } from "../../lib/walkthroughDemo";
 import { getBusinessVerificationNoticeLabels } from "../../lib/businessVerificationNotice";
-import bizzyHeroWebp from "../../../../images/bizzy001.webp";
-import bizzyHeroAvif from "../../../../images/bizzy001.avif";
+import bizzyHeroWebp from "../../../../images/finalbizzy-hero.webp";
+import bizzyHeroAvif from "../../../../images/finalbizzy-hero.avif";
 import { BusinessDashboardMobileHero } from "../../components/business/BusinessDashboardMobileHero";
 import { BusinessDashboardHeroActions } from "../../components/business/BusinessDashboardHeroActions";
 
@@ -181,44 +171,23 @@ export const BusinessDashboard = memo(function BusinessDashboard() {
       ).length,
     [employees],
   );
-  const useDevDemo = shouldUseBusinessDashboardDevDemo({
-    isDev: import.meta.env.DEV,
-    isWalkthroughDemoAccount: isWalkthroughDemoManager(user),
-    statsLoading: isMetricsInitialLoad,
-    pendingVerification: showOnboardingReviewNotice,
-    tipCount: displayStats?.tipCount ?? 0,
-  });
-
-  const devPeriod = useDevDemo ? devMockBusinessPeriodStats(analyticsTimeframe) : null;
-  const analyticsStats: BusinessDashboardStats | null = useDevDemo
-    ? {
-        ...(displayStats ?? {}),
-        totalTips: devPeriod!.totalTips,
-        tipCount: devPeriod!.tipCount,
-        employeeCount: devPeriod!.employeeCount,
-      }
-    : displayStats;
-
-  const operationalPulse = useDevDemo
-    ? devMockBusinessOperationalPulse()
-    : analyticsTimeframe === "month"
+  /** Always from GET /api/business/me/stats — never client-side financial KPI mocks. */
+  const operationalPulse =
+    analyticsTimeframe === "month"
       ? (displayStats?.operationalPulse ?? heroStats?.operationalPulse)
       : (heroStats?.operationalPulse ?? displayStats?.operationalPulse);
 
-  const hasTipActivityInPeriod = useDevDemo || (displayMetrics?.totalTips ?? 0) > 0;
+  const hasTipActivityInPeriod = (displayMetrics?.totalTips ?? 0) > 0;
 
   const chartPeriodStats = useMemo(
-    () =>
-      useDevDemo
-        ? null
-        : resolveBusinessDashboardChartStats(analyticsTimeframe, displayStats, statsTimeframe),
-    [useDevDemo, analyticsTimeframe, displayStats, statsTimeframe, dataRevision],
+    () => resolveBusinessDashboardChartStats(analyticsTimeframe, displayStats, statsTimeframe),
+    [analyticsTimeframe, displayStats, statsTimeframe, dataRevision],
   );
 
-  const dailyTipRows = useMemo(() => {
-    if (useDevDemo) return devMockBusinessTipDistribution(analyticsTimeframe);
-    return chartPeriodStats?.dailyTipDistribution ?? [];
-  }, [useDevDemo, analyticsTimeframe, chartPeriodStats?.dailyTipDistribution]);
+  const dailyTipRows = useMemo(
+    () => chartPeriodStats?.dailyTipDistribution ?? [],
+    [chartPeriodStats?.dailyTipDistribution],
+  );
 
   const tipDistributionChartData = useMemo(() => {
     const built = buildTipPerformanceChartData(dailyTipRows, analyticsTimeframe, t);
@@ -243,20 +212,17 @@ export const BusinessDashboard = memo(function BusinessDashboard() {
     [dailyTipRows],
   );
 
-  const hasChartTipActivity = useDevDemo
-    ? hasTipActivityInPeriod
-    : hasTipPerformanceChartActivity(dailyTipRows, chartPeriodStats?.totalTips ?? displayMetrics?.totalTips);
+  const hasChartTipActivity = hasTipPerformanceChartActivity(
+    dailyTipRows,
+    chartPeriodStats?.totalTips ?? displayMetrics?.totalTips,
+  );
 
-  const employeePerformance = useMemo(() => {
-    if (useDevDemo) {
-      return devMockBusinessEmployeePerformance(
-        Array.from({ length: 3 }, (_, index) => dashboardChartBarFill(index, 3)),
-      );
-    }
-    return buildEmployeePerformanceChartRows(chartPeriodStats?.employees ?? displayStats?.employees, 3);
-  }, [useDevDemo, chartPeriodStats?.employees, displayStats?.employees]);
+  const employeePerformance = useMemo(
+    () => buildEmployeePerformanceChartRows(chartPeriodStats?.employees ?? displayStats?.employees, 3),
+    [chartPeriodStats?.employees, displayStats?.employees],
+  );
 
-  const showChartsLoading = isAnalyticsSectionLoading && !useDevDemo;
+  const showChartsLoading = isAnalyticsSectionLoading;
 
   const employeeGoalsList =
     chartPeriodStats?.employeeGoals ?? displayStats?.employeeGoals ?? [];
@@ -296,16 +262,15 @@ export const BusinessDashboard = memo(function BusinessDashboard() {
     (displayStats?.employees ?? []).length > 0 &&
     (displayStats?.employees ?? []).some((e) => e.slug == null || e.slug === "");
 
-  const metricsBootBlocking = isMetricsInitialLoad && !useDevDemo;
+  const metricsBootBlocking = isMetricsInitialLoad;
   const {
     showInitialSkeleton: showMetricsSkeleton,
     coveredByGlobalLoader: globalLoaderCoversBoot,
   } = useBusinessPageBoot("overview", metricsBootBlocking);
 
-  const periodMetricsLoading = showMetricsSkeleton || (!useDevDemo && !displayMetrics);
-  const heroPulseLoading =
-    !useDevDemo && !isMetricsSettled && !operationalPulse;
-  const showGoalsLoading = isGoalsInitialLoad && !useDevDemo && !globalLoaderCoversBoot;
+  const periodMetricsLoading = showMetricsSkeleton || !displayMetrics;
+  const heroPulseLoading = !isMetricsSettled && !operationalPulse;
+  const showGoalsLoading = isGoalsInitialLoad && !globalLoaderCoversBoot;
   const periodRefreshingLabel = t("dashboard.refresh.updating");
   const isLargeScreen = useMinWidthMedia(1024);
 
@@ -316,7 +281,7 @@ export const BusinessDashboard = memo(function BusinessDashboard() {
   );
 
   const kpiUsable =
-    !periodMetricsLoading && (Boolean(displayMetrics) || hasVisibleMetrics || useDevDemo);
+    !periodMetricsLoading && (Boolean(displayMetrics) || hasVisibleMetrics);
   // Gate Motion on KPI usability (same commit as metrics) — avoid idle flip adding a render.
   const blockMotion = useMemo(
     () =>
@@ -332,20 +297,13 @@ export const BusinessDashboard = memo(function BusinessDashboard() {
   const motionReady = kpiUsable;
 
   const dashboardMetrics = useMemo(() => {
-    if (useDevDemo && devPeriod) {
-      return {
-        totalTips: devPeriod.totalTips,
-        tipCount: devPeriod.tipCount,
-        employeeCount: devPeriod.employeeCount,
-      };
-    }
     if (!displayMetrics) return null;
     return {
       ...displayMetrics,
       employeeCount:
         activeRosterCount > 0 ? activeRosterCount : (displayMetrics.employeeCount ?? 0),
     };
-  }, [useDevDemo, devPeriod, displayMetrics, activeRosterCount]);
+  }, [displayMetrics, activeRosterCount]);
 
   // ProtectedRoute guarantees user; avoid a second full-screen hold under layout chrome.
   if (!user) {
@@ -481,8 +439,10 @@ export const BusinessDashboard = memo(function BusinessDashboard() {
                   alt=""
                   className="business-hero-illustration relative z-[1] block w-full max-w-[min(100%,20rem)] object-cover object-center max-lg:mx-auto lg:max-w-none lg:object-left"
                   priority
+                  loading="eager"
+                  fetchPriority="high"
                   fadeIn={false}
-                  decoding="async"
+                  decoding="sync"
                 />
               </div>
             </motion.div>
@@ -698,7 +658,6 @@ export const BusinessDashboard = memo(function BusinessDashboard() {
               >
                 <BusinessDashboardAnalyticsCharts
                   showChartsLoading={showChartsLoading}
-                  useDevDemo={useDevDemo}
                   hasTipActivityInPeriod={hasChartTipActivity}
                   tipDistributionChartData={tipDistributionChartData}
                   tipDistributionTotal={tipDistributionTotal}
@@ -755,7 +714,7 @@ export const BusinessDashboard = memo(function BusinessDashboard() {
                   )}
                 >
                   <DashboardStableChartSlot
-                    loading={showGoalsLoading && !useDevDemo}
+                    loading={showGoalsLoading}
                     minHeightClass="min-h-[280px]"
                     contentMinHeightClass={
                       !showGoalsLoading && employeeGoalsList.length === 0 ? "min-h-0" : "min-h-[280px]"
@@ -767,7 +726,7 @@ export const BusinessDashboard = memo(function BusinessDashboard() {
                       />
                     }
                   >
-                    {showGoalsLoading && !useDevDemo ? null : employeeGoalsList.length === 0 ? (
+                    {showGoalsLoading ? null : employeeGoalsList.length === 0 ? (
                       <BusinessDashboardAnalyticsEmpty
                         variant="panel"
                         icon={<CareIcon name="goals" size="lg" className="text-muted-foreground" />}

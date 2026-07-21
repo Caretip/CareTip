@@ -104,6 +104,17 @@ async function dumpProfile(
   settleMs: number,
 ) {
   await page.waitForTimeout(settleMs);
+  // Profiler may attach slightly after shell mount — retry briefly.
+  for (let i = 0; i < 8; i += 1) {
+    const ready = await page.evaluate(() => {
+      const api = (window as unknown as {
+        __DASHBOARD_PROFILE__?: { snapshot: () => unknown };
+      }).__DASHBOARD_PROFILE__;
+      return Boolean(api?.snapshot?.());
+    });
+    if (ready) break;
+    await page.waitForTimeout(500);
+  }
   const payload = await page.evaluate(() => {
     const api = (window as unknown as {
       __DASHBOARD_PROFILE__?: {
@@ -124,6 +135,19 @@ async function dumpProfile(
   fs.writeFileSync(mdPath, payload.markdown || `# ${basename}\n\n(empty)\n`, "utf8");
   console.log("Wrote", jsonPath);
   return payload;
+}
+
+async function gotoDashboard(page: import("@playwright/test").Page, url: string) {
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    try {
+      await page.goto(url, { waitUntil: "domcontentloaded", timeout: 45_000 });
+      return;
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      if (!/ERR_ABORTED|net::ERR|Navigation/.test(msg) || attempt === 2) throw err;
+      await page.waitForTimeout(750);
+    }
+  }
 }
 
 test.describe("Dashboard performance evidence capture", () => {
@@ -163,25 +187,39 @@ test.describe("Dashboard performance evidence capture", () => {
         });
       },
     );
-    await page.route("**/api/business/profile**", json({ id: "biz", name: "Biz", verificationStatus: "verified" }, LIVE_LARGE.profileMs));
+    await page.route(
+      "**/api/business/profile**",
+      json(
+        {
+          id: "biz",
+          name: "Biz",
+          verificationStatus: "verified",
+          subscriptionTier: "premium",
+          hasActiveSubscription: true,
+          accessSource: "subscription",
+          subscriptionStatus: "active",
+        },
+        LIVE_LARGE.profileMs,
+      ),
+    );
     await page.route("**/api/me/notifications/unread-count**", json({ unreadCount: 3 }, LIVE_LARGE.notifUnreadMs));
     await page.route("**/api/me/notifications?**", json({ items: [{ id: "1" }], total: 1 }, LIVE_LARGE.notifListMs));
 
     await page.setViewportSize({ width: 1440, height: 900 });
-    await page.goto("/dashboard?dashProfile=1&dashScenario=cold_large", { waitUntil: "domcontentloaded" });
-    await page.waitForSelector(".caretip-dashboard-shell", { timeout: 30_000 });
+    await gotoDashboard(page, "/dashboard?dashProfile=1&dashScenario=cold_large");
+    await page.waitForSelector(".caretip-dashboard-shell", { timeout: 45_000 });
     const bizCold = await dumpProfile(page, "BUSINESS_DASHBOARD_PROFILE", 8000);
     expect(bizCold.snapshot).toBeTruthy();
 
     // Warm: reload same session (second navigation)
-    await page.goto("/dashboard?dashProfile=1&dashScenario=warm_large", { waitUntil: "domcontentloaded" });
-    await page.waitForSelector(".caretip-dashboard-shell", { timeout: 30_000 });
+    await gotoDashboard(page, "/dashboard?dashProfile=1&dashScenario=warm_large");
+    await page.waitForSelector(".caretip-dashboard-shell", { timeout: 45_000 });
     const bizWarm = await dumpProfile(page, "BUSINESS_DASHBOARD_PROFILE_WARM", 5000);
     expect(bizWarm.snapshot).toBeTruthy();
 
     // Hard refresh
     await page.reload({ waitUntil: "domcontentloaded" });
-    await page.waitForSelector(".caretip-dashboard-shell", { timeout: 30_000 });
+    await page.waitForSelector(".caretip-dashboard-shell", { timeout: 45_000 });
     await dumpProfile(page, "BUSINESS_DASHBOARD_PROFILE_HARD_REFRESH", 6000);
 
     // Small dataset scenario — re-route faster stats
@@ -205,8 +243,8 @@ test.describe("Dashboard performance evidence capture", () => {
         });
       },
     );
-    await page.goto("/dashboard?dashProfile=1&dashScenario=cold_small", { waitUntil: "domcontentloaded" });
-    await page.waitForSelector(".caretip-dashboard-shell", { timeout: 30_000 });
+    await gotoDashboard(page, "/dashboard?dashProfile=1&dashScenario=cold_small");
+    await page.waitForSelector(".caretip-dashboard-shell", { timeout: 45_000 });
     await dumpProfile(page, "BUSINESS_DASHBOARD_PROFILE_SMALL", 2500);
 
     // Merge primary business file should remain the cold_large capture — rewrite primary from cold
@@ -221,12 +259,22 @@ test.describe("Dashboard performance evidence capture", () => {
     await primeE2ESessionToken(page);
     await page.route("**/api/**", json({ ok: true }, 20));
     await page.route("**/api/auth/refresh", json({ token: employee.token, user: employee.user }));
-    await page.route("**/api/employees/me**", json({
-      id: "e2e-emp-row",
-      slug: "emp",
-      businessName: "Biz",
-      businessLogo: null,
-    }, 120));
+    await page.route(
+      "**/api/employees/me**",
+      json(
+        {
+          id: "e2e-emp-row",
+          slug: "emp",
+          businessName: "Biz",
+          businessLogo: null,
+          subscriptionTier: "premium",
+          hasActiveSubscription: true,
+          accessSource: "subscription",
+          subscriptionStatus: "active",
+        },
+        120,
+      ),
+    );
     await page.route("**/api/tips/employee**", json({
       totalEarningsEur: 120,
       totalSupporters: 4,
@@ -238,8 +286,8 @@ test.describe("Dashboard performance evidence capture", () => {
     await page.route("**/api/me/notifications/unread-count**", json({ unreadCount: 1 }, 50));
     await page.route("**/api/me/notifications?**", json({ items: [], total: 0 }, 100));
 
-    await page.goto("/employee/dashboard?dashProfile=1&dashScenario=cold", { waitUntil: "domcontentloaded" });
-    await page.waitForSelector(".caretip-dashboard-shell", { timeout: 30_000 });
+    await gotoDashboard(page, "/employee/dashboard?dashProfile=1&dashScenario=cold");
+    await page.waitForSelector(".caretip-dashboard-shell", { timeout: 45_000 });
     const emp = await dumpProfile(page, "EMPLOYEE_DASHBOARD_PROFILE", 4000);
     expect(emp.snapshot).toBeTruthy();
 
@@ -282,9 +330,7 @@ test.describe("Dashboard performance evidence capture", () => {
     await page.route("**/api/me/notifications/unread-count**", json({ unreadCount: 0 }, 40));
     await page.route("**/api/me/notifications?**", json({ items: [], total: 0 }, 80));
 
-    await page.goto("/platform-admin/dashboard?dashProfile=1&dashScenario=cold", {
-      waitUntil: "domcontentloaded",
-    });
+    await gotoDashboard(page, "/platform-admin/dashboard?dashProfile=1&dashScenario=cold");
     await page.waitForSelector(".caretip-dashboard-shell", { timeout: 45_000 });
     const adm = await dumpProfile(page, "ADMIN_DASHBOARD_PROFILE", 5000);
     expect(adm.snapshot).toBeTruthy();

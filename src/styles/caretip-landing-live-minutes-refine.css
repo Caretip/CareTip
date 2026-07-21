@@ -716,7 +716,7 @@ html.dark .caretip-landing #how-it-works .caretip-live-minutes-step--active {
 
 .caretip-landing #how-it-works .caretip-live-minutes-onboarding-preview {
   --caretip-onboarding-slot-w: min(100%, 20rem);
-  --caretip-onboarding-slot-h: clamp(25rem, 58vh, 34rem);
+  --caretip-onboarding-slot-h: clamp(29rem, 64vh, 38rem);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -791,15 +791,15 @@ html.dark .caretip-landing #how-it-works .caretip-live-minutes-step--active {
 
 @media (min-width: 640px) {
   .caretip-landing #how-it-works .caretip-live-minutes-onboarding-preview {
-    --caretip-onboarding-slot-w: min(100%, 22rem);
-    --caretip-onboarding-slot-h: clamp(28rem, 62vh, 36rem);
+    --caretip-onboarding-slot-w: min(100%, 22.5rem);
+    --caretip-onboarding-slot-h: clamp(32rem, 68vh, 40rem);
   }
 }
 
 @media (min-width: 1024px) {
   .caretip-landing #how-it-works .caretip-live-minutes-onboarding-preview {
-    --caretip-onboarding-slot-w: min(100%, 27.5rem);
-    --caretip-onboarding-slot-h: clamp(42rem, 72vh, 48rem);
+    --caretip-onboarding-slot-w: min(100%, 29rem);
+    --caretip-onboarding-slot-h: clamp(46rem, 78vh, 54rem);
   }
 
   .caretip-landing #how-it-works .caretip-live-minutes-onboarding-device {
@@ -818,7 +818,7 @@ html.dark .caretip-landing #how-it-works .caretip-live-minutes-step--active {
 
 @media (min-width: 1280px) {
   .caretip-landing #how-it-works .caretip-live-minutes-onboarding-preview {
-    --caretip-onboarding-slot-w: min(100%, 30rem);
-    --caretip-onboarding-slot-h: clamp(44rem, 74vh, 50rem);
+    --caretip-onboarding-slot-w: min(100%, 32rem);
+    --caretip-onboarding-slot-h: clamp(48rem, 80vh, 56rem);
   }
 }

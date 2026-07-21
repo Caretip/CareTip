@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { dispatchLandingIntent } from "../../lib/landingAiIntent";
-import { useTranslation } from "react-i18next";
+import { useTranslation, Trans } from "react-i18next";
 import { LiveInMinutesLaptopDemo } from "./LiveInMinutesLaptopDemo";
 import {
   preloadLiveMinutesOnboardingScreens,
@@ -10,6 +10,7 @@ import { landingCopyVisible, landingUi } from "@/components/landing/landingUi";
 import { landingType } from "@/components/landing/landingTypography";
 import { LandingSectionAccent } from "@/components/landing/LandingSectionAccent";
 import { LandingReveal } from "@/components/landing/LandingReveal";
+import { landingHeadlineHighlightComponents } from "@/components/landing/landingRichText";
 import { landingStaggerDelay } from "@/lib/landingMotion";
 import { cn } from "@/lib/utils";
 
@@ -77,7 +78,12 @@ export function SimpleSetupSection() {
               ) : null}
             </div>
 
-            <h2 className={landingUi.headline}>{t("landing.simpleSetup.title")}</h2>
+            <h2 className={landingUi.headline}>
+              <Trans
+                i18nKey="landing.simpleSetup.title"
+                components={landingHeadlineHighlightComponents}
+              />
+            </h2>
             {landingCopyVisible(sectionSubtitle) ? (
               <p className={cn(landingUi.subtitle, "max-md:max-w-[min(280px,30ch)]")}>{sectionSubtitle}</p>
             ) : null}

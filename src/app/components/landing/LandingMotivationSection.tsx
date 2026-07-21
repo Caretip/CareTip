@@ -1,10 +1,11 @@
 import { useMemo } from "react";
 import { Link } from "react-router";
-import { useTranslation } from "react-i18next";
+import { useTranslation, Trans } from "react-i18next";
 import { LandingBenefitChecklist } from "@/components/landing/LandingCheckBadge";
 import { LandingSectionAccent } from "@/components/landing/LandingSectionAccent";
 import { LandingReveal } from "@/components/landing/LandingReveal";
 import { landingCopyVisible, landingUi } from "@/components/landing/landingUi";
+import { landingHeadlineHighlightComponents } from "@/components/landing/landingRichText";
 import { cn } from "@/lib/utils";
 import { LandingMotivationActivityStack } from "./LandingMotivationActivityStack";
 import { LandingCopySentences } from "@/components/landing/LandingCopySentences";
@@ -54,7 +55,12 @@ export function LandingMotivationSection() {
               </div>
             ) : null}
 
-            <h2 className={landingUi.headline}>{t("landing.motivation.title")}</h2>
+            <h2 className={landingUi.headline}>
+              <Trans
+                i18nKey="landing.motivation.title"
+                components={landingHeadlineHighlightComponents}
+              />
+            </h2>
 
             {landingCopyVisible(subtitle) ? (
               <LandingCopySentences

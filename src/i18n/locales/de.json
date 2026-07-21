@@ -381,8 +381,8 @@
       "story": {
         "eyebrow": "Über uns",
         "title": "Zwei Städte. Eine Mission: Wertschätzung, die man auf dem Konto spürt.",
-        "p1": "Hinter CareTip stehen wir: Albertina & Fanny – zwei Berlinerinnen, die eine tiefe Liebe zur Gastronomie und zum Service teilen. Die Idee zu CareTip wurde jedoch Tausende Kilometer entfernt geboren, als eine von uns ihren Lebensmittelpunkt nach London verlegte.",
-        "p2": "Dort erlebten wir einen echten Kulturschock im besten Sinne: Digitales Bezahlen per Scan gehörte längst zum Alltag – und das Trinkgeld landete sekundenschnell und unkompliziert direkt bei den Teams.",
+        "p1": "Hinter CareTip stehen wir: Albertina & Fanny, zwei Berlinerinnen, die eine tiefe Liebe zur Gastronomie und zum Service teilen. Die Idee zu CareTip wurde jedoch Tausende Kilometer entfernt geboren, als eine von uns ihren Lebensmittelpunkt nach London verlegte.",
+        "p2": "Dort erlebten wir einen echten Kulturschock im besten Sinne: Digitales Bezahlen per Scan gehörte längst zum Alltag, und das Trinkgeld landete sekundenschnell und unkompliziert direkt bei den Teams.",
         "p3": "Als wir zurück nach Deutschland blickten, tat es fast ein bisschen weh. Wir sahen großartige Servicekräfte, Hebammen und Pflegekräfte, die jeden Tag ihr Bestes geben, aber leer ausgingen, weil die Gäste schlicht kein Bargeld mehr in den Taschen hatten.",
         "p4": "Genau in diesem Moment wurde uns klar: Wir wollen nicht länger stumme Zuschauerinnen sein. Unsere Service-Kultur braucht dringend ein Upgrade. CareTip ist kein reines Software-Projekt, sondern unsere Herzensangelegenheit. Wir haben es gebaut, um den Menschen an der Service-Front die echte, finanzielle Wertschätzung zurückzugeben, die sie jeden einzelnen Tag verdienen.",
         "imageAlt": "Albertina und Fanny, Gründerinnen von CareTip"
@@ -390,11 +390,11 @@
       "missionSection": {
         "eyebrow": "Wofür stehen wir",
         "title": "Auf Vertrauen gebaut. Für Teams gemacht.",
-        "m1Title": "Teams werden belohnt 💎",
+        "m1Title": "Teams werden belohnt",
         "m1Body": "Mitarbeitende im Service verdienen Anerkennung, die sie direkt erreicht. Bargeldlos, ohne Umwege und komplett ohne administrative Hürden.",
-        "m2Title": "Stripe-gesicherte Zahlungen 🔒",
+        "m2Title": "Stripe-gesicherte Zahlungen",
         "m2Body": "Jedes Trinkgeld läuft verschlüsselt über den bewährten Stripe-Checkout. Sicher, transparent vom Scan bis zur Auszahlung und für europäische Betriebe optimiert.",
-        "m3Title": "Transparente Teamführung 📊",
+        "m3Title": "Transparente Teamführung",
         "m3Body": "Führungskräfte erhalten klare, nachvollziehbare Aufzeichnungen und eine faire Verteilung. Keine Blackbox, sondern Vertrauen in jeder Schicht."
       },
       "ctaTitle": "Bereit für faires Trinkgeld in deinem Team?",
@@ -2675,7 +2675,7 @@
     "simpleSetup": {
       "pill": "Einrichtung in Minuten",
       "pillSub": "",
-      "title": "In wenigen Minuten startklar",
+      "title": "In wenigen Minuten <hl>startklar</hl>",
       "subtitle": "Vier Schritte von der Registrierung bis zum ersten Trinkgeld. Keine Hardware, kein IT-Projekt.",
       "step1Title": "Account erstellen",
       "step1Desc": "Dein Workspace ist in weniger als einer Minute bereit.",
@@ -2856,7 +2856,7 @@
     },
     "audienceBenefits": {
       "eyebrow": "VORTEILE AUF EINEN BLICK",
-      "headline": "Volle Kontrolle für Inhaber. Mehr Motivation für Teams.",
+      "headline": "Volle Kontrolle für Inhaber. <hl>Mehr Motivation</hl> für Teams.",
       "businessRole": "Für Betriebsinhaber",
       "businessTitle": "Volle Transparenz über Ihr Team",
       "businessBody": "Standorte, QR-Codes und Auszahlungen aus einem einzigen Dashboard steuern.",
@@ -2984,7 +2984,7 @@
     },
     "features": {
       "eyebrow": "Funktionen",
-      "title": "Alles in einem System. Überall einsatzbereit.",
+      "title": "Alles in einem System. <hl>Überall einsatzbereit</hl>.",
       "subtitle": "Individuelle QR-Codes, Analysen in Echtzeit und zentrale Standortkontrolle arbeiten Hand in Hand. Die smarte All-in-one-Plattform für moderne Betriebe.",
       "i1Title": "Individuell & Gebrandet",
       "i1Text": "Ein Scan im Look deiner Marke, und erstklassiger Service wird sofort belohnt.",
@@ -3201,7 +3201,7 @@
       }
     },
     "motivation": {
-      "title": "Endlich die Anerkennung, die dein Team verdient.",
+      "title": "Endlich die <hl>Anerkennung</hl>, die dein Team verdient.",
       "subtitle": "Wer täglich vollen Einsatz zeigt, darf nicht unsichtbar bleiben. CareTip macht Leistung sichtbar, in Echtzeit, für dein Team und deine Führung.",
       "pill": "LIVE-ANERKENNUNG",
       "feedLabel": "AKTIVITÄT IN DEINEM BETRIEB",
@@ -3259,7 +3259,7 @@
     },
     "industriesTeaser": {
       "eyebrow": "ÜBERALL DORT IM EINSATZ...",
-      "overviewHeadline": "CareTip passt sich Ihrer Branche an.",
+      "overviewHeadline": "CareTip passt sich <hl>Ihrer Branche</hl> an.",
       "overviewSubheadline": "Entdecken Sie, wie einfach digitales Trinkgeld in Ihrem Bereich funktioniert.\nEin Klick bringt Sie zu den Details.",
       "teasersAria": "Alle Branchen",
       "learnMore": "Mehr erfahren",
@@ -6418,6 +6418,7 @@
       "hintLiveSearch": "Ergebnisse aktualisieren sich während der Eingabe.",
       "colTransaction": "Transaktion",
       "colBusiness": "Unternehmen",
+      "colDateTime": "Datum & Uhrzeit",
       "colAmountEur": "Betrag (EUR)",
       "colCaretipFee": "CareTip-Gebühr",
       "colNetToStaff": "Netto an Team",

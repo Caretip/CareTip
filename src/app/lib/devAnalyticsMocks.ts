@@ -1,7 +1,6 @@
 import type { EmployeeGoalProgress } from "./api";
 import type { TipItem } from "./api";
 
-type BusinessTimeframe = "week" | "month" | "year";
 export type EmployeeTimeframe = "today" | "week" | "month";
 
 /**
@@ -39,99 +38,11 @@ const WEEKDAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"] as const;
 /** Realistic but deterministic “shape” for a week: builds toward weekend. */
 const BASE_WEEK_AMOUNTS = [20, 35, 18, 50, 70, 90, 65] as const;
 
-export function devMockBusinessTipDistribution(
-  timeframe: BusinessTimeframe,
-): Array<{ day: string; amount: number }> {
-  if (timeframe === "week") {
-    return WEEKDAYS.map((day, i) => ({ day, amount: BASE_WEEK_AMOUNTS[i] }));
-  }
-
-  if (timeframe === "year") {
-    // Seasonal variation + summer peak (EUR-ish magnitude; UI formats anyway).
-    const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-    const amounts = [820, 910, 980, 1120, 1350, 1620, 1880, 1760, 1490, 1280, 1170, 980];
-    return months.map((m, i) => ({ day: m, amount: amounts[i] }));
-  }
-
-  // month: elapsed days in the current month (matches dashboard chart trim).
-  const todayDom = new Date().getDate();
-  const points: Array<{ day: string; amount: number }> = [];
-  for (let d = 1; d <= todayDom; d++) {
-    const weekendBoost = d % 7 === 6 || d % 7 === 0 ? 1.35 : 1.0;
-    const mid = 1 + Math.sin(((d - 8) / Math.max(todayDom, 1)) * Math.PI) * 0.35;
-    const amt = Math.round(clamp(42 * mid * weekendBoost + (d % 5) * 2, 8, 120));
-    points.push({ day: String(d), amount: amt });
-  }
-  return points;
-}
-
-/** DEV preview gate — only for seeded walkthrough demo manager, never fresh accounts. */
-export function shouldUseBusinessDashboardDevDemo(opts: {
-  isDev: boolean;
-  isWalkthroughDemoAccount: boolean;
-  statsLoading: boolean;
-  pendingVerification: boolean;
-  tipCount: number;
-}): boolean {
-  return (
-    opts.isDev &&
-    opts.isWalkthroughDemoAccount &&
-    !opts.statsLoading &&
-    !opts.pendingVerification &&
-    opts.tipCount <= 0
-  );
-}
-
-export type BusinessOperationalPulse = NonNullable<
-  import("./api").BusinessDashboardStats["operationalPulse"]
->;
-
-/** Live hero pulse when demo mode paints period analytics elsewhere. */
-export function devMockBusinessOperationalPulse(): BusinessOperationalPulse {
-  return {
-    tipsLast60m: { count: 3, amount: 42 },
-    tipsToday: { count: 14, amount: 228 },
-    tippingReadyEmployees: 4,
-    rosterTotal: 6,
-    employeesMissingQr: 1,
-    goalsTracked: 5,
-    goalsOnTrackOrBetter: 3,
-  };
-}
-
-/** Period analytics when the venue has no real tips yet (DEV). */
-export function devMockBusinessPeriodStats(timeframe: BusinessTimeframe): {
-  totalTips: number;
-  tipCount: number;
-  employeeCount: number;
-} {
-  const mult = timeframe === "week" ? 0.28 : timeframe === "year" ? 3.2 : 1;
-  return {
-    totalTips: Math.round(2_840 * mult),
-    tipCount: Math.round(186 * mult),
-    employeeCount: 5,
-  };
-}
-
-export function devMockBusinessEmployeePerformance(
-  colors: string[],
-): Array<{ name: string; tips: number; rating: number; color: string }> {
-  const employees = [
-    { name: "Maya C.", tips: 420, rating: 4.9 },
-    { name: "James O.", tips: 355, rating: 4.7 },
-    { name: "Sofia R.", tips: 310, rating: 4.8 },
-  ];
-  return employees
-    .slice()
-    .sort((a, b) => b.tips - a.tips)
-    .slice(0, 3)
-    .map((e, i) => ({
-      name: e.name,
-      tips: e.tips,
-      rating: e.rating,
-      color: colors[i % colors.length] ?? "#e9932f",
-    }));
-}
+/**
+ * Business Dashboard must never silently replace financial KPIs with client mocks.
+ * Walkthrough/demo tips belong in an explicit Demo Mode (URL flag / feature flag /
+ * seeded DB), not in `BusinessDashboard` render paths.
+ */
 
 export function devMockEmployeeEarningsTimeline(
   timeframe: EmployeeTimeframe,

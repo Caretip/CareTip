@@ -1,4 +1,4 @@
-import { useTranslation } from "react-i18next";
+import { useTranslation, Trans } from "react-i18next";
 import {
   BedDouble,
   BriefcaseMedical,
@@ -12,6 +12,7 @@ import { PrefetchLink } from "@/app/components/PrefetchLink";
 import { landingUi } from "@/components/landing/landingUi";
 import { LandingReveal } from "@/components/landing/LandingReveal";
 import { LandingSectionAccent } from "@/components/landing/LandingSectionAccent";
+import { landingHeadlineHighlightComponents } from "@/components/landing/landingRichText";
 import {
   ALL_INDUSTRY_PAGE_IDS,
   industryPath,
@@ -52,7 +53,10 @@ export function LandingIndustriesTeaserSection() {
                 </LandingSectionAccent>
               </div>
               <h2 id="industries-overview-heading" className={landingUi.sectionTitle}>
-                {t(`${prefix}.overviewHeadline`)}
+                <Trans
+                  i18nKey={`${prefix}.overviewHeadline`}
+                  components={landingHeadlineHighlightComponents}
+                />
               </h2>
               <p className={cn(landingUi.sectionSubtitle, "caretip-industries-teaser__sub")}>
                 {t(`${prefix}.overviewSubheadline`)}

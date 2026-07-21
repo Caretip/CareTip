@@ -26,6 +26,22 @@ import { setPageSessionCache } from "../../lib/pageSessionCache";
 
 const PAGE_SIZE = 50;
 
+/** Align with platform analytics day buckets (cross-business list has no per-row TZ). */
+const PLATFORM_TX_TIMEZONE = "Europe/Berlin";
+
+/** Locale-aware date+time — same options as PlatformRefundsPage, with platform TZ. */
+function formatTransactionAt(iso: string, locale: string): string {
+  try {
+    return new Date(iso).toLocaleString(locale, {
+      dateStyle: "medium",
+      timeStyle: "short",
+      timeZone: PLATFORM_TX_TIMEZONE,
+    });
+  } catch {
+    return iso;
+  }
+}
+
 function payoutStatusLabel(status: string, t: TFunction) {
   const key = `admin.globalTransactionsPage.payoutStatus.${status}`;
   const label = t(key);
@@ -51,7 +67,7 @@ function readPage(sp: URLSearchParams): number {
 }
 
 export function GlobalTransactionsPage() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [searchParams, setSearchParams] = useSearchParams();
   const q = searchParams.get("q") ?? "";
   const page = readPage(searchParams);
@@ -218,6 +234,7 @@ export function GlobalTransactionsPage() {
               <tr className={platformUi.tableHeadRow}>
                 <th className={platformUi.tableTh}>{t("admin.globalTransactionsPage.colTransaction")}</th>
                 <th className={platformUi.tableTh}>{t("admin.globalTransactionsPage.colBusiness")}</th>
+                <th className={platformUi.tableTh}>{t("admin.globalTransactionsPage.colDateTime")}</th>
                 <th className={`${platformUi.tableTh} text-right`}>{t("admin.globalTransactionsPage.colAmountEur")}</th>
                 <th className={`${platformUi.tableTh} text-right`}>{t("admin.globalTransactionsPage.colCaretipFee")}</th>
                 <th className={`${platformUi.tableTh} text-right`}>{t("admin.globalTransactionsPage.colNetToStaff")}</th>
@@ -229,7 +246,7 @@ export function GlobalTransactionsPage() {
                 <GlobalTransactionsTableSkeleton />
               ) : loadError ? (
                 <tr>
-                  <td colSpan={6} className="p-0">
+                  <td colSpan={7} className="p-0">
                     <ListFilterLoadError
                       message={loadError}
                       kind={loadErrorKind}
@@ -240,7 +257,7 @@ export function GlobalTransactionsPage() {
                 </tr>
               ) : items.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="p-0">
+                  <td colSpan={7} className="p-0">
                     <EmptyState compact title={emptyCopy.title} description={emptyCopy.description} />
                   </td>
                 </tr>
@@ -256,6 +273,12 @@ export function GlobalTransactionsPage() {
                       ) : null}
                     </td>
                     <td className={platformUi.tableTd}>{row.businessName}</td>
+                    <td
+                      className={`${platformUi.tableTd} whitespace-nowrap text-xs tabular-nums text-muted-foreground`}
+                      title={row.createdAt}
+                    >
+                      {formatTransactionAt(row.createdAt, i18n.language)}
+                    </td>
                     <td className={`${platformUi.tableTd} text-right tabular-nums`}>{formatEur(row.amountEur)}</td>
                     <td className={`${platformUi.tableTd} text-right tabular-nums text-muted-foreground`}>
                       {row.caretipFeePercent}% ({formatEur(row.caretipFeeEur)})

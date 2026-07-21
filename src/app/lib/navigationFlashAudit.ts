@@ -1,6 +1,5 @@
 /**
- * Navigation flash / redirect sequence logging.
- * Enable with `localStorage.setItem('caretip_nav_flash_debug', '1')` or in Vite dev.
+ * Navigation flash / redirect sequence logging (Vite DEV builds only).
  */
 export type NavFlashEvent =
   | "route_entered"
@@ -31,9 +30,8 @@ function isEnabled(): boolean {
       typeof import.meta !== "undefined" &&
       import.meta.env &&
       (import.meta.env as { DEV?: boolean }).DEV === true;
-    const flagged =
-      typeof localStorage !== "undefined" && localStorage.getItem("caretip_nav_flash_debug") === "1";
-    return dev || flagged;
+    // Production builds must not ship opt-in navigation debug logging.
+    return dev;
   } catch {
     return false;
   }

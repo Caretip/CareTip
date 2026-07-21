@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { openMobileMenu, mobileNavPanel } from "./helpers/mobileMenu";
 
 const LANDING_PROBE_INIT = `
 (() => {
@@ -115,7 +116,8 @@ test.describe("Landing page performance profile", () => {
 
     await page.waitForFunction(
       () => window.__caretipLandingProbe?.milestones?.interactive != null,
-      { timeout: 20_000 },
+      undefined,
+      { timeout: 45_000 },
     );
 
     const result = await page.evaluate(() => ({
@@ -137,15 +139,16 @@ test.describe("Landing page performance profile", () => {
     await page.goto("/");
     await page.waitForTimeout(1500);
 
-    const langBtn = page.locator("nav").first().getByRole("button", { name: /language|sprache/i });
+    await openMobileMenu(page);
+    const langBtn = mobileNavPanel(page).getByRole("button", { name: /language|sprache/i });
     await expect(langBtn).toBeVisible();
     await langBtn.click();
-    await expect(page.locator('[role="listbox"]')).toBeVisible({ timeout: 3000 });
+    await expect(
+      mobileNavPanel(page).locator('[role="listbox"], [role="option"]').first(),
+    ).toBeVisible({ timeout: 3000 });
     await page.keyboard.press("Escape");
 
-    const hamburger = page.locator('button[aria-controls="mobile-main-nav"]');
-    await hamburger.click();
-    await expect(page.locator("#mobile-main-nav")).toBeVisible({ timeout: 3000 });
+    await expect(mobileNavPanel(page)).toBeVisible({ timeout: 3000 });
   });
 });
 

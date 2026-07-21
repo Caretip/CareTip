@@ -1,16 +1,19 @@
-import { useMemo } from "react";
+import { useMemo, type ComponentType } from "react";
 import { useTranslation } from "react-i18next";
+import { BarChart3, Gem, Lock, type LucideProps } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { usePublicScrollReveal } from "@/lib/usePublicScrollReveal";
 
+type BeliefIcon = ComponentType<LucideProps>;
+
 type BeliefCardProps = {
-  index: number;
+  Icon: BeliefIcon;
   title: string;
   body: string;
   delay?: number;
 };
 
-function AboutBeliefCard({ index, title, body, delay = 0 }: BeliefCardProps) {
+function AboutBeliefCard({ Icon, title, body, delay = 0 }: BeliefCardProps) {
   const reveal = usePublicScrollReveal<HTMLDivElement>(delay);
 
   return (
@@ -19,14 +22,16 @@ function AboutBeliefCard({ index, title, body, delay = 0 }: BeliefCardProps) {
       style={reveal.style}
       className={cn(reveal.className, "caretip-about-belief-card")}
     >
-      <span className="caretip-about-belief-card__index" aria-hidden>
-        {index}
+      <span className="caretip-about-belief-card__icon" aria-hidden>
+        <Icon className="caretip-about-belief-card__icon-svg" strokeWidth={2} />
       </span>
       <h3 className="caretip-about-belief-card__title">{title}</h3>
       <p className="caretip-about-belief-card__body">{body}</p>
     </article>
   );
 }
+
+const BELIEF_ICONS: BeliefIcon[] = [Gem, Lock, BarChart3];
 
 /** Trust grid — “What we stand for” (template: 3-column product & trust grid). */
 export function AboutMissionSection() {
@@ -36,14 +41,17 @@ export function AboutMissionSection() {
   const items = useMemo(
     () => [
       {
+        Icon: BELIEF_ICONS[0],
         title: t("staticPages.about.missionSection.m1Title"),
         body: t("staticPages.about.missionSection.m1Body"),
       },
       {
+        Icon: BELIEF_ICONS[1],
         title: t("staticPages.about.missionSection.m2Title"),
         body: t("staticPages.about.missionSection.m2Body"),
       },
       {
+        Icon: BELIEF_ICONS[2],
         title: t("staticPages.about.missionSection.m3Title"),
         body: t("staticPages.about.missionSection.m3Body"),
       },
@@ -69,7 +77,7 @@ export function AboutMissionSection() {
           {items.map((item, idx) => (
             <AboutBeliefCard
               key={item.title}
-              index={idx + 1}
+              Icon={item.Icon}
               title={item.title}
               body={item.body}
               delay={idx * 0.07}

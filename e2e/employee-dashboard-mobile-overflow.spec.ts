@@ -41,6 +41,10 @@ async function installEmployeeDashboardMocks(page: import("@playwright/test").Pa
         businessName: "E2E Venue",
         businessLogo: null,
         avatar: null,
+        subscriptionTier: "premium",
+        hasActiveSubscription: true,
+        accessSource: "subscription",
+        subscriptionStatus: "active",
       })(),
     );
   });
@@ -90,7 +94,17 @@ async function installEmployeeDashboardMocks(page: import("@playwright/test").Pa
   });
 
   await page.route("**/api/business/profile**", async (route) =>
-    route.fulfill(await jsonResponse({ tier: "business", advancedAnalytics: true })()),
+    route.fulfill(
+      await jsonResponse({
+        id: "e2e-biz-row",
+        name: "E2E Venue",
+        verificationStatus: "verified",
+        subscriptionTier: "premium",
+        hasActiveSubscription: true,
+        accessSource: "subscription",
+        subscriptionStatus: "active",
+      })(),
+    ),
   );
 }
 

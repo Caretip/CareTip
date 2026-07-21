@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { useTranslation } from "react-i18next";
+import { useTranslation, Trans } from "react-i18next";
 import {
   Check,
   LayoutDashboard,
@@ -10,6 +10,7 @@ import { PrefetchLink } from "@/app/components/PrefetchLink";
 import { LandingReveal } from "@/components/landing/LandingReveal";
 import { LandingSectionAccent } from "@/components/landing/LandingSectionAccent";
 import { landingUi } from "@/components/landing/landingUi";
+import { landingHeadlineHighlightComponents } from "@/components/landing/landingRichText";
 import { landingStaggerDelay } from "@/lib/landingMotion";
 import { cn } from "@/lib/utils";
 
@@ -94,7 +95,10 @@ export function LandingAudienceBenefitsSection() {
               </LandingSectionAccent>
             </div>
             <h2 id="audience-benefits-heading" className={landingUi.sectionTitle}>
-              {t(`${prefix}.headline`)}
+              <Trans
+                i18nKey={`${prefix}.headline`}
+                components={landingHeadlineHighlightComponents}
+              />
             </h2>
           </header>
         </LandingReveal>

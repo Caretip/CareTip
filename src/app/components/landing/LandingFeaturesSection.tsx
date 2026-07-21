@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { QrCode, Activity, BarChart3, History, Wallet, Star } from "lucide-react";
-import { useTranslation } from "react-i18next";
+import { useTranslation, Trans } from "react-i18next";
 import { landingStaggerDelay } from "@/lib/landingMotion";
 import { landingCopyVisible, landingUi } from "@/components/landing/landingUi";
 import { landingType } from "@/components/landing/landingTypography";
@@ -9,6 +9,7 @@ import {
   type LandingAccentVariant,
 } from "@/components/landing/LandingSectionAccent";
 import { LandingReveal } from "@/components/landing/LandingReveal";
+import { landingHeadlineHighlightComponents } from "@/components/landing/landingRichText";
 import { cn } from "@/lib/utils";
 
 const cardClassName = cn(
@@ -110,7 +111,10 @@ export function LandingFeaturesSection() {
             </div>
           ) : null}
           <h2 className={cn(landingUi.sectionTitle, "caretip-landing-scroll-reveal--visible")}>
-            {t("landing.features.title")}
+            <Trans
+              i18nKey="landing.features.title"
+              components={landingHeadlineHighlightComponents}
+            />
           </h2>
           {landingCopyVisible(sectionSubtitle) ? (
             <p className={cn(landingUi.sectionSubtitle, "caretip-landing-scroll-reveal--visible")}>
@@ -131,6 +135,7 @@ export function LandingFeaturesSection() {
               >
                 <article className={cardClassName}>
                   <LandingSectionAccent
+                    compact
                     variant={featureAccentVariants[idx % featureAccentVariants.length]}
                     className="caretip-landing-feature-accent mb-2.5 sm:mb-3"
                   >

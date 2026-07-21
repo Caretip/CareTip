@@ -1,69 +1,74 @@
 /**
- * Landing section accent badges — compact scale + soft brush underline.
+ * Landing section accents — glowing dot + label, soft header depth.
  */
 
-.caretip-landing [data-landing-accent] .caretip-landing-accent-text {
+.caretip-landing [data-landing-accent-eyebrow] .caretip-landing-accent-text {
   position: relative;
   display: inline-block;
-  padding-bottom: 0.28em;
+  line-height: 1.2;
 }
 
-.caretip-landing [data-landing-accent] .caretip-landing-accent-text::after {
+/* Compact feature-card labels keep a light underline cue (not section pills). */
+.caretip-landing [data-landing-accent-compact] .caretip-landing-accent-text {
+  position: relative;
+  display: inline-block;
+  padding-bottom: 0.2em;
+}
+
+.caretip-landing [data-landing-accent-compact] .caretip-landing-accent-text::after {
   content: "";
   position: absolute;
   left: 0.04em;
   right: -0.06em;
   bottom: 0.02em;
-  height: 0.24em;
+  height: 0.18em;
   border-radius: 999px;
   background: linear-gradient(
     104deg,
-    rgba(233, 120, 28, 0.52) 0%,
-    rgba(245, 158, 11, 0.34) 46%,
-    rgba(233, 120, 28, 0.06) 100%
+    rgba(235, 153, 44, 0.4) 0%,
+    rgba(232, 145, 36, 0.22) 46%,
+    rgba(216, 129, 24, 0.05) 100%
   );
   transform: skewX(-7deg) scaleX(0.94);
   transform-origin: left center;
   pointer-events: none;
 }
 
-.caretip-landing [data-landing-accent] .caretip-landing-accent-text--muted::after {
+html.dark .caretip-landing [data-landing-accent-compact] .caretip-landing-accent-text::after {
   background: linear-gradient(
     104deg,
-    rgba(115, 115, 115, 0.34) 0%,
-    rgba(163, 163, 163, 0.2) 50%,
-    transparent 100%
-  );
-}
-
-html.dark .caretip-landing [data-landing-accent] .caretip-landing-accent-text::after {
-  background: linear-gradient(
-    104deg,
-    rgba(251, 191, 36, 0.44) 0%,
-    rgba(233, 120, 28, 0.26) 48%,
+    rgba(251, 191, 36, 0.4) 0%,
+    rgba(233, 120, 28, 0.22) 48%,
     rgba(233, 120, 28, 0.05) 100%
   );
 }
 
-html.dark .caretip-landing [data-landing-accent] .caretip-landing-accent-text--muted::after {
-  background: linear-gradient(
-    104deg,
-    rgba(163, 163, 163, 0.28) 0%,
-    rgba(115, 115, 115, 0.14) 55%,
-    transparent 100%
-  );
+/* Soft radial depth behind badge + H2 — not a visible circle. */
+.caretip-landing .caretip-landing-section-header::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 0.15rem;
+  z-index: 0;
+  width: min(17rem, 72%);
+  height: 4.75rem;
+  transform: translateX(-50%);
+  border-radius: 9999px;
+  background: rgb(235 153 44 / 0.04);
+  filter: blur(48px);
+  pointer-events: none;
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  .caretip-landing [data-landing-accent] .caretip-landing-accent-text::after {
-    transition: transform 0.25s ease, opacity 0.25s ease;
-  }
+.caretip-landing .caretip-landing-section-header > * {
+  position: relative;
+  z-index: 1;
+}
 
-  @media (hover: hover) {
-    .caretip-landing [data-landing-accent]:hover .caretip-landing-accent-text::after {
-      transform: skewX(-5deg) scaleX(1);
-      opacity: 1;
-    }
+@media (min-width: 1024px) {
+  .caretip-landing .caretip-copy-stack.caretip-landing-section-header::before,
+  .caretip-landing .caretip-mobile-stack-intro.caretip-landing-section-header:not(.caretip-section-intro)::before {
+    left: 0;
+    transform: none;
   }
 }
 
