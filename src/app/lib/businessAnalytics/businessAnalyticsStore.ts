@@ -13,6 +13,20 @@ export function getBusinessAnalyticsBundle(
   return bundleStore.get(storeKey(timeframe), DASHBOARD_SWR_METRICS_TTL_MS);
 }
 
+/** Ignore TTL — used by dashboard global search over already-loaded bundles. */
+export function peekBusinessAnalyticsBundle(
+  timeframe: AnalyticsTimeframe,
+): BusinessAnalyticsBundle | null {
+  return bundleStore.peek(storeKey(timeframe));
+}
+
+export function peekAllBusinessAnalyticsBundles(): BusinessAnalyticsBundle[] {
+  return bundleStore
+    .entriesByPrefix("business-analytics:")
+    .map((e) => e.value)
+    .sort((a, b) => b.fetchedAt - a.fetchedAt);
+}
+
 export function setBusinessAnalyticsBundle(
   timeframe: AnalyticsTimeframe,
   bundle: BusinessAnalyticsBundle,

@@ -3924,6 +3924,31 @@
         "onboardingStatus": "Onboarding status"
       }
     },
+    "globalSearch": {
+      "placeholder": "Search tips, employees, QR tables, payouts...",
+      "aria": "Search your business dashboard",
+      "closeAria": "Close search",
+      "clearAria": "Clear search",
+      "resultsAria": "Search results",
+      "searching": "Searching…",
+      "emptyTitle": "No matching results found",
+      "emptyHint": "Try another name, table, tip ID, or keyword.",
+      "categories": {
+        "employees": "Employees",
+        "qrTables": "QR Tables",
+        "recentTips": "Recent Tips",
+        "recentActivity": "Recent Activity",
+        "payouts": "Payouts"
+      },
+      "payoutShortcuts": {
+        "subscriptionTitle": "Subscription & billing",
+        "subscriptionSubtitle": "Plan, payouts, and subscription status",
+        "invoicesTitle": "Invoices",
+        "invoicesSubtitle": "Billing history and invoices",
+        "historyTitle": "Payment history",
+        "historySubtitle": "Past billing and payment events"
+      }
+    },
     "dashboard": {
       "analyticsSectionTitle": "Period analytics",
       "analyticsSectionDesc": "Metrics and charts for {{period}}.",

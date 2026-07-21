@@ -23,6 +23,17 @@ export function createDashboardSwrStore<T>() {
       if (!cell || !isSwrEntryFresh(cell.at, ttlMs)) return null;
       return cell.value;
     },
+    /** Read without TTL gate — for client search over already-loaded session data. */
+    peek(key: string): T | null {
+      return cells.get(key)?.value ?? null;
+    },
+    entriesByPrefix(prefix: string): Array<{ key: string; value: T; at: number }> {
+      const out: Array<{ key: string; value: T; at: number }> = [];
+      for (const [key, cell] of cells) {
+        if (key.startsWith(prefix)) out.push({ key, value: cell.value, at: cell.at });
+      }
+      return out;
+    },
     set(key: string, value: T): void {
       cells.set(key, { at: Date.now(), value });
     },

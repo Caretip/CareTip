@@ -16,6 +16,12 @@ import {
   DashboardHeaderSearchPanel,
   DashboardHeaderSearchProvider,
 } from "./dashboard/DashboardHeaderSearch";
+import {
+  BusinessDashboardSearch,
+  BusinessDashboardSearchMobileToggle,
+  BusinessDashboardSearchPanel,
+  BusinessDashboardSearchProvider,
+} from "./business/BusinessDashboardSearch";
 import { DashboardHeaderMobileProfile } from "./dashboard/DashboardHeaderMobileProfile";
 import { cn } from "@/lib/utils";
 
@@ -80,11 +86,19 @@ function DashboardHeaderBar({
             <div className="hidden min-w-0 flex-1 lg:block">
               <DashboardHeaderSearchDesktop />
             </div>
-          ) : null}
+          ) : (
+            <div className="hidden min-w-0 flex-1 lg:block">
+              <BusinessDashboardSearch variant="desktop" />
+            </div>
+          )}
         </div>
 
         <div className="caretip-dashboard-header-trailing flex shrink-0 items-center gap-1.5 sm:gap-2 lg:gap-3">
-          {!isBusinessManager ? <DashboardHeaderSearchMobileToggle /> : null}
+          {!isBusinessManager ? (
+            <DashboardHeaderSearchMobileToggle />
+          ) : (
+            <BusinessDashboardSearchMobileToggle />
+          )}
           {showShellControls ? (
             <NotificationBell
               className={cn(
@@ -140,7 +154,11 @@ function DashboardHeaderBar({
         </div>
       </div>
 
-      {!isBusinessManager ? <DashboardHeaderSearchPanel /> : null}
+      {!isBusinessManager ? (
+        <DashboardHeaderSearchPanel />
+      ) : (
+        <BusinessDashboardSearchPanel />
+      )}
     </>
   );
 }
@@ -180,7 +198,9 @@ export const DashboardHeader = memo(function DashboardHeader({ onMenuClick }: Da
   return (
     <header className="caretip-dashboard-header-bar sticky top-0 z-30 border-b border-border/80 bg-background/95 backdrop-blur-[4px]">
       {isBusinessManager ? (
-        <DashboardHeaderBar {...barProps} />
+        <BusinessDashboardSearchProvider>
+          <DashboardHeaderBar {...barProps} />
+        </BusinessDashboardSearchProvider>
       ) : (
         <DashboardHeaderSearchProvider isPlatformAdmin={isPlatformAdmin}>
           <DashboardHeaderBar {...barProps} />

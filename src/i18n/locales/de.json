@@ -3924,6 +3924,31 @@
         "onboardingStatus": "Onboarding-Status"
       }
     },
+    "globalSearch": {
+      "placeholder": "Tips, Mitarbeitende, QR-Tische, Auszahlungen suchen…",
+      "aria": "Business-Dashboard durchsuchen",
+      "closeAria": "Suche schließen",
+      "clearAria": "Suche leeren",
+      "resultsAria": "Suchergebnisse",
+      "searching": "Suche…",
+      "emptyTitle": "Keine passenden Ergebnisse",
+      "emptyHint": "Anderen Namen, Tisch, Tip-ID oder Begriff versuchen.",
+      "categories": {
+        "employees": "Mitarbeitende",
+        "qrTables": "QR-Tische",
+        "recentTips": "Aktuelle Tips",
+        "recentActivity": "Aktuelle Aktivität",
+        "payouts": "Auszahlungen"
+      },
+      "payoutShortcuts": {
+        "subscriptionTitle": "Abo & Abrechnung",
+        "subscriptionSubtitle": "Tarif, Auszahlungen und Abo-Status",
+        "invoicesTitle": "Rechnungen",
+        "invoicesSubtitle": "Abrechnungshistorie und Rechnungen",
+        "historyTitle": "Zahlungsverlauf",
+        "historySubtitle": "Vergangene Abrechnungs- und Zahlungsereignisse"
+      }
+    },
     "dashboard": {
       "analyticsSectionTitle": "Zeitraum-Analysen",
       "analyticsSectionDesc": "Kennzahlen und Diagramme für {{period}}.",

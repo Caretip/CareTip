@@ -16,6 +16,8 @@ export {
 export {
   clearBusinessAnalyticsStore,
   getBusinessAnalyticsBundle,
+  peekAllBusinessAnalyticsBundles,
+  peekBusinessAnalyticsBundle,
   setBusinessAnalyticsBundle,
   upsertBusinessAnalyticsStatsBundle,
 } from "./businessAnalyticsStore";

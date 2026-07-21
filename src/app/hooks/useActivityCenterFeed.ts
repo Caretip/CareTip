@@ -20,6 +20,7 @@ import {
   type ActivityEventSource,
   type BusinessActivityFeedItem,
 } from "../lib/api";
+import { setBusinessActivitySearchSnapshot } from "../lib/businessActivitySearchSnapshot";
 import { shouldProcessRealtimeEvent } from "../lib/realtime/realtimeEventDedupe";
 import { subscribeActivityCreated } from "../lib/realtime/subscribeActivityCreated";
 import { useRealtimeReconnect } from "../lib/realtime/useRealtimeReconnect";
@@ -239,6 +240,14 @@ export function useActivityCenterFeed({ enabled, businessId, source }: UseActivi
     }, DISCONNECTED_POLL_MS);
     return () => window.clearInterval(id);
   }, [enabled, connected, catchUp]);
+
+  useEffect(() => {
+    if (!enabled) {
+      setBusinessActivitySearchSnapshot([]);
+      return;
+    }
+    setBusinessActivitySearchSnapshot(pool);
+  }, [enabled, pool]);
 
   return {
     items,

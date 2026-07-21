@@ -12,6 +12,7 @@ import { clearBusinessDashboardSwrStore } from "../hooks/useBusinessDashboardSta
 import { clearEmployeePeriodSwrStore } from "../hooks/useEmployeeDashboardAnalytics";
 import { clearEmployeeAccountSwrStore } from "../hooks/useEmployeeAccountSummary";
 import { clearVenueCatalogStore } from "./businessVenueCatalog";
+import { clearBusinessActivitySearchSnapshot } from "./businessActivitySearchSnapshot";
 import { resetQrStudioWarmCache } from "./qrStudioWarmCache";
 import { clearCheckoutIntent, clearCheckoutSyncExpectation } from "./checkoutIntent";
 
@@ -31,6 +32,7 @@ export function resetAllClientSessionCaches(): void {
   clearEmployeePeriodSwrStore();
   clearEmployeeAccountSwrStore();
   clearVenueCatalogStore();
+  clearBusinessActivitySearchSnapshot();
   clearBusinessBrandingSettingsClientCache();
   resetQrStudioWarmCache();
   clearCheckoutIntent();

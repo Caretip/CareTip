@@ -35,3 +35,14 @@ export function invalidatePageSessionCacheByPrefix(prefix: string): void {
 export function clearAllPageSessionCache(): void {
   pageStore.clear();
 }
+
+/** Session-cache peek for client-side global search (no TTL eviction). */
+export function peekPageSessionCache<T>(key: string): T | null {
+  return pageStore.peek(key) as T | null;
+}
+
+export function peekPageSessionCacheByPrefix<T>(
+  prefix: string,
+): Array<{ key: string; value: T; at: number }> {
+  return pageStore.entriesByPrefix(prefix) as Array<{ key: string; value: T; at: number }>;
+}
