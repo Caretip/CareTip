@@ -1,12 +1,13 @@
 import { useMemo } from "react";
 import { Activity, BarChart3, History, QrCode, Star, Wallet } from "lucide-react";
-import { useTranslation } from "react-i18next";
+import { Trans, useTranslation } from "react-i18next";
 import "@/styles/bundles/marketing-pages.css";
 import "@/styles/bundles/landing.css";
 import { PublicPageShell } from "@/components/public/PublicPageShell";
 import { FeaturesPageFinalCta } from "@/components/public/features/FeaturesPageFinalCta";
 import { LandingReveal } from "@/components/landing/LandingReveal";
 import { LandingSectionAccent, type LandingAccentVariant } from "@/components/landing/LandingSectionAccent";
+import { landingHeadlineHighlightComponents } from "@/components/landing/landingRichText";
 import { landingCopyVisible, landingUi } from "@/components/landing/landingUi";
 import { landingType } from "@/components/landing/landingTypography";
 import { landingStaggerDelay } from "@/lib/landingMotion";
@@ -73,7 +74,10 @@ export function FeaturesPage() {
                 </div>
               ) : null}
               <h1 className={cn(landingUi.sectionTitle, "caretip-landing-scroll-reveal--visible")}>
-                {t("landing.features.title")}
+                <Trans
+                  i18nKey="landing.features.title"
+                  components={landingHeadlineHighlightComponents}
+                />
               </h1>
               {landingCopyVisible(sectionSubtitle) ? (
                 <p className={cn(landingUi.sectionSubtitle, "caretip-landing-scroll-reveal--visible")}>
