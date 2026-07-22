@@ -139,6 +139,10 @@ export type QrBrandingOptions = {
   socialInstagram?: string | null;
   socialFacebook?: string | null;
   templateFieldVisibility?: Partial<Record<QrTemplateFieldId, boolean>>;
+  logoSize?: import("./qrDesignSystem").QrLogoSize;
+  logoOrientation?: import("./qrDesignSystem").QrLogoOrientation;
+  logoAlignment?: import("./qrDesignSystem").QrLogoAlignment;
+  logoPadding?: import("./qrDesignSystem").QrLogoPadding;
 };
 
 const HEX_RE = /^#[0-9A-Fa-f]{6}$/;
@@ -288,6 +292,10 @@ export function qrBrandingFingerprint(opts: QrBrandingOptions | null | undefined
     showVenueLogoHeader: opts.showVenueLogoHeader ?? null,
     registeredAddress: opts.templateProfile?.registeredAddress ?? null,
     templateFieldVisibility: opts.templateFieldVisibility ?? null,
+    logoSize: opts.logoSize ?? null,
+    logoOrientation: opts.logoOrientation ?? null,
+    logoAlignment: opts.logoAlignment ?? null,
+    logoPadding: opts.logoPadding ?? null,
   });
 }
 

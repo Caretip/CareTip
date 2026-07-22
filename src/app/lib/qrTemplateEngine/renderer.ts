@@ -23,7 +23,16 @@ const ATTRIBUTION_TEXT = "Powered by CareTip";
 const FONT_STACK = "system-ui, -apple-system, sans-serif";
 
 let qrcodeModulePromise: Promise<typeof import("qrcode")> | null = null;
+const IMAGE_CACHE_MAX = 48;
 const imageCache = new Map<string, Promise<HTMLImageElement | null>>();
+
+function trimImageCache(): void {
+  while (imageCache.size > IMAGE_CACHE_MAX) {
+    const oldest = imageCache.keys().next().value;
+    if (!oldest) break;
+    imageCache.delete(oldest);
+  }
+}
 
 function loadQrCodeModule() {
   qrcodeModulePromise ??= import("qrcode");
@@ -43,6 +52,7 @@ function loadImage(url: string): Promise<HTMLImageElement | null> {
       img.src = key;
     });
     imageCache.set(key, pending);
+    trimImageCache();
   }
   return pending;
 }
@@ -527,16 +537,7 @@ async function drawLogoField(
   const img = await loadImage(logoUrl);
   if (!img?.naturalWidth) return;
   const { x, y, w, h } = absPosition(pos, canvasW, canvasH);
-  const ratio = img.naturalHeight / img.naturalWidth;
-  let lw = w;
-  let lh = ratio * lw;
-  if (lh > h) {
-    lh = h;
-    lw = lh / ratio;
-  }
-  const dx = x + (w - lw) / 2;
-  const dy = y + (h - lh) / 2;
-  ctx.drawImage(img, dx, dy, lw, lh);
+  drawLogoImageCrisp(ctx, img, { x, y, w, h }, "center");
 }
 
 async function drawQrMatrix(
@@ -582,15 +583,19 @@ async function drawQrMatrix(
     const logoImg = await loadImage(payload.logoUrl);
     if (logoImg?.naturalWidth) {
       const markW = maxSafeLogoWidth(size, true);
-      const ratio = logoImg.naturalHeight / logoImg.naturalWidth;
-      const markH = ratio * markW;
+      const markH = (logoImg.naturalHeight / logoImg.naturalWidth) * markW;
       const cx = x + size / 2;
       const cy = y + size / 2;
       ctx.fillStyle = moduleLight;
       ctx.beginPath();
       ctx.arc(cx, cy, markW * 0.58, 0, Math.PI * 2);
       ctx.fill();
-      ctx.drawImage(logoImg, cx - markW / 2, cy - markH / 2, markW, markH);
+      drawLogoImageCrisp(ctx, logoImg, {
+        x: cx - markW / 2,
+        y: cy - markH / 2,
+        w: markW,
+        h: markH,
+      });
     }
   }
 }
@@ -689,11 +694,51 @@ function drawNeutralBusinessLogoPlaceholder(
   ctx.fillText(initial, x + size / 2, y + size / 2 + size * 0.02);
 }
 
+function fitImageInBox(
+  imgW: number,
+  imgH: number,
+  boxW: number,
+  boxH: number,
+): { w: number; h: number } {
+  if (!imgW || !imgH || !boxW || !boxH) return { w: boxW, h: boxH };
+  const ratio = imgH / imgW;
+  let lw = boxW;
+  let lh = ratio * lw;
+  if (lh > boxH) {
+    lh = boxH;
+    lw = lh / ratio;
+  }
+  return { w: lw, h: lh };
+}
+
+function drawLogoImageCrisp(
+  ctx: CanvasRenderingContext2D,
+  img: HTMLImageElement,
+  rect: { x: number; y: number; w: number; h: number },
+  alignment: "center" | "top" = "center",
+): void {
+  const { w: lw, h: lh } = fitImageInBox(img.naturalWidth, img.naturalHeight, rect.w, rect.h);
+  const dx = Math.round(rect.x + (rect.w - lw) / 2);
+  const dy = Math.round(alignment === "top" ? rect.y : rect.y + (rect.h - lh) / 2);
+  const dw = Math.round(lw);
+  const dh = Math.round(lh);
+  const downscaling = dw < img.naturalWidth || dh < img.naturalHeight;
+  const prevSmooth = ctx.imageSmoothingEnabled;
+  ctx.imageSmoothingEnabled = downscaling;
+  if (downscaling && "imageSmoothingQuality" in ctx) {
+    ctx.imageSmoothingQuality = "high";
+  }
+  // Draw from full source resolution — never use a compressed intermediate.
+  ctx.drawImage(img, 0, 0, img.naturalWidth, img.naturalHeight, dx, dy, dw, dh);
+  ctx.imageSmoothingEnabled = prevSmooth;
+}
+
 async function drawLogoInRect(
   ctx: CanvasRenderingContext2D,
   logoUrl: string | null,
   rect: { x: number; y: number; w: number; h: number },
   businessName?: string,
+  alignment: "center" | "top" = "center",
 ): Promise<void> {
   if (!logoUrl) {
     if (businessName) drawNeutralBusinessLogoPlaceholder(ctx, rect, businessName);
@@ -704,16 +749,36 @@ async function drawLogoInRect(
     if (businessName) drawNeutralBusinessLogoPlaceholder(ctx, rect, businessName);
     return;
   }
-  const ratio = img.naturalHeight / img.naturalWidth;
-  let lw = rect.w;
-  let lh = ratio * lw;
-  if (lh > rect.h) {
-    lh = rect.h;
-    lw = lh / ratio;
+  drawLogoImageCrisp(ctx, img, rect, alignment);
+}
+
+function resolveLogoSlot(
+  rect: { x: number; y: number; w: number; h: number },
+  baseLogoH: number,
+  gap: number,
+  layout: NonNullable<QrTemplateBrandingPayload["logoLayout"]> | undefined,
+): { box: { x: number; y: number; w: number; h: number }; advance: number } {
+  const sizeMul = layout?.size === "small" ? 0.82 : layout?.size === "large" ? 1.42 : 1.05;
+  const padMul = layout?.padding === "tight" ? 0.7 : layout?.padding === "generous" ? 1.45 : 1;
+  const logoH = baseLogoH * sizeMul;
+  const orientation = layout?.orientation ?? "square";
+
+  let maxW = rect.w * 0.92;
+  let maxH = logoH;
+  if (orientation === "landscape") {
+    maxW = rect.w * 0.96;
+    maxH = logoH * 0.68;
+  } else if (orientation === "portrait") {
+    maxW = rect.w * 0.5;
+    maxH = logoH * 1.15;
+  } else {
+    maxW = rect.w * 0.84;
+    maxH = logoH;
   }
-  const dx = rect.x + (rect.w - lw) / 2;
-  const dy = rect.y + (rect.h - lh) / 2;
-  ctx.drawImage(img, dx, dy, lw, lh);
+
+  const boxX = rect.x + (rect.w - maxW) / 2;
+  const advance = maxH + gap * padMul + gap * 0.4;
+  return { box: { x: boxX, y: 0, w: maxW, h: maxH }, advance };
 }
 
 function drawCtaInRect(
@@ -752,25 +817,28 @@ async function renderBrandingZone(
 ): Promise<void> {
   const zone = def.zones!.brandingZone;
   const rect = absZone(zone, canvasW, canvasH);
-  const gap = Math.round(rect.h * 0.04);
+  const gap = Math.round(rect.h * 0.055);
   let cursorY = rect.y + gap;
 
   const logoStyle = def.positions.logo;
   if (payload.fieldVisibility.logo && logoStyle) {
-    const logoH = rect.h * (logoStyle.h ?? 0.4);
-    await drawLogoInRect(ctx, payload.logoUrl, {
-      x: rect.x,
-      y: cursorY,
-      w: rect.w,
-      h: logoH,
-    }, payload.businessName);
-    cursorY += logoH + gap;
+    const baseLogoH = rect.h * (logoStyle.h ?? 0.58);
+    const { box, advance } = resolveLogoSlot(rect, baseLogoH, gap, payload.logoLayout);
+    await drawLogoInRect(
+      ctx,
+      payload.logoUrl,
+      { ...box, y: cursorY },
+      payload.businessName,
+      payload.logoLayout?.alignment ?? "center",
+    );
+    cursorY += advance;
   }
 
+  // Desired brand order: Logo → Company Name → Tagline → Address
   const stack: Array<{ field: QrTemplateFieldId; weight: number }> = [
     { field: "businessName", weight: 0.32 },
-    { field: "address", weight: 0.16 },
-    { field: "tagline", weight: 0.12 },
+    { field: "tagline", weight: 0.15 },
+    { field: "address", weight: 0.15 },
     { field: "welcomeMessage", weight: 0.1 },
   ];
 
@@ -789,7 +857,7 @@ async function renderBrandingZone(
       style,
       payload,
     );
-    cursorY += slotH + gap * 0.5;
+    cursorY += slotH + gap * 0.7;
   }
 }
 
@@ -851,14 +919,26 @@ async function renderFooterZone(
     cursorY += rowH + gap;
   }
 
-  if (payload.fieldVisibility.socialInstagram) {
-    const style = def.positions.socialInstagram;
-    const text = fieldText("socialInstagram", payload);
-    if (style && text?.trim()) {
-      const slotH = rect.h * 0.12;
-      drawTextFieldAt(ctx, text, { x: rect.x, y: cursorY, w: rect.w, h: slotH }, style, payload);
-      cursorY += slotH;
-    }
+  const socialFields: QrTemplateFieldId[] = ["socialInstagram", "socialFacebook"];
+  const visibleSocial = socialFields.filter(
+    (f) => def.supportedFields.includes(f) && payload.fieldVisibility[f] && fieldText(f, payload)?.trim(),
+  );
+  if (visibleSocial.length) {
+    const rowH = rect.h * 0.12;
+    const colW = rect.w / visibleSocial.length;
+    visibleSocial.forEach((field, i) => {
+      const style = def.positions[field];
+      const text = fieldText(field, payload);
+      if (!style || !text?.trim()) return;
+      drawTextFieldAt(
+        ctx,
+        text,
+        { x: rect.x + colW * i, y: cursorY, w: colW, h: rowH },
+        style,
+        payload,
+      );
+    });
+    cursorY += rowH;
   }
 
   if (payload.fieldVisibility.attribution) {
@@ -982,17 +1062,21 @@ export async function renderQrTemplateCard(input: QrTemplateRenderInput): Promis
   }
 
   const canvas = document.createElement("canvas");
-  canvas.width = W;
-  canvas.height = H;
+  const pixelScale = Math.min(4, Math.max(1, input.scale ?? 1));
+  canvas.width = Math.round(W * pixelScale);
+  canvas.height = Math.round(H * pixelScale);
   const ctx = canvas.getContext("2d");
   if (!ctx) return null;
+
+  if (pixelScale > 1) {
+    ctx.scale(pixelScale, pixelScale);
+  }
 
   await drawBackground(ctx, W, H, def.background, input.payload.qrAccentColor);
 
   if (def.zones) {
     await renderZoneBasedCard(ctx, def, input, W, H);
-    const scale = Math.min(4, Math.max(1, input.scale ?? 1));
-    return scaleCanvas(canvas, scale, { smooth: input.smoothScale });
+    return canvas;
   }
 
   const qrPresentation = def.qrPresentation ?? "framed";
@@ -1047,6 +1131,5 @@ export async function renderQrTemplateCard(input: QrTemplateRenderInput): Promis
     );
   }
 
-  const scale = Math.min(4, Math.max(1, input.scale ?? 1));
-  return scaleCanvas(canvas, scale, { smooth: input.smoothScale });
+  return canvas;
 }

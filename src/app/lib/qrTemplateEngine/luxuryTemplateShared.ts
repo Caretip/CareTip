@@ -84,6 +84,7 @@ const LUXURY_SUPPORTED_FIELDS = [
   "phone",
   "website",
   "socialInstagram",
+  "socialFacebook",
   "attribution",
 ] as const;
 
@@ -99,11 +100,12 @@ const LUXURY_DEFAULT_VISIBILITY = {
   phone: true,
   website: true,
   socialInstagram: false,
+  socialFacebook: false,
   attribution: true,
 } as const;
 
 const LUXURY_FIELD_POSITIONS: QrTemplateDefinition["positions"] = {
-  logo: { x: 0, y: 0, w: 0.34, h: 0.5, align: "center", valign: "top" },
+  logo: { x: 0, y: 0, w: 0.34, h: 0.58, align: "center", valign: "top" },
   businessName: {
     x: 0,
     y: 0,
@@ -163,6 +165,7 @@ const LUXURY_FIELD_POSITIONS: QrTemplateDefinition["positions"] = {
   phone: { x: 0, y: 0, w: 0.33, align: "center", maxFontSize: 8, color: "onDark" },
   website: { x: 0, y: 0, w: 0.33, align: "center", maxFontSize: 8, color: "onDark" },
   socialInstagram: { x: 0, y: 0, w: 1, align: "center", maxFontSize: 7.5, color: "onDark" },
+  socialFacebook: { x: 0, y: 0, w: 1, align: "center", maxFontSize: 7.5, color: "onDark" },
   attribution: { x: 0, y: 0, w: 1, align: "center", maxFontSize: 6.5, color: "onDark" },
 };
 
@@ -176,6 +179,7 @@ const CHAMPAGNE_FIELD_POSITIONS: QrTemplateDefinition["positions"] = {
   phone: { ...LUXURY_FIELD_POSITIONS.phone!, color: "onLight" },
   website: { ...LUXURY_FIELD_POSITIONS.website!, color: "onLight" },
   socialInstagram: { ...LUXURY_FIELD_POSITIONS.socialInstagram!, color: "onLight" },
+  socialFacebook: { ...LUXURY_FIELD_POSITIONS.socialFacebook!, color: "onLight" },
   attribution: { ...LUXURY_FIELD_POSITIONS.attribution!, color: "onLight" },
 };
 

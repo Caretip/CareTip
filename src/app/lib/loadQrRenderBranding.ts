@@ -24,6 +24,11 @@ export type QrRenderBrandingSource =
       businessId: string;
       tier: "basic" | "premium" | "enterprise";
       fallbackBusinessName?: string;
+      /** Skip redundant profile fetch when caller already loaded it. */
+      prefetchedProfile?: Pick<
+        BusinessInfo,
+        "name" | "registeredAddress" | "location" | "contactPhone" | "website"
+      >;
     }
   | { mode: "employee"; businessId: string };
 
@@ -67,7 +72,9 @@ export async function loadQrRenderBranding(
     if (source.mode === "manager") {
       const [settings, profile] = await Promise.all([
         fetchBusinessBrandingSettings(),
-        fetchBusinessProfile(),
+        source.prefetchedProfile
+          ? Promise.resolve(source.prefetchedProfile as BusinessInfo)
+          : fetchBusinessProfile(),
       ]);
       const name =
         String(profile.name ?? "").trim() ||

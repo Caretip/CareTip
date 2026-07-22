@@ -288,6 +288,42 @@ export const QrManagementCard = memo(function QrManagementCard({
     </div>
   );
 
+  const previewDialog = showPreviewActions ? (
+    <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
+      <DialogContent className="max-w-md sm:max-w-lg">
+        <DialogHeader>
+          <DialogTitle>{item.name}</DialogTitle>
+          <DialogDescription>
+            {metadata?.ownershipLabel ??
+              (type === "storefront"
+                ? t("business.qrStudio.gallery.ownershipStorefront", { name: item.name })
+                : item.role ?? item.name)}
+          </DialogDescription>
+        </DialogHeader>
+        {previewDataUrl ? (
+          <div className="flex justify-center rounded-xl border bg-white p-4">
+            <img src={previewDataUrl} alt="" className="max-h-[min(60vh,420px)] w-full object-contain" />
+          </div>
+        ) : null}
+        <div className="flex flex-wrap justify-end gap-2">
+          <Button type="button" variant="outline" size="sm" onClick={() => onCopy(item.id, item.qrUrl)}>
+            <Copy className="mr-2 h-4 w-4" />
+            {t("business.qrPage.copyUrlAria")}
+          </Button>
+          <Button
+            type="button"
+            size="sm"
+            onClick={handleDownloadPng}
+            disabled={qrLocked || exportBlocked || !previewDataUrl}
+          >
+            <Download className="mr-2 h-4 w-4" />
+            {t("business.qrStudio.gallery.downloadPng")}
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+  ) : null;
+
   if (isLibrary && metadata) {
     return (
       <>
@@ -349,43 +385,20 @@ export const QrManagementCard = memo(function QrManagementCard({
           </div>
         </article>
 
-        <Dialog open={previewOpen && showPreviewActions} onOpenChange={setPreviewOpen}>
-          <DialogContent className="max-w-md sm:max-w-lg">
-            <DialogHeader>
-              <DialogTitle>{item.name}</DialogTitle>
-              <DialogDescription>{metadata.ownershipLabel}</DialogDescription>
-            </DialogHeader>
-            {previewDataUrl ? (
-              <div className="flex justify-center rounded-xl border bg-white p-4">
-                <img src={previewDataUrl} alt="" className="max-h-[min(60vh,420px)] w-full object-contain" />
-              </div>
-            ) : null}
-            <div className="flex flex-wrap justify-end gap-2">
-              <Button type="button" variant="outline" size="sm" onClick={() => onCopy(item.id, item.qrUrl)}>
-                <Copy className="mr-2 h-4 w-4" />
-                {t("business.qrPage.copyUrlAria")}
-              </Button>
-              <Button
-                type="button"
-                size="sm"
-                onClick={handleDownloadPng}
-                disabled={qrLocked || exportBlocked || !previewDataUrl}
-              >
-                <Download className="mr-2 h-4 w-4" />
-                {t("business.qrStudio.gallery.downloadPng")}
-              </Button>
-            </div>
-          </DialogContent>
-        </Dialog>
+        {previewDialog}
       </>
     );
   }
 
   return (
+    <>
     <div className={cn(businessUi.cardStatic, businessUi.cardPad, "min-w-0 text-foreground")}>
       <div className="flex min-w-0 flex-col gap-4 sm:flex-row sm:gap-6">
         <div className="flex w-full min-w-0 shrink-0 justify-center sm:w-auto sm:justify-start">
-          <QrPreviewImage dataUrl={previewDataUrl} />
+          <QrPreviewImage
+            dataUrl={previewDataUrl}
+            onPreview={showPreviewActions ? () => setPreviewOpen(true) : undefined}
+          />
           {exportBlocked ? (
             <p className="mt-2 text-center text-[10px] font-medium text-destructive">
               {t("business.qrReliability.exportBlockedShort")}
@@ -457,6 +470,8 @@ export const QrManagementCard = memo(function QrManagementCard({
         </div>
       </div>
     </div>
+    {previewDialog}
+    </>
   );
 });
 

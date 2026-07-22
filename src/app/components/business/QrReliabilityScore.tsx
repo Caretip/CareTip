@@ -87,7 +87,7 @@ export function QrReliabilityScore({
       cancelled = true;
       window.clearTimeout(timer);
     };
-  }, [sampleUrl, brandingKey, branding, debounceMs, onReportChange]);
+  }, [sampleUrl, brandingKey, debounceMs, onReportChange]);
 
   const grade = report?.grade ?? "good";
   const style = GRADE_STYLES[grade];

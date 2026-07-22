@@ -15,9 +15,11 @@ import {
 } from "../lib/businessBranding";
 import {
   DEFAULT_QR_STUDIO_EXTRAS,
+  detectLogoOrientation,
+  flushQrStudioDesignExtrasSave,
   loadQrStudioDesignExtras,
   mergeQrStudioBranding,
-  saveQrStudioDesignExtras,
+  scheduleQrStudioDesignExtrasSave,
   type QrLayoutVariantId,
   type QrStudioDesignExtras,
 } from "../lib/qrDesignSystem";
@@ -155,7 +157,7 @@ export function useQrStudioDesign(opts: {
     (patch: Partial<QrStudioDesignExtras>) => {
       setExtras((prev) => {
         const next = { ...prev, ...patch };
-        if (businessId) saveQrStudioDesignExtras(businessId, next);
+        if (businessId) scheduleQrStudioDesignExtrasSave(businessId, next);
         return next;
       });
     },
@@ -169,7 +171,7 @@ export function useQrStudioDesign(opts: {
           ...prev,
           templateFieldVisibility: { ...prev.templateFieldVisibility, [field]: visible },
         };
-        if (businessId) saveQrStudioDesignExtras(businessId, next);
+        if (businessId) scheduleQrStudioDesignExtrasSave(businessId, next);
         return next;
       });
     },
@@ -260,7 +262,7 @@ export function useQrStudioDesign(opts: {
         registeredAddress: registeredAddress.trim() || null,
       }));
       setSettings(updated);
-      if (businessId) saveQrStudioDesignExtras(businessId, extras);
+      if (businessId) flushQrStudioDesignExtrasSave(businessId, extras);
       notifyBusinessBrandingChanged();
       trackBrandingClientEvent("branding_qr_v2_updated");
       return true;
@@ -290,9 +292,23 @@ export function useQrStudioDesign(opts: {
 
   const uploadLogo = useCallback(async (file: File) => {
     await withIdleSuppress("qr-studio-logo-upload", async () => {
+      const orientation = await new Promise<QrStudioDesignExtras["logoOrientation"]>((resolve) => {
+        const url = URL.createObjectURL(file);
+        const img = new Image();
+        img.onload = () => {
+          resolve(detectLogoOrientation(img.naturalWidth, img.naturalHeight));
+          URL.revokeObjectURL(url);
+        };
+        img.onerror = () => {
+          URL.revokeObjectURL(url);
+          resolve("square");
+        };
+        img.src = url;
+      });
       await uploadMyBusinessLogo(file);
       await refresh();
       setLogoBust((n) => n + 1);
+      setExtras((prev) => ({ ...prev, logoOrientation: orientation }));
       notifyBusinessBrandingChanged();
       trackBrandingClientEvent("branding_logo_uploaded");
     });

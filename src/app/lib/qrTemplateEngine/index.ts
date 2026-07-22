@@ -53,7 +53,16 @@ export function buildEngineRenderInput(opts: {
   profile?: QrTemplateProfileSlice | null;
   extras?: Pick<
     QrStudioDesignExtras,
-    "ctaText" | "websiteUrl" | "socialInstagram" | "socialFacebook" | "templateFieldVisibility"
+    | "ctaText"
+    | "websiteUrl"
+    | "socialInstagram"
+    | "socialFacebook"
+    | "templateFieldVisibility"
+    | "showVenueLogoHeader"
+    | "logoSize"
+    | "logoOrientation"
+    | "logoAlignment"
+    | "logoPadding"
   > | null;
   scale?: QrTemplateRenderInput["scale"];
   smoothScale?: QrTemplateRenderInput["smoothScale"];
@@ -82,7 +91,16 @@ export async function renderEngineTemplateFromBranding(
     profile?: QrTemplateProfileSlice | null;
     extras?: Pick<
       QrStudioDesignExtras,
-      "ctaText" | "websiteUrl" | "socialInstagram" | "socialFacebook" | "templateFieldVisibility"
+      | "ctaText"
+      | "websiteUrl"
+      | "socialInstagram"
+      | "socialFacebook"
+      | "templateFieldVisibility"
+      | "showVenueLogoHeader"
+      | "logoSize"
+      | "logoOrientation"
+      | "logoAlignment"
+      | "logoPadding"
     > | null;
     scale?: QrTemplateRenderInput["scale"];
     smoothScale?: QrTemplateRenderInput["smoothScale"];

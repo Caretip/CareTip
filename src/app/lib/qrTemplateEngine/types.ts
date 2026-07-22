@@ -138,6 +138,13 @@ export type QrTemplateBrandingPayload = {
   qrModuleLight: string;
   /** Per-field visibility — business + template defaults merged. */
   fieldVisibility: Record<QrTemplateFieldId, boolean>;
+  /** Studio logo layout (local extras) — instant preview only. */
+  logoLayout?: {
+    size: "small" | "medium" | "large";
+    orientation: "landscape" | "portrait" | "square";
+    alignment: "center" | "top";
+    padding: "tight" | "balanced" | "generous";
+  };
 };
 
 export type QrTemplateRenderInput = {

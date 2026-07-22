@@ -133,6 +133,10 @@ function resolveQrBranding(opts?: Partial<QrBrandingOptions>): QrBrandingOptions
     socialInstagram: opts?.socialInstagram ?? null,
     socialFacebook: opts?.socialFacebook ?? null,
     templateFieldVisibility: opts?.templateFieldVisibility,
+    logoSize: opts?.logoSize,
+    logoOrientation: opts?.logoOrientation,
+    logoAlignment: opts?.logoAlignment,
+    logoPadding: opts?.logoPadding,
   };
 }
 
@@ -168,6 +172,11 @@ export async function renderBrandedQrUrlToCanvas(
       socialInstagram: brand.socialInstagram ?? "",
       socialFacebook: brand.socialFacebook ?? "",
       templateFieldVisibility: brand.templateFieldVisibility ?? {},
+      showVenueLogoHeader: brand.showVenueLogoHeader !== false,
+      logoSize: brand.logoSize ?? "medium",
+      logoOrientation: brand.logoOrientation ?? "square",
+      logoAlignment: brand.logoAlignment ?? "center",
+      logoPadding: brand.logoPadding ?? "balanced",
     },
     scale: renderOptions?.scale,
     smoothScale: renderOptions?.smoothScale,

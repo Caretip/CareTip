@@ -72,7 +72,11 @@ import {
   qrTableUrl,
 } from "../../lib/appPublicUrl";
 import { downloadStaffQrPdf } from "../../lib/qrBulkPdf";
-import { logClientError } from "../../lib/clientLog";
+import {
+  mapWithConcurrency,
+  renderQrGalleryThumbnail,
+  QR_GALLERY_META_CONCURRENCY,
+} from "../../lib/qrStudioPerformance";
 import { DashboardHero } from "@/components/ui/dashboard-hero";
 import { TracingBeam } from "@/components/ui/tracing-beam";
 import { Button } from "@/components/ui/button";
@@ -167,6 +171,7 @@ export function QRCodeManagementPage({
         businessId: user.businessId,
         tier: brandingTier,
         fallbackBusinessName: String(user?.businessName ?? "").trim() || undefined,
+        prefetchedProfile: profile,
       });
       if (branding) {
         setQrBrandingOpts(branding);
@@ -364,34 +369,36 @@ export function QRCodeManagementPage({
           url: qrTableUrl(tbl.id),
         })),
       ];
-      const results = await Promise.all(
-        tasks.map(async ({ key, url }) => {
-          try {
-            const { canvas, report } = await validateBrandedQrReliability(url, qrBrand);
-            return {
-              key,
-              dataUrl: canvas?.toDataURL("image/png") ?? "",
-              report,
-            };
-          } catch (err) {
-            logClientError("QRCodeManagementPage", err);
-            return { key, dataUrl: "", report: null };
-          }
-        }),
+      const thumbResults = await Promise.all(
+        tasks.map(async ({ key, url }) => ({
+          key,
+          dataUrl: await renderQrGalleryThumbnail(url, qrBrand).catch(() => ""),
+        })),
       );
       if (cancelled) return;
       const next: Record<string, string> = {};
-      const meta: Record<string, { grade: QrQualityGrade; exportAllowed: boolean }> = {};
-      for (const { key, dataUrl, report } of results) {
+      for (const { key, dataUrl } of thumbResults) {
         next[key] = dataUrl;
-        if (report) {
-          meta[key] = { grade: report.grade, exportAllowed: report.exportAllowed };
-        }
       }
       venueQrCacheKeyRef.current = cacheKey;
       setVenueQrPreview(next);
-      setQrScanMeta((prev) => ({ ...prev, ...meta }));
       setAssetsSyncedAt(new Date().toISOString());
+
+      const metaResults = await mapWithConcurrency(tasks, QR_GALLERY_META_CONCURRENCY, async ({ key, url }) => {
+        try {
+          const { report } = await validateBrandedQrReliability(url, qrBrand);
+          return { key, report };
+        } catch (err) {
+          logClientError("QRCodeManagementPage", err);
+          return { key, report: null };
+        }
+      });
+      if (cancelled) return;
+      const meta: Record<string, { grade: QrQualityGrade; exportAllowed: boolean }> = {};
+      for (const { key, report } of metaResults) {
+        if (report) meta[key] = { grade: report.grade, exportAllowed: report.exportAllowed };
+      }
+      setQrScanMeta((prev) => ({ ...prev, ...meta }));
     })();
     return () => {
       cancelled = true;
@@ -418,16 +425,17 @@ export function QRCodeManagementPage({
         ? businessDirectoryUrl(businessSlug)
         : qrLandingUrl(businessId);
       try {
-        const { canvas, report } = await validateBrandedQrReliability(storeUrl, qrBrand);
+        const dataUrl = await renderQrGalleryThumbnail(storeUrl, qrBrand);
         if (!cancelled) {
           storefrontQrCacheKeyRef.current = cacheKey;
-          setStorefrontQr(canvas?.toDataURL("image/png") ?? "");
-          if (report) {
-            setQrScanMeta((prev) => ({
-              ...prev,
-              storefront: { grade: report.grade, exportAllowed: report.exportAllowed },
-            }));
-          }
+          setStorefrontQr(dataUrl);
+        }
+        const { report } = await validateBrandedQrReliability(storeUrl, qrBrand);
+        if (!cancelled && report) {
+          setQrScanMeta((prev) => ({
+            ...prev,
+            storefront: { grade: report.grade, exportAllowed: report.exportAllowed },
+          }));
         }
       } catch (err) {
         logClientError("QRCodeManagementPage.storefrontQr", err);
@@ -455,66 +463,75 @@ export function QRCodeManagementPage({
       for (const e of safeEmployees) {
         if (!e.slug) next[e.id] = "";
       }
+
+      const employeeTasks = withSlug.map((e) => ({
+        id: e.id,
+        name: e.name,
+        slug: e.slug!,
+        url: businessSlug
+          ? publicEmployeeTipUrl(businessSlug, e.slug!)
+          : qrEmployeeLegacyUrl(e.id),
+      }));
+
+      const thumbResults = await Promise.all(
+        employeeTasks.map(async (task) => ({
+          id: task.id,
+          dataUrl: await renderQrGalleryThumbnail(task.url, qrBrand).catch(() => ""),
+        })),
+      );
+      for (const { id, dataUrl } of thumbResults) {
+        next[id] = dataUrl;
+      }
+      if (!cancelled) {
+        employeeQrCacheKeyRef.current = cacheKey;
+        setQrImages(next);
+        setAssetsSyncedAt(new Date().toISOString());
+      }
+
       let referenceLayout: BrandedQrLayoutMetrics | null = null;
-      if (withSlug.length > 0) {
-        const first = withSlug[0];
-        const firstUrl = businessSlug
-          ? publicEmployeeTipUrl(businessSlug, first.slug!)
-          : qrEmployeeLegacyUrl(first.id);
+      if (employeeTasks.length > 0) {
+        const first = employeeTasks[0];
         try {
-          const { canvas, report, diagnostics } = await validateBrandedQrReliability(firstUrl, qrBrand, {
+          const { report, diagnostics } = await validateBrandedQrReliability(first.url, qrBrand, {
             employeeId: first.id,
-            employeeSlug: first.slug!,
+            employeeSlug: first.slug,
             referenceLayout,
           });
           if (diagnostics?.layout) referenceLayout = diagnostics.layout;
           if (import.meta.env.DEV && diagnostics) {
             logQrScanDiagnostics(first.name, diagnostics);
           }
-          next[first.id] = canvas?.toDataURL("image/png") ?? "";
           if (report) meta[first.id] = { grade: report.grade, exportAllowed: report.exportAllowed };
         } catch (err) {
           logClientError("QRCodeManagementPage", err);
-          next[first.id] = "";
         }
-        const rest = withSlug.slice(1);
+
+        const rest = employeeTasks.slice(1);
         if (rest.length > 0) {
-          const restResults = await Promise.all(
-            rest.map(async (e) => {
-              try {
-                const url = businessSlug
-                  ? publicEmployeeTipUrl(businessSlug, e.slug!)
-                  : qrEmployeeLegacyUrl(e.id);
-                const { canvas, report, diagnostics } = await validateBrandedQrReliability(url, qrBrand, {
-                  employeeId: e.id,
-                  employeeSlug: e.slug!,
-                  referenceLayout,
-                });
-                if (import.meta.env.DEV && diagnostics) {
-                  logQrScanDiagnostics(e.name, diagnostics);
-                }
-                return {
-                  id: e.id,
-                  dataUrl: canvas?.toDataURL("image/png") ?? "",
-                  report,
-                };
-              } catch (err) {
-                logClientError("QRCodeManagementPage", err);
-                return { id: e.id, dataUrl: "", report: null };
+          const restMeta = await mapWithConcurrency(rest, QR_GALLERY_META_CONCURRENCY, async (task) => {
+            try {
+              const { report, diagnostics } = await validateBrandedQrReliability(task.url, qrBrand, {
+                employeeId: task.id,
+                employeeSlug: task.slug,
+                referenceLayout,
+              });
+              if (import.meta.env.DEV && diagnostics) {
+                logQrScanDiagnostics(task.name, diagnostics);
               }
-            }),
-          );
-          for (const { id, dataUrl, report } of restResults) {
-            next[id] = dataUrl;
+              return { id: task.id, report };
+            } catch (err) {
+              logClientError("QRCodeManagementPage", err);
+              return { id: task.id, report: null };
+            }
+          });
+          for (const { id, report } of restMeta) {
             if (report) meta[id] = { grade: report.grade, exportAllowed: report.exportAllowed };
           }
         }
       }
+
       if (!cancelled) {
-        employeeQrCacheKeyRef.current = cacheKey;
-        setQrImages(next);
         setQrScanMeta((prev) => ({ ...prev, ...meta }));
-        setAssetsSyncedAt(new Date().toISOString());
       }
     })();
     return () => {
