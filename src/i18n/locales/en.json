@@ -4461,7 +4461,7 @@
       "pdfInstruction": "Scan to tip instantly",
       "toastBulkNeedLinks": "Add staff with generated links first, or ensure your business has a public slug.",
       "toastBulkAddStaff": "Add staff first.",
-      "fallbackBusinessName": "Business",
+      "fallbackBusinessName": "Your Business",
       "storefrontQrHeading": "{{name}} QR",
       "storefrontQrDesc": "Place at the entrance. Guests scan to choose who to tip.",
       "storefrontQrUrlLabel": "Public page:",

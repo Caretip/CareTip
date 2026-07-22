@@ -233,6 +233,13 @@ export function parseUser(data: AuthResponse["user"]): User {
     onboardingStep,
     businessId: data.businessId,
     employeeId: data.employeeId,
+    // Auth DTO uses `name` for the venue on managers; keep `businessName` in sync for QR / Studio.
+    businessName:
+      typeof (data as { businessName?: string }).businessName === "string"
+        ? (data as { businessName?: string }).businessName
+        : role === "business"
+          ? data.name
+          : undefined,
     avatar: data.avatar ?? undefined,
     impersonation: ext.impersonation,
     impersonatedBy: ext.impersonatedBy,

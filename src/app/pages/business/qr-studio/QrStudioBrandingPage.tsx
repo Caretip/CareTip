@@ -12,7 +12,11 @@ export function QrStudioBrandingPage() {
     <FeatureGate featureKey="brandingCustomization" role="business">
       <QrStudioDesigner
         businessId={user?.businessId}
-        businessName={user?.businessName ?? t("dashboard.venueDashboardFallback")}
+        businessName={
+          user?.businessName?.trim() ||
+          user?.name?.trim() ||
+          t("dashboard.venueDashboardFallback")
+        }
         canEdit
         initialSection="branding"
       />

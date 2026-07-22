@@ -1409,6 +1409,8 @@ export async function downloadBusinessTransactionsExport(): Promise<void> {
 export interface BusinessInfo {
   id: string;
   name: string;
+  /** Alias returned by public/manager profile DTOs — same as `name`. */
+  businessName?: string;
   /** Public directory path: `/{slug}` */
   slug?: string | null;
   logo: string | null;

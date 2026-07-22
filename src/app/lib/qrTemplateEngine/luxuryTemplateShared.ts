@@ -97,7 +97,7 @@ const LUXURY_DEFAULT_VISIBILITY = {
   cta: true,
   thankYouMessage: true,
   address: true,
-  phone: true,
+  phone: false,
   website: true,
   socialInstagram: false,
   socialFacebook: false,

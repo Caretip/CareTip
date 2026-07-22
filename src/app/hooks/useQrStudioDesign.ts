@@ -9,7 +9,9 @@ import {
 } from "../lib/api";
 import {
   notifyBusinessBrandingChanged,
+  pickRegisteredBusinessName,
   qrOptionsFromBrandingFields,
+  resolveQrCardBusinessName,
   trackBrandingClientEvent,
   type QrBrandingOptions,
 } from "../lib/businessBranding";
@@ -124,6 +126,7 @@ export function useQrStudioDesign(opts: {
       const [s, profile] = await Promise.all([fetchBusinessBrandingSettings(), fetchBusinessProfile()]);
       setSettings(s);
       setTemplateProfile({
+        name: pickRegisteredBusinessName(profile) || null,
         registeredAddress: profile.registeredAddress ?? null,
         location: profile.location ?? null,
         contactPhone: profile.contactPhone ?? null,
@@ -179,6 +182,11 @@ export function useQrStudioDesign(opts: {
   );
 
   const previewBranding = useMemo(() => {
+    const resolvedName = resolveQrCardBusinessName({
+      premium: canEdit,
+      registeredName: businessName,
+      brandDisplayName,
+    });
     const base = qrOptionsFromBrandingFields(
       canEdit,
       {
@@ -195,13 +203,15 @@ export function useQrStudioDesign(opts: {
         qrAccentColor,
         qrBackgroundColor,
       },
-      brandDisplayName.trim() || businessName,
+      businessName,
     );
     const merged = mergeQrStudioBranding(base, extras);
     const withProfile = {
       ...merged,
+      businessName: resolvedName,
       templateProfile: {
         ...templateProfile,
+        name: String(businessName ?? "").trim() || templateProfile?.name || null,
         registeredAddress: registeredAddress.trim() || templateProfile?.registeredAddress || null,
         location: templateProfile?.location ?? null,
         contactPhone: templateProfile?.contactPhone ?? null,

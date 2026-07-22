@@ -4461,7 +4461,7 @@
       "pdfInstruction": "Scannen, um sofort zu tippen",
       "toastBulkNeedLinks": "Zuerst Team mit erzeugten Links anlegen oder einen öffentlichen Slug für das Unternehmen sicherstellen.",
       "toastBulkAddStaff": "Zuerst Team anlegen.",
-      "fallbackBusinessName": "Unternehmen",
+      "fallbackBusinessName": "Ihr Unternehmen",
       "storefrontQrHeading": "{{name}} QR",
       "storefrontQrDesc": "Am Eingang platzieren. Gäste scannen und wählen, wem sie Trinkgeld geben.",
       "storefrontQrUrlLabel": "Öffentliche Seite:",

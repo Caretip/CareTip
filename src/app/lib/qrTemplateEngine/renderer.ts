@@ -21,6 +21,14 @@ import type {
 
 const ATTRIBUTION_TEXT = "Powered by CareTip";
 const FONT_STACK = "system-ui, -apple-system, sans-serif";
+/** Warm near-black for CareTip default (light) shell — readable secondary copy. */
+const CARETIP_DEFAULT_INK = "#2A1F14";
+const CARETIP_DEFAULT_MUTED = "rgba(42, 31, 20, 0.72)";
+const CARETIP_DEFAULT_CTA_LABEL = "#FFFFFF";
+
+function isCareTipDefaultTheme(payload: QrTemplateBrandingPayload): boolean {
+  return payload.premium !== true;
+}
 
 let qrcodeModulePromise: Promise<typeof import("qrcode")> | null = null;
 const IMAGE_CACHE_MAX = 48;
@@ -83,18 +91,19 @@ function resolveColor(
   token: QrTemplateFieldPosition["color"],
   payload: QrTemplateBrandingPayload,
 ): string {
+  const caretipDefault = isCareTipDefaultTheme(payload);
   switch (token) {
     case "secondary":
       return payload.secondaryColor;
     case "accent":
-      return payload.qrAccentColor;
+      return caretipDefault ? payload.primaryColor : payload.qrAccentColor;
     case "onDark":
-      return "rgba(245,245,245,0.9)";
+      return caretipDefault ? CARETIP_DEFAULT_MUTED : "rgba(245,245,245,0.9)";
     case "onLight":
-      return "#1A1A1A";
+      return caretipDefault ? CARETIP_DEFAULT_CTA_LABEL : "#1A1A1A";
     case "primary":
     default:
-      return payload.primaryColor;
+      return caretipDefault ? CARETIP_DEFAULT_INK : payload.primaryColor;
   }
 }
 
@@ -264,6 +273,45 @@ function drawLuxuryCornerOrnaments(
     ctx.lineTo(pad + (sx < 0 ? w - pad - corner : pad) + corner * sx, pad + (sy < 0 ? h - pad : pad));
     ctx.stroke();
   }
+}
+
+function drawCareTipDefaultShell(
+  ctx: CanvasRenderingContext2D,
+  w: number,
+  h: number,
+  accent: string,
+): void {
+  const grad = ctx.createLinearGradient(0, 0, 0, h);
+  grad.addColorStop(0, "#FFFFFF");
+  grad.addColorStop(0.38, "#FFF8F0");
+  grad.addColorStop(0.72, "#F8E8D4");
+  grad.addColorStop(1, "#F3D5B0");
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, w, h);
+
+  // Soft amber wash for warmth
+  const wash = ctx.createRadialGradient(w * 0.5, h * 0.12, 8, w * 0.5, h * 0.18, w * 0.72);
+  wash.addColorStop(0, "rgba(235, 153, 44, 0.16)");
+  wash.addColorStop(1, "rgba(235, 153, 44, 0)");
+  ctx.fillStyle = wash;
+  ctx.fillRect(0, 0, w, h);
+
+  // Elegant geometric accents
+  ctx.strokeStyle = "rgba(235, 153, 44, 0.28)";
+  ctx.lineWidth = 1.25;
+  roundRect(ctx, 14, 14, w - 28, h - 28, 14);
+  ctx.stroke();
+  ctx.strokeStyle = "rgba(235, 153, 44, 0.14)";
+  ctx.lineWidth = 1;
+  roundRect(ctx, 22, 22, w - 44, h - 44, 10);
+  ctx.stroke();
+
+  ctx.fillStyle = "rgba(235, 153, 44, 0.07)";
+  for (let i = 0; i < 36; i++) {
+    ctx.fillRect((i * 47) % w, (i * 29) % h, 3, 1);
+  }
+
+  drawLuxuryCornerOrnaments(ctx, w, h, accent, 16, 26);
 }
 
 function drawProceduralLuxuryShell(
@@ -464,7 +512,12 @@ async function drawBackground(
   h: number,
   background: import("./types").QrTemplateDefinition["background"],
   accent: string,
+  caretipDefault = false,
 ): Promise<void> {
+  if (caretipDefault) {
+    drawCareTipDefaultShell(ctx, w, h, accent);
+    return;
+  }
   if (background.kind === "procedural") {
     drawProceduralLuxuryShell(ctx, w, h, accent, background.variant);
     return;
@@ -500,7 +553,7 @@ function drawTextField(
   ctx.font = `${weight} ${maxSize}px ${FONT_STACK}`;
   const lines = wrapText(ctx, content, w);
   let cy = y;
-  const lh = maxSize * 1.35;
+  const lh = maxSize * (isCareTipDefaultTheme(payload) ? 1.42 : 1.35);
   for (const line of lines) {
     const tx = pos.align === "left" ? x : pos.align === "right" ? x + w : x + w / 2;
     ctx.fillText(line, tx, cy);
@@ -631,7 +684,7 @@ function drawTextInRect(
   ctx.textBaseline = "top";
   ctx.font = `${weight} ${maxSize}px ${FONT_STACK}`;
   const lines = wrapText(ctx, content, rect.w);
-  const lh = maxSize * 1.35;
+  const lh = maxSize * (isCareTipDefaultTheme(payload) ? 1.42 : 1.35);
   const blockH = lines.length * lh;
   let cy = rect.y + Math.max(0, (rect.h - blockH) / 2);
   for (const line of lines) {
@@ -659,7 +712,7 @@ function drawTextFieldAt(
   ctx.textBaseline = "top";
   ctx.font = `${weight} ${maxSize}px ${FONT_STACK}`;
   const lines = wrapText(ctx, content, rect.w);
-  const lh = maxSize * 1.35;
+  const lh = maxSize * (isCareTipDefaultTheme(payload) ? 1.42 : 1.35);
   let cy = rect.y;
   for (const line of lines) {
     const tx = align === "left" ? rect.x : align === "right" ? rect.x + rect.w : rect.x + rect.w / 2;
@@ -788,7 +841,11 @@ function drawCtaInRect(
   style: QrTemplateFieldPosition,
   payload: QrTemplateBrandingPayload,
 ): void {
-  const pillH = Math.min(rect.h, Math.max(18, (style.maxFontSize ?? 10) * 2.2));
+  const caretipDefault = isCareTipDefaultTheme(payload);
+  const pillH = Math.min(
+    rect.h,
+    Math.max(caretipDefault ? 22 : 18, (style.maxFontSize ?? 10) * (caretipDefault ? 2.45 : 2.2)),
+  );
   const pillW = Math.min(rect.w, rect.w * (style.w ?? 1));
   const px = rect.x + (rect.w - pillW) / 2;
   const py = rect.y + (rect.h - pillH) / 2;
@@ -799,11 +856,22 @@ function drawCtaInRect(
   roundRect(ctx, px, py, pillW, pillH, pillH / 2);
   ctx.fillStyle = grad;
   ctx.fill();
+  if (caretipDefault) {
+    ctx.strokeStyle = "rgba(42, 31, 20, 0.08)";
+    ctx.lineWidth = 1;
+    ctx.stroke();
+  }
   drawTextInRect(
     ctx,
     text,
     { x: px, y: py, w: pillW, h: pillH },
-    { ...style, color: "onLight", align: "center" },
+    {
+      ...style,
+      color: "onLight",
+      align: "center",
+      maxFontSize: caretipDefault ? Math.max(style.maxFontSize ?? 11, 12) : style.maxFontSize,
+      fontWeight: caretipDefault ? "800" : style.fontWeight,
+    },
     payload,
   );
 }
@@ -817,47 +885,92 @@ async function renderBrandingZone(
 ): Promise<void> {
   const zone = def.zones!.brandingZone;
   const rect = absZone(zone, canvasW, canvasH);
-  const gap = Math.round(rect.h * 0.055);
+  const caretipDefault = isCareTipDefaultTheme(payload);
+  const gap = Math.round(rect.h * (caretipDefault ? 0.06 : 0.055));
   let cursorY = rect.y + gap;
 
+  const nameText = fieldText("businessName", payload)?.trim() || "";
+  const showName = Boolean(
+    payload.fieldVisibility.businessName && def.positions.businessName && nameText,
+  );
+  // Keep business name inside the branding zone so the QR panel cannot cover it.
+  const reservedForText = Math.round(
+    rect.h * (showName ? (caretipDefault ? 0.48 : 0.38) : 0.12),
+  );
+  const logoBudgetBottom = rect.y + rect.h - reservedForText;
+
   const logoStyle = def.positions.logo;
-  if (payload.fieldVisibility.logo && logoStyle) {
-    const baseLogoH = rect.h * (logoStyle.h ?? 0.58);
+  const hasLogo = Boolean(payload.logoUrl?.trim());
+  // Default CareTip card: only spend logo space when a real logo exists.
+  const showLogoSlot =
+    Boolean(payload.fieldVisibility.logo && logoStyle) &&
+    (hasLogo || !caretipDefault);
+
+  if (showLogoSlot && logoStyle) {
+    const maxLogoH = Math.max(28, logoBudgetBottom - cursorY - gap);
+    const preferredH =
+      rect.h * (logoStyle.h ?? 0.58) * (caretipDefault ? 0.72 : 1);
+    const baseLogoH = Math.min(preferredH, maxLogoH);
     const { box, advance } = resolveLogoSlot(rect, baseLogoH, gap, payload.logoLayout);
+    const drawnAdvance = Math.min(advance, maxLogoH + gap);
     await drawLogoInRect(
       ctx,
       payload.logoUrl,
-      { ...box, y: cursorY },
-      payload.businessName,
+      { ...box, y: cursorY, h: Math.min(box.h, maxLogoH) },
+      hasLogo ? undefined : payload.businessName,
       payload.logoLayout?.alignment ?? "center",
     );
-    cursorY += advance;
+    cursorY += drawnAdvance;
   }
 
   // Desired brand order: Logo → Company Name → Tagline → Address
   const stack: Array<{ field: QrTemplateFieldId; weight: number }> = [
-    { field: "businessName", weight: 0.32 },
-    { field: "tagline", weight: 0.15 },
-    { field: "address", weight: 0.15 },
-    { field: "welcomeMessage", weight: 0.1 },
+    { field: "businessName", weight: caretipDefault ? 0.5 : 0.4 },
+    { field: "tagline", weight: caretipDefault ? 0.22 : 0.2 },
+    { field: "address", weight: caretipDefault ? 0.18 : 0.2 },
+    { field: "welcomeMessage", weight: 0.12 },
   ];
 
-  const remaining = rect.y + rect.h - gap - cursorY;
+  const remaining = Math.max(24, rect.y + rect.h - gap - cursorY);
   for (const item of stack) {
     if (!def.supportedFields.includes(item.field)) continue;
     if (!payload.fieldVisibility[item.field]) continue;
     const style = def.positions[item.field];
     const text = fieldText(item.field, payload);
     if (!style || !text?.trim()) continue;
-    const slotH = remaining * item.weight;
+    const slotH =
+      item.field === "businessName"
+        ? Math.max(remaining * item.weight, caretipDefault ? 28 : 22)
+        : remaining * item.weight;
+    const tunedStyle: QrTemplateFieldPosition =
+      item.field === "businessName"
+        ? {
+            ...style,
+            maxFontSize: Math.max(style.maxFontSize ?? 19, caretipDefault ? 22 : 19),
+            fontWeight: caretipDefault ? "800" : style.fontWeight ?? "700",
+            color: caretipDefault ? "primary" : style.color ?? "accent",
+          }
+        : caretipDefault && (item.field === "tagline" || item.field === "address")
+          ? {
+              ...style,
+              color: "onDark",
+              maxFontSize:
+                item.field === "address"
+                  ? (style.maxFontSize ?? 10) + 2
+                  : (style.maxFontSize ?? 11) + 0.5,
+            }
+          : item.field === "address"
+            ? { ...style, maxFontSize: (style.maxFontSize ?? 10) + 1.5 }
+            : style;
     drawTextFieldAt(
       ctx,
       text,
       { x: rect.x, y: cursorY, w: rect.w, h: slotH },
-      style,
+      tunedStyle,
       payload,
     );
-    cursorY += slotH + gap * 0.7;
+    cursorY += slotH + gap * (caretipDefault ? 0.9 : 0.7);
+    if (cursorY >= rect.y + rect.h - gap) break;
   }
 }
 
@@ -1072,7 +1185,14 @@ export async function renderQrTemplateCard(input: QrTemplateRenderInput): Promis
     ctx.scale(pixelScale, pixelScale);
   }
 
-  await drawBackground(ctx, W, H, def.background, input.payload.qrAccentColor);
+  await drawBackground(
+    ctx,
+    W,
+    H,
+    def.background,
+    input.payload.qrAccentColor,
+    isCareTipDefaultTheme(input.payload),
+  );
 
   if (def.zones) {
     await renderZoneBasedCard(ctx, def, input, W, H);

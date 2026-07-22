@@ -7,6 +7,8 @@ import {
 import {
   qrBrandingForManager,
   qrBrandingFromGuestBranding,
+  pickRegisteredBusinessName,
+  resolveQrCardBusinessName,
   type QrBrandingOptions,
 } from "./businessBranding";
 import { loadQrStudioDesignExtras, mergeQrStudioBranding } from "./qrDesignSystem";
@@ -27,7 +29,7 @@ export type QrRenderBrandingSource =
       /** Skip redundant profile fetch when caller already loaded it. */
       prefetchedProfile?: Pick<
         BusinessInfo,
-        "name" | "registeredAddress" | "location" | "contactPhone" | "website"
+        "name" | "businessName" | "registeredAddress" | "location" | "contactPhone" | "website"
       >;
     }
   | { mode: "employee"; businessId: string };
@@ -35,10 +37,11 @@ export type QrRenderBrandingSource =
 function templateProfileFromBusinessInfo(
   profile: Pick<
     BusinessInfo,
-    "registeredAddress" | "location" | "contactPhone" | "website"
+    "name" | "businessName" | "registeredAddress" | "location" | "contactPhone" | "website"
   >,
 ): NonNullable<QrBrandingOptions["templateProfile"]> {
   return {
+    name: pickRegisteredBusinessName(profile) || null,
     registeredAddress: profile.registeredAddress ?? null,
     location: profile.location ?? null,
     contactPhone: profile.contactPhone ?? null,
@@ -51,7 +54,7 @@ function mergeStudioExtras(
   base: QrBrandingOptions,
   profile: Pick<
     BusinessInfo,
-    "registeredAddress" | "location" | "contactPhone" | "website"
+    "name" | "businessName" | "registeredAddress" | "location" | "contactPhone" | "website"
   >,
 ): QrBrandingOptions {
   const extras = loadQrStudioDesignExtras(businessId);
@@ -76,18 +79,50 @@ export async function loadQrRenderBranding(
           ? Promise.resolve(source.prefetchedProfile as BusinessInfo)
           : fetchBusinessProfile(),
       ]);
-      const name =
-        String(profile.name ?? "").trim() ||
-        String(source.fallbackBusinessName ?? "").trim() ||
-        "Business";
-      const base = qrBrandingForManager(source.tier, settings, name);
-      return mergeStudioExtras(businessId, base, profile);
+      const registeredName = pickRegisteredBusinessName(
+        profile,
+        source.fallbackBusinessName,
+      );
+      const cardName = resolveQrCardBusinessName({
+        premium: source.tier === "premium" || source.tier === "enterprise",
+        registeredName,
+        brandDisplayName: settings.brandDisplayName,
+        sessionFallbackName: source.fallbackBusinessName,
+      });
+      const base = qrBrandingForManager(source.tier, settings, registeredName || cardName);
+      const merged = mergeStudioExtras(businessId, base, profile);
+      return {
+        ...merged,
+        businessName: cardName,
+        templateProfile: {
+          ...merged.templateProfile,
+          name: registeredName || merged.templateProfile?.name || null,
+        },
+      };
     }
 
     const profile = await getBusinessById(businessId);
     if (!profile?.branding) return null;
     const base = qrBrandingFromGuestBranding(profile.branding);
-    return mergeStudioExtras(businessId, base, profile);
+    const merged = mergeStudioExtras(businessId, base, profile);
+    const registeredName = pickRegisteredBusinessName(
+      profile,
+      profile.branding.businessName,
+    );
+    const cardName = resolveQrCardBusinessName({
+      premium: base.premium,
+      registeredName,
+      brandDisplayName: profile.branding.brandDisplayName,
+      sessionFallbackName: profile.branding.businessName,
+    });
+    return {
+      ...merged,
+      businessName: cardName,
+      templateProfile: {
+        ...merged.templateProfile,
+        name: registeredName || null,
+      },
+    };
   } catch (err) {
     logClientError("loadQrRenderBranding", err);
     return null;
@@ -100,22 +135,32 @@ export function fallbackManagerQrRenderBranding(
   businessName: string,
   logoPath?: string | null,
 ): QrBrandingOptions {
-  return qrBrandingForManager(
-    tier,
-    {
-      logoPath: logoPath ?? null,
-      brandPrimaryColor: "#EB992C",
-      brandSecondaryColor: "#000000",
-      brandDisplayName: null,
-      brandTagline: null,
-      welcomeMessage: null,
-      thankYouMessage: null,
-      qrTemplate: DEFAULT_QR_TEMPLATE,
-      qrBorderStyle: DEFAULT_QR_BORDER_STYLE,
-      qrShape: DEFAULT_QR_SHAPE,
-      qrAccentColor: "#EB992C",
-      qrBackgroundColor: DEFAULT_QR_BACKGROUND_COLOR,
+  const name = resolveQrCardBusinessName({
+    premium: tier === "premium" || tier === "enterprise",
+    registeredName: businessName,
+  });
+  return {
+    ...qrBrandingForManager(
+      tier,
+      {
+        logoPath: logoPath ?? null,
+        brandPrimaryColor: "#EB992C",
+        brandSecondaryColor: "#000000",
+        brandDisplayName: null,
+        brandTagline: null,
+        welcomeMessage: null,
+        thankYouMessage: null,
+        qrTemplate: DEFAULT_QR_TEMPLATE,
+        qrBorderStyle: DEFAULT_QR_BORDER_STYLE,
+        qrShape: DEFAULT_QR_SHAPE,
+        qrAccentColor: "#EB992C",
+        qrBackgroundColor: DEFAULT_QR_BACKGROUND_COLOR,
+      },
+      name,
+    ),
+    businessName: name,
+    templateProfile: {
+      name: String(businessName ?? "").trim() || null,
     },
-    businessName.trim() || "Business",
-  );
+  };
 }

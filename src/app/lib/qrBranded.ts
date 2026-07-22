@@ -9,7 +9,9 @@ import { publicEmployeeTipUrl, qrEmployeeLegacyUrl } from "./appPublicUrl";
 import { resolveMediaUrl } from "./mediaUrl";
 import { withIdleSuppress } from "./idleSuppress";
 import {
+  CARETIP_DEFAULT_BUSINESS_NAME,
   CARETIP_QR_BRAND_HEX,
+  isQrBusinessNamePlaceholder,
   type QrBrandingOptions,
 } from "./businessBranding";
 import {
@@ -47,7 +49,8 @@ export {
   isQrExportAllowed,
 } from "./qrReliability";
 
-const BRAND_TOP_TEXT = "CareTip";
+/** Neutral fallback when a registered business name is unavailable. Never bare "Business". */
+export { CARETIP_DEFAULT_BUSINESS_NAME } from "./businessBranding";
 
 /** Inner QR matrix width (px) — legacy constant kept for PDF layout references. */
 export const CARETIP_BRANDED_QR_MATRIX_PX = 256;
@@ -99,7 +102,7 @@ const DEFAULT_QR_BRANDING: QrBrandingOptions = {
   primaryColor: CARETIP_QR_BRAND_HEX,
   secondaryColor: "#000000",
   centerLogoUrl: null,
-  businessName: BRAND_TOP_TEXT,
+  businessName: CARETIP_DEFAULT_BUSINESS_NAME,
 };
 
 function resolveQrBranding(opts?: Partial<QrBrandingOptions>): QrBrandingOptions {
@@ -107,8 +110,15 @@ function resolveQrBranding(opts?: Partial<QrBrandingOptions>): QrBrandingOptions
   const primaryColor = premium && opts?.primaryColor ? opts.primaryColor : CARETIP_QR_BRAND_HEX;
   const secondaryColor =
     premium && opts?.secondaryColor ? opts.secondaryColor : DEFAULT_QR_BRANDING.secondaryColor;
-  const businessName = premium && opts?.businessName?.trim() ? opts.businessName.trim() : BRAND_TOP_TEXT;
-  const rawLogo = premium && opts?.centerLogoUrl ? opts.centerLogoUrl : null;
+  const rawName = opts?.businessName?.trim();
+  const profileName = opts?.templateProfile?.name?.trim();
+  const businessName =
+    rawName && !isQrBusinessNamePlaceholder(rawName)
+      ? rawName
+      : profileName && !isQrBusinessNamePlaceholder(profileName)
+        ? profileName
+        : CARETIP_DEFAULT_BUSINESS_NAME;
+  const rawLogo = opts?.centerLogoUrl ? opts.centerLogoUrl : null;
   const centerLogoUrl = rawLogo ? resolveMediaUrl(rawLogo) ?? rawLogo : null;
   return {
     premium,
@@ -116,22 +126,23 @@ function resolveQrBranding(opts?: Partial<QrBrandingOptions>): QrBrandingOptions
     secondaryColor,
     centerLogoUrl,
     businessName,
-    brandTagline: premium ? opts?.brandTagline?.trim() || null : null,
+    // CareTip default may show venue tagline/logo/CTA; Premium keeps full Studio control.
+    brandTagline: opts?.brandTagline?.trim() || null,
     welcomeMessage: premium ? opts?.welcomeMessage?.trim() || null : null,
     thankYouMessage: premium ? opts?.thankYouMessage?.trim() || null : null,
-    ctaText: premium ? opts?.ctaText?.trim() || "Scan to tip" : null,
+    ctaText: opts?.ctaText?.trim() || "Scan to Tip",
     qrTemplate: normalizeQrTemplateId(opts?.qrTemplate ?? DEFAULT_QR_TEMPLATE),
     qrBorderStyle: opts?.qrBorderStyle,
     qrShape: opts?.qrShape,
-    qrAccentColor: opts?.qrAccentColor,
+    qrAccentColor: premium ? opts?.qrAccentColor : CARETIP_QR_BRAND_HEX,
     qrBackgroundColor: opts?.qrBackgroundColor,
     layoutVariant: opts?.layoutVariant,
     decorationsEnabled: opts?.decorationsEnabled,
     showVenueLogoHeader: opts?.showVenueLogoHeader,
     templateProfile: opts?.templateProfile ?? null,
-    websiteUrl: opts?.websiteUrl ?? null,
-    socialInstagram: opts?.socialInstagram ?? null,
-    socialFacebook: opts?.socialFacebook ?? null,
+    websiteUrl: premium ? opts?.websiteUrl ?? null : null,
+    socialInstagram: premium ? opts?.socialInstagram ?? null : null,
+    socialFacebook: premium ? opts?.socialFacebook ?? null : null,
     templateFieldVisibility: opts?.templateFieldVisibility,
     logoSize: opts?.logoSize,
     logoOrientation: opts?.logoOrientation,
@@ -167,7 +178,7 @@ export async function renderBrandedQrUrlToCanvas(
   return renderEngineTemplateFromBranding(encoded, brand, {
     profile: brand.templateProfile,
     extras: {
-      ctaText: brand.ctaText ?? "Scan to tip",
+      ctaText: brand.ctaText ?? "Scan to Tip",
       websiteUrl: brand.websiteUrl ?? "",
       socialInstagram: brand.socialInstagram ?? "",
       socialFacebook: brand.socialFacebook ?? "",

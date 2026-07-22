@@ -129,6 +129,8 @@ export type QrBrandingOptions = {
   showVenueLogoHeader?: boolean;
   /** Engine templates — profile contact slice (from business profile API). */
   templateProfile?: {
+    /** Registered / onboarding business name from profile. */
+    name?: string | null;
     registeredAddress?: string | null;
     location?: string | null;
     contactPhone?: string | null;
@@ -146,6 +148,54 @@ export type QrBrandingOptions = {
 };
 
 const HEX_RE = /^#[0-9A-Fa-f]{6}$/;
+
+/** Neutral fallback when a registered business name is unavailable. */
+export const CARETIP_DEFAULT_BUSINESS_NAME = "Your Business";
+
+/** True when a name is empty or a known placeholder (must not override real profile data). */
+export function isQrBusinessNamePlaceholder(name: string | null | undefined): boolean {
+  const n = String(name ?? "").trim();
+  if (!n) return true;
+  return /^(business|your business|your business name|unternehmen|ihr unternehmen)$/i.test(n);
+}
+
+/**
+ * Resolve the QR card business name from profile + optional Studio display name.
+ * Placeholders never win over a registered profile / session name.
+ */
+export function resolveQrCardBusinessName(input: {
+  premium: boolean;
+  registeredName?: string | null;
+  brandDisplayName?: string | null;
+  sessionFallbackName?: string | null;
+}): string {
+  const candidates = [
+    // Premium custom display name first when real
+    input.premium ? input.brandDisplayName : null,
+    input.registeredName,
+    input.sessionFallbackName,
+    // Non-premium may still use a saved Studio display name if profile name is missing
+    input.brandDisplayName,
+  ];
+  for (const candidate of candidates) {
+    const value = String(candidate ?? "").trim();
+    if (value && !isQrBusinessNamePlaceholder(value)) return value;
+  }
+  return CARETIP_DEFAULT_BUSINESS_NAME;
+}
+
+/** Pick the registered venue name from a business profile payload. */
+export function pickRegisteredBusinessName(
+  profile: { name?: string | null; businessName?: string | null } | null | undefined,
+  ...fallbacks: Array<string | null | undefined>
+): string {
+  const candidates = [profile?.name, profile?.businessName, ...fallbacks];
+  for (const candidate of candidates) {
+    const value = String(candidate ?? "").trim();
+    if (value && !isQrBusinessNamePlaceholder(value)) return value;
+  }
+  return "";
+}
 
 export function isValidBrandHex(value: string): boolean {
   return HEX_RE.test(value.trim());
@@ -217,8 +267,11 @@ export function qrOptionsFromBrandingFields(
   },
   businessName: string,
 ): QrBrandingOptions {
-  const displayName =
-    premium && fields.brandDisplayName?.trim() ? fields.brandDisplayName.trim() : businessName;
+  const displayName = resolveQrCardBusinessName({
+    premium,
+    registeredName: businessName,
+    brandDisplayName: fields.brandDisplayName,
+  });
   return {
     premium,
     primaryColor: premium
@@ -227,15 +280,16 @@ export function qrOptionsFromBrandingFields(
     secondaryColor: premium
       ? fields.brandSecondaryColor || DEFAULT_BRAND_SECONDARY_COLOR
       : DEFAULT_BRAND_SECONDARY_COLOR,
-    centerLogoUrl: premium && fields.logoPath ? fields.logoPath : null,
+    // CareTip default may show a venue logo when present; Premium still owns full branding.
+    centerLogoUrl: fields.logoPath ? fields.logoPath : null,
     businessName: displayName,
-    brandTagline: premium ? fields.brandTagline?.trim() || null : null,
+    brandTagline: fields.brandTagline?.trim() || null,
     welcomeMessage: premium ? fields.welcomeMessage?.trim() || null : null,
     thankYouMessage: premium ? fields.thankYouMessage?.trim() || null : null,
     qrTemplate: premium ? normalizeQrTemplateId(fields.qrTemplate) : DEFAULT_QR_TEMPLATE,
     qrBorderStyle: premium ? normalizeQrBorderStyleId(fields.qrBorderStyle) : DEFAULT_QR_BORDER_STYLE,
     qrShape: premium ? normalizeQrShapeId(fields.qrShape) : DEFAULT_QR_SHAPE,
-    qrAccentColor: premium ? fields.qrAccentColor?.trim() || undefined : undefined,
+    qrAccentColor: premium ? fields.qrAccentColor?.trim() || undefined : CARETIP_QR_BRAND_HEX,
     qrBackgroundColor: premium
       ? fields.qrBackgroundColor?.trim() || DEFAULT_QR_BACKGROUND_COLOR
       : undefined,
@@ -291,6 +345,7 @@ export function qrBrandingFingerprint(opts: QrBrandingOptions | null | undefined
     decorationsEnabled: opts.decorationsEnabled ?? null,
     showVenueLogoHeader: opts.showVenueLogoHeader ?? null,
     registeredAddress: opts.templateProfile?.registeredAddress ?? null,
+    profileName: opts.templateProfile?.name ?? null,
     templateFieldVisibility: opts.templateFieldVisibility ?? null,
     logoSize: opts.logoSize ?? null,
     logoOrientation: opts.logoOrientation ?? null,

@@ -82,7 +82,12 @@ export function normalizeStoredUser(raw: unknown): User | null {
     onboardingStep,
     businessId: typeof o.businessId === "string" ? o.businessId : undefined,
     employeeId: typeof o.employeeId === "string" ? o.employeeId : undefined,
-    businessName: typeof o.businessName === "string" ? o.businessName : undefined,
+    businessName:
+      typeof o.businessName === "string"
+        ? o.businessName
+        : o.role === "business" && typeof o.name === "string"
+          ? o.name
+          : undefined,
     avatar: typeof o.avatar === "string" ? o.avatar : undefined,
     status: o.status as User["status"],
     impersonation: o.impersonation === true,

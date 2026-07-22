@@ -1,6 +1,9 @@
 import i18n from "@/i18n/i18n";
 import {
+  CARETIP_DEFAULT_BUSINESS_NAME,
   DEFAULT_QR_THANK_YOU_MESSAGE,
+  isQrBusinessNamePlaceholder,
+  pickRegisteredBusinessName,
   resolveQrThankYouMessage,
   type QrBrandingOptions,
 } from "../businessBranding";
@@ -13,6 +16,7 @@ import {
 } from "./types";
 
 export type QrTemplateProfileSlice = {
+  name?: string | null;
   registeredAddress?: string | null;
   location?: string | null;
   contactPhone?: string | null;
@@ -114,12 +118,16 @@ export function buildQrTemplateBrandingPayload(input: {
 
   const address =
     profile?.registeredAddress?.trim() || profile?.location?.trim() || null;
-  const website = extras?.websiteUrl?.trim() || profile?.website?.trim() || null;
-  const tagline = premium ? branding.brandTagline?.trim() || null : null;
+  const website = premium
+    ? extras?.websiteUrl?.trim() || profile?.website?.trim() || null
+    : null;
+  const tagline = branding.brandTagline?.trim() || null;
   const welcomeMessage = premium ? branding.welcomeMessage?.trim() || null : null;
   const socialInstagram = premium ? extras?.socialInstagram?.trim() || null : null;
   const socialFacebook = premium ? extras?.socialFacebook?.trim() || null : null;
-  const logoUrl = premium ? branding.centerLogoUrl : null;
+  const logoUrl = branding.centerLogoUrl;
+  const ctaText =
+    extras?.ctaText?.trim() || branding.ctaText?.trim() || "Scan to Tip";
 
   const baseVisibility = mergeFieldVisibility(template, extras?.templateFieldVisibility);
   const fieldVisibility = applyContentAwareVisibility(template, baseVisibility, {
@@ -132,11 +140,36 @@ export function buildQrTemplateBrandingPayload(input: {
     addressVisibleOverride: extras?.templateFieldVisibility?.address,
   });
 
+  // CareTip default / out-of-box cards: never show phone (keep cards clean).
+  // Phone stays off unless Studio explicitly enables it later.
+  fieldVisibility.phone = extras?.templateFieldVisibility?.phone === true;
+  // Onboarding / registered name must always render on the card.
+  fieldVisibility.businessName = true;
+
+  if (!premium) {
+    fieldVisibility.website = false;
+    fieldVisibility.socialInstagram = false;
+    fieldVisibility.socialFacebook = false;
+    fieldVisibility.welcomeMessage = false;
+    fieldVisibility.cta = true;
+    fieldVisibility.thankYouMessage = true;
+    if (address && extras?.templateFieldVisibility?.address !== false) {
+      fieldVisibility.address = true;
+    }
+  }
+
+  const fromBranding = branding.businessName?.trim();
+  const fromProfile = pickRegisteredBusinessName(profile);
+  const businessName =
+    fromBranding && !isQrBusinessNamePlaceholder(fromBranding)
+      ? fromBranding
+      : fromProfile || CARETIP_DEFAULT_BUSINESS_NAME;
+
   return {
     premium,
     logoUrl,
-    businessName: branding.businessName.trim(),
-    tagline,
+    businessName,
+    tagline: premium || tagline ? tagline : null,
     welcomeMessage,
     thankYouMessage: resolveQrThankYouMessage(
       premium,
@@ -145,11 +178,14 @@ export function buildQrTemplateBrandingPayload(input: {
         defaultValue: DEFAULT_QR_THANK_YOU_MESSAGE,
       }),
     ),
-    ctaText: premium ? extras?.ctaText?.trim() || branding.ctaText?.trim() || "Scan to tip" : null,
-    address: premium ? address : null,
-    phone: premium ? profile?.contactPhone?.trim() || null : null,
+    ctaText,
+    address: premium || address ? address : null,
+    phone:
+      extras?.templateFieldVisibility?.phone === true
+        ? profile?.contactPhone?.trim() || null
+        : null,
     email: premium ? profile?.contactEmail?.trim() || null : null,
-    website: premium ? website : null,
+    website,
     socialInstagram,
     socialFacebook,
     primaryColor: branding.primaryColor,

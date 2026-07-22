@@ -48,7 +48,7 @@ import {
   type BrandedQrLayoutMetrics,
 } from "../../lib/qrBranded";
 import type { QrQualityGrade } from "../../lib/qrReliability";
-import { BUSINESS_BRANDING_CHANGED_EVENT, qrBrandingFingerprint } from "../../lib/businessBranding";
+import { BUSINESS_BRANDING_CHANGED_EVENT, isQrBusinessNamePlaceholder, pickRegisteredBusinessName, qrBrandingFingerprint } from "../../lib/businessBranding";
 import {
   fallbackManagerQrRenderBranding,
   loadQrRenderBranding,
@@ -163,7 +163,12 @@ export function QRCodeManagementPage({
     try {
       const profile = await fetchBusinessProfile();
       setBusinessSlug(profile.slug?.trim() || null);
-      setBusinessDisplayName(String(profile.name ?? "").trim() || null);
+      const registeredName = pickRegisteredBusinessName(
+        profile,
+        user?.businessName,
+        user?.name,
+      );
+      setBusinessDisplayName(registeredName || null);
       setBusinessLocation(String(profile.registeredAddress ?? profile.location ?? "").trim() || null);
       setBusinessLogoPath(profile.logo?.trim() ? profile.logo : null);
       setOnboardingVerificationStatus(profile.onboardingVerificationStatus ?? null);
@@ -171,17 +176,35 @@ export function QRCodeManagementPage({
         mode: "manager",
         businessId: user.businessId,
         tier: brandingTier,
-        fallbackBusinessName: String(user?.businessName ?? "").trim() || undefined,
+        fallbackBusinessName:
+          String(user?.businessName ?? "").trim() ||
+          String(user?.name ?? "").trim() ||
+          registeredName ||
+          undefined,
         prefetchedProfile: profile,
       });
       if (branding) {
-        setQrBrandingOpts(branding);
+        // Registered/onboarding name always wins over lingering placeholders.
+        const cardName =
+          registeredName ||
+          (!isQrBusinessNamePlaceholder(branding.businessName)
+            ? branding.businessName.trim()
+            : "") ||
+          t("business.qrPage.fallbackBusinessName");
+        setQrBrandingOpts({
+          ...branding,
+          businessName: cardName,
+          templateProfile: {
+            ...branding.templateProfile,
+            name: registeredName || branding.templateProfile?.name || null,
+            registeredAddress:
+              branding.templateProfile?.registeredAddress ?? profile.registeredAddress ?? null,
+            location: branding.templateProfile?.location ?? profile.location ?? null,
+          },
+        });
         return;
       }
-      const name =
-        String(profile.name ?? "").trim() ||
-        String(user?.businessName ?? "").trim() ||
-        t("business.qrPage.fallbackBusinessName");
+      const name = registeredName || t("business.qrPage.fallbackBusinessName");
       setQrBrandingOpts(fallbackManagerQrRenderBranding(brandingTier, name, profile.logo));
     } catch (err) {
       logClientError("QRCodeManagementPage.branding", err);
@@ -217,8 +240,9 @@ export function QRCodeManagementPage({
     () =>
       String(businessDisplayName ?? "").trim() ||
       user?.businessName ||
+      user?.name ||
       t("business.qrPage.fallbackBusinessName"),
-    [businessDisplayName, user?.businessName, t],
+    [businessDisplayName, user?.businessName, user?.name, t],
   );
 
   const storefrontQrItem = useMemo((): QrManagementCardItem | null => {
