@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
+import { logClientError } from "../../lib/clientLog";
 import { useRequireAuth } from "../../hooks/useRequireAuth";
 import { useSubscriptionEntitlements } from "../../hooks/useSubscriptionEntitlements";
 import { canUseProductionQr } from "../../lib/businessVerificationCapabilities";
