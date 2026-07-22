@@ -6,10 +6,18 @@
   padding-block: clamp(3rem, 6.5vw, 5.5rem);
 }
 
-.caretip-landing .caretip-industries-teaser__inner {
+.caretip-landing .caretip-industries-teaser__frame {
   display: flex;
   flex-direction: column;
-  gap: clamp(2rem, 4vw, 3rem);
+  gap: clamp(1.75rem, 3.5vw, 2.5rem);
+  box-sizing: border-box;
+}
+
+.caretip-landing .caretip-industries-teaser__showcase-shell {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
 }
 
 .caretip-landing .caretip-industries-teaser__overview-header {

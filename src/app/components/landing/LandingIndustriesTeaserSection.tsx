@@ -1,41 +1,30 @@
-import { useTranslation, Trans } from "react-i18next";
-import {
-  BedDouble,
-  BriefcaseMedical,
-  HeartHandshake,
-  Ticket,
-  Truck,
-  UtensilsCrossed,
-  type LucideIcon,
-} from "lucide-react";
-import { PrefetchLink } from "@/app/components/PrefetchLink";
+import { useTranslation } from "react-i18next";
 import { landingUi } from "@/components/landing/landingUi";
 import { LandingReveal } from "@/components/landing/LandingReveal";
 import { LandingSectionAccent } from "@/components/landing/LandingSectionAccent";
-import { landingHeadlineHighlightComponents } from "@/components/landing/landingRichText";
-import {
-  ALL_INDUSTRY_PAGE_IDS,
-  industryPath,
-  type IndustryPageId,
-} from "@/app/data/industryPages";
-import { landingStaggerDelay } from "@/lib/landingMotion";
+import { AnimatedHeadingLazy } from "@/components/ui/AnimatedHeading.lazy";
+import { IndustryShowcase } from "@/components/landing/IndustryShowcase";
 import { cn } from "@/lib/utils";
 
-const INDUSTRY_ICONS: Record<IndustryPageId, LucideIcon> = {
-  gastronomy: UtensilsCrossed,
-  hotels: BedDouble,
-  logistics: Truck,
-  midwives: HeartHandshake,
-  fairs: Ticket,
-  "field-service": BriefcaseMedical,
-};
+function parseLandingHeadline(raw: string): { text: string; highlight: string[] } {
+  const highlight = [...raw.matchAll(/<hl>(.*?)<\/hl>/gi)].map((m) => m[1] ?? "").filter(Boolean);
+  const text = raw.replace(/<\/?hl>/gi, "");
+  return { text, highlight };
+}
+
+/** Matches Navigation + landing section gutters. */
+const INDUSTRIES_FRAME =
+  "mx-auto w-full min-w-0 max-w-7xl px-4 sm:px-6 lg:px-8";
 
 /**
- * Homepage: compact 6-industry overview grid.
+ * Homepage industries — immersive one-at-a-time showcase (wow moment).
  */
 export function LandingIndustriesTeaserSection() {
   const { t } = useTranslation();
   const prefix = "landing.industriesTeaser";
+  const { text: overviewHeadline, highlight: overviewHighlight } = parseLandingHeadline(
+    t(`${prefix}.overviewHeadline`),
+  );
 
   return (
     <section
@@ -43,59 +32,33 @@ export function LandingIndustriesTeaserSection() {
       className={cn(landingUi.sectionWhite, "caretip-industries-teaser scroll-mt-[80px]")}
       aria-labelledby="industries-overview-heading"
     >
-      <div className={cn(landingUi.sectionShell, "caretip-industries-teaser__inner px-4 sm:px-6 lg:px-8")}>
-        <div className="caretip-industries-teaser__overview">
-          <LandingReveal>
-            <header className="caretip-industries-teaser__overview-header">
-              <div className={cn(landingUi.sectionAccentRow, "justify-center lg:justify-center")}>
-                <LandingSectionAccent variant="spark" className="mx-auto lg:mx-auto">
-                  {t(`${prefix}.eyebrow`)}
-                </LandingSectionAccent>
-              </div>
-              <h2 id="industries-overview-heading" className={landingUi.sectionTitle}>
-                <Trans
-                  i18nKey={`${prefix}.overviewHeadline`}
-                  components={landingHeadlineHighlightComponents}
-                />
-              </h2>
-              <p className={cn(landingUi.sectionSubtitle, "caretip-industries-teaser__sub")}>
-                {t(`${prefix}.overviewSubheadline`)}
-              </p>
-            </header>
-          </LandingReveal>
+      <div className={cn(INDUSTRIES_FRAME, "caretip-industries-teaser__frame")}>
+        <LandingReveal>
+          <header className="caretip-industries-teaser__overview-header">
+            <div className={cn(landingUi.sectionAccentRow, "justify-center lg:justify-center")}>
+              <LandingSectionAccent variant="spark" className="mx-auto lg:mx-auto">
+                {t(`${prefix}.eyebrow`)}
+              </LandingSectionAccent>
+            </div>
+            <h2 id="industries-overview-heading" className={landingUi.sectionTitle}>
+              <AnimatedHeadingLazy
+                text={overviewHeadline}
+                highlight={overviewHighlight}
+                highlightClassName="bg-gradient-to-r from-[#EB992C] via-[#E89124] to-[#D88118] bg-clip-text text-transparent"
+              />
+            </h2>
+            <p className={cn(landingUi.sectionSubtitle, "caretip-industries-teaser__sub")}>
+              {t(`${prefix}.overviewSubheadline`)}
+            </p>
+          </header>
+        </LandingReveal>
 
-          <ul className="caretip-industries-teaser__cards" aria-label={t(`${prefix}.teasersAria`)}>
-            {ALL_INDUSTRY_PAGE_IDS.map((id, index) => {
-              const Icon = INDUSTRY_ICONS[id];
-              return (
-                <LandingReveal
-                  key={id}
-                  as="li"
-                  className="caretip-industries-teaser__card"
-                  delay={landingStaggerDelay(index + 1)}
-                >
-                  <PrefetchLink
-                    to={industryPath(id)}
-                    className="caretip-industries-teaser__card-link"
-                  >
-                    <span className="caretip-industries-teaser__card-icon" aria-hidden>
-                      <Icon strokeWidth={1.75} />
-                    </span>
-                    <h3 className="caretip-industries-teaser__card-title">
-                      {t(`${prefix}.cards.${id}.title`)}
-                    </h3>
-                    <p className="caretip-industries-teaser__card-body">
-                      {t(`${prefix}.cards.${id}.body`)}
-                    </p>
-                    <span className="caretip-industries-teaser__card-cta">
-                      {t(`${prefix}.learnMore`)}
-                    </span>
-                  </PrefetchLink>
-                </LandingReveal>
-              );
-            })}
-          </ul>
-        </div>
+        <LandingReveal
+          className="caretip-industries-teaser__showcase-shell w-full min-w-0"
+          delay={0.08}
+        >
+          <IndustryShowcase className="h-full w-full max-w-full" />
+        </LandingReveal>
       </div>
     </section>
   );

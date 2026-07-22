@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { dispatchLandingIntent } from "../../lib/landingAiIntent";
-import { useTranslation, Trans } from "react-i18next";
+import { useTranslation } from "react-i18next";
 import { LiveInMinutesLaptopDemo } from "./LiveInMinutesLaptopDemo";
 import {
   preloadLiveMinutesOnboardingScreens,
@@ -10,7 +10,7 @@ import { landingCopyVisible, landingUi } from "@/components/landing/landingUi";
 import { landingType } from "@/components/landing/landingTypography";
 import { LandingSectionAccent } from "@/components/landing/LandingSectionAccent";
 import { LandingReveal } from "@/components/landing/LandingReveal";
-import { landingHeadlineHighlightComponents } from "@/components/landing/landingRichText";
+import { AnimatedHeadingLazy } from "@/components/ui/AnimatedHeading.lazy";
 import { landingStaggerDelay } from "@/lib/landingMotion";
 import { cn } from "@/lib/utils";
 
@@ -18,10 +18,19 @@ function formatStepNumber(index: number): string {
   return String(index + 1).padStart(2, "0");
 }
 
+function parseLandingHeadline(raw: string): { text: string; highlight: string[] } {
+  const highlight = [...raw.matchAll(/<hl>(.*?)<\/hl>/gi)].map((m) => m[1] ?? "").filter(Boolean);
+  const text = raw.replace(/<\/?hl>/gi, "");
+  return { text, highlight };
+}
+
 export function SimpleSetupSection() {
   const { t, i18n } = useTranslation();
   const [activeStep, setActiveStep] = useState(0);
   const onboardingIntentSent = useRef(false);
+  const { text: setupHeadline, highlight: setupHighlight } = parseLandingHeadline(
+    t("landing.simpleSetup.title"),
+  );
 
   useEffect(() => {
     const locale = resolveLiveMinutesOnboardingLocale(i18n.language);
@@ -79,13 +88,14 @@ export function SimpleSetupSection() {
             </div>
 
             <h2 className={landingUi.headline}>
-              <Trans
-                i18nKey="landing.simpleSetup.title"
-                components={landingHeadlineHighlightComponents}
+              <AnimatedHeadingLazy
+                text={setupHeadline}
+                highlight={setupHighlight}
+                highlightClassName="bg-gradient-to-r from-[#EB992C] via-[#E89124] to-[#D88118] bg-clip-text text-transparent"
               />
             </h2>
             {landingCopyVisible(sectionSubtitle) ? (
-              <p className={cn(landingUi.subtitle, "max-md:max-w-[min(280px,30ch)]")}>{sectionSubtitle}</p>
+              <p className={cn(landingUi.subtitle, "max-md:max-w-[min(100%,34ch)]")}>{sectionSubtitle}</p>
             ) : null}
           </div>
 
@@ -122,7 +132,7 @@ export function SimpleSetupSection() {
                     >
                     <div className="flex items-start gap-4 sm:gap-5">
                       <span
-                        className="caretip-process-step-number shrink-0 font-hero-display text-[2.75rem] font-extrabold leading-none tracking-tight tabular-nums sm:text-[3.25rem]"
+                        className="caretip-process-step-number shrink-0 font-hero-display text-[2.375rem] font-extrabold leading-none tracking-tight tabular-nums sm:text-[2.875rem]"
                         aria-hidden
                       >
                         {formatStepNumber(idx)}

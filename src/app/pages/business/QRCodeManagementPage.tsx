@@ -48,11 +48,16 @@ import {
   type BrandedQrLayoutMetrics,
 } from "../../lib/qrBranded";
 import type { QrQualityGrade } from "../../lib/qrReliability";
-import { BUSINESS_BRANDING_CHANGED_EVENT, isQrBusinessNamePlaceholder, pickRegisteredBusinessName, qrBrandingFingerprint } from "../../lib/businessBranding";
+import {
+  isQrBusinessNamePlaceholder,
+  pickRegisteredBusinessName,
+  qrBrandingFingerprint,
+} from "../../lib/businessBranding";
 import {
   fallbackManagerQrRenderBranding,
   loadQrRenderBranding,
 } from "../../lib/loadQrRenderBranding";
+import { useBusinessBrandingOptional } from "../../contexts/BusinessBrandingContext";
 import {
   normalizeQrTemplateId,
   QR_TEMPLATE_PRESETS,
@@ -123,6 +128,9 @@ export function QRCodeManagementPage({
     role: "business",
   });
   const brandingTier = tier ?? "basic";
+  /** QR Studio SSOT — never reconstruct branding when provider is present. */
+  const studioBranding = useBusinessBrandingOptional();
+  const usesStudioSsot = studioBranding != null;
   const [onboardingVerificationStatus, setOnboardingVerificationStatus] = useState<
     import("../../lib/api").OnboardingVerificationStatus | null
   >(null);
@@ -150,15 +158,52 @@ export function QRCodeManagementPage({
   const [venueQrPreview, setVenueQrPreview] = useState<Record<string, string>>({});
   /** Stored API path for venue logo (PDF + print). */
   const [businessLogoPath, setBusinessLogoPath] = useState<string | null>(null);
-  const [qrBrandingOpts, setQrBrandingOpts] = useState<QrBrandingOptions | null>(null);
+  /** Legacy fallback only when rendered outside BusinessBrandingProvider. */
+  const [legacyQrBrandingOpts, setLegacyQrBrandingOpts] = useState<QrBrandingOptions | null>(null);
   const [assetsSyncedAt, setAssetsSyncedAt] = useState<string | null>(null);
   const employeeQrCacheKeyRef = useRef("");
   const storefrontQrCacheKeyRef = useRef("");
   const venueQrCacheKeyRef = useRef("");
+  const lastStudioVersionRef = useRef<number | null>(null);
 
-  const brandingFingerprint = useMemo(() => qrBrandingFingerprint(qrBrandingOpts), [qrBrandingOpts]);
+  const qrBrandingOpts = studioBranding?.snapshot.branding ?? legacyQrBrandingOpts;
+  const brandingFingerprint = useMemo(() => {
+    if (studioBranding) return `ssot:v${studioBranding.snapshot.version}`;
+    return qrBrandingFingerprint(legacyQrBrandingOpts);
+  }, [studioBranding, legacyQrBrandingOpts]);
 
-  const loadQrBranding = useCallback(async () => {
+  // Sync non-branding profile meta from the Studio provider.
+  useEffect(() => {
+    if (!studioBranding || studioBranding.loading) return;
+    setBusinessDisplayName(studioBranding.businessName || null);
+    setBusinessLocation(studioBranding.profileLocation);
+    setBusinessLogoPath(studioBranding.profileLogoPath);
+    setOnboardingVerificationStatus(studioBranding.onboardingVerificationStatus);
+    if (lastStudioVersionRef.current !== studioBranding.snapshot.version) {
+      lastStudioVersionRef.current = studioBranding.snapshot.version;
+      employeeQrCacheKeyRef.current = "";
+      storefrontQrCacheKeyRef.current = "";
+      venueQrCacheKeyRef.current = "";
+      setAssetsSyncedAt(new Date(studioBranding.snapshot.updatedAt).toISOString());
+    }
+  }, [
+    studioBranding?.loading,
+    studioBranding?.businessName,
+    studioBranding?.profileLocation,
+    studioBranding?.profileLogoPath,
+    studioBranding?.onboardingVerificationStatus,
+    studioBranding?.snapshot.version,
+    studioBranding?.snapshot.updatedAt,
+  ]);
+
+  // Seed slug from provider once; regenerate handlers may override locally.
+  useEffect(() => {
+    if (!studioBranding?.profileSlug) return;
+    setBusinessSlug((prev) => prev ?? studioBranding.profileSlug);
+  }, [studioBranding?.profileSlug]);
+
+  const loadLegacyQrBranding = useCallback(async () => {
+    if (usesStudioSsot) return;
     if (!user?.businessId || user.role !== "business") return;
     try {
       const profile = await fetchBusinessProfile();
@@ -184,14 +229,13 @@ export function QRCodeManagementPage({
         prefetchedProfile: profile,
       });
       if (branding) {
-        // Registered/onboarding name always wins over lingering placeholders.
         const cardName =
           registeredName ||
           (!isQrBusinessNamePlaceholder(branding.businessName)
             ? branding.businessName.trim()
             : "") ||
           t("business.qrPage.fallbackBusinessName");
-        setQrBrandingOpts({
+        setLegacyQrBrandingOpts({
           ...branding,
           businessName: cardName,
           templateProfile: {
@@ -205,34 +249,37 @@ export function QRCodeManagementPage({
         return;
       }
       const name = registeredName || t("business.qrPage.fallbackBusinessName");
-      setQrBrandingOpts(fallbackManagerQrRenderBranding(brandingTier, name, profile.logo));
+      setLegacyQrBrandingOpts(
+        fallbackManagerQrRenderBranding(brandingTier, name, profile.logo, user.businessId),
+      );
     } catch (err) {
       logClientError("QRCodeManagementPage.branding", err);
       setOnboardingVerificationStatus(user.onboardingVerificationStatus ?? null);
-      setQrBrandingOpts(
+      setLegacyQrBrandingOpts(
         fallbackManagerQrRenderBranding(
           brandingTier,
-          String(businessDisplayName ?? user?.businessName ?? "").trim() || "Business",
+          String(businessDisplayName ?? user?.businessName ?? user?.name ?? "").trim() || "Business",
           businessLogoPath,
+          user?.businessId,
         ),
       );
     }
-  }, [user?.businessId, user?.role, user?.businessName, user?.onboardingVerificationStatus, brandingTier, businessDisplayName, businessLogoPath, t]);
+  }, [
+    usesStudioSsot,
+    user?.businessId,
+    user?.role,
+    user?.businessName,
+    user?.name,
+    user?.onboardingVerificationStatus,
+    brandingTier,
+    businessDisplayName,
+    businessLogoPath,
+    t,
+  ]);
 
   useEffect(() => {
-    void loadQrBranding();
-  }, [loadQrBranding]);
-
-  useEffect(() => {
-    const onBrandingChanged = () => {
-      employeeQrCacheKeyRef.current = "";
-      storefrontQrCacheKeyRef.current = "";
-      venueQrCacheKeyRef.current = "";
-      void loadQrBranding();
-    };
-    window.addEventListener(BUSINESS_BRANDING_CHANGED_EVENT, onBrandingChanged);
-    return () => window.removeEventListener(BUSINESS_BRANDING_CHANGED_EVENT, onBrandingChanged);
-  }, [loadQrBranding]);
+    void loadLegacyQrBranding();
+  }, [loadLegacyQrBranding]);
 
   const qrBrand = qrBrandingOpts ?? undefined;
 
@@ -379,6 +426,7 @@ export function QRCodeManagementPage({
   );
 
   useEffect(() => {
+    if (studioBranding?.loading) return;
     if (!needsVenueData || !venueQrFingerprint || !brandingFingerprint) return;
     const cacheKey = `${venueQrFingerprint}|${brandingFingerprint}`;
     if (venueQrCacheKeyRef.current === cacheKey) return;
@@ -429,6 +477,7 @@ export function QRCodeManagementPage({
       cancelled = true;
     };
   }, [
+    studioBranding?.loading,
     needsVenueData,
     venueQrFingerprint,
     safeVenueLocations,
@@ -438,6 +487,7 @@ export function QRCodeManagementPage({
   ]);
 
   useEffect(() => {
+    if (studioBranding?.loading) return;
     if (viewMode !== "employees") return;
     const businessId = user?.businessId;
     if (!businessId || !brandingFingerprint) return;
@@ -472,9 +522,10 @@ export function QRCodeManagementPage({
     return () => {
       cancelled = true;
     };
-  }, [viewMode, user?.businessId, businessSlug, qrBrand, brandingFingerprint]);
+  }, [studioBranding?.loading, viewMode, user?.businessId, businessSlug, qrBrand, brandingFingerprint]);
 
   useEffect(() => {
+    if (studioBranding?.loading) return;
     if (!needsEmployeeData) return;
     const businessId = user?.businessId;
     if (!businessId || !brandingFingerprint) return;
@@ -563,6 +614,7 @@ export function QRCodeManagementPage({
       cancelled = true;
     };
   }, [
+    studioBranding?.loading,
     needsEmployeeData,
     safeEmployees,
     employeeQrFingerprint,

@@ -6,6 +6,7 @@ import {
   QrStudioAccessPanel,
   resolveQrStudioAccessBlock,
 } from "../../../components/business/QrStudioAccessPanel";
+import { BusinessBrandingProvider } from "../../../contexts/BusinessBrandingContext";
 import { useBusinessEntitlementsContext } from "../../../contexts/BusinessEntitlementsContext";
 import { useSubscriptionEntitlements } from "../../../hooks/useSubscriptionEntitlements";
 import { useRequireAuth } from "../../../hooks/useRequireAuth";
@@ -73,7 +74,9 @@ export function QrStudioLayout() {
         ) : showPending ? (
           <FeatureGatePending className="mx-auto max-w-2xl" />
         ) : showOutlet ? (
-          <Outlet />
+          <BusinessBrandingProvider canEdit>
+            <Outlet />
+          </BusinessBrandingProvider>
         ) : null}
       </div>
     </div>

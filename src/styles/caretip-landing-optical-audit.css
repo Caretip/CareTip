@@ -3,14 +3,14 @@
  * Spacing, alignment, rhythm, container rails. No layout or component redesign.
  */
 
-/* —— Container rail — 80rem across hero + split sections —— */
+/* —— Container rail — align with optical-consistency (72rem) —— */
 .caretip-landing .caretip-hero-grid {
-  max-width: 80rem;
+  max-width: 72rem;
 }
 
 @media (min-width: 1024px) {
   .caretip-landing #how-it-works .caretip-live-minutes-split {
-    max-width: 80rem;
+    max-width: 72rem;
   }
 }
 

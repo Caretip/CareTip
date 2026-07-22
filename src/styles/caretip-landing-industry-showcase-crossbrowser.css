@@ -1,0 +1,131 @@
+/**
+ * Industry showcase — cross-browser parity with Firefox reference
+ * (template/Screenshot (145).png).
+ *
+ * Normalizes: stage height, glass translucency, radius clipping,
+ * background fill, progress chrome, and content-rail alignment with nav.
+ * Presentation only — no layout redesign or behavior changes.
+ */
+
+/* —— Match Navigation rail (80rem), not the tighter 72rem section clamp —— */
+.caretip-landing.caretip-landing--premium main > section#industries > .mx-auto.max-w-7xl,
+.caretip-landing.caretip-landing--premium main > section#industries .caretip-industries-teaser__frame {
+  max-width: 80rem;
+}
+
+/* —— Stage size: Firefox reference proportions (stable across engines) —— */
+.caretip-landing .caretip-industry-showcase {
+  min-height: min(78vh, 42rem);
+  min-height: min(78svh, 42rem);
+  /* Chrome: clip children with backdrop-filter to the radius */
+  overflow: hidden;
+  -webkit-transform: translateZ(0);
+  transform: translateZ(0);
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+  /* Chromium-only radius+overflow clip assist — do not set standard mask-image */
+  -webkit-mask-image: -webkit-radial-gradient(#fff, #000);
+}
+
+@media (min-width: 1024px) {
+  .caretip-landing .caretip-industry-showcase {
+    min-height: min(72vh, 46rem);
+    min-height: min(72svh, 46rem);
+    border-radius: 1.75rem;
+  }
+}
+
+/* —— Background layers: identical cover fill in all engines —— */
+.caretip-landing .caretip-industry-showcase__bg-layer {
+  display: block;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+}
+
+.caretip-landing .caretip-industry-showcase__bg-img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  object-fit: cover;
+  object-position: center;
+  /* Avoid Chromium image decode flash / stretch quirks */
+  -webkit-user-drag: none;
+}
+
+/* —— Glass: Firefox-like translucency (Chromium blur is stronger by default) —— */
+.caretip-landing .caretip-industry-glass {
+  /* Heavier solid tint so engines converge even when blur strength differs */
+  background: linear-gradient(
+    165deg,
+    rgb(255 255 255 / 0.14) 0%,
+    rgb(255 255 255 / 0.07) 46%,
+    rgb(12 8 6 / 0.22) 100%
+  );
+  border: 1px solid rgb(255 255 255 / 0.2);
+  /* Standard (Firefox-forward) */
+  backdrop-filter: blur(18px) saturate(1.18);
+  /* WebKit/Blink: slightly softer to land near Firefox */
+  -webkit-backdrop-filter: blur(16px) saturate(1.1);
+  -webkit-transform: translateZ(0);
+  transform: translateZ(0);
+}
+
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .caretip-landing .caretip-industry-glass {
+    background: linear-gradient(
+      165deg,
+      rgb(40 32 26 / 0.72) 0%,
+      rgb(24 18 14 / 0.78) 100%
+    );
+  }
+}
+
+.caretip-landing .caretip-industry-nav__btn {
+  backdrop-filter: blur(8px) saturate(1.1);
+  -webkit-backdrop-filter: blur(8px) saturate(1.05);
+  background: rgb(0 0 0 / 0.22);
+  border: 1px solid rgb(255 255 255 / 0.28);
+}
+
+/* —— Progress: soft dark pill as in Firefox reference —— */
+.caretip-landing .caretip-industry-progress__count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.28rem 0.72rem;
+  border-radius: 999px;
+  border: 1px solid rgb(255 255 255 / 0.12);
+  background: rgb(0 0 0 / 0.4);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  color: rgb(255 255 255 / 0.78);
+  letter-spacing: 0.14em;
+}
+
+.caretip-landing .caretip-industry-progress__current {
+  color: #fff;
+}
+
+/* —— Stage flex: avoid Chromium min-height inheritance gaps —— */
+.caretip-landing .caretip-industry-showcase__stage {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: inherit;
+  flex: 1 1 auto;
+}
+
+.caretip-landing .caretip-industry-showcase__card-slot {
+  flex-shrink: 0;
+}
+
+/* —— Font rendering parity (FF vs Chromium antialiasing) —— */
+.caretip-landing .caretip-industry-glass__title,
+.caretip-landing .caretip-industry-glass__teaser {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: geometricPrecision;
+}

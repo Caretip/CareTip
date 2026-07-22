@@ -13,6 +13,7 @@ import {
 import { useTranslation } from "react-i18next";
 import { LANDING_INDUSTRY_CARD_IDS } from "@/app/data/caretipIndustries";
 import { landingCopyVisible, landingUi } from "@/components/landing/landingUi";
+import { AnimatedHeadingLazy } from "@/components/ui/AnimatedHeading.lazy";
 import { landingFadeReveal } from "@/lib/motionPerf";
 import { cn } from "@/lib/utils";
 
@@ -56,7 +57,9 @@ export function LandingIndustriesSection() {
         className={cn(landingUi.sectionIntro, "relative mx-auto max-w-2xl")}
         {...landingFadeReveal}
       >
-        <h2 className={landingUi.sectionTitle}>{t("landing.industryCards.sectionTitle")}</h2>
+        <h2 className={landingUi.sectionTitle}>
+          <AnimatedHeadingLazy text={t("landing.industryCards.sectionTitle")} />
+        </h2>
         {landingCopyVisible(t("landing.industryCards.sectionSubtitle")) ? (
           <p className={landingUi.sectionSubtitle}>{t("landing.industryCards.sectionSubtitle")}</p>
         ) : null}

@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import { LandingTrustComplianceStrip } from "@/app/components/landing/LandingTrustComplianceStrip";
 import { LandingReveal } from "@/components/landing/LandingReveal";
 import { LandingCopySentences } from "@/components/landing/LandingCopySentences";
+import { AnimatedHeadingLazy } from "@/components/ui/AnimatedHeading.lazy";
 import { landingCopyVisible, landingUi } from "@/components/landing/landingUi";
 
 /**
@@ -11,6 +12,7 @@ import { landingCopyVisible, landingUi } from "@/components/landing/landingUi";
 export function LandingFinalCtaSection() {
   const { t } = useTranslation();
   const sectionSubtitle = t("landing.finalCta.subtitle");
+  const sectionTitle = t("landing.finalCta.title");
 
   return (
     <section
@@ -20,7 +22,7 @@ export function LandingFinalCtaSection() {
     >
       <LandingReveal className="caretip-landing-cta-wise__inner caretip-features-cta-wise__inner">
         <h2 id="landing-final-cta-title" className="caretip-features-cta-wise__title">
-          {t("landing.finalCta.title")}
+          <AnimatedHeadingLazy text={sectionTitle} />
         </h2>
 
         {landingCopyVisible(sectionSubtitle) ? (

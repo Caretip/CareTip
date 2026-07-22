@@ -67,6 +67,7 @@ function applyContentAwareVisibility(
     socialInstagram: string | null;
     socialFacebook: string | null;
     welcomeMessage: string | null;
+    address: string | null;
     showLogo: boolean;
     addressVisibleOverride?: boolean;
   },
@@ -83,6 +84,9 @@ function applyContentAwareVisibility(
   }
   if (def.supportedFields.includes("welcomeMessage") && content.welcomeMessage) {
     next.welcomeMessage = true;
+  }
+  if (def.supportedFields.includes("address") && content.address) {
+    next.address = content.addressVisibleOverride !== false;
   }
 
   if (content.addressVisibleOverride === false) next.address = false;
@@ -119,12 +123,19 @@ export function buildQrTemplateBrandingPayload(input: {
   const address =
     profile?.registeredAddress?.trim() || profile?.location?.trim() || null;
   const website = premium
-    ? extras?.websiteUrl?.trim() || profile?.website?.trim() || null
+    ? extras?.websiteUrl?.trim() ||
+      branding.websiteUrl?.trim() ||
+      profile?.website?.trim() ||
+      null
     : null;
   const tagline = branding.brandTagline?.trim() || null;
   const welcomeMessage = premium ? branding.welcomeMessage?.trim() || null : null;
-  const socialInstagram = premium ? extras?.socialInstagram?.trim() || null : null;
-  const socialFacebook = premium ? extras?.socialFacebook?.trim() || null : null;
+  const socialInstagram = premium
+    ? extras?.socialInstagram?.trim() || branding.socialInstagram?.trim() || null
+    : null;
+  const socialFacebook = premium
+    ? extras?.socialFacebook?.trim() || branding.socialFacebook?.trim() || null
+    : null;
   const logoUrl = branding.centerLogoUrl;
   const ctaText =
     extras?.ctaText?.trim() || branding.ctaText?.trim() || "Scan to Tip";
@@ -136,14 +147,13 @@ export function buildQrTemplateBrandingPayload(input: {
     socialInstagram,
     socialFacebook,
     welcomeMessage,
+    address,
     showLogo: extras?.showVenueLogoHeader !== false,
     addressVisibleOverride: extras?.templateFieldVisibility?.address,
   });
 
   // CareTip default / out-of-box cards: never show phone (keep cards clean).
-  // Phone stays off unless Studio explicitly enables it later.
   fieldVisibility.phone = extras?.templateFieldVisibility?.phone === true;
-  // Onboarding / registered name must always render on the card.
   fieldVisibility.businessName = true;
 
   if (!premium) {
@@ -153,10 +163,30 @@ export function buildQrTemplateBrandingPayload(input: {
     fieldVisibility.welcomeMessage = false;
     fieldVisibility.cta = true;
     fieldVisibility.thankYouMessage = true;
-    if (address && extras?.templateFieldVisibility?.address !== false) {
-      fieldVisibility.address = true;
-    }
+  } else {
+    // Premium Studio config: show configured content everywhere (same as Branding preview).
+    if (welcomeMessage) fieldVisibility.welcomeMessage = true;
+    if (tagline) fieldVisibility.tagline = true;
+    if (website) fieldVisibility.website = true;
+    if (socialInstagram) fieldVisibility.socialInstagram = true;
+    if (socialFacebook) fieldVisibility.socialFacebook = true;
+    fieldVisibility.cta = true;
+    fieldVisibility.thankYouMessage = true;
   }
+
+  // Address: show whenever we have text and the Studio toggle is not off (basic + premium).
+  if (address && extras?.templateFieldVisibility?.address !== false) {
+    fieldVisibility.address = true;
+  } else if (extras?.templateFieldVisibility?.address === false) {
+    fieldVisibility.address = false;
+  }
+
+  const logoLayout = {
+    size: extras?.logoSize ?? branding.logoSize ?? "medium",
+    orientation: extras?.logoOrientation ?? branding.logoOrientation ?? "square",
+    alignment: extras?.logoAlignment ?? branding.logoAlignment ?? "center",
+    padding: extras?.logoPadding ?? branding.logoPadding ?? "balanced",
+  } as const;
 
   const fromBranding = branding.businessName?.trim();
   const fromProfile = pickRegisteredBusinessName(profile);
@@ -193,11 +223,6 @@ export function buildQrTemplateBrandingPayload(input: {
     qrAccentColor: branding.qrAccentColor?.trim() || branding.primaryColor,
     qrModuleLight: "#FFFFFF",
     fieldVisibility,
-    logoLayout: {
-      size: extras?.logoSize ?? "medium",
-      orientation: extras?.logoOrientation ?? "square",
-      alignment: extras?.logoAlignment ?? "center",
-      padding: extras?.logoPadding ?? "balanced",
-    },
+    logoLayout,
   };
 }

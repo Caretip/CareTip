@@ -346,6 +346,9 @@ export function qrBrandingFingerprint(opts: QrBrandingOptions | null | undefined
     showVenueLogoHeader: opts.showVenueLogoHeader ?? null,
     registeredAddress: opts.templateProfile?.registeredAddress ?? null,
     profileName: opts.templateProfile?.name ?? null,
+    websiteUrl: opts.websiteUrl ?? null,
+    socialInstagram: opts.socialInstagram ?? null,
+    socialFacebook: opts.socialFacebook ?? null,
     templateFieldVisibility: opts.templateFieldVisibility ?? null,
     logoSize: opts.logoSize ?? null,
     logoOrientation: opts.logoOrientation ?? null,
@@ -354,13 +357,10 @@ export function qrBrandingFingerprint(opts: QrBrandingOptions | null | undefined
   });
 }
 
-export const BUSINESS_BRANDING_CHANGED_EVENT = "caretip-business-branding-changed";
-
-export function notifyBusinessBrandingChanged(): void {
-  if (typeof window !== "undefined") {
-    window.dispatchEvent(new Event(BUSINESS_BRANDING_CHANGED_EVENT));
-  }
-}
+export {
+  BUSINESS_BRANDING_CHANGED_EVENT,
+  notifyBusinessBrandingChanged,
+} from "./businessBrandingEvents";
 
 export function trackBrandingClientEvent(
   event:

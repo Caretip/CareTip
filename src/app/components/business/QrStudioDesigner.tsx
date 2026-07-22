@@ -22,7 +22,6 @@ import {
   renderBrandedQrUrlToDataUrl,
   type QrReliabilityReport,
 } from "../../lib/qrBranded";
-import { qrBrandingFingerprint } from "../../lib/businessBranding";
 import { QR_STUDIO_PREVIEW_DEBOUNCE_MS } from "../../lib/qrStudioPerformance";
 import {
   type QrLogoAlignment,
@@ -134,8 +133,8 @@ export function QrStudioDesigner({
   }, []);
 
   const previewBrandingFingerprint = useMemo(
-    () => qrBrandingFingerprint(studio.previewBranding),
-    [studio.previewBranding],
+    () => `ssot:v${studio.snapshot.version}`,
+    [studio.snapshot.version],
   );
 
   const handleReliabilityReport = useCallback((report: QrReliabilityReport | null) => {
@@ -149,7 +148,7 @@ export function QrStudioDesigner({
     const timer = window.setTimeout(() => {
       void (async () => {
         try {
-          const dataUrl = await renderBrandedQrUrlToDataUrl(studio.sampleUrl, studio.previewBranding, {
+          const dataUrl = await renderBrandedQrUrlToDataUrl(studio.sampleUrl, studio.snapshot.branding, {
             scale: previewRenderScale(),
           });
           if (!cancelled) setPreviewUrl(dataUrl);
@@ -164,12 +163,12 @@ export function QrStudioDesigner({
       cancelled = true;
       window.clearTimeout(timer);
     };
-  }, [studio.loading, studio.sampleUrl, studio.previewBranding, previewBrandingFingerprint, previewRenderScale]);
+  }, [studio.loading, studio.sampleUrl, studio.snapshot.branding, previewBrandingFingerprint, previewRenderScale]);
 
   const refreshInspectionPreview = useCallback(async () => {
     setInspectionLoading(true);
     try {
-      const dataUrl = await renderBrandedQrUrlToDataUrl(studio.sampleUrl, studio.previewBranding, {
+      const dataUrl = await renderBrandedQrUrlToDataUrl(studio.sampleUrl, studio.snapshot.branding, {
         scale: 4,
       });
       setInspectionUrl(dataUrl);
@@ -178,7 +177,7 @@ export function QrStudioDesigner({
     } finally {
       setInspectionLoading(false);
     }
-  }, [studio.sampleUrl, studio.previewBranding]);
+  }, [studio.sampleUrl, studio.snapshot.branding]);
 
   useEffect(() => {
     if (!livePreviewOpen) return;
@@ -209,11 +208,11 @@ export function QrStudioDesigner({
 
   const handleExportPng = async () => {
     try {
-      const dataUrl = await renderBrandedQrUrlToDataUrl(studio.sampleUrl, studio.previewBranding, {
+      const dataUrl = await renderBrandedQrUrlToDataUrl(studio.sampleUrl, studio.snapshot.branding, {
         scale: 4,
       });
       if (!dataUrl) return;
-      const name = studio.previewBranding.businessName.replace(/\s+/g, "-").toLowerCase();
+      const name = studio.snapshot.branding.businessName.replace(/\s+/g, "-").toLowerCase();
       downloadQrDataUrlPng(dataUrl, `caretip-${name}-experience.png`, { exportAllowed });
       if (!exportAllowed) toast.error(t("business.qrReliability.exportBlocked"));
     } catch {
@@ -322,8 +321,8 @@ export function QrStudioDesigner({
                         canEdit={canEdit}
                         accentColor={studio.qrAccentColor}
                         backgroundColor={studio.qrBackgroundColor}
-                        displayName={studio.previewBranding.businessName}
-                        tagline={studio.previewBranding.brandTagline}
+                        displayName={studio.snapshot.branding.businessName}
+                        tagline={studio.snapshot.branding.brandTagline}
                       />
                     </Suspense>
                   </div>
@@ -769,7 +768,7 @@ export function QrStudioDesigner({
         >
           <QrReliabilityScore
             sampleUrl={studio.sampleUrl}
-            branding={studio.previewBranding}
+            branding={studio.snapshot.branding}
             onReportChange={handleReliabilityReport}
           />
         </section>

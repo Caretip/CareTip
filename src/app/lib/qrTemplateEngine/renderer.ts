@@ -923,25 +923,53 @@ async function renderBrandingZone(
     cursorY += drawnAdvance;
   }
 
-  // Desired brand order: Logo → Company Name → Tagline → Address
+  // Desired brand order: Logo → Company Name → Tagline → Welcome → Address
+  // Welcome stays above address so Studio-configured copy is not clipped under the QR.
   const stack: Array<{ field: QrTemplateFieldId; weight: number }> = [
-    { field: "businessName", weight: caretipDefault ? 0.5 : 0.4 },
-    { field: "tagline", weight: caretipDefault ? 0.22 : 0.2 },
-    { field: "address", weight: caretipDefault ? 0.18 : 0.2 },
-    { field: "welcomeMessage", weight: 0.12 },
+    { field: "businessName", weight: caretipDefault ? 0.46 : 0.36 },
+    { field: "tagline", weight: caretipDefault ? 0.2 : 0.18 },
+    { field: "welcomeMessage", weight: 0.16 },
+    { field: "address", weight: caretipDefault ? 0.16 : 0.18 },
   ];
 
-  const remaining = Math.max(24, rect.y + rect.h - gap - cursorY);
-  for (const item of stack) {
-    if (!def.supportedFields.includes(item.field)) continue;
-    if (!payload.fieldVisibility[item.field]) continue;
-    const style = def.positions[item.field];
-    const text = fieldText(item.field, payload);
-    if (!style || !text?.trim()) continue;
-    const slotH =
-      item.field === "businessName"
-        ? Math.max(remaining * item.weight, caretipDefault ? 28 : 22)
-        : remaining * item.weight;
+  const visibleStack = stack.filter((item) => {
+    if (!def.supportedFields.includes(item.field)) return false;
+    if (!payload.fieldVisibility[item.field]) return false;
+    if (!def.positions[item.field]) return false;
+    return Boolean(fieldText(item.field, payload)?.trim());
+  });
+
+  const zoneBottom = rect.y + rect.h - gap;
+  const available = Math.max(24, zoneBottom - cursorY);
+  const gapBetween = gap * (caretipDefault ? 0.9 : 0.7);
+  const gapsTotal = Math.max(0, visibleStack.length - 1) * gapBetween;
+  const textBudget = Math.max(24, available - gapsTotal);
+  const weightSum = visibleStack.reduce((sum, item) => sum + item.weight, 0) || 1;
+
+  const minFor = (field: QrTemplateFieldId): number => {
+    if (field === "businessName") return caretipDefault ? 28 : 22;
+    if (field === "welcomeMessage") return 16;
+    if (field === "address") return caretipDefault ? 18 : 16;
+    return 12;
+  };
+
+  let rawSlots = visibleStack.map((item) => {
+    const proportional = textBudget * (item.weight / weightSum);
+    return Math.max(proportional, minFor(item.field));
+  });
+  const rawSum = rawSlots.reduce((a, b) => a + b, 0);
+  if (rawSum > textBudget && rawSum > 0) {
+    const scale = textBudget / rawSum;
+    rawSlots = rawSlots.map((h) => Math.max(10, h * scale));
+  }
+
+  for (let i = 0; i < visibleStack.length; i++) {
+    const item = visibleStack[i]!;
+    const style = def.positions[item.field]!;
+    const text = fieldText(item.field, payload)!;
+    const remainingForItem = Math.max(10, zoneBottom - cursorY);
+    const drawnH = Math.min(rawSlots[i]!, remainingForItem);
+    if (drawnH < 10) break;
     const tunedStyle: QrTemplateFieldPosition =
       item.field === "businessName"
         ? {
@@ -965,12 +993,11 @@ async function renderBrandingZone(
     drawTextFieldAt(
       ctx,
       text,
-      { x: rect.x, y: cursorY, w: rect.w, h: slotH },
+      { x: rect.x, y: cursorY, w: rect.w, h: drawnH },
       tunedStyle,
       payload,
     );
-    cursorY += slotH + gap * (caretipDefault ? 0.9 : 0.7);
-    if (cursorY >= rect.y + rect.h - gap) break;
+    cursorY += drawnH + gapBetween;
   }
 }
 

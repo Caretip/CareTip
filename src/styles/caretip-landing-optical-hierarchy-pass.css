@@ -1,0 +1,136 @@
+/**
+ * Landing optical hierarchy pass — presentation only.
+ * Resolves stacked-layer conflicts (padding, intro gaps, weight, rails)
+ * without redesigning sections, copy, nav, or brand colors.
+ * Loaded last among landing CSS so it wins cleanly.
+ */
+
+.caretip-landing.caretip-landing--premium {
+  /* Calmer chapter air than 7rem — still premium, less empty */
+  --caretip-landing-section-py-wide: 6rem;
+  --caretip-landing-intro-gap-lg: 2.75rem;
+  --caretip-landing-content-rail: 72rem;
+}
+
+/* —— Payments: trust bridge, not a full narrative chapter —— */
+@media (max-width: 767px) {
+  .caretip-landing.caretip-landing--premium main > section#payments-trust {
+    padding-top: clamp(2.5rem, 6vw, 3rem) !important;
+    padding-bottom: clamp(2.75rem, 6.5vw, 3.25rem) !important;
+  }
+}
+
+@media (min-width: 768px) and (max-width: 1023px) {
+  .caretip-landing.caretip-landing--premium main > section#payments-trust {
+    padding-top: clamp(2.75rem, 5vw, 3.25rem) !important;
+    padding-bottom: clamp(3rem, 5.5vw, 3.5rem) !important;
+  }
+}
+
+@media (min-width: 1024px) {
+  .caretip-landing.caretip-landing--premium main > section#payments-trust {
+    padding-top: clamp(2.75rem, 4vw, 3.5rem) !important;
+    padding-bottom: clamp(3rem, 4.5vw, 3.75rem) !important;
+  }
+}
+
+/* —— Industries: tall stage already carries mass; soften section py —— */
+@media (max-width: 767px) {
+  .caretip-landing.caretip-landing--premium main > section#industries {
+    padding-top: clamp(2.5rem, 6vw, 3rem) !important;
+    padding-bottom: clamp(2.5rem, 6vw, 3rem) !important;
+  }
+}
+
+@media (min-width: 768px) and (max-width: 1023px) {
+  .caretip-landing.caretip-landing--premium main > section#industries {
+    padding-top: clamp(2.75rem, 5vw, 3.5rem) !important;
+    padding-bottom: clamp(2.75rem, 5vw, 3.5rem) !important;
+  }
+}
+
+@media (min-width: 1024px) {
+  .caretip-landing.caretip-landing--premium main > section#industries {
+    padding-top: clamp(3.25rem, 4.5vw, 4.5rem) !important;
+    padding-bottom: clamp(3.25rem, 4.5vw, 4.5rem) !important;
+  }
+}
+
+/* —— Audience: kill intro mb + flex-gap stack —— */
+.caretip-landing.caretip-landing--premium .caretip-audience-benefits .caretip-section-intro {
+  margin-bottom: 0 !important;
+}
+
+.caretip-landing.caretip-landing--premium .caretip-audience-benefits__inner {
+  gap: clamp(1.75rem, 3.5vw, 2.5rem);
+}
+
+.caretip-landing.caretip-landing--premium .caretip-audience-benefits__grid {
+  max-width: min(100%, var(--caretip-landing-content-rail, 72rem));
+}
+
+/* —— Industries: single rhythm source (frame gap only) —— */
+.caretip-landing.caretip-landing--premium .caretip-industries-teaser__frame {
+  gap: clamp(1.75rem, 3.5vw, 2.5rem);
+}
+
+.caretip-landing.caretip-landing--premium .caretip-industries-teaser__showcase-shell {
+  margin-top: 0 !important;
+}
+
+/* Showcase height owned by industry-showcase.css (Firefox reference) — do not shrink here */
+
+/* —— Setup: step numerals shouldn’t overpower H2 —— */
+.caretip-landing.caretip-landing--premium .caretip-process-step-number {
+  font-size: clamp(2.25rem, 3.8vw, 2.875rem);
+}
+
+/* —— Setup mobile lead: less pinched measure —— */
+@media (max-width: 767px) {
+  .caretip-landing.caretip-landing--premium #how-it-works .caretip-mobile-stack-tagline {
+    max-width: min(100%, 34ch);
+  }
+}
+
+/* —— Lead measure under wide headlines (desktop) —— */
+@media (min-width: 1280px) {
+  .caretip-landing.caretip-landing--premium .caretip-section-intro > p,
+  .caretip-landing.caretip-landing--premium .caretip-showcase-subtitle,
+  .caretip-landing.caretip-landing--premium .caretip-mobile-stack-tagline {
+    max-width: min(100%, 42ch);
+  }
+}
+
+/* —— Final Wise CTA: center action cluster (retarget orphaned final-cta rules) —— */
+.caretip-landing.caretip-landing--premium #final-cta .caretip-features-cta-wise__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  width: 100%;
+}
+
+.caretip-landing.caretip-landing--premium #final-cta .caretip-features-cta-wise__actions > * {
+  max-width: min(100%, 17.5rem);
+}
+
+/* —— Hero → industries seam: soft ivory handoff —— */
+html:not(.dark) .caretip-landing.caretip-landing--premium #industries.caretip-industries-teaser {
+  background: linear-gradient(
+    180deg,
+    #ffffff 0%,
+    var(--caretip-ivory-soft, #f9f7f4) 42%,
+    var(--caretip-ivory-base, #faf8f5) 100%
+  );
+}
+
+/* —— Audience band: quieter residual business glow —— */
+html:not(.dark) .caretip-landing.caretip-landing--premium #business-section.caretip-audience-benefits::before {
+  opacity: 0.55;
+}
+
+/* —— Motivation points → action: slightly calmer —— */
+@media (max-width: 1023px) {
+  .caretip-landing.caretip-landing--premium #recognition .caretip-motivation-points {
+    margin-top: 1.125rem;
+  }
+}

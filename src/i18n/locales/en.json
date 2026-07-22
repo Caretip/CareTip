@@ -3261,32 +3261,41 @@
       "eyebrow": "IN USE EVERYWHERE...",
       "overviewHeadline": "CareTip adapts to <hl>your industry</hl>.",
       "overviewSubheadline": "Discover how easy digital tipping works in your field.\nClick on any industry to see the details.",
-      "teasersAria": "All industries",
+      "teasersAria": "Industry showcase",
       "learnMore": "Learn more",
+      "navPrev": "Previous industry",
+      "navNext": "Next industry",
+      "navHint": "Scroll or drag",
       "cards": {
         "gastronomy": {
           "title": "Gastronomy",
-          "body": "Fast tipping via QR code directly at table."
+          "body": "Fast tipping via QR code directly at table.",
+          "teaser": "QR tips right at the table."
         },
         "hotels": {
           "title": "Hotels & Hospitality",
-          "body": "For room service, front desk & concierge staff."
+          "body": "For room service, front desk & concierge staff.",
+          "teaser": "Reward your team digitally."
         },
         "logistics": {
           "title": "Logistics",
-          "body": "Rewards for couriers and delivery drivers."
+          "body": "Rewards for couriers and delivery drivers.",
+          "teaser": "Digital recognition for drivers."
         },
         "midwives": {
           "title": "Midwives",
-          "body": "Easy appreciation after home visits."
+          "body": "Easy appreciation after home visits.",
+          "teaser": "Say thank you, simply."
         },
         "fairs": {
           "title": "Trade Fairs & Events",
-          "body": "Perfect for on-site service teams."
+          "body": "Perfect for on-site service teams.",
+          "teaser": "Appreciation that keeps pace on site."
         },
         "field-service": {
           "title": "Field Service & Care",
-          "body": "The mobile solution for crews out in the field."
+          "body": "The mobile solution for crews out in the field.",
+          "teaser": "More gratitude, no cash needed."
         }
       }
     }

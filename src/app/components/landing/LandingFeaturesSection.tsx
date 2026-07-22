@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { QrCode, Activity, BarChart3, History, Wallet, Star } from "lucide-react";
-import { useTranslation, Trans } from "react-i18next";
+import { useTranslation } from "react-i18next";
 import { landingStaggerDelay } from "@/lib/landingMotion";
 import { landingCopyVisible, landingUi } from "@/components/landing/landingUi";
 import { landingType } from "@/components/landing/landingTypography";
@@ -9,7 +9,7 @@ import {
   type LandingAccentVariant,
 } from "@/components/landing/LandingSectionAccent";
 import { LandingReveal } from "@/components/landing/LandingReveal";
-import { landingHeadlineHighlightComponents } from "@/components/landing/landingRichText";
+import { AnimatedHeadingLazy } from "@/components/ui/AnimatedHeading.lazy";
 import { cn } from "@/lib/utils";
 
 const cardClassName = cn(
@@ -36,6 +36,11 @@ const featureAccentVariants: LandingAccentVariant[] = [
 export function LandingFeaturesSection() {
   const { t, i18n } = useTranslation();
   const sectionSubtitle = t("landing.features.subtitle");
+  const rawTitle = t("landing.features.title");
+  const featuresHighlight = [...rawTitle.matchAll(/<hl>(.*?)<\/hl>/gi)]
+    .map((m) => m[1] ?? "")
+    .filter(Boolean);
+  const featuresTitle = rawTitle.replace(/<\/?hl>/gi, "");
 
   const items = useMemo(
     () =>
@@ -111,9 +116,10 @@ export function LandingFeaturesSection() {
             </div>
           ) : null}
           <h2 className={cn(landingUi.sectionTitle, "caretip-landing-scroll-reveal--visible")}>
-            <Trans
-              i18nKey="landing.features.title"
-              components={landingHeadlineHighlightComponents}
+            <AnimatedHeadingLazy
+              text={featuresTitle}
+              highlight={featuresHighlight}
+              highlightClassName="bg-gradient-to-r from-[#EB992C] via-[#E89124] to-[#D88118] bg-clip-text text-transparent"
             />
           </h2>
           {landingCopyVisible(sectionSubtitle) ? (

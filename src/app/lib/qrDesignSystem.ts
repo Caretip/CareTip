@@ -1,6 +1,6 @@
 /**
- * QR Studio design extras — layout variants and localStorage overrides.
- * Template rendering is handled exclusively by the Template Engine (`qrTemplateEngine/`).
+ * QR Studio design extras — layout variants and local persistence for fields not yet on the API.
+ * Runtime consumers in QR Studio read BusinessBrandingSnapshot from BusinessBrandingProvider.
  */
 
 import type { QrTemplateFieldId } from "./qrTemplateEngine/types";
@@ -65,7 +65,7 @@ export type QrStudioDesignExtras = {
 
 export const DEFAULT_QR_STUDIO_EXTRAS: QrStudioDesignExtras = {
   layoutVariant: DEFAULT_QR_LAYOUT_VARIANT,
-  ctaText: "Scan to tip",
+  ctaText: "Scan to Tip",
   websiteUrl: "",
   socialInstagram: "",
   socialFacebook: "",
@@ -96,7 +96,7 @@ export function saveQrStudioDesignExtras(businessId: string, extras: QrStudioDes
 
 const extrasSaveTimers = new Map<string, number>();
 
-/** Debounce localStorage writes during rapid studio edits (keystrokes, toggles). */
+/** Persist Studio extras. Consumers in QR Studio read BusinessBrandingSnapshot — not localStorage. */
 export function scheduleQrStudioDesignExtrasSave(
   businessId: string,
   extras: QrStudioDesignExtras,
@@ -138,7 +138,7 @@ export function mergeQrStudioBranding(
   return {
     ...base,
     layoutVariant: extras.layoutVariant,
-    ctaText: extras.ctaText.trim() || "Scan to tip",
+    ctaText: extras.ctaText.trim() || "Scan to Tip",
     decorationsEnabled: extras.decorationsEnabled,
     showVenueLogoHeader: extras.showVenueLogoHeader,
     websiteUrl: extras.websiteUrl.trim() || base.websiteUrl || null,

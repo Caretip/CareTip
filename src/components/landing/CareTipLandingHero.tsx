@@ -3,10 +3,10 @@ import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import { landingCopyVisible, landingUi } from "@/components/landing/landingUi";
-import { landingHeroHeadlineWithHighlight } from "@/components/landing/landingHeroHeadline";
 import { LandingHeroAnimatedWord } from "@/components/landing/LandingHeroAnimatedWord";
 import { LandingHeroStoryShowcase } from "@/components/landing/LandingHeroStoryShowcase";
 import { LandingCopySentences } from "@/components/landing/LandingCopySentences";
+import { AnimatedHeading } from "@/components/ui/AnimatedHeading";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { cn } from "@/lib/utils";
 
@@ -120,11 +120,11 @@ export function CareTipLandingHero({
                       index === 0 && "caretip-hero-headline-line--static",
                     )}
                   >
-                    {landingHeroHeadlineWithHighlight(
-                      line,
-                      heroHeadlineHighlights,
-                      landingUi.heroHeadlineEmphasis,
-                    )}
+                    <AnimatedHeading
+                      text={line}
+                      highlight={heroHeadlineHighlights}
+                      highlightClassName={landingUi.heroHeadlineEmphasis}
+                    />
                   </span>
                 ))
               ) : (
@@ -135,11 +135,11 @@ export function CareTipLandingHero({
                     "caretip-hero-headline-line--controlled",
                   )}
                 >
-                  {landingHeroHeadlineWithHighlight(
-                    activeHeadline,
-                    heroHeadlineHighlights,
-                    landingUi.heroHeadlineEmphasis,
-                  )}
+                  <AnimatedHeading
+                    text={activeHeadline}
+                    highlight={heroHeadlineHighlights}
+                    highlightClassName={landingUi.heroHeadlineEmphasis}
+                  />
                 </span>
               )
             ) : (

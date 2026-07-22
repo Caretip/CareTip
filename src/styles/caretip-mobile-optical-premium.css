@@ -226,9 +226,8 @@
     padding-block: clamp(2.75rem, 7vw, 3.75rem);
   }
 
-  .caretip-landing .caretip-industries-teaser__inner {
+  .caretip-landing .caretip-industries-teaser__frame {
     gap: 2rem;
-    padding-inline: var(--caretip-mobile-gutter, 1.125rem);
   }
 
   .caretip-landing .caretip-industries-teaser__sub {

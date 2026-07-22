@@ -3261,32 +3261,41 @@
       "eyebrow": "ÜBERALL DORT IM EINSATZ...",
       "overviewHeadline": "CareTip passt sich <hl>Ihrer Branche</hl> an.",
       "overviewSubheadline": "Entdecken Sie, wie einfach digitales Trinkgeld in Ihrem Bereich funktioniert.\nEin Klick bringt Sie zu den Details.",
-      "teasersAria": "Alle Branchen",
+      "teasersAria": "Branchen-Showcase",
       "learnMore": "Mehr erfahren",
+      "navPrev": "Vorherige Branche",
+      "navNext": "Nächste Branche",
+      "navHint": "Scrollen oder ziehen",
       "cards": {
         "gastronomy": {
           "title": "Gastronomie",
-          "body": "Trinkgeld per QR-Code direkt am Tisch."
+          "body": "Trinkgeld per QR-Code direkt am Tisch.",
+          "teaser": "QR-Trinkgeld direkt am Tisch."
         },
         "hotels": {
           "title": "Hotellerie",
-          "body": "Für Zimmerservice, Rezeption & Concierge."
+          "body": "Für Zimmerservice, Rezeption & Concierge.",
+          "teaser": "Belohnen Sie Ihr Team digital."
         },
         "logistics": {
           "title": "Logistik",
-          "body": "Belohnung für Paketboten & Lieferdienste."
+          "body": "Belohnung für Paketboten & Lieferdienste.",
+          "teaser": "Digitale Anerkennung für Fahrer."
         },
         "midwives": {
           "title": "Hebammen",
-          "body": "Wertschätzung nach dem Hausbesuch."
+          "body": "Wertschätzung nach dem Hausbesuch.",
+          "teaser": "Einfach bedanken."
         },
         "fairs": {
           "title": "Messen & Events",
-          "body": "Perfekt für temporäre Service-Teams vor Ort."
+          "body": "Perfekt für temporäre Service-Teams vor Ort.",
+          "teaser": "Wertschätzung, die mit dem Event mithält."
         },
         "field-service": {
           "title": "Außendienst & Pflege",
-          "body": "Die mobile Lösung für Kräfte im Einsatz."
+          "body": "Die mobile Lösung für Kräfte im Einsatz.",
+          "teaser": "Mehr Wertschätzung ohne Bargeld."
         }
       }
     }
