@@ -10,6 +10,8 @@
   --caretip-landing-section-py-wide: 6rem;
   --caretip-landing-intro-gap-lg: 2.75rem;
   --caretip-landing-content-rail: 72rem;
+  /* Desktop CLS reserve for industries lazy host */
+  --caretip-lazy-industries-h: 52rem;
 }
 
 /* —— Payments: trust bridge, not a full narrative chapter —— */

@@ -37,7 +37,7 @@ export function IndustryGlassCard({
         to={href}
         className={cn(
           caretipBtnPrimary,
-          "caretip-industry-glass__cta no-underline",
+          "caretip-industry-glass__cta no-underline touch-manipulation",
         )}
       >
         {ctaLabel}

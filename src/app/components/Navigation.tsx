@@ -140,7 +140,7 @@ export const Navigation = memo(function Navigation({ variant: _variant = "defaul
                   <button
                     type="button"
                     onClick={() => closeMobileMenu("toggle")}
-                    className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-border/70 bg-card text-foreground shadow-sm transition-colors hover:bg-muted/70 active:bg-muted"
+                    className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-md border-0 bg-transparent text-foreground shadow-none transition-colors hover:bg-muted/50 active:bg-muted/70"
                     aria-label={t("nav.closeMenu")}
                   >
                     <X className="h-5 w-5" aria-hidden />

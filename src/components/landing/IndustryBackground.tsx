@@ -33,6 +33,7 @@ export function IndustryBackground({ activeId, className }: IndustryBackgroundPr
               loading={active ? "eager" : "lazy"}
               fetchPriority={active ? "high" : "low"}
               className="caretip-industry-showcase__bg-img h-full w-full object-cover"
+              sizes="(max-width: 1023px) 100vw, min(80rem, 100vw)"
               draggable={false}
             />
           </picture>
