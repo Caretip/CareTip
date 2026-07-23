@@ -1,5 +1,6 @@
 import type { OnboardingVerificationStatus } from "./api";
 import type { BusinessAccountStatus } from "../hooks/useAuth";
+import { isKycRequiredForReceiveTips } from "./mvpVerificationPolicy";
 
 export type BusinessVerificationUiStatus =
   | BusinessAccountStatus
@@ -52,12 +53,13 @@ export function resolveBusinessVerificationCapabilities(
   const onboardingApproved = isOnboardingApprovedForPublicGoLive(opts?.onboardingVerificationStatus);
   const normalized = normalizeKycStatus(kycStatus);
   const kycVerified = normalized === "verified";
+  const canReceiveTips = isKycRequiredForReceiveTips() ? kycVerified : onboardingApproved;
 
   return {
     canAccessSetupFeatures: normalized != null && normalized !== "rejected",
     canGenerateQrCodes: onboardingApproved,
     canActivateTipping: onboardingApproved,
-    canReceiveTips: kycVerified,
+    canReceiveTips,
   };
 }
 

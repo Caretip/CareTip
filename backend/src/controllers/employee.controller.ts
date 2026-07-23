@@ -363,6 +363,62 @@ export async function patchEmployeeStatus(req: Request, res: Response) {
   }
 }
 
+export async function ensureMissingEmployeeSlugs(req: Request, res: Response) {
+  try {
+    const userId = req.user?.userId ?? req.user?.id;
+    if (!userId) {
+      return res.status(401).json({ message: "Authentication required" });
+    }
+    const business = await businessService.getBusinessByUserId(userId);
+    if (!business) {
+      return res.status(403).json({ message: "Only business owners can update employees" });
+    }
+    const result = await employeeService.ensureMissingEmployeeSlugsForBusiness(business.id);
+    return res.json(result);
+  } catch (err) {
+    logServerError("employee.ensureMissingEmployeeSlugs", err);
+    const msg = err instanceof Error ? err.message : "";
+    if (msg === VERIFICATION_REQUIRED_MSG) {
+      return res.status(403).json({ message: VERIFICATION_REQUIRED_MSG });
+    }
+    return res.status(400).json({
+      message: clientSafeMessage(err, CLIENT_FALLBACK.employee),
+    });
+  }
+}
+
+export async function ensureEmployeeSlug(req: Request, res: Response) {
+  try {
+    const userId = req.user?.userId ?? req.user?.id;
+    if (!userId) {
+      return res.status(401).json({ message: "Authentication required" });
+    }
+    const business = await businessService.getBusinessByUserId(userId);
+    if (!business) {
+      return res.status(403).json({ message: "Only business owners can update employees" });
+    }
+    const { employeeId } = req.params;
+    if (!employeeId?.trim()) {
+      return res.status(400).json({ message: "Employee ID is required" });
+    }
+    const updated = await employeeService.ensureEmployeeSlugForBusiness(
+      business.id,
+      employeeId.trim(),
+    );
+    return res.json(updated);
+  } catch (err) {
+    logServerError("employee.ensureEmployeeSlug", err);
+    const msg = err instanceof Error ? err.message : "";
+    if (msg === VERIFICATION_REQUIRED_MSG) {
+      return res.status(403).json({ message: VERIFICATION_REQUIRED_MSG });
+    }
+    const status = msg === "Employee not found" ? 404 : 400;
+    return res.status(status).json({
+      message: clientSafeMessage(err, CLIENT_FALLBACK.employee),
+    });
+  }
+}
+
 export async function regenerateEmployeeSlug(req: Request, res: Response) {
   try {
     const userId = req.user?.userId ?? req.user?.id;

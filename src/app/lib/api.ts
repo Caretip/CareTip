@@ -1839,6 +1839,36 @@ export async function regenerateEmployeeSlug(employeeId: string): Promise<{
   });
 }
 
+/** Idempotent: create staff slug if missing (manager). Does not rotate existing slugs. */
+export async function ensureEmployeeSlugForBusiness(employeeId: string): Promise<{
+  id: string;
+  name: string;
+  jobTitle: string;
+  slug: string | null;
+  avatar: string | null;
+  email: string;
+}> {
+  return apiRequest(apiPath(`/api/employees/${encodeURIComponent(employeeId)}/ensure-slug`), {
+    method: "POST",
+    headers: getHeaders(),
+    body: EMPTY_JSON_BODY,
+    credentials: "include",
+  });
+}
+
+/** QR Studio SSOT — ensure every tipping-ready employee has a public slug. */
+export async function ensureMissingEmployeeSlugs(): Promise<{
+  ensured: Array<{ id: string; slug: string }>;
+  skipped: Array<{ id: string; reason: string }>;
+}> {
+  return apiRequest(apiPath("/api/employees/ensure-slugs"), {
+    method: "POST",
+    headers: getHeaders(),
+    body: EMPTY_JSON_BODY,
+    credentials: "include",
+  });
+}
+
 export interface EmployeeDetail {
   id: string;
   name: string;
@@ -3293,6 +3323,11 @@ export type TipSessionContextResponse =
   | {
       status: "pending";
       sessionId: string;
+      paymentIntentId?: string | null;
+      paymentStatus?: string | null;
+      checkoutStatus?: string | null;
+      businessId?: string | null;
+      employeeId?: string | null;
     }
   | {
       status: "expired";
@@ -3301,6 +3336,14 @@ export type TipSessionContextResponse =
   | {
       status: "unpaid";
       sessionId: string;
+    }
+  | {
+      /** Tip ledger exists but is not success (eligibility failure / refund). */
+      status: "failed";
+      sessionId: string;
+      tipId?: string;
+      tipStatus?: string;
+      paymentIntentId?: string | null;
     }
   | {
       status: "ready";
@@ -3316,6 +3359,7 @@ export type TipSessionContextResponse =
     };
 
 export type TipSessionReadyContext = Extract<TipSessionContextResponse, { status: "ready" }>;
+export type TipSessionPendingContext = Extract<TipSessionContextResponse, { status: "pending" }>;
 
 export async function getTipSessionContext(sessionId: string): Promise<TipSessionContextResponse> {
   const url = apiPath(`/api/payments/tip-session/${encodeURIComponent(sessionId)}`);
@@ -3336,13 +3380,30 @@ export async function getTipSessionContext(sessionId: string): Promise<TipSessio
   ) as Partial<TipSessionContextResponse> & { message?: string };
 
   if (res.status === 202 && data.status === "pending" && typeof data.sessionId === "string") {
-    return { status: "pending", sessionId: data.sessionId };
+    return {
+      status: "pending",
+      sessionId: data.sessionId,
+      paymentIntentId: typeof data.paymentIntentId === "string" ? data.paymentIntentId : null,
+      paymentStatus: typeof data.paymentStatus === "string" ? data.paymentStatus : null,
+      checkoutStatus: typeof data.checkoutStatus === "string" ? data.checkoutStatus : null,
+      businessId: typeof data.businessId === "string" ? data.businessId : null,
+      employeeId: typeof data.employeeId === "string" ? data.employeeId : null,
+    };
   }
   if (res.status === 410 && data.status === "expired" && typeof data.sessionId === "string") {
     return { status: "expired", sessionId: data.sessionId };
   }
   if (res.status === 422 && data.status === "unpaid" && typeof data.sessionId === "string") {
     return { status: "unpaid", sessionId: data.sessionId };
+  }
+  if (res.status === 422 && data.status === "failed" && typeof data.sessionId === "string") {
+    return {
+      status: "failed",
+      sessionId: data.sessionId,
+      tipId: typeof data.tipId === "string" ? data.tipId : undefined,
+      tipStatus: typeof data.tipStatus === "string" ? data.tipStatus : undefined,
+      paymentIntentId: typeof data.paymentIntentId === "string" ? data.paymentIntentId : null,
+    };
   }
   if (res.ok && data.status === "ready" && typeof data.sessionId === "string") {
     return data as TipSessionReadyContext;

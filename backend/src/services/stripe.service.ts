@@ -795,6 +795,16 @@ export async function handleSuccessfulTipPayment(session: Stripe.Checkout.Sessio
     });
 
     console.log("TIP CREATED", tip.id);
+    console.info("[tip-reconcile] webhook_tip_created", {
+      checkoutSessionId: session.id,
+      paymentIntentId: piId,
+      tipId: tip.id,
+      tipCreatedAt: tip.createdAt?.toISOString?.() ?? new Date().toISOString(),
+      businessId,
+      employeeId,
+      customerName: typeof md.customerName === "string" ? md.customerName : null,
+      amountEur: confirmedEur,
+    });
 
     recordCheckoutFunnelEvent("completed", {
       sessionId: session.id,

@@ -121,6 +121,25 @@ export function qrEmployeeLegacyUrl(employeeId: string): string {
   return joinPath(`/qr/employee/${encodeURIComponent(employeeId)}`);
 }
 
+/**
+ * Single URL resolver for employee QR cards (preview / PNG / PDF).
+ * Prefer canonical slug pair; fall back to legacy id URL so branding never depends on slug presence.
+ */
+export function resolveEmployeeQrUrl(opts: {
+  employeeId: string;
+  businessSlug?: string | null;
+  employeeSlug?: string | null;
+}): string {
+  const employeeId = String(opts.employeeId ?? "").trim();
+  if (!employeeId) return "";
+  const businessSlug = opts.businessSlug?.trim() || "";
+  const employeeSlug = opts.employeeSlug?.trim() || "";
+  if (businessSlug && employeeSlug) {
+    return publicEmployeeTipUrl(businessSlug, employeeSlug);
+  }
+  return qrEmployeeLegacyUrl(employeeId);
+}
+
 /** @deprecated Alias of {@link qrEmployeeLegacyUrl}; use {@link publicEmployeeTipUrl} for new QR codes. */
 export function qrEmployeeUrl(employeeId: string): string {
   return qrEmployeeLegacyUrl(employeeId);

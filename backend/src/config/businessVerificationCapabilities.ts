@@ -1,4 +1,5 @@
 import type { BusinessVerificationStatus, OnboardingVerificationStatus } from "@prisma/client";
+import { isKycRequiredForReceiveTips } from "./mvpVerificationPolicy.js";
 
 /** Product capabilities gated by admin review — not dashboard access. */
 export type BusinessVerificationCapability =
@@ -14,7 +15,11 @@ export type BusinessVerificationCapabilityFlags = {
   canGenerateQrCodes: boolean;
   /** Public tipping surfaces (QR landing, staff directory) may activate. */
   canActivateTipping: boolean;
-  /** Stripe checkout and tip ledger acceptance (KYC / compliance). */
+  /**
+   * Stripe checkout and tip ledger acceptance.
+   * Policy A: while MVP KYC is disabled, follows onboarding approval (same as QR / activate tipping).
+   * When KYC is re-enabled via MVP flags, requires KYC verified again.
+   */
   canReceiveTips: boolean;
 };
 
@@ -29,7 +34,7 @@ export const ONBOARDING_APPROVAL_REQUIRED_MESSAGE =
 type ResolveOpts = {
   impersonating?: boolean;
   superAdmin?: boolean;
-  /** Platform onboarding review — gates public QR / venue exposure. */
+  /** Platform onboarding review — gates public QR / venue exposure / MVP tip checkout. */
   onboardingVerificationStatus?: OnboardingVerificationStatus | null;
 };
 
@@ -43,6 +48,9 @@ export function isOnboardingApprovedForPublicGoLive(
 /**
  * Setup vs go-live capabilities.
  * Dashboard access is not gated here — only public QR exposure and live tipping.
+ *
+ * Single go-live SSOT while MVP KYC is disabled:
+ * QR + activate tipping + receive tips all follow onboarding approval.
  */
 export function resolveBusinessVerificationCapabilities(
   kycStatus: BusinessVerificationStatus | null | undefined,
@@ -60,12 +68,13 @@ export function resolveBusinessVerificationCapabilities(
   const onboardingApproved = isOnboardingApprovedForPublicGoLive(opts?.onboardingVerificationStatus);
   const kycVerified = kycStatus === "verified";
   const hasBusiness = kycStatus != null;
+  const canReceiveTips = isKycRequiredForReceiveTips() ? kycVerified : onboardingApproved;
 
   return {
     canAccessSetupFeatures: hasBusiness && kycStatus !== "rejected",
     canGenerateQrCodes: onboardingApproved,
     canActivateTipping: onboardingApproved,
-    canReceiveTips: kycVerified,
+    canReceiveTips,
   };
 }
 

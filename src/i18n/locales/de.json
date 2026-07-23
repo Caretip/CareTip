@@ -1937,7 +1937,12 @@
       "tipAnotherMember": "Anderem Teammitglied Trinkgeld geben",
       "exit": "Beenden",
       "processingTitle": "Trinkgeld wird bestätigt…",
-      "processingSubtitle": "Das dauert in der Regel nur wenige Sekunden. Bitte lassen Sie diese Seite geöffnet.",
+      "processingSubtitle": "Wir bestätigen Ihre Zahlung. Das dauert in der Regel nur wenige Sekunden. Bitte lassen Sie diese Seite geöffnet.",
+      "confirmDelayedTitle": "Zahlung wird noch bestätigt",
+      "confirmDelayedDesc": "Ihre Zahlung wurde bei Stripe abgeschlossen. Wir warten noch auf die endgültige Bestätigung — das kann etwas länger dauern.",
+      "confirmDelayedBody": "Sie können diese Seite schließen. Ihr Trinkgeld erscheint beim Teammitglied, sobald die Bestätigung abgeschlossen ist. Falls es nach einigen Minuten nicht sichtbar ist, kontaktieren Sie bitte den Betrieb mit Ihrem Zahlungsbeleg.",
+      "paymentFailedTitle": "Zahlung konnte nicht abgeschlossen werden",
+      "paymentFailedDesc": "Ihre Karte wurde für dieses Trinkgeld nicht belastet (oder die Belastung wurde rückgängig gemacht). Bitte versuchen Sie es erneut.",
       "notVerifiedTitle": "Zahlung nicht bestätigt",
       "notVerifiedDesc": "Für diese Sitzung konnte keine abgeschlossene Zahlung bestätigt werden."
     },

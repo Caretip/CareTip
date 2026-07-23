@@ -51,11 +51,30 @@ export function RatingPage() {
   }, [isDevMockSession, navigate, sessionId]);
 
   useEffect(() => {
-    if (verification.phase === "expired" || verification.phase === "unpaid") {
-      toast.message(t("tipFlow.completion.notVerifiedTitle"), {
-        description: t("tipFlow.completion.notVerifiedDesc"),
-      });
+    if (
+      verification.phase === "expired" ||
+      verification.phase === "unpaid" ||
+      verification.phase === "failed"
+    ) {
+      toast.message(
+        verification.phase === "failed"
+          ? t("tipFlow.completion.paymentFailedTitle")
+          : t("tipFlow.completion.notVerifiedTitle"),
+        {
+          description:
+            verification.phase === "failed"
+              ? t("tipFlow.completion.paymentFailedDesc")
+              : t("tipFlow.completion.notVerifiedDesc"),
+        },
+      );
       navigate("/", { replace: true });
+      return;
+    }
+    if (verification.phase === "timeout") {
+      // Stripe may already have charged; tip ledger is late — do not call it "Payment not found".
+      toast.message(t("tipFlow.completion.confirmDelayedTitle"), {
+        description: t("tipFlow.completion.confirmDelayedDesc"),
+      });
     }
   }, [navigate, t, verification.phase]);
 
@@ -136,18 +155,38 @@ export function RatingPage() {
   const displayEmployeeName =
     readyContext?.employee?.name ?? employeeName ?? t("tipFlow.common.aTeamMember");
   const feedbackHeader = headerLeaveFeedbackFor(t, displayEmployeeName);
-  const showVerifyingPayment = Boolean(sessionId) && verification.phase === "pending";
+  const showVerifyingPayment =
+    Boolean(sessionId) &&
+    (verification.phase === "pending" || verification.phase === "timeout");
 
-  if (sessionId && verification.phase === "loading") {
+  if (sessionId && (verification.phase === "loading" || verification.phase === "pending")) {
     return (
       <CustomerFlowShell
         venue={venueBrand}
         stepTitle={feedbackHeader.stepTitle}
-        trustMessage={feedbackHeader.trustMessage}
+        trustMessage={
+          verification.phase === "pending"
+            ? t("tipFlow.completion.processingSubtitle")
+            : feedbackHeader.trustMessage
+        }
         loading
         loadingContext="stripeReturn"
         loadingRegistrationKey="rating-page-verification"
       />
+    );
+  }
+
+  if (sessionId && verification.phase === "timeout") {
+    return (
+      <CustomerFlowShell
+        venue={venueBrand}
+        stepTitle={t("tipFlow.completion.confirmDelayedTitle")}
+        trustMessage={t("tipFlow.completion.confirmDelayedDesc")}
+      >
+        <div className={`${cf.cardMuted} px-5 py-5 text-sm leading-relaxed text-muted-foreground sm:px-6`}>
+          {t("tipFlow.completion.confirmDelayedBody")}
+        </div>
+      </CustomerFlowShell>
     );
   }
 

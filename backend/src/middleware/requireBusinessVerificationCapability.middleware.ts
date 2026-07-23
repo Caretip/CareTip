@@ -10,6 +10,7 @@ import {
   hasBusinessVerificationCapability,
   type BusinessVerificationCapability,
 } from "../config/businessVerificationCapabilities.js";
+import { isKycRequiredForReceiveTips } from "../config/mvpVerificationPolicy.js";
 
 /**
  * Go-live gate — use only for public tipping / QR production capabilities.
@@ -61,14 +62,24 @@ export function requireBusinessVerificationCapability(
         onboardingVerificationStatus: business.onboardingVerificationStatus,
       };
 
+      // QR / activate tipping always use onboarding; receiveTips does too while MVP KYC is off.
+      const onboardingGatesCapability =
+        capability === "qrCodes" ||
+        capability === "activateTipping" ||
+        capability === "receiveTips";
+
       if (
-        (capability === "qrCodes" || capability === "activateTipping") &&
+        onboardingGatesCapability &&
         !isOnboardingApprovedForPublicGoLive(business.onboardingVerificationStatus)
       ) {
-        return res.status(403).json({
-          message: ONBOARDING_APPROVAL_REQUIRED_MESSAGE,
-          code: ONBOARDING_APPROVAL_REQUIRED_CODE,
-        });
+        // When KYC is enforced again, receiveTips may still fail later on KYC even if onboarding is approved.
+        // While MVP KYC is disabled, this is the sole go-live block for receiveTips.
+        if (capability !== "receiveTips" || !isKycRequiredForReceiveTips()) {
+          return res.status(403).json({
+            message: ONBOARDING_APPROVAL_REQUIRED_MESSAGE,
+            code: ONBOARDING_APPROVAL_REQUIRED_CODE,
+          });
+        }
       }
 
       const kycLegacy = kycStatusToLegacyMirror(business.kycVerificationStatus);

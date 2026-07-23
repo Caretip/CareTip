@@ -106,6 +106,23 @@ router.get("/:employeeId", employeeController.getEmployeeById);
 
 // Business only: add employee to their business (setup — available while KYC pending, after email verified)
 router.post("/", authMiddleware, requireVerifiedEmail, requireRole(Role.MANAGER), employeeController.createEmployee);
+/** QR Studio SSOT — idempotent slug repair for tipping-ready staff (must be before :employeeId). */
+router.post(
+  "/ensure-slugs",
+  authMiddleware,
+  requireVerifiedEmail,
+  requireRole(Role.MANAGER),
+  requireBusinessVerificationCapability("qrCodes"),
+  employeeController.ensureMissingEmployeeSlugs,
+);
+router.post(
+  "/:employeeId/ensure-slug",
+  authMiddleware,
+  requireVerifiedEmail,
+  requireRole(Role.MANAGER),
+  requireBusinessVerificationCapability("qrCodes"),
+  employeeController.ensureEmployeeSlug,
+);
 router.post(
   "/:employeeId/regenerate-slug",
   authMiddleware,

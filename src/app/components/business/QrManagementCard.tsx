@@ -83,10 +83,13 @@ function QrTypeIcon({ type }: { type: QrManagementCardProps["type"] }) {
 
 function QrPreviewImage({
   dataUrl,
+  hasQrUrl,
   onPreview,
   library,
 }: {
   dataUrl?: string;
+  /** When true and dataUrl is empty, show loading frame — never the Lucide placeholder. */
+  hasQrUrl?: boolean;
   onPreview?: () => void;
   library?: boolean;
 }) {
@@ -100,6 +103,8 @@ function QrPreviewImage({
     >
       {dataUrl ? (
         <img src={dataUrl} alt="" className="h-full w-full object-contain" decoding="async" />
+      ) : hasQrUrl ? (
+        <LoadingSpinner size="sm" className="text-muted-foreground" />
       ) : (
         <QrCode className="h-16 w-16 text-foreground sm:h-20 sm:w-20" />
       )}
@@ -219,7 +224,7 @@ export const QrManagementCard = memo(function QrManagementCard({
             type="button"
             size="sm"
             onClick={() => onEmployeePrintPdf?.(item)}
-            disabled={qrLocked || !previewDataUrl || exportBlocked}
+            disabled={qrLocked || !item.qrUrl?.trim() || exportBlocked}
             className={DASH_BTN_PRIMARY}
           >
             <FileDown className="mr-2 h-4 w-4" />
@@ -351,6 +356,7 @@ export const QrManagementCard = memo(function QrManagementCard({
             </div>
             <QrPreviewImage
               dataUrl={previewDataUrl}
+              hasQrUrl={Boolean(item.qrUrl?.trim())}
               library
               onPreview={showPreviewActions ? () => setPreviewOpen(true) : undefined}
             />
@@ -396,6 +402,7 @@ export const QrManagementCard = memo(function QrManagementCard({
         <div className="flex w-full min-w-0 shrink-0 justify-center sm:w-auto sm:justify-start">
           <QrPreviewImage
             dataUrl={previewDataUrl}
+            hasQrUrl={Boolean(item.qrUrl?.trim())}
             onPreview={showPreviewActions ? () => setPreviewOpen(true) : undefined}
           />
           {exportBlocked ? (

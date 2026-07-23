@@ -477,8 +477,7 @@ export async function updateEmployeeActiveStatusForBusiness(
   };
 }
 
-/** Regenerate a unique staff URL slug (saved to Postgres). Caller must authorize businessId. */
-export async function regenerateEmployeeSlugForBusiness(businessId: string, employeeId: string) {
+async function assertBusinessQrCapability(businessId: string): Promise<void> {
   const biz = await prisma.business.findUnique({
     where: { id: businessId },
     select: { kycVerificationStatus: true, onboardingVerificationStatus: true },
@@ -493,13 +492,10 @@ export async function regenerateEmployeeSlugForBusiness(businessId: string, empl
   ) {
     throw new Error(VERIFICATION_REQUIRED_MSG);
   }
-  const emp = await prisma.employee.findFirst({
-    where: { id: employeeId, businessId },
-  });
-  if (!emp) {
-    throw new Error("Employee not found");
-  }
-  const baseSlug = generateSlug(emp.name.trim() || "staff");
+}
+
+async function assignUniqueEmployeeSlug(employeeId: string, name: string): Promise<string> {
+  const baseSlug = generateSlug(name.trim() || "staff");
   const slug = await ensureUniqueSlug(baseSlug, async (s) => {
     const other = await prisma.employee.findFirst({
       where: { slug: s, NOT: { id: employeeId } },
@@ -510,6 +506,96 @@ export async function regenerateEmployeeSlugForBusiness(businessId: string, empl
     where: { id: employeeId },
     data: { slug },
   });
+  return slug;
+}
+
+/**
+ * Idempotent: create a unique staff URL slug when missing.
+ * Does not rotate existing slugs (unlike regenerate). Caller must authorize businessId.
+ */
+export async function ensureEmployeeSlugForBusiness(businessId: string, employeeId: string) {
+  await assertBusinessQrCapability(businessId);
+  const emp = await prisma.employee.findFirst({
+    where: { id: employeeId, businessId, isDeleted: false },
+    include: { user: { select: { email: true } } },
+  });
+  if (!emp) {
+    throw new Error("Employee not found");
+  }
+  let slug = emp.slug?.trim() || null;
+  if (!slug) {
+    slug = await assignUniqueEmployeeSlug(emp.id, emp.name);
+    notifyBusinessRosterChanged(businessId, "staff_slug_ensured");
+  }
+  return {
+    id: emp.id,
+    name: emp.name,
+    jobTitle: emp.jobTitle,
+    slug,
+    avatar: absolutizePublicMediaPath(emp.avatar),
+    email: emp.user?.email ?? "",
+  };
+}
+
+/**
+ * Ensure every tipping-ready employee under this business has a public slug.
+ * Idempotent — only rows with null/blank slug are updated. Used by QR Studio SSOT sync.
+ */
+export async function ensureMissingEmployeeSlugsForBusiness(
+  businessId: string,
+): Promise<{ ensured: Array<{ id: string; slug: string }>; skipped: Array<{ id: string; reason: string }> }> {
+  await assertBusinessQrCapability(businessId);
+
+  const roster = await prisma.employee.findMany({
+    where: {
+      businessId,
+      isDeleted: false,
+      isActive: true,
+      activationStatus: "active",
+      user: { emailVerified: true },
+    },
+    select: {
+      id: true,
+      name: true,
+      slug: true,
+      activationStatus: true,
+      isActive: true,
+      businessId: true,
+      user: { select: { emailVerified: true } },
+    },
+    orderBy: { name: "asc" },
+  });
+
+  const ensured: Array<{ id: string; slug: string }> = [];
+  const skipped: Array<{ id: string; reason: string }> = [];
+
+  for (const emp of roster) {
+    const existing = emp.slug?.trim() || "";
+    if (existing) {
+      skipped.push({ id: emp.id, reason: "slug_already_set" });
+      continue;
+    }
+    const slug = await assignUniqueEmployeeSlug(emp.id, emp.name);
+    ensured.push({ id: emp.id, slug });
+  }
+
+  if (ensured.length > 0) {
+    notifyBusinessRosterChanged(businessId, "staff_slugs_ensured");
+  }
+
+  return { ensured, skipped };
+}
+
+/** Regenerate a unique staff URL slug (saved to Postgres). Caller must authorize businessId. */
+export async function regenerateEmployeeSlugForBusiness(businessId: string, employeeId: string) {
+  await assertBusinessQrCapability(businessId);
+  const emp = await prisma.employee.findFirst({
+    where: { id: employeeId, businessId },
+  });
+  if (!emp) {
+    throw new Error("Employee not found");
+  }
+  const slug = await assignUniqueEmployeeSlug(employeeId, emp.name);
   const updated = await prisma.employee.findUnique({
     where: { id: employeeId },
     include: { user: { select: { email: true } } },
@@ -520,7 +606,7 @@ export async function regenerateEmployeeSlugForBusiness(businessId: string, empl
     id: updated.id,
     name: updated.name,
     jobTitle: updated.jobTitle,
-    slug: updated.slug,
+    slug: updated.slug ?? slug,
     avatar: absolutizePublicMediaPath(updated.avatar),
     email: updated.user?.email ?? "",
   };

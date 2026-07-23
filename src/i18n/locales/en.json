@@ -1937,7 +1937,12 @@
       "tipAnotherMember": "Tip another team member",
       "exit": "Exit",
       "processingTitle": "Confirming your tip…",
-      "processingSubtitle": "This usually takes a few seconds. Please keep this page open.",
+      "processingSubtitle": "We're confirming your payment. This usually takes a few seconds. Please keep this page open.",
+      "confirmDelayedTitle": "Still confirming your payment",
+      "confirmDelayedDesc": "Your payment went through with Stripe. We're waiting for the final confirmation — this can take a little longer.",
+      "confirmDelayedBody": "You can safely close this page. Your tip will appear for the staff member once confirmation finishes. If you don't see it after a few minutes, contact the venue with your payment receipt.",
+      "paymentFailedTitle": "Payment could not be completed",
+      "paymentFailedDesc": "Your card was not charged for this tip (or the charge was reversed). Please try again.",
       "notVerifiedTitle": "Payment not confirmed",
       "notVerifiedDesc": "We could not verify a completed payment for this session."
     },

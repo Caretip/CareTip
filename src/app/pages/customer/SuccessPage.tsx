@@ -6,7 +6,6 @@ import { toast } from "sonner";
 import { useTipFlow } from "../../context/TipFlowContext";
 import { toUserFriendlyMessage } from "../../lib/errorMessages";
 import { clearCustomerFlowEntry } from "../../lib/customerFlowGuard";
-import { CareTipPageLoader } from "../../components/CareTipPageLoader";
 import { TipPaymentProcessingView } from "./TipPaymentProcessingView";
 import { DEV_BYPASS_ENABLED, DEV_MOCK } from "../../lib/devCustomerBypass";
 import { useVerifiedTipSession, isVerifiedTipSessionReady } from "../../hooks/useVerifiedTipSession";
@@ -60,10 +59,23 @@ export function SuccessPage() {
   }, [navigate, sessionId]);
 
   useEffect(() => {
-    if (verification.phase === "expired" || verification.phase === "unpaid" || verification.phase === "error") {
-      toast.message(t("tipFlow.completion.notVerifiedTitle"), {
-        description: toUserFriendlyMessage(verification.phase === "error" ? verification.message : undefined),
-      });
+    if (
+      verification.phase === "expired" ||
+      verification.phase === "unpaid" ||
+      verification.phase === "failed" ||
+      verification.phase === "error"
+    ) {
+      toast.message(
+        verification.phase === "failed"
+          ? t("tipFlow.completion.paymentFailedTitle")
+          : t("tipFlow.completion.notVerifiedTitle"),
+        {
+          description:
+            verification.phase === "failed"
+              ? t("tipFlow.completion.paymentFailedDesc")
+              : toUserFriendlyMessage(verification.phase === "error" ? verification.message : undefined),
+        },
+      );
       navigate("/", { replace: true });
     }
   }, [navigate, t, verification]);
@@ -82,23 +94,30 @@ export function SuccessPage() {
     navigate("/", { replace: true });
   };
 
-  if (verification.phase === "loading") {
+  if (verification.phase === "loading" || verification.phase === "pending") {
     return (
-      <CareTipPageLoader
-        variant="wait"
-        context="stripeReturn"
-        registrationKey="success-page-verification"
+      <TipPaymentProcessingView
+        employeeName={employeeName ?? undefined}
+        title={t("tipFlow.completion.processingTitle")}
+        subtitle={t("tipFlow.completion.processingSubtitle")}
       />
     );
   }
 
-  if (verification.phase === "pending") {
-    return <TipPaymentProcessingView employeeName={employeeName ?? undefined} />;
+  if (verification.phase === "timeout") {
+    return (
+      <TipPaymentProcessingView
+        employeeName={employeeName ?? undefined}
+        title={t("tipFlow.completion.confirmDelayedTitle")}
+        subtitle={t("tipFlow.completion.confirmDelayedDesc")}
+      />
+    );
   }
 
   if (
     verification.phase === "expired" ||
     verification.phase === "unpaid" ||
+    verification.phase === "failed" ||
     verification.phase === "error"
   ) {
     return null;
@@ -106,10 +125,10 @@ export function SuccessPage() {
 
   if (!verified) {
     return (
-      <CareTipPageLoader
-        variant="wait"
-        context="stripeReturn"
-        registrationKey="success-page-verification"
+      <TipPaymentProcessingView
+        employeeName={employeeName ?? undefined}
+        title={t("tipFlow.completion.processingTitle")}
+        subtitle={t("tipFlow.completion.processingSubtitle")}
       />
     );
   }

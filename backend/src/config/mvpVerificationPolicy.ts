@@ -1,6 +1,6 @@
 /**
  * MVP launch policy — flip flags when KYC becomes a product requirement.
- * Keep in sync with `backend/src/config/mvpVerificationPolicy.ts`.
+ * Keep in sync with `src/app/lib/mvpVerificationPolicy.ts`.
  */
 export const MVP_KYC_DOCUMENT_UPLOAD_ENABLED = false;
 

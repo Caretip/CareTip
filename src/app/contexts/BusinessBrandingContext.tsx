@@ -51,6 +51,8 @@ import { logClientError } from "../lib/clientLog";
 import { useRequireAuth } from "../hooks/useRequireAuth";
 import { useSubscriptionEntitlements } from "../hooks/useSubscriptionEntitlements";
 import { useTranslation } from "react-i18next";
+import { BUSINESS_BRANDING_CHANGED_EVENT } from "../lib/businessBrandingEvents";
+import { logQrStudioSync } from "../lib/qrStudioSyncDiagnostics";
 
 export const QR_STUDIO_SAMPLE_URL = "https://caretip.app/qr-studio-scan-check";
 
@@ -226,6 +228,19 @@ export function BusinessBrandingProvider({ children, canEdit: canEditProp }: Pro
     void refresh();
   }, [refresh]);
 
+  // Settings panel (and other non-Studio writers) broadcast this event — refresh SSOT snapshot.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const onBrandingChanged = () => {
+      logQrStudioSync("cache_invalidation", {
+        reason: "business_branding_changed_event",
+      });
+      void refresh();
+    };
+    window.addEventListener(BUSINESS_BRANDING_CHANGED_EVENT, onBrandingChanged);
+    return () => window.removeEventListener(BUSINESS_BRANDING_CHANGED_EVENT, onBrandingChanged);
+  }, [refresh]);
+
   const patchExtras = useCallback(
     (patch: Partial<QrStudioDesignExtras>) => {
       setExtras((prev) => {
@@ -384,6 +399,7 @@ export function BusinessBrandingProvider({ children, canEdit: canEditProp }: Pro
       setSettings(updated);
       bumpVersion();
       trackBrandingClientEvent("branding_qr_v2_updated");
+      logQrStudioSync("branding_version", { reason: "studio_save" });
       return true;
     } catch (e) {
       logClientError("BusinessBrandingProvider.save", e);

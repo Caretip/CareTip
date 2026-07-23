@@ -32,7 +32,8 @@ export type TipPaymentEligibilitySnapshot = {
 
 /**
  * Ensures an employee may receive guest tips via Stripe (checkout or webhook).
- * Mirrors public tipping rules in `employee.service.getEmployeeById`.
+ * Go-live / receiveTips is resolved centrally in `hasBusinessVerificationCapability`
+ * (Policy A: onboarding while MVP KYC disabled; KYC when re-enabled).
  */
 export async function assertEmployeeEligibleForTipPayment(
   employeeId: string,
@@ -54,7 +55,14 @@ export async function assertEmployeeEligibleForTipPayment(
       isDeleted: true,
       activationStatus: true,
       user: { select: { emailVerified: true, isActive: true } },
-      business: { select: { id: true, kycVerificationStatus: true, operationalStatus: true } },
+      business: {
+        select: {
+          id: true,
+          kycVerificationStatus: true,
+          onboardingVerificationStatus: true,
+          operationalStatus: true,
+        },
+      },
     },
   });
 
@@ -104,6 +112,9 @@ export async function assertEmployeeEligibleForTipPayment(
     !hasBusinessVerificationCapability(
       kycStatusToLegacyMirror(emp.business.kycVerificationStatus),
       "receiveTips",
+      {
+        onboardingVerificationStatus: emp.business.onboardingVerificationStatus,
+      },
     )
   ) {
     throw new TipPaymentEligibilityError(GO_LIVE_REQUIRED_MESSAGE, GO_LIVE_REQUIRED_CODE);

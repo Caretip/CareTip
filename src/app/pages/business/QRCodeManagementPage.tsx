@@ -22,6 +22,7 @@ import {
   fetchBusinessProfile,
   regenerateBusinessSlug,
   regenerateEmployeeSlug,
+  ensureMissingEmployeeSlugs,
   type EmployeeItem,
   type LocationDTO,
   type TableDTO,
@@ -37,13 +38,10 @@ import { DashboardListSkeleton } from "../../components/dashboard/DashboardSecti
 import { BusinessSubPageShellSkeleton } from "../../components/dashboard/BusinessSubPageShellSkeleton";
 import { useBusinessPageBoot } from "../../lib/useBusinessPageBoot";
 import {
-  renderBrandedQRToDataUrl,
-  renderBrandedQRToDataUrlLegacy,
   renderBrandedQrUrlToDataUrl,
   validateBrandedQrReliability,
   downloadQrDataUrlPng,
   printQrDataUrl,
-  isQrExportAllowed,
   logQrScanDiagnostics,
   type BrandedQrLayoutMetrics,
 } from "../../lib/qrBranded";
@@ -70,12 +68,10 @@ import {
 } from "../../lib/qrPrintPdf";
 import {
   businessDirectoryUrl,
-  publicEmployeeTipUrl,
-  qrBusinessUrl,
-  qrEmployeeLegacyUrl,
   qrLandingUrl,
   qrLocationUrl,
   qrTableUrl,
+  resolveEmployeeQrUrl,
 } from "../../lib/appPublicUrl";
 import { downloadStaffQrPdf } from "../../lib/qrBulkPdf";
 import {
@@ -83,6 +79,7 @@ import {
   renderQrGalleryThumbnail,
   QR_GALLERY_META_CONCURRENCY,
 } from "../../lib/qrStudioPerformance";
+import { logQrStudioSync } from "../../lib/qrStudioSyncDiagnostics";
 import { DashboardHero } from "@/components/ui/dashboard-hero";
 import { TracingBeam } from "@/components/ui/tracing-beam";
 import { Button } from "@/components/ui/button";
@@ -185,6 +182,14 @@ export function QRCodeManagementPage({
       storefrontQrCacheKeyRef.current = "";
       venueQrCacheKeyRef.current = "";
       setAssetsSyncedAt(new Date(studioBranding.snapshot.updatedAt).toISOString());
+      logQrStudioSync("cache_invalidation", {
+        brandingVersion: studioBranding.snapshot.version,
+        reason: "studio_version_bump",
+      });
+      logQrStudioSync("branding_version", {
+        brandingVersion: studioBranding.snapshot.version,
+        updatedAt: studioBranding.snapshot.updatedAt,
+      });
     }
   }, [
     studioBranding?.loading,
@@ -345,7 +350,43 @@ export function QRCodeManagementPage({
     }
     try {
       const list = await getEmployees(user.businessId);
-      const normalized = Array.isArray(list) ? list : [];
+      let normalized = Array.isArray(list) ? list : [];
+
+      // QR Studio SSOT: repair missing slugs so branding never disappears for valid staff.
+      const missingSlug = normalized.filter((e) => !e.slug?.trim());
+      if (missingSlug.length > 0) {
+        try {
+          const result = await ensureMissingEmployeeSlugs();
+          logQrStudioSync("slug_ensure", {
+            brandingVersion: studioBranding?.snapshot.version ?? null,
+            ensured: result.ensured,
+            skipped: result.skipped,
+          });
+          if (result.ensured.length > 0) {
+            const slugById = new Map(result.ensured.map((r) => [r.id, r.slug]));
+            normalized = normalized.map((e) => {
+              const nextSlug = slugById.get(e.id);
+              return nextSlug ? { ...e, slug: nextSlug } : e;
+            });
+            employeeQrCacheKeyRef.current = "";
+          }
+        } catch (ensureErr) {
+          logClientError("QRCodeManagementPage.ensureSlugs", ensureErr);
+          for (const e of missingSlug) {
+            logQrStudioSync("employee_skipped", {
+              employeeId: e.id,
+              slug: e.slug,
+              reason: "slug_ensure_failed_using_legacy_url",
+              fallbackUrl: resolveEmployeeQrUrl({
+                employeeId: e.id,
+                businessSlug,
+                employeeSlug: e.slug,
+              }),
+            });
+          }
+        }
+      }
+
       setEmployees(normalized);
       setPageSessionCache(cacheKey, normalized);
     } catch (err) {
@@ -357,7 +398,7 @@ export function QRCodeManagementPage({
     } finally {
       if (!quiet && !useCachedFirst) setLoading(false);
     }
-  }, [authHydrated, sessionValidated, user?.businessId, t]);
+  }, [authHydrated, sessionValidated, user?.businessId, t, studioBranding?.snapshot.version, businessSlug]);
 
   useEffect(() => {
     if (!needsEmployeeData) {
@@ -535,25 +576,60 @@ export function QRCodeManagementPage({
     (async () => {
       const next: Record<string, string> = {};
       const meta: Record<string, { grade: QrQualityGrade; exportAllowed: boolean }> = {};
-      const withSlug = safeEmployees.filter((e) => e.slug);
-      for (const e of safeEmployees) {
-        if (!e.slug) next[e.id] = "";
-      }
 
-      const employeeTasks = withSlug.map((e) => ({
-        id: e.id,
-        name: e.name,
-        slug: e.slug!,
-        url: businessSlug
-          ? publicEmployeeTipUrl(businessSlug, e.slug!)
-          : qrEmployeeLegacyUrl(e.id),
-      }));
+      // SSOT: every roster employee gets a resolvable QR URL (canonical slug or legacy id).
+      // Branding never depends on slug — slug is only preferred for the tip URL.
+      const employeeTasks = safeEmployees
+        .map((e) => {
+          const url = resolveEmployeeQrUrl({
+            employeeId: e.id,
+            businessSlug,
+            employeeSlug: e.slug,
+          });
+          if (!url) {
+            logQrStudioSync("employee_skipped", {
+              employeeId: e.id,
+              slug: e.slug,
+              brandingVersion: studioBranding?.snapshot.version ?? null,
+              reason: "no_employee_id",
+            });
+            return null;
+          }
+          return {
+            id: e.id,
+            name: e.name,
+            slug: e.slug?.trim() || null,
+            url,
+          };
+        })
+        .filter((t): t is { id: string; name: string; slug: string | null; url: string } => t != null);
 
       const thumbResults = await Promise.all(
-        employeeTasks.map(async (task) => ({
-          id: task.id,
-          dataUrl: await renderQrGalleryThumbnail(task.url, qrBrand).catch(() => ""),
-        })),
+        employeeTasks.map(async (task) => {
+          try {
+            const dataUrl = await renderQrGalleryThumbnail(task.url, qrBrand);
+            logQrStudioSync("preview_generation", {
+              employeeId: task.id,
+              slug: task.slug,
+              url: task.url,
+              brandingVersion: studioBranding?.snapshot.version ?? null,
+              brandingFingerprint,
+              success: Boolean(dataUrl),
+            });
+            return { id: task.id, dataUrl };
+          } catch (err) {
+            logClientError("QRCodeManagementPage.employeeThumb", err);
+            logQrStudioSync("preview_generation", {
+              employeeId: task.id,
+              slug: task.slug,
+              url: task.url,
+              brandingVersion: studioBranding?.snapshot.version ?? null,
+              success: false,
+              error: err instanceof Error ? err.message : String(err),
+            });
+            return { id: task.id, dataUrl: "" };
+          }
+        }),
       );
       for (const { id, dataUrl } of thumbResults) {
         next[id] = dataUrl;
@@ -562,6 +638,12 @@ export function QRCodeManagementPage({
         employeeQrCacheKeyRef.current = cacheKey;
         setQrImages(next);
         setAssetsSyncedAt(new Date().toISOString());
+        logQrStudioSync("regeneration_complete", {
+          brandingVersion: studioBranding?.snapshot.version ?? null,
+          brandingFingerprint,
+          employeeCount: employeeTasks.length,
+          renderedCount: thumbResults.filter((r) => Boolean(r.dataUrl)).length,
+        });
       }
 
       let referenceLayout: BrandedQrLayoutMetrics | null = null;
@@ -615,6 +697,7 @@ export function QRCodeManagementPage({
     };
   }, [
     studioBranding?.loading,
+    studioBranding?.snapshot.version,
     needsEmployeeData,
     safeEmployees,
     employeeQrFingerprint,
@@ -685,10 +768,11 @@ export function QRCodeManagementPage({
           role: employee.role,
           avatar: employee.avatar,
           slug: employee.slug,
-          qrUrl:
-            businessSlug && employee.slug
-              ? publicEmployeeTipUrl(businessSlug, employee.slug)
-              : qrEmployeeLegacyUrl(employee.id),
+          qrUrl: resolveEmployeeQrUrl({
+            employeeId: employee.id,
+            businessSlug,
+            employeeSlug: employee.slug,
+          }),
         },
         previewDataUrl: qrImages[employee.id],
         exportKey: employee.id,
@@ -803,10 +887,21 @@ export function QRCodeManagementPage({
             : p
         )
       );
-      if (updated.slug) {
-        const dataUrl = businessSlug
-          ? await renderBrandedQRToDataUrl(businessSlug, updated.slug, qrBrand)
-          : await renderBrandedQRToDataUrlLegacy(updated.id, qrBrand);
+      if (updated.slug || updated.id) {
+        const url = resolveEmployeeQrUrl({
+          employeeId: updated.id,
+          businessSlug,
+          employeeSlug: updated.slug,
+        });
+        const dataUrl = await renderBrandedQrUrlToDataUrl(url, qrBrand);
+        logQrStudioSync("png_generation", {
+          mode: "regenerate_employee",
+          employeeId: updated.id,
+          slug: updated.slug,
+          url,
+          brandingVersion: studioBranding?.snapshot.version ?? null,
+          success: Boolean(dataUrl),
+        });
         setQrImages((prev) => ({ ...prev, [employee.id]: dataUrl }));
       }
     } catch (err) {
@@ -895,20 +990,27 @@ export function QRCodeManagementPage({
 
   const handleGenerateAllPdf = async () => {
     if (!authHydrated || !sessionValidated) return;
-    const bs = businessSlug?.trim();
-    const staff = bs
-      ? safeEmployees
-          .filter((e) => e.slug?.trim())
-          .map((e) => ({ id: e.id, name: e.name, businessSlug: bs, employeeSlug: e.slug!.trim() }))
-      : [];
+    const staff = safeEmployees
+      .map((e) => ({
+        id: e.id,
+        name: e.name,
+        businessSlug: businessSlug?.trim() || undefined,
+        employeeSlug: e.slug?.trim() || undefined,
+      }))
+      .filter((e) => e.id?.trim());
     if (staff.length === 0) {
-      toast.error(bs ? t("business.qrPage.toastBulkNeedLinks") : t("business.qrPage.toastBulkAddStaff"));
+      toast.error(t("business.qrPage.toastBulkAddStaff"));
       return;
     }
     setBulkPdfLoading(true);
     try {
       const { venueLocalTodayKey, resolveBusinessTimezone } = await import("../../lib/businessVenueTime");
       const dateStr = venueLocalTodayKey(resolveBusinessTimezone());
+      logQrStudioSync("pdf_generation", {
+        mode: "bulk",
+        brandingVersion: studioBranding?.snapshot.version ?? null,
+        employeeCount: staff.length,
+      });
       await downloadStaffQrPdf(staff, `CareTip_QR_All_${dateStr}`, {
         branding: qrBrand,
         resolveCardDataUrl: (id) => qrImages[id] ?? null,
@@ -953,7 +1055,54 @@ export function QRCodeManagementPage({
   };
 
   const handleEmployeePrintPdf = async (item: CardItem) => {
-    const dataUrl = qrImages[item.id];
+    if (isQrExportBlocked(item.id)) {
+      toast.error(t("business.qrReliability.exportBlocked"));
+      return;
+    }
+    let dataUrl = qrImages[item.id]?.trim() || "";
+    if (!dataUrl) {
+      const url =
+        item.qrUrl?.trim() ||
+        resolveEmployeeQrUrl({
+          employeeId: item.id,
+          businessSlug,
+          employeeSlug: item.slug,
+        });
+      if (!url) {
+        toast.error(t("business.qrPage.toastQrNotReady"));
+        return;
+      }
+      try {
+        dataUrl = await renderBrandedQrUrlToDataUrl(url, qrBrand);
+        logQrStudioSync("pdf_generation", {
+          mode: "lazy",
+          employeeId: item.id,
+          slug: item.slug ?? null,
+          url,
+          brandingVersion: studioBranding?.snapshot.version ?? null,
+          success: Boolean(dataUrl),
+        });
+        if (dataUrl) {
+          setQrImages((prev) => ({ ...prev, [item.id]: dataUrl }));
+        }
+      } catch (err) {
+        logClientError("QRCodeManagementPage.employeePrintPdf.lazy", err);
+        logQrStudioSync("pdf_generation", {
+          mode: "lazy",
+          employeeId: item.id,
+          success: false,
+          error: err instanceof Error ? err.message : String(err),
+        });
+      }
+    } else {
+      logQrStudioSync("pdf_generation", {
+        mode: "cache",
+        employeeId: item.id,
+        slug: item.slug ?? null,
+        brandingVersion: studioBranding?.snapshot.version ?? null,
+        success: true,
+      });
+    }
     if (!dataUrl) {
       toast.error(t("business.qrPage.toastQrNotReady"));
       return;
@@ -974,7 +1123,24 @@ export function QRCodeManagementPage({
       toast.error(t("business.qrReliability.exportBlocked"));
       return;
     }
-    const dataUrl = previewDataUrl || qrImages[item.id];
+    let dataUrl = previewDataUrl || qrImages[item.id];
+    if (!dataUrl) {
+      const url =
+        item.qrUrl?.trim() ||
+        resolveEmployeeQrUrl({
+          employeeId: item.id,
+          businessSlug,
+          employeeSlug: item.slug,
+        });
+      if (url) {
+        try {
+          dataUrl = await renderBrandedQrUrlToDataUrl(url, qrBrand);
+          if (dataUrl) setQrImages((prev) => ({ ...prev, [item.id]: dataUrl! }));
+        } catch (err) {
+          logClientError("QRCodeManagementPage.employeePrint.lazy", err);
+        }
+      }
+    }
     if (!dataUrl) {
       toast.error(t("business.qrPage.toastQrNotReady"));
       return;
@@ -1355,10 +1521,11 @@ export function QRCodeManagementPage({
                             name: employee.name,
                             role: employee.role,
                             avatar: employee.avatar,
-                            qrUrl:
-                              businessSlug && employee.slug
-                                ? publicEmployeeTipUrl(businessSlug, employee.slug)
-                                : qrEmployeeLegacyUrl(employee.id),
+                            qrUrl: resolveEmployeeQrUrl({
+                              employeeId: employee.id,
+                              businessSlug,
+                              employeeSlug: employee.slug,
+                            }),
                             slug: employee.slug,
                           }}
                           type="employee"

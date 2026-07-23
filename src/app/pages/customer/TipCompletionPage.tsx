@@ -5,7 +5,6 @@ import { clearCustomerFlowEntry } from "../../lib/customerFlowGuard";
 import { useTipFlow } from "../../context/TipFlowContext";
 import { useVerifiedTipSession, isVerifiedTipSessionReady } from "../../hooks/useVerifiedTipSession";
 import { TipPaymentProcessingView } from "./TipPaymentProcessingView";
-import { CareTipPageLoader } from "../../components/CareTipPageLoader";
 import { useCustomerVenueBrand } from "./customerJourneyBrand";
 import { resolveGuestThankYouMessage } from "../../lib/businessBranding";
 import { TipSuccessExperience } from "./TipSuccessExperience";
@@ -51,7 +50,12 @@ export function TipCompletionPage() {
   }, [navigate, sessionId]);
 
   useEffect(() => {
-    if (verification.phase === "expired" || verification.phase === "unpaid" || verification.phase === "error") {
+    if (
+      verification.phase === "expired" ||
+      verification.phase === "unpaid" ||
+      verification.phase === "failed" ||
+      verification.phase === "error"
+    ) {
       navigate("/", { replace: true });
     }
   }, [navigate, verification.phase]);
@@ -60,21 +64,24 @@ export function TipCompletionPage() {
     return null;
   }
 
-  if (verification.phase === "loading") {
-    return (
-      <CareTipPageLoader
-        variant="wait"
-        context="finishing"
-        registrationKey="tip-completion-loading"
-      />
-    );
-  }
-
-  if (verification.phase === "pending") {
+  if (verification.phase === "loading" || verification.phase === "pending") {
     return (
       <TipPaymentProcessingView
         venue={venueBrand}
         employeeName={tipFlowEmployeeName ?? undefined}
+        title={t("tipFlow.completion.processingTitle")}
+        subtitle={t("tipFlow.completion.processingSubtitle")}
+      />
+    );
+  }
+
+  if (verification.phase === "timeout") {
+    return (
+      <TipPaymentProcessingView
+        venue={venueBrand}
+        employeeName={tipFlowEmployeeName ?? undefined}
+        title={t("tipFlow.completion.confirmDelayedTitle")}
+        subtitle={t("tipFlow.completion.confirmDelayedDesc")}
       />
     );
   }

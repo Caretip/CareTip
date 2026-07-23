@@ -104,6 +104,7 @@ export async function createTipSession(req: Request, res: Response) {
  * responses expose session id + status only.
  */
 export async function getTipSessionContext(req: Request, res: Response) {
+  const lookupStarted = Date.now();
   try {
     const sessionId = String(req.params.sessionId ?? "").trim();
     if (!sessionId) {
@@ -119,6 +120,12 @@ export async function getTipSessionContext(req: Request, res: Response) {
     const ctx = await getTipCheckoutContext(sessionId);
 
     if (ctx.checkoutStatus === "expired") {
+      console.info("[tip-reconcile] lookup_expired", {
+        sessionId: ctx.sessionId,
+        checkoutStatus: ctx.checkoutStatus,
+        paymentStatus: ctx.paymentStatus,
+        elapsedMs: Date.now() - lookupStarted,
+      });
       return res.status(410).json({
         status: "expired",
         sessionId: ctx.sessionId,
@@ -126,19 +133,47 @@ export async function getTipSessionContext(req: Request, res: Response) {
     }
 
     const piId = ctx.paymentIntentId;
-    const tx = piId
+    const tipByPi = piId
       ? await prisma.transaction.findFirst({
-          where: { stripePaymentIntentId: piId, status: "success" },
+          where: { stripePaymentIntentId: piId },
           select: {
             id: true,
+            status: true,
             employeeId: true,
             businessId: true,
             locationId: true,
             tableId: true,
             receiptNumber: true,
+            createdAt: true,
           },
         })
       : null;
+
+    // Webhook already wrote a non-success tip (e.g. eligibility_failure + refund).
+    // Do NOT keep returning pending — Stripe may still report payment_status=paid after refund.
+    if (tipByPi && tipByPi.status !== "success") {
+      console.info("[tip-reconcile] lookup_failed_ledger", {
+        sessionId: ctx.sessionId,
+        paymentIntentId: ctx.paymentIntentId,
+        tipId: tipByPi.id,
+        tipStatus: tipByPi.status,
+        tipCreatedAt: tipByPi.createdAt.toISOString(),
+        businessId: tipByPi.businessId,
+        employeeId: tipByPi.employeeId,
+        checkoutStatus: ctx.checkoutStatus,
+        paymentStatus: ctx.paymentStatus,
+        elapsedMs: Date.now() - lookupStarted,
+      });
+      return res.status(422).json({
+        status: "failed",
+        sessionId: ctx.sessionId,
+        tipId: tipByPi.id,
+        tipStatus: tipByPi.status,
+        paymentIntentId: ctx.paymentIntentId,
+      });
+    }
+
+    const tx = tipByPi?.status === "success" ? tipByPi : null;
 
     if (tx) {
       const employee = await prisma.employee.findUnique({
@@ -148,6 +183,17 @@ export async function getTipSessionContext(req: Request, res: Response) {
 
       const receiptNumber =
         tx.receiptNumber?.trim() || (await ensureTransactionReceiptNumber(tx.id));
+
+      console.info("[tip-reconcile] lookup_ready", {
+        sessionId: ctx.sessionId,
+        paymentIntentId: ctx.paymentIntentId,
+        tipId: tx.id,
+        tipCreatedAt: tx.createdAt.toISOString(),
+        businessId: tx.businessId,
+        employeeId: tx.employeeId,
+        customerName: ctx.customerName,
+        elapsedMs: Date.now() - lookupStarted,
+      });
 
       return res.json({
         status: "ready",
@@ -174,16 +220,38 @@ export async function getTipSessionContext(req: Request, res: Response) {
       ctx.paymentStatus &&
       ctx.paymentStatus !== "paid"
     ) {
+      console.info("[tip-reconcile] lookup_unpaid", {
+        sessionId: ctx.sessionId,
+        paymentIntentId: ctx.paymentIntentId,
+        checkoutStatus: ctx.checkoutStatus,
+        paymentStatus: ctx.paymentStatus,
+        elapsedMs: Date.now() - lookupStarted,
+      });
       return res.status(422).json({
         status: "unpaid",
         sessionId: ctx.sessionId,
       });
     }
 
-    // Webhook may not have persisted the Transaction yet; client can retry briefly.
+    // Webhook may not have persisted the Transaction yet; client polls until tip exists.
+    console.info("[tip-reconcile] lookup_pending", {
+      sessionId: ctx.sessionId,
+      paymentIntentId: ctx.paymentIntentId,
+      checkoutStatus: ctx.checkoutStatus,
+      paymentStatus: ctx.paymentStatus,
+      businessId: ctx.businessId,
+      employeeId: ctx.employeeId,
+      customerName: ctx.customerName,
+      elapsedMs: Date.now() - lookupStarted,
+    });
     return res.status(202).json({
       status: "pending",
       sessionId: ctx.sessionId,
+      paymentIntentId: ctx.paymentIntentId,
+      paymentStatus: ctx.paymentStatus,
+      checkoutStatus: ctx.checkoutStatus,
+      businessId: ctx.businessId,
+      employeeId: ctx.employeeId,
     });
   } catch (err) {
     logServerError("payment.getTipSessionContext", err);
