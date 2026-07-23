@@ -43,6 +43,13 @@ import {
   PAGE_CACHE_TTL_HIGH_MS,
 } from "@/app/lib/pageSessionCache";
 import { cn } from "@/lib/utils";
+import {
+  resolveBusinessTimezone,
+  venueLocalDayKey,
+  venueLocalDayKeyMinusDays,
+  venueLocalMonthPrefix,
+  venueLocalTodayKey,
+} from "@/app/lib/businessVenueTime";
 
 const PAGE_SIZE = 20;
 const ANALYTICS_TAKE = 100;
@@ -57,16 +64,14 @@ type SortKey = "newest" | "highest" | "lowest";
 type RatingFilter = "all" | "5" | "4" | "3" | "2" | "1";
 type DateRangeKey = "all" | "7d" | "30d" | "90d";
 
-function startOfMonth(d: Date) {
-  return new Date(d.getFullYear(), d.getMonth(), 1);
-}
-
 function isWithinDateRange(iso: string, range: DateRangeKey): boolean {
   if (range === "all") return true;
-  const created = new Date(iso).getTime();
-  if (Number.isNaN(created)) return true;
+  const tz = resolveBusinessTimezone();
+  const dayKey = venueLocalDayKey(iso, tz);
+  if (!dayKey) return true;
   const days = range === "7d" ? 7 : range === "30d" ? 30 : 90;
-  return created >= Date.now() - days * 24 * 60 * 60 * 1000;
+  const oldest = venueLocalDayKeyMinusDays(days - 1, tz);
+  return dayKey >= oldest && dayKey <= venueLocalTodayKey(tz);
 }
 
 function matchesSearch(item: CustomerFeedbackRow, q: string): boolean {
@@ -220,8 +225,10 @@ export function CustomerFeedbackPage() {
   );
 
   const reviewsThisMonth = useMemo(() => {
-    const start = startOfMonth(new Date()).getTime();
-    return analyticsItems.filter((i) => new Date(i.createdAt).getTime() >= start).length;
+    const tz = resolveBusinessTimezone();
+    const monthPrefix = venueLocalMonthPrefix(tz);
+    return analyticsItems.filter((i) => venueLocalDayKey(i.createdAt, tz).startsWith(monthPrefix))
+      .length;
   }, [analyticsItems]);
 
   /** Guest written-feedback rate as a stand-in until reply tracking exists. */

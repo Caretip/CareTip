@@ -10,6 +10,7 @@
  *   - Transactions or Analytics fetch paths
  *
  * Allowed data path: parent hook → GET /api/business/activity + activity.created.
+ * Venue calendar labels use businessVenueTime (presentation only).
  * See docs/ARCHITECTURE_ACTIVITY_CENTER.md
  */
 import { Link } from "react-router";
@@ -24,27 +25,19 @@ import {
   UserPlus,
 } from "lucide-react";
 import type { BusinessActivityFeedItem, ActivityEventPriority } from "../../../lib/api";
+import type { ActivityCenterFilter } from "../../../lib/activityCenterFilters";
 import { formatEur } from "../../../lib/formatEur";
 import { formatTimeAgo } from "../../../lib/formatTimeAgo";
+import { formatActivityVenueTimeParts } from "../../../lib/businessVenueTime";
 import { DashboardWorkspacePanel } from "../../dashboard/DashboardWorkspacePanel";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/app/components/ui/select";
 import { cn } from "@/lib/utils";
-import type { ActivitySourceFilter } from "../../../hooks/useActivityCenterFeed";
 
-const SOURCE_FILTERS: { id: ActivitySourceFilter; labelKey: string }[] = [
+const FILTER_CHIPS: { id: ActivityCenterFilter; labelKey: string }[] = [
   { id: "all", labelKey: "business.activityCenter.filter.all" },
+  { id: "today", labelKey: "business.activityCenter.filter.today" },
   { id: "TIPS", labelKey: "business.activityCenter.filter.tips" },
   { id: "QR", labelKey: "business.activityCenter.filter.qr" },
-  { id: "GOALS", labelKey: "business.activityCenter.filter.goals" },
-  { id: "STAFF", labelKey: "business.activityCenter.filter.staff" },
   { id: "PAYMENTS", labelKey: "business.activityCenter.filter.payments" },
-  { id: "SYSTEM", labelKey: "business.activityCenter.filter.system" },
 ];
 
 function iconForType(type: string) {
@@ -120,7 +113,7 @@ function subtitleFromParams(
   if (typeof p.reason === "string" && p.reason.trim() && item.type.startsWith("payment.")) {
     parts.push(t(`business.activityCenter.reason.${p.reason}`, { defaultValue: p.reason }));
   }
-  return parts.length > 0 ? parts.join(" ") : null;
+  return parts.length > 0 ? parts.join(" · ") : null;
 }
 
 function priorityClass(priority: ActivityEventPriority): string {
@@ -134,8 +127,9 @@ type ActivityCenterFeedProps = {
   liveIds: Set<string>;
   loading: boolean;
   refreshing?: boolean;
-  source: ActivitySourceFilter;
-  onSourceChange: (source: ActivitySourceFilter) => void;
+  filter: ActivityCenterFilter;
+  onFilterChange: (filter: ActivityCenterFilter) => void;
+  venueTimezone: string;
   hasMore: boolean;
   isLoadingOlder: boolean;
   onLoadOlder: () => void;
@@ -147,16 +141,18 @@ export function ActivityCenterFeed({
   liveIds,
   loading,
   refreshing = false,
-  source,
-  onSourceChange,
+  filter,
+  onFilterChange,
+  venueTimezone,
   hasMore,
   isLoadingOlder,
   onLoadOlder,
   error = null,
 }: ActivityCenterFeedProps) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const showSkeleton = loading && items.length === 0;
-  const filterLabelId = "activity-center-source-filter-label";
+  const filterLabelId = "activity-center-filter-label";
+  const locale = i18n.language?.startsWith("de") ? "de-DE" : "en-GB";
 
   return (
     <DashboardWorkspacePanel
@@ -170,32 +166,36 @@ export function ActivityCenterFeed({
       }
     >
       <div className="border-b border-border px-4 py-3 sm:px-5">
-        <div className="flex w-full max-w-full flex-col gap-1.5 sm:max-w-xs">
-          <label id={filterLabelId} htmlFor="activity-center-source-filter" className="sr-only">
-            {t("business.activityCenter.filterLabel")}
-          </label>
-          <Select
-            value={source}
-            onValueChange={(value) => onSourceChange(value as ActivitySourceFilter)}
-          >
-            <SelectTrigger
-              id="activity-center-source-filter"
-              aria-labelledby={filterLabelId}
-              className="w-full max-w-full"
-            >
-              <SelectValue placeholder={t("business.activityCenter.filter.all")} />
-            </SelectTrigger>
-            <SelectContent
-              position="popper"
-              className="w-[var(--radix-select-trigger-width)] max-w-[min(100vw-2rem,24rem)]"
-            >
-              {SOURCE_FILTERS.map((f) => (
-                <SelectItem key={f.id} value={f.id}>
-                  {t(f.labelKey)}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+        <p className="mb-3 text-xs leading-relaxed text-muted-foreground">
+          {t("business.activityCenter.ssotHelper")}
+        </p>
+        <p id={filterLabelId} className="sr-only">
+          {t("business.activityCenter.filterLabel")}
+        </p>
+        <div
+          className="flex flex-wrap gap-2"
+          role="group"
+          aria-labelledby={filterLabelId}
+        >
+          {FILTER_CHIPS.map((chip) => {
+            const active = filter === chip.id;
+            return (
+              <button
+                key={chip.id}
+                type="button"
+                onClick={() => onFilterChange(chip.id)}
+                aria-pressed={active}
+                className={cn(
+                  "rounded-full border px-3 py-1 text-xs font-medium transition-colors",
+                  active
+                    ? "border-primary/40 bg-primary/10 text-foreground"
+                    : "border-border bg-muted/20 text-muted-foreground hover:bg-muted/40 hover:text-foreground",
+                )}
+              >
+                {t(chip.labelKey)}
+              </button>
+            );
+          })}
         </div>
       </div>
 
@@ -219,7 +219,9 @@ export function ActivityCenterFeed({
         </div>
       ) : items.length === 0 ? (
         <p className="px-4 py-10 text-center text-sm text-muted-foreground sm:px-5">
-          {t("business.activityCenter.empty")}
+          {filter === "today"
+            ? t("business.activityCenter.emptyToday")
+            : t("business.activityCenter.empty")}
         </p>
       ) : (
         <>
@@ -236,6 +238,17 @@ export function ActivityCenterFeed({
                   defaultValue: item.type,
                 }),
               });
+              const venueTime = formatActivityVenueTimeParts(
+                item.occurredAt,
+                venueTimezone,
+                locale,
+              );
+              const dayHeading =
+                venueTime.dayLabel === "today"
+                  ? t("business.activityCenter.time.today")
+                  : venueTime.dayLabel === "yesterday"
+                    ? t("business.activityCenter.time.yesterday")
+                    : (venueTime.dateText ?? "—");
 
               const body = (
                 <>
@@ -256,15 +269,22 @@ export function ActivityCenterFeed({
                         </p>
                       ) : null}
                     </div>
-                    <p className="mt-0.5 truncate text-xs text-muted-foreground">
-                      {subtitle ? <span>{subtitle} </span> : null}
-                      <span>{formatTimeAgo(item.occurredAt)}</span>
-                      {isLive ? (
-                        <span className="ml-2 font-medium uppercase tracking-wide text-primary">
-                          {t("status.live")}
-                        </span>
-                      ) : null}
-                    </p>
+                    <div className="mt-0.5 text-xs text-muted-foreground">
+                      {subtitle ? <p className="truncate">{subtitle}</p> : null}
+                      <p className="tabular-nums">
+                        <span className="font-medium text-foreground/80">{dayHeading}</span>
+                        <span className="mx-1.5 text-muted-foreground/70">·</span>
+                        <span>{venueTime.timeText}</span>
+                      </p>
+                      <p className="mt-0.5">
+                        <span>{formatTimeAgo(item.occurredAt)}</span>
+                        {isLive ? (
+                          <span className="ml-2 font-medium uppercase tracking-wide text-primary">
+                            {t("status.live")}
+                          </span>
+                        ) : null}
+                      </p>
+                    </div>
                   </div>
                 </>
               );

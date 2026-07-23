@@ -18,6 +18,10 @@ import {
 import { recordCheckoutSessionExpired } from "../services/checkoutFunnelMetrics.service.js";
 import { logTrialSync } from "../lib/subscription/trialSyncDebugLog.js";
 import { logServerError } from "../utils/httpErrors.js";
+import {
+  upsertStripeRefundEvent,
+  upsertStripeDisputeEvent,
+} from "../services/finance/tipRefunds.service.js";
 
 /**
  * POST /api/webhooks/stripe (mounted at /api/webhooks + /stripe)
@@ -30,6 +34,11 @@ const TIP_EVENT_TYPES = new Set([
   "payment_intent.succeeded",
   "payment_intent.payment_failed",
   "payment_intent.canceled",
+  "charge.refunded",
+  "refund.updated",
+  "charge.dispute.created",
+  "charge.dispute.closed",
+  "charge.dispute.updated",
 ]);
 
 router.post("/stripe", async (req: Request, res: Response) => {
@@ -101,6 +110,71 @@ router.post("/stripe", async (req: Request, res: Response) => {
     if (event.type === "payment_intent.canceled") {
       const paymentIntent = event.data.object as Stripe.PaymentIntent;
       await handlePaymentFailed(paymentIntent.id);
+    }
+
+    if (event.type === "charge.refunded" || event.type === "refund.updated") {
+      const obj = event.data.object as Stripe.Charge | Stripe.Refund;
+      if (event.type === "refund.updated") {
+        const refund = obj as Stripe.Refund;
+        const pi =
+          typeof refund.payment_intent === "string"
+            ? refund.payment_intent
+            : refund.payment_intent?.id ?? null;
+        const charge =
+          typeof refund.charge === "string" ? refund.charge : refund.charge?.id ?? null;
+        await upsertStripeRefundEvent({
+          stripeRefundId: refund.id,
+          stripePaymentIntentId: pi,
+          stripeChargeId: charge,
+          amountCents: refund.amount,
+          currency: refund.currency,
+          status: refund.status ?? "pending",
+          reason: typeof refund.reason === "string" ? refund.reason : null,
+          occurredAt: new Date((refund.created ?? Math.floor(Date.now() / 1000)) * 1000),
+        });
+      } else {
+        const charge = obj as Stripe.Charge;
+        const pi =
+          typeof charge.payment_intent === "string"
+            ? charge.payment_intent
+            : charge.payment_intent?.id ?? null;
+        const refunds = charge.refunds?.data ?? [];
+        for (const refund of refunds) {
+          await upsertStripeRefundEvent({
+            stripeRefundId: refund.id,
+            stripePaymentIntentId: pi,
+            stripeChargeId: charge.id,
+            amountCents: refund.amount,
+            currency: refund.currency ?? charge.currency,
+            status: refund.status ?? "succeeded",
+            reason: typeof refund.reason === "string" ? refund.reason : null,
+            occurredAt: new Date((refund.created ?? charge.created) * 1000),
+          });
+        }
+      }
+    }
+
+    if (
+      event.type === "charge.dispute.created" ||
+      event.type === "charge.dispute.closed" ||
+      event.type === "charge.dispute.updated"
+    ) {
+      const dispute = event.data.object as Stripe.Dispute;
+      const chargeId = typeof dispute.charge === "string" ? dispute.charge : dispute.charge?.id ?? null;
+      const pi =
+        typeof dispute.payment_intent === "string"
+          ? dispute.payment_intent
+          : dispute.payment_intent?.id ?? null;
+      await upsertStripeDisputeEvent({
+        stripeDisputeId: dispute.id,
+        stripeChargeId: chargeId,
+        stripePaymentIntentId: pi,
+        amountCents: dispute.amount,
+        currency: dispute.currency,
+        status: dispute.status,
+        reason: typeof dispute.reason === "string" ? dispute.reason : null,
+        occurredAt: new Date((dispute.created ?? Math.floor(Date.now() / 1000)) * 1000),
+      });
     }
 
     if (TIP_EVENT_TYPES.has(event.type) || event.type === "checkout.session.completed") {

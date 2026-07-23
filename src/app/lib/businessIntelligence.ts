@@ -1,5 +1,11 @@
 import type { BusinessDashboardStats, BusinessQrAnalytics, TipActivityRow } from "./api";
 import type { AnalyticsPeriodSnapshot } from "./businessAnalytics/types";
+import {
+  resolveBusinessTimezone,
+  venueLocalDayKey,
+  venueLocalHour,
+  venueLocalWeekDayKeys,
+} from "./businessVenueTime";
 
 /**
  * Business intelligence aggregates — Sprint 6: traceable KPIs from tips, employees,
@@ -17,6 +23,15 @@ export type BusinessIntelligenceInput = {
   pulse: BusinessDashboardStats["operationalPulse"] | null;
   /** Sprint 6 — optional QR analytics from GET /api/business/qr-analytics */
   qrAnalytics?: BusinessQrAnalytics | null;
+  /** SQL rankings for selected timeframe (authoritative). */
+  locationRankings?: Array<{ id: string | null; name: string; tipsEur: number; tipCount: number }>;
+  tableRankings?: Array<{ id: string | null; name: string; tipsEur: number; tipCount: number }>;
+  /** Server growth % vs prior equal window; null when unavailable. */
+  growthPercent?: number | null;
+  peakHour?: number | null;
+  bestShift?: "morning" | "afternoon" | "evening" | "late" | null;
+  avgTipsPerShift?: number | null;
+  completedShifts?: number | null;
 };
 
 export type IntelligenceSeverity = "low" | "medium" | "high";
@@ -52,7 +67,8 @@ export type OperationalMetrics = {
   activeEmployees: number;
   employeesReceivingTips: number;
   averageTipsPerEmployee: number;
-  averageTipsPerShift: number;
+  /** Null until real shift configuration exists — never fabricate ÷3. */
+  averageTipsPerShift: number | null;
 };
 
 function shiftLabel(hour: number): string {
@@ -83,19 +99,16 @@ function aggregateByKey(
 }
 
 /**
- * Source: `tips` via GET /api/business/me/stats (month/week scopes).
- * Calculation: period sums, week-vs-month growth.
+ * Source: `tips` via GET /api/business/me/stats (week/month/year scopes).
+ * Calculation: period sums; growthPercent from SQL prior-window comparison when present.
  * Refresh: useBusinessAnalytics — socket `new_tip` / `business_data_updated` + 45s poll fallback.
  */
 export function computeRevenueAnalytics(input: BusinessIntelligenceInput): RevenueAnalytics {
   const { period, week, today, dailyTipDistribution } = input;
-  const weeklyAvgInPeriod = period.totalTips > 0 ? period.totalTips / 4.33 : 0;
   const growthPercent =
-    weeklyAvgInPeriod > 0
-      ? Math.round(((week.totalTips - weeklyAvgInPeriod) / weeklyAvgInPeriod) * 100)
-      : week.totalTips > 0
-        ? 100
-        : 0;
+    typeof input.growthPercent === "number" && Number.isFinite(input.growthPercent)
+      ? Math.round(input.growthPercent)
+      : 0;
 
   const lastDayAmount =
     dailyTipDistribution.length > 0
@@ -114,11 +127,11 @@ export function computeRevenueAnalytics(input: BusinessIntelligenceInput): Reven
 }
 
 /**
- * Source: `tips` + `dailyTipDistribution` from business stats.
+ * Source: `tips` + `dailyTipDistribution` + SQL location/table/shift aggregates from business stats.
  * Refresh: same as revenue analytics.
  */
 export function computeBusinessInsights(input: BusinessIntelligenceInput): BusinessInsights {
-  const { dailyTipDistribution, recentTips } = input;
+  const { dailyTipDistribution, recentTips, locationRankings, tableRankings } = input;
 
   let bestDay = "—";
   let bestDayAmount = 0;
@@ -129,60 +142,95 @@ export function computeBusinessInsights(input: BusinessIntelligenceInput): Busin
     }
   }
 
-  const shiftCounts: Record<string, number> = { morning: 0, afternoon: 0, evening: 0, late: 0 };
-  for (const tip of recentTips) {
-    const h = new Date(tip.createdAt).getHours();
-    if (!Number.isNaN(h)) shiftCounts[shiftLabel(h)] += tip.amount;
-  }
   let bestShift = "—";
-  let bestShiftAmount = 0;
-  for (const [shift, amount] of Object.entries(shiftCounts)) {
-    if (amount > bestShiftAmount) {
-      bestShiftAmount = amount;
-      bestShift = shift;
+  if (input.bestShift != null) {
+    bestShift = input.bestShift || "—";
+  } else {
+    const shiftCounts: Record<string, number> = { morning: 0, afternoon: 0, evening: 0, late: 0 };
+    for (const tip of recentTips) {
+      const h = venueLocalHour(tip.createdAt, resolveBusinessTimezone());
+      if (!Number.isNaN(h)) shiftCounts[shiftLabel(h)] += tip.amount;
+    }
+    let bestShiftAmount = 0;
+    for (const [shift, amount] of Object.entries(shiftCounts)) {
+      if (amount > bestShiftAmount) {
+        bestShiftAmount = amount;
+        bestShift = shift;
+      }
     }
   }
 
-  const bestLocation = aggregateByKey(recentTips, "locationName")?.label ?? "—";
-  const bestTable = aggregateByKey(recentTips, "tableName")?.label ?? "—";
+  const topLocation = locationRankings?.[0];
+  const topTable = tableRankings?.[0];
+  // When SQL rankings are present (including empty), never fall back to feed samples.
+  const bestLocation =
+    locationRankings != null
+      ? topLocation && topLocation.tipsEur > 0
+        ? topLocation.name
+        : "—"
+      : aggregateByKey(recentTips, "locationName")?.label ?? "—";
+  const bestTable =
+    tableRankings != null
+      ? topTable && topTable.tipsEur > 0
+        ? topTable.name
+        : "—"
+      : aggregateByKey(recentTips, "tableName")?.label ?? "—";
 
-  const hourBuckets = new Array(24).fill(0) as number[];
-  for (const tip of recentTips) {
-    const h = new Date(tip.createdAt).getHours();
-    if (!Number.isNaN(h)) hourBuckets[h] += 1;
-  }
-  let peakHour = 0;
-  let peakCount = 0;
-  hourBuckets.forEach((c, h) => {
-    if (c > peakCount) {
-      peakCount = c;
-      peakHour = h;
+  let peakPeriod = "—";
+  if (input.peakHour !== undefined && input.peakHour !== null) {
+    const h = input.peakHour;
+    if (h >= 0 && h < 24) {
+      peakPeriod = `${String(h).padStart(2, "0")}:00–${String((h + 1) % 24).padStart(2, "0")}:00`;
     }
-  });
-  const peakPeriod =
-    peakCount > 0 ? `${String(peakHour).padStart(2, "0")}:00–${String((peakHour + 1) % 24).padStart(2, "0")}:00` : "—";
+  } else {
+    const hourBuckets = new Array(24).fill(0) as number[];
+    for (const tip of recentTips) {
+      const h = venueLocalHour(tip.createdAt, resolveBusinessTimezone());
+      if (!Number.isNaN(h)) hourBuckets[h] += 1;
+    }
+    let peakHour = 0;
+    let peakCount = 0;
+    hourBuckets.forEach((c, h) => {
+      if (c > peakCount) {
+        peakCount = c;
+        peakHour = h;
+      }
+    });
+    peakPeriod =
+      peakCount > 0
+        ? `${String(peakHour).padStart(2, "0")}:00–${String((peakHour + 1) % 24).padStart(2, "0")}:00`
+        : "—";
+  }
 
   return { bestDay, bestDayAmount, bestShift, bestLocation, bestTable, peakPeriod };
 }
 
 /**
  * Source: `employees` + `tips` rollups from GET /api/business/me/stats; roster from operationalPulse.
- * Refresh: useBusinessTipsModuleData.
+ * `averageTipsPerShift` = SQL periodTips ÷ completed (day×shift) buckets when present; else null.
  */
 export function computeOperationalMetrics(input: BusinessIntelligenceInput): OperationalMetrics {
   const { employees, period, pulse } = input;
-  const activeEmployees = pulse?.rosterTotal ?? employees.filter((e) => e.isActive !== false).length;
+  const activeEmployees =
+    pulse?.tippingReadyEmployees ??
+    pulse?.rosterTotal ??
+    employees.filter((e) => e.isActive !== false).length;
   const employeesReceivingTips = employees.filter((e) => e.tipCount > 0).length;
   const averageTipsPerEmployee =
     employeesReceivingTips > 0 ? period.totalTips / employeesReceivingTips : 0;
 
-  const shiftTips = period.tipCount > 0 ? period.totalTips / 3 : 0;
+  const avgFromServer =
+    typeof input.avgTipsPerShift === "number" &&
+    Number.isFinite(input.avgTipsPerShift) &&
+    (input.completedShifts ?? 0) > 0
+      ? input.avgTipsPerShift
+      : null;
 
   return {
     activeEmployees,
     employeesReceivingTips,
     averageTipsPerEmployee,
-    averageTipsPerShift: shiftTips,
+    averageTipsPerShift: avgFromServer,
   };
 }
 
@@ -449,8 +497,11 @@ function computePeriodParticipationPct(input: BusinessIntelligenceInput): number
 function computeWeekParticipationPct(input: BusinessIntelligenceInput): number {
   const ops = computeOperationalMetrics(input);
   if (ops.activeEmployees <= 0) return 0;
-  const weekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
-  const weekTips = input.recentTips.filter((t) => new Date(t.createdAt).getTime() >= weekAgo);
+  const tz = resolveBusinessTimezone();
+  const weekKeys = new Set(venueLocalWeekDayKeys(tz));
+  const weekTips = input.recentTips.filter((t) =>
+    weekKeys.has(venueLocalDayKey(t.createdAt, tz)),
+  );
   const uniqueEmployees = new Set(
     weekTips.map((t) => t.employeeId).filter((id): id is string => Boolean(id)),
   );
@@ -497,7 +548,7 @@ export function generateExecutiveRisks(input: BusinessIntelligenceInput): Execut
       tone: "warning",
       ...trace(
         "revenueGrowthPercent",
-        "(week.totalTips - period.totalTips/4.33) / (period.totalTips/4.33) * 100",
+        "(period.totalTips - priorPeriod.totalTips) / priorPeriod.totalTips * 100",
         "business.team.performance.executive.evidence.tipVolumeDecline",
         { weekTips: input.week.totalTips, periodTips: input.period.totalTips, percent: revenue.growthPercent },
         revenue.growthPercent < -15 ? "high" : "medium",
@@ -790,7 +841,7 @@ export function generateOpportunities(input: BusinessIntelligenceInput): Executi
       tone: "success",
       ...trace(
         "revenueGrowthPercent",
-        "(week.totalTips - period.totalTips/4.33) / (period.totalTips/4.33) * 100",
+        "(period.totalTips - priorPeriod.totalTips) / priorPeriod.totalTips * 100",
         "business.team.performance.executive.evidence.tipGrowthOpp",
         { percent: revenue.growthPercent },
       ),
@@ -976,7 +1027,7 @@ export type PerformanceSnapshot = {
 };
 
 /**
- * Source: trusted BI aggregates (tips, employees, goals, locations from recentTips).
+ * Source: trusted BI aggregates (tips, employees, goals, SQL location rankings).
  * Refresh: useBusinessTipsModuleData.
  */
 export function computePerformanceSnapshot(input: BusinessIntelligenceInput): PerformanceSnapshot {
@@ -986,9 +1037,9 @@ export function computePerformanceSnapshot(input: BusinessIntelligenceInput): Pe
   const rated = input.employees.filter((e) => e.rating != null && e.rating > 0);
   const satisfaction =
     rated.length > 0 ? rated.reduce((s, e) => s + (e.rating ?? 0), 0) / rated.length : 0;
-  const locations = new Set(
-    input.recentTips.map((t) => t.locationName?.trim() || "Main venue"),
-  );
+  const activeLocations =
+    (input.locationRankings?.filter((r) => r.tipsEur > 0).length ?? 0) ||
+    new Set(input.recentTips.map((t) => t.locationName?.trim() || "Main venue")).size;
 
   const goals = input.employeeGoals;
   let goalCompletion = 0;
@@ -1007,7 +1058,7 @@ export function computePerformanceSnapshot(input: BusinessIntelligenceInput): Pe
         : 0,
     goalCompletion,
     guestSatisfaction: satisfaction,
-    activeLocations: locations.size,
+    activeLocations,
     periodTipCount: input.period.tipCount,
   };
 }
@@ -1040,10 +1091,32 @@ function buildComparisons(
 }
 
 export function computeLocationComparisons(input: BusinessIntelligenceInput): ComparisonRow[] {
+  const rankings = input.locationRankings;
+  if (rankings != null) {
+    const total = rankings.reduce((s, r) => s + r.tipsEur, 0);
+    return rankings.map((r) => ({
+      label: r.name,
+      tips: r.tipsEur,
+      count: r.tipCount,
+      share: total > 0 ? Math.round((r.tipsEur / total) * 100) : 0,
+    }));
+  }
   return buildComparisons(input.recentTips, "locationName", "Main venue");
 }
 
 export function computeTableComparisons(input: BusinessIntelligenceInput): ComparisonRow[] {
+  const rankings = input.tableRankings;
+  if (rankings != null) {
+    const total = rankings.reduce((s, r) => s + r.tipsEur, 0);
+    return rankings
+      .map((r) => ({
+        label: r.name,
+        tips: r.tipsEur,
+        count: r.tipCount,
+        share: total > 0 ? Math.round((r.tipsEur / total) * 100) : 0,
+      }))
+      .filter((r) => r.label !== "—");
+  }
   return buildComparisons(input.recentTips, "tableName", "—").filter((r) => r.label !== "—");
 }
 

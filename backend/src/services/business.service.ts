@@ -40,6 +40,8 @@ import { inferManagerOnboardingStep } from "./onboardingProgress.service.js";
 import { queryEmployeeRatingAggregates } from "./feedback.service.js";
 import {
   buildBusinessDailyTipDistribution,
+  buildYearChartFromMonthTotals,
+  buildAllTimeChartFromYearTotals,
   queryBusinessDashboardMetaAndSummaryMetrics,
   queryBusinessDashboardSqlBundle,
   queryBusinessDashboardSummaryMetrics,
@@ -311,10 +313,6 @@ async function monthlyTipTotalsForRange(
     }
   }
   return monthTotals;
-}
-
-function buildYearChartFromMonthTotals(monthTotals: number[]): { day: string; amount: number }[] {
-  return MONTH_CHART_LABELS.map((day, i) => ({ day, amount: monthTotals[i] ?? 0 }));
 }
 
 export type BusinessStatsScope = "summary" | "roster" | "analytics" | "full";
@@ -621,6 +619,45 @@ async function loadBusinessSqlBundleCached(
   return { ...meta, ...slice };
 }
 
+function assertBusinessChartKpiSsot(opts: {
+  businessId: string;
+  timeframe: BusinessDashboardTimeframe;
+  tz: string;
+  rangeStart: Date;
+  dailyTipDistribution: { day: string; amount: number }[];
+  periodAmount: number;
+  todayAmount?: number;
+  todayCount?: number;
+}): void {
+  if (
+    process.env.NODE_ENV === "production" &&
+    process.env.DASHBOARD_TIMING !== "1" &&
+    process.env.SSOT_CHART_ASSERT !== "1"
+  ) {
+    return;
+  }
+  const chartSum = opts.dailyTipDistribution.reduce((s, r) => s + (Number(r.amount) || 0), 0);
+  const kpi = Number(opts.periodAmount) || 0;
+  const delta = Math.abs(chartSum - kpi);
+  console.info("[SSOT] business.chart↔kpi", {
+    businessId: opts.businessId,
+    timeframe: opts.timeframe,
+    tz: opts.tz,
+    periodStartIso: opts.rangeStart.toISOString(),
+    chartBuckets: opts.dailyTipDistribution.length,
+    chartSum,
+    periodAmount: kpi,
+    delta,
+    todayAmount: opts.todayAmount,
+    todayCount: opts.todayCount,
+  });
+  if (opts.dailyTipDistribution.length > 0 && delta > 0.05) {
+    console.warn(
+      `[SSOT] chart sum ≠ period KPI (${opts.timeframe}): chartSum=${chartSum} periodAmount=${kpi} Δ=${delta}`,
+    );
+  }
+}
+
 function buildChartFromSqlBundle(
   timeframe: BusinessDashboardTimeframe,
   rangeStart: Date,
@@ -628,7 +665,9 @@ function buildChartFromSqlBundle(
   bundle: BusinessDashboardSqlBundle,
 ): { day: string; amount: number }[] {
   if (timeframe === "year" && bundle.monthTotals) return buildYearChartFromMonthTotals(bundle.monthTotals);
-  if (timeframe === "all") return buildYearChartFromMonthTotals(new Array(12).fill(0));
+  if (timeframe === "all") {
+    return buildAllTimeChartFromYearTotals(bundle.yearTotals ?? []);
+  }
   if (timeframe === "week" || timeframe === "month") {
     return buildBusinessDailyTipDistribution(timeframe, bundle.dailyByYmd, rangeStart, tz);
   }
@@ -962,6 +1001,26 @@ async function getBusinessStatsAnalyticsImpl(
     () => loadBusinessAnalyticsExtras(businessId, { includeAssignments: timeframe === "all" }),
   );
   const dailyTipDistribution = buildChartFromSqlBundle(timeframe, rangeStart, tz, bundle);
+  console.info("[SSOT:13.7] business.dailyTipDistribution", {
+    businessId,
+    timeframe,
+    tz,
+    rangeStartIso: rangeStart.toISOString(),
+    todayAmount: bundle.summary.todayAmount,
+    todayCount: bundle.summary.todayCount,
+    periodAmount: bundle.summary.periodAmount,
+    distribution: dailyTipDistribution,
+  });
+  assertBusinessChartKpiSsot({
+    businessId,
+    timeframe,
+    tz,
+    rangeStart,
+    dailyTipDistribution,
+    periodAmount: bundle.summary.periodAmount,
+    todayAmount: bundle.summary.todayAmount,
+    todayCount: bundle.summary.todayCount,
+  });
   const ratingsByEmployee = await queryEmployeeRatingAggregates(businessId);
   const employeeStats = mapEmployeesToStats(employees, bundle.tipsByEmployee, ratingsByEmployee);
 
@@ -969,6 +1028,15 @@ async function getBusinessStatsAnalyticsImpl(
   const goalsOnTrackOrBetter = employeeGoals.filter(
     (g) => g.status === "on_track" || g.status === "achieved",
   ).length;
+
+  const periodTotalTips = bundle.summary.periodAmount;
+  const prior = bundle.priorPeriod;
+  const growthPercent =
+    prior.totalTips > 0
+      ? Math.round(((periodTotalTips - prior.totalTips) / prior.totalTips) * 100)
+      : periodTotalTips > 0
+        ? 100
+        : 0;
 
   logStatsPhase("analytics_ok", {
     ...ctx,
@@ -983,6 +1051,14 @@ async function getBusinessStatsAnalyticsImpl(
     employees: employeeStats,
     employeeGoals,
     operationalPulse: { goalsTracked, goalsOnTrackOrBetter },
+    locationRankings: bundle.locationRankings,
+    tableRankings: bundle.tableRankings,
+    priorPeriod: prior,
+    growthPercent,
+    peakHour: bundle.shiftAggregate.peakHour,
+    bestShift: bundle.shiftAggregate.bestShift,
+    avgTipsPerShift: bundle.shiftAggregate.avgTipsPerShift,
+    completedShifts: bundle.shiftAggregate.completedShifts,
   };
 }
 
@@ -1025,6 +1101,16 @@ async function getBusinessStatsImpl(
       () => loadBusinessAnalyticsExtras(businessId, { includeAssignments: timeframe === "all" }),
     );
     const dailyTipDistribution = buildChartFromSqlBundle(timeframe, rangeStart, tz, bundle);
+    assertBusinessChartKpiSsot({
+      businessId,
+      timeframe,
+      tz,
+      rangeStart,
+      dailyTipDistribution,
+      periodAmount: summaryMetrics.periodAmount,
+      todayAmount: summaryMetrics.todayAmount,
+      todayCount: summaryMetrics.todayCount,
+    });
     const ratingsByEmployee = await queryEmployeeRatingAggregates(businessId);
     const employeeStats = mapEmployeesToStats(employees, bundle.tipsByEmployee, ratingsByEmployee);
 
@@ -1032,6 +1118,14 @@ async function getBusinessStatsImpl(
     const goalsOnTrackOrBetter = employeeGoals.filter(
       (g) => g.status === "on_track" || g.status === "achieved",
     ).length;
+
+    const prior = bundle.priorPeriod;
+    const growthPercent =
+      prior.totalTips > 0
+        ? Math.round(((totalTips - prior.totalTips) / prior.totalTips) * 100)
+        : totalTips > 0
+          ? 100
+          : 0;
 
     const payload = {
       id: business.id,
@@ -1046,6 +1140,14 @@ async function getBusinessStatsImpl(
       dailyTipDistribution,
       employees: employeeStats,
       employeeGoals,
+      locationRankings: bundle.locationRankings,
+      tableRankings: bundle.tableRankings,
+      priorPeriod: prior,
+      growthPercent,
+      peakHour: bundle.shiftAggregate.peakHour,
+      bestShift: bundle.shiftAggregate.bestShift,
+      avgTipsPerShift: bundle.shiftAggregate.avgTipsPerShift,
+      completedShifts: bundle.shiftAggregate.completedShifts,
       operationalPulse: {
         tipsLast60m: { amount: summaryMetrics.last60Amount, count: summaryMetrics.last60Count },
         tipsToday: { amount: summaryMetrics.todayAmount, count: summaryMetrics.todayCount },
@@ -1120,6 +1222,7 @@ const BUSINESS_PROFILE_SELECT = {
   businessType: true,
   location: true,
   registeredAddress: true,
+  timezone: true,
   onboardingVerificationStatus: true,
   kycVerificationStatus: true,
   subscriptionTier: true,

@@ -2,9 +2,9 @@ import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { useSearchParams } from "react-router";
 import { useTranslation } from "react-i18next";
 import type { TFunction } from "i18next";
-import { RotateCcw, Eye } from "lucide-react";
-import { fetchPlatformTransactions } from "../../../lib/api";
-import { isRefundCandidate, mapRefundRow, type RefundRecord } from "../../../lib/platformRefunds";
+import { RotateCcw, Eye, Download } from "lucide-react";
+import { downloadPlatformRefundsCsv, fetchPlatformRefunds } from "../../../lib/api";
+import { mapLedgerRefundRow, type RefundRecord } from "../../../lib/platformRefunds";
 import { logClientError } from "../../../lib/clientLog";
 import { toUserFriendlyMessage } from "../../../lib/errorMessages";
 import {
@@ -32,7 +32,6 @@ import {
 } from "@/app/components/ui/dialog";
 
 const PAGE_SIZE = 50;
-const FETCH_BATCH = 250;
 
 function refundStatusLabel(status: string, t: TFunction): string {
   const key = `admin.refundsPage.status.${status}`;
@@ -47,10 +46,10 @@ function refundReasonLabel(reason: string, t: TFunction): string {
 }
 
 function refundStatusClass(status: string): string {
-  if (status === "processed") {
+  if (status === "processed" || status === "succeeded" || status === "won") {
     return "bg-success/15 text-success dark:bg-success/25";
   }
-  if (status === "failed") {
+  if (status === "failed" || status === "lost" || status === "canceled") {
     return "bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-200";
   }
   return "bg-amber-100 text-amber-900 dark:bg-amber-900/40 dark:text-amber-100";
@@ -66,6 +65,7 @@ function formatRefundDate(iso: string, locale: string): string {
     return new Date(iso).toLocaleString(locale, {
       dateStyle: "medium",
       timeStyle: "short",
+      timeZone: "Europe/Berlin",
     });
   } catch {
     return iso;
@@ -76,9 +76,13 @@ export function PlatformRefundsPage() {
   const { t, i18n } = useTranslation();
   const [searchParams, setSearchParams] = useSearchParams();
   const q = searchParams.get("q") ?? "";
+  const kind = searchParams.get("kind") ?? "all";
+  const status = searchParams.get("status") ?? "all";
   const page = readPage(searchParams);
   const [debouncedQ, setDebouncedQ] = useState(q);
   const [allRefunds, setAllRefunds] = useState<RefundRecord[]>([]);
+  const [serverTotal, setServerTotal] = useState(0);
+  const [ledgerAvailable, setLedgerAvailable] = useState(true);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [loadErrorKind, setLoadErrorKind] = useState<ReturnType<typeof classifyFetchError>>("api");
@@ -111,53 +115,52 @@ export function PlatformRefundsPage() {
     [searchParams, setSearchParams],
   );
 
+  const setFilter = useCallback(
+    (key: "kind" | "status", next: string) => {
+      const sp = new URLSearchParams(searchParams);
+      if (next && next !== "all") sp.set(key, next);
+      else sp.delete(key);
+      sp.delete("page");
+      setSearchParams(sp, { replace: true });
+    },
+    [searchParams, setSearchParams],
+  );
+
   const load = useCallback(async () => {
     const gen = ++loadGenRef.current;
     setLoading(true);
     setLoadError(null);
     try {
-      const collected: RefundRecord[] = [];
-      let skip = 0;
-      let serverTotal = Infinity;
-
-      while (skip < serverTotal && collected.length < 1000) {
-        const res = await fetchPlatformTransactions({
-          q: debouncedQ || undefined,
-          take: FETCH_BATCH,
-          skip,
-        });
-        if (gen !== loadGenRef.current) return;
-        serverTotal = res.total;
-        for (const row of res.items) {
-          if (isRefundCandidate(row)) {
-            collected.push(mapRefundRow(row));
-          }
-        }
-        skip += FETCH_BATCH;
-        if (res.items.length === 0) break;
-      }
-
-      setAllRefunds(collected);
+      const res = await fetchPlatformRefunds({
+        q: debouncedQ || undefined,
+        kind: kind !== "all" ? kind : undefined,
+        status: status !== "all" ? status : undefined,
+        take: PAGE_SIZE,
+        skip: page * PAGE_SIZE,
+      });
+      if (gen !== loadGenRef.current) return;
+      setLedgerAvailable(res.ledgerAvailable !== false);
+      setServerTotal(res.total);
+      setAllRefunds((res.items ?? []).map(mapLedgerRefundRow));
     } catch (e) {
       if (gen !== loadGenRef.current) return;
       logClientError("PlatformRefundsPage", e);
       setLoadError(toUserFriendlyMessage(e));
       setLoadErrorKind(classifyFetchError(e));
+      setLedgerAvailable(false);
       setAllRefunds([]);
+      setServerTotal(0);
     } finally {
       if (gen === loadGenRef.current) setLoading(false);
     }
-  }, [debouncedQ]);
+  }, [debouncedQ, kind, status, page]);
 
   useEffect(() => {
     void load();
   }, [load]);
 
-  const total = allRefunds.length;
-  const items = useMemo(
-    () => allRefunds.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE),
-    [allRefunds, page],
-  );
+  const total = serverTotal;
+  const items = allRefunds;
   const showTableLoading = loading;
   const pageCount = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
@@ -169,6 +172,12 @@ export function PlatformRefundsPage() {
   }, [debouncedQ, t, total]);
 
   const emptyCopy = useMemo(() => {
+    if (!ledgerAvailable) {
+      return {
+        title: t("admin.refundsPage.empty.noDataTitle"),
+        description: t("admin.refundsPage.empty.noDataDescription"),
+      };
+    }
     if (debouncedQ) {
       return {
         title: t("admin.refundsPage.emptySearch.title"),
@@ -176,10 +185,10 @@ export function PlatformRefundsPage() {
       };
     }
     return {
-      title: t("admin.refundsPage.empty.title"),
+      title: t("admin.refundsPage.empty.noDataTitle"),
       description: t("admin.refundsPage.empty.description"),
     };
-  }, [debouncedQ, t]);
+  }, [debouncedQ, ledgerAvailable, t]);
 
   const footer =
     !showTableLoading && !loadError && total > 0 ? (
@@ -232,6 +241,56 @@ export function PlatformRefundsPage() {
         ariaLabel={t("admin.refundsPage.searchAria")}
         hint={t("admin.refundsPage.hintLiveSearch")}
       />
+
+      <div className="mb-3 flex flex-wrap items-end gap-3">
+        <label className="flex min-w-[10rem] flex-col gap-1 text-xs font-medium text-muted-foreground">
+          {t("admin.refundsPage.filterKind")}
+          <select
+            className="min-h-[40px] rounded-lg border border-border bg-background px-3 text-sm text-foreground"
+            value={kind}
+            onChange={(e) => setFilter("kind", e.target.value)}
+          >
+            <option value="all">{t("admin.refundsPage.kind.all")}</option>
+            <option value="refund">{t("admin.refundsPage.kind.refund")}</option>
+            <option value="chargeback">{t("admin.refundsPage.kind.chargeback")}</option>
+            <option value="dispute">{t("admin.refundsPage.kind.dispute")}</option>
+          </select>
+        </label>
+        <label className="flex min-w-[10rem] flex-col gap-1 text-xs font-medium text-muted-foreground">
+          {t("admin.refundsPage.filterStatus")}
+          <select
+            className="min-h-[40px] rounded-lg border border-border bg-background px-3 text-sm text-foreground"
+            value={status}
+            onChange={(e) => setFilter("status", e.target.value)}
+          >
+            <option value="all">{t("admin.refundsPage.statusFilter.all")}</option>
+            <option value="pending">{t("admin.refundsPage.status.pending")}</option>
+            <option value="succeeded">{t("admin.refundsPage.status.succeeded")}</option>
+            <option value="failed">{t("admin.refundsPage.status.failed")}</option>
+            <option value="needs_response">{t("admin.refundsPage.status.needs_response")}</option>
+            <option value="won">{t("admin.refundsPage.status.won")}</option>
+            <option value="lost">{t("admin.refundsPage.status.lost")}</option>
+            <option value="canceled">{t("admin.refundsPage.status.canceled")}</option>
+          </select>
+        </label>
+        <button
+          type="button"
+          onClick={() => {
+            void downloadPlatformRefundsCsv({
+              q: debouncedQ || undefined,
+              kind: kind !== "all" ? kind : undefined,
+              status: status !== "all" ? status : undefined,
+            }).catch((e) => {
+              logClientError("PlatformRefundsPage.export", e);
+              setLoadError(toUserFriendlyMessage(e));
+            });
+          }}
+          className="inline-flex min-h-[40px] items-center gap-1.5 rounded-lg border border-border px-3 text-xs font-medium text-foreground hover:bg-muted/50"
+        >
+          <Download className="h-3.5 w-3.5" aria-hidden />
+          {t("admin.refundsPage.exportCsv")}
+        </button>
+      </div>
 
       {!loadError && !showTableLoading ? (
         <p className="mb-3 text-sm font-medium text-foreground" role="status">

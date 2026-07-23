@@ -3518,7 +3518,7 @@
       "setTipGoal": "Set tip goal",
       "statTotalEarnings": "Total earnings",
       "statMonthEarnings": "This month",
-      "statTotalSupporters": "Total supporters",
+      "statTotalSupporters": "Successful tips",
       "accountOverviewLabel": "Account overview, all time"
     },
     "period": {
@@ -3542,9 +3542,9 @@
       "goal": "Goal progress",
       "goalTarget": "Target {{amount}}",
       "goalOpen": "Set a monthly goal to track progress",
-      "streak": "Tip streak",
+      "streak": "Tip streak (estimated)",
       "streakDays": "{{count}} days",
-      "streakHint": "Consecutive days with tips",
+      "streakHint": "Estimated from recent tip days on this device feed",
       "trend": "Period earnings",
       "trendHint": "Tips in the selected period"
     },
@@ -4807,19 +4807,26 @@
     "activityCenter": {
       "centerTitle": "Activity Center",
       "streamLabel": "Live",
+      "ssotHelper": "Recent activity. Not limited to today. Today's tip totals are shown in the Overview using venue time.",
       "empty": "Nothing yet. Tips, QR scans, goals, staff, and payments will appear here as they happen.",
+      "emptyToday": "No activity yet today in venue time. Switch to All Activity to see overnight events.",
       "loadOlder": "Load older",
       "loadingOlder": "Loading…",
       "filter": {
         "all": "All Activity",
+        "today": "Today",
         "tips": "Tips",
-        "qr": "QR Scans",
+        "qr": "QR",
         "goals": "Goals",
         "staff": "Staff",
         "payments": "Payments",
         "system": "System"
       },
-      "filterLabel": "Filter activity by type",
+      "filterLabel": "Filter activity",
+      "time": {
+        "today": "Today",
+        "yesterday": "Yesterday"
+      },
       "source": {
         "TIPS": "Tips",
         "QR": "QR Scans",
@@ -4862,7 +4869,7 @@
         "transactions": "Transactions",
         "analytics": "Analytics"
       },
-      "liveDesc": "What is happening right now: tips, scans, goals, staff, and payments in chronological order.",
+      "liveDesc": "What is happening right now: tips, scans, goals, staff, and payments in chronological order. Not the same as today's tip totals on Overview.",
       "analyticsDesc": "Deep-dive reporting on revenue, QR, employees, locations, and trends. Filter by period and export data.",
       "live": {
         "cards": {
@@ -4956,7 +4963,7 @@
           "totalTips": "Total tips",
           "tipCountHint": "{{count}} tips this month",
           "tipGrowth": "Tip growth",
-          "tipGrowthHint": "Week vs monthly average",
+          "tipGrowthHint": "Vs previous equal period (week / month / year)",
           "avgTip": "Average tip value",
           "weeklyRevenue": "Weekly revenue",
           "periodRevenueHint": "{{amount}} in selected period",
@@ -4983,7 +4990,7 @@
           "operationalTitle": "Operational metrics",
           "activeEmployees": "Active employees",
           "employeesWithTips": "Employees receiving tips",
-          "avgPerEmployee": "Avg tips per employee",
+          "avgPerEmployee": "Avg tips per tip receiver",
           "avgPerShift": "Avg tips per shift",
           "trendsTitle": "Trend analysis",
           "chartTipsOverTime": "Tips over time",
@@ -5009,7 +5016,7 @@
             "participationStrong": "Employee participation is strong at {{percent}}%.",
             "goalsNeedAttention": "Team goal completion is at {{percent}}%, below target."
           },
-          "healthTitle": "Business health",
+          "healthTitle": "Business health (composite)",
           "healthGrades": {
             "excellent": "Excellent",
             "good": "Good",
@@ -5064,7 +5071,7 @@
             "topTippingTable": "{{table}} drives {{share}}% of recent tip revenue."
           },
           "evidence": {
-            "tipVolumeDecline": "Source: week.totalTips vs period.totalTips/4.33, growth {{percent}}%.",
+            "tipVolumeDecline": "Source: period vs prior equal window, growth {{percent}}%.",
             "lowParticipation": "Source: {{receiving}} of {{active}} active employees received tips ({{percent}}%).",
             "participationDecline": "Period participation {{from}}% vs week {{to}}% (unique employees in recent tips).",
             "goalCompletionLow": "Source: average goal completion {{percent}}% from employee goals.",
@@ -5124,7 +5131,7 @@
         },
         "empty": "No rankings yet for this period.",
         "locationLeaderboard": "Location leaderboard",
-        "locationEmpty": "Tips by location appear as guests scan area QRs.",
+        "locationEmpty": "Tips by location appear as guests scan area QRs. Rankings use recent tip sample only.",
         "mainVenue": "Main venue",
         "tipCount": "{{count}} tips",
         "recognitionTitle": "Recognition",
@@ -6020,7 +6027,7 @@
         "failedPayments": "Failed Payments",
         "successfulSubscriptions": "Successful Subscriptions",
         "failedSubscriptions": "Failed Subscriptions",
-        "refunds": "Refunds"
+        "refunds": "Failed tips"
       },
       "users": {
         "management": "User Management",
@@ -6364,8 +6371,8 @@
         "subtitle": "Past-due and at-risk subscription accounts."
       },
       "refunds": {
-        "title": "Refunds",
-        "subtitle": "Failed and reversed tip transactions requiring refund review."
+        "title": "Refunds & chargebacks",
+        "subtitle": "Stripe refund and dispute ledger. Partial refunds and chargebacks are recorded separately from tip totals."
       }
     },
     "loading": "Loading…",
@@ -6440,47 +6447,70 @@
       "noSearchMatches": "No entries match your search."
     },
     "refundsPage": {
-      "searchPlaceholder": "Refund ID, transaction ID, business, or staff name…",
+      "searchPlaceholder": "Refund ID, dispute ID, payment intent, tip ID, or business…",
       "searchAria": "Search refunds",
-      "hintLiveSearch": "Results update as you type. Only failed or reversed tips are shown.",
-      "colRefundId": "Refund ID",
-      "colOriginalTransaction": "Original transaction",
+      "hintLiveSearch": "Results update as you type. Data comes from Stripe refund and dispute events only.",
+      "filterKind": "Type",
+      "filterStatus": "Status",
+      "exportCsv": "Export CSV",
+      "kind": {
+        "all": "All types",
+        "refund": "Refunds",
+        "chargeback": "Chargebacks",
+        "dispute": "Disputes"
+      },
+      "statusFilter": {
+        "all": "All statuses"
+      },
+      "colRefundId": "Refund / dispute ID",
+      "colOriginalTransaction": "Original tip / PI",
       "colBusiness": "Business",
       "colCustomer": "Customer",
       "colRefundAmount": "Refund amount",
       "colOriginalAmount": "Original amount",
-      "colReason": "Refund reason",
-      "colStatus": "Refund status",
-      "colRequested": "Requested",
-      "colProcessed": "Processed",
+      "colReason": "Reason",
+      "colStatus": "Status",
+      "colRequested": "Occurred",
+      "colProcessed": "Updated",
       "colProvider": "Payment provider",
-      "colStaff": "Staff affected",
+      "colStaff": "Staff",
       "colActions": "Actions",
       "anonymousCustomer": "Guest tipper",
       "view": "View",
-      "detailSubtitle": "Refund record details",
-      "summaryDefault": "Showing {{total}} refund records",
-      "summarySearch": "Showing {{total}} refunds matching \"{{q}}\"",
+      "detailSubtitle": "Refund / dispute ledger details",
+      "summaryDefault": "Showing {{total}} refund and dispute records",
+      "summarySearch": "Showing {{total}} records matching \"{{q}}\"",
       "footerShowing": "{{from}}–{{to}} of {{total}}",
       "prevPage": "Previous",
       "nextPage": "Next",
       "empty": {
-        "title": "No refunds found",
-        "description": "There are no failed or reversed tip transactions on the platform yet."
+        "title": "No refund data available",
+        "noDataTitle": "No refund data available",
+        "noDataDescription": "No Stripe refund or dispute events have been recorded yet. Failed tip payments are not shown here.",
+        "description": "No Stripe refund or dispute events have been recorded yet. Failed tip payments are not shown here."
       },
       "emptySearch": {
         "title": "No refunds match your search",
-        "description": "No results for \"{{q}}\". Try a refund ID, transaction ID, or business name."
+        "description": "No results for \"{{q}}\". Try a refund ID, payment intent, or business name."
       },
       "status": {
         "pending": "Pending",
         "processed": "Processed",
-        "failed": "Failed"
+        "succeeded": "Succeeded",
+        "failed": "Failed",
+        "canceled": "Canceled",
+        "needs_response": "Needs response",
+        "won": "Won",
+        "lost": "Lost"
       },
       "reason": {
         "payout_failed": "Payout failed",
         "payment_reversed": "Payment reversed",
-        "chargeback_or_dispute": "Chargeback or dispute"
+        "chargeback_or_dispute": "Chargeback or dispute",
+        "eligibility_failure": "Eligibility failure",
+        "requested_by_customer": "Requested by customer",
+        "duplicate": "Duplicate",
+        "fraudulent": "Fraudulent"
       }
     },
     "globalTransactionsPage": {

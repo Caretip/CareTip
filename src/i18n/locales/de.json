@@ -3518,7 +3518,7 @@
       "setTipGoal": "Trinkgeldziel setzen",
       "statTotalEarnings": "Gesamteinnahmen",
       "statMonthEarnings": "Diesen Monat",
-      "statTotalSupporters": "Unterstützer gesamt",
+      "statTotalSupporters": "Erfolgreiche Trinkgelder",
       "accountOverviewLabel": "Kontoübersicht, gesamt"
     },
     "period": {
@@ -3542,9 +3542,9 @@
       "goal": "Ziel-Fortschritt",
       "goalTarget": "Ziel {{amount}}",
       "goalOpen": "Monatsziel setzen, um Fortschritt zu verfolgen",
-      "streak": "Trinkgeld-Serie",
+      "streak": "Trinkgeld-Serie (geschätzt)",
       "streakDays": "{{count}} Tage",
-      "streakHint": "Aufeinanderfolgende Tage mit Trinkgeld",
+      "streakHint": "Geschätzt aus den letzten Trinkgeld-Tagen in diesem Feed",
       "trend": "Verdienst im Zeitraum",
       "trendHint": "Trinkgeld im gewählten Zeitraum"
     },
@@ -4847,19 +4847,26 @@
     "activityCenter": {
       "centerTitle": "Aktivitätscenter",
       "streamLabel": "Live",
+      "ssotHelper": "Aktuelle Aktivität. Nicht auf heute beschränkt. Die heutigen Trinkgeld-Summen sehen Sie in der Übersicht (Ortszeit des Lokals).",
       "empty": "Noch nichts. Trinkgeld, QR-Scans, Ziele, Team und Zahlungen erscheinen hier chronologisch.",
+      "emptyToday": "Heute (Ortszeit) noch keine Aktivität. Unter Alle Aktivitäten sehen Sie auch Ereignisse von gestern Nacht.",
       "loadOlder": "Ältere laden",
       "loadingOlder": "Laden…",
       "filter": {
         "all": "Alle Aktivitäten",
+        "today": "Heute",
         "tips": "Trinkgeld",
-        "qr": "QR-Scans",
+        "qr": "QR",
         "goals": "Ziele",
         "staff": "Team",
         "payments": "Zahlungen",
         "system": "System"
       },
-      "filterLabel": "Aktivität nach Typ filtern",
+      "filterLabel": "Aktivität filtern",
+      "time": {
+        "today": "Heute",
+        "yesterday": "Gestern"
+      },
       "source": {
         "TIPS": "Trinkgeld",
         "QR": "QR-Scans",
@@ -4902,7 +4909,7 @@
         "transactions": "Transaktionen",
         "analytics": "Analysen"
       },
-      "liveDesc": "Was gerade passiert: Trinkgeld, Scans, Ziele, Team und Zahlungen in chronologischer Reihenfolge.",
+      "liveDesc": "Was gerade passiert: Trinkgeld, Scans, Ziele, Team und Zahlungen in chronologischer Reihenfolge. Nicht dasselbe wie die heutigen Tip-Summen in der Übersicht.",
       "analyticsDesc": "Tiefenanalyse zu Umsatz, QR, Mitarbeiter, Standorte und Trends. Nach Zeitraum filtern und exportieren.",
       "live": {
         "cards": {
@@ -4996,7 +5003,7 @@
           "totalTips": "Trinkgeld gesamt",
           "tipCountHint": "{{count}} Trinkgeld diesen Monat",
           "tipGrowth": "Trinkgeld-Wachstum",
-          "tipGrowthHint": "Woche vs. Monatsdurchschnitt",
+          "tipGrowthHint": "Vs. vorheriger gleicher Zeitraum (Woche / Monat / Jahr)",
           "avgTip": "Durchschnittliches Trinkgeld",
           "weeklyRevenue": "Wochenumsatz",
           "periodRevenueHint": "{{amount}} im gewählten Zeitraum",
@@ -5023,7 +5030,7 @@
           "operationalTitle": "Operative Kennzahlen",
           "activeEmployees": "Aktive Mitarbeiter",
           "employeesWithTips": "Mitarbeiter mit Trinkgeld",
-          "avgPerEmployee": "Ø Trinkgeld pro Mitarbeiter",
+          "avgPerEmployee": "Ø Trinkgeld pro Empfänger",
           "avgPerShift": "Ø Trinkgeld pro Schicht",
           "trendsTitle": "Trendanalyse",
           "chartTipsOverTime": "Trinkgeld im Zeitverlauf",
@@ -5049,7 +5056,7 @@
             "participationStrong": "Mitarbeiterbeteiligung ist stark bei {{percent}} %.",
             "goalsNeedAttention": "Teamziel-Erfüllung liegt bei {{percent}} %, unter dem Ziel."
           },
-          "healthTitle": "Geschäftsgesundheit",
+          "healthTitle": "Geschäftsgesundheit (zusammengesetzt)",
           "healthGrades": {
             "excellent": "Ausgezeichnet",
             "good": "Gut",
@@ -5104,7 +5111,7 @@
             "topTippingTable": "{{table}}: {{share}} % des jüngsten Trinkgeld-Umsatzes."
           },
           "evidence": {
-            "tipVolumeDecline": "Quelle: week.totalTips vs period.totalTips/4.33, Wachstum {{percent}} %.",
+            "tipVolumeDecline": "Quelle: Zeitraum vs. vorheriger gleicher Fenster, Wachstum {{percent}} %.",
             "lowParticipation": "Quelle: {{receiving}} von {{active}} aktiven Mitarbeitenden ({{percent}} %).",
             "participationDecline": "Periode {{from}} % vs Woche {{to}} % (eindeutige Mitarbeitende in recentTips).",
             "goalCompletionLow": "Quelle: durchschnittliche Zielerfüllung {{percent}} %.",
@@ -5164,7 +5171,7 @@
         },
         "empty": "Noch keine Ranglisten für diesen Zeitraum.",
         "locationLeaderboard": "Standort-Rangliste",
-        "locationEmpty": "Trinkgeld nach Standort erscheinen bei Bereichs-QR-Scans.",
+        "locationEmpty": "Trinkgeld nach Standort erscheinen bei Bereichs-QR-Scans. Ranglisten nutzen nur die aktuelle Stichprobe.",
         "mainVenue": "Hauptlokal",
         "tipCount": "{{count}} Trinkgeld",
         "recognitionTitle": "Anerkennung",
@@ -6020,7 +6027,7 @@
         "failedPayments": "Fehlgeschlagene Zahlungen",
         "successfulSubscriptions": "Erfolgreiche Abonnements",
         "failedSubscriptions": "Fehlgeschlagene Abonnements",
-        "refunds": "Erstattungen"
+        "refunds": "Fehlgeschlagene Tips"
       },
       "users": {
         "management": "Benutzerverwaltung",
@@ -6364,8 +6371,8 @@
         "subtitle": "Überfällige und gefährdete Abonnementkonten."
       },
       "refunds": {
-        "title": "Erstattungen",
-        "subtitle": "Fehlgeschlagene und stornierte Trinkgeldtransaktionen zur Erstattungsprüfung."
+        "title": "Erstattungen & Rückbuchungen",
+        "subtitle": "Stripe-Erstattungs- und Streitfallbuch. Teilrückerstattungen und Chargebacks werden getrennt von Trinkgeld-Totals geführt."
       }
     },
     "loading": "Laden…",
@@ -6440,47 +6447,70 @@
       "noSearchMatches": "Keine Einträge entsprechen Ihrer Suche."
     },
     "refundsPage": {
-      "searchPlaceholder": "Erstattungs-ID, Transaktions-ID, Betrieb oder Mitarbeiter…",
+      "searchPlaceholder": "Erstattungs-ID, Streitfall-ID, Payment Intent, Tip-ID oder Betrieb…",
       "searchAria": "Erstattungen durchsuchen",
-      "hintLiveSearch": "Ergebnisse aktualisieren sich beim Tippen. Nur fehlgeschlagene oder stornierte Trinkgelder.",
-      "colRefundId": "Erstattungs-ID",
-      "colOriginalTransaction": "Ursprüngliche Transaktion",
+      "hintLiveSearch": "Ergebnisse aktualisieren sich beim Tippen. Nur Stripe-Erstattungs- und Streitfall-Ereignisse.",
+      "filterKind": "Typ",
+      "filterStatus": "Status",
+      "exportCsv": "CSV exportieren",
+      "kind": {
+        "all": "Alle Typen",
+        "refund": "Erstattungen",
+        "chargeback": "Rückbuchungen",
+        "dispute": "Streitfälle"
+      },
+      "statusFilter": {
+        "all": "Alle Status"
+      },
+      "colRefundId": "Erstattungs-/Streitfall-ID",
+      "colOriginalTransaction": "Ursprünglicher Tip / PI",
       "colBusiness": "Betrieb",
       "colCustomer": "Kunde",
       "colRefundAmount": "Erstattungsbetrag",
       "colOriginalAmount": "Ursprünglicher Betrag",
-      "colReason": "Erstattungsgrund",
-      "colStatus": "Erstattungsstatus",
-      "colRequested": "Angefragt",
-      "colProcessed": "Verarbeitet",
+      "colReason": "Grund",
+      "colStatus": "Status",
+      "colRequested": "Aufgetreten",
+      "colProcessed": "Aktualisiert",
       "colProvider": "Zahlungsanbieter",
-      "colStaff": "Betroffenes Team",
+      "colStaff": "Team",
       "colActions": "Aktionen",
       "anonymousCustomer": "Gast-Tipper",
       "view": "Ansehen",
-      "detailSubtitle": "Details zur Erstattung",
-      "summaryDefault": "{{total}} Erstattungsdatensätze",
-      "summarySearch": "{{total}} Erstattungen passend zu „{{q}}“",
+      "detailSubtitle": "Details zum Erstattungs-/Streitfallbuch",
+      "summaryDefault": "{{total}} Erstattungs- und Streitfall-Datensätze",
+      "summarySearch": "{{total}} Datensätze passend zu „{{q}}“",
       "footerShowing": "{{from}}–{{to}} von {{total}}",
       "prevPage": "Zurück",
       "nextPage": "Weiter",
       "empty": {
-        "title": "Keine Erstattungen gefunden",
-        "description": "Es gibt noch keine fehlgeschlagenen oder stornierten Trinkgeldtransaktionen."
+        "title": "Keine Erstattungsdaten verfügbar",
+        "noDataTitle": "Keine Erstattungsdaten verfügbar",
+        "noDataDescription": "Noch keine Stripe-Erstattungs- oder Streitfall-Ereignisse. Fehlgeschlagene Tip-Zahlungen werden hier nicht angezeigt.",
+        "description": "Noch keine Stripe-Erstattungs- oder Streitfall-Ereignisse. Fehlgeschlagene Tip-Zahlungen werden hier nicht angezeigt."
       },
       "emptySearch": {
-        "title": "Keine Erstattungen passend zur Suche",
-        "description": "Keine Ergebnisse für „{{q}}“. Versuchen Sie Erstattungs-ID, Transaktions-ID oder Betriebsname."
+        "title": "Keine Erstattungen zur Suche",
+        "description": "Keine Ergebnisse für „{{q}}“. Versuchen Sie Erstattungs-ID, Payment Intent oder Betriebsname."
       },
       "status": {
         "pending": "Ausstehend",
         "processed": "Verarbeitet",
-        "failed": "Fehlgeschlagen"
+        "succeeded": "Erfolgreich",
+        "failed": "Fehlgeschlagen",
+        "canceled": "Storniert",
+        "needs_response": "Antwort erforderlich",
+        "won": "Gewonnen",
+        "lost": "Verloren"
       },
       "reason": {
         "payout_failed": "Auszahlung fehlgeschlagen",
         "payment_reversed": "Zahlung storniert",
-        "chargeback_or_dispute": "Rückbuchung oder Streitfall"
+        "chargeback_or_dispute": "Rückbuchung oder Streitfall",
+        "eligibility_failure": "Eligibilitätsfehler",
+        "requested_by_customer": "Vom Kunden angefordert",
+        "duplicate": "Duplikat",
+        "fraudulent": "Betrug"
       }
     },
     "globalTransactionsPage": {

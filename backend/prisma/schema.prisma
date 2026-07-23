@@ -556,6 +556,8 @@ model Business {
   operationalStatusChangedAt DateTime?                @map("operational_status_changed_at")
   operationalReviewHistory Json?                      @map("operational_review_history")
   deletedAt                DateTime?                  @map("deleted_at")
+  /** Venue / business creation time — platform growth SSOT (not manager user proxy). */
+  createdAt                DateTime                   @default(now()) @map("created_at")
 
   user           User            @relation(fields: [userId], references: [id], onDelete: Cascade)
   employees      Employee[]
@@ -569,12 +571,14 @@ model Business {
   qrFunnelEvents QrFunnelEvent[]
   featureUtilizationDaily FeatureUtilizationDaily[]
   activityEvents BusinessActivityEvent[]
+  tipRefunds     TipRefund[]
 
   @@index([verificationStatus], map: "businesses_verification_status_idx")
   @@index([onboardingVerificationStatus], map: "businesses_onboarding_verification_status_idx")
   @@index([kycVerificationStatus], map: "businesses_kyc_verification_status_idx")
   @@index([operationalStatus], map: "businesses_operational_status_idx")
   @@index([deletedAt], map: "businesses_deleted_at_idx")
+  @@index([createdAt(sort: Desc)], map: "businesses_created_at_idx")
   @@map("businesses")
 }
 
@@ -971,3 +975,49 @@ model BusinessActivityEvent {
   @@index([businessId, type, occurredAt(sort: Desc)])
   @@map("business_activity_events")
 }
+
+/// Stripe refund / chargeback / dispute ledger (platform admin finance SSOT).
+/// Never derive these rows from tip status=failed — failed payment ≠ refund.
+enum TipRefundKind {
+  refund
+  chargeback
+  dispute
+}
+
+enum TipRefundStatus {
+  pending
+  succeeded
+  failed
+  canceled
+  needs_response
+  won
+  lost
+}
+
+model TipRefund {
+  id                      String          @id @default(cuid())
+  businessId              String          @map("business_id")
+  tipId                   String?         @map("tip_id")
+  stripeRefundId          String?         @unique @map("stripe_refund_id")
+  stripePaymentIntentId   String?         @map("stripe_payment_intent_id")
+  stripeChargeId          String?         @map("stripe_charge_id")
+  stripeDisputeId         String?         @unique @map("stripe_dispute_id")
+  kind                    TipRefundKind
+  status                  TipRefundStatus @default(pending)
+  amountEur               Decimal         @map("amount_eur") @db.Decimal(10, 2)
+  currency                String          @default("eur") @db.VarChar(8)
+  reason                  String?         @db.VarChar(120)
+  /** Original tip amount when tip row is known (supports partial refund display). */
+  originalAmountEur       Decimal?        @map("original_amount_eur") @db.Decimal(10, 2)
+  occurredAt              DateTime        @map("occurred_at")
+  createdAt               DateTime        @default(now()) @map("created_at")
+  updatedAt               DateTime        @updatedAt @map("updated_at")
+
+  business Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  @@index([businessId, occurredAt(sort: Desc)])
+  @@index([stripePaymentIntentId])
+  @@index([kind, status])
+  @@map("tip_refunds")
+}
+

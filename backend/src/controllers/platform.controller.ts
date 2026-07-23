@@ -169,6 +169,45 @@ export async function listTransactions(req: Request, res: Response) {
   }
 }
 
+export async function listRefunds(req: Request, res: Response) {
+  try {
+    const q = typeof req.query.q === "string" ? req.query.q : undefined;
+    const kind = typeof req.query.kind === "string" ? req.query.kind : undefined;
+    const status = typeof req.query.status === "string" ? req.query.status : undefined;
+    const take = Math.min(Math.max(Number(req.query.take) || 50, 1), 100);
+    const skip = Math.max(Number(req.query.skip) || 0, 0);
+    const { listTipRefunds } = await import("../services/finance/tipRefunds.service.js");
+    const result = await listTipRefunds({ q, take, skip, kind, status });
+    return res.json(result);
+  } catch (err) {
+    logServerError("platform.listRefunds", err);
+    return res.status(500).json({
+      ledgerAvailable: false,
+      total: 0,
+      items: [],
+      message: clientSafeMessage(err, "No refund data available"),
+    });
+  }
+}
+
+export async function exportRefunds(req: Request, res: Response) {
+  try {
+    const q = typeof req.query.q === "string" ? req.query.q : undefined;
+    const kind = typeof req.query.kind === "string" ? req.query.kind : undefined;
+    const status = typeof req.query.status === "string" ? req.query.status : undefined;
+    const { exportTipRefundsCsv } = await import("../services/finance/tipRefunds.service.js");
+    const csv = await exportTipRefundsCsv({ q, kind, status });
+    res.setHeader("Content-Type", "text/csv; charset=utf-8");
+    res.setHeader("Content-Disposition", 'attachment; filename="caretip-refunds-ledger.csv"');
+    return res.status(200).send(csv);
+  } catch (err) {
+    logServerError("platform.exportRefunds", err);
+    return res.status(500).json({
+      message: clientSafeMessage(err, "No refund data available"),
+    });
+  }
+}
+
 export async function getStats(_req: Request, res: Response) {
   try {
     const stats = await platformService.getGlobalPlatformStats();

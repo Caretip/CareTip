@@ -1,6 +1,7 @@
 import { Prisma } from "@prisma/client";
 import { prisma } from "../../prisma.js";
 import { businessUtcRangeForTimeframe, sanitizeIanaTimezone } from "../../utils/businessTime.js";
+import { sqlNaiveUtcColumnAsLocal } from "../../utils/sqlNaiveUtcToLocal.js";
 import { buildBusinessDailyTipDistribution } from "../../utils/tipChartBuckets.js";
 
 export type QrAnalyticsTimeframe = "week" | "month" | "year";
@@ -53,7 +54,7 @@ async function queryQrScanDailyCounts(opts: {
 }): Promise<Map<string, number>> {
   const rows = await prisma.$queryRaw<Array<{ d: string; total: number }>>(Prisma.sql`
     SELECT
-      to_char(date_trunc('day', scanned_at AT TIME ZONE ${opts.tz}), 'YYYY-MM-DD') AS d,
+      to_char(date_trunc('day', ${sqlNaiveUtcColumnAsLocal(Prisma.sql`scanned_at`, opts.tz)}), 'YYYY-MM-DD') AS d,
       COUNT(*)::int AS total
     FROM qr_scan_events
     WHERE business_id = ${opts.businessId}

@@ -158,19 +158,39 @@ export function buildBusinessAnalyticsDTO(bundle: BusinessAnalyticsBundle): Busi
   const pulse = bundle.periodStats.operationalPulse ?? null;
   const today = todaySnapshotFromPulse(pulse);
 
+  const dailyTipDistribution = bundle.periodStats.dailyTipDistribution ?? [];
   const input = buildBusinessIntelligenceInput({
     period,
     week,
     today,
-    dailyTipDistribution: bundle.periodStats.dailyTipDistribution ?? [],
+    dailyTipDistribution,
     recentTips: bundle.recentTips,
     employees: bundle.periodStats.employees ?? [],
     employeeGoals: bundle.periodStats.employeeGoals ?? [],
     pulse,
     qrAnalytics: bundle.qrAnalytics ?? null,
+    locationRankings: bundle.periodStats.locationRankings,
+    tableRankings: bundle.periodStats.tableRankings,
+    growthPercent: bundle.periodStats.growthPercent,
+    peakHour: bundle.periodStats.peakHour,
+    bestShift: bundle.periodStats.bestShift,
+    avgTipsPerShift: bundle.periodStats.avgTipsPerShift,
+    completedShifts: bundle.periodStats.completedShifts,
   });
 
   const intelligence = runBusinessIntelligenceEngine(input);
+
+  if (import.meta.env.DEV) {
+    void import("../assertKpiChartIntegrity").then(({ runBusinessSsotIntegrityChecks }) => {
+      runBusinessSsotIntegrityChecks({
+        label: `business.${bundle.timeframe}`,
+        kpiTotal: period.totalTips,
+        chartAmounts: dailyTipDistribution.map((r) => r.amount),
+        locationRankings: bundle.periodStats.locationRankings,
+        tableRankings: bundle.periodStats.tableRankings,
+      });
+    });
+  }
 
   return {
     timeframe: bundle.timeframe,
@@ -182,7 +202,7 @@ export function buildBusinessAnalyticsDTO(bundle: BusinessAnalyticsBundle): Busi
     recentTips: bundle.recentTips,
     employees: bundle.periodStats.employees ?? [],
     employeeGoals: bundle.periodStats.employeeGoals ?? [],
-    dailyTipDistribution: bundle.periodStats.dailyTipDistribution ?? [],
+    dailyTipDistribution,
     input,
     intelligence,
     fetchedAt: bundle.fetchedAt,

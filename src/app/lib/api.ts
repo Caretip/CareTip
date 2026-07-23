@@ -1182,6 +1182,21 @@ export interface BusinessDashboardStats {
     goalsTracked: number;
     goalsOnTrackOrBetter: number;
   };
+  /** SQL location rankings for selected timeframe (not tip-feed samples). */
+  locationRankings?: Array<{ id: string | null; name: string; tipsEur: number; tipCount: number }>;
+  /** SQL table rankings for selected timeframe. */
+  tableRankings?: Array<{ id: string | null; name: string; tipsEur: number; tipCount: number }>;
+  /** Prior equal-length window tip totals for growth %. */
+  priorPeriod?: { totalTips: number; tipCount: number };
+  /** Period-over-prior growth % from SQL (WoW / MoM / YoY by timeframe). */
+  growthPercent?: number;
+  /** Venue-local peak tip hour 0–23 from SQL (null if no tips). */
+  peakHour?: number | null;
+  /** Best shift key from SQL: morning | afternoon | evening | late. */
+  bestShift?: "morning" | "afternoon" | "evening" | "late" | null;
+  /** periodTips ÷ completed (day×shift) buckets; null when no completed shifts. */
+  avgTipsPerShift?: number | null;
+  completedShifts?: number;
 }
 
 /**
@@ -1194,7 +1209,8 @@ const businessStatsResultCache = new Map<
   string,
   { at: number; value: BusinessDashboardStats }
 >();
-const BUSINESS_STATS_CLIENT_RESULT_TTL_MS = 90_000;
+/** Align with DASHBOARD_SWR_METRICS_TTL_MS — shorter stale window, same hit rate under sockets. */
+const BUSINESS_STATS_CLIENT_RESULT_TTL_MS = 45_000;
 
 export type BusinessStatsScope = "summary" | "roster" | "analytics" | "full";
 
@@ -1224,6 +1240,18 @@ export function mergeBusinessDashboardStats(
       summary?.employeeCount != null
         ? summary.employeeCount
         : (analytics?.employeeCount ?? summary?.employeeCount ?? 0),
+    dailyTipDistribution:
+      analytics?.dailyTipDistribution ?? summary?.dailyTipDistribution,
+    locationRankings: analytics?.locationRankings ?? summary?.locationRankings,
+    tableRankings: analytics?.tableRankings ?? summary?.tableRankings,
+    priorPeriod: analytics?.priorPeriod ?? summary?.priorPeriod,
+    growthPercent: analytics?.growthPercent ?? summary?.growthPercent,
+    peakHour: analytics?.peakHour ?? summary?.peakHour,
+    bestShift: analytics?.bestShift ?? summary?.bestShift,
+    avgTipsPerShift: analytics?.avgTipsPerShift ?? summary?.avgTipsPerShift,
+    completedShifts: analytics?.completedShifts ?? summary?.completedShifts,
+    employees: analytics?.employees ?? summary?.employees,
+    employeeGoals: analytics?.employeeGoals ?? summary?.employeeGoals,
     operationalPulse:
       pulseS || pulseA
         ? {
@@ -1386,7 +1414,8 @@ export async function downloadBusinessTransactionsExport(): Promise<void> {
   }
 
   const blob = await res.blob();
-  const dateStr = new Date().toISOString().slice(0, 10);
+  const { venueLocalTodayKey, resolveBusinessTimezone } = await import("./businessVenueTime");
+  const dateStr = venueLocalTodayKey(resolveBusinessTimezone());
   const filename = `CareTip_Transactions_${dateStr}.csv`;
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
@@ -1419,6 +1448,8 @@ export interface BusinessInfo {
   type?: string | null;
   contactPhone?: string | null;
   website?: string | null;
+  /** IANA venue timezone (manager profile) — Activity Center calendar labels. */
+  timezone?: string | null;
   /** Present on manager profile only — not returned by public GET /api/business/:id */
   employeeCount?: number;
   /** @deprecated Legacy KYC mirror — use `kycVerificationStatus`. */
@@ -1504,6 +1535,11 @@ export async function fetchBusinessProfile(opts?: {
     now - businessProfileCache.at < BUSINESS_PROFILE_CLIENT_TTL_MS
   ) {
     primeBusinessSubscriptionTier(businessProfileCache.data);
+    if (businessProfileCache.data.timezone) {
+      void import("./businessVenueTime").then(({ setCachedBusinessVenueTimezone }) => {
+        setCachedBusinessVenueTimezone(businessProfileCache!.data.timezone);
+      });
+    }
     return businessProfileCache.data;
   }
   if (businessProfileInflight) return businessProfileInflight;
@@ -1516,6 +1552,11 @@ export async function fetchBusinessProfile(opts?: {
     .then((data) => {
       businessProfileCache = { at: Date.now(), data };
       primeBusinessSubscriptionTier(data);
+      if (data.timezone) {
+        void import("./businessVenueTime").then(({ setCachedBusinessVenueTimezone }) => {
+          setCachedBusinessVenueTimezone(data.timezone);
+        });
+      }
       return data;
     })
     .finally(() => {
@@ -2138,7 +2179,10 @@ export interface EmployeeTipsResponse {
   analyticsBundled?: boolean;
   /** Lifetime successful tips — hero account summary */
   totalEarningsEur?: number;
+  /** @deprecated Prefer paidOutEur */
   availableBalanceEur?: number;
+  /** Successful tips with payout_status=paid */
+  paidOutEur?: number;
   totalSupporters?: number;
   /** Period-scoped guest ratings (summary scope). */
   averageRating?: number | null;
@@ -2237,7 +2281,9 @@ export type EmployeeTipsScope = "account" | "summary" | "analytics" | "full";
 
 export type EmployeeAccountSnapshot = {
   totalEarningsEur: number;
+  /** @deprecated Prefer paidOutEur */
   availableBalanceEur: number;
+  paidOutEur: number;
   totalSupporters: number;
 };
 
@@ -2277,6 +2323,11 @@ export function mergeEmployeeTipsResponse(
     chartSeries: analytics?.chartSeries ?? summary?.chartSeries ?? [],
     totalEarningsEur: summary?.totalEarningsEur ?? analytics?.totalEarningsEur,
     availableBalanceEur: summary?.availableBalanceEur ?? analytics?.availableBalanceEur,
+    paidOutEur:
+      summary?.paidOutEur ??
+      analytics?.paidOutEur ??
+      summary?.availableBalanceEur ??
+      analytics?.availableBalanceEur,
     totalSupporters: summary?.totalSupporters ?? analytics?.totalSupporters,
   };
 }
@@ -2305,10 +2356,16 @@ export async function getEmployeeAccountSnapshot(
   init?: CaretipRequestInit & { silent?: boolean },
 ): Promise<EmployeeAccountSnapshot> {
   const data = await getTipsByEmployee("today", { ...init, scope: "account" });
+  const paid =
+    typeof data.paidOutEur === "number"
+      ? data.paidOutEur
+      : typeof data.availableBalanceEur === "number"
+        ? data.availableBalanceEur
+        : 0;
   return {
     totalEarningsEur: typeof data.totalEarningsEur === "number" ? data.totalEarningsEur : 0,
-    availableBalanceEur:
-      typeof data.availableBalanceEur === "number" ? data.availableBalanceEur : 0,
+    availableBalanceEur: paid,
+    paidOutEur: paid,
     totalSupporters: typeof data.totalSupporters === "number" ? data.totalSupporters : 0,
   };
 }
@@ -3416,9 +3473,28 @@ export async function fetchPlatformStats(): Promise<PlatformGlobalStats> {
   const promise = apiRequest<PlatformGlobalStats>(apiPath("/api/platform/stats"), {
     headers: getHeaders(),
     credentials: "include",
-  }).finally(() => {
-    if (platformStatsInflight.get(cacheKey) === promise) platformStatsInflight.delete(cacheKey);
-  });
+  })
+    .then((stats) => {
+      if (import.meta.env.DEV) {
+        void fetchPlatformRefunds({ take: 1, skip: 0 })
+          .then((refunds) => {
+            void import("./assertKpiChartIntegrity").then(({ assertRefundsExcludedFromGmv }) => {
+              assertRefundsExcludedFromGmv({
+                label: "platform.stats",
+                tipGmvEur: stats.totalVolumeEur,
+                refundLedgerEur: refunds.ledgerTotalEur ?? 0,
+              });
+            });
+          })
+          .catch(() => {
+            /* ledger optional in DEV */
+          });
+      }
+      return stats;
+    })
+    .finally(() => {
+      if (platformStatsInflight.get(cacheKey) === promise) platformStatsInflight.delete(cacheKey);
+    });
   platformStatsInflight.set(cacheKey, promise);
   return promise;
 }
@@ -3433,7 +3509,23 @@ export async function fetchPlatformAnalytics(days = 30, timezone?: string): Prom
   const promise = apiRequest<PlatformAnalytics>(apiPath(`/api/platform/analytics?${sp.toString()}`), {
     headers: getHeaders(),
     credentials: "include",
-  }).finally(() => {
+  })
+    .then((data) => {
+      if (import.meta.env.DEV) {
+        if (data.warning) {
+          console.warn("[SSOT] platform analytics returned warning scaffold:", data.warning);
+        }
+        const sum = (data.tipVolume ?? []).reduce((s, r) => s + (Number(r.tipsEur) || 0), 0);
+        console.info("[SSOT] platform tipVolume sum", {
+          days: data.rangeDays,
+          timezone: data.timezone,
+          tipVolumeSumEur: sum,
+          today: data.tipVolume?.[data.tipVolume.length - 1],
+        });
+      }
+      return data;
+    })
+    .finally(() => {
     if (platformAnalyticsInflight.get(cacheKey) === promise) platformAnalyticsInflight.delete(cacheKey);
   });
   platformAnalyticsInflight.set(cacheKey, promise);
@@ -3469,6 +3561,84 @@ export async function fetchPlatformTransactions(params: {
     apiPath(`/api/platform/transactions${qs ? `?${qs}` : ""}`),
     { headers: getHeaders(), credentials: "include" }
   );
+}
+
+/** Stripe refund / dispute ledger — never inferred from failed tips. */
+export type PlatformRefundLedgerRow = {
+  id: string;
+  businessId: string;
+  businessName: string;
+  tipId: string | null;
+  stripeRefundId: string | null;
+  stripePaymentIntentId: string | null;
+  stripeChargeId: string | null;
+  stripeDisputeId: string | null;
+  kind: "refund" | "chargeback" | "dispute";
+  status: string;
+  amountEur: number;
+  originalAmountEur: number | null;
+  currency: string;
+  reason: string | null;
+  occurredAt: string;
+};
+
+export async function fetchPlatformRefunds(params: {
+  q?: string;
+  take?: number;
+  skip?: number;
+  kind?: string;
+  status?: string;
+}): Promise<{ items: PlatformRefundLedgerRow[]; total: number; ledgerAvailable: boolean; ledgerTotalEur?: number; message?: string }> {
+  const sp = new URLSearchParams();
+  if (params.q) sp.set("q", params.q);
+  if (params.kind) sp.set("kind", params.kind);
+  if (params.status) sp.set("status", params.status);
+  if (params.take != null) sp.set("take", String(params.take));
+  if (params.skip != null) sp.set("skip", String(params.skip));
+  const qs = sp.toString();
+  return apiRequest(
+    apiPath(`/api/platform/refunds${qs ? `?${qs}` : ""}`),
+    { headers: getHeaders(), credentials: "include" },
+  );
+}
+
+export function buildPlatformRefundsExportUrl(params: {
+  q?: string;
+  kind?: string;
+  status?: string;
+}): string {
+  const sp = new URLSearchParams();
+  if (params.q) sp.set("q", params.q);
+  if (params.kind) sp.set("kind", params.kind);
+  if (params.status) sp.set("status", params.status);
+  const qs = sp.toString();
+  return apiPath(`/api/platform/refunds/export${qs ? `?${qs}` : ""}`);
+}
+
+export async function downloadPlatformRefundsCsv(params: {
+  q?: string;
+  kind?: string;
+  status?: string;
+}): Promise<void> {
+  const token = getToken();
+  const res = await fetch(buildPlatformRefundsExportUrl(params), {
+    method: "GET",
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+    credentials: "include",
+  });
+  if (!res.ok) {
+    throw new Error("No refund data available");
+  }
+  const blob = await res.blob();
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "caretip-refunds-ledger.csv";
+  a.rel = "noopener";
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
 }
 
 export type PlatformBusinessOperationalStatus = "active" | "suspended" | "inactive";

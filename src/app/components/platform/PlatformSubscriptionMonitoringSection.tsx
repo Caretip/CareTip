@@ -41,9 +41,11 @@ const PAGE_SIZE = 25;
 function formatAdminDate(iso: string | null | undefined, locale: string): string {
   if (!iso) return "—";
   try {
-    return new Intl.DateTimeFormat(locale, { dateStyle: "medium", timeStyle: "short" }).format(
-      new Date(iso),
-    );
+    return new Intl.DateTimeFormat(locale, {
+      dateStyle: "medium",
+      timeStyle: "short",
+      timeZone: "Europe/Berlin",
+    }).format(new Date(iso));
   } catch {
     return "—";
   }

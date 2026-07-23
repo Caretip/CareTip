@@ -484,7 +484,10 @@ export async function loadEmployeeCurrentMonthTotal(
 /** Lifetime account summary for employee dashboard hero (not period-scoped). */
 export async function loadEmployeeAccountSummary(employeeId: string): Promise<{
   totalEarningsEur: number;
+  /** @deprecated Prefer paidOutEur — same value (sum of tips with payout_status=paid). */
   availableBalanceEur: number;
+  /** Authoritative: successful tips with payout_status = paid. */
+  paidOutEur: number;
   totalSupporters: number;
 }> {
   return getCachedOrLoad(`emp-account:${employeeId}`, EMPLOYEE_PERIOD_CACHE_TTL_MS, async () => {
@@ -506,9 +509,11 @@ export async function loadEmployeeAccountSummary(employeeId: string): Promise<{
       `),
     );
     const row = rows[0];
+    const paidOutEur = Number(row?.paid_total ?? 0);
     return {
       totalEarningsEur: Number(row?.total_earnings ?? 0),
-      availableBalanceEur: Number(row?.paid_total ?? 0),
+      availableBalanceEur: paidOutEur,
+      paidOutEur,
       /** Each successful tip counts as one supporter interaction (guests are anonymous). */
       totalSupporters: Number(row?.tip_count ?? 0),
     };

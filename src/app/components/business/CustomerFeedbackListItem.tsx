@@ -1,9 +1,8 @@
 import { useMemo, useState } from "react";
-import { format } from "date-fns";
-import { enUS, de } from "date-fns/locale";
 import { Star } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import type { CustomerFeedbackRow } from "@/app/lib/api";
+import { formatVenueDateTime, resolveBusinessTimezone } from "@/app/lib/businessVenueTime";
 import { cn } from "@/lib/utils";
 
 const PREVIEW_MAX_CHARS = 160;
@@ -41,7 +40,6 @@ function StarRating({ rating, className }: { rating: number | null; className?: 
 
 export function CustomerFeedbackListItem({ item, className }: CustomerFeedbackListItemProps) {
   const { t, i18n } = useTranslation();
-  const dateLocale = i18n.language?.toLowerCase().startsWith("de") ? de : enUS;
   const [expanded, setExpanded] = useState(false);
 
   const comment = item.comment?.trim() ?? "";
@@ -53,12 +51,11 @@ export function CustomerFeedbackListItem({ item, className }: CustomerFeedbackLi
   }, [comment, expanded, hasLongComment]);
 
   const visitDate = useMemo(() => {
-    try {
-      return format(new Date(item.createdAt), "PP", { locale: dateLocale });
-    } catch {
-      return item.createdAt;
-    }
-  }, [item.createdAt, dateLocale]);
+    return formatVenueDateTime(item.createdAt, resolveBusinessTimezone(), i18n.language || "en", {
+      dateStyle: "medium",
+      timeStyle: null,
+    });
+  }, [item.createdAt, i18n.language]);
 
   const customerLabel =
     item.customerName?.trim() || t("business.customerFeedback.anonymousGuest");

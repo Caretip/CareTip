@@ -1,28 +1,17 @@
 import { useTranslation } from "react-i18next";
-import type { de, enUS } from "date-fns/locale";
-import { format } from "date-fns";
 import { Copy } from "lucide-react";
 import type { TipActivityRow, TipStatus } from "../../lib/api";
 import { formatEur } from "../../lib/formatEur";
+import { formatVenueDateTime, resolveBusinessTimezone } from "../../lib/businessVenueTime";
 import { cn } from "@/lib/utils";
 import { businessUi } from "./businessDashboardUi";
-
-function formatDateTime(iso: string, locale: typeof de | typeof enUS, timezone?: string): string {
-  try {
-    return format(new Date(iso), "PPp", {
-      locale,
-      ...(timezone ? { timeZone: timezone } : {}),
-    });
-  } catch {
-    return iso;
-  }
-}
 
 type TipActivityMobileCardProps = {
   tip: TipActivityRow;
   showStaffColumn: boolean;
   statusLabel: (s: TipStatus | string) => string;
-  dateLocale: typeof de | typeof enUS;
+  /** BCP 47 locale tag (e.g. en, de) — not a date-fns locale object. */
+  dateLocale: string;
   dataTimezone: string | null;
   unknownStaffLabel: string;
   youLabel: string;
@@ -76,7 +65,7 @@ export function TipActivityMobileCard({
             {t("business.tipsActivity.thDateTime")}
           </dt>
           <dd className="mt-0.5 text-sm text-muted-foreground">
-            {formatDateTime(tip.createdAt, dateLocale, dataTimezone ?? undefined)}
+            {formatVenueDateTime(tip.createdAt, resolveBusinessTimezone(dataTimezone), dateLocale)}
           </dd>
         </div>
       </dl>

@@ -6,7 +6,10 @@ import { dashboardWorkspaceUi } from "@/app/components/dashboard/dashboardWorksp
 function formatDate(iso: string | null, locale: string, emptyLabel: string): string {
   if (!iso) return emptyLabel;
   try {
-    return new Intl.DateTimeFormat(locale, { dateStyle: "medium" }).format(new Date(iso));
+    return new Intl.DateTimeFormat(locale, {
+      dateStyle: "medium",
+      timeZone: "Europe/Berlin",
+    }).format(new Date(iso));
   } catch {
     return iso.slice(0, 10);
   }

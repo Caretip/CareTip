@@ -1,4 +1,5 @@
 import { absolutizePublicMediaPath } from "../utils/publicMediaUrl.js";
+import { sanitizeIanaTimezone } from "../utils/businessTime.js";
 import type {
   BusinessSubscriptionTier,
   KycVerificationStatus,
@@ -32,6 +33,8 @@ export type PublicBusinessProfileDto = {
 
 /** Manager-authenticated profile (includes operational fields). */
 export type ManagerBusinessProfileDto = PublicBusinessProfileDto & {
+  /** IANA venue timezone for dashboard / Activity Center calendar labels. */
+  timezone: string;
   onboardingVerificationStatus: OnboardingVerificationStatus;
   kycVerificationStatus: KycVerificationStatus;
   /** Mirrored tier when entitled; null when status is none. */
@@ -59,6 +62,7 @@ type BusinessRow = {
   businessType: string | null;
   location: string | null;
   registeredAddress: string | null;
+  timezone?: string | null;
   onboardingVerificationStatus: OnboardingVerificationStatus;
   kycVerificationStatus: KycVerificationStatus;
   subscriptionTier: BusinessSubscriptionTier | null;
@@ -115,6 +119,7 @@ export function toManagerBusinessProfileDto(
       : null;
   return {
     ...toPublicBusinessProfileDto(business, entitlements.subscriptionTier),
+    timezone: sanitizeIanaTimezone(business.timezone),
     onboardingVerificationStatus: business.onboardingVerificationStatus,
     kycVerificationStatus: business.kycVerificationStatus,
     subscriptionTier: entitlements.subscriptionTier,
@@ -135,6 +140,7 @@ export function toManagerBusinessProfileDto(
 
 /** Sensitive keys that must never appear on the public business-by-id API. */
 export const MANAGER_ONLY_BUSINESS_FIELDS = [
+  "timezone",
   "onboardingVerificationStatus",
   "kycVerificationStatus",
   "subscriptionTier",

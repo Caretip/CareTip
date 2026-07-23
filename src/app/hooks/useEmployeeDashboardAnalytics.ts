@@ -58,6 +58,7 @@ type AnalyticsPayload = {
   chartSeries: Array<{ label: string; amount: number }>;
   totalEarningsEur?: number;
   availableBalanceEur?: number;
+  paidOutEur?: number;
   totalSupporters?: number;
 };
 
@@ -165,6 +166,12 @@ function payloadFromResponse(data: EmployeeTipsResponse): AnalyticsPayload {
       typeof data.totalEarningsEur === "number" ? data.totalEarningsEur : undefined,
     availableBalanceEur:
       typeof data.availableBalanceEur === "number" ? data.availableBalanceEur : undefined,
+    paidOutEur:
+      typeof data.paidOutEur === "number"
+        ? data.paidOutEur
+        : typeof data.availableBalanceEur === "number"
+          ? data.availableBalanceEur
+          : undefined,
     totalSupporters:
       typeof data.totalSupporters === "number" ? data.totalSupporters : undefined,
   };
@@ -853,7 +860,8 @@ export function useEmployeeDashboardAnalytics(
         if (typeof summaryData.totalEarningsEur === "number") {
           primeEmployeeAccountSnapshot({
             totalEarningsEur: summaryData.totalEarningsEur,
-            availableBalanceEur: summaryData.availableBalanceEur ?? 0,
+            availableBalanceEur: summaryData.availableBalanceEur ?? summaryData.paidOutEur ?? 0,
+            paidOutEur: summaryData.paidOutEur ?? summaryData.availableBalanceEur ?? 0,
             totalSupporters: summaryData.totalSupporters ?? 0,
           });
         }

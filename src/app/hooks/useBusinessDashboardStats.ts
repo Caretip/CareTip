@@ -975,6 +975,7 @@ export function useBusinessDashboardStats(
     }
     tipReconcileTimerRef.current = setTimeout(() => {
       tipReconcileTimerRef.current = null;
+      clearBusinessStatsClientCache();
       invalidateBusinessAnalytics("all");
       businessSwrStore.delete(swrKey("month"));
       networkSettledTfsRef.current.delete("month");
@@ -988,7 +989,7 @@ export function useBusinessDashboardStats(
       if (activeTf !== "month") {
         void loadHeroMonthSummaryRef.current();
       }
-    }, 2_500);
+    }, 800);
   }, [loadStatsFor]);
 
   const syncPartialsFromAnalyticsBundles = useCallback(() => {

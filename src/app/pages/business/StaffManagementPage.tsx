@@ -2,9 +2,8 @@ import { motion } from "motion/react";
 import { useState, useEffect, useCallback, useMemo, useRef, type ComponentProps, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { useTranslation } from "react-i18next";
-import { format } from "date-fns";
-import { de, enUS } from "date-fns/locale";
 import { toast } from "sonner";
+import { formatVenueDateTime, resolveBusinessTimezone } from "../../lib/businessVenueTime";
 import {
   Search,
   Star,
@@ -247,7 +246,6 @@ function rosterNoteText(noteKey: StaffRosterNoteKey | null, t: (k: string) => st
 
 export function StaffManagementPage() {
   const { t, i18n } = useTranslation();
-  const dateLocale = i18n.language?.toLowerCase().startsWith("de") ? de : enUS;
   const { user, isBusiness, authHydrated, sessionValidated } = useRequireAuth();
   const isLargeScreen = useMinWidthMedia(1024);
   const { tier, hasFeature, advancedAnalyticsEnabled } = useSubscriptionEntitlements({
@@ -766,8 +764,7 @@ export function StaffManagementPage() {
 
   const formatExpiresAt = (iso: string) => {
     try {
-      const d = new Date(iso);
-      return format(d, "PPp", { locale: dateLocale });
+      return formatVenueDateTime(iso, resolveBusinessTimezone(), i18n.language || "en");
     } catch (err) {
       logClientError("StaffManagementPage", err);
       return null;

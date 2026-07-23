@@ -1,8 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { motion } from "motion/react";
 import { useTranslation } from "react-i18next";
-import { format } from "date-fns";
-import { de, enUS } from "date-fns/locale";
 import { ChevronDown, CreditCard, Download, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/app/components/ui/EmptyState";
@@ -28,6 +26,7 @@ import {
 } from "@/app/lib/pageSessionCache";
 import { useBusinessPageBoot } from "@/app/lib/useBusinessPageBoot";
 import { withIdleSuppressSync } from "@/app/lib/idleSuppress";
+import { formatVenueDateTime, resolveBusinessTimezone, setCachedBusinessVenueTimezone, venueLocalTodayKey } from "@/app/lib/businessVenueTime";
 
 type TipsActivityCache = {
   items: TipActivityRow[];
@@ -35,16 +34,8 @@ type TipsActivityCache = {
   timezone: string | null;
 };
 
-function formatDateTime(iso: string, locale: typeof de, timezone?: string): string {
-  try {
-    const d = new Date(iso);
-    return format(d, "PPp", {
-      locale,
-      ...(timezone ? { timeZone: timezone } : {}),
-    });
-  } catch {
-    return iso;
-  }
+function formatTipRowAt(iso: string, localeTag: string, timezone?: string | null): string {
+  return formatVenueDateTime(iso, resolveBusinessTimezone(timezone), localeTag);
 }
 
 function csvEscape(v: string): string {
@@ -75,7 +66,7 @@ export function TipsActivityPage({ variant = "default", embedded = false }: Tips
   const isEmployeeHistory = variant === "employee-history";
   const copyNs = isEmployeeHistory ? "employee.tipHistory" : "business.tipsActivity";
   const copy = useCallback((key: string, opts?: Record<string, unknown>) => t(`${copyNs}.${key}`, opts), [copyNs, t]);
-  const dateLocale = i18n.language?.toLowerCase().startsWith("de") ? de : enUS;
+  const localeTag = i18n.language || "en";
   const { user, sessionValidated } = useRequireAuth();
   const { hasFeature, tier, ready: entitlementsReady } = useSubscriptionEntitlements({
     enabled: user?.role === "business",
@@ -157,6 +148,7 @@ export function TipsActivityPage({ variant = "default", embedded = false }: Tips
       setItems(nextItems);
       setTotal(nextTotal);
       setDataTimezone(nextTz);
+      if (nextTz) setCachedBusinessVenueTimezone(nextTz);
       setPageSessionCache(cacheKey, { items: nextItems, total: nextTotal, timezone: nextTz });
     } catch (e) {
       logClientError("TipsActivityPage.load", e);
@@ -306,7 +298,7 @@ export function TipsActivityPage({ variant = "default", embedded = false }: Tips
                     t("business.tipsActivity.csvStatus"),
                   ];
                   const rows = items.map((tip) => [
-                    formatDateTime(tip.createdAt, dateLocale, dataTimezone ?? undefined),
+                    formatTipRowAt(tip.createdAt, localeTag, dataTimezone),
                     formatEur(tip.amount),
                     tip.staffName ?? "",
                     tip.tableName
@@ -321,7 +313,7 @@ export function TipsActivityPage({ variant = "default", embedded = false }: Tips
                     .filter((r) => r.length > 0)
                     .map((r) => r.map((c) => csvEscape(String(c))).join(","))
                     .join("\n");
-                  const dateStr = new Date().toISOString().slice(0, 10);
+                  const dateStr = venueLocalTodayKey(resolveBusinessTimezone(dataTimezone));
                   const tzSlug = (dataTimezone ?? "local").replace(/\//g, "_");
                   withIdleSuppressSync("tips-csv-export", () => {
                     downloadCsv(`tips_activity_${dateStr}_${tzSlug}.csv`, csv);
@@ -376,7 +368,7 @@ export function TipsActivityPage({ variant = "default", embedded = false }: Tips
                     tip={tip}
                     showStaffColumn={showStaffColumn}
                     statusLabel={statusLabel}
-                    dateLocale={dateLocale}
+                    dateLocale={localeTag}
                     dataTimezone={dataTimezone}
                     unknownStaffLabel={copy("unknownStaff")}
                     youLabel={copy("you")}
@@ -409,7 +401,7 @@ export function TipsActivityPage({ variant = "default", embedded = false }: Tips
                       <td className="px-4 py-3 tabular-nums font-medium">{formatEur(tip.amount)}</td>
                       {isEmployeeHistory ? (
                         <td className="px-4 py-3 text-muted-foreground">
-                          {formatDateTime(tip.createdAt, dateLocale, dataTimezone ?? undefined)}
+                          {formatTipRowAt(tip.createdAt, localeTag, dataTimezone)}
                         </td>
                       ) : null}
                       {showStaffColumn ? (
@@ -426,7 +418,7 @@ export function TipsActivityPage({ variant = "default", embedded = false }: Tips
                       </td>
                       {!isEmployeeHistory ? (
                         <td className="px-4 py-3 text-muted-foreground">
-                          {formatDateTime(tip.createdAt, dateLocale, dataTimezone ?? undefined)}
+                          {formatTipRowAt(tip.createdAt, localeTag, dataTimezone)}
                         </td>
                       ) : null}
                       <td className="px-4 py-3">

@@ -25,13 +25,14 @@ export function OperationalMetricsCards({
 }: OperationalMetricsCardsProps) {
   const { t } = useTranslation();
   const ops = useMemo(() => computeOperationalMetrics(data), [data]);
+  const showShift = ops.averageTipsPerShift != null;
 
   return (
     <section className="space-y-3">
       <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
         {t("business.team.performance.bi.operationalTitle")}
       </h2>
-      <div className={cn(businessUi.statsGrid, "lg:grid-cols-4")}>
+      <div className={cn(businessUi.statsGrid, showShift ? "lg:grid-cols-4" : "lg:grid-cols-3")}>
         <BusinessStatCard
           loading={loading}
           refreshing={refreshing}
@@ -56,14 +57,16 @@ export function OperationalMetricsCards({
           value={<CountUpMetric value={ops.averageTipsPerEmployee} kind="eur" />}
           icon={<Wallet className="h-5 w-5" aria-hidden />}
         />
-        <BusinessStatCard
-          loading={loading}
-          refreshing={refreshing}
-          refreshingLabel={refreshingLabel}
-          label={t("business.team.performance.bi.avgPerShift")}
-          value={<CountUpMetric value={ops.averageTipsPerShift} kind="eur" />}
-          icon={<Clock className="h-5 w-5" aria-hidden />}
-        />
+        {showShift ? (
+          <BusinessStatCard
+            loading={loading}
+            refreshing={refreshing}
+            refreshingLabel={refreshingLabel}
+            label={t("business.team.performance.bi.avgPerShift")}
+            value={<CountUpMetric value={ops.averageTipsPerShift ?? 0} kind="eur" />}
+            icon={<Clock className="h-5 w-5" aria-hidden />}
+          />
+        ) : null}
       </div>
     </section>
   );

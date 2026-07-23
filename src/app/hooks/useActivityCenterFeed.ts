@@ -4,6 +4,8 @@
  * Allowed dependencies only:
  *   - fetchBusinessActivity → GET /api/business/activity
  *   - subscribeActivityCreated → activity.created
+ *   - businessVenueTime (calendar labels / Today filter — not tip KPIs)
+ *   - fetchBusinessProfile (venue timezone only)
  *
  * Forbidden (do not import):
  *   - useBusinessTipsModuleData / listBusinessTips
@@ -17,17 +19,31 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   fetchBusinessActivity,
+  fetchBusinessProfile,
   type ActivityEventSource,
   type BusinessActivityFeedItem,
 } from "../lib/api";
+import {
+  activityFilterToApiSource,
+  type ActivityCenterFilter,
+} from "../lib/activityCenterFilters";
 import { setBusinessActivitySearchSnapshot } from "../lib/businessActivitySearchSnapshot";
+import {
+  DEFAULT_BUSINESS_TIMEZONE,
+  isWithinVenueLocalDay,
+  resolveBusinessTimezone,
+  setCachedBusinessVenueTimezone,
+} from "../lib/businessVenueTime";
 import { shouldProcessRealtimeEvent } from "../lib/realtime/realtimeEventDedupe";
 import { subscribeActivityCreated } from "../lib/realtime/subscribeActivityCreated";
 import { useRealtimeReconnect } from "../lib/realtime/useRealtimeReconnect";
 import { useDashboardTabRefocus } from "./useDashboardTabRefocus";
 import { useSocket, useDeferSocketConnect } from "./useSocket";
 
+/** @deprecated Prefer ActivityCenterFilter — kept for type aliases. */
 export type ActivitySourceFilter = ActivityEventSource | "all";
+
+export type { ActivityCenterFilter };
 
 const PAGE_SIZE = 30;
 const MAX_IN_MEMORY = 120;
@@ -65,6 +81,17 @@ function mergeById(
   return sortByOccurredAtDesc([...map.values()]).slice(0, MAX_IN_MEMORY);
 }
 
+export function matchesActivityFilter(
+  item: BusinessActivityFeedItem,
+  filter: ActivityCenterFilter,
+  timeZone: string,
+): boolean {
+  if (filter === "all") return true;
+  if (filter === "today") return isWithinVenueLocalDay(item.occurredAt, timeZone);
+  return item.source === filter;
+}
+
+/** @deprecated Use matchesActivityFilter */
 export function matchesSourceFilter(
   item: BusinessActivityFeedItem,
   source: ActivitySourceFilter,
@@ -76,27 +103,29 @@ export function matchesSourceFilter(
 type UseActivityCenterFeedOptions = {
   enabled: boolean;
   businessId?: string | null;
-  source: ActivitySourceFilter;
+  filter: ActivityCenterFilter;
 };
 
 /**
  * Activity Center feed — REST SSOT + activity.created only.
  * Filter changes apply locally from the in-memory pool first, then soft-sync the API.
  */
-export function useActivityCenterFeed({ enabled, businessId, source }: UseActivityCenterFeedOptions) {
-  /** Mixed pool of loaded events (all sources); UI filters this for instant chip/dropdown response. */
+export function useActivityCenterFeed({ enabled, businessId, filter }: UseActivityCenterFeedOptions) {
   const [pool, setPool] = useState<BusinessActivityFeedItem[]>([]);
-  const [cursorsBySource, setCursorsBySource] = useState<
-    Partial<Record<ActivitySourceFilter, string | null>>
+  const [cursorsByApiSource, setCursorsByApiSource] = useState<
+    Partial<Record<"all" | ActivityEventSource, string | null>>
   >({});
   const [liveIds, setLiveIds] = useState<Set<string>>(new Set());
   const [isInitialLoading, setIsInitialLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isLoadingOlder, setIsLoadingOlder] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [venueTimezone, setVenueTimezone] = useState(DEFAULT_BUSINESS_TIMEZONE);
 
-  const sourceRef = useRef(source);
-  sourceRef.current = source;
+  const filterRef = useRef(filter);
+  filterRef.current = filter;
+  const timezoneRef = useRef(venueTimezone);
+  timezoneRef.current = venueTimezone;
   const syncInFlightRef = useRef<Set<string>>(new Set());
   const bootstrappedRef = useRef(false);
 
@@ -104,12 +133,20 @@ export function useActivityCenterFeed({ enabled, businessId, source }: UseActivi
   const { socket, connected } = useSocket(socketReady);
 
   const items = useMemo(
-    () => pool.filter((row) => matchesSourceFilter(row, source)),
-    [pool, source],
+    () => pool.filter((row) => matchesActivityFilter(row, filter, venueTimezone)),
+    [pool, filter, venueTimezone],
   );
 
-  const nextCursor = cursorsBySource[source] ?? null;
-  const hasMore = Boolean(nextCursor);
+  const apiSource = activityFilterToApiSource(filter);
+  const nextCursor = cursorsByApiSource[apiSource] ?? null;
+
+  const hasMore = useMemo(() => {
+    if (!nextCursor) return false;
+    if (filter !== "today") return true;
+    const oldest = pool.length > 0 ? pool[pool.length - 1] : null;
+    if (!oldest) return true;
+    return isWithinVenueLocalDay(oldest.occurredAt, venueTimezone);
+  }, [nextCursor, filter, pool, venueTimezone]);
 
   const markLive = useCallback((id: string) => {
     setLiveIds((prev) => new Set(prev).add(id));
@@ -122,8 +159,11 @@ export function useActivityCenterFeed({ enabled, businessId, source }: UseActivi
     }, 12_000);
   }, []);
 
-  const syncSource = useCallback(
-    async (target: ActivitySourceFilter, opts?: { soft?: boolean; replacePool?: boolean }) => {
+  const syncApiSource = useCallback(
+    async (
+      target: "all" | ActivityEventSource,
+      opts?: { soft?: boolean; replacePool?: boolean },
+    ) => {
       if (!enabled) return;
       const key = target;
       if (syncInFlightRef.current.has(key)) return;
@@ -145,7 +185,7 @@ export function useActivityCenterFeed({ enabled, businessId, source }: UseActivi
             ? mergeById([], result.items, "replace")
             : mergeById(prev, result.items, "prepend"),
         );
-        setCursorsBySource((prev) => ({ ...prev, [target]: result.nextCursor }));
+        setCursorsByApiSource((prev) => ({ ...prev, [target]: result.nextCursor }));
         bootstrappedRef.current = true;
       } catch (err) {
         if (!bootstrappedRef.current) {
@@ -162,54 +202,74 @@ export function useActivityCenterFeed({ enabled, businessId, source }: UseActivi
 
   const catchUp = useCallback(async () => {
     if (!enabled) return;
-    await syncSource(sourceRef.current, { soft: true });
-  }, [enabled, syncSource]);
+    await syncApiSource(activityFilterToApiSource(filterRef.current), { soft: true });
+  }, [enabled, syncApiSource]);
 
   const loadOlder = useCallback(async () => {
     if (!enabled || isLoadingOlder) return;
-    const cursor = cursorsBySource[source];
+    const target = activityFilterToApiSource(filter);
+    const cursor = cursorsByApiSource[target];
     if (!cursor) return;
     setIsLoadingOlder(true);
     try {
       const result = await fetchBusinessActivity({
         limit: PAGE_SIZE,
         cursor,
-        source,
+        source: target,
       });
       setPool((prev) => mergeById(prev, result.items, "append"));
-      setCursorsBySource((prev) => ({ ...prev, [source]: result.nextCursor }));
+      setCursorsByApiSource((prev) => ({ ...prev, [target]: result.nextCursor }));
     } catch {
       // Soft fail
     } finally {
       setIsLoadingOlder(false);
     }
-  }, [enabled, isLoadingOlder, cursorsBySource, source]);
+  }, [enabled, isLoadingOlder, cursorsByApiSource, filter]);
 
-  // Bootstrap once with "all" so local filters are instant, then soft-sync active source.
+  useEffect(() => {
+    if (!enabled) return;
+    let cancelled = false;
+    void (async () => {
+      try {
+        const profile = await fetchBusinessProfile({ silent: true });
+        if (cancelled) return;
+        const tz = resolveBusinessTimezone(profile.timezone);
+        setCachedBusinessVenueTimezone(tz);
+        setVenueTimezone(tz);
+      } catch {
+        // Keep default venue TZ
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [enabled]);
+
   useEffect(() => {
     if (!enabled) {
       setPool([]);
-      setCursorsBySource({});
+      setCursorsByApiSource({});
       setIsInitialLoading(false);
       bootstrappedRef.current = false;
       return;
     }
     void (async () => {
-      await syncSource("all", { soft: false, replacePool: true });
-      if (sourceRef.current !== "all") {
-        void syncSource(sourceRef.current, { soft: true });
+      await syncApiSource("all", { soft: false, replacePool: true });
+      const active = activityFilterToApiSource(filterRef.current);
+      if (active !== "all") {
+        void syncApiSource(active, { soft: true });
       }
     })();
-  }, [enabled, syncSource]);
+  }, [enabled, syncApiSource]);
 
-  // Filter change: local filter is instant via `items` memo; soft-sync that source in background.
-  const prevSourceRef = useRef(source);
+  const prevFilterRef = useRef(filter);
   useEffect(() => {
     if (!enabled || !bootstrappedRef.current) return;
-    if (prevSourceRef.current === source) return;
-    prevSourceRef.current = source;
-    void syncSource(source, { soft: true });
-  }, [enabled, source, syncSource]);
+    if (prevFilterRef.current === filter) return;
+    prevFilterRef.current = filter;
+    const target = activityFilterToApiSource(filter);
+    void syncApiSource(target, { soft: true });
+  }, [enabled, filter, syncApiSource]);
 
   useEffect(() => {
     if (!socket || !enabled) return;
@@ -219,7 +279,7 @@ export function useActivityCenterFeed({ enabled, businessId, source }: UseActivi
       if (!shouldProcessRealtimeEvent(`activity-row:${item.id}`)) return;
       if (businessId && meta?.businessId && meta.businessId !== businessId) return;
       setPool((prev) => mergeById(prev, [item], "prepend"));
-      if (matchesSourceFilter(item, sourceRef.current)) {
+      if (matchesActivityFilter(item, filterRef.current, timezoneRef.current)) {
         markLive(item.id);
       }
     });
@@ -260,5 +320,6 @@ export function useActivityCenterFeed({ enabled, businessId, source }: UseActivi
     error,
     loadOlder,
     refresh: catchUp,
+    venueTimezone,
   };
 }

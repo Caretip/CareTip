@@ -4,6 +4,7 @@ import { dashboardChartBarFill } from "@/app/components/dashboard/dashboardChart
 import type { AnalyticsTimeframe } from "@/app/hooks/useBusinessDashboardStats";
 import type { BusinessDashboardStats } from "@/app/lib/api";
 import { getBusinessAnalyticsBundle } from "@/app/lib/businessAnalytics/businessAnalyticsStore";
+import { resolveBusinessTimezone, venueLocalTodayKey } from "@/app/lib/businessVenueTime";
 
 export type TipPerformanceChartRow = {
   day: string;
@@ -24,12 +25,24 @@ export function resolveBusinessDashboardChartStats(
   displayStats: BusinessDashboardStats | null,
   statsTimeframe: AnalyticsTimeframe | null,
 ): BusinessDashboardStats | null {
-  if (displayStats && statsTimeframe === analyticsTimeframe) {
+  const cached = getBusinessAnalyticsBundle(analyticsTimeframe)?.periodStats ?? null;
+
+  const chartUsable = (s: BusinessDashboardStats | null | undefined): boolean => {
+    if (!s) return false;
+    const dist = s.dailyTipDistribution ?? [];
+    if (dist.length === 0) return false;
+    const sum = dist.reduce((acc, row) => acc + (Number(row.amount) || 0), 0);
+    const total = Number(s.totalTips) || 0;
+    // Reject all-zero series while period KPI is non-zero (SSOT lie).
+    if (total > 0 && sum === 0) return false;
+    return true;
+  };
+
+  if (displayStats && statsTimeframe === analyticsTimeframe && chartUsable(displayStats)) {
     return displayStats;
   }
 
-  const cached = getBusinessAnalyticsBundle(analyticsTimeframe)?.periodStats;
-  if (cached) {
+  if (cached && chartUsable(cached)) {
     return {
       ...(displayStats ?? {}),
       ...cached,
@@ -39,7 +52,12 @@ export function resolveBusinessDashboardChartStats(
       employees: cached.employees ?? displayStats?.employees,
       employeeGoals: cached.employeeGoals ?? displayStats?.employeeGoals,
       dailyTipDistribution: cached.dailyTipDistribution ?? [],
+      operationalPulse: displayStats?.operationalPulse ?? cached.operationalPulse,
     } as BusinessDashboardStats;
+  }
+
+  if (displayStats && statsTimeframe === analyticsTimeframe) {
+    return displayStats;
   }
 
   // Never paint a different period's analytics under the active toggle.
@@ -50,10 +68,18 @@ function isMonthDayOfMonthLabel(day: string): boolean {
   return /^\d{1,2}$/.test(day.trim());
 }
 
+/**
+ * Truncate month chart to venue-local day-of-month (not browser calendar).
+ * @param venueDayOfMonth 1–31 from business timezone "now"
+ */
 function normalizeMonthDistributionRows(
   rows: Array<{ day: string; amount: number }>,
+  venueDayOfMonth?: number,
 ): Array<{ day: string; amount: number }> {
-  const todayDom = new Date().getDate();
+  const todayDom =
+    typeof venueDayOfMonth === "number" && venueDayOfMonth >= 1 && venueDayOfMonth <= 31
+      ? venueDayOfMonth
+      : Number(venueLocalTodayKey(resolveBusinessTimezone()).slice(8, 10)) || 1;
   const monthDomRows = rows.filter((row) => isMonthDayOfMonthLabel(row.day));
   if (monthDomRows.length === 0) return rows;
   return monthDomRows.filter((row) => Number.parseInt(row.day, 10) <= todayDom);
@@ -76,10 +102,11 @@ const YEAR_CHART_LABELS = [
 
 const WEEKDAY_LABELS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"] as const;
 
-/** Zero scaffold when KPIs show activity but distribution rows are still loading. */
+/** Zero scaffold only when there is truly no period tip activity. */
 export function buildFallbackTipPerformanceChartData(
   timeframe: AnalyticsTimeframe,
   t: TFunction,
+  opts?: { venueDayOfMonth?: number },
 ): TipPerformanceChartRow[] {
   if (timeframe === "week") {
     return WEEKDAY_LABELS.map((day) => ({
@@ -95,7 +122,12 @@ export function buildFallbackTipPerformanceChartData(
       amount: 0,
     }));
   }
-  const todayDom = new Date().getDate();
+  const todayDom =
+    typeof opts?.venueDayOfMonth === "number" &&
+    opts.venueDayOfMonth >= 1 &&
+    opts.venueDayOfMonth <= 31
+      ? opts.venueDayOfMonth
+      : Number(venueLocalTodayKey(resolveBusinessTimezone()).slice(8, 10)) || 1;
   return Array.from({ length: todayDom }, (_, index) => {
     const day = String(index + 1);
     return { day, dayLabel: day, amount: 0 };
@@ -107,8 +139,10 @@ export function buildTipPerformanceChartData(
   rows: Array<{ day: string; amount: number }>,
   timeframe: AnalyticsTimeframe,
   t: TFunction,
+  opts?: { venueDayOfMonth?: number },
 ): TipPerformanceChartRow[] {
-  const scopedRows = timeframe === "month" ? normalizeMonthDistributionRows(rows) : rows;
+  const scopedRows =
+    timeframe === "month" ? normalizeMonthDistributionRows(rows, opts?.venueDayOfMonth) : rows;
 
   return scopedRows.map((row) => ({
     ...row,
@@ -119,6 +153,47 @@ export function buildTipPerformanceChartData(
           ? translateChartMonthLabel(row.day, t)
           : row.day,
   }));
+}
+
+/**
+ * SSOT gate: never return an all-zero series when period KPI € > 0.
+ * Returns null → caller should keep loading / prior series instead of lying zeros.
+ */
+export function resolveTipPerformanceChartRows(opts: {
+  rows: Array<{ day: string; amount: number }>;
+  timeframe: AnalyticsTimeframe;
+  t: TFunction;
+  periodTotalTips?: number | null;
+  venueDayOfMonth?: number;
+}): TipPerformanceChartRow[] | null {
+  const built = buildTipPerformanceChartData(opts.rows, opts.timeframe, opts.t, {
+    venueDayOfMonth: opts.venueDayOfMonth,
+  });
+  const periodTotal = Number(opts.periodTotalTips) || 0;
+  const chartSum = sumTipPerformanceTotal(built);
+
+  if (built.length === 0) {
+    if (periodTotal > 0) return null;
+    return buildFallbackTipPerformanceChartData(opts.timeframe, opts.t, {
+      venueDayOfMonth: opts.venueDayOfMonth,
+    });
+  }
+
+  if (periodTotal > 0 && chartSum === 0) {
+    return null;
+  }
+
+  // Reject series that cannot reconcile with the period KPI (SSOT).
+  if (periodTotal > 0 && Math.abs(chartSum - periodTotal) > 0.05) {
+    if (import.meta.env.DEV) {
+      console.warn(
+        `[SSOT] tip chart sum ≠ period KPI (${opts.timeframe}): chartSum=${chartSum} KPI=${periodTotal}`,
+      );
+    }
+    return null;
+  }
+
+  return built;
 }
 
 export function sumTipPerformanceTotal(rows: Array<{ amount: number }>): number {

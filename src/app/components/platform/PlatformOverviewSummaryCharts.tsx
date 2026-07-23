@@ -34,6 +34,7 @@ import {
   PLATFORM_REVENUE_BASE,
 } from "./platformAdminNav";
 import { CHART_ANIMATION_OFF } from "../../lib/lightweightChartProps";
+import { formatVenueDayBucketLabel } from "../../lib/businessVenueTime";
 
 type PlatformOverviewSummaryChartsProps = {
   analytics: PlatformAnalytics | null;
@@ -50,11 +51,7 @@ function formatCompact(n: number): string {
 }
 
 function formatShortDate(iso: string): string {
-  try {
-    return new Date(iso).toLocaleDateString(undefined, { month: "short", day: "numeric" });
-  } catch {
-    return iso.slice(5, 10);
-  }
+  return formatVenueDayBucketLabel(iso, undefined, "Europe/Berlin");
 }
 
 export function PlatformOverviewSummaryCharts({

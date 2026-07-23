@@ -508,6 +508,19 @@ export async function handlePaymentSuccess(paymentIntentId: string): Promise<voi
         amountEur: Number(pending.amount),
         employeeName: emp?.name ?? null,
       });
+      void import("./finance/tipRefunds.service.js").then(({ upsertStripeRefundEvent }) =>
+        upsertStripeRefundEvent({
+          stripeRefundId: refundId,
+          stripePaymentIntentId: paymentIntentId,
+          amountCents: Math.round(Number(pending.amount) * 100),
+          currency: "eur",
+          status: "succeeded",
+          reason: "eligibility_failure",
+          occurredAt: new Date(),
+          businessId: pending.businessId,
+          tipId: pending.id,
+        }),
+      );
     }
     return;
   }
@@ -727,6 +740,19 @@ export async function handleSuccessfulTipPayment(session: Stripe.Checkout.Sessio
         amountEur,
         employeeName: emp?.name ?? null,
       });
+      void import("./finance/tipRefunds.service.js").then(({ upsertStripeRefundEvent }) =>
+        upsertStripeRefundEvent({
+          stripeRefundId: refundId,
+          stripePaymentIntentId: piId,
+          amountCents: Math.round(Number(amountEur) * 100),
+          currency: "eur",
+          status: "succeeded",
+          reason: "eligibility_failure",
+          occurredAt: new Date(),
+          businessId,
+          tipId: transactionId,
+        }),
+      );
     }
 
     console.log("SKIP REASON: employee or venue not eligible for tips (refund attempted)");

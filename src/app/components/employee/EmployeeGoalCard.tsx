@@ -9,6 +9,7 @@ import {
   type GoalPeriod,
 } from "../../lib/api";
 import { formatEur } from "../../lib/formatEur";
+import { venueLocalTodayKey, resolveBusinessTimezone } from "../../lib/businessVenueTime";
 import { toUserFriendlyMessage } from "../../lib/errorMessages";
 import { logClientError } from "../../lib/clientLog";
 import { Button } from "@/components/ui/button";
@@ -103,7 +104,7 @@ export const EmployeeGoalCard = forwardRef<EmployeeGoalCardHandle, Props>(functi
     } else {
       setAmount("");
       setPeriod("monthly");
-      setStartDate(new Date().toISOString().slice(0, 10));
+      setStartDate(venueLocalTodayKey(resolveBusinessTimezone()));
     }
     setOpen(true);
   };
@@ -111,7 +112,7 @@ export const EmployeeGoalCard = forwardRef<EmployeeGoalCardHandle, Props>(functi
   const openCreateNew = () => {
     setAmount("");
     setPeriod("monthly");
-    setStartDate(new Date().toISOString().slice(0, 10));
+    setStartDate(venueLocalTodayKey(resolveBusinessTimezone()));
     setOpen(true);
   };
 

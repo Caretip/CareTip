@@ -80,6 +80,7 @@ for (const rel of GUARDED_FILES) {
   ) {
     fail(`${rel} import path reconnects Activity Center to tip/analytics/legacy stream`);
   }
+  // Allowed: fetchBusinessProfile / businessVenueTime for venue-calendar presentation only.
   console.log(`OK: no forbidden imports — ${rel}`);
 }
 

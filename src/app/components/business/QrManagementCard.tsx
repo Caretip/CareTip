@@ -14,11 +14,10 @@ import {
   Store,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { format } from "date-fns";
-import { de, enUS } from "date-fns/locale";
 import { ProfileAvatar } from "../ui/profile-avatar";
 import { LoadingSpinner } from "../ui/loading-spinner";
 import { Button } from "@/components/ui/button";
+import { formatVenueDateTime, resolveBusinessTimezone } from "../../lib/businessVenueTime";
 import {
   Dialog,
   DialogContent,
@@ -478,8 +477,7 @@ export const QrManagementCard = memo(function QrManagementCard({
 export function formatQrAssetUpdatedAt(iso: string | null | undefined, language: string): string {
   if (!iso) return "—";
   try {
-    const locale = language.toLowerCase().startsWith("de") ? de : enUS;
-    return format(new Date(iso), "PPp", { locale });
+    return formatVenueDateTime(iso, resolveBusinessTimezone(), language);
   } catch {
     return "—";
   }

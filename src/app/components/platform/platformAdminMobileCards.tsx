@@ -98,9 +98,9 @@ export function PlatformRefundMobileCard({
 }) {
   const { t } = useTranslation();
   const statusClass =
-    row.status === "processed"
+    row.status === "processed" || row.status === "succeeded" || row.status === "won"
       ? "bg-success/15 text-success"
-      : row.status === "failed"
+      : row.status === "failed" || row.status === "lost" || row.status === "canceled"
         ? "bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-200"
         : "bg-amber-100 text-amber-900 dark:bg-amber-900/40 dark:text-amber-100";
 

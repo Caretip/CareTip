@@ -114,6 +114,13 @@ const EMPTY_DTO: BusinessAnalyticsDTO = {
 
     pulse: null,
     qrAnalytics: null,
+    locationRankings: [],
+    tableRankings: [],
+    growthPercent: null,
+    peakHour: null,
+    bestShift: null,
+    avgTipsPerShift: null,
+    completedShifts: null,
   },
 
   intelligence: {
@@ -160,7 +167,7 @@ const EMPTY_DTO: BusinessAnalyticsDTO = {
 
       averageTipsPerEmployee: 0,
 
-      averageTipsPerShift: 0,
+      averageTipsPerShift: null,
 
     },
 
@@ -235,7 +242,7 @@ const EMPTY_DTO: BusinessAnalyticsDTO = {
 
 
 
-const RECONCILE_DEBOUNCE_MS = 2_500;
+const RECONCILE_DEBOUNCE_MS = 800;
 
 
 

@@ -1,6 +1,11 @@
 import type { BusinessDashboardStats, BusinessQrAnalytics, TipActivityRow } from "./api";
 import type { AnalyticsPeriodSnapshot } from "../lib/businessAnalytics/types";
 import type { AnalyticsTimeframe } from "../lib/businessAnalytics/types";
+import {
+  resolveBusinessTimezone,
+  venueLocalCalendarYear,
+  venueLocalTodayKey,
+} from "./businessVenueTime";
 
 /**
  * Sprint 2D — shared BI input builder (Pipeline B convergence).
@@ -17,6 +22,13 @@ export type BuildBiInputParams = {
   employeeGoals: NonNullable<BusinessDashboardStats["employeeGoals"]>;
   pulse: BusinessDashboardStats["operationalPulse"] | null;
   qrAnalytics?: BusinessQrAnalytics | null;
+  locationRankings?: BusinessDashboardStats["locationRankings"];
+  tableRankings?: BusinessDashboardStats["tableRankings"];
+  growthPercent?: number | null;
+  peakHour?: number | null;
+  bestShift?: BusinessDashboardStats["bestShift"];
+  avgTipsPerShift?: number | null;
+  completedShifts?: number | null;
 };
 
 /** Build BI input from period-scoped stats — timeframe-agnostic field names (Sprint 3D). */
@@ -31,6 +43,13 @@ export function buildBusinessIntelligenceInput(params: BuildBiInputParams) {
     employeeGoals: params.employeeGoals,
     pulse: params.pulse,
     qrAnalytics: params.qrAnalytics ?? null,
+    locationRankings: params.locationRankings ?? [],
+    tableRankings: params.tableRankings ?? [],
+    growthPercent: params.growthPercent ?? null,
+    peakHour: params.peakHour ?? null,
+    bestShift: params.bestShift ?? null,
+    avgTipsPerShift: params.avgTipsPerShift ?? null,
+    completedShifts: params.completedShifts ?? null,
   };
 }
 
@@ -42,12 +61,15 @@ export function tipsFeedParamsForTimeframe(timeframe: AnalyticsTimeframe): {
   toDate?: string;
 } {
   if (timeframe === "year") {
-    const year = new Date().getFullYear();
+    // Venue calendar year — never browser getFullYear / UTC date slice.
+    const tz = resolveBusinessTimezone();
+    const year = venueLocalCalendarYear(tz);
+    const today = venueLocalTodayKey(tz);
     return {
       take: 200,
       range: "custom",
       fromDate: `${year}-01-01`,
-      toDate: new Date().toISOString().slice(0, 10),
+      toDate: today,
     };
   }
   if (timeframe === "week") {

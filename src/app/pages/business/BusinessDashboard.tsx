@@ -59,12 +59,15 @@ import { EmployeeGoalMobileCard } from "../../components/business/businessDashbo
 
 import {
   buildEmployeePerformanceChartRows,
-  buildFallbackTipPerformanceChartData,
-  buildTipPerformanceChartData,
   hasTipPerformanceChartActivity,
   resolveBusinessDashboardChartStats,
+  resolveTipPerformanceChartRows,
   sumTipPerformanceTotal,
 } from "../../lib/businessDashboardChartData";
+import {
+  resolveBusinessTimezone,
+  venueLocalTodayKey,
+} from "../../lib/businessVenueTime";
 import { DASHBOARD_EMPLOYEE_TEASER_LIMIT } from "../../components/business/insights/TopPerformersTeaser";
 import { BusinessDashboardChartsFallback } from "./BusinessDashboardChartsFallback";
 
@@ -190,14 +193,19 @@ export const BusinessDashboard = memo(function BusinessDashboard() {
   );
 
   const tipDistributionChartData = useMemo(() => {
-    const built = buildTipPerformanceChartData(dailyTipRows, analyticsTimeframe, t);
-    if (built.length > 0) return built;
+    const venueToday = venueLocalTodayKey(resolveBusinessTimezone());
+    const venueDayOfMonth = Number(venueToday.slice(8, 10)) || undefined;
     const periodTotal =
       chartPeriodStats?.totalTips ?? displayMetrics?.totalTips ?? displayStats?.totalTips;
-    if ((periodTotal ?? 0) > 0) {
-      return buildFallbackTipPerformanceChartData(analyticsTimeframe, t);
-    }
-    return built;
+    const resolved = resolveTipPerformanceChartRows({
+      rows: dailyTipRows,
+      timeframe: analyticsTimeframe,
+      t,
+      periodTotalTips: periodTotal,
+      venueDayOfMonth,
+    });
+    // null = distribution not ready / SSOT mismatch — keep empty so chart slot stays loading
+    return resolved ?? [];
   }, [
     dailyTipRows,
     analyticsTimeframe,
@@ -208,9 +216,14 @@ export const BusinessDashboard = memo(function BusinessDashboard() {
   ]);
 
   const tipDistributionTotal = useMemo(
-    () => sumTipPerformanceTotal(dailyTipRows),
-    [dailyTipRows],
+    () => sumTipPerformanceTotal(tipDistributionChartData),
+    [tipDistributionChartData],
   );
+
+  const chartAwaitingDistribution =
+    (Number(chartPeriodStats?.totalTips ?? displayMetrics?.totalTips ?? 0) > 0 &&
+      tipDistributionTotal === 0) ||
+    false;
 
   const hasChartTipActivity = hasTipPerformanceChartActivity(
     dailyTipRows,
@@ -222,7 +235,7 @@ export const BusinessDashboard = memo(function BusinessDashboard() {
     [chartPeriodStats?.employees, displayStats?.employees],
   );
 
-  const showChartsLoading = isAnalyticsSectionLoading;
+  const showChartsLoading = isAnalyticsSectionLoading || chartAwaitingDistribution;
 
   const employeeGoalsList =
     chartPeriodStats?.employeeGoals ?? displayStats?.employeeGoals ?? [];
@@ -296,14 +309,8 @@ export const BusinessDashboard = memo(function BusinessDashboard() {
   );
   const motionReady = kpiUsable;
 
-  const dashboardMetrics = useMemo(() => {
-    if (!displayMetrics) return null;
-    return {
-      ...displayMetrics,
-      employeeCount:
-        activeRosterCount > 0 ? activeRosterCount : (displayMetrics.employeeCount ?? 0),
-    };
-  }, [displayMetrics, activeRosterCount]);
+  /** Prefer API `employeeCount` (tipping-ready SSOT) — do not override with client roster filters. */
+  const dashboardMetrics = displayMetrics;
 
   // ProtectedRoute guarantees user; avoid a second full-screen hold under layout chrome.
   if (!user) {

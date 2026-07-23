@@ -160,7 +160,7 @@ export function BusinessTeamTopPerformersPage() {
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
-        <LocationLeaderboard recentTips={data.recentTips} />
+        <LocationLeaderboard rankings={data.locationRankings} />
         <RecognitionBadges goals={data.employeeGoals} />
       </div>
     </div>

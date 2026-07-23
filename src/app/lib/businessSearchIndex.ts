@@ -10,6 +10,7 @@ import {
   peekPageSessionCacheByPrefix,
 } from "@/app/lib/pageSessionCache";
 import { formatEur } from "@/app/lib/formatEur";
+import { formatVenueDateTime, resolveBusinessTimezone } from "@/app/lib/businessVenueTime";
 
 export type BusinessSearchCategory =
   | "employees"
@@ -107,11 +108,7 @@ function activityTitle(item: BusinessActivityFeedItem): string {
 function activitySubtitle(item: BusinessActivityFeedItem): string {
   const parts = [item.source, item.type.replace(/_/g, " ")];
   if (item.occurredAt) {
-    try {
-      parts.push(new Date(item.occurredAt).toLocaleString());
-    } catch {
-      /* ignore */
-    }
+    parts.push(formatVenueDateTime(item.occurredAt, resolveBusinessTimezone()));
   }
   return parts.filter(Boolean).join(" · ");
 }

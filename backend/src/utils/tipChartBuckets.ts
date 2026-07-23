@@ -3,6 +3,8 @@ import { DateTime } from "luxon";
 import { prisma } from "../prisma.js";
 import { runSerializedByKey } from "./serializedByKey.js";
 import { businessDayKey, sanitizeIanaTimezone } from "./businessTime.js";
+import { sqlCreatedAtLocal } from "./sqlNaiveUtcToLocal.js";
+import { buildTipShiftAggregateFromHourly } from "../config/venueShiftWindows.js";
 
 function mondayOfWeekContaining(localDay: DateTime): DateTime {
   const d = localDay.startOf("day");
@@ -30,7 +32,7 @@ export async function queryDailyTipBuckets(opts: {
 
   const rows = await prisma.$queryRaw<Array<{ d: string; total: number }>>(Prisma.sql`
     SELECT
-      to_char(date_trunc('day', created_at AT TIME ZONE ${tz}), 'YYYY-MM-DD') AS d,
+      to_char(date_trunc('day', ${sqlCreatedAtLocal(tz)}), 'YYYY-MM-DD') AS d,
       COALESCE(SUM(amount), 0)::float AS total
     FROM tips
     WHERE status = 'success'
@@ -176,7 +178,7 @@ export async function queryEmployeeAnalyticsBundle(opts: {
           SELECT COALESCE(json_agg(row_to_json(b)), '[]'::json)
           FROM (
             SELECT
-              EXTRACT(HOUR FROM (created_at AT TIME ZONE ${tz}))::int AS h,
+              EXTRACT(HOUR FROM (${sqlCreatedAtLocal(tz)}))::int AS h,
               COALESCE(SUM(amount), 0)::float AS total
             FROM tips
             WHERE employee_id = ${opts.employeeId}
@@ -216,7 +218,7 @@ export async function queryEmployeeAnalyticsBundle(opts: {
         SELECT COALESCE(json_agg(row_to_json(b)), '[]'::json)
         FROM (
           SELECT
-            to_char(date_trunc('day', created_at AT TIME ZONE ${tz}), 'YYYY-MM-DD') AS d,
+            to_char(date_trunc('day', ${sqlCreatedAtLocal(tz)}), 'YYYY-MM-DD') AS d,
             COALESCE(SUM(amount), 0)::float AS total
           FROM tips
           WHERE employee_id = ${opts.employeeId}
@@ -255,7 +257,7 @@ export async function queryHourlyTipBuckets(opts: {
 
   const rows = await prisma.$queryRaw<Array<{ h: number; total: number }>>(Prisma.sql`
     SELECT
-      EXTRACT(HOUR FROM (created_at AT TIME ZONE ${tz}))::int AS h,
+      EXTRACT(HOUR FROM (${sqlCreatedAtLocal(tz)}))::int AS h,
       COALESCE(SUM(amount), 0)::float AS total
     FROM tips
     WHERE status = 'success'
@@ -273,6 +275,75 @@ export async function queryHourlyTipBuckets(opts: {
     if (h >= 0 && h < 24) m.set(h, Number(r.total ?? 0));
   }
   return m;
+}
+
+/**
+ * Period tip € by venue-local hour + completed (day × shift) buckets for avg tips/shift.
+ * Shift windows: morning 6–12, afternoon 12–17, evening 17–22, late 22–6 (wraps).
+ */
+export async function queryBusinessTipShiftAggregates(opts: {
+  businessId: string;
+  startUtc: Date;
+  endUtc: Date;
+  timezone: string;
+}): Promise<{
+  hourlyByHour: Map<number, number>;
+  tipCountByHour: Map<number, number>;
+  completedShifts: number;
+}> {
+  const tz = sanitizeIanaTimezone(opts.timezone);
+  const [hourlyRows, completedRows] = await Promise.all([
+    prisma.$queryRaw<Array<{ h: number; total: number; tip_count: number }>>(Prisma.sql`
+      SELECT
+        EXTRACT(HOUR FROM (${sqlCreatedAtLocal(tz)}))::int AS h,
+        COALESCE(SUM(amount), 0)::float AS total,
+        COUNT(*)::int AS tip_count
+      FROM tips
+      WHERE business_id = ${opts.businessId}
+        AND status = 'success'
+        AND created_at >= ${opts.startUtc}
+        AND created_at <= ${opts.endUtc}
+      GROUP BY 1
+      ORDER BY 1 ASC
+    `),
+    prisma.$queryRaw<Array<{ completed: number }>>(Prisma.sql`
+      SELECT COUNT(*)::int AS completed
+      FROM (
+        SELECT
+          to_char(date_trunc('day', ${sqlCreatedAtLocal(tz)}), 'YYYY-MM-DD') AS d,
+          CASE
+            WHEN EXTRACT(HOUR FROM (${sqlCreatedAtLocal(tz)}))::int >= 6
+              AND EXTRACT(HOUR FROM (${sqlCreatedAtLocal(tz)}))::int < 12 THEN 'morning'
+            WHEN EXTRACT(HOUR FROM (${sqlCreatedAtLocal(tz)}))::int >= 12
+              AND EXTRACT(HOUR FROM (${sqlCreatedAtLocal(tz)}))::int < 17 THEN 'afternoon'
+            WHEN EXTRACT(HOUR FROM (${sqlCreatedAtLocal(tz)}))::int >= 17
+              AND EXTRACT(HOUR FROM (${sqlCreatedAtLocal(tz)}))::int < 22 THEN 'evening'
+            ELSE 'late'
+          END AS shift_key
+        FROM tips
+        WHERE business_id = ${opts.businessId}
+          AND status = 'success'
+          AND created_at >= ${opts.startUtc}
+          AND created_at <= ${opts.endUtc}
+        GROUP BY 1, 2
+      ) s
+    `),
+  ]);
+
+  const hourlyByHour = new Map<number, number>();
+  const tipCountByHour = new Map<number, number>();
+  for (const r of hourlyRows) {
+    const h = Number(r.h);
+    if (h >= 0 && h < 24) {
+      hourlyByHour.set(h, Number(r.total ?? 0));
+      tipCountByHour.set(h, Number(r.tip_count ?? 0));
+    }
+  }
+  return {
+    hourlyByHour,
+    tipCountByHour,
+    completedShifts: Number(completedRows[0]?.completed ?? 0),
+  };
 }
 
 /** Monthly tip totals for a year window (index 0 = January). */
@@ -295,7 +366,7 @@ export async function queryMonthlyTipTotalsForRange(opts: {
 
   const rows = await prisma.$queryRaw<Array<{ m: number; total: number }>>(Prisma.sql`
     SELECT
-      EXTRACT(MONTH FROM (created_at AT TIME ZONE ${tz}))::int AS m,
+      EXTRACT(MONTH FROM (${sqlCreatedAtLocal(tz)}))::int AS m,
       COALESCE(SUM(amount), 0)::float AS total
     FROM tips
     WHERE status = 'success'
@@ -313,6 +384,118 @@ export async function queryMonthlyTipTotalsForRange(opts: {
     if (idx >= 0 && idx < 12) monthTotals[idx] = Number(r.total ?? 0);
   }
   return monthTotals;
+}
+
+/** All-time tip totals by venue-local calendar year (for timeframe=all chart reconciliation). */
+export async function queryYearlyTipTotalsForRange(opts: {
+  businessId: string;
+  startUtc: Date;
+  endUtc: Date;
+  timezone: string;
+}): Promise<Array<{ year: number; total: number }>> {
+  const tz = sanitizeIanaTimezone(opts.timezone);
+  const rows = await prisma.$queryRaw<Array<{ y: number; total: number }>>(Prisma.sql`
+    SELECT
+      EXTRACT(YEAR FROM (${sqlCreatedAtLocal(tz)}))::int AS y,
+      COALESCE(SUM(amount), 0)::float AS total
+    FROM tips
+    WHERE status = 'success'
+      AND business_id = ${opts.businessId}
+      AND created_at >= ${opts.startUtc}
+      AND created_at <= ${opts.endUtc}
+    GROUP BY 1
+    ORDER BY 1 ASC
+  `);
+  return rows.map((r) => ({ year: Number(r.y), total: Number(r.total ?? 0) }));
+}
+
+/** Location / table tip rollups for a period (SSOT rankings — not feed samples). */
+export async function queryTipRankingsByLocationAndTable(opts: {
+  businessId: string;
+  startUtc: Date;
+  endUtc: Date;
+}): Promise<{
+  locations: Array<{ id: string | null; name: string; tipsEur: number; tipCount: number }>;
+  tables: Array<{ id: string | null; name: string; tipsEur: number; tipCount: number }>;
+}> {
+  const locationRows = await prisma.$queryRaw<
+    Array<{ id: string | null; name: string | null; tips_eur: number; tip_count: number }>
+  >(Prisma.sql`
+    SELECT
+      t.location_id AS id,
+      COALESCE(NULLIF(TRIM(l.name), ''), 'Main venue') AS name,
+      COALESCE(SUM(t.amount), 0)::float AS tips_eur,
+      COUNT(*)::int AS tip_count
+    FROM tips t
+    LEFT JOIN locations l ON l.id = t.location_id
+    WHERE t.business_id = ${opts.businessId}
+      AND t.status = 'success'
+      AND t.created_at >= ${opts.startUtc}
+      AND t.created_at <= ${opts.endUtc}
+    GROUP BY t.location_id, l.name
+    ORDER BY tips_eur DESC
+    LIMIT 25
+  `);
+
+  const tableRows = await prisma.$queryRaw<
+    Array<{ id: string | null; name: string | null; tips_eur: number; tip_count: number }>
+  >(Prisma.sql`
+    SELECT
+      t.table_id AS id,
+      COALESCE(NULLIF(TRIM(tb.name), ''), '—') AS name,
+      COALESCE(SUM(t.amount), 0)::float AS tips_eur,
+      COUNT(*)::int AS tip_count
+    FROM tips t
+    LEFT JOIN venue_tables tb ON tb.id = t.table_id
+    WHERE t.business_id = ${opts.businessId}
+      AND t.status = 'success'
+      AND t.created_at >= ${opts.startUtc}
+      AND t.created_at <= ${opts.endUtc}
+      AND t.table_id IS NOT NULL
+    GROUP BY t.table_id, tb.name
+    ORDER BY tips_eur DESC
+    LIMIT 25
+  `);
+
+  return {
+    locations: locationRows.map((r) => ({
+      id: r.id,
+      name: String(r.name ?? "Main venue"),
+      tipsEur: Number(r.tips_eur ?? 0),
+      tipCount: Number(r.tip_count ?? 0),
+    })),
+    tables: tableRows.map((r) => ({
+      id: r.id,
+      name: String(r.name ?? "—"),
+      tipsEur: Number(r.tips_eur ?? 0),
+      tipCount: Number(r.tip_count ?? 0),
+    })),
+  };
+}
+
+/** Prior window of equal length ending just before rangeStart (WoW / MoM / YoY base). */
+export async function queryPriorPeriodTipTotals(opts: {
+  businessId: string;
+  rangeStart: Date;
+  rangeEnd: Date;
+}): Promise<{ totalTips: number; tipCount: number }> {
+  const durationMs = Math.max(0, opts.rangeEnd.getTime() - opts.rangeStart.getTime());
+  const priorEnd = new Date(opts.rangeStart.getTime() - 1);
+  const priorStart = new Date(priorEnd.getTime() - durationMs);
+  const [row] = await prisma.$queryRaw<Array<{ total: number; c: number }>>(Prisma.sql`
+    SELECT
+      COALESCE(SUM(amount), 0)::float AS total,
+      COUNT(*)::int AS c
+    FROM tips
+    WHERE business_id = ${opts.businessId}
+      AND status = 'success'
+      AND created_at >= ${priorStart}
+      AND created_at <= ${priorEnd}
+  `);
+  return {
+    totalTips: Number(row?.total ?? 0),
+    tipCount: Number(row?.c ?? 0),
+  };
 }
 
 export type BusinessDashboardTimeframe = "week" | "month" | "year" | "all";
@@ -582,6 +765,13 @@ export type BusinessDashboardSqlBundle = {
   tipsByEmployee: Map<string, { total: number; count: number }>;
   dailyByYmd: Map<string, number>;
   monthTotals: number[] | null;
+  /** All-time yearly buckets (timeframe=all). */
+  yearTotals: Array<{ year: number; total: number }> | null;
+  locationRankings: Array<{ id: string | null; name: string; tipsEur: number; tipCount: number }>;
+  tableRankings: Array<{ id: string | null; name: string; tipsEur: number; tipCount: number }>;
+  priorPeriod: { totalTips: number; tipCount: number };
+  /** SQL hour + shift aggregates for peakHour / bestShift / avgTipsPerShift. */
+  shiftAggregate: import("../config/venueShiftWindows.js").TipShiftAggregate;
 };
 
 /** Per-employee tip totals for a business period (simple GROUP BY — pool-safe). */
@@ -753,6 +943,7 @@ export async function queryBusinessDashboardSqlBundle(opts: {
 
   let monthTotals: number[] | null = null;
   let monthTotalsMs = 0;
+  let yearTotals: Array<{ year: number; total: number }> | null = null;
   if (opts.timeframe === "year") {
     const tMonth0 = performance.now();
     monthTotals = await queryMonthlyTipTotalsForRange({
@@ -762,7 +953,43 @@ export async function queryBusinessDashboardSqlBundle(opts: {
       timezone: tz,
     });
     monthTotalsMs = Math.round(performance.now() - tMonth0);
+  } else if (opts.timeframe === "all") {
+    const tYear0 = performance.now();
+    yearTotals = await queryYearlyTipTotalsForRange({
+      businessId: opts.businessId,
+      startUtc: periodStart,
+      endUtc: periodEnd,
+      timezone: tz,
+    });
+    monthTotalsMs = Math.round(performance.now() - tYear0);
   }
+
+  const rankings = await queryTipRankingsByLocationAndTable({
+    businessId: opts.businessId,
+    startUtc: periodStart,
+    endUtc: periodEnd,
+  });
+
+  const priorPeriod =
+    opts.timeframe === "all"
+      ? { totalTips: 0, tipCount: 0 }
+      : await queryPriorPeriodTipTotals({
+          businessId: opts.businessId,
+          rangeStart: periodStart,
+          rangeEnd: periodEnd,
+        });
+
+  const shiftRaw = await queryBusinessTipShiftAggregates({
+    businessId: opts.businessId,
+    startUtc: periodStart,
+    endUtc: periodEnd,
+    timezone: tz,
+  });
+  const shiftAggregate = buildTipShiftAggregateFromHourly(
+    shiftRaw.hourlyByHour,
+    shiftRaw.completedShifts,
+    shiftRaw.tipCountByHour,
+  );
 
   const tSql = Math.round(performance.now() - t0);
   if (shouldLog) {
@@ -773,12 +1000,22 @@ export async function queryBusinessDashboardSqlBundle(opts: {
         tipsByEmployeeMs,
         dailyBucketsMs,
         monthTotalsMs,
-        sequentialQueries: 2 + (dailyBucketsMs > 0 || monthTotalsMs > 0 ? 1 : 0),
+        sequentialQueries: 3 + (dailyBucketsMs > 0 || monthTotalsMs > 0 ? 1 : 0),
       },
     );
   }
 
-  return { summary, tipsByEmployee, dailyByYmd, monthTotals };
+  return {
+    summary,
+    tipsByEmployee,
+    dailyByYmd,
+    monthTotals,
+    yearTotals,
+    locationRankings: rankings.locations,
+    tableRankings: rankings.tables,
+    priorPeriod,
+    shiftAggregate,
+  };
 }
 
 /**
@@ -848,7 +1085,16 @@ export async function queryBusinessDashboardSummaryMetrics(opts: {
   if (shouldLog) {
     console.info(
       `[dashboard.timing] business.myStats.${opts.timeframe}.summarySql ${tSql}ms`,
-      { businessId: opts.businessId },
+      {
+        businessId: opts.businessId,
+        periodStartIso: opts.rangeStart.toISOString(),
+        periodEndIso: opts.rangeEnd.toISOString(),
+        todayStartIso: opts.todayStart.toISOString(),
+        todayEndIso: opts.todayEnd.toISOString(),
+        periodAmount: Number(row?.period_amount ?? 0),
+        todayAmount: Number(row?.today_amount ?? 0),
+        todayCount: Number(row?.today_count ?? 0),
+      },
     );
   }
 
@@ -1000,6 +1246,17 @@ export function buildBusinessDailyTipDistribution(
 
 export function buildYearChartFromMonthTotals(monthTotals: number[]): { day: string; amount: number }[] {
   return MONTH_CHART_LABELS.map((day, i) => ({ day, amount: monthTotals[i] ?? 0 }));
+}
+
+/** All-time chart: one bucket per calendar year — sum equals period totalTips. */
+export function buildAllTimeChartFromYearTotals(
+  yearTotals: Array<{ year: number; total: number }>,
+): { day: string; amount: number }[] {
+  if (yearTotals.length === 0) return [];
+  return yearTotals.map((row) => ({
+    day: String(row.year),
+    amount: Number(row.total ?? 0),
+  }));
 }
 
 /** Fallback: build daily map from rows when SQL path is skipped. */

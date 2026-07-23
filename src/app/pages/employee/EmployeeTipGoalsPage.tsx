@@ -26,6 +26,7 @@ import { cn } from "@/lib/utils";
 import { EmployeePageHeader } from "../../components/employee/EmployeePageHeader";
 import { EmployeeEmptyState } from "../../components/employee/EmployeeEmptyState";
 import { employeeUi } from "../../components/employee/employeeDashboardUi";
+import { venueLocalTodayKey, resolveBusinessTimezone } from "../../lib/businessVenueTime";
 import {
   getPageSessionCache,
   setPageSessionCache,
@@ -111,7 +112,7 @@ export function EmployeeTipGoalsPage() {
     setName("");
     setAmount("");
     setPeriod("monthly");
-    setStartDate(new Date().toISOString().slice(0, 10));
+    setStartDate(venueLocalTodayKey(resolveBusinessTimezone()));
     setOpen(true);
   };
 

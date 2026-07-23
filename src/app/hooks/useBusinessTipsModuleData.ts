@@ -36,6 +36,8 @@ export function useBusinessTipsModuleData(
     week: data.week,
     period: data.period,
     recentTips: data.recentTips,
+    locationRankings: data.stats?.locationRankings ?? [],
+    tableRankings: data.stats?.tableRankings ?? [],
     employees: data.employees,
     employeeGoals: data.employeeGoals,
     dailyTipDistribution: data.dailyTipDistribution,

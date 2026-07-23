@@ -907,7 +907,8 @@ export function QRCodeManagementPage({
     }
     setBulkPdfLoading(true);
     try {
-      const dateStr = new Date().toISOString().slice(0, 10);
+      const { venueLocalTodayKey, resolveBusinessTimezone } = await import("../../lib/businessVenueTime");
+      const dateStr = venueLocalTodayKey(resolveBusinessTimezone());
       await downloadStaffQrPdf(staff, `CareTip_QR_All_${dateStr}`, {
         branding: qrBrand,
         resolveCardDataUrl: (id) => qrImages[id] ?? null,

@@ -34,6 +34,8 @@ router.get("/health", platformController.getHealth);
 router.get("/stats", platformController.getStats);
 router.get("/analytics", platformController.getAnalytics);
 router.get("/transactions", platformController.listTransactions);
+router.get("/refunds", platformController.listRefunds);
+router.get("/refunds/export", platformController.exportRefunds);
 router.get("/audit-logs", platformController.listAuditLogs);
 router.get("/kyc/metrics", platformController.getKycQueueMetrics);
 router.get("/onboarding/metrics", platformController.getOnboardingQueueMetrics);
