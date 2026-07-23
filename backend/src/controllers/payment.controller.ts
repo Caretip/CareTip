@@ -234,6 +234,7 @@ export async function getTipSessionContext(req: Request, res: Response) {
     }
 
     // Webhook may not have persisted the Transaction yet; client polls until tip exists.
+    // Privacy: keep business/employee/customer out of the public pending body (log-only).
     console.info("[tip-reconcile] lookup_pending", {
       sessionId: ctx.sessionId,
       paymentIntentId: ctx.paymentIntentId,
@@ -250,8 +251,6 @@ export async function getTipSessionContext(req: Request, res: Response) {
       paymentIntentId: ctx.paymentIntentId,
       paymentStatus: ctx.paymentStatus,
       checkoutStatus: ctx.checkoutStatus,
-      businessId: ctx.businessId,
-      employeeId: ctx.employeeId,
     });
   } catch (err) {
     logServerError("payment.getTipSessionContext", err);

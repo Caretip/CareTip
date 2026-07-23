@@ -174,8 +174,6 @@ export function useVerifiedTipSession(
           sessionId: trimmed,
           paymentIntentId: pending.paymentIntentId ?? null,
           paymentStatus: pending.paymentStatus ?? null,
-          businessId: pending.businessId ?? null,
-          employeeId: pending.employeeId ?? null,
           stripePaid: lastStripePaid,
           try: tries,
           elapsedMs: Date.now() - startedAt,

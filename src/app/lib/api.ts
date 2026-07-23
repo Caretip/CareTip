@@ -3326,8 +3326,6 @@ export type TipSessionContextResponse =
       paymentIntentId?: string | null;
       paymentStatus?: string | null;
       checkoutStatus?: string | null;
-      businessId?: string | null;
-      employeeId?: string | null;
     }
   | {
       status: "expired";
@@ -3386,8 +3384,6 @@ export async function getTipSessionContext(sessionId: string): Promise<TipSessio
       paymentIntentId: typeof data.paymentIntentId === "string" ? data.paymentIntentId : null,
       paymentStatus: typeof data.paymentStatus === "string" ? data.paymentStatus : null,
       checkoutStatus: typeof data.checkoutStatus === "string" ? data.checkoutStatus : null,
-      businessId: typeof data.businessId === "string" ? data.businessId : null,
-      employeeId: typeof data.employeeId === "string" ? data.employeeId : null,
     };
   }
   if (res.status === 410 && data.status === "expired" && typeof data.sessionId === "string") {
