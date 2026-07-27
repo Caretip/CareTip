@@ -238,7 +238,7 @@ jobs:
       - name: Frontend dependency audit (high+)
         run: |
           echo "=== Frontend npm audit (fail on high/critical) ==="
-          npm audit --audit-level=high
+          node scripts/npm-audit-ci.mjs
       - name: Install backend deps
         working-directory: backend
         run: npm ci

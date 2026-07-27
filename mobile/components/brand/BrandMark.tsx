@@ -1,4 +1,5 @@
 import { Image, type ImageStyle, type StyleProp } from "react-native";
+import caretipLogoPrimary from "../../assets/brand/caretip-logo-primary.png";
 
 type BrandMarkProps = {
   /** Visual height in dp; width follows the wordmark aspect ratio. */
@@ -17,7 +18,7 @@ export function BrandMark({
 }: BrandMarkProps) {
   return (
     <Image
-      source={require("../../assets/brand/caretip-logo-primary.png")}
+      source={caretipLogoPrimary}
       style={[{ height, width: height * 3.8 }, style]}
       resizeMode="contain"
       accessibilityRole="image"
