@@ -1,0 +1,188 @@
+import { useState } from "react";
+import {
+  ActivityIndicator,
+  FlatList,
+  StyleSheet,
+  View,
+} from "react-native";
+import { useRouter } from "expo-router";
+import { SearchField } from "@/components/ui/SearchField";
+import { PeriodToggle } from "@/components/ui/PeriodToggle";
+import { ScreenShell, screenContentPadding, useListRefreshControl } from "@/components/ui/ScreenShell";
+import { EmptyState } from "@/components/ui/EmptyState";
+import { ErrorState } from "@/components/ui/ErrorState";
+import { SkeletonListRows } from "@/components/ui/Skeleton";
+import { TipCard } from "@/components/ui/ListCards";
+import { ScreenHeader } from "@/components/ui/ScreenHeader";
+import { useBusinessTipsList, useEmployeeTipsList } from "@/hooks/useTipsList";
+import { useI18n } from "@/hooks/useI18n";
+import { formatEur } from "@/utils/format";
+import { formatTipStatus } from "@/utils/labels";
+import { friendlyErrorMessage } from "@/utils/friendlyError";
+import type { TipActivityRow, TipStatus } from "@/types/tips";
+import { colors, spacing } from "@/theme";
+
+type TipsListScreenProps = {
+  role: "business" | "employee";
+  basePath: "/(app)/business/tips" | "/(app)/employee/tips";
+};
+
+function statusTone(status: string): "success" | "warning" | "danger" | "neutral" {
+  if (status === "success") return "success";
+  if (status === "pending") return "warning";
+  if (status === "failed") return "danger";
+  return "neutral";
+}
+
+function formatTipDate(iso: string, timezone?: string): string {
+  try {
+    return new Intl.DateTimeFormat(undefined, {
+      dateStyle: "medium",
+      timeStyle: "short",
+      ...(timezone ? { timeZone: timezone } : {}),
+    }).format(new Date(iso));
+  } catch {
+    return new Date(iso).toLocaleString();
+  }
+}
+
+export function TipsListScreen({ role, basePath }: TipsListScreenProps) {
+  const router = useRouter();
+  const { t } = useI18n();
+  const [search, setSearch] = useState("");
+  const [range, setRange] = useState<"today" | "week" | "month">("month");
+  const [status, setStatus] = useState<"all" | TipStatus>("all");
+
+  const params = {
+    q: search,
+    range,
+    ...(status !== "all" ? { status } : {}),
+  };
+
+  const businessQuery = useBusinessTipsList(params);
+  const employeeQuery = useEmployeeTipsList(params);
+  const query = role === "business" ? businessQuery : employeeQuery;
+
+  const items = query.data?.pages.flatMap((p) => p.items) ?? [];
+  const total = query.data?.pages[0]?.total ?? 0;
+  const timezone = query.data?.pages[0]?.timezone;
+  const refreshControl = useListRefreshControl(query.isRefetching, () => void query.refetch());
+
+  const rangeOptions = [
+    { value: "today" as const, label: t("period.today") },
+    { value: "week" as const, label: t("period.week") },
+    { value: "month" as const, label: t("period.month") },
+  ];
+
+  const statusOptions = [
+    { value: "all" as const, label: t("activity.filterAll") },
+    {
+      value: "success" as const,
+      label: role === "business" ? t("status.success") : t("status.paid"),
+    },
+    { value: "pending" as const, label: t("status.pending") },
+    { value: "failed" as const, label: t("status.failed") },
+  ];
+
+  const openDetail = (tip: TipActivityRow) => {
+    router.push({
+      pathname: `${basePath}/[id]` as never,
+      params: {
+        id: tip.id,
+        payload: encodeURIComponent(JSON.stringify(tip)),
+      },
+    });
+  };
+
+  return (
+    <ScreenShell>
+      <View style={styles.header}>
+        <ScreenHeader
+          title={role === "business" ? t("tips.businessTitle") : t("tips.employeeTitle")}
+          subtitle={t("tips.transactions", { count: total })}
+        />
+      </View>
+
+      <View style={styles.filters}>
+        <SearchField
+          value={search}
+          onChangeText={setSearch}
+          placeholder={
+            role === "business" ? t("tips.searchBusiness") : t("tips.searchEmployee")
+          }
+          accessibilityLabel={t("common.search")}
+        />
+        <PeriodToggle value={range} options={rangeOptions} onChange={setRange} />
+        <PeriodToggle value={status} options={statusOptions} onChange={setStatus} />
+      </View>
+
+      {query.isLoading ? (
+        <View style={styles.listPad}>
+          <SkeletonListRows count={5} />
+        </View>
+      ) : query.isError ? (
+        <ErrorState
+          message={friendlyErrorMessage(query.error, t("tips.loadError"))}
+          onRetry={() => void query.refetch()}
+        />
+      ) : (
+        <FlatList
+          data={items}
+          keyExtractor={(item) => item.id}
+          contentContainerStyle={styles.list}
+          refreshControl={refreshControl}
+          onEndReached={() => {
+            if (query.hasNextPage && !query.isFetchingNextPage) void query.fetchNextPage();
+          }}
+          onEndReachedThreshold={0.4}
+          ListEmptyComponent={
+            <EmptyState
+              variant="tips"
+              title={t("tips.emptyTitle")}
+              message={t("tips.emptyMessage")}
+            />
+          }
+          ListFooterComponent={
+            query.isFetchingNextPage ? (
+              <ActivityIndicator color={colors.primary} style={styles.footerLoader} />
+            ) : null
+          }
+          renderItem={({ item }) => (
+            <TipCard
+              amount={formatEur(item.amount)}
+              statusLabel={formatTipStatus(item.status, role)}
+              statusTone={statusTone(item.status)}
+              staffName={item.staffName ?? t("tips.staff")}
+              meta={formatTipDate(item.createdAt, timezone)}
+              location={item.locationName}
+              onPress={() => openDetail(item)}
+            />
+          )}
+        />
+      )}
+    </ScreenShell>
+  );
+}
+
+const styles = StyleSheet.create({
+  header: {
+    ...screenContentPadding,
+    paddingBottom: spacing.md,
+    paddingTop: spacing.md,
+  },
+  filters: {
+    paddingHorizontal: spacing.xl,
+    paddingBottom: spacing.md,
+    gap: spacing.md,
+  },
+  listPad: {
+    ...screenContentPadding,
+  },
+  list: {
+    ...screenContentPadding,
+    flexGrow: 1,
+  },
+  footerLoader: {
+    marginVertical: spacing.lg,
+  },
+});

@@ -1,0 +1,43 @@
+/** Business dashboard DTOs — aligned with web `BusinessInfo` / `BusinessDashboardStats`. */
+
+export type BusinessTimeframe = "week" | "month" | "year";
+
+export type BusinessProfile = {
+  id: string;
+  name: string;
+  businessName?: string;
+  slug?: string | null;
+  logo?: string | null;
+  location?: string | null;
+  timezone?: string | null;
+  employeeCount?: number;
+  subscriptionTier?: "basic" | "premium" | "enterprise" | null;
+  hasActiveSubscription?: boolean;
+  [key: string]: unknown;
+};
+
+export type BusinessDashboardStats = {
+  name?: string;
+  slug?: string | null;
+  timeframe?: BusinessTimeframe | "all";
+  totalTips?: number;
+  tipCount?: number;
+  employeeCount?: number;
+  /** Same series web AreaChart uses — from GET /api/business/me/stats?scope=full */
+  dailyTipDistribution?: Array<{ day: string; amount: number }>;
+  employees?: Array<{
+    name: string;
+    tipsTotal: number;
+    isActive?: boolean;
+    activationStatus?: string;
+    emailVerified?: boolean;
+  }>;
+  operationalPulse?: {
+    tipsToday?: { amount: number; count: number };
+    tipsLast60m?: { amount: number; count: number };
+    tippingReadyEmployees?: number;
+    rosterTotal?: number;
+  };
+  growthPercent?: number;
+  priorPeriod?: { totalTips: number; tipCount: number };
+};

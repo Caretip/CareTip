@@ -10,6 +10,7 @@ import { ThemeProvider, useTheme } from "./context/ThemeContext";
 import { AuthProvider } from "./components/AuthProvider";
 import { SocketProvider } from "./context/SocketProvider";
 import { googleOAuthWebClientId } from "./lib/googleOAuthWebClientId";
+import { CookieConsentProvider } from "./context/CookieConsentContext";
 
 const PwaInstallPrompt = lazy(() =>
   import('./components/PwaInstallPrompt').then((m) => ({ default: m.PwaInstallPrompt })),
@@ -20,21 +21,23 @@ const googleClientId = googleOAuthWebClientId();
 function AppTree() {
   const { resolvedTheme } = useTheme();
   return (
-    <TipFlowProvider>
-      <AppLoadingSplashProvider>
-        <AuthProvider>
-          <AppLoadingManagerProvider>
-            <SocketProvider>
-              <RouterProvider router={router} />
-            </SocketProvider>
-          </AppLoadingManagerProvider>
-        </AuthProvider>
-        <Toaster theme={resolvedTheme} position="top-center" closeButton />
-        <Suspense fallback={null}>
-          <PwaInstallPrompt />
-        </Suspense>
-      </AppLoadingSplashProvider>
-    </TipFlowProvider>
+    <CookieConsentProvider>
+      <TipFlowProvider>
+        <AppLoadingSplashProvider>
+          <AuthProvider>
+            <AppLoadingManagerProvider>
+              <SocketProvider>
+                <RouterProvider router={router} />
+              </SocketProvider>
+            </AppLoadingManagerProvider>
+          </AuthProvider>
+          <Toaster theme={resolvedTheme} position="top-center" closeButton />
+          <Suspense fallback={null}>
+            <PwaInstallPrompt />
+          </Suspense>
+        </AppLoadingSplashProvider>
+      </TipFlowProvider>
+    </CookieConsentProvider>
   );
 }
 

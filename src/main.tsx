@@ -9,8 +9,6 @@ import { dismissHtmlMarketingBootBridge } from "./app/lib/htmlMarketingBootBridg
 import { wakeRemoteApi, migrateLegacyAccessTokenFromStorage } from "./app/lib/api";
 import { scheduleMobileDeferredWork } from "./lib/mobilePerf";
 import { ensureI18nReady } from "./i18n/i18n";
-import { initSentry } from "./app/lib/sentry";
-import { initGoogleAdsConversion } from "./app/lib/googleAdsConversion";
 import "./styles/index.css";
 
 /** Manrope display font — marketing headings only; skip on auth/admin shells. */
@@ -24,6 +22,8 @@ function scheduleHeroDisplayFont(): void {
     p === "/how-it-works" ||
     p === "/contact" ||
     p === "/faq" ||
+    p === "/terms" ||
+    p === "/cookies" ||
     p === "/mobile-app" ||
     p === "/careers" ||
     p === "/blog" ||
@@ -34,9 +34,6 @@ function scheduleHeroDisplayFont(): void {
 }
 
 scheduleHeroDisplayFont();
-initGoogleAdsConversion();
-
-initSentry();
 migrateLegacyAccessTokenFromStorage();
 scheduleMobileDeferredWork(() => wakeRemoteApi(), { mobileTimeoutMs: 3500, desktopTimeoutMs: 900 });
 

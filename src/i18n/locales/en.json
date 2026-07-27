@@ -1003,57 +1003,59 @@
     "cookies": {
       "title": "Cookie Policy",
       "subtitle": "Learn how we use cookies.",
-      "whatTitle": "What Are Cookies?",
-      "whatBody": "Cookies are small text files that are placed on your device when you visit our website. They help us provide you with a better experience by remembering your preferences and understanding how you use our service.",
-      "typesTitle": "Types of Cookies We Use",
-      "essentialTitle": "Essential Cookies",
-      "essentialBody": "These cookies are necessary for the website to function properly. They enable core functionality such as security, network management, and accessibility.",
-      "essentialLi0": "Authentication and login status",
-      "essentialLi1": "Security and fraud prevention",
-      "essentialLi2": "Session management",
-      "performanceTitle": "Performance Cookies",
-      "performanceBody": "These cookies help us understand how visitors interact with our website by collecting and reporting information anonymously.",
-      "performanceLi0": "Page load times and performance",
-      "performanceLi1": "Error tracking and diagnostics",
-      "performanceLi2": "Usage statistics and analytics",
-      "functionalTitle": "Functional Cookies",
-      "functionalBody": "These cookies enable the website to provide enhanced functionality and personalization.",
-      "functionalLi0": "Remember your preferences and settings",
-      "functionalLi1": "Language and region selection",
-      "functionalLi2": "Customized user interface",
-      "targetingTitle": "Targeting/Advertising Cookies",
-      "targetingBody": "These cookies are used to deliver advertisements more relevant to you and your interests.",
-      "targetingLi0": "Track browsing behavior",
-      "targetingLi1": "Measure advertising effectiveness",
-      "targetingLi2": "Deliver personalized content",
-      "thirdTitle": "Third-Party Cookies",
-      "thirdLead": "We use services from trusted third-party providers that may set cookies on your device:",
-      "thirdLi0": "Google Analytics: To understand how users interact with our website",
-      "thirdLi1": "Payment Processors: To securely process transactions",
-      "thirdLi2": "Social Media Platforms: To enable social sharing features",
-      "thirdLi3": "Customer Support Tools: To provide live chat and support",
-      "manageTitle": "Managing Your Cookie Preferences",
-      "manageLead": "You have the right to decide whether to accept or reject cookies. You can exercise your cookie preferences by:",
-      "manageLi0": "Browser Settings: Most browsers allow you to refuse or delete cookies through their settings",
-      "manageLi1": "Cookie Consent Tool: Use our cookie consent banner when you first visit our site",
-      "manageLi2": "Opt-Out Links: Follow opt-out instructions provided by third-party services",
-      "manageNote": "Note: Blocking essential cookies may affect the functionality of our website.",
-      "browserTitle": "How to Control Cookies in Your Browser",
-      "browserChrome": "Google Chrome: Settings → Privacy and Security → Cookies and other site data",
-      "browserFirefox": "Mozilla Firefox: Settings → Privacy & Security → Cookies and Site Data",
-      "browserSafari": "Safari: Preferences → Privacy → Manage Website Data",
-      "browserEdge": "Microsoft Edge: Settings → Cookies and site permissions → Manage and delete cookies",
-      "retentionTitle": "Cookie Retention",
-      "retentionLead": "Different cookies have different retention periods:",
-      "retentionLi0": "Session Cookies: Deleted when you close your browser",
-      "retentionLi1": "Persistent Cookies: Remain on your device for a set period or until you delete them",
-      "retentionLi2": "Essential Cookies: Typically last for the duration of your session",
-      "retentionLi3": "Analytics Cookies: Usually stored for up to 2 years",
-      "updatesTitle": "Updates to This Cookie Policy",
-      "updatesBody": "We may update this Cookie Policy from time to time to reflect changes in technology, legislation, or our business operations. We encourage you to review this policy periodically.",
-      "footerLastLabel": "Last Updated:",
-      "footerLastDate": "March 18, 2026",
-      "footerContact": "If you have questions about our use of cookies, please contact us at privacy@caretip.com"
+      "pageEyebrow": "PRIVACY",
+      "pageTitle": "Cookie Policy",
+      "pageSubtitle": "How CareTip uses cookies, what categories we rely on, and how you stay in control under GDPR and TTDSG.",
+      "contentAria": "Cookie policy sections",
+      "intro": "We use cookies and similar technologies to run CareTip securely, remember your preferences, and—only with your consent—measure usage and marketing performance.",
+      "ctaTitle": "Your preferences, your choice",
+      "ctaBody": "You can accept all cookies, reject non-essential cookies, or fine-tune analytics, functional, and marketing cookies at any time.",
+      "manageButton": "Manage cookie preferences",
+      "sections": [
+        {
+          "q": "What are cookies?",
+          "a": "Cookies are small text files stored on your device when you visit caretip.de. They help the site work reliably, remember choices such as language, and—if you allow—help us understand how visitors use CareTip."
+        },
+        {
+          "q": "Why we use cookies",
+          "a": "Cookies let guests tip smoothly, keep accounts secure, remember dashboard preferences, and—only after consent—help us improve the product and measure campaigns. We never use non-essential cookies before you choose."
+        },
+        {
+          "q": "Essential cookies (always active)",
+          "a": "Required for CareTip to function. Examples: authentication, session management, security and CSRF protection, load balancing, and language preference. These cannot be disabled because the service would not work without them. Consent is not required under TTDSG for strictly necessary cookies."
+        },
+        {
+          "q": "Analytics cookies (optional)",
+          "a": "Help us understand performance and reliability—for example error monitoring and usage statistics. Examples may include Sentry diagnostics or Google Analytics when enabled. Loaded only after you opt in."
+        },
+        {
+          "q": "Functional cookies (optional)",
+          "a": "Enable enhanced features such as saved UI preferences, embedded content, or support chat widgets. Loaded only after you opt in."
+        },
+        {
+          "q": "Marketing cookies (optional)",
+          "a": "Used to measure advertising effectiveness and deliver relevant campaigns—for example Google Ads conversion tracking or social pixels when configured. Loaded only after you opt in."
+        },
+        {
+          "q": "Third-party services",
+          "a": "CareTip may integrate trusted providers that set their own cookies when you consent:\n• Stripe — secure payments\n• Google (Analytics / Ads) — measurement when enabled\n• Sentry — error diagnostics when enabled\n• Google Fonts — typography delivery\n• Embedded content or social platforms when used on marketing pages"
+        },
+        {
+          "q": "Managing your cookie preferences",
+          "a": "Use the cookie banner on your first visit, the “Cookie settings” link in the footer, or the button below on this page. You can withdraw consent at any time. Rejecting non-essential cookies prevents analytics and marketing scripts from loading on future visits."
+        },
+        {
+          "q": "Cookie retention",
+          "a": "Session cookies are deleted when you close your browser. Essential persistence (e.g. login) follows security best practices. Analytics and marketing cookies—when accepted—may be stored for up to 24 months unless you clear them sooner in your browser."
+        },
+        {
+          "q": "Contact",
+          "a": "Questions about cookies or privacy? Email privacy@caretip.com. For general support, visit our Contact page."
+        }
+      ],
+      "footerLastLabel": "Last updated:",
+      "footerLastDate": "July 27, 2026",
+      "footerContact": "Questions? privacy@caretip.com"
     },
     "privacy": {
       "title": "Privacy Policy",
@@ -1109,49 +1111,99 @@
     "terms": {
       "title": "Terms of Service",
       "subtitle": "These terms govern your use of Caretip's digital tipping platform for hospitality businesses, employees, and guests.",
-      "s1Title": "1. Acceptance of Terms",
-      "s1Body": "By accessing or using Caretip (\"we,\" \"us,\" or \"the Service\"), you agree to these Terms. If you do not agree, do not use the Service. Caretip enables businesses to offer QR-based digital tipping, process payments, and route tips to employees according to your agreement, fee tier, and settings.",
-      "s2Title": "2. Eligibility and Accounts",
-      "s2Lead": "You may use Caretip only if you can form a binding contract. When you register:",
-      "s2Li0": "You must provide accurate information for yourself or your business",
-      "s2Li1": "You are responsible for safeguarding your password and all activity under your account",
-      "s2Li2": "You must notify us promptly of unauthorized access",
-      "s2Li3": "Business accounts must only invite employees and issue QR codes in line with your workplace policies",
-      "s3Title": "3. The Service",
-      "s3Lead": "Caretip provides tools to:",
-      "s3Li0": "Generate and manage QR codes and tipping flows for staff or locations",
-      "s3Li1": "Allow guests to leave tips using supported payment methods",
-      "s3Li2": "Display tips, payouts, and related notifications to authorized users",
-      "s3Li3": "Provide analytics and reporting to businesses as described in your plan",
-      "s3Foot": "Features may vary by fee tier or account type. We may modify or discontinue features with reasonable notice where required by law.",
-      "s4Title": "4. Fees, Tips, and Payments",
-      "s4Lead": "Digital tips are processed through payment partners. You agree that:",
-      "s4Li0": "Platform or transaction fees may apply as shown at checkout or in your business agreement",
-      "s4Li1": "Payout timing and methods depend on your configuration, verification status, and third-party rules",
-      "s4Li2": "You are responsible for taxes, reporting, and compliance related to tips and wages in your jurisdiction",
-      "s4Li3": "Chargebacks and payment disputes may be handled according to card network rules and our policies",
-      "s5Title": "5. Acceptable Use",
-      "s5Lead": "You must not:",
-      "s5Li0": "Use the Service for fraud, money laundering, or illegal activity",
-      "s5Li1": "Interfere with or disrupt the Service or other users",
-      "s5Li2": "Attempt to access data or accounts you are not authorized to use",
-      "s5Li3": "Misrepresent tips, identities, or business relationships",
-      "s5Li4": "Reverse engineer or scrape the Service except where permitted by law",
-      "s6Title": "6. Intellectual Property",
-      "s6Body": "Caretip's name, logo, software, and content are protected by intellectual property laws. We grant you a limited, non-exclusive license to use the Service as intended. You may not copy our materials except as allowed for normal use of the product.",
-      "s7Title": "7. Third-Party Services",
-      "s7Body": "We integrate with payment processors, banks, and other providers. Your use of those services may be subject to their terms. We are not responsible for third-party outages or actions outside our reasonable control.",
-      "s8Title": "8. Disclaimer and Limitation of Liability",
-      "s8Body": "The Service is provided \"as available.\" To the fullest extent permitted by law, Caretip is not liable for indirect, incidental, special, or consequential damages, or lost profits, arising from your use of tipping or payout features. Some jurisdictions do not allow certain limitations; in those cases, our liability is limited to the maximum allowed by law.",
-      "s9Title": "9. Suspension and Termination",
-      "s9Body": "We may suspend or terminate access for breach of these Terms, risk to the platform, or legal requirements. You may close your account according to in-product options. Certain provisions survive termination.",
-      "s10Title": "10. Changes to Terms",
-      "s10Body": "We may update these Terms. We will post changes here and update the \"Last updated\" date. Continued use after changes constitutes acceptance where permitted by law.",
-      "s11Title": "11. Governing Law",
-      "s11Body": "These Terms are governed by the laws applicable in the United States, without regard to conflict-of-law rules, unless otherwise required by your jurisdiction.",
+      "pageEyebrow": "LEGAL",
+      "pageTitle": "Terms of Service",
+      "pageSubtitle": "The rules that govern how businesses, employees, and guests use CareTip's digital tipping platform.",
+      "effectiveDateLine": "These Terms of Service are effective as of March 24, 2026.",
+      "contentAria": "Terms of service sections",
+      "intro": "These Terms apply when you access or use CareTip. By using the Service, you agree to the conditions below. If you do not agree, please do not use CareTip.",
+      "highlights": [
+        {
+          "title": "Built for hospitality",
+          "body": "QR tipping, team payouts, and business dashboards in one platform."
+        },
+        {
+          "title": "Secure by design",
+          "body": "Payments processed through trusted partners with industry-standard protections."
+        },
+        {
+          "title": "Transparent fees",
+          "body": "Pricing and transaction costs are shown before you commit."
+        }
+      ],
+      "sections": [
+        {
+          "id": "acceptance",
+          "q": "1. Acceptance of Terms",
+          "a": "By accessing or using Caretip (\"we,\" \"us,\" or \"the Service\"), you agree to these Terms. If you do not agree, do not use the Service. Caretip enables businesses to offer QR-based digital tipping, process payments, and route tips to employees according to your agreement, fee tier, and settings."
+        },
+        {
+          "id": "eligibility",
+          "q": "2. Eligibility and Accounts",
+          "a": "You may use Caretip only if you can form a binding contract. When you register:\n• You must provide accurate information for yourself or your business\n• You are responsible for safeguarding your password and all activity under your account\n• You must notify us promptly of unauthorized access\n• Business accounts must only invite employees and issue QR codes in line with your workplace policies"
+        },
+        {
+          "id": "service",
+          "q": "3. The Service",
+          "a": "Caretip provides tools to:\n• Generate and manage QR codes and tipping flows for staff or locations\n• Allow guests to leave tips using supported payment methods\n• Display tips, payouts, and related notifications to authorized users\n• Provide analytics and reporting to businesses as described in your plan\n\nFeatures may vary by fee tier or account type. We may modify or discontinue features with reasonable notice where required by law."
+        },
+        {
+          "id": "fees",
+          "q": "4. Fees, Tips, and Payments",
+          "a": "Digital tips are processed through payment partners. You agree that:\n• Platform or transaction fees may apply as shown at checkout or in your business agreement\n• Payout timing and methods depend on your configuration, verification status, and third-party rules\n• You are responsible for taxes, reporting, and compliance related to tips and wages in your jurisdiction\n• Chargebacks and payment disputes may be handled according to card network rules and our policies"
+        },
+        {
+          "id": "acceptable-use",
+          "q": "5. Acceptable Use",
+          "a": "You must not:\n• Use the Service for fraud, money laundering, or illegal activity\n• Interfere with or disrupt the Service or other users\n• Attempt to access data or accounts you are not authorized to use\n• Misrepresent tips, identities, or business relationships\n• Reverse engineer or scrape the Service except where permitted by law"
+        },
+        {
+          "id": "intellectual-property",
+          "q": "6. Intellectual Property",
+          "a": "Caretip's name, logo, software, and content are protected by intellectual property laws. We grant you a limited, non-exclusive license to use the Service as intended. You may not copy our materials except as allowed for normal use of the product."
+        },
+        {
+          "id": "third-party",
+          "q": "7. Third-Party Services",
+          "a": "We integrate with payment processors, banks, and other providers. Your use of those services may be subject to their terms. We are not responsible for third-party outages or actions outside our reasonable control."
+        },
+        {
+          "id": "liability",
+          "q": "8. Disclaimer and Limitation of Liability",
+          "a": "The Service is provided \"as available.\" To the fullest extent permitted by law, Caretip is not liable for indirect, incidental, special, or consequential damages, or lost profits, arising from your use of tipping or payout features. Some jurisdictions do not allow certain limitations; in those cases, our liability is limited to the maximum allowed by law."
+        },
+        {
+          "id": "termination",
+          "q": "9. Suspension and Termination",
+          "a": "We may suspend or terminate access for breach of these Terms, risk to the platform, or legal requirements. You may close your account according to in-product options. Certain provisions survive termination."
+        },
+        {
+          "id": "changes",
+          "q": "10. Changes to Terms",
+          "a": "We may update these Terms. We will post changes here and update the \"Last updated\" date. Continued use after changes constitutes acceptance where permitted by law."
+        },
+        {
+          "id": "governing-law",
+          "q": "11. Governing Law",
+          "a": "These Terms are governed by the laws applicable in the United States, without regard to conflict-of-law rules, unless otherwise required by your jurisdiction."
+        }
+      ],
       "footerLastLabel": "Last Updated:",
       "footerLastDate": "March 24, 2026",
       "footerContact": "Questions? Contact us at legal@caretip.com"
+    },
+    "legalNav": {
+      "sidebarAria": "Legal page navigation",
+      "documentsAria": "Legal documents",
+      "sidebarTitle": "Legal",
+      "onThisPage": "On this page",
+      "terms": "Terms of Service",
+      "privacy": "Privacy Policy",
+      "cookies": "Cookie Policy",
+      "imprint": "Imprint",
+      "sidebarHelpTitle": "Questions about these terms?",
+      "sidebarHelpBody": "Our team can clarify how CareTip works for your business, staff, or guests.",
+      "sidebarHelpButton": "Contact us"
     },
     "imprint": {
       "title": "Imprint",
@@ -2022,6 +2074,40 @@
     "searchAria": "Search FAQs",
     "noMatch": "No FAQs match your search.",
     "clearSearch": "Clear search"
+  },
+  "cookieConsent": {
+    "banner": {
+      "title": "We value your privacy",
+      "description": "We use cookies to ensure CareTip works properly, improve your experience, understand how visitors use our platform, and provide relevant content. You can accept all cookies, reject non-essential cookies, or customize your preferences.",
+      "acceptAll": "Accept all",
+      "reject": "Reject non-essential",
+      "settings": "Cookie settings",
+      "privacyPolicy": "Privacy policy"
+    },
+    "settings": {
+      "title": "Cookie settings",
+      "intro": "Choose which optional cookies CareTip may use. Essential cookies are always active because the site cannot function without them.",
+      "save": "Save preferences",
+      "close": "Close cookie settings",
+      "categories": {
+        "essential": {
+          "title": "Essential cookies",
+          "description": "Required for login, security, sessions, and language. Always active."
+        },
+        "analytics": {
+          "title": "Analytics cookies",
+          "description": "Help us measure performance and diagnose errors (e.g. Sentry, Google Analytics when enabled)."
+        },
+        "functional": {
+          "title": "Functional cookies",
+          "description": "Enable enhanced features such as saved preferences, chat widgets, or embedded content."
+        },
+        "marketing": {
+          "title": "Marketing cookies",
+          "description": "Measure advertising effectiveness (e.g. Google Ads, social pixels when enabled)."
+        }
+      }
+    }
   },
   "dashboard": {
     "refresh": {
@@ -3341,6 +3427,7 @@
     "privacy": "Privacy",
     "terms": "Terms",
     "cookies": "Cookies",
+    "cookieSettings": "Cookie settings",
     "imprint": "Imprint"
   },
   "employee": {
@@ -4848,6 +4935,22 @@
         "payment.refunded": "Payment refunded",
         "employee.invited": "Employee invited",
         "employee.joined": "Employee joined"
+      },
+      "qrSource": {
+        "business": "Business QR",
+        "employee": "Employee QR",
+        "location": "Location QR",
+        "table": "Table QR",
+        "venue": "Venue QR",
+        "qr": "QR"
+      },
+      "qrTitle": {
+        "scanned": "{{qrSource}} scanned"
+      },
+      "qrSubtitle": {
+        "guestScannedYourQr": "Guest scanned your {{qrSource}}",
+        "guestOpenedEmployeeProfile": "Guest opened your employee profile",
+        "guestViewedEmployeeNamed": "Guest viewed {{name}}"
       },
       "channel": {
         "code": "Invite code",

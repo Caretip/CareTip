@@ -40,6 +40,7 @@ import { logClientError } from './lib/clientLog';
 import { SignInHandoffCover } from "./components/auth/SignInHandoffCover";
 import { DashboardProfilerRoot } from "./hooks/useDashboardRuntimeProfile";
 import { useNavigationFlashProbe } from './hooks/useNavigationFlashProbe';
+import { CookieConsentRoot } from './components/cookie/CookieConsentRoot';
 
 const LoaderDiagRuntime = import.meta.env.DEV
   ? React.lazy(() =>
@@ -127,6 +128,7 @@ function RootLayout() {
           </AuthLogoutTransitionRegistrar>
         </AuthBootstrapLoadingRegistrar>
       </RouteNavigationLoadingRegistrar>
+      <CookieConsentRoot />
     </>
   );
 }

@@ -29,6 +29,7 @@ import type { ActivityCenterFilter } from "../../../lib/activityCenterFilters";
 import { formatEur } from "../../../lib/formatEur";
 import { formatTimeAgo } from "../../../lib/formatTimeAgo";
 import { formatActivityVenueTimeParts } from "../../../lib/businessVenueTime";
+import { translateActivitySource } from "../../../lib/activitySourceTranslator";
 import { DashboardWorkspacePanel } from "../../dashboard/DashboardWorkspacePanel";
 import { cn } from "@/lib/utils";
 
@@ -96,6 +97,10 @@ function subtitleFromParams(
   item: BusinessActivityFeedItem,
   t: (key: string, opts?: Record<string, unknown>) => string,
 ): string | null {
+  if (item.type === "qr.scanned") {
+    return translateActivitySource(item, t)?.subtitle ?? null;
+  }
+
   const p = item.params;
   const parts: string[] = [];
   if (typeof p.employeeName === "string" && p.employeeName.trim()) {
@@ -230,14 +235,19 @@ export function ActivityCenterFeed({
               const Icon = iconForType(item.type);
               const isLive = liveIds.has(item.id);
               const amount = amountFromParams(item.type, item.params);
-              const subtitle = subtitleFromParams(item, t);
               const href = deepLinkForType(item.type);
-              const title = t(item.titleKey, {
-                ...item.params,
-                defaultValue: t(`business.activityCenter.type.${item.type}`, {
-                  defaultValue: item.type,
-                }),
-              });
+
+              const qrTranslation = item.type === "qr.scanned" ? translateActivitySource(item, t) : null;
+              const subtitle = qrTranslation?.subtitle ?? subtitleFromParams(item, t);
+              const title =
+                qrTranslation?.title ??
+                t(item.titleKey, {
+                  ...item.params,
+                  defaultValue: t(`business.activityCenter.type.${item.type}`, {
+                    defaultValue: item.type,
+                  }),
+                });
+
               const venueTime = formatActivityVenueTimeParts(
                 item.occurredAt,
                 venueTimezone,
@@ -276,14 +286,16 @@ export function ActivityCenterFeed({
                         <span className="mx-1.5 text-muted-foreground/70">·</span>
                         <span>{venueTime.timeText}</span>
                       </p>
-                      <p className="mt-0.5">
-                        <span>{formatTimeAgo(item.occurredAt)}</span>
-                        {isLive ? (
-                          <span className="ml-2 font-medium uppercase tracking-wide text-primary">
-                            {t("status.live")}
-                          </span>
-                        ) : null}
-                      </p>
+                      {filter !== "today" ? (
+                        <p className="mt-0.5">
+                          <span>{formatTimeAgo(item.occurredAt)}</span>
+                          {isLive ? (
+                            <span className="ml-2 font-medium uppercase tracking-wide text-primary">
+                              {t("status.live")}
+                            </span>
+                          ) : null}
+                        </p>
+                      ) : null}
                     </div>
                   </div>
                 </>

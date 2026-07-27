@@ -1,103 +1,94 @@
+import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
-import { PublicLegalPageShell } from "@/components/public/PublicLegalPageShell";
-import { publicPageUi } from "@/components/public/publicPageUi";
-import { cn } from "@/lib/utils";
+import "@/styles/bundles/marketing-pages.css";
+import { PublicPageShell } from "@/components/public/PublicPageShell";
+import { PublicPageBackLink } from "@/components/public/PublicPageBackLink";
+import { LegalDocumentsSidebar } from "@/components/public/legal/LegalDocumentsSidebar";
+import { LegalSectionBody } from "@/components/public/legal/LegalSectionBody";
+
+type TermsSection = { id: string; q: string; a: string };
+type TermsHighlight = { title: string; body: string };
 
 export function TermsPage() {
   const { t } = useTranslation();
 
+  const sections = useMemo(() => {
+    const raw = t("staticPages.terms.sections", { returnObjects: true });
+    const items = Array.isArray(raw) ? raw : [];
+    return items.filter(
+      (item): item is TermsSection =>
+        typeof item === "object" &&
+        item !== null &&
+        "id" in item &&
+        typeof (item as TermsSection).id === "string" &&
+        "q" in item &&
+        typeof (item as TermsSection).q === "string" &&
+        typeof (item as TermsSection).a === "string",
+    );
+  }, [t]);
+
+  const highlights = useMemo(() => {
+    const raw = t("staticPages.terms.highlights", { returnObjects: true });
+    const items = Array.isArray(raw) ? raw : [];
+    return items.filter(
+      (item): item is TermsHighlight =>
+        typeof item === "object" &&
+        item !== null &&
+        "title" in item &&
+        typeof (item as TermsHighlight).title === "string" &&
+        typeof (item as TermsHighlight).body === "string",
+    );
+  }, [t]);
+
+  const sectionAnchors = sections.map((section) => ({ id: section.id, title: section.q }));
+
   return (
-    <PublicLegalPageShell title={t("staticPages.terms.title")} subtitle={t("staticPages.terms.subtitle")}>
-      <div className="space-y-6">
-        <div>
-          <h2>{t("staticPages.terms.s1Title")}</h2>
-          <p>{t("staticPages.terms.s1Body")}</p>
-        </div>
+    <PublicPageShell maxWidth="full" contentClassName="pb-0" className="caretip-legal-document-page bg-background">
+      <main id="terms-of-service" className="caretip-legal-document-page__main" aria-label={t("staticPages.terms.title")}>
+        <PublicPageBackLink className="caretip-legal-document-page__back" />
 
-        <div>
-          <h2>{t("staticPages.terms.s2Title")}</h2>
-          <p>{t("staticPages.terms.s2Lead")}</p>
-          <ul>
-            <li>{t("staticPages.terms.s2Li0")}</li>
-            <li>{t("staticPages.terms.s2Li1")}</li>
-            <li>{t("staticPages.terms.s2Li2")}</li>
-            <li>{t("staticPages.terms.s2Li3")}</li>
-          </ul>
-        </div>
+        <div className="caretip-legal-document-page__grid">
+          <article className="caretip-legal-document__article">
+            <header className="caretip-legal-document__header">
+              <p className="caretip-legal-document__eyebrow">{t("staticPages.terms.pageEyebrow")}</p>
+              <h1 className="caretip-legal-document__title">{t("staticPages.terms.pageTitle")}</h1>
+              <p className="caretip-legal-document__effective">{t("staticPages.terms.effectiveDateLine")}</p>
+              <p className="caretip-legal-document__intro">{t("staticPages.terms.intro")}</p>
 
-        <div>
-          <h2>{t("staticPages.terms.s3Title")}</h2>
-          <p>{t("staticPages.terms.s3Lead")}</p>
-          <ul>
-            <li>{t("staticPages.terms.s3Li0")}</li>
-            <li>{t("staticPages.terms.s3Li1")}</li>
-            <li>{t("staticPages.terms.s3Li2")}</li>
-            <li>{t("staticPages.terms.s3Li3")}</li>
-          </ul>
-          <p>{t("staticPages.terms.s3Foot")}</p>
-        </div>
+              {highlights.length > 0 ? (
+                <div className="caretip-legal-document__highlights">
+                  {highlights.map((item) => (
+                    <div key={item.title} className="caretip-legal-document__highlight">
+                      <p className="caretip-legal-document__highlight-title">{item.title}</p>
+                      <p className="caretip-legal-document__highlight-body">{item.body}</p>
+                    </div>
+                  ))}
+                </div>
+              ) : null}
+            </header>
 
-        <div>
-          <h2>{t("staticPages.terms.s4Title")}</h2>
-          <p>{t("staticPages.terms.s4Lead")}</p>
-          <ul>
-            <li>{t("staticPages.terms.s4Li0")}</li>
-            <li>{t("staticPages.terms.s4Li1")}</li>
-            <li>{t("staticPages.terms.s4Li2")}</li>
-            <li>{t("staticPages.terms.s4Li3")}</li>
-          </ul>
-        </div>
+            <div className="caretip-legal-document__sections">
+              {sections.map((section) => (
+                <section key={section.id} id={section.id} className="caretip-legal-document__section" aria-labelledby={`${section.id}-title`}>
+                  <h2 id={`${section.id}-title`} className="caretip-legal-document__section-title">
+                    {section.q}
+                  </h2>
+                  <LegalSectionBody text={section.a} />
+                </section>
+              ))}
+            </div>
 
-        <div>
-          <h2>{t("staticPages.terms.s5Title")}</h2>
-          <p>{t("staticPages.terms.s5Lead")}</p>
-          <ul>
-            <li>{t("staticPages.terms.s5Li0")}</li>
-            <li>{t("staticPages.terms.s5Li1")}</li>
-            <li>{t("staticPages.terms.s5Li2")}</li>
-            <li>{t("staticPages.terms.s5Li3")}</li>
-            <li>{t("staticPages.terms.s5Li4")}</li>
-          </ul>
-        </div>
+            <footer className="caretip-legal-document__footer">
+              <p className="caretip-legal-document__footer-meta">
+                <strong>{t("staticPages.terms.footerLastLabel")}</strong> {t("staticPages.terms.footerLastDate")}
+              </p>
+              <p className="caretip-legal-document__footer-contact">{t("staticPages.terms.footerContact")}</p>
+            </footer>
+          </article>
 
-        <div>
-          <h2>{t("staticPages.terms.s6Title")}</h2>
-          <p>{t("staticPages.terms.s6Body")}</p>
+          <LegalDocumentsSidebar activeDocument="terms" sectionAnchors={sectionAnchors} />
         </div>
-
-        <div>
-          <h2>{t("staticPages.terms.s7Title")}</h2>
-          <p>{t("staticPages.terms.s7Body")}</p>
-        </div>
-
-        <div>
-          <h2>{t("staticPages.terms.s8Title")}</h2>
-          <p>{t("staticPages.terms.s8Body")}</p>
-        </div>
-
-        <div>
-          <h2>{t("staticPages.terms.s9Title")}</h2>
-          <p>{t("staticPages.terms.s9Body")}</p>
-        </div>
-
-        <div>
-          <h2>{t("staticPages.terms.s10Title")}</h2>
-          <p>{t("staticPages.terms.s10Body")}</p>
-        </div>
-
-        <div>
-          <h2>{t("staticPages.terms.s11Title")}</h2>
-          <p>{t("staticPages.terms.s11Body")}</p>
-        </div>
-
-        <div className={publicPageUi.legalFooter}>
-          <p className={publicPageUi.legalFooterText}>
-            <strong className={publicPageUi.legalFooterStrong}>{t("staticPages.terms.footerLastLabel")}</strong>{" "}
-            {t("staticPages.terms.footerLastDate")}
-          </p>
-          <p className={cn("mt-3", publicPageUi.legalFooterText)}>{t("staticPages.terms.footerContact")}</p>
-        </div>
-      </div>
-    </PublicLegalPageShell>
+      </main>
+    </PublicPageShell>
   );
 }

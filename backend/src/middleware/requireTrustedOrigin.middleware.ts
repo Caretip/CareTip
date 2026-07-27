@@ -1,5 +1,9 @@
 import type { Request, Response, NextFunction } from "express";
 import { isCorsOriginAllowed } from "../config/cors.js";
+import {
+  CARETIP_CLIENT_HEADER,
+  CARETIP_CLIENT_HEADER_VALUE,
+} from "./requireCaretipClientHeader.middleware.js";
 
 function originFromReferer(referer: string | undefined): string | undefined {
   const trimmed = referer?.trim();
@@ -20,13 +24,26 @@ export function resolveRequestOrigin(req: Request): string | undefined {
 
 /**
  * CSRF guard for cookie-authenticated auth routes.
- * Rejects cross-site requests with 403 when Origin/Referer is missing or not allowlisted.
+ * - Browser: Origin/Referer must be allowlisted.
+ * - Native (Expo): no Origin is sent; `X-CareTip-Client: 1` is the CSRF stand-in
+ *   (same header already required on refresh/logout).
  */
 export function requireTrustedOrigin(req: Request, res: Response, next: NextFunction): void {
   const origin = resolveRequestOrigin(req);
-  if (!origin || !isCorsOriginAllowed(origin)) {
-    res.status(403).json({ message: "Forbidden" });
+  if (origin) {
+    if (!isCorsOriginAllowed(origin)) {
+      res.status(403).json({ message: "Forbidden" });
+      return;
+    }
+    next();
     return;
   }
-  next();
+
+  const client = req.get(CARETIP_CLIENT_HEADER)?.trim();
+  if (client === CARETIP_CLIENT_HEADER_VALUE) {
+    next();
+    return;
+  }
+
+  res.status(403).json({ message: "Forbidden" });
 }

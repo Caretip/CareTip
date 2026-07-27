@@ -7,6 +7,7 @@ import { CareTipLogo } from "@/app/components/CareTipLogo";
 import { usePublicMountProbe } from "@/lib/publicMountProbe";
 import { LandingCopySentences } from "@/components/landing/LandingCopySentences";
 import { FacebookIcon, InstagramIcon, TikTokIcon } from "@/components/social/SocialBrandIcons";
+import { openCookieConsentSettings } from "@/app/lib/cookieConsent";
 import { INDUSTRY_NAV_ITEMS } from "@/app/data/industryPages";
 
 const SOCIAL_FACEBOOK_URL = (import.meta.env.VITE_SOCIAL_FACEBOOK_URL as string | undefined)?.trim() || "";
@@ -50,6 +51,7 @@ export const Footer = memo(function Footer({
         { name: t("footer.privacy"), to: "/privacy" },
         { name: t("footer.terms"), to: "/terms" },
         { name: t("footer.cookies"), to: "/cookies" },
+        { name: t("footer.cookieSettings"), to: "__cookie_settings__" },
         { name: t("footer.imprint"), to: "/imprint" },
       ],
     }),
@@ -166,13 +168,26 @@ export const Footer = memo(function Footer({
                 <ul className="space-y-3.5">
                   {col.links.map((link) => (
                     <li key={`${col.key}-${link.to}-${link.name}`}>
-                      <PrefetchLink
-                        to={link.to}
-                        className="caretip-site-footer-link inline-block text-sm text-neutral-400 transition-[color,opacity] duration-300 ease-out hover:text-white/95 touch-manipulation"
-                        onClick={handleLinkClick}
-                      >
-                        {link.name}
-                      </PrefetchLink>
+                      {link.to === "__cookie_settings__" ? (
+                        <button
+                          type="button"
+                          className="caretip-site-footer-link inline-block text-left text-sm text-neutral-400 transition-[color,opacity] duration-300 ease-out hover:text-white/95 touch-manipulation"
+                          onClick={() => {
+                            handleLinkClick();
+                            openCookieConsentSettings();
+                          }}
+                        >
+                          {link.name}
+                        </button>
+                      ) : (
+                        <PrefetchLink
+                          to={link.to}
+                          className="caretip-site-footer-link inline-block text-sm text-neutral-400 transition-[color,opacity] duration-300 ease-out hover:text-white/95 touch-manipulation"
+                          onClick={handleLinkClick}
+                        >
+                          {link.name}
+                        </PrefetchLink>
+                      )}
                     </li>
                   ))}
                 </ul>

@@ -61,6 +61,7 @@ import { securityHeadersMiddleware } from "./middleware/securityHeaders.middlewa
 import { authenticatedApiRateLimit } from "./middleware/securityRateLimit.middleware.js";
 import socketRoutes from "./routes/socket.routes.js";
 import internalJobsRoutes from "./routes/internalJobs.routes.js";
+import * as healthController from "./controllers/health.controller.js";
 
 const app = express();
 const PORT = process.env.PORT ?? 3001;
@@ -147,6 +148,13 @@ app.use(
   }),
 );
 app.use(jsonParseErrorHandler);
+
+/** Public probes — no auth; mounted before broad /api rate limit. */
+app.get("/api/health", healthController.getApiHealth);
+app.get("/favicon.ico", (_req, res) => {
+  res.status(204).end();
+});
+
 app.use("/api", authenticatedApiRateLimit);
 
 app.use(blockSensitiveStaticUploadPaths);
@@ -230,6 +238,22 @@ app.get("/health", (req, res) => {
     email,
     observability,
     uploads,
+  });
+});
+
+/** API-only root — no SPA; points clients to health + API prefixes. */
+app.get("/", (_req, res) => {
+  res.json({
+    name: "CareTip API",
+    status: "ok",
+    health: "/api/health",
+    message: "API-only backend. Use the CareTip web or mobile client.",
+  });
+});
+
+app.use((req, res) => {
+  res.status(404).json({
+    message: `Cannot ${req.method} ${req.originalUrl}`,
   });
 });
 

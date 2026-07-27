@@ -1,111 +1,88 @@
+import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { PublicLegalPageShell } from "@/components/public/PublicLegalPageShell";
-import { publicPageUi } from "@/components/public/publicPageUi";
-import { cn } from "@/lib/utils";
+import "@/styles/bundles/marketing-pages.css";
+import { PublicPageShell } from "@/components/public/PublicPageShell";
+import { CookiesPageHero } from "@/components/public/cookies/CookiesPageHero";
+import { FaqAccordionItem } from "@/components/public/faq/FaqAccordionItem";
+import { publicPagesBrandUi } from "@/components/public/publicPagesBrandUi";
+import { openCookieConsentSettings } from "../lib/cookieConsent";
+
+type CookieSection = { q: string; a: string };
 
 export function CookiesPage() {
   const { t } = useTranslation();
+  const [openIndex, setOpenIndex] = useState<number | null>(0);
 
-  const cookieType = (titleKey: string, bodyKey: string, liKeys: string[]) => (
-    <div className={cn(publicPageUi.insetPanel, "not-prose")}>
-      <h3 className={publicPageUi.legalInsetTitle}>{t(titleKey)}</h3>
-      <p className="text-sm">{t(bodyKey)}</p>
-      <ul className="ml-4 mt-2 list-disc space-y-1 text-sm">
-        {liKeys.map((key) => (
-          <li key={key}>{t(key)}</li>
-        ))}
-      </ul>
-    </div>
-  );
+  const sections = useMemo(() => {
+    const raw = t("staticPages.cookies.sections", { returnObjects: true });
+    const items = Array.isArray(raw) ? raw : [];
+    return items.filter(
+      (item): item is CookieSection =>
+        typeof item === "object" &&
+        item !== null &&
+        "q" in item &&
+        typeof (item as CookieSection).q === "string" &&
+        typeof (item as CookieSection).a === "string",
+    );
+  }, [t]);
+
+  useEffect(() => {
+    setOpenIndex(sections.length > 0 ? 0 : null);
+  }, [sections.length]);
 
   return (
-    <PublicLegalPageShell title={t("staticPages.cookies.title")} subtitle={t("staticPages.cookies.subtitle")}>
-      <div className="space-y-6">
-        <div>
-          <h2>{t("staticPages.cookies.whatTitle")}</h2>
-          <p>{t("staticPages.cookies.whatBody")}</p>
-        </div>
+    <PublicPageShell maxWidth="full" contentClassName="pb-0" className="bg-background">
+      <main
+        id="cookies-policy"
+        className="caretip-faq-page caretip-faq-page--wise"
+        aria-label={t("staticPages.cookies.title")}
+      >
+        <CookiesPageHero />
 
-        <div>
-          <h2>{t("staticPages.cookies.typesTitle")}</h2>
-          <div className="not-prose mt-4 space-y-4">
-            {cookieType("staticPages.cookies.essentialTitle", "staticPages.cookies.essentialBody", [
-              "staticPages.cookies.essentialLi0",
-              "staticPages.cookies.essentialLi1",
-              "staticPages.cookies.essentialLi2",
-            ])}
-            {cookieType("staticPages.cookies.performanceTitle", "staticPages.cookies.performanceBody", [
-              "staticPages.cookies.performanceLi0",
-              "staticPages.cookies.performanceLi1",
-              "staticPages.cookies.performanceLi2",
-            ])}
-            {cookieType("staticPages.cookies.functionalTitle", "staticPages.cookies.functionalBody", [
-              "staticPages.cookies.functionalLi0",
-              "staticPages.cookies.functionalLi1",
-              "staticPages.cookies.functionalLi2",
-            ])}
-            {cookieType("staticPages.cookies.targetingTitle", "staticPages.cookies.targetingBody", [
-              "staticPages.cookies.targetingLi0",
-              "staticPages.cookies.targetingLi1",
-              "staticPages.cookies.targetingLi2",
-            ])}
+        <section className="caretip-faq-content" aria-label={t("staticPages.cookies.contentAria")}>
+          <div className="caretip-faq-page__inner caretip-faq-content__inner">
+            <p className="caretip-faq-hero-wise__subtitle mx-auto mb-8 max-w-3xl text-center">
+              {t("staticPages.cookies.intro")}
+            </p>
+
+            <div className="caretip-faq-list">
+              {sections.map((section, index) => (
+                <FaqAccordionItem
+                  key={section.q}
+                  question={section.q}
+                  answer={section.a}
+                  isOpen={openIndex === index}
+                  onToggle={() => setOpenIndex(openIndex === index ? null : index)}
+                />
+              ))}
+            </div>
+
+            <p className="mt-8 text-center text-sm text-muted-foreground">
+              {t("staticPages.cookies.footerLastLabel")}{" "}
+              <span className="font-medium text-foreground">{t("staticPages.cookies.footerLastDate")}</span>
+            </p>
+            <p className="mt-2 text-center text-sm text-muted-foreground">{t("staticPages.cookies.footerContact")}</p>
           </div>
-        </div>
+        </section>
 
-        <div>
-          <h2>{t("staticPages.cookies.thirdTitle")}</h2>
-          <p>{t("staticPages.cookies.thirdLead")}</p>
-          <ul>
-            <li>{t("staticPages.cookies.thirdLi0")}</li>
-            <li>{t("staticPages.cookies.thirdLi1")}</li>
-            <li>{t("staticPages.cookies.thirdLi2")}</li>
-            <li>{t("staticPages.cookies.thirdLi3")}</li>
-          </ul>
-        </div>
-
-        <div>
-          <h2>{t("staticPages.cookies.manageTitle")}</h2>
-          <p>{t("staticPages.cookies.manageLead")}</p>
-          <ul>
-            <li>{t("staticPages.cookies.manageLi0")}</li>
-            <li>{t("staticPages.cookies.manageLi1")}</li>
-            <li>{t("staticPages.cookies.manageLi2")}</li>
-          </ul>
-          <p className="text-sm italic">{t("staticPages.cookies.manageNote")}</p>
-        </div>
-
-        <div>
-          <h2>{t("staticPages.cookies.browserTitle")}</h2>
-          <p>{t("staticPages.cookies.browserChrome")}</p>
-          <p>{t("staticPages.cookies.browserFirefox")}</p>
-          <p>{t("staticPages.cookies.browserSafari")}</p>
-          <p>{t("staticPages.cookies.browserEdge")}</p>
-        </div>
-
-        <div>
-          <h2>{t("staticPages.cookies.retentionTitle")}</h2>
-          <p>{t("staticPages.cookies.retentionLead")}</p>
-          <ul>
-            <li>{t("staticPages.cookies.retentionLi0")}</li>
-            <li>{t("staticPages.cookies.retentionLi1")}</li>
-            <li>{t("staticPages.cookies.retentionLi2")}</li>
-            <li>{t("staticPages.cookies.retentionLi3")}</li>
-          </ul>
-        </div>
-
-        <div>
-          <h2>{t("staticPages.cookies.updatesTitle")}</h2>
-          <p>{t("staticPages.cookies.updatesBody")}</p>
-        </div>
-
-        <div className={publicPageUi.legalFooter}>
-          <p className={publicPageUi.legalFooterText}>
-            <strong className={publicPageUi.legalFooterStrong}>{t("staticPages.cookies.footerLastLabel")}</strong>{" "}
-            {t("staticPages.cookies.footerLastDate")}
-          </p>
-          <p className={cn("mt-3", publicPageUi.legalFooterText)}>{t("staticPages.cookies.footerContact")}</p>
-        </div>
-      </div>
-    </PublicLegalPageShell>
+        <section className="caretip-faq-cta-wise" aria-labelledby="cookies-cta-title">
+          <div className="caretip-faq-page__inner caretip-faq-cta-wise__inner">
+            <h2 id="cookies-cta-title" className="caretip-faq-cta-wise__title">
+              {t("staticPages.cookies.ctaTitle")}
+            </h2>
+            <p className="caretip-faq-cta-wise__body">{t("staticPages.cookies.ctaBody")}</p>
+            <div className="caretip-faq-cta-wise__actions">
+              <button
+                type="button"
+                className={publicPagesBrandUi.ctaButtonPrimary}
+                onClick={() => openCookieConsentSettings()}
+              >
+                {t("staticPages.cookies.manageButton")}
+              </button>
+            </div>
+          </div>
+        </section>
+      </main>
+    </PublicPageShell>
   );
 }

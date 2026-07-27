@@ -3,6 +3,8 @@ import { prisma } from "../prisma.js";
 import { bumpAuthTokenVersion } from "./authTokenVersion.service.js";
 
 const COOKIE_NAME = "caretip_refresh";
+/** Readable by native clients that cannot access HttpOnly Set-Cookie (same opaque token). */
+export const CARETIP_REFRESH_HEADER = "X-CareTip-Refresh";
 
 function sha256Hex(input: string): string {
   return crypto.createHash("sha256").update(input).digest("hex");
@@ -45,7 +47,10 @@ export function parseCookie(header: string | undefined, name: string): string | 
 }
 
 export function setRefreshCookie(
-  res: { cookie: (name: string, value: string, opts: Record<string, unknown>) => void },
+  res: {
+    cookie: (name: string, value: string, opts: Record<string, unknown>) => void;
+    setHeader?: (name: string, value: string) => void;
+  },
   value: string,
   opts?: { maxAgeMs?: number }
 ): void {
@@ -58,10 +63,15 @@ export function setRefreshCookie(
     path: "/",
     maxAge,
   });
+  // Expo / React Native cannot reliably read Set-Cookie; mirror the same refresh token.
+  res.setHeader?.(CARETIP_REFRESH_HEADER, value);
 }
 
 export function clearRefreshCookie(
-  res: { cookie: (name: string, value: string, opts: Record<string, unknown>) => void },
+  res: {
+    cookie: (name: string, value: string, opts: Record<string, unknown>) => void;
+    setHeader?: (name: string, value: string) => void;
+  },
 ): void {
   const isProd = process.env.NODE_ENV === "production";
   res.cookie(COOKIE_NAME, "", {
@@ -72,6 +82,7 @@ export function clearRefreshCookie(
     expires: new Date(0),
     maxAge: 0,
   });
+  res.setHeader?.(CARETIP_REFRESH_HEADER, "");
 }
 
 export async function issueRefreshToken(

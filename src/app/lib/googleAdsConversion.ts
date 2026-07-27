@@ -48,12 +48,15 @@ const EVENT_LABELS: Partial<Record<GoogleAdsConversionEvent, string>> = {
   billing_checkout_completed: import.meta.env.VITE_GOOGLE_ADS_LABEL_BILLING as string | undefined,
 };
 
-/** Fire a conversion event when Ads is configured; no-op otherwise. */
+/** Fire a conversion event when Ads is configured and marketing consent is granted. */
 export function trackGoogleAdsConversion(event: GoogleAdsConversionEvent): void {
   if (typeof window === "undefined" || !ADS_ID || !window.gtag) return;
-  const label = (EVENT_LABELS[event] ?? ADS_LABEL).trim();
-  if (!label) return;
-  window.gtag("event", "conversion", {
-    send_to: `${ADS_ID}/${label}`,
+  void import("./cookieConsent").then(({ readCookieConsent }) => {
+    if (!readCookieConsent()?.marketing) return;
+    const label = (EVENT_LABELS[event] ?? ADS_LABEL).trim();
+    if (!label) return;
+    window.gtag?.("event", "conversion", {
+      send_to: `${ADS_ID}/${label}`,
+    });
   });
 }

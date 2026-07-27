@@ -63,6 +63,7 @@ export const corsMiddlewareOptions: CorsOptions = {
     callback(null, false);
   },
   credentials: true,
+  exposedHeaders: ["X-CareTip-Refresh"],
 };
 
 export const socketCorsOptions = {

@@ -1,0 +1,192 @@
+import { useMemo, useState } from "react";
+import {
+  ActivityIndicator,
+  FlatList,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
+import { SearchField } from "@/components/ui/SearchField";
+import { Button } from "@/components/ui/Button";
+import { ScreenShell, screenContentPadding, useListRefreshControl } from "@/components/ui/ScreenShell";
+import { EmptyState } from "@/components/ui/EmptyState";
+import { ErrorState } from "@/components/ui/ErrorState";
+import { SkeletonListRows } from "@/components/ui/Skeleton";
+import { NotificationCard } from "@/components/ui/ListCards";
+import { ScreenHeader } from "@/components/ui/ScreenHeader";
+import { useNotificationsFeed } from "@/hooks/useNotifications";
+import { useI18n } from "@/hooks/useI18n";
+import { formatTimeAgo } from "@/utils/formatTimeAgo";
+import { formatNotificationType } from "@/utils/labels";
+import { friendlyErrorMessage } from "@/utils/friendlyError";
+import { colors, spacing, typography } from "@/theme";
+
+function dayBucket(
+  iso: string,
+  t: (key: string) => string,
+): { key: string; label: string } {
+  const date = new Date(iso);
+  const now = new Date();
+  const startToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const startYesterday = new Date(startToday);
+  startYesterday.setDate(startYesterday.getDate() - 1);
+  const startMsg = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+
+  if (startMsg.getTime() === startToday.getTime()) {
+    return { key: "today", label: t("activity.today") };
+  }
+  if (startMsg.getTime() === startYesterday.getTime()) {
+    return { key: "yesterday", label: t("activity.yesterday") };
+  }
+  const key = iso.slice(0, 10);
+  return {
+    key,
+    label: new Intl.DateTimeFormat(undefined, {
+      weekday: "short",
+      month: "short",
+      day: "numeric",
+    }).format(date),
+  };
+}
+
+export function NotificationsScreen() {
+  const { t } = useI18n();
+  const [search, setSearch] = useState("");
+  const {
+    items,
+    isLoading,
+    isRefetching,
+    refetch,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    isError,
+    error,
+    markRead,
+    markAllRead,
+  } = useNotificationsFeed(search);
+
+  const refreshControl = useListRefreshControl(isRefetching, () => void refetch());
+
+  type Row =
+    | { kind: "header"; id: string; label: string }
+    | { kind: "item"; id: string; item: (typeof items)[number] };
+
+  const rows = useMemo(() => {
+    const out: Row[] = [];
+    let lastKey = "";
+    for (const item of items) {
+      const bucket = dayBucket(item.createdAt, t);
+      if (bucket.key !== lastKey) {
+        out.push({ kind: "header", id: `h-${bucket.key}`, label: bucket.label });
+        lastKey = bucket.key;
+      }
+      out.push({ kind: "item", id: item.id, item });
+    }
+    return out;
+  }, [items, t]);
+
+  return (
+    <ScreenShell>
+      <View style={styles.header}>
+        <ScreenHeader
+          title={t("notifications.title")}
+        />
+        <Button
+          label={t("notifications.markAllRead")}
+          variant="outline"
+          onPress={() => void markAllRead.mutateAsync()}
+        />
+      </View>
+
+      <View style={styles.search}>
+        <SearchField
+          value={search}
+          onChangeText={setSearch}
+          placeholder={t("notifications.search")}
+          accessibilityLabel={t("notifications.search")}
+        />
+      </View>
+
+      {isLoading ? (
+        <View style={styles.listPad}>
+          <SkeletonListRows count={5} />
+        </View>
+      ) : isError && items.length === 0 ? (
+        <ErrorState
+          message={friendlyErrorMessage(error, t("notifications.loadError"))}
+          onRetry={() => void refetch()}
+        />
+      ) : (
+        <FlatList
+          data={rows}
+          keyExtractor={(row) => row.id}
+          contentContainerStyle={styles.list}
+          refreshControl={refreshControl}
+          onEndReached={() => {
+            if (hasNextPage && !isFetchingNextPage) void fetchNextPage();
+          }}
+          onEndReachedThreshold={0.4}
+          ListEmptyComponent={
+            <EmptyState
+              variant="notifications"
+              title={t("notifications.emptyTitle")}
+              message={t("notifications.emptyMessage")}
+            />
+          }
+          ListFooterComponent={
+            isFetchingNextPage ? (
+              <ActivityIndicator color={colors.primary} style={styles.footerLoader} />
+            ) : null
+          }
+          renderItem={({ item: row }) => {
+            if (row.kind === "header") {
+              return <Text style={styles.dayHeader}>{row.label}</Text>;
+            }
+            const item = row.item;
+            return (
+              <NotificationCard
+                title={item.title}
+                message={item.message}
+                meta={`${formatNotificationType(item.type)} · ${formatTimeAgo(item.createdAt)}`}
+                unread={!item.read}
+                onPress={() => {
+                  if (!item.read) void markRead.mutateAsync(item.id);
+                }}
+              />
+            );
+          }}
+        />
+      )}
+    </ScreenShell>
+  );
+}
+
+const styles = StyleSheet.create({
+  header: {
+    ...screenContentPadding,
+    paddingBottom: spacing.md,
+    paddingTop: spacing.md,
+    gap: spacing.lg,
+  },
+  search: {
+    paddingHorizontal: spacing.xl,
+    paddingBottom: spacing.md,
+  },
+  listPad: {
+    ...screenContentPadding,
+  },
+  list: {
+    ...screenContentPadding,
+    flexGrow: 1,
+  },
+  dayHeader: {
+    ...typography.overline,
+    color: colors.mutedForeground,
+    marginTop: spacing.sm,
+    marginBottom: spacing.md,
+  },
+  footerLoader: {
+    marginVertical: spacing.lg,
+  },
+});

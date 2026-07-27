@@ -46,10 +46,10 @@ export function isExpiredAccessTokenRefreshAllowed(): boolean {
 
 /**
  * Resolve user id from Bearer access token for POST /api/auth/refresh fallback.
- * Accepts valid tokens and recently expired tokens (within grace).
+ * Always accepts currently-valid access JWTs.
+ * Recently expired tokens are accepted only when expired-grace is enabled (non-prod default).
  */
 export function userIdFromAccessTokenForRefresh(bearer: string): string | null {
-  if (!isExpiredAccessTokenRefreshAllowed()) return null;
   const token = String(bearer ?? "").trim();
   if (!token) return null;
 
@@ -59,6 +59,7 @@ export function userIdFromAccessTokenForRefresh(bearer: string): string | null {
     return resolveJwtSubject(decoded);
   } catch (err) {
     if (!(err instanceof jwt.TokenExpiredError)) return null;
+    if (!isExpiredAccessTokenRefreshAllowed()) return null;
     try {
       const decoded = verifyJwt<DecodedAccessClaims & JwtPayload & { exp?: number }>(token, {
         ignoreExpiration: true,

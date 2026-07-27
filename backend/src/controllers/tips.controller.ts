@@ -91,7 +91,8 @@ export async function getByEmployee(req: Request, res: Response) {
       );
     }
 
-    if (!subscriptionBypass(req)) {
+    // `account` already returned above; only `summary` skips the advanced-analytics gate.
+    if (!subscriptionBypass(req) && scope !== "summary") {
       const tier = await getSubscriptionTierForBusinessId(employee.businessId);
       if (!isEmployeeTipsScopeAllowedForTier(tier, scope)) {
         return res.status(403).json(subscriptionRequiredPayload("advancedAnalytics"));

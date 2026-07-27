@@ -1003,57 +1003,59 @@
     "cookies": {
       "title": "Cookie-Richtlinie",
       "subtitle": "Erfahren Sie, wie wir Cookies einsetzen.",
-      "whatTitle": "Was sind Cookies?",
-      "whatBody": "Cookies sind kleine Textdateien, die auf Ihrem Gerät gespeichert werden, wenn Sie unsere Website besuchen. Sie helfen uns, Ihre Einstellungen zu merken und zu verstehen, wie Sie unseren Service nutzen.",
-      "typesTitle": "Welche Cookies wir verwenden",
-      "essentialTitle": "Notwendige Cookies",
-      "essentialBody": "Diese Cookies sind für den Betrieb der Website erforderlich. Sie ermöglichen Kernfunktionen wie Sicherheit, Netzwerk und Barrierefreiheit.",
-      "essentialLi0": "Anmeldung und Sitzungsstatus",
-      "essentialLi1": "Sicherheit und Betrugsprävention",
-      "essentialLi2": "Sitzungsverwaltung",
-      "performanceTitle": "Performance-Cookies",
-      "performanceBody": "Diese Cookies helfen uns zu verstehen, wie Besucher mit der Website interagieren, indem Informationen anonym erfasst und ausgewertet werden.",
-      "performanceLi0": "Ladezeiten und Performance",
-      "performanceLi1": "Fehleranalyse und Diagnostik",
-      "performanceLi2": "Nutzungsstatistiken und Analytics",
-      "functionalTitle": "Funktionale Cookies",
-      "functionalBody": "Diese Cookies ermöglichen erweiterte Funktionen und Personalisierung.",
-      "functionalLi0": "Einstellungen und Präferenzen speichern",
-      "functionalLi1": "Sprach- und Regionswahl",
-      "functionalLi2": "Angepasste Oberfläche",
-      "targetingTitle": "Marketing-/Targeting-Cookies",
-      "targetingBody": "Diese Cookies dienen dazu, Werbung relevanter für Sie zu gestalten.",
-      "targetingLi0": "Surfverhalten messen",
-      "targetingLi1": "Werbewirksamkeit messen",
-      "targetingLi2": "Personalisierte Inhalte ausspielen",
-      "thirdTitle": "Cookies von Drittanbietern",
-      "thirdLead": "Wir nutzen Dienste vertrauenswürdiger Anbieter, die Cookies setzen können:",
-      "thirdLi0": "Google Analytics: um die Nutzung der Website zu verstehen",
-      "thirdLi1": "Zahlungsdienstleister: zur sicheren Abwicklung von Zahlungen",
-      "thirdLi2": "Social-Media-Plattformen: für Teilen-Funktionen",
-      "thirdLi3": "Support-Tools: für Live-Chat und Hilfe",
-      "manageTitle": "Cookie-Einstellungen verwalten",
-      "manageLead": "Sie entscheiden, ob Sie Cookies akzeptieren. Sie können Ihre Präferenzen wie folgt anpassen:",
-      "manageLi0": "Browser-Einstellungen: In den meisten Browsern können Sie Cookies ablehnen oder löschen",
-      "manageLi1": "Cookie-Banner: beim ersten Besuch unserer Website",
-      "manageLi2": "Opt-out: gemäß Hinweisen der jeweiligen Drittanbieter",
-      "manageNote": "Hinweis: Wenn Sie notwendige Cookies blockieren, kann die Website eingeschränkt funktionieren.",
-      "browserTitle": "Cookies im Browser steuern",
-      "browserChrome": "Google Chrome: Einstellungen → Datenschutz und Sicherheit → Cookies und andere Websitedaten",
-      "browserFirefox": "Mozilla Firefox: Einstellungen → Datenschutz & Sicherheit → Cookies und Website-Daten",
-      "browserSafari": "Safari: Einstellungen → Datenschutz → Websites-Daten verwalten",
-      "browserEdge": "Microsoft Edge: Einstellungen → Cookies und Websiteberechtigungen → Cookies verwalten und löschen",
-      "retentionTitle": "Speicherdauer",
-      "retentionLead": "Cookies werden unterschiedlich lange gespeichert:",
-      "retentionLi0": "Sitzungs-Cookies: werden beim Schließen des Browsers gelöscht",
-      "retentionLi1": "Persistente Cookies: bleiben bis zum Ablauf oder manuellen Löschen",
-      "retentionLi2": "Notwendige Cookies: in der Regel für die Dauer der Sitzung",
-      "retentionLi3": "Analytics-Cookies: oft bis zu 2 Jahre",
-      "updatesTitle": "Aktualisierungen dieser Cookie-Richtlinie",
-      "updatesBody": "Wir können diese Cookie-Richtlinie anpassen, etwa bei technischen oder rechtlichen Änderungen. Bitte prüfen Sie sie regelmäßig.",
+      "pageEyebrow": "DATENSCHUTZ",
+      "pageTitle": "Cookie-Richtlinie",
+      "pageSubtitle": "Wie CareTip Cookies nutzt, welche Kategorien es gibt und wie Sie unter DSGVO und TTDSG die Kontrolle behalten.",
+      "contentAria": "Abschnitte der Cookie-Richtlinie",
+      "intro": "Wir verwenden Cookies und ähnliche Technologien, um CareTip sicher zu betreiben, Ihre Einstellungen zu speichern und—nur mit Ihrer Einwilligung—Nutzung und Marketing zu messen.",
+      "ctaTitle": "Ihre Wahl, Ihre Einstellungen",
+      "ctaBody": "Sie können alle Cookies akzeptieren, nicht notwendige ablehnen oder Analytics-, Funktions- und Marketing-Cookies jederzeit anpassen.",
+      "manageButton": "Cookie-Einstellungen verwalten",
+      "sections": [
+        {
+          "q": "Was sind Cookies?",
+          "a": "Cookies sind kleine Textdateien, die beim Besuch von caretip.de auf Ihrem Gerät gespeichert werden. Sie helfen, die Website zuverlässig zu betreiben, Einstellungen wie die Sprache zu merken und—wenn Sie zustimmen—die Nutzung besser zu verstehen."
+        },
+        {
+          "q": "Warum wir Cookies verwenden",
+          "a": "Cookies ermöglichen reibungsloses Trinkgeld, sichere Konten, gespeicherte Dashboard-Präferenzen und—nur nach Einwilligung—Produktverbesserung und Kampagnenmessung. Nicht notwendige Cookies laden wir nie vor Ihrer Entscheidung."
+        },
+        {
+          "q": "Notwendige Cookies (immer aktiv)",
+          "a": "Erforderlich für den Betrieb von CareTip. Beispiele: Authentifizierung, Sitzungsverwaltung, Sicherheit und CSRF-Schutz, Lastverteilung und Spracheinstellung. Diese können nicht deaktiviert werden. Für streng notwendige Cookies ist nach TTDSG keine Einwilligung erforderlich."
+        },
+        {
+          "q": "Analytics-Cookies (optional)",
+          "a": "Helfen bei Performance und Zuverlässigkeit—z. B. Fehlerüberwachung und Nutzungsstatistiken. Beispiele können Sentry-Diagnostik oder Google Analytics sein, sofern aktiviert. Werden nur nach Opt-in geladen."
+        },
+        {
+          "q": "Funktionale Cookies (optional)",
+          "a": "Ermöglichen erweiterte Funktionen wie gespeicherte UI-Präferenzen, eingebettete Inhalte oder Support-Chat. Werden nur nach Opt-in geladen."
+        },
+        {
+          "q": "Marketing-Cookies (optional)",
+          "a": "Dienen der Messung von Werbewirkung und relevanten Kampagnen—z. B. Google-Ads-Conversion-Tracking oder Social-Pixel, sofern konfiguriert. Werden nur nach Opt-in geladen."
+        },
+        {
+          "q": "Dienste von Drittanbietern",
+          "a": "CareTip kann vertrauenswürdige Anbieter einbinden, die eigene Cookies setzen, wenn Sie zustimmen:\n• Stripe — sichere Zahlungen\n• Google (Analytics / Ads) — Messung bei Aktivierung\n• Sentry — Fehlerdiagnostik bei Aktivierung\n• Google Fonts — Schriftbereitstellung\n• Eingebettete Inhalte oder Social-Plattformen auf Marketing-Seiten"
+        },
+        {
+          "q": "Cookie-Einstellungen verwalten",
+          "a": "Nutzen Sie das Cookie-Banner beim ersten Besuch, den Link „Cookie-Einstellungen“ im Footer oder die Schaltfläche unten auf dieser Seite. Sie können Ihre Einwilligung jederzeit widerrufen. Beim Ablehnen nicht notwendiger Cookies werden Analytics- und Marketing-Skripte bei künftigen Besuchen nicht geladen."
+        },
+        {
+          "q": "Speicherdauer",
+          "a": "Sitzungs-Cookies werden beim Schließen des Browsers gelöscht. Notwendige Persistenz (z. B. Anmeldung) folgt Sicherheitsstandards. Analytics- und Marketing-Cookies—wenn akzeptiert—können bis zu 24 Monate gespeichert werden, sofern Sie sie nicht früher im Browser löschen."
+        },
+        {
+          "q": "Kontakt",
+          "a": "Fragen zu Cookies oder Datenschutz? E-Mail: privacy@caretip.com. Für allgemeinen Support besuchen Sie unsere Kontaktseite."
+        }
+      ],
       "footerLastLabel": "Zuletzt aktualisiert:",
-      "footerLastDate": "18. März 2026",
-      "footerContact": "Fragen zu Cookies? Kontakt: privacy@caretip.com"
+      "footerLastDate": "27. Juli 2026",
+      "footerContact": "Fragen? privacy@caretip.com"
     },
     "privacy": {
       "title": "Datenschutzerklärung",
@@ -1109,49 +1111,99 @@
     "terms": {
       "title": "Nutzungsbedingungen",
       "subtitle": "Diese Bedingungen regeln die Nutzung der digitalen Trinkgeld-Plattform CareTip für Betriebe, Mitarbeitende und Gäste.",
-      "s1Title": "1. Annahme der Bedingungen",
-      "s1Body": "Mit Zugriff auf oder Nutzung von CareTip („wir“, „uns“ oder „der Dienst“) akzeptieren Sie diese Bedingungen. CareTip ermöglicht QR-basiertes digitales Trinkgeld, Zahlungsabwicklung und Weiterleitung an Mitarbeitende gemäß Vereinbarung, Gebührenstufe und Einstellungen.",
-      "s2Title": "2. Berechtigung und Konten",
-      "s2Lead": "Sie dürfen CareTip nur nutzen, wenn Sie einen Vertrag schließen dürfen. Bei Registrierung:",
-      "s2Li0": "Geben Sie wahrheitsgemäße Angaben zu sich oder Ihrem Unternehmen an",
-      "s2Li1": "Schützen Sie Ihr Passwort und sind für Aktivitäten unter Ihrem Konto verantwortlich",
-      "s2Li2": "Melden Sie unbefugten Zugriff umgehend",
-      "s2Li3": "Unternehmenskonten laden Mitarbeitende nur im Rahmen der internen Richtlinien ein und geben QR-Codes nur entsprechend aus",
-      "s3Title": "3. Der Dienst",
-      "s3Lead": "CareTip bietet unter anderem:",
-      "s3Li0": "Erstellung und Verwaltung von QR-Codes und Trinkgeld-Flows",
-      "s3Li1": "Trinkgelder über unterstützte Zahlungsarten",
-      "s3Li2": "Anzeige von Trinkgeldern, Auszahlungen und Benachrichtigungen für berechtigte Nutzer",
-      "s3Li3": "Analysen und Reporting für Unternehmen gemäß Tarif",
-      "s3Foot": "Funktionen können je nach Tarif variieren. Änderungen sind möglich, soweit gesetzlich zulässig.",
-      "s4Title": "4. Gebühren, Trinkgeld und Zahlungen",
-      "s4Lead": "Digitale Trinkgelder werden über Zahlungspartner abgewickelt. Sie erkennen an:",
-      "s4Li0": "Plattform- oder Transaktionsgebühren wie beim Checkout oder in Ihrer Vereinbarung ausgewiesen",
-      "s4Li1": "Auszahlungszeitpunkte und -wege hängen von Konfiguration, Verifizierung und Drittregeln ab",
-      "s4Li2": "Sie sind für Steuern, Meldungen und Compliance in Ihrer Zuständigkeit verantwortlich",
-      "s4Li3": "Rückbuchungen und Streitigkeiten können nach Kartensystemregeln und unseren Richtlinien behandelt werden",
-      "s5Title": "5. Zulässige Nutzung",
-      "s5Lead": "Untersagt ist insbesondere:",
-      "s5Li0": "Nutzung für Betrug, Geldwäsche oder illegale Aktivitäten",
-      "s5Li1": "Störung des Dienstes oder anderer Nutzer",
-      "s5Li2": "Zugriff auf Daten oder Konten ohne Berechtigung",
-      "s5Li3": "Falsche Angaben zu Trinkgeldern, Identitäten oder Geschäftsbeziehungen",
-      "s5Li4": "Reverse Engineering oder Scraping, soweit nicht gesetzlich erlaubt",
-      "s6Title": "6. Geistiges Eigentum",
-      "s6Body": "Name, Logo, Software und Inhalte von CareTip sind rechtlich geschützt. Sie erhalten eine beschränkte, nicht ausschließliche Lizenz zur bestimmungsgemäßen Nutzung.",
-      "s7Title": "7. Drittanbieter",
-      "s7Body": "Wir binden Zahlungsdienstleister, Banken und andere Partner ein. Deren Bedingungen können zusätzlich gelten. Wir haften nicht für Ausfälle oder Handlungen Dritter außerhalb unseres angemessenen Einflussbereichs.",
-      "s8Title": "8. Haftungsausschluss",
-      "s8Body": "Der Dienst wird „wie verfügbar“ bereitgestellt. Im gesetzlich zulässigen Umfang schließen wir indirekte Schäden und Folgeschäden aus. Soweit Gesetze das nicht zulassen, gilt die maximal zulässige Haftungsbegrenzung.",
-      "s9Title": "9. Sperrung und Kündigung",
-      "s9Body": "Wir können den Zugang bei Verstößen, Risiko für die Plattform oder gesetzlichen Anforderungen sperren oder beenden. Sie können Ihr Konto über die Produktfunktionen schließen. Einzelne Bestimmungen bleiben wirksam.",
-      "s10Title": "10. Änderungen der Bedingungen",
-      "s10Body": "Wir können diese Bedingungen aktualisieren und das Datum „Zuletzt aktualisiert“ anpassen. Die weitere Nutzung kann als Zustimmung gelten, soweit rechtlich zulässig.",
-      "s11Title": "11. Anwendbares Recht",
-      "s11Body": "Es gilt das Recht der Vereinigten Staaten unter Ausschluss von Kollisionsnormen, sofern in Ihrem Land nicht zwingend anderes vorgeschrieben ist.",
+      "pageEyebrow": "RECHTLICHES",
+      "pageTitle": "Nutzungsbedingungen",
+      "pageSubtitle": "Die Regeln für Betriebe, Mitarbeitende und Gäste bei der Nutzung der digitalen Trinkgeld-Plattform CareTip.",
+      "effectiveDateLine": "Diese Nutzungsbedingungen gelten ab dem 24. März 2026.",
+      "contentAria": "Abschnitte der Nutzungsbedingungen",
+      "intro": "Diese Bedingungen gelten, wenn Sie CareTip aufrufen oder nutzen. Mit der Nutzung des Dienstes erklären Sie sich mit den folgenden Regelungen einverstanden. Wenn Sie nicht einverstanden sind, nutzen Sie CareTip bitte nicht.",
+      "highlights": [
+        {
+          "title": "Für die Gastronomie",
+          "body": "QR-Trinkgeld, Team-Auszahlungen und Business-Dashboards in einer Plattform."
+        },
+        {
+          "title": "Sicher konzipiert",
+          "body": "Zahlungen über vertrauenswürdige Partner mit branchenüblichem Schutz."
+        },
+        {
+          "title": "Transparente Gebühren",
+          "body": "Preise und Transaktionskosten werden vor der Buchung angezeigt."
+        }
+      ],
+      "sections": [
+        {
+          "id": "acceptance",
+          "q": "1. Annahme der Bedingungen",
+          "a": "Mit Zugriff auf oder Nutzung von CareTip („wir“, „uns“ oder „der Dienst“) akzeptieren Sie diese Bedingungen. CareTip ermöglicht QR-basiertes digitales Trinkgeld, Zahlungsabwicklung und Weiterleitung an Mitarbeitende gemäß Vereinbarung, Gebührenstufe und Einstellungen."
+        },
+        {
+          "id": "eligibility",
+          "q": "2. Berechtigung und Konten",
+          "a": "Sie dürfen CareTip nur nutzen, wenn Sie einen Vertrag schließen dürfen. Bei Registrierung:\n• Geben Sie wahrheitsgemäße Angaben zu sich oder Ihrem Unternehmen an\n• Schützen Sie Ihr Passwort und sind für Aktivitäten unter Ihrem Konto verantwortlich\n• Melden Sie unbefugten Zugriff umgehend\n• Unternehmenskonten laden Mitarbeitende nur im Rahmen der internen Richtlinien ein und geben QR-Codes nur entsprechend aus"
+        },
+        {
+          "id": "service",
+          "q": "3. Der Dienst",
+          "a": "CareTip bietet unter anderem:\n• Erstellung und Verwaltung von QR-Codes und Trinkgeld-Flows\n• Trinkgelder über unterstützte Zahlungsarten\n• Anzeige von Trinkgeldern, Auszahlungen und Benachrichtigungen für berechtigte Nutzer\n• Analysen und Reporting für Unternehmen gemäß Tarif\n\nFunktionen können je nach Tarif variieren. Änderungen sind möglich, soweit gesetzlich zulässig."
+        },
+        {
+          "id": "fees",
+          "q": "4. Gebühren, Trinkgeld und Zahlungen",
+          "a": "Digitale Trinkgelder werden über Zahlungspartner abgewickelt. Sie erkennen an:\n• Plattform- oder Transaktionsgebühren wie beim Checkout oder in Ihrer Vereinbarung ausgewiesen\n• Auszahlungszeitpunkte und -wege hängen von Konfiguration, Verifizierung und Drittregeln ab\n• Sie sind für Steuern, Meldungen und Compliance in Ihrer Zuständigkeit verantwortlich\n• Rückbuchungen und Streitigkeiten können nach Kartensystemregeln und unseren Richtlinien behandelt werden"
+        },
+        {
+          "id": "acceptable-use",
+          "q": "5. Zulässige Nutzung",
+          "a": "Untersagt ist insbesondere:\n• Nutzung für Betrug, Geldwäsche oder illegale Aktivitäten\n• Störung des Dienstes oder anderer Nutzer\n• Zugriff auf Daten oder Konten ohne Berechtigung\n• Falsche Angaben zu Trinkgeldern, Identitäten oder Geschäftsbeziehungen\n• Reverse Engineering oder Scraping, soweit nicht gesetzlich erlaubt"
+        },
+        {
+          "id": "intellectual-property",
+          "q": "6. Geistiges Eigentum",
+          "a": "Name, Logo, Software und Inhalte von CareTip sind rechtlich geschützt. Sie erhalten eine beschränkte, nicht ausschließliche Lizenz zur bestimmungsgemäßen Nutzung."
+        },
+        {
+          "id": "third-party",
+          "q": "7. Drittanbieter",
+          "a": "Wir binden Zahlungsdienstleister, Banken und andere Partner ein. Deren Bedingungen können zusätzlich gelten. Wir haften nicht für Ausfälle oder Handlungen Dritter außerhalb unseres angemessenen Einflussbereichs."
+        },
+        {
+          "id": "liability",
+          "q": "8. Haftungsausschluss",
+          "a": "Der Dienst wird „wie verfügbar“ bereitgestellt. Im gesetzlich zulässigen Umfang schließen wir indirekte Schäden und Folgeschäden aus. Soweit Gesetze das nicht zulassen, gilt die maximal zulässige Haftungsbegrenzung."
+        },
+        {
+          "id": "termination",
+          "q": "9. Sperrung und Kündigung",
+          "a": "Wir können den Zugang bei Verstößen, Risiko für die Plattform oder gesetzlichen Anforderungen sperren oder beenden. Sie können Ihr Konto über die Produktfunktionen schließen. Einzelne Bestimmungen bleiben wirksam."
+        },
+        {
+          "id": "changes",
+          "q": "10. Änderungen der Bedingungen",
+          "a": "Wir können diese Bedingungen aktualisieren und das Datum „Zuletzt aktualisiert“ anpassen. Die weitere Nutzung kann als Zustimmung gelten, soweit rechtlich zulässig."
+        },
+        {
+          "id": "governing-law",
+          "q": "11. Anwendbares Recht",
+          "a": "Es gilt das Recht der Vereinigten Staaten unter Ausschluss von Kollisionsnormen, sofern in Ihrem Land nicht zwingend anderes vorgeschrieben ist."
+        }
+      ],
       "footerLastLabel": "Zuletzt aktualisiert:",
       "footerLastDate": "24. März 2026",
       "footerContact": "Fragen? legal@caretip.com"
+    },
+    "legalNav": {
+      "sidebarAria": "Navigation für Rechtsseiten",
+      "documentsAria": "Rechtliche Dokumente",
+      "sidebarTitle": "Rechtliches",
+      "onThisPage": "Auf dieser Seite",
+      "terms": "Nutzungsbedingungen",
+      "privacy": "Datenschutz",
+      "cookies": "Cookie-Richtlinie",
+      "imprint": "Impressum",
+      "sidebarHelpTitle": "Fragen zu diesen Bedingungen?",
+      "sidebarHelpBody": "Unser Team hilft Ihnen gerne weiter—egal ob Betrieb, Team oder Gast.",
+      "sidebarHelpButton": "Kontakt aufnehmen"
     },
     "imprint": {
       "title": "Impressum",
@@ -2022,6 +2074,40 @@
     "searchAria": "FAQ durchsuchen",
     "noMatch": "Keine FAQ entsprechen Ihrer Suche.",
     "clearSearch": "Suche zurücksetzen"
+  },
+  "cookieConsent": {
+    "banner": {
+      "title": "Wir respektieren Ihre Privatsphäre",
+      "description": "Wir verwenden Cookies, damit CareTip zuverlässig funktioniert, Ihr Erlebnis verbessert wird und wir—mit Ihrer Einwilligung—verstehen, wie Besucher unsere Plattform nutzen. Sie können alle Cookies akzeptieren, nicht notwendige ablehnen oder Ihre Einstellungen anpassen.",
+      "acceptAll": "Alle akzeptieren",
+      "reject": "Nicht notwendige ablehnen",
+      "settings": "Cookie-Einstellungen",
+      "privacyPolicy": "Datenschutzerklärung"
+    },
+    "settings": {
+      "title": "Cookie-Einstellungen",
+      "intro": "Wählen Sie, welche optionalen Cookies CareTip verwenden darf. Notwendige Cookies sind immer aktiv, weil die Website sonst nicht funktioniert.",
+      "save": "Einstellungen speichern",
+      "close": "Cookie-Einstellungen schließen",
+      "categories": {
+        "essential": {
+          "title": "Notwendige Cookies",
+          "description": "Erforderlich für Anmeldung, Sicherheit, Sitzungen und Sprache. Immer aktiv."
+        },
+        "analytics": {
+          "title": "Analytics-Cookies",
+          "description": "Helfen bei Performance-Messung und Fehlerdiagnose (z. B. Sentry, Google Analytics bei Aktivierung)."
+        },
+        "functional": {
+          "title": "Funktionale Cookies",
+          "description": "Ermöglichen erweiterte Funktionen wie gespeicherte Präferenzen, Chat oder eingebettete Inhalte."
+        },
+        "marketing": {
+          "title": "Marketing-Cookies",
+          "description": "Messen Werbewirkung (z. B. Google Ads, Social-Pixel bei Aktivierung)."
+        }
+      }
+    }
   },
   "dashboard": {
     "refresh": {
@@ -3341,6 +3427,7 @@
     "privacy": "Datenschutz",
     "terms": "AGB",
     "cookies": "Cookies",
+    "cookieSettings": "Cookie-Einstellungen",
     "imprint": "Impressum"
   },
   "employee": {
@@ -4888,6 +4975,22 @@
         "payment.refunded": "Zahlung erstattet",
         "employee.invited": "Mitarbeiter eingeladen",
         "employee.joined": "Mitarbeiter beigetreten"
+      },
+      "qrSource": {
+        "business": "Business-QR",
+        "employee": "Mitarbeiter-QR",
+        "location": "Standort-QR",
+        "table": "Tisch-QR",
+        "venue": "Venue-QR",
+        "qr": "QR"
+      },
+      "qrTitle": {
+        "scanned": "{{qrSource}} gescannt"
+      },
+      "qrSubtitle": {
+        "guestScannedYourQr": "Gast hat Ihr {{qrSource}} gescannt",
+        "guestOpenedEmployeeProfile": "Gast hat Ihr Mitarbeiterprofil geöffnet",
+        "guestViewedEmployeeNamed": "Gast hat {{name}} angesehen"
       },
       "channel": {
         "code": "Einladungscode",

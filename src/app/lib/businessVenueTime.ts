@@ -98,10 +98,12 @@ export function formatActivityVenueTimeParts(
     return { dayLabel: "date", dateText: "—", timeText: "—" };
   }
 
+  // Activity Center uses consistent 12h labels (e.g. "3:23 PM") regardless of browser locale.
   const timeText = new Intl.DateTimeFormat(locale, {
     timeZone: tz,
     hour: "numeric",
     minute: "2-digit",
+    hour12: true,
   }).format(d);
 
   if (isWithinVenueLocalDay(d, tz)) {
