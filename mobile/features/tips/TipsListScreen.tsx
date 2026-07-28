@@ -122,7 +122,7 @@ export function TipsListScreen({ role, basePath }: TipsListScreenProps) {
         </View>
       ) : query.isError ? (
         <ErrorState
-          message={friendlyErrorMessage(query.error, t("tips.loadError"))}
+          message={friendlyErrorMessage(query.error, t("tips.loadError"), t)}
           onRetry={() => void query.refetch()}
         />
       ) : (

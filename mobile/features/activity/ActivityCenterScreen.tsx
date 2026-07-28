@@ -15,6 +15,7 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { ErrorState } from "@/components/ui/ErrorState";
 import { SkeletonListRows } from "@/components/ui/Skeleton";
 import { useActivityCenterFeed } from "@/hooks/useActivityCenterFeed";
+import { useAuth } from "@/hooks/useAuth";
 import { useI18n } from "@/hooks/useI18n";
 import type {
   ActivityCenterFilter,
@@ -92,6 +93,7 @@ function ActivityRow({
 
 export function ActivityCenterScreen() {
   const { t } = useI18n();
+  const { user } = useAuth();
   const {
     filter,
     setFilter,
@@ -104,7 +106,7 @@ export function ActivityCenterScreen() {
     refresh,
     loadOlder,
     error,
-  } = useActivityCenterFeed(true);
+  } = useActivityCenterFeed({ enabled: true, businessId: user?.businessId });
 
   const filterOptions: Array<{ value: ActivityCenterFilter; label: string }> = [
     { value: "all", label: t("activity.filterAll") },
@@ -222,8 +224,10 @@ export function ActivityCenterScreen() {
                 onPress={() => void loadOlder()}
                 style={styles.loadMore}
               >
-                <Text style={styles.loadMoreText}>Load older</Text>
+                <Text style={styles.loadMoreText}>{t("activity.loadOlder")}</Text>
               </Pressable>
+            ) : items.length > 0 ? (
+              <Text style={styles.endOfList}>{t("activity.endOfList")}</Text>
             ) : null
           }
         />
@@ -236,7 +240,6 @@ const styles = StyleSheet.create({
   header: {
     ...screenContentPadding,
     paddingBottom: spacing.md,
-    paddingTop: spacing.md,
     gap: spacing.xs,
   },
   eyebrow: {
@@ -281,5 +284,11 @@ const styles = StyleSheet.create({
   loadMoreText: {
     ...typography.button,
     color: colors.primary,
+  },
+  endOfList: {
+    ...typography.caption,
+    color: colors.mutedForeground,
+    textAlign: "center",
+    paddingVertical: spacing.lg,
   },
 });

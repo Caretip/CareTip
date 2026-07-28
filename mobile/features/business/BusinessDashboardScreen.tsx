@@ -1,6 +1,6 @@
 import { StyleSheet, Text, View } from "react-native";
 import { KpiCard } from "@/components/ui/KpiCard";
-import { AreaTrendChart } from "@/components/ui/AreaTrendChart";
+import { EmployeePerformanceChart } from "@/components/ui/EmployeePerformanceChart";
 import { PeriodToggle } from "@/components/ui/PeriodToggle";
 import { Screen } from "@/components/ui/Screen";
 import { ScreenHeader, HeroCard } from "@/components/ui/ScreenHeader";
@@ -11,7 +11,7 @@ import { SkeletonMetricGrid } from "@/components/ui/Skeleton";
 import { useAuth } from "@/hooks/useAuth";
 import { useI18n } from "@/hooks/useI18n";
 import { useBusinessDashboard } from "@/features/business/useBusinessDashboard";
-import { resolveTipPerformanceChartRows } from "@/utils/dashboardChartData";
+import { buildEmployeePerformanceChartRows } from "@/utils/dashboardChartData";
 import { formatCount, formatEur, formatGrowthPercent } from "@/utils/format";
 import { friendlyErrorMessage, isPermissionError } from "@/utils/friendlyError";
 import { colors, spacing, typography } from "@/theme";
@@ -39,14 +39,19 @@ export function BusinessDashboardScreen() {
   const tipsToday = stats?.operationalPulse?.tipsToday;
   const firstName = user?.name?.split(" ")[0] ?? "there";
   const growth = stats?.growthPercent;
+  const employeeCount = stats?.employeeCount ?? profile?.employeeCount ?? 0;
+  const periodTotalTips = stats?.totalTips ?? 0;
+  const hasTipActivity = periodTotalTips > 0;
 
-  const chartRows = resolveTipPerformanceChartRows({
-    rows: stats?.dailyTipDistribution,
-    timeframe,
-    periodTotalTips: stats?.totalTips,
-  });
-  const chartPoints =
-    chartRows?.map((row) => ({ label: row.dayLabel, amount: row.amount })) ?? undefined;
+  const employeePerformance = buildEmployeePerformanceChartRows(stats?.employees, 3);
+  const leader = employeePerformance[0];
+  const leaderMessage =
+    leader != null
+      ? t("businessDashboard.chartPerformanceLeader", {
+          name: leader.name,
+          amount: formatEur(leader.tips),
+        })
+      : null;
 
   return (
     <Screen refreshing={isRefreshing} onRefresh={() => void refresh()}>
@@ -64,11 +69,11 @@ export function BusinessDashboardScreen() {
         isPermissionError(error) ? (
           <EmptyState
             title={t("errors.permissionTitle")}
-            message={friendlyErrorMessage(error, t("errors.permissionBody"))}
+            message={friendlyErrorMessage(error, t("errors.permissionBody"), t)}
           />
         ) : (
           <ErrorState
-            message={friendlyErrorMessage(error, t("businessDashboard.loadError"))}
+            message={friendlyErrorMessage(error, t("businessDashboard.loadError"), t)}
             onRetry={() => void refresh()}
           />
         )
@@ -108,18 +113,25 @@ export function BusinessDashboardScreen() {
               />
               <KpiCard
                 label={t("businessDashboard.activeStaff")}
-                value={formatCount(stats?.employeeCount ?? profile?.employeeCount)}
+                value={formatCount(employeeCount)}
                 hint={t("businessDashboard.onRoster")}
                 variant="plain"
               />
             </View>
           </Section>
 
-          <AreaTrendChart
-            title={t("businessDashboard.chartTitle")}
-            points={chartPoints}
-            loading={chartRows === null && (stats?.totalTips ?? 0) > 0}
-            emptyMessage={t("businessDashboard.chartEmpty")}
+          <EmployeePerformanceChart
+            title={t("businessDashboard.employeePerformanceTitle")}
+            subtitle={t("businessDashboard.employeePerformanceDesc")}
+            rows={employeePerformance}
+            employeeCount={employeeCount}
+            hasTipActivityInPeriod={hasTipActivity}
+            loading={isLoading}
+            leaderMessage={leaderMessage}
+            emptyNoEmployeesTitle={t("businessDashboard.noEmployees")}
+            emptyNoEmployeesMessage={t("businessDashboard.noEmployeesChartHint")}
+            emptyChartTitle={t("emptyState.chartTitle")}
+            emptyChartMessage={t("emptyState.chartDescription")}
           />
 
           <Section title={t("businessDashboard.pulseTitle")} highlighted>

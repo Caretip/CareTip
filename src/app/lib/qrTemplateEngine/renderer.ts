@@ -8,6 +8,7 @@ import {
   QR_ERROR_CORRECTION_LEVEL,
   QR_QUIET_ZONE_MODULES,
 } from "../qrReliability";
+import { getQrCanvasEnvironment } from "../qrCanvasEnvironment";
 import { getEngineTemplate } from "./registry";
 import type {
   QrProceduralShellVariant,
@@ -31,16 +32,6 @@ function isCareTipDefaultTheme(payload: QrTemplateBrandingPayload): boolean {
 }
 
 let qrcodeModulePromise: Promise<typeof import("qrcode")> | null = null;
-const IMAGE_CACHE_MAX = 48;
-const imageCache = new Map<string, Promise<HTMLImageElement | null>>();
-
-function trimImageCache(): void {
-  while (imageCache.size > IMAGE_CACHE_MAX) {
-    const oldest = imageCache.keys().next().value;
-    if (!oldest) break;
-    imageCache.delete(oldest);
-  }
-}
 
 function loadQrCodeModule() {
   qrcodeModulePromise ??= import("qrcode");
@@ -48,21 +39,7 @@ function loadQrCodeModule() {
 }
 
 function loadImage(url: string): Promise<HTMLImageElement | null> {
-  const key = url.trim();
-  if (!key) return Promise.resolve(null);
-  let pending = imageCache.get(key);
-  if (!pending) {
-    pending = new Promise((resolve) => {
-      const img = new Image();
-      img.crossOrigin = "anonymous";
-      img.onload = () => resolve(img);
-      img.onerror = () => resolve(null);
-      img.src = key;
-    });
-    imageCache.set(key, pending);
-    trimImageCache();
-  }
-  return pending;
+  return getQrCanvasEnvironment().loadImage(url);
 }
 
 function roundRect(
@@ -616,7 +593,7 @@ async function drawQrMatrix(
 
   const moduleLight =
     presentation === "inset" || presentation === "panel" ? "#FFFFFF" : payload.qrModuleLight;
-  const qrCanvas = document.createElement("canvas");
+  const qrCanvas = getQrCanvasEnvironment().createCanvas(size, size);
   const { toCanvas } = await loadQrCodeModule();
   await toCanvas(qrCanvas, qrUrl, {
     width: size,
@@ -1143,9 +1120,10 @@ function scaleCanvas(
   opts?: { smooth?: boolean },
 ): HTMLCanvasElement {
   if (scale <= 1) return source;
-  const scaled = document.createElement("canvas");
-  scaled.width = Math.round(source.width * scale);
-  scaled.height = Math.round(source.height * scale);
+  const scaled = getQrCanvasEnvironment().createCanvas(
+    Math.round(source.width * scale),
+    Math.round(source.height * scale),
+  );
   const ctx = scaled.getContext("2d");
   if (!ctx) return source;
   const smooth = opts?.smooth !== false;
@@ -1190,7 +1168,7 @@ export function engineTemplateLayoutMetrics(
 
 export async function renderQrTemplateCard(input: QrTemplateRenderInput): Promise<HTMLCanvasElement | null> {
   const def = getEngineTemplate(input.templateId);
-  if (!def || typeof document === "undefined") return null;
+  if (!def) return null;
 
   const W = def.canvasWidth;
   let H = def.canvasHeight;
@@ -1201,10 +1179,11 @@ export async function renderQrTemplateCard(input: QrTemplateRenderInput): Promis
     }
   }
 
-  const canvas = document.createElement("canvas");
   const pixelScale = Math.min(4, Math.max(1, input.scale ?? 1));
-  canvas.width = Math.round(W * pixelScale);
-  canvas.height = Math.round(H * pixelScale);
+  const canvas = getQrCanvasEnvironment().createCanvas(
+    Math.round(W * pixelScale),
+    Math.round(H * pixelScale),
+  );
   const ctx = canvas.getContext("2d");
   if (!ctx) return null;
 

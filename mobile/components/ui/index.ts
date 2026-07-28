@@ -13,6 +13,7 @@ export { Section, Divider, GroupedList, GroupedRow } from "./Section";
 export { Avatar } from "./Avatar";
 export { TipCard, ActivityCard, NotificationCard } from "./ListCards";
 export { AreaTrendChart } from "./AreaTrendChart";
+export { EmployeePerformanceChart } from "./EmployeePerformanceChart";
 export { FadeIn, PressScale } from "./motion";
 export { QrCodeDisplay } from "./QrCodeDisplay";
 export { Screen } from "./Screen";

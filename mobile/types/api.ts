@@ -39,13 +39,14 @@ export function normalizeApiError(error: unknown): NormalizedApiError {
       code === "ECONNREFUSED" ||
       code === "ENOTFOUND");
   const serverMessage = axiosError.response?.data?.message;
-  const message =
-    (typeof serverMessage === "string" && serverMessage.trim()) ||
-    (isTimeout
-      ? "Request timed out. The server took too long to respond."
-      : isNetworkError
-        ? "Could not reach the CareTip API. Check Wi‑Fi and that the backend is running."
-        : axiosError.message || "Something went wrong. Please try again.");
+  const genericFallback = "Something went wrong. Please try again.";
+  const message = isTimeout
+    ? genericFallback
+    : isNetworkError
+      ? genericFallback
+      : typeof serverMessage === "string" && serverMessage.trim()
+        ? serverMessage.trim()
+        : genericFallback;
 
   return {
     status,

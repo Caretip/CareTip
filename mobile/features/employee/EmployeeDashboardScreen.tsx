@@ -63,11 +63,11 @@ export function EmployeeDashboardScreen() {
         isPermissionError(error) ? (
           <EmptyState
             title={t("errors.permissionTitle")}
-            message={friendlyErrorMessage(error, t("errors.permissionBody"))}
+            message={friendlyErrorMessage(error, t("errors.permissionBody"), t)}
           />
         ) : (
           <ErrorState
-            message={friendlyErrorMessage(error, t("employeeDashboard.loadError"))}
+            message={friendlyErrorMessage(error, t("employeeDashboard.loadError"), t)}
             onRetry={() => void refresh()}
           />
         )
@@ -77,11 +77,11 @@ export function EmployeeDashboardScreen() {
         isPermissionError(tipsError) ? (
           <EmptyState
             title={t("errors.permissionTitle")}
-            message={friendlyErrorMessage(tipsError, t("errors.permissionBody"))}
+            message={friendlyErrorMessage(tipsError, t("errors.permissionBody"), t)}
           />
         ) : (
           <ErrorState
-            message={friendlyErrorMessage(tipsError, t("employeeDashboard.tipsLoadError"))}
+            message={friendlyErrorMessage(tipsError, t("employeeDashboard.tipsLoadError"), t)}
             onRetry={() => void refresh()}
           />
         )

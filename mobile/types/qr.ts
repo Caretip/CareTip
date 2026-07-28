@@ -1,5 +1,8 @@
 export type QrItemType = "business" | "employee" | "location" | "table";
 
+/** Branded QR API mode — employee self-service vs manager QR Studio. */
+export type BrandedQrViewerMode = "employee" | "manager";
+
 export type QrCodeItem = {
   id: string;
   type: QrItemType;

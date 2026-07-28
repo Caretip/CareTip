@@ -2,7 +2,6 @@ import { Redirect, Stack } from "expo-router";
 import { useAuth } from "@/hooks/useAuth";
 import { BootstrapScreen } from "@/components/brand/BootstrapScreen";
 import { getDashboardRouteForRole } from "@/utils/routing";
-import { colors } from "@/theme";
 
 /**
  * Auth stack — hold branded bootstrap until session is known so Login never flashes.
@@ -23,7 +22,8 @@ export default function AuthLayout() {
     <Stack
       screenOptions={{
         headerShown: false,
-        contentStyle: { backgroundColor: colors.background },
+        contentStyle: { backgroundColor: "transparent" },
+        animation: "fade",
       }}
     />
   );

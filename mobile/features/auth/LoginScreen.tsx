@@ -1,18 +1,20 @@
 import { useEffect, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { StyleSheet, Text, View } from "react-native";
+import { Pressable, StyleSheet, Text, View } from "react-native";
 import { useRouter } from "expo-router";
-import { BrandMark } from "@/components/brand/BrandMark";
+import { AuthExperienceShell } from "@/components/auth/AuthExperienceShell";
+import { AuthGlassCard } from "@/components/auth/AuthGlassCard";
 import { Button } from "@/components/ui/Button";
 import { TextField } from "@/components/ui/TextField";
-import { Screen } from "@/components/ui/Screen";
 import { useAuth } from "@/hooks/useAuth";
 import { useI18n } from "@/hooks/useI18n";
 import { loginSchema, type LoginFormValues } from "@/features/auth/loginSchema";
+import { authWebPaths } from "@/constants/authLinks";
 import { isMfaChallenge } from "@/types/auth";
 import { getDashboardRouteForRole } from "@/utils/routing";
 import { friendlyErrorMessage } from "@/utils/friendlyError";
+import { openCareTipWeb } from "@/utils/openCareTipWeb";
 import { resolveLoginLocale } from "@/utils/resolveLoginLocale";
 import { colors, spacing, typography } from "@/theme";
 
@@ -68,22 +70,20 @@ export function LoginScreen() {
 
       router.replace(getDashboardRouteForRole(result.user.role));
     } catch (error) {
-      setFormError(friendlyErrorMessage(error, t("auth.signInFailed")));
+      setFormError(friendlyErrorMessage(error, t("auth.signInFailed"), t));
     }
   });
 
   const bootstrapping = !isHydrated || status === "bootstrapping";
 
   return (
-    <Screen contentContainerStyle={styles.content} scrollEnabled={false}>
-      <View style={styles.hero}>
-        <BrandMark height={40} />
-        <Text style={styles.eyebrow}>{t("auth.welcomeBack")}</Text>
-        <Text style={styles.title}>{t("auth.signIn")}</Text>
-        <Text style={styles.subtitle}>{t("auth.signInSubtitle")}</Text>
-      </View>
+    <AuthExperienceShell>
+      <AuthGlassCard>
+        <View style={styles.cardHeader}>
+          <Text style={styles.cardEyebrow}>{t("auth.welcomeBack")}</Text>
+          <Text style={styles.cardTitle}>{t("auth.loginTitle")}</Text>
+        </View>
 
-      <View style={styles.form}>
         <Controller
           control={control}
           name="email"
@@ -118,6 +118,14 @@ export function LoginScreen() {
           )}
         />
 
+        <Pressable
+          accessibilityRole="button"
+          onPress={() => void openCareTipWeb(authWebPaths.forgotPassword)}
+          style={({ pressed }) => [styles.forgotLink, pressed ? styles.pressed : null]}
+        >
+          <Text style={styles.forgotLabel}>{t("auth.forgotPassword")}</Text>
+        </Pressable>
+
         {formError ? (
           <Text style={styles.formError} accessibilityRole="alert" accessibilityLiveRegion="polite">
             {formError}
@@ -125,43 +133,47 @@ export function LoginScreen() {
         ) : null}
 
         <Button
-          label={t("auth.signIn")}
+          label={t("common.continue")}
           onPress={onSubmit}
           loading={isSubmitting}
           disabled={bootstrapping}
         />
-      </View>
-    </Screen>
+      </AuthGlassCard>
+    </AuthExperienceShell>
   );
 }
 
 const styles = StyleSheet.create({
-  content: {
-    flexGrow: 1,
-    justifyContent: "center",
-    gap: spacing["3xl"],
+  cardHeader: {
+    gap: spacing.xs,
+    marginBottom: spacing.xs,
   },
-  hero: {
-    gap: spacing.sm,
-  },
-  eyebrow: {
+  cardEyebrow: {
     ...typography.overline,
-    color: colors.mutedForeground,
+    color: colors.primary,
   },
-  title: {
-    ...typography.hero,
+  cardTitle: {
+    ...typography.h1,
     color: colors.foreground,
+    fontSize: 26,
   },
-  subtitle: {
-    ...typography.body,
-    color: colors.mutedForeground,
+  forgotLink: {
+    alignSelf: "flex-end",
+    marginTop: -spacing.sm,
+    minHeight: 44,
+    justifyContent: "center",
   },
-  form: {
-    gap: spacing.lg,
+  forgotLabel: {
+    ...typography.caption,
+    color: colors.primary,
+    fontWeight: "700",
   },
   formError: {
     ...typography.caption,
     color: colors.destructive,
     fontWeight: "600",
+  },
+  pressed: {
+    opacity: 0.75,
   },
 });

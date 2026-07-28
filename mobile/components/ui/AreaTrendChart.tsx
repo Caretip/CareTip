@@ -28,7 +28,7 @@ export function AreaTrendChart({
   points,
   loading = false,
   emptyMessage = "No tip activity in this period yet.",
-  height = 168,
+  height = 260,
 }: AreaTrendChartProps) {
   const { width: windowWidth } = useWindowDimensions();
   const chartWidth = Math.min(windowWidth - spacing.xl * 4, 640);

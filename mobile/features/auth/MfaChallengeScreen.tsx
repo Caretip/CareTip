@@ -3,10 +3,10 @@ import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ActivityIndicator, Image, StyleSheet, Text, View } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { BrandMark } from "@/components/brand/BrandMark";
+import { AuthExperienceShell } from "@/components/auth/AuthExperienceShell";
+import { AuthGlassCard } from "@/components/auth/AuthGlassCard";
 import { Button } from "@/components/ui/Button";
 import { TextField } from "@/components/ui/TextField";
-import { Screen } from "@/components/ui/Screen";
 import { useAuth } from "@/hooks/useAuth";
 import { useI18n } from "@/hooks/useI18n";
 import { mfaSchema, type MfaFormValues } from "@/features/auth/loginSchema";
@@ -41,7 +41,7 @@ export function MfaChallengeScreen() {
       })
       .catch((error) => {
         if (!cancelled) {
-          setFormError(friendlyErrorMessage(error, t("auth.mfaSetupFailed")));
+          setFormError(friendlyErrorMessage(error, t("auth.mfaSetupFailed"), t));
         }
       })
       .finally(() => {
@@ -76,37 +76,36 @@ export function MfaChallengeScreen() {
       });
       router.replace(getDashboardRouteForRole(result.user.role));
     } catch (error) {
-      setFormError(friendlyErrorMessage(error, t("auth.mfaFailed")));
+      setFormError(friendlyErrorMessage(error, t("auth.mfaFailed"), t));
     }
   });
 
   return (
-    <Screen contentContainerStyle={styles.content}>
-      <View style={styles.hero}>
-        <BrandMark height={32} />
-        <Text style={styles.eyebrow}>{t("auth.security")}</Text>
-        <Text style={styles.title}>
-          {mfaSetupRequired ? t("auth.mfaSetupTitle") : t("auth.mfaTitle")}
-        </Text>
-        <Text style={styles.subtitle}>
-          {mfaSetupRequired ? t("auth.mfaSetupSubtitle") : t("auth.mfaSubtitle")}
-        </Text>
-      </View>
-
-      {mfaSetupRequired ? (
-        <View style={styles.qrBlock}>
-          {setupLoading ? <ActivityIndicator color={colors.primary} /> : null}
-          {setup?.qrDataUrl ? (
-            <Image
-              source={{ uri: setup.qrDataUrl }}
-              style={styles.qrImage}
-              accessibilityLabel={t("auth.qrA11y")}
-            />
-          ) : null}
+    <AuthExperienceShell showSecondaryActions={false}>
+      <AuthGlassCard>
+        <View style={styles.cardHeader}>
+          <Text style={styles.cardEyebrow}>{t("auth.security")}</Text>
+          <Text style={styles.cardTitle}>
+            {mfaSetupRequired ? t("auth.mfaSetupTitle") : t("auth.mfaTitle")}
+          </Text>
+          <Text style={styles.cardSubtitle}>
+            {mfaSetupRequired ? t("auth.mfaSetupSubtitle") : t("auth.mfaSubtitle")}
+          </Text>
         </View>
-      ) : null}
 
-      <View style={styles.form}>
+        {mfaSetupRequired ? (
+          <View style={styles.qrBlock}>
+            {setupLoading ? <ActivityIndicator color={colors.primary} /> : null}
+            {setup?.qrDataUrl ? (
+              <Image
+                source={{ uri: setup.qrDataUrl }}
+                style={styles.qrImage}
+                accessibilityLabel={t("auth.qrA11y")}
+              />
+            ) : null}
+          </View>
+        ) : null}
+
         <Controller
           control={control}
           name="code"
@@ -123,7 +122,11 @@ export function MfaChallengeScreen() {
           )}
         />
 
-        {formError ? <Text style={styles.formError}>{formError}</Text> : null}
+        {formError ? (
+          <Text style={styles.formError} accessibilityRole="alert">
+            {formError}
+          </Text>
+        ) : null}
 
         <Button label={t("common.continue")} onPress={onSubmit} loading={isSubmitting} />
         <Button
@@ -131,45 +134,39 @@ export function MfaChallengeScreen() {
           variant="ghost"
           onPress={() => router.replace("/(auth)/login")}
         />
-      </View>
-    </Screen>
+      </AuthGlassCard>
+    </AuthExperienceShell>
   );
 }
 
 const styles = StyleSheet.create({
-  content: {
-    flexGrow: 1,
-    justifyContent: "center",
-    gap: spacing["3xl"],
+  cardHeader: {
+    gap: spacing.xs,
+    marginBottom: spacing.xs,
   },
-  hero: {
-    gap: spacing.sm,
-  },
-  eyebrow: {
-    ...typography.caption,
+  cardEyebrow: {
+    ...typography.overline,
     color: colors.primary,
-    letterSpacing: 2,
-    fontWeight: "700",
   },
-  title: {
-    ...typography.section,
+  cardTitle: {
+    ...typography.h1,
     color: colors.foreground,
+    fontSize: 24,
   },
-  subtitle: {
+  cardSubtitle: {
     ...typography.body,
     color: colors.mutedForeground,
+    marginTop: spacing.xs,
   },
   qrBlock: {
     alignItems: "center",
     minHeight: 48,
+    marginBottom: spacing.sm,
   },
   qrImage: {
     width: 200,
     height: 200,
     borderRadius: radius.xl,
-  },
-  form: {
-    gap: spacing.lg,
   },
   formError: {
     ...typography.caption,

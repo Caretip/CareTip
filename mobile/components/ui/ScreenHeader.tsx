@@ -56,7 +56,7 @@ const styles = StyleSheet.create({
     alignItems: "flex-start",
     justifyContent: "space-between",
     gap: spacing.lg,
-    paddingTop: spacing.xs,
+    paddingTop: spacing.md,
   },
   text: {
     flex: 1,
@@ -94,6 +94,7 @@ const styles = StyleSheet.create({
   },
   hero: {
     gap: spacing.md,
+    paddingTop: spacing.sm,
     paddingBottom: spacing.lg,
     marginBottom: spacing.md,
     borderBottomWidth: StyleSheet.hairlineWidth,

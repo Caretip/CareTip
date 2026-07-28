@@ -37,6 +37,24 @@ export type MobileMessages = {
     thisYear: string;
   };
   auth: {
+    brandName: string;
+    tagline: string;
+    loginTitle: string;
+    forgotPassword: string;
+    register: string;
+    enterInviteCode: string;
+    footerMenuTitle: string;
+    footerCompanySection: string;
+    footerSocialSection: string;
+    footerAbout: string;
+    footerContact: string;
+    footerFaq: string;
+    footerPrivacy: string;
+    footerTerms: string;
+    socialFacebook: string;
+    socialInstagram: string;
+    socialLinkedin: string;
+    socialX: string;
     welcomeBack: string;
     signIn: string;
     signInSubtitle: string;
@@ -74,6 +92,15 @@ export type MobileMessages = {
     last60: string;
     tipsCount: string;
     chartTitle: string;
+    tipsPerformanceTitle: string;
+    tipsPerformanceDescWeek: string;
+    tipsPerformanceDescMonth: string;
+    tipsPerformanceDescYear: string;
+    employeePerformanceTitle: string;
+    employeePerformanceDesc: string;
+    chartPerformanceLeader: string;
+    noEmployees: string;
+    noEmployeesChartHint: string;
     chartSubtitle: string;
     chartEmpty: string;
     pulseTitle: string;
@@ -115,6 +142,9 @@ export type MobileMessages = {
     today: string;
     yesterday: string;
     loadOlder: string;
+    loadingOlder: string;
+    loadMoreError: string;
+    endOfList: string;
     tipReceived: string;
     qrScanned: string;
     goalAchieved: string;
@@ -181,6 +211,14 @@ export type MobileMessages = {
     share: string;
     unavailable: string;
     tipLinkHint: string;
+    poweredBy: string;
+    brandedLoadError: string;
+    brandedNetworkError: string;
+    brandedPermissionError: string;
+    brandedNotFound: string;
+    brandedUnavailable: string;
+    usingStandardQr: string;
+    signInRequired: string;
     myQrEyebrow: string;
     myQrTitle: string;
     myQrSubtitle: string;
@@ -276,8 +314,52 @@ export type MobileMessages = {
   errors: {
     generic: string;
     tryAgain: string;
+    dismiss: string;
+    offline: string;
+    timeout: string;
+    unavailable: string;
+    server: string;
+    unauthorized: string;
+    forbidden: string;
+    notFound: string;
     permissionTitle: string;
     permissionBody: string;
+  };
+  emptyState: {
+    chartTitle: string;
+    chartDescription: string;
+  };
+  charts: {
+    tooltipTips: string;
+    weekdays: {
+      mon: string;
+      tue: string;
+      wed: string;
+      thu: string;
+      fri: string;
+      sat: string;
+      sun: string;
+    };
+    months: {
+      jan: string;
+      feb: string;
+      mar: string;
+      apr: string;
+      may: string;
+      jun: string;
+      jul: string;
+      aug: string;
+      sep: string;
+      oct: string;
+      nov: string;
+      dec: string;
+    };
+  };
+  success: {
+    saved: string;
+    qrCreated: string;
+    linkCopied: string;
+    paymentReceived: string;
   };
   admin: {
     title: string;

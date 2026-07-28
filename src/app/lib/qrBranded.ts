@@ -172,7 +172,7 @@ export async function renderBrandedQrUrlToCanvas(
   renderOptions?: QrRenderOptions,
 ): Promise<HTMLCanvasElement | null> {
   const encoded = String(url ?? "").trim();
-  if (!encoded || typeof document === "undefined") return null;
+  if (!encoded) return null;
 
   const brand = resolveQrBranding(branding);
   return renderEngineTemplateFromBranding(encoded, brand, {
@@ -209,7 +209,7 @@ export async function validateBrandedQrReliability(
   diagnostics: QrScanDiagnostics | null;
 }> {
   const encoded = String(url ?? "").trim();
-  if (!encoded || typeof document === "undefined") {
+  if (!encoded) {
     return { canvas: null, report: null, diagnostics: null };
   }
 

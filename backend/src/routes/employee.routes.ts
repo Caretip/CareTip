@@ -10,6 +10,7 @@ import {
 import { requireBusinessVerificationCapability } from "../middleware/requireBusinessVerificationCapability.middleware.js";
 import { requireFeature } from "../services/subscriptionEntitlement.service.js";
 import * as employeeController from "../controllers/employee.controller.js";
+import * as qrController from "../controllers/qr.controller.js";
 import * as goalController from "../controllers/goal.controller.js";
 import { isAllowedImageMimetype } from "../services/upload.service.js";
 import { MULTER_SAFE_LIMITS } from "../lib/multerUploadLimits.js";
@@ -36,6 +37,20 @@ router.get(
   requireVerifiedEmail,
   requireRole(Role.EMPLOYEE),
   employeeController.getMyProfile,
+);
+router.get(
+  "/me/qr/branded",
+  authMiddleware,
+  requireVerifiedEmail,
+  requireRole(Role.EMPLOYEE),
+  qrController.getEmployeeBrandedQr,
+);
+router.get(
+  "/me/qr/branded.png",
+  authMiddleware,
+  requireVerifiedEmail,
+  requireRole(Role.EMPLOYEE),
+  qrController.getEmployeeBrandedQr,
 );
 router.post(
   "/me/ensure-slug",

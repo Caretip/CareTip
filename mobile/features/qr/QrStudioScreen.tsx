@@ -72,6 +72,7 @@ export function QrStudioScreen() {
             subtitle={typeLabels[selected.type]}
             size={240}
             elevated={false}
+            mode="manager"
           />
           <View style={styles.actions}>
             <Button
@@ -103,11 +104,11 @@ export function QrStudioScreen() {
             <EmptyState
               variant="qr"
               title={t("errors.permissionTitle")}
-              message={friendlyErrorMessage(error, t("errors.permissionBody"))}
+              message={friendlyErrorMessage(error, t("errors.permissionBody"), t)}
             />
           ) : (
             <ErrorState
-              message={friendlyErrorMessage(error, t("qr.loadError"))}
+              message={friendlyErrorMessage(error, t("qr.loadError"), t)}
               onRetry={() => void refresh()}
             />
           )}

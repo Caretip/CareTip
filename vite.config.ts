@@ -218,6 +218,7 @@ export default defineConfig(({ mode }) => {
   assetsInclude: ['**/*.svg', '**/*.csv'],
 
   server: {
+    host: true,
     proxy: {
       '/uploads': {
         target: 'http://localhost:3001',

@@ -1,17 +1,27 @@
+/**
+ * Activity Center feed — REST SSOT + activity.created only (web parity).
+ * GET /api/business/activity with per-source cursors; Today filter is client-side.
+ */
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { AppState, type AppStateStatus } from "react-native";
+import { useSocket } from "@/components/providers/SocketProvider";
+import { subscribeActivityCreated } from "@/lib/realtime/subscribeActivityCreated";
 import { fetchBusinessActivity } from "@/services/api/activityService";
 import { fetchBusinessProfile } from "@/services/api/businessService";
-import type { ActivityCenterFilter, BusinessActivityFeedItem } from "@/types/activity";
+import type {
+  ActivityCenterFilter,
+  ActivityEventSource,
+  BusinessActivityFeedItem,
+} from "@/types/activity";
+import { activityFilterToApiSource } from "@/utils/activityCenterFilters";
 import { isWithinVenueLocalDay, resolveBusinessTimezone } from "@/utils/businessVenueTime";
 import { friendlyErrorMessage } from "@/utils/friendlyError";
+import { shouldProcessRealtimeEvent } from "@/utils/realtimeEventDedupe";
+import { useI18n } from "@/hooks/useI18n";
 
 const PAGE_SIZE = 30;
 const MAX_IN_MEMORY = 120;
-
-function activityFilterToApiSource(filter: ActivityCenterFilter): "TIPS" | "QR" | "PAYMENTS" | "all" {
-  if (filter === "today" || filter === "all") return "all";
-  return filter;
-}
+const DISCONNECTED_POLL_MS = 45_000;
 
 function sortByOccurredAtDesc(items: BusinessActivityFeedItem[]): BusinessActivityFeedItem[] {
   return [...items].sort((a, b) => {
@@ -45,7 +55,7 @@ function mergeById(
   return sortByOccurredAtDesc([...map.values()]).slice(0, MAX_IN_MEMORY);
 }
 
-function matchesActivityFilter(
+export function matchesActivityFilter(
   item: BusinessActivityFeedItem,
   filter: ActivityCenterFilter,
   timeZone: string,
@@ -55,133 +65,212 @@ function matchesActivityFilter(
   return item.source === filter;
 }
 
-export function useActivityCenterFeed(enabled: boolean) {
-  const [filter, setFilter] = useState<ActivityCenterFilter>("all");
+type UseActivityCenterFeedOptions = {
+  enabled: boolean;
+  businessId?: string | null;
+};
+
+export function useActivityCenterFeed({ enabled, businessId }: UseActivityCenterFeedOptions) {
+  const { t } = useI18n();
+  const [filter, setFilterState] = useState<ActivityCenterFilter>("all");
   const [pool, setPool] = useState<BusinessActivityFeedItem[]>([]);
-  const [nextCursor, setNextCursor] = useState<string | null>(null);
+  const [cursorsByApiSource, setCursorsByApiSource] = useState<
+    Partial<Record<"all" | ActivityEventSource, string | null>>
+  >({});
   const [venueTimezone, setVenueTimezone] = useState(resolveBusinessTimezone());
   const [isInitialLoading, setIsInitialLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isLoadingOlder, setIsLoadingOlder] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const cursorsRef = useRef<Record<string, string | null>>({});
+
+  const filterRef = useRef(filter);
+  filterRef.current = filter;
+  const timezoneRef = useRef(venueTimezone);
+  timezoneRef.current = venueTimezone;
+  const syncInFlightRef = useRef<Set<string>>(new Set());
+  const bootstrappedRef = useRef(false);
+
+  const { socket, connected } = useSocket();
 
   const items = useMemo(
-    () => pool.filter((item) => matchesActivityFilter(item, filter, venueTimezone)),
+    () => pool.filter((row) => matchesActivityFilter(row, filter, venueTimezone)),
     [pool, filter, venueTimezone],
   );
 
-  const syncSource = useCallback(
-    async (sourceKey: string, apiSource: ReturnType<typeof activityFilterToApiSource>, replacePool = false) => {
-      const result = await fetchBusinessActivity({
-        limit: PAGE_SIZE,
-        source: apiSource,
-      });
-      cursorsRef.current[sourceKey] = result.nextCursor;
-      setNextCursor(result.nextCursor);
-      setPool((prev) => mergeById(prev, result.items, replacePool ? "replace" : "prepend"));
+  const apiSource = activityFilterToApiSource(filter);
+  const nextCursor = cursorsByApiSource[apiSource] ?? null;
+
+  const hasMore = useMemo(() => {
+    if (!nextCursor) return false;
+    if (filter !== "today") return true;
+    const oldest = pool.length > 0 ? pool[pool.length - 1] : null;
+    if (!oldest) return true;
+    return isWithinVenueLocalDay(oldest.occurredAt, venueTimezone);
+  }, [nextCursor, filter, pool, venueTimezone]);
+
+  const syncApiSource = useCallback(
+    async (
+      target: "all" | ActivityEventSource,
+      opts?: { soft?: boolean; replacePool?: boolean },
+    ) => {
+      if (!enabled) return;
+      const key = target;
+      if (syncInFlightRef.current.has(key)) return;
+      syncInFlightRef.current.add(key);
+
+      const soft = opts?.soft !== false;
+      const showFullLoad = !soft && !bootstrappedRef.current;
+      if (showFullLoad) setIsInitialLoading(true);
+      else if (!soft) setIsRefreshing(true);
+      setError(null);
+
+      try {
+        const result = await fetchBusinessActivity({
+          limit: PAGE_SIZE,
+          source: target,
+        });
+        setPool((prev) =>
+          opts?.replacePool
+            ? mergeById([], result.items, "replace")
+            : mergeById(prev, result.items, "prepend"),
+        );
+        setCursorsByApiSource((prev) => ({ ...prev, [target]: result.nextCursor }));
+        bootstrappedRef.current = true;
+      } catch (e) {
+        if (!bootstrappedRef.current) {
+          setError(friendlyErrorMessage(e, t("activity.loadError"), t));
+        }
+      } finally {
+        syncInFlightRef.current.delete(key);
+        setIsInitialLoading(false);
+        setIsRefreshing(false);
+      }
     },
-    [],
+    [enabled],
   );
 
-  const bootstrap = useCallback(async () => {
-    setError(null);
-    try {
-      const profile = await fetchBusinessProfile();
-      const tz = resolveBusinessTimezone(
-        typeof profile.timezone === "string" ? profile.timezone : null,
-      );
-      setVenueTimezone(tz);
-      await syncSource("all", "all", true);
-      if (filter !== "all") {
-        await syncSource(filter, activityFilterToApiSource(filter));
-      }
-    } catch (e) {
-      setError(friendlyErrorMessage(e, "Failed to load activity"));
-    } finally {
-      setIsInitialLoading(false);
-    }
-  }, [filter, syncSource]);
-
-  useEffect(() => {
+  const catchUp = useCallback(async () => {
     if (!enabled) return;
-    void bootstrap();
-  }, [enabled, bootstrap]);
-
-  const refresh = useCallback(async () => {
     setIsRefreshing(true);
     try {
-      await syncSource("all", "all", true);
-      if (filter !== "all") {
-        await syncSource(filter, activityFilterToApiSource(filter));
-      }
-    } catch (e) {
-      setError(friendlyErrorMessage(e, "Failed to refresh"));
+      await syncApiSource(activityFilterToApiSource(filterRef.current), { soft: true });
     } finally {
       setIsRefreshing(false);
     }
-  }, [filter, syncSource]);
+  }, [enabled, syncApiSource]);
 
   const loadOlder = useCallback(async () => {
-    const sourceKey = filter === "today" ? "all" : filter;
-    const cursor = cursorsRef.current[sourceKey] ?? nextCursor;
-    if (!cursor || isLoadingOlder) return;
+    if (!enabled || isLoadingOlder) return;
+    const target = activityFilterToApiSource(filter);
+    const cursor = cursorsByApiSource[target];
+    if (!cursor) return;
 
     setIsLoadingOlder(true);
     try {
       const result = await fetchBusinessActivity({
         limit: PAGE_SIZE,
         cursor,
-        source: activityFilterToApiSource(filter),
+        source: target,
       });
-      cursorsRef.current[sourceKey] = result.nextCursor;
-      setNextCursor(result.nextCursor);
       setPool((prev) => mergeById(prev, result.items, "append"));
+      setCursorsByApiSource((prev) => ({ ...prev, [target]: result.nextCursor }));
     } catch (e) {
-      setError(friendlyErrorMessage(e, "Failed to load more"));
+      setError(friendlyErrorMessage(e, t("activity.loadMoreError"), t));
     } finally {
       setIsLoadingOlder(false);
     }
-  }, [filter, isLoadingOlder, nextCursor]);
+  }, [enabled, isLoadingOlder, cursorsByApiSource, filter]);
 
-  const hasMore = useMemo(() => {
-    const sourceKey = filter === "today" ? "all" : filter;
-    const cursor = cursorsRef.current[sourceKey] ?? nextCursor;
-    if (!cursor) return false;
-    if (filter === "today" && items.length > 0) {
-      const oldest = items[items.length - 1];
-      if (oldest && !isWithinVenueLocalDay(oldest.occurredAt, venueTimezone)) {
-        return false;
+  useEffect(() => {
+    if (!enabled) return;
+    let cancelled = false;
+    void (async () => {
+      try {
+        const profile = await fetchBusinessProfile();
+        if (cancelled) return;
+        const tz = resolveBusinessTimezone(
+          typeof profile.timezone === "string" ? profile.timezone : null,
+        );
+        setVenueTimezone(tz);
+      } catch {
+        /* keep default venue TZ */
       }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [enabled]);
+
+  useEffect(() => {
+    if (!enabled) {
+      setPool([]);
+      setCursorsByApiSource({});
+      setIsInitialLoading(false);
+      bootstrappedRef.current = false;
+      return;
     }
-    return Boolean(cursor);
-  }, [filter, items, nextCursor, venueTimezone]);
-
-  const changeFilter = useCallback(
-    async (next: ActivityCenterFilter) => {
-      setFilter(next);
-      if (next !== "all" && next !== "today") {
-        try {
-          await syncSource(next, activityFilterToApiSource(next));
-        } catch {
-          /* pool filter still applies */
-        }
+    void (async () => {
+      await syncApiSource("all", { soft: false, replacePool: true });
+      const active = activityFilterToApiSource(filterRef.current);
+      if (active !== "all") {
+        void syncApiSource(active, { soft: true });
       }
-    },
-    [syncSource],
-  );
+    })();
+  }, [enabled, syncApiSource]);
+
+  const prevFilterRef = useRef(filter);
+  useEffect(() => {
+    if (!enabled || !bootstrappedRef.current) return;
+    if (prevFilterRef.current === filter) return;
+    prevFilterRef.current = filter;
+    const target = activityFilterToApiSource(filter);
+    void syncApiSource(target, { soft: true });
+  }, [enabled, filter, syncApiSource]);
+
+  useEffect(() => {
+    if (!socket || !enabled) return;
+    return subscribeActivityCreated(socket, (item, meta) => {
+      const dedupeId = meta?.eventId ?? item.id;
+      if (!shouldProcessRealtimeEvent(dedupeId)) return;
+      if (!shouldProcessRealtimeEvent(`activity-row:${item.id}`)) return;
+      if (businessId && meta?.businessId && meta.businessId !== businessId) return;
+      setPool((prev) => mergeById(prev, [item], "prepend"));
+    });
+  }, [socket, enabled, businessId]);
+
+  useEffect(() => {
+    if (!enabled || connected) return;
+    const id = setInterval(() => {
+      void catchUp();
+    }, DISCONNECTED_POLL_MS);
+    return () => clearInterval(id);
+  }, [enabled, connected, catchUp]);
+
+  useEffect(() => {
+    if (!enabled) return;
+    const onAppState = (next: AppStateStatus) => {
+      if (next === "active") void catchUp();
+    };
+    const sub = AppState.addEventListener("change", onAppState);
+    return () => sub.remove();
+  }, [enabled, catchUp]);
+
+  const changeFilter = useCallback((next: ActivityCenterFilter) => {
+    setFilterState(next);
+  }, []);
 
   return {
     filter,
     setFilter: changeFilter,
     items,
     venueTimezone,
+    nextCursor,
     isInitialLoading,
     isRefreshing,
     isLoadingOlder,
     error,
     hasMore,
-    refresh,
+    refresh: catchUp,
     loadOlder,
   };
 }

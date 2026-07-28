@@ -211,8 +211,8 @@ apiClient.interceptors.response.use(
       notifySessionExpired();
     }
 
-    // Transport failures are shown by screen ErrorStates — avoid global "offline" spam.
-    if (status && status !== 401) {
+    // Screen-level ErrorStates handle HTTP failures — only surface transport issues globally.
+    if (!status && !isPublicAuthPath(original?.url)) {
       reportGlobalError(error);
     } else if (!status && __DEV__) {
       const normalized = normalizeApiError(error);

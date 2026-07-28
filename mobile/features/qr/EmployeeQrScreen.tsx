@@ -19,6 +19,7 @@ import { colors, spacing, typography } from "@/theme";
 export function EmployeeQrScreen() {
   const { t } = useI18n();
   const [cached, setCached] = useState<Awaited<ReturnType<typeof loadEmployeeQrCache>>>(null);
+  const [qrReloadKey, setQrReloadKey] = useState(0);
 
   const { data: profile, isLoading, isError, error, refetch, isRefetching } = useQuery({
     queryKey: queryKeys.employeeMe,
@@ -68,7 +69,13 @@ export function EmployeeQrScreen() {
   };
 
   return (
-    <Screen refreshing={isRefetching} onRefresh={() => void refetch()}>
+    <Screen
+      refreshing={isRefetching}
+      onRefresh={() => {
+        setQrReloadKey((k) => k + 1);
+        void refetch();
+      }}
+    >
       <View style={styles.hero}>
         <Text style={styles.eyebrow}>{t("qr.myQrEyebrow")}</Text>
         <Text style={styles.title}>{t("qr.myQrTitle")}</Text>
@@ -84,7 +91,7 @@ export function EmployeeQrScreen() {
         </View>
       ) : isError && !url ? (
         <ErrorState
-          message={friendlyErrorMessage(error, t("qr.loadError"))}
+          message={friendlyErrorMessage(error, t("qr.loadError"), t)}
           onRetry={() => void refetch()}
         />
       ) : (
@@ -94,6 +101,8 @@ export function EmployeeQrScreen() {
             title={displayName}
             subtitle={t("qr.employeeQr")}
             size={240}
+            mode="employee"
+            reloadKey={qrReloadKey}
           />
           <View style={styles.actions}>
             <Button label={t("qr.copyLink")} onPress={() => void handleCopy()} />

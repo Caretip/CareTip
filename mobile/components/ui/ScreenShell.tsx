@@ -47,6 +47,7 @@ const styles = StyleSheet.create({
 
 export const screenContentPadding = {
   paddingHorizontal: spacing.xl,
+  paddingTop: spacing.md,
   paddingBottom: spacing["7xl"] + spacing["2xl"],
   width: "100%" as const,
   maxWidth: 720,

@@ -122,7 +122,7 @@ export function SettingsScreen({ role }: SettingsScreenProps) {
     } catch (e) {
       setLocale(previous);
       await setLanguage(previous);
-      Alert.alert(t("common.error"), friendlyErrorMessage(e, t("settings.languageError")));
+      Alert.alert(t("common.error"), friendlyErrorMessage(e, t("settings.languageError"), t));
     } finally {
       setLocaleSaving(false);
     }
@@ -135,7 +135,7 @@ export function SettingsScreen({ role }: SettingsScreenProps) {
       setCurrentPassword("");
       setNewPassword("");
     } catch (e) {
-      Alert.alert(t("common.error"), friendlyErrorMessage(e, t("settings.passwordError")));
+      Alert.alert(t("common.error"), friendlyErrorMessage(e, t("settings.passwordError"), t));
     }
   };
 
@@ -145,7 +145,7 @@ export function SettingsScreen({ role }: SettingsScreenProps) {
       const setup = await setupTwoFactor();
       setMfaSetup(setup);
     } catch (e) {
-      Alert.alert(t("common.error"), friendlyErrorMessage(e, t("settings.setupError")));
+      Alert.alert(t("common.error"), friendlyErrorMessage(e, t("settings.setupError"), t));
     } finally {
       setMfaSetupLoading(false);
     }
@@ -167,7 +167,7 @@ export function SettingsScreen({ role }: SettingsScreenProps) {
       setMfaSetup(null);
       void twoFactorQuery.refetch();
     } catch (e) {
-      Alert.alert(t("common.error"), friendlyErrorMessage(e, t("settings.enableError")));
+      Alert.alert(t("common.error"), friendlyErrorMessage(e, t("settings.enableError"), t));
     }
   };
 
@@ -179,7 +179,7 @@ export function SettingsScreen({ role }: SettingsScreenProps) {
       setMfaSetup(null);
       void twoFactorQuery.refetch();
     } catch (e) {
-      Alert.alert(t("common.error"), friendlyErrorMessage(e, t("settings.disableError")));
+      Alert.alert(t("common.error"), friendlyErrorMessage(e, t("settings.disableError"), t));
     }
   };
 

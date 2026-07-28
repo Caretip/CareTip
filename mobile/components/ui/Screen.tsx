@@ -56,6 +56,7 @@ const styles = StyleSheet.create({
   },
   content: {
     paddingHorizontal: spacing.xl,
+    paddingTop: spacing.md,
     paddingBottom: spacing["7xl"] + spacing["2xl"],
     gap: spacing.lg,
     width: "100%",
@@ -63,7 +64,7 @@ const styles = StyleSheet.create({
     alignSelf: "center",
   },
   header: {
-    paddingTop: spacing.md,
+    paddingTop: spacing.lg,
     gap: spacing.sm,
   },
 });

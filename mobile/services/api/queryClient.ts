@@ -46,6 +46,8 @@ export const queryKeys = {
   twoFactor: ["settings", "2fa"] as const,
   locations: ["locations"] as const,
   tables: ["tables"] as const,
+  brandedQr: (mode: "employee" | "manager", targetUrl: string) =>
+    ["brandedQr", mode, targetUrl] as const,
 } as const;
 
 export const queryDefaults = {

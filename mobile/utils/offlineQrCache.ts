@@ -51,6 +51,8 @@ export async function clearOfflineQrItems(): Promise<void> {
 }
 
 /** Clear all QR offline caches on logout (shared-device hygiene). */
+import { clearBrandedQrImageCaches } from "@/utils/brandedQrImageCache";
+
 export async function clearAllOfflineQrCaches(): Promise<void> {
-  await Promise.all([clearOfflineQrItems(), clearEmployeeQrCache()]);
+  await Promise.all([clearOfflineQrItems(), clearEmployeeQrCache(), clearBrandedQrImageCaches()]);
 }

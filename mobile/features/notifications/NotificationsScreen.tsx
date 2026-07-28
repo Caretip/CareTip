@@ -114,7 +114,7 @@ export function NotificationsScreen() {
         </View>
       ) : isError && items.length === 0 ? (
         <ErrorState
-          message={friendlyErrorMessage(error, t("notifications.loadError"))}
+          message={friendlyErrorMessage(error, t("notifications.loadError"), t)}
           onRetry={() => void refetch()}
         />
       ) : (

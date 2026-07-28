@@ -1,7 +1,6 @@
 import { StyleSheet, Text, View } from "react-native";
-import QRCode from "react-native-qrcode-svg";
+import { BrandedQrImage, type BrandedQrViewerMode } from "@/components/qr/BrandedQrImage";
 import { useI18n } from "@/hooks/useI18n";
-import { maskIdsInUrl } from "@/utils/format";
 import { colors, radius, spacing, typography } from "@/theme";
 
 type QrCodeDisplayProps = {
@@ -11,8 +10,15 @@ type QrCodeDisplayProps = {
   size?: number;
   elevated?: boolean;
   hideRawUrl?: boolean;
+  /** Web renderer mode — employee My QR vs manager QR Studio inventory. */
+  mode: BrandedQrViewerMode;
+  /** Increment to revalidate branded QR from API after pull-to-refresh. */
+  reloadKey?: number;
 };
 
+/**
+ * Branded QR card — displays the server-rendered PNG (shared pipeline with web).
+ */
 export function QrCodeDisplay({
   value,
   title,
@@ -20,6 +26,8 @@ export function QrCodeDisplay({
   size = 220,
   elevated = false,
   hideRawUrl = true,
+  mode,
+  reloadKey,
 }: QrCodeDisplayProps) {
   const { t } = useI18n();
 
@@ -32,15 +40,14 @@ export function QrCodeDisplay({
     );
   }
 
+  const minHeight = Math.max(size + 140, 380);
+
   return (
     <View style={[styles.wrap, elevated ? styles.elevated : null]}>
-      <Text style={styles.title}>{title}</Text>
       {subtitle ? <Text style={styles.subtitle}>{subtitle}</Text> : null}
-      <View style={styles.qrWrap}>
-        <QRCode value={value} size={size} color={colors.foreground} backgroundColor="#FFFFFF" />
-      </View>
+      <BrandedQrImage targetUrl={value} mode={mode} minHeight={minHeight} reloadKey={reloadKey} />
       <Text style={styles.url} numberOfLines={2}>
-        {hideRawUrl ? t("qr.tipLinkHint") : maskIdsInUrl(value)}
+        {hideRawUrl ? t("qr.tipLinkHint") : value}
       </Text>
     </View>
   );
@@ -50,6 +57,7 @@ const styles = StyleSheet.create({
   wrap: {
     gap: spacing.md,
     alignItems: "center",
+    width: "100%",
   },
   elevated: {
     backgroundColor: colors.card,
@@ -67,13 +75,6 @@ const styles = StyleSheet.create({
     ...typography.caption,
     color: colors.mutedForeground,
     textAlign: "center",
-  },
-  qrWrap: {
-    padding: spacing.lg,
-    backgroundColor: "#FFFFFF",
-    borderRadius: radius.lg,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: colors.border,
   },
   url: {
     ...typography.caption,

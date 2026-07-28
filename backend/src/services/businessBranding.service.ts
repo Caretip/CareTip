@@ -17,6 +17,7 @@ import {
   type BusinessBrandingSettingsDto,
 } from "./businessBranding.dto.js";
 import { emitBusinessDataChanged } from "../socket/socketEmitters.js";
+import { invalidateBrandedQrCacheForBusiness } from "./qr/brandedQrRender.service.js";
 
 const WELCOME_MAX = 120;
 const THANK_YOU_MAX = 250;
@@ -167,6 +168,7 @@ export async function updateBrandingSettings(
   }
 
   emitBusinessDataChanged(businessId, "branding_updated");
+  invalidateBrandedQrCacheForBusiness(businessId);
   return toBusinessBrandingSettingsDto(updated, true);
 }
 
@@ -177,8 +179,10 @@ export async function setBusinessBannerPath(businessId: string, publicPath: stri
   });
   trackProductEvent("branding_banner_uploaded", { businessId });
   emitBusinessDataChanged(businessId, "branding_updated");
+  invalidateBrandedQrCacheForBusiness(businessId);
 }
 
 export function trackBrandingLogoUploaded(businessId: string): void {
   trackProductEvent("branding_logo_uploaded", { businessId });
+  invalidateBrandedQrCacheForBusiness(businessId);
 }

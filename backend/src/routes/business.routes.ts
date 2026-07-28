@@ -4,6 +4,7 @@ import { authMiddleware, requireRole, requireVerifiedEmail } from "../middleware
 import { requireBusinessVerificationCapability } from "../middleware/requireBusinessVerificationCapability.middleware.js";
 import { requireCompletedOnboarding } from "../middleware/requireCompletedOnboarding.middleware.js";
 import * as businessController from "../controllers/business.controller.js";
+import * as qrController from "../controllers/qr.controller.js";
 import * as activityController from "../controllers/activity.controller.js";
 import { businessUploadLogo, businessUploadVerification, businessUploadBanner } from "../middleware/businessUpload.middleware.js";
 import { requireBusinessLogoUpload } from "../middleware/requireBusinessLogoUpload.middleware.js";
@@ -102,6 +103,20 @@ router.patch(
   requireRole(Role.MANAGER),
   requireBrandingCustomization,
   businessController.patchMyBrandingSettings,
+);
+router.get(
+  "/qr/branded",
+  authMiddleware,
+  requireVerifiedEmail,
+  requireRole(Role.MANAGER),
+  qrController.getBusinessBrandedQr,
+);
+router.get(
+  "/qr/branded.png",
+  authMiddleware,
+  requireVerifiedEmail,
+  requireRole(Role.MANAGER),
+  qrController.getBusinessBrandedQr,
 );
 router.post(
   "/profile/banner",
