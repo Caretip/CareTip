@@ -28,6 +28,11 @@ export function formatGrowthPercent(value: number | null | undefined): string {
   return `${sign}${value.toFixed(1)}%`;
 }
 
+export function formatPercent(value: number | null | undefined): string {
+  if (value == null || !Number.isFinite(value)) return "—";
+  return `${value.toFixed(1)}%`;
+}
+
 /** Mask UUID segments in guest-facing URLs for display (QR payload stays full). */
 export function maskIdsInUrl(url: string): string {
   return url.replace(

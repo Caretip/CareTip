@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import {
   ActivityIndicator,
   FlatList,
@@ -13,14 +13,15 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { ErrorState } from "@/components/ui/ErrorState";
 import { SkeletonListRows } from "@/components/ui/Skeleton";
 import { TipCard } from "@/components/ui/ListCards";
-import { ScreenHeader } from "@/components/ui/ScreenHeader";
+import { DetailScreenHeader } from "@/components/ui/DetailScreenHeader";
 import { useBusinessTipsList, useEmployeeTipsList } from "@/hooks/useTipsList";
 import { useI18n } from "@/hooks/useI18n";
 import { formatEur } from "@/utils/format";
 import { formatTipStatus } from "@/utils/labels";
 import { friendlyErrorMessage } from "@/utils/friendlyError";
 import type { TipActivityRow, TipStatus } from "@/types/tips";
-import { colors, spacing } from "@/theme";
+import { LIST_PERF } from "@/constants/listPerf";
+import { colors, spacing, surface } from "@/theme";
 
 type TipsListScreenProps = {
   role: "business" | "employee";
@@ -53,53 +54,113 @@ export function TipsListScreen({ role, basePath }: TipsListScreenProps) {
   const [range, setRange] = useState<"today" | "week" | "month">("month");
   const [status, setStatus] = useState<"all" | TipStatus>("all");
 
-  const params = {
-    q: search,
-    range,
-    ...(status !== "all" ? { status } : {}),
-  };
+  const params = useMemo(
+    () => ({
+      q: search,
+      range,
+      ...(status !== "all" ? { status } : {}),
+    }),
+    [search, range, status],
+  );
 
-  const businessQuery = useBusinessTipsList(params);
-  const employeeQuery = useEmployeeTipsList(params);
+  const businessQuery = useBusinessTipsList(params, { enabled: role === "business" });
+  const employeeQuery = useEmployeeTipsList(params, { enabled: role === "employee" });
   const query = role === "business" ? businessQuery : employeeQuery;
 
-  const items = query.data?.pages.flatMap((p) => p.items) ?? [];
+  const items = useMemo(
+    () => query.data?.pages.flatMap((p) => p.items) ?? [],
+    [query.data?.pages],
+  );
   const total = query.data?.pages[0]?.total ?? 0;
   const timezone = query.data?.pages[0]?.timezone;
   const refreshControl = useListRefreshControl(query.isRefetching, () => void query.refetch());
 
-  const rangeOptions = [
-    { value: "today" as const, label: t("period.today") },
-    { value: "week" as const, label: t("period.week") },
-    { value: "month" as const, label: t("period.month") },
-  ];
+  const rangeOptions = useMemo(
+    () => [
+      { value: "today" as const, label: t("period.today") },
+      { value: "week" as const, label: t("period.week") },
+      { value: "month" as const, label: t("period.month") },
+    ],
+    [t],
+  );
 
-  const statusOptions = [
-    { value: "all" as const, label: t("activity.filterAll") },
-    {
-      value: "success" as const,
-      label: role === "business" ? t("status.success") : t("status.paid"),
-    },
-    { value: "pending" as const, label: t("status.pending") },
-    { value: "failed" as const, label: t("status.failed") },
-  ];
-
-  const openDetail = (tip: TipActivityRow) => {
-    router.push({
-      pathname: `${basePath}/[id]` as never,
-      params: {
-        id: tip.id,
-        payload: encodeURIComponent(JSON.stringify(tip)),
+  const statusOptions = useMemo(
+    () => [
+      { value: "all" as const, label: t("activity.filterAll") },
+      {
+        value: "success" as const,
+        label: role === "business" ? t("status.success") : t("status.paid"),
       },
-    });
-  };
+      { value: "pending" as const, label: t("status.pending") },
+      { value: "failed" as const, label: t("status.failed") },
+    ],
+    [role, t],
+  );
+
+  const openDetail = useCallback(
+    (tip: TipActivityRow) => {
+      router.push({
+        pathname: `${basePath}/[id]` as never,
+        params: {
+          id: tip.id,
+          payload: encodeURIComponent(JSON.stringify(tip)),
+        },
+      });
+    },
+    [basePath, router],
+  );
+
+  const renderItem = useCallback(
+    ({ item }: { item: TipActivityRow }) => (
+      <TipCard
+        inset
+        amount={formatEur(item.amount)}
+        statusLabel={formatTipStatus(item.status, role)}
+        statusTone={statusTone(item.status)}
+        staffName={item.staffName ?? t("tips.staff")}
+        meta={formatTipDate(item.createdAt, timezone)}
+        location={item.locationName}
+        onPress={() => openDetail(item)}
+      />
+    ),
+    [openDetail, role, t, timezone],
+  );
+
+  const keyExtractor = useCallback((item: TipActivityRow) => item.id, []);
+
+  const handleEndReached = useCallback(() => {
+    if (query.hasNextPage && !query.isFetchingNextPage) void query.fetchNextPage();
+  }, [query]);
+
+  const listEmpty = useMemo(
+    () => (
+      <EmptyState
+        variant="tips"
+        title={t("tips.emptyTitle")}
+        message={t("tips.emptyMessage")}
+      />
+    ),
+    [t],
+  );
+
+  const listFooter = useMemo(
+    () =>
+      query.isFetchingNextPage ? (
+        <ActivityIndicator color={colors.primary} style={styles.footerLoader} />
+      ) : null,
+    [query.isFetchingNextPage],
+  );
+
+  const menuFallbackHref =
+    role === "business" ? "/(app)/business/menu" : "/(app)/employee/menu";
 
   return (
     <ScreenShell>
       <View style={styles.header}>
-        <ScreenHeader
+        <DetailScreenHeader
           title={role === "business" ? t("tips.businessTitle") : t("tips.employeeTitle")}
           subtitle={t("tips.transactions", { count: total })}
+          fallbackHref={menuFallbackHref}
         />
       </View>
 
@@ -128,36 +189,15 @@ export function TipsListScreen({ role, basePath }: TipsListScreenProps) {
       ) : (
         <FlatList
           data={items}
-          keyExtractor={(item) => item.id}
+          keyExtractor={keyExtractor}
+          renderItem={renderItem}
           contentContainerStyle={styles.list}
           refreshControl={refreshControl}
-          onEndReached={() => {
-            if (query.hasNextPage && !query.isFetchingNextPage) void query.fetchNextPage();
-          }}
+          onEndReached={handleEndReached}
           onEndReachedThreshold={0.4}
-          ListEmptyComponent={
-            <EmptyState
-              variant="tips"
-              title={t("tips.emptyTitle")}
-              message={t("tips.emptyMessage")}
-            />
-          }
-          ListFooterComponent={
-            query.isFetchingNextPage ? (
-              <ActivityIndicator color={colors.primary} style={styles.footerLoader} />
-            ) : null
-          }
-          renderItem={({ item }) => (
-            <TipCard
-              amount={formatEur(item.amount)}
-              statusLabel={formatTipStatus(item.status, role)}
-              statusTone={statusTone(item.status)}
-              staffName={item.staffName ?? t("tips.staff")}
-              meta={formatTipDate(item.createdAt, timezone)}
-              location={item.locationName}
-              onPress={() => openDetail(item)}
-            />
-          )}
+          ListEmptyComponent={listEmpty}
+          ListFooterComponent={listFooter}
+          {...LIST_PERF}
         />
       )}
     </ScreenShell>
@@ -181,6 +221,11 @@ const styles = StyleSheet.create({
   list: {
     ...screenContentPadding,
     flexGrow: 1,
+    backgroundColor: colors.card,
+    borderRadius: surface.groupRadius,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.border,
+    overflow: "hidden",
   },
   footerLoader: {
     marginVertical: spacing.lg,

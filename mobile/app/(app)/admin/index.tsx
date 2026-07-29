@@ -1,11 +1,12 @@
+import { Redirect, useRouter } from "expo-router";
 import { StyleSheet, Text, View } from "react-native";
-import { useRouter } from "expo-router";
 import { Button } from "@/components/ui/Button";
 import { Screen } from "@/components/ui/Screen";
 import { ScreenHeader, HeroCard } from "@/components/ui/ScreenHeader";
 import { Divider, Section } from "@/components/ui/Section";
 import { useAuth } from "@/hooks/useAuth";
 import { useI18n } from "@/hooks/useI18n";
+import { getDashboardRouteForRole } from "@/utils/routing";
 import { colors, spacing, typography } from "@/theme";
 
 /**
@@ -16,6 +17,10 @@ export default function AdminDashboardRoute() {
   const router = useRouter();
   const { t } = useI18n();
   const { user, signOut } = useAuth();
+
+  if (user?.role && user.role !== "SUPER_ADMIN") {
+    return <Redirect href={getDashboardRouteForRole(user.role)} />;
+  }
 
   const handleSignOut = async () => {
     await signOut();

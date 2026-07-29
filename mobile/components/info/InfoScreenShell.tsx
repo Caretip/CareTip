@@ -3,15 +3,19 @@ import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Screen } from "@/components/ui/Screen";
-import { colors, spacing, touchTarget, typography } from "@/theme";
+import { useI18n } from "@/hooks/useI18n";
+import { colors, hitSlop, spacing, touchTarget, typography } from "@/theme";
 
 type InfoScreenShellProps = {
   title: string;
   children: React.ReactNode;
+  /** When false, body is a flex container (for WebView / nested scroll). */
+  scroll?: boolean;
 };
 
-export function InfoScreenShell({ title, children }: InfoScreenShellProps) {
+export function InfoScreenShell({ title, children, scroll = true }: InfoScreenShellProps) {
   const router = useRouter();
+  const { t } = useI18n();
   const insets = useSafeAreaInsets();
 
   return (
@@ -19,10 +23,10 @@ export function InfoScreenShell({ title, children }: InfoScreenShellProps) {
       <View style={styles.header}>
         <Pressable
           accessibilityRole="button"
-          accessibilityLabel="Back"
+          accessibilityLabel={t("common.back")}
           onPress={() => (router.canGoBack() ? router.back() : router.replace("/(auth)/login"))}
           style={styles.back}
-          hitSlop={8}
+          hitSlop={hitSlop.sm}
         >
           <Ionicons name="chevron-back" size={24} color={colors.foreground} />
         </Pressable>
@@ -31,9 +35,13 @@ export function InfoScreenShell({ title, children }: InfoScreenShellProps) {
         </Text>
         <View style={styles.backSpacer} />
       </View>
-      <Screen padded contentContainerStyle={styles.content}>
-        {children}
-      </Screen>
+      {scroll ? (
+        <Screen padded tabSafe={false} contentContainerStyle={styles.content}>
+          {children}
+        </Screen>
+      ) : (
+        <View style={[styles.embeddedBody, styles.content]}>{children}</View>
+      )}
     </View>
   );
 }
@@ -70,5 +78,13 @@ const styles = StyleSheet.create({
   content: {
     gap: spacing.lg,
     paddingTop: spacing.lg,
+  },
+  embeddedBody: {
+    flex: 1,
+    paddingHorizontal: spacing.xl,
+    paddingBottom: spacing.xl,
+    width: "100%",
+    maxWidth: 720,
+    alignSelf: "center",
   },
 });

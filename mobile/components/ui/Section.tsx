@@ -1,5 +1,5 @@
 import { StyleSheet, Text, View, type StyleProp, type ViewStyle } from "react-native";
-import { colors, radius, shadows, spacing, typography } from "@/theme";
+import { colors, spacing, surface, typography } from "@/theme";
 
 type SectionProps = {
   title?: string;
@@ -53,22 +53,19 @@ export function GroupedRow({ children, showDivider = true }: GroupedRowProps) {
 
 const styles = StyleSheet.create({
   section: {
-    gap: spacing.lg,
-    marginBottom: spacing["3xl"],
+    gap: spacing.md,
+    marginBottom: spacing["2xl"],
   },
   highlighted: {
     backgroundColor: colors.card,
-    borderRadius: 22,
+    borderRadius: surface.cardRadius,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: colors.border,
-    padding: spacing.xl,
-    ...shadows.sm,
+    padding: spacing.lg,
   },
   title: {
     ...typography.overline,
     color: colors.mutedForeground,
-    fontSize: 11,
-    letterSpacing: 1,
     marginBottom: spacing.xs,
   },
   subtitle: {
@@ -87,11 +84,10 @@ const styles = StyleSheet.create({
   },
   group: {
     backgroundColor: colors.card,
-    borderRadius: 22,
+    borderRadius: surface.groupRadius,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: colors.border,
     overflow: "hidden",
-    ...shadows.sm,
   },
   groupRow: {
     paddingHorizontal: spacing.xl,

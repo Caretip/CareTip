@@ -1,8 +1,8 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { LayoutAnimation, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { InfoScreenShell } from "@/components/info/InfoScreenShell";
-import { MOBILE_FAQ_ITEMS } from "@/constants/infoContent";
+import { getLocalizedFaqItems } from "@/utils/infoI18n";
 import { useI18n } from "@/hooks/useI18n";
 import { authBrand } from "@/theme/authBrand";
 import { colors, radius, spacing, touchTarget, typography } from "@/theme";
@@ -10,16 +10,24 @@ import { colors, radius, spacing, touchTarget, typography } from "@/theme";
 export function FaqScreen() {
   const { t } = useI18n();
   const [query, setQuery] = useState("");
-  const [openId, setOpenId] = useState<string | null>(MOBILE_FAQ_ITEMS[0]?.id ?? null);
+  const [openId, setOpenId] = useState<string | null>(null);
+
+  const allItems = useMemo(() => getLocalizedFaqItems(t), [t]);
+
+  useEffect(() => {
+    if (openId == null && allItems[0]?.id) {
+      setOpenId(allItems[0].id);
+    }
+  }, [allItems, openId]);
 
   const items = useMemo(() => {
     const q = query.trim().toLowerCase();
-    if (!q) return MOBILE_FAQ_ITEMS;
-    return MOBILE_FAQ_ITEMS.filter(
+    if (!q) return allItems;
+    return allItems.filter(
       (item) =>
         item.question.toLowerCase().includes(q) || item.answer.toLowerCase().includes(q),
     );
-  }, [query]);
+  }, [query, allItems]);
 
   const toggle = (id: string) => {
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
@@ -54,7 +62,7 @@ export function FaqScreen() {
             <Pressable
               key={item.id}
               onPress={() => toggle(item.id)}
-              style={styles.card}
+              style={({ pressed }) => [styles.card, pressed ? styles.cardPressed : null]}
               accessibilityRole="button"
               accessibilityState={{ expanded: open }}
             >
@@ -100,6 +108,10 @@ const styles = StyleSheet.create({
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: colors.border,
     gap: spacing.md,
+  },
+  cardPressed: {
+    opacity: 0.92,
+    backgroundColor: colors.secondary,
   },
   cardHeader: {
     flexDirection: "row",

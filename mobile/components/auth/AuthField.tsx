@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { forwardRef, useState } from "react";
 import {
   Platform,
   StyleSheet,
@@ -15,7 +15,7 @@ import Animated, {
 } from "react-native-reanimated";
 import { Ionicons } from "@expo/vector-icons";
 import { authBrand } from "@/theme/authBrand";
-import { motion, radius, spacing, typography } from "@/theme";
+import { colors, motion, radius, spacing, typography } from "@/theme";
 
 type AuthFieldProps = TextInputProps & {
   label: string;
@@ -25,31 +25,35 @@ type AuthFieldProps = TextInputProps & {
 
 const AnimatedView = Animated.createAnimatedComponent(View);
 
-export function AuthField({
-  label,
-  icon,
-  error,
-  value,
-  onFocus,
-  onBlur,
-  style,
-  ...rest
-}: AuthFieldProps) {
+export const AuthField = forwardRef<TextInput, AuthFieldProps>(function AuthField(
+  {
+    label,
+    icon,
+    error,
+    value,
+    onFocus,
+    onBlur,
+    style,
+    ...rest
+  },
+  ref,
+) {
   const [focused, setFocused] = useState(false);
   const focusProgress = useSharedValue(0);
   const hasValue = Boolean(value && String(value).length > 0);
   const float = focused || hasValue;
+  const errorColor = colors.destructive;
 
   const ringStyle = useAnimatedStyle(() => ({
     borderColor: interpolateColor(
       focusProgress.value,
       [0, 1],
-      [error ? "#E11D48" : "rgba(11, 18, 32, 0.08)", error ? "#E11D48" : authBrand.orange],
+      [error ? errorColor : "rgba(11, 18, 32, 0.08)", error ? errorColor : authBrand.orange],
     ),
   }));
 
   return (
-    <View style={styles.wrap}>
+    <View style={styles.wrap} collapsable={false}>
       <AnimatedView style={[styles.field, ringStyle]}>
         <View style={styles.iconSlot}>
           <Ionicons
@@ -61,6 +65,7 @@ export function AuthField({
         <View style={styles.inputCol}>
           <Text style={[styles.label, float ? styles.labelFloat : null]}>{label}</Text>
           <TextInput
+            ref={ref}
             value={value}
             accessibilityLabel={label}
             placeholderTextColor="transparent"
@@ -91,7 +96,7 @@ export function AuthField({
       ) : null}
     </View>
   );
-}
+});
 
 const styles = StyleSheet.create({
   wrap: {
@@ -149,7 +154,7 @@ const styles = StyleSheet.create({
   },
   error: {
     ...typography.caption,
-    color: "#E11D48",
+    color: colors.destructive,
     fontWeight: "600",
     paddingHorizontal: spacing.xs,
   },

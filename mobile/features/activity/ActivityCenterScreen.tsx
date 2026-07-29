@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from "react";
+import { useCallback, useMemo, memo } from "react";
 import {
   ActivityIndicator,
   FlatList,
@@ -8,7 +8,7 @@ import {
   View,
 } from "react-native";
 import { ActivityCard } from "@/components/ui/ListCards";
-import { ScreenHeader } from "@/components/ui/ScreenHeader";
+import { DetailScreenHeader } from "@/components/ui/DetailScreenHeader";
 import { PeriodToggle } from "@/components/ui/PeriodToggle";
 import { ScreenShell, screenContentPadding, useListRefreshControl } from "@/components/ui/ScreenShell";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -26,6 +26,7 @@ import { getActivityAmount, getActivitySubtitle, getActivityTitle } from "@/util
 import { formatActivityVenueTimeParts } from "@/utils/businessVenueTime";
 import { formatTimeAgo } from "@/utils/formatTimeAgo";
 import { formatEur } from "@/utils/format";
+import { LIST_PERF } from "@/constants/listPerf";
 import { colors, spacing, typography } from "@/theme";
 
 const SOURCE_TONE: Record<
@@ -40,14 +41,9 @@ const SOURCE_TONE: Record<
   SYSTEM: "neutral",
 };
 
-const SOURCE_LABEL: Record<ActivityEventSource, string> = {
-  TIPS: "Tip",
-  QR: "QR",
-  PAYMENTS: "Payment",
-  GOALS: "Goal",
-  STAFF: "Staff",
-  SYSTEM: "System",
-};
+function sourceLabelKey(source: ActivityEventSource): string {
+  return `activity.source.${source.toLowerCase()}` as const;
+}
 
 function dayGroupKey(iso: string, venueTimezone: string): string {
   try {
@@ -62,16 +58,18 @@ function dayGroupKey(iso: string, venueTimezone: string): string {
   }
 }
 
-function ActivityRow({
+const ActivityRow = memo(function ActivityRow({
   item,
   venueTimezone,
   hideRelative,
   isLast,
+  sourceLabel,
 }: {
   item: BusinessActivityFeedItem;
   venueTimezone: string;
   hideRelative: boolean;
   isLast: boolean;
+  sourceLabel: string;
 }) {
   const amount = getActivityAmount(item);
   const parts = formatActivityVenueTimeParts(item.occurredAt, venueTimezone);
@@ -84,12 +82,12 @@ function ActivityRow({
       subtitle={subtitle}
       meta={`${parts.timeText}${!hideRelative ? ` · ${formatTimeAgo(item.occurredAt)}` : ""}`}
       amount={amount != null ? formatEur(amount) : null}
-      badgeLabel={SOURCE_LABEL[item.source] ?? item.source}
+      badgeLabel={sourceLabel}
       badgeTone={tone}
       isLast={isLast}
     />
   );
-}
+});
 
 export function ActivityCenterScreen() {
   const { t } = useI18n();
@@ -167,19 +165,27 @@ export function ActivityCenterScreen() {
           venueTimezone={venueTimezone}
           hideRelative={filter === "today"}
           isLast={item.isLast}
+          sourceLabel={t(sourceLabelKey(item.item.source))}
         />
       );
     },
-    [venueTimezone, filter],
+    [venueTimezone, filter, t],
   );
 
   const refreshControl = useListRefreshControl(isRefreshing, () => void refresh());
 
+  const keyExtractor = useCallback((row: ListEntry) => row.id, []);
+
+  const handleEndReached = useCallback(() => {
+    if (hasMore && !isLoadingOlder) void loadOlder();
+  }, [hasMore, isLoadingOlder, loadOlder]);
+
   return (
     <ScreenShell>
       <View style={styles.header}>
-        <ScreenHeader
+        <DetailScreenHeader
           title={t("activity.title")}
+          fallbackHref="/(app)/business/menu"
         />
       </View>
 
@@ -199,14 +205,13 @@ export function ActivityCenterScreen() {
       ) : (
         <FlatList
           data={flatData}
-          keyExtractor={(row) => row.id}
+          keyExtractor={keyExtractor}
           renderItem={renderItem}
           contentContainerStyle={styles.list}
           refreshControl={refreshControl}
-          onEndReached={() => {
-            if (hasMore && !isLoadingOlder) void loadOlder();
-          }}
+          onEndReached={handleEndReached}
           onEndReachedThreshold={0.4}
+          {...LIST_PERF}
           ListEmptyComponent={
             <EmptyState
               variant="activity"

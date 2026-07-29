@@ -1,39 +1,46 @@
 import { Linking, Pressable, StyleSheet, Text, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { InfoScreenShell } from "@/components/info/InfoScreenShell";
-import { BUSINESS_HOURS, CONTACT_CHANNELS } from "@/constants/infoContent";
-import { openCareTipWeb } from "@/utils/openCareTipWeb";
-import { useI18n } from "@/hooks/useI18n";
+import { CONTACT_CHANNEL_DEFS } from "@/constants/infoContent";
+import { useI18n } from "@/hooks/useI18n";import {
+  getBusinessHoursRows,
+  getContactChannelSubtitle,
+  getContactChannelTitle,
+  type ContactChannelId,
+} from "@/utils/infoI18n";
 import { authBrand } from "@/theme/authBrand";
 import { colors, radius, spacing, touchTarget, typography } from "@/theme";
+import { hapticLight } from "@/utils/haptics";
 
 export function ContactScreen() {
   const { t } = useI18n();
+  const hoursRows = getBusinessHoursRows(t);
 
   const openChannel = async (href: string) => {
-    if (href.startsWith("/")) {
-      await openCareTipWeb(href);
-      return;
-    }
+    hapticLight();
     await Linking.openURL(href);
   };
-
   return (
     <InfoScreenShell title={t("info.contactTitle")}>
       <Text style={styles.lead}>{t("info.contactLead")}</Text>
-      {CONTACT_CHANNELS.map((channel) => (
+      {CONTACT_CHANNEL_DEFS.map((channel) => (
         <Pressable
           key={channel.id}
           style={({ pressed }) => [styles.card, pressed ? styles.pressed : null]}
           onPress={() => void openChannel(channel.href)}
           accessibilityRole="button"
+          accessibilityLabel={`${getContactChannelTitle(t, channel.id as ContactChannelId)}. ${getContactChannelSubtitle(t, channel.id as ContactChannelId)}`}
         >
           <View style={styles.iconWrap}>
             <Ionicons name={channel.icon} size={22} color={authBrand.orange} />
           </View>
           <View style={styles.cardText}>
-            <Text style={styles.cardTitle}>{channel.title}</Text>
-            <Text style={styles.cardSub}>{channel.subtitle}</Text>
+            <Text style={styles.cardTitle}>
+              {getContactChannelTitle(t, channel.id as ContactChannelId)}
+            </Text>
+            <Text style={styles.cardSub}>
+              {getContactChannelSubtitle(t, channel.id as ContactChannelId)}
+            </Text>
           </View>
           <Ionicons name="chevron-forward" size={18} color={colors.mutedForeground} />
         </Pressable>
@@ -41,7 +48,7 @@ export function ContactScreen() {
 
       <Text style={styles.section}>{t("info.businessHours")}</Text>
       <View style={styles.hoursCard}>
-        {BUSINESS_HOURS.map((row) => (
+        {hoursRows.map((row) => (
           <View key={row.day} style={styles.hoursRow}>
             <Text style={styles.hoursDay}>{row.day}</Text>
             <Text style={styles.hoursTime}>{row.hours}</Text>

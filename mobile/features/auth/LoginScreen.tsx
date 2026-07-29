@@ -1,23 +1,28 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import { useRouter } from "expo-router";
 import { AuthExperienceShell } from "@/components/auth/AuthExperienceShell";
 import { AuthGlassCard } from "@/components/auth/AuthGlassCard";
 import { AuthField } from "@/components/auth/AuthField";
 import { AuthContinueButton } from "@/components/auth/AuthContinueButton";
+import { AuthRegisterSheet } from "@/components/auth/AuthRegisterSheet";
+import { GoogleAuthButton } from "@/components/auth/GoogleAuthButton";
 import { useAuth } from "@/hooks/useAuth";
+import { useGoogleAuth } from "@/hooks/useGoogleAuth";
 import { useI18n } from "@/hooks/useI18n";
 import { loginSchema, type LoginFormValues } from "@/features/auth/loginSchema";
-import { authWebPaths } from "@/constants/authLinks";
+import { EMAIL_NOT_VERIFIED } from "@/constants/authErrors";
 import { isMfaChallenge } from "@/types/auth";
-import { getDashboardRouteForRole } from "@/utils/routing";
+import { normalizeApiError } from "@/types/api";
 import { friendlyErrorMessage } from "@/utils/friendlyError";
-import { openCareTipWeb } from "@/utils/openCareTipWeb";
+import { navigateAfterAuth } from "@/utils/postAuthNavigation";
 import { resolveLoginLocale } from "@/utils/resolveLoginLocale";
+import { hapticLight } from "@/utils/haptics";
+import { authCardStyles } from "@/components/auth/authCardStyles";
 import { authBrand } from "@/theme/authBrand";
-import { spacing, typography } from "@/theme";
+import { colors, spacing, touchTarget, typography } from "@/theme";
 
 function resolveTimeZone(): string | undefined {
   try {
@@ -32,12 +37,19 @@ export function LoginScreen() {
   const { t } = useI18n();
   const { signIn, isHydrated, status, isAuthenticated, user } = useAuth();
   const [formError, setFormError] = useState<string | null>(null);
+  const [showVerifyPrompt, setShowVerifyPrompt] = useState(false);
+  const [registerOpen, setRegisterOpen] = useState(false);
+  const passwordRef = useRef<TextInput>(null);
+
+  const { runGoogleAuth, googleLoading, googleConfigured } = useGoogleAuth({
+    onAccountNotRegistered: () => setRegisterOpen(true),
+  });
 
   useEffect(() => {
     if (isHydrated && isAuthenticated && user?.role) {
-      router.replace(getDashboardRouteForRole(user.role));
+      void navigateAfterAuth(router, user);
     }
-  }, [isHydrated, isAuthenticated, user?.role, router]);
+  }, [isHydrated, isAuthenticated, user, router]);
 
   const {
     control,
@@ -50,6 +62,7 @@ export function LoginScreen() {
 
   const onSubmit = handleSubmit(async (values) => {
     setFormError(null);
+    setShowVerifyPrompt(false);
     try {
       const result = await signIn({
         email: values.email.trim(),
@@ -69,118 +82,167 @@ export function LoginScreen() {
         return;
       }
 
-      router.replace(getDashboardRouteForRole(result.user.role));
+      await navigateAfterAuth(router, result.user);
     } catch (error) {
+      const normalized = normalizeApiError(error);
+      if (normalized.code === EMAIL_NOT_VERIFIED) {
+        setShowVerifyPrompt(true);
+      }
       setFormError(friendlyErrorMessage(error, t("auth.signInFailed"), t));
     }
   });
 
   const bootstrapping = !isHydrated || status === "bootstrapping";
+  const authBusy = isSubmitting || googleLoading;
 
   return (
-    <AuthExperienceShell>
-      <AuthGlassCard>
-        <View style={styles.cardHeader}>
-          <Text style={styles.cardEyebrow}>{t("auth.welcomeBack")}</Text>
-          <Text style={styles.cardTitle}>{t("auth.loginTitle")}</Text>
-          <Text style={styles.cardSubtitle}>{t("auth.signInSubtitle")}</Text>
-        </View>
+    <>
+      <AuthExperienceShell onRegisterPress={() => setRegisterOpen(true)}>
+        <AuthGlassCard>
+          <View style={authCardStyles.cardHeader}>
+            <Text style={authCardStyles.cardEyebrow}>{t("auth.welcomeBack")}</Text>
+            <Text style={authCardStyles.cardTitle}>{t("auth.loginTitle")}</Text>
+            <Text style={authCardStyles.cardSubtitle}>{t("auth.signInSubtitle")}</Text>
+          </View>
 
-        <View style={styles.fields}>
-          <Controller
-            control={control}
-            name="email"
-            render={({ field: { onChange, onBlur, value } }) => (
-              <AuthField
-                label={t("auth.email")}
-                icon="mail-outline"
-                value={value}
-                onChangeText={onChange}
-                onBlur={onBlur}
-                keyboardType="email-address"
-                textContentType="username"
-                autoComplete="email"
-                error={errors.email?.message}
+          {googleConfigured ? (
+            <>
+              <GoogleAuthButton
+                label={t("auth.continueWithGoogle")}
+                loading={googleLoading}
+                disabled={authBusy || bootstrapping}
+                onPress={() => void runGoogleAuth({ isLogin: true })}
               />
-            )}
+              <View style={styles.dividerRow}>
+                <View style={styles.dividerLine} />
+                <Text style={styles.dividerLabel}>{t("auth.orContinueWith")}</Text>
+                <View style={styles.dividerLine} />
+              </View>
+            </>
+          ) : null}
+
+          <View style={authCardStyles.fields}>
+            <Controller
+              control={control}
+              name="email"
+              render={({ field: { onChange, onBlur, value } }) => (
+                <AuthField
+                  label={t("auth.email")}
+                  icon="mail-outline"
+                  value={value}
+                  onChangeText={onChange}
+                  onBlur={onBlur}
+                  keyboardType="email-address"
+                  textContentType="username"
+                  autoComplete="email"
+                  returnKeyType="next"
+                  blurOnSubmit={false}
+                  editable={!authBusy}
+                  onSubmitEditing={() => passwordRef.current?.focus()}
+                  error={errors.email?.message}
+                />
+              )}
+            />
+
+            <Controller
+              control={control}
+              name="password"
+              render={({ field: { onChange, onBlur, value } }) => (
+                <AuthField
+                  ref={passwordRef}
+                  label={t("auth.password")}
+                  icon="lock-closed-outline"
+                  value={value}
+                  onChangeText={onChange}
+                  onBlur={onBlur}
+                  secureTextEntry
+                  textContentType="password"
+                  autoComplete="password"
+                  returnKeyType="done"
+                  editable={!authBusy}
+                  onSubmitEditing={onSubmit}
+                  error={errors.password?.message}
+                />
+              )}
+            />
+          </View>
+
+          <Pressable
+            accessibilityRole="button"
+            onPress={() => {
+              hapticLight();
+              router.push("/(auth)/forgot-password");
+            }}
+            style={({ pressed }) => [styles.forgotLink, pressed ? authCardStyles.pressed : null]}
+          >
+            <Text style={styles.forgotLabel}>{t("auth.forgotPassword")}</Text>
+          </Pressable>
+
+          {showVerifyPrompt ? (
+            <Pressable
+              accessibilityRole="button"
+              onPress={() => {
+                hapticLight();
+                router.push("/(auth)/verify-email");
+              }}
+              style={({ pressed }) => [styles.verifyPrompt, pressed ? authCardStyles.pressed : null]}
+            >
+              <Text style={styles.verifyPromptLabel}>{t("auth.verifyEmailPrompt")}</Text>
+            </Pressable>
+          ) : null}
+
+          {formError ? (
+            <Text style={authCardStyles.formError} accessibilityRole="alert" accessibilityLiveRegion="polite">
+              {formError}
+            </Text>
+          ) : null}
+
+          <AuthContinueButton
+            label={t("auth.signIn")}
+            onPress={onSubmit}
+            loading={isSubmitting}
+            disabled={bootstrapping || googleLoading}
           />
+        </AuthGlassCard>
+      </AuthExperienceShell>
 
-          <Controller
-            control={control}
-            name="password"
-            render={({ field: { onChange, onBlur, value } }) => (
-              <AuthField
-                label={t("auth.password")}
-                icon="lock-closed-outline"
-                value={value}
-                onChangeText={onChange}
-                onBlur={onBlur}
-                secureTextEntry
-                textContentType="password"
-                autoComplete="password"
-                error={errors.password?.message}
-              />
-            )}
-          />
-        </View>
-
-        <Pressable
-          accessibilityRole="button"
-          onPress={() => void openCareTipWeb(authWebPaths.forgotPassword)}
-          style={({ pressed }) => [styles.forgotLink, pressed ? styles.pressed : null]}
-        >
-          <Text style={styles.forgotLabel}>{t("auth.forgotPassword")}</Text>
-        </Pressable>
-
-        {formError ? (
-          <Text style={styles.formError} accessibilityRole="alert" accessibilityLiveRegion="polite">
-            {formError}
-          </Text>
-        ) : null}
-
-        <AuthContinueButton
-          label={t("common.continue")}
-          onPress={onSubmit}
-          loading={isSubmitting}
-          disabled={bootstrapping}
-        />
-      </AuthGlassCard>
-    </AuthExperienceShell>
+      <AuthRegisterSheet
+        visible={registerOpen}
+        onClose={() => setRegisterOpen(false)}
+        onSignIn={() => setRegisterOpen(false)}
+        googleLoading={googleLoading}
+        onContinueWithGoogle={() =>
+          void runGoogleAuth({ isLogin: false, intendedRole: "MANAGER" }).finally(() =>
+            setRegisterOpen(false),
+          )
+        }
+      />
+    </>
   );
 }
 
 const styles = StyleSheet.create({
-  cardHeader: {
-    gap: spacing.sm,
-    marginBottom: spacing.xs,
+  dividerRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.md,
   },
-  cardEyebrow: {
-    ...typography.overline,
-    color: authBrand.orange,
-    letterSpacing: 1.4,
-    fontSize: 11,
+  dividerLine: {
+    flex: 1,
+    height: StyleSheet.hairlineWidth,
+    backgroundColor: "rgba(11, 18, 32, 0.12)",
   },
-  cardTitle: {
-    ...typography.hero,
-    color: authBrand.dark,
-    fontSize: 30,
-    letterSpacing: -0.6,
-  },
-  cardSubtitle: {
-    ...typography.body,
+  dividerLabel: {
+    ...typography.caption,
     color: authBrand.muted,
-    fontSize: 14,
-    lineHeight: 20,
-    marginTop: spacing.xs,
-  },
-  fields: {
-    gap: spacing.xl,
+    fontWeight: "600",
+    fontSize: 12,
   },
   forgotLink: {
     alignSelf: "flex-end",
-    minHeight: 40,
+    minHeight: touchTarget,
     justifyContent: "center",
-    marginTop: -spacing.sm,
+    paddingVertical: spacing.xs,
   },
   forgotLabel: {
     ...typography.caption,
@@ -188,12 +250,21 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     fontSize: 13,
   },
+  verifyPrompt: {
+    alignSelf: "stretch",
+    minHeight: touchTarget,
+    justifyContent: "center",
+    paddingVertical: spacing.xs,
+  },
+  verifyPromptLabel: {
+    ...typography.caption,
+    color: authBrand.orange,
+    fontWeight: "600",
+    textAlign: "center",
+  },
   formError: {
     ...typography.caption,
-    color: "#E11D48",
+    color: colors.destructive,
     fontWeight: "600",
-  },
-  pressed: {
-    opacity: 0.75,
   },
 });

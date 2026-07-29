@@ -8,6 +8,8 @@ import { useSocket } from "@/components/providers/SocketProvider";
 import { subscribeActivityCreated } from "@/lib/realtime/subscribeActivityCreated";
 import { fetchBusinessActivity } from "@/services/api/activityService";
 import { fetchBusinessProfile } from "@/services/api/businessService";
+import { queryClient, queryKeys } from "@/services/api/queryClient";
+import type { BusinessProfile } from "@/types/business";
 import type {
   ActivityCenterFilter,
   ActivityEventSource,
@@ -186,6 +188,16 @@ export function useActivityCenterFeed({ enabled, businessId }: UseActivityCenter
     let cancelled = false;
     void (async () => {
       try {
+        const cached = queryClient.getQueryData<BusinessProfile>(queryKeys.businessProfile);
+        if (cached?.timezone) {
+          if (cancelled) return;
+          setVenueTimezone(
+            resolveBusinessTimezone(
+              typeof cached.timezone === "string" ? cached.timezone : null,
+            ),
+          );
+          return;
+        }
         const profile = await fetchBusinessProfile();
         if (cancelled) return;
         const tz = resolveBusinessTimezone(

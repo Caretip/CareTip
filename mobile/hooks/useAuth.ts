@@ -3,7 +3,7 @@ import { verifyMfaLogin } from "@/services/auth/mfaService";
 import { sessionManager } from "@/services/auth/sessionManager";
 import { useAuthStore } from "@/store/authStore";
 import { useUserStore } from "@/store/userStore";
-import type { AuthResponse, SignInRequest, SignInResult } from "@/types/auth";
+import type { AuthResponse, OAuthRequest, SignInRequest, SignInResult } from "@/types/auth";
 import { isMfaChallenge } from "@/types/auth";
 import { normalizeApiError } from "@/types/api";
 
@@ -45,6 +45,19 @@ export function useAuth() {
     }
   }
 
+  async function signInWithGoogle(payload: OAuthRequest): Promise<SignInResult> {
+    try {
+      const result = await authService.oauthLogin(payload);
+      if (!isMfaChallenge(result)) {
+        useUserStore.getState().setUser(result.user);
+        useAuthStore.getState().setAuthenticated(result.token);
+      }
+      return result;
+    } catch (error) {
+      throw normalizeApiError(error);
+    }
+  }
+
   async function signOut(): Promise<void> {
     await sessionManager.signOut();
   }
@@ -56,6 +69,7 @@ export function useAuth() {
     isHydrated,
     isAuthenticated,
     signIn,
+    signInWithGoogle,
     completeMfaSignIn,
     signOut,
     bootstrap: sessionManager.bootstrapSession,

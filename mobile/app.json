@@ -88,10 +88,22 @@
       "expo-router",
       "expo-secure-store",
       [
+        "expo-build-properties",
+        {
+          "android": {
+            "enableMinifyInReleaseBuilds": true,
+            "enableShrinkResourcesInReleaseBuilds": true
+          },
+          "ios": {
+            "jsEngine": "hermes"
+          }
+        }
+      ],
+      [
         "expo-splash-screen",
         {
           "image": "./assets/splash-native.png",
-          "imageWidth": 280,
+          "imageWidth": 240,
           "resizeMode": "contain",
           "backgroundColor": "#EB992C"
         }

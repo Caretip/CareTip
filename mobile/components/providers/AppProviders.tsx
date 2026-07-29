@@ -11,6 +11,7 @@ import { SocketProvider } from "@/components/providers/SocketProvider";
 import { RealtimeQueryBridge } from "@/components/providers/RealtimeQueryBridge";
 import { LocaleBridge } from "@/components/providers/LocaleBridge";
 import { StartupBridge } from "@/components/providers/StartupBridge";
+import { DeepLinkBridge } from "@/components/providers/DeepLinkBridge";
 
 bindReactQueryOnlineManager();
 
@@ -36,6 +37,7 @@ export function AppProviders({ children }: { children: ReactNode }) {
                 <SessionExpiryBridge />
                 <PushNotificationBridge />
                 <RealtimeQueryBridge />
+                <DeepLinkBridge />
                 {children}
               </SocketProvider>
             </GlobalErrorBridge>

@@ -1,34 +1,29 @@
+import { useCallback } from "react";
 import { Ionicons } from "@expo/vector-icons";
 import { Redirect, Tabs } from "expo-router";
+import type { BottomTabBarProps } from "@react-navigation/bottom-tabs";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { PremiumTabBar } from "@/components/navigation/PremiumTabBar";
+import { MimeTabBar } from "@/components/navigation/MimeTabBar";
 import { useAuth } from "@/hooks/useAuth";
 import { useI18n } from "@/hooks/useI18n";
-import { useUnreadNotificationCount } from "@/hooks/useNotifications";
-import { colors } from "@/theme";
 import { buildPremiumTabScreenOptions } from "@/theme/navigation";
 
 function TabIcon({
-  outline,
-  filled,
+  name,
   color,
   size,
-  focused,
 }: {
-  outline: keyof typeof Ionicons.glyphMap;
-  filled: keyof typeof Ionicons.glyphMap;
+  name: keyof typeof Ionicons.glyphMap;
   color: string;
   size: number;
-  focused: boolean;
 }) {
-  return <Ionicons name={focused ? filled : outline} size={size} color={color} />;
+  return <Ionicons name={name} size={size} color={color} />;
 }
 
 export default function EmployeeTabsLayout() {
   const insets = useSafeAreaInsets();
   const { t } = useI18n();
-  const { user, isAuthenticated } = useAuth();
-  const { data: unreadCount } = useUnreadNotificationCount(isAuthenticated);
+  const { user } = useAuth();
 
   if (user?.role === "MANAGER") {
     return <Redirect href="/(app)/business" />;
@@ -37,89 +32,36 @@ export default function EmployeeTabsLayout() {
     return <Redirect href="/(app)/admin" />;
   }
 
-  const inboxBadge = unreadCount && unreadCount > 0 ? unreadCount : undefined;
+  const renderTabBar = useCallback(
+    (props: BottomTabBarProps) => <MimeTabBar {...props} />,
+    [],
+  );
 
   return (
     <Tabs
-      tabBar={(props) => <PremiumTabBar {...props} />}
+      tabBar={renderTabBar}
       screenOptions={buildPremiumTabScreenOptions(insets.bottom)}
     >
       <Tabs.Screen
         name="index"
         options={{
-          title: t("tabs.overview"),
+          title: t("tabs.home"),
           tabBarIcon: ({ color, size, focused }) => (
-            <TabIcon
-              outline="home-outline"
-              filled="home"
-              color={color}
-              size={size}
-              focused={focused}
-            />
+            <TabIcon name={focused ? "home" : "home-outline"} color={color} size={size} />
           ),
         }}
       />
       <Tabs.Screen
-        name="qr"
+        name="menu"
         options={{
-          title: t("tabs.myQr"),
-          tabBarIcon: ({ color, size, focused }) => (
-            <TabIcon
-              outline="qr-code-outline"
-              filled="qr-code"
-              color={color}
-              size={size}
-              focused={focused}
-            />
-          ),
+          title: t("tabs.more"),
+          tabBarIcon: ({ color, size }) => <TabIcon name="menu" color={color} size={size} />,
         }}
       />
-      <Tabs.Screen
-        name="tips"
-        options={{
-          title: t("tabs.tipHistory"),
-          tabBarIcon: ({ color, size, focused }) => (
-            <TabIcon
-              outline="wallet-outline"
-              filled="wallet"
-              color={color}
-              size={size}
-              focused={focused}
-            />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="notifications"
-        options={{
-          title: t("tabs.inbox"),
-          tabBarBadge: inboxBadge,
-          tabBarIcon: ({ color, size, focused }) => (
-            <TabIcon
-              outline="notifications-outline"
-              filled="notifications"
-              color={color}
-              size={size}
-              focused={focused}
-            />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="settings"
-        options={{
-          title: t("tabs.settings"),
-          tabBarIcon: ({ color, size, focused }) => (
-            <TabIcon
-              outline="settings-outline"
-              filled="settings"
-              color={color}
-              size={size}
-              focused={focused}
-            />
-          ),
-        }}
-      />
+      <Tabs.Screen name="qr" options={{ href: null }} />
+      <Tabs.Screen name="tips" options={{ href: null }} />
+      <Tabs.Screen name="notifications" options={{ href: null }} />
+      <Tabs.Screen name="settings" options={{ href: null }} />
     </Tabs>
   );
 }

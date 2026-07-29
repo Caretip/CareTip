@@ -1,4 +1,13 @@
-import { RefreshControl, ScrollView, StyleSheet, View, type ScrollViewProps } from "react-native";
+import {
+  KeyboardAvoidingView,
+  Platform,
+  RefreshControl,
+  ScrollView,
+  StyleSheet,
+  View,
+  useWindowDimensions,
+  type ScrollViewProps,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { colors, spacing } from "@/theme";
 import { TAB_BAR_SCROLL_CLEARANCE } from "@/theme/navigation";
@@ -12,6 +21,8 @@ type ScreenProps = ScrollViewProps & {
   onRefresh?: () => void;
   padded?: boolean;
   tabSafe?: boolean;
+  /** Wrap scroll content in KeyboardAvoidingView — use on form-heavy screens. */
+  keyboardAware?: boolean;
 };
 
 export function Screen({
@@ -20,36 +31,55 @@ export function Screen({
   onRefresh,
   padded = true,
   tabSafe = true,
+  keyboardAware = false,
   contentContainerStyle,
   ...rest
 }: ScreenProps) {
+  const { width } = useWindowDimensions();
+  const contentMaxWidth = width >= 768 ? 960 : 720;
+
+  const scroll = (
+    <ScrollView
+      keyboardShouldPersistTaps="handled"
+      keyboardDismissMode="on-drag"
+      showsVerticalScrollIndicator={false}
+      refreshControl={
+        onRefresh ? (
+          <RefreshControl
+            refreshing={Boolean(refreshing)}
+            onRefresh={onRefresh}
+            tintColor={colors.primary}
+            colors={[colors.primary]}
+          />
+        ) : undefined
+      }
+      contentContainerStyle={[
+        padded ? [styles.content, { maxWidth: contentMaxWidth }] : null,
+        tabSafe ? styles.tabClearance : null,
+        contentContainerStyle,
+      ]}
+      {...rest}
+    >
+      {children}
+    </ScrollView>
+  );
+
   return (
     <SafeAreaView style={styles.safe} edges={["top", "left", "right"]} collapsable={false}>
       <SplashScreenAnchor source="Screen" />
       <OfflineBanner />
       <ErrorBanner />
-      <ScrollView
-        keyboardShouldPersistTaps="handled"
-        showsVerticalScrollIndicator={false}
-        refreshControl={
-          onRefresh ? (
-            <RefreshControl
-              refreshing={Boolean(refreshing)}
-              onRefresh={onRefresh}
-              tintColor={colors.primary}
-              colors={[colors.primary]}
-            />
-          ) : undefined
-        }
-        contentContainerStyle={[
-          padded ? styles.content : null,
-          tabSafe ? styles.tabClearance : null,
-          contentContainerStyle,
-        ]}
-        {...rest}
-      >
-        {children}
-      </ScrollView>
+      {keyboardAware ? (
+        <KeyboardAvoidingView
+          style={styles.flex}
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+          keyboardVerticalOffset={Platform.OS === "ios" ? spacing.lg : 0}
+        >
+          {scroll}
+        </KeyboardAvoidingView>
+      ) : (
+        scroll
+      )}
     </SafeAreaView>
   );
 }
@@ -63,12 +93,14 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.background,
   },
+  flex: {
+    flex: 1,
+  },
   content: {
     paddingHorizontal: spacing.xl,
     paddingTop: spacing.lg,
     gap: spacing["2xl"],
     width: "100%",
-    maxWidth: 720,
     alignSelf: "center",
   },
   tabClearance: {

@@ -8,6 +8,7 @@ export type BusinessProfile = {
   businessName?: string;
   slug?: string | null;
   logo?: string | null;
+  contactPhone?: string | null;
   location?: string | null;
   timezone?: string | null;
   employeeCount?: number;
@@ -26,11 +27,28 @@ export type BusinessDashboardStats = {
   /** Same series web AreaChart uses — from GET /api/business/me/stats?scope=full */
   dailyTipDistribution?: Array<{ day: string; amount: number }>;
   employees?: Array<{
+    id?: string;
     name: string;
     tipsTotal: number;
+    tipCount?: number;
+    rating?: number | null;
     isActive?: boolean;
     activationStatus?: string;
     emailVerified?: boolean;
+  }>;
+  employeeGoals?: Array<{
+    employeeId: string;
+    name?: string;
+    goalAmount: number;
+    currentAmount: number;
+    percent: number;
+    status?: string;
+  }>;
+  locationRankings?: Array<{
+    id: string | null;
+    name: string;
+    tipsEur: number;
+    tipCount: number;
   }>;
   operationalPulse?: {
     tipsToday?: { amount: number; count: number };

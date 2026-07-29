@@ -17,6 +17,8 @@
 @rem
 
 @if "%DEBUG%"=="" @echo off
+@rem CareTip: short Gradle home avoids Windows MAX_PATH failures
+if not defined GRADLE_USER_HOME set "GRADLE_USER_HOME=C:\gradle"
 @rem ##########################################################################
 @rem
 @rem  Gradle startup script for Windows

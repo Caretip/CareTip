@@ -83,7 +83,12 @@ function isPublicAuthPath(url: string | undefined): boolean {
     path.includes("/api/auth/login") ||
     path.includes("/api/auth/refresh") ||
     path.includes("/api/auth/logout") ||
-    path.includes("/api/auth/register")
+    path.includes("/api/auth/register") ||
+    path.includes("/api/auth/oauth") ||
+    path.includes("/api/auth/forgot-password") ||
+    path.includes("/api/auth/reset-password") ||
+    path.includes("/api/auth/verify-email") ||
+    path.includes("/api/auth/resend-verification-email")
   );
 }
 

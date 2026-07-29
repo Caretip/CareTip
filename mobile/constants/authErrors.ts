@@ -1,0 +1,4 @@
+/** Backend OAuth error codes — aligned with web `apiError.ts`. */
+export const GOOGLE_ACCOUNT_NOT_REGISTERED = "GOOGLE_ACCOUNT_NOT_REGISTERED" as const;
+export const GOOGLE_TOKEN_VERIFICATION_FAILED = "GOOGLE_TOKEN_VERIFICATION_FAILED" as const;
+export const EMAIL_NOT_VERIFIED = "EMAIL_NOT_VERIFIED" as const;

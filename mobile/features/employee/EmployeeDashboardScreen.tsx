@@ -1,26 +1,30 @@
-import { StyleSheet, Text, View } from "react-native";
+import { StyleSheet, View } from "react-native";
+import { useRouter } from "expo-router";
+import { useMemo } from "react";
+import { HeroBalanceCard } from "@/components/ui/HeroBalanceCard";
+import { QuickActionRow } from "@/components/ui/QuickActionRow";
+import { TipCard } from "@/components/ui/ListCards";
 import { KpiCard } from "@/components/ui/KpiCard";
 import { PeriodToggle } from "@/components/ui/PeriodToggle";
 import { Screen } from "@/components/ui/Screen";
 import { ScreenHeader, HeroCard } from "@/components/ui/ScreenHeader";
-import { Section } from "@/components/ui/Section";
+import { GroupedList, Section } from "@/components/ui/Section";
 import { ErrorState } from "@/components/ui/ErrorState";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { SkeletonMetricGrid } from "@/components/ui/Skeleton";
-import { AreaTrendChart } from "@/components/ui/AreaTrendChart";
+import { FadeIn } from "@/components/ui/motion";
 import { useAuth } from "@/hooks/useAuth";
 import { useI18n } from "@/hooks/useI18n";
 import { useEmployeeDashboard } from "@/features/employee/useEmployeeDashboard";
-import { mapEmployeeChartSeries } from "@/utils/dashboardChartData";
 import { formatCount, formatEur, formatRating } from "@/utils/format";
+import { formatTipStatus, uiLocaleTag } from "@/utils/labels";
 import { friendlyErrorMessage, isPermissionError } from "@/utils/friendlyError";
-import { colors, spacing, typography } from "@/theme";
+import { spacing } from "@/theme";
 import type { EmployeeTimeframe } from "@/types/employee";
-import { uiLocaleTag } from "@/utils/labels";
-import { Divider } from "@/components/ui/Section";
 
 export function EmployeeDashboardScreen() {
   const { t } = useI18n();
+  const router = useRouter();
   const { user } = useAuth();
   const {
     timeframe,
@@ -44,13 +48,36 @@ export function EmployeeDashboardScreen() {
   const recentTips = tips?.tips?.slice(0, 3) ?? [];
   const displayName =
     (profile?.name ?? user?.name)?.split(" ")[0] ?? profile?.name ?? user?.name ?? "there";
-  const tipStreak = tips?.periodTipCount ?? 0;
-  const chartPoints = mapEmployeeChartSeries(tips?.chartSeries);
+
+  const quickActions = useMemo(
+    () => [
+      {
+        id: "qr",
+        label: t("tabs.myQr"),
+        icon: "qr-code-outline" as const,
+        onPress: () => router.push("/(app)/employee/qr"),
+      },
+      {
+        id: "tips",
+        label: t("tabs.tipHistory"),
+        icon: "wallet-outline" as const,
+        onPress: () => router.push("/(app)/employee/tips"),
+      },
+      {
+        id: "inbox",
+        label: t("tabs.inbox"),
+        icon: "notifications-outline" as const,
+        onPress: () => router.push("/(app)/employee/notifications"),
+      },
+    ],
+    [router, t],
+  );
 
   return (
     <Screen refreshing={isRefreshing} onRefresh={() => void refresh()}>
       <HeroCard>
         <ScreenHeader
+          eyebrow={t("employeeDashboard.eyebrow")}
           title={t("employeeDashboard.welcome", { name: displayName })}
           subtitle={`${profile?.jobTitle ? `${profile.jobTitle} · ` : ""}${profile?.businessName ?? t("businessDashboard.venueFallback")}`}
         />
@@ -87,78 +114,75 @@ export function EmployeeDashboardScreen() {
         )
       ) : (
         <View style={styles.stack}>
-          <Section title={t("businessDashboard.overview")}>
-            <KpiCard
+          <FadeIn index={0}>
+            <View style={styles.heroBlock}>
+            <HeroBalanceCard
               label={t("employeeDashboard.periodEarnings")}
               value={formatEur(tips?.periodAmountEur)}
               hint={t("businessDashboard.tipsThisPeriod", {
                 count: formatCount(tips?.periodTipCount),
               })}
-              tone="accent"
-              large
               icon="wallet"
             />
-            <View style={styles.metrics}>
-              <KpiCard
-                label={t("employeeDashboard.avgRating")}
-                value={formatRating(tips?.averageRating)}
-                hint={t("employeeDashboard.ratingsHint", {
-                  count: formatCount(tips?.ratingCount),
-                })}
-                icon="star-outline"
-              />
-              <KpiCard
-                label={t("employeeDashboard.tipStreak")}
-                value={formatCount(tipStreak)}
-                hint={t("employeeDashboard.tipsInPeriod")}
-                icon="flame-outline"
-              />
-              <KpiCard
-                label={t("employeeDashboard.totalEarnings")}
-                value={formatEur(tips?.totalEarningsEur)}
-                hint={t("employeeDashboard.successfulTipsHint", {
-                  count: formatCount(tips?.totalSupporters),
-                })}
-                icon="cash-outline"
-              />
-              <KpiCard
-                label={t("employeeDashboard.paidOut")}
-                value={formatEur(tips?.paidOutEur)}
-                hint={t("employeeDashboard.successfulPayouts")}
-                icon="checkmark-circle-outline"
-              />
+            <QuickActionRow actions={quickActions} />
+            <View style={styles.metricsRow}>
+              <View style={styles.metricCol}>
+                <KpiCard
+                  variant="plain"
+                  label={t("employeeDashboard.avgRating")}
+                  value={formatRating(tips?.averageRating)}
+                  hint={t("employeeDashboard.ratingsHint", {
+                    count: formatCount(tips?.ratingCount),
+                  })}
+                  icon="star-outline"
+                />
+              </View>
+              <View style={styles.metricCol}>
+                <KpiCard
+                  variant="plain"
+                  label={t("employeeDashboard.paidOut")}
+                  value={formatEur(tips?.paidOutEur)}
+                  hint={t("employeeDashboard.successfulPayouts")}
+                  icon="checkmark-circle-outline"
+                />
+              </View>
             </View>
-          </Section>
+            </View>
+          </FadeIn>
 
-          <AreaTrendChart
-            title={t("employeeDashboard.chartTitle")}
-            points={chartPoints}
-            loading={isTipsLoading && !tips}
-            emptyMessage={t("employeeDashboard.chartEmpty")}
-          />
-
-          <Section title={t("employeeDashboard.recentTips")} highlighted>
-            {recentTips.length === 0 ? (
-              <EmptyState
-                variant="tips"
-                title={t("employeeDashboard.emptyTipsTitle")}
-                message={t("employeeDashboard.emptyTips")}
-              />
-            ) : (
-              recentTips.map((tip, index) => (
-                <View key={tip.id}>
-                  <View style={styles.tipRow}>
-                    <Text style={styles.tipAmount}>{formatEur(tip.amount)}</Text>
-                    <Text style={styles.muted}>
-                      {new Date(tip.createdAt).toLocaleString(uiLocaleTag())}
-                      {tip.rating != null ? ` · ★ ${formatRating(tip.rating)}` : ""}
-                    </Text>
-                  </View>
-                  {index < recentTips.length - 1 ? <Divider /> : null}
-                </View>
-              ))
-            )}
-          </Section>
+          <FadeIn index={1}>
+            <Section title={t("employeeDashboard.recentTips")}>
+              {recentTips.length === 0 ? (
+                <EmptyState
+                  variant="tips"
+                  title={t("employeeDashboard.emptyTipsTitle")}
+                  message={t("employeeDashboard.emptyTips")}
+                />
+              ) : (
+                <GroupedList>
+                  {recentTips.map((tip) => (
+                    <TipCard
+                      key={tip.id}
+                      inset
+                      amount={formatEur(tip.amount)}
+                      statusLabel={formatTipStatus("success", "employee")}
+                      statusTone="success"
+                      meta={new Date(tip.createdAt).toLocaleString(uiLocaleTag())}
+                      onPress={() =>
+                        router.push({
+                          pathname: "/(app)/employee/tips/[id]" as never,
+                          params: {
+                            id: tip.id,
+                            payload: encodeURIComponent(JSON.stringify(tip)),
+                          },
+                        })
+                      }
+                    />
+                  ))}
+                </GroupedList>
+              )}
+            </Section>
+          </FadeIn>
         </View>
       )}
     </Screen>
@@ -167,28 +191,18 @@ export function EmployeeDashboardScreen() {
 
 const styles = StyleSheet.create({
   stack: {
+    gap: spacing["2xl"],
+  },
+  heroBlock: {
+    gap: spacing.lg,
+  },
+  metricsRow: {
+    flexDirection: "row",
+    alignItems: "flex-start",
     gap: spacing.xl,
   },
-  metrics: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: spacing.md,
-    rowGap: spacing.md,
-  },
-  tipRow: {
-    gap: spacing.xxs,
-    paddingVertical: spacing.sm,
-  },
-  tipAmount: {
-    ...typography.h2,
-    fontSize: 20,
-    fontWeight: "700",
-    color: colors.foreground,
-    letterSpacing: -0.3,
-  },
-  muted: {
-    ...typography.caption,
-    color: colors.mutedForeground,
-    fontSize: 13,
+  metricCol: {
+    flex: 1,
+    minWidth: 0,
   },
 });

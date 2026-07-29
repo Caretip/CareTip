@@ -20,10 +20,10 @@ export function StartupBridge({ children }: { children: ReactNode }) {
     ensureSplashPrevented();
     scheduleSplashWatchdog();
 
-    void (async () => {
-      await useI18nStore.getState().hydrate();
-      await sessionManager.bootstrapSession();
-    })();
+    void Promise.all([
+      useI18nStore.getState().hydrate(),
+      sessionManager.bootstrapSession(),
+    ]);
   }, []);
 
   return <>{children}</>;

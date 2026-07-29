@@ -1,7 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { fetchEmployeeProfile, fetchEmployeeTips } from "@/services/api/employeeService";
-import { queryKeys } from "@/services/api/queryClient";
-import { useEmployeeStore } from "@/store/employeeStore";
+import { queryKeys, queryStaleTimes } from "@/services/api/queryClient";
 import { useAuth } from "@/hooks/useAuth";
 import { usePersistedTimeframe } from "@/hooks/usePersistedTimeframe";
 import { PREFERENCE_KEYS } from "@/constants/storageKeys";
@@ -13,16 +12,11 @@ export function useEmployeeDashboard() {
     PREFERENCE_KEYS.employeeDashboardTimeframe,
     "week",
   );
-  const setProfile = useEmployeeStore((s) => s.setProfile);
-
   const profileQuery = useQuery({
     queryKey: queryKeys.employeeMe,
-    queryFn: async () => {
-      const profile = await fetchEmployeeProfile();
-      setProfile(profile);
-      return profile;
-    },
+    queryFn: fetchEmployeeProfile,
     enabled: isAuthenticated,
+    staleTime: queryStaleTimes.profile,
   });
 
   const tipsQuery = useQuery({

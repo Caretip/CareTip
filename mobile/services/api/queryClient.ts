@@ -30,13 +30,26 @@ export const queryClient = new QueryClient({
   },
 });
 
+/** Per-domain stale windows — reduce remount refetches without stale UI. */
+export const queryStaleTimes = {
+  live: 45_000,
+  profile: 5 * 60_000,
+  settings: 5 * 60_000,
+  inventory: 3 * 60_000,
+  feedback: 2 * 60_000,
+  tipDetail: 10 * 60_000,
+  roster: 3 * 60_000,
+} as const;
+
 export const queryKeys = {
-  session: ["session"] as const,
   businessProfile: ["business", "profile"] as const,
   businessStats: ["business", "stats"] as const,
+  businessQrAnalytics: ["business", "qr-analytics"] as const,
+  businessFeedback: ["business", "feedback"] as const,
   businessActivity: ["business", "activity"] as const,
   businessQr: ["business", "qr"] as const,
   businessTips: ["business", "tips"] as const,
+  businessEmployees: (businessId: string) => ["business", "employees", businessId] as const,
   employeeMe: ["employees", "me"] as const,
   employeeTips: ["employees", "tips"] as const,
   employeeTipList: ["employees", "tipList"] as const,
@@ -44,10 +57,10 @@ export const queryKeys = {
   notificationUnread: ["notifications", "unread"] as const,
   accountSettings: ["settings", "account"] as const,
   twoFactor: ["settings", "2fa"] as const,
-  locations: ["locations"] as const,
-  tables: ["tables"] as const,
   brandedQr: (mode: "employee" | "manager", targetUrl: string) =>
     ["brandedQr", mode, targetUrl] as const,
+  tipDetail: (audience: "business" | "employee", tipId: string) =>
+    ["tip-detail", audience, tipId] as const,
 } as const;
 
 export const queryDefaults = {

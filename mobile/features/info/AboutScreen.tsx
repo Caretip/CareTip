@@ -1,10 +1,10 @@
 import { StyleSheet, Text, View } from "react-native";
 import Constants from "expo-constants";
 import { InfoScreenShell } from "@/components/info/InfoScreenShell";
-import { ABOUT_CONTENT } from "@/constants/infoContent";
 import { BrandMark } from "@/components/brand/BrandMark";
 import { useI18n } from "@/hooks/useI18n";
 import { colors, radius, spacing, typography } from "@/theme";
+import { textA11y } from "@/theme/a11y";
 
 export function AboutScreen() {
   const { t } = useI18n();
@@ -12,29 +12,40 @@ export function AboutScreen() {
   const build =
     Constants.nativeBuildVersion ??
     String(Constants.expoConfig?.android?.versionCode ?? Constants.expoConfig?.ios?.buildNumber ?? "1");
+  const year = new Date().getFullYear();
 
   return (
     <InfoScreenShell title={t("info.aboutTitle")}>
       <View style={styles.hero}>
         <BrandMark height={36} />
-        <Text style={styles.heroTitle}>{ABOUT_CONTENT.storyTitle}</Text>
-        <Text style={styles.body}>{ABOUT_CONTENT.storyBody}</Text>
+        <Text style={styles.heroTitle} {...textA11y}>
+          {t("info.about.storyTitle")}
+        </Text>
+        <Text style={styles.body} {...textA11y}>
+          {t("info.about.storyBody")}
+        </Text>
       </View>
 
       <View style={styles.card}>
-        <Text style={styles.cardEyebrow}>{ABOUT_CONTENT.missionTitle}</Text>
-        <Text style={styles.body}>{ABOUT_CONTENT.missionBody}</Text>
+        <Text style={styles.cardEyebrow}>{t("info.about.missionTitle")}</Text>
+        <Text style={styles.body} {...textA11y}>
+          {t("info.about.missionBody")}
+        </Text>
       </View>
 
       <View style={styles.card}>
-        <Text style={styles.cardEyebrow}>{ABOUT_CONTENT.visionTitle}</Text>
-        <Text style={styles.body}>{ABOUT_CONTENT.visionBody}</Text>
+        <Text style={styles.cardEyebrow}>{t("info.about.visionTitle")}</Text>
+        <Text style={styles.body} {...textA11y}>
+          {t("info.about.visionBody")}
+        </Text>
       </View>
 
       <View style={styles.metaCard}>
         <MetaRow label={t("info.version")} value={version} />
         <MetaRow label={t("info.build")} value={build} />
-        <Text style={styles.copyright}>{ABOUT_CONTENT.copyright}</Text>
+        <Text style={styles.copyright} {...textA11y}>
+          {t("info.about.copyright", { year })}
+        </Text>
       </View>
     </InfoScreenShell>
   );

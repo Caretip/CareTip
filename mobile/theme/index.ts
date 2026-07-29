@@ -29,3 +29,4 @@ export { typography, fontFamilies, fontSizes, fontWeights };
 export { spacing, radius, hitSlop, touchTarget, screenPadding };
 export { shadows };
 export { motion };
+export { heroGradient, heroText, surface } from "./surfaces";

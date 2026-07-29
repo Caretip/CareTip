@@ -2,9 +2,11 @@
  * Premium fintech metric widgets — white surfaces, orange accent on values/icons only.
  */
 
-import { Platform, StyleSheet, Text, View } from "react-native";
+import { memo } from "react";
+import { StyleSheet, Text, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { colors, radius, shadows, spacing, typography } from "@/theme";
+import { colors, radius, shadows, spacing, surface, typography } from "@/theme";
+import { metricTextA11y, textA11y } from "@/theme/a11y";
 
 type MetricTone = "default" | "accent" | "positive" | "negative" | "neutral";
 
@@ -33,7 +35,7 @@ function toneIconBg(tone: MetricTone): string {
   return colors.secondary;
 }
 
-export function KpiCard({
+export const KpiCard = memo(function KpiCard({
   label,
   value,
   hint,
@@ -47,7 +49,31 @@ export function KpiCard({
 }: KpiCardProps) {
   const resolved: MetricTone = tone ?? (accent ? "accent" : "default");
   const isCard = variant === "card";
+  const isPlain = variant === "plain";
   const isHero = large && isCard;
+
+  if (isPlain) {
+    return (
+      <View style={styles.plain}>
+        <View style={styles.plainHeader}>
+          {icon ? (
+            <Ionicons name={icon} size={15} color={toneIconColor(resolved)} style={styles.plainIcon} />
+          ) : null}
+          <Text style={styles.plainLabel} numberOfLines={2} {...textA11y}>
+            {label}
+          </Text>
+        </View>
+        <Text style={styles.plainValue} numberOfLines={1} adjustsFontSizeToFit {...metricTextA11y}>
+          {value}
+        </Text>
+        {hint ? (
+          <Text style={styles.plainHint} numberOfLines={2}>
+            {hint}
+          </Text>
+        ) : null}
+      </View>
+    );
+  }
 
   return (
     <View
@@ -67,7 +93,7 @@ export function KpiCard({
             />
           </View>
         ) : null}
-        <Text style={[styles.label, isHero ? styles.labelHero : null]} numberOfLines={2}>
+        <Text style={[styles.label, isHero ? styles.labelHero : null]} numberOfLines={2} {...textA11y}>
           {label}
         </Text>
       </View>
@@ -82,6 +108,7 @@ export function KpiCard({
         ]}
         numberOfLines={1}
         adjustsFontSizeToFit
+        {...metricTextA11y}
       >
         {value}
       </Text>
@@ -108,32 +135,54 @@ export function KpiCard({
       ) : null}
     </View>
   );
-}
+});
 
-export function StatCard(props: KpiCardProps) {
+export const StatCard = memo(function StatCard(props: KpiCardProps) {
   return <KpiCard {...props} large={false} />;
-}
+});
 
-export function MetricCard(props: KpiCardProps) {
+export const MetricCard = memo(function MetricCard(props: KpiCardProps) {
   return <KpiCard {...props} />;
-}
+});
 
 const tileBase = {
-  backgroundColor: colors.card,
-  borderRadius: 22,
-  borderWidth: StyleSheet.hairlineWidth,
-  borderColor: colors.border,
-  ...shadows.sm,
+  backgroundColor: colors.secondary,
+  borderRadius: surface.cardRadius,
 } as const;
 
 const styles = StyleSheet.create({
   plain: {
-    flexGrow: 1,
-    flexBasis: "47%",
-    maxWidth: "48%",
+    gap: spacing.xs,
     paddingVertical: spacing.sm,
-    gap: spacing.xxs,
-    minHeight: 72,
+    minWidth: 0,
+  },
+  plainHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.xs,
+    minHeight: 18,
+  },
+  plainIcon: {
+    flexShrink: 0,
+  },
+  plainLabel: {
+    ...typography.overline,
+    color: colors.mutedForeground,
+    flex: 1,
+  },
+  plainValue: {
+    fontSize: 22,
+    lineHeight: 26,
+    fontWeight: "700",
+    letterSpacing: -0.5,
+    color: colors.foreground,
+  },
+  plainHint: {
+    ...typography.caption,
+    color: colors.mutedForeground,
+    fontSize: 12,
+    lineHeight: 16,
+    minHeight: 16,
   },
   heroPlain: {
     flexBasis: "100%",
@@ -160,11 +209,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.xl,
     paddingVertical: spacing.xl,
     gap: spacing.md,
-    ...Platform.select({
-      ios: shadows.md,
-      android: { elevation: 4 },
-      default: {},
-    }),
+    backgroundColor: colors.card,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.border,
   },
   topRow: {
     flexDirection: "row",
@@ -181,13 +228,10 @@ const styles = StyleSheet.create({
   label: {
     ...typography.overline,
     color: colors.mutedForeground,
-    fontSize: 10,
-    letterSpacing: 0.8,
     flex: 1,
   },
   labelHero: {
-    fontSize: 11,
-    letterSpacing: 1,
+    letterSpacing: 1.1,
   },
   value: {
     color: colors.foreground,

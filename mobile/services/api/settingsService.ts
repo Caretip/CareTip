@@ -40,7 +40,12 @@ export async function disableTwoFactor(code: string): Promise<TwoFactorStatus> {
 }
 
 export async function patchEmployeeProfile(
-  patch: Partial<Pick<EmployeeProfile, "name" | "bio" | "emailNotifications" | "pushNotifications">>,
+  patch: Partial<
+    Pick<
+      EmployeeProfile,
+      "name" | "bio" | "emailNotifications" | "pushNotifications" | "monthlyGoal"
+    >
+  >,
 ): Promise<EmployeeProfile> {
   const { data } = await apiClient.patch<EmployeeProfile>(API_ENDPOINTS.employees.me, patch);
   return data;

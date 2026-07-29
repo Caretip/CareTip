@@ -1,3 +1,4 @@
+import { useState } from "react";
 import {
   StyleSheet,
   Text,
@@ -21,8 +22,12 @@ export function TextField({
   containerStyle,
   style,
   accessibilityLabel,
+  onFocus,
+  onBlur,
   ...rest
 }: TextFieldProps) {
+  const [focused, setFocused] = useState(false);
+
   return (
     <View style={[styles.container, containerStyle]}>
       <Text style={styles.label} accessibilityRole="text">
@@ -31,9 +36,22 @@ export function TextField({
       <TextInput
         accessibilityLabel={accessibilityLabel ?? label}
         placeholderTextColor={colors.mutedForeground}
-        style={[styles.input, error ? styles.inputError : null, style]}
+        style={[
+          styles.input,
+          focused && !error ? styles.inputFocused : null,
+          error ? styles.inputError : null,
+          style,
+        ]}
         autoCapitalize="none"
         autoCorrect={false}
+        onFocus={(e) => {
+          setFocused(true);
+          onFocus?.(e);
+        }}
+        onBlur={(e) => {
+          setFocused(false);
+          onBlur?.(e);
+        }}
         {...rest}
       />
       {error ? (
@@ -63,6 +81,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.xl,
     ...typography.body,
     color: colors.foreground,
+  },
+  inputFocused: {
+    borderColor: colors.primary,
+    borderWidth: 1.5,
   },
   inputError: {
     borderColor: colors.destructive,

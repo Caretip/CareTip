@@ -26,6 +26,8 @@ export default ({ config }: ConfigContext): ExpoConfig => {
     },
   ]);
 
+  plugins.push("@react-native-google-signin/google-signin");
+
   return {
     ...base,
     name: base.name ?? "CareTip",

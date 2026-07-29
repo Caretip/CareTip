@@ -1,7 +1,7 @@
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { BrandMark } from "@/components/brand/BrandMark";
-import { colors, radius, spacing, touchTarget, typography } from "@/theme";
+import { colors, radius, shadows, spacing, surface, touchTarget, typography } from "@/theme";
 
 type EmptyVariant = "tips" | "notifications" | "activity" | "qr" | "offline" | "generic";
 
@@ -32,7 +32,11 @@ export function EmptyState({
   onAction,
 }: EmptyStateProps) {
   return (
-    <View style={styles.container} accessibilityRole="text">
+    <View
+      style={styles.card}
+      accessible
+      accessibilityLabel={[title, message].filter(Boolean).join(". ")}
+    >
       <View style={styles.iconWrap}>
         {emoji ? (
           <Text style={styles.emoji}>{emoji}</Text>
@@ -57,18 +61,23 @@ export function EmptyState({
 }
 
 const styles = StyleSheet.create({
-  container: {
-    marginVertical: spacing.xl,
+  card: {
+    marginVertical: spacing.md,
     paddingVertical: spacing["3xl"],
     paddingHorizontal: spacing["2xl"],
     alignItems: "center",
     gap: spacing.md,
+    backgroundColor: colors.card,
+    borderRadius: surface.cardRadius,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.border,
+    ...shadows.sm,
   },
   iconWrap: {
-    width: 56,
-    height: 56,
-    borderRadius: radius.full,
-    backgroundColor: colors.secondary,
+    width: surface.iconWellSize + 8,
+    height: surface.iconWellSize + 8,
+    borderRadius: surface.iconWellRadius + 4,
+    backgroundColor: colors.primarySoft,
     alignItems: "center",
     justifyContent: "center",
     marginBottom: spacing.xs,
@@ -92,8 +101,9 @@ const styles = StyleSheet.create({
     minHeight: touchTarget,
     paddingHorizontal: spacing["2xl"],
     paddingVertical: spacing.md,
-    borderRadius: radius.lg,
+    borderRadius: surface.pillRadius,
     backgroundColor: colors.primary,
+    ...shadows.sm,
     alignItems: "center",
     justifyContent: "center",
     marginTop: spacing.sm,

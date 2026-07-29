@@ -1,10 +1,12 @@
+import { useEffect } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
   withTiming,
 } from "react-native-reanimated";
-import { colors, motion, radius, spacing, touchTarget, typography } from "@/theme";
+import { colors, motion, radius, spacing, surface, touchTarget, typography } from "@/theme";
+import { hapticSelection } from "@/utils/haptics";
 
 type PeriodToggleProps<T extends string> = {
   value: T;
@@ -22,7 +24,10 @@ export function PeriodToggle<T extends string>({ value, options, onChange }: Per
             key={option.value}
             label={option.label}
             active={active}
-            onPress={() => onChange(option.value)}
+            onPress={() => {
+              hapticSelection();
+              onChange(option.value);
+            }}
           />
         );
       })}
@@ -40,7 +45,11 @@ function Segment({
   onPress: () => void;
 }) {
   const progress = useSharedValue(active ? 1 : 0);
-  progress.value = withTiming(active ? 1 : 0, { duration: motion.duration.fast });
+
+  useEffect(() => {
+    progress.value = withTiming(active ? 1 : 0, { duration: motion.duration.fast });
+  }, [active, progress]);
+
   const pillStyle = useAnimatedStyle(() => ({
     opacity: progress.value,
     transform: [{ scale: 0.98 + progress.value * 0.02 }],
@@ -66,7 +75,7 @@ const styles = StyleSheet.create({
   track: {
     flexDirection: "row",
     backgroundColor: colors.secondary,
-    borderRadius: radius.xl,
+    borderRadius: surface.pillRadius,
     padding: 3,
     gap: 2,
     borderWidth: StyleSheet.hairlineWidth,
@@ -84,6 +93,8 @@ const styles = StyleSheet.create({
     ...StyleSheet.absoluteFillObject,
     borderRadius: radius.lg,
     backgroundColor: colors.card,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: "rgba(235, 153, 44, 0.12)",
     shadowColor: "#111827",
     shadowOpacity: 0.04,
     shadowRadius: 4,
@@ -98,7 +109,7 @@ const styles = StyleSheet.create({
     zIndex: 1,
   },
   labelActive: {
-    color: colors.foreground,
+    color: colors.primary,
     fontWeight: "700",
   },
 });

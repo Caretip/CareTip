@@ -25,7 +25,7 @@ export function LegalScreen({ kind }: LegalScreenProps) {
   const fallbackTitle = t(TITLE_KEYS[kind]);
 
   return (
-    <InfoScreenShell title={query.data?.title ?? fallbackTitle}>
+    <InfoScreenShell title={query.data?.title ?? fallbackTitle} scroll={false}>
       {query.isLoading ? (
         <LegalDocumentLoading />
       ) : query.isNotFound ? (

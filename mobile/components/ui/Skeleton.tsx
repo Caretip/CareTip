@@ -7,7 +7,7 @@ import Animated, {
   withRepeat,
   withTiming,
 } from "react-native-reanimated";
-import { colors, radius, spacing } from "@/theme";
+import { colors, radius, spacing, surface } from "@/theme";
 
 type SkeletonProps = {
   height?: number;
@@ -42,7 +42,7 @@ export function Skeleton({ height = 16, width = "100%", style, rounded = "lg" }:
 export function SkeletonMetricGrid() {
   return (
     <View style={styles.grid}>
-      <Skeleton height={128} width="100%" rounded="2xl" style={styles.full} />
+      <Skeleton height={152} width="100%" rounded="2xl" style={styles.full} />
       <Skeleton height={112} width="48%" rounded="2xl" />
       <Skeleton height={112} width="48%" rounded="2xl" />
       <Skeleton height={112} width="48%" rounded="2xl" />
@@ -56,7 +56,7 @@ export function SkeletonListRows({ count = 4 }: { count?: number }) {
     <View style={styles.list}>
       {Array.from({ length: count }).map((_, i) => (
         <View key={i} style={styles.row}>
-          <Skeleton height={44} width={44} rounded="full" />
+          <Skeleton height={surface.iconWellSize} width={surface.iconWellSize} rounded="lg" />
           <View style={styles.rowText}>
             <Skeleton height={14} width="72%" />
             <Skeleton height={12} width="48%" />

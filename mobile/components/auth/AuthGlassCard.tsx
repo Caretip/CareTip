@@ -1,14 +1,12 @@
 import { Platform, StyleSheet, View, type StyleProp, type ViewStyle } from "react-native";
 import { BlurView } from "expo-blur";
 import { authBrand } from "@/theme/authBrand";
-import { spacing } from "@/theme";
+import { radius, spacing } from "@/theme";
 
 type AuthGlassCardProps = {
   children: React.ReactNode;
   style?: StyleProp<ViewStyle>;
 };
-
-const CARD_RADIUS = 32;
 
 /** Floating glassmorphism surface for auth forms. */
 export function AuthGlassCard({ children, style }: AuthGlassCardProps) {
@@ -16,11 +14,11 @@ export function AuthGlassCard({ children, style }: AuthGlassCardProps) {
     <View style={[styles.shadowWrap, style]}>
       <View style={styles.clip}>
         {Platform.OS === "web" ? (
-          <View style={[StyleSheet.absoluteFill, styles.webFallback]} />
+          <View style={[StyleSheet.absoluteFill, styles.webFallback]} pointerEvents="none" />
         ) : (
-          <BlurView intensity={52} tint="light" style={StyleSheet.absoluteFill} />
+          <BlurView intensity={52} tint="light" style={StyleSheet.absoluteFill} pointerEvents="none" />
         )}
-        <View style={styles.glassTint} />
+        <View style={styles.glassTint} pointerEvents="none" />
         <View style={styles.content}>{children}</View>
       </View>
     </View>
@@ -32,7 +30,7 @@ const styles = StyleSheet.create({
     width: "100%",
     maxWidth: 420,
     alignSelf: "center",
-    borderRadius: CARD_RADIUS,
+    borderRadius: radius["3xl"],
     ...Platform.select({
       ios: {
         shadowColor: "#0B1220",
@@ -45,7 +43,7 @@ const styles = StyleSheet.create({
     }),
   },
   clip: {
-    borderRadius: CARD_RADIUS,
+    borderRadius: radius["3xl"],
     overflow: "hidden",
     borderWidth: StyleSheet.hairlineWidth * 2,
     borderColor: authBrand.glassBorder,

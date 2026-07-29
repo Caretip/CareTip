@@ -9,6 +9,7 @@ import {
 import {
   clearAllSessionSecrets,
   getRefreshToken,
+  getUserSnapshot,
   saveAccessToken,
   saveUserSnapshot,
 } from "@/services/auth/tokenStorage";
@@ -21,7 +22,16 @@ import {
   serializeResponseHeaders,
 } from "@/utils/authDebug";
 import { config } from "@/constants/config";
-import type { AuthResponse, SignInRequest, SignInResult } from "@/types/auth";
+import type {
+  AuthResponse,
+  InviteValidation,
+  MessageResponse,
+  OAuthRequest,
+  RegisterPendingResponse,
+  RegisterRequest,
+  SignInRequest,
+  SignInResult,
+} from "@/types/auth";
 import { isMfaChallenge } from "@/types/auth";
 import { normalizeApiError } from "@/types/api";
 
@@ -35,6 +45,37 @@ async function persistSession(data: AuthResponse): Promise<AuthResponse> {
   await saveAccessToken(data.token);
   await saveUserSnapshot(data.user);
   logAuthTokenState("session.persisted", data.token);
+  return data;
+}
+
+async function finalizeAuthResponse(
+  data: AuthResponse,
+  context: "login" | "oauth",
+  meta?: Record<string, unknown>,
+): Promise<AuthResponse> {
+  await persistSession(data);
+
+  let refreshEndpointSuccess = false;
+  const secureStoreReadBack = Boolean(await getRefreshToken());
+  if (secureStoreReadBack) {
+    try {
+      const refreshed = await refreshSession();
+      refreshEndpointSuccess = Boolean(refreshed?.token);
+    } catch (error) {
+      logAuthEvent(`${context}.post.refresh.failed`, {
+        message: normalizeApiError(error).message,
+        note: "Auth still succeeds; refresh is session continuity only.",
+        ...meta,
+      });
+    }
+  }
+
+  logAuthEvent(`${context}.ready.for.dashboard`, {
+    hasRefreshInSecureStore: Boolean(await getRefreshToken()),
+    refreshEndpointSuccess,
+    ...meta,
+  });
+
   return data;
 }
 
@@ -101,27 +142,7 @@ export async function login(payload: SignInRequest): Promise<SignInResult> {
   }
 
   // Match web: access token from signin is enough to enter the app.
-  await persistSession(data);
-
-  // Optional continuity check — never fail the login UX on refresh errors.
-  let refreshEndpointSuccess = false;
-  if (secureStoreReadBack) {
-    try {
-      const refreshed = await refreshSession();
-      refreshEndpointSuccess = Boolean(refreshed?.token);
-    } catch (error) {
-      logAuthEvent("login.post.refresh.failed", {
-        message: normalizeApiError(error).message,
-        note: "Sign-in still succeeds; refresh is session continuity only.",
-      });
-    }
-  } else {
-    logAuthEvent("login.post.refresh.skipped", {
-      reason: "no-refresh-token-in-SecureStore",
-      hasRefreshHeader,
-      hasSetCookie,
-    });
-  }
+  await finalizeAuthResponse(data, "login", { requestUrl });
 
   logLoginTrace({
     hasAccessToken: true,
@@ -129,15 +150,51 @@ export async function login(payload: SignInRequest): Promise<SignInResult> {
     hasSetCookie,
     refreshPersisted,
     secureStoreReadBack: Boolean(await getRefreshToken()),
-    refreshEndpointSuccess,
+    refreshEndpointSuccess: Boolean(await getRefreshToken()),
   });
 
-  logAuthEvent("login.ready.for.dashboard", {
-    requestUrl,
-    hasRefreshInSecureStore: Boolean(await getRefreshToken()),
-    refreshEndpointSuccess,
+  return data;
+}
+
+/**
+ * Google OAuth — same contract as web `oauthAPI`:
+ * POST /api/auth/oauth → store access JWT + refresh mirror.
+ */
+export async function oauthLogin(payload: OAuthRequest): Promise<SignInResult> {
+  const requestUrl = `${config.apiUrl}${API_ENDPOINTS.auth.oauth}`;
+  logAuthEvent("oauth.request", {
+    method: "POST",
+    url: requestUrl,
+    isLogin: payload.isLogin,
+    intendedRole: payload.intendedRole,
   });
 
+  const response = await apiClient.post<SignInResult>(API_ENDPOINTS.auth.oauth, {
+    provider: "google",
+    idToken: payload.idToken,
+    isLogin: payload.isLogin,
+    ...(payload.intendedRole && !payload.isLogin
+      ? { intendedRole: payload.intendedRole }
+      : {}),
+    ...(payload.name ? { name: payload.name } : {}),
+    ...(payload.inviteCode ? { inviteCode: payload.inviteCode } : {}),
+    ...(payload.locale ? { locale: payload.locale } : {}),
+    ...(payload.timeZone ? { timeZone: payload.timeZone } : {}),
+  });
+
+  await persistRefreshFromResponse(response.headers);
+  const data = response.data;
+
+  if (isMfaChallenge(data)) {
+    logAuthEvent("oauth.mfa.challenge");
+    return data;
+  }
+
+  if (!data || typeof data !== "object" || !("token" in data) || !data.token || !("user" in data)) {
+    throw normalizeApiError(new Error("OAuth succeeded without access token."));
+  }
+
+  await finalizeAuthResponse(data, "oauth");
   return data;
 }
 
@@ -193,6 +250,10 @@ export async function refreshSession(): Promise<AuthResponse | null> {
     setMemoryAccessToken(token);
     await saveAccessToken(token);
     logAuthTokenState("refresh.recovered.accessOnly", token);
+    const cachedUser = await getUserSnapshot();
+    if (cachedUser) {
+      return { token, user: cachedUser };
+    }
     return null;
   }
 }
@@ -218,8 +279,98 @@ export async function logout(): Promise<void> {
   }
 }
 
+/** Email registration — same contract as web `registerAPI`. */
+export async function register(payload: RegisterRequest): Promise<RegisterPendingResponse> {
+  const response = await apiClient.post<RegisterPendingResponse>(API_ENDPOINTS.auth.register, payload);
+  const data = response.data;
+  return {
+    requiresEmailVerification: true,
+    email: data.email ?? data.user?.email ?? payload.email,
+    role: data.role ?? payload.role,
+    user: data.user,
+  };
+}
+
+export async function requestPasswordReset(
+  email: string,
+  locale?: RegisterRequest["locale"],
+): Promise<MessageResponse> {
+  const { data } = await apiClient.post<MessageResponse>(API_ENDPOINTS.auth.forgotPassword, {
+    email: email.trim(),
+    ...(locale ? { locale } : {}),
+  });
+  return data;
+}
+
+export async function resetPasswordWithToken(
+  token: string,
+  password: string,
+): Promise<MessageResponse> {
+  const { data } = await apiClient.post<MessageResponse>(API_ENDPOINTS.auth.resetPassword, {
+    token: token.trim(),
+    password,
+  });
+  return data;
+}
+
+export async function verifyEmailWithToken(token: string): Promise<MessageResponse> {
+  const { data } = await apiClient.get<MessageResponse>(API_ENDPOINTS.auth.verifyEmail, {
+    params: { token: token.trim() },
+  });
+  return data;
+}
+
+export async function resendVerificationEmail(
+  email: string,
+  password: string,
+  locale?: RegisterRequest["locale"],
+): Promise<MessageResponse> {
+  const { data } = await apiClient.post<MessageResponse>(API_ENDPOINTS.auth.resendVerification, {
+    email: email.trim(),
+    password,
+    ...(locale ? { locale } : {}),
+  });
+  return data;
+}
+
+export async function resendVerificationEmailSession(
+  locale?: RegisterRequest["locale"],
+): Promise<MessageResponse> {
+  const { data } = await apiClient.post<MessageResponse>(
+    API_ENDPOINTS.auth.resendVerificationSession,
+    locale ? { locale } : {},
+  );
+  return data;
+}
+
+export async function patchMyOnboardingStatus(
+  hasCompletedOnboarding: boolean,
+): Promise<AuthResponse> {
+  const response = await apiClient.patch<AuthResponse>(API_ENDPOINTS.auth.patchMe, {
+    hasCompletedOnboarding,
+  });
+  await persistRefreshFromResponse(response.headers);
+  return persistSession(response.data);
+}
+
+export async function validateInviteCode(code: string): Promise<InviteValidation> {
+  const { data } = await apiClient.get<InviteValidation>(API_ENDPOINTS.business.inviteValidate, {
+    params: { code: code.trim() },
+  });
+  return data;
+}
+
 export const authService = {
   login,
+  oauthLogin,
   refreshSession,
   logout,
+  register,
+  requestPasswordReset,
+  resetPasswordWithToken,
+  verifyEmailWithToken,
+  resendVerificationEmail,
+  resendVerificationEmailSession,
+  patchMyOnboardingStatus,
+  validateInviteCode,
 };

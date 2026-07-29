@@ -11,6 +11,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useToastStore } from "@/store/toastStore";
 import { authBrand } from "@/theme/authBrand";
 import { radius, spacing, typography } from "@/theme";
+import { hapticSuccess } from "@/utils/haptics";
 
 export function ToastHost() {
   const insets = useSafeAreaInsets();
@@ -21,14 +22,19 @@ export function ToastHost() {
 
   useEffect(() => {
     if (!toast) return;
+    if (toast.tone !== "error") hapticSuccess();
     opacity.value = withTiming(1, { duration: 220, easing: Easing.out(Easing.cubic) });
     translateY.value = withTiming(0, { duration: 260, easing: Easing.out(Easing.cubic) });
+    let dismissTimer: ReturnType<typeof setTimeout> | undefined;
     const timer = setTimeout(() => {
       opacity.value = withTiming(0, { duration: 180 });
       translateY.value = withTiming(-16, { duration: 180 });
-      setTimeout(() => clearToast(), 200);
+      dismissTimer = setTimeout(() => clearToast(), 200);
     }, toast.durationMs);
-    return () => clearTimeout(timer);
+    return () => {
+      clearTimeout(timer);
+      if (dismissTimer) clearTimeout(dismissTimer);
+    };
   }, [clearToast, opacity, toast, translateY]);
 
   const anim = useAnimatedStyle(() => ({

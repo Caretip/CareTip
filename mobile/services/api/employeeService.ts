@@ -17,3 +17,18 @@ export async function fetchEmployeeTips(
   });
   return data;
 }
+
+export async function downloadEmployeeDataExport(): Promise<void> {
+  const { data } = await apiClient.get<unknown>(API_ENDPOINTS.employees.meExport);
+  const { shareAsync, isAvailableAsync } = await import("expo-sharing");
+  const FileSystem = await import("expo-file-system/legacy");
+  const path = `${FileSystem.cacheDirectory ?? ""}caretip-data-export.json`;
+  await FileSystem.writeAsStringAsync(path, JSON.stringify(data, null, 2));
+  if (await isAvailableAsync()) {
+    await shareAsync(path, { mimeType: "application/json", dialogTitle: "CareTip data export" });
+  }
+}
+
+export async function deleteEmployeeAccount(): Promise<void> {
+  await apiClient.delete(API_ENDPOINTS.employees.me);
+}

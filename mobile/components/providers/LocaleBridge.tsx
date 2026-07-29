@@ -16,6 +16,7 @@ export function LocaleBridge({ children }: { children: ReactNode }) {
   const preferredLocale = useUserStore((s) => s.user?.preferredLocale);
 
   useEffect(() => {
+    if (useI18nStore.getState().hydrated) return;
     void (async () => {
       const stored = await withTimeoutFallback(
         AsyncStorage.getItem(PREFERENCE_KEYS.language),

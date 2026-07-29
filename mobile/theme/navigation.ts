@@ -7,7 +7,7 @@ export const TAB_BAR_HEIGHT = 64;
 /** Scroll content clearance so lists clear the floating tab bar. */
 export const TAB_BAR_SCROLL_CLEARANCE = TAB_BAR_HEIGHT + spacing["3xl"] + spacing.xl;
 
-/** Shared tab options — pair with `<PremiumTabBar />` via `tabBar` prop. */
+/** Shared tab options — pair with `<MimeTabBar />` via `tabBar` prop. */
 export function buildPremiumTabScreenOptions(_bottomInset = 0): {
   headerShown: boolean;
   tabBarActiveTintColor: string;
@@ -24,7 +24,7 @@ export function buildPremiumTabScreenOptions(_bottomInset = 0): {
     tabBarActiveTintColor: colors.primary,
     tabBarInactiveTintColor: colors.mutedForeground,
     tabBarLabelStyle: {
-      fontSize: 10,
+      fontSize: 11,
       fontWeight: "600",
       fontFamily: typography.caption.fontFamily,
       letterSpacing: 0.1,
@@ -39,5 +39,5 @@ export function buildPremiumTabScreenOptions(_bottomInset = 0): {
   };
 }
 
-/** @deprecated Use buildPremiumTabScreenOptions with PremiumTabBar */
+/** @deprecated Use buildPremiumTabScreenOptions with MimeTabBar */
 export const premiumTabScreenOptions = buildPremiumTabScreenOptions(0);

@@ -10,7 +10,7 @@ import { ErrorState } from "@/components/ui/ErrorState";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { useI18n } from "@/hooks/useI18n";
 import { fetchEmployeeProfile } from "@/services/api/employeeService";
-import { queryKeys } from "@/services/api/queryClient";
+import { queryKeys, queryStaleTimes } from "@/services/api/queryClient";
 import { resolveEmployeeQrUrl } from "@/utils/appPublicUrl";
 import { friendlyErrorMessage } from "@/utils/friendlyError";
 import { showSuccessToast } from "@/store/toastStore";
@@ -25,6 +25,7 @@ export function EmployeeQrScreen() {
   const { data: profile, isLoading, isError, error, refetch, isRefetching } = useQuery({
     queryKey: queryKeys.employeeMe,
     queryFn: fetchEmployeeProfile,
+    staleTime: queryStaleTimes.profile,
   });
 
   useEffect(() => {

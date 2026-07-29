@@ -1,5 +1,5 @@
 import { StyleSheet, Text, View, type StyleProp, type ViewStyle } from "react-native";
-import { colors, spacing, typography } from "@/theme";
+import { colors, spacing, surface, typography } from "@/theme";
 
 type ScreenHeaderProps = {
   eyebrow?: string;
@@ -63,9 +63,7 @@ const styles = StyleSheet.create({
   },
   eyebrow: {
     ...typography.overline,
-    color: colors.mutedForeground,
-    fontSize: 10,
-    letterSpacing: 1.1,
+    color: colors.primary,
   },
   title: {
     ...typography.h1,

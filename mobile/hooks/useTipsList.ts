@@ -5,7 +5,14 @@ import type { TipListParams } from "@/types/tips";
 
 const PAGE_SIZE = 50;
 
-export function useBusinessTipsList(params: Omit<TipListParams, "take" | "skip"> = {}) {
+type TipsListOptions = {
+  enabled?: boolean;
+};
+
+export function useBusinessTipsList(
+  params: Omit<TipListParams, "take" | "skip"> = {},
+  options: TipsListOptions = {},
+) {
   return useInfiniteQuery({
     queryKey: [...queryKeys.businessTips, params] as const,
     queryFn: ({ pageParam = 0 }) =>
@@ -15,10 +22,14 @@ export function useBusinessTipsList(params: Omit<TipListParams, "take" | "skip">
       const next = lastPageParam + PAGE_SIZE;
       return next < lastPage.total ? next : undefined;
     },
+    enabled: options.enabled ?? true,
   });
 }
 
-export function useEmployeeTipsList(params: Omit<TipListParams, "take" | "skip"> = {}) {
+export function useEmployeeTipsList(
+  params: Omit<TipListParams, "take" | "skip"> = {},
+  options: TipsListOptions = {},
+) {
   return useInfiniteQuery({
     queryKey: [...queryKeys.employeeTipList, params] as const,
     queryFn: ({ pageParam = 0 }) =>
@@ -28,5 +39,6 @@ export function useEmployeeTipsList(params: Omit<TipListParams, "take" | "skip">
       const next = lastPageParam + PAGE_SIZE;
       return next < lastPage.total ? next : undefined;
     },
+    enabled: options.enabled ?? true,
   });
 }

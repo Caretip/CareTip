@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "react";
-import { AppState, Platform } from "react-native";
+import { Platform } from "react-native";
 import Constants, { ExecutionEnvironment } from "expo-constants";
 import { router } from "expo-router";
 import { registerPushToken } from "@/services/api/settingsService";
@@ -7,18 +7,17 @@ import { useAuth } from "@/hooks/useAuth";
 import { config } from "@/constants/config";
 import { setRegisteredPushToken } from "@/utils/pushTokenRegistry";
 import { useUserStore } from "@/store/userStore";
-import { getDashboardRouteForRole } from "@/utils/routing";
+import { getNotificationsRouteForRole } from "@/utils/routing";
 
 /**
  * Remote push tokens are unavailable in Expo Go since SDK 53.
  * Skip the module entirely there so Metro does not surface a fatal ERROR overlay.
  * Push registration runs only in development / production builds.
  *
- * Required before production push works:
- * 1. `eas init` → real projectId in app config
- * 2. `eas credentials` → FCM (Android) + APNs (iOS)
- * 3. EXPO_PUBLIC_EAS_PROJECT_ID or Constants.easConfig.projectId available at runtime
- * See docs/PHASE4_BETA_PACKAGING.md § Push.
+ * Post-auth landing is owned by `postAuthNavigation` / `getPostAuthHref` — never inbox.
+ * Inbox navigation happens only when the user explicitly taps a notification while the app
+ * is running (response listener). We do not call getLastNotificationResponseAsync after
+ * login or session restore — Android persists stale responses and caused dashboard → inbox redirects.
  */
 const isExpoGo = Constants.executionEnvironment === ExecutionEnvironment.StoreClient;
 
@@ -31,28 +30,15 @@ function resolveEasProjectId(): string | undefined {
   );
 }
 
-function openInboxForCurrentUser(): void {
-  const role = useUserStore.getState().user?.role;
-  if (role === "MANAGER") {
-    router.push("/(app)/business/notifications");
-    return;
-  }
-  if (role === "EMPLOYEE") {
-    router.push("/(app)/employee/notifications");
-    return;
-  }
-  if (role) {
-    router.push(getDashboardRouteForRole(role));
-  }
-}
-
 export function PushNotificationBridge() {
   const { isAuthenticated } = useAuth();
   const registeredForSession = useRef(false);
-  const handledColdStartTap = useRef(false);
 
   useEffect(() => {
-    if (!isAuthenticated || isExpoGo) return;
+    if (!isAuthenticated || isExpoGo) {
+      registeredForSession.current = false;
+      return;
+    }
 
     let cancelled = false;
     let responseSub: { remove: () => void } | undefined;
@@ -76,18 +62,10 @@ export function PushNotificationBridge() {
       });
 
       responseSub = Notifications.addNotificationResponseReceivedListener(() => {
-        openInboxForCurrentUser();
+        const role = useUserStore.getState().user?.role;
+        const inboxRoute = getNotificationsRouteForRole(role);
+        router.push(inboxRoute);
       });
-
-      try {
-        const last = await Notifications.getLastNotificationResponseAsync();
-        if (last && !cancelled && !handledColdStartTap.current) {
-          handledColdStartTap.current = true;
-          openInboxForCurrentUser();
-        }
-      } catch {
-        /* non-fatal */
-      }
 
       const settings = await Notifications.getPermissionsAsync();
       let status = settings.status;
@@ -127,17 +105,11 @@ export function PushNotificationBridge() {
       }
     })();
 
-    const appStateSub = AppState.addEventListener("change", (next) => {
-      if (next === "active") {
-        /* Badge clear / inbox refresh left to NotificationsScreen pull-to-refresh. */
-      }
-    });
-
     return () => {
       cancelled = true;
+      registeredForSession.current = false;
       receiveSub?.remove();
       responseSub?.remove();
-      appStateSub.remove();
     };
   }, [isAuthenticated]);
 

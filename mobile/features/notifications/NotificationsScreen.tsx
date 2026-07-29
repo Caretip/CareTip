@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import {
   ActivityIndicator,
   FlatList,
@@ -6,6 +6,7 @@ import {
   Text,
   View,
 } from "react-native";
+import type { Href } from "expo-router";
 import { SearchField } from "@/components/ui/SearchField";
 import { Button } from "@/components/ui/Button";
 import { ScreenShell, screenContentPadding, useListRefreshControl } from "@/components/ui/ScreenShell";
@@ -13,13 +14,14 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { ErrorState } from "@/components/ui/ErrorState";
 import { SkeletonListRows } from "@/components/ui/Skeleton";
 import { NotificationCard } from "@/components/ui/ListCards";
-import { ScreenHeader } from "@/components/ui/ScreenHeader";
+import { DetailScreenHeader } from "@/components/ui/DetailScreenHeader";
 import { useNotificationsFeed } from "@/hooks/useNotifications";
 import { useI18n } from "@/hooks/useI18n";
 import { formatTimeAgo } from "@/utils/formatTimeAgo";
 import { formatNotificationType } from "@/utils/labels";
 import { friendlyErrorMessage } from "@/utils/friendlyError";
-import { colors, spacing, typography } from "@/theme";
+import { LIST_PERF } from "@/constants/listPerf";
+import { colors, spacing, surface, typography } from "@/theme";
 
 function dayBucket(
   iso: string,
@@ -49,7 +51,11 @@ function dayBucket(
   };
 }
 
-export function NotificationsScreen() {
+export function NotificationsScreen({
+  menuFallbackHref = "/(app)/business/menu",
+}: {
+  menuFallbackHref?: Href;
+}) {
   const { t } = useI18n();
   const [search, setSearch] = useState("");
   const {
@@ -86,15 +92,46 @@ export function NotificationsScreen() {
     return out;
   }, [items, t]);
 
+  const renderRow = useCallback(
+    ({ item: row }: { item: Row }) => {
+      if (row.kind === "header") {
+        return <Text style={styles.dayHeader}>{row.label}</Text>;
+      }
+      const item = row.item;
+      return (
+        <NotificationCard
+          title={item.title}
+          message={item.message}
+          meta={`${formatNotificationType(item.type)} · ${formatTimeAgo(item.createdAt)}`}
+          unread={!item.read}
+          inset
+          onPress={() => {
+            if (!item.read) void markRead.mutateAsync(item.id);
+          }}
+        />
+      );
+    },
+    [markRead],
+  );
+
+  const keyExtractor = useCallback((row: Row) => row.id, []);
+
+  const handleEndReached = useCallback(() => {
+    if (hasNextPage && !isFetchingNextPage) void fetchNextPage();
+  }, [fetchNextPage, hasNextPage, isFetchingNextPage]);
+
   return (
     <ScreenShell>
       <View style={styles.header}>
-        <ScreenHeader
+        <DetailScreenHeader
           title={t("notifications.title")}
+          fallbackHref={menuFallbackHref}
         />
         <Button
           label={t("notifications.markAllRead")}
           variant="outline"
+          loading={markAllRead.isPending}
+          disabled={markAllRead.isPending}
           onPress={() => void markAllRead.mutateAsync()}
         />
       </View>
@@ -120,12 +157,11 @@ export function NotificationsScreen() {
       ) : (
         <FlatList
           data={rows}
-          keyExtractor={(row) => row.id}
+          keyExtractor={keyExtractor}
+          renderItem={renderRow}
           contentContainerStyle={styles.list}
           refreshControl={refreshControl}
-          onEndReached={() => {
-            if (hasNextPage && !isFetchingNextPage) void fetchNextPage();
-          }}
+          onEndReached={handleEndReached}
           onEndReachedThreshold={0.4}
           ListEmptyComponent={
             <EmptyState
@@ -139,23 +175,7 @@ export function NotificationsScreen() {
               <ActivityIndicator color={colors.primary} style={styles.footerLoader} />
             ) : null
           }
-          renderItem={({ item: row }) => {
-            if (row.kind === "header") {
-              return <Text style={styles.dayHeader}>{row.label}</Text>;
-            }
-            const item = row.item;
-            return (
-              <NotificationCard
-                title={item.title}
-                message={item.message}
-                meta={`${formatNotificationType(item.type)} · ${formatTimeAgo(item.createdAt)}`}
-                unread={!item.read}
-                onPress={() => {
-                  if (!item.read) void markRead.mutateAsync(item.id);
-                }}
-              />
-            );
-          }}
+          {...LIST_PERF}
         />
       )}
     </ScreenShell>
@@ -179,6 +199,11 @@ const styles = StyleSheet.create({
   list: {
     ...screenContentPadding,
     flexGrow: 1,
+    backgroundColor: colors.card,
+    borderRadius: surface.groupRadius,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.border,
+    overflow: "hidden",
   },
   dayHeader: {
     ...typography.overline,

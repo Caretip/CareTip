@@ -54,4 +54,8 @@ export const config = {
   /** Matches web CSRF guard header required by refresh/logout. */
   clientHeader: "1" as const,
   clientHeaderName: "X-CareTip-Client" as const,
+  /** Google OAuth web client ID — same as web VITE_GOOGLE_CLIENT_ID (required for idToken). */
+  googleWebClientId: (process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID ?? "").trim() || undefined,
+  /** iOS native client ID (optional; falls back to GoogleService-Info.plist when set). */
+  googleIosClientId: (process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID ?? "").trim() || undefined,
 } as const;

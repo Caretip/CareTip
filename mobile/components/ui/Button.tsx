@@ -13,7 +13,9 @@ import Animated, {
   useSharedValue,
   withSpring,
 } from "react-native-reanimated";
-import { colors, motion, radius, shadows, spacing, touchTarget, typography } from "@/theme";
+import { colors, motion, shadows, spacing, surface, touchTarget, typography } from "@/theme";
+import { textA11y } from "@/theme/a11y";
+import { hapticLight } from "@/utils/haptics";
 
 type ButtonVariant = "primary" | "secondary" | "outline" | "ghost" | "destructive";
 
@@ -75,9 +77,11 @@ export function Button({
   return (
     <AnimatedPressable
       accessibilityRole="button"
+      accessibilityState={{ disabled: isDisabled, busy: loading }}
       disabled={isDisabled}
       onPressIn={(e) => {
         scale.value = withSpring(0.97, motion.spring.press);
+        if (!isDisabled) hapticLight();
         onPressIn?.(e);
       }}
       onPressOut={(e) => {
@@ -90,7 +94,9 @@ export function Button({
       {loading ? (
         <ActivityIndicator color={palette.label.color as string} />
       ) : (
-        <Text style={[styles.label, palette.label, labelStyle]}>{label}</Text>
+        <Text style={[styles.label, palette.label, labelStyle]} {...textA11y}>
+          {label}
+        </Text>
       )}
     </AnimatedPressable>
   );
@@ -99,7 +105,7 @@ export function Button({
 const styles = StyleSheet.create({
   base: {
     minHeight: touchTarget,
-    borderRadius: radius.xl,
+    borderRadius: surface.pillRadius,
     alignItems: "center",
     justifyContent: "center",
     paddingHorizontal: spacing.xl,

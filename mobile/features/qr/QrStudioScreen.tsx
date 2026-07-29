@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import * as Clipboard from "expo-clipboard";
 import * as Sharing from "expo-sharing";
 import {
@@ -21,6 +21,7 @@ import { loadOfflineQrItems } from "@/utils/offlineQrCache";
 import { friendlyErrorMessage, isPermissionError } from "@/utils/friendlyError";
 import { showSuccessToast } from "@/store/toastStore";
 import type { QrCodeItem } from "@/types/qr";
+import { LIST_PERF_COMPACT } from "@/constants/listPerf";
 import { colors, spacing, typography } from "@/theme";
 
 export function QrStudioScreen() {
@@ -29,12 +30,15 @@ export function QrStudioScreen() {
   const [offlineItems, setOfflineItems] = useState<QrCodeItem[]>([]);
   const { items, isLoading, isRefreshing, refresh, error } = useQrStudio();
 
-  const typeLabels: Record<QrCodeItem["type"], string> = {
-    business: t("qr.businessQr"),
-    employee: t("qr.employeeQr"),
-    location: t("qr.locationQr"),
-    table: t("qr.tableQr"),
-  };
+  const typeLabels: Record<QrCodeItem["type"], string> = useMemo(
+    () => ({
+      business: t("qr.businessQr"),
+      employee: t("qr.employeeQr"),
+      location: t("qr.locationQr"),
+      table: t("qr.tableQr"),
+    }),
+    [t],
+  );
 
   useEffect(() => {
     void loadOfflineQrItems().then(setOfflineItems);
@@ -44,48 +48,70 @@ export function QrStudioScreen() {
   const offline = items.length === 0 && offlineItems.length > 0;
   const refreshControl = useListRefreshControl(isRefreshing, () => void refresh());
 
-  const handleCopy = async (url: string) => {
+  const handleCopy = useCallback(async (url: string) => {
     await Clipboard.setStringAsync(url);
     showSuccessToast(t("success.linkCopied"));
-  };
+  }, [t]);
 
-  const handleShare = async (item: QrCodeItem) => {
+  const handleShare = useCallback(async (item: QrCodeItem) => {
     const canShare = await Sharing.isAvailableAsync();
     if (canShare) {
       await Sharing.shareAsync(item.url, { dialogTitle: `${t("qr.share")} ${item.title}` });
     } else {
       await handleCopy(item.url);
     }
-  };
+  }, [handleCopy, t]);
 
-  const listHeader = (
-    <>
-      <View style={styles.header}>
-        <Text style={styles.title}>{t("qr.studioTitle")}</Text>
-        {offline ? <Text style={styles.offlineNote}>{t("common.offline")}</Text> : null}
-      </View>
-      {selected ? (
-        <View style={styles.detail}>
-          <QrCodeDisplay
-            value={selected.url}
-            title={selected.title}
-            subtitle={typeLabels[selected.type]}
-            size={240}
-            elevated={false}
-            mode="manager"
-          />
-          <View style={styles.actions}>
-            <Button
-              label={t("qr.copyLink")}
-              variant="secondary"
-              onPress={() => void handleCopy(selected.url)}
-            />
-            <Button label={t("qr.share")} onPress={() => void handleShare(selected)} />
-            <Button label={t("qr.backToList")} variant="ghost" onPress={() => setSelected(null)} />
-          </View>
+  const listHeader = useMemo(
+    () => (
+      <>
+        <View style={styles.header}>
+          <Text style={styles.title}>{t("qr.studioTitle")}</Text>
+          {offline ? <Text style={styles.offlineNote}>{t("common.offline")}</Text> : null}
         </View>
-      ) : null}
-    </>
+        {selected ? (
+          <View style={styles.detail}>
+            <QrCodeDisplay
+              value={selected.url}
+              title={selected.title}
+              subtitle={typeLabels[selected.type]}
+              size={240}
+              elevated={false}
+              mode="manager"
+            />
+            <View style={styles.actions}>
+              <Button
+                label={t("qr.copyLink")}
+                variant="secondary"
+                onPress={() => void handleCopy(selected.url)}
+              />
+              <Button label={t("qr.share")} onPress={() => void handleShare(selected)} />
+              <Button label={t("qr.backToList")} variant="ghost" onPress={() => setSelected(null)} />
+            </View>
+          </View>
+        ) : null}
+      </>
+    ),
+    [handleCopy, handleShare, offline, selected, t, typeLabels],
+  );
+
+  const keyExtractor = useCallback((item: QrCodeItem) => item.id, []);
+
+  const renderItem = useCallback(
+    ({ item }: { item: QrCodeItem }) => (
+      <Pressable
+        style={({ pressed }) => [styles.row, pressed && styles.pressed]}
+        accessibilityRole="button"
+        onPress={() => setSelected(item)}
+      >
+        <View style={styles.rowBody}>
+          <Text style={styles.cardTitle}>{item.title}</Text>
+          {item.subtitle ? <Text style={styles.cardSubtitle}>{item.subtitle}</Text> : null}
+        </View>
+        <StatusPill label={typeLabels[item.type]} tone="brand" />
+      </Pressable>
+    ),
+    [typeLabels],
   );
 
   return (
@@ -116,10 +142,12 @@ export function QrStudioScreen() {
       ) : (
         <FlatList
           data={selected ? [] : displayItems}
-          keyExtractor={(item) => item.id}
+          keyExtractor={keyExtractor}
+          renderItem={renderItem}
           contentContainerStyle={styles.list}
           refreshControl={refreshControl}
           ListHeaderComponent={listHeader}
+          {...LIST_PERF_COMPACT}
           ListEmptyComponent={
             selected ? null : (
               <EmptyState
@@ -129,19 +157,6 @@ export function QrStudioScreen() {
               />
             )
           }
-          renderItem={({ item }) => (
-            <Pressable
-              style={({ pressed }) => [styles.row, pressed && styles.pressed]}
-              accessibilityRole="button"
-              onPress={() => setSelected(item)}
-            >
-              <View style={styles.rowBody}>
-                <Text style={styles.cardTitle}>{item.title}</Text>
-                {item.subtitle ? <Text style={styles.cardSubtitle}>{item.subtitle}</Text> : null}
-              </View>
-              <StatusPill label={typeLabels[item.type]} tone="brand" />
-            </Pressable>
-          )}
         />
       )}
     </ScreenShell>

@@ -1,7 +1,10 @@
+import { memo } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { Avatar } from "@/components/ui/Avatar";
 import { StatusPill } from "@/components/ui/StatusPill";
-import { colors, radius, spacing, typography } from "@/theme";
+import { useI18n } from "@/hooks/useI18n";
+import { colors, radius, spacing, surface, typography } from "@/theme";
+import { hapticLight } from "@/utils/haptics";
 
 type TipCardProps = {
   amount: string;
@@ -11,10 +14,12 @@ type TipCardProps = {
   meta?: string;
   location?: string | null;
   onPress?: () => void;
+  /** Divider row inside a grouped list — no individual card chrome. */
+  inset?: boolean;
 };
 
 /** Compact tip row — divider list style, not a boxed card. */
-export function TipCard({
+export const TipCard = memo(function TipCard({
   amount,
   statusLabel,
   statusTone = "neutral",
@@ -22,16 +27,26 @@ export function TipCard({
   meta,
   location,
   onPress,
+  inset = false,
 }: TipCardProps) {
   const a11y = [amount, statusLabel, staffName, meta, location].filter(Boolean).join(". ");
   return (
     <Pressable
       accessibilityRole="button"
       accessibilityLabel={a11y || "Tip"}
-      onPress={onPress}
-      style={({ pressed }) => [styles.row, pressed && styles.pressed]}
+      onPress={() => {
+        hapticLight();
+        onPress?.();
+      }}
+      style={({ pressed }) => [
+        styles.row,
+        inset ? styles.rowInset : styles.rowCard,
+        pressed && styles.pressed,
+      ]}
     >
-      <Avatar label={staffName ?? "Tip"} tone="brand" size={36} />
+      <View style={styles.iconWell}>
+        <Avatar label={staffName ?? "Tip"} tone="brand" size={36} />
+      </View>
       <View style={styles.body}>
         <View style={styles.top}>
           <Text style={styles.amount}>{amount}</Text>
@@ -44,7 +59,7 @@ export function TipCard({
       </View>
     </Pressable>
   );
-}
+});
 
 type ActivityCardProps = {
   title: string;
@@ -57,7 +72,7 @@ type ActivityCardProps = {
 };
 
 /** Timeline-style activity row. */
-export function ActivityCard({
+export const ActivityCard = memo(function ActivityCard({
   title,
   subtitle,
   meta,
@@ -83,7 +98,7 @@ export function ActivityCard({
       </View>
     </View>
   );
-}
+});
 
 type NotificationCardProps = {
   title: string;
@@ -91,23 +106,42 @@ type NotificationCardProps = {
   meta: string;
   unread?: boolean;
   onPress?: () => void;
+  inset?: boolean;
 };
 
-export function NotificationCard({
+export const NotificationCard = memo(function NotificationCard({
   title,
   message,
   meta,
   unread = false,
   onPress,
+  inset = false,
 }: NotificationCardProps) {
+  const { t } = useI18n();
+  const readState = unread ? t("a11y.unread") : t("a11y.read");
   return (
     <Pressable
       accessibilityRole="button"
-      accessibilityLabel={`${title}. ${unread ? "Unread" : "Read"}`}
-      onPress={onPress}
-      style={({ pressed }) => [styles.row, unread ? styles.unreadRow : null, pressed && styles.pressed]}
+      accessibilityLabel={`${title}. ${readState}`}
+      onPress={() => {
+        hapticLight();
+        onPress?.();
+      }}
+      style={({ pressed }) => [
+        styles.row,
+        inset ? styles.rowInset : styles.rowCard,
+        !inset && unread ? styles.unreadRow : null,
+        inset && unread ? styles.unreadInset : null,
+        pressed && styles.pressed,
+      ]}
     >
-      {unread ? <View style={styles.unreadDot} /> : <View style={styles.readSpacer} />}
+      <View style={[styles.iconWell, unread ? styles.iconWellUnread : null]}>
+        {unread ? (
+          <View style={styles.unreadDotInner} />
+        ) : (
+          <View style={styles.readDotInner} />
+        )}
+      </View>
       <View style={styles.body}>
         <Text style={[styles.title, unread ? styles.titleUnread : null]}>{title}</Text>
         <Text style={styles.subtitle} numberOfLines={2}>
@@ -117,20 +151,31 @@ export function NotificationCard({
       </View>
     </Pressable>
   );
-}
+});
 
 const styles = StyleSheet.create({
   row: {
     flexDirection: "row",
     gap: spacing.md,
     alignItems: "flex-start",
-    paddingVertical: spacing.lg,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: colors.border,
     minHeight: 56,
+  },
+  rowCard: {
+    paddingVertical: spacing.lg,
+    paddingHorizontal: spacing.lg,
+    marginBottom: spacing.sm,
+    backgroundColor: colors.card,
+    borderRadius: surface.cardRadius - 4,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.border,
+  },
+  rowInset: {
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.lg,
   },
   pressed: {
     opacity: 0.85,
+    transform: [{ scale: 0.99 }],
   },
   body: {
     flex: 1,
@@ -175,17 +220,35 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   unreadRow: {
-    backgroundColor: "transparent",
+    borderColor: "rgba(235, 153, 44, 0.22)",
   },
-  unreadDot: {
+  unreadInset: {
+    backgroundColor: "rgba(235, 153, 44, 0.06)",
+  },
+  iconWell: {
+    width: surface.iconWellSize,
+    height: surface.iconWellSize,
+    borderRadius: surface.iconWellRadius,
+    backgroundColor: colors.primarySoft,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  iconWellUnread: {
+    backgroundColor: colors.primarySoft,
+    borderWidth: 1.5,
+    borderColor: colors.primary,
+  },
+  unreadDotInner: {
+    width: 10,
+    height: 10,
+    borderRadius: radius.full,
+    backgroundColor: colors.primary,
+  },
+  readDotInner: {
     width: 8,
     height: 8,
     borderRadius: radius.full,
-    backgroundColor: colors.primary,
-    marginTop: 6,
-  },
-  readSpacer: {
-    width: 8,
+    backgroundColor: colors.borderStrong,
   },
   timelineRow: {
     flexDirection: "row",

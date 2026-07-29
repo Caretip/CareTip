@@ -13,7 +13,8 @@ import Animated, {
 } from "react-native-reanimated";
 import { LinearGradient } from "expo-linear-gradient";
 import { authBrand } from "@/theme/authBrand";
-import { motion, spacing, touchTarget, typography } from "@/theme";
+import { motion, radius, spacing, touchTarget, typography } from "@/theme";
+import { hapticLight } from "@/utils/haptics";
 
 type AuthContinueButtonProps = PressableProps & {
   label: string;
@@ -39,9 +40,11 @@ export function AuthContinueButton({
   return (
     <AnimatedPressable
       accessibilityRole="button"
+      accessibilityState={{ disabled: isDisabled, busy: loading }}
       disabled={isDisabled}
       android_ripple={{ color: "rgba(255,255,255,0.22)" }}
       onPressIn={(e) => {
+        if (!isDisabled) hapticLight();
         scale.value = withSpring(0.97, motion.spring.press);
         onPressIn?.(e);
       }}
@@ -70,7 +73,7 @@ export function AuthContinueButton({
 
 const styles = StyleSheet.create({
   wrap: {
-    borderRadius: 18,
+    borderRadius: radius.xl,
     overflow: "hidden",
     ...Platform.select({
       ios: {

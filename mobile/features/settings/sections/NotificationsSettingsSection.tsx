@@ -1,0 +1,112 @@
+import { StyleSheet, Switch, Text, View } from "react-native";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { GroupedList, GroupedRow, Section } from "@/components/ui/Section";
+import { SettingsSectionLayout } from "@/features/settings/SettingsSectionLayout";
+import { useI18n } from "@/hooks/useI18n";
+import { fetchEmployeeProfile } from "@/services/api/employeeService";
+import { fetchAccountSettings, patchAccountSettings, patchEmployeeProfile } from "@/services/api/settingsService";
+import { queryKeys, queryStaleTimes } from "@/services/api/queryClient";
+import { colors, spacing, typography } from "@/theme";
+
+export function BusinessNotificationsSettingsScreen() {
+  const { t } = useI18n();
+  const queryClient = useQueryClient();
+  const accountQuery = useQuery({
+    queryKey: queryKeys.accountSettings,
+    queryFn: fetchAccountSettings,
+    staleTime: queryStaleTimes.settings,
+  });
+  const patchAccount = useMutation({
+    mutationFn: patchAccountSettings,
+    onSuccess: () => void queryClient.invalidateQueries({ queryKey: queryKeys.accountSettings }),
+  });
+
+  if (!accountQuery.data) return null;
+
+  const toggles = [
+    ["tipReceivedNotifications", "settings.tipReceived"],
+    ["summaryEmails", "settings.summaryEmails"],
+    ["systemAlerts", "settings.systemAlerts"],
+    ["notifyNewLogin", "settings.newLogin"],
+  ] as const;
+
+  return (
+    <SettingsSectionLayout
+      title={t("settings.menu.notifications")}
+      subtitle={t("settings.notificationsBusinessSub")}
+    >
+      <Section title={t("settings.notificationsBusiness")}>
+        <GroupedList>
+          {toggles.map(([key, labelKey], index) => (
+            <GroupedRow key={key} showDivider={index < toggles.length - 1}>
+              <View style={styles.row}>
+                <Text style={styles.body}>{t(labelKey)}</Text>
+                <Switch
+                  value={accountQuery.data[key]}
+                  onValueChange={(value) => void patchAccount.mutateAsync({ [key]: value })}
+                />
+              </View>
+            </GroupedRow>
+          ))}
+        </GroupedList>
+      </Section>
+    </SettingsSectionLayout>
+  );
+}
+
+export function EmployeeNotificationsSettingsScreen() {
+  const { t } = useI18n();
+  const queryClient = useQueryClient();
+  const employeeQuery = useQuery({
+    queryKey: queryKeys.employeeMe,
+    queryFn: fetchEmployeeProfile,
+    staleTime: queryStaleTimes.profile,
+  });
+  const patchEmployee = useMutation({
+    mutationFn: patchEmployeeProfile,
+    onSuccess: () => void queryClient.invalidateQueries({ queryKey: queryKeys.employeeMe }),
+  });
+
+  if (!employeeQuery.data) return null;
+
+  return (
+    <SettingsSectionLayout
+      title={t("settings.menu.notifications")}
+      subtitle={t("settings.notificationsEmployeeSub")}
+    >
+      <Section title={t("settings.notificationsEmployee")}>
+        <GroupedList>
+          <GroupedRow>
+            <View style={styles.row}>
+              <Text style={styles.body}>{t("settings.emailNotifications")}</Text>
+              <Switch
+                value={employeeQuery.data.emailNotifications}
+                onValueChange={(v) => void patchEmployee.mutateAsync({ emailNotifications: v })}
+              />
+            </View>
+          </GroupedRow>
+          <GroupedRow showDivider={false}>
+            <View style={styles.row}>
+              <Text style={styles.body}>{t("settings.pushNotifications")}</Text>
+              <Switch
+                value={employeeQuery.data.pushNotifications}
+                onValueChange={(v) => void patchEmployee.mutateAsync({ pushNotifications: v })}
+              />
+            </View>
+          </GroupedRow>
+        </GroupedList>
+      </Section>
+    </SettingsSectionLayout>
+  );
+}
+
+const styles = StyleSheet.create({
+  row: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    gap: spacing.md,
+    minHeight: 52,
+  },
+  body: { ...typography.body, color: colors.foreground, flex: 1 },
+});

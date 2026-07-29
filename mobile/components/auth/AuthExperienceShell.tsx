@@ -21,21 +21,21 @@ import Animated, {
 import { LinearGradient } from "expo-linear-gradient";
 import { BlurView } from "expo-blur";
 import { StatusBar } from "expo-status-bar";
+import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import hospitalityBackground from "@/assets/auth/hospitality-background.jpg";
+import authBackground from "@/assets/auth/mobileauth.png";
 import caretipAppIcon from "@/assets/caretip-app-icon-ref.png";
 import { AuthFooterSheet } from "@/components/auth/AuthFooterSheet";
 import { SplashScreenAnchor } from "@/components/brand/SplashScreenAnchor";
-import { authWebPaths } from "@/constants/authLinks";
 import { useI18n } from "@/hooks/useI18n";
-import { openCareTipWeb } from "@/utils/openCareTipWeb";
 import { authBrand } from "@/theme/authBrand";
 import { spacing, touchTarget, typography } from "@/theme";
 
 type AuthExperienceShellProps = {
   children: ReactNode;
   showSecondaryActions?: boolean;
+  onRegisterPress?: () => void;
 };
 
 const TABLET_MIN_WIDTH = 768;
@@ -43,8 +43,10 @@ const TABLET_MIN_WIDTH = 768;
 export function AuthExperienceShell({
   children,
   showSecondaryActions = true,
+  onRegisterPress,
 }: AuthExperienceShellProps) {
   const { t } = useI18n();
+  const router = useRouter();
   const insets = useSafeAreaInsets();
   const { width, height } = useWindowDimensions();
   const isTablet = width >= TABLET_MIN_WIDTH;
@@ -87,7 +89,7 @@ export function AuthExperienceShell({
       <StatusBar style="light" />
       <View style={styles.background} pointerEvents="none">
         <ImageBackground
-          source={hospitalityBackground}
+          source={authBackground}
           style={StyleSheet.absoluteFill}
           resizeMode="cover"
           accessibilityIgnoresInvertColors
@@ -130,7 +132,7 @@ export function AuthExperienceShell({
       <KeyboardAvoidingView
         style={styles.flex}
         behavior={Platform.OS === "ios" ? "padding" : "height"}
-        keyboardVerticalOffset={Platform.OS === "ios" ? spacing.md : 0}
+        keyboardVerticalOffset={Platform.OS === "ios" ? Math.max(insets.top, spacing.lg) : 0}
       >
         <ScrollView
           keyboardShouldPersistTaps="always"
@@ -169,7 +171,9 @@ export function AuthExperienceShell({
               <Animated.View style={[styles.secondaryRow, footerAnim]}>
                 <Pressable
                   accessibilityRole="button"
-                  onPress={() => void openCareTipWeb(authWebPaths.signup)}
+                  onPress={() =>
+                    onRegisterPress ? onRegisterPress() : router.push("/(auth)/register")
+                  }
                   style={({ pressed }) => [
                     styles.secondaryAction,
                     pressed ? styles.pressed : null,
@@ -180,7 +184,7 @@ export function AuthExperienceShell({
                 <Text style={styles.secondaryPipe}>|</Text>
                 <Pressable
                   accessibilityRole="button"
-                  onPress={() => void openCareTipWeb(authWebPaths.join)}
+                  onPress={() => router.push("/(auth)/join")}
                   style={({ pressed }) => [
                     styles.secondaryAction,
                     pressed ? styles.pressed : null,

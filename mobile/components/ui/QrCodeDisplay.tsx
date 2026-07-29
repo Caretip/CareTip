@@ -1,7 +1,7 @@
 import { StyleSheet, Text, View } from "react-native";
 import { BrandedQrImage, type BrandedQrViewerMode } from "@/components/qr/BrandedQrImage";
 import { useI18n } from "@/hooks/useI18n";
-import { colors, radius, spacing, typography } from "@/theme";
+import { colors, shadows, spacing, surface, typography } from "@/theme";
 
 type QrCodeDisplayProps = {
   value: string;
@@ -61,10 +61,11 @@ const styles = StyleSheet.create({
   },
   elevated: {
     backgroundColor: colors.card,
-    borderRadius: radius.xl,
+    borderRadius: surface.cardRadius,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: colors.border,
     padding: spacing.xl,
+    ...shadows.sm,
   },
   title: {
     ...typography.cardTitle,

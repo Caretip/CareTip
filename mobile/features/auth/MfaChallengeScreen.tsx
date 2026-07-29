@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ActivityIndicator, Image, StyleSheet, Text, View } from "react-native";
@@ -12,11 +12,12 @@ import { useAuth } from "@/hooks/useAuth";
 import { useI18n } from "@/hooks/useI18n";
 import { mfaSchema, type MfaFormValues } from "@/features/auth/loginSchema";
 import { setupLoginMfa } from "@/services/auth/mfaService";
-import { getDashboardRouteForRole } from "@/utils/routing";
+import { navigateAfterAuth } from "@/utils/postAuthNavigation";
 import { friendlyErrorMessage } from "@/utils/friendlyError";
 import type { TwoFactorSetup } from "@/types/settings";
+import { authCardStyles } from "@/components/auth/authCardStyles";
 import { authBrand } from "@/theme/authBrand";
-import { radius, spacing, typography } from "@/theme";
+import { radius, spacing } from "@/theme";
 
 export function MfaChallengeScreen() {
   const router = useRouter();
@@ -57,6 +58,7 @@ export function MfaChallengeScreen() {
   const {
     control,
     handleSubmit,
+    watch,
     formState: { isSubmitting, errors },
   } = useForm<MfaFormValues>({
     resolver: zodResolver(mfaSchema),
@@ -76,21 +78,33 @@ export function MfaChallengeScreen() {
         code: values.code.trim(),
         mfaSetupRequired,
       });
-      router.replace(getDashboardRouteForRole(result.user.role));
+      await navigateAfterAuth(router, result.user);
     } catch (error) {
       setFormError(friendlyErrorMessage(error, t("auth.mfaFailed"), t));
     }
   });
 
+  const codeValue = watch("code");
+  const lastAutoCode = useRef("");
+  const onSubmitRef = useRef(onSubmit);
+  onSubmitRef.current = onSubmit;
+
+  useEffect(() => {
+    const digits = (codeValue ?? "").replace(/\D/g, "");
+    if (digits.length !== 6 || isSubmitting || digits === lastAutoCode.current) return;
+    lastAutoCode.current = digits;
+    void onSubmitRef.current();
+  }, [codeValue, isSubmitting]);
+
   return (
     <AuthExperienceShell showSecondaryActions={false}>
       <AuthGlassCard>
-        <View style={styles.cardHeader}>
-          <Text style={styles.cardEyebrow}>{t("auth.security")}</Text>
-          <Text style={styles.cardTitle}>
+        <View style={authCardStyles.cardHeader}>
+          <Text style={authCardStyles.cardEyebrow}>{t("auth.security")}</Text>
+          <Text style={authCardStyles.cardTitle}>
             {mfaSetupRequired ? t("auth.mfaSetupTitle") : t("auth.mfaTitle")}
           </Text>
-          <Text style={styles.cardSubtitle}>
+          <Text style={authCardStyles.cardSubtitle}>
             {mfaSetupRequired ? t("auth.mfaSetupSubtitle") : t("auth.mfaSubtitle")}
           </Text>
         </View>
@@ -120,13 +134,17 @@ export function MfaChallengeScreen() {
               onBlur={onBlur}
               keyboardType="number-pad"
               autoComplete="one-time-code"
+              textContentType="oneTimeCode"
+              maxLength={6}
+              returnKeyType="done"
+              onSubmitEditing={onSubmit}
               error={errors.code?.message}
             />
           )}
         />
 
         {formError ? (
-          <Text style={styles.formError} accessibilityRole="alert">
+          <Text style={authCardStyles.formError} accessibilityRole="alert">
             {formError}
           </Text>
         ) : null}
@@ -147,29 +165,6 @@ export function MfaChallengeScreen() {
 }
 
 const styles = StyleSheet.create({
-  cardHeader: {
-    gap: spacing.sm,
-    marginBottom: spacing.xs,
-  },
-  cardEyebrow: {
-    ...typography.overline,
-    color: authBrand.orange,
-    letterSpacing: 1.4,
-    fontSize: 11,
-  },
-  cardTitle: {
-    ...typography.hero,
-    color: authBrand.dark,
-    fontSize: 26,
-    letterSpacing: -0.5,
-  },
-  cardSubtitle: {
-    ...typography.body,
-    color: authBrand.muted,
-    fontSize: 14,
-    lineHeight: 20,
-    marginTop: spacing.xs,
-  },
   qrBlock: {
     alignItems: "center",
     minHeight: 48,
@@ -178,10 +173,5 @@ const styles = StyleSheet.create({
     width: 180,
     height: 180,
     borderRadius: radius.xl,
-  },
-  formError: {
-    ...typography.caption,
-    color: "#E11D48",
-    fontWeight: "600",
   },
 });

@@ -8,12 +8,11 @@ import {
   useWindowDimensions,
 } from "react-native";
 import Svg, { Rect } from "react-native-svg";
-import { Section } from "@/components/ui/Section";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { EmptyState } from "@/components/ui/EmptyState";
 import type { EmployeePerformanceChartRow } from "@/utils/dashboardChartData";
 import { formatEur } from "@/utils/format";
-import { colors, radius, spacing, typography } from "@/theme";
+import { colors, radius, spacing, surface, typography } from "@/theme";
 
 type EmployeePerformanceChartProps = {
   title: string;
@@ -27,6 +26,10 @@ type EmployeePerformanceChartProps = {
   emptyNoEmployeesMessage: string;
   emptyChartTitle: string;
   emptyChartMessage: string;
+  /** When true, omit the built-in title (parent Section provides it). */
+  hideHeader?: boolean;
+  /** White card surface around chart content. */
+  card?: boolean;
 };
 
 const ROW_HEIGHT = 28;
@@ -76,6 +79,8 @@ export function EmployeePerformanceChart({
   emptyNoEmployeesMessage,
   emptyChartTitle,
   emptyChartMessage,
+  hideHeader = false,
+  card = false,
 }: EmployeePerformanceChartProps) {
   const { width: windowWidth } = useWindowDimensions();
   const [containerWidth, setContainerWidth] = useState(0);
@@ -102,101 +107,126 @@ export function EmployeePerformanceChart({
     }
   };
 
-  return (
-    <Section title={title} highlighted>
-      {subtitle ? <Text style={styles.sectionSub}>{subtitle}</Text> : null}
-      {loading ? (
-        <Skeleton height={Math.max(chartHeight, 180)} rounded="xl" />
-      ) : employeeCount === 0 ? (
-        <EmptyState
-          variant="generic"
-          title={emptyNoEmployeesTitle}
-          message={emptyNoEmployeesMessage}
-        />
-      ) : employeeChartEmpty ? (
-        <EmptyState variant="generic" title={emptyChartTitle} message={emptyChartMessage} />
-      ) : (
-        <View style={styles.chartWrap} onLayout={handleLayout}>
-          {rows.map((row, index) => {
-            const active = activeIndex === index;
-            const amountLabel = formatEur(row.tips);
+  const body = loading ? (
+    <Skeleton height={Math.max(chartHeight, 180)} rounded="xl" />
+  ) : employeeCount === 0 ? (
+    <EmptyState
+      variant="generic"
+      title={emptyNoEmployeesTitle}
+      message={emptyNoEmployeesMessage}
+    />
+  ) : employeeChartEmpty ? (
+    <EmptyState variant="generic" title={emptyChartTitle} message={emptyChartMessage} />
+  ) : (
+    <View style={styles.chartWrap} onLayout={handleLayout}>
+      {rows.map((row, index) => {
+        const active = activeIndex === index;
+        const amountLabel = formatEur(row.tips);
 
-            if (isCompact) {
-              return (
-                <Pressable
-                  key={`${row.name}-${index}`}
-                  style={[styles.rowCompact, index < rows.length - 1 ? styles.rowSpacing : null]}
-                  onPressIn={() => setActiveIndex(index)}
-                  onPressOut={() => setActiveIndex(null)}
-                  accessibilityRole="button"
-                  accessibilityLabel={`${row.name} ${amountLabel}`}
-                >
-                  <View style={styles.rowHeader}>
-                    <Text style={styles.nameCompact} numberOfLines={1}>
-                      {row.name}
-                    </Text>
-                    {active ? (
-                      <View style={styles.tooltip}>
-                        <Text style={styles.tooltipText}>{amountLabel}</Text>
-                      </View>
-                    ) : (
-                      <Text style={styles.amountCompact}>{amountLabel}</Text>
-                    )}
-                  </View>
-                  <PerformanceBar
-                    width={plotWidth}
-                    tips={row.tips}
-                    maxTips={maxTips}
-                    color={row.color}
-                  />
-                </Pressable>
-              );
-            }
-
-            return (
-              <Pressable
-                key={`${row.name}-${index}`}
-                style={[styles.row, index < rows.length - 1 ? styles.rowSpacing : null]}
-                onPressIn={() => setActiveIndex(index)}
-                onPressOut={() => setActiveIndex(null)}
-                accessibilityRole="button"
-                accessibilityLabel={`${row.name} ${amountLabel}`}
-              >
-                <Text style={[styles.name, { width: labelWidth }]} numberOfLines={1}>
+        if (isCompact) {
+          return (
+            <Pressable
+              key={`${row.name}-${index}`}
+              style={[styles.rowCompact, index < rows.length - 1 ? styles.rowSpacing : null]}
+              onPressIn={() => setActiveIndex(index)}
+              onPressOut={() => setActiveIndex(null)}
+              accessibilityRole="button"
+              accessibilityLabel={`${row.name} ${amountLabel}`}
+            >
+              <View style={styles.rowHeader}>
+                <Text style={styles.nameCompact} numberOfLines={1}>
                   {row.name}
                 </Text>
-                <View style={[styles.barTrack, { width: plotWidth }]}>
-                  <PerformanceBar
-                    width={plotWidth}
-                    tips={row.tips}
-                    maxTips={maxTips}
-                    color={row.color}
-                  />
-                </View>
                 {active ? (
                   <View style={styles.tooltip}>
                     <Text style={styles.tooltipText}>{amountLabel}</Text>
                   </View>
                 ) : (
-                  <Text style={[styles.amount, { width: amountWidth }]} numberOfLines={1}>
-                    {amountLabel}
-                  </Text>
+                  <Text style={styles.amountCompact}>{amountLabel}</Text>
                 )}
-              </Pressable>
-            );
-          })}
-          {leaderMessage ? <Text style={styles.leader}>{leaderMessage}</Text> : null}
-        </View>
-      )}
-    </Section>
+              </View>
+              <PerformanceBar
+                width={plotWidth}
+                tips={row.tips}
+                maxTips={maxTips}
+                color={row.color}
+              />
+            </Pressable>
+          );
+        }
+
+        return (
+          <Pressable
+            key={`${row.name}-${index}`}
+            style={[styles.row, index < rows.length - 1 ? styles.rowSpacing : null]}
+            onPressIn={() => setActiveIndex(index)}
+            onPressOut={() => setActiveIndex(null)}
+            accessibilityRole="button"
+            accessibilityLabel={`${row.name} ${amountLabel}`}
+          >
+            <Text style={[styles.name, { width: labelWidth }]} numberOfLines={1}>
+              {row.name}
+            </Text>
+            <View style={[styles.barTrack, { width: plotWidth }]}>
+              <PerformanceBar
+                width={plotWidth}
+                tips={row.tips}
+                maxTips={maxTips}
+                color={row.color}
+              />
+            </View>
+            {active ? (
+              <View style={styles.tooltip}>
+                <Text style={styles.tooltipText}>{amountLabel}</Text>
+              </View>
+            ) : (
+              <Text style={[styles.amount, { width: amountWidth }]} numberOfLines={1}>
+                {amountLabel}
+              </Text>
+            )}
+          </Pressable>
+        );
+      })}
+      {leaderMessage ? <Text style={styles.leader}>{leaderMessage}</Text> : null}
+    </View>
+  );
+
+  const chartBlock = (
+    <>
+      {subtitle ? <Text style={styles.sectionSub}>{subtitle}</Text> : null}
+      {body}
+    </>
+  );
+
+  return (
+    <View style={styles.wrap}>
+      {!hideHeader && title ? <Text style={styles.title}>{title}</Text> : null}
+      {card ? <View style={styles.cardSurface}>{chartBlock}</View> : chartBlock}
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
+  wrap: {
+    gap: spacing.sm,
+  },
+  cardSurface: {
+    backgroundColor: colors.card,
+    borderRadius: surface.cardRadius,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.border,
+    padding: spacing.lg,
+    gap: spacing.md,
+  },
+  title: {
+    ...typography.overline,
+    color: colors.mutedForeground,
+    fontSize: 11,
+    letterSpacing: 1,
+  },
   sectionSub: {
     ...typography.caption,
     color: colors.mutedForeground,
-    marginTop: -spacing.sm,
   },
   chartWrap: {
     width: "100%",

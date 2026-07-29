@@ -1,3 +1,6 @@
+export { DashboardShortcutGrid } from "./DashboardShortcutGrid";
+export type { DashboardShortcut } from "./DashboardShortcutGrid";
+export { QuickActionRow } from "./QuickActionRow";
 export { Button } from "./Button";
 export { Card, CardHeader } from "./Card";
 export { KpiCard, StatCard, MetricCard } from "./KpiCard";
@@ -12,9 +15,9 @@ export { ScreenHeader, SectionHeader, HeroCard } from "./ScreenHeader";
 export { Section, Divider, GroupedList, GroupedRow } from "./Section";
 export { Avatar } from "./Avatar";
 export { TipCard, ActivityCard, NotificationCard } from "./ListCards";
-export { AreaTrendChart } from "./AreaTrendChart";
 export { EmployeePerformanceChart } from "./EmployeePerformanceChart";
 export { FadeIn, PressScale } from "./motion";
 export { QrCodeDisplay } from "./QrCodeDisplay";
 export { Screen } from "./Screen";
 export { ScreenShell, screenContentPadding, useListRefreshControl } from "./ScreenShell";
+export type { QuickAction } from "./QuickActionRow";

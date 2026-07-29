@@ -1,5 +1,5 @@
 import { StyleSheet, Text, View, type StyleProp, type ViewStyle } from "react-native";
-import { colors, radius, shadows, spacing, typography } from "@/theme";
+import { colors, shadows, spacing, surface, typography } from "@/theme";
 
 type CardProps = {
   children: React.ReactNode;
@@ -52,7 +52,7 @@ export function CardHeader({ title, subtitle, trailing }: CardHeaderProps) {
 const styles = StyleSheet.create({
   card: {
     backgroundColor: colors.card,
-    borderRadius: 22,
+    borderRadius: surface.cardRadius,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: colors.border,
     gap: spacing.lg,

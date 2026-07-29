@@ -34,6 +34,16 @@ export type MfaChallengeResponse = {
   pendingMfaToken: string;
 };
 
+export type OAuthRequest = {
+  idToken: string;
+  isLogin: boolean;
+  intendedRole?: UserRole;
+  name?: string;
+  inviteCode?: string;
+  locale?: AppLocale;
+  timeZone?: string;
+};
+
 export type SignInRequest = {
   email: string;
   password: string;
@@ -58,3 +68,34 @@ export type AuthSessionStatus =
   | "authenticated"
   | "unauthenticated"
   | "error";
+
+export type RegisterRole = "business" | "employee";
+
+export type RegisterRequest = {
+  email: string;
+  password: string;
+  name?: string;
+  role: RegisterRole;
+  inviteCode?: string;
+  locale?: AppLocale;
+};
+
+export type RegisterPendingResponse = {
+  requiresEmailVerification: true;
+  email: string;
+  role: RegisterRole;
+  user?: AuthUser;
+};
+
+export type MessageResponse = {
+  ok: boolean;
+  message: string;
+};
+
+export type InviteValidation = {
+  valid: boolean;
+  businessName?: string;
+  businessId?: string;
+  businessSlug?: string;
+  businessLocation?: string | null;
+};

@@ -1,6 +1,6 @@
 let sessionExpiredHandler: (() => void) | null = null;
 
-export function registerSessionExpiredHandler(handler: () => void): void {
+export function registerSessionExpiredHandler(handler: (() => void) | null): void {
   sessionExpiredHandler = handler;
 }
 

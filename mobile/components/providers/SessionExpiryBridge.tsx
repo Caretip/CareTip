@@ -12,6 +12,7 @@ export function SessionExpiryBridge() {
         router.replace("/(auth)/login");
       });
     });
+    return () => registerSessionExpiredHandler(null);
   }, [router]);
 
   return null;

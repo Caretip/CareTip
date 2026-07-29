@@ -1,10 +1,11 @@
 import { Redirect, Stack } from "expo-router";
 import { useAuth } from "@/hooks/useAuth";
 import { useSessionRoutingReady } from "@/hooks/useAppReady";
+import { getPostAuthHref, resolvePostAuthAction } from "@/utils/postAuthNavigation";
 import { colors } from "@/theme";
 
 export default function AppLayout() {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
   const routingReady = useSessionRoutingReady();
 
   if (!routingReady) {
@@ -13,6 +14,13 @@ export default function AppLayout() {
 
   if (!isAuthenticated) {
     return <Redirect href="/(auth)/login" />;
+  }
+
+  if (user) {
+    const action = resolvePostAuthAction(user);
+    if (action.kind === "verify-email" || action.kind === "onboarding") {
+      return <Redirect href={getPostAuthHref(user)} />;
+    }
   }
 
   return (

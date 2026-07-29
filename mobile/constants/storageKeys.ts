@@ -9,6 +9,7 @@ export const STORAGE_KEYS = {
 /** Non-secret preference keys (AsyncStorage). */
 export const PREFERENCE_KEYS = {
   businessDashboardTimeframe: "caretip_pref_business_dashboard_tf",
+  businessAnalyticsTimeframe: "caretip_pref_business_analytics_tf",
   employeeDashboardTimeframe: "caretip_pref_employee_dashboard_tf",
   qrStudioTimeframe: "caretip_pref_qr_studio_tf",
   language: "caretip_pref_language",
