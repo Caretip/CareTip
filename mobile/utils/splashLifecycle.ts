@@ -1,10 +1,12 @@
 import { InteractionManager } from "react-native";
 import * as SplashScreen from "expo-splash-screen";
+import { SPLASH_HIDE_FALLBACK_MS, STARTUP_SPLASH_MAX_MS } from "@/constants/startup";
 
 const splashStartMs = Date.now();
 let preventCalled = false;
 let hideStarted = false;
 let hideCompleted = false;
+let watchdogTimer: ReturnType<typeof setTimeout> | undefined;
 
 export function logSplash(phase: string, detail?: Record<string, unknown>): void {
   if (!__DEV__) return;
@@ -14,6 +16,17 @@ export function logSplash(phase: string, detail?: Record<string, unknown>): void
   } else {
     console.log(`[Splash] ${phase} (+${elapsed}ms)`);
   }
+}
+
+/** Reset in-memory splash flags — safe on every cold/warm JS boot. */
+export function resetSplashLifecycle(): void {
+  hideStarted = false;
+  hideCompleted = false;
+  if (watchdogTimer) {
+    clearTimeout(watchdogTimer);
+    watchdogTimer = undefined;
+  }
+  logSplash("lifecycle.reset");
 }
 
 /** Call once at app entry — keeps the native splash visible until we hide explicitly. */
@@ -30,11 +43,28 @@ export function ensureSplashPrevented(): void {
     });
 }
 
+resetSplashLifecycle();
 ensureSplashPrevented();
 
+function performHide(reason: string): void {
+  if (hideCompleted) return;
+  void SplashScreen.hideAsync()
+    .then(() => {
+      hideCompleted = true;
+      logSplash("hideAsync.done", { reason });
+    })
+    .catch((error) => {
+      hideStarted = false;
+      logSplash("hideAsync.error", {
+        reason,
+        message: error instanceof Error ? error.message : String(error),
+      });
+    });
+}
+
 /**
- * Hides the native splash exactly once, after interactions settle.
- * Safe to call from multiple readiness hooks — only the first invocation runs.
+ * Hides the native splash exactly once.
+ * Does not rely solely on InteractionManager (can stall after force-close).
  */
 export function hideSplashOnce(reason: string): void {
   if (hideStarted || hideCompleted) {
@@ -49,22 +79,26 @@ export function hideSplashOnce(reason: string): void {
     fade: true,
   });
 
-  InteractionManager.runAfterInteractions(() => {
-    requestAnimationFrame(() => {
-      void SplashScreen.hideAsync()
-        .then(() => {
-          hideCompleted = true;
-          logSplash("hideAsync.done", { reason });
-        })
-        .catch((error) => {
-          hideStarted = false;
-          logSplash("hideAsync.error", {
-            reason,
-            message: error instanceof Error ? error.message : String(error),
-          });
-        });
-    });
-  });
+  let hideDispatched = false;
+  const dispatchHide = (via: string) => {
+    if (hideDispatched || hideCompleted) return;
+    hideDispatched = true;
+    logSplash("hideAsync.dispatch", { reason, via });
+    performHide(reason);
+  };
+
+  InteractionManager.runAfterInteractions(() => dispatchHide("afterInteractions"));
+  setTimeout(() => dispatchHide("fallback"), SPLASH_HIDE_FALLBACK_MS);
+}
+
+/** Absolute deadline — splash must never outlive startup. */
+export function scheduleSplashWatchdog(): void {
+  if (watchdogTimer) return;
+  watchdogTimer = setTimeout(() => {
+    logSplash("watchdog.fire", { maxMs: STARTUP_SPLASH_MAX_MS });
+    hideSplashOnce("watchdog");
+  }, STARTUP_SPLASH_MAX_MS);
+  logSplash("watchdog.scheduled", { maxMs: STARTUP_SPLASH_MAX_MS });
 }
 
 export function splashTimingOriginMs(): number {

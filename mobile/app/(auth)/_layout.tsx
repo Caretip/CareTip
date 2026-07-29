@@ -1,15 +1,13 @@
 import { Redirect, Stack } from "expo-router";
 import { useAuth } from "@/hooks/useAuth";
+import { useSessionRoutingReady } from "@/hooks/useAppReady";
 import { getDashboardRouteForRole } from "@/utils/routing";
 
-/**
- * Auth stack — native splash covers bootstrap; render nothing until session is known.
- */
 export default function AuthLayout() {
-  const { isHydrated, status, isAuthenticated, user } = useAuth();
-  const bootstrapping = !isHydrated || status === "idle" || status === "bootstrapping";
+  const { isAuthenticated, user } = useAuth();
+  const routingReady = useSessionRoutingReady();
 
-  if (bootstrapping) {
+  if (!routingReady) {
     return null;
   }
 

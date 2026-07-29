@@ -1,12 +1,13 @@
 import { Redirect } from "expo-router";
 import { useAuth } from "@/hooks/useAuth";
+import { useSessionRoutingReady } from "@/hooks/useAppReady";
 import { getDashboardRouteForRole } from "@/utils/routing";
 
 export default function AppHome() {
-  const { isHydrated, status, isAuthenticated, user } = useAuth();
-  const bootstrapping = !isHydrated || status === "idle" || status === "bootstrapping";
+  const { isAuthenticated, user } = useAuth();
+  const routingReady = useSessionRoutingReady();
 
-  if (bootstrapping) {
+  if (!routingReady) {
     return null;
   }
 

@@ -1,7 +1,6 @@
 import { useEffect, type ReactNode } from "react";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { queryClient } from "@/services/api/queryClient";
-import { sessionManager } from "@/services/auth/sessionManager";
 import { subscribeGlobalErrors } from "@/utils/errors";
 import { bindReactQueryOnlineManager } from "@/utils/reactQueryOnline";
 import { useUiStore } from "@/store/uiStore";
@@ -11,15 +10,9 @@ import { SessionExpiryBridge } from "@/components/providers/SessionExpiryBridge"
 import { SocketProvider } from "@/components/providers/SocketProvider";
 import { RealtimeQueryBridge } from "@/components/providers/RealtimeQueryBridge";
 import { LocaleBridge } from "@/components/providers/LocaleBridge";
+import { StartupBridge } from "@/components/providers/StartupBridge";
 
 bindReactQueryOnlineManager();
-
-function AuthBootstrap({ children }: { children: ReactNode }) {
-  useEffect(() => {
-    void sessionManager.bootstrapSession();
-  }, []);
-  return <>{children}</>;
-}
 
 function GlobalErrorBridge({ children }: { children: ReactNode }) {
   const setGlobalError = useUiStore((s) => s.setGlobalError);
@@ -35,20 +28,20 @@ function NetworkBridge({ children }: { children: ReactNode }) {
 export function AppProviders({ children }: { children: ReactNode }) {
   return (
     <QueryClientProvider client={queryClient}>
-      <LocaleBridge>
-        <NetworkBridge>
-          <GlobalErrorBridge>
-            <AuthBootstrap>
+      <StartupBridge>
+        <LocaleBridge>
+          <NetworkBridge>
+            <GlobalErrorBridge>
               <SocketProvider>
                 <SessionExpiryBridge />
                 <PushNotificationBridge />
                 <RealtimeQueryBridge />
                 {children}
               </SocketProvider>
-            </AuthBootstrap>
-          </GlobalErrorBridge>
-        </NetworkBridge>
-      </LocaleBridge>
+            </GlobalErrorBridge>
+          </NetworkBridge>
+        </LocaleBridge>
+      </StartupBridge>
     </QueryClientProvider>
   );
 }

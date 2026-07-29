@@ -12,7 +12,7 @@
       "policy": "appVersion"
     },
     "splash": {
-      "image": "./assets/splash-logo.png",
+      "image": "./assets/splash-native.png",
       "resizeMode": "contain",
       "backgroundColor": "#EB992C"
     },
@@ -20,11 +20,6 @@
       "supportsTablet": true,
       "bundleIdentifier": "de.caretip.app",
       "buildNumber": "1",
-      "splash": {
-        "image": "./assets/splash-logo.png",
-        "resizeMode": "contain",
-        "backgroundColor": "#EB992C"
-      },
       "infoPlist": {
         "UIBackgroundModes": [
           "remote-notification"
@@ -40,11 +35,6 @@
     "android": {
       "package": "de.caretip.app",
       "versionCode": 1,
-      "splash": {
-        "image": "./assets/splash-logo.png",
-        "resizeMode": "contain",
-        "backgroundColor": "#EB992C"
-      },
       "adaptiveIcon": {
         "backgroundColor": "#EB992C",
         "foregroundImage": "./assets/caretip-app-icon-ref.png",
@@ -100,22 +90,10 @@
       [
         "expo-splash-screen",
         {
-          "image": "./assets/splash-logo.png",
-          "imageWidth": 340,
+          "image": "./assets/splash-native.png",
+          "imageWidth": 280,
           "resizeMode": "contain",
-          "backgroundColor": "#EB992C",
-          "android": {
-            "image": "./assets/splash-logo.png",
-            "imageWidth": 340,
-            "resizeMode": "contain",
-            "backgroundColor": "#EB992C"
-          },
-          "ios": {
-            "image": "./assets/splash-logo.png",
-            "imageWidth": 340,
-            "resizeMode": "contain",
-            "backgroundColor": "#EB992C"
-          }
+          "backgroundColor": "#EB992C"
         }
       ],
       [

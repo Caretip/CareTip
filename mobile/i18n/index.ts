@@ -4,6 +4,8 @@ import { en } from "./locales/en";
 import { de } from "./locales/de";
 import type { AppLanguage, MobileMessages, TranslationParams } from "./types";
 import { PREFERENCE_KEYS } from "@/constants/storageKeys";
+import { STARTUP_TASK_TIMEOUT_MS } from "@/constants/startup";
+import { withTimeoutFallback } from "@/utils/withTimeout";
 
 const catalogs: Record<AppLanguage, MobileMessages> = { en, de };
 
@@ -47,13 +49,18 @@ export const useI18nStore = create<I18nState>((set, get) => ({
   hydrate: async () => {
     if (get().hydrated) return;
     try {
-      const stored = await AsyncStorage.getItem(PREFERENCE_KEYS.language);
+      const stored = await withTimeoutFallback(
+        AsyncStorage.getItem(PREFERENCE_KEYS.language),
+        STARTUP_TASK_TIMEOUT_MS,
+        "i18n.language.read",
+        null,
+      );
       if (stored === "en" || stored === "de") {
         set({ language: stored, hydrated: true });
         return;
       }
     } catch {
-      /* ignore */
+      /* fall through — never block startup on locale I/O */
     }
     set({ hydrated: true });
   },

@@ -2,8 +2,7 @@ import { useEffect, type ReactNode } from "react";
 import { View, StyleSheet } from "react-native";
 import { useBootstrapReady } from "@/hooks/useAppReady";
 import { useNavigationReady } from "@/hooks/useNavigationReady";
-import { useSplashStore } from "@/store/splashStore";
-import { authBrand } from "@/theme/authBrand";
+import { colors } from "@/theme";
 import { hideSplashOnce, logSplash } from "@/utils/splashLifecycle";
 
 type NativeSplashGateProps = {
@@ -11,30 +10,26 @@ type NativeSplashGateProps = {
 };
 
 /**
- * Keeps the native Expo splash visible until bootstrap, navigation, and the
- * first destination screen have all reported ready.
+ * Native splash only — hides once bootstrap (+ nav when available) or watchdog fires.
+ * Does not wait for first-screen paint (Redirect chains never mounted anchors).
  */
 export function NativeSplashGate({ children }: NativeSplashGateProps) {
   const bootstrapReady = useBootstrapReady();
   const navigationReady = useNavigationReady();
-  const firstScreenReady = useSplashStore((s) => s.firstScreenReady);
-  const firstScreenSource = useSplashStore((s) => s.firstScreenSource);
 
   useEffect(() => {
-    logSplash("bootstrap.state", {
-      bootstrapReady,
-      navigationReady,
-      firstScreenReady,
-      firstScreenSource,
-    });
-  }, [bootstrapReady, navigationReady, firstScreenReady, firstScreenSource]);
+    logSplash("gate.state", { bootstrapReady, navigationReady });
+  }, [bootstrapReady, navigationReady]);
 
   useEffect(() => {
-    if (!bootstrapReady || !navigationReady || !firstScreenReady) return;
-    hideSplashOnce(
-      firstScreenSource ? `first-screen:${firstScreenSource}` : "first-screen",
-    );
-  }, [bootstrapReady, navigationReady, firstScreenReady, firstScreenSource]);
+    if (!bootstrapReady) return;
+    hideSplashOnce("bootstrap-ready");
+  }, [bootstrapReady]);
+
+  useEffect(() => {
+    if (!bootstrapReady || !navigationReady) return;
+    hideSplashOnce("navigation-ready");
+  }, [bootstrapReady, navigationReady]);
 
   if (!bootstrapReady) {
     return null;
@@ -46,6 +41,6 @@ export function NativeSplashGate({ children }: NativeSplashGateProps) {
 const styles = StyleSheet.create({
   root: {
     flex: 1,
-    backgroundColor: authBrand.orange,
+    backgroundColor: colors.background,
   },
 });

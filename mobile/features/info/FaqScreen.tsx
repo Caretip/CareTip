@@ -1,15 +1,11 @@
 import { useMemo, useState } from "react";
-import { LayoutAnimation, Platform, Pressable, StyleSheet, Text, TextInput, UIManager, View } from "react-native";
+import { LayoutAnimation, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { InfoScreenShell } from "@/components/info/InfoScreenShell";
 import { MOBILE_FAQ_ITEMS } from "@/constants/infoContent";
 import { useI18n } from "@/hooks/useI18n";
 import { authBrand } from "@/theme/authBrand";
 import { colors, radius, spacing, touchTarget, typography } from "@/theme";
-
-if (Platform.OS === "android" && UIManager.setLayoutAnimationEnabledExperimental) {
-  UIManager.setLayoutAnimationEnabledExperimental(true);
-}
 
 export function FaqScreen() {
   const { t } = useI18n();
