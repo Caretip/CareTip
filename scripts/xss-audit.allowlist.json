@@ -36,6 +36,12 @@
       "line": 376,
       "sink": "dangerouslySetInnerHTML",
       "reason": "Static INJECTED_STYLES constant"
+    },
+    {
+      "file": "src/components/public/legal/SafeLegalHtmlContent.tsx",
+      "line": 15,
+      "sink": "dangerouslySetInnerHTML",
+      "reason": "Provider legal HTML rendered only after sanitizeLegalHtmlClient (DOMPurify + tag/attr allowlist in src/lib/safeLegalHtml.ts)"
     }
   ],
   "urlSchemeAllowlist": [
@@ -64,5 +70,8 @@
       "reason": "teamUrl is same-origin path from publicBase + server slug"
     }
   ],
-  "richTextAllowlist": []
+  "richTextAllowlist": [
+    "dompurify",
+    "sanitize-html"
+  ]
 }
