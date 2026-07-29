@@ -1,17 +1,15 @@
-/** Dashboard chart tokens — mirrors web `dashboardChartTheme.ts` (CareTip teal bars + brand orange tips). */
+import { colors } from "@/theme/colors";
 
-export const DASHBOARD_CHART_BAR_BASE = "#197278";
-export const DASHBOARD_CHART_GRID = "rgba(11, 18, 32, 0.12)";
-export const DASHBOARD_CHART_AXIS = "rgba(91, 101, 119, 0.9)";
+/** Neutral bar base — top performer uses brand orange. */
+export const DASHBOARD_CHART_BAR_BASE = colors.chartNeutral;
+export const DASHBOARD_CHART_BAR_ACCENT = colors.primary;
+export const DASHBOARD_CHART_GRID = "rgba(17, 24, 39, 0.06)";
+export const DASHBOARD_CHART_AXIS = colors.mutedForeground;
 
-/** Same opacity ramp as web `dashboardChartBarFill`. */
-export function dashboardChartBarFill(index: number, total: number): string {
-  if (total <= 1) return DASHBOARD_CHART_BAR_BASE;
-  const t = index / Math.max(total - 1, 1);
-  const opacity = 0.42 + t * 0.38;
-  const hex = DASHBOARD_CHART_BAR_BASE.replace("#", "");
-  const r = Number.parseInt(hex.slice(0, 2), 16);
-  const g = Number.parseInt(hex.slice(2, 4), 16);
-  const b = Number.parseInt(hex.slice(4, 6), 16);
-  return `rgba(${r}, ${g}, ${b}, ${opacity.toFixed(2)})`;
+const NEUTRAL_BAR_STEPS = [colors.chartNeutral, colors.chartNeutralMuted, "#F3F4F6"] as const;
+
+/** Ranked bars: #1 orange, others neutral gray ramp. */
+export function dashboardChartBarFill(index: number, _total: number): string {
+  if (index === 0) return DASHBOARD_CHART_BAR_ACCENT;
+  return NEUTRAL_BAR_STEPS[Math.min(index, NEUTRAL_BAR_STEPS.length - 1)] ?? DASHBOARD_CHART_BAR_BASE;
 }

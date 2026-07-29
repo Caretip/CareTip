@@ -32,11 +32,12 @@ export default function AdminDashboardRoute() {
         />
       </HeroCard>
 
-      <Section title={t("admin.title")} subtitle={t("admin.subtitle")}>
+      <Section title={t("admin.title")} highlighted>
         <Text style={styles.body}>{t("admin.body")}</Text>
         {user?.email ? (
           <>
             <Divider />
+            <Text style={styles.emailLabel}>{t("auth.email")}</Text>
             <Text style={styles.email}>{user.email}</Text>
           </>
         ) : null}
@@ -53,10 +54,19 @@ const styles = StyleSheet.create({
   body: {
     ...typography.body,
     color: colors.foreground,
+    lineHeight: 24,
+  },
+  emailLabel: {
+    ...typography.overline,
+    color: colors.mutedForeground,
+    fontSize: 10,
+    letterSpacing: 0.8,
+    marginBottom: spacing.xxs,
   },
   email: {
     ...typography.body,
-    color: colors.mutedForeground,
+    color: colors.foreground,
+    fontWeight: "600",
   },
   footer: {
     marginTop: spacing.xl,

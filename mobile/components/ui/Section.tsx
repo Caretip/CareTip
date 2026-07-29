@@ -5,14 +5,11 @@ type SectionProps = {
   title?: string;
   subtitle?: string;
   children: React.ReactNode;
-  /** Soft elevated surface — use sparingly (charts, primary focus). */
+  /** Elevated white card — charts and focus blocks. */
   highlighted?: boolean;
   style?: StyleProp<ViewStyle>;
 };
 
-/**
- * Section grouping via typography + spacing (not a card by default).
- */
 export function Section({ title, subtitle, children, highlighted = false, style }: SectionProps) {
   return (
     <View style={[styles.section, highlighted ? styles.highlighted : null, style]}>
@@ -36,9 +33,6 @@ type GroupedListProps = {
   style?: StyleProp<ViewStyle>;
 };
 
-/**
- * Single surface for related settings/rows with internal dividers.
- */
 export function GroupedList({ children, style }: GroupedListProps) {
   return <View style={[styles.group, style]}>{children}</View>;
 }
@@ -59,43 +53,45 @@ export function GroupedRow({ children, showDivider = true }: GroupedRowProps) {
 
 const styles = StyleSheet.create({
   section: {
-    gap: spacing.md,
-    marginBottom: spacing["2xl"],
+    gap: spacing.lg,
+    marginBottom: spacing["3xl"],
   },
   highlighted: {
     backgroundColor: colors.card,
-    borderRadius: radius.xl,
+    borderRadius: 22,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: colors.border,
     padding: spacing.xl,
-    ...shadows.xs,
+    ...shadows.sm,
   },
   title: {
-    ...typography.section,
-    color: colors.foreground,
+    ...typography.overline,
+    color: colors.mutedForeground,
+    fontSize: 11,
+    letterSpacing: 1,
     marginBottom: spacing.xs,
   },
   subtitle: {
     ...typography.caption,
     color: colors.mutedForeground,
+    marginTop: -spacing.sm,
     marginBottom: spacing.sm,
   },
   divider: {
     height: StyleSheet.hairlineWidth,
     backgroundColor: colors.border,
     width: "100%",
-    marginBottom: spacing["2xl"],
   },
   dividerInset: {
     marginLeft: spacing.xl,
-    marginBottom: 0,
   },
   group: {
     backgroundColor: colors.card,
-    borderRadius: radius.xl,
+    borderRadius: 22,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: colors.border,
     overflow: "hidden",
+    ...shadows.sm,
   },
   groupRow: {
     paddingHorizontal: spacing.xl,

@@ -4,7 +4,7 @@
     "slug": "caretip-mobile",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
+    "icon": "./assets/caretip-app-icon-ref.png",
     "scheme": "caretip",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
@@ -14,12 +14,17 @@
     "splash": {
       "image": "./assets/splash-logo.png",
       "resizeMode": "contain",
-      "backgroundColor": "#FFFFFF"
+      "backgroundColor": "#EB992C"
     },
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "de.caretip.app",
       "buildNumber": "1",
+      "splash": {
+        "image": "./assets/splash-logo.png",
+        "resizeMode": "contain",
+        "backgroundColor": "#EB992C"
+      },
       "infoPlist": {
         "UIBackgroundModes": [
           "remote-notification"
@@ -35,10 +40,14 @@
     "android": {
       "package": "de.caretip.app",
       "versionCode": 1,
+      "splash": {
+        "image": "./assets/splash-logo.png",
+        "resizeMode": "contain",
+        "backgroundColor": "#EB992C"
+      },
       "adaptiveIcon": {
-        "backgroundColor": "#FFFFFF",
-        "foregroundImage": "./assets/android-icon-foreground.png",
-        "backgroundImage": "./assets/android-icon-background.png",
+        "backgroundColor": "#EB992C",
+        "foregroundImage": "./assets/caretip-app-icon-ref.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
       "permissions": [
@@ -89,10 +98,31 @@
       "expo-router",
       "expo-secure-store",
       [
+        "expo-splash-screen",
+        {
+          "image": "./assets/splash-logo.png",
+          "imageWidth": 340,
+          "resizeMode": "contain",
+          "backgroundColor": "#EB992C",
+          "android": {
+            "image": "./assets/splash-logo.png",
+            "imageWidth": 340,
+            "resizeMode": "contain",
+            "backgroundColor": "#EB992C"
+          },
+          "ios": {
+            "image": "./assets/splash-logo.png",
+            "imageWidth": 340,
+            "resizeMode": "contain",
+            "backgroundColor": "#EB992C"
+          }
+        }
+      ],
+      [
         "expo-notifications",
         {
-          "icon": "./assets/icon.png",
-          "color": "#e9781c",
+          "icon": "./assets/caretip-app-icon-ref.png",
+          "color": "#EB992C",
           "defaultChannel": "default"
         }
       ],

@@ -5,8 +5,8 @@ import { Pressable, StyleSheet, Text, View } from "react-native";
 import { useRouter } from "expo-router";
 import { AuthExperienceShell } from "@/components/auth/AuthExperienceShell";
 import { AuthGlassCard } from "@/components/auth/AuthGlassCard";
-import { Button } from "@/components/ui/Button";
-import { TextField } from "@/components/ui/TextField";
+import { AuthField } from "@/components/auth/AuthField";
+import { AuthContinueButton } from "@/components/auth/AuthContinueButton";
 import { useAuth } from "@/hooks/useAuth";
 import { useI18n } from "@/hooks/useI18n";
 import { loginSchema, type LoginFormValues } from "@/features/auth/loginSchema";
@@ -16,7 +16,8 @@ import { getDashboardRouteForRole } from "@/utils/routing";
 import { friendlyErrorMessage } from "@/utils/friendlyError";
 import { openCareTipWeb } from "@/utils/openCareTipWeb";
 import { resolveLoginLocale } from "@/utils/resolveLoginLocale";
-import { colors, spacing, typography } from "@/theme";
+import { authBrand } from "@/theme/authBrand";
+import { spacing, typography } from "@/theme";
 
 function resolveTimeZone(): string | undefined {
   try {
@@ -82,41 +83,46 @@ export function LoginScreen() {
         <View style={styles.cardHeader}>
           <Text style={styles.cardEyebrow}>{t("auth.welcomeBack")}</Text>
           <Text style={styles.cardTitle}>{t("auth.loginTitle")}</Text>
+          <Text style={styles.cardSubtitle}>{t("auth.signInSubtitle")}</Text>
         </View>
 
-        <Controller
-          control={control}
-          name="email"
-          render={({ field: { onChange, onBlur, value } }) => (
-            <TextField
-              label={t("auth.email")}
-              value={value}
-              onChangeText={onChange}
-              onBlur={onBlur}
-              keyboardType="email-address"
-              textContentType="username"
-              autoComplete="email"
-              error={errors.email?.message}
-            />
-          )}
-        />
+        <View style={styles.fields}>
+          <Controller
+            control={control}
+            name="email"
+            render={({ field: { onChange, onBlur, value } }) => (
+              <AuthField
+                label={t("auth.email")}
+                icon="mail-outline"
+                value={value}
+                onChangeText={onChange}
+                onBlur={onBlur}
+                keyboardType="email-address"
+                textContentType="username"
+                autoComplete="email"
+                error={errors.email?.message}
+              />
+            )}
+          />
 
-        <Controller
-          control={control}
-          name="password"
-          render={({ field: { onChange, onBlur, value } }) => (
-            <TextField
-              label={t("auth.password")}
-              value={value}
-              onChangeText={onChange}
-              onBlur={onBlur}
-              secureTextEntry
-              textContentType="password"
-              autoComplete="password"
-              error={errors.password?.message}
-            />
-          )}
-        />
+          <Controller
+            control={control}
+            name="password"
+            render={({ field: { onChange, onBlur, value } }) => (
+              <AuthField
+                label={t("auth.password")}
+                icon="lock-closed-outline"
+                value={value}
+                onChangeText={onChange}
+                onBlur={onBlur}
+                secureTextEntry
+                textContentType="password"
+                autoComplete="password"
+                error={errors.password?.message}
+              />
+            )}
+          />
+        </View>
 
         <Pressable
           accessibilityRole="button"
@@ -132,7 +138,7 @@ export function LoginScreen() {
           </Text>
         ) : null}
 
-        <Button
+        <AuthContinueButton
           label={t("common.continue")}
           onPress={onSubmit}
           loading={isSubmitting}
@@ -145,32 +151,46 @@ export function LoginScreen() {
 
 const styles = StyleSheet.create({
   cardHeader: {
-    gap: spacing.xs,
+    gap: spacing.sm,
     marginBottom: spacing.xs,
   },
   cardEyebrow: {
     ...typography.overline,
-    color: colors.primary,
+    color: authBrand.orange,
+    letterSpacing: 1.4,
+    fontSize: 11,
   },
   cardTitle: {
-    ...typography.h1,
-    color: colors.foreground,
-    fontSize: 26,
+    ...typography.hero,
+    color: authBrand.dark,
+    fontSize: 30,
+    letterSpacing: -0.6,
+  },
+  cardSubtitle: {
+    ...typography.body,
+    color: authBrand.muted,
+    fontSize: 14,
+    lineHeight: 20,
+    marginTop: spacing.xs,
+  },
+  fields: {
+    gap: spacing.xl,
   },
   forgotLink: {
     alignSelf: "flex-end",
-    marginTop: -spacing.sm,
-    minHeight: 44,
+    minHeight: 40,
     justifyContent: "center",
+    marginTop: -spacing.sm,
   },
   forgotLabel: {
     ...typography.caption,
-    color: colors.primary,
+    color: authBrand.orange,
     fontWeight: "700",
+    fontSize: 13,
   },
   formError: {
     ...typography.caption,
-    color: colors.destructive,
+    color: "#E11D48",
     fontWeight: "600",
   },
   pressed: {

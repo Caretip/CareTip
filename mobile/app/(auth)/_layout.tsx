@@ -1,17 +1,16 @@
 import { Redirect, Stack } from "expo-router";
 import { useAuth } from "@/hooks/useAuth";
-import { BootstrapScreen } from "@/components/brand/BootstrapScreen";
 import { getDashboardRouteForRole } from "@/utils/routing";
 
 /**
- * Auth stack — hold branded bootstrap until session is known so Login never flashes.
+ * Auth stack — native splash covers bootstrap; render nothing until session is known.
  */
 export default function AuthLayout() {
   const { isHydrated, status, isAuthenticated, user } = useAuth();
   const bootstrapping = !isHydrated || status === "idle" || status === "bootstrapping";
 
   if (bootstrapping) {
-    return <BootstrapScreen />;
+    return null;
   }
 
   if (isAuthenticated) {
@@ -24,6 +23,7 @@ export default function AuthLayout() {
         headerShown: false,
         contentStyle: { backgroundColor: "transparent" },
         animation: "fade",
+        animationDuration: 280,
       }}
     />
   );

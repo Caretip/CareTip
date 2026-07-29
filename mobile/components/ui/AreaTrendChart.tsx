@@ -87,8 +87,8 @@ export function AreaTrendChart({
           <Svg width={chartWidth} height={height}>
             <Defs>
               <LinearGradient id="tipFill" x1="0" y1="0" x2="0" y2="1">
-                <Stop offset="0" stopColor={colors.primary} stopOpacity={0.22} />
-                <Stop offset="1" stopColor={colors.primary} stopOpacity={0.02} />
+                <Stop offset="0" stopColor={colors.primary} stopOpacity={0.14} />
+                <Stop offset="1" stopColor={colors.primary} stopOpacity={0.01} />
               </LinearGradient>
             </Defs>
             {[0.25, 0.5, 0.75, 1].map((t) => {
@@ -107,7 +107,7 @@ export function AreaTrendChart({
               );
             })}
             <Path d={areaPath} fill="url(#tipFill)" />
-            <Path d={linePath} stroke={colors.primary} strokeWidth={2.5} fill="none" />
+            <Path d={linePath} stroke={colors.primary} strokeWidth={2} fill="none" />
             {coords.map((c, i) => (
               <Circle key={i} cx={c.x} cy={c.y} r={3} fill={colors.primary} />
             ))}

@@ -14,7 +14,7 @@ import { useBusinessDashboard } from "@/features/business/useBusinessDashboard";
 import { buildEmployeePerformanceChartRows } from "@/utils/dashboardChartData";
 import { formatCount, formatEur, formatGrowthPercent } from "@/utils/format";
 import { friendlyErrorMessage, isPermissionError } from "@/utils/friendlyError";
-import { colors, spacing, typography } from "@/theme";
+import { spacing } from "@/theme";
 import type { BusinessTimeframe } from "@/types/business";
 
 function growthTone(value: number | null | undefined): "positive" | "negative" | "neutral" {
@@ -92,7 +92,7 @@ export function BusinessDashboardScreen() {
               }
               tone="accent"
               large
-              variant="plain"
+              icon="wallet"
             />
             <View style={styles.metrics}>
               <KpiCard
@@ -100,7 +100,7 @@ export function BusinessDashboardScreen() {
                 value={formatGrowthPercent(growth)}
                 hint={t("businessDashboard.vsPrior")}
                 tone={growthTone(growth)}
-                variant="plain"
+                icon="trending-up"
               />
               <KpiCard
                 label={t("businessDashboard.tipsToday")}
@@ -108,14 +108,13 @@ export function BusinessDashboardScreen() {
                 hint={t("businessDashboard.tipsCount", {
                   count: formatCount(tipsToday?.count),
                 })}
-                tone="accent"
-                variant="plain"
+                icon="today-outline"
               />
               <KpiCard
                 label={t("businessDashboard.activeStaff")}
                 value={formatCount(employeeCount)}
                 hint={t("businessDashboard.onRoster")}
-                variant="plain"
+                icon="people-outline"
               />
             </View>
           </Section>
@@ -134,15 +133,12 @@ export function BusinessDashboardScreen() {
             emptyChartMessage={t("emptyState.chartDescription")}
           />
 
-          <Section title={t("businessDashboard.pulseTitle")} highlighted>
-            <Text style={styles.pulseValue}>
-              {formatCount(stats?.operationalPulse?.tippingReadyEmployees)}
-              <Text style={styles.pulseMuted}>
-                {" "}
-                / {formatCount(stats?.operationalPulse?.rosterTotal)}
-              </Text>
-            </Text>
-            <Text style={styles.pulseLabel}>{t("businessDashboard.tippingReady")}</Text>
+          <Section title={t("businessDashboard.pulseTitle")}>
+            <KpiCard
+              label={t("businessDashboard.tippingReady")}
+              value={`${formatCount(stats?.operationalPulse?.tippingReadyEmployees)} / ${formatCount(stats?.operationalPulse?.rosterTotal)}`}
+              icon="checkmark-circle-outline"
+            />
           </Section>
         </View>
       )}
@@ -152,26 +148,12 @@ export function BusinessDashboardScreen() {
 
 const styles = StyleSheet.create({
   stack: {
-    gap: spacing.sm,
+    gap: spacing.xl,
   },
   metrics: {
     flexDirection: "row",
     flexWrap: "wrap",
     gap: spacing.md,
-    rowGap: spacing.sm,
-  },
-  pulseValue: {
-    ...typography.display,
-    fontSize: 28,
-    color: colors.foreground,
-  },
-  pulseMuted: {
-    fontSize: 18,
-    fontWeight: "500",
-    color: colors.mutedForeground,
-  },
-  pulseLabel: {
-    ...typography.caption,
-    color: colors.mutedForeground,
+    rowGap: spacing.md,
   },
 });

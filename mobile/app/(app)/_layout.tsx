@@ -1,6 +1,5 @@
 import { Redirect, Stack } from "expo-router";
 import { useAuth } from "@/hooks/useAuth";
-import { BootstrapScreen } from "@/components/brand/BootstrapScreen";
 import { colors } from "@/theme";
 
 export default function AppLayout() {
@@ -8,7 +7,7 @@ export default function AppLayout() {
   const bootstrapping = !isHydrated || status === "idle" || status === "bootstrapping";
 
   if (bootstrapping) {
-    return <BootstrapScreen />;
+    return null;
   }
 
   if (!isAuthenticated) {
@@ -20,6 +19,8 @@ export default function AppLayout() {
       screenOptions={{
         headerShown: false,
         contentStyle: { backgroundColor: colors.background },
+        animation: "fade",
+        animationDuration: 220,
       }}
     />
   );

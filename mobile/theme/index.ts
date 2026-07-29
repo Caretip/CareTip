@@ -1,6 +1,6 @@
 import { colors, darkColors, lightColors, brand } from "./colors";
 import { typography, fontFamilies, fontSizes, fontWeights } from "./typography";
-import { spacing, radius, hitSlop, touchTarget } from "./spacing";
+import { spacing, radius, hitSlop, touchTarget, screenPadding } from "./spacing";
 import { shadows } from "./shadows";
 import { motion } from "./motion";
 
@@ -26,6 +26,6 @@ export type CareTipTheme = typeof theme;
 
 export { colors, darkColors, lightColors, brand };
 export { typography, fontFamilies, fontSizes, fontWeights };
-export { spacing, radius, hitSlop, touchTarget };
+export { spacing, radius, hitSlop, touchTarget, screenPadding };
 export { shadows };
 export { motion };

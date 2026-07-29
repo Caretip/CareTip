@@ -1,10 +1,10 @@
 /**
- * Compact KPI metrics — plain by default (Stripe / Revolut density).
- * Use variant="card" only when a bordered tile is intentional.
+ * Premium fintech metric widgets — white surfaces, orange accent on values/icons only.
  */
 
-import { StyleSheet, Text, View } from "react-native";
-import { colors, radius, spacing, typography } from "@/theme";
+import { Platform, StyleSheet, Text, View } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import { colors, radius, shadows, spacing, typography } from "@/theme";
 
 type MetricTone = "default" | "accent" | "positive" | "negative" | "neutral";
 
@@ -17,9 +17,21 @@ type KpiCardProps = {
   tone?: MetricTone;
   large?: boolean;
   accent?: boolean;
-  /** plain = section metric (default); card = bordered tile */
+  icon?: keyof typeof Ionicons.glyphMap;
   variant?: "plain" | "card";
 };
+
+function toneIconColor(tone: MetricTone): string {
+  if (tone === "accent") return colors.primary;
+  if (tone === "positive") return colors.success;
+  if (tone === "negative") return colors.destructive;
+  return colors.mutedForeground;
+}
+
+function toneIconBg(tone: MetricTone): string {
+  if (tone === "accent") return colors.primarySoft;
+  return colors.secondary;
+}
 
 export function KpiCard({
   label,
@@ -30,26 +42,40 @@ export function KpiCard({
   tone,
   large = false,
   accent = false,
-  variant = "plain",
+  icon,
+  variant = "card",
 }: KpiCardProps) {
   const resolved: MetricTone = tone ?? (accent ? "accent" : "default");
   const isCard = variant === "card";
+  const isHero = large && isCard;
 
   return (
     <View
       style={[
         isCard ? styles.tile : styles.plain,
-        large ? (isCard ? styles.largeTile : styles.largePlain) : null,
-        isCard && resolved === "accent" ? styles.accent : null,
-        isCard && resolved === "positive" ? styles.positive : null,
-        isCard && resolved === "negative" ? styles.negative : null,
+        isHero ? styles.heroTile : isCard ? styles.gridTile : null,
+        large && !isCard ? styles.heroPlain : null,
       ]}
     >
-      <Text style={styles.label}>{label}</Text>
+      <View style={styles.topRow}>
+        {icon ? (
+          <View style={[styles.iconWrap, { backgroundColor: toneIconBg(resolved) }]}>
+            <Ionicons
+              name={icon}
+              size={isHero ? 20 : 17}
+              color={toneIconColor(resolved)}
+            />
+          </View>
+        ) : null}
+        <Text style={[styles.label, isHero ? styles.labelHero : null]} numberOfLines={2}>
+          {label}
+        </Text>
+      </View>
+
       <Text
         style={[
           styles.value,
-          large ? styles.valueLarge : null,
+          isHero ? styles.valueHero : styles.valueGrid,
           resolved === "accent" ? styles.valueAccent : null,
           resolved === "positive" ? styles.valuePositive : null,
           resolved === "negative" ? styles.valueNegative : null,
@@ -59,6 +85,7 @@ export function KpiCard({
       >
         {value}
       </Text>
+
       {trend ? (
         <Text
           style={[
@@ -73,8 +100,9 @@ export function KpiCard({
           {trend}
         </Text>
       ) : null}
+
       {hint ? (
-        <Text style={styles.hint} numberOfLines={1}>
+        <Text style={styles.hint} numberOfLines={2}>
           {hint}
         </Text>
       ) : null}
@@ -90,72 +118,91 @@ export function MetricCard(props: KpiCardProps) {
   return <KpiCard {...props} />;
 }
 
+const tileBase = {
+  backgroundColor: colors.card,
+  borderRadius: 22,
+  borderWidth: StyleSheet.hairlineWidth,
+  borderColor: colors.border,
+  ...shadows.sm,
+} as const;
+
 const styles = StyleSheet.create({
   plain: {
     flexGrow: 1,
     flexBasis: "47%",
     maxWidth: "48%",
     paddingVertical: spacing.sm,
-    gap: 2,
-    minHeight: 64,
+    gap: spacing.xxs,
+    minHeight: 72,
   },
-  largePlain: {
+  heroPlain: {
     flexBasis: "100%",
     maxWidth: "100%",
     paddingVertical: spacing.md,
-    paddingBottom: spacing.lg,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: colors.border,
     marginBottom: spacing.sm,
   },
   tile: {
+    ...tileBase,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.lg,
+    gap: spacing.sm,
+  },
+  gridTile: {
     flexGrow: 1,
     flexBasis: "47%",
     maxWidth: "48%",
-    backgroundColor: colors.card,
-    borderRadius: radius.lg,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: colors.border,
-    paddingVertical: spacing.sm + 2,
-    paddingHorizontal: spacing.md,
-    gap: 2,
-    minHeight: 72,
+    minHeight: 116,
   },
-  largeTile: {
+  heroTile: {
     flexBasis: "100%",
     maxWidth: "100%",
-    minHeight: 88,
-    paddingVertical: spacing.md,
-    paddingHorizontal: spacing.lg,
+    minHeight: 132,
+    paddingHorizontal: spacing.xl,
+    paddingVertical: spacing.xl,
+    gap: spacing.md,
+    ...Platform.select({
+      ios: shadows.md,
+      android: { elevation: 4 },
+      default: {},
+    }),
   },
-  accent: {
-    borderColor: colors.primary,
-    backgroundColor: colors.primarySoft,
+  topRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.sm,
   },
-  positive: {
-    borderColor: "#99F6E4",
-    backgroundColor: colors.successSoft,
-  },
-  negative: {
-    borderColor: "#FECDD3",
-    backgroundColor: colors.destructiveSoft,
+  iconWrap: {
+    width: 36,
+    height: 36,
+    borderRadius: radius.lg,
+    alignItems: "center",
+    justifyContent: "center",
   },
   label: {
-    ...typography.caption,
+    ...typography.overline,
     color: colors.mutedForeground,
-    fontWeight: "600",
+    fontSize: 10,
+    letterSpacing: 0.8,
+    flex: 1,
+  },
+  labelHero: {
     fontSize: 11,
+    letterSpacing: 1,
   },
   value: {
-    ...typography.metric,
     color: colors.foreground,
-    fontSize: 22,
-    lineHeight: 26,
+    fontWeight: "800",
+    letterSpacing: -0.8,
   },
-  valueLarge: {
-    fontSize: 32,
-    lineHeight: 36,
-    letterSpacing: -0.6,
+  valueHero: {
+    fontSize: 40,
+    lineHeight: 44,
+  },
+  valueGrid: {
+    fontSize: 24,
+    lineHeight: 28,
+    fontWeight: "700",
+    letterSpacing: -0.5,
   },
   valueAccent: {
     color: colors.primary,
@@ -167,9 +214,10 @@ const styles = StyleSheet.create({
     color: colors.destructive,
   },
   trend: {
-    ...typography.metadata,
+    ...typography.caption,
     color: colors.mutedForeground,
-    fontWeight: "700",
+    fontWeight: "600",
+    fontSize: 12,
   },
   trendUp: {
     color: colors.success,
@@ -180,6 +228,7 @@ const styles = StyleSheet.create({
   hint: {
     ...typography.caption,
     color: colors.mutedForeground,
-    fontSize: 11,
+    fontSize: 12,
+    lineHeight: 17,
   },
 });

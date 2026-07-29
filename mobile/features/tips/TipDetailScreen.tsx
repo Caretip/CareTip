@@ -1,10 +1,11 @@
-import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
+import { StyleSheet, Text, View } from "react-native";
 import { useLocalSearchParams } from "expo-router";
 import { useQuery } from "@tanstack/react-query";
 import { Screen } from "@/components/ui/Screen";
 import { Section, Divider } from "@/components/ui/Section";
 import { StatusPill } from "@/components/ui/StatusPill";
 import { ErrorState } from "@/components/ui/ErrorState";
+import { Skeleton } from "@/components/ui/Skeleton";
 import { useI18n } from "@/hooks/useI18n";
 import { findTipById } from "@/services/api/tipsService";
 import { formatEur } from "@/utils/format";
@@ -62,8 +63,9 @@ export function TipDetailScreen({
     return (
       <Screen>
         <View style={styles.loading}>
-          <ActivityIndicator color={colors.primary} size="large" />
-          <Text style={styles.body}>{t("tips.loadingDetail")}</Text>
+          <Skeleton height={48} width="60%" rounded="lg" />
+          <Skeleton height={24} width="40%" rounded="md" />
+          <Skeleton height={160} width="100%" rounded="2xl" style={styles.detailSkeleton} />
         </View>
       </Screen>
     );
@@ -153,11 +155,11 @@ const styles = StyleSheet.create({
     color: colors.mutedForeground,
   },
   loading: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    gap: spacing.md,
-    paddingVertical: spacing["4xl"],
+    gap: spacing.lg,
+    paddingVertical: spacing.xl,
+  },
+  detailSkeleton: {
+    marginTop: spacing.md,
   },
   detailRow: {
     gap: spacing.xxs,

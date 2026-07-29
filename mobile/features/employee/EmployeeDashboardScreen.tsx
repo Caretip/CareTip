@@ -96,7 +96,7 @@ export function EmployeeDashboardScreen() {
               })}
               tone="accent"
               large
-              variant="plain"
+              icon="wallet"
             />
             <View style={styles.metrics}>
               <KpiCard
@@ -105,14 +105,13 @@ export function EmployeeDashboardScreen() {
                 hint={t("employeeDashboard.ratingsHint", {
                   count: formatCount(tips?.ratingCount),
                 })}
-                variant="plain"
+                icon="star-outline"
               />
               <KpiCard
                 label={t("employeeDashboard.tipStreak")}
                 value={formatCount(tipStreak)}
                 hint={t("employeeDashboard.tipsInPeriod")}
-                tone="positive"
-                variant="plain"
+                icon="flame-outline"
               />
               <KpiCard
                 label={t("employeeDashboard.totalEarnings")}
@@ -120,13 +119,13 @@ export function EmployeeDashboardScreen() {
                 hint={t("employeeDashboard.successfulTipsHint", {
                   count: formatCount(tips?.totalSupporters),
                 })}
-                variant="plain"
+                icon="cash-outline"
               />
               <KpiCard
                 label={t("employeeDashboard.paidOut")}
                 value={formatEur(tips?.paidOutEur)}
                 hint={t("employeeDashboard.successfulPayouts")}
-                variant="plain"
+                icon="checkmark-circle-outline"
               />
             </View>
           </Section>
@@ -138,9 +137,13 @@ export function EmployeeDashboardScreen() {
             emptyMessage={t("employeeDashboard.chartEmpty")}
           />
 
-          <Section title={t("employeeDashboard.recentTips")}>
+          <Section title={t("employeeDashboard.recentTips")} highlighted>
             {recentTips.length === 0 ? (
-              <Text style={styles.muted}>{t("employeeDashboard.emptyTips")}</Text>
+              <EmptyState
+                variant="tips"
+                title={t("employeeDashboard.emptyTipsTitle")}
+                message={t("employeeDashboard.emptyTips")}
+              />
             ) : (
               recentTips.map((tip, index) => (
                 <View key={tip.id}>
@@ -164,24 +167,28 @@ export function EmployeeDashboardScreen() {
 
 const styles = StyleSheet.create({
   stack: {
-    gap: spacing.sm,
+    gap: spacing.xl,
   },
   metrics: {
     flexDirection: "row",
     flexWrap: "wrap",
     gap: spacing.md,
-    rowGap: spacing.sm,
+    rowGap: spacing.md,
   },
   tipRow: {
     gap: spacing.xxs,
-    paddingVertical: spacing.md,
+    paddingVertical: spacing.sm,
   },
   tipAmount: {
     ...typography.h2,
+    fontSize: 20,
+    fontWeight: "700",
     color: colors.foreground,
+    letterSpacing: -0.3,
   },
   muted: {
     ...typography.caption,
     color: colors.mutedForeground,
+    fontSize: 13,
   },
 });

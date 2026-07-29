@@ -7365,5 +7365,14 @@
         }
       }
     }
+  },
+  "legal": {
+    "privacyTitle": "Datenschutzerklärung",
+    "termsTitle": "Allgemeine Geschäftsbedingungen",
+    "impressumTitle": "Impressum",
+    "loading": "Dokument wird geladen…",
+    "loadError": "Dieses Dokument konnte nicht geladen werden. Bitte erneut versuchen.",
+    "tryAgain": "Erneut versuchen",
+    "versionLine": "Version {{version}} · Aktualisiert {{date}}"
   }
 }

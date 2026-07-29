@@ -5,8 +5,9 @@ import { ActivityIndicator, Image, StyleSheet, Text, View } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { AuthExperienceShell } from "@/components/auth/AuthExperienceShell";
 import { AuthGlassCard } from "@/components/auth/AuthGlassCard";
+import { AuthField } from "@/components/auth/AuthField";
+import { AuthContinueButton } from "@/components/auth/AuthContinueButton";
 import { Button } from "@/components/ui/Button";
-import { TextField } from "@/components/ui/TextField";
 import { useAuth } from "@/hooks/useAuth";
 import { useI18n } from "@/hooks/useI18n";
 import { mfaSchema, type MfaFormValues } from "@/features/auth/loginSchema";
@@ -14,7 +15,8 @@ import { setupLoginMfa } from "@/services/auth/mfaService";
 import { getDashboardRouteForRole } from "@/utils/routing";
 import { friendlyErrorMessage } from "@/utils/friendlyError";
 import type { TwoFactorSetup } from "@/types/settings";
-import { colors, radius, spacing, typography } from "@/theme";
+import { authBrand } from "@/theme/authBrand";
+import { radius, spacing, typography } from "@/theme";
 
 export function MfaChallengeScreen() {
   const router = useRouter();
@@ -95,7 +97,7 @@ export function MfaChallengeScreen() {
 
         {mfaSetupRequired ? (
           <View style={styles.qrBlock}>
-            {setupLoading ? <ActivityIndicator color={colors.primary} /> : null}
+            {setupLoading ? <ActivityIndicator color={authBrand.orange} /> : null}
             {setup?.qrDataUrl ? (
               <Image
                 source={{ uri: setup.qrDataUrl }}
@@ -110,8 +112,9 @@ export function MfaChallengeScreen() {
           control={control}
           name="code"
           render={({ field: { onChange, onBlur, value } }) => (
-            <TextField
+            <AuthField
               label={t("auth.mfaCode")}
+              icon="keypad-outline"
               value={value}
               onChangeText={onChange}
               onBlur={onBlur}
@@ -128,7 +131,11 @@ export function MfaChallengeScreen() {
           </Text>
         ) : null}
 
-        <Button label={t("common.continue")} onPress={onSubmit} loading={isSubmitting} />
+        <AuthContinueButton
+          label={t("common.continue")}
+          onPress={onSubmit}
+          loading={isSubmitting}
+        />
         <Button
           label={t("auth.backToSignIn")}
           variant="ghost"
@@ -141,36 +148,40 @@ export function MfaChallengeScreen() {
 
 const styles = StyleSheet.create({
   cardHeader: {
-    gap: spacing.xs,
+    gap: spacing.sm,
     marginBottom: spacing.xs,
   },
   cardEyebrow: {
     ...typography.overline,
-    color: colors.primary,
+    color: authBrand.orange,
+    letterSpacing: 1.4,
+    fontSize: 11,
   },
   cardTitle: {
-    ...typography.h1,
-    color: colors.foreground,
-    fontSize: 24,
+    ...typography.hero,
+    color: authBrand.dark,
+    fontSize: 26,
+    letterSpacing: -0.5,
   },
   cardSubtitle: {
     ...typography.body,
-    color: colors.mutedForeground,
+    color: authBrand.muted,
+    fontSize: 14,
+    lineHeight: 20,
     marginTop: spacing.xs,
   },
   qrBlock: {
     alignItems: "center",
     minHeight: 48,
-    marginBottom: spacing.sm,
   },
   qrImage: {
-    width: 200,
-    height: 200,
+    width: 180,
+    height: 180,
     borderRadius: radius.xl,
   },
   formError: {
     ...typography.caption,
-    color: colors.destructive,
+    color: "#E11D48",
     fontWeight: "600",
   },
 });

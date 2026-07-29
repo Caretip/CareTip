@@ -1,14 +1,25 @@
-import { Modal, Pressable, StyleSheet, Text, View } from "react-native";
+import { useEffect } from "react";
+import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import Animated, {
+  Easing,
+  useAnimatedStyle,
+  useSharedValue,
+  withTiming,
+} from "react-native-reanimated";
 import { Ionicons } from "@expo/vector-icons";
+import { useRouter, type Href } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { authSocialLinks, authWebPaths } from "@/constants/authLinks";
+import { authSocialLinks } from "@/constants/authLinks";
 import { useI18n } from "@/hooks/useI18n";
 import { openCareTipWeb } from "@/utils/openCareTipWeb";
+import { authBrand } from "@/theme/authBrand";
 import { colors, radius, spacing, touchTarget, typography } from "@/theme";
 
 type AuthFooterSheetProps = {
   visible: boolean;
   onClose: () => void;
+  /** Base path prefix for in-app info routes. */
+  routePrefix?: "/(auth)" | "/(app)/info";
 };
 
 type FooterRow = {
@@ -19,57 +30,94 @@ type FooterRow = {
   external?: boolean;
 };
 
-export function AuthFooterSheet({ visible, onClose }: AuthFooterSheetProps) {
+export function AuthFooterSheet({
+  visible,
+  onClose,
+  routePrefix = "/(auth)",
+}: AuthFooterSheetProps) {
   const { t } = useI18n();
+  const router = useRouter();
   const insets = useSafeAreaInsets();
+  const translateY = useSharedValue(48);
+  const opacity = useSharedValue(0);
+
+  useEffect(() => {
+    if (visible) {
+      opacity.value = withTiming(1, { duration: 220, easing: Easing.out(Easing.cubic) });
+      translateY.value = withTiming(0, { duration: 340, easing: Easing.out(Easing.cubic) });
+    } else {
+      opacity.value = 0;
+      translateY.value = 48;
+    }
+  }, [opacity, translateY, visible]);
+
+  const backdropAnim = useAnimatedStyle(() => ({ opacity: opacity.value }));
+  const sheetAnim = useAnimatedStyle(() => ({
+    transform: [{ translateY: translateY.value }],
+  }));
+
+  const go = (path: string) => {
+    onClose();
+    const href =
+      routePrefix === "/(auth)"
+        ? (`/(auth)/${path}` as Href)
+        : (`/(app)/info/${path}` as Href);
+    setTimeout(() => router.push(href), 80);
+  };
 
   const companyRows: FooterRow[] = [
-    {
-      key: "about",
-      label: t("auth.footerAbout"),
-      icon: "business-outline",
-      onPress: () => void openCareTipWeb(authWebPaths.about),
-    },
-    {
-      key: "contact",
-      label: t("auth.footerContact"),
-      icon: "mail-outline",
-      onPress: () => void openCareTipWeb(authWebPaths.contact),
-    },
     {
       key: "faq",
       label: t("auth.footerFaq"),
       icon: "help-circle-outline",
-      onPress: () => void openCareTipWeb(authWebPaths.faq),
+      onPress: () => go("faq"),
+    },
+    {
+      key: "contact",
+      label: t("auth.footerContact"),
+      icon: "chatbubbles-outline",
+      onPress: () => go("contact"),
+    },
+    {
+      key: "about",
+      label: t("auth.footerAbout"),
+      icon: "heart-outline",
+      onPress: () => go("about"),
     },
     {
       key: "privacy",
       label: t("auth.footerPrivacy"),
       icon: "shield-checkmark-outline",
-      onPress: () => void openCareTipWeb(authWebPaths.privacy),
+      onPress: () => go("privacy"),
     },
     {
       key: "terms",
       label: t("auth.footerTerms"),
       icon: "document-text-outline",
-      onPress: () => void openCareTipWeb(authWebPaths.terms),
+      onPress: () => go("terms"),
+    },
+    {
+      key: "impressum",
+      label: t("auth.footerImpressum"),
+      icon: "business-outline",
+      onPress: () => go("impressum"),
     },
   ];
 
   const socialRows: FooterRow[] = [
-    {
-      key: "facebook",
-      label: t("auth.socialFacebook"),
-      icon: "logo-facebook",
-      external: true,
-      onPress: () => void openCareTipWeb(authSocialLinks.facebook),
-    },
     {
       key: "instagram",
       label: t("auth.socialInstagram"),
       icon: "logo-instagram",
       external: true,
       onPress: () => void openCareTipWeb(authSocialLinks.instagram),
+    },
+    {
+      key: "facebook",
+      label: t("auth.socialFacebook"),
+      icon: "logo-facebook",
+      external: true,
+      onPress: () => void openCareTipWeb(authSocialLinks.facebook),
     },
     {
       key: "linkedin",
@@ -79,11 +127,11 @@ export function AuthFooterSheet({ visible, onClose }: AuthFooterSheetProps) {
       onPress: () => void openCareTipWeb(authSocialLinks.linkedin),
     },
     {
-      key: "x",
-      label: t("auth.socialX"),
-      icon: "logo-twitter",
+      key: "tiktok",
+      label: t("auth.socialTiktok"),
+      icon: "logo-tiktok",
       external: true,
-      onPress: () => void openCareTipWeb(authSocialLinks.x),
+      onPress: () => void openCareTipWeb(authSocialLinks.tiktok),
     },
   ];
 
@@ -92,13 +140,13 @@ export function AuthFooterSheet({ visible, onClose }: AuthFooterSheetProps) {
       key={row.key}
       accessibilityRole="button"
       onPress={() => {
-        onClose();
+        if (row.external) onClose();
         row.onPress();
       }}
       style={({ pressed }) => [styles.row, pressed ? styles.rowPressed : null]}
     >
       <View style={styles.rowIcon}>
-        <Ionicons name={row.icon} size={20} color={colors.foreground} />
+        <Ionicons name={row.icon} size={20} color={authBrand.orange} />
       </View>
       <Text style={styles.rowLabel}>{row.label}</Text>
       <Ionicons
@@ -110,37 +158,70 @@ export function AuthFooterSheet({ visible, onClose }: AuthFooterSheetProps) {
   );
 
   return (
-    <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
-      <Pressable style={styles.backdrop} onPress={onClose} accessibilityLabel={t("common.cancel")} />
-      <View style={[styles.sheet, { paddingBottom: Math.max(insets.bottom, spacing.lg) }]}>
-        <View style={styles.handle} />
-        <Text style={styles.sheetTitle}>{t("auth.footerMenuTitle")}</Text>
-        <Text style={styles.sectionLabel}>{t("auth.footerCompanySection")}</Text>
-        {companyRows.map(renderRow)}
-        <View style={styles.divider} />
-        <Text style={styles.sectionLabel}>{t("auth.footerSocialSection")}</Text>
-        {socialRows.map(renderRow)}
-        <Pressable
-          accessibilityRole="button"
-          onPress={onClose}
-          style={({ pressed }) => [styles.closeBtn, pressed ? styles.rowPressed : null]}
+    <Modal visible={visible} animationType="none" transparent onRequestClose={onClose}>
+      <View style={styles.root}>
+        <Animated.View style={[styles.backdrop, backdropAnim]}>
+          <Pressable
+            style={StyleSheet.absoluteFill}
+            onPress={onClose}
+            accessibilityLabel={t("common.cancel")}
+          />
+        </Animated.View>
+        <Animated.View
+          style={[
+            styles.sheet,
+            { paddingBottom: Math.max(insets.bottom, spacing.lg) },
+            sheetAnim,
+          ]}
         >
-          <Text style={styles.closeLabel}>{t("common.cancel")}</Text>
-        </Pressable>
+          <View style={styles.handle} />
+          <Text style={styles.sheetTitle}>{t("auth.footerMenuTitle")}</Text>
+          <ScrollView showsVerticalScrollIndicator={false} bounces={false}>
+            <Text style={styles.sectionLabel}>{t("auth.footerCompanySection")}</Text>
+            {companyRows.map(renderRow)}
+            <View style={styles.divider} />
+            <Text style={styles.sectionLabel}>{t("auth.footerSocialSection")}</Text>
+            <View style={styles.socialGrid}>
+              {socialRows.map((row) => (
+                <Pressable
+                  key={row.key}
+                  accessibilityRole="button"
+                  accessibilityLabel={row.label}
+                  onPress={() => {
+                    onClose();
+                    row.onPress();
+                  }}
+                  style={({ pressed }) => [styles.socialChip, pressed ? styles.rowPressed : null]}
+                >
+                  <Ionicons name={row.icon} size={20} color={authBrand.dark} />
+                  <Text style={styles.socialLabel}>{row.label}</Text>
+                </Pressable>
+              ))}
+            </View>
+            <Pressable
+              accessibilityRole="button"
+              onPress={onClose}
+              style={({ pressed }) => [styles.closeBtn, pressed ? styles.rowPressed : null]}
+            >
+              <Text style={styles.closeLabel}>{t("common.cancel")}</Text>
+            </Pressable>
+          </ScrollView>
+        </Animated.View>
       </View>
     </Modal>
   );
 }
 
 const styles = StyleSheet.create({
+  root: { flex: 1, justifyContent: "flex-end" },
   backdrop: {
-    flex: 1,
-    backgroundColor: colors.overlay,
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "rgba(11, 18, 32, 0.52)",
   },
   sheet: {
     backgroundColor: colors.card,
-    borderTopLeftRadius: radius["2xl"],
-    borderTopRightRadius: radius["2xl"],
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
     paddingHorizontal: spacing.xl,
     paddingTop: spacing.md,
     maxHeight: "82%",
@@ -170,14 +251,12 @@ const styles = StyleSheet.create({
     gap: spacing.md,
     paddingVertical: spacing.sm,
   },
-  rowPressed: {
-    opacity: 0.72,
-  },
+  rowPressed: { opacity: 0.72 },
   rowIcon: {
-    width: 36,
-    height: 36,
-    borderRadius: radius.lg,
-    backgroundColor: colors.secondary,
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    backgroundColor: "rgba(235, 153, 44, 0.12)",
     alignItems: "center",
     justifyContent: "center",
   },
@@ -192,15 +271,34 @@ const styles = StyleSheet.create({
     backgroundColor: colors.border,
     marginVertical: spacing.lg,
   },
+  socialGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: spacing.sm,
+  },
+  socialChip: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.sm,
+    minHeight: touchTarget,
+    paddingHorizontal: spacing.lg,
+    borderRadius: 999,
+    backgroundColor: colors.secondary,
+  },
+  socialLabel: {
+    ...typography.caption,
+    color: colors.foreground,
+    fontWeight: "700",
+  },
   closeBtn: {
-    marginTop: spacing.lg,
+    marginTop: spacing.xl,
     minHeight: touchTarget,
     alignItems: "center",
     justifyContent: "center",
   },
   closeLabel: {
     ...typography.button,
-    color: colors.primary,
+    color: authBrand.orange,
     fontWeight: "700",
   },
 });

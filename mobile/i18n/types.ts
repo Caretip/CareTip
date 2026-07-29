@@ -51,10 +51,11 @@ export type MobileMessages = {
     footerFaq: string;
     footerPrivacy: string;
     footerTerms: string;
+    footerImpressum: string;
     socialFacebook: string;
     socialInstagram: string;
+    socialTiktok: string;
     socialLinkedin: string;
-    socialX: string;
     welcomeBack: string;
     signIn: string;
     signInSubtitle: string;
@@ -72,6 +73,25 @@ export type MobileMessages = {
     mfaSetupFailed: string;
     backToSignIn: string;
     qrA11y: string;
+  };
+  info: {
+    faqTitle: string;
+    faqSearch: string;
+    faqEmpty: string;
+    contactTitle: string;
+    contactLead: string;
+    businessHours: string;
+    aboutTitle: string;
+    privacyTitle: string;
+    privacyLead: string;
+    termsTitle: string;
+    impressumTitle: string;
+    legalLoading: string;
+    legalLoadError: string;
+    legalNotAvailable: string;
+    legalVersionLine: string;
+    version: string;
+    build: string;
   };
   businessDashboard: {
     eyebrow: string;
@@ -122,6 +142,7 @@ export type MobileMessages = {
     chartEmpty: string;
     recentTips: string;
     recentSubtitle: string;
+    emptyTipsTitle: string;
     emptyTips: string;
     avgRating: string;
     tipStreak: string;

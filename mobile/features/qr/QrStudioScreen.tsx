@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import * as Clipboard from "expo-clipboard";
 import * as Sharing from "expo-sharing";
 import {
-  Alert,
   FlatList,
   Pressable,
   StyleSheet,
@@ -20,6 +19,7 @@ import { useQrStudio } from "@/hooks/useQrStudio";
 import { useI18n } from "@/hooks/useI18n";
 import { loadOfflineQrItems } from "@/utils/offlineQrCache";
 import { friendlyErrorMessage, isPermissionError } from "@/utils/friendlyError";
+import { showSuccessToast } from "@/store/toastStore";
 import type { QrCodeItem } from "@/types/qr";
 import { colors, spacing, typography } from "@/theme";
 
@@ -46,7 +46,7 @@ export function QrStudioScreen() {
 
   const handleCopy = async (url: string) => {
     await Clipboard.setStringAsync(url);
-    Alert.alert(t("qr.linkCopiedTitle"), t("qr.linkCopiedBody"));
+    showSuccessToast(t("success.linkCopied"));
   };
 
   const handleShare = async (item: QrCodeItem) => {

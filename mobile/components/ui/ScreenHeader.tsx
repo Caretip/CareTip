@@ -56,7 +56,6 @@ const styles = StyleSheet.create({
     alignItems: "flex-start",
     justifyContent: "space-between",
     gap: spacing.lg,
-    paddingTop: spacing.md,
   },
   text: {
     flex: 1,
@@ -64,28 +63,35 @@ const styles = StyleSheet.create({
   },
   eyebrow: {
     ...typography.overline,
-    color: colors.primary,
+    color: colors.mutedForeground,
+    fontSize: 10,
+    letterSpacing: 1.1,
   },
   title: {
     ...typography.h1,
     fontSize: 26,
-    lineHeight: 30,
+    lineHeight: 32,
+    letterSpacing: -0.7,
+    fontWeight: "800",
     color: colors.foreground,
   },
   subtitle: {
     ...typography.body,
     color: colors.mutedForeground,
+    fontSize: 15,
+    lineHeight: 22,
   },
   section: {
     flexDirection: "row",
     alignItems: "flex-start",
     justifyContent: "space-between",
     gap: spacing.md,
-    marginBottom: spacing.md,
+    marginBottom: spacing.lg,
   },
   sectionTitle: {
-    ...typography.section,
+    ...typography.h2,
     color: colors.foreground,
+    fontWeight: "700",
   },
   sectionSub: {
     ...typography.caption,
@@ -93,11 +99,8 @@ const styles = StyleSheet.create({
     marginTop: spacing.xxs,
   },
   hero: {
-    gap: spacing.md,
-    paddingTop: spacing.sm,
-    paddingBottom: spacing.lg,
+    gap: spacing.xl,
+    paddingBottom: spacing.sm,
     marginBottom: spacing.md,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: colors.border,
   },
 });

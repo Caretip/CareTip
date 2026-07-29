@@ -1021,3 +1021,24 @@ model TipRefund {
   @@map("tip_refunds")
 }
 
+enum LegalDocumentType {
+  privacy_policy
+  terms_conditions
+  impressum
+}
+
+/// Provider-managed legal documents (privacy, terms, impressum). One row per type + language.
+model LegalDocument {
+  id          String            @id @default(cuid())
+  type        LegalDocumentType
+  language    String            @default("en") @db.VarChar(8)
+  title       String
+  contentHtml String            @map("content_html")
+  version     String            @db.VarChar(64)
+  updatedAt   DateTime          @updatedAt @map("updated_at")
+  createdAt   DateTime          @default(now()) @map("created_at")
+
+  @@unique([type, language])
+  @@map("legal_documents")
+}
+

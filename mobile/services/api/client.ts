@@ -87,12 +87,19 @@ function isPublicAuthPath(url: string | undefined): boolean {
   );
 }
 
+/** Public paths that must never attach Bearer tokens or trigger session refresh. */
+function isPublicApiPath(url: string | undefined): boolean {
+  const path = url ?? "";
+  return isPublicAuthPath(path) || path.includes("/api/legal/");
+}
+
 apiClient.interceptors.request.use(async (request) => {
   const path = request.url ?? "";
   const isPublicAuth = isPublicAuthPath(path);
+  const isPublicApi = isPublicApiPath(path);
 
-  // Do not attach stale Bearer to public login — matches web loginAPI (no Authorization).
-  if (!isPublicAuth || path.includes("/api/auth/refresh") || path.includes("/api/auth/logout")) {
+  // Do not attach stale Bearer to public login or legal document reads.
+  if (!isPublicApi && (!isPublicAuth || path.includes("/api/auth/refresh") || path.includes("/api/auth/logout"))) {
     const token = memoryAccessToken ?? (await getAccessToken());
     if (token) {
       memoryAccessToken = token;
@@ -199,7 +206,7 @@ apiClient.interceptors.response.use(
       status === 401 &&
       original &&
       !original.__caretipRetried &&
-      !isPublicAuthPath(original.url)
+      !isPublicApiPath(original.url)
     ) {
       original.__caretipRetried = true;
       const nextToken = await refreshAccessToken();
@@ -212,7 +219,7 @@ apiClient.interceptors.response.use(
     }
 
     // Screen-level ErrorStates handle HTTP failures — only surface transport issues globally.
-    if (!status && !isPublicAuthPath(original?.url)) {
+    if (!status && !isPublicApiPath(original?.url)) {
       reportGlobalError(error);
     } else if (!status && __DEV__) {
       const normalized = normalizeApiError(error);

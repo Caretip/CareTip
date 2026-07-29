@@ -1,7 +1,7 @@
-import { StyleSheet, Text, View } from "react-native";
+import { Pressable, StyleSheet, Text, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { BrandMark } from "@/components/brand/BrandMark";
-import { colors, radius, spacing, typography } from "@/theme";
+import { colors, radius, spacing, touchTarget, typography } from "@/theme";
 
 type EmptyVariant = "tips" | "notifications" | "activity" | "qr" | "offline" | "generic";
 
@@ -10,6 +10,8 @@ type EmptyStateProps = {
   message?: string;
   emoji?: string;
   variant?: EmptyVariant;
+  actionLabel?: string;
+  onAction?: () => void;
 };
 
 const ICONS: Record<EmptyVariant, keyof typeof Ionicons.glyphMap> = {
@@ -26,18 +28,29 @@ export function EmptyState({
   message,
   emoji,
   variant = "generic",
+  actionLabel,
+  onAction,
 }: EmptyStateProps) {
   return (
-    <View style={styles.container}>
+    <View style={styles.container} accessibilityRole="text">
       <View style={styles.iconWrap}>
         {emoji ? (
           <Text style={styles.emoji}>{emoji}</Text>
         ) : (
-          <Ionicons name={ICONS[variant]} size={22} color={colors.primary} />
+          <Ionicons name={ICONS[variant]} size={24} color={colors.primary} />
         )}
       </View>
       <Text style={styles.title}>{title}</Text>
       {message ? <Text style={styles.message}>{message}</Text> : null}
+      {actionLabel && onAction ? (
+        <Pressable
+          accessibilityRole="button"
+          onPress={onAction}
+          style={({ pressed }) => [styles.action, pressed ? styles.pressed : null]}
+        >
+          <Text style={styles.actionLabel}>{actionLabel}</Text>
+        </Pressable>
+      ) : null}
       <BrandMark height={16} style={styles.brand} />
     </View>
   );
@@ -47,21 +60,21 @@ const styles = StyleSheet.create({
   container: {
     marginVertical: spacing.xl,
     paddingVertical: spacing["3xl"],
-    paddingHorizontal: spacing.xl,
+    paddingHorizontal: spacing["2xl"],
     alignItems: "center",
-    gap: spacing.sm,
+    gap: spacing.md,
   },
   iconWrap: {
-    width: 48,
-    height: 48,
+    width: 56,
+    height: 56,
     borderRadius: radius.full,
-    backgroundColor: colors.primarySoft,
+    backgroundColor: colors.secondary,
     alignItems: "center",
     justifyContent: "center",
     marginBottom: spacing.xs,
   },
   emoji: {
-    fontSize: 20,
+    fontSize: 22,
     color: colors.primary,
   },
   title: {
@@ -74,6 +87,23 @@ const styles = StyleSheet.create({
     color: colors.mutedForeground,
     textAlign: "center",
     maxWidth: 300,
+  },
+  action: {
+    minHeight: touchTarget,
+    paddingHorizontal: spacing["2xl"],
+    paddingVertical: spacing.md,
+    borderRadius: radius.lg,
+    backgroundColor: colors.primary,
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: spacing.sm,
+  },
+  actionLabel: {
+    ...typography.button,
+    color: colors.primaryForeground,
+  },
+  pressed: {
+    opacity: 0.88,
   },
   brand: {
     marginTop: spacing.md,

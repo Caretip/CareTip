@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import * as WebBrowser from "expo-web-browser";
 import { Alert, Image, Pressable, StyleSheet, Switch, Text, View } from "react-native";
 import { useRouter } from "expo-router";
 import { useQuery, useMutation } from "@tanstack/react-query";
@@ -23,8 +22,8 @@ import { fetchBusinessProfile } from "@/services/api/businessService";
 import { fetchEmployeeProfile } from "@/services/api/employeeService";
 import { saveUserSnapshot } from "@/services/auth/tokenStorage";
 import { queryKeys } from "@/services/api/queryClient";
-import { config } from "@/constants/config";
 import { useUserStore } from "@/store/userStore";
+import { showErrorToast, showSuccessToast } from "@/store/toastStore";
 import { formatUserRole } from "@/utils/labels";
 import { friendlyErrorMessage } from "@/utils/friendlyError";
 import type { TwoFactorSetup } from "@/types/settings";
@@ -96,9 +95,13 @@ export function SettingsScreen({ role }: SettingsScreenProps) {
     }
   }, [accountQuery.data?.preferredLocale, user?.preferredLocale]);
 
-  const openLegal = async (path: string) => {
-    const base = config.appUrl || "https://caretip.de";
-    await WebBrowser.openBrowserAsync(`${base}${path}`);
+  const openLegal = async (path: "privacy" | "terms" | "cookies") => {
+    if (path === "cookies") {
+      const { openCareTipWeb } = await import("@/utils/openCareTipWeb");
+      await openCareTipWeb("/cookies");
+      return;
+    }
+    router.push(`/(app)/info/${path}`);
   };
 
   const handleSignOut = async () => {
@@ -122,7 +125,7 @@ export function SettingsScreen({ role }: SettingsScreenProps) {
     } catch (e) {
       setLocale(previous);
       await setLanguage(previous);
-      Alert.alert(t("common.error"), friendlyErrorMessage(e, t("settings.languageError"), t));
+      showErrorToast(friendlyErrorMessage(e, t("settings.languageError"), t));
     } finally {
       setLocaleSaving(false);
     }
@@ -131,11 +134,11 @@ export function SettingsScreen({ role }: SettingsScreenProps) {
   const handleChangePassword = async () => {
     try {
       await changePassword(currentPassword, newPassword);
-      Alert.alert(t("settings.passwordUpdatedTitle"), t("settings.passwordUpdatedBody"));
+      showSuccessToast(t("success.saved"));
       setCurrentPassword("");
       setNewPassword("");
     } catch (e) {
-      Alert.alert(t("common.error"), friendlyErrorMessage(e, t("settings.passwordError"), t));
+      showErrorToast(friendlyErrorMessage(e, t("settings.passwordError"), t));
     }
   };
 
@@ -145,7 +148,7 @@ export function SettingsScreen({ role }: SettingsScreenProps) {
       const setup = await setupTwoFactor();
       setMfaSetup(setup);
     } catch (e) {
-      Alert.alert(t("common.error"), friendlyErrorMessage(e, t("settings.setupError"), t));
+      showErrorToast(friendlyErrorMessage(e, t("settings.setupError"), t));
     } finally {
       setMfaSetupLoading(false);
     }
@@ -162,24 +165,24 @@ export function SettingsScreen({ role }: SettingsScreenProps) {
         return;
       }
       await enableTwoFactor(mfaCode);
-      Alert.alert(t("settings.twoFaEnabled"), t("settings.twoFaEnabledBody"));
+      showSuccessToast(t("settings.twoFaEnabledBody"));
       setMfaCode("");
       setMfaSetup(null);
       void twoFactorQuery.refetch();
     } catch (e) {
-      Alert.alert(t("common.error"), friendlyErrorMessage(e, t("settings.enableError"), t));
+      showErrorToast(friendlyErrorMessage(e, t("settings.enableError"), t));
     }
   };
 
   const handleDisableMfa = async () => {
     try {
       await disableTwoFactor(mfaCode);
-      Alert.alert(t("settings.twoFaDisabled"));
+      showSuccessToast(t("settings.twoFaDisabled"));
       setMfaCode("");
       setMfaSetup(null);
       void twoFactorQuery.refetch();
     } catch (e) {
-      Alert.alert(t("common.error"), friendlyErrorMessage(e, t("settings.disableError"), t));
+      showErrorToast(friendlyErrorMessage(e, t("settings.disableError"), t));
     }
   };
 
@@ -361,17 +364,17 @@ export function SettingsScreen({ role }: SettingsScreenProps) {
         <Button
           label={t("settings.privacy")}
           variant="secondary"
-          onPress={() => void openLegal("/privacy")}
+          onPress={() => void openLegal("privacy")}
         />
         <Button
           label={t("settings.terms")}
           variant="secondary"
-          onPress={() => void openLegal("/terms")}
+          onPress={() => void openLegal("terms")}
         />
         <Button
           label={t("settings.cookies")}
           variant="secondary"
-          onPress={() => void openLegal("/cookies")}
+          onPress={() => void openLegal("cookies")}
         />
       </Section>
 

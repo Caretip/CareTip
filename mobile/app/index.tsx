@@ -1,17 +1,16 @@
 import { Redirect } from "expo-router";
 import { useAuth } from "@/hooks/useAuth";
-import { BootstrapScreen } from "@/components/brand/BootstrapScreen";
 import { getDashboardRouteForRole } from "@/utils/routing";
 
 /**
- * Root entry — branded bootstrap until session hydration finishes.
- * Never flashes Login while still determining auth.
+ * Root entry — native splash stays visible until ready; redirect once session is known.
  */
 export default function Index() {
   const { status, isHydrated, isAuthenticated, user } = useAuth();
+  const bootstrapping = !isHydrated || status === "idle" || status === "bootstrapping";
 
-  if (!isHydrated || status === "idle" || status === "bootstrapping") {
-    return <BootstrapScreen />;
+  if (bootstrapping) {
+    return null;
   }
 
   if (isAuthenticated) {

@@ -52,7 +52,7 @@ export function CardHeader({ title, subtitle, trailing }: CardHeaderProps) {
 const styles = StyleSheet.create({
   card: {
     backgroundColor: colors.card,
-    borderRadius: radius["2xl"],
+    borderRadius: 22,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: colors.border,
     gap: spacing.lg,

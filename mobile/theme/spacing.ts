@@ -36,3 +36,6 @@ export const hitSlop = {
 
 /** Minimum interactive target (HIG / Material). */
 export const touchTarget = 48;
+
+/** Standard horizontal screen inset (20–24dp). */
+export const screenPadding = spacing.xl;

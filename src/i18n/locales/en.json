@@ -7365,5 +7365,14 @@
         }
       }
     }
+  },
+  "legal": {
+    "privacyTitle": "Privacy Policy",
+    "termsTitle": "Terms & Conditions",
+    "impressumTitle": "Imprint",
+    "loading": "Loading document…",
+    "loadError": "We couldn't load this document. Please try again.",
+    "tryAgain": "Try again",
+    "versionLine": "Version {{version}} · Updated {{date}}"
   }
 }

@@ -1,6 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { Redirect, Tabs } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { PremiumTabBar } from "@/components/navigation/PremiumTabBar";
 import { useAuth } from "@/hooks/useAuth";
 import { useI18n } from "@/hooks/useI18n";
 import { useUnreadNotificationCount } from "@/hooks/useNotifications";
@@ -40,18 +41,8 @@ export default function EmployeeTabsLayout() {
 
   return (
     <Tabs
-      screenOptions={{
-        ...buildPremiumTabScreenOptions(insets.bottom),
-        tabBarBadgeStyle: {
-          backgroundColor: colors.primary,
-          color: colors.primaryForeground,
-          fontSize: 10,
-          fontWeight: "700",
-          minWidth: 18,
-          height: 18,
-          lineHeight: 16,
-        },
-      }}
+      tabBar={(props) => <PremiumTabBar {...props} />}
+      screenOptions={buildPremiumTabScreenOptions(insets.bottom)}
     >
       <Tabs.Screen
         name="index"

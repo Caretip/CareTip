@@ -1,4 +1,5 @@
-import { ActivityIndicator, Image, StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, Image, Pressable, StyleSheet, Text, View } from "react-native";
+import { Skeleton } from "@/components/ui/Skeleton";
 import { useBrandedQrImage } from "@/hooks/useBrandedQrImage";
 import { useI18n } from "@/hooks/useI18n";
 import { BrandedQrFetchError } from "@/services/api/brandedQrService";
@@ -59,7 +60,7 @@ export function BrandedQrImage({ targetUrl, mode, minHeight = 400, reloadKey = 0
   if (isLoading && !data) {
     return (
       <View style={[styles.frame, { minHeight }]}>
-        <ActivityIndicator color={colors.primary} size="large" />
+        <Skeleton height={minHeight * 0.72} width="100%" rounded="2xl" />
       </View>
     );
   }
@@ -68,9 +69,9 @@ export function BrandedQrImage({ targetUrl, mode, minHeight = 400, reloadKey = 0
     return (
       <View style={[styles.fallback, { minHeight }]}>
         <Text style={styles.fallbackText}>{resolveBrandedQrMessage(error, t)}</Text>
-        <Text style={styles.hintText} onPress={() => void refetch()}>
-          {t("common.tryAgain")}
-        </Text>
+        <Pressable accessibilityRole="button" onPress={() => void refetch()}>
+          <Text style={styles.hintText}>{t("common.tryAgain")}</Text>
+        </Pressable>
       </View>
     );
   }

@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import * as Clipboard from "expo-clipboard";
 import * as Sharing from "expo-sharing";
-import { Alert, StyleSheet, Text, View } from "react-native";
+import { StyleSheet, Text, View } from "react-native";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/Button";
 import { QrCodeDisplay } from "@/components/ui/QrCodeDisplay";
@@ -13,6 +13,7 @@ import { fetchEmployeeProfile } from "@/services/api/employeeService";
 import { queryKeys } from "@/services/api/queryClient";
 import { resolveEmployeeQrUrl } from "@/utils/appPublicUrl";
 import { friendlyErrorMessage } from "@/utils/friendlyError";
+import { showSuccessToast } from "@/store/toastStore";
 import { loadEmployeeQrCache, saveEmployeeQrCache } from "@/utils/offlineQrCache";
 import { colors, spacing, typography } from "@/theme";
 
@@ -55,7 +56,7 @@ export function EmployeeQrScreen() {
   const handleCopy = async () => {
     if (!url) return;
     await Clipboard.setStringAsync(url);
-    Alert.alert(t("qr.linkCopiedTitle"), t("qr.linkCopiedBody"));
+    showSuccessToast(t("success.linkCopied"));
   };
 
   const handleShare = async () => {

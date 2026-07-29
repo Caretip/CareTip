@@ -1,14 +1,17 @@
 import { RefreshControl, ScrollView, StyleSheet, View, type ScrollViewProps } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { colors, spacing } from "@/theme";
+import { TAB_BAR_SCROLL_CLEARANCE } from "@/theme/navigation";
 import { OfflineBanner } from "@/components/layout/OfflineBanner";
 import { ErrorBanner } from "@/components/layout/ErrorBanner";
+import { SplashScreenAnchor } from "@/components/brand/SplashScreenAnchor";
 
 type ScreenProps = ScrollViewProps & {
   children: React.ReactNode;
   refreshing?: boolean;
   onRefresh?: () => void;
   padded?: boolean;
+  tabSafe?: boolean;
 };
 
 export function Screen({
@@ -16,11 +19,13 @@ export function Screen({
   refreshing,
   onRefresh,
   padded = true,
+  tabSafe = true,
   contentContainerStyle,
   ...rest
 }: ScreenProps) {
   return (
-    <SafeAreaView style={styles.safe} edges={["top", "left", "right"]}>
+    <SafeAreaView style={styles.safe} edges={["top", "left", "right"]} collapsable={false}>
+      <SplashScreenAnchor source="Screen" />
       <OfflineBanner />
       <ErrorBanner />
       <ScrollView
@@ -36,7 +41,11 @@ export function Screen({
             />
           ) : undefined
         }
-        contentContainerStyle={[padded ? styles.content : null, contentContainerStyle]}
+        contentContainerStyle={[
+          padded ? styles.content : null,
+          tabSafe ? styles.tabClearance : null,
+          contentContainerStyle,
+        ]}
         {...rest}
       >
         {children}
@@ -56,15 +65,17 @@ const styles = StyleSheet.create({
   },
   content: {
     paddingHorizontal: spacing.xl,
-    paddingTop: spacing.md,
-    paddingBottom: spacing["7xl"] + spacing["2xl"],
-    gap: spacing.lg,
+    paddingTop: spacing.lg,
+    gap: spacing["2xl"],
     width: "100%",
     maxWidth: 720,
     alignSelf: "center",
   },
+  tabClearance: {
+    paddingBottom: TAB_BAR_SCROLL_CLEARANCE,
+  },
   header: {
     paddingTop: spacing.lg,
-    gap: spacing.sm,
+    gap: spacing.md,
   },
 });

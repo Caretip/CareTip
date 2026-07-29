@@ -57,4 +57,9 @@ export const API_ENDPOINTS = {
     tokens: "/api/push/tokens",
     tokensAll: "/api/push/tokens/all",
   },
+  legal: {
+    privacy: "/api/legal/privacy",
+    terms: "/api/legal/terms",
+    impressum: "/api/legal/impressum",
+  },
 } as const;

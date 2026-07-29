@@ -1,53 +1,43 @@
 import { Platform, StyleSheet, type TextStyle, type ViewStyle } from "react-native";
-import { colors, radius, shadows, spacing, typography } from "@/theme";
+import { colors, spacing, typography } from "@/theme";
 
-/** Floating glass tab bar — routes unchanged. Pass safe-area bottom inset from layouts. */
-export function buildPremiumTabScreenOptions(bottomInset = 0): {
+/** Height of the floating tab surface (excluding safe-area inset). */
+export const TAB_BAR_HEIGHT = 64;
+
+/** Scroll content clearance so lists clear the floating tab bar. */
+export const TAB_BAR_SCROLL_CLEARANCE = TAB_BAR_HEIGHT + spacing["3xl"] + spacing.xl;
+
+/** Shared tab options — pair with `<PremiumTabBar />` via `tabBar` prop. */
+export function buildPremiumTabScreenOptions(_bottomInset = 0): {
   headerShown: boolean;
   tabBarActiveTintColor: string;
   tabBarInactiveTintColor: string;
   tabBarHideOnKeyboard: boolean;
-  tabBarLabelStyle: TextStyle;
-  tabBarItemStyle: ViewStyle;
+  tabBarShowLabel: boolean;
   tabBarStyle: ViewStyle;
+  tabBarLabelStyle: TextStyle;
 } {
-  const bottom = Math.max(bottomInset, Platform.OS === "ios" ? spacing.md : spacing.lg);
-
   return {
     headerShown: false,
     tabBarHideOnKeyboard: true,
+    tabBarShowLabel: true,
     tabBarActiveTintColor: colors.primary,
     tabBarInactiveTintColor: colors.mutedForeground,
     tabBarLabelStyle: {
       fontSize: 10,
       fontWeight: "600",
       fontFamily: typography.caption.fontFamily,
-      marginTop: 2,
       letterSpacing: 0.1,
-    },
-    tabBarItemStyle: {
-      justifyContent: "center",
-      alignItems: "center",
-      paddingTop: 4,
-      paddingBottom: 2,
     },
     tabBarStyle: {
       position: "absolute",
-      left: spacing.xl,
-      right: spacing.xl,
-      bottom,
-      height: 64,
-      borderRadius: radius["3xl"],
-      backgroundColor: colors.tabBar,
+      height: 0,
       borderTopWidth: 0,
-      borderWidth: StyleSheet.hairlineWidth,
-      borderColor: colors.tabBarBorder,
-      paddingBottom: 6,
-      paddingTop: 6,
-      ...shadows.tabBar,
+      elevation: 0,
+      backgroundColor: "transparent",
     },
   };
 }
 
-/** @deprecated Prefer buildPremiumTabScreenOptions(insets.bottom) */
+/** @deprecated Use buildPremiumTabScreenOptions with PremiumTabBar */
 export const premiumTabScreenOptions = buildPremiumTabScreenOptions(0);

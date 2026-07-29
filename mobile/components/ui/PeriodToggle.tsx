@@ -12,7 +12,6 @@ type PeriodToggleProps<T extends string> = {
   onChange: (value: T) => void;
 };
 
-/** Modern segmented control with animated active state. */
 export function PeriodToggle<T extends string>({ value, options, onChange }: PeriodToggleProps<T>) {
   return (
     <View style={styles.track} accessibilityRole="tablist">
@@ -44,7 +43,7 @@ function Segment({
   progress.value = withTiming(active ? 1 : 0, { duration: motion.duration.fast });
   const pillStyle = useAnimatedStyle(() => ({
     opacity: progress.value,
-    transform: [{ scale: 0.96 + progress.value * 0.04 }],
+    transform: [{ scale: 0.98 + progress.value * 0.02 }],
   }));
 
   return (
@@ -55,7 +54,7 @@ function Segment({
       onPress={onPress}
       style={styles.segment}
     >
-      <Animated.View style={[styles.pill, active ? styles.pillActive : null, pillStyle]} />
+      <Animated.View style={[styles.pill, pillStyle]} />
       <Text style={[styles.label, active ? styles.labelActive : null]} numberOfLines={1}>
         {label}
       </Text>
@@ -68,12 +67,14 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     backgroundColor: colors.secondary,
     borderRadius: radius.xl,
-    padding: 4,
+    padding: 3,
     gap: 2,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.border,
   },
   segment: {
     flex: 1,
-    minHeight: touchTarget,
+    minHeight: touchTarget - 4,
     alignItems: "center",
     justifyContent: "center",
     paddingHorizontal: spacing.sm,
@@ -83,18 +84,17 @@ const styles = StyleSheet.create({
     ...StyleSheet.absoluteFillObject,
     borderRadius: radius.lg,
     backgroundColor: colors.card,
-  },
-  pillActive: {
-    shadowColor: "#0B1220",
-    shadowOpacity: 0.06,
-    shadowRadius: 6,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 2,
+    shadowColor: "#111827",
+    shadowOpacity: 0.04,
+    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 1 },
+    elevation: 1,
   },
   label: {
     ...typography.caption,
     color: colors.mutedForeground,
     fontWeight: "600",
+    fontSize: 13,
     zIndex: 1,
   },
   labelActive: {

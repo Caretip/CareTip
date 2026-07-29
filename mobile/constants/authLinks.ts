@@ -24,8 +24,8 @@ export const authWebPaths = {
 export const authSocialLinks = {
   facebook: trimUrl(process.env.EXPO_PUBLIC_SOCIAL_FACEBOOK_URL) || contactFallback,
   instagram: trimUrl(process.env.EXPO_PUBLIC_SOCIAL_INSTAGRAM_URL) || contactFallback,
+  tiktok: trimUrl(process.env.EXPO_PUBLIC_SOCIAL_TIKTOK_URL) || contactFallback,
   linkedin: trimUrl(process.env.EXPO_PUBLIC_SOCIAL_LINKEDIN_URL) || contactFallback,
-  x: trimUrl(process.env.EXPO_PUBLIC_SOCIAL_X_URL) || contactFallback,
 } as const;
 
 export function resolveAuthWebUrl(path: string): string {
