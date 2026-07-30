@@ -4,10 +4,25 @@ import {
   getLatestLegalDocument,
   upsertLegalDocumentsFromWebhook,
 } from "../services/legalDocument.service.js";
+import {
+  buildItRechtXmlResponse,
+  buildItRechtAuthErrorXml,
+} from "../services/itRechtKanzlei/itRechtKanzleiXmlBuilder.js";
+import {
+  itRechtErrorCodeFromUnknown,
+  itRechtErrorMessageFromUnknown,
+  isLegalProviderConfigured,
+  processItRechtXmlRequest,
+} from "../services/itRechtKanzlei/itRechtKanzleiWebhook.service.js";
+import { extractLegalWebhookXmlBody } from "../middleware/legalWebhookBody.middleware.js";
 import { clientSafeMessage, CLIENT_FALLBACK, logServerError } from "../utils/httpErrors.js";
 import {
+  logLegalWebhookIncoming,
   logLegalWebhookProcessingFailure,
   logLegalWebhookSuccess,
+  logLegalWebhookXmlAuthFailure,
+  logLegalWebhookXmlAuthSuccess,
+  logLegalWebhookXmlIncoming,
 } from "../utils/legalWebhookLogging.js";
 
 function resolveLanguage(req: { query: Record<string, unknown>; headers: Record<string, string | string[] | undefined> }): string | undefined {
@@ -26,6 +41,10 @@ function isLegalStoreUnavailable(err: unknown): boolean {
     err instanceof Prisma.PrismaClientKnownRequestError &&
     (err.code === "P2021" || err.code === "P2022")
   );
+}
+
+function sendXml(res: Parameters<RequestHandler>[1], xml: string): void {
+  res.status(200).type("text/xml; charset=utf-8").send(xml);
 }
 
 async function sendLegalDocument(
@@ -62,8 +81,60 @@ export const getImpressumDocument: RequestHandler = async (req, res) => {
   await sendLegalDocument(res, LegalDocumentType.impressum, resolveLanguage(req));
 };
 
-export const postLegalWebhook: RequestHandler = async (req, res) => {
+async function handleItRechtXmlWebhook(req: Parameters<RequestHandler>[0], res: Parameters<RequestHandler>[1]): Promise<void> {
   const startedAt = Date.now();
+  logLegalWebhookXmlIncoming(req);
+
+  const rawXml = extractLegalWebhookXmlBody(req);
+  if (!rawXml) {
+    sendXml(
+      res,
+      buildItRechtXmlResponse({
+        status: "error",
+        error: 12,
+        errorMessage: "Error processing XML data.",
+      }),
+    );
+    return;
+  }
+
+  if (!isLegalProviderConfigured()) {
+    logLegalWebhookXmlAuthFailure("LEGAL_PROVIDER_TOKEN not configured", req);
+    sendXml(res, buildItRechtAuthErrorXml());
+    return;
+  }
+
+  try {
+    const response = await processItRechtXmlRequest(rawXml);
+    if (response.status === "error" && response.error === 3) {
+      logLegalWebhookXmlAuthFailure("Invalid authentication token", req);
+    } else if (response.status === "success") {
+      logLegalWebhookXmlAuthSuccess(req, response);
+      if (response.targetUrl) {
+        const durationMs = Date.now() - startedAt;
+        console.info("[legal.webhook] IT-Recht push stored", {
+          targetUrl: response.targetUrl,
+          durationMs,
+        });
+      }
+    }
+    sendXml(res, buildItRechtXmlResponse(response));
+  } catch (err) {
+    logLegalWebhookProcessingFailure(err, req, 200);
+    sendXml(
+      res,
+      buildItRechtXmlResponse({
+        status: "error",
+        error: itRechtErrorCodeFromUnknown(err),
+        errorMessage: itRechtErrorMessageFromUnknown(err),
+      }),
+    );
+  }
+}
+
+async function handleJsonWebhook(req: Parameters<RequestHandler>[0], res: Parameters<RequestHandler>[1]): Promise<void> {
+  const startedAt = Date.now();
+  logLegalWebhookIncoming(req);
   try {
     const updated = await upsertLegalDocumentsFromWebhook(req.body);
     logLegalWebhookSuccess(updated, Date.now() - startedAt);
@@ -88,4 +159,13 @@ export const postLegalWebhook: RequestHandler = async (req, res) => {
       message: clientSafeMessage(err, CLIENT_FALLBACK.generic),
     });
   }
+}
+
+export const postLegalWebhook: RequestHandler = async (req, res) => {
+  const rawXml = extractLegalWebhookXmlBody(req);
+  if (rawXml) {
+    await handleItRechtXmlWebhook(req, res);
+    return;
+  }
+  await handleJsonWebhook(req, res);
 };

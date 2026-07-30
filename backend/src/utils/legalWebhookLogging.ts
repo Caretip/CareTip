@@ -2,6 +2,12 @@ import type { Request } from "express";
 import { LegalDocumentType } from "@prisma/client";
 import type { LegalDocumentDto } from "../services/legalDocument.service.js";
 import { logServerError } from "./httpErrors.js";
+import type { ItRechtXmlResponse } from "../services/itRechtKanzlei/itRechtKanzlei.types.js";
+function listIncomingHeaderNames(req: Request): string[] {
+  return Object.keys(req.headers)
+    .map((name) => name.toLowerCase())
+    .sort();
+}
 
 const LOG_PREFIX = "[legal.webhook]";
 
@@ -24,7 +30,6 @@ function requestPath(req: Request): string {
   return req.originalUrl || req.path;
 }
 
-/** Safe request metadata — never includes Authorization, body, or env secrets. */
 function requestMeta(req: Request): Record<string, string> {
   const contentLength = req.get("content-length");
   return {
@@ -37,19 +42,48 @@ function requestMeta(req: Request): Record<string, string> {
   };
 }
 
-/** Log every incoming webhook request at middleware entry. */
+/** Log legacy JSON webhook requests. */
 export function logLegalWebhookIncoming(req: Request): void {
   const meta = requestMeta(req);
   console.info(`${LOG_PREFIX} Incoming ${meta.method} ${meta.path}`, meta);
 }
 
-export type LegalWebhookAuthFailureReason =
+/** Log IT-Recht XML webhook requests (header names only). */
+export function logLegalWebhookXmlIncoming(req: Request): void {
+  const headerNames = listIncomingHeaderNames(req);
+  console.info(`${LOG_PREFIX} Incoming XML ${req.method} ${requestPath(req)}`, {
+    ...requestMeta(req),
+    contentType: req.get("content-type")?.split(";")[0]?.trim() ?? "unknown",
+    headerNames,
+    hasAuthorizationHeader: headerNames.includes("authorization"),
+  });
+}
+
+export type LegalWebhookJsonAuthFailureReason =
   | "Missing Authorization header"
   | "Invalid Bearer token"
   | "LEGAL_PROVIDER_TOKEN not configured";
 
-/** Log authentication failures without logging tokens or Authorization headers. */
-export function logLegalWebhookAuthFailure(reason: LegalWebhookAuthFailureReason, req: Request): void {
+/** Log legacy JSON Bearer auth failures. */
+export function logLegalWebhookJsonAuthFailure(reason: LegalWebhookJsonAuthFailureReason, req: Request): void {
+  const payload = {
+    timestamp: isoTimestamp(),
+    ip: clientIp(req),
+    reason,
+  };
+  if (reason === "LEGAL_PROVIDER_TOKEN not configured") {
+    console.error(`${LOG_PREFIX} JSON authentication failed`, payload);
+  } else {
+    console.warn(`${LOG_PREFIX} JSON authentication failed`, payload);
+  }
+}
+
+export type LegalWebhookXmlAuthFailureReason =
+  | "Invalid authentication token"
+  | "LEGAL_PROVIDER_TOKEN not configured";
+
+/** Log IT-Recht XML body auth failures (never logs token values). */
+export function logLegalWebhookXmlAuthFailure(reason: LegalWebhookXmlAuthFailureReason, req: Request): void {
   const payload = {
     timestamp: isoTimestamp(),
     ip: clientIp(req),
@@ -60,6 +94,16 @@ export function logLegalWebhookAuthFailure(reason: LegalWebhookAuthFailureReason
   } else {
     console.warn(`${LOG_PREFIX} Authentication failed`, payload);
   }
+}
+
+/** Log successful IT-Recht XML authentication. */
+export function logLegalWebhookXmlAuthSuccess(req: Request, response: ItRechtXmlResponse): void {
+  console.info(`${LOG_PREFIX} Authentication successful`, {
+    timestamp: isoTimestamp(),
+    ip: clientIp(req),
+    action: response.targetUrl ? "push" : "api",
+    requestId: req.get("x-request-id")?.trim() || req.get("x-correlation-id")?.trim() || undefined,
+  });
 }
 
 /** Log successful document sync — metadata only, no HTML. */
