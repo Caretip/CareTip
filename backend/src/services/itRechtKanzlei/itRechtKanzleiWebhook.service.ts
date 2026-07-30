@@ -1,8 +1,17 @@
 import { LegalDocumentType } from "@prisma/client";
-import type { LegalDocumentDto, LegalWebhookDocumentInput } from "../legalDocument.service.js";
+import type { LegalWebhookDocumentInput } from "../legalDocument.service.js";
 import { upsertLegalDocument } from "../legalDocument.service.js";
+import {
+  getItRechtAccountList,
+  isItRechtMultishopEnabled,
+  resolveItRechtAccount,
+} from "./itRechtKanzleiAccountConfig.js";
+import {
+  isValidRechtstextPdfBase64,
+  isValidRechtstextPdfUrl,
+} from "./itRechtKanzleiPdfValidator.js";
 import type { ItRechtAction, ItRechtApiRequest, ItRechtXmlErrorCode, ItRechtXmlResponse } from "./itRechtKanzlei.types.js";
-import { IT_RECHT_API_VERSION } from "./itRechtKanzlei.types.js";
+import { IT_RECHT_API_VERSION, IT_RECHT_ERROR_MESSAGES } from "./itRechtKanzlei.types.js";
 import { parseItRechtXmlPayload, resolveItRechtAction } from "./itRechtKanzleiXmlParser.js";
 
 const RECHTSTEXT_TYPE_MAP: Record<string, LegalDocumentType> = {
@@ -24,6 +33,12 @@ function publicAppOrigin(): string {
     process.env.VITE_APP_URL?.trim() ||
     "https://caretip.de";
   return base.replace(/\/$/, "");
+}
+
+function itRechtError(code: ItRechtXmlErrorCode, message?: string): never {
+  throw Object.assign(new Error(message ?? IT_RECHT_ERROR_MESSAGES[code] ?? "An error occurred."), {
+    itRechtErrorCode: code,
+  });
 }
 
 export function authenticateItRechtRequest(request: ItRechtApiRequest): boolean {
@@ -56,62 +71,116 @@ export function isLegalProviderConfigured(): boolean {
 function assertSupportedApiVersion(request: ItRechtApiRequest): void {
   const version = request.apiVersion?.trim();
   if (version && version !== IT_RECHT_API_VERSION) {
-    throw Object.assign(new Error("Unknown API Version."), { itRechtErrorCode: 1 as const });
+    itRechtError(1);
+  }
+}
+
+function assertPushPdfFields(request: ItRechtApiRequest, isImpressum: boolean): void {
+  if (isImpressum) return;
+
+  const pdfBody = request.rechtstextPdf?.trim();
+  const pdfUrl = request.rechtstextPdfUrl?.trim();
+
+  if (!pdfBody && !pdfUrl) {
+    itRechtError(7);
+  }
+
+  if (pdfBody && !isValidRechtstextPdfBase64(pdfBody)) {
+    itRechtError(7);
+  }
+
+  if (pdfUrl && !isValidRechtstextPdfUrl(pdfUrl)) {
+    itRechtError(7);
+  }
+}
+
+function assertPushAccount(request: ItRechtApiRequest): ReturnType<typeof resolveItRechtAccount> {
+  if (isItRechtMultishopEnabled()) {
+    const accountId = request.userAccountId?.trim();
+    if (!accountId) {
+      itRechtError(11);
+    }
+    const account = resolveItRechtAccount(accountId);
+    if (!account) {
+      itRechtError(11);
+    }
+    return account;
+  }
+
+  return resolveItRechtAccount(request.userAccountId);
+}
+
+function assertPushLocaleAndCountry(
+  request: ItRechtApiRequest,
+  account: ReturnType<typeof resolveItRechtAccount>,
+): void {
+  const language = request.rechtstextLanguage?.trim().toLowerCase();
+  if (!language) {
+    itRechtError(9);
+  }
+
+  if (!request.rechtstextLanguageIso6392b?.trim()) {
+    itRechtError(9);
+  }
+
+  const country = request.rechtstextCountry?.trim();
+  if (!country) {
+    itRechtError(17);
+  }
+
+  if (account?.locales && account.locales.length > 0) {
+    const allowed = account.locales.map((locale) => locale.toLowerCase());
+    if (!allowed.includes(language!)) {
+      itRechtError(82);
+    }
+  }
+
+  if (account?.countries && account.countries.length > 0) {
+    const allowed = account.countries.map((c) => c.toUpperCase());
+    if (!allowed.includes(country!.toUpperCase())) {
+      itRechtError(17);
+    }
   }
 }
 
 export function mapPushToDocumentInput(request: ItRechtApiRequest): LegalWebhookDocumentInput {
   const typeKey = request.rechtstextType?.trim().toLowerCase();
   if (!typeKey) {
-    throw Object.assign(new Error("rechtstext_type is required"), { itRechtErrorCode: 4 as const });
+    itRechtError(4);
   }
 
-  const mappedType = RECHTSTEXT_TYPE_MAP[typeKey];
+  const mappedType = RECHTSTEXT_TYPE_MAP[typeKey!];
   if (!mappedType) {
-    throw Object.assign(new Error(`Unsupported rechtstext_type: ${typeKey}`), {
-      itRechtErrorCode: 4 as const,
-    });
+    itRechtError(4);
   }
+
+  const account = assertPushAccount(request);
+  assertPushLocaleAndCountry(request, account);
 
   const title = request.rechtstextTitle?.trim();
   if (!title) {
-    throw Object.assign(new Error("rechtstext_title is required"), { itRechtErrorCode: 18 as const });
+    itRechtError(18);
   }
 
-  const language = request.rechtstextLanguage?.trim().toLowerCase();
-  if (!language) {
-    throw Object.assign(new Error("rechtstext_language is required"), { itRechtErrorCode: 9 as const });
+  if (!request.rechtstextText?.trim()) {
+    itRechtError(5);
   }
 
-  const country = request.rechtstextCountry?.trim();
-  if (!country) {
-    throw Object.assign(new Error("rechtstext_country is required"), { itRechtErrorCode: 17 as const });
-  }
-
-  let contentHtml = request.rechtstextHtml?.trim();
+  const contentHtml = request.rechtstextHtml?.trim();
   if (!contentHtml) {
-    const plain = request.rechtstextText?.trim();
-    if (!plain) {
-      throw Object.assign(new Error("rechtstext_html is required"), { itRechtErrorCode: 6 as const });
-    }
-    contentHtml = `<pre>${plain.replace(/</g, "&lt;").replace(/>/g, "&gt;")}</pre>`;
+    itRechtError(6);
   }
 
   const isImpressum = typeKey === "impressum";
-  const hasPdf = Boolean(request.rechtstextPdf?.trim() || request.rechtstextPdfUrl?.trim());
-  if (!isImpressum && !hasPdf) {
-    throw Object.assign(new Error("rechtstext_pdf or rechtstext_pdf_url is required"), {
-      itRechtErrorCode: 7 as const,
-    });
-  }
+  assertPushPdfFields(request, isImpressum);
 
   const version =
     request.rechtstextPdfMd5Hash?.trim() ||
     new Date().toISOString().slice(0, 10);
 
   return {
-    type: mappedType,
-    language,
+    type: mappedType!,
+    language: request.rechtstextLanguage!.trim().toLowerCase(),
     title,
     contentHtml,
     version,
@@ -125,34 +194,25 @@ export function handleItRechtGetVersion(): ItRechtXmlResponse {
 export function handleItRechtGetAccountList(): ItRechtXmlResponse {
   return {
     status: "success",
-    accounts: [
-      {
-        accountId: "0",
-        accountName: "",
-        locales: ["de", "en"],
-        countries: ["DE"],
-      },
-    ],
+    accounts: getItRechtAccountList(),
   };
 }
 
 export async function handleItRechtPush(request: ItRechtApiRequest): Promise<ItRechtXmlResponse> {
   const input = mapPushToDocumentInput(request);
-  let saved: LegalDocumentDto;
   try {
-    saved = await upsertLegalDocument(input);
+    const saved = await upsertLegalDocument(input);
+    const targetPath = TARGET_PATH_BY_TYPE[saved.type];
+    return {
+      status: "success",
+      targetUrl: `${publicAppOrigin()}${targetPath}`,
+    };
   } catch (err) {
-    throw Object.assign(new Error("The legal text cannot be saved."), {
-      itRechtErrorCode: 50 as const,
-      cause: err,
-    });
+    if (typeof err === "object" && err !== null && "itRechtErrorCode" in err) {
+      throw err;
+    }
+    itRechtError(50);
   }
-
-  const targetPath = TARGET_PATH_BY_TYPE[saved.type];
-  return {
-    status: "success",
-    targetUrl: `${publicAppOrigin()}${targetPath}`,
-  };
 }
 
 export async function processItRechtXmlRequest(rawXml: string): Promise<ItRechtXmlResponse> {
@@ -163,7 +223,7 @@ export async function processItRechtXmlRequest(rawXml: string): Promise<ItRechtX
     return {
       status: "error",
       error: 3,
-      errorMessage: "Invalid authentication token.",
+      errorMessage: IT_RECHT_ERROR_MESSAGES[3]!,
     };
   }
 
@@ -171,7 +231,7 @@ export async function processItRechtXmlRequest(rawXml: string): Promise<ItRechtX
     return {
       status: "error",
       error: 3,
-      errorMessage: "Invalid authentication token.",
+      errorMessage: IT_RECHT_ERROR_MESSAGES[3]!,
     };
   }
 
@@ -180,7 +240,7 @@ export async function processItRechtXmlRequest(rawXml: string): Promise<ItRechtX
     return {
       status: "error",
       error: 10,
-      errorMessage: "Invalid action.",
+      errorMessage: IT_RECHT_ERROR_MESSAGES[10]!,
     };
   }
 
@@ -205,5 +265,5 @@ export function itRechtErrorCodeFromUnknown(err: unknown): ItRechtXmlErrorCode {
 
 export function itRechtErrorMessageFromUnknown(err: unknown): string {
   if (err instanceof Error && err.message.trim()) return err.message;
-  return "An unexpected error occurred.";
+  return IT_RECHT_ERROR_MESSAGES[99]!;
 }

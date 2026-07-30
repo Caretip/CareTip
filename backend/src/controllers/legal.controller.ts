@@ -14,6 +14,7 @@ import {
   isLegalProviderConfigured,
   processItRechtXmlRequest,
 } from "../services/itRechtKanzlei/itRechtKanzleiWebhook.service.js";
+import { IT_RECHT_ERROR_MESSAGES } from "../services/itRechtKanzlei/itRechtKanzlei.types.js";
 import { extractLegalWebhookXmlBody } from "../middleware/legalWebhookBody.middleware.js";
 import { clientSafeMessage, CLIENT_FALLBACK, logServerError } from "../utils/httpErrors.js";
 import {
@@ -92,7 +93,7 @@ async function handleItRechtXmlWebhook(req: Parameters<RequestHandler>[0], res: 
       buildItRechtXmlResponse({
         status: "error",
         error: 12,
-        errorMessage: "Error processing XML data.",
+        errorMessage: IT_RECHT_ERROR_MESSAGES[12]!,
       }),
     );
     return;

@@ -1,11 +1,16 @@
 import { escapeXml } from "../../utils/xmlEscape.js";
 import type { ItRechtXmlResponse } from "./itRechtKanzlei.types.js";
-import { IT_RECHT_API_VERSION, IT_RECHT_MODULE_VERSION } from "./itRechtKanzlei.types.js";
+import { IT_RECHT_API_VERSION, itRechtModuleVersion } from "./itRechtKanzlei.types.js";
 
 function metaBlock(response: ItRechtXmlResponse): string {
   const shop = response.metaShopVersion ?? IT_RECHT_API_VERSION;
-  const modul = response.metaModulVersion ?? IT_RECHT_MODULE_VERSION;
+  const modul = response.metaModulVersion ?? itRechtModuleVersion();
   return `<meta_shopversion>${escapeXml(shop)}</meta_shopversion><meta_modulversion>${escapeXml(modul)}</meta_modulversion>`;
+}
+
+function accountNameElement(accountName: string): string {
+  if (!accountName) return "<accountname/>";
+  return `<accountname>${escapeXml(accountName)}</accountname>`;
 }
 
 export function buildItRechtXmlResponse(response: ItRechtXmlResponse): string {
@@ -20,7 +25,7 @@ export function buildItRechtXmlResponse(response: ItRechtXmlResponse): string {
             account.countries?.map((country) => `<country>${escapeXml(country)}</country>`).join("") ??
             "";
           const countryBlock = countries ? `<countries>${countries}</countries>` : "";
-          return `<account><accountid>${escapeXml(account.accountId)}</accountid><accountname>${escapeXml(account.accountName)}</accountname>${localeBlock}${countryBlock}</account>`;
+          return `<account><accountid>${escapeXml(account.accountId)}</accountid>${accountNameElement(account.accountName)}${localeBlock}${countryBlock}</account>`;
         })
         .join("") ?? "";
 
