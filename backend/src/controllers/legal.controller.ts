@@ -15,15 +15,24 @@ import {
   processItRechtXmlRequest,
 } from "../services/itRechtKanzlei/itRechtKanzleiWebhook.service.js";
 import { IT_RECHT_ERROR_MESSAGES } from "../services/itRechtKanzlei/itRechtKanzlei.types.js";
+import type { ItRechtAction, ItRechtApiRequest } from "../services/itRechtKanzlei/itRechtKanzlei.types.js";
+import {
+  parseItRechtXmlPayload,
+  resolveItRechtAction,
+} from "../services/itRechtKanzlei/itRechtKanzleiXmlParser.js";
 import { extractLegalWebhookXmlBody } from "../middleware/legalWebhookBody.middleware.js";
 import { clientSafeMessage, CLIENT_FALLBACK, logServerError } from "../utils/httpErrors.js";
 import {
+  logItRechtAuthFailure,
+  logItRechtAuthSuccess,
+  logItRechtPushCompleted,
+  logItRechtXmlError,
+  logItRechtXmlIncoming,
   logLegalWebhookIncoming,
   logLegalWebhookProcessingFailure,
   logLegalWebhookSuccess,
-  logLegalWebhookXmlAuthFailure,
-  logLegalWebhookXmlAuthSuccess,
-  logLegalWebhookXmlIncoming,
+  resolveItRechtAuthFailureReason,
+  resolveLegalWebhookRequestId,
 } from "../utils/legalWebhookLogging.js";
 
 function resolveLanguage(req: { query: Record<string, unknown>; headers: Record<string, string | string[] | undefined> }): string | undefined {
@@ -46,6 +55,19 @@ function isLegalStoreUnavailable(err: unknown): boolean {
 
 function sendXml(res: Parameters<RequestHandler>[1], xml: string): void {
   res.status(200).type("text/xml; charset=utf-8").send(xml);
+}
+
+function tryParseItRechtRequest(rawXml: string): {
+  parsed?: ItRechtApiRequest;
+  action?: ItRechtAction | null;
+  parseFailed: boolean;
+} {
+  try {
+    const parsed = parseItRechtXmlPayload(rawXml);
+    return { parsed, action: resolveItRechtAction(parsed), parseFailed: false };
+  } catch {
+    return { parseFailed: true };
+  }
 }
 
 async function sendLegalDocument(
@@ -84,10 +106,12 @@ export const getImpressumDocument: RequestHandler = async (req, res) => {
 
 async function handleItRechtXmlWebhook(req: Parameters<RequestHandler>[0], res: Parameters<RequestHandler>[1]): Promise<void> {
   const startedAt = Date.now();
-  logLegalWebhookXmlIncoming(req);
-
+  const requestId = resolveLegalWebhookRequestId(req);
   const rawXml = extractLegalWebhookXmlBody(req);
+
   if (!rawXml) {
+    logItRechtXmlIncoming(req, { requestId, parseFailed: true });
+    logItRechtXmlError(12, requestId);
     sendXml(
       res,
       buildItRechtXmlResponse({
@@ -99,34 +123,66 @@ async function handleItRechtXmlWebhook(req: Parameters<RequestHandler>[0], res: 
     return;
   }
 
+  const preview = tryParseItRechtRequest(rawXml);
+  logItRechtXmlIncoming(req, {
+    requestId,
+    parsed: preview.parsed,
+    action: preview.action,
+    parseFailed: preview.parseFailed,
+  });
+
   if (!isLegalProviderConfigured()) {
-    logLegalWebhookXmlAuthFailure("LEGAL_PROVIDER_TOKEN not configured", req);
+    logItRechtAuthFailure(
+      resolveItRechtAuthFailureReason(preview.parsed, false),
+      requestId,
+      preview.action,
+    );
+    logItRechtXmlError(3, requestId, { action: preview.action });
     sendXml(res, buildItRechtAuthErrorXml());
     return;
   }
 
   try {
     const response = await processItRechtXmlRequest(rawXml);
+    const action = preview.action ?? preview.parsed?.action ?? "unknown";
+    const durationMs = Date.now() - startedAt;
+
     if (response.status === "error" && response.error === 3) {
-      logLegalWebhookXmlAuthFailure("Invalid authentication token", req);
-    } else if (response.status === "success") {
-      logLegalWebhookXmlAuthSuccess(req, response);
-      if (response.targetUrl) {
-        const durationMs = Date.now() - startedAt;
-        console.info("[legal.webhook] IT-Recht push stored", {
-          targetUrl: response.targetUrl,
-          durationMs,
-        });
+      logItRechtAuthFailure(resolveItRechtAuthFailureReason(preview.parsed, true), requestId, action);
+      logItRechtXmlError(3, requestId, { action });
+    } else if (response.status === "error" && response.error === 1) {
+      logItRechtXmlError(1, requestId, { action });
+    } else if (response.status === "error" && response.error === 10) {
+      logItRechtAuthSuccess(action, requestId);
+      logItRechtXmlError(10, requestId, { action });
+    } else if (response.status === "error" && response.error) {
+      logItRechtAuthSuccess(action, requestId);
+      logItRechtXmlError(response.error, requestId, { action });
+    } else {
+      logItRechtAuthSuccess(action, requestId);
+      if (response.pushAudit) {
+        logItRechtPushCompleted(response.pushAudit, durationMs, requestId);
       }
     }
+
     sendXml(res, buildItRechtXmlResponse(response));
   } catch (err) {
+    const action = preview.action ?? preview.parsed?.action ?? "unknown";
+    const errorCode = itRechtErrorCodeFromUnknown(err);
+
+    if (errorCode === 12) {
+      logItRechtXmlError(12, requestId, { action, err });
+    } else {
+      logItRechtAuthSuccess(action, requestId);
+      logItRechtXmlError(errorCode, requestId, { action, err });
+    }
+
     logLegalWebhookProcessingFailure(err, req, 200);
     sendXml(
       res,
       buildItRechtXmlResponse({
         status: "error",
-        error: itRechtErrorCodeFromUnknown(err),
+        error: errorCode,
         errorMessage: itRechtErrorMessageFromUnknown(err),
       }),
     );

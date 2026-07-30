@@ -1,6 +1,6 @@
 import { LegalDocumentType } from "@prisma/client";
 import type { LegalWebhookDocumentInput } from "../legalDocument.service.js";
-import { upsertLegalDocument } from "../legalDocument.service.js";
+import { getLatestLegalDocument, upsertLegalDocument } from "../legalDocument.service.js";
 import {
   getItRechtAccountList,
   isItRechtMultishopEnabled,
@@ -200,12 +200,24 @@ export function handleItRechtGetAccountList(): ItRechtXmlResponse {
 
 export async function handleItRechtPush(request: ItRechtApiRequest): Promise<ItRechtXmlResponse> {
   const input = mapPushToDocumentInput(request);
+  const typeKey = request.rechtstextType!.trim().toLowerCase();
+  const mappedType = RECHTSTEXT_TYPE_MAP[typeKey]!;
   try {
+    const existed = await getLatestLegalDocument(mappedType, input.language);
     const saved = await upsertLegalDocument(input);
     const targetPath = TARGET_PATH_BY_TYPE[saved.type];
+    const targetUrl = `${publicAppOrigin()}${targetPath}`;
     return {
       status: "success",
-      targetUrl: `${publicAppOrigin()}${targetPath}`,
+      targetUrl,
+      pushAudit: {
+        created: !existed,
+        rechtstextType: typeKey,
+        language: input.language ?? request.rechtstextLanguage!.trim().toLowerCase(),
+        country: request.rechtstextCountry!.trim(),
+        accountId: request.userAccountId?.trim(),
+        targetUrl,
+      },
     };
   } catch (err) {
     if (typeof err === "object" && err !== null && "itRechtErrorCode" in err) {

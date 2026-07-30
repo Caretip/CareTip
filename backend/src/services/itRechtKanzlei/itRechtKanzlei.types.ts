@@ -59,6 +59,17 @@ export type ItRechtXmlResponse = {
     countries?: string[];
   }>;
   targetUrl?: string;
+  /** Internal audit metadata — never serialized into XML responses. */
+  pushAudit?: ItRechtPushAudit;
+};
+
+export type ItRechtPushAudit = {
+  created: boolean;
+  rechtstextType: string;
+  language: string;
+  country: string;
+  accountId?: string;
+  targetUrl: string;
 };
 
 export const IT_RECHT_API_VERSION = "1.0";
