@@ -8,6 +8,10 @@ import type {
   ItRechtPushAudit,
   ItRechtXmlErrorCode,
 } from "../services/itRechtKanzlei/itRechtKanzlei.types.js";
+import {
+  buildItRechtTokenAuthDiagnostics,
+  type ItRechtTokenAuthDiagnostics,
+} from "../services/itRechtKanzlei/itRechtKanzleiTokenAuth.js";
 
 export const LOG_PREFIX = "[legal.webhook]";
 
@@ -125,11 +129,28 @@ export function logItRechtAuthSuccess(action: ItRechtAction | string, requestId:
   });
 }
 
+/** Log safe token comparison diagnostics on auth failure (never logs token values). */
+export function logItRechtTokenAuthDiagnostics(
+  requestId: string,
+  receivedToken: string | undefined,
+  action?: ItRechtAction | string | null,
+): ItRechtTokenAuthDiagnostics {
+  const diagnostics = buildItRechtTokenAuthDiagnostics(receivedToken);
+  console.warn(`${LOG_PREFIX} Token auth diagnostics`, {
+    timestamp: isoTimestamp(),
+    requestId,
+    ...(action ? { action } : {}),
+    ...diagnostics,
+  });
+  return diagnostics;
+}
+
 /** Log IT-Recht XML authentication failure. */
 export function logItRechtAuthFailure(
   reason: ItRechtAuthFailureReason,
   requestId: string,
   action?: ItRechtAction | string | null,
+  receivedToken?: string,
 ): void {
   const payload = {
     timestamp: isoTimestamp(),
@@ -138,9 +159,16 @@ export function logItRechtAuthFailure(
     ...(action ? { action } : {}),
   };
   if (reason === "LEGAL_PROVIDER_TOKEN not configured") {
-    console.error(`${LOG_PREFIX} Authentication failed`, payload);
+    console.error(`${LOG_PREFIX} Authentication failed`, {
+      ...payload,
+      envVar: "LEGAL_PROVIDER_TOKEN",
+      expectedMissing: true,
+    });
   } else {
     console.warn(`${LOG_PREFIX} Authentication failed`, payload);
+    if (reason === "Invalid token" || reason === "Missing user_auth_token") {
+      logItRechtTokenAuthDiagnostics(requestId, receivedToken, action);
+    }
   }
 }
 

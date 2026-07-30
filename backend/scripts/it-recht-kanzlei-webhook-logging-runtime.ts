@@ -135,9 +135,10 @@ function main(): void {
   else fail("auth success generates log");
 
   const authFailureLogs = captureLogs(() => {
-    logItRechtAuthFailure("Invalid token", "req-test-123", "getversion");
+    logItRechtAuthFailure("Invalid token", "req-test-123", "getversion", "wrong-token-value");
   });
   const authFail = findLog(authFailureLogs, "Authentication failed");
+  const tokenDiag = findLog(authFailureLogs, "Token auth diagnostics");
   if (authFail) {
     pass("auth failure generates log");
     const payload = authFail.args[1] as Record<string, string>;
@@ -148,6 +149,22 @@ function main(): void {
     }
   } else {
     fail("auth failure generates log");
+  }
+  if (tokenDiag) {
+    pass("auth failure generates token diagnostics log");
+    const diag = tokenDiag.args[1] as Record<string, unknown>;
+    if (
+      typeof diag.expectedLength === "number" &&
+      typeof diag.receivedLength === "number" &&
+      typeof diag.equalAfterTrim === "boolean" &&
+      !JSON.stringify(tokenDiag.args).includes("wrong-token-value")
+    ) {
+      pass("token diagnostics log excludes raw token values");
+    } else {
+      fail("token diagnostics log excludes raw token values");
+    }
+  } else {
+    fail("auth failure generates token diagnostics log");
   }
 
   const missingTokenLogs = captureLogs(() => {

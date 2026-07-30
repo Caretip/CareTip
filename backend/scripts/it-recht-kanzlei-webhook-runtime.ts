@@ -14,6 +14,10 @@ import {
   buildItRechtXmlResponse,
 } from "../src/services/itRechtKanzlei/itRechtKanzleiXmlBuilder.js";
 import { parseItRechtXmlPayload, resolveItRechtAction } from "../src/services/itRechtKanzlei/itRechtKanzleiXmlParser.js";
+import {
+  buildItRechtTokenAuthDiagnostics,
+  tokensMatchItRechtAuth,
+} from "../src/services/itRechtKanzlei/itRechtKanzleiTokenAuth.js";
 import { decodeItRechtHtml } from "../src/services/itRechtKanzlei/itRechtKanzleiHtmlDecoder.js";
 import { isValidRechtstextPdfBase64 } from "../src/services/itRechtKanzlei/itRechtKanzleiPdfValidator.js";
 import { LegalDocumentType } from "@prisma/client";
@@ -116,6 +120,26 @@ async function main(): Promise<void> {
     else fail("token auth accepts valid token");
     if (!authenticateItRechtRequest({ userAuthToken: "wrong" })) pass("token auth rejects invalid token");
     else fail("token auth rejects invalid token");
+
+    process.env.LEGAL_PROVIDER_TOKEN = `  ${TEST_TOKEN}  `;
+    if (tokensMatchItRechtAuth(TEST_TOKEN)) pass("token auth compares trimmed values");
+    else fail("token auth compares trimmed values");
+    const whitespaceDiag = buildItRechtTokenAuthDiagnostics(` ${TEST_TOKEN} `);
+    if (whitespaceDiag.equalAfterTrim && !whitespaceDiag.receivedTrimmed) {
+      pass("token diagnostics report trim normalization");
+    } else {
+      fail("token diagnostics report trim normalization");
+    }
+    process.env.LEGAL_PROVIDER_TOKEN = TEST_TOKEN;
+
+    delete process.env.LEGAL_PROVIDER_TOKEN;
+    const missingDiag = buildItRechtTokenAuthDiagnostics(TEST_TOKEN);
+    if (missingDiag.expectedMissing && !missingDiag.expectedConfigured) {
+      pass("token diagnostics report missing LEGAL_PROVIDER_TOKEN");
+    } else {
+      fail("token diagnostics report missing LEGAL_PROVIDER_TOKEN");
+    }
+    process.env.LEGAL_PROVIDER_TOKEN = TEST_TOKEN;
 
     process.env.LEGAL_PROVIDER_USERNAME = "itrk-user";
     process.env.LEGAL_PROVIDER_PASSWORD = "itrk-pass";

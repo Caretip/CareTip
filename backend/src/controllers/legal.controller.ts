@@ -136,6 +136,7 @@ async function handleItRechtXmlWebhook(req: Parameters<RequestHandler>[0], res: 
       resolveItRechtAuthFailureReason(preview.parsed, false),
       requestId,
       preview.action,
+      preview.parsed?.userAuthToken,
     );
     logItRechtXmlError(3, requestId, { action: preview.action });
     sendXml(res, buildItRechtAuthErrorXml());
@@ -148,7 +149,12 @@ async function handleItRechtXmlWebhook(req: Parameters<RequestHandler>[0], res: 
     const durationMs = Date.now() - startedAt;
 
     if (response.status === "error" && response.error === 3) {
-      logItRechtAuthFailure(resolveItRechtAuthFailureReason(preview.parsed, true), requestId, action);
+      logItRechtAuthFailure(
+        resolveItRechtAuthFailureReason(preview.parsed, true),
+        requestId,
+        action,
+        preview.parsed?.userAuthToken,
+      );
       logItRechtXmlError(3, requestId, { action });
     } else if (response.status === "error" && response.error === 1) {
       logItRechtXmlError(1, requestId, { action });

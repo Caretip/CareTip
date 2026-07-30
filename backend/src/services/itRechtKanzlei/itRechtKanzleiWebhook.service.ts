@@ -13,6 +13,7 @@ import {
 import type { ItRechtAction, ItRechtApiRequest, ItRechtXmlErrorCode, ItRechtXmlResponse } from "./itRechtKanzlei.types.js";
 import { IT_RECHT_API_VERSION, IT_RECHT_ERROR_MESSAGES } from "./itRechtKanzlei.types.js";
 import { parseItRechtXmlPayload, resolveItRechtAction } from "./itRechtKanzleiXmlParser.js";
+import { loadLegalProviderTokenExpected, tokensMatchItRechtAuth } from "./itRechtKanzleiTokenAuth.js";
 
 const RECHTSTEXT_TYPE_MAP: Record<string, LegalDocumentType> = {
   impressum: LegalDocumentType.impressum,
@@ -42,8 +43,7 @@ function itRechtError(code: ItRechtXmlErrorCode, message?: string): never {
 }
 
 export function authenticateItRechtRequest(request: ItRechtApiRequest): boolean {
-  const expectedToken = process.env.LEGAL_PROVIDER_TOKEN?.trim();
-  if (expectedToken && request.userAuthToken === expectedToken) {
+  if (tokensMatchItRechtAuth(request.userAuthToken)) {
     return true;
   }
 
@@ -52,8 +52,8 @@ export function authenticateItRechtRequest(request: ItRechtApiRequest): boolean 
   if (
     expectedUsername &&
     expectedPassword &&
-    request.userUsername === expectedUsername &&
-    request.userPassword === expectedPassword
+    request.userUsername?.trim() === expectedUsername &&
+    request.userPassword?.trim() === expectedPassword
   ) {
     return true;
   }
@@ -62,7 +62,7 @@ export function authenticateItRechtRequest(request: ItRechtApiRequest): boolean 
 }
 
 export function isLegalProviderConfigured(): boolean {
-  const token = process.env.LEGAL_PROVIDER_TOKEN?.trim();
+  const token = loadLegalProviderTokenExpected();
   const username = process.env.LEGAL_PROVIDER_USERNAME?.trim();
   const password = process.env.LEGAL_PROVIDER_PASSWORD?.trim();
   return Boolean(token || (username && password));
