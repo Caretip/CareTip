@@ -3,9 +3,12 @@ import { LegalDocumentType, Prisma } from "@prisma/client";
 import {
   getLatestLegalDocument,
   upsertLegalDocumentsFromWebhook,
-  logLegalWebhookFailure,
 } from "../services/legalDocument.service.js";
 import { clientSafeMessage, CLIENT_FALLBACK, logServerError } from "../utils/httpErrors.js";
+import {
+  logLegalWebhookProcessingFailure,
+  logLegalWebhookSuccess,
+} from "../utils/legalWebhookLogging.js";
 
 function resolveLanguage(req: { query: Record<string, unknown>; headers: Record<string, string | string[] | undefined> }): string | undefined {
   const q = req.query.lang ?? req.query.language ?? req.query.locale;
@@ -60,8 +63,10 @@ export const getImpressumDocument: RequestHandler = async (req, res) => {
 };
 
 export const postLegalWebhook: RequestHandler = async (req, res) => {
+  const startedAt = Date.now();
   try {
     const updated = await upsertLegalDocumentsFromWebhook(req.body);
+    logLegalWebhookSuccess(updated, Date.now() - startedAt);
     res.status(200).json({
       ok: true,
       updated: updated.map((doc) => ({
@@ -77,10 +82,7 @@ export const postLegalWebhook: RequestHandler = async (req, res) => {
         ? (err as { status: number }).status
         : 500;
 
-    logLegalWebhookFailure("Legal webhook processing failed", {
-      status,
-      message: err instanceof Error ? err.message : "unknown",
-    });
+    logLegalWebhookProcessingFailure(err, req, status);
 
     res.status(status).json({
       message: clientSafeMessage(err, CLIENT_FALLBACK.generic),
