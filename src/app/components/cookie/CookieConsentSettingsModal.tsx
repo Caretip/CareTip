@@ -1,10 +1,12 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router";
 import { useTranslation } from "react-i18next";
-import { X } from "lucide-react";
+import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { useCookieConsent } from "../../context/CookieConsentContext";
+import { Button } from "../ui/button";
+import { DialogPortal } from "../ui/dialog";
 import { cn } from "@/lib/utils";
-import { caretipBtnPrimary, caretipBtnSecondary } from "@/lib/caretipButtonSystem";
+import { cookieConsentClasses as cc } from "./cookieConsentPresentation";
 
 type CategoryKey = "analytics" | "functional" | "marketing";
 
@@ -24,13 +26,13 @@ function CategoryToggle({
   onChange: (next: boolean) => void;
 }) {
   return (
-    <div className="rounded-xl border border-border bg-muted/20 p-4">
+    <div className="rounded-2xl border border-border/80 bg-muted/15 p-4">
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0 space-y-1">
           <label htmlFor={id} className="text-sm font-semibold text-foreground">
             {title}
           </label>
-          <p className="text-xs leading-relaxed text-muted-foreground">{description}</p>
+          <p className="text-sm leading-relaxed text-muted-foreground">{description}</p>
         </div>
         <button
           id={id}
@@ -41,6 +43,7 @@ function CategoryToggle({
           onClick={() => !disabled && onChange(!checked)}
           className={cn(
             "relative inline-flex h-7 w-12 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors",
+            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/45 focus-visible:ring-offset-2 focus-visible:ring-offset-background",
             disabled ? "cursor-not-allowed opacity-60" : "hover:opacity-90",
             checked ? "bg-primary" : "bg-muted",
           )}
@@ -101,76 +104,69 @@ export function CookieConsentSettingsModal() {
     ];
 
   return (
-    <div
-      className="fixed inset-0 z-[9995] flex items-end justify-center bg-black/50 p-4 sm:items-center"
-      role="presentation"
-      onClick={closeSettings}
-      onKeyDown={(e) => e.key === "Escape" && closeSettings()}
-    >
-      <div
-        className="relative max-h-[min(90vh,42rem)] w-full max-w-lg overflow-y-auto rounded-2xl border border-border bg-card p-5 shadow-xl sm:p-6"
-        role="dialog"
-        aria-labelledby="cookie-settings-title"
-        aria-modal="true"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <button
-          type="button"
-          onClick={closeSettings}
-          className="absolute right-4 top-4 rounded-lg p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground"
-          aria-label={t("cookieConsent.settings.close")}
+    <DialogPrimitive.Root open={settingsOpen} onOpenChange={(open) => !open && closeSettings()}>
+      <DialogPortal>
+        <DialogPrimitive.Overlay className={cc.backdrop} />
+        <DialogPrimitive.Content
+          className={cn(cc.panel, "max-w-lg")}
+          aria-labelledby="cookie-settings-title"
+          aria-describedby="cookie-settings-intro"
         >
-          <X className="h-5 w-5" />
-        </button>
+          <div className={cc.scroll}>
+            <DialogPrimitive.Title id="cookie-settings-title" className={cc.title}>
+              {t("cookieConsent.settings.title")}
+            </DialogPrimitive.Title>
+            <DialogPrimitive.Description id="cookie-settings-intro" className={cn(cc.body, "mt-4")}>
+              {t("cookieConsent.settings.intro")}
+            </DialogPrimitive.Description>
 
-        <h2 id="cookie-settings-title" className="pr-8 text-lg font-semibold text-foreground">
-          {t("cookieConsent.settings.title")}
-        </h2>
-        <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{t("cookieConsent.settings.intro")}</p>
+            <div className="mt-5 space-y-3">
+              <CategoryToggle
+                id="cookie-essential"
+                title={t("cookieConsent.settings.categories.essential.title")}
+                description={t("cookieConsent.settings.categories.essential.description")}
+                checked
+                disabled
+                onChange={() => {}}
+              />
+              {categories.map((cat) => (
+                <CategoryToggle
+                  key={cat.key}
+                  id={`cookie-${cat.key}`}
+                  title={t(cat.titleKey)}
+                  description={t(cat.descKey)}
+                  checked={cat.value}
+                  onChange={cat.set}
+                />
+              ))}
+            </div>
 
-        <div className="mt-5 space-y-3">
-          <CategoryToggle
-            id="cookie-essential"
-            title={t("cookieConsent.settings.categories.essential.title")}
-            description={t("cookieConsent.settings.categories.essential.description")}
-            checked
-            disabled
-            onChange={() => {}}
-          />
-          {categories.map((cat) => (
-            <CategoryToggle
-              key={cat.key}
-              id={`cookie-${cat.key}`}
-              title={t(cat.titleKey)}
-              description={t(cat.descKey)}
-              checked={cat.value}
-              onChange={cat.set}
-            />
-          ))}
-        </div>
+            <p className={cc.privacy}>
+              <Link to="/privacy" className={cc.privacyLink}>
+                {t("cookieConsent.banner.privacyPolicy")}
+              </Link>
+            </p>
 
-        <p className="mt-4 text-xs text-muted-foreground">
-          <Link to="/privacy" className="font-medium text-primary underline-offset-2 hover:underline">
-            {t("cookieConsent.banner.privacyPolicy")}
-          </Link>
-        </p>
-
-        <div className="mt-6 flex flex-col gap-2 sm:flex-row sm:flex-wrap">
-          <button
-            type="button"
-            className={cn(caretipBtnPrimary, "w-full sm:flex-1")}
-            onClick={() => savePreferences({ analytics, functional, marketing })}
-          >
-            {t("cookieConsent.settings.save")}
-          </button>
-          <button type="button" className={cn(caretipBtnSecondary, "w-full sm:flex-1")} onClick={acceptAll}>
-            {t("cookieConsent.banner.acceptAll")}
-          </button>
-          <button type="button" className={cn(caretipBtnSecondary, "w-full sm:flex-1")} onClick={rejectNonEssential}>
-            {t("cookieConsent.banner.reject")}
-          </button>
-        </div>
-      </div>
-    </div>
+            <div className={cn(cc.actions, "mt-6")}>
+              <Button
+                type="button"
+                variant="default"
+                size="lg"
+                className={cn(cc.action, "font-bold")}
+                onClick={() => savePreferences({ analytics, functional, marketing })}
+              >
+                {t("cookieConsent.settings.save")}
+              </Button>
+              <Button type="button" variant="outline" size="lg" className={cc.action} onClick={acceptAll}>
+                {t("cookieConsent.banner.acceptAll")}
+              </Button>
+              <Button type="button" variant="ghost" size="lg" className={cc.action} onClick={rejectNonEssential}>
+                {t("cookieConsent.banner.reject")}
+              </Button>
+            </div>
+          </div>
+        </DialogPrimitive.Content>
+      </DialogPortal>
+    </DialogPrimitive.Root>
   );
 }

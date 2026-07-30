@@ -2078,7 +2078,8 @@
   "cookieConsent": {
     "banner": {
       "title": "Wir respektieren Ihre Privatsphäre",
-      "description": "Wir verwenden Cookies, damit CareTip zuverlässig funktioniert, Ihr Erlebnis verbessert wird und wir—mit Ihrer Einwilligung—verstehen, wie Besucher unsere Plattform nutzen. Sie können alle Cookies akzeptieren, nicht notwendige ablehnen oder Ihre Einstellungen anpassen.",
+      "description": "Wir verwenden Cookies, damit CareTip zuverlässig funktioniert, Ihr Erlebnis verbessert wird und wir mit Ihrer Einwilligung verstehen, wie Besucher unsere Plattform nutzen.",
+      "descriptionSecondary": "Sie können alle Cookies akzeptieren, nicht notwendige ablehnen oder Ihre Einstellungen anpassen.",
       "acceptAll": "Alle akzeptieren",
       "reject": "Nicht notwendige ablehnen",
       "settings": "Cookie-Einstellungen",

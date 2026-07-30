@@ -2078,7 +2078,8 @@
   "cookieConsent": {
     "banner": {
       "title": "We value your privacy",
-      "description": "We use cookies to ensure CareTip works properly, improve your experience, understand how visitors use our platform, and provide relevant content. You can accept all cookies, reject non-essential cookies, or customize your preferences.",
+      "description": "We use cookies so CareTip works reliably, your experience improves, and with your consent we understand how visitors use our platform.",
+      "descriptionSecondary": "You can accept all cookies, reject non-essential cookies, or customize your preferences.",
       "acceptAll": "Accept all",
       "reject": "Reject non-essential",
       "settings": "Cookie settings",
