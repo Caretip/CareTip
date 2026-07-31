@@ -1,5 +1,7 @@
 name: Preview build on main
 
+# Push to main with changes under mobile/** triggers an Android preview build.
+
 on:
   push:
     branches:
