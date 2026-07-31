@@ -1,0 +1,14 @@
+name: Development build (manual)
+
+# Run from Expo dashboard or: eas workflow:run .eas/workflows/development-manual.yml --ref main
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build_android_development:
+    name: Android development
+    type: build
+    params:
+      platform: android
+      profile: development
