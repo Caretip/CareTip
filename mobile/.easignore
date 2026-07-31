@@ -1,0 +1,43 @@
+# EAS Build upload ignore — extends .gitignore.
+# See: https://docs.expo.dev/build-reference/easignore/
+#
+# Exclude committed native folders so EAS runs prebuild and syncs app.config.js
+# (fixes expo-doctor CNG check). Keep android/ locally for expo run:android.
+
+# --- from .gitignore ---
+node_modules/
+.expo/
+dist/
+web-build/
+expo-env.d.ts
+ios/
+*.orig.*
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+.metro-health-check*
+npm-debug.*
+yarn-debug.*
+yarn-error.*
+.DS_Store
+*.pem
+.env
+.env*.local
+.env.staging
+.env.production
+credentials.json
+google-services.json
+GoogleService-Info.plist
+*.keystore
+*.tsbuildinfo
+
+# Native dirs — EAS Build regenerates from app.config.js / app.json
+/android
+/ios
+
+# Not needed on build workers
+.expo-export-check/
+tmp-metro-test/
+coverage/

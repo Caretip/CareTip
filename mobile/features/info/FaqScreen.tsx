@@ -1,5 +1,5 @@
 import { useMemo, useState, useEffect } from "react";
-import { LayoutAnimation, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
+import { LayoutAnimation, Platform, Pressable, StyleSheet, Text, TextInput, UIManager, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { InfoScreenShell } from "@/components/info/InfoScreenShell";
 import { getLocalizedFaqItems } from "@/utils/infoI18n";
@@ -13,6 +13,15 @@ export function FaqScreen() {
   const [openId, setOpenId] = useState<string | null>(null);
 
   const allItems = useMemo(() => getLocalizedFaqItems(t), [t]);
+
+  useEffect(() => {
+    if (
+      Platform.OS === "android" &&
+      UIManager.setLayoutAnimationEnabledExperimental != null
+    ) {
+      UIManager.setLayoutAnimationEnabledExperimental(true);
+    }
+  }, []);
 
   useEffect(() => {
     if (openId == null && allItems[0]?.id) {
@@ -35,7 +44,7 @@ export function FaqScreen() {
   };
 
   return (
-    <InfoScreenShell title={t("info.faqTitle")}>
+    <InfoScreenShell title={t("info.faqTitle")} keyboardAware>
       <View style={styles.search}>
         <Ionicons name="search" size={18} color={colors.mutedForeground} />
         <TextInput

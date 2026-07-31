@@ -1,19 +1,14 @@
 import { memo } from "react";
 import type { BottomTabBarProps } from "@react-navigation/bottom-tabs";
-import { Ionicons } from "@expo/vector-icons";
 import { Platform, Pressable, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useSignOutAction } from "@/hooks/useSignOutAction";
-import { useI18n } from "@/hooks/useI18n";
 import { colors, spacing, touchTarget, typography } from "@/theme";
 import { TAB_BAR_HEIGHT } from "@/theme/navigation";
 import { hapticSelection } from "@/utils/haptics";
 
-/** Bottom bar — Home (left), Log out (center), Menu (right). Inspired by template/mime. */
+/** Bottom bar — Home (left), Menu (right). Inspired by template/mime. */
 export const MimeTabBar = memo(function MimeTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
   const insets = useSafeAreaInsets();
-  const { t } = useI18n();
-  const onSignOut = useSignOutAction();
   const bottomInset = Math.max(insets.bottom, Platform.OS === "ios" ? spacing.sm : spacing.md);
 
   const homeRoute = state.routes.find((route) => route.name === "index");
@@ -74,19 +69,6 @@ export const MimeTabBar = memo(function MimeTabBar({ state, descriptors, navigat
     <View style={[styles.outer, { paddingBottom: bottomInset }]}>
       <View style={styles.bar}>
         {renderTab(homeRoute)}
-
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel={t("tabs.logout")}
-          onPress={onSignOut}
-          style={({ pressed }) => [styles.tabSlot, styles.tab, styles.logoutTab, pressed ? styles.tabPressed : null]}
-        >
-          <Ionicons name="log-out-outline" size={22} color={colors.destructive} />
-          <Text style={[styles.label, styles.logoutLabel]} numberOfLines={1}>
-            {t("tabs.logout")}
-          </Text>
-        </Pressable>
-
         {renderTab(menuRoute)}
       </View>
     </View>
@@ -116,12 +98,6 @@ const styles = StyleSheet.create({
     minHeight: touchTarget,
     gap: spacing.xs,
   },
-  logoutTab: {
-    borderLeftWidth: StyleSheet.hairlineWidth,
-    borderRightWidth: StyleSheet.hairlineWidth,
-    borderColor: colors.border,
-    paddingHorizontal: spacing.sm,
-  },
   tabPressed: {
     opacity: 0.75,
   },
@@ -134,9 +110,5 @@ const styles = StyleSheet.create({
   labelActive: {
     color: colors.primary,
     fontWeight: "700",
-  },
-  logoutLabel: {
-    color: colors.destructive,
-    fontWeight: "600",
   },
 });

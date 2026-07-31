@@ -8,9 +8,7 @@
     "scheme": "caretip",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
-    "runtimeVersion": {
-      "policy": "appVersion"
-    },
+    "runtimeVersion": "1.0.0",
     "splash": {
       "image": "./assets/splash-native.png",
       "resizeMode": "contain",
@@ -34,7 +32,7 @@
     },
     "android": {
       "package": "de.caretip.app",
-      "versionCode": 1,
+      "versionCode": 3,
       "adaptiveIcon": {
         "backgroundColor": "#EB992C",
         "foregroundImage": "./assets/caretip-app-icon-ref.png",
@@ -86,6 +84,8 @@
     },
     "plugins": [
       "expo-router",
+      "expo-dev-client",
+      "expo-updates",
       "expo-secure-store",
       [
         "expo-build-properties",
@@ -122,7 +122,12 @@
       "typedRoutes": true
     },
     "extra": {
-      "router": {}
-    }
+      "router": {},
+      "eas": {
+        "projectId": "329fa8cd-98fe-4ace-abea-44dd421654f4"
+      },
+      "appEnv": "development"
+    },
+    "owner": "caretip"
   }
 }

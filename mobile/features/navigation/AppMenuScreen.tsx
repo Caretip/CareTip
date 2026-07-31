@@ -1,8 +1,10 @@
 import { StyleSheet, View } from "react-native";
+import LogOut from "lucide-react-native/icons/log-out";
 import { Screen } from "@/components/ui/Screen";
 import { ScreenHeader } from "@/components/ui/ScreenHeader";
 import { SettingsMenuGroup, SettingsMenuRow } from "@/components/settings/SettingsMenuRow";
 import { useI18n } from "@/hooks/useI18n";
+import { useSignOutAction } from "@/hooks/useSignOutAction";
 import { spacing } from "@/theme";
 import type { AppMenuItem } from "@/features/navigation/appMenuConfig";
 
@@ -13,6 +15,7 @@ type AppMenuScreenProps = {
 
 export function AppMenuScreen({ role, items }: AppMenuScreenProps) {
   const { t } = useI18n();
+  const onSignOut = useSignOutAction();
 
   return (
     <Screen tabSafe>
@@ -38,6 +41,16 @@ export function AppMenuScreen({ role, items }: AppMenuScreenProps) {
             showDivider={index < items.length - 1}
           />
         ))}
+      </SettingsMenuGroup>
+
+      <SettingsMenuGroup>
+        <SettingsMenuRow
+          label={t("settings.signOut")}
+          icon={LogOut}
+          onPress={onSignOut}
+          destructive
+          showDivider={false}
+        />
       </SettingsMenuGroup>
     </Screen>
   );

@@ -8,7 +8,7 @@ import {
   useWindowDimensions,
   type ScrollViewProps,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { SafeAreaView, type Edge } from "react-native-safe-area-context";
 import { colors, spacing } from "@/theme";
 import { TAB_BAR_SCROLL_CLEARANCE } from "@/theme/navigation";
 import { OfflineBanner } from "@/components/layout/OfflineBanner";
@@ -23,6 +23,8 @@ type ScreenProps = ScrollViewProps & {
   tabSafe?: boolean;
   /** Wrap scroll content in KeyboardAvoidingView — use on form-heavy screens. */
   keyboardAware?: boolean;
+  /** Override SafeAreaView edges — use when a parent shell already applies top inset. */
+  safeAreaEdges?: Edge[];
 };
 
 export function Screen({
@@ -32,6 +34,7 @@ export function Screen({
   padded = true,
   tabSafe = true,
   keyboardAware = false,
+  safeAreaEdges = ["top", "left", "right"],
   contentContainerStyle,
   ...rest
 }: ScreenProps) {
@@ -65,7 +68,7 @@ export function Screen({
   );
 
   return (
-    <SafeAreaView style={styles.safe} edges={["top", "left", "right"]} collapsable={false}>
+    <SafeAreaView style={styles.safe} edges={safeAreaEdges} collapsable={false}>
       <SplashScreenAnchor source="Screen" />
       <OfflineBanner />
       <ErrorBanner />

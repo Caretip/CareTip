@@ -1,4 +1,5 @@
 import { useEffect, type ReactNode } from "react";
+import { SafeAreaProvider } from "react-native-safe-area-context";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { queryClient } from "@/services/api/queryClient";
 import { subscribeGlobalErrors } from "@/utils/errors";
@@ -28,22 +29,24 @@ function NetworkBridge({ children }: { children: ReactNode }) {
 
 export function AppProviders({ children }: { children: ReactNode }) {
   return (
-    <QueryClientProvider client={queryClient}>
-      <StartupBridge>
-        <LocaleBridge>
-          <NetworkBridge>
-            <GlobalErrorBridge>
-              <SocketProvider>
-                <SessionExpiryBridge />
-                <PushNotificationBridge />
-                <RealtimeQueryBridge />
-                <DeepLinkBridge />
-                {children}
-              </SocketProvider>
-            </GlobalErrorBridge>
-          </NetworkBridge>
-        </LocaleBridge>
-      </StartupBridge>
-    </QueryClientProvider>
+    <SafeAreaProvider>
+      <QueryClientProvider client={queryClient}>
+        <StartupBridge>
+          <LocaleBridge>
+            <NetworkBridge>
+              <GlobalErrorBridge>
+                <SocketProvider>
+                  <SessionExpiryBridge />
+                  <PushNotificationBridge />
+                  <RealtimeQueryBridge />
+                  <DeepLinkBridge />
+                  {children}
+                </SocketProvider>
+              </GlobalErrorBridge>
+            </NetworkBridge>
+          </LocaleBridge>
+        </StartupBridge>
+      </QueryClientProvider>
+    </SafeAreaProvider>
   );
 }

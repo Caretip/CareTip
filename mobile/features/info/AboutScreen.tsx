@@ -11,7 +11,7 @@ export function AboutScreen() {
   const version = Constants.expoConfig?.version ?? "1.0.0";
   const build =
     Constants.nativeBuildVersion ??
-    String(Constants.expoConfig?.android?.versionCode ?? Constants.expoConfig?.ios?.buildNumber ?? "1");
+    String(Constants.expoConfig?.ios?.buildNumber ?? Constants.expoConfig?.android?.versionCode ?? "1");
   const year = new Date().getFullYear();
 
   return (

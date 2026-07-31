@@ -12,7 +12,8 @@
         "buildType": "apk"
       },
       "ios": {
-        "simulator": true
+        "simulator": false,
+        "resourceClass": "m-medium"
       },
       "env": {
         "EXPO_PUBLIC_APP_ENV": "development"
@@ -25,10 +26,13 @@
         "buildType": "apk"
       },
       "ios": {
-        "simulator": false
+        "simulator": false,
+        "resourceClass": "m-medium"
       },
       "env": {
-        "EXPO_PUBLIC_APP_ENV": "staging"
+        "EXPO_PUBLIC_APP_ENV": "staging",
+        "EXPO_PUBLIC_API_URL": "https://caretip.onrender.com",
+        "EXPO_PUBLIC_APP_URL": "https://caretip.de"
       }
     },
     "preview-lan": {
@@ -47,8 +51,13 @@
       "android": {
         "buildType": "app-bundle"
       },
+      "ios": {
+        "resourceClass": "m-medium"
+      },
       "env": {
-        "EXPO_PUBLIC_APP_ENV": "production"
+        "EXPO_PUBLIC_APP_ENV": "production",
+        "EXPO_PUBLIC_API_URL": "https://caretip.onrender.com",
+        "EXPO_PUBLIC_APP_URL": "https://caretip.de"
       }
     }
   },

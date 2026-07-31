@@ -11,9 +11,16 @@ type InfoScreenShellProps = {
   children: React.ReactNode;
   /** When false, body is a flex container (for WebView / nested scroll). */
   scroll?: boolean;
+  /** Enable KeyboardAvoidingView for search / form inputs inside the shell. */
+  keyboardAware?: boolean;
 };
 
-export function InfoScreenShell({ title, children, scroll = true }: InfoScreenShellProps) {
+export function InfoScreenShell({
+  title,
+  children,
+  scroll = true,
+  keyboardAware = false,
+}: InfoScreenShellProps) {
   const router = useRouter();
   const { t } = useI18n();
   const insets = useSafeAreaInsets();
@@ -36,7 +43,13 @@ export function InfoScreenShell({ title, children, scroll = true }: InfoScreenSh
         <View style={styles.backSpacer} />
       </View>
       {scroll ? (
-        <Screen padded tabSafe={false} contentContainerStyle={styles.content}>
+        <Screen
+          padded
+          tabSafe={false}
+          keyboardAware={keyboardAware}
+          safeAreaEdges={["left", "right"]}
+          contentContainerStyle={styles.content}
+        >
           {children}
         </Screen>
       ) : (

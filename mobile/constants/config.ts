@@ -5,8 +5,14 @@
 
 export type AppEnv = "development" | "staging" | "production";
 
-const DEFAULT_API_URL = "http://localhost:3001";
+/** Render production API — same origin as web `VITE_API_URL` in deployed builds. */
+export const PRODUCTION_API_URL = "https://caretip.onrender.com";
+
+const DEFAULT_DEV_API_URL = "http://localhost:3001";
 const DEFAULT_TIMEOUT_MS = 20_000;
+
+const DEV_API_HOST_PATTERN =
+  /localhost|127\.0\.0\.1|10\.0\.2\.2|192\.168\.\d+\.\d+|0\.0\.0\.0/i;
 
 function trimTrailingSlash(value: string): string {
   return value.replace(/\/+$/, "");
@@ -20,21 +26,33 @@ function resolveAppEnv(raw: string | undefined): AppEnv {
 }
 
 const appEnv = resolveAppEnv(process.env.EXPO_PUBLIC_APP_ENV);
-const apiUrl = trimTrailingSlash(
-  (process.env.EXPO_PUBLIC_API_URL ?? DEFAULT_API_URL).trim() || DEFAULT_API_URL,
-);
+
+function resolveApiUrl(env: AppEnv): string {
+  const fromEnv = trimTrailingSlash((process.env.EXPO_PUBLIC_API_URL ?? "").trim());
+  if (fromEnv) return fromEnv;
+  if (env === "production" || env === "staging") return PRODUCTION_API_URL;
+  return DEFAULT_DEV_API_URL;
+}
+
+const apiUrl = resolveApiUrl(appEnv);
 
 /**
- * Production builds must talk HTTPS to the CareTip API.
- * Fail closed in release so beta/prod never silently use cleartext LAN URLs.
+ * Release builds must use HTTPS and must not embed LAN/emulator loopback URLs.
+ * Fail closed so EAS preview/production never ship with localhost baked in.
  */
 function assertApiUrlSafeForEnv(env: AppEnv, url: string): void {
-  if (env !== "production") return;
-  if (url.startsWith("https://")) return;
-  throw new Error(
-    `[CareTip] EXPO_PUBLIC_API_URL must be https:// in production (got "${url}"). ` +
-      `Set EAS secrets / env for the production profile.`,
-  );
+  if (env === "development") return;
+  if (!url.startsWith("https://")) {
+    throw new Error(
+      `[CareTip] EXPO_PUBLIC_API_URL must be https:// for ${env} builds (got "${url}"). ` +
+        `Set EAS env / eas.json for the profile.`,
+    );
+  }
+  if (DEV_API_HOST_PATTERN.test(url)) {
+    throw new Error(
+      `[CareTip] EXPO_PUBLIC_API_URL must not use a development host in ${env} builds (got "${url}").`,
+    );
+  }
 }
 
 assertApiUrlSafeForEnv(appEnv, apiUrl);

@@ -1,3 +1,4 @@
+import { Platform } from "react-native";
 import { config } from "@/constants/config";
 import {
   GoogleSignInCancelledError,
@@ -68,7 +69,9 @@ export async function requestGoogleIdToken(): Promise<string> {
   const { GoogleSignin, isCancelledResponse, isSuccessResponse } = mod;
 
   configureGoogleSignIn();
-  await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
+  if (Platform.OS === "android") {
+    await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
+  }
 
   const response = await GoogleSignin.signIn();
   if (isCancelledResponse(response)) {
@@ -103,7 +106,11 @@ export function mapGoogleNativeError(error: unknown): Error {
       return new GoogleSignInUnavailableError("Google sign-in is already in progress.");
     }
     if (error.code === statusCodes.PLAY_SERVICES_NOT_AVAILABLE) {
-      return new GoogleSignInUnavailableError("Google Play Services is unavailable.");
+      return new GoogleSignInUnavailableError(
+        Platform.OS === "android"
+          ? "Google Play Services is unavailable."
+          : "Google Sign-In is unavailable on this device.",
+      );
     }
   }
 
