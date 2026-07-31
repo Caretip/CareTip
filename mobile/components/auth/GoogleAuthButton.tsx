@@ -18,8 +18,6 @@ type GoogleAuthButtonProps = PressableProps & {
   loading?: boolean;
 };
 
-const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
-
 export function GoogleAuthButton({
   label,
   loading = false,
@@ -36,7 +34,7 @@ export function GoogleAuthButton({
   }));
 
   return (
-    <AnimatedPressable
+    <Pressable
       accessibilityRole="button"
       accessibilityState={{ disabled: isDisabled, busy: loading }}
       disabled={isDisabled}
@@ -51,35 +49,29 @@ export function GoogleAuthButton({
         scale.value = withSpring(1, motion.spring.press);
         onPressOut?.(e);
       }}
-      style={[styles.button, isDisabled ? styles.disabled : null, animatedStyle]}
+      style={[styles.button, isDisabled ? styles.disabled : null]}
       {...rest}
     >
-      {loading ? (
-        <ActivityIndicator color={authBrand.dark} />
-      ) : (
-        <>
-          <GoogleIcon size={20} />
-          <Text style={styles.label} {...textA11y}>
-            {label}
-          </Text>
-        </>
-      )}
-    </AnimatedPressable>
+      <Animated.View style={[styles.content, animatedStyle]} collapsable={false}>
+        {loading ? (
+          <ActivityIndicator color={authBrand.dark} />
+        ) : (
+          <>
+            <GoogleIcon size={20} />
+            <Text style={styles.label} {...textA11y}>
+              {label}
+            </Text>
+          </>
+        )}
+      </Animated.View>
+    </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
   button: {
-    minHeight: touchTarget + 4,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: spacing.md,
-    backgroundColor: "#FFFFFF",
     borderRadius: radius.xl,
-    borderWidth: StyleSheet.hairlineWidth * 2,
-    borderColor: "rgba(11, 18, 32, 0.1)",
-    paddingHorizontal: spacing.xl,
+    overflow: "hidden",
     ...Platform.select({
       ios: {
         shadowColor: "#0B1220",
@@ -90,6 +82,18 @@ const styles = StyleSheet.create({
       android: { elevation: 3 },
       default: {},
     }),
+  },
+  content: {
+    minHeight: touchTarget + 4,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: spacing.md,
+    backgroundColor: "#FFFFFF",
+    borderRadius: radius.xl,
+    borderWidth: StyleSheet.hairlineWidth * 2,
+    borderColor: "rgba(11, 18, 32, 0.1)",
+    paddingHorizontal: spacing.xl,
   },
   label: {
     ...typography.button,

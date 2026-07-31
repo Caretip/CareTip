@@ -21,8 +21,6 @@ type AuthContinueButtonProps = PressableProps & {
   loading?: boolean;
 };
 
-const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
-
 export function AuthContinueButton({
   label,
   loading = false,
@@ -38,7 +36,7 @@ export function AuthContinueButton({
   }));
 
   return (
-    <AnimatedPressable
+    <Pressable
       accessibilityRole="button"
       accessibilityState={{ disabled: isDisabled, busy: loading }}
       disabled={isDisabled}
@@ -52,22 +50,24 @@ export function AuthContinueButton({
         scale.value = withSpring(1, motion.spring.press);
         onPressOut?.(e);
       }}
-      style={[styles.wrap, isDisabled ? styles.disabled : null, animatedStyle]}
+      style={[styles.wrap, isDisabled ? styles.disabled : null]}
       {...rest}
     >
-      <LinearGradient
-        colors={[authBrand.orangeSoft, authBrand.orange, authBrand.orangeDeep]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={styles.gradient}
-      >
-        {loading ? (
-          <ActivityIndicator color={authBrand.white} />
-        ) : (
-          <Text style={styles.label}>{label}</Text>
-        )}
-      </LinearGradient>
-    </AnimatedPressable>
+      <Animated.View style={[styles.scaleWrap, animatedStyle]} collapsable={false}>
+        <LinearGradient
+          colors={[authBrand.orangeSoft, authBrand.orange, authBrand.orangeDeep]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.gradient}
+        >
+          {loading ? (
+            <ActivityIndicator color={authBrand.white} />
+          ) : (
+            <Text style={styles.label}>{label}</Text>
+          )}
+        </LinearGradient>
+      </Animated.View>
+    </Pressable>
   );
 }
 
@@ -85,6 +85,10 @@ const styles = StyleSheet.create({
       android: { elevation: 8 },
       default: {},
     }),
+  },
+  scaleWrap: {
+    borderRadius: radius.xl,
+    overflow: "hidden",
   },
   gradient: {
     minHeight: touchTarget + 8,
