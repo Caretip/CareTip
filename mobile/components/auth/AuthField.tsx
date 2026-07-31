@@ -49,22 +49,20 @@ export const AuthField = forwardRef<TextInput, AuthFieldProps>(function AuthFiel
 
   useImperativeHandle(ref, () => inputRef.current as TextInput);
 
-  const errorBorderColor = error ? errorColor : null;
+  const borderIdle = error ? errorColor : "rgba(11, 18, 32, 0.08)";
+  const borderFocus = error ? errorColor : authBrand.orange;
 
-  const fieldStyle = useAnimatedStyle(() => ({
-    borderColor: interpolateColor(
-      focusProgress.value,
-      [0, 1],
-      [errorBorderColor ?? "rgba(11, 18, 32, 0.08)", errorBorderColor ?? authBrand.orange],
-    ),
-    ...Platform.select({
-      ios: {
-        shadowOpacity: interpolate(focusProgress.value, [0, 1], [0.06, 0.12]),
-        shadowRadius: interpolate(focusProgress.value, [0, 1], [10, 16]),
-      },
-      default: {},
+  const borderStyle = useAnimatedStyle(
+    () => ({
+      borderColor: interpolateColor(focusProgress.value, [0, 1], [borderIdle, borderFocus]),
     }),
-  }), [errorBorderColor]);
+    [borderIdle, borderFocus],
+  );
+
+  const iosFocusShadowStyle = useAnimatedStyle(() => ({
+    shadowOpacity: interpolate(focusProgress.value, [0, 1], [0.06, 0.12]),
+    shadowRadius: interpolate(focusProgress.value, [0, 1], [10, 16]),
+  }));
 
   const focusInput = () => {
     if (editable !== false) {
@@ -84,7 +82,14 @@ export const AuthField = forwardRef<TextInput, AuthFieldProps>(function AuthFiel
         style={({ pressed }) => [pressed && editable !== false ? styles.pressed : null]}
       >
         <View style={[styles.field, shadows.sm]}>
-          <AnimatedView style={[styles.fieldInner, fieldStyle]}>
+          <AnimatedView
+            style={[
+              styles.fieldInner,
+              borderStyle,
+              Platform.OS === "ios" ? styles.fieldInnerIosShadow : null,
+              Platform.OS === "ios" ? iosFocusShadowStyle : null,
+            ]}
+          >
             <View style={styles.iconSlot} pointerEvents="none">
               <Ionicons
                 name={icon}
@@ -153,6 +158,10 @@ const styles = StyleSheet.create({
     borderColor: "rgba(11, 18, 32, 0.08)",
     paddingHorizontal: spacing.lg,
     gap: spacing.md,
+  },
+  fieldInnerIosShadow: {
+    shadowColor: authBrand.orange,
+    shadowOffset: { width: 0, height: 4 },
   },
   iconSlot: {
     width: 28,
