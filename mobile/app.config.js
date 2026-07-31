@@ -1,6 +1,15 @@
 /** @typedef {import('expo/config').ExpoConfig} ExpoConfig */
 /** @typedef {import('expo/config').ConfigContext} ConfigContext */
 
+const {
+  resolveAppVariant,
+  resolveAndroidPackage,
+  resolveIosBundleIdentifier,
+  resolveAppName,
+  resolveAppScheme,
+  mapIntentFilters,
+} = require("./config/buildVariant");
+
 /** @typedef {string | [string, ...unknown[]]} PluginEntry */
 
 /**
@@ -67,6 +76,15 @@ module.exports = ({ config }) => {
   const base = /** @type {ExpoConfig} */ (config);
   const basePlugins = /** @type {PluginEntry[]} */ (base.plugins ?? []);
   const existingBuildProps = findPluginConfig(basePlugins, "expo-build-properties") ?? {};
+  const existingNotifications = findPluginConfig(basePlugins, "expo-notifications") ?? {};
+
+  const appVariant = resolveAppVariant();
+  const isDevelopmentPackage = appVariant === "development";
+  const androidPackage = resolveAndroidPackage(appVariant);
+  const iosBundleIdentifier = resolveIosBundleIdentifier(appVariant);
+  const appName = resolveAppName(appVariant);
+  const appScheme = resolveAppScheme(appVariant);
+  const devIcon = "./assets/caretip-app-icon-dev.png";
 
   const plugins = basePlugins.filter((plugin) => {
     if (plugin === "expo-build-properties") return false;
@@ -75,6 +93,8 @@ module.exports = ({ config }) => {
     if (Array.isArray(plugin) && plugin[0] === "@react-native-google-signin/google-signin") {
       return false;
     }
+    if (plugin === "expo-notifications") return false;
+    if (Array.isArray(plugin) && plugin[0] === "expo-notifications") return false;
     return true;
   });
 
@@ -99,8 +119,18 @@ module.exports = ({ config }) => {
     plugins.push("@react-native-google-signin/google-signin");
   }
 
+  plugins.push([
+    "expo-notifications",
+    {
+      ...existingNotifications,
+      ...(isDevelopmentPackage ? { icon: devIcon } : {}),
+    },
+  ]);
+
   const easProjectId = resolveEasProjectId(base);
   const runtimeVersion = resolveRuntimeVersion(base);
+  const baseAndroid = /** @type {Record<string, unknown>} */ (base.android ?? {});
+  const baseAdaptiveIcon = /** @type {Record<string, unknown>} */ (baseAndroid.adaptiveIcon ?? {});
   const baseIos = /** @type {Record<string, unknown>} */ (base.ios ?? {});
   const baseInfoPlist = /** @type {Record<string, unknown>} */ (baseIos.infoPlist ?? {});
 
@@ -116,13 +146,26 @@ module.exports = ({ config }) => {
 
   return {
     ...base,
-    name: base.name ?? "CareTip",
+    name: appName,
     slug: base.slug ?? "caretip-mobile",
+    scheme: appScheme,
+    icon: isDevelopmentPackage ? devIcon : base.icon,
     runtimeVersion,
     plugins,
+    android: {
+      ...baseAndroid,
+      package: androidPackage,
+      adaptiveIcon: isDevelopmentPackage
+        ? {
+            ...baseAdaptiveIcon,
+            foregroundImage: devIcon,
+          }
+        : baseAdaptiveIcon,
+      intentFilters: mapIntentFilters(baseAndroid.intentFilters, appScheme),
+    },
     ios: {
       ...baseIos,
-      bundleIdentifier: /** @type {string | undefined} */ (baseIos.bundleIdentifier) ?? "de.caretip.app",
+      bundleIdentifier: iosBundleIdentifier,
       infoPlist: iosInfoPlist,
     },
     updates: easProjectId
@@ -138,6 +181,8 @@ module.exports = ({ config }) => {
         ...(/** @type {{ eas?: Record<string, unknown> } | undefined} */ (base.extra)?.eas ?? {}),
         ...(easProjectId ? { projectId: easProjectId } : {}),
       },
+      appVariant,
+      androidPackage,
       appEnv: isProduction
         ? "production"
         : appEnv === "staging" || appEnv === "preview" || appEnv === "beta"
