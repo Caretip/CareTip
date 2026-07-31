@@ -4,7 +4,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { ActivityIndicator, Image, StyleSheet, Text, View } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { AuthExperienceShell } from "@/components/auth/AuthExperienceShell";
-import { AuthGlassCard } from "@/components/auth/AuthGlassCard";
 import { AuthField } from "@/components/auth/AuthField";
 import { AuthContinueButton } from "@/components/auth/AuthContinueButton";
 import { Button } from "@/components/ui/Button";
@@ -98,7 +97,7 @@ export function MfaChallengeScreen() {
 
   return (
     <AuthExperienceShell showSecondaryActions={false}>
-      <AuthGlassCard>
+      <View style={authCardStyles.formBlock}>
         <View style={authCardStyles.cardHeader}>
           <Text style={authCardStyles.cardEyebrow}>{t("auth.security")}</Text>
           <Text style={authCardStyles.cardTitle}>
@@ -159,7 +158,7 @@ export function MfaChallengeScreen() {
           variant="ghost"
           onPress={() => router.replace("/(auth)/login")}
         />
-      </AuthGlassCard>
+      </View>
     </AuthExperienceShell>
   );
 }

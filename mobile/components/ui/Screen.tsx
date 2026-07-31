@@ -9,7 +9,7 @@ import {
   type ScrollViewProps,
 } from "react-native";
 import { SafeAreaView, type Edge } from "react-native-safe-area-context";
-import { colors, spacing } from "@/theme";
+import { colors, spacing, screenPadding } from "@/theme";
 import { TAB_BAR_SCROLL_CLEARANCE } from "@/theme/navigation";
 import { OfflineBanner } from "@/components/layout/OfflineBanner";
 import { ErrorBanner } from "@/components/layout/ErrorBanner";
@@ -100,9 +100,9 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   content: {
-    paddingHorizontal: spacing.xl,
+    paddingHorizontal: screenPadding,
     paddingTop: spacing.lg,
-    gap: spacing["2xl"],
+    gap: spacing["3xl"],
     width: "100%",
     alignSelf: "center",
   },

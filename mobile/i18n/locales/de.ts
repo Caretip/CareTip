@@ -645,4 +645,13 @@ export const de: MobileMessages = {
     unread: "Ungelesen",
     read: "Gelesen",
   },
+  preferences: {
+    selectLanguage: "Sprache wählen",
+    theme: "Design",
+    themeLight: "Hell",
+    themeDark: "Dunkel",
+    themeSystem: "System",
+    notifications: "Benachrichtigungen",
+    notificationsA11y: "Benachrichtigungen, {{count}} ungelesen",
+  },
 };

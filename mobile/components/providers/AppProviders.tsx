@@ -11,6 +11,7 @@ import { SessionExpiryBridge } from "@/components/providers/SessionExpiryBridge"
 import { SocketProvider } from "@/components/providers/SocketProvider";
 import { RealtimeQueryBridge } from "@/components/providers/RealtimeQueryBridge";
 import { LocaleBridge } from "@/components/providers/LocaleBridge";
+import { ThemeBridge } from "@/components/providers/ThemeBridge";
 import { StartupBridge } from "@/components/providers/StartupBridge";
 import { DeepLinkBridge } from "@/components/providers/DeepLinkBridge";
 
@@ -32,19 +33,21 @@ export function AppProviders({ children }: { children: ReactNode }) {
     <SafeAreaProvider>
       <QueryClientProvider client={queryClient}>
         <StartupBridge>
-          <LocaleBridge>
-            <NetworkBridge>
-              <GlobalErrorBridge>
-                <SocketProvider>
-                  <SessionExpiryBridge />
-                  <PushNotificationBridge />
-                  <RealtimeQueryBridge />
-                  <DeepLinkBridge />
-                  {children}
-                </SocketProvider>
-              </GlobalErrorBridge>
-            </NetworkBridge>
-          </LocaleBridge>
+          <ThemeBridge>
+            <LocaleBridge>
+              <NetworkBridge>
+                <GlobalErrorBridge>
+                  <SocketProvider>
+                    <SessionExpiryBridge />
+                    <PushNotificationBridge />
+                    <RealtimeQueryBridge />
+                    <DeepLinkBridge />
+                    {children}
+                  </SocketProvider>
+                </GlobalErrorBridge>
+              </NetworkBridge>
+            </LocaleBridge>
+          </ThemeBridge>
         </StartupBridge>
       </QueryClientProvider>
     </SafeAreaProvider>

@@ -6,8 +6,7 @@ import { QuickActionRow } from "@/components/ui/QuickActionRow";
 import { TipCard } from "@/components/ui/ListCards";
 import { KpiCard } from "@/components/ui/KpiCard";
 import { PeriodToggle } from "@/components/ui/PeriodToggle";
-import { Screen } from "@/components/ui/Screen";
-import { ScreenHeader, HeroCard } from "@/components/ui/ScreenHeader";
+import { LayeredScreen } from "@/components/ui/LayeredScreen";
 import { GroupedList, Section } from "@/components/ui/Section";
 import { ErrorState } from "@/components/ui/ErrorState";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -19,7 +18,7 @@ import { useEmployeeDashboard } from "@/features/employee/useEmployeeDashboard";
 import { formatCount, formatEur, formatRating } from "@/utils/format";
 import { formatTipStatus, uiLocaleTag } from "@/utils/labels";
 import { friendlyErrorMessage, isPermissionError } from "@/utils/friendlyError";
-import { spacing } from "@/theme";
+import { layered } from "@/theme/layered";
 import type { EmployeeTimeframe } from "@/types/employee";
 
 export function EmployeeDashboardScreen() {
@@ -74,16 +73,17 @@ export function EmployeeDashboardScreen() {
   );
 
   return (
-    <Screen refreshing={isRefreshing} onRefresh={() => void refresh()}>
-      <HeroCard>
-        <ScreenHeader
-          eyebrow={t("employeeDashboard.eyebrow")}
-          title={t("employeeDashboard.welcome", { name: displayName })}
-          subtitle={`${profile?.jobTitle ? `${profile.jobTitle} · ` : ""}${profile?.businessName ?? t("businessDashboard.venueFallback")}`}
-        />
+    <LayeredScreen
+      eyebrow={t("employeeDashboard.eyebrow")}
+      title={t("employeeDashboard.welcome", { name: displayName })}
+      subtitle={`${profile?.jobTitle ? `${profile.jobTitle} · ` : ""}${profile?.businessName ?? t("businessDashboard.venueFallback")}`}
+      notificationsHref="/(app)/employee/notifications"
+      refreshing={isRefreshing}
+      onRefresh={() => void refresh()}
+      headerExtra={
         <PeriodToggle value={timeframe} options={timeframeOptions} onChange={setTimeframe} />
-      </HeroCard>
-
+      }
+    >
       {isLoading ? (
         <SkeletonMetricGrid />
       ) : error && !profile ? (
@@ -116,37 +116,37 @@ export function EmployeeDashboardScreen() {
         <View style={styles.stack}>
           <FadeIn index={0}>
             <View style={styles.heroBlock}>
-            <HeroBalanceCard
-              label={t("employeeDashboard.periodEarnings")}
-              value={formatEur(tips?.periodAmountEur)}
-              hint={t("businessDashboard.tipsThisPeriod", {
-                count: formatCount(tips?.periodTipCount),
-              })}
-              icon="wallet"
-            />
-            <QuickActionRow actions={quickActions} />
-            <View style={styles.metricsRow}>
-              <View style={styles.metricCol}>
-                <KpiCard
-                  variant="plain"
-                  label={t("employeeDashboard.avgRating")}
-                  value={formatRating(tips?.averageRating)}
-                  hint={t("employeeDashboard.ratingsHint", {
-                    count: formatCount(tips?.ratingCount),
-                  })}
-                  icon="star-outline"
-                />
+              <HeroBalanceCard
+                label={t("employeeDashboard.periodEarnings")}
+                value={formatEur(tips?.periodAmountEur)}
+                hint={t("businessDashboard.tipsThisPeriod", {
+                  count: formatCount(tips?.periodTipCount),
+                })}
+                icon="wallet"
+              />
+              <QuickActionRow actions={quickActions} />
+              <View style={styles.metricsRow}>
+                <View style={styles.metricCol}>
+                  <KpiCard
+                    variant="plain"
+                    label={t("employeeDashboard.avgRating")}
+                    value={formatRating(tips?.averageRating)}
+                    hint={t("employeeDashboard.ratingsHint", {
+                      count: formatCount(tips?.ratingCount),
+                    })}
+                    icon="star-outline"
+                  />
+                </View>
+                <View style={styles.metricCol}>
+                  <KpiCard
+                    variant="plain"
+                    label={t("employeeDashboard.paidOut")}
+                    value={formatEur(tips?.paidOutEur)}
+                    hint={t("employeeDashboard.successfulPayouts")}
+                    icon="checkmark-circle-outline"
+                  />
+                </View>
               </View>
-              <View style={styles.metricCol}>
-                <KpiCard
-                  variant="plain"
-                  label={t("employeeDashboard.paidOut")}
-                  value={formatEur(tips?.paidOutEur)}
-                  hint={t("employeeDashboard.successfulPayouts")}
-                  icon="checkmark-circle-outline"
-                />
-              </View>
-            </View>
             </View>
           </FadeIn>
 
@@ -185,21 +185,21 @@ export function EmployeeDashboardScreen() {
           </FadeIn>
         </View>
       )}
-    </Screen>
+    </LayeredScreen>
   );
 }
 
 const styles = StyleSheet.create({
   stack: {
-    gap: spacing["2xl"],
+    gap: layered.sectionGap,
   },
   heroBlock: {
-    gap: spacing.lg,
+    gap: layered.elementGap,
   },
   metricsRow: {
     flexDirection: "row",
     alignItems: "flex-start",
-    gap: spacing.xl,
+    gap: layered.elementGap,
   },
   metricCol: {
     flex: 1,

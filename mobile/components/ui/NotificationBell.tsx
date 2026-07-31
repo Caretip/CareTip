@@ -1,0 +1,71 @@
+import { StyleSheet, Text, View } from "react-native";
+import { useRouter } from "expo-router";
+import { HeaderIconButton, type HeaderControlVariant } from "@/components/ui/HeaderIconButton";
+import { useI18n } from "@/hooks/useI18n";
+import { useUnreadNotificationCount } from "@/hooks/useNotifications";
+import { brand, typography } from "@/theme";
+
+type NotificationBellProps = {
+  href: string;
+  variant?: HeaderControlVariant;
+};
+
+function formatBadge(count: number): string {
+  if (count <= 0) return "";
+  if (count > 9) return "9+";
+  return String(count);
+}
+
+export function NotificationBell({ href, variant = "onHero" }: NotificationBellProps) {
+  const router = useRouter();
+  const { t } = useI18n();
+  const { data: unread = 0 } = useUnreadNotificationCount(true);
+  const badge = formatBadge(unread);
+
+  return (
+    <View style={styles.wrap}>
+      <HeaderIconButton
+        icon="notifications-outline"
+        accessibilityLabel={
+          unread > 0
+            ? t("preferences.notificationsA11y", { count: unread > 9 ? "9+" : unread })
+            : t("preferences.notifications")
+        }
+        onPress={() => router.push(href as never)}
+        variant={variant}
+      />
+      {badge ? (
+        <View style={styles.badge} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
+          <Text style={styles.badgeLabel}>{badge}</Text>
+        </View>
+      ) : null}
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  wrap: {
+    position: "relative",
+  },
+  badge: {
+    position: "absolute",
+    top: -2,
+    right: -2,
+    minWidth: 18,
+    height: 18,
+    borderRadius: 9,
+    backgroundColor: brand.orange,
+    borderWidth: 2,
+    borderColor: "#FFFFFF",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 4,
+  },
+  badgeLabel: {
+    ...typography.caption,
+    color: "#FFFFFF",
+    fontSize: 10,
+    fontWeight: "800",
+    lineHeight: 12,
+  },
+});

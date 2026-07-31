@@ -13,4 +13,5 @@ export const PREFERENCE_KEYS = {
   employeeDashboardTimeframe: "caretip_pref_employee_dashboard_tf",
   qrStudioTimeframe: "caretip_pref_qr_studio_tf",
   language: "caretip_pref_language",
+  theme: "caretip_pref_theme",
 } as const;

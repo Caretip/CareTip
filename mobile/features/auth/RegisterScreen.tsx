@@ -4,7 +4,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { AuthExperienceShell } from "@/components/auth/AuthExperienceShell";
-import { AuthGlassCard } from "@/components/auth/AuthGlassCard";
 import { AuthField } from "@/components/auth/AuthField";
 import { AuthContinueButton } from "@/components/auth/AuthContinueButton";
 import { useI18n } from "@/hooks/useI18n";
@@ -74,7 +73,7 @@ export function RegisterScreen() {
 
   return (
     <AuthExperienceShell showSecondaryActions={false}>
-      <AuthGlassCard>
+      <View style={authCardStyles.formBlock}>
         <View style={authCardStyles.cardHeader}>
           <Text style={authCardStyles.cardEyebrow}>{t("auth.createAccountTitle")}</Text>
           <Text style={authCardStyles.cardTitle}>{t("auth.registerScreenTitle")}</Text>
@@ -231,7 +230,7 @@ export function RegisterScreen() {
           <Text style={styles.signInPrompt}>{t("auth.alreadyHaveAccount")} </Text>
           <Text style={styles.signInLink}>{t("auth.signInLink")}</Text>
         </Pressable>
-      </AuthGlassCard>
+      </View>
     </AuthExperienceShell>
   );
 }

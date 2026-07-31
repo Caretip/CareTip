@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { StyleSheet, Text, View, Pressable } from "react-native";
 import { useRouter } from "expo-router";
 import { AuthExperienceShell } from "@/components/auth/AuthExperienceShell";
-import { AuthGlassCard } from "@/components/auth/AuthGlassCard";
 import { AuthField } from "@/components/auth/AuthField";
 import { AuthContinueButton } from "@/components/auth/AuthContinueButton";
 import { useAuth } from "@/hooks/useAuth";
@@ -92,7 +91,7 @@ export function BusinessOnboardingScreen() {
 
   return (
     <AuthExperienceShell showSecondaryActions={false}>
-      <AuthGlassCard>
+      <View style={authCardStyles.formBlock}>
         <View style={authCardStyles.cardHeader}>
           <Text style={authCardStyles.cardEyebrow}>{t("auth.onboardingEyebrow")}</Text>
           <Text style={authCardStyles.cardTitle}>
@@ -177,7 +176,7 @@ export function BusinessOnboardingScreen() {
             <Text style={authCardStyles.backLink}>{t("common.back")}</Text>
           </Pressable>
         ) : null}
-      </AuthGlassCard>
+      </View>
     </AuthExperienceShell>
   );
 }

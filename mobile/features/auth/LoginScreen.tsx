@@ -4,7 +4,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import { useRouter } from "expo-router";
 import { AuthExperienceShell } from "@/components/auth/AuthExperienceShell";
-import { AuthGlassCard } from "@/components/auth/AuthGlassCard";
 import { AuthField } from "@/components/auth/AuthField";
 import { AuthContinueButton } from "@/components/auth/AuthContinueButton";
 import { AuthRegisterSheet } from "@/components/auth/AuthRegisterSheet";
@@ -98,7 +97,7 @@ export function LoginScreen() {
   return (
     <>
       <AuthExperienceShell onRegisterPress={() => setRegisterOpen(true)}>
-        <AuthGlassCard>
+        <View style={authCardStyles.formBlock}>
           <View style={authCardStyles.cardHeader}>
             <Text style={authCardStyles.cardEyebrow}>{t("auth.welcomeBack")}</Text>
             <Text style={authCardStyles.cardTitle}>{t("auth.loginTitle")}</Text>
@@ -203,7 +202,7 @@ export function LoginScreen() {
             loading={isSubmitting}
             disabled={bootstrapping || googleLoading}
           />
-        </AuthGlassCard>
+        </View>
       </AuthExperienceShell>
 
       <AuthRegisterSheet

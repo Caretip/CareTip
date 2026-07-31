@@ -7,8 +7,7 @@ import { DashboardShortcutGrid } from "@/components/ui/DashboardShortcutGrid";
 import { EmployeePerformanceChart } from "@/components/ui/EmployeePerformanceChart";
 import { KpiCard } from "@/components/ui/KpiCard";
 import { PeriodToggle } from "@/components/ui/PeriodToggle";
-import { Screen } from "@/components/ui/Screen";
-import { ScreenHeader, HeroCard } from "@/components/ui/ScreenHeader";
+import { LayeredScreen } from "@/components/ui/LayeredScreen";
 import { Section } from "@/components/ui/Section";
 import { ErrorState } from "@/components/ui/ErrorState";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -22,7 +21,7 @@ import { useBusinessDashboard } from "@/features/business/useBusinessDashboard";
 import { buildEmployeePerformanceChartRows } from "@/utils/dashboardChartData";
 import { formatCount, formatEur, formatGrowthPercent } from "@/utils/format";
 import { friendlyErrorMessage, isPermissionError } from "@/utils/friendlyError";
-import { spacing } from "@/theme";
+import { layered } from "@/theme/layered";
 import type { BusinessTimeframe } from "@/types/business";
 
 export function BusinessDashboardScreen() {
@@ -90,16 +89,17 @@ export function BusinessDashboardScreen() {
   );
 
   return (
-    <Screen refreshing={isRefreshing} onRefresh={() => void refresh()}>
-      <HeroCard>
-        <ScreenHeader
-          eyebrow={t("businessDashboard.eyebrow")}
-          title={t("businessDashboard.welcome", { name: firstName })}
-          subtitle={businessName}
-        />
+    <LayeredScreen
+      eyebrow={t("businessDashboard.eyebrow")}
+      title={t("businessDashboard.welcome", { name: firstName })}
+      subtitle={businessName}
+      notificationsHref="/(app)/business/notifications"
+      refreshing={isRefreshing}
+      onRefresh={() => void refresh()}
+      headerExtra={
         <PeriodToggle value={timeframe} options={timeframeOptions} onChange={setTimeframe} />
-      </HeroCard>
-
+      }
+    >
       {isLoading ? (
         <SkeletonMetricGrid />
       ) : error ? (
@@ -119,40 +119,40 @@ export function BusinessDashboardScreen() {
           <FadeIn index={0}>
             <View style={styles.heroBlock}>
               <HeroBalanceCard
-              label={t("businessDashboard.totalTips")}
-              value={formatEur(stats?.totalTips)}
-              hint={t("businessDashboard.tipsThisPeriod", {
-                count: formatCount(stats?.tipCount),
-              })}
-              trend={formatGrowthPercent(growth)}
-              trendPositive={
-                growth == null || !Number.isFinite(growth) || growth === 0 ? null : growth > 0
-              }
-              icon="wallet"
-            />
-            <DashboardShortcutGrid shortcuts={shortcuts} />
-            <View style={styles.metricsRow}>
-              <View style={styles.metricCol}>
-                <KpiCard
-                  variant="plain"
-                  label={t("businessDashboard.tipsToday")}
-                  value={formatEur(tipsToday?.amount)}
-                  hint={t("businessDashboard.tipsVenueTime", {
-                    count: formatCount(tipsToday?.count),
-                  })}
-                  icon="today-outline"
-                />
+                label={t("businessDashboard.totalTips")}
+                value={formatEur(stats?.totalTips)}
+                hint={t("businessDashboard.tipsThisPeriod", {
+                  count: formatCount(stats?.tipCount),
+                })}
+                trend={formatGrowthPercent(growth)}
+                trendPositive={
+                  growth == null || !Number.isFinite(growth) || growth === 0 ? null : growth > 0
+                }
+                icon="wallet"
+              />
+              <DashboardShortcutGrid shortcuts={shortcuts} />
+              <View style={styles.metricsRow}>
+                <View style={styles.metricCol}>
+                  <KpiCard
+                    variant="plain"
+                    label={t("businessDashboard.tipsToday")}
+                    value={formatEur(tipsToday?.amount)}
+                    hint={t("businessDashboard.tipsVenueTime", {
+                      count: formatCount(tipsToday?.count),
+                    })}
+                    icon="today-outline"
+                  />
+                </View>
+                <View style={styles.metricCol}>
+                  <KpiCard
+                    variant="plain"
+                    label={t("businessDashboard.activeStaff")}
+                    value={formatCount(employeeCount)}
+                    hint={t("businessDashboard.onRoster")}
+                    icon="people-outline"
+                  />
+                </View>
               </View>
-              <View style={styles.metricCol}>
-                <KpiCard
-                  variant="plain"
-                  label={t("businessDashboard.activeStaff")}
-                  value={formatCount(employeeCount)}
-                  hint={t("businessDashboard.onRoster")}
-                  icon="people-outline"
-                />
-              </View>
-            </View>
             </View>
           </FadeIn>
 
@@ -189,21 +189,21 @@ export function BusinessDashboardScreen() {
           </FadeIn>
         </View>
       )}
-    </Screen>
+    </LayeredScreen>
   );
 }
 
 const styles = StyleSheet.create({
   stack: {
-    gap: spacing["2xl"],
+    gap: layered.sectionGap,
   },
   heroBlock: {
-    gap: spacing.lg,
+    gap: layered.elementGap,
   },
   metricsRow: {
     flexDirection: "row",
     alignItems: "flex-start",
-    gap: spacing.xl,
+    gap: layered.elementGap,
   },
   metricCol: {
     flex: 1,

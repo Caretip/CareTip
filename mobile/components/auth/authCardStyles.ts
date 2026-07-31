@@ -27,7 +27,10 @@ export const authCardStyles = StyleSheet.create({
     lineHeight: 22,
   },
   fields: {
-    gap: spacing.lg,
+    gap: spacing.xl,
+  },
+  formBlock: {
+    gap: spacing["2xl"],
   },
   formError: {
     ...typography.caption,

@@ -639,4 +639,13 @@ export const en: MobileMessages = {
     unread: "Unread",
     read: "Read",
   },
+  preferences: {
+    selectLanguage: "Select language",
+    theme: "Theme",
+    themeLight: "Light",
+    themeDark: "Dark",
+    themeSystem: "System",
+    notifications: "Notifications",
+    notificationsA11y: "Notifications, {{count}} unread",
+  },
 };

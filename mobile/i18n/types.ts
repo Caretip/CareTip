@@ -619,4 +619,13 @@ export type MobileMessages = {
     unread: string;
     read: string;
   };
+  preferences: {
+    selectLanguage: string;
+    theme: string;
+    themeLight: string;
+    themeDark: string;
+    themeSystem: string;
+    notifications: string;
+    notificationsA11y: string;
+  };
 };

@@ -2,7 +2,6 @@ import { useCallback, useEffect, useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { AuthExperienceShell } from "@/components/auth/AuthExperienceShell";
-import { AuthGlassCard } from "@/components/auth/AuthGlassCard";
 import { AuthField } from "@/components/auth/AuthField";
 import { AuthContinueButton } from "@/components/auth/AuthContinueButton";
 import { useAuth } from "@/hooks/useAuth";
@@ -94,7 +93,7 @@ export function VerifyEmailScreen() {
 
   return (
     <AuthExperienceShell showSecondaryActions={false}>
-      <AuthGlassCard>
+      <View style={authCardStyles.formBlock}>
         <View style={authCardStyles.cardHeader}>
           <Text style={authCardStyles.cardEyebrow}>{t("auth.security")}</Text>
           <Text style={authCardStyles.cardTitle}>{t("auth.verifyEmailTitle")}</Text>
@@ -156,7 +155,7 @@ export function VerifyEmailScreen() {
         >
           <Text style={authCardStyles.backLink}>{t("auth.backToSignIn")}</Text>
         </Pressable>
-      </AuthGlassCard>
+      </View>
     </AuthExperienceShell>
   );
 }

@@ -4,7 +4,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { AuthExperienceShell } from "@/components/auth/AuthExperienceShell";
-import { AuthGlassCard } from "@/components/auth/AuthGlassCard";
 import { AuthField } from "@/components/auth/AuthField";
 import { AuthContinueButton } from "@/components/auth/AuthContinueButton";
 import { useI18n } from "@/hooks/useI18n";
@@ -51,7 +50,7 @@ export function ResetPasswordScreen() {
 
   return (
     <AuthExperienceShell showSecondaryActions={false}>
-      <AuthGlassCard>
+      <View style={authCardStyles.formBlock}>
         {done ? (
           <View style={styles.block}>
             <Text style={authCardStyles.cardTitle}>{t("auth.resetPasswordSuccessTitle")}</Text>
@@ -134,7 +133,7 @@ export function ResetPasswordScreen() {
             </Pressable>
           </>
         )}
-      </AuthGlassCard>
+      </View>
     </AuthExperienceShell>
   );
 }

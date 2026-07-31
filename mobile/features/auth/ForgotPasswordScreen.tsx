@@ -4,7 +4,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { useRouter } from "expo-router";
 import { AuthExperienceShell } from "@/components/auth/AuthExperienceShell";
-import { AuthGlassCard } from "@/components/auth/AuthGlassCard";
 import { AuthField } from "@/components/auth/AuthField";
 import { AuthContinueButton } from "@/components/auth/AuthContinueButton";
 import { authCardStyles } from "@/components/auth/authCardStyles";
@@ -45,7 +44,7 @@ export function ForgotPasswordScreen() {
 
   return (
     <AuthExperienceShell showSecondaryActions={false}>
-      <AuthGlassCard>
+      <View style={authCardStyles.formBlock}>
         {sent ? (
           <View style={styles.sentBlock}>
             <Text style={authCardStyles.cardTitle}>{t("auth.forgotPasswordSentTitle")}</Text>
@@ -110,7 +109,7 @@ export function ForgotPasswordScreen() {
             </Pressable>
           </>
         )}
-      </AuthGlassCard>
+      </View>
     </AuthExperienceShell>
   );
 }
