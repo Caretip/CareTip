@@ -4,6 +4,7 @@ name: Development build (manual)
 
 on:
   workflow_dispatch:
+    inputs: {}
 
 jobs:
   build_android_development:
