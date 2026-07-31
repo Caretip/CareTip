@@ -49,11 +49,13 @@ export const AuthField = forwardRef<TextInput, AuthFieldProps>(function AuthFiel
 
   useImperativeHandle(ref, () => inputRef.current as TextInput);
 
+  const errorBorderColor = error ? errorColor : null;
+
   const fieldStyle = useAnimatedStyle(() => ({
     borderColor: interpolateColor(
       focusProgress.value,
       [0, 1],
-      [error ? errorColor : "rgba(11, 18, 32, 0.08)", error ? errorColor : authBrand.orange],
+      [errorBorderColor ?? "rgba(11, 18, 32, 0.08)", errorBorderColor ?? authBrand.orange],
     ),
     ...Platform.select({
       ios: {
@@ -62,7 +64,7 @@ export const AuthField = forwardRef<TextInput, AuthFieldProps>(function AuthFiel
       },
       default: {},
     }),
-  }));
+  }), [errorBorderColor]);
 
   const focusInput = () => {
     if (editable !== false) {
@@ -81,39 +83,41 @@ export const AuthField = forwardRef<TextInput, AuthFieldProps>(function AuthFiel
         onPress={focusInput}
         style={({ pressed }) => [pressed && editable !== false ? styles.pressed : null]}
       >
-        <AnimatedView style={[styles.field, shadows.sm, fieldStyle]}>
-          <View style={styles.iconSlot} pointerEvents="none">
-            <Ionicons
-              name={icon}
-              size={20}
-              color={focused ? authBrand.orange : authBrand.muted}
+        <View style={[styles.field, shadows.sm]}>
+          <AnimatedView style={[styles.fieldInner, fieldStyle]}>
+            <View style={styles.iconSlot} pointerEvents="none">
+              <Ionicons
+                name={icon}
+                size={20}
+                color={focused ? authBrand.orange : authBrand.muted}
+              />
+            </View>
+            <TextInput
+              ref={inputRef}
+              value={value}
+              accessibilityLabel={label}
+              placeholderTextColor={authBrand.muted}
+              style={[styles.input, style]}
+              autoCapitalize="none"
+              autoCorrect={false}
+              importantForAutofill="yes"
+              textAlignVertical="center"
+              underlineColorAndroid="transparent"
+              editable={editable}
+              onFocus={(e) => {
+                setFocused(true);
+                focusProgress.value = withTiming(1, { duration: motion.duration.fast });
+                onFocus?.(e);
+              }}
+              onBlur={(e) => {
+                setFocused(false);
+                focusProgress.value = withTiming(0, { duration: motion.duration.fast });
+                onBlur?.(e);
+              }}
+              {...rest}
             />
-          </View>
-          <TextInput
-            ref={inputRef}
-            value={value}
-            accessibilityLabel={label}
-            placeholderTextColor={authBrand.muted}
-            style={[styles.input, style]}
-            autoCapitalize="none"
-            autoCorrect={false}
-            importantForAutofill="yes"
-            textAlignVertical="center"
-            underlineColorAndroid="transparent"
-            editable={editable}
-            onFocus={(e) => {
-              setFocused(true);
-              focusProgress.value = withTiming(1, { duration: motion.duration.fast });
-              onFocus?.(e);
-            }}
-            onBlur={(e) => {
-              setFocused(false);
-              focusProgress.value = withTiming(0, { duration: motion.duration.fast });
-              onBlur?.(e);
-            }}
-            {...rest}
-          />
-        </AnimatedView>
+          </AnimatedView>
+        </View>
       </Pressable>
       {error ? (
         <Text style={styles.error} accessibilityRole="alert" accessibilityLiveRegion="polite">
@@ -136,11 +140,15 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.xxs,
   },
   field: {
+    borderRadius: radius.lg,
+    backgroundColor: authBrand.white,
+    overflow: "hidden",
+  },
+  fieldInner: {
     minHeight: touchTarget + 8,
     flexDirection: "row",
     alignItems: "center",
     borderRadius: radius.lg,
-    backgroundColor: authBrand.white,
     borderWidth: 1.5,
     borderColor: "rgba(11, 18, 32, 0.08)",
     paddingHorizontal: spacing.lg,

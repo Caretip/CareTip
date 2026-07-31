@@ -1,6 +1,7 @@
 import { StyleSheet, Text, View } from "react-native";
 import { useRouter } from "expo-router";
 import { HeaderIconButton, type HeaderControlVariant } from "@/components/ui/HeaderIconButton";
+import { useAuth } from "@/hooks/useAuth";
 import { useI18n } from "@/hooks/useI18n";
 import { useUnreadNotificationCount } from "@/hooks/useNotifications";
 import { brand, typography } from "@/theme";
@@ -19,7 +20,8 @@ function formatBadge(count: number): string {
 export function NotificationBell({ href, variant = "onHero" }: NotificationBellProps) {
   const router = useRouter();
   const { t } = useI18n();
-  const { data: unread = 0 } = useUnreadNotificationCount(true);
+  const { isAuthenticated } = useAuth();
+  const { data: unread = 0 } = useUnreadNotificationCount(isAuthenticated);
   const badge = formatBadge(unread);
 
   return (

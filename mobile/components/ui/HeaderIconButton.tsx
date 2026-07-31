@@ -1,11 +1,11 @@
-import { Platform, Pressable, StyleSheet, type StyleProp, type ViewStyle } from "react-native";
+import { Pressable, StyleSheet, View, type StyleProp, type ViewStyle } from "react-native";
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
   withSpring,
 } from "react-native-reanimated";
 import { Ionicons } from "@expo/vector-icons";
-import { motion, radius, shadows, spacing, touchTarget } from "@/theme";
+import { motion, radius, shadows, touchTarget } from "@/theme";
 import { hapticLight } from "@/utils/haptics";
 
 export type HeaderControlVariant = "onHero" | "onSurface";
@@ -19,8 +19,6 @@ type HeaderIconButtonProps = {
   active?: boolean;
   style?: StyleProp<ViewStyle>;
 };
-
-const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 const variantStyles = {
   onHero: {
@@ -52,7 +50,7 @@ export function HeaderIconButton({
   }));
 
   return (
-    <AnimatedPressable
+    <Pressable
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel}
       onPress={() => {
@@ -73,12 +71,13 @@ export function HeaderIconButton({
           backgroundColor: active ? "rgba(235, 153, 44, 0.22)" : palette.backgroundColor,
           borderColor: active ? "#EB992C" : palette.borderColor,
         },
-        animatedStyle,
         style,
       ]}
     >
-      <Ionicons name={icon} size={20} color={active ? "#EB992C" : palette.iconColor} />
-    </AnimatedPressable>
+      <Animated.View style={[styles.iconWrap, animatedStyle]} collapsable={false}>
+        <Ionicons name={icon} size={20} color={active ? "#EB992C" : palette.iconColor} />
+      </Animated.View>
+    </Pressable>
   );
 }
 
@@ -90,9 +89,10 @@ const styles = StyleSheet.create({
     borderWidth: StyleSheet.hairlineWidth,
     alignItems: "center",
     justifyContent: "center",
-    ...Platform.select({
-      android: { elevation: 2 },
-      default: {},
-    }),
+    overflow: "hidden",
+  },
+  iconWrap: {
+    alignItems: "center",
+    justifyContent: "center",
   },
 });

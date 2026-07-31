@@ -1,6 +1,7 @@
 import { useCallback, useRef, useState } from "react";
 import {
   Modal,
+  Platform,
   Pressable,
   StyleSheet,
   Text,
@@ -27,6 +28,10 @@ const THEME_OPTIONS: Array<{ mode: ThemeMode; icon: "sunny-outline" | "moon-outl
     { mode: "dark", icon: "moon-outline", labelKey: "preferences.themeDark" },
     { mode: "system", icon: "phone-portrait-outline", labelKey: "preferences.themeSystem" },
   ];
+
+const MENU_ENTER = Platform.OS === "android" ? undefined : ZoomIn.duration(200).springify().damping(18);
+const BACKDROP_ENTER = Platform.OS === "android" ? undefined : FadeIn.duration(160);
+const BACKDROP_EXIT = Platform.OS === "android" ? undefined : FadeOut.duration(120);
 
 export function ThemeToggle({ variant = "onHero" }: ThemeToggleProps) {
   const { t } = useI18n();
@@ -76,10 +81,10 @@ export function ThemeToggle({ variant = "onHero" }: ThemeToggleProps) {
       </View>
 
       <Modal visible={open} transparent animationType="none" onRequestClose={() => setOpen(false)}>
-        <Animated.View entering={FadeIn.duration(160)} exiting={FadeOut.duration(120)} style={styles.backdrop}>
+        <Animated.View entering={BACKDROP_ENTER} exiting={BACKDROP_EXIT} style={styles.backdrop}>
           <Pressable style={StyleSheet.absoluteFill} onPress={() => setOpen(false)} accessibilityLabel={t("common.cancel")} />
           <Animated.View
-            entering={ZoomIn.duration(200).springify().damping(18)}
+            entering={MENU_ENTER}
             style={[styles.menu, shadows.lg, { top: menuPos.top, right: menuPos.right }]}
           >
             <Text style={styles.menuTitle}>{t("preferences.theme")}</Text>

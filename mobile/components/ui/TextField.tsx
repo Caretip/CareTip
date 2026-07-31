@@ -44,13 +44,15 @@ export const TextField = forwardRef<TextInput, TextFieldProps>(function TextFiel
 
   useImperativeHandle(ref, () => inputRef.current as TextInput);
 
+  const errorBorderColor = error ? colors.destructive : null;
+
   const inputStyle = useAnimatedStyle(() => ({
     borderColor: interpolateColor(
       focusProgress.value,
       [0, 1],
-      [error ? colors.destructive : colors.borderStrong, error ? colors.destructive : colors.primary],
+      [errorBorderColor ?? colors.borderStrong, errorBorderColor ?? colors.primary],
     ),
-  }));
+  }), [errorBorderColor]);
 
   const focusInput = () => {
     if (editable !== false) {
@@ -68,35 +70,36 @@ export const TextField = forwardRef<TextInput, TextFieldProps>(function TextFiel
         disabled={editable === false}
         onPress={focusInput}
       >
-        <AnimatedView
-          style={[
-            styles.input,
-            shadows.sm,
-            inputStyle,
-            error ? styles.inputError : null,
-          ]}
-        >
-          <TextInput
-            ref={inputRef}
-            accessibilityLabel={accessibilityLabel ?? label}
-            placeholderTextColor={colors.mutedForeground}
-            style={[styles.inputText, style]}
-            autoCapitalize="none"
-            autoCorrect={false}
-            editable={editable}
-            textAlignVertical="center"
-            underlineColorAndroid="transparent"
-            onFocus={(e) => {
-              focusProgress.value = withTiming(1, { duration: motion.duration.fast });
-              onFocus?.(e);
-            }}
-            onBlur={(e) => {
-              focusProgress.value = withTiming(0, { duration: motion.duration.fast });
-              onBlur?.(e);
-            }}
-            {...rest}
-          />
-        </AnimatedView>
+        <View style={[styles.inputShell, shadows.sm]}>
+          <AnimatedView
+            style={[
+              styles.input,
+              inputStyle,
+              error ? styles.inputError : null,
+            ]}
+          >
+            <TextInput
+              ref={inputRef}
+              accessibilityLabel={accessibilityLabel ?? label}
+              placeholderTextColor={colors.mutedForeground}
+              style={[styles.inputText, style]}
+              autoCapitalize="none"
+              autoCorrect={false}
+              editable={editable}
+              textAlignVertical="center"
+              underlineColorAndroid="transparent"
+              onFocus={(e) => {
+                focusProgress.value = withTiming(1, { duration: motion.duration.fast });
+                onFocus?.(e);
+              }}
+              onBlur={(e) => {
+                focusProgress.value = withTiming(0, { duration: motion.duration.fast });
+                onBlur?.(e);
+              }}
+              {...rest}
+            />
+          </AnimatedView>
+        </View>
       </Pressable>
       {error ? (
         <Text style={styles.error} accessibilityRole="alert" accessibilityLiveRegion="polite">
@@ -116,6 +119,10 @@ const styles = StyleSheet.create({
     color: colors.foreground,
     fontWeight: "600",
     fontSize: 13,
+  },
+  inputShell: {
+    borderRadius: radius.lg,
+    overflow: "hidden",
   },
   input: {
     minHeight: touchTarget + 4,
