@@ -1,8 +1,21 @@
-import { ErrorUtils } from "react-native";
+type GlobalErrorUtils = {
+  getGlobalHandler: () => ((error: unknown, isFatal?: boolean) => void) | undefined;
+  setGlobalHandler: (handler: (error: unknown, isFatal?: boolean) => void) => void;
+};
 
-/** Logs fatal JS errors in release so `adb logcat ReactNativeJS:* *:S` captures the first exception. */
+/** Logs fatal JS errors in release when ErrorUtils is available (Bridgeless may omit it). */
 export function installStartupErrorHandler(): void {
-  if (__DEV__) return;
+  const ErrorUtils = (global as typeof globalThis & { ErrorUtils?: GlobalErrorUtils })
+    .ErrorUtils;
+
+  if (
+    __DEV__ ||
+    !ErrorUtils ||
+    typeof ErrorUtils.getGlobalHandler !== "function" ||
+    typeof ErrorUtils.setGlobalHandler !== "function"
+  ) {
+    return;
+  }
 
   const previous = ErrorUtils.getGlobalHandler();
   ErrorUtils.setGlobalHandler((error, isFatal) => {
