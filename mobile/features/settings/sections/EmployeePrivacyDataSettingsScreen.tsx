@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import { Alert, StyleSheet, Text } from "react-native";
 import { useRouter } from "expo-router";
 import { Button } from "@/components/ui/Button";
@@ -5,13 +6,17 @@ import { Section } from "@/components/ui/Section";
 import { SettingsSectionLayout } from "@/features/settings/SettingsSectionLayout";
 import { useAuth } from "@/hooks/useAuth";
 import { useI18n } from "@/hooks/useI18n";
+import { useTheme } from "@/hooks/useTheme";
 import { deleteEmployeeAccount, downloadEmployeeDataExport } from "@/services/api/employeeService";
 import { showErrorToast, showSuccessToast } from "@/store/toastStore";
 import { friendlyErrorMessage } from "@/utils/friendlyError";
-import { colors, typography } from "@/theme";
+import type { ColorPalette } from "@/theme/colors";
+import { typography } from "@/theme";
 
 export function EmployeePrivacyDataSettingsScreen() {
   const { t } = useI18n();
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const router = useRouter();
   const { signOut } = useAuth();
 
@@ -59,6 +64,8 @@ export function EmployeePrivacyDataSettingsScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  body: { ...typography.body, color: colors.mutedForeground },
-});
+function createStyles(colors: ColorPalette) {
+  return StyleSheet.create({
+    body: { ...typography.body, color: colors.mutedForeground },
+  });
+}

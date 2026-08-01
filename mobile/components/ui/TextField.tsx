@@ -1,4 +1,4 @@
-import { forwardRef, useImperativeHandle, useRef, useState } from "react";
+import { forwardRef, useImperativeHandle, useMemo, useRef, useState } from "react";
 import {
   Pressable,
   StyleSheet,
@@ -15,7 +15,9 @@ import Animated, {
   useSharedValue,
   withTiming,
 } from "react-native-reanimated";
-import { colors, motion, radius, shadows, spacing, touchTarget, typography } from "@/theme";
+import { useTheme } from "@/hooks/useTheme";
+import type { ColorPalette } from "@/theme/colors";
+import { motion, radius, shadows, spacing, touchTarget, typography } from "@/theme";
 
 type TextFieldProps = TextInputProps & {
   label: string;
@@ -39,6 +41,8 @@ export const TextField = forwardRef<TextInput, TextFieldProps>(function TextFiel
   },
   ref,
 ) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const inputRef = useRef<TextInput>(null);
   const focusProgress = useSharedValue(0);
 
@@ -46,13 +50,16 @@ export const TextField = forwardRef<TextInput, TextFieldProps>(function TextFiel
 
   const errorBorderColor = error ? colors.destructive : null;
 
-  const inputStyle = useAnimatedStyle(() => ({
-    borderColor: interpolateColor(
-      focusProgress.value,
-      [0, 1],
-      [errorBorderColor ?? colors.borderStrong, errorBorderColor ?? colors.primary],
-    ),
-  }), [errorBorderColor]);
+  const inputStyle = useAnimatedStyle(
+    () => ({
+      borderColor: interpolateColor(
+        focusProgress.value,
+        [0, 1],
+        [errorBorderColor ?? colors.borderStrong, errorBorderColor ?? colors.primary],
+      ),
+    }),
+    [errorBorderColor, colors.borderStrong, colors.primary],
+  );
 
   const focusInput = () => {
     if (editable !== false) {
@@ -65,19 +72,9 @@ export const TextField = forwardRef<TextInput, TextFieldProps>(function TextFiel
       <Text style={styles.label} pointerEvents="none" accessibilityRole="text">
         {label}
       </Text>
-      <Pressable
-        accessibilityRole="none"
-        disabled={editable === false}
-        onPress={focusInput}
-      >
+      <Pressable accessibilityRole="none" disabled={editable === false} onPress={focusInput}>
         <View style={[styles.inputShell, shadows.sm]}>
-          <AnimatedView
-            style={[
-              styles.input,
-              inputStyle,
-              error ? styles.inputError : null,
-            ]}
-          >
+          <AnimatedView style={[styles.input, inputStyle, error ? styles.inputError : null]}>
             <TextInput
               ref={inputRef}
               accessibilityLabel={accessibilityLabel ?? label}
@@ -110,42 +107,44 @@ export const TextField = forwardRef<TextInput, TextFieldProps>(function TextFiel
   );
 });
 
-const styles = StyleSheet.create({
-  container: {
-    gap: spacing.sm,
-  },
-  label: {
-    ...typography.caption,
-    color: colors.foreground,
-    fontWeight: "600",
-    fontSize: 13,
-  },
-  inputShell: {
-    borderRadius: radius.lg,
-    overflow: "hidden",
-  },
-  input: {
-    minHeight: touchTarget + 4,
-    borderWidth: 1.5,
-    borderColor: colors.borderStrong,
-    backgroundColor: colors.inputBackground,
-    borderRadius: radius.lg,
-    paddingHorizontal: spacing.lg,
-    justifyContent: "center",
-  },
-  inputText: {
-    ...typography.body,
-    color: colors.foreground,
-    padding: 0,
-    margin: 0,
-    minHeight: touchTarget,
-  },
-  inputError: {
-    borderColor: colors.destructive,
-    backgroundColor: colors.destructiveSoft,
-  },
-  error: {
-    ...typography.caption,
-    color: colors.destructive,
-  },
-});
+function createStyles(colors: ColorPalette) {
+  return StyleSheet.create({
+    container: {
+      gap: spacing.sm,
+    },
+    label: {
+      ...typography.caption,
+      color: colors.foreground,
+      fontWeight: "600",
+      fontSize: 13,
+    },
+    inputShell: {
+      borderRadius: radius.lg,
+      overflow: "hidden",
+    },
+    input: {
+      minHeight: touchTarget + 4,
+      borderWidth: 1.5,
+      borderColor: colors.borderStrong,
+      backgroundColor: colors.inputBackground,
+      borderRadius: radius.lg,
+      paddingHorizontal: spacing.lg,
+      justifyContent: "center",
+    },
+    inputText: {
+      ...typography.body,
+      color: colors.foreground,
+      padding: 0,
+      margin: 0,
+      minHeight: touchTarget,
+    },
+    inputError: {
+      borderColor: colors.destructive,
+      backgroundColor: colors.destructiveSoft,
+    },
+    error: {
+      ...typography.caption,
+      color: colors.destructive,
+    },
+  });
+}

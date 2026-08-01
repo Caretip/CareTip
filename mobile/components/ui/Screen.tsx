@@ -9,8 +9,9 @@ import {
   type ScrollViewProps,
 } from "react-native";
 import { SafeAreaView, type Edge } from "react-native-safe-area-context";
-import { colors, spacing, screenPadding } from "@/theme";
+import { spacing, screenPadding } from "@/theme";
 import { TAB_BAR_SCROLL_CLEARANCE } from "@/theme/navigation";
+import { useTheme } from "@/hooks/useTheme";
 import { OfflineBanner } from "@/components/layout/OfflineBanner";
 import { ErrorBanner } from "@/components/layout/ErrorBanner";
 import { SplashScreenAnchor } from "@/components/brand/SplashScreenAnchor";
@@ -21,9 +22,7 @@ type ScreenProps = ScrollViewProps & {
   onRefresh?: () => void;
   padded?: boolean;
   tabSafe?: boolean;
-  /** Wrap scroll content in KeyboardAvoidingView — use on form-heavy screens. */
   keyboardAware?: boolean;
-  /** Override SafeAreaView edges — use when a parent shell already applies top inset. */
   safeAreaEdges?: Edge[];
 };
 
@@ -39,6 +38,7 @@ export function Screen({
   ...rest
 }: ScreenProps) {
   const { width } = useWindowDimensions();
+  const { colors } = useTheme();
   const contentMaxWidth = width >= 768 ? 960 : 720;
 
   const scroll = (
@@ -53,6 +53,7 @@ export function Screen({
             onRefresh={onRefresh}
             tintColor={colors.primary}
             colors={[colors.primary]}
+            progressBackgroundColor={colors.background}
           />
         ) : undefined
       }
@@ -68,7 +69,7 @@ export function Screen({
   );
 
   return (
-    <SafeAreaView style={styles.safe} edges={safeAreaEdges} collapsable={false}>
+    <SafeAreaView style={[styles.safe, { backgroundColor: colors.background }]} edges={safeAreaEdges} collapsable={false}>
       <SplashScreenAnchor source="Screen" />
       <OfflineBanner />
       <ErrorBanner />
@@ -94,7 +95,6 @@ export function ScreenHeader({ children }: { children: React.ReactNode }) {
 const styles = StyleSheet.create({
   safe: {
     flex: 1,
-    backgroundColor: colors.background,
   },
   flex: {
     flex: 1,

@@ -17,15 +17,19 @@ import { StatusPill } from "@/components/ui/StatusPill";
 import { ScreenShell, screenContentPadding, useListRefreshControl } from "@/components/ui/ScreenShell";
 import { useQrStudio } from "@/hooks/useQrStudio";
 import { useI18n } from "@/hooks/useI18n";
+import { useTheme } from "@/hooks/useTheme";
 import { loadOfflineQrItems } from "@/utils/offlineQrCache";
 import { friendlyErrorMessage, isPermissionError } from "@/utils/friendlyError";
 import { showSuccessToast } from "@/store/toastStore";
 import type { QrCodeItem } from "@/types/qr";
 import { LIST_PERF_COMPACT } from "@/constants/listPerf";
-import { colors, spacing, typography } from "@/theme";
+import type { ColorPalette } from "@/theme/colors";
+import { spacing, typography } from "@/theme";
 
 export function QrStudioScreen() {
   const { t } = useI18n();
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const [selected, setSelected] = useState<QrCodeItem | null>(null);
   const [offlineItems, setOfflineItems] = useState<QrCodeItem[]>([]);
   const { items, isLoading, isRefreshing, refresh, error } = useQrStudio();
@@ -92,7 +96,7 @@ export function QrStudioScreen() {
         ) : null}
       </>
     ),
-    [handleCopy, handleShare, offline, selected, t, typeLabels],
+    [handleCopy, handleShare, offline, selected, styles, t, typeLabels],
   );
 
   const keyExtractor = useCallback((item: QrCodeItem) => item.id, []);
@@ -111,7 +115,7 @@ export function QrStudioScreen() {
         <StatusPill label={typeLabels[item.type]} tone="brand" />
       </Pressable>
     ),
-    [typeLabels],
+    [styles, typeLabels],
   );
 
   return (
@@ -163,60 +167,62 @@ export function QrStudioScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  header: {
-    gap: spacing.xs,
-    marginBottom: spacing.md,
-  },
-  title: {
-    ...typography.title,
-    color: colors.foreground,
-  },
-  offlineNote: {
-    ...typography.caption,
-    color: colors.warning,
-    fontWeight: "600",
-  },
-  listPad: {
-    paddingHorizontal: spacing.xl,
-  },
-  list: {
-    ...screenContentPadding,
-    flexGrow: 1,
-  },
-  row: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    gap: spacing.md,
-    paddingVertical: spacing.lg,
-    minHeight: 48,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: colors.border,
-  },
-  rowBody: {
-    gap: spacing.xs,
-    flex: 1,
-  },
-  pressed: {
-    opacity: 0.92,
-  },
-  cardTitle: {
-    ...typography.cardTitle,
-    color: colors.foreground,
-  },
-  cardSubtitle: {
-    ...typography.caption,
-    color: colors.mutedForeground,
-  },
-  detail: {
-    gap: spacing.lg,
-    marginBottom: spacing.xl,
-    paddingVertical: spacing.lg,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: colors.border,
-  },
-  actions: {
-    gap: spacing.md,
-  },
-});
+function createStyles(colors: ColorPalette) {
+  return StyleSheet.create({
+    header: {
+      gap: spacing.xs,
+      marginBottom: spacing.md,
+    },
+    title: {
+      ...typography.title,
+      color: colors.foreground,
+    },
+    offlineNote: {
+      ...typography.caption,
+      color: colors.warning,
+      fontWeight: "600",
+    },
+    listPad: {
+      paddingHorizontal: spacing.xl,
+    },
+    list: {
+      ...screenContentPadding,
+      flexGrow: 1,
+    },
+    row: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      gap: spacing.md,
+      paddingVertical: spacing.lg,
+      minHeight: 48,
+      borderBottomWidth: StyleSheet.hairlineWidth,
+      borderBottomColor: colors.border,
+    },
+    rowBody: {
+      gap: spacing.xs,
+      flex: 1,
+    },
+    pressed: {
+      opacity: 0.92,
+    },
+    cardTitle: {
+      ...typography.cardTitle,
+      color: colors.foreground,
+    },
+    cardSubtitle: {
+      ...typography.caption,
+      color: colors.mutedForeground,
+    },
+    detail: {
+      gap: spacing.lg,
+      marginBottom: spacing.xl,
+      paddingVertical: spacing.lg,
+      borderBottomWidth: StyleSheet.hairlineWidth,
+      borderBottomColor: colors.border,
+    },
+    actions: {
+      gap: spacing.md,
+    },
+  });
+}

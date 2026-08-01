@@ -17,6 +17,7 @@ import { SkeletonListRows } from "@/components/ui/Skeleton";
 import { useActivityCenterFeed } from "@/hooks/useActivityCenterFeed";
 import { useAuth } from "@/hooks/useAuth";
 import { useI18n } from "@/hooks/useI18n";
+import { useTheme } from "@/hooks/useTheme";
 import type {
   ActivityCenterFilter,
   ActivityEventSource,
@@ -27,7 +28,8 @@ import { formatActivityVenueTimeParts } from "@/utils/businessVenueTime";
 import { formatTimeAgo } from "@/utils/formatTimeAgo";
 import { formatEur } from "@/utils/format";
 import { LIST_PERF } from "@/constants/listPerf";
-import { colors, spacing, typography } from "@/theme";
+import type { ColorPalette } from "@/theme/colors";
+import { spacing, typography } from "@/theme";
 
 const SOURCE_TONE: Record<
   ActivityEventSource,
@@ -91,6 +93,8 @@ const ActivityRow = memo(function ActivityRow({
 
 export function ActivityCenterScreen() {
   const { t } = useI18n();
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const { user } = useAuth();
   const {
     filter,
@@ -169,7 +173,7 @@ export function ActivityCenterScreen() {
         />
       );
     },
-    [venueTimezone, filter, t],
+    [venueTimezone, filter, t, styles.dayHeader],
   );
 
   const refreshControl = useListRefreshControl(isRefreshing, () => void refresh());
@@ -241,59 +245,61 @@ export function ActivityCenterScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  header: {
-    ...screenContentPadding,
-    paddingBottom: spacing.md,
-    gap: spacing.xs,
-  },
-  eyebrow: {
-    ...typography.overline,
-    color: colors.primary,
-  },
-  title: {
-    ...typography.title,
-    color: colors.foreground,
-  },
-  headerSub: {
-    ...typography.body,
-    color: colors.mutedForeground,
-  },
-  filters: {
-    paddingHorizontal: spacing.xl,
-    paddingBottom: spacing.md,
-  },
-  listPad: {
-    ...screenContentPadding,
-  },
-  list: {
-    ...screenContentPadding,
-    flexGrow: 1,
-    paddingTop: spacing.xs,
-  },
-  dayHeader: {
-    ...typography.overline,
-    color: colors.mutedForeground,
-    marginTop: spacing.md,
-    marginBottom: spacing.md,
-  },
-  footerLoader: {
-    marginVertical: spacing.lg,
-  },
-  loadMore: {
-    alignItems: "center",
-    paddingVertical: spacing.lg,
-    minHeight: 48,
-    justifyContent: "center",
-  },
-  loadMoreText: {
-    ...typography.button,
-    color: colors.primary,
-  },
-  endOfList: {
-    ...typography.caption,
-    color: colors.mutedForeground,
-    textAlign: "center",
-    paddingVertical: spacing.lg,
-  },
-});
+function createStyles(colors: ColorPalette) {
+  return StyleSheet.create({
+    header: {
+      ...screenContentPadding,
+      paddingBottom: spacing.md,
+      gap: spacing.xs,
+    },
+    eyebrow: {
+      ...typography.overline,
+      color: colors.primary,
+    },
+    title: {
+      ...typography.title,
+      color: colors.foreground,
+    },
+    headerSub: {
+      ...typography.body,
+      color: colors.mutedForeground,
+    },
+    filters: {
+      paddingHorizontal: spacing.xl,
+      paddingBottom: spacing.md,
+    },
+    listPad: {
+      ...screenContentPadding,
+    },
+    list: {
+      ...screenContentPadding,
+      flexGrow: 1,
+      paddingTop: spacing.xs,
+    },
+    dayHeader: {
+      ...typography.overline,
+      color: colors.mutedForeground,
+      marginTop: spacing.md,
+      marginBottom: spacing.md,
+    },
+    footerLoader: {
+      marginVertical: spacing.lg,
+    },
+    loadMore: {
+      alignItems: "center",
+      paddingVertical: spacing.lg,
+      minHeight: 48,
+      justifyContent: "center",
+    },
+    loadMoreText: {
+      ...typography.button,
+      color: colors.primary,
+    },
+    endOfList: {
+      ...typography.caption,
+      color: colors.mutedForeground,
+      textAlign: "center",
+      paddingVertical: spacing.lg,
+    },
+  });
+}

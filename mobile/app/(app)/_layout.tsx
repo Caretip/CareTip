@@ -2,9 +2,10 @@ import { Redirect, Stack } from "expo-router";
 import { useAuth } from "@/hooks/useAuth";
 import { useSessionRoutingReady } from "@/hooks/useAppReady";
 import { getPostAuthHref, resolvePostAuthAction } from "@/utils/postAuthNavigation";
-import { colors } from "@/theme";
+import { useTheme } from "@/hooks/useTheme";
 
 export default function AppLayout() {
+  const { colors } = useTheme();
   const { isAuthenticated, user } = useAuth();
   const routingReady = useSessionRoutingReady();
 

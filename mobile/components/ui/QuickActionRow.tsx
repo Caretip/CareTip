@@ -1,8 +1,10 @@
-import { memo } from "react";
+import { memo, useMemo } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { useTheme } from "@/hooks/useTheme";
 import { surface } from "@/theme/surfaces";
-import { colors, spacing, touchTarget, typography } from "@/theme";
+import type { ColorPalette } from "@/theme/colors";
+import { spacing, touchTarget, typography } from "@/theme";
 import { hapticLight } from "@/utils/haptics";
 
 export type QuickAction = {
@@ -18,6 +20,9 @@ type QuickActionRowProps = {
 
 /** Payment-wallet template — circular icon shortcuts below hero balance. */
 export const QuickActionRow = memo(function QuickActionRow({ actions }: QuickActionRowProps) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
+
   return (
     <View style={styles.row}>
       {actions.map((action) => (
@@ -43,38 +48,40 @@ export const QuickActionRow = memo(function QuickActionRow({ actions }: QuickAct
   );
 });
 
-const styles = StyleSheet.create({
-  row: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    gap: spacing.sm,
-  },
-  chip: {
-    flex: 1,
-    alignItems: "center",
-    gap: spacing.sm,
-    minHeight: touchTarget + 20,
-    paddingVertical: spacing.xs,
-  },
-  pressed: {
-    opacity: 0.82,
-  },
-  iconWell: {
-    width: surface.iconWellSize,
-    height: surface.iconWellSize,
-    borderRadius: surface.iconWellRadius,
-    backgroundColor: colors.primarySoft,
-    alignItems: "center",
-    justifyContent: "center",
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: "rgba(235, 153, 44, 0.14)",
-  },
-  label: {
-    ...typography.caption,
-    color: colors.foreground,
-    fontWeight: "600",
-    fontSize: 11,
-    textAlign: "center",
-    lineHeight: 14,
-  },
-});
+function createStyles(colors: ColorPalette) {
+  return StyleSheet.create({
+    row: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      gap: spacing.sm,
+    },
+    chip: {
+      flex: 1,
+      alignItems: "center",
+      gap: spacing.sm,
+      minHeight: touchTarget + 20,
+      paddingVertical: spacing.xs,
+    },
+    pressed: {
+      opacity: 0.82,
+    },
+    iconWell: {
+      width: surface.iconWellSize,
+      height: surface.iconWellSize,
+      borderRadius: surface.iconWellRadius,
+      backgroundColor: colors.primarySoft,
+      alignItems: "center",
+      justifyContent: "center",
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: colors.primarySoft,
+    },
+    label: {
+      ...typography.caption,
+      color: colors.foreground,
+      fontWeight: "600",
+      fontSize: 11,
+      textAlign: "center",
+      lineHeight: 14,
+    },
+  });
+}

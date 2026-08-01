@@ -1,7 +1,9 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { StyleSheet, TextInput, View, type TextInputProps } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { colors, radius, shadows, spacing, touchTarget, typography } from "@/theme";
+import { useTheme } from "@/hooks/useTheme";
+import type { ColorPalette } from "@/theme/colors";
+import { radius, shadows, spacing, touchTarget, typography } from "@/theme";
 
 type SearchFieldProps = TextInputProps & {
   value: string;
@@ -17,6 +19,8 @@ export function SearchField({
   onBlur,
   ...rest
 }: SearchFieldProps) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const [focused, setFocused] = useState(false);
 
   return (
@@ -50,28 +54,30 @@ export function SearchField({
   );
 }
 
-const styles = StyleSheet.create({
-  wrap: {
-    flexDirection: "row",
-    alignItems: "center",
-    borderRadius: radius["2xl"],
-    backgroundColor: colors.card,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: colors.border,
-    paddingHorizontal: spacing.lg,
-    minHeight: touchTarget,
-  },
-  focused: {
-    borderColor: colors.primary,
-  },
-  icon: {
-    marginRight: spacing.sm,
-  },
-  input: {
-    flex: 1,
-    minHeight: touchTarget,
-    paddingVertical: spacing.md,
-    ...typography.body,
-    color: colors.foreground,
-  },
-});
+function createStyles(colors: ColorPalette) {
+  return StyleSheet.create({
+    wrap: {
+      flexDirection: "row",
+      alignItems: "center",
+      borderRadius: radius["2xl"],
+      backgroundColor: colors.card,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: colors.border,
+      paddingHorizontal: spacing.lg,
+      minHeight: touchTarget,
+    },
+    focused: {
+      borderColor: colors.primary,
+    },
+    icon: {
+      marginRight: spacing.sm,
+    },
+    input: {
+      flex: 1,
+      minHeight: touchTarget,
+      paddingVertical: spacing.md,
+      ...typography.body,
+      color: colors.foreground,
+    },
+  });
+}

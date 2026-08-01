@@ -1,41 +1,43 @@
 import { StyleSheet } from "react-native";
 import { authBrand } from "@/theme/authBrand";
-import { colors, radius, spacing, touchTarget, typography } from "@/theme";
+import { radius, spacing, touchTarget, typography } from "@/theme";
 
-/** Shared auth card typography and rhythm — single source for optical balance. */
+/** Floating auth typography — light text on hero image, no white card. */
 export const authCardStyles = StyleSheet.create({
   cardHeader: {
-    gap: spacing.sm,
-    marginBottom: spacing.xs,
+    gap: spacing.md,
+    marginBottom: spacing.sm,
   },
   cardEyebrow: {
     ...typography.overline,
-    color: authBrand.orange,
-    letterSpacing: 1.2,
+    color: authBrand.heroEyebrow,
+    letterSpacing: 1.4,
   },
   cardTitle: {
     ...typography.hero,
-    color: authBrand.dark,
-    fontSize: 26,
-    lineHeight: 32,
-    letterSpacing: -0.5,
+    color: authBrand.heroTitle,
+    fontSize: 28,
+    lineHeight: 34,
+    letterSpacing: -0.6,
   },
   cardSubtitle: {
     ...typography.body,
-    color: authBrand.muted,
-    fontSize: 14,
-    lineHeight: 22,
+    color: authBrand.heroSubtitle,
+    fontSize: 15,
+    lineHeight: 24,
+    fontWeight: "500",
   },
   fields: {
-    gap: spacing.xl,
+    gap: spacing["2xl"],
   },
   formBlock: {
-    gap: spacing["2xl"],
+    gap: spacing["3xl"],
   },
   formError: {
     ...typography.caption,
-    color: colors.destructive,
+    color: "#FCA5A5",
     fontWeight: "600",
+    textAlign: "center",
   },
   backRow: {
     minHeight: touchTarget,
@@ -44,7 +46,7 @@ export const authCardStyles = StyleSheet.create({
   },
   backLink: {
     ...typography.body,
-    color: authBrand.orange,
+    color: authBrand.orangeSoft,
     fontWeight: "700",
   },
   pressed: {
@@ -60,21 +62,42 @@ export const authCardStyles = StyleSheet.create({
     minHeight: touchTarget,
     borderRadius: radius.md,
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: "rgba(11, 18, 32, 0.14)",
+    borderColor: authBrand.fieldBorder,
     alignItems: "center",
     justifyContent: "center",
     paddingHorizontal: spacing.sm,
+    backgroundColor: authBrand.fieldFill,
   },
   roleChipActive: {
-    backgroundColor: "rgba(255, 107, 26, 0.12)",
+    backgroundColor: "rgba(235, 153, 44, 0.22)",
     borderColor: authBrand.orange,
   },
   roleChipLabel: {
     ...typography.caption,
-    color: authBrand.muted,
+    color: authBrand.fieldLabel,
     fontWeight: "600",
   },
   roleChipLabelActive: {
-    color: authBrand.orange,
+    color: authBrand.orangeSoft,
+  },
+});
+
+/** Divider for floating auth forms on hero background. */
+export const authFloatingDivider = StyleSheet.create({
+  row: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.md,
+  },
+  line: {
+    flex: 1,
+    height: StyleSheet.hairlineWidth,
+    backgroundColor: "rgba(255, 255, 255, 0.22)",
+  },
+  label: {
+    ...typography.caption,
+    color: authBrand.fieldLabel,
+    fontWeight: "600",
+    fontSize: 12,
   },
 });

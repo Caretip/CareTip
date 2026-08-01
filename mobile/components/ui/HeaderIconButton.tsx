@@ -5,7 +5,9 @@ import Animated, {
   withSpring,
 } from "react-native-reanimated";
 import { Ionicons } from "@expo/vector-icons";
-import { motion, radius, shadows, touchTarget } from "@/theme";
+import { authBrand } from "@/theme/authBrand";
+import { motion, spacing, touchTarget } from "@/theme";
+import { useTheme } from "@/hooks/useTheme";
 import { hapticLight } from "@/utils/haptics";
 
 export type HeaderControlVariant = "onHero" | "onSurface";
@@ -20,19 +22,6 @@ type HeaderIconButtonProps = {
   style?: StyleProp<ViewStyle>;
 };
 
-const variantStyles = {
-  onHero: {
-    backgroundColor: "rgba(255, 255, 255, 0.16)",
-    borderColor: "rgba(255, 255, 255, 0.28)",
-    iconColor: "#FFFFFF",
-  },
-  onSurface: {
-    backgroundColor: "rgba(255, 255, 255, 0.92)",
-    borderColor: "rgba(11, 18, 32, 0.08)",
-    iconColor: "#111827",
-  },
-} as const;
-
 export function HeaderIconButton({
   icon,
   accessibilityLabel,
@@ -43,7 +32,26 @@ export function HeaderIconButton({
   style,
 }: HeaderIconButtonProps) {
   const scale = useSharedValue(1);
-  const palette = variantStyles[variant];
+  const { colors, isDark } = useTheme();
+  const isHero = variant === "onHero";
+
+  const palette = isHero
+    ? {
+        backgroundColor: authBrand.heroControlFill,
+        borderColor: authBrand.heroControlBorder,
+        iconColor: authBrand.heroControlIcon,
+        activeBg: "rgba(235, 153, 44, 0.32)",
+        activeBorder: authBrand.orange,
+        activeIcon: authBrand.orangeSoft,
+      }
+    : {
+        backgroundColor: isDark ? colors.cardElevated : "rgba(255, 255, 255, 0.94)",
+        borderColor: colors.borderStrong,
+        iconColor: colors.foreground,
+        activeBg: colors.primarySoft,
+        activeBorder: colors.primary,
+        activeIcon: colors.primary,
+      };
 
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [{ scale: scale.value }],
@@ -66,16 +74,20 @@ export function HeaderIconButton({
       }}
       style={[
         styles.button,
-        shadows.sm,
+        isHero ? styles.buttonHero : styles.buttonSurface,
         {
-          backgroundColor: active ? "rgba(235, 153, 44, 0.22)" : palette.backgroundColor,
-          borderColor: active ? "#EB992C" : palette.borderColor,
+          backgroundColor: active ? palette.activeBg : palette.backgroundColor,
+          borderColor: active ? palette.activeBorder : palette.borderColor,
         },
         style,
       ]}
     >
       <Animated.View style={[styles.iconWrap, animatedStyle]} collapsable={false}>
-        <Ionicons name={icon} size={20} color={active ? "#EB992C" : palette.iconColor} />
+        <Ionicons
+          name={icon}
+          size={20}
+          color={active ? palette.activeIcon : palette.iconColor}
+        />
       </Animated.View>
     </Pressable>
   );
@@ -83,13 +95,23 @@ export function HeaderIconButton({
 
 const styles = StyleSheet.create({
   button: {
-    width: touchTarget - 4,
-    height: touchTarget - 4,
-    borderRadius: radius.lg,
-    borderWidth: StyleSheet.hairlineWidth,
+    width: touchTarget,
+    height: touchTarget,
     alignItems: "center",
     justifyContent: "center",
     overflow: "hidden",
+    borderWidth: StyleSheet.hairlineWidth * 2,
+  },
+  buttonHero: {
+    borderRadius: touchTarget / 2,
+    shadowColor: "#000000",
+    shadowOpacity: 0.22,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 6,
+  },
+  buttonSurface: {
+    borderRadius: 14,
   },
   iconWrap: {
     alignItems: "center",

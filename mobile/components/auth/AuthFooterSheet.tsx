@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import Animated, {
   Easing,
@@ -11,9 +11,11 @@ import { useRouter, type Href } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { authSocialLinks } from "@/constants/authLinks";
 import { useI18n } from "@/hooks/useI18n";
+import { useTheme } from "@/hooks/useTheme";
 import { openCareTipWeb } from "@/utils/openCareTipWeb";
 import { authBrand } from "@/theme/authBrand";
-import { colors, radius, spacing, touchTarget, typography } from "@/theme";
+import type { ColorPalette } from "@/theme/colors";
+import { radius, spacing, touchTarget, typography } from "@/theme";
 
 type AuthFooterSheetProps = {
   visible: boolean;
@@ -36,6 +38,8 @@ export function AuthFooterSheet({
   routePrefix = "/(auth)",
 }: AuthFooterSheetProps) {
   const { t } = useI18n();
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const translateY = useSharedValue(48);
@@ -212,93 +216,95 @@ export function AuthFooterSheet({
   );
 }
 
-const styles = StyleSheet.create({
-  root: { flex: 1, justifyContent: "flex-end" },
-  backdrop: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgba(11, 18, 32, 0.52)",
-  },
-  sheet: {
-    backgroundColor: colors.card,
-    borderTopLeftRadius: 28,
-    borderTopRightRadius: 28,
-    paddingHorizontal: spacing.xl,
-    paddingTop: spacing.md,
-    maxHeight: "82%",
-  },
-  handle: {
-    alignSelf: "center",
-    width: 40,
-    height: 4,
-    borderRadius: radius.full,
-    backgroundColor: colors.borderStrong,
-    marginBottom: spacing.lg,
-  },
-  sheetTitle: {
-    ...typography.h2,
-    color: colors.foreground,
-    marginBottom: spacing.lg,
-  },
-  sectionLabel: {
-    ...typography.overline,
-    color: colors.mutedForeground,
-    marginBottom: spacing.sm,
-  },
-  row: {
-    minHeight: touchTarget,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: spacing.md,
-    paddingVertical: spacing.sm,
-  },
-  rowPressed: { opacity: 0.72 },
-  rowIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 12,
-    backgroundColor: "rgba(235, 153, 44, 0.12)",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  rowLabel: {
-    ...typography.body,
-    color: colors.foreground,
-    flex: 1,
-    fontWeight: "600",
-  },
-  divider: {
-    height: StyleSheet.hairlineWidth,
-    backgroundColor: colors.border,
-    marginVertical: spacing.lg,
-  },
-  socialGrid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: spacing.sm,
-  },
-  socialChip: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: spacing.sm,
-    minHeight: touchTarget,
-    paddingHorizontal: spacing.lg,
-    borderRadius: 999,
-    backgroundColor: colors.secondary,
-  },
-  socialLabel: {
-    ...typography.caption,
-    color: colors.foreground,
-    fontWeight: "700",
-  },
-  closeBtn: {
-    marginTop: spacing.xl,
-    minHeight: touchTarget,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  closeLabel: {
-    ...typography.button,
-    color: authBrand.orange,
-    fontWeight: "700",
-  },
-});
+function createStyles(colors: ColorPalette) {
+  return StyleSheet.create({
+    root: { flex: 1, justifyContent: "flex-end" },
+    backdrop: {
+      ...StyleSheet.absoluteFillObject,
+      backgroundColor: "rgba(11, 18, 32, 0.52)",
+    },
+    sheet: {
+      backgroundColor: colors.card,
+      borderTopLeftRadius: 28,
+      borderTopRightRadius: 28,
+      paddingHorizontal: spacing.xl,
+      paddingTop: spacing.md,
+      maxHeight: "82%",
+    },
+    handle: {
+      alignSelf: "center",
+      width: 40,
+      height: 4,
+      borderRadius: radius.full,
+      backgroundColor: colors.borderStrong,
+      marginBottom: spacing.lg,
+    },
+    sheetTitle: {
+      ...typography.h2,
+      color: colors.foreground,
+      marginBottom: spacing.lg,
+    },
+    sectionLabel: {
+      ...typography.overline,
+      color: colors.mutedForeground,
+      marginBottom: spacing.sm,
+    },
+    row: {
+      minHeight: touchTarget,
+      flexDirection: "row",
+      alignItems: "center",
+      gap: spacing.md,
+      paddingVertical: spacing.sm,
+    },
+    rowPressed: { opacity: 0.72 },
+    rowIcon: {
+      width: 40,
+      height: 40,
+      borderRadius: 12,
+      backgroundColor: "rgba(235, 153, 44, 0.12)",
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    rowLabel: {
+      ...typography.body,
+      color: colors.foreground,
+      flex: 1,
+      fontWeight: "600",
+    },
+    divider: {
+      height: StyleSheet.hairlineWidth,
+      backgroundColor: colors.border,
+      marginVertical: spacing.lg,
+    },
+    socialGrid: {
+      flexDirection: "row",
+      flexWrap: "wrap",
+      gap: spacing.sm,
+    },
+    socialChip: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: spacing.sm,
+      minHeight: touchTarget,
+      paddingHorizontal: spacing.lg,
+      borderRadius: 999,
+      backgroundColor: colors.secondary,
+    },
+    socialLabel: {
+      ...typography.caption,
+      color: colors.foreground,
+      fontWeight: "700",
+    },
+    closeBtn: {
+      marginTop: spacing.xl,
+      minHeight: touchTarget,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    closeLabel: {
+      ...typography.button,
+      color: authBrand.orange,
+      fontWeight: "700",
+    },
+  });
+}

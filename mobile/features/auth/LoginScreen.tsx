@@ -19,9 +19,9 @@ import { friendlyErrorMessage } from "@/utils/friendlyError";
 import { navigateAfterAuth } from "@/utils/postAuthNavigation";
 import { resolveLoginLocale } from "@/utils/resolveLoginLocale";
 import { hapticLight } from "@/utils/haptics";
-import { authCardStyles } from "@/components/auth/authCardStyles";
+import { authCardStyles, authFloatingDivider } from "@/components/auth/authCardStyles";
 import { authBrand } from "@/theme/authBrand";
-import { colors, spacing, touchTarget, typography } from "@/theme";
+import { spacing, touchTarget, typography } from "@/theme";
 
 function resolveTimeZone(): string | undefined {
   try {
@@ -112,10 +112,10 @@ export function LoginScreen() {
                 disabled={authBusy || bootstrapping}
                 onPress={() => void runGoogleAuth({ isLogin: true })}
               />
-              <View style={styles.dividerRow}>
-                <View style={styles.dividerLine} />
-                <Text style={styles.dividerLabel}>{t("auth.orContinueWith")}</Text>
-                <View style={styles.dividerLine} />
+              <View style={authFloatingDivider.row}>
+                <View style={authFloatingDivider.line} />
+                <Text style={authFloatingDivider.label}>{t("auth.orContinueWith")}</Text>
+                <View style={authFloatingDivider.line} />
               </View>
             </>
           ) : null}
@@ -221,22 +221,6 @@ export function LoginScreen() {
 }
 
 const styles = StyleSheet.create({
-  dividerRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: spacing.md,
-  },
-  dividerLine: {
-    flex: 1,
-    height: StyleSheet.hairlineWidth,
-    backgroundColor: "rgba(11, 18, 32, 0.12)",
-  },
-  dividerLabel: {
-    ...typography.caption,
-    color: authBrand.muted,
-    fontWeight: "600",
-    fontSize: 12,
-  },
   forgotLink: {
     alignSelf: "flex-end",
     minHeight: touchTarget,
@@ -245,7 +229,7 @@ const styles = StyleSheet.create({
   },
   forgotLabel: {
     ...typography.caption,
-    color: authBrand.orange,
+    color: authBrand.orangeSoft,
     fontWeight: "700",
     fontSize: 13,
   },
@@ -257,13 +241,8 @@ const styles = StyleSheet.create({
   },
   verifyPromptLabel: {
     ...typography.caption,
-    color: authBrand.orange,
+    color: authBrand.orangeSoft,
     fontWeight: "600",
     textAlign: "center",
-  },
-  formError: {
-    ...typography.caption,
-    color: colors.destructive,
-    fontWeight: "600",
   },
 });

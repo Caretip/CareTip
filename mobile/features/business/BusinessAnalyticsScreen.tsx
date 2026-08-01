@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import { StyleSheet, Text, View } from "react-native";
 import { KpiCard } from "@/components/ui/KpiCard";
 import { PeriodToggle } from "@/components/ui/PeriodToggle";
@@ -8,14 +9,18 @@ import { ErrorState } from "@/components/ui/ErrorState";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { SkeletonMetricGrid } from "@/components/ui/Skeleton";
 import { useI18n } from "@/hooks/useI18n";
+import { useTheme } from "@/hooks/useTheme";
 import { useBusinessAnalytics } from "@/features/business/useBusinessAnalytics";
 import { formatCount, formatEur, formatGrowthPercent, formatPercent } from "@/utils/format";
 import { friendlyErrorMessage, isPermissionError } from "@/utils/friendlyError";
-import { colors, spacing, typography } from "@/theme";
+import type { ColorPalette } from "@/theme/colors";
+import { spacing, typography } from "@/theme";
 import type { BusinessTimeframe } from "@/types/business";
 
 export function BusinessAnalyticsScreen() {
   const { t } = useI18n();
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const { timeframe, setTimeframe, stats, qrAnalytics, isLoading, isRefreshing, error, refresh } =
     useBusinessAnalytics({ includeQr: true });
 
@@ -124,7 +129,8 @@ export function BusinessAnalyticsScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ColorPalette) =>
+  StyleSheet.create({
   stack: { gap: spacing["2xl"], marginTop: spacing.lg },
   metricsRow: {
     flexDirection: "row",

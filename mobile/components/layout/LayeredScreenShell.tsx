@@ -19,12 +19,14 @@ import { spacing } from "@/theme";
 import { useTheme } from "@/hooks/useTheme";
 
 export type LayeredBackgroundVariant = "gradient" | "auth-image";
+export type LayeredLayoutVariant = "sheet" | "floating";
 
 type LayeredScreenShellProps = {
   header?: ReactNode;
   children: ReactNode;
   footer?: ReactNode;
   background?: LayeredBackgroundVariant;
+  layout?: LayeredLayoutVariant;
   refreshing?: boolean;
   onRefresh?: () => void;
   keyboardAware?: boolean;
@@ -40,6 +42,7 @@ export function LayeredScreenShell({
   children,
   footer,
   background = "gradient",
+  layout = "sheet",
   refreshing,
   onRefresh,
   keyboardAware = false,
@@ -50,8 +53,12 @@ export function LayeredScreenShell({
   const insets = useSafeAreaInsets();
   const { width, height } = useWindowDimensions();
   const isTablet = width >= TABLET_MIN_WIDTH;
+  const isFloating = layout === "floating";
   const pagePadding = isTablet ? spacing["4xl"] : layered.pagePadding;
-  const heroHeight = Math.max(height * heroHeightRatio, layered.heroMinHeight);
+  const heroHeight = Math.max(
+    height * (isFloating ? 0.34 : heroHeightRatio),
+    isFloating ? 240 : layered.heroMinHeight,
+  );
   const { colors, isDark } = useTheme();
   const sheetBackground = isDark ? colors.card : layered.sheetBackground;
 
@@ -66,43 +73,67 @@ export function LayeredScreenShell({
           <RefreshControl
             refreshing={Boolean(refreshing)}
             onRefresh={onRefresh}
-            tintColor={authBrand.white}
+            tintColor={isFloating ? authBrand.white : authBrand.orange}
             colors={[authBrand.orange]}
-            progressBackgroundColor={sheetBackground}
+            progressBackgroundColor={isFloating ? "transparent" : sheetBackground}
           />
         ) : undefined
       }
       contentContainerStyle={[
         styles.scrollContent,
         tabSafe ? styles.tabClearance : null,
-        { paddingBottom: Math.max(insets.bottom, layered.pagePadding) + (tabSafe ? 88 : 0) },
+        {
+          paddingBottom:
+            Math.max(insets.bottom, isFloating ? spacing["3xl"] : layered.pagePadding) +
+            (tabSafe ? 88 : 0),
+        },
       ]}
       {...scrollProps}
     >
-      <View style={[styles.heroZone, { minHeight: heroHeight, paddingHorizontal: pagePadding }]}>
+      <View
+        style={[
+          styles.heroZone,
+          isFloating ? styles.heroZoneFloating : null,
+          { minHeight: heroHeight, paddingHorizontal: pagePadding },
+        ]}
+      >
         {header}
       </View>
 
-      <View
-        style={[
-          styles.foregroundSheet,
-          layeredSheetShadow,
-          {
-            marginTop: -layered.sheetOverlap,
-            borderTopLeftRadius: layered.sheetRadius,
-            borderTopRightRadius: layered.sheetRadius,
-            paddingHorizontal: pagePadding,
-            paddingTop: layered.sectionGap,
-            paddingBottom: layered.sectionGap,
-            backgroundColor: sheetBackground,
-          },
-        ]}
-      >
-        {children}
-      </View>
+      {isFloating ? (
+        <View style={[styles.floatingContent, { paddingHorizontal: pagePadding }]}>
+          {children}
+        </View>
+      ) : (
+        <View
+          style={[
+            styles.foregroundSheet,
+            layeredSheetShadow,
+            {
+              marginTop: -layered.sheetOverlap,
+              borderTopLeftRadius: layered.sheetRadius,
+              borderTopRightRadius: layered.sheetRadius,
+              paddingHorizontal: pagePadding,
+              paddingTop: layered.sectionGap,
+              paddingBottom: layered.sectionGap,
+              backgroundColor: sheetBackground,
+            },
+          ]}
+        >
+          {children}
+        </View>
+      )}
 
       {footer ? (
-        <View style={[styles.footerZone, { paddingHorizontal: pagePadding }]}>{footer}</View>
+        <View
+          style={[
+            styles.footerZone,
+            isFloating ? styles.footerZoneFloating : null,
+            { paddingHorizontal: pagePadding },
+          ]}
+        >
+          {footer}
+        </View>
       ) : null}
     </ScrollView>
   );
@@ -121,10 +152,10 @@ export function LayeredScreenShell({
               colors={[
                 authBrand.overlayTop,
                 authBrand.overlayMid,
-                "rgba(11, 18, 32, 0.52)",
+                "rgba(11, 18, 32, 0.48)",
                 authBrand.overlayBottom,
               ]}
-              locations={[0, 0.28, 0.62, 1]}
+              locations={[0, 0.22, 0.55, 1]}
               style={StyleSheet.absoluteFill}
             />
           </ImageBackground>
@@ -136,10 +167,10 @@ export function LayeredScreenShell({
           colors={[...layered.heroGradient.colors]}
           start={layered.heroGradient.start}
           end={layered.heroGradient.end}
-          style={[styles.heroGradient, { height: heroHeight + layered.sheetOverlap }]}
+          style={[styles.heroGradient, { height: heroHeight + (isFloating ? 0 : layered.sheetOverlap) }]}
           pointerEvents="none"
         />
-      ) : (
+      ) : background === "auth-image" ? null : (
         <LinearGradient
           colors={["rgba(235, 153, 44, 0.18)", "rgba(235, 153, 44, 0.06)", "transparent"]}
           locations={[0, 0.45, 1]}
@@ -195,14 +226,26 @@ const styles = StyleSheet.create({
     paddingBottom: layered.sheetOverlap + spacing.lg,
     zIndex: 1,
   },
+  heroZoneFloating: {
+    paddingBottom: spacing["2xl"],
+  },
   foregroundSheet: {
     zIndex: 2,
     gap: layered.elementGap,
+  },
+  floatingContent: {
+    zIndex: 2,
+    gap: spacing["3xl"],
+    paddingTop: spacing.md,
   },
   footerZone: {
     paddingTop: spacing["2xl"],
     paddingBottom: spacing.lg,
     zIndex: 1,
+  },
+  footerZoneFloating: {
+    paddingTop: spacing["3xl"],
+    paddingBottom: spacing["2xl"],
   },
   tabClearance: {
     paddingBottom: spacing["6xl"],

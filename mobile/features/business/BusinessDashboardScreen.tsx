@@ -17,6 +17,7 @@ import { CustomerFeedbackPanel } from "@/components/business/CustomerFeedbackPan
 import { EmployeeGoalsPanel } from "@/components/business/EmployeeGoalsPanel";
 import { useAuth } from "@/hooks/useAuth";
 import { useI18n } from "@/hooks/useI18n";
+import { useTheme } from "@/hooks/useTheme";
 import { useBusinessDashboard } from "@/features/business/useBusinessDashboard";
 import { buildEmployeePerformanceChartRows } from "@/utils/dashboardChartData";
 import { formatCount, formatEur, formatGrowthPercent } from "@/utils/format";
@@ -26,6 +27,7 @@ import type { BusinessTimeframe } from "@/types/business";
 
 export function BusinessDashboardScreen() {
   const { t } = useI18n();
+  const { colors } = useTheme();
   const router = useRouter();
   const { user } = useAuth();
   const { timeframe, setTimeframe, profile, stats, isLoading, isRefreshing, error, refresh } =
@@ -46,7 +48,7 @@ export function BusinessDashboardScreen() {
   const hasTipActivity = periodTotalTips > 0;
   const tipsToday = stats?.operationalPulse?.tipsToday;
 
-  const employeePerformance = buildEmployeePerformanceChartRows(stats?.employees, 3);
+  const employeePerformance = buildEmployeePerformanceChartRows(stats?.employees, 3, colors);
   const leader = employeePerformance[0];
   const leaderMessage =
     leader != null

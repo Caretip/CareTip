@@ -1,10 +1,10 @@
-import { useEffect, useRef, type ReactNode } from "react";
+import { useMemo, useEffect, useRef, type ReactNode } from "react";
 import { StyleSheet, View } from "react-native";
 import Animated, { Easing, useAnimatedStyle, useSharedValue, withTiming } from "react-native-reanimated";
 import { useBootstrapReady } from "@/hooks/useAppReady";
 import { useNavigationReady } from "@/hooks/useNavigationReady";
+import { useTheme } from "@/hooks/useTheme";
 import { useSplashStore } from "@/store/splashStore";
-import { colors } from "@/theme";
 import { hideSplashOnce, logSplash } from "@/utils/splashLifecycle";
 
 const REVEAL_MS = 300;
@@ -19,6 +19,15 @@ type NativeSplashGateProps = {
  * Hides native splash once bootstrap + navigation + first screen paint (with fallback).
  */
 export function NativeSplashGate({ children }: NativeSplashGateProps) {
+  const { colors } = useTheme();
+  const styles = useMemo(
+    () =>
+      StyleSheet.create({
+        root: { flex: 1, backgroundColor: colors.background },
+        flex: { flex: 1 },
+      }),
+    [colors.background],
+  );
   const bootstrapReady = useBootstrapReady();
   const navigationReady = useNavigationReady();
   const firstScreenReady = useSplashStore((s) => s.firstScreenReady);
@@ -61,13 +70,3 @@ export function NativeSplashGate({ children }: NativeSplashGateProps) {
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  root: {
-    flex: 1,
-    backgroundColor: colors.background,
-  },
-  flex: {
-    flex: 1,
-  },
-});

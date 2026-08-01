@@ -1,16 +1,21 @@
+import { useMemo } from "react";
 import { StyleSheet, Text, View } from "react-native";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { GroupedList, GroupedRow } from "@/components/ui/Section";
 import { SkeletonListRows } from "@/components/ui/Skeleton";
 import { useI18n } from "@/hooks/useI18n";
+import { useTheme } from "@/hooks/useTheme";
 import { useBusinessCustomerFeedback } from "@/features/business/useBusinessCustomerFeedback";
 import { formatRating } from "@/utils/format";
 import { friendlyErrorMessage } from "@/utils/friendlyError";
-import { colors, spacing, typography } from "@/theme";
+import type { ColorPalette } from "@/theme/colors";
+import { spacing, typography } from "@/theme";
 import { uiLocaleTag } from "@/utils/labels";
 
 export function CustomerFeedbackPanel() {
   const { t } = useI18n();
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const { data, isLoading, error } = useBusinessCustomerFeedback(3);
 
   if (isLoading) {
@@ -76,41 +81,43 @@ export function CustomerFeedbackPanel() {
   );
 }
 
-const styles = StyleSheet.create({
-  wrap: { gap: spacing.md },
-  subtitle: {
-    ...typography.caption,
-    color: colors.mutedForeground,
-  },
-  error: {
-    ...typography.caption,
-    color: colors.destructive,
-  },
-  row: { gap: spacing.xs },
-  rowTop: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    gap: spacing.md,
-  },
-  name: {
-    ...typography.body,
-    fontWeight: "700",
-    color: colors.foreground,
-    flex: 1,
-  },
-  rating: {
-    ...typography.body,
-    fontWeight: "700",
-    color: colors.primary,
-  },
-  comment: {
-    ...typography.body,
-    color: colors.foreground,
-    lineHeight: 20,
-  },
-  meta: {
-    ...typography.caption,
-    color: colors.mutedForeground,
-  },
-});
+function createStyles(colors: ColorPalette) {
+  return StyleSheet.create({
+    wrap: { gap: spacing.md },
+    subtitle: {
+      ...typography.caption,
+      color: colors.mutedForeground,
+    },
+    error: {
+      ...typography.caption,
+      color: colors.destructive,
+    },
+    row: { gap: spacing.xs },
+    rowTop: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+      gap: spacing.md,
+    },
+    name: {
+      ...typography.body,
+      fontWeight: "700",
+      color: colors.foreground,
+      flex: 1,
+    },
+    rating: {
+      ...typography.body,
+      fontWeight: "700",
+      color: colors.primary,
+    },
+    comment: {
+      ...typography.body,
+      color: colors.foreground,
+      lineHeight: 20,
+    },
+    meta: {
+      ...typography.caption,
+      color: colors.mutedForeground,
+    },
+  });
+}

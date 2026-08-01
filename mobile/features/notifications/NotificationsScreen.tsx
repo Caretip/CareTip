@@ -17,11 +17,13 @@ import { NotificationCard } from "@/components/ui/ListCards";
 import { DetailScreenHeader } from "@/components/ui/DetailScreenHeader";
 import { useNotificationsFeed } from "@/hooks/useNotifications";
 import { useI18n } from "@/hooks/useI18n";
+import { useTheme } from "@/hooks/useTheme";
 import { formatTimeAgo } from "@/utils/formatTimeAgo";
 import { formatNotificationType } from "@/utils/labels";
 import { friendlyErrorMessage } from "@/utils/friendlyError";
 import { LIST_PERF } from "@/constants/listPerf";
-import { colors, spacing, surface, typography } from "@/theme";
+import type { ColorPalette } from "@/theme/colors";
+import { spacing, surface, typography } from "@/theme";
 
 function dayBucket(
   iso: string,
@@ -57,6 +59,8 @@ export function NotificationsScreen({
   menuFallbackHref?: Href;
 }) {
   const { t } = useI18n();
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const [search, setSearch] = useState("");
   const {
     items,
@@ -111,7 +115,7 @@ export function NotificationsScreen({
         />
       );
     },
-    [markRead],
+    [markRead, styles.dayHeader],
   );
 
   const keyExtractor = useCallback((row: Row) => row.id, []);
@@ -182,36 +186,38 @@ export function NotificationsScreen({
   );
 }
 
-const styles = StyleSheet.create({
-  header: {
-    ...screenContentPadding,
-    paddingBottom: spacing.md,
-    paddingTop: spacing.md,
-    gap: spacing.lg,
-  },
-  search: {
-    paddingHorizontal: spacing.xl,
-    paddingBottom: spacing.md,
-  },
-  listPad: {
-    ...screenContentPadding,
-  },
-  list: {
-    ...screenContentPadding,
-    flexGrow: 1,
-    backgroundColor: colors.card,
-    borderRadius: surface.groupRadius,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: colors.border,
-    overflow: "hidden",
-  },
-  dayHeader: {
-    ...typography.overline,
-    color: colors.mutedForeground,
-    marginTop: spacing.sm,
-    marginBottom: spacing.md,
-  },
-  footerLoader: {
-    marginVertical: spacing.lg,
-  },
-});
+function createStyles(colors: ColorPalette) {
+  return StyleSheet.create({
+    header: {
+      ...screenContentPadding,
+      paddingBottom: spacing.md,
+      paddingTop: spacing.md,
+      gap: spacing.lg,
+    },
+    search: {
+      paddingHorizontal: spacing.xl,
+      paddingBottom: spacing.md,
+    },
+    listPad: {
+      ...screenContentPadding,
+    },
+    list: {
+      ...screenContentPadding,
+      flexGrow: 1,
+      backgroundColor: colors.card,
+      borderRadius: surface.groupRadius,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: colors.border,
+      overflow: "hidden",
+    },
+    dayHeader: {
+      ...typography.overline,
+      color: colors.mutedForeground,
+      marginTop: spacing.sm,
+      marginBottom: spacing.md,
+    },
+    footerLoader: {
+      marginVertical: spacing.lg,
+    },
+  });
+}

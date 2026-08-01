@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import {
   Modal,
   Platform,
@@ -35,7 +35,8 @@ const BACKDROP_EXIT = Platform.OS === "android" ? undefined : FadeOut.duration(1
 
 export function ThemeToggle({ variant = "onHero" }: ThemeToggleProps) {
   const { t } = useI18n();
-  const { mode, resolvedMode, setThemeMode, toggleLightDark } = useTheme();
+  const { mode, resolvedMode, colors, setThemeMode, toggleLightDark } = useTheme();
+  const menuStyles = useMemo(() => createMenuStyles(colors), [colors]);
   const [open, setOpen] = useState(false);
   const anchorRef = useRef<View>(null);
   const insets = useSafeAreaInsets();
@@ -81,13 +82,13 @@ export function ThemeToggle({ variant = "onHero" }: ThemeToggleProps) {
       </View>
 
       <Modal visible={open} transparent animationType="none" onRequestClose={() => setOpen(false)}>
-        <Animated.View entering={BACKDROP_ENTER} exiting={BACKDROP_EXIT} style={styles.backdrop}>
+        <Animated.View entering={BACKDROP_ENTER} exiting={BACKDROP_EXIT} style={menuStyles.backdrop}>
           <Pressable style={StyleSheet.absoluteFill} onPress={() => setOpen(false)} accessibilityLabel={t("common.cancel")} />
           <Animated.View
             entering={MENU_ENTER}
-            style={[styles.menu, shadows.lg, { top: menuPos.top, right: menuPos.right }]}
+            style={[menuStyles.menu, shadows.lg, { top: menuPos.top, right: menuPos.right }]}
           >
-            <Text style={styles.menuTitle}>{t("preferences.theme")}</Text>
+            <Text style={menuStyles.menuTitle}>{t("preferences.theme")}</Text>
             {THEME_OPTIONS.map((option) => {
               const active = option.mode === mode;
               return (
@@ -96,19 +97,19 @@ export function ThemeToggle({ variant = "onHero" }: ThemeToggleProps) {
                   accessibilityRole="button"
                   accessibilityState={{ selected: active }}
                   onPress={() => void selectMode(option.mode)}
-                  style={[styles.option, active ? styles.optionActive : null]}
+                  style={[menuStyles.option, active ? menuStyles.optionActive : null]}
                 >
-                  <View style={[styles.optionIconWell, active ? styles.optionIconWellActive : null]}>
+                  <View style={[menuStyles.optionIconWell, active ? menuStyles.optionIconWellActive : null]}>
                     <Ionicons
                       name={option.icon}
                       size={18}
-                      color={active ? brand.orange : "#6B7280"}
+                      color={active ? brand.orange : colors.mutedForeground}
                     />
                   </View>
-                  <Text style={[styles.optionLabel, active ? styles.optionLabelActive : null]}>
+                  <Text style={[menuStyles.optionLabel, active ? menuStyles.optionLabelActive : null]}>
                     {t(option.labelKey)}
                   </Text>
-                  {active ? <Text style={styles.check}>✓</Text> : null}
+                  {active ? <Text style={menuStyles.check}>✓</Text> : null}
                 </Pressable>
               );
             })}
@@ -119,65 +120,67 @@ export function ThemeToggle({ variant = "onHero" }: ThemeToggleProps) {
   );
 }
 
-const styles = StyleSheet.create({
-  backdrop: {
-    flex: 1,
-    backgroundColor: "rgba(11, 18, 32, 0.28)",
-  },
-  menu: {
-    position: "absolute",
-    minWidth: 196,
-    backgroundColor: "#FFFFFF",
-    borderRadius: radius.xl,
-    paddingVertical: spacing.sm,
-    paddingHorizontal: spacing.sm,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: "rgba(11, 18, 32, 0.08)",
-    gap: spacing.xs,
-  },
-  menuTitle: {
-    ...typography.caption,
-    color: "#6B7280",
-    fontWeight: "700",
-    letterSpacing: 0.6,
-    textTransform: "uppercase",
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-  },
-  option: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: spacing.md,
-    minHeight: touchTarget,
-    borderRadius: radius.lg,
-    paddingHorizontal: spacing.sm,
-  },
-  optionActive: {
-    backgroundColor: brand.orangeSoft,
-  },
-  optionIconWell: {
-    width: 36,
-    height: 36,
-    borderRadius: radius.md,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "#F3F4F6",
-  },
-  optionIconWellActive: {
-    backgroundColor: brand.orangeSoft,
-  },
-  optionLabel: {
-    ...typography.body,
-    color: "#111827",
-    fontWeight: "600",
-    flex: 1,
-  },
-  optionLabelActive: {
-    color: brand.orange,
-  },
-  check: {
-    ...typography.body,
-    color: brand.orange,
-    fontWeight: "700",
-  },
-});
+function createMenuStyles(colors: ReturnType<typeof useTheme>["colors"]) {
+  return StyleSheet.create({
+    backdrop: {
+      flex: 1,
+      backgroundColor: colors.overlay,
+    },
+    menu: {
+      position: "absolute",
+      minWidth: 196,
+      backgroundColor: colors.cardElevated,
+      borderRadius: radius.xl,
+      paddingVertical: spacing.sm,
+      paddingHorizontal: spacing.sm,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: colors.border,
+      gap: spacing.xs,
+    },
+    menuTitle: {
+      ...typography.caption,
+      color: colors.mutedForeground,
+      fontWeight: "700",
+      letterSpacing: 0.6,
+      textTransform: "uppercase",
+      paddingHorizontal: spacing.md,
+      paddingVertical: spacing.sm,
+    },
+    option: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: spacing.md,
+      minHeight: touchTarget,
+      borderRadius: radius.lg,
+      paddingHorizontal: spacing.sm,
+    },
+    optionActive: {
+      backgroundColor: colors.primarySoft,
+    },
+    optionIconWell: {
+      width: 36,
+      height: 36,
+      borderRadius: radius.md,
+      alignItems: "center",
+      justifyContent: "center",
+      backgroundColor: colors.secondary,
+    },
+    optionIconWellActive: {
+      backgroundColor: colors.primarySoft,
+    },
+    optionLabel: {
+      ...typography.body,
+      color: colors.foreground,
+      fontWeight: "600",
+      flex: 1,
+    },
+    optionLabelActive: {
+      color: brand.orange,
+    },
+    check: {
+      ...typography.body,
+      color: brand.orange,
+      fontWeight: "700",
+    },
+  });
+}

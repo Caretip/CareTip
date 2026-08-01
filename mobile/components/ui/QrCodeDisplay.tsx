@@ -1,7 +1,10 @@
+import { useMemo } from "react";
 import { StyleSheet, Text, View } from "react-native";
 import { BrandedQrImage, type BrandedQrViewerMode } from "@/components/qr/BrandedQrImage";
 import { useI18n } from "@/hooks/useI18n";
-import { colors, shadows, spacing, surface, typography } from "@/theme";
+import { useTheme } from "@/hooks/useTheme";
+import type { ColorPalette } from "@/theme/colors";
+import { shadows, spacing, surface, typography } from "@/theme";
 
 type QrCodeDisplayProps = {
   value: string;
@@ -30,6 +33,8 @@ export function QrCodeDisplay({
   reloadKey,
 }: QrCodeDisplayProps) {
   const { t } = useI18n();
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
 
   if (!value) {
     return (
@@ -53,37 +58,39 @@ export function QrCodeDisplay({
   );
 }
 
-const styles = StyleSheet.create({
-  wrap: {
-    gap: spacing.md,
-    alignItems: "center",
-    width: "100%",
-  },
-  elevated: {
-    backgroundColor: colors.card,
-    borderRadius: surface.cardRadius,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: colors.border,
-    padding: spacing.xl,
-    ...shadows.sm,
-  },
-  title: {
-    ...typography.cardTitle,
-    color: colors.foreground,
-    textAlign: "center",
-  },
-  subtitle: {
-    ...typography.caption,
-    color: colors.mutedForeground,
-    textAlign: "center",
-  },
-  url: {
-    ...typography.caption,
-    color: colors.mutedForeground,
-    textAlign: "center",
-  },
-  muted: {
-    ...typography.body,
-    color: colors.mutedForeground,
-  },
-});
+function createStyles(colors: ColorPalette) {
+  return StyleSheet.create({
+    wrap: {
+      gap: spacing.md,
+      alignItems: "center",
+      width: "100%",
+    },
+    elevated: {
+      backgroundColor: colors.card,
+      borderRadius: surface.cardRadius,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: colors.border,
+      padding: spacing.xl,
+      ...shadows.sm,
+    },
+    title: {
+      ...typography.cardTitle,
+      color: colors.foreground,
+      textAlign: "center",
+    },
+    subtitle: {
+      ...typography.caption,
+      color: colors.mutedForeground,
+      textAlign: "center",
+    },
+    url: {
+      ...typography.caption,
+      color: colors.mutedForeground,
+      textAlign: "center",
+    },
+    muted: {
+      ...typography.body,
+      color: colors.mutedForeground,
+    },
+  });
+}

@@ -38,7 +38,7 @@ export function GoogleAuthButton({
       accessibilityRole="button"
       accessibilityState={{ disabled: isDisabled, busy: loading }}
       disabled={isDisabled}
-      android_ripple={{ color: "rgba(11, 18, 32, 0.08)" }}
+      android_ripple={{ color: "rgba(255, 255, 255, 0.12)" }}
       onPress={onPress}
       onPressIn={(e) => {
         if (!isDisabled) hapticLight();
@@ -54,7 +54,7 @@ export function GoogleAuthButton({
     >
       <Animated.View style={[styles.content, animatedStyle]} collapsable={false}>
         {loading ? (
-          <ActivityIndicator color={authBrand.dark} />
+          <ActivityIndicator color={authBrand.fieldText} />
         ) : (
           <>
             <GoogleIcon size={20} />
@@ -74,30 +74,30 @@ const styles = StyleSheet.create({
     overflow: "hidden",
     ...Platform.select({
       ios: {
-        shadowColor: "#0B1220",
-        shadowOpacity: 0.08,
-        shadowRadius: 12,
-        shadowOffset: { width: 0, height: 6 },
+        shadowColor: "#000000",
+        shadowOpacity: 0.18,
+        shadowRadius: 14,
+        shadowOffset: { width: 0, height: 8 },
       },
-      android: { elevation: 3 },
+      android: { elevation: 5 },
       default: {},
     }),
   },
   content: {
-    minHeight: touchTarget + 4,
+    minHeight: touchTarget + 6,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
     gap: spacing.md,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: authBrand.fieldFill,
     borderRadius: radius.xl,
-    borderWidth: StyleSheet.hairlineWidth * 2,
-    borderColor: "rgba(11, 18, 32, 0.1)",
+    borderWidth: 1.5,
+    borderColor: authBrand.fieldBorder,
     paddingHorizontal: spacing.xl,
   },
   label: {
     ...typography.button,
-    color: authBrand.dark,
+    color: authBrand.fieldText,
     fontWeight: "600",
     fontSize: 16,
     letterSpacing: 0.1,

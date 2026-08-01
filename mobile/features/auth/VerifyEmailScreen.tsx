@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { AuthExperienceShell } from "@/components/auth/AuthExperienceShell";
@@ -6,6 +6,7 @@ import { AuthField } from "@/components/auth/AuthField";
 import { AuthContinueButton } from "@/components/auth/AuthContinueButton";
 import { useAuth } from "@/hooks/useAuth";
 import { useI18n } from "@/hooks/useI18n";
+import { useTheme } from "@/hooks/useTheme";
 import { authService } from "@/services/auth/authService";
 import { useAuthStore } from "@/store/authStore";
 import { useUserStore } from "@/store/userStore";
@@ -15,11 +16,14 @@ import { resolveLoginLocale } from "@/utils/resolveLoginLocale";
 import { hapticLight } from "@/utils/haptics";
 import { authCardStyles } from "@/components/auth/authCardStyles";
 import { authBrand } from "@/theme/authBrand";
-import { colors, spacing, typography } from "@/theme";
+import type { ColorPalette } from "@/theme/colors";
+import { spacing, typography } from "@/theme";
 
 export function VerifyEmailScreen() {
   const router = useRouter();
   const { t } = useI18n();
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const { user, isAuthenticated } = useAuth();
   const params = useLocalSearchParams<{ token?: string; pendingEmail?: string }>();
   const token = typeof params.token === "string" ? params.token.trim() : "";
@@ -160,16 +164,18 @@ export function VerifyEmailScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  status: {
-    ...typography.body,
-    color: authBrand.muted,
-    marginBottom: spacing.md,
-  },
-  success: {
-    ...typography.body,
-    color: colors.success,
-    fontWeight: "600",
-    marginBottom: spacing.md,
-  },
-});
+function createStyles(colors: ColorPalette) {
+  return StyleSheet.create({
+    status: {
+      ...typography.body,
+      color: authBrand.muted,
+      marginBottom: spacing.md,
+    },
+    success: {
+      ...typography.body,
+      color: colors.success,
+      fontWeight: "600",
+      marginBottom: spacing.md,
+    },
+  });
+}

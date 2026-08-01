@@ -1,4 +1,5 @@
 import type { BusinessTimeframe } from "@/types/business";
+import type { ColorPalette } from "@/theme/colors";
 import { dashboardChartBarFill } from "@/theme/dashboardChartTheme";
 import { translateChartMonthLabel, translateChartWeekdayLabel } from "@/utils/chartAxisLabels";
 
@@ -163,7 +164,8 @@ type DashboardEmployeeRow = {
 /** Top earners for team performance bar chart (web parity). */
 export function buildEmployeePerformanceChartRows(
   employees: DashboardEmployeeRow[] | undefined,
-  limit = 3,
+  limit: number,
+  colors: ColorPalette,
 ): EmployeePerformanceChartRow[] {
   const ranked = (employees ?? [])
     .filter(
@@ -180,7 +182,7 @@ export function buildEmployeePerformanceChartRows(
     name: e.name,
     tips: e.tipsTotal,
     rating: 0,
-    color: dashboardChartBarFill(index, arr.length),
+    color: dashboardChartBarFill(index, arr.length, colors),
   }));
 }
 

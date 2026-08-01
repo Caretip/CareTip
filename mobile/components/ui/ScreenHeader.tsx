@@ -1,5 +1,8 @@
+import { useMemo } from "react";
 import { StyleSheet, Text, View, type StyleProp, type ViewStyle } from "react-native";
-import { colors, spacing, surface, typography } from "@/theme";
+import { useTheme } from "@/hooks/useTheme";
+import type { ColorPalette } from "@/theme/colors";
+import { spacing, typography } from "@/theme";
 
 type ScreenHeaderProps = {
   eyebrow?: string;
@@ -10,6 +13,9 @@ type ScreenHeaderProps = {
 };
 
 export function ScreenHeader({ eyebrow, title, subtitle, trailing, style }: ScreenHeaderProps) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
+
   return (
     <View style={[styles.wrap, style]}>
       <View style={styles.text}>
@@ -29,6 +35,9 @@ type SectionHeaderProps = {
 };
 
 export function SectionHeader({ title, subtitle, trailing }: SectionHeaderProps) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
+
   return (
     <View style={styles.section}>
       <View style={styles.text}>
@@ -47,58 +56,62 @@ type HeroCardProps = {
 };
 
 export function HeroCard({ children, style }: HeroCardProps) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   return <View style={[styles.hero, style]}>{children}</View>;
 }
 
-const styles = StyleSheet.create({
-  wrap: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-    justifyContent: "space-between",
-    gap: spacing.lg,
-  },
-  text: {
-    flex: 1,
-    gap: spacing.xs,
-  },
-  eyebrow: {
-    ...typography.overline,
-    color: colors.primary,
-  },
-  title: {
-    ...typography.h1,
-    fontSize: 26,
-    lineHeight: 32,
-    letterSpacing: -0.7,
-    fontWeight: "800",
-    color: colors.foreground,
-  },
-  subtitle: {
-    ...typography.body,
-    color: colors.mutedForeground,
-    fontSize: 15,
-    lineHeight: 22,
-  },
-  section: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-    justifyContent: "space-between",
-    gap: spacing.md,
-    marginBottom: spacing.lg,
-  },
-  sectionTitle: {
-    ...typography.h2,
-    color: colors.foreground,
-    fontWeight: "700",
-  },
-  sectionSub: {
-    ...typography.caption,
-    color: colors.mutedForeground,
-    marginTop: spacing.xxs,
-  },
-  hero: {
-    gap: spacing.xl,
-    paddingBottom: spacing.sm,
-    marginBottom: spacing.md,
-  },
-});
+function createStyles(colors: ColorPalette) {
+  return StyleSheet.create({
+    wrap: {
+      flexDirection: "row",
+      alignItems: "flex-start",
+      justifyContent: "space-between",
+      gap: spacing.lg,
+    },
+    text: {
+      flex: 1,
+      gap: spacing.xs,
+    },
+    eyebrow: {
+      ...typography.overline,
+      color: colors.primary,
+    },
+    title: {
+      ...typography.h1,
+      fontSize: 26,
+      lineHeight: 32,
+      letterSpacing: -0.7,
+      fontWeight: "800",
+      color: colors.foreground,
+    },
+    subtitle: {
+      ...typography.body,
+      color: colors.mutedForeground,
+      fontSize: 15,
+      lineHeight: 22,
+    },
+    section: {
+      flexDirection: "row",
+      alignItems: "flex-start",
+      justifyContent: "space-between",
+      gap: spacing.md,
+      marginBottom: spacing.lg,
+    },
+    sectionTitle: {
+      ...typography.h2,
+      color: colors.foreground,
+      fontWeight: "700",
+    },
+    sectionSub: {
+      ...typography.caption,
+      color: colors.mutedForeground,
+      marginTop: spacing.xxs,
+    },
+    hero: {
+      gap: spacing.xl,
+      paddingBottom: spacing.sm,
+      marginBottom: spacing.md,
+    },
+  });
+}

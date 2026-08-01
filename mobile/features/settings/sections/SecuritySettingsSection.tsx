@@ -1,12 +1,12 @@
-import { useEffect, useState } from "react";
+import { useMemo, useState } from "react";
 import { Alert, Image, StyleSheet, Text, View } from "react-native";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/Button";
 import { TextField } from "@/components/ui/TextField";
 import { Section } from "@/components/ui/Section";
 import { SettingsSectionLayout } from "@/features/settings/SettingsSectionLayout";
-import { useAuth } from "@/hooks/useAuth";
 import { useI18n } from "@/hooks/useI18n";
+import { useTheme } from "@/hooks/useTheme";
 import {
   changePassword,
   disableTwoFactor,
@@ -18,7 +18,8 @@ import { queryKeys, queryStaleTimes } from "@/services/api/queryClient";
 import { showErrorToast, showSuccessToast } from "@/store/toastStore";
 import { friendlyErrorMessage } from "@/utils/friendlyError";
 import type { TwoFactorSetup } from "@/types/settings";
-import { colors, radius, spacing, typography } from "@/theme";
+import type { ColorPalette } from "@/theme/colors";
+import { radius, spacing, typography } from "@/theme";
 
 type SecuritySettingsSectionProps = {
   includeMfa?: boolean;
@@ -26,6 +27,8 @@ type SecuritySettingsSectionProps = {
 
 export function SecuritySettingsSection({ includeMfa = false }: SecuritySettingsSectionProps) {
   const { t } = useI18n();
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [mfaCode, setMfaCode] = useState("");
@@ -158,8 +161,10 @@ export function SecuritySettingsSection({ includeMfa = false }: SecuritySettings
   );
 }
 
-const styles = StyleSheet.create({
-  body: { ...typography.body, color: colors.foreground },
-  mfaQr: { gap: spacing.sm, alignItems: "center" },
-  mfaQrImage: { width: 200, height: 200, borderRadius: radius.xl },
-});
+function createStyles(colors: ColorPalette) {
+  return StyleSheet.create({
+    body: { ...typography.body, color: colors.foreground },
+    mfaQr: { gap: spacing.sm, alignItems: "center" },
+    mfaQrImage: { width: 200, height: 200, borderRadius: radius.xl },
+  });
+}

@@ -4,11 +4,15 @@ import { Ionicons } from "@expo/vector-icons";
 import { InfoScreenShell } from "@/components/info/InfoScreenShell";
 import { getLocalizedFaqItems } from "@/utils/infoI18n";
 import { useI18n } from "@/hooks/useI18n";
+import { useTheme } from "@/hooks/useTheme";
 import { authBrand } from "@/theme/authBrand";
-import { colors, radius, spacing, touchTarget, typography } from "@/theme";
+import type { ColorPalette } from "@/theme/colors";
+import { radius, spacing, touchTarget, typography } from "@/theme";
 
 export function FaqScreen() {
   const { t } = useI18n();
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const [query, setQuery] = useState("");
   const [openId, setOpenId] = useState<string | null>(null);
 
@@ -92,56 +96,58 @@ export function FaqScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  search: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: spacing.sm,
-    minHeight: touchTarget,
-    borderRadius: radius.xl,
-    backgroundColor: colors.card,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: colors.border,
-    paddingHorizontal: spacing.lg,
-  },
-  searchInput: {
-    ...typography.body,
-    flex: 1,
-    color: colors.foreground,
-    paddingVertical: spacing.md,
-  },
-  card: {
-    backgroundColor: colors.card,
-    borderRadius: radius.xl,
-    padding: spacing.xl,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: colors.border,
-    gap: spacing.md,
-  },
-  cardPressed: {
-    opacity: 0.92,
-    backgroundColor: colors.secondary,
-  },
-  cardHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: spacing.md,
-  },
-  question: {
-    ...typography.h2,
-    fontSize: 16,
-    color: colors.foreground,
-    flex: 1,
-  },
-  answer: {
-    ...typography.body,
-    color: colors.mutedForeground,
-    lineHeight: 22,
-  },
-  empty: {
-    ...typography.body,
-    color: colors.mutedForeground,
-    textAlign: "center",
-    paddingVertical: spacing["3xl"],
-  },
-});
+function createStyles(colors: ColorPalette) {
+  return StyleSheet.create({
+    search: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: spacing.sm,
+      minHeight: touchTarget,
+      borderRadius: radius.xl,
+      backgroundColor: colors.card,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: colors.border,
+      paddingHorizontal: spacing.lg,
+    },
+    searchInput: {
+      ...typography.body,
+      flex: 1,
+      color: colors.foreground,
+      paddingVertical: spacing.md,
+    },
+    card: {
+      backgroundColor: colors.card,
+      borderRadius: radius.xl,
+      padding: spacing.xl,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: colors.border,
+      gap: spacing.md,
+    },
+    cardPressed: {
+      opacity: 0.92,
+      backgroundColor: colors.secondary,
+    },
+    cardHeader: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: spacing.md,
+    },
+    question: {
+      ...typography.h2,
+      fontSize: 16,
+      color: colors.foreground,
+      flex: 1,
+    },
+    answer: {
+      ...typography.body,
+      color: colors.mutedForeground,
+      lineHeight: 22,
+    },
+    empty: {
+      ...typography.body,
+      color: colors.mutedForeground,
+      textAlign: "center",
+      paddingVertical: spacing["3xl"],
+    },
+  });
+}

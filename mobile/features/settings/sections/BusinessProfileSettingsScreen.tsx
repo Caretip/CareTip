@@ -1,19 +1,23 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { StyleSheet, Text, TextInput, View } from "react-native";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/Button";
 import { Section } from "@/components/ui/Section";
 import { SettingsSectionLayout } from "@/features/settings/SettingsSectionLayout";
 import { useI18n } from "@/hooks/useI18n";
+import { useTheme } from "@/hooks/useTheme";
 import { fetchBusinessProfile, patchBusinessProfile } from "@/services/api/businessService";
 import { queryKeys, queryStaleTimes } from "@/services/api/queryClient";
 import { showErrorToast, showSuccessToast } from "@/store/toastStore";
 import { friendlyErrorMessage } from "@/utils/friendlyError";
-import { colors, radius, spacing, typography } from "@/theme";
+import type { ColorPalette } from "@/theme/colors";
+import { radius, spacing, typography } from "@/theme";
 import { textA11y } from "@/theme/a11y";
 
 export function BusinessProfileSettingsScreen() {
   const { t } = useI18n();
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const queryClient = useQueryClient();
   const profileQuery = useQuery({
     queryKey: queryKeys.businessProfile,
@@ -65,12 +69,16 @@ export function BusinessProfileSettingsScreen() {
           value={name}
           onChangeText={setName}
           editable={!saveMutation.isPending}
+          styles={styles}
+          placeholderColor={colors.mutedForeground}
         />
         <Field
           label={t("settings.menu.location")}
           value={location}
           onChangeText={setLocation}
           editable={!saveMutation.isPending}
+          styles={styles}
+          placeholderColor={colors.mutedForeground}
         />
         <Field
           label={t("settings.menu.contactPhone")}
@@ -78,6 +86,8 @@ export function BusinessProfileSettingsScreen() {
           onChangeText={setContactPhone}
           keyboardType="phone-pad"
           editable={!saveMutation.isPending}
+          styles={styles}
+          placeholderColor={colors.mutedForeground}
         />
         <Field
           label={t("settings.menu.website")}
@@ -86,6 +96,8 @@ export function BusinessProfileSettingsScreen() {
           autoCapitalize="none"
           keyboardType="url"
           editable={!saveMutation.isPending}
+          styles={styles}
+          placeholderColor={colors.mutedForeground}
         />
         <Text style={styles.readOnlyLabel}>{t("settings.menu.timezone")}</Text>
         <Text style={styles.readOnlyValue}>{profile?.timezone ?? "—"}</Text>
@@ -107,6 +119,8 @@ function Field({
   editable = true,
   keyboardType,
   autoCapitalize,
+  styles,
+  placeholderColor,
 }: {
   label: string;
   value: string;
@@ -114,6 +128,8 @@ function Field({
   editable?: boolean;
   keyboardType?: "default" | "phone-pad" | "url";
   autoCapitalize?: "none" | "sentences";
+  styles: ReturnType<typeof createStyles>;
+  placeholderColor: string;
 }) {
   return (
     <View style={styles.field}>
@@ -125,7 +141,7 @@ function Field({
         keyboardType={keyboardType}
         autoCapitalize={autoCapitalize}
         style={styles.input}
-        placeholderTextColor={colors.mutedForeground}
+        placeholderTextColor={placeholderColor}
         {...textA11y}
       />
     </View>
@@ -134,6 +150,8 @@ function Field({
 
 export function BusinessIntegrationsSettingsScreen() {
   const { t } = useI18n();
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   return (
     <SettingsSectionLayout
       title={t("settings.menu.integrations")}
@@ -146,35 +164,37 @@ export function BusinessIntegrationsSettingsScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  field: {
-    gap: spacing.xs,
-    marginBottom: spacing.md,
-  },
-  label: {
-    ...typography.caption,
-    color: colors.mutedForeground,
-    fontWeight: "600",
-  },
-  input: {
-    ...typography.body,
-    color: colors.foreground,
-    backgroundColor: colors.secondary,
-    borderRadius: radius.lg,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: colors.border,
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.md,
-    minHeight: 48,
-  },
-  readOnlyLabel: {
-    ...typography.caption,
-    color: colors.mutedForeground,
-    marginTop: spacing.sm,
-  },
-  readOnlyValue: {
-    ...typography.body,
-    color: colors.foreground,
-    fontWeight: "600",
-  },
-});
+function createStyles(colors: ColorPalette) {
+  return StyleSheet.create({
+    field: {
+      gap: spacing.xs,
+      marginBottom: spacing.md,
+    },
+    label: {
+      ...typography.caption,
+      color: colors.mutedForeground,
+      fontWeight: "600",
+    },
+    input: {
+      ...typography.body,
+      color: colors.foreground,
+      backgroundColor: colors.secondary,
+      borderRadius: radius.lg,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: colors.border,
+      paddingHorizontal: spacing.lg,
+      paddingVertical: spacing.md,
+      minHeight: 48,
+    },
+    readOnlyLabel: {
+      ...typography.caption,
+      color: colors.mutedForeground,
+      marginTop: spacing.sm,
+    },
+    readOnlyValue: {
+      ...typography.body,
+      color: colors.foreground,
+      fontWeight: "600",
+    },
+  });
+}

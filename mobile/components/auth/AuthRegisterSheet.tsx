@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import { InteractionManager, Modal, Platform, Pressable, StyleSheet, Text, View } from "react-native";
 import Animated, { Easing, useAnimatedStyle, useSharedValue, withTiming } from "react-native-reanimated";
 import { BlurView } from "expo-blur";
@@ -7,8 +7,10 @@ import { useRouter } from "expo-router";
 import { GoogleAuthButton } from "@/components/auth/GoogleAuthButton";
 import { Button } from "@/components/ui/Button";
 import { useI18n } from "@/hooks/useI18n";
+import { useTheme } from "@/hooks/useTheme";
 import { authBrand } from "@/theme/authBrand";
-import { colors, radius, spacing, touchTarget, typography } from "@/theme";
+import type { ColorPalette } from "@/theme/colors";
+import { radius, spacing, touchTarget, typography } from "@/theme";
 import { hapticLight } from "@/utils/haptics";
 
 type AuthRegisterSheetProps = {
@@ -27,6 +29,8 @@ export function AuthRegisterSheet({
   googleLoading = false,
 }: AuthRegisterSheetProps) {
   const { t } = useI18n();
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const translateY = useSharedValue(56);
@@ -111,69 +115,71 @@ export function AuthRegisterSheet({
   );
 }
 
-const styles = StyleSheet.create({
-  root: { flex: 1, justifyContent: "flex-end" },
-  backdrop: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgba(11, 18, 32, 0.48)",
-  },
-  sheet: {
-    backgroundColor: colors.card,
-    borderTopLeftRadius: 28,
-    borderTopRightRadius: 28,
-    paddingHorizontal: spacing["2xl"],
-    paddingTop: spacing.md,
-    gap: spacing.lg,
-    ...Platform.select({
-      ios: {
-        shadowColor: "#000",
-        shadowOpacity: 0.16,
-        shadowRadius: 24,
-        shadowOffset: { width: 0, height: -8 },
-      },
-      android: { elevation: 16 },
-      default: {},
-    }),
-  },
-  handle: {
-    alignSelf: "center",
-    width: 40,
-    height: 4,
-    borderRadius: radius.full,
-    backgroundColor: colors.borderStrong,
-    marginBottom: spacing.sm,
-  },
-  title: {
-    ...typography.h1,
-    fontSize: 24,
-    color: colors.foreground,
-    letterSpacing: -0.4,
-  },
-  subtitle: {
-    ...typography.body,
-    color: colors.mutedForeground,
-    lineHeight: 22,
-    marginTop: -spacing.sm,
-  },
-  actions: {
-    gap: spacing.md,
-    marginTop: spacing.sm,
-  },
-  signInRow: {
-    minHeight: touchTarget,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    paddingVertical: spacing.sm,
-  },
-  signInPrompt: {
-    ...typography.body,
-    color: colors.mutedForeground,
-  },
-  signInLink: {
-    ...typography.body,
-    color: authBrand.orange,
-    fontWeight: "700",
-  },
-  pressed: { opacity: 0.78 },
-});
+function createStyles(colors: ColorPalette) {
+  return StyleSheet.create({
+    root: { flex: 1, justifyContent: "flex-end" },
+    backdrop: {
+      ...StyleSheet.absoluteFillObject,
+      backgroundColor: "rgba(11, 18, 32, 0.48)",
+    },
+    sheet: {
+      backgroundColor: colors.card,
+      borderTopLeftRadius: 28,
+      borderTopRightRadius: 28,
+      paddingHorizontal: spacing["2xl"],
+      paddingTop: spacing.md,
+      gap: spacing.lg,
+      ...Platform.select({
+        ios: {
+          shadowColor: "#000",
+          shadowOpacity: 0.16,
+          shadowRadius: 24,
+          shadowOffset: { width: 0, height: -8 },
+        },
+        android: { elevation: 16 },
+        default: {},
+      }),
+    },
+    handle: {
+      alignSelf: "center",
+      width: 40,
+      height: 4,
+      borderRadius: radius.full,
+      backgroundColor: colors.borderStrong,
+      marginBottom: spacing.sm,
+    },
+    title: {
+      ...typography.h1,
+      fontSize: 24,
+      color: colors.foreground,
+      letterSpacing: -0.4,
+    },
+    subtitle: {
+      ...typography.body,
+      color: colors.mutedForeground,
+      lineHeight: 22,
+      marginTop: -spacing.sm,
+    },
+    actions: {
+      gap: spacing.md,
+      marginTop: spacing.sm,
+    },
+    signInRow: {
+      minHeight: touchTarget,
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "center",
+      paddingVertical: spacing.sm,
+    },
+    signInPrompt: {
+      ...typography.body,
+      color: colors.mutedForeground,
+    },
+    signInLink: {
+      ...typography.body,
+      color: authBrand.orange,
+      fontWeight: "700",
+    },
+    pressed: { opacity: 0.78 },
+  });
+}

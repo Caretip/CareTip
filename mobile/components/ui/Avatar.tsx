@@ -1,5 +1,8 @@
+import { useMemo } from "react";
 import { StyleSheet, Text, View } from "react-native";
-import { colors, radius, spacing, typography } from "@/theme";
+import { useTheme } from "@/hooks/useTheme";
+import type { ColorPalette } from "@/theme/colors";
+import { radius, typography } from "@/theme";
 
 type AvatarProps = {
   label: string;
@@ -7,19 +10,19 @@ type AvatarProps = {
   tone?: "brand" | "neutral" | "success" | "info";
 };
 
-const TONE_BG = {
-  brand: colors.primarySoft,
-  neutral: colors.secondary,
-  success: colors.successSoft,
-  info: colors.infoSoft,
-} as const;
+function toneBg(colors: ColorPalette, tone: AvatarProps["tone"]) {
+  if (tone === "neutral") return colors.secondary;
+  if (tone === "success") return colors.successSoft;
+  if (tone === "info") return colors.infoSoft;
+  return colors.primarySoft;
+}
 
-const TONE_FG = {
-  brand: colors.primary,
-  neutral: colors.secondaryForeground,
-  success: colors.success,
-  info: colors.info,
-} as const;
+function toneFg(colors: ColorPalette, tone: AvatarProps["tone"]) {
+  if (tone === "neutral") return colors.secondaryForeground;
+  if (tone === "success") return colors.success;
+  if (tone === "info") return colors.info;
+  return colors.primary;
+}
 
 function initials(label: string): string {
   const parts = label.trim().split(/\s+/).filter(Boolean);
@@ -29,6 +32,9 @@ function initials(label: string): string {
 }
 
 export function Avatar({ label, size = 40, tone = "brand" }: AvatarProps) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
+
   return (
     <View
       style={[
@@ -37,27 +43,29 @@ export function Avatar({ label, size = 40, tone = "brand" }: AvatarProps) {
           width: size,
           height: size,
           borderRadius: size / 2,
-          backgroundColor: TONE_BG[tone],
+          backgroundColor: toneBg(colors, tone),
         },
       ]}
       accessibilityLabel={label}
     >
-      <Text style={[styles.text, { color: TONE_FG[tone], fontSize: size * 0.34 }]}>
+      <Text style={[styles.text, { color: toneFg(colors, tone), fontSize: size * 0.34 }]}>
         {initials(label)}
       </Text>
     </View>
   );
 }
 
-const styles = StyleSheet.create({
-  base: {
-    alignItems: "center",
-    justifyContent: "center",
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: colors.border,
-  },
-  text: {
-    ...typography.caption,
-    fontWeight: "700",
-  },
-});
+function createStyles(colors: ColorPalette) {
+  return StyleSheet.create({
+    base: {
+      alignItems: "center",
+      justifyContent: "center",
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: colors.border,
+    },
+    text: {
+      ...typography.caption,
+      fontWeight: "700",
+    },
+  });
+}

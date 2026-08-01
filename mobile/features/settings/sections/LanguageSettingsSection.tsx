@@ -1,22 +1,24 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { Button } from "@/components/ui/Button";
-import { TextField } from "@/components/ui/TextField";
 import { Section } from "@/components/ui/Section";
 import { SettingsSectionLayout } from "@/features/settings/SettingsSectionLayout";
 import { useAuth } from "@/hooks/useAuth";
 import { useI18n } from "@/hooks/useI18n";
+import { useTheme } from "@/hooks/useTheme";
 import { fetchAccountSettings, patchAccountSettings } from "@/services/api/settingsService";
 import { saveUserSnapshot } from "@/services/auth/tokenStorage";
 import { queryKeys, queryStaleTimes } from "@/services/api/queryClient";
 import { useUserStore } from "@/store/userStore";
 import { showErrorToast } from "@/store/toastStore";
 import { friendlyErrorMessage } from "@/utils/friendlyError";
-import { colors, radius, spacing, touchTarget, typography } from "@/theme";
+import type { ColorPalette } from "@/theme/colors";
+import { radius, spacing, touchTarget, typography } from "@/theme";
 
 export function LanguageSettingsSection() {
   const { t, setLanguage } = useI18n();
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const { user } = useAuth();
   const [locale, setLocale] = useState<"en" | "de">(user?.preferredLocale === "de" ? "de" : "en");
   const [saving, setSaving] = useState(false);
@@ -86,26 +88,28 @@ export function LanguageSettingsSection() {
   );
 }
 
-const styles = StyleSheet.create({
-  localeRow: { flexDirection: "row", gap: spacing.sm },
-  localeChip: {
-    flex: 1,
-    minHeight: touchTarget,
-    borderRadius: radius.lg,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: colors.border,
-    backgroundColor: colors.secondary,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  localeChipActive: {
-    backgroundColor: colors.primarySoft,
-    borderColor: colors.primary,
-  },
-  localeChipLabel: {
-    ...typography.body,
-    fontWeight: "600",
-    color: colors.mutedForeground,
-  },
-  localeChipLabelActive: { color: colors.primary },
-});
+function createStyles(colors: ColorPalette) {
+  return StyleSheet.create({
+    localeRow: { flexDirection: "row", gap: spacing.sm },
+    localeChip: {
+      flex: 1,
+      minHeight: touchTarget,
+      borderRadius: radius.lg,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: colors.border,
+      backgroundColor: colors.secondary,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    localeChipActive: {
+      backgroundColor: colors.primarySoft,
+      borderColor: colors.primary,
+    },
+    localeChipLabel: {
+      ...typography.body,
+      fontWeight: "600",
+      color: colors.mutedForeground,
+    },
+    localeChipLabelActive: { color: colors.primary },
+  });
+}

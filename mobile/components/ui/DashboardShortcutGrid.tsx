@@ -1,12 +1,14 @@
-import { memo } from "react";
+import { memo, useMemo } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
   withSpring,
 } from "react-native-reanimated";
+import { useTheme } from "@/hooks/useTheme";
 import type { LucideIcon } from "@/types/lucide";
-import { colors, motion, spacing, surface, touchTarget, typography } from "@/theme";
+import type { ColorPalette } from "@/theme/colors";
+import { motion, spacing, surface, touchTarget, typography } from "@/theme";
 import { hapticLight } from "@/utils/haptics";
 
 export type DashboardShortcut = {
@@ -22,7 +24,12 @@ type DashboardShortcutGridProps = {
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
-function ShortcutCard({ label, icon: Icon, onPress }: DashboardShortcut) {
+type ShortcutCardProps = DashboardShortcut & {
+  colors: ColorPalette;
+};
+
+function ShortcutCard({ label, icon: Icon, onPress, colors }: ShortcutCardProps) {
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const scale = useSharedValue(1);
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [{ scale: scale.value }],
@@ -58,45 +65,50 @@ function ShortcutCard({ label, icon: Icon, onPress }: DashboardShortcut) {
 export const DashboardShortcutGrid = memo(function DashboardShortcutGrid({
   shortcuts,
 }: DashboardShortcutGridProps) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
+
   return (
     <View style={styles.row}>
       {shortcuts.map((shortcut) => (
-        <ShortcutCard key={shortcut.id} {...shortcut} />
+        <ShortcutCard key={shortcut.id} {...shortcut} colors={colors} />
       ))}
     </View>
   );
 });
 
-const styles = StyleSheet.create({
-  row: {
-    flexDirection: "row",
-    gap: spacing.md,
-  },
-  card: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    gap: spacing.sm,
-    minHeight: touchTarget + 36,
-    paddingVertical: spacing.lg,
-    paddingHorizontal: spacing.sm,
-    backgroundColor: colors.secondary,
-    borderRadius: surface.cardRadius,
-  },
-  iconWell: {
-    width: surface.iconWellSize,
-    height: surface.iconWellSize,
-    borderRadius: surface.iconWellRadius,
-    backgroundColor: colors.primarySoft,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  label: {
-    ...typography.caption,
-    color: colors.foreground,
-    fontWeight: "700",
-    fontSize: 12,
-    textAlign: "center",
-    lineHeight: 15,
-  },
-});
+function createStyles(colors: ColorPalette) {
+  return StyleSheet.create({
+    row: {
+      flexDirection: "row",
+      gap: spacing.md,
+    },
+    card: {
+      flex: 1,
+      alignItems: "center",
+      justifyContent: "center",
+      gap: spacing.sm,
+      minHeight: touchTarget + 36,
+      paddingVertical: spacing.lg,
+      paddingHorizontal: spacing.sm,
+      backgroundColor: colors.secondary,
+      borderRadius: surface.cardRadius,
+    },
+    iconWell: {
+      width: surface.iconWellSize,
+      height: surface.iconWellSize,
+      borderRadius: surface.iconWellRadius,
+      backgroundColor: colors.primarySoft,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    label: {
+      ...typography.caption,
+      color: colors.foreground,
+      fontWeight: "700",
+      fontSize: 12,
+      textAlign: "center",
+      lineHeight: 15,
+    },
+  });
+}

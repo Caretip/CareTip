@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import {
   ActivityIndicator,
   Pressable,
@@ -13,7 +14,9 @@ import Animated, {
   useSharedValue,
   withSpring,
 } from "react-native-reanimated";
-import { colors, motion, shadows, spacing, surface, touchTarget, typography } from "@/theme";
+import { useTheme } from "@/hooks/useTheme";
+import type { ColorPalette } from "@/theme/colors";
+import { motion, shadows, spacing, surface, touchTarget, typography } from "@/theme";
 import { textA11y } from "@/theme/a11y";
 import { hapticLight } from "@/utils/haptics";
 
@@ -29,32 +32,37 @@ type ButtonProps = PressableProps & {
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
-const variantStyles: Record<ButtonVariant, { container: ViewStyle; label: TextStyle }> = {
-  primary: {
-    container: { backgroundColor: colors.primary, ...shadows.sm },
-    label: { color: colors.primaryForeground },
-  },
-  secondary: {
-    container: { backgroundColor: colors.secondary },
-    label: { color: colors.secondaryForeground },
-  },
-  outline: {
-    container: {
-      backgroundColor: colors.card,
-      borderWidth: StyleSheet.hairlineWidth,
-      borderColor: colors.borderStrong,
+function createVariantStyles(colors: ColorPalette): Record<
+  ButtonVariant,
+  { container: ViewStyle; label: TextStyle }
+> {
+  return {
+    primary: {
+      container: { backgroundColor: colors.primary, ...shadows.sm },
+      label: { color: colors.primaryForeground },
     },
-    label: { color: colors.foreground },
-  },
-  ghost: {
-    container: { backgroundColor: "transparent" },
-    label: { color: colors.foreground },
-  },
-  destructive: {
-    container: { backgroundColor: colors.destructive, ...shadows.sm },
-    label: { color: colors.destructiveForeground },
-  },
-};
+    secondary: {
+      container: { backgroundColor: colors.secondary },
+      label: { color: colors.secondaryForeground },
+    },
+    outline: {
+      container: {
+        backgroundColor: colors.card,
+        borderWidth: StyleSheet.hairlineWidth,
+        borderColor: colors.borderStrong,
+      },
+      label: { color: colors.foreground },
+    },
+    ghost: {
+      container: { backgroundColor: "transparent" },
+      label: { color: colors.foreground },
+    },
+    destructive: {
+      container: { backgroundColor: colors.destructive, ...shadows.sm },
+      label: { color: colors.destructiveForeground },
+    },
+  };
+}
 
 export function Button({
   label,
@@ -67,6 +75,8 @@ export function Button({
   onPressOut,
   ...rest
 }: ButtonProps) {
+  const { colors } = useTheme();
+  const variantStyles = useMemo(() => createVariantStyles(colors), [colors]);
   const palette = variantStyles[variant];
   const isDisabled = disabled || loading;
   const scale = useSharedValue(1);

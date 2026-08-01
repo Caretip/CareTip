@@ -1,10 +1,13 @@
+import { useMemo } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Screen } from "@/components/ui/Screen";
 import { useI18n } from "@/hooks/useI18n";
-import { colors, hitSlop, spacing, touchTarget, typography } from "@/theme";
+import { useTheme } from "@/hooks/useTheme";
+import type { ColorPalette } from "@/theme/colors";
+import { hitSlop, spacing, touchTarget, typography } from "@/theme";
 
 type InfoScreenShellProps = {
   title: string;
@@ -23,6 +26,8 @@ export function InfoScreenShell({
 }: InfoScreenShellProps) {
   const router = useRouter();
   const { t } = useI18n();
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const insets = useSafeAreaInsets();
 
   return (
@@ -59,45 +64,47 @@ export function InfoScreenShell({
   );
 }
 
-const styles = StyleSheet.create({
-  root: {
-    flex: 1,
-    backgroundColor: colors.background,
-  },
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingHorizontal: spacing.md,
-    paddingBottom: spacing.sm,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: colors.border,
-    backgroundColor: colors.card,
-  },
-  back: {
-    width: touchTarget,
-    height: touchTarget,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  backSpacer: {
-    width: touchTarget,
-  },
-  title: {
-    ...typography.h2,
-    color: colors.foreground,
-    flex: 1,
-    textAlign: "center",
-  },
-  content: {
-    gap: spacing.lg,
-    paddingTop: spacing.lg,
-  },
-  embeddedBody: {
-    flex: 1,
-    paddingHorizontal: spacing.xl,
-    paddingBottom: spacing.xl,
-    width: "100%",
-    maxWidth: 720,
-    alignSelf: "center",
-  },
-});
+function createStyles(colors: ColorPalette) {
+  return StyleSheet.create({
+    root: {
+      flex: 1,
+      backgroundColor: colors.background,
+    },
+    header: {
+      flexDirection: "row",
+      alignItems: "center",
+      paddingHorizontal: spacing.md,
+      paddingBottom: spacing.sm,
+      borderBottomWidth: StyleSheet.hairlineWidth,
+      borderBottomColor: colors.border,
+      backgroundColor: colors.card,
+    },
+    back: {
+      width: touchTarget,
+      height: touchTarget,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    backSpacer: {
+      width: touchTarget,
+    },
+    title: {
+      ...typography.h2,
+      color: colors.foreground,
+      flex: 1,
+      textAlign: "center",
+    },
+    content: {
+      gap: spacing.lg,
+      paddingTop: spacing.lg,
+    },
+    embeddedBody: {
+      flex: 1,
+      paddingHorizontal: spacing.xl,
+      paddingBottom: spacing.xl,
+      width: "100%",
+      maxWidth: 720,
+      alignSelf: "center",
+    },
+  });
+}

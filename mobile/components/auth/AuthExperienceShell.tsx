@@ -25,7 +25,6 @@ import { LayeredScreenShell } from "@/components/layout/LayeredScreenShell";
 import { SplashScreenAnchor } from "@/components/brand/SplashScreenAnchor";
 import { useI18n } from "@/hooks/useI18n";
 import { authBrand } from "@/theme/authBrand";
-import { layered } from "@/theme/layered";
 import { spacing, touchTarget, typography } from "@/theme";
 
 type AuthExperienceShellProps = {
@@ -77,8 +76,9 @@ export function AuthExperienceShell({
       <AuthTopControls />
       <LayeredScreenShell
         background="auth-image"
+        layout="floating"
         keyboardAware
-        heroHeightRatio={isTablet ? 0.26 : 0.28}
+        heroHeightRatio={isTablet ? 0.32 : 0.36}
         header={
           <Animated.View style={[styles.hero, heroAnim]}>
             <View style={styles.logoMark}>
@@ -157,13 +157,13 @@ const styles = StyleSheet.create({
   },
   hero: {
     alignItems: "center",
-    gap: spacing.md,
-    paddingBottom: spacing.sm,
+    gap: spacing.lg,
+    paddingBottom: spacing.md,
   },
   logoMark: {
-    width: 64,
-    height: 64,
-    borderRadius: 18,
+    width: 72,
+    height: 72,
+    borderRadius: 20,
     overflow: "hidden",
     borderWidth: StyleSheet.hairlineWidth * 2,
     borderColor: "rgba(255,255,255,0.35)",
@@ -198,11 +198,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
   },
   formContent: {
-    gap: layered.sectionGap,
+    gap: spacing["3xl"],
   },
   footer: {
-    gap: spacing["2xl"],
+    gap: spacing["3xl"],
     alignItems: "center",
+    paddingTop: spacing.lg,
   },
   secondaryRow: {
     flexDirection: "row",

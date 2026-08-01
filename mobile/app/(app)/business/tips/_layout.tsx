@@ -1,7 +1,9 @@
 import { Stack } from "expo-router";
-import { colors } from "@/theme";
+import { useTheme } from "@/hooks/useTheme";
 
 export default function BusinessTipsLayout() {
+  const { colors } = useTheme();
+
   return (
     <Stack
       screenOptions={{

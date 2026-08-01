@@ -1,9 +1,11 @@
-import { memo } from "react";
+import { memo, useMemo } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { Avatar } from "@/components/ui/Avatar";
 import { StatusPill } from "@/components/ui/StatusPill";
 import { useI18n } from "@/hooks/useI18n";
-import { colors, radius, spacing, surface, typography } from "@/theme";
+import { useTheme } from "@/hooks/useTheme";
+import type { ColorPalette } from "@/theme/colors";
+import { radius, spacing, surface, typography } from "@/theme";
 import { hapticLight } from "@/utils/haptics";
 
 type TipCardProps = {
@@ -29,7 +31,10 @@ export const TipCard = memo(function TipCard({
   onPress,
   inset = false,
 }: TipCardProps) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const a11y = [amount, statusLabel, staffName, meta, location].filter(Boolean).join(". ");
+
   return (
     <Pressable
       accessibilityRole="button"
@@ -81,6 +86,9 @@ export const ActivityCard = memo(function ActivityCard({
   badgeTone = "neutral",
   isLast = false,
 }: ActivityCardProps) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
+
   return (
     <View style={styles.timelineRow}>
       <View style={styles.timelineRail}>
@@ -118,7 +126,10 @@ export const NotificationCard = memo(function NotificationCard({
   inset = false,
 }: NotificationCardProps) {
   const { t } = useI18n();
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const readState = unread ? t("a11y.unread") : t("a11y.read");
+
   return (
     <Pressable
       accessibilityRole="button"
@@ -153,137 +164,139 @@ export const NotificationCard = memo(function NotificationCard({
   );
 });
 
-const styles = StyleSheet.create({
-  row: {
-    flexDirection: "row",
-    gap: spacing.md,
-    alignItems: "flex-start",
-    minHeight: 56,
-  },
-  rowCard: {
-    paddingVertical: spacing.lg,
-    paddingHorizontal: spacing.lg,
-    marginBottom: spacing.sm,
-    backgroundColor: colors.card,
-    borderRadius: surface.cardRadius - 4,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: colors.border,
-  },
-  rowInset: {
-    paddingVertical: spacing.md,
-    paddingHorizontal: spacing.lg,
-  },
-  pressed: {
-    opacity: 0.85,
-    transform: [{ scale: 0.99 }],
-  },
-  body: {
-    flex: 1,
-    gap: 2,
-  },
-  top: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    gap: spacing.md,
-  },
-  amount: {
-    ...typography.metric,
-    fontSize: 18,
-    color: colors.foreground,
-  },
-  amountAccent: {
-    ...typography.h2,
-    color: colors.primary,
-    fontWeight: "700",
-  },
-  staff: {
-    ...typography.body,
-    fontWeight: "600",
-    color: colors.foreground,
-  },
-  title: {
-    ...typography.body,
-    fontWeight: "600",
-    color: colors.foreground,
-  },
-  titleUnread: {
-    fontWeight: "700",
-  },
-  subtitle: {
-    ...typography.caption,
-    color: colors.mutedForeground,
-  },
-  meta: {
-    ...typography.caption,
-    color: colors.mutedForeground,
-    marginTop: 2,
-  },
-  unreadRow: {
-    borderColor: "rgba(235, 153, 44, 0.22)",
-  },
-  unreadInset: {
-    backgroundColor: "rgba(235, 153, 44, 0.06)",
-  },
-  iconWell: {
-    width: surface.iconWellSize,
-    height: surface.iconWellSize,
-    borderRadius: surface.iconWellRadius,
-    backgroundColor: colors.primarySoft,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  iconWellUnread: {
-    backgroundColor: colors.primarySoft,
-    borderWidth: 1.5,
-    borderColor: colors.primary,
-  },
-  unreadDotInner: {
-    width: 10,
-    height: 10,
-    borderRadius: radius.full,
-    backgroundColor: colors.primary,
-  },
-  readDotInner: {
-    width: 8,
-    height: 8,
-    borderRadius: radius.full,
-    backgroundColor: colors.borderStrong,
-  },
-  timelineRow: {
-    flexDirection: "row",
-    gap: spacing.md,
-    paddingBottom: spacing.lg,
-  },
-  timelineRail: {
-    width: 16,
-    alignItems: "center",
-  },
-  dot: {
-    width: 10,
-    height: 10,
-    borderRadius: radius.full,
-    backgroundColor: colors.primary,
-    marginTop: 4,
-  },
-  dotSuccess: {
-    backgroundColor: colors.success,
-  },
-  rail: {
-    flex: 1,
-    width: 2,
-    backgroundColor: colors.border,
-    marginTop: spacing.xs,
-    minHeight: 24,
-  },
-  timelineBody: {
-    flex: 1,
-    gap: spacing.xxs,
-    paddingBottom: spacing.sm,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: colors.border,
-  },
-  timelineBodyLast: {
-    borderBottomWidth: 0,
-  },
-});
+function createStyles(colors: ColorPalette) {
+  return StyleSheet.create({
+    row: {
+      flexDirection: "row",
+      gap: spacing.md,
+      alignItems: "flex-start",
+      minHeight: 56,
+    },
+    rowCard: {
+      paddingVertical: spacing.lg,
+      paddingHorizontal: spacing.lg,
+      marginBottom: spacing.sm,
+      backgroundColor: colors.card,
+      borderRadius: surface.cardRadius - 4,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: colors.border,
+    },
+    rowInset: {
+      paddingVertical: spacing.md,
+      paddingHorizontal: spacing.lg,
+    },
+    pressed: {
+      opacity: 0.85,
+      transform: [{ scale: 0.99 }],
+    },
+    body: {
+      flex: 1,
+      gap: 2,
+    },
+    top: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+      gap: spacing.md,
+    },
+    amount: {
+      ...typography.metric,
+      fontSize: 18,
+      color: colors.foreground,
+    },
+    amountAccent: {
+      ...typography.h2,
+      color: colors.primary,
+      fontWeight: "700",
+    },
+    staff: {
+      ...typography.body,
+      fontWeight: "600",
+      color: colors.foreground,
+    },
+    title: {
+      ...typography.body,
+      fontWeight: "600",
+      color: colors.foreground,
+    },
+    titleUnread: {
+      fontWeight: "700",
+    },
+    subtitle: {
+      ...typography.caption,
+      color: colors.mutedForeground,
+    },
+    meta: {
+      ...typography.caption,
+      color: colors.mutedForeground,
+      marginTop: 2,
+    },
+    unreadRow: {
+      borderColor: colors.primarySoft,
+    },
+    unreadInset: {
+      backgroundColor: colors.primarySoft,
+    },
+    iconWell: {
+      width: surface.iconWellSize,
+      height: surface.iconWellSize,
+      borderRadius: surface.iconWellRadius,
+      backgroundColor: colors.primarySoft,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    iconWellUnread: {
+      backgroundColor: colors.primarySoft,
+      borderWidth: 1.5,
+      borderColor: colors.primary,
+    },
+    unreadDotInner: {
+      width: 10,
+      height: 10,
+      borderRadius: radius.full,
+      backgroundColor: colors.primary,
+    },
+    readDotInner: {
+      width: 8,
+      height: 8,
+      borderRadius: radius.full,
+      backgroundColor: colors.borderStrong,
+    },
+    timelineRow: {
+      flexDirection: "row",
+      gap: spacing.md,
+      paddingBottom: spacing.lg,
+    },
+    timelineRail: {
+      width: 16,
+      alignItems: "center",
+    },
+    dot: {
+      width: 10,
+      height: 10,
+      borderRadius: radius.full,
+      backgroundColor: colors.primary,
+      marginTop: 4,
+    },
+    dotSuccess: {
+      backgroundColor: colors.success,
+    },
+    rail: {
+      flex: 1,
+      width: 2,
+      backgroundColor: colors.border,
+      marginTop: spacing.xs,
+      minHeight: 24,
+    },
+    timelineBody: {
+      flex: 1,
+      gap: spacing.xxs,
+      paddingBottom: spacing.sm,
+      borderBottomWidth: StyleSheet.hairlineWidth,
+      borderBottomColor: colors.border,
+    },
+    timelineBodyLast: {
+      borderBottomWidth: 0,
+    },
+  });
+}

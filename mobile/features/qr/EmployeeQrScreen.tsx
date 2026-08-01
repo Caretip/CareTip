@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import * as Clipboard from "expo-clipboard";
 import * as Sharing from "expo-sharing";
 import { StyleSheet, Text, View } from "react-native";
@@ -9,16 +9,20 @@ import { Screen } from "@/components/ui/Screen";
 import { ErrorState } from "@/components/ui/ErrorState";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { useI18n } from "@/hooks/useI18n";
+import { useTheme } from "@/hooks/useTheme";
 import { fetchEmployeeProfile } from "@/services/api/employeeService";
 import { queryKeys, queryStaleTimes } from "@/services/api/queryClient";
 import { resolveEmployeeQrUrl } from "@/utils/appPublicUrl";
 import { friendlyErrorMessage } from "@/utils/friendlyError";
 import { showSuccessToast } from "@/store/toastStore";
 import { loadEmployeeQrCache, saveEmployeeQrCache } from "@/utils/offlineQrCache";
-import { colors, spacing, typography } from "@/theme";
+import type { ColorPalette } from "@/theme/colors";
+import { spacing, typography } from "@/theme";
 
 export function EmployeeQrScreen() {
   const { t } = useI18n();
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const [cached, setCached] = useState<Awaited<ReturnType<typeof loadEmployeeQrCache>>>(null);
   const [qrReloadKey, setQrReloadKey] = useState(0);
 
@@ -120,32 +124,34 @@ export function EmployeeQrScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  hero: {
-    gap: spacing.sm,
-    paddingBottom: spacing.lg,
-  },
-  eyebrow: {
-    ...typography.overline,
-    color: colors.primary,
-  },
-  title: {
-    ...typography.title,
-    color: colors.foreground,
-  },
-  subtitle: {
-    ...typography.body,
-    color: colors.mutedForeground,
-  },
-  offlineNote: {
-    ...typography.caption,
-    color: colors.warning,
-    fontWeight: "600",
-  },
-  loading: {
-    gap: spacing.md,
-  },
-  actions: {
-    gap: spacing.md,
-  },
-});
+function createStyles(colors: ColorPalette) {
+  return StyleSheet.create({
+    hero: {
+      gap: spacing.sm,
+      paddingBottom: spacing.lg,
+    },
+    eyebrow: {
+      ...typography.overline,
+      color: colors.primary,
+    },
+    title: {
+      ...typography.title,
+      color: colors.foreground,
+    },
+    subtitle: {
+      ...typography.body,
+      color: colors.mutedForeground,
+    },
+    offlineNote: {
+      ...typography.caption,
+      color: colors.warning,
+      fontWeight: "600",
+    },
+    loading: {
+      gap: spacing.md,
+    },
+    actions: {
+      gap: spacing.md,
+    },
+  });
+}

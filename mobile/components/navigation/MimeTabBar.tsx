@@ -1,14 +1,17 @@
-import { memo } from "react";
+import { memo, useMemo } from "react";
 import type { BottomTabBarProps } from "@react-navigation/bottom-tabs";
 import { Platform, Pressable, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { colors, spacing, touchTarget, typography } from "@/theme";
+import { spacing, touchTarget, typography } from "@/theme";
 import { TAB_BAR_HEIGHT } from "@/theme/navigation";
+import { useTheme } from "@/hooks/useTheme";
 import { hapticSelection } from "@/utils/haptics";
 
 /** Bottom bar — Home (left), Menu (right). Inspired by template/mime. */
 export const MimeTabBar = memo(function MimeTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
   const insets = useSafeAreaInsets();
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const bottomInset = Math.max(insets.bottom, Platform.OS === "ios" ? spacing.sm : spacing.md);
 
   const homeRoute = state.routes.find((route) => route.name === "index");
@@ -75,40 +78,42 @@ export const MimeTabBar = memo(function MimeTabBar({ state, descriptors, navigat
   );
 });
 
-const styles = StyleSheet.create({
-  outer: {
-    backgroundColor: colors.card,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: colors.border,
-  },
-  bar: {
-    flexDirection: "row",
-    alignItems: "center",
-    minHeight: TAB_BAR_HEIGHT,
-    paddingHorizontal: spacing.lg,
-    paddingTop: spacing.sm,
-  },
-  tabSlot: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  tab: {
-    minWidth: touchTarget,
-    minHeight: touchTarget,
-    gap: spacing.xs,
-  },
-  tabPressed: {
-    opacity: 0.75,
-  },
-  label: {
-    ...typography.caption,
-    fontSize: 12,
-    fontWeight: "500",
-    color: colors.foreground,
-  },
-  labelActive: {
-    color: colors.primary,
-    fontWeight: "700",
-  },
-});
+function createStyles(colors: ReturnType<typeof useTheme>["colors"]) {
+  return StyleSheet.create({
+    outer: {
+      backgroundColor: colors.tabBar,
+      borderTopWidth: StyleSheet.hairlineWidth,
+      borderTopColor: colors.tabBarBorder,
+    },
+    bar: {
+      flexDirection: "row",
+      alignItems: "center",
+      minHeight: TAB_BAR_HEIGHT,
+      paddingHorizontal: spacing.lg,
+      paddingTop: spacing.sm,
+    },
+    tabSlot: {
+      flex: 1,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    tab: {
+      minWidth: touchTarget,
+      minHeight: touchTarget,
+      gap: spacing.xs,
+    },
+    tabPressed: {
+      opacity: 0.75,
+    },
+    label: {
+      ...typography.caption,
+      fontSize: 12,
+      fontWeight: "500",
+      color: colors.foreground,
+    },
+    labelActive: {
+      color: colors.primary,
+      fontWeight: "700",
+    },
+  });
+}

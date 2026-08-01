@@ -10,6 +10,7 @@ import { ErrorState } from "@/components/ui/ErrorState";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { SkeletonMetricGrid } from "@/components/ui/Skeleton";
 import { useI18n } from "@/hooks/useI18n";
+import { useTheme } from "@/hooks/useTheme";
 import { useBusinessStats } from "@/features/business/useBusinessStats";
 import { buildEmployeePerformanceChartRows } from "@/utils/dashboardChartData";
 import { formatCount, formatEur, formatGrowthPercent } from "@/utils/format";
@@ -24,6 +25,7 @@ function growthTone(value: number | null | undefined): "positive" | "negative" |
 
 export function BusinessPerformanceScreen() {
   const { t } = useI18n();
+  const { colors } = useTheme();
   const { timeframe, setTimeframe, stats, isLoading, isRefreshing, error, refresh } =
     useBusinessStats();
 
@@ -35,7 +37,7 @@ export function BusinessPerformanceScreen() {
 
   const employeeCount = stats?.employeeCount ?? 0;
   const periodTotalTips = stats?.totalTips ?? 0;
-  const employeePerformance = buildEmployeePerformanceChartRows(stats?.employees, 8);
+  const employeePerformance = buildEmployeePerformanceChartRows(stats?.employees, 8, colors);
   const leader = employeePerformance[0];
   const leaderMessage =
     leader != null

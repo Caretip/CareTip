@@ -1,13 +1,18 @@
+import { useMemo } from "react";
 import { StyleSheet, Text, View } from "react-native";
 import Constants from "expo-constants";
 import { InfoScreenShell } from "@/components/info/InfoScreenShell";
 import { BrandMark } from "@/components/brand/BrandMark";
 import { useI18n } from "@/hooks/useI18n";
-import { colors, radius, spacing, typography } from "@/theme";
+import { useTheme } from "@/hooks/useTheme";
+import type { ColorPalette } from "@/theme/colors";
+import { radius, spacing, typography } from "@/theme";
 import { textA11y } from "@/theme/a11y";
 
 export function AboutScreen() {
   const { t } = useI18n();
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const version = Constants.expoConfig?.version ?? "1.0.0";
   const build =
     Constants.nativeBuildVersion ??
@@ -41,8 +46,8 @@ export function AboutScreen() {
       </View>
 
       <View style={styles.metaCard}>
-        <MetaRow label={t("info.version")} value={version} />
-        <MetaRow label={t("info.build")} value={build} />
+        <MetaRow label={t("info.version")} value={version} styles={styles} />
+        <MetaRow label={t("info.build")} value={build} styles={styles} />
         <Text style={styles.copyright} {...textA11y}>
           {t("info.about.copyright", { year })}
         </Text>
@@ -51,7 +56,15 @@ export function AboutScreen() {
   );
 }
 
-function MetaRow({ label, value }: { label: string; value: string }) {
+function MetaRow({
+  label,
+  value,
+  styles,
+}: {
+  label: string;
+  value: string;
+  styles: ReturnType<typeof createStyles>;
+}) {
   return (
     <View style={styles.metaRow}>
       <Text style={styles.metaLabel}>{label}</Text>
@@ -60,50 +73,52 @@ function MetaRow({ label, value }: { label: string; value: string }) {
   );
 }
 
-const styles = StyleSheet.create({
-  hero: {
-    gap: spacing.md,
-    paddingBottom: spacing.sm,
-  },
-  heroTitle: {
-    ...typography.h1,
-    color: colors.foreground,
-    fontSize: 26,
-  },
-  body: {
-    ...typography.body,
-    color: colors.mutedForeground,
-    lineHeight: 23,
-  },
-  card: {
-    backgroundColor: colors.card,
-    borderRadius: radius.xl,
-    padding: spacing.xl,
-    gap: spacing.sm,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: colors.border,
-  },
-  cardEyebrow: {
-    ...typography.overline,
-    color: colors.primary,
-  },
-  metaCard: {
-    backgroundColor: colors.card,
-    borderRadius: radius.xl,
-    padding: spacing.xl,
-    gap: spacing.md,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: colors.border,
-  },
-  metaRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-  },
-  metaLabel: { ...typography.caption, color: colors.mutedForeground, fontWeight: "600" },
-  metaValue: { ...typography.caption, color: colors.foreground, fontWeight: "700" },
-  copyright: {
-    ...typography.caption,
-    color: colors.mutedForeground,
-    marginTop: spacing.sm,
-  },
-});
+function createStyles(colors: ColorPalette) {
+  return StyleSheet.create({
+    hero: {
+      gap: spacing.md,
+      paddingBottom: spacing.sm,
+    },
+    heroTitle: {
+      ...typography.h1,
+      color: colors.foreground,
+      fontSize: 26,
+    },
+    body: {
+      ...typography.body,
+      color: colors.mutedForeground,
+      lineHeight: 23,
+    },
+    card: {
+      backgroundColor: colors.card,
+      borderRadius: radius.xl,
+      padding: spacing.xl,
+      gap: spacing.sm,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: colors.border,
+    },
+    cardEyebrow: {
+      ...typography.overline,
+      color: colors.primary,
+    },
+    metaCard: {
+      backgroundColor: colors.card,
+      borderRadius: radius.xl,
+      padding: spacing.xl,
+      gap: spacing.md,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: colors.border,
+    },
+    metaRow: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+    },
+    metaLabel: { ...typography.caption, color: colors.mutedForeground, fontWeight: "600" },
+    metaValue: { ...typography.caption, color: colors.foreground, fontWeight: "700" },
+    copyright: {
+      ...typography.caption,
+      color: colors.mutedForeground,
+      marginTop: spacing.sm,
+    },
+  });
+}

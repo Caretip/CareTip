@@ -10,15 +10,19 @@ import { Screen } from "@/components/ui/Screen";
 import { SkeletonListRows } from "@/components/ui/Skeleton";
 import { useAuth } from "@/hooks/useAuth";
 import { useI18n } from "@/hooks/useI18n";
+import { useTheme } from "@/hooks/useTheme";
 import { fetchBusinessEmployees } from "@/services/api/employeeDirectoryService";
 import { fetchBusinessProfile } from "@/services/api/businessService";
 import { queryKeys, queryStaleTimes } from "@/services/api/queryClient";
 import { formatCount } from "@/utils/format";
 import { friendlyErrorMessage } from "@/utils/friendlyError";
-import { colors, spacing, typography } from "@/theme";
+import type { ColorPalette } from "@/theme/colors";
+import { spacing, typography } from "@/theme";
 
 export function TeamManagementScreen() {
   const { t } = useI18n();
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const { user } = useAuth();
 
   const profileQuery = useQuery({
@@ -91,37 +95,39 @@ export function TeamManagementScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  row: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: spacing.md,
-  },
-  body: {
-    flex: 1,
-    gap: spacing.xxs,
-  },
-  name: {
-    ...typography.body,
-    fontWeight: "600",
-    color: colors.foreground,
-  },
-  meta: {
-    ...typography.caption,
-    color: colors.mutedForeground,
-  },
-  trailing: {
-    alignItems: "flex-end",
-    gap: 2,
-  },
-  tips: {
-    ...typography.body,
-    fontWeight: "700",
-    color: colors.primary,
-  },
-  tipsLabel: {
-    ...typography.caption,
-    color: colors.mutedForeground,
-    fontSize: 10,
-  },
-});
+function createStyles(colors: ColorPalette) {
+  return StyleSheet.create({
+    row: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: spacing.md,
+    },
+    body: {
+      flex: 1,
+      gap: spacing.xxs,
+    },
+    name: {
+      ...typography.body,
+      fontWeight: "600",
+      color: colors.foreground,
+    },
+    meta: {
+      ...typography.caption,
+      color: colors.mutedForeground,
+    },
+    trailing: {
+      alignItems: "flex-end",
+      gap: 2,
+    },
+    tips: {
+      ...typography.body,
+      fontWeight: "700",
+      color: colors.primary,
+    },
+    tipsLabel: {
+      ...typography.caption,
+      color: colors.mutedForeground,
+      fontSize: 10,
+    },
+  });
+}

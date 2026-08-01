@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { useMemo } from "react";
 import { StyleSheet, Text, View } from "react-native";
 import { SafeAreaView, type Edge } from "react-native-safe-area-context";
 import { LayeredScreenShell } from "@/components/layout/LayeredScreenShell";
@@ -6,7 +7,7 @@ import { HeaderUtilityStack } from "@/components/ui/HeaderUtilityStack";
 import { SplashScreenAnchor } from "@/components/brand/SplashScreenAnchor";
 import { OfflineBanner } from "@/components/layout/OfflineBanner";
 import { ErrorBanner } from "@/components/layout/ErrorBanner";
-import { heroText } from "@/theme/surfaces";
+import { useTheme } from "@/hooks/useTheme";
 import { brand, spacing, typography } from "@/theme";
 
 type LayeredScreenProps = {
@@ -22,7 +23,7 @@ type LayeredScreenProps = {
   showHeaderUtilities?: boolean;
 };
 
-/** App screens with orange hero + white foreground sheet (dashboards, etc.). */
+/** App screens with orange hero + foreground sheet (dashboards, etc.). */
 export function LayeredScreen({
   eyebrow,
   title,
@@ -35,8 +36,15 @@ export function LayeredScreen({
   notificationsHref,
   showHeaderUtilities = true,
 }: LayeredScreenProps) {
+  const { colors, isDark } = useTheme();
+  const styles = useMemo(() => createStyles(), []);
+
   return (
-    <SafeAreaView style={styles.safe} edges={safeAreaEdges} collapsable={false}>
+    <SafeAreaView
+      style={[staticStyles.safe, { backgroundColor: isDark ? colors.background : brand.orange }]}
+      edges={safeAreaEdges}
+      collapsable={false}
+    >
       <SplashScreenAnchor source="LayeredScreen" />
       <OfflineBanner />
       <ErrorBanner />
@@ -46,8 +54,8 @@ export function LayeredScreen({
         onRefresh={onRefresh}
         tabSafe
         header={
-          <View style={styles.headerRow}>
-            <View style={styles.headerMain}>
+          <View style={staticStyles.headerRow}>
+            <View style={staticStyles.headerMain}>
               {eyebrow ? <Text style={styles.eyebrow}>{eyebrow}</Text> : null}
               <Text style={styles.title}>{title}</Text>
               {subtitle ? <Text style={styles.subtitle}>{subtitle}</Text> : null}
@@ -65,10 +73,34 @@ export function LayeredScreen({
   );
 }
 
-const styles = StyleSheet.create({
+function createStyles() {
+  return StyleSheet.create({
+    eyebrow: {
+      ...typography.overline,
+      color: "rgba(255,255,255,0.82)",
+      letterSpacing: 1.1,
+    },
+    title: {
+      ...typography.h1,
+      color: "#FFFFFF",
+      fontSize: 28,
+      lineHeight: 34,
+      letterSpacing: -0.8,
+      fontWeight: "800",
+    },
+    subtitle: {
+      ...typography.body,
+      color: "rgba(255,255,255,0.88)",
+      fontSize: 15,
+      lineHeight: 22,
+      fontWeight: "500",
+    },
+  });
+}
+
+const staticStyles = StyleSheet.create({
   safe: {
     flex: 1,
-    backgroundColor: brand.orange,
   },
   headerRow: {
     flexDirection: "row",
@@ -81,25 +113,5 @@ const styles = StyleSheet.create({
     flex: 1,
     minWidth: 0,
     gap: spacing.sm,
-  },
-  eyebrow: {
-    ...typography.overline,
-    color: heroText.label,
-    letterSpacing: 1.1,
-  },
-  title: {
-    ...typography.h1,
-    color: heroText.value,
-    fontSize: 28,
-    lineHeight: 34,
-    letterSpacing: -0.8,
-    fontWeight: "800",
-  },
-  subtitle: {
-    ...typography.body,
-    color: heroText.hint,
-    fontSize: 15,
-    lineHeight: 22,
-    fontWeight: "500",
   },
 });

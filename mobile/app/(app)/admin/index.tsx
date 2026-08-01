@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import { Redirect, useRouter } from "expo-router";
 import { StyleSheet, Text, View } from "react-native";
 import { Button } from "@/components/ui/Button";
@@ -6,8 +7,10 @@ import { ScreenHeader, HeroCard } from "@/components/ui/ScreenHeader";
 import { Divider, Section } from "@/components/ui/Section";
 import { useAuth } from "@/hooks/useAuth";
 import { useI18n } from "@/hooks/useI18n";
+import { useTheme } from "@/hooks/useTheme";
 import { getDashboardRouteForRole } from "@/utils/routing";
-import { colors, spacing, typography } from "@/theme";
+import type { ColorPalette } from "@/theme/colors";
+import { spacing, typography } from "@/theme";
 
 /**
  * Admin mobile is intentionally limited (no platform analytics on device).
@@ -16,6 +19,8 @@ import { colors, spacing, typography } from "@/theme";
 export default function AdminDashboardRoute() {
   const router = useRouter();
   const { t } = useI18n();
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const { user, signOut } = useAuth();
 
   if (user?.role && user.role !== "SUPER_ADMIN") {
@@ -55,25 +60,27 @@ export default function AdminDashboardRoute() {
   );
 }
 
-const styles = StyleSheet.create({
-  body: {
-    ...typography.body,
-    color: colors.foreground,
-    lineHeight: 24,
-  },
-  emailLabel: {
-    ...typography.overline,
-    color: colors.mutedForeground,
-    fontSize: 10,
-    letterSpacing: 0.8,
-    marginBottom: spacing.xxs,
-  },
-  email: {
-    ...typography.body,
-    color: colors.foreground,
-    fontWeight: "600",
-  },
-  footer: {
-    marginTop: spacing.xl,
-  },
-});
+function createStyles(colors: ColorPalette) {
+  return StyleSheet.create({
+    body: {
+      ...typography.body,
+      color: colors.foreground,
+      lineHeight: 24,
+    },
+    emailLabel: {
+      ...typography.overline,
+      color: colors.mutedForeground,
+      fontSize: 10,
+      letterSpacing: 0.8,
+      marginBottom: spacing.xxs,
+    },
+    email: {
+      ...typography.body,
+      color: colors.foreground,
+      fontWeight: "600",
+    },
+    footer: {
+      marginTop: spacing.xl,
+    },
+  });
+}

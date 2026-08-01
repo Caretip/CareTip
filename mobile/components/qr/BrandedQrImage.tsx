@@ -1,11 +1,14 @@
+import { useMemo } from "react";
 import { ActivityIndicator, Image, Pressable, StyleSheet, Text, View } from "react-native";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { useBrandedQrImage } from "@/hooks/useBrandedQrImage";
 import { useI18n } from "@/hooks/useI18n";
+import { useTheme } from "@/hooks/useTheme";
 import { BrandedQrFetchError } from "@/services/api/brandedQrService";
 import { normalizeApiError } from "@/types/api";
 import type { BrandedQrViewerMode } from "@/types/qr";
-import { colors, spacing, typography } from "@/theme";
+import type { ColorPalette } from "@/theme/colors";
+import { spacing, typography } from "@/theme";
 
 export type { BrandedQrViewerMode };
 
@@ -42,6 +45,8 @@ function resolveBrandedQrMessage(error: unknown, t: (key: string) => string): st
  */
 export function BrandedQrImage({ targetUrl, mode, minHeight = 400, reloadKey = 0 }: BrandedQrImageProps) {
   const { t } = useI18n();
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const { data, isLoading, isError, error, refetch, isFetching } = useBrandedQrImage({
     mode,
     targetUrl,
@@ -96,55 +101,57 @@ export function BrandedQrImage({ targetUrl, mode, minHeight = 400, reloadKey = 0
   );
 }
 
-const styles = StyleSheet.create({
-  frame: {
-    width: "100%",
-    maxWidth: 420,
-    alignSelf: "center",
-    alignItems: "center",
-    justifyContent: "center",
-    overflow: "hidden",
-    borderRadius: 12,
-    backgroundColor: "transparent",
-    gap: spacing.sm,
-  },
-  image: {
-    width: "100%",
-    height: undefined,
-    aspectRatio: 0.72,
-    maxHeight: 560,
-  },
-  fallbackBanner: {
-    ...typography.caption,
-    color: colors.mutedForeground,
-    textAlign: "center",
-  },
-  refreshOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    alignItems: "flex-end",
-    justifyContent: "flex-start",
-    padding: spacing.sm,
-  },
-  fallback: {
-    width: "100%",
-    maxWidth: 420,
-    alignSelf: "center",
-    alignItems: "center",
-    justifyContent: "center",
-    padding: spacing.xl,
-    borderRadius: 12,
-    backgroundColor: colors.muted,
-    gap: spacing.sm,
-  },
-  fallbackText: {
-    ...typography.body,
-    color: colors.mutedForeground,
-    textAlign: "center",
-  },
-  hintText: {
-    ...typography.caption,
-    color: colors.primary,
-    textAlign: "center",
-    fontWeight: "600",
-  },
-});
+function createStyles(colors: ColorPalette) {
+  return StyleSheet.create({
+    frame: {
+      width: "100%",
+      maxWidth: 420,
+      alignSelf: "center",
+      alignItems: "center",
+      justifyContent: "center",
+      overflow: "hidden",
+      borderRadius: 12,
+      backgroundColor: "transparent",
+      gap: spacing.sm,
+    },
+    image: {
+      width: "100%",
+      height: undefined,
+      aspectRatio: 0.72,
+      maxHeight: 560,
+    },
+    fallbackBanner: {
+      ...typography.caption,
+      color: colors.mutedForeground,
+      textAlign: "center",
+    },
+    refreshOverlay: {
+      ...StyleSheet.absoluteFillObject,
+      alignItems: "flex-end",
+      justifyContent: "flex-start",
+      padding: spacing.sm,
+    },
+    fallback: {
+      width: "100%",
+      maxWidth: 420,
+      alignSelf: "center",
+      alignItems: "center",
+      justifyContent: "center",
+      padding: spacing.xl,
+      borderRadius: 12,
+      backgroundColor: colors.muted,
+      gap: spacing.sm,
+    },
+    fallbackText: {
+      ...typography.body,
+      color: colors.mutedForeground,
+      textAlign: "center",
+    },
+    hintText: {
+      ...typography.caption,
+      color: colors.primary,
+      textAlign: "center",
+      fontWeight: "600",
+    },
+  });
+}

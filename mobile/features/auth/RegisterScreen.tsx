@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
@@ -7,6 +7,7 @@ import { AuthExperienceShell } from "@/components/auth/AuthExperienceShell";
 import { AuthField } from "@/components/auth/AuthField";
 import { AuthContinueButton } from "@/components/auth/AuthContinueButton";
 import { useI18n } from "@/hooks/useI18n";
+import { useTheme } from "@/hooks/useTheme";
 import { registerSchema, type RegisterFormValues } from "@/features/auth/authSchemas";
 import { authService } from "@/services/auth/authService";
 import { friendlyErrorMessage } from "@/utils/friendlyError";
@@ -14,11 +15,14 @@ import { resolveLoginLocale } from "@/utils/resolveLoginLocale";
 import { hapticLight } from "@/utils/haptics";
 import { authCardStyles } from "@/components/auth/authCardStyles";
 import { authBrand } from "@/theme/authBrand";
-import { colors, spacing, touchTarget, typography } from "@/theme";
+import type { ColorPalette } from "@/theme/colors";
+import { spacing, touchTarget, typography } from "@/theme";
 
 export function RegisterScreen() {
   const router = useRouter();
   const { t } = useI18n();
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const params = useLocalSearchParams<{ role?: string; inviteCode?: string; businessName?: string }>();
   const [formError, setFormError] = useState<string | null>(null);
   const emailRef = useRef<TextInput>(null);
@@ -235,27 +239,29 @@ export function RegisterScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  venueHint: {
-    ...typography.caption,
-    color: colors.success,
-    fontWeight: "600",
-    marginBottom: spacing.sm,
-  },
-  signInRow: {
-    minHeight: touchTarget,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    paddingVertical: spacing.sm,
-  },
-  signInPrompt: {
-    ...typography.body,
-    color: authBrand.muted,
-  },
-  signInLink: {
-    ...typography.body,
-    color: authBrand.orange,
-    fontWeight: "700",
-  },
-});
+function createStyles(colors: ColorPalette) {
+  return StyleSheet.create({
+    venueHint: {
+      ...typography.caption,
+      color: colors.success,
+      fontWeight: "600",
+      marginBottom: spacing.sm,
+    },
+    signInRow: {
+      minHeight: touchTarget,
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "center",
+      paddingVertical: spacing.sm,
+    },
+    signInPrompt: {
+      ...typography.body,
+      color: authBrand.muted,
+    },
+    signInLink: {
+      ...typography.body,
+      color: authBrand.orange,
+      fontWeight: "700",
+    },
+  });
+}

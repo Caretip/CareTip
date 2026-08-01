@@ -3,16 +3,17 @@ import { StyleSheet, View } from "react-native";
 import { SplashScreenAnchor } from "@/components/brand/SplashScreenAnchor";
 import { useAuth } from "@/hooks/useAuth";
 import { useSessionRoutingReady } from "@/hooks/useAppReady";
+import { useTheme } from "@/hooks/useTheme";
 import { getPostAuthHref } from "@/utils/postAuthNavigation";
-import { colors } from "@/theme";
 
 export default function Index() {
+  const { colors } = useTheme();
   const { isAuthenticated, user } = useAuth();
   const routingReady = useSessionRoutingReady();
 
   if (!routingReady) {
     return (
-      <View style={styles.boot}>
+      <View style={[styles.boot, { backgroundColor: colors.background }]}>
         <SplashScreenAnchor source="index" />
       </View>
     );
@@ -28,6 +29,5 @@ export default function Index() {
 const styles = StyleSheet.create({
   boot: {
     flex: 1,
-    backgroundColor: colors.background,
   },
 });

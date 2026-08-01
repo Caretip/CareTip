@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import {
   Modal,
   Platform,
@@ -12,6 +12,7 @@ import Animated, { FadeIn, FadeOut, ZoomIn } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { HeaderIconButton, type HeaderControlVariant } from "@/components/ui/HeaderIconButton";
 import { useI18n } from "@/hooks/useI18n";
+import { useTheme } from "@/hooks/useTheme";
 import type { AppLanguage } from "@/i18n/types";
 import { brand, radius, shadows, spacing, touchTarget, typography } from "@/theme";
 import { hapticSelection } from "@/utils/haptics";
@@ -32,6 +33,8 @@ const BACKDROP_EXIT = Platform.OS === "android" ? undefined : FadeOut.duration(1
 
 export function LanguageSwitcher({ variant = "onHero" }: LanguageSwitcherProps) {
   const { t, language, setLanguage } = useI18n();
+  const { colors } = useTheme();
+  const menuStyles = useMemo(() => createMenuStyles(colors), [colors]);
   const [open, setOpen] = useState(false);
   const anchorRef = useRef<View>(null);
   const insets = useSafeAreaInsets();
@@ -76,13 +79,13 @@ export function LanguageSwitcher({ variant = "onHero" }: LanguageSwitcherProps) 
       </View>
 
       <Modal visible={open} transparent animationType="none" onRequestClose={() => setOpen(false)}>
-        <Animated.View entering={BACKDROP_ENTER} exiting={BACKDROP_EXIT} style={styles.backdrop}>
+        <Animated.View entering={BACKDROP_ENTER} exiting={BACKDROP_EXIT} style={menuStyles.backdrop}>
           <Pressable style={StyleSheet.absoluteFill} onPress={() => setOpen(false)} accessibilityLabel={t("common.cancel")} />
           <Animated.View
             entering={MENU_ENTER}
-            style={[styles.menu, shadows.lg, { top: menuPos.top, right: menuPos.right }]}
+            style={[menuStyles.menu, shadows.lg, { top: menuPos.top, right: menuPos.right }]}
           >
-            <Text style={styles.menuTitle}>{t("preferences.selectLanguage")}</Text>
+            <Text style={menuStyles.menuTitle}>{t("preferences.selectLanguage")}</Text>
             {LANGUAGE_OPTIONS.map((option) => {
               const active = option.code === language;
               return (
@@ -91,18 +94,18 @@ export function LanguageSwitcher({ variant = "onHero" }: LanguageSwitcherProps) 
                   accessibilityRole="button"
                   accessibilityState={{ selected: active }}
                   onPress={() => void selectLanguage(option.code)}
-                  style={[styles.option, active ? styles.optionActive : null]}
+                  style={[menuStyles.option, active ? menuStyles.optionActive : null]}
                 >
-                  <Text style={styles.flag}>{option.flag}</Text>
-                  <Text style={[styles.optionLabel, active ? styles.optionLabelActive : null]}>
+                  <Text style={menuStyles.flag}>{option.flag}</Text>
+                  <Text style={[menuStyles.optionLabel, active ? menuStyles.optionLabelActive : null]}>
                     {t(option.labelKey)}
                   </Text>
-                  {active ? <Text style={styles.check}>✓</Text> : null}
+                  {active ? <Text style={menuStyles.check}>✓</Text> : null}
                 </Pressable>
               );
             })}
-            <View style={styles.currentRow}>
-              <Text style={styles.currentHint}>
+            <View style={menuStyles.currentRow}>
+              <Text style={menuStyles.currentHint}>
                 {current?.flag} {current ? t(current.labelKey) : ""}
               </Text>
             </View>
@@ -113,69 +116,71 @@ export function LanguageSwitcher({ variant = "onHero" }: LanguageSwitcherProps) 
   );
 }
 
-const styles = StyleSheet.create({
-  backdrop: {
-    flex: 1,
-    backgroundColor: "rgba(11, 18, 32, 0.28)",
-  },
-  menu: {
-    position: "absolute",
-    minWidth: 196,
-    backgroundColor: "#FFFFFF",
-    borderRadius: radius.xl,
-    paddingVertical: spacing.sm,
-    paddingHorizontal: spacing.sm,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: "rgba(11, 18, 32, 0.08)",
-    gap: spacing.xs,
-  },
-  menuTitle: {
-    ...typography.caption,
-    color: "#6B7280",
-    fontWeight: "700",
-    letterSpacing: 0.6,
-    textTransform: "uppercase",
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-  },
-  option: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: spacing.md,
-    minHeight: touchTarget,
-    borderRadius: radius.lg,
-    paddingHorizontal: spacing.md,
-  },
-  optionActive: {
-    backgroundColor: brand.orangeSoft,
-  },
-  flag: {
-    fontSize: 18,
-  },
-  optionLabel: {
-    ...typography.body,
-    color: "#111827",
-    fontWeight: "600",
-    flex: 1,
-  },
-  optionLabelActive: {
-    color: brand.orange,
-  },
-  check: {
-    ...typography.body,
-    color: brand.orange,
-    fontWeight: "700",
-  },
-  currentRow: {
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: "rgba(11, 18, 32, 0.08)",
-    marginTop: spacing.xs,
-    paddingTop: spacing.sm,
-    paddingHorizontal: spacing.md,
-  },
-  currentHint: {
-    ...typography.caption,
-    color: "#6B7280",
-    fontWeight: "600",
-  },
-});
+function createMenuStyles(colors: ReturnType<typeof useTheme>["colors"]) {
+  return StyleSheet.create({
+    backdrop: {
+      flex: 1,
+      backgroundColor: colors.overlay,
+    },
+    menu: {
+      position: "absolute",
+      minWidth: 196,
+      backgroundColor: colors.cardElevated,
+      borderRadius: radius.xl,
+      paddingVertical: spacing.sm,
+      paddingHorizontal: spacing.sm,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: colors.border,
+      gap: spacing.xs,
+    },
+    menuTitle: {
+      ...typography.caption,
+      color: colors.mutedForeground,
+      fontWeight: "700",
+      letterSpacing: 0.6,
+      textTransform: "uppercase",
+      paddingHorizontal: spacing.md,
+      paddingVertical: spacing.sm,
+    },
+    option: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: spacing.md,
+      minHeight: touchTarget,
+      borderRadius: radius.lg,
+      paddingHorizontal: spacing.md,
+    },
+    optionActive: {
+      backgroundColor: colors.primarySoft,
+    },
+    flag: {
+      fontSize: 18,
+    },
+    optionLabel: {
+      ...typography.body,
+      color: colors.foreground,
+      fontWeight: "600",
+      flex: 1,
+    },
+    optionLabelActive: {
+      color: brand.orange,
+    },
+    check: {
+      ...typography.body,
+      color: brand.orange,
+      fontWeight: "700",
+    },
+    currentRow: {
+      borderTopWidth: StyleSheet.hairlineWidth,
+      borderTopColor: colors.border,
+      marginTop: spacing.xs,
+      paddingTop: spacing.sm,
+      paddingHorizontal: spacing.md,
+    },
+    currentHint: {
+      ...typography.caption,
+      color: colors.mutedForeground,
+      fontWeight: "600",
+    },
+  });
+}

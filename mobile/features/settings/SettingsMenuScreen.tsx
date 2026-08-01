@@ -1,14 +1,17 @@
+import { useMemo } from "react";
 import { StyleSheet, Text, View } from "react-native";
 import { Screen } from "@/components/ui/Screen";
 import { ScreenHeader } from "@/components/ui/ScreenHeader";
 import { SettingsMenuGroup, SettingsMenuRow } from "@/components/settings/SettingsMenuRow";
 import { useAuth } from "@/hooks/useAuth";
 import { useI18n } from "@/hooks/useI18n";
+import { useTheme } from "@/hooks/useTheme";
 import { useQuery } from "@tanstack/react-query";
 import { fetchBusinessProfile } from "@/services/api/businessService";
 import { fetchEmployeeProfile } from "@/services/api/employeeService";
 import { queryKeys, queryStaleTimes } from "@/services/api/queryClient";
-import { colors, spacing, typography } from "@/theme";
+import type { ColorPalette } from "@/theme/colors";
+import { spacing, typography } from "@/theme";
 import type { SettingsMenuConfig } from "@/features/settings/settingsMenuTypes";
 
 type SettingsMenuScreenProps = {
@@ -18,6 +21,8 @@ type SettingsMenuScreenProps = {
 
 export function SettingsMenuScreen({ role, config }: SettingsMenuScreenProps) {
   const { t } = useI18n();
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const { user } = useAuth();
 
   const businessQuery = useQuery({
@@ -69,14 +74,16 @@ export function SettingsMenuScreen({ role, config }: SettingsMenuScreenProps) {
   );
 }
 
-const styles = StyleSheet.create({
-  hero: {
-    gap: spacing.xs,
-    marginBottom: spacing.xl,
-  },
-  email: {
-    ...typography.body,
-    color: colors.mutedForeground,
-    marginTop: -spacing.xs,
-  },
-});
+function createStyles(colors: ColorPalette) {
+  return StyleSheet.create({
+    hero: {
+      gap: spacing.xs,
+      marginBottom: spacing.xl,
+    },
+    email: {
+      ...typography.body,
+      color: colors.mutedForeground,
+      marginTop: -spacing.xs,
+    },
+  });
+}

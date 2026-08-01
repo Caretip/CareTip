@@ -16,12 +16,14 @@ import { TipCard } from "@/components/ui/ListCards";
 import { DetailScreenHeader } from "@/components/ui/DetailScreenHeader";
 import { useBusinessTipsList, useEmployeeTipsList } from "@/hooks/useTipsList";
 import { useI18n } from "@/hooks/useI18n";
+import { useTheme } from "@/hooks/useTheme";
 import { formatEur } from "@/utils/format";
 import { formatTipStatus } from "@/utils/labels";
 import { friendlyErrorMessage } from "@/utils/friendlyError";
 import type { TipActivityRow, TipStatus } from "@/types/tips";
 import { LIST_PERF } from "@/constants/listPerf";
-import { colors, spacing, surface } from "@/theme";
+import type { ColorPalette } from "@/theme/colors";
+import { spacing, surface } from "@/theme";
 
 type TipsListScreenProps = {
   role: "business" | "employee";
@@ -50,6 +52,8 @@ function formatTipDate(iso: string, timezone?: string): string {
 export function TipsListScreen({ role, basePath }: TipsListScreenProps) {
   const router = useRouter();
   const { t } = useI18n();
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const [search, setSearch] = useState("");
   const [range, setRange] = useState<"today" | "week" | "month">("month");
   const [status, setStatus] = useState<"all" | TipStatus>("all");
@@ -148,7 +152,7 @@ export function TipsListScreen({ role, basePath }: TipsListScreenProps) {
       query.isFetchingNextPage ? (
         <ActivityIndicator color={colors.primary} style={styles.footerLoader} />
       ) : null,
-    [query.isFetchingNextPage],
+    [colors.primary, query.isFetchingNextPage, styles.footerLoader],
   );
 
   const menuFallbackHref =
@@ -204,30 +208,32 @@ export function TipsListScreen({ role, basePath }: TipsListScreenProps) {
   );
 }
 
-const styles = StyleSheet.create({
-  header: {
-    ...screenContentPadding,
-    paddingBottom: spacing.md,
-    paddingTop: spacing.md,
-  },
-  filters: {
-    paddingHorizontal: spacing.xl,
-    paddingBottom: spacing.md,
-    gap: spacing.md,
-  },
-  listPad: {
-    ...screenContentPadding,
-  },
-  list: {
-    ...screenContentPadding,
-    flexGrow: 1,
-    backgroundColor: colors.card,
-    borderRadius: surface.groupRadius,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: colors.border,
-    overflow: "hidden",
-  },
-  footerLoader: {
-    marginVertical: spacing.lg,
-  },
-});
+function createStyles(colors: ColorPalette) {
+  return StyleSheet.create({
+    header: {
+      ...screenContentPadding,
+      paddingBottom: spacing.md,
+      paddingTop: spacing.md,
+    },
+    filters: {
+      paddingHorizontal: spacing.xl,
+      paddingBottom: spacing.md,
+      gap: spacing.md,
+    },
+    listPad: {
+      ...screenContentPadding,
+    },
+    list: {
+      ...screenContentPadding,
+      flexGrow: 1,
+      backgroundColor: colors.card,
+      borderRadius: surface.groupRadius,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: colors.border,
+      overflow: "hidden",
+    },
+    footerLoader: {
+      marginVertical: spacing.lg,
+    },
+  });
+}

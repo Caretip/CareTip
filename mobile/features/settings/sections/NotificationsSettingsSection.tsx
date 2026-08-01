@@ -1,15 +1,20 @@
+import { useMemo } from "react";
 import { StyleSheet, Switch, Text, View } from "react-native";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { GroupedList, GroupedRow, Section } from "@/components/ui/Section";
 import { SettingsSectionLayout } from "@/features/settings/SettingsSectionLayout";
 import { useI18n } from "@/hooks/useI18n";
+import { useTheme } from "@/hooks/useTheme";
 import { fetchEmployeeProfile } from "@/services/api/employeeService";
 import { fetchAccountSettings, patchAccountSettings, patchEmployeeProfile } from "@/services/api/settingsService";
 import { queryKeys, queryStaleTimes } from "@/services/api/queryClient";
-import { colors, spacing, typography } from "@/theme";
+import type { ColorPalette } from "@/theme/colors";
+import { spacing, typography } from "@/theme";
 
 export function BusinessNotificationsSettingsScreen() {
   const { t } = useI18n();
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const queryClient = useQueryClient();
   const accountQuery = useQuery({
     queryKey: queryKeys.accountSettings,
@@ -56,6 +61,8 @@ export function BusinessNotificationsSettingsScreen() {
 
 export function EmployeeNotificationsSettingsScreen() {
   const { t } = useI18n();
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const queryClient = useQueryClient();
   const employeeQuery = useQuery({
     queryKey: queryKeys.employeeMe,
@@ -100,13 +107,15 @@ export function EmployeeNotificationsSettingsScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  row: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    gap: spacing.md,
-    minHeight: 52,
-  },
-  body: { ...typography.body, color: colors.foreground, flex: 1 },
-});
+function createStyles(colors: ColorPalette) {
+  return StyleSheet.create({
+    row: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+      gap: spacing.md,
+      minHeight: 52,
+    },
+    body: { ...typography.body, color: colors.foreground, flex: 1 },
+  });
+}

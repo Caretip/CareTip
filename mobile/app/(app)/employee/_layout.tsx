@@ -6,6 +6,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { MimeTabBar } from "@/components/navigation/MimeTabBar";
 import { useAuth } from "@/hooks/useAuth";
 import { useI18n } from "@/hooks/useI18n";
+import { useTheme } from "@/hooks/useTheme";
 import { buildPremiumTabScreenOptions } from "@/theme/navigation";
 
 function TabIcon({
@@ -23,6 +24,7 @@ function TabIcon({
 export default function EmployeeTabsLayout() {
   const insets = useSafeAreaInsets();
   const { t } = useI18n();
+  const { colors } = useTheme();
   const { user } = useAuth();
 
   if (user?.role === "MANAGER") {
@@ -40,7 +42,7 @@ export default function EmployeeTabsLayout() {
   return (
     <Tabs
       tabBar={renderTabBar}
-      screenOptions={buildPremiumTabScreenOptions(insets.bottom)}
+      screenOptions={buildPremiumTabScreenOptions(insets.bottom, colors)}
     >
       <Tabs.Screen
         name="index"

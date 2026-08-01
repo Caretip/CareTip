@@ -10,9 +10,11 @@ import {
 import Svg, { Rect } from "react-native-svg";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { useTheme } from "@/hooks/useTheme";
 import type { EmployeePerformanceChartRow } from "@/utils/dashboardChartData";
 import { formatEur } from "@/utils/format";
-import { colors, radius, spacing, surface, typography } from "@/theme";
+import type { ColorPalette } from "@/theme/colors";
+import { radius, spacing, surface, typography } from "@/theme";
 
 type EmployeePerformanceChartProps = {
   title: string;
@@ -82,6 +84,8 @@ export function EmployeePerformanceChart({
   hideHeader = false,
   card = false,
 }: EmployeePerformanceChartProps) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const { width: windowWidth } = useWindowDimensions();
   const [containerWidth, setContainerWidth] = useState(0);
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
@@ -206,94 +210,96 @@ export function EmployeePerformanceChart({
   );
 }
 
-const styles = StyleSheet.create({
-  wrap: {
-    gap: spacing.sm,
-  },
-  cardSurface: {
-    backgroundColor: colors.card,
-    borderRadius: surface.cardRadius,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: colors.border,
-    padding: spacing.lg,
-    gap: spacing.md,
-  },
-  title: {
-    ...typography.overline,
-    color: colors.mutedForeground,
-    fontSize: 11,
-    letterSpacing: 1,
-  },
-  sectionSub: {
-    ...typography.caption,
-    color: colors.mutedForeground,
-  },
-  chartWrap: {
-    width: "100%",
-    paddingVertical: spacing.sm,
-  },
-  row: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: spacing.sm,
-  },
-  rowCompact: {
-    width: "100%",
-    gap: spacing.xs,
-  },
-  rowSpacing: {
-    marginBottom: ROW_GAP,
-  },
-  rowHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    gap: spacing.sm,
-  },
-  name: {
-    ...typography.caption,
-    color: colors.foreground,
-    fontWeight: "600",
-    flexShrink: 0,
-  },
-  nameCompact: {
-    ...typography.caption,
-    color: colors.foreground,
-    fontWeight: "600",
-    flex: 1,
-  },
-  barTrack: {
-    flexShrink: 1,
-    overflow: "hidden",
-  },
-  amount: {
-    ...typography.caption,
-    color: colors.mutedForeground,
-    fontWeight: "600",
-    textAlign: "right",
-    flexShrink: 0,
-  },
-  amountCompact: {
-    ...typography.caption,
-    color: colors.mutedForeground,
-    fontWeight: "600",
-    flexShrink: 0,
-  },
-  tooltip: {
-    backgroundColor: colors.foreground,
-    borderRadius: radius.md,
-    paddingHorizontal: spacing.sm,
-    paddingVertical: spacing.xs,
-    flexShrink: 0,
-  },
-  tooltipText: {
-    ...typography.caption,
-    color: colors.card,
-    fontWeight: "700",
-  },
-  leader: {
-    ...typography.caption,
-    color: colors.mutedForeground,
-    marginTop: spacing.sm,
-  },
-});
+function createStyles(colors: ColorPalette) {
+  return StyleSheet.create({
+    wrap: {
+      gap: spacing.sm,
+    },
+    cardSurface: {
+      backgroundColor: colors.card,
+      borderRadius: surface.cardRadius,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: colors.border,
+      padding: spacing.lg,
+      gap: spacing.md,
+    },
+    title: {
+      ...typography.overline,
+      color: colors.mutedForeground,
+      fontSize: 11,
+      letterSpacing: 1,
+    },
+    sectionSub: {
+      ...typography.caption,
+      color: colors.mutedForeground,
+    },
+    chartWrap: {
+      width: "100%",
+      paddingVertical: spacing.sm,
+    },
+    row: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: spacing.sm,
+    },
+    rowCompact: {
+      width: "100%",
+      gap: spacing.xs,
+    },
+    rowSpacing: {
+      marginBottom: ROW_GAP,
+    },
+    rowHeader: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      gap: spacing.sm,
+    },
+    name: {
+      ...typography.caption,
+      color: colors.foreground,
+      fontWeight: "600",
+      flexShrink: 0,
+    },
+    nameCompact: {
+      ...typography.caption,
+      color: colors.foreground,
+      fontWeight: "600",
+      flex: 1,
+    },
+    barTrack: {
+      flexShrink: 1,
+      overflow: "hidden",
+    },
+    amount: {
+      ...typography.caption,
+      color: colors.mutedForeground,
+      fontWeight: "600",
+      textAlign: "right",
+      flexShrink: 0,
+    },
+    amountCompact: {
+      ...typography.caption,
+      color: colors.mutedForeground,
+      fontWeight: "600",
+      flexShrink: 0,
+    },
+    tooltip: {
+      backgroundColor: colors.foreground,
+      borderRadius: radius.md,
+      paddingHorizontal: spacing.sm,
+      paddingVertical: spacing.xs,
+      flexShrink: 0,
+    },
+    tooltipText: {
+      ...typography.caption,
+      color: colors.card,
+      fontWeight: "700",
+    },
+    leader: {
+      ...typography.caption,
+      color: colors.mutedForeground,
+      marginTop: spacing.sm,
+    },
+  });
+}

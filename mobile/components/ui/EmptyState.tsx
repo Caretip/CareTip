@@ -1,7 +1,10 @@
+import { useMemo } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { BrandMark } from "@/components/brand/BrandMark";
-import { colors, radius, shadows, spacing, surface, touchTarget, typography } from "@/theme";
+import { useTheme } from "@/hooks/useTheme";
+import type { ColorPalette } from "@/theme/colors";
+import { radius, shadows, spacing, surface, touchTarget, typography } from "@/theme";
 
 type EmptyVariant = "tips" | "notifications" | "activity" | "qr" | "offline" | "generic";
 
@@ -31,6 +34,9 @@ export function EmptyState({
   actionLabel,
   onAction,
 }: EmptyStateProps) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
+
   return (
     <View
       style={styles.card}
@@ -60,63 +66,65 @@ export function EmptyState({
   );
 }
 
-const styles = StyleSheet.create({
-  card: {
-    marginVertical: spacing.md,
-    paddingVertical: spacing["3xl"],
-    paddingHorizontal: spacing["2xl"],
-    alignItems: "center",
-    gap: spacing.md,
-    backgroundColor: colors.card,
-    borderRadius: surface.cardRadius,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: colors.border,
-    ...shadows.sm,
-  },
-  iconWrap: {
-    width: surface.iconWellSize + 8,
-    height: surface.iconWellSize + 8,
-    borderRadius: surface.iconWellRadius + 4,
-    backgroundColor: colors.primarySoft,
-    alignItems: "center",
-    justifyContent: "center",
-    marginBottom: spacing.xs,
-  },
-  emoji: {
-    fontSize: 22,
-    color: colors.primary,
-  },
-  title: {
-    ...typography.h2,
-    color: colors.foreground,
-    textAlign: "center",
-  },
-  message: {
-    ...typography.body,
-    color: colors.mutedForeground,
-    textAlign: "center",
-    maxWidth: 300,
-  },
-  action: {
-    minHeight: touchTarget,
-    paddingHorizontal: spacing["2xl"],
-    paddingVertical: spacing.md,
-    borderRadius: surface.pillRadius,
-    backgroundColor: colors.primary,
-    ...shadows.sm,
-    alignItems: "center",
-    justifyContent: "center",
-    marginTop: spacing.sm,
-  },
-  actionLabel: {
-    ...typography.button,
-    color: colors.primaryForeground,
-  },
-  pressed: {
-    opacity: 0.88,
-  },
-  brand: {
-    marginTop: spacing.md,
-    opacity: 0.8,
-  },
-});
+function createStyles(colors: ColorPalette) {
+  return StyleSheet.create({
+    card: {
+      marginVertical: spacing.md,
+      paddingVertical: spacing["3xl"],
+      paddingHorizontal: spacing["2xl"],
+      alignItems: "center",
+      gap: spacing.md,
+      backgroundColor: colors.card,
+      borderRadius: surface.cardRadius,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: colors.border,
+      ...shadows.sm,
+    },
+    iconWrap: {
+      width: surface.iconWellSize + 8,
+      height: surface.iconWellSize + 8,
+      borderRadius: surface.iconWellRadius + 4,
+      backgroundColor: colors.primarySoft,
+      alignItems: "center",
+      justifyContent: "center",
+      marginBottom: spacing.xs,
+    },
+    emoji: {
+      fontSize: 22,
+      color: colors.primary,
+    },
+    title: {
+      ...typography.h2,
+      color: colors.foreground,
+      textAlign: "center",
+    },
+    message: {
+      ...typography.body,
+      color: colors.mutedForeground,
+      textAlign: "center",
+      maxWidth: 300,
+    },
+    action: {
+      minHeight: touchTarget,
+      paddingHorizontal: spacing["2xl"],
+      paddingVertical: spacing.md,
+      borderRadius: surface.pillRadius,
+      backgroundColor: colors.primary,
+      ...shadows.sm,
+      alignItems: "center",
+      justifyContent: "center",
+      marginTop: spacing.sm,
+    },
+    actionLabel: {
+      ...typography.button,
+      color: colors.primaryForeground,
+    },
+    pressed: {
+      opacity: 0.88,
+    },
+    brand: {
+      marginTop: spacing.md,
+      opacity: 0.8,
+    },
+  });
+}

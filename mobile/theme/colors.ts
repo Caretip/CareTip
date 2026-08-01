@@ -63,7 +63,7 @@ export const lightColors = {
   chartNeutralMuted: "#E5E7EB",
 } as const;
 
-/** Prepared for future dark mode — not enabled. */
+/** Dark palette — active via ThemeBridge + useTheme(). */
 export const darkColors = {
   background: "#0B0D10",
   backgroundElevated: "#14171C",
@@ -113,6 +113,6 @@ export const darkColors = {
   chartNeutralMuted: "#374151",
 } as const;
 
-export type ColorPalette = typeof lightColors;
+export type ColorPalette = typeof lightColors | typeof darkColors;
 
 export const colors: ColorPalette = lightColors;

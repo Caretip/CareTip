@@ -1,6 +1,9 @@
+import { useMemo } from "react";
 import { RefreshControl, StyleSheet, View, useWindowDimensions, type ViewProps } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { colors, spacing } from "@/theme";
+import { useTheme } from "@/hooks/useTheme";
+import type { ColorPalette } from "@/theme/colors";
+import { spacing } from "@/theme";
 import { TAB_BAR_SCROLL_CLEARANCE } from "@/theme/navigation";
 import { OfflineBanner } from "@/components/layout/OfflineBanner";
 import { ErrorBanner } from "@/components/layout/ErrorBanner";
@@ -13,8 +16,8 @@ type ScreenShellProps = ViewProps & {
 
 /** Safe area shell for FlatList screens — avoids nesting scroll views. */
 export function ScreenShell({ children, refreshing, onRefresh, style, ...rest }: ScreenShellProps) {
-  const { width } = useWindowDimensions();
-  const contentMaxWidth = width >= 768 ? 960 : 720;
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
 
   return (
     <SafeAreaView style={styles.safe} edges={["top", "left", "right"]}>
@@ -28,6 +31,7 @@ export function ScreenShell({ children, refreshing, onRefresh, style, ...rest }:
 }
 
 export function useListRefreshControl(refreshing?: boolean, onRefresh?: () => void) {
+  const { colors } = useTheme();
   if (!onRefresh) return undefined;
   return (
     <RefreshControl
@@ -39,15 +43,17 @@ export function useListRefreshControl(refreshing?: boolean, onRefresh?: () => vo
   );
 }
 
-const styles = StyleSheet.create({
-  safe: {
-    flex: 1,
-    backgroundColor: colors.background,
-  },
-  body: {
-    flex: 1,
-  },
-});
+function createStyles(colors: ColorPalette) {
+  return StyleSheet.create({
+    safe: {
+      flex: 1,
+      backgroundColor: colors.background,
+    },
+    body: {
+      flex: 1,
+    },
+  });
+}
 
 export const screenContentPadding = {
   paddingHorizontal: spacing.xl,

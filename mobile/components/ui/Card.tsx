@@ -1,5 +1,7 @@
+import { useMemo } from "react";
 import { StyleSheet, Text, View, type StyleProp, type ViewStyle } from "react-native";
-import { colors, shadows, spacing, surface, typography } from "@/theme";
+import { useTheme } from "@/hooks/useTheme";
+import { shadows, spacing, surface, typography } from "@/theme";
 
 type CardProps = {
   children: React.ReactNode;
@@ -16,6 +18,9 @@ export function Card({
   glass = false,
   padded = true,
 }: CardProps) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
+
   return (
     <View
       style={[
@@ -38,6 +43,9 @@ type CardHeaderProps = {
 };
 
 export function CardHeader({ title, subtitle, trailing }: CardHeaderProps) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
+
   return (
     <View style={styles.header}>
       <View style={styles.headerText}>
@@ -49,37 +57,39 @@ export function CardHeader({ title, subtitle, trailing }: CardHeaderProps) {
   );
 }
 
-const styles = StyleSheet.create({
-  card: {
-    backgroundColor: colors.card,
-    borderRadius: surface.cardRadius,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: colors.border,
-    gap: spacing.lg,
-    overflow: "hidden",
-  },
-  padded: {
-    padding: spacing["2xl"],
-  },
-  glass: {
-    backgroundColor: colors.cardGlass,
-  },
-  header: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-    justifyContent: "space-between",
-    gap: spacing.md,
-  },
-  headerText: {
-    flex: 1,
-    gap: spacing.xs,
-  },
-  title: {
-    ...typography.h2,
-    color: colors.foreground,
-  },
-  subtitle: {
-    ...typography.caption,
-    color: colors.mutedForeground,
-  },
-});
+function createStyles(colors: ReturnType<typeof useTheme>["colors"]) {
+  return StyleSheet.create({
+    card: {
+      backgroundColor: colors.card,
+      borderRadius: surface.cardRadius,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: colors.border,
+      gap: spacing.lg,
+      overflow: "hidden",
+    },
+    padded: {
+      padding: spacing["2xl"],
+    },
+    glass: {
+      backgroundColor: colors.cardGlass,
+    },
+    header: {
+      flexDirection: "row",
+      alignItems: "flex-start",
+      justifyContent: "space-between",
+      gap: spacing.md,
+    },
+    headerText: {
+      flex: 1,
+      gap: spacing.xs,
+    },
+    title: {
+      ...typography.h2,
+      color: colors.foreground,
+    },
+    subtitle: {
+      ...typography.caption,
+      color: colors.mutedForeground,
+    },
+  });
+}

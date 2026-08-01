@@ -1,9 +1,12 @@
+import { useMemo } from "react";
 import { StyleSheet, Text, View } from "react-native";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { GroupedList, GroupedRow } from "@/components/ui/Section";
 import { useI18n } from "@/hooks/useI18n";
+import { useTheme } from "@/hooks/useTheme";
 import { formatEur, formatPercent } from "@/utils/format";
-import { colors, spacing, typography } from "@/theme";
+import type { ColorPalette } from "@/theme/colors";
+import { spacing, typography } from "@/theme";
 import type { BusinessDashboardStats } from "@/types/business";
 
 type EmployeeGoalsPanelProps = {
@@ -15,6 +18,8 @@ const TEASER_LIMIT = 4;
 
 export function EmployeeGoalsPanel({ stats, employeeNameById }: EmployeeGoalsPanelProps) {
   const { t } = useI18n();
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const goals = stats?.employeeGoals ?? [];
   const teaser = goals.slice(0, TEASER_LIMIT);
   const onTrack = goals.filter((g) => (g.percent ?? 0) >= 75).length;
@@ -78,62 +83,64 @@ export function EmployeeGoalsPanel({ stats, employeeNameById }: EmployeeGoalsPan
   );
 }
 
-const styles = StyleSheet.create({
-  wrap: { gap: spacing.md },
-  pills: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: spacing.sm,
-  },
-  pill: {
-    ...typography.caption,
-    color: colors.mutedForeground,
-    backgroundColor: colors.secondary,
-    paddingHorizontal: spacing.sm,
-    paddingVertical: 4,
-    borderRadius: 999,
-  },
-  pillAccent: {
-    color: colors.primary,
-    backgroundColor: colors.primarySoft,
-    fontWeight: "700",
-  },
-  hint: {
-    ...typography.caption,
-    color: colors.mutedForeground,
-  },
-  row: { gap: spacing.sm },
-  rowTop: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    gap: spacing.md,
-  },
-  name: {
-    ...typography.body,
-    fontWeight: "700",
-    color: colors.foreground,
-    flex: 1,
-  },
-  amount: {
-    ...typography.caption,
-    color: colors.mutedForeground,
-    fontWeight: "600",
-  },
-  track: {
-    height: 6,
-    borderRadius: 999,
-    backgroundColor: colors.secondary,
-    overflow: "hidden",
-  },
-  fill: {
-    height: "100%",
-    borderRadius: 999,
-    backgroundColor: colors.primary,
-  },
-  meta: {
-    ...typography.caption,
-    color: colors.mutedForeground,
-    fontWeight: "600",
-  },
-});
+function createStyles(colors: ColorPalette) {
+  return StyleSheet.create({
+    wrap: { gap: spacing.md },
+    pills: {
+      flexDirection: "row",
+      flexWrap: "wrap",
+      gap: spacing.sm,
+    },
+    pill: {
+      ...typography.caption,
+      color: colors.mutedForeground,
+      backgroundColor: colors.secondary,
+      paddingHorizontal: spacing.sm,
+      paddingVertical: 4,
+      borderRadius: 999,
+    },
+    pillAccent: {
+      color: colors.primary,
+      backgroundColor: colors.primarySoft,
+      fontWeight: "700",
+    },
+    hint: {
+      ...typography.caption,
+      color: colors.mutedForeground,
+    },
+    row: { gap: spacing.sm },
+    rowTop: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+      gap: spacing.md,
+    },
+    name: {
+      ...typography.body,
+      fontWeight: "700",
+      color: colors.foreground,
+      flex: 1,
+    },
+    amount: {
+      ...typography.caption,
+      color: colors.mutedForeground,
+      fontWeight: "600",
+    },
+    track: {
+      height: 6,
+      borderRadius: 999,
+      backgroundColor: colors.secondary,
+      overflow: "hidden",
+    },
+    fill: {
+      height: "100%",
+      borderRadius: 999,
+      backgroundColor: colors.primary,
+    },
+    meta: {
+      ...typography.caption,
+      color: colors.mutedForeground,
+      fontWeight: "600",
+    },
+  });
+}

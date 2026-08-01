@@ -9,14 +9,18 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { SkeletonListRows } from "@/components/ui/Skeleton";
 import { Avatar } from "@/components/ui/Avatar";
 import { useI18n } from "@/hooks/useI18n";
+import { useTheme } from "@/hooks/useTheme";
 import { useBusinessStats } from "@/features/business/useBusinessStats";
 import { formatCount, formatEur, formatRating } from "@/utils/format";
 import { friendlyErrorMessage, isPermissionError } from "@/utils/friendlyError";
-import { colors, spacing, typography } from "@/theme";
+import type { ColorPalette } from "@/theme/colors";
+import { spacing, typography } from "@/theme";
 import type { BusinessTimeframe } from "@/types/business";
 
 export function BusinessLeaderboardScreen() {
   const { t } = useI18n();
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const { timeframe, setTimeframe, stats, isLoading, isRefreshing, error, refresh } =
     useBusinessStats();
 
@@ -122,7 +126,8 @@ export function BusinessLeaderboardScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ColorPalette) =>
+  StyleSheet.create({
   stack: { gap: spacing["2xl"], marginTop: spacing.lg },
   rowInner: {
     flexDirection: "row",

@@ -28,7 +28,8 @@
     "eas:build:production:ios": "eas build --profile production --platform ios",
     "eas:submit:ios": "eas submit --platform ios --profile production",
     "eas:update:preview": "eas update --channel preview",
-    "eas:update:production": "eas update --channel production"
+    "eas:update:production": "eas update --channel production",
+    "ios": "expo run:ios"
   },
   "dependencies": {
     "@expo/vector-icons": "^15.0.3",
