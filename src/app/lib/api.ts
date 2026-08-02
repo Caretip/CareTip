@@ -3203,6 +3203,72 @@ export interface TippingContextResponse {
   branding?: import("./businessBranding").PublicGuestBranding | null;
 }
 
+/** Scan types aligned with backend QR_SCAN_TYPES. */
+export type GuestQrScanType =
+  | "employee"
+  | "employee_legacy_slug"
+  | "employee_legacy_id"
+  | "business_directory"
+  | "business_id"
+  | "location"
+  | "table_id"
+  | "table_slug";
+
+export type RecordGuestQrScanParams = {
+  businessId: string;
+  scanType: GuestQrScanType;
+  employeeId?: string;
+  locationId?: string;
+  tableId?: string;
+  qrSlug?: string;
+  entryPath?: string;
+  notify?: {
+    locationName?: string;
+    tableName?: string;
+  };
+};
+
+export type RecordGuestQrScanResult = {
+  inserted: boolean;
+  scanId: string | null;
+  visitId: string | null;
+  visitStatus: string | null;
+};
+
+const guestScanRecordedKeys = new Set<string>();
+
+function guestScanClientKey(businessId: string): string {
+  return `${getOrCreateQrScanSessionId()}:${businessId}`;
+}
+
+/** Phase 3 — sole client entry for durable QR scan analytics (POST /api/qr/scan). */
+export async function recordGuestQrScan(
+  params: RecordGuestQrScanParams,
+): Promise<RecordGuestQrScanResult | null> {
+  const clientKey = guestScanClientKey(params.businessId);
+  if (guestScanRecordedKeys.has(clientKey)) return null;
+  guestScanRecordedKeys.add(clientKey);
+  try {
+    return await apiRequest<RecordGuestQrScanResult>(apiPath("/api/qr/scan"), {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        ...guestQrScanHeaders(),
+      },
+      body: JSON.stringify(params),
+    });
+  } catch (e) {
+    guestScanRecordedKeys.delete(clientKey);
+    logClientError("recordGuestQrScan", e);
+    return null;
+  }
+}
+
+/** Fire-and-forget — never blocks landing UI. */
+export function recordGuestQrScanOnce(params: RecordGuestQrScanParams): void {
+  void recordGuestQrScan(params);
+}
+
 /** Public: resolve table QR slug to venue + business (guest scan). */
 export async function getTippingContextByQrSlug(qrSlug: string): Promise<TippingContextResponse> {
   return apiRequest<TippingContextResponse>(

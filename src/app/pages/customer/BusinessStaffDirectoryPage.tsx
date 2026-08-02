@@ -6,6 +6,7 @@ import { Building2, Search } from "lucide-react";
 import { useTipFlow } from "../../context/TipFlowContext";
 import {
   getBusinessStaffDirectory,
+  recordGuestQrScanOnce,
   type BusinessDirectoryEmployee,
   type BusinessDirectoryResponse,
 } from "../../lib/api";
@@ -51,6 +52,11 @@ export function BusinessStaffDirectoryPage() {
       try {
         const res = await getBusinessStaffDirectory(raw);
         if (cancelled) return;
+        recordGuestQrScanOnce({
+          businessId: res.business.id,
+          scanType: "business_directory",
+          entryPath: window.location.pathname,
+        });
         setData(res);
         setBusinessId(res.business.id);
       } catch (e) {

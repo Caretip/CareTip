@@ -5,7 +5,6 @@ import { isOnboardingApprovedForPublicGoLive } from "../lib/verificationWorkflow
 import { logServerError, clientSafeMessage, CLIENT_FALLBACK } from "../utils/httpErrors.js";
 import { absolutizePublicMediaPath } from "../utils/publicMediaUrl.js";
 import { toPublicGuestBrandingDto, BUSINESS_BRANDING_SELECT, type PublicGuestBrandingDto } from "../services/businessBranding.dto.js";
-import { QR_SCAN_TYPES, recordQrScanEvent } from "../services/qr/qrScanEvent.service.js";
 
 const VERIFICATION_REQUIRED_MSG = "QR code generation will be enabled after admin verification.";
 
@@ -35,11 +34,6 @@ export async function listActiveEmployeesByBusinessSlug(req: Request, res: Respo
     if (!isOnboardingApprovedForPublicGoLive(business.onboardingVerificationStatus)) {
       return res.status(403).json({ message: VERIFICATION_REQUIRED_MSG });
     }
-    recordQrScanEvent({
-      businessId: business.id,
-      scanType: QR_SCAN_TYPES.BUSINESS_DIRECTORY,
-      req,
-    });
     const employees = await prisma.employee.findMany({
       where: {
         businessId: business.id,
@@ -223,13 +217,6 @@ export async function getStaffByBusinessAndEmployeeSlug(req: Request, res: Respo
       return res.status(404).json({ message: "Staff member not found" });
     }
 
-    recordQrScanEvent({
-      businessId: business.id,
-      scanType: QR_SCAN_TYPES.EMPLOYEE,
-      employeeId: employee.id,
-      req,
-    });
-
     return res.json(await buildPublicStaffTipResponse(employee));
   } catch (err) {
     logServerError("staff.getStaffByBusinessAndEmployeeSlug", err);
@@ -259,13 +246,6 @@ export async function getStaffBySlug(req: Request, res: Response) {
     ) {
       return res.status(403).json({ message: VERIFICATION_REQUIRED_MSG });
     }
-
-    recordQrScanEvent({
-      businessId: employee.businessId,
-      scanType: QR_SCAN_TYPES.EMPLOYEE_LEGACY_SLUG,
-      employeeId: employee.id,
-      req,
-    });
 
     return res.json(await buildPublicStaffTipResponse(employee));
   } catch (err) {

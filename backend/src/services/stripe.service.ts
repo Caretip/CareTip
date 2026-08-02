@@ -826,6 +826,9 @@ export async function handleSuccessfulTipPayment(session: Stripe.Checkout.Sessio
         tableId: tblId,
         transactionId: tip.id,
       });
+      void import("./qr/qrGuestVisit.service.js").then(({ completeGuestVisit }) =>
+        completeGuestVisit(businessId, qrScanSessionId),
+      );
     }
 
     if (emitSnapshot) {

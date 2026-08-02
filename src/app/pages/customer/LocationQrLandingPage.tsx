@@ -6,6 +6,7 @@ import { MapPin, Search } from "lucide-react";
 import { useTipFlow } from "../../context/TipFlowContext";
 import {
   getPublicLocationContext,
+  recordGuestQrScanOnce,
   type BusinessDirectoryEmployee,
   type PublicLocationContextResponse,
 } from "../../lib/api";
@@ -51,6 +52,13 @@ export function LocationQrLandingPage() {
       try {
         const res = await getPublicLocationContext(raw);
         if (cancelled) return;
+        recordGuestQrScanOnce({
+          businessId: res.business.id,
+          scanType: "location",
+          locationId: res.location.id,
+          entryPath: window.location.pathname,
+          notify: { locationName: res.location.name },
+        });
         setData(res);
         setBusinessId(res.business.id);
         setTippingVenue({

@@ -6,10 +6,9 @@ import type { Request } from "express";
 import bcrypt from "bcrypt";
 import "../src/loadEnv.js";
 import { prisma } from "../src/prisma.js";
-import {
-  QR_SCAN_TYPES,
-  persistQrScanEvent,
-} from "../src/services/qr/qrScanEvent.service.js";
+import { QR_SCAN_TYPES } from "../src/services/qr/qrScanEvent.service.js";
+import { startGuestVisitAndRecordScan } from "../src/services/qr/qrGuestVisit.service.js";
+import { emitQrScanSideEffects } from "../src/services/qr/qrScanEvent.service.js";
 import { getBusinessQrAnalytics } from "../src/services/qr/qrAnalytics.service.js";
 import { ACTIVITY_EVENT_TYPES } from "../src/services/activity/businessActivityEvent.service.js";
 
@@ -36,6 +35,19 @@ function mockReq(sessionId: string, path: string): Request {
   } as Request;
 }
 
+async function recordVisitScan(
+  sessionId: string,
+  path: string,
+  input: Omit<Parameters<typeof startGuestVisitAndRecordScan>[0], "req">,
+) {
+  const req = mockReq(sessionId, path);
+  const result = await startGuestVisitAndRecordScan({ ...input, req });
+  if (result.inserted && result.scanId) {
+    await emitQrScanSideEffects({ ...input, req }, result.scanId);
+  }
+  return result;
+}
+
 async function seedFixture() {
   const tag = Date.now();
   const passwordHash = await bcrypt.hash("TestPass1!", 10);
@@ -51,6 +63,7 @@ async function seedFixture() {
           name: `Scan Readiness ${tag}`,
           slug: `scan-readiness-${tag}`,
           verificationStatus: "verified",
+          onboardingVerificationStatus: "approved",
           subscriptionTier: "premium",
           timezone: "Europe/Berlin",
         },
@@ -77,6 +90,7 @@ async function seedFixture() {
     cleanup: async () => {
       await prisma.notification.deleteMany({ where: { userId: managerUserId } });
       await prisma.businessActivityEvent.deleteMany({ where: { businessId } });
+      await prisma.qrGuestVisit.deleteMany({ where: { businessId } });
       await prisma.qrScanEvent.deleteMany({ where: { businessId } });
       await prisma.table.delete({ where: { id: table.id } }).catch(() => undefined);
       await prisma.location.delete({ where: { id: location.id } }).catch(() => undefined);
@@ -115,24 +129,21 @@ async function main() {
   try {
     const sessionJourney = `srjourney${fx.tag}`.slice(0, 32);
     const journeyResults = await Promise.all([
-      persistQrScanEvent({
+      recordVisitScan(sessionJourney, `/api/qr/scan`, {
         businessId: fx.businessId,
         scanType: QR_SCAN_TYPES.TABLE_SLUG,
         locationId: fx.locationId,
         tableId: fx.tableId,
         qrSlug: "table-abc",
-        req: mockReq(sessionJourney, `/api/tipping-context/table-abc`),
         notify: { locationName: "Main Hall", tableName: "Table 1" },
       }),
-      persistQrScanEvent({
+      recordVisitScan(sessionJourney, `/api/business/${fx.businessId}`, {
         businessId: fx.businessId,
         scanType: QR_SCAN_TYPES.BUSINESS_ID,
-        req: mockReq(sessionJourney, `/api/business/${fx.businessId}`),
       }),
-      persistQrScanEvent({
+      recordVisitScan(sessionJourney, `/api/staff/directory/business/${fx.businessSlug}`, {
         businessId: fx.businessId,
         scanType: QR_SCAN_TYPES.BUSINESS_DIRECTORY,
-        req: mockReq(sessionJourney, `/api/staff/directory/business/${fx.businessSlug}`),
       }),
     ]);
 
@@ -171,12 +182,14 @@ async function main() {
     }
 
     const sessionConcurrent = `srstorm${fx.tag}`.slice(0, 32);
-    const concurrentInput = {
-      businessId: fx.businessId,
-      scanType: QR_SCAN_TYPES.EMPLOYEE,
-      req: mockReq(sessionConcurrent, `/api/staff/test`),
-    };
-    await Promise.all(Array.from({ length: 50 }, () => persistQrScanEvent(concurrentInput)));
+    await Promise.all(
+      Array.from({ length: 50 }, () =>
+        recordVisitScan(sessionConcurrent, `/api/qr/scan`, {
+          businessId: fx.businessId,
+          scanType: QR_SCAN_TYPES.EMPLOYEE,
+        }),
+      ),
+    );
     const stormRows = await prisma.qrScanEvent.count({
       where: { businessId: fx.businessId, sessionId: sessionConcurrent },
     });
@@ -248,21 +261,19 @@ async function main() {
   }
 
   printSummary();
-  process.exit(results.some((r) => r.status === "FAIL") ? 1 : 0);
 }
 
 function printSummary() {
-  console.info("\n--- Scan Analytics Production Readiness ---\n");
+  const failed = results.filter((r) => r.status === "FAIL");
+  console.info("\n--- Scan Analytics Readiness ---");
   for (const r of results) {
-    console.info(`${r.status.padEnd(5)} [${r.id}] ${r.name}`);
-    console.info(`       ${r.detail}\n`);
+    console.info(`${r.status === "PASS" ? "✓" : "✗"} [${r.id}] ${r.name}: ${r.detail}`);
   }
-  const p = results.filter((r) => r.status === "PASS").length;
-  const f = results.filter((r) => r.status === "FAIL").length;
-  console.info(`Summary: ${p} passed, ${f} failed`);
+  console.info(`\n${results.length - failed.length}/${results.length} passed`);
+  if (failed.length > 0) process.exit(1);
 }
 
 main().catch((err) => {
-  console.error("[scan-readiness] fatal", err);
+  console.error(err);
   process.exit(1);
 });

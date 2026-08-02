@@ -8,11 +8,12 @@ import "../src/loadEnv.js";
 import { prisma } from "../src/prisma.js";
 import {
   QR_SCAN_TYPES,
-  persistQrScanEvent,
-  type RecordQrScanEventInput,
 } from "../src/services/qr/qrScanEvent.service.js";
+import { startGuestVisitAndRecordScan } from "../src/services/qr/qrGuestVisit.service.js";
+import { emitQrScanSideEffects } from "../src/services/qr/qrScanEvent.service.js";
 import {
   QR_SCAN_DEDUPE_WINDOW_MS,
+  buildVisitScanDedupeKey,
   buildScanDedupeKey,
   scanDedupeBucket,
 } from "../src/services/qr/qrScanRequestContext.js";
@@ -105,6 +106,7 @@ async function seedFixture() {
     tableId: table.id,
     cleanup: async () => {
       await prisma.qrFunnelEvent.deleteMany({ where: { businessId } });
+      await prisma.qrGuestVisit.deleteMany({ where: { businessId } });
       await prisma.qrScanEvent.deleteMany({ where: { businessId } });
       await prisma.transaction.deleteMany({ where: { businessId } });
       await prisma.table.delete({ where: { id: table.id } }).catch(() => {});
@@ -126,7 +128,7 @@ function scanInput(
   fx: Awaited<ReturnType<typeof seedFixture>>,
   sessionId: string,
   scanType = QR_SCAN_TYPES.EMPLOYEE,
-): RecordQrScanEventInput {
+) {
   return {
     businessId: fx.businessId,
     scanType,
@@ -138,6 +140,19 @@ function scanInput(
   };
 }
 
+async function recordVisit(
+  fx: Awaited<ReturnType<typeof seedFixture>>,
+  sessionId: string,
+  scanType = QR_SCAN_TYPES.EMPLOYEE,
+) {
+  const input = scanInput(fx, sessionId, scanType);
+  const result = await startGuestVisitAndRecordScan(input);
+  if (result.inserted && result.scanId) {
+    await emitQrScanSideEffects(input, result.scanId);
+  }
+  return result;
+}
+
 async function main() {
   console.info("[sprint41-dedupe] Starting concurrency stress tests…\n");
 
@@ -146,9 +161,8 @@ async function main() {
   try {
     // --- 100 concurrent identical requests → 1 row ---
     const sessionStorm = `s41storm${fx.tag}`.slice(0, 32);
-    const stormInput = scanInput(fx, sessionStorm);
     const stormResults = await Promise.all(
-      Array.from({ length: 100 }, () => persistQrScanEvent(stormInput)),
+      Array.from({ length: 100 }, () => recordVisit(fx, sessionStorm)),
     );
     const stormInserted = stormResults.filter((r) => r.inserted).length;
     const stormRows = await prisma.qrScanEvent.count({
@@ -170,7 +184,7 @@ async function main() {
 
     // --- 20 guests simultaneously → 20 rows ---
     const guestSessions = Array.from({ length: 20 }, (_, i) => `s41guest${fx.tag}${i}`.slice(0, 32));
-    await Promise.all(guestSessions.map((sid) => persistQrScanEvent(scanInput(fx, sid))));
+    await Promise.all(guestSessions.map((sid) => recordVisit(fx, sid)));
     const guestRows = await prisma.qrScanEvent.count({
       where: { businessId: fx.businessId, sessionId: { in: guestSessions } },
     });
@@ -182,9 +196,8 @@ async function main() {
 
     // --- Single guest rapid rescans within window → 1 row ---
     const sessionRapid = `s41rapid${fx.tag}`.slice(0, 32);
-    const rapidInput = scanInput(fx, sessionRapid);
     const rapidResults = await Promise.all(
-      Array.from({ length: 50 }, () => persistQrScanEvent(rapidInput)),
+      Array.from({ length: 50 }, () => recordVisit(fx, sessionRapid)),
     );
     const rapidRows = await prisma.qrScanEvent.count({
       where: { businessId: fx.businessId, sessionId: sessionRapid },
@@ -199,29 +212,28 @@ async function main() {
       );
     }
 
-    // --- Outside dedupe window → new row ---
+    // --- Phase 3: visit persists after 30s+ — still one row (no bucket rollover) ---
     const sessionWindow = `s41window${fx.tag}`.slice(0, 32);
-    const windowInput = scanInput(fx, sessionWindow);
-    const first = await persistQrScanEvent(windowInput);
+    const first = await recordVisit(fx, sessionWindow);
     await sleep(QR_SCAN_DEDUPE_WINDOW_MS + 500);
-    const second = await persistQrScanEvent(windowInput);
+    const second = await recordVisit(fx, sessionWindow);
     const windowRows = await prisma.qrScanEvent.count({
       where: { businessId: fx.businessId, sessionId: sessionWindow },
     });
-    if (first.inserted && second.inserted && windowRows === 2) {
-      pass("bucket-rollover", "Rescan after 30s window", `rows=${windowRows} (new bucket)`);
+    if (first.inserted && !second.inserted && windowRows === 1) {
+      pass("visit-persistence", "Rescan after 30s+ within same visit", `rows=${windowRows} (visit-scoped)`);
     } else {
       fail(
-        "bucket-rollover",
-        "Rescan after 30s window",
-        `Expected first+second inserted rows=2; got first=${first.inserted} second=${second.inserted} rows=${windowRows}`,
+        "visit-persistence",
+        "Rescan after 30s+ within same visit",
+        `Expected first inserted, second deduped rows=1; got first=${first.inserted} second=${second.inserted} rows=${windowRows}`,
       );
     }
 
     // --- Cross scanType within same session → 1 row (guest journey parity) ---
     const sessionJourney = `s41journey${fx.tag}`.slice(0, 32);
     const journeyResults = await Promise.all([
-      persistQrScanEvent({
+      startGuestVisitAndRecordScan({
         businessId: fx.businessId,
         scanType: QR_SCAN_TYPES.TABLE_SLUG,
         locationId: fx.locationId,
@@ -229,12 +241,12 @@ async function main() {
         qrSlug: "table-abc",
         req: mockReq(sessionJourney, `/api/tipping-context/table-abc`),
       }),
-      persistQrScanEvent({
+      startGuestVisitAndRecordScan({
         businessId: fx.businessId,
         scanType: QR_SCAN_TYPES.BUSINESS_ID,
         req: mockReq(sessionJourney, `/api/business/${fx.businessId}`),
       }),
-      persistQrScanEvent({
+      startGuestVisitAndRecordScan({
         businessId: fx.businessId,
         scanType: QR_SCAN_TYPES.BUSINESS_DIRECTORY,
         req: mockReq(sessionJourney, `/api/staff/directory/business/${fx.businessSlug}`),
@@ -304,14 +316,16 @@ async function main() {
       );
     }
 
-    // --- Bucket helper sanity ---
-    const b0 = scanDedupeBucket(new Date(0));
-    const b1 = scanDedupeBucket(new Date(QR_SCAN_DEDUPE_WINDOW_MS));
-    if (b1 === b0 + 1) {
-      pass("bucket-math", "30s bucket increments", `bucket(0)=${b0} bucket(30s)=${b1}`);
+    // --- Visit dedupe key helper sanity ---
+    const visitKey = buildVisitScanDedupeKey("clvisit123");
+    if (visitKey === "visit:clvisit123") {
+      pass("visit-dedupe-key", "Visit dedupe key format", visitKey);
     } else {
-      fail("bucket-math", "30s bucket increments", `b0=${b0} b1=${b1}`);
+      fail("visit-dedupe-key", "Visit dedupe key format", visitKey);
     }
+
+    void buildScanDedupeKey;
+    void scanDedupeBucket;
   } finally {
     await fx.cleanup();
   }

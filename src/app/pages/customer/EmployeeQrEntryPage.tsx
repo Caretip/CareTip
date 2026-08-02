@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { motion } from "motion/react";
 import { useTranslation } from "react-i18next";
 import { useTipFlow } from "../../context/TipFlowContext";
-import { getEmployeeById } from "../../lib/api";
+import { getEmployeeById, recordGuestQrScanOnce } from "../../lib/api";
 import { toUserFriendlyMessage } from "../../lib/errorMessages";
 import { logClientError } from "../../lib/clientLog";
 import { CareTipPageLoader } from "../../components/CareTipPageLoader";
@@ -51,6 +51,12 @@ export function EmployeeQrEntryPage() {
       try {
         const emp = await getEmployeeById(raw);
         if (cancelled) return;
+        recordGuestQrScanOnce({
+          businessId: emp.businessId,
+          scanType: "employee_legacy_id",
+          employeeId: emp.id,
+          entryPath: window.location.pathname,
+        });
         setEmp(emp);
         setBusinessId(emp.businessId);
         setEmployee(emp.id, emp.name, emp.avatar ?? undefined);

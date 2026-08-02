@@ -17,7 +17,6 @@ import {
   subscriptionRequiredPayload,
 } from "../services/subscriptionEntitlement.service.js";
 import { getBusinessQrAnalytics, type QrAnalyticsTimeframe } from "../services/qr/qrAnalytics.service.js";
-import { QR_SCAN_TYPES, recordQrScanEvent } from "../services/qr/qrScanEvent.service.js";
 
 function statsErrorHttpStatus(err: unknown): number {
   if (err instanceof StatsFetchError) {
@@ -436,11 +435,6 @@ export async function getById(req: Request, res: Response) {
     if (!business) {
       return res.status(404).json({ message: "Business not found" });
     }
-    recordQrScanEvent({
-      businessId: business.id,
-      scanType: QR_SCAN_TYPES.BUSINESS_ID,
-      req,
-    });
     return res.json(business);
   } catch (err) {
     logServerError("business.getById", err);

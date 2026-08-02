@@ -2,7 +2,6 @@ import type { Request, Response } from "express";
 import { Role } from "@prisma/client";
 import { prisma } from "../prisma.js";
 import * as employeeService from "../services/employee.service.js";
-import { QR_SCAN_TYPES, recordQrScanEvent } from "../services/qr/qrScanEvent.service.js";
 import * as businessService from "../services/business.service.js";
 import { kycStatusToLegacyMirror } from "../lib/verificationWorkflow.js";
 import {
@@ -235,12 +234,6 @@ export async function getEmployeeById(req: Request, res: Response) {
       console.warn("[employee.getEmployeeById] not resolved", { scannedRouteId: trimmed });
       return res.status(404).json({ message: "Staff member not found" });
     }
-    recordQrScanEvent({
-      businessId: employee.businessId,
-      scanType: QR_SCAN_TYPES.EMPLOYEE_LEGACY_ID,
-      employeeId: employee.id,
-      req,
-    });
     return res.json(employee);
   } catch (err) {
     logServerError("employee.getEmployeeById", err);

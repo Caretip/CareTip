@@ -126,6 +126,7 @@ export function LayeredScreenShell({
           styles.heroZone,
           isFloating ? styles.heroZoneFloating : null,
           isDashboard ? styles.heroZoneDashboard : null,
+          isDashboard && !headerExtra ? styles.heroZoneDashboardInlineHeaderExtra : null,
           keyboardOpen && isFloating ? styles.heroZoneCompressed : null,
           { minHeight: heroHeight, paddingHorizontal: pagePadding },
         ]}
@@ -293,6 +294,10 @@ const styles = StyleSheet.create({
   heroZoneDashboard: {
     paddingBottom: spacing.lg,
     paddingTop: spacing.lg,
+  },
+  /** Period toggle lives inside hero — restore overlap padding so sheet clears first card. */
+  heroZoneDashboardInlineHeaderExtra: {
+    paddingBottom: layered.sheetOverlap + spacing.xl,
   },
   stickyHeaderExtra: {
     zIndex: 3,

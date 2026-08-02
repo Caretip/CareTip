@@ -15,6 +15,8 @@ type LayeredScreenProps = {
   title: string;
   subtitle?: string;
   headerExtra?: ReactNode;
+  /** Sticky: pinned below hero while scrolling. Inline: inside hero (correct sheet clearance). */
+  headerExtraPlacement?: "inline" | "sticky";
   children: ReactNode;
   refreshing?: boolean;
   onRefresh?: () => void;
@@ -29,6 +31,7 @@ export function LayeredScreen({
   title,
   subtitle,
   headerExtra,
+  headerExtraPlacement = "sticky",
   children,
   refreshing,
   onRefresh,
@@ -37,6 +40,7 @@ export function LayeredScreen({
   showHeaderUtilities = true,
 }: LayeredScreenProps) {
   const styles = useMemo(() => createStyles(), []);
+  const stickyHeaderExtra = headerExtraPlacement === "sticky" ? headerExtra : undefined;
 
   return (
     <SafeAreaView style={staticStyles.safe} edges={safeAreaEdges} collapsable={false}>
@@ -48,7 +52,7 @@ export function LayeredScreen({
         refreshing={refreshing}
         onRefresh={onRefresh}
         tabSafe
-        headerExtra={headerExtra}
+        headerExtra={stickyHeaderExtra}
         header={
           <View style={staticStyles.headerBlock}>
             <View style={staticStyles.headerRow}>
@@ -62,6 +66,9 @@ export function LayeredScreen({
                 <HeaderUtilityStack notificationsHref={notificationsHref} />
               ) : null}
             </View>
+            {headerExtra && headerExtraPlacement === "inline" ? (
+              <View style={staticStyles.headerExtra}>{headerExtra}</View>
+            ) : null}
           </View>
         }
       >
@@ -130,5 +137,8 @@ const staticStyles = StyleSheet.create({
     gap: spacing.md,
     position: "relative",
     paddingBottom: spacing.xs,
+  },
+  headerExtra: {
+    marginTop: spacing.xxs,
   },
 });

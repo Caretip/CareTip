@@ -9,6 +9,7 @@ import {
   getEmployeeById,
   getBusinessStaffDirectory,
   getTippingContextByQrSlug,
+  recordGuestQrScanOnce,
   type BusinessDirectoryEmployee,
   type BusinessInfo,
   type EmployeeDetail,
@@ -112,6 +113,15 @@ export function QRLandingPage() {
         if (qrSlug) {
           const ctx = await getTippingContextByQrSlug(qrSlug);
           targetBusinessId = ctx.businessId;
+          recordGuestQrScanOnce({
+            businessId: ctx.businessId,
+            scanType: "table_slug",
+            locationId: ctx.locationId,
+            tableId: ctx.tableId,
+            qrSlug,
+            entryPath: window.location.pathname,
+            notify: { locationName: ctx.locationName, tableName: ctx.tableName },
+          });
           setBusinessId(ctx.businessId);
           setTippingVenue({
             locationId: ctx.locationId,
@@ -127,6 +137,14 @@ export function QRLandingPage() {
 
         if (employeeIdParam) {
           const emp = await getEmployeeById(employeeIdParam);
+          if (!qrSlug) {
+            recordGuestQrScanOnce({
+              businessId: emp.businessId,
+              scanType: "employee_legacy_id",
+              employeeId: emp.id,
+              entryPath: window.location.pathname,
+            });
+          }
           if (qrSlug && emp.businessId !== targetBusinessId) {
             setError(t("tipFlow.errors.employeeWrongVenue"));
             return;
@@ -139,6 +157,13 @@ export function QRLandingPage() {
             targetBusinessId = emp.businessId;
           }
         } else if (targetBusinessId) {
+          if (!qrSlug && !employeeIdParam) {
+            recordGuestQrScanOnce({
+              businessId: targetBusinessId,
+              scanType: "business_id",
+              entryPath: window.location.pathname,
+            });
+          }
           const business = await getBusinessById(targetBusinessId);
           if (!business) {
             setError(t("tipFlow.errors.businessNotFound"));

@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { Heart } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useTipFlow } from "../../context/TipFlowContext";
-import { getStaffByBusinessEmployeeSlug, type StaffBySlugResponse } from "../../lib/api";
+import { getStaffByBusinessEmployeeSlug, recordGuestQrScanOnce, type StaffBySlugResponse } from "../../lib/api";
 import { toUserFriendlyMessage } from "../../lib/errorMessages";
 import { logClientError } from "../../lib/clientLog";
 import { prefetchCustomerFlowRoutes } from "../../lib/prefetchCustomerRoutes";
@@ -72,6 +72,12 @@ export function StaffTipByPublicPathPage() {
       try {
         const data = await getStaffByBusinessEmployeeSlug(b, e);
         if (cancelled) return;
+        recordGuestQrScanOnce({
+          businessId: data.businessId,
+          scanType: "employee",
+          employeeId: data.id,
+          entryPath: window.location.pathname,
+        });
         setBusinessId(data.businessId);
         setEmployee(data.id, data.name, data.avatar ?? undefined);
         setStaffTipReturnPath(b, e);

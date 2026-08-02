@@ -82,6 +82,7 @@ export function EmployeeDashboardScreen() {
       notificationsHref="/(app)/employee/notifications"
       refreshing={isRefreshing}
       onRefresh={() => void refresh()}
+      headerExtraPlacement="inline"
       headerExtra={
         <PeriodToggle
           value={timeframe}

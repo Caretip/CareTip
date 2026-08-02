@@ -3,10 +3,20 @@ import type { Request } from "express";
 
 const SCAN_SESSION_HEADER = "x-caretip-scan-session";
 
-/** Sprint 4.1 — dedupe window; encoded as a time bucket in dedupeKey. */
+/** Default guest visit TTL — one tab session maps to one visit until complete/expired. */
+export const QR_GUEST_VISIT_TTL_MS = 24 * 60 * 60 * 1000;
+
+/** @deprecated Bucket dedupe removed in Phase 3 — retained for migration docs/tests only. */
 export const QR_SCAN_DEDUPE_WINDOW_MS = 30_000;
 
 export type QrScanDeviceType = "mobile" | "tablet" | "desktop" | "unknown";
+
+export class MissingScanSessionError extends Error {
+  constructor() {
+    super("x-caretip-scan-session header is required");
+    this.name = "MissingScanSessionError";
+  }
+}
 
 export function resolveScanSessionId(req: Request): string {
   const header = req.headers[SCAN_SESSION_HEADER];
@@ -20,6 +30,15 @@ export function resolveScanSessionId(req: Request): string {
       : req.ip ?? "unknown";
   const ua = req.headers["user-agent"] ?? "";
   return createHash("sha256").update(`${ip}|${ua}`).digest("hex").slice(0, 32);
+}
+
+/** Phase 3 — scan recording requires an explicit client session; no silent IP fallback. */
+export function resolveRequiredScanSessionId(req: Request): string {
+  const header = req.headers[SCAN_SESSION_HEADER];
+  if (typeof header === "string" && header.trim()) {
+    return header.trim().slice(0, 64);
+  }
+  throw new MissingScanSessionError();
 }
 
 export function newScanSessionId(): string {
@@ -53,7 +72,7 @@ export function resolveGeoFromRequest(req: Request): { country: string | null; c
   return { country, city };
 }
 
-/** 30-second UTC bucket — new bucket after dedupe window elapses. */
+/** @deprecated Phase 3 — visit-scoped dedupe replaces bucket windows. */
 export function scanDedupeBucket(at: Date = new Date()): number {
   return Math.floor(at.getTime() / QR_SCAN_DEDUPE_WINDOW_MS);
 }
@@ -61,18 +80,20 @@ export function scanDedupeBucket(at: Date = new Date()): number {
 export type ScanDedupeKeyParts = {
   businessId: string;
   sessionId: string;
-  /** Defaults to now — used by tests to simulate bucket rollover. */
+  /** @deprecated */
   at?: Date;
 };
 
 /**
- * Sprint 4.1 — stable dedupe identity for DB unique constraint.
- * One guest visit (session + business + 30s bucket) = one analytics scan row,
- * regardless of how many public context APIs fire during page load.
- * Format: scan:{businessId}:{sessionId}:{bucket}
+ * Phase 3 — one visit id → one dedupe key for qr_scan_events.
+ * Format: visit:{visitId}
  */
+export function buildVisitScanDedupeKey(visitId: string): string {
+  return `visit:${visitId}`.slice(0, 191);
+}
+
+/** @deprecated Use buildVisitScanDedupeKey — bucket dedupe removed in Phase 3. */
 export function buildScanDedupeKey(parts: ScanDedupeKeyParts): string {
   const bucket = scanDedupeBucket(parts.at ?? new Date());
   return `scan:${parts.businessId}:${parts.sessionId}:${bucket}`.slice(0, 191);
 }
-

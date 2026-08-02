@@ -6,6 +6,7 @@ import { LayoutGrid, MapPin, Search } from "lucide-react";
 import { useTipFlow } from "../../context/TipFlowContext";
 import {
   getPublicTableContextById,
+  recordGuestQrScanOnce,
   type BusinessDirectoryEmployee,
   type PublicTableContextResponse,
 } from "../../lib/api";
@@ -52,6 +53,15 @@ export function TableQrLandingPage() {
       try {
         const res = await getPublicTableContextById(raw);
         if (cancelled) return;
+        recordGuestQrScanOnce({
+          businessId: res.business.id,
+          scanType: "table_id",
+          locationId: res.location.id,
+          tableId: res.table.id,
+          qrSlug: res.table.qrSlug,
+          entryPath: window.location.pathname,
+          notify: { locationName: res.location.name, tableName: res.table.name },
+        });
         setData(res);
         setBusinessId(res.business.id);
         setTippingVenue({

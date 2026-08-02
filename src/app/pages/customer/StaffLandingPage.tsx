@@ -4,7 +4,7 @@ import { motion } from "motion/react";
 import { useTranslation } from "react-i18next";
 import { Heart } from "lucide-react";
 import { useTipFlow } from "../../context/TipFlowContext";
-import { getStaffBySlug, type StaffBySlugResponse } from "../../lib/api";
+import { getStaffBySlug, recordGuestQrScanOnce, type StaffBySlugResponse } from "../../lib/api";
 import { toUserFriendlyMessage } from "../../lib/errorMessages";
 import { logClientError } from "../../lib/clientLog";
 import { CareTipPageLoader } from "../../components/CareTipPageLoader";
@@ -60,6 +60,12 @@ export function StaffLandingPage() {
       try {
         const data = await getStaffBySlug(slug);
         if (cancelled) return;
+        recordGuestQrScanOnce({
+          businessId: data.businessId,
+          scanType: "employee_legacy_slug",
+          employeeId: data.id,
+          entryPath: window.location.pathname,
+        });
         setBusinessId(data.businessId);
         setEmployee(data.id, data.name, data.avatar ?? undefined);
         setStaffProfileSlug(slug);

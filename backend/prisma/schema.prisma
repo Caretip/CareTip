@@ -568,6 +568,7 @@ model Business {
   subscription   Subscription?
   sponsoredAccessGrants SponsoredAccessGrant[]
   qrScanEvents   QrScanEvent[]
+  qrGuestVisits  QrGuestVisit[]
   qrFunnelEvents QrFunnelEvent[]
   featureUtilizationDaily FeatureUtilizationDaily[]
   activityEvents BusinessActivityEvent[]
@@ -885,6 +886,40 @@ model SubscriptionEvent {
   @@map("subscription_events")
 }
 
+/// Phase 3 — guest visit lifecycle (one visit → one scan).
+enum QrGuestVisitStatus {
+  active
+  completed
+  expired
+
+  @@map("qr_guest_visit_status")
+}
+
+model QrGuestVisit {
+  id          String             @id @default(cuid())
+  businessId  String             @map("business_id")
+  sessionId   String             @map("session_id") @db.VarChar(64)
+  status      QrGuestVisitStatus @default(active)
+  scanEventId String?            @unique @map("scan_event_id")
+  scanType    String             @map("scan_type") @db.VarChar(32)
+  employeeId  String?            @map("employee_id")
+  locationId  String?            @map("location_id")
+  tableId     String?            @map("table_id")
+  qrSlug      String?            @map("qr_slug") @db.VarChar(128)
+  entryPath   String             @map("entry_path") @db.VarChar(512)
+  startedAt   DateTime           @default(now()) @map("started_at")
+  completedAt DateTime?          @map("completed_at")
+  expiresAt   DateTime           @map("expires_at")
+
+  business  Business     @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  scanEvent QrScanEvent? @relation(fields: [scanEventId], references: [id], onDelete: SetNull)
+
+  @@index([businessId, sessionId, status])
+  @@index([businessId, status])
+  @@index([expiresAt])
+  @@map("qr_guest_visits")
+}
+
 /// Sprint 4 — durable QR scan analytics (one row per attributed scan).
 model QrScanEvent {
   id         String   @id @default(cuid())
@@ -903,10 +938,11 @@ model QrScanEvent {
   sessionId  String   @map("session_id") @db.VarChar(64)
   dedupeKey  String   @unique @map("dedupe_key") @db.VarChar(191)
 
-  business Business  @relation(fields: [businessId], references: [id], onDelete: Cascade)
-  employee Employee? @relation(fields: [employeeId], references: [id], onDelete: SetNull)
-  location Location? @relation(fields: [locationId], references: [id], onDelete: SetNull)
-  table    Table?    @relation(fields: [tableId], references: [id], onDelete: SetNull)
+  business   Business      @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  employee   Employee?     @relation(fields: [employeeId], references: [id], onDelete: SetNull)
+  location   Location?     @relation(fields: [locationId], references: [id], onDelete: SetNull)
+  table      Table?        @relation(fields: [tableId], references: [id], onDelete: SetNull)
+  guestVisit QrGuestVisit?
 
   @@index([businessId, scannedAt(sort: Desc)])
   @@index([employeeId, scannedAt(sort: Desc)])
