@@ -16,7 +16,7 @@ type HeroBalanceCardProps = {
 };
 
 /**
- * Nexobank-style wallet hero — CareTip orange gradient, white typography.
+ * Premium wallet hero card — soft gradient, large amount, minimal decoration.
  */
 export const HeroBalanceCard = memo(function HeroBalanceCard({
   label,
@@ -33,8 +33,7 @@ export const HeroBalanceCard = memo(function HeroBalanceCard({
       end={heroGradient.end}
       style={styles.gradient}
     >
-      <View style={styles.patternA} pointerEvents="none" />
-      <View style={styles.patternB} pointerEvents="none" />
+      <View style={styles.pattern} pointerEvents="none" />
       <View style={styles.content}>
         <View style={styles.topRow}>
           <View style={styles.iconWell}>
@@ -75,40 +74,31 @@ const styles = StyleSheet.create({
   gradient: {
     borderRadius: surface.heroRadius,
     overflow: "hidden",
-    minHeight: 152,
+    minHeight: 168,
     ...Platform.select({
       ios: {
         shadowColor: "#C47A12",
-        shadowOpacity: 0.28,
-        shadowRadius: 20,
-        shadowOffset: { width: 0, height: 10 },
+        shadowOpacity: 0.18,
+        shadowRadius: 16,
+        shadowOffset: { width: 0, height: 8 },
       },
-      android: { elevation: 6 },
+      android: { elevation: 4 },
       default: {},
     }),
   },
-  patternA: {
-    position: "absolute",
-    width: 180,
-    height: 180,
-    borderRadius: 999,
-    backgroundColor: "rgba(255,255,255,0.08)",
-    top: -60,
-    right: -40,
-  },
-  patternB: {
+  pattern: {
     position: "absolute",
     width: 120,
     height: 120,
     borderRadius: 999,
     backgroundColor: "rgba(255,255,255,0.06)",
-    bottom: -30,
-    left: -20,
+    top: -40,
+    right: -24,
   },
   content: {
-    paddingHorizontal: spacing.xl,
-    paddingVertical: spacing.xl,
-    gap: spacing.sm,
+    paddingHorizontal: spacing["2xl"],
+    paddingVertical: spacing["2xl"],
+    gap: spacing.md,
   },
   topRow: {
     flexDirection: "row",
@@ -119,7 +109,7 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 12,
-    backgroundColor: "rgba(255,255,255,0.18)",
+    backgroundColor: "rgba(255,255,255,0.16)",
     alignItems: "center",
     justifyContent: "center",
   },
@@ -127,15 +117,15 @@ const styles = StyleSheet.create({
     ...typography.overline,
     color: heroText.label,
     fontSize: 11,
-    letterSpacing: 1,
+    letterSpacing: 1.2,
     flex: 1,
   },
   value: {
-    fontSize: 38,
-    lineHeight: 42,
+    fontSize: 42,
+    lineHeight: 46,
     fontWeight: "800",
     color: heroText.value,
-    letterSpacing: -1,
+    letterSpacing: -1.2,
   },
   trend: {
     ...typography.caption,

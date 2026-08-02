@@ -628,4 +628,14 @@ export type MobileMessages = {
     notifications: string;
     notificationsA11y: string;
   };
+  idleSession: {
+    warningTitle: string;
+    warningBody: string;
+    staySignedIn: string;
+    logOutNow: string;
+    countdownLive: string;
+    unsavedTitle: string;
+    unsavedBody: string;
+    logOutAnyway: string;
+  };
 };

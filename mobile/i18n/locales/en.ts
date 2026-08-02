@@ -648,4 +648,14 @@ export const en: MobileMessages = {
     notifications: "Notifications",
     notificationsA11y: "Notifications, {{count}} unread",
   },
+  idleSession: {
+    warningTitle: "You've been inactive.",
+    warningBody: "For your security, your session will expire soon.",
+    staySignedIn: "Continue Session",
+    logOutNow: "Log Out",
+    countdownLive: "Signing out in {{seconds}} seconds",
+    unsavedTitle: "You have unsaved changes",
+    unsavedBody: "Your session will end in {{seconds}}s. Save your work or continue your session.",
+    logOutAnyway: "Log out anyway",
+  },
 };

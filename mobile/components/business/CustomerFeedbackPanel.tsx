@@ -1,7 +1,7 @@
 import { useMemo } from "react";
-import { StyleSheet, Text, View } from "react-native";
+import { Platform, StyleSheet, Text, View } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { GroupedList, GroupedRow } from "@/components/ui/Section";
 import { SkeletonListRows } from "@/components/ui/Skeleton";
 import { useI18n } from "@/hooks/useI18n";
 import { useTheme } from "@/hooks/useTheme";
@@ -9,8 +9,39 @@ import { useBusinessCustomerFeedback } from "@/features/business/useBusinessCust
 import { formatRating } from "@/utils/format";
 import { friendlyErrorMessage } from "@/utils/friendlyError";
 import type { ColorPalette } from "@/theme/colors";
-import { spacing, typography } from "@/theme";
+import { brand, spacing, surface, typography } from "@/theme";
 import { uiLocaleTag } from "@/utils/labels";
+
+type StarRatingProps = {
+  rating: number;
+  max?: number;
+};
+
+function StarRating({ rating, max = 5 }: StarRatingProps) {
+  const { colors } = useTheme();
+  const filled = Math.round(Math.min(max, Math.max(0, rating)));
+
+  return (
+    <View style={starStyles.row} accessibilityLabel={`${rating} of ${max} stars`}>
+      {Array.from({ length: max }, (_, index) => (
+        <Ionicons
+          key={index}
+          name={index < filled ? "star" : "star-outline"}
+          size={14}
+          color={index < filled ? brand.orange : colors.mutedForeground}
+        />
+      ))}
+    </View>
+  );
+}
+
+const starStyles = StyleSheet.create({
+  row: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 2,
+  },
+});
 
 export function CustomerFeedbackPanel() {
   const { t } = useI18n();
@@ -46,78 +77,165 @@ export function CustomerFeedbackPanel() {
   return (
     <View style={styles.wrap}>
       {summary && summary.feedbackCount > 0 ? (
-        <Text style={styles.subtitle}>
-          {t("businessDashboard.feedbackSummary", {
-            count: summary.feedbackCount,
-            rating: formatRating(summary.averageRating),
-          })}
-        </Text>
+        <View style={styles.summaryCard}>
+          <Text style={styles.summaryLabel}>{t("businessDashboard.customerFeedbackTitle")}</Text>
+          <View style={styles.summaryRow}>
+            <Text style={styles.summaryRating}>{formatRating(summary.averageRating)}</Text>
+            <StarRating rating={summary.averageRating ?? 0} />
+          </View>
+          <Text style={styles.summaryMeta}>
+            {t("businessDashboard.feedbackSummary", {
+              count: summary.feedbackCount,
+              rating: formatRating(summary.averageRating),
+            })}
+          </Text>
+        </View>
       ) : null}
 
-      <GroupedList>
-        {items.map((item, index) => (
-          <GroupedRow key={item.id} showDivider={index < items.length - 1}>
-            <View style={styles.row}>
-              <View style={styles.rowTop}>
-                <Text style={styles.name}>{item.employeeName}</Text>
-                {item.rating != null ? (
-                  <Text style={styles.rating}>{formatRating(item.rating)}</Text>
-                ) : null}
+      <View style={styles.cards}>
+        {items.map((item) => (
+          <View key={item.id} style={styles.card}>
+            <View style={styles.cardHeader}>
+              <View style={styles.avatar}>
+                <Text style={styles.avatarText}>{item.employeeName.charAt(0).toUpperCase()}</Text>
               </View>
-              {item.comment ? (
-                <Text style={styles.comment} numberOfLines={3}>
-                  {item.comment}
+              <View style={styles.cardHeaderText}>
+                <Text style={styles.name} numberOfLines={1}>
+                  {item.employeeName}
                 </Text>
+                <Text style={styles.meta} numberOfLines={1}>
+                  {new Date(item.createdAt).toLocaleString(uiLocaleTag())}
+                  {item.customerName ? ` · ${item.customerName}` : ""}
+                </Text>
+              </View>
+              {item.rating != null ? (
+                <View style={styles.ratingCol}>
+                  <StarRating rating={item.rating} />
+                  <Text style={styles.ratingValue}>{formatRating(item.rating)}</Text>
+                </View>
               ) : null}
-              <Text style={styles.meta}>
-                {new Date(item.createdAt).toLocaleString(uiLocaleTag())}
-                {item.customerName ? ` · ${item.customerName}` : ""}
-              </Text>
             </View>
-          </GroupedRow>
+            {item.comment ? (
+              <Text style={styles.comment} numberOfLines={4}>
+                {item.comment}
+              </Text>
+            ) : null}
+          </View>
         ))}
-      </GroupedList>
+      </View>
     </View>
   );
 }
 
 function createStyles(colors: ColorPalette) {
   return StyleSheet.create({
-    wrap: { gap: spacing.md },
-    subtitle: {
-      ...typography.caption,
+    wrap: {
+      gap: spacing.xl,
+    },
+    summaryCard: {
+      backgroundColor: colors.secondary,
+      borderRadius: surface.cardRadius,
+      padding: spacing.xl,
+      gap: spacing.sm,
+    },
+    summaryLabel: {
+      ...typography.overline,
       color: colors.mutedForeground,
+      letterSpacing: 1.1,
     },
-    error: {
-      ...typography.caption,
-      color: colors.destructive,
-    },
-    row: { gap: spacing.xs },
-    rowTop: {
+    summaryRow: {
       flexDirection: "row",
-      justifyContent: "space-between",
       alignItems: "center",
       gap: spacing.md,
+    },
+    summaryRating: {
+      fontSize: 28,
+      lineHeight: 32,
+      fontWeight: "800",
+      color: colors.foreground,
+      letterSpacing: -0.6,
+    },
+    summaryMeta: {
+      ...typography.caption,
+      color: colors.mutedForeground,
+      lineHeight: 18,
+    },
+    cards: {
+      gap: spacing.lg,
+    },
+    card: {
+      backgroundColor: colors.card,
+      borderRadius: surface.cardRadius,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: colors.border,
+      padding: spacing.xl,
+      gap: spacing.md,
+      ...Platform.select({
+        ios: {
+          shadowColor: "#0B1220",
+          shadowOpacity: 0.04,
+          shadowRadius: 12,
+          shadowOffset: { width: 0, height: 4 },
+        },
+        android: { elevation: 2 },
+        default: {},
+      }),
+    },
+    cardHeader: {
+      flexDirection: "row",
+      alignItems: "flex-start",
+      gap: spacing.md,
+    },
+    avatar: {
+      width: 40,
+      height: 40,
+      borderRadius: 14,
+      backgroundColor: colors.secondary,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    avatarText: {
+      ...typography.body,
+      fontWeight: "700",
+      color: colors.foreground,
+    },
+    cardHeaderText: {
+      flex: 1,
+      minWidth: 0,
+      gap: spacing.xxs,
     },
     name: {
       ...typography.body,
       fontWeight: "700",
       color: colors.foreground,
-      flex: 1,
-    },
-    rating: {
-      ...typography.body,
-      fontWeight: "700",
-      color: colors.primary,
-    },
-    comment: {
-      ...typography.body,
-      color: colors.foreground,
-      lineHeight: 20,
+      fontSize: 16,
+      letterSpacing: -0.1,
     },
     meta: {
       ...typography.caption,
       color: colors.mutedForeground,
+      fontSize: 12,
+    },
+    ratingCol: {
+      alignItems: "flex-end",
+      gap: spacing.xxs,
+    },
+    ratingValue: {
+      ...typography.caption,
+      fontWeight: "700",
+      color: colors.primary,
+      fontSize: 12,
+    },
+    comment: {
+      ...typography.body,
+      color: colors.foreground,
+      fontSize: 15,
+      lineHeight: 22,
+      letterSpacing: 0.05,
+    },
+    error: {
+      ...typography.caption,
+      color: colors.destructive,
     },
   });
 }

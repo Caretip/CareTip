@@ -4,10 +4,11 @@ import { Platform, Pressable, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { spacing, touchTarget, typography } from "@/theme";
 import { TAB_BAR_HEIGHT } from "@/theme/navigation";
+import { floatingTabShadow } from "@/theme/layered";
 import { useTheme } from "@/hooks/useTheme";
 import { hapticSelection } from "@/utils/haptics";
 
-/** Bottom bar — Home (left), Menu (right). Inspired by template/mime. */
+/** Floating bottom bar — Home (left), Menu (right). */
 export const MimeTabBar = memo(function MimeTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
   const insets = useSafeAreaInsets();
   const { colors } = useTheme();
@@ -32,7 +33,7 @@ export const MimeTabBar = memo(function MimeTabBar({ state, descriptors, navigat
           ? String(options.title)
           : route.name;
     const isFocused = state.index === index;
-    const iconColor = isFocused ? colors.primary : colors.foreground;
+    const iconColor = isFocused ? colors.primary : colors.mutedForeground;
 
     const onPress = () => {
       const event = navigation.emit({
@@ -49,7 +50,7 @@ export const MimeTabBar = memo(function MimeTabBar({ state, descriptors, navigat
     const icon = options.tabBarIcon?.({
       focused: isFocused,
       color: iconColor,
-      size: 24,
+      size: isFocused ? 26 : 24,
     });
 
     return (
@@ -60,7 +61,7 @@ export const MimeTabBar = memo(function MimeTabBar({ state, descriptors, navigat
         onPress={onPress}
         style={({ pressed }) => [styles.tabSlot, styles.tab, pressed ? styles.tabPressed : null]}
       >
-        {icon}
+        <View style={[styles.iconSlot, isFocused ? styles.iconSlotActive : null]}>{icon}</View>
         <Text style={[styles.label, isFocused ? styles.labelActive : null]} numberOfLines={1}>
           {label}
         </Text>
@@ -69,8 +70,8 @@ export const MimeTabBar = memo(function MimeTabBar({ state, descriptors, navigat
   }
 
   return (
-    <View style={[styles.outer, { paddingBottom: bottomInset }]}>
-      <View style={styles.bar}>
+    <View pointerEvents="box-none" style={[styles.outer, { paddingBottom: bottomInset }]}>
+      <View style={[styles.bar, floatingTabShadow]}>
         {renderTab(homeRoute)}
         {renderTab(menuRoute)}
       </View>
@@ -81,16 +82,23 @@ export const MimeTabBar = memo(function MimeTabBar({ state, descriptors, navigat
 function createStyles(colors: ReturnType<typeof useTheme>["colors"]) {
   return StyleSheet.create({
     outer: {
-      backgroundColor: colors.tabBar,
-      borderTopWidth: StyleSheet.hairlineWidth,
-      borderTopColor: colors.tabBarBorder,
+      position: "absolute",
+      left: 0,
+      right: 0,
+      bottom: 0,
+      paddingHorizontal: spacing["2xl"],
+      backgroundColor: "transparent",
     },
     bar: {
       flexDirection: "row",
       alignItems: "center",
       minHeight: TAB_BAR_HEIGHT,
       paddingHorizontal: spacing.lg,
-      paddingTop: spacing.sm,
+      paddingVertical: spacing.sm,
+      backgroundColor: colors.tabBar,
+      borderRadius: 28,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: colors.tabBarBorder,
     },
     tabSlot: {
       flex: 1,
@@ -100,16 +108,26 @@ function createStyles(colors: ReturnType<typeof useTheme>["colors"]) {
     tab: {
       minWidth: touchTarget,
       minHeight: touchTarget,
-      gap: spacing.xs,
+      gap: spacing.xxs,
     },
     tabPressed: {
-      opacity: 0.75,
+      opacity: 0.82,
+    },
+    iconSlot: {
+      alignItems: "center",
+      justifyContent: "center",
+      width: 40,
+      height: 32,
+    },
+    iconSlotActive: {
+      transform: [{ scale: 1.04 }],
     },
     label: {
       ...typography.caption,
-      fontSize: 12,
+      fontSize: 11,
       fontWeight: "500",
-      color: colors.foreground,
+      color: colors.mutedForeground,
+      letterSpacing: 0.2,
     },
     labelActive: {
       color: colors.primary,

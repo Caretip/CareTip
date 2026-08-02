@@ -7,8 +7,8 @@ import { HeaderUtilityStack } from "@/components/ui/HeaderUtilityStack";
 import { SplashScreenAnchor } from "@/components/brand/SplashScreenAnchor";
 import { OfflineBanner } from "@/components/layout/OfflineBanner";
 import { ErrorBanner } from "@/components/layout/ErrorBanner";
-import { useTheme } from "@/hooks/useTheme";
-import { brand, spacing, typography } from "@/theme";
+import { brand } from "@/theme/colors";
+import { spacing, typography } from "@/theme";
 
 type LayeredScreenProps = {
   eyebrow?: string;
@@ -36,15 +36,10 @@ export function LayeredScreen({
   notificationsHref,
   showHeaderUtilities = true,
 }: LayeredScreenProps) {
-  const { colors, isDark } = useTheme();
   const styles = useMemo(() => createStyles(), []);
 
   return (
-    <SafeAreaView
-      style={[staticStyles.safe, { backgroundColor: isDark ? colors.background : brand.orange }]}
-      edges={safeAreaEdges}
-      collapsable={false}
-    >
+    <SafeAreaView style={staticStyles.safe} edges={safeAreaEdges} collapsable={false}>
       <SplashScreenAnchor source="LayeredScreen" />
       <OfflineBanner />
       <ErrorBanner />
@@ -54,16 +49,18 @@ export function LayeredScreen({
         onRefresh={onRefresh}
         tabSafe
         header={
-          <View style={staticStyles.headerRow}>
-            <View style={staticStyles.headerMain}>
-              {eyebrow ? <Text style={styles.eyebrow}>{eyebrow}</Text> : null}
-              <Text style={styles.title}>{title}</Text>
-              {subtitle ? <Text style={styles.subtitle}>{subtitle}</Text> : null}
-              {headerExtra}
+          <View style={staticStyles.headerBlock}>
+            <View style={staticStyles.headerRow}>
+              <View style={staticStyles.headerMain}>
+                {eyebrow ? <Text style={styles.eyebrow}>{eyebrow}</Text> : null}
+                <Text style={styles.title}>{title}</Text>
+                {subtitle ? <Text style={styles.subtitle}>{subtitle}</Text> : null}
+              </View>
+              {showHeaderUtilities && notificationsHref ? (
+                <HeaderUtilityStack notificationsHref={notificationsHref} />
+              ) : null}
             </View>
-            {showHeaderUtilities && notificationsHref ? (
-              <HeaderUtilityStack notificationsHref={notificationsHref} />
-            ) : null}
+            {headerExtra ? <View style={staticStyles.headerExtra}>{headerExtra}</View> : null}
           </View>
         }
       >
@@ -77,23 +74,27 @@ function createStyles() {
   return StyleSheet.create({
     eyebrow: {
       ...typography.overline,
-      color: "rgba(255,255,255,0.82)",
-      letterSpacing: 1.1,
+      color: "rgba(255,255,255,0.78)",
+      letterSpacing: 1.6,
+      fontSize: 10,
+      fontWeight: "700",
+      textTransform: "uppercase",
     },
     title: {
       ...typography.h1,
       color: "#FFFFFF",
-      fontSize: 28,
-      lineHeight: 34,
-      letterSpacing: -0.8,
+      fontSize: 30,
+      lineHeight: 36,
+      letterSpacing: -0.6,
       fontWeight: "800",
     },
     subtitle: {
       ...typography.body,
-      color: "rgba(255,255,255,0.88)",
+      color: "rgba(255,255,255,0.86)",
       fontSize: 15,
       lineHeight: 22,
       fontWeight: "500",
+      letterSpacing: 0.1,
     },
   });
 }
@@ -101,17 +102,24 @@ function createStyles() {
 const staticStyles = StyleSheet.create({
   safe: {
     flex: 1,
+    backgroundColor: brand.orange,
+  },
+  headerBlock: {
+    gap: spacing.lg,
   },
   headerRow: {
     flexDirection: "row",
     alignItems: "flex-start",
     justifyContent: "space-between",
-    gap: spacing.lg,
-    paddingTop: spacing.sm,
+    gap: spacing.md,
+    paddingTop: spacing.xs,
   },
   headerMain: {
     flex: 1,
     minWidth: 0,
     gap: spacing.sm,
+  },
+  headerExtra: {
+    marginTop: spacing.xs,
   },
 });

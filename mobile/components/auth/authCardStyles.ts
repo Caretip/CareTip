@@ -5,37 +5,41 @@ import { radius, spacing, touchTarget, typography } from "@/theme";
 /** Floating auth typography — light text on hero image, no white card. */
 export const authCardStyles = StyleSheet.create({
   cardHeader: {
-    gap: spacing.md,
-    marginBottom: spacing.sm,
+    gap: spacing.sm,
+    marginBottom: spacing.xs,
   },
   cardEyebrow: {
     ...typography.overline,
     color: authBrand.heroEyebrow,
-    letterSpacing: 1.4,
+    fontSize: 10,
+    letterSpacing: 2.2,
+    fontWeight: "700",
+    textTransform: "uppercase",
   },
   cardTitle: {
     ...typography.hero,
     color: authBrand.heroTitle,
-    fontSize: 28,
-    lineHeight: 34,
-    letterSpacing: -0.6,
+    fontSize: 24,
+    lineHeight: 30,
+    letterSpacing: -0.5,
+    fontWeight: "800",
   },
   cardSubtitle: {
     ...typography.body,
     color: authBrand.heroSubtitle,
     fontSize: 15,
-    lineHeight: 24,
-    fontWeight: "500",
+    lineHeight: 22,
+    fontWeight: "400",
   },
   fields: {
-    gap: spacing["2xl"],
+    gap: spacing.xl,
   },
   formBlock: {
-    gap: spacing["3xl"],
+    gap: spacing["2xl"],
   },
   formError: {
     ...typography.caption,
-    color: "#FCA5A5",
+    color: authBrand.fieldError,
     fontWeight: "600",
     textAlign: "center",
   },
@@ -46,7 +50,7 @@ export const authCardStyles = StyleSheet.create({
   },
   backLink: {
     ...typography.body,
-    color: authBrand.orangeSoft,
+    color: authBrand.orangeMuted,
     fontWeight: "700",
   },
   pressed: {
@@ -78,7 +82,7 @@ export const authCardStyles = StyleSheet.create({
     fontWeight: "600",
   },
   roleChipLabelActive: {
-    color: authBrand.orangeSoft,
+    color: authBrand.orangeMuted,
   },
 });
 
@@ -88,16 +92,40 @@ export const authFloatingDivider = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: spacing.md,
+    marginVertical: spacing.xs,
   },
   line: {
     flex: 1,
     height: StyleSheet.hairlineWidth,
-    backgroundColor: "rgba(255, 255, 255, 0.22)",
+    backgroundColor: authBrand.fieldBorder,
   },
   label: {
     ...typography.caption,
     color: authBrand.fieldLabel,
     fontWeight: "600",
+    fontSize: 11,
+    letterSpacing: 0.4,
+  },
+});
+
+/** Forgot-password link aligned to input column. */
+export const authForgotStyles = StyleSheet.create({
+  row: {
+    alignSelf: "stretch",
+    alignItems: "flex-end",
+    marginTop: -spacing.sm,
+    marginBottom: spacing.xs,
+  },
+  label: {
+    ...typography.caption,
+    color: authBrand.orangeMuted,
+    fontWeight: "600",
     fontSize: 12,
+    letterSpacing: 0.1,
+  },
+  link: {
+    minHeight: touchTarget - 8,
+    justifyContent: "center",
+    paddingVertical: spacing.xs,
   },
 });

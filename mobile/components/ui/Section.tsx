@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { StyleSheet, Text, View, type StyleProp, type ViewStyle } from "react-native";
+import { Platform, StyleSheet, Text, View, type StyleProp, type ViewStyle } from "react-native";
 import { useTheme } from "@/hooks/useTheme";
 import type { ColorPalette } from "@/theme/colors";
 import { spacing, surface, typography } from "@/theme";
@@ -20,7 +20,7 @@ export function Section({ title, subtitle, children, highlighted = false, style 
     <View style={[styles.section, highlighted ? styles.highlighted : null, style]}>
       {title ? <Text style={styles.title}>{title}</Text> : null}
       {subtitle ? <Text style={styles.subtitle}>{subtitle}</Text> : null}
-      {children}
+      <View style={styles.content}>{children}</View>
     </View>
   );
 }
@@ -69,26 +69,43 @@ function GroupedRowContent({ children }: { children: React.ReactNode }) {
 function createStyles(colors: ColorPalette) {
   return StyleSheet.create({
     section: {
-      gap: spacing.md,
-      marginBottom: spacing["2xl"],
+      gap: spacing.lg,
+      marginBottom: spacing["3xl"],
+    },
+    content: {
+      gap: spacing.lg,
     },
     highlighted: {
       backgroundColor: colors.card,
       borderRadius: surface.cardRadius,
       borderWidth: StyleSheet.hairlineWidth,
       borderColor: colors.border,
-      padding: spacing.lg,
+      padding: spacing.xl,
+      ...Platform.select({
+        ios: {
+          shadowColor: "#0B1220",
+          shadowOpacity: 0.04,
+          shadowRadius: 12,
+          shadowOffset: { width: 0, height: 4 },
+        },
+        android: { elevation: 2 },
+        default: {},
+      }),
     },
     title: {
-      ...typography.overline,
-      color: colors.mutedForeground,
-      marginBottom: spacing.xs,
+      ...typography.section,
+      color: colors.foreground,
+      fontSize: 17,
+      fontWeight: "700",
+      letterSpacing: -0.2,
+      lineHeight: 22,
     },
     subtitle: {
-      ...typography.caption,
+      ...typography.body,
       color: colors.mutedForeground,
+      fontSize: 14,
+      lineHeight: 20,
       marginTop: -spacing.sm,
-      marginBottom: spacing.sm,
     },
     divider: {
       height: StyleSheet.hairlineWidth,
@@ -104,11 +121,21 @@ function createStyles(colors: ColorPalette) {
       borderWidth: StyleSheet.hairlineWidth,
       borderColor: colors.border,
       overflow: "hidden",
+      ...Platform.select({
+        ios: {
+          shadowColor: "#0B1220",
+          shadowOpacity: 0.04,
+          shadowRadius: 12,
+          shadowOffset: { width: 0, height: 4 },
+        },
+        android: { elevation: 2 },
+        default: {},
+      }),
     },
     groupRow: {
       paddingHorizontal: spacing.xl,
       paddingVertical: spacing.lg,
-      minHeight: 52,
+      minHeight: 56,
       justifyContent: "center",
     },
   });

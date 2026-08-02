@@ -51,7 +51,8 @@ export function NotificationBell({ href, variant = "onHero" }: NotificationBellP
 }
 
 function createStyles(colors: ColorPalette, variant: HeaderControlVariant) {
-  const badgeBorder = variant === "onHero" ? "#FFFFFF" : colors.background;
+  const badgeBorder =
+    variant === "onHero" || variant === "onDashboardHero" ? "#FFFFFF" : colors.background;
 
   return StyleSheet.create({
     wrap: {

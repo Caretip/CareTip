@@ -6,7 +6,7 @@
     "orientation": "portrait",
     "icon": "./assets/caretip-app-icon-ref.png",
     "scheme": "caretip",
-    "userInterfaceStyle": "light",
+    "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "runtimeVersion": "1.0.0",
     "splash": {

@@ -15,18 +15,24 @@ type FadeInProps = {
 };
 
 /**
- * Opacity-only entrance — avoids Reanimated layout animations that can
- * overlap siblings in flex-wrap KPI grids on Android.
+ * Subtle fade + upward entrance for dashboard sections.
+ * Opacity-only on dense KPI grids; translateY kept small for performance.
  */
 export function FadeIn({ children, index = 0, style }: FadeInProps) {
   const opacity = useSharedValue(0);
+  const translateY = useSharedValue<number>(motion.entrance.translateY);
+
   useEffect(() => {
-    opacity.value = withDelay(
-      Math.min(index * 35, 200),
-      withTiming(1, { duration: motion.entrance.fade }),
-    );
-  }, [index, opacity]);
-  const animated = useAnimatedStyle(() => ({ opacity: opacity.value }));
+    const delay = Math.min(index * 45, 220);
+    opacity.value = withDelay(delay, withTiming(1, { duration: motion.entrance.fade }));
+    translateY.value = withDelay(delay, withTiming(0, { duration: motion.entrance.fade }));
+  }, [index, opacity, translateY]);
+
+  const animated = useAnimatedStyle(() => ({
+    opacity: opacity.value,
+    transform: [{ translateY: translateY.value }],
+  }));
+
   return <Animated.View style={[styles.base, animated, style]}>{children}</Animated.View>;
 }
 

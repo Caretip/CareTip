@@ -1,6 +1,6 @@
 import { useEffect, useState, type ReactNode } from "react";
 import {
-  Image,
+  Keyboard,
   Platform,
   Pressable,
   StyleSheet,
@@ -12,14 +12,13 @@ import Animated, {
   Easing,
   useAnimatedStyle,
   useSharedValue,
-  withDelay,
   withTiming,
 } from "react-native-reanimated";
 import { StatusBar } from "expo-status-bar";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
-import caretipAppIcon from "@/assets/caretip-app-icon-ref.png";
 import { AuthFooterSheet } from "@/components/auth/AuthFooterSheet";
+import { AuthHeroLogo } from "@/components/auth/AuthHeroLogo";
 import { AuthTopControls } from "@/components/auth/AuthTopControls";
 import { LayeredScreenShell } from "@/components/layout/LayeredScreenShell";
 import { SplashScreenAnchor } from "@/components/brand/SplashScreenAnchor";
@@ -45,28 +44,39 @@ export function AuthExperienceShell({
   const { width } = useWindowDimensions();
   const isTablet = width >= TABLET_MIN_WIDTH;
   const [footerOpen, setFooterOpen] = useState(false);
+  const [keyboardOpen, setKeyboardOpen] = useState(false);
 
   const heroOpacity = useSharedValue(0);
-  const heroY = useSharedValue<number>(12);
-  const sheetOpacity = useSharedValue(0);
-  const sheetY = useSharedValue<number>(20);
+  const heroY = useSharedValue(14);
+  const heroCompress = useSharedValue(1);
+
+  useEffect(() => {
+    const showEvent = Platform.OS === "ios" ? "keyboardWillShow" : "keyboardDidShow";
+    const hideEvent = Platform.OS === "ios" ? "keyboardWillHide" : "keyboardDidHide";
+    const showSub = Keyboard.addListener(showEvent, () => setKeyboardOpen(true));
+    const hideSub = Keyboard.addListener(hideEvent, () => setKeyboardOpen(false));
+    return () => {
+      showSub.remove();
+      hideSub.remove();
+    };
+  }, []);
+
+  useEffect(() => {
+    heroCompress.value = withTiming(keyboardOpen ? 0.55 : 1, {
+      duration: keyboardOpen ? 220 : 280,
+      easing: Easing.out(Easing.cubic),
+    });
+  }, [heroCompress, keyboardOpen]);
 
   useEffect(() => {
     const ease = Easing.out(Easing.cubic);
-    heroOpacity.value = withTiming(1, { duration: 400, easing: ease });
-    heroY.value = withTiming(0, { duration: 400, easing: ease });
-    sheetOpacity.value = withDelay(80, withTiming(1, { duration: 420, easing: ease }));
-    sheetY.value = withDelay(80, withTiming(0, { duration: 420, easing: ease }));
-  }, [heroOpacity, heroY, sheetOpacity, sheetY]);
+    heroOpacity.value = withTiming(1, { duration: 480, easing: ease });
+    heroY.value = withTiming(0, { duration: 480, easing: ease });
+  }, [heroOpacity, heroY]);
 
   const heroAnim = useAnimatedStyle(() => ({
-    opacity: heroOpacity.value,
-    transform: [{ translateY: heroY.value }],
-  }));
-
-  const sheetAnim = useAnimatedStyle(() => ({
-    opacity: sheetOpacity.value,
-    transform: [{ translateY: sheetY.value }],
+    opacity: heroOpacity.value * (0.45 + heroCompress.value * 0.55),
+    transform: [{ translateY: heroY.value }, { scale: 0.88 + heroCompress.value * 0.12 }],
   }));
 
   return (
@@ -78,16 +88,11 @@ export function AuthExperienceShell({
         background="auth-image"
         layout="floating"
         keyboardAware
-        heroHeightRatio={isTablet ? 0.32 : 0.36}
+        keyboardOpen={keyboardOpen}
+        heroHeightRatio={isTablet ? 0.24 : 0.26}
         header={
           <Animated.View style={[styles.hero, heroAnim]}>
-            <View style={styles.logoMark}>
-              <Image
-                source={caretipAppIcon}
-                style={styles.logoImage}
-                accessibilityLabel="CareTip"
-              />
-            </View>
+            <AuthHeroLogo height={isTablet ? 52 : 48} />
             <Text style={styles.brandName}>{t("auth.brandName")}</Text>
             <Text style={styles.tagline}>{t("auth.tagline")}</Text>
           </Animated.View>
@@ -130,7 +135,7 @@ export function AuthExperienceShell({
                 <View style={styles.pillInner}>
                   <Ionicons name="sparkles-outline" size={16} color={authBrand.white} />
                   <Text style={styles.pillLabel}>{t("auth.footerMenuTitle")}</Text>
-                  <Ionicons name="chevron-up" size={15} color="rgba(255,255,255,0.8)" />
+                  <Ionicons name="chevron-up" size={15} color="rgba(255,255,255,0.75)" />
                 </View>
               </Pressable>
             </View>
@@ -142,7 +147,7 @@ export function AuthExperienceShell({
           },
         }}
       >
-        <Animated.View style={[styles.formContent, sheetAnim]}>{children}</Animated.View>
+        {children}
       </LayeredScreenShell>
 
       <AuthFooterSheet visible={footerOpen} onClose={() => setFooterOpen(false)} />
@@ -157,51 +162,27 @@ const styles = StyleSheet.create({
   },
   hero: {
     alignItems: "center",
-    gap: spacing.lg,
-    paddingBottom: spacing.md,
-  },
-  logoMark: {
-    width: 72,
-    height: 72,
-    borderRadius: 20,
-    overflow: "hidden",
-    borderWidth: StyleSheet.hairlineWidth * 2,
-    borderColor: "rgba(255,255,255,0.35)",
-    ...Platform.select({
-      ios: {
-        shadowColor: "#000",
-        shadowOpacity: 0.2,
-        shadowRadius: 10,
-        shadowOffset: { width: 0, height: 4 },
-      },
-      android: { elevation: 4 },
-      default: {},
-    }),
-  },
-  logoImage: {
-    width: "100%",
-    height: "100%",
+    gap: spacing.md,
+    paddingBottom: spacing.sm,
   },
   brandName: {
-    ...typography.hero,
+    ...typography.h2,
     color: authBrand.white,
-    fontSize: 32,
-    letterSpacing: -0.6,
+    fontSize: 22,
+    letterSpacing: -0.4,
+    fontWeight: "700",
   },
   tagline: {
-    ...typography.body,
-    color: "rgba(255, 255, 255, 0.88)",
+    ...typography.caption,
+    color: authBrand.heroSubtitle,
     textAlign: "center",
-    maxWidth: 280,
-    lineHeight: 22,
+    maxWidth: 260,
+    lineHeight: 18,
     fontWeight: "500",
     paddingHorizontal: spacing.md,
   },
-  formContent: {
-    gap: spacing["3xl"],
-  },
   footer: {
-    gap: spacing["3xl"],
+    gap: spacing["2xl"],
     alignItems: "center",
     paddingTop: spacing.lg,
   },
@@ -223,7 +204,7 @@ const styles = StyleSheet.create({
     fontSize: 15,
   },
   secondaryPipe: {
-    color: "rgba(255,255,255,0.35)",
+    color: "rgba(255,255,255,0.28)",
     fontSize: 16,
   },
   pillOuter: {

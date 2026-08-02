@@ -1,5 +1,5 @@
 import { memo, useMemo } from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Platform, Pressable, StyleSheet, Text, View } from "react-native";
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
@@ -44,7 +44,7 @@ function ShortcutCard({ label, icon: Icon, onPress, colors }: ShortcutCardProps)
         onPress();
       }}
       onPressIn={() => {
-        scale.value = withSpring(0.96, motion.spring.press);
+        scale.value = withSpring(0.97, motion.spring.press);
       }}
       onPressOut={() => {
         scale.value = withSpring(1, motion.spring.press);
@@ -52,7 +52,7 @@ function ShortcutCard({ label, icon: Icon, onPress, colors }: ShortcutCardProps)
       style={[styles.card, animatedStyle]}
     >
       <View style={styles.iconWell}>
-        <Icon size={22} color={colors.primary} strokeWidth={2.2} />
+        <Icon size={21} color={colors.foreground} strokeWidth={2} />
       </View>
       <Text style={styles.label} numberOfLines={2}>
         {label}
@@ -87,28 +87,41 @@ function createStyles(colors: ColorPalette) {
       flex: 1,
       alignItems: "center",
       justifyContent: "center",
-      gap: spacing.sm,
-      minHeight: touchTarget + 36,
-      paddingVertical: spacing.lg,
+      gap: spacing.md,
+      minHeight: touchTarget + 40,
+      paddingVertical: spacing.xl,
       paddingHorizontal: spacing.sm,
-      backgroundColor: colors.secondary,
-      borderRadius: surface.cardRadius,
+      backgroundColor: colors.card,
+      borderRadius: surface.shortcutRadius,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: colors.border,
+      ...Platform.select({
+        ios: {
+          shadowColor: "#0B1220",
+          shadowOpacity: 0.04,
+          shadowRadius: 12,
+          shadowOffset: { width: 0, height: 4 },
+        },
+        android: { elevation: 2 },
+        default: {},
+      }),
     },
     iconWell: {
       width: surface.iconWellSize,
       height: surface.iconWellSize,
       borderRadius: surface.iconWellRadius,
-      backgroundColor: colors.primarySoft,
+      backgroundColor: colors.secondary,
       alignItems: "center",
       justifyContent: "center",
     },
     label: {
       ...typography.caption,
       color: colors.foreground,
-      fontWeight: "700",
+      fontWeight: "600",
       fontSize: 12,
       textAlign: "center",
-      lineHeight: 15,
+      lineHeight: 16,
+      letterSpacing: 0.1,
     },
   });
 }

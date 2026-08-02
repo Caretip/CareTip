@@ -1,16 +1,17 @@
-import { Pressable, StyleSheet, View, type StyleProp, type ViewStyle } from "react-native";
+import { Platform, Pressable, StyleSheet, View, type StyleProp, type ViewStyle } from "react-native";
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
   withSpring,
 } from "react-native-reanimated";
+import { BlurView } from "expo-blur";
 import { Ionicons } from "@expo/vector-icons";
 import { authBrand } from "@/theme/authBrand";
-import { motion, spacing, touchTarget } from "@/theme";
+import { motion } from "@/theme";
 import { useTheme } from "@/hooks/useTheme";
 import { hapticLight } from "@/utils/haptics";
 
-export type HeaderControlVariant = "onHero" | "onSurface";
+export type HeaderControlVariant = "onHero" | "onDashboardHero" | "onSurface";
 
 type HeaderIconButtonProps = {
   icon: keyof typeof Ionicons.glyphMap;
@@ -21,6 +22,9 @@ type HeaderIconButtonProps = {
   active?: boolean;
   style?: StyleProp<ViewStyle>;
 };
+
+const AUTH_HERO_SIZE = 40;
+const DASHBOARD_HERO_SIZE = 48;
 
 export function HeaderIconButton({
   icon,
@@ -33,19 +37,24 @@ export function HeaderIconButton({
 }: HeaderIconButtonProps) {
   const scale = useSharedValue(1);
   const { colors, isDark } = useTheme();
-  const isHero = variant === "onHero";
+  const isDashboardHero = variant === "onDashboardHero";
+  const isHero = variant === "onHero" || isDashboardHero;
 
   const palette = isHero
     ? {
-        backgroundColor: authBrand.heroControlFill,
-        borderColor: authBrand.heroControlBorder,
-        iconColor: authBrand.heroControlIcon,
-        activeBg: "rgba(235, 153, 44, 0.32)",
-        activeBorder: authBrand.orange,
-        activeIcon: authBrand.orangeSoft,
+        backgroundColor: isDashboardHero
+          ? "rgba(255, 255, 255, 0.18)"
+          : authBrand.heroControlFill,
+        borderColor: isDashboardHero
+          ? "rgba(255, 255, 255, 0.32)"
+          : authBrand.heroControlBorder,
+        iconColor: "#FFFFFF",
+        activeBg: "rgba(255, 255, 255, 0.28)",
+        activeBorder: "rgba(255, 255, 255, 0.55)",
+        activeIcon: "#FFFFFF",
       }
     : {
-        backgroundColor: isDark ? colors.cardElevated : "rgba(255, 255, 255, 0.94)",
+        backgroundColor: isDark ? colors.cardElevated : colors.cardGlass,
         borderColor: colors.borderStrong,
         iconColor: colors.foreground,
         activeBg: colors.primarySoft,
@@ -56,6 +65,9 @@ export function HeaderIconButton({
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [{ scale: scale.value }],
   }));
+
+  const size = isDashboardHero ? DASHBOARD_HERO_SIZE : isHero ? AUTH_HERO_SIZE : 44;
+  const iconSize = isDashboardHero ? 22 : isHero ? 18 : 20;
 
   return (
     <Pressable
@@ -74,18 +86,29 @@ export function HeaderIconButton({
       }}
       style={[
         styles.button,
-        isHero ? styles.buttonHero : styles.buttonSurface,
         {
+          width: size,
+          height: size,
+          borderRadius: size / 2,
           backgroundColor: active ? palette.activeBg : palette.backgroundColor,
           borderColor: active ? palette.activeBorder : palette.borderColor,
         },
+        isHero ? styles.buttonHero : styles.buttonSurface,
+        isDashboardHero ? styles.buttonDashboardHero : null,
         style,
       ]}
     >
+      {isHero && Platform.OS === "ios" ? (
+        <BlurView
+          intensity={isDashboardHero ? 28 : 22}
+          tint="light"
+          style={StyleSheet.absoluteFill}
+        />
+      ) : null}
       <Animated.View style={[styles.iconWrap, animatedStyle]} collapsable={false}>
         <Ionicons
           name={icon}
-          size={20}
+          size={iconSize}
           color={active ? palette.activeIcon : palette.iconColor}
         />
       </Animated.View>
@@ -95,20 +118,24 @@ export function HeaderIconButton({
 
 const styles = StyleSheet.create({
   button: {
-    width: touchTarget,
-    height: touchTarget,
     alignItems: "center",
     justifyContent: "center",
     overflow: "hidden",
-    borderWidth: StyleSheet.hairlineWidth * 2,
+    borderWidth: StyleSheet.hairlineWidth,
   },
   buttonHero: {
-    borderRadius: touchTarget / 2,
     shadowColor: "#000000",
-    shadowOpacity: 0.22,
-    shadowRadius: 10,
+    shadowOpacity: 0.14,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 3 },
+    elevation: 4,
+  },
+  buttonDashboardHero: {
+    shadowColor: "#000000",
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
     shadowOffset: { width: 0, height: 4 },
-    elevation: 6,
+    elevation: 5,
   },
   buttonSurface: {
     borderRadius: 14,

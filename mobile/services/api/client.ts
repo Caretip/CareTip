@@ -16,6 +16,7 @@ import { API_ENDPOINTS } from "@/constants/endpoints";
 import { buildRefreshCookieHeader, extractRefreshTokenFromHeaders } from "@/utils/refreshCookie";
 import { reportGlobalError } from "@/utils/errors";
 import { notifySessionExpired } from "@/utils/sessionExpiry";
+import { isIdleLogoutInFlight } from "@/lib/idleSession/idleSessionStore";
 import { logAuthEvent, logOutgoingAuthHeader } from "@/utils/authDebug";
 import { normalizeApiError } from "@/types/api";
 import type { AuthResponse } from "@/types/auth";
@@ -129,10 +130,12 @@ apiClient.interceptors.request.use(async (request) => {
 });
 
 async function refreshAccessToken(): Promise<string | null> {
+  if (isIdleLogoutInFlight()) return null;
   if (refreshPromise) return refreshPromise;
 
   refreshPromise = (async () => {
     try {
+      if (isIdleLogoutInFlight()) return null;
       const refreshToken = await getRefreshToken();
       const headers: Record<string, string> = {
         [config.clientHeaderName]: config.clientHeader,
@@ -152,6 +155,7 @@ async function refreshAccessToken(): Promise<string | null> {
       );
 
       await persistRefreshFromResponse(response.headers as Record<string, unknown>);
+      if (isIdleLogoutInFlight()) return null;
       const nextToken = response.data.token;
       memoryAccessToken = nextToken;
       await saveAccessToken(nextToken);
@@ -214,6 +218,10 @@ apiClient.interceptors.response.use(
       !isPublicApiPath(original.url)
     ) {
       original.__caretipRetried = true;
+      if (isIdleLogoutInFlight()) {
+        notifySessionExpired();
+        return Promise.reject(error);
+      }
       const nextToken = await refreshAccessToken();
       if (nextToken) {
         original.headers = original.headers ?? {};

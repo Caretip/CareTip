@@ -3,6 +3,10 @@ import { useRouter } from "expo-router";
 import { confirmSignOut } from "@/features/settings/settingsMenuConfig";
 import { useAuth } from "@/hooks/useAuth";
 import { useI18n } from "@/hooks/useI18n";
+import {
+  beginAuthLogoutTransition,
+  endAuthLogoutTransition,
+} from "@/lib/authLogoutTransition";
 import { hapticWarning } from "@/utils/haptics";
 
 export function useSignOutAction() {
@@ -14,8 +18,13 @@ export function useSignOutAction() {
     hapticWarning();
     confirmSignOut(t, () => {
       void (async () => {
-        await signOut();
-        router.replace("/(auth)/login");
+        beginAuthLogoutTransition();
+        try {
+          await signOut();
+          router.replace("/(auth)/login");
+        } finally {
+          endAuthLogoutTransition();
+        }
       })();
     });
   }, [router, signOut, t]);

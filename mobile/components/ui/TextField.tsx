@@ -17,6 +17,7 @@ import Animated, {
 } from "react-native-reanimated";
 import { useTheme } from "@/hooks/useTheme";
 import type { ColorPalette } from "@/theme/colors";
+import { notifyIdleTrustedActivity } from "@/lib/idleSession/idleSessionActivity";
 import { motion, radius, shadows, spacing, touchTarget, typography } from "@/theme";
 
 type TextFieldProps = TextInputProps & {
@@ -36,6 +37,7 @@ export const TextField = forwardRef<TextInput, TextFieldProps>(function TextFiel
     accessibilityLabel,
     onFocus,
     onBlur,
+    onChangeText,
     editable = true,
     ...rest
   },
@@ -92,6 +94,10 @@ export const TextField = forwardRef<TextInput, TextFieldProps>(function TextFiel
               onBlur={(e) => {
                 focusProgress.value = withTiming(0, { duration: motion.duration.fast });
                 onBlur?.(e);
+              }}
+              onChangeText={(text) => {
+                notifyIdleTrustedActivity();
+                onChangeText?.(text);
               }}
               {...rest}
             />

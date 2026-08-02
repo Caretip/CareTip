@@ -70,7 +70,7 @@ export function GoogleAuthButton({
 
 const styles = StyleSheet.create({
   button: {
-    borderRadius: radius.xl,
+    borderRadius: radius["2xl"],
     overflow: "hidden",
     ...Platform.select({
       ios: {
@@ -90,7 +90,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     gap: spacing.md,
     backgroundColor: authBrand.fieldFill,
-    borderRadius: radius.xl,
+    borderRadius: radius["2xl"],
     borderWidth: 1.5,
     borderColor: authBrand.fieldBorder,
     paddingHorizontal: spacing.xl,

@@ -8,19 +8,20 @@ type HeaderUtilityStackProps = {
   notificationsHref: string;
 };
 
-/** Dashboard header utilities — bell, theme, language (top-right stack). */
+/** Dashboard header utilities — compact frosted-glass row (top-right). */
 export function HeaderUtilityStack({ notificationsHref }: HeaderUtilityStackProps) {
   return (
-    <View style={styles.stack}>
-      <NotificationBell href={notificationsHref} variant="onHero" />
-      <ThemeToggle variant="onHero" />
-      <LanguageSwitcher variant="onHero" />
+    <View style={styles.row}>
+      <NotificationBell href={notificationsHref} variant="onDashboardHero" />
+      <ThemeToggle variant="onDashboardHero" />
+      <LanguageSwitcher variant="onDashboardHero" />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  stack: {
+  row: {
+    flexDirection: "row",
     alignItems: "center",
     gap: spacing.sm,
     paddingTop: spacing.xxs,

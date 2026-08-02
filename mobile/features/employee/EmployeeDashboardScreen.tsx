@@ -81,7 +81,12 @@ export function EmployeeDashboardScreen() {
       refreshing={isRefreshing}
       onRefresh={() => void refresh()}
       headerExtra={
-        <PeriodToggle value={timeframe} options={timeframeOptions} onChange={setTimeframe} />
+        <PeriodToggle
+          value={timeframe}
+          options={timeframeOptions}
+          onChange={setTimeframe}
+          variant="hero"
+        />
       }
     >
       {isLoading ? (

@@ -8,6 +8,7 @@ import { useUiStore } from "@/store/uiStore";
 import { useNetworkStatus } from "@/hooks/useNetworkStatus";
 import { PushNotificationBridge } from "@/components/providers/PushNotificationBridge";
 import { SessionExpiryBridge } from "@/components/providers/SessionExpiryBridge";
+import { IdleSessionBridge } from "@/components/providers/IdleSessionBridge";
 import { SocketProvider } from "@/components/providers/SocketProvider";
 import { RealtimeQueryBridge } from "@/components/providers/RealtimeQueryBridge";
 import { LocaleBridge } from "@/components/providers/LocaleBridge";
@@ -39,10 +40,12 @@ export function AppProviders({ children }: { children: ReactNode }) {
                 <GlobalErrorBridge>
                   <SocketProvider>
                     <SessionExpiryBridge />
-                    <PushNotificationBridge />
-                    <RealtimeQueryBridge />
-                    <DeepLinkBridge />
-                    {children}
+                    <IdleSessionBridge>
+                      <PushNotificationBridge />
+                      <RealtimeQueryBridge />
+                      <DeepLinkBridge />
+                      {children}
+                    </IdleSessionBridge>
                   </SocketProvider>
                 </GlobalErrorBridge>
               </NetworkBridge>

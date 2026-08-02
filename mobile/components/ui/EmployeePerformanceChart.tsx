@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import {
   LayoutChangeEvent,
+  Platform,
   Pressable,
   StyleSheet,
   Text,
@@ -220,8 +221,18 @@ function createStyles(colors: ColorPalette) {
       borderRadius: surface.cardRadius,
       borderWidth: StyleSheet.hairlineWidth,
       borderColor: colors.border,
-      padding: spacing.lg,
-      gap: spacing.md,
+      padding: spacing.xl,
+      gap: spacing.lg,
+      ...Platform.select({
+        ios: {
+          shadowColor: "#0B1220",
+          shadowOpacity: 0.04,
+          shadowRadius: 12,
+          shadowOffset: { width: 0, height: 4 },
+        },
+        android: { elevation: 2 },
+        default: {},
+      }),
     },
     title: {
       ...typography.overline,

@@ -21,6 +21,8 @@ type AuthContinueButtonProps = PressableProps & {
   loading?: boolean;
 };
 
+const GRADIENT_COLORS = [authBrand.orangeSoft, authBrand.orange, authBrand.orangeDeep] as const;
+
 export function AuthContinueButton({
   label,
   loading = false,
@@ -55,13 +57,13 @@ export function AuthContinueButton({
     >
       <Animated.View style={[styles.scaleWrap, animatedStyle]} collapsable={false}>
         <LinearGradient
-          colors={[authBrand.orangeSoft, authBrand.orange, authBrand.orangeDeep]}
+          colors={[...GRADIENT_COLORS]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
           style={styles.gradient}
         >
           {loading ? (
-            <ActivityIndicator color={authBrand.white} />
+            <ActivityIndicator color={authBrand.white} size="small" />
           ) : (
             <Text style={styles.label}>{label}</Text>
           )}
@@ -73,35 +75,37 @@ export function AuthContinueButton({
 
 const styles = StyleSheet.create({
   wrap: {
-    borderRadius: radius.xl,
+    borderRadius: radius["2xl"],
     overflow: "hidden",
+    marginTop: spacing.sm,
     ...Platform.select({
       ios: {
         shadowColor: authBrand.orangeDeep,
-        shadowOpacity: 0.42,
-        shadowRadius: 16,
-        shadowOffset: { width: 0, height: 10 },
+        shadowOpacity: 0.48,
+        shadowRadius: 20,
+        shadowOffset: { width: 0, height: 12 },
       },
-      android: { elevation: 8 },
+      android: { elevation: 10 },
       default: {},
     }),
   },
   scaleWrap: {
-    borderRadius: radius.xl,
+    borderRadius: radius["2xl"],
     overflow: "hidden",
   },
   gradient: {
-    minHeight: touchTarget + 8,
+    minHeight: touchTarget + 12,
     alignItems: "center",
     justifyContent: "center",
     paddingHorizontal: spacing.xl,
+    borderRadius: radius["2xl"],
   },
   label: {
     ...typography.button,
     color: authBrand.white,
     fontWeight: "700",
     fontSize: 16,
-    letterSpacing: 0.2,
+    letterSpacing: 0.3,
   },
   disabled: {
     opacity: 0.55,

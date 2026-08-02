@@ -6,18 +6,26 @@ import Animated, {
   withTiming,
 } from "react-native-reanimated";
 import { useTheme } from "@/hooks/useTheme";
-import { motion, radius, spacing, surface, touchTarget, typography } from "@/theme";
+import { brand, motion, radius, spacing, surface, touchTarget, typography } from "@/theme";
 import { hapticSelection } from "@/utils/haptics";
+
+type PeriodToggleVariant = "surface" | "hero";
 
 type PeriodToggleProps<T extends string> = {
   value: T;
   options: Array<{ value: T; label: string }>;
   onChange: (value: T) => void;
+  variant?: PeriodToggleVariant;
 };
 
-export function PeriodToggle<T extends string>({ value, options, onChange }: PeriodToggleProps<T>) {
+export function PeriodToggle<T extends string>({
+  value,
+  options,
+  onChange,
+  variant = "surface",
+}: PeriodToggleProps<T>) {
   const { colors } = useTheme();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const styles = useMemo(() => createStyles(colors, variant), [colors, variant]);
 
   return (
     <View style={styles.track} accessibilityRole="tablist">
@@ -59,7 +67,7 @@ function Segment({
 
   const pillStyle = useAnimatedStyle(() => ({
     opacity: progress.value,
-    transform: [{ scale: 0.98 + progress.value * 0.02 }],
+    transform: [{ scale: 0.96 + progress.value * 0.04 }],
   }));
 
   return (
@@ -78,20 +86,22 @@ function Segment({
   );
 }
 
-function createStyles(colors: ReturnType<typeof useTheme>["colors"]) {
+function createStyles(colors: ReturnType<typeof useTheme>["colors"], variant: PeriodToggleVariant) {
+  const isHero = variant === "hero";
+
   return StyleSheet.create({
     track: {
       flexDirection: "row",
-      backgroundColor: colors.secondary,
+      backgroundColor: isHero ? "rgba(255, 255, 255, 0.16)" : colors.secondary,
       borderRadius: surface.pillRadius,
-      padding: 3,
+      padding: 4,
       gap: 2,
       borderWidth: StyleSheet.hairlineWidth,
-      borderColor: colors.border,
+      borderColor: isHero ? "rgba(255, 255, 255, 0.28)" : colors.border,
     },
     segment: {
       flex: 1,
-      minHeight: touchTarget - 4,
+      minHeight: touchTarget - 6,
       alignItems: "center",
       justifyContent: "center",
       paddingHorizontal: spacing.sm,
@@ -100,24 +110,25 @@ function createStyles(colors: ReturnType<typeof useTheme>["colors"]) {
     pill: {
       ...StyleSheet.absoluteFillObject,
       borderRadius: radius.lg,
-      backgroundColor: colors.card,
+      backgroundColor: isHero ? "#FFFFFF" : colors.card,
       borderWidth: StyleSheet.hairlineWidth,
-      borderColor: colors.primarySoft,
-      shadowColor: colors.foreground,
-      shadowOpacity: 0.04,
-      shadowRadius: 4,
-      shadowOffset: { width: 0, height: 1 },
-      elevation: 1,
+      borderColor: isHero ? "rgba(255, 255, 255, 0.6)" : colors.border,
+      shadowColor: isHero ? "#000000" : colors.foreground,
+      shadowOpacity: isHero ? 0.08 : 0.04,
+      shadowRadius: 6,
+      shadowOffset: { width: 0, height: 2 },
+      elevation: isHero ? 2 : 1,
     },
     label: {
       ...typography.caption,
-      color: colors.mutedForeground,
+      color: isHero ? "rgba(255, 255, 255, 0.78)" : colors.mutedForeground,
       fontWeight: "600",
       fontSize: 13,
+      letterSpacing: 0.1,
       zIndex: 1,
     },
     labelActive: {
-      color: colors.primary,
+      color: isHero ? brand.orange : colors.primary,
       fontWeight: "700",
     },
   });

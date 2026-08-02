@@ -15,7 +15,7 @@ type ThemeState = {
 };
 
 export const useThemeStore = create<ThemeState>((set, get) => ({
-  mode: "system",
+  mode: "dark",
   hydrated: false,
   hydrate: async () => {
     if (get().hydrated) return;

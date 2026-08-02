@@ -654,4 +654,14 @@ export const de: MobileMessages = {
     notifications: "Benachrichtigungen",
     notificationsA11y: "Benachrichtigungen, {{count}} ungelesen",
   },
+  idleSession: {
+    warningTitle: "Sie waren inaktiv.",
+    warningBody: "Aus Sicherheitsgründen läuft Ihre Sitzung bald ab.",
+    staySignedIn: "Sitzung fortsetzen",
+    logOutNow: "Abmelden",
+    countdownLive: "Abmeldung in {{seconds}} Sekunden",
+    unsavedTitle: "Sie haben ungespeicherte Änderungen",
+    unsavedBody: "Ihre Sitzung endet in {{seconds}} s. Speichern Sie Ihre Arbeit oder setzen Sie die Sitzung fort.",
+    logOutAnyway: "Trotzdem abmelden",
+  },
 };

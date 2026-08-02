@@ -57,7 +57,9 @@ export default function BusinessTabsLayout() {
         name="menu"
         options={{
           title: t("tabs.more"),
-          tabBarIcon: ({ color, size }) => <TabIcon name="menu" color={color} size={size} />,
+          tabBarIcon: ({ color, size, focused }) => (
+            <TabIcon name={focused ? "menu" : "menu-outline"} color={color} size={size} />
+          ),
         }}
       />
       <Tabs.Screen name="activity" options={{ href: null }} />

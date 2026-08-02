@@ -1,6 +1,7 @@
-import type { ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import {
   ImageBackground,
+  Keyboard,
   KeyboardAvoidingView,
   Platform,
   RefreshControl,
@@ -14,6 +15,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import authBackground from "@/assets/auth/mobileauth.png";
 import { authBrand } from "@/theme/authBrand";
+import { brand } from "@/theme/colors";
 import { layered, layeredSheetShadow } from "@/theme/layered";
 import { spacing } from "@/theme";
 import { useTheme } from "@/hooks/useTheme";
@@ -30,6 +32,7 @@ type LayeredScreenShellProps = {
   refreshing?: boolean;
   onRefresh?: () => void;
   keyboardAware?: boolean;
+  keyboardOpen?: boolean;
   tabSafe?: boolean;
   heroHeightRatio?: number;
   scrollProps?: ScrollViewProps;
@@ -46,6 +49,7 @@ export function LayeredScreenShell({
   refreshing,
   onRefresh,
   keyboardAware = false,
+  keyboardOpen: keyboardOpenProp,
   tabSafe = false,
   heroHeightRatio = layered.heroHeightRatio,
   scrollProps,
@@ -54,13 +58,31 @@ export function LayeredScreenShell({
   const { width, height } = useWindowDimensions();
   const isTablet = width >= TABLET_MIN_WIDTH;
   const isFloating = layout === "floating";
+  const isDashboard = background === "gradient" && !isFloating;
   const pagePadding = isTablet ? spacing["4xl"] : layered.pagePadding;
+  const [keyboardOpenLocal, setKeyboardOpenLocal] = useState(false);
+  const keyboardOpen = keyboardOpenProp ?? keyboardOpenLocal;
+
+  useEffect(() => {
+    if (keyboardOpenProp !== undefined || !keyboardAware || !isFloating) return;
+    const showEvent = Platform.OS === "ios" ? "keyboardWillShow" : "keyboardDidShow";
+    const hideEvent = Platform.OS === "ios" ? "keyboardWillHide" : "keyboardDidHide";
+    const showSub = Keyboard.addListener(showEvent, () => setKeyboardOpenLocal(true));
+    const hideSub = Keyboard.addListener(hideEvent, () => setKeyboardOpenLocal(false));
+    return () => {
+      showSub.remove();
+      hideSub.remove();
+    };
+  }, [keyboardAware, isFloating, keyboardOpenProp]);
+
+  const compressedRatio = keyboardOpen && isFloating ? heroHeightRatio * 0.42 : heroHeightRatio;
   const heroHeight = Math.max(
-    height * (isFloating ? 0.34 : heroHeightRatio),
-    isFloating ? 240 : layered.heroMinHeight,
+    height * compressedRatio,
+    keyboardOpen && isFloating ? 88 : isFloating ? 200 : layered.heroMinHeight,
   );
   const { colors, isDark } = useTheme();
-  const sheetBackground = isDark ? colors.card : layered.sheetBackground;
+  const sheetBackground = isDark ? colors.background : layered.sheetBackground;
+  const rootBackground = isDashboard ? brand.orange : isFloating ? authBrand.dark : brand.orange;
 
   const scroll = (
     <ScrollView
@@ -73,19 +95,20 @@ export function LayeredScreenShell({
           <RefreshControl
             refreshing={Boolean(refreshing)}
             onRefresh={onRefresh}
-            tintColor={isFloating ? authBrand.white : authBrand.orange}
-            colors={[authBrand.orange]}
-            progressBackgroundColor={isFloating ? "transparent" : sheetBackground}
+            tintColor={isFloating ? authBrand.white : authBrand.white}
+            colors={[brand.orange]}
+            progressBackgroundColor={isDashboard ? brand.orange : sheetBackground}
           />
         ) : undefined
       }
       contentContainerStyle={[
         styles.scrollContent,
+        isDashboard ? styles.scrollContentDashboard : null,
         tabSafe ? styles.tabClearance : null,
         {
           paddingBottom:
             Math.max(insets.bottom, isFloating ? spacing["3xl"] : layered.pagePadding) +
-            (tabSafe ? 88 : 0),
+            (tabSafe ? 96 : 0),
         },
       ]}
       {...scrollProps}
@@ -94,6 +117,8 @@ export function LayeredScreenShell({
         style={[
           styles.heroZone,
           isFloating ? styles.heroZoneFloating : null,
+          isDashboard ? styles.heroZoneDashboard : null,
+          keyboardOpen && isFloating ? styles.heroZoneCompressed : null,
           { minHeight: heroHeight, paddingHorizontal: pagePadding },
         ]}
       >
@@ -117,6 +142,7 @@ export function LayeredScreenShell({
               paddingTop: layered.sectionGap,
               paddingBottom: layered.sectionGap,
               backgroundColor: sheetBackground,
+              minHeight: height * 0.62,
             },
           ]}
         >
@@ -129,6 +155,7 @@ export function LayeredScreenShell({
           style={[
             styles.footerZone,
             isFloating ? styles.footerZoneFloating : null,
+            keyboardOpen && isFloating ? styles.footerCompressed : null,
             { paddingHorizontal: pagePadding },
           ]}
         >
@@ -139,7 +166,7 @@ export function LayeredScreenShell({
   );
 
   return (
-    <View style={styles.root}>
+    <View style={[styles.root, { backgroundColor: rootBackground }]}>
       {background === "auth-image" ? (
         <View style={styles.backgroundLayer} pointerEvents="none">
           <ImageBackground
@@ -149,13 +176,8 @@ export function LayeredScreenShell({
             accessibilityIgnoresInvertColors
           >
             <LinearGradient
-              colors={[
-                authBrand.overlayTop,
-                authBrand.overlayMid,
-                "rgba(11, 18, 32, 0.48)",
-                authBrand.overlayBottom,
-              ]}
-              locations={[0, 0.22, 0.55, 1]}
+              colors={[authBrand.overlayTop, authBrand.overlayMid, authBrand.overlayBottom]}
+              locations={[0, 0.45, 1]}
               style={StyleSheet.absoluteFill}
             />
           </ImageBackground>
@@ -167,7 +189,10 @@ export function LayeredScreenShell({
           colors={[...layered.heroGradient.colors]}
           start={layered.heroGradient.start}
           end={layered.heroGradient.end}
-          style={[styles.heroGradient, { height: heroHeight + (isFloating ? 0 : layered.sheetOverlap) }]}
+          style={[
+            styles.heroGradient,
+            { height: heroHeight + (isFloating ? 0 : layered.sheetOverlap + spacing.lg) },
+          ]}
           pointerEvents="none"
         />
       ) : background === "auth-image" ? null : (
@@ -182,8 +207,8 @@ export function LayeredScreenShell({
       {keyboardAware ? (
         <KeyboardAvoidingView
           style={styles.flex}
-          behavior={Platform.OS === "ios" ? "padding" : "height"}
-          keyboardVerticalOffset={Platform.OS === "ios" ? Math.max(insets.top, spacing.lg) : 0}
+          behavior={Platform.OS === "ios" ? "padding" : undefined}
+          keyboardVerticalOffset={Platform.OS === "ios" ? Math.max(insets.top, spacing.md) : 0}
         >
           {scroll}
         </KeyboardAvoidingView>
@@ -197,7 +222,6 @@ export function LayeredScreenShell({
 const styles = StyleSheet.create({
   root: {
     flex: 1,
-    backgroundColor: authBrand.dark,
   },
   flex: {
     flex: 1,
@@ -220,23 +244,35 @@ const styles = StyleSheet.create({
     width: "100%",
     alignSelf: "center",
   },
+  scrollContentDashboard: {
+    minHeight: "100%",
+  },
   heroZone: {
     justifyContent: "flex-end",
-    paddingTop: spacing["3xl"],
+    paddingTop: spacing["2xl"],
     paddingBottom: layered.sheetOverlap + spacing.lg,
     zIndex: 1,
   },
+  heroZoneDashboard: {
+    paddingBottom: layered.sheetOverlap + spacing.xl,
+  },
   heroZoneFloating: {
-    paddingBottom: spacing["2xl"],
+    paddingTop: spacing.xl,
+    paddingBottom: spacing.lg,
+  },
+  heroZoneCompressed: {
+    paddingTop: spacing.md,
+    paddingBottom: spacing.sm,
   },
   foregroundSheet: {
     zIndex: 2,
     gap: layered.elementGap,
+    flexGrow: 1,
   },
   floatingContent: {
     zIndex: 2,
-    gap: spacing["3xl"],
-    paddingTop: spacing.md,
+    gap: spacing["2xl"],
+    paddingTop: spacing.sm,
   },
   footerZone: {
     paddingTop: spacing["2xl"],
@@ -244,8 +280,12 @@ const styles = StyleSheet.create({
     zIndex: 1,
   },
   footerZoneFloating: {
-    paddingTop: spacing["3xl"],
+    paddingTop: spacing["2xl"],
     paddingBottom: spacing["2xl"],
+  },
+  footerCompressed: {
+    paddingTop: spacing.lg,
+    opacity: 0.85,
   },
   tabClearance: {
     paddingBottom: spacing["6xl"],
