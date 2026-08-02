@@ -26,6 +26,8 @@ export type LayeredLayoutVariant = "sheet" | "floating";
 
 type LayeredScreenShellProps = {
   header?: ReactNode;
+  /** Pinned below hero title — stays visible while scrolling (period toggle, etc.). */
+  headerExtra?: ReactNode;
   children: ReactNode;
   footer?: ReactNode;
   background?: LayeredBackgroundVariant;
@@ -43,6 +45,7 @@ const TABLET_MIN_WIDTH = 768;
 
 export function LayeredScreenShell({
   header,
+  headerExtra,
   children,
   footer,
   background = "gradient",
@@ -86,12 +89,15 @@ export function LayeredScreenShell({
   const pageBackground = isDark ? colors.background : layered.pageBackground;
   const rootBackground = isDashboard ? pageBackground : isFloating ? authBrand.dark : brand.orange;
 
+  const stickyHeaderIndices = isDashboard && headerExtra ? [1] : undefined;
+
   const scroll = (
     <ScrollView
       keyboardShouldPersistTaps="always"
       keyboardDismissMode="on-drag"
       showsVerticalScrollIndicator={false}
       bounces
+      stickyHeaderIndices={stickyHeaderIndices}
       refreshControl={
         onRefresh ? (
           <RefreshControl
@@ -126,6 +132,17 @@ export function LayeredScreenShell({
       >
         {header}
       </View>
+
+      {headerExtra && isDashboard ? (
+        <View
+          style={[
+            styles.stickyHeaderExtra,
+            { paddingHorizontal: pagePadding, backgroundColor: premiumPalette.primary },
+          ]}
+        >
+          {headerExtra}
+        </View>
+      ) : null}
 
       {isFloating ? (
         <View style={[styles.floatingContent, { paddingHorizontal: pagePadding }]}>
@@ -274,8 +291,13 @@ const styles = StyleSheet.create({
     zIndex: 1,
   },
   heroZoneDashboard: {
-    paddingBottom: layered.sheetOverlap + spacing.xl,
+    paddingBottom: spacing.lg,
     paddingTop: spacing.lg,
+  },
+  stickyHeaderExtra: {
+    zIndex: 3,
+    paddingTop: spacing.xxs,
+    paddingBottom: layered.sheetOverlap + spacing.md,
   },
   heroZoneFloating: {
     paddingTop: spacing.xl,

@@ -1,10 +1,11 @@
 import { StyleSheet, View } from "react-native";
 import { useRouter } from "expo-router";
 import { useMemo } from "react";
+import { Bell, QrCode, Wallet } from "@/icons/lucide";
 import { HeroBalanceCard } from "@/components/ui/HeroBalanceCard";
-import { QuickActionRow } from "@/components/ui/QuickActionRow";
+import { CompactKpiRow } from "@/components/ui/CompactKpiRow";
+import { DashboardShortcutGrid } from "@/components/ui/DashboardShortcutGrid";
 import { TipCard } from "@/components/ui/ListCards";
-import { KpiCard } from "@/components/ui/KpiCard";
 import { PeriodToggle } from "@/components/ui/PeriodToggle";
 import { LayeredScreen } from "@/components/ui/LayeredScreen";
 import { GroupedList, Section } from "@/components/ui/Section";
@@ -49,24 +50,24 @@ export function EmployeeDashboardScreen() {
   const displayName =
     (profile?.name ?? user?.name)?.split(" ")[0] ?? profile?.name ?? user?.name ?? "there";
 
-  const quickActions = useMemo(
+  const shortcuts = useMemo(
     () => [
       {
         id: "qr",
         label: t("tabs.myQr"),
-        icon: "qr-code-outline" as const,
+        icon: QrCode,
         onPress: () => router.push("/(app)/employee/qr"),
       },
       {
         id: "tips",
         label: t("tabs.tipHistory"),
-        icon: "wallet-outline" as const,
+        icon: Wallet,
         onPress: () => router.push("/(app)/employee/tips"),
       },
       {
         id: "inbox",
         label: t("tabs.inbox"),
-        icon: "notifications-outline" as const,
+        icon: Bell,
         onPress: () => router.push("/(app)/employee/notifications"),
       },
     ],
@@ -130,29 +131,23 @@ export function EmployeeDashboardScreen() {
                 })}
                 icon="wallet"
               />
-              <QuickActionRow actions={quickActions} />
-              <View style={styles.metricsRow}>
-                <View style={styles.metricCol}>
-                  <KpiCard
-                    variant="plain"
-                    label={t("employeeDashboard.avgRating")}
-                    value={formatRating(tips?.averageRating)}
-                    hint={t("employeeDashboard.ratingsHint", {
+              <CompactKpiRow
+                items={[
+                  {
+                    label: t("employeeDashboard.avgRating"),
+                    value: formatRating(tips?.averageRating),
+                    hint: t("employeeDashboard.ratingsHint", {
                       count: formatCount(tips?.ratingCount),
-                    })}
-                    icon="star-outline"
-                  />
-                </View>
-                <View style={styles.metricCol}>
-                  <KpiCard
-                    variant="plain"
-                    label={t("employeeDashboard.paidOut")}
-                    value={formatEur(tips?.paidOutEur)}
-                    hint={t("employeeDashboard.successfulPayouts")}
-                    icon="checkmark-circle-outline"
-                  />
-                </View>
-              </View>
+                    }),
+                  },
+                  {
+                    label: t("employeeDashboard.paidOut"),
+                    value: formatEur(tips?.paidOutEur),
+                    hint: t("employeeDashboard.successfulPayouts"),
+                  },
+                ]}
+              />
+              <DashboardShortcutGrid shortcuts={shortcuts} />
             </View>
           </FadeIn>
 
@@ -200,15 +195,6 @@ const styles = StyleSheet.create({
     gap: layered.sectionGap,
   },
   heroBlock: {
-    gap: layered.elementGap,
-  },
-  metricsRow: {
-    flexDirection: "row",
-    alignItems: "stretch",
-    gap: spacing.md,
-  },
-  metricCol: {
-    flex: 1,
-    minWidth: 0,
+    gap: spacing.xl,
   },
 });

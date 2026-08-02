@@ -48,6 +48,7 @@ export function LayeredScreen({
         refreshing={refreshing}
         onRefresh={onRefresh}
         tabSafe
+        headerExtra={headerExtra}
         header={
           <View style={staticStyles.headerBlock}>
             <View style={staticStyles.headerRow}>
@@ -61,7 +62,6 @@ export function LayeredScreen({
                 <HeaderUtilityStack notificationsHref={notificationsHref} />
               ) : null}
             </View>
-            {headerExtra ? <View style={staticStyles.headerExtra}>{headerExtra}</View> : null}
           </View>
         }
       >
@@ -130,8 +130,5 @@ const staticStyles = StyleSheet.create({
     gap: spacing.md,
     position: "relative",
     paddingBottom: spacing.xs,
-  },
-  headerExtra: {
-    marginTop: spacing.xxs,
   },
 });
