@@ -303,6 +303,14 @@ export const en: MobileMessages = {
     teamLeaderboard: "Team leaderboard",
     locationLeaderboard: "Location leaderboard",
   },
+  cookieConsent: {
+    banner: {
+      message: "We use cookies to keep CareTip reliable and improve your experience.",
+      acceptAll: "Accept",
+      reject: "Reject",
+      privacyPolicy: "Privacy policy",
+    },
+  },
   employeeDashboard: {
     eyebrow: "YOUR TIPS",
     welcome: "Welcome back, {{name}}",

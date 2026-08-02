@@ -5,6 +5,7 @@ import { useRouter } from "expo-router";
 import { HeroBalanceCard } from "@/components/ui/HeroBalanceCard";
 import { CompactKpiRow } from "@/components/ui/CompactKpiRow";
 import { DashboardShortcutGrid } from "@/components/ui/DashboardShortcutGrid";
+import { DashboardCookieConsent } from "@/components/ui/DashboardCookieConsent";
 import { EmployeePerformanceChart } from "@/components/ui/EmployeePerformanceChart";
 import { PeriodToggle } from "@/components/ui/PeriodToggle";
 import { LayeredScreen } from "@/components/ui/LayeredScreen";
@@ -155,6 +156,7 @@ export function BusinessDashboardScreen() {
                 ]}
               />
               <DashboardShortcutGrid shortcuts={shortcuts} />
+              <DashboardCookieConsent />
             </View>
           </FadeIn>
 

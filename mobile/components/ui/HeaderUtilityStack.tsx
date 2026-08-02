@@ -8,7 +8,7 @@ type HeaderUtilityStackProps = {
   notificationsHref: string;
 };
 
-/** Dashboard header utilities — compact frosted-glass row (top-right). */
+/** Dashboard header utilities — compact dark icons on the orange hero (top-right). */
 export function HeaderUtilityStack({ notificationsHref }: HeaderUtilityStackProps) {
   return (
     <View style={styles.row}>
@@ -23,7 +23,7 @@ const styles = StyleSheet.create({
   row: {
     flexDirection: "row",
     alignItems: "center",
-    gap: spacing.sm,
+    gap: spacing.xs,
     paddingTop: spacing.xxs,
   },
 });

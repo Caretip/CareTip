@@ -24,7 +24,11 @@ type HeaderIconButtonProps = {
 };
 
 const AUTH_HERO_SIZE = 40;
-const DASHBOARD_HERO_SIZE = 48;
+/** 44dp touch target; visible glyph is smaller (premium dashboard header). */
+const DASHBOARD_HERO_TOUCH = 44;
+const DASHBOARD_HERO_ICON = 16;
+const DASHBOARD_HERO_ICON_COLOR = "#1A1A1A";
+const DASHBOARD_HERO_ICON_ACTIVE = "#0D0D0D";
 
 export function HeaderIconButton({
   icon,
@@ -40,14 +44,19 @@ export function HeaderIconButton({
   const isDashboardHero = variant === "onDashboardHero";
   const isHero = variant === "onHero" || isDashboardHero;
 
-  const palette = isHero
+  const palette = isDashboardHero
     ? {
-        backgroundColor: isDashboardHero
-          ? "rgba(255, 255, 255, 0.18)"
-          : authBrand.heroControlFill,
-        borderColor: isDashboardHero
-          ? "rgba(255, 255, 255, 0.32)"
-          : authBrand.heroControlBorder,
+        backgroundColor: "transparent",
+        borderColor: "transparent",
+        iconColor: DASHBOARD_HERO_ICON_COLOR,
+        activeBg: "transparent",
+        activeBorder: "transparent",
+        activeIcon: DASHBOARD_HERO_ICON_ACTIVE,
+      }
+    : isHero
+    ? {
+        backgroundColor: authBrand.heroControlFill,
+        borderColor: authBrand.heroControlBorder,
         iconColor: "#FFFFFF",
         activeBg: "rgba(255, 255, 255, 0.28)",
         activeBorder: "rgba(255, 255, 255, 0.55)",
@@ -66,8 +75,8 @@ export function HeaderIconButton({
     transform: [{ scale: scale.value }],
   }));
 
-  const size = isDashboardHero ? DASHBOARD_HERO_SIZE : isHero ? AUTH_HERO_SIZE : 44;
-  const iconSize = isDashboardHero ? 22 : isHero ? 18 : 20;
+  const size = isDashboardHero ? DASHBOARD_HERO_TOUCH : isHero ? AUTH_HERO_SIZE : 44;
+  const iconSize = isDashboardHero ? DASHBOARD_HERO_ICON : isHero ? 18 : 20;
 
   return (
     <Pressable
@@ -89,21 +98,19 @@ export function HeaderIconButton({
         {
           width: size,
           height: size,
-          borderRadius: size / 2,
+          borderRadius: isDashboardHero ? 0 : size / 2,
           backgroundColor: active ? palette.activeBg : palette.backgroundColor,
           borderColor: active ? palette.activeBorder : palette.borderColor,
+          borderWidth: isDashboardHero ? 0 : StyleSheet.hairlineWidth,
         },
-        isHero ? styles.buttonHero : styles.buttonSurface,
+        isHero && !isDashboardHero ? styles.buttonHero : null,
         isDashboardHero ? styles.buttonDashboardHero : null,
+        !isHero ? styles.buttonSurface : null,
         style,
       ]}
     >
-      {isHero && Platform.OS === "ios" ? (
-        <BlurView
-          intensity={isDashboardHero ? 28 : 22}
-          tint="light"
-          style={StyleSheet.absoluteFill}
-        />
+      {isHero && !isDashboardHero && Platform.OS === "ios" ? (
+        <BlurView intensity={22} tint="light" style={StyleSheet.absoluteFill} />
       ) : null}
       <Animated.View style={[styles.iconWrap, animatedStyle]} collapsable={false}>
         <Ionicons
@@ -121,7 +128,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     overflow: "hidden",
-    borderWidth: StyleSheet.hairlineWidth,
   },
   buttonHero: {
     shadowColor: "#000000",
@@ -131,11 +137,7 @@ const styles = StyleSheet.create({
     elevation: 4,
   },
   buttonDashboardHero: {
-    shadowColor: "#000000",
-    shadowOpacity: 0.1,
-    shadowRadius: 12,
-    shadowOffset: { width: 0, height: 4 },
-    elevation: 5,
+    overflow: "visible",
   },
   buttonSurface: {
     borderRadius: 14,

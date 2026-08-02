@@ -283,6 +283,14 @@ export type MobileMessages = {
     teamLeaderboard: string;
     locationLeaderboard: string;
   };
+  cookieConsent: {
+    banner: {
+      message: string;
+      acceptAll: string;
+      reject: string;
+      privacyPolicy: string;
+    };
+  };
   employeeDashboard: {
     eyebrow: string;
     welcome: string;

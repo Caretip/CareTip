@@ -14,4 +14,5 @@ export const PREFERENCE_KEYS = {
   qrStudioTimeframe: "caretip_pref_qr_studio_tf",
   language: "caretip_pref_language",
   theme: "caretip_pref_theme",
+  cookieConsent: "caretip_cookie_consent",
 } as const;

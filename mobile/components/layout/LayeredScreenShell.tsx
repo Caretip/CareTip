@@ -9,6 +9,7 @@ import {
   StyleSheet,
   View,
   useWindowDimensions,
+  type LayoutChangeEvent,
   type ScrollViewProps,
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
@@ -26,8 +27,6 @@ export type LayeredLayoutVariant = "sheet" | "floating";
 
 type LayeredScreenShellProps = {
   header?: ReactNode;
-  /** Pinned below hero title — stays visible while scrolling (period toggle, etc.). */
-  headerExtra?: ReactNode;
   children: ReactNode;
   footer?: ReactNode;
   background?: LayeredBackgroundVariant;
@@ -45,7 +44,6 @@ const TABLET_MIN_WIDTH = 768;
 
 export function LayeredScreenShell({
   header,
-  headerExtra,
   children,
   footer,
   background = "gradient",
@@ -65,6 +63,7 @@ export function LayeredScreenShell({
   const isDashboard = background === "gradient" && !isFloating;
   const pagePadding = isTablet ? spacing["4xl"] : layered.pagePadding;
   const [keyboardOpenLocal, setKeyboardOpenLocal] = useState(false);
+  const [measuredHeroHeight, setMeasuredHeroHeight] = useState(0);
   const keyboardOpen = keyboardOpenProp ?? keyboardOpenLocal;
 
   useEffect(() => {
@@ -80,16 +79,30 @@ export function LayeredScreenShell({
   }, [keyboardAware, isFloating, keyboardOpenProp]);
 
   const compressedRatio = keyboardOpen && isFloating ? heroHeightRatio * 0.42 : heroHeightRatio;
-  const heroHeight = Math.max(
+  const fallbackHeroHeight = Math.max(
     height * compressedRatio,
     keyboardOpen && isFloating ? 88 : isFloating ? 200 : layered.heroMinHeight,
   );
+
+  /** Dashboard hero is content-sized; ratio fallback only until first onLayout. */
+  const heroBackdropHeight = isDashboard
+    ? measuredHeroHeight > 0
+      ? measuredHeroHeight
+      : fallbackHeroHeight
+    : fallbackHeroHeight;
+
+  const onDashboardHeroLayout = (event: LayoutChangeEvent) => {
+    if (!isDashboard) return;
+    const next = Math.ceil(event.nativeEvent.layout.height);
+    if (next > 0 && next !== measuredHeroHeight) {
+      setMeasuredHeroHeight(next);
+    }
+  };
+
   const { colors, isDark } = useTheme();
   const sheetBackground = isDark ? colors.background : layered.sheetBackground;
   const pageBackground = isDark ? colors.background : layered.pageBackground;
   const rootBackground = isDashboard ? pageBackground : isFloating ? authBrand.dark : brand.orange;
-
-  const stickyHeaderIndices = isDashboard && headerExtra ? [1] : undefined;
 
   const scroll = (
     <ScrollView
@@ -97,7 +110,6 @@ export function LayeredScreenShell({
       keyboardDismissMode="on-drag"
       showsVerticalScrollIndicator={false}
       bounces
-      stickyHeaderIndices={stickyHeaderIndices}
       refreshControl={
         onRefresh ? (
           <RefreshControl
@@ -122,28 +134,18 @@ export function LayeredScreenShell({
       {...scrollProps}
     >
       <View
+        onLayout={isDashboard ? onDashboardHeroLayout : undefined}
         style={[
           styles.heroZone,
           isFloating ? styles.heroZoneFloating : null,
           isDashboard ? styles.heroZoneDashboard : null,
-          isDashboard && !headerExtra ? styles.heroZoneDashboardInlineHeaderExtra : null,
           keyboardOpen && isFloating ? styles.heroZoneCompressed : null,
-          { minHeight: heroHeight, paddingHorizontal: pagePadding },
+          !isDashboard ? { minHeight: fallbackHeroHeight } : null,
+          { paddingHorizontal: pagePadding },
         ]}
       >
         {header}
       </View>
-
-      {headerExtra && isDashboard ? (
-        <View
-          style={[
-            styles.stickyHeaderExtra,
-            { paddingHorizontal: pagePadding, backgroundColor: premiumPalette.primary },
-          ]}
-        >
-          {headerExtra}
-        </View>
-      ) : null}
 
       {isFloating ? (
         <View style={[styles.floatingContent, { paddingHorizontal: pagePadding }]}>
@@ -162,7 +164,8 @@ export function LayeredScreenShell({
               paddingTop: spacing["2xl"],
               paddingBottom: spacing["3xl"],
               backgroundColor: sheetBackground,
-              minHeight: height - heroHeight + layered.sheetOverlap + (tabSafe ? 88 : 0),
+              minHeight:
+                height - heroBackdropHeight + layered.sheetOverlap + (tabSafe ? 88 : 0),
             },
           ]}
         >
@@ -213,14 +216,14 @@ export function LayeredScreenShell({
             end={premiumHeroGradient.end}
             style={[
               styles.heroGradient,
-              { height: heroHeight + layered.sheetOverlap },
+              { height: heroBackdropHeight },
             ]}
             pointerEvents="none"
           />
           <View
             style={[
               styles.heroGlow,
-              { top: heroHeight * 0.12, left: pagePadding - spacing.md },
+              { top: heroBackdropHeight * 0.12, left: pagePadding - spacing.md },
             ]}
             pointerEvents="none"
           />
@@ -229,7 +232,7 @@ export function LayeredScreenShell({
         <LinearGradient
           colors={["rgba(245, 166, 35, 0.18)", "rgba(245, 166, 35, 0.06)", "transparent"]}
           locations={[0, 0.45, 1]}
-          style={[styles.heroGradient, { height: heroHeight + layered.sheetOverlap }]}
+          style={[styles.heroGradient, { height: heroBackdropHeight }]}
           pointerEvents="none"
         />
       )}
@@ -291,17 +294,14 @@ const styles = StyleSheet.create({
     paddingBottom: layered.sheetOverlap + spacing.md,
     zIndex: 1,
   },
+  /**
+   * Dashboard hero wraps header + period toggle.
+   * paddingBottom is the overlap band — sheet marginTop pulls into this zone only,
+   * keeping the toggle above the white sheet edge.
+   */
   heroZoneDashboard: {
-    paddingBottom: spacing.lg,
+    justifyContent: "flex-start",
     paddingTop: spacing.lg,
-  },
-  /** Period toggle lives inside hero — restore overlap padding so sheet clears first card. */
-  heroZoneDashboardInlineHeaderExtra: {
-    paddingBottom: layered.sheetOverlap + spacing.xl,
-  },
-  stickyHeaderExtra: {
-    zIndex: 3,
-    paddingTop: spacing.xxs,
     paddingBottom: layered.sheetOverlap + spacing.md,
   },
   heroZoneFloating: {

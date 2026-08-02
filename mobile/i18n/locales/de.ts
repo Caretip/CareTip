@@ -305,6 +305,14 @@ export const de: MobileMessages = {
     teamLeaderboard: "Team-Bestenliste",
     locationLeaderboard: "Standort-Ranking",
   },
+  cookieConsent: {
+    banner: {
+      message: "Wir verwenden Cookies, damit CareTip zuverlässig funktioniert und sich Ihre Nutzung verbessert.",
+      acceptAll: "Akzeptieren",
+      reject: "Ablehnen",
+      privacyPolicy: "Datenschutz",
+    },
+  },
   employeeDashboard: {
     eyebrow: "IHRE TRINKGELDER",
     welcome: "Willkommen zurück, {{name}}",

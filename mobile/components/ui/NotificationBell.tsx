@@ -51,8 +51,13 @@ export function NotificationBell({ href, variant = "onHero" }: NotificationBellP
 }
 
 function createStyles(colors: ColorPalette, variant: HeaderControlVariant) {
+  const isDashboardHero = variant === "onDashboardHero";
   const badgeBorder =
-    variant === "onHero" || variant === "onDashboardHero" ? "#FFFFFF" : colors.background;
+    variant === "onHero"
+      ? "#FFFFFF"
+      : isDashboardHero
+        ? "transparent"
+        : colors.background;
 
   return StyleSheet.create({
     wrap: {
@@ -60,24 +65,24 @@ function createStyles(colors: ColorPalette, variant: HeaderControlVariant) {
     },
     badge: {
       position: "absolute",
-      top: -2,
-      right: -2,
-      minWidth: 18,
-      height: 18,
-      borderRadius: 9,
+      top: isDashboardHero ? 6 : -2,
+      right: isDashboardHero ? 6 : -2,
+      minWidth: isDashboardHero ? 14 : 18,
+      height: isDashboardHero ? 14 : 18,
+      borderRadius: isDashboardHero ? 7 : 9,
       backgroundColor: brand.orange,
-      borderWidth: 2,
+      borderWidth: isDashboardHero ? 1.5 : 2,
       borderColor: badgeBorder,
       alignItems: "center",
       justifyContent: "center",
-      paddingHorizontal: 4,
+      paddingHorizontal: isDashboardHero ? 3 : 4,
     },
     badgeLabel: {
       ...typography.caption,
       color: colors.primaryForeground,
-      fontSize: 10,
+      fontSize: isDashboardHero ? 8 : 10,
       fontWeight: "800",
-      lineHeight: 12,
+      lineHeight: isDashboardHero ? 10 : 12,
     },
   });
 }

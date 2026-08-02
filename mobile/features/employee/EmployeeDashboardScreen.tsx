@@ -5,6 +5,7 @@ import { Bell, QrCode, Wallet } from "@/icons/lucide";
 import { HeroBalanceCard } from "@/components/ui/HeroBalanceCard";
 import { CompactKpiRow } from "@/components/ui/CompactKpiRow";
 import { DashboardShortcutGrid } from "@/components/ui/DashboardShortcutGrid";
+import { DashboardCookieConsent } from "@/components/ui/DashboardCookieConsent";
 import { TipCard } from "@/components/ui/ListCards";
 import { PeriodToggle } from "@/components/ui/PeriodToggle";
 import { LayeredScreen } from "@/components/ui/LayeredScreen";
@@ -82,7 +83,6 @@ export function EmployeeDashboardScreen() {
       notificationsHref="/(app)/employee/notifications"
       refreshing={isRefreshing}
       onRefresh={() => void refresh()}
-      headerExtraPlacement="inline"
       headerExtra={
         <PeriodToggle
           value={timeframe}
@@ -149,6 +149,7 @@ export function EmployeeDashboardScreen() {
                 ]}
               />
               <DashboardShortcutGrid shortcuts={shortcuts} />
+              <DashboardCookieConsent />
             </View>
           </FadeIn>
 
