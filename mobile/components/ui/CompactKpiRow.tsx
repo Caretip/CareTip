@@ -1,6 +1,7 @@
-import { memo } from "react";
+import { memo, useMemo } from "react";
 import { StyleSheet, Text, View } from "react-native";
-import { premiumPalette } from "@/theme/dashboardPremium";
+import { useTheme } from "@/hooks/useTheme";
+import { dashboardTextColors, premiumPalette } from "@/theme/dashboardPremium";
 import { spacing, typography } from "@/theme";
 import { metricTextA11y, textA11y } from "@/theme/a11y";
 
@@ -16,6 +17,9 @@ type CompactKpiRowProps = {
 
 /** Single-row dual KPI — replaces two separate metric cards. */
 export const CompactKpiRow = memo(function CompactKpiRow({ items }: CompactKpiRowProps) {
+  const { isDark } = useTheme();
+  const text = dashboardTextColors(isDark);
+  const styles = useMemo(() => createStyles(text), [text]);
   const [left, right] = items;
 
   return (
@@ -51,44 +55,46 @@ export const CompactKpiRow = memo(function CompactKpiRow({ items }: CompactKpiRo
   );
 });
 
-const styles = StyleSheet.create({
-  row: {
-    flexDirection: "row",
-    alignItems: "stretch",
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderColor: premiumPalette.border,
-    paddingVertical: spacing.lg,
-  },
-  cell: {
-    flex: 1,
-    minWidth: 0,
-    gap: spacing.xxs,
-    paddingHorizontal: spacing.xs,
-  },
-  divider: {
-    width: StyleSheet.hairlineWidth,
-    backgroundColor: premiumPalette.border,
-    marginVertical: spacing.xxs,
-  },
-  label: {
-    ...typography.caption,
-    color: premiumPalette.textMuted,
-    fontSize: 12,
-    fontWeight: "500",
-    letterSpacing: 0.1,
-  },
-  value: {
-    fontSize: 22,
-    lineHeight: 26,
-    fontWeight: "700",
-    color: premiumPalette.textPrimary,
-    letterSpacing: -0.4,
-  },
-  hint: {
-    ...typography.caption,
-    color: premiumPalette.textSecondary,
-    fontSize: 12,
-    lineHeight: 16,
-  },
-});
+function createStyles(text: ReturnType<typeof dashboardTextColors>) {
+  return StyleSheet.create({
+    row: {
+      flexDirection: "row",
+      alignItems: "stretch",
+      borderTopWidth: StyleSheet.hairlineWidth,
+      borderBottomWidth: StyleSheet.hairlineWidth,
+      borderColor: premiumPalette.border,
+      paddingVertical: spacing.lg,
+    },
+    cell: {
+      flex: 1,
+      minWidth: 0,
+      gap: spacing.xxs,
+      paddingHorizontal: spacing.xs,
+    },
+    divider: {
+      width: StyleSheet.hairlineWidth,
+      backgroundColor: premiumPalette.border,
+      marginVertical: spacing.xxs,
+    },
+    label: {
+      ...typography.caption,
+      color: text.muted,
+      fontSize: 12,
+      fontWeight: "500",
+      letterSpacing: 0.1,
+    },
+    value: {
+      fontSize: 22,
+      lineHeight: 26,
+      fontWeight: "700",
+      color: text.primary,
+      letterSpacing: -0.4,
+    },
+    hint: {
+      ...typography.caption,
+      color: text.secondary,
+      fontSize: 12,
+      lineHeight: 16,
+    },
+  });
+}

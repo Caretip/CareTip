@@ -1,11 +1,12 @@
 import { useMemo } from "react";
 import { StyleSheet, Text, View } from "react-native";
+import Svg, { Circle } from "react-native-svg";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { useI18n } from "@/hooks/useI18n";
 import { useTheme } from "@/hooks/useTheme";
 import { formatEur, formatPercent } from "@/utils/format";
 import type { ColorPalette } from "@/theme/colors";
-import { premiumPalette } from "@/theme/dashboardPremium";
+import { dashboardTextColors, premiumPalette } from "@/theme/dashboardPremium";
 import { spacing, typography } from "@/theme";
 import type { BusinessDashboardStats } from "@/types/business";
 
@@ -15,11 +16,77 @@ type EmployeeGoalsPanelProps = {
 };
 
 const TEASER_LIMIT = 4;
+const RING_SIZE = 44;
+const RING_STROKE = 3.5;
+
+type GoalProgressRingProps = {
+  percent: number;
+  trackColor: string;
+  fillColor: string;
+  labelColor: string;
+};
+
+function GoalProgressRing({ percent, trackColor, fillColor, labelColor }: GoalProgressRingProps) {
+  const radius = (RING_SIZE - RING_STROKE) / 2;
+  const circumference = 2 * Math.PI * radius;
+  const clamped = Math.min(100, Math.max(0, percent));
+  const offset = circumference - (clamped / 100) * circumference;
+  const center = RING_SIZE / 2;
+
+  return (
+    <View
+      style={ringStyles.wrap}
+      accessibilityLabel={formatPercent(clamped)}
+      accessibilityRole="progressbar"
+    >
+      <Svg width={RING_SIZE} height={RING_SIZE}>
+        <Circle
+          cx={center}
+          cy={center}
+          r={radius}
+          stroke={trackColor}
+          strokeWidth={RING_STROKE}
+          fill="none"
+        />
+        <Circle
+          cx={center}
+          cy={center}
+          r={radius}
+          stroke={fillColor}
+          strokeWidth={RING_STROKE}
+          fill="none"
+          strokeDasharray={`${circumference} ${circumference}`}
+          strokeDashoffset={offset}
+          strokeLinecap="round"
+          rotation={-90}
+          origin={`${center}, ${center}`}
+        />
+      </Svg>
+      <Text style={[ringStyles.label, { color: labelColor }]}>{Math.round(clamped)}%</Text>
+    </View>
+  );
+}
+
+const ringStyles = StyleSheet.create({
+  wrap: {
+    width: RING_SIZE,
+    height: RING_SIZE,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  label: {
+    position: "absolute",
+    fontSize: 9,
+    fontWeight: "700",
+    letterSpacing: -0.2,
+  },
+});
 
 export function EmployeeGoalsPanel({ stats, employeeNameById }: EmployeeGoalsPanelProps) {
   const { t } = useI18n();
-  const { colors } = useTheme();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const { colors, isDark } = useTheme();
+  const text = dashboardTextColors(isDark);
+  const styles = useMemo(() => createStyles(colors, text), [colors, text]);
   const goals = stats?.employeeGoals ?? [];
   const teaser = goals.slice(0, TEASER_LIMIT);
   const onTrack = goals.filter((g) => (g.percent ?? 0) >= 75).length;
@@ -63,16 +130,20 @@ export function EmployeeGoalsPanel({ stats, employeeNameById }: EmployeeGoalsPan
               key={goal.employeeId}
               style={[styles.row, index < teaser.length - 1 ? styles.rowBorder : null]}
             >
-              <View style={styles.rowTop}>
-                <Text style={styles.name}>{name}</Text>
+              <GoalProgressRing
+                percent={percent}
+                trackColor={colors.secondary}
+                fillColor={premiumPalette.primary}
+                labelColor={text.primary}
+              />
+              <View style={styles.rowBody}>
+                <Text style={styles.name} numberOfLines={1}>
+                  {name}
+                </Text>
                 <Text style={styles.amount}>
                   {formatEur(goal.currentAmount)} / {formatEur(goal.goalAmount)}
                 </Text>
               </View>
-              <View style={styles.track}>
-                <View style={[styles.fill, { width: `${percent}%` }]} />
-              </View>
-              <Text style={styles.meta}>{formatPercent(percent)}</Text>
             </View>
           );
         })}
@@ -81,18 +152,18 @@ export function EmployeeGoalsPanel({ stats, employeeNameById }: EmployeeGoalsPan
   );
 }
 
-function createStyles(colors: ColorPalette) {
+function createStyles(colors: ColorPalette, text: ReturnType<typeof dashboardTextColors>) {
   return StyleSheet.create({
     wrap: { gap: spacing.lg },
     summary: {
       ...typography.caption,
-      color: premiumPalette.textSecondary,
+      color: text.secondary,
       fontSize: 13,
       lineHeight: 18,
     },
     hint: {
       ...typography.caption,
-      color: premiumPalette.textMuted,
+      color: text.muted,
       fontSize: 12,
       marginTop: -spacing.sm,
     },
@@ -101,48 +172,31 @@ function createStyles(colors: ColorPalette) {
       borderColor: premiumPalette.border,
     },
     row: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: spacing.md,
       paddingVertical: spacing.lg,
-      gap: spacing.sm,
     },
     rowBorder: {
       borderBottomWidth: StyleSheet.hairlineWidth,
       borderBottomColor: premiumPalette.border,
     },
-    rowTop: {
-      flexDirection: "row",
-      justifyContent: "space-between",
-      alignItems: "center",
-      gap: spacing.md,
+    rowBody: {
+      flex: 1,
+      minWidth: 0,
+      gap: spacing.xxs,
     },
     name: {
       ...typography.body,
       fontWeight: "600",
-      color: premiumPalette.textPrimary,
-      flex: 1,
+      color: text.primary,
       fontSize: 15,
     },
     amount: {
       ...typography.caption,
-      color: premiumPalette.textSecondary,
+      color: text.secondary,
       fontWeight: "500",
       fontSize: 12,
-    },
-    track: {
-      height: 5,
-      borderRadius: 999,
-      backgroundColor: colors.secondary,
-      overflow: "hidden",
-    },
-    fill: {
-      height: "100%",
-      borderRadius: 999,
-      backgroundColor: premiumPalette.primary,
-    },
-    meta: {
-      ...typography.caption,
-      color: premiumPalette.textMuted,
-      fontWeight: "500",
-      fontSize: 11,
     },
   });
 }

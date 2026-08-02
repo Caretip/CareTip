@@ -2,7 +2,7 @@ import { useMemo } from "react";
 import { StyleSheet, Text, View, type StyleProp, type ViewStyle } from "react-native";
 import { useTheme } from "@/hooks/useTheme";
 import type { ColorPalette } from "@/theme/colors";
-import { premiumPalette } from "@/theme/dashboardPremium";
+import { dashboardTextColors, premiumPalette } from "@/theme/dashboardPremium";
 import { spacing, typography } from "@/theme";
 
 type SectionProps = {
@@ -14,8 +14,9 @@ type SectionProps = {
 };
 
 export function Section({ title, subtitle, children, highlighted = false, style }: SectionProps) {
-  const { colors } = useTheme();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const { colors, isDark } = useTheme();
+  const text = dashboardTextColors(isDark);
+  const styles = useMemo(() => createStyles(colors, text), [colors, text]);
 
   return (
     <View style={[styles.section, highlighted ? styles.highlighted : null, style]}>
@@ -31,8 +32,9 @@ type DividerProps = {
 };
 
 export function Divider({ inset = false }: DividerProps) {
-  const { colors } = useTheme();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const { colors, isDark } = useTheme();
+  const text = dashboardTextColors(isDark);
+  const styles = useMemo(() => createStyles(colors, text), [colors, text]);
   return <View style={[styles.divider, inset ? styles.dividerInset : null]} />;
 }
 
@@ -42,8 +44,9 @@ type GroupedListProps = {
 };
 
 export function GroupedList({ children, style }: GroupedListProps) {
-  const { colors } = useTheme();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const { colors, isDark } = useTheme();
+  const text = dashboardTextColors(isDark);
+  const styles = useMemo(() => createStyles(colors, text), [colors, text]);
   return <View style={[styles.group, style]}>{children}</View>;
 }
 
@@ -62,12 +65,13 @@ export function GroupedRow({ children, showDivider = true }: GroupedRowProps) {
 }
 
 function GroupedRowContent({ children }: { children: React.ReactNode }) {
-  const { colors } = useTheme();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const { colors, isDark } = useTheme();
+  const text = dashboardTextColors(isDark);
+  const styles = useMemo(() => createStyles(colors, text), [colors, text]);
   return <View style={styles.groupRow}>{children}</View>;
 }
 
-function createStyles(colors: ColorPalette) {
+function createStyles(colors: ColorPalette, text: ReturnType<typeof dashboardTextColors>) {
   return StyleSheet.create({
     section: {
       gap: spacing.lg,
@@ -85,7 +89,7 @@ function createStyles(colors: ColorPalette) {
     },
     title: {
       ...typography.section,
-      color: premiumPalette.textPrimary,
+      color: text.primary,
       fontSize: 17,
       fontWeight: "700",
       letterSpacing: -0.3,
@@ -93,7 +97,7 @@ function createStyles(colors: ColorPalette) {
     },
     subtitle: {
       ...typography.body,
-      color: premiumPalette.textSecondary,
+      color: text.secondary,
       fontSize: 14,
       lineHeight: 20,
       marginTop: -spacing.sm,

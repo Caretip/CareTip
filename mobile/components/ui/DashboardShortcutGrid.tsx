@@ -8,7 +8,7 @@ import Animated, {
 import { useTheme } from "@/hooks/useTheme";
 import type { LucideIcon } from "@/types/lucide";
 import type { ColorPalette } from "@/theme/colors";
-import { premiumPalette } from "@/theme/dashboardPremium";
+import { premiumPalette, dashboardTextColors } from "@/theme/dashboardPremium";
 import { motion, spacing, typography } from "@/theme";
 import { hapticLight } from "@/utils/haptics";
 
@@ -28,10 +28,11 @@ const ICON_SIZE = 18;
 
 type ShortcutCardProps = DashboardShortcut & {
   colors: ColorPalette;
+  text: ReturnType<typeof dashboardTextColors>;
 };
 
-function ShortcutCard({ label, icon: Icon, onPress, colors }: ShortcutCardProps) {
-  const styles = useMemo(() => createStyles(colors), [colors]);
+function ShortcutCard({ label, icon: Icon, onPress, colors, text }: ShortcutCardProps) {
+  const styles = useMemo(() => createStyles(colors, text), [colors, text]);
   const scale = useSharedValue(1);
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [{ scale: scale.value }],
@@ -53,7 +54,7 @@ function ShortcutCard({ label, icon: Icon, onPress, colors }: ShortcutCardProps)
       }}
       style={[styles.card, animatedStyle]}
     >
-      <Icon size={ICON_SIZE} color={premiumPalette.textSecondary} strokeWidth={2} />
+      <Icon size={ICON_SIZE} color={text.secondary} strokeWidth={2} />
       <Text style={styles.label} numberOfLines={2}>
         {label}
       </Text>
@@ -64,12 +65,13 @@ function ShortcutCard({ label, icon: Icon, onPress, colors }: ShortcutCardProps)
 export const DashboardShortcutGrid = memo(function DashboardShortcutGrid({
   shortcuts,
 }: DashboardShortcutGridProps) {
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
+  const text = dashboardTextColors(isDark);
 
   return (
     <View style={styles.row}>
       {shortcuts.map((shortcut) => (
-        <ShortcutCard key={shortcut.id} {...shortcut} colors={colors} />
+        <ShortcutCard key={shortcut.id} {...shortcut} colors={colors} text={text} />
       ))}
     </View>
   );
@@ -82,7 +84,7 @@ const styles = StyleSheet.create({
   },
 });
 
-function createStyles(colors: ColorPalette) {
+function createStyles(colors: ColorPalette, text: ReturnType<typeof dashboardTextColors>) {
   return StyleSheet.create({
     card: {
       flex: 1,
@@ -99,7 +101,7 @@ function createStyles(colors: ColorPalette) {
     },
     label: {
       ...typography.caption,
-      color: premiumPalette.textPrimary,
+      color: text.primary,
       fontWeight: "600",
       fontSize: 11,
       textAlign: "center",

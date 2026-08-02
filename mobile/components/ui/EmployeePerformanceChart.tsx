@@ -6,7 +6,7 @@ import { useTheme } from "@/hooks/useTheme";
 import type { EmployeePerformanceChartRow } from "@/utils/dashboardChartData";
 import { formatEur } from "@/utils/format";
 import type { ColorPalette } from "@/theme/colors";
-import { premiumPalette } from "@/theme/dashboardPremium";
+import { premiumPalette, dashboardTextColors } from "@/theme/dashboardPremium";
 import { spacing, typography } from "@/theme";
 
 type EmployeePerformanceChartProps = {
@@ -33,10 +33,11 @@ type PerformanceRowProps = {
   maxTips: number;
   isLast: boolean;
   colors: ColorPalette;
+  text: ReturnType<typeof dashboardTextColors>;
 };
 
-function PerformanceRow({ row, index, maxTips, isLast, colors }: PerformanceRowProps) {
-  const styles = useMemo(() => createRowStyles(colors), [colors]);
+function PerformanceRow({ row, index, maxTips, isLast, colors, text }: PerformanceRowProps) {
+  const styles = useMemo(() => createRowStyles(colors, text), [colors, text]);
   const progress = maxTips <= 0 ? 0 : row.tips / maxTips;
   const initial = row.name.charAt(0).toUpperCase();
 
@@ -66,7 +67,7 @@ function PerformanceRow({ row, index, maxTips, isLast, colors }: PerformanceRowP
   );
 }
 
-function createRowStyles(colors: ColorPalette) {
+function createRowStyles(colors: ColorPalette, text: ReturnType<typeof dashboardTextColors>) {
   return StyleSheet.create({
     row: {
       paddingVertical: spacing.lg,
@@ -92,7 +93,7 @@ function createRowStyles(colors: ColorPalette) {
     avatarText: {
       ...typography.body,
       fontWeight: "700",
-      color: premiumPalette.textPrimary,
+      color: text.primary,
       fontSize: 14,
     },
     rowMeta: {
@@ -103,19 +104,19 @@ function createRowStyles(colors: ColorPalette) {
     name: {
       ...typography.body,
       fontWeight: "600",
-      color: premiumPalette.textPrimary,
+      color: text.primary,
       fontSize: 15,
       letterSpacing: -0.1,
     },
     amount: {
       ...typography.caption,
       fontWeight: "600",
-      color: premiumPalette.textSecondary,
+      color: text.secondary,
       fontSize: 13,
     },
     rank: {
       ...typography.caption,
-      color: premiumPalette.textMuted,
+      color: text.muted,
       fontWeight: "500",
       fontSize: 12,
     },
@@ -149,8 +150,9 @@ export function EmployeePerformanceChart({
   hideHeader = false,
   card = false,
 }: EmployeePerformanceChartProps) {
-  const { colors } = useTheme();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const { colors, isDark } = useTheme();
+  const text = dashboardTextColors(isDark);
+  const styles = useMemo(() => createStyles(text), [text]);
   const maxTips = useMemo(() => Math.max(...rows.map((r) => r.tips), 0), [rows]);
 
   const employeeChartEmpty =
@@ -176,6 +178,7 @@ export function EmployeePerformanceChart({
           maxTips={maxTips}
           isLast={index === rows.length - 1}
           colors={colors}
+          text={text}
         />
       ))}
       {leaderMessage ? <Text style={styles.leader}>{leaderMessage}</Text> : null}
@@ -197,7 +200,7 @@ export function EmployeePerformanceChart({
   );
 }
 
-function createStyles(colors: ColorPalette) {
+function createStyles(text: ReturnType<typeof dashboardTextColors>) {
   return StyleSheet.create({
     wrap: {
       gap: spacing.sm,
@@ -209,13 +212,13 @@ function createStyles(colors: ColorPalette) {
     },
     title: {
       ...typography.overline,
-      color: premiumPalette.textMuted,
+      color: text.muted,
       fontSize: 11,
       letterSpacing: 0.8,
     },
     sectionSub: {
       ...typography.caption,
-      color: premiumPalette.textSecondary,
+      color: text.secondary,
       fontSize: 14,
       lineHeight: 20,
       marginBottom: spacing.sm,
@@ -225,7 +228,7 @@ function createStyles(colors: ColorPalette) {
     },
     leader: {
       ...typography.caption,
-      color: premiumPalette.textMuted,
+      color: text.muted,
       marginTop: spacing.md,
       fontSize: 12,
       lineHeight: 17,

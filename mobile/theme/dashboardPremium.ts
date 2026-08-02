@@ -17,6 +17,31 @@ export const premiumPalette = {
   starGold: "#F59E0B",
 } as const;
 
+/** Sheet text hierarchy — light theme uses premiumPalette; dark uses high-contrast grays. */
+export type DashboardTextColors = {
+  primary: string;
+  secondary: string;
+  muted: string;
+  disabled: string;
+};
+
+export function dashboardTextColors(isDark: boolean): DashboardTextColors {
+  if (isDark) {
+    return {
+      primary: "#FFFFFF",
+      secondary: "#D1D5DB",
+      muted: "#9CA3AF",
+      disabled: "#6B7280",
+    };
+  }
+  return {
+    primary: premiumPalette.textPrimary,
+    secondary: premiumPalette.textSecondary,
+    muted: premiumPalette.textMuted,
+    disabled: "#6B7280",
+  };
+}
+
 export const premiumHeroGradient = {
   colors: ["#FFC247", "#F59E0B", "#E67E22"] as const,
   locations: [0, 0.5, 1] as const,

@@ -9,16 +9,17 @@ import { useBusinessCustomerFeedback } from "@/features/business/useBusinessCust
 import { formatRating } from "@/utils/format";
 import { friendlyErrorMessage } from "@/utils/friendlyError";
 import type { ColorPalette } from "@/theme/colors";
-import { premiumPalette } from "@/theme/dashboardPremium";
+import { dashboardTextColors, premiumPalette } from "@/theme/dashboardPremium";
 import { spacing, typography } from "@/theme";
 import { uiLocaleTag } from "@/utils/labels";
 
 type StarRatingProps = {
   rating: number;
   max?: number;
+  emptyColor: string;
 };
 
-function StarRating({ rating, max = 5 }: StarRatingProps) {
+function StarRating({ rating, max = 5, emptyColor }: StarRatingProps) {
   const filled = Math.round(Math.min(max, Math.max(0, rating)));
 
   return (
@@ -28,7 +29,7 @@ function StarRating({ rating, max = 5 }: StarRatingProps) {
           key={index}
           name={index < filled ? "star" : "star-outline"}
           size={14}
-          color={index < filled ? premiumPalette.starGold : premiumPalette.textMuted}
+          color={index < filled ? premiumPalette.starGold : emptyColor}
         />
       ))}
     </View>
@@ -45,8 +46,9 @@ const starStyles = StyleSheet.create({
 
 export function CustomerFeedbackPanel() {
   const { t } = useI18n();
-  const { colors } = useTheme();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const { colors, isDark } = useTheme();
+  const text = dashboardTextColors(isDark);
+  const styles = useMemo(() => createStyles(colors, text), [colors, text]);
   const { data, isLoading, error } = useBusinessCustomerFeedback(3);
 
   if (isLoading) {
@@ -80,7 +82,7 @@ export function CustomerFeedbackPanel() {
         <View style={styles.summary}>
           <View style={styles.summaryRow}>
             <Text style={styles.summaryRating}>{formatRating(summary.averageRating)}</Text>
-            <StarRating rating={summary.averageRating ?? 0} />
+            <StarRating rating={summary.averageRating ?? 0} emptyColor={text.muted} />
           </View>
           <Text style={styles.summaryMeta}>
             {t("businessDashboard.feedbackSummary", {
@@ -112,7 +114,7 @@ export function CustomerFeedbackPanel() {
               </View>
               {item.rating != null ? (
                 <View style={styles.ratingCol}>
-                  <StarRating rating={item.rating} />
+                  <StarRating rating={item.rating} emptyColor={text.muted} />
                 </View>
               ) : null}
             </View>
@@ -128,7 +130,7 @@ export function CustomerFeedbackPanel() {
   );
 }
 
-function createStyles(colors: ColorPalette) {
+function createStyles(colors: ColorPalette, text: ReturnType<typeof dashboardTextColors>) {
   return StyleSheet.create({
     wrap: {
       gap: spacing.xl,
@@ -148,12 +150,12 @@ function createStyles(colors: ColorPalette) {
       fontSize: 28,
       lineHeight: 32,
       fontWeight: "700",
-      color: premiumPalette.textPrimary,
+      color: text.primary,
       letterSpacing: -0.6,
     },
     summaryMeta: {
       ...typography.caption,
-      color: premiumPalette.textSecondary,
+      color: text.secondary,
       lineHeight: 18,
       fontSize: 13,
     },
@@ -183,7 +185,7 @@ function createStyles(colors: ColorPalette) {
     },
     avatarText: {
       fontWeight: "700",
-      color: premiumPalette.textPrimary,
+      color: text.primary,
       fontSize: 14,
     },
     reviewMeta: {
@@ -194,12 +196,12 @@ function createStyles(colors: ColorPalette) {
     name: {
       ...typography.body,
       fontWeight: "600",
-      color: premiumPalette.textPrimary,
+      color: text.primary,
       fontSize: 15,
     },
     meta: {
       ...typography.caption,
-      color: premiumPalette.textMuted,
+      color: text.muted,
       fontSize: 11,
     },
     ratingCol: {
@@ -207,7 +209,7 @@ function createStyles(colors: ColorPalette) {
     },
     comment: {
       ...typography.body,
-      color: premiumPalette.textSecondary,
+      color: text.secondary,
       fontSize: 14,
       lineHeight: 21,
       paddingLeft: 36 + spacing.md,
