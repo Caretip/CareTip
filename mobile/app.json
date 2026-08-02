@@ -32,7 +32,7 @@
     },
     "android": {
       "package": "de.caretip.app",
-      "versionCode": 5,
+      "versionCode": 6,
       "adaptiveIcon": {
         "backgroundColor": "#EB992C",
         "foregroundImage": "./assets/caretip-app-icon-ref.png",
