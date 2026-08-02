@@ -16,6 +16,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import authBackground from "@/assets/auth/mobileauth.png";
 import { authBrand } from "@/theme/authBrand";
 import { brand } from "@/theme/colors";
+import { premiumHeroGradient, premiumPalette } from "@/theme/dashboardPremium";
 import { layered, layeredSheetShadow } from "@/theme/layered";
 import { spacing } from "@/theme";
 import { useTheme } from "@/hooks/useTheme";
@@ -82,7 +83,8 @@ export function LayeredScreenShell({
   );
   const { colors, isDark } = useTheme();
   const sheetBackground = isDark ? colors.background : layered.sheetBackground;
-  const rootBackground = isDashboard ? brand.orange : isFloating ? authBrand.dark : brand.orange;
+  const pageBackground = isDark ? colors.background : layered.pageBackground;
+  const rootBackground = isDashboard ? pageBackground : isFloating ? authBrand.dark : brand.orange;
 
   const scroll = (
     <ScrollView
@@ -96,8 +98,8 @@ export function LayeredScreenShell({
             refreshing={Boolean(refreshing)}
             onRefresh={onRefresh}
             tintColor={isFloating ? authBrand.white : authBrand.white}
-            colors={[brand.orange]}
-            progressBackgroundColor={isDashboard ? brand.orange : sheetBackground}
+            colors={[premiumPalette.primary]}
+            progressBackgroundColor={isDashboard ? premiumPalette.primary : sheetBackground}
           />
         ) : undefined
       }
@@ -106,9 +108,9 @@ export function LayeredScreenShell({
         isDashboard ? styles.scrollContentDashboard : null,
         tabSafe ? styles.tabClearance : null,
         {
+          minHeight: height,
           paddingBottom:
-            Math.max(insets.bottom, isFloating ? spacing["3xl"] : layered.pagePadding) +
-            (tabSafe ? 96 : 0),
+            Math.max(insets.bottom, isFloating ? spacing["3xl"] : spacing.lg) + (tabSafe ? 80 : 0),
         },
       ]}
       {...scrollProps}
@@ -139,10 +141,10 @@ export function LayeredScreenShell({
               borderTopLeftRadius: layered.sheetRadius,
               borderTopRightRadius: layered.sheetRadius,
               paddingHorizontal: pagePadding,
-              paddingTop: layered.sectionGap,
-              paddingBottom: layered.sectionGap,
+              paddingTop: spacing["2xl"],
+              paddingBottom: spacing["3xl"],
               backgroundColor: sheetBackground,
-              minHeight: height * 0.62,
+              minHeight: height - heroHeight + layered.sheetOverlap + (tabSafe ? 88 : 0),
             },
           ]}
         >
@@ -185,19 +187,29 @@ export function LayeredScreenShell({
       ) : null}
 
       {background === "gradient" ? (
-        <LinearGradient
-          colors={[...layered.heroGradient.colors]}
-          start={layered.heroGradient.start}
-          end={layered.heroGradient.end}
-          style={[
-            styles.heroGradient,
-            { height: heroHeight + (isFloating ? 0 : layered.sheetOverlap + spacing.lg) },
-          ]}
-          pointerEvents="none"
-        />
+        <>
+          <LinearGradient
+            colors={[...premiumHeroGradient.colors]}
+            locations={[...premiumHeroGradient.locations]}
+            start={premiumHeroGradient.start}
+            end={premiumHeroGradient.end}
+            style={[
+              styles.heroGradient,
+              { height: heroHeight + layered.sheetOverlap },
+            ]}
+            pointerEvents="none"
+          />
+          <View
+            style={[
+              styles.heroGlow,
+              { top: heroHeight * 0.12, left: pagePadding - spacing.md },
+            ]}
+            pointerEvents="none"
+          />
+        </>
       ) : background === "auth-image" ? null : (
         <LinearGradient
-          colors={["rgba(235, 153, 44, 0.18)", "rgba(235, 153, 44, 0.06)", "transparent"]}
+          colors={["rgba(245, 166, 35, 0.18)", "rgba(245, 166, 35, 0.06)", "transparent"]}
           locations={[0, 0.45, 1]}
           style={[styles.heroGradient, { height: heroHeight + layered.sheetOverlap }]}
           pointerEvents="none"
@@ -238,6 +250,14 @@ const styles = StyleSheet.create({
     right: 0,
     zIndex: 0,
   },
+  heroGlow: {
+    position: "absolute",
+    width: 200,
+    height: 200,
+    borderRadius: 999,
+    backgroundColor: "rgba(255, 255, 255, 0.14)",
+    zIndex: 0,
+  },
   scrollContent: {
     flexGrow: 1,
     maxWidth: 720,
@@ -245,16 +265,16 @@ const styles = StyleSheet.create({
     alignSelf: "center",
   },
   scrollContentDashboard: {
-    minHeight: "100%",
+    flexGrow: 1,
   },
   heroZone: {
     justifyContent: "flex-end",
-    paddingTop: spacing["2xl"],
-    paddingBottom: layered.sheetOverlap + spacing.lg,
+    paddingTop: spacing.xl,
+    paddingBottom: layered.sheetOverlap + spacing.md,
     zIndex: 1,
   },
   heroZoneDashboard: {
-    paddingBottom: layered.sheetOverlap + spacing.xl,
+    paddingBottom: layered.sheetOverlap + spacing.lg,
   },
   heroZoneFloating: {
     paddingTop: spacing.xl,
@@ -288,6 +308,6 @@ const styles = StyleSheet.create({
     opacity: 0.85,
   },
   tabClearance: {
-    paddingBottom: spacing["6xl"],
+    paddingBottom: spacing["5xl"],
   },
 });

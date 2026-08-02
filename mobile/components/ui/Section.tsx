@@ -1,7 +1,8 @@
 import { useMemo } from "react";
-import { Platform, StyleSheet, Text, View, type StyleProp, type ViewStyle } from "react-native";
+import { StyleSheet, Text, View, type StyleProp, type ViewStyle } from "react-native";
 import { useTheme } from "@/hooks/useTheme";
 import type { ColorPalette } from "@/theme/colors";
+import { premiumCardShadow } from "@/theme/dashboardPremium";
 import { spacing, surface, typography } from "@/theme";
 
 type SectionProps = {
@@ -69,36 +70,27 @@ function GroupedRowContent({ children }: { children: React.ReactNode }) {
 function createStyles(colors: ColorPalette) {
   return StyleSheet.create({
     section: {
-      gap: spacing.lg,
-      marginBottom: spacing["3xl"],
+      gap: spacing.md,
+      marginBottom: spacing["2xl"],
     },
     content: {
-      gap: spacing.lg,
+      gap: spacing.md,
     },
     highlighted: {
       backgroundColor: colors.card,
       borderRadius: surface.cardRadius,
       borderWidth: StyleSheet.hairlineWidth,
       borderColor: colors.border,
-      padding: spacing.xl,
-      ...Platform.select({
-        ios: {
-          shadowColor: "#0B1220",
-          shadowOpacity: 0.04,
-          shadowRadius: 12,
-          shadowOffset: { width: 0, height: 4 },
-        },
-        android: { elevation: 2 },
-        default: {},
-      }),
+      padding: spacing.lg,
+      ...premiumCardShadow,
     },
     title: {
       ...typography.section,
       color: colors.foreground,
-      fontSize: 17,
+      fontSize: 18,
       fontWeight: "700",
-      letterSpacing: -0.2,
-      lineHeight: 22,
+      letterSpacing: -0.35,
+      lineHeight: 24,
     },
     subtitle: {
       ...typography.body,
@@ -121,16 +113,7 @@ function createStyles(colors: ColorPalette) {
       borderWidth: StyleSheet.hairlineWidth,
       borderColor: colors.border,
       overflow: "hidden",
-      ...Platform.select({
-        ios: {
-          shadowColor: "#0B1220",
-          shadowOpacity: 0.04,
-          shadowRadius: 12,
-          shadowOffset: { width: 0, height: 4 },
-        },
-        android: { elevation: 2 },
-        default: {},
-      }),
+      ...premiumCardShadow,
     },
     groupRow: {
       paddingHorizontal: spacing.xl,

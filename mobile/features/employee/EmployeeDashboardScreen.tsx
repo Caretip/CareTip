@@ -19,6 +19,7 @@ import { formatCount, formatEur, formatRating } from "@/utils/format";
 import { formatTipStatus, uiLocaleTag } from "@/utils/labels";
 import { friendlyErrorMessage, isPermissionError } from "@/utils/friendlyError";
 import { layered } from "@/theme/layered";
+import { spacing } from "@/theme";
 import type { EmployeeTimeframe } from "@/types/employee";
 
 export function EmployeeDashboardScreen() {
@@ -203,8 +204,8 @@ const styles = StyleSheet.create({
   },
   metricsRow: {
     flexDirection: "row",
-    alignItems: "flex-start",
-    gap: layered.elementGap,
+    alignItems: "stretch",
+    gap: spacing.md,
   },
   metricCol: {
     flex: 1,

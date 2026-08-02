@@ -7,7 +7,7 @@ import { HeaderUtilityStack } from "@/components/ui/HeaderUtilityStack";
 import { SplashScreenAnchor } from "@/components/brand/SplashScreenAnchor";
 import { OfflineBanner } from "@/components/layout/OfflineBanner";
 import { ErrorBanner } from "@/components/layout/ErrorBanner";
-import { brand } from "@/theme/colors";
+import { premiumPalette } from "@/theme/dashboardPremium";
 import { spacing, typography } from "@/theme";
 
 type LayeredScreenProps = {
@@ -23,7 +23,7 @@ type LayeredScreenProps = {
   showHeaderUtilities?: boolean;
 };
 
-/** App screens with orange hero + foreground sheet (dashboards, etc.). */
+/** App screens with premium hero + foreground sheet (dashboards, etc.). */
 export function LayeredScreen({
   eyebrow,
   title,
@@ -52,6 +52,7 @@ export function LayeredScreen({
           <View style={staticStyles.headerBlock}>
             <View style={staticStyles.headerRow}>
               <View style={staticStyles.headerMain}>
+                <View style={styles.titleGlow} pointerEvents="none" />
                 {eyebrow ? <Text style={styles.eyebrow}>{eyebrow}</Text> : null}
                 <Text style={styles.title}>{title}</Text>
                 {subtitle ? <Text style={styles.subtitle}>{subtitle}</Text> : null}
@@ -72,10 +73,19 @@ export function LayeredScreen({
 
 function createStyles() {
   return StyleSheet.create({
+    titleGlow: {
+      position: "absolute",
+      top: -12,
+      left: -8,
+      width: 140,
+      height: 140,
+      borderRadius: 999,
+      backgroundColor: "rgba(255, 255, 255, 0.12)",
+    },
     eyebrow: {
       ...typography.overline,
-      color: "rgba(255,255,255,0.78)",
-      letterSpacing: 1.6,
+      color: "rgba(255,255,255,0.82)",
+      letterSpacing: 1.8,
       fontSize: 10,
       fontWeight: "700",
       textTransform: "uppercase",
@@ -83,18 +93,18 @@ function createStyles() {
     title: {
       ...typography.h1,
       color: "#FFFFFF",
-      fontSize: 30,
-      lineHeight: 36,
-      letterSpacing: -0.6,
+      fontSize: 32,
+      lineHeight: 38,
+      letterSpacing: -0.8,
       fontWeight: "800",
     },
     subtitle: {
       ...typography.body,
-      color: "rgba(255,255,255,0.86)",
+      color: "rgba(255,255,255,0.9)",
       fontSize: 15,
-      lineHeight: 22,
+      lineHeight: 21,
       fontWeight: "500",
-      letterSpacing: 0.1,
+      letterSpacing: 0.05,
     },
   });
 }
@@ -102,24 +112,24 @@ function createStyles() {
 const staticStyles = StyleSheet.create({
   safe: {
     flex: 1,
-    backgroundColor: brand.orange,
+    backgroundColor: premiumPalette.primary,
   },
   headerBlock: {
-    gap: spacing.lg,
+    gap: spacing.md,
   },
   headerRow: {
     flexDirection: "row",
     alignItems: "flex-start",
     justifyContent: "space-between",
     gap: spacing.md,
-    paddingTop: spacing.xs,
   },
   headerMain: {
     flex: 1,
     minWidth: 0,
     gap: spacing.sm,
+    position: "relative",
   },
   headerExtra: {
-    marginTop: spacing.xs,
+    marginTop: spacing.xxs,
   },
 });

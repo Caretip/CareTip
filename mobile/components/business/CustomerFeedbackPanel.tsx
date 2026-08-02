@@ -9,7 +9,8 @@ import { useBusinessCustomerFeedback } from "@/features/business/useBusinessCust
 import { formatRating } from "@/utils/format";
 import { friendlyErrorMessage } from "@/utils/friendlyError";
 import type { ColorPalette } from "@/theme/colors";
-import { brand, spacing, surface, typography } from "@/theme";
+import { premiumCardShadow, premiumPalette } from "@/theme/dashboardPremium";
+import { spacing, surface, typography } from "@/theme";
 import { uiLocaleTag } from "@/utils/labels";
 
 type StarRatingProps = {
@@ -18,7 +19,6 @@ type StarRatingProps = {
 };
 
 function StarRating({ rating, max = 5 }: StarRatingProps) {
-  const { colors } = useTheme();
   const filled = Math.round(Math.min(max, Math.max(0, rating)));
 
   return (
@@ -27,8 +27,8 @@ function StarRating({ rating, max = 5 }: StarRatingProps) {
         <Ionicons
           key={index}
           name={index < filled ? "star" : "star-outline"}
-          size={14}
-          color={index < filled ? brand.orange : colors.mutedForeground}
+          size={15}
+          color={index < filled ? premiumPalette.starGold : "rgba(156, 163, 175, 0.5)"}
         />
       ))}
     </View>
@@ -39,7 +39,7 @@ const starStyles = StyleSheet.create({
   row: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 2,
+    gap: 3,
   },
 });
 
@@ -77,7 +77,7 @@ export function CustomerFeedbackPanel() {
   return (
     <View style={styles.wrap}>
       {summary && summary.feedbackCount > 0 ? (
-        <View style={styles.summaryCard}>
+        <View style={[styles.summaryCard, premiumCardShadow]}>
           <Text style={styles.summaryLabel}>{t("businessDashboard.customerFeedbackTitle")}</Text>
           <View style={styles.summaryRow}>
             <Text style={styles.summaryRating}>{formatRating(summary.averageRating)}</Text>
@@ -94,7 +94,7 @@ export function CustomerFeedbackPanel() {
 
       <View style={styles.cards}>
         {items.map((item) => (
-          <View key={item.id} style={styles.card}>
+          <View key={item.id} style={[styles.card, premiumCardShadow]}>
             <View style={styles.cardHeader}>
               <View style={styles.avatar}>
                 <Text style={styles.avatarText}>{item.employeeName.charAt(0).toUpperCase()}</Text>
@@ -130,18 +130,21 @@ export function CustomerFeedbackPanel() {
 function createStyles(colors: ColorPalette) {
   return StyleSheet.create({
     wrap: {
-      gap: spacing.xl,
+      gap: spacing.lg,
     },
     summaryCard: {
-      backgroundColor: colors.secondary,
+      backgroundColor: colors.card,
       borderRadius: surface.cardRadius,
-      padding: spacing.xl,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: colors.border,
+      padding: spacing.lg,
       gap: spacing.sm,
     },
     summaryLabel: {
       ...typography.overline,
       color: colors.mutedForeground,
-      letterSpacing: 1.1,
+      letterSpacing: 1.2,
+      fontSize: 10,
     },
     summaryRow: {
       flexDirection: "row",
@@ -149,37 +152,28 @@ function createStyles(colors: ColorPalette) {
       gap: spacing.md,
     },
     summaryRating: {
-      fontSize: 28,
-      lineHeight: 32,
+      fontSize: 30,
+      lineHeight: 34,
       fontWeight: "800",
       color: colors.foreground,
-      letterSpacing: -0.6,
+      letterSpacing: -0.8,
     },
     summaryMeta: {
       ...typography.caption,
       color: colors.mutedForeground,
       lineHeight: 18,
+      fontSize: 12,
     },
     cards: {
-      gap: spacing.lg,
+      gap: spacing.md,
     },
     card: {
       backgroundColor: colors.card,
       borderRadius: surface.cardRadius,
       borderWidth: StyleSheet.hairlineWidth,
       borderColor: colors.border,
-      padding: spacing.xl,
+      padding: spacing.lg,
       gap: spacing.md,
-      ...Platform.select({
-        ios: {
-          shadowColor: "#0B1220",
-          shadowOpacity: 0.04,
-          shadowRadius: 12,
-          shadowOffset: { width: 0, height: 4 },
-        },
-        android: { elevation: 2 },
-        default: {},
-      }),
     },
     cardHeader: {
       flexDirection: "row",
@@ -187,17 +181,19 @@ function createStyles(colors: ColorPalette) {
       gap: spacing.md,
     },
     avatar: {
-      width: 40,
-      height: 40,
-      borderRadius: 14,
-      backgroundColor: colors.secondary,
+      width: 44,
+      height: 44,
+      borderRadius: 16,
+      backgroundColor: colors.primarySoft,
       alignItems: "center",
       justifyContent: "center",
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: colors.border,
     },
     avatarText: {
-      ...typography.body,
-      fontWeight: "700",
-      color: colors.foreground,
+      fontWeight: "800",
+      color: colors.primary,
+      fontSize: 17,
     },
     cardHeaderText: {
       flex: 1,
@@ -208,13 +204,13 @@ function createStyles(colors: ColorPalette) {
       ...typography.body,
       fontWeight: "700",
       color: colors.foreground,
-      fontSize: 16,
+      fontSize: 15,
       letterSpacing: -0.1,
     },
     meta: {
       ...typography.caption,
       color: colors.mutedForeground,
-      fontSize: 12,
+      fontSize: 11,
     },
     ratingCol: {
       alignItems: "flex-end",
@@ -223,15 +219,14 @@ function createStyles(colors: ColorPalette) {
     ratingValue: {
       ...typography.caption,
       fontWeight: "700",
-      color: colors.primary,
-      fontSize: 12,
+      color: premiumPalette.primary,
+      fontSize: 11,
     },
     comment: {
       ...typography.body,
       color: colors.foreground,
-      fontSize: 15,
-      lineHeight: 22,
-      letterSpacing: 0.05,
+      fontSize: 14,
+      lineHeight: 21,
     },
     error: {
       ...typography.caption,

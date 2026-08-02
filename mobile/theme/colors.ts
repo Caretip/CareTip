@@ -4,17 +4,16 @@
  */
 
 export const brand = {
-  orange: "#EB992C",
-  orangeLight: "#F0A845",
-  orangeHover: "#F5B85A",
-  /** Subtle tint for icon wells and active states — never full card fills. */
-  orangeSoft: "rgba(235, 153, 44, 0.10)",
-  orangeMuted: "rgba(235, 153, 44, 0.18)",
-  orangeDeep: "#C47A12",
+  orange: "#F5A623",
+  orangeLight: "#FFD36A",
+  orangeHover: "#FFD36A",
+  orangeSoft: "rgba(245, 166, 35, 0.12)",
+  orangeMuted: "rgba(245, 166, 35, 0.22)",
+  orangeDeep: "#E88E15",
 } as const;
 
 export const lightColors = {
-  background: "#F7F8FA",
+  background: "#F8F9FB",
   backgroundElevated: "#FFFFFF",
   foreground: "#111827",
   card: "#FFFFFF",
@@ -25,10 +24,10 @@ export const lightColors = {
   primaryHover: brand.orangeHover,
   primaryForeground: "#FFFFFF",
   primarySoft: brand.orangeSoft,
-  secondary: "#F3F4F6",
+  secondary: "#F1F3F6",
   secondaryForeground: "#111827",
   muted: "#F3F4F6",
-  mutedForeground: "#6B7280",
+  mutedForeground: "#9CA3AF",
   accent: brand.orange,
   accentForeground: "#FFFFFF",
   destructive: "#DC2626",

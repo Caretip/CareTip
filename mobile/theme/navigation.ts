@@ -3,10 +3,10 @@ import type { ColorPalette } from "./colors";
 import { colors as defaultColors, spacing, typography } from "@/theme";
 
 /** Height of the floating tab surface (excluding safe-area inset). */
-export const TAB_BAR_HEIGHT = 64;
+export const TAB_BAR_HEIGHT = 56;
 
 /** Scroll content clearance so lists clear the floating tab bar + outer padding. */
-export const TAB_BAR_SCROLL_CLEARANCE = TAB_BAR_HEIGHT + spacing["4xl"] + spacing["2xl"];
+export const TAB_BAR_SCROLL_CLEARANCE = TAB_BAR_HEIGHT + spacing["3xl"] + spacing.xl;
 
 /** Shared tab options — pair with `<MimeTabBar />` via `tabBar` prop. */
 export function buildPremiumTabScreenOptions(

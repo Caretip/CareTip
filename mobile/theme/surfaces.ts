@@ -1,30 +1,22 @@
-/** Hero wallet-style gradient — softer CareTip orange for premium dashboard cards. */
-export const heroGradient = {
-  colors: ["#F7C56E", "#EB992C", "#E08A22"] as const,
-  start: { x: 0, y: 0 },
-  end: { x: 1, y: 0.85 },
-};
+import { premiumWalletGradient } from "./dashboardPremium";
+
+/** Hero wallet card gradient — rich premium orange. */
+export const heroGradient = premiumWalletGradient;
 
 export const surface = {
-  /** Standard elevated card */
-  cardRadius: 20,
-  /** Hero / wallet card */
-  heroRadius: 24,
-  /** Pill controls */
+  cardRadius: 22,
+  heroRadius: 26,
   pillRadius: 9999,
-  /** Inset grouped list */
-  groupRadius: 20,
-  /** Icon well for list rows */
-  iconWellSize: 44,
+  groupRadius: 22,
+  iconWellSize: 42,
   iconWellRadius: 14,
-  /** Dashboard shortcut tiles */
-  shortcutRadius: 20,
+  shortcutRadius: 22,
 } as const;
 
 export const heroText = {
-  label: "rgba(255, 255, 255, 0.82)",
+  label: "rgba(255, 255, 255, 0.88)",
   value: "#FFFFFF",
-  hint: "rgba(255, 255, 255, 0.72)",
+  hint: "rgba(255, 255, 255, 0.78)",
   trendUp: "#D1FAE5",
   trendDown: "#FEE2E2",
 } as const;

@@ -3,10 +3,11 @@
  */
 
 import { memo, useMemo } from "react";
-import { StyleSheet, Text, View } from "react-native";
+import { Platform, StyleSheet, Text, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useTheme } from "@/hooks/useTheme";
 import type { ColorPalette } from "@/theme/colors";
+import { premiumSoftShadow } from "@/theme/dashboardPremium";
 import { radius, spacing, surface, typography } from "@/theme";
 import { metricTextA11y, textA11y } from "@/theme/a11y";
 
@@ -60,10 +61,12 @@ export const KpiCard = memo(function KpiCard({
 
   if (isPlain) {
     return (
-      <View style={styles.plain}>
+      <View style={[styles.plain, premiumSoftShadow]}>
         <View style={styles.plainHeader}>
           {icon ? (
-            <Ionicons name={icon} size={15} color={iconColor} style={styles.plainIcon} />
+            <View style={[styles.plainIconWell, { backgroundColor: colors.primarySoft }]}>
+              <Ionicons name={icon} size={14} color={colors.primary} />
+            </View>
           ) : null}
           <Text style={styles.plainLabel} numberOfLines={2} {...textA11y}>
             {label}
@@ -150,37 +153,48 @@ export const MetricCard = memo(function MetricCard(props: KpiCardProps) {
 function createStyles(colors: ColorPalette) {
   return StyleSheet.create({
     plain: {
-      gap: spacing.xs,
-      paddingVertical: spacing.sm,
+      gap: spacing.sm,
+      paddingVertical: spacing.lg,
+      paddingHorizontal: spacing.lg,
       minWidth: 0,
+      backgroundColor: colors.card,
+      borderRadius: surface.cardRadius,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: colors.border,
     },
     plainHeader: {
       flexDirection: "row",
       alignItems: "center",
-      gap: spacing.xs,
-      minHeight: 18,
+      gap: spacing.sm,
+      minHeight: 20,
     },
-    plainIcon: {
+    plainIconWell: {
+      width: 28,
+      height: 28,
+      borderRadius: radius.md,
+      alignItems: "center",
+      justifyContent: "center",
       flexShrink: 0,
     },
     plainLabel: {
       ...typography.overline,
       color: colors.mutedForeground,
       flex: 1,
+      fontSize: 10,
+      letterSpacing: 0.8,
     },
     plainValue: {
-      fontSize: 22,
-      lineHeight: 26,
-      fontWeight: "700",
-      letterSpacing: -0.5,
+      fontSize: 24,
+      lineHeight: 28,
+      fontWeight: "800",
+      letterSpacing: -0.6,
       color: colors.foreground,
     },
     plainHint: {
       ...typography.caption,
       color: colors.mutedForeground,
-      fontSize: 12,
-      lineHeight: 16,
-      minHeight: 16,
+      fontSize: 11,
+      lineHeight: 15,
     },
     heroPlain: {
       flexBasis: "100%",

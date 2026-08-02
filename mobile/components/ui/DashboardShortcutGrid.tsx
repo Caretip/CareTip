@@ -8,7 +8,8 @@ import Animated, {
 import { useTheme } from "@/hooks/useTheme";
 import type { LucideIcon } from "@/types/lucide";
 import type { ColorPalette } from "@/theme/colors";
-import { motion, spacing, surface, touchTarget, typography } from "@/theme";
+import { premiumSoftShadow } from "@/theme/dashboardPremium";
+import { motion, spacing, surface, typography } from "@/theme";
 import { hapticLight } from "@/utils/haptics";
 
 export type DashboardShortcut = {
@@ -23,6 +24,7 @@ type DashboardShortcutGridProps = {
 };
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
+const ICON_SIZE = 20;
 
 type ShortcutCardProps = DashboardShortcut & {
   colors: ColorPalette;
@@ -49,10 +51,10 @@ function ShortcutCard({ label, icon: Icon, onPress, colors }: ShortcutCardProps)
       onPressOut={() => {
         scale.value = withSpring(1, motion.spring.press);
       }}
-      style={[styles.card, animatedStyle]}
+      style={[styles.card, premiumSoftShadow, animatedStyle]}
     >
       <View style={styles.iconWell}>
-        <Icon size={21} color={colors.foreground} strokeWidth={2} />
+        <Icon size={ICON_SIZE} color={colors.primary} strokeWidth={2.2} />
       </View>
       <Text style={styles.label} numberOfLines={2}>
         {label}
@@ -61,12 +63,10 @@ function ShortcutCard({ label, icon: Icon, onPress, colors }: ShortcutCardProps)
   );
 }
 
-/** Premium fintech shortcut row — three equal cards beneath the hero balance. */
 export const DashboardShortcutGrid = memo(function DashboardShortcutGrid({
   shortcuts,
 }: DashboardShortcutGridProps) {
   const { colors } = useTheme();
-  const styles = useMemo(() => createStyles(colors), [colors]);
 
   return (
     <View style={styles.row}>
@@ -77,40 +77,33 @@ export const DashboardShortcutGrid = memo(function DashboardShortcutGrid({
   );
 });
 
+const styles = StyleSheet.create({
+  row: {
+    flexDirection: "row",
+    gap: spacing.md,
+  },
+});
+
 function createStyles(colors: ColorPalette) {
   return StyleSheet.create({
-    row: {
-      flexDirection: "row",
-      gap: spacing.md,
-    },
     card: {
       flex: 1,
       alignItems: "center",
       justifyContent: "center",
-      gap: spacing.md,
-      minHeight: touchTarget + 40,
-      paddingVertical: spacing.xl,
+      gap: spacing.sm,
+      minHeight: 96,
+      paddingVertical: spacing.lg,
       paddingHorizontal: spacing.sm,
       backgroundColor: colors.card,
       borderRadius: surface.shortcutRadius,
       borderWidth: StyleSheet.hairlineWidth,
       borderColor: colors.border,
-      ...Platform.select({
-        ios: {
-          shadowColor: "#0B1220",
-          shadowOpacity: 0.04,
-          shadowRadius: 12,
-          shadowOffset: { width: 0, height: 4 },
-        },
-        android: { elevation: 2 },
-        default: {},
-      }),
     },
     iconWell: {
       width: surface.iconWellSize,
       height: surface.iconWellSize,
       borderRadius: surface.iconWellRadius,
-      backgroundColor: colors.secondary,
+      backgroundColor: colors.primarySoft,
       alignItems: "center",
       justifyContent: "center",
     },
@@ -118,10 +111,10 @@ function createStyles(colors: ColorPalette) {
       ...typography.caption,
       color: colors.foreground,
       fontWeight: "600",
-      fontSize: 12,
+      fontSize: 11,
       textAlign: "center",
-      lineHeight: 16,
-      letterSpacing: 0.1,
+      lineHeight: 14,
+      letterSpacing: 0.05,
     },
   });
 }

@@ -1,8 +1,10 @@
 import { memo } from "react";
 import { Platform, StyleSheet, Text, View } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
+import { BlurView } from "expo-blur";
 import { Ionicons } from "@expo/vector-icons";
-import { heroGradient, heroText, surface } from "@/theme/surfaces";
+import { heroText, surface } from "@/theme/surfaces";
+import { premiumWalletGradient, premiumWalletShadow } from "@/theme/dashboardPremium";
 import { metricTextA11y, textA11y } from "@/theme/a11y";
 import { spacing, typography } from "@/theme";
 
@@ -15,9 +17,7 @@ type HeroBalanceCardProps = {
   icon?: keyof typeof Ionicons.glyphMap;
 };
 
-/**
- * Premium wallet hero card — soft gradient, large amount, minimal decoration.
- */
+/** Premium wallet hero card — rich gradient, frosted icon, large amount. */
 export const HeroBalanceCard = memo(function HeroBalanceCard({
   label,
   value,
@@ -28,16 +28,21 @@ export const HeroBalanceCard = memo(function HeroBalanceCard({
 }: HeroBalanceCardProps) {
   return (
     <LinearGradient
-      colors={[...heroGradient.colors]}
-      start={heroGradient.start}
-      end={heroGradient.end}
-      style={styles.gradient}
+      colors={[...premiumWalletGradient.colors]}
+      locations={[...premiumWalletGradient.locations]}
+      start={premiumWalletGradient.start}
+      end={premiumWalletGradient.end}
+      style={[styles.gradient, premiumWalletShadow]}
     >
-      <View style={styles.pattern} pointerEvents="none" />
+      <View style={styles.glowLarge} pointerEvents="none" />
+      <View style={styles.glowSmall} pointerEvents="none" />
       <View style={styles.content}>
         <View style={styles.topRow}>
           <View style={styles.iconWell}>
-            <Ionicons name={icon} size={20} color={heroText.value} />
+            {Platform.OS === "ios" ? (
+              <BlurView intensity={24} tint="light" style={StyleSheet.absoluteFill} />
+            ) : null}
+            <Ionicons name={icon} size={22} color={heroText.value} />
           </View>
           <Text style={styles.label} {...textA11y}>
             {label}
@@ -74,26 +79,25 @@ const styles = StyleSheet.create({
   gradient: {
     borderRadius: surface.heroRadius,
     overflow: "hidden",
-    minHeight: 168,
-    ...Platform.select({
-      ios: {
-        shadowColor: "#C47A12",
-        shadowOpacity: 0.18,
-        shadowRadius: 16,
-        shadowOffset: { width: 0, height: 8 },
-      },
-      android: { elevation: 4 },
-      default: {},
-    }),
+    minHeight: 176,
   },
-  pattern: {
+  glowLarge: {
     position: "absolute",
-    width: 120,
-    height: 120,
+    width: 160,
+    height: 160,
     borderRadius: 999,
-    backgroundColor: "rgba(255,255,255,0.06)",
-    top: -40,
-    right: -24,
+    backgroundColor: "rgba(255,255,255,0.1)",
+    top: -48,
+    right: -32,
+  },
+  glowSmall: {
+    position: "absolute",
+    width: 80,
+    height: 80,
+    borderRadius: 999,
+    backgroundColor: "rgba(255,255,255,0.08)",
+    bottom: -20,
+    left: 24,
   },
   content: {
     paddingHorizontal: spacing["2xl"],
@@ -103,29 +107,33 @@ const styles = StyleSheet.create({
   topRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: spacing.sm,
+    gap: spacing.md,
   },
   iconWell: {
-    width: 36,
-    height: 36,
-    borderRadius: 12,
-    backgroundColor: "rgba(255,255,255,0.16)",
+    width: 44,
+    height: 44,
+    borderRadius: 14,
+    backgroundColor: "rgba(255,255,255,0.2)",
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: "rgba(255,255,255,0.35)",
     alignItems: "center",
     justifyContent: "center",
+    overflow: "hidden",
   },
   label: {
     ...typography.overline,
     color: heroText.label,
     fontSize: 11,
-    letterSpacing: 1.2,
+    letterSpacing: 1.4,
     flex: 1,
+    fontWeight: "700",
   },
   value: {
-    fontSize: 42,
-    lineHeight: 46,
+    fontSize: 46,
+    lineHeight: 50,
     fontWeight: "800",
     color: heroText.value,
-    letterSpacing: -1.2,
+    letterSpacing: -1.4,
   },
   trend: {
     ...typography.caption,

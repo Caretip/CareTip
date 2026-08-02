@@ -1,21 +1,18 @@
-import { useMemo, useState } from "react";
-import {
-  LayoutChangeEvent,
-  Platform,
-  Pressable,
-  StyleSheet,
-  Text,
-  View,
-  useWindowDimensions,
-} from "react-native";
-import Svg, { Rect } from "react-native-svg";
+import { useMemo } from "react";
+import { StyleSheet, Text, View } from "react-native";
+import { LinearGradient } from "expo-linear-gradient";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { useTheme } from "@/hooks/useTheme";
 import type { EmployeePerformanceChartRow } from "@/utils/dashboardChartData";
 import { formatEur } from "@/utils/format";
 import type { ColorPalette } from "@/theme/colors";
-import { radius, spacing, surface, typography } from "@/theme";
+import {
+  premiumCardShadow,
+  premiumPalette,
+  premiumProgressGradient,
+} from "@/theme/dashboardPremium";
+import { spacing, surface, typography } from "@/theme";
 
 type EmployeePerformanceChartProps = {
   title: string;
@@ -29,47 +26,146 @@ type EmployeePerformanceChartProps = {
   emptyNoEmployeesMessage: string;
   emptyChartTitle: string;
   emptyChartMessage: string;
-  /** When true, omit the built-in title (parent Section provides it). */
   hideHeader?: boolean;
-  /** White card surface around chart content. */
   card?: boolean;
 };
 
-const ROW_HEIGHT = 28;
-const ROW_GAP = 12;
-const COMPACT_BREAKPOINT = 380;
+const BAR_HEIGHT = 8;
 
-function clamp(value: number, min: number, max: number): number {
-  return Math.min(max, Math.max(min, value));
-}
-
-type PerformanceBarProps = {
-  width: number;
-  tips: number;
+type PerformanceRowCardProps = {
+  row: EmployeePerformanceChartRow;
+  index: number;
   maxTips: number;
-  color: string;
+  isLeader: boolean;
+  colors: ColorPalette;
 };
 
-function PerformanceBar({ width, tips, maxTips, color }: PerformanceBarProps) {
-  const barW = maxTips <= 0 ? 0 : (tips / maxTips) * width;
+function PerformanceRowCard({ row, index, maxTips, isLeader, colors }: PerformanceRowCardProps) {
+  const styles = useMemo(() => createRowStyles(colors), [colors]);
+  const progress = maxTips <= 0 ? 0 : row.tips / maxTips;
+  const initial = row.name.charAt(0).toUpperCase();
+
   return (
-    <Svg width={width} height={ROW_HEIGHT}>
-      <Rect
-        x={0}
-        y={4}
-        width={Math.max(barW, tips > 0 ? 6 : 0)}
-        height={ROW_HEIGHT - 8}
-        rx={6}
-        ry={6}
-        fill={color}
-      />
-    </Svg>
+    <View style={[styles.rowCard, isLeader ? styles.rowCardLeader : null, premiumCardShadow]}>
+      {isLeader ? (
+        <View style={styles.leaderBadge}>
+          <Text style={styles.leaderBadgeText}>Top performer</Text>
+        </View>
+      ) : null}
+      <View style={styles.rowTop}>
+        <View style={[styles.avatar, isLeader ? styles.avatarLeader : null]}>
+          <Text style={styles.avatarText}>{initial}</Text>
+        </View>
+        <View style={styles.rowMeta}>
+          <Text style={styles.name} numberOfLines={1}>
+            {row.name}
+          </Text>
+          <Text style={styles.amount}>{formatEur(row.tips)}</Text>
+        </View>
+        <Text style={styles.rank}>#{index + 1}</Text>
+      </View>
+      <View style={styles.track}>
+        <LinearGradient
+          colors={[...premiumProgressGradient.colors]}
+          start={premiumProgressGradient.start}
+          end={premiumProgressGradient.end}
+          style={[styles.fill, { width: `${Math.max(progress * 100, row.tips > 0 ? 4 : 0)}%` }]}
+        />
+      </View>
+    </View>
   );
 }
 
-/**
- * Horizontal ranking bar chart — responsive layout for narrow phone screens.
- */
+function createRowStyles(colors: ColorPalette) {
+  return StyleSheet.create({
+    rowCard: {
+      backgroundColor: colors.card,
+      borderRadius: surface.cardRadius,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: colors.border,
+      padding: spacing.lg,
+      gap: spacing.md,
+    },
+    rowCardLeader: {
+      borderColor: premiumPalette.primary,
+      backgroundColor: colors.card,
+    },
+    leaderBadge: {
+      alignSelf: "flex-start",
+      backgroundColor: colors.primarySoft,
+      borderRadius: 999,
+      paddingHorizontal: spacing.sm,
+      paddingVertical: spacing.xxs,
+    },
+    leaderBadgeText: {
+      ...typography.caption,
+      color: colors.primary,
+      fontWeight: "700",
+      fontSize: 10,
+      letterSpacing: 0.3,
+    },
+    rowTop: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: spacing.md,
+    },
+    avatar: {
+      width: 40,
+      height: 40,
+      borderRadius: 14,
+      backgroundColor: colors.secondary,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    avatarLeader: {
+      backgroundColor: colors.primarySoft,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: colors.primary,
+    },
+    avatarText: {
+      ...typography.body,
+      fontWeight: "800",
+      color: colors.foreground,
+      fontSize: 16,
+    },
+    rowMeta: {
+      flex: 1,
+      minWidth: 0,
+      gap: spacing.xxs,
+    },
+    name: {
+      ...typography.body,
+      fontWeight: "700",
+      color: colors.foreground,
+      fontSize: 15,
+      letterSpacing: -0.1,
+    },
+    amount: {
+      ...typography.caption,
+      fontWeight: "700",
+      color: colors.primary,
+      fontSize: 13,
+    },
+    rank: {
+      ...typography.caption,
+      color: colors.mutedForeground,
+      fontWeight: "600",
+      fontSize: 12,
+    },
+    track: {
+      height: BAR_HEIGHT,
+      borderRadius: BAR_HEIGHT / 2,
+      backgroundColor: colors.secondary,
+      overflow: "hidden",
+    },
+    fill: {
+      height: BAR_HEIGHT,
+      borderRadius: BAR_HEIGHT / 2,
+      minWidth: 4,
+    },
+  });
+}
+
 export function EmployeePerformanceChart({
   title,
   subtitle,
@@ -87,33 +183,13 @@ export function EmployeePerformanceChart({
 }: EmployeePerformanceChartProps) {
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
-  const { width: windowWidth } = useWindowDimensions();
-  const [containerWidth, setContainerWidth] = useState(0);
-  const [activeIndex, setActiveIndex] = useState<number | null>(null);
-
-  const isCompact = windowWidth < COMPACT_BREAKPOINT;
-  const chartWidth = containerWidth > 0 ? containerWidth : Math.max(windowWidth - spacing.xl * 2, 280);
-  const labelWidth = isCompact ? chartWidth : clamp(chartWidth * 0.28, 64, 96);
-  const amountWidth = isCompact ? 0 : clamp(chartWidth * 0.24, 52, 80);
-  const plotWidth = isCompact
-    ? chartWidth
-    : Math.max(chartWidth - labelWidth - amountWidth - spacing.sm * 2, 48);
-
   const maxTips = useMemo(() => Math.max(...rows.map((r) => r.tips), 0), [rows]);
-  const chartHeight = rows.length * (ROW_HEIGHT + ROW_GAP) + (leaderMessage ? spacing.xl : 0);
 
   const employeeChartEmpty =
     employeeCount === 0 || !hasTipActivityInPeriod || rows.length === 0;
 
-  const handleLayout = (event: LayoutChangeEvent) => {
-    const next = event.nativeEvent.layout.width;
-    if (next > 0 && Math.abs(next - containerWidth) > 1) {
-      setContainerWidth(next);
-    }
-  };
-
   const body = loading ? (
-    <Skeleton height={Math.max(chartHeight, 180)} rounded="xl" />
+    <Skeleton height={220} rounded="xl" />
   ) : employeeCount === 0 ? (
     <EmptyState
       variant="generic"
@@ -123,75 +199,17 @@ export function EmployeePerformanceChart({
   ) : employeeChartEmpty ? (
     <EmptyState variant="generic" title={emptyChartTitle} message={emptyChartMessage} />
   ) : (
-    <View style={styles.chartWrap} onLayout={handleLayout}>
-      {rows.map((row, index) => {
-        const active = activeIndex === index;
-        const amountLabel = formatEur(row.tips);
-
-        if (isCompact) {
-          return (
-            <Pressable
-              key={`${row.name}-${index}`}
-              style={[styles.rowCompact, index < rows.length - 1 ? styles.rowSpacing : null]}
-              onPressIn={() => setActiveIndex(index)}
-              onPressOut={() => setActiveIndex(null)}
-              accessibilityRole="button"
-              accessibilityLabel={`${row.name} ${amountLabel}`}
-            >
-              <View style={styles.rowHeader}>
-                <Text style={styles.nameCompact} numberOfLines={1}>
-                  {row.name}
-                </Text>
-                {active ? (
-                  <View style={styles.tooltip}>
-                    <Text style={styles.tooltipText}>{amountLabel}</Text>
-                  </View>
-                ) : (
-                  <Text style={styles.amountCompact}>{amountLabel}</Text>
-                )}
-              </View>
-              <PerformanceBar
-                width={plotWidth}
-                tips={row.tips}
-                maxTips={maxTips}
-                color={row.color}
-              />
-            </Pressable>
-          );
-        }
-
-        return (
-          <Pressable
-            key={`${row.name}-${index}`}
-            style={[styles.row, index < rows.length - 1 ? styles.rowSpacing : null]}
-            onPressIn={() => setActiveIndex(index)}
-            onPressOut={() => setActiveIndex(null)}
-            accessibilityRole="button"
-            accessibilityLabel={`${row.name} ${amountLabel}`}
-          >
-            <Text style={[styles.name, { width: labelWidth }]} numberOfLines={1}>
-              {row.name}
-            </Text>
-            <View style={[styles.barTrack, { width: plotWidth }]}>
-              <PerformanceBar
-                width={plotWidth}
-                tips={row.tips}
-                maxTips={maxTips}
-                color={row.color}
-              />
-            </View>
-            {active ? (
-              <View style={styles.tooltip}>
-                <Text style={styles.tooltipText}>{amountLabel}</Text>
-              </View>
-            ) : (
-              <Text style={[styles.amount, { width: amountWidth }]} numberOfLines={1}>
-                {amountLabel}
-              </Text>
-            )}
-          </Pressable>
-        );
-      })}
+    <View style={styles.chartWrap}>
+      {rows.map((row, index) => (
+        <PerformanceRowCard
+          key={`${row.name}-${index}`}
+          row={row}
+          index={index}
+          maxTips={maxTips}
+          isLeader={index === 0}
+          colors={colors}
+        />
+      ))}
       {leaderMessage ? <Text style={styles.leader}>{leaderMessage}</Text> : null}
     </View>
   );
@@ -206,7 +224,7 @@ export function EmployeePerformanceChart({
   return (
     <View style={styles.wrap}>
       {!hideHeader && title ? <Text style={styles.title}>{title}</Text> : null}
-      {card ? <View style={styles.cardSurface}>{chartBlock}</View> : chartBlock}
+      {card ? <View style={[styles.cardSurface, premiumCardShadow]}>{chartBlock}</View> : chartBlock}
     </View>
   );
 }
@@ -221,18 +239,8 @@ function createStyles(colors: ColorPalette) {
       borderRadius: surface.cardRadius,
       borderWidth: StyleSheet.hairlineWidth,
       borderColor: colors.border,
-      padding: spacing.xl,
-      gap: spacing.lg,
-      ...Platform.select({
-        ios: {
-          shadowColor: "#0B1220",
-          shadowOpacity: 0.04,
-          shadowRadius: 12,
-          shadowOffset: { width: 0, height: 4 },
-        },
-        android: { elevation: 2 },
-        default: {},
-      }),
+      padding: spacing.lg,
+      gap: spacing.md,
     },
     title: {
       ...typography.overline,
@@ -243,74 +251,19 @@ function createStyles(colors: ColorPalette) {
     sectionSub: {
       ...typography.caption,
       color: colors.mutedForeground,
+      fontSize: 13,
+      lineHeight: 18,
+      marginBottom: spacing.xs,
     },
     chartWrap: {
       width: "100%",
-      paddingVertical: spacing.sm,
-    },
-    row: {
-      flexDirection: "row",
-      alignItems: "center",
-      gap: spacing.sm,
-    },
-    rowCompact: {
-      width: "100%",
-      gap: spacing.xs,
-    },
-    rowSpacing: {
-      marginBottom: ROW_GAP,
-    },
-    rowHeader: {
-      flexDirection: "row",
-      alignItems: "center",
-      justifyContent: "space-between",
-      gap: spacing.sm,
-    },
-    name: {
-      ...typography.caption,
-      color: colors.foreground,
-      fontWeight: "600",
-      flexShrink: 0,
-    },
-    nameCompact: {
-      ...typography.caption,
-      color: colors.foreground,
-      fontWeight: "600",
-      flex: 1,
-    },
-    barTrack: {
-      flexShrink: 1,
-      overflow: "hidden",
-    },
-    amount: {
-      ...typography.caption,
-      color: colors.mutedForeground,
-      fontWeight: "600",
-      textAlign: "right",
-      flexShrink: 0,
-    },
-    amountCompact: {
-      ...typography.caption,
-      color: colors.mutedForeground,
-      fontWeight: "600",
-      flexShrink: 0,
-    },
-    tooltip: {
-      backgroundColor: colors.foreground,
-      borderRadius: radius.md,
-      paddingHorizontal: spacing.sm,
-      paddingVertical: spacing.xs,
-      flexShrink: 0,
-    },
-    tooltipText: {
-      ...typography.caption,
-      color: colors.card,
-      fontWeight: "700",
+      gap: spacing.md,
     },
     leader: {
       ...typography.caption,
       color: colors.mutedForeground,
-      marginTop: spacing.sm,
+      marginTop: spacing.xs,
+      fontSize: 12,
     },
   });
 }

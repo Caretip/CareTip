@@ -1,54 +1,43 @@
 /**
- * Two-layer screen design — orange hero background + foreground sheet.
- * Inspired by fintech templates; mapped to CareTip branding.
+ * Two-layer screen design — premium hero + foreground sheet.
  */
 
 import { Platform, type ViewStyle } from "react-native";
-import { brand } from "./colors";
-import { radius, spacing } from "./spacing";
+import { premiumPalette } from "./dashboardPremium";
+import { spacing } from "./spacing";
 
 export const layered = {
-  /** Hero band height (~36–38% of viewport — +20–25% vs prior 0.30). */
-  heroHeightRatio: 0.375,
-  /** Minimum hero band height on small phones. */
-  heroMinHeight: 248,
-  /** Sheet top corner radius (32–36px). */
-  sheetRadius: 34,
-  /** Overlap of sheet onto hero (negative margin). */
-  sheetOverlap: spacing["4xl"] + spacing.sm,
-  /** Standard page horizontal inset. */
+  heroHeightRatio: 0.36,
+  heroMinHeight: 240,
+  /** Sheet top corner radius (36–40px). */
+  sheetRadius: 38,
+  sheetOverlap: spacing["3xl"] + spacing.md,
   pagePadding: spacing["2xl"],
-  /** Gap between related elements. */
-  elementGap: spacing.xl,
-  /** Gap between major sections. */
-  sectionGap: spacing["4xl"],
-  sheetBackground: "#FFFFFF",
-  heroGradient: {
-    colors: ["#F5B85A", brand.orange, "#D9861F"] as const,
-    start: { x: 0, y: 0 },
-    end: { x: 1, y: 1 },
-  },
+  elementGap: spacing.lg,
+  sectionGap: spacing["2xl"],
+  sheetBackground: premiumPalette.surface,
+  pageBackground: premiumPalette.background,
 } as const;
 
 export const layeredSheetShadow = Platform.select<ViewStyle>({
   ios: {
     shadowColor: "#0B1220",
-    shadowOpacity: 0.06,
-    shadowRadius: 20,
-    shadowOffset: { width: 0, height: -4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 24,
+    shadowOffset: { width: 0, height: -6 },
   },
-  android: { elevation: 6 },
+  android: { elevation: 8 },
   default: {},
 })!;
 
-/** Floating tab bar shadow — soft lift above content. */
+/** Floating tab bar shadow — soft lift on white sheet. */
 export const floatingTabShadow = Platform.select<ViewStyle>({
   ios: {
     shadowColor: "#0B1220",
-    shadowOpacity: 0.12,
-    shadowRadius: 24,
-    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.08,
+    shadowRadius: 16,
+    shadowOffset: { width: 0, height: 4 },
   },
-  android: { elevation: 12 },
+  android: { elevation: 6 },
   default: {},
 })!;

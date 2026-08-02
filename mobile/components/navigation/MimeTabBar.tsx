@@ -2,18 +2,19 @@ import { memo, useMemo } from "react";
 import type { BottomTabBarProps } from "@react-navigation/bottom-tabs";
 import { Platform, Pressable, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { spacing, touchTarget, typography } from "@/theme";
+import { spacing, typography } from "@/theme";
 import { TAB_BAR_HEIGHT } from "@/theme/navigation";
 import { floatingTabShadow } from "@/theme/layered";
+import { premiumPalette } from "@/theme/dashboardPremium";
 import { useTheme } from "@/hooks/useTheme";
 import { hapticSelection } from "@/utils/haptics";
 
-/** Floating bottom bar — Home (left), Menu (right). */
+/** Floating bottom bar on white sheet — Home (left), Menu (right). */
 export const MimeTabBar = memo(function MimeTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
   const insets = useSafeAreaInsets();
-  const { colors } = useTheme();
-  const styles = useMemo(() => createStyles(colors), [colors]);
-  const bottomInset = Math.max(insets.bottom, Platform.OS === "ios" ? spacing.sm : spacing.md);
+  const { colors, isDark } = useTheme();
+  const styles = useMemo(() => createStyles(colors, isDark), [colors, isDark]);
+  const bottomInset = Math.max(insets.bottom, Platform.OS === "ios" ? spacing.xs : spacing.sm);
 
   const homeRoute = state.routes.find((route) => route.name === "index");
   const menuRoute = state.routes.find((route) => route.name === "menu");
@@ -33,7 +34,7 @@ export const MimeTabBar = memo(function MimeTabBar({ state, descriptors, navigat
           ? String(options.title)
           : route.name;
     const isFocused = state.index === index;
-    const iconColor = isFocused ? colors.primary : colors.mutedForeground;
+    const iconColor = isFocused ? premiumPalette.primary : premiumPalette.inactive;
 
     const onPress = () => {
       const event = navigation.emit({
@@ -50,7 +51,7 @@ export const MimeTabBar = memo(function MimeTabBar({ state, descriptors, navigat
     const icon = options.tabBarIcon?.({
       focused: isFocused,
       color: iconColor,
-      size: isFocused ? 26 : 24,
+      size: isFocused ? 24 : 22,
     });
 
     return (
@@ -61,7 +62,7 @@ export const MimeTabBar = memo(function MimeTabBar({ state, descriptors, navigat
         onPress={onPress}
         style={({ pressed }) => [styles.tabSlot, styles.tab, pressed ? styles.tabPressed : null]}
       >
-        <View style={[styles.iconSlot, isFocused ? styles.iconSlotActive : null]}>{icon}</View>
+        {icon}
         <Text style={[styles.label, isFocused ? styles.labelActive : null]} numberOfLines={1}>
           {label}
         </Text>
@@ -79,14 +80,14 @@ export const MimeTabBar = memo(function MimeTabBar({ state, descriptors, navigat
   );
 });
 
-function createStyles(colors: ReturnType<typeof useTheme>["colors"]) {
+function createStyles(colors: ReturnType<typeof useTheme>["colors"], isDark: boolean) {
   return StyleSheet.create({
     outer: {
       position: "absolute",
       left: 0,
       right: 0,
       bottom: 0,
-      paddingHorizontal: spacing["2xl"],
+      paddingHorizontal: spacing.xl,
       backgroundColor: "transparent",
     },
     bar: {
@@ -94,11 +95,11 @@ function createStyles(colors: ReturnType<typeof useTheme>["colors"]) {
       alignItems: "center",
       minHeight: TAB_BAR_HEIGHT,
       paddingHorizontal: spacing.lg,
-      paddingVertical: spacing.sm,
-      backgroundColor: colors.tabBar,
+      paddingVertical: spacing.xs,
+      backgroundColor: isDark ? colors.cardElevated : premiumPalette.surface,
       borderRadius: 28,
       borderWidth: StyleSheet.hairlineWidth,
-      borderColor: colors.tabBarBorder,
+      borderColor: isDark ? colors.border : "rgba(15, 23, 42, 0.06)",
     },
     tabSlot: {
       flex: 1,
@@ -106,31 +107,22 @@ function createStyles(colors: ReturnType<typeof useTheme>["colors"]) {
       justifyContent: "center",
     },
     tab: {
-      minWidth: touchTarget,
-      minHeight: touchTarget,
-      gap: spacing.xxs,
+      minHeight: TAB_BAR_HEIGHT - 8,
+      gap: 2,
+      paddingVertical: spacing.xs,
     },
     tabPressed: {
       opacity: 0.82,
     },
-    iconSlot: {
-      alignItems: "center",
-      justifyContent: "center",
-      width: 40,
-      height: 32,
-    },
-    iconSlotActive: {
-      transform: [{ scale: 1.04 }],
-    },
     label: {
       ...typography.caption,
-      fontSize: 11,
+      fontSize: 10,
       fontWeight: "500",
-      color: colors.mutedForeground,
-      letterSpacing: 0.2,
+      color: premiumPalette.inactive,
+      letterSpacing: 0.15,
     },
     labelActive: {
-      color: colors.primary,
+      color: premiumPalette.primary,
       fontWeight: "700",
     },
   });

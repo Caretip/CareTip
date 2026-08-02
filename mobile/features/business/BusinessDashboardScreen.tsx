@@ -23,6 +23,7 @@ import { buildEmployeePerformanceChartRows } from "@/utils/dashboardChartData";
 import { formatCount, formatEur, formatGrowthPercent } from "@/utils/format";
 import { friendlyErrorMessage, isPermissionError } from "@/utils/friendlyError";
 import { layered } from "@/theme/layered";
+import { spacing } from "@/theme";
 import type { BusinessTimeframe } from "@/types/business";
 
 export function BusinessDashboardScreen() {
@@ -209,8 +210,8 @@ const styles = StyleSheet.create({
   },
   metricsRow: {
     flexDirection: "row",
-    alignItems: "flex-start",
-    gap: layered.elementGap,
+    alignItems: "stretch",
+    gap: spacing.md,
   },
   metricCol: {
     flex: 1,
