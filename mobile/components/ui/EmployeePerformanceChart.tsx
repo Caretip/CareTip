@@ -1,18 +1,13 @@
 import { useMemo } from "react";
 import { StyleSheet, Text, View } from "react-native";
-import { LinearGradient } from "expo-linear-gradient";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { useTheme } from "@/hooks/useTheme";
 import type { EmployeePerformanceChartRow } from "@/utils/dashboardChartData";
 import { formatEur } from "@/utils/format";
 import type { ColorPalette } from "@/theme/colors";
-import {
-  premiumCardShadow,
-  premiumPalette,
-  premiumProgressGradient,
-} from "@/theme/dashboardPremium";
-import { spacing, surface, typography } from "@/theme";
+import { premiumPalette } from "@/theme/dashboardPremium";
+import { spacing, typography } from "@/theme";
 
 type EmployeePerformanceChartProps = {
   title: string;
@@ -30,30 +25,25 @@ type EmployeePerformanceChartProps = {
   card?: boolean;
 };
 
-const BAR_HEIGHT = 8;
+const BAR_HEIGHT = 6;
 
-type PerformanceRowCardProps = {
+type PerformanceRowProps = {
   row: EmployeePerformanceChartRow;
   index: number;
   maxTips: number;
-  isLeader: boolean;
+  isLast: boolean;
   colors: ColorPalette;
 };
 
-function PerformanceRowCard({ row, index, maxTips, isLeader, colors }: PerformanceRowCardProps) {
+function PerformanceRow({ row, index, maxTips, isLast, colors }: PerformanceRowProps) {
   const styles = useMemo(() => createRowStyles(colors), [colors]);
   const progress = maxTips <= 0 ? 0 : row.tips / maxTips;
   const initial = row.name.charAt(0).toUpperCase();
 
   return (
-    <View style={[styles.rowCard, isLeader ? styles.rowCardLeader : null, premiumCardShadow]}>
-      {isLeader ? (
-        <View style={styles.leaderBadge}>
-          <Text style={styles.leaderBadgeText}>Top performer</Text>
-        </View>
-      ) : null}
+    <View style={[styles.row, !isLast ? styles.rowBorder : null]}>
       <View style={styles.rowTop}>
-        <View style={[styles.avatar, isLeader ? styles.avatarLeader : null]}>
+        <View style={styles.avatar}>
           <Text style={styles.avatarText}>{initial}</Text>
         </View>
         <View style={styles.rowMeta}>
@@ -65,11 +55,11 @@ function PerformanceRowCard({ row, index, maxTips, isLeader, colors }: Performan
         <Text style={styles.rank}>#{index + 1}</Text>
       </View>
       <View style={styles.track}>
-        <LinearGradient
-          colors={[...premiumProgressGradient.colors]}
-          start={premiumProgressGradient.start}
-          end={premiumProgressGradient.end}
-          style={[styles.fill, { width: `${Math.max(progress * 100, row.tips > 0 ? 4 : 0)}%` }]}
+        <View
+          style={[
+            styles.fill,
+            { width: `${Math.max(progress * 100, row.tips > 0 ? 3 : 0)}%` },
+          ]}
         />
       </View>
     </View>
@@ -78,31 +68,13 @@ function PerformanceRowCard({ row, index, maxTips, isLeader, colors }: Performan
 
 function createRowStyles(colors: ColorPalette) {
   return StyleSheet.create({
-    rowCard: {
-      backgroundColor: colors.card,
-      borderRadius: surface.cardRadius,
-      borderWidth: StyleSheet.hairlineWidth,
-      borderColor: colors.border,
-      padding: spacing.lg,
-      gap: spacing.md,
+    row: {
+      paddingVertical: spacing.lg,
+      gap: spacing.sm,
     },
-    rowCardLeader: {
-      borderColor: premiumPalette.primary,
-      backgroundColor: colors.card,
-    },
-    leaderBadge: {
-      alignSelf: "flex-start",
-      backgroundColor: colors.primarySoft,
-      borderRadius: 999,
-      paddingHorizontal: spacing.sm,
-      paddingVertical: spacing.xxs,
-    },
-    leaderBadgeText: {
-      ...typography.caption,
-      color: colors.primary,
-      fontWeight: "700",
-      fontSize: 10,
-      letterSpacing: 0.3,
+    rowBorder: {
+      borderBottomWidth: StyleSheet.hairlineWidth,
+      borderBottomColor: premiumPalette.border,
     },
     rowTop: {
       flexDirection: "row",
@@ -110,46 +82,41 @@ function createRowStyles(colors: ColorPalette) {
       gap: spacing.md,
     },
     avatar: {
-      width: 40,
-      height: 40,
-      borderRadius: 14,
+      width: 36,
+      height: 36,
+      borderRadius: 12,
       backgroundColor: colors.secondary,
       alignItems: "center",
       justifyContent: "center",
     },
-    avatarLeader: {
-      backgroundColor: colors.primarySoft,
-      borderWidth: StyleSheet.hairlineWidth,
-      borderColor: colors.primary,
-    },
     avatarText: {
       ...typography.body,
-      fontWeight: "800",
-      color: colors.foreground,
-      fontSize: 16,
+      fontWeight: "700",
+      color: premiumPalette.textPrimary,
+      fontSize: 14,
     },
     rowMeta: {
       flex: 1,
       minWidth: 0,
-      gap: spacing.xxs,
+      gap: 2,
     },
     name: {
       ...typography.body,
-      fontWeight: "700",
-      color: colors.foreground,
+      fontWeight: "600",
+      color: premiumPalette.textPrimary,
       fontSize: 15,
       letterSpacing: -0.1,
     },
     amount: {
       ...typography.caption,
-      fontWeight: "700",
-      color: colors.primary,
+      fontWeight: "600",
+      color: premiumPalette.textSecondary,
       fontSize: 13,
     },
     rank: {
       ...typography.caption,
-      color: colors.mutedForeground,
-      fontWeight: "600",
+      color: premiumPalette.textMuted,
+      fontWeight: "500",
       fontSize: 12,
     },
     track: {
@@ -161,7 +128,8 @@ function createRowStyles(colors: ColorPalette) {
     fill: {
       height: BAR_HEIGHT,
       borderRadius: BAR_HEIGHT / 2,
-      minWidth: 4,
+      minWidth: 3,
+      backgroundColor: premiumPalette.primary,
     },
   });
 }
@@ -189,7 +157,7 @@ export function EmployeePerformanceChart({
     employeeCount === 0 || !hasTipActivityInPeriod || rows.length === 0;
 
   const body = loading ? (
-    <Skeleton height={220} rounded="xl" />
+    <Skeleton height={180} rounded="lg" />
   ) : employeeCount === 0 ? (
     <EmptyState
       variant="generic"
@@ -201,12 +169,12 @@ export function EmployeePerformanceChart({
   ) : (
     <View style={styles.chartWrap}>
       {rows.map((row, index) => (
-        <PerformanceRowCard
+        <PerformanceRow
           key={`${row.name}-${index}`}
           row={row}
           index={index}
           maxTips={maxTips}
-          isLeader={index === 0}
+          isLast={index === rows.length - 1}
           colors={colors}
         />
       ))}
@@ -216,7 +184,7 @@ export function EmployeePerformanceChart({
 
   const chartBlock = (
     <>
-      {subtitle ? <Text style={styles.sectionSub}>{subtitle}</Text> : null}
+      {!hideHeader && subtitle ? <Text style={styles.sectionSub}>{subtitle}</Text> : null}
       {body}
     </>
   );
@@ -224,7 +192,7 @@ export function EmployeePerformanceChart({
   return (
     <View style={styles.wrap}>
       {!hideHeader && title ? <Text style={styles.title}>{title}</Text> : null}
-      {card ? <View style={[styles.cardSurface, premiumCardShadow]}>{chartBlock}</View> : chartBlock}
+      {card ? <View style={styles.cardSurface}>{chartBlock}</View> : chartBlock}
     </View>
   );
 }
@@ -235,35 +203,32 @@ function createStyles(colors: ColorPalette) {
       gap: spacing.sm,
     },
     cardSurface: {
-      backgroundColor: colors.card,
-      borderRadius: surface.cardRadius,
-      borderWidth: StyleSheet.hairlineWidth,
-      borderColor: colors.border,
-      padding: spacing.lg,
-      gap: spacing.md,
+      borderTopWidth: StyleSheet.hairlineWidth,
+      borderBottomWidth: StyleSheet.hairlineWidth,
+      borderColor: premiumPalette.border,
     },
     title: {
       ...typography.overline,
-      color: colors.mutedForeground,
+      color: premiumPalette.textMuted,
       fontSize: 11,
-      letterSpacing: 1,
+      letterSpacing: 0.8,
     },
     sectionSub: {
       ...typography.caption,
-      color: colors.mutedForeground,
-      fontSize: 13,
-      lineHeight: 18,
-      marginBottom: spacing.xs,
+      color: premiumPalette.textSecondary,
+      fontSize: 14,
+      lineHeight: 20,
+      marginBottom: spacing.sm,
     },
     chartWrap: {
       width: "100%",
-      gap: spacing.md,
     },
     leader: {
       ...typography.caption,
-      color: colors.mutedForeground,
-      marginTop: spacing.xs,
+      color: premiumPalette.textMuted,
+      marginTop: spacing.md,
       fontSize: 12,
+      lineHeight: 17,
     },
   });
 }

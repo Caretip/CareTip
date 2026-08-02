@@ -308,9 +308,10 @@ export function onEmployeeAccountActivated(userId: string, businessName: string)
   });
 }
 
-/** 5. QR scan — manager notified when a guest opens a tipping QR page. */
+/** 5. QR scan — manager notified when a guest opens a tipping QR page (one per inserted scan row). */
 export function onQrScanActivity(params: {
   businessId: string;
+  scanId: string;
   locationName?: string;
   tableName?: string;
   qrSlug?: string;
@@ -327,8 +328,6 @@ export function onQrScanActivity(params: {
         ? `${params.tableName} (${params.locationName})`
         : params.locationName ?? params.tableName ?? "your venue";
 
-    const dedupeSlug = params.qrSlug ?? params.tableName ?? params.businessId;
-
     await deliverUserNotification({
       userId: business.userId,
       payload: {
@@ -339,11 +338,12 @@ export function onQrScanActivity(params: {
         url: "/dashboard/qr-studio/employees",
         timestamp: new Date().toISOString(),
         metadata: {
-          entityId: dedupeSlug,
+          entityId: params.scanId,
           businessId: params.businessId,
+          scanId: params.scanId,
         },
       },
-      dedupeKey: `qr_scan:${params.businessId}:${dedupeSlug}`,
+      dedupeKey: `qr_scan:${params.scanId}`,
     });
   });
 }

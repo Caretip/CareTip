@@ -40,6 +40,7 @@ import {
 
 import { subscribeTipReceived } from "../lib/realtime/subscribeTipReceived";
 import type { LiveNewTipPayload } from "../lib/realtime/realtimeContracts";
+import { REALTIME_EVENTS } from "../lib/realtime/realtimeContracts";
 
 import { shouldProcessRealtimeEvent } from "../lib/realtime/realtimeEventDedupe";
 
@@ -542,11 +543,16 @@ export function useBusinessAnalytics(
 
     };
 
-
+    const onQrScanned = (raw: { eventId?: string }) => {
+      if (!shouldProcessRealtimeEvent(raw.eventId)) return;
+      trackSocketEventProcessed();
+      scheduleReconcile();
+    };
 
     const unsubTip = subscribeTipReceived(socket, onTip);
 
     socket.on("business_data_updated", onBusinessData);
+    socket.on(REALTIME_EVENTS.QR_SCANNED, onQrScanned);
 
 
 
@@ -555,6 +561,7 @@ export function useBusinessAnalytics(
       unsubTip();
 
       socket.off("business_data_updated", onBusinessData);
+      socket.off(REALTIME_EVENTS.QR_SCANNED, onQrScanned);
 
     };
 

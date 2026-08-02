@@ -1,79 +1,83 @@
 /**
- * Premium fintech dashboard design tokens — Revolut / Stripe / Apple Wallet inspired.
+ * Premium minimalist dashboard tokens — Apple Wallet / Stripe / Revolut inspired.
  */
 
 import { Platform, type ViewStyle } from "react-native";
 
 export const premiumPalette = {
-  primary: "#F5A623",
-  secondary: "#E88E15",
-  highlight: "#FFD36A",
-  background: "#F8F9FB",
-  surface: "#FFFFFF",
+  white: "#FFFFFF",
+  surface: "#FCFCFD",
+  border: "#ECECEC",
+  textPrimary: "#111827",
+  textSecondary: "#4B5563",
+  textMuted: "#9CA3AF",
+  primary: "#F59E0B",
+  primaryDeep: "#D97706",
   inactive: "#9CA3AF",
-  starGold: "#F5A623",
+  starGold: "#F59E0B",
 } as const;
 
 export const premiumHeroGradient = {
-  colors: ["#FFD36A", "#F5A623", "#E88E15", "#D9861F"] as const,
-  locations: [0, 0.32, 0.68, 1] as const,
+  colors: ["#FFC247", "#F59E0B", "#E67E22"] as const,
+  locations: [0, 0.5, 1] as const,
   start: { x: 0, y: 0 },
   end: { x: 1, y: 1 },
 };
 
 export const premiumWalletGradient = {
-  colors: ["#FFD36A", "#F5A623", "#E88E15"] as const,
+  colors: ["#FFC247", "#F59E0B", "#E67E22"] as const,
   locations: [0, 0.45, 1] as const,
   start: { x: 0, y: 0 },
-  end: { x: 1, y: 0.9 },
+  end: { x: 1, y: 0.85 },
 };
 
 export const premiumProgressGradient = {
-  colors: ["#FFD36A", "#F5A623", "#E88E15"] as const,
+  colors: ["#FCD34D", "#F59E0B"] as const,
   start: { x: 0, y: 0.5 },
   end: { x: 1, y: 0.5 },
 };
 
+/** Very soft elevation — prefer borders over shadows. */
 export const premiumCardShadow = Platform.select<ViewStyle>({
   ios: {
-    shadowColor: "#0B1220",
-    shadowOpacity: 0.06,
-    shadowRadius: 16,
-    shadowOffset: { width: 0, height: 6 },
+    shadowColor: "#111827",
+    shadowOpacity: 0.03,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 2 },
   },
-  android: { elevation: 3 },
+  android: { elevation: 1 },
   default: {},
 })!;
 
 export const premiumSoftShadow = Platform.select<ViewStyle>({
   ios: {
-    shadowColor: "#0B1220",
-    shadowOpacity: 0.04,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 3 },
+    shadowColor: "#111827",
+    shadowOpacity: 0.02,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 1 },
   },
-  android: { elevation: 2 },
+  android: { elevation: 0 },
   default: {},
 })!;
 
 export const premiumWalletShadow = Platform.select<ViewStyle>({
   ios: {
-    shadowColor: "#E88E15",
-    shadowOpacity: 0.22,
-    shadowRadius: 20,
-    shadowOffset: { width: 0, height: 10 },
+    shadowColor: "#111827",
+    shadowOpacity: 0.06,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 4 },
   },
-  android: { elevation: 5 },
+  android: { elevation: 2 },
   default: {},
 })!;
 
 export const premiumTabShadow = Platform.select<ViewStyle>({
   ios: {
-    shadowColor: "#0B1220",
-    shadowOpacity: 0.08,
-    shadowRadius: 16,
-    shadowOffset: { width: 0, height: 4 },
+    shadowColor: "#111827",
+    shadowOpacity: 0.05,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 2 },
   },
-  android: { elevation: 6 },
+  android: { elevation: 3 },
   default: {},
 })!;

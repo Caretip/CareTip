@@ -7,6 +7,7 @@ import Animated, {
 } from "react-native-reanimated";
 import { useTheme } from "@/hooks/useTheme";
 import { brand, motion, radius, spacing, surface, touchTarget, typography } from "@/theme";
+import { premiumPalette } from "@/theme/dashboardPremium";
 import { hapticSelection } from "@/utils/haptics";
 
 type PeriodToggleVariant = "surface" | "hero";
@@ -128,7 +129,7 @@ function createStyles(colors: ReturnType<typeof useTheme>["colors"], variant: Pe
       zIndex: 1,
     },
     labelActive: {
-      color: isHero ? brand.orange : colors.primary,
+      color: isHero ? premiumPalette.textPrimary : colors.primary,
       fontWeight: "700",
     },
   });

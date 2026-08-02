@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { Platform, StyleSheet, Text, View } from "react-native";
+import { StyleSheet, Text, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { SkeletonListRows } from "@/components/ui/Skeleton";
@@ -9,8 +9,8 @@ import { useBusinessCustomerFeedback } from "@/features/business/useBusinessCust
 import { formatRating } from "@/utils/format";
 import { friendlyErrorMessage } from "@/utils/friendlyError";
 import type { ColorPalette } from "@/theme/colors";
-import { premiumCardShadow, premiumPalette } from "@/theme/dashboardPremium";
-import { spacing, surface, typography } from "@/theme";
+import { premiumPalette } from "@/theme/dashboardPremium";
+import { spacing, typography } from "@/theme";
 import { uiLocaleTag } from "@/utils/labels";
 
 type StarRatingProps = {
@@ -27,8 +27,8 @@ function StarRating({ rating, max = 5 }: StarRatingProps) {
         <Ionicons
           key={index}
           name={index < filled ? "star" : "star-outline"}
-          size={15}
-          color={index < filled ? premiumPalette.starGold : "rgba(156, 163, 175, 0.5)"}
+          size={14}
+          color={index < filled ? premiumPalette.starGold : premiumPalette.textMuted}
         />
       ))}
     </View>
@@ -39,7 +39,7 @@ const starStyles = StyleSheet.create({
   row: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 3,
+    gap: 2,
   },
 });
 
@@ -77,8 +77,7 @@ export function CustomerFeedbackPanel() {
   return (
     <View style={styles.wrap}>
       {summary && summary.feedbackCount > 0 ? (
-        <View style={[styles.summaryCard, premiumCardShadow]}>
-          <Text style={styles.summaryLabel}>{t("businessDashboard.customerFeedbackTitle")}</Text>
+        <View style={styles.summary}>
           <View style={styles.summaryRow}>
             <Text style={styles.summaryRating}>{formatRating(summary.averageRating)}</Text>
             <StarRating rating={summary.averageRating ?? 0} />
@@ -92,14 +91,17 @@ export function CustomerFeedbackPanel() {
         </View>
       ) : null}
 
-      <View style={styles.cards}>
-        {items.map((item) => (
-          <View key={item.id} style={[styles.card, premiumCardShadow]}>
-            <View style={styles.cardHeader}>
+      <View style={styles.reviews}>
+        {items.map((item, index) => (
+          <View
+            key={item.id}
+            style={[styles.review, index < items.length - 1 ? styles.reviewBorder : null]}
+          >
+            <View style={styles.reviewHeader}>
               <View style={styles.avatar}>
                 <Text style={styles.avatarText}>{item.employeeName.charAt(0).toUpperCase()}</Text>
               </View>
-              <View style={styles.cardHeaderText}>
+              <View style={styles.reviewMeta}>
                 <Text style={styles.name} numberOfLines={1}>
                   {item.employeeName}
                 </Text>
@@ -111,7 +113,6 @@ export function CustomerFeedbackPanel() {
               {item.rating != null ? (
                 <View style={styles.ratingCol}>
                   <StarRating rating={item.rating} />
-                  <Text style={styles.ratingValue}>{formatRating(item.rating)}</Text>
                 </View>
               ) : null}
             </View>
@@ -130,21 +131,13 @@ export function CustomerFeedbackPanel() {
 function createStyles(colors: ColorPalette) {
   return StyleSheet.create({
     wrap: {
-      gap: spacing.lg,
+      gap: spacing.xl,
     },
-    summaryCard: {
-      backgroundColor: colors.card,
-      borderRadius: surface.cardRadius,
-      borderWidth: StyleSheet.hairlineWidth,
-      borderColor: colors.border,
-      padding: spacing.lg,
-      gap: spacing.sm,
-    },
-    summaryLabel: {
-      ...typography.overline,
-      color: colors.mutedForeground,
-      letterSpacing: 1.2,
-      fontSize: 10,
+    summary: {
+      gap: spacing.xs,
+      paddingBottom: spacing.lg,
+      borderBottomWidth: StyleSheet.hairlineWidth,
+      borderBottomColor: premiumPalette.border,
     },
     summaryRow: {
       flexDirection: "row",
@@ -152,81 +145,72 @@ function createStyles(colors: ColorPalette) {
       gap: spacing.md,
     },
     summaryRating: {
-      fontSize: 30,
-      lineHeight: 34,
-      fontWeight: "800",
-      color: colors.foreground,
-      letterSpacing: -0.8,
+      fontSize: 28,
+      lineHeight: 32,
+      fontWeight: "700",
+      color: premiumPalette.textPrimary,
+      letterSpacing: -0.6,
     },
     summaryMeta: {
       ...typography.caption,
-      color: colors.mutedForeground,
+      color: premiumPalette.textSecondary,
       lineHeight: 18,
-      fontSize: 12,
+      fontSize: 13,
     },
-    cards: {
-      gap: spacing.md,
+    reviews: {
+      gap: 0,
     },
-    card: {
-      backgroundColor: colors.card,
-      borderRadius: surface.cardRadius,
-      borderWidth: StyleSheet.hairlineWidth,
-      borderColor: colors.border,
-      padding: spacing.lg,
-      gap: spacing.md,
+    review: {
+      paddingVertical: spacing.lg,
+      gap: spacing.sm,
     },
-    cardHeader: {
+    reviewBorder: {
+      borderBottomWidth: StyleSheet.hairlineWidth,
+      borderBottomColor: premiumPalette.border,
+    },
+    reviewHeader: {
       flexDirection: "row",
       alignItems: "flex-start",
       gap: spacing.md,
     },
     avatar: {
-      width: 44,
-      height: 44,
-      borderRadius: 16,
-      backgroundColor: colors.primarySoft,
+      width: 36,
+      height: 36,
+      borderRadius: 12,
+      backgroundColor: colors.secondary,
       alignItems: "center",
       justifyContent: "center",
-      borderWidth: StyleSheet.hairlineWidth,
-      borderColor: colors.border,
     },
     avatarText: {
-      fontWeight: "800",
-      color: colors.primary,
-      fontSize: 17,
+      fontWeight: "700",
+      color: premiumPalette.textPrimary,
+      fontSize: 14,
     },
-    cardHeaderText: {
+    reviewMeta: {
       flex: 1,
       minWidth: 0,
-      gap: spacing.xxs,
+      gap: 2,
     },
     name: {
       ...typography.body,
-      fontWeight: "700",
-      color: colors.foreground,
+      fontWeight: "600",
+      color: premiumPalette.textPrimary,
       fontSize: 15,
-      letterSpacing: -0.1,
     },
     meta: {
       ...typography.caption,
-      color: colors.mutedForeground,
+      color: premiumPalette.textMuted,
       fontSize: 11,
     },
     ratingCol: {
       alignItems: "flex-end",
-      gap: spacing.xxs,
-    },
-    ratingValue: {
-      ...typography.caption,
-      fontWeight: "700",
-      color: premiumPalette.primary,
-      fontSize: 11,
     },
     comment: {
       ...typography.body,
-      color: colors.foreground,
+      color: premiumPalette.textSecondary,
       fontSize: 14,
       lineHeight: 21,
+      paddingLeft: 36 + spacing.md,
     },
     error: {
       ...typography.caption,

@@ -1,9 +1,8 @@
 import { memo } from "react";
-import { Platform, StyleSheet, Text, View } from "react-native";
+import { StyleSheet, Text, View } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
-import { BlurView } from "expo-blur";
 import { Ionicons } from "@expo/vector-icons";
-import { heroText, surface } from "@/theme/surfaces";
+import { heroText } from "@/theme/surfaces";
 import { premiumWalletGradient, premiumWalletShadow } from "@/theme/dashboardPremium";
 import { metricTextA11y, textA11y } from "@/theme/a11y";
 import { spacing, typography } from "@/theme";
@@ -17,7 +16,7 @@ type HeroBalanceCardProps = {
   icon?: keyof typeof Ionicons.glyphMap;
 };
 
-/** Premium wallet hero card — rich gradient, frosted icon, large amount. */
+/** Single hero KPI — elegant gradient card with restrained decoration. */
 export const HeroBalanceCard = memo(function HeroBalanceCard({
   label,
   value,
@@ -38,12 +37,7 @@ export const HeroBalanceCard = memo(function HeroBalanceCard({
       <View style={styles.glowSmall} pointerEvents="none" />
       <View style={styles.content}>
         <View style={styles.topRow}>
-          <View style={styles.iconWell}>
-            {Platform.OS === "ios" ? (
-              <BlurView intensity={24} tint="light" style={StyleSheet.absoluteFill} />
-            ) : null}
-            <Ionicons name={icon} size={22} color={heroText.value} />
-          </View>
+          <Ionicons name={icon} size={18} color="rgba(255,255,255,0.85)" />
           <Text style={styles.label} {...textA11y}>
             {label}
           </Text>
@@ -77,63 +71,51 @@ export const HeroBalanceCard = memo(function HeroBalanceCard({
 
 const styles = StyleSheet.create({
   gradient: {
-    borderRadius: surface.heroRadius,
+    borderRadius: 20,
     overflow: "hidden",
-    minHeight: 176,
+    minHeight: 152,
   },
   glowLarge: {
     position: "absolute",
-    width: 160,
-    height: 160,
+    width: 140,
+    height: 140,
     borderRadius: 999,
-    backgroundColor: "rgba(255,255,255,0.1)",
-    top: -48,
-    right: -32,
+    backgroundColor: "rgba(255,255,255,0.06)",
+    top: -40,
+    right: -28,
   },
   glowSmall: {
     position: "absolute",
-    width: 80,
-    height: 80,
+    width: 72,
+    height: 72,
     borderRadius: 999,
-    backgroundColor: "rgba(255,255,255,0.08)",
-    bottom: -20,
-    left: 24,
+    backgroundColor: "rgba(255,255,255,0.05)",
+    bottom: -16,
+    left: 20,
   },
   content: {
     paddingHorizontal: spacing["2xl"],
     paddingVertical: spacing["2xl"],
-    gap: spacing.md,
+    gap: spacing.sm,
   },
   topRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: spacing.md,
-  },
-  iconWell: {
-    width: 44,
-    height: 44,
-    borderRadius: 14,
-    backgroundColor: "rgba(255,255,255,0.2)",
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: "rgba(255,255,255,0.35)",
-    alignItems: "center",
-    justifyContent: "center",
-    overflow: "hidden",
+    gap: spacing.sm,
   },
   label: {
-    ...typography.overline,
+    ...typography.caption,
     color: heroText.label,
-    fontSize: 11,
-    letterSpacing: 1.4,
-    flex: 1,
-    fontWeight: "700",
+    fontSize: 13,
+    letterSpacing: 0.2,
+    fontWeight: "600",
   },
   value: {
-    fontSize: 46,
-    lineHeight: 50,
-    fontWeight: "800",
+    fontSize: 40,
+    lineHeight: 44,
+    fontWeight: "700",
     color: heroText.value,
-    letterSpacing: -1.4,
+    letterSpacing: -1.2,
   },
   trend: {
     ...typography.caption,

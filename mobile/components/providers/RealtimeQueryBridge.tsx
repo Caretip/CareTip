@@ -44,7 +44,10 @@ export function RealtimeQueryBridge() {
       if (keys.has("stats")) void queryClient.invalidateQueries({ queryKey: queryKeys.businessStats });
       if (keys.has("activity"))
         void queryClient.invalidateQueries({ queryKey: queryKeys.businessActivity });
-      if (keys.has("qr")) void queryClient.invalidateQueries({ queryKey: queryKeys.businessQr });
+      if (keys.has("qr")) {
+        void queryClient.invalidateQueries({ queryKey: queryKeys.businessQr });
+        void queryClient.invalidateQueries({ queryKey: queryKeys.businessQrAnalytics });
+      }
       if (keys.has("bizTips"))
         void queryClient.invalidateQueries({ queryKey: queryKeys.businessTips });
       if (keys.has("empTips")) {
@@ -125,6 +128,7 @@ export function RealtimeQueryBridge() {
       appStateRef.current = next;
       if ((prev === "background" || prev === "inactive") && next === "active") {
         schedule(["stats", "activity", "qr", "bizTips", "empTips", "inbox"]);
+        void queryClient.invalidateQueries({ queryKey: queryKeys.businessQrAnalytics });
       }
     };
     const sub = AppState.addEventListener("change", onAppState);
@@ -150,6 +154,7 @@ export function RealtimeQueryBridge() {
     void queryClient.invalidateQueries({ queryKey: queryKeys.notificationUnread });
     void queryClient.invalidateQueries({ queryKey: queryKeys.businessStats });
     void queryClient.invalidateQueries({ queryKey: queryKeys.employeeTips });
+    void queryClient.invalidateQueries({ queryKey: queryKeys.businessQrAnalytics });
   }, [connected, queryClient]);
 
   return null;

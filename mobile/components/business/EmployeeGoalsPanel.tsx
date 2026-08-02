@@ -1,11 +1,11 @@
 import { useMemo } from "react";
 import { StyleSheet, Text, View } from "react-native";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { GroupedList, GroupedRow } from "@/components/ui/Section";
 import { useI18n } from "@/hooks/useI18n";
 import { useTheme } from "@/hooks/useTheme";
 import { formatEur, formatPercent } from "@/utils/format";
 import type { ColorPalette } from "@/theme/colors";
+import { premiumPalette } from "@/theme/dashboardPremium";
 import { spacing, typography } from "@/theme";
 import type { BusinessDashboardStats } from "@/types/business";
 
@@ -35,14 +35,11 @@ export function EmployeeGoalsPanel({ stats, employeeNameById }: EmployeeGoalsPan
 
   return (
     <View style={styles.wrap}>
-      <View style={styles.pills}>
-        <Text style={[styles.pill, styles.pillAccent]}>
-          {t("businessDashboard.goalsOnTrack", { count: onTrack })}
-        </Text>
-        <Text style={styles.pill}>
-          {t("businessDashboard.goalsTracked", { count: goals.length })}
-        </Text>
-      </View>
+      <Text style={styles.summary}>
+        {t("businessDashboard.goalsOnTrack", { count: onTrack })}
+        {" · "}
+        {t("businessDashboard.goalsTracked", { count: goals.length })}
+      </Text>
 
       {goals.length > TEASER_LIMIT ? (
         <Text style={styles.hint}>
@@ -53,7 +50,7 @@ export function EmployeeGoalsPanel({ stats, employeeNameById }: EmployeeGoalsPan
         </Text>
       ) : null}
 
-      <GroupedList>
+      <View style={styles.list}>
         {teaser.map((goal, index) => {
           const name =
             goal.name ??
@@ -62,53 +59,55 @@ export function EmployeeGoalsPanel({ stats, employeeNameById }: EmployeeGoalsPan
           const percent = Math.min(100, Math.max(0, goal.percent ?? 0));
 
           return (
-            <GroupedRow key={goal.employeeId} showDivider={index < teaser.length - 1}>
-              <View style={styles.row}>
-                <View style={styles.rowTop}>
-                  <Text style={styles.name}>{name}</Text>
-                  <Text style={styles.amount}>
-                    {formatEur(goal.currentAmount)} / {formatEur(goal.goalAmount)}
-                  </Text>
-                </View>
-                <View style={styles.track}>
-                  <View style={[styles.fill, { width: `${percent}%` }]} />
-                </View>
-                <Text style={styles.meta}>{formatPercent(percent)}</Text>
+            <View
+              key={goal.employeeId}
+              style={[styles.row, index < teaser.length - 1 ? styles.rowBorder : null]}
+            >
+              <View style={styles.rowTop}>
+                <Text style={styles.name}>{name}</Text>
+                <Text style={styles.amount}>
+                  {formatEur(goal.currentAmount)} / {formatEur(goal.goalAmount)}
+                </Text>
               </View>
-            </GroupedRow>
+              <View style={styles.track}>
+                <View style={[styles.fill, { width: `${percent}%` }]} />
+              </View>
+              <Text style={styles.meta}>{formatPercent(percent)}</Text>
+            </View>
           );
         })}
-      </GroupedList>
+      </View>
     </View>
   );
 }
 
 function createStyles(colors: ColorPalette) {
   return StyleSheet.create({
-    wrap: { gap: spacing.md },
-    pills: {
-      flexDirection: "row",
-      flexWrap: "wrap",
-      gap: spacing.sm,
-    },
-    pill: {
+    wrap: { gap: spacing.lg },
+    summary: {
       ...typography.caption,
-      color: colors.mutedForeground,
-      backgroundColor: colors.secondary,
-      paddingHorizontal: spacing.sm,
-      paddingVertical: 4,
-      borderRadius: 999,
-    },
-    pillAccent: {
-      color: colors.primary,
-      backgroundColor: colors.primarySoft,
-      fontWeight: "700",
+      color: premiumPalette.textSecondary,
+      fontSize: 13,
+      lineHeight: 18,
     },
     hint: {
       ...typography.caption,
-      color: colors.mutedForeground,
+      color: premiumPalette.textMuted,
+      fontSize: 12,
+      marginTop: -spacing.sm,
     },
-    row: { gap: spacing.sm },
+    list: {
+      borderTopWidth: StyleSheet.hairlineWidth,
+      borderColor: premiumPalette.border,
+    },
+    row: {
+      paddingVertical: spacing.lg,
+      gap: spacing.sm,
+    },
+    rowBorder: {
+      borderBottomWidth: StyleSheet.hairlineWidth,
+      borderBottomColor: premiumPalette.border,
+    },
     rowTop: {
       flexDirection: "row",
       justifyContent: "space-between",
@@ -117,17 +116,19 @@ function createStyles(colors: ColorPalette) {
     },
     name: {
       ...typography.body,
-      fontWeight: "700",
-      color: colors.foreground,
+      fontWeight: "600",
+      color: premiumPalette.textPrimary,
       flex: 1,
+      fontSize: 15,
     },
     amount: {
       ...typography.caption,
-      color: colors.mutedForeground,
-      fontWeight: "600",
+      color: premiumPalette.textSecondary,
+      fontWeight: "500",
+      fontSize: 12,
     },
     track: {
-      height: 6,
+      height: 5,
       borderRadius: 999,
       backgroundColor: colors.secondary,
       overflow: "hidden",
@@ -135,12 +136,13 @@ function createStyles(colors: ColorPalette) {
     fill: {
       height: "100%",
       borderRadius: 999,
-      backgroundColor: colors.primary,
+      backgroundColor: premiumPalette.primary,
     },
     meta: {
       ...typography.caption,
-      color: colors.mutedForeground,
-      fontWeight: "600",
+      color: premiumPalette.textMuted,
+      fontWeight: "500",
+      fontSize: 11,
     },
   });
 }

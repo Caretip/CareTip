@@ -154,9 +154,7 @@ async function main() {
       const at = new Date(base.getTime() - (4 - i) * (QR_SCAN_DEDUPE_WINDOW_MS + 1_000));
       const dedupeKey = buildScanDedupeKey({
         businessId: fx.businessId,
-        scanType: QR_SCAN_TYPES.EMPLOYEE,
         sessionId: sessionRepeat,
-        employeeId: fx.employeeId,
         at,
       });
       await prisma.qrScanEvent.create({

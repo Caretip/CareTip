@@ -256,7 +256,6 @@ export function patchQrAnalyticsLocal(
   return {
     ...data,
     totalScans: data.totalScans + scanDelta,
-    repeatScans: data.repeatScans + scanDelta,
     scanTrend:
       data.scanTrend.length > 0
         ? data.scanTrend.map((row, i) =>

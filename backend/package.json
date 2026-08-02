@@ -31,6 +31,7 @@
     "test:sprint4-payment-e2e": "dotenv -e ../.env -e .env -- tsx scripts/sprint4-payment-e2e-runtime.ts",
     "test:sprint4-qr-intelligence": "dotenv -e ../.env -e .env -- tsx scripts/sprint4-qr-intelligence-validation.ts",
     "test:sprint41-qr-dedupe": "dotenv -e ../.env -e .env -- tsx scripts/sprint41-qr-dedupe-concurrency.ts",
+    "test:scan-analytics-readiness": "dotenv -e ../.env -e .env -- tsx scripts/scan-analytics-production-readiness.ts",
     "test:activity-center-phase-a": "dotenv -e ../.env -e .env -- tsx scripts/activity-center-phase-a-runtime.ts",
     "test:activity-center-phase-b": "dotenv -e ../.env -e .env -- tsx scripts/activity-center-phase-b-runtime.ts",
     "test:sprint4-tenant-isolation": "dotenv -e ../.env -e .env -- tsx scripts/sprint4-tenant-isolation-runtime.ts",

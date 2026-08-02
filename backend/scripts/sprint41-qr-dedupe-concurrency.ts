@@ -218,6 +218,48 @@ async function main() {
       );
     }
 
+    // --- Cross scanType within same session → 1 row (guest journey parity) ---
+    const sessionJourney = `s41journey${fx.tag}`.slice(0, 32);
+    const journeyResults = await Promise.all([
+      persistQrScanEvent({
+        businessId: fx.businessId,
+        scanType: QR_SCAN_TYPES.TABLE_SLUG,
+        locationId: fx.locationId,
+        tableId: fx.tableId,
+        qrSlug: "table-abc",
+        req: mockReq(sessionJourney, `/api/tipping-context/table-abc`),
+      }),
+      persistQrScanEvent({
+        businessId: fx.businessId,
+        scanType: QR_SCAN_TYPES.BUSINESS_ID,
+        req: mockReq(sessionJourney, `/api/business/${fx.businessId}`),
+      }),
+      persistQrScanEvent({
+        businessId: fx.businessId,
+        scanType: QR_SCAN_TYPES.BUSINESS_DIRECTORY,
+        req: mockReq(sessionJourney, `/api/staff/directory/business/${fx.businessSlug}`),
+      }),
+    ]);
+    const journeyRows = await prisma.qrScanEvent.count({
+      where: { businessId: fx.businessId, sessionId: sessionJourney },
+    });
+    if (
+      journeyRows === 1 &&
+      journeyResults.filter((r) => r.inserted).length === 1
+    ) {
+      pass(
+        "cross-scantype-journey",
+        "Table + business + directory APIs in one session",
+        `rows=${journeyRows} inserted=${journeyResults.filter((r) => r.inserted).length}`,
+      );
+    } else {
+      fail(
+        "cross-scantype-journey",
+        "Table + business + directory APIs in one session",
+        `Expected 1 row / 1 insert; got rows=${journeyRows} inserted=${journeyResults.filter((r) => r.inserted).length}`,
+      );
+    }
+
     // --- Analytics remain correct ---
     const sessionRepeat = `s41repeat${fx.tag}`.slice(0, 32);
     const base = new Date();
@@ -225,9 +267,7 @@ async function main() {
       const at = new Date(base.getTime() - (4 - i) * (QR_SCAN_DEDUPE_WINDOW_MS + 1_000));
       const dedupeKey = buildScanDedupeKey({
         businessId: fx.businessId,
-        scanType: QR_SCAN_TYPES.EMPLOYEE,
         sessionId: sessionRepeat,
-        employeeId: fx.employeeId,
         at,
       });
       await prisma.qrScanEvent.create({

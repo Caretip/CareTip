@@ -4,12 +4,11 @@ import { Platform, Pressable, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { spacing, typography } from "@/theme";
 import { TAB_BAR_HEIGHT } from "@/theme/navigation";
-import { floatingTabShadow } from "@/theme/layered";
-import { premiumPalette } from "@/theme/dashboardPremium";
+import { premiumPalette, premiumTabShadow } from "@/theme/dashboardPremium";
 import { useTheme } from "@/hooks/useTheme";
 import { hapticSelection } from "@/utils/haptics";
 
-/** Floating bottom bar on white sheet — Home (left), Menu (right). */
+/** Floating bottom bar — white sheet, soft shadow, orange active only. */
 export const MimeTabBar = memo(function MimeTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
   const insets = useSafeAreaInsets();
   const { colors, isDark } = useTheme();
@@ -51,7 +50,7 @@ export const MimeTabBar = memo(function MimeTabBar({ state, descriptors, navigat
     const icon = options.tabBarIcon?.({
       focused: isFocused,
       color: iconColor,
-      size: isFocused ? 24 : 22,
+      size: isFocused ? 22 : 21,
     });
 
     return (
@@ -72,7 +71,7 @@ export const MimeTabBar = memo(function MimeTabBar({ state, descriptors, navigat
 
   return (
     <View pointerEvents="box-none" style={[styles.outer, { paddingBottom: bottomInset }]}>
-      <View style={[styles.bar, floatingTabShadow]}>
+      <View style={[styles.bar, premiumTabShadow]}>
         {renderTab(homeRoute)}
         {renderTab(menuRoute)}
       </View>
@@ -96,10 +95,10 @@ function createStyles(colors: ReturnType<typeof useTheme>["colors"], isDark: boo
       minHeight: TAB_BAR_HEIGHT,
       paddingHorizontal: spacing.lg,
       paddingVertical: spacing.xs,
-      backgroundColor: isDark ? colors.cardElevated : premiumPalette.surface,
-      borderRadius: 28,
+      backgroundColor: isDark ? colors.cardElevated : premiumPalette.white,
+      borderRadius: 24,
       borderWidth: StyleSheet.hairlineWidth,
-      borderColor: isDark ? colors.border : "rgba(15, 23, 42, 0.06)",
+      borderColor: isDark ? colors.border : premiumPalette.border,
     },
     tabSlot: {
       flex: 1,
@@ -112,18 +111,18 @@ function createStyles(colors: ReturnType<typeof useTheme>["colors"], isDark: boo
       paddingVertical: spacing.xs,
     },
     tabPressed: {
-      opacity: 0.82,
+      opacity: 0.85,
     },
     label: {
       ...typography.caption,
       fontSize: 10,
       fontWeight: "500",
       color: premiumPalette.inactive,
-      letterSpacing: 0.15,
+      letterSpacing: 0.1,
     },
     labelActive: {
       color: premiumPalette.primary,
-      fontWeight: "700",
+      fontWeight: "600",
     },
   });
 }

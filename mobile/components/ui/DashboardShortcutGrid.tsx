@@ -1,5 +1,5 @@
 import { memo, useMemo } from "react";
-import { Platform, Pressable, StyleSheet, Text, View } from "react-native";
+import { Pressable, StyleSheet, Text, View } from "react-native";
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
@@ -8,8 +8,8 @@ import Animated, {
 import { useTheme } from "@/hooks/useTheme";
 import type { LucideIcon } from "@/types/lucide";
 import type { ColorPalette } from "@/theme/colors";
-import { premiumSoftShadow } from "@/theme/dashboardPremium";
-import { motion, spacing, surface, typography } from "@/theme";
+import { premiumPalette } from "@/theme/dashboardPremium";
+import { motion, spacing, typography } from "@/theme";
 import { hapticLight } from "@/utils/haptics";
 
 export type DashboardShortcut = {
@@ -24,7 +24,7 @@ type DashboardShortcutGridProps = {
 };
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
-const ICON_SIZE = 20;
+const ICON_SIZE = 18;
 
 type ShortcutCardProps = DashboardShortcut & {
   colors: ColorPalette;
@@ -46,16 +46,14 @@ function ShortcutCard({ label, icon: Icon, onPress, colors }: ShortcutCardProps)
         onPress();
       }}
       onPressIn={() => {
-        scale.value = withSpring(0.97, motion.spring.press);
+        scale.value = withSpring(0.98, motion.spring.press);
       }}
       onPressOut={() => {
         scale.value = withSpring(1, motion.spring.press);
       }}
-      style={[styles.card, premiumSoftShadow, animatedStyle]}
+      style={[styles.card, animatedStyle]}
     >
-      <View style={styles.iconWell}>
-        <Icon size={ICON_SIZE} color={colors.primary} strokeWidth={2.2} />
-      </View>
+      <Icon size={ICON_SIZE} color={premiumPalette.textSecondary} strokeWidth={2} />
       <Text style={styles.label} numberOfLines={2}>
         {label}
       </Text>
@@ -80,7 +78,7 @@ export const DashboardShortcutGrid = memo(function DashboardShortcutGrid({
 const styles = StyleSheet.create({
   row: {
     flexDirection: "row",
-    gap: spacing.md,
+    gap: spacing.sm,
   },
 });
 
@@ -90,31 +88,23 @@ function createStyles(colors: ColorPalette) {
       flex: 1,
       alignItems: "center",
       justifyContent: "center",
-      gap: spacing.sm,
-      minHeight: 96,
-      paddingVertical: spacing.lg,
-      paddingHorizontal: spacing.sm,
+      gap: spacing.xs,
+      minHeight: 72,
+      paddingVertical: spacing.md,
+      paddingHorizontal: spacing.xs,
       backgroundColor: colors.card,
-      borderRadius: surface.shortcutRadius,
+      borderRadius: 14,
       borderWidth: StyleSheet.hairlineWidth,
-      borderColor: colors.border,
-    },
-    iconWell: {
-      width: surface.iconWellSize,
-      height: surface.iconWellSize,
-      borderRadius: surface.iconWellRadius,
-      backgroundColor: colors.primarySoft,
-      alignItems: "center",
-      justifyContent: "center",
+      borderColor: premiumPalette.border,
     },
     label: {
       ...typography.caption,
-      color: colors.foreground,
+      color: premiumPalette.textPrimary,
       fontWeight: "600",
       fontSize: 11,
       textAlign: "center",
       lineHeight: 14,
-      letterSpacing: 0.05,
+      letterSpacing: 0.02,
     },
   });
 }

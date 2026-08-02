@@ -38,6 +38,11 @@ export type RecordQrScanEventInput = {
   locationId?: string | null;
   tableId?: string | null;
   qrSlug?: string | null;
+  /** When set, manager QR scan notification fires only after a successful insert. */
+  notify?: {
+    locationName?: string;
+    tableName?: string;
+  };
 };
 
 export type PersistQrScanResult = { inserted: boolean; scanId?: string };
@@ -53,13 +58,10 @@ export async function persistQrScanEvent(input: RecordQrScanEventInput): Promise
   const { country, city } = resolveGeoFromRequest(req);
   const dedupeKey = buildScanDedupeKey({
     businessId,
-    scanType,
     sessionId,
-    employeeId: input.employeeId,
-    locationId: input.locationId,
-    tableId: input.tableId,
-    qrSlug: input.qrSlug,
   });
+
+  const entryPath = resolveEntryPath(req);
 
   try {
     const row = await prisma.qrScanEvent.create({
@@ -70,7 +72,7 @@ export async function persistQrScanEvent(input: RecordQrScanEventInput): Promise
         tableId: input.tableId ?? null,
         qrSlug: input.qrSlug?.slice(0, 128) ?? null,
         scanType,
-        entryPath: resolveEntryPath(req),
+        entryPath,
         userAgent,
         deviceType,
         country,
@@ -127,6 +129,18 @@ export async function persistQrScanEvent(input: RecordQrScanEventInput): Promise
       },
     });
 
+    if (input.notify) {
+      void import("../push/notificationContext.js").then(({ notifyQrScanForBusiness }) => {
+        notifyQrScanForBusiness({
+          businessId,
+          scanId: row.id,
+          locationName: input.notify?.locationName,
+          tableName: input.notify?.tableName,
+          qrSlug: row.qrSlug ?? input.qrSlug ?? undefined,
+        });
+      });
+    }
+
     return { inserted: true, scanId: row.id };
   } catch (err) {
     if (isPrismaUniqueViolation(err)) {
@@ -138,7 +152,7 @@ export async function persistQrScanEvent(input: RecordQrScanEventInput): Promise
 
 /**
  * Sprint 4B — sole entry point for durable QR scan logging.
- * Notifications remain separate via notifyQrScanForBusiness.
+ * Optional manager notification is emitted only after a successful insert.
  */
 export function recordQrScanEvent(input: RecordQrScanEventInput): void {
   void persistQrScanEvent(input).catch((err) => {

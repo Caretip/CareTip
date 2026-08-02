@@ -252,10 +252,10 @@ const styles = StyleSheet.create({
   },
   heroGlow: {
     position: "absolute",
-    width: 200,
-    height: 200,
+    width: 180,
+    height: 180,
     borderRadius: 999,
-    backgroundColor: "rgba(255, 255, 255, 0.14)",
+    backgroundColor: "rgba(255, 255, 255, 0.06)",
     zIndex: 0,
   },
   scrollContent: {
@@ -274,7 +274,8 @@ const styles = StyleSheet.create({
     zIndex: 1,
   },
   heroZoneDashboard: {
-    paddingBottom: layered.sheetOverlap + spacing.lg,
+    paddingBottom: layered.sheetOverlap + spacing.xl,
+    paddingTop: spacing.lg,
   },
   heroZoneFloating: {
     paddingTop: spacing.xl,

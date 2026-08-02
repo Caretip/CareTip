@@ -3,9 +3,9 @@ import { StyleSheet, View } from "react-native";
 import { BarChart3, LineChart, Trophy } from "@/icons/lucide";
 import { useRouter } from "expo-router";
 import { HeroBalanceCard } from "@/components/ui/HeroBalanceCard";
+import { CompactKpiRow } from "@/components/ui/CompactKpiRow";
 import { DashboardShortcutGrid } from "@/components/ui/DashboardShortcutGrid";
 import { EmployeePerformanceChart } from "@/components/ui/EmployeePerformanceChart";
-import { KpiCard } from "@/components/ui/KpiCard";
 import { PeriodToggle } from "@/components/ui/PeriodToggle";
 import { LayeredScreen } from "@/components/ui/LayeredScreen";
 import { Section } from "@/components/ui/Section";
@@ -138,36 +138,32 @@ export function BusinessDashboardScreen() {
                 }
                 icon="wallet"
               />
-              <DashboardShortcutGrid shortcuts={shortcuts} />
-              <View style={styles.metricsRow}>
-                <View style={styles.metricCol}>
-                  <KpiCard
-                    variant="plain"
-                    label={t("businessDashboard.tipsToday")}
-                    value={formatEur(tipsToday?.amount)}
-                    hint={t("businessDashboard.tipsVenueTime", {
+              <CompactKpiRow
+                items={[
+                  {
+                    label: t("businessDashboard.tipsToday"),
+                    value: formatEur(tipsToday?.amount),
+                    hint: t("businessDashboard.tipsVenueTime", {
                       count: formatCount(tipsToday?.count),
-                    })}
-                    icon="today-outline"
-                  />
-                </View>
-                <View style={styles.metricCol}>
-                  <KpiCard
-                    variant="plain"
-                    label={t("businessDashboard.activeStaff")}
-                    value={formatCount(employeeCount)}
-                    hint={t("businessDashboard.onRoster")}
-                    icon="people-outline"
-                  />
-                </View>
-              </View>
+                    }),
+                  },
+                  {
+                    label: t("businessDashboard.activeStaff"),
+                    value: formatCount(employeeCount),
+                    hint: t("businessDashboard.onRoster"),
+                  },
+                ]}
+              />
+              <DashboardShortcutGrid shortcuts={shortcuts} />
             </View>
           </FadeIn>
 
           <FadeIn index={1}>
-            <Section title={t("businessDashboard.employeePerformanceTitle")}>
+            <Section
+              title={t("businessDashboard.employeePerformanceTitle")}
+              subtitle={t("businessDashboard.employeePerformanceDesc")}
+            >
               <EmployeePerformanceChart
-                card
                 title={t("businessDashboard.employeePerformanceTitle")}
                 subtitle={t("businessDashboard.employeePerformanceDesc")}
                 rows={employeePerformance}
@@ -206,15 +202,6 @@ const styles = StyleSheet.create({
     gap: layered.sectionGap,
   },
   heroBlock: {
-    gap: layered.elementGap,
-  },
-  metricsRow: {
-    flexDirection: "row",
-    alignItems: "stretch",
-    gap: spacing.md,
-  },
-  metricCol: {
-    flex: 1,
-    minWidth: 0,
+    gap: spacing.xl,
   },
 });

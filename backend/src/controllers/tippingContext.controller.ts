@@ -26,12 +26,7 @@ export async function getLocationById(req: Request, res: Response) {
       scanType: QR_SCAN_TYPES.LOCATION,
       locationId: ctx.location.id,
       req,
-    });
-    void import("../services/push/notificationContext.js").then(({ notifyQrScanForBusiness }) => {
-      notifyQrScanForBusiness({
-        businessId: ctx.business.id,
-        locationName: ctx.location.name,
-      });
+      notify: { locationName: ctx.location.name },
     });
     return res.json(ctx);
   } catch (err) {
@@ -63,14 +58,10 @@ export async function getTableById(req: Request, res: Response) {
       tableId: ctx.table.id,
       qrSlug: ctx.table.qrSlug,
       req,
-    });
-    void import("../services/push/notificationContext.js").then(({ notifyQrScanForBusiness }) => {
-      notifyQrScanForBusiness({
-        businessId: ctx.business.id,
+      notify: {
         locationName: ctx.location.name,
         tableName: ctx.table.name,
-        qrSlug: ctx.table.qrSlug,
-      });
+      },
     });
     return res.json(ctx);
   } catch (err) {
@@ -147,14 +138,10 @@ export async function getByQrSlug(req: Request, res: Response) {
       tableId: ctx.tableId,
       qrSlug,
       req,
-    });
-    void import("../services/push/notificationContext.js").then(({ notifyQrScanForBusiness }) => {
-      notifyQrScanForBusiness({
-        businessId: ctx.businessId,
+      notify: {
         locationName: ctx.locationName,
         tableName: ctx.tableName,
-        qrSlug,
-      });
+      },
     });
     return res.json({
       locationName: ctx.locationName,

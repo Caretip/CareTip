@@ -2,8 +2,8 @@ import { useMemo } from "react";
 import { StyleSheet, Text, View, type StyleProp, type ViewStyle } from "react-native";
 import { useTheme } from "@/hooks/useTheme";
 import type { ColorPalette } from "@/theme/colors";
-import { premiumCardShadow } from "@/theme/dashboardPremium";
-import { spacing, surface, typography } from "@/theme";
+import { premiumPalette } from "@/theme/dashboardPremium";
+import { spacing, typography } from "@/theme";
 
 type SectionProps = {
   title?: string;
@@ -70,7 +70,7 @@ function GroupedRowContent({ children }: { children: React.ReactNode }) {
 function createStyles(colors: ColorPalette) {
   return StyleSheet.create({
     section: {
-      gap: spacing.md,
+      gap: spacing.lg,
       marginBottom: spacing["2xl"],
     },
     content: {
@@ -78,30 +78,29 @@ function createStyles(colors: ColorPalette) {
     },
     highlighted: {
       backgroundColor: colors.card,
-      borderRadius: surface.cardRadius,
+      borderRadius: 16,
       borderWidth: StyleSheet.hairlineWidth,
-      borderColor: colors.border,
+      borderColor: premiumPalette.border,
       padding: spacing.lg,
-      ...premiumCardShadow,
     },
     title: {
       ...typography.section,
-      color: colors.foreground,
-      fontSize: 18,
+      color: premiumPalette.textPrimary,
+      fontSize: 17,
       fontWeight: "700",
-      letterSpacing: -0.35,
-      lineHeight: 24,
+      letterSpacing: -0.3,
+      lineHeight: 22,
     },
     subtitle: {
       ...typography.body,
-      color: colors.mutedForeground,
+      color: premiumPalette.textSecondary,
       fontSize: 14,
       lineHeight: 20,
       marginTop: -spacing.sm,
     },
     divider: {
       height: StyleSheet.hairlineWidth,
-      backgroundColor: colors.border,
+      backgroundColor: premiumPalette.border,
       width: "100%",
     },
     dividerInset: {
@@ -109,11 +108,10 @@ function createStyles(colors: ColorPalette) {
     },
     group: {
       backgroundColor: colors.card,
-      borderRadius: surface.groupRadius,
+      borderRadius: 16,
       borderWidth: StyleSheet.hairlineWidth,
-      borderColor: colors.border,
+      borderColor: premiumPalette.border,
       overflow: "hidden",
-      ...premiumCardShadow,
     },
     groupRow: {
       paddingHorizontal: spacing.xl,
