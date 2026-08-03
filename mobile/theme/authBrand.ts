@@ -13,7 +13,7 @@ export const authBrand = {
   glassPillFill: "rgba(255, 255, 255, 0.14)",
   glassPillBorder: "rgba(255, 255, 255, 0.24)",
   inputFill: "rgba(255, 255, 255, 0.92)",
-  /** Floating glass inputs on hero image. */
+  /** Floating glass inputs on hero image — not for bottom sheets / cards. */
   fieldFill: "rgba(255, 255, 255, 0.12)",
   fieldFillFocused: "rgba(255, 255, 255, 0.18)",
   fieldBorder: "rgba(255, 255, 255, 0.22)",

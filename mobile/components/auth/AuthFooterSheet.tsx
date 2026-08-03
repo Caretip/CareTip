@@ -221,7 +221,7 @@ function createStyles(colors: ColorPalette) {
     root: { flex: 1, justifyContent: "flex-end" },
     backdrop: {
       ...StyleSheet.absoluteFillObject,
-      backgroundColor: "rgba(11, 18, 32, 0.52)",
+      backgroundColor: colors.overlay,
     },
     sheet: {
       backgroundColor: colors.card,

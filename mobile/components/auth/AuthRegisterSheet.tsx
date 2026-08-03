@@ -81,6 +81,7 @@ export function AuthRegisterSheet({
               label={t("auth.continueWithGoogle")}
               loading={googleLoading}
               disabled={googleLoading}
+              variant="surface"
               onPress={onContinueWithGoogle}
             />
             <Button
@@ -120,7 +121,7 @@ function createStyles(colors: ColorPalette) {
     root: { flex: 1, justifyContent: "flex-end" },
     backdrop: {
       ...StyleSheet.absoluteFillObject,
-      backgroundColor: "rgba(11, 18, 32, 0.48)",
+      backgroundColor: colors.overlay,
     },
     sheet: {
       backgroundColor: colors.card,
@@ -159,6 +160,7 @@ function createStyles(colors: ColorPalette) {
       color: colors.mutedForeground,
       lineHeight: 22,
       marginTop: -spacing.sm,
+      fontWeight: "500",
     },
     actions: {
       gap: spacing.md,
@@ -174,6 +176,7 @@ function createStyles(colors: ColorPalette) {
     signInPrompt: {
       ...typography.body,
       color: colors.mutedForeground,
+      fontWeight: "500",
     },
     signInLink: {
       ...typography.body,

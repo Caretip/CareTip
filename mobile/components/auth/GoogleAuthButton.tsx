@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import {
   ActivityIndicator,
   Platform,
@@ -8,25 +9,37 @@ import {
 } from "react-native";
 import Animated, { useAnimatedStyle, useSharedValue, withSpring } from "react-native-reanimated";
 import { GoogleIcon } from "@/components/auth/GoogleIcon";
+import { useTheme } from "@/hooks/useTheme";
 import { authBrand } from "@/theme/authBrand";
-import { motion, radius, spacing, touchTarget, typography } from "@/theme";
+import type { ColorPalette } from "@/theme/colors";
+import { motion, radius, shadows, spacing, touchTarget, typography } from "@/theme";
 import { textA11y } from "@/theme/a11y";
 import { hapticLight } from "@/utils/haptics";
+
+type GoogleAuthButtonVariant = "hero" | "surface";
 
 type GoogleAuthButtonProps = PressableProps & {
   label: string;
   loading?: boolean;
+  /** Hero = floating glass on auth image; surface = bottom sheets and cards. */
+  variant?: GoogleAuthButtonVariant;
 };
 
 export function GoogleAuthButton({
   label,
   loading = false,
   disabled,
+  variant = "hero",
   onPress,
   onPressIn,
   onPressOut,
   ...rest
 }: GoogleAuthButtonProps) {
+  const { colors } = useTheme();
+  const { styles, labelColor, rippleColor } = useMemo(
+    () => createStyles(colors, variant),
+    [colors, variant],
+  );
   const scale = useSharedValue(1);
   const isDisabled = disabled || loading;
   const animatedStyle = useAnimatedStyle(() => ({
@@ -38,7 +51,7 @@ export function GoogleAuthButton({
       accessibilityRole="button"
       accessibilityState={{ disabled: isDisabled, busy: loading }}
       disabled={isDisabled}
-      android_ripple={{ color: "rgba(255, 255, 255, 0.12)" }}
+      android_ripple={{ color: rippleColor }}
       onPress={onPress}
       onPressIn={(e) => {
         if (!isDisabled) hapticLight();
@@ -54,7 +67,7 @@ export function GoogleAuthButton({
     >
       <Animated.View style={[styles.content, animatedStyle]} collapsable={false}>
         {loading ? (
-          <ActivityIndicator color={authBrand.fieldText} />
+          <ActivityIndicator color={labelColor} />
         ) : (
           <>
             <GoogleIcon size={20} />
@@ -68,41 +81,57 @@ export function GoogleAuthButton({
   );
 }
 
-const styles = StyleSheet.create({
-  button: {
-    borderRadius: radius["2xl"],
-    overflow: "hidden",
-    ...Platform.select({
-      ios: {
-        shadowColor: "#000000",
-        shadowOpacity: 0.18,
-        shadowRadius: 14,
-        shadowOffset: { width: 0, height: 8 },
-      },
-      android: { elevation: 5 },
-      default: {},
-    }),
-  },
-  content: {
-    minHeight: touchTarget + 6,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: spacing.md,
-    backgroundColor: authBrand.fieldFill,
-    borderRadius: radius["2xl"],
-    borderWidth: 1.5,
-    borderColor: authBrand.fieldBorder,
-    paddingHorizontal: spacing.xl,
-  },
-  label: {
-    ...typography.button,
-    color: authBrand.fieldText,
-    fontWeight: "600",
-    fontSize: 16,
-    letterSpacing: 0.1,
-  },
-  disabled: {
-    opacity: 0.55,
-  },
-});
+function createStyles(colors: ColorPalette, variant: GoogleAuthButtonVariant) {
+  const isSurface = variant === "surface";
+  const backgroundColor = isSurface ? colors.authSurfaceGoogleBg : authBrand.fieldFill;
+  const borderColor = isSurface ? colors.authSurfaceGoogleBorder : authBrand.fieldBorder;
+  const labelColor = isSurface ? colors.authSurfaceGoogleText : authBrand.fieldText;
+  const rippleColor = isSurface ? colors.authSurfaceGoogleRipple : "rgba(255, 255, 255, 0.12)";
+
+  const styles = StyleSheet.create({
+    button: {
+      borderRadius: radius["2xl"],
+      overflow: "hidden",
+      ...(isSurface
+        ? {
+            ...shadows.sm,
+            shadowColor: colors.foreground,
+            shadowOpacity: Platform.OS === "ios" ? 0.08 : 0,
+          }
+        : Platform.select({
+            ios: {
+              shadowColor: "#000000",
+              shadowOpacity: 0.18,
+              shadowRadius: 14,
+              shadowOffset: { width: 0, height: 8 },
+            },
+            android: { elevation: 5 },
+            default: {},
+          })),
+    },
+    content: {
+      minHeight: touchTarget + 6,
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "center",
+      gap: spacing.md,
+      backgroundColor,
+      borderRadius: radius["2xl"],
+      borderWidth: 1.5,
+      borderColor,
+      paddingHorizontal: spacing.xl,
+    },
+    label: {
+      ...typography.button,
+      color: labelColor,
+      fontWeight: "600",
+      fontSize: 16,
+      letterSpacing: 0.1,
+    },
+    disabled: {
+      opacity: 0.55,
+    },
+  });
+
+  return { styles, labelColor, rippleColor };
+}

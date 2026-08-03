@@ -20,6 +20,7 @@ import { brand } from "@/theme/colors";
 import { premiumHeroGradient, premiumPalette } from "@/theme/dashboardPremium";
 import { layered, layeredSheetShadow } from "@/theme/layered";
 import { spacing } from "@/theme";
+import { TAB_BAR_SCROLL_CLEARANCE } from "@/theme/navigation";
 import { useTheme } from "@/hooks/useTheme";
 
 export type LayeredBackgroundVariant = "gradient" | "auth-image";
@@ -124,11 +125,11 @@ export function LayeredScreenShell({
       contentContainerStyle={[
         styles.scrollContent,
         isDashboard ? styles.scrollContentDashboard : null,
-        tabSafe ? styles.tabClearance : null,
         {
           minHeight: height,
           paddingBottom:
-            Math.max(insets.bottom, isFloating ? spacing["3xl"] : spacing.lg) + (tabSafe ? 80 : 0),
+            Math.max(insets.bottom, isFloating ? spacing["3xl"] : spacing.lg) +
+            (tabSafe ? TAB_BAR_SCROLL_CLEARANCE : 0),
         },
       ]}
       {...scrollProps}
@@ -165,7 +166,7 @@ export function LayeredScreenShell({
               paddingBottom: spacing["3xl"],
               backgroundColor: sheetBackground,
               minHeight:
-                height - heroBackdropHeight + layered.sheetOverlap + (tabSafe ? 88 : 0),
+                height - heroBackdropHeight + layered.sheetOverlap + (tabSafe ? TAB_BAR_SCROLL_CLEARANCE : 0),
             },
           ]}
         >
@@ -334,8 +335,5 @@ const styles = StyleSheet.create({
   footerCompressed: {
     paddingTop: spacing.lg,
     opacity: 0.85,
-  },
-  tabClearance: {
-    paddingBottom: spacing["5xl"],
   },
 });

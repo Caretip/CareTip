@@ -4,15 +4,14 @@ import { Platform, Pressable, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { spacing, typography } from "@/theme";
 import { TAB_BAR_HEIGHT } from "@/theme/navigation";
-import { premiumPalette, premiumTabShadow } from "@/theme/dashboardPremium";
 import { useTheme } from "@/hooks/useTheme";
 import { hapticSelection } from "@/utils/haptics";
 
-/** Floating bottom bar — white sheet, soft shadow, orange active only. */
+/** Bottom tab bar — Home and Menu sit directly on the app surface. */
 export const MimeTabBar = memo(function MimeTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
   const insets = useSafeAreaInsets();
-  const { colors, isDark } = useTheme();
-  const styles = useMemo(() => createStyles(colors, isDark), [colors, isDark]);
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const bottomInset = Math.max(insets.bottom, Platform.OS === "ios" ? spacing.xs : spacing.sm);
 
   const homeRoute = state.routes.find((route) => route.name === "index");
@@ -33,7 +32,7 @@ export const MimeTabBar = memo(function MimeTabBar({ state, descriptors, navigat
           ? String(options.title)
           : route.name;
     const isFocused = state.index === index;
-    const iconColor = isFocused ? premiumPalette.primary : premiumPalette.inactive;
+    const iconColor = isFocused ? colors.primary : colors.mutedForeground;
 
     const onPress = () => {
       const event = navigation.emit({
@@ -70,35 +69,28 @@ export const MimeTabBar = memo(function MimeTabBar({ state, descriptors, navigat
   }
 
   return (
-    <View pointerEvents="box-none" style={[styles.outer, { paddingBottom: bottomInset }]}>
-      <View style={[styles.bar, premiumTabShadow]}>
-        {renderTab(homeRoute)}
-        {renderTab(menuRoute)}
-      </View>
+    <View pointerEvents="box-none" style={[styles.bar, { paddingBottom: bottomInset }]}>
+      {renderTab(homeRoute)}
+      {renderTab(menuRoute)}
     </View>
   );
 });
 
-function createStyles(colors: ReturnType<typeof useTheme>["colors"], isDark: boolean) {
+function createStyles(colors: ReturnType<typeof useTheme>["colors"]) {
   return StyleSheet.create({
-    outer: {
+    bar: {
       position: "absolute",
       left: 0,
       right: 0,
       bottom: 0,
-      paddingHorizontal: spacing.xl,
-      backgroundColor: "transparent",
-    },
-    bar: {
       flexDirection: "row",
       alignItems: "center",
       minHeight: TAB_BAR_HEIGHT,
       paddingHorizontal: spacing.lg,
-      paddingVertical: spacing.xs,
-      backgroundColor: isDark ? colors.cardElevated : premiumPalette.white,
-      borderRadius: 24,
-      borderWidth: StyleSheet.hairlineWidth,
-      borderColor: isDark ? colors.border : premiumPalette.border,
+      paddingTop: spacing.xs,
+      backgroundColor: colors.tabBar,
+      borderTopWidth: StyleSheet.hairlineWidth,
+      borderTopColor: colors.tabBarBorder,
     },
     tabSlot: {
       flex: 1,
@@ -117,11 +109,11 @@ function createStyles(colors: ReturnType<typeof useTheme>["colors"], isDark: boo
       ...typography.caption,
       fontSize: 10,
       fontWeight: "500",
-      color: premiumPalette.inactive,
+      color: colors.mutedForeground,
       letterSpacing: 0.1,
     },
     labelActive: {
-      color: premiumPalette.primary,
+      color: colors.primary,
       fontWeight: "600",
     },
   });

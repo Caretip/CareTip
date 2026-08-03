@@ -27,7 +27,7 @@ export const lightColors = {
   secondary: "#F1F3F6",
   secondaryForeground: "#111827",
   muted: "#F3F4F6",
-  mutedForeground: "#9CA3AF",
+  mutedForeground: "#6B7280",
   accent: brand.orange,
   accentForeground: "#FFFFFF",
   destructive: "#DC2626",
@@ -60,6 +60,11 @@ export const lightColors = {
   /** Neutral chart bars — accent bar uses primary. */
   chartNeutral: "#D1D5DB",
   chartNeutralMuted: "#E5E7EB",
+  /** Auth bottom sheets / modals — distinct from hero glass controls. */
+  authSurfaceGoogleBg: "#FFFFFF",
+  authSurfaceGoogleBorder: "#D1D5DB",
+  authSurfaceGoogleText: "#111827",
+  authSurfaceGoogleRipple: "rgba(17, 24, 39, 0.08)",
 } as const;
 
 /** Dark palette — active via ThemeBridge + useTheme(). */
@@ -110,6 +115,11 @@ export const darkColors = {
   skeletonHighlight: "#3F4654",
   chartNeutral: "#4B5563",
   chartNeutralMuted: "#374151",
+  /** Auth bottom sheets / modals — glass-style controls on dark surfaces. */
+  authSurfaceGoogleBg: "rgba(255, 255, 255, 0.12)",
+  authSurfaceGoogleBorder: "rgba(255, 255, 255, 0.22)",
+  authSurfaceGoogleText: "#FFFFFF",
+  authSurfaceGoogleRipple: "rgba(255, 255, 255, 0.12)",
 } as const;
 
 export type ColorPalette = typeof lightColors | typeof darkColors;
