@@ -67,6 +67,8 @@ export type AuthSessionStatus =
   | "bootstrapping"
   | "authenticated"
   | "unauthenticated"
+  /** Local secrets exist but backend has not validated the session (offline / timeout). */
+  | "session_recovery"
   | "error";
 
 export type RegisterRole = "business" | "employee";

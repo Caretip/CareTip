@@ -9,7 +9,8 @@ import { useTheme } from "@/hooks/useTheme";
 import { useQuery } from "@tanstack/react-query";
 import { fetchBusinessProfile } from "@/services/api/businessService";
 import { fetchEmployeeProfile } from "@/services/api/employeeService";
-import { queryKeys, queryStaleTimes } from "@/services/api/queryClient";
+import { queryStaleTimes } from "@/services/api/queryClient";
+import { useAuthUserId, useUserQueryKeys } from "@/services/api/queryKeys";
 import type { ColorPalette } from "@/theme/colors";
 import { spacing, typography } from "@/theme";
 import type { SettingsMenuConfig } from "@/features/settings/settingsMenuTypes";
@@ -24,18 +25,20 @@ export function SettingsMenuScreen({ role, config }: SettingsMenuScreenProps) {
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const { user } = useAuth();
+  const userId = useAuthUserId();
+  const keys = useUserQueryKeys();
 
   const businessQuery = useQuery({
-    queryKey: queryKeys.businessProfile,
+    queryKey: keys.businessProfile,
     queryFn: fetchBusinessProfile,
-    enabled: role === "business",
+    enabled: role === "business" && Boolean(userId),
     staleTime: queryStaleTimes.profile,
   });
 
   const employeeQuery = useQuery({
-    queryKey: queryKeys.employeeMe,
+    queryKey: keys.employeeMe,
     queryFn: fetchEmployeeProfile,
-    enabled: role === "employee",
+    enabled: role === "employee" && Boolean(userId),
     staleTime: queryStaleTimes.profile,
   });
 

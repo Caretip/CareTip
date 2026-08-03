@@ -7,7 +7,8 @@ import { SettingsSectionLayout } from "@/features/settings/SettingsSectionLayout
 import { useI18n } from "@/hooks/useI18n";
 import { useTheme } from "@/hooks/useTheme";
 import { fetchBusinessProfile, patchBusinessProfile } from "@/services/api/businessService";
-import { queryKeys, queryStaleTimes } from "@/services/api/queryClient";
+import { queryStaleTimes } from "@/services/api/queryClient";
+import { useAuthUserId, useUserQueryKeys } from "@/services/api/queryKeys";
 import { showErrorToast, showSuccessToast } from "@/store/toastStore";
 import { friendlyErrorMessage } from "@/utils/friendlyError";
 import type { ColorPalette } from "@/theme/colors";
@@ -18,10 +19,13 @@ export function BusinessProfileSettingsScreen() {
   const { t } = useI18n();
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
+  const userId = useAuthUserId();
+  const keys = useUserQueryKeys();
   const queryClient = useQueryClient();
   const profileQuery = useQuery({
-    queryKey: queryKeys.businessProfile,
+    queryKey: keys.businessProfile,
     queryFn: fetchBusinessProfile,
+    enabled: Boolean(userId),
     staleTime: queryStaleTimes.profile,
   });
   const profile = profileQuery.data;
@@ -49,7 +53,7 @@ export function BusinessProfileSettingsScreen() {
         website: website.trim() || null,
       }),
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: queryKeys.businessProfile });
+      await queryClient.invalidateQueries({ queryKey: keys.businessProfile });
       showSuccessToast(t("settings.profileSaved"));
     },
     onError: (error) => {

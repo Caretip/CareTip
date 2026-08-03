@@ -9,7 +9,8 @@ import { useI18n } from "@/hooks/useI18n";
 import { useTheme } from "@/hooks/useTheme";
 import { fetchEmployeeProfile } from "@/services/api/employeeService";
 import { patchEmployeeProfile } from "@/services/api/settingsService";
-import { queryKeys, queryStaleTimes } from "@/services/api/queryClient";
+import { queryStaleTimes } from "@/services/api/queryClient";
+import { useAuthUserId, useUserQueryKeys } from "@/services/api/queryKeys";
 import { showErrorToast, showSuccessToast } from "@/store/toastStore";
 import { friendlyErrorMessage } from "@/utils/friendlyError";
 import type { ColorPalette } from "@/theme/colors";
@@ -19,10 +20,13 @@ export function EmployeeProfileSettingsScreen() {
   const { t } = useI18n();
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
+  const userId = useAuthUserId();
+  const keys = useUserQueryKeys();
   const queryClient = useQueryClient();
   const employeeQuery = useQuery({
-    queryKey: queryKeys.employeeMe,
+    queryKey: keys.employeeMe,
     queryFn: fetchEmployeeProfile,
+    enabled: Boolean(userId),
     staleTime: queryStaleTimes.profile,
   });
   const [name, setName] = useState("");
@@ -47,7 +51,7 @@ export function EmployeeProfileSettingsScreen() {
       }),
     onSuccess: () => {
       showSuccessToast(t("success.saved"));
-      void queryClient.invalidateQueries({ queryKey: queryKeys.employeeMe });
+      void queryClient.invalidateQueries({ queryKey: keys.employeeMe });
     },
     onError: (e) => showErrorToast(friendlyErrorMessage(e, t("settings.saveError"), t)),
   });

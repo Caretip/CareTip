@@ -85,13 +85,30 @@ export function clearRefreshCookie(
   res.setHeader?.(CARETIP_REFRESH_HEADER, "");
 }
 
-export async function issueRefreshToken(
+type RefreshTokenDb = {
+  refreshToken: {
+    create: (args: {
+      data: {
+        tokenHash: string;
+        userId: string;
+        expiresAt: Date;
+        revokedAt: null;
+        replacedByTokenId: null;
+      };
+      select: { id: true };
+    }) => Promise<{ id: string }>;
+  };
+};
+
+/** Issue a refresh row using an optional transaction client (multi-session — does not revoke others). */
+export async function issueRefreshTokenWithClient(
+  db: RefreshTokenDb,
   userId: string,
 ): Promise<{ id: string; token: string; expiresAt: Date }> {
   const token = crypto.randomBytes(48).toString("base64url");
   const tokenHash = sha256Hex(token);
   const expiresAt = nowPlusDays(refreshTokenTtlDays());
-  const row = await prisma.refreshToken.create({
+  const row = await db.refreshToken.create({
     data: {
       tokenHash,
       userId,
@@ -102,6 +119,12 @@ export async function issueRefreshToken(
     select: { id: true },
   });
   return { id: row.id, token, expiresAt };
+}
+
+export async function issueRefreshToken(
+  userId: string,
+): Promise<{ id: string; token: string; expiresAt: Date }> {
+  return issueRefreshTokenWithClient(prisma, userId);
 }
 
 /** Revoke all active refresh sessions for a user (e.g. reused / stolen refresh token). */

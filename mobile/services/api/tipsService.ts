@@ -40,8 +40,9 @@ export async function fetchEmployeeTipsList(params: TipListParams = {}): Promise
 }
 
 /**
- * Resolve a tip by id using existing list endpoints (no dedicated tip-by-id API).
- * Used when deep links / cold opens lack the list payload param.
+ * Resolve a tip by id using existing authenticated list endpoints
+ * (no dedicated tip-by-id API — do not invent one client-side).
+ * Returns null when the tip is not present in the caller's accessible history.
  */
 export async function findTipById(
   audience: "business" | "employee",

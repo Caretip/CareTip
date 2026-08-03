@@ -1,14 +1,17 @@
 import { useQuery } from "@tanstack/react-query";
 import { fetchBusinessCustomerFeedback } from "@/services/api/feedbackService";
-import { queryKeys, queryStaleTimes } from "@/services/api/queryClient";
+import { queryStaleTimes } from "@/services/api/queryClient";
+import { useAuthUserId, useUserQueryKeys } from "@/services/api/queryKeys";
 import { useAuth } from "@/hooks/useAuth";
 
 export function useBusinessCustomerFeedback(take = 3) {
   const { isAuthenticated } = useAuth();
+  const userId = useAuthUserId();
+  const keys = useUserQueryKeys();
   return useQuery({
-    queryKey: [...queryKeys.businessFeedback, take] as const,
+    queryKey: [...keys.businessFeedback, take] as const,
     queryFn: () => fetchBusinessCustomerFeedback({ take, skip: 0 }),
-    enabled: isAuthenticated,
+    enabled: Boolean(isAuthenticated && userId),
     staleTime: queryStaleTimes.feedback,
   });
 }

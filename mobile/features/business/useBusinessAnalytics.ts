@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { fetchBusinessQrAnalytics, fetchBusinessStats } from "@/services/api/businessService";
-import { queryKeys } from "@/services/api/queryClient";
+import { useAuthUserId, useUserQueryKeys } from "@/services/api/queryKeys";
 import { useAuth } from "@/hooks/useAuth";
 import { usePersistedTimeframe } from "@/hooks/usePersistedTimeframe";
 import { PREFERENCE_KEYS } from "@/constants/storageKeys";
@@ -14,21 +14,24 @@ type UseBusinessAnalyticsOptions = {
 export function useBusinessAnalytics(options: UseBusinessAnalyticsOptions = {}) {
   const includeQr = options.includeQr ?? false;
   const { isAuthenticated } = useAuth();
+  const userId = useAuthUserId();
+  const keys = useUserQueryKeys();
+  const scoped = Boolean(isAuthenticated && userId);
   const [timeframe, setTimeframe] = usePersistedTimeframe<BusinessTimeframe>(
     PREFERENCE_KEYS.businessAnalyticsTimeframe,
     "month",
   );
 
   const statsQuery = useQuery({
-    queryKey: [...queryKeys.businessStats, timeframe] as const,
+    queryKey: [...keys.businessStats, timeframe] as const,
     queryFn: () => fetchBusinessStats(timeframe),
-    enabled: isAuthenticated,
+    enabled: scoped,
   });
 
   const qrQuery = useQuery({
-    queryKey: [...queryKeys.businessQrAnalytics, timeframe] as const,
+    queryKey: [...keys.businessQrAnalytics, timeframe] as const,
     queryFn: () => fetchBusinessQrAnalytics(timeframe),
-    enabled: includeQr && isAuthenticated && statsQuery.isSuccess,
+    enabled: includeQr && scoped && statsQuery.isSuccess,
   });
 
   const refresh = async () => {

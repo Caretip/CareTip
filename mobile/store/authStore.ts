@@ -8,6 +8,8 @@ type AuthState = {
   setStatus: (status: AuthSessionStatus) => void;
   setAuthenticated: (token: string) => void;
   setUnauthenticated: () => void;
+  /** Offline / timeout with secrets retained for retry — never mounts authenticated shell. */
+  setSessionRecovery: () => void;
   setHydrated: (value: boolean) => void;
 };
 
@@ -25,6 +27,12 @@ export const useAuthStore = create<AuthState>((set) => ({
   setUnauthenticated: () =>
     set({
       status: "unauthenticated",
+      accessToken: null,
+      isHydrated: true,
+    }),
+  setSessionRecovery: () =>
+    set({
+      status: "session_recovery",
       accessToken: null,
       isHydrated: true,
     }),

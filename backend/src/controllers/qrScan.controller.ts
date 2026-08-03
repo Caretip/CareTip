@@ -6,6 +6,7 @@ import { MissingScanSessionError } from "../services/qr/qrScanRequestContext.js"
 import { QR_SCAN_TYPES, type QrScanType } from "../services/qr/qrScanEvent.service.js";
 import { startGuestVisitAndRecordScan } from "../services/qr/qrGuestVisit.service.js";
 import { emitQrScanSideEffects } from "../services/qr/qrScanEvent.service.js";
+import { QrScanOwnershipError } from "../services/qr/qrScanOwnership.service.js";
 
 const VERIFICATION_REQUIRED_MSG = "QR code generation will be enabled after admin verification.";
 
@@ -103,6 +104,10 @@ export async function recordGuestScan(req: Request, res: Response): Promise<void
   } catch (err) {
     if (err instanceof MissingScanSessionError) {
       res.status(400).json({ message: err.message });
+      return;
+    }
+    if (err instanceof QrScanOwnershipError) {
+      res.status(400).json({ message: err.message, code: err.code });
       return;
     }
     logServerError("qrScan.recordGuestScan", err);

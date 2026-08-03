@@ -30,6 +30,9 @@ export const API_ENDPOINTS = {
     enable: "/api/auth/login/mfa/enable",
     verify: "/api/auth/login/mfa/verify",
   },
+  mobile: {
+    createBillingSession: "/api/mobile/create-billing-session",
+  },
   business: {
     inviteValidate: "/api/business/invite/validate",
     profile: "/api/business/profile",

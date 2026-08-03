@@ -13,7 +13,7 @@ import Plug from "lucide-react-native/icons/plug";
 import Shield from "lucide-react-native/icons/shield";
 import User from "lucide-react-native/icons/user";
 import Users from "lucide-react-native/icons/users";
-import { openCareTipWeb } from "@/utils/openCareTipWeb";
+import { openAuthenticatedBillingWeb } from "@/utils/openBillingWeb";
 import type { SettingsMenuConfig } from "@/features/settings/settingsMenuTypes";
 
 export function buildBusinessSettingsMenu(router: Router): SettingsMenuConfig {
@@ -84,7 +84,7 @@ export function buildBusinessSettingsMenu(router: Router): SettingsMenuConfig {
             labelKey: "settings.menu.billing",
             descriptionKey: "settings.menu.billingDesc",
             icon: CreditCard,
-            onPress: () => void openCareTipWeb("/dashboard/billing/subscription"),
+            onPress: () => void openAuthenticatedBillingWeb(),
           },
           {
             id: "team",

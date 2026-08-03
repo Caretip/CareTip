@@ -5,7 +5,8 @@ import {
   fetchLocations,
   fetchTables,
 } from "@/services/api/qrService";
-import { queryClient, queryKeys, queryStaleTimes } from "@/services/api/queryClient";
+import { queryClient, queryStaleTimes } from "@/services/api/queryClient";
+import { useAuthUserId, useUserQueryKeys } from "@/services/api/queryKeys";
 import { saveOfflineQrItems } from "@/utils/offlineQrCache";
 import { useQuery } from "@tanstack/react-query";
 import type { EmployeeQrItem } from "@/types/qr";
@@ -14,18 +15,23 @@ import type { EmployeeQrItem } from "@/types/qr";
  * QR Studio — inventory + preview only (not analytics).
  */
 export function useQrStudio() {
+  const userId = useAuthUserId();
+  const keys = useUserQueryKeys();
+  const scoped = Boolean(userId);
+
   const profileQuery = useQuery({
-    queryKey: queryKeys.businessProfile,
+    queryKey: keys.businessProfile,
     queryFn: fetchBusinessProfile,
+    enabled: scoped,
     staleTime: queryStaleTimes.profile,
   });
 
   const inventoryQuery = useQuery({
-    queryKey: [...queryKeys.businessQr, "inventory"] as const,
+    queryKey: [...keys.businessQr, "inventory"] as const,
     queryFn: async () => {
       const profile = profileQuery.data ?? (await fetchBusinessProfile());
       const directoryEmployees = await queryClient.fetchQuery({
-        queryKey: queryKeys.businessEmployees(profile.id),
+        queryKey: keys.businessEmployees(profile.id),
         queryFn: () => fetchDirectoryEmployees(profile.id),
         staleTime: queryStaleTimes.roster,
       });
@@ -40,7 +46,7 @@ export function useQrStudio() {
       await saveOfflineQrItems(items);
       return items;
     },
-    enabled: profileQuery.isSuccess,
+    enabled: scoped && profileQuery.isSuccess,
     staleTime: queryStaleTimes.inventory,
   });
 

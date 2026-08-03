@@ -167,6 +167,11 @@ const routes: RouteObject[] = [
     errorElement: <ErrorBoundary />,
   },
   {
+    path: '/mobile-auth',
+    lazy: routeLazy(() => import('./pages/MobileAuthHandoffPage'), 'MobileAuthHandoffPage'),
+    errorElement: <ErrorBoundary />,
+  },
+  {
     path: '/business/login',
     element: <Navigate to="/login" replace />,
     errorElement: <ErrorBoundary />,

@@ -10,7 +10,8 @@ import { useI18n } from "@/hooks/useI18n";
 import { useTheme } from "@/hooks/useTheme";
 import { fetchBusinessProfile } from "@/services/api/businessService";
 import { patchBusinessProfile } from "@/services/api/settingsService";
-import { queryKeys, queryStaleTimes } from "@/services/api/queryClient";
+import { queryStaleTimes } from "@/services/api/queryClient";
+import { useAuthUserId, useUserQueryKeys } from "@/services/api/queryKeys";
 import { showErrorToast, showSuccessToast } from "@/store/toastStore";
 import { formatUserRole } from "@/utils/labels";
 import { friendlyErrorMessage } from "@/utils/friendlyError";
@@ -22,10 +23,13 @@ export function BusinessGeneralSettingsScreen() {
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const { user } = useAuth();
+  const userId = useAuthUserId();
+  const keys = useUserQueryKeys();
   const queryClient = useQueryClient();
   const profileQuery = useQuery({
-    queryKey: queryKeys.businessProfile,
+    queryKey: keys.businessProfile,
     queryFn: fetchBusinessProfile,
+    enabled: Boolean(userId),
     staleTime: queryStaleTimes.profile,
   });
   const [contactPhone, setContactPhone] = useState("");
@@ -38,7 +42,7 @@ export function BusinessGeneralSettingsScreen() {
     mutationFn: () => patchBusinessProfile({ contactPhone: contactPhone.trim() || null }),
     onSuccess: () => {
       showSuccessToast(t("success.saved"));
-      void queryClient.invalidateQueries({ queryKey: queryKeys.businessProfile });
+      void queryClient.invalidateQueries({ queryKey: keys.businessProfile });
     },
     onError: (e) => showErrorToast(friendlyErrorMessage(e, t("settings.saveError"), t)),
   });

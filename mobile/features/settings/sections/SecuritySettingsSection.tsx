@@ -14,7 +14,8 @@ import {
   fetchTwoFactorStatus,
   setupTwoFactor,
 } from "@/services/api/settingsService";
-import { queryKeys, queryStaleTimes } from "@/services/api/queryClient";
+import { queryStaleTimes } from "@/services/api/queryClient";
+import { useAuthUserId, useUserQueryKeys } from "@/services/api/queryKeys";
 import { showErrorToast, showSuccessToast } from "@/store/toastStore";
 import { friendlyErrorMessage } from "@/utils/friendlyError";
 import type { TwoFactorSetup } from "@/types/settings";
@@ -29,6 +30,8 @@ export function SecuritySettingsSection({ includeMfa = false }: SecuritySettings
   const { t } = useI18n();
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
+  const userId = useAuthUserId();
+  const keys = useUserQueryKeys();
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [mfaCode, setMfaCode] = useState("");
@@ -36,9 +39,9 @@ export function SecuritySettingsSection({ includeMfa = false }: SecuritySettings
   const [mfaSetupLoading, setMfaSetupLoading] = useState(false);
 
   const twoFactorQuery = useQuery({
-    queryKey: queryKeys.twoFactor,
+    queryKey: keys.twoFactor,
     queryFn: fetchTwoFactorStatus,
-    enabled: includeMfa,
+    enabled: includeMfa && Boolean(userId),
     staleTime: queryStaleTimes.settings,
   });
 

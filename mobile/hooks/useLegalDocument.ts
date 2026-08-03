@@ -5,6 +5,7 @@ import {
   isLegalNetworkFailure,
   type LegalDocumentKind,
 } from "@/services/api/legalService";
+import { publicQueryKeys } from "@/services/api/queryKeys";
 import { useI18n } from "@/hooks/useI18n";
 import { friendlyErrorMessage } from "@/utils/friendlyError";
 
@@ -13,7 +14,7 @@ export function useLegalDocument(kind: LegalDocumentKind) {
   const lang = language.slice(0, 2);
 
   const query = useQuery({
-    queryKey: ["legal-document", kind, lang] as const,
+    queryKey: publicQueryKeys.legalDocument(kind, lang),
     queryFn: () => fetchLegalDocument(kind, lang),
     staleTime: 5 * 60 * 1000,
     retry: (failureCount, error) => {

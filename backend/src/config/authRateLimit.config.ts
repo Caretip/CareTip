@@ -42,4 +42,14 @@ export const authRateLimits = {
     ip: { max: envInt("AUTH_INVITE_VALIDATE_IP_MAX_PER_15M", 60), windowMs: AUTH_WINDOW_15M_MS },
     inviteCode: { max: envInt("AUTH_INVITE_VALIDATE_CODE_MAX_PER_HOUR", 50), windowMs: AUTH_WINDOW_1H_MS },
   },
+  /** Mobile → web billing handoff issuance (authenticated manager). */
+  mobileWebHandoffCreate: {
+    ip: { max: envInt("AUTH_MOBILE_HANDOFF_CREATE_IP_MAX_PER_15M", 40), windowMs: AUTH_WINDOW_15M_MS },
+    user: { max: envInt("AUTH_MOBILE_HANDOFF_CREATE_USER_MAX_PER_15M", 10), windowMs: AUTH_WINDOW_15M_MS },
+  },
+  /** Mobile → web handoff redeem (public, token-gated). */
+  mobileWebHandoffConsume: {
+    ip: { max: envInt("AUTH_MOBILE_HANDOFF_CONSUME_IP_MAX_PER_15M", 60), windowMs: AUTH_WINDOW_15M_MS },
+    token: { max: envInt("AUTH_MOBILE_HANDOFF_CONSUME_TOKEN_MAX_PER_15M", 8), windowMs: AUTH_WINDOW_15M_MS },
+  },
 } as const;

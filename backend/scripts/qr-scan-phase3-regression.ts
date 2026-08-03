@@ -9,6 +9,10 @@ import { prisma } from "../src/prisma.js";
 import { QR_SCAN_TYPES } from "../src/services/qr/qrScanEvent.service.js";
 import { startGuestVisitAndRecordScan, completeGuestVisit } from "../src/services/qr/qrGuestVisit.service.js";
 import { emitQrScanSideEffects } from "../src/services/qr/qrScanEvent.service.js";
+import {
+  QrScanOwnershipError,
+  QR_SCAN_OWNERSHIP_MISMATCH_CODE,
+} from "../src/services/qr/qrScanOwnership.service.js";
 import { getBusinessQrAnalytics } from "../src/services/qr/qrAnalytics.service.js";
 import { ACTIVITY_EVENT_TYPES } from "../src/services/activity/businessActivityEvent.service.js";
 import { QR_GUEST_VISIT_TTL_MS } from "../src/services/qr/qrScanRequestContext.js";
@@ -124,6 +128,90 @@ async function seedFixture() {
       }).catch(() => undefined);
     },
   };
+}
+
+async function seedSecondBusiness(tag: number) {
+  const passwordHash = await bcrypt.hash("TestPass1!", 10);
+  const user = await prisma.user.create({
+    data: {
+      email: `qr-phase3-b2-${tag}@caretip-test.local`,
+      passwordHash,
+      role: "MANAGER",
+      emailVerified: true,
+      hasCompletedOnboarding: true,
+      business: {
+        create: {
+          name: `QR Phase3 B2 ${tag}`,
+          slug: `qr-phase3-b2-${tag}`,
+          verificationStatus: "verified",
+          onboardingVerificationStatus: "approved",
+          subscriptionTier: "premium",
+          timezone: "Europe/Berlin",
+        },
+      },
+    },
+    include: { business: true },
+  });
+  const businessId = user.business!.id;
+  const empUser = await prisma.user.create({
+    data: {
+      email: `qr-phase3-b2-emp-${tag}@caretip-test.local`,
+      passwordHash,
+      role: "EMPLOYEE",
+      emailVerified: true,
+      employee: {
+        create: {
+          name: "Phase3 Other Staff",
+          slug: `phase3-other-${tag}`,
+          jobTitle: "Server",
+          businessId,
+          isActive: true,
+          activationStatus: "active",
+        },
+      },
+    },
+    include: { employee: true },
+  });
+  const location = await prisma.location.create({
+    data: { name: "Other Hall", businessId },
+  });
+  const table = await prisma.table.create({
+    data: { name: "Other Table", locationId: location.id, qrSlug: `tbl-p3-b2-${tag}` },
+  });
+
+  return {
+    businessId,
+    employeeId: empUser.employee!.id,
+    locationId: location.id,
+    tableId: table.id,
+    cleanup: async () => {
+      await prisma.qrGuestVisit.deleteMany({ where: { businessId } });
+      await prisma.qrScanEvent.deleteMany({ where: { businessId } });
+      await prisma.table.delete({ where: { id: table.id } }).catch(() => undefined);
+      await prisma.location.delete({ where: { id: location.id } }).catch(() => undefined);
+      await prisma.employee.delete({ where: { id: empUser.employee!.id } }).catch(() => undefined);
+      await prisma.business.delete({ where: { id: businessId } }).catch(() => undefined);
+      await prisma.user.deleteMany({ where: { id: { in: [user.id, empUser.id] } } }).catch(() => undefined);
+    },
+  };
+}
+
+async function expectOwnershipRejected(
+  id: string,
+  name: string,
+  input: Parameters<typeof startGuestVisitAndRecordScan>[0],
+) {
+  try {
+    await startGuestVisitAndRecordScan(input);
+    fail(id, name, "Expected QrScanOwnershipError");
+  } catch (e) {
+    if (e instanceof QrScanOwnershipError && e.code === QR_SCAN_OWNERSHIP_MISMATCH_CODE) {
+      pass(id, name, e.message);
+    } else {
+      const msg = e instanceof Error ? e.message : String(e);
+      fail(id, name, `Unexpected error: ${msg}`);
+    }
+  }
 }
 
 async function assertOneScanPipeline(
@@ -338,6 +426,175 @@ async function main() {
       pass("sql-dedupe", "No duplicate dedupe_key in qr_scan_events", "0 duplicates");
     } else {
       fail("sql-dedupe", "No duplicate dedupe_key", `dup=${dupScans[0]?.c}`);
+    }
+
+    // -------------------------------------------------------------------------
+    // Phase 1 — ownership validation (extend this suite; do not fork a new one)
+    // -------------------------------------------------------------------------
+    const other = await seedSecondBusiness(fx.tag);
+    try {
+      await expectOwnershipRejected(
+        "s9-foreign-employee",
+        "Foreign employeeId → ownership rejected",
+        {
+          businessId: fx.businessId,
+          scanType: QR_SCAN_TYPES.EMPLOYEE_LEGACY_ID,
+          employeeId: other.employeeId,
+          req: mockReq(`p3s9${fx.tag}`.slice(0, 32), "/api/qr/scan"),
+        },
+      );
+
+      await expectOwnershipRejected(
+        "s10-foreign-location",
+        "Foreign locationId → ownership rejected",
+        {
+          businessId: fx.businessId,
+          scanType: QR_SCAN_TYPES.LOCATION,
+          locationId: other.locationId,
+          req: mockReq(`p3s10${fx.tag}`.slice(0, 32), "/api/qr/scan"),
+        },
+      );
+
+      await expectOwnershipRejected(
+        "s11-foreign-table",
+        "Foreign tableId → ownership rejected",
+        {
+          businessId: fx.businessId,
+          scanType: QR_SCAN_TYPES.TABLE_ID,
+          tableId: other.tableId,
+          req: mockReq(`p3s11${fx.tag}`.slice(0, 32), "/api/qr/scan"),
+        },
+      );
+
+      const otherLocationSameBiz = await prisma.location.create({
+        data: { name: "Side Room", businessId: fx.businessId },
+      });
+      await expectOwnershipRejected(
+        "s12-table-location-mismatch",
+        "Own table + different same-biz locationId → rejected",
+        {
+          businessId: fx.businessId,
+          scanType: QR_SCAN_TYPES.TABLE_ID,
+          tableId: fx.tableId,
+          locationId: otherLocationSameBiz.id,
+          req: mockReq(`p3s12${fx.tag}`.slice(0, 32), "/api/qr/scan"),
+        },
+      );
+      await prisma.location.delete({ where: { id: otherLocationSameBiz.id } }).catch(() => undefined);
+
+      const passwordHash = await bcrypt.hash("TestPass1!", 10);
+      const inactiveUser = await prisma.user.create({
+        data: {
+          email: `qr-phase3-inactive-${fx.tag}@caretip-test.local`,
+          passwordHash,
+          role: "EMPLOYEE",
+          emailVerified: true,
+          employee: {
+            create: {
+              name: "Inactive Staff",
+              slug: `p3-inactive-${fx.tag}`,
+              jobTitle: "Server",
+              businessId: fx.businessId,
+              isActive: false,
+              activationStatus: "active",
+            },
+          },
+        },
+        include: { employee: true },
+      });
+      const deletedUser = await prisma.user.create({
+        data: {
+          email: `qr-phase3-deleted-${fx.tag}@caretip-test.local`,
+          passwordHash,
+          role: "EMPLOYEE",
+          emailVerified: true,
+          employee: {
+            create: {
+              name: "Deleted Staff",
+              slug: `p3-deleted-${fx.tag}`,
+              jobTitle: "Server",
+              businessId: fx.businessId,
+              isActive: true,
+              isDeleted: true,
+              deletedAt: new Date(),
+              activationStatus: "active",
+            },
+          },
+        },
+        include: { employee: true },
+      });
+      const inactiveEmpId = inactiveUser.employee!.id;
+      const deletedEmpId = deletedUser.employee!.id;
+
+      await expectOwnershipRejected(
+        "s13-inactive-employee",
+        "Inactive employeeId → ownership rejected",
+        {
+          businessId: fx.businessId,
+          scanType: QR_SCAN_TYPES.EMPLOYEE,
+          employeeId: inactiveEmpId,
+          req: mockReq(`p3s13${fx.tag}`.slice(0, 32), "/api/qr/scan"),
+        },
+      );
+
+      await expectOwnershipRejected(
+        "s14-deleted-employee",
+        "Soft-deleted employeeId → ownership rejected",
+        {
+          businessId: fx.businessId,
+          scanType: QR_SCAN_TYPES.EMPLOYEE,
+          employeeId: deletedEmpId,
+          req: mockReq(`p3s14${fx.tag}`.slice(0, 32), "/api/qr/scan"),
+        },
+      );
+
+      // Legitimate same-tenant path still works after ownership gates
+      const s15 = `p3s15${fx.tag}`.slice(0, 32);
+      const r15 = await recordScan(s15, "/api/qr/scan", {
+        businessId: fx.businessId,
+        scanType: QR_SCAN_TYPES.EMPLOYEE,
+        employeeId: fx.employeeId,
+      });
+      if (r15.inserted && r15.scanId) {
+        pass("s15-legit-employee", "Same-tenant employee scan still inserts", `scanId=${r15.scanId}`);
+      } else {
+        fail("s15-legit-employee", "Same-tenant employee scan still inserts", "Expected insert");
+      }
+
+      // No partial writes on rejected ownership attempt
+      const poisonSession = `p3s16${fx.tag}`.slice(0, 32);
+      try {
+        await startGuestVisitAndRecordScan({
+          businessId: fx.businessId,
+          scanType: QR_SCAN_TYPES.EMPLOYEE_LEGACY_ID,
+          employeeId: other.employeeId,
+          req: mockReq(poisonSession, "/api/qr/scan"),
+        });
+      } catch {
+        /* expected */
+      }
+      const poisonVisits = await prisma.qrGuestVisit.count({
+        where: { businessId: fx.businessId, sessionId: poisonSession },
+      });
+      const poisonScans = await prisma.qrScanEvent.count({
+        where: { businessId: fx.businessId, sessionId: poisonSession },
+      });
+      if (poisonVisits === 0 && poisonScans === 0) {
+        pass("s16-no-partial-write", "Ownership reject → zero visit/scan rows", "clean");
+      } else {
+        fail(
+          "s16-no-partial-write",
+          "Ownership reject → zero visit/scan rows",
+          `visits=${poisonVisits} scans=${poisonScans}`,
+        );
+      }
+
+      await prisma.employee.delete({ where: { id: inactiveEmpId } }).catch(() => undefined);
+      await prisma.user.delete({ where: { id: inactiveUser.id } }).catch(() => undefined);
+      await prisma.employee.delete({ where: { id: deletedEmpId } }).catch(() => undefined);
+      await prisma.user.delete({ where: { id: deletedUser.id } }).catch(() => undefined);
+    } finally {
+      await other.cleanup();
     }
 
     void QR_GUEST_VISIT_TTL_MS;

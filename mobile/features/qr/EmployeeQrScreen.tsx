@@ -11,7 +11,8 @@ import { Skeleton } from "@/components/ui/Skeleton";
 import { useI18n } from "@/hooks/useI18n";
 import { useTheme } from "@/hooks/useTheme";
 import { fetchEmployeeProfile } from "@/services/api/employeeService";
-import { queryKeys, queryStaleTimes } from "@/services/api/queryClient";
+import { queryStaleTimes } from "@/services/api/queryClient";
+import { useAuthUserId, useUserQueryKeys } from "@/services/api/queryKeys";
 import { resolveEmployeeQrUrl } from "@/utils/appPublicUrl";
 import { friendlyErrorMessage } from "@/utils/friendlyError";
 import { showSuccessToast } from "@/store/toastStore";
@@ -23,12 +24,15 @@ export function EmployeeQrScreen() {
   const { t } = useI18n();
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
+  const userId = useAuthUserId();
+  const keys = useUserQueryKeys();
   const [cached, setCached] = useState<Awaited<ReturnType<typeof loadEmployeeQrCache>>>(null);
   const [qrReloadKey, setQrReloadKey] = useState(0);
 
   const { data: profile, isLoading, isError, error, refetch, isRefetching } = useQuery({
-    queryKey: queryKeys.employeeMe,
+    queryKey: keys.employeeMe,
     queryFn: fetchEmployeeProfile,
+    enabled: Boolean(userId),
     staleTime: queryStaleTimes.profile,
   });
 

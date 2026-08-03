@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { fetchBrandedQrImage } from "@/services/api/brandedQrService";
 import type { BrandedQrViewerMode } from "@/types/qr";
-import { queryKeys } from "@/services/api/queryClient";
+import { useAuthUserId, useUserQueryKeys } from "@/services/api/queryKeys";
 
 type UseBrandedQrImageOptions = {
   mode: BrandedQrViewerMode;
@@ -17,11 +17,13 @@ export function useBrandedQrImage({
   enabled = true,
   reloadKey = 0,
 }: UseBrandedQrImageOptions) {
+  const userId = useAuthUserId();
+  const keys = useUserQueryKeys();
   const trimmedUrl = targetUrl.trim();
-  const active = enabled && Boolean(trimmedUrl);
+  const active = Boolean(userId) && enabled && Boolean(trimmedUrl);
 
   return useQuery({
-    queryKey: [...queryKeys.brandedQr(mode, trimmedUrl), reloadKey] as const,
+    queryKey: [...keys.brandedQr(mode, trimmedUrl), reloadKey] as const,
     queryFn: () =>
       fetchBrandedQrImage({
         mode,

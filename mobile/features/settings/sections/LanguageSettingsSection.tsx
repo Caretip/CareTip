@@ -8,7 +8,8 @@ import { useI18n } from "@/hooks/useI18n";
 import { useTheme } from "@/hooks/useTheme";
 import { fetchAccountSettings, patchAccountSettings } from "@/services/api/settingsService";
 import { saveUserSnapshot } from "@/services/auth/tokenStorage";
-import { queryKeys, queryStaleTimes } from "@/services/api/queryClient";
+import { queryStaleTimes } from "@/services/api/queryClient";
+import { useAuthUserId, useUserQueryKeys } from "@/services/api/queryKeys";
 import { useUserStore } from "@/store/userStore";
 import { showErrorToast } from "@/store/toastStore";
 import { friendlyErrorMessage } from "@/utils/friendlyError";
@@ -20,12 +21,15 @@ export function LanguageSettingsSection() {
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const { user } = useAuth();
+  const userId = useAuthUserId();
+  const keys = useUserQueryKeys();
   const [locale, setLocale] = useState<"en" | "de">(user?.preferredLocale === "de" ? "de" : "en");
   const [saving, setSaving] = useState(false);
 
   const accountQuery = useQuery({
-    queryKey: queryKeys.accountSettings,
+    queryKey: keys.accountSettings,
     queryFn: fetchAccountSettings,
+    enabled: Boolean(userId),
     staleTime: queryStaleTimes.settings,
   });
 

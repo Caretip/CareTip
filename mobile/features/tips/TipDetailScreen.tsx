@@ -12,23 +12,12 @@ import { Skeleton } from "@/components/ui/Skeleton";
 import { useI18n } from "@/hooks/useI18n";
 import { useTheme } from "@/hooks/useTheme";
 import { findTipById } from "@/services/api/tipsService";
-import { queryKeys, queryStaleTimes } from "@/services/api/queryClient";
+import { queryStaleTimes } from "@/services/api/queryClient";
+import { useAuthUserId, useUserQueryKeys } from "@/services/api/queryKeys";
 import { formatEur } from "@/utils/format";
 import { formatTipStatus, uiLocaleTag } from "@/utils/labels";
-import type { TipActivityRow } from "@/types/tips";
 import type { ColorPalette } from "@/theme/colors";
 import { spacing, typography } from "@/theme";
-
-function parseTipPayload(raw: string | string[] | undefined): TipActivityRow | null {
-  if (typeof raw !== "string" || !raw.trim()) return null;
-  try {
-    const parsed = JSON.parse(decodeURIComponent(raw)) as TipActivityRow;
-    if (!parsed?.id) return null;
-    return parsed;
-  } catch {
-    return null;
-  }
-}
 
 function statusTone(status: string): "success" | "warning" | "danger" | "neutral" {
   if (status === "success") return "success";
@@ -37,6 +26,16 @@ function statusTone(status: string): "success" | "warning" | "danger" | "neutral
   return "neutral";
 }
 
+function resolveTipId(raw: string | string[] | undefined): string {
+  if (typeof raw === "string") return raw.trim();
+  if (Array.isArray(raw) && typeof raw[0] === "string") return raw[0].trim();
+  return "";
+}
+
+/**
+ * Phase 2.3 — tip detail trusts only `tipId` + server fetch.
+ * Route params must never carry tip body / amounts / status.
+ */
 export function TipDetailScreen({
   audience = "employee",
 }: {
@@ -45,19 +44,17 @@ export function TipDetailScreen({
   const { t } = useI18n();
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
-  const params = useLocalSearchParams<{ id?: string; payload?: string }>();
-  const tipFromPayload = parseTipPayload(params.payload);
-  const tipId =
-    tipFromPayload?.id ?? (typeof params.id === "string" ? params.id : "");
+  const params = useLocalSearchParams<{ id?: string }>();
+  const tipId = resolveTipId(params.id);
+  const userId = useAuthUserId();
+  const keys = useUserQueryKeys();
 
   const tipQuery = useQuery({
-    queryKey: queryKeys.tipDetail(audience, tipId),
+    queryKey: keys.tipDetail(audience, tipId),
     queryFn: () => findTipById(audience, tipId),
-    enabled: !tipFromPayload && Boolean(tipId),
+    enabled: Boolean(userId && tipId),
     staleTime: queryStaleTimes.tipDetail,
   });
-
-  const tip = tipFromPayload ?? tipQuery.data ?? null;
 
   if (!tipId) {
     return (
@@ -68,7 +65,8 @@ export function TipDetailScreen({
     );
   }
 
-  if (!tipFromPayload && tipQuery.isLoading) {
+  // Skeleton until first server-backed result — never paint navigation/route tip bodies.
+  if (!tipQuery.data && (tipQuery.isLoading || tipQuery.isFetching)) {
     return (
       <Screen tabSafe={false}>
         <DetailScreenHeader title={t("tips.detailTitle")} />
@@ -81,7 +79,7 @@ export function TipDetailScreen({
     );
   }
 
-  if (!tipFromPayload && tipQuery.isError) {
+  if (tipQuery.isError) {
     return (
       <Screen tabSafe={false}>
         <DetailScreenHeader title={t("tips.detailTitle")} />
@@ -92,6 +90,8 @@ export function TipDetailScreen({
       </Screen>
     );
   }
+
+  const tip = tipQuery.data ?? null;
 
   if (!tip) {
     return (
@@ -147,11 +147,6 @@ export function TipDetailScreen({
 
 function createStyles(colors: ColorPalette) {
   return StyleSheet.create({
-    title: {
-      ...typography.title,
-      color: colors.foreground,
-      marginBottom: spacing.md,
-    },
     hero: {
       gap: spacing.md,
       paddingBottom: spacing.xl,
@@ -164,10 +159,6 @@ function createStyles(colors: ColorPalette) {
       fontSize: 36,
       lineHeight: 40,
       color: colors.foreground,
-    },
-    body: {
-      ...typography.body,
-      color: colors.mutedForeground,
     },
     loading: {
       gap: spacing.lg,

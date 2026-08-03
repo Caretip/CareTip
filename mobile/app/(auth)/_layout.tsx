@@ -3,16 +3,33 @@ import { useAuth } from "@/hooks/useAuth";
 import { useSessionRoutingReady } from "@/hooks/useAppReady";
 import { getPostAuthHref, resolvePostAuthAction } from "@/utils/postAuthNavigation";
 
-const AUTH_RECOVERY_ROUTES = new Set(["verify-email", "onboarding", "mfa"]);
+const AUTH_RECOVERY_ROUTES = new Set(["verify-email", "onboarding", "mfa", "session-recovery"]);
 
 export default function AuthLayout() {
-  const { isAuthenticated, user } = useAuth();
+  const { isAuthenticated, user, status } = useAuth();
   const routingReady = useSessionRoutingReady();
   const segments = useSegments();
   const currentRoute = segments[segments.length - 1] ?? "";
 
   if (!routingReady) {
     return null;
+  }
+
+  if (status === "session_recovery") {
+    const onSessionRecovery = (segments as string[]).includes("session-recovery");
+    if (!onSessionRecovery) {
+      return <Redirect href={"/(auth)/session-recovery" as never} />;
+    }
+    return (
+      <Stack
+        screenOptions={{
+          headerShown: false,
+          contentStyle: { backgroundColor: "transparent" },
+          animation: "fade",
+          animationDuration: 280,
+        }}
+      />
+    );
   }
 
   if (isAuthenticated && user) {

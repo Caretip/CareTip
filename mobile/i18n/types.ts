@@ -84,6 +84,11 @@ export type MobileMessages = {
     mfaFailed: string;
     mfaSetupFailed: string;
     backToSignIn: string;
+    sessionRecoveryEyebrow: string;
+    sessionRecoveryTitle: string;
+    sessionRecoverySubtitle: string;
+    sessionRecoveryRetry: string;
+    sessionRecoverySignIn: string;
     qrA11y: string;
     continueWithGoogle: string;
     continueWithEmail: string;

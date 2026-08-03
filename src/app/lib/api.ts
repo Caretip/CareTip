@@ -2753,6 +2753,26 @@ export async function createBillingPortalSession(opts?: {
   });
 }
 
+/** Mobile app → web billing session handoff (one-time token redeem). */
+export type MobileWebHandoffConsumeResponse = AuthResponse & {
+  destinationPath: string;
+  purpose: string;
+};
+
+export async function consumeMobileWebHandoff(
+  token: string,
+): Promise<MobileWebHandoffConsumeResponse> {
+  return apiRequest<MobileWebHandoffConsumeResponse>(
+    apiPath("/api/auth/mobile-web-handoff/consume"),
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ token: token.trim() }),
+      credentials: "include",
+    },
+  );
+}
+
 export async function scheduleBillingCancelAtPeriodEnd(): Promise<{
   status: string;
   cancelAtPeriodEnd: boolean;

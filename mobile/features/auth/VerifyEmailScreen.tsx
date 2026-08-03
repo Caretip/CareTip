@@ -7,9 +7,8 @@ import { AuthContinueButton } from "@/components/auth/AuthContinueButton";
 import { useAuth } from "@/hooks/useAuth";
 import { useI18n } from "@/hooks/useI18n";
 import { useTheme } from "@/hooks/useTheme";
+import { establishAuthenticatedSession } from "@/services/auth/authCacheBoundary";
 import { authService } from "@/services/auth/authService";
-import { useAuthStore } from "@/store/authStore";
-import { useUserStore } from "@/store/userStore";
 import { friendlyErrorMessage } from "@/utils/friendlyError";
 import { navigateAfterAuth } from "@/utils/postAuthNavigation";
 import { resolveLoginLocale } from "@/utils/resolveLoginLocale";
@@ -43,8 +42,7 @@ export function VerifyEmailScreen() {
     try {
       const session = await authService.refreshSession();
       if (session?.user) {
-        useUserStore.getState().setUser(session.user);
-        useAuthStore.getState().setAuthenticated(session.token);
+        await establishAuthenticatedSession(session.token, session.user, "verify-email");
         await navigateAfterAuth(router, session.user);
         return;
       }

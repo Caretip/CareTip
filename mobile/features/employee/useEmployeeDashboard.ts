@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { fetchEmployeeProfile, fetchEmployeeTips } from "@/services/api/employeeService";
-import { queryKeys, queryStaleTimes } from "@/services/api/queryClient";
+import { queryStaleTimes } from "@/services/api/queryClient";
+import { useAuthUserId, useUserQueryKeys } from "@/services/api/queryKeys";
 import { useAuth } from "@/hooks/useAuth";
 import { usePersistedTimeframe } from "@/hooks/usePersistedTimeframe";
 import { PREFERENCE_KEYS } from "@/constants/storageKeys";
@@ -8,21 +9,24 @@ import type { EmployeeTimeframe } from "@/types/employee";
 
 export function useEmployeeDashboard() {
   const { isAuthenticated } = useAuth();
+  const userId = useAuthUserId();
+  const keys = useUserQueryKeys();
+  const scoped = Boolean(isAuthenticated && userId);
   const [timeframe, setTimeframe] = usePersistedTimeframe<EmployeeTimeframe>(
     PREFERENCE_KEYS.employeeDashboardTimeframe,
     "week",
   );
   const profileQuery = useQuery({
-    queryKey: queryKeys.employeeMe,
+    queryKey: keys.employeeMe,
     queryFn: fetchEmployeeProfile,
-    enabled: isAuthenticated,
+    enabled: scoped,
     staleTime: queryStaleTimes.profile,
   });
 
   const tipsQuery = useQuery({
-    queryKey: [...queryKeys.employeeTips, timeframe] as const,
+    queryKey: [...keys.employeeTips, timeframe] as const,
     queryFn: () => fetchEmployeeTips(timeframe),
-    enabled: isAuthenticated && profileQuery.isSuccess,
+    enabled: scoped && profileQuery.isSuccess,
   });
 
   const refresh = async () => {

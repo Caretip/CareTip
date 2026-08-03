@@ -6,12 +6,11 @@ import { AuthField } from "@/components/auth/AuthField";
 import { AuthContinueButton } from "@/components/auth/AuthContinueButton";
 import { useAuth } from "@/hooks/useAuth";
 import { useI18n } from "@/hooks/useI18n";
+import { establishAuthenticatedSession } from "@/services/auth/authCacheBoundary";
 import { authService } from "@/services/auth/authService";
 import { fetchBusinessProfile, patchBusinessProfile } from "@/services/api/businessService";
 import { friendlyErrorMessage } from "@/utils/friendlyError";
 import { navigateAfterAuth } from "@/utils/postAuthNavigation";
-import { useUserStore } from "@/store/userStore";
-import { useAuthStore } from "@/store/authStore";
 import { authCardStyles } from "@/components/auth/authCardStyles";
 import { authBrand } from "@/theme/authBrand";
 import { spacing, typography } from "@/theme";
@@ -79,8 +78,10 @@ export function BusinessOnboardingScreen() {
     setBusy(true);
     try {
       const session = await authService.patchMyOnboardingStatus(true);
-      useUserStore.getState().setUser(session.user);
-      useAuthStore.getState().setAuthenticated(session.token);
+      // Same user entering the app shell — clear RQ so no pre-onboarding private cache paints.
+      await establishAuthenticatedSession(session.token, session.user, "onboarding-complete", {
+        clearOfflineQr: false,
+      });
       await navigateAfterAuth(router, session.user);
     } catch (err) {
       setError(friendlyErrorMessage(err, t("auth.onboardingSaveFailed"), t));

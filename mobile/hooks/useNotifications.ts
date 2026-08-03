@@ -6,15 +6,17 @@ import {
   markAllNotificationsRead,
   markNotificationRead,
 } from "@/services/api/notificationsService";
-import { queryKeys } from "@/services/api/queryClient";
+import { useAuthUserId, useUserQueryKeys } from "@/services/api/queryKeys";
 import { useSocket } from "@/components/providers/SocketProvider";
 
 export function useUnreadNotificationCount(enabled = true) {
   const { connected } = useSocket();
+  const userId = useAuthUserId();
+  const keys = useUserQueryKeys();
   return useQuery({
-    queryKey: queryKeys.notificationUnread,
+    queryKey: keys.notificationUnread,
     queryFn: fetchUnreadNotificationCount,
-    enabled,
+    enabled: Boolean(userId) && enabled,
     /** Prefer Socket.IO invalidation; poll only when disconnected. */
     refetchInterval: connected ? false : 120_000,
   });
@@ -22,9 +24,11 @@ export function useUnreadNotificationCount(enabled = true) {
 
 export function useNotificationsFeed(search = "") {
   const queryClient = useQueryClient();
+  const userId = useAuthUserId();
+  const keys = useUserQueryKeys();
 
   const query = useInfiniteQuery({
-    queryKey: [...queryKeys.notifications, search] as const,
+    queryKey: [...keys.notifications, search] as const,
     queryFn: ({ pageParam }) =>
       fetchNotifications({
         limit: 30,
@@ -33,29 +37,30 @@ export function useNotificationsFeed(search = "") {
       }),
     initialPageParam: null as string | null,
     getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
+    enabled: Boolean(userId),
   });
 
   const markRead = useMutation({
     mutationFn: markNotificationRead,
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: queryKeys.notifications });
-      void queryClient.invalidateQueries({ queryKey: queryKeys.notificationUnread });
+      void queryClient.invalidateQueries({ queryKey: keys.notifications });
+      void queryClient.invalidateQueries({ queryKey: keys.notificationUnread });
     },
   });
 
   const markAllRead = useMutation({
     mutationFn: markAllNotificationsRead,
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: queryKeys.notifications });
-      void queryClient.invalidateQueries({ queryKey: queryKeys.notificationUnread });
+      void queryClient.invalidateQueries({ queryKey: keys.notifications });
+      void queryClient.invalidateQueries({ queryKey: keys.notificationUnread });
     },
   });
 
   const remove = useMutation({
     mutationFn: deleteNotification,
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: queryKeys.notifications });
-      void queryClient.invalidateQueries({ queryKey: queryKeys.notificationUnread });
+      void queryClient.invalidateQueries({ queryKey: keys.notifications });
+      void queryClient.invalidateQueries({ queryKey: keys.notificationUnread });
     },
   });
 

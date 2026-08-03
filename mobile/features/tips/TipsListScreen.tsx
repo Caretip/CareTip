@@ -105,10 +105,7 @@ export function TipsListScreen({ role, basePath }: TipsListScreenProps) {
     (tip: TipActivityRow) => {
       router.push({
         pathname: `${basePath}/[id]` as never,
-        params: {
-          id: tip.id,
-          payload: encodeURIComponent(JSON.stringify(tip)),
-        },
+        params: { id: tip.id },
       });
     },
     [basePath, router],

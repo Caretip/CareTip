@@ -2,7 +2,7 @@ import { useEffect, useRef } from "react";
 import { AppState, type AppStateStatus } from "react-native";
 import { useQueryClient } from "@tanstack/react-query";
 import { useSocket } from "@/components/providers/SocketProvider";
-import { queryKeys } from "@/services/api/queryClient";
+import { getUserQueryKeys } from "@/services/api/queryKeys";
 
 type RealtimeEnvelope = {
   eventId?: string;
@@ -17,7 +17,7 @@ const DEBOUNCE_MS = 350;
  * Socket → React Query invalidate bridge (web quiet-refetch parity).
  * - Dedupes by envelope.eventId
  * - Debounces stampedes
- * - Targeted invalidation per event family
+ * - Targeted invalidation per event family (current user scope only)
  * - Foreground resume refresh after background
  */
 export function RealtimeQueryBridge() {
@@ -41,22 +41,25 @@ export function RealtimeQueryBridge() {
     const flush = () => {
       const keys = pendingRef.current;
       pendingRef.current = new Set();
-      if (keys.has("stats")) void queryClient.invalidateQueries({ queryKey: queryKeys.businessStats });
+      const qk = getUserQueryKeys();
+      if (!qk) return;
+
+      if (keys.has("stats")) void queryClient.invalidateQueries({ queryKey: qk.businessStats });
       if (keys.has("activity"))
-        void queryClient.invalidateQueries({ queryKey: queryKeys.businessActivity });
+        void queryClient.invalidateQueries({ queryKey: qk.businessActivity });
       if (keys.has("qr")) {
-        void queryClient.invalidateQueries({ queryKey: queryKeys.businessQr });
-        void queryClient.invalidateQueries({ queryKey: queryKeys.businessQrAnalytics });
+        void queryClient.invalidateQueries({ queryKey: qk.businessQr });
+        void queryClient.invalidateQueries({ queryKey: qk.businessQrAnalytics });
       }
       if (keys.has("bizTips"))
-        void queryClient.invalidateQueries({ queryKey: queryKeys.businessTips });
+        void queryClient.invalidateQueries({ queryKey: qk.businessTips });
       if (keys.has("empTips")) {
-        void queryClient.invalidateQueries({ queryKey: queryKeys.employeeTips });
-        void queryClient.invalidateQueries({ queryKey: queryKeys.employeeTipList });
+        void queryClient.invalidateQueries({ queryKey: qk.employeeTips });
+        void queryClient.invalidateQueries({ queryKey: qk.employeeTipList });
       }
       if (keys.has("inbox")) {
-        void queryClient.invalidateQueries({ queryKey: queryKeys.notifications });
-        void queryClient.invalidateQueries({ queryKey: queryKeys.notificationUnread });
+        void queryClient.invalidateQueries({ queryKey: qk.notifications });
+        void queryClient.invalidateQueries({ queryKey: qk.notificationUnread });
       }
     };
 
@@ -128,7 +131,10 @@ export function RealtimeQueryBridge() {
       appStateRef.current = next;
       if ((prev === "background" || prev === "inactive") && next === "active") {
         schedule(["stats", "activity", "qr", "bizTips", "empTips", "inbox"]);
-        void queryClient.invalidateQueries({ queryKey: queryKeys.businessQrAnalytics });
+        const qk = getUserQueryKeys();
+        if (qk) {
+          void queryClient.invalidateQueries({ queryKey: qk.businessQrAnalytics });
+        }
       }
     };
     const sub = AppState.addEventListener("change", onAppState);
@@ -150,11 +156,13 @@ export function RealtimeQueryBridge() {
 
   useEffect(() => {
     if (!connected) return;
+    const qk = getUserQueryKeys();
+    if (!qk) return;
     // Catch-up after reconnect — same intent as web SOCKET_RECONNECTED_EVENT handlers.
-    void queryClient.invalidateQueries({ queryKey: queryKeys.notificationUnread });
-    void queryClient.invalidateQueries({ queryKey: queryKeys.businessStats });
-    void queryClient.invalidateQueries({ queryKey: queryKeys.employeeTips });
-    void queryClient.invalidateQueries({ queryKey: queryKeys.businessQrAnalytics });
+    void queryClient.invalidateQueries({ queryKey: qk.notificationUnread });
+    void queryClient.invalidateQueries({ queryKey: qk.businessStats });
+    void queryClient.invalidateQueries({ queryKey: qk.employeeTips });
+    void queryClient.invalidateQueries({ queryKey: qk.businessQrAnalytics });
   }, [connected, queryClient]);
 
   return null;

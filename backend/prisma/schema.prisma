@@ -233,6 +233,7 @@ model User {
   auditLogs               AuditLog[]
   passwordResetTokens     PasswordResetToken[]
   emailVerificationTokens EmailVerificationToken[]
+  mobileWebHandoffTokens  MobileWebHandoffToken[]
   refreshTokens           RefreshToken[]
   settings                UserSettings?
   pushDeviceTokens        PushDeviceToken[]
@@ -428,6 +429,27 @@ model EmailVerificationToken {
 
   @@index([userId])
   @@map("email_verification_tokens")
+}
+
+/// One-time mobile→web session handoff (SHA-256 of secret). Short TTL; claim via consumedAt.
+model MobileWebHandoffToken {
+  id                String    @id @default(cuid())
+  tokenHash         String    @unique @map("token_hash")
+  userId            String    @map("user_id")
+  /// Allowlisted destination purpose, e.g. `billing` — never a client redirect path.
+  purpose           String    @db.VarChar(64)
+  expiresAt         DateTime  @map("expires_at")
+  createdAt         DateTime  @default(now()) @map("created_at")
+  consumedAt        DateTime? @map("consumed_at")
+  createdIp         String?   @map("created_ip") @db.VarChar(64)
+  createdUserAgent  String?   @map("created_user_agent") @db.Text
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+  @@index([consumedAt])
+  @@map("mobile_web_handoff_tokens")
 }
 
 /// One-time activation tokens for employee account setup (stores SHA-256 of the secret segment).

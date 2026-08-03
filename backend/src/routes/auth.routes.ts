@@ -9,6 +9,7 @@ import {
   resendVerificationSessionRateLimit,
   oauthRateLimit,
   activateEmployeeRateLimit,
+  mobileWebHandoffConsumeRateLimitWithAudit,
 } from "../middleware/authRateLimit.middleware.js";
 import {
   changePasswordRateLimit,
@@ -17,6 +18,7 @@ import {
 import { requireTrustedOrigin } from "../middleware/requireTrustedOrigin.middleware.js";
 import { requireCaretipClientHeader } from "../middleware/requireCaretipClientHeader.middleware.js";
 import * as authController from "../controllers/auth.controller.js";
+import * as mobileWebHandoffController from "../controllers/mobileWebHandoff.controller.js";
 
 const router = Router();
 
@@ -40,6 +42,13 @@ router.post(
 );
 router.post("/oauth", oauthRateLimit, authController.oauth);
 router.post("/activate-employee", activateEmployeeRateLimit, authController.activateEmployee);
+/** Mobile→web one-time handoff redeem — sets refresh cookie + returns access JWT. */
+router.post(
+  "/mobile-web-handoff/consume",
+  mobileWebHandoffConsumeRateLimitWithAudit,
+  requireTrustedOrigin,
+  mobileWebHandoffController.consumeMobileWebHandoffSession,
+);
 router.get(
   "/activate-employee-branding",
   authController.activateEmployeeBrandingPreview

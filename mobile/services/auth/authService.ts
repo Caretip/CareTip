@@ -9,7 +9,6 @@ import {
 import {
   clearAllSessionSecrets,
   getRefreshToken,
-  getUserSnapshot,
   saveAccessToken,
   saveUserSnapshot,
 } from "@/services/auth/tokenStorage";
@@ -198,13 +197,16 @@ export async function oauthLogin(payload: OAuthRequest): Promise<SignInResult> {
   return data;
 }
 
-/**
- * Rotates access JWT via POST /api/auth/refresh.
- * Prefer SecureStore-mirrored `caretip_refresh` cookie; Bearer grace path as fallback.
- */
-export async function refreshSession(): Promise<AuthResponse | null> {
-  const refreshToken = await getRefreshToken();
-  const access = getMemoryAccessToken();
+export type BootstrapValidateResult =
+  | { status: "authenticated"; session: AuthResponse }
+  | { status: "offline" }
+  | { status: "rejected" }
+  | { status: "no-secrets" };
+
+function buildRefreshHeaders(
+  refreshToken: string | null,
+  access: string | null,
+): Record<string, string> {
   const headers: Record<string, string> = {
     [config.clientHeaderName]: config.clientHeader,
     "Content-Type": "application/json",
@@ -216,6 +218,31 @@ export async function refreshSession(): Promise<AuthResponse | null> {
   if (access) {
     headers.Authorization = `Bearer ${access}`;
   }
+  return headers;
+}
+
+function isServerAuthResponse(data: unknown): data is AuthResponse {
+  return (
+    typeof data === "object" &&
+    data !== null &&
+    "token" in data &&
+    typeof (data as AuthResponse).token === "string" &&
+    Boolean((data as AuthResponse).token) &&
+    "user" in data &&
+    typeof (data as AuthResponse).user?.id === "string" &&
+    Boolean((data as AuthResponse).user.id)
+  );
+}
+
+/**
+ * POST /api/auth/refresh — server must return access token + AuthUser.
+ * There is no GET /api/auth/me; refresh's AuthUser is the validated identity.
+ * Never fabricates a session from a cached user snapshot.
+ */
+async function requestSessionRefresh(): Promise<AuthResponse | null> {
+  const refreshToken = await getRefreshToken();
+  const access = getMemoryAccessToken();
+  if (!refreshToken && !access) return null;
 
   logAuthEvent("refresh.attempt", {
     url: `${config.apiUrl}${API_ENDPOINTS.auth.refresh}`,
@@ -223,18 +250,35 @@ export async function refreshSession(): Promise<AuthResponse | null> {
     hasBearer: Boolean(access),
   });
 
+  const response = await apiClient.post<AuthResponse>(
+    API_ENDPOINTS.auth.refresh,
+    {},
+    { headers: buildRefreshHeaders(refreshToken, access) },
+  );
+  const headerMap = serializeResponseHeaders(response.headers);
+  logAuthEvent("refresh.response.headers", {
+    hasRefreshHeader: Boolean(headerLookup(headerMap, "x-caretip-refresh")),
+    hasSetCookie: Boolean(headerLookup(headerMap, "set-cookie")),
+    hasAccessToken: Boolean(response.data?.token),
+    hasUser: Boolean(response.data?.user?.id),
+  });
+  await persistRefreshFromResponse(response.headers);
+  if (!isServerAuthResponse(response.data)) {
+    logAuthEvent("refresh.invalid.response");
+    return null;
+  }
+  const session = await persistSession(response.data);
+  logAuthEvent("refresh.endpoint.success", { hasAccessToken: Boolean(session.token) });
+  return session;
+}
+
+/**
+ * Rotates access JWT via POST /api/auth/refresh.
+ * Returns null unless the backend returns a full AuthResponse (token + user).
+ */
+export async function refreshSession(): Promise<AuthResponse | null> {
   try {
-    const response = await apiClient.post<AuthResponse>(API_ENDPOINTS.auth.refresh, {}, { headers });
-    const headerMap = serializeResponseHeaders(response.headers);
-    logAuthEvent("refresh.response.headers", {
-      hasRefreshHeader: Boolean(headerLookup(headerMap, "x-caretip-refresh")),
-      hasSetCookie: Boolean(headerLookup(headerMap, "set-cookie")),
-      hasAccessToken: Boolean(response.data?.token),
-    });
-    await persistRefreshFromResponse(response.headers);
-    const session = await persistSession(response.data);
-    logAuthEvent("refresh.endpoint.success", { hasAccessToken: Boolean(session.token) });
-    return session;
+    return await requestSessionRefresh();
   } catch (error) {
     logAuthEvent("refresh.endpoint.failed", {
       status: (error as { response?: { status?: number; data?: { message?: string } } })?.response
@@ -244,17 +288,47 @@ export async function refreshSession(): Promise<AuthResponse | null> {
         (error instanceof Error ? error.message : "unknown"),
       backendRoute: "/api/auth/refresh",
     });
-    // Interceptor / grace path may still recover a raw access token.
+    // Interceptor may still recover an access token for in-flight API retries.
+    // Do not invent AuthUser from SecureStore snapshot — that is not server validation.
     const token = await refreshAccessToken();
     if (!token) return null;
-    setMemoryAccessToken(token);
-    await saveAccessToken(token);
     logAuthTokenState("refresh.recovered.accessOnly", token);
-    const cachedUser = await getUserSnapshot();
-    if (cachedUser) {
-      return { token, user: cachedUser };
-    }
     return null;
+  }
+}
+
+/**
+ * Phase 2.4 — cold-start session validation.
+ * Authenticated navigation is allowed only after a successful refresh AuthResponse.
+ */
+export async function validateBootstrapSession(): Promise<BootstrapValidateResult> {
+  const refreshToken = await getRefreshToken();
+  const access = getMemoryAccessToken();
+  if (!refreshToken && !access) {
+    return { status: "no-secrets" };
+  }
+
+  const { isOnline } = await import("@/utils/network");
+  if (!(await isOnline())) {
+    return { status: "offline" };
+  }
+
+  try {
+    const session = await requestSessionRefresh();
+    if (!session) return { status: "rejected" };
+    return { status: "authenticated", session };
+  } catch (error) {
+    const normalized = normalizeApiError(error);
+    logAuthEvent("bootstrap.validate.failed", {
+      status: normalized.status,
+      isNetworkError: normalized.isNetworkError,
+      isTimeout: normalized.isTimeout,
+      message: normalized.message,
+    });
+    if (normalized.isNetworkError || normalized.isTimeout) {
+      return { status: "offline" };
+    }
+    return { status: "rejected" };
   }
 }
 
@@ -364,6 +438,7 @@ export const authService = {
   login,
   oauthLogin,
   refreshSession,
+  validateBootstrapSession,
   logout,
   register,
   requestPasswordReset,

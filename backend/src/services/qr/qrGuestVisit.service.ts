@@ -13,6 +13,7 @@ import {
   type PersistQrScanResult,
   type RecordQrScanEventInput,
 } from "./qrScanEvent.service.js";
+import { assertQrScanTargetsBelongToBusiness } from "./qrScanOwnership.service.js";
 
 export const QR_GUEST_VISIT_STATUSES = {
   ACTIVE: "active",
@@ -166,6 +167,15 @@ export async function startGuestVisitAndRecordScan(
   input: StartGuestVisitInput,
 ): Promise<StartGuestVisitResult> {
   const sessionId = resolveRequiredScanSessionId(input.req);
+
+  // Phase 1 — reject cross-tenant child IDs before any visit/scan write.
+  await assertQrScanTargetsBelongToBusiness({
+    businessId: input.businessId,
+    employeeId: input.employeeId,
+    locationId: input.locationId,
+    tableId: input.tableId,
+  });
+
   const now = new Date();
   const expiresAt = visitExpiryFrom(now);
   const entryPath = resolveEntryPath(input.req);

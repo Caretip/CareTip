@@ -5,6 +5,7 @@ import type { RateLimitLayer } from "../utils/layeredRateLimit.js";
 import { enforceRateLimitLayersDistributed } from "../utils/rateLimitStore.js";
 import { normalizeLoginEmail } from "../services/auth.service.js";
 import * as employeeActivationService from "../services/employeeActivation.service.js";
+import { auditMobileWebHandoff } from "../services/mobileWebHandoff.service.js";
 
 function clientIp(req: Request): string {
   const ip = req.ip?.trim();
@@ -317,4 +318,82 @@ export const registerCombinedRateLimit: RequestHandler = (req, res, next) => {
     layers.push({ name: "email", key: keyEmail("register", email), ...regLim.email });
   }
   runLayers(req, res, next, layers, REGISTER_MSG, "register");
+};
+
+const HANDOFF_MSG = "Too many billing session requests. Please try again later.";
+
+function bodyHandoffToken(req: Request): string {
+  const body = req.body as Record<string, unknown> | undefined;
+  return typeof body?.token === "string" ? body.token.trim() : "";
+}
+
+/**
+ * POST /api/mobile/create-billing-session — IP + authenticated user.
+ * Must run after authMiddleware so `req.user` is set.
+ */
+export const mobileWebHandoffCreateRateLimit = createSyncLimiter((req) => {
+  const ip = clientIp(req);
+  const userId = sessionUserId(req);
+  const { mobileWebHandoffCreate: lim } = authRateLimits;
+  const layers: RateLimitLayer[] = [
+    { name: "ip", key: keyIp("mobile-handoff-create", ip), ...lim.ip },
+  ];
+  if (userId) {
+    layers.push({
+      name: "user",
+      key: `auth:mobile-handoff-create:user:${userId}`,
+      ...lim.user,
+    });
+  }
+  return layers;
+}, HANDOFF_MSG, "mobile-handoff-create");
+
+/** Wrap create limiter to emit handoff rate-limit audit events. */
+export const mobileWebHandoffCreateRateLimitWithAudit: RequestHandler = (req, res, next) => {
+  const originalJson = res.json.bind(res);
+  res.json = ((body: unknown) => {
+    if (res.statusCode === 429) {
+      void auditMobileWebHandoff("mobile_web_handoff.rate_limited", sessionUserId(req) || null, {
+        endpoint: "create-billing-session",
+        ip: clientIp(req),
+      });
+    }
+    return originalJson(body);
+  }) as typeof res.json;
+  mobileWebHandoffCreateRateLimit(req, res, next);
+};
+
+/**
+ * POST /api/auth/mobile-web-handoff/consume — IP + token-hash prefix.
+ */
+export const mobileWebHandoffConsumeRateLimit = createSyncLimiter((req) => {
+  const ip = clientIp(req);
+  const token = bodyHandoffToken(req);
+  const { mobileWebHandoffConsume: lim } = authRateLimits;
+  const layers: RateLimitLayer[] = [
+    { name: "ip", key: keyIp("mobile-handoff-consume", ip), ...lim.ip },
+  ];
+  if (token) {
+    const digest = crypto.createHash("sha256").update(token).digest("hex").slice(0, 24);
+    layers.push({
+      name: "token",
+      key: `auth:mobile-handoff-consume:token:${digest}`,
+      ...lim.token,
+    });
+  }
+  return layers;
+}, HANDOFF_MSG, "mobile-handoff-consume");
+
+export const mobileWebHandoffConsumeRateLimitWithAudit: RequestHandler = (req, res, next) => {
+  const originalJson = res.json.bind(res);
+  res.json = ((body: unknown) => {
+    if (res.statusCode === 429) {
+      void auditMobileWebHandoff("mobile_web_handoff.rate_limited", null, {
+        endpoint: "mobile-web-handoff/consume",
+        ip: clientIp(req),
+      });
+    }
+    return originalJson(body);
+  }) as typeof res.json;
+  mobileWebHandoffConsumeRateLimit(req, res, next);
 };

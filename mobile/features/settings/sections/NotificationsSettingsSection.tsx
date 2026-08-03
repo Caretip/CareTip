@@ -7,7 +7,8 @@ import { useI18n } from "@/hooks/useI18n";
 import { useTheme } from "@/hooks/useTheme";
 import { fetchEmployeeProfile } from "@/services/api/employeeService";
 import { fetchAccountSettings, patchAccountSettings, patchEmployeeProfile } from "@/services/api/settingsService";
-import { queryKeys, queryStaleTimes } from "@/services/api/queryClient";
+import { queryStaleTimes } from "@/services/api/queryClient";
+import { useAuthUserId, useUserQueryKeys } from "@/services/api/queryKeys";
 import type { ColorPalette } from "@/theme/colors";
 import { spacing, typography } from "@/theme";
 
@@ -15,15 +16,18 @@ export function BusinessNotificationsSettingsScreen() {
   const { t } = useI18n();
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
+  const userId = useAuthUserId();
+  const keys = useUserQueryKeys();
   const queryClient = useQueryClient();
   const accountQuery = useQuery({
-    queryKey: queryKeys.accountSettings,
+    queryKey: keys.accountSettings,
     queryFn: fetchAccountSettings,
+    enabled: Boolean(userId),
     staleTime: queryStaleTimes.settings,
   });
   const patchAccount = useMutation({
     mutationFn: patchAccountSettings,
-    onSuccess: () => void queryClient.invalidateQueries({ queryKey: queryKeys.accountSettings }),
+    onSuccess: () => void queryClient.invalidateQueries({ queryKey: keys.accountSettings }),
   });
 
   if (!accountQuery.data) return null;
@@ -63,15 +67,18 @@ export function EmployeeNotificationsSettingsScreen() {
   const { t } = useI18n();
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
+  const userId = useAuthUserId();
+  const keys = useUserQueryKeys();
   const queryClient = useQueryClient();
   const employeeQuery = useQuery({
-    queryKey: queryKeys.employeeMe,
+    queryKey: keys.employeeMe,
     queryFn: fetchEmployeeProfile,
+    enabled: Boolean(userId),
     staleTime: queryStaleTimes.profile,
   });
   const patchEmployee = useMutation({
     mutationFn: patchEmployeeProfile,
-    onSuccess: () => void queryClient.invalidateQueries({ queryKey: queryKeys.employeeMe }),
+    onSuccess: () => void queryClient.invalidateQueries({ queryKey: keys.employeeMe }),
   });
 
   if (!employeeQuery.data) return null;

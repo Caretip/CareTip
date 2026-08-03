@@ -174,10 +174,7 @@ export function EmployeeDashboardScreen() {
                       onPress={() =>
                         router.push({
                           pathname: "/(app)/employee/tips/[id]" as never,
-                          params: {
-                            id: tip.id,
-                            payload: encodeURIComponent(JSON.stringify(tip)),
-                          },
+                          params: { id: tip.id },
                         })
                       }
                     />

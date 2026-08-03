@@ -1,4 +1,5 @@
 import { authService } from "@/services/auth/authService";
+import { establishAuthenticatedSession } from "@/services/auth/authCacheBoundary";
 import { verifyMfaLogin } from "@/services/auth/mfaService";
 import { sessionManager } from "@/services/auth/sessionManager";
 import { useAuthStore } from "@/store/authStore";
@@ -25,8 +26,7 @@ export function useAuth() {
     try {
       const result = await authService.login(payload);
       if (!isMfaChallenge(result)) {
-        useUserStore.getState().setUser(result.user);
-        useAuthStore.getState().setAuthenticated(result.token);
+        await establishAuthenticatedSession(result.token, result.user, "password-login");
       }
       return result;
     } catch (error) {
@@ -37,8 +37,7 @@ export function useAuth() {
   async function completeMfaSignIn(input: CompleteMfaInput): Promise<AuthResponse> {
     try {
       const result = await verifyMfaLogin(input.pendingMfaToken, input.code, input.mfaSetupRequired);
-      useUserStore.getState().setUser(result.user);
-      useAuthStore.getState().setAuthenticated(result.token);
+      await establishAuthenticatedSession(result.token, result.user, "mfa-complete");
       return result;
     } catch (error) {
       throw normalizeApiError(error);
@@ -49,8 +48,7 @@ export function useAuth() {
     try {
       const result = await authService.oauthLogin(payload);
       if (!isMfaChallenge(result)) {
-        useUserStore.getState().setUser(result.user);
-        useAuthStore.getState().setAuthenticated(result.token);
+        await establishAuthenticatedSession(result.token, result.user, "google-login");
       }
       return result;
     } catch (error) {
@@ -73,5 +71,6 @@ export function useAuth() {
     completeMfaSignIn,
     signOut,
     bootstrap: sessionManager.bootstrapSession,
+    retryBootstrap: sessionManager.retryBootstrapSession,
   };
 }

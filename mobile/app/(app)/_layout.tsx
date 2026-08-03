@@ -6,11 +6,15 @@ import { useTheme } from "@/hooks/useTheme";
 
 export default function AppLayout() {
   const { colors } = useTheme();
-  const { isAuthenticated, user } = useAuth();
+  const { isAuthenticated, user, status } = useAuth();
   const routingReady = useSessionRoutingReady();
 
   if (!routingReady) {
     return null;
+  }
+
+  if (status === "session_recovery") {
+    return <Redirect href={"/(auth)/session-recovery" as never} />;
   }
 
   if (!isAuthenticated) {

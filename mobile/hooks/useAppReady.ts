@@ -12,7 +12,10 @@ export function useBootstrapReady(): boolean {
   const i18nHydrated = useI18nStore((s) => s.hydrated);
   const bootstrapSettled = useStartupStore((s) => s.bootstrapSettled);
 
-  const authReady = isHydrated && status !== "idle" && status !== "bootstrapping";
+  const authReady =
+    isHydrated &&
+    status !== "idle" &&
+    status !== "bootstrapping";
   return (fontsReady && authReady && i18nHydrated) || bootstrapSettled;
 }
 
@@ -22,7 +25,11 @@ export function useSessionRoutingReady(): boolean {
   const bootstrapSettled = useStartupStore((s) => s.bootstrapSettled);
 
   if (bootstrapSettled) return true;
-  return isHydrated && status !== "idle" && status !== "bootstrapping";
+  return (
+    isHydrated &&
+    status !== "idle" &&
+    status !== "bootstrapping"
+  );
 }
 
 /** @deprecated Prefer useBootstrapReady */

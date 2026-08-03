@@ -13,7 +13,8 @@ import { useI18n } from "@/hooks/useI18n";
 import { useTheme } from "@/hooks/useTheme";
 import { fetchBusinessEmployees } from "@/services/api/employeeDirectoryService";
 import { fetchBusinessProfile } from "@/services/api/businessService";
-import { queryKeys, queryStaleTimes } from "@/services/api/queryClient";
+import { queryStaleTimes } from "@/services/api/queryClient";
+import { useAuthUserId, useUserQueryKeys } from "@/services/api/queryKeys";
 import { formatCount } from "@/utils/format";
 import { friendlyErrorMessage } from "@/utils/friendlyError";
 import type { ColorPalette } from "@/theme/colors";
@@ -24,19 +25,22 @@ export function TeamManagementScreen() {
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const { user } = useAuth();
+  const userId = useAuthUserId();
+  const keys = useUserQueryKeys();
 
   const profileQuery = useQuery({
-    queryKey: queryKeys.businessProfile,
+    queryKey: keys.businessProfile,
     queryFn: fetchBusinessProfile,
+    enabled: Boolean(userId),
     staleTime: queryStaleTimes.profile,
   });
 
   const businessId = user?.businessId ?? profileQuery.data?.id ?? "";
 
   const teamQuery = useQuery({
-    queryKey: queryKeys.businessEmployees(businessId),
+    queryKey: keys.businessEmployees(businessId),
     queryFn: () => fetchBusinessEmployees(businessId),
-    enabled: Boolean(businessId),
+    enabled: Boolean(userId && businessId),
     staleTime: queryStaleTimes.roster,
   });
 

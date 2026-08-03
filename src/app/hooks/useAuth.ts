@@ -569,6 +569,15 @@ export function useAuth() {
     notifyAuthStorageSyncFromHook();
   }, []);
 
+  /** Apply a server AuthResponse (e.g. mobile→web handoff consume) as the active web session. */
+  const establishExternalSession = useCallback((data: AuthResponse): User => {
+    const u = persistAuthResponse(data);
+    bumpSessionEpoch();
+    commitAuthUser(u);
+    markSessionBootstrapSettled();
+    return u;
+  }, []);
+
   const refreshSession = useCallback(async (): Promise<User | null> => {
     try {
       const data = await refreshSessionAPI();
@@ -649,6 +658,7 @@ export function useAuth() {
     updateUser,
     setHasCompletedOnboarding,
     replaceUser,
+    establishExternalSession,
     completeAuthLogin,
     exitImpersonation,
   };
