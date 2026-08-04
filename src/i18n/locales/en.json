@@ -1981,7 +1981,7 @@
       }
     },
     "completion": {
-      "defaultThankYou": "Thanks for your tip!",
+      "defaultThankYou": "Thank you for your kindness.",
       "tipSentTo": "Your tip was sent to {{name}}.",
       "thankYouTipping": "Thank you for tipping {{name}}",
       "stepCompleteTitle": "You're all set",
@@ -5392,7 +5392,7 @@
       "welcomePlaceholder": "Welcome to {{name}}",
       "thankYouLabel": "Thank-you message",
       "thankYouPlaceholder": "Thank you for supporting our team. Your appreciation means a lot to us.",
-      "defaultThankYouMessage": "Thank you for your support.",
+      "defaultThankYouMessage": "Your appreciation means the world to our team.",
       "successPreviewTitle": "Success screen preview",
       "successPreviewDesc": "How guests see the page after tipping — matches the live experience (no banner).",
       "successPreviewAria": "Preview of the guest success screen after tipping",

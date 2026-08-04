@@ -78,10 +78,8 @@ export function BusinessOnboardingScreen() {
     setBusy(true);
     try {
       const session = await authService.patchMyOnboardingStatus(true);
-      // Same user entering the app shell — clear RQ so no pre-onboarding private cache paints.
-      await establishAuthenticatedSession(session.token, session.user, "onboarding-complete", {
-        clearOfflineQr: false,
-      });
+      // Entering the app shell — wipe RQ + any residual offline QR (tenant isolation).
+      await establishAuthenticatedSession(session.token, session.user, "onboarding-complete");
       await navigateAfterAuth(router, session.user);
     } catch (err) {
       setError(friendlyErrorMessage(err, t("auth.onboardingSaveFailed"), t));

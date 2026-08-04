@@ -28,6 +28,7 @@ export function useBrandedQrImage({
       fetchBrandedQrImage({
         mode,
         targetUrl: trimmedUrl,
+        userId: userId!,
         bustCache: reloadKey > 0,
       }),
     enabled: active,

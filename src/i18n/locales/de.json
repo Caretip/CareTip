@@ -1981,7 +1981,7 @@
       }
     },
     "completion": {
-      "defaultThankYou": "Danke für Ihr Trinkgeld!",
+      "defaultThankYou": "Vielen Dank für Ihre Herzlichkeit.",
       "tipSentTo": "Ihr Trinkgeld wurde an {{name}} gesendet.",
       "thankYouTipping": "Danke für Ihr Trinkgeld für {{name}}",
       "stepCompleteTitle": "Alles erledigt",
@@ -5392,7 +5392,7 @@
       "welcomePlaceholder": "Willkommen bei {{name}}",
       "thankYouLabel": "Dankesnachricht",
       "thankYouPlaceholder": "Vielen Dank für Ihre Unterstützung. Ihre Wertschätzung bedeutet uns viel.",
-      "defaultThankYouMessage": "Vielen Dank für Ihre Unterstützung.",
+      "defaultThankYouMessage": "Ihre Wertschätzung bedeutet unserem Team die Welt.",
       "successPreviewTitle": "Vorschau Erfolgsseite",
       "successPreviewDesc": "So sehen Gäste die Seite nach dem Trinkgeld — entspricht dem Live-Erlebnis (ohne Banner).",
       "successPreviewAria": "Vorschau der Gäste-Erfolgsseite nach dem Trinkgeld",

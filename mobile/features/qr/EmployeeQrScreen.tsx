@@ -37,30 +37,44 @@ export function EmployeeQrScreen() {
   });
 
   useEffect(() => {
-    void loadEmployeeQrCache().then(setCached);
-  }, []);
+    setCached(null);
+  }, [userId]);
 
-  const url =
+  useEffect(() => {
+    if (!userId) return;
+    let cancelled = false;
+    void loadEmployeeQrCache(userId).then((value) => {
+      if (!cancelled) setCached(value);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [userId]);
+
+  const liveUrl =
     profile != null
       ? resolveEmployeeQrUrl({
           employeeId: profile.id,
           businessSlug: profile.businessSlug,
           employeeSlug: profile.slug,
         })
-      : (cached?.url ?? "");
+      : "";
+
+  // Never render another account's offline QR while the current profile is still loading.
+  const url = liveUrl || (!isLoading ? cached?.url ?? "" : "");
 
   useEffect(() => {
-    if (!profile || !url) return;
-    void saveEmployeeQrCache({
-      url,
+    if (!userId || !profile || !liveUrl) return;
+    void saveEmployeeQrCache(userId, {
+      url: liveUrl,
       name: profile.name,
       businessName: profile.businessName ?? t("businessDashboard.venueFallback"),
       cachedAt: new Date().toISOString(),
-    }).then(() => void loadEmployeeQrCache().then(setCached));
-  }, [profile, url, t]);
+    }).then(() => void loadEmployeeQrCache(userId).then(setCached));
+  }, [userId, profile, liveUrl, t]);
 
-  const displayName = profile?.name ?? cached?.name ?? t("qr.myQrTitle");
-  const offline = !profile && Boolean(cached?.url);
+  const displayName = profile?.name ?? (!isLoading ? cached?.name : undefined) ?? t("qr.myQrTitle");
+  const offline = !profile && !isLoading && Boolean(cached?.url);
 
   const handleCopy = async () => {
     if (!url) return;
@@ -95,7 +109,7 @@ export function EmployeeQrScreen() {
         ) : null}
       </View>
 
-      {isLoading && !cached?.url ? (
+      {isLoading && !url ? (
         <View style={styles.loading}>
           <Skeleton height={280} rounded="2xl" />
         </View>
@@ -104,7 +118,7 @@ export function EmployeeQrScreen() {
           message={friendlyErrorMessage(error, t("qr.loadError"), t)}
           onRetry={() => void refetch()}
         />
-      ) : (
+      ) : url ? (
         <>
           <QrCodeDisplay
             value={url}
@@ -123,6 +137,10 @@ export function EmployeeQrScreen() {
             />
           </View>
         </>
+      ) : (
+        <View style={styles.loading}>
+          <Skeleton height={280} rounded="2xl" />
+        </View>
       )}
     </Screen>
   );

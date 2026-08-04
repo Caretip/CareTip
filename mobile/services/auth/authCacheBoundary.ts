@@ -25,8 +25,8 @@ export function clearReactQueryForAuthBoundary(reason: AuthBoundaryReason): void
 }
 
 /**
- * Interactive account changes (login / Google / MFA / verify-email) also clear
- * AsyncStorage QR offline caches so tip URLs cannot survive a missed logout.
+ * Interactive account changes also clear AsyncStorage QR offline caches so tip URLs
+ * cannot survive a missed logout or a late write from a prior session.
  * Session restore (cold start) must NOT clear offline QR — same user, offline UX.
  */
 export async function resetCachesForNewAuthentication(reason: AuthBoundaryReason): Promise<void> {
@@ -48,7 +48,8 @@ function shouldClearOfflineQrOnAuth(
     reason === "password-login" ||
     reason === "google-login" ||
     reason === "mfa-complete" ||
-    reason === "verify-email"
+    reason === "verify-email" ||
+    reason === "onboarding-complete"
   );
 }
 

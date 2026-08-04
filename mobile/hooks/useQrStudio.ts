@@ -13,6 +13,7 @@ import type { EmployeeQrItem } from "@/types/qr";
 
 /**
  * QR Studio — inventory + preview only (not analytics).
+ * Offline persistence is scoped to AuthUser.id; late writes after account switch are dropped.
  */
 export function useQrStudio() {
   const userId = useAuthUserId();
@@ -29,6 +30,9 @@ export function useQrStudio() {
   const inventoryQuery = useQuery({
     queryKey: [...keys.businessQr, "inventory"] as const,
     queryFn: async () => {
+      const ownerUserId = userId;
+      if (!ownerUserId) return [];
+
       const profile = profileQuery.data ?? (await fetchBusinessProfile());
       const directoryEmployees = await queryClient.fetchQuery({
         queryKey: keys.businessEmployees(profile.id),
@@ -43,7 +47,7 @@ export function useQrStudio() {
       }));
       const [locations, tables] = await Promise.all([fetchLocations(), fetchTables()]);
       const items = buildQrInventory(profile, employees, locations, tables);
-      await saveOfflineQrItems(items);
+      await saveOfflineQrItems(ownerUserId, items, profile.id);
       return items;
     },
     enabled: scoped && profileQuery.isSuccess,
@@ -55,6 +59,7 @@ export function useQrStudio() {
   };
 
   return {
+    userId,
     profile: profileQuery.data,
     items: inventoryQuery.data ?? [],
     isLoading: profileQuery.isLoading || inventoryQuery.isLoading,

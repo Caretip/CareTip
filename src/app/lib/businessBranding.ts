@@ -20,10 +20,11 @@ export const DEFAULT_BRAND_SECONDARY_COLOR = "#000000";
 export const CARETIP_QR_BRAND_HEX = "#EB992C";
 
 /** Plan-aware QR / guest fallback when custom branding is unavailable or unset. */
-export const DEFAULT_QR_THANK_YOU_MESSAGE = "Thank you for your support.";
+export const DEFAULT_QR_THANK_YOU_MESSAGE =
+  "Your appreciation means the world to our team.";
 
 /** Guest tip completion fallback (Basic or Premium without custom copy). */
-export const DEFAULT_GUEST_THANK_YOU_MESSAGE = "Thanks for your tip!";
+export const DEFAULT_GUEST_THANK_YOU_MESSAGE = "Thank you for your kindness.";
 
 /** Resolve thank-you copy for QR rendering — never read hardcoded text from template assets. */
 export function resolveQrThankYouMessage(

@@ -46,16 +46,20 @@ export class BrandedQrFetchError extends Error {
 export async function fetchBrandedQrImage(options: {
   mode: BrandedQrViewerMode;
   targetUrl: string;
+  userId: string;
   bustCache?: boolean;
 }): Promise<BrandedQrImageResult> {
-  const { mode, targetUrl, bustCache } = options;
+  const { mode, targetUrl, userId, bustCache } = options;
   const trimmedUrl = targetUrl.trim();
+  if (!userId) {
+    throw new BrandedQrFetchError("Authenticated user required for branded QR", 401);
+  }
   if (!trimmedUrl && mode === "manager") {
     throw new BrandedQrFetchError("targetUrl is required for manager branded QR", 400);
   }
 
-  const storageKey = brandedQrStorageKey(mode, trimmedUrl);
-  const disk = bustCache ? null : await loadBrandedQrImageCache(storageKey);
+  const storageKey = brandedQrStorageKey(userId, mode, trimmedUrl);
+  const disk = bustCache ? null : await loadBrandedQrImageCache(storageKey, userId);
 
   const path =
     mode === "employee"
@@ -84,7 +88,10 @@ export async function fetchBrandedQrImage(options: {
 
     const etag = payload.brandingVersion || disk?.etag || "";
     if (etag) {
-      await saveBrandedQrImageCache(storageKey, { dataUri: payload.imageUrl, etag });
+      await saveBrandedQrImageCache(storageKey, userId, {
+        dataUri: payload.imageUrl,
+        etag,
+      });
     }
 
     return {

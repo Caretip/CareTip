@@ -1,58 +1,106 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import type { QrCodeItem } from "@/types/qr";
+import { useUserStore } from "@/store/userStore";
+import { clearBrandedQrImageCaches } from "@/utils/brandedQrImageCache";
+import {
+  EMPLOYEE_QR_KEY_PREFIX,
+  LEGACY_EMPLOYEE_QR_KEY,
+  LEGACY_OFFLINE_QR_KEY,
+  OFFLINE_QR_KEY_PREFIX,
+  buildOfflineQrEnvelope,
+  employeeQrStorageKey,
+  isOfflineQrWriteAllowed,
+  offlineQrStorageKey,
+  parseEmployeeQrEnvelope,
+  parseOfflineQrEnvelope,
+  type EmployeeQrCacheEnvelope,
+} from "@/utils/offlineQrTenantIsolation";
 
-const OFFLINE_QR_KEY = "caretip_offline_qr_cache_v1";
+export type EmployeeQrCache = Omit<EmployeeQrCacheEnvelope, "userId">;
 
-export async function saveOfflineQrItems(items: QrCodeItem[]): Promise<void> {
-  await AsyncStorage.setItem(OFFLINE_QR_KEY, JSON.stringify(items));
+async function wipeLegacyUnscopedQrKeys(): Promise<void> {
+  await AsyncStorage.multiRemove([LEGACY_OFFLINE_QR_KEY, LEGACY_EMPLOYEE_QR_KEY]);
 }
 
-export async function loadOfflineQrItems(): Promise<QrCodeItem[]> {
-  const raw = await AsyncStorage.getItem(OFFLINE_QR_KEY);
+export async function saveOfflineQrItems(
+  userId: string,
+  items: QrCodeItem[],
+  businessId?: string | null,
+): Promise<void> {
+  const currentUserId = useUserStore.getState().user?.id ?? null;
+  if (!isOfflineQrWriteAllowed(userId, currentUserId)) {
+    return;
+  }
+  await wipeLegacyUnscopedQrKeys();
+  const envelope = buildOfflineQrEnvelope({ userId, businessId, items });
+  await AsyncStorage.setItem(offlineQrStorageKey(userId), JSON.stringify(envelope));
+}
+
+export async function loadOfflineQrItems(userId: string | null): Promise<QrCodeItem[]> {
+  await wipeLegacyUnscopedQrKeys();
+  if (!userId) return [];
+  const raw = await AsyncStorage.getItem(offlineQrStorageKey(userId));
   if (!raw) return [];
-  try {
-    const parsed = JSON.parse(raw) as QrCodeItem[];
-    return Array.isArray(parsed) ? parsed : [];
-  } catch {
-    return [];
+  return parseOfflineQrEnvelope(raw, userId);
+}
+
+export async function saveEmployeeQrCache(
+  userId: string,
+  data: EmployeeQrCache,
+): Promise<void> {
+  const currentUserId = useUserStore.getState().user?.id ?? null;
+  if (!isOfflineQrWriteAllowed(userId, currentUserId)) {
+    return;
   }
+  await wipeLegacyUnscopedQrKeys();
+  const envelope: EmployeeQrCacheEnvelope = {
+    userId,
+    url: data.url,
+    name: data.name,
+    businessName: data.businessName,
+    cachedAt: data.cachedAt,
+  };
+  await AsyncStorage.setItem(employeeQrStorageKey(userId), JSON.stringify(envelope));
 }
 
-const EMPLOYEE_QR_KEY = "caretip_employee_qr_cache_v1";
-
-export type EmployeeQrCache = {
-  url: string;
-  name: string;
-  businessName: string;
-  cachedAt: string;
-};
-
-export async function saveEmployeeQrCache(data: EmployeeQrCache): Promise<void> {
-  await AsyncStorage.setItem(EMPLOYEE_QR_KEY, JSON.stringify(data));
-}
-
-export async function loadEmployeeQrCache(): Promise<EmployeeQrCache | null> {
-  const raw = await AsyncStorage.getItem(EMPLOYEE_QR_KEY);
+export async function loadEmployeeQrCache(
+  userId: string | null,
+): Promise<EmployeeQrCache | null> {
+  await wipeLegacyUnscopedQrKeys();
+  if (!userId) return null;
+  const raw = await AsyncStorage.getItem(employeeQrStorageKey(userId));
   if (!raw) return null;
-  try {
-    const parsed = JSON.parse(raw) as EmployeeQrCache;
-    return parsed?.url ? parsed : null;
-  } catch {
-    return null;
-  }
+  const parsed = parseEmployeeQrEnvelope(raw, userId);
+  if (!parsed) return null;
+  return {
+    url: parsed.url,
+    name: parsed.name,
+    businessName: parsed.businessName,
+    cachedAt: parsed.cachedAt,
+  };
 }
 
 export async function clearEmployeeQrCache(): Promise<void> {
-  await AsyncStorage.removeItem(EMPLOYEE_QR_KEY);
+  const keys = await AsyncStorage.getAllKeys();
+  const employeeKeys = keys.filter(
+    (k) => k === LEGACY_EMPLOYEE_QR_KEY || k.startsWith(EMPLOYEE_QR_KEY_PREFIX),
+  );
+  if (employeeKeys.length > 0) {
+    await AsyncStorage.multiRemove(employeeKeys);
+  }
 }
 
 export async function clearOfflineQrItems(): Promise<void> {
-  await AsyncStorage.removeItem(OFFLINE_QR_KEY);
+  const keys = await AsyncStorage.getAllKeys();
+  const offlineKeys = keys.filter(
+    (k) => k === LEGACY_OFFLINE_QR_KEY || k.startsWith(OFFLINE_QR_KEY_PREFIX),
+  );
+  if (offlineKeys.length > 0) {
+    await AsyncStorage.multiRemove(offlineKeys);
+  }
 }
 
-/** Clear all QR offline caches on logout (shared-device hygiene). */
-import { clearBrandedQrImageCaches } from "@/utils/brandedQrImageCache";
-
+/** Clear all QR offline caches on logout / account change (shared-device hygiene). */
 export async function clearAllOfflineQrCaches(): Promise<void> {
   await Promise.all([clearOfflineQrItems(), clearEmployeeQrCache(), clearBrandedQrImageCaches()]);
 }

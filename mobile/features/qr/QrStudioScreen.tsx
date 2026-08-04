@@ -24,6 +24,7 @@ import { useQrStudio } from "@/hooks/useQrStudio";
 import { useI18n } from "@/hooks/useI18n";
 import { useTheme } from "@/hooks/useTheme";
 import { loadOfflineQrItems } from "@/utils/offlineQrCache";
+import { resolveQrStudioDisplayItems } from "@/utils/offlineQrTenantIsolation";
 import { friendlyErrorMessage, isPermissionError } from "@/utils/friendlyError";
 import { showSuccessToast } from "@/store/toastStore";
 import type { QrCodeItem } from "@/types/qr";
@@ -42,7 +43,7 @@ export function QrStudioScreen() {
   );
   const [selected, setSelected] = useState<QrCodeItem | null>(null);
   const [offlineItems, setOfflineItems] = useState<QrCodeItem[]>([]);
-  const { items, isLoading, isRefreshing, refresh, error } = useQrStudio();
+  const { userId, items, isLoading, isRefreshing, refresh, error } = useQrStudio();
 
   const typeLabels: Record<QrCodeItem["type"], string> = useMemo(
     () => ({
@@ -54,12 +55,42 @@ export function QrStudioScreen() {
     [t],
   );
 
+  // Drop any prior-account offline paint immediately on identity change.
   useEffect(() => {
-    void loadOfflineQrItems().then(setOfflineItems);
-  }, [items]);
+    setSelected(null);
+    setOfflineItems([]);
+  }, [userId]);
 
-  const displayItems = items.length > 0 ? items : offlineItems;
-  const offline = items.length === 0 && offlineItems.length > 0;
+  useEffect(() => {
+    if (!userId) return;
+    let cancelled = false;
+    void loadOfflineQrItems(userId).then((cached) => {
+      if (!cancelled) setOfflineItems(cached);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [userId, items]);
+
+  const displayItems = resolveQrStudioDisplayItems({
+    liveItems: items,
+    offlineItems,
+    isLoading,
+  });
+  const offline = !isLoading && items.length === 0 && offlineItems.length > 0;
+
+  useEffect(() => {
+    if (!selected) return;
+    if (items.length === 0) {
+      if (isLoading) setSelected(null);
+      return;
+    }
+    const stillOwned = items.some(
+      (row) => row.id === selected.id && row.url === selected.url,
+    );
+    if (!stillOwned) setSelected(null);
+  }, [items, isLoading, selected]);
+
   const refreshControl = useListRefreshControl(isRefreshing, () => void refresh());
 
   const handleCopy = useCallback(async (url: string) => {
