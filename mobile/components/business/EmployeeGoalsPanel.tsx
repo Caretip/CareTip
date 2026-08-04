@@ -163,8 +163,9 @@ function createStyles(colors: ColorPalette, text: ReturnType<typeof dashboardTex
     },
     hint: {
       ...typography.caption,
-      color: text.muted,
+      color: text.secondary,
       fontSize: 12,
+      lineHeight: 17,
       marginTop: -spacing.sm,
     },
     list: {

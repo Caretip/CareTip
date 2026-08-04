@@ -13,12 +13,16 @@ type AppMenuScreenProps = {
   items: AppMenuItem[];
 };
 
+/**
+ * More tab — flat rows on the page background (no large card container).
+ * Sign out stays visually separated below the primary list.
+ */
 export function AppMenuScreen({ role, items }: AppMenuScreenProps) {
   const { t } = useI18n();
   const onSignOut = useSignOutAction();
 
   return (
-    <Screen tabSafe>
+    <Screen tabSafe contentContainerStyle={styles.content}>
       <View style={styles.header}>
         <ScreenHeader
           eyebrow={t("appMenu.eyebrow")}
@@ -26,10 +30,12 @@ export function AppMenuScreen({ role, items }: AppMenuScreenProps) {
           subtitle={role === "business" ? t("appMenu.subtitleBusiness") : t("appMenu.subtitleEmployee")}
         />
       </View>
-      <SettingsMenuGroup>
+
+      <SettingsMenuGroup flat>
         {items.map((item, index) => (
           <SettingsMenuRow
             key={item.id}
+            flat
             label={t(item.labelKey)}
             description={
               item.badge != null && item.badge > 0
@@ -43,8 +49,11 @@ export function AppMenuScreen({ role, items }: AppMenuScreenProps) {
         ))}
       </SettingsMenuGroup>
 
-      <SettingsMenuGroup>
+      <View style={styles.signOutSpacer} />
+
+      <SettingsMenuGroup flat>
         <SettingsMenuRow
+          flat
           label={t("settings.signOut")}
           icon={LogOut}
           onPress={onSignOut}
@@ -57,7 +66,13 @@ export function AppMenuScreen({ role, items }: AppMenuScreenProps) {
 }
 
 const styles = StyleSheet.create({
+  content: {
+    gap: spacing.lg,
+  },
   header: {
-    marginBottom: spacing.md,
+    marginBottom: spacing.xs,
+  },
+  signOutSpacer: {
+    height: spacing.md,
   },
 });

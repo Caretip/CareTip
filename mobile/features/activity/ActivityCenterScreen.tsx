@@ -10,7 +10,12 @@ import {
 import { ActivityCard } from "@/components/ui/ListCards";
 import { DetailScreenHeader } from "@/components/ui/DetailScreenHeader";
 import { PeriodToggle } from "@/components/ui/PeriodToggle";
-import { ScreenShell, screenContentPadding, useListRefreshControl } from "@/components/ui/ScreenShell";
+import {
+  ScreenShell,
+  screenContentPadding,
+  useListRefreshControl,
+  useScreenContentPadding,
+} from "@/components/ui/ScreenShell";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { ErrorState } from "@/components/ui/ErrorState";
 import { SkeletonListRows } from "@/components/ui/Skeleton";
@@ -95,6 +100,11 @@ export function ActivityCenterScreen() {
   const { t } = useI18n();
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
+  const contentPad = useScreenContentPadding();
+  const listContentStyle = useMemo(
+    () => [styles.list, { paddingBottom: contentPad.paddingBottom }],
+    [contentPad.paddingBottom, styles.list],
+  );
   const { user } = useAuth();
   const {
     filter,
@@ -211,7 +221,7 @@ export function ActivityCenterScreen() {
           data={flatData}
           keyExtractor={keyExtractor}
           renderItem={renderItem}
-          contentContainerStyle={styles.list}
+          contentContainerStyle={listContentStyle}
           refreshControl={refreshControl}
           onEndReached={handleEndReached}
           onEndReachedThreshold={0.4}

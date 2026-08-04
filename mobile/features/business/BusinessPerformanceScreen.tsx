@@ -146,11 +146,11 @@ export function BusinessPerformanceScreen() {
 }
 
 const styles = StyleSheet.create({
-  stack: { gap: spacing["2xl"], marginTop: spacing.lg },
+  stack: { gap: spacing.xl, marginTop: spacing.md },
   metricsRow: {
     flexDirection: "row",
-    alignItems: "flex-start",
-    gap: spacing.xl,
+    alignItems: "stretch",
+    gap: spacing.md,
   },
   metricCol: {
     flex: 1,

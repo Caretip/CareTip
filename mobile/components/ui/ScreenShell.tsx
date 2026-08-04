@@ -1,10 +1,10 @@
 import { useMemo } from "react";
 import { RefreshControl, StyleSheet, View, useWindowDimensions, type ViewProps } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTheme } from "@/hooks/useTheme";
 import type { ColorPalette } from "@/theme/colors";
 import { spacing } from "@/theme";
-import { TAB_BAR_SCROLL_CLEARANCE } from "@/theme/navigation";
+import { TAB_BAR_SCROLL_CLEARANCE, tabBarScrollClearance } from "@/theme/navigation";
 import { OfflineBanner } from "@/components/layout/OfflineBanner";
 import { ErrorBanner } from "@/components/layout/ErrorBanner";
 
@@ -55,6 +55,10 @@ function createStyles(colors: ColorPalette) {
   });
 }
 
+/**
+ * Static list padding (no hook). Prefer `useScreenContentPadding` inside components
+ * so home-indicator insets are included in bottom clearance.
+ */
 export const screenContentPadding = {
   paddingHorizontal: spacing.xl,
   paddingTop: spacing.lg,
@@ -66,8 +70,13 @@ export const screenContentPadding = {
 
 export function useScreenContentPadding() {
   const { width } = useWindowDimensions();
+  const insets = useSafeAreaInsets();
   return {
-    ...screenContentPadding,
+    paddingHorizontal: spacing.xl,
+    paddingTop: spacing.lg,
+    paddingBottom: tabBarScrollClearance(insets.bottom),
+    width: "100%" as const,
     maxWidth: width >= 768 ? 960 : 720,
+    alignSelf: "center" as const,
   };
 }

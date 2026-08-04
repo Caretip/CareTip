@@ -8,7 +8,12 @@ import {
 import { useRouter } from "expo-router";
 import { SearchField } from "@/components/ui/SearchField";
 import { PeriodToggle } from "@/components/ui/PeriodToggle";
-import { ScreenShell, screenContentPadding, useListRefreshControl } from "@/components/ui/ScreenShell";
+import {
+  ScreenShell,
+  screenContentPadding,
+  useListRefreshControl,
+  useScreenContentPadding,
+} from "@/components/ui/ScreenShell";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { ErrorState } from "@/components/ui/ErrorState";
 import { SkeletonListRows } from "@/components/ui/Skeleton";
@@ -54,6 +59,11 @@ export function TipsListScreen({ role, basePath }: TipsListScreenProps) {
   const { t } = useI18n();
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
+  const contentPad = useScreenContentPadding();
+  const listContentStyle = useMemo(
+    () => [styles.list, { paddingBottom: contentPad.paddingBottom }],
+    [contentPad.paddingBottom, styles.list],
+  );
   const [search, setSearch] = useState("");
   const [range, setRange] = useState<"today" | "week" | "month">("month");
   const [status, setStatus] = useState<"all" | TipStatus>("all");
@@ -192,7 +202,7 @@ export function TipsListScreen({ role, basePath }: TipsListScreenProps) {
           data={items}
           keyExtractor={keyExtractor}
           renderItem={renderItem}
-          contentContainerStyle={styles.list}
+          contentContainerStyle={listContentStyle}
           refreshControl={refreshControl}
           onEndReached={handleEndReached}
           onEndReachedThreshold={0.4}

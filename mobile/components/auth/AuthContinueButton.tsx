@@ -75,39 +75,39 @@ export function AuthContinueButton({
 
 const styles = StyleSheet.create({
   wrap: {
-    borderRadius: radius["2xl"],
+    borderRadius: radius.xl,
     overflow: "hidden",
     marginTop: spacing.sm,
     ...Platform.select({
       ios: {
         shadowColor: authBrand.orangeDeep,
-        shadowOpacity: 0.48,
-        shadowRadius: 20,
-        shadowOffset: { width: 0, height: 12 },
+        shadowOpacity: 0.42,
+        shadowRadius: 18,
+        shadowOffset: { width: 0, height: 10 },
       },
-      android: { elevation: 10 },
+      android: { elevation: 8 },
       default: {},
     }),
   },
   scaleWrap: {
-    borderRadius: radius["2xl"],
+    borderRadius: radius.xl,
     overflow: "hidden",
   },
   gradient: {
-    minHeight: touchTarget + 12,
+    minHeight: touchTarget + 10,
     alignItems: "center",
     justifyContent: "center",
     paddingHorizontal: spacing.xl,
-    borderRadius: radius["2xl"],
+    borderRadius: radius.xl,
   },
   label: {
     ...typography.button,
     color: authBrand.white,
     fontWeight: "700",
     fontSize: 16,
-    letterSpacing: 0.3,
+    letterSpacing: 0.35,
   },
   disabled: {
-    opacity: 0.55,
+    opacity: 0.5,
   },
 });

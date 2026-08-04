@@ -14,7 +14,12 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { ErrorState } from "@/components/ui/ErrorState";
 import { SkeletonListRows } from "@/components/ui/Skeleton";
 import { StatusPill } from "@/components/ui/StatusPill";
-import { ScreenShell, screenContentPadding, useListRefreshControl } from "@/components/ui/ScreenShell";
+import {
+  ScreenShell,
+  screenContentPadding,
+  useListRefreshControl,
+  useScreenContentPadding,
+} from "@/components/ui/ScreenShell";
 import { useQrStudio } from "@/hooks/useQrStudio";
 import { useI18n } from "@/hooks/useI18n";
 import { useTheme } from "@/hooks/useTheme";
@@ -30,6 +35,11 @@ export function QrStudioScreen() {
   const { t } = useI18n();
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
+  const contentPad = useScreenContentPadding();
+  const listContentStyle = useMemo(
+    () => [styles.list, { paddingBottom: contentPad.paddingBottom }],
+    [contentPad.paddingBottom, styles.list],
+  );
   const [selected, setSelected] = useState<QrCodeItem | null>(null);
   const [offlineItems, setOfflineItems] = useState<QrCodeItem[]>([]);
   const { items, isLoading, isRefreshing, refresh, error } = useQrStudio();
@@ -148,7 +158,7 @@ export function QrStudioScreen() {
           data={selected ? [] : displayItems}
           keyExtractor={keyExtractor}
           renderItem={renderItem}
-          contentContainerStyle={styles.list}
+          contentContainerStyle={listContentStyle}
           refreshControl={refreshControl}
           ListHeaderComponent={listHeader}
           {...LIST_PERF_COMPACT}

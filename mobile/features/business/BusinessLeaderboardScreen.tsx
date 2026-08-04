@@ -128,7 +128,7 @@ export function BusinessLeaderboardScreen() {
 
 const createStyles = (colors: ColorPalette) =>
   StyleSheet.create({
-  stack: { gap: spacing["2xl"], marginTop: spacing.lg },
+  stack: { gap: spacing.xl, marginTop: spacing.md },
   rowInner: {
     flexDirection: "row",
     alignItems: "center",

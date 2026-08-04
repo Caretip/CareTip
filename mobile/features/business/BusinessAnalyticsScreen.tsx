@@ -131,11 +131,11 @@ export function BusinessAnalyticsScreen() {
 
 const createStyles = (colors: ColorPalette) =>
   StyleSheet.create({
-  stack: { gap: spacing["2xl"], marginTop: spacing.lg },
+  stack: { gap: spacing.xl, marginTop: spacing.md },
   metricsRow: {
     flexDirection: "row",
-    alignItems: "flex-start",
-    gap: spacing.xl,
+    alignItems: "stretch",
+    gap: spacing.md,
   },
   metricCol: {
     flex: 1,
@@ -143,8 +143,10 @@ const createStyles = (colors: ColorPalette) =>
   },
   sourceRow: {
     flexDirection: "row",
+    alignItems: "center",
     justifyContent: "space-between",
     gap: spacing.md,
+    minHeight: 44,
     paddingVertical: spacing.md,
     paddingHorizontal: spacing.lg,
     borderTopWidth: StyleSheet.hairlineWidth,
@@ -157,14 +159,18 @@ const createStyles = (colors: ColorPalette) =>
     ...typography.body,
     color: colors.foreground,
     flex: 1,
+    fontWeight: "500",
+    letterSpacing: -0.1,
   },
   sourceValue: {
     ...typography.caption,
     color: colors.mutedForeground,
     fontWeight: "600",
+    letterSpacing: -0.1,
   },
   muted: {
     ...typography.caption,
     color: colors.mutedForeground,
+    lineHeight: 20,
   },
 });

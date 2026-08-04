@@ -8,9 +8,9 @@ import {
   useWindowDimensions,
   type ScrollViewProps,
 } from "react-native";
-import { SafeAreaView, type Edge } from "react-native-safe-area-context";
+import { SafeAreaView, useSafeAreaInsets, type Edge } from "react-native-safe-area-context";
 import { spacing, screenPadding } from "@/theme";
-import { TAB_BAR_SCROLL_CLEARANCE } from "@/theme/navigation";
+import { tabBarScrollClearance } from "@/theme/navigation";
 import { useTheme } from "@/hooks/useTheme";
 import { OfflineBanner } from "@/components/layout/OfflineBanner";
 import { ErrorBanner } from "@/components/layout/ErrorBanner";
@@ -38,8 +38,12 @@ export function Screen({
   ...rest
 }: ScreenProps) {
   const { width } = useWindowDimensions();
+  const insets = useSafeAreaInsets();
   const { colors } = useTheme();
   const contentMaxWidth = width >= 768 ? 960 : 720;
+  const bottomClearance = tabSafe
+    ? tabBarScrollClearance(insets.bottom)
+    : Math.max(insets.bottom, spacing.lg);
 
   const scroll = (
     <ScrollView
@@ -59,8 +63,9 @@ export function Screen({
       }
       contentContainerStyle={[
         padded ? [styles.content, { maxWidth: contentMaxWidth }] : null,
-        tabSafe ? styles.tabClearance : null,
         contentContainerStyle,
+        // Keep last so callers cannot wipe tab/home-indicator clearance.
+        { paddingBottom: bottomClearance },
       ]}
       {...rest}
     >
@@ -105,9 +110,6 @@ const styles = StyleSheet.create({
     gap: spacing["3xl"],
     width: "100%",
     alignSelf: "center",
-  },
-  tabClearance: {
-    paddingBottom: TAB_BAR_SCROLL_CLEARANCE,
   },
   header: {
     paddingTop: spacing.lg,

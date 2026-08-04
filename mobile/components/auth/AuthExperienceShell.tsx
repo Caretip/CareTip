@@ -129,6 +129,8 @@ export function AuthExperienceShell({
               <Pressable
                 accessibilityRole="button"
                 accessibilityLabel={t("auth.footerMenuTitle")}
+                accessibilityHint={t("auth.footerMenuTitle")}
+                hitSlop={{ top: 8, bottom: 8, left: 12, right: 12 }}
                 onPress={() => setFooterOpen(true)}
                 style={({ pressed }) => [styles.pillOuter, pressed ? styles.pressed : null]}
               >
@@ -182,30 +184,35 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
   },
   footer: {
-    gap: spacing["2xl"],
+    gap: spacing.xl,
     alignItems: "center",
-    paddingTop: spacing.lg,
+    paddingTop: spacing.md,
+    width: "100%",
   },
   secondaryRow: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    gap: spacing.lg,
+    gap: spacing.md,
   },
   secondaryAction: {
     minHeight: touchTarget,
     justifyContent: "center",
-    paddingHorizontal: spacing.sm,
+    paddingHorizontal: spacing.md,
   },
   secondaryLabel: {
     ...typography.button,
-    color: authBrand.white,
+    color: "rgba(255,255,255,0.92)",
     fontWeight: "600",
     fontSize: 15,
+    letterSpacing: 0.2,
+    textDecorationLine: "underline",
+    textDecorationColor: "rgba(255,255,255,0.28)",
   },
   secondaryPipe: {
-    color: "rgba(255,255,255,0.28)",
-    fontSize: 16,
+    color: "rgba(255,255,255,0.22)",
+    fontSize: 14,
+    fontWeight: "300",
   },
   pillOuter: {
     borderRadius: 999,
@@ -213,22 +220,23 @@ const styles = StyleSheet.create({
     borderColor: authBrand.glassPillBorder,
     backgroundColor: authBrand.glassPillFill,
     minHeight: touchTarget,
+    alignSelf: "center",
   },
   pillInner: {
     flexDirection: "row",
     alignItems: "center",
     gap: spacing.sm,
     paddingHorizontal: spacing.xl,
-    paddingVertical: spacing.md,
+    paddingVertical: spacing.md + 2,
   },
   pillLabel: {
     ...typography.caption,
     color: authBrand.white,
     fontWeight: "700",
-    letterSpacing: 0.3,
+    letterSpacing: 0.35,
     fontSize: 13,
   },
   pressed: {
-    opacity: 0.85,
+    opacity: 0.82,
   },
 });

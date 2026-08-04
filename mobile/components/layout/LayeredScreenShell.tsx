@@ -20,7 +20,7 @@ import { brand } from "@/theme/colors";
 import { premiumHeroGradient, premiumPalette } from "@/theme/dashboardPremium";
 import { layered, layeredSheetShadow } from "@/theme/layered";
 import { spacing } from "@/theme";
-import { TAB_BAR_SCROLL_CLEARANCE } from "@/theme/navigation";
+import { tabBarScrollClearance } from "@/theme/navigation";
 import { useTheme } from "@/hooks/useTheme";
 
 export type LayeredBackgroundVariant = "gradient" | "auth-image";
@@ -105,6 +105,18 @@ export function LayeredScreenShell({
   const pageBackground = isDark ? colors.background : layered.pageBackground;
   const rootBackground = isDashboard ? pageBackground : isFloating ? authBrand.dark : brand.orange;
 
+  const {
+    contentContainerStyle: scrollContentStyleOverride,
+    ...restScrollProps
+  } = scrollProps ?? {};
+
+  /** Floating auth must clear the Android/iOS home indicator — never let callers wipe this. */
+  const bottomPad = isFloating
+    ? Math.max(insets.bottom, spacing.md) + spacing["3xl"]
+    : tabSafe
+      ? tabBarScrollClearance(insets.bottom)
+      : Math.max(insets.bottom, spacing.lg);
+
   const scroll = (
     <ScrollView
       keyboardShouldPersistTaps="always"
@@ -125,14 +137,13 @@ export function LayeredScreenShell({
       contentContainerStyle={[
         styles.scrollContent,
         isDashboard ? styles.scrollContentDashboard : null,
-        {
-          minHeight: height,
-          paddingBottom:
-            Math.max(insets.bottom, isFloating ? spacing["3xl"] : spacing.lg) +
-            (tabSafe ? TAB_BAR_SCROLL_CLEARANCE : 0),
-        },
+        { minHeight: height },
+        scrollContentStyleOverride,
+        // Always win over caller overrides — Explore CareTip / auth footers were clipped
+        // when contentContainerStyle wiped paddingBottom.
+        { paddingBottom: bottomPad },
       ]}
-      {...scrollProps}
+      {...restScrollProps}
     >
       <View
         onLayout={isDashboard ? onDashboardHeroLayout : undefined}
@@ -166,7 +177,10 @@ export function LayeredScreenShell({
               paddingBottom: spacing["3xl"],
               backgroundColor: sheetBackground,
               minHeight:
-                height - heroBackdropHeight + layered.sheetOverlap + (tabSafe ? TAB_BAR_SCROLL_CLEARANCE : 0),
+                height -
+                heroBackdropHeight +
+                layered.sheetOverlap +
+                (tabSafe ? tabBarScrollClearance(insets.bottom) : 0),
             },
           ]}
         >

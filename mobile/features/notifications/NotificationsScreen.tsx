@@ -9,7 +9,12 @@ import {
 import type { Href } from "expo-router";
 import { SearchField } from "@/components/ui/SearchField";
 import { Button } from "@/components/ui/Button";
-import { ScreenShell, screenContentPadding, useListRefreshControl } from "@/components/ui/ScreenShell";
+import {
+  ScreenShell,
+  screenContentPadding,
+  useListRefreshControl,
+  useScreenContentPadding,
+} from "@/components/ui/ScreenShell";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { ErrorState } from "@/components/ui/ErrorState";
 import { SkeletonListRows } from "@/components/ui/Skeleton";
@@ -61,6 +66,11 @@ export function NotificationsScreen({
   const { t } = useI18n();
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
+  const contentPad = useScreenContentPadding();
+  const listContentStyle = useMemo(
+    () => [styles.list, { paddingBottom: contentPad.paddingBottom }],
+    [contentPad.paddingBottom, styles.list],
+  );
   const [search, setSearch] = useState("");
   const {
     items,
@@ -163,7 +173,7 @@ export function NotificationsScreen({
           data={rows}
           keyExtractor={keyExtractor}
           renderItem={renderRow}
-          contentContainerStyle={styles.list}
+          contentContainerStyle={listContentStyle}
           refreshControl={refreshControl}
           onEndReached={handleEndReached}
           onEndReachedThreshold={0.4}

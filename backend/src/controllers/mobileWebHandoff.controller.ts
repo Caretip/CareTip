@@ -86,6 +86,16 @@ export async function createBillingSession(req: Request, res: Response): Promise
       res.status(403).json({ message });
       return;
     }
+    // Common ops failure: code shipped before migrate deploy applied the handoff table.
+    if (
+      /mobile_web_handoff_tokens/i.test(message) &&
+      (/does not exist/i.test(message) || /42P01/.test(message) || /P2021/.test(message))
+    ) {
+      res.status(503).json({
+        message: "Billing handoff is temporarily unavailable. Please try again shortly.",
+      });
+      return;
+    }
     res.status(400).json({
       message: clientSafeMessage(err, CLIENT_FALLBACK.generic),
     });

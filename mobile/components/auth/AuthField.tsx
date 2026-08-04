@@ -8,9 +8,7 @@ import {
   View,
   type TextInputProps,
 } from "react-native";
-import { BlurView } from "expo-blur";
 import Animated, {
-  interpolate,
   interpolateColor,
   useAnimatedStyle,
   useSharedValue,
@@ -64,11 +62,6 @@ export const AuthField = forwardRef<TextInput, AuthFieldProps>(function AuthFiel
     [borderIdle, borderFocus, fillIdle, fillFocus],
   );
 
-  const iosFocusShadowStyle = useAnimatedStyle(() => ({
-    shadowOpacity: interpolate(focusProgress.value, [0, 1], [0.1, 0.22]),
-    shadowRadius: interpolate(focusProgress.value, [0, 1], [10, 16]),
-  }));
-
   const focusInput = () => {
     if (editable !== false) {
       inputRef.current?.focus();
@@ -86,25 +79,16 @@ export const AuthField = forwardRef<TextInput, AuthFieldProps>(function AuthFiel
         onPress={focusInput}
         style={({ pressed }) => [pressed && editable !== false ? styles.pressed : null]}
       >
-        <AnimatedView
-          style={[
-            styles.field,
-            fieldStyle,
-            Platform.OS === "ios" ? styles.fieldIosShadow : null,
-            Platform.OS === "ios" ? iosFocusShadowStyle : null,
-          ]}
-        >
-          {Platform.OS === "ios" ? (
-            <BlurView intensity={28} tint="dark" style={StyleSheet.absoluteFill} />
-          ) : null}
+        <AnimatedView style={[styles.field, fieldStyle]}>
           <View style={styles.fieldInner}>
             <View style={styles.iconSlot} pointerEvents="none">
               <Ionicons
                 name={icon}
-                size={19}
+                size={18}
                 color={focused ? authBrand.orangeMuted : authBrand.fieldIcon}
               />
             </View>
+            <View style={styles.iconDivider} pointerEvents="none" />
             <TextInput
               ref={inputRef}
               value={value}
@@ -157,41 +141,53 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     fontSize: 12,
     paddingHorizontal: spacing.xxs,
-    letterSpacing: 0.3,
+    letterSpacing: 0.35,
   },
   field: {
-    borderRadius: radius["2xl"],
-    borderWidth: 1,
+    borderRadius: radius.xl,
+    borderWidth: StyleSheet.hairlineWidth * 2,
+    // Solid fill — avoid BlurView/elevation artifacts that drew a mid-field hairline on Android.
+    backgroundColor: authBrand.fieldFill,
     overflow: "hidden",
-    ...Platform.select({
-      android: { elevation: 3 },
-      default: {},
-    }),
   },
   fieldInner: {
-    minHeight: touchTarget + 8,
+    minHeight: touchTarget + 6,
     flexDirection: "row",
     alignItems: "center",
     paddingHorizontal: spacing.lg,
     gap: spacing.md,
   },
-  fieldIosShadow: {
-    shadowColor: "#000000",
-    shadowOffset: { width: 0, height: 6 },
-  },
   iconSlot: {
-    width: 26,
+    width: 22,
     alignItems: "center",
     justifyContent: "center",
+  },
+  iconDivider: {
+    width: StyleSheet.hairlineWidth,
+    alignSelf: "stretch",
+    marginVertical: spacing.md,
+    backgroundColor: "rgba(255,255,255,0.18)",
   },
   input: {
     flex: 1,
     ...typography.body,
     color: authBrand.fieldText,
-    padding: 0,
+    backgroundColor: "transparent",
+    paddingVertical: Platform.OS === "ios" ? spacing.md : spacing.sm,
+    paddingHorizontal: 0,
     margin: 0,
     minHeight: touchTarget,
     fontSize: 16,
+    borderWidth: 0,
+    borderBottomWidth: 0,
+    borderBottomColor: "transparent",
+    // Kill residual Android TextInput underlines / Material strokes.
+    ...(Platform.OS === "android"
+      ? {
+          includeFontPadding: false,
+          textAlignVertical: "center" as const,
+        }
+      : null),
   },
   pressed: {
     opacity: 0.96,

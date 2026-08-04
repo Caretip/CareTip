@@ -5,8 +5,16 @@ import { colors as defaultColors, spacing, typography } from "@/theme";
 /** Height of the floating tab surface (excluding safe-area inset). */
 export const TAB_BAR_HEIGHT = 56;
 
-/** Scroll content clearance so lists clear the tab bar + safe area. */
+/**
+ * Base scroll clearance for the floating tab bar (excludes device home-indicator).
+ * Prefer `tabBarScrollClearance(insets.bottom)` when insets are available.
+ */
 export const TAB_BAR_SCROLL_CLEARANCE = TAB_BAR_HEIGHT + spacing.lg;
+
+/** Tab bar height + home-indicator + breathing room so last rows stay tappable. */
+export function tabBarScrollClearance(bottomInset = 0): number {
+  return TAB_BAR_HEIGHT + Math.max(bottomInset, spacing.sm) + spacing.lg;
+}
 
 /** Shared tab options — pair with `<MimeTabBar />` via `tabBar` prop. */
 export function buildPremiumTabScreenOptions(

@@ -1,13 +1,20 @@
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
 import { StyleSheet, Text, View } from "react-native";
+import Animated, {
+  Easing,
+  useAnimatedStyle,
+  useSharedValue,
+  withDelay,
+  withTiming,
+} from "react-native-reanimated";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { useTheme } from "@/hooks/useTheme";
 import type { EmployeePerformanceChartRow } from "@/utils/dashboardChartData";
-import { formatEur } from "@/utils/format";
+import { formatEur, formatPercent } from "@/utils/format";
 import type { ColorPalette } from "@/theme/colors";
 import { premiumPalette, dashboardTextColors } from "@/theme/dashboardPremium";
-import { spacing, typography } from "@/theme";
+import { motion, spacing, typography } from "@/theme";
 
 type EmployeePerformanceChartProps = {
   title: string;
@@ -25,7 +32,7 @@ type EmployeePerformanceChartProps = {
   card?: boolean;
 };
 
-const BAR_HEIGHT = 6;
+const BAR_HEIGHT = 8;
 
 type PerformanceRowProps = {
   row: EmployeePerformanceChartRow;
@@ -38,8 +45,24 @@ type PerformanceRowProps = {
 
 function PerformanceRow({ row, index, maxTips, isLast, colors, text }: PerformanceRowProps) {
   const styles = useMemo(() => createRowStyles(colors, text), [colors, text]);
-  const progress = maxTips <= 0 ? 0 : row.tips / maxTips;
+  const progress = maxTips <= 0 ? 0 : Math.min(1, row.tips / maxTips);
+  const pct = progress * 100;
   const initial = row.name.charAt(0).toUpperCase();
+  const width = useSharedValue(0);
+
+  useEffect(() => {
+    width.value = withDelay(
+      index * 55,
+      withTiming(Math.max(pct, row.tips > 0 ? 4 : 0), {
+        duration: motion.duration.slow,
+        easing: Easing.out(Easing.cubic),
+      }),
+    );
+  }, [index, pct, row.tips, width]);
+
+  const fillStyle = useAnimatedStyle(() => ({
+    width: `${width.value}%`,
+  }));
 
   return (
     <View style={[styles.row, !isLast ? styles.rowBorder : null]}>
@@ -53,15 +76,13 @@ function PerformanceRow({ row, index, maxTips, isLast, colors, text }: Performan
           </Text>
           <Text style={styles.amount}>{formatEur(row.tips)}</Text>
         </View>
-        <Text style={styles.rank}>#{index + 1}</Text>
+        <View style={styles.rankBlock}>
+          <Text style={styles.rank}>#{index + 1}</Text>
+          <Text style={styles.pct}>{formatPercent(pct)}</Text>
+        </View>
       </View>
-      <View style={styles.track}>
-        <View
-          style={[
-            styles.fill,
-            { width: `${Math.max(progress * 100, row.tips > 0 ? 3 : 0)}%` },
-          ]}
-        />
+      <View style={styles.track} accessibilityRole="progressbar" accessibilityValue={{ now: Math.round(pct), min: 0, max: 100 }}>
+        <Animated.View style={[styles.fill, fillStyle]} />
       </View>
     </View>
   );
@@ -71,7 +92,7 @@ function createRowStyles(colors: ColorPalette, text: ReturnType<typeof dashboard
   return StyleSheet.create({
     row: {
       paddingVertical: spacing.lg,
-      gap: spacing.sm,
+      gap: spacing.md,
     },
     rowBorder: {
       borderBottomWidth: StyleSheet.hairlineWidth,
@@ -106,19 +127,31 @@ function createRowStyles(colors: ColorPalette, text: ReturnType<typeof dashboard
       fontWeight: "600",
       color: text.primary,
       fontSize: 15,
-      letterSpacing: -0.1,
+      letterSpacing: -0.15,
     },
     amount: {
       ...typography.caption,
       fontWeight: "600",
       color: text.secondary,
       fontSize: 13,
+      letterSpacing: -0.1,
+    },
+    rankBlock: {
+      alignItems: "flex-end",
+      gap: 2,
+      minWidth: 44,
     },
     rank: {
       ...typography.caption,
       color: text.muted,
-      fontWeight: "500",
+      fontWeight: "600",
       fontSize: 12,
+    },
+    pct: {
+      ...typography.metadata,
+      color: premiumPalette.primary,
+      fontWeight: "700",
+      fontSize: 11,
     },
     track: {
       height: BAR_HEIGHT,

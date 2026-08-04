@@ -74,8 +74,8 @@ function GroupedRowContent({ children }: { children: React.ReactNode }) {
 function createStyles(colors: ColorPalette, text: ReturnType<typeof dashboardTextColors>) {
   return StyleSheet.create({
     section: {
-      gap: spacing.lg,
-      marginBottom: spacing["2xl"],
+      gap: spacing.md,
+      marginBottom: spacing.xl,
     },
     content: {
       gap: spacing.md,
