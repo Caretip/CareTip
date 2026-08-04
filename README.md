@@ -128,19 +128,20 @@ npm run db:migrate
 
 | Role | Sign-in URL | Email | Password |
 |------|-------------|-------|----------|
-| **Business (manager)** | `/login` → Business | `demo@caretip.de` | `Demo1234!` |
-| **Employee (primary demo)** | `/login` → Staff | `employee@caretip.de` | `Demo1234!` |
-| **Platform admin** | `/platform-admin/login` | `admin@caretip.de` | `Demo1234!` |
-| **Platform admin (Albertina)** | `/platform-admin/login` | `albertina@caretip.de` | `caretip@2026!` |
-| **Platform admin (Fanny)** | `/platform-admin/login` | `fanny@caretip.de` | `caretip@2026!` |
+| **Business (manager)** | `/login` → Business | `<MANAGER_EMAIL>` | `<PASSWORD>` |
+| **Employee (primary demo)** | `/login` → Staff | `<EMPLOYEE_EMAIL>` | `<PASSWORD>` |
+| **Platform admin** | `/platform-admin/login` | `<ADMIN_EMAIL>` | `<PASSWORD>` |
+| **Additional platform admins** | `/platform-admin/login` | `<TEAM_ADMIN_EMAIL>` | `<PASSWORD>` |
+
+Credentials are created by the local seed scripts. **Do not publish real emails or passwords** in documentation or shared channels — read them from your local seed configuration or secure vault after seeding.
 
 All platform admins share the **same** dashboard and platform data. Each has a separate login, MFA (Google Authenticator), sessions, and audit trail. Seed with `npm run admin:seed-team` (from `backend/`).
 
 | Field | Value |
 |-------|-------|
-| **Primary venue** | Brasserie Lindenstraße — onboarding **approved**, KYC **verified**, **premium** |
-| **Other demo businesses** | Harbor Spa (enterprise), City Salon (submitted / pending review), Alpine Chalet (draft), Riverside Café (rejected) — managers: `harbor.demo@`, `salon.demo@`, `alpine.demo@`, `riverside.demo@` (same password) |
-| **Staff (primary venue)** | Mina Schmidt (`employee@`), Maria, Sam, Jordan, Luca — `*.staff.demo@caretip.de`, same password |
+| **Primary venue** | Demo hospitality venue — onboarding **approved**, KYC **verified**, **premium** |
+| **Other demo businesses** | Additional venues in varied onboarding / KYC / subscription states (managers use `<MANAGER_DEMO_EMAIL>` pattern from the seed) |
+| **Staff (primary venue)** | Multiple seeded employees; emails follow the seed’s `<STAFF_DEMO_EMAIL>` pattern |
 
 Amber ribbons on the **business**, **employee**, and **platform admin** shells mark walkthrough accounts. The admin shell reads all five demo businesses from the database.
 
@@ -374,7 +375,7 @@ From repo root you can also use `node scripts/createAdmin.js` (wrapper sets `cwd
 
 ### Additional platform admins (shared dashboard, separate logins)
 
-Internal team members each get their own `SUPER_ADMIN` account (`isPlatformAdmin: true`) — **no** new tenant, organization, or duplicated data. MFA (Google Authenticator) is configured **per account** on first sign-in at `/platform-admin/login`.
+Team operators each get their own `SUPER_ADMIN` account (`isPlatformAdmin: true`) — **no** new tenant, organization, or duplicated data. MFA (Google Authenticator) is configured **per account** on first sign-in at `/platform-admin/login`.
 
 ```bash
 cd backend
@@ -384,12 +385,17 @@ npm run admin:seed-team
 
 Idempotent: creates missing accounts, updates role flags, never duplicates users. Existing passwords and MFA secrets are **preserved** on re-run. To force new temporary passwords: `npm run admin:seed-team -- --reset-passwords`.
 
-| Name | Email | Temporary password |
-|------|-------|------------------|
-| Albertina | `albertina@caretip.de` | `caretip@2026!` |
-| Fanny | `fanny@caretip.de` | `caretip@2026!` |
+Configure seeded admin emails/passwords via environment variables (never commit real values):
 
-Override via `ALBERTINA_ADMIN_TEMP_PASSWORD` / `FANNY_ADMIN_TEMP_PASSWORD` (min. 12 characters). Verify: `npm run admin:verify -- albertina@caretip.de 'caretip@2026!'`.
+| Variable | Purpose |
+|----------|---------|
+| `ALBERTINA_ADMIN_TEMP_PASSWORD` / `FANNY_ADMIN_TEMP_PASSWORD` | Temporary passwords for seeded team admins (min. 12 characters) |
+
+Verify after seeding:
+
+```bash
+npm run admin:verify -- '<TEAM_ADMIN_EMAIL>' '<PASSWORD>'
+```
 
 ### Security measures (summary)
 

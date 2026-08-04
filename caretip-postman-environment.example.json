@@ -8,22 +8,22 @@
     },
     {
       "key": "managerEmail",
-      "value": "demo@caretip.de",
+      "value": "<MANAGER_EMAIL>",
       "enabled": true
     },
     {
       "key": "managerPassword",
-      "value": "YOUR_DEMO_PASSWORD",
+      "value": "<PASSWORD>",
       "enabled": true
     },
     {
       "key": "managerBEmail",
-      "value": "owner@caretip-demo.com",
+      "value": "<MANAGER_B_EMAIL>",
       "enabled": true
     },
     {
       "key": "managerBPassword",
-      "value": "YOUR_DEMO_PASSWORD",
+      "value": "<PASSWORD>",
       "enabled": true
     },
     {
@@ -38,22 +38,22 @@
     },
     {
       "key": "employeeEmail",
-      "value": "employee@caretip.de",
+      "value": "<EMPLOYEE_EMAIL>",
       "enabled": true
     },
     {
       "key": "employeePassword",
-      "value": "YOUR_DEMO_PASSWORD",
+      "value": "<PASSWORD>",
       "enabled": true
     },
     {
       "key": "adminEmail",
-      "value": "admin@caretip.de",
+      "value": "<ADMIN_EMAIL>",
       "enabled": true
     },
     {
       "key": "adminPassword",
-      "value": "YOUR_DEMO_PASSWORD",
+      "value": "<PASSWORD>",
       "enabled": true
     },
     {

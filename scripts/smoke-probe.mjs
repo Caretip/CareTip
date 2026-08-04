@@ -7,12 +7,29 @@ import { setTimeout as delay } from "node:timers/promises";
 const API = (process.env.SMOKE_API_URL ?? "http://localhost:3001").replace(/\/$/, "");
 const WEB = (process.env.SMOKE_WEB_URL ?? "http://localhost:5173").replace(/\/$/, "");
 
+/** Credentials must come from env — never commit real passwords. */
 const ACCOUNTS = [
-  { label: "businessA", email: "owner@caretip-demo.com", password: "password123" },
-  { label: "businessB", email: "demo@caretip.de", password: "Demo1234!" },
-  { label: "employeeA", email: "sarah@caretip-demo.com", password: "password123" },
-  { label: "employeeDemo", email: "employee@caretip.de", password: "Demo1234!" },
-];
+  {
+    label: "businessA",
+    email: process.env.SMOKE_MANAGER_B_EMAIL,
+    password: process.env.SMOKE_PASSWORD,
+  },
+  {
+    label: "businessB",
+    email: process.env.SMOKE_MANAGER_EMAIL,
+    password: process.env.SMOKE_PASSWORD,
+  },
+  {
+    label: "employeeA",
+    email: process.env.SMOKE_EMPLOYEE_B_EMAIL,
+    password: process.env.SMOKE_PASSWORD,
+  },
+  {
+    label: "employeeDemo",
+    email: process.env.SMOKE_EMPLOYEE_EMAIL,
+    password: process.env.SMOKE_PASSWORD,
+  },
+].filter((a) => Boolean(a.email && a.password));
 
 async function fetchJson(url, init) {
   const res = await fetch(url, init);
@@ -179,6 +196,16 @@ async function probePublicEmployeesNoEmail(businessId) {
 }
 
 async function main() {
+  if (ACCOUNTS.length < 2) {
+    console.error(
+      JSON.stringify({
+        fatal:
+          "Set SMOKE_MANAGER_EMAIL, SMOKE_MANAGER_B_EMAIL, SMOKE_EMPLOYEE_EMAIL, SMOKE_EMPLOYEE_B_EMAIL, and SMOKE_PASSWORD before running smoke probes.",
+      }),
+    );
+    process.exit(1);
+  }
+
   const health = await probeHealth();
   const web = await probeWebUp();
   const tenant = await probeTenantIsolation();
