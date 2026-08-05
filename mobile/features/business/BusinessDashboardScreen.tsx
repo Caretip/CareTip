@@ -10,7 +10,7 @@ import { EmployeePerformanceChart } from "@/components/ui/EmployeePerformanceCha
 import { PeriodToggle } from "@/components/ui/PeriodToggle";
 import { LayeredScreen } from "@/components/ui/LayeredScreen";
 import { Section } from "@/components/ui/Section";
-import { ErrorState } from "@/components/ui/ErrorState";
+import { AccessErrorState } from "@/components/ui/AccessErrorState";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { SkeletonMetricGrid } from "@/components/ui/Skeleton";
 import { FadeIn } from "@/components/ui/motion";
@@ -22,7 +22,7 @@ import { useTheme } from "@/hooks/useTheme";
 import { useBusinessDashboard } from "@/features/business/useBusinessDashboard";
 import { buildEmployeePerformanceChartRows } from "@/utils/dashboardChartData";
 import { formatCount, formatEur, formatGrowthPercent } from "@/utils/format";
-import { friendlyErrorMessage, isPermissionError } from "@/utils/friendlyError";
+import { openAuthenticatedBillingWeb } from "@/utils/openBillingWeb";
 import { layered } from "@/theme/layered";
 import { spacing } from "@/theme";
 import type { BusinessTimeframe } from "@/types/business";
@@ -32,8 +32,17 @@ export function BusinessDashboardScreen() {
   const { colors } = useTheme();
   const router = useRouter();
   const { user } = useAuth();
-  const { timeframe, setTimeframe, profile, stats, isLoading, isRefreshing, error, refresh } =
-    useBusinessDashboard();
+  const {
+    timeframe,
+    setTimeframe,
+    profile,
+    premiumTier,
+    stats,
+    isLoading,
+    isRefreshing,
+    error,
+    refresh,
+  } = useBusinessDashboard();
 
   const timeframeOptions: Array<{ value: BusinessTimeframe; label: string }> = [
     { value: "week", label: t("period.week") },
@@ -112,17 +121,11 @@ export function BusinessDashboardScreen() {
       {isLoading ? (
         <SkeletonMetricGrid />
       ) : error ? (
-        isPermissionError(error) ? (
-          <EmptyState
-            title={t("errors.permissionTitle")}
-            message={friendlyErrorMessage(error, t("errors.permissionBody"), t)}
-          />
-        ) : (
-          <ErrorState
-            message={friendlyErrorMessage(error, t("businessDashboard.loadError"), t)}
-            onRetry={() => void refresh()}
-          />
-        )
+        <AccessErrorState
+          error={error}
+          fallbackMessage={t("businessDashboard.loadError")}
+          onRetry={() => void refresh()}
+        />
       ) : (
         <View style={styles.stack}>
           <FadeIn index={0}>
@@ -165,26 +168,44 @@ export function BusinessDashboardScreen() {
               title={t("businessDashboard.employeePerformanceTitle")}
               subtitle={t("businessDashboard.employeePerformanceDesc")}
             >
-              <EmployeePerformanceChart
-                title={t("businessDashboard.employeePerformanceTitle")}
-                subtitle={t("businessDashboard.employeePerformanceDesc")}
-                rows={employeePerformance}
-                employeeCount={employeeCount}
-                hasTipActivityInPeriod={hasTipActivity}
-                loading={isLoading}
-                leaderMessage={leaderMessage}
-                emptyNoEmployeesTitle={t("businessDashboard.noEmployees")}
-                emptyNoEmployeesMessage={t("businessDashboard.noEmployeesChartHint")}
-                emptyChartTitle={t("emptyState.chartTitle")}
-                emptyChartMessage={t("emptyState.chartDescription")}
-                hideHeader
-              />
+              {premiumTier ? (
+                <EmployeePerformanceChart
+                  title={t("businessDashboard.employeePerformanceTitle")}
+                  subtitle={t("businessDashboard.employeePerformanceDesc")}
+                  rows={employeePerformance}
+                  employeeCount={employeeCount}
+                  hasTipActivityInPeriod={hasTipActivity}
+                  loading={isLoading}
+                  leaderMessage={leaderMessage}
+                  emptyNoEmployeesTitle={t("businessDashboard.noEmployees")}
+                  emptyNoEmployeesMessage={t("businessDashboard.noEmployeesChartHint")}
+                  emptyChartTitle={t("emptyState.chartTitle")}
+                  emptyChartMessage={t("emptyState.chartDescription")}
+                  hideHeader
+                />
+              ) : (
+                <EmptyState
+                  title={t("errors.subscriptionRequiredTitle")}
+                  message={t("errors.subscriptionRequiredBody")}
+                  actionLabel={t("errors.managePlan")}
+                  onAction={() => void openAuthenticatedBillingWeb()}
+                />
+              )}
             </Section>
           </FadeIn>
 
           <FadeIn index={2}>
             <Section title={t("businessDashboard.employeeGoalsTitle")}>
-              <EmployeeGoalsPanel stats={stats} employeeNameById={employeeNameById} />
+              {premiumTier ? (
+                <EmployeeGoalsPanel stats={stats} employeeNameById={employeeNameById} />
+              ) : (
+                <EmptyState
+                  title={t("errors.subscriptionRequiredTitle")}
+                  message={t("errors.subscriptionRequiredBody")}
+                  actionLabel={t("errors.managePlan")}
+                  onAction={() => void openAuthenticatedBillingWeb()}
+                />
+              )}
             </Section>
           </FadeIn>
 

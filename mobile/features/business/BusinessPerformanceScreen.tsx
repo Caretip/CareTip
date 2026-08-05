@@ -6,15 +6,13 @@ import { PeriodToggle } from "@/components/ui/PeriodToggle";
 import { Screen } from "@/components/ui/Screen";
 import { DetailScreenHeader } from "@/components/ui/DetailScreenHeader";
 import { Section } from "@/components/ui/Section";
-import { ErrorState } from "@/components/ui/ErrorState";
-import { EmptyState } from "@/components/ui/EmptyState";
+import { AccessErrorState } from "@/components/ui/AccessErrorState";
 import { SkeletonMetricGrid } from "@/components/ui/Skeleton";
 import { useI18n } from "@/hooks/useI18n";
 import { useTheme } from "@/hooks/useTheme";
 import { useBusinessStats } from "@/features/business/useBusinessStats";
 import { buildEmployeePerformanceChartRows } from "@/utils/dashboardChartData";
 import { formatCount, formatEur, formatGrowthPercent } from "@/utils/format";
-import { friendlyErrorMessage, isPermissionError } from "@/utils/friendlyError";
 import { spacing } from "@/theme";
 import type { BusinessTimeframe } from "@/types/business";
 
@@ -64,17 +62,11 @@ export function BusinessPerformanceScreen() {
       {isLoading ? (
         <SkeletonMetricGrid />
       ) : error ? (
-        isPermissionError(error) ? (
-          <EmptyState
-            title={t("errors.permissionTitle")}
-            message={friendlyErrorMessage(error, t("errors.permissionBody"), t)}
-          />
-        ) : (
-          <ErrorState
-            message={friendlyErrorMessage(error, t("businessInsights.loadError"), t)}
-            onRetry={() => void refresh()}
-          />
-        )
+        <AccessErrorState
+          error={error}
+          fallbackMessage={t("businessInsights.loadError")}
+          onRetry={() => void refresh()}
+        />
       ) : (
         <View style={styles.stack}>
           <Section title={t("businessInsights.teamPulse")}>

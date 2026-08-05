@@ -11,7 +11,6 @@ import {
 import { Button } from "@/components/ui/Button";
 import { QrCodeDisplay } from "@/components/ui/QrCodeDisplay";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { ErrorState } from "@/components/ui/ErrorState";
 import { SkeletonListRows } from "@/components/ui/Skeleton";
 import { StatusPill } from "@/components/ui/StatusPill";
 import {
@@ -25,7 +24,7 @@ import { useI18n } from "@/hooks/useI18n";
 import { useTheme } from "@/hooks/useTheme";
 import { loadOfflineQrItems } from "@/utils/offlineQrCache";
 import { resolveQrStudioDisplayItems } from "@/utils/offlineQrTenantIsolation";
-import { friendlyErrorMessage, isPermissionError } from "@/utils/friendlyError";
+import { AccessErrorState } from "@/components/ui/AccessErrorState";
 import { showSuccessToast } from "@/store/toastStore";
 import type { QrCodeItem } from "@/types/qr";
 import { LIST_PERF_COMPACT } from "@/constants/listPerf";
@@ -171,18 +170,12 @@ export function QrStudioScreen() {
       ) : error && displayItems.length === 0 ? (
         <>
           {listHeader}
-          {isPermissionError(error) ? (
-            <EmptyState
-              variant="qr"
-              title={t("errors.permissionTitle")}
-              message={friendlyErrorMessage(error, t("errors.permissionBody"), t)}
-            />
-          ) : (
-            <ErrorState
-              message={friendlyErrorMessage(error, t("qr.loadError"), t)}
-              onRetry={() => void refresh()}
-            />
-          )}
+          <AccessErrorState
+            error={error}
+            fallbackMessage={t("qr.loadError")}
+            onRetry={() => void refresh()}
+            permissionVariant="qr"
+          />
         </>
       ) : (
         <FlatList

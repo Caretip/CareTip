@@ -20,6 +20,7 @@ import { useEmployeeStore } from "@/store/employeeStore";
 import { unregisterPushToken } from "@/services/api/settingsService";
 import { getRegisteredPushToken, setRegisteredPushToken } from "@/utils/pushTokenRegistry";
 import { clearAllOfflineQrCaches } from "@/utils/offlineQrCache";
+import { clearOsNotificationBadge } from "@/utils/notificationBadge";
 import { logAuthEvent } from "@/utils/authDebug";
 import { STARTUP_TASK_TIMEOUT_MS } from "@/constants/startup";
 import { withTimeout } from "@/utils/withTimeout";
@@ -218,6 +219,7 @@ export async function signOut(): Promise<void> {
   } catch {
     /* Non-fatal — session secrets already cleared. */
   }
+  void clearOsNotificationBadge();
 
   useUserStore.getState().clear();
   useBusinessStore.getState().clear();

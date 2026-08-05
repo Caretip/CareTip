@@ -136,6 +136,8 @@ export type MobileMessages = {
     verifyEmailPasswordRequired: string;
     resendVerification: string;
     verifyEmailPrompt: string;
+    emailVerifiedBanner: string;
+    emailVerifiedSignInSubtitle: string;
     joinTitle: string;
     joinSubtitle: string;
     joinVenueHint: string;
@@ -149,9 +151,12 @@ export type MobileMessages = {
     onboardingBusinessType: string;
     onboardingAddress: string;
     onboardingPhone: string;
+    onboardingWebsite: string;
     onboardingReviewHint: string;
     onboardingFinish: string;
     onboardingNameRequired: string;
+    onboardingTypeRequired: string;
+    onboardingAddressRequired: string;
     onboardingSaveFailed: string;
   };
   info: {
@@ -580,6 +585,11 @@ export type MobileMessages = {
     notFoundCta: string;
     permissionTitle: string;
     permissionBody: string;
+    subscriptionRequiredTitle: string;
+    subscriptionRequiredBody: string;
+    onboardingIncompleteTitle: string;
+    onboardingIncompleteBody: string;
+    managePlan: string;
   };
   emptyState: {
     chartTitle: string;

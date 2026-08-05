@@ -50,7 +50,11 @@ function renderPasswordReset(
  */
 export async function requestPasswordReset(
   rawEmail: string,
-  opts?: { acceptLanguage?: string | null; explicitLocale?: string | null }
+  opts?: {
+    acceptLanguage?: string | null;
+    explicitLocale?: string | null;
+    platform?: "web" | "mobile";
+  }
 ): Promise<void> {
   const email = normalizeLoginEmail(rawEmail);
   if (!email) return;
@@ -79,7 +83,11 @@ export async function requestPasswordReset(
     }),
   ]);
 
-  const resetUrl = `${getFrontendBaseUrl()}/reset-password/${encodeURIComponent(plainToken)}`;
+  const encoded = encodeURIComponent(plainToken);
+  const resetUrl =
+    opts?.platform === "mobile"
+      ? `caretip://reset-password?token=${encoded}`
+      : `${getFrontendBaseUrl()}/reset-password/${encoded}`;
 
   const from = getResendFromAddress();
   const locale = resolveUserPreferredLocale(

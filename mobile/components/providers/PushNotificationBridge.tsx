@@ -2,24 +2,26 @@ import { useEffect, useRef } from "react";
 import { Platform } from "react-native";
 import Constants, { ExecutionEnvironment } from "expo-constants";
 import { router } from "expo-router";
+import { useQueryClient } from "@tanstack/react-query";
 import { registerPushToken } from "@/services/api/settingsService";
+import { getUserQueryKeys } from "@/services/api/queryKeys";
 import { useAuth } from "@/hooks/useAuth";
 import { config } from "@/constants/config";
 import { setRegisteredPushToken } from "@/utils/pushTokenRegistry";
 import { useUserStore } from "@/store/userStore";
 import { getNotificationsRouteForRole } from "@/utils/routing";
+import { clearOsNotificationBadge } from "@/utils/notificationBadge";
 
 /**
  * Remote push tokens are unavailable in Expo Go since SDK 53.
- * Skip the module entirely there so Metro does not surface a fatal ERROR overlay.
- * Push registration runs only in development / production builds.
  *
- * Post-auth landing is owned by `postAuthNavigation` / `getPostAuthHref` — never inbox.
- * Inbox navigation happens only when the user explicitly taps a notification while the app
- * is running (response listener). We do not call getLastNotificationResponseAsync after
- * login or session restore — Android persists stale responses and caused dashboard → inbox redirects.
+ * Post-auth landing is owned by `postAuthNavigation` — never inbox.
+ * Warm push taps navigate to inbox. Cold-start taps are intentionally skipped
+ * (Android stale getLastNotificationResponseAsync caused dashboard→inbox redirects).
  */
 const isExpoGo = Constants.executionEnvironment === ExecutionEnvironment.StoreClient;
+
+type Sub = { remove: () => void };
 
 function resolveEasProjectId(): string | undefined {
   return (
@@ -32,40 +34,62 @@ function resolveEasProjectId(): string | undefined {
 
 export function PushNotificationBridge() {
   const { isAuthenticated } = useAuth();
+  const queryClient = useQueryClient();
   const registeredForSession = useRef(false);
+  const receiveSubRef = useRef<Sub | null>(null);
+  const responseSubRef = useRef<Sub | null>(null);
 
   useEffect(() => {
     if (!isAuthenticated || isExpoGo) {
       registeredForSession.current = false;
+      void clearOsNotificationBadge();
       return;
     }
 
     let cancelled = false;
-    let responseSub: { remove: () => void } | undefined;
-    let receiveSub: { remove: () => void } | undefined;
+
+    const invalidateInbox = () => {
+      const qk = getUserQueryKeys();
+      if (!qk) return;
+      void queryClient.invalidateQueries({ queryKey: qk.notifications });
+      void queryClient.invalidateQueries({ queryKey: qk.notificationUnread });
+    };
 
     void (async () => {
       const Notifications = await import("expo-notifications");
+      if (cancelled) return;
 
       Notifications.setNotificationHandler({
         handleNotification: async () => ({
-          shouldShowAlert: true,
+          // Prefer in-app bell when foregrounded — avoid duplicate OS banner + badge.
+          shouldShowAlert: false,
           shouldPlaySound: true,
           shouldSetBadge: true,
-          shouldShowBanner: true,
+          shouldShowBanner: false,
           shouldShowList: true,
         }),
       });
 
-      receiveSub = Notifications.addNotificationReceivedListener(() => {
-        /* Inbox refreshes on focus / pull-to-refresh. */
+      receiveSubRef.current?.remove();
+      responseSubRef.current?.remove();
+
+      receiveSubRef.current = Notifications.addNotificationReceivedListener(() => {
+        invalidateInbox();
       });
 
-      responseSub = Notifications.addNotificationResponseReceivedListener(() => {
+      responseSubRef.current = Notifications.addNotificationResponseReceivedListener(() => {
+        invalidateInbox();
         const role = useUserStore.getState().user?.role;
-        const inboxRoute = getNotificationsRouteForRole(role);
-        router.push(inboxRoute);
+        router.push(getNotificationsRouteForRole(role));
       });
+
+      if (cancelled) {
+        receiveSubRef.current?.remove();
+        responseSubRef.current?.remove();
+        receiveSubRef.current = null;
+        responseSubRef.current = null;
+        return;
+      }
 
       const settings = await Notifications.getPermissionsAsync();
       let status = settings.status;
@@ -92,7 +116,7 @@ export function PushNotificationBridge() {
         return;
       }
 
-      if (registeredForSession.current) return;
+      if (registeredForSession.current || cancelled) return;
 
       try {
         const token = (await Notifications.getExpoPushTokenAsync({ projectId })).data;
@@ -108,10 +132,12 @@ export function PushNotificationBridge() {
     return () => {
       cancelled = true;
       registeredForSession.current = false;
-      receiveSub?.remove();
-      responseSub?.remove();
+      receiveSubRef.current?.remove();
+      responseSubRef.current?.remove();
+      receiveSubRef.current = null;
+      responseSubRef.current = null;
     };
-  }, [isAuthenticated]);
+  }, [isAuthenticated, queryClient]);
 
   return null;
 }

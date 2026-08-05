@@ -9,6 +9,7 @@ import {
   type EmailLocale,
   type WelcomeAccountKind,
 } from "../emails/i18nEmail.js";
+import type { AuthLinkPlatform } from "../utils/clientPlatform.js";
 
 const VERIFY_TTL_MS = 60 * 60 * 1000; // 1 hour
 
@@ -25,10 +26,31 @@ function getFrontendBaseUrl(): string {
   return "http://localhost:5173";
 }
 
-export function buildVerifyEmailUrl(plainToken: string): string {
+/**
+ * Verification deep link.
+ * - web: SPA `/verify-email?token=`
+ * - mobile: custom scheme so the CareTip app opens (Universal Links may still claim the HTTPS fallback)
+ *
+ * Mobile emails use the app scheme as the primary CTA so signup→verify→onboarding
+ * never continues on the web product.
+ */
+export function buildVerifyEmailUrl(
+  plainToken: string,
+  platform: AuthLinkPlatform = "web",
+): string {
   const token = String(plainToken ?? "").trim();
+  const encoded = encodeURIComponent(token);
+  if (platform === "mobile") {
+    return `caretip://verify-email?token=${encoded}`;
+  }
   /** Must match SPA route that consumes `token` (see `CheckEmailPage` / `VerifyEmailPage`). */
-  return `${getFrontendBaseUrl()}/verify-email?token=${encodeURIComponent(token)}`;
+  return `${getFrontendBaseUrl()}/verify-email?token=${encoded}`;
+}
+
+/** HTTPS fallback for mobile emails (email clients that strip custom schemes). */
+export function buildVerifyEmailHttpsFallbackUrl(plainToken: string): string {
+  const token = String(plainToken ?? "").trim();
+  return `${getFrontendBaseUrl()}/verify-email?token=${encodeURIComponent(token)}&client=mobile`;
 }
 
 export async function createEmailVerificationToken(userId: string): Promise<{
@@ -58,11 +80,13 @@ function renderVerifyEmail(
   locale: EmailLocale,
   verifyUrl: string,
   personalization?: { recipientName?: string | null; businessName?: string | null },
+  secondaryVerifyUrl?: string | null,
 ) {
   try {
     return buildVerifyEmailContent({
       locale,
       verifyUrl,
+      secondaryVerifyUrl: secondaryVerifyUrl ?? undefined,
       expiresInHours: VERIFY_EMAIL_EXPIRES_HOURS,
       recipientName: personalization?.recipientName,
       businessName: personalization?.businessName,
@@ -71,6 +95,7 @@ function renderVerifyEmail(
     return buildVerifyEmailContent({
       locale: "en",
       verifyUrl,
+      secondaryVerifyUrl: secondaryVerifyUrl ?? undefined,
       expiresInHours: VERIFY_EMAIL_EXPIRES_HOURS,
       recipientName: personalization?.recipientName,
       businessName: personalization?.businessName,
@@ -83,6 +108,7 @@ export async function sendEmailVerificationEmail(input: {
   verifyUrl: string;
   locale: EmailLocale;
   userId?: string | null;
+  secondaryVerifyUrl?: string | null;
 }): Promise<void> {
   const to = input.to.trim().toLowerCase();
   if (!to) return;
@@ -92,7 +118,12 @@ export async function sendEmailVerificationEmail(input: {
   const personalization = input.userId
     ? await resolveEmailPersonalizationForUser(input.userId)
     : null;
-  const { subject, html, text } = renderVerifyEmail(loc, input.verifyUrl, personalization ?? undefined);
+  const { subject, html, text } = renderVerifyEmail(
+    loc,
+    input.verifyUrl,
+    personalization ?? undefined,
+    input.secondaryVerifyUrl,
+  );
 
   const ok = await sendResendEmail("email-verify", { from, to: [to], subject, html, text });
   if (!ok && process.env.NODE_ENV !== "production") {

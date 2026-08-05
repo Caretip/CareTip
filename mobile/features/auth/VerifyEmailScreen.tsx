@@ -47,10 +47,17 @@ export function VerifyEmailScreen() {
         return;
       }
     } catch {
-      /* fall through to login */
+      /* Register does not issue a session — continue natively via login. */
     }
-    router.replace("/(auth)/login");
-  }, [router]);
+    // Stay in the app: prefill email and route to native onboarding after sign-in.
+    router.replace({
+      pathname: "/(auth)/login",
+      params: {
+        ...(pendingEmail ? { pendingEmail } : {}),
+        emailVerified: "1",
+      },
+    });
+  }, [pendingEmail, router]);
 
   useEffect(() => {
     if (!token) return;

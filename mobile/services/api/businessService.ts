@@ -21,11 +21,18 @@ export async function patchBusinessProfile(body: {
   return data;
 }
 
+export type BusinessStatsScope = "summary" | "roster" | "analytics" | "full";
+
+/**
+ * GET /api/business/me/stats — default `summary` is Basic-tier safe.
+ * Requesting `full` without advancedAnalytics returns 403 SUBSCRIPTION_REQUIRED.
+ */
 export async function fetchBusinessStats(
   timeframe: BusinessTimeframe = "month",
+  scope: BusinessStatsScope = "summary",
 ): Promise<BusinessDashboardStats> {
   const { data } = await apiClient.get<BusinessDashboardStats>(API_ENDPOINTS.business.stats, {
-    params: { timeframe, scope: "full" },
+    params: { timeframe, scope },
   });
   return data;
 }

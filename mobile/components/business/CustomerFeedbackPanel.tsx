@@ -7,7 +7,8 @@ import { useI18n } from "@/hooks/useI18n";
 import { useTheme } from "@/hooks/useTheme";
 import { useBusinessCustomerFeedback } from "@/features/business/useBusinessCustomerFeedback";
 import { formatRating } from "@/utils/format";
-import { friendlyErrorMessage } from "@/utils/friendlyError";
+import { AccessErrorState } from "@/components/ui/AccessErrorState";
+import { openAuthenticatedBillingWeb } from "@/utils/openBillingWeb";
 import type { ColorPalette } from "@/theme/colors";
 import { dashboardTextColors, premiumPalette } from "@/theme/dashboardPremium";
 import { spacing, typography } from "@/theme";
@@ -49,17 +50,29 @@ export function CustomerFeedbackPanel() {
   const { colors, isDark } = useTheme();
   const text = dashboardTextColors(isDark);
   const styles = useMemo(() => createStyles(colors, text), [colors, text]);
-  const { data, isLoading, error } = useBusinessCustomerFeedback(3);
+  const { data, isLoading, error, isGated } = useBusinessCustomerFeedback(3);
 
   if (isLoading) {
     return <SkeletonListRows count={2} />;
   }
 
+  if (isGated) {
+    return (
+      <EmptyState
+        title={t("errors.subscriptionRequiredTitle")}
+        message={t("errors.subscriptionRequiredBody")}
+        actionLabel={t("errors.managePlan")}
+        onAction={() => void openAuthenticatedBillingWeb()}
+      />
+    );
+  }
+
   if (error) {
     return (
-      <Text style={styles.error}>
-        {friendlyErrorMessage(error, t("businessDashboard.feedbackLoadError"), t)}
-      </Text>
+      <AccessErrorState
+        error={error}
+        fallbackMessage={t("businessDashboard.feedbackLoadError")}
+      />
     );
   }
 

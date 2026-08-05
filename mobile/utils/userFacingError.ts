@@ -32,18 +32,59 @@ function isTechnicalMessage(message: string): boolean {
   return false;
 }
 
-function statusKey(status: number | null): string | null {
-  if (status === 401) return "errors.unauthorized";
-  if (status === 403) return "errors.forbidden";
-  if (status === 404) return "errors.notFound";
-  if (status === 408 || status === 504) return "errors.timeout";
-  if (status === 503) return "errors.unavailable";
-  if (status != null && status >= 500) return "errors.server";
-  return null;
+/** Subscription/plan entitlement denial — not a role permission failure. */
+export function isSubscriptionRequiredError(error: unknown): boolean {
+  if (!error) return false;
+  const normalized = normalizeApiError(error);
+  if (normalized.code === "SUBSCRIPTION_REQUIRED") return true;
+  if (normalized.code === "PLAN_LIMIT_EXCEEDED") return true;
+  const raw =
+    typeof error === "string"
+      ? error
+      : normalized.message || "";
+  return /subscription is required|plan limit/i.test(raw);
+}
+
+export function isOnboardingIncompleteError(error: unknown): boolean {
+  if (!error) return false;
+  const normalized = normalizeApiError(error);
+  if (normalized.code === "ONBOARDING_INCOMPLETE") return true;
+  const raw =
+    typeof error === "string"
+      ? error
+      : normalized.message || "";
+  return /complete onboarding/i.test(raw);
+}
+
+export function isAuthenticationError(error: unknown): boolean {
+  if (!error) return false;
+  if (typeof error === "string") {
+    return /authentication required|unauthorized|sign in again/i.test(error);
+  }
+  const normalized = normalizeApiError(error);
+  if (normalized.isUnauthorized || normalized.status === 401) return true;
+  if (normalized.code === "AUTH_REQUIRED") return true;
+  return /authentication required/i.test(normalized.message || "");
+}
+
+export function isPermissionError(error: unknown): boolean {
+  if (!error) return false;
+  // Keep plan / onboarding / auth failures out of the role-permission EmptyState.
+  if (isSubscriptionRequiredError(error)) return false;
+  if (isOnboardingIncompleteError(error)) return false;
+  if (isAuthenticationError(error)) return false;
+  if (typeof error === "string") {
+    return error === "Insufficient permissions" || /403|forbidden|permission/i.test(error);
+  }
+  const normalized = normalizeApiError(error);
+  if (normalized.status === 403) return true;
+  const raw = normalized.message || "";
+  return raw === "Insufficient permissions" || /forbidden|permission/i.test(raw);
 }
 
 /**
  * Global user-facing error formatter — never surfaces Axios/stack/raw HTTP text.
+ * Order: network → auth → onboarding → subscription → status → allowlist → raw.
  */
 export function formatUserFacingError(
   error: unknown,
@@ -54,6 +95,9 @@ export function formatUserFacingError(
 
   if (!error) return fallback;
   if (typeof error === "string") {
+    if (isAuthenticationError(error)) return pick("errors.unauthorized");
+    if (isOnboardingIncompleteError(error)) return pick("errors.onboardingIncompleteBody");
+    if (isSubscriptionRequiredError(error)) return pick("errors.subscriptionRequiredBody");
     if (ALLOWED_SERVER_MESSAGES.has(error)) {
       return pick(
         error === "Insufficient permissions"
@@ -75,8 +119,21 @@ export function formatUserFacingError(
     return pick("errors.timeout");
   }
 
-  const byStatus = statusKey(normalized.status);
-  if (byStatus) return pick(byStatus);
+  if (isAuthenticationError(error)) {
+    return pick("errors.unauthorized");
+  }
+  if (isOnboardingIncompleteError(error)) {
+    return pick("errors.onboardingIncompleteBody");
+  }
+  if (isSubscriptionRequiredError(error)) {
+    return pick("errors.subscriptionRequiredBody");
+  }
+
+  if (normalized.status === 404) return pick("errors.notFound");
+  if (normalized.status === 408 || normalized.status === 504) return pick("errors.timeout");
+  if (normalized.status === 503) return pick("errors.unavailable");
+  if (normalized.status != null && normalized.status >= 500) return pick("errors.server");
+  if (normalized.status === 403) return pick("errors.forbidden");
 
   const raw = normalized.message?.trim() ?? "";
   if (raw && ALLOWED_SERVER_MESSAGES.has(raw)) {
@@ -90,15 +147,4 @@ export function formatUserFacingError(
   }
 
   return fallback;
-}
-
-export function isPermissionError(error: unknown): boolean {
-  if (!error) return false;
-  if (typeof error === "string") {
-    return error === "Insufficient permissions" || /403|forbidden|permission/i.test(error);
-  }
-  const normalized = normalizeApiError(error);
-  if (normalized.status === 403) return true;
-  const raw = normalized.message || "";
-  return raw === "Insufficient permissions" || /forbidden|permission/i.test(raw);
 }

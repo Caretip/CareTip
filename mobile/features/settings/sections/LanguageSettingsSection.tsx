@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Section } from "@/components/ui/Section";
 import { SettingsSectionLayout } from "@/features/settings/SettingsSectionLayout";
 import { useAuth } from "@/hooks/useAuth";
@@ -23,6 +23,7 @@ export function LanguageSettingsSection() {
   const { user } = useAuth();
   const userId = useAuthUserId();
   const keys = useUserQueryKeys();
+  const queryClient = useQueryClient();
   const [locale, setLocale] = useState<"en" | "de">(user?.preferredLocale === "de" ? "de" : "en");
   const [saving, setSaving] = useState(false);
 
@@ -53,6 +54,7 @@ export function LanguageSettingsSection() {
         useUserStore.getState().setUser(updated);
         await saveUserSnapshot(updated);
       }
+      void queryClient.invalidateQueries({ queryKey: keys.accountSettings });
     } catch (e) {
       setLocale(prev);
       await setLanguage(prev);

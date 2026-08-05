@@ -8,6 +8,10 @@ export const REALTIME_EVENTS = {
   NOTIFICATION_CREATED: "notification.created",
   BILLING_UPDATED: "billing.updated",
   ACTIVITY_CREATED: "activity.created",
+  /** Emitted when platform verification / admin approval changes. */
+  VERIFICATION_UPDATED: "verification_updated",
+  /** Broad business payload refresh (name, roster-adjacent, inventory). */
+  BUSINESS_DATA_UPDATED: "business_data_updated",
 } as const;
 
 export type RealtimeEventEnvelope<T = unknown> = {

@@ -246,6 +246,8 @@ function renderStandardEmail(input: {
 export function buildVerifyEmailContent(input: {
   locale: EmailLocale;
   verifyUrl: string;
+  /** Optional HTTPS fallback when primary CTA is the mobile app scheme. */
+  secondaryVerifyUrl?: string | null;
   expiresInHours?: number;
   recipientName?: string | null;
   businessName?: string | null;
@@ -256,6 +258,8 @@ export function buildVerifyEmailContent(input: {
     recipientName: input.recipientName,
     businessName: input.businessName,
   });
+  const secondary = input.secondaryVerifyUrl?.trim() || "";
+  const mobileCta = Boolean(secondary);
   const copy =
     loc === "de"
       ? {
@@ -264,7 +268,10 @@ export function buildVerifyEmailContent(input: {
           headline: "E-Mail bestätigen",
           line1:
             "Bitte bestätigen Sie Ihre E-Mail-Adresse, um Ihr CareTip-Konto für digitales Trinkgeld und Team-Einblicke zu aktivieren.",
-          cta: "E-Mail bestätigen",
+          cta: mobileCta ? "In der CareTip-App bestätigen" : "E-Mail bestätigen",
+          fallback: mobileCta
+            ? `Falls die App nicht öffnet, nutzen Sie diesen Link: ${secondary}`
+            : "",
         }
       : {
           subject: "Verify your email",
@@ -272,8 +279,13 @@ export function buildVerifyEmailContent(input: {
           headline: "Verify your email",
           line1:
             "Please verify your email address to activate your CareTip account for QR tipping and team insights.",
-          cta: "Verify email",
+          cta: mobileCta ? "Verify in the CareTip app" : "Verify email",
+          fallback: mobileCta
+            ? `If the app does not open, use this link: ${secondary}`
+            : "",
         };
+  const finePrint = [expires];
+  if (copy.fallback) finePrint.push(copy.fallback);
   return renderStandardEmail({
     locale: loc,
     subject: copy.subject,
@@ -282,7 +294,7 @@ export function buildVerifyEmailContent(input: {
     greeting,
     lines: [copy.line1],
     cta: { href: input.verifyUrl, label: copy.cta },
-    finePrint: [expires],
+    finePrint,
   });
 }
 

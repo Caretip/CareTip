@@ -51,12 +51,32 @@
             {
               "scheme": "https",
               "host": "caretip.de",
-              "pathPrefix": "/"
+              "pathPrefix": "/verify-email"
             },
             {
               "scheme": "https",
               "host": "www.caretip.de",
-              "pathPrefix": "/"
+              "pathPrefix": "/verify-email"
+            },
+            {
+              "scheme": "https",
+              "host": "caretip.de",
+              "pathPrefix": "/reset-password"
+            },
+            {
+              "scheme": "https",
+              "host": "www.caretip.de",
+              "pathPrefix": "/reset-password"
+            },
+            {
+              "scheme": "https",
+              "host": "caretip.de",
+              "pathPrefix": "/login"
+            },
+            {
+              "scheme": "https",
+              "host": "www.caretip.de",
+              "pathPrefix": "/login"
             }
           ],
           "category": [

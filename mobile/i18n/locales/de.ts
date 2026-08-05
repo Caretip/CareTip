@@ -134,6 +134,9 @@ export const de: MobileMessages = {
     verifyEmailPasswordRequired: "Geben Sie Ihr Passwort ein, um die Bestätigungs-E-Mail erneut zu senden.",
     resendVerification: "Bestätigung erneut senden",
     verifyEmailPrompt: "E-Mail bestätigen? Hilfe öffnen",
+    emailVerifiedBanner: "E-Mail bestätigt. Melden Sie sich an, um die Einrichtung in der App abzuschließen.",
+    emailVerifiedSignInSubtitle:
+      "Melden Sie sich an, um die Einrichtung fortzusetzen — Sie bleiben in der CareTip-App.",
     joinTitle: "Mit Einladungscode beitreten",
     joinSubtitle: "Geben Sie den Code Ihres Betriebs ein.",
     joinVenueHint: "Beitritt zu {{name}}",
@@ -141,15 +144,18 @@ export const de: MobileMessages = {
     onboardingEyebrow: "EINRICHTUNG",
     onboardingStep1Title: "Betriebsdaten",
     onboardingStep1Subtitle: "Erzählen Sie uns von Ihrem Betrieb.",
-    onboardingStep2Title: "Prüfen & abschließen",
-    onboardingStep2Subtitle: "Bestätigen Sie Ihre Angaben für das Dashboard.",
+    onboardingStep2Title: "Kontaktdaten",
+    onboardingStep2Subtitle: "Fügen Sie Ihre Adresse hinzu, um das Dashboard zu öffnen.",
     onboardingBusinessName: "Betriebsname",
     onboardingBusinessType: "Betriebsart",
     onboardingAddress: "Registrierte Adresse",
     onboardingPhone: "Telefon",
+    onboardingWebsite: "Website (optional)",
     onboardingReviewHint: "Branding und Abrechnung können Sie später in den Einstellungen anpassen.",
     onboardingFinish: "Einrichtung abschließen",
     onboardingNameRequired: "Betriebsname ist erforderlich.",
+    onboardingTypeRequired: "Betriebsart ist erforderlich.",
+    onboardingAddressRequired: "Bitte geben Sie eine vollständige Adresse ein.",
     onboardingSaveFailed: "Einrichtung konnte nicht gespeichert werden.",
   },
   info: {
@@ -606,6 +612,13 @@ export const de: MobileMessages = {
     permissionTitle: "Für dieses Konto nicht verfügbar",
     permissionBody:
       "Dieser Bereich ist für Ihre Rolle nicht verfügbar. Anderes Konto verwenden oder CareTip im Web öffnen.",
+    subscriptionRequiredTitle: "Plan-Upgrade erforderlich",
+    subscriptionRequiredBody:
+      "Diese Ansicht benötigt einen höheren CareTip-Plan. Ihr Dashboard funktioniert weiterhin mit Basic — Analytics nach dem Upgrade öffnen.",
+    onboardingIncompleteTitle: "Zuerst Einrichtung abschließen",
+    onboardingIncompleteBody:
+      "Schließen Sie die Betriebseinrichtung ab, bevor Sie diesen Bereich öffnen.",
+    managePlan: "Plan verwalten",
   },
   emptyState: {
     chartTitle: "Noch keine Diagrammdaten",

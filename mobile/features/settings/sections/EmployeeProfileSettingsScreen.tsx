@@ -52,6 +52,7 @@ export function EmployeeProfileSettingsScreen() {
     onSuccess: () => {
       showSuccessToast(t("success.saved"));
       void queryClient.invalidateQueries({ queryKey: keys.employeeMe });
+      void queryClient.invalidateQueries({ queryKey: keys.employeeTips });
     },
     onError: (e) => showErrorToast(friendlyErrorMessage(e, t("settings.saveError"), t)),
   });

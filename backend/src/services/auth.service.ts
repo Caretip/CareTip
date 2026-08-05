@@ -12,10 +12,12 @@ import { generateUniqueBusinessSlugForName } from "./business.service.js";
 import { isSubscriptionBasicDefaultEnabled } from "../config/featureFlags.js";
 import { provisionInternalBasicSubscription } from "./subscription.service.js";
 import {
+  buildVerifyEmailHttpsFallbackUrl,
   buildVerifyEmailUrl,
   createEmailVerificationToken,
   sendEmailVerificationEmail,
 } from "./emailVerification.service.js";
+import type { AuthLinkPlatform } from "../utils/clientPlatform.js";
 import * as employeeActivationService from "./employeeActivation.service.js";
 import { registerEmployeeWithInvite } from "./employeeInvite.service.js";
 import { generateSlug, ensureUniqueSlug } from "../utils/slug.js";
@@ -345,7 +347,11 @@ export async function authResultForUserId(
 async function sendVerificationEmailBestEffort(
   userId: string,
   email: string,
-  opts?: { explicitLocale?: string | null; acceptLanguage?: string | null }
+  opts?: {
+    explicitLocale?: string | null;
+    acceptLanguage?: string | null;
+    platform?: "web" | "mobile";
+  }
 ): Promise<void> {
   try {
     const u = await prisma.user.findUnique({
@@ -355,10 +361,13 @@ async function sendVerificationEmailBestEffort(
     const locale = resolveUserPreferredLocale(
       opts?.explicitLocale ?? u?.preferredLocale ?? null,
     );
+    const platform: AuthLinkPlatform = opts?.platform === "mobile" ? "mobile" : "web";
     const { plainToken } = await createEmailVerificationToken(userId);
     await sendEmailVerificationEmail({
       to: email,
-      verifyUrl: buildVerifyEmailUrl(plainToken),
+      verifyUrl: buildVerifyEmailUrl(plainToken, platform),
+      secondaryVerifyUrl:
+        platform === "mobile" ? buildVerifyEmailHttpsFallbackUrl(plainToken) : null,
       locale,
       userId,
     });
@@ -376,7 +385,7 @@ export async function registerBusiness(
     /** Client app language (`en` / `de`); stored on user for email + UI consistency. */
     locale?: string | null;
   },
-  opts?: { acceptLanguage?: string | null }
+  opts?: { acceptLanguage?: string | null; platform?: AuthLinkPlatform }
 ): Promise<RegisterPendingResult> {
   const email = normalizeLoginEmail(input.email);
   const pwCheck = validatePassword(input.password);
@@ -446,6 +455,7 @@ export async function registerBusiness(
   // Managers must verify email for password sign-ups — await so delivery runs before HTTP response (serverless-safe).
   await sendVerificationEmailBestEffort(created.id, created.email, {
     explicitLocale: input.locale,
+    platform: opts?.platform,
   });
 
   return pendingVerificationResultForUserRecord(created);
@@ -459,7 +469,7 @@ export async function registerEmployee(
     inviteCode: string;
     locale?: string | null;
   },
-  opts?: { acceptLanguage?: string | null }
+  opts?: { acceptLanguage?: string | null; platform?: AuthLinkPlatform }
 ): Promise<RegisterPendingResult> {
   const email = normalizeLoginEmail(input.email);
   const pwCheck = validatePassword(input.password);
@@ -490,6 +500,7 @@ export async function registerEmployee(
 
   await sendVerificationEmailBestEffort(created.id, created.email, {
     explicitLocale: input.locale,
+    platform: opts?.platform,
   });
 
   const withEmployee = await prisma.user.findUnique({
@@ -577,6 +588,7 @@ export async function resendVerificationEmail(input: {
   password: string;
   explicitLocale?: string | null;
   acceptLanguage?: string | null;
+  platform?: AuthLinkPlatform;
 }): Promise<void> {
   const email = normalizeLoginEmail(input.email);
   const user = await prisma.user.findUnique({
@@ -596,6 +608,7 @@ export async function resendVerificationEmail(input: {
   await sendVerificationEmailBestEffort(user.id, email, {
     explicitLocale: input.explicitLocale,
     acceptLanguage: input.acceptLanguage,
+    platform: input.platform,
   });
 }
 
@@ -605,7 +618,11 @@ export async function resendVerificationEmail(input: {
  */
 export async function resendVerificationEmailForSessionUser(
   userId: string,
-  opts?: { explicitLocale?: string | null; acceptLanguage?: string | null }
+  opts?: {
+    explicitLocale?: string | null;
+    acceptLanguage?: string | null;
+    platform?: AuthLinkPlatform;
+  }
 ): Promise<void> {
   const user = await prisma.user.findUnique({
     where: { id: userId },
@@ -621,6 +638,7 @@ export async function resendVerificationEmailForSessionUser(
   await sendVerificationEmailBestEffort(user.id, email, {
     explicitLocale: opts?.explicitLocale,
     acceptLanguage: opts?.acceptLanguage,
+    platform: opts?.platform,
   });
 }
 

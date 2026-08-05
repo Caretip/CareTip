@@ -11,10 +11,16 @@ import { authService } from "@/services/auth/authService";
 import { fetchBusinessProfile, patchBusinessProfile } from "@/services/api/businessService";
 import { friendlyErrorMessage } from "@/utils/friendlyError";
 import { navigateAfterAuth } from "@/utils/postAuthNavigation";
+import { requireOnline } from "@/utils/requireOnline";
 import { authCardStyles } from "@/components/auth/authCardStyles";
 import { authBrand } from "@/theme/authBrand";
 import { spacing, typography } from "@/theme";
 
+/**
+ * Native business onboarding — same required fields as web
+ * (`managerProfileReadyToFinish`: name + businessType + address length > 3).
+ * Completes entirely in-app; never opens the web product.
+ */
 export function BusinessOnboardingScreen() {
   const router = useRouter();
   const { t } = useI18n();
@@ -28,6 +34,7 @@ export function BusinessOnboardingScreen() {
   const [businessType, setBusinessType] = useState("");
   const [registeredAddress, setRegisteredAddress] = useState("");
   const [contactPhone, setContactPhone] = useState("");
+  const [website, setWebsite] = useState("");
 
   useEffect(() => {
     let cancelled = false;
@@ -38,6 +45,7 @@ export function BusinessOnboardingScreen() {
         setBusinessType(String(profile.type ?? ""));
         setRegisteredAddress(String(profile.registeredAddress ?? profile.location ?? ""));
         setContactPhone(String(profile.contactPhone ?? ""));
+        setWebsite(String(profile.website ?? ""));
       })
       .catch(() => {
         /* profile may not exist yet */
@@ -52,9 +60,17 @@ export function BusinessOnboardingScreen() {
 
   const handleContinue = async () => {
     setError(null);
+    if (!(await requireOnline())) {
+      setError(t("errors.offline"));
+      return;
+    }
     if (step === 1) {
-      if (!legalBusinessName.trim()) {
+      if (legalBusinessName.trim().length < 2) {
         setError(t("auth.onboardingNameRequired"));
+        return;
+      }
+      if (!businessType.trim()) {
+        setError(t("auth.onboardingTypeRequired"));
         return;
       }
       setBusy(true);
@@ -62,9 +78,7 @@ export function BusinessOnboardingScreen() {
         await patchBusinessProfile({
           name: legalBusinessName.trim(),
           legalBusinessName: legalBusinessName.trim(),
-          businessType: businessType.trim() || null,
-          registeredAddress: registeredAddress.trim() || null,
-          contactPhone: contactPhone.trim() || null,
+          businessType: businessType.trim(),
         });
         setStep(2);
       } catch (err) {
@@ -75,10 +89,19 @@ export function BusinessOnboardingScreen() {
       return;
     }
 
+    if (registeredAddress.trim().length <= 3) {
+      setError(t("auth.onboardingAddressRequired"));
+      return;
+    }
+
     setBusy(true);
     try {
+      await patchBusinessProfile({
+        registeredAddress: registeredAddress.trim(),
+        contactPhone: contactPhone.trim() || null,
+        website: website.trim() || null,
+      });
       const session = await authService.patchMyOnboardingStatus(true);
-      // Entering the app shell — wipe RQ + any residual offline QR (tenant isolation).
       await establishAuthenticatedSession(session.token, session.user, "onboarding-complete");
       await navigateAfterAuth(router, session.user);
     } catch (err) {
@@ -99,9 +122,7 @@ export function BusinessOnboardingScreen() {
           <Text style={authCardStyles.cardSubtitle}>
             {step === 1 ? t("auth.onboardingStep1Subtitle") : t("auth.onboardingStep2Subtitle")}
           </Text>
-          {user?.email ? (
-            <Text style={styles.emailHint}>{user.email}</Text>
-          ) : null}
+          {user?.email ? <Text style={styles.emailHint}>{user.email}</Text> : null}
         </View>
 
         {loading ? (
@@ -122,6 +143,9 @@ export function BusinessOnboardingScreen() {
               onChangeText={setBusinessType}
               editable={!busy}
             />
+          </View>
+        ) : (
+          <View style={authCardStyles.fields}>
             <AuthField
               label={t("auth.onboardingAddress")}
               icon="location-outline"
@@ -137,17 +161,14 @@ export function BusinessOnboardingScreen() {
               keyboardType="phone-pad"
               editable={!busy}
             />
-          </View>
-        ) : (
-          <View style={styles.review}>
-            <Text style={styles.reviewLabel}>{t("auth.onboardingBusinessName")}</Text>
-            <Text style={styles.reviewValue}>{legalBusinessName}</Text>
-            {registeredAddress ? (
-              <>
-                <Text style={styles.reviewLabel}>{t("auth.onboardingAddress")}</Text>
-                <Text style={styles.reviewValue}>{registeredAddress}</Text>
-              </>
-            ) : null}
+            <AuthField
+              label={t("auth.onboardingWebsite")}
+              icon="globe-outline"
+              value={website}
+              onChangeText={setWebsite}
+              keyboardType="url"
+              editable={!busy}
+            />
             <Text style={styles.reviewHint}>{t("auth.onboardingReviewHint")}</Text>
           </View>
         )}
@@ -185,21 +206,10 @@ const styles = StyleSheet.create({
     ...typography.caption,
     color: authBrand.muted,
   },
-  review: { gap: spacing.sm },
-  reviewLabel: {
-    ...typography.caption,
-    color: authBrand.muted,
-    marginTop: spacing.sm,
-  },
-  reviewValue: {
-    ...typography.body,
-    color: authBrand.dark,
-    fontWeight: "600",
-  },
   reviewHint: {
     ...typography.caption,
     color: authBrand.muted,
-    marginTop: spacing.md,
+    marginTop: spacing.sm,
     lineHeight: 22,
   },
   loading: {

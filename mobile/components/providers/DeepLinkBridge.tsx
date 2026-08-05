@@ -32,8 +32,24 @@ function routeAuthDeepLink(url: string, router: ReturnType<typeof useRouter>): b
     return true;
   }
 
-  if (lower.includes("/login")) {
-    router.replace("/(auth)/login");
+  if (lower.includes("/login") || lower.includes("://login")) {
+    const parsed = Linking.parse(url);
+    const pendingEmail =
+      typeof parsed.queryParams?.pendingEmail === "string"
+        ? parsed.queryParams.pendingEmail
+        : undefined;
+    const emailVerified =
+      parsed.queryParams?.emailVerified === "1" ||
+      parsed.queryParams?.emailVerified === "true"
+        ? "1"
+        : undefined;
+    router.replace({
+      pathname: "/(auth)/login",
+      params: {
+        ...(pendingEmail ? { pendingEmail } : {}),
+        ...(emailVerified ? { emailVerified } : {}),
+      },
+    });
     return true;
   }
 

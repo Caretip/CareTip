@@ -10,16 +10,15 @@ import { TipCard } from "@/components/ui/ListCards";
 import { PeriodToggle } from "@/components/ui/PeriodToggle";
 import { LayeredScreen } from "@/components/ui/LayeredScreen";
 import { GroupedList, Section } from "@/components/ui/Section";
-import { ErrorState } from "@/components/ui/ErrorState";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { SkeletonMetricGrid } from "@/components/ui/Skeleton";
 import { FadeIn } from "@/components/ui/motion";
+import { AccessErrorState } from "@/components/ui/AccessErrorState";
 import { useAuth } from "@/hooks/useAuth";
 import { useI18n } from "@/hooks/useI18n";
 import { useEmployeeDashboard } from "@/features/employee/useEmployeeDashboard";
 import { formatCount, formatEur, formatRating } from "@/utils/format";
 import { formatTipStatus, uiLocaleTag } from "@/utils/labels";
-import { friendlyErrorMessage, isPermissionError } from "@/utils/friendlyError";
 import { layered } from "@/theme/layered";
 import { spacing } from "@/theme";
 import type { EmployeeTimeframe } from "@/types/employee";
@@ -95,31 +94,19 @@ export function EmployeeDashboardScreen() {
       {isLoading ? (
         <SkeletonMetricGrid />
       ) : error && !profile ? (
-        isPermissionError(error) ? (
-          <EmptyState
-            title={t("errors.permissionTitle")}
-            message={friendlyErrorMessage(error, t("errors.permissionBody"), t)}
-          />
-        ) : (
-          <ErrorState
-            message={friendlyErrorMessage(error, t("employeeDashboard.loadError"), t)}
-            onRetry={() => void refresh()}
-          />
-        )
+        <AccessErrorState
+          error={error}
+          fallbackMessage={t("employeeDashboard.loadError")}
+          onRetry={() => void refresh()}
+        />
       ) : isTipsLoading && !tips ? (
         <SkeletonMetricGrid />
       ) : tipsError && !tips ? (
-        isPermissionError(tipsError) ? (
-          <EmptyState
-            title={t("errors.permissionTitle")}
-            message={friendlyErrorMessage(tipsError, t("errors.permissionBody"), t)}
-          />
-        ) : (
-          <ErrorState
-            message={friendlyErrorMessage(tipsError, t("employeeDashboard.tipsLoadError"), t)}
-            onRetry={() => void refresh()}
-          />
-        )
+        <AccessErrorState
+          error={tipsError}
+          fallbackMessage={t("employeeDashboard.tipsLoadError")}
+          onRetry={() => void refresh()}
+        />
       ) : (
         <View style={styles.stack}>
           <FadeIn index={0}>

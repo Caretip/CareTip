@@ -5,14 +5,14 @@ import { PeriodToggle } from "@/components/ui/PeriodToggle";
 import { Screen } from "@/components/ui/Screen";
 import { DetailScreenHeader } from "@/components/ui/DetailScreenHeader";
 import { Section, GroupedList } from "@/components/ui/Section";
-import { ErrorState } from "@/components/ui/ErrorState";
+import { AccessErrorState } from "@/components/ui/AccessErrorState";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { SkeletonMetricGrid } from "@/components/ui/Skeleton";
 import { useI18n } from "@/hooks/useI18n";
 import { useTheme } from "@/hooks/useTheme";
 import { useBusinessAnalytics } from "@/features/business/useBusinessAnalytics";
 import { formatCount, formatEur, formatGrowthPercent, formatPercent } from "@/utils/format";
-import { friendlyErrorMessage, isPermissionError } from "@/utils/friendlyError";
+import { openAuthenticatedBillingWeb } from "@/utils/openBillingWeb";
 import type { ColorPalette } from "@/theme/colors";
 import { spacing, typography } from "@/theme";
 import type { BusinessTimeframe } from "@/types/business";
@@ -21,8 +21,17 @@ export function BusinessAnalyticsScreen() {
   const { t } = useI18n();
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
-  const { timeframe, setTimeframe, stats, qrAnalytics, isLoading, isRefreshing, error, refresh } =
-    useBusinessAnalytics({ includeQr: true });
+  const {
+    timeframe,
+    setTimeframe,
+    premiumTier,
+    stats,
+    qrAnalytics,
+    isLoading,
+    isRefreshing,
+    error,
+    refresh,
+  } = useBusinessAnalytics({ includeQr: true });
 
   const timeframeOptions: Array<{ value: BusinessTimeframe; label: string }> = [
     { value: "week", label: t("period.week") },
@@ -44,17 +53,11 @@ export function BusinessAnalyticsScreen() {
       {isLoading ? (
         <SkeletonMetricGrid />
       ) : error ? (
-        isPermissionError(error) ? (
-          <EmptyState
-            title={t("errors.permissionTitle")}
-            message={friendlyErrorMessage(error, t("errors.permissionBody"), t)}
-          />
-        ) : (
-          <ErrorState
-            message={friendlyErrorMessage(error, t("businessInsights.loadError"), t)}
-            onRetry={() => void refresh()}
-          />
-        )
+        <AccessErrorState
+          error={error}
+          fallbackMessage={t("businessInsights.loadError")}
+          onRetry={() => void refresh()}
+        />
       ) : (
         <View style={styles.stack}>
           <Section title={t("businessInsights.revenueSummary")}>
@@ -84,43 +87,54 @@ export function BusinessAnalyticsScreen() {
           </Section>
 
           <Section title={t("businessInsights.qrAnalytics")}>
-            <View style={styles.metricsRow}>
-              <View style={styles.metricCol}>
-                <KpiCard
-                  variant="plain"
-                  label={t("businessInsights.totalScans")}
-                  value={formatCount(qrAnalytics?.totalScans)}
-                />
-              </View>
-              <View style={styles.metricCol}>
-                <KpiCard
-                  variant="plain"
-                  label={t("businessInsights.uniqueScans")}
-                  value={formatCount(qrAnalytics?.uniqueScans)}
-                />
-              </View>
-            </View>
-            <KpiCard
-              variant="plain"
-              label={t("businessInsights.conversionRate")}
-              value={formatPercent(qrAnalytics?.conversionRate)}
-            />
-            {topSources.length === 0 ? (
-              <Text style={styles.muted}>{t("businessInsights.noQrSources")}</Text>
-            ) : (
-              <GroupedList>
-                {topSources.map((source, index) => (
-                  <View
-                    key={source.label}
-                    style={[styles.sourceRow, index === 0 ? styles.sourceRowFirst : null]}
-                  >
-                    <Text style={styles.sourceLabel}>{source.label}</Text>
-                    <Text style={styles.sourceValue}>
-                      {formatCount(source.scans)} · {formatEur(source.tipsEur)}
-                    </Text>
+            {premiumTier ? (
+              <>
+                <View style={styles.metricsRow}>
+                  <View style={styles.metricCol}>
+                    <KpiCard
+                      variant="plain"
+                      label={t("businessInsights.totalScans")}
+                      value={formatCount(qrAnalytics?.totalScans)}
+                    />
                   </View>
-                ))}
-              </GroupedList>
+                  <View style={styles.metricCol}>
+                    <KpiCard
+                      variant="plain"
+                      label={t("businessInsights.uniqueScans")}
+                      value={formatCount(qrAnalytics?.uniqueScans)}
+                    />
+                  </View>
+                </View>
+                <KpiCard
+                  variant="plain"
+                  label={t("businessInsights.conversionRate")}
+                  value={formatPercent(qrAnalytics?.conversionRate)}
+                />
+                {topSources.length === 0 ? (
+                  <Text style={styles.muted}>{t("businessInsights.noQrSources")}</Text>
+                ) : (
+                  <GroupedList>
+                    {topSources.map((source, index) => (
+                      <View
+                        key={source.label}
+                        style={[styles.sourceRow, index === 0 ? styles.sourceRowFirst : null]}
+                      >
+                        <Text style={styles.sourceLabel}>{source.label}</Text>
+                        <Text style={styles.sourceValue}>
+                          {formatCount(source.scans)} · {formatEur(source.tipsEur)}
+                        </Text>
+                      </View>
+                    ))}
+                  </GroupedList>
+                )}
+              </>
+            ) : (
+              <EmptyState
+                title={t("errors.subscriptionRequiredTitle")}
+                message={t("errors.subscriptionRequiredBody")}
+                actionLabel={t("errors.managePlan")}
+                onAction={() => void openAuthenticatedBillingWeb()}
+              />
             )}
           </Section>
         </View>

@@ -82,13 +82,17 @@ export function SocketProvider({ children }: { children: ReactNode }) {
       setConnected(false);
       setConnectionStatus("disconnected");
     });
-    s.io.on("reconnect_attempt", () => setConnectionStatus("reconnecting"));
-    s.io.on("reconnect", () => {
+    const onReconnectAttempt = () => setConnectionStatus("reconnecting");
+    const onReconnect = () => {
       setConnected(true);
       setConnectionStatus("connected");
-    });
+    };
+    s.io.on("reconnect_attempt", onReconnectAttempt);
+    s.io.on("reconnect", onReconnect);
 
     return () => {
+      s.io.off("reconnect_attempt", onReconnectAttempt);
+      s.io.off("reconnect", onReconnect);
       s.removeAllListeners();
       s.close();
       socketRef.current = null;

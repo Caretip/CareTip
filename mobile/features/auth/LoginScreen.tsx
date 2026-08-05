@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
-import { useRouter } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import { AuthExperienceShell } from "@/components/auth/AuthExperienceShell";
 import { AuthEntrance } from "@/components/auth/AuthEntrance";
 import { AuthField } from "@/components/auth/AuthField";
@@ -39,6 +39,11 @@ function resolveTimeZone(): string | undefined {
 export function LoginScreen() {
   const router = useRouter();
   const { t } = useI18n();
+  const params = useLocalSearchParams<{ pendingEmail?: string; emailVerified?: string }>();
+  const pendingEmail =
+    typeof params.pendingEmail === "string" ? params.pendingEmail.trim() : "";
+  const emailJustVerified =
+    params.emailVerified === "1" || params.emailVerified === "true";
   const { signIn, isHydrated, status, isAuthenticated, user } = useAuth();
   const [formError, setFormError] = useState<string | null>(null);
   const [showVerifyPrompt, setShowVerifyPrompt] = useState(false);
@@ -58,11 +63,18 @@ export function LoginScreen() {
   const {
     control,
     handleSubmit,
+    setValue,
     formState: { isSubmitting, errors },
   } = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
-    defaultValues: { email: "", password: "" },
+    defaultValues: { email: pendingEmail, password: "" },
   });
+
+  useEffect(() => {
+    if (pendingEmail) {
+      setValue("email", pendingEmail);
+    }
+  }, [pendingEmail, setValue]);
 
   const onSubmit = handleSubmit(async (values) => {
     setFormError(null);
@@ -108,7 +120,16 @@ export function LoginScreen() {
             <View style={authCardStyles.cardHeader}>
               <Text style={authCardStyles.cardEyebrow}>{t("auth.welcomeBack")}</Text>
               <Text style={authCardStyles.cardTitle}>{t("auth.loginTitle")}</Text>
-              <Text style={authCardStyles.cardSubtitle}>{t("auth.signInSubtitle")}</Text>
+              <Text style={authCardStyles.cardSubtitle}>
+                {emailJustVerified
+                  ? t("auth.emailVerifiedSignInSubtitle")
+                  : t("auth.signInSubtitle")}
+              </Text>
+              {emailJustVerified ? (
+                <Text style={styles.verifiedBanner} accessibilityRole="text">
+                  {t("auth.emailVerifiedBanner")}
+                </Text>
+              ) : null}
             </View>
           </AuthEntrance>
 
@@ -248,6 +269,12 @@ export function LoginScreen() {
 }
 
 const styles = StyleSheet.create({
+  verifiedBanner: {
+    ...typography.caption,
+    color: authBrand.dark,
+    fontWeight: "600",
+    marginTop: spacing.sm,
+  },
   verifyPrompt: {
     alignSelf: "stretch",
     minHeight: touchTarget,

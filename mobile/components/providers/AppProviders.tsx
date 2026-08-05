@@ -11,6 +11,7 @@ import { SessionExpiryBridge } from "@/components/providers/SessionExpiryBridge"
 import { IdleSessionBridge } from "@/components/providers/IdleSessionBridge";
 import { SocketProvider } from "@/components/providers/SocketProvider";
 import { RealtimeQueryBridge } from "@/components/providers/RealtimeQueryBridge";
+import { AuthSessionSyncBridge } from "@/components/providers/AuthSessionSyncBridge";
 import { LocaleBridge } from "@/components/providers/LocaleBridge";
 import { ThemeBridge } from "@/components/providers/ThemeBridge";
 import { StartupBridge } from "@/components/providers/StartupBridge";
@@ -42,6 +43,7 @@ export function AppProviders({ children }: { children: ReactNode }) {
                     <SessionExpiryBridge />
                     <IdleSessionBridge>
                       <PushNotificationBridge />
+                      <AuthSessionSyncBridge />
                       <RealtimeQueryBridge />
                       <DeepLinkBridge />
                       {children}

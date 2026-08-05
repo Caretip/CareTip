@@ -5,6 +5,10 @@ import { useAuthUserId, useUserQueryKeys } from "@/services/api/queryKeys";
 import { useAuth } from "@/hooks/useAuth";
 import { usePersistedTimeframe } from "@/hooks/usePersistedTimeframe";
 import { PREFERENCE_KEYS } from "@/constants/storageKeys";
+import {
+  isPremiumAnalyticsTier,
+  resolveDashboardStatsScope,
+} from "@/utils/businessStatsScope";
 import type { BusinessTimeframe } from "@/types/business";
 
 export function useBusinessDashboard() {
@@ -23,9 +27,13 @@ export function useBusinessDashboard() {
     staleTime: queryStaleTimes.profile,
   });
 
+  // Basic-tier safe — mirrors web dashboard (summary unless advancedAnalytics).
+  const statsScope = resolveDashboardStatsScope(profileQuery.data?.subscriptionTier);
+  const premiumTier = isPremiumAnalyticsTier(profileQuery.data?.subscriptionTier);
+
   const statsQuery = useQuery({
-    queryKey: [...keys.businessStats, timeframe] as const,
-    queryFn: () => fetchBusinessStats(timeframe),
+    queryKey: [...keys.businessStats, timeframe, statsScope] as const,
+    queryFn: () => fetchBusinessStats(timeframe, statsScope),
     enabled: scoped && profileQuery.isSuccess,
   });
 
@@ -37,6 +45,7 @@ export function useBusinessDashboard() {
     timeframe,
     setTimeframe,
     profile: profileQuery.data,
+    premiumTier,
     stats: statsQuery.data,
     isLoading: profileQuery.isLoading || statsQuery.isLoading,
     isRefreshing: profileQuery.isRefetching || statsQuery.isRefetching,

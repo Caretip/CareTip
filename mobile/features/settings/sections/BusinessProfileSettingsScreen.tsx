@@ -9,8 +9,10 @@ import { useTheme } from "@/hooks/useTheme";
 import { fetchBusinessProfile, patchBusinessProfile } from "@/services/api/businessService";
 import { queryStaleTimes } from "@/services/api/queryClient";
 import { useAuthUserId, useUserQueryKeys } from "@/services/api/queryKeys";
+import { invalidateBrandingArtifacts } from "@/services/api/invalidateUserQueries";
 import { showErrorToast, showSuccessToast } from "@/store/toastStore";
 import { friendlyErrorMessage } from "@/utils/friendlyError";
+import { requireOnline } from "@/utils/requireOnline";
 import type { ColorPalette } from "@/theme/colors";
 import { radius, spacing, typography } from "@/theme";
 import { textA11y } from "@/theme/a11y";
@@ -44,19 +46,29 @@ export function BusinessProfileSettingsScreen() {
   }, [profile]);
 
   const saveMutation = useMutation({
-    mutationFn: () =>
-      patchBusinessProfile({
+    mutationFn: async () => {
+      if (!(await requireOnline())) {
+        throw new Error("OFFLINE");
+      }
+      return patchBusinessProfile({
         name: name.trim(),
         legalBusinessName: name.trim(),
         location: location.trim() || null,
         contactPhone: contactPhone.trim() || null,
         website: website.trim() || null,
-      }),
+      });
+    },
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: keys.businessProfile });
+      await queryClient.invalidateQueries({ queryKey: keys.businessStats });
+      await invalidateBrandingArtifacts(queryClient, keys);
       showSuccessToast(t("settings.profileSaved"));
     },
     onError: (error) => {
+      if (error instanceof Error && error.message === "OFFLINE") {
+        showErrorToast(t("errors.offline"));
+        return;
+      }
       showErrorToast(friendlyErrorMessage(error, t("settings.saveError"), t));
     },
   });

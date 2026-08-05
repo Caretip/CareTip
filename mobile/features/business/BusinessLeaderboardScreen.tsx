@@ -4,7 +4,7 @@ import { PeriodToggle } from "@/components/ui/PeriodToggle";
 import { Screen } from "@/components/ui/Screen";
 import { DetailScreenHeader } from "@/components/ui/DetailScreenHeader";
 import { Section, GroupedList, GroupedRow } from "@/components/ui/Section";
-import { ErrorState } from "@/components/ui/ErrorState";
+import { AccessErrorState } from "@/components/ui/AccessErrorState";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { SkeletonListRows } from "@/components/ui/Skeleton";
 import { Avatar } from "@/components/ui/Avatar";
@@ -12,7 +12,6 @@ import { useI18n } from "@/hooks/useI18n";
 import { useTheme } from "@/hooks/useTheme";
 import { useBusinessStats } from "@/features/business/useBusinessStats";
 import { formatCount, formatEur, formatRating } from "@/utils/format";
-import { friendlyErrorMessage, isPermissionError } from "@/utils/friendlyError";
 import type { ColorPalette } from "@/theme/colors";
 import { spacing, typography } from "@/theme";
 import type { BusinessTimeframe } from "@/types/business";
@@ -49,17 +48,11 @@ export function BusinessLeaderboardScreen() {
       {isLoading ? (
         <SkeletonListRows count={5} />
       ) : error ? (
-        isPermissionError(error) ? (
-          <EmptyState
-            title={t("errors.permissionTitle")}
-            message={friendlyErrorMessage(error, t("errors.permissionBody"), t)}
-          />
-        ) : (
-          <ErrorState
-            message={friendlyErrorMessage(error, t("businessInsights.loadError"), t)}
-            onRetry={() => void refresh()}
-          />
-        )
+        <AccessErrorState
+          error={error}
+          fallbackMessage={t("businessInsights.loadError")}
+          onRetry={() => void refresh()}
+        />
       ) : (
         <View style={styles.stack}>
           <Section title={t("businessInsights.teamLeaderboard")}>

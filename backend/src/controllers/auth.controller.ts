@@ -7,6 +7,7 @@ import { managerProfileReadyToFinish } from "../services/onboardingProgress.serv
 import * as emailVerificationService from "../services/emailVerification.service.js";
 import * as passwordResetService from "../services/passwordReset.service.js";
 import * as employeeActivationService from "../services/employeeActivation.service.js";
+import { resolveAuthLinkPlatform } from "../utils/clientPlatform.js";
 import { prisma } from "../prisma.js";
 import speakeasy from "speakeasy";
 import qrcode from "qrcode";
@@ -173,6 +174,7 @@ export async function register(req: Request, res: Response) {
     const acceptLanguage = req.get("accept-language") ?? undefined;
     const locale =
       typeof body.locale === "string" && body.locale.trim() ? body.locale.trim() : undefined;
+    const platform = resolveAuthLinkPlatform(req);
 
     const inviteTrimmed =
       typeof inviteCode === "string" ? inviteCode.trim() : "";
@@ -192,7 +194,7 @@ export async function register(req: Request, res: Response) {
           inviteCode: inviteTrimmed,
           locale,
         },
-        { acceptLanguage },
+        { acceptLanguage, platform },
       );
       clearRefreshCookie(res);
       return res.status(201).json(result);
@@ -206,7 +208,7 @@ export async function register(req: Request, res: Response) {
           name: typeof name === "string" ? name : undefined,
           locale,
         },
-        { acceptLanguage },
+        { acceptLanguage, platform },
       );
       clearRefreshCookie(res);
       return res.status(201).json(result);
@@ -227,7 +229,7 @@ export async function register(req: Request, res: Response) {
           inviteCode,
           locale,
         },
-        { acceptLanguage },
+        { acceptLanguage, platform },
       );
       clearRefreshCookie(res);
       return res.status(201).json(result);
@@ -647,7 +649,14 @@ export async function resendVerificationEmail(req: Request, res: Response) {
     const acceptLanguage = req.get("accept-language") ?? undefined;
     const locale =
       typeof body.locale === "string" && body.locale.trim() ? body.locale.trim() : undefined;
-    await authService.resendVerificationEmail({ email, password, explicitLocale: locale, acceptLanguage });
+    const platform = resolveAuthLinkPlatform(req);
+    await authService.resendVerificationEmail({
+      email,
+      password,
+      explicitLocale: locale,
+      acceptLanguage,
+      platform,
+    });
     return res.json({
       ok: true,
       message: "We sent a new verification link to your email.",
@@ -681,6 +690,7 @@ export async function resendVerificationEmailForSession(req: Request, res: Respo
     await authService.resendVerificationEmailForSessionUser(uid, {
       explicitLocale: locale,
       acceptLanguage,
+      platform: resolveAuthLinkPlatform(req),
     });
     return res.json({
       ok: true,
@@ -971,6 +981,7 @@ export async function forgotPassword(req: Request, res: Response) {
     await passwordResetService.requestPasswordReset(email, {
       acceptLanguage: req.get("accept-language") ?? undefined,
       explicitLocale: localeHint,
+      platform: resolveAuthLinkPlatform(req),
     });
     return res.status(200).json({
       ok: true,

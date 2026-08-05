@@ -1,6 +1,12 @@
 import { Platform } from "react-native";
 import * as WebBrowser from "expo-web-browser";
 import { createBillingHandoffSession } from "@/services/api/billingHandoffService";
+import { queryClient } from "@/services/api/queryClient";
+import { getUserQueryKeys } from "@/services/api/queryKeys";
+import {
+  invalidateWorkspaceQueries,
+  syncAuthUserFromServer,
+} from "@/services/api/invalidateUserQueries";
 import { showErrorToast } from "@/store/toastStore";
 import { normalizeApiError } from "@/types/api";
 
@@ -33,6 +39,10 @@ export async function openAuthenticatedBillingWeb(): Promise<void> {
         enableDefaultShareMenuItem: false,
         presentationStyle: WebBrowser.WebBrowserPresentationStyle.FULL_SCREEN,
       });
+      // Plan changes happen on web — sync AuthUser + entitlements when the tab closes.
+      await syncAuthUserFromServer();
+      const qk = getUserQueryKeys();
+      if (qk) await invalidateWorkspaceQueries(queryClient, qk);
     } catch (error) {
       const normalized = normalizeApiError(error);
       showErrorToast(

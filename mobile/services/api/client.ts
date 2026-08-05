@@ -73,6 +73,7 @@ export const apiClient: AxiosInstance = axios.create({
     Accept: "application/json",
     "Content-Type": "application/json",
     [config.clientHeaderName]: config.clientHeader,
+    [config.appPlatformHeaderName]: config.appPlatformHeader,
   },
 });
 

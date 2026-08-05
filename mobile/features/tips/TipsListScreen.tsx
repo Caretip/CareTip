@@ -15,7 +15,7 @@ import {
   useScreenContentPadding,
 } from "@/components/ui/ScreenShell";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { ErrorState } from "@/components/ui/ErrorState";
+import { AccessErrorState } from "@/components/ui/AccessErrorState";
 import { SkeletonListRows } from "@/components/ui/Skeleton";
 import { TipCard } from "@/components/ui/ListCards";
 import { DetailScreenHeader } from "@/components/ui/DetailScreenHeader";
@@ -24,7 +24,6 @@ import { useI18n } from "@/hooks/useI18n";
 import { useTheme } from "@/hooks/useTheme";
 import { formatEur } from "@/utils/format";
 import { formatTipStatus } from "@/utils/labels";
-import { friendlyErrorMessage } from "@/utils/friendlyError";
 import type { TipActivityRow, TipStatus } from "@/types/tips";
 import { LIST_PERF } from "@/constants/listPerf";
 import type { ColorPalette } from "@/theme/colors";
@@ -188,13 +187,14 @@ export function TipsListScreen({ role, basePath }: TipsListScreenProps) {
         <PeriodToggle value={status} options={statusOptions} onChange={setStatus} />
       </View>
 
-      {query.isLoading ? (
+      {query.isLoading && items.length === 0 ? (
         <View style={styles.listPad}>
           <SkeletonListRows count={5} />
         </View>
-      ) : query.isError ? (
-        <ErrorState
-          message={friendlyErrorMessage(query.error, t("tips.loadError"), t)}
+      ) : query.isError && items.length === 0 ? (
+        <AccessErrorState
+          error={query.error}
+          fallbackMessage={t("tips.loadError")}
           onRetry={() => void query.refetch()}
         />
       ) : (
