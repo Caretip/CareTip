@@ -17,6 +17,8 @@ export default tseslint.config(
       "backend",
       // Expo app is a separate package; root ESLint targets the Vite web SPA only.
       "mobile/**",
+      // Node tooling / pentest generators (not browser SPA source).
+      "security/**",
       "docs/**",
       "e2e/**",
       "playwright.config.ts",

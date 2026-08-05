@@ -10,6 +10,7 @@ import { getLoginPathForSessionRole } from "@/app/lib/authSession";
 import {
   buildMobileLoginAfterVerifyUrl,
   isMobileClientQuery,
+  openMobileLoginAfterVerify,
 } from "@/app/lib/mobileAppDeepLink";
 import { caretipBtnPrimaryFull, caretipBtnSecondaryFull } from "@/lib/caretipButtonSystem";
 import { cn } from "@/lib/utils";
@@ -27,16 +28,13 @@ export function EmailVerificationSuccessScreen() {
     () => buildMobileLoginAfterVerifyUrl(user?.email ?? null),
     [user?.email],
   );
+  const pendingEmail = user?.email ?? null;
 
   useEffect(() => {
     if (!mobileHandoff) return;
     // Attempt automatic return to the native app; button remains as fallback.
-    try {
-      window.location.href = appLoginUrl;
-    } catch {
-      /* ignore */
-    }
-  }, [appLoginUrl, mobileHandoff]);
+    openMobileLoginAfterVerify(pendingEmail);
+  }, [mobileHandoff, pendingEmail]);
 
   const handleContinueWeb = () => {
     const loginPath = getLoginPathForSessionRole(user?.role ?? "user");
@@ -44,8 +42,9 @@ export function EmailVerificationSuccessScreen() {
     navigate(loginPath, { replace: true });
   };
 
-  const handleOpenApp = () => {
-    window.location.href = appLoginUrl;
+  const handleOpenApp = (event?: { preventDefault?: () => void }) => {
+    event?.preventDefault?.();
+    openMobileLoginAfterVerify(pendingEmail);
   };
 
   return (
