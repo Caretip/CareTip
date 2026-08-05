@@ -1290,8 +1290,8 @@
       "signIn": {
         "panelAria": "Why CareTip for venues",
         "badge": "Trusted by hospitality teams",
-        "headline": "Welcome back to your venue.",
-        "body": "Manage your team, tips, and insights from one workspace.",
+        "headline": "Welcome back.",
+        "body": "Manage your team, tips, and business insights from one secure workspace.",
         "benefit1": "Team management",
         "benefit2": "QR tipping activation",
         "benefit3": "Real-time analytics",
@@ -1301,7 +1301,7 @@
         "panelAria": "Start your CareTip journey",
         "badge": "Start your CareTip journey",
         "headline": "Turn great service into measurable earnings.",
-        "body": "Create your venue account, onboard your team, and start building a better tipping experience.",
+        "body": "Create your venue, onboard your team, and start accepting tips in minutes.",
         "benefit1": "Fast venue setup",
         "benefit2": "Staff onboarding",
         "benefit3": "QR tipping system",
@@ -1310,8 +1310,8 @@
       "verification": {
         "panelAria": "Verify your venue account",
         "badge": "Verify your account",
-        "headline": "Almost there.",
-        "body": "Confirm your email to unlock your venue dashboard and start managing your team.",
+        "headline": "One last step.",
+        "body": "Verify your email to activate your CareTip workspace.",
         "benefit1": "Venue dashboard access",
         "benefit2": "Team management tools",
         "benefit3": "QR tipping activation",
@@ -1326,14 +1326,34 @@
         "benefit2": "Protected account access",
         "benefit3": "Back to your dashboard",
         "benefit4": "Encrypted data protection"
+      },
+      "passwordReset": {
+        "panelAria": "Create a new password",
+        "badge": "Secure your account",
+        "headline": "Create a new password.",
+        "body": "Choose a strong password to secure your account.",
+        "benefit1": "Strong password protection",
+        "benefit2": "Secure account access",
+        "benefit3": "Back to your dashboard",
+        "benefit4": "Encrypted data protection"
+      },
+      "otp": {
+        "panelAria": "Secure sign in verification",
+        "badge": "Secure sign in",
+        "headline": "Secure sign in.",
+        "body": "Enter the verification code we sent to your email or phone.",
+        "benefit1": "Protected workspace access",
+        "benefit2": "Two-factor security",
+        "benefit3": "Encrypted sessions",
+        "benefit4": "Trusted sign-in"
       }
     },
     "employeeMarketing": {
       "signIn": {
         "panelAria": "Why CareTip for staff",
         "badge": "For hospitality professionals",
-        "headline": "Join your team.",
-        "body": "Track your performance, manage your profile, and stay connected with your workplace.",
+        "headline": "Welcome back.",
+        "body": "Track your tips, performance, and workplace updates from one secure account.",
         "benefit1": "Personal dashboard",
         "benefit2": "Tip tracking",
         "benefit3": "Performance insights",
@@ -1342,8 +1362,8 @@
       "signUp": {
         "panelAria": "Join your team on CareTip",
         "badge": "Join your team",
-        "headline": "Start earning with your team.",
-        "body": "Enter your invite code, connect to your workplace, and access your employee dashboard.",
+        "headline": "Join your workplace.",
+        "body": "Create your staff account and connect securely to your business.",
         "benefit1": "Quick invite onboarding",
         "benefit2": "Team connection",
         "benefit3": "Tip visibility",
@@ -1352,8 +1372,8 @@
       "invite": {
         "panelAria": "Join your team with an invite code",
         "badge": "Join your team",
-        "headline": "Enter your invite code.",
-        "body": "Use the code from your manager to connect with your workplace and get started.",
+        "headline": "Join your workplace.",
+        "body": "Enter the invite code from your manager to securely connect to your business.",
         "benefit1": "Quick team onboarding",
         "benefit2": "Workplace connection",
         "benefit3": "Tip visibility",
@@ -1362,8 +1382,8 @@
       "passwordSetup": {
         "panelAria": "Set your employee password",
         "badge": "Secure your account",
-        "headline": "Set your password.",
-        "body": "Create a secure password to activate your employee account and access your dashboard.",
+        "headline": "Create a new password.",
+        "body": "Choose a strong password to secure your account.",
         "benefit1": "Track your tips",
         "benefit2": "View performance insights",
         "benefit3": "Stay connected to your team",
@@ -1382,8 +1402,8 @@
       "verification": {
         "panelAria": "Verify your employee email",
         "badge": "Verify your email",
-        "headline": "One more step.",
-        "body": "Confirm your email to access your employee dashboard and start tracking your tips.",
+        "headline": "One last step.",
+        "body": "Verify your email to activate your CareTip workspace.",
         "benefit1": "Employee dashboard access",
         "benefit2": "Tip tracking",
         "benefit3": "Performance insights",
@@ -1398,6 +1418,26 @@
         "benefit2": "Protected account access",
         "benefit3": "Back to your dashboard",
         "benefit4": "Encrypted data protection"
+      },
+      "passwordReset": {
+        "panelAria": "Create a new password",
+        "badge": "Secure your account",
+        "headline": "Create a new password.",
+        "body": "Choose a strong password to secure your account.",
+        "benefit1": "Strong password protection",
+        "benefit2": "Secure account access",
+        "benefit3": "Back to your dashboard",
+        "benefit4": "Encrypted data protection"
+      },
+      "otp": {
+        "panelAria": "Secure sign in verification",
+        "badge": "Secure sign in",
+        "headline": "Secure sign in.",
+        "body": "Enter the verification code we sent to your email or phone.",
+        "benefit1": "Protected account access",
+        "benefit2": "Two-factor security",
+        "benefit3": "Encrypted sessions",
+        "benefit4": "Trusted sign-in"
       }
     },
     "trust": {
@@ -1423,6 +1463,38 @@
       "roleBusiness": "Business",
       "roleStaff": "Staff",
       "roleLockedInviteHint": "Team invite: account type is locked to Staff"
+    },
+    "mobileWebAuth": {
+      "loginTitle": "Welcome back",
+      "loginSubtitle": "Let's get you signed in. Enter your email below.",
+      "registerTitle": "Create Account",
+      "registerSubtitle": "Fill your information below or register with your social account.",
+      "labelName": "Name",
+      "placeholderName": "John Doe",
+      "placeholderEmail": "example@gmail.com",
+      "agreePrefix": "Agree With",
+      "termsLink": "Terms & Condition",
+      "logIn": "Log In",
+      "signUp": "Sign Up",
+      "orSignInWith": "Or sign in with",
+      "orSignUpWith": "Or sign up with",
+      "footerNoAccount": "Don't have an account?",
+      "footerHasAccount": "Already have an account?",
+      "signInLink": "Sign in",
+      "signUpLink": "Sign up",
+      "otpTitle": "Enter Your code",
+      "otpSubtitle": "A 6 digit code has been sent to your authenticator app.",
+      "otpAria": "Verification code",
+      "otpResendPrompt": "Didn't receive the code?",
+      "otpResend": "Resend.",
+      "verify": "Verify",
+      "verifying": "Verifying…",
+      "socialAria": "Google sign-in",
+      "continueWithGoogle": "Continue with Google",
+      "signUpWithGoogle": "Sign up with Google",
+      "socialSoon": "{{provider}} sign-in is not available yet.",
+      "termsRequired": "Please agree to the Terms & Condition to continue.",
+      "mfaCodeRequired": "Enter the 6-digit code from your authenticator app."
     },
     "employeeAuth": {
       "titleSignIn": "Staff sign in",

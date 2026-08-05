@@ -2,6 +2,7 @@ import { useMemo } from "react";
 import { StyleSheet, View } from "react-native";
 import { BarChart3, LineChart, Trophy } from "@/icons/lucide";
 import { useRouter } from "expo-router";
+import { BusinessLogo } from "@/components/ui/BusinessLogo";
 import { HeroBalanceCard } from "@/components/ui/HeroBalanceCard";
 import { CompactKpiRow } from "@/components/ui/CompactKpiRow";
 import { DashboardShortcutGrid } from "@/components/ui/DashboardShortcutGrid";
@@ -19,6 +20,7 @@ import { EmployeeGoalsPanel } from "@/components/business/EmployeeGoalsPanel";
 import { useAuth } from "@/hooks/useAuth";
 import { useI18n } from "@/hooks/useI18n";
 import { useTheme } from "@/hooks/useTheme";
+import { useEmployeeAvatarLookup } from "@/hooks/useEmployeeAvatarLookup";
 import { useBusinessDashboard } from "@/features/business/useBusinessDashboard";
 import { buildEmployeePerformanceChartRows } from "@/utils/dashboardChartData";
 import { formatCount, formatEur, formatGrowthPercent } from "@/utils/format";
@@ -43,6 +45,7 @@ export function BusinessDashboardScreen() {
     error,
     refresh,
   } = useBusinessDashboard();
+  const avatarLookup = useEmployeeAvatarLookup();
 
   const timeframeOptions: Array<{ value: BusinessTimeframe; label: string }> = [
     { value: "week", label: t("period.week") },
@@ -59,7 +62,12 @@ export function BusinessDashboardScreen() {
   const hasTipActivity = periodTotalTips > 0;
   const tipsToday = stats?.operationalPulse?.tipsToday;
 
-  const employeePerformance = buildEmployeePerformanceChartRows(stats?.employees, 3, colors);
+  const employeePerformance = buildEmployeePerformanceChartRows(
+    stats?.employees,
+    3,
+    colors,
+    avatarLookup.byId,
+  );
   const leader = employeePerformance[0];
   const leaderMessage =
     leader != null
@@ -106,6 +114,14 @@ export function BusinessDashboardScreen() {
       eyebrow={t("businessDashboard.eyebrow")}
       title={t("businessDashboard.welcome", { name: firstName })}
       subtitle={businessName}
+      leading={
+        <BusinessLogo
+          businessName={businessName}
+          uri={profile?.logo}
+          size={48}
+          fit="contain"
+        />
+      }
       notificationsHref="/(app)/business/notifications"
       refreshing={isRefreshing}
       onRefresh={() => void refresh()}

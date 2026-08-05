@@ -69,6 +69,7 @@ export function buildQrInventory(
       subtitle: "Team directory QR",
       url: publicBusinessTipUrl(businessSlug),
       slug: businessSlug,
+      imageUrl: profile.logo ?? null,
     });
   }
 
@@ -86,6 +87,7 @@ export function buildQrInventory(
       subtitle: employee.jobTitle ?? "Employee QR",
       url,
       slug: employee.slug ?? null,
+      imageUrl: employee.avatar ?? null,
     });
   }
 

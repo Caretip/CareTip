@@ -18,7 +18,6 @@ export const API_ENDPOINTS = {
     resendVerification: "/api/auth/resend-verification-email",
     resendVerificationSession: "/api/auth/resend-verification-email/session",
     activateEmployee: "/api/auth/activate-employee",
-    activateEmployeeBranding: "/api/auth/activate-employee-branding",
     changePassword: "/api/auth/change-password",
     twoFactorStatus: "/api/auth/2fa/status",
     twoFactorSetup: "/api/auth/2fa/setup",
@@ -36,6 +35,7 @@ export const API_ENDPOINTS = {
   business: {
     inviteValidate: "/api/business/invite/validate",
     profile: "/api/business/profile",
+    profileLogo: "/api/business/profile/logo",
     stats: "/api/business/me/stats",
     activity: "/api/business/activity",
     qrAnalytics: "/api/business/qr-analytics",
@@ -49,6 +49,7 @@ export const API_ENDPOINTS = {
   },
   employees: {
     me: "/api/employees/me",
+    meAvatar: "/api/employees/me/avatar",
     meExport: "/api/employees/me/export",
     brandedQr: "/api/employees/me/qr/branded",
     tips: "/api/tips/employee",

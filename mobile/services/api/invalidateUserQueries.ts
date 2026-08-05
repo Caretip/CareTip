@@ -4,6 +4,7 @@ import { refreshSession } from "@/services/auth/authService";
 import { useAuthStore } from "@/store/authStore";
 import { useUserStore } from "@/store/userStore";
 import { clearBrandedQrImageCaches } from "@/utils/brandedQrImageCache";
+import { bumpMediaCacheGeneration } from "@/utils/mediaCacheGeneration";
 import { logAuthEvent } from "@/utils/authDebug";
 
 /** Broad workspace refresh after resume / billing / verification / business_data. */
@@ -60,12 +61,46 @@ export async function syncAuthUserFromServer(): Promise<boolean> {
 export async function invalidateBrandingArtifacts(
   queryClient: QueryClient,
   qk: UserQueryKeys,
+  opts?: { bumpGeneration?: boolean },
 ): Promise<void> {
   await queryClient.invalidateQueries({ queryKey: [...qk.root, "brandedQr"] });
   await queryClient.invalidateQueries({ queryKey: qk.businessQr });
+  if (opts?.bumpGeneration !== false) {
+    bumpMediaCacheGeneration();
+  }
   try {
     await clearBrandedQrImageCaches();
   } catch {
     /* non-fatal */
+  }
+}
+
+/**
+ * After logo / avatar upload — refresh every surface that may show the image
+ * and bust RN image cache so initials never stick without logout.
+ */
+export async function invalidateMediaSurfaces(
+  queryClient: QueryClient,
+  qk: UserQueryKeys,
+  opts?: { syncAuthUser?: boolean },
+): Promise<void> {
+  bumpMediaCacheGeneration();
+  await Promise.all([
+    queryClient.invalidateQueries({ queryKey: qk.businessProfile }),
+    queryClient.invalidateQueries({ queryKey: qk.businessStats }),
+    queryClient.invalidateQueries({ queryKey: qk.businessFeedback }),
+    queryClient.invalidateQueries({ queryKey: qk.businessActivity }),
+    queryClient.invalidateQueries({ queryKey: qk.businessTips }),
+    queryClient.invalidateQueries({ queryKey: [...qk.root, "business", "employees"] }),
+    queryClient.invalidateQueries({ queryKey: qk.employeeMe }),
+    queryClient.invalidateQueries({ queryKey: qk.employeeTips }),
+    queryClient.invalidateQueries({ queryKey: qk.employeeTipList }),
+    queryClient.invalidateQueries({ queryKey: qk.notifications }),
+    queryClient.invalidateQueries({ queryKey: qk.notificationUnread }),
+  ]);
+  // Generation already bumped above — only clear disk + RQ branding keys.
+  await invalidateBrandingArtifacts(queryClient, qk, { bumpGeneration: false });
+  if (opts?.syncAuthUser !== false) {
+    await syncAuthUserFromServer();
   }
 }

@@ -8,9 +8,11 @@ import {
   Text,
   View,
 } from "react-native";
+import { BusinessLogo } from "@/components/ui/BusinessLogo";
 import { Button } from "@/components/ui/Button";
 import { QrCodeDisplay } from "@/components/ui/QrCodeDisplay";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { RemoteAvatar } from "@/components/ui/RemoteAvatar";
 import { SkeletonListRows } from "@/components/ui/Skeleton";
 import { StatusPill } from "@/components/ui/StatusPill";
 import {
@@ -42,6 +44,7 @@ export function QrStudioScreen() {
   );
   const [selected, setSelected] = useState<QrCodeItem | null>(null);
   const [offlineItems, setOfflineItems] = useState<QrCodeItem[]>([]);
+  const [qrReloadKey, setQrReloadKey] = useState(0);
   const { userId, items, isLoading, isRefreshing, refresh, error } = useQrStudio();
 
   const typeLabels: Record<QrCodeItem["type"], string> = useMemo(
@@ -90,7 +93,10 @@ export function QrStudioScreen() {
     if (!stillOwned) setSelected(null);
   }, [items, isLoading, selected]);
 
-  const refreshControl = useListRefreshControl(isRefreshing, () => void refresh());
+  const refreshControl = useListRefreshControl(isRefreshing, () => {
+    setQrReloadKey((k) => k + 1);
+    void refresh();
+  });
 
   const handleCopy = useCallback(async (url: string) => {
     await Clipboard.setStringAsync(url);
@@ -122,6 +128,7 @@ export function QrStudioScreen() {
               size={240}
               elevated={false}
               mode="manager"
+              reloadKey={qrReloadKey}
             />
             <View style={styles.actions}>
               <Button
@@ -136,7 +143,7 @@ export function QrStudioScreen() {
         ) : null}
       </>
     ),
-    [handleCopy, handleShare, offline, selected, styles, t, typeLabels],
+    [handleCopy, handleShare, offline, qrReloadKey, selected, styles, t, typeLabels],
   );
 
   const keyExtractor = useCallback((item: QrCodeItem) => item.id, []);
@@ -148,6 +155,13 @@ export function QrStudioScreen() {
         accessibilityRole="button"
         onPress={() => setSelected(item)}
       >
+        {item.type === "business" ? (
+          <BusinessLogo businessName={item.title} uri={item.imageUrl} size={40} fit="cover" />
+        ) : item.type === "employee" ? (
+          <RemoteAvatar displayName={item.title} uri={item.imageUrl} size={40} tone="brand" />
+        ) : (
+          <RemoteAvatar displayName={item.title} size={40} tone="neutral" />
+        )}
         <View style={styles.rowBody}>
           <Text style={styles.cardTitle}>{item.title}</Text>
           {item.subtitle ? <Text style={styles.cardSubtitle}>{item.subtitle}</Text> : null}

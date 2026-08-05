@@ -21,6 +21,7 @@ import { ErrorState } from "@/components/ui/ErrorState";
 import { SkeletonListRows } from "@/components/ui/Skeleton";
 import { useActivityCenterFeed } from "@/hooks/useActivityCenterFeed";
 import { useAuth } from "@/hooks/useAuth";
+import { useEmployeeAvatarLookup } from "@/hooks/useEmployeeAvatarLookup";
 import { useI18n } from "@/hooks/useI18n";
 import { useTheme } from "@/hooks/useTheme";
 import type {
@@ -71,17 +72,23 @@ const ActivityRow = memo(function ActivityRow({
   hideRelative,
   isLast,
   sourceLabel,
+  avatarUri,
 }: {
   item: BusinessActivityFeedItem;
   venueTimezone: string;
   hideRelative: boolean;
   isLast: boolean;
   sourceLabel: string;
+  avatarUri?: string | null;
 }) {
   const amount = getActivityAmount(item);
   const parts = formatActivityVenueTimeParts(item.occurredAt, venueTimezone);
   const subtitle = getActivitySubtitle(item);
   const tone = SOURCE_TONE[item.source] ?? "neutral";
+  const actorName =
+    typeof item.params?.employeeName === "string" && item.params.employeeName.trim()
+      ? item.params.employeeName.trim()
+      : item.actorEmployeeId;
 
   return (
     <ActivityCard
@@ -92,6 +99,8 @@ const ActivityRow = memo(function ActivityRow({
       badgeLabel={sourceLabel}
       badgeTone={tone}
       isLast={isLast}
+      actorName={actorName}
+      avatarUri={avatarUri}
     />
   );
 });
@@ -106,6 +115,7 @@ export function ActivityCenterScreen() {
     [contentPad.paddingBottom, styles.list],
   );
   const { user } = useAuth();
+  const avatarLookup = useEmployeeAvatarLookup(user?.role === "MANAGER");
   const {
     filter,
     setFilter,
@@ -173,6 +183,14 @@ export function ActivityCenterScreen() {
       if (item.kind === "header") {
         return <Text style={styles.dayHeader}>{item.label}</Text>;
       }
+      const employeeName =
+        typeof item.item.params?.employeeName === "string"
+          ? item.item.params.employeeName
+          : null;
+      const avatarUri = avatarLookup.resolve({
+        employeeId: item.item.actorEmployeeId,
+        name: employeeName,
+      });
       return (
         <ActivityRow
           item={item.item}
@@ -180,10 +198,11 @@ export function ActivityCenterScreen() {
           hideRelative={filter === "today"}
           isLast={item.isLast}
           sourceLabel={t(sourceLabelKey(item.item.source))}
+          avatarUri={avatarUri}
         />
       );
     },
-    [venueTimezone, filter, t, styles.dayHeader],
+    [avatarLookup, venueTimezone, filter, t, styles.dayHeader],
   );
 
   const refreshControl = useListRefreshControl(isRefreshing, () => void refresh());

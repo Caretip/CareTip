@@ -9,6 +9,7 @@ import { DashboardCookieConsent } from "@/components/ui/DashboardCookieConsent";
 import { TipCard } from "@/components/ui/ListCards";
 import { PeriodToggle } from "@/components/ui/PeriodToggle";
 import { LayeredScreen } from "@/components/ui/LayeredScreen";
+import { RemoteAvatar } from "@/components/ui/RemoteAvatar";
 import { GroupedList, Section } from "@/components/ui/Section";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { SkeletonMetricGrid } from "@/components/ui/Skeleton";
@@ -47,8 +48,9 @@ export function EmployeeDashboardScreen() {
   ];
 
   const recentTips = tips?.tips?.slice(0, 3) ?? [];
-  const displayName =
-    (profile?.name ?? user?.name)?.split(" ")[0] ?? profile?.name ?? user?.name ?? "there";
+  const fullName = profile?.name ?? user?.name ?? "there";
+  const displayName = fullName.split(" ")[0] ?? fullName;
+  const avatarUri = profile?.avatar ?? user?.avatar;
 
   const shortcuts = useMemo(
     () => [
@@ -79,6 +81,9 @@ export function EmployeeDashboardScreen() {
       eyebrow={t("employeeDashboard.eyebrow")}
       title={t("employeeDashboard.welcome", { name: displayName })}
       subtitle={`${profile?.jobTitle ? `${profile.jobTitle} · ` : ""}${profile?.businessName ?? t("businessDashboard.venueFallback")}`}
+      leading={
+        <RemoteAvatar displayName={fullName} uri={avatarUri} size={52} tone="brand" />
+      }
       notificationsHref="/(app)/employee/notifications"
       refreshing={isRefreshing}
       onRefresh={() => void refresh()}
@@ -157,6 +162,8 @@ export function EmployeeDashboardScreen() {
                       amount={formatEur(tip.amount)}
                       statusLabel={formatTipStatus("success", "employee")}
                       statusTone="success"
+                      staffName={fullName}
+                      avatarUri={avatarUri}
                       meta={new Date(tip.createdAt).toLocaleString(uiLocaleTag())}
                       onPress={() =>
                         router.push({

@@ -7,9 +7,10 @@ import { Section, GroupedList, GroupedRow } from "@/components/ui/Section";
 import { AccessErrorState } from "@/components/ui/AccessErrorState";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { SkeletonListRows } from "@/components/ui/Skeleton";
-import { Avatar } from "@/components/ui/Avatar";
+import { RemoteAvatar } from "@/components/ui/RemoteAvatar";
 import { useI18n } from "@/hooks/useI18n";
 import { useTheme } from "@/hooks/useTheme";
+import { useEmployeeAvatarLookup } from "@/hooks/useEmployeeAvatarLookup";
 import { useBusinessStats } from "@/features/business/useBusinessStats";
 import { formatCount, formatEur, formatRating } from "@/utils/format";
 import type { ColorPalette } from "@/theme/colors";
@@ -22,6 +23,7 @@ export function BusinessLeaderboardScreen() {
   const styles = useMemo(() => createStyles(colors), [colors]);
   const { timeframe, setTimeframe, stats, isLoading, isRefreshing, error, refresh } =
     useBusinessStats();
+  const avatarLookup = useEmployeeAvatarLookup();
 
   const timeframeOptions: Array<{ value: BusinessTimeframe; label: string }> = [
     { value: "week", label: t("period.week") },
@@ -71,7 +73,18 @@ export function BusinessLeaderboardScreen() {
                   >
                     <View style={styles.rowInner}>
                       <Text style={styles.rank}>{index + 1}</Text>
-                      <Avatar label={employee.name} tone="brand" size={40} />
+                      <RemoteAvatar
+                        displayName={employee.name}
+                        uri={
+                          employee.avatar ??
+                          avatarLookup.resolve({
+                            employeeId: employee.id,
+                            name: employee.name,
+                          })
+                        }
+                        tone="brand"
+                        size={40}
+                      />
                       <View style={styles.body}>
                         <Text style={styles.name}>{employee.name}</Text>
                         <Text style={styles.meta}>

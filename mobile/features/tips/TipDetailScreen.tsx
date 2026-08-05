@@ -2,15 +2,20 @@ import { useMemo } from "react";
 import { StyleSheet, Text, View } from "react-native";
 import { useLocalSearchParams } from "expo-router";
 import { useQuery } from "@tanstack/react-query";
+import { BusinessLogo } from "@/components/ui/BusinessLogo";
 import { Screen } from "@/components/ui/Screen";
 import { DetailScreenHeader } from "@/components/ui/DetailScreenHeader";
+import { RemoteAvatar } from "@/components/ui/RemoteAvatar";
 import { Section, Divider } from "@/components/ui/Section";
 import { StatusPill } from "@/components/ui/StatusPill";
 import { ErrorState } from "@/components/ui/ErrorState";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Skeleton } from "@/components/ui/Skeleton";
+import { useAuth } from "@/hooks/useAuth";
+import { useEmployeeAvatarLookup } from "@/hooks/useEmployeeAvatarLookup";
 import { useI18n } from "@/hooks/useI18n";
 import { useTheme } from "@/hooks/useTheme";
+import { fetchBusinessProfile } from "@/services/api/businessService";
 import { findTipById } from "@/services/api/tipsService";
 import { queryStaleTimes } from "@/services/api/queryClient";
 import { useAuthUserId, useUserQueryKeys } from "@/services/api/queryKeys";
@@ -33,7 +38,7 @@ function resolveTipId(raw: string | string[] | undefined): string {
 }
 
 /**
- * Phase 2.3 — tip detail trusts only `tipId` + server fetch.
+ * Tip detail trusts only `tipId` + server fetch.
  * Route params must never carry tip body / amounts / status.
  */
 export function TipDetailScreen({
@@ -43,17 +48,26 @@ export function TipDetailScreen({
 }) {
   const { t } = useI18n();
   const { colors } = useTheme();
+  const { user } = useAuth();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const params = useLocalSearchParams<{ id?: string }>();
   const tipId = resolveTipId(params.id);
   const userId = useAuthUserId();
   const keys = useUserQueryKeys();
+  const avatarLookup = useEmployeeAvatarLookup(audience === "business");
 
   const tipQuery = useQuery({
     queryKey: keys.tipDetail(audience, tipId),
     queryFn: () => findTipById(audience, tipId),
     enabled: Boolean(userId && tipId),
     staleTime: queryStaleTimes.tipDetail,
+  });
+
+  const profileQuery = useQuery({
+    queryKey: keys.businessProfile,
+    queryFn: fetchBusinessProfile,
+    enabled: audience === "business" && Boolean(userId),
+    staleTime: queryStaleTimes.profile,
   });
 
   if (!tipId) {
@@ -65,7 +79,6 @@ export function TipDetailScreen({
     );
   }
 
-  // Skeleton until first server-backed result — never paint navigation/route tip bodies.
   if (!tipQuery.data && (tipQuery.isLoading || tipQuery.isFetching)) {
     return (
       <Screen tabSafe={false}>
@@ -102,10 +115,43 @@ export function TipDetailScreen({
     );
   }
 
+  const staffName = tip.staffName?.trim() || t("tips.staff");
+  const avatarUri =
+    audience === "employee"
+      ? user?.avatar
+      : avatarLookup.resolve({
+          employeeId: tip.employeeId,
+          name: tip.staffName,
+        });
+  const businessName =
+    profileQuery.data?.businessName ??
+    profileQuery.data?.name ??
+    t("businessDashboard.venueFallback");
+
   return (
     <Screen tabSafe={false}>
       <DetailScreenHeader title={t("tips.detailTitle")} />
       <View style={styles.hero}>
+        <View style={styles.identityRow}>
+          <RemoteAvatar displayName={staffName} uri={avatarUri} size={56} tone="brand" />
+          <View style={styles.identityMeta}>
+            <Text style={styles.staffName}>{staffName}</Text>
+            {audience === "business" ? (
+              <View style={styles.logoRow}>
+                <BusinessLogo
+                  businessName={businessName}
+                  uri={profileQuery.data?.logo}
+                  size={28}
+                  fit="contain"
+                  cacheBust={profileQuery.dataUpdatedAt}
+                />
+                <Text style={styles.businessName} numberOfLines={1}>
+                  {businessName}
+                </Text>
+              </View>
+            ) : null}
+          </View>
+        </View>
         <Text style={styles.amount}>{formatEur(tip.amount)}</Text>
         <StatusPill label={formatTipStatus(tip.status, audience)} tone={statusTone(tip.status)} />
       </View>
@@ -120,7 +166,15 @@ export function TipDetailScreen({
           <>
             <View style={styles.detailRow}>
               <Text style={styles.label}>{t("tips.staff")}</Text>
-              <Text style={styles.value}>{tip.staffName}</Text>
+              <View style={styles.staffValueRow}>
+                <RemoteAvatar
+                  displayName={tip.staffName}
+                  uri={avatarUri}
+                  size={28}
+                  tone="brand"
+                />
+                <Text style={styles.value}>{tip.staffName}</Text>
+              </View>
             </View>
             <Divider />
           </>
@@ -154,6 +208,31 @@ function createStyles(colors: ColorPalette) {
       borderBottomWidth: StyleSheet.hairlineWidth,
       borderBottomColor: colors.border,
     },
+    identityRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: spacing.lg,
+    },
+    identityMeta: {
+      flex: 1,
+      minWidth: 0,
+      gap: spacing.xs,
+    },
+    staffName: {
+      ...typography.h2,
+      color: colors.foreground,
+      fontWeight: "700",
+    },
+    logoRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: spacing.sm,
+    },
+    businessName: {
+      ...typography.caption,
+      color: colors.mutedForeground,
+      flex: 1,
+    },
     amount: {
       ...typography.metric,
       fontSize: 36,
@@ -170,6 +249,11 @@ function createStyles(colors: ColorPalette) {
     detailRow: {
       gap: spacing.xxs,
       paddingVertical: spacing.md,
+    },
+    staffValueRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: spacing.sm,
     },
     label: {
       ...typography.caption,

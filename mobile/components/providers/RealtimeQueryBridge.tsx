@@ -2,9 +2,13 @@ import { useEffect, useRef } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useSocket } from "@/components/providers/SocketProvider";
 import { getUserQueryKeys } from "@/services/api/queryKeys";
-import { syncAuthUserFromServer } from "@/services/api/invalidateUserQueries";
+import {
+  invalidateMediaSurfaces,
+  syncAuthUserFromServer,
+} from "@/services/api/invalidateUserQueries";
 import { REALTIME_EVENTS } from "@/lib/realtime/realtimeContracts";
 import { clearBrandedQrImageCaches } from "@/utils/brandedQrImageCache";
+import { bumpMediaCacheGeneration } from "@/utils/mediaCacheGeneration";
 
 type RealtimeEnvelope = {
   eventId?: string;
@@ -17,11 +21,8 @@ const DEBOUNCE_MS = 350;
 
 /**
  * Socket → React Query invalidate bridge (web quiet-refetch parity).
- * - Dedupes by envelope.eventId
- * - Debounces stampedes
- * - Targeted invalidation per event family (current user scope only)
- * - AuthUser refresh on verification / billing (nav + entitlements)
- * App resume sync is owned by AuthSessionSyncBridge (avoids duplicate stampedes).
+ * Media-affecting events (`business_data_updated`, `employee.updated`) call
+ * `invalidateMediaSurfaces` once (includes branding disk clear + cache generation).
  */
 export function RealtimeQueryBridge() {
   const { socket, connected } = useSocket();
@@ -45,6 +46,15 @@ export function RealtimeQueryBridge() {
       pendingRef.current = new Set();
       const qk = getUserQueryKeys();
       if (!qk) return;
+
+      // Single consolidated media path — avoids double bump/clear with brandingDisk.
+      if (keys.has("mediaSurfaces")) {
+        void invalidateMediaSurfaces(queryClient, qk, { syncAuthUser: true });
+        if (keys.has("qrAnalytics")) {
+          void queryClient.invalidateQueries({ queryKey: qk.businessQrAnalytics });
+        }
+        return;
+      }
 
       if (keys.has("stats")) void queryClient.invalidateQueries({ queryKey: qk.businessStats });
       if (keys.has("profile"))
@@ -81,6 +91,7 @@ export function RealtimeQueryBridge() {
         void syncAuthUserFromServer();
       }
       if (keys.has("brandingDisk")) {
+        bumpMediaCacheGeneration();
         void clearBrandedQrImageCaches().catch(() => undefined);
       }
     };
@@ -119,27 +130,16 @@ export function RealtimeQueryBridge() {
         schedule(["inbox"]);
         return;
       }
+      // Covers backend reasons: business_profile_updated, logo_updated, etc.
       if (eventName === REALTIME_EVENTS.BUSINESS_DATA_UPDATED) {
-        schedule([
-          "stats",
-          "profile",
-          "activity",
-          "qr",
-          "feedback",
-          "employees",
-          "bizTips",
-          "empTips",
-          "brandingDisk",
-        ]);
+        schedule(["mediaSurfaces", "qrAnalytics"]);
         return;
       }
       if (eventName === REALTIME_EVENTS.VERIFICATION_UPDATED) {
-        // Admin approval changes AuthUser-adjacent verification flags + profile.
         schedule(["stats", "profile", "qr", "authUser"]);
         return;
       }
       if (eventName === REALTIME_EVENTS.BILLING_UPDATED) {
-        // Plan/entitlement changes — refresh AuthUser + entitlement-bearing queries.
         schedule(["profile", "stats", "feedback", "qr", "settings", "authUser"]);
         return;
       }
@@ -147,8 +147,9 @@ export function RealtimeQueryBridge() {
         schedule(["stats", "empTips", "employees"]);
         return;
       }
+      // Avatar / employee profile changes — full media surface refresh once.
       if (eventName === REALTIME_EVENTS.EMPLOYEE_UPDATED) {
-        schedule(["employees", "stats", "qr", "empTips"]);
+        schedule(["mediaSurfaces"]);
       }
     };
 
@@ -183,9 +184,6 @@ export function RealtimeQueryBridge() {
     socket.on(REALTIME_EVENTS.GOAL_UPDATED, onGoal);
     socket.on(REALTIME_EVENTS.EMPLOYEE_UPDATED, onEmployee);
 
-    // App resume workspace sync is owned by AuthSessionSyncBridge (AuthUser + full invalidate).
-    // Keep only socket event handling here to avoid duplicate resume stampedes.
-
     return () => {
       socket.off(REALTIME_EVENTS.TIP_RECEIVED, onTip);
       socket.off("tip_received", onTipLegacy);
@@ -207,7 +205,6 @@ export function RealtimeQueryBridge() {
     if (!connected) return;
     const qk = getUserQueryKeys();
     if (!qk) return;
-    // Catch-up after reconnect — broader than before so approval/plan aren't missed.
     void queryClient.invalidateQueries({ queryKey: qk.notificationUnread });
     void queryClient.invalidateQueries({ queryKey: qk.businessProfile });
     void queryClient.invalidateQueries({ queryKey: qk.businessStats });

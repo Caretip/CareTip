@@ -14,6 +14,8 @@ type LayeredScreenProps = {
   eyebrow?: string;
   title: string;
   subtitle?: string;
+  /** Logo / avatar shown above the hero title (BusinessLogo / RemoteAvatar). */
+  leading?: ReactNode;
   /** Rendered at the bottom of the hero (period toggle, etc.). */
   headerExtra?: ReactNode;
   children: ReactNode;
@@ -29,6 +31,7 @@ export function LayeredScreen({
   eyebrow,
   title,
   subtitle,
+  leading,
   headerExtra,
   children,
   refreshing,
@@ -54,6 +57,7 @@ export function LayeredScreen({
             <View style={staticStyles.headerRow}>
               <View style={staticStyles.headerMain}>
                 <View style={styles.titleGlow} pointerEvents="none" />
+                {leading ? <View style={staticStyles.leading}>{leading}</View> : null}
                 {eyebrow ? <Text style={styles.eyebrow}>{eyebrow}</Text> : null}
                 <Text style={styles.title}>{title}</Text>
                 {subtitle ? <Text style={styles.subtitle}>{subtitle}</Text> : null}
@@ -131,6 +135,9 @@ const staticStyles = StyleSheet.create({
     gap: spacing.md,
     position: "relative",
     paddingBottom: spacing.xs,
+  },
+  leading: {
+    marginBottom: spacing.xxs,
   },
   headerExtra: {
     marginTop: spacing.xxs,

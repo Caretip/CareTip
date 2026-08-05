@@ -485,6 +485,20 @@ export type MobileMessages = {
     signOutConfirmBody: string;
     saveError: string;
     profileSaved: string;
+    media: {
+      chooseTitle: string;
+      camera: string;
+      gallery: string;
+      changeLogo: string;
+      changeAvatar: string;
+      uploading: string;
+      logoHint: string;
+      avatarHint: string;
+      logoUploaded: string;
+      avatarUploaded: string;
+      uploadError: string;
+      permissionDenied: string;
+    };
     menu: {
       account: string;
       securityPrefs: string;

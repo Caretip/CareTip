@@ -9,6 +9,7 @@ import Animated, {
 } from "react-native-reanimated";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { RemoteAvatar } from "@/components/ui/RemoteAvatar";
 import { useTheme } from "@/hooks/useTheme";
 import type { EmployeePerformanceChartRow } from "@/utils/dashboardChartData";
 import { formatEur, formatPercent } from "@/utils/format";
@@ -47,7 +48,6 @@ function PerformanceRow({ row, index, maxTips, isLast, colors, text }: Performan
   const styles = useMemo(() => createRowStyles(colors, text), [colors, text]);
   const progress = maxTips <= 0 ? 0 : Math.min(1, row.tips / maxTips);
   const pct = progress * 100;
-  const initial = row.name.charAt(0).toUpperCase();
   const width = useSharedValue(0);
 
   useEffect(() => {
@@ -67,9 +67,13 @@ function PerformanceRow({ row, index, maxTips, isLast, colors, text }: Performan
   return (
     <View style={[styles.row, !isLast ? styles.rowBorder : null]}>
       <View style={styles.rowTop}>
-        <View style={styles.avatar}>
-          <Text style={styles.avatarText}>{initial}</Text>
-        </View>
+        <RemoteAvatar
+          displayName={row.name}
+          uri={row.avatar}
+          size={36}
+          variant="square"
+          tone="neutral"
+        />
         <View style={styles.rowMeta}>
           <Text style={styles.name} numberOfLines={1}>
             {row.name}
@@ -102,20 +106,6 @@ function createRowStyles(colors: ColorPalette, text: ReturnType<typeof dashboard
       flexDirection: "row",
       alignItems: "center",
       gap: spacing.md,
-    },
-    avatar: {
-      width: 36,
-      height: 36,
-      borderRadius: 12,
-      backgroundColor: colors.secondary,
-      alignItems: "center",
-      justifyContent: "center",
-    },
-    avatarText: {
-      ...typography.body,
-      fontWeight: "700",
-      color: text.primary,
-      fontSize: 14,
     },
     rowMeta: {
       flex: 1,

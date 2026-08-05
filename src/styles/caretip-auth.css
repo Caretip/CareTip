@@ -145,7 +145,8 @@
   position: absolute;
   z-index: 1;
   top: -10%;
-  right: 48%;
+  /* Shifted ~4% left vs prior 48% so the white form column gains a little room */
+  right: 52%;
   height: 2000px;
   width: 2000px;
   border-radius: 50%;
@@ -158,7 +159,7 @@
 }
 
 .caretip-auth-curved-container--sign-up .caretip-auth-curved-blob {
-  right: 52%;
+  right: 56%;
   transform: translate(100%, -50%);
 }
 
@@ -994,6 +995,16 @@
 
 /* Tablet+ — horizontal split with full-height blob curve */
 @media (min-width: 768px) {
+  .caretip-auth-page,
+  .caretip-auth-shell,
+  .caretip-auth-curved-container,
+  .caretip-auth-recovery-stage {
+    height: 100dvh;
+    max-height: 100dvh;
+    min-height: 100dvh;
+    overflow: hidden;
+  }
+
   .caretip-auth-curved-container {
     flex-direction: row;
     align-items: stretch;
@@ -1001,41 +1012,219 @@
   }
 
   .caretip-auth-curved-brand {
-    flex: 0 0 38%;
-    max-width: 38%;
-    min-height: 100dvh;
+    flex: 0 0 36%;
+    max-width: 36%;
+    min-height: 100%;
+    height: 100%;
   }
 
   .caretip-auth-marketing {
     min-height: 100%;
+    height: 100%;
     width: 100%;
-    padding-right: 1.25rem;
+    padding-right: 1rem;
   }
 
   .caretip-auth-marketing__inner {
     min-height: 100%;
+    height: 100%;
     max-width: 24rem;
-    padding: 1.75rem 1.5rem 1.25rem 1.75rem;
+    padding: 1.25rem 1.25rem 1.25rem 1.5rem;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* Keep Back to Home at top; vertically center only the marketing copy */
+  .caretip-auth-back-home--marketing {
+    flex-shrink: 0;
+    margin-bottom: 0;
+  }
+
+  .caretip-auth-marketing__content {
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding-block: 0.75rem 2.25rem;
+  }
+
+  .caretip-auth-marketing__headline {
+    margin-top: 0;
+    font-size: clamp(1.45rem, 2.4vw, 1.85rem);
+  }
+
+  .caretip-auth-marketing--focused .caretip-auth-marketing__headline {
+    margin-top: 0;
+  }
+
+  .caretip-auth-marketing__body {
+    margin-top: 0.65rem;
+    max-width: 22rem;
+    font-size: 0.875rem;
+    line-height: 1.5;
   }
 
   .caretip-auth-split-layout__panel {
     flex: 1 1 auto;
-    min-height: 100dvh;
-    max-height: 100dvh;
+    min-height: 100%;
+    max-height: 100%;
+    height: 100%;
     min-width: 0;
     padding: 0.75rem 1.5rem;
-    overflow-y: auto;
+    overflow: hidden;
     align-items: center;
-    justify-content: flex-start;
-    padding-top: 1.25rem;
-    padding-bottom: 1.25rem;
+    justify-content: center;
   }
 
   .caretip-auth-split-layout__panel-inner {
     width: 100%;
-    max-width: 28rem;
+    max-width: 31rem;
     margin-inline: auto;
     flex-shrink: 0;
+  }
+
+  .caretip-auth-card-wrap,
+  .caretip-auth-recovery-inner {
+    max-width: 31rem;
+  }
+
+  .caretip-auth-card,
+  .caretip-auth-card--stable,
+  .caretip-auth-card--recovery {
+    padding: 0.85rem 1.2rem 0.8rem;
+  }
+
+  .caretip-auth-card--stable {
+    max-height: calc(100dvh - 1.5rem);
+  }
+
+  .caretip-auth-card--recovery {
+    max-height: calc(100dvh - 1.5rem);
+  }
+
+  .caretip-auth-card-brand {
+    margin-bottom: 0.65rem;
+  }
+
+  .caretip-auth-card-brand__logo {
+    width: var(--caretip-auth-logo-w, 104px) !important;
+    max-width: var(--caretip-auth-logo-max-w, 116px) !important;
+  }
+
+  .caretip-auth-header {
+    margin-bottom: 0.25rem;
+  }
+
+  .caretip-auth-title {
+    padding-top: 0;
+    font-size: 1.25rem;
+  }
+
+  .caretip-auth-subtitle {
+    margin-top: 0.125rem;
+    font-size: 0.75rem;
+  }
+
+  .caretip-auth-tabs {
+    margin-bottom: 0.25rem;
+    padding: 0.1rem;
+  }
+
+  .caretip-auth-tabs button {
+    padding-block: 0.35rem;
+  }
+
+  .caretip-auth-mode-block {
+    margin-bottom: 0.15rem;
+  }
+
+  .caretip-auth-form {
+    gap: 0.375rem;
+  }
+
+  .caretip-auth-field-group {
+    gap: 0.1rem;
+  }
+
+  .caretip-auth-label {
+    margin-bottom: 0.15rem;
+  }
+
+  .caretip-auth-field {
+    min-height: 2.625rem;
+    padding: 0.35rem 0.7rem;
+    font-size: 0.8125rem;
+    border-radius: 0.7rem;
+  }
+
+  .caretip-auth-oauth,
+  .caretip-auth-oauth-mount {
+    min-height: 2.5rem;
+  }
+
+  .caretip-auth-oauth iframe {
+    min-height: 2.5rem !important;
+  }
+
+  .caretip-auth-oauth-divider {
+    margin-block: 0.05rem;
+    gap: 0.5rem;
+  }
+
+  .caretip-auth-page .caretip-auth-submit.caretip-btn-primary,
+  .caretip-auth-recovery-stage .caretip-auth-submit.caretip-btn-primary,
+  .caretip-auth-split-layout .caretip-auth-submit.caretip-btn-primary {
+    min-height: 2.625rem;
+    margin-top: 0.1rem;
+  }
+
+  .caretip-auth-inline-link {
+    font-size: 0.75rem;
+  }
+
+  .caretip-auth-form > .flex.justify-end {
+    margin-top: -0.1rem;
+    padding-top: 0;
+  }
+
+  .caretip-auth-trust {
+    margin-top: 0.25rem;
+    gap: 0.15rem 0.5rem;
+  }
+
+  .caretip-auth-trust li {
+    font-size: 0.625rem;
+  }
+
+  .caretip-auth-form-footer {
+    padding-top: 0.15rem;
+    font-size: 0.75rem;
+  }
+
+  .caretip-auth-error-slot {
+    min-height: 1.35rem;
+    font-size: 0.75rem;
+  }
+
+  .caretip-auth-form-status-slot {
+    min-height: 0.5rem;
+  }
+
+  .caretip-auth-resend-slot {
+    gap: 0.25rem;
+  }
+
+  .caretip-auth-signup-password-row,
+  .caretip-auth-employee-fields {
+    gap: 0.35rem;
+  }
+
+  .caretip-auth-card--signup .caretip-auth-header {
+    padding-top: 0.15rem;
+  }
+
+  .caretip-auth-split-layout__top-slot {
+    margin-bottom: 0.5rem;
   }
 }
 
@@ -1046,34 +1235,75 @@
   }
 
   .caretip-auth-curved-brand {
-    flex: 0 0 46%;
-    max-width: 46%;
+    flex: 0 0 42%;
+    max-width: 42%;
   }
 
   .caretip-auth-marketing {
-    padding-right: 2rem;
+    padding-right: 1.5rem;
   }
 
   .caretip-auth-marketing__inner {
     max-width: 26rem;
-    padding: 1.75rem 1.75rem 1.25rem 2.25rem;
+    padding: 1.35rem 1.5rem 1.25rem 2rem;
   }
 
   .caretip-auth-split-layout__panel {
-    flex: 0 0 54%;
-    max-width: 54%;
+    flex: 0 0 58%;
+    max-width: 58%;
     min-width: 0;
-    overflow-y: auto;
+    overflow: hidden;
     align-items: center;
-    justify-content: flex-start;
-    padding: 1.25rem 2.25rem 1.25rem 2rem;
+    justify-content: center;
+    padding: 1rem 2rem;
   }
 }
 
 @media (min-width: 1280px) {
   .caretip-auth-marketing__inner {
-    max-width: 30rem;
-    padding-left: 3.75rem;
+    max-width: 28rem;
+    padding-left: 2.75rem;
+  }
+}
+
+/* Short desktop viewports — keep the card fully visible without page scroll */
+@media (min-width: 768px) and (max-height: 820px) {
+  .caretip-auth-card,
+  .caretip-auth-card--stable,
+  .caretip-auth-card--recovery {
+    padding: 0.7rem 1.1rem 0.65rem;
+  }
+
+  .caretip-auth-card-brand {
+    margin-bottom: 0.45rem;
+  }
+
+  .caretip-auth-form {
+    gap: 0.3rem;
+  }
+
+  .caretip-auth-trust {
+    display: none;
+  }
+
+  .caretip-auth-field {
+    min-height: 2.45rem;
+  }
+
+  .caretip-auth-oauth,
+  .caretip-auth-oauth-mount,
+  .caretip-auth-oauth iframe {
+    min-height: 2.35rem !important;
+  }
+
+  .caretip-auth-page .caretip-auth-submit.caretip-btn-primary,
+  .caretip-auth-recovery-stage .caretip-auth-submit.caretip-btn-primary,
+  .caretip-auth-split-layout .caretip-auth-submit.caretip-btn-primary {
+    min-height: 2.45rem;
+  }
+
+  .caretip-auth-marketing__body {
+    font-size: 0.8125rem;
   }
 }
 
@@ -1436,30 +1666,34 @@
 
 @media (min-width: 768px) {
   .caretip-auth-recovery-stage--compact-marketing .caretip-auth-curved-brand {
-    flex: 0 0 32%;
-    max-width: 32%;
+    flex: 0 0 36%;
+    max-width: 36%;
   }
 
   .caretip-auth-recovery-stage--compact-marketing .caretip-auth-marketing--compact .caretip-auth-marketing__inner {
     max-width: 22rem;
-    padding: 1.5rem 1.25rem 1rem 1.75rem;
+    padding: 1.25rem 1.25rem 1rem 1.5rem;
   }
 
   .caretip-auth-recovery-stage--compact-marketing .caretip-auth-split-layout__panel {
     flex: 1 1 auto;
     max-width: none;
+    justify-content: center;
+    overflow: hidden;
   }
 }
 
 @media (min-width: 1024px) {
   .caretip-auth-recovery-stage--compact-marketing .caretip-auth-curved-brand {
-    flex: 0 0 34%;
-    max-width: 34%;
+    flex: 0 0 42%;
+    max-width: 42%;
   }
 
   .caretip-auth-recovery-stage--compact-marketing .caretip-auth-split-layout__panel {
-    flex: 0 0 66%;
-    max-width: 66%;
+    flex: 0 0 58%;
+    max-width: 58%;
+    justify-content: center;
+    overflow: hidden;
   }
 }
 

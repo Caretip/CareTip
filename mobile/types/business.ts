@@ -32,6 +32,7 @@ export type BusinessDashboardStats = {
     tipsTotal: number;
     tipCount?: number;
     rating?: number | null;
+    avatar?: string | null;
     isActive?: boolean;
     activationStatus?: string;
     emailVerified?: boolean;
@@ -39,6 +40,7 @@ export type BusinessDashboardStats = {
   employeeGoals?: Array<{
     employeeId: string;
     name?: string;
+    avatar?: string | null;
     goalAmount: number;
     currentAmount: number;
     percent: number;

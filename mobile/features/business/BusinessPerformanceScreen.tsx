@@ -10,6 +10,7 @@ import { AccessErrorState } from "@/components/ui/AccessErrorState";
 import { SkeletonMetricGrid } from "@/components/ui/Skeleton";
 import { useI18n } from "@/hooks/useI18n";
 import { useTheme } from "@/hooks/useTheme";
+import { useEmployeeAvatarLookup } from "@/hooks/useEmployeeAvatarLookup";
 import { useBusinessStats } from "@/features/business/useBusinessStats";
 import { buildEmployeePerformanceChartRows } from "@/utils/dashboardChartData";
 import { formatCount, formatEur, formatGrowthPercent } from "@/utils/format";
@@ -26,6 +27,7 @@ export function BusinessPerformanceScreen() {
   const { colors } = useTheme();
   const { timeframe, setTimeframe, stats, isLoading, isRefreshing, error, refresh } =
     useBusinessStats();
+  const avatarLookup = useEmployeeAvatarLookup();
 
   const timeframeOptions: Array<{ value: BusinessTimeframe; label: string }> = [
     { value: "week", label: t("period.week") },
@@ -35,7 +37,12 @@ export function BusinessPerformanceScreen() {
 
   const employeeCount = stats?.employeeCount ?? 0;
   const periodTotalTips = stats?.totalTips ?? 0;
-  const employeePerformance = buildEmployeePerformanceChartRows(stats?.employees, 8, colors);
+  const employeePerformance = buildEmployeePerformanceChartRows(
+    stats?.employees,
+    8,
+    colors,
+    avatarLookup.byId,
+  );
   const leader = employeePerformance[0];
   const leaderMessage =
     leader != null

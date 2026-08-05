@@ -12,7 +12,9 @@ export type AuthMarketingScene =
   | "passwordSetup"
   | "activation"
   | "verification"
-  | "recovery";
+  | "recovery"
+  | "passwordReset"
+  | "otp";
 
 export type AuthMarketingContent = {
   scene: AuthMarketingScene;
@@ -31,6 +33,8 @@ export const BUSINESS_AUTH_CONTENT: Record<AuthMarketingScene, AuthMarketingCont
   activation: { scene: "signUp", i18nPrefix: `${BUSINESS_PREFIX}.signUp` },
   verification: { scene: "verification", i18nPrefix: `${BUSINESS_PREFIX}.verification` },
   recovery: { scene: "recovery", i18nPrefix: `${BUSINESS_PREFIX}.recovery` },
+  passwordReset: { scene: "passwordReset", i18nPrefix: `${BUSINESS_PREFIX}.passwordReset` },
+  otp: { scene: "otp", i18nPrefix: `${BUSINESS_PREFIX}.otp` },
 };
 
 export const EMPLOYEE_AUTH_CONTENT: Record<AuthMarketingScene, AuthMarketingContent> = {
@@ -41,6 +45,8 @@ export const EMPLOYEE_AUTH_CONTENT: Record<AuthMarketingScene, AuthMarketingCont
   activation: { scene: "activation", i18nPrefix: `${EMPLOYEE_PREFIX}.activation` },
   verification: { scene: "verification", i18nPrefix: `${EMPLOYEE_PREFIX}.verification` },
   recovery: { scene: "recovery", i18nPrefix: `${EMPLOYEE_PREFIX}.recovery` },
+  passwordReset: { scene: "passwordReset", i18nPrefix: `${EMPLOYEE_PREFIX}.passwordReset` },
+  otp: { scene: "otp", i18nPrefix: `${EMPLOYEE_PREFIX}.otp` },
 };
 
 export function getAuthMarketingContent(
@@ -74,11 +80,8 @@ export const AUTH_ROUTE_MARKETING: RouteMarketingRule[] = [
   { match: (p) => p === "/verify-email" || p === "/verify", lane: "business", scene: "verification" },
   { match: (p) => p === "/signup", lane: "business", scene: "signUp" },
   { match: (p) => p === "/login" || p === "/auth", lane: "business", scene: "signIn" },
-  {
-    match: (p) => p === "/forgot-password" || p.startsWith("/reset-password/"),
-    lane: "business",
-    scene: "recovery",
-  },
+  { match: (p) => p === "/forgot-password", lane: "business", scene: "recovery" },
+  { match: (p) => p.startsWith("/reset-password/"), lane: "business", scene: "passwordReset" },
 ];
 
 export function resolveAuthMarketingFromPath(pathname: string): {

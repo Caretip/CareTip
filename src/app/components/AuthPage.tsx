@@ -33,6 +33,8 @@ import {
   EMAIL_NOT_VERIFIED_CODE,
   GOOGLE_ACCOUNT_NOT_REGISTERED_CODE,
   isMfaLoginChallenge,
+  loginMfaEnableAPI,
+  loginMfaVerifyAPI,
 } from '../lib/api';
 import { validateInviteCode } from "../lib/api";
 import { logClientError } from '../lib/clientLog';
@@ -65,6 +67,17 @@ import {
   useAppLoadingRegistration,
 } from "../lib/globalAppLoading";
 import { isAppShellInteractive } from "../lib/appShellLifecycle";
+import { MobileWebAuthShell } from "./auth/mobileWeb";
+
+function subscribeMobileWebAuth(onChange: () => void) {
+  const mq = window.matchMedia("(max-width: 767px)");
+  mq.addEventListener("change", onChange);
+  return () => mq.removeEventListener("change", onChange);
+}
+
+function getMobileWebAuthSnapshot() {
+  return window.matchMedia("(max-width: 767px)").matches;
+}
 
 const ROLE_MISMATCH_TOAST_STYLE = { background: '#000000', color: '#ffffff' } as const;
 
@@ -125,11 +138,19 @@ export function AuthPage() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [showPasswordChecklist, setShowPasswordChecklist] = useState(false);
   const [unlockedFields, setUnlockedFields] = useState<Set<string>>(() => new Set());
-  const { login, register, loginWithOAuth, logout, user, sessionValidated, authStatus } = useAuth();
+  const [pendingMfaToken, setPendingMfaToken] = useState('');
+  const [mfaSetupRequired, setMfaSetupRequired] = useState(false);
+  const [otpCode, setOtpCode] = useState('');
+  const { login, register, loginWithOAuth, logout, user, sessionValidated, authStatus, completeAuthLogin } = useAuth();
   const authInFlightRef = useRef(false);
   const postAuthRedirectRef = useRef<string | null>(null);
   /** Suppresses session-resume UI during fresh sign-in before navigation completes. */
   const [authFlowInProgress, setAuthFlowInProgress] = useState(false);
+  const isMobileWebAuth = useSyncExternalStore(
+    subscribeMobileWebAuth,
+    getMobileWebAuthSnapshot,
+    () => false,
+  );
 
   // Form buttons keep local busy state — never reopen the global brand overlay for sign-in/up.
   useAppLoadingRegistration(
@@ -295,7 +316,7 @@ export function AuthPage() {
     }
 
     if (!isLogin) {
-      if (authLane === 'employee' && !name.trim()) {
+      if ((authLane === 'employee' || isMobileWebAuth) && !name.trim()) {
         setError(t("auth.page.errorFullName"));
         return;
       }
@@ -324,7 +345,11 @@ export function AuthPage() {
         const result = await login(email, password);
         if (isMfaLoginChallenge(result)) {
           endAuthSignInHandoff("AuthPage_mfa_challenge");
-          navigate('/platform-admin/login', { replace: true });
+          setPendingMfaToken(result.pendingMfaToken);
+          setMfaSetupRequired(Boolean(result.mfaSetupRequired));
+          setOtpCode('');
+          setIsSubmitting(false);
+          setAuthFlowInProgress(false);
           return;
         }
         await redirectAfterAuth(parseUser(result.user));
@@ -417,6 +442,40 @@ export function AuthPage() {
       setError(toUserFriendlyMessage(err));
     } finally {
       setResendBusy(false);
+    }
+  };
+
+  const handleMfaSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+    const code = otpCode.trim();
+    if (!pendingMfaToken || code.length < 6) {
+      setError(t('auth.mobileWebAuth.mfaCodeRequired'));
+      return;
+    }
+    if (authInFlightRef.current) return;
+    authInFlightRef.current = true;
+    beginAuthSignInHandoff();
+    setAuthFlowInProgress(true);
+    setIsSubmitting(true);
+    try {
+      const data = mfaSetupRequired
+        ? await loginMfaEnableAPI(pendingMfaToken, code)
+        : await loginMfaVerifyAPI(pendingMfaToken, code);
+      const sessionUser = completeAuthLogin(data);
+      setPendingMfaToken('');
+      setOtpCode('');
+      await redirectAfterAuth(sessionUser);
+    } catch (err) {
+      logClientError('AuthPage.mfa', err);
+      endAuthSignInHandoff('AuthPage_mfa_error');
+      setError(toUserFriendlyMessage(err));
+    } finally {
+      authInFlightRef.current = false;
+      if (!postAuthRedirectRef.current) {
+        setIsSubmitting(false);
+        setAuthFlowInProgress(false);
+      }
     }
   };
 
@@ -619,8 +678,51 @@ export function AuthPage() {
     </div>
   ) : null;
 
+  const mobileAuthMode = pendingMfaToken
+    ? 'otp'
+    : isLogin
+      ? 'login'
+      : 'register';
+
   return (
-    <div className="caretip-auth-page relative font-sans">
+    <div
+      className={cn(
+        "caretip-auth-page relative font-sans",
+        isMobileWebAuth && "caretip-auth-page--has-mobile-web",
+      )}
+    >
+        {isMobileWebAuth ? (
+          <MobileWebAuthShell
+            mode={mobileAuthMode}
+            role={role}
+            authLane={authLane}
+            name={name}
+            email={email}
+            password={password}
+            confirmPassword={confirmPassword}
+            otpCode={otpCode}
+            error={error}
+            busy={isSubmitting || authFlowInProgress}
+            resendBusy={resendBusy}
+            showResendVerification={showResendVerification}
+            inviteCode={resolvedInviteCode}
+            employeeVenueName={inviteContext?.businessName}
+            onNameChange={setName}
+            onEmailChange={setEmail}
+            onPasswordChange={setPassword}
+            onConfirmPasswordChange={setConfirmPassword}
+            onOtpChange={setOtpCode}
+            onToggleMode={toggleAuthMode}
+            onSubmit={(e) => void handleSubmit(e)}
+            onOtpSubmit={(e) => void handleMfaSubmit(e)}
+            onResend={
+              pendingMfaToken ? undefined : () => void handleResendVerification()
+            }
+            onGoogleCredential={(token) => void runGoogleOAuth(token)}
+            sessionBanner={showAuthenticatedSessionHint ? sessionHintBanner : null}
+          />
+        ) : null}
+        <div className={cn(isMobileWebAuth && "caretip-auth-desktop-only")}>
         <SignInCard2
           isLogin={isLogin}
           onToggleMode={toggleAuthMode}
@@ -928,6 +1030,7 @@ export function AuthPage() {
           </form>
           ) : null}
         </SignInCard2>
+        </div>
     </div>
   );
 }

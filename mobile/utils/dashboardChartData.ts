@@ -10,10 +10,12 @@ export type TipPerformanceChartRow = {
 };
 
 export type EmployeePerformanceChartRow = {
+  id?: string;
   name: string;
   tips: number;
   rating: number;
   color: string;
+  avatar?: string | null;
 };
 
 type TranslateFn = (key: string, params?: Record<string, string | number>) => string;
@@ -154,8 +156,10 @@ export function hasTipPerformanceChartActivity(
 }
 
 type DashboardEmployeeRow = {
+  id?: string;
   name: string;
   tipsTotal: number;
+  avatar?: string | null;
   isActive?: boolean;
   activationStatus?: string;
   emailVerified?: boolean;
@@ -166,6 +170,7 @@ export function buildEmployeePerformanceChartRows(
   employees: DashboardEmployeeRow[] | undefined,
   limit: number,
   colors: ColorPalette,
+  avatarById?: Map<string, string | null>,
 ): EmployeePerformanceChartRow[] {
   const ranked = (employees ?? [])
     .filter(
@@ -179,10 +184,12 @@ export function buildEmployeePerformanceChartRows(
     .slice(0, limit);
 
   return ranked.map((e, index, arr) => ({
+    id: e.id,
     name: e.name,
     tips: e.tipsTotal,
     rating: 0,
     color: dashboardChartBarFill(index, arr.length, colors),
+    avatar: e.avatar ?? (e.id ? avatarById?.get(e.id) : undefined) ?? null,
   }));
 }
 

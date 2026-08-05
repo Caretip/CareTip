@@ -21,11 +21,17 @@ import { SkeletonListRows } from "@/components/ui/Skeleton";
 import { NotificationCard } from "@/components/ui/ListCards";
 import { DetailScreenHeader } from "@/components/ui/DetailScreenHeader";
 import { useNotificationsFeed } from "@/hooks/useNotifications";
+import { useAuth } from "@/hooks/useAuth";
+import { useEmployeeAvatarLookup } from "@/hooks/useEmployeeAvatarLookup";
 import { useI18n } from "@/hooks/useI18n";
 import { useTheme } from "@/hooks/useTheme";
 import { formatTimeAgo } from "@/utils/formatTimeAgo";
 import { formatNotificationType } from "@/utils/labels";
 import { friendlyErrorMessage } from "@/utils/friendlyError";
+import {
+  getNotificationActor,
+  notificationHasPersonActor,
+} from "@/utils/notificationMedia";
 import { LIST_PERF } from "@/constants/listPerf";
 import type { ColorPalette } from "@/theme/colors";
 import { spacing, surface, typography } from "@/theme";
@@ -65,6 +71,7 @@ export function NotificationsScreen({
 }) {
   const { t } = useI18n();
   const { colors } = useTheme();
+  const { user } = useAuth();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const contentPad = useScreenContentPadding();
   const listContentStyle = useMemo(
@@ -72,6 +79,7 @@ export function NotificationsScreen({
     [contentPad.paddingBottom, styles.list],
   );
   const [search, setSearch] = useState("");
+  const avatarLookup = useEmployeeAvatarLookup(user?.role === "MANAGER");
   const {
     items,
     isLoading,
@@ -112,6 +120,16 @@ export function NotificationsScreen({
         return <Text style={styles.dayHeader}>{row.label}</Text>;
       }
       const item = row.item;
+      const actor = getNotificationActor(item.metadata);
+      const hasActor = notificationHasPersonActor(actor);
+      const avatarUri = hasActor
+        ? actor.employeeId && user?.employeeId && actor.employeeId === user.employeeId
+          ? user.avatar
+          : avatarLookup.resolve({
+              employeeId: actor.employeeId,
+              name: actor.displayName,
+            }) ?? (actor.employeeId === user?.employeeId ? user?.avatar : undefined)
+        : undefined;
       return (
         <NotificationCard
           title={item.title}
@@ -119,13 +137,15 @@ export function NotificationsScreen({
           meta={`${formatNotificationType(item.type)} · ${formatTimeAgo(item.createdAt)}`}
           unread={!item.read}
           inset
+          actorName={hasActor ? actor.displayName ?? actor.employeeId : null}
+          avatarUri={avatarUri}
           onPress={() => {
             if (!item.read) void markRead.mutateAsync(item.id);
           }}
         />
       );
     },
-    [markRead, styles.dayHeader],
+    [avatarLookup, markRead, styles.dayHeader, user?.avatar, user?.employeeId],
   );
 
   const keyExtractor = useCallback((row: Row) => row.id, []);

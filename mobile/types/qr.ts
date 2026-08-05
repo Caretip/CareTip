@@ -10,6 +10,8 @@ export type QrCodeItem = {
   subtitle?: string | null;
   url: string;
   slug?: string | null;
+  /** Business logo or employee avatar URL when available. */
+  imageUrl?: string | null;
 };
 
 export type BusinessQrAnalyticsTimeframe = "week" | "month" | "year";

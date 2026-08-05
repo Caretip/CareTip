@@ -1,10 +1,13 @@
 import { useEffect, useMemo, useState } from "react";
 import { StyleSheet, Text, TextInput, View } from "react-native";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { MediaUploadControl } from "@/components/media/MediaUploadControl";
+import { BusinessLogo } from "@/components/ui/BusinessLogo";
 import { Button } from "@/components/ui/Button";
 import { Section } from "@/components/ui/Section";
 import { SettingsSectionLayout } from "@/features/settings/SettingsSectionLayout";
 import { useI18n } from "@/hooks/useI18n";
+import { useMediaUploadFlow } from "@/hooks/useMediaUploadFlow";
 import { useTheme } from "@/hooks/useTheme";
 import { fetchBusinessProfile, patchBusinessProfile } from "@/services/api/businessService";
 import { queryStaleTimes } from "@/services/api/queryClient";
@@ -24,6 +27,8 @@ export function BusinessProfileSettingsScreen() {
   const userId = useAuthUserId();
   const keys = useUserQueryKeys();
   const queryClient = useQueryClient();
+  const { uploading: logoUploading, startUpload: startLogoUpload } =
+    useMediaUploadFlow("businessLogo");
   const profileQuery = useQuery({
     queryKey: keys.businessProfile,
     queryFn: fetchBusinessProfile,
@@ -80,11 +85,28 @@ export function BusinessProfileSettingsScreen() {
       keyboardAware
     >
       <Section title={t("settings.menu.venueDetails")}>
+        <MediaUploadControl
+          preview={
+            <BusinessLogo
+              businessName={name || t("businessDashboard.venueFallback")}
+              uri={profile?.logo}
+              size={72}
+              fit="contain"
+              cacheBust={profileQuery.dataUpdatedAt}
+            />
+          }
+          actionLabel={t("settings.media.changeLogo")}
+          uploadingLabel={t("settings.media.uploading")}
+          hint={t("settings.media.logoHint")}
+          uploading={logoUploading}
+          disabled={saveMutation.isPending}
+          onPress={() => void startLogoUpload()}
+        />
         <Field
           label={t("settings.menu.businessName")}
           value={name}
           onChangeText={setName}
-          editable={!saveMutation.isPending}
+          editable={!saveMutation.isPending && !logoUploading}
           styles={styles}
           placeholderColor={colors.mutedForeground}
         />
@@ -92,7 +114,7 @@ export function BusinessProfileSettingsScreen() {
           label={t("settings.menu.location")}
           value={location}
           onChangeText={setLocation}
-          editable={!saveMutation.isPending}
+          editable={!saveMutation.isPending && !logoUploading}
           styles={styles}
           placeholderColor={colors.mutedForeground}
         />
@@ -101,7 +123,7 @@ export function BusinessProfileSettingsScreen() {
           value={contactPhone}
           onChangeText={setContactPhone}
           keyboardType="phone-pad"
-          editable={!saveMutation.isPending}
+          editable={!saveMutation.isPending && !logoUploading}
           styles={styles}
           placeholderColor={colors.mutedForeground}
         />
@@ -111,7 +133,7 @@ export function BusinessProfileSettingsScreen() {
           onChangeText={setWebsite}
           autoCapitalize="none"
           keyboardType="url"
-          editable={!saveMutation.isPending}
+          editable={!saveMutation.isPending && !logoUploading}
           styles={styles}
           placeholderColor={colors.mutedForeground}
         />
@@ -121,7 +143,7 @@ export function BusinessProfileSettingsScreen() {
       <Button
         label={t("common.save")}
         loading={saveMutation.isPending}
-        disabled={!name.trim() || saveMutation.isPending}
+        disabled={!name.trim() || saveMutation.isPending || logoUploading}
         onPress={() => void saveMutation.mutateAsync()}
       />
     </SettingsSectionLayout>

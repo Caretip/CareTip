@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import { StyleSheet, Text, View } from "react-native";
 import { useQuery } from "@tanstack/react-query";
-import { Avatar } from "@/components/ui/Avatar";
+import { RemoteAvatar } from "@/components/ui/RemoteAvatar";
 import { DetailScreenHeader } from "@/components/ui/DetailScreenHeader";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { ErrorState } from "@/components/ui/ErrorState";
@@ -77,7 +77,13 @@ export function TeamManagementScreen() {
                 showDivider={index < employees.length - 1}
               >
                 <View style={styles.row}>
-                  <Avatar label={employee.name} tone="brand" size={40} />
+                  <RemoteAvatar
+                    displayName={employee.name}
+                    uri={employee.avatar}
+                    tone="brand"
+                    size={40}
+                    cacheBust={teamQuery.dataUpdatedAt}
+                  />
                   <View style={styles.body}>
                     <Text style={styles.name}>{employee.name}</Text>
                     <Text style={styles.meta}>

@@ -2,9 +2,11 @@ import { useMemo } from "react";
 import { StyleSheet, Text, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { RemoteAvatar } from "@/components/ui/RemoteAvatar";
 import { SkeletonListRows } from "@/components/ui/Skeleton";
 import { useI18n } from "@/hooks/useI18n";
 import { useTheme } from "@/hooks/useTheme";
+import { useEmployeeAvatarLookup } from "@/hooks/useEmployeeAvatarLookup";
 import { useBusinessCustomerFeedback } from "@/features/business/useBusinessCustomerFeedback";
 import { formatRating } from "@/utils/format";
 import { AccessErrorState } from "@/components/ui/AccessErrorState";
@@ -51,6 +53,7 @@ export function CustomerFeedbackPanel() {
   const text = dashboardTextColors(isDark);
   const styles = useMemo(() => createStyles(colors, text), [colors, text]);
   const { data, isLoading, error, isGated } = useBusinessCustomerFeedback(3);
+  const avatarLookup = useEmployeeAvatarLookup(!isGated);
 
   if (isLoading) {
     return <SkeletonListRows count={2} />;
@@ -113,9 +116,15 @@ export function CustomerFeedbackPanel() {
             style={[styles.review, index < items.length - 1 ? styles.reviewBorder : null]}
           >
             <View style={styles.reviewHeader}>
-              <View style={styles.avatar}>
-                <Text style={styles.avatarText}>{item.employeeName.charAt(0).toUpperCase()}</Text>
-              </View>
+              <RemoteAvatar
+                displayName={item.employeeName}
+                uri={avatarLookup.resolve({
+                  employeeId: item.employeeId,
+                  name: item.employeeName,
+                })}
+                size={36}
+                tone="brand"
+              />
               <View style={styles.reviewMeta}>
                 <Text style={styles.name} numberOfLines={1}>
                   {item.employeeName}
@@ -187,19 +196,6 @@ function createStyles(colors: ColorPalette, text: ReturnType<typeof dashboardTex
       flexDirection: "row",
       alignItems: "flex-start",
       gap: spacing.md,
-    },
-    avatar: {
-      width: 36,
-      height: 36,
-      borderRadius: 12,
-      backgroundColor: colors.secondary,
-      alignItems: "center",
-      justifyContent: "center",
-    },
-    avatarText: {
-      fontWeight: "700",
-      color: text.primary,
-      fontSize: 14,
     },
     reviewMeta: {
       flex: 1,

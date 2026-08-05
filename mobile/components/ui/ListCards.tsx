@@ -1,6 +1,6 @@
 import { memo, useMemo } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
-import { Avatar } from "@/components/ui/Avatar";
+import { RemoteAvatar } from "@/components/ui/RemoteAvatar";
 import { StatusPill } from "@/components/ui/StatusPill";
 import { useI18n } from "@/hooks/useI18n";
 import { useTheme } from "@/hooks/useTheme";
@@ -13,6 +13,7 @@ type TipCardProps = {
   statusLabel: string;
   statusTone?: "success" | "warning" | "danger" | "neutral" | "brand" | "info";
   staffName?: string | null;
+  avatarUri?: string | null;
   meta?: string;
   location?: string | null;
   onPress?: () => void;
@@ -26,6 +27,7 @@ export const TipCard = memo(function TipCard({
   statusLabel,
   statusTone = "neutral",
   staffName,
+  avatarUri,
   meta,
   location,
   onPress,
@@ -50,7 +52,12 @@ export const TipCard = memo(function TipCard({
       ]}
     >
       <View style={styles.iconWell}>
-        <Avatar label={staffName ?? "Tip"} tone="brand" size={36} />
+        <RemoteAvatar
+          displayName={staffName ?? "Tip"}
+          uri={avatarUri}
+          tone="brand"
+          size={36}
+        />
       </View>
       <View style={styles.body}>
         <View style={styles.top}>
@@ -74,6 +81,9 @@ type ActivityCardProps = {
   badgeLabel: string;
   badgeTone?: "success" | "warning" | "danger" | "neutral" | "brand" | "info";
   isLast?: boolean;
+  /** When set, show person avatar instead of timeline source dot. */
+  actorName?: string | null;
+  avatarUri?: string | null;
 };
 
 /** Timeline-style activity row. */
@@ -85,14 +95,26 @@ export const ActivityCard = memo(function ActivityCard({
   badgeLabel,
   badgeTone = "neutral",
   isLast = false,
+  actorName,
+  avatarUri,
 }: ActivityCardProps) {
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
+  const showAvatar = Boolean(actorName);
 
   return (
     <View style={styles.timelineRow}>
       <View style={styles.timelineRail}>
-        <View style={[styles.dot, badgeTone === "success" ? styles.dotSuccess : null]} />
+        {showAvatar ? (
+          <RemoteAvatar
+            displayName={actorName ?? title}
+            uri={avatarUri}
+            size={28}
+            tone="brand"
+          />
+        ) : (
+          <View style={[styles.dot, badgeTone === "success" ? styles.dotSuccess : null]} />
+        )}
         {!isLast ? <View style={styles.rail} /> : null}
       </View>
       <View style={[styles.timelineBody, isLast ? styles.timelineBodyLast : null]}>
@@ -115,6 +137,9 @@ type NotificationCardProps = {
   unread?: boolean;
   onPress?: () => void;
   inset?: boolean;
+  /** When person identity is known, render RemoteAvatar instead of read/unread dots. */
+  actorName?: string | null;
+  avatarUri?: string | null;
 };
 
 export const NotificationCard = memo(function NotificationCard({
@@ -124,11 +149,14 @@ export const NotificationCard = memo(function NotificationCard({
   unread = false,
   onPress,
   inset = false,
+  actorName,
+  avatarUri,
 }: NotificationCardProps) {
   const { t } = useI18n();
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const readState = unread ? t("a11y.unread") : t("a11y.read");
+  const showAvatar = Boolean(actorName);
 
   return (
     <Pressable
@@ -146,13 +174,25 @@ export const NotificationCard = memo(function NotificationCard({
         pressed && styles.pressed,
       ]}
     >
-      <View style={[styles.iconWell, unread ? styles.iconWellUnread : null]}>
-        {unread ? (
-          <View style={styles.unreadDotInner} />
-        ) : (
-          <View style={styles.readDotInner} />
-        )}
-      </View>
+      {showAvatar ? (
+        <View style={styles.avatarWell}>
+          <RemoteAvatar
+            displayName={actorName ?? title}
+            uri={avatarUri}
+            size={36}
+            tone="brand"
+          />
+          {unread ? <View style={styles.unreadBadge} /> : null}
+        </View>
+      ) : (
+        <View style={[styles.iconWell, unread ? styles.iconWellUnread : null]}>
+          {unread ? (
+            <View style={styles.unreadDotInner} />
+          ) : (
+            <View style={styles.readDotInner} />
+          )}
+        </View>
+      )}
       <View style={styles.body}>
         <Text style={[styles.title, unread ? styles.titleUnread : null]}>{title}</Text>
         <Text style={styles.subtitle} numberOfLines={2}>
@@ -250,6 +290,24 @@ function createStyles(colors: ColorPalette) {
       borderWidth: 1.5,
       borderColor: colors.primary,
     },
+    avatarWell: {
+      width: surface.iconWellSize,
+      height: surface.iconWellSize,
+      alignItems: "center",
+      justifyContent: "center",
+      position: "relative",
+    },
+    unreadBadge: {
+      position: "absolute",
+      top: 0,
+      right: 0,
+      width: 10,
+      height: 10,
+      borderRadius: radius.full,
+      backgroundColor: colors.primary,
+      borderWidth: 2,
+      borderColor: colors.card,
+    },
     unreadDotInner: {
       width: 10,
       height: 10,
@@ -268,7 +326,7 @@ function createStyles(colors: ColorPalette) {
       paddingBottom: spacing.lg,
     },
     timelineRail: {
-      width: 16,
+      width: 28,
       alignItems: "center",
     },
     dot: {

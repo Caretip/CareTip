@@ -22,8 +22,9 @@
         "UIBackgroundModes": [
           "remote-notification"
         ],
-        "NSCameraUsageDescription": "CareTip may use the camera when you choose to capture a profile photo.",
-        "NSPhotoLibraryUsageDescription": "CareTip may access your photos when you choose an image to share."
+        "NSCameraUsageDescription": "CareTip uses the camera when you take a business logo or profile photo.",
+        "NSPhotoLibraryUsageDescription": "CareTip accesses your photos when you choose a business logo or profile picture.",
+        "NSPhotoLibraryAddUsageDescription": "CareTip may save images you share from the app."
       },
       "associatedDomains": [
         "applinks:caretip.de",
@@ -41,7 +42,11 @@
       "permissions": [
         "RECEIVE_BOOT_COMPLETED",
         "VIBRATE",
-        "POST_NOTIFICATIONS"
+        "POST_NOTIFICATIONS",
+        "CAMERA",
+        "READ_MEDIA_IMAGES",
+        "READ_EXTERNAL_STORAGE",
+        "WRITE_EXTERNAL_STORAGE"
       ],
       "intentFilters": [
         {
@@ -136,7 +141,14 @@
           "defaultChannel": "default"
         }
       ],
-      "expo-font"
+      "expo-font",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "CareTip accesses your photos when you choose a business logo or profile picture.",
+          "cameraPermission": "CareTip uses the camera when you take a business logo or profile photo."
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true

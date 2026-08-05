@@ -5,6 +5,7 @@ import { StyleSheet, Text, View } from "react-native";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/Button";
 import { QrCodeDisplay } from "@/components/ui/QrCodeDisplay";
+import { RemoteAvatar } from "@/components/ui/RemoteAvatar";
 import { Screen } from "@/components/ui/Screen";
 import { ErrorState } from "@/components/ui/ErrorState";
 import { Skeleton } from "@/components/ui/Skeleton";
@@ -29,7 +30,15 @@ export function EmployeeQrScreen() {
   const [cached, setCached] = useState<Awaited<ReturnType<typeof loadEmployeeQrCache>>>(null);
   const [qrReloadKey, setQrReloadKey] = useState(0);
 
-  const { data: profile, isLoading, isError, error, refetch, isRefetching } = useQuery({
+  const {
+    data: profile,
+    isLoading,
+    isError,
+    error,
+    refetch,
+    isRefetching,
+    dataUpdatedAt,
+  } = useQuery({
     queryKey: keys.employeeMe,
     queryFn: fetchEmployeeProfile,
     enabled: Boolean(userId),
@@ -101,6 +110,13 @@ export function EmployeeQrScreen() {
       }}
     >
       <View style={styles.hero}>
+        <RemoteAvatar
+          displayName={displayName}
+          uri={profile?.avatar}
+          size={56}
+          tone="brand"
+          cacheBust={dataUpdatedAt}
+        />
         <Text style={styles.eyebrow}>{t("qr.myQrEyebrow")}</Text>
         <Text style={styles.title}>{t("qr.myQrTitle")}</Text>
         <Text style={styles.subtitle}>{t("qr.myQrSubtitle")}</Text>

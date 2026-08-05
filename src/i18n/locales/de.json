@@ -1290,8 +1290,8 @@
       "signIn": {
         "panelAria": "Warum CareTip für Venues",
         "badge": "Vertraut von Hospitality-Teams",
-        "headline": "Willkommen zurück in Ihrem Venue.",
-        "body": "Team, Trinkgelder und Insights aus einem Workspace verwalten.",
+        "headline": "Willkommen zurück.",
+        "body": "Verwalten Sie Team, Trinkgelder und Business-Insights aus einem sicheren Workspace.",
         "benefit1": "Teamverwaltung",
         "benefit2": "QR-Trinkgeld-Aktivierung",
         "benefit3": "Echtzeit-Analysen",
@@ -1301,7 +1301,7 @@
         "panelAria": "Start mit CareTip",
         "badge": "Starten Sie Ihre CareTip-Reise",
         "headline": "Verwandeln Sie guten Service in messbare Einnahmen.",
-        "body": "Erstellen Sie Ihr Venue-Konto, onboarden Sie Ihr Team und bauen Sie ein besseres Trinkgeld-Erlebnis auf.",
+        "body": "Erstellen Sie Ihr Venue, onboarden Sie Ihr Team und nehmen Sie in wenigen Minuten Trinkgelder an.",
         "benefit1": "Schnelle Venue-Einrichtung",
         "benefit2": "Team-Onboarding",
         "benefit3": "QR-Trinkgeld-System",
@@ -1310,8 +1310,8 @@
       "verification": {
         "panelAria": "Venue-Konto verifizieren",
         "badge": "Konto verifizieren",
-        "headline": "Fast geschafft.",
-        "body": "Bestätigen Sie Ihre E-Mail, um Ihr Venue-Dashboard freizuschalten und Ihr Team zu verwalten.",
+        "headline": "Noch ein letzter Schritt.",
+        "body": "Bestätigen Sie Ihre E-Mail, um Ihren CareTip-Workspace zu aktivieren.",
         "benefit1": "Venue-Dashboard-Zugang",
         "benefit2": "Team-Management-Tools",
         "benefit3": "QR-Trinkgeld-Aktivierung",
@@ -1326,14 +1326,34 @@
         "benefit2": "Geschützter Kontozugang",
         "benefit3": "Zurück zum Dashboard",
         "benefit4": "Verschlüsselter Datenschutz"
+      },
+      "passwordReset": {
+        "panelAria": "Neues Passwort erstellen",
+        "badge": "Konto absichern",
+        "headline": "Neues Passwort erstellen.",
+        "body": "Wählen Sie ein starkes Passwort, um Ihr Konto zu sichern.",
+        "benefit1": "Starker Passwortschutz",
+        "benefit2": "Sicherer Kontozugang",
+        "benefit3": "Zurück zum Dashboard",
+        "benefit4": "Verschlüsselter Datenschutz"
+      },
+      "otp": {
+        "panelAria": "Sichere Anmeldungsbestätigung",
+        "badge": "Sichere Anmeldung",
+        "headline": "Sichere Anmeldung.",
+        "body": "Geben Sie den Bestätigungscode ein, den wir an Ihre E-Mail oder Ihr Telefon gesendet haben.",
+        "benefit1": "Geschützter Workspace-Zugang",
+        "benefit2": "Zwei-Faktor-Sicherheit",
+        "benefit3": "Verschlüsselte Sitzungen",
+        "benefit4": "Vertrauenswürdige Anmeldung"
       }
     },
     "employeeMarketing": {
       "signIn": {
         "panelAria": "Warum CareTip für Teams",
         "badge": "Für Hospitality-Profis",
-        "headline": "Team beitreten.",
-        "body": "Performance verfolgen, Profil verwalten und mit Ihrem Arbeitsplatz verbunden bleiben.",
+        "headline": "Willkommen zurück.",
+        "body": "Verfolgen Sie Trinkgelder, Performance und Updates aus einem sicheren Konto.",
         "benefit1": "Persönliches Dashboard",
         "benefit2": "Trinkgeld-Tracking",
         "benefit3": "Performance-Insights",
@@ -1342,8 +1362,8 @@
       "signUp": {
         "panelAria": "Team bei CareTip beitreten",
         "badge": "Team beitreten",
-        "headline": "Mit Ihrem Team verdienen.",
-        "body": "Einladungscode eingeben, mit Ihrem Arbeitsplatz verbinden und Ihr Mitarbeiter-Dashboard nutzen.",
+        "headline": "Ihrer Arbeitsstelle beitreten.",
+        "body": "Erstellen Sie Ihr Mitarbeiterkonto und verbinden Sie sich sicher mit Ihrem Betrieb.",
         "benefit1": "Schnelles Invite-Onboarding",
         "benefit2": "Team-Verbindung",
         "benefit3": "Trinkgeld-Transparenz",
@@ -1352,8 +1372,8 @@
       "invite": {
         "panelAria": "Mit Einladungscode dem Team beitreten",
         "badge": "Team beitreten",
-        "headline": "Einladungscode eingeben.",
-        "body": "Nutzen Sie den Code Ihres Managers, um sich mit Ihrem Arbeitsplatz zu verbinden.",
+        "headline": "Ihrer Arbeitsstelle beitreten.",
+        "body": "Geben Sie den Einladungscode Ihres Managers ein, um sich sicher mit Ihrem Betrieb zu verbinden.",
         "benefit1": "Schnelles Team-Onboarding",
         "benefit2": "Arbeitsplatz-Verbindung",
         "benefit3": "Trinkgeld-Transparenz",
@@ -1362,8 +1382,8 @@
       "passwordSetup": {
         "panelAria": "Mitarbeiter-Passwort festlegen",
         "badge": "Konto absichern",
-        "headline": "Passwort festlegen.",
-        "body": "Erstellen Sie ein sicheres Passwort, um Ihr Mitarbeiterkonto zu aktivieren und Ihr Dashboard zu nutzen.",
+        "headline": "Neues Passwort erstellen.",
+        "body": "Wählen Sie ein starkes Passwort, um Ihr Konto zu sichern.",
         "benefit1": "Trinkgeld verfolgen",
         "benefit2": "Performance-Insights",
         "benefit3": "Mit dem Team verbunden bleiben",
@@ -1382,8 +1402,8 @@
       "verification": {
         "panelAria": "Mitarbeiter-E-Mail verifizieren",
         "badge": "E-Mail verifizieren",
-        "headline": "Noch ein Schritt.",
-        "body": "Bestätigen Sie Ihre E-Mail, um Ihr Mitarbeiter-Dashboard zu nutzen und Trinkgelder zu verfolgen.",
+        "headline": "Noch ein letzter Schritt.",
+        "body": "Bestätigen Sie Ihre E-Mail, um Ihren CareTip-Workspace zu aktivieren.",
         "benefit1": "Mitarbeiter-Dashboard-Zugang",
         "benefit2": "Trinkgeld-Tracking",
         "benefit3": "Performance-Insights",
@@ -1398,6 +1418,26 @@
         "benefit2": "Geschützter Kontozugang",
         "benefit3": "Zurück zum Dashboard",
         "benefit4": "Verschlüsselter Datenschutz"
+      },
+      "passwordReset": {
+        "panelAria": "Neues Passwort erstellen",
+        "badge": "Konto absichern",
+        "headline": "Neues Passwort erstellen.",
+        "body": "Wählen Sie ein starkes Passwort, um Ihr Konto zu sichern.",
+        "benefit1": "Starker Passwortschutz",
+        "benefit2": "Sicherer Kontozugang",
+        "benefit3": "Zurück zum Dashboard",
+        "benefit4": "Verschlüsselter Datenschutz"
+      },
+      "otp": {
+        "panelAria": "Sichere Anmeldungsbestätigung",
+        "badge": "Sichere Anmeldung",
+        "headline": "Sichere Anmeldung.",
+        "body": "Geben Sie den Bestätigungscode ein, den wir an Ihre E-Mail oder Ihr Telefon gesendet haben.",
+        "benefit1": "Geschützter Kontozugang",
+        "benefit2": "Zwei-Faktor-Sicherheit",
+        "benefit3": "Verschlüsselte Sitzungen",
+        "benefit4": "Vertrauenswürdige Anmeldung"
       }
     },
     "trust": {
@@ -1423,6 +1463,38 @@
       "roleBusiness": "Unternehmen",
       "roleStaff": "Team",
       "roleLockedInviteHint": "Teameinladung: Kontotyp ist auf Team festgelegt"
+    },
+    "mobileWebAuth": {
+      "loginTitle": "Willkommen zurück",
+      "loginSubtitle": "Melden Sie sich an. Geben Sie unten Ihre E-Mail ein.",
+      "registerTitle": "Konto erstellen",
+      "registerSubtitle": "Füllen Sie die Felder aus oder registrieren Sie sich mit einem Social-Konto.",
+      "labelName": "Name",
+      "placeholderName": "Max Mustermann",
+      "placeholderEmail": "beispiel@gmail.com",
+      "agreePrefix": "Ich stimme den",
+      "termsLink": "AGB zu",
+      "logIn": "Anmelden",
+      "signUp": "Registrieren",
+      "orSignInWith": "Oder anmelden mit",
+      "orSignUpWith": "Oder registrieren mit",
+      "footerNoAccount": "Noch kein Konto?",
+      "footerHasAccount": "Bereits ein Konto?",
+      "signInLink": "Anmelden",
+      "signUpLink": "Registrieren",
+      "otpTitle": "Code eingeben",
+      "otpSubtitle": "Ein 6-stelliger Code wurde an Ihre Authenticator-App gesendet.",
+      "otpAria": "Bestätigungscode",
+      "otpResendPrompt": "Code nicht erhalten?",
+      "otpResend": "Erneut senden.",
+      "verify": "Bestätigen",
+      "verifying": "Wird geprüft…",
+      "socialAria": "Google-Anmeldung",
+      "continueWithGoogle": "Mit Google fortfahren",
+      "signUpWithGoogle": "Mit Google registrieren",
+      "socialSoon": "{{provider}}-Anmeldung ist noch nicht verfügbar.",
+      "termsRequired": "Bitte stimmen Sie den AGB zu, um fortzufahren.",
+      "mfaCodeRequired": "Geben Sie den 6-stelligen Code aus Ihrer Authenticator-App ein."
     },
     "employeeAuth": {
       "titleSignIn": "Team-Anmeldung",

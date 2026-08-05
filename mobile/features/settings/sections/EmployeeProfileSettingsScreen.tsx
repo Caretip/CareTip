@@ -1,11 +1,14 @@
 import { useEffect, useMemo, useState } from "react";
-import { StyleSheet, Text } from "react-native";
+import { StyleSheet, Text, View } from "react-native";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { MediaUploadControl } from "@/components/media/MediaUploadControl";
 import { Button } from "@/components/ui/Button";
+import { RemoteAvatar } from "@/components/ui/RemoteAvatar";
 import { TextField } from "@/components/ui/TextField";
 import { Section } from "@/components/ui/Section";
 import { SettingsSectionLayout } from "@/features/settings/SettingsSectionLayout";
 import { useI18n } from "@/hooks/useI18n";
+import { useMediaUploadFlow } from "@/hooks/useMediaUploadFlow";
 import { useTheme } from "@/hooks/useTheme";
 import { fetchEmployeeProfile } from "@/services/api/employeeService";
 import { patchEmployeeProfile } from "@/services/api/settingsService";
@@ -13,8 +16,9 @@ import { queryStaleTimes } from "@/services/api/queryClient";
 import { useAuthUserId, useUserQueryKeys } from "@/services/api/queryKeys";
 import { showErrorToast, showSuccessToast } from "@/store/toastStore";
 import { friendlyErrorMessage } from "@/utils/friendlyError";
+import { requireOnline } from "@/utils/requireOnline";
 import type { ColorPalette } from "@/theme/colors";
-import { typography } from "@/theme";
+import { spacing, typography } from "@/theme";
 
 export function EmployeeProfileSettingsScreen() {
   const { t } = useI18n();
@@ -23,6 +27,8 @@ export function EmployeeProfileSettingsScreen() {
   const userId = useAuthUserId();
   const keys = useUserQueryKeys();
   const queryClient = useQueryClient();
+  const { uploading: avatarUploading, startUpload: startAvatarUpload } =
+    useMediaUploadFlow("employeeAvatar");
   const employeeQuery = useQuery({
     queryKey: keys.employeeMe,
     queryFn: fetchEmployeeProfile,
@@ -43,18 +49,28 @@ export function EmployeeProfileSettingsScreen() {
   }, [employeeQuery.data]);
 
   const saveMutation = useMutation({
-    mutationFn: () =>
-      patchEmployeeProfile({
+    mutationFn: async () => {
+      if (!(await requireOnline())) {
+        throw new Error("OFFLINE");
+      }
+      return patchEmployeeProfile({
         name: name.trim(),
         bio: bio.trim() || null,
         monthlyGoal: monthlyGoal.trim() ? Number(monthlyGoal) : null,
-      }),
+      });
+    },
     onSuccess: () => {
       showSuccessToast(t("success.saved"));
       void queryClient.invalidateQueries({ queryKey: keys.employeeMe });
       void queryClient.invalidateQueries({ queryKey: keys.employeeTips });
     },
-    onError: (e) => showErrorToast(friendlyErrorMessage(e, t("settings.saveError"), t)),
+    onError: (error) => {
+      if (error instanceof Error && error.message === "OFFLINE") {
+        showErrorToast(t("errors.offline"));
+        return;
+      }
+      showErrorToast(friendlyErrorMessage(error, t("settings.saveError"), t));
+    },
   });
 
   return (
@@ -64,26 +80,53 @@ export function EmployeeProfileSettingsScreen() {
       keyboardAware
     >
       <Section title={t("settings.profileTitle")}>
-        <Text style={styles.muted}>{employeeQuery.data?.jobTitle}</Text>
-        <Text style={styles.muted}>{employeeQuery.data?.businessName}</Text>
+        <MediaUploadControl
+          preview={
+            <RemoteAvatar
+              displayName={name || employeeQuery.data?.name || "?"}
+              uri={employeeQuery.data?.avatar}
+              size={72}
+              tone="brand"
+              cacheBust={employeeQuery.dataUpdatedAt}
+            />
+          }
+          actionLabel={t("settings.media.changeAvatar")}
+          uploadingLabel={t("settings.media.uploading")}
+          hint={t("settings.media.avatarHint")}
+          uploading={avatarUploading}
+          disabled={saveMutation.isPending}
+          onPress={() => void startAvatarUpload()}
+        />
+        <View style={styles.meta}>
+          <Text style={styles.muted}>{employeeQuery.data?.jobTitle}</Text>
+          <Text style={styles.muted}>{employeeQuery.data?.businessName}</Text>
+        </View>
       </Section>
-      <TextField label={t("settings.menu.displayName")} value={name} onChangeText={setName} />
+      <TextField
+        label={t("settings.menu.displayName")}
+        value={name}
+        onChangeText={setName}
+        editable={!saveMutation.isPending && !avatarUploading}
+      />
       <TextField
         label={t("settings.menu.bio")}
         value={bio}
         onChangeText={setBio}
         multiline
+        editable={!saveMutation.isPending && !avatarUploading}
       />
       <TextField
         label={t("settings.menu.monthlyGoal")}
         value={monthlyGoal}
         onChangeText={setMonthlyGoal}
         keyboardType="decimal-pad"
+        editable={!saveMutation.isPending && !avatarUploading}
       />
       <Button
         label={t("common.save")}
         onPress={() => void saveMutation.mutate()}
         loading={saveMutation.isPending}
+        disabled={avatarUploading}
       />
     </SettingsSectionLayout>
   );
@@ -91,6 +134,10 @@ export function EmployeeProfileSettingsScreen() {
 
 function createStyles(colors: ColorPalette) {
   return StyleSheet.create({
+    meta: {
+      gap: spacing.xxs,
+      marginBottom: spacing.sm,
+    },
     muted: { ...typography.body, color: colors.mutedForeground },
   });
 }

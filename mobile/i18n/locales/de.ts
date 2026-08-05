@@ -511,6 +511,21 @@ export const de: MobileMessages = {
     signOutConfirmBody: "Sie müssen sich erneut anmelden, um auf Ihr Konto zuzugreifen.",
     saveError: "Einstellungen konnten nicht gespeichert werden.",
     profileSaved: "Profil aktualisiert.",
+    media: {
+      chooseTitle: "Bild auswählen",
+      camera: "Kamera",
+      gallery: "Galerie",
+      changeLogo: "Logo ändern",
+      changeAvatar: "Foto ändern",
+      uploading: "Wird hochgeladen…",
+      logoHint: "JPEG oder PNG, max. 5 MB. Aktualisiert Dashboard und gebrandete QR-Codes.",
+      avatarHint: "JPEG oder PNG, max. 5 MB. Erscheint in Profil und Trinkgeld-Aktivität.",
+      logoUploaded: "Unternehmenslogo aktualisiert.",
+      avatarUploaded: "Profilfoto aktualisiert.",
+      uploadError: "Bild konnte nicht hochgeladen werden.",
+      permissionDenied:
+        "Berechtigung verweigert. Kamera oder Fotos in den Systemeinstellungen aktivieren.",
+    },
     menu: {
       account: "Konto",
       securityPrefs: "Sicherheit & Einstellungen",

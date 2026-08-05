@@ -20,6 +20,8 @@ import { SkeletonListRows } from "@/components/ui/Skeleton";
 import { TipCard } from "@/components/ui/ListCards";
 import { DetailScreenHeader } from "@/components/ui/DetailScreenHeader";
 import { useBusinessTipsList, useEmployeeTipsList } from "@/hooks/useTipsList";
+import { useEmployeeAvatarLookup } from "@/hooks/useEmployeeAvatarLookup";
+import { useAuth } from "@/hooks/useAuth";
 import { useI18n } from "@/hooks/useI18n";
 import { useTheme } from "@/hooks/useTheme";
 import { formatEur } from "@/utils/format";
@@ -57,6 +59,7 @@ export function TipsListScreen({ role, basePath }: TipsListScreenProps) {
   const router = useRouter();
   const { t } = useI18n();
   const { colors } = useTheme();
+  const { user } = useAuth();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const contentPad = useScreenContentPadding();
   const listContentStyle = useMemo(
@@ -66,6 +69,8 @@ export function TipsListScreen({ role, basePath }: TipsListScreenProps) {
   const [search, setSearch] = useState("");
   const [range, setRange] = useState<"today" | "week" | "month">("month");
   const [status, setStatus] = useState<"all" | TipStatus>("all");
+  const avatarLookup = useEmployeeAvatarLookup(role === "business");
+  const selfAvatar = user?.avatar;
 
   const params = useMemo(
     () => ({
@@ -121,19 +126,29 @@ export function TipsListScreen({ role, basePath }: TipsListScreenProps) {
   );
 
   const renderItem = useCallback(
-    ({ item }: { item: TipActivityRow }) => (
-      <TipCard
-        inset
-        amount={formatEur(item.amount)}
-        statusLabel={formatTipStatus(item.status, role)}
-        statusTone={statusTone(item.status)}
-        staffName={item.staffName ?? t("tips.staff")}
-        meta={formatTipDate(item.createdAt, timezone)}
-        location={item.locationName}
-        onPress={() => openDetail(item)}
-      />
-    ),
-    [openDetail, role, t, timezone],
+    ({ item }: { item: TipActivityRow }) => {
+      const avatarUri =
+        role === "business"
+          ? avatarLookup.resolve({
+              employeeId: item.employeeId,
+              name: item.staffName,
+            })
+          : selfAvatar;
+      return (
+        <TipCard
+          inset
+          amount={formatEur(item.amount)}
+          statusLabel={formatTipStatus(item.status, role)}
+          statusTone={statusTone(item.status)}
+          staffName={item.staffName ?? t("tips.staff")}
+          avatarUri={avatarUri}
+          meta={formatTipDate(item.createdAt, timezone)}
+          location={item.locationName}
+          onPress={() => openDetail(item)}
+        />
+      );
+    },
+    [avatarLookup, openDetail, role, selfAvatar, t, timezone],
   );
 
   const keyExtractor = useCallback((item: TipActivityRow) => item.id, []);
