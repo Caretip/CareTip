@@ -862,8 +862,8 @@
 
   .caretip-auth-subtitle {
     margin-top: 0.125rem;
-    font-size: 0.75rem;
-    line-height: 1.35;
+    font-size: 0.8125rem;
+    line-height: 1.45;
   }
 
   .caretip-auth-tabs {
@@ -884,14 +884,14 @@
 
   .caretip-auth-label {
     margin-bottom: 0.1875rem;
-    font-size: 0.625rem;
-    line-height: 1.25;
+    font-size: 0.8125rem;
+    line-height: 1.35;
   }
 
   .caretip-auth-field {
     min-height: 2.625rem;
     padding: 0.3125rem 0.625rem;
-    font-size: 0.8125rem;
+    font-size: 0.9375rem;
     border-radius: 0.625rem;
   }
 
@@ -1153,7 +1153,7 @@
   .caretip-auth-field {
     min-height: 2.625rem;
     padding: 0.35rem 0.7rem;
-    font-size: 0.8125rem;
+    font-size: 0.9375rem;
     border-radius: 0.7rem;
   }
 
@@ -1764,10 +1764,10 @@
 
 .caretip-auth-subtitle {
   margin: 0.1875rem 0 0;
-  font-size: 0.8125rem;
+  font-size: 0.875rem;
   font-weight: 500;
-  line-height: 1.4;
-  color: rgb(115 115 115);
+  line-height: 1.5;
+  color: rgb(82 82 82);
 }
 
 .dark .caretip-auth-subtitle {
@@ -1778,33 +1778,33 @@
   display: block;
   margin-bottom: 0.25rem;
   text-align: left;
-  font-size: 0.6875rem;
+  font-size: 0.8125rem;
   font-weight: 600;
   letter-spacing: 0.01em;
-  color: rgb(82 82 82);
+  color: rgb(64 64 64);
 }
 
 .dark .caretip-auth-label {
-  color: rgb(163 163 163);
+  color: rgb(212 212 212);
 }
 
 .caretip-auth-helper {
-  font-size: 0.6875rem;
+  font-size: 0.8125rem;
   font-weight: 500;
-  line-height: 1.4;
-  color: rgb(115 115 115);
+  line-height: 1.45;
+  color: rgb(82 82 82);
 }
 
 .dark .caretip-auth-helper {
-  color: rgb(115 115 115);
+  color: rgb(163 163 163);
 }
 
 .caretip-auth-footer-link {
   margin-top: 1.25rem;
   text-align: center;
-  font-size: 0.75rem;
+  font-size: 0.8125rem;
   font-weight: 500;
-  color: rgb(115 115 115);
+  color: rgb(82 82 82);
 }
 
 .caretip-auth-footer-link a {
@@ -1914,15 +1914,17 @@
   background: rgba(255, 255, 255, 0.98);
   padding: 0.4375rem 0.75rem;
   font-family: inherit;
-  font-size: 0.8125rem;
-  line-height: 1.35;
+  font-size: 1rem;
+  line-height: 1.45;
+  font-weight: 400;
   color: rgb(23 23 23);
   box-shadow: 0 1px 2px rgba(15, 23, 42, 0.03);
   transition: border-color 0.2s ease-out, opacity 0.2s ease-out;
 }
 
 .caretip-auth-field::placeholder {
-  color: rgba(115, 115, 115, 0.72);
+  color: rgba(82, 82, 82, 0.78);
+  font-weight: 500;
 }
 
 .caretip-auth-field:hover:not(:focus):not(:disabled):not([readonly]) {
@@ -1966,7 +1968,8 @@
 }
 
 .dark .caretip-auth-field::placeholder {
-  color: rgba(163, 163, 163, 0.75);
+  color: rgba(212, 212, 212, 0.72);
+  font-weight: 500;
 }
 
 .dark .caretip-auth-field:hover:not(:focus):not(:disabled):not([readonly]) {
@@ -2103,6 +2106,40 @@ select.caretip-auth-field {
 .caretip-auth-oauth--busy {
   pointer-events: none;
   opacity: 0.65;
+}
+
+.caretip-auth-oauth-stack {
+  width: 100%;
+}
+
+.caretip-auth-oauth-btn {
+  border: 1px solid transparent;
+  min-height: 2.75rem;
+}
+
+.caretip-auth-oauth-btn:disabled {
+  opacity: 0.55;
+  pointer-events: none;
+}
+
+.caretip-auth-oauth-btn--apple {
+  background: #000;
+  color: #fff;
+  border-color: #000;
+}
+
+.caretip-auth-oauth-btn--apple:hover:not(:disabled) {
+  background: #1a1a1a;
+}
+
+.caretip-auth-oauth-btn--facebook {
+  background: #1877f2;
+  color: #fff;
+  border-color: #1877f2;
+}
+
+.caretip-auth-oauth-btn--facebook:hover:not(:disabled) {
+  background: #166fe5;
 }
 
 /* —— Layout stability (CLS) —— */

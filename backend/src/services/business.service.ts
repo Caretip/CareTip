@@ -693,7 +693,7 @@ async function loadBusinessAnalyticsEmployees(
         email: true,
         emailVerified: true,
         passwordHash: true,
-        oauthProvider: true,
+        oauthAccounts: { select: { id: true }, take: 1 },
       },
     },
   } as const;
@@ -723,7 +723,7 @@ async function loadBusinessAnalyticsEmployees(
         email: true,
         emailVerified: true,
         passwordHash: true,
-        oauthProvider: true,
+        oauthAccounts: { select: { id: true }, take: 1 },
       },
     },
   } as const;
@@ -826,11 +826,14 @@ function mapEmployeesToStats(
       email: "",
       emailVerified: false,
       passwordHash: null as string | null,
-      oauthProvider: null as string | null,
+      oauthAccounts: [] as { id: string }[],
     };
     const passwordIsSet =
       (account.passwordHash != null && account.passwordHash.length > 0) ||
-      (account.oauthProvider != null && account.oauthProvider.trim().length > 0);
+      (("oauthAccounts" in account &&
+        Array.isArray(account.oauthAccounts) &&
+        account.oauthAccounts.length > 0) ||
+        false);
     return {
       id: emp.id,
       slug: emp.slug ?? null,

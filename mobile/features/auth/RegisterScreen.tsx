@@ -1,69 +1,78 @@
-import { useMemo, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
-import { useLocalSearchParams, useRouter } from "expo-router";
+import { Redirect, useLocalSearchParams, useRouter } from "expo-router";
 import { AuthExperienceShell } from "@/components/auth/AuthExperienceShell";
 import { AuthField } from "@/components/auth/AuthField";
 import { AuthContinueButton } from "@/components/auth/AuthContinueButton";
+import { AuthScreenHeader } from "@/components/auth/AuthScreenHeader";
 import { useI18n } from "@/hooks/useI18n";
-import { useTheme } from "@/hooks/useTheme";
-import { registerSchema, type RegisterFormValues } from "@/features/auth/authSchemas";
+import { managerRegisterSchema, type ManagerRegisterFormValues } from "@/features/auth/authSchemas";
 import { authService } from "@/services/auth/authService";
 import { friendlyErrorMessage } from "@/utils/friendlyError";
 import { resolveLoginLocale } from "@/utils/resolveLoginLocale";
 import { hapticLight } from "@/utils/haptics";
 import { authCardStyles } from "@/components/auth/authCardStyles";
 import { authBrand } from "@/theme/authBrand";
-import type { ColorPalette } from "@/theme/colors";
 import { spacing, touchTarget, typography } from "@/theme";
 
+/**
+ * Manager / business registration only.
+ * Employees do not register here — they complete an invitation via AcceptInviteScreen.
+ */
 export function RegisterScreen() {
   const router = useRouter();
   const { t } = useI18n();
-  const { colors } = useTheme();
-  const styles = useMemo(() => createStyles(colors), [colors]);
   const params = useLocalSearchParams<{ role?: string; inviteCode?: string; businessName?: string }>();
   const [formError, setFormError] = useState<string | null>(null);
   const emailRef = useRef<TextInput>(null);
   const passwordRef = useRef<TextInput>(null);
 
-  const defaultRole = params.role === "employee" ? "employee" : "business";
-  const inviteFromLink = typeof params.inviteCode === "string" ? params.inviteCode : "";
-  const venueName = typeof params.businessName === "string" ? params.businessName : "";
+  const legacyEmployeeInvite =
+    params.role === "employee" ||
+    (typeof params.inviteCode === "string" && params.inviteCode.trim().length > 0);
 
   const {
     control,
     handleSubmit,
-    watch,
-    setValue,
     formState: { isSubmitting, errors },
-  } = useForm<RegisterFormValues>({
-    resolver: zodResolver(registerSchema),
+  } = useForm<ManagerRegisterFormValues>({
+    resolver: zodResolver(managerRegisterSchema),
     defaultValues: {
       name: "",
       email: "",
       password: "",
       confirmPassword: "",
-      role: defaultRole,
-      inviteCode: inviteFromLink,
     },
   });
 
-  const role = watch("role");
+  if (legacyEmployeeInvite) {
+    return (
+      <Redirect
+        href={{
+          pathname: "/(auth)/accept-invite",
+          params: {
+            ...(typeof params.inviteCode === "string" && params.inviteCode.trim()
+              ? { inviteCode: params.inviteCode.trim() }
+              : {}),
+            ...(typeof params.businessName === "string" && params.businessName
+              ? { businessName: params.businessName }
+              : {}),
+          },
+        }}
+      />
+    );
+  }
 
   const onSubmit = handleSubmit(async (values) => {
     setFormError(null);
     try {
-      if (values.role === "employee" && values.inviteCode?.trim()) {
-        await authService.validateInviteCode(values.inviteCode.trim());
-      }
       const created = await authService.register({
         email: values.email.trim(),
         password: values.password,
         name: values.name?.trim() || undefined,
-        role: values.role,
-        inviteCode: values.role === "employee" ? values.inviteCode?.trim() : undefined,
+        role: "business",
         locale: resolveLoginLocale(),
       });
       router.replace({
@@ -78,34 +87,10 @@ export function RegisterScreen() {
   return (
     <AuthExperienceShell showSecondaryActions={false}>
       <View style={authCardStyles.formBlock}>
-        <View style={authCardStyles.cardHeader}>
-          <Text style={authCardStyles.cardEyebrow}>{t("auth.createAccountTitle")}</Text>
-          <Text style={authCardStyles.cardTitle}>{t("auth.registerScreenTitle")}</Text>
-          <Text style={authCardStyles.cardSubtitle}>{t("auth.registerScreenSubtitle")}</Text>
-        </View>
-
-        {venueName ? (
-          <Text style={styles.venueHint}>{t("auth.joinVenueHint", { name: venueName })}</Text>
-        ) : null}
-
-        <View style={authCardStyles.roleRow}>
-          {(["business", "employee"] as const).map((option) => (
-            <Pressable
-              key={option}
-              accessibilityRole="button"
-              accessibilityState={{ selected: role === option }}
-              onPress={() => {
-                hapticLight();
-                setValue("role", option, { shouldValidate: true });
-              }}
-              style={[authCardStyles.roleChip, role === option ? authCardStyles.roleChipActive : null]}
-            >
-              <Text style={[authCardStyles.roleChipLabel, role === option ? authCardStyles.roleChipLabelActive : null]}>
-                {option === "business" ? t("auth.registerBusiness") : t("auth.registerEmployee")}
-              </Text>
-            </Pressable>
-          ))}
-        </View>
+        <AuthScreenHeader
+          title={t("auth.registerScreenTitle")}
+          subtitle={t("auth.registerScreenSubtitle")}
+        />
 
         <View style={authCardStyles.fields}>
           <Controller
@@ -118,6 +103,7 @@ export function RegisterScreen() {
                 value={value ?? ""}
                 onChangeText={onChange}
                 onBlur={onBlur}
+                placeholder={t("auth.fullNamePlaceholder")}
                 autoComplete="name"
                 returnKeyType="next"
                 onSubmitEditing={() => emailRef.current?.focus()}
@@ -125,27 +111,6 @@ export function RegisterScreen() {
               />
             )}
           />
-
-          {role === "employee" ? (
-            <Controller
-              control={control}
-              name="inviteCode"
-              render={({ field: { onChange, onBlur, value } }) => (
-                <AuthField
-                  label={t("auth.inviteCode")}
-                  icon="ticket-outline"
-                  value={value ?? ""}
-                  onChangeText={onChange}
-                  onBlur={onBlur}
-                  autoCapitalize="characters"
-                  returnKeyType="next"
-                  onSubmitEditing={() => emailRef.current?.focus()}
-                  editable={!isSubmitting}
-                  error={errors.inviteCode?.message}
-                />
-              )}
-            />
-          ) : null}
 
           <Controller
             control={control}
@@ -158,6 +123,7 @@ export function RegisterScreen() {
                 value={value}
                 onChangeText={onChange}
                 onBlur={onBlur}
+                placeholder={t("auth.emailPlaceholder")}
                 keyboardType="email-address"
                 textContentType="username"
                 autoComplete="email"
@@ -180,6 +146,7 @@ export function RegisterScreen() {
                 value={value}
                 onChangeText={onChange}
                 onBlur={onBlur}
+                placeholder={t("auth.passwordPlaceholder")}
                 secureTextEntry
                 textContentType="newPassword"
                 autoComplete="password-new"
@@ -200,6 +167,7 @@ export function RegisterScreen() {
                 value={value}
                 onChangeText={onChange}
                 onBlur={onBlur}
+                placeholder={t("auth.confirmPasswordPlaceholder")}
                 secureTextEntry
                 textContentType="newPassword"
                 returnKeyType="done"
@@ -218,10 +186,22 @@ export function RegisterScreen() {
         ) : null}
 
         <AuthContinueButton
-          label={t("auth.createAccountCta")}
+          label={t("auth.createBusinessAccountCta")}
           onPress={onSubmit}
           loading={isSubmitting}
         />
+
+        <Pressable
+          accessibilityRole="button"
+          onPress={() => {
+            hapticLight();
+            router.replace("/(auth)/join");
+          }}
+          style={({ pressed }) => [styles.inviteRow, pressed ? authCardStyles.pressed : null]}
+        >
+          <Text style={styles.invitePrompt}>{t("auth.haveInvitePrompt")} </Text>
+          <Text style={styles.inviteLink}>{t("auth.haveInviteLink")}</Text>
+        </Pressable>
 
         <Pressable
           accessibilityRole="button"
@@ -239,29 +219,38 @@ export function RegisterScreen() {
   );
 }
 
-function createStyles(colors: ColorPalette) {
-  return StyleSheet.create({
-    venueHint: {
-      ...typography.caption,
-      color: colors.success,
-      fontWeight: "600",
-      marginBottom: spacing.sm,
-    },
-    signInRow: {
-      minHeight: touchTarget,
-      flexDirection: "row",
-      alignItems: "center",
-      justifyContent: "center",
-      paddingVertical: spacing.sm,
-    },
-    signInPrompt: {
-      ...typography.body,
-      color: authBrand.muted,
-    },
-    signInLink: {
-      ...typography.body,
-      color: authBrand.orange,
-      fontWeight: "700",
-    },
-  });
-}
+const styles = StyleSheet.create({
+  inviteRow: {
+    minHeight: touchTarget,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: spacing.xs,
+    flexWrap: "wrap",
+  },
+  invitePrompt: {
+    ...typography.body,
+    color: authBrand.heroSubtitle,
+  },
+  inviteLink: {
+    ...typography.body,
+    color: authBrand.orange,
+    fontWeight: "700",
+  },
+  signInRow: {
+    minHeight: touchTarget,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: spacing.sm,
+  },
+  signInPrompt: {
+    ...typography.body,
+    color: authBrand.heroSubtitle,
+  },
+  signInLink: {
+    ...typography.body,
+    color: authBrand.orange,
+    fontWeight: "700",
+  },
+});

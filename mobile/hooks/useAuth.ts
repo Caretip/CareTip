@@ -44,16 +44,21 @@ export function useAuth() {
     }
   }
 
-  async function signInWithGoogle(payload: OAuthRequest): Promise<SignInResult> {
+  async function signInWithOAuth(payload: OAuthRequest): Promise<SignInResult> {
     try {
       const result = await authService.oauthLogin(payload);
       if (!isMfaChallenge(result)) {
-        await establishAuthenticatedSession(result.token, result.user, "google-login");
+        await establishAuthenticatedSession(result.token, result.user, "oauth-login");
       }
       return result;
     } catch (error) {
       throw normalizeApiError(error);
     }
+  }
+
+  /** @deprecated Prefer signInWithOAuth — kept for Google call-site compatibility. */
+  async function signInWithGoogle(payload: OAuthRequest): Promise<SignInResult> {
+    return signInWithOAuth({ ...payload, provider: payload.provider ?? "google" });
   }
 
   async function signOut(): Promise<void> {
@@ -67,6 +72,7 @@ export function useAuth() {
     isHydrated,
     isAuthenticated,
     signIn,
+    signInWithOAuth,
     signInWithGoogle,
     completeMfaSignIn,
     signOut,

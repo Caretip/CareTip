@@ -11,6 +11,7 @@ import {
 import { logClientError } from "../../../lib/clientLog";
 import { toUserFriendlyMessage } from "../../../lib/errorMessages";
 import { BusinessSettingsPanelShell } from "./BusinessSettingsPanelShell";
+import { LinkedOAuthAccountsSection } from "./LinkedOAuthAccountsSection";
 import type { useBusinessSettingsData } from "./useBusinessSettingsData";
 
 const TEAL = "#e9781c";
@@ -148,6 +149,13 @@ export function BusinessSettingsSecurityPanel({ loading, twoFactorEnabled, setTw
             </button>
           </div>
         )}
+      </BusinessSettingsPanelShell>
+
+      <BusinessSettingsPanelShell grouped
+        title={t("business.accountSettings.linkedAccountsTitle")}
+        description={t("business.accountSettings.linkedAccountsDesc")}
+      >
+        <LinkedOAuthAccountsSection loading={loading} />
       </BusinessSettingsPanelShell>
 
       <BusinessSettingsPanelShell grouped

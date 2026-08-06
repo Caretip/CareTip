@@ -424,7 +424,7 @@ export function useAuth() {
   }, [requestLocale]);
 
   const loginWithOAuth = useCallback(async (
-    provider: "google",
+    provider: "google" | "apple" | "facebook",
     idToken: string,
     options: {
       isLogin: boolean;

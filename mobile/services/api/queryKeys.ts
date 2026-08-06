@@ -40,6 +40,7 @@ export function createUserQueryKeys(userId: string) {
 
     accountSettings: [...root, "settings", "account"] as const,
     twoFactor: [...root, "settings", "2fa"] as const,
+    oauthAccounts: [...root, "settings", "oauth-accounts"] as const,
 
     brandedQr: (mode: "employee" | "manager", targetUrl: string) =>
       [...root, "brandedQr", mode, targetUrl] as const,

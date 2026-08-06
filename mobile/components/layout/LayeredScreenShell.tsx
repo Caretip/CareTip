@@ -210,12 +210,29 @@ export function LayeredScreenShell({
           <ImageBackground
             source={authBackground}
             style={StyleSheet.absoluteFill}
+            imageStyle={styles.authImage}
             resizeMode="cover"
+            blurRadius={Platform.OS === "ios" ? 10 : 6}
             accessibilityIgnoresInvertColors
           >
+            {/* Soft wash + primary dark overlay (~55–70% black). */}
+            <View style={styles.authSoftWash} />
             <LinearGradient
               colors={[authBrand.overlayTop, authBrand.overlayMid, authBrand.overlayBottom]}
-              locations={[0, 0.45, 1]}
+              locations={[0, 0.42, 1]}
+              style={StyleSheet.absoluteFill}
+            />
+            {/* Gentle vignette — edges darker, center still readable. */}
+            <LinearGradient
+              colors={["transparent", authBrand.vignetteEdge]}
+              locations={[0.35, 1]}
+              style={StyleSheet.absoluteFill}
+            />
+            <LinearGradient
+              colors={[authBrand.vignetteEdge, "transparent", authBrand.vignetteEdge]}
+              locations={[0, 0.5, 1]}
+              start={{ x: 0, y: 0.5 }}
+              end={{ x: 1, y: 0.5 }}
               style={StyleSheet.absoluteFill}
             />
           </ImageBackground>
@@ -278,6 +295,14 @@ const styles = StyleSheet.create({
   backgroundLayer: {
     ...StyleSheet.absoluteFillObject,
     zIndex: 0,
+  },
+  authImage: {
+    // Slight brightness pull so overlays don't fight a washed-out photo.
+    opacity: 0.88,
+  },
+  authSoftWash: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: authBrand.softWash,
   },
   heroGradient: {
     position: "absolute",

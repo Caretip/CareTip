@@ -21,6 +21,7 @@ import {
 } from "./apiError";
 import { resolveApiBaseUrl } from "./apiOrigin";
 import { logClientError } from "./clientLog";
+import type { OAuthProviderId } from "./oauthProviderIds";
 import { captureClientException } from "./sentry";
 import { validateImageFileForUpload } from "./imageClientUpload";
 import {
@@ -947,7 +948,16 @@ export async function resendVerificationEmailSessionAPI(
   });
 }
 
-export { ApiRequestError, EMAIL_NOT_VERIFIED_CODE, GOOGLE_ACCOUNT_NOT_REGISTERED_CODE, isApiRequestError } from "./apiError";
+export {
+  ApiRequestError,
+  EMAIL_NOT_VERIFIED_CODE,
+  GOOGLE_ACCOUNT_NOT_REGISTERED_CODE,
+  OAUTH_ACCOUNT_NOT_REGISTERED_CODE,
+  OAUTH_LINKING_REQUIRED_CODE,
+  OAUTH_EMAIL_REQUIRED_CODE,
+  OAUTH_TOKEN_VERIFICATION_FAILED_CODE,
+  isApiRequestError,
+} from "./apiError";
 
 export async function requestPasswordReset(
   email: string,
@@ -1019,8 +1029,10 @@ export async function verifyEmailWithToken(token: string): Promise<{ ok: true; m
   return p;
 }
 
+export type { OAuthProviderId };
+
 export async function oauthAPI(payload: {
-  provider: "google";
+  provider: OAuthProviderId;
   idToken: string;
   isLogin: boolean;
   /** Sign-up only; omitted on login (role from database). */
@@ -1060,10 +1072,52 @@ export async function oauthAPI(payload: {
       bodyKeys: raw && typeof raw === "object" ? Object.keys(raw as object) : [],
     });
     throw new Error(
-      "Google sign-in returned an incomplete response. Please try again. If this continues, refresh the page or use email sign-in.",
+      "Social sign-in returned an incomplete response. Please try again. If this continues, refresh the page or use email sign-in.",
     );
   }
   return parsed;
+}
+
+export type LinkedOAuthAccount = {
+  provider: OAuthProviderId;
+  emailAtLink: string | null;
+  linkedAt: string;
+};
+
+export type LinkedOAuthAccountsResponse = {
+  providers: LinkedOAuthAccount[];
+  hasPassword: boolean;
+};
+
+export async function listLinkedOAuthAccountsAPI(): Promise<LinkedOAuthAccountsResponse> {
+  return apiRequest<LinkedOAuthAccountsResponse>(apiPath("/api/auth/oauth/accounts"), {
+    method: "GET",
+    headers: getHeaders(),
+    credentials: "include",
+  });
+}
+
+export async function linkOAuthAccountAPI(
+  provider: OAuthProviderId,
+  idToken: string,
+): Promise<{ provider: OAuthProviderId; linked: true }> {
+  return apiRequest<{ provider: OAuthProviderId; linked: true }>(apiPath("/api/auth/oauth/link"), {
+    method: "POST",
+    headers: getHeaders(),
+    body: JSON.stringify({ provider, idToken }),
+    credentials: "include",
+  });
+}
+
+export async function unlinkOAuthAccountAPI(
+  provider: OAuthProviderId,
+): Promise<{ provider: OAuthProviderId; unlinked: true }> {
+  return apiRequest<{ provider: OAuthProviderId; unlinked: true }>(apiPath("/api/auth/oauth/unlink"), {
+    method: "POST",
+    headers: getHeaders(),
+    body: JSON.stringify({ provider }),
+    credentials: "include",
+  });
 }
 
 export async function refreshSessionAPI(): Promise<AuthResponse> {

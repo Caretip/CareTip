@@ -4,6 +4,7 @@ import { useRouter } from "expo-router";
 import { AuthExperienceShell } from "@/components/auth/AuthExperienceShell";
 import { AuthField } from "@/components/auth/AuthField";
 import { AuthContinueButton } from "@/components/auth/AuthContinueButton";
+import { AuthScreenHeader } from "@/components/auth/AuthScreenHeader";
 import { useAuth } from "@/hooks/useAuth";
 import { useI18n } from "@/hooks/useI18n";
 import { establishAuthenticatedSession } from "@/services/auth/authCacheBoundary";
@@ -114,16 +115,15 @@ export function BusinessOnboardingScreen() {
   return (
     <AuthExperienceShell showSecondaryActions={false}>
       <View style={authCardStyles.formBlock}>
-        <View style={authCardStyles.cardHeader}>
-          <Text style={authCardStyles.cardEyebrow}>{t("auth.onboardingEyebrow")}</Text>
-          <Text style={authCardStyles.cardTitle}>
-            {step === 1 ? t("auth.onboardingStep1Title") : t("auth.onboardingStep2Title")}
-          </Text>
-          <Text style={authCardStyles.cardSubtitle}>
-            {step === 1 ? t("auth.onboardingStep1Subtitle") : t("auth.onboardingStep2Subtitle")}
-          </Text>
+        <AuthScreenHeader
+          eyebrow={t("auth.onboardingEyebrow")}
+          title={step === 1 ? t("auth.onboardingStep1Title") : t("auth.onboardingStep2Title")}
+          subtitle={
+            step === 1 ? t("auth.onboardingStep1Subtitle") : t("auth.onboardingStep2Subtitle")
+          }
+        >
           {user?.email ? <Text style={styles.emailHint}>{user.email}</Text> : null}
-        </View>
+        </AuthScreenHeader>
 
         {loading ? (
           <Text style={styles.loading}>{t("common.loading")}</Text>

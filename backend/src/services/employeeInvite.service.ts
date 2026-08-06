@@ -455,6 +455,7 @@ export type RegisterWithInviteInput = {
   preferredLocale: string | null;
   oauthProvider?: string | null;
   oauthSubject?: string | null;
+  oauthDisplayName?: string | null;
   activationStatus: "pending_verification" | "active";
   registrationChannel: "password" | "oauth";
 };
@@ -495,12 +496,22 @@ export async function registerEmployeeWithInvite(input: RegisterWithInviteInput)
       data: {
         email,
         passwordHash: input.passwordHash,
-        oauthProvider: input.oauthProvider ?? null,
-        oauthSubject: input.oauthSubject ?? null,
         role: "EMPLOYEE",
         isPlatformAdmin: false,
         emailVerified: input.emailVerified,
         preferredLocale: input.preferredLocale,
+        ...(input.oauthProvider && input.oauthSubject
+          ? {
+              oauthAccounts: {
+                create: {
+                  provider: input.oauthProvider,
+                  subject: input.oauthSubject,
+                  emailAtLink: email,
+                  displayName: input.oauthDisplayName ?? null,
+                },
+              },
+            }
+          : {}),
         employee: {
           create: {
             name,

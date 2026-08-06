@@ -90,26 +90,15 @@ function createStyles() {
     eyebrow: {
       ...typography.overline,
       color: "rgba(255,255,255,0.78)",
-      letterSpacing: 1.4,
-      fontSize: 10,
-      fontWeight: "600",
-      textTransform: "uppercase",
     },
     title: {
       ...typography.h1,
       color: "#FFFFFF",
-      fontSize: 30,
-      lineHeight: 36,
-      letterSpacing: -0.6,
-      fontWeight: "700",
     },
     subtitle: {
-      ...typography.body,
+      ...typography.smallBody,
       color: "rgba(255,255,255,0.88)",
-      fontSize: 15,
-      lineHeight: 21,
       fontWeight: "500",
-      letterSpacing: 0.02,
     },
   });
 }

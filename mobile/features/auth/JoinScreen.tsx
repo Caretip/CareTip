@@ -6,6 +6,7 @@ import { useRouter } from "expo-router";
 import { AuthExperienceShell } from "@/components/auth/AuthExperienceShell";
 import { AuthField } from "@/components/auth/AuthField";
 import { AuthContinueButton } from "@/components/auth/AuthContinueButton";
+import { AuthScreenHeader } from "@/components/auth/AuthScreenHeader";
 import { useI18n } from "@/hooks/useI18n";
 import { joinSchema, type JoinFormValues } from "@/features/auth/authSchemas";
 import { authService } from "@/services/auth/authService";
@@ -35,9 +36,8 @@ export function JoinScreen() {
         return;
       }
       router.push({
-        pathname: "/(auth)/register",
+        pathname: "/(auth)/accept-invite",
         params: {
-          role: "employee",
           inviteCode: values.inviteCode.trim(),
           ...(validation.businessName ? { businessName: validation.businessName } : {}),
         },
@@ -50,11 +50,7 @@ export function JoinScreen() {
   return (
     <AuthExperienceShell showSecondaryActions={false}>
       <View style={authCardStyles.formBlock}>
-        <View style={authCardStyles.cardHeader}>
-          <Text style={authCardStyles.cardEyebrow}>{t("auth.enterInviteCode")}</Text>
-          <Text style={authCardStyles.cardTitle}>{t("auth.joinTitle")}</Text>
-          <Text style={authCardStyles.cardSubtitle}>{t("auth.joinSubtitle")}</Text>
-        </View>
+        <AuthScreenHeader title={t("auth.joinTitle")} subtitle={t("auth.joinSubtitle")} />
 
         <Controller
           control={control}
@@ -66,6 +62,7 @@ export function JoinScreen() {
               value={value}
               onChangeText={onChange}
               onBlur={onBlur}
+              placeholder={t("auth.inviteCodePlaceholder")}
               autoCapitalize="characters"
               returnKeyType="done"
               onSubmitEditing={onSubmit}

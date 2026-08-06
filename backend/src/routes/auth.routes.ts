@@ -41,6 +41,14 @@ router.post(
   authController.resendVerificationEmailForSession
 );
 router.post("/oauth", oauthRateLimit, authController.oauth);
+router.get("/oauth/accounts", authMiddleware, authController.listLinkedOAuthAccounts);
+router.post("/oauth/link", authMiddleware, oauthRateLimit, authController.linkOAuthAccount);
+router.post("/oauth/unlink", authMiddleware, authController.unlinkOAuthAccount);
+router.delete(
+  "/oauth/accounts/:provider",
+  authMiddleware,
+  authController.unlinkOAuthAccount,
+);
 router.post("/activate-employee", activateEmployeeRateLimit, authController.activateEmployee);
 /** Mobile→web one-time handoff redeem — sets refresh cookie + returns access JWT. */
 router.post(

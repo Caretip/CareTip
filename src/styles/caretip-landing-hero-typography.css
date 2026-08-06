@@ -9,8 +9,8 @@
   --caretip-hero-animated-slot: 1.05em;
   --caretip-hero-line-gap: 0.28rem;
   --caretip-hero-rotating-stack-gap: 0.22rem;
-  --caretip-hero-body-size: clamp(0.9375rem, 0.32vw + 0.86rem, 1rem);
-  --caretip-hero-body-lh: var(--caretip-landing-lead-lh, 1.62);
+  --caretip-hero-body-size: clamp(1rem, 0.35vw + 0.9rem, 1.125rem);
+  --caretip-hero-body-lh: var(--caretip-landing-lead-lh, 1.68);
   --caretip-hero-body-color: rgb(45 45 45);
   --caretip-hero-body-color-secondary: rgb(64 64 64);
 }

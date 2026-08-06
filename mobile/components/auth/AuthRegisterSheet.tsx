@@ -4,12 +4,13 @@ import Animated, { Easing, useAnimatedStyle, useSharedValue, withTiming } from "
 import { BlurView } from "expo-blur";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
-import { GoogleAuthButton } from "@/components/auth/GoogleAuthButton";
+import { SocialAuthButtons } from "@/components/auth/SocialAuthButtons";
 import { Button } from "@/components/ui/Button";
 import { useI18n } from "@/hooks/useI18n";
 import { useTheme } from "@/hooks/useTheme";
 import { authBrand } from "@/theme/authBrand";
 import type { ColorPalette } from "@/theme/colors";
+import type { OAuthProvider } from "@/types/auth";
 import { radius, spacing, touchTarget, typography } from "@/theme";
 import { hapticLight } from "@/utils/haptics";
 
@@ -17,16 +18,18 @@ type AuthRegisterSheetProps = {
   visible: boolean;
   onClose: () => void;
   onSignIn: () => void;
-  onContinueWithGoogle: () => void;
-  googleLoading?: boolean;
+  onContinueWithProvider: (provider: OAuthProvider) => void;
+  configuredProviders?: OAuthProvider[];
+  socialLoadingProvider?: OAuthProvider | null;
 };
 
 export function AuthRegisterSheet({
   visible,
   onClose,
   onSignIn,
-  onContinueWithGoogle,
-  googleLoading = false,
+  onContinueWithProvider,
+  configuredProviders = ["google"],
+  socialLoadingProvider = null,
 }: AuthRegisterSheetProps) {
   const { t } = useI18n();
   const { colors } = useTheme();
@@ -35,6 +38,10 @@ export function AuthRegisterSheet({
   const insets = useSafeAreaInsets();
   const translateY = useSharedValue(56);
   const opacity = useSharedValue(0);
+
+  const loadingProvider = socialLoadingProvider;
+  const providers = configuredProviders;
+  const socialBusy = loadingProvider != null;
 
   useEffect(() => {
     if (visible) {
@@ -77,22 +84,34 @@ export function AuthRegisterSheet({
           <Text style={styles.subtitle}>{t("auth.createAccountSubtitle")}</Text>
 
           <View style={styles.actions}>
-            <GoogleAuthButton
-              label={t("auth.continueWithGoogle")}
-              loading={googleLoading}
-              disabled={googleLoading}
+            <SocialAuthButtons
+              providers={providers}
+              loadingProvider={loadingProvider}
+              disabled={socialBusy}
               variant="surface"
-              onPress={onContinueWithGoogle}
+              onPressProvider={onContinueWithProvider}
             />
             <Button
               label={t("auth.continueWithEmail")}
               variant="outline"
-              disabled={googleLoading}
+              disabled={socialBusy}
               onPress={() => {
                 hapticLight();
                 onClose();
                 InteractionManager.runAfterInteractions(() => {
                   router.push("/(auth)/register");
+                });
+              }}
+            />
+            <Button
+              label={t("auth.haveInviteCta")}
+              variant="ghost"
+              disabled={socialBusy}
+              onPress={() => {
+                hapticLight();
+                onClose();
+                InteractionManager.runAfterInteractions(() => {
+                  router.push("/(auth)/join");
                 });
               }}
             />

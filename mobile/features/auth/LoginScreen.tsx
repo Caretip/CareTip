@@ -8,13 +8,15 @@ import { AuthEntrance } from "@/components/auth/AuthEntrance";
 import { AuthField } from "@/components/auth/AuthField";
 import { AuthContinueButton } from "@/components/auth/AuthContinueButton";
 import { AuthRegisterSheet } from "@/components/auth/AuthRegisterSheet";
-import { GoogleAuthButton } from "@/components/auth/GoogleAuthButton";
+import { AuthScreenHeader } from "@/components/auth/AuthScreenHeader";
+import { SocialAuthButtons } from "@/components/auth/SocialAuthButtons";
 import { useAuth } from "@/hooks/useAuth";
-import { useGoogleAuth } from "@/hooks/useGoogleAuth";
+import { useSocialAuth } from "@/hooks/useSocialAuth";
 import { useI18n } from "@/hooks/useI18n";
 import { loginSchema, type LoginFormValues } from "@/features/auth/loginSchema";
 import { EMAIL_NOT_VERIFIED } from "@/constants/authErrors";
 import { isMfaChallenge } from "@/types/auth";
+import type { OAuthProvider } from "@/types/auth";
 import { normalizeApiError } from "@/types/api";
 import { friendlyErrorMessage } from "@/utils/friendlyError";
 import { navigateAfterAuth } from "@/utils/postAuthNavigation";
@@ -50,7 +52,13 @@ export function LoginScreen() {
   const [registerOpen, setRegisterOpen] = useState(false);
   const passwordRef = useRef<TextInput>(null);
 
-  const { runGoogleAuth, googleLoading, googleConfigured } = useGoogleAuth({
+  const {
+    runSocialAuth,
+    loadingProvider,
+    socialBusy,
+    anySocialConfigured,
+    configuredProviders,
+  } = useSocialAuth({
     onAccountNotRegistered: () => setRegisterOpen(true),
   });
 
@@ -109,38 +117,42 @@ export function LoginScreen() {
   });
 
   const bootstrapping = !isHydrated || status === "bootstrapping";
-  const authBusy = isSubmitting || googleLoading;
-  const googleBlockOffset = googleConfigured ? 3 : 0;
+  const authBusy = isSubmitting || socialBusy;
+  const socialBlockOffset = anySocialConfigured ? 3 : 0;
+
+  const handleSocialPress = (provider: OAuthProvider) => {
+    void runSocialAuth(provider, { isLogin: true });
+  };
 
   return (
     <>
       <AuthExperienceShell onRegisterPress={() => setRegisterOpen(true)}>
         <View style={authCardStyles.formBlock}>
           <AuthEntrance index={0}>
-            <View style={authCardStyles.cardHeader}>
-              <Text style={authCardStyles.cardEyebrow}>{t("auth.welcomeBack")}</Text>
-              <Text style={authCardStyles.cardTitle}>{t("auth.loginTitle")}</Text>
-              <Text style={authCardStyles.cardSubtitle}>
-                {emailJustVerified
+            <AuthScreenHeader
+              title={t("auth.loginTitle")}
+              subtitle={
+                emailJustVerified
                   ? t("auth.emailVerifiedSignInSubtitle")
-                  : t("auth.signInSubtitle")}
-              </Text>
+                  : t("auth.signInSubtitle")
+              }
+            >
               {emailJustVerified ? (
                 <Text style={styles.verifiedBanner} accessibilityRole="text">
                   {t("auth.emailVerifiedBanner")}
                 </Text>
               ) : null}
-            </View>
+            </AuthScreenHeader>
           </AuthEntrance>
 
-          {googleConfigured ? (
+          {anySocialConfigured ? (
             <>
               <AuthEntrance index={1}>
-                <GoogleAuthButton
-                  label={t("auth.continueWithGoogle")}
-                  loading={googleLoading}
+                <SocialAuthButtons
+                  providers={configuredProviders}
+                  loadingProvider={loadingProvider}
                   disabled={authBusy || bootstrapping}
-                  onPress={() => void runGoogleAuth({ isLogin: true })}
+                  onPressProvider={handleSocialPress}
                 />
               </AuthEntrance>
               <AuthEntrance index={2}>
@@ -153,7 +165,7 @@ export function LoginScreen() {
             </>
           ) : null}
 
-          <AuthEntrance index={googleBlockOffset + 1}>
+          <AuthEntrance index={socialBlockOffset + 1}>
             <View style={authCardStyles.fields}>
               <Controller
                 control={control}
@@ -165,6 +177,7 @@ export function LoginScreen() {
                     value={value}
                     onChangeText={onChange}
                     onBlur={onBlur}
+                    placeholder={t("auth.emailPlaceholder")}
                     keyboardType="email-address"
                     textContentType="username"
                     autoComplete="email"
@@ -188,6 +201,7 @@ export function LoginScreen() {
                     value={value}
                     onChangeText={onChange}
                     onBlur={onBlur}
+                    placeholder={t("auth.passwordPlaceholder")}
                     secureTextEntry
                     textContentType="password"
                     autoComplete="password"
@@ -201,7 +215,7 @@ export function LoginScreen() {
             </View>
           </AuthEntrance>
 
-          <AuthEntrance index={googleBlockOffset + 2}>
+          <AuthEntrance index={socialBlockOffset + 2}>
             <View style={authForgotStyles.row}>
               <Pressable
                 accessibilityRole="button"
@@ -220,7 +234,7 @@ export function LoginScreen() {
           </AuthEntrance>
 
           {showVerifyPrompt ? (
-            <AuthEntrance index={googleBlockOffset + 3}>
+            <AuthEntrance index={socialBlockOffset + 3}>
               <Pressable
                 accessibilityRole="button"
                 onPress={() => {
@@ -235,19 +249,19 @@ export function LoginScreen() {
           ) : null}
 
           {formError ? (
-            <AuthEntrance index={googleBlockOffset + 3}>
+            <AuthEntrance index={socialBlockOffset + 3}>
               <Text style={authCardStyles.formError} accessibilityRole="alert" accessibilityLiveRegion="polite">
                 {formError}
               </Text>
             </AuthEntrance>
           ) : null}
 
-          <AuthEntrance index={googleBlockOffset + 5}>
+          <AuthEntrance index={socialBlockOffset + 5}>
             <AuthContinueButton
               label={t("auth.signIn")}
               onPress={onSubmit}
               loading={isSubmitting}
-              disabled={bootstrapping || googleLoading}
+              disabled={bootstrapping || socialBusy}
             />
           </AuthEntrance>
         </View>
@@ -257,9 +271,10 @@ export function LoginScreen() {
         visible={registerOpen}
         onClose={() => setRegisterOpen(false)}
         onSignIn={() => setRegisterOpen(false)}
-        googleLoading={googleLoading}
-        onContinueWithGoogle={() =>
-          void runGoogleAuth({ isLogin: false, intendedRole: "MANAGER" }).finally(() =>
+        socialLoadingProvider={loadingProvider}
+        configuredProviders={configuredProviders}
+        onContinueWithProvider={(provider) =>
+          void runSocialAuth(provider, { isLogin: false, intendedRole: "MANAGER" }).finally(() =>
             setRegisterOpen(false),
           )
         }
@@ -271,7 +286,7 @@ export function LoginScreen() {
 const styles = StyleSheet.create({
   verifiedBanner: {
     ...typography.caption,
-    color: authBrand.dark,
+    color: authBrand.orangeMuted,
     fontWeight: "600",
     marginTop: spacing.sm,
   },

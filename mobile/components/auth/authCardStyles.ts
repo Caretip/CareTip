@@ -5,37 +5,29 @@ import { radius, spacing, touchTarget, typography } from "@/theme";
 /** Floating auth typography — light text on hero image, no white card. */
 export const authCardStyles = StyleSheet.create({
   cardHeader: {
-    gap: spacing.sm,
-    marginBottom: spacing.xs,
+    gap: spacing.md,
+    marginBottom: spacing.sm,
   },
   cardEyebrow: {
     ...typography.overline,
     color: authBrand.heroEyebrow,
-    fontSize: 10,
-    letterSpacing: 2.2,
-    fontWeight: "700",
-    textTransform: "uppercase",
+    letterSpacing: 3.2,
   },
   cardTitle: {
-    ...typography.hero,
+    ...typography.h1,
     color: authBrand.heroTitle,
-    fontSize: 24,
-    lineHeight: 30,
-    letterSpacing: -0.5,
     fontWeight: "800",
   },
   cardSubtitle: {
-    ...typography.body,
+    ...typography.smallBody,
     color: authBrand.heroSubtitle,
-    fontSize: 15,
-    lineHeight: 22,
-    fontWeight: "400",
+    marginTop: spacing.xxs,
   },
   fields: {
-    gap: spacing.xl,
+    gap: spacing["2xl"],
   },
   formBlock: {
-    gap: spacing["2xl"],
+    gap: spacing["3xl"],
   },
   formError: {
     ...typography.caption,
@@ -64,7 +56,7 @@ export const authCardStyles = StyleSheet.create({
   roleChip: {
     flex: 1,
     minHeight: touchTarget,
-    borderRadius: radius.md,
+    borderRadius: radius["2xl"],
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: authBrand.fieldBorder,
     alignItems: "center",

@@ -6,6 +6,7 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { AuthExperienceShell } from "@/components/auth/AuthExperienceShell";
 import { AuthField } from "@/components/auth/AuthField";
 import { AuthContinueButton } from "@/components/auth/AuthContinueButton";
+import { AuthScreenHeader } from "@/components/auth/AuthScreenHeader";
 import { useI18n } from "@/hooks/useI18n";
 import { resetPasswordSchema, type ResetPasswordFormValues } from "@/features/auth/authSchemas";
 import { authService } from "@/services/auth/authService";
@@ -62,11 +63,10 @@ export function ResetPasswordScreen() {
           </View>
         ) : (
           <>
-            <View style={authCardStyles.cardHeader}>
-              <Text style={authCardStyles.cardEyebrow}>{t("auth.security")}</Text>
-              <Text style={authCardStyles.cardTitle}>{t("auth.resetPasswordTitle")}</Text>
-              <Text style={authCardStyles.cardSubtitle}>{t("auth.resetPasswordSubtitle")}</Text>
-            </View>
+            <AuthScreenHeader
+              title={t("auth.resetPasswordTitle")}
+              subtitle={t("auth.resetPasswordSubtitle")}
+            />
 
             <View style={authCardStyles.fields}>
               <Controller
@@ -79,6 +79,7 @@ export function ResetPasswordScreen() {
                     value={value}
                     onChangeText={onChange}
                     onBlur={onBlur}
+                    placeholder={t("auth.passwordPlaceholder")}
                     secureTextEntry
                     textContentType="newPassword"
                     autoComplete="password-new"
@@ -97,6 +98,7 @@ export function ResetPasswordScreen() {
                     value={value}
                     onChangeText={onChange}
                     onBlur={onBlur}
+                    placeholder={t("auth.confirmPasswordPlaceholder")}
                     secureTextEntry
                     textContentType="newPassword"
                     returnKeyType="done"

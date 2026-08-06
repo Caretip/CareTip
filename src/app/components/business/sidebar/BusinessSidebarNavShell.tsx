@@ -123,7 +123,7 @@ function SidebarChildNavItem({
   );
 
   const itemClass = cn(
-    "business-sidebar-child-link flex w-full flex-col items-stretch py-2 pl-11 pr-3 text-left text-[13px] font-medium transition-colors",
+    "business-sidebar-child-link flex w-full flex-col items-stretch py-2 pl-11 pr-3 text-left font-sans text-caption font-medium transition-colors",
     lock.locked
       ? "cursor-pointer text-sidebar-foreground/55 hover:bg-sidebar-accent/60 hover:text-sidebar-foreground/75"
       : childActive

@@ -3,14 +3,13 @@ import { Pressable, StyleSheet, Text, View } from "react-native";
 import { useRouter } from "expo-router";
 import { AuthExperienceShell } from "@/components/auth/AuthExperienceShell";
 import { AuthContinueButton } from "@/components/auth/AuthContinueButton";
+import { AuthScreenHeader } from "@/components/auth/AuthScreenHeader";
 import { authCardStyles } from "@/components/auth/authCardStyles";
 import { useI18n } from "@/hooks/useI18n";
-import { useTheme } from "@/hooks/useTheme";
 import { sessionManager } from "@/services/auth/sessionManager";
 import { getUserSnapshot } from "@/services/auth/tokenStorage";
 import { useAuthStore } from "@/store/authStore";
 import { authBrand } from "@/theme/authBrand";
-import type { ColorPalette } from "@/theme/colors";
 import { spacing, typography } from "@/theme";
 
 /**
@@ -20,8 +19,7 @@ import { spacing, typography } from "@/theme";
 export function SessionRecoveryScreen() {
   const router = useRouter();
   const { t } = useI18n();
-  const { colors } = useTheme();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const styles = useMemo(() => createStyles(), []);
   const status = useAuthStore((s) => s.status);
   const [hintEmail, setHintEmail] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -62,12 +60,12 @@ export function SessionRecoveryScreen() {
   return (
     <AuthExperienceShell showSecondaryActions={false}>
       <View style={authCardStyles.formBlock}>
-        <View style={authCardStyles.cardHeader}>
-          <Text style={authCardStyles.cardEyebrow}>{t("auth.sessionRecoveryEyebrow")}</Text>
-          <Text style={authCardStyles.cardTitle}>{t("auth.sessionRecoveryTitle")}</Text>
-          <Text style={authCardStyles.cardSubtitle}>{t("auth.sessionRecoverySubtitle")}</Text>
+        <AuthScreenHeader
+          title={t("auth.sessionRecoveryTitle")}
+          subtitle={t("auth.sessionRecoverySubtitle")}
+        >
           {hintEmail ? <Text style={styles.emailHint}>{hintEmail}</Text> : null}
-        </View>
+        </AuthScreenHeader>
 
         <AuthContinueButton
           label={t("auth.sessionRecoveryRetry")}
@@ -87,11 +85,11 @@ export function SessionRecoveryScreen() {
   );
 }
 
-function createStyles(colors: ColorPalette) {
+function createStyles() {
   return StyleSheet.create({
     emailHint: {
       ...typography.caption,
-      color: colors.mutedForeground,
+      color: authBrand.heroSubtitle,
       marginTop: spacing.sm,
     },
     secondaryPress: {

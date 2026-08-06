@@ -11,6 +11,7 @@ import { AuthHeader } from "./AuthHeader";
 import { AuthInput } from "./AuthInput";
 import { OTPInput } from "./OTPInput";
 import { SocialLoginRow } from "./SocialLoginRow";
+import type { OAuthProviderId } from "@/app/lib/oauthProviderIds";
 import "@/styles/caretip-mobile-web-auth.css";
 
 export type MobileWebAuthMode = "login" | "register" | "otp";
@@ -39,7 +40,7 @@ export type MobileWebAuthShellProps = {
   onSubmit: (e: FormEvent) => void;
   onOtpSubmit: (e: FormEvent) => void;
   onResend?: () => void;
-  onGoogleCredential: (idToken: string) => void;
+  onSocialCredential: (provider: OAuthProviderId, idToken: string) => void;
   sessionBanner?: ReactNode;
 };
 
@@ -56,7 +57,7 @@ export function MobileWebAuthShell({
   busy,
   resendBusy = false,
   showResendVerification = false,
-  inviteCode: _inviteCode = "",
+  inviteCode = "",
   employeeVenueName,
   onNameChange,
   onEmailChange,
@@ -67,12 +68,17 @@ export function MobileWebAuthShell({
   onSubmit,
   onOtpSubmit,
   onResend,
-  onGoogleCredential,
+  onSocialCredential,
   sessionBanner,
 }: MobileWebAuthShellProps) {
   const { t, i18n } = useTranslation();
   const [termsAccepted, setTermsAccepted] = useState(false);
   const isEmployee = authLane === "employee";
+  const isLogin = mode === "login";
+  const allowSocialSignUp =
+    isLogin ||
+    !isEmployee ||
+    (inviteCode.trim().length > 0 && name.trim().length > 0);
   const activeLang: AppLanguage = i18n.resolvedLanguage?.toLowerCase().startsWith("de")
     ? "de"
     : "en";
@@ -141,8 +147,6 @@ export function MobileWebAuthShell({
     );
   }
 
-  const isLogin = mode === "login";
-
   return (
     <div className="mw-auth" data-mw-auth={mode}>
       <div className="mw-auth__inner">
@@ -158,13 +162,15 @@ export function MobileWebAuthShell({
                 : isEmployee
                   ? employeeVenueName
                     ? t("auth.employeeAuth.titleWelcomeVenue", { venue: employeeVenueName })
-                    : t("auth.mobileWebAuth.registerTitle")
+                    : t("auth.employeeAuth.titleJoinTeam")
                   : t("auth.mobileWebAuth.registerTitle")
             }
             subtitle={
               isLogin
                 ? t("auth.mobileWebAuth.loginSubtitle")
-                : t("auth.mobileWebAuth.registerSubtitle")
+                : isEmployee
+                  ? t("auth.employeeAuth.subtitleInviteVerified")
+                  : t("auth.mobileWebAuth.registerSubtitle")
             }
           />
 
@@ -328,7 +334,8 @@ export function MobileWebAuthShell({
             <SocialLoginRow
               disabled={busy}
               isLogin={isLogin}
-              onGoogleCredential={onGoogleCredential}
+              allowSocialSignUp={allowSocialSignUp}
+              onSocialCredential={onSocialCredential}
             />
           </form>
 

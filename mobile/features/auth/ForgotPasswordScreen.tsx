@@ -6,6 +6,7 @@ import { useRouter } from "expo-router";
 import { AuthExperienceShell } from "@/components/auth/AuthExperienceShell";
 import { AuthField } from "@/components/auth/AuthField";
 import { AuthContinueButton } from "@/components/auth/AuthContinueButton";
+import { AuthScreenHeader } from "@/components/auth/AuthScreenHeader";
 import { authCardStyles } from "@/components/auth/authCardStyles";
 import { useI18n } from "@/hooks/useI18n";
 import { forgotPasswordSchema, type ForgotPasswordFormValues } from "@/features/auth/authSchemas";
@@ -58,11 +59,10 @@ export function ForgotPasswordScreen() {
           </View>
         ) : (
           <>
-            <View style={authCardStyles.cardHeader}>
-              <Text style={authCardStyles.cardEyebrow}>{t("auth.security")}</Text>
-              <Text style={authCardStyles.cardTitle}>{t("auth.forgotPasswordTitle")}</Text>
-              <Text style={authCardStyles.cardSubtitle}>{t("auth.forgotPasswordSubtitle")}</Text>
-            </View>
+            <AuthScreenHeader
+              title={t("auth.forgotPasswordTitle")}
+              subtitle={t("auth.forgotPasswordSubtitle")}
+            />
 
             <Controller
               control={control}
@@ -74,6 +74,7 @@ export function ForgotPasswordScreen() {
                   value={value}
                   onChangeText={onChange}
                   onBlur={onBlur}
+                  placeholder={t("auth.emailPlaceholder")}
                   keyboardType="email-address"
                   textContentType="username"
                   autoComplete="email"

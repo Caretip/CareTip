@@ -1,6 +1,6 @@
-import { useMemo, useState } from "react";
-import { Alert, Image, StyleSheet, Text, View } from "react-native";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { Alert, Image, Platform, StyleSheet, Text, View } from "react-native";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/Button";
 import { TextField } from "@/components/ui/TextField";
 import { Section } from "@/components/ui/Section";
@@ -14,10 +14,35 @@ import {
   fetchTwoFactorStatus,
   setupTwoFactor,
 } from "@/services/api/settingsService";
+import {
+  isAppleSignInAvailable,
+  isAppleSignInConfigured,
+  mapAppleNativeError,
+  requestAppleIdToken,
+} from "@/services/apple/appleSignIn";
+import {
+  isFacebookSignInConfigured,
+  mapFacebookNativeError,
+  requestFacebookIdToken,
+} from "@/services/facebook/facebookSignIn";
+import {
+  isGoogleSignInConfigured,
+  isGoogleSignInNativeAvailable,
+  mapGoogleNativeError,
+  requestGoogleIdToken,
+} from "@/services/google/googleSignIn";
+import {
+  linkOAuthAccount,
+  listOAuthAccounts,
+  unlinkOAuthAccount,
+} from "@/services/auth/authService";
 import { queryStaleTimes } from "@/services/api/queryClient";
 import { useAuthUserId, useUserQueryKeys } from "@/services/api/queryKeys";
 import { showErrorToast, showSuccessToast } from "@/store/toastStore";
 import { friendlyErrorMessage } from "@/utils/friendlyError";
+import { resolveOAuthErrorMessage } from "@/utils/oauthErrorMessage";
+import { normalizeApiError } from "@/types/api";
+import type { OAuthProvider } from "@/types/auth";
 import type { TwoFactorSetup } from "@/types/settings";
 import type { ColorPalette } from "@/theme/colors";
 import { radius, spacing, typography } from "@/theme";
@@ -26,17 +51,55 @@ type SecuritySettingsSectionProps = {
   includeMfa?: boolean;
 };
 
+const ALL_PROVIDERS: OAuthProvider[] =
+  Platform.OS === "ios" ? ["apple", "google", "facebook"] : ["google", "facebook", "apple"];
+
+function providerLabelKey(provider: OAuthProvider): string {
+  if (provider === "apple") return "settings.linkedAccounts.apple";
+  if (provider === "facebook") return "settings.linkedAccounts.facebook";
+  return "settings.linkedAccounts.google";
+}
+
+async function requestIdTokenForProvider(provider: OAuthProvider): Promise<string> {
+  if (provider === "google") return requestGoogleIdToken();
+  if (provider === "apple") {
+    const result = await requestAppleIdToken();
+    return result.idToken;
+  }
+  return requestFacebookIdToken();
+}
+
+function mapProviderNativeError(provider: OAuthProvider, error: unknown): Error {
+  if (provider === "google") return mapGoogleNativeError(error);
+  if (provider === "apple") return mapAppleNativeError(error);
+  return mapFacebookNativeError(error);
+}
+
 export function SecuritySettingsSection({ includeMfa = false }: SecuritySettingsSectionProps) {
   const { t } = useI18n();
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const userId = useAuthUserId();
   const keys = useUserQueryKeys();
+  const queryClient = useQueryClient();
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [mfaCode, setMfaCode] = useState("");
   const [mfaSetup, setMfaSetup] = useState<TwoFactorSetup | null>(null);
   const [mfaSetupLoading, setMfaSetupLoading] = useState(false);
+  const [linkingProvider, setLinkingProvider] = useState<OAuthProvider | null>(null);
+  const [appleAvailable, setAppleAvailable] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    void (async () => {
+      const available = await isAppleSignInAvailable();
+      if (!cancelled) setAppleAvailable(available);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const twoFactorQuery = useQuery({
     queryKey: keys.twoFactor,
@@ -45,12 +108,44 @@ export function SecuritySettingsSection({ includeMfa = false }: SecuritySettings
     staleTime: queryStaleTimes.settings,
   });
 
+  const oauthQuery = useQuery({
+    queryKey: keys.oauthAccounts,
+    queryFn: listOAuthAccounts,
+    enabled: Boolean(userId),
+    staleTime: queryStaleTimes.settings,
+  });
+
+  const unlinkMutation = useMutation({
+    mutationFn: unlinkOAuthAccount,
+    onSuccess: async () => {
+      showSuccessToast(t("settings.linkedAccounts.unlinked"));
+      await queryClient.invalidateQueries({ queryKey: keys.oauthAccounts });
+    },
+    onError: (e) => {
+      showErrorToast(friendlyErrorMessage(e, t("settings.linkedAccounts.unlinkError"), t));
+    },
+  });
+
+  const isProviderLinkable = useCallback(
+    (provider: OAuthProvider): boolean => {
+      if (provider === "google") {
+        return isGoogleSignInConfigured() && isGoogleSignInNativeAvailable();
+      }
+      if (provider === "apple") {
+        return isAppleSignInConfigured() && appleAvailable;
+      }
+      return isFacebookSignInConfigured();
+    },
+    [appleAvailable],
+  );
+
   const handleChangePassword = async () => {
     try {
       await changePassword(currentPassword, newPassword);
       showSuccessToast(t("success.saved"));
       setCurrentPassword("");
       setNewPassword("");
+      await queryClient.invalidateQueries({ queryKey: keys.oauthAccounts });
     } catch (e) {
       showErrorToast(friendlyErrorMessage(e, t("settings.passwordError"), t));
     }
@@ -99,6 +194,62 @@ export function SecuritySettingsSection({ includeMfa = false }: SecuritySettings
     }
   };
 
+  const handleLink = async (provider: OAuthProvider) => {
+    if (!isProviderLinkable(provider)) {
+      showErrorToast(
+        provider === "apple"
+          ? t("auth.appleNotConfigured")
+          : provider === "facebook"
+            ? t("auth.facebookNotConfigured")
+            : t("auth.googleNotConfigured"),
+      );
+      return;
+    }
+    setLinkingProvider(provider);
+    try {
+      const idToken = await requestIdTokenForProvider(provider);
+      await linkOAuthAccount(provider, idToken);
+      showSuccessToast(t("settings.linkedAccounts.linked"));
+      await queryClient.invalidateQueries({ queryKey: keys.oauthAccounts });
+    } catch (error) {
+      const mapped = normalizeApiError(mapProviderNativeError(provider, error));
+      showErrorToast(resolveOAuthErrorMessage(mapped, t, provider));
+    } finally {
+      setLinkingProvider(null);
+    }
+  };
+
+  const handleUnlink = (provider: OAuthProvider) => {
+    Alert.alert(
+      t("settings.linkedAccounts.unlinkTitle"),
+      t("settings.linkedAccounts.unlinkBody", {
+        provider: t(providerLabelKey(provider)),
+      }),
+      [
+        { text: t("common.cancel"), style: "cancel" },
+        {
+          text: t("settings.linkedAccounts.unlinkConfirm"),
+          style: "destructive",
+          onPress: () => unlinkMutation.mutate(provider),
+        },
+      ],
+    );
+  };
+
+  const linkedSet = useMemo(() => {
+    const set = new Set<OAuthProvider>();
+    for (const row of oauthQuery.data?.providers ?? []) {
+      set.add(row.provider);
+    }
+    return set;
+  }, [oauthQuery.data?.providers]);
+
+  const canUnlinkAny = useMemo(() => {
+    const linkedCount = linkedSet.size;
+    const hasPassword = Boolean(oauthQuery.data?.hasPassword);
+    return hasPassword || linkedCount > 1;
+  }, [linkedSet.size, oauthQuery.data?.hasPassword]);
+
   return (
     <SettingsSectionLayout
       title={t("settings.menu.security")}
@@ -123,6 +274,52 @@ export function SecuritySettingsSection({ includeMfa = false }: SecuritySettings
           variant="secondary"
           onPress={() => void handleChangePassword()}
         />
+      </Section>
+
+      <Section title={t("settings.linkedAccounts.title")}>
+        <Text style={styles.body}>{t("settings.linkedAccounts.subtitle")}</Text>
+        {oauthQuery.isLoading ? (
+          <Text style={styles.muted}>{t("common.loading")}</Text>
+        ) : null}
+        {oauthQuery.isError ? (
+          <Text style={styles.body}>{t("settings.linkedAccounts.loadError")}</Text>
+        ) : null}
+        {ALL_PROVIDERS.map((provider) => {
+          const linked = linkedSet.has(provider);
+          const linkable = isProviderLinkable(provider);
+          if (!linked && !linkable) return null;
+          return (
+            <View key={provider} style={styles.providerRow}>
+              <View style={styles.providerMeta}>
+                <Text style={styles.providerName}>{t(providerLabelKey(provider))}</Text>
+                <Text style={styles.muted}>
+                  {linked
+                    ? t("settings.linkedAccounts.linkedStatus")
+                    : t("settings.linkedAccounts.notLinkedStatus")}
+                </Text>
+              </View>
+              {linked ? (
+                <Button
+                  label={t("settings.linkedAccounts.unlink")}
+                  variant="ghost"
+                  disabled={!canUnlinkAny || unlinkMutation.isPending}
+                  onPress={() => handleUnlink(provider)}
+                />
+              ) : (
+                <Button
+                  label={
+                    linkingProvider === provider
+                      ? t("common.loading")
+                      : t("settings.linkedAccounts.link")
+                  }
+                  variant="secondary"
+                  disabled={linkingProvider != null}
+                  onPress={() => void handleLink(provider)}
+                />
+              )}
+            </View>
+          );
+        })}
       </Section>
 
       {includeMfa ? (
@@ -167,6 +364,16 @@ export function SecuritySettingsSection({ includeMfa = false }: SecuritySettings
 function createStyles(colors: ColorPalette) {
   return StyleSheet.create({
     body: { ...typography.body, color: colors.foreground },
+    muted: { ...typography.caption, color: colors.mutedForeground },
+    providerRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      gap: spacing.md,
+      paddingVertical: spacing.xs,
+    },
+    providerMeta: { flex: 1, gap: 2 },
+    providerName: { ...typography.body, color: colors.foreground, fontWeight: "600" },
     mfaQr: { gap: spacing.sm, alignItems: "center" },
     mfaQrImage: { width: 200, height: 200, borderRadius: radius.xl },
   });

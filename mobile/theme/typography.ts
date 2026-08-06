@@ -1,5 +1,8 @@
 /**
- * Typography hierarchy — Hero → H1 → H2 → Section → Body → Caption → Metadata.
+ * Typography hierarchy — Display → H1–H4 → Large Body → Body → Small Body →
+ * Caption → Button → Label → Input → Helper → Badge → Overline.
+ *
+ * Prefer `typography.*` composites over local `fontSize` overrides.
  */
 
 export const fontFamilies = {
@@ -8,12 +11,22 @@ export const fontFamilies = {
 } as const;
 
 export const fontSizes = {
+  /** Badge / overline chrome — not for readable paragraphs. */
+  badge: 11,
   metadata: 11,
   caption: 12,
+  /** Form labels. */
+  label: 13,
   meta: 13,
+  /** Dense secondary body. */
+  smallBody: 14,
   button: 15,
   body: 16,
+  /** Large body / feature lead. */
+  largeBody: 17,
   feature: 17,
+  h4: 16,
+  h3: 18,
   h2: 18,
   section: 20,
   h1: 28,
@@ -68,7 +81,7 @@ export const typography = {
     lineHeight: Math.round(fontSizes.h1 * lineHeights.snug),
     letterSpacing: -0.5,
   },
-  /** @deprecated Prefer section — kept for compatibility */
+  /** @deprecated Prefer h2/section — kept for compatibility */
   section: {
     fontFamily: fontFamilies.sans,
     fontSize: fontSizes.section,
@@ -83,12 +96,25 @@ export const typography = {
     lineHeight: Math.round(fontSizes.h2 * lineHeights.snug),
     letterSpacing: -0.2,
   },
-  /** Card / list title alias */
+  h3: {
+    fontFamily: fontFamilies.sans,
+    fontSize: fontSizes.h3,
+    fontWeight: fontWeights.semibold,
+    lineHeight: Math.round(fontSizes.h3 * lineHeights.snug),
+    letterSpacing: -0.2,
+  },
+  h4: {
+    fontFamily: fontFamilies.sans,
+    fontSize: fontSizes.h4,
+    fontWeight: fontWeights.semibold,
+    lineHeight: Math.round(fontSizes.h4 * lineHeights.snug),
+  },
+  /** Card / list title alias → H3 */
   cardTitle: {
     fontFamily: fontFamilies.sans,
-    fontSize: fontSizes.h2,
+    fontSize: fontSizes.h3,
     fontWeight: fontWeights.semibold,
-    lineHeight: Math.round(fontSizes.h2 * lineHeights.snug),
+    lineHeight: Math.round(fontSizes.h3 * lineHeights.snug),
   },
   metric: {
     fontFamily: fontFamilies.display,
@@ -97,11 +123,23 @@ export const typography = {
     lineHeight: Math.round(fontSizes.metric * lineHeights.tight),
     letterSpacing: -0.6,
   },
+  largeBody: {
+    fontFamily: fontFamilies.sans,
+    fontSize: fontSizes.largeBody,
+    fontWeight: fontWeights.regular,
+    lineHeight: Math.round(fontSizes.largeBody * lineHeights.body),
+  },
   body: {
     fontFamily: fontFamilies.sans,
     fontSize: fontSizes.body,
     fontWeight: fontWeights.regular,
     lineHeight: Math.round(fontSizes.body * lineHeights.body),
+  },
+  smallBody: {
+    fontFamily: fontFamilies.sans,
+    fontSize: fontSizes.smallBody,
+    fontWeight: fontWeights.regular,
+    lineHeight: Math.round(fontSizes.smallBody * lineHeights.body),
   },
   button: {
     fontFamily: fontFamilies.sans,
@@ -109,11 +147,37 @@ export const typography = {
     fontWeight: fontWeights.semibold,
     lineHeight: Math.round(fontSizes.button * lineHeights.snug),
   },
+  label: {
+    fontFamily: fontFamilies.sans,
+    fontSize: fontSizes.label,
+    fontWeight: fontWeights.semibold,
+    lineHeight: Math.round(fontSizes.label * lineHeights.body),
+    letterSpacing: 0.2,
+  },
+  input: {
+    fontFamily: fontFamilies.sans,
+    fontSize: fontSizes.body,
+    fontWeight: fontWeights.medium,
+    lineHeight: Math.round(fontSizes.body * lineHeights.body),
+  },
+  helper: {
+    fontFamily: fontFamilies.sans,
+    fontSize: fontSizes.caption,
+    fontWeight: fontWeights.medium,
+    lineHeight: Math.round(fontSizes.caption * lineHeights.body),
+  },
   caption: {
     fontFamily: fontFamilies.sans,
     fontSize: fontSizes.caption,
     fontWeight: fontWeights.medium,
     lineHeight: Math.round(fontSizes.caption * lineHeights.body),
+  },
+  badge: {
+    fontFamily: fontFamilies.sans,
+    fontSize: fontSizes.badge,
+    fontWeight: fontWeights.semibold,
+    lineHeight: Math.round(fontSizes.badge * lineHeights.body),
+    letterSpacing: 0.2,
   },
   metadata: {
     fontFamily: fontFamilies.sans,

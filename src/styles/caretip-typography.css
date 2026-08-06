@@ -1,6 +1,9 @@
 /**
  * CareTip typography — Inter (body/UI); Manrope (public marketing headings).
- * Hierarchy: hero-title → section-title → card-title → body-copy → feature-copy → button-text
+ *
+ * Role scale (use these names in product UI):
+ * Display → H1 → H2 → H3 → H4 → Large Body → Body → Small Body →
+ * Caption → Button → Label → Input → Helper → Badge → Overline
  */
 
 :root {
@@ -16,31 +19,51 @@
   --caretip-app-title-size: clamp(1.375rem, 2.5vw + 0.75rem, 1.75rem);
   --caretip-app-subtitle-size: clamp(1.125rem, 1vw + 0.95rem, 1.3125rem);
   --caretip-card-title-size: clamp(1.0625rem, 0.2vw + 1rem, 1.125rem);
+  --caretip-large-body-size: clamp(1.0625rem, 0.18vw + 1rem, 1.125rem);
   --caretip-body-size: clamp(1rem, 0.2vw + 0.96rem, 1.0625rem);
   --caretip-feature-size: clamp(0.98rem, 0.12vw + 0.94rem, 1rem);
-  --caretip-button-size: 0.9375rem;
-  --caretip-tagline-size: 0.75rem;
-  --caretip-meta-size: 0.6875rem;
-  --caretip-micro-size: 0.625rem;
-  --caretip-caption-size: 0.8125rem;
+  --caretip-small-body-size: 0.875rem; /* 14px — dense UI / secondary paragraphs */
+  --caretip-button-size: 0.9375rem; /* 15px — do not couple to control height */
+  --caretip-caption-size: 0.8125rem; /* 13px */
+  --caretip-label-size: 0.8125rem; /* 13px — stronger form labels */
+  --caretip-helper-size: 0.8125rem; /* 13px — secondary field hints */
+  --caretip-input-size: var(--caretip-body-size);
+  --caretip-tagline-size: 0.75rem; /* 12px overline-adjacent */
+  --caretip-meta-size: 0.6875rem; /* 11px KPI / badge chrome */
+  --caretip-micro-size: 0.625rem; /* 10px dense chrome only */
+  --caretip-overline-size: var(--caretip-tagline-size);
 
   /*
-   * Semantic aliases (Phase A) — document roles; point at existing scale.
-   * Do not change computed sizes when swapping class names to these tokens.
+   * Semantic role aliases — prefer `--type-*` / `text-*` utilities in new code.
    */
+  --type-display: var(--caretip-hero-size);
+  --type-display-de: var(--caretip-hero-size-de);
+  --type-h1: var(--caretip-app-title-size);
+  --type-h2: var(--caretip-app-subtitle-size);
+  --type-h3: var(--caretip-card-title-size);
+  --type-h4: var(--caretip-feature-size);
+  --type-large-body: var(--caretip-large-body-size);
+  --type-body: var(--caretip-body-size);
+  --type-small-body: var(--caretip-small-body-size);
+  --type-caption: var(--caretip-caption-size);
+  --type-button: var(--caretip-button-size);
+  --type-label: var(--caretip-label-size);
+  --type-input: var(--caretip-input-size);
+  --type-helper: var(--caretip-helper-size);
+  --type-badge: var(--caretip-meta-size);
+  --type-overline: var(--caretip-overline-size);
+
+  /* Legacy aliases (keep for existing call sites) */
   --type-hero: var(--caretip-hero-size);
   --type-hero-de: var(--caretip-hero-size-de);
   --type-section: var(--caretip-section-size);
   --type-app-title: var(--caretip-app-title-size);
   --type-app-subtitle: var(--caretip-app-subtitle-size);
   --type-card-title: var(--caretip-card-title-size);
-  --type-body: var(--caretip-body-size);
   --type-feature: var(--caretip-feature-size);
-  --type-button: var(--caretip-button-size);
   --type-tagline: var(--caretip-tagline-size);
   --type-meta: var(--caretip-meta-size);
   --type-micro: var(--caretip-micro-size);
-  --type-caption: var(--caretip-caption-size);
   --type-kpi-label: var(--caretip-meta-size);
 }
 
@@ -52,8 +75,10 @@
     --caretip-app-title-size: clamp(1.5rem, 1.2vw + 0.85rem, 2rem);
     --caretip-app-subtitle-size: clamp(1.1875rem, 0.5vw + 1rem, 1.4375rem);
     --caretip-card-title-size: clamp(1.0625rem, 0.15vw + 1rem, 1.1875rem);
+    --caretip-large-body-size: clamp(1.125rem, 0.1vw + 1.05rem, 1.1875rem);
     --caretip-body-size: clamp(1.0625rem, 0.12vw + 1rem, 1.15625rem);
     --caretip-feature-size: clamp(1rem, 0.08vw + 0.96rem, 1.0625rem);
+    --caretip-small-body-size: 0.9375rem; /* 15px desktop dense UI */
   }
 }
 
@@ -116,6 +141,12 @@ html.caretip-font-inter {
   letter-spacing: -0.016em;
 }
 
+@utility text-large-body {
+  font-size: var(--caretip-large-body-size);
+  line-height: 1.68;
+  letter-spacing: -0.008em;
+}
+
 @utility text-body-copy {
   font-size: var(--caretip-body-size);
   line-height: 1.72;
@@ -128,10 +159,46 @@ html.caretip-font-inter {
   letter-spacing: -0.006em;
 }
 
+@utility text-small-body {
+  font-size: var(--caretip-small-body-size);
+  line-height: 1.55;
+  letter-spacing: -0.006em;
+}
+
 @utility text-button-text {
   font-size: var(--caretip-button-size);
   line-height: 1.25;
   letter-spacing: -0.01em;
+}
+
+@utility text-label {
+  font-size: var(--caretip-label-size);
+  line-height: 1.35;
+  letter-spacing: -0.004em;
+}
+
+@utility text-input {
+  font-size: var(--caretip-input-size);
+  line-height: 1.45;
+  letter-spacing: -0.006em;
+}
+
+@utility text-helper {
+  font-size: var(--caretip-helper-size);
+  line-height: 1.45;
+  letter-spacing: -0.004em;
+}
+
+@utility text-overline {
+  font-size: var(--caretip-overline-size);
+  line-height: 1.35;
+  letter-spacing: 0.06em;
+}
+
+@utility text-badge {
+  font-size: var(--caretip-meta-size);
+  line-height: 1.35;
+  letter-spacing: 0.04em;
 }
 
 @utility text-tagline {
@@ -156,7 +223,7 @@ html.caretip-font-inter {
 /** 13px compact copy — maps prior `text-[13px]` / legacy caption usage. */
 @utility text-caption {
   font-size: var(--caretip-caption-size);
-  line-height: 1.25rem;
+  line-height: 1.45;
   letter-spacing: -0.006em;
 }
 
@@ -258,5 +325,20 @@ html.caretip-font-inter {
     font-size: var(--caretip-feature-size);
     font-weight: 600;
     letter-spacing: -0.01em;
+  }
+
+  [data-slot="label"] {
+    font-family: var(--font-inter);
+    font-size: var(--caretip-label-size);
+    font-weight: 600;
+    letter-spacing: -0.004em;
+  }
+
+  [data-slot="card-description"],
+  [data-slot="dialog-description"] {
+    font-family: var(--font-inter);
+    font-size: var(--caretip-small-body-size);
+    line-height: 1.55;
+    letter-spacing: -0.006em;
   }
 }

@@ -93,6 +93,8 @@ module.exports = ({ config }) => {
     if (Array.isArray(plugin) && plugin[0] === "@react-native-google-signin/google-signin") {
       return false;
     }
+    if (plugin === "expo-apple-authentication") return false;
+    if (Array.isArray(plugin) && plugin[0] === "expo-apple-authentication") return false;
     if (plugin === "expo-notifications") return false;
     if (Array.isArray(plugin) && plugin[0] === "expo-notifications") return false;
     return true;
@@ -118,6 +120,9 @@ module.exports = ({ config }) => {
   } else {
     plugins.push("@react-native-google-signin/google-signin");
   }
+
+  // Sign in with Apple capability (iOS). Safe no-op on Android / web prebuild.
+  plugins.push("expo-apple-authentication");
 
   plugins.push([
     "expo-notifications",
@@ -167,6 +172,7 @@ module.exports = ({ config }) => {
       ...baseIos,
       bundleIdentifier: iosBundleIdentifier,
       infoPlist: iosInfoPlist,
+      usesAppleSignIn: true,
     },
     updates: easProjectId
       ? {

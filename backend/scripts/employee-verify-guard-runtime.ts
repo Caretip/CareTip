@@ -149,7 +149,11 @@ async function main() {
     }
 
     const oauthUser = await prisma.user.findFirst({
-      where: { role: "EMPLOYEE", oauthProvider: { not: null }, passwordHash: null },
+      where: {
+        role: "EMPLOYEE",
+        passwordHash: null,
+        oauthAccounts: { some: {} },
+      },
       select: { email: true },
     });
     if (oauthUser?.email) {
@@ -161,14 +165,17 @@ async function main() {
         fail("OAuth employee password login should not succeed");
       } catch (e) {
         const msg = e instanceof Error ? e.message : String(e);
-        if (msg === "This account uses Google sign-in.") {
-          pass("OAuth account gets Google sign-in message on password login");
+        if (
+          msg === "This account uses Google sign-in." ||
+          msg.includes("social sign-in")
+        ) {
+          pass("OAuth account gets social sign-in message on password login");
         } else {
           fail(`OAuth password login message: ${msg}`);
         }
       }
     } else {
-      results.push("SKIP: No OAuth employee in DB — Google login message check skipped");
+      results.push("SKIP: No OAuth employee in DB — social login message check skipped");
     }
   } finally {
     if (userId) {

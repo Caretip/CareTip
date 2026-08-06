@@ -4,6 +4,7 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { AuthExperienceShell } from "@/components/auth/AuthExperienceShell";
 import { AuthField } from "@/components/auth/AuthField";
 import { AuthContinueButton } from "@/components/auth/AuthContinueButton";
+import { AuthScreenHeader } from "@/components/auth/AuthScreenHeader";
 import { useAuth } from "@/hooks/useAuth";
 import { useI18n } from "@/hooks/useI18n";
 import { useTheme } from "@/hooks/useTheme";
@@ -103,15 +104,14 @@ export function VerifyEmailScreen() {
   return (
     <AuthExperienceShell showSecondaryActions={false}>
       <View style={authCardStyles.formBlock}>
-        <View style={authCardStyles.cardHeader}>
-          <Text style={authCardStyles.cardEyebrow}>{t("auth.security")}</Text>
-          <Text style={authCardStyles.cardTitle}>{t("auth.verifyEmailTitle")}</Text>
-          <Text style={authCardStyles.cardSubtitle}>
-            {pendingEmail
-              ? t("auth.verifyEmailSubtitle", { email: pendingEmail })
-              : t("auth.verifyEmailSubtitleGeneric")}
-          </Text>
-        </View>
+        <AuthScreenHeader
+          title={t("auth.verifyEmailTitle")}
+          subtitle={
+            pendingEmail
+              ? t("auth.verifyEmailSubtitleWithAddress", { email: pendingEmail })
+              : t("auth.verifyEmailSubtitle")
+          }
+        />
 
         {status === "verifying" ? (
           <Text style={styles.status}>{t("auth.verifyEmailWorking")}</Text>
@@ -135,6 +135,7 @@ export function VerifyEmailScreen() {
                 icon="lock-closed-outline"
                 value={password}
                 onChangeText={setPassword}
+                placeholder={t("auth.passwordPlaceholder")}
                 secureTextEntry
                 textContentType="password"
                 autoComplete="password"

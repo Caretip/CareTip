@@ -24,12 +24,16 @@ import { config } from "@/constants/config";
 import type {
   AuthResponse,
   InviteValidation,
+  LinkOAuthResult,
+  LinkedOAuthAccountsResponse,
   MessageResponse,
+  OAuthProvider,
   OAuthRequest,
   RegisterPendingResponse,
   RegisterRequest,
   SignInRequest,
   SignInResult,
+  UnlinkOAuthResult,
 } from "@/types/auth";
 import { isMfaChallenge } from "@/types/auth";
 import { normalizeApiError } from "@/types/api";
@@ -156,20 +160,23 @@ export async function login(payload: SignInRequest): Promise<SignInResult> {
 }
 
 /**
- * Google OAuth — same contract as web `oauthAPI`:
+ * Social OAuth — same contract as web `oauthAPI`:
  * POST /api/auth/oauth → store access JWT + refresh mirror.
+ * Provider defaults to google for backward compatibility.
  */
 export async function oauthLogin(payload: OAuthRequest): Promise<SignInResult> {
+  const provider: OAuthProvider = payload.provider ?? "google";
   const requestUrl = `${config.apiUrl}${API_ENDPOINTS.auth.oauth}`;
   logAuthEvent("oauth.request", {
     method: "POST",
     url: requestUrl,
+    provider,
     isLogin: payload.isLogin,
     intendedRole: payload.intendedRole,
   });
 
   const response = await apiClient.post<SignInResult>(API_ENDPOINTS.auth.oauth, {
-    provider: "google",
+    provider,
     idToken: payload.idToken,
     isLogin: payload.isLogin,
     ...(payload.intendedRole && !payload.isLogin
@@ -185,7 +192,7 @@ export async function oauthLogin(payload: OAuthRequest): Promise<SignInResult> {
   const data = response.data;
 
   if (isMfaChallenge(data)) {
-    logAuthEvent("oauth.mfa.challenge");
+    logAuthEvent("oauth.mfa.challenge", { provider });
     return data;
   }
 
@@ -193,7 +200,35 @@ export async function oauthLogin(payload: OAuthRequest): Promise<SignInResult> {
     throw normalizeApiError(new Error("OAuth succeeded without access token."));
   }
 
-  await finalizeAuthResponse(data, "oauth");
+  await finalizeAuthResponse(data, "oauth", { provider });
+  return data;
+}
+
+/** GET /api/auth/oauth/accounts — linked providers for Settings. */
+export async function listOAuthAccounts(): Promise<LinkedOAuthAccountsResponse> {
+  const { data } = await apiClient.get<LinkedOAuthAccountsResponse>(
+    API_ENDPOINTS.auth.oauthAccounts,
+  );
+  return data;
+}
+
+/** POST /api/auth/oauth/link — attach a provider to the current user. */
+export async function linkOAuthAccount(
+  provider: OAuthProvider,
+  idToken: string,
+): Promise<LinkOAuthResult> {
+  const { data } = await apiClient.post<LinkOAuthResult>(API_ENDPOINTS.auth.oauthLink, {
+    provider,
+    idToken,
+  });
+  return data;
+}
+
+/** POST /api/auth/oauth/unlink — remove a provider without orphaning the account. */
+export async function unlinkOAuthAccount(provider: OAuthProvider): Promise<UnlinkOAuthResult> {
+  const { data } = await apiClient.post<UnlinkOAuthResult>(API_ENDPOINTS.auth.oauthUnlink, {
+    provider,
+  });
   return data;
 }
 
@@ -437,6 +472,9 @@ export async function validateInviteCode(code: string): Promise<InviteValidation
 export const authService = {
   login,
   oauthLogin,
+  listOAuthAccounts,
+  linkOAuthAccount,
+  unlinkOAuthAccount,
   refreshSession,
   validateBootstrapSession,
   logout,

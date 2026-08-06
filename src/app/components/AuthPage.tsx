@@ -32,10 +32,13 @@ import {
   isApiRequestError,
   EMAIL_NOT_VERIFIED_CODE,
   GOOGLE_ACCOUNT_NOT_REGISTERED_CODE,
+  OAUTH_ACCOUNT_NOT_REGISTERED_CODE,
+  OAUTH_LINKING_REQUIRED_CODE,
   isMfaLoginChallenge,
   loginMfaEnableAPI,
   loginMfaVerifyAPI,
 } from '../lib/api';
+import type { OAuthProviderId } from '../lib/oauthProviderIds';
 import { validateInviteCode } from "../lib/api";
 import { logClientError } from '../lib/clientLog';
 import {
@@ -504,7 +507,7 @@ export function AuthPage() {
     setUnlockedFields(new Set());
   };
 
-  const runGoogleOAuth = async (idToken: string) => {
+  const runSocialOAuth = async (provider: OAuthProviderId, idToken: string) => {
     if (user != null && sessionValidated) {
       setAuthFlowInProgress(true);
       setIsSubmitting(true);
@@ -533,7 +536,7 @@ export function AuthPage() {
       if (!isLogin && authLane === 'employee') {
         await validateInviteCode(resolvedInviteCode);
       }
-      const loggedIn = await loginWithOAuth("google", idToken, {
+      const loggedIn = await loginWithOAuth(provider, idToken, {
         isLogin,
         ...(!isLogin
           ? {
@@ -551,7 +554,19 @@ export function AuthPage() {
     } catch (err) {
       logClientError('AuthPage.oauth', err);
       endAuthSignInHandoff("AuthPage_oauth_error");
-      if (isApiRequestError(err) && err.code === GOOGLE_ACCOUNT_NOT_REGISTERED_CODE) {
+      if (
+        isApiRequestError(err) &&
+        err.code === OAUTH_LINKING_REQUIRED_CODE
+      ) {
+        toast.error(t("auth.oauth.linkingRequiredToast"));
+        setError(t("auth.oauth.linkingRequiredToast"));
+        return;
+      }
+      if (
+        isApiRequestError(err) &&
+        (err.code === GOOGLE_ACCOUNT_NOT_REGISTERED_CODE ||
+          err.code === OAUTH_ACCOUNT_NOT_REGISTERED_CODE)
+      ) {
         setIsLogin(false);
         setError(toUserFriendlyMessage(err));
         return;
@@ -718,7 +733,7 @@ export function AuthPage() {
             onResend={
               pendingMfaToken ? undefined : () => void handleResendVerification()
             }
-            onGoogleCredential={(token) => void runGoogleOAuth(token)}
+            onSocialCredential={(provider, token) => void runSocialOAuth(provider, token)}
             sessionBanner={showAuthenticatedSessionHint ? sessionHintBanner : null}
           />
         ) : null}
@@ -789,7 +804,7 @@ export function AuthPage() {
                 formBusy={isSubmitting}
                 name={name}
                 inviteCode={resolvedInviteCode}
-                onGoogleCredential={(t) => void runGoogleOAuth(t)}
+                onSocialCredential={(provider, token) => void runSocialOAuth(provider, token)}
               />
             </div>
 

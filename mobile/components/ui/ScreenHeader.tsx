@@ -79,17 +79,11 @@ function createStyles(colors: ColorPalette) {
     },
     title: {
       ...typography.h1,
-      fontSize: 26,
-      lineHeight: 32,
-      letterSpacing: -0.7,
-      fontWeight: "800",
       color: colors.foreground,
     },
     subtitle: {
-      ...typography.body,
+      ...typography.smallBody,
       color: colors.mutedForeground,
-      fontSize: 15,
-      lineHeight: 22,
     },
     section: {
       flexDirection: "row",

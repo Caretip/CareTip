@@ -34,7 +34,10 @@ export type MfaChallengeResponse = {
   pendingMfaToken: string;
 };
 
+export type OAuthProvider = "google" | "apple" | "facebook";
+
 export type OAuthRequest = {
+  provider?: OAuthProvider;
   idToken: string;
   isLogin: boolean;
   intendedRole?: UserRole;
@@ -42,6 +45,27 @@ export type OAuthRequest = {
   inviteCode?: string;
   locale?: AppLocale;
   timeZone?: string;
+};
+
+export type LinkedOAuthAccount = {
+  provider: OAuthProvider;
+  emailAtLink: string | null;
+  linkedAt: string;
+};
+
+export type LinkedOAuthAccountsResponse = {
+  providers: LinkedOAuthAccount[];
+  hasPassword: boolean;
+};
+
+export type LinkOAuthResult = {
+  provider: OAuthProvider;
+  linked: true;
+};
+
+export type UnlinkOAuthResult = {
+  provider: OAuthProvider;
+  unlinked: true;
 };
 
 export type SignInRequest = {

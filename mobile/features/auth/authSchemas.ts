@@ -8,14 +8,13 @@ const emailField = z
 
 const passwordField = z.string().min(8, "Password must be at least 8 characters.");
 
-export const registerSchema = z
+/** Manager / business account creation only — employees use AcceptInviteScreen. */
+export const managerRegisterSchema = z
   .object({
     name: z.string().trim().optional(),
     email: emailField,
     password: passwordField,
     confirmPassword: z.string().min(1, "Please confirm your password."),
-    role: z.enum(["business", "employee"]),
-    inviteCode: z.string().trim().optional(),
   })
   .superRefine((values, ctx) => {
     if (values.password !== values.confirmPassword) {
@@ -25,16 +24,13 @@ export const registerSchema = z
         path: ["confirmPassword"],
       });
     }
-    if (values.role === "employee" && !values.inviteCode?.trim()) {
-      ctx.addIssue({
-        code: "custom",
-        message: "An invite code is required for staff registration.",
-        path: ["inviteCode"],
-      });
-    }
   });
 
-export type RegisterFormValues = z.infer<typeof registerSchema>;
+export type ManagerRegisterFormValues = z.infer<typeof managerRegisterSchema>;
+
+/** @deprecated Prefer managerRegisterSchema */
+export const registerSchema = managerRegisterSchema;
+export type RegisterFormValues = ManagerRegisterFormValues;
 
 export const forgotPasswordSchema = z.object({
   email: emailField,

@@ -41,10 +41,11 @@ body {
   background-color: hsl(var(--background));
 }
 
-/* Make placeholder text clearly distinct from real values across the app (even for raw <input>/<textarea>). */
+/* Placeholders: readable contrast, still visually secondary to filled values. */
 input::placeholder,
 textarea::placeholder {
-  color: hsl(var(--muted-foreground) / 0.65);
+  color: hsl(var(--muted-foreground) / 0.82);
+  font-weight: 500;
 }
 
 #root {

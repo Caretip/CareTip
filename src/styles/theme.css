@@ -85,7 +85,7 @@
   }
 
   label {
-    @apply font-sans text-feature-copy font-semibold text-foreground;
+    @apply font-sans text-label font-semibold text-foreground;
   }
 
   button {
@@ -95,13 +95,14 @@
   input,
   textarea,
   select {
-    @apply font-sans text-body-copy font-normal text-foreground;
+    @apply font-sans text-input font-normal text-foreground;
   }
 
   input::placeholder,
   textarea::placeholder {
-    color: hsl(var(--muted-foreground));
+    color: hsl(var(--muted-foreground) / 0.82);
     opacity: 1;
+    font-weight: 500;
   }
 
   /*

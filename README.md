@@ -351,7 +351,7 @@ CareTip separates **business / staff** accounts from **platform operators** (`SU
 
 ### Why public admin signup does not exist
 
-`POST /api/auth/register` **rejects** attempts to create `SUPER_ADMIN`, set `isPlatformAdmin`, or disable `isActive`. Business signups become **`MANAGER`**; employee signups with a valid invite become **`EMPLOYEE`**.
+`POST /api/auth/register` **rejects** attempts to create `SUPER_ADMIN`, set `isPlatformAdmin`, or disable `isActive`. Business signups become **`MANAGER`**. Employees are admitted only via business invite (or manager-created employee) and then activate with password or OAuth — OAuth never creates employment by itself.
 
 ### Roles (UI vs database)
 

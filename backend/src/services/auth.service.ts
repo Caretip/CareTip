@@ -539,8 +539,9 @@ export async function validateLoginCredentials(input: LoginInput): Promise<UserF
     throw new Error("Invalid email or password");
   }
   if (!user.passwordHash) {
-    if (user.oauthProvider) {
-      throw new Error("This account uses Google sign-in.");
+    const oauthCount = await prisma.oAuthAccount.count({ where: { userId: user.id } });
+    if (oauthCount > 0) {
+      throw new Error("This account uses social sign-in. Continue with Google, Apple, or Facebook.");
     }
     throw new Error("Invalid email or password");
   }

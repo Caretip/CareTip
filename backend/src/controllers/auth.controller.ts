@@ -99,6 +99,7 @@ const LOGIN_CLIENT_MESSAGES = new Set([
   "Invalid email or password",
   "Login failed",
   "This account uses Google sign-in.",
+  "This account uses social sign-in. Continue with Google, Apple, or Facebook.",
   "This account does not have Business permissions.",
   "This account does not have Staff permissions.",
   "Use the Platform Admin sign-in for this account.",
@@ -179,6 +180,12 @@ export async function register(req: Request, res: Response) {
     const inviteTrimmed =
       typeof inviteCode === "string" ? inviteCode.trim() : "";
     if (inviteTrimmed) {
+      if (role === "business") {
+        return res.status(400).json({
+          message:
+            "Invite codes complete employee invitations only. Create a business account without an invite code.",
+        });
+      }
       const inviteCheck = await businessService.validateInviteCode(inviteTrimmed);
       if (!inviteCheck.ok) {
         return res.status(400).json({ message: "Invalid or expired invite code" });
@@ -724,8 +731,10 @@ export async function oauth(req: Request, res: Response) {
     const businessType = typeof body.businessType === "string" ? body.businessType : undefined;
     const location = typeof body.location === "string" ? body.location : undefined;
 
-    if (provider !== "google") {
-      return res.status(400).json({ message: "provider must be 'google'" });
+    if (provider !== "google" && provider !== "apple" && provider !== "facebook") {
+      return res.status(400).json({
+        message: "provider must be 'google', 'apple', or 'facebook'",
+      });
     }
     if (!idToken.trim()) {
       return res.status(400).json({ message: "idToken is required" });
@@ -802,6 +811,7 @@ export async function oauth(req: Request, res: Response) {
         JSON.stringify({
           userId: session.user.id,
           role: session.user.role,
+          provider,
           isLogin,
         }),
       );
@@ -819,27 +829,53 @@ export async function oauth(req: Request, res: Response) {
         canResend: err.canResend,
       });
     }
-    const message = err instanceof Error ? err.message : "OAuth sign-in failed";
-    if (err instanceof oauthAuthService.GoogleTokenVerificationError) {
-      logServerError("auth.oauth.verifyIdToken", err);
-      return res.status(401).json({
-        message:
-          "Google sign-in could not be verified. The server OAuth client may not match the site — contact support if this continues.",
-        code: oauthAuthService.GOOGLE_TOKEN_VERIFICATION_FAILED_CODE,
+    if (err instanceof oauthAuthService.OAuthLinkingRequiredError) {
+      return res.status(409).json({
+        message: err.message,
+        code: err.code,
+        email: err.email,
+        provider: err.provider,
       });
     }
-    if (message.includes("not configured") || message.includes("GOOGLE_CLIENT_ID")) {
+    if (err instanceof oauthAuthService.OAuthEmailRequiredError) {
+      return res.status(400).json({
+        message: err.message,
+        code: err.code,
+      });
+    }
+    const message = err instanceof Error ? err.message : "OAuth sign-in failed";
+    if (err instanceof oauthAuthService.OAuthTokenVerificationError) {
+      logServerError("auth.oauth.verifyIdToken", err);
+      return res.status(401).json({
+        message: `${err.provider[0]!.toUpperCase()}${err.provider.slice(1)} sign-in could not be verified.`,
+        code: oauthAuthService.OAUTH_TOKEN_VERIFICATION_FAILED_CODE,
+        provider: err.provider,
+      });
+    }
+    if (
+      message.includes("not configured") ||
+      message.includes("GOOGLE_CLIENT_ID") ||
+      message.includes("APPLE_CLIENT_ID") ||
+      message.includes("FACEBOOK_APP")
+    ) {
       logServerError("auth.oauth", err);
       return res.status(503).json({ message: CLIENT_FALLBACK.loginUnexpected });
     }
-    if (message === oauthAuthService.GOOGLE_ACCOUNT_NOT_REGISTERED_MESSAGE) {
+    if (
+      message === oauthAuthService.GOOGLE_ACCOUNT_NOT_REGISTERED_MESSAGE ||
+      message === oauthAuthService.OAUTH_ACCOUNT_NOT_REGISTERED_MESSAGE
+    ) {
       return res.status(400).json({
-        message: oauthAuthService.GOOGLE_ACCOUNT_NOT_REGISTERED_MESSAGE,
-        code: oauthAuthService.GOOGLE_ACCOUNT_NOT_REGISTERED_CODE,
+        message,
+        code:
+          message === oauthAuthService.GOOGLE_ACCOUNT_NOT_REGISTERED_MESSAGE
+            ? oauthAuthService.GOOGLE_ACCOUNT_NOT_REGISTERED_CODE
+            : oauthAuthService.OAUTH_ACCOUNT_NOT_REGISTERED_CODE,
       });
     }
     if (
       message === "Email already registered. Sign in instead." ||
+      message === oauthAuthService.OAUTH_EMAIL_ALREADY_REGISTERED_MESSAGE ||
       message.includes("Invite code") ||
       message.includes("invite code") ||
       message.includes("Invalid or expired")
@@ -848,15 +884,14 @@ export async function oauth(req: Request, res: Response) {
     }
     if (
       message === "This account has been disabled." ||
-      message === "Use the Platform Admin sign-in for this account."
+      message === "Use the Platform Admin sign-in for this account." ||
+      message === "Platform admin sign-in is not available with social login." ||
+      message === "Platform admin sign-in is not available with Google."
     ) {
       return res.status(403).json({ message });
     }
-    if (message === "Only Google sign-in is supported.") {
+    if (message.includes("Unsupported OAuth provider")) {
       return res.status(400).json({ message });
-    }
-    if (message === "Platform admin sign-in is not available with Google.") {
-      return res.status(403).json({ message });
     }
     if (message === "Invalid email or password") {
       return res.status(401).json({ message });
@@ -865,6 +900,74 @@ export async function oauth(req: Request, res: Response) {
     return res.status(400).json({
       message: clientSafeMessage(err, CLIENT_FALLBACK.loginUnexpected),
     });
+  }
+}
+
+export async function listLinkedOAuthAccounts(req: Request, res: Response) {
+  try {
+    const userId = req.user?.userId;
+    if (!userId) return res.status(401).json({ message: "Authentication required" });
+    const providers = await oauthAuthService.listLinkedOAuthProvidersForUser(userId);
+    const methods = await oauthAuthService.userHasPasswordOrOAuth(userId);
+    return res.status(200).json({
+      providers,
+      hasPassword: methods.hasPassword,
+    });
+  } catch (err) {
+    logServerError("auth.listLinkedOAuthAccounts", err);
+    return res.status(503).json({ message: CLIENT_FALLBACK.loginUnexpected });
+  }
+}
+
+export async function linkOAuthAccount(req: Request, res: Response) {
+  try {
+    const userId = req.user?.userId;
+    if (!userId) return res.status(401).json({ message: "Authentication required" });
+    const body = req.body as Record<string, unknown>;
+    const provider = typeof body.provider === "string" ? body.provider : "";
+    const idToken = typeof body.idToken === "string" ? body.idToken : "";
+    const result = await oauthAuthService.linkOAuthProviderForUser(userId, provider, idToken);
+    return res.status(200).json(result);
+  } catch (err) {
+    if (err instanceof oauthAuthService.OAuthTokenVerificationError) {
+      return res.status(401).json({
+        message: "Social account could not be verified.",
+        code: oauthAuthService.OAUTH_TOKEN_VERIFICATION_FAILED_CODE,
+      });
+    }
+    if (err instanceof oauthAuthService.OAuthEmailRequiredError) {
+      return res.status(400).json({ message: err.message, code: err.code });
+    }
+    const message = err instanceof Error ? err.message : "Link failed";
+    if (message === "Authentication required") {
+      return res.status(401).json({ message });
+    }
+    if (message.includes("Platform admin")) {
+      return res.status(403).json({ message });
+    }
+    return res.status(400).json({ message });
+  }
+}
+
+export async function unlinkOAuthAccount(req: Request, res: Response) {
+  try {
+    const userId = req.user?.userId;
+    if (!userId) return res.status(401).json({ message: "Authentication required" });
+    const body = req.body as Record<string, unknown>;
+    const provider =
+      typeof body.provider === "string"
+        ? body.provider
+        : typeof req.params.provider === "string"
+          ? req.params.provider
+          : "";
+    const result = await oauthAuthService.unlinkOAuthProviderForUser(userId, provider);
+    return res.status(200).json(result);
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Unlink failed";
+    if (message === "Authentication required") {
+      return res.status(401).json({ message });
+    }
+    return res.status(400).json({ message });
   }
 }
 

@@ -22,6 +22,7 @@ import { toUserFriendlyMessage } from "../../lib/errorMessages";
 import { logClientError } from "../../lib/clientLog";
 import { registerFcmDeviceToken, unregisterFcmDeviceToken } from "../../lib/fcmPush";
 import { ThemeAppearanceControl } from "@/app/components/theme/ThemeAppearanceControl";
+import { LinkedOAuthAccountsSection } from "@/app/components/business/settings/LinkedOAuthAccountsSection";
 import { changeAppLanguage, type AppLanguage } from "@/i18n/i18n";
 import { EmployeeSettingsFormSkeleton } from "../../components/dashboard/DashboardSectionLoading";
 import { Input } from "../../components/ui/input";
@@ -309,8 +310,9 @@ export function EmployeeSettingsPage() {
 
         <section className={employeeUi.settingsSection}>
           <h3 className={employeeUi.settingsHeading}>
-            Account security
+            {t("employee.settings.securitySection")}
           </h3>
+          <LinkedOAuthAccountsSection />
           <div>
             <Label htmlFor="cur-pw">{t("employee.settings.currentPassword")}</Label>
             <div className="relative mt-1">

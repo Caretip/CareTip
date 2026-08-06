@@ -7,7 +7,7 @@ type AuthEmployeeVenueBannerProps = {
   verified?: boolean;
 };
 
-/** Confirms invite validation and venue context on employee signup. */
+/** Confirms invite validation and venue context while completing an employee invitation. */
 export function AuthEmployeeVenueBanner({
   businessName,
   businessLocation,

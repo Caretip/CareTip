@@ -6,6 +6,7 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { AuthExperienceShell } from "@/components/auth/AuthExperienceShell";
 import { AuthField } from "@/components/auth/AuthField";
 import { AuthContinueButton } from "@/components/auth/AuthContinueButton";
+import { AuthScreenHeader } from "@/components/auth/AuthScreenHeader";
 import { Button } from "@/components/ui/Button";
 import { useAuth } from "@/hooks/useAuth";
 import { useI18n } from "@/hooks/useI18n";
@@ -98,15 +99,10 @@ export function MfaChallengeScreen() {
   return (
     <AuthExperienceShell showSecondaryActions={false}>
       <View style={authCardStyles.formBlock}>
-        <View style={authCardStyles.cardHeader}>
-          <Text style={authCardStyles.cardEyebrow}>{t("auth.security")}</Text>
-          <Text style={authCardStyles.cardTitle}>
-            {mfaSetupRequired ? t("auth.mfaSetupTitle") : t("auth.mfaTitle")}
-          </Text>
-          <Text style={authCardStyles.cardSubtitle}>
-            {mfaSetupRequired ? t("auth.mfaSetupSubtitle") : t("auth.mfaSubtitle")}
-          </Text>
-        </View>
+        <AuthScreenHeader
+          title={mfaSetupRequired ? t("auth.mfaSetupTitle") : t("auth.mfaTitle")}
+          subtitle={mfaSetupRequired ? t("auth.mfaSetupSubtitle") : t("auth.mfaSubtitle")}
+        />
 
         {mfaSetupRequired ? (
           <View style={styles.qrBlock}>
@@ -131,6 +127,7 @@ export function MfaChallengeScreen() {
               value={value}
               onChangeText={onChange}
               onBlur={onBlur}
+              placeholder={t("auth.mfaCodePlaceholder")}
               keyboardType="number-pad"
               autoComplete="one-time-code"
               textContentType="oneTimeCode"

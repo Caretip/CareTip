@@ -8,6 +8,7 @@ import { logAuthEvent } from "@/utils/authDebug";
 export type AuthBoundaryReason =
   | "password-login"
   | "google-login"
+  | "oauth-login"
   | "mfa-complete"
   | "session-restore"
   | "verify-email"
@@ -47,6 +48,7 @@ function shouldClearOfflineQrOnAuth(
   return (
     reason === "password-login" ||
     reason === "google-login" ||
+    reason === "oauth-login" ||
     reason === "mfa-complete" ||
     reason === "verify-email" ||
     reason === "onboarding-complete"

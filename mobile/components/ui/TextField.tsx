@@ -119,10 +119,8 @@ function createStyles(colors: ColorPalette) {
       gap: spacing.sm,
     },
     label: {
-      ...typography.caption,
+      ...typography.label,
       color: colors.foreground,
-      fontWeight: "600",
-      fontSize: 13,
     },
     inputShell: {
       borderRadius: radius.lg,
@@ -138,7 +136,7 @@ function createStyles(colors: ColorPalette) {
       justifyContent: "center",
     },
     inputText: {
-      ...typography.body,
+      ...typography.input,
       color: colors.foreground,
       padding: 0,
       margin: 0,
@@ -149,7 +147,7 @@ function createStyles(colors: ColorPalette) {
       backgroundColor: colors.destructiveSoft,
     },
     error: {
-      ...typography.caption,
+      ...typography.helper,
       color: colors.destructive,
     },
   });

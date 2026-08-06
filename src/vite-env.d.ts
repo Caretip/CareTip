@@ -6,6 +6,10 @@ interface ImportMetaEnv {
   readonly VITE_GOOGLE_CLIENT_ID?: string;
   /** Same as `VITE_GOOGLE_CLIENT_ID`; supported for hosts that only define `NEXT_PUBLIC_*` (e.g. some Vercel setups). */
   readonly NEXT_PUBLIC_GOOGLE_CLIENT_ID?: string;
+  /** Apple Sign In Services ID (inlined at build). Same value as backend `APPLE_CLIENT_ID`. */
+  readonly VITE_APPLE_CLIENT_ID?: string;
+  /** Facebook Login App ID (inlined at build). Same value as backend `FACEBOOK_APP_ID`. */
+  readonly VITE_FACEBOOK_APP_ID?: string;
   /** Optional URL (e.g. `/videos/how-it-works.webm`) for the Live in minutes laptop demo; when unset, an in-browser slideshow is used. */
   readonly VITE_LIVE_IN_MINUTES_DEMO_VIDEO?: string;
   readonly VITE_API_URL?: string;

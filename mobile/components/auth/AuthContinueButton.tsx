@@ -45,11 +45,19 @@ export function AuthContinueButton({
       android_ripple={{ color: "rgba(255,255,255,0.22)" }}
       onPressIn={(e) => {
         if (!isDisabled) hapticLight();
-        scale.value = withSpring(0.97, motion.spring.press);
+        scale.value = withSpring(0.965, {
+          ...motion.spring.press,
+          damping: 18,
+          stiffness: 320,
+        });
         onPressIn?.(e);
       }}
       onPressOut={(e) => {
-        scale.value = withSpring(1, motion.spring.press);
+        scale.value = withSpring(1, {
+          ...motion.spring.press,
+          damping: 16,
+          stiffness: 260,
+        });
         onPressOut?.(e);
       }}
       style={[styles.wrap, isDisabled ? styles.disabled : null]}
@@ -75,30 +83,30 @@ export function AuthContinueButton({
 
 const styles = StyleSheet.create({
   wrap: {
-    borderRadius: radius.xl,
+    borderRadius: radius["2xl"],
     overflow: "hidden",
     marginTop: spacing.sm,
     ...Platform.select({
       ios: {
         shadowColor: authBrand.orangeDeep,
-        shadowOpacity: 0.42,
-        shadowRadius: 18,
-        shadowOffset: { width: 0, height: 10 },
+        shadowOpacity: 0.55,
+        shadowRadius: 22,
+        shadowOffset: { width: 0, height: 12 },
       },
-      android: { elevation: 8 },
+      android: { elevation: 10 },
       default: {},
     }),
   },
   scaleWrap: {
-    borderRadius: radius.xl,
+    borderRadius: radius["2xl"],
     overflow: "hidden",
   },
   gradient: {
-    minHeight: touchTarget + 10,
+    minHeight: touchTarget + 16,
     alignItems: "center",
     justifyContent: "center",
     paddingHorizontal: spacing.xl,
-    borderRadius: radius.xl,
+    borderRadius: radius["2xl"],
   },
   label: {
     ...typography.button,

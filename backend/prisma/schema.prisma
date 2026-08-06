@@ -190,13 +190,16 @@ model User {
   id                     String    @id @default(cuid())
   email                  String    @unique
   /**
-   * Null when the account only uses Google sign-in.
+   * Null when the account only uses social sign-in (no password set).
    */
   passwordHash           String?   @map("password_hash")
   /**
-   * e.g. google — paired with oauthSubject for IdP lookup.
+   * @deprecated Prefer OAuthAccount rows. Kept nullable for rollback/compat; no longer written.
    */
   oauthProvider          String?   @map("oauth_provider")
+  /**
+   * @deprecated Prefer OAuthAccount rows. Kept nullable for rollback/compat; no longer written.
+   */
   oauthSubject           String?   @map("oauth_subject")
   role                   Role
   emailVerified          Boolean   @default(false) @map("email_verified")
@@ -230,6 +233,7 @@ model User {
 
   business                Business?
   employee                Employee?
+  oauthAccounts           OAuthAccount[]
   auditLogs               AuditLog[]
   passwordResetTokens     PasswordResetToken[]
   emailVerificationTokens EmailVerificationToken[]
@@ -254,6 +258,28 @@ model User {
 
   @@unique([oauthProvider, oauthSubject], map: "User_oauth_provider_subject_key")
   @@index([createdAt(sort: Desc)])
+}
+
+/**
+ * Linked identity providers (Google / Apple / Facebook).
+ * One CareTip user may link multiple providers; each provider subject is globally unique.
+ */
+model OAuthAccount {
+  id          String   @id @default(cuid())
+  userId      String   @map("user_id")
+  provider    String
+  subject     String
+  emailAtLink String?  @map("email_at_link")
+  displayName String?  @map("display_name")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, subject], map: "OAuthAccount_provider_subject_key")
+  @@unique([userId, provider], map: "OAuthAccount_user_provider_key")
+  @@index([userId])
+  @@map("oauth_accounts")
 }
 
 model UserSettings {

@@ -10,17 +10,17 @@ import { caretipBtnGhost, caretipBtnPrimary, caretipBtnSecondary } from "@/lib/c
 export const DASHBOARD_WORKSPACE_FLAG = "dashboard-workspace";
 
 export const dashboardWorkspaceUi = {
-  eyebrow: "text-xs font-medium uppercase tracking-wider text-muted-foreground",
-  pageTitle: "text-2xl font-semibold tracking-tight text-foreground",
-  sectionTitle: "text-base font-semibold tracking-tight text-foreground",
-  subsectionTitle: "text-sm font-medium text-foreground",
-  pageDescription: "mt-1 max-w-prose text-sm leading-relaxed text-muted-foreground",
-  helperText: "text-sm text-muted-foreground",
-  formLabel: "text-sm font-medium text-foreground",
+  eyebrow: `${caretipType.overline} text-muted-foreground`,
+  pageTitle: caretipType.appTitle,
+  sectionTitle: caretipType.appSubtitle,
+  subsectionTitle: caretipType.h4,
+  pageDescription: `mt-1 max-w-prose ${caretipType.smallBody}`,
+  helperText: caretipType.helper,
+  formLabel: caretipType.label,
   kpiLabel: caretipType.kpiLabel,
   kpiValue: caretipType.kpiValue,
-  emptyTitle: "text-base font-semibold text-foreground",
-  emptyDesc: "text-sm leading-relaxed text-muted-foreground",
+  emptyTitle: caretipType.cardTitle,
+  emptyDesc: caretipType.smallBody,
 
   pageHeader: "dashboard-workspace-page-header mb-6",
   moduleHeader: "dashboard-workspace-module-header mb-6 border-b border-border pb-5",

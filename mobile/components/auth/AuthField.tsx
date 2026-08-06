@@ -133,25 +133,22 @@ export const AuthField = forwardRef<TextInput, AuthFieldProps>(function AuthFiel
 
 const styles = StyleSheet.create({
   wrap: {
-    gap: spacing.sm,
+    gap: spacing.md,
   },
   label: {
-    ...typography.caption,
+    ...typography.label,
     color: authBrand.fieldLabel,
-    fontWeight: "600",
-    fontSize: 12,
     paddingHorizontal: spacing.xxs,
-    letterSpacing: 0.35,
+    letterSpacing: 0.4,
   },
   field: {
-    borderRadius: radius.xl,
+    borderRadius: radius["2xl"],
     borderWidth: StyleSheet.hairlineWidth * 2,
-    // Solid fill — avoid BlurView/elevation artifacts that drew a mid-field hairline on Android.
     backgroundColor: authBrand.fieldFill,
     overflow: "hidden",
   },
   fieldInner: {
-    minHeight: touchTarget + 6,
+    minHeight: touchTarget + 14,
     flexDirection: "row",
     alignItems: "center",
     paddingHorizontal: spacing.lg,
@@ -166,22 +163,20 @@ const styles = StyleSheet.create({
     width: StyleSheet.hairlineWidth,
     alignSelf: "stretch",
     marginVertical: spacing.md,
-    backgroundColor: "rgba(255,255,255,0.18)",
+    backgroundColor: "rgba(255,255,255,0.22)",
   },
   input: {
     flex: 1,
-    ...typography.body,
+    ...typography.input,
     color: authBrand.fieldText,
     backgroundColor: "transparent",
-    paddingVertical: Platform.OS === "ios" ? spacing.md : spacing.sm,
+    paddingVertical: Platform.OS === "ios" ? spacing.md + 2 : spacing.md,
     paddingHorizontal: 0,
     margin: 0,
-    minHeight: touchTarget,
-    fontSize: 16,
+    minHeight: touchTarget + 4,
     borderWidth: 0,
     borderBottomWidth: 0,
     borderBottomColor: "transparent",
-    // Kill residual Android TextInput underlines / Material strokes.
     ...(Platform.OS === "android"
       ? {
           includeFontPadding: false,
@@ -193,7 +188,7 @@ const styles = StyleSheet.create({
     opacity: 0.96,
   },
   error: {
-    ...typography.caption,
+    ...typography.helper,
     color: authBrand.fieldError,
     fontWeight: "600",
     paddingHorizontal: spacing.xxs,

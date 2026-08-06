@@ -96,11 +96,16 @@ async function testOAuthSignupNestedCreate(): Promise<boolean> {
     data: {
       email,
       passwordHash: null,
-      oauthProvider: "google",
-      oauthSubject: `google-sub-${tag}`,
       role: "MANAGER",
       isPlatformAdmin: false,
       emailVerified: true,
+      oauthAccounts: {
+        create: {
+          provider: "google",
+          subject: `google-sub-${tag}`,
+          emailAtLink: email,
+        },
+      },
       business: {
         create: {
           name: bizName,

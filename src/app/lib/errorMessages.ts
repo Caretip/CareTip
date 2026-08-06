@@ -8,6 +8,10 @@ import {
   isApiRequestError,
   EMAIL_NOT_VERIFIED_CODE,
   GOOGLE_ACCOUNT_NOT_REGISTERED_CODE,
+  OAUTH_ACCOUNT_NOT_REGISTERED_CODE,
+  OAUTH_LINKING_REQUIRED_CODE,
+  OAUTH_EMAIL_REQUIRED_CODE,
+  OAUTH_TOKEN_VERIFICATION_FAILED_CODE,
   SUBSCRIPTION_REQUIRED_CODE,
 } from "./apiError";
 import { translateFriendlyMessageToDe } from "./friendlyMessageDe";
@@ -95,9 +99,20 @@ const ERROR_MAP: Record<string, string> = {
     "Sign-in isn't available right now. Please try again in a few minutes.",
   "Sign-in service is temporarily unavailable. Please try again shortly.":
     "Sign-in isn't available right now. Please try again in a few minutes.",
-  "This account uses Google sign-in.": "This account uses Google sign-in. Use “Continue with Google” instead of a password.",
+  "This account uses Google sign-in.":
+    "This account uses social sign-in. Use Continue with Google, Apple, or Facebook instead of a password.",
   "Password sign-in is not set for this account. Use Google.":
-    "This account only uses Google sign-in. Use “Continue with Google”.",
+    "This account only uses social sign-in. Use Continue with Google, Apple, or Facebook.",
+  [OAUTH_LINKING_REQUIRED_CODE]:
+    "An account with this email already exists. Sign in with your existing method, then link this provider from Settings → Security → Linked Accounts.",
+  [OAUTH_EMAIL_REQUIRED_CODE]:
+    "Facebook did not provide an email address. Enable email permission in Facebook Login, or use another sign-in method.",
+  [OAUTH_TOKEN_VERIFICATION_FAILED_CODE]:
+    "Social sign-in could not be verified. Please try again.",
+  [OAUTH_ACCOUNT_NOT_REGISTERED_CODE]:
+    "This social account is not registered with CareTip yet. Please create an account first.",
+  [GOOGLE_ACCOUNT_NOT_REGISTERED_CODE]:
+    "This Google account is not registered with CareTip yet. Please create an account first.",
   "This account has been disabled.": "This account has been disabled. Contact support if you think this is a mistake.",
   "Email is already verified.": "Your email is already verified. You can sign in.",
   "We sent a new verification link to your email.": "We sent a new verification link. Check your inbox (and spam).",
@@ -293,7 +308,11 @@ export function toUserFriendlyMessage(error: unknown, options?: ToUserFriendlyMe
   if (error == null) return localizeFriendlyMessageCopy(GENERIC_UNKNOWN_ERROR);
   if (isAbortError(error)) return "";
 
-  if (isApiRequestError(error) && error.code === GOOGLE_ACCOUNT_NOT_REGISTERED_CODE) {
+  if (
+    isApiRequestError(error) &&
+    (error.code === GOOGLE_ACCOUNT_NOT_REGISTERED_CODE ||
+      error.code === OAUTH_ACCOUNT_NOT_REGISTERED_CODE)
+  ) {
     return localizeFriendlyMessageCopy(error.message);
   }
 
