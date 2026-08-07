@@ -102,8 +102,15 @@ export function LayeredScreenShell({
 
   const { colors, isDark } = useTheme();
   const sheetBackground = isDark ? colors.background : layered.sheetBackground;
-  const pageBackground = isDark ? colors.background : layered.pageBackground;
-  const rootBackground = isDashboard ? pageBackground : isFloating ? authBrand.dark : brand.orange;
+  /**
+   * Dashboard + tab bar: keep one continuous surface into the absolute MimeTabBar.
+   * Using pageBackground (#FCFCFD) under a white sheet/tab created a visible lower split.
+   */
+  const rootBackground = isDashboard
+    ? sheetBackground
+    : isFloating
+      ? authBrand.dark
+      : brand.orange;
 
   const {
     contentContainerStyle: scrollContentStyleOverride,
@@ -174,13 +181,11 @@ export function LayeredScreenShell({
               borderTopRightRadius: layered.sheetRadius,
               paddingHorizontal: pagePadding,
               paddingTop: spacing["2xl"],
-              paddingBottom: spacing["3xl"],
+              // Tab clearance lives on ScrollView paddingBottom only — do not also
+              // inflate sheet minHeight or a second empty white band appears above the nav.
+              paddingBottom: tabSafe ? spacing.xl : spacing["3xl"],
               backgroundColor: sheetBackground,
-              minHeight:
-                height -
-                heroBackdropHeight +
-                layered.sheetOverlap +
-                (tabSafe ? tabBarScrollClearance(insets.bottom) : 0),
+              minHeight: height - heroBackdropHeight + layered.sheetOverlap,
             },
           ]}
         >
