@@ -325,7 +325,7 @@ function portalReturnUrl(flow: "default" | "payment_methods"): string {
   const path =
     flow === "payment_methods"
       ? "/dashboard/billing/payment-methods"
-      : "/dashboard/billing/invoices";
+      : "/dashboard/billing/subscription";
   return `${base}${path}`;
 }
 
@@ -336,7 +336,13 @@ export async function postMyBillingPortal(req: Request, res: Response) {
       return res.status(ctx.status).json({ message: ctx.message });
     }
 
+    // Tenant-scoped status only — never accept client-supplied business/customer IDs.
     const status = await getBillingStatusForBusiness(ctx.businessId);
+    if (status.accessSource === "sponsored") {
+      return res.status(403).json({
+        message: "Billing portal is not available while sponsored access is active",
+      });
+    }
     if (!status.stripeCustomerId) {
       return res.status(400).json({ message: "No Stripe customer linked to this account" });
     }

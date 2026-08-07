@@ -237,7 +237,7 @@ export async function createBillingPortalSession(params: {
   const flow = params.flow ?? "default";
   const session = await stripe.billingPortal.sessions.create({
     customer: params.stripeCustomerId,
-    return_url: params.returnUrl ?? `${frontendBaseUrl()}/dashboard/billing/invoices`,
+    return_url: params.returnUrl ?? `${frontendBaseUrl()}/dashboard/billing/subscription`,
     ...(flow === "payment_methods"
       ? { flow_data: { type: "payment_method_update" as const } }
       : {}),

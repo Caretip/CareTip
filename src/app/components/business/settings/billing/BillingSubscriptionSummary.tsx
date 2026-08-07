@@ -9,6 +9,7 @@ import {
   hasOperationalBillingPlan,
   isOnInternalBasicPlan,
   resolveBillingPlanKey,
+  shouldManagePlanOpenStripePortal,
 } from "../../../../lib/billingDisplayState";
 import {
   resolveBillingTrialPlanKey,
@@ -39,15 +40,32 @@ function sponsoredProgrammeLabel(
 
 type Props = {
   billing: BillingStatus;
-  onManageBilling?: () => void;
-  manageBillingBusy?: boolean;
+  /** Opens Stripe Customer Portal when Manage Plan should use portal (paid / trial). */
+  onOpenStripePortal?: () => void;
+  managePlanBusy?: boolean;
   className?: string;
 };
 
+function ManagePlanScrollLink({ className }: { className?: string }) {
+  const { t } = useTranslation();
+  return (
+    <a
+      href={`#${BILLING_PLANS_SECTION_ID}`}
+      onClick={(e) => {
+        e.preventDefault();
+        scrollToBillingPlansSection("smooth");
+      }}
+      className={className}
+    >
+      {t("business.billing.managePlan")}
+    </a>
+  );
+}
+
 export function BillingSubscriptionSummary({
   billing,
-  onManageBilling,
-  manageBillingBusy = false,
+  onOpenStripePortal,
+  managePlanBusy = false,
   className,
 }: Props) {
   const { t, i18n } = useTranslation();
@@ -94,16 +112,9 @@ export function BillingSubscriptionSummary({
               {t("business.billing.subscriptionSummary.noActiveTitle")}
             </h2>
           </div>
-          <a
-            href={`#${BILLING_PLANS_SECTION_ID}`}
-            onClick={(e) => {
-              e.preventDefault();
-              scrollToBillingPlansSection("smooth");
-            }}
+          <ManagePlanScrollLink
             className={cn(dashboardWorkspaceUi.btnSecondary, "inline-flex shrink-0")}
-          >
-            {t("business.billing.managePlan")}
-          </a>
+          />
         </div>
         <p className="billing-subscription-summary__inline-meta">
           {t("business.billing.subscriptionSummary.noActiveBody")}
@@ -137,7 +148,8 @@ export function BillingSubscriptionSummary({
     });
   }
 
-  const showManageBilling = Boolean(onManageBilling && billing.hasStripeBilling);
+  /** SaaS rule: free/basic → pricing; paid/trial with Stripe → Customer Portal. Label always “Manage Plan”. */
+  const openPortal = Boolean(onOpenStripePortal && shouldManagePlanOpenStripePortal(billing));
   const badgeStatus = onBasic
     ? ("active" as const)
     : billing.status !== "none"
@@ -159,35 +171,26 @@ export function BillingSubscriptionSummary({
           </h2>
         </div>
         <div className="flex shrink-0 flex-wrap items-center justify-end gap-2">
-          {showManageBilling ? (
+          {openPortal ? (
             <button
               type="button"
-              onClick={onManageBilling}
-              disabled={manageBillingBusy}
+              onClick={onOpenStripePortal}
+              disabled={managePlanBusy}
               className={cn(
                 dashboardWorkspaceUi.btnPrimary,
                 "inline-flex gap-2 disabled:opacity-60",
               )}
-              aria-busy={manageBillingBusy || undefined}
+              aria-busy={managePlanBusy || undefined}
             >
-              {manageBillingBusy ? (
+              {managePlanBusy ? (
                 <Loader2 className="size-4 shrink-0 animate-spin" aria-hidden />
               ) : (
                 <CreditCard className="size-4 shrink-0" aria-hidden />
               )}
-              {t("business.billing.manageBilling")}
+              {t("business.billing.managePlan")}
             </button>
           ) : (
-            <a
-              href={`#${BILLING_PLANS_SECTION_ID}`}
-              onClick={(e) => {
-                e.preventDefault();
-                scrollToBillingPlansSection("smooth");
-              }}
-              className={cn(dashboardWorkspaceUi.btnPrimary, "inline-flex")}
-            >
-              {t("business.billing.managePlan")}
-            </a>
+            <ManagePlanScrollLink className={cn(dashboardWorkspaceUi.btnPrimary, "inline-flex")} />
           )}
         </div>
       </div>

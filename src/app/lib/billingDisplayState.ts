@@ -31,6 +31,27 @@ export function isOnInternalBasicPlan(billing: BillingStatus): boolean {
 }
 
 /**
+ * Context-aware “Manage Plan” CTA:
+ * - Free / internal Basic → scroll to in-page pricing (caller handles scroll)
+ * - Active paid Stripe subscription (Pro / Premium) → Stripe Customer Portal
+ * - Active trial with Stripe customer already established → Stripe Customer Portal
+ * - Sponsored / no Stripe customer → do not open portal
+ */
+export function shouldManagePlanOpenStripePortal(billing: BillingStatus): boolean {
+  if (billing.accessSource === "sponsored") return false;
+  if (!billing.billingEnabled || !billing.stripeConfigured) return false;
+  if (!billing.stripeCustomerId?.trim()) return false;
+
+  // Paid (or past-checkout) Stripe subscription linked on the mirror.
+  if (billing.hasStripeBilling) return true;
+
+  // Trial with Stripe billing already set up (customer present) even if mirror lag.
+  if (isBillingTrialActive(billing)) return true;
+
+  return false;
+}
+
+/**
  * Post-trial downgrade: Pro trial truly ended and the venue is back on Basic
  * without an upgraded paid Pro/Premium subscription.
  */

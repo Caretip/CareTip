@@ -11,6 +11,7 @@ import {
   hasOperationalBillingPlan,
   isBillingTrialActive,
   isOnInternalBasicPlan,
+  shouldManagePlanOpenStripePortal,
   shouldShowTrialAlreadyUsedMessage,
   shouldShowTrialExpiredUpgrade,
 } from "../src/app/lib/billingDisplayState";
@@ -157,6 +158,79 @@ function testCheckoutIntentBasicSkipped(): boolean {
   return ok;
 }
 
+/** Manage Plan CTA: free/basic → pricing; paid/trial with Stripe → Customer Portal. */
+function testManagePlanPortalRouting(): boolean {
+  let ok = true;
+
+  const basic = mockBilling({});
+  if (shouldManagePlanOpenStripePortal(basic)) {
+    fail("basic plan must scroll to pricing (not open Stripe portal)");
+    ok = false;
+  }
+
+  const paidPro = mockBilling({
+    planKey: "premium",
+    status: "active",
+    hasStripeBilling: true,
+    stripeCustomerId: "cus_paid",
+  });
+  if (!shouldManagePlanOpenStripePortal(paidPro)) {
+    fail("paid Pro with Stripe subscription must open Customer Portal");
+    ok = false;
+  }
+
+  const trial = mockBilling({
+    planKey: "premium",
+    status: "trialing",
+    isTrial: true,
+    trialDaysRemaining: 10,
+    hasStripeBilling: true,
+    stripeCustomerId: "cus_trial",
+  });
+  if (!shouldManagePlanOpenStripePortal(trial)) {
+    fail("active trial with Stripe customer must open Customer Portal");
+    ok = false;
+  }
+
+  const trialCustomerOnly = mockBilling({
+    planKey: "premium",
+    status: "trialing",
+    isTrial: true,
+    trialDaysRemaining: 5,
+    hasStripeBilling: false,
+    stripeCustomerId: "cus_trial_only",
+  });
+  if (!shouldManagePlanOpenStripePortal(trialCustomerOnly)) {
+    fail("active trial with Stripe customer (no sub flag yet) must open Customer Portal");
+    ok = false;
+  }
+
+  const sponsored = mockBilling({
+    accessSource: "sponsored",
+    planKey: "premium",
+    hasStripeBilling: true,
+    stripeCustomerId: "cus_sponsored",
+  });
+  if (shouldManagePlanOpenStripePortal(sponsored)) {
+    fail("sponsored accounts must not open Stripe portal from Manage Plan");
+    ok = false;
+  }
+
+  const noCustomer = mockBilling({
+    planKey: "premium",
+    status: "active",
+    hasStripeBilling: true,
+    stripeCustomerId: null,
+  });
+  if (shouldManagePlanOpenStripePortal(noCustomer)) {
+    fail("paid plan without stripeCustomerId must not open portal");
+    ok = false;
+  }
+
+  if (ok) pass("Manage Plan routes free→pricing and paid/trial→Stripe portal");
+  return ok;
+}
+
 function main(): void {
   const checks = [
     testBasicOperational(),
@@ -164,6 +238,7 @@ function main(): void {
     testActiveProTrialDoesNotShowUsedMessage(),
     testPaidProDoesNotShowUsedMessage(),
     testCheckoutIntentBasicSkipped(),
+    testManagePlanPortalRouting(),
   ];
   console.log(results.join("\n"));
   if (checks.some((c) => !c)) {

@@ -114,8 +114,8 @@ export function BusinessSettingsBillingPanel() {
     <div className="billing-settings-panel space-y-8">
       <BillingSubscriptionSummary
         billing={data}
-        onManageBilling={canOpenPortal ? () => void openBillingPortal() : undefined}
-        manageBillingBusy={portalBusy}
+        onOpenStripePortal={canOpenPortal ? () => void openBillingPortal() : undefined}
+        managePlanBusy={portalBusy}
       />
 
       <BillingSubscriptionLifecycle billing={data} />
