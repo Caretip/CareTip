@@ -8,6 +8,7 @@ import {
   resetSplashLifecycle,
   scheduleSplashWatchdog,
 } from "@/utils/splashLifecycle";
+import { cleanupShareTempFiles } from "@/services/share";
 
 /**
  * Idempotent cold/warm start — resets splash state, bounds bootstrap, arms watchdog.
@@ -19,6 +20,9 @@ export function StartupBridge({ children }: { children: ReactNode }) {
     resetSplashLifecycle();
     ensureSplashPrevented();
     scheduleSplashWatchdog();
+
+    // Clear orphaned share temps / interrupted export files from prior sessions.
+    void cleanupShareTempFiles({ includeExport: true });
 
     void Promise.all([
       useI18nStore.getState().hydrate(),

@@ -1,5 +1,6 @@
 import { apiClient } from "@/services/api/client";
 import { API_ENDPOINTS } from "@/constants/endpoints";
+import { shareJsonExport, type ShareOutcome } from "@/services/share";
 import type { EmployeeProfile, EmployeeTimeframe, EmployeeTipsStats } from "@/types/employee";
 
 export async function fetchEmployeeProfile(): Promise<EmployeeProfile> {
@@ -18,15 +19,16 @@ export async function fetchEmployeeTips(
   return data;
 }
 
-export async function downloadEmployeeDataExport(): Promise<void> {
+export async function downloadEmployeeDataExport(): Promise<ShareOutcome> {
   const { data } = await apiClient.get<unknown>(API_ENDPOINTS.employees.meExport);
-  const { shareAsync, isAvailableAsync } = await import("expo-sharing");
-  const FileSystem = await import("expo-file-system/legacy");
-  const path = `${FileSystem.cacheDirectory ?? ""}caretip-data-export.json`;
-  await FileSystem.writeAsStringAsync(path, JSON.stringify(data, null, 2));
-  if (await isAvailableAsync()) {
-    await shareAsync(path, { mimeType: "application/json", dialogTitle: "CareTip data export" });
+  const outcome = await shareJsonExport({
+    data,
+    dialogTitle: "CareTip data export",
+  });
+  if (outcome === "failed" || outcome === "unavailable") {
+    throw new Error("SHARE_EXPORT_UNAVAILABLE");
   }
+  return outcome;
 }
 
 export async function deleteEmployeeAccount(): Promise<void> {

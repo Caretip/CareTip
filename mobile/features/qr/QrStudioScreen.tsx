@@ -1,6 +1,4 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import * as Clipboard from "expo-clipboard";
-import * as Sharing from "expo-sharing";
 import {
   FlatList,
   Pressable,
@@ -27,7 +25,8 @@ import { useTheme } from "@/hooks/useTheme";
 import { loadOfflineQrItems } from "@/utils/offlineQrCache";
 import { resolveQrStudioDisplayItems } from "@/utils/offlineQrTenantIsolation";
 import { AccessErrorState } from "@/components/ui/AccessErrorState";
-import { showSuccessToast } from "@/store/toastStore";
+import { copyToClipboard, shareUrl } from "@/services/share";
+import { showErrorToast, showSuccessToast } from "@/store/toastStore";
 import type { QrCodeItem } from "@/types/qr";
 import { LIST_PERF_COMPACT } from "@/constants/listPerf";
 import type { ColorPalette } from "@/theme/colors";
@@ -45,6 +44,8 @@ export function QrStudioScreen() {
   const [selected, setSelected] = useState<QrCodeItem | null>(null);
   const [offlineItems, setOfflineItems] = useState<QrCodeItem[]>([]);
   const [qrReloadKey, setQrReloadKey] = useState(0);
+  const [sharing, setSharing] = useState(false);
+  const [copying, setCopying] = useState(false);
   const { userId, items, isLoading, isRefreshing, refresh, error } = useQrStudio();
 
   const typeLabels: Record<QrCodeItem["type"], string> = useMemo(
@@ -98,19 +99,41 @@ export function QrStudioScreen() {
     void refresh();
   });
 
-  const handleCopy = useCallback(async (url: string) => {
-    await Clipboard.setStringAsync(url);
-    showSuccessToast(t("success.linkCopied"));
-  }, [t]);
+  const handleCopy = useCallback(
+    async (url: string) => {
+      if (!url || copying) return;
+      setCopying(true);
+      try {
+        await copyToClipboard(url);
+        showSuccessToast(t("success.linkCopied"));
+      } catch {
+        showErrorToast(t("qr.shareFailed"));
+      } finally {
+        setCopying(false);
+      }
+    },
+    [copying, t],
+  );
 
-  const handleShare = useCallback(async (item: QrCodeItem) => {
-    const canShare = await Sharing.isAvailableAsync();
-    if (canShare) {
-      await Sharing.shareAsync(item.url, { dialogTitle: `${t("qr.share")} ${item.title}` });
-    } else {
-      await handleCopy(item.url);
-    }
-  }, [handleCopy, t]);
+  const handleShare = useCallback(
+    async (item: QrCodeItem) => {
+      if (!item.url || sharing) return;
+      setSharing(true);
+      try {
+        await shareUrl({
+          url: item.url,
+          dialogTitle: `${t("qr.share")} ${item.title}`,
+          fallbackToCopy: true,
+          successMessage: t("success.shared"),
+          errorMessage: t("qr.shareFailed"),
+          copiedMessage: t("qr.shareUnavailable"),
+        });
+      } finally {
+        setSharing(false);
+      }
+    },
+    [sharing, t],
+  );
 
   const listHeader = useMemo(
     () => (
@@ -133,17 +156,42 @@ export function QrStudioScreen() {
             <View style={styles.actions}>
               <Button
                 label={t("qr.copyLink")}
+                accessibilityLabel={t("qr.copyLink")}
                 variant="secondary"
+                loading={copying}
+                disabled={copying || sharing}
                 onPress={() => void handleCopy(selected.url)}
               />
-              <Button label={t("qr.share")} onPress={() => void handleShare(selected)} />
-              <Button label={t("qr.backToList")} variant="ghost" onPress={() => setSelected(null)} />
+              <Button
+                label={t("qr.share")}
+                accessibilityLabel={t("qr.share")}
+                loading={sharing}
+                disabled={sharing || copying}
+                onPress={() => void handleShare(selected)}
+              />
+              <Button
+                label={t("qr.backToList")}
+                accessibilityLabel={t("qr.backToList")}
+                variant="ghost"
+                onPress={() => setSelected(null)}
+              />
             </View>
           </View>
         ) : null}
       </>
     ),
-    [handleCopy, handleShare, offline, qrReloadKey, selected, styles, t, typeLabels],
+    [
+      copying,
+      handleCopy,
+      handleShare,
+      offline,
+      qrReloadKey,
+      selected,
+      sharing,
+      styles,
+      t,
+      typeLabels,
+    ],
   );
 
   const keyExtractor = useCallback((item: QrCodeItem) => item.id, []);

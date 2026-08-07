@@ -271,6 +271,7 @@ export const en: MobileMessages = {
   },
   businessDashboard: {
     eyebrow: "YOUR VENUE",
+    welcomeGreeting: "Welcome back",
     welcome: "Welcome back, {{name}}",
     venueFallback: "Your venue",
     activity: "Activity",
@@ -360,6 +361,7 @@ export const en: MobileMessages = {
   },
   employeeDashboard: {
     eyebrow: "YOUR TIPS",
+    welcomeGreeting: "Welcome back",
     welcome: "Welcome back, {{name}}",
     loadError: "Could not load dashboard.",
     tipsLoadError: "Could not load tips.",
@@ -469,6 +471,9 @@ export const en: MobileMessages = {
     tableQr: "Table QR",
     copyLink: "Copy link",
     share: "Share",
+    shareSuccess: "Ready to share.",
+    shareFailed: "Could not open the share sheet. Try Copy link instead.",
+    shareUnavailable: "Sharing is not available on this device. The link was copied instead.",
     unavailable: "QR unavailable — missing link.",
     tipLinkHint: "Guest tip link",
     poweredBy: "Powered by CareTip",
@@ -715,6 +720,7 @@ export const en: MobileMessages = {
     saved: "Your changes have been saved.",
     qrCreated: "QR code created successfully.",
     linkCopied: "Link copied to your clipboard.",
+    shared: "Shared successfully.",
     paymentReceived: "Payment received successfully.",
   },
   admin: {

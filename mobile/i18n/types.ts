@@ -248,6 +248,7 @@ export type MobileMessages = {
   };
   businessDashboard: {
     eyebrow: string;
+    welcomeGreeting: string;
     welcome: string;
     venueFallback: string;
     activity: string;
@@ -337,6 +338,7 @@ export type MobileMessages = {
   };
   employeeDashboard: {
     eyebrow: string;
+    welcomeGreeting: string;
     welcome: string;
     loadError: string;
     tipsLoadError: string;
@@ -446,6 +448,9 @@ export type MobileMessages = {
     tableQr: string;
     copyLink: string;
     share: string;
+    shareSuccess: string;
+    shareFailed: string;
+    shareUnavailable: string;
     unavailable: string;
     tipLinkHint: string;
     poweredBy: string;
@@ -691,6 +696,7 @@ export type MobileMessages = {
     saved: string;
     qrCreated: string;
     linkCopied: string;
+    shared: string;
     paymentReceived: string;
   };
   admin: {

@@ -277,6 +277,7 @@ export const de: MobileMessages = {
   },
   businessDashboard: {
     eyebrow: "IHR VENUE",
+    welcomeGreeting: "Willkommen zurück",
     welcome: "Willkommen zurück, {{name}}",
     venueFallback: "Ihr Venue",
     activity: "Aktivität",
@@ -367,6 +368,7 @@ export const de: MobileMessages = {
   },
   employeeDashboard: {
     eyebrow: "IHRE TRINKGELDER",
+    welcomeGreeting: "Willkommen zurück",
     welcome: "Willkommen zurück, {{name}}",
     loadError: "Dashboard konnte nicht geladen werden.",
     tipsLoadError: "Trinkgelder konnten nicht geladen werden.",
@@ -477,6 +479,9 @@ export const de: MobileMessages = {
     tableQr: "Tisch-QR",
     copyLink: "Link kopieren",
     share: "Teilen",
+    shareSuccess: "Bereit zum Teilen.",
+    shareFailed: "Teilen konnte nicht geöffnet werden. Nutze stattdessen „Link kopieren“.",
+    shareUnavailable: "Teilen ist auf diesem Gerät nicht verfügbar. Der Link wurde kopiert.",
     unavailable: "QR nicht verfügbar — Link fehlt.",
     tipLinkHint: "Gäste-Trinkgeld-Link",
     poweredBy: "Powered by CareTip",
@@ -728,6 +733,7 @@ export const de: MobileMessages = {
     saved: "Ihre Änderungen wurden gespeichert.",
     qrCreated: "QR-Code erfolgreich erstellt.",
     linkCopied: "Link in die Zwischenablage kopiert.",
+    shared: "Erfolgreich geteilt.",
     paymentReceived: "Zahlung erfolgreich erhalten.",
   },
   admin: {

@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { Alert, StyleSheet, Text } from "react-native";
 import { useRouter } from "expo-router";
 import { Button } from "@/components/ui/Button";
@@ -19,13 +19,20 @@ export function EmployeePrivacyDataSettingsScreen() {
   const styles = useMemo(() => createStyles(colors), [colors]);
   const router = useRouter();
   const { signOut } = useAuth();
+  const [exporting, setExporting] = useState(false);
 
   const handleExport = async () => {
+    if (exporting) return;
+    setExporting(true);
     try {
-      await downloadEmployeeDataExport();
-      showSuccessToast(t("settings.menu.exportStarted"));
+      const outcome = await downloadEmployeeDataExport();
+      if (outcome === "shared") {
+        showSuccessToast(t("settings.menu.exportStarted"));
+      }
     } catch (e) {
       showErrorToast(friendlyErrorMessage(e, t("settings.menu.exportError"), t));
+    } finally {
+      setExporting(false);
     }
   };
 
@@ -58,8 +65,21 @@ export function EmployeePrivacyDataSettingsScreen() {
       <Section>
         <Text style={styles.body}>{t("settings.menu.privacyDataHint")}</Text>
       </Section>
-      <Button label={t("settings.menu.downloadData")} variant="secondary" onPress={() => void handleExport()} />
-      <Button label={t("settings.menu.deleteAccount")} variant="destructive" onPress={handleDelete} />
+      <Button
+        label={t("settings.menu.downloadData")}
+        accessibilityLabel={t("settings.menu.downloadData")}
+        variant="secondary"
+        loading={exporting}
+        disabled={exporting}
+        onPress={() => void handleExport()}
+      />
+      <Button
+        label={t("settings.menu.deleteAccount")}
+        accessibilityLabel={t("settings.menu.deleteAccount")}
+        variant="destructive"
+        disabled={exporting}
+        onPress={handleDelete}
+      />
     </SettingsSectionLayout>
   );
 }

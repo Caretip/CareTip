@@ -1,6 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
-import * as Clipboard from "expo-clipboard";
-import * as Sharing from "expo-sharing";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { StyleSheet, Text, View } from "react-native";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/Button";
@@ -14,9 +12,10 @@ import { useTheme } from "@/hooks/useTheme";
 import { fetchEmployeeProfile } from "@/services/api/employeeService";
 import { queryStaleTimes } from "@/services/api/queryClient";
 import { useAuthUserId, useUserQueryKeys } from "@/services/api/queryKeys";
+import { copyToClipboard, shareUrl } from "@/services/share";
 import { resolveEmployeeQrUrl } from "@/utils/appPublicUrl";
 import { friendlyErrorMessage } from "@/utils/friendlyError";
-import { showSuccessToast } from "@/store/toastStore";
+import { showErrorToast, showSuccessToast } from "@/store/toastStore";
 import { loadEmployeeQrCache, saveEmployeeQrCache } from "@/utils/offlineQrCache";
 import type { ColorPalette } from "@/theme/colors";
 import { spacing, typography } from "@/theme";
@@ -29,6 +28,8 @@ export function EmployeeQrScreen() {
   const keys = useUserQueryKeys();
   const [cached, setCached] = useState<Awaited<ReturnType<typeof loadEmployeeQrCache>>>(null);
   const [qrReloadKey, setQrReloadKey] = useState(0);
+  const [sharing, setSharing] = useState(false);
+  const [copying, setCopying] = useState(false);
 
   const {
     data: profile,
@@ -85,21 +86,35 @@ export function EmployeeQrScreen() {
   const displayName = profile?.name ?? (!isLoading ? cached?.name : undefined) ?? t("qr.myQrTitle");
   const offline = !profile && !isLoading && Boolean(cached?.url);
 
-  const handleCopy = async () => {
-    if (!url) return;
-    await Clipboard.setStringAsync(url);
-    showSuccessToast(t("success.linkCopied"));
-  };
-
-  const handleShare = async () => {
-    if (!url) return;
-    const canShare = await Sharing.isAvailableAsync();
-    if (canShare) {
-      await Sharing.shareAsync(url, { dialogTitle: `${t("qr.share")} ${displayName}` });
-    } else {
-      await handleCopy();
+  const handleCopy = useCallback(async () => {
+    if (!url || copying) return;
+    setCopying(true);
+    try {
+      await copyToClipboard(url);
+      showSuccessToast(t("success.linkCopied"));
+    } catch {
+      showErrorToast(t("qr.shareFailed"));
+    } finally {
+      setCopying(false);
     }
-  };
+  }, [copying, t, url]);
+
+  const handleShare = useCallback(async () => {
+    if (!url || sharing) return;
+    setSharing(true);
+    try {
+      await shareUrl({
+        url,
+        dialogTitle: `${t("qr.share")} ${displayName}`,
+        fallbackToCopy: true,
+        successMessage: t("success.shared"),
+        errorMessage: t("qr.shareFailed"),
+        copiedMessage: t("qr.shareUnavailable"),
+      });
+    } finally {
+      setSharing(false);
+    }
+  }, [displayName, sharing, t, url]);
 
   return (
     <Screen
@@ -145,10 +160,19 @@ export function EmployeeQrScreen() {
             reloadKey={qrReloadKey}
           />
           <View style={styles.actions}>
-            <Button label={t("qr.copyLink")} onPress={() => void handleCopy()} />
+            <Button
+              label={t("qr.copyLink")}
+              accessibilityLabel={t("qr.copyLink")}
+              loading={copying}
+              disabled={copying || sharing}
+              onPress={() => void handleCopy()}
+            />
             <Button
               label={t("qr.share")}
+              accessibilityLabel={t("qr.share")}
               variant="secondary"
+              loading={sharing}
+              disabled={sharing || copying}
               onPress={() => void handleShare()}
             />
           </View>

@@ -49,8 +49,9 @@ export function EmployeeDashboardScreen() {
 
   const recentTips = tips?.tips?.slice(0, 3) ?? [];
   const fullName = profile?.name ?? user?.name ?? "there";
-  const displayName = fullName.split(" ")[0] ?? fullName;
   const avatarUri = profile?.avatar ?? user?.avatar;
+  const roleLabel = profile?.jobTitle?.trim() || t("roles.employee");
+  const businessLabel = profile?.businessName ?? t("businessDashboard.venueFallback");
 
   const shortcuts = useMemo(
     () => [
@@ -78,11 +79,12 @@ export function EmployeeDashboardScreen() {
 
   return (
     <LayeredScreen
-      eyebrow={t("employeeDashboard.eyebrow")}
-      title={t("employeeDashboard.welcome", { name: displayName })}
-      subtitle={`${profile?.jobTitle ? `${profile.jobTitle} · ` : ""}${profile?.businessName ?? t("businessDashboard.venueFallback")}`}
+      eyebrow={t("employeeDashboard.welcomeGreeting")}
+      title={fullName}
+      role={roleLabel}
+      subtitle={businessLabel}
       leading={
-        <RemoteAvatar displayName={fullName} uri={avatarUri} size={52} tone="brand" />
+        <RemoteAvatar displayName={fullName} uri={avatarUri} size={44} tone="brand" />
       }
       notificationsHref="/(app)/employee/notifications"
       refreshing={isRefreshing}

@@ -11,10 +11,15 @@ import { premiumPalette } from "@/theme/dashboardPremium";
 import { spacing, typography } from "@/theme";
 
 type LayeredScreenProps = {
+  /** Small greeting above the name (e.g. "Welcome back"). */
   eyebrow?: string;
+  /** User display name — largest text in the compact welcome header. */
   title: string;
+  /** Role label under the greeting (Employee / Manager / job title). */
+  role?: string;
+  /** Business / venue name under the role. */
   subtitle?: string;
-  /** Logo / avatar shown above the hero title (BusinessLogo / RemoteAvatar). */
+  /** Profile avatar shown beside the welcome text (RemoteAvatar). */
   leading?: ReactNode;
   /** Rendered at the bottom of the hero (period toggle, etc.). */
   headerExtra?: ReactNode;
@@ -26,10 +31,14 @@ type LayeredScreenProps = {
   showHeaderUtilities?: boolean;
 };
 
-/** App screens with premium hero + foreground sheet (dashboards, etc.). */
+/**
+ * App screens with premium hero + foreground sheet (Employee / Manager dashboards).
+ * Welcome header: avatar | greeting + name + role + business | utilities.
+ */
 export function LayeredScreen({
   eyebrow,
   title,
+  role,
   subtitle,
   leading,
   headerExtra,
@@ -55,12 +64,26 @@ export function LayeredScreen({
         header={
           <View style={staticStyles.headerBlock}>
             <View style={staticStyles.headerRow}>
+              {leading ? <View style={staticStyles.leading}>{leading}</View> : null}
               <View style={staticStyles.headerMain}>
-                <View style={styles.titleGlow} pointerEvents="none" />
-                {leading ? <View style={staticStyles.leading}>{leading}</View> : null}
-                {eyebrow ? <Text style={styles.eyebrow}>{eyebrow}</Text> : null}
-                <Text style={styles.title}>{title}</Text>
-                {subtitle ? <Text style={styles.subtitle}>{subtitle}</Text> : null}
+                {eyebrow ? (
+                  <Text style={styles.eyebrow} numberOfLines={1}>
+                    {eyebrow}
+                  </Text>
+                ) : null}
+                <Text style={styles.title} numberOfLines={1}>
+                  {title}
+                </Text>
+                {role ? (
+                  <Text style={styles.role} numberOfLines={1}>
+                    {role}
+                  </Text>
+                ) : null}
+                {subtitle ? (
+                  <Text style={styles.subtitle} numberOfLines={1}>
+                    {subtitle}
+                  </Text>
+                ) : null}
               </View>
               {showHeaderUtilities && notificationsHref ? (
                 <HeaderUtilityStack notificationsHref={notificationsHref} />
@@ -78,26 +101,25 @@ export function LayeredScreen({
 
 function createStyles() {
   return StyleSheet.create({
-    titleGlow: {
-      position: "absolute",
-      top: -12,
-      left: -8,
-      width: 120,
-      height: 120,
-      borderRadius: 999,
-      backgroundColor: "rgba(255, 255, 255, 0.06)",
-    },
     eyebrow: {
-      ...typography.overline,
+      ...typography.caption,
       color: "rgba(255,255,255,0.78)",
+      fontWeight: "500",
     },
     title: {
-      ...typography.h1,
+      ...typography.section,
       color: "#FFFFFF",
+      fontWeight: "700",
+      letterSpacing: -0.3,
+    },
+    role: {
+      ...typography.caption,
+      color: "rgba(255,255,255,0.88)",
+      fontWeight: "500",
     },
     subtitle: {
-      ...typography.smallBody,
-      color: "rgba(255,255,255,0.88)",
+      ...typography.caption,
+      color: "rgba(255,255,255,0.72)",
       fontWeight: "500",
     },
   });
@@ -109,24 +131,24 @@ const staticStyles = StyleSheet.create({
     backgroundColor: premiumPalette.primary,
   },
   headerBlock: {
-    gap: spacing.lg,
-    paddingTop: spacing.sm,
+    gap: spacing.md,
+    paddingTop: spacing.xs,
+    paddingBottom: spacing.xxs,
   },
   headerRow: {
     flexDirection: "row",
-    alignItems: "flex-start",
+    alignItems: "center",
     justifyContent: "space-between",
     gap: spacing.md,
+  },
+  leading: {
+    flexShrink: 0,
   },
   headerMain: {
     flex: 1,
     minWidth: 0,
-    gap: spacing.md,
-    position: "relative",
-    paddingBottom: spacing.xs,
-  },
-  leading: {
-    marginBottom: spacing.xxs,
+    gap: 2,
+    justifyContent: "center",
   },
   headerExtra: {
     marginTop: spacing.xxs,

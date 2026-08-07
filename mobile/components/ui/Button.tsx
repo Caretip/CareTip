@@ -84,9 +84,12 @@ export function Button({
     transform: [{ scale: scale.value }],
   }));
 
+  const { accessibilityLabel: accessibilityLabelProp, ...pressableRest } = rest;
+
   return (
     <AnimatedPressable
       accessibilityRole="button"
+      accessibilityLabel={accessibilityLabelProp ?? label}
       accessibilityState={{ disabled: isDisabled, busy: loading }}
       disabled={isDisabled}
       onPressIn={(e) => {
@@ -99,7 +102,7 @@ export function Button({
         onPressOut?.(e);
       }}
       style={[styles.base, palette.container, isDisabled ? styles.disabled : null, animatedStyle, style]}
-      {...rest}
+      {...pressableRest}
     >
       {loading ? (
         <ActivityIndicator color={palette.label.color as string} />

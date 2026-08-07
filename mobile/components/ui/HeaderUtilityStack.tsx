@@ -23,7 +23,7 @@ const styles = StyleSheet.create({
   row: {
     flexDirection: "row",
     alignItems: "center",
+    flexShrink: 0,
     gap: spacing.xs,
-    paddingTop: spacing.xxs,
   },
 });

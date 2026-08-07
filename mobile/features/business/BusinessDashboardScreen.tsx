@@ -2,7 +2,6 @@ import { useMemo } from "react";
 import { StyleSheet, View } from "react-native";
 import { BarChart3, LineChart, Trophy } from "@/icons/lucide";
 import { useRouter } from "expo-router";
-import { BusinessLogo } from "@/components/ui/BusinessLogo";
 import { HeroBalanceCard } from "@/components/ui/HeroBalanceCard";
 import { CompactKpiRow } from "@/components/ui/CompactKpiRow";
 import { DashboardShortcutGrid } from "@/components/ui/DashboardShortcutGrid";
@@ -10,6 +9,7 @@ import { DashboardCookieConsent } from "@/components/ui/DashboardCookieConsent";
 import { EmployeePerformanceChart } from "@/components/ui/EmployeePerformanceChart";
 import { PeriodToggle } from "@/components/ui/PeriodToggle";
 import { LayeredScreen } from "@/components/ui/LayeredScreen";
+import { RemoteAvatar } from "@/components/ui/RemoteAvatar";
 import { Section } from "@/components/ui/Section";
 import { AccessErrorState } from "@/components/ui/AccessErrorState";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -55,7 +55,8 @@ export function BusinessDashboardScreen() {
 
   const businessName =
     profile?.businessName ?? profile?.name ?? user?.name ?? t("businessDashboard.venueFallback");
-  const firstName = user?.name?.split(" ")[0] ?? "there";
+  const managerName = user?.name?.trim() || businessName;
+  const avatarUri = user?.avatar;
   const growth = stats?.growthPercent;
   const employeeCount = stats?.employeeCount ?? profile?.employeeCount ?? 0;
   const periodTotalTips = stats?.totalTips ?? 0;
@@ -111,16 +112,12 @@ export function BusinessDashboardScreen() {
 
   return (
     <LayeredScreen
-      eyebrow={t("businessDashboard.eyebrow")}
-      title={t("businessDashboard.welcome", { name: firstName })}
+      eyebrow={t("businessDashboard.welcomeGreeting")}
+      title={managerName}
+      role={t("roles.manager")}
       subtitle={businessName}
       leading={
-        <BusinessLogo
-          businessName={businessName}
-          uri={profile?.logo}
-          size={48}
-          fit="contain"
-        />
+        <RemoteAvatar displayName={managerName} uri={avatarUri} size={44} tone="brand" />
       }
       notificationsHref="/(app)/business/notifications"
       refreshing={isRefreshing}
