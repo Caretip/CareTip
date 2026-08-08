@@ -1,6 +1,7 @@
 name: Preview build on main
 
 # Push to main with changes under mobile/** triggers an Android preview build.
+# Manual trigger: 2026-08-08 — refresh Android preview APK on company/main.
 
 on:
   push:
