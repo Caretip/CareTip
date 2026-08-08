@@ -27,7 +27,7 @@ export function useBusinessDashboard() {
     staleTime: queryStaleTimes.profile,
   });
 
-  // Basic-tier safe — mirrors web dashboard (summary unless advancedAnalytics).
+  // Basic → summary; Premium+ → full (charts + employeeGoals; web parity).
   const statsScope = resolveDashboardStatsScope(profileQuery.data?.subscriptionTier);
   const premiumTier = isPremiumAnalyticsTier(profileQuery.data?.subscriptionTier);
 

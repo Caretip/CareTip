@@ -3,7 +3,7 @@
  * and backend `isStatsScopeAllowedForTier`.
  *
  * Basic / Starter: `summary` only.
- * Premium+: may request `full` / `analytics`.
+ * Premium+: may request `full` / `analytics` (charts + employee goals).
  *
  * Also used as the mobile proxy for Premium feature gates
  * (advancedAnalytics, customerFeedback, employeeGoals) until a
@@ -19,11 +19,12 @@ export function isPremiumAnalyticsTier(tier: SubscriptionTierHint): boolean {
   return normalized === "premium" || normalized === "enterprise";
 }
 
-/** Dashboard home KPIs — always available on Basic. */
-export function resolveDashboardStatsScope(
-  _tier?: SubscriptionTierHint,
-): Extract<BusinessStatsScope, "summary"> {
-  return "summary";
+/**
+ * Manager dashboard home — Basic stays on summary KPIs; Premium+ uses `full`
+ * so tip charts and employeeGoals hydrate (web parity).
+ */
+export function resolveDashboardStatsScope(tier?: SubscriptionTierHint): BusinessStatsScope {
+  return isPremiumAnalyticsTier(tier) ? "full" : "summary";
 }
 
 /**

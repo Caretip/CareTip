@@ -53,14 +53,15 @@ export const shadows = {
     android: { elevation: 3 },
     default: {},
   })!,
+  /** Bottom tab chrome — soft lift under content (shadow casts upward). */
   tabBar: Platform.select<ViewStyle>({
     ios: {
       shadowColor: "#111827",
-      shadowOpacity: 0.06,
-      shadowRadius: 20,
-      shadowOffset: { width: 0, height: 8 },
+      shadowOpacity: 0.07,
+      shadowRadius: 8,
+      shadowOffset: { width: 0, height: -2 },
     },
-    android: { elevation: 8 },
+    android: { elevation: 6 },
     default: {},
   })!,
 } as const;

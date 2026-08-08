@@ -2,22 +2,23 @@ import { useEffect, useRef } from "react";
 import { AppState, type AppStateStatus } from "react-native";
 import { useQueryClient } from "@tanstack/react-query";
 import { getUserQueryKeys } from "@/services/api/queryKeys";
-import {
-  invalidateWorkspaceQueries,
-  syncAuthUserFromServer,
-} from "@/services/api/invalidateUserQueries";
+import { syncAuthUserFromServer } from "@/services/api/invalidateUserQueries";
 import { useAuthStore } from "@/store/authStore";
 import { logAuthEvent } from "@/utils/authDebug";
 
+/** Minimum gap between foreground sync bursts (avoids resume stampede). */
+const FOREGROUND_SYNC_COOLDOWN_MS = 60_000;
+
 /**
  * Foreground session + entitlement sync.
- * After platform approval / plan changes, AuthUser and React Query caches
- * must refresh before dashboard screens render from stale state.
+ * After platform approval / plan changes, AuthUser and a small set of entitlement
+ * caches refresh — not the entire workspace query tree.
  */
 export function AuthSessionSyncBridge() {
   const queryClient = useQueryClient();
   const appStateRef = useRef<AppStateStatus>(AppState.currentState);
   const syncingRef = useRef(false);
+  const lastSyncAtRef = useRef(0);
 
   useEffect(() => {
     const syncOnForeground = async () => {
@@ -25,12 +26,26 @@ export function AuthSessionSyncBridge() {
       const auth = useAuthStore.getState();
       if (auth.status !== "authenticated" || !auth.accessToken) return;
 
+      const now = Date.now();
+      if (now - lastSyncAtRef.current < FOREGROUND_SYNC_COOLDOWN_MS) {
+        logAuthEvent("session.foreground.skipped_cooldown", {
+          remainingMs: FOREGROUND_SYNC_COOLDOWN_MS - (now - lastSyncAtRef.current),
+        });
+        return;
+      }
+
       syncingRef.current = true;
+      lastSyncAtRef.current = now;
       try {
         const synced = await syncAuthUserFromServer();
         const qk = getUserQueryKeys();
         if (qk) {
-          await invalidateWorkspaceQueries(queryClient, qk);
+          // Entitlement-sensitive keys only — dashboards refetch via staleTime / pull-to-refresh.
+          await Promise.all([
+            queryClient.invalidateQueries({ queryKey: qk.businessProfile }),
+            queryClient.invalidateQueries({ queryKey: qk.accountSettings }),
+            queryClient.invalidateQueries({ queryKey: qk.notificationUnread }),
+          ]);
         }
         logAuthEvent("session.foreground.synced", { authUserSynced: synced });
       } catch (error) {

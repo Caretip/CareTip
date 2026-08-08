@@ -59,7 +59,8 @@ function isPermissionError(error: ReturnType<typeof axiosLike>): boolean {
 function run() {
   assert.equal(resolveDashboardStatsScope(undefined), "summary");
   assert.equal(resolveDashboardStatsScope("basic"), "summary");
-  assert.equal(resolveDashboardStatsScope("premium"), "summary");
+  assert.equal(resolveDashboardStatsScope("premium"), "full");
+  assert.equal(resolveDashboardStatsScope("enterprise"), "full");
 
   assert.equal(resolveAnalyticsStatsScope("basic"), "summary");
   assert.equal(resolveAnalyticsStatsScope("premium"), "full");

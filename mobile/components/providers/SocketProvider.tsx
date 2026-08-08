@@ -10,6 +10,7 @@ import {
 } from "react";
 import { io, type Socket } from "socket.io-client";
 import { config } from "@/constants/config";
+import { getMemoryAccessToken } from "@/services/api/client";
 import { useAuthStore } from "@/store/authStore";
 
 export type SocketConnectionStatus =
@@ -27,8 +28,14 @@ type SocketContextValue = {
 
 const SocketContext = createContext<SocketContextValue | null>(null);
 
+function resolveLiveAccessToken(): string {
+  return useAuthStore.getState().accessToken ?? getMemoryAccessToken() ?? "";
+}
+
 /**
  * Authenticated Socket.IO client — same origin + auth token pattern as web SocketProvider.
+ * Socket lifetime follows auth *status*, not every access-token string change (avoids
+ * reconnect → RealtimeQueryBridge invalidation storms after silent refresh).
  */
 export function SocketProvider({ children }: { children: ReactNode }) {
   const accessToken = useAuthStore((s) => s.accessToken);
@@ -50,15 +57,17 @@ export function SocketProvider({ children }: { children: ReactNode }) {
     setConnectionStatus("idle");
   }, []);
 
-  useEffect(() => {
-    if (status !== "authenticated" || !accessToken) {
-      disconnect();
-      return;
-    }
+  const attachSocket = useCallback(() => {
+    if (socketRef.current) return;
+    const token = resolveLiveAccessToken();
+    if (!token) return;
 
     setConnectionStatus("connecting");
     const s = io(config.apiUrl, {
-      auth: { token: accessToken },
+      // Always read latest access token for connect + reconnect handshakes.
+      auth: (cb: (data: { token: string }) => void) => {
+        cb({ token: resolveLiveAccessToken() });
+      },
       transports: ["polling", "websocket"],
       reconnection: true,
       reconnectionAttempts: Infinity,
@@ -93,14 +102,37 @@ export function SocketProvider({ children }: { children: ReactNode }) {
     return () => {
       s.io.off("reconnect_attempt", onReconnectAttempt);
       s.io.off("reconnect", onReconnect);
-      s.removeAllListeners();
-      s.close();
-      socketRef.current = null;
-      setSocket(null);
-      setConnected(false);
-      setConnectionStatus("idle");
     };
-  }, [accessToken, status, disconnect]);
+  }, []);
+
+  // Create / tear down once per authenticated session (not per token refresh).
+  useEffect(() => {
+    if (status !== "authenticated") {
+      disconnect();
+      return;
+    }
+
+    const detachListeners = attachSocket();
+
+    return () => {
+      detachListeners?.();
+      // Only tear down when leaving authenticated (effect re-runs on status change).
+      disconnect();
+    };
+  }, [status, disconnect, attachSocket]);
+
+  // Late token after status=authenticated, or patch auth after refresh — never recreate.
+  useEffect(() => {
+    if (status !== "authenticated") return;
+    const token = accessToken ?? getMemoryAccessToken();
+    if (!token) return;
+
+    if (!socketRef.current) {
+      attachSocket();
+      return;
+    }
+    socketRef.current.auth = { token };
+  }, [accessToken, status, attachSocket]);
 
   const value = useMemo(
     () => ({ socket, connected, connectionStatus }),

@@ -1,20 +1,13 @@
 import { QueryClient } from "@tanstack/react-query";
 import { config } from "@/constants/config";
+import { shouldRetryQuery } from "@/utils/queryRetry";
+
+export { getQueryErrorStatus, shouldRetryQuery } from "@/utils/queryRetry";
 
 export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      retry: (failureCount, error) => {
-        const status =
-          typeof error === "object" &&
-          error !== null &&
-          "response" in error &&
-          typeof (error as { response?: { status?: number } }).response?.status === "number"
-            ? (error as { response?: { status?: number } }).response?.status
-            : null;
-        if (status === 401 || status === 403 || status === 404) return false;
-        return failureCount < 2;
-      },
+      retry: shouldRetryQuery,
       staleTime: 45_000,
       gcTime: 10 * 60_000,
       refetchOnReconnect: true,

@@ -2,12 +2,15 @@ import { memo, useMemo } from "react";
 import type { BottomTabBarProps } from "@react-navigation/bottom-tabs";
 import { Platform, Pressable, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { spacing, typography } from "@/theme";
+import { shadows, spacing, typography } from "@/theme";
 import { TAB_BAR_HEIGHT } from "@/theme/navigation";
 import { useTheme } from "@/hooks/useTheme";
 import { hapticSelection } from "@/utils/haptics";
 
-/** Bottom tab bar — Home and Menu sit directly on the app surface. */
+/**
+ * Bottom tab bar — solid white (theme) surface with a full-width top rule
+ * and soft upward shadow so it stays visually independent from dashboard content.
+ */
 export const MimeTabBar = memo(function MimeTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
   const insets = useSafeAreaInsets();
   const { colors } = useTheme();
@@ -83,14 +86,17 @@ function createStyles(colors: ReturnType<typeof useTheme>["colors"]) {
       left: 0,
       right: 0,
       bottom: 0,
+      zIndex: 20,
       flexDirection: "row",
       alignItems: "center",
       minHeight: TAB_BAR_HEIGHT,
       paddingHorizontal: spacing.lg,
       paddingTop: spacing.xs,
       backgroundColor: colors.tabBar,
-      borderTopWidth: StyleSheet.hairlineWidth,
+      // Full-width 1px rule — hairline is too weak on many Android densities.
+      borderTopWidth: 1,
       borderTopColor: colors.tabBarBorder,
+      ...shadows.tabBar,
     },
     tabSlot: {
       flex: 1,

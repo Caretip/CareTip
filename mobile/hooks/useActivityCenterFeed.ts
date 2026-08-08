@@ -19,6 +19,10 @@ import type {
 import { activityFilterToApiSource } from "@/utils/activityCenterFilters";
 import { isWithinVenueLocalDay, resolveBusinessTimezone } from "@/utils/businessVenueTime";
 import { friendlyErrorMessage } from "@/utils/friendlyError";
+import {
+  isRateLimitError,
+  resolveRateLimitUntilMs,
+} from "@/utils/rateLimitBackoff";
 import { shouldProcessRealtimeEvent } from "@/utils/realtimeEventDedupe";
 import { useI18n } from "@/hooks/useI18n";
 
@@ -92,6 +96,7 @@ export function useActivityCenterFeed({ enabled, businessId }: UseActivityCenter
   timezoneRef.current = venueTimezone;
   const syncInFlightRef = useRef<Set<string>>(new Set());
   const bootstrappedRef = useRef(false);
+  const rateLimitedUntilRef = useRef(0);
 
   const { socket, connected } = useSocket();
 
@@ -111,12 +116,25 @@ export function useActivityCenterFeed({ enabled, businessId }: UseActivityCenter
     return isWithinVenueLocalDay(oldest.occurredAt, venueTimezone);
   }, [nextCursor, filter, pool, venueTimezone]);
 
+  const noteRateLimit = useCallback(
+    (e: unknown) => {
+      if (!isRateLimitError(e)) return false;
+      rateLimitedUntilRef.current = resolveRateLimitUntilMs(e);
+      setError(friendlyErrorMessage(e, t("activity.loadError"), t));
+      return true;
+    },
+    [t],
+  );
+
+  const isRateLimited = useCallback(() => Date.now() < rateLimitedUntilRef.current, []);
+
   const syncApiSource = useCallback(
     async (
       target: "all" | ActivityEventSource,
       opts?: { soft?: boolean; replacePool?: boolean },
     ) => {
       if (!enabled) return;
+      if (isRateLimited()) return;
       const key = target;
       if (syncInFlightRef.current.has(key)) return;
       syncInFlightRef.current.add(key);
@@ -140,7 +158,9 @@ export function useActivityCenterFeed({ enabled, businessId }: UseActivityCenter
         setCursorsByApiSource((prev) => ({ ...prev, [target]: result.nextCursor }));
         bootstrappedRef.current = true;
       } catch (e) {
-        if (!bootstrappedRef.current) {
+        if (noteRateLimit(e)) {
+          /* backoff armed — skip generic empty-state overwrite on soft sync */
+        } else if (!bootstrappedRef.current) {
           setError(friendlyErrorMessage(e, t("activity.loadError"), t));
         }
       } finally {
@@ -149,21 +169,21 @@ export function useActivityCenterFeed({ enabled, businessId }: UseActivityCenter
         setIsRefreshing(false);
       }
     },
-    [enabled],
+    [enabled, isRateLimited, noteRateLimit, t],
   );
 
   const catchUp = useCallback(async () => {
-    if (!enabled) return;
+    if (!enabled || isRateLimited()) return;
     setIsRefreshing(true);
     try {
       await syncApiSource(activityFilterToApiSource(filterRef.current), { soft: true });
     } finally {
       setIsRefreshing(false);
     }
-  }, [enabled, syncApiSource]);
+  }, [enabled, isRateLimited, syncApiSource]);
 
   const loadOlder = useCallback(async () => {
-    if (!enabled || isLoadingOlder) return;
+    if (!enabled || isLoadingOlder || isRateLimited()) return;
     const target = activityFilterToApiSource(filter);
     const cursor = cursorsByApiSource[target];
     if (!cursor) return;
@@ -178,11 +198,13 @@ export function useActivityCenterFeed({ enabled, businessId }: UseActivityCenter
       setPool((prev) => mergeById(prev, result.items, "append"));
       setCursorsByApiSource((prev) => ({ ...prev, [target]: result.nextCursor }));
     } catch (e) {
-      setError(friendlyErrorMessage(e, t("activity.loadMoreError"), t));
+      if (!noteRateLimit(e)) {
+        setError(friendlyErrorMessage(e, t("activity.loadMoreError"), t));
+      }
     } finally {
       setIsLoadingOlder(false);
     }
-  }, [enabled, isLoadingOlder, cursorsByApiSource, filter]);
+  }, [enabled, isLoadingOlder, cursorsByApiSource, filter, isRateLimited, noteRateLimit, t]);
 
   useEffect(() => {
     if (!enabled) return;
@@ -223,6 +245,7 @@ export function useActivityCenterFeed({ enabled, businessId }: UseActivityCenter
       setCursorsByApiSource({});
       setIsInitialLoading(false);
       bootstrappedRef.current = false;
+      rateLimitedUntilRef.current = 0;
       return;
     }
     void (async () => {
@@ -257,10 +280,11 @@ export function useActivityCenterFeed({ enabled, businessId }: UseActivityCenter
   useEffect(() => {
     if (!enabled || connected) return;
     const id = setInterval(() => {
+      if (isRateLimited()) return;
       void catchUp();
     }, DISCONNECTED_POLL_MS);
     return () => clearInterval(id);
-  }, [enabled, connected, catchUp]);
+  }, [enabled, connected, catchUp, isRateLimited]);
 
   useEffect(() => {
     if (!enabled) return;

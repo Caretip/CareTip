@@ -201,17 +201,19 @@ export function RealtimeQueryBridge() {
     };
   }, [socket, queryClient]);
 
+  /**
+   * Soft connect sync only — broad invalidate + refreshAuth on every reconnect
+   * previously stampeded /api and tripped authenticatedApiRateLimit (429).
+   * Domain events above remain the SSOT for workspace refetch.
+   */
   useEffect(() => {
     if (!connected) return;
     const qk = getUserQueryKeys();
     if (!qk) return;
-    void queryClient.invalidateQueries({ queryKey: qk.notificationUnread });
-    void queryClient.invalidateQueries({ queryKey: qk.businessProfile });
-    void queryClient.invalidateQueries({ queryKey: qk.businessStats });
-    void queryClient.invalidateQueries({ queryKey: qk.employeeTips });
-    void queryClient.invalidateQueries({ queryKey: qk.businessQr });
-    void queryClient.invalidateQueries({ queryKey: qk.businessQrAnalytics });
-    void syncAuthUserFromServer();
+    void queryClient.invalidateQueries({
+      queryKey: qk.notificationUnread,
+      refetchType: "active",
+    });
   }, [connected, queryClient]);
 
   return null;
