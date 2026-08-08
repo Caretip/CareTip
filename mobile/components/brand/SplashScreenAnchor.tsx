@@ -3,13 +3,17 @@ import { StyleSheet, View } from "react-native";
 import { useSplashStore } from "@/store/splashStore";
 
 type SplashScreenAnchorProps = {
-  /** Label used in splash timing logs (e.g. "auth", "Screen"). */
+  /**
+   * Label used in splash timing logs.
+   * Must identify a real destination (e.g. "auth", "LayeredScreen", "Screen").
+   * Never use "index" / boot placeholders — those are rejected by policy.
+   */
   source: string;
 };
 
 /**
- * Invisible layout probe — signals that the hosting screen has painted.
- * Place on entry screens only (auth shell, tab home Screen, etc.).
+ * Invisible layout probe — signals that the hosting destination screen has painted.
+ * Place on AuthExperienceShell, LayeredScreen (dashboard), Screen — not app/index boot.
  */
 export function SplashScreenAnchor({ source }: SplashScreenAnchorProps) {
   const markFirstScreenReady = useSplashStore((s) => s.markFirstScreenReady);

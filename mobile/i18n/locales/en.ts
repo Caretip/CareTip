@@ -31,8 +31,8 @@ export const en: MobileMessages = {
   appMenu: {
     eyebrow: "NAVIGATION",
     title: "Menu",
-    subtitleBusiness: "Activity, tips, insights, and settings",
-    subtitleEmployee: "QR, history, inbox, and settings",
+    subtitleBusiness: "QR Studio, insights, and settings",
+    subtitleEmployee: "Settings and account",
     unread: "unread",
   },
   period: {

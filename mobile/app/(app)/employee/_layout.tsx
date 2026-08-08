@@ -4,8 +4,10 @@ import { Redirect, Tabs } from "expo-router";
 import type { BottomTabBarProps } from "@react-navigation/bottom-tabs";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { MimeTabBar } from "@/components/navigation/MimeTabBar";
+import { EMPLOYEE_PRIMARY_TAB_ROUTES } from "@/features/navigation/primaryTabs";
 import { useAuth } from "@/hooks/useAuth";
 import { useI18n } from "@/hooks/useI18n";
+import { useUnreadNotificationCount } from "@/hooks/useNotifications";
 import { useTheme } from "@/hooks/useTheme";
 import { buildPremiumTabScreenOptions } from "@/theme/navigation";
 
@@ -25,7 +27,9 @@ export default function EmployeeTabsLayout() {
   const insets = useSafeAreaInsets();
   const { t } = useI18n();
   const { colors } = useTheme();
-  const { user } = useAuth();
+  const { user, isAuthenticated } = useAuth();
+  const { data: unreadCount } = useUnreadNotificationCount(isAuthenticated);
+  const inboxBadge = unreadCount && unreadCount > 0 ? unreadCount : undefined;
 
   if (user?.role === "MANAGER") {
     return <Redirect href="/(app)/business" />;
@@ -35,7 +39,9 @@ export default function EmployeeTabsLayout() {
   }
 
   const renderTabBar = useCallback(
-    (props: BottomTabBarProps) => <MimeTabBar {...props} />,
+    (props: BottomTabBarProps) => (
+      <MimeTabBar {...props} primaryRoutes={EMPLOYEE_PRIMARY_TAB_ROUTES} />
+    ),
     [],
   );
 
@@ -54,6 +60,34 @@ export default function EmployeeTabsLayout() {
         }}
       />
       <Tabs.Screen
+        name="tips"
+        options={{
+          title: t("tabs.tipHistory"),
+          tabBarIcon: ({ color, size, focused }) => (
+            <TabIcon name={focused ? "wallet" : "wallet-outline"} color={color} size={size} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="qr"
+        options={{
+          title: t("tabs.myQr"),
+          tabBarIcon: ({ color, size, focused }) => (
+            <TabIcon name={focused ? "qr-code" : "qr-code-outline"} color={color} size={size} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="notifications"
+        options={{
+          title: t("tabs.inbox"),
+          tabBarBadge: inboxBadge,
+          tabBarIcon: ({ color, size, focused }) => (
+            <TabIcon name={focused ? "notifications" : "notifications-outline"} color={color} size={size} />
+          ),
+        }}
+      />
+      <Tabs.Screen
         name="menu"
         options={{
           title: t("tabs.more"),
@@ -62,9 +96,6 @@ export default function EmployeeTabsLayout() {
           ),
         }}
       />
-      <Tabs.Screen name="qr" options={{ href: null }} />
-      <Tabs.Screen name="tips" options={{ href: null }} />
-      <Tabs.Screen name="notifications" options={{ href: null }} />
       <Tabs.Screen name="settings" options={{ href: null }} />
     </Tabs>
   );

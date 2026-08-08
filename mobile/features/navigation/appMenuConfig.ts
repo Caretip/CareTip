@@ -1,13 +1,10 @@
 import type { Router } from "expo-router";
 import {
-  Activity,
   BarChart3,
-  Bell,
   LineChart,
   QrCode,
   Settings,
   Trophy,
-  Wallet,
 } from "@/icons/lucide";
 import type { LucideIcon } from "@/types/lucide";
 
@@ -19,32 +16,17 @@ export type AppMenuItem = {
   badge?: number;
 };
 
-export function buildBusinessAppMenu(router: Router, inboxBadge?: number): AppMenuItem[] {
+/**
+ * More menu — secondary destinations only.
+ * Primary daily tabs (Activity/Tips/Inbox/QR) live on MimeTabBar; Log out stays here.
+ */
+export function buildBusinessAppMenu(router: Router, _inboxBadge?: number): AppMenuItem[] {
   return [
-    {
-      id: "activity",
-      labelKey: "tabs.activity",
-      icon: Activity,
-      onPress: () => router.push("/(app)/business/activity"),
-    },
     {
       id: "qr",
       labelKey: "tabs.qrStudio",
       icon: QrCode,
       onPress: () => router.push("/(app)/business/qr"),
-    },
-    {
-      id: "tips",
-      labelKey: "tabs.tips",
-      icon: Wallet,
-      onPress: () => router.push("/(app)/business/tips"),
-    },
-    {
-      id: "inbox",
-      labelKey: "tabs.inbox",
-      icon: Bell,
-      onPress: () => router.push("/(app)/business/notifications"),
-      badge: inboxBadge,
     },
     {
       id: "analytics",
@@ -73,27 +55,8 @@ export function buildBusinessAppMenu(router: Router, inboxBadge?: number): AppMe
   ];
 }
 
-export function buildEmployeeAppMenu(router: Router, inboxBadge?: number): AppMenuItem[] {
+export function buildEmployeeAppMenu(router: Router, _inboxBadge?: number): AppMenuItem[] {
   return [
-    {
-      id: "qr",
-      labelKey: "tabs.myQr",
-      icon: QrCode,
-      onPress: () => router.push("/(app)/employee/qr"),
-    },
-    {
-      id: "tips",
-      labelKey: "tabs.tipHistory",
-      icon: Wallet,
-      onPress: () => router.push("/(app)/employee/tips"),
-    },
-    {
-      id: "inbox",
-      labelKey: "tabs.inbox",
-      icon: Bell,
-      onPress: () => router.push("/(app)/employee/notifications"),
-      badge: inboxBadge,
-    },
     {
       id: "settings",
       labelKey: "tabs.settings",

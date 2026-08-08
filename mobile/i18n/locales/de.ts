@@ -31,8 +31,8 @@ export const de: MobileMessages = {
   appMenu: {
     eyebrow: "NAVIGATION",
     title: "Menü",
-    subtitleBusiness: "Aktivität, Trinkgelder, Einblicke und Einstellungen",
-    subtitleEmployee: "QR, Verlauf, Posteingang und Einstellungen",
+    subtitleBusiness: "QR-Studio, Einblicke und Einstellungen",
+    subtitleEmployee: "Einstellungen und Konto",
     unread: "ungelesen",
   },
   period: {

@@ -1,24 +1,22 @@
 import { Redirect } from "expo-router";
 import { StyleSheet, View } from "react-native";
-import { SplashScreenAnchor } from "@/components/brand/SplashScreenAnchor";
 import { useAuth } from "@/hooks/useAuth";
 import { useSessionRoutingReady } from "@/hooks/useAppReady";
-import { useTheme } from "@/hooks/useTheme";
 import { getPostAuthHref } from "@/utils/postAuthNavigation";
 import { useAuthStore } from "@/store/authStore";
+import { authBrand } from "@/theme/authBrand";
 
+/**
+ * Routing switch only — must not mark splash firstScreenReady.
+ * Destination screens (auth shell / dashboard LayeredScreen) own that signal.
+ */
 export default function Index() {
-  const { colors } = useTheme();
   const { isAuthenticated, user } = useAuth();
   const status = useAuthStore((s) => s.status);
   const routingReady = useSessionRoutingReady();
 
   if (!routingReady) {
-    return (
-      <View style={[styles.boot, { backgroundColor: colors.background }]}>
-        <SplashScreenAnchor source="index" />
-      </View>
-    );
+    return <View style={styles.boot} />;
   }
 
   if (status === "session_recovery") {
@@ -35,5 +33,7 @@ export default function Index() {
 const styles = StyleSheet.create({
   boot: {
     flex: 1,
+    // Match splash orange — never light/white under BrandSplashOverlay.
+    backgroundColor: authBrand.orange,
   },
 });

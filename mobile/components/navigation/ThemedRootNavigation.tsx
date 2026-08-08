@@ -1,17 +1,16 @@
 import { Stack } from "expo-router";
-import { useTheme } from "@/hooks/useTheme";
 import { NativeSplashGate } from "@/components/brand/NativeSplashGate";
 import { ToastHost } from "@/components/ui/ToastHost";
+import { authBrand } from "@/theme/authBrand";
 
 export function ThemedRootNavigation() {
-  const { colors } = useTheme();
-
   return (
     <NativeSplashGate>
       <Stack
         screenOptions={{
           headerShown: false,
-          contentStyle: { backgroundColor: colors.background },
+          // Orange during gated boot prevents gray/white flash under the overlay fade.
+          contentStyle: { backgroundColor: authBrand.orange },
           animation: "fade",
           animationDuration: 220,
         }}

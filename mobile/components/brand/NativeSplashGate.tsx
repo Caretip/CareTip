@@ -5,40 +5,52 @@ import { BrandSplashOverlay } from "@/components/brand/BrandSplashOverlay";
 import { useBootstrapReady } from "@/hooks/useAppReady";
 import { useI18n } from "@/hooks/useI18n";
 import { useNavigationReady } from "@/hooks/useNavigationReady";
-import { useTheme } from "@/hooks/useTheme";
 import { useSplashStore } from "@/store/splashStore";
-import { hideSplashOnce, logSplash } from "@/utils/splashLifecycle";
+import { authBrand } from "@/theme/authBrand";
+import {
+  shouldRevealAfterDestination,
+  shouldRevealAfterFallback,
+} from "@/utils/splashHandoffPolicy";
+import {
+  hideSplashOnce,
+  logSplash,
+  setSplashWatchdogReveal,
+} from "@/utils/splashLifecycle";
 
 const REVEAL_MS = 380;
-const FIRST_SCREEN_FALLBACK_MS = 1200;
+/** Destination should paint shortly after route resolve; still requires bootstrap+nav. */
+const FIRST_SCREEN_FALLBACK_MS = 1600;
 const PROGRESS_TICK_MS = 180;
 const COMPLETE_HOLD_MS = 220;
+/** Let the React overlay paint Preparing… under native before peeling the underlay. */
+const NATIVE_HANDOFF_DELAY_MS = 48;
 
 type NativeSplashGateProps = {
   children: ReactNode;
 };
 
 /**
- * Native splash + branded JS companion (logo + progress).
- * Hides native splash once the JS overlay has painted, then fades into the app
- * when bootstrap + navigation + first screen are ready.
+ * Native underlay + React BrandSplashOverlay (SSOT startup narrative).
+ * Reveal only after bootstrap/routing settle and a real destination paints
+ * (or fallback / watchdog — never leave the overlay stuck).
  */
 export function NativeSplashGate({ children }: NativeSplashGateProps) {
   const { t } = useI18n();
-  const { colors } = useTheme();
   const styles = useMemo(
     () =>
       StyleSheet.create({
-        root: { flex: 1, backgroundColor: colors.background },
-        flex: { flex: 1 },
+        // Match native/React splash orange so handoff never flashes light/white.
+        root: { flex: 1, backgroundColor: authBrand.orange },
+        flex: { flex: 1, backgroundColor: authBrand.orange },
       }),
-    [colors.background],
+    [],
   );
   const bootstrapReady = useBootstrapReady();
   const navigationReady = useNavigationReady();
   const firstScreenReady = useSplashStore((s) => s.firstScreenReady);
   const contentOpacity = useSharedValue(0);
   const completed = useRef(false);
+  const nativeHandoffStarted = useRef(false);
   const [overlayVisible, setOverlayVisible] = useState(true);
   const [progress, setProgress] = useState(0.08);
 
@@ -47,7 +59,7 @@ export function NativeSplashGate({ children }: NativeSplashGateProps) {
     completed.current = true;
     logSplash("gate.reveal", { reason });
     setProgress(1);
-    hideSplashOnce(reason);
+    hideSplashOnce(reason, { duration: 120, fade: true });
     setTimeout(() => {
       setOverlayVisible(false);
       contentOpacity.value = withTiming(1, {
@@ -56,6 +68,12 @@ export function NativeSplashGate({ children }: NativeSplashGateProps) {
       });
     }, COMPLETE_HOLD_MS);
   };
+
+  useEffect(() => {
+    setSplashWatchdogReveal(() => reveal("watchdog"));
+    return () => setSplashWatchdogReveal(null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- register once per mount
+  }, []);
 
   useEffect(() => {
     logSplash("gate.state", { bootstrapReady, navigationReady, firstScreenReady });
@@ -74,17 +92,34 @@ export function NativeSplashGate({ children }: NativeSplashGateProps) {
   }, []);
 
   useEffect(() => {
-    if (!bootstrapReady || !navigationReady || !firstScreenReady) return;
+    if (
+      !shouldRevealAfterDestination({
+        bootstrapReady,
+        navigationReady,
+        firstScreenReady,
+      })
+    ) {
+      return;
+    }
     reveal("first-screen-ready");
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- reveal is stable for gate lifetime
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [bootstrapReady, navigationReady, firstScreenReady]);
 
   useEffect(() => {
-    if (!bootstrapReady || !navigationReady) return;
+    if (!shouldRevealAfterFallback({ bootstrapReady, navigationReady })) return;
     const timer = setTimeout(() => reveal("first-screen-fallback"), FIRST_SCREEN_FALLBACK_MS);
     return () => clearTimeout(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [bootstrapReady, navigationReady]);
+
+  const handoffNativeSplash = () => {
+    if (nativeHandoffStarted.current || completed.current) return;
+    nativeHandoffStarted.current = true;
+    // Brief delay so Preparing… is already composited under the native layer.
+    setTimeout(() => {
+      hideSplashOnce("js-overlay-ready", { duration: 160, fade: true });
+    }, NATIVE_HANDOFF_DELAY_MS);
+  };
 
   const contentAnim = useAnimatedStyle(() => ({
     opacity: contentOpacity.value,
@@ -97,7 +132,7 @@ export function NativeSplashGate({ children }: NativeSplashGateProps) {
         progress={progress}
         visible={overlayVisible}
         message={t("auth.splashPreparing")}
-        onReady={() => hideSplashOnce("js-overlay-ready")}
+        onReady={handoffNativeSplash}
       />
     </View>
   );

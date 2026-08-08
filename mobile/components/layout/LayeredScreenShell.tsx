@@ -117,12 +117,20 @@ export function LayeredScreenShell({
     ...restScrollProps
   } = scrollProps ?? {};
 
-  /** Floating auth must clear the Android/iOS home indicator — never let callers wipe this. */
+  /**
+   * Tab clearance must live on the same container as dashboard content (the sheet),
+   * matching Screen / ScreenShell. Putting it only on ScrollView after a viewport-filling
+   * sheet left Overview cards under the absolute MimeTabBar at scrollY=0.
+   */
+  const tabClearance = tabBarScrollClearance(insets.bottom);
+  const sheetOwnsTabClearance = Boolean(tabSafe && !isFloating);
   const bottomPad = isFloating
     ? Math.max(insets.bottom, spacing.md) + spacing["3xl"]
-    : tabSafe
-      ? tabBarScrollClearance(insets.bottom)
-      : Math.max(insets.bottom, spacing.lg);
+    : sheetOwnsTabClearance
+      ? 0
+      : tabSafe
+        ? tabClearance
+        : Math.max(insets.bottom, spacing.lg);
 
   const scroll = (
     <ScrollView
@@ -181,9 +189,12 @@ export function LayeredScreenShell({
               borderTopRightRadius: layered.sheetRadius,
               paddingHorizontal: pagePadding,
               paddingTop: spacing["2xl"],
-              // Tab clearance lives on ScrollView paddingBottom only — do not also
-              // inflate sheet minHeight or a second empty white band appears above the nav.
-              paddingBottom: tabSafe ? spacing.xl : spacing["3xl"],
+              // Clear absolute MimeTabBar inside the sheet (Screen/ScreenShell parity).
+              paddingBottom: sheetOwnsTabClearance
+                ? tabClearance
+                : tabSafe
+                  ? spacing.xl
+                  : spacing["3xl"],
               backgroundColor: sheetBackground,
               minHeight: height - heroBackdropHeight + layered.sheetOverlap,
             },
