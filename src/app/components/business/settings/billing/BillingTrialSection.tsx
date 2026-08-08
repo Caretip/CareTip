@@ -145,11 +145,7 @@ export function BillingTrialSection({
       <>
         <section
           id={BILLING_START_TRIAL_HASH}
-          className={cn(
-            dashboardWorkspaceUi.card,
-            dashboardWorkspaceUi.cardPad,
-            "flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between",
-          )}
+          className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"
           aria-labelledby="billing-trial-promo-title"
         >
           <div className="min-w-0">
