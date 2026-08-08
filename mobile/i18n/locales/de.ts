@@ -698,6 +698,21 @@ export const de: MobileMessages = {
       "Schließen Sie die Betriebseinrichtung ab, bevor Sie diesen Bereich öffnen.",
     managePlan: "Plan verwalten",
   },
+  billingHandoff: {
+    confirmTitle: "Weiter auf CareTip Web",
+    confirmBody:
+      "Sie verlassen die CareTip-App vorübergehend, um Ihr Abonnement sicher auf CareTip Web abzuschließen. Nach der Zahlung kehren Sie hierher zurück, um Ihren aktualisierten Plan zu sehen.",
+    cancel: "Abbrechen",
+    continue: "Weiter zu CareTip Web",
+    updatingPlan: "Ihr Abonnement wird bestätigt…",
+    planUpdated: "Ihr CareTip-Plan ist aktuell.",
+    planUnchangedHint:
+      "Noch keine Planänderung bestätigt. Wenn Sie bezahlt haben, warten Sie kurz und öffnen Sie „Plan verwalten“ erneut — oder ziehen Sie zum Aktualisieren.",
+    syncFailed:
+      "Wir konnten Ihren Plan nicht aktualisieren. Prüfen Sie die Verbindung und versuchen Sie „Plan verwalten“ erneut.",
+    openFailed: "Abrechnung konnte nicht geöffnet werden. Bitte Verbindung prüfen und erneut versuchen.",
+    sessionExpired: "Ihre Sitzung ist abgelaufen. Bitte erneut anmelden und „Plan verwalten“ versuchen.",
+  },
   emptyState: {
     chartTitle: "Noch keine Diagrammdaten",
     chartDescription:

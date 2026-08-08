@@ -5,6 +5,7 @@ import { getUserQueryKeys } from "@/services/api/queryKeys";
 import { syncAuthUserFromServer } from "@/services/api/invalidateUserQueries";
 import { useAuthStore } from "@/store/authStore";
 import { logAuthEvent } from "@/utils/authDebug";
+import { shouldBypassForegroundSyncCooldown } from "@/utils/billingForegroundBoost";
 
 /** Minimum gap between foreground sync bursts (avoids resume stampede). */
 const FOREGROUND_SYNC_COOLDOWN_MS = 60_000;
@@ -27,11 +28,15 @@ export function AuthSessionSyncBridge() {
       if (auth.status !== "authenticated" || !auth.accessToken) return;
 
       const now = Date.now();
-      if (now - lastSyncAtRef.current < FOREGROUND_SYNC_COOLDOWN_MS) {
+      const bypassCooldown = shouldBypassForegroundSyncCooldown(now);
+      if (!bypassCooldown && now - lastSyncAtRef.current < FOREGROUND_SYNC_COOLDOWN_MS) {
         logAuthEvent("session.foreground.skipped_cooldown", {
           remainingMs: FOREGROUND_SYNC_COOLDOWN_MS - (now - lastSyncAtRef.current),
         });
         return;
+      }
+      if (bypassCooldown) {
+        logAuthEvent("session.foreground.billing_boost");
       }
 
       syncingRef.current = true;

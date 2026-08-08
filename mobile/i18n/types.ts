@@ -662,6 +662,18 @@ export type MobileMessages = {
     onboardingIncompleteBody: string;
     managePlan: string;
   };
+  billingHandoff: {
+    confirmTitle: string;
+    confirmBody: string;
+    cancel: string;
+    continue: string;
+    updatingPlan: string;
+    planUpdated: string;
+    planUnchangedHint: string;
+    syncFailed: string;
+    openFailed: string;
+    sessionExpired: string;
+  };
   emptyState: {
     chartTitle: string;
     chartDescription: string;

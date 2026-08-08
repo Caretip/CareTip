@@ -35,6 +35,10 @@ export const API_ENDPOINTS = {
   mobile: {
     createBillingSession: "/api/mobile/create-billing-session",
   },
+  /** Manager billing APIs — same routes as web (`/api/me/billing/*`). */
+  billing: {
+    syncStatus: "/api/me/billing/sync-status",
+  },
   business: {
     inviteValidate: "/api/business/invite/validate",
     profile: "/api/business/profile",

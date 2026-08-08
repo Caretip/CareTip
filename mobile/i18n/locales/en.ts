@@ -686,6 +686,20 @@ export const en: MobileMessages = {
     onboardingIncompleteBody: "Complete business onboarding before opening this part of the app.",
     managePlan: "Manage plan",
   },
+  billingHandoff: {
+    confirmTitle: "Continue on CareTip Web",
+    confirmBody:
+      "You're about to leave the CareTip app temporarily to complete your subscription securely on CareTip Web. After payment, return here to see your updated plan.",
+    cancel: "Cancel",
+    continue: "Continue to CareTip Web",
+    updatingPlan: "Confirming your subscription…",
+    planUpdated: "Your CareTip plan is up to date.",
+    planUnchangedHint:
+      "No plan change confirmed yet. If you completed payment, wait a moment and open Manage plan again — or pull to refresh.",
+    syncFailed: "We couldn't refresh your plan. Check your connection and try Manage plan again.",
+    openFailed: "Could not open Billing. Check your connection and try again.",
+    sessionExpired: "Your session expired. Sign in again, then retry Manage plan.",
+  },
   emptyState: {
     chartTitle: "No chart data yet",
     chartDescription: "Tips and team performance will appear here once activity starts.",

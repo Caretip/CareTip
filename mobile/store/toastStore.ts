@@ -36,3 +36,7 @@ export function showSuccessToast(message: string): void {
 export function showErrorToast(message: string): void {
   useToastStore.getState().showToast(message, "error");
 }
+
+export function showInfoToast(message: string, durationMs = 3600): void {
+  useToastStore.getState().showToast(message, "info", durationMs);
+}
