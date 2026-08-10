@@ -1,8 +1,10 @@
+import { View } from "react-native";
 import { Redirect, Stack } from "expo-router";
 import { useAuth } from "@/hooks/useAuth";
 import { useSessionRoutingReady } from "@/hooks/useAppReady";
 import { getPostAuthHref, resolvePostAuthAction } from "@/utils/postAuthNavigation";
 import { useTheme } from "@/hooks/useTheme";
+import { authBrand } from "@/theme/authBrand";
 
 export default function AppLayout() {
   const { colors } = useTheme();
@@ -10,7 +12,7 @@ export default function AppLayout() {
   const routingReady = useSessionRoutingReady();
 
   if (!routingReady) {
-    return null;
+    return <View style={{ flex: 1, backgroundColor: authBrand.orange }} />;
   }
 
   if (status === "session_recovery") {

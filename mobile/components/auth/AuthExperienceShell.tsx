@@ -100,7 +100,7 @@ export function AuthExperienceShell({
         footer={
           showSecondaryActions ? (
             <View style={styles.footer}>
-              <View style={styles.secondaryRow}>
+              <View style={styles.secondaryColumn}>
                 <Pressable
                   accessibilityRole="button"
                   onPress={() =>
@@ -113,7 +113,6 @@ export function AuthExperienceShell({
                 >
                   <Text style={styles.secondaryLabel}>{t("auth.register")}</Text>
                 </Pressable>
-                <Text style={styles.secondaryPipe}>|</Text>
                 <Pressable
                   accessibilityRole="button"
                   onPress={() => router.push("/(auth)/join")}
@@ -189,16 +188,19 @@ const styles = StyleSheet.create({
     paddingTop: spacing.md,
     width: "100%",
   },
-  secondaryRow: {
-    flexDirection: "row",
+  secondaryColumn: {
     alignItems: "center",
     justifyContent: "center",
-    gap: spacing.md,
+    gap: spacing.sm,
+    width: "100%",
+    paddingHorizontal: spacing.lg,
   },
   secondaryAction: {
     minHeight: touchTarget,
     justifyContent: "center",
+    alignItems: "center",
     paddingHorizontal: spacing.md,
+    maxWidth: "100%",
   },
   secondaryLabel: {
     ...typography.button,
@@ -206,13 +208,9 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     fontSize: 15,
     letterSpacing: 0.2,
+    textAlign: "center",
     textDecorationLine: "underline",
     textDecorationColor: "rgba(255,255,255,0.28)",
-  },
-  secondaryPipe: {
-    color: "rgba(255,255,255,0.22)",
-    fontSize: 14,
-    fontWeight: "300",
   },
   pillOuter: {
     borderRadius: 999,

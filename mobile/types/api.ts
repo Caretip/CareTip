@@ -20,7 +20,7 @@ export function normalizeApiError(error: unknown): NormalizedApiError {
   if (!error || typeof error !== "object") {
     return {
       status: null,
-      message: "Something went wrong. Please try again.",
+      message: "",
       isNetworkError: false,
       isTimeout: false,
       isUnauthorized: false,
@@ -39,14 +39,15 @@ export function normalizeApiError(error: unknown): NormalizedApiError {
       code === "ECONNREFUSED" ||
       code === "ENOTFOUND");
   const serverMessage = axiosError.response?.data?.message;
-  const genericFallback = "Something went wrong. Please try again.";
-  const message = isTimeout
-    ? genericFallback
-    : isNetworkError
-      ? genericFallback
-      : typeof serverMessage === "string" && serverMessage.trim()
-        ? serverMessage.trim()
-        : genericFallback;
+  // Keep server message for code/heuristic mapping only — UI must use formatUserFacingError.
+  const message =
+    typeof serverMessage === "string" && serverMessage.trim()
+      ? serverMessage.trim()
+      : isTimeout || isNetworkError
+        ? ""
+        : typeof axiosError.message === "string"
+          ? axiosError.message
+          : "";
 
   return {
     status,

@@ -13,6 +13,7 @@ import {
 import { useBillingReturnSyncStore } from "@/store/billingReturnSyncStore";
 import { showErrorToast, showInfoToast, showSuccessToast } from "@/store/toastStore";
 import { normalizeApiError } from "@/types/api";
+import { friendlyErrorMessage } from "@/utils/friendlyError";
 import { boostForegroundSyncAfterBilling } from "@/utils/billingForegroundBoost";
 import {
   BILLING_RETURN_SYNC_INTERVAL_MS,
@@ -185,10 +186,8 @@ export async function openAuthenticatedBillingWeb(
       const status = normalized.status;
       if (status === 401 || code === "AUTH_REQUIRED") {
         showErrorToast(t("billingHandoff.sessionExpired"));
-      } else if (status === 429) {
-        showErrorToast(normalized.message || t("billingHandoff.openFailed"));
       } else {
-        showErrorToast(normalized.message || t("billingHandoff.openFailed"));
+        showErrorToast(friendlyErrorMessage(error, t("billingHandoff.openFailed"), t));
       }
     } finally {
       if (Platform.OS === "android") {

@@ -3,12 +3,15 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 
 /**
  * Persists dashboard / QR period toggles across restarts (preference polish).
+ * `ready` is false until AsyncStorage has been read once so callers can avoid
+ * firing a default-key query that immediately remounts when the stored period loads.
  */
 export function usePersistedTimeframe<T extends string>(
   storageKey: string,
   defaultValue: T,
-): [T, (next: T) => void] {
+): [T, (next: T) => void, boolean] {
   const [value, setValue] = useState<T>(defaultValue);
+  const [ready, setReady] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -20,6 +23,8 @@ export function usePersistedTimeframe<T extends string>(
         }
       } catch {
         /* ignore — use default */
+      } finally {
+        if (!cancelled) setReady(true);
       }
     })();
     return () => {
@@ -34,5 +39,5 @@ export function usePersistedTimeframe<T extends string>(
     });
   };
 
-  return [value, setPersisted];
+  return [value, setPersisted, ready];
 }

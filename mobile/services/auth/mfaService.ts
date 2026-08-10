@@ -1,10 +1,8 @@
-import { API_ENDPOINTS } from "@/constants/endpoints";
 import {
   apiClient,
+  markNewAccessSession,
   persistRefreshFromResponse,
-  setMemoryAccessToken,
 } from "@/services/api/client";
-import { refreshSession } from "@/services/auth/authService";
 import {
   getRefreshToken,
   saveAccessToken,
@@ -20,9 +18,10 @@ import { config } from "@/constants/config";
 import type { AuthResponse } from "@/types/auth";
 import type { TwoFactorSetup } from "@/types/settings";
 import { normalizeApiError } from "@/types/api";
+import { API_ENDPOINTS } from "@/constants/endpoints";
 
 async function persistSession(data: AuthResponse): Promise<AuthResponse> {
-  setMemoryAccessToken(data.token);
+  markNewAccessSession(data.token);
   await saveAccessToken(data.token);
   await saveUserSnapshot(data.user);
   return data;
@@ -93,26 +92,13 @@ export async function verifyMfaLogin(
 
   await persistSession(response.data);
 
-  let refreshEndpointSuccess = false;
-  if (secureStoreReadBack) {
-    try {
-      const refreshed = await refreshSession();
-      refreshEndpointSuccess = Boolean(refreshed?.token);
-      if (refreshed) return refreshed;
-    } catch (error) {
-      logAuthEvent("mfa.post.refresh.failed", {
-        message: normalizeApiError(error).message,
-      });
-    }
-  }
-
   logLoginTrace({
     hasAccessToken: true,
     hasRefreshHeader,
     hasSetCookie,
     refreshPersisted,
     secureStoreReadBack: Boolean(await getRefreshToken()),
-    refreshEndpointSuccess,
+    refreshEndpointSuccess: false,
   });
 
   return response.data;

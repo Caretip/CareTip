@@ -1,6 +1,7 @@
 /**
  * Brief window during intentional logout — disarms idle session guard.
- * Subset of web `authLogoutTransition.ts` (mobile has no logout overlay).
+ * Session teardown flips auth status before clearing caches so dashboards
+ * do not empty/skeleton under a still-authenticated shell (no logout overlay).
  */
 
 let active = false;

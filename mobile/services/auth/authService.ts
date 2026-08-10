@@ -2,6 +2,7 @@ import { API_ENDPOINTS } from "@/constants/endpoints";
 import {
   apiClient,
   getMemoryAccessToken,
+  markNewAccessSession,
   persistRefreshFromResponse,
   refreshAccessToken,
   setMemoryAccessToken,
@@ -44,13 +45,18 @@ import { normalizeApiError } from "@/types/api";
  */
 
 async function persistSession(data: AuthResponse): Promise<AuthResponse> {
-  setMemoryAccessToken(data.token);
+  markNewAccessSession(data.token);
   await saveAccessToken(data.token);
   await saveUserSnapshot(data.user);
   logAuthTokenState("session.persisted", data.token);
   return data;
 }
 
+/**
+ * Persist tokens after sign-in. Matches web: access JWT from sign-in is enough to enter the app.
+ * Do NOT call /api/auth/refresh here — a failed optional refresh used to clear the new access
+ * token and paint "Please sign in again" on the dashboard via reportGlobalError.
+ */
 async function finalizeAuthResponse(
   data: AuthResponse,
   context: "login" | "oauth",
@@ -58,24 +64,8 @@ async function finalizeAuthResponse(
 ): Promise<AuthResponse> {
   await persistSession(data);
 
-  let refreshEndpointSuccess = false;
-  const secureStoreReadBack = Boolean(await getRefreshToken());
-  if (secureStoreReadBack) {
-    try {
-      const refreshed = await refreshSession();
-      refreshEndpointSuccess = Boolean(refreshed?.token);
-    } catch (error) {
-      logAuthEvent(`${context}.post.refresh.failed`, {
-        message: normalizeApiError(error).message,
-        note: "Auth still succeeds; refresh is session continuity only.",
-        ...meta,
-      });
-    }
-  }
-
   logAuthEvent(`${context}.ready.for.dashboard`, {
     hasRefreshInSecureStore: Boolean(await getRefreshToken()),
-    refreshEndpointSuccess,
     ...meta,
   });
 

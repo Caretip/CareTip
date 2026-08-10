@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { fetchBusinessProfile, fetchBusinessStats } from "@/services/api/businessService";
 import { queryStaleTimes } from "@/services/api/queryClient";
 import { useAuthUserId, useUserQueryKeys } from "@/services/api/queryKeys";
@@ -16,7 +16,7 @@ export function useBusinessDashboard() {
   const userId = useAuthUserId();
   const keys = useUserQueryKeys();
   const scoped = Boolean(isAuthenticated && userId);
-  const [timeframe, setTimeframe] = usePersistedTimeframe<BusinessTimeframe>(
+  const [timeframe, setTimeframe, timeframeReady] = usePersistedTimeframe<BusinessTimeframe>(
     PREFERENCE_KEYS.businessDashboardTimeframe,
     "month",
   );
@@ -34,20 +34,28 @@ export function useBusinessDashboard() {
   const statsQuery = useQuery({
     queryKey: [...keys.businessStats, timeframe, statsScope] as const,
     queryFn: () => fetchBusinessStats(timeframe, statsScope),
-    enabled: scoped && profileQuery.isSuccess,
+    enabled: scoped && timeframeReady && profileQuery.isSuccess,
+    placeholderData: keepPreviousData,
   });
 
   const refresh = async () => {
     await Promise.all([profileQuery.refetch(), statsQuery.refetch()]);
   };
 
+  const profile = profileQuery.data;
+  const stats = statsQuery.data;
+
   return {
     timeframe,
     setTimeframe,
-    profile: profileQuery.data,
+    profile,
     premiumTier,
-    stats: statsQuery.data,
-    isLoading: profileQuery.isLoading || statsQuery.isLoading,
+    stats,
+    /** Full skeleton only on first paint — not on period toggles / background refetch. */
+    isLoading:
+      !timeframeReady ||
+      (profileQuery.isLoading && !profile) ||
+      (statsQuery.isLoading && !stats),
     isRefreshing: profileQuery.isRefetching || statsQuery.isRefetching,
     error: profileQuery.error ?? statsQuery.error,
     refresh,

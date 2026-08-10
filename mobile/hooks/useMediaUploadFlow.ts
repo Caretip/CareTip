@@ -23,6 +23,23 @@ function isUserCancel(error: unknown): boolean {
   return error instanceof MediaUploadUserError && error.code === "CANCELLED";
 }
 
+function mediaErrorToastKey(code: MediaUploadUserError["code"]): string {
+  switch (code) {
+    case "PERMISSION_DENIED":
+      return "settings.media.permissionDenied";
+    case "TOO_LARGE":
+      return "settings.media.tooLarge";
+    case "UNSUPPORTED_TYPE":
+      return "settings.media.unsupportedType";
+    case "EMPTY":
+      return "settings.media.empty";
+    case "OFFLINE":
+      return "errors.offline";
+    default:
+      return "settings.media.uploadError";
+  }
+}
+
 /**
  * Camera/gallery → compress → existing multipart endpoint → invalidateMediaSurfaces.
  */
@@ -55,11 +72,7 @@ export function useMediaUploadFlow(kind: UploadKind) {
     } catch (error) {
       if (isUserCancel(error)) return;
       if (error instanceof MediaUploadUserError) {
-        showErrorToast(
-          error.code === "PERMISSION_DENIED"
-            ? t("settings.media.permissionDenied")
-            : error.message,
-        );
+        showErrorToast(t(mediaErrorToastKey(error.code)));
         return;
       }
       showErrorToast(friendlyErrorMessage(error, t("settings.media.uploadError"), t));
@@ -103,7 +116,7 @@ export function useMediaUploadFlow(kind: UploadKind) {
       showSuccessToast(t("settings.media.avatarUploaded"));
     } catch (error) {
       if (error instanceof MediaUploadUserError) {
-        showErrorToast(error.message);
+        showErrorToast(t(mediaErrorToastKey(error.code)));
         return;
       }
       showErrorToast(friendlyErrorMessage(error, t("settings.media.uploadError"), t));

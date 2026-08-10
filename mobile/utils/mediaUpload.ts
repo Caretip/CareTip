@@ -49,13 +49,10 @@ function guessMime(uri: string, declared?: string | null): string {
 
 function assertAllowedMime(mime: string): void {
   if (/svg/i.test(mime)) {
-    throw new MediaUploadUserError("UNSUPPORTED_TYPE", "SVG uploads are not allowed.");
+    throw new MediaUploadUserError("UNSUPPORTED_TYPE", "UNSUPPORTED_TYPE");
   }
   if (!/^image\/(jpeg|jpg|png|gif|webp|heic|heif|avif)$/i.test(mime)) {
-    throw new MediaUploadUserError(
-      "UNSUPPORTED_TYPE",
-      "Unsupported image type. Use JPEG, PNG, GIF, WebP, HEIC, or AVIF.",
-    );
+    throw new MediaUploadUserError("UNSUPPORTED_TYPE", "UNSUPPORTED_TYPE");
   }
 }
 
@@ -120,10 +117,10 @@ export async function prepareImageForUpload(
   }
 
   if (bytes > CLIENT_IMAGE_MAX_BYTES) {
-    throw new MediaUploadUserError("TOO_LARGE", "Image is too large (max 5 MB).");
+    throw new MediaUploadUserError("TOO_LARGE", "TOO_LARGE");
   }
   if (bytes > 0 && bytes < 32) {
-    throw new MediaUploadUserError("EMPTY", "Image file is empty.");
+    throw new MediaUploadUserError("EMPTY", "EMPTY");
   }
 
   return {
@@ -142,10 +139,7 @@ async function ensurePermission(source: MediaPickSource): Promise<void> {
       ? current
       : await ImagePicker.requestCameraPermissionsAsync();
     if (!result.granted) {
-      throw new MediaUploadUserError(
-        "PERMISSION_DENIED",
-        "Camera permission is required to take a photo.",
-      );
+      throw new MediaUploadUserError("PERMISSION_DENIED", "PERMISSION_DENIED");
     }
     return;
   }
@@ -155,10 +149,7 @@ async function ensurePermission(source: MediaPickSource): Promise<void> {
     ? current
     : await ImagePicker.requestMediaLibraryPermissionsAsync();
   if (!result.granted) {
-    throw new MediaUploadUserError(
-      "PERMISSION_DENIED",
-      "Photo library permission is required to choose an image.",
-    );
+    throw new MediaUploadUserError("PERMISSION_DENIED", "PERMISSION_DENIED");
   }
 }
 

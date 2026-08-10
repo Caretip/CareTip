@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Pressable, StyleSheet, Text, View } from "react-native";
@@ -9,7 +9,10 @@ import { AuthContinueButton } from "@/components/auth/AuthContinueButton";
 import { AuthScreenHeader } from "@/components/auth/AuthScreenHeader";
 import { authCardStyles } from "@/components/auth/authCardStyles";
 import { useI18n } from "@/hooks/useI18n";
-import { forgotPasswordSchema, type ForgotPasswordFormValues } from "@/features/auth/authSchemas";
+import {
+  createForgotPasswordSchema,
+  type ForgotPasswordFormValues,
+} from "@/features/auth/authSchemas";
 import { authService } from "@/services/auth/authService";
 import { friendlyErrorMessage } from "@/utils/friendlyError";
 import { resolveLoginLocale } from "@/utils/resolveLoginLocale";
@@ -22,6 +25,7 @@ export function ForgotPasswordScreen() {
   const [formError, setFormError] = useState<string | null>(null);
   const [sent, setSent] = useState(false);
   const [sentEmail, setSentEmail] = useState("");
+  const forgotPasswordSchema = useMemo(() => createForgotPasswordSchema(t), [t]);
 
   const {
     control,

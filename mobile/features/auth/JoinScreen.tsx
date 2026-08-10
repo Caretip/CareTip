@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Pressable, Text, View } from "react-native";
@@ -8,7 +8,7 @@ import { AuthField } from "@/components/auth/AuthField";
 import { AuthContinueButton } from "@/components/auth/AuthContinueButton";
 import { AuthScreenHeader } from "@/components/auth/AuthScreenHeader";
 import { useI18n } from "@/hooks/useI18n";
-import { joinSchema, type JoinFormValues } from "@/features/auth/authSchemas";
+import { createJoinSchema, type JoinFormValues } from "@/features/auth/authSchemas";
 import { authService } from "@/services/auth/authService";
 import { friendlyErrorMessage } from "@/utils/friendlyError";
 import { hapticLight } from "@/utils/haptics";
@@ -18,6 +18,7 @@ export function JoinScreen() {
   const router = useRouter();
   const { t } = useI18n();
   const [formError, setFormError] = useState<string | null>(null);
+  const joinSchema = useMemo(() => createJoinSchema(t), [t]);
   const {
     control,
     handleSubmit,

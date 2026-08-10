@@ -86,7 +86,6 @@ export function EmployeeDashboardScreen() {
       leading={
         <RemoteAvatar displayName={fullName} uri={avatarUri} size={44} tone="brand" />
       }
-      notificationsHref="/(app)/employee/notifications"
       refreshing={isRefreshing}
       onRefresh={() => void refresh()}
       headerExtra={
@@ -106,7 +105,7 @@ export function EmployeeDashboardScreen() {
           fallbackMessage={t("employeeDashboard.loadError")}
           onRetry={() => void refresh()}
         />
-      ) : isTipsLoading && !tips ? (
+      ) : isTipsLoading ? (
         <SkeletonMetricGrid />
       ) : tipsError && !tips ? (
         <AccessErrorState

@@ -212,7 +212,12 @@ export async function signOut(): Promise<void> {
 
   await authService.logout();
 
-  // Clear private caches before flipping auth status so no screen can paint stale data.
+  // Flip auth first so `(app)` redirects away before caches/stores empty under a mounted dashboard.
+  useAuthStore.getState().setUnauthenticated();
+  useUserStore.getState().clear();
+  useBusinessStore.getState().clear();
+  useEmployeeStore.getState().clear();
+
   clearReactQueryForAuthBoundary("logout");
   try {
     await clearAllOfflineQrCaches();
@@ -220,11 +225,6 @@ export async function signOut(): Promise<void> {
     /* Non-fatal — session secrets already cleared. */
   }
   void clearOsNotificationBadge();
-
-  useUserStore.getState().clear();
-  useBusinessStore.getState().clear();
-  useEmployeeStore.getState().clear();
-  useAuthStore.getState().setUnauthenticated();
 }
 
 export const sessionManager = {

@@ -1,8 +1,10 @@
 /**
  * Premium minimalist dashboard tokens — Apple Wallet / Stripe / Revolut inspired.
+ * Brand accents use the web CareTip CTA orange (`#e9781c`), not Tailwind amber.
  */
 
 import { Platform, type ViewStyle } from "react-native";
+import { brand } from "./colors";
 
 export const premiumPalette = {
   white: "#FFFFFF",
@@ -11,10 +13,10 @@ export const premiumPalette = {
   textPrimary: "#111827",
   textSecondary: "#4B5563",
   textMuted: "#9CA3AF",
-  primary: "#F59E0B",
-  primaryDeep: "#D97706",
+  primary: brand.orange,
+  primaryDeep: brand.orangeDeep,
   inactive: "#9CA3AF",
-  starGold: "#F59E0B",
+  starGold: brand.orange,
 } as const;
 
 /** Sheet text hierarchy — light theme uses premiumPalette; dark uses high-contrast grays. */
@@ -43,21 +45,21 @@ export function dashboardTextColors(isDark: boolean): DashboardTextColors {
 }
 
 export const premiumHeroGradient = {
-  colors: ["#FFC247", "#F59E0B", "#E67E22"] as const,
+  colors: [brand.orangeLight, brand.orange, brand.orangeDeep] as const,
   locations: [0, 0.5, 1] as const,
   start: { x: 0, y: 0 },
   end: { x: 1, y: 1 },
 };
 
 export const premiumWalletGradient = {
-  colors: ["#FFC247", "#F59E0B", "#E67E22"] as const,
+  colors: [brand.orangeLight, brand.orange, brand.orangeDeep] as const,
   locations: [0, 0.45, 1] as const,
   start: { x: 0, y: 0 },
   end: { x: 1, y: 0.85 },
 };
 
 export const premiumProgressGradient = {
-  colors: ["#FCD34D", "#F59E0B"] as const,
+  colors: [brand.orangeHover, brand.orange] as const,
   start: { x: 0, y: 0.5 },
   end: { x: 1, y: 0.5 },
 };

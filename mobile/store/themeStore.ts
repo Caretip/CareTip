@@ -15,7 +15,8 @@ type ThemeState = {
 };
 
 export const useThemeStore = create<ThemeState>((set, get) => ({
-  mode: "dark",
+  // Prefer system until hydrate — avoids forcing dark then flipping to stored light.
+  mode: "system",
   hydrated: false,
   hydrate: async () => {
     if (get().hydrated) return;

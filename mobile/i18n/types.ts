@@ -82,6 +82,8 @@ export type MobileMessages = {
     fullNamePlaceholder: string;
     mfaCodePlaceholder: string;
     signInFailed: string;
+    invalidCredentials: string;
+    emailNotVerifiedError: string;
     security: string;
     mfaTitle: string;
     mfaSetupTitle: string;
@@ -555,6 +557,9 @@ export type MobileMessages = {
       avatarUploaded: string;
       uploadError: string;
       permissionDenied: string;
+      tooLarge: string;
+      unsupportedType: string;
+      empty: string;
     };
     menu: {
       account: string;
@@ -587,6 +592,7 @@ export type MobileMessages = {
       privacyDataDesc: string;
       privacyDataHint: string;
       downloadData: string;
+      exportDialogTitle: string;
       exportStarted: string;
       exportError: string;
       deleteAccount: string;
@@ -658,9 +664,26 @@ export type MobileMessages = {
     permissionBody: string;
     subscriptionRequiredTitle: string;
     subscriptionRequiredBody: string;
+    planLimitExceeded: string;
     onboardingIncompleteTitle: string;
     onboardingIncompleteBody: string;
     managePlan: string;
+    rateLimited: string;
+    validation: string;
+    conflict: string;
+    businessContextRequired: string;
+  };
+  validation: {
+    emailPasswordRequired: string;
+    emailRequired: string;
+    emailInvalid: string;
+    passwordMin: string;
+    confirmPasswordRequired: string;
+    passwordsMismatch: string;
+    inviteCodeRequired: string;
+    mfaCodeRequired: string;
+    mfaCodeTooLong: string;
+    nameRequired: string;
   };
   billingHandoff: {
     confirmTitle: string;

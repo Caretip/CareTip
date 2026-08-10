@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
@@ -13,7 +13,7 @@ import { SocialAuthButtons } from "@/components/auth/SocialAuthButtons";
 import { useAuth } from "@/hooks/useAuth";
 import { useSocialAuth } from "@/hooks/useSocialAuth";
 import { useI18n } from "@/hooks/useI18n";
-import { loginSchema, type LoginFormValues } from "@/features/auth/loginSchema";
+import { createLoginSchema, type LoginFormValues } from "@/features/auth/loginSchema";
 import { EMAIL_NOT_VERIFIED } from "@/constants/authErrors";
 import { isMfaChallenge } from "@/types/auth";
 import type { OAuthProvider } from "@/types/auth";
@@ -61,6 +61,8 @@ export function LoginScreen() {
   } = useSocialAuth({
     onAccountNotRegistered: () => setRegisterOpen(true),
   });
+
+  const loginSchema = useMemo(() => createLoginSchema(t), [t]);
 
   useEffect(() => {
     if (isHydrated && isAuthenticated && user?.role) {

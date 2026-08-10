@@ -19,11 +19,13 @@ export async function fetchEmployeeTips(
   return data;
 }
 
-export async function downloadEmployeeDataExport(): Promise<ShareOutcome> {
+export async function downloadEmployeeDataExport(options?: {
+  dialogTitle?: string;
+}): Promise<ShareOutcome> {
   const { data } = await apiClient.get<unknown>(API_ENDPOINTS.employees.meExport);
   const outcome = await shareJsonExport({
     data,
-    dialogTitle: "CareTip data export",
+    dialogTitle: options?.dialogTitle ?? "CareTip data export",
   });
   if (outcome === "failed" || outcome === "unavailable") {
     throw new Error("SHARE_EXPORT_UNAVAILABLE");

@@ -65,10 +65,10 @@ export function VerifyEmailScreen() {
     let cancelled = false;
     void authService
       .verifyEmailWithToken(token)
-      .then(async (result) => {
+      .then(async () => {
         if (cancelled) return;
         setStatus("verified");
-        setMessage(result.message || t("auth.verifyEmailSuccess"));
+        setMessage(t("auth.verifyEmailSuccess"));
         await refreshAndContinue();
       })
       .catch((error) => {
@@ -90,10 +90,12 @@ export function VerifyEmailScreen() {
     setMessage(null);
     try {
       const locale = resolveLoginLocale();
-      const result = isAuthenticated
-        ? await authService.resendVerificationEmailSession(locale)
-        : await authService.resendVerificationEmail(pendingEmail, password, locale);
-      setMessage(result.message || t("auth.verifyEmailResent"));
+      if (isAuthenticated) {
+        await authService.resendVerificationEmailSession(locale);
+      } else {
+        await authService.resendVerificationEmail(pendingEmail, password, locale);
+      }
+      setMessage(t("auth.verifyEmailResent"));
     } catch (error) {
       setMessage(friendlyErrorMessage(error, t("auth.verifyEmailResendFailed"), t));
     } finally {

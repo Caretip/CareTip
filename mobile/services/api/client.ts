@@ -20,6 +20,11 @@ import { isIdleLogoutInFlight } from "@/lib/idleSession/idleSessionStore";
 import { logAuthEvent, logOutgoingAuthHeader } from "@/utils/authDebug";
 import { normalizeApiError } from "@/types/api";
 import type { AuthResponse } from "@/types/auth";
+import {
+  bumpAuthSessionEpoch,
+  getAuthSessionEpoch,
+} from "@/services/auth/authSessionEpoch";
+import { useAuthStore } from "@/store/authStore";
 
 type RetriableConfig = InternalAxiosRequestConfig & {
   __caretipRetried?: boolean;
@@ -34,6 +39,12 @@ export function setMemoryAccessToken(token: string | null): void {
 
 export function getMemoryAccessToken(): string | null {
   return memoryAccessToken;
+}
+
+/** Call when login/MFA/OAuth/bootstrap persists a new access session. */
+export function markNewAccessSession(token: string): void {
+  bumpAuthSessionEpoch();
+  memoryAccessToken = token;
 }
 
 export async function hydrateAccessTokenFromSecureStore(): Promise<string | null> {
@@ -134,6 +145,9 @@ async function refreshAccessToken(): Promise<string | null> {
   if (isIdleLogoutInFlight()) return null;
   if (refreshPromise) return refreshPromise;
 
+  const epochAtStart = getAuthSessionEpoch();
+  const accessAtStart = memoryAccessToken;
+
   refreshPromise = (async () => {
     try {
       if (isIdleLogoutInFlight()) return null;
@@ -155,6 +169,11 @@ async function refreshAccessToken(): Promise<string | null> {
         { headers, timeout: config.apiTimeoutMs },
       );
 
+      if (epochAtStart !== getAuthSessionEpoch()) {
+        logAuthEvent("refresh.success.ignored", { reason: "newer-session-epoch" });
+        return getMemoryAccessToken();
+      }
+
       await persistRefreshFromResponse(response.headers as Record<string, unknown>);
       if (isIdleLogoutInFlight()) return null;
       const nextToken = response.data.token;
@@ -162,14 +181,35 @@ async function refreshAccessToken(): Promise<string | null> {
       await saveAccessToken(nextToken);
       return nextToken;
     } catch (error) {
+      // A successful login (or restore) won while this refresh was in flight — do not
+      // clear the new session or surface "Please sign in again" on the dashboard.
+      if (epochAtStart !== getAuthSessionEpoch()) {
+        logAuthEvent("refresh.failed.stale", {
+          reason: "newer-session-epoch",
+          status: (error as AxiosError)?.response?.status ?? null,
+        });
+        return getMemoryAccessToken();
+      }
+      if (memoryAccessToken && memoryAccessToken !== accessAtStart) {
+        logAuthEvent("refresh.failed.stale", { reason: "access-token-replaced" });
+        return memoryAccessToken;
+      }
+
+      const authStatus = useAuthStore.getState().status;
       memoryAccessToken = null;
       await clearAccessToken();
       logAuthEvent("refresh.failed", {
         status: (error as AxiosError)?.response?.status ?? null,
         message: (error as AxiosError<{ message?: string }>)?.response?.data?.message ?? "unknown",
+        authStatus,
       });
-      notifySessionExpired();
-      reportGlobalError(error);
+
+      // Only invalidate an established session. Failures during login/bootstrap/unauth
+      // must not paint the authenticated dashboard with a false expiry banner.
+      if (authStatus === "authenticated" && epochAtStart === getAuthSessionEpoch()) {
+        notifySessionExpired();
+        reportGlobalError(error);
+      }
       return null;
     } finally {
       refreshPromise = null;
@@ -229,7 +269,8 @@ apiClient.interceptors.response.use(
         original.headers.Authorization = `Bearer ${nextToken}`;
         return apiClient.request(original);
       }
-      notifySessionExpired();
+      // refreshAccessToken already notified/reported when the session was genuinely dead.
+      return Promise.reject(error);
     }
 
     // Screen-level ErrorStates handle HTTP failures — only surface transport issues globally.

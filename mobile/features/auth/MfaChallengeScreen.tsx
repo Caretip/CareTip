@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ActivityIndicator, Image, StyleSheet, Text, View } from "react-native";
@@ -10,7 +10,7 @@ import { AuthScreenHeader } from "@/components/auth/AuthScreenHeader";
 import { Button } from "@/components/ui/Button";
 import { useAuth } from "@/hooks/useAuth";
 import { useI18n } from "@/hooks/useI18n";
-import { mfaSchema, type MfaFormValues } from "@/features/auth/loginSchema";
+import { createMfaSchema, type MfaFormValues } from "@/features/auth/loginSchema";
 import { setupLoginMfa } from "@/services/auth/mfaService";
 import { navigateAfterAuth } from "@/utils/postAuthNavigation";
 import { friendlyErrorMessage } from "@/utils/friendlyError";
@@ -33,6 +33,7 @@ export function MfaChallengeScreen() {
 
   const pendingMfaToken = typeof params.pendingMfaToken === "string" ? params.pendingMfaToken : "";
   const mfaSetupRequired = params.mfaSetupRequired === "1";
+  const mfaSchema = useMemo(() => createMfaSchema(t), [t]);
 
   useEffect(() => {
     if (!mfaSetupRequired || !pendingMfaToken) return;

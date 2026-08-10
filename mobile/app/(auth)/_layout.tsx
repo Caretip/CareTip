@@ -1,6 +1,8 @@
+import { View } from "react-native";
 import { Redirect, Stack, useSegments } from "expo-router";
 import { useAuth } from "@/hooks/useAuth";
 import { useSessionRoutingReady } from "@/hooks/useAppReady";
+import { authBrand } from "@/theme/authBrand";
 import { getPostAuthHref, resolvePostAuthAction } from "@/utils/postAuthNavigation";
 
 const AUTH_RECOVERY_ROUTES = new Set(["verify-email", "onboarding", "mfa", "session-recovery"]);
@@ -12,7 +14,8 @@ export default function AuthLayout() {
   const currentRoute = segments[segments.length - 1] ?? "";
 
   if (!routingReady) {
-    return null;
+    // Match splash orange — avoid a blank/null frame under the overlay.
+    return <View style={{ flex: 1, backgroundColor: authBrand.orange }} />;
   }
 
   if (status === "session_recovery") {

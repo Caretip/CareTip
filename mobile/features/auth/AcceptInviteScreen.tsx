@@ -21,30 +21,10 @@ import {
 import { authBrand } from "@/theme/authBrand";
 import { spacing, typography } from "@/theme";
 import type { OAuthProvider } from "@/types/auth";
-import { z } from "zod";
-
-const acceptInviteSchema = z
-  .object({
-    name: z.string().trim().min(1, "Please enter your name."),
-    email: z
-      .string()
-      .trim()
-      .min(1, "Please enter your email address.")
-      .email("Please enter a valid email address."),
-    password: z.string().min(8, "Password must be at least 8 characters."),
-    confirmPassword: z.string().min(1, "Please confirm your password."),
-  })
-  .superRefine((values, ctx) => {
-    if (values.password !== values.confirmPassword) {
-      ctx.addIssue({
-        code: "custom",
-        message: "Passwords do not match.",
-        path: ["confirmPassword"],
-      });
-    }
-  });
-
-type AcceptInviteFormValues = z.infer<typeof acceptInviteSchema>;
+import {
+  createAcceptInviteSchema,
+  type AcceptInviteFormValues,
+} from "@/features/auth/authSchemas";
 
 /**
  * Employee invitation completion — identity verification only.
@@ -75,6 +55,8 @@ export function AcceptInviteScreen() {
     loadingProvider,
     socialBusy,
   } = useSocialAuth();
+
+  const acceptInviteSchema = useMemo(() => createAcceptInviteSchema(t), [t]);
 
   const {
     control,

@@ -278,7 +278,7 @@ export function LayeredScreenShell({
         </>
       ) : background === "auth-image" ? null : (
         <LinearGradient
-          colors={["rgba(245, 166, 35, 0.18)", "rgba(245, 166, 35, 0.06)", "transparent"]}
+          colors={["rgba(233, 120, 28, 0.18)", "rgba(233, 120, 28, 0.06)", "transparent"]}
           locations={[0, 0.45, 1]}
           style={[styles.heroGradient, { height: heroBackdropHeight }]}
           pointerEvents="none"

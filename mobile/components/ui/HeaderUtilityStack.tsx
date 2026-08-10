@@ -1,18 +1,12 @@
 import { StyleSheet, View } from "react-native";
 import { LanguageSwitcher } from "@/components/ui/LanguageSwitcher";
-import { NotificationBell } from "@/components/ui/NotificationBell";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { spacing } from "@/theme";
 
-type HeaderUtilityStackProps = {
-  notificationsHref: string;
-};
-
-/** Dashboard header utilities — compact dark icons on the orange hero (top-right). */
-export function HeaderUtilityStack({ notificationsHref }: HeaderUtilityStackProps) {
+/** Dashboard header utilities — theme + language on the orange hero (top-right). */
+export function HeaderUtilityStack() {
   return (
     <View style={styles.row}>
-      <NotificationBell href={notificationsHref} variant="onDashboardHero" />
       <ThemeToggle variant="onDashboardHero" />
       <LanguageSwitcher variant="onDashboardHero" />
     </View>

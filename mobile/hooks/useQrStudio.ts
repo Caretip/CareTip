@@ -62,7 +62,9 @@ export function useQrStudio() {
     userId,
     profile: profileQuery.data,
     items: inventoryQuery.data ?? [],
-    isLoading: profileQuery.isLoading || inventoryQuery.isLoading,
+    isLoading:
+      (profileQuery.isLoading && !profileQuery.data) ||
+      (inventoryQuery.isLoading && !inventoryQuery.data),
     isRefreshing: profileQuery.isRefetching || inventoryQuery.isRefetching,
     error: profileQuery.error ?? inventoryQuery.error,
     refresh,

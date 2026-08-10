@@ -1,15 +1,18 @@
 /**
  * CareTip fintech light theme — neutral surfaces, orange accent only for emphasis.
  * Palette: Grey / Raenest / Revolut inspired hospitality fintech.
+ *
+ * Brand orange matches web app CTA primary (`src/styles/caretip-brand.css` /
+ * `src/lib/caretipBrand.ts` — `#e9781c`).
  */
 
 export const brand = {
-  orange: "#F5A623",
-  orangeLight: "#FFD36A",
-  orangeHover: "#FFD36A",
-  orangeSoft: "rgba(245, 166, 35, 0.12)",
-  orangeMuted: "rgba(245, 166, 35, 0.22)",
-  orangeDeep: "#E88E15",
+  orange: "#e9781c",
+  orangeLight: "#ff9e2d",
+  orangeHover: "#ffb04a",
+  orangeSoft: "rgba(233, 120, 28, 0.12)",
+  orangeMuted: "rgba(233, 120, 28, 0.22)",
+  orangeDeep: "#d96810",
 } as const;
 
 export const lightColors = {

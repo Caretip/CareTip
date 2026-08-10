@@ -20,8 +20,9 @@ import {
   FacebookSignInCancelledError,
   FacebookSignInUnavailableError,
 } from "@/services/facebook/facebookSignInErrors";
+import { formatUserFacingError } from "@/utils/userFacingError";
 
-type TranslateFn = (key: string) => string;
+type TranslateFn = (key: string, params?: Record<string, string | number>) => string;
 
 function fallbackKeyForProvider(provider?: OAuthProvider): string {
   if (provider === "apple") return "auth.appleSignInFailed";
@@ -55,13 +56,13 @@ export function resolveOAuthErrorMessage(
     return t("auth.facebookSignInCancelled");
   }
   if (error instanceof GoogleSignInUnavailableError) {
-    return error.message || t("auth.googleNotConfigured");
+    return t("auth.googleNotConfigured");
   }
   if (error instanceof AppleSignInUnavailableError) {
-    return error.message || t("auth.appleNotConfigured");
+    return t("auth.appleNotConfigured");
   }
   if (error instanceof FacebookSignInUnavailableError) {
-    return error.message || t("auth.facebookNotConfigured");
+    return t("auth.facebookNotConfigured");
   }
 
   const normalized =
@@ -97,10 +98,8 @@ export function resolveOAuthErrorMessage(
   ) {
     return t("auth.oauthTokenInvalid");
   }
-  if (normalized.message && normalized.message !== "Something went wrong. Please try again.") {
-    return normalized.message;
-  }
-  return t(fallbackKey);
+
+  return formatUserFacingError(error, t(fallbackKey), t);
 }
 
 export function isOAuthAccountNotRegistered(error: unknown): boolean {

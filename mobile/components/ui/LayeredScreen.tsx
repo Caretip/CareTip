@@ -27,7 +27,6 @@ type LayeredScreenProps = {
   refreshing?: boolean;
   onRefresh?: () => void;
   safeAreaEdges?: Edge[];
-  notificationsHref?: string;
   showHeaderUtilities?: boolean;
 };
 
@@ -46,7 +45,6 @@ export function LayeredScreen({
   refreshing,
   onRefresh,
   safeAreaEdges = ["top", "left", "right"],
-  notificationsHref,
   showHeaderUtilities = true,
 }: LayeredScreenProps) {
   const styles = useMemo(() => createStyles(), []);
@@ -85,9 +83,7 @@ export function LayeredScreen({
                   </Text>
                 ) : null}
               </View>
-              {showHeaderUtilities && notificationsHref ? (
-                <HeaderUtilityStack notificationsHref={notificationsHref} />
-              ) : null}
+              {showHeaderUtilities ? <HeaderUtilityStack /> : null}
             </View>
             {headerExtra ? <View style={staticStyles.headerExtra}>{headerExtra}</View> : null}
           </View>

@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { fetchBusinessProfile, fetchBusinessQrAnalytics, fetchBusinessStats } from "@/services/api/businessService";
 import { queryStaleTimes } from "@/services/api/queryClient";
 import { useAuthUserId, useUserQueryKeys } from "@/services/api/queryKeys";
@@ -22,7 +22,7 @@ export function useBusinessAnalytics(options: UseBusinessAnalyticsOptions = {}) 
   const userId = useAuthUserId();
   const keys = useUserQueryKeys();
   const scoped = Boolean(isAuthenticated && userId);
-  const [timeframe, setTimeframe] = usePersistedTimeframe<BusinessTimeframe>(
+  const [timeframe, setTimeframe, timeframeReady] = usePersistedTimeframe<BusinessTimeframe>(
     PREFERENCE_KEYS.businessAnalyticsTimeframe,
     "month",
   );
@@ -40,14 +40,16 @@ export function useBusinessAnalytics(options: UseBusinessAnalyticsOptions = {}) 
   const statsQuery = useQuery({
     queryKey: [...keys.businessStats, timeframe, statsScope] as const,
     queryFn: () => fetchBusinessStats(timeframe, statsScope),
-    enabled: scoped && profileQuery.isSuccess,
+    enabled: scoped && timeframeReady && profileQuery.isSuccess,
+    placeholderData: keepPreviousData,
   });
 
   // Never call Premium-only QR analytics on Basic — show upgrade UI instead.
   const qrQuery = useQuery({
     queryKey: [...keys.businessQrAnalytics, timeframe] as const,
     queryFn: () => fetchBusinessQrAnalytics(timeframe),
-    enabled: includeQr && premiumTier && scoped && statsQuery.isSuccess,
+    enabled: includeQr && premiumTier && scoped && timeframeReady && statsQuery.isSuccess,
+    placeholderData: keepPreviousData,
   });
 
   const refresh = async () => {
@@ -58,14 +60,20 @@ export function useBusinessAnalytics(options: UseBusinessAnalyticsOptions = {}) 
     ]);
   };
 
+  const profile = profileQuery.data;
+  const stats = statsQuery.data;
+
   return {
     timeframe,
     setTimeframe,
-    profile: profileQuery.data,
+    profile,
     premiumTier,
-    stats: statsQuery.data,
+    stats,
     qrAnalytics: includeQr && premiumTier ? qrQuery.data : undefined,
-    isLoading: profileQuery.isLoading || statsQuery.isLoading,
+    isLoading:
+      !timeframeReady ||
+      (profileQuery.isLoading && !profile) ||
+      (statsQuery.isLoading && !stats),
     isRefreshing: statsQuery.isRefetching || (includeQr && premiumTier && qrQuery.isRefetching),
     // Do not surface QR entitlement errors into the whole Analytics page.
     error: profileQuery.error ?? statsQuery.error,

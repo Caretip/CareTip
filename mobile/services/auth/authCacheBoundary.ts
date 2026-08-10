@@ -1,6 +1,8 @@
 import { queryClient } from "@/services/api/queryClient";
+import { markNewAccessSession } from "@/services/api/client";
 import { useAuthStore } from "@/store/authStore";
 import { useUserStore } from "@/store/userStore";
+import { useUiStore } from "@/store/uiStore";
 import type { AuthUser } from "@/types/auth";
 import { clearAllOfflineQrCaches } from "@/utils/offlineQrCache";
 import { logAuthEvent } from "@/utils/authDebug";
@@ -70,6 +72,11 @@ export async function establishAuthenticatedSession(
   } else {
     clearReactQueryForAuthBoundary(reason);
   }
+
+  // Ensure interceptor Bearer matches the session we are about to mount.
+  markNewAccessSession(token);
+  // Drop any stale global banner (e.g. prior refresh failure / transport error).
+  useUiStore.getState().clearGlobalError();
 
   useUserStore.getState().setUser(user);
   useAuthStore.getState().setAuthenticated(token);

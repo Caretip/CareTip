@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Pressable, StyleSheet, Text, View } from "react-native";
@@ -8,7 +8,10 @@ import { AuthField } from "@/components/auth/AuthField";
 import { AuthContinueButton } from "@/components/auth/AuthContinueButton";
 import { AuthScreenHeader } from "@/components/auth/AuthScreenHeader";
 import { useI18n } from "@/hooks/useI18n";
-import { resetPasswordSchema, type ResetPasswordFormValues } from "@/features/auth/authSchemas";
+import {
+  createResetPasswordSchema,
+  type ResetPasswordFormValues,
+} from "@/features/auth/authSchemas";
 import { authService } from "@/services/auth/authService";
 import { friendlyErrorMessage } from "@/utils/friendlyError";
 import { hapticLight } from "@/utils/haptics";
@@ -22,6 +25,7 @@ export function ResetPasswordScreen() {
   const token = typeof params.token === "string" ? params.token.trim() : "";
   const [formError, setFormError] = useState<string | null>(null);
   const [done, setDone] = useState(false);
+  const resetPasswordSchema = useMemo(() => createResetPasswordSchema(t), [t]);
 
   useEffect(() => {
     if (!token) {

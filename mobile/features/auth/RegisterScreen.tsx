@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
@@ -8,7 +8,10 @@ import { AuthField } from "@/components/auth/AuthField";
 import { AuthContinueButton } from "@/components/auth/AuthContinueButton";
 import { AuthScreenHeader } from "@/components/auth/AuthScreenHeader";
 import { useI18n } from "@/hooks/useI18n";
-import { managerRegisterSchema, type ManagerRegisterFormValues } from "@/features/auth/authSchemas";
+import {
+  createManagerRegisterSchema,
+  type ManagerRegisterFormValues,
+} from "@/features/auth/authSchemas";
 import { authService } from "@/services/auth/authService";
 import { friendlyErrorMessage } from "@/utils/friendlyError";
 import { resolveLoginLocale } from "@/utils/resolveLoginLocale";
@@ -28,6 +31,7 @@ export function RegisterScreen() {
   const [formError, setFormError] = useState<string | null>(null);
   const emailRef = useRef<TextInput>(null);
   const passwordRef = useRef<TextInput>(null);
+  const managerRegisterSchema = useMemo(() => createManagerRegisterSchema(t), [t]);
 
   const legacyEmployeeInvite =
     params.role === "employee" ||

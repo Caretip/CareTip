@@ -119,7 +119,6 @@ export function BusinessDashboardScreen() {
       leading={
         <RemoteAvatar displayName={managerName} uri={avatarUri} size={44} tone="brand" />
       }
-      notificationsHref="/(app)/business/notifications"
       refreshing={isRefreshing}
       onRefresh={() => void refresh()}
       headerExtra={

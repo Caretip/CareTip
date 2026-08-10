@@ -2,21 +2,23 @@ import { useAuth } from "@/hooks/useAuth";
 import { useFontsReady } from "@/hooks/useFontsReady";
 import { useI18nStore } from "@/i18n";
 import { useStartupStore } from "@/store/startupStore";
+import { useThemeStore } from "@/store/themeStore";
 
 /**
- * True when fonts, auth, and locale are ready — or startup settled (incl. timeout).
+ * True when fonts, auth, locale, and theme are ready — or startup settled (incl. timeout).
  */
 export function useBootstrapReady(): boolean {
   const fontsReady = useFontsReady();
   const { isHydrated, status } = useAuth();
   const i18nHydrated = useI18nStore((s) => s.hydrated);
+  const themeHydrated = useThemeStore((s) => s.hydrated);
   const bootstrapSettled = useStartupStore((s) => s.bootstrapSettled);
 
   const authReady =
     isHydrated &&
     status !== "idle" &&
     status !== "bootstrapping";
-  return (fontsReady && authReady && i18nHydrated) || bootstrapSettled;
+  return (fontsReady && authReady && i18nHydrated && themeHydrated) || bootstrapSettled;
 }
 
 /** Routing gates (index redirects) — never wait past bootstrap settlement. */

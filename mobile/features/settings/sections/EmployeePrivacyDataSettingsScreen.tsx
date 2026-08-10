@@ -25,7 +25,9 @@ export function EmployeePrivacyDataSettingsScreen() {
     if (exporting) return;
     setExporting(true);
     try {
-      const outcome = await downloadEmployeeDataExport();
+      const outcome = await downloadEmployeeDataExport({
+        dialogTitle: t("settings.menu.exportDialogTitle"),
+      });
       if (outcome === "shared") {
         showSuccessToast(t("settings.menu.exportStarted"));
       }
