@@ -21,7 +21,7 @@
 
 .caretip-landing .caretip-industry-showcase:focus-visible {
   box-shadow:
-    0 0 0 2px rgb(235 153 44 / 0.55),
+    0 0 0 2px rgb(233 120 28 / 0.55),
     0 24px 64px -28px rgb(0 0 0 / 0.45);
 }
 
@@ -184,7 +184,7 @@
   height: 2.75rem;
   border-radius: 999px;
   border: 1px solid rgb(255 255 255 / 0.22);
-  background: rgb(235 153 44 / 0.18);
+  background: rgb(233 120 28 / 0.18);
   color: #fff;
 }
 
@@ -258,12 +258,12 @@
 
 .caretip-landing .caretip-industry-progress__dot--active {
   width: 1.15rem;
-  background: #eb992c;
+  background: #e9781c;
   transform: scale(1.05);
 }
 
 .caretip-landing .caretip-industry-progress__dot:focus-visible {
-  outline: 2px solid #eb992c;
+  outline: 2px solid #e9781c;
   outline-offset: 3px;
 }
 
@@ -311,7 +311,7 @@
 }
 
 .caretip-landing .caretip-industry-nav__btn:focus-visible {
-  outline: 2px solid #eb992c;
+  outline: 2px solid #e9781c;
   outline-offset: 2px;
 }
 

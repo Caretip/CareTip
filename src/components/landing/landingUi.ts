@@ -10,9 +10,9 @@ export function landingCopyVisible(text: string | undefined): boolean {
   return Boolean(text?.trim());
 }
 
-/** Rich amber gradient — hero keyword + section headline emphasis. */
+/** Company CTA orange gradient — hero keyword + section headline emphasis. */
 const brandAccentGradient =
-  "caretip-hero-headline-accent bg-gradient-to-r from-[#EB992C] via-[#E89124] to-[#D88118] bg-clip-text text-transparent dark:from-[#FBBF24] dark:via-[#F59E0B] dark:to-[#E68A2E]";
+  "caretip-hero-headline-accent bg-gradient-to-r from-[#ff9e2d] via-[#e9781c] to-[#d96810] bg-clip-text text-transparent dark:from-[#ffb04a] dark:via-[#e9781c] dark:to-[#ff9e2d]";
 
 /**
  * Landing page design system — layout, spacing, typography (TipJar-inspired rhythm).
@@ -146,9 +146,9 @@ export const landingUi = {
   sectionAccentMuted:
     "relative inline-flex w-fit items-center gap-2 max-lg:mx-auto lg:mx-0",
   sectionAccentDot:
-    "h-1.5 w-1.5 shrink-0 rounded-full bg-[#EB992C] shadow-[0_0_0_3px_rgba(235,153,44,0.16)]",
+    "h-1.5 w-1.5 shrink-0 rounded-full bg-[#e9781c] shadow-[0_0_0_3px_rgba(233,120,28,0.16)]",
   sectionAccentText:
-    "text-xs font-semibold uppercase tracking-[0.18em] text-[#EB992C]",
+    "text-xs font-semibold uppercase tracking-[0.18em] text-[#e9781c]",
   sectionAccentTextMuted:
     "text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground",
   /** Feature-card label (not a section eyebrow). */

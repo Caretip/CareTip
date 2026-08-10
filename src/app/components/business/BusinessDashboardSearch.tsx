@@ -47,7 +47,7 @@ const CATEGORY_ICON: Record<BusinessSearchCategory, typeof Search> = {
 };
 
 const inputClassName =
-  "h-11 w-full min-w-0 rounded-xl border border-border/80 bg-card py-2 pl-10 pr-9 text-sm text-foreground shadow-[0_1px_2px_rgba(15,23,42,0.04)] transition-[border-color,box-shadow] placeholder:text-muted-foreground focus:border-[#EB992C] focus:outline-none focus:ring-2 focus:ring-[#EB992C]/20";
+  "h-11 w-full min-w-0 rounded-xl border border-border/80 bg-card py-2 pl-10 pr-9 text-sm text-foreground shadow-[0_1px_2px_rgba(15,23,42,0.04)] transition-[border-color,box-shadow] placeholder:text-muted-foreground focus:border-[#e9781c] focus:outline-none focus:ring-2 focus:ring-[#e9781c]/20";
 
 function HighlightedText({ text, query }: { text: string; query: string }) {
   const parts = highlightMatchSegments(text, query);
@@ -57,7 +57,7 @@ function HighlightedText({ text, query }: { text: string; query: string }) {
         part.match ? (
           <mark
             key={`${part.text}-${i}`}
-            className="rounded-sm bg-[#EB992C]/15 px-0.5 font-medium text-foreground"
+            className="rounded-sm bg-[#e9781c]/15 px-0.5 font-medium text-foreground"
           >
             {part.text}
           </mark>
@@ -267,7 +267,7 @@ export function BusinessDashboardSearch({
                             aria-selected={active}
                             className={cn(
                               "flex w-full items-start gap-2.5 rounded-lg px-2.5 py-2 text-left transition-colors",
-                              active ? "bg-[#EB992C]/10" : "hover:bg-muted/70",
+                              active ? "bg-[#e9781c]/10" : "hover:bg-muted/70",
                             )}
                             onMouseEnter={() => setActiveIndex(index)}
                             onClick={() => goTo(hit)}
@@ -276,7 +276,7 @@ export function BusinessDashboardSearch({
                               className={cn(
                                 "mt-0.5 inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-lg",
                                 active
-                                  ? "bg-[#EB992C]/15 text-[#EB992C]"
+                                  ? "bg-[#e9781c]/15 text-[#e9781c]"
                                   : "bg-muted text-muted-foreground",
                               )}
                               aria-hidden

@@ -3,8 +3,8 @@
  */
 
 .caretip-legal-document-page {
-  --caretip-legal-accent: #eb992c;
-  --caretip-legal-accent-rgb: 235 153 44;
+  --caretip-legal-accent: #e9781c;
+  --caretip-legal-accent-rgb: 233 120 28;
   --caretip-legal-inner-max: min(100%, 72rem);
   background: hsl(var(--background));
 }

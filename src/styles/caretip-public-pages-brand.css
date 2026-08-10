@@ -95,7 +95,8 @@
 
 /* —— Shared hero card shell (Pricing standard) —— */
 .caretip-public-page-hero-card {
-  --caretip-page-hero-card-accent-rgb: 235 153 44;
+  /* Company CTA orange #e9781c (not logo #EB992C) */
+  --caretip-page-hero-card-accent-rgb: 233 120 28;
   --caretip-page-hero-card-dark-rgb: 22 20 18;
   background: linear-gradient(
     180deg,
@@ -118,7 +119,7 @@ html.dark .caretip-public-page-hero-card {
 
 /* —— Shared marketing page hero (Features, About, FAQ, Pricing) —— */
 .caretip-public-marketing-hero-wise {
-  --caretip-marketing-hero-accent-rgb: 235 153 44;
+  --caretip-marketing-hero-accent-rgb: 233 120 28;
   --caretip-marketing-hero-dark-rgb: 22 20 18;
   margin-bottom: 0;
 }
@@ -469,7 +470,7 @@ html.dark .caretip-public-warm-dark-cta {
 }
 
 .caretip-public-warm-dark-trust-strip .caretip-public-hero-pills__list > li > span > span[aria-hidden] {
-  background: rgb(251 191 36);
+  background: var(--caretip-brand-orange, #e9781c);
 }
 
 html.dark .caretip-public-warm-dark-trust-strip .caretip-public-hero-pills__list > li > span {

@@ -54,7 +54,7 @@ html.dark .caretip-landing [data-landing-accent-compact] .caretip-landing-accent
   height: 4.75rem;
   transform: translateX(-50%);
   border-radius: 9999px;
-  background: rgb(235 153 44 / 0.04);
+  background: rgb(233 120 28 / 0.04);
   filter: blur(48px);
   pointer-events: none;
 }

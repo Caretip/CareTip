@@ -107,9 +107,9 @@ export function AnimatedTestimonials({
                 <div className="inline-flex items-center gap-2">
                   <span
                     aria-hidden
-                    className="h-1.5 w-1.5 shrink-0 rounded-full bg-[#EB992C] shadow-[0_0_0_3px_rgba(235,153,44,0.16)]"
+                    className="h-1.5 w-1.5 shrink-0 rounded-full bg-[#e9781c] shadow-[0_0_0_3px_rgba(233,120,28,0.16)]"
                   />
-                  <span className="text-xs font-semibold uppercase tracking-[0.18em] text-[#EB992C]">
+                  <span className="text-xs font-semibold uppercase tracking-[0.18em] text-[#e9781c]">
                     {badgeText}
                   </span>
                 </div>

@@ -91,7 +91,7 @@ export function SimpleSetupSection() {
               <AnimatedHeadingLazy
                 text={setupHeadline}
                 highlight={setupHighlight}
-                highlightClassName="bg-gradient-to-r from-[#EB992C] via-[#E89124] to-[#D88118] bg-clip-text text-transparent"
+                highlightClassName="bg-gradient-to-r from-[#ff9e2d] via-[#e9781c] to-[#d96810] bg-clip-text text-transparent"
               />
             </h2>
             {landingCopyVisible(sectionSubtitle) ? (
