@@ -1253,7 +1253,7 @@
         },
         {
           "q": "Ist CareTip DSGVO-konform?",
-          "a": "Ja, vollständig. CareTip wurde von Grund auf mit Datenschutz im Mittelpunkt entwickelt. Wir erfüllen alle Anforderungen der DSGVO und des BDSG und geben unseren Nutzern jederzeit volle Kontrolle über ihre Daten, inklusive Auskunfts- und Löschrecht."
+          "a": "CareTip ist für die Gastronomie in der EU mit Fokus auf Datenschutz entwickelt. Wir unterstützen DSGVO-Rechte wie Auskunft (Datenexport) und Löschanfragen, soweit anwendbar. Einige Datensätze—etwa Trinkgeld- und Zahlungsverläufe aus finanziellen oder rechtlichen Gründen—können nach Entzug des Kontozugangs in begrenzter Form erhalten bleiben. Details stehen in unserer Datenschutzerklärung."
         },
         {
           "q": "Wie funktioniert CareTip? Wie geben Kunden Trinkgeld?",
@@ -3642,7 +3642,7 @@
       "toastPasswordUpdated": "Passwort aktualisiert.",
       "toastDownloadStarted": "Download gestartet.",
       "toastDownloadFailed": "Download fehlgeschlagen.",
-      "toastAccountDeleted": "Ihr Konto wurde gelöscht.",
+      "toastAccountDeleted": "Ihr Kontozugang wurde entzogen.",
       "toastDeleteFailed": "Konto konnte nicht gelöscht werden.",
       "title": "Einstellungen",
       "photoSection": "Profilfoto",
@@ -3678,7 +3678,7 @@
       "dangerZone": "Gefahrenzone",
       "deleteAccount": "Konto löschen",
       "deleteConfirmTitle": "Konto löschen?",
-      "deleteConfirmDesc": "Dadurch wird Ihr Caretip-Mitarbeiterkonto und zugehörige Daten dauerhaft entfernt. Dies kann nicht rückgängig gemacht werden.",
+      "deleteConfirmDesc": "Dadurch wird Ihr CareTip-Mitarbeiterzugang entzogen und Sie werden aus diesem Betrieb entfernt. Trinkgeld- und Zahlungsdaten, die für finanzielle oder rechtliche Zwecke benötigt werden, können in begrenzter Form erhalten bleiben. Laden Sie Ihre Daten vorher herunter, falls Sie eine Kopie benötigen. Dies kann nicht rückgängig gemacht werden.",
       "prefsHint": "Speichern Sie das Profil, um Änderungen an den Einstellungen zu übernehmen.",
       "downloadMyData": "Meine Daten herunterladen",
       "deletePermanently": "Endgültig löschen",
@@ -4596,7 +4596,7 @@
       "deactivateConfirmAction": "Deaktivieren",
       "deactivating": "Wird deaktiviert…",
       "deleteConfirmTitle": "Mitarbeitende entfernen?",
-      "deleteConfirmBody": "Damit werden das Konto von {{name}} und zugehörige Trinkgeld-Verknüpfungen dauerhaft gelöscht (Recht auf Löschung). Dies kann nicht rückgängig gemacht werden.",
+      "deleteConfirmBody": "Damit wird {{name}} aus diesem Betrieb entfernt und der CareTip-Zugang entzogen. Historische Trinkgeldbeträge für Ihren Betrieb bleiben für Berichte und Finanzunterlagen erhalten—sie werden nicht gelöscht. Das ist nicht dasselbe wie eine vollständige Konto-Löschanfrage.",
       "labelTipsMonth": "Trinkgeld (Monat)",
       "labelRating": "Bewertung",
       "qrButton": "QR",
@@ -6252,7 +6252,52 @@
       },
       "system": {
         "health": "Systemstatus",
-        "settings": "Systemeinstellungen"
+        "settings": "Systemeinstellungen",
+        "legalHold": "Legal Holds"
+      }
+    },
+    "legalHoldPage": {
+      "title": "Legal-Hold-Verwaltung",
+      "subtitle": "Verwalten Sie Legal Holds für Nutzer und Unternehmen, wenn bestimmte Daten aus rechtlichen oder Compliance-Gründen erhalten bleiben müssen.",
+      "lookupHint": "Wählen Sie einen Nutzer oder ein Unternehmen, um den Legal Hold anzuzeigen oder zu verwalten. Zum Setzen eines Holds sind eine Begründung und mindestens eine Datenkategorie erforderlich.",
+      "subjectType": "Subjekttyp",
+      "subjectId": "Subjekt-ID",
+      "subjectIdPlaceholder": "ID eingeben…",
+      "searchBusiness": "Unternehmen suchen",
+      "searchUser": "Nutzer suchen",
+      "searchBusinessPlaceholder": "Unternehmensname oder ID",
+      "searchUserPlaceholder": "Name, E-Mail oder ID",
+      "selectedSubject": "Ausgewähltes Subjekt",
+      "idLookupToggle": "Nur per ID suchen",
+      "load": "Legal Hold anzeigen",
+      "loadById": "Per ID laden",
+      "empty": "Wählen Sie einen Nutzer oder ein Unternehmen, um den Legal Hold anzuzeigen oder zu verwalten.",
+      "panelTitle": "Legal Hold",
+      "panelHint": "Das Aufheben eines Legal Holds stellt keinen Kontozugang wieder her.",
+      "loading": "Legal Hold wird geladen…",
+      "status": "Legal-Hold-Status",
+      "statusActive": "Legal Hold aktiv",
+      "statusInactive": "Kein aktiver Legal Hold",
+      "inactiveHint": "Für dieses Subjekt besteht kein aktiver Legal Hold. Sie können unten einen setzen.",
+      "reason": "Begründung",
+      "categories": "Geschützte Datenkategorien",
+      "setAt": "Datum der Hold-Setzung",
+      "setBy": "Gesetzt von (Admin)",
+      "none": "—",
+      "reasonInput": "Begründung für den Hold",
+      "categoriesInput": "Zu erhaltende Datenkategorien",
+      "setHold": "Legal Hold setzen",
+      "clearHold": "Legal Hold aufheben",
+      "refresh": "Aktualisieren",
+      "reasonRequired": "Eine Begründung ist erforderlich, um einen Legal Hold zu setzen.",
+      "categoriesRequired": "Wählen Sie mindestens eine Datenkategorie, um einen Legal Hold zu setzen.",
+      "confirmSet": "Diesen Legal Hold setzen? Die ausgewählten Kategorien werden vor anwendbaren Lifecycle-Lösch- und Anonymisierungsprozessen geschützt, solange der Hold aktiv ist.",
+      "confirmClear": "Sind Sie sicher, dass Sie diesen Legal Hold aufheben möchten? Anwendbare Lifecycle-Verarbeitung kann nach Aufhebung des Holds fortgesetzt werden.",
+      "setSuccess": "Legal Hold gesetzt.",
+      "clearSuccess": "Legal Hold aufgehoben.",
+      "subject": {
+        "user": "Nutzer",
+        "business": "Unternehmen"
       }
     },
     "overview": {

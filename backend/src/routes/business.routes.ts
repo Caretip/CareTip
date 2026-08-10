@@ -200,6 +200,20 @@ router.get(
   activityController.listActivity,
 );
 
+/** GDPR Slice E — ownership transfer (current owner; never trust client businessId for tenancy). */
+router.post(
+  "/ownership/transfer",
+  authMiddleware,
+  requireVerifiedEmail,
+  requireRole(Role.MANAGER),
+  async (req, res) => {
+    const { transferOwnershipAsManager } = await import(
+      "../controllers/lifecycleExport.controller.js"
+    );
+    return transferOwnershipAsManager(req, res);
+  },
+);
+
 router.get("/:businessId", businessController.getById);
 
 export default router;

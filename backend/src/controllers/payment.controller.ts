@@ -176,10 +176,12 @@ export async function getTipSessionContext(req: Request, res: Response) {
     const tx = tipByPi?.status === "success" ? tipByPi : null;
 
     if (tx) {
-      const employee = await prisma.employee.findUnique({
-        where: { id: tx.employeeId },
-        select: { id: true, name: true, avatar: true },
-      });
+      const employee = tx.employeeId
+        ? await prisma.employee.findUnique({
+            where: { id: tx.employeeId },
+            select: { id: true, name: true, avatar: true },
+          })
+        : null;
 
       const receiptNumber =
         tx.receiptNumber?.trim() || (await ensureTransactionReceiptNumber(tx.id));

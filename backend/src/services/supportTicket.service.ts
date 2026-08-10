@@ -50,7 +50,7 @@ export type SupportTicketDto = {
 
 export type SupportTicketMessageDto = {
   id: string;
-  authorUserId: string;
+  authorUserId: string | null;
   authorRole: "business" | "admin";
   body: string;
   createdAt: string;

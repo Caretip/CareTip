@@ -113,6 +113,7 @@ export const platformAdminNavEntries: readonly PlatformAdminNavEntry[] = [
     children: [
       { labelKey: "admin.sidebar.system.health", href: `${PLATFORM_SYSTEM_BASE}/health` },
       { labelKey: "admin.sidebar.system.settings", href: `${PLATFORM_SYSTEM_BASE}/settings` },
+      { labelKey: "admin.sidebar.system.legalHold", href: `${PLATFORM_SYSTEM_BASE}/legal-hold` },
     ],
   },
 ] as const;

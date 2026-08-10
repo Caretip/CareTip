@@ -25,12 +25,12 @@ export function CareTipLoadingTitle({
     <img
       src="/brand/caretip-app-icon.svg"
       alt="CareTip"
-      width={compact ? 48 : 72}
-      height={compact ? 48 : 72}
+      width={compact ? 48 : 80}
+      height={compact ? 48 : 80}
       decoding="async"
       className={cn(
         "select-none object-contain",
-        compact ? "h-12 w-12" : "h-[4.5rem] w-[4.5rem] sm:h-[5rem] sm:w-[5rem]",
+        compact ? "h-12 w-12" : "h-16 w-16 sm:h-20 sm:w-20",
         className,
       )}
       draggable={false}
@@ -38,18 +38,45 @@ export function CareTipLoadingTitle({
   );
 }
 
-/** Shared logo + orbit spinner used by all branded loading surfaces. */
+/**
+ * Shared logo + progress cue used by all branded CareTip loading surfaces.
+ * Full startup layout mirrors the workspace boot pattern:
+ * icon → progress bar → CareTip → short tagline.
+ */
 export function CareTipBrandedLoaderMark({
   compact = true,
   className,
+  showTagline,
 }: {
   compact?: boolean;
   className?: string;
+  /** Defaults to true when not compact (startup / auth shells). */
+  showTagline?: boolean;
 }) {
+  const { t } = useTranslation();
+  const withTagline = showTagline ?? !compact;
+  const tagline = t("common.preparingWorkspace");
+
   return (
-    <div className={cn("app-branded-loader__mark", className)} aria-hidden>
-      <CareTipLoadingTitle compact={compact} className="app-branded-loader__title" />
-      <span className="app-branded-loader__spinner" />
+    <div
+      className={cn(
+        "app-branded-loader__mark",
+        compact && "app-branded-loader__mark--compact",
+        className,
+      )}
+    >
+      <div className="app-branded-loader__icon-wrap" aria-hidden>
+        <CareTipLoadingTitle compact={compact} className="app-branded-loader__title" />
+      </div>
+      <span className="app-branded-loader__track" aria-hidden>
+        <span className="app-branded-loader__indeterminate" />
+      </span>
+      {withTagline ? (
+        <>
+          <p className="app-branded-loader__brand">CareTip</p>
+          <p className="app-branded-loader__tagline">{tagline}</p>
+        </>
+      ) : null}
     </div>
   );
 }
@@ -128,9 +155,8 @@ export function CareTipPageLoader({
         )}
         role="status"
         aria-busy="true"
-        aria-label="CareTip"
       >
-        <CareTipBrandedLoaderMark />
+        <CareTipBrandedLoaderMark compact={false} />
       </div>
     );
   }

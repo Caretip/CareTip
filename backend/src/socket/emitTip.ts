@@ -14,7 +14,8 @@ export interface NewTipPayload {
     status: string;
     createdAt: string;
   };
-  employeeId: string;
+  /** May be null after staff detach/erasure (Slice D). */
+  employeeId: string | null;
   employeeName: string;
   /** Guest/tipper name from payment metadata or transaction row (may be empty). */
   customerName?: string | null;
@@ -33,9 +34,11 @@ export interface NewTipPayload {
 export function emitNewTip(payload: NewTipPayload): void {
   const io = getSocketIO();
   if (io) {
-    emitTipReceivedCanonical(payload.businessId, payload.employeeId, payload);
-    /** Legacy alias — single emit per room (Sprint 8.1; replaces new_tip + duplicate tip_received). */
-    io.to(`employee:${payload.employeeId}`).emit("tip_received", payload);
+    if (payload.employeeId) {
+      emitTipReceivedCanonical(payload.businessId, payload.employeeId, payload);
+      /** Legacy alias — single emit per room (Sprint 8.1; replaces new_tip + duplicate tip_received). */
+      io.to(`employee:${payload.employeeId}`).emit("tip_received", payload);
+    }
     io.to(`business:${payload.businessId}`).emit("tip_received", payload);
   }
 
@@ -58,14 +61,16 @@ export function emitNewTip(payload: NewTipPayload): void {
   });
 
   /** Phase B — goal.achieved on threshold cross (isolated; never fails tip path). */
-  scheduleGoalAchievedProjectionsForTip({
-    tipId: payload.tip.id,
-    tipAmount: payload.tip.amount,
-    tipCreatedAt: new Date(payload.tip.createdAt),
-    employeeId: payload.employeeId,
-    employeeName: payload.employeeName,
-    businessId: payload.businessId,
-  });
+  if (payload.employeeId) {
+    scheduleGoalAchievedProjectionsForTip({
+      tipId: payload.tip.id,
+      tipAmount: payload.tip.amount,
+      tipCreatedAt: new Date(payload.tip.createdAt),
+      employeeId: payload.employeeId,
+      employeeName: payload.employeeName,
+      businessId: payload.businessId,
+    });
+  }
 
   void import("../services/push/notification.triggers.js").then(({ onTipReceived }) => {
     onTipReceived(payload);
@@ -74,9 +79,11 @@ export function emitNewTip(payload: NewTipPayload): void {
   void import("../services/business.service.js").then(({ invalidateBusinessStatsTipCaches }) => {
     invalidateBusinessStatsTipCaches(payload.businessId);
   });
-  void import("../services/employeeTipsDashboard.service.js").then(({ invalidateEmployeeDashboardCache }) => {
-    invalidateEmployeeDashboardCache(payload.employeeId);
-  });
+  if (payload.employeeId) {
+    void import("../services/employeeTipsDashboard.service.js").then(({ invalidateEmployeeDashboardCache }) => {
+      invalidateEmployeeDashboardCache(payload.employeeId!);
+    });
+  }
   void import("../services/platform.service.js").then(({ invalidatePlatformMetricsCache }) => {
     invalidatePlatformMetricsCache();
   });

@@ -16,7 +16,7 @@ export function AuthBootstrapShell({ className }: { className?: string }) {
       aria-busy="true"
       aria-label="CareTip"
     >
-      <CareTipBrandedLoaderMark />
+      <CareTipBrandedLoaderMark compact={false} />
     </div>
   );
 }

@@ -4118,6 +4118,135 @@ export async function fetchPlatformBusiness(
   });
 }
 
+/** Slice G — category-specific legal hold (platform-admin APIs). Matches backend LEGAL_HOLD_API_CATEGORIES. */
+export const PLATFORM_LEGAL_HOLD_CATEGORIES = [
+  "financial",
+  "payment",
+  "kyc",
+  "audit",
+  "support",
+  "analytics",
+  "guest",
+  "staff_pii",
+  "billing",
+  "notify",
+  "profile",
+  "staff-profile",
+] as const;
+
+export type PlatformLegalHoldCategory = (typeof PLATFORM_LEGAL_HOLD_CATEGORIES)[number];
+
+export type PlatformLegalHoldState = {
+  subjectType: "user" | "business";
+  subjectId: string;
+  legalHold: boolean;
+  legalHoldReason: string | null;
+  legalHoldCategories: string[];
+  legalHoldSetAt: string | null;
+  legalHoldSetByUserId: string | null;
+};
+
+export async function fetchPlatformUserLegalHold(
+  userId: string,
+): Promise<PlatformLegalHoldState> {
+  return apiRequest(apiPath(`/api/platform/users/${encodeURIComponent(userId)}/legal-hold`), {
+    headers: getHeaders(),
+    credentials: "include",
+  });
+}
+
+export async function setPlatformUserLegalHold(
+  userId: string,
+  input: { reason: string; categories: string[] },
+): Promise<PlatformLegalHoldState> {
+  return apiRequest(apiPath(`/api/platform/users/${encodeURIComponent(userId)}/legal-hold`), {
+    method: "PUT",
+    headers: getHeaders(),
+    body: JSON.stringify({
+      reason: input.reason,
+      categories: input.categories,
+    }),
+    credentials: "include",
+  });
+}
+
+export async function clearPlatformUserLegalHold(
+  userId: string,
+): Promise<PlatformLegalHoldState> {
+  return apiRequest(apiPath(`/api/platform/users/${encodeURIComponent(userId)}/legal-hold`), {
+    method: "DELETE",
+    headers: getHeaders(),
+    credentials: "include",
+  });
+}
+
+export async function fetchPlatformBusinessLegalHold(
+  businessId: string,
+): Promise<PlatformLegalHoldState> {
+  return apiRequest(
+    apiPath(`/api/platform/businesses/${encodeURIComponent(businessId)}/legal-hold`),
+    {
+      headers: getHeaders(),
+      credentials: "include",
+    },
+  );
+}
+
+export async function setPlatformBusinessLegalHold(
+  businessId: string,
+  input: { reason: string; categories: string[] },
+): Promise<PlatformLegalHoldState> {
+  return apiRequest(
+    apiPath(`/api/platform/businesses/${encodeURIComponent(businessId)}/legal-hold`),
+    {
+      method: "PUT",
+      headers: getHeaders(),
+      body: JSON.stringify({
+        reason: input.reason,
+        categories: input.categories,
+      }),
+      credentials: "include",
+    },
+  );
+}
+
+export async function clearPlatformBusinessLegalHold(
+  businessId: string,
+): Promise<PlatformLegalHoldState> {
+  return apiRequest(
+    apiPath(`/api/platform/businesses/${encodeURIComponent(businessId)}/legal-hold`),
+    {
+      method: "DELETE",
+      headers: getHeaders(),
+      credentials: "include",
+    },
+  );
+}
+
+/** Platform-admin–only subject lookup for Legal Hold UI (minimal fields). */
+export type PlatformLegalHoldSubjectHit = {
+  id: string;
+  label: string;
+  secondary: string | null;
+  subjectType: "user" | "business";
+};
+
+export async function searchPlatformLegalHoldSubjects(input: {
+  type: "user" | "business";
+  q: string;
+}): Promise<{ items: PlatformLegalHoldSubjectHit[] }> {
+  const q = input.q.trim();
+  if (!q) return { items: [] };
+  const params = new URLSearchParams({
+    type: input.type,
+    q,
+  });
+  return apiRequest(apiPath(`/api/platform/legal-hold/subjects?${params.toString()}`), {
+    headers: getHeaders(),
+    credentials: "include",
+  });
+}
+
 export interface PlatformAuditLogRow {
   id: string;
   action: string;

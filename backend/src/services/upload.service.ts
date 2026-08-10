@@ -25,6 +25,7 @@ import {
   assertPrivateObjectExists,
   removeUploadedObjectByPublicUrlIfPossible,
   removePrivateStorageObject,
+  removeKycStorageObject,
   parseSupabasePublicStorageUrl,
 } from "../lib/supabaseStorageClient.js";
 import { buildUniqueStorageObjectNameFromExtension } from "../utils/storageObjectName.js";
@@ -348,7 +349,8 @@ export async function removeStoredUploadReferenceIfPossible(storedRef: string): 
     return;
   }
   if (parsed.kind === "kyc-object") {
-    await removePrivateStorageObject(parsed.bucket, parsed.objectPath);
+    // Prefer KYC-scoped helper (refuses DSAR bucket / paths). Best-effort: no requireConfigured.
+    await removeKycStorageObject(parsed.bucket, parsed.objectPath);
     return;
   }
   if (parsed.kind === "kyc-disk") {

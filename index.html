@@ -25,7 +25,7 @@
     <meta name="apple-mobile-web-app-title" content="CareTip" />
     <title>CareTip</title>
     <style>
-      /* Minimal first-paint mirror of AppBrandedLoadingScreen (marketing cold load only). */
+      /* Minimal first-paint mirror of AppBrandedLoadingScreen (web app cold start). */
       #root {
         min-height: 100vh;
         min-height: 100dvh;
@@ -96,20 +96,30 @@
       .caretip-html-boot__mark {
         position: relative;
         display: flex;
+        flex-direction: column;
         align-items: center;
         justify-content: center;
-        padding: 0.35rem;
+        gap: 1.15rem;
+        padding: 0.25rem;
+        text-align: center;
       }
 
-      .caretip-html-boot__mark::before {
+      .caretip-html-boot__icon-wrap {
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .caretip-html-boot__icon-wrap::before {
         content: "";
         position: absolute;
-        inset: -0.65rem;
+        inset: -0.85rem;
         border-radius: 9999px;
         background: radial-gradient(
           ellipse at center,
-          rgba(235, 153, 44, 0.22) 0%,
-          rgba(235, 153, 44, 0.06) 45%,
+          rgba(235, 153, 44, 0.14) 0%,
+          rgba(235, 153, 44, 0.04) 50%,
           transparent 72%
         );
         pointer-events: none;
@@ -126,36 +136,82 @@
 
       @media (min-width: 640px) {
         .caretip-html-boot__mark img {
-          width: 4.5rem;
-          height: 4.5rem;
+          width: 5rem;
+          height: 5rem;
         }
       }
 
-      .caretip-html-boot__spinner {
-        position: absolute;
-        inset: -0.8rem;
-        z-index: 2;
+      .caretip-html-boot__track {
+        position: relative;
+        width: 8.75rem;
+        height: 3px;
+        overflow: hidden;
         border-radius: 9999px;
-        border: 1.5px solid rgba(235, 153, 44, 0.14);
-        border-top-color: rgb(235, 153, 44);
-        border-right-color: rgba(235, 153, 44, 0.45);
-        animation: caretip-html-boot-spin 0.85s linear infinite;
+        background: rgba(15, 23, 42, 0.1);
         pointer-events: none;
-        box-sizing: border-box;
       }
 
-      @keyframes caretip-html-boot-spin {
-        to {
-          transform: rotate(360deg);
+      html.dark .caretip-html-boot__track {
+        background: rgba(250, 250, 250, 0.16);
+      }
+
+      .caretip-html-boot__indeterminate {
+        position: absolute;
+        inset: 0 auto 0 0;
+        width: 38%;
+        border-radius: inherit;
+        background: rgb(235, 153, 44);
+        animation: caretip-html-boot-indeterminate 1.15s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+        will-change: transform;
+      }
+
+      .caretip-html-boot__brand {
+        margin: 0.15rem 0 0;
+        font-size: 1.125rem;
+        font-weight: 600;
+        letter-spacing: -0.02em;
+        line-height: 1.25;
+        color: #0a0a0a;
+      }
+
+      html.dark .caretip-html-boot__brand {
+        color: #fafafa;
+      }
+
+      .caretip-html-boot__tagline {
+        margin: -0.55rem 0 0;
+        max-width: 16rem;
+        font-size: 0.875rem;
+        font-weight: 400;
+        line-height: 1.35;
+        color: #64748b;
+      }
+
+      html.dark .caretip-html-boot__tagline {
+        color: #a1a1aa;
+      }
+
+      @keyframes caretip-html-boot-indeterminate {
+        0% {
+          transform: translateX(-130%);
+        }
+        100% {
+          transform: translateX(280%);
         }
       }
 
       @media (prefers-reduced-motion: reduce) {
-        .caretip-html-boot__spinner {
+        .caretip-html-boot__indeterminate {
           animation: none;
-          border-color: rgba(235, 153, 44, 0.35);
-          border-top-color: rgb(235, 153, 44);
-          opacity: 0.85;
+          inset: 0;
+          width: 42%;
+          left: 0;
+          opacity: 0.9;
+          background: rgb(235, 153, 44);
+        }
+
+        .caretip-html-boot__icon-wrap::before {
+          opacity: 0.65;
         }
       }
     </style>
@@ -189,23 +245,47 @@
   </head>
 
   <body style="margin: 0; background-color: #fcfbf8">
-    <div id="caretip-html-boot" role="status" aria-label="CareTip" aria-busy="true" hidden>
-      <div class="caretip-html-boot__mark" aria-hidden="true">
-        <img src="/brand/caretip-app-icon.svg" width="72" height="72" alt="" />
-        <span class="caretip-html-boot__spinner"></span>
+    <div id="caretip-html-boot" role="status" aria-busy="true" hidden>
+      <div class="caretip-html-boot__mark">
+        <div class="caretip-html-boot__icon-wrap" aria-hidden="true">
+          <img
+            src="/brand/caretip-app-icon.svg"
+            width="80"
+            height="80"
+            alt=""
+            decoding="async"
+            fetchpriority="high"
+          />
+        </div>
+        <span class="caretip-html-boot__track" aria-hidden="true">
+          <span class="caretip-html-boot__indeterminate"></span>
+        </span>
+        <p class="caretip-html-boot__brand">CareTip</p>
+        <p class="caretip-html-boot__tagline" id="caretip-html-boot-tagline">
+          Preparing your workspace…
+        </p>
       </div>
     </div>
     <script>
       (function () {
+        var lng = "de";
+        var tagline = "Ihr Workspace wird vorbereitet…";
         try {
           var bootLocale = window.CareTipBootLocale;
-          var lng = bootLocale ? bootLocale.readBootLanguage() : "de";
+          if (bootLocale) {
+            lng = bootLocale.readBootLanguage();
+            var copy = bootLocale.getCopy(lng);
+            if (copy && copy.preparingWorkspace) tagline = copy.preparingWorkspace;
+          }
           document.documentElement.setAttribute("lang", lng);
         } catch (_) {
           /* ignore */
         }
+        var taglineEl = document.getElementById("caretip-html-boot-tagline");
+        if (taglineEl) taglineEl.textContent = tagline;
         var el = document.getElementById("caretip-html-boot");
         if (!el) return;
+        el.setAttribute("aria-label", "CareTip — " + tagline);
         el.removeAttribute("hidden");
         document.documentElement.classList.add("caretip-html-boot-active");
       })();

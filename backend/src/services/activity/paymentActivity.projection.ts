@@ -11,7 +11,7 @@ export function schedulePaymentFailedProjection(input: {
   paymentIntentId: string;
   transactionId: string;
   businessId: string;
-  employeeId: string;
+  employeeId: string | null;
   amountEur: number;
   employeeName?: string | null;
   reason: "payment_intent_failed" | "canceled";
@@ -41,7 +41,7 @@ export function schedulePaymentRefundedProjection(input: {
   refundId: string;
   transactionId: string;
   businessId: string;
-  employeeId: string;
+  employeeId: string | null;
   amountEur: number;
   employeeName?: string | null;
 }): void {

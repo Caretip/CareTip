@@ -5,7 +5,8 @@ import { prisma } from "../prisma.js";
  * Failures are swallowed so logging never breaks the main request.
  */
 export async function writeAuditLog(input: {
-  userId: string;
+  /** Null when actor was anonymized/detached (Slice D / T-F03-b). */
+  userId: string | null;
   action: string;
   metadata?: string | null;
 }): Promise<void> {

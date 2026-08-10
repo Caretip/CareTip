@@ -2,25 +2,35 @@
  * UX polish — branded loaders, image frames, route motion, action feedback.
  */
 
-/* —— Branded global loader (logo + orbit spinner) —— */
+/* —— Branded startup loader (icon → bar → brand → tagline; workspace-style) —— */
 .app-branded-loader__mark {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1.15rem;
+  padding: 0.25rem;
+  text-align: center;
+}
+
+.app-branded-loader__icon-wrap {
   position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 0.25rem;
 }
 
-/* Soft ambient glow — static, does not imply progress by itself */
-.app-branded-loader__mark::before {
+/* Soft CareTip glow — restrained so the mark stays clean like a workspace boot */
+.app-branded-loader__icon-wrap::before {
   content: "";
   position: absolute;
-  inset: -0.65rem;
+  inset: -0.85rem;
   border-radius: 9999px;
   background: radial-gradient(
     ellipse at center,
-    rgba(235, 153, 44, 0.22) 0%,
-    rgba(235, 153, 44, 0.06) 45%,
+    rgba(235, 153, 44, 0.14) 0%,
+    rgba(235, 153, 44, 0.04) 50%,
     transparent 72%
   );
   pointer-events: none;
@@ -31,32 +41,78 @@
   z-index: 1;
 }
 
-/* Thin orbit spinner — active loading cue around the CareTip icon */
-.app-branded-loader__spinner {
-  position: absolute;
-  inset: -0.8rem;
-  z-index: 2;
+/*
+ * Indeterminate progress track beneath the mark (workspace-style cue).
+ * Presentation-only — does not gate startup timing.
+ */
+.app-branded-loader__track {
+  position: relative;
+  width: 8.75rem;
+  height: 3px;
+  overflow: hidden;
   border-radius: 9999px;
-  border: 1.5px solid rgba(235, 153, 44, 0.14);
-  border-top-color: rgb(235, 153, 44);
-  border-right-color: rgba(235, 153, 44, 0.45);
-  animation: caretip-brand-loader-spin 0.85s linear infinite;
+  background: rgba(15, 23, 42, 0.1);
   pointer-events: none;
-  box-sizing: border-box;
 }
 
-@keyframes caretip-brand-loader-spin {
-  to {
-    transform: rotate(360deg);
+:is(.dark) .app-branded-loader__track {
+  background: rgba(250, 250, 250, 0.16);
+}
+
+.app-branded-loader__mark--compact .app-branded-loader__track {
+  width: 5.5rem;
+  height: 2px;
+}
+
+.app-branded-loader__indeterminate {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 38%;
+  border-radius: inherit;
+  background: rgb(235, 153, 44);
+  animation: caretip-brand-loader-indeterminate 1.15s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  will-change: transform;
+}
+
+.app-branded-loader__brand {
+  margin: 0.15rem 0 0;
+  font-size: 1.125rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.25;
+  color: hsl(var(--foreground));
+}
+
+.app-branded-loader__tagline {
+  margin: -0.55rem 0 0;
+  max-width: 16rem;
+  font-size: 0.875rem;
+  font-weight: 400;
+  line-height: 1.35;
+  color: hsl(var(--muted-foreground));
+}
+
+@keyframes caretip-brand-loader-indeterminate {
+  0% {
+    transform: translateX(-130%);
+  }
+  100% {
+    transform: translateX(280%);
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .app-branded-loader__spinner {
+  .app-branded-loader__indeterminate {
     animation: none;
-    border-color: rgba(235, 153, 44, 0.35);
-    border-top-color: rgb(235, 153, 44);
-    opacity: 0.85;
+    inset: 0;
+    width: 42%;
+    left: 0;
+    opacity: 0.9;
+    background: rgb(235, 153, 44);
+  }
+
+  .app-branded-loader__icon-wrap::before {
+    opacity: 0.65;
   }
 }
 

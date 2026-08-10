@@ -57,9 +57,9 @@ async function assertAccessJwtStillValid(payload: JwtPayload): Promise<string | 
   const uid = payload.sub;
   const userRow = await prisma.user.findUnique({
     where: { id: uid },
-    select: { authTokenVersion: true, isActive: true },
+    select: { authTokenVersion: true, isActive: true, accountStatus: true },
   });
-  if (!userRow || userRow.isActive !== true) {
+  if (!userRow || userRow.isActive !== true || userRow.accountStatus !== "active") {
     return "Authentication required";
   }
 

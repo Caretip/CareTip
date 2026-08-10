@@ -137,11 +137,11 @@ export async function getBusinessByUserId(userId: string) {
 }
 
 /**
- * Hard-delete a venue and every auth account tied to it:
- * all staff `User` rows (and their `Employee` rows via FK cascade), then the manager `User` row
- * (which cascades removal of the `Business` row per `businesses_user_id_fkey`).
- *
- * Call this instead of `prisma.business.delete` so staff manager accounts are not left orphaned.
+ * Hard-delete a venue with empty financial history only (Slice D / D.1 / T-F02).
+ * Business.user is Restrict — owner User cannot be deleted while Business exists.
+ * Transaction.business + TipRefund.business are Restrict — DB refuses ledger wipe even if
+ * application checks are bypassed.
+ * Tips/refunds must never be cascade-wiped: refuse when ledger rows exist.
  */
 export async function deleteBusinessCascadeUsers(businessId: string): Promise<void> {
   await prisma.$transaction(async (tx) => {
@@ -163,6 +163,16 @@ export async function deleteBusinessCascadeUsers(businessId: string): Promise<vo
       throw new Error("Business owner user has unexpected role; delete aborted");
     }
 
+    const [tipCount, refundCount] = await Promise.all([
+      tx.transaction.count({ where: { businessId } }),
+      tx.tipRefund.count({ where: { businessId } }),
+    ]);
+    if (tipCount > 0 || refundCount > 0) {
+      throw new Error(
+        "Cannot hard-delete business with financial history; use soft-close (SOLE_BUSINESS_OWNER / ledger retention)",
+      );
+    }
+
     const employees = await tx.employee.findMany({
       where: { businessId },
       select: {
@@ -174,16 +184,31 @@ export async function deleteBusinessCascadeUsers(businessId: string): Promise<vo
     const ownerUserId = business.userId;
     const staffUserIds: string[] = [];
     for (const row of employees) {
-      if (row.userId === ownerUserId) {
+      if (!row.userId || row.userId === ownerUserId) {
         continue;
       }
-      if (row.user.isPlatformAdmin) {
+      if (row.user?.isPlatformAdmin) {
         throw new Error("Cannot delete business: a staff account is marked as platform administrator");
       }
-      if (row.user.role !== "EMPLOYEE") {
+      if (row.user && row.user.role !== "EMPLOYEE") {
         throw new Error("Business has a staff user with unexpected role; delete aborted");
       }
       staffUserIds.push(row.userId);
+    }
+
+    // Delete Business first (Restrict prevents deleting owner while Business exists).
+    // Empty tip/refund ledger only — Restrict on tips/tip_refunds blocks ledger wipe at DB.
+    // Other child rows (employees, locations, …) still Cascade when ledger is empty.
+    try {
+      await tx.business.delete({ where: { id: businessId } });
+    } catch (err) {
+      const { Prisma } = await import("@prisma/client");
+      if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === "P2003") {
+        throw new Error(
+          "Cannot hard-delete business with financial history; use soft-close (SOLE_BUSINESS_OWNER / ledger retention)",
+        );
+      }
+      throw err;
     }
 
     for (const uid of staffUserIds) {

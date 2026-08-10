@@ -34,7 +34,9 @@ PRICING:
 - Transparent platform fee on processed tips; tier details on the public Pricing page. Do not invent fee percentages.
 
 SECURITY & GDPR:
-- GDPR-aligned handling for EU hospitality; consent-friendly flows; data minimization; export/deletion supported via support processes.
+- GDPR-aligned handling for EU hospitality; consent-friendly flows; data minimization.
+- Users can request data export and account erasure where applicable. Financial tip/payment records may be retained in limited form after access is removed when required for legal or financial purposes.
+- Do not claim that all personal data is deleted immediately, or that users have absolute control over every record at all times.
 
 ANALYTICS & NOTIFICATIONS:
 - Live dashboards for businesses and employees; analytics by timeframe; push/email notifications where enabled.
@@ -79,8 +81,8 @@ export const FAQ_ENTRIES: FaqEntry[] = [
   {
     id: "gdpr",
     keywords: ["gdpr", "dsgvo", "privacy", "data", "compliance", "eu"],
-    en: "CareTip is built for EU hospitality: GDPR-aligned data handling, consent-friendly flows, and clear retention policies. Personal data is minimized; export and deletion requests are supported.",
-    de: "CareTip ist für EU-Gastronomie gebaut: DSGVO-konforme Datenverarbeitung, einwilligungsfreundliche Abläufe und klare Aufbewahrung. Wir minimieren personenbezogene Daten.",
+    en: "CareTip is built for EU hospitality with GDPR-aligned handling and consent-friendly flows. You can request a data export and account erasure where applicable. Some financial tip or payment records may be retained in limited form after access is removed when required. See the Privacy Policy for details—we do not claim every record disappears immediately.",
+    de: "CareTip ist für EU-Gastronomie mit DSGVO-orientierter Verarbeitung und einwilligungsfreundlichen Abläufen gebaut. Sie können Datenexport und Löschanfragen stellen, soweit anwendbar. Einige finanzielle Trinkgeld- oder Zahlungsdaten können nach Entzug des Zugangs in begrenzter Form erhalten bleiben, wenn erforderlich. Details in der Datenschutzerklärung—wir behaupten nicht, dass alle Daten sofort verschwinden.",
   },
   {
     id: "employee_tips",

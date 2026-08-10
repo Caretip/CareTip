@@ -262,7 +262,7 @@ function toTipRow(t: {
   amount: unknown;
   status: string;
   createdAt: Date;
-  employeeId: string;
+  employeeId: string | null;
   locationId: string | null;
   tableId: string | null;
   employee?: { id: string; name: string } | null;

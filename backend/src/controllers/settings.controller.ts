@@ -98,3 +98,63 @@ export async function patchMySettings(req: Request, res: Response) {
     return res.status(400).json({ message: clientSafeMessage(err, CLIENT_FALLBACK.generic) });
   }
 }
+
+/** GDPR Slice B — erasure status (employee or manager). */
+export async function getDeletionStatus(req: Request, res: Response) {
+  try {
+    const userId = getUserId(req);
+    if (!userId) return res.status(401).json({ message: "Authentication required" });
+    const { getErasureStatus } = await import("../services/erasureRequest.service.js");
+    const status = await getErasureStatus(userId);
+    return res.json({
+      ...status,
+      /**
+       * MVP: CareTip requires users to obtain their data export before confirming
+       * account deletion. After confirmation, sessions are terminated and
+       * /api/me/export is no longer accessible for non-active accounts.
+       */
+      exportBeforeDeletionRequired: true,
+      exportHint:
+        "Download your data export via POST /api/me/export while your account is still active, before confirming deletion.",
+    });
+  } catch (err) {
+    logServerError("settings.getDeletionStatus", err);
+    return res.status(400).json({ message: clientSafeMessage(err, CLIENT_FALLBACK.generic) });
+  }
+}
+
+/** GDPR Slice B — request account erasure (safe foundation; no User hard-delete). */
+export async function postDeletionRequest(req: Request, res: Response) {
+  try {
+    const userId = getUserId(req);
+    if (!userId) return res.status(401).json({ message: "Authentication required" });
+    const body = req.body as { confirm?: unknown };
+    if (body?.confirm !== true) {
+      return res.status(400).json({ message: "confirm: true is required" });
+    }
+    const { requestAccountErasure } = await import("../services/erasureRequest.service.js");
+    const result = await requestAccountErasure(userId);
+    if (!result.ok) {
+      return res.status(409).json({
+        message: result.message,
+        blockers: result.status.blockers,
+        status: result.status,
+      });
+    }
+    return res.status(200).json({
+      message: result.message,
+      status: result.status,
+      removal: "membership_and_access",
+      financialRecords: "retained",
+      /**
+       * After this confirmation, the account is no longer active and self-service
+       * DSAR endpoints are unavailable. Export must have been completed beforehand.
+       */
+      exportBeforeDeletionRequired: true,
+      exportAvailable: false,
+    });
+  } catch (err) {
+    logServerError("settings.postDeletionRequest", err);
+    return res.status(400).json({ message: clientSafeMessage(err, CLIENT_FALLBACK.generic) });
+  }
+}

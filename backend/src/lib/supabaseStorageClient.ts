@@ -107,6 +107,28 @@ export function supabaseKycStorageBucketName(): string {
   return process.env.SUPABASE_KYC_STORAGE_BUCKET?.trim() || "caretip-kyc";
 }
 
+/**
+ * Dedicated private bucket for DSAR export artifacts (Slice E remediation).
+ * Never share the KYC bucket for DSAR objects.
+ */
+export function supabaseDsarStorageBucketName(): string {
+  return process.env.SUPABASE_DSAR_STORAGE_BUCKET?.trim() || "caretip-dsar";
+}
+
+/** DSAR object keys must live under exports/{userId}/{jobId}.json — never KYC paths. */
+export function isAllowedDsarObjectPath(objectPath: string): boolean {
+  const key = objectPath.replace(/^\/+/, "").replace(/\/+/g, "/");
+  return /^exports\/[A-Za-z0-9_-]+\/[A-Za-z0-9_-]+\.json$/.test(key);
+}
+
+export function assertAllowedDsarObjectPath(objectPath: string): string {
+  const key = objectPath.replace(/^\/+/, "").replace(/\/+/g, "/");
+  if (!isAllowedDsarObjectPath(key)) {
+    throw new Error("Invalid DSAR storage path");
+  }
+  return key;
+}
+
 export function kycSignedUrlTtlSeconds(): number {
   const raw = Number(process.env.KYC_SIGNED_URL_TTL_SECONDS ?? 300);
   if (!Number.isFinite(raw) || raw < 60 || raw > 3600) return 300;
@@ -114,6 +136,7 @@ export function kycSignedUrlTtlSeconds(): number {
 }
 
 let kycBucketReadyPromise: Promise<void> | null = null;
+let dsarBucketReadyPromise: Promise<void> | null = null;
 
 /**
  * Ensures the configured bucket exists (public read). Safe to call before every upload — runs once per process.
@@ -203,6 +226,47 @@ export async function ensureSupabaseKycBucketReady(): Promise<void> {
   })();
 
   return kycBucketReadyPromise;
+}
+
+/** Ensures the private DSAR export bucket exists (no public read). Isolated from KYC. */
+export async function ensureSupabaseDsarBucketReady(): Promise<void> {
+  if (!isSupabaseStorageConfigured()) return;
+  if (dsarBucketReadyPromise) return dsarBucketReadyPromise;
+
+  dsarBucketReadyPromise = (async () => {
+    const supabase = getServiceClient();
+    const bucket = supabaseDsarStorageBucketName();
+
+    const { data: buckets, error: listErr } = await supabase.storage.listBuckets();
+    if (listErr) {
+      const detail = describeStorageError(listErr);
+      console.error("[upload] Supabase listBuckets (DSAR) failed:", detail);
+      throw new Error("File upload isn't available right now. Please try again later.");
+    }
+
+    if (buckets?.some((b) => b.name === bucket)) {
+      return;
+    }
+
+    console.info(`[upload] Supabase DSAR bucket "${bucket}" not found — creating (private).`);
+    const { error: createErr } = await supabase.storage.createBucket(bucket, {
+      public: false,
+      fileSizeLimit: VERIFICATION_MAX_BYTES,
+    });
+
+    if (createErr) {
+      const detail = describeStorageError(createErr);
+      if (/already exists|duplicate/i.test(detail)) {
+        return;
+      }
+      console.error(`[upload] Supabase createBucket DSAR("${bucket}") failed:`, detail);
+      throw new Error("File upload isn't available right now. Please try again later.");
+    }
+
+    console.info(`[upload] Supabase DSAR bucket "${bucket}" created (private).`);
+  })();
+
+  return dsarBucketReadyPromise;
 }
 
 function getServiceClient(): SupabaseClient {
@@ -367,5 +431,112 @@ export async function removePrivateStorageObject(bucket: string, objectPath: str
     await supabase.storage.from(bucket).remove([objectPath]);
   } catch {
     /* ignore */
+  }
+}
+
+/**
+ * Upload a DSAR artifact to the dedicated private DSAR bucket.
+ * Path must match exports/{userId}/{jobId}.json. Upsert for idempotent worker retries.
+ */
+export async function uploadBufferToSupabaseDsarObject(
+  objectKey: string,
+  buffer: Buffer,
+  contentType = "application/json",
+): Promise<{ bucket: string; objectPath: string }> {
+  await ensureSupabaseDsarBucketReady();
+  const bucket = supabaseDsarStorageBucketName();
+  const key = assertAllowedDsarObjectPath(objectKey);
+  const supabase = getServiceClient();
+  const { error } = await supabase.storage.from(bucket).upload(key, buffer, {
+    contentType: contentType.trim() || "application/json",
+    upsert: true,
+    cacheControl: "private, max-age=0",
+  });
+  if (error) {
+    const detail = describeStorageError(error);
+    console.error(`[upload] Supabase DSAR upload bucket="${bucket}" key="${key}":`, detail);
+    throw new Error(clientMessageForStorageUploadError(detail));
+  }
+  return { bucket, objectPath: key };
+}
+
+/**
+ * Delete a single DSAR object. Refuses KYC bucket and non-allowlisted paths.
+ */
+export async function removeDsarStorageObject(bucket: string, objectPath: string): Promise<void> {
+  if (!isSupabaseStorageConfigured()) return;
+  const dsarBucket = supabaseDsarStorageBucketName();
+  const kycBucket = supabaseKycStorageBucketName();
+  if (bucket === kycBucket) {
+    throw new Error("Refusing to delete KYC object via DSAR cleanup");
+  }
+  if (bucket !== dsarBucket) {
+    throw new Error("Refusing DSAR cleanup for unexpected bucket");
+  }
+  const key = assertAllowedDsarObjectPath(objectPath);
+  try {
+    const supabase = getServiceClient();
+    await supabase.storage.from(bucket).remove([key]);
+  } catch {
+    /* ignore missing */
+  }
+}
+
+export type RemoveKycStorageObjectOptions = {
+  /**
+   * When true (Slice F-B secure destroy), missing Supabase config is a hard failure —
+   * never treat "storage not configured" as successful deletion.
+   * Default false preserves best-effort rollback helpers.
+   */
+  requireConfigured?: boolean;
+  /** When set, object path must be under verification/{businessId}/. */
+  businessId?: string;
+};
+
+/**
+ * KYC-scoped delete helper — refuses DSAR bucket / exports|dsar paths / non-KYC buckets.
+ * Optional businessId enforces tenant path allowlist.
+ */
+export async function removeKycStorageObject(
+  bucket: string,
+  objectPath: string,
+  opts?: RemoveKycStorageObjectOptions,
+): Promise<void> {
+  const dsarBucket = supabaseDsarStorageBucketName();
+  const kycBucket = supabaseKycStorageBucketName();
+  if (bucket === dsarBucket) {
+    throw new Error("Refusing to delete DSAR object via KYC cleanup");
+  }
+  if (bucket !== kycBucket) {
+    throw new Error("Refusing KYC cleanup for unexpected bucket");
+  }
+  const key = objectPath.replace(/^\/+/, "").replace(/\/+/g, "/");
+  if (key.startsWith("exports/") || key.startsWith("dsar/")) {
+    throw new Error("Refusing to delete DSAR-prefixed path via KYC cleanup");
+  }
+  if (opts?.businessId) {
+    const safeBiz = opts.businessId.replace(/[^a-zA-Z0-9-_]/g, "");
+    if (
+      !safeBiz ||
+      key.includes("..") ||
+      !key.startsWith(`verification/${safeBiz}/`) ||
+      key.length <= `verification/${safeBiz}/`.length
+    ) {
+      throw new Error("Refusing KYC cleanup for path outside business allowlist");
+    }
+  }
+
+  const configured = isSupabaseStorageConfigured();
+  if (!configured) {
+    if (opts?.requireConfigured) {
+      throw new Error("KYC storage provider is not configured — refusing to claim deletion success");
+    }
+    return;
+  }
+
+  const supabase = getServiceClient();
+  const { error } = await supabase.storage.from(bucket).remove([key]);
+  if (error) {
+    throw new Error(`KYC storage delete failed: ${describeStorageError(error)}`);
   }
 }

@@ -46,6 +46,43 @@ router.get("/businesses", platformController.listBusinesses);
 router.get("/businesses/:id", platformController.getBusiness);
 router.delete("/businesses/:id", platformController.deleteBusiness);
 router.post("/businesses/:id/soft-delete", platformController.softDeleteBusiness);
+router.post("/businesses/:id/ownership/transfer", async (req, res) => {
+  const { transferOwnershipAsPlatform } = await import(
+    "../controllers/lifecycleExport.controller.js"
+  );
+  return transferOwnershipAsPlatform(req, res);
+});
+
+/** Slice G — category-specific legal holds (platform-admin only; fail-closed audit). */
+router.get("/legal-hold/subjects", async (req, res) => {
+  const { searchPlatformLegalHoldSubjects } = await import("../controllers/legalHold.controller.js");
+  return searchPlatformLegalHoldSubjects(req, res);
+});
+router.get("/users/:userId/legal-hold", async (req, res) => {
+  const { getPlatformUserLegalHold } = await import("../controllers/legalHold.controller.js");
+  return getPlatformUserLegalHold(req, res);
+});
+router.put("/users/:userId/legal-hold", async (req, res) => {
+  const { putPlatformUserLegalHold } = await import("../controllers/legalHold.controller.js");
+  return putPlatformUserLegalHold(req, res);
+});
+router.delete("/users/:userId/legal-hold", async (req, res) => {
+  const { deletePlatformUserLegalHold } = await import("../controllers/legalHold.controller.js");
+  return deletePlatformUserLegalHold(req, res);
+});
+router.get("/businesses/:id/legal-hold", async (req, res) => {
+  const { getPlatformBusinessLegalHold } = await import("../controllers/legalHold.controller.js");
+  return getPlatformBusinessLegalHold(req, res);
+});
+router.put("/businesses/:id/legal-hold", async (req, res) => {
+  const { putPlatformBusinessLegalHold } = await import("../controllers/legalHold.controller.js");
+  return putPlatformBusinessLegalHold(req, res);
+});
+router.delete("/businesses/:id/legal-hold", async (req, res) => {
+  const { deletePlatformBusinessLegalHold } = await import("../controllers/legalHold.controller.js");
+  return deletePlatformBusinessLegalHold(req, res);
+});
+
 router.patch("/businesses/:id/operational-status", platformController.updateBusinessOperationalStatus);
 router.patch("/businesses/:id/verify", platformController.verifyBusinessKyc);
 router.patch("/businesses/:id/verify-kyc", platformController.verifyBusinessKyc);

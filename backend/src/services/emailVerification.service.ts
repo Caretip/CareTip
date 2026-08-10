@@ -10,6 +10,7 @@ import {
   type WelcomeAccountKind,
 } from "../emails/i18nEmail.js";
 import type { AuthLinkPlatform } from "../utils/clientPlatform.js";
+import { userMayAuthenticate } from "./accountAccess.service.js";
 
 const VERIFY_TTL_MS = 60 * 60 * 1000; // 1 hour
 
@@ -218,9 +219,11 @@ export async function verifyEmailWithToken(plainToken: string): Promise<void> {
   const tokenHash = hashToken(token);
   const row = await prisma.emailVerificationToken.findUnique({
     where: { tokenHash },
-    include: { user: { select: { id: true, email: true, preferredLocale: true } } },
+    include: {
+      user: { select: { id: true, email: true, preferredLocale: true, isActive: true, accountStatus: true } },
+    },
   });
-  if (!row || row.expiresAt < new Date()) {
+  if (!row || row.expiresAt < new Date() || !userMayAuthenticate(row.user)) {
     throw new Error("Verification link is invalid or has expired.");
   }
 

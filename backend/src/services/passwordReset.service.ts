@@ -6,6 +6,7 @@ import { validatePassword } from "../utils/passwordValidation.js";
 import { getResendFromAddress, sendResendEmail } from "./resendClient.js";
 import { resolveEmailPersonalizationForUser } from "../emails/emailPersonalization.js";
 import { buildPasswordResetContent, resolveUserPreferredLocale, type EmailLocale } from "../emails/i18nEmail.js";
+import { userMayAuthenticate } from "./accountAccess.service.js";
 
 const RESET_TTL_MS = 60 * 60 * 1000; // 1 hour
 const RESET_EXPIRES_HOURS = RESET_TTL_MS / (60 * 60 * 1000);
@@ -61,10 +62,11 @@ export async function requestPasswordReset(
 
   const user = await prisma.user.findUnique({
     where: { email },
-    select: { id: true, passwordHash: true, preferredLocale: true },
+    select: { id: true, passwordHash: true, preferredLocale: true, isActive: true, accountStatus: true },
   });
 
-  if (!user?.passwordHash) {
+  // Generic success for missing/OAuth-only/inactive — no enumeration (F-05).
+  if (!user?.passwordHash || !userMayAuthenticate(user)) {
     return;
   }
 
@@ -133,10 +135,10 @@ export async function resetPasswordWithToken(plainToken: string, newPassword: st
   const tokenHash = hashToken(token);
   const row = await prisma.passwordResetToken.findUnique({
     where: { tokenHash },
-    include: { user: { select: { id: true } } },
+    include: { user: { select: { id: true, isActive: true, accountStatus: true } } },
   });
 
-  if (!row || row.expiresAt < new Date()) {
+  if (!row || row.expiresAt < new Date() || !userMayAuthenticate(row.user)) {
     throw new Error("Reset link is invalid or has expired.");
   }
 

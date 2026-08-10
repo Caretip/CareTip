@@ -467,6 +467,7 @@ const routes: RouteObject[] = [
       { path: 'reports/commercial', lazy: routeLazy(() => import('./pages/platform/reports/PlatformCommercialIntelligencePage'), 'PlatformCommercialIntelligencePage') },
       { path: 'system/health', lazy: routeLazy(() => import('./pages/platform/PlatformSystemHealthPage'), 'PlatformSystemHealthPage') },
       { path: 'system/settings', lazy: routeLazy(() => import('./pages/platform/PlatformSettingsPage'), 'PlatformSettingsPage') },
+      { path: 'system/legal-hold', lazy: routeLazy(() => import('./pages/platform/PlatformLegalHoldPage'), 'PlatformLegalHoldPage') },
       { path: 'support/:ticketId', lazy: routeLazy(() => import('./pages/shared/SupportTicketDetailPage'), 'SupportTicketDetailPage') },
       { path: 'transactions', element: <Navigate to="/platform-admin/revenue/transactions" replace /> },
       { path: 'logs', element: <Navigate to="/platform-admin/reports/audit-logs" replace /> },

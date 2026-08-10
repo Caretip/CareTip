@@ -55,7 +55,7 @@ textarea::placeholder {
   background-color: hsl(var(--background));
 }
 
-/* Global setup overlay (auth bootstrap, route gates) — spinner + copy only */
+/* Global setup overlay (auth bootstrap, route gates) — branded mark only by default */
 .app-setup-loading {
   animation: app-setup-fade-in 0.2s ease-out;
 }
@@ -85,6 +85,17 @@ textarea::placeholder {
     opacity: 1;
   }
   to {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .app-setup-loading,
+  .app-setup-loading--exiting {
+    animation: none;
+  }
+
+  .app-setup-loading--exiting {
     opacity: 0;
   }
 }

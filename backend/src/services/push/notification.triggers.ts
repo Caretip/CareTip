@@ -32,47 +32,51 @@ export function onTipReceived(payload: NewTipPayload): void {
     let employeeUserId = payload.employeeUserId;
     let employeeName = payload.employeeName;
 
-    if (!employeeUserId) {
+    if (!employeeUserId && payload.employeeId) {
       const employee = await prisma.employee.findUnique({
         where: { id: payload.employeeId },
         select: { userId: true, name: true },
       });
-      if (!employee) return;
-      employeeUserId = employee.userId;
-      employeeName = employee.name;
+      if (employee) {
+        employeeUserId = employee.userId ?? undefined;
+        employeeName = employee.name;
+      }
     }
 
     const ts = new Date().toISOString();
     const amount = Number(payload.tip.amount);
     const customerName = normalizeTipCustomerName(payload.customerName);
 
-    await deliverUserNotification({
-      userId: employeeUserId,
-      payload: {
-        type: NotificationType.TIP_RECEIVED,
-        title: "You received a new tip",
-        body: "",
-        localeTemplate: {
-          id: "tip_received_employee",
-          params: {
-            amount,
-            customerName,
+    // Detached/anonymized staff may have no linked User — skip employee inbox only.
+    if (employeeUserId) {
+      await deliverUserNotification({
+        userId: employeeUserId,
+        payload: {
+          type: NotificationType.TIP_RECEIVED,
+          title: "You received a new tip",
+          body: "",
+          localeTemplate: {
+            id: "tip_received_employee",
+            params: {
+              amount,
+              customerName,
+            },
+          },
+          url: "/employee/tip-history",
+          timestamp: ts,
+          metadata: {
+            entityId: payload.tip.id,
+            tipId: payload.tip.id,
+            ...(payload.employeeId ? { employeeId: payload.employeeId } : {}),
+            businessId: payload.businessId,
+            amount: String(amount),
+            employeeName,
+            ...(customerName ? { customerName } : {}),
           },
         },
-        url: "/employee/tip-history",
-        timestamp: ts,
-        metadata: {
-          entityId: payload.tip.id,
-          tipId: payload.tip.id,
-          employeeId: payload.employeeId,
-          businessId: payload.businessId,
-          amount: String(amount),
-          employeeName,
-          ...(customerName ? { customerName } : {}),
-        },
-      },
-      dedupeKey: `tip:${payload.tip.id}:employee:${employeeUserId}`,
-    });
+        dedupeKey: `tip:${payload.tip.id}:employee:${employeeUserId}`,
+      });
+    }
 
     let managerUserId: string | undefined = payload.businessManagerUserId;
     if (managerUserId === undefined) {
@@ -102,7 +106,7 @@ export function onTipReceived(payload: NewTipPayload): void {
           metadata: {
             entityId: payload.tip.id,
             tipId: payload.tip.id,
-            employeeId: payload.employeeId,
+            ...(payload.employeeId ? { employeeId: payload.employeeId } : {}),
             businessId: payload.businessId,
             amount: String(amount),
             employeeName,
@@ -529,6 +533,50 @@ export function onSystemAlert(userId: string, title: string, body: string, url?:
         url,
         timestamp: new Date().toISOString(),
       },
+    });
+  });
+}
+
+/** Slice E — both parties notified after Business.userId reassignment. */
+export function notifyBusinessOwnershipTransferred(params: {
+  businessId: string;
+  businessName: string;
+  previousOwnerUserId: string;
+  newOwnerUserId: string;
+}): void {
+  safeTrigger("notifyBusinessOwnershipTransferred", async () => {
+    const ts = new Date().toISOString();
+    await deliverUserNotification({
+      userId: params.previousOwnerUserId,
+      payload: {
+        type: NotificationType.SYSTEM_ALERT,
+        title: "Business ownership transferred",
+        body: `You are no longer the owner of ${params.businessName}.`,
+        url: "/settings",
+        timestamp: ts,
+        metadata: {
+          entityId: params.businessId,
+          businessId: params.businessId,
+          event: "ownership_transferred_former",
+        },
+      },
+      dedupeKey: `ownership:${params.businessId}:former:${params.previousOwnerUserId}`,
+    });
+    await deliverUserNotification({
+      userId: params.newOwnerUserId,
+      payload: {
+        type: NotificationType.SYSTEM_ALERT,
+        title: "You are now the business owner",
+        body: `Ownership of ${params.businessName} was transferred to you.`,
+        url: "/dashboard",
+        timestamp: ts,
+        metadata: {
+          entityId: params.businessId,
+          businessId: params.businessId,
+          event: "ownership_transferred_new",
+        },
+      },
+      dedupeKey: `ownership:${params.businessId}:new:${params.newOwnerUserId}`,
     });
   });
 }

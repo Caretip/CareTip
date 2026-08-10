@@ -163,8 +163,22 @@ export async function deleteMyAccount(req: Request, res: Response) {
     if (!userId) {
       return res.status(401).json({ message: "Authentication required" });
     }
-    await employeeService.deleteEmployeeAccount(userId);
-    return res.status(204).send();
+    const { requestAccountErasure } = await import("../services/erasureRequest.service.js");
+    const result = await requestAccountErasure(userId);
+    if (!result.ok) {
+      return res.status(409).json({
+        message: result.message,
+        blockers: result.status.blockers,
+        status: result.status,
+      });
+    }
+    // 200 (not 204): clients may need confirmation that tips were retained.
+    return res.status(200).json({
+      message: result.message,
+      status: result.status,
+      removal: "membership_and_access",
+      financialRecords: "retained",
+    });
   } catch (err) {
     logServerError("employee.deleteMyAccount", err);
     return res.status(400).json({
@@ -459,7 +473,11 @@ export async function deleteEmployee(req: Request, res: Response) {
       return res.status(400).json({ message: "Employee ID is required" });
     }
     await employeeService.deleteEmployeeForBusiness(business.id, employeeId.trim());
-    return res.status(204).send();
+    // F-04 / T-F04-b: manager remove is membership soft-remove, not Art. 17 erasure.
+    return res.status(200).json({
+      removal: "membership",
+      financialRecords: "retained",
+    });
   } catch (err) {
     logServerError("employee.deleteEmployee", err);
     const msg = err instanceof Error ? err.message : "";

@@ -222,15 +222,29 @@ async function resolveLocationTable(
 }
 
 async function loadTipEmitSnapshot(
-  employeeId: string,
+  employeeId: string | null,
   businessId: string,
 ): Promise<{
   employeeName: string;
-  employeeUserId: string;
+  employeeUserId: string | undefined;
   monthlyGoal: number | null;
   businessTimezone: string;
   businessManagerUserId: string;
 } | null> {
+  if (!employeeId) {
+    const business = await prisma.business.findUnique({
+      where: { id: businessId },
+      select: { timezone: true, userId: true },
+    });
+    if (!business) return null;
+    return {
+      employeeName: "Former staff",
+      employeeUserId: undefined,
+      monthlyGoal: null,
+      businessTimezone: business.timezone,
+      businessManagerUserId: business.userId,
+    };
+  }
   const row = await prisma.employee.findFirst({
     where: { id: employeeId, businessId },
     select: {
@@ -243,7 +257,7 @@ async function loadTipEmitSnapshot(
   if (!row) return null;
   return {
     employeeName: row.name,
-    employeeUserId: row.userId,
+    employeeUserId: row.userId ?? undefined,
     monthlyGoal: row.monthlyGoal != null ? Number(row.monthlyGoal) : null,
     businessTimezone: row.business.timezone,
     businessManagerUserId: row.business.userId,
@@ -256,7 +270,7 @@ async function emitTipSocketWithSnapshot(
     amount: unknown;
     status: string;
     createdAt: Date;
-    employeeId: string;
+    employeeId: string | null;
     businessId: string;
     customerName?: string | null;
   },
@@ -264,16 +278,18 @@ async function emitTipSocketWithSnapshot(
 ): Promise<void> {
   const tz = sanitizeIanaTimezone(snapshot.businessTimezone);
   const monthRange = businessUtcRangeForTimeframe("month", tz);
-  const currentMonthTotalAgg = await prisma.transaction.aggregate({
-    where: {
-      employeeId: tip.employeeId,
-      status: "success",
-      ...(monthRange != null
-        ? { createdAt: { gte: monthRange.startUtc, lte: monthRange.endUtc } }
-        : { createdAt: { gte: new Date(0) } }),
-    },
-    _sum: { amount: true },
-  });
+  const currentMonthTotalAgg = tip.employeeId
+    ? await prisma.transaction.aggregate({
+        where: {
+          employeeId: tip.employeeId,
+          status: "success",
+          ...(monthRange != null
+            ? { createdAt: { gte: monthRange.startUtc, lte: monthRange.endUtc } }
+            : { createdAt: { gte: new Date(0) } }),
+        },
+        _sum: { amount: true },
+      })
+    : { _sum: { amount: null as number | null } };
   const currentMonthTotal = Number(currentMonthTotalAgg._sum.amount ?? 0);
 
   emitNewTip({
@@ -482,6 +498,9 @@ export async function handlePaymentSuccess(paymentIntentId: string): Promise<voi
   }
 
   try {
+    if (!pending.employeeId) {
+      throw new Error("Tip has no linked employee");
+    }
     await assertEmployeeEligibleForTipPayment(pending.employeeId, pending.businessId);
   } catch (err) {
     await prisma.transaction.updateMany({
@@ -490,15 +509,17 @@ export async function handlePaymentSuccess(paymentIntentId: string): Promise<voi
     });
     const refundId = await refundTipPaymentForEligibilityFailure(paymentIntentId, {
       source: "handlePaymentSuccess",
-      employeeId: pending.employeeId,
+      employeeId: pending.employeeId ?? undefined,
       businessId: pending.businessId,
       transactionId: pending.id,
     }, err);
     if (refundId) {
-      const emp = await prisma.employee.findUnique({
-        where: { id: pending.employeeId },
-        select: { name: true },
-      });
+      const emp = pending.employeeId
+        ? await prisma.employee.findUnique({
+            where: { id: pending.employeeId },
+            select: { name: true },
+          })
+        : null;
       schedulePaymentRefundedProjection({
         paymentIntentId,
         refundId,

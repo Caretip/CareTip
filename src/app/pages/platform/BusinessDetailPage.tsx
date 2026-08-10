@@ -24,6 +24,7 @@ import { formatEur } from "../../lib/formatEur";
 import { BusinessLogoMark } from "../../components/business/BusinessLogoMark";
 import { PlatformPage, PlatformPageHeader } from "../../components/platform/PlatformPageChrome";
 import { PlatformSponsoredAccessSection } from "../../components/platform/PlatformSponsoredAccessSection";
+import { PlatformLegalHoldPanel } from "../../components/platform/PlatformLegalHoldPanel";
 import { BusinessWorkflowVerificationPanels } from "../../components/platform/BusinessWorkflowVerificationPanels";
 import { platformUi } from "../../components/platform/platformDashboardUi";
 import { cn } from "@/lib/utils";
@@ -251,6 +252,19 @@ export function BusinessDetailPage() {
             </div>
 
             <PlatformSponsoredAccessSection businessId={row.id} />
+
+            <PlatformLegalHoldPanel
+              subjectType="business"
+              subjectId={row.id}
+              subjectLabel={row.name}
+            />
+            {row.ownerUserId ? (
+              <PlatformLegalHoldPanel
+                subjectType="user"
+                subjectId={row.ownerUserId}
+                subjectLabel={row.ownerEmail}
+              />
+            ) : null}
 
             <dl className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
               <div>

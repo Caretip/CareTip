@@ -56,11 +56,19 @@ export async function updateBusinessOperationalStatus(
         operationalReviewHistory: history,
       },
     });
+    const { userAccessRestoredData, userAccessRevokedData } = await import(
+      "./lifecycleStatus.helpers.js"
+    );
     await tx.user.update({
       where: { id: previous.userId },
-      data: { isActive: ownerShouldBeActive },
+      data: ownerShouldBeActive ? userAccessRestoredData() : userAccessRevokedData(),
     });
   });
+
+  if (!ownerShouldBeActive) {
+    const { terminateUserSessions } = await import("./accountAccess.service.js");
+    await terminateUserSessions(previous.userId);
+  }
 
   if (opts?.adminUserId) {
     await writeAuditLog({
@@ -68,7 +76,9 @@ export async function updateBusinessOperationalStatus(
       action: `business.operational_status.${nextStatus}`,
       metadata: JSON.stringify({
         businessId,
-        businessName: previous.name,
+        // Structured ids preferred (lifecycle Amendment A3); name kept for legacy admin ops until audit rewrite.
+        resourceType: "business",
+        resourceId: businessId,
         previousStatus: previous.operationalStatus,
         nextStatus,
         note,
@@ -149,19 +159,28 @@ export async function softDeleteBusinessForAdmin(
   const deletedAt = new Date();
 
   await prisma.$transaction(async (tx) => {
+    const { userAccessRevokedData, businessLifecycleForSoftClose } = await import(
+      "./lifecycleStatus.helpers.js"
+    );
     await tx.business.update({
       where: { id: businessId },
       data: {
         deletedAt,
         operationalStatus: "inactive",
         operationalStatusChangedAt: deletedAt,
+        lifecycleStatus: businessLifecycleForSoftClose(),
       },
     });
     await tx.user.update({
       where: { id: business.userId },
-      data: { isActive: false },
+      data: userAccessRevokedData(),
     });
   });
+
+  {
+    const { terminateUserSessions } = await import("./accountAccess.service.js");
+    await terminateUserSessions(business.userId);
+  }
 
   if (opts?.adminUserId) {
     await writeAuditLog({
@@ -169,7 +188,8 @@ export async function softDeleteBusinessForAdmin(
       action: "business.soft_deleted",
       metadata: JSON.stringify({
         businessId,
-        businessName: business.name,
+        resourceType: "business",
+        resourceId: businessId,
         reason,
         deletedAt: deletedAt.toISOString(),
       }),

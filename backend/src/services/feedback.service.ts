@@ -4,7 +4,7 @@ import { prisma } from "../prisma.js";
 export type CustomerFeedbackRow = {
   id: string;
   transactionId: string;
-  employeeId: string;
+  employeeId: string | null;
   employeeName: string;
   rating: number | null;
   comment: string | null;
@@ -37,6 +37,7 @@ export async function queryEmployeeRatingAggregates(
     FROM tip_feedback
     WHERE business_id = ${businessId}
       AND rating IS NOT NULL
+      AND employee_id IS NOT NULL
     GROUP BY employee_id
   `);
   const m = new Map<string, { average: number; count: number }>();
@@ -120,7 +121,7 @@ export async function listBusinessCustomerFeedback(opts: {
     getBusinessFeedbackSummary(opts.businessId),
   ]);
 
-  const employeeIds = [...new Set(rows.map((r) => r.employeeId))];
+  const employeeIds = [...new Set(rows.map((r) => r.employeeId).filter((id): id is string => Boolean(id)))];
   const employees =
     employeeIds.length > 0
       ? await prisma.employee.findMany({
@@ -137,7 +138,7 @@ export async function listBusinessCustomerFeedback(opts: {
       id: r.id,
       transactionId: r.transactionId,
       employeeId: r.employeeId,
-      employeeName: nameById.get(r.employeeId) ?? "Staff",
+      employeeName: r.employeeId ? (nameById.get(r.employeeId) ?? "Staff") : "Former staff",
       rating: r.rating,
       comment: r.comment,
       tags: r.tags,

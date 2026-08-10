@@ -618,13 +618,15 @@ export const de: MobileMessages = {
       languageDesc: "App-Sprache",
       privacyData: "Daten & Datenschutz",
       privacyDataDesc: "Daten exportieren oder Konto löschen",
-      privacyDataHint: "Laden Sie eine Kopie Ihrer Daten herunter oder löschen Sie Ihr Mitarbeiterkonto dauerhaft.",
+      privacyDataHint:
+        "Laden Sie eine Kopie Ihrer Daten herunter oder beantragen Sie die Entfernung Ihres Mitarbeiterzugangs. Trinkgeldaufzeichnungen des Betriebs können, soweit erforderlich, erhalten bleiben.",
       downloadData: "Meine Daten herunterladen",
       exportStarted: "Export zum Teilen bereit",
       exportError: "Datenexport fehlgeschlagen.",
       deleteAccount: "Konto löschen",
       deleteAccountTitle: "Konto löschen?",
-      deleteAccountBody: "Dies entfernt Ihr Mitarbeiterkonto dauerhaft und kann nicht rückgängig gemacht werden.",
+      deleteAccountBody:
+        "Dadurch wird Ihr CareTip-Mitarbeiterzugang entzogen und Sie werden aus diesem Betrieb entfernt. Trinkgeld- und Zahlungsdaten können in begrenzter Form erhalten bleiben. Laden Sie Ihre Daten vorher herunter, falls Sie eine Kopie benötigen. Dies kann nicht rückgängig gemacht werden.",
       deleteAccountConfirm: "Löschen",
       deleteAccountError: "Konto konnte nicht gelöscht werden.",
       contactPhone: "Telefon",

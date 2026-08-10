@@ -25,6 +25,28 @@ export function getSocketIO(): Server | null {
   return io;
 }
 
+/** Disconnect all authenticated sockets for a user (deactivate / erasure). */
+export function disconnectUserSockets(userId: string): void {
+  const id = String(userId ?? "").trim();
+  if (!id || !io) return;
+  for (const [socketId, mappedUserId] of socketUserMap) {
+    if (mappedUserId !== id) continue;
+    const socket = io.sockets.sockets.get(socketId);
+    if (socket) {
+      socket.disconnect(true);
+    }
+    socketUserMap.delete(socketId);
+  }
+  // Also disconnect any socket in user room that was not in the map (recovery edge cases).
+  void io.in(`user:${id}`).fetchSockets().then((sockets) => {
+    for (const s of sockets) {
+      s.disconnect(true);
+    }
+  }).catch(() => {
+    /* best-effort */
+  });
+}
+
 export function initSocketServer(httpServer: HttpServer): Server {
   io = new Server(httpServer, {
     cors: socketCorsOptions,

@@ -22,6 +22,7 @@
   var COPY = {
     de: {
       onlyAMoment: "Das dauert nur einen Moment.",
+      preparingWorkspace: "Ihr Workspace wird vorbereitet…",
       starting: "CareTip wird gestartet …",
       landing: "Ihr Erlebnis wird vorbereitet …",
       sessionCheck: "Sitzung wird geprüft …",
@@ -32,6 +33,7 @@
     },
     en: {
       onlyAMoment: "This will only take a moment.",
+      preparingWorkspace: "Preparing your workspace…",
       starting: "Starting CareTip...",
       landing: "Preparing your experience...",
       sessionCheck: "Checking your session...",

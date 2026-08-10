@@ -422,7 +422,7 @@ export async function updateEmployeeActiveStatusForBusiness(
   employeeId: string,
   isActive: boolean
 ) {
-  const updated = await prisma.$transaction(async (tx) => {
+  const { updated, linkedUserId } = await prisma.$transaction(async (tx) => {
     const emp = await tx.employee.findFirst({
       where: { id: employeeId, businessId },
       select: { id: true, userId: true },
@@ -433,6 +433,9 @@ export async function updateEmployeeActiveStatusForBusiness(
 
     // Keep User.isActive in sync for activated employees (those with a linked user).
     // Pending-activation employees have no user yet, so only Employee.isActive is updated.
+    const { userAccessRevokedData, userAccessRestoredData } = await import(
+      "./lifecycleStatus.helpers.js"
+    );
     await tx.user.updateMany({
       where: {
         OR: [
@@ -440,10 +443,10 @@ export async function updateEmployeeActiveStatusForBusiness(
           { employee: { id: employeeId } },
         ],
       },
-      data: { isActive },
+      data: isActive ? userAccessRestoredData() : userAccessRevokedData(),
     });
 
-    return tx.employee.update({
+    const updatedEmp = await tx.employee.update({
       where: { id: employeeId },
       data: { isActive },
       select: {
@@ -459,7 +462,13 @@ export async function updateEmployeeActiveStatusForBusiness(
         monthlyGoal: true,
       },
     });
+    return { updated: updatedEmp, linkedUserId: emp.userId };
   });
+
+  if (!isActive && linkedUserId) {
+    const { terminateUserSessions } = await import("./accountAccess.service.js");
+    await terminateUserSessions(linkedUserId);
+  }
 
   notifyBusinessRosterChanged(businessId, "staff_updated");
 
@@ -621,8 +630,9 @@ export async function deleteEmployeeForBusiness(businessId: string, employeeId: 
     throw new Error("Employee not found");
   }
   const now = new Date();
-  await prisma.$transaction([
-    prisma.employee.update({
+  const { userAccessRevokedData } = await import("./lifecycleStatus.helpers.js");
+  await prisma.$transaction(async (tx) => {
+    await tx.employee.update({
       where: { id: emp.id },
       data: {
         isDeleted: true,
@@ -630,12 +640,18 @@ export async function deleteEmployeeForBusiness(businessId: string, employeeId: 
         isActive: false,
         activationStatus: "pending_activation",
       },
-    }),
-    prisma.user.update({
-      where: { id: emp.userId },
-      data: { isActive: false },
-    }),
-  ]);
+    });
+    if (emp.userId) {
+      await tx.user.update({
+        where: { id: emp.userId },
+        data: userAccessRevokedData(),
+      });
+    }
+  });
+  if (emp.userId) {
+    const { terminateUserSessions } = await import("./accountAccess.service.js");
+    await terminateUserSessions(emp.userId);
+  }
   notifyBusinessRosterChanged(businessId, "staff_deleted");
 }
 
@@ -889,12 +905,21 @@ export async function exportEmployeeData(userId: string) {
   };
 }
 
+/**
+ * Employee self-service account erasure (Slice B).
+ * Must NOT hard-delete User (tips cascade). Delegates to erasure-request foundation.
+ */
 export async function deleteEmployeeAccount(userId: string): Promise<void> {
-  const user = await prisma.user.findUnique({ where: { id: userId } });
-  if (!user || user.role !== "EMPLOYEE") {
-    throw new Error("Not allowed");
+  const { requestAccountErasure } = await import("./erasureRequest.service.js");
+  const result = await requestAccountErasure(userId);
+  if (!result.ok) {
+    const detail = result.status.blockers.map((b) => b.code).join(", ");
+    throw new Error(
+      detail
+        ? `Erasure blocked: ${detail}`
+        : result.message || "Erasure cannot proceed",
+    );
   }
-  await prisma.user.delete({ where: { id: userId } });
 }
 
 export interface CreateEmployeeWithActivationInput {

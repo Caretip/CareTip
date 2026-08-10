@@ -428,6 +428,8 @@ export async function deleteBusiness(req: Request, res: Response) {
     }
     if (
       msg.startsWith("Cannot delete") ||
+      msg.startsWith("Cannot hard-delete") ||
+      msg.includes("financial history") ||
       msg.includes("unexpected role") ||
       msg.includes("delete aborted")
     ) {

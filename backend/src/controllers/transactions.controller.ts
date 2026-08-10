@@ -29,9 +29,9 @@ export async function exportTransactions(req: Request, res: Response) {
         created_at_local: local.toFormat("yyyy-MM-dd HH:mm:ss"),
         created_at_local_day: local.toFormat("yyyy-MM-dd"),
         timezone: tz,
-        employee_id: t.employeeId,
-        employee_name: t.employee.name,
-        job_title: t.employee.jobTitle,
+        employee_id: t.employeeId ?? "",
+        employee_name: t.employee?.name ?? "Former team member",
+        job_title: t.employee?.jobTitle ?? "",
         stripe_payment_intent_id: t.stripePaymentIntentId ?? "",
         business_name: business.name,
       };

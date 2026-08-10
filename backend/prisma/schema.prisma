@@ -27,6 +27,52 @@ enum Role {
   SUPER_ADMIN
 }
 
+/// GDPR lifecycle — User account state (Slice C expand). Synced with isActive for compat.
+enum AccountStatus {
+  active
+  deactivated
+  erasure_pending
+  anonymized
+  closed
+}
+
+/// GDPR lifecycle — Business closure / retention stage (Slice C expand).
+enum BusinessLifecycle {
+  active
+  soft_closed
+  data_restricted
+  tombstoned
+}
+
+enum DataLifecycleJobType {
+  erasure_continue
+  anonymize_user
+  anonymize_employee
+  kyc_secure_destroy
+  analytics_ttl
+  audit_scrub
+  storage_orphan_gc
+  support_redact
+  dsar_export
+  /// Slice F-C — in-app notification TTL (fail-closed unless RETENTION_T_NOTIFY_DAYS set)
+  notify_cleanup
+  /// Slice F-C — guest TipFeedback PII scrub (fail-closed unless RETENTION_T_GUEST_DAYS set)
+  guest_scrub
+  /// Slice F-C — SubscriptionEvent payload redact (fail-closed unless RETENTION_T_BILLING_DAYS set)
+  billing_redact
+  /// Slice F-C — soft-removed staff identifier scrub (fail-closed unless RETENTION_T_STAFF_PII_DAYS set)
+  staff_pii_scrub
+}
+
+enum DataLifecycleJobStatus {
+  pending
+  running
+  succeeded
+  failed
+  skipped_legal_hold
+  cancelled
+}
+
 enum BusinessVerificationStatus {
   pending
   verified
@@ -209,8 +255,32 @@ model User {
   isPlatformAdmin        Boolean   @default(false) @map("is_platform_admin")
   /**
    * When false, user cannot sign in; used to revoke access without deleting the row.
+   * Kept in sync with accountStatus (active ↔ true; other states ↔ false).
    */
   isActive               Boolean   @default(true) @map("is_active")
+  /**
+   * Authoritative lifecycle state (Slice C). isActive remains compat mirror.
+   */
+  accountStatus          AccountStatus @default(active) @map("account_status")
+  deletionRequestedAt    DateTime?     @map("deletion_requested_at")
+  deletionCancelUntil    DateTime?     @map("deletion_cancel_until")
+  anonymizedAt           DateTime?     @map("anonymized_at")
+  closedAt               DateTime?     @map("closed_at")
+  /**
+   * Orchestration wake-up helper only — NOT legal authority for category retention (Amendment A1).
+   */
+  nextLifecycleWakeAt    DateTime?     @map("next_lifecycle_wake_at")
+  legalHold              Boolean       @default(false) @map("legal_hold")
+  legalHoldReason        String?       @map("legal_hold_reason") @db.Text
+  /** Category-specific hold (e.g. financial, kyc, audit, support). Empty = no category hold. */
+  legalHoldCategories    String[]      @default([]) @map("legal_hold_categories")
+  legalHoldSetAt         DateTime?     @map("legal_hold_set_at")
+  /** Platform-admin actor id who last set the hold (Amendment A2/A3 — id only, no email). */
+  legalHoldSetByUserId   String?       @map("legal_hold_set_by_user_id")
+  /**
+   * HMAC of normalized email after anonymize — PSEUDONYMIZED residual (Amendment A5), not anonymous.
+   */
+  emailHash              String?       @map("email_hash")
   /**
    * Business-only: whether the manager finished onboarding.
    * Controls post-auth routing to `/onboarding`.
@@ -352,7 +422,7 @@ model Notification {
 /// Platform admin broadcast audit record.
 model Announcement {
   id             String               @id @default(cuid())
-  createdById    String               @map("created_by_id")
+  createdById    String?              @map("created_by_id")
   title          String               @db.VarChar(256)
   message        String               @db.Text
   audience       String               @db.VarChar(32)
@@ -363,7 +433,7 @@ model Announcement {
   metadata       Json                 @default("{}")
   createdAt      DateTime             @default(now()) @map("created_at")
 
-  createdBy User @relation("AnnouncementCreatedBy", fields: [createdById], references: [id], onDelete: Cascade)
+  createdBy User? @relation("AnnouncementCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
 
   @@index([createdAt(sort: Desc)])
   @@map("announcements")
@@ -374,7 +444,7 @@ model SupportTicket {
   id              String                @id @default(cuid())
   ticketNumber    String                @unique @map("ticket_number") @db.VarChar(32)
   businessId      String                @map("business_id")
-  createdByUserId String                @map("created_by_user_id")
+  createdByUserId String?               @map("created_by_user_id")
   subject         String                @db.VarChar(256)
   category        SupportTicketCategory
   status          SupportTicketStatus   @default(OPEN)
@@ -383,7 +453,7 @@ model SupportTicket {
   closedAt        DateTime?             @map("closed_at")
 
   business  Business               @relation(fields: [businessId], references: [id], onDelete: Cascade)
-  createdBy User                   @relation("SupportTicketCreatedBy", fields: [createdByUserId], references: [id], onDelete: Cascade)
+  createdBy User?                  @relation("SupportTicketCreatedBy", fields: [createdByUserId], references: [id], onDelete: SetNull)
   messages  SupportTicketMessage[]
 
   @@index([businessId, updatedAt(sort: Desc)])
@@ -394,7 +464,7 @@ model SupportTicket {
 model SupportTicketMessage {
   id           String   @id @default(cuid())
   ticketId     String   @map("ticket_id")
-  authorUserId String   @map("author_user_id")
+  authorUserId String?  @map("author_user_id")
   /**
    * `business` (manager) or `admin` (platform operator).
    */
@@ -403,7 +473,7 @@ model SupportTicketMessage {
   createdAt    DateTime @default(now()) @map("created_at")
 
   ticket SupportTicket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
-  author User          @relation("SupportTicketMessageAuthor", fields: [authorUserId], references: [id], onDelete: Cascade)
+  author User?         @relation("SupportTicketMessageAuthor", fields: [authorUserId], references: [id], onDelete: SetNull)
 
   @@index([ticketId, createdAt])
   @@map("support_ticket_messages")
@@ -498,11 +568,11 @@ model EmployeeActivationToken {
 model AuditLog {
   id        String   @id @default(cuid())
   action    String
-  userId    String   @map("user_id")
+  userId    String?  @map("user_id")
   metadata  String?  @db.Text
   createdAt DateTime @default(now()) @map("created_at")
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
 
   @@index([userId])
   @@index([createdAt])
@@ -604,12 +674,28 @@ model Business {
   operationalStatusChangedAt DateTime?                @map("operational_status_changed_at")
   operationalReviewHistory Json?                      @map("operational_review_history")
   deletedAt                DateTime?                  @map("deleted_at")
+  /** GDPR lifecycle stage (Slice C expand). deletedAt remains soft-close compat. */
+  lifecycleStatus          BusinessLifecycle          @default(active) @map("lifecycle_status")
+  anonymizedAt             DateTime?                  @map("anonymized_at")
+  /**
+   * Orchestration helpers from category policy — NOT sole tombstone authority (Amendment A1/A6).
+   */
+  kycRetainUntil           DateTime?                  @map("kyc_retain_until")
+  financialRetainUntil     DateTime?                  @map("financial_retain_until")
+  legalHold                Boolean                    @default(false) @map("legal_hold")
+  legalHoldReason          String?                    @map("legal_hold_reason") @db.Text
+  legalHoldCategories      String[]                   @default([]) @map("legal_hold_categories")
+  legalHoldSetAt           DateTime?                  @map("legal_hold_set_at")
+  /** Platform-admin actor id who last set the hold (Amendment A2/A3 — id only, no email). */
+  legalHoldSetByUserId     String?                    @map("legal_hold_set_by_user_id")
   /** Venue / business creation time — platform growth SSOT (not manager user proxy). */
   createdAt                DateTime                   @default(now()) @map("created_at")
 
-  user           User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  /// Slice D: Restrict — owner User cannot be deleted while Business exists.
+  user           User            @relation(fields: [userId], references: [id], onDelete: Restrict)
   employees      Employee[]
   transactions   Transaction[]
+  tipRefunds     TipRefund[]
   locations      Location[]
   supportTickets SupportTicket[]
   employeeInvites EmployeeInvite[]
@@ -620,7 +706,6 @@ model Business {
   qrFunnelEvents QrFunnelEvent[]
   featureUtilizationDaily FeatureUtilizationDaily[]
   activityEvents BusinessActivityEvent[]
-  tipRefunds     TipRefund[]
 
   @@index([verificationStatus], map: "businesses_verification_status_idx")
   @@index([onboardingVerificationStatus], map: "businesses_onboarding_verification_status_idx")
@@ -750,9 +835,13 @@ model Employee {
   emailNotifications Boolean                  @default(true) @map("email_notifications")
   pushNotifications  Boolean                  @default(true) @map("push_notifications")
   isActive           Boolean                  @default(true) @map("is_active")
-  /** Soft delete — row retained for tips ledger and analytics. */
+  /**
+   * Soft delete — membership_removed. Tips must survive (do not hard-delete User for Art. 17).
+   * Art. 17 completion uses anonymizedAt (membership_anon) in a later slice.
+   */
   isDeleted          Boolean                  @default(false) @map("is_deleted")
   deletedAt          DateTime?                @map("deleted_at")
+  anonymizedAt       DateTime?                @map("anonymized_at")
   /**
    * `active` = ready for work flows; `pending_activation` = dashboard invite, needs `/activate`;
    * `pending_verification` = auth-page invite signup, needs email verification.
@@ -760,17 +849,17 @@ model Employee {
   activationStatus   EmployeeActivationStatus @default(active) @map("activation_status")
   businessId         String                   @map("business_id")
   /**
-   * Always set: every staff member has a row in `User` (auth account), including invite/activation flows
-   * before password is chosen. `User.email_verified` may still be false until they verify or complete activation.
+   * Linked auth account. Nullable after anonymization / user detach (Slice D SetNull).
+   * New hires still create a User; absence of userId means membership stub for tip history.
    */
-  userId             String                   @unique @map("user_id")
+  userId             String?                  @unique @map("user_id")
   /**
    * Optional venue for multi-QR flows; must belong to the same business.
    */
   locationId         String?                  @map("location_id")
 
   business         Business                  @relation(fields: [businessId], references: [id], onDelete: Cascade)
-  user             User                      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user             User?                     @relation(fields: [userId], references: [id], onDelete: SetNull)
   location         Location?                 @relation(fields: [locationId], references: [id], onDelete: SetNull)
   transactions     Transaction[]
   tableAssignments EmployeeTableAssignment[]
@@ -814,17 +903,20 @@ model Transaction {
   /** Customer-facing receipt reference (e.g. CT-26-A8K4P9X2). Assigned when status becomes success. */
   receiptNumber         String?      @unique @map("receipt_number")
   payoutStatus          PayoutStatus @default(not_applicable) @map("payout_status")
-  employeeId            String       @map("employee_id")
+  /// Nullable after staff detach/erasure (Slice D) — tip financial row must survive.
+  employeeId            String?      @map("employee_id")
   businessId            String       @map("business_id")
   locationId            String?      @map("location_id")
   tableId               String?      @map("table_id")
   createdAt             DateTime     @default(now()) @map("created_at")
 
-  employee Employee     @relation(fields: [employeeId], references: [id], onDelete: Cascade)
-  business Business     @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  employee Employee?    @relation(fields: [employeeId], references: [id], onDelete: SetNull)
+  /// Slice D.1: Restrict — prevent accidental cascade wipe of financial history.
+  business Business     @relation(fields: [businessId], references: [id], onDelete: Restrict)
   location Location?    @relation(fields: [locationId], references: [id], onDelete: SetNull)
   table    Table?       @relation(fields: [tableId], references: [id], onDelete: SetNull)
   feedback TipFeedback?
+  tipRefunds TipRefund[]
 
   @@index([businessId])
   @@index([employeeId, status, createdAt(sort: Desc)])
@@ -848,7 +940,7 @@ model TipFeedback {
   id                      String  @id @default(cuid())
   transactionId           String  @unique @map("transaction_id")
   businessId              String  @map("business_id")
-  employeeId              String  @map("employee_id")
+  employeeId              String? @map("employee_id")
   locationId              String? @map("location_id")
   tableId                 String? @map("table_id")
   stripeCheckoutSessionId String? @map("stripe_checkout_session_id")
@@ -1097,11 +1189,15 @@ model TipRefund {
   createdAt               DateTime        @default(now()) @map("created_at")
   updatedAt               DateTime        @updatedAt @map("updated_at")
 
-  business Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  /// Slice D.1: Restrict — refund ledger must not cascade-wipe with Business.
+  business Business     @relation(fields: [businessId], references: [id], onDelete: Restrict)
+  /// Slice D: optional tip link — SetNull if tip row later detached/deleted.
+  tip        Transaction? @relation(fields: [tipId], references: [id], onDelete: SetNull)
 
   @@index([businessId, occurredAt(sort: Desc)])
   @@index([stripePaymentIntentId])
   @@index([kind, status])
+  @@index([tipId])
   @@map("tip_refunds")
 }
 
@@ -1124,5 +1220,25 @@ model LegalDocument {
 
   @@unique([type, language])
   @@map("legal_documents")
+}
+
+/// Outbox for GDPR lifecycle jobs (Slice C expand — workers in later slices).
+model DataLifecycleJob {
+  id          String                   @id @default(cuid())
+  type        DataLifecycleJobType
+  status      DataLifecycleJobStatus   @default(pending)
+  subjectType String                   @map("subject_type") @db.VarChar(32)
+  subjectId   String                   @map("subject_id") @db.VarChar(64)
+  payload     Json?
+  notBefore   DateTime                 @default(now()) @map("not_before")
+  attempts    Int                      @default(0)
+  lastError   String?                  @map("last_error") @db.Text
+  createdAt   DateTime                 @default(now()) @map("created_at")
+  updatedAt   DateTime                 @updatedAt @map("updated_at")
+  completedAt DateTime?                @map("completed_at")
+
+  @@index([status, notBefore])
+  @@index([subjectType, subjectId])
+  @@map("data_lifecycle_jobs")
 }
 

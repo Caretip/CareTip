@@ -1253,7 +1253,7 @@
         },
         {
           "q": "Is CareTip GDPR compliant?",
-          "a": "Yes, fully. CareTip was built from the ground up with privacy at its core. We comply with all requirements of the GDPR and give users full control over their data at all times, including the right to access and deletion."
+          "a": "CareTip is designed for EU hospitality with privacy in mind. We support GDPR rights such as access (data export) and erasure requests where applicable. Some records—for example tip and payment history needed for financial or legal purposes—may be retained in a limited form after account access is removed. Details are in our Privacy Policy."
         },
         {
           "q": "How does CareTip work? How do customers leave a tip?",
@@ -3642,7 +3642,7 @@
       "toastPasswordUpdated": "Password updated.",
       "toastDownloadStarted": "Download started.",
       "toastDownloadFailed": "Download failed.",
-      "toastAccountDeleted": "Your account has been deleted.",
+      "toastAccountDeleted": "Your account access has been revoked.",
       "toastDeleteFailed": "Could not delete account.",
       "title": "Settings",
       "photoSection": "Profile photo",
@@ -3678,7 +3678,7 @@
       "dangerZone": "Danger zone",
       "deleteAccount": "Delete account",
       "deleteConfirmTitle": "Delete your account?",
-      "deleteConfirmDesc": "This permanently removes your Caretip staff account and associated data. This cannot be undone.",
+      "deleteConfirmDesc": "This revokes your CareTip staff access and removes you from this business. Tip and payment records needed for financial or legal purposes may be retained in limited form. Download your data first if you need a copy. This cannot be undone.",
       "prefsHint": "Use Save profile to apply preference changes.",
       "downloadMyData": "Download my data",
       "deletePermanently": "Delete permanently",
@@ -4596,7 +4596,7 @@
       "deactivateConfirmAction": "Deactivate",
       "deactivating": "Deactivating…",
       "deleteConfirmTitle": "Remove staff member?",
-      "deleteConfirmBody": "This will permanently delete {{name}}'s account and tip history associations (right to erasure). This cannot be undone.",
+      "deleteConfirmBody": "This removes {{name}} from this business and revokes their CareTip access. Historical tip amounts for your venue are kept for reporting and financial records—they are not wiped. This is not the same as a full account erasure request.",
       "labelTipsMonth": "Tips (month)",
       "labelRating": "Rating",
       "qrButton": "QR",
@@ -6252,7 +6252,52 @@
       },
       "system": {
         "health": "System Health",
-        "settings": "System Settings"
+        "settings": "System Settings",
+        "legalHold": "Legal Holds"
+      }
+    },
+    "legalHoldPage": {
+      "title": "Legal Hold Management",
+      "subtitle": "Manage legal holds for users and businesses when specific data must be preserved for legal or compliance reasons.",
+      "lookupHint": "Select a user or business to view or manage their legal hold. A reason and at least one data category are required when placing a hold.",
+      "subjectType": "Subject type",
+      "subjectId": "Subject ID",
+      "subjectIdPlaceholder": "Enter ID…",
+      "searchBusiness": "Search business",
+      "searchUser": "Search user",
+      "searchBusinessPlaceholder": "Business name or ID",
+      "searchUserPlaceholder": "Name, email, or ID",
+      "selectedSubject": "Selected subject",
+      "idLookupToggle": "Look up by ID only",
+      "load": "View legal hold",
+      "loadById": "Load by ID",
+      "empty": "Select a user or business to view or manage their legal hold.",
+      "panelTitle": "Legal Hold",
+      "panelHint": "Clearing a legal hold does not restore account access.",
+      "loading": "Loading legal hold…",
+      "status": "Legal Hold Status",
+      "statusActive": "Legal Hold Active",
+      "statusInactive": "No active legal hold",
+      "inactiveHint": "There is no active legal hold for this subject. You can place one below.",
+      "reason": "Reason",
+      "categories": "Protected data categories",
+      "setAt": "Date hold was placed",
+      "setBy": "Placed by (admin)",
+      "none": "—",
+      "reasonInput": "Reason for hold",
+      "categoriesInput": "Data categories to preserve",
+      "setHold": "Place Legal Hold",
+      "clearHold": "Clear Legal Hold",
+      "refresh": "Refresh",
+      "reasonRequired": "A reason is required to place a legal hold.",
+      "categoriesRequired": "Select at least one data category to place a legal hold.",
+      "confirmSet": "Place this legal hold? The selected categories will be protected from applicable lifecycle deletion and anonymization processes while the hold remains active.",
+      "confirmClear": "Are you sure you want to clear this legal hold? Applicable lifecycle processing may resume after the hold is cleared.",
+      "setSuccess": "Legal hold placed.",
+      "clearSuccess": "Legal hold cleared.",
+      "subject": {
+        "user": "User",
+        "business": "Business"
       }
     },
     "overview": {

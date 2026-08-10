@@ -192,7 +192,8 @@ export async function listGlobalTransactions(params: {
       createdAt: t.createdAt.toISOString(),
       businessId: t.businessId,
       businessName: t.business.name,
-      employeeName: t.employee.name,
+      employeeName: t.employee?.name ?? "Former team member",
+      employeeId: t.employeeId,
     };
   });
 
@@ -350,7 +351,7 @@ export async function listAuditLogsForAdmin(params: { take: number; skip: number
       id: r.id,
       action: r.action,
       userId: r.userId,
-      userEmail: r.user.email,
+      userEmail: r.user?.email ?? null,
       metadata: r.metadata,
       createdAt: r.createdAt.toISOString(),
     })),
@@ -533,7 +534,7 @@ export async function listAnnouncementsForAdmin(params: { take: number; skip: nu
       channels: r.channels,
       url: r.url,
       recipientCount: r.recipientCount,
-      createdByEmail: r.createdBy.email,
+      createdByEmail: r.createdBy?.email ?? null,
       createdAt: r.createdAt.toISOString(),
     })),
     total,

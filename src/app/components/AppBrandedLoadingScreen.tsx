@@ -48,10 +48,10 @@ export function AppBrandedLoadingScreen({
       )}
       role="status"
       aria-busy={!exiting}
-      aria-label={status ?? "CareTip"}
+      aria-label={status ?? undefined}
       aria-live="polite"
     >
-      <CareTipBrandedLoaderMark />
+      <CareTipBrandedLoaderMark compact={false} />
       {status ? (
         <p className="max-w-sm text-center text-sm font-medium text-foreground">{status}</p>
       ) : null}
