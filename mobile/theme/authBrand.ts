@@ -1,9 +1,14 @@
-/** Auth-screen brand tokens — CareTip hospitality fintech palette. */
+import { brand } from "./colors";
+
+/**
+ * Auth-screen tokens. Primary orange is the web CareTip CTA token (`brand.orange`),
+ * not a second splash orange. Canvas stays dark — orange is accents only.
+ */
 export const authBrand = {
-  orange: "#EB992C",
-  orangeDeep: "#C47A12",
-  orangeSoft: "#FFB04A",
-  orangeMuted: "rgba(255, 176, 74, 0.92)",
+  orange: brand.orange,
+  orangeDeep: brand.orangeDeep,
+  orangeSoft: brand.orangeHover,
+  orangeMuted: "rgba(233, 120, 28, 0.92)",
   white: "#FFFFFF",
   dark: "#0B1220",
   darkSoft: "#1A2332",
@@ -17,7 +22,7 @@ export const authBrand = {
   fieldFill: "rgba(8, 12, 20, 0.42)",
   fieldFillFocused: "rgba(8, 12, 20, 0.55)",
   fieldBorder: "rgba(255, 255, 255, 0.22)",
-  fieldBorderFocused: "rgba(255, 176, 74, 0.95)",
+  fieldBorderFocused: "rgba(233, 120, 28, 0.95)",
   fieldLabel: "rgba(255, 255, 255, 0.94)",
   fieldText: "#FFFFFF",
   fieldPlaceholder: "rgba(255, 255, 255, 0.74)",
@@ -25,7 +30,7 @@ export const authBrand = {
   fieldError: "#FCA5A5",
   heroTitle: "#FFFFFF",
   heroSubtitle: "rgba(255, 255, 255, 0.78)",
-  heroEyebrow: "#EB992C",
+  heroEyebrow: brand.orange,
   heroControlFill: "rgba(255, 255, 255, 0.14)",
   heroControlBorder: "rgba(255, 255, 255, 0.22)",
   heroControlIcon: "#FFFFFF",

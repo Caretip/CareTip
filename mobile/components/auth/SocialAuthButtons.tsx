@@ -7,6 +7,7 @@ import {
 import { useI18n } from "@/hooks/useI18n";
 import type { OAuthProvider } from "@/types/auth";
 import { spacing } from "@/theme";
+import { authBrand } from "@/theme/authBrand";
 
 import googleLogo from "@/assets/oauth/google.png";
 import facebookLogo from "@/assets/oauth/facebook.png";
@@ -78,7 +79,7 @@ export function SocialAuthButtons({
             variant={variant}
             fillColor="#FFFFFF"
             borderColor="transparent"
-            spinnerColor="#EB992C"
+            spinnerColor={authBrand.orange}
             icon={
               <Image
                 source={LOGO_SOURCE[provider]}

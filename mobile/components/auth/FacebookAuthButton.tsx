@@ -5,6 +5,7 @@ import {
   type OAuthProviderCircleVariant,
 } from "@/components/auth/OAuthProviderCircle";
 import facebookLogo from "@/assets/oauth/facebook.png";
+import { authBrand } from "@/theme/authBrand";
 
 type FacebookAuthButtonProps = PressableProps & {
   label: string;
@@ -26,7 +27,7 @@ export function FacebookAuthButton({
       variant={variant}
       fillColor="transparent"
       borderColor="transparent"
-      spinnerColor="#EB992C"
+      spinnerColor={authBrand.orange}
       icon={<Image source={facebookLogo} style={styles.logo} resizeMode="cover" />}
       {...rest}
     />

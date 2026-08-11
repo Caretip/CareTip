@@ -1,6 +1,6 @@
 /**
  * Generates splash assets — icon-only on transparent canvas.
- * Orange fill comes from app.json backgroundColor (#EB992C), not the PNG.
+ * Orange fill comes from app.json backgroundColor (#e9781c), not the PNG.
  *
  * Outputs:
  *   assets/splash-icon-white.png  — 512×512 icon for in-app splash

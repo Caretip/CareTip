@@ -12,7 +12,7 @@
     "splash": {
       "image": "./assets/splash-native.png",
       "resizeMode": "contain",
-      "backgroundColor": "#EB992C"
+      "backgroundColor": "#e9781c"
     },
     "ios": {
       "supportsTablet": true,
@@ -35,7 +35,7 @@
       "package": "de.caretip.app",
       "versionCode": 6,
       "adaptiveIcon": {
-        "backgroundColor": "#EB992C",
+        "backgroundColor": "#e9781c",
         "foregroundImage": "./assets/caretip-app-icon-ref.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
@@ -130,14 +130,14 @@
           "image": "./assets/splash-native.png",
           "imageWidth": 240,
           "resizeMode": "contain",
-          "backgroundColor": "#EB992C"
+          "backgroundColor": "#e9781c"
         }
       ],
       [
         "expo-notifications",
         {
           "icon": "./assets/caretip-app-icon-ref.png",
-          "color": "#EB992C",
+          "color": "#e9781c",
           "defaultChannel": "default"
         }
       ],

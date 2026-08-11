@@ -5,6 +5,7 @@ import {
   type OAuthProviderCircleVariant,
 } from "@/components/auth/OAuthProviderCircle";
 import appleLogo from "@/assets/oauth/apple.png";
+import { authBrand } from "@/theme/authBrand";
 
 type AppleAuthButtonProps = PressableProps & {
   label: string;
@@ -26,7 +27,7 @@ export function AppleAuthButton({
       variant={variant}
       fillColor="transparent"
       borderColor="transparent"
-      spinnerColor="#EB992C"
+      spinnerColor={authBrand.orange}
       icon={<Image source={appleLogo} style={styles.logo} resizeMode="cover" />}
       {...rest}
     />

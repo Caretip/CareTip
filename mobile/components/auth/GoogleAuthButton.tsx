@@ -5,6 +5,7 @@ import {
   type OAuthProviderCircleVariant,
 } from "@/components/auth/OAuthProviderCircle";
 import googleLogo from "@/assets/oauth/google.png";
+import { authBrand } from "@/theme/authBrand";
 
 type GoogleAuthButtonProps = PressableProps & {
   label: string;
@@ -26,7 +27,7 @@ export function GoogleAuthButton({
       variant={variant}
       fillColor="transparent"
       borderColor="transparent"
-      spinnerColor="#EB992C"
+      spinnerColor={authBrand.orange}
       icon={<Image source={googleLogo} style={styles.logo} resizeMode="contain" />}
       {...rest}
     />
