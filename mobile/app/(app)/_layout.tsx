@@ -1,6 +1,8 @@
 import { View } from "react-native";
 import { Redirect, Stack } from "expo-router";
 import { useAuth } from "@/hooks/useAuth";
+import { useAuthLogoutTransitionActive } from "@/hooks/useAuthLogoutTransition";
+import { isAuthenticatedAppShellEligible } from "@/lib/authLogoutTransition";
 import { useSessionRoutingReady } from "@/hooks/useAppReady";
 import { getPostAuthHref, resolvePostAuthAction } from "@/utils/postAuthNavigation";
 import { useTheme } from "@/hooks/useTheme";
@@ -10,6 +12,7 @@ export default function AppLayout() {
   const { colors } = useTheme();
   const { isAuthenticated, user, status } = useAuth();
   const routingReady = useSessionRoutingReady();
+  const logoutTransition = useAuthLogoutTransitionActive();
 
   if (!routingReady) {
     return <View style={{ flex: 1, backgroundColor: authBrand.orange }} />;
@@ -19,8 +22,14 @@ export default function AppLayout() {
     return <Redirect href={"/(auth)/session-recovery" as never} />;
   }
 
-  if (!isAuthenticated) {
-    return <Redirect href="/(auth)/login" />;
+  // Logout / unauth: do not paint the dashboard Stack. Hold the auth canvas
+  // (not orange/white) so Redirect does not flash a hole through the splash gate.
+  if (!isAuthenticatedAppShellEligible(isAuthenticated) || logoutTransition) {
+    return (
+      <View style={{ flex: 1, backgroundColor: authBrand.dark }}>
+        <Redirect href="/(auth)/login" />
+      </View>
+    );
   }
 
   if (user) {

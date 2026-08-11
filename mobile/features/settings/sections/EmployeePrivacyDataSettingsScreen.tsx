@@ -1,6 +1,5 @@
 import { useMemo, useState } from "react";
 import { Alert, StyleSheet, Text } from "react-native";
-import { useRouter } from "expo-router";
 import { Button } from "@/components/ui/Button";
 import { Section } from "@/components/ui/Section";
 import { SettingsSectionLayout } from "@/features/settings/SettingsSectionLayout";
@@ -17,7 +16,6 @@ export function EmployeePrivacyDataSettingsScreen() {
   const { t } = useI18n();
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
-  const router = useRouter();
   const { signOut } = useAuth();
   const [exporting, setExporting] = useState(false);
 
@@ -49,7 +47,6 @@ export function EmployeePrivacyDataSettingsScreen() {
             try {
               await deleteEmployeeAccount();
               await signOut();
-              router.replace("/(auth)/login");
             } catch (e) {
               showErrorToast(friendlyErrorMessage(e, t("settings.menu.deleteAccountError"), t));
             }

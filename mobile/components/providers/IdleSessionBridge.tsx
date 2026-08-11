@@ -1,24 +1,10 @@
-import { useCallback, useMemo, useSyncExternalStore } from "react";
-import { useRouter } from "expo-router";
+import { useCallback, useMemo } from "react";
 import { IdleActivityCapture } from "@/components/idle/IdleActivityCapture";
 import { IdleWarningModal } from "@/components/idle/IdleWarningModal";
 import { useAuth } from "@/hooks/useAuth";
+import { useAuthLogoutTransitionActive } from "@/hooks/useAuthLogoutTransition";
 import { useIdleSessionGuard } from "@/hooks/useIdleSessionGuard";
-import {
-  beginAuthLogoutTransition,
-  endAuthLogoutTransition,
-  isAuthLogoutTransitionActive,
-  subscribeAuthLogoutTransition,
-} from "@/lib/authLogoutTransition";
 import { isIdleSessionTimeoutEnabled } from "@/lib/idleSession/idleSessionConfig";
-
-function useAuthLogoutTransitionActive(): boolean {
-  return useSyncExternalStore(
-    subscribeAuthLogoutTransition,
-    isAuthLogoutTransitionActive,
-    () => false,
-  );
-}
 
 type IdleSessionBridgeProps = {
   children: React.ReactNode;
@@ -29,7 +15,6 @@ type IdleSessionBridgeProps = {
  * Mirrors web `IdleSessionController.tsx`.
  */
 export function IdleSessionBridge({ children }: IdleSessionBridgeProps) {
-  const router = useRouter();
   const { user, status, isHydrated, signOut } = useAuth();
   const logoutTransitionActive = useAuthLogoutTransitionActive();
   const flagEnabled = isIdleSessionTimeoutEnabled();
@@ -44,14 +29,8 @@ export function IdleSessionBridge({ children }: IdleSessionBridgeProps) {
   }, [flagEnabled, status, isHydrated, user, logoutTransitionActive]);
 
   const logout = useCallback(async () => {
-    beginAuthLogoutTransition();
-    try {
-      await signOut();
-      router.replace("/(auth)/login");
-    } finally {
-      endAuthLogoutTransition();
-    }
-  }, [router, signOut]);
+    await signOut();
+  }, [signOut]);
 
   const { warning, staySignedIn, logOutNow } = useIdleSessionGuard(active, logout);
 

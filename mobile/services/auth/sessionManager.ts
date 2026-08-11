@@ -25,6 +25,11 @@ import { logAuthEvent } from "@/utils/authDebug";
 import { STARTUP_TASK_TIMEOUT_MS } from "@/constants/startup";
 import { withTimeout } from "@/utils/withTimeout";
 import { useStartupStore } from "@/store/startupStore";
+import { bumpAuthSessionEpoch } from "@/services/auth/authSessionEpoch";
+import {
+  beginAuthLogoutTransition,
+  endAuthLogoutTransition,
+} from "@/lib/authLogoutTransition";
 
 /**
  * Session manager — cold-start bootstrap + sign-out.
@@ -199,32 +204,55 @@ export async function abandonSessionRecovery(): Promise<void> {
   await clearLocalAuthState("recovery-abandoned");
 }
 
+let signOutPromise: Promise<void> | null = null;
+
+/**
+ * Sign out: detach authenticated UI in the same tick (no await), then revoke
+ * session and clear caches. Callers must not `router.replace` — `(app)` Redirects.
+ */
 export async function signOut(): Promise<void> {
-  const pushToken = getRegisteredPushToken();
-  if (pushToken) {
+  if (signOutPromise) return signOutPromise;
+
+  signOutPromise = (async () => {
+    beginAuthLogoutTransition();
+    // Synchronous — dashboard Stack is no longer eligible to render this frame.
+    useAuthStore.getState().setUnauthenticated();
+    bumpAuthSessionEpoch();
+
     try {
-      await unregisterPushToken(pushToken);
-    } catch {
-      /* Non-fatal — local session must still clear. */
+      const pushToken = getRegisteredPushToken();
+      if (pushToken) {
+        try {
+          await unregisterPushToken(pushToken);
+        } catch {
+          /* Non-fatal — local session must still clear. */
+        }
+        setRegisteredPushToken(null);
+      }
+
+      await authService.logout();
+
+      useUserStore.getState().clear();
+      useBusinessStore.getState().clear();
+      useEmployeeStore.getState().clear();
+
+      clearReactQueryForAuthBoundary("logout");
+      try {
+        await clearAllOfflineQrCaches();
+      } catch {
+        /* Non-fatal — session secrets already cleared. */
+      }
+      void clearOsNotificationBadge();
+    } finally {
+      endAuthLogoutTransition();
     }
-    setRegisteredPushToken(null);
-  }
+  })();
 
-  await authService.logout();
-
-  // Flip auth first so `(app)` redirects away before caches/stores empty under a mounted dashboard.
-  useAuthStore.getState().setUnauthenticated();
-  useUserStore.getState().clear();
-  useBusinessStore.getState().clear();
-  useEmployeeStore.getState().clear();
-
-  clearReactQueryForAuthBoundary("logout");
   try {
-    await clearAllOfflineQrCaches();
-  } catch {
-    /* Non-fatal — session secrets already cleared. */
+    await signOutPromise;
+  } finally {
+    signOutPromise = null;
   }
-  void clearOsNotificationBadge();
 }
 
 export const sessionManager = {

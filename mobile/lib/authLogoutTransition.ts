@@ -1,11 +1,16 @@
 /**
- * Brief window during intentional logout — disarms idle session guard.
- * Session teardown flips auth status before clearing caches so dashboards
- * do not empty/skeleton under a still-authenticated shell (no logout overlay).
+ * Intentional logout window.
+ * Call `begin` synchronously on Sign Out (before any await) so `(app)` can
+ * unmount authenticated screens before caches empty or navigation fades.
  */
 
 let active = false;
 const listeners = new Set<() => void>();
+
+/** `(app)` Stack must not paint after Sign Out starts, even for one frame. */
+export function isAuthenticatedAppShellEligible(isAuthenticated: boolean): boolean {
+  return isAuthenticated && !active;
+}
 
 function emit(): void {
   for (const listener of listeners) {

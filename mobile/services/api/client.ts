@@ -17,6 +17,7 @@ import { buildRefreshCookieHeader, extractRefreshTokenFromHeaders } from "@/util
 import { reportGlobalError } from "@/utils/errors";
 import { notifySessionExpired } from "@/utils/sessionExpiry";
 import { isIdleLogoutInFlight } from "@/lib/idleSession/idleSessionStore";
+import { isAuthLogoutTransitionActive } from "@/lib/authLogoutTransition";
 import { logAuthEvent, logOutgoingAuthHeader } from "@/utils/authDebug";
 import { normalizeApiError } from "@/types/api";
 import type { AuthResponse } from "@/types/auth";
@@ -54,6 +55,7 @@ export async function hydrateAccessTokenFromSecureStore(): Promise<string | null
 }
 
 export async function persistRefreshFromResponse(headers: unknown): Promise<boolean> {
+  if (isAuthLogoutTransitionActive()) return false;
   const refresh = extractRefreshTokenFromHeaders(headers);
   if (!refresh) {
     const map =
@@ -141,8 +143,12 @@ apiClient.interceptors.request.use(async (request) => {
   return request;
 });
 
+function isSessionTeardownActive(): boolean {
+  return isIdleLogoutInFlight() || isAuthLogoutTransitionActive();
+}
+
 async function refreshAccessToken(): Promise<string | null> {
-  if (isIdleLogoutInFlight()) return null;
+  if (isSessionTeardownActive()) return null;
   if (refreshPromise) return refreshPromise;
 
   const epochAtStart = getAuthSessionEpoch();
@@ -150,7 +156,7 @@ async function refreshAccessToken(): Promise<string | null> {
 
   refreshPromise = (async () => {
     try {
-      if (isIdleLogoutInFlight()) return null;
+      if (isSessionTeardownActive()) return null;
       const refreshToken = await getRefreshToken();
       const headers: Record<string, string> = {
         [config.clientHeaderName]: config.clientHeader,
@@ -175,7 +181,7 @@ async function refreshAccessToken(): Promise<string | null> {
       }
 
       await persistRefreshFromResponse(response.headers as Record<string, unknown>);
-      if (isIdleLogoutInFlight()) return null;
+      if (isSessionTeardownActive()) return null;
       const nextToken = response.data.token;
       memoryAccessToken = nextToken;
       await saveAccessToken(nextToken);
@@ -259,6 +265,9 @@ apiClient.interceptors.response.use(
       !isPublicApiPath(original.url)
     ) {
       original.__caretipRetried = true;
+      if (isAuthLogoutTransitionActive()) {
+        return Promise.reject(error);
+      }
       if (isIdleLogoutInFlight()) {
         notifySessionExpired();
         return Promise.reject(error);

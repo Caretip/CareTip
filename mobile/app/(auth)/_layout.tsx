@@ -1,6 +1,7 @@
 import { View } from "react-native";
 import { Redirect, Stack, useSegments } from "expo-router";
 import { useAuth } from "@/hooks/useAuth";
+import { useAuthLogoutTransitionActive } from "@/hooks/useAuthLogoutTransition";
 import { useSessionRoutingReady } from "@/hooks/useAppReady";
 import { authBrand } from "@/theme/authBrand";
 import { getPostAuthHref, resolvePostAuthAction } from "@/utils/postAuthNavigation";
@@ -10,6 +11,7 @@ const AUTH_RECOVERY_ROUTES = new Set(["verify-email", "onboarding", "mfa", "sess
 export default function AuthLayout() {
   const { isAuthenticated, user, status } = useAuth();
   const routingReady = useSessionRoutingReady();
+  const logoutTransition = useAuthLogoutTransitionActive();
   const segments = useSegments();
   const currentRoute = segments[segments.length - 1] ?? "";
 
@@ -35,7 +37,8 @@ export default function AuthLayout() {
     );
   }
 
-  if (isAuthenticated && user) {
+  // Do not bounce back to the dashboard while Sign Out is tearing down.
+  if (isAuthenticated && user && !logoutTransition) {
     const action = resolvePostAuthAction(user);
 
     if (AUTH_RECOVERY_ROUTES.has(currentRoute)) {
@@ -66,9 +69,9 @@ export default function AuthLayout() {
     <Stack
       screenOptions={{
         headerShown: false,
-        contentStyle: { backgroundColor: "transparent" },
-        animation: "fade",
-        animationDuration: 280,
+        contentStyle: { backgroundColor: logoutTransition ? authBrand.dark : "transparent" },
+        animation: logoutTransition ? "none" : "fade",
+        animationDuration: logoutTransition ? 0 : 280,
       }}
     />
   );

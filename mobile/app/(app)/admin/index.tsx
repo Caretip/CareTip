@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { Redirect, useRouter } from "expo-router";
+import { Redirect } from "expo-router";
 import { StyleSheet, Text, View } from "react-native";
 import { Button } from "@/components/ui/Button";
 import { Screen } from "@/components/ui/Screen";
@@ -17,7 +17,6 @@ import { spacing, typography } from "@/theme";
  * Does not invent KPIs — session confirmation + sign-out only.
  */
 export default function AdminDashboardRoute() {
-  const router = useRouter();
   const { t } = useI18n();
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
@@ -29,7 +28,6 @@ export default function AdminDashboardRoute() {
 
   const handleSignOut = async () => {
     await signOut();
-    router.replace("/(auth)/login");
   };
 
   return (
