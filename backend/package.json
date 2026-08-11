@@ -45,7 +45,7 @@
     "test:lifecycle-slice-c": "dotenv -e ../.env -e .env -- tsx scripts/lifecycle-slice-c-schema-runtime.ts",
     "test:lifecycle-slice-d": "dotenv -e ../.env -e .env -- tsx scripts/lifecycle-slice-d-fk-runtime.ts",
     "test:lifecycle-slice-d1": "dotenv -e ../.env -e .env -- tsx scripts/lifecycle-slice-d1-business-fk-runtime.ts",
-    "test:lifecycle-slice-e": "dotenv -e ../.env -e .env -- tsx scripts/lifecycle-slice-e-ownership-dsar-runtime.ts && dotenv -e ../.env -e .env -- tsx scripts/lifecycle-slice-e-remediation-runtime.ts",
+    "test:lifecycle-slice-e": "tsx scripts/lifecycle-slice-e-storage-guard-runtime.ts && dotenv -e ../.env -e .env -- tsx scripts/lifecycle-slice-e-ownership-dsar-runtime.ts && dotenv -e ../.env -e .env -- tsx scripts/lifecycle-slice-e-remediation-runtime.ts",
     "test:lifecycle-slice-e-remediation": "dotenv -e ../.env -e .env -- tsx scripts/lifecycle-slice-e-remediation-runtime.ts",
     "test:lifecycle-slice-f-anonymization": "dotenv -e ../.env -e .env -- tsx scripts/lifecycle-slice-f-anonymization-runtime.ts",
     "test:lifecycle-slice-f-b": "dotenv -e ../.env -e .env -- tsx scripts/lifecycle-slice-f-b-kyc-runtime.ts",

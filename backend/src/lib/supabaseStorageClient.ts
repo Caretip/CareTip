@@ -462,9 +462,9 @@ export async function uploadBufferToSupabaseDsarObject(
 
 /**
  * Delete a single DSAR object. Refuses KYC bucket and non-allowlisted paths.
+ * Isolation guards always run — even when Supabase is not configured (CI).
  */
 export async function removeDsarStorageObject(bucket: string, objectPath: string): Promise<void> {
-  if (!isSupabaseStorageConfigured()) return;
   const dsarBucket = supabaseDsarStorageBucketName();
   const kycBucket = supabaseKycStorageBucketName();
   if (bucket === kycBucket) {
@@ -474,6 +474,7 @@ export async function removeDsarStorageObject(bucket: string, objectPath: string
     throw new Error("Refusing DSAR cleanup for unexpected bucket");
   }
   const key = assertAllowedDsarObjectPath(objectPath);
+  if (!isSupabaseStorageConfigured()) return;
   try {
     const supabase = getServiceClient();
     await supabase.storage.from(bucket).remove([key]);

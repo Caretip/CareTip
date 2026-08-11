@@ -75,12 +75,14 @@ async function main() {
     await processDsarExportJob(created.jobId);
     await prisma.dataLifecycleJob.update({
       where: { id: created.jobId },
-      data: {
-        status: "running",
-        updatedAt: new Date(Date.now() - 20 * 60 * 1000),
-        lastError: null,
-      },
+      data: { status: "running", lastError: null },
     });
+    // @updatedAt would overwrite an explicit timestamp — pin wall-clock via SQL for reclaim.
+    await prisma.$executeRaw`
+      UPDATE data_lifecycle_jobs
+      SET updated_at = NOW() - INTERVAL '20 minutes'
+      WHERE id = ${created.jobId}
+    `;
     const reclaimed = await reclaimStaleDsarRunningJobs(new Date(), 15 * 60 * 1000);
     const afterReclaim = await prisma.dataLifecycleJob.findUnique({ where: { id: created.jobId } });
     if (reclaimed >= 1 && afterReclaim?.status === "pending") {
