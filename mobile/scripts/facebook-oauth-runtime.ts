@@ -95,6 +95,13 @@ function main(): void {
   assert.match(facebookService, /requestFacebookIdToken/);
   assert.match(facebookService, /react-native-fbsdk-next/);
   assert.match(facebookService, /NativeModules\.FBLoginManager/);
+  assert.match(facebookService, /Never probe native Facebook during boot/);
+  assert.match(facebookService, /hasPublicFacebookConfig/);
+  const configuredFn = facebookService.slice(
+    facebookService.indexOf("export function isFacebookSignInConfigured"),
+    facebookService.indexOf("function configureFacebookSdk"),
+  );
+  assert.doesNotMatch(configuredFn, /require\("react-native-fbsdk-next"\)/);
   assert.doesNotMatch(facebookService, /EXPO_PUBLIC_FACEBOOK_APP_SECRET/);
   assert.doesNotMatch(facebookService, /process\.env\.FACEBOOK_APP_SECRET/);
   assert.doesNotMatch(facebookService, /mockFacebook|fakeFacebook|bypassMeta/i);
@@ -132,7 +139,15 @@ function main(): void {
   assert.match(appConfig, /EXPO_PUBLIC_FACEBOOK_APP_ID/);
   assert.match(appConfig, /EXPO_PUBLIC_FACEBOOK_CLIENT_TOKEN/);
   assert.match(appConfig, /facebookAppId && facebookClientToken/);
+  assert.match(appConfig, /isAutoInitEnabled:\s*false/);
   assert.doesNotMatch(appConfig, /FACEBOOK_APP_SECRET/);
+
+  const rnConfig = read("react-native.config.js");
+  assert.match(rnConfig, /react-native-fbsdk-next/);
+  assert.match(rnConfig, /android:\s*null/);
+  assert.match(rnConfig, /ios:\s*null/);
+  assert.match(rnConfig, /EXPO_PUBLIC_FACEBOOK_APP_ID/);
+  assert.doesNotMatch(rnConfig, /FACEBOOK_APP_SECRET/);
 
   const pkg = JSON.parse(read("package.json")) as { dependencies?: Record<string, string> };
   assert.ok(pkg.dependencies?.["react-native-fbsdk-next"]);

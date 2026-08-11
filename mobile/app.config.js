@@ -138,7 +138,7 @@ module.exports = ({ config }) => {
         scheme: `fb${facebookAppId}`,
         advertiserIDCollectionEnabled: false,
         autoLogAppEventsEnabled: false,
-        isAutoInitEnabled: true,
+        isAutoInitEnabled: false,
       },
     ]);
   }

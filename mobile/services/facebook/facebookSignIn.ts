@@ -19,6 +19,9 @@ export {
  *
  * Requires a custom/dev client rebuild after installing the SDK + Expo plugin.
  * Expo Go does not include the native module.
+ *
+ * Missing Meta credentials must not probe NativeModules or require() the SDK —
+ * that crashes New Architecture / unconfigured facebook-android-sdk after splash.
  */
 
 type FacebookLoginResult = {
@@ -48,6 +51,14 @@ type FacebookSdkModule = {
 
 let configured = false;
 
+function hasPublicFacebookConfig(): boolean {
+  return isFacebookMobileReady({
+    appId: config.facebookAppId,
+    clientToken: config.facebookClientToken,
+    nativeSdkAvailable: true,
+  });
+}
+
 /** Lazy load — soft-fail when SDK is not in this native binary (Expo Go / pre-rebuild). */
 function loadFacebookSdk(): FacebookSdkModule | null {
   try {
@@ -58,17 +69,22 @@ function loadFacebookSdk(): FacebookSdkModule | null {
   }
 }
 
+function readFacebookNativeModule(): unknown {
+  try {
+    return NativeModules.FBLoginManager;
+  } catch {
+    return null;
+  }
+}
+
 export function isFacebookSignInNativeAvailable(): boolean {
-  if (!NativeModules.FBLoginManager) return false;
-  return loadFacebookSdk() != null;
+  return Boolean(readFacebookNativeModule());
 }
 
 export function isFacebookSignInConfigured(): boolean {
-  return isFacebookMobileReady({
-    appId: config.facebookAppId,
-    clientToken: config.facebookClientToken,
-    nativeSdkAvailable: isFacebookSignInNativeAvailable(),
-  });
+  // Never probe native Facebook during boot when Meta credentials are absent.
+  if (!hasPublicFacebookConfig()) return false;
+  return isFacebookSignInNativeAvailable();
 }
 
 function configureFacebookSdk(mod: FacebookSdkModule): void {
@@ -88,14 +104,18 @@ function configureFacebookSdk(mod: FacebookSdkModule): void {
  * for POST /api/auth/oauth { provider: "facebook" }.
  */
 export async function requestFacebookIdToken(): Promise<string> {
-  if (!config.facebookAppId || !config.facebookClientToken) {
+  if (!hasPublicFacebookConfig()) {
+    throw new FacebookSignInUnavailableError("Facebook Sign-In is not configured.");
+  }
+
+  if (!readFacebookNativeModule()) {
     throw new FacebookSignInUnavailableError(
-      "Facebook Sign-In is not configured.",
+      "Facebook Sign-In native module is unavailable. Rebuild the dev client after installing react-native-fbsdk-next.",
     );
   }
 
   const mod = loadFacebookSdk();
-  if (!mod || !NativeModules.FBLoginManager) {
+  if (!mod) {
     throw new FacebookSignInUnavailableError(
       "Facebook Sign-In native module is unavailable. Rebuild the dev client after installing react-native-fbsdk-next.",
     );
