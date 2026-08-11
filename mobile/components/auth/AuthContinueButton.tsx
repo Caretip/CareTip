@@ -13,15 +13,13 @@ import Animated, {
 } from "react-native-reanimated";
 import { LinearGradient } from "expo-linear-gradient";
 import { authBrand } from "@/theme/authBrand";
-import { motion, radius, spacing, touchTarget, typography } from "@/theme";
+import { caretipPrimaryCtaGradient, motion, radius, spacing, touchTarget, typography } from "@/theme";
 import { hapticLight } from "@/utils/haptics";
 
 type AuthContinueButtonProps = PressableProps & {
   label: string;
   loading?: boolean;
 };
-
-const GRADIENT_COLORS = [authBrand.orangeSoft, authBrand.orange, authBrand.orangeDeep] as const;
 
 export function AuthContinueButton({
   label,
@@ -65,9 +63,10 @@ export function AuthContinueButton({
     >
       <Animated.View style={[styles.scaleWrap, animatedStyle]} collapsable={false}>
         <LinearGradient
-          colors={[...GRADIENT_COLORS]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
+          colors={[...caretipPrimaryCtaGradient.colors]}
+          locations={[...caretipPrimaryCtaGradient.locations]}
+          start={caretipPrimaryCtaGradient.start}
+          end={caretipPrimaryCtaGradient.end}
           style={styles.gradient}
         >
           {loading ? (
@@ -88,7 +87,7 @@ const styles = StyleSheet.create({
     marginTop: spacing.sm,
     ...Platform.select({
       ios: {
-        shadowColor: authBrand.orangeDeep,
+        shadowColor: authBrand.orange,
         shadowOpacity: 0.55,
         shadowRadius: 22,
         shadowOffset: { width: 0, height: 12 },

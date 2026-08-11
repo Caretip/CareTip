@@ -4,6 +4,11 @@
  *
  * Brand orange matches web app CTA primary (`src/styles/caretip-brand.css` /
  * `src/lib/caretipBrand.ts` — `#e9781c`).
+ *
+ * Do not invent a mobile-only CareTip orange. Web tokens are the source of truth:
+ *   --caretip-brand-orange-light: #ff9e2d
+ *   --caretip-brand-orange:       #e9781c
+ *   --caretip-brand-orange-hover: #ffb04a
  */
 
 export const brand = {
@@ -12,7 +17,36 @@ export const brand = {
   orangeHover: "#ffb04a",
   orangeSoft: "rgba(233, 120, 28, 0.12)",
   orangeMuted: "rgba(233, 120, 28, 0.22)",
+  /** Tonal shade for dashboard hero/illustration gradients — not the Sign In CTA. */
   orangeDeep: "#d96810",
+} as const;
+
+/**
+ * Web Sign In / primary CTA fill — traced from source, not screenshots.
+ *
+ * Definition: `src/styles/caretip-buttons.css`
+ *   html:not(.dark) .caretip-btn-primary,
+ *   html:not(.dark) .caretip-cta-primary,
+ *   .dark .caretip-btn-primary,
+ *   .dark .caretip-cta-primary
+ *     background: linear-gradient(
+ *       180deg,
+ *       var(--caretip-brand-orange-light) 0%,
+ *       var(--caretip-brand-orange) 100%
+ *     )
+ *
+ * Token values: `src/styles/caretip-brand.css` / `src/lib/caretipBrand.ts`
+ *   light #ff9e2d → base #e9781c
+ * Direction: 180deg = top → bottom. Two stops only. Colors are fully opaque.
+ * Hover (not the resting CTA): 180deg #ffb04a → #e9781c.
+ *
+ * expo-linear-gradient mapping for 180deg: start {x:0.5,y:0} → end {x:0.5,y:1}.
+ */
+export const caretipPrimaryCtaGradient = {
+  colors: [brand.orangeLight, brand.orange] as const,
+  locations: [0, 1] as const,
+  start: { x: 0.5, y: 0 },
+  end: { x: 0.5, y: 1 },
 } as const;
 
 export const lightColors = {

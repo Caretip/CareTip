@@ -1,4 +1,4 @@
-import { colors, darkColors, lightColors, brand } from "./colors";
+import { colors, darkColors, lightColors, brand, caretipPrimaryCtaGradient } from "./colors";
 import { typography, fontFamilies, fontSizes, fontWeights } from "./typography";
 import { spacing, radius, hitSlop, touchTarget, screenPadding } from "./spacing";
 import { shadows } from "./shadows";
@@ -24,7 +24,7 @@ export const theme = {
 
 export type CareTipTheme = typeof theme;
 
-export { colors, darkColors, lightColors, brand };
+export { colors, darkColors, lightColors, brand, caretipPrimaryCtaGradient };
 export { typography, fontFamilies, fontSizes, fontWeights };
 export { spacing, radius, hitSlop, touchTarget, screenPadding };
 export { shadows };

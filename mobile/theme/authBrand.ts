@@ -3,6 +3,9 @@ import { brand } from "./colors";
 /**
  * Auth-screen tokens. Primary orange is the web CareTip CTA token (`brand.orange`),
  * not a second splash orange. Canvas stays dark — orange is accents only.
+ *
+ * Sign In / primary auth CTA fill is `caretipPrimaryCtaGradient` (web 180deg
+ * #ff9e2d → #e9781c), not a three-stop or diagonal mobile interpretation.
  */
 export const authBrand = {
   orange: brand.orange,
