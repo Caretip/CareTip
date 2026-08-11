@@ -5,7 +5,6 @@ import { BlurView } from "expo-blur";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { SocialAuthButtons } from "@/components/auth/SocialAuthButtons";
-import { Button } from "@/components/ui/Button";
 import { useI18n } from "@/hooks/useI18n";
 import { useTheme } from "@/hooks/useTheme";
 import { authBrand } from "@/theme/authBrand";
@@ -91,9 +90,8 @@ export function AuthRegisterSheet({
               variant="surface"
               onPressProvider={onContinueWithProvider}
             />
-            <Button
-              label={t("auth.continueWithEmail")}
-              variant="outline"
+            <Pressable
+              accessibilityRole="button"
               disabled={socialBusy}
               onPress={() => {
                 hapticLight();
@@ -102,10 +100,13 @@ export function AuthRegisterSheet({
                   router.push("/(auth)/register");
                 });
               }}
-            />
-            <Button
-              label={t("auth.haveInviteCta")}
-              variant="ghost"
+              style={({ pressed }) => [styles.choice, pressed || socialBusy ? styles.pressed : null]}
+            >
+              <Text style={styles.choiceTitle}>{t("auth.createBusinessChoiceTitle")}</Text>
+              <Text style={styles.choiceBody}>{t("auth.createBusinessChoiceBody")}</Text>
+            </Pressable>
+            <Pressable
+              accessibilityRole="button"
               disabled={socialBusy}
               onPress={() => {
                 hapticLight();
@@ -114,7 +115,11 @@ export function AuthRegisterSheet({
                   router.push("/(auth)/join");
                 });
               }}
-            />
+              style={({ pressed }) => [styles.choice, pressed || socialBusy ? styles.pressed : null]}
+            >
+              <Text style={styles.choiceTitle}>{t("auth.joinInviteChoiceTitle")}</Text>
+              <Text style={styles.choiceBody}>{t("auth.joinInviteChoiceBody")}</Text>
+            </Pressable>
           </View>
 
           <Pressable
@@ -184,6 +189,28 @@ function createStyles(colors: ColorPalette) {
     actions: {
       gap: spacing.md,
       marginTop: spacing.sm,
+    },
+    choice: {
+      minHeight: touchTarget + 8,
+      borderRadius: radius["2xl"],
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: colors.borderStrong,
+      backgroundColor: colors.card,
+      paddingHorizontal: spacing.xl,
+      paddingVertical: spacing.lg,
+      gap: spacing.xs,
+    },
+    choiceTitle: {
+      ...typography.button,
+      color: colors.foreground,
+      fontWeight: "700",
+      fontSize: 16,
+    },
+    choiceBody: {
+      ...typography.caption,
+      color: colors.mutedForeground,
+      lineHeight: 18,
+      fontWeight: "500",
     },
     signInRow: {
       minHeight: touchTarget,

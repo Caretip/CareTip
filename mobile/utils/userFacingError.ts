@@ -22,6 +22,10 @@ const TECHNICAL_PATTERNS = [
   /\bforbidden\b/i,
   /\bunauthorized\b/i,
   /\bstatus code\b/i,
+  /oauthaccountnotfound/i,
+  /oauth_account_not_registered/i,
+  /google_account_not_registered/i,
+  /oauth_linking_required/i,
   /https?:\/\//i,
   /\/api\//i,
   /\{["']?\w+["']?:/,
@@ -52,6 +56,12 @@ const CODE_TO_I18N: Record<string, string> = {
   SERVICE_UNAVAILABLE: "errors.unavailable",
   INTERNAL_ERROR: "errors.server",
   BILLING_SESSION_MISSING: "billingHandoff.openFailed",
+  OAUTH_ACCOUNT_NOT_REGISTERED: "auth.oauthAccountNotRegistered",
+  GOOGLE_ACCOUNT_NOT_REGISTERED: "auth.oauthAccountNotRegistered",
+  OAUTH_LINKING_REQUIRED: "auth.oauthLinkingRequired",
+  OAUTH_EMAIL_REQUIRED: "auth.oauthEmailRequired",
+  OAUTH_TOKEN_VERIFICATION_FAILED: "auth.oauthTokenInvalid",
+  GOOGLE_TOKEN_VERIFICATION_FAILED: "auth.oauthTokenInvalid",
 };
 
 /** Known English server messages → same keys (when code is missing). */

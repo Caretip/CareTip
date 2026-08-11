@@ -37,6 +37,7 @@ async function main() {
   let passwordUserId: string | null = null;
   let googleUserId: string | null = null;
   let appleUserId: string | null = null;
+  let facebookUserId: string | null = null;
 
   try {
     // --- Password account exists; OAuth login with same email must NOT auto-link ---
@@ -63,6 +64,14 @@ async function main() {
       fail("Expected password user without OAuth link");
     }
 
+    const passwordCount = await prisma.user.count({ where: { email: passwordEmail } });
+    const passwordLinks = await prisma.oAuthAccount.count({ where: { userId: pwUser.id } });
+    if (passwordCount === 1 && passwordLinks === 0) {
+      pass("Password account is not duplicated or auto-linked by an unmatched social subject");
+    } else {
+      fail(`Password account mutated: users=${passwordCount} oauthRows=${passwordLinks}`);
+    }
+
     // --- Create Google-linked user via OAuthAccount (no legacy columns) ---
     const googleEmail = `${tag}-google@caretip-test.local`;
     const googleSubject = `${tag}-google-sub`;
@@ -87,6 +96,31 @@ async function main() {
       pass("Google user resolved by OAuthAccount (provider, subject)");
     } else {
       fail("Google OAuthAccount lookup failed");
+    }
+
+    const gReloaded = await prisma.user.findUnique({
+      where: { id: googleUserId },
+      include: { business: true },
+    });
+    const loginAgain = await prisma.oAuthAccount.findUnique({
+      where: { provider_subject: { provider: "google", subject: googleSubject } },
+    });
+    if (
+      loginAgain?.userId === googleUserId &&
+      gReloaded?.role === "MANAGER" &&
+      gReloaded.business?.id &&
+      gReloaded.business.userId === googleUserId
+    ) {
+      pass("Signup→login Google reuse preserves user, MANAGER role, and business");
+    } else {
+      fail("Google signup→login reuse failed to preserve tenant/role");
+    }
+
+    const pwBusiness = await prisma.business.findUnique({ where: { userId: pwUser.id } });
+    if (gReloaded?.business?.id && pwBusiness?.id && gReloaded.business.id !== pwBusiness.id) {
+      pass("Google OAuth login cannot cross into another tenant's business");
+    } else {
+      fail("Tenant isolation check failed for Google vs password businesses");
     }
 
     if (gUser.oauthProvider == null && gUser.oauthSubject == null) {
@@ -163,10 +197,61 @@ async function main() {
     const appleHit = await prisma.oAuthAccount.findUnique({
       where: { provider_subject: { provider: "apple", subject: appleSubject } },
     });
-    if (appleHit?.userId === appleUserId) {
-      pass("Apple user identified by provider+subject (relay email OK)");
+    const aReloaded = await prisma.user.findUnique({
+      where: { id: appleUserId },
+      include: { business: true },
+    });
+    if (
+      appleHit?.userId === appleUserId &&
+      aReloaded?.role === "MANAGER" &&
+      aReloaded.business?.userId === appleUserId
+    ) {
+      pass("Signup→login Apple reuse preserves user, MANAGER role, and business");
     } else {
-      fail("Apple subject lookup failed");
+      fail("Apple signup→login reuse failed to preserve tenant/role");
+    }
+
+    // --- Facebook existing social account → login reuses same user ---
+    const facebookEmail = `${tag}-facebook@caretip-test.local`;
+    const facebookSubject = `${tag}-facebook-sub`;
+    if (!pwBusiness?.id) {
+      fail("Password business missing; cannot fixture Facebook employee");
+    } else {
+      const fUser = await prisma.user.create({
+        data: {
+          email: facebookEmail,
+          passwordHash: null,
+          role: "EMPLOYEE",
+          emailVerified: true,
+          oauthAccounts: {
+            create: { provider: "facebook", subject: facebookSubject, emailAtLink: facebookEmail },
+          },
+          employee: {
+            create: {
+              businessId: pwBusiness.id,
+              name: "FB Staff",
+              jobTitle: "Server",
+            },
+          },
+        },
+      });
+      facebookUserId = fUser.id;
+      const fbHit = await prisma.oAuthAccount.findUnique({
+        where: { provider_subject: { provider: "facebook", subject: facebookSubject } },
+      });
+      const fbReloaded = await prisma.user.findUnique({
+        where: { id: facebookUserId },
+        include: { employee: true },
+      });
+      if (
+        fbHit?.userId === facebookUserId &&
+        fbReloaded?.role === "EMPLOYEE" &&
+        fbReloaded.employee?.businessId === pwBusiness.id
+      ) {
+        pass("Existing Facebook account login reuses user, EMPLOYEE role, and tenant");
+      } else {
+        fail("Facebook existing-account login reuse failed");
+      }
     }
 
     // --- Facebook missing email: service error class ---
@@ -240,9 +325,10 @@ async function main() {
     }
     await prisma.user.delete({ where: { id: admin.id } }).catch(() => {});
   } finally {
-    await cleanupUser(passwordUserId);
-    await cleanupUser(googleUserId);
+    await cleanupUser(facebookUserId);
     await cleanupUser(appleUserId);
+    await cleanupUser(googleUserId);
+    await cleanupUser(passwordUserId);
     await prisma.$disconnect();
   }
 

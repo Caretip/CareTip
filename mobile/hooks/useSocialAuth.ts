@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Platform } from "react-native";
 import { useRouter } from "expo-router";
+import { socialProvidersForPlatform as providersForOs } from "@/utils/socialAuthUiPolicy";
 import { useAuth } from "@/hooks/useAuth";
 import { useI18n } from "@/hooks/useI18n";
 import {
@@ -52,10 +53,7 @@ type UseSocialAuthOptions = {
 
 /** Platform button order: iOS Apple → Google → Facebook; Android Google → Facebook → Apple. */
 export function socialProvidersForPlatform(): OAuthProvider[] {
-  if (Platform.OS === "ios") {
-    return ["apple", "google", "facebook"];
-  }
-  return ["google", "facebook", "apple"];
+  return providersForOs(Platform.OS === "ios" ? "ios" : "android");
 }
 
 export function useSocialAuth(options?: UseSocialAuthOptions) {
@@ -140,17 +138,17 @@ export function useSocialAuth(options?: UseSocialAuthOptions) {
 
         await navigateAfterAuth(router, result.user);
       } catch (error) {
-        const mapped =
+        const nativeMapped =
           provider === "google"
-            ? normalizeApiError(mapGoogleNativeError(error))
+            ? mapGoogleNativeError(error)
             : provider === "apple"
-              ? normalizeApiError(mapAppleNativeError(error))
-              : normalizeApiError(mapFacebookNativeError(error));
+              ? mapAppleNativeError(error)
+              : mapFacebookNativeError(error);
 
-        if (isOAuthAccountNotRegistered(mapped)) {
+        if (isOAuthAccountNotRegistered(normalizeApiError(nativeMapped))) {
           options?.onAccountNotRegistered?.();
         }
-        showErrorToast(resolveOAuthErrorMessage(mapped, t, provider));
+        showErrorToast(resolveOAuthErrorMessage(nativeMapped, t, provider));
       } finally {
         setLoadingProvider(null);
       }

@@ -1,4 +1,4 @@
-import type { NormalizedApiError } from "@/types/api";
+import { normalizeApiError, type NormalizedApiError } from "@/types/api";
 import type { OAuthProvider } from "@/types/auth";
 import {
   GOOGLE_ACCOUNT_NOT_REGISTERED,
@@ -65,17 +65,13 @@ export function resolveOAuthErrorMessage(
     return t("auth.facebookNotConfigured");
   }
 
-  const normalized =
-    "isNetworkError" in error
-      ? error
-      : ({
-          message: error.message,
-          code: undefined,
-          isNetworkError: false,
-          isTimeout: false,
-          isUnauthorized: false,
-          status: null,
-        } satisfies NormalizedApiError);
+  const normalized: NormalizedApiError =
+    typeof error === "object" &&
+    error !== null &&
+    "isNetworkError" in error &&
+    "status" in error
+      ? (error as NormalizedApiError)
+      : normalizeApiError(error);
 
   if (normalized.isNetworkError || normalized.isTimeout) {
     return t("errors.offline");

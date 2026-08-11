@@ -95,6 +95,8 @@ module.exports = ({ config }) => {
     }
     if (plugin === "expo-apple-authentication") return false;
     if (Array.isArray(plugin) && plugin[0] === "expo-apple-authentication") return false;
+    if (plugin === "react-native-fbsdk-next") return false;
+    if (Array.isArray(plugin) && plugin[0] === "react-native-fbsdk-next") return false;
     if (plugin === "expo-notifications") return false;
     if (Array.isArray(plugin) && plugin[0] === "expo-notifications") return false;
     return true;
@@ -123,6 +125,23 @@ module.exports = ({ config }) => {
 
   // Sign in with Apple capability (iOS). Safe no-op on Android / web prebuild.
   plugins.push("expo-apple-authentication");
+
+  const facebookAppId = (process.env.EXPO_PUBLIC_FACEBOOK_APP_ID ?? "").trim();
+  const facebookClientToken = (process.env.EXPO_PUBLIC_FACEBOOK_CLIENT_TOKEN ?? "").trim();
+  if (facebookAppId && facebookClientToken) {
+    plugins.push([
+      "react-native-fbsdk-next",
+      {
+        appID: facebookAppId,
+        clientToken: facebookClientToken,
+        displayName: "CareTip",
+        scheme: `fb${facebookAppId}`,
+        advertiserIDCollectionEnabled: false,
+        autoLogAppEventsEnabled: false,
+        isAutoInitEnabled: true,
+      },
+    ]);
+  }
 
   plugins.push([
     "expo-notifications",

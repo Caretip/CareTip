@@ -58,7 +58,6 @@ export function LoginScreen() {
     runSocialAuth,
     loadingProvider,
     socialBusy,
-    anySocialConfigured,
     configuredProviders,
   } = useSocialAuth({
     onAccountNotRegistered: () => setRegisterOpen(true),
@@ -123,7 +122,7 @@ export function LoginScreen() {
 
   const bootstrapping = !isHydrated || status === "bootstrapping";
   const authBusy = isSubmitting || socialBusy;
-  const socialBlockOffset = anySocialConfigured ? 3 : 0;
+  const socialBlockOffset = 3;
 
   const handleSocialPress = (provider: OAuthProvider) => {
     void runSocialAuth(provider, { isLogin: true });
@@ -131,7 +130,7 @@ export function LoginScreen() {
 
   return (
     <>
-      <AuthExperienceShell onRegisterPress={() => setRegisterOpen(true)}>
+      <AuthExperienceShell>
         <View style={authCardStyles.formBlock}>
           <AuthEntrance index={0}>
             <AuthScreenHeader
@@ -150,25 +149,21 @@ export function LoginScreen() {
             </AuthScreenHeader>
           </AuthEntrance>
 
-          {anySocialConfigured ? (
-            <>
-              <AuthEntrance index={1}>
-                <SocialAuthButtons
-                  providers={configuredProviders}
-                  loadingProvider={loadingProvider}
-                  disabled={authBusy || bootstrapping}
-                  onPressProvider={handleSocialPress}
-                />
-              </AuthEntrance>
-              <AuthEntrance index={2}>
-                <View style={authFloatingDivider.row}>
-                  <View style={authFloatingDivider.line} />
-                  <Text style={authFloatingDivider.label}>{t("auth.orContinueWith")}</Text>
-                  <View style={authFloatingDivider.line} />
-                </View>
-              </AuthEntrance>
-            </>
-          ) : null}
+          <AuthEntrance index={1}>
+            <SocialAuthButtons
+              providers={configuredProviders}
+              loadingProvider={loadingProvider}
+              disabled={authBusy || bootstrapping}
+              onPressProvider={handleSocialPress}
+            />
+          </AuthEntrance>
+          <AuthEntrance index={2}>
+            <View style={authFloatingDivider.row}>
+              <View style={authFloatingDivider.line} />
+              <Text style={authFloatingDivider.label}>{t("auth.orContinueWith")}</Text>
+              <View style={authFloatingDivider.line} />
+            </View>
+          </AuthEntrance>
 
           <AuthEntrance index={socialBlockOffset + 1}>
             <View style={authCardStyles.fields}>
@@ -269,6 +264,22 @@ export function LoginScreen() {
               disabled={bootstrapping || socialBusy}
             />
           </AuthEntrance>
+
+          <AuthEntrance index={socialBlockOffset + 6}>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={`${t("auth.dontHaveAccount")} ${t("auth.signUpLink")}`}
+              disabled={authBusy || bootstrapping}
+              onPress={() => {
+                hapticLight();
+                setRegisterOpen(true);
+              }}
+              style={({ pressed }) => [styles.signUpRow, pressed ? authCardStyles.pressed : null]}
+            >
+              <Text style={styles.signUpPrompt}>{t("auth.dontHaveAccount")} </Text>
+              <Text style={styles.signUpLink}>{t("auth.signUpLink")}</Text>
+            </Pressable>
+          </AuthEntrance>
         </View>
       </AuthExperienceShell>
 
@@ -306,5 +317,23 @@ const styles = StyleSheet.create({
     color: authBrand.orangeMuted,
     fontWeight: "600",
     textAlign: "center",
+  },
+  signUpRow: {
+    minHeight: touchTarget,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: spacing.sm,
+    flexWrap: "wrap",
+  },
+  signUpPrompt: {
+    ...typography.body,
+    color: authBrand.heroSubtitle,
+    fontWeight: "500",
+  },
+  signUpLink: {
+    ...typography.body,
+    color: authBrand.orange,
+    fontWeight: "700",
   },
 });

@@ -1,3 +1,6 @@
+import { NativeModules, Platform } from "react-native";
+import { config } from "@/constants/config";
+import { isFacebookMobileReady } from "@/utils/facebookAuthPolicy";
 import {
   FacebookSignInCancelledError,
   FacebookSignInUnavailableError,
@@ -11,30 +14,41 @@ export {
 /**
  * Facebook Login via react-native-fbsdk-next.
  *
- * Soft-fail stub until the SDK is installed and configured in EAS:
- * - Add `react-native-fbsdk-next` + Expo config plugin
- * - Set Facebook App ID / Client Token in app.config / Info.plist / AndroidManifest
- * - Rebuild a custom/dev client (not available in Expo Go)
+ * Public config only: EXPO_PUBLIC_FACEBOOK_APP_ID + EXPO_PUBLIC_FACEBOOK_CLIENT_TOKEN.
+ * FACEBOOK_APP_SECRET stays on the API (Graph access-token debug_token).
  *
- * When the native module is present, this will request a limited-login /
- * identity token (or access token) for POST /api/auth/oauth { provider: "facebook" }.
+ * Requires a custom/dev client rebuild after installing the SDK + Expo plugin.
+ * Expo Go does not include the native module.
  */
 
+type FacebookLoginResult = {
+  isCancelled?: boolean;
+};
+
 type FacebookSdkModule = {
+  Settings?: {
+    setAppID?: (appId: string) => void;
+    setClientToken?: (token: string) => void;
+    initializeSDK?: () => void;
+  };
   LoginManager: {
-    logInWithPermissions: (permissions: string[]) => Promise<{ isCancelled?: boolean }>;
+    logInWithPermissions: (
+      permissions: string[],
+      loginTracking?: "limited" | "enabled",
+    ) => Promise<FacebookLoginResult>;
     logOut: () => void;
   };
   AccessToken: {
     getCurrentAccessToken: () => Promise<{ accessToken: string } | null>;
   };
-  /** Optional Limited Login JWT when configured. */
   AuthenticationToken?: {
     getAuthenticationTokenIOS: () => Promise<{ authenticationToken: string } | null>;
   };
 };
 
-/** Lazy load — soft-fail when SDK is not installed. */
+let configured = false;
+
+/** Lazy load — soft-fail when SDK is not in this native binary (Expo Go / pre-rebuild). */
 function loadFacebookSdk(): FacebookSdkModule | null {
   try {
     // eslint-disable-next-line @typescript-eslint/no-require-imports
@@ -45,34 +59,58 @@ function loadFacebookSdk(): FacebookSdkModule | null {
 }
 
 export function isFacebookSignInNativeAvailable(): boolean {
+  if (!NativeModules.FBLoginManager) return false;
   return loadFacebookSdk() != null;
 }
 
-/** Facebook is only considered configured once the native SDK is present in the build. */
 export function isFacebookSignInConfigured(): boolean {
-  return isFacebookSignInNativeAvailable();
+  return isFacebookMobileReady({
+    appId: config.facebookAppId,
+    clientToken: config.facebookClientToken,
+    nativeSdkAvailable: isFacebookSignInNativeAvailable(),
+  });
+}
+
+function configureFacebookSdk(mod: FacebookSdkModule): void {
+  if (configured) return;
+  const appId = config.facebookAppId;
+  if (!appId) return;
+  mod.Settings?.setAppID?.(appId);
+  if (config.facebookClientToken) {
+    mod.Settings?.setClientToken?.(config.facebookClientToken);
+  }
+  mod.Settings?.initializeSDK?.();
+  configured = true;
 }
 
 /**
- * Request a Facebook identity/access token for CareTip OAuth.
- * Throws unavailable until react-native-fbsdk-next is installed + EAS-configured.
+ * Native Facebook account picker → Limited Login JWT or Graph access token
+ * for POST /api/auth/oauth { provider: "facebook" }.
  */
 export async function requestFacebookIdToken(): Promise<string> {
-  const mod = loadFacebookSdk();
-  if (!mod) {
+  if (!config.facebookAppId || !config.facebookClientToken) {
     throw new FacebookSignInUnavailableError(
-      "Facebook Sign-In is not configured. Install react-native-fbsdk-next and configure the Facebook App ID in EAS, then rebuild.",
+      "Facebook Sign-In is not configured.",
     );
   }
 
+  const mod = loadFacebookSdk();
+  if (!mod || !NativeModules.FBLoginManager) {
+    throw new FacebookSignInUnavailableError(
+      "Facebook Sign-In native module is unavailable. Rebuild the dev client after installing react-native-fbsdk-next.",
+    );
+  }
+
+  configureFacebookSdk(mod);
+
   try {
-    const result = await mod.LoginManager.logInWithPermissions(["public_profile", "email"]);
+    const tracking = Platform.OS === "ios" ? "limited" : "enabled";
+    const result = await mod.LoginManager.logInWithPermissions(["public_profile", "email"], tracking);
     if (result.isCancelled) {
       throw new FacebookSignInCancelledError();
     }
 
-    // Prefer Limited Login JWT on iOS when available (backend verifies as idToken).
-    if (mod.AuthenticationToken?.getAuthenticationTokenIOS) {
+    if (Platform.OS === "ios" && mod.AuthenticationToken?.getAuthenticationTokenIOS) {
       const auth = await mod.AuthenticationToken.getAuthenticationTokenIOS();
       if (auth?.authenticationToken) {
         return auth.authenticationToken;
@@ -92,5 +130,11 @@ export async function requestFacebookIdToken(): Promise<string> {
 export function mapFacebookNativeError(error: unknown): Error {
   if (error instanceof FacebookSignInCancelledError) return error;
   if (error instanceof FacebookSignInUnavailableError) return error;
+
+  const message = error instanceof Error ? error.message : String(error ?? "");
+  if (/cancel/i.test(message)) {
+    return new FacebookSignInCancelledError();
+  }
+
   return error instanceof Error ? error : new Error("Facebook sign-in failed.");
 }

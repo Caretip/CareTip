@@ -15,9 +15,11 @@ import Animated, {
   withTiming,
 } from "react-native-reanimated";
 import { Ionicons } from "@expo/vector-icons";
+import { useI18n } from "@/hooks/useI18n";
 import { authBrand } from "@/theme/authBrand";
 import { notifyIdleTrustedActivity } from "@/lib/idleSession/idleSessionActivity";
-import { motion, radius, spacing, touchTarget, typography } from "@/theme";
+import { hapticSelection } from "@/utils/haptics";
+import { hitSlop, motion, radius, spacing, touchTarget, typography } from "@/theme";
 
 type AuthFieldProps = TextInputProps & {
   label: string;
@@ -37,15 +39,20 @@ export const AuthField = forwardRef<TextInput, AuthFieldProps>(function AuthFiel
     onBlur,
     onChangeText,
     editable = true,
+    secureTextEntry = false,
     style,
     ...rest
   },
   ref,
 ) {
+  const { t } = useI18n();
   const inputRef = useRef<TextInput>(null);
   const [focused, setFocused] = useState(false);
+  const [passwordVisible, setPasswordVisible] = useState(false);
   const focusProgress = useSharedValue(0);
   const errorColor = authBrand.fieldError;
+  const isPasswordField = Boolean(secureTextEntry);
+  const hidePassword = isPasswordField && !passwordVisible;
 
   useImperativeHandle(ref, () => inputRef.current as TextInput);
 
@@ -118,7 +125,32 @@ export const AuthField = forwardRef<TextInput, AuthFieldProps>(function AuthFiel
                 onChangeText?.(text);
               }}
               {...rest}
+              secureTextEntry={hidePassword}
             />
+            {isPasswordField ? (
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel={
+                  passwordVisible ? t("auth.hidePassword") : t("auth.showPassword")
+                }
+                hitSlop={hitSlop.sm}
+                disabled={editable === false}
+                onPress={() => {
+                  hapticSelection();
+                  setPasswordVisible((visible) => !visible);
+                }}
+                style={({ pressed }) => [
+                  styles.revealSlot,
+                  pressed ? styles.revealPressed : null,
+                ]}
+              >
+                <Ionicons
+                  name={passwordVisible ? "eye-off-outline" : "eye-outline"}
+                  size={20}
+                  color={focused ? authBrand.orangeMuted : authBrand.fieldIcon}
+                />
+              </Pressable>
+            ) : null}
           </View>
         </AnimatedView>
       </Pressable>
@@ -183,6 +215,16 @@ const styles = StyleSheet.create({
           textAlignVertical: "center" as const,
         }
       : null),
+  },
+  revealSlot: {
+    width: 36,
+    height: touchTarget,
+    alignItems: "center",
+    justifyContent: "center",
+    marginRight: -spacing.sm,
+  },
+  revealPressed: {
+    opacity: 0.72,
   },
   pressed: {
     opacity: 0.96,

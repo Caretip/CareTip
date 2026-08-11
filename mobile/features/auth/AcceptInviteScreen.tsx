@@ -51,7 +51,6 @@ export function AcceptInviteScreen() {
   const {
     runSocialAuth,
     configuredProviders,
-    anySocialConfigured,
     loadingProvider,
     socialBusy,
   } = useSocialAuth();
@@ -153,21 +152,19 @@ export function AcceptInviteScreen() {
           )}
         />
 
-        {anySocialConfigured ? (
-          <View style={styles.socialBlock}>
-            <SocialAuthButtons
-              providers={configuredProviders}
-              loadingProvider={loadingProvider}
-              disabled={busy}
-              onPressProvider={onSocial}
-            />
-            <View style={authFloatingDivider.row}>
-              <View style={authFloatingDivider.line} />
-              <Text style={authFloatingDivider.label}>{t("auth.orContinueWith")}</Text>
-              <View style={authFloatingDivider.line} />
-            </View>
+        <View style={styles.socialBlock}>
+          <SocialAuthButtons
+            providers={configuredProviders}
+            loadingProvider={loadingProvider}
+            disabled={busy}
+            onPressProvider={onSocial}
+          />
+          <View style={authFloatingDivider.row}>
+            <View style={authFloatingDivider.line} />
+            <Text style={authFloatingDivider.label}>{t("auth.orContinueWith")}</Text>
+            <View style={authFloatingDivider.line} />
           </View>
-        ) : null}
+        </View>
 
         {!showPasswordForm ? (
           <AuthContinueButton

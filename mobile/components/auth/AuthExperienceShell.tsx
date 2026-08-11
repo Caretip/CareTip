@@ -15,7 +15,6 @@ import Animated, {
   withTiming,
 } from "react-native-reanimated";
 import { StatusBar } from "expo-status-bar";
-import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { AuthFooterSheet } from "@/components/auth/AuthFooterSheet";
 import { AuthHeroLogo } from "@/components/auth/AuthHeroLogo";
@@ -28,8 +27,8 @@ import { spacing, touchTarget, typography } from "@/theme";
 
 type AuthExperienceShellProps = {
   children: ReactNode;
+  /** Explore CareTip footer pill — login only. Signup shortcuts live on the signup sheet. */
   showSecondaryActions?: boolean;
-  onRegisterPress?: () => void;
 };
 
 const TABLET_MIN_WIDTH = 768;
@@ -37,10 +36,8 @@ const TABLET_MIN_WIDTH = 768;
 export function AuthExperienceShell({
   children,
   showSecondaryActions = true,
-  onRegisterPress,
 }: AuthExperienceShellProps) {
   const { t } = useI18n();
-  const router = useRouter();
   const { width } = useWindowDimensions();
   const isTablet = width >= TABLET_MIN_WIDTH;
   const [footerOpen, setFooterOpen] = useState(false);
@@ -100,31 +97,6 @@ export function AuthExperienceShell({
         footer={
           showSecondaryActions ? (
             <View style={styles.footer}>
-              <View style={styles.secondaryColumn}>
-                <Pressable
-                  accessibilityRole="button"
-                  onPress={() =>
-                    onRegisterPress ? onRegisterPress() : router.push("/(auth)/register")
-                  }
-                  style={({ pressed }) => [
-                    styles.secondaryAction,
-                    pressed ? styles.pressed : null,
-                  ]}
-                >
-                  <Text style={styles.secondaryLabel}>{t("auth.register")}</Text>
-                </Pressable>
-                <Pressable
-                  accessibilityRole="button"
-                  onPress={() => router.push("/(auth)/join")}
-                  style={({ pressed }) => [
-                    styles.secondaryAction,
-                    pressed ? styles.pressed : null,
-                  ]}
-                >
-                  <Text style={styles.secondaryLabel}>{t("auth.enterInviteCode")}</Text>
-                </Pressable>
-              </View>
-
               <Pressable
                 accessibilityRole="button"
                 accessibilityLabel={t("auth.footerMenuTitle")}
@@ -187,30 +159,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingTop: spacing.md,
     width: "100%",
-  },
-  secondaryColumn: {
-    alignItems: "center",
-    justifyContent: "center",
-    gap: spacing.sm,
-    width: "100%",
-    paddingHorizontal: spacing.lg,
-  },
-  secondaryAction: {
-    minHeight: touchTarget,
-    justifyContent: "center",
-    alignItems: "center",
-    paddingHorizontal: spacing.md,
-    maxWidth: "100%",
-  },
-  secondaryLabel: {
-    ...typography.button,
-    color: "rgba(255,255,255,0.92)",
-    fontWeight: "600",
-    fontSize: 15,
-    letterSpacing: 0.2,
-    textAlign: "center",
-    textDecorationLine: "underline",
-    textDecorationColor: "rgba(255,255,255,0.28)",
   },
   pillOuter: {
     borderRadius: 999,

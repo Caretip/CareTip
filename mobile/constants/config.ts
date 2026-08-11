@@ -79,4 +79,11 @@ export const config = {
   googleWebClientId: (process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID ?? "").trim() || undefined,
   /** iOS native client ID (optional; falls back to GoogleService-Info.plist when set). */
   googleIosClientId: (process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID ?? "").trim() || undefined,
+  /** Facebook Login App ID — public; same as web VITE_FACEBOOK_APP_ID / backend FACEBOOK_APP_ID. */
+  facebookAppId: (process.env.EXPO_PUBLIC_FACEBOOK_APP_ID ?? "").trim() || undefined,
+  /**
+   * Facebook Client Token — public (Meta dashboard → Settings → Advanced).
+   * Not FACEBOOK_APP_SECRET. The App Secret must never ship in the mobile bundle.
+   */
+  facebookClientToken: (process.env.EXPO_PUBLIC_FACEBOOK_CLIENT_TOKEN ?? "").trim() || undefined,
 } as const;

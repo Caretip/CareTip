@@ -77,6 +77,8 @@ export type MobileMessages = {
     password: string;
     emailPlaceholder: string;
     passwordPlaceholder: string;
+    showPassword: string;
+    hidePassword: string;
     confirmPasswordPlaceholder: string;
     inviteCodePlaceholder: string;
     fullNamePlaceholder: string;
@@ -107,6 +109,12 @@ export type MobileMessages = {
     orContinueWith: string;
     createAccountTitle: string;
     createAccountSubtitle: string;
+    dontHaveAccount: string;
+    signUpLink: string;
+    createBusinessChoiceTitle: string;
+    createBusinessChoiceBody: string;
+    joinInviteChoiceTitle: string;
+    joinInviteChoiceBody: string;
     alreadyHaveAccount: string;
     signInLink: string;
     googleSignInFailed: string;
