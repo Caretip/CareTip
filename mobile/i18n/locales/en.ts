@@ -625,7 +625,8 @@ export const en: MobileMessages = {
       privacyDataHint: "Download a copy of your data, or request removal of your staff access. Tip records for the venue may be retained where required.",
       downloadData: "Download my data",
       exportDialogTitle: "CareTip data export",
-      exportStarted: "Export ready to share",
+      exportStarted:
+        "Your data export is ready. You can now save or share the PDF.",
       exportError: "We couldn't export your data. Please try again.",
       deleteAccount: "Delete account",
       deleteAccountTitle: "Delete your account?",

@@ -640,7 +640,8 @@ export const de: MobileMessages = {
         "Laden Sie eine Kopie Ihrer Daten herunter oder beantragen Sie die Entfernung Ihres Mitarbeiterzugangs. Trinkgeldaufzeichnungen des Betriebs können, soweit erforderlich, erhalten bleiben.",
       downloadData: "Meine Daten herunterladen",
       exportDialogTitle: "CareTip-Datenexport",
-      exportStarted: "Export zum Teilen bereit",
+      exportStarted:
+        "Ihr Datenexport ist bereit. Sie können die PDF jetzt speichern oder teilen.",
       exportError: "Datenexport nicht möglich. Bitte erneut versuchen.",
       deleteAccount: "Konto löschen",
       deleteAccountTitle: "Konto löschen?",

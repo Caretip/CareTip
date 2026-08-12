@@ -13,7 +13,7 @@ import type { ColorPalette } from "@/theme/colors";
 import { typography } from "@/theme";
 
 export function EmployeePrivacyDataSettingsScreen() {
-  const { t } = useI18n();
+  const { t, language } = useI18n();
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const { signOut } = useAuth();
@@ -25,6 +25,7 @@ export function EmployeePrivacyDataSettingsScreen() {
     try {
       const outcome = await downloadEmployeeDataExport({
         dialogTitle: t("settings.menu.exportDialogTitle"),
+        locale: language === "de" ? "de" : "en",
       });
       if (outcome === "shared") {
         showSuccessToast(t("settings.menu.exportStarted"));

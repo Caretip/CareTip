@@ -4,15 +4,22 @@
  */
 
 const SHARE_TEMP_PREFIX = "caretip-share-";
-const EXPORT_FILE_NAME = "caretip-data-export.json";
+const LEGACY_EXPORT_JSON_NAME = "caretip-data-export.json";
+const EXPORT_PDF_PREFIX = "caretip-my-data-";
 
 export function shareTempFileName(suffix: string): string {
   const safe = suffix.replace(/[^a-zA-Z0-9._-]/g, "_").slice(0, 80);
   return `${SHARE_TEMP_PREFIX}${Date.now()}-${safe}`;
 }
 
+/** @deprecated Prefer dated PDF exports via dataExportPdfFileName. */
 export function dataExportFileName(): string {
-  return EXPORT_FILE_NAME;
+  return LEGACY_EXPORT_JSON_NAME;
+}
+
+export function isCareTipDataExportCacheFile(name: string): boolean {
+  if (name === LEGACY_EXPORT_JSON_NAME) return true;
+  return name.startsWith(EXPORT_PDF_PREFIX) && name.endsWith(".pdf");
 }
 
 export async function resolveCacheDirectory(): Promise<string> {
@@ -42,7 +49,7 @@ export async function writeCacheBase64File(fileName: string, base64: string): Pr
   return path;
 }
 
-/** Delete CareTip share temp files (and optionally the reusable export JSON). */
+/** Delete CareTip share temp files (and optionally reusable data-export cache files). */
 export async function cleanupShareTempFiles(options?: {
   includeExport?: boolean;
 }): Promise<void> {
@@ -54,7 +61,7 @@ export async function cleanupShareTempFiles(options?: {
     const entries = await FileSystem.readDirectoryAsync(dir);
     const targets = entries.filter((name) => {
       if (name.startsWith(SHARE_TEMP_PREFIX)) return true;
-      if (options?.includeExport && name === EXPORT_FILE_NAME) return true;
+      if (options?.includeExport && isCareTipDataExportCacheFile(name)) return true;
       return false;
     });
     await Promise.all(

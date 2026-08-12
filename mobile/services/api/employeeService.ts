@@ -1,6 +1,8 @@
 import { apiClient } from "@/services/api/client";
 import { API_ENDPOINTS } from "@/constants/endpoints";
-import { shareJsonExport, type ShareOutcome } from "@/services/share";
+import { writeEmployeeDataExportPdf } from "@/services/export/writeEmployeeDataExportPdf";
+import type { EmployeeDataExportPdfLocale } from "@/services/export/buildEmployeeDataExportHtml";
+import { sharePdf, cleanupShareTempFiles, type ShareOutcome } from "@/services/share";
 import type { EmployeeProfile, EmployeeTimeframe, EmployeeTipsStats } from "@/types/employee";
 
 export async function fetchEmployeeProfile(): Promise<EmployeeProfile> {
@@ -19,14 +21,29 @@ export async function fetchEmployeeTips(
   return data;
 }
 
+/**
+ * Employee "Download my data":
+ * 1) Fetch authorized JSON from GET /api/employees/me/export (unchanged backend contract)
+ * 2) Render a human-readable PDF on-device
+ * 3) Open the native share sheet (save/share) — does not auto-save without user action
+ */
 export async function downloadEmployeeDataExport(options?: {
   dialogTitle?: string;
+  locale?: EmployeeDataExportPdfLocale;
 }): Promise<ShareOutcome> {
   const { data } = await apiClient.get<unknown>(API_ENDPOINTS.employees.meExport);
-  const outcome = await shareJsonExport({
+  await cleanupShareTempFiles({ includeExport: true });
+  const { fileUri } = await writeEmployeeDataExportPdf({
     data,
-    dialogTitle: options?.dialogTitle ?? "CareTip data export",
+    locale: options?.locale,
   });
+
+  const outcome = await sharePdf({
+    fileUri,
+    dialogTitle: options?.dialogTitle ?? "CareTip data export",
+    deleteAfterShare: false,
+  });
+
   if (outcome === "failed" || outcome === "unavailable") {
     throw new Error("SHARE_EXPORT_UNAVAILABLE");
   }
