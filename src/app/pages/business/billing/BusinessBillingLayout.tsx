@@ -7,6 +7,7 @@ import "@/styles/caretip-pricing-premium.css";
 import { trackGoogleAdsConversion } from "../../../lib/googleAdsConversion";
 import { processBillingCheckoutSuccess } from "../../../lib/subscriptionActivationNotification";
 import { BusinessModuleWorkspaceHeader } from "../../../components/business/BusinessModuleWorkspaceHeader";
+import { MobileBillingHandoffBanner } from "../../../components/business/billing/MobileBillingHandoffBanner";
 import { businessUi } from "@/app/components/business/businessDashboardUi";
 
 export function BusinessBillingLayout() {
@@ -41,6 +42,7 @@ export function BusinessBillingLayout() {
           title={t("business.settings.panels.billingTitle")}
           subtitle={t("business.billing.moduleSubtitle")}
         />
+        <MobileBillingHandoffBanner />
         <Outlet />
       </div>
     </div>

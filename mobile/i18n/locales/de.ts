@@ -751,13 +751,13 @@ export const de: MobileMessages = {
   billingHandoff: {
     confirmTitle: "Weiter auf CareTip Web",
     confirmBody:
-      "Sie verlassen die CareTip-App vorübergehend, um Ihr Abonnement sicher auf CareTip Web abzuschließen. Nach der Zahlung kehren Sie hierher zurück, um Ihren aktualisierten Plan zu sehen.",
+      "Sie werden zu CareTip Web weitergeleitet, um das Abonnement für denselben Workspace zu verwalten. Sie können dort abschließen, weiter im Web arbeiten oder zur mobilen App zurückkehren — wir aktualisieren Ihren Plan, wenn Sie zurückkommen.",
     cancel: "Abbrechen",
     continue: "Weiter zu CareTip Web",
-    updatingPlan: "Ihr Abonnement wird bestätigt…",
-    planUpdated: "Ihr CareTip-Plan ist aktuell.",
+    updatingPlan: "Ihr Workspace wird aktualisiert…",
+    planUpdated: "Ihr CareTip-Workspace ist aktuell.",
     planUnchangedHint:
-      "Noch keine Planänderung bestätigt. Wenn Sie bezahlt haben, warten Sie kurz und öffnen Sie „Plan verwalten“ erneut — oder ziehen Sie zum Aktualisieren.",
+      "Noch keine Planänderung bestätigt. Wenn Sie im Web bezahlt haben, warten Sie kurz und öffnen Sie „Plan verwalten“ erneut — oder ziehen Sie zum Aktualisieren.",
     syncFailed:
       "Wir konnten Ihren Plan nicht aktualisieren. Prüfen Sie die Verbindung und versuchen Sie „Plan verwalten“ erneut.",
     openFailed: "Abrechnung konnte nicht geöffnet werden. Bitte Verbindung prüfen und erneut versuchen.",

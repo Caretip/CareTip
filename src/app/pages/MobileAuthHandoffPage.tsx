@@ -4,6 +4,7 @@ import { consumeMobileWebHandoff } from "@/app/lib/api";
 import { useAuth } from "@/app/hooks/useAuth";
 import { logClientError } from "@/app/lib/clientLog";
 import { AuthBootstrapShell } from "@/app/components/auth/AuthBootstrapShell";
+import { markMobileBillingHandoffBanner } from "@/app/components/business/billing/MobileBillingHandoffBanner";
 
 const ALLOWED_DESTINATIONS = new Set([
   "/dashboard/billing/subscription",
@@ -45,6 +46,7 @@ export function MobileAuthHandoffPage() {
       try {
         const session = await consumeMobileWebHandoff(token);
         establishExternalSession(session);
+        markMobileBillingHandoffBanner();
         navigate(resolveDestination(session.destinationPath), { replace: true });
       } catch (err) {
         logClientError("MobileAuthHandoffPage", err);

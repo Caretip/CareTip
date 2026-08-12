@@ -522,7 +522,9 @@ function drawTextField(
   const maxSize = pos.maxFontSize ?? 12;
   const weight = pos.fontWeight ?? "400";
   const color = resolveColor(pos.color, payload);
-  const content = pos.uppercase ? text.toUpperCase() : text;
+  // CareTip Basic/default shell stays sentence-case for readable thank-you / body copy.
+  const content =
+    pos.uppercase && !isCareTipDefaultTheme(payload) ? text.toUpperCase() : text;
 
   ctx.fillStyle = color;
   ctx.textAlign = pos.align ?? "center";

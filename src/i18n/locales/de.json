@@ -5567,6 +5567,11 @@
       "moduleEyebrow": "Abonnement",
       "moduleTitle": "Abrechnung",
       "moduleSubtitle": "Plan, Rechnungen und Zahlungsmethoden verwalten.",
+      "mobileHandoff": {
+        "title": "Sie sind auf CareTip Web",
+        "body": "Sie haben die Abrechnung aus der CareTip-App geöffnet. Dies ist derselbe Workspace — schließen Sie Ihr Abonnement hier ab, verwalten Sie die Abrechnung weiter im Web oder kehren Sie zur mobilen App zurück, wenn Sie fertig sind.",
+        "dismiss": "Schließen"
+      },
       "navAria": "Abrechnungsbereiche",
       "nav": {
         "subscription": "Abonnement",

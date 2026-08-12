@@ -156,7 +156,13 @@ export async function buildManagerQrBrandingOptions(businessId: string) {
 export async function buildEmployeeQrBrandingOptions(businessId: string) {
   const row = await prisma.business.findUnique({
     where: { id: businessId },
-    select: BUSINESS_BRANDING_SELECT,
+    select: {
+      ...BUSINESS_BRANDING_SELECT,
+      location: true,
+      registeredAddress: true,
+      contactPhone: true,
+      website: true,
+    },
   });
   if (!row) throw new BrandedQrNotFoundError("Business not found");
 
@@ -181,7 +187,13 @@ export async function buildEmployeeQrBrandingOptions(businessId: string) {
       qrBackgroundColor: guest.qrBackgroundColor,
     },
     registeredBusinessName: guest.businessName,
-    profile: { name: row.name },
+    profile: {
+      name: row.name,
+      registeredAddress: row.registeredAddress,
+      location: row.location,
+      contactPhone: row.contactPhone,
+      website: row.website,
+    },
     businessId,
     sessionFallbackName: guest.businessName,
   });

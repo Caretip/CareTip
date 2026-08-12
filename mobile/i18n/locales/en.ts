@@ -731,13 +731,13 @@ export const en: MobileMessages = {
   billingHandoff: {
     confirmTitle: "Continue on CareTip Web",
     confirmBody:
-      "You're about to leave the CareTip app temporarily to complete your subscription securely on CareTip Web. After payment, return here to see your updated plan.",
+      "You're being taken to CareTip Web to manage your subscription for this same workspace. You can finish there, keep working on the web, or return to the mobile app when you're done — we'll refresh your plan when you come back.",
     cancel: "Cancel",
     continue: "Continue to CareTip Web",
-    updatingPlan: "Confirming your subscription…",
-    planUpdated: "Your CareTip plan is up to date.",
+    updatingPlan: "Refreshing your workspace…",
+    planUpdated: "Your CareTip workspace is up to date.",
     planUnchangedHint:
-      "No plan change confirmed yet. If you completed payment, wait a moment and open Manage plan again — or pull to refresh.",
+      "No plan change confirmed yet. If you completed payment on the web, wait a moment and open Manage plan again — or pull to refresh.",
     syncFailed: "We couldn't refresh your plan. Check your connection and try Manage plan again.",
     openFailed: "We couldn't open Billing. Check your connection and try again.",
     sessionExpired: "Your session expired. Sign in again, then retry Manage plan.",

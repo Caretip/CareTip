@@ -1,6 +1,16 @@
-/** Node QR render stub — template copy uses static strings; i18n not required server-side. */
+/**
+ * Node QR render stub — the canvas bundle does not load full i18next.
+ * Call sites must pass `defaultValue` for any user-facing copy.
+ * Never return raw translation keys to the QR card.
+ */
 const i18n = {
-  t: (key: string, _opts?: Record<string, unknown>) => key,
+  t: (key: string, opts?: Record<string, unknown>) => {
+    const defaultValue = opts?.defaultValue;
+    if (typeof defaultValue === "string" && defaultValue.trim()) {
+      return defaultValue;
+    }
+    return key;
+  },
 };
 
 export default i18n;

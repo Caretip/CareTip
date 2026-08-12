@@ -11,6 +11,7 @@ import {
   isBillingEntitlementConfirmed,
 } from "../utils/billingReturnSyncPolicy";
 import { shouldBypassForegroundSyncCooldown } from "../utils/billingForegroundBoost";
+import { en } from "../i18n/locales/en";
 
 function run() {
   assert.equal(isBillingEntitlementConfirmed({ synced: true, subscriptionTier: "basic" }), true);
@@ -39,6 +40,12 @@ function run() {
 
   // Boost helper: default false until set — import is side-effect free for the check API.
   assert.equal(shouldBypassForegroundSyncCooldown(0), false);
+
+  // Handoff copy must explain same-workspace web continue + return to mobile (EN).
+  assert.match(en.billingHandoff.confirmTitle, /CareTip Web/i);
+  assert.match(en.billingHandoff.confirmBody, /same workspace/i);
+  assert.match(en.billingHandoff.confirmBody, /return to the mobile app/i);
+  assert.match(en.billingHandoff.updatingPlan, /Refreshing|workspace/i);
 
   console.log("billing-handoff-runtime: OK");
 }

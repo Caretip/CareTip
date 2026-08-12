@@ -5567,6 +5567,11 @@
       "moduleEyebrow": "Subscription",
       "moduleTitle": "Billing",
       "moduleSubtitle": "Manage your plan, invoices, and payment methods.",
+      "mobileHandoff": {
+        "title": "You're on CareTip Web",
+        "body": "You opened Billing from the CareTip mobile app. This is the same workspace — finish your subscription here, keep managing billing on the web, or return to the mobile app when you're done.",
+        "dismiss": "Dismiss"
+      },
       "navAria": "Billing sections",
       "nav": {
         "subscription": "Subscription",
