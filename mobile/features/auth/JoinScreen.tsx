@@ -11,6 +11,7 @@ import { useI18n } from "@/hooks/useI18n";
 import { createJoinSchema, type JoinFormValues } from "@/features/auth/authSchemas";
 import { authService } from "@/services/auth/authService";
 import { friendlyErrorMessage } from "@/utils/friendlyError";
+import { normalizeInviteCode } from "@/utils/normalizeInviteCode";
 import { hapticLight } from "@/utils/haptics";
 import { authCardStyles } from "@/components/auth/authCardStyles";
 
@@ -30,16 +31,18 @@ export function JoinScreen() {
 
   const onSubmit = handleSubmit(async (values) => {
     setFormError(null);
+    const inviteCode = normalizeInviteCode(values.inviteCode);
     try {
-      const validation = await authService.validateInviteCode(values.inviteCode.trim());
-      if (!validation.valid) {
+      const validation = await authService.validateInviteCode(inviteCode);
+      // Backend returns `{ ok: true }` — never check a non-existent `valid` field.
+      if (!validation.ok) {
         setFormError(t("auth.inviteInvalid"));
         return;
       }
       router.push({
         pathname: "/(auth)/accept-invite",
         params: {
-          inviteCode: values.inviteCode.trim(),
+          inviteCode,
           ...(validation.businessName ? { businessName: validation.businessName } : {}),
         },
       });
@@ -65,6 +68,7 @@ export function JoinScreen() {
               onBlur={onBlur}
               placeholder={t("auth.inviteCodePlaceholder")}
               autoCapitalize="characters"
+              autoCorrect={false}
               returnKeyType="done"
               onSubmitEditing={onSubmit}
               editable={!isSubmitting}

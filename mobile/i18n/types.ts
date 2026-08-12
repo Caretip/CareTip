@@ -317,6 +317,22 @@ export type MobileMessages = {
     loadError: string;
     emptyTitle: string;
     emptyMessage: string;
+    addEmployeeTitle: string;
+    addEmployeeBody: string;
+    generateInvite: string;
+    regenerateInvite: string;
+    inviteCodeLabel: string;
+    inviteExpires: string;
+    copyInvite: string;
+    shareInvite: string;
+    inviteGenerated: string;
+    inviteGenerateError: string;
+    inviteCopied: string;
+    inviteCopyError: string;
+    inviteShareTitle: string;
+    inviteShareMessage: string;
+    inviteShared: string;
+    inviteShareError: string;
   };
   businessInsights: {
     analyticsTitle: string;

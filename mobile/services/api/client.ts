@@ -110,7 +110,11 @@ function isPublicAuthPath(url: string | undefined): boolean {
 /** Public paths that must never attach Bearer tokens or trigger session refresh. */
 function isPublicApiPath(url: string | undefined): boolean {
   const path = url ?? "";
-  return isPublicAuthPath(path) || path.includes("/api/legal/");
+  return (
+    isPublicAuthPath(path) ||
+    path.includes("/api/legal/") ||
+    path.includes("/api/business/invite/validate")
+  );
 }
 
 apiClient.interceptors.request.use(async (request) => {

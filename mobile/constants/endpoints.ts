@@ -41,6 +41,7 @@ export const API_ENDPOINTS = {
   },
   business: {
     inviteValidate: "/api/business/invite/validate",
+    generateInvite: "/api/business/generate-invite",
     profile: "/api/business/profile",
     profileLogo: "/api/business/profile/logo",
     stats: "/api/business/me/stats",

@@ -427,7 +427,7 @@ export async function shareJsonExport(options: {
   }
 }
 
-/** Architecture-ready — do not expose UI until Product approves. */
+/** Share an employee invite code (same backend codes as web). */
 export async function shareInvite(options: {
   inviteCode?: string;
   url?: string;

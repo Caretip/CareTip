@@ -14,6 +14,7 @@ import {
   saveUserSnapshot,
 } from "@/services/auth/tokenStorage";
 import { buildRefreshCookieHeader } from "@/utils/refreshCookie";
+import { normalizeInviteCode } from "@/utils/normalizeInviteCode";
 import {
   headerLookup,
   logAuthEvent,
@@ -173,7 +174,7 @@ export async function oauthLogin(payload: OAuthRequest): Promise<SignInResult> {
       ? { intendedRole: payload.intendedRole }
       : {}),
     ...(payload.name ? { name: payload.name } : {}),
-    ...(payload.inviteCode ? { inviteCode: payload.inviteCode } : {}),
+    ...(payload.inviteCode ? { inviteCode: normalizeInviteCode(payload.inviteCode) } : {}),
     ...(payload.locale ? { locale: payload.locale } : {}),
     ...(payload.timeZone ? { timeZone: payload.timeZone } : {}),
   });
@@ -380,7 +381,14 @@ export async function logout(): Promise<void> {
 
 /** Email registration — same contract as web `registerAPI`. */
 export async function register(payload: RegisterRequest): Promise<RegisterPendingResponse> {
-  const response = await apiClient.post<RegisterPendingResponse>(API_ENDPOINTS.auth.register, payload);
+  const body: RegisterRequest = {
+    ...payload,
+    email: payload.email.trim(),
+    ...(payload.inviteCode
+      ? { inviteCode: normalizeInviteCode(payload.inviteCode) }
+      : {}),
+  };
+  const response = await apiClient.post<RegisterPendingResponse>(API_ENDPOINTS.auth.register, body);
   const data = response.data;
   return {
     requiresEmailVerification: true,
@@ -453,8 +461,9 @@ export async function patchMyOnboardingStatus(
 }
 
 export async function validateInviteCode(code: string): Promise<InviteValidation> {
+  const normalized = normalizeInviteCode(code);
   const { data } = await apiClient.get<InviteValidation>(API_ENDPOINTS.business.inviteValidate, {
-    params: { code: code.trim() },
+    params: { code: normalized },
   });
   return data;
 }

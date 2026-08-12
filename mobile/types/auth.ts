@@ -119,9 +119,11 @@ export type MessageResponse = {
 };
 
 export type InviteValidation = {
-  valid: boolean;
+  /** Backend contract: `{ ok: true | false }` from GET /api/business/invite/validate */
+  ok: boolean;
   businessName?: string;
   businessId?: string;
   businessSlug?: string;
   businessLocation?: string | null;
+  message?: string;
 };

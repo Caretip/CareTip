@@ -45,3 +45,17 @@ export async function fetchBusinessQrAnalytics(
   });
   return data;
 }
+
+/** POST /api/business/generate-invite — same contract as web `generateInviteCode()`. */
+export async function generateBusinessInviteCode(): Promise<{
+  inviteId?: string;
+  inviteCode: string;
+  expiresAt: string;
+}> {
+  const { data } = await apiClient.post<{
+    inviteId?: string;
+    inviteCode: string;
+    expiresAt: string;
+  }>(API_ENDPOINTS.business.generateInvite, {});
+  return data;
+}

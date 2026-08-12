@@ -48,6 +48,9 @@ function main(): void {
   assert.match(register, /authService\.register/);
   assert.match(register, /router\.replace\("\/\(auth\)\/login"\)/);
   assert.match(join, /authService\.validateInviteCode/);
+  assert.match(join, /validation\.ok/);
+  assert.doesNotMatch(join, /validation\.valid/);
+  assert.match(join, /normalizeInviteCode/);
   assert.match(join, /\/\(auth\)\/accept-invite/);
   assert.match(join, /router\.replace\("\/\(auth\)\/login"\)/);
 

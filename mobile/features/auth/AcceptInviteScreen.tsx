@@ -25,6 +25,7 @@ import {
   createAcceptInviteSchema,
   type AcceptInviteFormValues,
 } from "@/features/auth/authSchemas";
+import { normalizeInviteCode } from "@/utils/normalizeInviteCode";
 
 /**
  * Employee invitation completion — identity verification only.
@@ -39,7 +40,7 @@ export function AcceptInviteScreen() {
     businessName?: string;
     employeeName?: string;
   }>();
-  const inviteCode = typeof params.inviteCode === "string" ? params.inviteCode.trim() : "";
+  const inviteCode = typeof params.inviteCode === "string" ? normalizeInviteCode(params.inviteCode) : "";
   const venueName = typeof params.businessName === "string" ? params.businessName : "";
   const welcomeName = typeof params.employeeName === "string" ? params.employeeName.trim() : "";
 
