@@ -24,6 +24,7 @@ import { SplashScreenAnchor } from "@/components/brand/SplashScreenAnchor";
 import { useI18n } from "@/hooks/useI18n";
 import { authBrand } from "@/theme/authBrand";
 import { spacing, touchTarget, typography } from "@/theme";
+import { authLoginLayout } from "@/utils/authLoginLayout";
 
 type AuthExperienceShellProps = {
   children: ReactNode;
@@ -86,11 +87,13 @@ export function AuthExperienceShell({
         layout="floating"
         keyboardAware
         keyboardOpen={keyboardOpen}
-        heroHeightRatio={isTablet ? 0.24 : 0.26}
+        heroHeightRatio={isTablet ? 0.18 : 0.16}
         header={
           <Animated.View style={[styles.hero, heroAnim]}>
-            <AuthHeroLogo height={isTablet ? 52 : 48} />
-            <Text style={styles.brandName}>{t("auth.brandName")}</Text>
+            <View style={styles.brandRow}>
+              <AuthHeroLogo height={isTablet ? authLoginLayout.logoHeightTablet : authLoginLayout.logoHeight} />
+              <Text style={styles.brandName}>{t("auth.brandName")}</Text>
+            </View>
             <Text style={styles.tagline}>{t("auth.tagline")}</Text>
           </Animated.View>
         }
@@ -135,8 +138,15 @@ const styles = StyleSheet.create({
   },
   hero: {
     alignItems: "center",
-    gap: spacing.md,
-    paddingBottom: spacing.sm,
+    gap: authLoginLayout.brandStackGap,
+    paddingBottom: 0,
+  },
+  brandRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: authLoginLayout.brandRowGap,
+    paddingHorizontal: spacing["5xl"],
   },
   brandName: {
     ...typography.h2,
@@ -155,9 +165,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
   },
   footer: {
-    gap: spacing.xl,
+    gap: spacing.md,
     alignItems: "center",
-    paddingTop: spacing.md,
+    paddingTop: spacing.sm,
     width: "100%",
   },
   pillOuter: {

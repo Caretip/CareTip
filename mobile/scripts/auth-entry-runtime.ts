@@ -8,6 +8,7 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { AUTH_LOGIN_VIEWPORTS, isLoginSignInAboveFold } from "../utils/authLoginLayout";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const mobileRoot = path.join(__dirname, "..");
@@ -59,6 +60,25 @@ function main(): void {
   assert.match(authField, /eye-off-outline/);
   assert.match(authField, /auth\.showPassword/);
   assert.match(authField, /auth\.hidePassword/);
+
+  assert.match(login, /SocialAuthButtons/);
+  assert.match(login, /configuredProviders/);
+  assert.match(login, /auth\.dontHaveAccount/);
+  assert.match(login, /compact/);
+  assert.match(login, /authLoginLayout/);
+  assert.match(shell, /auth\.brandName/);
+  assert.match(shell, /auth\.tagline/);
+  assert.match(shell, /auth\.footerMenuTitle/);
+  assert.match(shell, /brandRow/);
+
+  const layered = read("components/layout/LayeredScreenShell.tsx");
+  assert.doesNotMatch(layered, /isFloating \? 200/);
+  assert.match(layered, /!isDashboard && !isFloating/);
+
+  assert.equal(isLoginSignInAboveFold(AUTH_LOGIN_VIEWPORTS.iPhoneSe, 20), true);
+  assert.equal(isLoginSignInAboveFold(AUTH_LOGIN_VIEWPORTS.commonAndroid, 24), true);
+  assert.equal(isLoginSignInAboveFold(AUTH_LOGIN_VIEWPORTS.iPhone14, 47), true);
+  assert.equal(isLoginSignInAboveFold(AUTH_LOGIN_VIEWPORTS.shortAndroid, 24), true);
 
   console.log("auth-entry-runtime: OK");
 }

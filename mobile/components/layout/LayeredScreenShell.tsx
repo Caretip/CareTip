@@ -82,8 +82,10 @@ export function LayeredScreenShell({
   const compressedRatio = keyboardOpen && isFloating ? heroHeightRatio * 0.42 : heroHeightRatio;
   const fallbackHeroHeight = Math.max(
     height * compressedRatio,
-    keyboardOpen && isFloating ? 88 : isFloating ? 200 : layered.heroMinHeight,
+    keyboardOpen && isFloating ? 72 : layered.heroMinHeight,
   );
+  const floatingHeroPaddingTop =
+    Math.max(insets.top, spacing.md) + (keyboardOpen ? spacing.xs : spacing.sm);
 
   /** Dashboard hero is content-sized; ratio fallback only until first onLayout. */
   const heroBackdropHeight = isDashboard
@@ -125,7 +127,7 @@ export function LayeredScreenShell({
   const tabClearance = tabBarScrollClearance(insets.bottom);
   const sheetOwnsTabClearance = Boolean(tabSafe && !isFloating);
   const bottomPad = isFloating
-    ? Math.max(insets.bottom, spacing.md) + spacing["3xl"]
+    ? Math.max(insets.bottom, spacing.md) + spacing.xl
     : sheetOwnsTabClearance
       ? 0
       : tabSafe
@@ -167,7 +169,13 @@ export function LayeredScreenShell({
           isFloating ? styles.heroZoneFloating : null,
           isDashboard ? styles.heroZoneDashboard : null,
           keyboardOpen && isFloating ? styles.heroZoneCompressed : null,
-          !isDashboard ? { minHeight: fallbackHeroHeight } : null,
+          isFloating
+            ? {
+                paddingTop: floatingHeroPaddingTop,
+                paddingBottom: keyboardOpen ? spacing.sm : spacing.md,
+              }
+            : null,
+          !isDashboard && !isFloating ? { minHeight: fallbackHeroHeight } : null,
           { paddingHorizontal: pagePadding },
         ]}
       >
@@ -361,8 +369,9 @@ const styles = StyleSheet.create({
     paddingBottom: layered.sheetOverlap + spacing.md,
   },
   heroZoneFloating: {
-    paddingTop: spacing.xl,
-    paddingBottom: spacing.lg,
+    justifyContent: "flex-start",
+    paddingTop: spacing.md,
+    paddingBottom: spacing.md,
   },
   heroZoneCompressed: {
     paddingTop: spacing.md,
@@ -375,8 +384,8 @@ const styles = StyleSheet.create({
   },
   floatingContent: {
     zIndex: 2,
-    gap: spacing["2xl"],
-    paddingTop: spacing.sm,
+    gap: spacing.lg,
+    paddingTop: spacing.xs,
   },
   footerZone: {
     paddingTop: spacing["2xl"],
@@ -384,8 +393,8 @@ const styles = StyleSheet.create({
     zIndex: 1,
   },
   footerZoneFloating: {
-    paddingTop: spacing["2xl"],
-    paddingBottom: spacing["2xl"],
+    paddingTop: spacing.lg,
+    paddingBottom: spacing.lg,
   },
   footerCompressed: {
     paddingTop: spacing.lg,

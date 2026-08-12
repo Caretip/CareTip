@@ -9,6 +9,8 @@ type AuthScreenHeaderProps = {
   subtitle?: string;
   /** Defaults to shared “WELCOME TO CARETIP” eyebrow. */
   eyebrow?: string;
+  /** Tighter title stack for Login above-the-fold layout. */
+  compact?: boolean;
   children?: ReactNode;
 };
 
@@ -17,12 +19,13 @@ export function AuthScreenHeader({
   title,
   subtitle,
   eyebrow,
+  compact = false,
   children,
 }: AuthScreenHeaderProps) {
   const { t } = useI18n();
 
   return (
-    <View style={[authCardStyles.cardHeader, styles.header]}>
+    <View style={[authCardStyles.cardHeader, compact ? styles.headerCompact : styles.header]}>
       <Text style={authCardStyles.cardEyebrow}>{eyebrow ?? t("auth.welcomeToCaretip")}</Text>
       <Text style={authCardStyles.cardTitle}>{title}</Text>
       {subtitle ? <Text style={authCardStyles.cardSubtitle}>{subtitle}</Text> : null}
@@ -34,5 +37,9 @@ export function AuthScreenHeader({
 const styles = StyleSheet.create({
   header: {
     marginBottom: spacing.md,
+  },
+  headerCompact: {
+    gap: spacing.sm,
+    marginBottom: 0,
   },
 });

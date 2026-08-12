@@ -30,6 +30,7 @@ import {
 } from "@/components/auth/authCardStyles";
 import { authBrand } from "@/theme/authBrand";
 import { spacing, touchTarget, typography } from "@/theme";
+import { authLoginLayout } from "@/utils/authLoginLayout";
 
 function resolveTimeZone(): string | undefined {
   try {
@@ -131,9 +132,10 @@ export function LoginScreen() {
   return (
     <>
       <AuthExperienceShell>
-        <View style={authCardStyles.formBlock}>
+        <View style={styles.formBlock}>
           <AuthEntrance index={0}>
             <AuthScreenHeader
+              compact
               title={t("auth.loginTitle")}
               subtitle={
                 emailJustVerified
@@ -166,7 +168,7 @@ export function LoginScreen() {
           </AuthEntrance>
 
           <AuthEntrance index={socialBlockOffset + 1}>
-            <View style={authCardStyles.fields}>
+            <View style={styles.fields}>
               <Controller
                 control={control}
                 name="email"
@@ -216,53 +218,49 @@ export function LoginScreen() {
           </AuthEntrance>
 
           <AuthEntrance index={socialBlockOffset + 2}>
-            <View style={authForgotStyles.row}>
-              <Pressable
-                accessibilityRole="button"
-                onPress={() => {
-                  hapticLight();
-                  router.push("/(auth)/forgot-password");
-                }}
-                style={({ pressed }) => [
-                  authForgotStyles.link,
-                  pressed ? authCardStyles.pressed : null,
-                ]}
-              >
-                <Text style={authForgotStyles.label}>{t("auth.forgotPassword")}</Text>
-              </Pressable>
+            <View style={styles.primaryActions}>
+              <View style={styles.forgotRow}>
+                <Pressable
+                  accessibilityRole="button"
+                  onPress={() => {
+                    hapticLight();
+                    router.push("/(auth)/forgot-password");
+                  }}
+                  style={({ pressed }) => [
+                    authForgotStyles.link,
+                    pressed ? authCardStyles.pressed : null,
+                  ]}
+                >
+                  <Text style={authForgotStyles.label}>{t("auth.forgotPassword")}</Text>
+                </Pressable>
+              </View>
+
+              {showVerifyPrompt ? (
+                <Pressable
+                  accessibilityRole="button"
+                  onPress={() => {
+                    hapticLight();
+                    router.push("/(auth)/verify-email");
+                  }}
+                  style={({ pressed }) => [styles.verifyPrompt, pressed ? authCardStyles.pressed : null]}
+                >
+                  <Text style={styles.verifyPromptLabel}>{t("auth.verifyEmailPrompt")}</Text>
+                </Pressable>
+              ) : null}
+
+              {formError ? (
+                <Text style={authCardStyles.formError} accessibilityRole="alert" accessibilityLiveRegion="polite">
+                  {formError}
+                </Text>
+              ) : null}
+
+              <AuthContinueButton
+                label={t("auth.signIn")}
+                onPress={onSubmit}
+                loading={isSubmitting}
+                disabled={bootstrapping || socialBusy}
+              />
             </View>
-          </AuthEntrance>
-
-          {showVerifyPrompt ? (
-            <AuthEntrance index={socialBlockOffset + 3}>
-              <Pressable
-                accessibilityRole="button"
-                onPress={() => {
-                  hapticLight();
-                  router.push("/(auth)/verify-email");
-                }}
-                style={({ pressed }) => [styles.verifyPrompt, pressed ? authCardStyles.pressed : null]}
-              >
-                <Text style={styles.verifyPromptLabel}>{t("auth.verifyEmailPrompt")}</Text>
-              </Pressable>
-            </AuthEntrance>
-          ) : null}
-
-          {formError ? (
-            <AuthEntrance index={socialBlockOffset + 3}>
-              <Text style={authCardStyles.formError} accessibilityRole="alert" accessibilityLiveRegion="polite">
-                {formError}
-              </Text>
-            </AuthEntrance>
-          ) : null}
-
-          <AuthEntrance index={socialBlockOffset + 5}>
-            <AuthContinueButton
-              label={t("auth.signIn")}
-              onPress={onSubmit}
-              loading={isSubmitting}
-              disabled={bootstrapping || socialBusy}
-            />
           </AuthEntrance>
 
           <AuthEntrance index={socialBlockOffset + 6}>
@@ -300,6 +298,19 @@ export function LoginScreen() {
 }
 
 const styles = StyleSheet.create({
+  formBlock: {
+    gap: authLoginLayout.formGap,
+  },
+  fields: {
+    gap: authLoginLayout.fieldsGap,
+  },
+  primaryActions: {
+    gap: spacing.sm,
+  },
+  forgotRow: {
+    alignSelf: "stretch",
+    alignItems: "flex-end",
+  },
   verifiedBanner: {
     ...typography.caption,
     color: authBrand.orangeMuted,
@@ -319,11 +330,11 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   signUpRow: {
-    minHeight: touchTarget,
+    minHeight: authLoginLayout.signUpMinHeight,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    paddingVertical: spacing.sm,
+    paddingVertical: spacing.xs,
     flexWrap: "wrap",
   },
   signUpPrompt: {
