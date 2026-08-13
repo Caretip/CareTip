@@ -1,4 +1,4 @@
-import { Router } from "express";
+import express, { Router } from "express";
 import { authMiddleware, requireVerifiedEmail } from "../middleware/auth.middleware.js";
 import {
   loginRateLimit,
@@ -10,6 +10,7 @@ import {
   oauthRateLimit,
   activateEmployeeRateLimit,
   mobileWebHandoffConsumeRateLimitWithAudit,
+  appleNativeCallbackRateLimit,
 } from "../middleware/authRateLimit.middleware.js";
 import {
   changePasswordRateLimit,
@@ -41,6 +42,17 @@ router.post(
   authController.resendVerificationEmailForSession
 );
 router.post("/oauth", oauthRateLimit, authController.oauth);
+/**
+ * Apple HTTPS Return URL for Android web OAuth (form_post bounce → caretip://).
+ * Not a session/login endpoint — identity verification stays on POST /oauth.
+ */
+router.get("/apple/native-callback", appleNativeCallbackRateLimit, authController.appleNativeCallback);
+router.post(
+  "/apple/native-callback",
+  express.urlencoded({ extended: false, limit: "32kb" }),
+  appleNativeCallbackRateLimit,
+  authController.appleNativeCallback,
+);
 router.get("/oauth/accounts", authMiddleware, authController.listLinkedOAuthAccounts);
 router.post("/oauth/link", authMiddleware, oauthRateLimit, authController.linkOAuthAccount);
 router.post("/oauth/unlink", authMiddleware, authController.unlinkOAuthAccount);

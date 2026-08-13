@@ -53,13 +53,13 @@ function main(): void {
   assert.deepEqual(socialProvidersForPlatform("ios"), socialProvidersForPlatform("ios"));
 
   const login = read("features/auth/LoginScreen.tsx");
-  const sheet = read("components/auth/AuthRegisterSheet.tsx");
+  const register = read("features/auth/RegisterScreen.tsx");
   assert.match(login, /SocialAuthButtons/);
   assert.match(login, /configuredProviders/);
-  assert.match(sheet, /SocialAuthButtons/);
-  assert.match(sheet, /configuredProviders|providers/);
+  assert.match(register, /SocialAuthButtons/);
+  assert.match(register, /configuredProviders/);
   assert.match(login, /isLogin:\s*true/);
-  assert.match(login, /isLogin:\s*false,\s*intendedRole:\s*"MANAGER"/);
+  assert.match(register, /isLogin:\s*false,\s*intendedRole:\s*"MANAGER"/);
 
   assert.equal(
     isFacebookMobileReady({ appId: undefined, nativeSdkAvailable: true }),
@@ -163,6 +163,9 @@ function main(): void {
   const appleService = read("services/apple/appleSignIn.ts");
   assert.match(googleService, /requestGoogleIdToken/);
   assert.match(appleService, /requestAppleIdToken/);
+  assert.match(appleService, /openAuthSessionAsync/);
+  assert.match(appleService, /expo-apple-authentication/);
+  assert.doesNotMatch(appleService, /EXPO_PUBLIC_APPLE_PRIVATE/);
 
   console.log("facebook-oauth-runtime: OK");
 }

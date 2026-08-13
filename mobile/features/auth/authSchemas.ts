@@ -18,7 +18,6 @@ function passwordField(t: TranslateFn) {
 export function createManagerRegisterSchema(t: TranslateFn) {
   return z
     .object({
-      name: z.string().trim().optional(),
       email: emailField(t),
       password: passwordField(t),
       confirmPassword: z.string().min(1, t("validation.confirmPasswordRequired")),

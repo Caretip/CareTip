@@ -384,6 +384,13 @@ export const mobileWebHandoffConsumeRateLimit = createSyncLimiter((req) => {
   return layers;
 }, HANDOFF_MSG, "mobile-handoff-consume");
 
+const APPLE_CALLBACK_MSG = "Too many Apple sign-in attempts. Please try again later.";
+
+export const appleNativeCallbackRateLimit = createSyncLimiter((req) => {
+  const { appleNativeCallback: lim } = authRateLimits;
+  return [{ name: "ip", key: keyIp("apple-native-callback", clientIp(req)), ...lim.ip }];
+}, APPLE_CALLBACK_MSG, "apple-native-callback");
+
 export const mobileWebHandoffConsumeRateLimitWithAudit: RequestHandler = (req, res, next) => {
   const originalJson = res.json.bind(res);
   res.json = ((body: unknown) => {

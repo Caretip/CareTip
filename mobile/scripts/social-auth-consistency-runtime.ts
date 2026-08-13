@@ -56,20 +56,38 @@ function runPolicy(): void {
 
 function runSourceConsistency(): void {
   const login = fs.readFileSync(path.join(mobileRoot, "features/auth/LoginScreen.tsx"), "utf8");
-  const sheet = fs.readFileSync(
-    path.join(mobileRoot, "components/auth/AuthRegisterSheet.tsx"),
+  const register = fs.readFileSync(path.join(mobileRoot, "features/auth/RegisterScreen.tsx"), "utf8");
+  const choice = fs.readFileSync(
+    path.join(mobileRoot, "features/auth/SignupChoiceScreen.tsx"),
     "utf8",
   );
 
   assert.match(login, /SocialAuthButtons/);
-  assert.match(sheet, /SocialAuthButtons/);
+  assert.match(register, /SocialAuthButtons/);
+  assert.doesNotMatch(choice, /SocialAuthButtons/);
   assert.doesNotMatch(login, /anySocialConfigured\s*\?/);
   assert.match(login, /runSocialAuth\(provider,\s*\{\s*isLogin:\s*true/);
-  assert.match(sheet, /onContinueWithProvider/);
+  assert.doesNotMatch(login, /isLogin:\s*false,\s*intendedRole:\s*"MANAGER"/);
   assert.match(
-    login,
+    register,
     /runSocialAuth\(provider,\s*\{\s*isLogin:\s*false,\s*intendedRole:\s*"MANAGER"/,
   );
+
+  const hook = fs.readFileSync(path.join(mobileRoot, "hooks/useSocialAuth.ts"), "utf8");
+  assert.match(hook, /inFlightRef/);
+  assert.match(hook, /mode\.isLogin && isOAuthAccountNotRegistered/);
+
+  const appleService = fs.readFileSync(
+    path.join(mobileRoot, "services/apple/appleSignIn.ts"),
+    "utf8",
+  );
+  assert.match(appleService, /isAppleAndroidWebConfigured/);
+  assert.match(appleService, /requestAppleIdTokenAndroid/);
+  assert.match(appleService, /requestAppleIdTokenIos/);
+
+  const diag = fs.readFileSync(path.join(mobileRoot, "utils/oauthFlowDiag.ts"), "utf8");
+  assert.match(diag, /hasInviteCode/);
+  assert.match(diag, /Never logs tokens/);
 }
 
 function runErrorMapping(): void {

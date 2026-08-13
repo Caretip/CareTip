@@ -7,7 +7,6 @@ import { AuthExperienceShell } from "@/components/auth/AuthExperienceShell";
 import { AuthEntrance } from "@/components/auth/AuthEntrance";
 import { AuthField } from "@/components/auth/AuthField";
 import { AuthContinueButton } from "@/components/auth/AuthContinueButton";
-import { AuthRegisterSheet } from "@/components/auth/AuthRegisterSheet";
 import { AuthScreenHeader } from "@/components/auth/AuthScreenHeader";
 import { SocialAuthButtons } from "@/components/auth/SocialAuthButtons";
 import { useAuth } from "@/hooks/useAuth";
@@ -52,7 +51,6 @@ export function LoginScreen() {
   const logoutTransition = useAuthLogoutTransitionActive();
   const [formError, setFormError] = useState<string | null>(null);
   const [showVerifyPrompt, setShowVerifyPrompt] = useState(false);
-  const [registerOpen, setRegisterOpen] = useState(false);
   const passwordRef = useRef<TextInput>(null);
 
   const {
@@ -61,7 +59,7 @@ export function LoginScreen() {
     socialBusy,
     configuredProviders,
   } = useSocialAuth({
-    onAccountNotRegistered: () => setRegisterOpen(true),
+    onAccountNotRegistered: () => router.push("/(auth)/signup" as never),
   });
 
   const loginSchema = useMemo(() => createLoginSchema(t), [t]);
@@ -130,8 +128,7 @@ export function LoginScreen() {
   };
 
   return (
-    <>
-      <AuthExperienceShell>
+    <AuthExperienceShell>
         <View style={styles.formBlock}>
           <AuthEntrance index={0}>
             <AuthScreenHeader
@@ -270,7 +267,7 @@ export function LoginScreen() {
               disabled={authBusy || bootstrapping}
               onPress={() => {
                 hapticLight();
-                setRegisterOpen(true);
+                router.push("/(auth)/signup" as never);
               }}
               style={({ pressed }) => [styles.signUpRow, pressed ? authCardStyles.pressed : null]}
             >
@@ -280,20 +277,6 @@ export function LoginScreen() {
           </AuthEntrance>
         </View>
       </AuthExperienceShell>
-
-      <AuthRegisterSheet
-        visible={registerOpen}
-        onClose={() => setRegisterOpen(false)}
-        onSignIn={() => setRegisterOpen(false)}
-        socialLoadingProvider={loadingProvider}
-        configuredProviders={configuredProviders}
-        onContinueWithProvider={(provider) =>
-          void runSocialAuth(provider, { isLogin: false, intendedRole: "MANAGER" }).finally(() =>
-            setRegisterOpen(false),
-          )
-        }
-      />
-    </>
   );
 }
 

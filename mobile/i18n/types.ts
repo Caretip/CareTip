@@ -96,6 +96,7 @@ export type MobileMessages = {
     mfaFailed: string;
     mfaSetupFailed: string;
     backToSignIn: string;
+    backToSignupChoice: string;
     sessionRecoveryEyebrow: string;
     sessionRecoveryTitle: string;
     sessionRecoverySubtitle: string;

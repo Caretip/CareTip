@@ -1,5 +1,5 @@
 /**
- * Login entry hierarchy: Sign in stays primary; signup shortcuts are not on Login.
+ * Login entry hierarchy: Sign in stays primary; signup starts on the choice screen.
  *
  *   npm run test:auth-entry
  *   npx tsx scripts/auth-entry-runtime.ts
@@ -20,7 +20,7 @@ function read(rel: string): string {
 function main(): void {
   const login = read("features/auth/LoginScreen.tsx");
   const shell = read("components/auth/AuthExperienceShell.tsx");
-  const sheet = read("components/auth/AuthRegisterSheet.tsx");
+  const choice = read("features/auth/SignupChoiceScreen.tsx");
   const register = read("features/auth/RegisterScreen.tsx");
   const join = read("features/auth/JoinScreen.tsx");
 
@@ -28,7 +28,8 @@ function main(): void {
   assert.match(login, /auth\.forgotPassword/);
   assert.match(login, /auth\.dontHaveAccount/);
   assert.match(login, /auth\.signUpLink/);
-  assert.match(login, /setRegisterOpen\(true\)/);
+  assert.match(login, /router\.push\("\/\(auth\)\/signup"/);
+  assert.doesNotMatch(login, /AuthRegisterSheet/);
   assert.doesNotMatch(login, /auth\.enterInviteCode/);
   assert.doesNotMatch(login, /auth\.register[}"'`]/);
   assert.doesNotMatch(login, /onRegisterPress/);
@@ -38,24 +39,31 @@ function main(): void {
   assert.doesNotMatch(shell, /\/\(auth\)\/register/);
   assert.doesNotMatch(shell, /\/\(auth\)\/join/);
 
-  assert.match(sheet, /auth\.createBusinessChoiceTitle/);
-  assert.match(sheet, /auth\.joinInviteChoiceTitle/);
-  assert.match(sheet, /router\.push\("\/\(auth\)\/register"\)/);
-  assert.match(sheet, /router\.push\("\/\(auth\)\/join"\)/);
-  assert.match(sheet, /SocialAuthButtons/);
-  assert.match(sheet, /onRequestClose=\{onClose\}/);
+  assert.match(choice, /auth\.createAccountTitle/);
+  assert.match(choice, /auth\.createAccountSubtitle/);
+  assert.match(choice, /auth\.createBusinessChoiceTitle/);
+  assert.match(choice, /auth\.joinInviteChoiceTitle/);
+  assert.match(choice, /router\.push\("\/\(auth\)\/register"\)/);
+  assert.match(choice, /router\.push\("\/\(auth\)\/join"\)/);
+  assert.doesNotMatch(choice, /SocialAuthButtons/);
+  assert.doesNotMatch(choice, /auth\.fullName/);
+  assert.doesNotMatch(choice, /auth\.email/);
+  assert.doesNotMatch(choice, /auth\.password/);
 
   assert.match(register, /authService\.register/);
-  assert.match(register, /router\.replace\("\/\(auth\)\/login"\)/);
+  assert.match(register, /SocialAuthButtons/);
+  assert.match(register, /isLogin:\s*false,\s*intendedRole:\s*"MANAGER"/);
+  assert.doesNotMatch(register, /auth\.fullName/);
+  assert.match(register, /auth\.backToSignupChoice/);
   assert.match(join, /authService\.validateInviteCode/);
   assert.match(join, /validation\.ok/);
   assert.doesNotMatch(join, /validation\.valid/);
   assert.match(join, /normalizeInviteCode/);
   assert.match(join, /\/\(auth\)\/accept-invite/);
-  assert.match(join, /router\.replace\("\/\(auth\)\/login"\)/);
+  assert.match(join, /auth\.backToSignupChoice/);
 
   assert.match(login, /isLogin:\s*true/);
-  assert.match(login, /isLogin:\s*false,\s*intendedRole:\s*"MANAGER"/);
+  assert.doesNotMatch(login, /isLogin:\s*false,\s*intendedRole:\s*"MANAGER"/);
 
   const authField = read("components/auth/AuthField.tsx");
   assert.match(login, /secureTextEntry/);
@@ -77,6 +85,11 @@ function main(): void {
   const layered = read("components/layout/LayeredScreenShell.tsx");
   assert.doesNotMatch(layered, /isFloating \? 200/);
   assert.match(layered, /!isDashboard && !isFloating/);
+
+  const en = read("i18n/locales/en.ts");
+  assert.match(en, /Create Your CareTip Account/);
+  assert.match(en, /Choose how you want to get started\./);
+  assert.doesNotMatch(en, /Chooses how you want/);
 
   assert.equal(isLoginSignInAboveFold(AUTH_LOGIN_VIEWPORTS.iPhoneSe, 20), true);
   assert.equal(isLoginSignInAboveFold(AUTH_LOGIN_VIEWPORTS.commonAndroid, 24), true);

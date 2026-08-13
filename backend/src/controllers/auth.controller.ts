@@ -3,6 +3,7 @@ import { Prisma } from "@prisma/client";
 import * as authService from "../services/auth.service.js";
 import * as businessService from "../services/business.service.js";
 import * as oauthAuthService from "../services/oauthAuth.service.js";
+import { buildAppleNativeCallbackHtml } from "../services/oauth/appleNativeCallbackBounce.js";
 import { managerProfileReadyToFinish } from "../services/onboardingProgress.service.js";
 import * as emailVerificationService from "../services/emailVerification.service.js";
 import * as passwordResetService from "../services/passwordReset.service.js";
@@ -900,6 +901,39 @@ export async function oauth(req: Request, res: Response) {
     return res.status(400).json({
       message: clientSafeMessage(err, CLIENT_FALLBACK.loginUnexpected),
     });
+  }
+}
+
+/**
+ * Apple HTTPS Return URL bounce for Android web OAuth.
+ * Does not create a session — copies Apple form_post fields onto a CareTip deep link.
+ * Never logs id_token, authorization code, or user payload.
+ */
+export function appleNativeCallback(req: Request, res: Response) {
+  try {
+    const source =
+      req.method === "POST"
+        ? ((req.body ?? {}) as Record<string, unknown>)
+        : ((req.query ?? {}) as Record<string, unknown>);
+    const html = buildAppleNativeCallbackHtml({
+      id_token: source.id_token,
+      user: source.user,
+      error: source.error,
+      error_description: source.error_description,
+      state: source.state,
+    });
+    res.status(html.status);
+    for (const [key, value] of Object.entries(html.headers)) {
+      res.setHeader(key, value);
+    }
+    return res.send(html.body);
+  } catch {
+    const html = buildAppleNativeCallbackHtml({ error: "server_error" });
+    res.status(html.status);
+    for (const [key, value] of Object.entries(html.headers)) {
+      res.setHeader(key, value);
+    }
+    return res.send(html.body);
   }
 }
 

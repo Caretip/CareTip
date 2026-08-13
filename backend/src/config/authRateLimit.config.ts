@@ -52,4 +52,8 @@ export const authRateLimits = {
     ip: { max: envInt("AUTH_MOBILE_HANDOFF_CONSUME_IP_MAX_PER_15M", 60), windowMs: AUTH_WINDOW_15M_MS },
     token: { max: envInt("AUTH_MOBILE_HANDOFF_CONSUME_TOKEN_MAX_PER_15M", 8), windowMs: AUTH_WINDOW_15M_MS },
   },
+  /** Apple form_post bounce for Android Sign in with Apple (not a login endpoint). */
+  appleNativeCallback: {
+    ip: { max: envInt("AUTH_APPLE_NATIVE_CALLBACK_IP_MAX_PER_15M", 120), windowMs: AUTH_WINDOW_15M_MS },
+  },
 } as const;

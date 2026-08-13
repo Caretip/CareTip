@@ -7,7 +7,9 @@ import { AuthExperienceShell } from "@/components/auth/AuthExperienceShell";
 import { AuthField } from "@/components/auth/AuthField";
 import { AuthContinueButton } from "@/components/auth/AuthContinueButton";
 import { AuthScreenHeader } from "@/components/auth/AuthScreenHeader";
+import { SocialAuthButtons } from "@/components/auth/SocialAuthButtons";
 import { useI18n } from "@/hooks/useI18n";
+import { useSocialAuth } from "@/hooks/useSocialAuth";
 import {
   createManagerRegisterSchema,
   type ManagerRegisterFormValues,
@@ -16,22 +18,35 @@ import { authService } from "@/services/auth/authService";
 import { friendlyErrorMessage } from "@/utils/friendlyError";
 import { resolveLoginLocale } from "@/utils/resolveLoginLocale";
 import { hapticLight } from "@/utils/haptics";
-import { authCardStyles } from "@/components/auth/authCardStyles";
+import { authCardStyles, authFloatingDivider } from "@/components/auth/authCardStyles";
 import { authBrand } from "@/theme/authBrand";
 import { spacing, touchTarget, typography } from "@/theme";
+import type { OAuthProvider } from "@/types/auth";
+
+function goToSignupChoice(router: ReturnType<typeof useRouter>) {
+  if (router.canGoBack()) router.back();
+  else router.replace("/(auth)/signup" as never);
+}
 
 /**
  * Manager / business registration only.
  * Employees do not register here — they complete an invitation via AcceptInviteScreen.
+ * Social signup uses the existing useSocialAuth → POST /api/auth/oauth path.
  */
 export function RegisterScreen() {
   const router = useRouter();
   const { t } = useI18n();
   const params = useLocalSearchParams<{ role?: string; inviteCode?: string; businessName?: string }>();
   const [formError, setFormError] = useState<string | null>(null);
-  const emailRef = useRef<TextInput>(null);
   const passwordRef = useRef<TextInput>(null);
   const managerRegisterSchema = useMemo(() => createManagerRegisterSchema(t), [t]);
+
+  const {
+    runSocialAuth,
+    configuredProviders,
+    loadingProvider,
+    socialBusy,
+  } = useSocialAuth();
 
   const legacyEmployeeInvite =
     params.role === "employee" ||
@@ -44,7 +59,6 @@ export function RegisterScreen() {
   } = useForm<ManagerRegisterFormValues>({
     resolver: zodResolver(managerRegisterSchema),
     defaultValues: {
-      name: "",
       email: "",
       password: "",
       confirmPassword: "",
@@ -69,13 +83,18 @@ export function RegisterScreen() {
     );
   }
 
+  const busy = isSubmitting || socialBusy;
+
+  const onSocial = (provider: OAuthProvider) => {
+    void runSocialAuth(provider, { isLogin: false, intendedRole: "MANAGER" });
+  };
+
   const onSubmit = handleSubmit(async (values) => {
     setFormError(null);
     try {
       const created = await authService.register({
         email: values.email.trim(),
         password: values.password,
-        name: values.name?.trim() || undefined,
         role: "business",
         locale: resolveLoginLocale(),
       });
@@ -96,32 +115,24 @@ export function RegisterScreen() {
           subtitle={t("auth.registerScreenSubtitle")}
         />
 
-        <View style={authCardStyles.fields}>
-          <Controller
-            control={control}
-            name="name"
-            render={({ field: { onChange, onBlur, value } }) => (
-              <AuthField
-                label={t("auth.fullName")}
-                icon="person-outline"
-                value={value ?? ""}
-                onChangeText={onChange}
-                onBlur={onBlur}
-                placeholder={t("auth.fullNamePlaceholder")}
-                autoComplete="name"
-                returnKeyType="next"
-                onSubmitEditing={() => emailRef.current?.focus()}
-                editable={!isSubmitting}
-              />
-            )}
-          />
+        <SocialAuthButtons
+          providers={configuredProviders}
+          loadingProvider={loadingProvider}
+          disabled={busy}
+          onPressProvider={onSocial}
+        />
+        <View style={authFloatingDivider.row}>
+          <View style={authFloatingDivider.line} />
+          <Text style={authFloatingDivider.label}>{t("auth.orContinueWith")}</Text>
+          <View style={authFloatingDivider.line} />
+        </View>
 
+        <View style={authCardStyles.fields}>
           <Controller
             control={control}
             name="email"
             render={({ field: { onChange, onBlur, value } }) => (
               <AuthField
-                ref={emailRef}
                 label={t("auth.email")}
                 icon="mail-outline"
                 value={value}
@@ -133,7 +144,7 @@ export function RegisterScreen() {
                 autoComplete="email"
                 returnKeyType="next"
                 onSubmitEditing={() => passwordRef.current?.focus()}
-                editable={!isSubmitting}
+                editable={!busy}
                 error={errors.email?.message}
               />
             )}
@@ -155,7 +166,7 @@ export function RegisterScreen() {
                 textContentType="newPassword"
                 autoComplete="password-new"
                 returnKeyType="next"
-                editable={!isSubmitting}
+                editable={!busy}
                 error={errors.password?.message}
               />
             )}
@@ -176,7 +187,7 @@ export function RegisterScreen() {
                 textContentType="newPassword"
                 returnKeyType="done"
                 onSubmitEditing={onSubmit}
-                editable={!isSubmitting}
+                editable={!busy}
                 error={errors.confirmPassword?.message}
               />
             )}
@@ -193,18 +204,18 @@ export function RegisterScreen() {
           label={t("auth.createBusinessAccountCta")}
           onPress={onSubmit}
           loading={isSubmitting}
+          disabled={socialBusy}
         />
 
         <Pressable
           accessibilityRole="button"
           onPress={() => {
             hapticLight();
-            router.replace("/(auth)/join");
+            goToSignupChoice(router);
           }}
-          style={({ pressed }) => [styles.inviteRow, pressed ? authCardStyles.pressed : null]}
+          style={({ pressed }) => [styles.backRow, pressed ? authCardStyles.pressed : null]}
         >
-          <Text style={styles.invitePrompt}>{t("auth.haveInvitePrompt")} </Text>
-          <Text style={styles.inviteLink}>{t("auth.haveInviteLink")}</Text>
+          <Text style={authCardStyles.backLink}>{t("auth.backToSignupChoice")}</Text>
         </Pressable>
 
         <Pressable
@@ -224,22 +235,11 @@ export function RegisterScreen() {
 }
 
 const styles = StyleSheet.create({
-  inviteRow: {
+  backRow: {
     minHeight: touchTarget,
-    flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
     paddingVertical: spacing.xs,
-    flexWrap: "wrap",
-  },
-  invitePrompt: {
-    ...typography.body,
-    color: authBrand.heroSubtitle,
-  },
-  inviteLink: {
-    ...typography.body,
-    color: authBrand.orange,
-    fontWeight: "700",
   },
   signInRow: {
     minHeight: touchTarget,
@@ -247,6 +247,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     paddingVertical: spacing.sm,
+    flexWrap: "wrap",
   },
   signInPrompt: {
     ...typography.body,

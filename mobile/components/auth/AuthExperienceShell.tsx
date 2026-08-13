@@ -28,7 +28,7 @@ import { authLoginLayout } from "@/utils/authLoginLayout";
 
 type AuthExperienceShellProps = {
   children: ReactNode;
-  /** Explore CareTip footer pill — login only. Signup shortcuts live on the signup sheet. */
+  /** Explore CareTip footer pill — login only. Signup shortcuts live on the signup choice screen. */
   showSecondaryActions?: boolean;
 };
 

@@ -86,4 +86,9 @@ export const config = {
    * Not FACEBOOK_APP_SECRET. The App Secret must never ship in the mobile bundle.
    */
   facebookClientToken: (process.env.EXPO_PUBLIC_FACEBOOK_CLIENT_TOKEN ?? "").trim() || undefined,
+  /**
+   * Apple Services ID — public; same as web VITE_APPLE_CLIENT_ID / backend APPLE_CLIENT_ID.
+   * Used for Android web Sign in with Apple. Never put Apple private keys here.
+   */
+  appleClientId: (process.env.EXPO_PUBLIC_APPLE_CLIENT_ID ?? "").trim() || undefined,
 } as const;

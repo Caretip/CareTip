@@ -23,6 +23,8 @@ import {
   serializeResponseHeaders,
 } from "@/utils/authDebug";
 import { config } from "@/constants/config";
+import { logOAuthFlowDiag, nextOAuthRequestCount } from "@/utils/oauthFlowDiag";
+import { normalizeApiError } from "@/types/api";
 import type {
   AuthResponse,
   InviteValidation,
@@ -38,7 +40,6 @@ import type {
   UnlinkOAuthResult,
 } from "@/types/auth";
 import { isMfaChallenge } from "@/types/auth";
-import { normalizeApiError } from "@/types/api";
 
 /**
  * Auth API — reuses existing backend routes only.
@@ -158,6 +159,9 @@ export async function login(payload: SignInRequest): Promise<SignInResult> {
 export async function oauthLogin(payload: OAuthRequest): Promise<SignInResult> {
   const provider: OAuthProvider = payload.provider ?? "google";
   const requestUrl = `${config.apiUrl}${API_ENDPOINTS.auth.oauth}`;
+  const requestCount = nextOAuthRequestCount();
+  const flow = payload.isLogin ? "login" : "signup";
+  const hasInviteCode = Boolean(payload.inviteCode);
   logAuthEvent("oauth.request", {
     method: "POST",
     url: requestUrl,
@@ -165,34 +169,71 @@ export async function oauthLogin(payload: OAuthRequest): Promise<SignInResult> {
     isLogin: payload.isLogin,
     intendedRole: payload.intendedRole,
   });
-
-  const response = await apiClient.post<SignInResult>(API_ENDPOINTS.auth.oauth, {
+  logOAuthFlowDiag("request", {
+    flow,
     provider,
-    idToken: payload.idToken,
+    requestCount,
     isLogin: payload.isLogin,
-    ...(payload.intendedRole && !payload.isLogin
-      ? { intendedRole: payload.intendedRole }
-      : {}),
-    ...(payload.name ? { name: payload.name } : {}),
-    ...(payload.inviteCode ? { inviteCode: normalizeInviteCode(payload.inviteCode) } : {}),
-    ...(payload.locale ? { locale: payload.locale } : {}),
-    ...(payload.timeZone ? { timeZone: payload.timeZone } : {}),
+    intendedRole: payload.intendedRole ?? null,
+    hasInviteCode,
+    source: "authService.oauthLogin",
   });
 
-  await persistRefreshFromResponse(response.headers);
-  const data = response.data;
+  try {
+    const response = await apiClient.post<SignInResult>(API_ENDPOINTS.auth.oauth, {
+      provider,
+      idToken: payload.idToken,
+      isLogin: payload.isLogin,
+      ...(payload.intendedRole && !payload.isLogin
+        ? { intendedRole: payload.intendedRole }
+        : {}),
+      ...(payload.name ? { name: payload.name } : {}),
+      ...(payload.inviteCode ? { inviteCode: normalizeInviteCode(payload.inviteCode) } : {}),
+      ...(payload.locale ? { locale: payload.locale } : {}),
+      ...(payload.timeZone ? { timeZone: payload.timeZone } : {}),
+    });
 
-  if (isMfaChallenge(data)) {
-    logAuthEvent("oauth.mfa.challenge", { provider });
+    logOAuthFlowDiag("response", {
+      flow,
+      provider,
+      requestCount,
+      isLogin: payload.isLogin,
+      intendedRole: payload.intendedRole ?? null,
+      hasInviteCode,
+      status: response.status,
+      code: null,
+      source: "authService.oauthLogin",
+    });
+
+    await persistRefreshFromResponse(response.headers);
+    const data = response.data;
+
+    if (isMfaChallenge(data)) {
+      logAuthEvent("oauth.mfa.challenge", { provider });
+      return data;
+    }
+
+    if (!data || typeof data !== "object" || !("token" in data) || !data.token || !("user" in data)) {
+      throw normalizeApiError(new Error("OAuth succeeded without access token."));
+    }
+
+    await finalizeAuthResponse(data, "oauth", { provider });
     return data;
+  } catch (error) {
+    const normalized = normalizeApiError(error);
+    logOAuthFlowDiag("error", {
+      flow,
+      provider,
+      requestCount,
+      isLogin: payload.isLogin,
+      intendedRole: payload.intendedRole ?? null,
+      hasInviteCode,
+      status: normalized.status ?? null,
+      code: normalized.code ?? null,
+      source: "authService.oauthLogin",
+    });
+    throw error;
   }
-
-  if (!data || typeof data !== "object" || !("token" in data) || !data.token || !("user" in data)) {
-    throw normalizeApiError(new Error("OAuth succeeded without access token."));
-  }
-
-  await finalizeAuthResponse(data, "oauth", { provider });
-  return data;
 }
 
 /** GET /api/auth/oauth/accounts — linked providers for Settings. */

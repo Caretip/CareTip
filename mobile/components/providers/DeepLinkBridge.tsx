@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import * as Linking from "expo-linking";
 import { useRouter } from "expo-router";
+import { isAppleAndroidCallbackUrl } from "@/services/apple/appleAndroidOAuth";
 
 function extractToken(url: string): string | null {
   const parsed = Linking.parse(url);
@@ -62,11 +63,18 @@ export function DeepLinkBridge() {
 
   useEffect(() => {
     const handle = (url: string | null) => {
-      if (!url) return;
-      routeAuthDeepLink(url, router);
+      try {
+        if (!url) return;
+        if (isAppleAndroidCallbackUrl(url)) return;
+        routeAuthDeepLink(url, router);
+      } catch {
+        // Malformed URLs must not crash the app.
+      }
     };
 
-    void Linking.getInitialURL().then(handle);
+    void Linking.getInitialURL()
+      .then(handle)
+      .catch(() => undefined);
     const sub = Linking.addEventListener("url", ({ url }) => handle(url));
     return () => sub.remove();
   }, [router]);

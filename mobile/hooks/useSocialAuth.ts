@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Platform } from "react-native";
 import { useRouter } from "expo-router";
 import { socialProvidersForPlatform as providersForOs } from "@/utils/socialAuthUiPolicy";
@@ -7,6 +7,7 @@ import { useI18n } from "@/hooks/useI18n";
 import {
   isAppleSignInAvailable,
   isAppleSignInConfigured,
+  logAppleOAuthDiag,
   mapAppleNativeError,
   requestAppleIdToken,
 } from "@/services/apple/appleSignIn";
@@ -31,6 +32,7 @@ import {
   isOAuthAccountNotRegistered,
 } from "@/utils/oauthErrorMessage";
 import { resolveLoginLocale } from "@/utils/resolveLoginLocale";
+import { logOAuthFlowDiag } from "@/utils/oauthFlowDiag";
 
 function resolveTimeZone(): string | undefined {
   try {
@@ -61,13 +63,19 @@ export function useSocialAuth(options?: UseSocialAuthOptions) {
   const { t } = useI18n();
   const { signInWithOAuth } = useAuth();
   const [loadingProvider, setLoadingProvider] = useState<OAuthProvider | null>(null);
-  const [appleAvailable, setAppleAvailable] = useState(false);
+  const [appleAvailable, setAppleAvailable] = useState(() =>
+    Platform.OS === "android" ? isAppleSignInConfigured() : false,
+  );
 
   useEffect(() => {
     let cancelled = false;
     void (async () => {
-      const available = await isAppleSignInAvailable();
-      if (!cancelled) setAppleAvailable(available);
+      try {
+        const available = await isAppleSignInAvailable();
+        if (!cancelled) setAppleAvailable(available);
+      } catch {
+        if (!cancelled) setAppleAvailable(false);
+      }
     })();
     return () => {
       cancelled = true;
@@ -77,6 +85,7 @@ export function useSocialAuth(options?: UseSocialAuthOptions) {
   const googleConfigured = isGoogleSignInConfigured() && isGoogleSignInNativeAvailable();
   const appleConfigured = isAppleSignInConfigured() && appleAvailable;
   const facebookConfigured = isFacebookSignInConfigured();
+  const inFlightRef = useRef(false);
 
   /** Always show platform-order icons for UI parity; runSocialAuth gates unconfigured providers. */
   const configuredProviders = useMemo(() => socialProvidersForPlatform(), []);
@@ -86,11 +95,23 @@ export function useSocialAuth(options?: UseSocialAuthOptions) {
 
   const runSocialAuth = useCallback(
     async (provider: OAuthProvider, mode: SocialAuthMode) => {
+      if (inFlightRef.current) {
+        logOAuthFlowDiag("ignored_duplicate", {
+          flow: mode.isLogin ? "login" : "signup",
+          provider,
+          isLogin: mode.isLogin,
+          intendedRole: mode.intendedRole ?? null,
+          hasInviteCode: Boolean(mode.inviteCode),
+          source: "useSocialAuth.inFlight",
+        });
+        return;
+      }
       if (provider === "google" && !googleConfigured) {
         showErrorToast(t("auth.googleNotConfigured"));
         return;
       }
       if (provider === "apple" && !appleConfigured) {
+        logAppleOAuthDiag("configuration missing");
         showErrorToast(t("auth.appleNotConfigured"));
         return;
       }
@@ -99,6 +120,15 @@ export function useSocialAuth(options?: UseSocialAuthOptions) {
         return;
       }
 
+      inFlightRef.current = true;
+      logOAuthFlowDiag("start", {
+        flow: mode.isLogin ? "login" : "signup",
+        provider,
+        isLogin: mode.isLogin,
+        intendedRole: mode.intendedRole ?? null,
+        hasInviteCode: Boolean(mode.inviteCode),
+        source: "useSocialAuth.runSocialAuth",
+      });
       setLoadingProvider(provider);
       try {
         let idToken: string;
@@ -108,7 +138,10 @@ export function useSocialAuth(options?: UseSocialAuthOptions) {
           idToken = await requestGoogleIdToken();
         } else if (provider === "apple") {
           const apple = await requestAppleIdToken();
-          idToken = apple.idToken;
+          idToken = typeof apple?.idToken === "string" ? apple.idToken.trim() : "";
+          if (!idToken) {
+            throw new Error("Apple did not return an identity token.");
+          }
           if (!name && apple.fullName) name = apple.fullName;
         } else {
           idToken = await requestFacebookIdToken();
@@ -145,11 +178,16 @@ export function useSocialAuth(options?: UseSocialAuthOptions) {
               ? mapAppleNativeError(error)
               : mapFacebookNativeError(error);
 
-        if (isOAuthAccountNotRegistered(normalizeApiError(nativeMapped))) {
-          options?.onAccountNotRegistered?.();
+        if (mode.isLogin && isOAuthAccountNotRegistered(normalizeApiError(nativeMapped))) {
+          try {
+            options?.onAccountNotRegistered?.();
+          } catch {
+            // navigation callback must not crash the auth screen
+          }
         }
         showErrorToast(resolveOAuthErrorMessage(nativeMapped, t, provider));
       } finally {
+        inFlightRef.current = false;
         setLoadingProvider(null);
       }
     },

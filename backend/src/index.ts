@@ -157,6 +157,17 @@ app.get("/api/health", healthController.getApiHealth);
 app.get("/favicon.ico", (_req, res) => {
   res.status(204).end();
 });
+/** Optional Apple domain verification file for Sign in with Apple (Services ID Return URL host). */
+app.get("/.well-known/apple-developer-domain-association.txt", (_req, res) => {
+  const content = process.env.APPLE_DOMAIN_ASSOCIATION_CONTENT?.trim();
+  if (!content) {
+    res.status(404).end();
+    return;
+  }
+  res.setHeader("Content-Type", "text/plain; charset=utf-8");
+  res.setHeader("Cache-Control", "no-store");
+  res.send(content);
+});
 
 app.use("/api", authenticatedApiRateLimit);
 

@@ -17,6 +17,7 @@ import {
 import {
   isAppleSignInAvailable,
   isAppleSignInConfigured,
+  logAppleOAuthDiag,
   mapAppleNativeError,
   requestAppleIdToken,
 } from "@/services/apple/appleSignIn";
@@ -41,7 +42,6 @@ import { useAuthUserId, useUserQueryKeys } from "@/services/api/queryKeys";
 import { showErrorToast, showSuccessToast } from "@/store/toastStore";
 import { friendlyErrorMessage } from "@/utils/friendlyError";
 import { resolveOAuthErrorMessage } from "@/utils/oauthErrorMessage";
-import { normalizeApiError } from "@/types/api";
 import type { OAuthProvider } from "@/types/auth";
 import type { TwoFactorSetup } from "@/types/settings";
 import type { ColorPalette } from "@/theme/colors";
@@ -88,13 +88,19 @@ export function SecuritySettingsSection({ includeMfa = false }: SecuritySettings
   const [mfaSetup, setMfaSetup] = useState<TwoFactorSetup | null>(null);
   const [mfaSetupLoading, setMfaSetupLoading] = useState(false);
   const [linkingProvider, setLinkingProvider] = useState<OAuthProvider | null>(null);
-  const [appleAvailable, setAppleAvailable] = useState(false);
+  const [appleAvailable, setAppleAvailable] = useState(() =>
+    Platform.OS === "android" ? isAppleSignInConfigured() : false,
+  );
 
   useEffect(() => {
     let cancelled = false;
     void (async () => {
-      const available = await isAppleSignInAvailable();
-      if (!cancelled) setAppleAvailable(available);
+      try {
+        const available = await isAppleSignInAvailable();
+        if (!cancelled) setAppleAvailable(available);
+      } catch {
+        if (!cancelled) setAppleAvailable(false);
+      }
     })();
     return () => {
       cancelled = true;
@@ -195,7 +201,11 @@ export function SecuritySettingsSection({ includeMfa = false }: SecuritySettings
   };
 
   const handleLink = async (provider: OAuthProvider) => {
+    if (linkingProvider) return;
     if (!isProviderLinkable(provider)) {
+      if (provider === "apple") {
+        logAppleOAuthDiag("configuration missing");
+      }
       showErrorToast(
         provider === "apple"
           ? t("auth.appleNotConfigured")
@@ -208,11 +218,14 @@ export function SecuritySettingsSection({ includeMfa = false }: SecuritySettings
     setLinkingProvider(provider);
     try {
       const idToken = await requestIdTokenForProvider(provider);
+      if (provider === "apple" && (typeof idToken !== "string" || !idToken.trim())) {
+        throw new Error("Apple did not return an identity token.");
+      }
       await linkOAuthAccount(provider, idToken);
       showSuccessToast(t("settings.linkedAccounts.linked"));
       await queryClient.invalidateQueries({ queryKey: keys.oauthAccounts });
     } catch (error) {
-      const mapped = normalizeApiError(mapProviderNativeError(provider, error));
+      const mapped = mapProviderNativeError(provider, error);
       showErrorToast(resolveOAuthErrorMessage(mapped, t, provider));
     } finally {
       setLinkingProvider(null);

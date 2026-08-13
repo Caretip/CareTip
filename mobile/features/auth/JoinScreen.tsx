@@ -93,11 +93,12 @@ export function JoinScreen() {
           accessibilityRole="button"
           onPress={() => {
             hapticLight();
-            router.replace("/(auth)/login");
+            if (router.canGoBack()) router.back();
+            else router.replace("/(auth)/signup" as never);
           }}
           style={({ pressed }) => [authCardStyles.backRow, pressed ? authCardStyles.pressed : null]}
         >
-          <Text style={authCardStyles.backLink}>{t("auth.backToSignIn")}</Text>
+          <Text style={authCardStyles.backLink}>{t("auth.backToSignupChoice")}</Text>
         </Pressable>
       </View>
     </AuthExperienceShell>
