@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { StyleSheet, Text, View, Pressable } from "react-native";
+import { useEffect, useRef, useState } from "react";
+import { BackHandler, StyleSheet, Text, View, Pressable } from "react-native";
 import { useRouter } from "expo-router";
 import { AuthExperienceShell } from "@/components/auth/AuthExperienceShell";
 import { AuthField } from "@/components/auth/AuthField";
@@ -10,9 +10,15 @@ import { useI18n } from "@/hooks/useI18n";
 import { establishAuthenticatedSession } from "@/services/auth/authCacheBoundary";
 import { authService } from "@/services/auth/authService";
 import { fetchBusinessProfile, patchBusinessProfile } from "@/services/api/businessService";
-import { friendlyErrorMessage } from "@/utils/friendlyError";
+import { showSuccessToast } from "@/store/toastStore";
+import {
+  formatOnboardingError,
+  isAuthenticationError,
+  isBusinessNotFoundError,
+} from "@/utils/userFacingError";
 import { navigateAfterAuth } from "@/utils/postAuthNavigation";
 import { requireOnline } from "@/utils/requireOnline";
+import { hapticLight } from "@/utils/haptics";
 import { authCardStyles } from "@/components/auth/authCardStyles";
 import { authBrand } from "@/theme/authBrand";
 import { spacing, typography } from "@/theme";
@@ -25,17 +31,26 @@ import { spacing, typography } from "@/theme";
 export function BusinessOnboardingScreen() {
   const router = useRouter();
   const { t } = useI18n();
-  const { user } = useAuth();
+  const { user, isAuthenticated, signOut } = useAuth();
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [needsSignIn, setNeedsSignIn] = useState(false);
+  const inFlightRef = useRef(false);
 
   const [legalBusinessName, setLegalBusinessName] = useState("");
   const [businessType, setBusinessType] = useState("");
   const [registeredAddress, setRegisteredAddress] = useState("");
   const [contactPhone, setContactPhone] = useState("");
   const [website, setWebsite] = useState("");
+
+  const applyOnboardingFailure = (err: unknown) => {
+    setError(formatOnboardingError(err, t));
+    if (isAuthenticationError(err) || isBusinessNotFoundError(err)) {
+      setNeedsSignIn(true);
+    }
+  };
 
   useEffect(() => {
     let cancelled = false;
@@ -48,8 +63,9 @@ export function BusinessOnboardingScreen() {
         setContactPhone(String(profile.contactPhone ?? ""));
         setWebsite(String(profile.website ?? ""));
       })
-      .catch(() => {
-        /* profile may not exist yet */
+      .catch((err) => {
+        if (cancelled) return;
+        applyOnboardingFailure(err);
       })
       .finally(() => {
         if (!cancelled) setLoading(false);
@@ -57,9 +73,35 @@ export function BusinessOnboardingScreen() {
     return () => {
       cancelled = true;
     };
+    // t is stable enough for first-load copy; avoid refetch loops.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  useEffect(() => {
+    const sub = BackHandler.addEventListener("hardwareBackPress", () => {
+      if (busy || loading || inFlightRef.current) return true;
+      if (step === 2) {
+        setStep(1);
+        setError(null);
+        return true;
+      }
+      // Stay on step 1 — popping would flash signup/login then redirect back.
+      return true;
+    });
+    return () => sub.remove();
+  }, [busy, loading, step]);
+
+  const goToSignIn = async () => {
+    if (busy || inFlightRef.current) return;
+    hapticLight();
+    if (isAuthenticated) {
+      await signOut();
+    }
+    router.replace("/(auth)/login");
+  };
+
   const handleContinue = async () => {
+    if (busy || loading || inFlightRef.current || needsSignIn) return;
     setError(null);
     if (!(await requireOnline())) {
       setError(t("errors.offline"));
@@ -74,6 +116,7 @@ export function BusinessOnboardingScreen() {
         setError(t("auth.onboardingTypeRequired"));
         return;
       }
+      inFlightRef.current = true;
       setBusy(true);
       try {
         await patchBusinessProfile({
@@ -81,10 +124,12 @@ export function BusinessOnboardingScreen() {
           legalBusinessName: legalBusinessName.trim(),
           businessType: businessType.trim(),
         });
+        showSuccessToast(t("auth.onboardingDetailsSaved"));
         setStep(2);
       } catch (err) {
-        setError(friendlyErrorMessage(err, t("auth.onboardingSaveFailed"), t));
+        applyOnboardingFailure(err);
       } finally {
+        inFlightRef.current = false;
         setBusy(false);
       }
       return;
@@ -95,6 +140,7 @@ export function BusinessOnboardingScreen() {
       return;
     }
 
+    inFlightRef.current = true;
     setBusy(true);
     try {
       await patchBusinessProfile({
@@ -104,10 +150,12 @@ export function BusinessOnboardingScreen() {
       });
       const session = await authService.patchMyOnboardingStatus(true);
       await establishAuthenticatedSession(session.token, session.user, "onboarding-complete");
+      showSuccessToast(t("auth.onboardingReady"));
       await navigateAfterAuth(router, session.user);
     } catch (err) {
-      setError(friendlyErrorMessage(err, t("auth.onboardingSaveFailed"), t));
+      applyOnboardingFailure(err);
     } finally {
+      inFlightRef.current = false;
       setBusy(false);
     }
   };
@@ -134,14 +182,14 @@ export function BusinessOnboardingScreen() {
               icon="business-outline"
               value={legalBusinessName}
               onChangeText={setLegalBusinessName}
-              editable={!busy}
+              editable={!busy && !needsSignIn}
             />
             <AuthField
               label={t("auth.onboardingBusinessType")}
               icon="storefront-outline"
               value={businessType}
               onChangeText={setBusinessType}
-              editable={!busy}
+              editable={!busy && !needsSignIn}
             />
           </View>
         ) : (
@@ -151,7 +199,7 @@ export function BusinessOnboardingScreen() {
               icon="location-outline"
               value={registeredAddress}
               onChangeText={setRegisteredAddress}
-              editable={!busy}
+              editable={!busy && !needsSignIn}
             />
             <AuthField
               label={t("auth.onboardingPhone")}
@@ -159,7 +207,7 @@ export function BusinessOnboardingScreen() {
               value={contactPhone}
               onChangeText={setContactPhone}
               keyboardType="phone-pad"
-              editable={!busy}
+              editable={!busy && !needsSignIn}
             />
             <AuthField
               label={t("auth.onboardingWebsite")}
@@ -167,7 +215,7 @@ export function BusinessOnboardingScreen() {
               value={website}
               onChangeText={setWebsite}
               keyboardType="url"
-              editable={!busy}
+              editable={!busy && !needsSignIn}
             />
             <Text style={styles.reviewHint}>{t("auth.onboardingReviewHint")}</Text>
           </View>
@@ -179,23 +227,45 @@ export function BusinessOnboardingScreen() {
           </Text>
         ) : null}
 
-        <AuthContinueButton
-          label={step === 1 ? t("common.continue") : t("auth.onboardingFinish")}
-          onPress={() => void handleContinue()}
-          loading={busy}
-          disabled={loading}
-        />
+        {needsSignIn ? (
+          <AuthContinueButton
+            label={t("auth.backToSignIn")}
+            onPress={() => void goToSignIn()}
+            loading={busy}
+          />
+        ) : (
+          <AuthContinueButton
+            label={step === 1 ? t("common.continue") : t("auth.onboardingFinish")}
+            onPress={() => void handleContinue()}
+            loading={busy}
+            disabled={loading}
+          />
+        )}
 
-        {step === 2 ? (
+        {step === 2 && !needsSignIn ? (
           <Pressable
             accessibilityRole="button"
-            onPress={() => setStep(1)}
+            onPress={() => {
+              if (busy) return;
+              hapticLight();
+              setStep(1);
+              setError(null);
+            }}
             disabled={busy}
             style={({ pressed }) => [authCardStyles.backRow, pressed ? authCardStyles.pressed : null]}
           >
             <Text style={authCardStyles.backLink}>{t("common.back")}</Text>
           </Pressable>
-        ) : null}
+        ) : (
+          <Pressable
+            accessibilityRole="button"
+            onPress={() => void goToSignIn()}
+            disabled={busy || loading}
+            style={({ pressed }) => [authCardStyles.backRow, pressed ? authCardStyles.pressed : null]}
+          >
+            <Text style={authCardStyles.backLink}>{t("auth.backToSignIn")}</Text>
+          </Pressable>
+        )}
       </View>
     </AuthExperienceShell>
   );

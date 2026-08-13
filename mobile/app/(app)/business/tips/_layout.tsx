@@ -9,6 +9,8 @@ export default function BusinessTipsLayout() {
       screenOptions={{
         headerShown: false,
         contentStyle: { backgroundColor: colors.background },
+        animation: "slide_from_right",
+        animationDuration: 240,
       }}
     />
   );

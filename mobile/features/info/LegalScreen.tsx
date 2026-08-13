@@ -26,7 +26,7 @@ export function LegalScreen({ kind }: LegalScreenProps) {
 
   return (
     <InfoScreenShell title={query.data?.title ?? fallbackTitle} scroll={false}>
-      {query.isLoading ? (
+      {query.isLoading && !query.data ? (
         <LegalDocumentLoading />
       ) : query.isNotFound ? (
         <LegalDocumentEmpty message={t("info.legalNotAvailable")} />

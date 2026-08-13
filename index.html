@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html
   lang="en"
-  class="caretip-font-inter"
+  class="caretip-font-inter dark"
   style="font-family: Inter, 'Inter Fallback', ui-sans-serif, system-ui, sans-serif"
 >
   <head>
@@ -11,10 +11,10 @@
       content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=5"
     />
     <meta name="color-scheme" content="light dark" />
-    <meta name="theme-color" content="#FFFFFF" />
+    <meta name="theme-color" content="#0a0a0a" />
     <meta name="theme-color" content="#FAF9F6" media="(prefers-color-scheme: light)" />
     <meta name="theme-color" content="#0a0a0a" media="(prefers-color-scheme: dark)" />
-    <meta name="msapplication-TileColor" content="#FAF9F6" />
+    <meta name="msapplication-TileColor" content="#0a0a0a" />
     <meta
       name="description"
       content="CareTip: digital tipping for hospitality. Scan, tip, and support your team."
@@ -34,6 +34,11 @@
       html.dark body,
       html.dark #root {
         background-color: #0a0a0a;
+      }
+
+      html:not(.dark) body,
+      html:not(.dark) #root {
+        background-color: #fcfbf8;
       }
 
       #caretip-html-boot {
@@ -244,7 +249,7 @@
     <script src="/boot-locale.js"></script>
   </head>
 
-  <body style="margin: 0; background-color: #fcfbf8">
+  <body style="margin: 0">
     <div id="caretip-html-boot" role="status" aria-busy="true" hidden>
       <div class="caretip-html-boot__mark">
         <div class="caretip-html-boot__icon-wrap" aria-hidden="true">

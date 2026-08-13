@@ -2,7 +2,13 @@ import { Stack } from "expo-router";
 
 export default function BusinessSettingsLayout() {
   return (
-    <Stack screenOptions={{ headerShown: false, animation: "slide_from_right" }}>
+    <Stack
+      screenOptions={{
+        headerShown: false,
+        animation: "slide_from_right",
+        animationDuration: 240,
+      }}
+    >
       <Stack.Screen name="index" />
       <Stack.Screen name="general" />
       <Stack.Screen name="appearance" />

@@ -2,6 +2,7 @@ import { useMemo } from "react";
 import { StyleSheet, Switch, Text, View } from "react-native";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { GroupedList, GroupedRow, Section } from "@/components/ui/Section";
+import { SkeletonListRows } from "@/components/ui/Skeleton";
 import { SettingsSectionLayout } from "@/features/settings/SettingsSectionLayout";
 import { useI18n } from "@/hooks/useI18n";
 import { useTheme } from "@/hooks/useTheme";
@@ -30,14 +31,13 @@ export function BusinessNotificationsSettingsScreen() {
     onSuccess: () => void queryClient.invalidateQueries({ queryKey: keys.accountSettings }),
   });
 
-  if (!accountQuery.data) return null;
-
   const toggles = [
     ["tipReceivedNotifications", "settings.tipReceived"],
     ["summaryEmails", "settings.summaryEmails"],
     ["systemAlerts", "settings.systemAlerts"],
     ["notifyNewLogin", "settings.newLogin"],
   ] as const;
+  const account = accountQuery.data;
 
   return (
     <SettingsSectionLayout
@@ -45,19 +45,23 @@ export function BusinessNotificationsSettingsScreen() {
       subtitle={t("settings.notificationsBusinessSub")}
     >
       <Section title={t("settings.notificationsBusiness")}>
-        <GroupedList>
-          {toggles.map(([key, labelKey], index) => (
-            <GroupedRow key={key} showDivider={index < toggles.length - 1}>
-              <View style={styles.row}>
-                <Text style={styles.body}>{t(labelKey)}</Text>
-                <Switch
-                  value={accountQuery.data[key]}
-                  onValueChange={(value) => void patchAccount.mutateAsync({ [key]: value })}
-                />
-              </View>
-            </GroupedRow>
-          ))}
-        </GroupedList>
+        {accountQuery.isLoading && !account ? (
+          <SkeletonListRows count={4} />
+        ) : account ? (
+          <GroupedList>
+            {toggles.map(([key, labelKey], index) => (
+              <GroupedRow key={key} showDivider={index < toggles.length - 1}>
+                <View style={styles.row}>
+                  <Text style={styles.body}>{t(labelKey)}</Text>
+                  <Switch
+                    value={account[key]}
+                    onValueChange={(value) => void patchAccount.mutateAsync({ [key]: value })}
+                  />
+                </View>
+              </GroupedRow>
+            ))}
+          </GroupedList>
+        ) : null}
       </Section>
     </SettingsSectionLayout>
   );
@@ -81,7 +85,7 @@ export function EmployeeNotificationsSettingsScreen() {
     onSuccess: () => void queryClient.invalidateQueries({ queryKey: keys.employeeMe }),
   });
 
-  if (!employeeQuery.data) return null;
+  const employee = employeeQuery.data;
 
   return (
     <SettingsSectionLayout
@@ -89,26 +93,30 @@ export function EmployeeNotificationsSettingsScreen() {
       subtitle={t("settings.notificationsEmployeeSub")}
     >
       <Section title={t("settings.notificationsEmployee")}>
-        <GroupedList>
-          <GroupedRow>
-            <View style={styles.row}>
-              <Text style={styles.body}>{t("settings.emailNotifications")}</Text>
-              <Switch
-                value={employeeQuery.data.emailNotifications}
-                onValueChange={(v) => void patchEmployee.mutateAsync({ emailNotifications: v })}
-              />
-            </View>
-          </GroupedRow>
-          <GroupedRow showDivider={false}>
-            <View style={styles.row}>
-              <Text style={styles.body}>{t("settings.pushNotifications")}</Text>
-              <Switch
-                value={employeeQuery.data.pushNotifications}
-                onValueChange={(v) => void patchEmployee.mutateAsync({ pushNotifications: v })}
-              />
-            </View>
-          </GroupedRow>
-        </GroupedList>
+        {employeeQuery.isLoading && !employee ? (
+          <SkeletonListRows count={2} />
+        ) : employee ? (
+          <GroupedList>
+            <GroupedRow>
+              <View style={styles.row}>
+                <Text style={styles.body}>{t("settings.emailNotifications")}</Text>
+                <Switch
+                  value={employee.emailNotifications}
+                  onValueChange={(v) => void patchEmployee.mutateAsync({ emailNotifications: v })}
+                />
+              </View>
+            </GroupedRow>
+            <GroupedRow showDivider={false}>
+              <View style={styles.row}>
+                <Text style={styles.body}>{t("settings.pushNotifications")}</Text>
+                <Switch
+                  value={employee.pushNotifications}
+                  onValueChange={(v) => void patchEmployee.mutateAsync({ pushNotifications: v })}
+                />
+              </View>
+            </GroupedRow>
+          </GroupedList>
+        ) : null}
       </Section>
     </SettingsSectionLayout>
   );

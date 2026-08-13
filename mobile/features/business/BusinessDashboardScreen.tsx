@@ -14,7 +14,6 @@ import { Section } from "@/components/ui/Section";
 import { AccessErrorState } from "@/components/ui/AccessErrorState";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { SkeletonMetricGrid } from "@/components/ui/Skeleton";
-import { FadeIn } from "@/components/ui/motion";
 import { CustomerFeedbackPanel } from "@/components/business/CustomerFeedbackPanel";
 import { EmployeeGoalsPanel } from "@/components/business/EmployeeGoalsPanel";
 import { useAuth } from "@/hooks/useAuth";
@@ -140,8 +139,7 @@ export function BusinessDashboardScreen() {
         />
       ) : (
         <View style={styles.stack}>
-          <FadeIn index={0}>
-            <View style={styles.heroBlock}>
+          <View style={styles.heroBlock}>
               <HeroBalanceCard
                 label={t("businessDashboard.totalTips")}
                 value={formatEur(stats?.totalTips)}
@@ -173,9 +171,7 @@ export function BusinessDashboardScreen() {
               <DashboardShortcutGrid shortcuts={shortcuts} />
               <DashboardCookieConsent />
             </View>
-          </FadeIn>
 
-          <FadeIn index={1}>
             <Section
               title={t("businessDashboard.employeePerformanceTitle")}
               subtitle={t("businessDashboard.employeePerformanceDesc")}
@@ -204,9 +200,7 @@ export function BusinessDashboardScreen() {
                 />
               )}
             </Section>
-          </FadeIn>
 
-          <FadeIn index={2}>
             <Section title={t("businessDashboard.employeeGoalsTitle")}>
               {premiumTier ? (
                 <EmployeeGoalsPanel stats={stats} employeeNameById={employeeNameById} />
@@ -219,13 +213,10 @@ export function BusinessDashboardScreen() {
                 />
               )}
             </Section>
-          </FadeIn>
 
-          <FadeIn index={3}>
             <Section title={t("businessDashboard.customerFeedbackTitle")}>
               <CustomerFeedbackPanel />
             </Section>
-          </FadeIn>
         </View>
       )}
     </LayeredScreen>

@@ -291,7 +291,7 @@ export function SecuritySettingsSection({ includeMfa = false }: SecuritySettings
 
       <Section title={t("settings.linkedAccounts.title")}>
         <Text style={styles.body}>{t("settings.linkedAccounts.subtitle")}</Text>
-        {oauthQuery.isLoading ? (
+        {oauthQuery.isLoading && !oauthQuery.data ? (
           <Text style={styles.muted}>{t("common.loading")}</Text>
         ) : null}
         {oauthQuery.isError ? (

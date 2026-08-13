@@ -62,6 +62,14 @@ function main(): void {
   assert.match(join, /\/\(auth\)\/accept-invite/);
   assert.match(join, /auth\.backToSignupChoice/);
 
+  const accept = read("features/auth/AcceptInviteScreen.tsx");
+  assert.match(accept, /\/\(auth\)\/join/);
+  assert.doesNotMatch(accept, /router\.replace\("\/\(auth\)\/login"\)/);
+
+  const onboarding = read("features/auth/BusinessOnboardingScreen.tsx");
+  assert.match(onboarding, /BackHandler/);
+  assert.match(onboarding, /formatOnboardingError/);
+
   assert.match(login, /isLogin:\s*true/);
   assert.doesNotMatch(login, /isLogin:\s*false,\s*intendedRole:\s*"MANAGER"/);
 

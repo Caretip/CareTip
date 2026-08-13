@@ -9,7 +9,7 @@ export function BillingReturnSyncOverlay() {
   const message = useBillingReturnSyncStore((s) => s.message);
 
   return (
-    <Modal visible={active} transparent animationType="fade" statusBarTranslucent>
+    <Modal visible={active} transparent animationType="none" statusBarTranslucent>
       <View style={styles.backdrop} accessibilityViewIsModal>
         <View style={styles.card}>
           <ActivityIndicator color={authBrand.orange} size="large" />

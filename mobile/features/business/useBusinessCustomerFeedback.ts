@@ -35,7 +35,9 @@ export function useBusinessCustomerFeedback(take = 3) {
   return {
     data: feedbackQuery.data,
     error: feedbackQuery.error,
-    isLoading: profileQuery.isLoading || (premiumTier && feedbackQuery.isLoading),
+    isLoading:
+      (profileQuery.isLoading && !profileQuery.data) ||
+      (Boolean(premiumTier) && feedbackQuery.isLoading && !feedbackQuery.data),
     isRefreshing: feedbackQuery.isRefetching,
     premiumTier,
     isGated,

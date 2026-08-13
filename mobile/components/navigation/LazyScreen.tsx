@@ -1,14 +1,11 @@
 import { Suspense, lazy, type ComponentType } from "react";
 import { StyleSheet, View } from "react-native";
-import { SkeletonListRows } from "@/components/ui/Skeleton";
+import { useTheme } from "@/hooks/useTheme";
 import { screenContentPadding } from "@/components/ui/ScreenShell";
 
 function LazyScreenFallback() {
-  return (
-    <View style={styles.fallback}>
-      <SkeletonListRows count={4} />
-    </View>
-  );
+  const { colors } = useTheme();
+  return <View style={[styles.fallback, { backgroundColor: colors.background }]} />;
 }
 
 /** Defer heavy insight screens until first navigation — keeps dashboard/QR/settings instant. */
@@ -27,6 +24,5 @@ const styles = StyleSheet.create({
   fallback: {
     flex: 1,
     ...screenContentPadding,
-    paddingTop: 24,
   },
 });

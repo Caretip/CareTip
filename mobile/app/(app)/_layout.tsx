@@ -44,8 +44,8 @@ export default function AppLayout() {
       screenOptions={{
         headerShown: false,
         contentStyle: { backgroundColor: colors.background },
-        animation: "fade",
-        animationDuration: 220,
+        animation: "slide_from_right",
+        animationDuration: 240,
       }}
     />
   );

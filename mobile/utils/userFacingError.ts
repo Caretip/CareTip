@@ -89,6 +89,12 @@ const MESSAGE_TO_I18N: Record<string, string> = {
   "unauthorized": "errors.unauthorized",
   "not found": "errors.notFound",
   "something went wrong. please try again.": "errors.generic",
+  "invalid or expired invite code": "auth.inviteInvalid",
+  "invalid invite code": "auth.inviteInvalid",
+  "this account has been disabled.": "errors.unauthorized",
+  "this account has been disabled": "errors.unauthorized",
+  "email already registered": "auth.registerFailed",
+  "email already registered. sign in instead.": "auth.registerFailed",
   "share_export_unavailable": "settings.menu.exportError",
   "share export unavailable": "settings.menu.exportError",
 };
@@ -141,6 +147,29 @@ export function isAuthenticationError(error: unknown): boolean {
   if (normalized.isUnauthorized || normalized.status === 401) return true;
   if (normalized.code === "AUTH_REQUIRED" || normalized.code === "UNAUTHORIZED") return true;
   return /authentication required/i.test(normalized.message || "");
+}
+
+export function isBusinessNotFoundError(error: unknown): boolean {
+  if (!error) return false;
+  const normalized = normalizeApiError(error);
+  if (normalized.code === "BUSINESS_NOT_FOUND") return true;
+  const raw =
+    typeof error === "string" ? error : normalized.message || "";
+  return /business not found/i.test(raw);
+}
+
+/** Onboarding-specific copy — does not change global 404 mapping. */
+export function formatOnboardingError(
+  error: unknown,
+  t: TranslateFn,
+): string {
+  if (isAuthenticationError(error)) {
+    return t("auth.onboardingSessionExpired");
+  }
+  if (isBusinessNotFoundError(error)) {
+    return t("auth.onboardingBusinessUnavailable");
+  }
+  return formatUserFacingError(error, t("auth.onboardingSaveFailed"), t);
 }
 
 export function isPermissionError(error: unknown): boolean {

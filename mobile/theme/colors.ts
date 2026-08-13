@@ -161,4 +161,4 @@ export const darkColors = {
 
 export type ColorPalette = typeof lightColors | typeof darkColors;
 
-export const colors: ColorPalette = lightColors;
+export const colors: ColorPalette = darkColors;

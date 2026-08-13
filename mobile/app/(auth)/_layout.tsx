@@ -8,6 +8,21 @@ import { getPostAuthHref, resolvePostAuthAction } from "@/utils/postAuthNavigati
 
 const AUTH_RECOVERY_ROUTES = new Set(["verify-email", "onboarding", "mfa", "session-recovery"]);
 
+function AuthStack() {
+  return (
+    <Stack
+      screenOptions={{
+        headerShown: false,
+        contentStyle: { backgroundColor: authBrand.dark },
+        animation: "none",
+        animationDuration: 0,
+      }}
+    >
+      <Stack.Screen name="onboarding" options={{ gestureEnabled: false }} />
+    </Stack>
+  );
+}
+
 export default function AuthLayout() {
   const { isAuthenticated, user, status } = useAuth();
   const routingReady = useSessionRoutingReady();
@@ -25,16 +40,12 @@ export default function AuthLayout() {
     if (!onSessionRecovery) {
       return <Redirect href={"/(auth)/session-recovery" as never} />;
     }
-    return (
-      <Stack
-        screenOptions={{
-          headerShown: false,
-          contentStyle: { backgroundColor: "transparent" },
-          animation: "fade",
-          animationDuration: 280,
-        }}
-      />
-    );
+    return <AuthStack />;
+  }
+
+  // Onboarding requires a live session — do not keep the wizard after sign-out / expiry.
+  if (currentRoute === "onboarding" && !isAuthenticated && !logoutTransition) {
+    return <Redirect href={"/(auth)/login"} />;
   }
 
   // Do not bounce back to the dashboard while Sign Out is tearing down.
@@ -49,30 +60,12 @@ export default function AuthLayout() {
         return <Redirect href={getPostAuthHref(user)} />;
       }
       if (currentRoute === "mfa") {
-        return (
-          <Stack
-            screenOptions={{
-              headerShown: false,
-              contentStyle: { backgroundColor: "transparent" },
-              animation: "fade",
-              animationDuration: 280,
-            }}
-          />
-        );
+        return <AuthStack />;
       }
     } else {
       return <Redirect href={getPostAuthHref(user)} />;
     }
   }
 
-  return (
-    <Stack
-      screenOptions={{
-        headerShown: false,
-        contentStyle: { backgroundColor: logoutTransition ? authBrand.dark : "transparent" },
-        animation: logoutTransition ? "none" : "fade",
-        animationDuration: logoutTransition ? 0 : 280,
-      }}
-    />
-  );
+  return <AuthStack />;
 }

@@ -185,7 +185,8 @@ export const de: MobileMessages = {
     joinTitle: "Ihrem Unternehmen beitreten",
     joinSubtitle: "Geben Sie den Einladungscode Ihrer Führungskraft ein, um die Einladung anzunehmen.",
     joinVenueHint: "Beitritt zu {{name}}",
-    inviteInvalid: "Dieser Einladungscode ist ungültig oder abgelaufen.",
+    inviteInvalid:
+      "Dieser Einladungscode ist ungültig oder abgelaufen. Bitte Code prüfen und erneut versuchen.",
     acceptInviteTitle: "Einladung abschließen",
     acceptInviteWelcome: "Willkommen, {{name}}",
     acceptInviteSubtitle:
@@ -212,6 +213,12 @@ export const de: MobileMessages = {
     onboardingTypeRequired: "Bitte wählen Sie eine Betriebsart.",
     onboardingAddressRequired: "Bitte geben Sie eine vollständige Adresse ein.",
     onboardingSaveFailed: "Einrichtung konnte nicht gespeichert werden. Bitte erneut versuchen.",
+    onboardingDetailsSaved: "Ihre Betriebsdaten wurden gespeichert.",
+    onboardingReady: "Ihr CareTip-Konto ist bereit. Dashboard wird geöffnet.",
+    onboardingSessionExpired:
+      "Ihre Sitzung ist nicht mehr gültig. Bitte erneut anmelden, um die Einrichtung fortzusetzen.",
+    onboardingBusinessUnavailable:
+      "Ihre Betriebseinrichtung ist nicht mehr verfügbar. Bitte erneut anmelden und die Einrichtung neu starten.",
   },
   info: {
     faqTitle: "FAQ",
@@ -723,7 +730,7 @@ export const de: MobileMessages = {
     timeout: "Das dauert länger als erwartet. Bitte erneut versuchen.",
     unavailable: "Diese Funktion ist vorübergehend nicht verfügbar. Bitte gleich erneut versuchen.",
     server: "Etwas ist auf unserer Seite schiefgelaufen. Bitte gleich erneut versuchen.",
-    unauthorized: "Bitte melden Sie sich erneut an, um fortzufahren.",
+    unauthorized: "Ihre Sitzung ist nicht mehr gültig. Bitte erneut anmelden, um fortzufahren.",
     forbidden: "Sie haben keine Berechtigung für diese Aktion.",
     notFound: "Wir konnten das Gesuchte nicht finden.",
     notFoundTitle: "Seite nicht gefunden",

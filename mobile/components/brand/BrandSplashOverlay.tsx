@@ -45,7 +45,7 @@ export function BrandSplashOverlay({
 
   useEffect(() => {
     opacity.value = withTiming(visible ? 1 : 0, {
-      duration: 420,
+      duration: visible ? 180 : 200,
       easing: Easing.out(Easing.cubic),
     });
   }, [opacity, visible]);

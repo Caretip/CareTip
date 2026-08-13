@@ -5,7 +5,7 @@ import { shadows } from "./shadows";
 import { motion } from "./motion";
 
 export const theme = {
-  mode: "light" as const,
+  mode: "dark" as const,
   brand,
   colors,
   lightColors,

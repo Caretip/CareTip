@@ -13,7 +13,6 @@ import { RemoteAvatar } from "@/components/ui/RemoteAvatar";
 import { GroupedList, Section } from "@/components/ui/Section";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { SkeletonMetricGrid } from "@/components/ui/Skeleton";
-import { FadeIn } from "@/components/ui/motion";
 import { AccessErrorState } from "@/components/ui/AccessErrorState";
 import { useAuth } from "@/hooks/useAuth";
 import { useI18n } from "@/hooks/useI18n";
@@ -115,8 +114,7 @@ export function EmployeeDashboardScreen() {
         />
       ) : (
         <View style={styles.stack}>
-          <FadeIn index={0}>
-            <View style={styles.heroBlock}>
+          <View style={styles.heroBlock}>
               <HeroBalanceCard
                 label={t("employeeDashboard.periodEarnings")}
                 value={formatEur(tips?.periodAmountEur)}
@@ -144,9 +142,7 @@ export function EmployeeDashboardScreen() {
               <DashboardShortcutGrid shortcuts={shortcuts} />
               <DashboardCookieConsent />
             </View>
-          </FadeIn>
 
-          <FadeIn index={1}>
             <Section title={t("employeeDashboard.recentTips")}>
               {recentTips.length === 0 ? (
                 <EmptyState
@@ -177,7 +173,6 @@ export function EmployeeDashboardScreen() {
                 </GroupedList>
               )}
             </Section>
-          </FadeIn>
         </View>
       )}
     </LayeredScreen>

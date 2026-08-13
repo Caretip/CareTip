@@ -47,8 +47,8 @@ export function AuthFooterSheet({
 
   useEffect(() => {
     if (visible) {
-      opacity.value = withTiming(1, { duration: 220, easing: Easing.out(Easing.cubic) });
-      translateY.value = withTiming(0, { duration: 340, easing: Easing.out(Easing.cubic) });
+      opacity.value = withTiming(1, { duration: 160, easing: Easing.out(Easing.cubic) });
+      translateY.value = withTiming(0, { duration: 240, easing: Easing.out(Easing.cubic) });
     } else {
       opacity.value = 0;
       translateY.value = 48;

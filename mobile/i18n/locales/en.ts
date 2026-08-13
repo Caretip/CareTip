@@ -177,7 +177,7 @@ export const en: MobileMessages = {
     joinTitle: "Join Your Business",
     joinSubtitle: "Enter the invite code from your manager to accept your invitation.",
     joinVenueHint: "Joining {{name}}",
-    inviteInvalid: "This invite code is invalid or expired. Ask your manager for a new one.",
+    inviteInvalid: "This invite code is invalid or has expired. Check the code and try again.",
     acceptInviteTitle: "Complete Your Invitation",
     acceptInviteWelcome: "Welcome, {{name}}",
     acceptInviteSubtitle: "Verify your identity to join your business. Choose how you want to sign in.",
@@ -203,6 +203,12 @@ export const en: MobileMessages = {
     onboardingTypeRequired: "Business type is required.",
     onboardingAddressRequired: "Please enter a full registered address.",
     onboardingSaveFailed: "Could not save setup. Please try again.",
+    onboardingDetailsSaved: "Your business details have been saved.",
+    onboardingReady: "Your CareTip account is ready. Opening your dashboard.",
+    onboardingSessionExpired:
+      "Your session is no longer valid. Please sign in again to continue setup.",
+    onboardingBusinessUnavailable:
+      "Your business setup is no longer available. Please sign in again and start setup again.",
   },
   info: {
     faqTitle: "FAQ",
@@ -707,7 +713,7 @@ export const en: MobileMessages = {
     timeout: "This is taking longer than expected. Please try again.",
     unavailable: "This feature is temporarily unavailable. Please try again shortly.",
     server: "Something went wrong on our side. Please try again in a moment.",
-    unauthorized: "Please sign in again to continue.",
+    unauthorized: "Your session is no longer valid. Please sign in again to continue.",
     forbidden: "You don't have permission to perform this action.",
     notFound: "We couldn't find what you're looking for.",
     notFoundTitle: "Page not found",

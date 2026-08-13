@@ -44,8 +44,8 @@ export function AuthExperienceShell({
   const [footerOpen, setFooterOpen] = useState(false);
   const [keyboardOpen, setKeyboardOpen] = useState(false);
 
-  const heroOpacity = useSharedValue(0);
-  const heroY = useSharedValue(14);
+  const heroOpacity = useSharedValue(1);
+  const heroY = useSharedValue(0);
   const heroCompress = useSharedValue(1);
 
   useEffect(() => {
@@ -61,16 +61,10 @@ export function AuthExperienceShell({
 
   useEffect(() => {
     heroCompress.value = withTiming(keyboardOpen ? 0.55 : 1, {
-      duration: keyboardOpen ? 220 : 280,
+      duration: keyboardOpen ? 180 : 200,
       easing: Easing.out(Easing.cubic),
     });
   }, [heroCompress, keyboardOpen]);
-
-  useEffect(() => {
-    const ease = Easing.out(Easing.cubic);
-    heroOpacity.value = withTiming(1, { duration: 480, easing: ease });
-    heroY.value = withTiming(0, { duration: 480, easing: ease });
-  }, [heroOpacity, heroY]);
 
   const heroAnim = useAnimatedStyle(() => ({
     opacity: heroOpacity.value * (0.45 + heroCompress.value * 0.55),

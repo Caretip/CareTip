@@ -55,7 +55,7 @@ export function CustomerFeedbackPanel() {
   const { data, isLoading, error, isGated } = useBusinessCustomerFeedback(3);
   const avatarLookup = useEmployeeAvatarLookup(!isGated);
 
-  if (isLoading) {
+  if (isLoading && !data) {
     return <SkeletonListRows count={2} />;
   }
 

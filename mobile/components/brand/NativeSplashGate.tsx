@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { StyleSheet, View } from "react-native";
-import Animated, { Easing, useAnimatedStyle, useSharedValue, withTiming } from "react-native-reanimated";
 import { BrandSplashOverlay } from "@/components/brand/BrandSplashOverlay";
 import { useBootstrapReady } from "@/hooks/useAppReady";
 import { useI18n } from "@/hooks/useI18n";
@@ -17,11 +16,9 @@ import {
   setSplashWatchdogReveal,
 } from "@/utils/splashLifecycle";
 
-const REVEAL_MS = 380;
 /** Destination should paint shortly after route resolve; still requires bootstrap+nav. */
 const FIRST_SCREEN_FALLBACK_MS = 1600;
 const PROGRESS_TICK_MS = 180;
-const COMPLETE_HOLD_MS = 220;
 /** Let the React overlay paint Preparing… under native before peeling the underlay. */
 const NATIVE_HANDOFF_DELAY_MS = 48;
 
@@ -31,24 +28,14 @@ type NativeSplashGateProps = {
 
 /**
  * Native underlay + React BrandSplashOverlay (SSOT startup narrative).
- * Reveal only after bootstrap/routing settle and a real destination paints
- * (or fallback / watchdog — never leave the overlay stuck).
+ * Destination paints under the overlay; reveal only hides the overlay.
+ * After reveal, this gate must not keep an orange canvas between screens.
  */
 export function NativeSplashGate({ children }: NativeSplashGateProps) {
   const { t } = useI18n();
-  const styles = useMemo(
-    () =>
-      StyleSheet.create({
-        // Match native/React splash orange so handoff never flashes light/white.
-        root: { flex: 1, backgroundColor: authBrand.orange },
-        flex: { flex: 1, backgroundColor: authBrand.orange },
-      }),
-    [],
-  );
   const bootstrapReady = useBootstrapReady();
   const navigationReady = useNavigationReady();
   const firstScreenReady = useSplashStore((s) => s.firstScreenReady);
-  const contentOpacity = useSharedValue(0);
   const completed = useRef(false);
   const nativeHandoffStarted = useRef(false);
   const [overlayVisible, setOverlayVisible] = useState(true);
@@ -60,13 +47,7 @@ export function NativeSplashGate({ children }: NativeSplashGateProps) {
     logSplash("gate.reveal", { reason });
     setProgress(1);
     hideSplashOnce(reason, { duration: 120, fade: true });
-    setTimeout(() => {
-      setOverlayVisible(false);
-      contentOpacity.value = withTiming(1, {
-        duration: REVEAL_MS,
-        easing: Easing.out(Easing.cubic),
-      });
-    }, COMPLETE_HOLD_MS);
+    setOverlayVisible(false);
   };
 
   useEffect(() => {
@@ -115,19 +96,26 @@ export function NativeSplashGate({ children }: NativeSplashGateProps) {
   const handoffNativeSplash = () => {
     if (nativeHandoffStarted.current || completed.current) return;
     nativeHandoffStarted.current = true;
-    // Brief delay so Preparing… is already composited under the native layer.
     setTimeout(() => {
       hideSplashOnce("js-overlay-ready", { duration: 160, fade: true });
     }, NATIVE_HANDOFF_DELAY_MS);
   };
 
-  const contentAnim = useAnimatedStyle(() => ({
-    opacity: contentOpacity.value,
-  }));
+  const styles = useMemo(
+    () =>
+      StyleSheet.create({
+        root: {
+          flex: 1,
+          backgroundColor: overlayVisible ? authBrand.orange : "transparent",
+        },
+        flex: { flex: 1 },
+      }),
+    [overlayVisible],
+  );
 
   return (
     <View style={styles.root}>
-      <Animated.View style={[styles.flex, contentAnim]}>{children}</Animated.View>
+      <View style={styles.flex}>{children}</View>
       <BrandSplashOverlay
         progress={progress}
         visible={overlayVisible}

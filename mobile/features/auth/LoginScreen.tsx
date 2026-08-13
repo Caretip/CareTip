@@ -10,7 +10,6 @@ import { AuthContinueButton } from "@/components/auth/AuthContinueButton";
 import { AuthScreenHeader } from "@/components/auth/AuthScreenHeader";
 import { SocialAuthButtons } from "@/components/auth/SocialAuthButtons";
 import { useAuth } from "@/hooks/useAuth";
-import { useAuthLogoutTransitionActive } from "@/hooks/useAuthLogoutTransition";
 import { useSocialAuth } from "@/hooks/useSocialAuth";
 import { useI18n } from "@/hooks/useI18n";
 import { createLoginSchema, type LoginFormValues } from "@/features/auth/loginSchema";
@@ -47,8 +46,7 @@ export function LoginScreen() {
     typeof params.pendingEmail === "string" ? params.pendingEmail.trim() : "";
   const emailJustVerified =
     params.emailVerified === "1" || params.emailVerified === "true";
-  const { signIn, isHydrated, status, isAuthenticated, user } = useAuth();
-  const logoutTransition = useAuthLogoutTransitionActive();
+  const { signIn, isHydrated, status } = useAuth();
   const [formError, setFormError] = useState<string | null>(null);
   const [showVerifyPrompt, setShowVerifyPrompt] = useState(false);
   const passwordRef = useRef<TextInput>(null);
@@ -63,13 +61,6 @@ export function LoginScreen() {
   });
 
   const loginSchema = useMemo(() => createLoginSchema(t), [t]);
-
-  useEffect(() => {
-    if (logoutTransition) return;
-    if (isHydrated && isAuthenticated && user?.role) {
-      void navigateAfterAuth(router, user);
-    }
-  }, [isHydrated, isAuthenticated, user, router, logoutTransition]);
 
   const {
     control,

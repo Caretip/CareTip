@@ -104,9 +104,12 @@ export function ForgotPasswordScreen() {
 
             <Pressable
               accessibilityRole="button"
+              disabled={isSubmitting}
               onPress={() => {
+                if (isSubmitting) return;
                 hapticLight();
-                router.back();
+                if (router.canGoBack()) router.back();
+                else router.replace("/(auth)/login");
               }}
               style={({ pressed }) => [authCardStyles.backRow, pressed ? authCardStyles.pressed : null]}
             >

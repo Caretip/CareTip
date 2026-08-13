@@ -22,6 +22,7 @@ export function buildPremiumTabScreenOptions(
   palette: ColorPalette = defaultColors,
 ): {
   headerShown: boolean;
+  animation: "none";
   tabBarActiveTintColor: string;
   tabBarInactiveTintColor: string;
   tabBarHideOnKeyboard: boolean;
@@ -31,6 +32,7 @@ export function buildPremiumTabScreenOptions(
 } {
   return {
     headerShown: false,
+    animation: "none",
     tabBarHideOnKeyboard: true,
     tabBarShowLabel: true,
     tabBarActiveTintColor: palette.primary,

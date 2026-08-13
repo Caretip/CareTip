@@ -22,15 +22,17 @@ type ThemeContextValue = {
 };
 
 export const THEME_STORAGE_KEY = "caretip-theme";
+/** Used when nothing is stored yet. Toggle still offers light / dark / system. */
+export const DEFAULT_THEME_PREFERENCE: ThemePreference = "dark";
 
 function getSystemTheme(): ResolvedTheme {
-  if (typeof window === "undefined") return "light";
+  if (typeof window === "undefined") return "dark";
   return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
 }
 
 function parseStoredPreference(raw: string | null): ThemePreference {
   if (raw === "light" || raw === "dark" || raw === "system") return raw;
-  return "light";
+  return DEFAULT_THEME_PREFERENCE;
 }
 
 function resolveTheme(preference: ThemePreference): ResolvedTheme {
@@ -42,7 +44,7 @@ function readStoredPreference(): ThemePreference {
   try {
     return parseStoredPreference(window.localStorage.getItem(THEME_STORAGE_KEY));
   } catch {
-    return "light";
+    return DEFAULT_THEME_PREFERENCE;
   }
 }
 
@@ -56,7 +58,7 @@ function applyResolvedTheme(resolved: ResolvedTheme) {
 }
 
 function getInitialPreference(): ThemePreference {
-  if (typeof window === "undefined") return "light";
+  if (typeof window === "undefined") return DEFAULT_THEME_PREFERENCE;
   return readStoredPreference();
 }
 

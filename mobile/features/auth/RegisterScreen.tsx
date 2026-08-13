@@ -209,7 +209,9 @@ export function RegisterScreen() {
 
         <Pressable
           accessibilityRole="button"
+          disabled={busy}
           onPress={() => {
+            if (busy) return;
             hapticLight();
             goToSignupChoice(router);
           }}

@@ -258,13 +258,21 @@ export function AcceptInviteScreen() {
 
         <Pressable
           accessibilityRole="button"
+          disabled={busy}
           onPress={() => {
+            if (busy) return;
             hapticLight();
-            router.replace("/(auth)/login");
+            if (showPasswordForm) {
+              setShowPasswordForm(false);
+              setFormError(null);
+              return;
+            }
+            if (router.canGoBack()) router.back();
+            else router.replace("/(auth)/join" as never);
           }}
           style={({ pressed }) => [authCardStyles.backRow, pressed ? authCardStyles.pressed : null]}
         >
-          <Text style={authCardStyles.backLink}>{t("auth.backToSignIn")}</Text>
+          <Text style={authCardStyles.backLink}>{t("common.back")}</Text>
         </Pressable>
       </View>
     </AuthExperienceShell>

@@ -13,11 +13,11 @@ export function ThemedRootNavigation() {
   const { isAuthenticated } = useAuth();
   const bootstrapReady = useBootstrapReady();
   const logoutTransition = useAuthLogoutTransitionActive();
-  const suppressGroupFade = logoutTransition || !isAuthenticated;
-  // Orange only during gated boot. Logout uses the auth canvas (not orange / not white).
+  const holdAuthCanvas = logoutTransition || !isAuthenticated;
+  // Orange only during gated boot. Logout / unauth uses the auth canvas (not orange / not white).
   const contentBackground = !bootstrapReady
     ? authBrand.orange
-    : suppressGroupFade
+    : holdAuthCanvas
       ? authBrand.dark
       : colors.background;
 
@@ -28,8 +28,8 @@ export function ThemedRootNavigation() {
           screenOptions={{
             headerShown: false,
             contentStyle: { backgroundColor: contentBackground },
-            animation: suppressGroupFade ? "none" : "fade",
-            animationDuration: suppressGroupFade ? 0 : 220,
+            animation: "none",
+            animationDuration: 0,
           }}
         />
         <ToastHost />

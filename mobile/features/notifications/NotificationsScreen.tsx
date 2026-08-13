@@ -179,7 +179,7 @@ export function NotificationsScreen({
         />
       </View>
 
-      {isLoading ? (
+      {isLoading && items.length === 0 ? (
         <View style={styles.listPad}>
           <SkeletonListRows count={5} />
         </View>

@@ -91,7 +91,9 @@ export function JoinScreen() {
 
         <Pressable
           accessibilityRole="button"
+          disabled={isSubmitting}
           onPress={() => {
+            if (isSubmitting) return;
             hapticLight();
             if (router.canGoBack()) router.back();
             else router.replace("/(auth)/signup" as never);

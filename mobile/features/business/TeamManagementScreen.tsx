@@ -157,7 +157,7 @@ export function TeamManagementScreen() {
         </View>
       </Section>
 
-      {teamQuery.isLoading || profileQuery.isLoading ? (
+      {teamQuery.isLoading && employees.length === 0 ? (
         <SkeletonListRows count={6} />
       ) : teamQuery.isError ? (
         <ErrorState

@@ -1,6 +1,8 @@
 export {
+  formatOnboardingError,
   formatUserFacingError,
   isAuthenticationError,
+  isBusinessNotFoundError,
   isOnboardingIncompleteError,
   isPermissionError,
   isSubscriptionRequiredError,
