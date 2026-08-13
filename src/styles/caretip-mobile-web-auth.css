@@ -1,6 +1,7 @@
 /**
  * Mobile web auth — 1:1 recreation of template/new-mobileweb(+02).
  * Scoped to .mw-auth. Desktop/tablet auth is untouched.
+ * Tokens flip under html.dark so dark theme preference applies on mobile web.
  */
 
 .mw-auth {
@@ -13,8 +14,14 @@
   --mw-border-strong: #d1d5db;
   --mw-surface: #f3f4f6;
   --mw-card: #ffffff;
+  --mw-input: #ffffff;
+  --mw-placeholder: #9ca3af;
   --mw-otp-empty: #e5e7eb;
   --mw-otp-filled: #1f2937;
+  --mw-switch-off: #d1d5db;
+  --mw-shadow-card:
+    0 1px 2px rgba(15, 23, 42, 0.04),
+    0 12px 40px -16px rgba(15, 23, 42, 0.14);
   --mw-radius-card: 1.75rem;
   --mw-radius-input: 0.9rem;
   --mw-radius-btn: 9999px;
@@ -35,6 +42,24 @@
   flex-direction: column;
   align-items: center;
   justify-content: flex-start;
+}
+
+.dark .mw-auth {
+  --mw-orange-soft: rgba(233, 120, 28, 0.16);
+  --mw-ink: hsl(var(--foreground));
+  --mw-muted: hsl(var(--muted-foreground));
+  --mw-border: hsl(var(--border));
+  --mw-border-strong: hsl(var(--border));
+  --mw-surface: hsl(var(--background));
+  --mw-card: hsl(var(--card));
+  --mw-input: hsl(var(--input-background));
+  --mw-placeholder: hsl(var(--muted-foreground) / 0.72);
+  --mw-otp-empty: hsl(var(--muted));
+  --mw-otp-filled: hsl(var(--foreground) / 0.85);
+  --mw-switch-off: hsl(var(--muted));
+  --mw-shadow-card:
+    0 1px 2px rgba(0, 0, 0, 0.35),
+    0 12px 40px -16px rgba(0, 0, 0, 0.55);
 }
 
 .mw-auth__inner {
@@ -64,9 +89,7 @@
   width: 100%;
   background: var(--mw-card);
   border-radius: var(--mw-radius-card);
-  box-shadow:
-    0 1px 2px rgba(15, 23, 42, 0.04),
-    0 12px 40px -16px rgba(15, 23, 42, 0.14);
+  box-shadow: var(--mw-shadow-card);
   padding: 2.25rem 1.5rem 1.85rem;
 }
 
@@ -95,6 +118,16 @@
   background: linear-gradient(145deg, #fff7ed 0%, #ffedd5 45%, #fdba74 100%);
   box-shadow: 0 10px 24px -12px rgba(233, 120, 28, 0.55);
   color: var(--mw-orange);
+}
+
+.dark .mw-auth-header__icon-badge {
+  background: linear-gradient(
+    145deg,
+    rgba(233, 120, 28, 0.28) 0%,
+    rgba(233, 120, 28, 0.16) 45%,
+    rgba(217, 104, 16, 0.22) 100%
+  );
+  box-shadow: 0 10px 24px -12px rgba(233, 120, 28, 0.4);
 }
 
 .mw-auth-header__title {
@@ -143,7 +176,7 @@
   min-height: var(--mw-field-h);
   border-radius: var(--mw-radius-input);
   border: 1.5px solid var(--mw-border);
-  background: #fff;
+  background: var(--mw-input);
   color: var(--mw-ink);
   font-size: 1rem;
   padding: 0.85rem 1rem;
@@ -153,7 +186,7 @@
 }
 
 .mw-auth-input::placeholder {
-  color: #9ca3af;
+  color: var(--mw-placeholder);
 }
 
 .mw-auth-input:hover:not(:disabled):not(:focus) {
@@ -181,7 +214,7 @@
   height: 2rem;
   border: none;
   background: transparent;
-  color: #9ca3af;
+  color: var(--mw-placeholder);
   cursor: pointer;
   padding: 0;
 }
@@ -204,7 +237,7 @@
   padding: 0 0.75rem;
   border-radius: var(--mw-radius-input);
   border: 1.5px solid var(--mw-border);
-  background: #fff;
+  background: var(--mw-input);
   color: var(--mw-ink);
   font-size: 0.875rem;
   font-weight: 600;
@@ -218,7 +251,7 @@
 
 .mw-auth-country__chevron {
   margin-left: auto;
-  color: #9ca3af;
+  color: var(--mw-placeholder);
 }
 
 .mw-auth-checkbox {
@@ -360,13 +393,17 @@
   min-height: var(--mw-btn-h);
   border-radius: var(--mw-radius-btn);
   border: 1.5px solid var(--mw-border);
-  background: #fff;
+  background: var(--mw-input);
   color: var(--mw-ink);
   font-size: 1rem;
   font-weight: 700;
   letter-spacing: -0.01em;
   box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
   pointer-events: none;
+}
+
+.dark .mw-auth-google__face {
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
 }
 
 .mw-auth-google__gsi {
@@ -544,7 +581,7 @@
   height: 1.55rem;
   border-radius: 9999px;
   border: none;
-  background: #d1d5db;
+  background: var(--mw-switch-off);
   cursor: pointer;
   padding: 0;
   flex-shrink: 0;
@@ -585,7 +622,11 @@
   }
 
   .caretip-auth-page--has-mobile-web {
-    background: var(--mw-surface, #f3f4f6) !important;
+    background: #f3f4f6 !important;
     min-height: 100dvh;
+  }
+
+  .dark .caretip-auth-page--has-mobile-web {
+    background: hsl(var(--background)) !important;
   }
 }

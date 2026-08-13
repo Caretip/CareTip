@@ -96,7 +96,7 @@ export function MobileWebAuthShell({
       <div className="mw-auth" data-mw-auth="session">
         <div className="mw-auth__inner">
           <div className="mw-auth-brand">
-            <CareTipLogo size="auth" variant="wordmark" tone="primary" className="mw-auth-brand__logo" />
+            <CareTipLogo size="auth" variant="wordmark" tone="auto" className="mw-auth-brand__logo" />
           </div>
           <AuthCard>{sessionBanner}</AuthCard>
         </div>
@@ -151,7 +151,7 @@ export function MobileWebAuthShell({
     <div className="mw-auth" data-mw-auth={mode}>
       <div className="mw-auth__inner">
         <div className="mw-auth-brand">
-          <CareTipLogo size="auth" variant="wordmark" tone="primary" className="mw-auth-brand__logo" />
+          <CareTipLogo size="auth" variant="wordmark" tone="auto" className="mw-auth-brand__logo" />
         </div>
 
         <AuthCard>
