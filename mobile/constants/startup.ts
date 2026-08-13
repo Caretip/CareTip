@@ -2,8 +2,8 @@
 export const STARTUP_TASK_TIMEOUT_MS = 5_000;
 
 /**
- * Hard ceiling for the full startup splash experience.
- * Watchdog hides the native underlay AND forces React overlay reveal.
+ * Hard ceiling for the native Expo splash.
+ * Watchdog forces hideAsync if destination readiness never signals.
  */
 export const STARTUP_SPLASH_MAX_MS = 5_000;
 

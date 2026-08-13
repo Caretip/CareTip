@@ -64,13 +64,12 @@ function performHide(reason: string): void {
 }
 
 export type HideSplashOptions = {
-  /** Native fade duration (ms). Short fade keeps the orange underlay continuous. */
   duration?: number;
   fade?: boolean;
 };
 
 /**
- * Hides the native splash exactly once.
+ * Hides the native splash exactly once — only after destination reveal.
  * Does not rely solely on InteractionManager (can stall after force-close).
  */
 export function hideSplashOnce(reason: string, opts?: HideSplashOptions): void {
@@ -81,10 +80,8 @@ export function hideSplashOnce(reason: string, opts?: HideSplashOptions): void {
   hideStarted = true;
   logSplash("hideAsync.scheduled", { reason, duration: opts?.duration, fade: opts?.fade });
 
-  const duration =
-    opts?.duration ??
-    (reason === "js-overlay-ready" ? 160 : 280);
-  const fade = opts?.fade ?? true;
+  const duration = opts?.duration ?? 0;
+  const fade = opts?.fade ?? false;
 
   SplashScreen.setOptions?.({
     duration,
@@ -104,20 +101,20 @@ export function hideSplashOnce(reason: string, opts?: HideSplashOptions): void {
 }
 
 /**
- * Register the React gate reveal for the startup watchdog.
- * Watchdog must dismiss the overlay — not only the native splash.
+ * Register the gate reveal callback for the startup watchdog.
+ * Watchdog must force hide even if destination never marks ready.
  */
 export function setSplashWatchdogReveal(handler: (() => void) | null): void {
   watchdogRevealHandler = handler;
   logSplash("watchdog.revealHandler", { registered: Boolean(handler) });
 }
 
-/** Absolute deadline — native hide + React overlay reveal. */
+/** Absolute deadline — force native splash hide so startup cannot stick forever. */
 export function scheduleSplashWatchdog(): void {
   if (watchdogTimer) return;
   watchdogTimer = setTimeout(() => {
     logSplash("watchdog.fire", { maxMs: STARTUP_SPLASH_MAX_MS });
-    hideSplashOnce("watchdog", { duration: 120, fade: true });
+    hideSplashOnce("watchdog", { duration: 0, fade: false });
     try {
       watchdogRevealHandler?.();
     } catch (error) {

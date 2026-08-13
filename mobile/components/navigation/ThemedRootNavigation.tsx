@@ -14,9 +14,10 @@ export function ThemedRootNavigation() {
   const bootstrapReady = useBootstrapReady();
   const logoutTransition = useAuthLogoutTransitionActive();
   const holdAuthCanvas = logoutTransition || !isAuthenticated;
-  // Orange only during gated boot. Logout / unauth uses the auth canvas (not orange / not white).
+  // Destination canvas only — native Expo splash covers startup (no React splash/orange underlay).
+  // Before bootstrap settles, prefer auth-dark over white to avoid a light flash if hide races.
   const contentBackground = !bootstrapReady
-    ? authBrand.orange
+    ? authBrand.dark
     : holdAuthCanvas
       ? authBrand.dark
       : colors.background;

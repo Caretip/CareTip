@@ -33,7 +33,7 @@ export default function Index() {
 const styles = StyleSheet.create({
   boot: {
     flex: 1,
-    // Match splash orange — never light/white under BrandSplashOverlay.
+    // Opaque boot stub while session resolves under the native splash (not a React splash).
     backgroundColor: authBrand.orange,
   },
 });

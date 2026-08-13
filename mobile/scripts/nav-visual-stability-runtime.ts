@@ -21,12 +21,27 @@ function main(): void {
   assert.doesNotMatch(gate, /contentOpacity/);
   assert.doesNotMatch(gate, /COMPLETE_HOLD_MS/);
   assert.doesNotMatch(gate, /REVEAL_MS/);
-  assert.match(gate, /overlayVisible \? authBrand\.orange : "transparent"/);
-  assert.match(gate, /setOverlayVisible\(false\)/);
+  assert.doesNotMatch(gate, /js-overlay-ready/);
+  assert.doesNotMatch(gate, /NATIVE_HANDOFF_DELAY/);
+  assert.doesNotMatch(gate, /handoffNativeSplash/);
+  assert.doesNotMatch(gate, /BrandSplashOverlay/);
+  assert.doesNotMatch(gate, /overlayVisible/);
+  assert.doesNotMatch(gate, /authBrand\.orange/);
+  assert.match(gate, /hideSplashOnce\(reason, \{ duration: 0, fade: false \}\)/);
+  assert.match(gate, /shouldRevealAfterDestination/);
+  assert.match(gate, /firstScreenReady/);
+
+  assert.equal(
+    fs.existsSync(path.join(mobileRoot, "components/brand/BrandSplashOverlay.tsx")),
+    false,
+    "BrandSplashOverlay must be removed — native Expo splash only",
+  );
 
   const rootNav = read("components/navigation/ThemedRootNavigation.tsx");
   assert.match(rootNav, /animation:\s*"none"/);
   assert.doesNotMatch(rootNav, /animationDuration:\s*220/);
+  assert.doesNotMatch(rootNav, /authBrand\.orange/);
+  assert.match(rootNav, /NativeSplashGate/);
 
   const appLayout = read("app/(app)/_layout.tsx");
   assert.match(appLayout, /animation:\s*"slide_from_right"/);

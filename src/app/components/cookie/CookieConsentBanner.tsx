@@ -14,11 +14,11 @@ export function CookieConsentBanner() {
   if (!bannerVisible) return null;
 
   return (
-    <DialogPrimitive.Root open={bannerVisible}>
+    <DialogPrimitive.Root open={bannerVisible} modal={false}>
       <DialogPortal>
-        <DialogPrimitive.Overlay className={cc.backdrop} />
+        <DialogPrimitive.Overlay className={cc.backdropPassive} />
         <DialogPrimitive.Content
-          className={cc.panel}
+          className={cc.panelBanner}
           aria-labelledby="cookie-consent-title"
           aria-describedby="cookie-consent-desc"
           onEscapeKeyDown={(event) => event.preventDefault()}
@@ -47,30 +47,30 @@ export function CookieConsentBanner() {
               <div className={cc.actions}>
                 <Button
                   type="button"
-                  variant="default"
-                  size="lg"
-                  onClick={acceptAll}
-                  className={cn(cc.action, "text-base font-bold")}
+                  variant="outline"
+                  size="sm"
+                  onClick={openSettings}
+                  className={cn(cc.action, "font-semibold")}
                 >
-                  {t("cookieConsent.banner.acceptAll")}
+                  {t("cookieConsent.banner.settings")}
                 </Button>
                 <Button
                   type="button"
                   variant="outline"
-                  size="lg"
+                  size="sm"
                   onClick={rejectNonEssential}
-                  className={cn(cc.action, "text-base font-semibold")}
+                  className={cn(cc.action, "font-semibold")}
                 >
                   {t("cookieConsent.banner.reject")}
                 </Button>
                 <Button
                   type="button"
-                  variant="ghost"
-                  size="lg"
-                  onClick={openSettings}
-                  className={cn(cc.action, "text-base font-semibold")}
+                  variant="default"
+                  size="sm"
+                  onClick={acceptAll}
+                  className={cn(cc.actionPrimary, "font-bold")}
                 >
-                  {t("cookieConsent.banner.settings")}
+                  {t("cookieConsent.banner.acceptAll")}
                 </Button>
               </div>
             </div>

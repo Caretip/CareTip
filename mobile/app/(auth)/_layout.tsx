@@ -31,7 +31,7 @@ export default function AuthLayout() {
   const currentRoute = segments[segments.length - 1] ?? "";
 
   if (!routingReady) {
-    // Match splash orange — avoid a blank/null frame under the overlay.
+    // Opaque boot stub while session resolves under the native splash (not a React splash).
     return <View style={{ flex: 1, backgroundColor: authBrand.orange }} />;
   }
 

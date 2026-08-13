@@ -1,6 +1,6 @@
 /**
- * Pure splash handoff policy — used by runtime gate + regression tests.
- * Keep BrandSplashOverlay visuals out of this module.
+ * Pure splash handoff policy — used by NativeSplashGate + regression tests.
+ * Native Expo splash only; no React splash visuals.
  */
 
 /** Boot stubs must never unlock the splash reveal. */
@@ -36,7 +36,7 @@ export function shouldRevealAfterFallback(input: {
   return input.bootstrapReady && input.navigationReady;
 }
 
-/** Hard deadline must always release the React overlay (not only native splash). */
+/** Hard deadline must always release the native splash. */
 export function shouldForceRevealOnWatchdog(watchdogFired: boolean): boolean {
   return watchdogFired;
 }

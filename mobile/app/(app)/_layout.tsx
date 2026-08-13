@@ -15,6 +15,7 @@ export default function AppLayout() {
   const logoutTransition = useAuthLogoutTransitionActive();
 
   if (!routingReady) {
+    // Opaque boot stub while session resolves under the native splash (not a React splash).
     return <View style={{ flex: 1, backgroundColor: authBrand.orange }} />;
   }
 
