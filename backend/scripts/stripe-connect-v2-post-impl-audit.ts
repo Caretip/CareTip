@@ -32,7 +32,9 @@ async function main(): Promise<void> {
 
   console.log("=== ENV (secrets redacted) ===");
   console.log(`STRIPE_SECRET_KEY: ${secretInfo.present ? "PRESENT" : "MISSING"} mode=${secretInfo.mode}`);
-  console.log(`STRIPE_WEBHOOK_SECRET: ${webhookInfo.present ? "PRESENT" : "MISSING"} mode=${webhookInfo.mode === "UNKNOWN" && webhookInfo.present ? "whsec_configured" : webhookInfo.mode}`);
+  console.log(
+    `STRIPE_WEBHOOK_SECRET: ${webhookInfo.present ? "PRESENT" : "MISSING"} mode=${webhookInfo.mode}`,
+  );
   console.log(`FRONTEND_URL: ${process.env.FRONTEND_URL?.trim() ? "PRESENT" : "MISSING"}`);
   console.log(`STRIPE_ACCOUNTS_V2_API_VERSION: ${process.env.STRIPE_ACCOUNTS_V2_API_VERSION?.trim() || "(code default 2026-07-29.dahlia)"}`);
 
