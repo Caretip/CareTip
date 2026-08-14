@@ -259,8 +259,8 @@ function runPreflightAndKeySafety() {
 
   const fakeEnv = {
     NODE_ENV: "development",
-    STRIPE_SECRET_KEY: "sk_test_PHASE28FAKESECRETVALUE",
-    STRIPE_WEBHOOK_SECRET: "whsec_PHASE28FAKEWEBHOOKSECRET",
+    STRIPE_SECRET_KEY: "sk_test_ci_placeholder",
+    STRIPE_WEBHOOK_SECRET: "whsec_ci_test_secret_placeholder",
     FRONTEND_URL: "https://caretip.de",
     STRIPE_CONNECT_DEFAULT_COUNTRY: "DE",
   } as NodeJS.ProcessEnv;
