@@ -48,7 +48,7 @@ const CONTEXT_I18N_KEY: Record<AppLoadingContext, string> = {
   receipt: "common.loading.receipt",
   saving: "common.savingChanges",
   language: "common.loading.language",
-  workspace: "common.preparingWorkspace",
+  workspace: "common.gettingReady",
 };
 
 export function resolveAppLoadingContextMessage(
@@ -64,7 +64,7 @@ function normalizePath(pathname: string): string {
 
 /**
  * Customer deep-link cold boot — journey-specific copy (never generic marketing landing).
- * Keep in sync with index.html resolveBootMessage.
+ * Keep in sync with public/boot-locale.js resolveBootTagline.
  */
 export function resolveCustomerJourneyBootContext(pathname: string): AppLoadingContext | null {
   const p = normalizePath(pathname);
@@ -226,6 +226,9 @@ export function resolveInitialBootLoadingMessage(pathname: string, t: TFunction)
   }
   if (p.startsWith("/platform-admin")) {
     return resolveAppLoadingContextMessage("sessionCheck", t);
+  }
+  if (p.startsWith("/onboarding")) {
+    return t("common.creatingWorkspace");
   }
   return resolveAppLoadingContextMessage("startup", t);
 }

@@ -69,6 +69,8 @@ export function shouldBypassOverlayShowThreshold(
   if (initialColdBootPending) return true;
   return (
     winnerKey === "app-boot" ||
+    winnerKey === "onboarding-init" ||
+    winnerKey === "onboarding-submit" ||
     winnerKey === "payment-stripe-redirect" ||
     winnerKey === "payment-page-checkout" ||
     (typeof winnerKey === "string" && winnerKey.includes("checkout"))

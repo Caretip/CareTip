@@ -163,6 +163,36 @@ enum TipStatus {
   failed
 }
 
+/// Stripe Connect Express onboarding / capability mirror (Phase 1 — not tip routing).
+enum StripeConnectStatus {
+  not_connected
+  onboarding_required
+  onboarding_incomplete
+  requires_information
+  ready
+  restricted
+}
+
+/// Stripe Payout object status for connected Express accounts (Phase 3).
+/// Distinct from Transaction.payoutStatus (legacy employee tip flag).
+enum StripeConnectPayoutStatus {
+  pending
+  in_transit
+  paid
+  failed
+  canceled
+  unknown
+}
+
+/// Balance-transaction sync against a Stripe Payout (Phase 4). Distinct from StripeConnectPayoutStatus.
+enum StripeConnectPayoutReconciliationStatus {
+  pending
+  in_progress
+  complete
+  partial
+  failed
+}
+
 enum GoalPeriod {
   daily
   weekly
@@ -588,6 +618,71 @@ model StripeWebhookEvent {
   @@map("stripe_webhook_events")
 }
 
+/// Stripe Connect Express payout to a connected account's external bank/card.
+/// Observation-only — CareTip does not initiate Stripe payouts. Not Transaction.payoutStatus.
+model StripeConnectPayout {
+  id                     String                    @id @default(cuid())
+  businessId             String                    @map("business_id")
+  stripeAccountId        String                    @map("stripe_account_id")
+  stripePayoutId         String                    @unique @map("stripe_payout_id")
+  amountCents            Int                       @map("amount_cents")
+  currency               String                    @db.VarChar(8)
+  status                 StripeConnectPayoutStatus
+  arrivalDate            DateTime?                 @map("arrival_date")
+  method                 String?                   @db.VarChar(32)
+  payoutType             String?                   @map("payout_type") @db.VarChar(32)
+  description            String?                   @db.VarChar(255)
+  failureCode            String?                   @map("failure_code") @db.VarChar(64)
+  failureMessage         String?                   @map("failure_message") @db.VarChar(255)
+  stripeCreatedAt        DateTime                  @map("stripe_created_at")
+  lastStripeEventCreated Int                       @map("last_stripe_event_created")
+  lastStripeEventType    String                    @map("last_stripe_event_type") @db.VarChar(64)
+  lastStripeEventId      String?                   @map("last_stripe_event_id") @db.VarChar(128)
+  paidAt                 DateTime?                 @map("paid_at")
+  failedAt               DateTime?                 @map("failed_at")
+  canceledAt             DateTime?                 @map("canceled_at")
+  reconciliationStatus        StripeConnectPayoutReconciliationStatus @default(pending) @map("reconciliation_status")
+  reconciliationCursor        String?                                 @map("reconciliation_cursor") @db.VarChar(128)
+  reconciliationHasMore       Boolean                                 @default(true) @map("reconciliation_has_more")
+  reconciliationAttemptCount  Int                                     @default(0) @map("reconciliation_attempt_count")
+  reconciliationLastError     String?                                 @map("reconciliation_last_error") @db.VarChar(255)
+  reconciliationLastAttemptAt DateTime?                               @map("reconciliation_last_attempt_at")
+  reconciliationCompletedAt   DateTime?                               @map("reconciliation_completed_at")
+  createdAt              DateTime                  @default(now()) @map("created_at")
+  updatedAt              DateTime                  @updatedAt @map("updated_at")
+
+  business     Business                           @relation(fields: [businessId], references: [id], onDelete: Restrict)
+  balanceLines StripeConnectPayoutBalanceLine[]
+
+  @@index([businessId, stripeCreatedAt(sort: Desc)])
+  @@index([businessId, status])
+  @@index([stripeAccountId])
+  @@index([status, stripeCreatedAt(sort: Desc)])
+  @@index([reconciliationStatus, reconciliationLastAttemptAt])
+  @@map("stripe_connect_payouts")
+}
+
+/// Stripe balance transactions that contributed to a connected-account payout.
+/// A payout is not 1:1 with a CareTip tip — lines may include charges, refunds, fees, adjustments.
+model StripeConnectPayoutBalanceLine {
+  id                         String   @id @default(cuid())
+  payoutId                   String   @map("payout_id")
+  stripeBalanceTransactionId String   @unique @map("stripe_balance_transaction_id")
+  reportingCategory          String?  @map("reporting_category") @db.VarChar(64)
+  type                       String   @db.VarChar(64)
+  amountCents                Int      @map("amount_cents")
+  feeCents                   Int      @map("fee_cents")
+  netCents                   Int      @map("net_cents")
+  currency                   String   @db.VarChar(8)
+  createdAtStripe            DateTime @map("created_at_stripe")
+  createdAt                  DateTime @default(now()) @map("created_at")
+
+  payout StripeConnectPayout @relation(fields: [payoutId], references: [id], onDelete: Cascade)
+
+  @@index([payoutId])
+  @@map("stripe_connect_payout_balance_lines")
+}
+
 model Business {
   id                  String    @id @default(cuid())
   name                String
@@ -597,7 +692,18 @@ model Business {
   slug                String    @unique @map("slug")
   inviteCode          String?   @unique @map("invite_code")
   inviteCodeExpiresAt DateTime? @map("invite_code_expires_at")
-  stripeAccountId     String?   @map("stripe_account_id")
+  /// Stripe Connect Express connected account (`acct_...`). Unique — one Business ↔ one Connect account.
+  stripeAccountId     String?   @unique @map("stripe_account_id")
+  /// CareTip-facing Connect status derived from Stripe account capabilities/requirements.
+  stripeConnectStatus StripeConnectStatus @default(not_connected) @map("stripe_connect_status")
+  stripeChargesEnabled Boolean @default(false) @map("stripe_charges_enabled")
+  stripePayoutsEnabled Boolean @default(false) @map("stripe_payouts_enabled")
+  stripeDetailsSubmitted Boolean @default(false) @map("stripe_details_submitted")
+  /// Stripe `requirements.disabled_reason` when present (safe short code/string).
+  stripeConnectDisabledReason String? @map("stripe_connect_disabled_reason") @db.VarChar(128)
+  /// Count of `requirements.currently_due` items (not the raw list).
+  stripeConnectRequirementsDue Int @default(0) @map("stripe_connect_requirements_due")
+  stripeConnectUpdatedAt DateTime? @map("stripe_connect_updated_at")
   /// Platform Stripe Customer for checkout reuse before a Subscription row exists (Option A).
   stripeCustomerId    String?   @unique @map("stripe_customer_id")
   userId              String    @unique @map("user_id")
@@ -696,6 +802,7 @@ model Business {
   employees      Employee[]
   transactions   Transaction[]
   tipRefunds     TipRefund[]
+  stripeConnectPayouts StripeConnectPayout[]
   locations      Location[]
   supportTickets SupportTicket[]
   employeeInvites EmployeeInvite[]

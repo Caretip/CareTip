@@ -996,7 +996,7 @@ export function AuthPage() {
             <AuthStableSubmitButton
               type="submit"
               loading={isSubmitting}
-              loadingAriaLabel={isLogin ? t("common.loading.signingIn") : t("common.creatingWorkspace")}
+              loadingAriaLabel={isLogin ? t("common.loading.signingIn") : t("auth.page.creatingAccountWait")}
               disabled={resumeSessionPending || (!isLogin && signUpDisabled)}
               className="disabled:cursor-not-allowed"
             >
@@ -1007,7 +1007,7 @@ export function AuthPage() {
               {isSubmitting
                 ? isLogin
                   ? t("common.loading.signingIn")
-                  : t("common.creatingWorkspace")
+                  : t("auth.page.creatingAccountWait")
                 : null}
             </AuthFormStatusSlot>
 

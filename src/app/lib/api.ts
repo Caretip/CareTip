@@ -2759,6 +2759,155 @@ export async function fetchBillingStatus(): Promise<BillingStatus> {
   });
 }
 
+/** Stripe Connect Express status (Phase 1) — no account id / secrets. */
+export type ConnectStatus = {
+  status:
+    | "not_connected"
+    | "onboarding_required"
+    | "onboarding_incomplete"
+    | "requires_information"
+    | "ready"
+    | "restricted";
+  stripeConfigured: boolean;
+  hasAccount: boolean;
+  chargesEnabled: boolean;
+  payoutsEnabled: boolean;
+  detailsSubmitted: boolean;
+  requirementsDueCount: number;
+  disabledReason: string | null;
+  updatedAt: string | null;
+  readyForPayouts: boolean;
+};
+
+export async function getConnectStatus(): Promise<ConnectStatus> {
+  return apiRequest<ConnectStatus>(apiPath("/api/me/connect/status"), {
+    method: "GET",
+    headers: getHeaders(),
+    credentials: "include",
+  });
+}
+
+/** Starts/resumes Express onboarding — server creates Account Link; no client return URLs. */
+export async function createConnectAccountLink(): Promise<{ url: string }> {
+  return apiRequest(apiPath("/api/me/connect/account-link"), {
+    method: "POST",
+    headers: getHeaders(),
+    credentials: "include",
+    body: JSON.stringify({}),
+  });
+}
+
+export type ConnectPayoutStatus =
+  | "pending"
+  | "in_transit"
+  | "paid"
+  | "failed"
+  | "canceled"
+  | "unknown";
+
+export type ConnectPayoutReconciliationStatus =
+  | "pending"
+  | "in_progress"
+  | "complete"
+  | "partial"
+  | "failed";
+
+export type ConnectPayoutBalanceLine = {
+  reportingCategory: string | null;
+  type: string;
+  amountCents: number;
+  feeCents: number;
+  netCents: number;
+  amountEur: number;
+  netEur: number;
+  currency: string;
+};
+
+export type ConnectPayout = {
+  id: string;
+  amountCents: number;
+  amountEur: number;
+  currency: string;
+  status: ConnectPayoutStatus;
+  arrivalDate: string | null;
+  method: string | null;
+  payoutType: string | null;
+  description: string | null;
+  failureCode: string | null;
+  failureMessage: string | null;
+  createdAt: string;
+  stripeCreatedAt: string;
+  paidAt: string | null;
+  failedAt: string | null;
+  canceledAt: string | null;
+  reconciliationStatus: ConnectPayoutReconciliationStatus;
+  balanceLineCount: number;
+  balanceLines?: ConnectPayoutBalanceLine[];
+};
+
+export type PlatformConnectPayout = ConnectPayout & {
+  businessId: string;
+  businessName: string;
+  stripeAccountSuffix: string;
+};
+
+export async function listMyConnectPayouts(params?: {
+  take?: number;
+  skip?: number;
+}): Promise<{ items: ConnectPayout[]; total: number }> {
+  const sp = new URLSearchParams();
+  if (params?.take != null) sp.set("take", String(params.take));
+  if (params?.skip != null) sp.set("skip", String(params.skip));
+  const qs = sp.toString();
+  return apiRequest<{ items: ConnectPayout[]; total: number }>(
+    apiPath(`/api/me/connect/payouts${qs ? `?${qs}` : ""}`),
+    { method: "GET", headers: getHeaders(), credentials: "include" },
+  );
+}
+
+export async function getMyConnectPayout(id: string): Promise<ConnectPayout> {
+  return apiRequest<ConnectPayout>(apiPath(`/api/me/connect/payouts/${encodeURIComponent(id)}`), {
+    method: "GET",
+    headers: getHeaders(),
+    credentials: "include",
+  });
+}
+
+export async function fetchPlatformConnectPayout(id: string): Promise<PlatformConnectPayout> {
+  return apiRequest<PlatformConnectPayout>(
+    apiPath(`/api/platform/connect-payouts/${encodeURIComponent(id)}`),
+    { method: "GET", headers: getHeaders(), credentials: "include" },
+  );
+}
+
+export async function fetchPlatformConnectPayouts(params: {
+  q?: string;
+  take?: number;
+  skip?: number;
+  status?: string;
+  reconciliationStatus?: string;
+  currency?: string;
+  createdFrom?: string;
+  createdTo?: string;
+  businessId?: string;
+}): Promise<{ items: PlatformConnectPayout[]; total: number }> {
+  const sp = new URLSearchParams();
+  if (params.q) sp.set("q", params.q);
+  if (params.status) sp.set("status", params.status);
+  if (params.reconciliationStatus) sp.set("reconciliationStatus", params.reconciliationStatus);
+  if (params.currency) sp.set("currency", params.currency);
+  if (params.createdFrom) sp.set("createdFrom", params.createdFrom);
+  if (params.createdTo) sp.set("createdTo", params.createdTo);
+  if (params.businessId) sp.set("businessId", params.businessId);
+  if (params.take != null) sp.set("take", String(params.take));
+  if (params.skip != null) sp.set("skip", String(params.skip));
+  const qs = sp.toString();
+  return apiRequest(apiPath(`/api/platform/connect-payouts${qs ? `?${qs}` : ""}`), {
+    headers: getHeaders(),
+    credentials: "include",
+  });
+}
+
 export async function createBillingCheckoutSession(params: {
   planKey: SubscriptionPlanKey;
   billingCycle?: SubscriptionBillingCycle;
@@ -3733,8 +3882,9 @@ export interface GlobalTransactionRow {
   id: string;
   amountEur: number;
   caretipFeePercent: number;
-  caretipFeeEur: number;
-  netToStaffEur: number;
+  caretipFeeFixedCents: number;
+  caretipFeeEur: number | null;
+  netToStaffEur: number | null;
   payoutStatus: string;
   tipStatus: string;
   stripePaymentIntentId: string | null;

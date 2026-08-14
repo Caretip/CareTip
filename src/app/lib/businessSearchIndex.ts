@@ -17,6 +17,7 @@ export type BusinessSearchCategory =
   | "qrTables"
   | "recentTips"
   | "recentActivity"
+  | "billing"
   | "payouts";
 
 export type BusinessSearchHit = {
@@ -46,37 +47,60 @@ type TipsActivityCache = {
   items: TipActivityRow[];
 };
 
-const PAYOUT_SHORTCUTS: Array<Omit<BusinessSearchHit, "haystack"> & { keywords: string }> = [
+const BILLING_SHORTCUTS: Array<Omit<BusinessSearchHit, "haystack"> & { keywords: string }> = [
   {
-    id: "payout:subscription",
-    category: "payouts",
+    id: "billing:subscription",
+    category: "billing",
     title: "Subscription & billing",
-    subtitle: "Plan, payouts, and subscription status",
+    subtitle: "Plan, invoices, and CareTip subscription status",
     titleKey: "business.globalSearch.payoutShortcuts.subscriptionTitle",
     subtitleKey: "business.globalSearch.payoutShortcuts.subscriptionSubtitle",
     href: "/dashboard/billing/subscription",
     keywords:
-      "payout payouts billing subscription plan stripe invoice invoices payment abo abrechnung auszahlung",
+      "billing subscription plan stripe invoice invoices payment abo abrechnung",
   },
   {
-    id: "payout:invoices",
-    category: "payouts",
+    id: "billing:invoices",
+    category: "billing",
     title: "Invoices",
     subtitle: "Billing history and invoices",
     titleKey: "business.globalSearch.payoutShortcuts.invoicesTitle",
     subtitleKey: "business.globalSearch.payoutShortcuts.invoicesSubtitle",
     href: "/dashboard/billing/invoices",
-    keywords: "payout invoice invoices billing receipt rechnung rechnungen",
+    keywords: "invoice invoices billing receipt rechnung rechnungen",
   },
   {
-    id: "payout:history",
-    category: "payouts",
+    id: "billing:history",
+    category: "billing",
     title: "Payment history",
-    subtitle: "Past billing and payment events",
+    subtitle: "Past CareTip subscription billing events",
     titleKey: "business.globalSearch.payoutShortcuts.historyTitle",
     subtitleKey: "business.globalSearch.payoutShortcuts.historySubtitle",
     href: "/dashboard/billing/history",
-    keywords: "payout payment history billing zahlungsverlauf historie",
+    keywords: "payment history billing zahlungsverlauf historie subscription",
+  },
+];
+
+const PAYOUT_SHORTCUTS: Array<Omit<BusinessSearchHit, "haystack"> & { keywords: string }> = [
+  {
+    id: "payout:connect",
+    category: "payouts",
+    title: "Stripe Connect",
+    subtitle: "Connect Stripe so this venue can receive tips",
+    titleKey: "business.globalSearch.payoutShortcuts.connectTitle",
+    subtitleKey: "business.globalSearch.payoutShortcuts.connectSubtitle",
+    href: "/dashboard/stripe/connect",
+    keywords: "stripe connect onboarding setup tip tips trinkgeld verbinden",
+  },
+  {
+    id: "payout:connect-payouts",
+    category: "payouts",
+    title: "Stripe payouts",
+    subtitle: "Business Stripe payout history and status",
+    titleKey: "business.globalSearch.payoutShortcuts.connectPayoutsTitle",
+    subtitleKey: "business.globalSearch.payoutShortcuts.connectPayoutsSubtitle",
+    href: "/dashboard/stripe/payouts",
+    keywords: "payout payouts stripe connect auszahlung bank transfer",
   },
 ];
 
@@ -211,6 +235,19 @@ export function collectBusinessSearchCorpus(businessId?: string | null): Busines
     });
   }
 
+  for (const billing of BILLING_SHORTCUTS) {
+    push({
+      id: billing.id,
+      category: billing.category,
+      title: billing.title,
+      subtitle: billing.subtitle,
+      titleKey: billing.titleKey,
+      subtitleKey: billing.subtitleKey,
+      href: billing.href,
+      haystack: `${billing.title} ${billing.subtitle} ${billing.keywords}`,
+    });
+  }
+
   for (const payout of PAYOUT_SHORTCUTS) {
     push({
       id: payout.id,
@@ -249,6 +286,7 @@ export function filterBusinessSearchHits(
     "qrTables",
     "recentTips",
     "recentActivity",
+    "billing",
     "payouts",
   ];
   return order.flatMap((cat) => grouped.get(cat) ?? []);

@@ -35,6 +35,7 @@ const CATEGORY_ORDER: BusinessSearchCategory[] = [
   "qrTables",
   "recentTips",
   "recentActivity",
+  "billing",
   "payouts",
 ];
 
@@ -43,7 +44,8 @@ const CATEGORY_ICON: Record<BusinessSearchCategory, typeof Search> = {
   qrTables: LayoutGrid,
   recentTips: Wallet,
   recentActivity: Activity,
-  payouts: CreditCard,
+  billing: CreditCard,
+  payouts: Wallet,
 };
 
 const inputClassName =

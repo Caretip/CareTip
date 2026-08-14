@@ -233,6 +233,8 @@ export const FRIENDLY_MESSAGE_DE: Record<string, string> = {
     "Das Hochladen des Logos dauerte zu lange. Bitte versuchen Sie es mit einer kleineren Datei erneut.",
   "The service is temporarily unavailable. Please try again later.":
     "Der Dienst ist vorübergehend nicht verfügbar. Bitte versuchen Sie es später erneut.",
+  "This venue cannot accept tips right now.":
+    "Diese Location kann derzeit kein Trinkgeld entgegennehmen.",
 };
 
 export function translateFriendlyMessageToDe(english: string): string {

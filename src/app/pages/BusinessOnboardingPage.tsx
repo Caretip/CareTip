@@ -6,7 +6,7 @@ import { useTranslation } from "react-i18next";
 import { Loader2, MapPin, Palette } from "lucide-react";
 import { useAuth, getPostAuthRedirect } from "../hooks/useAuth";
 import { getAuthSessionFlags } from "../lib/authSessionBootstrap";
-import { useRegisterGlobalAppInit, useAppLoadingRegistration, APP_LOADING_PRIORITY } from "../lib/globalAppLoading";
+import { useRegisterGlobalAppInit, useAppLoadingRegistration, useGlobalAppLoadingActive, APP_LOADING_PRIORITY } from "../lib/globalAppLoading";
 import {
   isAuthPostLoginTransitionActive,
   signalPostLoginDashboardShellReady,
@@ -95,11 +95,12 @@ export function BusinessOnboardingPage() {
     checkoutIntent.planKey !== "basic"
       ? t("common.loading.checkout")
       : t("common.creatingWorkspace");
+  const onboardingHoldMessage = t("common.creatingWorkspace");
 
   useAppLoadingRegistration(
     "onboarding-submit",
     APP_LOADING_PRIORITY.APP_INIT,
-    busy,
+    busy && step === 3,
     onboardingBusyMessage,
   );
 
@@ -310,7 +311,11 @@ export function BusinessOnboardingPage() {
     skipEntranceMotionRef.current = true;
   }
 
-  useRegisterGlobalAppInit("onboarding-init", pageInitBlocking);
+  useRegisterGlobalAppInit("onboarding-init", pageInitBlocking, onboardingHoldMessage);
+
+  const overlayActive = useGlobalAppLoadingActive();
+  const publishingOnboarding = busy && step === 3;
+  const onboardingTagline = publishingOnboarding ? onboardingBusyMessage : onboardingHoldMessage;
 
   /**
    * Post-login CareTip cover must stay until Business Details has committed a frame.
@@ -339,12 +344,12 @@ export function BusinessOnboardingPage() {
     };
   }, [pageInitBlocking, postLoginActive, signInHandoffActive]);
 
-  if (pageInitBlocking) {
-    // Keep CareTip branding if the Sign In cover ends early (timeout / race).
-    if (postAuthHandoffActive) {
-      return <AuthBootstrapShell />;
+  if (pageInitBlocking || publishingOnboarding) {
+    /* Overlay / sign-in cover already owns the viewport — never paint a second sentence. */
+    if (overlayActive || postAuthHandoffActive) {
+      return <GlobalAppLoadingHold />;
     }
-    return <GlobalAppLoadingHold />;
+    return <AuthBootstrapShell tagline={onboardingTagline} />;
   }
 
   const isReviewStep = step === 3;

@@ -24,8 +24,7 @@ import {
   beginHtmlBootBridgeExit,
   dismissHtmlMarketingBootBridge,
   isHtmlBootBridgeActive,
-  setHtmlBootBridgeMessage,
-  setHtmlBootBridgeSub,
+  setHtmlBootBridgeTagline,
 } from "../lib/htmlMarketingBootBridge";
 import { resolveInitialBootLoadingMessage } from "../lib/appLoadingContexts";
 import i18n from "@/i18n/i18n";
@@ -43,7 +42,6 @@ import {
   isTechnicalOverlayRegistration,
 } from "../lib/appLoadingJourney";
 import {
-  isIntentionalPostShellOverlayKey,
   markAppShellInteractive,
   shouldSuppressSoftNavGlobalOverlay,
 } from "../lib/appShellLifecycle";
@@ -553,8 +551,7 @@ export function AppLoadingManagerProvider({ children }: { children: React.ReactN
 
   useEffect(() => {
     if (!htmlBootOwnsVisual) return;
-    setHtmlBootBridgeMessage(displayOverlayMessage);
-    setHtmlBootBridgeSub(i18n.t("common.onlyAMoment"));
+    setHtmlBootBridgeTagline(displayOverlayMessage);
   }, [htmlBootOwnsVisual, displayOverlayMessage]);
 
   useEffect(() => {
@@ -638,11 +635,7 @@ export function AppLoadingManagerProvider({ children }: { children: React.ReactN
         <AppBrandedLoadingScreen
           fixed
           message={displayOverlayMessage}
-          suppressStatusMessage={
-            winner?.key === BOOTSTRAP_KEY ||
-            !winner?.key ||
-            !isIntentionalPostShellOverlayKey(winner.key)
-          }
+          suppressStatusMessage={false}
           allowStartupFallback={false}
           exiting={overlayPhase === "exiting"}
         />

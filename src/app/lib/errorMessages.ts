@@ -194,6 +194,25 @@ const ERROR_MAP: Record<string, string> = {
     "Custom QR codes can only use letters, numbers, hyphens, and underscores (3 to 128 characters).",
 
   // Payment / tips
+  CONNECT_NOT_READY: "This venue cannot accept tips right now.",
+  STRIPE_ACCOUNT_CREATE_FAILED: "Stripe connection couldn't be started. Please try again.",
+  STRIPE_ACCOUNT_RETRIEVE_FAILED: "Stripe connection couldn't be started. Please try again.",
+  STRIPE_ACCOUNT_TENANT_CONFLICT: "Stripe connection couldn't be started. Please try again.",
+  STRIPE_ACCOUNT_LINK_FAILED: "Stripe connection couldn't be started. Please try again.",
+  STRIPE_ACCOUNT_LINK_EMPTY: "Stripe connection couldn't be started. Please try again.",
+  STRIPE_ACCOUNT_PERSIST_FAILED: "Stripe connection couldn't be started. Please try again.",
+  "Stripe connection couldn't be started. Please try again.":
+    "Stripe connection couldn't be started. Please try again.",
+  "Could not start Stripe Connect setup. Please try again later.":
+    "Stripe connection couldn't be started. Please try again.",
+  "Could not open Stripe onboarding. Please try again.":
+    "Stripe connection couldn't be started. Please try again.",
+  "Could not save Stripe Connect account. Please try again.":
+    "Stripe connection couldn't be started. Please try again.",
+  CONNECT_DESTINATION_MISMATCH: "This venue cannot accept tips right now.",
+  CONNECT_PAYMENT_INVARIANT: "This venue cannot accept tips right now.",
+  CONNECT_LIVE_ACCOUNT_NOT_CAPABLE: "This venue cannot accept tips right now.",
+  "This venue cannot accept tips right now.": "This venue cannot accept tips right now.",
   "amount, employeeId, and businessId are required": "Please complete your tip details and try again.",
   "employeeId and businessId are required": "Please choose who you’re tipping and try again.",
   "amount must be a positive number": "Please enter a tip amount greater than zero.",

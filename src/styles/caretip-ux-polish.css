@@ -2,7 +2,7 @@
  * UX polish — branded loaders, image frames, route motion, action feedback.
  */
 
-/* —— Branded startup loader (icon → bar → brand → tagline; workspace-style) —— */
+/* —— Branded startup loader (icon → bar → one sentence) —— */
 .app-branded-loader__mark {
   position: relative;
   display: flex;
@@ -74,17 +74,8 @@
   will-change: transform;
 }
 
-.app-branded-loader__brand {
-  margin: 0.15rem 0 0;
-  font-size: 1.125rem;
-  font-weight: 600;
-  letter-spacing: -0.02em;
-  line-height: 1.25;
-  color: hsl(var(--foreground));
-}
-
 .app-branded-loader__tagline {
-  margin: -0.55rem 0 0;
+  margin: 0.15rem 0 0;
   max-width: 16rem;
   font-size: 0.875rem;
   font-weight: 400;

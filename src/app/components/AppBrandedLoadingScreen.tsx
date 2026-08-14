@@ -8,11 +8,11 @@ export type AppBrandedLoadingScreenProps = {
   /** Full-viewport fixed overlay (global manager). */
   fixed?: boolean;
   /**
-   * Optional status line — only for intentional payment/checkout waits.
-   * Cold entry never shows copy.
+   * Stage-specific tagline for intentional payment/onboarding waits.
+   * Replaces the default “Getting things ready…” sentence — never a second line.
    */
   message?: string;
-  /** When true, never render status copy (cold boot / auth). */
+  /** When true, keep the default getting-ready tagline (ignore `message`). */
   suppressStatusMessage?: boolean;
   /** @deprecated Ignored — kept for call-site compatibility. */
   allowStartupFallback?: boolean;
@@ -21,14 +21,15 @@ export type AppBrandedLoadingScreenProps = {
 };
 
 /**
- * Application entry / intentional overlay — CareTip icon with optional payment status.
- * No rotating messages, no “only a moment” filler.
+ * Application entry / intentional overlay — CareTip icon + a single tagline.
+ * Stage-specific copy (checkout, onboarding setup, …) replaces the default
+ * “Getting things ready…” tagline. Never render a second loading sentence.
  */
 export function AppBrandedLoadingScreen({
   className,
   fixed = false,
   message,
-  suppressStatusMessage = true,
+  suppressStatusMessage = false,
   exiting = false,
 }: AppBrandedLoadingScreenProps) {
   useEffect(() => {
@@ -36,25 +37,22 @@ export function AppBrandedLoadingScreen({
     traceGlobalOverlayMounted();
   }, [fixed, exiting]);
 
-  const status = !suppressStatusMessage && message?.trim() ? message.trim() : null;
+  const status = suppressStatusMessage ? undefined : message?.trim() || undefined;
 
   return (
     <div
       className={cn(
         "app-setup-loading app-branded-loader flex flex-col items-center justify-center gap-5 bg-background px-6",
         fixed ? "fixed inset-0 z-[9998]" : "min-h-[100dvh] w-full",
+        fixed && !exiting && "app-setup-loading--instant",
         exiting && "app-setup-loading--exiting",
         className,
       )}
       role="status"
       aria-busy={!exiting}
-      aria-label={status ?? undefined}
       aria-live="polite"
     >
-      <CareTipBrandedLoaderMark compact={false} />
-      {status ? (
-        <p className="max-w-sm text-center text-sm font-medium text-foreground">{status}</p>
-      ) : null}
+      <CareTipBrandedLoaderMark compact={false} tagline={status} />
     </div>
   );
 }

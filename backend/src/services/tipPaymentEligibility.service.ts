@@ -61,6 +61,7 @@ export async function assertEmployeeEligibleForTipPayment(
           kycVerificationStatus: true,
           onboardingVerificationStatus: true,
           operationalStatus: true,
+          deletedAt: true,
         },
       },
     },
@@ -102,6 +103,10 @@ export async function assertEmployeeEligibleForTipPayment(
 
   if (emp.user.isActive === false) {
     throw new TipPaymentEligibilityError(EMPLOYEE_UNAVAILABLE_MSG, "EMPLOYEE_USER_INACTIVE");
+  }
+
+  if (emp.business.deletedAt) {
+    throw new TipPaymentEligibilityError(EMPLOYEE_UNAVAILABLE_MSG, "BUSINESS_SOFT_CLOSED");
   }
 
   if (emp.business.operationalStatus !== "active") {

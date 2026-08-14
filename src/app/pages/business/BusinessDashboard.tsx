@@ -18,6 +18,7 @@ import { DashboardRefreshIndicator } from "../../components/dashboard/DashboardR
 import { DashboardRealtimeStatusStrip } from "../../components/dashboard/DashboardRealtimeStatusStrip";
 import { BusinessDashboardRealtimeSync } from "../../components/business/BusinessDashboardRealtimeSync";
 import { FixPrompt } from "../../components/FixPrompt";
+import { BusinessStripeConnectPrompt } from "../../components/business/BusinessStripeConnectPrompt";
 import { useBusinessDashboardStats } from "../../hooks/useBusinessDashboardStats";
 import { useSubscriptionEntitlements } from "../../hooks/useSubscriptionEntitlements";
 import { useBusinessEntitlementsContext } from "../../contexts/BusinessEntitlementsContext";
@@ -377,6 +378,7 @@ export const BusinessDashboard = memo(function BusinessDashboard() {
               actionTo="/awaiting-approval"
               dismissPersistence="session"
             />
+            <BusinessStripeConnectPrompt density="compact" />
           </div>
           <BusinessDashboardMobileHero
             welcomeName={user.name?.split(" ")[0]}
@@ -402,6 +404,7 @@ export const BusinessDashboard = memo(function BusinessDashboard() {
           dismissPersistence="session"
           className="mb-3"
         />
+        <BusinessStripeConnectPrompt density="compact" className="mb-3" />
         <PremiumPageHero personality="overview" autoHeight className="business-dashboard-hero">
         <DashboardHero
           stackHeroOnMobile

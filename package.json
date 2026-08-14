@@ -37,7 +37,8 @@
     "test:idle-session-ops": "node ./backend/node_modules/tsx/dist/cli.mjs ./scripts/idle-session-ops-runtime.ts",
     "test:idle-session": "npm run test:idle-session-infra && npm run test:idle-session-activity && npm run test:idle-session-warning && npm run test:idle-session-auth-gate && npm run test:idle-session-multitab && npm run test:idle-session-ops",
     "test:activity-center-architecture": "node ./backend/node_modules/tsx/dist/cli.mjs ./scripts/activity-center-architecture-runtime.ts",
-    "test:qr-thankyou": "node ./backend/node_modules/tsx/dist/cli.mjs ./scripts/qr-thankyou-runtime.ts"
+    "test:qr-thankyou": "node ./backend/node_modules/tsx/dist/cli.mjs ./scripts/qr-thankyou-runtime.ts",
+    "test:stripe-connect-phase4-5-ui": "node ./backend/node_modules/tsx/dist/cli.mjs ./scripts/stripe-connect-phase4-5-ui-runtime.ts"
   },
   "dependencies": {
     "@fontsource/inter": "^5.2.8",

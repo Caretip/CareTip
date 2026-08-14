@@ -30,6 +30,7 @@ export function BusinessOnboardingFinishCta({
         <p className="business-onboarding-finish-cta__title">{t("business.onboarding.finalStep.readyTitle")}</p>
         <p className="business-onboarding-finish-cta__message">{t("business.onboarding.finalStep.readyMessage")}</p>
         <p className="business-onboarding-finish-cta__footnote">{t("business.onboarding.finalStep.publishHint")}</p>
+        <p className="business-onboarding-finish-cta__footnote">{t("business.onboarding.finalStep.stripeNextHint")}</p>
       </div>
 
       <BusinessOnboardingNavFooter

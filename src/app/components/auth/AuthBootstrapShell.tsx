@@ -2,10 +2,17 @@ import { CareTipBrandedLoaderMark } from "@/app/components/CareTipPageLoader";
 import { cn } from "@/lib/utils";
 
 /**
- * Brief icon-only hold during auth handoff — never status copy.
- * Prefer dashboard shell + skeletons once the destination paints.
+ * Auth / onboarding hold — shared CareTip mark with one primary sentence.
+ * Do not stack a second loading sentence here.
  */
-export function AuthBootstrapShell({ className }: { className?: string }) {
+export function AuthBootstrapShell({
+  className,
+  tagline,
+}: {
+  className?: string;
+  /** Overrides the default “Getting things ready…” sentence. */
+  tagline?: string;
+}) {
   return (
     <div
       className={cn(
@@ -14,9 +21,9 @@ export function AuthBootstrapShell({ className }: { className?: string }) {
       )}
       role="status"
       aria-busy="true"
-      aria-label="CareTip"
+      aria-live="polite"
     >
-      <CareTipBrandedLoaderMark compact={false} />
+      <CareTipBrandedLoaderMark compact={false} tagline={tagline} />
     </div>
   );
 }

@@ -1,5 +1,7 @@
 import { useEffect, useSyncExternalStore } from "react";
+import { useTranslation } from "react-i18next";
 import {
+  getAuthSignInHandoffTargetPath,
   isAuthSignInHandoffCoverVisible,
   subscribeAuthSignInHandoff,
 } from "../../lib/authSignInHandoff";
@@ -8,17 +10,19 @@ import { markPostLoginTrace } from "../../lib/postLoginRuntimeTrace";
 
 /**
  * Post–Sign In cover while AuthPage unmounts and the destination mounts.
- *
- * Why this file exists: handoff visibility is owned by `authSignInHandoff` (navigate
- * timing). The *visual* must be the shared CareTip branded loader — not a one-off
- * "Signing you in…" form. We reuse {@link AuthBootstrapShell} (CareTipBrandedLoaderMark)
- * so auth transitions match cold-start / bootstrap branding.
+ * One branded sentence only — onboarding uses workspace-setup copy.
  */
 export function SignInHandoffCover() {
+  const { t } = useTranslation();
   const visible = useSyncExternalStore(
     subscribeAuthSignInHandoff,
     isAuthSignInHandoffCoverVisible,
     () => false,
+  );
+  const targetPath = useSyncExternalStore(
+    subscribeAuthSignInHandoff,
+    getAuthSignInHandoffTargetPath,
+    () => null,
   );
 
   useEffect(() => {
@@ -33,9 +37,13 @@ export function SignInHandoffCover() {
 
   if (!visible) return null;
 
+  const onboarding =
+    (targetPath ?? window.location.pathname).split("?")[0]?.startsWith("/onboarding") === true;
+  const tagline = onboarding ? t("common.creatingWorkspace") : t("common.gettingReady");
+
   return (
     <div className="fixed inset-0 z-[10000]" data-testid="sign-in-handoff-cover">
-      <AuthBootstrapShell className="h-full min-h-[100dvh]" />
+      <AuthBootstrapShell className="h-full min-h-[100dvh]" tagline={tagline} />
     </div>
   );
 }

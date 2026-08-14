@@ -10,7 +10,7 @@ import {
   DashboardListSkeleton,
   GlobalTransactionsTableSkeleton,
 } from "../../components/dashboard/DashboardSectionLoading";
-import { formatEur } from "../../lib/formatEur";
+import { formatEur, formatOptionalEur } from "../../lib/formatEur";
 import {
   PlatformPage,
   PlatformPageHeader,
@@ -197,7 +197,8 @@ export function GlobalTransactionsPage() {
         icon={CreditCard}
         title={t("admin.globalTransactionsPage.title")}
         subtitle={t("admin.globalTransactionsPage.subtitle", {
-          feePercent: items[0]?.caretipFeePercent ?? 5,
+          feePercent: items[0]?.caretipFeePercent ?? 10,
+          feeFixed: ((items[0]?.caretipFeeFixedCents ?? 49) / 100).toFixed(2),
         })}
       />
 
@@ -281,10 +282,14 @@ export function GlobalTransactionsPage() {
                     </td>
                     <td className={`${platformUi.tableTd} text-right tabular-nums`}>{formatEur(row.amountEur)}</td>
                     <td className={`${platformUi.tableTd} text-right tabular-nums text-muted-foreground`}>
-                      {row.caretipFeePercent}% ({formatEur(row.caretipFeeEur)})
+                      {t("admin.globalTransactionsPage.feeCell", {
+                        percent: row.caretipFeePercent,
+                        fixed: (row.caretipFeeFixedCents / 100).toFixed(2),
+                        amount: formatOptionalEur(row.caretipFeeEur),
+                      })}
                     </td>
                     <td className={`${platformUi.tableTd} text-right font-medium tabular-nums`}>
-                      {formatEur(row.netToStaffEur)}
+                      {formatOptionalEur(row.netToStaffEur)}
                     </td>
                     <td className={platformUi.tableTd}>
                       <span

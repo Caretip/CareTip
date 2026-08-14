@@ -190,6 +190,57 @@ export async function listRefunds(req: Request, res: Response) {
   }
 }
 
+export async function listConnectPayouts(req: Request, res: Response) {
+  try {
+    const q = typeof req.query.q === "string" ? req.query.q : undefined;
+    const status = typeof req.query.status === "string" ? req.query.status : undefined;
+    const businessId = typeof req.query.businessId === "string" ? req.query.businessId : undefined;
+    const reconciliationStatus =
+      typeof req.query.reconciliationStatus === "string" ? req.query.reconciliationStatus : undefined;
+    const currency = typeof req.query.currency === "string" ? req.query.currency : undefined;
+    const createdFrom = typeof req.query.createdFrom === "string" ? req.query.createdFrom : undefined;
+    const createdTo = typeof req.query.createdTo === "string" ? req.query.createdTo : undefined;
+    const take = Math.min(Math.max(Number(req.query.take) || 50, 1), 100);
+    const skip = Math.max(Number(req.query.skip) || 0, 0);
+    const { listPlatformConnectPayouts } = await import("../services/stripeConnectPayout.service.js");
+    const result = await listPlatformConnectPayouts({
+      q,
+      status,
+      businessId,
+      reconciliationStatus,
+      currency,
+      createdFrom,
+      createdTo,
+      take,
+      skip,
+    });
+    return res.json(result);
+  } catch (err) {
+    logServerError("platform.listConnectPayouts", err);
+    return res.status(500).json({
+      total: 0,
+      items: [],
+      message: clientSafeMessage(err, "We couldn't load Connect payouts. Try again."),
+    });
+  }
+}
+
+export async function getConnectPayout(req: Request, res: Response) {
+  try {
+    const id = typeof req.params.id === "string" ? req.params.id.trim() : "";
+    if (!id) return res.status(400).json({ message: "Invalid payout id" });
+    const { getPlatformConnectPayout } = await import("../services/stripeConnectPayout.service.js");
+    const payout = await getPlatformConnectPayout(id);
+    if (!payout) return res.status(404).json({ message: "Payout not found" });
+    return res.json(payout);
+  } catch (err) {
+    logServerError("platform.getConnectPayout", err);
+    return res.status(500).json({
+      message: clientSafeMessage(err, "We couldn't load that payout. Try again."),
+    });
+  }
+}
+
 export async function exportRefunds(req: Request, res: Response) {
   try {
     const q = typeof req.query.q === "string" ? req.query.q : undefined;

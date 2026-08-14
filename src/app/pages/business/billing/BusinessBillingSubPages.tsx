@@ -1,3 +1,4 @@
+import { Navigate } from "react-router";
 import { useBillingStatus } from "../../../hooks/useBillingStatus";
 import { useBusinessPageBoot } from "../../../lib/useBusinessPageBoot";
 import { BillingHistoryPanel } from "../../../components/business/settings/billing/BillingHistoryPanel";
@@ -36,4 +37,9 @@ export function BusinessBillingPaymentMethodsPage() {
       <BillingPaymentMethodsPanel />
     </BusinessSettingsPanelShell>
   );
+}
+
+/** @deprecated Use `/dashboard/stripe/payouts`. Kept so leftover imports still redirect. */
+export function BusinessBillingPayoutsPage() {
+  return <Navigate to="/dashboard/stripe/payouts" replace />;
 }

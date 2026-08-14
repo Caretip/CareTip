@@ -2,7 +2,6 @@ import { useId } from "react";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
 import { GlobalAppLoadingHold } from "./GlobalAppLoadingHold";
-import { LoadingSpinner } from "./ui/loading-spinner";
 import {
   APP_LOADING_PRIORITY,
   useAppLoadingRegistration,
@@ -24,7 +23,7 @@ export function CareTipLoadingTitle({
   return (
     <img
       src="/brand/caretip-app-icon.svg"
-      alt="CareTip"
+      alt=""
       width={compact ? 48 : 80}
       height={compact ? 48 : 80}
       decoding="async"
@@ -40,22 +39,28 @@ export function CareTipLoadingTitle({
 
 /**
  * Shared logo + progress cue used by all branded CareTip loading surfaces.
- * Full startup layout mirrors the workspace boot pattern:
- * icon → progress bar → CareTip → short tagline.
+ * App-level layout: icon → progress bar → one loading sentence.
+ * Never pair this sentence with a second line of copy on the same screen.
  */
 export function CareTipBrandedLoaderMark({
   compact = true,
   className,
   showTagline,
+  tagline: taglineOverride,
 }: {
   compact?: boolean;
   className?: string;
   /** Defaults to true when not compact (startup / auth shells). */
   showTagline?: boolean;
+  /**
+   * Overrides the default “getting ready” sentence when a more specific
+   * user-facing stage is active. One tagline only.
+   */
+  tagline?: string;
 }) {
   const { t } = useTranslation();
   const withTagline = showTagline ?? !compact;
-  const tagline = t("common.preparingWorkspace");
+  const tagline = taglineOverride?.trim() || t("common.gettingReady");
 
   return (
     <div
@@ -72,10 +77,7 @@ export function CareTipBrandedLoaderMark({
         <span className="app-branded-loader__indeterminate" />
       </span>
       {withTagline ? (
-        <>
-          <p className="app-branded-loader__brand">CareTip</p>
-          <p className="app-branded-loader__tagline">{tagline}</p>
-        </>
+        <p className="app-branded-loader__tagline">{tagline}</p>
       ) : null}
     </div>
   );
@@ -101,8 +103,8 @@ export type CareTipPageLoaderProps = {
   /**
    * fullscreen — full-viewport (cold entry under global overlay; soft nav = icon only).
    * section — in-page blocks (lists, settings body).
-   * compact — tables, overlays, modals (smaller title + md spinner).
-   * wait — full-viewport wait (QR resolve, guards, data hydration).
+   * compact — tables, overlays, modals (smaller title + bar).
+   * wait — full-viewport wait (QR resolve, guards).
    */
   variant?: "fullscreen" | "section" | "compact" | "wait";
 };
@@ -122,7 +124,6 @@ export function CareTipPageLoader({
     Boolean(message) || (context != null && TIP_PROGRESS_CONTEXTS.has(context));
   const resolvedMessage =
     message ?? (context ? resolveAppLoadingContextMessage(context, t) : undefined);
-  const spinnerSize = variant === "compact" ? "md" : "lg";
 
   useAppLoadingRegistration(
     registrationKey ?? `caretip-page-loader:${autoKey}`,
@@ -132,53 +133,31 @@ export function CareTipPageLoader({
   );
 
   const variantClass =
-    variant === "fullscreen"
-      ? "flex min-h-screen flex-col items-center justify-center gap-8 bg-background px-6"
-      : variant === "wait"
-        ? "flex min-h-screen flex-col items-center justify-center gap-5 bg-background px-6"
-        : variant === "section"
-          ? "flex flex-col items-center justify-center gap-6 py-16 px-4"
-          : "flex flex-col items-center justify-center gap-4";
+    variant === "fullscreen" || variant === "wait"
+      ? "flex min-h-[100dvh] flex-col items-center justify-center bg-background px-6"
+      : variant === "section"
+        ? "flex flex-col items-center justify-center py-16 px-4"
+        : "flex flex-col items-center justify-center";
 
   /* Cold entry: stay under the global CareTip overlay. */
   if (isFullScreen && !softNav) {
     return <GlobalAppLoadingHold className={className} />;
   }
 
-  /* Soft SPA: tip/payment keep progress copy; dashboards get icon + orbit spinner. */
-  if (isFullScreen && softNav && !keepProgressCopy) {
-    return (
-      <div
-        className={cn(
-          "app-branded-loader flex min-h-[40vh] flex-col items-center justify-center bg-background px-6",
-          className,
-        )}
-        role="status"
-        aria-busy="true"
-      >
-        <CareTipBrandedLoaderMark compact={false} />
-      </div>
-    );
-  }
+  const tagline = keepProgressCopy ? resolvedMessage : undefined;
 
   return (
     <div
-      className={cn(variantClass, className)}
+      className={cn("app-branded-loader", variantClass, className)}
       role="status"
       aria-busy="true"
       aria-live="polite"
     >
-      {keepProgressCopy ? null : (
-        <CareTipBrandedLoaderMark compact={variant === "compact" || isFullScreen} />
-      )}
-      <div className="flex flex-col items-center gap-3">
-        {keepProgressCopy ? <LoadingSpinner size={spinnerSize} /> : null}
-        {keepProgressCopy && resolvedMessage ? (
-          <p className="max-w-sm text-center text-sm text-muted-foreground">
-            {resolvedMessage}
-          </p>
-        ) : null}
-      </div>
+      <CareTipBrandedLoaderMark
+        compact={!isFullScreen}
+        tagline={tagline}
+        showTagline={keepProgressCopy || isFullScreen}
+      />
     </div>
   );
 }

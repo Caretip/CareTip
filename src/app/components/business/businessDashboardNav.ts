@@ -52,6 +52,7 @@ export const businessDashboardNavItems: readonly BusinessDashboardNavItem[] = [
   },
   { labelKey: "dashboardNav.business.locations", href: "/dashboard/locations", icon: "locations" },
   { labelKey: "dashboardNav.business.customers", href: "/dashboard/customers", icon: "inbox" },
+  { labelKey: "dashboardNav.business.stripe", href: "/dashboard/stripe", icon: "earnings" },
   { labelKey: "dashboardNav.business.billing", href: "/dashboard/billing", icon: "billing" },
   { labelKey: "dashboardNav.business.settings", href: "/dashboard/settings", icon: "settings" },
 ] as const;
@@ -116,6 +117,14 @@ export const billingSubNavItems = [
   { labelKey: "business.billing.nav.history", href: `${BILLING_BASE}/history` },
 ] as const;
 
+export const STRIPE_BASE = "/dashboard/stripe" as const;
+export const STRIPE_CONNECT_HREF = `${STRIPE_BASE}/connect` as const;
+export const STRIPE_PAYOUTS_HREF = `${STRIPE_BASE}/payouts` as const;
+export const stripeSubNavItems = [
+  { labelKey: "business.stripe.nav.connect", href: STRIPE_CONNECT_HREF },
+  { labelKey: "business.stripe.nav.payouts", href: STRIPE_PAYOUTS_HREF },
+] as const;
+
 const settingsSidebarChildren: readonly BusinessSidebarChildNavItem[] =
   BUSINESS_SETTINGS_SECTIONS.map((section) => ({
     labelKey: section.labelKey,
@@ -168,6 +177,14 @@ export const businessSidebarNavEntries: readonly BusinessSidebarNavEntry[] = [
     labelKey: "dashboardNav.business.customers",
     href: CUSTOMERS_BASE,
     icon: "inbox",
+  },
+  {
+    type: "group",
+    id: "stripe",
+    labelKey: "dashboardNav.business.stripe",
+    icon: "earnings",
+    defaultHref: STRIPE_CONNECT_HREF,
+    children: stripeSubNavItems,
   },
   {
     type: "group",
@@ -233,6 +250,7 @@ const MODULE_PREFIXES = [
   "/dashboard/team",
   "/dashboard/qr-studio",
   "/dashboard/customers",
+  "/dashboard/stripe",
   "/dashboard/billing",
 ] as const;
 

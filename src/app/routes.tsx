@@ -389,7 +389,18 @@ const routes: RouteObject[] = [
           { path: 'subscription', lazy: routeLazy(() => import('./pages/business/billing/BusinessBillingSubscriptionPage'), 'BusinessBillingSubscriptionPage') },
           { path: 'invoices', lazy: routeLazy(() => import('./pages/business/billing/BusinessBillingSubPages'), 'BusinessBillingInvoicesPage') },
           { path: 'payment-methods', lazy: routeLazy(() => import('./pages/business/billing/BusinessBillingSubPages'), 'BusinessBillingPaymentMethodsPage') },
+          { path: 'payouts', element: <Navigate to="/dashboard/stripe/payouts" replace /> },
           { path: 'history', lazy: routeLazy(() => import('./pages/business/billing/BusinessBillingSubPages'), 'BusinessBillingHistoryPage') },
+        ],
+      },
+      /* —— Stripe Connect (tips / payouts — not SaaS billing) —— */
+      {
+        path: 'stripe',
+        lazy: routeLazy(() => import('./pages/business/stripe/BusinessStripeLayout'), 'BusinessStripeLayout'),
+        children: [
+          { index: true, element: <Navigate to="/dashboard/stripe/connect" replace /> },
+          { path: 'connect', lazy: routeLazy(() => import('./pages/business/stripe/BusinessStripePages'), 'BusinessStripeConnectPage') },
+          { path: 'payouts', lazy: routeLazy(() => import('./pages/business/stripe/BusinessStripePages'), 'BusinessStripePayoutsPage') },
         ],
       },
       { path: 'locations', lazy: routeLazy(() => import('./pages/business/LocationsPage'), 'LocationsPage') },
@@ -454,6 +465,7 @@ const routes: RouteObject[] = [
       { path: 'revenue/successful-subscriptions', lazy: routeLazy(() => import('./pages/platform/revenue/PlatformSuccessfulSubscriptionsPage'), 'PlatformSuccessfulSubscriptionsPage') },
       { path: 'revenue/failed-subscriptions', lazy: routeLazy(() => import('./pages/platform/revenue/PlatformFailedSubscriptionsPage'), 'PlatformFailedSubscriptionsPage') },
       { path: 'revenue/refunds', lazy: routeLazy(() => import('./pages/platform/revenue/PlatformRefundsPage'), 'PlatformRefundsPage') },
+      { path: 'revenue/connect-payouts', lazy: routeLazy(() => import('./pages/platform/revenue/PlatformConnectPayoutsPage'), 'PlatformConnectPayoutsPage') },
       { path: 'users/management', lazy: routeLazy(() => import('./pages/platform/PlatformUserManagementPage'), 'PlatformUserManagementPage') },
       { path: 'users/staff', lazy: routeLazy(() => import('./pages/platform/users/PlatformStaffAccountsPage'), 'PlatformStaffAccountsPage') },
       { path: 'users/admins', lazy: routeLazy(() => import('./pages/platform/users/PlatformAdminsPage'), 'PlatformAdminsPage') },

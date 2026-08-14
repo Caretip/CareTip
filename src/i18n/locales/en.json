@@ -131,32 +131,33 @@
     }
   },
   "common": {
-    "settingUp": "Setting things up for you.",
-    "preparingWorkspace": "Preparing your workspace…",
-    "creatingWorkspace": "Creating workspace…",
+    "settingUp": "Getting things ready…",
+    "gettingReady": "Getting things ready…",
+    "preparingWorkspace": "Getting things ready…",
+    "creatingWorkspace": "Setting up your workspace…",
     "savingChanges": "Saving changes…",
-    "signingOut": "Signing you out securely...",
+    "signingOut": "Signing you out…",
     "onlyAMoment": "This will only take a moment.",
     "comingSoonBadge": "Coming soon",
     "comingSoonInDevelopment": "Currently in development",
     "loading": {
-      "starting": "Starting CareTip...",
-      "landing": "Preparing your experience...",
-      "signingIn": "Signing you in...",
-      "sessionCheck": "Checking your session...",
-      "dashboard": "Preparing your dashboard...",
-      "analytics": "Loading your insights...",
-      "qrTools": "Opening QR tools...",
-      "tipPage": "Opening your tip page...",
-      "findingRecipient": "Finding your CareTip recipient...",
-      "checkout": "Preparing secure checkout...",
-      "stripeRedirect": "Connecting to secure payment...",
-      "stripeReturn": "Confirming your tip...",
-      "finishing": "Finishing up...",
-      "receipt": "Preparing your receipt...",
-      "language": "Updating your experience..."
+      "starting": "Getting things ready…",
+      "landing": "Getting things ready…",
+      "signingIn": "Signing you in…",
+      "sessionCheck": "Getting your account ready…",
+      "dashboard": "Loading your dashboard…",
+      "analytics": "Loading your insights…",
+      "qrTools": "Opening QR tools…",
+      "tipPage": "Opening your tip page…",
+      "findingRecipient": "Finding who to tip…",
+      "checkout": "Preparing secure checkout…",
+      "stripeRedirect": "Connecting to secure payment…",
+      "stripeReturn": "Confirming your tip…",
+      "finishing": "Almost there…",
+      "receipt": "Preparing your receipt…",
+      "language": "Updating your language…"
     },
-    "syncingAccountStatus": "Syncing account status…",
+    "syncingAccountStatus": "Getting billing ready…",
     "loadingTeamMembers": "Loading team members…",
     "loadingTeam": "Loading team…",
     "openingTip": "Opening tip…",
@@ -1515,9 +1516,9 @@
       "footerJoinTeam": "Join with invite code"
     },
     "page": {
-      "sessionCheckingTitle": "Checking your session...",
-      "sessionCheckingBody": "We're confirming your login status.",
-      "sessionPleaseWait": "Please wait",
+      "sessionCheckingTitle": "Getting your account ready…",
+      "sessionCheckingBody": "Confirming you're signed in.",
+      "sessionPleaseWait": "Getting things ready…",
       "errorBothRequired": "Please enter both email and password.",
       "errorInvalidEmail": "Please enter a valid email address.",
       "errorFullName": "Please enter your full name.",
@@ -1709,7 +1710,7 @@
     },
     "categories": {
       "tips": "Tips",
-      "payouts": "Payouts",
+      "payouts": "Tip records",
       "team": "Team",
       "feedback": "Feedback",
       "goals": "Goals",
@@ -1744,8 +1745,8 @@
         "body": "{{amount}} for {{employeeName}}"
       },
       "payout_completed": {
-        "title": "Payout completed",
-        "body": "A payout of {{amount}} was processed."
+        "title": "Tip recorded",
+        "body": "{{amount}} was added to your tip history. This is not a Stripe bank payout."
       },
       "login_security": {
         "title": "New sign in",
@@ -2509,6 +2510,7 @@
       "qrStudio": "QR Studio",
       "locations": "Locations",
       "customers": "Customer Feedback",
+      "stripe": "Stripe",
       "billing": "Billing",
       "settings": "Settings",
       "planLabels": {
@@ -3846,6 +3848,11 @@
       "description": "Open QR Management to generate fresh links and printable codes.",
       "action": "Fix QR links"
     },
+    "fixConnect": {
+      "title": "Connect Stripe to receive tips",
+      "description": "CareTip needs your Stripe account before guests can tip this venue.",
+      "action": "Connect Stripe"
+    },
     "shell": {
       "sidebarAria": "Business dashboard navigation",
       "navAria": "Main navigation"
@@ -3865,7 +3872,8 @@
         "description": "Confirm your details and preview the guest tipping experience before you go live.",
         "readyTitle": "Ready to go live",
         "readyMessage": "Everything looks good? Publish your venue and open your dashboard.",
-        "publishHint": "You can update branding and contact details anytime in settings."
+        "publishHint": "You can update branding and contact details anytime in settings.",
+        "stripeNextHint": "Next: connect Stripe in your dashboard so guests can tip this venue."
       },
       "sections": {
         "branding": "Branding",
@@ -4112,7 +4120,7 @@
       }
     },
     "globalSearch": {
-      "placeholder": "Search tips, employees, QR tables, payouts...",
+      "placeholder": "Search tips, employees, QR tables, billing, payouts...",
       "aria": "Search your business dashboard",
       "closeAria": "Close search",
       "clearAria": "Clear search",
@@ -4125,15 +4133,20 @@
         "qrTables": "QR Tables",
         "recentTips": "Recent Tips",
         "recentActivity": "Recent Activity",
-        "payouts": "Payouts"
+        "billing": "Billing",
+        "payouts": "Stripe payouts"
       },
       "payoutShortcuts": {
         "subscriptionTitle": "Subscription & billing",
-        "subscriptionSubtitle": "Plan, payouts, and subscription status",
+        "subscriptionSubtitle": "Plan, invoices, and CareTip subscription status",
         "invoicesTitle": "Invoices",
         "invoicesSubtitle": "Billing history and invoices",
         "historyTitle": "Payment history",
-        "historySubtitle": "Past billing and payment events"
+        "historySubtitle": "Past CareTip subscription billing events",
+        "connectTitle": "Stripe Connect",
+        "connectSubtitle": "Connect Stripe so this venue can receive tips",
+        "connectPayoutsTitle": "Stripe payouts",
+        "connectPayoutsSubtitle": "Business Stripe payout history — not CareTip subscription billing"
       }
     },
     "dashboard": {
@@ -5563,10 +5576,20 @@
         "composite_decode_fallback": "Card extract decode used matrix fallback — QR payload verified; compositing is scan-safe."
       }
     },
+    "stripe": {
+      "moduleEyebrow": "Tips & payouts",
+      "moduleTitle": "Stripe",
+      "moduleSubtitle": "Connect your business Stripe account so guests can tip this venue.",
+      "payoutsSubtitle": "Stripe payouts from this business’s connected account to its bank — not CareTip subscription billing.",
+      "nav": {
+        "connect": "Connect",
+        "payouts": "Payouts"
+      }
+    },
     "billing": {
       "moduleEyebrow": "Subscription",
       "moduleTitle": "Billing",
-      "moduleSubtitle": "Manage your plan, invoices, and payment methods.",
+      "moduleSubtitle": "Manage your CareTip plan, invoices, and payment methods.",
       "mobileHandoff": {
         "title": "You're on CareTip Web",
         "body": "You opened Billing from the CareTip mobile app. This is the same workspace — finish your subscription here, keep managing billing on the web, or return to the mobile app when you're done.",
@@ -5577,11 +5600,64 @@
         "subscription": "Subscription",
         "invoices": "Invoices",
         "paymentMethods": "Payment Methods",
+        "payouts": "Payouts",
         "history": "Billing History"
       },
       "historyDesc": "Track subscription activity including trials, renewals, payments, and plan changes.",
       "historyEmptyTitle": "No billing activity yet",
       "historyEmptyBody": "Subscription events will appear here when your plan changes, renews, or when payments are processed.",
+      "payouts": {
+        "hint": "These are Stripe payouts from your connected account’s available balance to your bank. They are not individual guest tips, and CareTip does not send them — Stripe does.",
+        "loadError": "Could not load payout history.",
+        "loading": "Loading payouts",
+        "emptyTitle": "No payouts yet",
+        "emptyBody": "Your Stripe-connected account hasn’t received a payout yet. Once Stripe sends funds from that account, payout history will appear here.",
+        "tableCaption": "Stripe connected-account payouts",
+        "colAmount": "Amount",
+        "colStatus": "Payout status",
+        "colArrival": "Expected arrival",
+        "colCreated": "Created",
+        "colPaid": "Paid",
+        "colFailedAt": "Failed",
+        "colCanceledAt": "Canceled",
+        "colReconciliation": "CareTip sync",
+        "colFailure": "Payout issue",
+        "colBalanceLines": "Balance activity",
+        "failedFallback": "Stripe could not complete this payout.",
+        "canceledFallback": "This payout was canceled.",
+        "openDetail": "View payout details",
+        "detailTitle": "Payout details",
+        "detailLead": "A Stripe payout moves available connected-account balance to the venue’s payout destination. It is not one guest tip and not an employee withdrawal.",
+        "detailLoading": "Loading payout details…",
+        "detailError": "Could not load this payout.",
+        "balanceLinesHint": "These Stripe balance entries are not individual CareTip tips.",
+        "balanceLinesMore": "Additional lines are not shown here.",
+        "showing": "{{from}}–{{to}} of {{total}}",
+        "prev": "Previous",
+        "next": "Next",
+        "status": {
+          "pending": "Pending",
+          "in_transit": "In transit",
+          "paid": "Paid",
+          "failed": "Failed",
+          "canceled": "Canceled",
+          "unknown": "Unknown"
+        },
+        "reconciliation": {
+          "pending": "Sync pending",
+          "in_progress": "Syncing",
+          "complete": "Reconciled",
+          "partial": "Partially reconciled",
+          "failed": "Sync failed"
+        },
+        "reconExplain": {
+          "pending": "The payout exists. CareTip has not finished reading Stripe’s related balance activity.",
+          "in_progress": "CareTip is synchronizing Stripe balance activity for this payout.",
+          "complete": "CareTip has synchronized the Stripe balance activity available for this payout.",
+          "partial": "The payout exists, but CareTip has not yet synchronized all related Stripe balance activity.",
+          "failed": "The payout itself is unchanged. CareTip could not finish synchronizing Stripe balance activity."
+        }
+      },
       "invoicesDesc": "Download invoices and payment receipts from your Stripe Customer Portal.",
       "invoicesHint": "Invoices and receipts are securely managed by Stripe.",
       "openBillingPortal": "Open Billing Portal",
@@ -5595,6 +5671,31 @@
       "loadError": "Could not load billing information.",
       "loading": "Loading billing…",
       "retry": "Try again",
+      "connect": {
+        "title": "Receive tips with Stripe",
+        "description": "Connect Stripe so this business can receive guest tips. Guests cannot complete a tip until Stripe setup is ready.",
+        "loading": "Checking payout setup…",
+        "loadError": "Could not load payout setup.",
+        "connect": "Connect Stripe",
+        "continue": "Continue Stripe setup",
+        "manage": "Update Stripe details",
+        "starting": "Opening Stripe…",
+        "startError": "Stripe connection couldn't be started. Please try again.",
+        "notConfigured": "Stripe is not configured on the server yet.",
+        "statusNotConnected": "Stripe is not connected yet. Connect Stripe before the venue can receive tips.",
+        "statusIncomplete": "Stripe setup is incomplete. Complete setup before the venue can receive tips.",
+        "statusAttention": "Stripe needs more information before this venue can receive tips.",
+        "statusReady": "Stripe account is ready. Guests can tip this venue.",
+        "chargesOff": "Guest card payments are not enabled on this Stripe account yet.",
+        "payoutsOff": "Stripe has not enabled payouts for this account yet. Tip acceptance still requires both charges and payouts to be enabled.",
+        "readyNote": "Stripe controls when funds move from the connected account to your bank. CareTip only records those payouts.",
+        "viewPayouts": "View payout history",
+        "readinessReady": "Business readiness: ready to receive tips.",
+        "readinessRequired": "Business readiness: Stripe setup required before this venue can receive tips.",
+        "goLiveNote": "Platform approval for QR codes is separate. Tip checkout still requires a ready Stripe connection.",
+        "returnedHint": "Welcome back. Stripe status updates when Stripe confirms your account — this may take a moment.",
+        "linkExpired": "That Stripe setup link expired. Use Continue Stripe setup to open a new one."
+      },
       "emptyStateTitle": "You are on the CareTip Basic plan.",
       "emptyStateBody": "Upgrade to Pro for advanced analytics, branding, multi-location, and more.",
       "noActiveSubscriptionTitle": "Basic plan active",
@@ -6237,7 +6338,8 @@
         "failedPayments": "Failed Payments",
         "successfulSubscriptions": "Successful Subscriptions",
         "failedSubscriptions": "Failed Subscriptions",
-        "refunds": "Failed tips"
+        "refunds": "Failed tips",
+        "connectPayouts": "Connect payouts"
       },
       "users": {
         "management": "User Management",
@@ -6701,6 +6803,57 @@
       "empty": "No audit entries yet.",
       "noSearchMatches": "No entries match your search."
     },
+    "connectPayoutsPage": {
+      "title": "Connect payouts",
+      "subtitle": "Stripe payouts from connected Express accounts to each venue’s bank. Observation only — CareTip does not initiate payouts. These are not individual guest tips or employee withdrawals.",
+      "searchPlaceholder": "Search by business name…",
+      "searchAria": "Search Connect payouts by business name",
+      "filterStatus": "Payout status",
+      "filterCurrency": "Currency",
+      "filterFrom": "Created from",
+      "filterTo": "Created to",
+      "businessFilterActive": "Showing payouts for one business.",
+      "clearBusinessFilter": "Show all businesses",
+      "colBusiness": "Business",
+      "colAmount": "Amount",
+      "colStatus": "Payout status",
+      "colArrival": "Expected arrival",
+      "colCreated": "Created",
+      "colFailure": "Payout issue",
+      "colReconciliation": "CareTip sync",
+      "filterReconciliation": "CareTip sync",
+      "footerShowing": "{{from}}–{{to}} of {{total}}",
+      "prevPage": "Previous",
+      "nextPage": "Next",
+      "statusFilter": {
+        "all": "All statuses"
+      },
+      "reconFilter": {
+        "all": "All sync states"
+      },
+      "currencyFilter": {
+        "all": "All currencies"
+      },
+      "status": {
+        "pending": "Pending",
+        "in_transit": "In transit",
+        "paid": "Paid",
+        "failed": "Failed",
+        "canceled": "Canceled",
+        "unknown": "Unknown"
+      },
+      "reconciliation": {
+        "pending": "Sync pending",
+        "in_progress": "Syncing",
+        "complete": "Reconciled",
+        "partial": "Partially reconciled",
+        "failed": "Sync failed"
+      },
+      "empty": {
+        "title": "No Connect payouts yet",
+        "description": "Payouts appear here after Stripe sends funds from a connected account’s available balance. CareTip does not create these payouts."
+      }
+    },
     "refundsPage": {
       "searchPlaceholder": "Refund ID, dispute ID, payment intent, tip ID, or business…",
       "searchAria": "Search refunds",
@@ -6770,7 +6923,8 @@
     },
     "globalTransactionsPage": {
       "title": "Global transactions",
-      "subtitle": "All tips platform-wide. Amounts in EUR, CareTip fee {{feePercent}}%, net to staff, payout status.",
+      "subtitle": "All guest tips platform-wide. Amounts in EUR, CareTip fee {{feePercent}}% + €{{feeFixed}}, net to staff, and tip-ledger status (not Stripe Connect payouts).",
+      "feeCell": "{{percent}}% + €{{fixed}} ({{amount}})",
       "searchPlaceholder": "Transaction ID, Stripe ID, business name, or staff name…",
       "searchAria": "Search transactions",
       "hintLiveSearch": "Results update as you type.",
@@ -6780,7 +6934,7 @@
       "colAmountEur": "Amount (EUR)",
       "colCaretipFee": "CareTip fee",
       "colNetToStaff": "Net to staff",
-      "colPayout": "Payout",
+      "colPayout": "Tip ledger",
       "loading": "Loading…",
       "empty": "No transactions found.",
       "summaryDefault": "Showing {{total}} transactions",

@@ -131,32 +131,33 @@
     }
   },
   "common": {
-    "settingUp": "Wird für Sie eingerichtet.",
-    "preparingWorkspace": "Ihr Workspace wird vorbereitet…",
-    "creatingWorkspace": "Workspace wird erstellt…",
+    "settingUp": "Wird eingerichtet…",
+    "gettingReady": "Wird eingerichtet…",
+    "preparingWorkspace": "Wird eingerichtet…",
+    "creatingWorkspace": "Ihr Bereich wird eingerichtet…",
     "savingChanges": "Änderungen werden gespeichert…",
-    "signingOut": "Sie werden sicher abgemeldet …",
+    "signingOut": "Sie werden abgemeldet…",
     "onlyAMoment": "Das dauert nur einen Moment.",
     "comingSoonBadge": "Demnächst",
     "comingSoonInDevelopment": "Derzeit in Entwicklung",
     "loading": {
-      "starting": "CareTip wird gestartet …",
-      "landing": "Ihr Erlebnis wird vorbereitet …",
-      "signingIn": "Anmeldung läuft …",
-      "sessionCheck": "Sitzung wird geprüft …",
-      "dashboard": "Ihr Dashboard wird vorbereitet …",
-      "analytics": "Ihre Einblicke werden geladen …",
-      "qrTools": "QR-Tools werden geöffnet …",
-      "tipPage": "Ihre Trinkgeldseite wird geöffnet …",
-      "findingRecipient": "CareTip-Empfänger wird gesucht …",
-      "checkout": "Sicherer Checkout wird vorbereitet …",
-      "stripeRedirect": "Sichere Zahlungsverbindung wird hergestellt …",
-      "stripeReturn": "Ihr Trinkgeld wird bestätigt …",
-      "finishing": "Wird abgeschlossen …",
-      "receipt": "Ihre Quittung wird vorbereitet …",
-      "language": "Ihr Erlebnis wird aktualisiert …"
+      "starting": "Wird eingerichtet…",
+      "landing": "Wird eingerichtet…",
+      "signingIn": "Anmeldung läuft…",
+      "sessionCheck": "Ihr Konto wird vorbereitet…",
+      "dashboard": "Ihr Dashboard wird geladen…",
+      "analytics": "Ihre Einblicke werden geladen…",
+      "qrTools": "QR-Tools werden geöffnet…",
+      "tipPage": "Ihre Trinkgeldseite wird geöffnet…",
+      "findingRecipient": "Empfänger wird gesucht…",
+      "checkout": "Sicherer Checkout wird vorbereitet…",
+      "stripeRedirect": "Sichere Zahlung wird vorbereitet…",
+      "stripeReturn": "Ihr Trinkgeld wird bestätigt…",
+      "finishing": "Gleich geschafft…",
+      "receipt": "Ihre Quittung wird vorbereitet…",
+      "language": "Sprache wird aktualisiert…"
     },
-    "syncingAccountStatus": "Kontostatus wird synchronisiert…",
+    "syncingAccountStatus": "Abrechnung wird vorbereitet…",
     "loadingTeamMembers": "Team wird geladen…",
     "loadingTeam": "Team wird geladen…",
     "openingTip": "Trinkgeld wird geöffnet…",
@@ -1515,9 +1516,9 @@
       "footerJoinTeam": "Mit Einladungscode beitreten"
     },
     "page": {
-      "sessionCheckingTitle": "Sitzung wird geprüft…",
-      "sessionCheckingBody": "Wir bestätigen Ihren Anmeldestatus.",
-      "sessionPleaseWait": "Bitte warten",
+      "sessionCheckingTitle": "Ihr Konto wird vorbereitet…",
+      "sessionCheckingBody": "Wir bestätigen, dass Sie angemeldet sind.",
+      "sessionPleaseWait": "Wird eingerichtet…",
       "errorBothRequired": "Bitte E-Mail und Passwort eingeben.",
       "errorInvalidEmail": "Bitte geben Sie eine gültige E-Mail-Adresse ein.",
       "errorFullName": "Bitte geben Sie Ihren vollständigen Namen ein.",
@@ -1709,7 +1710,7 @@
     },
     "categories": {
       "tips": "Trinkgeld",
-      "payouts": "Auszahlungen",
+      "payouts": "Trinkgeld-Einträge",
       "team": "Team",
       "feedback": "Feedback",
       "goals": "Ziele",
@@ -1744,8 +1745,8 @@
         "body": "{{amount}} für {{employeeName}}"
       },
       "payout_completed": {
-        "title": "Auszahlung abgeschlossen",
-        "body": "Eine Auszahlung über {{amount}} wurde verarbeitet."
+        "title": "Trinkgeld erfasst",
+        "body": "{{amount}} wurde in Ihrer Trinkgeld-Historie erfasst. Das ist keine Stripe-Bankauszahlung."
       },
       "login_security": {
         "title": "Neue Anmeldung",
@@ -2509,6 +2510,7 @@
       "qrStudio": "QR Studio",
       "locations": "Standorte",
       "customers": "Kundenfeedback",
+      "stripe": "Stripe",
       "billing": "Abrechnung",
       "settings": "Einstellungen",
       "planLabels": {
@@ -3846,6 +3848,11 @@
       "description": "Öffnen Sie die QR Verwaltung, um neue Links und druckbare Codes zu erzeugen.",
       "action": "QR Links beheben"
     },
+    "fixConnect": {
+      "title": "Stripe verbinden, um Trinkgeld zu empfangen",
+      "description": "CareTip benötigt Ihr Stripe-Konto, bevor Gäste in dieser Location Trinkgeld geben können.",
+      "action": "Stripe verbinden"
+    },
     "shell": {
       "sidebarAria": "Unternehmens-Dashboard-Navigation",
       "navAria": "Hauptnavigation"
@@ -3865,7 +3872,8 @@
         "description": "Angaben bestätigen und die mobile Gastvorschau prüfen, bevor Sie live gehen.",
         "readyTitle": "Bereit für den Start",
         "readyMessage": "Alles in Ordnung? Veröffentlichen Sie Ihren Betrieb und öffnen Sie Ihr Dashboard.",
-        "publishHint": "Branding und Kontaktdaten können Sie jederzeit in den Einstellungen ändern."
+        "publishHint": "Branding und Kontaktdaten können Sie jederzeit in den Einstellungen ändern.",
+        "stripeNextHint": "Als Nächstes: Verbinden Sie Stripe im Dashboard, damit Gäste in dieser Location Trinkgeld geben können."
       },
       "sections": {
         "branding": "Branding",
@@ -4112,7 +4120,7 @@
       }
     },
     "globalSearch": {
-      "placeholder": "Tips, Mitarbeitende, QR-Tische, Auszahlungen suchen…",
+      "placeholder": "Tips, Mitarbeitende, QR-Tische, Abrechnung, Auszahlungen suchen…",
       "aria": "Business-Dashboard durchsuchen",
       "closeAria": "Suche schließen",
       "clearAria": "Suche leeren",
@@ -4125,15 +4133,20 @@
         "qrTables": "QR-Tische",
         "recentTips": "Aktuelle Tips",
         "recentActivity": "Aktuelle Aktivität",
-        "payouts": "Auszahlungen"
+        "billing": "Abrechnung",
+        "payouts": "Stripe-Auszahlungen"
       },
       "payoutShortcuts": {
         "subscriptionTitle": "Abo & Abrechnung",
-        "subscriptionSubtitle": "Tarif, Auszahlungen und Abo-Status",
+        "subscriptionSubtitle": "Tarif, Rechnungen und CareTip-Abo-Status",
         "invoicesTitle": "Rechnungen",
         "invoicesSubtitle": "Abrechnungshistorie und Rechnungen",
         "historyTitle": "Zahlungsverlauf",
-        "historySubtitle": "Vergangene Abrechnungs- und Zahlungsereignisse"
+        "historySubtitle": "Vergangene CareTip-Abo-Ereignisse",
+        "connectTitle": "Stripe Connect",
+        "connectSubtitle": "Stripe verbinden, damit diese Location Trinkgeld empfangen kann",
+        "connectPayoutsTitle": "Stripe-Auszahlungen",
+        "connectPayoutsSubtitle": "Stripe-Auszahlungen des Unternehmens — nicht die CareTip-Abo-Abrechnung"
       }
     },
     "dashboard": {
@@ -5563,6 +5576,16 @@
         "composite_decode_fallback": "Karten-Extrakt fehlgeschlagen — Matrix-Fallback bestätigte die QR-Nutzlast; Compositing ist scan-sicher."
       }
     },
+    "stripe": {
+      "moduleEyebrow": "Trinkgeld & Auszahlungen",
+      "moduleTitle": "Stripe",
+      "moduleSubtitle": "Verbinden Sie das Stripe-Konto Ihres Unternehmens, damit Gäste in dieser Location Trinkgeld geben können.",
+      "payoutsSubtitle": "Stripe-Auszahlungen vom verbundenen Geschäftskonto auf das Bankkonto — nicht die CareTip-Abo-Abrechnung.",
+      "nav": {
+        "connect": "Verbindung",
+        "payouts": "Auszahlungen"
+      }
+    },
     "billing": {
       "moduleEyebrow": "Abonnement",
       "moduleTitle": "Abrechnung",
@@ -5577,11 +5600,64 @@
         "subscription": "Abonnement",
         "invoices": "Rechnungen",
         "paymentMethods": "Zahlungsmethoden",
+        "payouts": "Auszahlungen",
         "history": "Abrechnungsverlauf"
       },
       "historyDesc": "Abo-Aktivität verfolgen: Testphasen, Verlängerungen, Zahlungen und Planwechsel.",
       "historyEmptyTitle": "Noch keine Abrechnungsaktivität",
       "historyEmptyBody": "Abo-Ereignisse erscheinen hier, sobald sich Ihr Plan ändert, verlängert wird oder Zahlungen verarbeitet werden.",
+      "payouts": {
+        "hint": "Dies sind Stripe-Auszahlungen vom verfügbaren Guthaben Ihres verbundenen Kontos auf Ihr Bankkonto. Sie sind keine einzelnen Gäste-Tips, und CareTip löst sie nicht aus — Stripe tut das.",
+        "loadError": "Auszahlungsverlauf konnte nicht geladen werden.",
+        "loading": "Auszahlungen werden geladen",
+        "emptyTitle": "Noch keine Auszahlungen",
+        "emptyBody": "Ihr mit Stripe verbundenes Konto hat noch keine Auszahlung erhalten. Sobald Stripe Geld von diesem Konto sendet, erscheint der Verlauf hier.",
+        "tableCaption": "Stripe-Auszahlungen des verbundenen Kontos",
+        "colAmount": "Betrag",
+        "colStatus": "Auszahlungsstatus",
+        "colArrival": "Erwartete Ankunft",
+        "colCreated": "Erstellt",
+        "colPaid": "Ausgezahlt",
+        "colFailedAt": "Fehlgeschlagen",
+        "colCanceledAt": "Storniert",
+        "colReconciliation": "CareTip-Abgleich",
+        "colFailure": "Auszahlungsproblem",
+        "colBalanceLines": "Saldo-Aktivität",
+        "failedFallback": "Stripe konnte diese Auszahlung nicht abschließen.",
+        "canceledFallback": "Diese Auszahlung wurde storniert.",
+        "openDetail": "Auszahlungsdetails anzeigen",
+        "detailTitle": "Auszahlungsdetails",
+        "detailLead": "Eine Stripe-Auszahlung bewegt verfügbares Guthaben des verbundenen Kontos zum Auszahlungsziel der Location. Das ist kein einzelner Gäste-Tip und keine Mitarbeiter-Auszahlung.",
+        "detailLoading": "Auszahlungsdetails werden geladen…",
+        "detailError": "Diese Auszahlung konnte nicht geladen werden.",
+        "balanceLinesHint": "Diese Stripe-Saldoeinträge sind keine einzelnen CareTip-Tips.",
+        "balanceLinesMore": "Weitere Zeilen werden hier nicht angezeigt.",
+        "showing": "{{from}}–{{to}} von {{total}}",
+        "prev": "Zurück",
+        "next": "Weiter",
+        "status": {
+          "pending": "Ausstehend",
+          "in_transit": "Unterwegs",
+          "paid": "Ausgezahlt",
+          "failed": "Fehlgeschlagen",
+          "canceled": "Storniert",
+          "unknown": "Unbekannt"
+        },
+        "reconciliation": {
+          "pending": "Abgleich ausstehend",
+          "in_progress": "Abgleich läuft",
+          "complete": "Abgeglichen",
+          "partial": "Teilweise abgeglichen",
+          "failed": "Abgleich fehlgeschlagen"
+        },
+        "reconExplain": {
+          "pending": "Die Auszahlung existiert. CareTip hat die zugehörige Stripe-Saldoaktivität noch nicht vollständig gelesen.",
+          "in_progress": "CareTip synchronisiert die Stripe-Saldoaktivität für diese Auszahlung.",
+          "complete": "CareTip hat die verfügbare Stripe-Saldoaktivität für diese Auszahlung synchronisiert.",
+          "partial": "Die Auszahlung existiert, aber CareTip hat noch nicht die gesamte zugehörige Stripe-Saldoaktivität synchronisiert.",
+          "failed": "Die Auszahlung selbst ist unverändert. CareTip konnte die Stripe-Saldoaktivität nicht vollständig synchronisieren."
+        }
+      },
       "invoicesDesc": "Rechnungen und Zahlungsbelege im Stripe-Kundenportal herunterladen.",
       "invoicesHint": "Rechnungen und Belege werden sicher über Stripe verwaltet.",
       "openBillingPortal": "Abrechnungsportal öffnen",
@@ -5595,6 +5671,31 @@
       "loadError": "Abrechnungsdaten konnten nicht geladen werden.",
       "loading": "Abrechnung wird geladen…",
       "retry": "Erneut versuchen",
+      "connect": {
+        "title": "Trinkgelder mit Stripe empfangen",
+        "description": "Verbinden Sie Stripe, damit dieses Unternehmen Trinkgeld von Gästen empfangen kann. Gäste können erst Trinkgeld geben, wenn die Stripe-Einrichtung bereit ist.",
+        "loading": "Auszahlungseinrichtung wird geprüft…",
+        "loadError": "Auszahlungseinrichtung konnte nicht geladen werden.",
+        "connect": "Stripe verbinden",
+        "continue": "Stripe-Einrichtung fortsetzen",
+        "manage": "Stripe-Angaben aktualisieren",
+        "starting": "Stripe wird geöffnet…",
+        "startError": "Stripe-Verbindung konnte nicht gestartet werden. Bitte erneut versuchen.",
+        "notConfigured": "Stripe ist auf dem Server noch nicht konfiguriert.",
+        "statusNotConnected": "Stripe ist noch nicht verbunden. Verbinden Sie Stripe, bevor die Location Trinkgeld empfangen kann.",
+        "statusIncomplete": "Stripe-Einrichtung ist unvollständig. Schließen Sie die Einrichtung ab, bevor die Location Trinkgeld empfangen kann.",
+        "statusAttention": "Stripe benötigt weitere Angaben, bevor diese Location Trinkgeld empfangen kann.",
+        "statusReady": "Stripe-Konto ist bereit. Gäste können in dieser Location Trinkgeld geben.",
+        "chargesOff": "Kartenzahlungen von Gästen sind auf diesem Stripe-Konto noch nicht aktiviert.",
+        "payoutsOff": "Stripe hat Auszahlungen für dieses Konto noch nicht aktiviert. Tip-Empfang erfordert aktivierte Charges und Payouts.",
+        "readyNote": "Stripe steuert, wann Guthaben vom verbundenen Konto auf Ihr Bankkonto fließt. CareTip zeichnet diese Auszahlungen nur auf.",
+        "viewPayouts": "Auszahlungsverlauf anzeigen",
+        "readinessReady": "Bereitschaft: bereit, Trinkgeld zu empfangen.",
+        "readinessRequired": "Bereitschaft: Stripe-Einrichtung erforderlich, bevor diese Location Trinkgeld empfangen kann.",
+        "goLiveNote": "Die Plattformfreigabe für QR-Codes ist davon unabhängig. Tip-Checkout erfordert trotzdem eine bereite Stripe-Verbindung.",
+        "returnedHint": "Willkommen zurück. Der Stripe-Status wird aktualisiert, sobald Stripe Ihr Konto bestätigt — das kann einen Moment dauern.",
+        "linkExpired": "Dieser Stripe-Einrichtungslink ist abgelaufen. Nutzen Sie „Stripe-Einrichtung fortsetzen“, um einen neuen zu öffnen."
+      },
       "emptyStateTitle": "Sie nutzen den CareTip Basic-Plan.",
       "emptyStateBody": "Upgraden Sie auf Pro für erweiterte Analysen, Branding, Mehrstandort und mehr.",
       "noActiveSubscriptionTitle": "Basic-Plan aktiv",
@@ -6237,7 +6338,8 @@
         "failedPayments": "Fehlgeschlagene Zahlungen",
         "successfulSubscriptions": "Erfolgreiche Abonnements",
         "failedSubscriptions": "Fehlgeschlagene Abonnements",
-        "refunds": "Fehlgeschlagene Tips"
+        "refunds": "Fehlgeschlagene Tips",
+        "connectPayouts": "Connect-Auszahlungen"
       },
       "users": {
         "management": "Benutzerverwaltung",
@@ -6701,6 +6803,57 @@
       "empty": "Noch keine Audit-Einträge.",
       "noSearchMatches": "Keine Einträge entsprechen Ihrer Suche."
     },
+    "connectPayoutsPage": {
+      "title": "Connect-Auszahlungen",
+      "subtitle": "Stripe-Auszahlungen von verbundenen Express-Konten auf das Bankkonto der Location. Nur Beobachtung — CareTip löst keine Auszahlungen aus. Das sind keine einzelnen Gäste-Tips und keine Mitarbeiter-Auszahlungen.",
+      "searchPlaceholder": "Nach Betriebsname suchen…",
+      "searchAria": "Connect-Auszahlungen nach Betriebsname suchen",
+      "filterStatus": "Auszahlungsstatus",
+      "filterCurrency": "Währung",
+      "filterFrom": "Erstellt von",
+      "filterTo": "Erstellt bis",
+      "businessFilterActive": "Auszahlungen für einen Betrieb werden angezeigt.",
+      "clearBusinessFilter": "Alle Betriebe anzeigen",
+      "colBusiness": "Betrieb",
+      "colAmount": "Betrag",
+      "colStatus": "Auszahlungsstatus",
+      "colArrival": "Erwartete Ankunft",
+      "colCreated": "Erstellt",
+      "colFailure": "Auszahlungsproblem",
+      "colReconciliation": "CareTip-Abgleich",
+      "filterReconciliation": "CareTip-Abgleich",
+      "footerShowing": "{{from}}–{{to}} von {{total}}",
+      "prevPage": "Zurück",
+      "nextPage": "Weiter",
+      "statusFilter": {
+        "all": "Alle Status"
+      },
+      "reconFilter": {
+        "all": "Alle Abgleiche"
+      },
+      "currencyFilter": {
+        "all": "Alle Währungen"
+      },
+      "status": {
+        "pending": "Ausstehend",
+        "in_transit": "Unterwegs",
+        "paid": "Ausgezahlt",
+        "failed": "Fehlgeschlagen",
+        "canceled": "Storniert",
+        "unknown": "Unbekannt"
+      },
+      "reconciliation": {
+        "pending": "Abgleich ausstehend",
+        "in_progress": "Abgleich läuft",
+        "complete": "Abgeglichen",
+        "partial": "Teilweise abgeglichen",
+        "failed": "Abgleich fehlgeschlagen"
+      },
+      "empty": {
+        "title": "Noch keine Connect-Auszahlungen",
+        "description": "Auszahlungen erscheinen hier, nachdem Stripe Geld vom verfügbaren Guthaben eines verbundenen Kontos sendet. CareTip erzeugt diese Auszahlungen nicht."
+      }
+    },
     "refundsPage": {
       "searchPlaceholder": "Erstattungs-ID, Streitfall-ID, Payment Intent, Tip-ID oder Betrieb…",
       "searchAria": "Erstattungen durchsuchen",
@@ -6770,7 +6923,8 @@
     },
     "globalTransactionsPage": {
       "title": "Globale Transaktionen",
-      "subtitle": "Alle Trinkgelder plattformweit. Beträge in EUR, CareTip-Gebühr {{feePercent}}%, Netto an Team, Auszahlungsstatus.",
+      "subtitle": "Alle Gäste-Tips plattformweit. Beträge in EUR, CareTip-Gebühr {{feePercent}}% + {{feeFixed}} €, Netto an Team, und Tip-Ledger-Status (keine Stripe-Connect-Auszahlungen).",
+      "feeCell": "{{percent}}% + {{fixed}} € ({{amount}})",
       "searchPlaceholder": "Transaktions-ID, Stripe-ID, Unternehmens- oder Teamname…",
       "searchAria": "Transaktionen durchsuchen",
       "hintLiveSearch": "Ergebnisse aktualisieren sich während der Eingabe.",
@@ -6780,7 +6934,7 @@
       "colAmountEur": "Betrag (EUR)",
       "colCaretipFee": "CareTip-Gebühr",
       "colNetToStaff": "Netto an Team",
-      "colPayout": "Auszahlung",
+      "colPayout": "Tip-Ledger",
       "loading": "Laden…",
       "empty": "Keine Transaktionen gefunden.",
       "summaryDefault": "{{total}} Transaktionen angezeigt",

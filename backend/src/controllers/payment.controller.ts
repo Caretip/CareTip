@@ -12,13 +12,98 @@ import { resolveScanSessionId } from "../services/qr/qrScanRequestContext.js";
 import { QR_FUNNEL_EVENT_TYPES, recordQrFunnelEvent } from "../services/qr/qrFunnelEvent.service.js";
 import { ensureTransactionReceiptNumber } from "../services/tipReceipt.service.js";
 
+/** Client must never steer Connect destination or platform fee. */
+export const TIP_CONNECT_CLIENT_FORBIDDEN_KEYS = [
+  "destination",
+  "stripeAccountId",
+  "accountId",
+  "connectAccountId",
+  "application_fee_amount",
+  "applicationFee",
+  "applicationFeeAmount",
+  "platformFee",
+  "platformFeeCents",
+  "feePercentage",
+  "feePercent",
+  "transfer_data",
+  "transferData",
+  "payment_intent_data",
+  "paymentIntentData",
+  "on_behalf_of",
+  "onBehalfOf",
+] as const;
+
+const FORBIDDEN_CONNECT_KEY_SET = new Set<string>(TIP_CONNECT_CLIENT_FORBIDDEN_KEYS);
+
+const FORBIDDEN_CONNECT_HEADERS = ["stripe-account", "x-stripe-account", "destination"] as const;
+
+function findForbiddenConnectKeyInValue(value: unknown, path: string, depth: number): string | null {
+  if (value == null || depth > 8) return null;
+  if (Array.isArray(value)) {
+    for (let i = 0; i < value.length; i += 1) {
+      const hit = findForbiddenConnectKeyInValue(value[i], `${path}[${i}]`, depth + 1);
+      if (hit) return hit;
+    }
+    return null;
+  }
+  if (typeof value !== "object") return null;
+  const obj = value as Record<string, unknown>;
+  for (const key of Object.keys(obj)) {
+    if (FORBIDDEN_CONNECT_KEY_SET.has(key) && obj[key] != null) {
+      return `${path}.${key}`;
+    }
+  }
+  for (const key of Object.keys(obj)) {
+    const hit = findForbiddenConnectKeyInValue(obj[key], `${path}.${key}`, depth + 1);
+    if (hit) return hit;
+  }
+  return null;
+}
+
+/**
+ * Reject client-controlled Connect destination / fee fields from body, query, or headers.
+ * Nested JSON is scanned (defense in depth — Stripe params are still built server-side).
+ * Exported for Phase 2 / 2.5 regression.
+ */
+export function findClientControlledConnectPaymentField(req: {
+  body?: unknown;
+  query?: unknown;
+  headers?: unknown;
+}): string | null {
+  const fromBody = findForbiddenConnectKeyInValue(req.body ?? {}, "body", 0);
+  if (fromBody) return fromBody;
+  const fromQuery = findForbiddenConnectKeyInValue(req.query ?? {}, "query", 0);
+  if (fromQuery) return fromQuery;
+
+  const headers = (req.headers ?? {}) as Record<string, unknown>;
+  for (const h of FORBIDDEN_CONNECT_HEADERS) {
+    const val = headers[h];
+    if (val != null && val !== "") return `header.${h}`;
+  }
+  return null;
+}
+
 /**
  * POST /api/payments/create-tip-session
  * Public — guest tipping (no auth).
  */
 export async function createTipSession(req: Request, res: Response) {
   try {
+    const forbidden = findClientControlledConnectPaymentField(req);
+    if (forbidden) {
+      return res.status(400).json({
+        message: "Invalid request.",
+        code: "CONNECT_CLIENT_DESTINATION_FORBIDDEN",
+      });
+    }
+
     const body = req.body as Record<string, unknown>;
+    if (Array.isArray(body.amount) || (body.amount != null && typeof body.amount === "object")) {
+      return res.status(400).json({ message: "amount must be a positive number" });
+    }
+    if (body.tipAmount != null && (Array.isArray(body.tipAmount) || typeof body.tipAmount === "object")) {
+      return res.status(400).json({ message: "tipAmount must match amount" });
+    }
     const employeeId = typeof body.employeeId === "string" ? body.employeeId : "";
     const businessId = typeof body.businessId === "string" ? body.businessId : "";
     const amount = Number(body.amount);
@@ -38,14 +123,10 @@ export async function createTipSession(req: Request, res: Response) {
     if (!employeeId || !businessId) {
       return res.status(400).json({ message: "employeeId and businessId are required" });
     }
-    if (Number.isNaN(amount) || amount <= 0) {
+    if (!Number.isFinite(amount) || amount <= 0) {
       return res.status(400).json({ message: "amount must be a positive number" });
     }
-    if (
-      tipAmount != null &&
-      !Number.isNaN(tipAmount) &&
-      Math.abs(tipAmount - amount) > 0.001
-    ) {
+    if (tipAmount != null && (!Number.isFinite(tipAmount) || Math.abs(tipAmount - amount) > 0.001)) {
       return res.status(400).json({ message: "tipAmount must match amount" });
     }
 

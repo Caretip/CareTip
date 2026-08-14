@@ -150,6 +150,32 @@ function testSidebarLocks(): boolean {
     ok = false;
   }
 
+  const unsubscribed = {
+    ready: true,
+    hasActiveEntitlements: false,
+    hasFeature: () => false,
+  };
+  const stripeLock = resolveSidebarNavLock(
+    "/dashboard/stripe/connect",
+    undefined,
+    "stripe",
+    unsubscribed,
+  );
+  if (stripeLock.locked) {
+    fail("Stripe Connect must remain unlocked without a paid subscription");
+    ok = false;
+  }
+  const stripePayoutsLock = resolveSidebarNavLock(
+    "/dashboard/stripe/payouts",
+    undefined,
+    "stripe",
+    unsubscribed,
+  );
+  if (stripePayoutsLock.locked) {
+    fail("Stripe Payouts must remain unlocked without a paid subscription");
+    ok = false;
+  }
+
   if (ok) pass("sidebar nav lock (basic vs pro)");
   return ok;
 }

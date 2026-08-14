@@ -5,7 +5,7 @@ import { useTranslation } from "react-i18next";
 import type { TFunction } from "i18next";
 import type { GlobalTransactionRow, PlatformAuditLogRow, PlatformBusinessRow } from "../../lib/api";
 import type { RefundRecord } from "../../lib/platformRefunds";
-import { formatEur } from "../../lib/formatEur";
+import { formatEur, formatOptionalEur } from "../../lib/formatEur";
 import { BusinessLogoMark } from "../business/BusinessLogoMark";
 import { cn } from "@/lib/utils";
 import { platformUi } from "./platformDashboardUi";
@@ -68,14 +68,18 @@ export function PlatformTransactionMobileCard({ row }: { row: GlobalTransactionR
           <dt className="font-medium uppercase tracking-wide text-muted-foreground">
             {t("admin.globalTransactionsPage.colNetToStaff")}
           </dt>
-          <dd className="mt-0.5 text-sm font-semibold tabular-nums">{formatEur(row.netToStaffEur)}</dd>
+          <dd className="mt-0.5 text-sm font-semibold tabular-nums">{formatOptionalEur(row.netToStaffEur)}</dd>
         </div>
         <div className="col-span-2">
           <dt className="font-medium uppercase tracking-wide text-muted-foreground">
             {t("admin.globalTransactionsPage.colCaretipFee")}
           </dt>
           <dd className="mt-0.5 text-sm tabular-nums text-muted-foreground">
-            {row.caretipFeePercent}% ({formatEur(row.caretipFeeEur)})
+            {t("admin.globalTransactionsPage.feeCell", {
+              percent: row.caretipFeePercent,
+              fixed: (row.caretipFeeFixedCents / 100).toFixed(2),
+              amount: formatOptionalEur(row.caretipFeeEur),
+            })}
           </dd>
         </div>
       </dl>

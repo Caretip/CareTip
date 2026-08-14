@@ -12,7 +12,7 @@ import {
   resolveCustomerEmployeeContext,
 } from "../../lib/resolveCustomerEmployeeContext";
 import { formatEur } from "../../lib/formatEur";
-import { isTipAmountInRangeEur } from "../../lib/tipAmountLimits";
+import { isTipAmountInRangeEur, MIN_TIP_AMOUNT_EUR } from "../../lib/tipAmountLimits";
 import { customerFlowUi as cf } from "./customerFlowUi";
 import { CustomerFlowShell } from "./CustomerFlowShell";
 import {
@@ -319,7 +319,7 @@ export function TipAmountPage() {
                 className={`${cf.inputAmount} pl-11 text-2xl sm:text-3xl`}
                 autoFocus
                 step="0.01"
-                min="0"
+                min={MIN_TIP_AMOUNT_EUR}
               />
             </div>
           )}

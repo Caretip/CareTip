@@ -14,6 +14,7 @@ import {
 export const FIX_PROMPT_IDS = [
   "missingQR",
   "pendingVerification",
+  "stripeConnect",
   "profilePhoto",
   "platformDataLoad",
 ] as const;

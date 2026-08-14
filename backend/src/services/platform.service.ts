@@ -6,7 +6,11 @@ import {
   emitPlatformDataUpdated,
   emitVerificationUpdated,
 } from "../socket/socketEmitters.js";
-import { CARETIP_FEE_PERCENT } from "../config/fees.js";
+import {
+  CARETIP_FEE_FIXED_CENTS_EUR,
+  CARETIP_FEE_PERCENT,
+  calculateTipPlatformFeeCents,
+} from "../config/fees.js";
 import { impersonationAuthUserDto, signImpersonationToken } from "./auth.service.js";
 import {
   getCachedOrLoad,
@@ -175,17 +179,23 @@ export async function listGlobalTransactions(params: {
     prisma.transaction.count({ where }),
   ]);
 
-  const feeRate = CARETIP_FEE_PERCENT / 100;
   const items = rows.map((t) => {
     const gross = Number(t.amount);
-    const feeAmount = Math.round(gross * feeRate * 100) / 100;
-    const netToStaff = Math.round((gross - feeAmount) * 100) / 100;
+    const amountCents = Math.round(gross * 100);
+    let feeCents: number | null = null;
+    try {
+      feeCents = calculateTipPlatformFeeCents(amountCents);
+    } catch {
+      // Legacy tips below the current €1.00 minimum cannot satisfy fee < tip.
+      feeCents = null;
+    }
     return {
       id: t.id,
       amountEur: gross,
       caretipFeePercent: CARETIP_FEE_PERCENT,
-      caretipFeeEur: feeAmount,
-      netToStaffEur: netToStaff,
+      caretipFeeFixedCents: CARETIP_FEE_FIXED_CENTS_EUR,
+      caretipFeeEur: feeCents == null ? null : feeCents / 100,
+      netToStaffEur: feeCents == null ? null : (amountCents - feeCents) / 100,
       payoutStatus: t.payoutStatus,
       tipStatus: t.status,
       stripePaymentIntentId: t.stripePaymentIntentId,

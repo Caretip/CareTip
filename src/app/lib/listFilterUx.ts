@@ -1,4 +1,6 @@
 import type { TFunction } from "i18next";
+import { isApiRequestError } from "./apiError";
+import { isAbortError } from "./errorMessages";
 
 /** Count independent filter dimensions that restrict the result set (excludes sort-only). */
 export function countRestrictiveFilterDimensions(parts: boolean[]): number {
@@ -13,7 +15,12 @@ export type ListEmptyStateCopy = {
 export type ListLoadErrorKind = "api" | "network" | "permission" | "unknown";
 
 export function classifyFetchError(err: unknown): ListLoadErrorKind {
-  if (err instanceof TypeError) return "network";
+  if (isApiRequestError(err)) {
+    if (err.status === 401 || err.status === 403) return "permission";
+    if (err.status === 408 || err.status === 504 || err.status === 0) return "network";
+    return "api";
+  }
+  if (isAbortError(err) || err instanceof TypeError) return "network";
   const message =
     err instanceof Error
       ? err.message.toLowerCase()
@@ -23,7 +30,9 @@ export function classifyFetchError(err: unknown): ListLoadErrorKind {
   if (message.includes("403") || message.includes("unauthorized") || message.includes("forbidden")) {
     return "permission";
   }
-  if (message.includes("network") || message.includes("fetch")) return "network";
+  if (message.includes("network") || message.includes("fetch") || message.includes("timeout")) {
+    return "network";
+  }
   return "api";
 }
 

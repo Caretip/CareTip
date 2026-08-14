@@ -12,3 +12,11 @@ export function formatEur(
     maximumFractionDigits: maxFrac,
   })}`;
 }
+
+export function formatOptionalEur(
+  amount: number | null | undefined,
+  options: { minFrac?: number; maxFrac?: number } = {},
+): string {
+  if (amount == null || !Number.isFinite(amount)) return "—";
+  return formatEur(amount, options);
+}

@@ -170,21 +170,8 @@
         will-change: transform;
       }
 
-      .caretip-html-boot__brand {
-        margin: 0.15rem 0 0;
-        font-size: 1.125rem;
-        font-weight: 600;
-        letter-spacing: -0.02em;
-        line-height: 1.25;
-        color: #0a0a0a;
-      }
-
-      html.dark .caretip-html-boot__brand {
-        color: #fafafa;
-      }
-
       .caretip-html-boot__tagline {
-        margin: -0.55rem 0 0;
+        margin: 0.15rem 0 0;
         max-width: 16rem;
         font-size: 0.875rem;
         font-weight: 400;
@@ -265,22 +252,25 @@
         <span class="caretip-html-boot__track" aria-hidden="true">
           <span class="caretip-html-boot__indeterminate"></span>
         </span>
-        <p class="caretip-html-boot__brand">CareTip</p>
         <p class="caretip-html-boot__tagline" id="caretip-html-boot-tagline">
-          Preparing your workspace…
+          Getting things ready…
         </p>
       </div>
     </div>
     <script>
       (function () {
         var lng = "de";
-        var tagline = "Ihr Workspace wird vorbereitet…";
+        var tagline = "Wird eingerichtet…";
         try {
           var bootLocale = window.CareTipBootLocale;
           if (bootLocale) {
             lng = bootLocale.readBootLanguage();
             var copy = bootLocale.getCopy(lng);
-            if (copy && copy.preparingWorkspace) tagline = copy.preparingWorkspace;
+            if (copy) {
+              tagline = bootLocale.resolveBootTagline
+                ? bootLocale.resolveBootTagline(copy, location.pathname)
+                : copy.gettingReady || tagline;
+            }
           }
           document.documentElement.setAttribute("lang", lng);
         } catch (_) {

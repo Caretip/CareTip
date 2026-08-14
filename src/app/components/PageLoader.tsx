@@ -1,7 +1,5 @@
 import type { CareTipPageLoaderProps } from "./CareTipPageLoader";
 import { CareTipPageLoader } from "./CareTipPageLoader";
-import { useTranslation } from "react-i18next";
-import { resolveAppLoadingContextMessage } from "../lib/appLoadingContexts";
 
 export type PageLoaderProps = Pick<
   CareTipPageLoaderProps,
@@ -11,6 +9,7 @@ export type PageLoaderProps = Pick<
 /**
  * Registers fullscreen loading with the global branded overlay.
  * Use `variant="section"` or `"compact"` for in-dashboard placeholders.
+ * Do not pass a second sentence — `message` replaces the default tagline.
  */
 export function PageLoader({
   message,
@@ -19,14 +18,11 @@ export function PageLoader({
   context,
   registrationKey,
 }: PageLoaderProps) {
-  const { t } = useTranslation();
-  const resolvedMessage =
-    message ??
-    (context ? resolveAppLoadingContextMessage(context, t) : t("common.settingUp"));
   return (
     <CareTipPageLoader
       variant={variant}
-      message={resolvedMessage}
+      message={message}
+      context={context}
       className={className}
       registrationKey={registrationKey}
     />

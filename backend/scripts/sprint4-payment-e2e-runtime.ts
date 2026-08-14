@@ -10,6 +10,9 @@ import {
   handleSuccessfulTipPayment,
   verifyWebhookSignature,
   isStripeConfigured,
+  __setPaymentIntentsRetrieveFnForTests,
+  __setConnectedAccountRetrieveFnForTests,
+  __setRefundsCreateFnForTests,
 } from "../src/services/stripe.service.js";
 import {
   isStripeWebhookEventProcessed,
@@ -39,7 +42,13 @@ async function seedVerifiedVenue() {
           name: `Sprint4 Pay Venue ${tag}`,
           slug: `sprint4-pay-${tag}`,
           verificationStatus: "verified",
+          onboardingVerificationStatus: "approved",
+          operationalStatus: "active",
           subscriptionTier: "premium",
+          stripeAccountId: `acct_sprint4_${tag}`,
+          stripeConnectStatus: "ready",
+          stripeChargesEnabled: true,
+          stripePayoutsEnabled: true,
         },
       },
     },
@@ -67,6 +76,7 @@ async function seedVerifiedVenue() {
   return {
     businessId: user.business!.id,
     employeeId: empUser.employee!.id,
+    stripeAccountId: user.business!.stripeAccountId!,
     cleanup: async () => {
       await prisma.transaction.deleteMany({ where: { businessId: user.business!.id } });
       await prisma.employee.deleteMany({ where: { businessId: user.business!.id } });
@@ -92,9 +102,26 @@ async function main() {
     pass("pre-payment eligibility");
 
     const piId = `pi_sprint4_test_${Date.now()}`;
+    __setRefundsCreateFnForTests(async () => ({ id: `re_s4_${Date.now()}`, object: "refund", status: "succeeded" } as Stripe.Refund));
+    __setPaymentIntentsRetrieveFnForTests(async (id) => ({
+      id,
+      object: "payment_intent",
+      amount: 500,
+      amount_received: 500,
+      currency: "eur",
+      status: "succeeded",
+      application_fee_amount: 99,
+      transfer_data: { destination: venue.stripeAccountId },
+    } as Stripe.PaymentIntent));
+    __setConnectedAccountRetrieveFnForTests(async (id) => ({
+      id,
+      charges_enabled: true,
+      payouts_enabled: true,
+    }));
     const session = {
       id: `cs_sprint4_test_${Date.now()}`,
       payment_status: "paid",
+      currency: "eur",
       payment_intent: piId,
       amount_total: 500,
       metadata: {
@@ -150,6 +177,9 @@ async function main() {
   } catch (e) {
     fail(`runtime error: ${e instanceof Error ? e.message : String(e)}`);
   } finally {
+    __setPaymentIntentsRetrieveFnForTests(null);
+    __setConnectedAccountRetrieveFnForTests(null);
+    __setRefundsCreateFnForTests(null);
     if (venue) await venue.cleanup();
   }
 

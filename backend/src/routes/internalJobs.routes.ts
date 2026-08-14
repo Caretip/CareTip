@@ -84,4 +84,20 @@ router.post("/category-retention-tick", async (req, res) => {
   return res.json({ ok: true, ...result });
 });
 
+/**
+ * POST /api/internal/jobs/connect-payout-reconciliation-tick
+ * Resume incomplete Stripe Connect payout balance-transaction sync.
+ * Observation only — does not create or cancel payouts.
+ */
+router.post("/connect-payout-reconciliation-tick", async (req, res) => {
+  if (!authorizeCronRequest(req)) {
+    return res.status(401).json({ message: "Unauthorized" });
+  }
+  const { tickConnectPayoutReconciliation } = await import(
+    "../services/stripeConnectPayoutReconciliation.service.js"
+  );
+  const result = await tickConnectPayoutReconciliation();
+  return res.json({ ok: true, ...result });
+});
+
 export default router;

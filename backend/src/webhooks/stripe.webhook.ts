@@ -11,6 +11,11 @@ import {
   isStripeBillingEventType,
   isSubscriptionCheckoutSession,
 } from "../services/stripeBillingWebhook.service.js";
+import { handleConnectAccountUpdated } from "../services/stripeConnect.service.js";
+import {
+  handleConnectPayoutEvent,
+  isConnectPayoutEventType,
+} from "../services/stripeConnectPayout.service.js";
 import {
   isStripeWebhookEventProcessed,
   markStripeWebhookEventProcessed,
@@ -40,6 +45,8 @@ const TIP_EVENT_TYPES = new Set([
   "charge.dispute.closed",
   "charge.dispute.updated",
 ]);
+
+const CONNECT_EVENT_TYPES = new Set(["account.updated"]);
 
 router.post("/stripe", async (req: Request, res: Response) => {
   const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
@@ -79,6 +86,22 @@ router.post("/stripe", async (req: Request, res: Response) => {
     if (await isStripeWebhookEventProcessed(event.id)) {
       console.info("[stripe.webhook] duplicate event skipped", { eventId: event.id, type: event.type });
       return res.json({ received: true, duplicate: true });
+    }
+
+    if (event.type === "account.updated") {
+      const account = event.data.object as Stripe.Account;
+      await handleConnectAccountUpdated(account, { eventCreatedUnix: event.created });
+      // Mark only after handler completes so Stripe can retry on failure.
+      await markStripeWebhookEventProcessed(event.id, event.type);
+      return res.json({ received: true });
+    }
+
+    if (isConnectPayoutEventType(event.type)) {
+      await handleConnectPayoutEvent(event);
+      // Unmatched accounts are a successful observation (no attach). Mark after handler
+      // so thrown errors remain retryable.
+      await markStripeWebhookEventProcessed(event.id, event.type);
+      return res.json({ received: true });
     }
 
     if (event.type === "checkout.session.completed") {
@@ -177,7 +200,11 @@ router.post("/stripe", async (req: Request, res: Response) => {
       });
     }
 
-    if (TIP_EVENT_TYPES.has(event.type) || event.type === "checkout.session.completed") {
+    if (
+      TIP_EVENT_TYPES.has(event.type) ||
+      event.type === "checkout.session.completed" ||
+      CONNECT_EVENT_TYPES.has(event.type)
+    ) {
       await markStripeWebhookEventProcessed(event.id, event.type);
     }
   } catch (err) {

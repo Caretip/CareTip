@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { Outlet, useSearchParams } from "react-router";
+import { Outlet, useNavigate, useSearchParams } from "react-router";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { CreditCard } from "lucide-react";
@@ -12,7 +12,14 @@ import { businessUi } from "@/app/components/business/businessDashboardUi";
 
 export function BusinessBillingLayout() {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
+
+  useEffect(() => {
+    const connect = searchParams.get("connect");
+    if (connect !== "return" && connect !== "refresh") return;
+    navigate(`/dashboard/stripe/connect?connect=${connect}`, { replace: true });
+  }, [navigate, searchParams]);
 
   useEffect(() => {
     const billing = searchParams.get("billing");

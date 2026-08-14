@@ -318,7 +318,7 @@ export function MobileWebAuthShell({
             <AuthButton
               loading={busy}
               loadingLabel={
-                isLogin ? t("common.loading.signingIn") : t("common.creatingWorkspace")
+                isLogin ? t("common.loading.signingIn") : t("auth.page.creatingAccountWait")
               }
               disabled={!isLogin && !termsAccepted}
             >

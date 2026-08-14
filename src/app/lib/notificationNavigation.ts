@@ -155,7 +155,7 @@ export function resolveInboxNotificationActionKey(
   const tid = templateId(notification);
 
   if (type === "tip_received" || type === "qr_payment_success") return "viewTip";
-  if (type === "payout_paid" || type === "payout_completed") return "viewPayout";
+  if (type === "payout_paid" || type === "payout_completed") return "viewTip";
   if (type === "employee_invited" && tid !== "employee_activated") return "viewTeam";
   if (type === "qr_scan") return "viewQrCodes";
   if (type === "new_login") return "reviewSecurity";
