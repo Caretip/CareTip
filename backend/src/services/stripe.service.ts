@@ -555,9 +555,10 @@ async function refundTipPaymentForEligibilityFailure(
   try {
     const refundParams: Stripe.RefundCreateParams = {
       payment_intent: paymentIntentId,
-      // Destination charges: refund the PI (Stripe reverses the connected transfer)
-      // and return the CareTip application fee so an ineligible payment is fully unwound.
+      // Destination charges transfer the full amount then take application_fee_amount
+      // on that transfer. Stripe requires reverse_transfer when refunding that fee.
       refund_application_fee: true,
+      reverse_transfer: true,
       metadata: {
         caretip_refund_reason: "eligibility_failure",
         caretip_context: source,

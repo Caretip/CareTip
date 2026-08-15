@@ -279,10 +279,10 @@ function runStatic() {
     stripeSvc.includes("transfer_data") &&
     stripeSvc.includes("application_fee_amount") &&
     stripeSvc.includes("refund_application_fee: true") &&
-    !stripeSvc.includes("reverse_transfer")
+    stripeSvc.includes("reverse_transfer: true")
   ) {
     pass("X-destination-unchanged", "Destination-charge Checkout path still present");
-    pass("Z-refund-app-fee-unchanged", "refund_application_fee: true remains; no reverse_transfer");
+    pass("Z-refund-app-fee-unchanged", "refund_application_fee + reverse_transfer for destination-charge full refunds");
   } else {
     fail("X-destination-unchanged", "Destination-charge path changed");
     fail("Z-refund-app-fee-unchanged", "Refund application fee path changed");

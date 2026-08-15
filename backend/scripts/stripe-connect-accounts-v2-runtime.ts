@@ -15,7 +15,10 @@ import { prisma } from "../src/prisma.js";
 import { CARETIP_FEE_FIXED_CENTS_EUR, CARETIP_FEE_PERCENT } from "../src/config/fees.js";
 import {
   STRIPE_ACCOUNTS_V2_CREATE_PATH,
+  CARETIP_NEW_ACCOUNT_V2_CONFIGURATIONS,
+  accountsV2GetRequestOptions,
   accountsV2RequestOptions,
+  buildAccountsV2AccountLinkParams,
   buildAccountsV2CreateParams,
   connectExpressIdempotencyKey,
   createExpressAccountOnboardingLink,
@@ -28,6 +31,7 @@ import {
   __setCreateV2AccountFnForTests,
   __setCreateV2AccountLinkFnForTests,
   __setRetrieveAccountFnForTests,
+  __setRetrieveV2AppliedConfigurationsFnForTests,
   __setSerializeConnectEnsureForTests,
 } from "../src/services/stripeConnect.service.js";
 
@@ -148,11 +152,54 @@ function runStatic(): void {
     connectSvc.includes("STRIPE_ACCOUNTS_V2_ACCOUNT_LINKS_PATH") &&
     connectSvc.includes("/v2/core/account_links") &&
     connectSvc.includes("account_onboarding") &&
-    connectSvc.includes("accountLinks.create")
+    connectSvc.includes("accountLinks.create") &&
+    connectSvc.includes("applied_configurations") &&
+    connectSvc.includes("accountsV2GetRequestOptions") &&
+    connectSvc.includes("configs_must_match")
   ) {
-    pass("I-static-account-link", "V2 Account Links primary; V1 Account Links fallback for existing Express");
+    pass("I-static-account-link", "V2 Account Links use retrieved applied_configurations; V1 only for non-V2 Express");
   } else {
-    fail("I-static-account-link", "Account Link onboarding missing V2 path or V1 fallback");
+    fail("I-static-account-link", "Account Link onboarding missing V2 retrieve-configs path or V1 fallback");
+  }
+
+  const getOpts = accountsV2GetRequestOptions() as Stripe.RequestOptions & {
+    additionalHeaders?: Record<string, string>;
+  };
+  const getHeaders = getOpts.additionalHeaders ?? {};
+  if (!("Content-Length" in getHeaders) && getOpts.apiVersion === "2026-07-29.dahlia") {
+    pass("I-static-v2-get-no-content-length", "GET /v2/core/accounts/:id uses V2 apiVersion and does not send Content-Length");
+  } else {
+    fail("I-static-v2-get-no-content-length", `apiVersion=${String(getOpts.apiVersion)} headers=${JSON.stringify(getHeaders)}`);
+  }
+
+  try {
+    const marieParams = buildAccountsV2AccountLinkParams({
+      accountId: "acct_marie_style_fixture",
+      refreshUrl: "https://caretip.de/refresh",
+      returnUrl: "https://caretip.de/return",
+      configurations: ["customer", "merchant"],
+    });
+    const newParams = buildAccountsV2AccountLinkParams({
+      accountId: "acct_new_caretip_fixture",
+      refreshUrl: "https://caretip.de/refresh",
+      returnUrl: "https://caretip.de/return",
+      configurations: [...CARETIP_NEW_ACCOUNT_V2_CONFIGURATIONS],
+    });
+    const marieCfgs = (
+      (marieParams.use_case as { account_onboarding?: { configurations?: string[] } }).account_onboarding
+        ?.configurations ?? []
+    ).slice().sort().join(",");
+    const newCfgs = (
+      (newParams.use_case as { account_onboarding?: { configurations?: string[] } }).account_onboarding
+        ?.configurations ?? []
+    ).slice().sort().join(",");
+    if (marieCfgs === "customer,merchant" && newCfgs === "merchant,recipient" && marieCfgs !== newCfgs) {
+      pass("I-static-link-configs-not-mixed", "Marie-style customer+merchant and new merchant+recipient stay distinct");
+    } else {
+      fail("I-static-link-configs-not-mixed", `marie=${marieCfgs} new=${newCfgs}`);
+    }
+  } catch (err) {
+    fail("I-static-link-configs-not-mixed", err instanceof Error ? err.message : String(err));
   }
 
   if (
@@ -175,9 +222,9 @@ function runStatic(): void {
     pass("N-static-destination", "Destination still Business.stripeAccountId; fee 10% + €0.49");
   } else fail("N-static-destination", "Destination/fee path changed");
 
-  if (stripeSvc.includes("refund_application_fee: true") && !stripeSvc.includes("reverse_transfer: true")) {
-    pass("P-static-refund-app-fee", "refund_application_fee true; no reverse_transfer");
-  } else fail("P-static-refund-app-fee", "Refund flags changed");
+  if (stripeSvc.includes("refund_application_fee: true") && stripeSvc.includes("reverse_transfer: true")) {
+    pass("P-static-refund-app-fee", "Destination-charge full refund: refund_application_fee + reverse_transfer");
+  } else fail("P-static-refund-app-fee", "Refund flags missing refund_application_fee or reverse_transfer");
 
   if (
     payoutSvc.includes("event.account") &&
@@ -251,6 +298,8 @@ async function runDbSuite(): Promise<void> {
       return created;
     });
     __setRetrieveAccountFnForTests(async (id) => fakeAccount(id));
+    __setRetrieveV2AppliedConfigurationsFnForTests(null);
+    __setCreateV2AccountLinkFnForTests(null);
   }
 
   installIdempotentV2();
@@ -276,8 +325,11 @@ async function runDbSuite(): Promise<void> {
         linkAccount = typeof params.account === "string" ? params.account : null;
         const useCase = params.use_case as { type?: string; account_onboarding?: { configurations?: string[] } };
         if (useCase?.type !== "account_onboarding") throw new Error("expected account_onboarding");
-        if (!useCase.account_onboarding?.configurations?.includes("merchant")) {
-          throw new Error("expected merchant configuration");
+        if (
+          !useCase.account_onboarding?.configurations?.includes("merchant") ||
+          !useCase.account_onboarding?.configurations?.includes("recipient")
+        ) {
+          throw new Error("expected merchant+recipient configuration for new CareTip accounts");
         }
         return { url: "https://accounts.stripe.com/r/acct_test_v2_link#alu_test" };
       });
@@ -291,6 +343,89 @@ async function runDbSuite(): Promise<void> {
         pass("I-account-link-bound", "V2 Account Link used the bound connected account");
       } else {
         fail("I-account-link-bound", `linkAcct=${link.accountId} bound=${created.accountId} posted=${linkAccount}`);
+      }
+    });
+
+    await withTestBusiness("marie-link", async ({ businessId, email }) => {
+      installIdempotentV2();
+      v2Creates = 0;
+      v2Cache.clear();
+      const created = await ensureExpressConnectedAccountForBusiness({ businessId, managerEmail: email });
+      const createsBeforeLink = v2Creates;
+      let postedAccount: string | null = null;
+      let postedConfigs: string[] = [];
+      __setRetrieveV2AppliedConfigurationsFnForTests(async () => ["customer", "merchant"]);
+      __setCreateV2AccountLinkFnForTests(async (params) => {
+        postedAccount = typeof params.account === "string" ? params.account : null;
+        postedConfigs =
+          (params.use_case as { account_onboarding?: { configurations?: string[] } }).account_onboarding
+            ?.configurations ?? [];
+        return { url: "https://accounts.stripe.com/r/acct_marie_style_link" };
+      });
+      const link = await createExpressAccountOnboardingLink({ businessId, managerEmail: email });
+      const posted = postedConfigs.slice().sort().join(",");
+      if (
+        link.accountId === created.accountId &&
+        postedAccount === created.accountId &&
+        posted === "customer,merchant" &&
+        !postedConfigs.includes("recipient") &&
+        v2Creates === createsBeforeLink &&
+        link.url.startsWith("https://accounts.stripe.com/")
+      ) {
+        pass(
+          "I-marie-style-link-configs",
+          "Existing customer+merchant account uses those configs; no recreate; not mixed with recipient",
+        );
+      } else {
+        fail(
+          "I-marie-style-link-configs",
+          `acct=${postedAccount} created=${created.accountId} configs=${posted} v2Creates=${v2Creates}`,
+        );
+      }
+    });
+
+    await withTestBusiness("new-link-cfg", async ({ businessId, email }) => {
+      installIdempotentV2();
+      let postedConfigs: string[] = [];
+      __setRetrieveV2AppliedConfigurationsFnForTests(null);
+      __setCreateV2AccountLinkFnForTests(async (params) => {
+        postedConfigs =
+          (params.use_case as { account_onboarding?: { configurations?: string[] } }).account_onboarding
+            ?.configurations ?? [];
+        return { url: "https://accounts.stripe.com/r/acct_new_cfg_link" };
+      });
+      await ensureExpressConnectedAccountForBusiness({ businessId, managerEmail: email });
+      await createExpressAccountOnboardingLink({ businessId, managerEmail: email });
+      const posted = postedConfigs.slice().sort().join(",");
+      if (posted === "merchant,recipient") {
+        pass("I-new-account-link-configs", "New CareTip account Account Link requests merchant+recipient");
+      } else {
+        fail("I-new-account-link-configs", `configs=${posted}`);
+      }
+    });
+
+    await withTestBusiness("mismatch-no-v1", async ({ businessId, email }) => {
+      installIdempotentV2();
+      await ensureExpressConnectedAccountForBusiness({ businessId, managerEmail: email });
+      __setRetrieveV2AppliedConfigurationsFnForTests(async () => ["customer", "merchant"]);
+      __setCreateV2AccountLinkFnForTests(async () => {
+        const err = new Error("The requested configurations must match the account.");
+        (err as { code?: string; statusCode?: number }).code = "configs_must_match_to_use_account_links";
+        (err as { statusCode?: number }).statusCode = 400;
+        throw err;
+      });
+      let threwCode: string | null = null;
+      let url: string | null = null;
+      try {
+        const link = await createExpressAccountOnboardingLink({ businessId, managerEmail: email });
+        url = link.url;
+      } catch (err) {
+        threwCode = err instanceof StripeConnectError ? err.code : "other";
+      }
+      if (threwCode === "STRIPE_ACCOUNT_LINK_FAILED" && !url?.includes("connect.stripe.com")) {
+        pass("I-configs-mismatch-no-v1-fallback", "configs_must_match does not fall back to V1 Account Links");
+      } else {
+        fail("I-configs-mismatch-no-v1-fallback", `code=${threwCode} url=${url ?? "(none)"}`);
       }
     });
 
@@ -525,6 +660,7 @@ async function runDbSuite(): Promise<void> {
     __setCreateV2AccountFnForTests(null);
     __setCreateV2AccountLinkFnForTests(null);
     __setRetrieveAccountFnForTests(null);
+    __setRetrieveV2AppliedConfigurationsFnForTests(null);
     __setCreateAccountFnForTests(null);
   }
 }

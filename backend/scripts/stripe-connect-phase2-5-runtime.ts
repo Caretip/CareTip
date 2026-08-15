@@ -583,6 +583,7 @@ async function runRuntimeAttacks(): Promise<void> {
       refunds.length === 1 &&
       refunds[0]?.params.payment_intent === racePi &&
       refunds[0]?.params.refund_application_fee === true &&
+      refunds[0]?.params.reverse_transfer === true &&
       refunds[0]?.options?.idempotencyKey === `eligibility_refund:${racePi}`;
     if (raceRows.length === 1 && raceRows[0]?.status === "failed" && refundOk) {
       pass("restricted-race-refund", "Post-pay restricted mirror → failed ledger + application-fee refund");

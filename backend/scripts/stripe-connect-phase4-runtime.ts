@@ -293,13 +293,13 @@ function runStatic() {
     stripeSvc.includes("transfer_data") &&
     stripeSvc.includes("application_fee_amount") &&
     stripeSvc.includes("refund_application_fee: true") &&
-    !stripeSvc.includes("reverse_transfer") &&
+    stripeSvc.includes("reverse_transfer: true") &&
     fees.includes("CARETIP_FEE_PERCENT = 10") &&
     fees.includes("CARETIP_FEE_FIXED_CENTS_EUR = 49")
   ) {
     pass("W-destination-regression-static", "Destination charge path unchanged", "STATIC_ANALYSIS");
     pass("X-application-fee-policy", "CARETIP_FEE_PERCENT = 10 + €0.49", "STATIC_ANALYSIS");
-    pass("Y-refund-application-fee", "refund_application_fee: true", "STATIC_ANALYSIS");
+    pass("Y-refund-application-fee", "refund_application_fee + reverse_transfer for destination-charge full refunds", "STATIC_ANALYSIS");
   } else {
     fail("W-destination-regression-static", "Destination-charge path changed", "STATIC_ANALYSIS");
     fail("X-application-fee-policy", "fee constant changed", "STATIC_ANALYSIS");

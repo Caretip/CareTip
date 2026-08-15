@@ -395,9 +395,9 @@ function runStaticAudit() {
     pass("fee-percent", "CARETIP_FEE_PERCENT=10 + €0.49 floor policy");
   } else fail("fee-percent", "Fee policy changed");
 
-  if (stripeSvc.includes("refund_application_fee: true") && !stripeSvc.includes("reverse_transfer")) {
-    pass("AF-refund-app-fee", "Eligibility refund uses refund_application_fee, not reverse_transfer");
-    pass("AG-no-reverse-transfer", "No reverse_transfer on destination-charge refunds");
+  if (stripeSvc.includes("refund_application_fee: true") && stripeSvc.includes("reverse_transfer: true")) {
+    pass("AF-refund-app-fee", "Eligibility refund uses refund_application_fee + reverse_transfer");
+    pass("AG-no-reverse-transfer", "Destination-charge full refund reverses the connected transfer (Stripe requires this when the application fee was taken on the transfer)");
   } else fail("AF-refund-app-fee", "Refund flags incorrect");
 
   if (billing.includes('mode: "subscription"') && !billing.includes("transfer_data") && !billing.includes("application_fee_amount")) {
@@ -683,6 +683,7 @@ async function runRuntime(): Promise<void> {
       refunds.length === 1 &&
       refunds[0]?.params.payment_intent === mismatchPi &&
       refunds[0]?.params.refund_application_fee === true &&
+      refunds[0]?.params.reverse_transfer === true &&
       refunds[0]?.options?.idempotencyKey === `eligibility_refund:${mismatchPi}`;
     if (mmRows.length === 1 && mmRows[0]?.status === "failed" && mmRefund) {
       pass("M-dest-mismatch-fail-closed", "PI dest mismatch → failed + application-fee refund");

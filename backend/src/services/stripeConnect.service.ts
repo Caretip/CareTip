@@ -93,6 +93,40 @@ export function accountsV2RequestOptions(
   } as Stripe.RawRequestOptions;
 }
 
+/**
+ * GET /v2/core/accounts/:id — apiVersion only.
+ * Do not set additionalHeaders/Content-Length; stripe-node treats those as a GET body
+ * and Stripe then fails the retrieve (which would incorrectly look like a non-V2 account).
+ */
+export function accountsV2GetRequestOptions(): Stripe.RawRequestOptions {
+  return {
+    apiVersion: accountsV2ApiVersion(),
+  } as Stripe.RawRequestOptions;
+}
+
+export function accountsV2RetrievePath(accountId: string): string {
+  return `${STRIPE_ACCOUNTS_V2_CREATE_PATH}/${encodeURIComponent(accountId)}`;
+}
+
+/** Configurations requested when CareTip creates a new V2 account. Existing accounts may differ. */
+export const CARETIP_NEW_ACCOUNT_V2_CONFIGURATIONS = ["merchant", "recipient"] as const;
+
+const V2_LINK_CONFIGURATION_ALLOW = new Set(["customer", "merchant", "recipient", "storer"]);
+
+export function normalizeAccountsV2LinkConfigurations(raw: unknown): string[] {
+  if (!Array.isArray(raw)) return [];
+  const out: string[] = [];
+  const seen = new Set<string>();
+  for (const item of raw) {
+    if (typeof item !== "string") continue;
+    const v = item.trim().toLowerCase();
+    if (!V2_LINK_CONFIGURATION_ALLOW.has(v) || seen.has(v)) continue;
+    seen.add(v);
+    out.push(v);
+  }
+  return out;
+}
+
 /** Express-equivalent V2 create body for destination charges (merchant + recipient). */
 export function buildAccountsV2CreateParams(input: {
   country: string;
@@ -137,13 +171,22 @@ export function buildAccountsV2AccountLinkParams(input: {
   accountId: string;
   refreshUrl: string;
   returnUrl: string;
+  configurations: readonly string[];
 }): Record<string, unknown> {
+  const configurations = normalizeAccountsV2LinkConfigurations([...input.configurations]);
+  if (configurations.length === 0) {
+    throw new StripeConnectError(
+      "Could not open Stripe onboarding. Please try again.",
+      "STRIPE_ACCOUNT_LINK_CONFIGS_EMPTY",
+      502,
+    );
+  }
   return {
     account: input.accountId,
     use_case: {
       type: "account_onboarding",
       account_onboarding: {
-        configurations: ["merchant", "recipient"],
+        configurations,
         refresh_url: input.refreshUrl,
         return_url: input.returnUrl,
       },
@@ -428,11 +471,14 @@ type CreateV2AccountLinkFn = (
 
 type RetrieveAccountFn = (accountId: string) => Promise<Stripe.Account>;
 
+type RetrieveV2AppliedConfigurationsFn = (accountId: string) => Promise<string[] | null>;
+
 /** Test seam — production uses Stripe Accounts V2 via rawRequest. */
 let createAccountFn: CreateAccountFn | null = null;
 let createV2AccountFn: CreateV2AccountFn | null = null;
 let createV2AccountLinkFn: CreateV2AccountLinkFn | null = null;
 let retrieveAccountFn: RetrieveAccountFn | null = null;
+let retrieveV2AppliedConfigurationsFn: RetrieveV2AppliedConfigurationsFn | null = null;
 
 export function __setCreateAccountFnForTests(fn: CreateAccountFn | null): void {
   createAccountFn = fn;
@@ -450,9 +496,52 @@ export function __setRetrieveAccountFnForTests(fn: RetrieveAccountFn | null): vo
   retrieveAccountFn = fn;
 }
 
+export function __setRetrieveV2AppliedConfigurationsFnForTests(
+  fn: RetrieveV2AppliedConfigurationsFn | null,
+): void {
+  retrieveV2AppliedConfigurationsFn = fn;
+}
+
 async function retrieveConnectedAccount(accountId: string): Promise<Stripe.Account> {
   if (retrieveAccountFn) return retrieveAccountFn(accountId);
   return getStripeClient().accounts.retrieve(accountId);
+}
+
+function parseV2AppliedConfigurations(payload: unknown): string[] {
+  if (!payload || typeof payload !== "object") return [];
+  return normalizeAccountsV2LinkConfigurations(
+    (payload as { applied_configurations?: unknown }).applied_configurations,
+  );
+}
+
+/**
+ * Existing V2 accounts must use their actual applied_configurations for Account Links.
+ * null = not a V2 account (legacy Express → supported V1 Account Link fallback).
+ */
+async function retrieveV2AppliedConfigurations(accountId: string): Promise<string[] | null> {
+  if (retrieveV2AppliedConfigurationsFn) return retrieveV2AppliedConfigurationsFn(accountId);
+  // Mocked V2 Account Link tests default to the new-account create configuration.
+  if (createV2AccountLinkFn) return [...CARETIP_NEW_ACCOUNT_V2_CONFIGURATIONS];
+  if (!isStripeConfigured()) return null;
+  try {
+    const payload = await getStripeClient().rawRequest(
+      "GET",
+      accountsV2RetrievePath(accountId),
+      // stripe-node types forbid null, but {} is sent as a GET body and 404s the V2 retrieve.
+      null as unknown as { [key: string]: unknown },
+      accountsV2GetRequestOptions(),
+    );
+    return parseV2AppliedConfigurations(payload);
+  } catch (err) {
+    if (isStripeResourceMissing(err)) {
+      console.info("[stripe.connect] v2.accounts.retrieve_not_found", {
+        accountSuffix: accountId.slice(-8),
+        ...stripeOpsMeta(err),
+      });
+      return null;
+    }
+    throw err;
+  }
 }
 
 /**
@@ -692,8 +781,17 @@ export async function ensureExpressConnectedAccountForBusiness(params: {
   return runSerializedByKey(`stripe_connect_ensure:${businessId}`, run);
 }
 
+function isConfigsMustMatchAccountLinkError(err: unknown): boolean {
+  if (!err || typeof err !== "object") return false;
+  const code = (err as { code?: unknown }).code;
+  if (typeof code === "string" && code.includes("configs_must_match")) return true;
+  const message = (err as { message?: unknown }).message;
+  return typeof message === "string" && message.includes("configs_must_match");
+}
+
 function shouldFallbackToV1AccountLink(err: unknown): boolean {
   if (!err || typeof err !== "object") return true;
+  if (isConfigsMustMatchAccountLinkError(err)) return false;
   const status = (err as { statusCode?: unknown }).statusCode;
   if (status === 401 || status === 403) return false;
   return true;
@@ -726,22 +824,68 @@ async function createOnboardingLinkUrl(input: {
   refreshUrl: string;
   returnUrl: string;
 }): Promise<string> {
-  const v2Params = buildAccountsV2AccountLinkParams({
-    accountId: input.accountId,
-    refreshUrl: input.refreshUrl,
-    returnUrl: input.returnUrl,
-  });
-
   // Phase 1.6 V1 mock path — do not call Accounts V2 Account Links.
   if (createAccountFn && !createV2AccountFn && !createV2AccountLinkFn) {
     return createV1AccountOnboardingLinkUrl(input);
   }
+
+  let applied: string[] | null;
+  try {
+    applied = await retrieveV2AppliedConfigurations(input.accountId);
+  } catch (err) {
+    logServerError("stripeConnect.v2.accounts.retrieve", err, {
+      businessId: input.businessId,
+      accountSuffix: input.accountId.slice(-8),
+      ...stripeOpsMeta(err),
+    });
+    throw new StripeConnectError(
+      "Could not open Stripe onboarding. Please try again.",
+      "STRIPE_ACCOUNT_LINK_RETRIEVE_FAILED",
+      502,
+    );
+  }
+
+  // Legacy Express (not in Accounts V2) — supported V1 Account Link fallback.
+  if (applied === null) {
+    console.info("[stripe.connect] account_link.v1_fallback", {
+      businessId: input.businessId,
+      accountSuffix: input.accountId.slice(-8),
+      reason: "v2_account_not_found",
+    });
+    try {
+      return await createV1AccountOnboardingLinkUrl(input);
+    } catch (err) {
+      if (err instanceof StripeConnectError) throw err;
+      logServerError("stripeConnect.accountLinks.create", err, {
+        businessId: input.businessId,
+        accountSuffix: input.accountId.slice(-8),
+        ...stripeOpsMeta(err),
+      });
+      throw new StripeConnectError(
+        "Could not open Stripe onboarding. Please try again.",
+        "STRIPE_ACCOUNT_LINK_FAILED",
+        502,
+      );
+    }
+  }
+
+  const v2Params = buildAccountsV2AccountLinkParams({
+    accountId: input.accountId,
+    refreshUrl: input.refreshUrl,
+    returnUrl: input.returnUrl,
+    configurations: applied,
+  });
 
   try {
     let payload: unknown;
     if (createV2AccountLinkFn) {
       payload = await createV2AccountLinkFn(v2Params, accountsV2RequestOptions(v2Params));
     } else if (isStripeConfigured()) {
+      console.info("[stripe.connect] v2.account_links.create", {
+        businessId: input.businessId,
+        accountSuffix: input.accountId.slice(-8),
+        configurations: applied,
+      });
       payload = await getStripeClient().rawRequest(
         "POST",
         STRIPE_ACCOUNTS_V2_ACCOUNT_LINKS_PATH,
@@ -762,25 +906,9 @@ async function createOnboardingLinkUrl(input: {
       businessId: input.businessId,
       accountSuffix: input.accountId.slice(-8),
       ...stripeOpsMeta(err),
+      configsMustMatch: isConfigsMustMatchAccountLinkError(err),
     });
-    if (createV2AccountLinkFn || !shouldFallbackToV1AccountLink(err) || !isStripeConfigured()) {
-      throw new StripeConnectError(
-        "Could not open Stripe onboarding. Please try again.",
-        "STRIPE_ACCOUNT_LINK_FAILED",
-        502,
-      );
-    }
-  }
-
-  try {
-    return await createV1AccountOnboardingLinkUrl(input);
-  } catch (err) {
-    if (err instanceof StripeConnectError) throw err;
-    logServerError("stripeConnect.accountLinks.create", err, {
-      businessId: input.businessId,
-      accountSuffix: input.accountId.slice(-8),
-      ...stripeOpsMeta(err),
-    });
+    // V2 accounts: never conceal a configuration mismatch (or other V2 link failure) with V1.
     throw new StripeConnectError(
       "Could not open Stripe onboarding. Please try again.",
       "STRIPE_ACCOUNT_LINK_FAILED",
@@ -791,7 +919,8 @@ async function createOnboardingLinkUrl(input: {
 
 /**
  * Create a Stripe-hosted Express Account Link. Return/refresh URLs are server-fixed.
- * New V2 accounts use POST /v2/core/account_links; existing V1 Express accounts fall back to V1 Account Links.
+ * V2 Account Links use the account's actual applied_configurations.
+ * Legacy Express accounts (not in V2) fall back to V1 Account Links.
  */
 export async function createExpressAccountOnboardingLink(params: {
   businessId: string;
@@ -930,7 +1059,9 @@ export const __test = {
   connectExpressIdempotencyKey,
   shouldAcceptConnectAccountEvent,
   buildAccountsV2CreateParams,
+  buildAccountsV2AccountLinkParams,
   accountsV2RequestOptions,
+  accountsV2GetRequestOptions,
   v2JsonUtf8ContentLength,
   isStripeConnectedAccountId,
   parseV2CreatedAccountId,
@@ -938,5 +1069,7 @@ export const __test = {
   __setCreateV2AccountFnForTests,
   __setCreateV2AccountLinkFnForTests,
   __setRetrieveAccountFnForTests,
+  __setRetrieveV2AppliedConfigurationsFnForTests,
   __setSerializeConnectEnsureForTests,
+  shouldFallbackToV1AccountLink,
 };

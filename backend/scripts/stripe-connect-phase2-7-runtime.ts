@@ -198,8 +198,8 @@ function runStaticAudit() {
     pass("F-static-checkout-mirror", "Checkout gate remains CareTip mirror (no live retrieve in destination service)");
   } else fail("F-static-checkout-mirror", "Checkout destination service unexpectedly retrieves Stripe accounts");
 
-  if (stripeSvc.includes("refund_application_fee: true") && !stripeSvc.includes("reverse_transfer")) {
-    pass("R-static-refund-app-fee", "Eligibility refund uses refund_application_fee, not reverse_transfer");
+  if (stripeSvc.includes("refund_application_fee: true") && stripeSvc.includes("reverse_transfer: true")) {
+    pass("R-static-refund-app-fee", "Eligibility refund uses refund_application_fee + reverse_transfer");
   } else fail("R-static-refund-app-fee", "Refund flags incorrect");
 
   if (webhook.includes("verifyWebhookSignature") && indexSrc.includes("express.raw")) {
@@ -578,6 +578,7 @@ async function runRuntime(): Promise<void> {
       refunds.length === 1 &&
       refunds[0]?.params.payment_intent === mismatchPi &&
       refunds[0]?.params.refund_application_fee === true &&
+      refunds[0]?.params.reverse_transfer === true &&
       refunds[0]?.options?.idempotencyKey === `eligibility_refund:${mismatchPi}`;
     if (mmRows.length === 1 && mmRows[0]?.status === "failed" && mmRefund) {
       pass("M-dest-mismatch-fail-closed", "PI dest acct_B vs Business A → failed + application-fee refund");
