@@ -125,6 +125,10 @@ verification-results.json
 # --- GDPR / compliance exports ---
 GDPR*
 *GDPR*
+# Prisma SQL migrations must stay tracked even when the folder name includes "gdpr".
+# Without this exception, CI `prisma migrate deploy` never creates User.anonymize_eligible_at.
+!backend/prisma/migrations/
+!backend/prisma/migrations/**
 
 # --- Documentation exports & design audit screenshots ---
 docs/**/*-audit/
