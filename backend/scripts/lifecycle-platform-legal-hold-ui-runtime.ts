@@ -301,6 +301,7 @@ async function main() {
     const cleared = await clearBusinessLegalHold({
       businessId,
       actorUserId: admin.id,
+      releaseReason: "matter closed",
     });
     if (!cleared.legalHold && cleared.legalHoldCategories.length === 0) {
       pass("authorized admin can clear business hold");
@@ -315,7 +316,7 @@ async function main() {
     if (setUser.legalHold && setUser.legalHoldSetByUserId === admin.id) {
       pass("authorized admin can place user hold");
     } else fail("set user hold failed");
-    await clearUserLegalHold({ userId: manager.id, actorUserId: admin.id });
+    await clearUserLegalHold({ userId: manager.id, actorUserId: admin.id, releaseReason: "matter closed" });
     pass("authorized admin can clear user hold");
   } finally {
     await prisma.auditLog.deleteMany({

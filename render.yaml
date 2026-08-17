@@ -1,0 +1,46 @@
+# CareTip — category-retention Cron Jobs only.
+#
+# This Blueprint does NOT create the jobs until you apply it in the Render Dashboard
+# (or create the two Cron Jobs manually using docs/GDPR_CATEGORY_RETENTION_RENDER_CRON.md).
+# Cursor cannot create Render resources from this repository.
+#
+# Do not put CRON_SECRET (or any secret value) in this file.
+# Do not use generateValue for CRON_SECRET — reuse the existing web-service secret in the Dashboard.
+# Do not add DATA_LIFECYCLE_* or RETENTION_T_* here. Keep them unset on the web service.
+# Do not add KYC, tombstone, anonymization, or financial-delete cron services.
+
+services:
+  - type: cron
+    name: caretip-category-retention-sweep
+    runtime: node
+    plan: starter
+    buildCommand: "true"
+    # Inline curl: do not depend on a repo-relative script path (Root Directory is often backend/).
+    startCommand: 'test -n "$CRON_SECRET" || { echo "CRON_SECRET is not set; refusing to call internal jobs (fail-closed)." >&2; exit 1; }; curl -fsS -X POST -H "x-cron-secret: $CRON_SECRET" --max-time 120 "${CARE_TIP_API_ORIGIN:-https://caretip.onrender.com}${CARE_TIP_INTERNAL_JOB_PATH}"'
+    # Hourly at minute 0 UTC — discover eligible work and enqueue DataLifecycleJob rows.
+    # With DATA_LIFECYCLE_V1 unset, the web endpoint is a gated no-op.
+    schedule: "0 * * * *"
+    envVars:
+      - key: CRON_SECRET
+        sync: false
+      - key: CARE_TIP_API_ORIGIN
+        value: https://caretip.onrender.com
+      - key: CARE_TIP_INTERNAL_JOB_PATH
+        value: /api/internal/jobs/category-retention-sweep
+
+  - type: cron
+    name: caretip-category-retention-tick
+    runtime: node
+    plan: starter
+    buildCommand: "true"
+    startCommand: 'test -n "$CRON_SECRET" || { echo "CRON_SECRET is not set; refusing to call internal jobs (fail-closed)." >&2; exit 1; }; curl -fsS -X POST -H "x-cron-secret: $CRON_SECRET" --max-time 120 "${CARE_TIP_API_ORIGIN:-https://caretip.onrender.com}${CARE_TIP_INTERNAL_JOB_PATH}"'
+    # Every 15 minutes, offset 10 minutes after sweep so sweep runs first each hour.
+    # :10 / :25 / :40 / :55 UTC. BATCH=200 can drain across ticks. Gated while EXECUTE is off.
+    schedule: "10,25,40,55 * * * *"
+    envVars:
+      - key: CRON_SECRET
+        sync: false
+      - key: CARE_TIP_API_ORIGIN
+        value: https://caretip.onrender.com
+      - key: CARE_TIP_INTERNAL_JOB_PATH
+        value: /api/internal/jobs/category-retention-tick

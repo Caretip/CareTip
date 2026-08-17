@@ -86,8 +86,8 @@ async function main() {
           verificationStatus: "verified",
           subscriptionTier: "premium",
           lifecycleStatus: "soft_closed",
-          deletedAt: new Date(Date.now() - 40 * 24 * 60 * 60 * 1000),
-          kycRetainUntil: new Date(Date.now() - 24 * 60 * 60 * 1000),
+          deletedAt: new Date("2010-06-01T00:00:00.000Z"),
+          kycRetainUntil: new Date("2010-06-01T00:00:00.000Z"),
           taxId: "DE-TAX-KEEP",
           kycReviewNotes: "reviewer note",
           verificationDocumentPath: buildKycObjectStorageRef(
@@ -160,8 +160,8 @@ async function main() {
           name: "Other FB",
           slug: `slice-fb-other-${tag}`,
           verificationStatus: "verified",
-          lifecycleStatus: "soft_closed",
-          deletedAt: new Date(Date.now() - 40 * 24 * 60 * 60 * 1000),
+          deletedAt: new Date("2010-06-01T00:00:00.000Z"),
+          kycRetainUntil: new Date("2010-06-01T00:00:00.000Z"),
           verificationDocumentPath: buildKycObjectStorageRef(
             supabaseKycStorageBucketName(),
             `verification/OTHER/should-not-touch.pdf`,
@@ -212,21 +212,35 @@ async function main() {
       RETENTION_T_KYC_DAYS: undefined,
     });
     const unset = readTKycDaysFromEnv();
-    if (!unset.configured) pass("T_KYC UNSET detected (fail-closed)");
+    if (!unset.configured) pass("T_KYC UNSET detected (calendar-year policy applies)");
     else fail("T_KYC should be unset");
 
+    await prisma.business.update({
+      where: { id: bizId },
+      data: {
+        deletedAt: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000),
+        kycRetainUntil: null,
+      },
+    });
     try {
       await secureDestroyBusinessKyc(bizId, {
         bypassExecutionGate: true,
         destroyStorage: destroyOk,
         env: process.env,
       });
-      fail("KYC destroy should block when T_KYC UNSET");
+      fail("KYC destroy should block when 10-year calendar-year has not elapsed");
     } catch (e) {
-      if (e instanceof KycSecureDestroyError && e.code === "T_KYC_UNSET") {
-        pass("KYC object deletion blocked when T_KYC is UNSET");
+      if (e instanceof KycSecureDestroyError && (e.code === "RETENTION_NOT_ELAPSED" || e.code === "T_KYC_UNSET")) {
+        pass("KYC object deletion blocked when 10-year calendar-year has not elapsed");
       } else fail(`unexpected unset error: ${e instanceof Error ? e.message : e}`);
     }
+    await prisma.business.update({
+      where: { id: bizId },
+      data: {
+        deletedAt: new Date("2010-06-01T00:00:00.000Z"),
+        kycRetainUntil: new Date("2010-06-01T00:00:00.000Z"),
+      },
+    });
 
     // Invalid T_KYC
     setKycTestEnv({ RETENTION_T_KYC_DAYS: "90days" });
@@ -245,12 +259,14 @@ async function main() {
       legalHoldCategories: [] as string[],
     };
     const early = evaluateKycDestroyEligibility(earlyBiz, { env: process.env });
-    if (!early.eligible && early.code === "RETENTION_NOT_ELAPSED") {
-      pass("KYC deletion blocked before retention expires");
+    if (!early.eligible && (early.code === "POLICY_CONTRADICTION" || early.code === "RETENTION_NOT_ELAPSED")) {
+      pass("KYC deletion blocked before retention expires / contradicting rolling days");
     } else fail("should block before retention elapses");
 
+    setKycTestEnv({ RETENTION_T_KYC_DAYS: undefined });
+
     // Legal hold kyc
-    setKycTestEnv({ RETENTION_T_KYC_DAYS: "1" });
+    setKycTestEnv({ RETENTION_T_KYC_DAYS: undefined });
     await prisma.business.update({
       where: { id: bizId },
       data: { legalHold: true, legalHoldCategories: ["kyc"], legalHoldSetAt: new Date() },
@@ -278,13 +294,13 @@ async function main() {
         kycRetainUntil: new Date(Date.now() - 1000),
       },
     });
-    setKycTestEnv({ RETENTION_T_KYC_DAYS: "1" });
+    setKycTestEnv({ RETENTION_T_KYC_DAYS: undefined });
     const okHold = evaluateKycDestroyEligibility(
       {
         id: bizId,
         lifecycleStatus: "soft_closed",
-        deletedAt: new Date(Date.now() - 40 * 24 * 60 * 60 * 1000),
-        kycRetainUntil: new Date(Date.now() - 1000),
+        deletedAt: new Date("2010-06-01T00:00:00.000Z"),
+        kycRetainUntil: new Date("2010-06-01T00:00:00.000Z"),
         legalHold: true,
         legalHoldCategories: ["financial"],
       },
@@ -293,10 +309,15 @@ async function main() {
     if (okHold.eligible) pass("unrelated financial hold does not block KYC destroy");
     else fail("financial hold incorrectly blocked KYC");
 
-    // Clear hold for successful destroy
+    // Clear hold and restore 10-year-elapsed closure anchors before destructive attempts
     await prisma.business.update({
       where: { id: bizId },
-      data: { legalHold: false, legalHoldCategories: [] },
+      data: {
+        legalHold: false,
+        legalHoldCategories: [],
+        deletedAt: new Date("2010-06-01T00:00:00.000Z"),
+        kycRetainUntil: new Date("2010-06-01T00:00:00.000Z"),
+      },
     });
 
     // Storage isolation
@@ -537,7 +558,7 @@ async function main() {
     setKycTestEnv({
       DATA_LIFECYCLE_V1: "true",
       DATA_LIFECYCLE_KYC_DESTROY_EXECUTE: "true",
-      RETENTION_T_KYC_DAYS: "1",
+      RETENTION_T_KYC_DAYS: undefined,
     });
     await prisma.dataLifecycleJob.deleteMany({
       where: { subjectId: bizId, type: "kyc_secure_destroy" },

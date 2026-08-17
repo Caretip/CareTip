@@ -83,7 +83,11 @@ export async function deletePlatformUserLegalHold(req: Request, res: Response) {
     if (!actorId) return res.status(401).json({ message: "Authentication required" });
     const userId = String(req.params.userId ?? "").trim();
     if (!userId) return res.status(400).json({ message: "userId is required", code: "VALIDATION" });
-    const state = await clearUserLegalHold({ userId, actorUserId: actorId });
+    const state = await clearUserLegalHold({
+      userId,
+      actorUserId: actorId,
+      releaseReason: (req.body as { reason?: unknown } | undefined)?.reason,
+    });
     return res.json(state);
   } catch (err) {
     if (mapLegalHoldError(err, res)) return;
@@ -143,7 +147,11 @@ export async function deletePlatformBusinessLegalHold(req: Request, res: Respons
     if (!businessId) {
       return res.status(400).json({ message: "business id is required", code: "VALIDATION" });
     }
-    const state = await clearBusinessLegalHold({ businessId, actorUserId: actorId });
+    const state = await clearBusinessLegalHold({
+      businessId,
+      actorUserId: actorId,
+      releaseReason: (req.body as { reason?: unknown } | undefined)?.reason,
+    });
     return res.json(state);
   } catch (err) {
     if (mapLegalHoldError(err, res)) return;

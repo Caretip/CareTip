@@ -1,5 +1,10 @@
 /**
- * GDPR Slice G — Legal hold control plane (platform-admin only).
+ * GDPR Slice G — Legal hold control plane.
+ *
+ * Role mapping (CareTip has no distinct CEO role in Role enum):
+ * - Place: platform Admin = SUPER_ADMIN + isPlatformAdmin (covers approved "Admin";
+ *   "CEO" is not a separate persisted role — ordinary MANAGER/EMPLOYEE cannot place holds).
+ * - Release: same platform Admin only (explicit authorization). Tenant managers cannot release.
  *
  * Amendment A2: category-specific holds. Auth/session termination always allowed.
  * Amendment A3: structured audit (ids only — no email/name/phone).
@@ -10,7 +15,7 @@
 
 import { Prisma, Role } from "@prisma/client";
 import { prisma } from "../prisma.js";
-import { normalizeLegalHoldCategories } from "./retentionPolicy.helpers.js";
+import { categoryHoldDecision, normalizeLegalHoldCategories } from "./retentionPolicy.helpers.js";
 
 export class LegalHoldError extends Error {
   constructor(
@@ -35,6 +40,9 @@ export type LegalHoldState = {
   legalHoldCategories: string[];
   legalHoldSetAt: string | null;
   legalHoldSetByUserId: string | null;
+  legalHoldReleasedAt: string | null;
+  legalHoldReleasedByUserId: string | null;
+  legalHoldReleaseReason: string | null;
 };
 
 const REASON_MAX = 2000;
@@ -125,6 +133,9 @@ function mapUserHold(row: {
   legalHoldCategories: string[];
   legalHoldSetAt: Date | null;
   legalHoldSetByUserId: string | null;
+  legalHoldReleasedAt: Date | null;
+  legalHoldReleasedByUserId: string | null;
+  legalHoldReleaseReason: string | null;
 }): LegalHoldState {
   return {
     subjectType: "user",
@@ -134,6 +145,9 @@ function mapUserHold(row: {
     legalHoldCategories: row.legalHoldCategories ?? [],
     legalHoldSetAt: row.legalHoldSetAt?.toISOString() ?? null,
     legalHoldSetByUserId: row.legalHoldSetByUserId,
+    legalHoldReleasedAt: row.legalHoldReleasedAt?.toISOString() ?? null,
+    legalHoldReleasedByUserId: row.legalHoldReleasedByUserId,
+    legalHoldReleaseReason: row.legalHoldReleaseReason,
   };
 }
 
@@ -144,6 +158,9 @@ function mapBusinessHold(row: {
   legalHoldCategories: string[];
   legalHoldSetAt: Date | null;
   legalHoldSetByUserId: string | null;
+  legalHoldReleasedAt: Date | null;
+  legalHoldReleasedByUserId: string | null;
+  legalHoldReleaseReason: string | null;
 }): LegalHoldState {
   return {
     subjectType: "business",
@@ -153,6 +170,9 @@ function mapBusinessHold(row: {
     legalHoldCategories: row.legalHoldCategories ?? [],
     legalHoldSetAt: row.legalHoldSetAt?.toISOString() ?? null,
     legalHoldSetByUserId: row.legalHoldSetByUserId,
+    legalHoldReleasedAt: row.legalHoldReleasedAt?.toISOString() ?? null,
+    legalHoldReleasedByUserId: row.legalHoldReleasedByUserId,
+    legalHoldReleaseReason: row.legalHoldReleaseReason,
   };
 }
 
@@ -163,6 +183,9 @@ const USER_HOLD_SELECT = {
   legalHoldCategories: true,
   legalHoldSetAt: true,
   legalHoldSetByUserId: true,
+  legalHoldReleasedAt: true,
+  legalHoldReleasedByUserId: true,
+  legalHoldReleaseReason: true,
   accountStatus: true,
 } as const;
 
@@ -173,6 +196,9 @@ const BUSINESS_HOLD_SELECT = {
   legalHoldCategories: true,
   legalHoldSetAt: true,
   legalHoldSetByUserId: true,
+  legalHoldReleasedAt: true,
+  legalHoldReleasedByUserId: true,
+  legalHoldReleaseReason: true,
 } as const;
 
 export async function getUserLegalHold(userId: string, actorUserId: string): Promise<LegalHoldState> {
@@ -227,6 +253,9 @@ export async function setUserLegalHold(input: {
           legalHoldCategories: normalized.categories,
           legalHoldSetAt: now,
           legalHoldSetByUserId: input.actorUserId,
+          legalHoldReleasedAt: null,
+          legalHoldReleasedByUserId: null,
+          legalHoldReleaseReason: null,
         },
         select: USER_HOLD_SELECT,
       });
@@ -262,9 +291,11 @@ export async function setUserLegalHold(input: {
 export async function clearUserLegalHold(input: {
   userId: string;
   actorUserId: string;
+  releaseReason?: unknown;
 }): Promise<LegalHoldState> {
   await assertPlatformAdminActor(input.actorUserId);
   const userId = String(input.userId ?? "").trim();
+  const releaseReason = sanitizeReason(input.releaseReason);
   const existing = await prisma.user.findUnique({
     where: { id: userId },
     select: { ...USER_HOLD_SELECT },
@@ -279,10 +310,10 @@ export async function clearUserLegalHold(input: {
         where: { id: userId },
         data: {
           legalHold: false,
-          legalHoldReason: null,
           legalHoldCategories: [],
-          legalHoldSetAt: null,
-          legalHoldSetByUserId: null,
+          legalHoldReleasedAt: now,
+          legalHoldReleasedByUserId: input.actorUserId,
+          legalHoldReleaseReason: releaseReason,
         },
         select: USER_HOLD_SELECT,
       });
@@ -355,6 +386,9 @@ export async function setBusinessLegalHold(input: {
           legalHoldCategories: normalized.categories,
           legalHoldSetAt: now,
           legalHoldSetByUserId: input.actorUserId,
+          legalHoldReleasedAt: null,
+          legalHoldReleasedByUserId: null,
+          legalHoldReleaseReason: null,
         },
         select: BUSINESS_HOLD_SELECT,
       });
@@ -390,9 +424,11 @@ export async function setBusinessLegalHold(input: {
 export async function clearBusinessLegalHold(input: {
   businessId: string;
   actorUserId: string;
+  releaseReason?: unknown;
 }): Promise<LegalHoldState> {
   await assertPlatformAdminActor(input.actorUserId);
   const businessId = String(input.businessId ?? "").trim();
+  const releaseReason = sanitizeReason(input.releaseReason);
   const existing = await prisma.business.findUnique({
     where: { id: businessId },
     select: BUSINESS_HOLD_SELECT,
@@ -407,10 +443,10 @@ export async function clearBusinessLegalHold(input: {
         where: { id: businessId },
         data: {
           legalHold: false,
-          legalHoldReason: null,
           legalHoldCategories: [],
-          legalHoldSetAt: null,
-          legalHoldSetByUserId: null,
+          legalHoldReleasedAt: now,
+          legalHoldReleasedByUserId: input.actorUserId,
+          legalHoldReleaseReason: releaseReason,
         },
         select: BUSINESS_HOLD_SELECT,
       });
@@ -579,6 +615,113 @@ export function assertAuditMetadataHasNoPii(metadataJson: string | null | undefi
   } catch {
     return false;
   }
+}
+
+const HOLD_AUDIT_CATEGORIES = [
+  "analytics",
+  "guest",
+  "staff_pii",
+  "support",
+  "audit",
+  "billing",
+  "kyc",
+  "financial",
+  "notify",
+  "profile",
+] as const;
+
+export type LegalHeldBusinessAudit = {
+  businessId: string;
+  legalHold: true;
+  legalHoldCategories: string[];
+  legalHoldSetAt: string | null;
+  lifecycleStatus: string;
+  ambiguousEmptyCategories: boolean;
+  reasonPresent: boolean;
+  reasonLength: number;
+  holdDecisions: Record<(typeof HOLD_AUDIT_CATEGORIES)[number], "held" | "clear" | "unknown">;
+};
+
+export type LegalHeldUserAudit = {
+  userId: string;
+  legalHold: true;
+  legalHoldCategories: string[];
+  legalHoldSetAt: string | null;
+  accountStatus: string;
+  ambiguousEmptyCategories: boolean;
+  reasonPresent: boolean;
+  reasonLength: number;
+  holdDecisions: Record<"profile" | "notify" | "audit" | "staff_pii", "held" | "clear" | "unknown">;
+};
+
+/**
+ * Read-only inventory of businesses with legalHold=true.
+ * IDs and categories only — no names, emails, or reason text.
+ */
+export async function auditLegalHeldBusinesses(): Promise<LegalHeldBusinessAudit[]> {
+  const rows = await prisma.business.findMany({
+    where: { legalHold: true },
+    select: {
+      id: true,
+      legalHold: true,
+      legalHoldCategories: true,
+      legalHoldSetAt: true,
+      legalHoldReason: true,
+      lifecycleStatus: true,
+    },
+  });
+  return rows.map((b) => {
+    const cats = b.legalHoldCategories ?? [];
+    const holdDecisions = {} as LegalHeldBusinessAudit["holdDecisions"];
+    for (const cat of HOLD_AUDIT_CATEGORIES) {
+      holdDecisions[cat] = categoryHoldDecision(b, cat);
+    }
+    return {
+      businessId: b.id,
+      legalHold: true as const,
+      legalHoldCategories: cats,
+      legalHoldSetAt: b.legalHoldSetAt?.toISOString() ?? null,
+      lifecycleStatus: b.lifecycleStatus,
+      ambiguousEmptyCategories: cats.length === 0,
+      reasonPresent: Boolean(b.legalHoldReason?.trim()),
+      reasonLength: b.legalHoldReason?.length ?? 0,
+      holdDecisions,
+    };
+  });
+}
+
+/** Read-only inventory of users with legalHold=true. IDs and categories only. */
+export async function auditLegalHeldUsers(): Promise<LegalHeldUserAudit[]> {
+  const rows = await prisma.user.findMany({
+    where: { legalHold: true },
+    select: {
+      id: true,
+      legalHold: true,
+      legalHoldCategories: true,
+      legalHoldSetAt: true,
+      legalHoldReason: true,
+      accountStatus: true,
+    },
+  });
+  return rows.map((u) => {
+    const cats = u.legalHoldCategories ?? [];
+    return {
+      userId: u.id,
+      legalHold: true as const,
+      legalHoldCategories: cats,
+      legalHoldSetAt: u.legalHoldSetAt?.toISOString() ?? null,
+      accountStatus: u.accountStatus,
+      ambiguousEmptyCategories: cats.length === 0,
+      reasonPresent: Boolean(u.legalHoldReason?.trim()),
+      reasonLength: u.legalHoldReason?.length ?? 0,
+      holdDecisions: {
+        profile: categoryHoldDecision(u, "profile"),
+        notify: categoryHoldDecision(u, "notify"),
+        audit: categoryHoldDecision(u, "audit"),
+        staff_pii: categoryHoldDecision(u, "staff_pii"),
+      },
+    };
+  });
 }
 
 export { writeFailClosedAudit };

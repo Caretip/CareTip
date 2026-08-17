@@ -27,6 +27,7 @@ const REQUIRED_ENUM_LABELS = [
   "guest_scrub",
   "billing_redact",
   "staff_pii_scrub",
+  "business_tombstone",
 ] as const;
 
 async function main() {
@@ -49,7 +50,7 @@ async function main() {
     (l) => labels.has(l),
   );
   if (missing.length === 0) {
-    pass("all required DataLifecycleJobType labels present (incl. F-C)");
+    pass("all required DataLifecycleJobType labels present (incl. F-C + business_tombstone)");
   } else if (presentFc.length > 0 && presentFc.length < 4) {
     fail(
       `PARTIAL F-C enum state: have [${presentFc.join(",")}] missing [${missing.join(",")}]. ` +
@@ -85,6 +86,31 @@ async function main() {
   if (bizCol.length === 1) pass("businesses.legal_hold_set_by_user_id present");
   else fail("businesses.legal_hold_set_by_user_id missing — apply 20260810170000 migration");
 
+  const gdprCols = await prisma.$queryRaw<Array<{ table_name: string; column_name: string }>>`
+    SELECT table_name, column_name
+    FROM information_schema.columns
+    WHERE table_schema = 'public'
+      AND (
+        (table_name = 'User' AND column_name IN ('anonymize_eligible_at', 'legal_hold_released_at', 'legal_hold_release_reason'))
+        OR (table_name = 'businesses' AND column_name IN ('tombstoned_at', 'legal_hold_released_at', 'legal_hold_release_reason'))
+        OR (table_name = 'audit_logs' AND column_name = 'retention_class')
+        OR (table_name = 'qr_scan_events' AND column_name = 'anonymized_at')
+      )
+  `;
+  const gdprSet = new Set(gdprCols.map((c) => `${c.table_name}.${c.column_name}`));
+  const requiredGdpr = [
+    "User.anonymize_eligible_at",
+    "User.legal_hold_released_at",
+    "User.legal_hold_release_reason",
+    "businesses.tombstoned_at",
+    "businesses.legal_hold_released_at",
+    "audit_logs.retention_class",
+    "qr_scan_events.anonymized_at",
+  ];
+  const missingGdpr = requiredGdpr.filter((k) => !gdprSet.has(k));
+  if (missingGdpr.length === 0) pass("GDPR retention v1 additive columns present");
+  else fail(`GDPR retention v1 columns missing: ${missingGdpr.join(", ")}`);
+
   // Migration history consistency for the two I-R2 migrations
   const migrations = await prisma.$queryRaw<Array<{ migration_name: string; finished_at: Date | null }>>`
     SELECT migration_name, finished_at
@@ -92,7 +118,8 @@ async function main() {
     WHERE migration_name IN (
       '20260810160000_data_lifecycle_fc_job_types',
       '20260810170000_data_lifecycle_legal_hold_set_by',
-      '20260810180000_data_lifecycle_fc_enum_idempotent'
+      '20260810180000_data_lifecycle_fc_enum_idempotent',
+      '20260817120000_gdpr_retention_policy_v1'
     )
   `;
   const byName = new Map(migrations.map((m) => [m.migration_name, m]));
@@ -100,6 +127,7 @@ async function main() {
     "20260810160000_data_lifecycle_fc_job_types",
     "20260810170000_data_lifecycle_legal_hold_set_by",
     "20260810180000_data_lifecycle_fc_enum_idempotent",
+    "20260817120000_gdpr_retention_policy_v1",
   ]) {
     const row = byName.get(name);
     if (row && row.finished_at) pass(`_prisma_migrations records ${name} finished`);

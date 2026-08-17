@@ -1356,3 +1356,45 @@ export async function verifyEmail(req: Request, res: Response) {
     });
   }
 }
+
+/**
+ * POST /api/auth/cancel-deletion
+ * Credential-based reverse of account erasure within the 14-day cancellation window.
+ * Sessions were terminated on erasure, so this does not use authMiddleware.
+ */
+export async function cancelDeletion(req: Request, res: Response) {
+  try {
+    const body = req.body as { email?: unknown; password?: unknown };
+    const email = typeof body.email === "string" ? body.email : "";
+    const password = typeof body.password === "string" ? body.password : "";
+    if (!email.trim() || !password) {
+      return res.status(400).json({ message: "email and password are required" });
+    }
+    const { cancelAccountErasureByCredentials, ErasureCancelError } = await import(
+      "../services/erasureRequest.service.js"
+    );
+    const status = await cancelAccountErasureByCredentials({ email, password });
+    return res.json({
+      ok: true,
+      message: status.isActive
+        ? "Deletion cancelled. You can sign in again."
+        : "Deletion cancelled. Account remains restricted.",
+      status,
+    });
+  } catch (err) {
+    const { ErasureCancelError } = await import("../services/erasureRequest.service.js");
+    if (err instanceof ErasureCancelError) {
+      const http =
+        err.code === "INVALID_CREDENTIALS"
+          ? 401
+          : err.code === "EXPIRED"
+            ? 409
+            : err.code === "NOT_FOUND"
+              ? 401
+              : 409;
+      return res.status(http).json({ message: err.message, code: err.code });
+    }
+    logServerError("auth.cancelDeletion", err);
+    return res.status(400).json({ message: clientSafeMessage(err, CLIENT_FALLBACK.generic) });
+  }
+}

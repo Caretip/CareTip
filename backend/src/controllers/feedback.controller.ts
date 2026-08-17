@@ -30,8 +30,7 @@ export async function submitTipFeedback(req: Request, res: Response) {
       .map((t) => t.trim())
       .filter(Boolean)
       .slice(0, 12);
-    const customerName =
-      typeof body.customerName === "string" ? body.customerName.trim().slice(0, 80) : null;
+    // customerName may still arrive from the guest form; it is not stored locally.
 
     if (!sessionId) {
       return res.status(400).json({ message: "sessionId is required" });
@@ -82,13 +81,18 @@ export async function submitTipFeedback(req: Request, res: Response) {
         rating: rating != null && Number.isFinite(rating) ? Math.trunc(rating) : null,
         comment: comment ? comment : null,
         tags,
-        customerName,
+        // Guest names are anonymized on feedback completion — do not persist locally.
+        // Stripe Checkout/PI metadata.customerName may still exist on Stripe; CareTip
+        // does not call Stripe object deletion/metadata wipe (not a supported CareTip operation).
+        customerName: null,
+        nameAnonymizedAt: new Date(),
       },
       update: {
         rating: rating != null && Number.isFinite(rating) ? Math.trunc(rating) : null,
         comment: comment ? comment : null,
         tags,
-        customerName,
+        customerName: null,
+        nameAnonymizedAt: new Date(),
         stripeCheckoutSessionId: ctx.sessionId,
       },
       select: { id: true, transactionId: true, rating: true },

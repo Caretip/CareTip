@@ -1,13 +1,25 @@
 /**
- * GDPR Slice F-C — shared retention policy helpers (fail-closed).
+ * GDPR retention policy helpers (fail-closed).
  *
- * Approved Data Retention Matrix / RETENTION_T_*_DAYS is the sole legal authority.
- * Never invent defaults (30/90/180/365). UNSET/empty/invalid → configured:false.
+ * Approved CareTip management/legal constants in retentionPolicy.constants.ts are
+ * the authority for calendar-year and exact-duration policies.
+ * RETENTION_T_*_DAYS must be UNSET, or fail-closed if they contradict the approved policy
+ * (rolling-day env is not a substitute for calendar-year rules).
+ *
  * Orchestration helpers (kycRetainUntil, financialRetainUntil, nextLifecycleWakeAt)
  * are NOT legal authority.
  *
  * MVP: this module must not gate onboarding/dashboard access.
  */
+
+import {
+  AUDIT_RETENTION_YEARS,
+  BILLING_RETENTION_YEARS,
+  EMPLOYEE_HISTORICAL_RETENTION_YEARS,
+  NOTIFICATION_RETENTION_DAYS,
+  QR_PERSONAL_ANONYMIZATION_HOURS,
+  SUPPORT_RETENTION_YEARS,
+} from "./retentionPolicy.constants.js";
 
 export type RetentionDaysConfig =
   | { configured: false; reason: "unset" | "invalid" }
@@ -182,6 +194,31 @@ export function isCategoryRetentionExecutionEnabled(
   return isDataLifecycleV1Enabled(env) && envFlagTrue(EXEC_GATES[category], env);
 }
 
+/** Dry-run reports candidates without mutating. Preferred over EXECUTE when both are set. */
+export function isDataLifecycleDryRunEnabled(env: NodeJS.ProcessEnv = process.env): boolean {
+  return isDataLifecycleV1Enabled(env) && envFlagTrue("DATA_LIFECYCLE_DRY_RUN", env);
+}
+
+export type RetentionJobMode = "off" | "dry_run" | "execute";
+
+/**
+ * Feature-flag progression: OFF → DRY RUN → ENABLE CATEGORY.
+ * DRY_RUN wins over EXECUTE so production cannot mutate while reviewing reports.
+ */
+export function resolveRetentionJobMode(
+  category: Exclude<RetentionCategory, "kyc" | "financial" | "payment">,
+  env: NodeJS.ProcessEnv = process.env,
+  opts?: { bypassExecutionGate?: boolean },
+): RetentionJobMode {
+  if (opts?.bypassExecutionGate) {
+    return isDataLifecycleDryRunEnabled(env) ? "dry_run" : "execute";
+  }
+  if (!isDataLifecycleV1Enabled(env)) return "off";
+  if (isDataLifecycleDryRunEnabled(env)) return "dry_run";
+  if (envFlagTrue(EXEC_GATES[category], env)) return "execute";
+  return "off";
+}
+
 export function cutoffDateFromDays(days: number, now = new Date()): Date {
   return new Date(now.getTime() - days * 24 * 60 * 60 * 1000);
 }
@@ -196,16 +233,80 @@ export function holdCategoriesOf(entity: {
   );
 }
 
+export type CategoryHoldDecision = "held" | "clear" | "unknown";
+
+/**
+ * Fail-closed hold lookup.
+ * - missing entity → unknown (do not delete)
+ * - legalHold true with empty categories → held for all (ambiguous hold)
+ * - otherwise Amendment A2 category match
+ */
+export function categoryHoldDecision(
+  entity: { legalHold: boolean; legalHoldCategories: string[] } | null | undefined,
+  category: RetentionCategory | "profile",
+): CategoryHoldDecision {
+  if (!entity) return "unknown";
+  if (!entity.legalHold) return "clear";
+  const held = holdCategoriesOf(entity);
+  if (held.size === 0) return "held";
+  const aliases = HOLD_ALIASES[category] ?? [category];
+  return aliases.some((a) => held.has(a)) ? "held" : "clear";
+}
+
+/** True when a worker must skip destructive work. */
+export function shouldSkipForHold(decision: CategoryHoldDecision): boolean {
+  return decision !== "clear";
+}
+
 /** Amendment A2: only the listed category (and aliases) blocks that category's destruction. */
 export function isCategoryHeld(
   entity: { legalHold: boolean; legalHoldCategories: string[] } | null | undefined,
   category: RetentionCategory,
 ): boolean {
-  if (!entity) return false;
-  const held = holdCategoriesOf(entity);
-  if (held.size === 0) return false;
-  const aliases = HOLD_ALIASES[category] ?? [category];
-  return aliases.some((a) => held.has(a));
+  return categoryHoldDecision(entity, category) === "held";
+}
+
+export type ApprovedCategoryPolicy =
+  | { ok: true; kind: "hours"; hours: number }
+  | { ok: true; kind: "days"; days: number }
+  | { ok: true; kind: "calendar_years"; years: number }
+  | { ok: true; kind: "immediate_name_only" }
+  | { ok: false; reason: "invalid_env" | "contradicts_policy" };
+
+/**
+ * Resolve the approved cutoff policy for a retention category.
+ * Rolling RETENTION_T_*_DAYS must remain UNSET for calendar-year / exact-duration
+ * categories. A set or invalid T_* value fails closed.
+ */
+export function resolveApprovedCategoryPolicy(
+  category: Exclude<RetentionCategory, "kyc" | "financial" | "payment">,
+  env: NodeJS.ProcessEnv = process.env,
+): ApprovedCategoryPolicy {
+  const cfg = readCategoryRetentionDays(category, env);
+  if (cfg.configured) {
+    return { ok: false, reason: "contradicts_policy" };
+  }
+  if (cfg.reason === "invalid") {
+    return { ok: false, reason: "invalid_env" };
+  }
+  switch (category) {
+    case "analytics":
+      return { ok: true, kind: "hours", hours: QR_PERSONAL_ANONYMIZATION_HOURS };
+    case "notify":
+      return { ok: true, kind: "days", days: NOTIFICATION_RETENTION_DAYS };
+    case "audit":
+      return { ok: true, kind: "calendar_years", years: AUDIT_RETENTION_YEARS };
+    case "support":
+      return { ok: true, kind: "calendar_years", years: SUPPORT_RETENTION_YEARS };
+    case "billing":
+      return { ok: true, kind: "calendar_years", years: BILLING_RETENTION_YEARS };
+    case "staff_pii":
+      return { ok: true, kind: "calendar_years", years: EMPLOYEE_HISTORICAL_RETENTION_YEARS };
+    case "guest":
+      return { ok: true, kind: "immediate_name_only" };
+    default:
+      return { ok: false, reason: "invalid_env" };
+  }
 }
 
 /** Keys scrubbed from JSON/text audit metadata (Amendment A3). */

@@ -269,11 +269,15 @@ async function main() {
   try {
     // ── ANALYTICS UNSET ──
     try {
-      await runAnalyticsTtl({ bypassExecutionGate: true, env: process.env, businessId: bizId });
-      fail("analytics should fail-closed when T_ANALYTICS UNSET");
+      await runAnalyticsTtl({
+        bypassExecutionGate: true,
+        env: { RETENTION_T_ANALYTICS_DAYS: "30" } as NodeJS.ProcessEnv,
+        businessId: bizId,
+      });
+      fail("analytics should fail-closed when T_ANALYTICS contradicts 48h policy");
     } catch (e) {
-      if (e instanceof CategoryRetentionError && e.code === "T_UNSET") {
-        pass("T_ANALYTICS UNSET → no deletion");
+      if (e instanceof CategoryRetentionError && (e.code === "T_UNSET" || e.code === "POLICY_CONTRADICTION")) {
+        pass("contradicting T_ANALYTICS → no QR mutation");
       } else fail(`analytics unset: ${e instanceof Error ? e.message : e}`);
     }
     if (await prisma.qrScanEvent.findUnique({ where: { id: oldScan.id } })) {
@@ -284,18 +288,18 @@ async function main() {
     setEnv({
       DATA_LIFECYCLE_V1: "true",
       DATA_LIFECYCLE_ANALYTICS_EXECUTE: "true",
-      RETENTION_T_ANALYTICS_DAYS: "30",
+      RETENTION_T_ANALYTICS_DAYS: undefined,
     });
-    if (readCategoryRetentionDays("analytics").configured) pass("T_ANALYTICS configured for test only");
-    else fail("analytics config");
-
-    // Younger than retention preserved; older eligible
+    await prisma.qrScanEvent.update({
+      where: { id: oldScan.id },
+      data: { scannedAt: new Date(Date.now() - 49 * 3600000) },
+    });
     const youngBefore = await prisma.qrScanEvent.findUnique({ where: { id: youngScan.id } });
     await runAnalyticsTtl({ bypassExecutionGate: true, env: process.env, businessId: bizId });
     const oldAfter = await prisma.qrScanEvent.findUnique({ where: { id: oldScan.id } });
     const youngAfter = await prisma.qrScanEvent.findUnique({ where: { id: youngScan.id } });
-    if (!oldAfter && youngAfter && youngBefore) {
-      pass("old analytics deleted when eligible; younger preserved");
+    if (oldAfter?.anonymizedAt && oldAfter.userAgent == null && youngAfter && youngBefore) {
+      pass("old QR personal fields anonymized; row kept; younger preserved");
     } else fail("analytics TTL age filter failed");
 
     // Recreate old scan for hold test
@@ -307,7 +311,8 @@ async function main() {
         deviceType: "mobile",
         sessionId: `sess-hold-${tag}`,
         dedupeKey: `dedupe-hold-${tag}`,
-        scannedAt: new Date(Date.now() - 40 * 86400000),
+        scannedAt: new Date(Date.now() - 49 * 3600000),
+        userAgent: "HoldUA",
       },
     });
     await prisma.business.update({
@@ -315,7 +320,8 @@ async function main() {
       data: { legalHold: true, legalHoldCategories: ["analytics"] },
     });
     await runAnalyticsTtl({ bypassExecutionGate: true, env: process.env, businessId: bizId });
-    if (await prisma.qrScanEvent.findUnique({ where: { id: heldScan.id } })) {
+    const heldRow = await prisma.qrScanEvent.findUnique({ where: { id: heldScan.id } });
+    if (heldRow && heldRow.userAgent === "HoldUA") {
       pass("legal hold on analytics → preserved");
     } else fail("analytics hold did not preserve");
 
@@ -324,8 +330,9 @@ async function main() {
       data: { legalHold: true, legalHoldCategories: ["financial"] },
     });
     await runAnalyticsTtl({ bypassExecutionGate: true, env: process.env, businessId: bizId });
-    if (!(await prisma.qrScanEvent.findUnique({ where: { id: heldScan.id } }))) {
-      pass("unrelated financial hold does not block analytics");
+    const afterUnrelated = await prisma.qrScanEvent.findUnique({ where: { id: heldScan.id } });
+    if (afterUnrelated?.anonymizedAt && afterUnrelated.userAgent == null) {
+      pass("unrelated financial hold does not block analytics anonymize");
     } else fail("financial hold incorrectly blocked analytics");
 
     await prisma.business.update({
@@ -343,20 +350,24 @@ async function main() {
     else fail("analytics not idempotent");
 
     // ── AUDIT ──
-    setEnv({ RETENTION_T_AUDIT_DAYS: undefined, DATA_LIFECYCLE_AUDIT_EXECUTE: "true" });
+    setEnv({ RETENTION_T_AUDIT_DAYS: "30", DATA_LIFECYCLE_AUDIT_EXECUTE: "true" });
     try {
       await runAuditScrub({ bypassExecutionGate: true, env: process.env });
-      fail("audit should unset-fail");
+      fail("audit should contradiction-fail");
     } catch (e) {
-      if (e instanceof CategoryRetentionError && e.code === "T_UNSET") pass("T_AUDIT UNSET → no scrub");
-      else fail("audit unset");
+      if (e instanceof CategoryRetentionError && (e.code === "T_UNSET" || e.code === "POLICY_CONTRADICTION")) {
+        pass("contradicting T_AUDIT → no scrub");
+      } else fail("audit unset");
     }
 
-    setEnv({ RETENTION_T_AUDIT_DAYS: "30", DATA_LIFECYCLE_AUDIT_EXECUTE: "true" });
-    // Ensure target row is older than cutoff (pooler clocks / default(now) overrides).
+    setEnv({ RETENTION_T_AUDIT_DAYS: undefined, DATA_LIFECYCLE_AUDIT_EXECUTE: "true" });
     await prisma.$executeRawUnsafe(
-      `UPDATE audit_logs SET created_at = NOW() - INTERVAL '40 days' WHERE action = $1`,
+      `UPDATE audit_logs SET created_at = TIMESTAMPTZ '2018-06-01 00:00:00+00' WHERE action = $1`,
       "test.fc.audit",
+    );
+    await prisma.$executeRawUnsafe(
+      `UPDATE business_activity_events SET occurred_at = TIMESTAMPTZ '2018-06-01 00:00:00+00' WHERE dedupe_key = $1`,
+      `fc-act-${tag}`,
     );
     for (let i = 0; i < 5; i++) {
       await runAuditScrub({ bypassExecutionGate: true, env: process.env, businessId: bizId });
@@ -380,16 +391,21 @@ async function main() {
     } else fail("activity scrub failed");
 
     // ── SUPPORT ──
-    setEnv({ RETENTION_T_SUPPORT_DAYS: undefined });
+    setEnv({ RETENTION_T_SUPPORT_DAYS: "30" });
     try {
       await runSupportRedact({ bypassExecutionGate: true, env: process.env, businessId: bizId });
-      fail("support unset should fail");
+      fail("support contradiction should fail");
     } catch (e) {
-      if (e instanceof CategoryRetentionError && e.code === "T_UNSET") pass("T_SUPPORT UNSET → no redaction");
-      else fail("support unset");
+      if (e instanceof CategoryRetentionError && (e.code === "T_UNSET" || e.code === "POLICY_CONTRADICTION")) {
+        pass("contradicting T_SUPPORT → no redaction");
+      } else fail("support unset");
     }
 
-    setEnv({ RETENTION_T_SUPPORT_DAYS: "30", DATA_LIFECYCLE_SUPPORT_EXECUTE: "true" });
+    setEnv({ RETENTION_T_SUPPORT_DAYS: undefined, DATA_LIFECYCLE_SUPPORT_EXECUTE: "true" });
+    await prisma.supportTicket.update({
+      where: { id: ticket.id },
+      data: { closedAt: new Date("2018-06-01T00:00:00.000Z") },
+    });
     await prisma.business.update({
       where: { id: bizId },
       data: { legalHold: true, legalHoldCategories: ["support"] },
@@ -411,16 +427,21 @@ async function main() {
     } else fail("support redact failed");
 
     // ── NOTIFY ──
-    setEnv({ RETENTION_T_NOTIFY_DAYS: undefined });
+    setEnv({ RETENTION_T_NOTIFY_DAYS: "30" });
     try {
       await runNotifyCleanup({ bypassExecutionGate: true, env: process.env, userId: owner.id });
-      fail("notify unset");
+      fail("notify contradiction");
     } catch (e) {
-      if (e instanceof CategoryRetentionError && e.code === "T_UNSET") pass("T_NOTIFY UNSET → no cleanup");
-      else fail("notify unset");
+      if (e instanceof CategoryRetentionError && (e.code === "T_UNSET" || e.code === "POLICY_CONTRADICTION")) {
+        pass("contradicting T_NOTIFY → no cleanup");
+      } else fail("notify unset");
     }
 
-    setEnv({ RETENTION_T_NOTIFY_DAYS: "30", DATA_LIFECYCLE_NOTIFY_EXECUTE: "true" });
+    setEnv({ RETENTION_T_NOTIFY_DAYS: undefined, DATA_LIFECYCLE_NOTIFY_EXECUTE: "true" });
+    await prisma.notification.updateMany({
+      where: { userId: owner.id, title: "Old" },
+      data: { createdAt: new Date(Date.now() - 91 * 86400000) },
+    });
     await runNotifyCleanup({ bypassExecutionGate: true, env: process.env, userId: owner.id });
     const notes = await prisma.notification.findMany({ where: { userId: owner.id } });
     if (notes.length === 1 && notes[0].title === "New") {
@@ -428,20 +449,21 @@ async function main() {
     } else fail("notify cleanup failed");
 
     // ── GUEST ──
-    setEnv({ RETENTION_T_GUEST_DAYS: undefined });
+    setEnv({ RETENTION_T_GUEST_DAYS: "30" });
     try {
       await runGuestScrub({ bypassExecutionGate: true, env: process.env, businessId: bizId });
-      fail("guest unset");
+      fail("guest contradiction");
     } catch (e) {
-      if (e instanceof CategoryRetentionError && e.code === "T_UNSET") pass("T_GUEST UNSET → no guest destruction");
-      else fail("guest unset");
+      if (e instanceof CategoryRetentionError && (e.code === "T_UNSET" || e.code === "POLICY_CONTRADICTION")) {
+        pass("contradicting T_GUEST → no guest destruction");
+      } else fail("guest unset");
     }
 
-    setEnv({ RETENTION_T_GUEST_DAYS: "30", DATA_LIFECYCLE_GUEST_EXECUTE: "true" });
+    setEnv({ RETENTION_T_GUEST_DAYS: undefined, DATA_LIFECYCLE_GUEST_EXECUTE: "true" });
     await runGuestScrub({ bypassExecutionGate: true, env: process.env, businessId: bizId });
     const fb = await prisma.tipFeedback.findFirst({ where: { transactionId: tip.id } });
-    if (fb && fb.customerName == null && fb.comment == null && fb.rating === 5 && fb.tags.includes("fast")) {
-      pass("guest PII scrubbed; rating/tags kept");
+    if (fb && fb.customerName == null && fb.comment === "Nice" && fb.rating === 5 && fb.tags.includes("fast")) {
+      pass("guest name leftover scrubbed; comment/rating/tags kept");
     } else fail("guest scrub failed");
 
     const tipOk = await prisma.transaction.findUnique({ where: { id: tip.id } });
@@ -450,18 +472,19 @@ async function main() {
     else fail("financial rows damaged");
 
     // ── BILLING ──
-    setEnv({ RETENTION_T_BILLING_DAYS: undefined });
+    setEnv({ RETENTION_T_BILLING_DAYS: "30" });
     try {
       await runBillingRedact({ bypassExecutionGate: true, env: process.env });
-      fail("billing unset");
+      fail("billing contradiction");
     } catch (e) {
-      if (e instanceof CategoryRetentionError && e.code === "T_UNSET") pass("T_BILLING UNSET → no destructive op");
-      else fail("billing unset");
+      if (e instanceof CategoryRetentionError && (e.code === "T_UNSET" || e.code === "POLICY_CONTRADICTION")) {
+        pass("contradicting T_BILLING → no destructive op");
+      } else fail("billing unset");
     }
 
-    setEnv({ RETENTION_T_BILLING_DAYS: "30", DATA_LIFECYCLE_BILLING_EXECUTE: "true" });
+    setEnv({ RETENTION_T_BILLING_DAYS: undefined, DATA_LIFECYCLE_BILLING_EXECUTE: "true" });
     await prisma.$executeRawUnsafe(
-      `UPDATE subscription_events SET occurred_at = NOW() - INTERVAL '40 days' WHERE id = $1`,
+      `UPDATE subscription_events SET occurred_at = TIMESTAMPTZ '2010-06-01 00:00:00+00' WHERE id = $1`,
       subEv.id,
     );
     for (let i = 0; i < 5; i++) {
@@ -477,16 +500,21 @@ async function main() {
     } else fail(`billing redact failed: ${JSON.stringify(payload)}`);
 
     // ── STAFF PII ──
-    setEnv({ RETENTION_T_STAFF_PII_DAYS: undefined });
+    setEnv({ RETENTION_T_STAFF_PII_DAYS: "30" });
     try {
       await runStaffPiiScrub({ bypassExecutionGate: true, env: process.env, businessId: bizId });
-      fail("staff unset");
+      fail("staff contradiction");
     } catch (e) {
-      if (e instanceof CategoryRetentionError && e.code === "T_UNSET") pass("T_STAFF_PII UNSET → fail-closed");
-      else fail("staff unset");
+      if (e instanceof CategoryRetentionError && (e.code === "T_UNSET" || e.code === "POLICY_CONTRADICTION")) {
+        pass("contradicting T_STAFF_PII → fail-closed");
+      } else fail("staff unset");
     }
 
-    setEnv({ RETENTION_T_STAFF_PII_DAYS: "30", DATA_LIFECYCLE_STAFF_PII_EXECUTE: "true" });
+    setEnv({ RETENTION_T_STAFF_PII_DAYS: undefined, DATA_LIFECYCLE_STAFF_PII_EXECUTE: "true" });
+    await prisma.employee.update({
+      where: { id: emp.id },
+      data: { deletedAt: new Date("2010-06-01T00:00:00.000Z") },
+    });
     await runStaffPiiScrub({ bypassExecutionGate: true, env: process.env, businessId: bizId });
     const empAfter = await prisma.employee.findUnique({ where: { id: emp.id } });
     if (
@@ -503,7 +531,7 @@ async function main() {
     setEnv({
       DATA_LIFECYCLE_V1: "true",
       DATA_LIFECYCLE_GUEST_EXECUTE: "true",
-      RETENTION_T_GUEST_DAYS: "30",
+      RETENTION_T_GUEST_DAYS: undefined,
     });
     const evil = await prisma.dataLifecycleJob.create({
       data: {
@@ -583,7 +611,7 @@ async function main() {
     setEnv({
       DATA_LIFECYCLE_V1: "true",
       DATA_LIFECYCLE_NOTIFY_EXECUTE: "true",
-      RETENTION_T_NOTIFY_DAYS: "30",
+      RETENTION_T_NOTIFY_DAYS: undefined,
     });
     await prisma.dataLifecycleJob.deleteMany({
       where: { subjectId: owner.id, type: "notify_cleanup" },

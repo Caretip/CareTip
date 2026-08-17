@@ -639,6 +639,9 @@ export async function deleteEmployeeForBusiness(businessId: string, employeeId: 
         deletedAt: now,
         isActive: false,
         activationStatus: "pending_activation",
+        avatar: null,
+        bio: null,
+        phone: null,
       },
     });
     if (emp.userId) {

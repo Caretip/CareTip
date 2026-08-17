@@ -142,7 +142,7 @@ async function main() {
     } else fail(`expected skipped_legal_hold got ${heldResult.status}`);
 
     // 5) Clear hold → enqueues erasure_continue (legalHold.service)
-    await clearUserLegalHold({ userId: emp.id, actorUserId: admin.id });
+    await clearUserLegalHold({ userId: emp.id, actorUserId: admin.id, releaseReason: "matter closed" });
     const woken = await prisma.dataLifecycleJob.findFirst({
       where: {
         type: "erasure_continue",
@@ -154,7 +154,14 @@ async function main() {
     if (woken) pass("hold clear enqueues erasure_continue");
     else fail("hold clear did not enqueue erasure_continue");
 
-    // 6) Process erasure_continue → anonymize path
+    // 6) Process erasure_continue → anonymize path (30-day eligibility must already have elapsed)
+    await prisma.user.update({
+      where: { id: emp.id },
+      data: {
+        anonymizeEligibleAt: new Date(Date.now() - 1000),
+        deletionCancelUntil: new Date(Date.now() - 1000),
+      },
+    });
     const contId = woken!.id;
     const contResult = await processErasureContinueJob(contId, {
       bypassExecutionGate: true,
@@ -274,7 +281,9 @@ async function main() {
         emailVerified: true,
         accountStatus: "erasure_pending",
         isActive: false,
-        deletionRequestedAt: new Date(),
+        deletionRequestedAt: new Date(Date.now() - 40 * 24 * 60 * 60 * 1000),
+        deletionCancelUntil: new Date(Date.now() - 20 * 24 * 60 * 60 * 1000),
+        anonymizeEligibleAt: new Date(Date.now() - 1000),
         employee: {
           create: {
             name: "Blocked",

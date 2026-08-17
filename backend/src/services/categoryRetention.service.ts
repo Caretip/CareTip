@@ -1,57 +1,54 @@
 /**
- * GDPR lifecycle Slice F-C — category retention jobs (fail-closed).
+ * GDPR category retention jobs (fail-closed, legal-hold-aware, dry-run capable).
  *
- * Categories: analytics_ttl, audit_scrub, support_redact, notify_cleanup,
- * guest_scrub, billing_redact, staff_pii_scrub.
- *
- * NEVER invents T_* days. UNSET → no destructive work.
  * NEVER deletes Transaction/TipRefund/Business/Employee stubs/KYC/DSAR.
- * NEVER gates MVP onboarding/dashboard access.
- * Production: DATA_LIFECYCLE_V1 + per-category EXECUTE flags (default OFF).
+ * Production mutate: DATA_LIFECYCLE_V1 + per-category EXECUTE (default OFF).
+ * DATA_LIFECYCLE_DRY_RUN reports WOULD_* without mutation and wins over EXECUTE.
  */
 
 import { Prisma, type DataLifecycleJob, type DataLifecycleJobType } from "@prisma/client";
 import { prisma } from "../prisma.js";
 import {
-  cutoffDateFromDays,
-  isCategoryHeld,
-  isCategoryRetentionExecutionEnabled,
-  readCategoryRetentionDays,
-  redactBillingPayload,
-  scrubPiiKeysInJson,
-  scrubPiiKeysInMetadataString,
+  resolveApprovedCategoryPolicy,
+  resolveRetentionJobMode,
   type RetentionCategory,
 } from "./retentionPolicy.helpers.js";
-import { FORMER_TEAM_MEMBER_NAME } from "./anonymization.service.js";
+import { daysCutoff, hoursCutoff } from "./retentionCalendar.js";
+import {
+  CategoryRetentionError,
+  type CategoryJobKind,
+  runAnalyticsTtl,
+  runAuditScrub,
+  runBillingRedact,
+  runGuestScrub,
+  runNotifyCleanup,
+  runStaffPiiScrub,
+  runSupportRedact,
+} from "./categoryRetention.runners.js";
+
+export {
+  CategoryRetentionError,
+  runAnalyticsTtl,
+  runAuditScrub,
+  runBillingRedact,
+  runGuestScrub,
+  runNotifyCleanup,
+  runStaffPiiScrub,
+  runSupportRedact,
+};
+export type { CategoryJobKind } from "./categoryRetention.runners.js";
+export type {
+  AnalyticsTtlResult,
+  AuditScrubResult,
+  BillingRedactResult,
+  GuestScrubResult,
+  NotifyCleanupResult,
+  StaffPiiScrubResult,
+  SupportRedactResult,
+} from "./categoryRetention.runners.js";
 
 const RUNNING_LEASE_MS = 15 * 60 * 1000;
 const MAX_ATTEMPTS = 8;
-const BATCH = 200;
-
-export class CategoryRetentionError extends Error {
-  constructor(
-    message: string,
-    readonly code:
-      | "EXECUTION_GATED"
-      | "T_UNSET"
-      | "LEGAL_HOLD"
-      | "FORBIDDEN"
-      | "NOT_FOUND"
-      | "PRECONDITION",
-  ) {
-    super(message);
-    this.name = "CategoryRetentionError";
-  }
-}
-
-export type CategoryJobKind =
-  | "analytics_ttl"
-  | "audit_scrub"
-  | "support_redact"
-  | "notify_cleanup"
-  | "guest_scrub"
-  | "billing_redact"
-  | "staff_pii_scrub";
 
 const JOB_TO_CATEGORY: Record<CategoryJobKind, Exclude<RetentionCategory, "kyc" | "financial" | "payment">> = {
   analytics_ttl: "analytics",
@@ -67,530 +64,47 @@ export function assertCategoryExecutionAllowed(
   kind: CategoryJobKind,
   opts?: { bypassExecutionGate?: boolean; env?: NodeJS.ProcessEnv },
 ): void {
-  if (opts?.bypassExecutionGate) return;
+  const env = opts?.env ?? process.env;
   const cat = JOB_TO_CATEGORY[kind];
-  if (!isCategoryRetentionExecutionEnabled(cat, opts?.env ?? process.env)) {
+  const mode = resolveRetentionJobMode(cat, env, { bypassExecutionGate: opts?.bypassExecutionGate });
+  if (mode === "off") {
     throw new CategoryRetentionError(
-      `${kind} execution disabled (DATA_LIFECYCLE_V1 / category execute flag)`,
+      `${kind} execution disabled (DATA_LIFECYCLE_V1 / category execute flag / dry-run)`,
       "EXECUTION_GATED",
     );
   }
 }
 
+export function assertApprovedCategoryPolicy(
+  kind: CategoryJobKind,
+  env: NodeJS.ProcessEnv = process.env,
+) {
+  const cat = JOB_TO_CATEGORY[kind];
+  const policy = resolveApprovedCategoryPolicy(cat, env);
+  if (!policy.ok) {
+    throw new CategoryRetentionError(
+      `${cat} retention env contradicts approved policy or is invalid — fail-closed`,
+      policy.reason === "contradicts_policy" ? "POLICY_CONTRADICTION" : "T_UNSET",
+    );
+  }
+  return policy;
+}
+
+/** @deprecated Use assertApprovedCategoryPolicy — kept so existing imports compile. */
 export function assertCategoryRetentionConfigured(
   kind: CategoryJobKind,
   env: NodeJS.ProcessEnv = process.env,
 ): { days: number; cutoff: Date } {
-  const cat = JOB_TO_CATEGORY[kind];
-  const cfg = readCategoryRetentionDays(cat, env);
-  if (!cfg.configured) {
-    throw new CategoryRetentionError(
-      `${cat} retention UNSET/invalid — fail-closed (no destructive work)`,
-      "T_UNSET",
-    );
+  const policy = assertApprovedCategoryPolicy(kind, env);
+  if (policy.kind === "days") {
+    return { days: policy.days, cutoff: daysCutoff(policy.days) };
   }
-  return { days: cfg.days, cutoff: cutoffDateFromDays(cfg.days) };
+  if (policy.kind === "hours") {
+    const daysApprox = Math.max(1, Math.ceil(policy.hours / 24));
+    return { days: daysApprox, cutoff: hoursCutoff(policy.hours) };
+  }
+  throw new CategoryRetentionError(`${kind} is not a rolling-day policy`, "T_UNSET");
 }
-
-async function businessHeld(
-  businessId: string,
-  category: RetentionCategory,
-): Promise<boolean> {
-  const b = await prisma.business.findUnique({
-    where: { id: businessId },
-    select: { legalHold: true, legalHoldCategories: true },
-  });
-  return isCategoryHeld(b, category);
-}
-
-// ── Analytics ─────────────────────────────────────────────────────────────
-
-export type AnalyticsTtlResult = {
-  deletedFunnel: number;
-  deletedVisits: number;
-  deletedScans: number;
-  skippedHeldBusinesses: number;
-  alreadyComplete: boolean;
-};
-
-export async function runAnalyticsTtl(
-  opts?: {
-    bypassExecutionGate?: boolean;
-    env?: NodeJS.ProcessEnv;
-    businessId?: string;
-    now?: Date;
-  },
-): Promise<AnalyticsTtlResult> {
-  assertCategoryExecutionAllowed("analytics_ttl", opts);
-  const env = opts?.env ?? process.env;
-  const { cutoff } = assertCategoryRetentionConfigured("analytics_ttl", env);
-  const bizFilter = opts?.businessId ? { businessId: opts.businessId } : {};
-
-  let deletedFunnel = 0;
-  let deletedVisits = 0;
-  let deletedScans = 0;
-  let skippedHeldBusinesses = 0;
-
-  // Process per-business to honor category holds.
-  const bizIds = opts?.businessId
-    ? [opts.businessId]
-    : (
-        await prisma.qrScanEvent.findMany({
-          where: { scannedAt: { lt: cutoff }, ...bizFilter },
-          select: { businessId: true },
-          distinct: ["businessId"],
-          take: 500,
-        })
-      ).map((r) => r.businessId);
-
-  const extraBiz = await prisma.qrFunnelEvent.findMany({
-    where: { createdAt: { lt: cutoff }, ...(opts?.businessId ? { businessId: opts.businessId } : {}) },
-    select: { businessId: true },
-    distinct: ["businessId"],
-    take: 500,
-  });
-  const allBiz = [...new Set([...bizIds, ...extraBiz.map((b) => b.businessId)])];
-
-  if (allBiz.length === 0) {
-    return {
-      deletedFunnel: 0,
-      deletedVisits: 0,
-      deletedScans: 0,
-      skippedHeldBusinesses: 0,
-      alreadyComplete: true,
-    };
-  }
-
-  for (const businessId of allBiz) {
-    if (await businessHeld(businessId, "analytics")) {
-      skippedHeldBusinesses += 1;
-      continue;
-    }
-    const funnel = await prisma.qrFunnelEvent.deleteMany({
-      where: { businessId, createdAt: { lt: cutoff } },
-    });
-    deletedFunnel += funnel.count;
-
-    const visits = await prisma.qrGuestVisit.deleteMany({
-      where: { businessId, startedAt: { lt: cutoff } },
-    });
-    deletedVisits += visits.count;
-
-    const scans = await prisma.qrScanEvent.deleteMany({
-      where: { businessId, scannedAt: { lt: cutoff } },
-    });
-    deletedScans += scans.count;
-  }
-
-  return {
-    deletedFunnel,
-    deletedVisits,
-    deletedScans,
-    skippedHeldBusinesses,
-    alreadyComplete: deletedFunnel + deletedVisits + deletedScans === 0,
-  };
-}
-
-// ── Audit scrub ───────────────────────────────────────────────────────────
-
-export type AuditScrubResult = {
-  scrubbedAuditLogs: number;
-  scrubbedActivityEvents: number;
-  skipped: number;
-  alreadyComplete: boolean;
-};
-
-export async function runAuditScrub(
-  opts?: {
-    bypassExecutionGate?: boolean;
-    env?: NodeJS.ProcessEnv;
-    businessId?: string;
-  },
-): Promise<AuditScrubResult> {
-  assertCategoryExecutionAllowed("audit_scrub", opts);
-  const env = opts?.env ?? process.env;
-  const { cutoff } = assertCategoryRetentionConfigured("audit_scrub", env);
-
-  let scrubbedAuditLogs = 0;
-  let scrubbedActivityEvents = 0;
-  let skipped = 0;
-
-  const logs = await prisma.auditLog.findMany({
-    where: {
-      createdAt: { lt: cutoff },
-      OR: [
-        { metadata: { contains: '"email"' } },
-        { metadata: { contains: '"phone"' } },
-        { metadata: { contains: '"customerName"' } },
-        { metadata: { contains: '"inviteeEmail"' } },
-        { metadata: { contains: "@" } },
-      ],
-    },
-    select: { id: true, userId: true, metadata: true },
-    orderBy: { createdAt: "asc" },
-    take: BATCH,
-  });
-
-  for (const log of logs) {
-    if (log.userId) {
-      const user = await prisma.user.findUnique({
-        where: { id: log.userId },
-        select: { legalHold: true, legalHoldCategories: true },
-      });
-      if (isCategoryHeld(user, "audit")) {
-        skipped += 1;
-        continue;
-      }
-    }
-    const { changed, value } = scrubPiiKeysInMetadataString(log.metadata);
-    if (changed) {
-      await prisma.auditLog.update({
-        where: { id: log.id },
-        data: { metadata: value },
-      });
-      scrubbedAuditLogs += 1;
-    }
-  }
-
-  const activityWhere: Prisma.BusinessActivityEventWhereInput = {
-    occurredAt: { lt: cutoff },
-    ...(opts?.businessId ? { businessId: opts.businessId } : {}),
-  };
-  const events = await prisma.businessActivityEvent.findMany({
-    where: activityWhere,
-    select: { id: true, businessId: true, summary: true },
-    take: BATCH,
-  });
-
-  for (const ev of events) {
-    if (await businessHeld(ev.businessId, "audit")) {
-      skipped += 1;
-      continue;
-    }
-    const { changed, value } = scrubPiiKeysInJson(ev.summary);
-    if (changed) {
-      await prisma.businessActivityEvent.update({
-        where: { id: ev.id },
-        data: { summary: value as Prisma.InputJsonValue },
-      });
-      scrubbedActivityEvents += 1;
-    }
-  }
-
-  return {
-    scrubbedAuditLogs,
-    scrubbedActivityEvents,
-    skipped,
-    alreadyComplete: scrubbedAuditLogs + scrubbedActivityEvents === 0,
-  };
-}
-
-// ── Support redact ────────────────────────────────────────────────────────
-
-export type SupportRedactResult = {
-  redactedMessages: number;
-  skippedTickets: number;
-  alreadyComplete: boolean;
-};
-
-export async function runSupportRedact(
-  opts?: {
-    bypassExecutionGate?: boolean;
-    env?: NodeJS.ProcessEnv;
-    businessId?: string;
-  },
-): Promise<SupportRedactResult> {
-  assertCategoryExecutionAllowed("support_redact", opts);
-  const env = opts?.env ?? process.env;
-  const { cutoff } = assertCategoryRetentionConfigured("support_redact", env);
-
-  let redactedMessages = 0;
-  let skippedTickets = 0;
-
-  const tickets = await prisma.supportTicket.findMany({
-    where: {
-      updatedAt: { lt: cutoff },
-      ...(opts?.businessId ? { businessId: opts.businessId } : {}),
-    },
-    select: { id: true, businessId: true },
-    take: BATCH,
-  });
-
-  for (const t of tickets) {
-    if (await businessHeld(t.businessId, "support")) {
-      skippedTickets += 1;
-      continue;
-    }
-    const res = await prisma.supportTicketMessage.updateMany({
-      where: {
-        ticketId: t.id,
-        NOT: { body: "[redacted]" },
-      },
-      data: { body: "[redacted]" },
-    });
-    redactedMessages += res.count;
-    // Detach authors (nullable) — keep ticket structure.
-    await prisma.supportTicket.update({
-      where: { id: t.id },
-      data: { createdByUserId: null },
-    });
-    await prisma.supportTicketMessage.updateMany({
-      where: { ticketId: t.id },
-      data: { authorUserId: null },
-    });
-  }
-
-  return {
-    redactedMessages,
-    skippedTickets,
-    alreadyComplete: redactedMessages === 0 && skippedTickets === 0 && tickets.length === 0,
-  };
-}
-
-// ── Notifications ─────────────────────────────────────────────────────────
-
-export type NotifyCleanupResult = {
-  deleted: number;
-  alreadyComplete: boolean;
-};
-
-export async function runNotifyCleanup(
-  opts?: {
-    bypassExecutionGate?: boolean;
-    env?: NodeJS.ProcessEnv;
-    userId?: string;
-  },
-): Promise<NotifyCleanupResult> {
-  assertCategoryExecutionAllowed("notify_cleanup", opts);
-  const env = opts?.env ?? process.env;
-  const { cutoff } = assertCategoryRetentionConfigured("notify_cleanup", env);
-
-  // User-scoped hold: skip users with notify held.
-  if (opts?.userId) {
-    const user = await prisma.user.findUnique({
-      where: { id: opts.userId },
-      select: { legalHold: true, legalHoldCategories: true },
-    });
-    if (isCategoryHeld(user, "notify")) {
-      return { deleted: 0, alreadyComplete: true };
-    }
-    const res = await prisma.notification.deleteMany({
-      where: { userId: opts.userId, createdAt: { lt: cutoff } },
-    });
-    return { deleted: res.count, alreadyComplete: res.count === 0 };
-  }
-
-  const candidates = await prisma.notification.findMany({
-    where: { createdAt: { lt: cutoff } },
-    select: { id: true, userId: true },
-    take: BATCH,
-  });
-
-  let deleted = 0;
-  for (const n of candidates) {
-    const user = await prisma.user.findUnique({
-      where: { id: n.userId },
-      select: { legalHold: true, legalHoldCategories: true },
-    });
-    if (isCategoryHeld(user, "notify")) continue;
-    await prisma.notification.delete({ where: { id: n.id } });
-    deleted += 1;
-  }
-
-  return { deleted, alreadyComplete: deleted === 0 };
-}
-
-// ── Guest feedback ────────────────────────────────────────────────────────
-
-export type GuestScrubResult = {
-  scrubbed: number;
-  skipped: number;
-  alreadyComplete: boolean;
-};
-
-export async function runGuestScrub(
-  opts?: {
-    bypassExecutionGate?: boolean;
-    env?: NodeJS.ProcessEnv;
-    businessId?: string;
-  },
-): Promise<GuestScrubResult> {
-  assertCategoryExecutionAllowed("guest_scrub", opts);
-  const env = opts?.env ?? process.env;
-  const { cutoff } = assertCategoryRetentionConfigured("guest_scrub", env);
-
-  const rows = await prisma.tipFeedback.findMany({
-    where: {
-      createdAt: { lt: cutoff },
-      OR: [{ customerName: { not: null } }, { comment: { not: null } }],
-      ...(opts?.businessId ? { businessId: opts.businessId } : {}),
-    },
-    select: { id: true, businessId: true },
-    take: BATCH,
-  });
-
-  let scrubbed = 0;
-  let skipped = 0;
-  for (const row of rows) {
-    if (await businessHeld(row.businessId, "guest")) {
-      skipped += 1;
-      continue;
-    }
-    await prisma.tipFeedback.update({
-      where: { id: row.id },
-      data: { customerName: null, comment: null },
-    });
-    scrubbed += 1;
-  }
-
-  return {
-    scrubbed,
-    skipped,
-    alreadyComplete: scrubbed === 0 && rows.length === 0,
-  };
-}
-
-// ── Billing event redact ──────────────────────────────────────────────────
-
-export type BillingRedactResult = {
-  redacted: number;
-  alreadyComplete: boolean;
-};
-
-export async function runBillingRedact(
-  opts?: {
-    bypassExecutionGate?: boolean;
-    env?: NodeJS.ProcessEnv;
-  },
-): Promise<BillingRedactResult> {
-  assertCategoryExecutionAllowed("billing_redact", opts);
-  const env = opts?.env ?? process.env;
-  const { cutoff } = assertCategoryRetentionConfigured("billing_redact", env);
-
-  const candidateIds = await prisma.$queryRaw<Array<{ id: string }>>`
-    SELECT id FROM subscription_events
-    WHERE occurred_at < ${cutoff}
-      AND payload IS NOT NULL
-      AND payload::text LIKE '%"email"%'
-      AND payload::text NOT LIKE '%"[redacted]"%'
-    ORDER BY occurred_at ASC
-    LIMIT ${BATCH}
-  `;
-
-  const events = candidateIds.length
-    ? await prisma.subscriptionEvent.findMany({
-        where: { id: { in: candidateIds.map((r) => r.id) } },
-        select: { id: true, payload: true, subscriptionId: true },
-      })
-    : [];
-
-  let redacted = 0;
-  for (const ev of events) {
-    if (ev.payload == null) continue;
-    // Optional: if subscription → business held for billing, skip.
-    if (ev.subscriptionId) {
-      const sub = await prisma.subscription.findUnique({
-        where: { id: ev.subscriptionId },
-        select: { businessId: true },
-      });
-      if (sub && (await businessHeld(sub.businessId, "billing"))) {
-        continue;
-      }
-    }
-    const { changed, value } = redactBillingPayload(ev.payload);
-    if (changed) {
-      await prisma.subscriptionEvent.update({
-        where: { id: ev.id },
-        data: { payload: value as Prisma.InputJsonValue },
-      });
-      redacted += 1;
-    }
-  }
-
-  return { redacted, alreadyComplete: redacted === 0 };
-}
-
-// ── Staff PII scrub (soft-removed only; does not undo F-A; no tip deletes) ─
-
-export type StaffPiiScrubResult = {
-  scrubbed: number;
-  skipped: number;
-  alreadyComplete: boolean;
-};
-
-export async function runStaffPiiScrub(
-  opts?: {
-    bypassExecutionGate?: boolean;
-    env?: NodeJS.ProcessEnv;
-    businessId?: string;
-  },
-): Promise<StaffPiiScrubResult> {
-  assertCategoryExecutionAllowed("staff_pii_scrub", opts);
-  const env = opts?.env ?? process.env;
-  const { cutoff } = assertCategoryRetentionConfigured("staff_pii_scrub", env);
-
-  const employees = await prisma.employee.findMany({
-    where: {
-      isDeleted: true,
-      anonymizedAt: null,
-      deletedAt: { lt: cutoff },
-      ...(opts?.businessId ? { businessId: opts.businessId } : {}),
-    },
-    select: {
-      id: true,
-      businessId: true,
-      userId: true,
-      name: true,
-      phone: true,
-      bio: true,
-      avatar: true,
-    },
-    take: BATCH,
-  });
-
-  let scrubbed = 0;
-  let skipped = 0;
-  for (const emp of employees) {
-    if (await businessHeld(emp.businessId, "staff_pii")) {
-      skipped += 1;
-      continue;
-    }
-    if (emp.userId) {
-      const user = await prisma.user.findUnique({
-        where: { id: emp.userId },
-        select: { legalHold: true, legalHoldCategories: true },
-      });
-      if (isCategoryHeld(user, "staff_pii")) {
-        skipped += 1;
-        continue;
-      }
-    }
-    // Scrub identifiers only — keep Employee row as tip stub; do not delete tips.
-    await prisma.employee.update({
-      where: { id: emp.id },
-      data: {
-        name: FORMER_TEAM_MEMBER_NAME,
-        phone: null,
-        bio: null,
-        avatar: null,
-        slug: null,
-        emailNotifications: false,
-        pushNotifications: false,
-        anonymizedAt: new Date(),
-        // userId left as-is unless already null — F-A owns full detach; avoid conflicting auth path
-      },
-    });
-    scrubbed += 1;
-  }
-
-  return {
-    scrubbed,
-    skipped,
-    alreadyComplete: scrubbed === 0 && employees.length === 0,
-  };
-}
-
-// ── Job orchestration ─────────────────────────────────────────────────────
 
 type JobPayload = {
   businessId?: string;
@@ -641,7 +155,7 @@ export async function enqueueCategoryRetentionJob(
       payload: {
         ...(opts?.businessId ? { businessId: opts.businessId } : {}),
         ...(opts?.userId ? { userId: opts.userId } : {}),
-      } as Prisma.InputJsonValue,
+      },
     },
   });
   return { jobId: job.id };
@@ -708,7 +222,6 @@ export async function processCategoryRetentionJob(
   }
 
   const payload = parsePayload(claimed);
-  // Tenant safety: subjectId authoritative for business/user scoped jobs.
   if (claimed.subjectType === "business") {
     if (payload.businessId && payload.businessId !== claimed.subjectId) {
       await prisma.dataLifecycleJob.update({
@@ -797,7 +310,12 @@ export async function processCategoryRetentionJob(
       return { status: "skipped_legal_hold" };
     }
 
-    if (code === "T_UNSET" || code === "EXECUTION_GATED" || code === "FORBIDDEN") {
+    if (
+      code === "T_UNSET" ||
+      code === "POLICY_CONTRADICTION" ||
+      code === "EXECUTION_GATED" ||
+      code === "FORBIDDEN"
+    ) {
       await prisma.dataLifecycleJob.update({
         where: { id: jobId },
         data: { status: "failed", lastError: message, completedAt: new Date() },
@@ -826,10 +344,6 @@ export async function processCategoryRetentionJob(
   }
 }
 
-/**
- * Tick all F-C category jobs. Each category independently gated.
- * Returns per-category processed counts; gated categories contribute 0.
- */
 export async function tickCategoryRetentionJobs(
   limitPerType = 5,
   opts?: { bypassExecutionGate?: boolean; env?: NodeJS.ProcessEnv },
@@ -842,12 +356,12 @@ export async function tickCategoryRetentionJobs(
   const kinds = Object.keys(JOB_TO_CATEGORY) as CategoryJobKind[];
   const processed = {} as Record<CategoryJobKind, number>;
   const gated = {} as Record<CategoryJobKind, boolean>;
+  const env = opts?.env ?? process.env;
 
   for (const kind of kinds) {
     const cat = JOB_TO_CATEGORY[kind];
-    const enabled =
-      opts?.bypassExecutionGate === true ||
-      isCategoryRetentionExecutionEnabled(cat, opts?.env ?? process.env);
+    const mode = resolveRetentionJobMode(cat, env, { bypassExecutionGate: opts?.bypassExecutionGate });
+    const enabled = mode !== "off";
     gated[kind] = !enabled;
     processed[kind] = 0;
     if (!enabled) continue;

@@ -39,6 +39,15 @@ const results: string[] = [];
 const pass = (m: string) => results.push(`PASS: ${m}`);
 const fail = (m: string) => results.push(`FAIL: ${m}`);
 
+/** 14-day cancel already passed; 30-day anonymize eligibility elapsed (test fixtures only). */
+function elapsedErasureClocks() {
+  return {
+    deletionRequestedAt: new Date(Date.now() - 40 * 24 * 60 * 60 * 1000),
+    deletionCancelUntil: new Date(Date.now() - 20 * 24 * 60 * 60 * 1000),
+    anonymizeEligibleAt: new Date(Date.now() - 1000),
+  };
+}
+
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 async function main() {
@@ -102,7 +111,7 @@ async function main() {
       emailVerified: true,
       accountStatus: "erasure_pending",
       isActive: false,
-      deletionRequestedAt: new Date(),
+      ...elapsedErasureClocks(),
       twoFactorEnabled: true,
       twoFactorSecret: "SECRET_TOTP_SLICE_FA",
       twoFactorTempSecret: "TEMP_SECRET",
@@ -321,10 +330,33 @@ async function main() {
       } else fail("F-A02 unexpected error");
     }
 
-    // F-A15 owner of active business blocked
+    // 30-day eligibility gate (distinct from 14-day cancellation)
     await prisma.user.update({
       where: { id: owner.id },
-      data: { accountStatus: "erasure_pending", isActive: false },
+      data: {
+        accountStatus: "erasure_pending",
+        isActive: false,
+        deletionRequestedAt: new Date(),
+        deletionCancelUntil: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000),
+        anonymizeEligibleAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+      },
+    });
+    try {
+      await anonymizeUser(owner.id, {
+        bypassExecutionGate: true,
+        deleteStorageObject: deleteStorageOk,
+      });
+      fail("30-day eligibility should block anonymize");
+    } catch (e) {
+      if (e instanceof AnonymizationError && e.code === "PRECONDITION") {
+        pass("30-day account-erasure eligibility blocks irreversible anonymize");
+      } else fail(`30-day gate unexpected: ${e instanceof Error ? e.message : e}`);
+    }
+
+    // F-A15 owner of active business blocked (after 30-day clock has elapsed)
+    await prisma.user.update({
+      where: { id: owner.id },
+      data: { accountStatus: "erasure_pending", isActive: false, ...elapsedErasureClocks() },
     });
     try {
       await anonymizeUser(owner.id, {
@@ -515,6 +547,7 @@ async function main() {
         role: "EMPLOYEE",
         accountStatus: "erasure_pending",
         isActive: false,
+        ...elapsedErasureClocks(),
       },
     });
     userIds.push(auditFailUser.id);
@@ -555,6 +588,7 @@ async function main() {
         role: "EMPLOYEE",
         accountStatus: "erasure_pending",
         isActive: false,
+        ...elapsedErasureClocks(),
         employee: {
           create: {
             name: "Partial Staff",

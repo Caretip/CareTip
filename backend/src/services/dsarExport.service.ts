@@ -13,6 +13,7 @@ import path from "node:path";
 import type { AccountStatus, DataLifecycleJob, Prisma } from "@prisma/client";
 import { prisma } from "../prisma.js";
 import { writeAuditLog } from "./audit.service.js";
+import { logDryRunRecord, type RetentionDryRunRecord } from "./retentionDryRun.js";
 import {
   assertAllowedDsarObjectPath,
   createSignedUrlForPrivateObject,
@@ -371,11 +372,160 @@ export async function buildDsarExportPackage(userId: string): Promise<Record<str
 }
 
 function parsePayload(job: DataLifecycleJob): DsarExportPayload {
+  return readDsarExportPayload(job);
+}
+
+/** Read DSAR job payload without mutating artifacts. */
+export function readDsarExportPayload(job: { payload: Prisma.JsonValue | null }): DsarExportPayload {
   const raw = job.payload;
   if (!raw || typeof raw !== "object" || Array.isArray(raw)) {
     return { downloadToken: "", expiresAt: new Date(0).toISOString() };
   }
   return raw as DsarExportPayload;
+}
+
+export type DsarCleanupDryRunJob = {
+  jobId: string;
+  subjectId: string;
+  status: string;
+  expiresAt: string;
+  artifactKind: string | null;
+};
+
+export type DsarCleanupDryRunOrphan = {
+  userId: string;
+  jobId: string;
+  file: string;
+};
+
+export type DsarCleanupDryRunResult = {
+  expiredSucceededJobs: DsarCleanupDryRunJob[];
+  failedOrCancelledWithArtifact: DsarCleanupDryRunJob[];
+  localOrphans: DsarCleanupDryRunOrphan[];
+  wouldDeleteArtifacts: number;
+  records: RetentionDryRunRecord[];
+};
+
+/**
+ * Read-only DSAR artifact TTL evaluation.
+ * Never calls expireDsarExportArtifact, cleanupOrphanLocalDsarArtifacts, or tickDsarExportJobs.
+ * Technical artifact TTL (6 hours) is not a legal retention period.
+ */
+export async function evaluateDsarCleanupDryRun(now = new Date()): Promise<DsarCleanupDryRunResult> {
+  const records: RetentionDryRunRecord[] = [];
+  const expiredSucceededJobs: DsarCleanupDryRunJob[] = [];
+  const failedOrCancelledWithArtifact: DsarCleanupDryRunJob[] = [];
+
+  const jobs = await prisma.dataLifecycleJob.findMany({
+    where: {
+      type: "dsar_export",
+      status: { in: ["succeeded", "failed", "cancelled"] },
+    },
+    take: 500,
+  });
+
+  const nowMs = now.getTime();
+  for (const job of jobs) {
+    const payload = readDsarExportPayload(job);
+    const artifactKind = payload.artifact?.kind ?? null;
+    const summary: DsarCleanupDryRunJob = {
+      jobId: job.id,
+      subjectId: job.subjectId,
+      status: job.status,
+      expiresAt: payload.expiresAt,
+      artifactKind,
+    };
+    if (job.status === "succeeded" && new Date(payload.expiresAt).getTime() <= nowMs) {
+      expiredSucceededJobs.push(summary);
+      const rec: RetentionDryRunRecord = {
+        action: "WOULD_DELETE",
+        category: "dsar_artifact",
+        record: job.id,
+        reason: "technical_ttl_expired_not_legal_retention",
+        retentionExpiry: payload.expiresAt,
+        legalHold: false,
+        financialPreservation: "n/a",
+      };
+      records.push(rec);
+      logDryRunRecord(rec);
+      continue;
+    }
+    if ((job.status === "failed" || job.status === "cancelled") && payload.artifact) {
+      failedOrCancelledWithArtifact.push(summary);
+      const rec: RetentionDryRunRecord = {
+        action: "WOULD_DELETE",
+        category: "dsar_artifact",
+        record: job.id,
+        reason: `terminal_${job.status}_artifact_ref`,
+        retentionExpiry: payload.expiresAt,
+        legalHold: false,
+        financialPreservation: "n/a",
+      };
+      records.push(rec);
+      logDryRunRecord(rec);
+    }
+  }
+
+  const localOrphans: DsarCleanupDryRunOrphan[] = [];
+  let userDirs: string[] = [];
+  try {
+    userDirs = await readdir(localDsarRootDir());
+  } catch {
+    userDirs = [];
+  }
+  for (const userId of userDirs) {
+    if (!/^[A-Za-z0-9_-]+$/.test(userId)) continue;
+    const dir = path.join(localDsarRootDir(), userId);
+    let files: string[] = [];
+    try {
+      files = await readdir(dir);
+    } catch {
+      continue;
+    }
+    for (const file of files) {
+      if (!file.endsWith(".json")) continue;
+      const jobId = file.replace(/\.json$/, "");
+      if (!/^[A-Za-z0-9_-]+$/.test(jobId)) continue;
+      const job = await prisma.dataLifecycleJob.findFirst({
+        where: {
+          id: jobId,
+          type: "dsar_export",
+          subjectType: "user",
+          subjectId: userId,
+        },
+      });
+      const payload = job ? readDsarExportPayload(job) : null;
+      const expired = payload ? new Date(payload.expiresAt).getTime() <= nowMs : true;
+      const keep =
+        Boolean(job) &&
+        job!.status === "succeeded" &&
+        !expired &&
+        payload?.artifact?.kind === "local_file";
+      if (!keep) {
+        localOrphans.push({ userId, jobId, file });
+        const rec: RetentionDryRunRecord = {
+          action: "WOULD_DELETE",
+          category: "dsar_local_orphan",
+          record: jobId,
+          reason: job ? "local_file_not_kept" : "no_matching_dsar_job",
+          retentionExpiry: payload?.expiresAt ?? null,
+          legalHold: false,
+          financialPreservation: "n/a",
+        };
+        records.push(rec);
+        logDryRunRecord(rec);
+      }
+    }
+  }
+
+  return {
+    expiredSucceededJobs,
+    failedOrCancelledWithArtifact,
+    localOrphans,
+    wouldDeleteArtifacts:
+      expiredSucceededJobs.length + failedOrCancelledWithArtifact.length + localOrphans.length,
+    records,
+  };
 }
 
 /** Delete a single DSAR artifact reference — never KYC. */

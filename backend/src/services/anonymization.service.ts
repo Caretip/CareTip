@@ -16,6 +16,8 @@ import type { AccountStatus, DataLifecycleJob, Prisma } from "@prisma/client";
 import { prisma } from "../prisma.js";
 import { removeUploadedObjectByPublicUrlIfPossible } from "../lib/supabaseStorageClient.js";
 import { userMayAuthenticate } from "./accountAccess.service.js";
+import { deriveErasureLifecycleState, resolveAnonymizeEligibleAt } from "./lifecycleStatus.helpers.js";
+import { logDryRunRecord, type RetentionDryRunAction, type RetentionDryRunRecord } from "./retentionDryRun.js";
 
 /** Amendment A5 — emailHash remains personal data under CareTip-controlled linkage. */
 export const EMAIL_HASH_CLASSIFICATION = "PSEUDONYMIZED" as const;
@@ -405,6 +407,158 @@ export async function anonymizeEmployee(
   };
 }
 
+export type EvaluateAnonymizeUserResult = {
+  userId: string;
+  action: RetentionDryRunAction;
+  reason: string;
+  state: ReturnType<typeof deriveErasureLifecycleState>;
+  deletionCancelUntil: string | null;
+  anonymizeEligibleAt: string | null;
+  legalHold: boolean;
+  financialPreservation: "preserved";
+};
+
+function dryRunRecordFromAnonymizeEval(row: EvaluateAnonymizeUserResult): RetentionDryRunRecord {
+  return {
+    action: row.action,
+    category: "user_anonymize",
+    record: row.userId,
+    reason: row.reason,
+    retentionExpiry: row.anonymizeEligibleAt,
+    legalHold: row.legalHold,
+    financialPreservation: row.financialPreservation,
+  };
+}
+
+/**
+ * Read-only anonymizeUser gates. Never mutates (no session terminate, no profile scrub).
+ * The mutate path still terminates auth satellites when a profile legal hold blocks scrub;
+ * evaluation must not copy that side effect.
+ */
+export async function evaluateAnonymizeUser(
+  userId: string,
+  opts?: { now?: Date; platformAuthorized?: boolean },
+): Promise<EvaluateAnonymizeUserResult> {
+  const id = String(userId ?? "").trim();
+  const now = opts?.now ?? new Date();
+  const platformOk = opts?.platformAuthorized === true;
+
+  const existing = await prisma.user.findUnique({
+    where: { id },
+    select: {
+      id: true,
+      accountStatus: true,
+      anonymizedAt: true,
+      legalHold: true,
+      legalHoldCategories: true,
+      deletionRequestedAt: true,
+      deletionCancelUntil: true,
+      anonymizeEligibleAt: true,
+    },
+  });
+
+  const base = (partial: Pick<EvaluateAnonymizeUserResult, "action" | "reason" | "legalHold"> & {
+    state?: EvaluateAnonymizeUserResult["state"];
+    deletionCancelUntil?: Date | null;
+    anonymizeEligibleAt?: Date | null;
+  }): EvaluateAnonymizeUserResult => ({
+    userId: id || "(missing)",
+    action: partial.action,
+    reason: partial.reason,
+    state:
+      partial.state ??
+      (existing
+        ? deriveErasureLifecycleState(existing, now)
+        : "DEACTIVATED"),
+    deletionCancelUntil:
+      partial.deletionCancelUntil !== undefined
+        ? partial.deletionCancelUntil?.toISOString() ?? null
+        : existing?.deletionCancelUntil?.toISOString() ?? null,
+    anonymizeEligibleAt:
+      partial.anonymizeEligibleAt !== undefined
+        ? partial.anonymizeEligibleAt?.toISOString() ?? null
+        : existing?.anonymizeEligibleAt?.toISOString() ?? null,
+    legalHold: partial.legalHold,
+    financialPreservation: "preserved",
+  });
+
+  if (!id || !existing) {
+    return base({ action: "WOULD_SKIP_NOT_ELIGIBLE", reason: "NOT_FOUND", legalHold: false, state: "DEACTIVATED" });
+  }
+
+  if (existing.accountStatus === "anonymized" || existing.accountStatus === "closed" || existing.anonymizedAt) {
+    return base({ action: "WOULD_SKIP_ALREADY_DONE", reason: "already_anonymized_or_closed", legalHold: existing.legalHold });
+  }
+
+  if (existing.accountStatus !== "erasure_pending" && !platformOk) {
+    return base({
+      action: "WOULD_SKIP_NOT_ELIGIBLE",
+      reason: "PRECONDITION_not_erasure_pending",
+      legalHold: existing.legalHold,
+    });
+  }
+
+  const held = holdCategories(existing);
+  if (categoryHeld(held, LEGAL_HOLD_PROFILE_CATEGORY)) {
+    return base({
+      action: "WOULD_SKIP_LEGAL_HOLD",
+      reason: "LEGAL_HOLD_CATEGORY_profile",
+      legalHold: true,
+    });
+  }
+
+  if (!platformOk) {
+    const eligibleAt = resolveAnonymizeEligibleAt(existing);
+    if (!eligibleAt || now.getTime() < eligibleAt.getTime()) {
+      return base({
+        action: "WOULD_SKIP_NOT_ELIGIBLE",
+        reason: "ACCOUNT_ERASURE_30_DAY_NOT_ELAPSED",
+        legalHold: existing.legalHold,
+        anonymizeEligibleAt: eligibleAt,
+      });
+    }
+  }
+
+  const owned = await prisma.business.findFirst({
+    where: { userId: id, deletedAt: null, lifecycleStatus: "active" },
+    select: { id: true },
+  });
+  if (owned) {
+    return base({
+      action: "WOULD_SKIP_NOT_ELIGIBLE",
+      reason: "ACTIVE_BUSINESS_OWNER",
+      legalHold: existing.legalHold,
+    });
+  }
+
+  return base({
+    action: "WOULD_ANONYMIZE",
+    reason: "erasure_30_day_elapsed_financial_preserved",
+    legalHold: existing.legalHold,
+  });
+}
+
+/** Scan erasure_pending users with evaluateAnonymizeUser. Never calls anonymizeUser. */
+export async function evaluateErasurePendingAnonymizeDryRun(opts?: {
+  now?: Date;
+}): Promise<{ results: EvaluateAnonymizeUserResult[]; records: RetentionDryRunRecord[] }> {
+  const pending = await prisma.user.findMany({
+    where: { accountStatus: "erasure_pending" },
+    select: { id: true },
+    take: 500,
+  });
+  const results: EvaluateAnonymizeUserResult[] = [];
+  const records: RetentionDryRunRecord[] = [];
+  for (const u of pending) {
+    const row = await evaluateAnonymizeUser(u.id, opts);
+    results.push(row);
+    const rec = dryRunRecordFromAnonymizeEval(row);
+    records.push(rec);
+    logDryRunRecord(rec);
+  }
+  return { results, records };
+}
+
 /**
  * Anonymize an eligible user: auth satellites removed, profile tombstoned,
  * linked employee scrubbed, financial rows preserved. Never prisma.user.delete.
@@ -431,6 +585,9 @@ export async function anonymizeUser(
       emailHash: true,
       legalHold: true,
       legalHoldCategories: true,
+      deletionRequestedAt: true,
+      deletionCancelUntil: true,
+      anonymizeEligibleAt: true,
       employee: { select: { id: true, anonymizedAt: true, avatar: true } },
     },
   });
@@ -491,6 +648,16 @@ export async function anonymizeUser(
       "Legal hold preserves profile category — profile anonymization blocked",
       "LEGAL_HOLD_CATEGORY",
     );
+  }
+
+  if (!platformOk) {
+    const eligibleAt = resolveAnonymizeEligibleAt(existing);
+    if (!eligibleAt || Date.now() < eligibleAt.getTime()) {
+      throw new AnonymizationError(
+        "Account-erasure 30-day eligibility period has not elapsed",
+        "PRECONDITION",
+      );
+    }
   }
 
   // Fail fast outside the interactive transaction (pooler-friendly).

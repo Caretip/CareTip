@@ -27,6 +27,12 @@ router.post("/register", registerCombinedRateLimit, authController.register);
 router.post("/login", loginRateLimit, requireTrustedOrigin, authController.login);
 /** Same handler as POST /login — preferred name for sign-in clients. */
 router.post("/signin", loginRateLimit, requireTrustedOrigin, authController.login);
+router.post(
+  "/cancel-deletion",
+  loginRateLimit,
+  requireTrustedOrigin,
+  authController.cancelDeletion,
+);
 router.post("/login/mfa/setup", loginRateLimit, authController.loginMfaSetup);
 router.post("/login/mfa/enable", mfaTotpRateLimit, authController.loginMfaEnable);
 router.post("/login/mfa/verify", mfaTotpRateLimit, authController.loginMfaVerify);

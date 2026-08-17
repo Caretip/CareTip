@@ -62,6 +62,8 @@ enum DataLifecycleJobType {
   billing_redact
   /// Slice F-C — soft-removed staff identifier scrub (fail-closed unless RETENTION_T_STAFF_PII_DAYS set)
   staff_pii_scrub
+  /// Strip non-essential business assets after closure + grace. Gated; does not delete financial rows.
+  business_tombstone
 }
 
 enum DataLifecycleJobStatus {
@@ -71,6 +73,13 @@ enum DataLifecycleJobStatus {
   failed
   skipped_legal_hold
   cancelled
+}
+
+/// Administrative audit trails (3-year calendar-year) vs ephemeral security logs (30 days).
+/// Existing rows default to admin_audit — never apply 30-day deletion to unclassified AuditLog.
+enum AuditRetentionClass {
+  admin_audit
+  security
 }
 
 enum BusinessVerificationStatus {
@@ -293,7 +302,16 @@ model User {
    */
   accountStatus          AccountStatus @default(active) @map("account_status")
   deletionRequestedAt    DateTime?     @map("deletion_requested_at")
+  /**
+   * 14-day deletion-cancellation window (DELETION_CANCELLATION_DAYS).
+   * Distinct from anonymizeEligibleAt (30-day account-erasure eligibility).
+   */
   deletionCancelUntil    DateTime?     @map("deletion_cancel_until")
+  /**
+   * 30-day account-erasure eligibility (ACCOUNT_ERASURE_GRACE_DAYS) — irreversible
+   * personal-profile anonymization must not run before this instant.
+   */
+  anonymizeEligibleAt    DateTime?     @map("anonymize_eligible_at")
   anonymizedAt           DateTime?     @map("anonymized_at")
   closedAt               DateTime?     @map("closed_at")
   /**
@@ -307,6 +325,10 @@ model User {
   legalHoldSetAt         DateTime?     @map("legal_hold_set_at")
   /** Platform-admin actor id who last set the hold (Amendment A2/A3 — id only, no email). */
   legalHoldSetByUserId   String?       @map("legal_hold_set_by_user_id")
+  /** Last release (Admin only). Kept after legalHold=false for audit. */
+  legalHoldReleasedAt    DateTime?     @map("legal_hold_released_at")
+  legalHoldReleasedByUserId String?    @map("legal_hold_released_by_user_id")
+  legalHoldReleaseReason String?       @map("legal_hold_release_reason") @db.Text
   /**
    * HMAC of normalized email after anonymize — PSEUDONYMIZED residual (Amendment A5), not anonymous.
    */
@@ -596,16 +618,21 @@ model EmployeeActivationToken {
 
 /// Security / compliance trail for sensitive actions (especially platform admin).
 model AuditLog {
-  id        String   @id @default(cuid())
-  action    String
-  userId    String?  @map("user_id")
-  metadata  String?  @db.Text
-  createdAt DateTime @default(now()) @map("created_at")
+  id             String              @id @default(cuid())
+  action         String
+  userId         String?             @map("user_id")
+  metadata       String?             @db.Text
+  createdAt      DateTime            @default(now()) @map("created_at")
+  /**
+   * Default admin_audit (3-year calendar-year). Do not apply 30-day security TTL here.
+   */
+  retentionClass AuditRetentionClass @default(admin_audit) @map("retention_class")
 
   user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
 
   @@index([userId])
   @@index([createdAt])
+  @@index([retentionClass, createdAt])
   @@map("audit_logs")
 }
 
@@ -794,6 +821,11 @@ model Business {
   legalHoldSetAt           DateTime?                  @map("legal_hold_set_at")
   /** Platform-admin actor id who last set the hold (Amendment A2/A3 — id only, no email). */
   legalHoldSetByUserId     String?                    @map("legal_hold_set_by_user_id")
+  legalHoldReleasedAt      DateTime?                  @map("legal_hold_released_at")
+  legalHoldReleasedByUserId String?                   @map("legal_hold_released_by_user_id")
+  legalHoldReleaseReason   String?                    @map("legal_hold_release_reason") @db.Text
+  /** Set when non-essential assets are stripped; financial/Stripe mapping retained. */
+  tombstonedAt             DateTime?                  @map("tombstoned_at")
   /** Venue / business creation time — platform growth SSOT (not manager user proxy). */
   createdAt                DateTime                   @default(now()) @map("created_at")
 
@@ -1056,6 +1088,8 @@ model TipFeedback {
   comment      String?  @db.Text
   tags         String[]
   customerName String?  @map("customer_name")
+  /** Set when guest name is dropped on feedback completion (or leftover scrub). */
+  nameAnonymizedAt DateTime? @map("name_anonymized_at")
   createdAt    DateTime @default(now()) @map("created_at")
   updatedAt    DateTime @updatedAt @map("updated_at")
 
@@ -1157,6 +1191,7 @@ model QrGuestVisit {
   startedAt   DateTime           @default(now()) @map("started_at")
   completedAt DateTime?          @map("completed_at")
   expiresAt   DateTime           @map("expires_at")
+  anonymizedAt DateTime?         @map("anonymized_at")
 
   business  Business     @relation(fields: [businessId], references: [id], onDelete: Cascade)
   scanEvent QrScanEvent? @relation(fields: [scanEventId], references: [id], onDelete: SetNull)
@@ -1164,6 +1199,7 @@ model QrGuestVisit {
   @@index([businessId, sessionId, status])
   @@index([businessId, status])
   @@index([expiresAt])
+  @@index([anonymizedAt])
   @@map("qr_guest_visits")
 }
 
@@ -1184,6 +1220,7 @@ model QrScanEvent {
   scannedAt  DateTime @default(now()) @map("scanned_at")
   sessionId  String   @map("session_id") @db.VarChar(64)
   dedupeKey  String   @unique @map("dedupe_key") @db.VarChar(191)
+  anonymizedAt DateTime? @map("anonymized_at")
 
   business   Business      @relation(fields: [businessId], references: [id], onDelete: Cascade)
   employee   Employee?     @relation(fields: [employeeId], references: [id], onDelete: SetNull)
@@ -1195,6 +1232,7 @@ model QrScanEvent {
   @@index([employeeId, scannedAt(sort: Desc)])
   @@index([locationId, scannedAt(sort: Desc)])
   @@index([tableId, scannedAt(sort: Desc)])
+  @@index([anonymizedAt])
   @@map("qr_scan_events")
 }
 
@@ -1209,11 +1247,13 @@ model QrFunnelEvent {
   tableId       String?  @map("table_id")
   transactionId String?  @map("transaction_id")
   createdAt     DateTime @default(now()) @map("created_at")
+  anonymizedAt  DateTime? @map("anonymized_at")
 
   business Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
 
   @@index([businessId, createdAt(sort: Desc)])
   @@index([sessionId, createdAt(sort: Desc)])
+  @@index([anonymizedAt])
   @@map("qr_funnel_events")
 }
 

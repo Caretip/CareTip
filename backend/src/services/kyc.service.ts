@@ -108,17 +108,19 @@ export async function getManagerKycStatus(userId: string) {
       verificationDocumentPath: true,
       kycDocuments: true,
       kycSubmittedAt: true,
+      lifecycleStatus: true,
     },
   });
   if (!business) {
     throw new Error("Business not found");
   }
 
-  const kycDocuments = parseKycDocuments(business.kycDocuments);
+  const archival = business.lifecycleStatus === "tombstoned" || business.lifecycleStatus === "data_restricted";
+  const kycDocuments = archival ? parseKycDocuments(null) : parseKycDocuments(business.kycDocuments);
   const kycUiStatus = resolveKycUiStatus({
     verificationStatus: business.verificationStatus,
     kycDocuments,
-    kycSubmittedAt: business.kycSubmittedAt,
+    kycSubmittedAt: archival ? null : business.kycSubmittedAt,
   });
 
   return {
@@ -126,11 +128,12 @@ export async function getManagerKycStatus(userId: string) {
     verificationStatus: business.verificationStatus,
     kycUiStatus,
     kycDocuments,
-    kycSubmittedAt: business.kycSubmittedAt?.toISOString() ?? null,
-    legacyVerificationDocumentPath: business.verificationDocumentPath,
+    kycSubmittedAt: archival ? null : business.kycSubmittedAt?.toISOString() ?? null,
+    legacyVerificationDocumentPath: archival ? null : business.verificationDocumentPath,
     requiredDocumentTypes: REQUIRED_TYPES,
+    kycArchiveRestricted: archival,
     timeline: buildKycTimeline({
-      kycSubmittedAt: business.kycSubmittedAt,
+      kycSubmittedAt: archival ? null : business.kycSubmittedAt,
       verificationStatus: business.verificationStatus,
       kycUiStatus,
     }),

@@ -13,6 +13,9 @@ import type { DataLifecycleJob, Prisma } from "@prisma/client";
 import { prisma } from "../prisma.js";
 import { getErasureBlockers } from "./erasureRequest.service.js";
 import {
+  resolveAnonymizeEligibleAt,
+} from "./lifecycleStatus.helpers.js";
+import {
   AnonymizationError,
   LEGAL_HOLD_PROFILE_CATEGORY,
   enqueueAnonymizeUserJob,
@@ -157,6 +160,9 @@ export async function processErasureContinueJob(
         legalHoldCategories: true,
         anonymizedAt: true,
         closedAt: true,
+        deletionRequestedAt: true,
+        deletionCancelUntil: true,
+        anonymizeEligibleAt: true,
       },
     });
     if (!user) throw new ErasureContinueError("User not found", "NOT_FOUND");
@@ -204,6 +210,25 @@ export async function processErasureContinueJob(
         },
       });
       return { status: "skipped_legal_hold" };
+    }
+
+    const eligibleAt = resolveAnonymizeEligibleAt(user);
+    if (!eligibleAt || Date.now() < eligibleAt.getTime()) {
+      await prisma.dataLifecycleJob.update({
+        where: { id: jobId },
+        data: {
+          status: "pending",
+          lastError: "account_erasure_grace_30d_not_elapsed",
+          notBefore: eligibleAt ?? new Date(Date.now() + 24 * 60 * 60 * 1000),
+          payload: {
+            ...payload,
+            result: "waiting_anonymize_eligible_at",
+            anonymizeEligibleAt: eligibleAt?.toISOString() ?? null,
+            deletionCancelUntilNote: "14-day cancellation is a separate clock",
+          } as Prisma.InputJsonValue,
+        },
+      });
+      return { status: "pending" };
     }
 
     const blockers = await getErasureBlockers(userId);

@@ -9,8 +9,9 @@
  * lifecycle/T_KYC/legal-hold gates pass. No KYC data → no-op (alreadyComplete).
  * T_KYC remains UNSET and DATA_LIFECYCLE_KYC_DESTROY_EXECUTE remains OFF by default.
  *
- * - T_KYC via RETENTION_T_KYC_DAYS must be explicitly configured (non-empty integer).
- * - Never invent retention days. UNSET/invalid → no KYC deletion.
+ * - Approved policy: 10-year calendar-year retention from end of year of closure (deletedAt).
+ * - RETENTION_T_KYC_DAYS must remain UNSET. A set rolling-day value contradicts policy (fail-closed).
+ * - Invalid T_KYC → no KYC deletion. Calendar-year not elapsed → no KYC deletion.
  * - Storage delete succeeds before DB refs are cleared.
  * - Unconfigured storage provider is never treated as successful deletion.
  * - Does NOT tombstone Business. Does NOT destroy tips/payments/support/audit.
@@ -33,6 +34,9 @@ import {
   type KycDestroyTarget,
 } from "../lib/kycStorageReference.js";
 import { parseKycDocuments } from "./kyc.service.js";
+import { calendarYearRetentionEligibleAt } from "./retentionCalendar.js";
+import { KYC_RETENTION_YEARS } from "./retentionPolicy.constants.js";
+import { logDryRunRecord, type RetentionDryRunAction, type RetentionDryRunRecord } from "./retentionDryRun.js";
 
 const KYC_RUNNING_LEASE_MS = 15 * 60 * 1000;
 const MAX_JOB_ATTEMPTS = 8;
@@ -40,10 +44,19 @@ const TX_OPTS = { maxWait: 20_000, timeout: 60_000 } as const;
 
 const ELIGIBLE_LIFECYCLES: BusinessLifecycle[] = ["soft_closed", "data_restricted"];
 
+export type KycDestroyEligibility = {
+  eligible: boolean;
+  code?: KycSecureDestroyErrorCode;
+  message: string;
+  tKycDays: number | null;
+  earliestDestroyAt: string | null;
+};
+
 export type KycSecureDestroyErrorCode =
   | "NOT_FOUND"
   | "EXECUTION_GATED"
   | "T_KYC_UNSET"
+  | "POLICY_CONTRADICTION"
   | "LIFECYCLE_INELIGIBLE"
   | "RETENTION_NOT_ELAPSED"
   | "LEGAL_HOLD_KYC"
@@ -111,21 +124,16 @@ function holdCategories(b: { legalHold: boolean; legalHoldCategories: string[] }
   return new Set((b.legalHoldCategories ?? []).map((c) => c.trim().toLowerCase()).filter(Boolean));
 }
 
-/** Amendment A2: only the `kyc` category blocks KYC destruction. */
+/** Amendment A2: kyc category, or an ambiguous hold with empty categories, blocks destroy. */
 export function isKycCategoryHeld(b: {
   legalHold: boolean;
   legalHoldCategories: string[];
 }): boolean {
-  return holdCategories(b).has("kyc");
+  if (!b.legalHold) return false;
+  const held = holdCategories(b);
+  if (held.size === 0) return true;
+  return held.has("kyc");
 }
-
-export type KycDestroyEligibility = {
-  eligible: boolean;
-  code?: KycSecureDestroyErrorCode;
-  message: string;
-  tKycDays: number | null;
-  earliestDestroyAt: string | null;
-};
 
 export type BusinessKycEligibilityInput = {
   id: string;
@@ -138,7 +146,9 @@ export type BusinessKycEligibilityInput = {
 
 /**
  * Evaluate KYC destroy guards (fail-closed).
- * Legal authority: RETENTION_T_KYC_DAYS. kycRetainUntil is an additional orchestration gate only.
+ * Legal authority: 10-year calendar-year retention from end of year of closure (deletedAt).
+ * RETENTION_T_KYC_DAYS must remain UNSET; a set value contradicts calendar-year policy.
+ * kycRetainUntil is an additional orchestration gate only.
  */
 export function evaluateKycDestroyEligibility(
   business: BusinessKycEligibilityInput,
@@ -146,14 +156,21 @@ export function evaluateKycDestroyEligibility(
 ): KycDestroyEligibility {
   const now = opts?.now ?? new Date();
   const tKyc = readTKycDaysFromEnv(opts?.env ?? process.env);
-  if (!tKyc.configured) {
+  if (tKyc.configured) {
+    return {
+      eligible: false,
+      code: "POLICY_CONTRADICTION",
+      message:
+        "RETENTION_T_KYC_DAYS is set — rolling-day KYC destroy contradicts the approved 10-year calendar-year policy (fail-closed)",
+      tKycDays: tKyc.days,
+      earliestDestroyAt: null,
+    };
+  }
+  if (tKyc.reason === "invalid") {
     return {
       eligible: false,
       code: "T_KYC_UNSET",
-      message:
-        tKyc.reason === "invalid"
-          ? "RETENTION_T_KYC_DAYS is invalid — KYC destroy fail-closed"
-          : "RETENTION_T_KYC_DAYS is UNSET — KYC destroy fail-closed",
+      message: "RETENTION_T_KYC_DAYS is invalid — KYC destroy fail-closed",
       tKycDays: null,
       earliestDestroyAt: null,
     };
@@ -164,7 +181,7 @@ export function evaluateKycDestroyEligibility(
       eligible: false,
       code: "LIFECYCLE_INELIGIBLE",
       message: `Business lifecycle ${business.lifecycleStatus} is not eligible for KYC destroy`,
-      tKycDays: tKyc.days,
+      tKycDays: null,
       earliestDestroyAt: null,
     };
   }
@@ -174,36 +191,44 @@ export function evaluateKycDestroyEligibility(
       eligible: false,
       code: "LEGAL_HOLD_KYC",
       message: "Legal hold preserves kyc category — KYC destroy blocked",
-      tKycDays: tKyc.days,
+      tKycDays: null,
       earliestDestroyAt: null,
     };
   }
 
-  // Soft-close / restriction anchor — do not invent if missing.
   const anchor = business.deletedAt;
   if (!anchor) {
     return {
       eligible: false,
       code: "RETENTION_NOT_ELAPSED",
-      message: "No soft-close deletedAt anchor — cannot compute T_KYC elapsed (fail-closed)",
-      tKycDays: tKyc.days,
+      message: "No soft-close deletedAt anchor — cannot compute KYC calendar-year retention (fail-closed)",
+      tKycDays: null,
       earliestDestroyAt: null,
     };
   }
 
-  const earliestFromPolicy = new Date(anchor.getTime() + tKyc.days * 24 * 60 * 60 * 1000);
-  // Orchestration helper: if set, also wait until kycRetainUntil (never sole authority).
+  const cal = calendarYearRetentionEligibleAt(anchor, KYC_RETENTION_YEARS, "UTC");
+  if (!cal.ok) {
+    return {
+      eligible: false,
+      code: "RETENTION_NOT_ELAPSED",
+      message: "Cannot compute KYC calendar-year eligibility (fail-closed)",
+      tKycDays: null,
+      earliestDestroyAt: null,
+    };
+  }
+
   const earliest =
-    business.kycRetainUntil && business.kycRetainUntil.getTime() > earliestFromPolicy.getTime()
+    business.kycRetainUntil && business.kycRetainUntil.getTime() > cal.eligibleAt.getTime()
       ? business.kycRetainUntil
-      : earliestFromPolicy;
+      : cal.eligibleAt;
 
   if (now.getTime() < earliest.getTime()) {
     return {
       eligible: false,
       code: "RETENTION_NOT_ELAPSED",
-      message: "KYC retention period has not elapsed",
-      tKycDays: tKyc.days,
+      message: "KYC 10-year calendar-year retention period has not elapsed",
+      tKycDays: null,
       earliestDestroyAt: earliest.toISOString(),
     };
   }
@@ -211,7 +236,7 @@ export function evaluateKycDestroyEligibility(
   return {
     eligible: true,
     message: "eligible",
-    tKycDays: tKyc.days,
+    tKycDays: null,
     earliestDestroyAt: earliest.toISOString(),
   };
 }
@@ -238,6 +263,107 @@ export function collectKycStorageRefs(input: {
     for (const a of docs.additional) push(a);
   }
   return refs;
+}
+
+export type KycDestroyDryRunRow = {
+  businessId: string;
+  hasKycRefs: boolean;
+  kycRefCount: number;
+  eligible: boolean;
+  code: string;
+  earliestDestroyAt: string | null;
+  action: RetentionDryRunAction;
+  taxIdUntouched: true;
+};
+
+/**
+ * Read-only KYC destroy scan. Never calls secureDestroyBusinessKyc or storage delete.
+ * WOULD_DELETE means KYC object refs only — taxId / Stripe mapping stay.
+ */
+export async function evaluateKycDestroyDryRunScan(opts?: {
+  now?: Date;
+  env?: NodeJS.ProcessEnv;
+}): Promise<{ rows: KycDestroyDryRunRow[]; records: RetentionDryRunRecord[]; wouldDestroy: number }> {
+  const businesses = await prisma.business.findMany({
+    select: {
+      id: true,
+      lifecycleStatus: true,
+      deletedAt: true,
+      kycRetainUntil: true,
+      legalHold: true,
+      legalHoldCategories: true,
+      verificationDocumentPath: true,
+      kycDocuments: true,
+    },
+  });
+
+  const rows: KycDestroyDryRunRow[] = [];
+  const records: RetentionDryRunRecord[] = [];
+  for (const b of businesses) {
+    const refs = collectKycStorageRefs({
+      verificationDocumentPath: b.verificationDocumentPath,
+      kycDocuments: b.kycDocuments,
+    });
+    const hasKycRefs = refs.length > 0;
+    if (!hasKycRefs && !ELIGIBLE_LIFECYCLES.includes(b.lifecycleStatus)) continue;
+
+    const elig = evaluateKycDestroyEligibility(
+      {
+        id: b.id,
+        lifecycleStatus: b.lifecycleStatus,
+        deletedAt: b.deletedAt,
+        kycRetainUntil: b.kycRetainUntil,
+        legalHold: b.legalHold,
+        legalHoldCategories: b.legalHoldCategories,
+      },
+      { now: opts?.now, env: opts?.env },
+    );
+
+    let action: RetentionDryRunAction;
+    let reason: string;
+    if (elig.eligible && hasKycRefs) {
+      action = "WOULD_DELETE";
+      reason = "kyc_objects_only_taxId_untouched";
+    } else if (elig.code === "LEGAL_HOLD_KYC") {
+      action = "WOULD_SKIP_LEGAL_HOLD";
+      reason = elig.code;
+    } else if (elig.eligible && !hasKycRefs) {
+      action = "WOULD_SKIP_ALREADY_DONE";
+      reason = "no_kyc_refs";
+    } else {
+      action = "WOULD_SKIP_NOT_ELIGIBLE";
+      reason = elig.code ?? "ineligible";
+    }
+
+    const row: KycDestroyDryRunRow = {
+      businessId: b.id,
+      hasKycRefs,
+      kycRefCount: refs.length,
+      eligible: elig.eligible,
+      code: elig.code ?? (elig.eligible ? "eligible" : "ineligible"),
+      earliestDestroyAt: elig.earliestDestroyAt,
+      action,
+      taxIdUntouched: true,
+    };
+    rows.push(row);
+    const rec: RetentionDryRunRecord = {
+      action,
+      category: "kyc",
+      record: b.id,
+      reason,
+      retentionExpiry: elig.earliestDestroyAt,
+      legalHold: elig.code === "LEGAL_HOLD_KYC" ? true : b.legalHold,
+      financialPreservation: "preserved",
+    };
+    records.push(rec);
+    logDryRunRecord(rec);
+  }
+
+  return {
+    rows,
+    records,
+    wouldDestroy: rows.filter((r) => r.action === "WOULD_DELETE").length,
+  };
 }
 
 export type DestroyKycStorageFn = (target: KycDestroyTarget, businessId: string) => Promise<void>;
@@ -490,9 +616,20 @@ function parsePayload(job: DataLifecycleJob): KycJobPayload {
 
 export async function enqueueKycSecureDestroyJob(
   businessId: string,
-  opts?: { bypassExecutionGate?: boolean; notBefore?: Date },
+  opts?: {
+    bypassExecutionGate?: boolean;
+    notBefore?: Date;
+    /**
+     * Allow creating a pending kyc_secure_destroy job when EXECUTE is OFF.
+     * The job still will not run until tick/process with EXECUTE (or bypass in tests).
+     * Sweep uses this so enqueue is separate from destruction.
+     */
+    allowEnqueueWhenGated?: boolean;
+  },
 ): Promise<{ jobId: string }> {
-  assertKycDestroyExecutionAllowed(opts);
+  if (!opts?.allowEnqueueWhenGated) {
+    assertKycDestroyExecutionAllowed(opts);
+  }
   const id = String(businessId ?? "").trim();
   if (!id) throw new KycSecureDestroyError("businessId required", "NOT_FOUND");
 
@@ -628,6 +765,7 @@ export async function processKycSecureDestroyJob(
 
     if (
       code === "T_KYC_UNSET" ||
+      code === "POLICY_CONTRADICTION" ||
       code === "LIFECYCLE_INELIGIBLE" ||
       code === "RETENTION_NOT_ELAPSED" ||
       code === "EXECUTION_GATED" ||

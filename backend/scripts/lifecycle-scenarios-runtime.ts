@@ -273,7 +273,7 @@ async function main() {
       if (code === "LEGAL_HOLD") pass("S16_legal_hold_blocks_transfer_and_destructive_progression");
       else fail(`S16 unexpected: ${e}`);
     }
-    await clearBusinessLegalHold({ businessId, actorUserId: admin.id });
+    await clearBusinessLegalHold({ businessId, actorUserId: admin.id, releaseReason: "matter closed" });
 
     // S17 — Support tickets: SetNull / retain model (schema relation check via create)
     const ticket = await prisma.supportTicket.create({
@@ -351,7 +351,7 @@ async function main() {
     });
     if (bizHeld?.legalHold) pass("SEC09_legal_hold_set_blocks_destructive_platform_paths");
     else fail("SEC09 hold not set");
-    await clearBusinessLegalHold({ businessId, actorUserId: admin.id });
+    await clearBusinessLegalHold({ businessId, actorUserId: admin.id, releaseReason: "matter closed" });
 
     const finalTips = await prisma.transaction.count({ where: { businessId } });
     if (finalTips >= tipCountBefore) pass("SEC10_no_tip_row_loss_on_art17_foundation_path");

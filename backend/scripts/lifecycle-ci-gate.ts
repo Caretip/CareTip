@@ -13,6 +13,9 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const backendRoot = path.resolve(__dirname, "..");
 
 const steps: Array<{ name: string; cmd: string; args: string[] }> = [
+  { name: "retention-calendar", cmd: "npm", args: ["run", "test:retention-calendar"] },
+  { name: "gdpr-retention-policy", cmd: "npm", args: ["run", "test:gdpr-retention-policy"] },
+  { name: "category-retention-sweep", cmd: "npm", args: ["run", "test:category-retention-sweep"] },
   { name: "lifecycle-slice-a", cmd: "npm", args: ["run", "test:lifecycle-slice-a"] },
   { name: "lifecycle-slice-b", cmd: "npm", args: ["run", "test:lifecycle-slice-b"] },
   { name: "lifecycle-slice-c", cmd: "npm", args: ["run", "test:lifecycle-slice-c"] },

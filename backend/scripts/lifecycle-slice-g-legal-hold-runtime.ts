@@ -225,6 +225,7 @@ async function main() {
     const clearedUser = await clearUserLegalHold({
       userId: employeeUser.id,
       actorUserId: admin.id,
+      releaseReason: "matter closed",
     });
     if (!clearedUser.legalHold && clearedUser.legalHoldCategories.length === 0) {
       pass("clear user legal hold");
@@ -275,6 +276,7 @@ async function main() {
     const clearedBiz = await clearBusinessLegalHold({
       businessId,
       actorUserId: admin.id,
+      releaseReason: "matter closed",
     });
     if (!clearedBiz.legalHold) pass("clear business legal hold");
     else fail("clear business hold failed");
@@ -350,7 +352,11 @@ async function main() {
         payload: {},
       },
     });
-    await clearUserLegalHold({ userId: employeeUser.id, actorUserId: admin.id });
+    await clearUserLegalHold({
+      userId: employeeUser.id,
+      actorUserId: admin.id,
+      releaseReason: "matter closed",
+    });
     const woken = await prisma.dataLifecycleJob.findFirst({
       where: {
         type: "anonymize_user",
