@@ -1,5 +1,6 @@
 #!/bin/sh
 # Render Cron Job HTTP caller for CareTip category-retention sweep/tick.
+# Prefer render-category-retention-http.mjs on Render (node runtime may lack curl).
 # Reads CRON_SECRET from the cron service environment. Never prints it.
 # Does not set DATA_LIFECYCLE_* flags. Mutation still depends on the web service.
 set -eu

@@ -13,10 +13,11 @@ services:
   - type: cron
     name: caretip-category-retention-sweep
     runtime: node
+    rootDir: backend
     plan: starter
     buildCommand: "true"
-    # Inline curl: do not depend on a repo-relative script path (Root Directory is often backend/).
-    startCommand: 'test -n "$CRON_SECRET" || { echo "CRON_SECRET is not set; refusing to call internal jobs (fail-closed)." >&2; exit 1; }; curl -fsS -X POST -H "x-cron-secret: $CRON_SECRET" --max-time 120 "${CARE_TIP_API_ORIGIN:-https://caretip.onrender.com}${CARE_TIP_INTERNAL_JOB_PATH}"'
+    # Node script — Render node cron images may not include curl.
+    startCommand: node scripts/render-category-retention-http.mjs
     # Hourly at minute 0 UTC — discover eligible work and enqueue DataLifecycleJob rows.
     # With DATA_LIFECYCLE_V1 unset, the web endpoint is a gated no-op.
     schedule: "0 * * * *"
@@ -31,9 +32,10 @@ services:
   - type: cron
     name: caretip-category-retention-tick
     runtime: node
+    rootDir: backend
     plan: starter
     buildCommand: "true"
-    startCommand: 'test -n "$CRON_SECRET" || { echo "CRON_SECRET is not set; refusing to call internal jobs (fail-closed)." >&2; exit 1; }; curl -fsS -X POST -H "x-cron-secret: $CRON_SECRET" --max-time 120 "${CARE_TIP_API_ORIGIN:-https://caretip.onrender.com}${CARE_TIP_INTERNAL_JOB_PATH}"'
+    startCommand: node scripts/render-category-retention-http.mjs
     # Every 15 minutes, offset 10 minutes after sweep so sweep runs first each hour.
     # :10 / :25 / :40 / :55 UTC. BATCH=200 can drain across ticks. Gated while EXECUTE is off.
     schedule: "10,25,40,55 * * * *"
