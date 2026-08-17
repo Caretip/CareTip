@@ -123,12 +123,10 @@ postman-cookies.json
 verification-results.json
 
 # --- GDPR / compliance exports ---
-GDPR*
-*GDPR*
-# Prisma SQL migrations must stay tracked even when the folder name includes "gdpr".
-# Without this exception, CI `prisma migrate deploy` never creates User.anonymize_eligible_at.
-!backend/prisma/migrations/
-!backend/prisma/migrations/**
+# Root dumps and docs only. Do not use *GDPR* — that hid backend tests and migrations from CI.
+/GDPR*
+docs/**/*GDPR*
+docs/**/*gdpr*
 
 # --- Documentation exports & design audit screenshots ---
 docs/**/*-audit/
