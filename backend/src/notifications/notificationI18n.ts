@@ -31,7 +31,11 @@ export type NotificationTemplate =
   | { id: "support_status_resolved" }
   | { id: "support_status_closed" }
   | { id: "support_status_updated"; params: { status: string } }
-  | { id: "support_inbox_title"; params: { ticketNumber: string; status: string; subject: string } };
+  | { id: "support_inbox_title"; params: { ticketNumber: string; status: string; subject: string } }
+  | { id: "physical_qr_paid" }
+  | { id: "physical_qr_printing" }
+  | { id: "physical_qr_shipped"; params: { trackingNumber: string | null } }
+  | { id: "physical_qr_delivered" };
 
 export function renderNotificationTemplate(
   locale: EmailLocale,
@@ -250,6 +254,52 @@ export function renderNotificationTemplate(
         : {
             title: `[TICKET] [${template.params.status}] ${template.params.ticketNumber}: ${template.params.subject}`,
             body: "",
+          };
+    case "physical_qr_paid":
+      return de
+        ? {
+            title: "Zahlung eingegangen",
+            body: "Ihre physische QR-Bestellung wurde bezahlt und wird jetzt bearbeitet.",
+          }
+        : {
+            title: "Payment received",
+            body: "Your physical QR order has been paid for and is now being processed.",
+          };
+    case "physical_qr_printing":
+      return de
+        ? {
+            title: "Druck",
+            body: "Ihre physische QR-Bestellung wird jetzt gedruckt.",
+          }
+        : {
+            title: "Printing",
+            body: "Your physical QR order is now being printed.",
+          };
+    case "physical_qr_shipped": {
+      const tracking = template.params.trackingNumber?.trim();
+      return de
+        ? {
+            title: "Versendet",
+            body: tracking
+              ? `Ihre physische QR-Bestellung wurde versendet. Sendungsnummer: ${tracking}`
+              : "Ihre physische QR-Bestellung wurde versendet.",
+          }
+        : {
+            title: "Shipped",
+            body: tracking
+              ? `Your physical QR order has been shipped. Tracking number: ${tracking}`
+              : "Your physical QR order has been shipped.",
+          };
+    }
+    case "physical_qr_delivered":
+      return de
+        ? {
+            title: "Zugestellt",
+            body: "Ihre physische QR-Bestellung wurde zugestellt.",
+          }
+        : {
+            title: "Delivered",
+            body: "Your physical QR order has been delivered.",
           };
     default:
       return { title: "", body: "" };

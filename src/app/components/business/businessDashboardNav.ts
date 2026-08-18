@@ -69,11 +69,6 @@ export const qrStudioSubNavItems = [
     href: `${QR_STUDIO_BASE}/branding`,
     featureKey: "brandingCustomization" as FeatureKey,
   },
-  {
-    labelKey: "business.qrStudio.nav.templates",
-    href: `${QR_STUDIO_BASE}/templates`,
-    featureKey: "qrTemplates" as FeatureKey,
-  },
 ] as const;
 
 export const TIPS_BASE = "/dashboard/tips" as const;

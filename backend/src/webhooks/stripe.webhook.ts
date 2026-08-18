@@ -27,6 +27,12 @@ import {
   upsertStripeRefundEvent,
   upsertStripeDisputeEvent,
 } from "../services/finance/tipRefunds.service.js";
+import { isPhysicalQrCheckoutSession } from "../services/physicalQr/physicalQrCheckout.service.js";
+import {
+  handlePhysicalQrCheckoutExpired,
+  handlePhysicalQrCheckoutSessionCompleted,
+  handlePhysicalQrPaymentFailed,
+} from "../services/physicalQr/physicalQrWebhook.service.js";
 
 /**
  * POST /api/webhooks/stripe (mounted at /api/webhooks + /stripe)
@@ -67,6 +73,17 @@ router.post("/stripe", async (req: Request, res: Response) => {
   try {
     if (event.type === "checkout.session.completed") {
       const session = event.data.object as Stripe.Checkout.Session;
+      if (isPhysicalQrCheckoutSession(session)) {
+        if (await isStripeWebhookEventProcessed(event.id)) {
+          return res.json({ received: true, duplicate: true, source: "physical_qr_order" });
+        }
+        const result = await handlePhysicalQrCheckoutSessionCompleted(session);
+        if (!result.ok) {
+          return res.status(400).json({ received: false, source: "physical_qr_order", ...result });
+        }
+        await markStripeWebhookEventProcessed(event.id, event.type);
+        return res.json({ received: true, source: "physical_qr_order", ...result });
+      }
       if (isSubscriptionCheckoutSession(session)) {
         logTrialSync("webhook.stripe_router.billing_checkout", {
           stripeEventId: event.id,
@@ -106,6 +123,9 @@ router.post("/stripe", async (req: Request, res: Response) => {
 
     if (event.type === "checkout.session.completed") {
       const session = event.data.object as Stripe.Checkout.Session;
+      if (isPhysicalQrCheckoutSession(session)) {
+        return res.json({ received: true, source: "physical_qr_order" });
+      }
       console.log("stripe.webhook: checkout.session.completed → handleSuccessfulTipPayment", {
         eventId: event.id,
         sessionId: session.id,
@@ -115,12 +135,16 @@ router.post("/stripe", async (req: Request, res: Response) => {
     }
     if (event.type === "checkout.session.expired") {
       const session = event.data.object as Stripe.Checkout.Session;
-      console.info("[stripe.webhook] checkout.session.expired", {
-        eventId: event.id,
-        sessionId: session.id,
-        paymentStatus: session.payment_status ?? null,
-      });
-      recordCheckoutSessionExpired(session);
+      if (isPhysicalQrCheckoutSession(session)) {
+        await handlePhysicalQrCheckoutExpired(session);
+      } else {
+        console.info("[stripe.webhook] checkout.session.expired", {
+          eventId: event.id,
+          sessionId: session.id,
+          paymentStatus: session.payment_status ?? null,
+        });
+        recordCheckoutSessionExpired(session);
+      }
     }
     if (event.type === "payment_intent.succeeded") {
       const paymentIntent = event.data.object as Stripe.PaymentIntent;
@@ -128,11 +152,19 @@ router.post("/stripe", async (req: Request, res: Response) => {
     }
     if (event.type === "payment_intent.payment_failed") {
       const paymentIntent = event.data.object as Stripe.PaymentIntent;
-      await handlePaymentFailed(paymentIntent.id);
+      if (paymentIntent.metadata?.source === "physical_qr_order") {
+        await handlePhysicalQrPaymentFailed(paymentIntent);
+      } else {
+        await handlePaymentFailed(paymentIntent.id);
+      }
     }
     if (event.type === "payment_intent.canceled") {
       const paymentIntent = event.data.object as Stripe.PaymentIntent;
-      await handlePaymentFailed(paymentIntent.id);
+      if (paymentIntent.metadata?.source === "physical_qr_order") {
+        await handlePhysicalQrPaymentFailed(paymentIntent);
+      } else {
+        await handlePaymentFailed(paymentIntent.id);
+      }
     }
 
     if (event.type === "charge.refunded" || event.type === "refund.updated") {

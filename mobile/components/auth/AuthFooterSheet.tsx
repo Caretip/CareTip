@@ -109,35 +109,43 @@ export function AuthFooterSheet({
   ];
 
   const socialRows: FooterRow[] = [
-    {
-      key: "instagram",
-      label: t("auth.socialInstagram"),
-      icon: "logo-instagram",
-      external: true,
-      onPress: () => void openCareTipWeb(authSocialLinks.instagram),
-    },
-    {
-      key: "facebook",
-      label: t("auth.socialFacebook"),
-      icon: "logo-facebook",
-      external: true,
-      onPress: () => void openCareTipWeb(authSocialLinks.facebook),
-    },
-    {
-      key: "linkedin",
-      label: t("auth.socialLinkedin"),
-      icon: "logo-linkedin",
-      external: true,
-      onPress: () => void openCareTipWeb(authSocialLinks.linkedin),
-    },
-    {
-      key: "tiktok",
-      label: t("auth.socialTiktok"),
-      icon: "logo-tiktok",
-      external: true,
-      onPress: () => void openCareTipWeb(authSocialLinks.tiktok),
-    },
-  ];
+    authSocialLinks.instagram
+      ? {
+          key: "instagram",
+          label: t("auth.socialInstagram"),
+          icon: "logo-instagram",
+          external: true,
+          onPress: () => void openCareTipWeb(authSocialLinks.instagram),
+        }
+      : null,
+    authSocialLinks.facebook
+      ? {
+          key: "facebook",
+          label: t("auth.socialFacebook"),
+          icon: "logo-facebook",
+          external: true,
+          onPress: () => void openCareTipWeb(authSocialLinks.facebook),
+        }
+      : null,
+    authSocialLinks.linkedin
+      ? {
+          key: "linkedin",
+          label: t("auth.socialLinkedin"),
+          icon: "logo-linkedin",
+          external: true,
+          onPress: () => void openCareTipWeb(authSocialLinks.linkedin),
+        }
+      : null,
+    authSocialLinks.tiktok
+      ? {
+          key: "tiktok",
+          label: t("auth.socialTiktok"),
+          icon: "logo-tiktok",
+          external: true,
+          onPress: () => void openCareTipWeb(authSocialLinks.tiktok),
+        }
+      : null,
+  ].filter((row): row is FooterRow => row != null);
 
   const renderRow = (row: FooterRow) => (
     <Pressable
@@ -185,23 +193,25 @@ export function AuthFooterSheet({
             {companyRows.map(renderRow)}
             <View style={styles.divider} />
             <Text style={styles.sectionLabel}>{t("auth.footerSocialSection")}</Text>
-            <View style={styles.socialGrid}>
-              {socialRows.map((row) => (
-                <Pressable
-                  key={row.key}
-                  accessibilityRole="button"
-                  accessibilityLabel={row.label}
-                  onPress={() => {
-                    onClose();
-                    row.onPress();
-                  }}
-                  style={({ pressed }) => [styles.socialChip, pressed ? styles.rowPressed : null]}
-                >
-                  <Ionicons name={row.icon} size={20} color={authBrand.dark} />
-                  <Text style={styles.socialLabel}>{row.label}</Text>
-                </Pressable>
-              ))}
-            </View>
+            {socialRows.length > 0 ? (
+              <View style={styles.socialGrid}>
+                {socialRows.map((row) => (
+                  <Pressable
+                    key={row.key}
+                    accessibilityRole="button"
+                    accessibilityLabel={row.label}
+                    onPress={() => {
+                      onClose();
+                      row.onPress();
+                    }}
+                    style={({ pressed }) => [styles.socialChip, pressed ? styles.rowPressed : null]}
+                  >
+                    <Ionicons name={row.icon} size={20} color={authBrand.dark} />
+                    <Text style={styles.socialLabel}>{row.label}</Text>
+                  </Pressable>
+                ))}
+              </View>
+            ) : null}
             <Pressable
               accessibilityRole="button"
               onPress={onClose}

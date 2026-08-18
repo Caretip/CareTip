@@ -118,6 +118,38 @@ router.post(
   platformController.uploadVerificationDocument,
 );
 router.post("/impersonate", platformController.impersonate);
+router.get("/physical-qr/orders", async (req, res) => {
+  const { adminListPhysicalQrOrders } = await import("../controllers/platformPhysicalQr.controller.js");
+  return adminListPhysicalQrOrders(req, res);
+});
+router.get("/physical-qr/orders/:orderId", async (req, res) => {
+  const { adminGetPhysicalQrOrder } = await import("../controllers/platformPhysicalQr.controller.js");
+  return adminGetPhysicalQrOrder(req, res);
+});
+router.post("/physical-qr/orders/:orderId/processing", async (req, res) => {
+  const { adminMarkPhysicalQrProcessing } = await import("../controllers/platformPhysicalQr.controller.js");
+  return adminMarkPhysicalQrProcessing(req, res);
+});
+router.post("/physical-qr/orders/:orderId/printing", async (req, res) => {
+  const { adminMarkPhysicalQrPrinting } = await import("../controllers/platformPhysicalQr.controller.js");
+  return adminMarkPhysicalQrPrinting(req, res);
+});
+router.post("/physical-qr/orders/:orderId/ship", async (req, res) => {
+  const { adminShipPhysicalQrOrder } = await import("../controllers/platformPhysicalQr.controller.js");
+  return adminShipPhysicalQrOrder(req, res);
+});
+router.post("/physical-qr/orders/:orderId/deliver", async (req, res) => {
+  const { adminDeliverPhysicalQrOrder } = await import("../controllers/platformPhysicalQr.controller.js");
+  return adminDeliverPhysicalQrOrder(req, res);
+});
+router.get("/physical-qr/orders/:orderId/notes", async (req, res) => {
+  const { adminListPhysicalQrNotes } = await import("../controllers/platformPhysicalQr.controller.js");
+  return adminListPhysicalQrNotes(req, res);
+});
+router.post("/physical-qr/orders/:orderId/notes", async (req, res) => {
+  const { adminPostPhysicalQrNote } = await import("../controllers/platformPhysicalQr.controller.js");
+  return adminPostPhysicalQrNote(req, res);
+});
 router.get("/announcements", platformController.listAnnouncements);
 router.post("/announcements", platformController.sendAnnouncement);
 

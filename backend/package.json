@@ -69,6 +69,7 @@
     "test:sql-injection-smoke": "dotenv -e ../.env -e .env -- tsx scripts/sql-injection-smoke-runtime.ts",
     "test:sql-injection": "npm run test:sql-injection-audit && npm run test:sql-injection-smoke",
     "test:file-upload-pentest": "tsx scripts/file-upload-pentest.ts",
+    "test:physical-qr": "tsx scripts/physical-qr-runtime.ts",
     "test:payment-pentest": "tsx scripts/payment-pentest.ts",
     "test:stripe-connect-accounts-v2": "dotenv -e ../.env -e .env -- tsx scripts/stripe-connect-accounts-v2-runtime.ts",
     "test:stripe-connect-phase1": "dotenv -e ../.env -e .env -- tsx scripts/stripe-connect-phase1-runtime.ts",

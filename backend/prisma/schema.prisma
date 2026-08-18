@@ -367,9 +367,12 @@ model User {
   announcementsCreated    Announcement[]           @relation("AnnouncementCreatedBy")
   supportTicketsCreated   SupportTicket[]          @relation("SupportTicketCreatedBy")
   supportTicketMessages   SupportTicketMessage[]   @relation("SupportTicketMessageAuthor")
+  physicalQrOrderMessages PhysicalQrOrderMessage[] @relation("PhysicalQrOrderMessageAuthor")
+  physicalQrOrderNotes    PhysicalQrOrderInternalNote[] @relation("PhysicalQrOrderNoteAuthor")
   employeeInvitesCreated  EmployeeInvite[]         @relation("EmployeeInvitesCreated")
   employeeInviteRedemptions EmployeeInviteRedemption[] @relation("EmployeeInviteRedemptions")
   sponsoredAccessGrantsApproved SponsoredAccessGrant[] @relation("SponsoredAccessGrantsApproved")
+  physicalQrOrders        PhysicalQrOrder[]
 
   /**
    * Account-level security features (optional; does not change auth flow unless enforced).
@@ -845,6 +848,7 @@ model Business {
   qrFunnelEvents QrFunnelEvent[]
   featureUtilizationDaily FeatureUtilizationDaily[]
   activityEvents BusinessActivityEvent[]
+  physicalQrOrders PhysicalQrOrder[]
 
   @@index([verificationStatus], map: "businesses_verification_status_idx")
   @@index([onboardingVerificationStatus], map: "businesses_onboarding_verification_status_idx")
@@ -1387,5 +1391,133 @@ model DataLifecycleJob {
   @@index([status, notBefore])
   @@index([subjectType, subjectId])
   @@map("data_lifecycle_jobs")
+}
+
+enum PhysicalQrContextType {
+  storefront
+  employee
+  table
+  location
+}
+
+enum PhysicalQrProcessingClass {
+  SAME_DAY
+  WITHIN_24_HOURS
+}
+
+enum PhysicalQrPaymentStatus {
+  PENDING
+  PAID
+  FAILED
+  CANCELLED
+}
+
+enum PhysicalQrFulfillmentStatus {
+  PENDING_PAYMENT
+  PAID
+  PROCESSING
+  PRINTING
+  SHIPPED
+  DELIVERED
+  CANCELLED
+  PAYMENT_FAILED
+}
+
+/// Platform-managed physical CareTip print catalogue. Price stays null until officially supplied.
+model PhysicalQrProduct {
+  id              String   @id
+  name            String
+  description     String   @db.Text
+  templateId      String   @map("template_id") @db.VarChar(64)
+  previewAsset    String?  @map("preview_asset")
+  supportsAddress Boolean  @map("supports_address")
+  active          Boolean  @default(true)
+  orderable       Boolean  @default(false)
+  /// Official unit price in EUR cents. Null = blocked; never invent a value.
+  priceCents      Int?     @map("price_cents")
+  currency        String   @default("EUR") @db.VarChar(3)
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+  orders          PhysicalQrOrder[]
+
+  @@map("physical_qr_products")
+}
+
+model PhysicalQrOrder {
+  id                      String                       @id @default(cuid())
+  businessId              String                       @map("business_id")
+  userId                  String                       @map("user_id")
+  productId               String                       @map("product_id")
+  qrContextType           PhysicalQrContextType        @map("qr_context_type")
+  qrSubjectId             String?                      @map("qr_subject_id")
+  qrTargetUrlSnapshot     String                       @map("qr_target_url_snapshot") @db.Text
+  quantity                Int
+  unitPrice               Int                          @map("unit_price")
+  totalAmount             Int                          @map("total_amount")
+  currency                String                       @db.VarChar(3)
+  placedAt                DateTime                     @map("placed_at")
+  processingClass         PhysicalQrProcessingClass    @map("processing_class")
+  processingDeadlineAt    DateTime                     @map("processing_deadline_at")
+  processingCopySnapshot  Json                         @map("processing_copy_snapshot")
+  addressSnapshot         Json?                        @map("address_snapshot")
+  colorTokensSnapshot     Json                         @map("color_tokens_snapshot")
+  businessNameSnapshot    String                       @map("business_name_snapshot") @db.VarChar(160)
+  paymentStatus           PhysicalQrPaymentStatus      @default(PENDING) @map("payment_status")
+  fulfillmentStatus       PhysicalQrFulfillmentStatus  @default(PENDING_PAYMENT) @map("fulfillment_status")
+  stripeCheckoutSessionId String?                      @unique @map("stripe_checkout_session_id")
+  stripePaymentIntentId   String?                      @map("stripe_payment_intent_id")
+  carrier                 String?
+  trackingNumber          String?                      @map("tracking_number")
+  trackingUrl             String?                      @map("tracking_url") @db.Text
+  paidAt                  DateTime?                    @map("paid_at")
+  processingAt            DateTime?                    @map("processing_at")
+  printingAt              DateTime?                    @map("printing_at")
+  shippedAt               DateTime?                    @map("shipped_at")
+  deliveredAt             DateTime?                    @map("delivered_at")
+  createdAt               DateTime                     @default(now()) @map("created_at")
+  updatedAt               DateTime                     @updatedAt @map("updated_at")
+
+  business      Business                     @relation(fields: [businessId], references: [id], onDelete: Restrict)
+  user          User                         @relation(fields: [userId], references: [id], onDelete: Restrict)
+  product       PhysicalQrProduct            @relation(fields: [productId], references: [id], onDelete: Restrict)
+  messages      PhysicalQrOrderMessage[]
+  internalNotes PhysicalQrOrderInternalNote[]
+
+  @@index([businessId, placedAt(sort: Desc)])
+  @@index([fulfillmentStatus, placedAt(sort: Desc)])
+  @@index([paymentStatus])
+  @@map("physical_qr_orders")
+}
+
+/// Order-specific thread between platform fulfillment and the business. Never mix with internal notes.
+model PhysicalQrOrderMessage {
+  id           String   @id @default(cuid())
+  orderId      String   @map("order_id")
+  authorUserId String?  @map("author_user_id")
+  /// `business` or `admin`
+  authorRole   String   @map("author_role") @db.VarChar(16)
+  body         String   @db.Text
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  order  PhysicalQrOrder @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  author User?           @relation("PhysicalQrOrderMessageAuthor", fields: [authorUserId], references: [id], onDelete: SetNull)
+
+  @@index([orderId, createdAt])
+  @@map("physical_qr_order_messages")
+}
+
+/// Fulfillment-only notes. Must never be returned on business order APIs.
+model PhysicalQrOrderInternalNote {
+  id           String   @id @default(cuid())
+  orderId      String   @map("order_id")
+  authorUserId String?  @map("author_user_id")
+  body         String   @db.Text
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  order  PhysicalQrOrder @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  author User?           @relation("PhysicalQrOrderNoteAuthor", fields: [authorUserId], references: [id], onDelete: SetNull)
+
+  @@index([orderId, createdAt])
+  @@map("physical_qr_order_internal_notes")
 }
 

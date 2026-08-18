@@ -1,3 +1,5 @@
+import type { ImgHTMLAttributes } from "react";
+
 import { INDUSTRY_MEDIA } from "@/app/data/industryMedia";
 import type { IndustryPageId } from "@/app/data/industryPages";
 import { cn } from "@/lib/utils";
@@ -31,7 +33,9 @@ export function IndustryBackground({ activeId, className }: IndustryBackgroundPr
               alt=""
               decoding="async"
               loading={active ? "eager" : "lazy"}
-              fetchPriority={active ? "high" : "low"}
+              {...({
+                fetchpriority: active ? "high" : "low",
+              } as ImgHTMLAttributes<HTMLImageElement>)}
               className="caretip-industry-showcase__bg-img h-full w-full object-cover"
               sizes="(max-width: 1023px) 100vw, min(80rem, 100vw)"
               draggable={false}

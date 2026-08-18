@@ -51,6 +51,7 @@ export const platformAdminNavEntries: readonly PlatformAdminNavEntry[] = [
       { labelKey: "admin.sidebar.business.kycVerification", href: `${PLATFORM_BUSINESS_BASE}/kyc-verification` },
       { labelKey: "admin.sidebar.business.subscriptions", href: `${PLATFORM_BUSINESS_BASE}/subscriptions` },
       { labelKey: "admin.sidebar.business.analytics", href: `${PLATFORM_BUSINESS_BASE}/analytics` },
+      { labelKey: "admin.sidebar.business.physicalQrOrders", href: `${PLATFORM_BUSINESS_BASE}/branding-orders` },
     ],
   },
   {

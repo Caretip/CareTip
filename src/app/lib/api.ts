@@ -3577,6 +3577,246 @@ export async function fetchTables(opts?: { silent?: boolean }): Promise<TableDTO
   return normalizeApiList<TableDTO>(raw, ["tables", "items", "data"]);
 }
 
+export type PhysicalQrCatalogProduct = {
+  id: string;
+  name: string;
+  description: string;
+  templateId: string;
+  supportsAddress: boolean;
+  active: boolean;
+  orderable: boolean;
+  currency: string;
+  priceCents: number | null;
+  priceConfigured: boolean;
+  checkoutReady: boolean;
+  checkoutBlock: string | null;
+};
+
+export type PhysicalQrContextOption = { id: string; label: string };
+
+export type PhysicalQrContextOptions = {
+  storefront: PhysicalQrContextOption;
+  employees: PhysicalQrContextOption[];
+  locations: PhysicalQrContextOption[];
+  tables: PhysicalQrContextOption[];
+};
+
+export type PhysicalQrCustomerOrder = {
+  id: string;
+  productId: string;
+  productName: string | null;
+  templateId: string | null;
+  supportsAddress: boolean;
+  qrContextType: string;
+  qrSubjectId: string | null;
+  quantity: number;
+  currency: string;
+  unitPrice: number;
+  totalAmount: number;
+  placedAt: string;
+  processingClass: string;
+  processingDeadlineAt: string;
+  processingCopySnapshot: unknown;
+  addressSnapshot: unknown;
+  colorTokensSnapshot?: unknown;
+  businessNameSnapshot: string;
+  paymentStatus: string;
+  fulfillmentStatus: string;
+  canPay: boolean;
+  carrier: string | null;
+  trackingNumber: string | null;
+  trackingUrl: string | null;
+  paidAt: string | null;
+  processingAt: string | null;
+  printingAt: string | null;
+  shippedAt: string | null;
+  deliveredAt: string | null;
+};
+
+export type PhysicalQrInternalNote = {
+  id: string;
+  body: string;
+  authorName: string;
+  createdAt: string;
+};
+
+export async function fetchPhysicalQrCatalog(): Promise<{ products: PhysicalQrCatalogProduct[] }> {
+  return apiRequest(apiPath("/api/business/physical-qr/catalog"), {
+    headers: getHeaders(),
+    credentials: "include",
+  });
+}
+
+export async function fetchPhysicalQrContexts(): Promise<PhysicalQrContextOptions> {
+  return apiRequest(apiPath("/api/business/physical-qr/contexts"), {
+    headers: getHeaders(),
+    credentials: "include",
+  });
+}
+
+export async function resolvePhysicalQrContext(payload: {
+  qrContextType: string;
+  qrSubjectId?: string;
+}): Promise<{ qrTargetUrl: string; qrContextType: string; qrSubjectId: string | null; label: string }> {
+  return apiRequest(apiPath("/api/business/physical-qr/contexts/resolve"), {
+    method: "POST",
+    headers: getHeaders(),
+    credentials: "include",
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function fetchPhysicalQrOrders(): Promise<{ orders: PhysicalQrCustomerOrder[] }> {
+  return apiRequest(apiPath("/api/business/physical-qr/orders"), {
+    headers: getHeaders(),
+    credentials: "include",
+  });
+}
+
+export async function fetchPhysicalQrOrder(orderId: string): Promise<PhysicalQrCustomerOrder> {
+  return apiRequest(apiPath(`/api/business/physical-qr/orders/${encodeURIComponent(orderId)}`), {
+    headers: getHeaders(),
+    credentials: "include",
+  });
+}
+
+export async function createPhysicalQrOrder(payload: {
+  productId: string;
+  qrContextType: string;
+  qrSubjectId?: string;
+  quantity: number;
+  address?: string;
+  colorTokens: {
+    backgroundGradientStart: string;
+    backgroundGradientEnd: string;
+    primaryTextColor: string;
+    secondaryTextColor: string;
+  };
+}): Promise<PhysicalQrCustomerOrder> {
+  return apiRequest(apiPath("/api/business/physical-qr/orders"), {
+    method: "POST",
+    headers: getHeaders(),
+    credentials: "include",
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function checkoutPhysicalQrOrder(
+  orderId: string,
+): Promise<{ url: string; sessionId: string }> {
+  return apiRequest(apiPath(`/api/business/physical-qr/orders/${encodeURIComponent(orderId)}/checkout`), {
+    method: "POST",
+    headers: getHeaders(),
+    credentials: "include",
+    body: EMPTY_JSON_BODY,
+  });
+}
+
+export type PhysicalQrAdminOrder = {
+  id: string;
+  businessId: string;
+  businessName: string | null;
+  businessSlug: string | null;
+  productName: string | null;
+  supportsAddress: boolean;
+  qrContextType: string;
+  quantity: number;
+  paymentStatus: string;
+  fulfillmentStatus: string;
+  carrier: string | null;
+  trackingNumber: string | null;
+  trackingUrl: string | null;
+  paidAt: string | null;
+  processingAt: string | null;
+  printingAt: string | null;
+  shippedAt: string | null;
+  deliveredAt: string | null;
+  placedAt: string;
+  updatedAt: string | null;
+  currency: string;
+  unitPrice: number;
+  totalAmount: number;
+  processingClass: string | null;
+  processingCopySnapshot: unknown;
+  addressSnapshot: unknown;
+  businessNameSnapshot: string | null;
+};
+
+export async function fetchPlatformPhysicalQrOrders(params?: {
+  filter?: string;
+  q?: string;
+}): Promise<{ orders: PhysicalQrAdminOrder[] }> {
+  const search = new URLSearchParams();
+  if (params?.filter) search.set("filter", params.filter);
+  if (params?.q) search.set("q", params.q);
+  const qs = search.toString();
+  return apiRequest(apiPath(`/api/platform/physical-qr/orders${qs ? `?${qs}` : ""}`), {
+    headers: getHeaders(),
+    credentials: "include",
+  });
+}
+
+export async function fetchPlatformPhysicalQrOrder(orderId: string): Promise<{
+  order: PhysicalQrAdminOrder;
+  internalNotes: PhysicalQrInternalNote[];
+}> {
+  return apiRequest(apiPath(`/api/platform/physical-qr/orders/${encodeURIComponent(orderId)}`), {
+    headers: getHeaders(),
+    credentials: "include",
+  });
+}
+
+export async function markPlatformPhysicalQrPrinting(orderId: string): Promise<PhysicalQrAdminOrder> {
+  return apiRequest(apiPath(`/api/platform/physical-qr/orders/${encodeURIComponent(orderId)}/printing`), {
+    method: "POST",
+    headers: getHeaders(),
+    credentials: "include",
+    body: EMPTY_JSON_BODY,
+  });
+}
+
+export async function markPlatformPhysicalQrProcessing(orderId: string): Promise<PhysicalQrAdminOrder> {
+  return apiRequest(apiPath(`/api/platform/physical-qr/orders/${encodeURIComponent(orderId)}/processing`), {
+    method: "POST",
+    headers: getHeaders(),
+    credentials: "include",
+    body: EMPTY_JSON_BODY,
+  });
+}
+
+export async function shipPlatformPhysicalQrOrder(
+  orderId: string,
+  payload: { carrier: string; trackingNumber: string; trackingUrl?: string },
+): Promise<PhysicalQrAdminOrder> {
+  return apiRequest(apiPath(`/api/platform/physical-qr/orders/${encodeURIComponent(orderId)}/ship`), {
+    method: "POST",
+    headers: getHeaders(),
+    credentials: "include",
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function deliverPlatformPhysicalQrOrder(orderId: string): Promise<PhysicalQrAdminOrder> {
+  return apiRequest(apiPath(`/api/platform/physical-qr/orders/${encodeURIComponent(orderId)}/deliver`), {
+    method: "POST",
+    headers: getHeaders(),
+    credentials: "include",
+    body: EMPTY_JSON_BODY,
+  });
+}
+
+export async function postPlatformPhysicalQrInternalNote(
+  orderId: string,
+  body: string,
+): Promise<PhysicalQrInternalNote> {
+  return apiRequest(apiPath(`/api/platform/physical-qr/orders/${encodeURIComponent(orderId)}/notes`), {
+    method: "POST",
+    headers: getHeaders(),
+    credentials: "include",
+    body: JSON.stringify({ body }),
+  });
+}
+
 export async function createTableAPI(payload: {
   name: string;
   locationId: string;

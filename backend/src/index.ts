@@ -43,6 +43,7 @@ import pushRoutes from "./routes/push.routes.js";
 import notificationsRoutes from "./routes/notifications.routes.js";
 import commercialRoutes from "./routes/commercial.routes.js";
 import supportTicketRoutes from "./routes/supportTicket.routes.js";
+import physicalQrRoutes from "./routes/physicalQr.routes.js";
 import landingAiRoutes from "./routes/landingAi.routes.js";
 import leadRoutes from "./routes/lead.routes.js";
 import legalRoutes from "./routes/legal.routes.js";
@@ -212,6 +213,7 @@ app.get(
   requireCompletedOnboarding,
   businessController.getMyQrAnalytics
 );
+app.use("/api/business/physical-qr", physicalQrRoutes);
 app.use("/api/business", businessRoutes);
 app.use("/api/business/commercial", commercialRoutes);
 app.use("/api/business/support", supportTicketRoutes);

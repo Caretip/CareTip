@@ -1,3 +1,8 @@
+/**
+ * Retired standalone Templates route. `/dashboard/qr-studio/templates` now
+ * redirects to Branding. Digital template picking lives in QrStudioDesigner
+ * via QrTemplatePicker; do not delete qrTemplateEngine.
+ */
 import { useEffect, useState } from "react";
 import { Link } from "react-router";
 import { useTranslation } from "react-i18next";

@@ -12,6 +12,17 @@ const backendRoot = path.resolve(here, "..");
 const repoRoot = path.resolve(backendRoot, "..");
 const appRoot = path.join(repoRoot, "src", "app");
 const assetsRoot = path.join(repoRoot, "src", "assets");
+const physicalQrSvgSrc = path.join(assetsRoot, "physical-qr", "caretip-a5.svg");
+const physicalQrSvgDest = path.join(backendRoot, "src", "lib", "physicalQr", "caretip-a5.svg");
+const physicalQrPngSrc = path.join(assetsRoot, "physical-qr", "caretip-a5-artwork.png");
+const physicalQrPngDest = path.join(backendRoot, "src", "lib", "physicalQr", "caretip-a5-artwork.png");
+if (fs.existsSync(physicalQrSvgSrc)) {
+  fs.mkdirSync(path.dirname(physicalQrSvgDest), { recursive: true });
+  fs.copyFileSync(physicalQrSvgSrc, physicalQrSvgDest);
+}
+if (fs.existsSync(physicalQrPngSrc)) {
+  fs.copyFileSync(physicalQrPngSrc, physicalQrPngDest);
+}
 
 const entry = path.join(backendRoot, "src/qr/renderBundleEntry.ts");
 const outfile = path.join(backendRoot, "dist/qr-render.bundle.mjs");

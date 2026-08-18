@@ -7,12 +7,9 @@ import { CareTipLogo } from "@/app/components/CareTipLogo";
 import { usePublicMountProbe } from "@/lib/publicMountProbe";
 import { LandingCopySentences } from "@/components/landing/LandingCopySentences";
 import { FacebookIcon, InstagramIcon, TikTokIcon } from "@/components/social/SocialBrandIcons";
+import { caretipSocialLinks } from "@/app/lib/caretipSocialLinks";
 import { openCookieConsentSettings } from "@/app/lib/cookieConsent";
 import { INDUSTRY_NAV_ITEMS } from "@/app/data/industryPages";
-
-const SOCIAL_FACEBOOK_URL = (import.meta.env.VITE_SOCIAL_FACEBOOK_URL as string | undefined)?.trim() || "";
-const SOCIAL_INSTAGRAM_URL = (import.meta.env.VITE_SOCIAL_INSTAGRAM_URL as string | undefined)?.trim() || "";
-const SOCIAL_TIKTOK_URL = (import.meta.env.VITE_SOCIAL_TIKTOK_URL as string | undefined)?.trim() || "";
 
 const APP_VERSION =
   typeof import.meta.env.VITE_APP_VERSION === "string" && import.meta.env.VITE_APP_VERSION.trim() !== ""
@@ -122,35 +119,34 @@ export const Footer = memo(function Footer({
 
             <div className="flex flex-wrap items-center gap-3 pt-2">
               <a
-                href={SOCIAL_FACEBOOK_URL || "/contact"}
-                {...(SOCIAL_FACEBOOK_URL
-                  ? { target: "_blank", rel: "noopener noreferrer" }
-                  : {})}
+                href={caretipSocialLinks.facebook}
+                target="_blank"
+                rel="noopener noreferrer"
                 className="flex h-10 w-10 items-center justify-center rounded-lg border border-white/15 bg-white/5 text-neutral-300 transition-[color,background-color,opacity,transform] duration-200 hover:bg-white/10 hover:text-white"
                 aria-label={t("footer.facebook")}
               >
                 <FacebookIcon className="h-5 w-5" />
               </a>
               <a
-                href={SOCIAL_INSTAGRAM_URL || "/contact"}
-                {...(SOCIAL_INSTAGRAM_URL
-                  ? { target: "_blank", rel: "noopener noreferrer" }
-                  : {})}
+                href={caretipSocialLinks.instagram}
+                target="_blank"
+                rel="noopener noreferrer"
                 className="flex h-10 w-10 items-center justify-center rounded-lg border border-white/15 bg-white/5 text-neutral-300 transition-[color,background-color,opacity,transform] duration-200 hover:bg-white/10 hover:text-white"
                 aria-label={t("footer.instagram")}
               >
                 <InstagramIcon className="h-5 w-5" />
               </a>
-              <a
-                href={SOCIAL_TIKTOK_URL || "/contact"}
-                {...(SOCIAL_TIKTOK_URL
-                  ? { target: "_blank", rel: "noopener noreferrer" }
-                  : {})}
-                className="flex h-10 w-10 items-center justify-center rounded-lg border border-white/15 bg-white/5 text-neutral-300 transition-[color,background-color,opacity,transform] duration-200 hover:bg-white/10 hover:text-white"
-                aria-label={t("footer.tiktok")}
-              >
-                <TikTokIcon className="h-5 w-5" />
-              </a>
+              {caretipSocialLinks.tiktok ? (
+                <a
+                  href={caretipSocialLinks.tiktok}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex h-10 w-10 items-center justify-center rounded-lg border border-white/15 bg-white/5 text-neutral-300 transition-[color,background-color,opacity,transform] duration-200 hover:bg-white/10 hover:text-white"
+                  aria-label={t("footer.tiktok")}
+                >
+                  <TikTokIcon className="h-5 w-5" />
+                </a>
+              ) : null}
             </div>
           </div>
 
