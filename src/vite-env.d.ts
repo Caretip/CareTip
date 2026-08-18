@@ -1,15 +1,7 @@
-/**
- * Vite + PWA client shims.
- * Kept self-contained so the IDE typechecks when `node_modules/vite` is not installed
- * (e.g. disk-full installs). Compatible with `vite/client` via declaration merging.
- */
+/// <reference types="vite/client" />
+/// <reference types="vite-plugin-pwa/client" />
 
 interface ImportMetaEnv {
-  readonly MODE: string;
-  readonly BASE_URL: string;
-  readonly PROD: boolean;
-  readonly DEV: boolean;
-  readonly SSR: boolean;
   /** Google Sign-In Web client ID (inlined at build). Same value as backend `GOOGLE_CLIENT_ID`. */
   readonly VITE_GOOGLE_CLIENT_ID?: string;
   /** Same as `VITE_GOOGLE_CLIENT_ID`; supported for hosts that only define `NEXT_PUBLIC_*` (e.g. some Vercel setups). */
@@ -40,81 +32,8 @@ interface ImportMetaEnv {
   readonly NEXT_PUBLIC_APP_URL?: string;
   /** Ask CareTip landing assistant. Default off when unset. Set to `true` to show launcher + chat. */
   readonly VITE_ENABLE_AI_ASSISTANT?: string;
-  readonly VITE_SENTRY_DSN?: string;
-  readonly VITE_SENTRY_ENVIRONMENT?: string;
-  readonly VITE_SENTRY_RELEASE?: string;
-  readonly [key: string]: string | boolean | undefined;
 }
 
 interface ImportMeta {
   readonly env: ImportMetaEnv;
-  readonly hot?: {
-    readonly data: unknown;
-    accept: {
-      (): void;
-      (cb: (mod: unknown) => void): void;
-      (dep: string, cb: (mod: unknown) => void): void;
-      (deps: readonly string[], cb: (mods: unknown[]) => void): void;
-    };
-    dispose: (cb: (data: unknown) => void) => void;
-    invalidate: (message?: string) => void;
-  };
-  glob: {
-    <T = unknown>(
-      pattern: string,
-      options?: { eager?: boolean; import?: string; query?: string | Record<string, string> },
-    ): Record<string, T | (() => Promise<T>)>;
-  };
-}
-
-declare module "*.svg?raw" {
-  const src: string;
-  export default src;
-}
-declare module "*.png?inline" {
-  const src: string;
-  export default src;
-}
-declare module "*.svg" {
-  const src: string;
-  export default src;
-}
-declare module "*.png" {
-  const src: string;
-  export default src;
-}
-declare module "*.jpg" {
-  const src: string;
-  export default src;
-}
-declare module "*.jpeg" {
-  const src: string;
-  export default src;
-}
-declare module "*.webp" {
-  const src: string;
-  export default src;
-}
-declare module "*.gif" {
-  const src: string;
-  export default src;
-}
-declare module "*.woff" {
-  const src: string;
-  export default src;
-}
-declare module "*.woff2" {
-  const src: string;
-  export default src;
-}
-
-declare module "virtual:pwa-register" {
-  export type RegisterSWOptions = {
-    immediate?: boolean;
-    onNeedRefresh?: () => void;
-    onOfflineReady?: () => void;
-    onRegistered?: (registration: ServiceWorkerRegistration | undefined) => void;
-    onRegisterError?: (error: unknown) => void;
-  };
-  export function registerSW(options?: RegisterSWOptions): (reloadPage?: boolean) => Promise<void>;
 }

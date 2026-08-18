@@ -12,6 +12,7 @@
     "resolveJsonModule": true,
     "isolatedModules": true,
     "esModuleInterop": true,
+    "types": ["vite/client"],
     "paths": {
       "@/*": ["./src/*"]
     }
