@@ -51,6 +51,8 @@ export type ManagerBusinessProfileDto = PublicBusinessProfileDto & {
   sponsoredProgrammeLabelKey: string | null;
   employeeCount: number;
   contactPhone: string | null;
+  legalContactName: string | null;
+  contactEmail: string | null;
   registeredAddress: string | null;
   website: string | null;
 };
@@ -67,6 +69,8 @@ type BusinessRow = {
   kycVerificationStatus: KycVerificationStatus;
   subscriptionTier: BusinessSubscriptionTier | null;
   contactPhone: string | null;
+  legalContactName: string | null;
+  contactEmail: string | null;
   website: string | null;
   logoPath: string | null;
   bannerImagePath: string | null;
@@ -133,6 +137,8 @@ export function toManagerBusinessProfileDto(
     sponsoredProgrammeLabelKey: sponsoredDef?.labelKey ?? null,
     employeeCount,
     contactPhone: business.contactPhone ?? null,
+    legalContactName: business.legalContactName ?? null,
+    contactEmail: business.contactEmail ?? null,
     registeredAddress: business.registeredAddress ?? null,
     website: business.website ?? null,
   };
@@ -154,6 +160,8 @@ export const MANAGER_ONLY_BUSINESS_FIELDS = [
   "sponsoredProgrammeLabelKey",
   "employeeCount",
   "contactPhone",
+  "legalContactName",
+  "contactEmail",
   "registeredAddress",
   "website",
 ] as const;

@@ -1255,6 +1255,8 @@ const BUSINESS_PROFILE_SELECT = {
   kycVerificationStatus: true,
   subscriptionTier: true,
   contactPhone: true,
+  legalContactName: true,
+  contactEmail: true,
   website: true,
   logoPath: true,
   bannerImagePath: true,

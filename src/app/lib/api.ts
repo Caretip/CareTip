@@ -1501,6 +1501,9 @@ export interface BusinessInfo {
   registeredAddress?: string | null;
   type?: string | null;
   contactPhone?: string | null;
+  /** Manager profile only — used to prefill Physical QR delivery. */
+  legalContactName?: string | null;
+  contactEmail?: string | null;
   website?: string | null;
   /** IANA venue timezone (manager profile) — Activity Center calendar labels. */
   timezone?: string | null;
