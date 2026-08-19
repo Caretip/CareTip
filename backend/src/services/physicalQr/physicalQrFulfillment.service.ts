@@ -67,7 +67,7 @@ export async function getPhysicalQrOrderForAdmin(orderId: string) {
     where: { id: orderId },
     include: {
       product: true,
-      business: { select: { id: true, name: true, slug: true, registeredAddress: true } },
+      business: { select: { id: true, name: true, slug: true } },
     },
   });
   if (!row) {
@@ -169,6 +169,10 @@ export function toAdminOrderDto(row: {
   processingClass?: string;
   processingCopySnapshot?: unknown;
   addressSnapshot?: unknown;
+  shippingSnapshot?: unknown;
+  contactSnapshot?: unknown;
+  qrTargetUrlSnapshot?: string;
+  stripePaymentIntentId?: string | null;
   businessNameSnapshot?: string;
   colorTokensSnapshot?: unknown;
   supportsAddress?: boolean;
@@ -202,6 +206,10 @@ export function toAdminOrderDto(row: {
     processingClass: row.processingClass ?? null,
     processingCopySnapshot: row.processingCopySnapshot ?? null,
     addressSnapshot: row.addressSnapshot ?? null,
+    shippingSnapshot: row.shippingSnapshot ?? null,
+    contactSnapshot: row.contactSnapshot ?? null,
+    qrTargetUrlSnapshot: row.qrTargetUrlSnapshot ?? null,
+    stripePaymentIntentId: row.stripePaymentIntentId ?? null,
     businessNameSnapshot: row.businessNameSnapshot ?? null,
     colorTokensSnapshot: row.colorTokensSnapshot ?? null,
   };

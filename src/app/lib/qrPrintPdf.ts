@@ -1,8 +1,8 @@
 /**
- * PDF export for branded QR template cards.
+ * PDF export for digital QR images (plain matrix or leftover branded cards).
  *
- * Single source of truth: embed the exact canvas produced by the Template Engine
- * (`renderQrTemplateCard` / `renderBrandedQrUrlToCanvas`). No separate PDF layout system.
+ * Embeds the caller-supplied PNG on A4 or 105×148 mm. Digital management surfaces
+ * pass a plain QR; this helper does not render Physical A5 artwork.
  */
 
 import { createJsPdfDocument, type JsPDFDocument } from "./qrPdfLazy";
@@ -87,7 +87,7 @@ export async function createBrandedTemplateCardPdf(params: {
 }
 
 /**
- * Business / venue PDF — `qrPngDataUrl` must be the full Template Engine card (not a raw QR matrix).
+ * Business / venue PDF — embeds `qrPngDataUrl` (plain digital QR on management surfaces).
  * @deprecated Legacy params (`businessName`, `subtext`, `instruction`, `businessLogoPngDataUrl`) are ignored for layout.
  */
 export async function createBusinessQrPrintPdf(params: {
@@ -121,7 +121,7 @@ export async function downloadBusinessQrPrintPdf(params: {
 }
 
 /**
- * Employee PDF — `qrPngDataUrl` must be the full Template Engine card.
+ * Employee PDF — embeds `qrPngDataUrl` (plain digital QR on management surfaces).
  * @deprecated Legacy params (`employeeName`, `businessName`, `instruction`, `businessLogoPngDataUrl`) are ignored for layout.
  */
 export async function createEmployeeQrPrintPdf(params: {

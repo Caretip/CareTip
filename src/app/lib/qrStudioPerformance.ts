@@ -1,5 +1,4 @@
-import type { QrBrandingOptions } from "./businessBranding";
-import { renderBrandedQrUrlToDataUrl } from "./qrBranded";
+import { PLAIN_QR_PREVIEW_WIDTH_PX, renderPlainQrUrlToDataUrl } from "./plainQr";
 
 /** Live preview debounce — balances instant feel vs canvas churn. */
 export const QR_STUDIO_PREVIEW_DEBOUNCE_MS = 300;
@@ -10,11 +9,9 @@ export const QR_GALLERY_THUMBNAIL_SCALE = 2 as const;
 /** Background reliability meta — lower priority than thumbnail paint. */
 export const QR_GALLERY_META_CONCURRENCY = 2;
 
-export async function renderQrGalleryThumbnail(
-  url: string,
-  branding?: Partial<QrBrandingOptions>,
-): Promise<string> {
-  return renderBrandedQrUrlToDataUrl(url, branding, { scale: QR_GALLERY_THUMBNAIL_SCALE });
+/** Digital management cards — plain QR only (not branded template cards, not Physical A5). */
+export async function renderQrGalleryThumbnail(url: string): Promise<string> {
+  return renderPlainQrUrlToDataUrl(url, { width: PLAIN_QR_PREVIEW_WIDTH_PX });
 }
 
 /** Run async work with a fixed concurrency limit (gallery meta validation). */

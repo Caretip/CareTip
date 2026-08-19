@@ -3,6 +3,11 @@ import { hasFeature } from "../subscriptionEntitlement.service.js";
 import { assertPhysicalQrColorTokens, PhysicalQrColorError } from "../../lib/physicalQr/colors.js";
 import { freezePhysicalQrProcessing } from "../../lib/physicalQr/processing.js";
 import {
+  parsePhysicalQrContactSnapshot,
+  parsePhysicalQrShippingSnapshot,
+  PhysicalQrShippingError,
+} from "../../lib/physicalQr/shipping.js";
+import {
   PHYSICAL_QR_QUANTITY_MAX,
   PHYSICAL_QR_QUANTITY_MIN,
   type PhysicalQrAddressSnapshot,
@@ -35,6 +40,8 @@ export type CreatePhysicalQrOrderInput = {
   qrSubjectId?: unknown;
   quantity?: unknown;
   address?: unknown;
+  shipping?: unknown;
+  contact?: unknown;
   colorTokens?: unknown;
   /** Ignored — never trusted from the client. */
   unitPrice?: unknown;
@@ -106,15 +113,24 @@ export async function createPhysicalQrOrder(input: CreatePhysicalQrOrderInput) {
     (input.colorTokens ?? {}) as PhysicalQrColorTokens,
   );
 
-  const business = await prisma.business.findUnique({
-    where: { id: input.businessId },
-    select: {
-      id: true,
-      name: true,
-      brandDisplayName: true,
-      registeredAddress: true,
-    },
-  });
+  const [business, user] = await Promise.all([
+    prisma.business.findUnique({
+      where: { id: input.businessId },
+      select: {
+        id: true,
+        name: true,
+        brandDisplayName: true,
+        registeredAddress: true,
+        legalContactName: true,
+        contactEmail: true,
+        contactPhone: true,
+      },
+    }),
+    prisma.user.findUnique({
+      where: { id: input.userId },
+      select: { email: true },
+    }),
+  ]);
   if (!business) {
     throw new PhysicalQrOrderError("BUSINESS_NOT_FOUND", "Business not found", 404);
   }
@@ -130,6 +146,22 @@ export async function createPhysicalQrOrder(input: CreatePhysicalQrOrderInput) {
     registeredAddress: business.registeredAddress,
     clientAddress: input.address,
   });
+
+  let shippingSnapshot;
+  let contactSnapshot;
+  try {
+    shippingSnapshot = parsePhysicalQrShippingSnapshot(input.shipping);
+    contactSnapshot = parsePhysicalQrContactSnapshot(input.contact, {
+      name: business.legalContactName,
+      email: business.contactEmail || user?.email,
+      phone: business.contactPhone,
+    });
+  } catch (err) {
+    if (err instanceof PhysicalQrShippingError) {
+      throw new PhysicalQrOrderError(err.code, err.message);
+    }
+    throw err;
+  }
 
   const placedAt = new Date();
   const processing = freezePhysicalQrProcessing(placedAt);
@@ -154,6 +186,8 @@ export async function createPhysicalQrOrder(input: CreatePhysicalQrOrderInput) {
       processingDeadlineAt: processing.processingDeadlineAt,
       processingCopySnapshot: processing.processingCopySnapshot,
       addressSnapshot: addressSnapshot as object | undefined,
+      shippingSnapshot: shippingSnapshot as object,
+      contactSnapshot: contactSnapshot as object,
       colorTokensSnapshot: colorTokens as object,
       businessNameSnapshot: businessName,
       paymentStatus: "PENDING",
@@ -196,6 +230,8 @@ export function toCustomerOrderDto(row: {
   processingDeadlineAt: Date;
   processingCopySnapshot: unknown;
   addressSnapshot: unknown;
+  shippingSnapshot?: unknown;
+  contactSnapshot?: unknown;
   colorTokensSnapshot?: unknown;
   businessNameSnapshot: string;
   paymentStatus: string;
@@ -229,6 +265,8 @@ export function toCustomerOrderDto(row: {
     processingDeadlineAt: row.processingDeadlineAt.toISOString(),
     processingCopySnapshot: row.processingCopySnapshot,
     addressSnapshot: row.addressSnapshot,
+    shippingSnapshot: row.shippingSnapshot ?? null,
+    contactSnapshot: row.contactSnapshot ?? null,
     colorTokensSnapshot: row.colorTokensSnapshot ?? null,
     businessNameSnapshot: row.businessNameSnapshot,
     paymentStatus: row.paymentStatus,

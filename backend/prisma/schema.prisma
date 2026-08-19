@@ -1460,6 +1460,10 @@ model PhysicalQrOrder {
   processingDeadlineAt    DateTime                     @map("processing_deadline_at")
   processingCopySnapshot  Json                         @map("processing_copy_snapshot")
   addressSnapshot         Json?                        @map("address_snapshot")
+  /// Parcel destination frozen at place-order. Never backfilled from live profile.
+  shippingSnapshot        Json?                        @map("shipping_snapshot")
+  /// Contact frozen at place-order. Independent of printed addressSnapshot.
+  contactSnapshot         Json?                        @map("contact_snapshot")
   colorTokensSnapshot     Json                         @map("color_tokens_snapshot")
   businessNameSnapshot    String                       @map("business_name_snapshot") @db.VarChar(160)
   paymentStatus           PhysicalQrPaymentStatus      @default(PENDING) @map("payment_status")

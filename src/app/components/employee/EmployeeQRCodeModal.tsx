@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
   Dialog,
@@ -9,17 +9,13 @@ import {
 } from "../ui/dialog";
 import { Download, Link as LinkIcon } from "lucide-react";
 import { toast } from "sonner";
-import { getEmployeeProfile } from "../../lib/api";
-import { qrBrandingFingerprint } from "../../lib/businessBranding";
-import { loadQrRenderBranding } from "../../lib/loadQrRenderBranding";
+import { publicEmployeeTipUrl, qrEmployeeLegacyUrl } from "../../lib/appPublicUrl";
 import {
-  renderBrandedQRToDataUrl,
-  renderBrandedQRToDataUrlLegacy,
-  downloadBrandedQR,
-  downloadBrandedQRLegacy,
-  getEmployeeQrShareUrl,
-  getEmployeeQrLegacyShareUrl,
-} from "../../lib/qrBranded";
+  downloadPlainEmployeeQr,
+  downloadPlainEmployeeQrLegacy,
+  renderPlainEmployeeQrToDataUrl,
+  renderPlainEmployeeQrToDataUrlLegacy,
+} from "../../lib/plainQr";
 import { logClientError } from "../../lib/clientLog";
 
 type EmployeeQRCodeModalProps = {
@@ -44,52 +40,19 @@ export function EmployeeQRCodeModal({
   const { t } = useTranslation();
   const [dataUrl, setDataUrl] = useState("");
   const [imgLoading, setImgLoading] = useState(false);
-  const [brandingReady, setBrandingReady] = useState(false);
-  const [qrBranding, setQrBranding] = useState<Awaited<ReturnType<typeof loadQrRenderBranding>>>(null);
 
   const bs = businessSlug?.trim();
   const es = employeeSlug?.trim();
   const useSlugPair = Boolean(bs && es);
-  const brandingFingerprint = useMemo(() => qrBrandingFingerprint(qrBranding), [qrBranding]);
 
   useEffect(() => {
-    if (!open) {
-      setQrBranding(null);
-      setBrandingReady(false);
-      return;
-    }
-    let cancelled = false;
-    setBrandingReady(false);
-    void (async () => {
-      try {
-        const profile = await getEmployeeProfile();
-        if (cancelled) return;
-        const branding = await loadQrRenderBranding({
-          mode: "employee",
-          businessId: profile.businessId,
-        });
-        if (cancelled) return;
-        setQrBranding(branding);
-      } catch (err) {
-        logClientError("EmployeeQRCodeModal.branding", err);
-        if (!cancelled) setQrBranding(null);
-      } finally {
-        if (!cancelled) setBrandingReady(true);
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [open]);
-
-  useEffect(() => {
-    if (!open || !employeeId || !brandingReady) return;
+    if (!open || !employeeId) return;
     let cancelled = false;
     setImgLoading(true);
     setDataUrl("");
     const render = useSlugPair
-      ? renderBrandedQRToDataUrl(bs!, es!, qrBranding ?? undefined)
-      : renderBrandedQRToDataUrlLegacy(employeeId, qrBranding ?? undefined);
+      ? renderPlainEmployeeQrToDataUrl(bs!, es!)
+      : renderPlainEmployeeQrToDataUrlLegacy(employeeId);
     render
       .then((url) => {
         if (!cancelled) setDataUrl(url);
@@ -103,9 +66,9 @@ export function EmployeeQRCodeModal({
     return () => {
       cancelled = true;
     };
-  }, [open, employeeId, bs, es, useSlugPair, brandingReady, brandingFingerprint, qrBranding]);
+  }, [open, employeeId, bs, es, useSlugPair]);
 
-  const shareUrl = useSlugPair ? getEmployeeQrShareUrl(bs!, es!) : getEmployeeQrLegacyShareUrl(employeeId);
+  const shareUrl = useSlugPair ? publicEmployeeTipUrl(bs!, es!) : qrEmployeeLegacyUrl(employeeId);
 
   const copyLink = async () => {
     try {
@@ -117,9 +80,8 @@ export function EmployeeQRCodeModal({
   };
 
   const download = () => {
-    const branding = qrBranding ?? undefined;
-    if (useSlugPair) void downloadBrandedQR(bs!, es!, employeeName, branding);
-    else void downloadBrandedQRLegacy(employeeId, employeeName, branding);
+    if (useSlugPair) void downloadPlainEmployeeQr(bs!, es!, employeeName);
+    else void downloadPlainEmployeeQrLegacy(employeeId, employeeName);
   };
 
   return (
@@ -132,10 +94,10 @@ export function EmployeeQRCodeModal({
           </DialogDescription>
         </DialogHeader>
         <div className="flex flex-col items-center gap-4 py-2">
-          <div className="flex min-h-[400px] w-full items-center justify-center rounded-2xl border border-border bg-muted/35 p-4">
+          <div className="flex min-h-[280px] w-full items-center justify-center rounded-2xl border border-border bg-white p-4">
             {imgLoading ? (
-              <div className="w-full max-w-[340px]">
-                <div className="h-[360px] w-full animate-pulse rounded-xl bg-muted" />
+              <div className="w-full max-w-[280px]">
+                <div className="aspect-square w-full animate-pulse rounded-xl bg-muted" />
                 <p className="mt-3 text-center text-xs font-medium text-muted-foreground">
                   {t("employee.qrModal.loadingQr")}
                 </p>

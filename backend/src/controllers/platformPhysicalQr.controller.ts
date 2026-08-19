@@ -16,6 +16,9 @@ import {
   listPhysicalQrInternalNotes,
   postPhysicalQrInternalNote,
 } from "../services/physicalQr/physicalQrMessage.service.js";
+import { renderPhysicalQrPrint } from "../lib/physicalQr/printPipeline.js";
+import { jpegToA5Pdf } from "../lib/physicalQr/pdfA5.js";
+import { PHYSICAL_QR_QUANTITY_MAX, PHYSICAL_QR_QUANTITY_MIN } from "../lib/physicalQr/types.js";
 
 function mapErr(res: Response, err: unknown, ctx: string) {
   if (err instanceof PhysicalQrFulfillmentError) {
@@ -54,6 +57,54 @@ export async function adminGetPhysicalQrOrder(req: Request, res: Response) {
     return res.json({ order: toAdminOrderDto(row), internalNotes });
   } catch (err) {
     return mapErr(res, err, "physicalQr.admin.get");
+  }
+}
+
+export async function adminPrintPhysicalQrOrder(req: Request, res: Response) {
+  try {
+    const row = await getPhysicalQrOrderForAdmin(String(req.params.orderId ?? ""));
+    if (row.paymentStatus !== "PAID") {
+      return res.status(409).json({
+        success: false,
+        code: "PAYMENT_REQUIRED",
+        message: "Print files are available after payment is confirmed.",
+      });
+    }
+    const product = row.product;
+    const address =
+      product.supportsAddress && row.addressSnapshot && typeof row.addressSnapshot === "object"
+        ? String((row.addressSnapshot as { line?: string }).line ?? "")
+        : null;
+    const printed = await renderPhysicalQrPrint({
+      targetUrl: row.qrTargetUrlSnapshot,
+      businessName: row.businessNameSnapshot,
+      address,
+      supportsAddress: product.supportsAddress,
+      colorTokens: (row.colorTokensSnapshot ?? {}) as {
+        backgroundGradientStart: string;
+        backgroundGradientEnd: string;
+        primaryTextColor: string;
+        secondaryTextColor: string;
+      },
+    });
+    const copies = Math.min(
+      PHYSICAL_QR_QUANTITY_MAX,
+      Math.max(PHYSICAL_QR_QUANTITY_MIN, Number.isInteger(row.quantity) ? row.quantity : 1),
+    );
+    const format = String(req.query.format ?? "pdf").toLowerCase();
+    if (format === "png") {
+      res.setHeader("Content-Type", "image/png");
+      return res.send(printed.png);
+    }
+    const pdf = jpegToA5Pdf(printed.jpeg, printed.widthPx, printed.heightPx, copies);
+    res.setHeader("Content-Type", "application/pdf");
+    res.setHeader(
+      "Content-Disposition",
+      `attachment; filename="caretip-a5-${row.id}${copies > 1 ? `-x${copies}` : ""}.pdf"`,
+    );
+    return res.send(pdf);
+  } catch (err) {
+    return mapErr(res, err, "physicalQr.admin.print");
   }
 }
 

@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import {
   deliverPlatformPhysicalQrOrder,
+  downloadPlatformPhysicalQrOrderPrint,
   fetchPlatformPhysicalQrOrder,
   markPlatformPhysicalQrPrinting,
   markPlatformPhysicalQrProcessing,
@@ -16,12 +17,14 @@ import {
   formatBerlinDateTime,
   formatPhysicalQrMoney,
   physicalQrAddressLine,
+  physicalQrContactFromUnknown,
   physicalQrContextLabel,
   physicalQrCutoffLabel,
   physicalQrEstimatedFulfillmentLabel,
   physicalQrFulfillmentLabel,
   physicalQrOrderNumber,
   physicalQrPaymentLabel,
+  physicalQrShippingLine,
 } from "../../lib/physicalQrOrderUi";
 import { PhysicalQrOrderTimeline } from "../../components/business/physical-branding/PhysicalQrOrderTimeline";
 import { PlatformPage, PlatformPageHeader } from "../../components/platform/PlatformPageChrome";
@@ -42,6 +45,7 @@ export function PlatformPhysicalQrOrderDetailPage() {
   const [trackingUrl, setTrackingUrl] = useState("");
   const [noteBody, setNoteBody] = useState("");
   const [busy, setBusy] = useState(false);
+  const [downloadingPdf, setDownloadingPdf] = useState(false);
 
   const reload = useCallback(async () => {
     const data = await fetchPlatformPhysicalQrOrder(orderId);
@@ -55,6 +59,17 @@ export function PlatformPhysicalQrOrderDetailPage() {
   useEffect(() => {
     void reload().catch(() => toast.error(t("admin.physicalQr.loadError")));
   }, [reload, t]);
+
+  async function downloadPdf() {
+    setDownloadingPdf(true);
+    try {
+      await downloadPlatformPhysicalQrOrderPrint(orderId, "pdf");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : t("admin.physicalQr.downloadPdfError"));
+    } finally {
+      setDownloadingPdf(false);
+    }
+  }
 
   async function run(fn: () => Promise<unknown>) {
     setBusy(true);
@@ -77,6 +92,8 @@ export function PlatformPhysicalQrOrderDetailPage() {
   }
 
   const address = physicalQrAddressLine(order.addressSnapshot);
+  const shipTo = physicalQrShippingLine(order.shippingSnapshot);
+  const contact = physicalQrContactFromUnknown(order.contactSnapshot);
 
   return (
     <PlatformPage>
@@ -107,6 +124,30 @@ export function PlatformPhysicalQrOrderDetailPage() {
           </p>
         </div>
         <div>
+          <p className="text-muted-foreground">{t("admin.physicalQr.deliveryAddress")}</p>
+          <p className="font-medium">{shipTo || t("admin.physicalQr.deliveryNotCollected")}</p>
+        </div>
+        <div>
+          <p className="text-muted-foreground">{t("admin.physicalQr.contact")}</p>
+          <p className="font-medium">
+            {contact
+              ? [contact.name, contact.email, contact.phone].filter(Boolean).join(" · ")
+              : t("admin.physicalQr.deliveryNotCollected")}
+          </p>
+        </div>
+        {order.qrTargetUrlSnapshot ? (
+          <div className="sm:col-span-2">
+            <p className="text-muted-foreground">{t("admin.physicalQr.qrTarget")}</p>
+            <p className="break-all font-medium">{order.qrTargetUrlSnapshot}</p>
+          </div>
+        ) : null}
+        {order.stripePaymentIntentId ? (
+          <div className="sm:col-span-2">
+            <p className="text-muted-foreground">{t("admin.physicalQr.paymentIntent")}</p>
+            <p className="break-all font-medium">{order.stripePaymentIntentId}</p>
+          </div>
+        ) : null}
+        <div>
           <p className="text-muted-foreground">{t("business.qrStudio.physical.quantity")}</p>
           <p className="font-medium">{order.quantity}</p>
         </div>
@@ -134,6 +175,9 @@ export function PlatformPhysicalQrOrderDetailPage() {
           <p className="font-medium">{physicalQrEstimatedFulfillmentLabel(order.processingClass, t)}</p>
         </div>
         <p className="sm:col-span-2 text-muted-foreground">{t("business.qrStudio.physical.deliveryAfterShip")}</p>
+        {!shipTo ? (
+          <p className="sm:col-span-2 text-sm text-destructive">{t("admin.physicalQr.deliveryMissingWarning")}</p>
+        ) : null}
       </div>
 
       <div className={`${platformUi.contentCard} mb-4`}>
@@ -145,6 +189,15 @@ export function PlatformPhysicalQrOrderDetailPage() {
         <p className="font-medium">
           {t("admin.physicalQr.currentStatus")}: {physicalQrFulfillmentLabel(order.fulfillmentStatus, t)}
         </p>
+        {order.paymentStatus === "PAID" ? (
+          <Button type="button" variant="outline" disabled={downloadingPdf} onClick={() => void downloadPdf()}>
+            {order.quantity > 1
+              ? t("admin.physicalQr.downloadPdfQty", { count: order.quantity })
+              : t("admin.physicalQr.downloadPdf")}
+          </Button>
+        ) : (
+          <p className="text-sm text-muted-foreground">{t("admin.physicalQr.printUnpaidHint")}</p>
+        )}
         {order.fulfillmentStatus === "PAID" ? (
           <Button type="button" disabled={busy} onClick={() => void run(() => markPlatformPhysicalQrProcessing(order.id))}>
             {t("admin.physicalQr.markProcessing")}

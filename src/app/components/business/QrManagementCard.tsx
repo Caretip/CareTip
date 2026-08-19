@@ -27,7 +27,7 @@ import {
 } from "../ui/dialog";
 import { DASH_BTN_PRIMARY, DASH_BTN_SECONDARY } from "@/components/ui/dashboard-styles";
 import { businessUi } from "@/app/components/business/businessDashboardUi";
-import { downloadQrDataUrlPng } from "../../lib/qrBranded";
+import { downloadQrDataUrlPng } from "../../lib/qrExport";
 import { cn } from "@/lib/utils";
 
 export type QrManagementCardItem = {
@@ -170,7 +170,7 @@ export const QrManagementCard = memo(function QrManagementCard({
   const { t } = useTranslation();
   const [previewOpen, setPreviewOpen] = useState(false);
   const isLibrary = layout === "library";
-  const showPreviewActions = Boolean(previewDataUrl) && type !== "employee";
+  const showPreviewActions = Boolean(previewDataUrl);
 
   const handleDownloadPng = () => {
     if (!previewDataUrl) return;

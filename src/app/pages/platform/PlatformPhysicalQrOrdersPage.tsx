@@ -11,6 +11,7 @@ import {
   physicalQrFulfillmentLabel,
   physicalQrOrderNumber,
   physicalQrPaymentLabel,
+  physicalQrShippingFromUnknown,
 } from "../../lib/physicalQrOrderUi";
 import { PlatformPage, PlatformPageHeader } from "../../components/platform/PlatformPageChrome";
 import { platformUi } from "../../components/platform/platformDashboardUi";
@@ -89,7 +90,9 @@ export function PlatformPhysicalQrOrdersPage() {
             <p className="text-sm text-muted-foreground">{t("admin.physicalQr.empty")}</p>
           </div>
         ) : (
-          orders.map((order) => (
+          orders.map((order) => {
+            const shipping = physicalQrShippingFromUnknown(order.shippingSnapshot);
+            return (
             <Link
               key={order.id}
               to={`/platform-admin/businesses/branding-orders/${order.id}`}
@@ -105,6 +108,7 @@ export function PlatformPhysicalQrOrdersPage() {
                   <p className="text-sm text-muted-foreground">
                     {order.businessName} · {physicalQrContextLabel(order.qrContextType, t)} · ×
                     {order.quantity}
+                    {shipping ? ` · ${shipping.city}, ${shipping.country}` : ""}
                   </p>
                 </div>
                 <p className="text-sm font-semibold">
@@ -120,7 +124,8 @@ export function PlatformPhysicalQrOrdersPage() {
                 {order.updatedAt ? ` · ${formatBerlinDateTime(order.updatedAt, i18n.language)}` : ""}
               </p>
             </Link>
-          ))
+            );
+          })
         )}
       </div>
     </PlatformPage>

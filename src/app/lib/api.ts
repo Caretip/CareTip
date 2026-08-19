@@ -3618,6 +3618,8 @@ export type PhysicalQrCustomerOrder = {
   processingDeadlineAt: string;
   processingCopySnapshot: unknown;
   addressSnapshot: unknown;
+  shippingSnapshot?: unknown;
+  contactSnapshot?: unknown;
   colorTokensSnapshot?: unknown;
   businessNameSnapshot: string;
   paymentStatus: string;
@@ -3686,6 +3688,19 @@ export async function createPhysicalQrOrder(payload: {
   qrSubjectId?: string;
   quantity: number;
   address?: string;
+  shipping: {
+    recipientName: string;
+    streetLine: string;
+    addressLine2?: string;
+    postalCode: string;
+    city: string;
+    country: string;
+  };
+  contact: {
+    name: string;
+    email: string;
+    phone: string;
+  };
   colorTokens: {
     backgroundGradientStart: string;
     backgroundGradientEnd: string;
@@ -3739,6 +3754,10 @@ export type PhysicalQrAdminOrder = {
   processingClass: string | null;
   processingCopySnapshot: unknown;
   addressSnapshot: unknown;
+  shippingSnapshot?: unknown;
+  contactSnapshot?: unknown;
+  qrTargetUrlSnapshot?: string | null;
+  stripePaymentIntentId?: string | null;
   businessNameSnapshot: string | null;
 };
 
@@ -3773,6 +3792,46 @@ export async function markPlatformPhysicalQrPrinting(orderId: string): Promise<P
     credentials: "include",
     body: EMPTY_JSON_BODY,
   });
+}
+
+export async function downloadPlatformPhysicalQrOrderPrint(
+  orderId: string,
+  format: "pdf" | "png" = "pdf",
+): Promise<void> {
+  const token = getToken();
+  const qs = format === "png" ? "?format=png" : "?format=pdf";
+  const res = await fetch(
+    apiPath(`/api/platform/physical-qr/orders/${encodeURIComponent(orderId)}/print${qs}`),
+    {
+      method: "GET",
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+      credentials: "include",
+    },
+  );
+  if (!res.ok) {
+    const ct = res.headers.get("content-type") ?? "";
+    let message = "Could not download the print file.";
+    if (ct.includes("application/json")) {
+      const errData = (await res.json().catch(() => ({}))) as { message?: string; code?: string };
+      if (errData.code === "PAYMENT_REQUIRED" || res.status === 409) {
+        message = "Print files are available after payment is confirmed.";
+      } else if (errData.message) {
+        message = errData.message;
+      }
+    }
+    throw new Error(message);
+  }
+  const blob = await res.blob();
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download =
+    format === "png" ? `caretip-a5-${orderId}.png` : `caretip-a5-${orderId}.pdf`;
+  a.rel = "noopener";
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
 }
 
 export async function markPlatformPhysicalQrProcessing(orderId: string): Promise<PhysicalQrAdminOrder> {

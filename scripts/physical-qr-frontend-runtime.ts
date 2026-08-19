@@ -16,6 +16,10 @@ import {
   validatePhysicalQrColorTokens,
 } from "../src/app/lib/physicalQrTemplate/colors.ts";
 import {
+  PHYSICAL_QR_SHIP_COUNTRY,
+  physicalQrDeliveryIsComplete,
+} from "../src/app/lib/physicalQrOrderUi.ts";
+import {
   injectPhysicalQrSvg,
   svgHidesAddress,
   svgShowsAddress,
@@ -147,11 +151,66 @@ const en = readFileSync(path.join(root, "src/i18n/locales/en.json"), "utf8");
 if (
   !studio.includes("CardTitle") &&
   studio.includes("divide-y") &&
+  studio.includes("physicalQrDeliveryIsComplete") &&
+  studio.includes("needDelivery") &&
+  studio.includes("missingDelivery") &&
+  !studio.includes("backgroundGradientStart") &&
   !en.includes("Stripe webhook") &&
   en.includes("Track your physical QR orders")
 ) {
   pass("Branding order UI is compact and customer-facing");
 } else fail("Branding page still uses nested cards or webhook copy");
+
+if (
+  !physicalQrDeliveryIsComplete({
+    recipientName: "",
+    streetLine: "",
+    postalCode: "",
+    city: "",
+    country: PHYSICAL_QR_SHIP_COUNTRY,
+    email: "",
+    phone: "",
+  })
+) {
+  pass("Place order/Pay stays disabled until delivery is valid");
+} else fail("empty delivery should not enable pay");
+
+if (
+  physicalQrDeliveryIsComplete({
+    recipientName: "Marie Testerin",
+    streetLine: "Kolonnenstraße 8",
+    postalCode: "10827",
+    city: "Berlin",
+    country: PHYSICAL_QR_SHIP_COUNTRY,
+    email: "marie@example.com",
+    phone: "+493012345678",
+  })
+) {
+  pass("complete Germany delivery enables pay");
+} else fail("valid DE delivery should enable pay");
+
+if (
+  !physicalQrDeliveryIsComplete({
+    recipientName: "Marie Testerin",
+    streetLine: "Kolonnenstraße 8",
+    postalCode: "10827",
+    city: "Berlin",
+    country: "AT",
+    email: "marie@example.com",
+    phone: "+493012345678",
+  }) &&
+  !physicalQrDeliveryIsComplete({
+    recipientName: "Marie Testerin",
+    streetLine: "Kolonnenstraße 8",
+    postalCode: "10827",
+    city: "Berlin",
+    country: PHYSICAL_QR_SHIP_COUNTRY,
+    email: "marie@example.com",
+    phone: "",
+  })
+) {
+  pass("non-Germany shipping and missing phone keep Pay disabled");
+} else fail("country/phone delivery gates");
 
 const orderDetail = readFileSync(path.join(root, "src/app/pages/business/qr-studio/PhysicalQrOrderDetailPage.tsx"), "utf8");
 if (
@@ -166,12 +225,25 @@ if (
 const adminDetail = readFileSync(path.join(root, "src/app/pages/platform/PlatformPhysicalQrOrderDetailPage.tsx"), "utf8");
 if (
   adminDetail.includes("markPlatformPhysicalQrPrinting") &&
+  adminDetail.includes("downloadPlatformPhysicalQrOrderPrint") &&
+  adminDetail.includes('paymentStatus === "PAID"') &&
   adminDetail.includes("shipPlatformPhysicalQrOrder") &&
   adminDetail.includes("internalNotes") &&
-  !adminDetail.includes("PhysicalQrOrderThread")
+  adminDetail.includes("deliveryAddress") &&
+  adminDetail.includes("deliveryMissingWarning") &&
+  !adminDetail.includes("PhysicalQrOrderThread") &&
+  !adminDetail.includes("registeredAddress")
 ) {
   pass("admin order detail has fulfillment controls and separate internal notes");
 } else fail("admin fulfillment controls");
+
+if (
+  adminDetail.includes("downloadPlatformPhysicalQrOrderPrint") &&
+  adminDetail.includes("onClick={() => void downloadPdf()}") &&
+  adminDetail.includes("onClick={() => void run(() => markPlatformPhysicalQrPrinting(order.id))}")
+) {
+  pass("Download PDF is separate from Mark as printing");
+} else fail("Download PDF should stay separate from Mark as printing");
 
 const nav = readFileSync(path.join(root, "src/app/components/business/businessDashboardNav.ts"), "utf8");
 if (!nav.includes("qr-studio/templates")) pass("Templates nav entry removed");

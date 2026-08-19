@@ -118,6 +118,8 @@ export async function createMyPhysicalQrOrder(req: Request, res: Response) {
       qrSubjectId: req.body?.qrSubjectId,
       quantity: req.body?.quantity,
       address: req.body?.address,
+      shipping: req.body?.shipping,
+      contact: req.body?.contact,
       colorTokens: req.body?.colorTokens,
       unitPrice: req.body?.unitPrice,
       totalAmount: req.body?.totalAmount,

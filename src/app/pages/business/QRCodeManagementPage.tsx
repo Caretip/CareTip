@@ -37,19 +37,16 @@ import {
 import { DashboardListSkeleton } from "../../components/dashboard/DashboardSectionLoading";
 import { BusinessSubPageShellSkeleton } from "../../components/dashboard/BusinessSubPageShellSkeleton";
 import { useBusinessPageBoot } from "../../lib/useBusinessPageBoot";
+import { downloadQrDataUrlPng, printQrDataUrl } from "../../lib/qrExport";
 import {
-  renderBrandedQrUrlToDataUrl,
-  validateBrandedQrReliability,
-  downloadQrDataUrlPng,
-  printQrDataUrl,
-  logQrScanDiagnostics,
-  type BrandedQrLayoutMetrics,
-} from "../../lib/qrBranded";
+  PLAIN_QR_RENDER_VERSION,
+  renderPlainQrUrlToDataUrl,
+  validatePlainQrReliability,
+} from "../../lib/plainQr";
 import type { QrQualityGrade } from "../../lib/qrReliability";
 import {
   isQrBusinessNamePlaceholder,
   pickRegisteredBusinessName,
-  qrBrandingFingerprint,
 } from "../../lib/businessBranding";
 import {
   fallbackManagerQrRenderBranding,
@@ -164,10 +161,6 @@ export function QRCodeManagementPage({
   const lastStudioVersionRef = useRef<number | null>(null);
 
   const qrBrandingOpts = studioBranding?.snapshot.branding ?? legacyQrBrandingOpts;
-  const brandingFingerprint = useMemo(() => {
-    if (studioBranding) return `ssot:v${studioBranding.snapshot.version}`;
-    return qrBrandingFingerprint(legacyQrBrandingOpts);
-  }, [studioBranding, legacyQrBrandingOpts]);
 
   // Sync non-branding profile meta from the Studio provider.
   useEffect(() => {
@@ -178,17 +171,11 @@ export function QRCodeManagementPage({
     setOnboardingVerificationStatus(studioBranding.onboardingVerificationStatus);
     if (lastStudioVersionRef.current !== studioBranding.snapshot.version) {
       lastStudioVersionRef.current = studioBranding.snapshot.version;
-      employeeQrCacheKeyRef.current = "";
-      storefrontQrCacheKeyRef.current = "";
-      venueQrCacheKeyRef.current = "";
       setAssetsSyncedAt(new Date(studioBranding.snapshot.updatedAt).toISOString());
-      logQrStudioSync("cache_invalidation", {
-        brandingVersion: studioBranding.snapshot.version,
-        reason: "studio_version_bump",
-      });
       logQrStudioSync("branding_version", {
         brandingVersion: studioBranding.snapshot.version,
         updatedAt: studioBranding.snapshot.updatedAt,
+        reason: "plain_qr_skips_visual_cache_bust",
       });
     }
   }, [
@@ -285,8 +272,6 @@ export function QRCodeManagementPage({
   useEffect(() => {
     void loadLegacyQrBranding();
   }, [loadLegacyQrBranding]);
-
-  const qrBrand = qrBrandingOpts ?? undefined;
 
   const venueName = useMemo(
     () =>
@@ -468,8 +453,8 @@ export function QRCodeManagementPage({
 
   useEffect(() => {
     if (studioBranding?.loading) return;
-    if (!needsVenueData || !venueQrFingerprint || !brandingFingerprint) return;
-    const cacheKey = `${venueQrFingerprint}|${brandingFingerprint}`;
+    if (!needsVenueData || !venueQrFingerprint) return;
+    const cacheKey = `${venueQrFingerprint}|${PLAIN_QR_RENDER_VERSION}`;
     if (venueQrCacheKeyRef.current === cacheKey) return;
     let cancelled = false;
     (async () => {
@@ -486,7 +471,7 @@ export function QRCodeManagementPage({
       const thumbResults = await Promise.all(
         tasks.map(async ({ key, url }) => ({
           key,
-          dataUrl: await renderQrGalleryThumbnail(url, qrBrand).catch(() => ""),
+          dataUrl: await renderQrGalleryThumbnail(url).catch(() => ""),
         })),
       );
       if (cancelled) return;
@@ -500,7 +485,7 @@ export function QRCodeManagementPage({
 
       const metaResults = await mapWithConcurrency(tasks, QR_GALLERY_META_CONCURRENCY, async ({ key, url }) => {
         try {
-          const { report } = await validateBrandedQrReliability(url, qrBrand);
+          const { report } = await validatePlainQrReliability(url);
           return { key, report };
         } catch (err) {
           logClientError("QRCodeManagementPage", err);
@@ -523,16 +508,14 @@ export function QRCodeManagementPage({
     venueQrFingerprint,
     safeVenueLocations,
     safeVenueTables,
-    qrBrand,
-    brandingFingerprint,
   ]);
 
   useEffect(() => {
     if (studioBranding?.loading) return;
     if (viewMode !== "employees") return;
     const businessId = user?.businessId;
-    if (!businessId || !brandingFingerprint) return;
-    const cacheKey = `${businessId}|${businessSlug ?? ""}|${brandingFingerprint}`;
+    if (!businessId) return;
+    const cacheKey = `${businessId}|${businessSlug ?? ""}|${PLAIN_QR_RENDER_VERSION}`;
     if (storefrontQrCacheKeyRef.current === cacheKey) return;
     let cancelled = false;
     setStorefrontQrGenerating(true);
@@ -541,12 +524,12 @@ export function QRCodeManagementPage({
         ? businessDirectoryUrl(businessSlug)
         : qrLandingUrl(businessId);
       try {
-        const dataUrl = await renderQrGalleryThumbnail(storeUrl, qrBrand);
+        const dataUrl = await renderQrGalleryThumbnail(storeUrl);
         if (!cancelled) {
           storefrontQrCacheKeyRef.current = cacheKey;
           setStorefrontQr(dataUrl);
         }
-        const { report } = await validateBrandedQrReliability(storeUrl, qrBrand);
+        const { report } = await validatePlainQrReliability(storeUrl);
         if (!cancelled && report) {
           setQrScanMeta((prev) => ({
             ...prev,
@@ -563,22 +546,21 @@ export function QRCodeManagementPage({
     return () => {
       cancelled = true;
     };
-  }, [studioBranding?.loading, viewMode, user?.businessId, businessSlug, qrBrand, brandingFingerprint]);
+  }, [studioBranding?.loading, viewMode, user?.businessId, businessSlug]);
 
   useEffect(() => {
     if (studioBranding?.loading) return;
     if (!needsEmployeeData) return;
     const businessId = user?.businessId;
-    if (!businessId || !brandingFingerprint) return;
-    const cacheKey = `${businessId}|${businessSlug ?? ""}|${employeeQrFingerprint}|${brandingFingerprint}`;
+    if (!businessId) return;
+    const cacheKey = `${businessId}|${businessSlug ?? ""}|${employeeQrFingerprint}|${PLAIN_QR_RENDER_VERSION}`;
     if (employeeQrCacheKeyRef.current === cacheKey) return;
     let cancelled = false;
     (async () => {
       const next: Record<string, string> = {};
       const meta: Record<string, { grade: QrQualityGrade; exportAllowed: boolean }> = {};
 
-      // SSOT: every roster employee gets a resolvable QR URL (canonical slug or legacy id).
-      // Branding never depends on slug — slug is only preferred for the tip URL.
+      // Every roster employee gets a resolvable QR URL (canonical slug or legacy id).
       const employeeTasks = safeEmployees
         .map((e) => {
           const url = resolveEmployeeQrUrl({
@@ -590,7 +572,6 @@ export function QRCodeManagementPage({
             logQrStudioSync("employee_skipped", {
               employeeId: e.id,
               slug: e.slug,
-              brandingVersion: studioBranding?.snapshot.version ?? null,
               reason: "no_employee_id",
             });
             return null;
@@ -607,13 +588,11 @@ export function QRCodeManagementPage({
       const thumbResults = await Promise.all(
         employeeTasks.map(async (task) => {
           try {
-            const dataUrl = await renderQrGalleryThumbnail(task.url, qrBrand);
+            const dataUrl = await renderQrGalleryThumbnail(task.url);
             logQrStudioSync("preview_generation", {
               employeeId: task.id,
               slug: task.slug,
               url: task.url,
-              brandingVersion: studioBranding?.snapshot.version ?? null,
-              brandingFingerprint,
               success: Boolean(dataUrl),
             });
             return { id: task.id, dataUrl };
@@ -623,7 +602,6 @@ export function QRCodeManagementPage({
               employeeId: task.id,
               slug: task.slug,
               url: task.url,
-              brandingVersion: studioBranding?.snapshot.version ?? null,
               success: false,
               error: err instanceof Error ? err.message : String(err),
             });
@@ -639,52 +617,27 @@ export function QRCodeManagementPage({
         setQrImages(next);
         setAssetsSyncedAt(new Date().toISOString());
         logQrStudioSync("regeneration_complete", {
-          brandingVersion: studioBranding?.snapshot.version ?? null,
-          brandingFingerprint,
           employeeCount: employeeTasks.length,
           renderedCount: thumbResults.filter((r) => Boolean(r.dataUrl)).length,
         });
       }
 
-      let referenceLayout: BrandedQrLayoutMetrics | null = null;
       if (employeeTasks.length > 0) {
-        const first = employeeTasks[0];
-        try {
-          const { report, diagnostics } = await validateBrandedQrReliability(first.url, qrBrand, {
-            employeeId: first.id,
-            employeeSlug: first.slug,
-            referenceLayout,
-          });
-          if (diagnostics?.layout) referenceLayout = diagnostics.layout;
-          if (import.meta.env.DEV && diagnostics) {
-            logQrScanDiagnostics(first.name, diagnostics);
-          }
-          if (report) meta[first.id] = { grade: report.grade, exportAllowed: report.exportAllowed };
-        } catch (err) {
-          logClientError("QRCodeManagementPage", err);
-        }
-
-        const rest = employeeTasks.slice(1);
-        if (rest.length > 0) {
-          const restMeta = await mapWithConcurrency(rest, QR_GALLERY_META_CONCURRENCY, async (task) => {
+        const restMeta = await mapWithConcurrency(
+          employeeTasks,
+          QR_GALLERY_META_CONCURRENCY,
+          async (task) => {
             try {
-              const { report, diagnostics } = await validateBrandedQrReliability(task.url, qrBrand, {
-                employeeId: task.id,
-                employeeSlug: task.slug,
-                referenceLayout,
-              });
-              if (import.meta.env.DEV && diagnostics) {
-                logQrScanDiagnostics(task.name, diagnostics);
-              }
+              const { report } = await validatePlainQrReliability(task.url);
               return { id: task.id, report };
             } catch (err) {
               logClientError("QRCodeManagementPage", err);
               return { id: task.id, report: null };
             }
-          });
-          for (const { id, report } of restMeta) {
-            if (report) meta[id] = { grade: report.grade, exportAllowed: report.exportAllowed };
-          }
+          },
+        );
+        for (const { id, report } of restMeta) {
+          if (report) meta[id] = { grade: report.grade, exportAllowed: report.exportAllowed };
         }
       }
 
@@ -697,14 +650,11 @@ export function QRCodeManagementPage({
     };
   }, [
     studioBranding?.loading,
-    studioBranding?.snapshot.version,
     needsEmployeeData,
     safeEmployees,
     employeeQrFingerprint,
     user?.businessId,
     businessSlug,
-    qrBrand,
-    brandingFingerprint,
   ]);
 
   const locations: Array<{ id: string; name: string; address: string; qrUrl: string }> =
@@ -893,7 +843,7 @@ export function QRCodeManagementPage({
           businessSlug,
           employeeSlug: updated.slug,
         });
-        const dataUrl = await renderBrandedQrUrlToDataUrl(url, qrBrand);
+        const dataUrl = await renderPlainQrUrlToDataUrl(url);
         logQrStudioSync("png_generation", {
           mode: "regenerate_employee",
           employeeId: updated.id,
@@ -930,7 +880,7 @@ export function QRCodeManagementPage({
     if (previewDataUrl) return previewDataUrl;
     if (!item.qrUrl) return null;
     try {
-      return await renderBrandedQrUrlToDataUrl(item.qrUrl, qrBrand);
+      return await renderPlainQrUrlToDataUrl(item.qrUrl);
     } catch (err) {
       logClientError("QRCodeManagementPage.buildVenueQr", err);
       return null;
@@ -1012,7 +962,6 @@ export function QRCodeManagementPage({
         employeeCount: staff.length,
       });
       await downloadStaffQrPdf(staff, `CareTip_QR_All_${dateStr}`, {
-        branding: qrBrand,
         resolveCardDataUrl: (id) => qrImages[id] ?? null,
       });
     } catch (err) {
@@ -1073,7 +1022,7 @@ export function QRCodeManagementPage({
         return;
       }
       try {
-        dataUrl = await renderBrandedQrUrlToDataUrl(url, qrBrand);
+        dataUrl = await renderPlainQrUrlToDataUrl(url);
         logQrStudioSync("pdf_generation", {
           mode: "lazy",
           employeeId: item.id,
@@ -1134,7 +1083,7 @@ export function QRCodeManagementPage({
         });
       if (url) {
         try {
-          dataUrl = await renderBrandedQrUrlToDataUrl(url, qrBrand);
+          dataUrl = await renderPlainQrUrlToDataUrl(url);
           if (dataUrl) setQrImages((prev) => ({ ...prev, [item.id]: dataUrl! }));
         } catch (err) {
           logClientError("QRCodeManagementPage.employeePrint.lazy", err);
@@ -1466,6 +1415,12 @@ export function QRCodeManagementPage({
                         regeneratingId={regeneratingId}
                         onCopy={handleCopy}
                         onRegenerateBusinessQr={requestRegenerateBusinessQr}
+                        onVenuePrint={(item, venueType, url) =>
+                          void handleVenueQrPrint(item as CardItem, venueType, url)
+                        }
+                        onVenuePrintPdf={(item, venueType, url) =>
+                          void handleVenuePrintPdf(item as CardItem, venueType, url)
+                        }
                         exportBlocked={isQrExportBlocked("storefront")}
                       />
                     )}

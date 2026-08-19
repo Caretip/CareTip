@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { Copy } from "lucide-react";
 import type { TipActivityRow, TipStatus } from "../../lib/api";
@@ -79,6 +80,8 @@ type TableItemMobileCardProps = {
   guestUrl: string;
   onCopy: () => void;
   copyLabel: string;
+  qrDataUrl?: string;
+  extraActions?: ReactNode;
 };
 
 export function TableItemMobileCard({
@@ -87,6 +90,8 @@ export function TableItemMobileCard({
   guestUrl,
   onCopy,
   copyLabel,
+  qrDataUrl,
+  extraActions,
 }: TableItemMobileCardProps) {
   const { t } = useTranslation();
 
@@ -106,12 +111,18 @@ export function TableItemMobileCard({
           {copyLabel}
         </button>
       </div>
+      {qrDataUrl ? (
+        <div className="mt-3 flex justify-center rounded-xl border border-black/[0.08] bg-white p-2">
+          <img src={qrDataUrl} alt="" className="h-28 w-28 object-contain" />
+        </div>
+      ) : null}
       <div className="mt-3">
         <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
           {t("business.tablesPage.thGuestLink")}
         </p>
         <code className="mt-1 block break-all text-xs text-muted-foreground">{guestUrl}</code>
       </div>
+      {extraActions ? <div className="mt-3 flex flex-wrap gap-2">{extraActions}</div> : null}
     </article>
   );
 }

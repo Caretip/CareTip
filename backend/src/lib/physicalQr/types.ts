@@ -46,6 +46,26 @@ export type PhysicalQrAddressSnapshot = {
   source: "registered" | "order_edit";
 };
 
+/** Germany-only shipping for this phase. */
+export const PHYSICAL_QR_SHIP_COUNTRY = "DE" as const;
+export type PhysicalQrShipCountry = typeof PHYSICAL_QR_SHIP_COUNTRY;
+
+export type PhysicalQrShippingSnapshot = {
+  recipientName: string;
+  streetLine: string;
+  addressLine2?: string;
+  postalCode: string;
+  city: string;
+  country: PhysicalQrShipCountry;
+};
+
+export type PhysicalQrContactSnapshot = {
+  name: string;
+  email: string;
+  phone: string;
+  source: "order_form";
+};
+
 export type PhysicalQrZone = { x: number; y: number; w: number; h: number };
 
 /**

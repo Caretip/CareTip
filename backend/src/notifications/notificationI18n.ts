@@ -33,6 +33,7 @@ export type NotificationTemplate =
   | { id: "support_status_updated"; params: { status: string } }
   | { id: "support_inbox_title"; params: { ticketNumber: string; status: string; subject: string } }
   | { id: "physical_qr_paid" }
+  | { id: "physical_qr_paid_admin"; params: { businessName: string; orderId: string } }
   | { id: "physical_qr_printing" }
   | { id: "physical_qr_shipped"; params: { trackingNumber: string | null } }
   | { id: "physical_qr_delivered" };
@@ -264,6 +265,16 @@ export function renderNotificationTemplate(
         : {
             title: "Payment received",
             body: "Your physical QR order has been paid for and is now being processed.",
+          };
+    case "physical_qr_paid_admin":
+      return de
+        ? {
+            title: "Physische QR-Bestellung bezahlt",
+            body: `${template.params.businessName} hat eine physische QR-Bestellung bezahlt.`,
+          }
+        : {
+            title: "Physical QR order paid",
+            body: `${template.params.businessName} paid for a physical QR order.`,
           };
     case "physical_qr_printing":
       return de

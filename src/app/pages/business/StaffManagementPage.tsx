@@ -37,9 +37,7 @@ import {
   type TableDTO,
 } from "../../lib/api";
 import { formatEur } from "../../lib/formatEur";
-import { downloadBrandedQR, downloadBrandedQRLegacy } from "../../lib/qrBranded";
-import type { QrBrandingOptions } from "../../lib/businessBranding";
-import { loadQrRenderBranding } from "../../lib/loadQrRenderBranding";
+import { downloadPlainEmployeeQr, downloadPlainEmployeeQrLegacy } from "../../lib/plainQr";
 import { useSubscriptionEntitlements } from "../../hooks/useSubscriptionEntitlements";
 import { TeamGrowthUpgradeNotice } from "../../components/subscription/TeamGrowthUpgradeNotice";
 import { isApiSubscriptionRequiredError } from "../../lib/apiError";
@@ -248,11 +246,10 @@ export function StaffManagementPage() {
   const { t, i18n } = useTranslation();
   const { user, isBusiness, authHydrated, sessionValidated } = useRequireAuth();
   const isLargeScreen = useMinWidthMedia(1024);
-  const { tier, hasFeature, advancedAnalyticsEnabled } = useSubscriptionEntitlements({
+  const { hasFeature, advancedAnalyticsEnabled } = useSubscriptionEntitlements({
     enabled: isBusiness,
     role: "business",
   });
-  const brandingTier = tier ?? "basic";
   const canGrowTeam = hasFeature("teamManagement");
   const canCreateCustomJobTitles = hasFeature("customJobTitles");
   const [searchQuery, setSearchQuery] = useState("");
@@ -300,7 +297,6 @@ export function StaffManagementPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [businessPublicSlug, setBusinessPublicSlug] = useState<string | null>(null);
-  const [qrBranding, setQrBranding] = useState<QrBrandingOptions | null>(null);
   const employeesRef = useRef(employees);
   employeesRef.current = employees;
   const togglingEmployeeIdsRef = useRef<Set<string>>(new Set());
@@ -431,27 +427,6 @@ export function StaffManagementPage() {
       cancelled = true;
     };
   }, [authHydrated, sessionValidated, isBusiness, user?.businessId]);
-
-  useEffect(() => {
-    if (!authHydrated || !sessionValidated || !isBusiness || !user?.businessId) return;
-    let cancelled = false;
-    void loadQrRenderBranding({
-      mode: "manager",
-      businessId: user.businessId,
-      tier: brandingTier,
-      fallbackBusinessName: user.businessName ?? undefined,
-    })
-      .then((branding) => {
-        if (!cancelled) setQrBranding(branding);
-      })
-      .catch((err) => {
-        logClientError("StaffManagementPage.qrBranding", err);
-        if (!cancelled) setQrBranding(null);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [authHydrated, sessionValidated, isBusiness, user?.businessId, user?.businessName, tier]);
 
   useEffect(() => {
     if (!authHydrated || !sessionValidated || !isBusiness) return;
@@ -753,8 +728,8 @@ export function StaffManagementPage() {
     try {
       const bs = businessPublicSlug?.trim();
       const es = employee.slug?.trim();
-      if (bs && es) await downloadBrandedQR(bs, es, employee.name, qrBranding ?? undefined);
-      else await downloadBrandedQRLegacy(employee.id, employee.name, qrBranding ?? undefined);
+      if (bs && es) await downloadPlainEmployeeQr(bs, es, employee.name);
+      else await downloadPlainEmployeeQrLegacy(employee.id, employee.name);
       toastOk(t("business.staffPage.toastQrDownloaded"));
     } catch (err) {
       logClientError("StaffManagementPage", err);

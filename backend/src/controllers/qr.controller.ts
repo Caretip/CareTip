@@ -33,7 +33,7 @@ function sendBrandedQrError(
   res.status(status).json(body);
 }
 
-/** Manager / business QR studio — branded PNG metadata + image for any venue tip URL. */
+/** Manager / business QR studio — digital plain QR PNG for any venue tip URL. */
 export async function getBusinessBrandedQr(req: Request, res: Response): Promise<void> {
   const targetUrl = String(req.query.targetUrl ?? "").trim();
   try {

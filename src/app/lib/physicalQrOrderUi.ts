@@ -36,6 +36,94 @@ export function physicalQrAddressLine(snapshot: unknown): string | null {
   return line || null;
 }
 
+export const PHYSICAL_QR_SHIP_COUNTRY = "DE" as const;
+
+export type PhysicalQrShippingSnapshot = {
+  recipientName: string;
+  streetLine: string;
+  addressLine2?: string;
+  postalCode: string;
+  city: string;
+  country: string;
+};
+
+export type PhysicalQrContactSnapshot = {
+  name: string;
+  email: string;
+  phone: string;
+};
+
+export type PhysicalQrDeliveryForm = {
+  recipientName: string;
+  streetLine: string;
+  addressLine2?: string;
+  postalCode: string;
+  city: string;
+  country: string;
+  email: string;
+  phone: string;
+};
+
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const DE_POSTAL_RE = /^\d{5}$/;
+
+export function physicalQrDeliveryIsComplete(form: PhysicalQrDeliveryForm): boolean {
+  const recipientName = form.recipientName.trim();
+  const streetLine = form.streetLine.trim();
+  const postalCode = form.postalCode.trim().replace(/\s+/g, "");
+  const city = form.city.trim();
+  const country = form.country.trim().toUpperCase();
+  const email = form.email.trim();
+  const phone = form.phone.trim();
+  return (
+    Boolean(recipientName) &&
+    Boolean(streetLine) &&
+    DE_POSTAL_RE.test(postalCode) &&
+    postalCode !== "00000" &&
+    Boolean(city) &&
+    country === PHYSICAL_QR_SHIP_COUNTRY &&
+    EMAIL_RE.test(email) &&
+    phone.replace(/\D/g, "").length >= 8
+  );
+}
+
+export function physicalQrShippingFromUnknown(raw: unknown): PhysicalQrShippingSnapshot | null {
+  if (!raw || typeof raw !== "object") return null;
+  const value = raw as Record<string, unknown>;
+  const recipientName = String(value.recipientName ?? "").trim();
+  const streetLine = String(value.streetLine ?? "").trim();
+  const postalCode = String(value.postalCode ?? "").trim();
+  const city = String(value.city ?? "").trim();
+  const country = String(value.country ?? "").trim();
+  if (!recipientName || !streetLine || !postalCode || !city || !country) return null;
+  const addressLine2 = String(value.addressLine2 ?? "").trim();
+  return {
+    recipientName,
+    streetLine,
+    ...(addressLine2 ? { addressLine2 } : {}),
+    postalCode,
+    city,
+    country,
+  };
+}
+
+export function physicalQrContactFromUnknown(raw: unknown): PhysicalQrContactSnapshot | null {
+  if (!raw || typeof raw !== "object") return null;
+  const value = raw as Record<string, unknown>;
+  const name = String(value.name ?? "").trim();
+  const email = String(value.email ?? "").trim();
+  const phone = String(value.phone ?? "").trim();
+  if (!name && !email && !phone) return null;
+  return { name, email, phone };
+}
+
+export function physicalQrShippingLine(snapshot: unknown): string | null {
+  const shipping = physicalQrShippingFromUnknown(snapshot);
+  if (!shipping) return null;
+  const line2 = shipping.addressLine2 ? `, ${shipping.addressLine2}` : "";
+  return `${shipping.recipientName}, ${shipping.streetLine}${line2}, ${shipping.postalCode} ${shipping.city}, ${shipping.country}`;
+}
+
 export function physicalQrPaymentLabel(paymentStatus: string, t: TFunction): string {
   if (paymentStatus === "PAID") return t("business.qrStudio.physical.orders.paymentReceived");
   if (paymentStatus === "FAILED") return t("business.qrStudio.physical.orders.paymentFailed");

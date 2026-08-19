@@ -32,6 +32,12 @@ import {
 import { validatePhysicalQrColorTokens } from "../src/lib/physicalQr/colors.js";
 import { canTransitionFulfillment, orderCanPay } from "../src/lib/physicalQr/status.js";
 import {
+  parsePhysicalQrContactSnapshot,
+  parsePhysicalQrShippingSnapshot,
+  PhysicalQrShippingError,
+} from "../src/lib/physicalQr/shipping.js";
+import { PHYSICAL_QR_SHIP_COUNTRY } from "../src/lib/physicalQr/types.js";
+import {
   assertPhysicalQrCheckoutReady,
   isPhysicalQrCheckoutEnvEnabled,
   PHYSICAL_QR_CHECKOUT_NOT_ACTIVATED,
@@ -251,6 +257,67 @@ function sectionStatus() {
   if (orderCanPay({ paymentStatus: "FAILED", fulfillmentStatus: "PAYMENT_FAILED" })) {
     pass("failed payments can retry");
   } else fail("PAYMENT_FAILED should be retryable");
+  if (orderCanPay({ paymentStatus: "PENDING", fulfillmentStatus: "PENDING_PAYMENT" })) {
+    pass("expired Checkout remains payable while unpaid");
+  } else fail("unpaid order should stay payable after expiry policy");
+}
+
+function expectShippingError(code: string, fn: () => unknown) {
+  try {
+    fn();
+    fail(`expected ${code}`);
+  } catch (err) {
+    if (err instanceof PhysicalQrShippingError && err.code === code) pass(`shipping rejects ${code}`);
+    else fail(`expected ${code} got ${String(err)}`);
+  }
+}
+
+function sectionShipping() {
+  const validShipping = {
+    recipientName: "Marie Testerin",
+    streetLine: "Kolonnenstraße 8",
+    postalCode: "10827",
+    city: "Berlin",
+    country: "DE",
+  };
+  const parsed = parsePhysicalQrShippingSnapshot(validShipping);
+  if (
+    parsed.country === PHYSICAL_QR_SHIP_COUNTRY &&
+    parsed.postalCode === "10827" &&
+    parsed.recipientName === "Marie Testerin"
+  ) {
+    pass("Germany shipping snapshot is accepted");
+  } else fail("valid DE shipping");
+
+  expectShippingError("RECIPIENT_REQUIRED", () => parsePhysicalQrShippingSnapshot({}));
+  expectShippingError("INVALID_COUNTRY", () =>
+    parsePhysicalQrShippingSnapshot({ ...validShipping, country: "AT" }),
+  );
+  expectShippingError("INVALID_POSTAL_CODE", () =>
+    parsePhysicalQrShippingSnapshot({ ...validShipping, postalCode: "1010" }),
+  );
+  expectShippingError("PHONE_REQUIRED", () =>
+    parsePhysicalQrContactSnapshot({
+      name: "Marie Testerin",
+      email: "marie@example.com",
+      phone: "",
+    }),
+  );
+  const contact = parsePhysicalQrContactSnapshot(
+    { phone: "+49 30 12345678" },
+    { name: "Marie Testerin", email: "marie@example.com" },
+  );
+  if (contact.email === "marie@example.com" && contact.phone.includes("30")) {
+    pass("contact snapshot uses server fallbacks except required phone from form");
+  } else fail("contact fallbacks");
+
+  try {
+    parsePhysicalQrShippingSnapshot(undefined);
+    fail("omitted shipping should 400");
+  } catch (err) {
+    if (err instanceof PhysicalQrShippingError) pass("omitted shipping is rejected server-side");
+    else fail(`omitted shipping ${String(err)}`);
+  }
 }
 
 function sectionPrintStatic() {
@@ -270,6 +337,13 @@ function sectionPrintStatic() {
   if (text.includes("%PDF-1.4") && text.includes("419.528") && text.includes("595.276")) {
     pass("A5 PDF media box is 148×210 mm");
   } else fail("A5 PDF media box");
+  if (text.includes("/Count 1") && !text.includes("/Count 5")) {
+    pass("jpegToA5Pdf defaults to one page");
+  } else fail("default PDF page count");
+  const five = jpegToA5Pdf(fakeJpeg, 1748, 2480, 5).toString("latin1");
+  if (five.includes("/Count 5") && five.includes("419.528") && five.includes("595.276")) {
+    pass("quantity 5 yields five identical A5 pages");
+  } else fail("PDF page count 5");
 }
 
 function sectionRegressionFiles() {
@@ -307,6 +381,74 @@ function sectionRegressionFiles() {
   ) {
     pass("business APIs do not expose internal notes and cannot change fulfillment");
   } else fail("business controller leaked notes or lost 403 patch");
+
+  const orderService = readFileSync(
+    path.join(root, "backend/src/services/physicalQr/physicalQrOrder.service.ts"),
+    "utf8",
+  );
+  if (
+    orderService.includes("parsePhysicalQrShippingSnapshot") &&
+    orderService.includes("parsePhysicalQrContactSnapshot") &&
+    orderService.includes("shippingSnapshot") &&
+    !orderService.includes("shippingSnapshot: business.registeredAddress")
+  ) {
+    pass("create order requires shipping/contact snapshots and does not copy live profile into shipping");
+  } else fail("order create shipping snapshots");
+
+  const webhook = readFileSync(
+    path.join(root, "backend/src/services/physicalQr/physicalQrWebhook.service.ts"),
+    "utf8",
+  );
+  if (
+    webhook.includes("Expired Checkout remains payable") &&
+    !webhook.includes('fulfillmentStatus: "CANCELLED"') &&
+    webhook.includes('fulfillmentStatus: "PROCESSING"') &&
+    webhook.includes("amount_total") &&
+    webhook.includes("business_mismatch")
+  ) {
+    pass("expired Checkout stays payable; paid still auto-PROCESSING; webhook still amount/tenant-safe");
+  } else fail("webhook expiry/paid/tenant checks");
+
+  const adminDto = readFileSync(
+    path.join(root, "backend/src/services/physicalQr/physicalQrFulfillment.service.ts"),
+    "utf8",
+  );
+  if (
+    adminDto.includes("shippingSnapshot: row.shippingSnapshot") &&
+    adminDto.includes("contactSnapshot: row.contactSnapshot") &&
+    !adminDto.includes("registeredAddress: true")
+  ) {
+    pass("admin DTO exposes shipping snapshot and does not use live registered address");
+  } else fail("admin shipping DTO");
+
+  const checkout = readFileSync(
+    path.join(root, "backend/src/services/physicalQr/physicalQrCheckout.service.ts"),
+    "utf8",
+  );
+  if (checkout.includes("customer_email") && checkout.includes("price_data") && !checkout.includes("application_fee")) {
+    pass("Checkout stays platform price_data and can prefill customer_email");
+  } else fail("checkout session shape");
+
+  const adminPrint = readFileSync(
+    path.join(root, "backend/src/controllers/platformPhysicalQr.controller.ts"),
+    "utf8",
+  );
+  const printPipeline = readFileSync(
+    path.join(root, "backend/src/lib/physicalQr/printPipeline.ts"),
+    "utf8",
+  );
+  if (
+    platformRoutes.includes("/physical-qr/orders/:orderId/print") &&
+    adminPrint.includes("adminPrintPhysicalQrOrder") &&
+    adminPrint.includes("renderPhysicalQrPrint") &&
+    adminPrint.includes("qrTargetUrlSnapshot") &&
+    adminPrint.includes("businessNameSnapshot") &&
+    adminPrint.includes("PAYMENT_REQUIRED") &&
+    !adminPrint.includes("registeredAddress") &&
+    printPipeline.includes("jpegToA5Pdf(jpeg, w, h)")
+  ) {
+    pass("admin print GET reuses snapshot renderer; business print stays single-page");
+  } else fail("admin print endpoint / snapshot renderer");
 }
 
 async function sectionPrintDecode() {
@@ -468,6 +610,7 @@ async function main() {
   sectionEntitlement();
   sectionCheckoutBlock();
   sectionStatus();
+  sectionShipping();
   sectionPrintStatic();
   sectionRegressionFiles();
   await sectionPrintDecode();

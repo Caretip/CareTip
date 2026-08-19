@@ -12,11 +12,13 @@ import {
   formatBerlinDateTime,
   formatPhysicalQrMoney,
   physicalQrAddressLine,
+  physicalQrContactFromUnknown,
   physicalQrContextLabel,
   physicalQrCustomerStatus,
   physicalQrCutoffLabel,
   physicalQrEstimatedFulfillmentLabel,
   physicalQrOrderNumber,
+  physicalQrShippingLine,
 } from "@/app/lib/physicalQrOrderUi";
 import { PhysicalQrOrderTimeline } from "../../../components/business/physical-branding/PhysicalQrOrderTimeline";
 import { useRequireAuth } from "../../../hooks/useRequireAuth";
@@ -103,6 +105,8 @@ export function PhysicalQrOrderDetailPage() {
   }
 
   const address = physicalQrAddressLine(order.addressSnapshot);
+  const shipTo = physicalQrShippingLine(order.shippingSnapshot);
+  const contact = physicalQrContactFromUnknown(order.contactSnapshot);
   const paid = order.paymentStatus === "PAID";
   const failed = order.paymentStatus === "FAILED" || order.fulfillmentStatus === "PAYMENT_FAILED";
   const showPay = Boolean(order.canPay) && !confirming;
@@ -166,6 +170,18 @@ export function PhysicalQrOrderDetailPage() {
                 : t("business.qrStudio.physical.withoutAddress")}
             </p>
           </div>
+          <div>
+            <p className="text-muted-foreground">{t("business.qrStudio.physical.shipTo")}</p>
+            <p className="font-medium">{shipTo || t("business.qrStudio.physical.deliveryNotCollected")}</p>
+          </div>
+          {contact ? (
+            <div className="sm:col-span-2">
+              <p className="text-muted-foreground">{t("business.qrStudio.physical.contact")}</p>
+              <p className="font-medium">
+                {[contact.name, contact.email, contact.phone].filter(Boolean).join(" · ")}
+              </p>
+            </div>
+          ) : null}
           <div>
             <p className="text-muted-foreground">{t("business.qrStudio.physical.quantity")}</p>
             <p className="font-medium">{order.quantity}</p>

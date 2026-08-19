@@ -2,6 +2,7 @@ import { prisma } from "../../prisma.js";
 import { deliverUserNotification } from "../notifications/notificationOrchestrator.service.js";
 import { NotificationType } from "../push/notification.types.js";
 import type { NotificationTemplate } from "../../notifications/notificationI18n.js";
+import { onPlatformOperationalAlert } from "../push/notification.triggers.js";
 
 function orderUrl(orderId: string): string {
   return `/dashboard/qr-studio/branding/orders/${encodeURIComponent(orderId)}`;
@@ -56,6 +57,31 @@ export function notifyPhysicalQrPaymentReceived(input: { businessId: string; ord
     dedupeKey: `physical-qr:${input.orderId}:paid`,
     email: true,
   }).catch(() => undefined);
+
+  void prisma.business
+    .findUnique({
+      where: { id: input.businessId },
+      select: { name: true, brandDisplayName: true },
+    })
+    .then((business) => {
+      const businessName = business?.brandDisplayName?.trim() || business?.name || "A business";
+      onPlatformOperationalAlert({
+        title: "Physical QR order paid",
+        body: `${businessName} paid for a physical QR order.`,
+        url: `/platform-admin/businesses/branding-orders/${encodeURIComponent(input.orderId)}`,
+        entityId: input.orderId,
+        localeTemplate: {
+          id: "physical_qr_paid_admin",
+          params: { businessName, orderId: input.orderId },
+        },
+        metadata: {
+          source: "physical_qr_order",
+          orderId: input.orderId,
+          businessId: input.businessId,
+        },
+      });
+    })
+    .catch(() => undefined);
 }
 
 export function notifyPhysicalQrPrinting(input: { businessId: string; orderId: string }): void {

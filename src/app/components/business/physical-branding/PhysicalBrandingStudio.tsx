@@ -18,6 +18,7 @@ import { useBusinessEntitlementsContext } from "../../../contexts/BusinessEntitl
 import { UpgradeCta } from "@/app/components/subscription/UpgradeCta";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
 import { Textarea } from "@/app/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/app/components/ui/select";
 import {
@@ -35,6 +36,10 @@ import {
 import { PhysicalQrPreview } from "./PhysicalQrPreview";
 import { PhysicalQrOrderCard } from "./PhysicalQrOrderCard";
 import { cn } from "@/lib/utils";
+import {
+  PHYSICAL_QR_SHIP_COUNTRY,
+  physicalQrDeliveryIsComplete,
+} from "@/app/lib/physicalQrOrderUi";
 
 const QTY_MIN = 1;
 const QTY_MAX = 50;
@@ -87,6 +92,16 @@ export function PhysicalBrandingStudio() {
   const [targetUrl, setTargetUrl] = useState("");
   const [printAddress, setPrintAddress] = useState("");
   const [quantity, setQuantity] = useState(1);
+  const [recipientName, setRecipientName] = useState("");
+  const [streetLine, setStreetLine] = useState("");
+  const [addressLine2, setAddressLine2] = useState("");
+  const [postalCode, setPostalCode] = useState("");
+  const [city, setCity] = useState("");
+  const [contactEmail, setContactEmail] = useState("");
+  const [contactPhone, setContactPhone] = useState("");
+  const [useRegisteredShipping, setUseRegisteredShipping] = useState(false);
+  const [registeredAddressBlob, setRegisteredAddressBlob] = useState("");
+  const [locationPrefill, setLocationPrefill] = useState("");
   const [orders, setOrders] = useState<PhysicalQrCustomerOrder[]>([]);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -102,19 +117,30 @@ export function PhysicalBrandingStudio() {
     const fromContext = branding?.registeredAddress?.trim() ?? "";
     if (fromContext) {
       setPrintAddress(fromContext);
-      return;
+      setRegisteredAddressBlob(fromContext);
     }
     let cancelled = false;
     void fetchBusinessProfile()
       .then((profile) => {
         if (cancelled) return;
-        setPrintAddress((profile.registeredAddress ?? profile.location ?? "").trim());
+        const registered = (profile.registeredAddress ?? fromContext).trim();
+        const location = (profile.location ?? "").trim();
+        setRegisteredAddressBlob(registered);
+        setLocationPrefill(location);
+        setPrintAddress((prev) => prev || registered || location);
+        setRecipientName((prev) => prev || (profile.legalContactName ?? user?.name ?? "").trim());
+        setContactEmail((prev) => prev || (profile.contactEmail ?? user?.email ?? "").trim());
+        setContactPhone((prev) => prev || (profile.contactPhone ?? "").trim());
       })
-      .catch(() => {});
+      .catch(() => {
+        if (cancelled) return;
+        setRecipientName((prev) => prev || (user?.name ?? "").trim());
+        setContactEmail((prev) => prev || (user?.email ?? "").trim());
+      });
     return () => {
       cancelled = true;
     };
-  }, [branding?.registeredAddress]);
+  }, [branding?.registeredAddress, user?.email, user?.name]);
 
   useEffect(() => {
     let cancelled = false;
@@ -198,11 +224,23 @@ export function PhysicalBrandingStudio() {
     }).format(cents / 100);
   const missingQr = !targetUrl || (qrContextType !== "storefront" && !qrSubjectId);
   const missingAddress = supportsAddress && !printAddress.trim();
+  const deliveryForm = {
+    recipientName,
+    streetLine,
+    addressLine2,
+    postalCode,
+    city,
+    country: PHYSICAL_QR_SHIP_COUNTRY,
+    email: contactEmail,
+    phone: contactPhone,
+  };
+  const missingDelivery = !physicalQrDeliveryIsComplete(deliveryForm);
   const canSubmit =
     canOrder &&
     Boolean(product?.checkoutReady) &&
     !missingQr &&
     !missingAddress &&
+    !missingDelivery &&
     !submitting;
   const setQty = (next: number) => setQuantity(Math.min(QTY_MAX, Math.max(QTY_MIN, next)));
 
@@ -224,6 +262,19 @@ export function PhysicalBrandingStudio() {
         qrSubjectId: qrContextType === "storefront" ? undefined : qrSubjectId,
         quantity,
         address: supportsAddress ? printAddress : undefined,
+        shipping: {
+          recipientName: recipientName.trim(),
+          streetLine: streetLine.trim(),
+          addressLine2: addressLine2.trim() || undefined,
+          postalCode: postalCode.trim(),
+          city: city.trim(),
+          country: PHYSICAL_QR_SHIP_COUNTRY,
+        },
+        contact: {
+          name: recipientName.trim(),
+          email: contactEmail.trim(),
+          phone: contactPhone.trim(),
+        },
         colorTokens: PHYSICAL_QR_DEFAULT_COLOR_TOKENS,
       });
       await startCheckout(order.id);
@@ -236,12 +287,19 @@ export function PhysicalBrandingStudio() {
     }
   }, [
     canSubmit,
+    city,
+    contactEmail,
+    contactPhone,
     printAddress,
     product,
     qrContextType,
     qrSubjectId,
     quantity,
+    recipientName,
     startCheckout,
+    streetLine,
+    addressLine2,
+    postalCode,
     supportsAddress,
     t,
   ]);
@@ -326,7 +384,7 @@ export function PhysicalBrandingStudio() {
           </div>
         </StudioField>
 
-        <aside className="h-fit space-y-2 lg:sticky lg:top-4 lg:col-start-2 lg:row-span-5 lg:row-start-1">
+        <aside className="h-fit space-y-2 lg:sticky lg:top-4 lg:col-start-2 lg:row-span-7 lg:row-start-1">
           <p className="text-sm font-medium tracking-tight lg:hidden">
             {t("business.qrStudio.physical.preview")}
           </p>
@@ -391,6 +449,116 @@ export function PhysicalBrandingStudio() {
         ) : (
           <p className="text-sm text-muted-foreground lg:col-start-1">{t("business.qrStudio.physical.noAddressNote")}</p>
         )}
+
+        <StudioField
+          title={t("business.qrStudio.physical.deliveryTitle")}
+          hint={t("business.qrStudio.physical.deliveryHint")}
+        >
+          <div className="space-y-3">
+            <label className="flex items-start gap-2 text-sm">
+              <input
+                type="checkbox"
+                className="mt-1"
+                checked={useRegisteredShipping}
+                onChange={(e) => {
+                  const next = e.target.checked;
+                  setUseRegisteredShipping(next);
+                  if (next) {
+                    setStreetLine(registeredAddressBlob);
+                    if (locationPrefill) setCity(locationPrefill);
+                  }
+                }}
+              />
+              <span>{t("business.qrStudio.physical.useRegisteredAddress")}</span>
+            </label>
+            <div className="space-y-1">
+              <Label htmlFor="physical-recipient">{t("business.qrStudio.physical.recipientName")}</Label>
+              <Input
+                id="physical-recipient"
+                value={recipientName}
+                onChange={(e) => setRecipientName(e.target.value)}
+                autoComplete="name"
+                maxLength={120}
+              />
+            </div>
+            <div className="space-y-1">
+              <Label htmlFor="physical-street">{t("business.qrStudio.physical.streetLine")}</Label>
+              <Input
+                id="physical-street"
+                value={streetLine}
+                onChange={(e) => setStreetLine(e.target.value)}
+                autoComplete="address-line1"
+                maxLength={200}
+              />
+            </div>
+            <div className="space-y-1">
+              <Label htmlFor="physical-street2">{t("business.qrStudio.physical.addressLine2")}</Label>
+              <Input
+                id="physical-street2"
+                value={addressLine2}
+                onChange={(e) => setAddressLine2(e.target.value)}
+                autoComplete="address-line2"
+                maxLength={120}
+              />
+            </div>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div className="space-y-1">
+                <Label htmlFor="physical-postal">{t("business.qrStudio.physical.postalCode")}</Label>
+                <Input
+                  id="physical-postal"
+                  value={postalCode}
+                  onChange={(e) => setPostalCode(e.target.value)}
+                  autoComplete="postal-code"
+                  inputMode="numeric"
+                  maxLength={5}
+                />
+              </div>
+              <div className="space-y-1">
+                <Label htmlFor="physical-city">{t("business.qrStudio.physical.city")}</Label>
+                <Input
+                  id="physical-city"
+                  value={city}
+                  onChange={(e) => setCity(e.target.value)}
+                  autoComplete="address-level2"
+                  maxLength={100}
+                />
+              </div>
+            </div>
+            <div className="space-y-1">
+              <Label htmlFor="physical-country">{t("business.qrStudio.physical.country")}</Label>
+              <Input
+                id="physical-country"
+                value={t("business.qrStudio.physical.countryGermany")}
+                readOnly
+                disabled
+              />
+            </div>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div className="space-y-1">
+                <Label htmlFor="physical-email">{t("business.qrStudio.physical.email")}</Label>
+                <Input
+                  id="physical-email"
+                  type="email"
+                  value={contactEmail}
+                  onChange={(e) => setContactEmail(e.target.value)}
+                  autoComplete="email"
+                  maxLength={160}
+                />
+              </div>
+              <div className="space-y-1">
+                <Label htmlFor="physical-phone">{t("business.qrStudio.physical.phone")}</Label>
+                <Input
+                  id="physical-phone"
+                  type="tel"
+                  value={contactPhone}
+                  onChange={(e) => setContactPhone(e.target.value)}
+                  autoComplete="tel"
+                  maxLength={32}
+                />
+              </div>
+            </div>
+          </div>
+        </StudioField>
 
         <StudioField title={t("business.qrStudio.physical.order")}>
           <div className="space-y-4">
@@ -457,6 +625,25 @@ export function PhysicalBrandingStudio() {
             {missingQr ? <p className="text-sm text-muted-foreground">{t("business.qrStudio.physical.needQr")}</p> : null}
             {missingAddress ? (
               <p className="text-sm text-muted-foreground">{t("business.qrStudio.physical.needAddress")}</p>
+            ) : null}
+            {missingDelivery ? (
+              <p className="text-sm text-muted-foreground">{t("business.qrStudio.physical.needDelivery")}</p>
+            ) : null}
+
+            {!missingDelivery && product ? (
+              <div className="space-y-1 rounded-md border border-border px-3 py-2 text-sm">
+                <p className="font-medium">{t("business.qrStudio.physical.reviewTitle")}</p>
+                <p className="text-muted-foreground">
+                  {product.name} · {t("business.qrStudio.physical.orders.qtyShort", { count: quantity })}
+                  {product.priceCents != null
+                    ? ` · ${formatEur(product.priceCents * quantity)}`
+                    : ""}
+                </p>
+                <p>
+                  {t("business.qrStudio.physical.reviewShipTo")}: {recipientName}, {streetLine}, {postalCode} {city},{" "}
+                  {PHYSICAL_QR_SHIP_COUNTRY}
+                </p>
+              </div>
             ) : null}
 
             <Button type="button" disabled={!canSubmit} onClick={() => void placeOrder()}>

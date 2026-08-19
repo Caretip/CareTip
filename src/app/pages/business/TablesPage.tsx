@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router";
 import { useTranslation } from "react-i18next";
-import { Copy, LayoutGrid } from "lucide-react";
+import { Copy, Download, Eye, LayoutGrid, Printer } from "lucide-react";
 import { toast } from "sonner";
 import { useRequireAuth } from "../../hooks/useRequireAuth";
 import { useSubscriptionEntitlements } from "../../hooks/useSubscriptionEntitlements";
@@ -15,6 +15,9 @@ import {
 import { toUserFriendlyMessage } from "../../lib/errorMessages";
 import { logClientError } from "../../lib/clientLog";
 import { qrTableUrl } from "../../lib/appPublicUrl";
+import { PLAIN_QR_PREVIEW_WIDTH_PX, renderPlainQrUrlToDataUrl } from "../../lib/plainQr";
+import { downloadQrDataUrlPng, printQrDataUrl } from "../../lib/qrExport";
+import { canUseProductionQr } from "../../lib/businessVerificationCapabilities";
 import { LoadingSpinner } from "../../components/ui/loading-spinner";
 import { TablesListSkeleton } from "../../components/dashboard/DashboardSectionLoading";
 import { useBusinessPageBoot } from "../../lib/useBusinessPageBoot";
@@ -42,7 +45,7 @@ type TablesPageCache = { locations: LocationDTO[]; tables: TableDTO[] };
 
 export function TablesPage({ embedded = false }: { embedded?: boolean } = {}) {
   const { t } = useTranslation();
-  const { isBusiness } = useRequireAuth();
+  const { user, isBusiness } = useRequireAuth();
   const { tier, ready, hasFeature, limits } = useSubscriptionEntitlements({
     enabled: isBusiness,
     role: "business",
@@ -55,6 +58,12 @@ export function TablesPage({ embedded = false }: { embedded?: boolean } = {}) {
   const [saving, setSaving] = useState(false);
   const [tableName, setTableName] = useState("");
   const [locationId, setLocationId] = useState("");
+  const [qrImages, setQrImages] = useState<Record<string, string>>({});
+  const [previewTableId, setPreviewTableId] = useState<string | null>(null);
+  const qrLocked = !canUseProductionQr(
+    user?.onboardingVerificationStatus,
+    Boolean(user?.impersonation),
+  );
   const atTableCap =
     ready &&
     tableQrEnabled &&
@@ -110,11 +119,103 @@ export function TablesPage({ embedded = false }: { embedded?: boolean } = {}) {
     void loadAll();
   }, [loadAll]);
 
+  useEffect(() => {
+    if (tables.length === 0) {
+      setQrImages({});
+      return;
+    }
+    let cancelled = false;
+    void (async () => {
+      const next: Record<string, string> = {};
+      await Promise.all(
+        tables.map(async (row) => {
+          try {
+            next[row.id] = await renderPlainQrUrlToDataUrl(qrTableUrl(row.id), {
+              width: PLAIN_QR_PREVIEW_WIDTH_PX,
+            });
+          } catch (err) {
+            logClientError("TablesPage.plainQr", err);
+            next[row.id] = "";
+          }
+        }),
+      );
+      if (!cancelled) setQrImages(next);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [tables]);
+
   const tableUrl = (tableId: string) => qrTableUrl(tableId);
 
   const copyLink = (tableId: string) => {
     void navigator.clipboard.writeText(tableUrl(tableId));
   };
+
+  const previewTable = previewTableId ? tables.find((row) => row.id === previewTableId) : null;
+
+  const downloadTablePng = (row: TableDTO) => {
+    if (qrLocked) return;
+    const dataUrl = qrImages[row.id];
+    if (!dataUrl) {
+      toast.error(t("business.qrPage.toastQrNotReady"));
+      return;
+    }
+    const safe = row.name.replace(/\s+/g, "-").toLowerCase();
+    downloadQrDataUrlPng(dataUrl, `caretip-table-${safe}-${row.id.slice(0, 8)}.png`, {
+      exportAllowed: true,
+    });
+  };
+
+  const printTableQr = (row: TableDTO) => {
+    if (qrLocked) return;
+    const dataUrl = qrImages[row.id];
+    if (!dataUrl) {
+      toast.error(t("business.qrPage.toastQrNotReady"));
+      return;
+    }
+    if (!printQrDataUrl(dataUrl, row.name, { exportAllowed: true })) {
+      toast.error(t("business.qrPage.toastPopupsPdf"));
+    }
+  };
+
+  const tableQrActions = (row: TableDTO) => (
+    <>
+      <Button
+        type="button"
+        size="sm"
+        variant="outline"
+        onClick={() => setPreviewTableId(row.id)}
+        disabled={!qrImages[row.id]}
+        className="h-8"
+      >
+        <Eye className="mr-1.5 h-3.5 w-3.5" />
+        {t("business.qrStudio.gallery.preview")}
+      </Button>
+      <Button
+        type="button"
+        size="sm"
+        variant="outline"
+        onClick={() => downloadTablePng(row)}
+        disabled={qrLocked || !qrImages[row.id]}
+        className="h-8"
+      >
+        <Download className="mr-1.5 h-3.5 w-3.5" />
+        {t("business.qrStudio.gallery.downloadPng")}
+      </Button>
+      <Button
+        type="button"
+        size="sm"
+        variant="outline"
+        onClick={() => printTableQr(row)}
+        disabled={qrLocked || !qrImages[row.id]}
+        className="h-8"
+      >
+        <Printer className="mr-1.5 h-3.5 w-3.5" />
+        {t("business.qrPage.print")}
+      </Button>
+    </>
+  );
 
   const handleSave = async () => {
     const trimmed = tableName.trim();
@@ -233,8 +334,10 @@ export function TablesPage({ embedded = false }: { embedded?: boolean } = {}) {
                     name={row.name}
                     locationName={row.location.name}
                     guestUrl={tableUrl(row.id)}
+                    qrDataUrl={qrImages[row.id]}
                     onCopy={() => copyLink(row.id)}
                     copyLabel={t("business.tablesPage.copy")}
+                    extraActions={tableQrActions(row)}
                   />
                 ))}
               </>
@@ -246,7 +349,8 @@ export function TablesPage({ embedded = false }: { embedded?: boolean } = {}) {
                     <th className="px-4 py-3 font-medium text-foreground">{t("business.tablesPage.thTable")}</th>
                     <th className="px-4 py-3 font-medium text-foreground">{t("business.tablesPage.thLocation")}</th>
                     <th className="px-4 py-3 font-medium text-foreground">{t("business.tablesPage.thGuestLink")}</th>
-                    <th className="px-4 py-3 w-24" />
+                    <th className="px-4 py-3 font-medium text-foreground">{t("business.qrStudio.gallery.preview")}</th>
+                    <th className="px-4 py-3 w-48" />
                   </tr>
                 </thead>
                 <tbody>
@@ -258,14 +362,31 @@ export function TablesPage({ embedded = false }: { embedded?: boolean } = {}) {
                         <code className="text-xs break-all text-muted-foreground">{tableUrl(row.id)}</code>
                       </td>
                       <td className="px-4 py-3">
-                        <button
-                          type="button"
-                          onClick={() => copyLink(row.id)}
-                          className="inline-flex items-center gap-1 text-xs font-medium px-2 py-1 rounded-md border border-border hover:bg-muted"
-                        >
-                          <Copy className="w-3.5 h-3.5" />
-                          {t("business.tablesPage.copy")}
-                        </button>
+                        {qrImages[row.id] ? (
+                          <button
+                            type="button"
+                            onClick={() => setPreviewTableId(row.id)}
+                            className="block rounded-lg border border-black/[0.08] bg-white p-1"
+                            aria-label={t("business.qrStudio.gallery.previewAssetAria")}
+                          >
+                            <img src={qrImages[row.id]} alt="" className="h-14 w-14 object-contain" />
+                          </button>
+                        ) : (
+                          <LoadingSpinner size="sm" />
+                        )}
+                      </td>
+                      <td className="px-4 py-3">
+                        <div className="flex flex-wrap items-center gap-1.5">
+                          <button
+                            type="button"
+                            onClick={() => copyLink(row.id)}
+                            className="inline-flex items-center gap-1 text-xs font-medium px-2 py-1 rounded-md border border-border hover:bg-muted"
+                          >
+                            <Copy className="w-3.5 h-3.5" />
+                            {t("business.tablesPage.copy")}
+                          </button>
+                          {tableQrActions(row)}
+                        </div>
                       </td>
                     </tr>
                   ))}
@@ -325,6 +446,53 @@ export function TablesPage({ embedded = false }: { embedded?: boolean } = {}) {
               {saving ? <LoadingSpinner size="sm" /> : t("business.tablesPage.save")}
             </Button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={previewTableId != null} onOpenChange={(open) => !open && setPreviewTableId(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>{previewTable?.name ?? t("business.tablesPage.title")}</DialogTitle>
+            <DialogDescription>
+              {previewTable?.location.name}
+            </DialogDescription>
+          </DialogHeader>
+          {previewTable && qrImages[previewTable.id] ? (
+            <div className="flex justify-center rounded-xl border bg-white p-4">
+              <img
+                src={qrImages[previewTable.id]}
+                alt=""
+                className="max-h-[min(60vh,360px)] w-full object-contain"
+              />
+            </div>
+          ) : null}
+          {previewTable ? (
+            <div className="flex flex-wrap justify-end gap-2">
+              <Button type="button" variant="outline" size="sm" onClick={() => copyLink(previewTable.id)}>
+                <Copy className="mr-2 h-4 w-4" />
+                {t("business.tablesPage.copy")}
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                onClick={() => downloadTablePng(previewTable)}
+                disabled={qrLocked}
+              >
+                <Download className="mr-2 h-4 w-4" />
+                {t("business.qrStudio.gallery.downloadPng")}
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                onClick={() => printTableQr(previewTable)}
+                disabled={qrLocked}
+              >
+                <Printer className="mr-2 h-4 w-4" />
+                {t("business.qrPage.print")}
+              </Button>
+            </div>
+          ) : null}
         </DialogContent>
       </Dialog>
     </div>

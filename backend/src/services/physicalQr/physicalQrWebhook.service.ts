@@ -1,7 +1,6 @@
 import type Stripe from "stripe";
 import { prisma } from "../../prisma.js";
 import { PHYSICAL_QR_CHECKOUT_METADATA_SOURCE } from "../../config/physicalQrCheckout.js";
-import { logServerError } from "../../utils/httpErrors.js";
 
 export async function handlePhysicalQrCheckoutSessionCompleted(
   session: Stripe.Checkout.Session,
@@ -53,23 +52,8 @@ export async function handlePhysicalQrCheckoutSessionCompleted(
 }
 
 export async function handlePhysicalQrCheckoutExpired(session: Stripe.Checkout.Session): Promise<void> {
-  const orderId = session.metadata?.orderId?.trim();
-  if (!orderId || session.metadata?.source !== PHYSICAL_QR_CHECKOUT_METADATA_SOURCE) return;
-  try {
-    await prisma.physicalQrOrder.updateMany({
-      where: {
-        id: orderId,
-        paymentStatus: "PENDING",
-        fulfillmentStatus: "PENDING_PAYMENT",
-      },
-      data: {
-        paymentStatus: "CANCELLED",
-        fulfillmentStatus: "CANCELLED",
-      },
-    });
-  } catch (err) {
-    logServerError("physicalQr.checkout.expired", err, { orderId });
-  }
+  if (session.metadata?.source !== PHYSICAL_QR_CHECKOUT_METADATA_SOURCE) return;
+  // Expired Checkout remains payable. Pay now creates a new Session on the same order.
 }
 
 export async function handlePhysicalQrPaymentFailed(paymentIntent: Stripe.PaymentIntent): Promise<void> {

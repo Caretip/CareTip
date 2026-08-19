@@ -6,6 +6,7 @@ import {
   PHYSICAL_QR_CHECKOUT_METADATA_SOURCE,
   assertPhysicalQrCheckoutReady,
 } from "../../config/physicalQrCheckout.js";
+import { readPhysicalQrContactSnapshot } from "../../lib/physicalQr/shipping.js";
 import { PhysicalQrOrderError, getPhysicalQrOrderForBusiness } from "./physicalQrOrder.service.js";
 
 /**
@@ -37,10 +38,19 @@ export async function createPhysicalQrCheckoutSession(input: {
 
   const base = resolveCheckoutFrontendBaseUrl().replace(/\/+$/, "");
   const stripe = getStripeClient();
+  if (order.stripeCheckoutSessionId) {
+    try {
+      await stripe.checkout.sessions.expire(order.stripeCheckoutSessionId);
+    } catch {
+      /* Previous session may already be expired or completed. */
+    }
+  }
+  const contact = readPhysicalQrContactSnapshot(order.contactSnapshot);
   const session = await stripe.checkout.sessions.create({
     mode: "payment",
     success_url: `${base}/dashboard/qr-studio/branding/orders/${order.id}?checkout=success`,
     cancel_url: `${base}/dashboard/qr-studio/branding/orders/${order.id}?checkout=canceled`,
+    ...(contact?.email ? { customer_email: contact.email } : {}),
     line_items: [
       {
         quantity: order.quantity,
