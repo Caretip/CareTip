@@ -1,13 +1,18 @@
 import { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router";
 import { useTranslation } from "react-i18next";
-import { MapPin } from "lucide-react";
+import { MapPin, Pencil, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { useRequireAuth } from "../../hooks/useRequireAuth";
 import { useSubscriptionEntitlements } from "../../hooks/useSubscriptionEntitlements";
 import { LocationsMultiLocationUpgradeCard } from "../../components/business/LocationsMultiLocationUpgradeCard";
 import { fetchLocationsCached, invalidateVenueCatalog } from "../../lib/businessVenueCatalog";
-import { createLocationAPI, type LocationDTO } from "../../lib/api";
+import {
+  createLocationAPI,
+  deleteLocationAPI,
+  updateLocationAPI,
+  type LocationDTO,
+} from "../../lib/api";
 import { toUserFriendlyMessage } from "../../lib/errorMessages";
 import { logClientError } from "../../lib/clientLog";
 import { LoadingSpinner } from "../../components/ui/loading-spinner";
@@ -44,7 +49,10 @@ export function LocationsPage() {
   const [locations, setLocations] = useState<LocationDTO[]>([]);
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
+  const [editing, setEditing] = useState<LocationDTO | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<LocationDTO | null>(null);
   const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
 
@@ -90,6 +98,28 @@ export function LocationsPage() {
   const isInitialLocationsLoad = loading && locations.length === 0;
   const { showInitialSkeleton } = useBusinessPageBoot("locations", isInitialLocationsLoad);
 
+  const openCreate = () => {
+    setEditing(null);
+    setName("");
+    setDescription("");
+    setModalOpen(true);
+  };
+
+  const openEdit = (loc: LocationDTO) => {
+    setEditing(loc);
+    setName(loc.name);
+    setDescription(loc.description ?? "");
+    setModalOpen(true);
+  };
+
+  const closeModal = () => {
+    if (saving) return;
+    setModalOpen(false);
+    setEditing(null);
+    setName("");
+    setDescription("");
+  };
+
   const handleSave = async () => {
     const trimmed = name.trim();
     if (!trimmed) {
@@ -98,11 +128,21 @@ export function LocationsPage() {
     }
     setSaving(true);
     try {
-      await createLocationAPI({
-        name: trimmed,
-        description: description.trim() || undefined,
-      });
+      if (editing) {
+        await updateLocationAPI(editing.id, {
+          name: trimmed,
+          description: description.trim() || null,
+        });
+        toast.success(t("business.locationsPage.toastUpdated"));
+      } else {
+        await createLocationAPI({
+          name: trimmed,
+          description: description.trim() || undefined,
+        });
+        toast.success(t("business.locationsPage.toastCreated"));
+      }
       setModalOpen(false);
+      setEditing(null);
       setName("");
       setDescription("");
       invalidateVenueCatalog();
@@ -112,6 +152,23 @@ export function LocationsPage() {
       toast.error(toUserFriendlyMessage(e));
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!deleteTarget) return;
+    setDeleting(true);
+    try {
+      await deleteLocationAPI(deleteTarget.id);
+      toast.success(t("business.locationsPage.toastDeleted"));
+      setDeleteTarget(null);
+      invalidateVenueCatalog();
+      await load();
+    } catch (e) {
+      logClientError("LocationsPage", e);
+      toast.error(toUserFriendlyMessage(e));
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -134,7 +191,7 @@ export function LocationsPage() {
             actions={
               <Button
                 type="button"
-                onClick={() => setModalOpen(true)}
+                onClick={openCreate}
                 disabled={!isBusiness || atSingleLocationCap}
                 className={cn(businessUi.btnPrimary, "w-full sm:w-auto")}
               >
@@ -168,11 +225,33 @@ export function LocationsPage() {
                 >
                   <MapPin className="w-5 h-5" style={{ color: ACTION_TEAL }} />
                 </div>
-                <div className="min-w-0">
+                <div className="min-w-0 flex-1">
                   <p className="font-semibold text-foreground">{loc.name}</p>
                   {loc.description ? (
                     <p className="text-sm text-muted-foreground mt-1 line-clamp-3">{loc.description}</p>
                   ) : null}
+                </div>
+                <div className="flex shrink-0 items-center gap-1">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="h-9 w-9"
+                    aria-label={t("business.locationsPage.editAria", { name: loc.name })}
+                    onClick={() => openEdit(loc)}
+                  >
+                    <Pencil className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="h-9 w-9 text-destructive hover:text-destructive"
+                    aria-label={t("business.locationsPage.deleteAria", { name: loc.name })}
+                    onClick={() => setDeleteTarget(loc)}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
                 </div>
               </li>
             ))}
@@ -185,11 +264,19 @@ export function LocationsPage() {
         ) : null}
       </div>
 
-      <Dialog open={modalOpen} onOpenChange={setModalOpen}>
+      <Dialog open={modalOpen} onOpenChange={(open) => (open ? setModalOpen(true) : closeModal())}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>{t("business.locationsPage.dialogTitle")}</DialogTitle>
-            <DialogDescription>{t("business.locationsPage.dialogDesc")}</DialogDescription>
+            <DialogTitle>
+              {editing
+                ? t("business.locationsPage.editDialogTitle")
+                : t("business.locationsPage.dialogTitle")}
+            </DialogTitle>
+            <DialogDescription>
+              {editing
+                ? t("business.locationsPage.editDialogDesc")
+                : t("business.locationsPage.dialogDesc")}
+            </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-2">
             <div className="space-y-2">
@@ -218,7 +305,7 @@ export function LocationsPage() {
             </div>
           </div>
           <DialogFooter className="gap-2 sm:gap-0">
-            <Button type="button" variant="outline" onClick={() => setModalOpen(false)} disabled={saving}>
+            <Button type="button" variant="outline" onClick={closeModal} disabled={saving}>
               {t("business.locationsPage.cancel")}
             </Button>
             <Button
@@ -228,6 +315,42 @@ export function LocationsPage() {
               style={{ backgroundColor: ACTION_TEAL }}
             >
               {saving ? <LoadingSpinner size="sm" /> : t("business.locationsPage.save")}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={deleteTarget != null}
+        onOpenChange={(open) => {
+          if (!open && !deleting) setDeleteTarget(null);
+        }}
+      >
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>{t("business.locationsPage.deleteConfirmTitle")}</DialogTitle>
+            <DialogDescription>
+              {t("business.locationsPage.deleteConfirmBody", {
+                name: deleteTarget?.name ?? "",
+              })}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setDeleteTarget(null)}
+              disabled={deleting}
+            >
+              {t("business.locationsPage.cancel")}
+            </Button>
+            <Button
+              type="button"
+              variant="destructive"
+              onClick={() => void handleDeleteConfirm()}
+              disabled={deleting}
+            >
+              {deleting ? <LoadingSpinner size="sm" /> : t("business.locationsPage.delete")}
             </Button>
           </DialogFooter>
         </DialogContent>

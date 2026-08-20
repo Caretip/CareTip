@@ -66,3 +66,57 @@ export async function assertLocationOwnedByBusiness(locationId: string, business
   }
   return loc;
 }
+
+async function resolveBusinessIdForUser(userId: string): Promise<string> {
+  const business = await prisma.business.findUnique({
+    where: { userId },
+    select: { id: true },
+  });
+  if (!business) {
+    throw new Error("Business not found");
+  }
+  return business.id;
+}
+
+export async function updateLocationForBusinessUser(
+  userId: string,
+  locationId: string,
+  name: string,
+  description?: string | null,
+) {
+  const trimmed = name.trim();
+  if (!trimmed) {
+    throw new Error("Location name is required");
+  }
+  const businessId = await resolveBusinessIdForUser(userId);
+  const entitlements = await resolveSubscriptionEntitlements(businessId);
+  if (!entitlements.hasActiveEntitlements) {
+    throw new Error("An active subscription is required to manage locations.");
+  }
+  await assertLocationOwnedByBusiness(locationId, businessId);
+  const data: { name: string; description?: string | null } = { name: trimmed };
+  if (typeof description === "string") {
+    const desc = description.trim();
+    data.description = desc.length > 0 ? desc : null;
+  }
+  const loc = await prisma.location.update({
+    where: { id: locationId },
+    data,
+  });
+  emitBusinessDataChanged(businessId, "location_updated");
+  invalidateBusinessStatsCache(businessId);
+  return loc;
+}
+
+export async function deleteLocationForBusinessUser(userId: string, locationId: string) {
+  const businessId = await resolveBusinessIdForUser(userId);
+  const entitlements = await resolveSubscriptionEntitlements(businessId);
+  if (!entitlements.hasActiveEntitlements) {
+    throw new Error("An active subscription is required to manage locations.");
+  }
+  await assertLocationOwnedByBusiness(locationId, businessId);
+  // Cascades venue tables; tip history / employees keep rows with locationId set null.
+  await prisma.location.delete({ where: { id: locationId } });
+  emitBusinessDataChanged(businessId, "location_deleted");
+  invalidateBusinessStatsCache(businessId);
+}

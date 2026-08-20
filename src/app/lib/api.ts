@@ -3650,6 +3650,26 @@ export async function createLocationAPI(payload: {
   });
 }
 
+export async function updateLocationAPI(
+  locationId: string,
+  payload: { name: string; description?: string | null },
+): Promise<LocationDTO> {
+  return apiRequest<LocationDTO>(apiPath(`/api/locations/${encodeURIComponent(locationId)}`), {
+    method: "PATCH",
+    headers: getHeaders(),
+    body: JSON.stringify(payload),
+    credentials: "include",
+  });
+}
+
+export async function deleteLocationAPI(locationId: string): Promise<void> {
+  await apiRequest<void>(apiPath(`/api/locations/${encodeURIComponent(locationId)}`), {
+    method: "DELETE",
+    headers: getHeaders(),
+    credentials: "include",
+  });
+}
+
 export interface TableDTO {
   id: string;
   name: string;

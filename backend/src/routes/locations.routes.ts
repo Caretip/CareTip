@@ -22,5 +22,21 @@ router.post(
   requireOperationalSubscription(),
   locationsController.createLocation,
 );
+router.patch(
+  "/:id",
+  authMiddleware,
+  requireVerifiedEmail,
+  requireRole(Role.MANAGER),
+  requireOperationalSubscription(),
+  locationsController.updateLocation,
+);
+router.delete(
+  "/:id",
+  authMiddleware,
+  requireVerifiedEmail,
+  requireRole(Role.MANAGER),
+  requireOperationalSubscription(),
+  locationsController.deleteLocation,
+);
 
 export default router;
