@@ -1,79 +1,56 @@
-import { useCallback, useEffect, useId, useMemo, useState } from "react";
+import { useCallback, useEffect, useId } from "react";
 import { Link } from "react-router";
 import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import {
-  addDismissedFixId,
-  readDismissedFixIds,
-  removeDismissedFixId,
-  type FixPromptDismissPersistence,
-} from "../lib/fixPromptStorage";
+import { useSetupPromptIntelligence } from "../hooks/useSetupPromptIntelligence";
+import type { SetupPromptKind } from "../lib/setupNotificationIntelligence";
 
-/** Known dashboard fix prompts — extend as new prompts are added. */
+/** Dashboard setup prompts — lifecycle is server Class S intelligence. */
 export const FIX_PROMPT_IDS = [
   "missingQR",
   "pendingVerification",
   "stripeConnect",
   "profilePhoto",
-  "platformDataLoad",
 ] as const;
 
 export type FixPromptId = (typeof FIX_PROMPT_IDS)[number];
 
-export type FixPromptTone = "default" | "info";
+const ID_TO_KIND: Record<FixPromptId, SetupPromptKind> = {
+  missingQR: "missing_employee_qr",
+  pendingVerification: "onboarding_verification",
+  stripeConnect: "stripe_connect",
+  profilePhoto: "profile_photo",
+};
 
+export type FixPromptTone = "default" | "info";
 export type FixPromptDensity = "default" | "compact";
 
 export type FixPromptProps = {
   id: FixPromptId;
-  /** When false, the prompt is hidden and this id is removed from dismissed storage. */
   issueActive: boolean;
+  /** Fingerprint of the unresolved condition (e.g. not_ready, rejected). */
+  conditionVersion: string;
   title: string;
   description?: string;
-  /** Slim status-bar layout for unobtrusive dashboard notices. */
   density?: FixPromptDensity;
-  /** Primary CTA; omit for dismiss-only informational prompts. */
   actionLabel?: string;
-  /** Navigate on primary action (preferred for in-app routes). */
   actionTo?: string;
-  /** Run on primary action when not using `actionTo`. */
   onAction?: () => void;
   secondaryLabel?: string;
   secondaryTo?: string;
   onSecondaryClick?: () => void;
-  dismissPersistence?: FixPromptDismissPersistence;
+  /** @deprecated Ignored — dismiss is server-backed. Kept for call-site compatibility. */
+  dismissPersistence?: "local" | "session";
   tone?: FixPromptTone;
   className?: string;
+  enabled?: boolean;
 };
-
-function useFixPromptVisibility(
-  id: FixPromptId,
-  issueActive: boolean,
-  dismissPersistence: FixPromptDismissPersistence,
-) {
-  const [epoch, setEpoch] = useState(0);
-
-  useEffect(() => {
-    if (!issueActive) {
-      removeDismissedFixId(id);
-    }
-  }, [issueActive, id]);
-
-  const dismissed = useMemo(() => readDismissedFixIds(dismissPersistence).includes(id), [dismissPersistence, id, epoch]);
-
-  const dismiss = useCallback(() => {
-    addDismissedFixId(id, dismissPersistence);
-    setEpoch((e) => e + 1);
-  }, [id, dismissPersistence]);
-
-  const visible = issueActive && !dismissed;
-  return { visible, dismiss };
-}
 
 export function FixPrompt({
   id,
   issueActive,
+  conditionVersion,
   title,
   description,
   actionLabel,
@@ -82,16 +59,22 @@ export function FixPrompt({
   secondaryLabel,
   secondaryTo,
   onSecondaryClick,
-  dismissPersistence = "local",
   tone = "default",
   density = "default",
   className,
+  enabled = true,
 }: FixPromptProps) {
   const panelId = useId();
-  const { visible, dismiss } = useFixPromptVisibility(id, issueActive, dismissPersistence);
+  const kind = ID_TO_KIND[id];
+  const { loading, show, dismiss, markActioned } = useSetupPromptIntelligence({
+    kind,
+    conditionActive: issueActive,
+    conditionVersion,
+    enabled,
+  });
 
   useEffect(() => {
-    if (!visible) return;
+    if (!show) return;
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
         e.preventDefault();
@@ -100,14 +83,18 @@ export function FixPrompt({
     };
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [visible, dismiss]);
+  }, [show, dismiss]);
 
-  if (!visible) return null;
+  const handlePrimaryClick = useCallback(() => {
+    markActioned();
+    onAction?.();
+  }, [markActioned, onAction]);
+
+  if (loading || !show) return null;
 
   const hasSecondary = Boolean(secondaryLabel && (secondaryTo || onSecondaryClick));
   const hasPrimary = Boolean(actionLabel && (actionTo || onAction));
   const hasActions = hasSecondary || hasPrimary;
-
   const compact = density === "compact";
 
   const shell =
@@ -185,10 +172,16 @@ export function FixPrompt({
             {hasPrimary ? (
               actionTo ? (
                 <Button className="h-9 shrink-0 bg-primary hover:bg-primary/90" asChild>
-                  <Link to={actionTo}>{actionLabel}</Link>
+                  <Link to={actionTo} onClick={() => markActioned()}>
+                    {actionLabel}
+                  </Link>
                 </Button>
               ) : (
-                <Button type="button" className="h-9 shrink-0 bg-primary hover:bg-primary/90" onClick={onAction}>
+                <Button
+                  type="button"
+                  className="h-9 shrink-0 bg-primary hover:bg-primary/90"
+                  onClick={handlePrimaryClick}
+                >
                   {actionLabel}
                 </Button>
               )

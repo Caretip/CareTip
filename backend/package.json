@@ -71,6 +71,8 @@
     "test:file-upload-pentest": "tsx scripts/file-upload-pentest.ts",
     "test:physical-qr": "tsx scripts/physical-qr-runtime.ts",
     "test:digital-plain-qr": "tsx scripts/digital-plain-qr-runtime.ts",
+    "test:employee-assignment-visibility": "dotenv -e ../.env -e .env -- tsx scripts/employee-assignment-visibility-runtime.ts",
+    "test:notification-intelligence": "dotenv -e ../.env -e .env -- tsx scripts/notification-intelligence-runtime.ts",
     "test:payment-pentest": "tsx scripts/payment-pentest.ts",
     "test:stripe-connect-accounts-v2": "dotenv -e ../.env -e .env -- tsx scripts/stripe-connect-accounts-v2-runtime.ts",
     "test:stripe-connect-phase1": "dotenv -e ../.env -e .env -- tsx scripts/stripe-connect-phase1-runtime.ts",

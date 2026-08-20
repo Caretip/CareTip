@@ -23,7 +23,7 @@ type PdfCopy = {
 
 const COPY: Record<EmployeeDataExportPdfLocale, PdfCopy> = {
   en: {
-    title: "CareTip — My Data Export",
+    title: "CareTip: My Data Export",
     exportDate: "Export date",
     profileHeading: "My Profile",
     name: "Name",
@@ -40,7 +40,7 @@ const COPY: Record<EmployeeDataExportPdfLocale, PdfCopy> = {
     emptyValue: "—",
   },
   de: {
-    title: "CareTip — Mein Datenexport",
+    title: "CareTip: Mein Datenexport",
     exportDate: "Exportdatum",
     profileHeading: "Mein Profil",
     name: "Name",

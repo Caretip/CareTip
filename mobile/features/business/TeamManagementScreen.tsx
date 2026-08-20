@@ -117,7 +117,7 @@ export function TeamManagementScreen() {
       />
 
       <Section title={t("team.addEmployeeTitle")}>
-        <View style={styles.inviteCard}>
+        <View style={styles.inviteBlock}>
           <Text style={styles.inviteBody}>{t("team.addEmployeeBody")}</Text>
           <Button
             label={inviteCode ? t("team.regenerateInvite") : t("team.generateInvite")}
@@ -209,13 +209,8 @@ export function TeamManagementScreen() {
 
 function createStyles(colors: ColorPalette) {
   return StyleSheet.create({
-    inviteCard: {
+    inviteBlock: {
       gap: spacing.md,
-      padding: spacing.lg,
-      borderRadius: 16,
-      backgroundColor: colors.card,
-      borderWidth: StyleSheet.hairlineWidth,
-      borderColor: colors.border,
     },
     inviteBody: {
       ...typography.body,

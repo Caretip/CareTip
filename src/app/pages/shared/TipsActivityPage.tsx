@@ -353,8 +353,14 @@ export function TipsActivityPage({ variant = "default", embedded = false }: Tips
           <div className={cn(ui.tablePanel, "overflow-hidden")}>
             <EmptyState
               icon={<CreditCard className="h-6 w-6" aria-hidden />}
-              title={t("emptyState.tips.title")}
-              description={t("emptyState.tips.description")}
+              title={
+                isEmployeeHistory
+                  ? t("emptyState.tips.title")
+                  : t("business.tipsActivity.empty")
+              }
+              description={
+                isEmployeeHistory ? t("emptyState.tips.description") : undefined
+              }
               compact
             />
           </div>

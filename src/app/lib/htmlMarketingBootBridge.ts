@@ -23,7 +23,7 @@ export function setHtmlBootBridgeTagline(message: string | undefined): void {
   if (el.textContent === next) return;
   el.textContent = next;
   const boot = document.getElementById(BOOT_ID);
-  if (boot) boot.setAttribute("aria-label", `CareTip — ${next}`);
+  if (boot) boot.setAttribute("aria-label", `CareTip: ${next}`);
 }
 
 /** @deprecated Alias — HTML boot has one tagline, not a message + subline. */

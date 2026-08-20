@@ -330,7 +330,7 @@ export function PlatformConnectPayoutsPage() {
                           onClick={() => detail.openFor(payout.id, payout)}
                         >
                           <span className="font-medium">{payout.businessName}</span>
-                          <span className="sr-only"> — {t("business.billing.payouts.openDetail")}</span>
+                          <span className="sr-only">, {t("business.billing.payouts.openDetail")}</span>
                         </button>
                         {payout.stripeAccountSuffix ? (
                           <div className="text-xs text-muted-foreground">…{payout.stripeAccountSuffix}</div>

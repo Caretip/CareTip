@@ -364,6 +364,7 @@ model User {
   settings                UserSettings?
   pushDeviceTokens        PushDeviceToken[]
   notifications           Notification[]
+  setupNotificationStates SetupNotificationState[]
   announcementsCreated    Announcement[]           @relation("AnnouncementCreatedBy")
   supportTicketsCreated   SupportTicket[]          @relation("SupportTicketCreatedBy")
   supportTicketMessages   SupportTicketMessage[]   @relation("SupportTicketMessageAuthor")
@@ -472,6 +473,42 @@ model Notification {
   @@index([userId, createdAt(sort: Desc)])
   @@index([userId, readAt])
   @@map("notifications")
+}
+
+/// Class S setup-prompt lifecycle (Stripe / verification / missing QR / profile photo).
+/// Not inbox rows — contextual UI only. Unique per user + logical key.
+enum SetupNotificationStatus {
+  active
+  dismissed
+  actioned
+  resolved
+}
+
+model SetupNotificationState {
+  id              String                   @id @default(cuid())
+  userId          String                   @map("user_id")
+  /**
+   * Stable identity, e.g. setup:stripe_connect:business:{businessId}
+   */
+  notificationKey String                   @map("notification_key") @db.VarChar(191)
+  businessId      String?                  @map("business_id")
+  status          SetupNotificationStatus  @default(active)
+  /**
+   * Condition fingerprint (e.g. not_ready, pending, rejected). Change → new ACTIVE cycle.
+   */
+  conditionVersion String                  @map("condition_version") @db.VarChar(64)
+  dismissedAt     DateTime?                @map("dismissed_at")
+  remindAt        DateTime?                @map("remind_at")
+  actionedAt      DateTime?                @map("actioned_at")
+  resolvedAt      DateTime?                @map("resolved_at")
+  createdAt       DateTime                 @default(now()) @map("created_at")
+  updatedAt       DateTime                 @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, notificationKey])
+  @@index([userId, status])
+  @@map("setup_notification_states")
 }
 
 /// Platform admin broadcast audit record.

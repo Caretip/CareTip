@@ -166,7 +166,7 @@
       "loadError": {
         "generic": "We couldn't load this list right now.",
         "api": "We couldn't load this list right now.",
-        "network": "Network error — check your connection and try again.",
+        "network": "Network error. Check your connection and try again.",
         "permission": "You don't have permission to view this data.",
         "hint": "Your filters are still applied. Retry to refresh the results."
       }
@@ -185,7 +185,7 @@
   "join": {
     "eyebrow": "Join your business",
     "title": "Accept your invitation",
-    "subtitle": "Enter the invite code from your manager. Employees join via invitation — they do not create CareTip accounts on their own.",
+    "subtitle": "Enter the invite code from your manager. Employees join via invitation. They do not create CareTip accounts on their own.",
     "inviteLabel": "Invite code",
     "placeholder": "e.g. 123456",
     "checking": "Checking…",
@@ -1008,18 +1008,18 @@
       "pageTitle": "Cookie Policy",
       "pageSubtitle": "How CareTip uses cookies, what categories we rely on, and how you stay in control under GDPR and TTDSG.",
       "contentAria": "Cookie policy sections",
-      "intro": "We use cookies and similar technologies to run CareTip securely, remember your preferences, and—only with your consent—measure usage and marketing performance.",
+      "intro": "We use cookies and similar technologies to run CareTip securely, remember your preferences, and, only with your consent, measure usage and marketing performance.",
       "ctaTitle": "Your preferences, your choice",
       "ctaBody": "You can accept all cookies, reject non-essential cookies, or fine-tune analytics, functional, and marketing cookies at any time.",
       "manageButton": "Manage cookie preferences",
       "sections": [
         {
           "q": "What are cookies?",
-          "a": "Cookies are small text files stored on your device when you visit caretip.de. They help the site work reliably, remember choices such as language, and—if you allow—help us understand how visitors use CareTip."
+          "a": "Cookies are small text files stored on your device when you visit caretip.de. They help the site work reliably, remember choices such as language, and, if you allow, help us understand how visitors use CareTip."
         },
         {
           "q": "Why we use cookies",
-          "a": "Cookies let guests tip smoothly, keep accounts secure, remember dashboard preferences, and—only after consent—help us improve the product and measure campaigns. We never use non-essential cookies before you choose."
+          "a": "Cookies let guests tip smoothly, keep accounts secure, remember dashboard preferences, and, only after consent, help us improve the product and measure campaigns. We never use non-essential cookies before you choose."
         },
         {
           "q": "Essential cookies (always active)",
@@ -1027,7 +1027,7 @@
         },
         {
           "q": "Analytics cookies (optional)",
-          "a": "Help us understand performance and reliability—for example error monitoring and usage statistics. Examples may include Sentry diagnostics or Google Analytics when enabled. Loaded only after you opt in."
+          "a": "Help us understand performance and reliability, for example error monitoring and usage statistics. Examples may include Sentry diagnostics or Google Analytics when enabled. Loaded only after you opt in."
         },
         {
           "q": "Functional cookies (optional)",
@@ -1035,11 +1035,11 @@
         },
         {
           "q": "Marketing cookies (optional)",
-          "a": "Used to measure advertising effectiveness and deliver relevant campaigns—for example Google Ads conversion tracking or social pixels when configured. Loaded only after you opt in."
+          "a": "Used to measure advertising effectiveness and deliver relevant campaigns, for example Google Ads conversion tracking or social pixels when configured. Loaded only after you opt in."
         },
         {
           "q": "Third-party services",
-          "a": "CareTip may integrate trusted providers that set their own cookies when you consent:\n• Stripe — secure payments\n• Google (Analytics / Ads) — measurement when enabled\n• Sentry — error diagnostics when enabled\n• Google Fonts — typography delivery\n• Embedded content or social platforms when used on marketing pages"
+          "a": "CareTip may integrate trusted providers that set their own cookies when you consent:\n• Stripe: secure payments\n• Google (Analytics / Ads): measurement when enabled\n• Sentry: error diagnostics when enabled\n• Google Fonts: typography delivery\n• Embedded content or social platforms when used on marketing pages"
         },
         {
           "q": "Managing your cookie preferences",
@@ -1047,7 +1047,7 @@
         },
         {
           "q": "Cookie retention",
-          "a": "Session cookies are deleted when you close your browser. Essential persistence (e.g. login) follows security best practices. Analytics and marketing cookies—when accepted—may be stored for up to 24 months unless you clear them sooner in your browser."
+          "a": "Session cookies are deleted when you close your browser. Essential persistence (e.g. login) follows security best practices. Analytics and marketing cookies, when accepted, may be stored for up to 24 months unless you clear them sooner in your browser."
         },
         {
           "q": "Contact",
@@ -1254,7 +1254,7 @@
         },
         {
           "q": "Is CareTip GDPR compliant?",
-          "a": "CareTip is designed for EU hospitality with privacy in mind. We support GDPR rights such as access (data export) and erasure requests where applicable. Some records—for example tip and payment history needed for financial or legal purposes—may be retained in a limited form after account access is removed. Details are in our Privacy Policy."
+          "a": "CareTip is designed for EU hospitality with privacy in mind. We support GDPR rights such as access (data export) and erasure requests where applicable. Some records, for example tip and payment history needed for financial or legal purposes, may be retained in a limited form after account access is removed. Details are in our Privacy Policy."
         },
         {
           "q": "How does CareTip work? How do customers leave a tip?",
@@ -1525,7 +1525,7 @@
       "errorPasswordsMismatch": "Passwords do not match.",
       "errorPasswordWeak": "Password must have 8+ chars, uppercase, lowercase, number, and special character (e.g. @#$%).",
       "errorInviteRequired": "Please enter your invite code.",
-      "employeeInviteHint": "Employees join after a business invite — use your invite code or join link.",
+      "employeeInviteHint": "Employees join after a business invite. Use your invite code or join link.",
       "toastAccountCreated": "Invitation completed. Check your email to verify your address.",
       "resendNeedPassword": "Enter your password above, then tap resend. We use it to confirm it's you.",
       "toastResendDefault": "We sent a new verification link. Check your inbox.",
@@ -1673,7 +1673,7 @@
     "inbox": {
       "badge": "Inbox",
       "title": "Notifications",
-      "subtitle": "Operational updates for your account",
+      "subtitle": "",
       "subtitleAdmin": "Support tickets, verification alerts, and platform updates",
       "markAllRead": "Mark all read",
       "emptyTitle": "No notifications yet",
@@ -1700,8 +1700,8 @@
       "openAction": "Open",
       "unreadBadge": "Unread",
       "detailTitle": "Notification details",
-      "emptyBodyPremium": "When tips arrive, team changes happen, or alerts are sent, they will appear here in a live activity feed.",
-      "emptyHint": "Real-time updates sync across web and mobile",
+      "emptyBodyPremium": "",
+      "emptyHint": "",
       "filterEmptyTitle": "No notifications match this filter",
       "filterEmptyBody": "Try another category or clear filters to see all activity.",
       "clearFilters": "Show all notifications",
@@ -2077,7 +2077,7 @@
       "processingTitle": "Confirming your tip…",
       "processingSubtitle": "We're confirming your payment. This usually takes a few seconds. Please keep this page open.",
       "confirmDelayedTitle": "Still confirming your payment",
-      "confirmDelayedDesc": "Your payment went through with Stripe. We're waiting for the final confirmation — this can take a little longer.",
+      "confirmDelayedDesc": "Your payment went through with Stripe. We're waiting for the final confirmation. This can take a little longer.",
       "confirmDelayedBody": "You can safely close this page. Your tip will appear for the staff member once confirmation finishes. If you don't see it after a few minutes, contact the venue with your payment receipt.",
       "paymentFailedTitle": "Payment could not be completed",
       "paymentFailedDesc": "Your card was not charged for this tip (or the charge was reversed). Please try again.",
@@ -2232,7 +2232,7 @@
       "platformAccessApprovedDesc": "Your business is approved to use the CareTip dashboard.",
       "platformAccessPending": "Onboarding review in progress",
       "platformAccessPendingDesc": "You can use your dashboard while we review your business. QR code generation unlocks after onboarding is approved.",
-      "kycComingSoon": "KYC verification — coming soon",
+      "kycComingSoon": "KYC verification coming soon",
       "kycComingSoonDesc": "Financial compliance verification will be available in a future update. It does not affect your dashboard access.",
       "kycVerified": "Verified",
       "kycVerifiedDesc": "Your venue is approved for live guest tips",
@@ -2330,7 +2330,7 @@
       "billingCompactTitle": "Upgrade to Pro",
       "resolvingEntitlements": "Preparing your dashboard…",
       "preview": {
-        "sectionAria": "Dashboard preview — unlock with a subscription",
+        "sectionAria": "Dashboard preview (unlock with a subscription)",
         "lead": "Preview of your dashboard once CareTip is activated.",
         "sampleData": "Sample preview",
         "avgTip": "Avg. tip",
@@ -2338,7 +2338,7 @@
         "topPerformers": "Top performers",
         "qrStudio": "QR Studio",
         "feedback": "Customer feedback",
-        "footer": "Sample data shown — activate to start tracking real tips and team performance."
+        "footer": "Sample data shown. Activate to start tracking real tips and team performance."
       }
     },
     "upgrade": {
@@ -2370,23 +2370,23 @@
         "f2": "Timezone-aware exports"
       },
       "multiLocation": {
-    "title": "Multi-location support",
-    "benefit": "Manage tipping across multiple venues and branches from a single dashboard.",
-    "f0": "Unlimited locations",
-    "f1": "Individual QR codes per location",
-    "f2": "Advanced location-level analytics",
-    "upgradeRequired": "🔒 Upgrade required",
-    "footer": "Upgrade to Pro to unlock multi-location management, advanced team tools, and centralized analytics.",
-    "upgradeCta": "⚡ Upgrade to Pro"
-  },
-  "customJobTitles": {
-    "title": "Custom job titles",
-    "benefit": "Create and reuse your own roles alongside CareTip’s standard job titles.",
-    "f0": "Add custom roles for your venue",
-    "f1": "Reuse titles across your team",
-    "f2": "Included on Pro and above"
-  },
-  "tableQr": {
+        "title": "Multi-location support",
+        "benefit": "Manage tipping across multiple venues and branches from a single dashboard.",
+        "f0": "Unlimited locations",
+        "f1": "Individual QR codes per location",
+        "f2": "Advanced location-level analytics",
+        "upgradeRequired": "🔒 Upgrade required",
+        "footer": "Upgrade to Pro to unlock multi-location management, advanced team tools, and centralized analytics.",
+        "upgradeCta": "⚡ Upgrade to Pro"
+      },
+      "customJobTitles": {
+        "title": "Custom job titles",
+        "benefit": "Create and reuse your own roles alongside CareTip’s standard job titles.",
+        "f0": "Add custom roles for your venue",
+        "f1": "Reuse titles across your team",
+        "f2": "Included on Pro and above"
+      },
+      "tableQr": {
         "title": "Table QR codes",
         "benefit": "Let guests tip by table with dedicated QR codes.",
         "f0": "Table-level QR codes",
@@ -2500,6 +2500,7 @@
       "overview": "Overview",
       "inbox": "Inbox",
       "tipHistory": "Tip history",
+      "assignment": "My assignment",
       "tipGoals": "Tip goals",
       "settings": "Settings"
     },
@@ -3532,7 +3533,7 @@
       "loadFailedTitle": "Couldn't load tip alerts",
       "retry": "Try again",
       "emptyTitle": "You're all caught up!",
-      "emptySubtitle": "New tip activity will show up here.",
+      "emptySubtitle": "",
       "manageHint": "Manage your notifications",
       "selectAll": "Select all",
       "selectAllAria": "Select all notifications",
@@ -3556,7 +3557,7 @@
     },
     "tipHistory": {
       "title": "Tip history",
-      "subtitle": "Your earnings ledger with searchable tip records and payment status.",
+      "subtitle": "",
       "backAria": "Back",
       "searchPlaceholder": "Search location, table, or tip ID…",
       "statusAll": "All status",
@@ -3587,12 +3588,12 @@
       "title": "Tip goals",
       "subtitle": "Set a target and track your progress.",
       "manageTitle": "Manage goals",
-      "manageSubtitle": "Create, edit, mark goals as achieved, or delete them.",
+      "manageSubtitle": "",
       "newGoal": "New goal",
       "couldNotLoad": "Couldn't load goals",
       "retry": "Retry",
       "emptyTitle": "No goals set yet",
-      "emptySubtitle": "Add your first goal to start tracking your tipping progress.",
+      "emptySubtitle": "Add your first goal.",
       "colName": "Goal name",
       "colTarget": "Target (€)",
       "colPeriod": "Period",
@@ -3624,6 +3625,19 @@
       "toastNoProgress": "No progress yet to mark as achieved.",
       "toastMarkedAchieved": "Marked as achieved",
       "confirmRemove": "Remove your tip goal?"
+    },
+    "assignment": {
+      "title": "My assignment",
+      "subtitle": "",
+      "backAria": "Back",
+      "locationLabel": "Assigned location",
+      "tablesLabel": "Assigned tables",
+      "tableAtLocation": "At {{location}}",
+      "loading": "Loading assignment…",
+      "noLocationTitle": "No location assigned",
+      "noLocationDesc": "Ask your manager to assign one.",
+      "noTablesTitle": "No tables assigned",
+      "noTablesDesc": "Ask your manager to assign tables."
     },
     "qrModal": {
       "toastLinkCopied": "Link copied to clipboard",
@@ -3689,7 +3703,7 @@
     "hero": {
       "headlineLine1": "Your earnings",
       "headlineLine2": "at a glance",
-      "sub": "Track earnings, goals, and performance.",
+      "sub": "",
       "helperText": "Snapshot above. Tap a period below for detailed earnings and charts.",
       "welcomeBack": "Welcome back",
       "welcomeBackNamed": "Welcome back, {{name}}",
@@ -3844,14 +3858,14 @@
       "monthly": "Monthly"
     },
     "fixQr": {
-      "title": "Some staff are missing QR links",
-      "description": "Open QR Management to generate fresh links and printable codes.",
-      "action": "Fix QR links"
+      "title": "Missing staff QR links",
+      "description": "Generate links for staff without a QR code.",
+      "action": "Open QR Studio"
     },
     "fixConnect": {
-      "title": "Connect Stripe to receive tips",
-      "description": "CareTip needs your Stripe account before guests can tip this venue.",
-      "action": "Connect Stripe"
+      "title": "Connect Stripe",
+      "description": "Finish setup to receive tips.",
+      "action": "Continue Stripe setup"
     },
     "shell": {
       "sidebarAria": "Business dashboard navigation",
@@ -4146,7 +4160,7 @@
         "connectTitle": "Stripe Connect",
         "connectSubtitle": "Connect Stripe so this venue can receive tips",
         "connectPayoutsTitle": "Stripe payouts",
-        "connectPayoutsSubtitle": "Business Stripe payout history — not CareTip subscription billing"
+        "connectPayoutsSubtitle": "Business Stripe payout history (not CareTip subscription billing)"
       }
     },
     "dashboard": {
@@ -4185,7 +4199,7 @@
       "avgTipPerEmployee": "Avg tip per employee",
       "avgTipCoaching": "Useful coaching metric",
       "employeeGoalsTitle": "Employee tip goals",
-      "employeeGoalsDesc": "Targets your team set for themselves. Progress uses tips in each person's current period (aligned with the performance chart timeframe for totals).",
+      "employeeGoalsDesc": "Team targets for the current period.",
       "employeeGoalsDescShort": "Track team goal progress in real time.",
       "employeeGoalsMore": "How it works",
       "employeeGoalsLess": "Hide details",
@@ -4319,10 +4333,10 @@
       "backAria": "Back to dashboard",
       "eyebrow": "Venues",
       "title": "Locations",
-      "subtitle": "Structured venue areas for table QR codes and multi-location operations.",
+      "subtitle": "",
       "addNew": "+ Add New Location",
       "loading": "Loading locations…",
-      "empty": "No locations yet. Add your first area (e.g. Main Bar, Rooftop).",
+      "empty": "No locations yet.",
       "toastNameRequired": "Please enter a location name.",
       "toastCreated": "Location created.",
       "dialogTitle": "Add location",
@@ -4337,7 +4351,7 @@
     "tablesPage": {
       "backAria": "Back to dashboard",
       "title": "Tables",
-      "subtitle": "Guest tipping QR codes per table",
+      "subtitle": "",
       "create": "+ Create Table",
       "loading": "Loading tables…",
       "emptyNeedLocation": "Add a location first, then create tables under it.",
@@ -4406,7 +4420,7 @@
     },
     "tipsActivity": {
       "title": "Tips & Activity",
-      "subtitle": "Real tip activity for your account.",
+      "subtitle": "",
       "searchPlaceholder": "Search staff, location/table, or tip ID…",
       "statusAll": "All status",
       "statusSuccess": "Success",
@@ -4514,7 +4528,7 @@
       "backAria": "Back to dashboard",
       "heroTitle": "Staff management",
       "heroDesc": "Invites, roles, and active staff.",
-      "filterDesc": "Filter by name or role",
+      "filterDesc": "",
       "searchPlaceholder": "Search employees…",
       "noTables": "No tables",
       "noPhone": "No phone",
@@ -4552,7 +4566,7 @@
       "removing": "Removing…",
       "delete": "Delete",
       "emptyTitle": "No staff members yet.",
-      "emptySubtitle": "Add employees to get started.",
+      "emptySubtitle": "",
       "mobileEmpty": "No staff members yet.",
       "joinedLabel": "Joined {{date}}",
       "tableCount": "{{count}} table(s)",
@@ -4566,7 +4580,7 @@
       "badgeTeamRoster": "Team roster",
       "inviteCodeLabel": "Invite code",
       "inviteTeamTitle": "Invite team members",
-      "inviteTeamDesc": "Generate invite codes or manually add employees.",
+      "inviteTeamDesc": "Generate codes or add staff.",
       "inviteExpires": "Expires {{date}}",
       "inviteHint": "Generate an invite code to onboard staff.",
       "copy": "Copy",
@@ -4609,7 +4623,7 @@
       "deactivateConfirmAction": "Deactivate",
       "deactivating": "Deactivating…",
       "deleteConfirmTitle": "Remove staff member?",
-      "deleteConfirmBody": "This removes {{name}} from this business and revokes their CareTip access. Historical tip amounts for your venue are kept for reporting and financial records—they are not wiped. This is not the same as a full account erasure request.",
+      "deleteConfirmBody": "This removes {{name}} from this business and revokes their CareTip access. Historical tip amounts for your venue are kept for reporting and financial records. They are not wiped. This is not the same as a full account erasure request.",
       "labelTipsMonth": "Tips (month)",
       "labelRating": "Rating",
       "qrButton": "QR",
@@ -4725,7 +4739,7 @@
     "qrStudio": {
       "eyebrow": "Product",
       "title": "QR Studio",
-      "subtitle": "Your premium studio for branded QR codes, guest touchpoints, and print-ready assets.",
+      "subtitle": "",
       "navAria": "QR Studio sections",
       "nav": {
         "gallery": "QR Gallery",
@@ -4776,7 +4790,7 @@
         "manageLocations": "Location QRs",
         "manageTables": "Table QRs",
         "libraryTitle": "QR asset library",
-        "libraryDesc": "Every printable code for your venue — with template, ownership, and download actions in one place.",
+        "libraryDesc": "Every printable code for your venue, with template, ownership, and download actions in one place.",
         "libraryEmpty": "No QR assets yet. Add staff, locations, or tables to build your library.",
         "preview": "Preview",
         "downloadPng": "Download PNG",
@@ -4941,7 +4955,7 @@
         "background": "Background",
         "decorations": "Decorative layers",
         "decorationsHint": "Premium frames, corners, and accents outside the scan zone.",
-        "controlComingSoon": "Coming soon — this control is temporarily unavailable until it updates the live card.",
+        "controlComingSoon": "Coming soon. This control is temporarily unavailable until it updates the live card.",
         "qrStageDeferredHint": "QR size, shape, and border options will return when they drive the exported card. Template and accent color already shape your live preview.",
         "logoSectionTitle": "Logo",
         "logoSectionHint": "Upload your mark, then control how it sits on the branded QR card.",
@@ -5091,8 +5105,8 @@
         "roseGoldSalonDesc": "Soft rose-gold editorial light, patisseries, salons, and boutique daytime venues."
       },
       "downloads": {
-        "title": "Downloads & print formats",
-        "description": "Generate print-ready assets from your QR Gallery.",
+        "title": "Print formats",
+        "description": "",
         "png": "PNG",
         "pngDesc": "High-resolution QR image",
         "pdf": "PDF layout",
@@ -5113,9 +5127,9 @@
     "activityCenter": {
       "centerTitle": "Activity Center",
       "streamLabel": "Live",
-      "ssotHelper": "Recent activity. Not limited to today. Today's tip totals are shown in the Overview using venue time.",
-      "empty": "Nothing yet. Tips, QR scans, goals, staff, and payments will appear here as they happen.",
-      "emptyToday": "No activity yet today in venue time. Switch to All Activity to see overnight events.",
+      "ssotHelper": "",
+      "empty": "No activity yet",
+      "emptyToday": "Nothing yet today.",
       "loadOlder": "Load older",
       "loadingOlder": "Loading…",
       "filter": {
@@ -5183,15 +5197,15 @@
     "tips": {
       "eyebrow": "Revenue",
       "title": "Tips",
-      "subtitle": "Activity Center, tip transactions, and revenue analytics.",
-      "analyticsHeaderSubtitle": "Executive reporting on revenue, trends, exports, and business intelligence.",
+      "subtitle": "",
+      "analyticsHeaderSubtitle": "",
       "navAria": "Tips sections",
       "nav": {
         "live": "Activity Center",
         "transactions": "Transactions",
         "analytics": "Analytics"
       },
-      "liveDesc": "What is happening right now: tips, scans, goals, staff, and payments in chronological order. Not the same as today's tip totals on Overview.",
+      "liveDesc": "",
       "analyticsDesc": "Deep-dive reporting on revenue, QR, employees, locations, and trends. Filter by period and export data.",
       "live": {
         "cards": {
@@ -5245,9 +5259,9 @@
     "team": {
       "eyebrow": "People",
       "title": "Team",
-      "subtitle": "Manage staff, performance, goals, and workforce growth.",
-      "employeesHeaderSubtitle": "Onboard staff, manage invites, and run day-to-day roster administration.",
-      "topPerformersHeaderSubtitle": "Recognition, rankings, and top performers across your hospitality team.",
+      "subtitle": "Staff, performance, and goals.",
+      "employeesHeaderSubtitle": "",
+      "topPerformersHeaderSubtitle": "",
       "navAria": "Team sections",
       "nav": {
         "employees": "Employees",
@@ -5274,7 +5288,7 @@
       },
       "performance": {
         "openAnalytics": "View performance analytics",
-        "headerSubtitle": "Executive health, risks, opportunities, and recommended actions for your business.",
+        "headerSubtitle": "",
         "leaderboardTitle": "Team leaderboard",
         "goalProgress": "{{percent}}% of goal",
         "rating": "★ {{rating}} avg",
@@ -5468,7 +5482,7 @@
       "eyebrow": "Guests",
       "title": "Customer Feedback",
       "subtitle": "Guest feedback, reviews, and sentiment from every tipping journey.",
-      "mergedSubtitle": "Ratings, comments, and insights from every guest tipping journey.",
+      "mergedSubtitle": "",
       "navAria": "Customers sections",
       "nav": {
         "feedback": "Feedback",
@@ -5487,7 +5501,7 @@
     },
     "notifications": {
       "title": "Notifications",
-      "subtitle": "Updates about tips, QR tools, and your CareTip account",
+      "subtitle": "",
       "markAllRead": "Mark all read",
       "filterAll": "All",
       "filterUnread": "Unread",
@@ -5528,7 +5542,7 @@
     "settings": {
       "eyebrow": "Workspace",
       "title": "Settings",
-      "subtitle": "Account preferences, security, and integrations.",
+      "subtitle": "Account, security, and integrations.",
       "navAria": "Settings sections",
       "loading": "Loading…",
       "sections": {
@@ -5607,7 +5621,7 @@
       "thankYouPlaceholder": "Thank you for supporting our team. Your appreciation means a lot to us.",
       "defaultThankYouMessage": "Your appreciation means the world to our team.",
       "successPreviewTitle": "Success screen preview",
-      "successPreviewDesc": "How guests see the page after tipping — matches the live experience (no banner).",
+      "successPreviewDesc": "How guests see the page after tipping. Matches the live experience (no banner).",
       "successPreviewAria": "Preview of the guest success screen after tipping",
       "successPreviewStaffName": "Alex",
       "successPreviewStaffRole": "Server",
@@ -5688,14 +5702,14 @@
         "circle_shape_sanitized": "Circle style is rendered as a safe rounded square to protect finder patterns.",
         "decode_failed": "A camera could not decode this QR. It may not scan in production.",
         "url_mismatch": "Decoded payload did not match the expected tipping URL.",
-        "composite_decode_fallback": "Card extract decode used matrix fallback — QR payload verified; compositing is scan-safe."
+        "composite_decode_fallback": "Card extract decode used matrix fallback. QR payload verified; compositing is scan-safe."
       }
     },
     "stripe": {
       "moduleEyebrow": "Tips & payouts",
       "moduleTitle": "Stripe",
-      "moduleSubtitle": "Connect your business Stripe account so guests can tip this venue.",
-      "payoutsSubtitle": "Stripe payouts from this business’s connected account to its bank — not CareTip subscription billing.",
+      "moduleSubtitle": "Connect Stripe to receive guest tips.",
+      "payoutsSubtitle": "Stripe payouts to your bank (not subscription billing).",
       "nav": {
         "connect": "Connect",
         "payouts": "Payouts"
@@ -5704,10 +5718,10 @@
     "billing": {
       "moduleEyebrow": "Subscription",
       "moduleTitle": "Billing",
-      "moduleSubtitle": "Manage your CareTip plan, invoices, and payment methods.",
+      "moduleSubtitle": "Manage your plan and invoices.",
       "mobileHandoff": {
         "title": "You're on CareTip Web",
-        "body": "You opened Billing from the CareTip mobile app. This is the same workspace — finish your subscription here, keep managing billing on the web, or return to the mobile app when you're done.",
+        "body": "You opened Billing from the CareTip mobile app. This is the same workspace. Finish your subscription here, keep managing billing on the web, or return to the mobile app when you're done.",
         "dismiss": "Dismiss"
       },
       "navAria": "Billing sections",
@@ -5720,13 +5734,13 @@
       },
       "historyDesc": "Track subscription activity including trials, renewals, payments, and plan changes.",
       "historyEmptyTitle": "No billing activity yet",
-      "historyEmptyBody": "Subscription events will appear here when your plan changes, renews, or when payments are processed.",
+      "historyEmptyBody": "Renewals and plan changes appear here.",
       "payouts": {
-        "hint": "These are Stripe payouts from your connected account’s available balance to your bank. They are not individual guest tips, and CareTip does not send them — Stripe does.",
+        "hint": "Transfers from your Stripe balance to your bank.",
         "loadError": "Could not load payout history.",
         "loading": "Loading payouts",
         "emptyTitle": "No payouts yet",
-        "emptyBody": "Your Stripe-connected account hasn’t received a payout yet. Once Stripe sends funds from that account, payout history will appear here.",
+        "emptyBody": "Shows up after your first Stripe payout.",
         "tableCaption": "Stripe connected-account payouts",
         "colAmount": "Amount",
         "colStatus": "Payout status",
@@ -5788,19 +5802,20 @@
       "retry": "Try again",
       "connect": {
         "title": "Receive tips with Stripe",
-        "description": "Connect Stripe so this business can receive guest tips. Guests cannot complete a tip until Stripe setup is ready.",
-        "loading": "Checking payout setup…",
-        "loadError": "Could not load payout setup.",
+        "description": "Receive tips directly through Stripe.",
+        "loading": "Checking Stripe…",
+        "loadError": "Could not load Stripe setup.",
         "connect": "Connect Stripe",
         "continue": "Continue Stripe setup",
         "manage": "Update Stripe details",
         "starting": "Opening Stripe…",
         "startError": "Stripe connection couldn't be started. Please try again.",
         "notConfigured": "Stripe is not configured on the server yet.",
-        "statusNotConnected": "Stripe is not connected yet. Connect Stripe before the venue can receive tips.",
-        "statusIncomplete": "Stripe setup is incomplete. Complete setup before the venue can receive tips.",
-        "statusAttention": "Stripe needs more information before this venue can receive tips.",
-        "statusReady": "Stripe account is ready. Guests can tip this venue.",
+        "statusNotConnected": "Stripe not connected",
+        "statusIncomplete": "Stripe setup incomplete",
+        "statusAttention": "Stripe needs attention",
+        "statusReady": "Stripe ready",
+        "nextStepHint": "Complete the remaining setup steps to receive tips.",
         "chargesOff": "Guest card payments are not enabled on this Stripe account yet.",
         "payoutsOff": "Stripe has not enabled payouts for this account yet. Tip acceptance still requires both charges and payouts to be enabled.",
         "readyNote": "Stripe controls when funds move from the connected account to your bank. CareTip only records those payouts.",
@@ -5808,8 +5823,8 @@
         "readinessReady": "Business readiness: ready to receive tips.",
         "readinessRequired": "Business readiness: Stripe setup required before this venue can receive tips.",
         "goLiveNote": "Platform approval for QR codes is separate. Tip checkout still requires a ready Stripe connection.",
-        "returnedHint": "Welcome back. Stripe status updates when Stripe confirms your account — this may take a moment.",
-        "linkExpired": "That Stripe setup link expired. Use Continue Stripe setup to open a new one."
+        "returnedHint": "Welcome back. Stripe status may take a moment to update.",
+        "linkExpired": "That Stripe setup link expired. Continue setup to open a new one."
       },
       "emptyStateTitle": "You are on the CareTip Basic plan.",
       "emptyStateBody": "Upgrade to Pro for advanced analytics, branding, multi-location, and more.",
@@ -5929,7 +5944,7 @@
         "readyTitle": "You're all set!",
         "readyBody": "Your plan is active. Opening your dashboard…",
         "timeoutTitle": "Still processing",
-        "timeoutBody": "Your payment was received but activation is taking longer than usual. You can open the dashboard now — your plan should appear shortly.",
+        "timeoutBody": "Your payment was received but activation is taking longer than usual. You can open the dashboard now. Your plan should appear shortly.",
         "goToDashboard": "Go to dashboard",
         "viewBilling": "View billing",
         "backToPricing": "Back to pricing",
@@ -5957,7 +5972,7 @@
         "expiredPremiumLink": "Need Premium? Contact sales",
         "upgradeCta": "Upgrade to Pro",
         "planHint": {
-          "basic": "Your current free plan — tipping, QR, and team tools included",
+          "basic": "Your current free plan with tipping, QR, and team tools included",
           "premium": "Advanced analytics, branding, exports, multi-location, and team goals",
           "enterprise": "Custom rollout for your organization. Contact our sales team."
         }
@@ -6004,7 +6019,7 @@
       "plans": {
         "basic": {
           "name": "Basic",
-          "tagline": "Free — essential tipping for small teams",
+          "tagline": "Free: essential tipping for small teams",
           "f0": "QR tipping for staff and venues",
           "f1": "Real-time tip notifications",
           "f2": "Staff invite codes",
@@ -6094,7 +6109,7 @@
       "toastPasswordUpdated": "Password updated.",
       "toastPrefsSaved": "Preferences saved.",
       "toastImageOnly": "Please choose an image file.",
-      "heroBodyLong": "Accept one-time tips via QR codes and staff links. Payments use Stripe Payment Intents. Basic is free — upgrade to Pro for advanced features.",
+      "heroBodyLong": "Accept one-time tips via QR codes and staff links. Payments use Stripe Payment Intents. Basic is free. Upgrade to Pro for advanced features.",
       "linkTipsActivity": "View tips & activity",
       "linkFeeDetails": "Fee details",
       "labelEmailReadonly": "Email address (read-only)",
@@ -6240,7 +6255,7 @@
       },
       "verificationQueue": {
         "title": "Verification queue",
-        "desc": "Up to {{limit}} venues — pending reviews shown first"
+        "desc": "Up to {{limit}} venues (pending reviews shown first)"
       }
     },
     "subscriptions": {
@@ -6345,7 +6360,7 @@
         "team_scale": "{{staffCount}} employees on Basic.",
         "multi_location": "{{locationCount}} locations on Basic.",
         "table_qr": "Table QR in use on Basic.",
-        "csv_export": "Export & reporting — upgrade to Pro to unlock.",
+        "csv_export": "Export & reporting: upgrade to Pro to unlock.",
         "employee_goals": "Goals in use on Basic.",
         "branding": "Branding configured on Basic.",
         "enterprise_scale": "{{locations}} locations, {{staff}} staff, {{qrScans30d}} QR scans."
@@ -6384,7 +6399,7 @@
     "businessesOpen": "Open",
     "verificationTeaser": {
       "title": "Business verification",
-      "subtitle": "Up to {{limit}} venues — pending reviews shown first",
+      "subtitle": "Up to {{limit}} venues (pending reviews shown first)",
       "pendingCount": "{{count}} awaiting verification",
       "viewAll": "View all"
     },
@@ -6773,7 +6788,7 @@
     },
     "businessAnalyticsPage": {
       "title": "Business analytics",
-      "subtitle": "Platform business performance — growth, revenue, subscriptions, and top venues.",
+      "subtitle": "Platform business performance: growth, revenue, subscriptions, and top venues.",
       "chartsTitle": "Business performance",
       "chartsSubtitle": "Last {{days}} days ({{tz}}). Revenue, growth, and payment health across venues.",
       "chartGrowth": "Business growth trends",
@@ -6789,7 +6804,7 @@
     },
     "usageReportsPage": {
       "title": "Usage reports",
-      "subtitle": "Product adoption and engagement — users, activity, and platform usage signals.",
+      "subtitle": "Product adoption and engagement: users, activity, and platform usage signals.",
       "chartsTitle": "Usage & engagement",
       "chartsSubtitle": "Last {{days}} days ({{tz}}). Sign-ups, roles, and tipping activity as usage proxies.",
       "chartUserRoles": "User roles",
@@ -6799,7 +6814,7 @@
       "chartSignups": "New user sign-ups",
       "chartSignupsDesc": "Daily new accounts registered on the platform.",
       "chartTipVolume": "Daily tip activity",
-      "chartTipVolumeDesc": "Tip volume over time — a proxy for QR scans and customer engagement.",
+      "chartTipVolumeDesc": "Tip volume over time, a proxy for QR scans and customer engagement.",
       "kpi": {
         "activeUsers": "Active users",
         "employees": "Employee accounts",
@@ -6966,7 +6981,7 @@
     },
     "connectPayoutsPage": {
       "title": "Connect payouts",
-      "subtitle": "Stripe payouts from connected Express accounts to each venue’s bank. Observation only — CareTip does not initiate payouts. These are not individual guest tips or employee withdrawals.",
+      "subtitle": "Stripe payouts from connected Express accounts to each venue’s bank. Observation only. CareTip does not initiate payouts. These are not individual guest tips or employee withdrawals.",
       "searchPlaceholder": "Search by business name…",
       "searchAria": "Search Connect payouts by business name",
       "filterStatus": "Payout status",
@@ -7263,7 +7278,7 @@
           },
           "pending_review": {
             "title": "No businesses are currently awaiting manual review",
-            "description": "The queue is clear — new submissions will appear here automatically."
+            "description": "The queue is clear. New submissions will appear here automatically."
           },
           "awaiting_upload": {
             "title": "Every business has uploaded verification documents",

@@ -90,8 +90,11 @@ export function notifySupportTicketReply(params: {
   managerUserId: string;
   repliedBy: "business" | "admin";
   preview: string;
+  /** Unique message id — required so each reply is a distinct notification. */
+  messageId: string;
 }): void {
-  const { ticket, businessName, managerUserId, repliedBy, preview } = params;
+  const { ticket, businessName, managerUserId, repliedBy, preview, messageId } = params;
+  const msgKey = messageId.trim() || `t${Date.now()}`;
 
   if (repliedBy === "business") {
     void listPlatformAdminUserIds().then((adminIds) => {
@@ -117,10 +120,11 @@ export function notifySupportTicketReply(params: {
             ticketId: ticket.id,
             ticketNumber: ticket.ticketNumber,
             status: ticket.status,
+            messageId: msgKey,
           },
         },
         {
-          dedupeKeyPrefix: `support_reply:${ticket.id}:business`,
+          dedupeKeyPrefix: `support_reply:${ticket.id}:msg:${msgKey}:business`,
           channels: { in_app: true, push: true, email: false },
         },
       );
@@ -148,9 +152,10 @@ export function notifySupportTicketReply(params: {
         ticketId: ticket.id,
         ticketNumber: ticket.ticketNumber,
         status: ticket.status,
+        messageId: msgKey,
       },
     },
-    dedupeKey: `support_reply:${ticket.id}:admin:${managerUserId}`,
+    dedupeKey: `support_reply:${ticket.id}:msg:${msgKey}:admin:${managerUserId}`,
     channels: { in_app: true, push: true, email: true },
   });
 }

@@ -14,7 +14,7 @@ export const dashboardWorkspaceUi = {
   pageTitle: caretipType.appTitle,
   sectionTitle: caretipType.appSubtitle,
   subsectionTitle: caretipType.h4,
-  pageDescription: `mt-1 max-w-prose ${caretipType.smallBody}`,
+  pageDescription: `dashboard-workspace-page-desc mt-1 max-w-prose ${caretipType.smallBody}`,
   helperText: caretipType.helper,
   formLabel: caretipType.label,
   kpiLabel: caretipType.kpiLabel,

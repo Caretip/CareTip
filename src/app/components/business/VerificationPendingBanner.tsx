@@ -1,25 +1,36 @@
 import { Link, useLocation } from "react-router";
-import { ArrowRight, Clock, ShieldAlert } from "lucide-react";
+import { ArrowRight, Clock, ShieldAlert, X } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import {
   getBusinessVerificationNoticeLabels,
   shouldSuppressLayoutVerificationBanner,
 } from "../../lib/businessVerificationNotice";
 import { useBusinessVerificationNotice } from "../../hooks/useBusinessVerificationNotice";
+import { useSetupPromptIntelligence } from "../../hooks/useSetupPromptIntelligence";
 import { cn } from "@/lib/utils";
 
 /**
  * Soft banner while platform onboarding review is pending or rejected.
- * KYC status does not trigger this banner — see dashboard status bar "Coming soon".
+ * Dismiss is server-backed (Class S) — remount/login do not reset it within snooze.
+ * Always reachable via /awaiting-approval.
  */
 export function VerificationPendingBanner({ className }: { className?: string }) {
   const { t } = useTranslation();
   const { pathname } = useLocation();
-  const { show, rejected } = useBusinessVerificationNotice();
+  const { show: conditionShow, rejected, pending } = useBusinessVerificationNotice();
 
-  if (!show || shouldSuppressLayoutVerificationBanner(pathname)) {
+  const conditionVersion = rejected ? "rejected" : pending ? "pending" : "none";
+  const { loading, show, dismiss, markActioned } = useSetupPromptIntelligence({
+    kind: "onboarding_verification",
+    conditionActive: conditionShow,
+    conditionVersion,
+    enabled: conditionShow,
+  });
+
+  if (!conditionShow || shouldSuppressLayoutVerificationBanner(pathname)) {
     return null;
   }
+  if (loading || !show) return null;
 
   const labels = getBusinessVerificationNoticeLabels(t, rejected);
 
@@ -46,20 +57,31 @@ export function VerificationPendingBanner({ className }: { className?: string })
           >
             {rejected ? <ShieldAlert className="h-4 w-4" /> : <Clock className="h-4 w-4" />}
           </span>
-          <div className="min-w-0 flex-1">
+          <div className="min-w-0 flex-1 pr-8 sm:pr-0">
             <p className="text-sm font-semibold tracking-tight text-foreground">{labels.title}</p>
             <p className="mt-0.5 text-xs leading-relaxed text-muted-foreground sm:text-[13px]">
               {labels.description}
             </p>
           </div>
         </div>
-        <Link
-          to="/awaiting-approval"
-          className="inline-flex shrink-0 items-center gap-1.5 self-start rounded-lg border border-border bg-background px-3 py-2 text-xs font-semibold text-foreground shadow-sm transition-colors hover:bg-muted sm:self-center"
-        >
-          {labels.cta}
-          <ArrowRight className="h-3.5 w-3.5 opacity-70" aria-hidden />
-        </Link>
+        <div className="flex shrink-0 items-center gap-2 self-start sm:self-center">
+          <Link
+            to="/awaiting-approval"
+            onClick={() => markActioned()}
+            className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-background px-3 py-2 text-xs font-semibold text-foreground shadow-sm transition-colors hover:bg-muted"
+          >
+            {labels.cta}
+            <ArrowRight className="h-3.5 w-3.5 opacity-70" aria-hidden />
+          </Link>
+          <button
+            type="button"
+            onClick={dismiss}
+            aria-label={t("common.dismiss", { defaultValue: "Dismiss" })}
+            className="inline-flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+          >
+            <X className="h-4 w-4" aria-hidden />
+          </button>
+        </div>
       </div>
     </div>
   );

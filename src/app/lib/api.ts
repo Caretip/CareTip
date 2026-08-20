@@ -2496,6 +2496,23 @@ export async function getTipsByEmployee(
   return promise;
 }
 
+export interface EmployeeSelfAssignmentLocation {
+  id: string;
+  name: string;
+  description: string | null;
+}
+
+export interface EmployeeSelfAssignmentTable {
+  id: string;
+  name: string;
+  location: { id: string; name: string };
+}
+
+export interface EmployeeSelfAssignment {
+  location: EmployeeSelfAssignmentLocation | null;
+  tables: EmployeeSelfAssignmentTable[];
+}
+
 export interface EmployeeSelfProfile {
   id: string;
   name: string;
@@ -2524,6 +2541,8 @@ export interface EmployeeSelfProfile {
   hasActiveSubscription?: boolean;
   accessSource?: "none" | "subscription" | "sponsored";
   sponsoredProgrammeKey?: string | null;
+  /** Manager-assigned venue location and tables (read-only for the employee). */
+  assignment: EmployeeSelfAssignment;
 }
 
 const EMPLOYEE_PROFILE_CACHE_TTL_MS = 30_000;
@@ -3127,6 +3146,74 @@ export async function markAllNotificationsReadApi(): Promise<{ updated: number; 
   invalidateUnreadNotificationCountCache();
   return res;
 }
+
+export type SetupPromptKind =
+  | "stripe_connect"
+  | "missing_employee_qr"
+  | "onboarding_verification"
+  | "profile_photo";
+
+export type SetupPromptEvaluateItem = {
+  kind: SetupPromptKind;
+  conditionActive: boolean;
+  conditionVersion: string;
+};
+
+export type SetupPromptVisibilityResult = {
+  kind: SetupPromptKind;
+  show: boolean;
+  status: string;
+  remindAt: string | null;
+};
+
+export async function evaluateSetupPromptsApi(
+  items: SetupPromptEvaluateItem[],
+): Promise<SetupPromptVisibilityResult[]> {
+  const res = await apiRequest<{ results: SetupPromptVisibilityResult[] }>(
+    apiPath("/api/me/notifications/setup/evaluate"),
+    {
+      method: "POST",
+      headers: getHeaders(),
+      credentials: "include",
+      body: JSON.stringify({ items }),
+      caretipSilentErrors: true,
+    } as CaretipRequestInit,
+  );
+  return Array.isArray(res.results) ? res.results : [];
+}
+
+export async function dismissSetupPromptApi(
+  kind: SetupPromptKind,
+  conditionVersion: string,
+): Promise<SetupPromptVisibilityResult> {
+  const res = await apiRequest<{ result: SetupPromptVisibilityResult }>(
+    apiPath("/api/me/notifications/setup/dismiss"),
+    {
+      method: "POST",
+      headers: getHeaders(),
+      credentials: "include",
+      body: JSON.stringify({ kind, conditionVersion }),
+    },
+  );
+  return res.result;
+}
+
+export async function actionSetupPromptApi(
+  kind: SetupPromptKind,
+  conditionVersion: string,
+): Promise<SetupPromptVisibilityResult> {
+  const res = await apiRequest<{ result: SetupPromptVisibilityResult }>(
+    apiPath("/api/me/notifications/setup/actioned"),
+    {
+      method: "POST",
+      headers: getHeaders(),
+      credentials: "include",
+      body: JSON.stringify({ kind, conditionVersion }),
+    },
+  );
+  return res.result;
+}
+
 
 export async function deleteNotificationApi(id: string): Promise<{ success: boolean; unreadCount: number }> {
   const res = await apiRequest<{ success: boolean; unreadCount: number }>(

@@ -79,7 +79,6 @@ const BusinessDashboardAnalyticsCharts = lazy(() =>
 );
 import { getAuthSessionFlags } from "../../lib/authSessionBootstrap";
 import { isOnboardingCompleted } from "../../lib/onboardingProgress";
-import { getBusinessVerificationNoticeLabels } from "../../lib/businessVerificationNotice";
 import bizzyHeroWebp from "../../../../images/finalbizzy-hero.webp";
 import bizzyHeroAvif from "../../../../images/finalbizzy-hero.avif";
 import { BusinessDashboardMobileHero } from "../../components/business/BusinessDashboardMobileHero";
@@ -160,10 +159,6 @@ export const BusinessDashboard = memo(function BusinessDashboard() {
     advancedAnalyticsEnabled,
   );
   const showOnboardingReviewNotice = onboardingReviewRejected;
-  const verificationNoticeLabels = getBusinessVerificationNoticeLabels(
-    t,
-    user?.onboardingVerificationStatus === "rejected",
-  );
 
   const [employeeGoalsExpanded, setEmployeeGoalsExpanded] = useState(true);
 
@@ -367,17 +362,6 @@ export const BusinessDashboard = memo(function BusinessDashboard() {
       {!isLargeScreen ? (
         <div>
           <div className="business-dashboard-overview__prompts">
-            <FixPrompt
-              id="pendingVerification"
-              issueActive={showOnboardingReviewNotice}
-              tone="info"
-              density="compact"
-              title={verificationNoticeLabels.title}
-              description={verificationNoticeLabels.description}
-              actionLabel={verificationNoticeLabels.cta}
-              actionTo="/awaiting-approval"
-              dismissPersistence="session"
-            />
             <BusinessStripeConnectPrompt density="compact" />
           </div>
           <BusinessDashboardMobileHero
@@ -392,18 +376,6 @@ export const BusinessDashboard = memo(function BusinessDashboard() {
 
       {isLargeScreen ? (
       <div className={businessUi.pageInner}>
-        <FixPrompt
-          id="pendingVerification"
-          issueActive={showOnboardingReviewNotice}
-          tone="info"
-          density="compact"
-          title={verificationNoticeLabels.title}
-          description={verificationNoticeLabels.description}
-          actionLabel={verificationNoticeLabels.cta}
-          actionTo="/awaiting-approval"
-          dismissPersistence="session"
-          className="mb-3"
-        />
         <BusinessStripeConnectPrompt density="compact" className="mb-3" />
         <PremiumPageHero personality="overview" autoHeight className="business-dashboard-hero">
         <DashboardHero
@@ -612,7 +584,7 @@ export const BusinessDashboard = memo(function BusinessDashboard() {
             <FixPrompt
               id="missingQR"
               issueActive={brokenQrLinks}
-              dismissPersistence="session"
+              conditionVersion={brokenQrLinks ? "employees_missing_qr" : "ok"}
               title={t("business.fixQr.title")}
               description={t("business.fixQr.description")}
               actionLabel={t("business.fixQr.action")}

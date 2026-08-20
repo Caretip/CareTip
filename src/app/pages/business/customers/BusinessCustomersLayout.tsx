@@ -16,6 +16,7 @@ export function BusinessCustomersLayout() {
           icon={MessageSquareHeart}
           title={t("business.customers.title")}
           subtitle={t("business.customers.mergedSubtitle")}
+          hideSubtitleOnMobile
         />
         <Outlet />
       </div>

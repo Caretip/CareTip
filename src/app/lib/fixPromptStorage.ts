@@ -1,50 +1,20 @@
-/** localStorage: survives sessions. sessionStorage: dismiss clears when the tab session ends. */
+/**
+ * Deprecated: Class S setup prompts use server notification intelligence.
+ * Quick Start / PWA keep their own keys. This module remains only if any
+ * legacy caller still imports it — prefer deleting call sites.
+ */
 export type FixPromptDismissPersistence = "local" | "session";
 
 const LOCAL_KEY = "dismissedFixes";
 const SESSION_KEY = "dismissedFixesSession";
 
-function parseList(raw: string | null): string[] {
-  try {
-    const parsed = raw ? JSON.parse(raw) : [];
-    return Array.isArray(parsed) ? parsed.filter((x): x is string => typeof x === "string") : [];
-  } catch {
-    return [];
-  }
-}
-
-export function readDismissedFixIds(persistence: FixPromptDismissPersistence): string[] {
-  if (typeof window === "undefined") return [];
-  try {
-    const raw =
-      persistence === "local" ? window.localStorage.getItem(LOCAL_KEY) : window.sessionStorage.getItem(SESSION_KEY);
-    return parseList(raw);
-  } catch {
-    return [];
-  }
-}
-
-function writeDismissedFixIds(ids: string[], persistence: FixPromptDismissPersistence): void {
+/** Clear legacy browser dismiss flags (one-time hygiene; safe no-op). */
+export function clearLegacyFixPromptDismissStorage(): void {
   if (typeof window === "undefined") return;
   try {
-    const json = JSON.stringify(ids);
-    if (persistence === "local") window.localStorage.setItem(LOCAL_KEY, json);
-    else window.sessionStorage.setItem(SESSION_KEY, json);
+    window.localStorage.removeItem(LOCAL_KEY);
+    window.sessionStorage.removeItem(SESSION_KEY);
   } catch {
-    // ignore quota / private mode
+    // ignore
   }
-}
-
-export function addDismissedFixId(id: string, persistence: FixPromptDismissPersistence): void {
-  const next = new Set(readDismissedFixIds(persistence));
-  next.add(id);
-  writeDismissedFixIds([...next], persistence);
-}
-
-/** When the underlying issue is gone, clear this id from both stores so the prompt can return if needed. */
-export function removeDismissedFixId(id: string): void {
-  const local = readDismissedFixIds("local").filter((x) => x !== id);
-  const sess = readDismissedFixIds("session").filter((x) => x !== id);
-  writeDismissedFixIds(local, "local");
-  writeDismissedFixIds(sess, "session");
 }

@@ -39,6 +39,8 @@
     "test:activity-center-architecture": "node ./backend/node_modules/tsx/dist/cli.mjs ./scripts/activity-center-architecture-runtime.ts",
     "test:qr-thankyou": "node ./backend/node_modules/tsx/dist/cli.mjs ./scripts/qr-thankyou-runtime.ts",
     "test:digital-plain-qr-frontend": "node ./backend/node_modules/tsx/dist/cli.mjs ./scripts/digital-plain-qr-runtime.ts",
+    "test:dashboard-mobile-ui": "node ./backend/node_modules/tsx/dist/cli.mjs ./scripts/dashboard-mobile-ui-runtime.ts",
+    "test:notification-intelligence": "npm --prefix backend run test:notification-intelligence",
     "test:physical-qr-frontend": "node ./backend/node_modules/tsx/dist/cli.mjs ./scripts/physical-qr-frontend-runtime.ts",
     "test:stripe-connect-phase4-5-ui": "node ./backend/node_modules/tsx/dist/cli.mjs ./scripts/stripe-connect-phase4-5-ui-runtime.ts"
   },

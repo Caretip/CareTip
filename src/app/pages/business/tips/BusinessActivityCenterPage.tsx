@@ -21,7 +21,6 @@
  * See docs/ARCHITECTURE_ACTIVITY_CENTER.md
  */
 import { useState } from "react";
-import { useTranslation } from "react-i18next";
 
 import { useRequireAuth } from "../../../hooks/useRequireAuth";
 import {
@@ -33,7 +32,6 @@ import { ActivityCenterFeed } from "../../../components/business/insights/Activi
 
 /** Activity Center — operational event stream from BusinessActivityEvent SSOT. */
 export function BusinessActivityCenterPage() {
-  const { t } = useTranslation();
   const { user, sessionValidated } = useRequireAuth();
   const [filter, setFilter] = useState<ActivityCenterFilter>("all");
 
@@ -59,7 +57,6 @@ export function BusinessActivityCenterPage() {
 
   return (
     <div className="space-y-6 pt-6">
-      <p className="text-sm text-muted-foreground">{t("business.tips.liveDesc")}</p>
       <ActivityCenterFeed
         items={items}
         liveIds={liveIds}

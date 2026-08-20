@@ -1,6 +1,9 @@
 /**
- * Self-hosted Manrope + metric fallbacks for index.html first paint.
- * Inter loads via Vite bundle: src/styles/caretip-inter-vite.css
+ * Self-hosted Inter + Manrope + metric fallbacks for index.html first paint.
+ * Absolute /fonts/... URLs only — avoids nested-route resolution / Firefox sanitizer.
+ *
+ * Inter binaries are the same @fontsource latin files previously loaded via Vite
+ * (package ships .woff for these weights; CSS listed missing .woff2 first, which caused the sanitizer error).
  */
 
 @font-face {
@@ -19,6 +22,46 @@
   ascent-override: 91%;
   descent-override: 23%;
   line-gap-override: 0%;
+}
+
+@font-face {
+  font-family: "Inter";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/inter/inter-latin-400-normal.woff") format("woff");
+}
+
+@font-face {
+  font-family: "Inter";
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url("/fonts/inter/inter-latin-500-normal.woff") format("woff");
+}
+
+@font-face {
+  font-family: "Inter";
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url("/fonts/inter/inter-latin-600-normal.woff") format("woff");
+}
+
+@font-face {
+  font-family: "Inter";
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url("/fonts/inter/inter-latin-700-normal.woff") format("woff");
+}
+
+@font-face {
+  font-family: "Inter";
+  font-style: normal;
+  font-weight: 800;
+  font-display: swap;
+  src: url("/fonts/inter/inter-latin-800-normal.woff") format("woff");
 }
 
 @font-face {

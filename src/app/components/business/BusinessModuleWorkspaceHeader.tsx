@@ -17,6 +17,8 @@ type BusinessModuleWorkspaceHeaderProps = {
   statusBadge?: ReactNode;
   insightBadge?: ReactNode;
   premiumIndicator?: ReactNode;
+  /** When true, module subtitle is hidden below lg (card/page body carries the one-line summary). */
+  hideSubtitleOnMobile?: boolean;
 };
 
 /** Flat module page header — typography hierarchy only. */
@@ -31,6 +33,7 @@ export function BusinessModuleWorkspaceHeader({
   statusBadge,
   insightBadge,
   premiumIndicator,
+  hideSubtitleOnMobile = false,
 }: BusinessModuleWorkspaceHeaderProps) {
   const metaPills = [feature, statusBadge, insightBadge, premiumIndicator].filter(Boolean);
 
@@ -39,6 +42,7 @@ export function BusinessModuleWorkspaceHeader({
       className={cn(
         dashboardWorkspaceUi.moduleHeader,
         "business-module-workspace-header premium-workspace-header",
+        hideSubtitleOnMobile && "business-module-workspace-header--hide-mobile-desc",
         className,
       )}
     >
@@ -53,7 +57,9 @@ export function BusinessModuleWorkspaceHeader({
             ))}
           </div>
           <h1 className={dashboardWorkspaceUi.pageTitle}>{title}</h1>
-          <p className={dashboardWorkspaceUi.pageDescription}>{subtitle}</p>
+          {subtitle.trim() ? (
+            <p className={dashboardWorkspaceUi.pageDescription}>{subtitle}</p>
+          ) : null}
         </div>
 
         {actions ? (

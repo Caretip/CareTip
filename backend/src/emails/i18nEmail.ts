@@ -362,7 +362,7 @@ export function buildWelcomeEmailContent(input: {
     loc === "de"
       ? {
           subject: `Willkommen bei ${b.brand}`,
-          preheader: "Ihr CareTip-Konto ist bereit — Trinkgeld per QR und Team-Einblicke.",
+          preheader: "Ihr CareTip-Konto ist bereit. Trinkgeld per QR und Team-Einblicke.",
           headline: `Willkommen bei ${b.brand}`,
           line1: "Ihr Konto ist bereit.",
           valueLine:
@@ -388,7 +388,7 @@ export function buildWelcomeEmailContent(input: {
         }
       : {
           subject: `Welcome to ${b.brand}`,
-          preheader: "Your CareTip account is ready — QR tipping and real-time team insights.",
+          preheader: "Your CareTip account is ready. QR tipping and real-time team insights.",
           headline: `Welcome to ${b.brand}`,
           line1: "Your account is ready.",
           valueLine:

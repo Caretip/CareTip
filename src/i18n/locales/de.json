@@ -166,7 +166,7 @@
       "loadError": {
         "generic": "Diese Liste konnte gerade nicht geladen werden.",
         "api": "Diese Liste konnte gerade nicht geladen werden.",
-        "network": "Netzwerkfehler — Verbindung prüfen und erneut versuchen.",
+        "network": "Netzwerkfehler. Verbindung prüfen und erneut versuchen.",
         "permission": "Sie haben keine Berechtigung, diese Daten anzuzeigen.",
         "hint": "Ihre Filter bleiben aktiv. Erneut versuchen, um die Ergebnisse zu aktualisieren."
       }
@@ -185,7 +185,7 @@
   "join": {
     "eyebrow": "Unternehmen beitreten",
     "title": "Einladung annehmen",
-    "subtitle": "Geben Sie den Einladungscode Ihrer Führungskraft ein. Mitarbeitende treten per Einladung bei — sie erstellen kein eigenes CareTip-Konto.",
+    "subtitle": "Geben Sie den Einladungscode Ihrer Führungskraft ein. Mitarbeitende treten per Einladung bei. Sie erstellen kein eigenes CareTip-Konto.",
     "inviteLabel": "Einladungscode",
     "placeholder": "z. B. 123456",
     "checking": "Wird geprüft…",
@@ -1008,18 +1008,18 @@
       "pageTitle": "Cookie-Richtlinie",
       "pageSubtitle": "Wie CareTip Cookies nutzt, welche Kategorien es gibt und wie Sie unter DSGVO und TTDSG die Kontrolle behalten.",
       "contentAria": "Abschnitte der Cookie-Richtlinie",
-      "intro": "Wir verwenden Cookies und ähnliche Technologien, um CareTip sicher zu betreiben, Ihre Einstellungen zu speichern und—nur mit Ihrer Einwilligung—Nutzung und Marketing zu messen.",
+      "intro": "Wir verwenden Cookies und ähnliche Technologien, um CareTip sicher zu betreiben, Ihre Einstellungen zu speichern und, nur mit Ihrer Einwilligung, Nutzung und Marketing zu messen.",
       "ctaTitle": "Ihre Wahl, Ihre Einstellungen",
       "ctaBody": "Sie können alle Cookies akzeptieren, nicht notwendige ablehnen oder Analytics-, Funktions- und Marketing-Cookies jederzeit anpassen.",
       "manageButton": "Cookie-Einstellungen verwalten",
       "sections": [
         {
           "q": "Was sind Cookies?",
-          "a": "Cookies sind kleine Textdateien, die beim Besuch von caretip.de auf Ihrem Gerät gespeichert werden. Sie helfen, die Website zuverlässig zu betreiben, Einstellungen wie die Sprache zu merken und—wenn Sie zustimmen—die Nutzung besser zu verstehen."
+          "a": "Cookies sind kleine Textdateien, die beim Besuch von caretip.de auf Ihrem Gerät gespeichert werden. Sie helfen, die Website zuverlässig zu betreiben, Einstellungen wie die Sprache zu merken und, wenn Sie zustimmen, die Nutzung besser zu verstehen."
         },
         {
           "q": "Warum wir Cookies verwenden",
-          "a": "Cookies ermöglichen reibungsloses Trinkgeld, sichere Konten, gespeicherte Dashboard-Präferenzen und—nur nach Einwilligung—Produktverbesserung und Kampagnenmessung. Nicht notwendige Cookies laden wir nie vor Ihrer Entscheidung."
+          "a": "Cookies ermöglichen reibungsloses Trinkgeld, sichere Konten, gespeicherte Dashboard-Präferenzen und, nur nach Einwilligung, Produktverbesserung und Kampagnenmessung. Nicht notwendige Cookies laden wir nie vor Ihrer Entscheidung."
         },
         {
           "q": "Notwendige Cookies (immer aktiv)",
@@ -1027,7 +1027,7 @@
         },
         {
           "q": "Analytics-Cookies (optional)",
-          "a": "Helfen bei Performance und Zuverlässigkeit—z. B. Fehlerüberwachung und Nutzungsstatistiken. Beispiele können Sentry-Diagnostik oder Google Analytics sein, sofern aktiviert. Werden nur nach Opt-in geladen."
+          "a": "Helfen bei Performance und Zuverlässigkeit, z. B. Fehlerüberwachung und Nutzungsstatistiken. Beispiele können Sentry-Diagnostik oder Google Analytics sein, sofern aktiviert. Werden nur nach Opt-in geladen."
         },
         {
           "q": "Funktionale Cookies (optional)",
@@ -1035,11 +1035,11 @@
         },
         {
           "q": "Marketing-Cookies (optional)",
-          "a": "Dienen der Messung von Werbewirkung und relevanten Kampagnen—z. B. Google-Ads-Conversion-Tracking oder Social-Pixel, sofern konfiguriert. Werden nur nach Opt-in geladen."
+          "a": "Dienen der Messung von Werbewirkung und relevanten Kampagnen, z. B. Google-Ads-Conversion-Tracking oder Social-Pixel, sofern konfiguriert. Werden nur nach Opt-in geladen."
         },
         {
           "q": "Dienste von Drittanbietern",
-          "a": "CareTip kann vertrauenswürdige Anbieter einbinden, die eigene Cookies setzen, wenn Sie zustimmen:\n• Stripe — sichere Zahlungen\n• Google (Analytics / Ads) — Messung bei Aktivierung\n• Sentry — Fehlerdiagnostik bei Aktivierung\n• Google Fonts — Schriftbereitstellung\n• Eingebettete Inhalte oder Social-Plattformen auf Marketing-Seiten"
+          "a": "CareTip kann vertrauenswürdige Anbieter einbinden, die eigene Cookies setzen, wenn Sie zustimmen:\n• Stripe: sichere Zahlungen\n• Google (Analytics / Ads): Messung bei Aktivierung\n• Sentry: Fehlerdiagnostik bei Aktivierung\n• Google Fonts: Schriftbereitstellung\n• Eingebettete Inhalte oder Social-Plattformen auf Marketing-Seiten"
         },
         {
           "q": "Cookie-Einstellungen verwalten",
@@ -1047,7 +1047,7 @@
         },
         {
           "q": "Speicherdauer",
-          "a": "Sitzungs-Cookies werden beim Schließen des Browsers gelöscht. Notwendige Persistenz (z. B. Anmeldung) folgt Sicherheitsstandards. Analytics- und Marketing-Cookies—wenn akzeptiert—können bis zu 24 Monate gespeichert werden, sofern Sie sie nicht früher im Browser löschen."
+          "a": "Sitzungs-Cookies werden beim Schließen des Browsers gelöscht. Notwendige Persistenz (z. B. Anmeldung) folgt Sicherheitsstandards. Analytics- und Marketing-Cookies, wenn akzeptiert, können bis zu 24 Monate gespeichert werden, sofern Sie sie nicht früher im Browser löschen."
         },
         {
           "q": "Kontakt",
@@ -1203,7 +1203,7 @@
       "cookies": "Cookie-Richtlinie",
       "imprint": "Impressum",
       "sidebarHelpTitle": "Fragen zu diesen Bedingungen?",
-      "sidebarHelpBody": "Unser Team hilft Ihnen gerne weiter—egal ob Betrieb, Team oder Gast.",
+      "sidebarHelpBody": "Unser Team hilft Ihnen gerne weiter, egal ob Betrieb, Team oder Gast.",
       "sidebarHelpButton": "Kontakt aufnehmen"
     },
     "imprint": {
@@ -1254,7 +1254,7 @@
         },
         {
           "q": "Ist CareTip DSGVO-konform?",
-          "a": "CareTip ist für die Gastronomie in der EU mit Fokus auf Datenschutz entwickelt. Wir unterstützen DSGVO-Rechte wie Auskunft (Datenexport) und Löschanfragen, soweit anwendbar. Einige Datensätze—etwa Trinkgeld- und Zahlungsverläufe aus finanziellen oder rechtlichen Gründen—können nach Entzug des Kontozugangs in begrenzter Form erhalten bleiben. Details stehen in unserer Datenschutzerklärung."
+          "a": "CareTip ist für die Gastronomie in der EU mit Fokus auf Datenschutz entwickelt. Wir unterstützen DSGVO-Rechte wie Auskunft (Datenexport) und Löschanfragen, soweit anwendbar. Einige Datensätze, etwa Trinkgeld- und Zahlungsverläufe aus finanziellen oder rechtlichen Gründen, können nach Entzug des Kontozugangs in begrenzter Form erhalten bleiben. Details stehen in unserer Datenschutzerklärung."
         },
         {
           "q": "Wie funktioniert CareTip? Wie geben Kunden Trinkgeld?",
@@ -1525,7 +1525,7 @@
       "errorPasswordsMismatch": "Die Passwörter stimmen nicht überein.",
       "errorPasswordWeak": "Das Passwort braucht mind. 8 Zeichen, Groß- und Kleinbuchstaben, Zahl und Sonderzeichen (z. B. @#$%).",
       "errorInviteRequired": "Bitte geben Sie Ihren Einladungscode ein.",
-      "employeeInviteHint": "Mitarbeitende treten nach einer Firmeneinladung bei — nutzen Sie Ihren Einladungscode oder Join-Link.",
+      "employeeInviteHint": "Mitarbeitende treten nach einer Firmeneinladung bei. Nutzen Sie Ihren Einladungscode oder Join-Link.",
       "toastAccountCreated": "Einladung abgeschlossen. Bitte prüfen Sie Ihre E-Mail zur Bestätigung.",
       "resendNeedPassword": "Geben Sie oben Ihr Passwort ein und tippen Sie dann auf Erneut senden, damit wir bestätigen können, dass Sie es sind.",
       "toastResendDefault": "Wir haben einen neuen Bestätigungslink gesendet. Bitte Posteingang prüfen.",
@@ -1673,7 +1673,7 @@
     "inbox": {
       "badge": "Posteingang",
       "title": "Benachrichtigungen",
-      "subtitle": "Betriebliche Updates für Ihr Konto",
+      "subtitle": "",
       "subtitleAdmin": "Support-Tickets, Verifizierungs-Hinweise und Plattform-Updates",
       "markAllRead": "Alle als gelesen markieren",
       "emptyTitle": "Noch keine Benachrichtigungen",
@@ -1700,8 +1700,8 @@
       "openAction": "Öffnen",
       "unreadBadge": "Ungelesen",
       "detailTitle": "Benachrichtigungsdetails",
-      "emptyBodyPremium": "Sobald Trinkgeld eingehen, Teamänderungen passieren oder Hinweise gesendet werden, erscheinen sie hier im Live-Aktivitätsfeed.",
-      "emptyHint": "Echtzeit-Updates synchronisieren Web und Mobil",
+      "emptyBodyPremium": "",
+      "emptyHint": "",
       "filterEmptyTitle": "Keine Benachrichtigungen für diesen Filter",
       "filterEmptyBody": "Wählen Sie eine andere Kategorie oder setzen Sie die Filter zurück.",
       "clearFilters": "Alle Benachrichtigungen anzeigen",
@@ -2077,7 +2077,7 @@
       "processingTitle": "Trinkgeld wird bestätigt…",
       "processingSubtitle": "Wir bestätigen Ihre Zahlung. Das dauert in der Regel nur wenige Sekunden. Bitte lassen Sie diese Seite geöffnet.",
       "confirmDelayedTitle": "Zahlung wird noch bestätigt",
-      "confirmDelayedDesc": "Ihre Zahlung wurde bei Stripe abgeschlossen. Wir warten noch auf die endgültige Bestätigung — das kann etwas länger dauern.",
+      "confirmDelayedDesc": "Ihre Zahlung wurde bei Stripe abgeschlossen. Wir warten noch auf die endgültige Bestätigung. Das kann etwas länger dauern.",
       "confirmDelayedBody": "Sie können diese Seite schließen. Ihr Trinkgeld erscheint beim Teammitglied, sobald die Bestätigung abgeschlossen ist. Falls es nach einigen Minuten nicht sichtbar ist, kontaktieren Sie bitte den Betrieb mit Ihrem Zahlungsbeleg.",
       "paymentFailedTitle": "Zahlung konnte nicht abgeschlossen werden",
       "paymentFailedDesc": "Ihre Karte wurde für dieses Trinkgeld nicht belastet (oder die Belastung wurde rückgängig gemacht). Bitte versuchen Sie es erneut.",
@@ -2232,7 +2232,7 @@
       "platformAccessApprovedDesc": "Ihr Unternehmen ist für das CareTip-Dashboard freigegeben.",
       "platformAccessPending": "Onboarding-Prüfung läuft",
       "platformAccessPendingDesc": "Sie können Ihr Dashboard nutzen, während wir Ihr Unternehmen prüfen. QR-Codes stehen nach der Onboarding-Freigabe zur Verfügung.",
-      "kycComingSoon": "KYC-Verifizierung — demnächst",
+      "kycComingSoon": "KYC-Verifizierung demnächst",
       "kycComingSoonDesc": "Die finanzielle Compliance-Prüfung folgt in einem künftigen Update. Sie blockiert nicht den Dashboard-Zugang.",
       "kycVerified": "Verifiziert",
       "kycVerifiedDesc": "Ihr Lokal ist für Live-Gast-Trinkgeld freigegeben",
@@ -2330,7 +2330,7 @@
       "billingCompactTitle": "Auf Pro upgraden",
       "resolvingEntitlements": "Dashboard wird vorbereitet…",
       "preview": {
-        "sectionAria": "Dashboard-Vorschau — mit Abonnement freischalten",
+        "sectionAria": "Dashboard-Vorschau (mit Abonnement freischalten)",
         "lead": "Vorschau Ihres Dashboards nach der CareTip-Aktivierung.",
         "sampleData": "Beispielvorschau",
         "avgTip": "Ø Trinkgeld",
@@ -2500,6 +2500,7 @@
       "overview": "Überblick",
       "inbox": "Posteingang",
       "tipHistory": "Trinkgeldverlauf",
+      "assignment": "Meine Zuweisung",
       "tipGoals": "Trinkgeldziele",
       "settings": "Einstellungen"
     },
@@ -3532,7 +3533,7 @@
       "loadFailedTitle": "Trinkgeld-Hinweise nicht geladen",
       "retry": "Erneut versuchen",
       "emptyTitle": "Sie sind auf dem neuesten Stand!",
-      "emptySubtitle": "Neue Trinkgeldaktivität erscheint hier.",
+      "emptySubtitle": "",
       "manageHint": "Benachrichtigungen verwalten",
       "selectAll": "Alle auswählen",
       "selectAllAria": "Alle Benachrichtigungen auswählen",
@@ -3556,7 +3557,7 @@
     },
     "tipHistory": {
       "title": "Trinkgeldverlauf",
-      "subtitle": "Ihr Einnahmenbuch mit durchsuchbaren Trinkgeld-Einträge mit Zahlungsstatus.",
+      "subtitle": "",
       "backAria": "Zurück",
       "searchPlaceholder": "Standort, Tisch oder Trinkgeld-ID suchen…",
       "statusAll": "Alle Status",
@@ -3587,12 +3588,12 @@
       "title": "Trinkgeldziele",
       "subtitle": "Setzen Sie ein Ziel und verfolgen Sie Ihren Fortschritt.",
       "manageTitle": "Ziele verwalten",
-      "manageSubtitle": "Trinkgeldziele anlegen, bearbeiten, als erreicht markieren oder löschen.",
+      "manageSubtitle": "",
       "newGoal": "Neues Ziel",
       "couldNotLoad": "Ziele konnten nicht geladen werden",
       "retry": "Erneut versuchen",
       "emptyTitle": "Noch keine Ziele",
-      "emptySubtitle": "Legen Sie Ihr erstes Ziel an, um Ihren Trinkgeld-Fortschritt zu verfolgen.",
+      "emptySubtitle": "Erstes Ziel hinzufügen.",
       "colName": "Zielname",
       "colTarget": "Ziel (€)",
       "colPeriod": "Zeitraum",
@@ -3624,6 +3625,19 @@
       "toastNoProgress": "Noch kein Fortschritt, um als erreicht zu markieren.",
       "toastMarkedAchieved": "Als erreicht markiert",
       "confirmRemove": "Ihr Trinkgeldziel entfernen?"
+    },
+    "assignment": {
+      "title": "Meine Zuweisung",
+      "subtitle": "",
+      "backAria": "Zurück",
+      "locationLabel": "Zugewiesener Standort",
+      "tablesLabel": "Zugewiesene Tische",
+      "tableAtLocation": "In {{location}}",
+      "loading": "Zuweisung wird geladen…",
+      "noLocationTitle": "Kein Standort zugewiesen",
+      "noLocationDesc": "Bitten Sie Ihren Manager um eine Zuweisung.",
+      "noTablesTitle": "Keine Tische zugewiesen",
+      "noTablesDesc": "Bitten Sie Ihren Manager um Tischzuweisungen."
     },
     "qrModal": {
       "toastLinkCopied": "Link in die Zwischenablage kopiert",
@@ -3689,7 +3703,7 @@
     "hero": {
       "headlineLine1": "Ihre Einnahmen",
       "headlineLine2": "auf einen Blick",
-      "sub": "Trinkgeld, Ziele und Leistung im Blick.",
+      "sub": "",
       "helperText": "Überblick oben. Unten den Zeitraum wählen für Details und Diagramme.",
       "welcomeBack": "Willkommen zurück",
       "welcomeBackNamed": "Willkommen zurück, {{name}}",
@@ -3844,14 +3858,14 @@
       "monthly": "Monatlich"
     },
     "fixQr": {
-      "title": "Einigen Mitarbeitenden fehlen QR Links",
-      "description": "Öffnen Sie die QR Verwaltung, um neue Links und druckbare Codes zu erzeugen.",
-      "action": "QR Links beheben"
+      "title": "Fehlende Mitarbeiter-QR-Links",
+      "description": "Links für Mitarbeitende ohne QR-Code erzeugen.",
+      "action": "QR-Studio öffnen"
     },
     "fixConnect": {
-      "title": "Stripe verbinden, um Trinkgeld zu empfangen",
-      "description": "CareTip benötigt Ihr Stripe-Konto, bevor Gäste in dieser Location Trinkgeld geben können.",
-      "action": "Stripe verbinden"
+      "title": "Stripe verbinden",
+      "description": "Setup abschließen, um Trinkgelder zu erhalten.",
+      "action": "Stripe-Setup fortsetzen"
     },
     "shell": {
       "sidebarAria": "Unternehmens-Dashboard-Navigation",
@@ -4146,7 +4160,7 @@
         "connectTitle": "Stripe Connect",
         "connectSubtitle": "Stripe verbinden, damit diese Location Trinkgeld empfangen kann",
         "connectPayoutsTitle": "Stripe-Auszahlungen",
-        "connectPayoutsSubtitle": "Stripe-Auszahlungen des Unternehmens — nicht die CareTip-Abo-Abrechnung"
+        "connectPayoutsSubtitle": "Stripe-Auszahlungen des Unternehmens (nicht die CareTip-Abo-Abrechnung)"
       }
     },
     "dashboard": {
@@ -4159,7 +4173,7 @@
       "fixVerificationTitle": "Ihr Unternehmen wird geprüft",
       "fixVerificationDesc": "Vielen Dank für die Einreichung Ihrer Unternehmensverifizierung. Unser Team prüft Ihre Angaben.",
       "verificationBannerTitle": "Ihr Unternehmen wird geprüft",
-      "verificationBannerDesc": "Vielen Dank für die Einreichung Ihrer Unternehmensverifizierung. Unser Team prüft Ihre Angaben — Sie werden benachrichtigt, sobald Ihr Unternehmen freigegeben wurde.",
+      "verificationBannerDesc": "Vielen Dank für die Einreichung Ihrer Unternehmensverifizierung. Unser Team prüft Ihre Angaben. Sie werden benachrichtigt, sobald Ihr Unternehmen freigegeben wurde.",
       "verificationBannerRejectedTitle": "Geschäftsverifizierung erfordert Aufmerksamkeit",
       "verificationBannerRejectedDesc": "Ihr Lokal konnte noch nicht freigegeben werden. Kontaktieren Sie den Support bei Fragen.",
       "verificationBannerCta": "Verifizierungsstatus anzeigen",
@@ -4185,7 +4199,7 @@
       "avgTipPerEmployee": "Ø Trinkgeld pro Person",
       "avgTipCoaching": "Nützliche Kennzahl fürs Team",
       "employeeGoalsTitle": "Trinkgeldziele des Teams",
-      "employeeGoalsDesc": "Ziele, die Ihr Team selbst setzt. Der Fortschritt basiert auf Trinkgeld der jeweiligen Person im aktuellen Zeitraum (an die Gesamtzeiträume des Leistungsdiagramms angeglichen).",
+      "employeeGoalsDesc": "Teamziele für den aktuellen Zeitraum.",
       "employeeGoalsDescShort": "Team-Fortschritt bei den Zielen in Echtzeit verfolgen.",
       "employeeGoalsMore": "So funktioniert‘s",
       "employeeGoalsLess": "Weniger anzeigen",
@@ -4319,10 +4333,10 @@
       "backAria": "Zurück zum Dashboard",
       "eyebrow": "Standorte",
       "title": "Standorte",
-      "subtitle": "Strukturierte Bereiche für Tisch-QR-Codes und Multi-Standort-Betrieb.",
+      "subtitle": "",
       "addNew": "+ Neuer Standort",
       "loading": "Standorte werden geladen…",
-      "empty": "Noch keine Standorte. Legen Sie z. B. Hauptbar oder Dachterrasse an.",
+      "empty": "Noch keine Standorte.",
       "toastNameRequired": "Bitte geben Sie einen Standortnamen ein.",
       "toastCreated": "Standort angelegt.",
       "dialogTitle": "Standort hinzufügen",
@@ -4337,7 +4351,7 @@
     "tablesPage": {
       "backAria": "Zurück zum Dashboard",
       "title": "Tische",
-      "subtitle": "Gäste-QR-Codes pro Tisch",
+      "subtitle": "",
       "create": "+ Tisch anlegen",
       "loading": "Tische werden geladen…",
       "emptyNeedLocation": "Zuerst einen Standort anlegen, dann Tische darunter.",
@@ -4406,7 +4420,7 @@
     },
     "tipsActivity": {
       "title": "Trinkgeld & Aktivität",
-      "subtitle": "Echte Trinkgeldaktivität für Ihr Konto.",
+      "subtitle": "",
       "searchPlaceholder": "Team, Standort/Tisch oder Trinkgeld-ID suchen…",
       "statusAll": "Alle Status",
       "statusSuccess": "Erfolgreich",
@@ -4514,7 +4528,7 @@
       "backAria": "Zurück zum Dashboard",
       "heroTitle": "Teamverwaltung",
       "heroDesc": "Einladungen, Rollen und aktives Team.",
-      "filterDesc": "Nach Name oder Rolle filtern",
+      "filterDesc": "",
       "searchPlaceholder": "Team durchsuchen…",
       "noTables": "Keine Tische",
       "noPhone": "Keine Telefonnummer",
@@ -4552,7 +4566,7 @@
       "removing": "Wird entfernt…",
       "delete": "Löschen",
       "emptyTitle": "Noch keine Teammitglieder.",
-      "emptySubtitle": "Fügen Sie Mitarbeitende hinzu, um zu starten.",
+      "emptySubtitle": "",
       "mobileEmpty": "Noch keine Teammitglieder.",
       "joinedLabel": "Beigetreten {{date}}",
       "tableCount": "{{count}} Tisch(e)",
@@ -4566,7 +4580,7 @@
       "badgeTeamRoster": "Teamliste",
       "inviteCodeLabel": "Einladungscode",
       "inviteTeamTitle": "Teammitglieder einladen",
-      "inviteTeamDesc": "Einladungscodes erzeugen oder Mitarbeitende manuell hinzufügen.",
+      "inviteTeamDesc": "Codes erzeugen oder Mitarbeitende hinzufügen.",
       "inviteExpires": "Läuft ab {{date}}",
       "inviteHint": "Erzeugen Sie einen Einladungscode, um Mitarbeitende einzubinden.",
       "copy": "Kopieren",
@@ -4609,7 +4623,7 @@
       "deactivateConfirmAction": "Deaktivieren",
       "deactivating": "Wird deaktiviert…",
       "deleteConfirmTitle": "Mitarbeitende entfernen?",
-      "deleteConfirmBody": "Damit wird {{name}} aus diesem Betrieb entfernt und der CareTip-Zugang entzogen. Historische Trinkgeldbeträge für Ihren Betrieb bleiben für Berichte und Finanzunterlagen erhalten—sie werden nicht gelöscht. Das ist nicht dasselbe wie eine vollständige Konto-Löschanfrage.",
+      "deleteConfirmBody": "Damit wird {{name}} aus diesem Betrieb entfernt und der CareTip-Zugang entzogen. Historische Trinkgeldbeträge für Ihren Betrieb bleiben für Berichte und Finanzunterlagen erhalten. Sie werden nicht gelöscht. Das ist nicht dasselbe wie eine vollständige Konto-Löschanfrage.",
       "labelTipsMonth": "Trinkgeld (Monat)",
       "labelRating": "Bewertung",
       "qrButton": "QR",
@@ -4709,7 +4723,7 @@
     },
     "notifications": {
       "title": "Benachrichtigungen",
-      "subtitle": "Updates zu Trinkgeld, QR-Tools und Ihrem CareTip-Konto",
+      "subtitle": "",
       "markAllRead": "Alle als gelesen",
       "filterAll": "Alle",
       "filterUnread": "Ungelesen",
@@ -4765,7 +4779,7 @@
     "qrStudio": {
       "eyebrow": "Produkt",
       "title": "QR Studio",
-      "subtitle": "Ihr Premium-Studio für Marken-QR-Codes, Gäste-Touchpoints und druckfertige Assets.",
+      "subtitle": "",
       "navAria": "QR-Studio-Bereiche",
       "nav": {
         "gallery": "QR-Galerie",
@@ -4785,7 +4799,7 @@
         "continueVerification": "Verifizierung fortsetzen",
         "verificationInReviewTitle": "Ihr Unternehmen wird geprüft",
         "verificationInReviewBadge": "Verifizierung läuft",
-        "verificationInReviewBody": "Vielen Dank für die Einreichung Ihrer Unternehmensverifizierung. Unser Team prüft derzeit Ihre Angaben. Dies dauert in der Regel nur kurz — Sie erhalten eine In-App-Benachrichtigung und E-Mail, sobald Ihr Unternehmen freigegeben wurde.",
+        "verificationInReviewBody": "Vielen Dank für die Einreichung Ihrer Unternehmensverifizierung. Unser Team prüft derzeit Ihre Angaben. Dies dauert in der Regel nur kurz. Sie erhalten eine In-App-Benachrichtigung und E-Mail, sobald Ihr Unternehmen freigegeben wurde.",
         "verificationInReviewLimitedAccess": "Während der Prüfung bleiben Funktionen, die ein verifiziertes Unternehmen erfordern (z. B. Live-QR-Codes), vorübergehend nicht verfügbar.",
         "viewVerificationStatus": "Verifizierungsstatus anzeigen",
         "verificationInReviewSupportBefore": "Möchten Sie Ihre Einreichung aktualisieren?",
@@ -4816,7 +4830,7 @@
         "manageLocations": "Standort-QRs",
         "manageTables": "Tisch-QRs",
         "libraryTitle": "QR-Asset-Bibliothek",
-        "libraryDesc": "Alle druckbaren Codes für Ihr Lokal — mit Vorlage, Zuordnung und Download-Aktionen an einem Ort.",
+        "libraryDesc": "Alle druckbaren Codes für Ihr Lokal, mit Vorlage, Zuordnung und Download-Aktionen an einem Ort.",
         "libraryEmpty": "Noch keine QR-Assets. Fügen Sie Mitarbeitende, Standorte oder Tische hinzu.",
         "preview": "Vorschau",
         "downloadPng": "PNG herunterladen",
@@ -4981,7 +4995,7 @@
         "background": "Hintergrund",
         "decorations": "Dekorative Ebenen",
         "decorationsHint": "Premium-Rahmen, Ecken und Akzente außerhalb der Scan-Zone.",
-        "controlComingSoon": "Demnächst — dieses Steuerelement ist vorübergehend deaktiviert, bis es die Live-Karte aktualisiert.",
+        "controlComingSoon": "Demnächst. Dieses Steuerelement ist vorübergehend deaktiviert, bis es die Live-Karte aktualisiert.",
         "qrStageDeferredHint": "QR-Größe, Form und Rahmen kehren zurück, sobald sie die exportierte Karte steuern. Vorlage und Akzentfarbe prägen bereits Ihre Live-Vorschau.",
         "logoSectionTitle": "Logo",
         "logoSectionHint": "Laden Sie Ihr Logo hoch und steuern Sie die Darstellung auf der Marken-QR-Karte.",
@@ -5131,8 +5145,8 @@
         "roseGoldSalonDesc": "Weiches Roségold-Licht, Patisserien, Salons und Boutique-Tagesvenues."
       },
       "downloads": {
-        "title": "Downloads & Druckformate",
-        "description": "Druckfertige Assets aus Ihrer QR-Galerie erstellen.",
+        "title": "Druckformate",
+        "description": "",
         "png": "PNG",
         "pngDesc": "Hochauflösendes QR-Bild",
         "pdf": "PDF-Layout",
@@ -5153,9 +5167,9 @@
     "activityCenter": {
       "centerTitle": "Aktivitätscenter",
       "streamLabel": "Live",
-      "ssotHelper": "Aktuelle Aktivität. Nicht auf heute beschränkt. Die heutigen Trinkgeld-Summen sehen Sie in der Übersicht (Ortszeit des Lokals).",
-      "empty": "Noch nichts. Trinkgeld, QR-Scans, Ziele, Team und Zahlungen erscheinen hier chronologisch.",
-      "emptyToday": "Heute (Ortszeit) noch keine Aktivität. Unter Alle Aktivitäten sehen Sie auch Ereignisse von gestern Nacht.",
+      "ssotHelper": "",
+      "empty": "Noch keine Aktivität",
+      "emptyToday": "Heute noch nichts.",
       "loadOlder": "Ältere laden",
       "loadingOlder": "Laden…",
       "filter": {
@@ -5223,15 +5237,15 @@
     "tips": {
       "eyebrow": "Umsatz",
       "title": "Trinkgeld",
-      "subtitle": "Aktivitätscenter, Transaktionen und Umsatzanalysen.",
-      "analyticsHeaderSubtitle": "Executive-Reporting zu Umsatz, Trends, Exporten und Business Intelligence.",
+      "subtitle": "",
+      "analyticsHeaderSubtitle": "",
       "navAria": "Trinkgeld-Bereiche",
       "nav": {
         "live": "Aktivitätscenter",
         "transactions": "Transaktionen",
         "analytics": "Analysen"
       },
-      "liveDesc": "Was gerade passiert: Trinkgeld, Scans, Ziele, Team und Zahlungen in chronologischer Reihenfolge. Nicht dasselbe wie die heutigen Tip-Summen in der Übersicht.",
+      "liveDesc": "",
       "analyticsDesc": "Tiefenanalyse zu Umsatz, QR, Mitarbeiter, Standorte und Trends. Nach Zeitraum filtern und exportieren.",
       "live": {
         "cards": {
@@ -5285,9 +5299,9 @@
     "team": {
       "eyebrow": "Personal",
       "title": "Team",
-      "subtitle": "Mitarbeiter, Performance, Ziele und Teamwachstum verwalten.",
-      "employeesHeaderSubtitle": "Mitarbeitende onboarden, Einladungen verwalten und den Tagesbetrieb im Team.",
-      "topPerformersHeaderSubtitle": "Anerkennung, Ranglisten und Top Performer in Ihrem Team.",
+      "subtitle": "Personal, Performance und Ziele.",
+      "employeesHeaderSubtitle": "",
+      "topPerformersHeaderSubtitle": "",
       "navAria": "Team-Bereiche",
       "nav": {
         "employees": "Mitarbeiter",
@@ -5314,7 +5328,7 @@
       },
       "performance": {
         "openAnalytics": "Leistungsanalysen anzeigen",
-        "headerSubtitle": "Executive-Gesundheit, Risiken, Chancen und empfohlene Maßnahmen für Ihr Unternehmen.",
+        "headerSubtitle": "",
         "leaderboardTitle": "Team-Rangliste",
         "goalProgress": "{{percent}} % des Ziels",
         "rating": "★ {{rating}} Ø",
@@ -5508,7 +5522,7 @@
       "eyebrow": "Gäste",
       "title": "Kundenfeedback",
       "subtitle": "Gästefeedback, Bewertungen und Stimmung aus jeder Trinkgeld-Journey.",
-      "mergedSubtitle": "Bewertungen, Kommentare und Einblicke aus jeder Gäste-Trinkgeld-Journey.",
+      "mergedSubtitle": "",
       "navAria": "Gäste-Bereiche",
       "nav": {
         "feedback": "Feedback",
@@ -5528,7 +5542,7 @@
     "settings": {
       "eyebrow": "Arbeitsbereich",
       "title": "Einstellungen",
-      "subtitle": "Kontoeinstellungen, Sicherheit und Integrationen.",
+      "subtitle": "Konto, Sicherheit und Integrationen.",
       "navAria": "Einstellungsbereiche",
       "loading": "Wird geladen…",
       "sections": {
@@ -5607,7 +5621,7 @@
       "thankYouPlaceholder": "Vielen Dank für Ihre Unterstützung. Ihre Wertschätzung bedeutet uns viel.",
       "defaultThankYouMessage": "Ihre Wertschätzung bedeutet unserem Team die Welt.",
       "successPreviewTitle": "Vorschau Erfolgsseite",
-      "successPreviewDesc": "So sehen Gäste die Seite nach dem Trinkgeld — entspricht dem Live-Erlebnis (ohne Banner).",
+      "successPreviewDesc": "So sehen Gäste die Seite nach dem Trinkgeld. Entspricht dem Live-Erlebnis (ohne Banner).",
       "successPreviewAria": "Vorschau der Gäste-Erfolgsseite nach dem Trinkgeld",
       "successPreviewStaffName": "Alex",
       "successPreviewStaffRole": "Service",
@@ -5688,14 +5702,14 @@
         "circle_shape_sanitized": "Kreis-Stil wird als sicheres abgerundetes Quadrat gerendert, um Finder-Muster zu schützen.",
         "decode_failed": "Eine Kamera konnte diesen QR nicht decodieren. Er scannt in Produktion möglicherweise nicht.",
         "url_mismatch": "Decodierter Inhalt stimmt nicht mit der erwarteten Trinkgeld-URL überein.",
-        "composite_decode_fallback": "Karten-Extrakt fehlgeschlagen — Matrix-Fallback bestätigte die QR-Nutzlast; Compositing ist scan-sicher."
+        "composite_decode_fallback": "Karten-Extrakt fehlgeschlagen. Matrix-Fallback bestätigte die QR-Nutzlast; Compositing ist scan-sicher."
       }
     },
     "stripe": {
       "moduleEyebrow": "Trinkgeld & Auszahlungen",
       "moduleTitle": "Stripe",
-      "moduleSubtitle": "Verbinden Sie das Stripe-Konto Ihres Unternehmens, damit Gäste in dieser Location Trinkgeld geben können.",
-      "payoutsSubtitle": "Stripe-Auszahlungen vom verbundenen Geschäftskonto auf das Bankkonto — nicht die CareTip-Abo-Abrechnung.",
+      "moduleSubtitle": "Stripe verbinden, um Trinkgeld zu empfangen.",
+      "payoutsSubtitle": "Stripe-Auszahlungen auf Ihr Bankkonto (keine CareTip-Abo-Abrechnung).",
       "nav": {
         "connect": "Verbindung",
         "payouts": "Auszahlungen"
@@ -5704,10 +5718,10 @@
     "billing": {
       "moduleEyebrow": "Abonnement",
       "moduleTitle": "Abrechnung",
-      "moduleSubtitle": "Plan, Rechnungen und Zahlungsmethoden verwalten.",
+      "moduleSubtitle": "Plan und Rechnungen verwalten.",
       "mobileHandoff": {
         "title": "Sie sind auf CareTip Web",
-        "body": "Sie haben die Abrechnung aus der CareTip-App geöffnet. Dies ist derselbe Workspace — schließen Sie Ihr Abonnement hier ab, verwalten Sie die Abrechnung weiter im Web oder kehren Sie zur mobilen App zurück, wenn Sie fertig sind.",
+        "body": "Sie haben die Abrechnung aus der CareTip-App geöffnet. Dies ist derselbe Workspace. Schließen Sie Ihr Abonnement hier ab, verwalten Sie die Abrechnung weiter im Web oder kehren Sie zur mobilen App zurück, wenn Sie fertig sind.",
         "dismiss": "Schließen"
       },
       "navAria": "Abrechnungsbereiche",
@@ -5720,13 +5734,13 @@
       },
       "historyDesc": "Abo-Aktivität verfolgen: Testphasen, Verlängerungen, Zahlungen und Planwechsel.",
       "historyEmptyTitle": "Noch keine Abrechnungsaktivität",
-      "historyEmptyBody": "Abo-Ereignisse erscheinen hier, sobald sich Ihr Plan ändert, verlängert wird oder Zahlungen verarbeitet werden.",
+      "historyEmptyBody": "Verlängerungen und Planänderungen erscheinen hier.",
       "payouts": {
-        "hint": "Dies sind Stripe-Auszahlungen vom verfügbaren Guthaben Ihres verbundenen Kontos auf Ihr Bankkonto. Sie sind keine einzelnen Gäste-Tips, und CareTip löst sie nicht aus — Stripe tut das.",
+        "hint": "Überweisungen vom Stripe-Guthaben auf Ihr Bankkonto.",
         "loadError": "Auszahlungsverlauf konnte nicht geladen werden.",
         "loading": "Auszahlungen werden geladen",
         "emptyTitle": "Noch keine Auszahlungen",
-        "emptyBody": "Ihr mit Stripe verbundenes Konto hat noch keine Auszahlung erhalten. Sobald Stripe Geld von diesem Konto sendet, erscheint der Verlauf hier.",
+        "emptyBody": "Erscheint nach der ersten Stripe-Auszahlung.",
         "tableCaption": "Stripe-Auszahlungen des verbundenen Kontos",
         "colAmount": "Betrag",
         "colStatus": "Auszahlungsstatus",
@@ -5788,19 +5802,20 @@
       "retry": "Erneut versuchen",
       "connect": {
         "title": "Trinkgelder mit Stripe empfangen",
-        "description": "Verbinden Sie Stripe, damit dieses Unternehmen Trinkgeld von Gästen empfangen kann. Gäste können erst Trinkgeld geben, wenn die Stripe-Einrichtung bereit ist.",
-        "loading": "Auszahlungseinrichtung wird geprüft…",
-        "loadError": "Auszahlungseinrichtung konnte nicht geladen werden.",
+        "description": "Trinkgeld direkt über Stripe empfangen.",
+        "loading": "Stripe wird geprüft…",
+        "loadError": "Stripe-Einrichtung konnte nicht geladen werden.",
         "connect": "Stripe verbinden",
         "continue": "Stripe-Einrichtung fortsetzen",
         "manage": "Stripe-Angaben aktualisieren",
         "starting": "Stripe wird geöffnet…",
         "startError": "Stripe-Verbindung konnte nicht gestartet werden. Bitte erneut versuchen.",
         "notConfigured": "Stripe ist auf dem Server noch nicht konfiguriert.",
-        "statusNotConnected": "Stripe ist noch nicht verbunden. Verbinden Sie Stripe, bevor die Location Trinkgeld empfangen kann.",
-        "statusIncomplete": "Stripe-Einrichtung ist unvollständig. Schließen Sie die Einrichtung ab, bevor die Location Trinkgeld empfangen kann.",
-        "statusAttention": "Stripe benötigt weitere Angaben, bevor diese Location Trinkgeld empfangen kann.",
-        "statusReady": "Stripe-Konto ist bereit. Gäste können in dieser Location Trinkgeld geben.",
+        "statusNotConnected": "Stripe nicht verbunden",
+        "statusIncomplete": "Stripe-Einrichtung unvollständig",
+        "statusAttention": "Stripe benötigt Aufmerksamkeit",
+        "statusReady": "Stripe bereit",
+        "nextStepHint": "Schließen Sie die Einrichtung ab, um Trinkgeld zu empfangen.",
         "chargesOff": "Kartenzahlungen von Gästen sind auf diesem Stripe-Konto noch nicht aktiviert.",
         "payoutsOff": "Stripe hat Auszahlungen für dieses Konto noch nicht aktiviert. Tip-Empfang erfordert aktivierte Charges und Payouts.",
         "readyNote": "Stripe steuert, wann Guthaben vom verbundenen Konto auf Ihr Bankkonto fließt. CareTip zeichnet diese Auszahlungen nur auf.",
@@ -5808,8 +5823,8 @@
         "readinessReady": "Bereitschaft: bereit, Trinkgeld zu empfangen.",
         "readinessRequired": "Bereitschaft: Stripe-Einrichtung erforderlich, bevor diese Location Trinkgeld empfangen kann.",
         "goLiveNote": "Die Plattformfreigabe für QR-Codes ist davon unabhängig. Tip-Checkout erfordert trotzdem eine bereite Stripe-Verbindung.",
-        "returnedHint": "Willkommen zurück. Der Stripe-Status wird aktualisiert, sobald Stripe Ihr Konto bestätigt — das kann einen Moment dauern.",
-        "linkExpired": "Dieser Stripe-Einrichtungslink ist abgelaufen. Nutzen Sie „Stripe-Einrichtung fortsetzen“, um einen neuen zu öffnen."
+        "returnedHint": "Willkommen zurück. Der Stripe-Status kann einen Moment brauchen.",
+        "linkExpired": "Dieser Stripe-Einrichtungslink ist abgelaufen. Setzen Sie die Einrichtung fort, um einen neuen zu öffnen."
       },
       "emptyStateTitle": "Sie nutzen den CareTip Basic-Plan.",
       "emptyStateBody": "Upgraden Sie auf Pro für erweiterte Analysen, Branding, Mehrstandort und mehr.",
@@ -5929,7 +5944,7 @@
         "readyTitle": "Alles bereit!",
         "readyBody": "Ihr Tarif ist aktiv. Dashboard wird geöffnet…",
         "timeoutTitle": "Wird noch verarbeitet",
-        "timeoutBody": "Ihre Zahlung ist eingegangen, die Aktivierung dauert etwas länger. Sie können das Dashboard öffnen — Ihr Tarif sollte in Kürze erscheinen.",
+        "timeoutBody": "Ihre Zahlung ist eingegangen, die Aktivierung dauert etwas länger. Sie können das Dashboard öffnen. Ihr Tarif sollte in Kürze erscheinen.",
         "goToDashboard": "Zum Dashboard",
         "viewBilling": "Abrechnung anzeigen",
         "backToPricing": "Zurück zu Preise",
@@ -5957,7 +5972,7 @@
         "expiredPremiumLink": "Premium benötigt? Vertrieb kontaktieren",
         "upgradeCta": "Auf Pro upgraden",
         "planHint": {
-          "basic": "Ihr aktueller kostenloser Plan — Trinkgeld, QR und Team-Tools inklusive",
+          "basic": "Ihr aktueller kostenloser Plan mit Trinkgeld, QR und Team-Tools inklusive",
           "premium": "Erweiterte Analysen, Branding, Exporte, Mehrstandort und Team-Ziele",
           "enterprise": "Individuelle Einführung für Ihre Organisation. Vertrieb kontaktieren."
         }
@@ -6004,7 +6019,7 @@
       "plans": {
         "basic": {
           "name": "Basic",
-          "tagline": "Kostenlos — Trinkgeld-Basics für kleine Teams",
+          "tagline": "Kostenlos: Trinkgeld-Basics für kleine Teams",
           "f0": "QR-Trinkgeld für Team und Lokal",
           "f1": "Echtzeit-Benachrichtigungen",
           "f2": "Mitarbeiter-Einladungscodes",
@@ -6094,7 +6109,7 @@
       "toastPasswordUpdated": "Passwort aktualisiert.",
       "toastPrefsSaved": "Einstellungen gespeichert.",
       "toastImageOnly": "Bitte eine Bilddatei wählen.",
-      "heroBodyLong": "Einmalige Trinkgeld per QR-Code und Mitarbeiterlinks. Zahlungen nutzen Stripe Payment Intents. Basic ist kostenlos — auf Pro upgraden für erweiterte Funktionen.",
+      "heroBodyLong": "Einmalige Trinkgeld per QR-Code und Mitarbeiterlinks. Zahlungen nutzen Stripe Payment Intents. Basic ist kostenlos. Auf Pro upgraden für erweiterte Funktionen.",
       "linkTipsActivity": "Trinkgeld & Aktivität ansehen",
       "linkFeeDetails": "Gebühren",
       "labelEmailReadonly": "E-Mail-Adresse (nur lesen)",
@@ -6240,7 +6255,7 @@
       },
       "verificationQueue": {
         "title": "Verifizierungs-Warteschlange",
-        "desc": "Bis zu {{limit}} Betriebe — ausstehende Prüfungen zuerst"
+        "desc": "Bis zu {{limit}} Betriebe (ausstehende Prüfungen zuerst)"
       }
     },
     "subscriptions": {
@@ -6345,7 +6360,7 @@
         "team_scale": "{{staffCount}} Mitarbeitende auf Basic.",
         "multi_location": "{{locationCount}} Standorte auf Basic.",
         "table_qr": "Tisch-QR auf Basic in Nutzung.",
-        "csv_export": "Export & Reporting — auf Pro upgraden zum Freischalten.",
+        "csv_export": "Export & Reporting: auf Pro upgraden zum Freischalten.",
         "employee_goals": "Ziele auf Basic in Nutzung.",
         "branding": "Branding auf Basic konfiguriert.",
         "enterprise_scale": "{{locations}} Standorte, {{staff}} Personal, {{qrScans30d}} QR-Scans."
@@ -6384,7 +6399,7 @@
     "businessesOpen": "Öffnen",
     "verificationTeaser": {
       "title": "Unternehmensverifizierung",
-      "subtitle": "Bis zu {{limit}} Betriebe — ausstehende Prüfungen zuerst",
+      "subtitle": "Bis zu {{limit}} Betriebe (ausstehende Prüfungen zuerst)",
       "pendingCount": "{{count}} warten auf Verifizierung",
       "viewAll": "Alle anzeigen"
     },
@@ -6773,7 +6788,7 @@
     },
     "businessAnalyticsPage": {
       "title": "Unternehmensanalysen",
-      "subtitle": "Unternehmensleistung der Plattform — Wachstum, Umsatz, Abonnements und Top-Betriebe.",
+      "subtitle": "Unternehmensleistung der Plattform: Wachstum, Umsatz, Abonnements und Top-Betriebe.",
       "chartsTitle": "Unternehmensleistung",
       "chartsSubtitle": "Letzte {{days}} Tage ({{tz}}). Umsatz, Wachstum und Zahlungsstatus über alle Betriebe.",
       "chartGrowth": "Wachstumstrends",
@@ -6789,7 +6804,7 @@
     },
     "usageReportsPage": {
       "title": "Nutzungsberichte",
-      "subtitle": "Produktadoption und Engagement — Nutzer, Aktivität und Nutzungssignale.",
+      "subtitle": "Produktadoption und Engagement: Nutzer, Aktivität und Nutzungssignale.",
       "chartsTitle": "Nutzung & Engagement",
       "chartsSubtitle": "Letzte {{days}} Tage ({{tz}}). Registrierungen, Rollen und Trinkgeldaktivität als Nutzungsindikatoren.",
       "chartUserRoles": "Benutzerrollen",
@@ -6799,7 +6814,7 @@
       "chartSignups": "Neue Registrierungen",
       "chartSignupsDesc": "Täglich neu registrierte Konten auf der Plattform.",
       "chartTipVolume": "Tägliche Trinkgeldaktivität",
-      "chartTipVolumeDesc": "Trinkgeldvolumen im Zeitverlauf — Indikator für QR-Scans und Kundenengagement.",
+      "chartTipVolumeDesc": "Trinkgeldvolumen im Zeitverlauf, Indikator für QR-Scans und Kundenengagement.",
       "kpi": {
         "activeUsers": "Aktive Nutzer",
         "employees": "Mitarbeiterkonten",
@@ -6966,7 +6981,7 @@
     },
     "connectPayoutsPage": {
       "title": "Connect-Auszahlungen",
-      "subtitle": "Stripe-Auszahlungen von verbundenen Express-Konten auf das Bankkonto der Location. Nur Beobachtung — CareTip löst keine Auszahlungen aus. Das sind keine einzelnen Gäste-Tips und keine Mitarbeiter-Auszahlungen.",
+      "subtitle": "Stripe-Auszahlungen von verbundenen Express-Konten auf das Bankkonto der Location. Nur Beobachtung. CareTip löst keine Auszahlungen aus. Das sind keine einzelnen Gäste-Tips und keine Mitarbeiter-Auszahlungen.",
       "searchPlaceholder": "Nach Betriebsname suchen…",
       "searchAria": "Connect-Auszahlungen nach Betriebsname suchen",
       "filterStatus": "Auszahlungsstatus",
@@ -7263,7 +7278,7 @@
           },
           "pending_review": {
             "title": "Derzeit warten keine Unternehmen auf manuelle Prüfung",
-            "description": "Die Warteschlange ist leer — neue Einreichungen erscheinen automatisch."
+            "description": "Die Warteschlange ist leer. Neue Einreichungen erscheinen automatisch."
           },
           "awaiting_upload": {
             "title": "Alle Unternehmen haben Verifizierungsdokumente hochgeladen",

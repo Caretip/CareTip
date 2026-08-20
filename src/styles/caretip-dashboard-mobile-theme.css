@@ -143,6 +143,72 @@
     background: hsl(var(--muted)) !important;
     color: hsl(var(--muted-foreground)) !important;
   }
+
+  /* ── Flatten nested / decorative cards on mobile ── */
+  .caretip-dashboard-shell .dashboard-mobile-flat-surface,
+  .caretip-dashboard-shell .dashboard-mobile-flat-surface.business-card,
+  .caretip-dashboard-shell .dashboard-mobile-flat-surface.employee-card {
+    border: none !important;
+    box-shadow: none !important;
+    background: transparent !important;
+    border-radius: 0 !important;
+  }
+
+  .caretip-dashboard-shell .dashboard-mobile-flat-surface > [data-slot="card-content"],
+  .caretip-dashboard-shell .dashboard-mobile-flat-surface > .p-4,
+  .caretip-dashboard-shell .dashboard-mobile-flat-surface > .sm\:p-5 {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+  }
+
+  .caretip-dashboard-shell .dashboard-table-panel:has(.business-mobile-list) {
+    border: none !important;
+    box-shadow: none !important;
+    background: transparent !important;
+    padding-bottom: 0 !important;
+  }
+
+  .caretip-dashboard-shell .business-mobile-list {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+  }
+
+  .caretip-dashboard-shell .dashboard-mobile-list-row {
+    border-radius: 0.5rem;
+    border: 1px solid hsl(var(--border) / 0.72);
+    background: hsl(var(--card));
+  }
+
+  .caretip-dashboard-shell .dashboard-mobile-list-row--flat {
+    border: none !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+  }
+
+  .caretip-dashboard-shell .dashboard-at-a-glance--mobile-flat {
+    border: none !important;
+    box-shadow: none !important;
+    background: transparent !important;
+  }
+
+  .caretip-dashboard-shell .dashboard-at-a-glance--mobile-flat .dashboard-at-a-glance__grid > div {
+    border-radius: 0.5rem;
+    border: 1px solid hsl(var(--border) / 0.72);
+    background: hsl(var(--card));
+    padding: 0.5rem 0.25rem;
+  }
+
+  .caretip-dashboard-shell .stripe-connect-card {
+    /* Mobile: status + action sit flat under the module header */
+  }
+}
+
+@media (min-width: 1024px) {
+  .caretip-dashboard-shell .business-module-workspace-header--hide-mobile-desc .dashboard-workspace-page-desc {
+    display: block;
+  }
 }
 
 /* Portaled dashboard overlays — Radix renders outside `.caretip-dashboard-shell` */

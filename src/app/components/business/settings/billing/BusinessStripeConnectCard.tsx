@@ -14,7 +14,6 @@ import {
   useAppLoadingRegistration,
 } from "../../../../lib/globalAppLoading";
 import { performExternalStripeRedirect } from "../../../../lib/externalStripeRedirect";
-import { dashboardWorkspaceUi } from "@/app/components/dashboard/dashboardWorkspaceUi";
 import { cn } from "@/lib/utils";
 
 function statusHeadlineKey(status: ConnectStatus["status"]): string {
@@ -47,8 +46,8 @@ function ctaLabelKey(status: ConnectStatus["status"]): string {
 }
 
 /**
- * Minimal Stripe Connect Express onboarding card (Phase 1).
- * Does not change tip payment routing.
+ * Minimal Stripe Connect Express onboarding panel.
+ * Page header carries “Stripe / Connect Stripe…”. This panel is status + action only.
  */
 export function BusinessStripeConnectCard() {
   const { t } = useTranslation();
@@ -143,43 +142,30 @@ export function BusinessStripeConnectCard() {
   if (!data) return null;
 
   const canStart = data.stripeConfigured;
+  const isReady = data.status === "ready";
   const statusKey = statusHeadlineKey(data.status);
 
   return (
     <section
-      className="rounded-xl border border-border/80 bg-card px-4 py-5 sm:px-5"
-      aria-labelledby="stripe-connect-heading"
+      className="stripe-connect-card max-lg:space-y-4 lg:rounded-xl lg:border lg:border-border/80 lg:bg-card lg:px-5 lg:py-5"
+      aria-labelledby="stripe-connect-status"
     >
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-        <div className="min-w-0 space-y-1.5">
-          <h2 id="stripe-connect-heading" className={dashboardWorkspaceUi.sectionTitle}>
-            {t("business.billing.connect.title")}
-          </h2>
-          <p className={cn(dashboardWorkspaceUi.pageDescription)}>
-            {t("business.billing.connect.description")}
-          </p>
-          <p className="text-sm font-medium text-foreground" data-connect-status={data.status}>
+        <div className="min-w-0 space-y-2">
+          <p
+            id="stripe-connect-status"
+            className="text-base font-semibold tracking-tight text-foreground"
+            data-connect-status={data.status}
+            data-connect-readiness={isReady ? "ready" : "required"}
+          >
             {t(statusKey)}
-          </p>
-          <p className="text-sm text-muted-foreground" data-connect-readiness={data.status === "ready" ? "ready" : "required"}>
-            {data.status === "ready"
-              ? t("business.billing.connect.readinessReady")
-              : t("business.billing.connect.readinessRequired")}
           </p>
           {!data.stripeConfigured ? (
             <p className="text-sm text-muted-foreground">{t("business.billing.connect.notConfigured")}</p>
           ) : null}
-          {data.hasAccount && !data.chargesEnabled ? (
-            <p className="text-sm text-muted-foreground">{t("business.billing.connect.chargesOff")}</p>
+          {!isReady && data.stripeConfigured ? (
+            <p className="text-sm text-muted-foreground">{t("business.billing.connect.nextStepHint")}</p>
           ) : null}
-          {data.hasAccount && !data.payoutsEnabled ? (
-            <p className="text-sm text-muted-foreground">{t("business.billing.connect.payoutsOff")}</p>
-          ) : null}
-          {data.status === "ready" ? (
-            <p className="text-sm text-muted-foreground">{t("business.billing.connect.readyNote")}</p>
-          ) : (
-            <p className="text-sm text-muted-foreground">{t("business.billing.connect.goLiveNote")}</p>
-          )}
           <p className="text-sm">
             <Link
               to="/dashboard/stripe/payouts"
@@ -195,7 +181,7 @@ export function BusinessStripeConnectCard() {
             disabled={!canStart || busy}
             onClick={() => void startOnboarding()}
             className={cn(
-              "inline-flex h-11 items-center justify-center rounded-lg px-4 text-sm font-semibold transition",
+              "inline-flex h-11 w-full items-center justify-center rounded-lg px-4 text-sm font-semibold transition sm:w-auto",
               "bg-[#197278] text-white hover:bg-[#145c61] disabled:cursor-not-allowed disabled:opacity-50",
             )}
           >

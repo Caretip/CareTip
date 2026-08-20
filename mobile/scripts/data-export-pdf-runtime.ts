@@ -56,13 +56,13 @@ function main(): void {
   assert.equal(payload.profile.name, "Ada <Tip>");
 
   const html = buildEmployeeDataExportHtml(payload, "en");
-  assert.match(html, /CareTip — My Data Export/);
+  assert.match(html, /CareTip: My Data Export/);
   assert.match(html, /My Profile/);
   assert.match(html, /My Tips/);
   assert.match(html, /Total Tips/);
-  assert.match(html, /€10\.00/);
-  assert.match(html, /€35\.50/);
-  assert.match(html, /€45\.50/);
+  assert.match(html, /€10,00/);
+  assert.match(html, /€35,50/);
+  assert.match(html, /€45,50/);
   assert.match(html, /Ada &lt;Tip&gt;/);
   assert.doesNotMatch(html, /tip-secret/);
   assert.doesNotMatch(html, /"id"/);
@@ -78,7 +78,7 @@ function main(): void {
     "en",
   );
   assert.match(emptyHtml, /No tips recorded/);
-  assert.match(emptyHtml, /€0\.00/);
+  assert.match(emptyHtml, /€0,00/);
 
   const service = read("services/api/employeeService.ts");
   assert.match(service, /API_ENDPOINTS\.employees\.meExport/);

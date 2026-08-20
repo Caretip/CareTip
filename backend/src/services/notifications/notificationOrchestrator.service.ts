@@ -117,7 +117,17 @@ export async function deliverUserNotification(
   }
 
   if (channels.includes("push")) {
-    await sendNotification(input.userId, deliveryPayload, {
+    const pushPayload =
+      notification?.id
+        ? {
+            ...deliveryPayload,
+            metadata: {
+              ...(deliveryPayload.metadata ?? {}),
+              notificationId: notification.id,
+            },
+          }
+        : deliveryPayload;
+    await sendNotification(input.userId, pushPayload, {
       bypassPreferences: input.bypassPreferences,
       dedupeKey: `push:${dedupeKey}`,
     });

@@ -33,6 +33,7 @@ export function BusinessTipsLayout() {
         icon={Coins}
         title={t("business.tips.title")}
         subtitle={header.subtitle}
+        hideSubtitleOnMobile
       />
       <Outlet />
     </>

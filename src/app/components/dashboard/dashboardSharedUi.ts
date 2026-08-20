@@ -35,4 +35,13 @@ export const dashboardSharedUi = {
     "dashboard-notification-card rounded-lg border border-border bg-card p-4 shadow-sm sm:p-5",
   notificationCardUnread:
     "dashboard-notification-card rounded-lg border border-primary/20 bg-primary/[0.04] p-4 shadow-sm sm:p-5",
+  /** Flatten decorative card chrome on mobile — desktop unchanged. */
+  mobileFlatSurface:
+    "max-lg:!border-0 max-lg:!bg-transparent max-lg:!shadow-none max-lg:!rounded-none",
+  /** Hide redundant subtitles/descriptions on mobile. */
+  mobileHideDesc: "max-lg:hidden",
+  /** Compact section spacing without card wrapper. */
+  mobileFlatSection: "min-w-0 space-y-3 max-lg:py-0",
+  mobileSectionTitle: "text-base font-semibold tracking-tight text-foreground",
+  mobileSectionDivider: "max-lg:border-t max-lg:border-border/80 max-lg:pt-4",
 } as const;

@@ -86,6 +86,12 @@ export function BusinessLayout() {
   useCommercialPageTracking(isAppReady && !user?.impersonation);
 
   useEffect(() => {
+    void import("../lib/fixPromptStorage").then(({ clearLegacyFixPromptDismissStorage }) => {
+      clearLegacyFixPromptDismissStorage();
+    });
+  }, []);
+
+  useEffect(() => {
     if (!isAppReady || user?.impersonation) return;
     if (!sessionHasActiveEntitlements()) return;
     scheduleMobileDeferredWork(() => {

@@ -181,7 +181,10 @@ export function useFcmPushSync(
     if (authStatus !== "authenticated") return undefined;
     return subscribeForegroundPushMessages((title, body, data) => {
       if (!shouldDisplayUserFacingPush(data)) return;
-      toast(title, { description: body || undefined });
+      const notificationId = data?.notificationId?.trim();
+      // Same Sonner id as NotificationInboxSync — socket + FCM = one toast
+      const toastId = notificationId ? `inbox-${notificationId}` : undefined;
+      toast(title, { description: body || undefined, id: toastId });
     });
   }, [authStatus]);
 

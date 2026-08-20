@@ -592,7 +592,7 @@ export const EmployeeDashboard = memo(function EmployeeDashboard() {
           <FixPrompt
             id="profilePhoto"
             issueActive={!user.avatar}
-            dismissPersistence="local"
+            conditionVersion={user.avatar ? "has_photo" : "missing_photo"}
             title={t("employee.dashboard.fixPhotoTitle")}
             description={t("employee.dashboard.fixPhotoDesc")}
             actionLabel={t("employee.dashboard.fixPhotoAction")}

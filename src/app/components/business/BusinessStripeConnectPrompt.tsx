@@ -12,18 +12,19 @@ export function BusinessStripeConnectPrompt({ density, className }: BusinessStri
   const { t } = useTranslation();
   const { data, loading, error } = useConnectStatus();
   const issueActive = connectNeedsSetup(data, loading, error);
+  const conditionVersion = data?.status ? String(data.status) : "not_ready";
 
   return (
     <FixPrompt
       id="stripeConnect"
       issueActive={issueActive}
+      conditionVersion={conditionVersion}
       tone="info"
       density={density}
       title={t("business.fixConnect.title")}
       description={t("business.fixConnect.description")}
       actionLabel={t("business.fixConnect.action")}
       actionTo={STRIPE_CONNECT_HREF}
-      dismissPersistence="session"
       className={className}
     />
   );

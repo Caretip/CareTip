@@ -278,7 +278,11 @@ export function TablesPage({ embedded = false }: { embedded?: boolean } = {}) {
         </div>
       ) : (
         <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <p className="text-sm text-muted-foreground">{t("business.tablesPage.subtitle")}</p>
+          {t("business.tablesPage.subtitle").trim() ? (
+            <p className="text-sm text-muted-foreground">{t("business.tablesPage.subtitle")}</p>
+          ) : (
+            <span className="hidden sm:block" />
+          )}
           <Button
             type="button"
             onClick={() => setModalOpen(true)}

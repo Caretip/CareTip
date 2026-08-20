@@ -9,7 +9,6 @@ import {
 import {
   formatConnectPayoutAmount,
   formatConnectPayoutDate,
-  reconExplainI18nKey,
   sanitizePayoutFailureDisplay,
 } from "../../../../lib/connectPayoutDisplay";
 import { ConnectPayoutReconBadge, ConnectPayoutStatusBadge } from "../../../connect/ConnectPayoutBadges";
@@ -133,7 +132,7 @@ export function ConnectPayoutsPanel({ loading: bootLoading }: { loading?: boolea
                       onClick={() => detail.openFor(payout.id, payout)}
                     >
                       {formatConnectPayoutAmount(payout.amountCents, payout.currency, i18n.language)}
-                      <span className="sr-only"> — {t("business.billing.payouts.openDetail")}</span>
+                      <span className="sr-only">, {t("business.billing.payouts.openDetail")}</span>
                     </button>
                   </td>
                   <td className="px-4 py-3">
@@ -150,9 +149,6 @@ export function ConnectPayoutsPanel({ loading: bootLoading }: { loading?: boolea
                       status={payout.reconciliationStatus}
                       lineCount={payout.balanceLineCount}
                     />
-                    <p className="mt-1 max-w-[14rem] text-xs text-muted-foreground">
-                      {t(reconExplainI18nKey(payout.reconciliationStatus))}
-                    </p>
                   </td>
                   <td className="px-4 py-3 text-muted-foreground">{failure ?? "—"}</td>
                 </tr>
@@ -225,7 +221,7 @@ function PayoutCard({
       type="button"
       onClick={onOpen}
       className="w-full rounded-xl border border-border bg-card p-4 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
-      aria-label={`${formatConnectPayoutAmount(payout.amountCents, payout.currency, locale)} — ${t("business.billing.payouts.openDetail")}`}
+      aria-label={`${formatConnectPayoutAmount(payout.amountCents, payout.currency, locale)}, ${t("business.billing.payouts.openDetail")}`}
     >
       <div className="flex items-start justify-between gap-3">
         <div className="font-medium tabular-nums">
@@ -236,13 +232,7 @@ function PayoutCard({
       <div className="mt-2 text-xs text-muted-foreground">
         {t("business.billing.payouts.colArrival")}: {formatConnectPayoutDate(payout.arrivalDate, locale)}
       </div>
-      <div className="mt-2">
-        <ConnectPayoutReconBadge status={payout.reconciliationStatus} lineCount={payout.balanceLineCount} />
-      </div>
-      <p className="mt-2 text-xs text-muted-foreground">
-        {t(reconExplainI18nKey(payout.reconciliationStatus))}
-      </p>
-      {failure ? <p className="mt-2 text-xs text-muted-foreground">{failure}</p> : null}
+      {failure ? <p className="mt-2 text-xs text-destructive">{failure}</p> : null}
     </button>
   );
 }

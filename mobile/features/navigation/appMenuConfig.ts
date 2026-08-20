@@ -2,6 +2,7 @@ import type { Router } from "expo-router";
 import {
   BarChart3,
   LineChart,
+  MapPin,
   QrCode,
   Settings,
   Trophy,
@@ -57,6 +58,12 @@ export function buildBusinessAppMenu(router: Router, _inboxBadge?: number): AppM
 
 export function buildEmployeeAppMenu(router: Router, _inboxBadge?: number): AppMenuItem[] {
   return [
+    {
+      id: "assignment",
+      labelKey: "employeeAssignment.title",
+      icon: MapPin,
+      onPress: () => router.push("/(app)/employee/assignment"),
+    },
     {
       id: "settings",
       labelKey: "tabs.settings",

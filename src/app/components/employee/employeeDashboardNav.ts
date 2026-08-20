@@ -16,6 +16,7 @@ export const employeeDashboardNavItems: readonly EmployeeDashboardNavItem[] = [
   { labelKey: "dashboardNav.employee.overview", href: "/employee/dashboard", icon: "overview" },
   { labelKey: "dashboardNav.employee.inbox", href: "/employee/inbox", icon: "inbox" },
   { labelKey: "dashboardNav.employee.tipHistory", href: "/employee/tip-history", icon: "transactions" },
+  { labelKey: "dashboardNav.employee.assignment", href: "/employee/assignment", icon: "locations" },
   {
     labelKey: "dashboardNav.employee.tipGoals",
     href: "/employee/tip-goals",

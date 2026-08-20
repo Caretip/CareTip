@@ -2,6 +2,23 @@
 
 export type EmployeeTimeframe = "today" | "week" | "month";
 
+export type EmployeeAssignmentLocation = {
+  id: string;
+  name: string;
+  description: string | null;
+};
+
+export type EmployeeAssignmentTable = {
+  id: string;
+  name: string;
+  location: { id: string; name: string };
+};
+
+export type EmployeeAssignment = {
+  location: EmployeeAssignmentLocation | null;
+  tables: EmployeeAssignmentTable[];
+};
+
 export type EmployeeProfile = {
   id: string;
   name: string;
@@ -18,6 +35,7 @@ export type EmployeeProfile = {
   bio?: string | null;
   subscriptionTier?: "basic" | "premium" | "enterprise" | null;
   hasActiveSubscription?: boolean;
+  assignment: EmployeeAssignment;
   [key: string]: unknown;
 };
 

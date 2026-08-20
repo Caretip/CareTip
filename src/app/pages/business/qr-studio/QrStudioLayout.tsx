@@ -66,6 +66,7 @@ export function QrStudioLayout() {
           icon={QrCode}
           title={t("business.qrStudio.title")}
           subtitle={t("business.qrStudio.subtitle")}
+          hideSubtitleOnMobile
         />
         {accessBlock ? (
           <div className="py-8 sm:py-12">

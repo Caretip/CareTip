@@ -272,7 +272,7 @@ export async function addBusinessReply(input: {
   if (!ticket) throw new Error("Ticket not found");
   if (ticket.status === "CLOSED") throw new Error("This ticket is closed");
 
-  await prisma.supportTicketMessage.create({
+  const message = await prisma.supportTicketMessage.create({
     data: {
       ticketId: ticket.id,
       authorUserId: input.userId,
@@ -301,6 +301,7 @@ export async function addBusinessReply(input: {
     managerUserId: business.userId,
     repliedBy: "business",
     preview: body.slice(0, 200),
+    messageId: message.id,
   });
 
   return detail;
@@ -363,7 +364,7 @@ export async function addAdminReply(input: {
   if (!ticket) throw new Error("Ticket not found");
   if (ticket.status === "CLOSED") throw new Error("This ticket is closed");
 
-  await prisma.supportTicketMessage.create({
+  const message = await prisma.supportTicketMessage.create({
     data: {
       ticketId: ticket.id,
       authorUserId: input.adminUserId,
@@ -395,6 +396,7 @@ export async function addAdminReply(input: {
     managerUserId: ticket.business.userId,
     repliedBy: "admin",
     preview: body.slice(0, 200),
+    messageId: message.id,
   });
 
   return detail;

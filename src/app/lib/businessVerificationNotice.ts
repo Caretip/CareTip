@@ -35,9 +35,9 @@ export function resolveBusinessVerificationNoticeState(
   };
 }
 
-/** Routes that render verification inline — never show the layout banner too. */
+/** Routes that already own the verification UX — suppress the layout banner. */
 export function shouldSuppressLayoutVerificationBanner(pathname: string): boolean {
-  return pathname === BUSINESS_VERIFICATION_INLINE_ROUTE;
+  return pathname === "/awaiting-approval" || pathname.startsWith("/awaiting-approval/");
 }
 
 export function getBusinessVerificationNoticeLabels(t: TFunction, rejected: boolean) {

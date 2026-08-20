@@ -41,6 +41,7 @@ export function BusinessTeamLayout() {
         icon={Users}
         title={t("business.team.title")}
         subtitle={header.subtitle}
+        hideSubtitleOnMobile
       />
       <Outlet />
     </>

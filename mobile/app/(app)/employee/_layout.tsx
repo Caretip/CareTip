@@ -97,6 +97,7 @@ export default function EmployeeTabsLayout() {
         }}
       />
       <Tabs.Screen name="settings" options={{ href: null }} />
+      <Tabs.Screen name="assignment" options={{ href: null }} />
     </Tabs>
   );
 }

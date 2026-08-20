@@ -527,7 +527,7 @@ html[data-auth-sign-in-handoff] .caretip-dashboard-page-enter {
     width: 100%;
   }
 
-  .caretip-dashboard-shell .dashboard-hero-actions > :is(a, button) {
+  .caretip-dashboard-shell .dashboard-hero-actions > :is(a, button):not(.employee-hero-cta-btn):not([class*="heroCta"]) {
     display: inline-flex !important;
     align-items: center;
     height: auto !important;
@@ -542,6 +542,16 @@ html[data-auth-sign-in-handoff] .caretip-dashboard-page-enter {
     overflow: hidden;
     text-overflow: ellipsis;
     flex: 0 1 auto;
+  }
+
+  .caretip-dashboard-shell .dashboard-hero-actions > :is(a, button).employee-hero-cta-btn,
+  .caretip-dashboard-shell .dashboard-hero-actions > :is(a, button)[class*="heroCtaBtn"],
+  .caretip-dashboard-shell .dashboard-hero-actions > :is(a, button)[class*="heroCtaLink"] {
+    white-space: normal !important;
+    overflow: visible !important;
+    text-overflow: unset !important;
+    max-width: 100% !important;
+    line-height: 1.35 !important;
   }
 
   .caretip-dashboard-shell .employee-hero-cta-row > :is(a, button),

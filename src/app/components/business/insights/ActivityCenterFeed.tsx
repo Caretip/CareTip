@@ -171,9 +171,11 @@ export function ActivityCenterFeed({
       }
     >
       <div className="border-b border-border px-4 py-3 sm:px-5">
-        <p className="mb-3 text-xs leading-relaxed text-muted-foreground">
-          {t("business.activityCenter.ssotHelper")}
-        </p>
+        {t("business.activityCenter.ssotHelper").trim() ? (
+          <p className="mb-3 hidden text-xs leading-relaxed text-muted-foreground lg:block">
+            {t("business.activityCenter.ssotHelper")}
+          </p>
+        ) : null}
         <p id={filterLabelId} className="sr-only">
           {t("business.activityCenter.filterLabel")}
         </p>

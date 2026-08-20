@@ -1,6 +1,5 @@
-/** Inter UI weights — latin subsets only, bundled by Vite (avoids stale public/ SW cache). */
-@import "@fontsource/inter/latin-400.css";
-@import "@fontsource/inter/latin-500.css";
-@import "@fontsource/inter/latin-600.css";
-@import "@fontsource/inter/latin-700.css";
-@import "@fontsource/inter/latin-800.css";
+/**
+ * Inter is served from /fonts/inter via caretip-font-faces.css (absolute URLs).
+ * Kept as a no-op import so main.tsx stays stable.
+ * Do not re-introduce @fontsource CSS here — its relative ./files/ URLs break under nested routes.
+ */

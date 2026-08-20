@@ -48,6 +48,7 @@ export function BusinessBillingLayout() {
           icon={CreditCard}
           title={t("business.settings.panels.billingTitle")}
           subtitle={t("business.billing.moduleSubtitle")}
+          hideSubtitleOnMobile
         />
         <MobileBillingHandoffBanner />
         <Outlet />

@@ -658,6 +658,23 @@ export async function deleteEmployeeForBusiness(businessId: string, employeeId: 
   notifyBusinessRosterChanged(businessId, "staff_deleted");
 }
 
+export interface EmployeeSelfAssignmentLocation {
+  id: string;
+  name: string;
+  description: string | null;
+}
+
+export interface EmployeeSelfAssignmentTable {
+  id: string;
+  name: string;
+  location: { id: string; name: string };
+}
+
+export interface EmployeeSelfAssignment {
+  location: EmployeeSelfAssignmentLocation | null;
+  tables: EmployeeSelfAssignmentTable[];
+}
+
 export interface EmployeeSelfProfile {
   id: string;
   name: string;
@@ -685,7 +702,69 @@ export interface EmployeeSelfProfile {
   hasActiveSubscription?: boolean;
   accessSource?: "none" | "subscription" | "sponsored";
   sponsoredProgrammeKey?: string | null;
+  /** Manager-assigned venue location and tables (read-only for the employee). */
+  assignment: EmployeeSelfAssignment;
 }
+
+type EmployeeAssignmentSource = {
+  businessId: string;
+  location: {
+    id: string;
+    name: string;
+    description: string | null;
+    businessId: string;
+  } | null;
+  tableAssignments: Array<{
+    table: {
+      id: string;
+      name: string;
+      location: { id: string; name: string; businessId: string };
+    };
+  }>;
+};
+
+/** Defense-in-depth: only expose location/table rows that belong to the employee's business. */
+export function buildEmployeeSelfAssignment(source: EmployeeAssignmentSource): EmployeeSelfAssignment {
+  const { businessId, location, tableAssignments } = source;
+  let assignmentLocation: EmployeeSelfAssignmentLocation | null = null;
+  if (location && location.businessId === businessId) {
+    const description = location.description?.trim() ?? "";
+    assignmentLocation = {
+      id: location.id,
+      name: location.name,
+      description: description.length > 0 ? description : null,
+    };
+  }
+
+  const tables: EmployeeSelfAssignmentTable[] = [];
+  for (const row of tableAssignments) {
+    const table = row.table;
+    if (table.location.businessId !== businessId) continue;
+    tables.push({
+      id: table.id,
+      name: table.name,
+      location: { id: table.location.id, name: table.location.name },
+    });
+  }
+  tables.sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: "base" }));
+
+  return { location: assignmentLocation, tables };
+}
+
+const employeeSelfAssignmentSelect = {
+  location: { select: { id: true, name: true, description: true, businessId: true } },
+  tableAssignments: {
+    select: {
+      table: {
+        select: {
+          id: true,
+          name: true,
+          location: { select: { id: true, name: true, businessId: true } },
+        },
+      },
+    },
+  },
+} as const;
 
 export async function getEmployeeProfileForUser(userId: string): Promise<EmployeeSelfProfile | null> {
   const userEmail = { select: { email: true } } as const;
@@ -702,6 +781,7 @@ export async function getEmployeeProfileForUser(userId: string): Promise<Employe
     slug: true,
     business: { select: { slug: true, timezone: true, name: true, logoPath: true, subscriptionTier: true } },
     user: userEmail,
+    ...employeeSelfAssignmentSelect,
   } as const;
   try {
     const emp = await prisma.employee.findUnique({
@@ -732,6 +812,11 @@ export async function getEmployeeProfileForUser(userId: string): Promise<Employe
       hasActiveSubscription: entitlements.hasActiveEntitlements,
       accessSource: entitlements.accessSource,
       sponsoredProgrammeKey: entitlements.sponsoredProgrammeKey,
+      assignment: buildEmployeeSelfAssignment({
+        businessId: emp.businessId,
+        location: emp.location,
+        tableAssignments: emp.tableAssignments,
+      }),
     };
   } catch (e) {
     if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2022") {
@@ -772,6 +857,7 @@ export async function getEmployeeProfileForUser(userId: string): Promise<Employe
         hasActiveSubscription: entitlements.hasActiveEntitlements,
         accessSource: entitlements.accessSource,
         sponsoredProgrammeKey: entitlements.sponsoredProgrammeKey,
+        assignment: { location: null, tables: [] },
       };
     }
     throw e;

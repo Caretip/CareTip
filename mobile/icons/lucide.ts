@@ -6,3 +6,5 @@ export { default as QrCode } from "lucide-react-native/icons/qr-code";
 export { default as Settings } from "lucide-react-native/icons/settings";
 export { default as Trophy } from "lucide-react-native/icons/trophy";
 export { default as Wallet } from "lucide-react-native/icons/wallet";
+export { default as MapPin } from "lucide-react-native/icons/map-pin";
+export { default as UtensilsCrossed } from "lucide-react-native/icons/utensils-crossed";

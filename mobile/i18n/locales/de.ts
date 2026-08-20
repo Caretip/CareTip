@@ -151,7 +151,7 @@ export const de: MobileMessages = {
     registerFailed: "Konto konnte nicht erstellt werden. Bitte Angaben prüfen und erneut versuchen.",
     inviteCode: "Einladungscode",
     forgotPasswordTitle: "Passwort vergessen",
-    forgotPasswordSubtitle: "Geben Sie Ihre E-Mail ein – wir senden einen Link zum Zurücksetzen.",
+    forgotPasswordSubtitle: "Geben Sie Ihre E-Mail ein. Wir senden einen Link zum Zurücksetzen.",
     sendResetLink: "Link senden",
     forgotPasswordFailed: "Zurücksetzungs-E-Mail konnte nicht gesendet werden. Bitte erneut versuchen.",
     forgotPasswordSentTitle: "E-Mail prüfen",
@@ -162,7 +162,7 @@ export const de: MobileMessages = {
     newPassword: "Neues Passwort",
     resetPasswordCta: "Passwort aktualisieren",
     resetPasswordFailed:
-      "Passwort konnte nicht zurückgesetzt werden. Der Link ist möglicherweise abgelaufen — fordern Sie einen neuen an.",
+      "Passwort konnte nicht zurückgesetzt werden. Der Link ist möglicherweise abgelaufen. Fordern Sie einen neuen an.",
     resetPasswordInvalidToken: "Dieser Link ist ungültig oder abgelaufen. Bitte fordern Sie einen neuen an.",
     resetPasswordSuccessTitle: "Passwort aktualisiert",
     resetPasswordSuccessBody: "Sie können sich jetzt mit Ihrem neuen Passwort anmelden.",
@@ -173,7 +173,7 @@ export const de: MobileMessages = {
     verifyEmailWorking: "E-Mail wird bestätigt…",
     verifyEmailSuccess: "Ihre E-Mail wurde bestätigt. Weiterleitung…",
     verifyEmailFailed:
-      "E-Mail konnte nicht bestätigt werden. Der Link ist möglicherweise abgelaufen — fordern Sie einen neuen an.",
+      "E-Mail konnte nicht bestätigt werden. Der Link ist möglicherweise abgelaufen. Fordern Sie einen neuen an.",
     verifyEmailResent: "Bestätigungs-E-Mail gesendet. Bitte Posteingang und Spam-Ordner prüfen.",
     verifyEmailResendFailed: "Bestätigungs-E-Mail konnte nicht erneut gesendet werden. Bitte später versuchen.",
     verifyEmailPasswordRequired: "Geben Sie Ihr Passwort ein, um die Bestätigungs-E-Mail erneut zu senden.",
@@ -181,7 +181,7 @@ export const de: MobileMessages = {
     verifyEmailPrompt: "E-Mail bestätigen? Hilfe öffnen",
     emailVerifiedBanner: "E-Mail bestätigt. Melden Sie sich an, um die Einrichtung in der App abzuschließen.",
     emailVerifiedSignInSubtitle:
-      "Melden Sie sich an, um die Einrichtung fortzusetzen — Sie bleiben in der CareTip-App.",
+      "Melden Sie sich an, um die Einrichtung fortzusetzen. Sie bleiben in der CareTip-App.",
     joinTitle: "Ihrem Unternehmen beitreten",
     joinSubtitle: "Geben Sie den Einladungscode Ihrer Führungskraft ein, um die Einladung anzunehmen.",
     joinVenueHint: "Beitritt zu {{name}}",
@@ -241,7 +241,7 @@ export const de: MobileMessages = {
     faq: {
       whatIsCaretip: {
         q: "Was ist CareTip?",
-        a: "CareTip ist eine digitale Trinkgeld-Plattform für Gastronomie und Service-Teams. Gäste scannen einen QR-Code und geben in Sekunden sicher Trinkgeld — ohne Bargeld und ohne App-Download für Gäste.",
+        a: "CareTip ist eine digitale Trinkgeld-Plattform für Gastronomie und Service-Teams. Gäste scannen einen QR-Code und geben in Sekunden sicher Trinkgeld. Ohne Bargeld und ohne App-Download für Gäste.",
       },
       howTipsWork: {
         q: "Wie erreichen Trinkgelder die Mitarbeitenden?",
@@ -257,10 +257,10 @@ export const de: MobileMessages = {
       },
       qrBranded: {
         q: "Warum sieht mein QR in der App anders aus?",
-        a: "Ihr gebrandeter QR wird vom gemeinsamen CareTip-Backend gerendert — dieselbe Grafik wie im Web. Die Mobile App zeigt dieses Bild exakt an.",
+        a: "Ihr gebrandeter QR wird vom gemeinsamen CareTip-Backend gerendert. Dieselbe Grafik wie im Web. Die Mobile App zeigt dieses Bild exakt an.",
       },
       forgotPassword: {
-        q: "Passwort vergessen — was tun?",
+        q: "Passwort vergessen: was tun?",
         a: "Tippen Sie auf Passwort vergessen auf dem Login-Bildschirm, setzen Sie es über den Web-Wiederherstellungsflow zurück und melden Sie sich erneut in der App an.",
       },
       support: {
@@ -271,13 +271,13 @@ export const de: MobileMessages = {
     about: {
       storyTitle: "Zwei Städte. Eine Mission.",
       storyBody:
-        "CareTip wurde von Albertina & Fanny gegründet — Berlinerinnen mit einer Leidenschaft für Gastfreundschaft. Nach mühelosem digitalem Trinkgeld in London bauten sie CareTip, damit Service-Teams in Europa Anerkennung erhalten, die wirklich ankommt.",
+        "CareTip wurde von Albertina & Fanny gegründet, Berlinerinnen mit einer Leidenschaft für Gastfreundschaft. Nach mühelosem digitalem Trinkgeld in London bauten sie CareTip, damit Service-Teams in Europa Anerkennung erhalten, die wirklich ankommt.",
       missionTitle: "Mission",
       missionBody:
-        "Trinkgeld mühelos, fair und transparent machen — damit jedes Dankeschön der Gäste echte Wertschätzung für die Menschen wird, die großartigen Service liefern.",
+        "Trinkgeld mühelos, fair und transparent machen, damit jedes Dankeschön der Gäste echte Wertschätzung für die Menschen wird, die großartigen Service liefern.",
       visionTitle: "Vision",
       visionBody:
-        "Eine Welt, in der Gastfreundschaft und Care-Arbeit digital gefeiert werden — premium für Gäste, stärkend für Teams und vertrauenswürdig für Betriebe.",
+        "Eine Welt, in der Gastfreundschaft und Care-Arbeit digital gefeiert werden: premium für Gäste, stärkend für Teams und vertrauenswürdig für Betriebe.",
       copyright: "© {{year}} CareTip. Alle Rechte vorbehalten.",
     },
     contact: {
@@ -358,10 +358,9 @@ export const de: MobileMessages = {
     tipsLabel: "Trinkgelder",
     loadError: "Team konnte nicht geladen werden.",
     emptyTitle: "Noch keine aktiven Mitarbeiter",
-    emptyMessage: "Erstellen Sie unten einen Einladungscode und teilen Sie ihn mit Ihrem Team.",
+    emptyMessage: "",
     addEmployeeTitle: "Mitarbeiter hinzufügen",
-    addEmployeeBody:
-      "Erstellen Sie einen CareTip-Einladungscode für dieses Unternehmen. Mitarbeitende geben denselben Code in der Web- oder Mobile-App ein.",
+    addEmployeeBody: "Teilen Sie diesen Code, damit Mitarbeitende per Web oder App beitreten.",
     generateInvite: "Einladungscode erstellen",
     regenerateInvite: "Neuen Code erstellen",
     inviteCodeLabel: "Einladungscode",
@@ -423,11 +422,24 @@ export const de: MobileMessages = {
     recentTips: "Aktuelle Trinkgelder",
     recentSubtitle: "",
     emptyTipsTitle: "Noch keine Trinkgelder",
-    emptyTips: "In diesem Zeitraum noch keine Trinkgelder. Teilen Sie Ihren QR-Code, um Dankbarkeit zu erhalten.",
+    emptyTips: "Teilen Sie Ihren QR-Code, um zu starten.",
     avgRating: "Ø Bewertung",
     tipStreak: "Trinkgeld-Serie",
     ratingsHint: "{{count}} Bewertungen",
     successfulTipsHint: "{{count}} erfolgreiche Trinkgelder",
+  },
+  employeeAssignment: {
+    eyebrow: "ZUWEISUNG",
+    title: "Meine Zuweisung",
+    subtitle: "",
+    loadError: "Zuweisung konnte nicht geladen werden.",
+    locationLabel: "Zugewiesener Standort",
+    tablesLabel: "Zugewiesene Tische",
+    tableAtLocation: "In {{location}}",
+    noLocationTitle: "Kein Standort zugewiesen",
+    noLocationDesc: "Bitten Sie Ihren Manager um eine Zuweisung.",
+    noTablesTitle: "Keine Tische zugewiesen",
+    noTablesDesc: "Bitten Sie Ihren Manager um Tischzuweisungen.",
   },
   activity: {
     eyebrow: "AKTIVITÄT",
@@ -435,7 +447,7 @@ export const de: MobileMessages = {
     subtitle: "",
     emptyToday: "Heute noch keine Aktivität",
     empty: "Noch keine Aktivität",
-    emptyMessage: "Trinkgelder, Scans und Team-Ereignisse erscheinen hier.",
+    emptyMessage: "",
     loadError: "Aktivität konnte nicht geladen werden.",
     filterAll: "Alle",
     filterQr: "QR",
@@ -477,7 +489,7 @@ export const de: MobileMessages = {
     searchEmployee: "Standort oder Tisch suchen…",
     loadError: "Trinkgelder konnten nicht geladen werden.",
     emptyTitle: "Keine Trinkgelder gefunden",
-    emptyMessage: "Anderen Filter oder Zeitraum versuchen.",
+    emptyMessage: "",
     detailEyebrow: "TRINKGELDER",
     detailTitle: "Trinkgeld-Details",
     notFound: "Trinkgeld nicht gefunden",
@@ -488,7 +500,7 @@ export const de: MobileMessages = {
     loadingDetail: "Trinkgeld wird geladen…",
     transaction: "TRANSAKTION",
     details: "Details",
-    detailsSubtitle: "Zahlung und Venue-Kontext",
+    detailsSubtitle: "",
     dateTime: "Datum & Uhrzeit",
     staff: "Mitarbeiter",
     location: "Standort",
@@ -502,7 +514,7 @@ export const de: MobileMessages = {
     search: "Posteingang durchsuchen…",
     loadError: "Benachrichtigungen konnten nicht geladen werden.",
     emptyTitle: "Noch keine Benachrichtigungen",
-    emptyMessage: "Updates erscheinen hier bei Trinkgeldern, Auszahlungen und Kontoereignissen.",
+    emptyMessage: "",
   },
   qr: {
     studioEyebrow: "QR",
@@ -510,7 +522,7 @@ export const de: MobileMessages = {
     studioSubtitle: "",
     loadError: "QR-Codes konnten nicht geladen werden.",
     emptyTitle: "Noch keine QR-Codes",
-    emptyMessage: "Mitarbeiter, Standorte oder Tische im Web hinzufügen, um QR-Codes zu erzeugen.",
+    emptyMessage: "Mitarbeiter oder Tische im Web hinzufügen, um Codes zu erzeugen.",
     linkCopiedTitle: "Link kopiert",
     linkCopiedBody: "QR-Link in die Zwischenablage kopiert.",
     businessQr: "Business-QR",
@@ -522,7 +534,7 @@ export const de: MobileMessages = {
     shareSuccess: "Bereit zum Teilen.",
     shareFailed: "Teilen konnte nicht geöffnet werden. Nutze stattdessen „Link kopieren“.",
     shareUnavailable: "Teilen ist auf diesem Gerät nicht verfügbar. Der Link wurde kopiert.",
-    unavailable: "QR nicht verfügbar — Link fehlt.",
+    unavailable: "QR nicht verfügbar. Link fehlt.",
     tipLinkHint: "Gäste-Trinkgeld-Link",
     poweredBy: "Powered by CareTip",
     brandedLoadError: "Ihr gebrandeter QR konnte nicht geladen werden. Bitte versuchen Sie es erneut.",
@@ -535,7 +547,7 @@ export const de: MobileMessages = {
     signInRequired: "Melden Sie sich an, um Ihren gebrandeten QR-Code zu laden.",
     myQrEyebrow: "MEIN QR",
     myQrTitle: "Ihr Trinkgeld-QR-Code",
-    myQrSubtitle: "Gäste scannen diesen Code, um Ihnen Trinkgeld zu geben",
+    myQrSubtitle: "",
     backToList: "Zurück zur Liste",
   },
   settings: {
@@ -546,7 +558,7 @@ export const de: MobileMessages = {
     profileSubtitle: "Angemeldete Kontodaten",
     role: "Rolle: {{role}}",
     language: "Sprache",
-    languageSubtitle: "App-Sprache und E-Mails werden sofort aktualisiert.",
+    languageSubtitle: "",
     english: "English",
     german: "Deutsch",
     languageError: "Spracheinstellung konnte nicht gespeichert werden.",
@@ -650,7 +662,7 @@ export const de: MobileMessages = {
       securityDesc: "Passwort, verknüpfte Konten und Zwei-Faktor-Authentifizierung",
       integrations: "Integrationen",
       integrationsDesc: "Drittanbieter verbinden",
-      integrationsComingSoon: "Integrationen kommen bald — wie im Web-Dashboard.",
+      integrationsComingSoon: "Integrationen kommen bald, wie im Web-Dashboard.",
       billing: "Abrechnung & Abo",
       billingDesc: "CareTip-Plan verwalten",
       team: "Teamverwaltung",
@@ -741,7 +753,7 @@ export const de: MobileMessages = {
       "Dieser Bereich ist für Ihre Rolle nicht verfügbar. Anderes Konto verwenden oder CareTip im Web öffnen.",
     subscriptionRequiredTitle: "Plan-Upgrade erforderlich",
     subscriptionRequiredBody:
-      "Diese Ansicht benötigt einen höheren CareTip-Plan. Ihr Dashboard funktioniert weiterhin mit Basic — Analytics nach dem Upgrade öffnen.",
+      "Diese Ansicht benötigt einen höheren CareTip-Plan. Ihr Dashboard funktioniert weiterhin mit Basic. Analytics nach dem Upgrade öffnen.",
     planLimitExceeded:
       "Sie haben das Limit Ihres aktuellen Plans erreicht. Bitte Plan aktualisieren oder Auswahl ändern und erneut versuchen.",
     onboardingIncompleteTitle: "Zuerst Einrichtung abschließen",
@@ -777,13 +789,13 @@ export const de: MobileMessages = {
   billingHandoff: {
     confirmTitle: "Weiter auf CareTip Web",
     confirmBody:
-      "Sie werden zu CareTip Web weitergeleitet, um das Abonnement für denselben Workspace zu verwalten. Sie können dort abschließen, weiter im Web arbeiten oder zur mobilen App zurückkehren — wir aktualisieren Ihren Plan, wenn Sie zurückkommen.",
+      "Sie werden zu CareTip Web weitergeleitet, um das Abonnement für denselben Workspace zu verwalten. Sie können dort abschließen, weiter im Web arbeiten oder zur mobilen App zurückkehren. Wir aktualisieren Ihren Plan, wenn Sie zurückkommen.",
     cancel: "Abbrechen",
     continue: "Weiter zu CareTip Web",
     updatingPlan: "Ihr Workspace wird aktualisiert…",
     planUpdated: "Ihr CareTip-Workspace ist aktuell.",
     planUnchangedHint:
-      "Noch keine Planänderung bestätigt. Wenn Sie im Web bezahlt haben, warten Sie kurz und öffnen Sie „Plan verwalten“ erneut — oder ziehen Sie zum Aktualisieren.",
+      "Noch keine Planänderung bestätigt. Wenn Sie im Web bezahlt haben, warten Sie kurz und öffnen Sie „Plan verwalten“ erneut, oder ziehen Sie zum Aktualisieren.",
     syncFailed:
       "Wir konnten Ihren Plan nicht aktualisieren. Prüfen Sie die Verbindung und versuchen Sie „Plan verwalten“ erneut.",
     openFailed: "Abrechnung konnte nicht geöffnet werden. Bitte Verbindung prüfen und erneut versuchen.",
@@ -791,8 +803,7 @@ export const de: MobileMessages = {
   },
   emptyState: {
     chartTitle: "Noch keine Diagrammdaten",
-    chartDescription:
-      "Trinkgelder und Team-Performance erscheinen hier, sobald Aktivität beginnt.",
+    chartDescription: "",
   },
   charts: {
     tooltipTips: "Trinkgelder",

@@ -130,6 +130,7 @@ export function LocationsPage() {
             icon={MapPin}
             title={t("business.locationsPage.title")}
             subtitle={t("business.locationsPage.subtitle")}
+            hideSubtitleOnMobile
             actions={
               <Button
                 type="button"

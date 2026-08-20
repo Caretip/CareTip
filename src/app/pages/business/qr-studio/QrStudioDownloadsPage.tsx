@@ -28,15 +28,12 @@ export function QrStudioDownloadsPage() {
       <Card className={businessUi.cardStatic}>
         <CardHeader className="border-b border-neutral-100/90">
           <CardTitle className="text-base">{t("business.qrStudio.downloads.title")}</CardTitle>
-          <CardDescription className={businessUi.cardDesc}>
-            {t("business.qrStudio.downloads.description")}
-          </CardDescription>
         </CardHeader>
-        <CardContent className="grid gap-4 pt-6 sm:grid-cols-2 lg:grid-cols-3">
+        <CardContent className="grid gap-4 pt-6 sm:grid-cols-2 lg:grid-cols-3 max-lg:grid-cols-1">
           {DOWNLOAD_FORMATS.map((fmt) => (
             <div
               key={fmt.id}
-              className="flex flex-col rounded-xl border border-border bg-muted/20 p-4"
+              className="flex flex-col rounded-xl border border-border bg-muted/20 p-4 max-lg:rounded-none max-lg:border-x-0 max-lg:border-t-0 max-lg:bg-transparent max-lg:px-0 first:max-lg:border-t"
             >
               <fmt.icon className="mb-2 h-5 w-5 text-primary" aria-hidden />
               <h3 className="text-sm font-semibold text-foreground">{t(fmt.labelKey)}</h3>

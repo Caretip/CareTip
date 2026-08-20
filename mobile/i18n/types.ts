@@ -390,6 +390,19 @@ export type MobileMessages = {
     ratingsHint: string;
     successfulTipsHint: string;
   };
+  employeeAssignment: {
+    eyebrow: string;
+    title: string;
+    subtitle: string;
+    loadError: string;
+    locationLabel: string;
+    tablesLabel: string;
+    tableAtLocation: string;
+    noLocationTitle: string;
+    noLocationDesc: string;
+    noTablesTitle: string;
+    noTablesDesc: string;
+  };
   activity: {
     eyebrow: string;
     title: string;

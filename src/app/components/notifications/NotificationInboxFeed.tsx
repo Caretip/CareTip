@@ -255,11 +255,14 @@ function NotificationDetailPanel({
 
 function InboxEmptyState() {
   const { t } = useTranslation();
+  const hint = t("notifications.inbox.emptyHint").trim();
+  const body = t("notifications.inbox.emptyBodyPremium").trim();
+  const description = [body, hint].filter(Boolean).join(" ");
   return (
     <DashboardWorkspaceEmptyState
       icon={<BellRing className="h-5 w-5" aria-hidden />}
       title={t("notifications.inbox.emptyTitle")}
-      description={`${t("notifications.inbox.emptyBodyPremium")} ${t("notifications.inbox.emptyHint")}`}
+      description={description || undefined}
     />
   );
 }

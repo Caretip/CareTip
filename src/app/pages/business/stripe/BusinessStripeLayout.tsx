@@ -30,6 +30,7 @@ export function BusinessStripeLayout() {
           icon={Landmark}
           title={t("business.stripe.moduleTitle")}
           subtitle={header.subtitle}
+          hideSubtitleOnMobile
         />
         <Outlet />
       </div>

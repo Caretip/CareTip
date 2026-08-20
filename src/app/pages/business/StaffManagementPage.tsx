@@ -56,6 +56,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
+import { dashboardSharedUi } from "../../components/dashboard/dashboardSharedUi";
 import {
   DASH_BTN_PRIMARY,
   DASH_BTN_SECONDARY,
@@ -767,14 +768,14 @@ export function StaffManagementPage() {
       {!canGrowTeam ? (
         <TeamGrowthUpgradeNotice />
       ) : (
-      <Card className={cn(businessUi.cardStatic, "w-full")}>
+      <Card className={cn(businessUi.cardStatic, "dashboard-mobile-flat-surface w-full")}>
         <CardContent className="p-4 sm:p-5">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between sm:gap-6">
             <div className="min-w-0 flex-1">
               <p className="text-xs font-semibold uppercase tracking-[0.08em] text-muted-foreground">
                 {t("business.staffPage.inviteTeamTitle")}
               </p>
-              <p className="mt-1.5 max-w-md text-sm text-muted-foreground">
+              <p className={cn("mt-1.5 max-w-md text-sm text-muted-foreground", dashboardSharedUi.mobileHideDesc)}>
                 {t("business.staffPage.inviteTeamDesc")}
               </p>
               {inviteCode ? (
@@ -782,7 +783,7 @@ export function StaffManagementPage() {
                   <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
                     {t("business.staffPage.inviteCodeLabel")}
                   </p>
-                  <p className="mt-1.5 select-all break-all font-mono text-xl font-bold tracking-[0.2em] text-foreground sm:text-2xl">
+                  <p className="mt-1.5 select-all break-all font-mono text-lg font-bold tracking-[0.12em] text-foreground sm:text-2xl sm:tracking-[0.2em]">
                     {inviteCode}
                   </p>
                   {inviteExpiresAt ? (
@@ -871,7 +872,7 @@ export function StaffManagementPage() {
       </Card>
       )}
 
-      <Card className={businessUi.atAGlanceCard}>
+      <Card className={cn(businessUi.atAGlanceCard, "dashboard-at-a-glance--mobile-flat")}>
           <CardContent className={businessUi.atAGlanceContent}>
             <p className={businessUi.atAGlanceLabel}>{t("business.qrPage.atAGlance")}</p>
             <div className={cn(businessUi.atAGlanceGrid, "sm:grid-cols-2 lg:grid-cols-4")}>
@@ -896,10 +897,28 @@ export function StaffManagementPage() {
         </Card>
 
       <div className="min-w-0 space-y-6">
-          <Card className={cn(businessUi.cardStatic, "w-full")}>
+          <section className={cn(dashboardSharedUi.mobileFlatSection, "lg:hidden")}>
+            <h2 className={dashboardSharedUi.mobileSectionTitle}>{t("business.staffPage.searchTitle")}</h2>
+            <div className="relative mt-2">
+              <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
+              <input
+                type="search"
+                placeholder={t("business.staffPage.searchPlaceholder")}
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full rounded-lg border border-border bg-background py-3 pl-10 pr-4 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+              />
+            </div>
+          </section>
+
+          <Card className={cn(businessUi.cardStatic, "hidden w-full lg:block")}>
             <CardHeader className="pb-3">
               <CardTitle className="text-base">{t("business.staffPage.searchTitle")}</CardTitle>
-              <CardDescription className={businessUi.cardDesc}>{t("business.staffPage.filterDesc")}</CardDescription>
+              {t("business.staffPage.filterDesc").trim() ? (
+                <CardDescription className={businessUi.cardDesc}>
+                  {t("business.staffPage.filterDesc")}
+                </CardDescription>
+              ) : null}
             </CardHeader>
             <CardContent>
               <div className="relative">
@@ -970,7 +989,9 @@ export function StaffManagementPage() {
                     <div className={DASH_EMPTY_STATE}>
                       <Users className={DASH_EMPTY_ICON} />
                       <p className="text-sm font-medium">{t("business.staffPage.emptyTitle")}</p>
-                      <p className="mt-1 text-sm text-gray-400">{t("business.staffPage.emptySubtitle")}</p>
+                      {t("business.staffPage.emptySubtitle").trim() ? (
+                        <p className="mt-1 text-sm text-gray-400">{t("business.staffPage.emptySubtitle")}</p>
+                      ) : null}
                     </div>
                   </td>
                 </tr>
