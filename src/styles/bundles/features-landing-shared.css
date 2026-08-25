@@ -1,0 +1,12 @@
+/**
+ * Minimal landing styles for /features only.
+ * Avoids the full landing.css graph (hero story, industries showcase, etc.).
+ */
+@import "../caretip-landing-motion.css";
+@import "../caretip-landing-feature-rhythm.css";
+@import "../caretip-landing-features-refine.css";
+@import "../caretip-landing-saas-polish.css";
+@import "../caretip-landing-audit-premium.css";
+@import "../caretip-landing-section-flow.css";
+/* Redesign rules that also target .caretip-features-page */
+@import "../caretip-landing-trickyfresh-redesign.css";

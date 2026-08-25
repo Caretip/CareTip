@@ -3,7 +3,7 @@ import { Link } from 'react-router';
 import { Smartphone, Bell, BarChart3, Shield, Download, Check, Star } from 'lucide-react';
 import { Navigation } from '../components/Navigation';
 import { Footer } from '../components/Footer';
-import AnimatedShaderBackground from '../components/ui/animated-shader-background';
+import DeferredShaderBackground from '../components/ui/deferred-shader-background';
 
 export function MobileAppPage() {
   const features = [
@@ -37,7 +37,7 @@ export function MobileAppPage() {
 
   return (
     <div className="min-h-screen relative">
-      <AnimatedShaderBackground />
+      <DeferredShaderBackground />
       <div className="relative z-10">
         <Navigation />
         

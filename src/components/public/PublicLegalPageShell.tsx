@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import "@/styles/bundles/marketing-pages.css";
 import { PublicPageShell } from "@/components/public/PublicPageShell";
 import { PublicPageHeader } from "@/components/public/PublicPageHeader";
 import { publicPageUi } from "@/components/public/publicPageUi";
@@ -12,7 +13,7 @@ type PublicLegalPageShellProps = {
 
 export function PublicLegalPageShell({ title, subtitle, children }: PublicLegalPageShellProps) {
   return (
-    <PublicPageShell>
+    <PublicPageShell className="caretip-legal-document-page">
       <PublicPageHeader title={title} subtitle={subtitle} />
       <div
         className={cn(

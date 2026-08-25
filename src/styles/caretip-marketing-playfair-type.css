@@ -1,6 +1,6 @@
 /**
  * Playfair Display + TrickyFreshString headline scale —
- * Features, Industries, Pricing, FAQ only.
+ * Features, Industries, Pricing, FAQ, Company (About/Contact), Legal pages.
  *
  * Does NOT change global --font-hero-display (Manrope stays on auth/dashboards).
  */
@@ -8,7 +8,10 @@
 .caretip-features-page,
 .caretip-pricing-page,
 .caretip-faq-page,
-.caretip-industry-page {
+.caretip-industry-page,
+.caretip-about-page,
+.caretip-contact-page,
+.caretip-legal-document-page {
   --font-hero-display: "Playfair Display", Georgia, "Times New Roman", serif;
   --caretip-marketing-display: "Playfair Display", Georgia, "Times New Roman", serif;
 }
@@ -37,7 +40,29 @@
 .caretip-industry-page .caretip-industry-page__headline,
 .caretip-industry-page .caretip-industry-page__section-title,
 .caretip-industry-page .caretip-industry-page__final-cta-title,
-.caretip-industry-page .font-hero-display {
+.caretip-industry-page .font-hero-display,
+.caretip-about-page h1,
+.caretip-about-page h2,
+.caretip-about-page h3,
+.caretip-about-page .caretip-about-split__headline,
+.caretip-about-page .caretip-about-beliefs__title,
+.caretip-about-page .caretip-about-belief-card__title,
+.caretip-about-page .caretip-about-cta-wise__title,
+.caretip-about-page .font-hero-display,
+.caretip-contact-page h1,
+.caretip-contact-page h2,
+.caretip-contact-page .caretip-contact-headline,
+.caretip-contact-page .caretip-contact-flow__title,
+.caretip-contact-page .caretip-contact-sales-panel__title,
+.caretip-contact-page .caretip-contact-intent-card__title,
+.caretip-contact-page .font-hero-display,
+.caretip-legal-document-page h1,
+.caretip-legal-document-page h2,
+.caretip-legal-document-page h3,
+.caretip-legal-document-page .caretip-legal-document__title,
+.caretip-legal-document-page .caretip-legal-document__section-title,
+.caretip-legal-document-page .font-hero-display,
+.caretip-legal-document-page .caretip-legal-prose :is(h1, h2, h3, h4) {
   font-family: var(--caretip-marketing-display) !important;
   font-weight: 500 !important;
   letter-spacing: -0.065em;
@@ -49,7 +74,12 @@
 .caretip-features-page h1.text-section-title,
 .caretip-pricing-page .caretip-pricing-hero-wise__title,
 .caretip-faq-page .caretip-faq-hero-wise__title,
-.caretip-industry-page .caretip-industry-page__headline {
+.caretip-industry-page .caretip-industry-page__headline,
+.caretip-about-page .caretip-about-split__headline,
+.caretip-contact-page .caretip-contact-headline,
+.caretip-legal-document-page .caretip-legal-document__title,
+.caretip-legal-document-page .caretip-public-page-header h1,
+.caretip-legal-document-page h1.text-section-title {
   font-size: clamp(2.7rem, 5vw, 4.75rem) !important;
   letter-spacing: -0.065em !important;
   line-height: 1.02 !important;
@@ -59,7 +89,11 @@
 .caretip-pricing-page .caretip-pricing-cta-wise__title,
 .caretip-faq-page .caretip-faq-cta-wise__title,
 .caretip-industry-page .caretip-industry-page__final-cta-title,
-.caretip-industry-page .caretip-industry-page__section-title {
+.caretip-industry-page .caretip-industry-page__section-title,
+.caretip-about-page .caretip-about-cta-wise__title,
+.caretip-about-page .caretip-about-beliefs__title,
+.caretip-contact-page .caretip-contact-flow__title,
+.caretip-legal-document-page .caretip-legal-document__section-title {
   font-size: clamp(1.85rem, 3.2vw, 2.85rem) !important;
   letter-spacing: -0.05em !important;
   line-height: 1.08 !important;
@@ -74,7 +108,13 @@
 .caretip-faq-page h1 .bg-clip-text,
 .caretip-faq-page h2 .bg-clip-text,
 .caretip-industry-page h1 .bg-clip-text,
-.caretip-industry-page h2 .bg-clip-text {
+.caretip-industry-page h2 .bg-clip-text,
+.caretip-about-page h1 .bg-clip-text,
+.caretip-about-page h2 .bg-clip-text,
+.caretip-contact-page h1 .bg-clip-text,
+.caretip-contact-page h2 .bg-clip-text,
+.caretip-legal-document-page h1 .bg-clip-text,
+.caretip-legal-document-page h2 .bg-clip-text {
   background-image: none !important;
   color: #e9781c !important;
   -webkit-text-fill-color: #e9781c !important;
@@ -87,7 +127,12 @@
   .caretip-features-page h1.text-section-title,
   .caretip-pricing-page .caretip-pricing-hero-wise__title,
   .caretip-faq-page .caretip-faq-hero-wise__title,
-  .caretip-industry-page .caretip-industry-page__headline {
+  .caretip-industry-page .caretip-industry-page__headline,
+  .caretip-about-page .caretip-about-split__headline,
+  .caretip-contact-page .caretip-contact-headline,
+  .caretip-legal-document-page .caretip-legal-document__title,
+  .caretip-legal-document-page .caretip-public-page-header h1,
+  .caretip-legal-document-page h1.text-section-title {
     font-size: clamp(2.65rem, 13vw, 4rem) !important;
   }
 }

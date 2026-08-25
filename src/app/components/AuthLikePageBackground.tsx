@@ -1,13 +1,16 @@
-import { motion } from "motion/react";
 import { cn } from "@/lib/utils";
 
 type AuthLikePageBackgroundProps = {
-  /** Public pages use static gradients — no infinite compositor loops after paint. */
+  /**
+   * Kept for API compatibility. Public shells always use the static canvas —
+   * motion/react is intentionally not imported here so marketing pages do not
+   * pay for animation runtime.
+   */
   animated?: boolean;
 };
 
 /** Soft canvas + warm orange blurs — light ivory; charcoal gradient in dark mode. */
-export function AuthLikePageBackground({ animated = true }: AuthLikePageBackgroundProps) {
+export function AuthLikePageBackground({ animated: _animated = true }: AuthLikePageBackgroundProps) {
   return (
     <div
       className="pointer-events-none absolute inset-0 z-0 isolate overflow-hidden"
@@ -33,41 +36,20 @@ export function AuthLikePageBackground({ animated = true }: AuthLikePageBackgrou
         className="absolute top-0 left-1/2 h-[45vh] w-[100vh] -translate-x-1/2 rounded-b-[50%] bg-[hsl(33_82%_55%_/_0.12)] blur-[90px] dark:bg-primary/10"
         aria-hidden
       />
-      {animated ? (
-        <>
-          <motion.div
-            className="absolute top-0 left-1/2 h-[40vh] w-[85vh] -translate-x-1/2 rounded-b-full bg-[hsl(33_90%_60%_/_0.08)] blur-[70px] dark:bg-primary/8"
-            animate={{ opacity: [0.35, 0.55, 0.35], scale: [0.98, 1.02, 0.98] }}
-            transition={{ duration: 8, repeat: Infinity, repeatType: "mirror" }}
-            aria-hidden
-          />
-          <motion.div
-            className="absolute bottom-0 left-1/2 h-[55vh] w-[75vh] -translate-x-1/2 rounded-t-full bg-[hsl(33_70%_85%_/_0.35)] blur-[70px] dark:bg-primary/6"
-            animate={{ opacity: [0.4, 0.6, 0.4], scale: [1, 1.04, 1] }}
-            transition={{ duration: 6, repeat: Infinity, repeatType: "mirror", delay: 0.5 }}
-            aria-hidden
-          />
-          <div
-            className="absolute top-1/4 left-1/4 h-64 w-64 animate-pulse rounded-full bg-white opacity-80 blur-[90px] dark:bg-primary/10 dark:opacity-40"
-            aria-hidden
-          />
-          <div
-            className="absolute right-1/4 bottom-1/4 h-64 w-64 animate-pulse rounded-full bg-[hsl(33_82%_55%_/_0.06)] blur-[90px] [animation-delay:500ms] dark:bg-primary/5"
-            aria-hidden
-          />
-        </>
-      ) : (
-        <>
-          <div
-            className="absolute top-0 left-1/2 h-[40vh] w-[85vh] -translate-x-1/2 rounded-b-full bg-[hsl(33_90%_60%_/_0.08)] blur-[70px] opacity-45 dark:bg-primary/8 dark:opacity-30"
-            aria-hidden
-          />
-          <div
-            className="absolute bottom-0 left-1/2 h-[55vh] w-[75vh] -translate-x-1/2 rounded-t-full bg-[hsl(33_70%_85%_/_0.35)] blur-[70px] opacity-50 dark:bg-primary/5 dark:opacity-25"
-            aria-hidden
-          />
-        </>
-      )}
+      <div
+        className={cn(
+          "absolute top-0 left-1/2 h-[40vh] w-[85vh] -translate-x-1/2 rounded-b-full",
+          "bg-[hsl(33_90%_60%_/_0.08)] blur-[70px] opacity-45 dark:bg-primary/8 dark:opacity-30",
+        )}
+        aria-hidden
+      />
+      <div
+        className={cn(
+          "absolute bottom-0 left-1/2 h-[55vh] w-[75vh] -translate-x-1/2 rounded-t-full",
+          "bg-[hsl(33_70%_85%_/_0.35)] blur-[70px] opacity-50 dark:bg-primary/5 dark:opacity-25",
+        )}
+        aria-hidden
+      />
     </div>
   );
 }

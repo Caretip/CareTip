@@ -6,7 +6,7 @@ import { landingCopyVisible, landingUi } from "@/components/landing/landingUi";
 import { LandingHeroAnimatedWord } from "@/components/landing/LandingHeroAnimatedWord";
 import { LandingHeroStoryShowcase } from "@/components/landing/LandingHeroStoryShowcase";
 import { LandingCopySentences } from "@/components/landing/LandingCopySentences";
-import { AnimatedHeading } from "@/components/ui/AnimatedHeading";
+import { AnimatedHeadingLazy } from "@/components/ui/AnimatedHeading.lazy";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { cn } from "@/lib/utils";
 
@@ -122,7 +122,7 @@ export function CareTipLandingHero({
                       index === 0 && "caretip-hero-headline-line--static",
                     )}
                   >
-                    <AnimatedHeading
+                    <AnimatedHeadingLazy
                       text={line}
                       highlight={heroHeadlineHighlights}
                       highlightClassName={landingUi.heroHeadlineEmphasis}
@@ -137,7 +137,7 @@ export function CareTipLandingHero({
                     "caretip-hero-headline-line--controlled",
                   )}
                 >
-                  <AnimatedHeading
+                  <AnimatedHeadingLazy
                     text={activeHeadline}
                     highlight={heroHeadlineHighlights}
                     highlightClassName={landingUi.heroHeadlineEmphasis}

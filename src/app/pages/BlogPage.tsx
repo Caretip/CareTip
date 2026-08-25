@@ -2,7 +2,7 @@ import { Link } from 'react-router';
 import { Calendar, Clock } from 'lucide-react';
 import { Navigation } from '../components/Navigation';
 import { Footer } from '../components/Footer';
-import AnimatedShaderBackground from '../components/ui/animated-shader-background';
+import DeferredShaderBackground from '../components/ui/deferred-shader-background';
 
 const blogPosts = [
   {
@@ -64,7 +64,7 @@ const blogPosts = [
 export function BlogPage() {
   return (
     <div className="min-h-screen relative">
-      <AnimatedShaderBackground />
+      <DeferredShaderBackground />
       <div className="relative z-10">
         <Navigation />
         

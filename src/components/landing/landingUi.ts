@@ -42,9 +42,9 @@ function cnHeroSubtitle(layout: string) {
   return `${landingLeadCopy} ${layout}`;
 }
 
-/** Clears fixed nav + premium breathing room below nav (mobile includes safe-area). */
+/** Clears fixed nav + light breathing room (full-bleed hero; heavy pad lives in redesign CSS). */
 const heroSectionPadTop =
-  "max-lg:pt-[calc(5.25rem+env(safe-area-inset-top,0px)+0.75rem)] max-lg:pb-4 lg:pt-[calc(6.75rem+1.75rem)] lg:pb-10 xl:pb-12";
+  "max-lg:pt-[calc(4.5rem+env(safe-area-inset-top,0px))] max-lg:pb-3 lg:pt-[5.25rem] lg:pb-8 xl:pb-9";
 /** Mobile-first stack rhythm between headline, lead, actions, and mockup. */
 const heroStackGapMobile = "mt-6 md:mt-7";
 /** Tighter gap above product shot on stacked mobile hero */

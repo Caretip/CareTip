@@ -76,8 +76,10 @@ export function IndustryPhotoGrid({
     [t, moreIds],
   );
 
+  // Warm only the three visible teaser heroes. Remaining industries are
+  // idle-warmed / hover-warmed elsewhere — avoid decoding every hero on mount.
   useEffect(() => {
-    for (const id of ALL_INDUSTRY_PAGE_IDS) {
+    for (const id of TEASER_IDS) {
       void warmIndustryHero(id, { priority: "low" });
     }
   }, []);

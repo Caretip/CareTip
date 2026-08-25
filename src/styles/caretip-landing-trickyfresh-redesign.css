@@ -114,11 +114,22 @@
 .caretip-landing .caretip-hero-section--fullbleed-light,
 .caretip-landing .caretip-hero-section--fullbleed-dark {
   position: relative;
-  /* Shorter band so primary CTA stays above the fold */
-  min-height: clamp(28rem, 68vh, 38rem);
+  /*
+   * Clear sticky nav + modest breathing room only.
+   * Overrides caretip-landing-hero-fullbg.css !important padding so content
+   * is not double-spaced (section pad + content pad-block).
+   */
+  min-height: clamp(26rem, 72vh, 36rem);
   background: #1a2228;
   --caretip-hero-fullbg-headline-size: clamp(2.85rem, 5.8vw, 4.85rem);
-  --caretip-hero-fullbg-min-h: clamp(28rem, 68vh, 38rem);
+  --caretip-hero-fullbg-min-h: clamp(26rem, 72vh, 36rem);
+  /* Internal rhythm — keep readable gaps without pushing CTA below the fold */
+  --caretip-hero-gap-tagline: clamp(0.7rem, 1.2vh, 0.95rem);
+  --caretip-hero-gap-headline-body: clamp(0.7rem, 1.2vh, 1rem);
+  --caretip-hero-gap-body-cta: clamp(1.15rem, 2vh, 1.65rem);
+  /* Nav bar ~4–5.25rem; leave ~0.75–1.25rem under it */
+  padding-top: clamp(4.75rem, 4.35rem + 1.5vh, 5.75rem) !important;
+  padding-bottom: clamp(1.75rem, 3.5vh, 2.75rem) !important;
 }
 
 .caretip-landing .caretip-hero-section--fullbleed-light .caretip-hero-visual-band,
@@ -201,7 +212,8 @@
 .caretip-landing .caretip-hero-section--fullbleed-dark .caretip-hero-full-bg-content {
   max-width: min(100%, 34rem);
   margin-inline: 0;
-  padding-block: clamp(5.25rem, 9vh, 6.75rem) clamp(1.75rem, 3.5vh, 2.75rem);
+  /* Section already clears the nav — keep only light top inset here */
+  padding-block: clamp(0.5rem, 1.25vh, 1rem) clamp(1.25rem, 2.75vh, 2rem);
   text-align: left;
 }
 
@@ -303,6 +315,36 @@
   display: none !important;
 }
 
+/* Laptop / tablet: keep CTA in first viewport; override fullbg lg padding bump */
+@media (min-width: 1024px) {
+  .caretip-landing .caretip-hero-section--fullbleed-light,
+  .caretip-landing .caretip-hero-section--fullbleed-dark {
+    padding-top: clamp(5rem, 4.5rem + 1.25vh, 5.85rem) !important;
+    padding-bottom: clamp(2rem, 3.5vh, 2.85rem) !important;
+    min-height: clamp(28rem, 78vh, 38rem);
+    --caretip-hero-fullbg-min-h: clamp(28rem, 78vh, 38rem);
+  }
+}
+
+@media (max-width: 1023px) {
+  .caretip-landing .caretip-hero-section--fullbleed-light,
+  .caretip-landing .caretip-hero-section--fullbleed-dark {
+    /* Beat hero-mobile-stack 5.5rem+safe-area when that feels too tall */
+    padding-top: calc(clamp(4.35rem, 4.6rem + 0.5vh, 5.15rem) + env(safe-area-inset-top, 0px)) !important;
+    padding-bottom: clamp(1.5rem, 3vh, 2.25rem) !important;
+    min-height: clamp(22rem, min(78vh, 34rem), 32rem);
+    --caretip-hero-fullbg-min-h: clamp(22rem, min(78vh, 34rem), 32rem);
+    --caretip-hero-gap-tagline: 0.65rem;
+    --caretip-hero-gap-headline-body: 0.7rem;
+    --caretip-hero-gap-body-cta: 1.15rem;
+  }
+
+  .caretip-landing .caretip-hero-section--fullbleed-light .caretip-hero-full-bg-content,
+  .caretip-landing .caretip-hero-section--fullbleed-dark .caretip-hero-full-bg-content {
+    padding-block: clamp(0.35rem, 1vh, 0.75rem) clamp(1rem, 2.5vh, 1.5rem);
+  }
+}
+
 @media (max-width: 640px) {
   .caretip-landing .caretip-hero-section--fullbleed-light .caretip-hero-full-bg-inner,
   .caretip-landing .caretip-hero-section--fullbleed-dark .caretip-hero-full-bg-inner {
@@ -310,9 +352,15 @@
     margin-left: 12px;
   }
 
+  .caretip-landing .caretip-hero-section--fullbleed-light,
+  .caretip-landing .caretip-hero-section--fullbleed-dark {
+    padding-top: calc(clamp(4.15rem, 4.35rem + 0.4vh, 4.85rem) + env(safe-area-inset-top, 0px)) !important;
+    --caretip-hero-gap-body-cta: 1.05rem;
+  }
+
   .caretip-landing .caretip-hero-section--fullbleed-light .caretip-hero-full-bg-content,
   .caretip-landing .caretip-hero-section--fullbleed-dark .caretip-hero-full-bg-content {
-    padding-block: clamp(4.75rem, 8vh, 6rem) clamp(1.5rem, 3vh, 2.25rem);
+    padding-block: 0.35rem clamp(1rem, 2.5vh, 1.35rem);
   }
 }
 

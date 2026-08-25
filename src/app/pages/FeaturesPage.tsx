@@ -2,7 +2,7 @@ import { useMemo } from "react";
 import { Activity, BarChart3, History, QrCode, Star, Wallet } from "lucide-react";
 import { Trans, useTranslation } from "react-i18next";
 import "@/styles/bundles/marketing-pages.css";
-import "@/styles/bundles/landing.css";
+import "@/styles/bundles/features-landing-shared.css";
 import { PublicPageShell } from "@/components/public/PublicPageShell";
 import { FeaturesPageFinalCta } from "@/components/public/features/FeaturesPageFinalCta";
 import { LandingReveal } from "@/components/landing/LandingReveal";
