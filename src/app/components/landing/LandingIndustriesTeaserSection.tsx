@@ -1,9 +1,10 @@
+import { useId, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { landingUi } from "@/components/landing/landingUi";
 import { LandingReveal } from "@/components/landing/LandingReveal";
 import { LandingSectionAccent } from "@/components/landing/LandingSectionAccent";
 import { AnimatedHeadingLazy } from "@/components/ui/AnimatedHeading.lazy";
-import { IndustryShowcase } from "@/components/landing/IndustryShowcase";
+import { IndustryPhotoGrid } from "@/components/landing/IndustryPhotoGrid";
 import { cn } from "@/lib/utils";
 
 function parseLandingHeadline(raw: string): { text: string; highlight: string[] } {
@@ -12,16 +13,17 @@ function parseLandingHeadline(raw: string): { text: string; highlight: string[] 
   return { text, highlight };
 }
 
-/** Matches Navigation + landing section gutters. */
 const INDUSTRIES_FRAME =
   "mx-auto w-full min-w-0 max-w-7xl px-4 sm:px-6 lg:px-8";
 
 /**
- * Homepage industries — immersive one-at-a-time showcase (wow moment).
+ * Homepage industries — TrickyFreshString second-section 3-up teaser + expand.
  */
 export function LandingIndustriesTeaserSection() {
   const { t } = useTranslation();
   const prefix = "landing.industriesTeaser";
+  const morePanelId = useId();
+  const [showAll, setShowAll] = useState(false);
   const { text: overviewHeadline, highlight: overviewHighlight } = parseLandingHeadline(
     t(`${prefix}.overviewHeadline`),
   );
@@ -29,16 +31,21 @@ export function LandingIndustriesTeaserSection() {
   return (
     <section
       id="industries"
-      className={cn(landingUi.sectionWhite, "caretip-industries-teaser scroll-mt-[80px]")}
+      className={cn(
+        landingUi.sectionWhite,
+        "caretip-industries-teaser caretip-industries-teaser--photo-grid scroll-mt-[80px]",
+      )}
       aria-labelledby="industries-overview-heading"
     >
       <div className={cn(INDUSTRIES_FRAME, "caretip-industries-teaser__frame")}>
         <LandingReveal>
           <header className="caretip-industries-teaser__overview-header">
-            <div className={cn(landingUi.sectionAccentRow, "justify-center lg:justify-center")}>
-              <LandingSectionAccent variant="spark" className="mx-auto lg:mx-auto">
-                {t(`${prefix}.eyebrow`)}
-              </LandingSectionAccent>
+            <div className="caretip-industries-teaser__overview-top">
+              <div className={cn(landingUi.sectionAccentRow, "justify-center lg:justify-center")}>
+                <LandingSectionAccent variant="spark" className="mx-auto lg:mx-auto">
+                  {t(`${prefix}.eyebrow`)}
+                </LandingSectionAccent>
+              </div>
             </div>
             <h2 id="industries-overview-heading" className={landingUi.sectionTitle}>
               <AnimatedHeadingLazy
@@ -57,7 +64,18 @@ export function LandingIndustriesTeaserSection() {
           className="caretip-industries-teaser__showcase-shell w-full min-w-0"
           delay={0.08}
         >
-          <IndustryShowcase className="h-full w-full max-w-full" />
+          <div className="caretip-industry-view-all-nav-slot">
+            <button
+              type="button"
+              className="caretip-industry-view-all-nav"
+              aria-expanded={showAll}
+              aria-controls={morePanelId}
+              onClick={() => setShowAll((open) => !open)}
+            >
+              {showAll ? t(`${prefix}.showFewerIndustries`) : t(`${prefix}.viewAllIndustries`)}
+            </button>
+          </div>
+          <IndustryPhotoGrid showAll={showAll} morePanelId={morePanelId} />
         </LandingReveal>
       </div>
     </section>

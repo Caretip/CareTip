@@ -34,6 +34,7 @@
 @import "../caretip-landing-hero-image.css";
 @import "../caretip-landing-hospitality-refine.css";
 @import "../caretip-landing-industries-teaser.css";
+@import "../caretip-landing-industry-photo-grid.css";
 @import "../caretip-landing-industry-showcase.css";
 @import "../caretip-landing-industry-showcase-crossbrowser.css";
 @import "../caretip-landing-industry-showcase-mobile.css";
@@ -44,3 +45,5 @@
 @import "../caretip-mobile-optical-premium.css";
 @import "../caretip-landing-cta-size.css";
 @import "../caretip-landing-optical-hierarchy-pass.css";
+/* TrickyFreshString visual redesign — load last so it wins within .caretip-landing */
+@import "../caretip-landing-trickyfresh-redesign.css";

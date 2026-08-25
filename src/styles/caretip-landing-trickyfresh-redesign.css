@@ -1,0 +1,1180 @@
+/**
+ * CareTip landing visual redesign — adapted from TrickyFreshString
+ * (artifacts/caretip-landing) design language.
+ *
+ * Scope: .caretip-landing only. Content/nav/routes remain CareTip.
+ * Headline font: Playfair Display (Replit display face) — loaded via LandingPage.
+ */
+
+.caretip-landing {
+  --care-orange: #e9781c;
+  --care-ink: #1f2a35;
+  --care-cream: #f8f4ed;
+  --care-sand: #eee6d8;
+  --care-coral: #f4d3bf;
+  --care-slate: #53616b;
+  --care-ink-deep: #273640;
+  --font-hero-display: "Playfair Display", Georgia, "Times New Roman", serif;
+  --app-font-serif: var(--font-hero-display);
+  background: var(--care-cream);
+  color: var(--care-ink);
+  overflow-x: hidden;
+}
+
+.caretip-landing.caretip-landing--premium {
+  background: var(--care-cream);
+}
+
+.dark .caretip-landing {
+  --care-cream: #1a2228;
+  --care-sand: #243038;
+  --care-ink: #f3ebe0;
+  --care-slate: #aeb9b7;
+  --care-ink-deep: #12181d;
+  background: var(--care-cream);
+  color: var(--care-ink);
+}
+
+/* —— Playfair on major landing headlines —— */
+.caretip-landing h1.font-hero-display,
+.caretip-landing h1.caretip-hero-headline,
+.caretip-landing h2,
+.caretip-landing .caretip-features-cta-wise__title,
+.caretip-landing .caretip-audience-benefits__title,
+.caretip-landing .text-section-title {
+  font-family: var(--font-hero-display) !important;
+  font-weight: 500 !important;
+  letter-spacing: -0.065em;
+  line-height: 1.05;
+}
+
+.caretip-landing .caretip-hero-headline-accent,
+.caretip-landing h1 .bg-clip-text,
+.caretip-landing h2 .bg-clip-text {
+  background-image: none !important;
+  -webkit-text-fill-color: var(--care-orange) !important;
+  color: var(--care-orange) !important;
+  font-style: italic;
+  font-weight: 500 !important;
+}
+
+/* —— Floating pill nav (visual only; CareTip routes unchanged) —— */
+.caretip-landing .caretip-landing-nav-shell {
+  position: fixed;
+  z-index: 50;
+  top: 14px;
+  left: 50%;
+  width: min(1180px, calc(100% - 32px));
+  transform: translateX(-50%);
+  max-width: none;
+  overflow: visible;
+  pointer-events: none;
+}
+
+.caretip-landing .caretip-landing-nav-shell > * {
+  pointer-events: auto;
+}
+
+.caretip-landing .caretip-public-nav {
+  border: 1px solid rgba(31, 42, 53, 0.1);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.94);
+  backdrop-filter: blur(14px);
+  box-shadow: 0 10px 28px rgba(72, 52, 31, 0.08);
+}
+
+.dark .caretip-landing .caretip-public-nav {
+  background: rgba(26, 34, 40, 0.88);
+  border-color: rgba(255, 255, 255, 0.08);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.35);
+}
+
+.caretip-landing .caretip-public-nav nav {
+  max-width: none;
+  padding-top: 0.35rem;
+  padding-bottom: 0.35rem;
+}
+
+.caretip-landing .caretip-public-nav-link:hover {
+  color: var(--care-orange);
+  background: transparent;
+}
+
+.caretip-landing .caretip-public-nav-link,
+.caretip-landing .caretip-public-nav a:not([class*="caretipBtn"]):not([href="/join"]) {
+  color: var(--care-ink, #1f2a35);
+}
+
+.caretip-landing .caretip-public-nav a[href="/join"],
+.caretip-landing .caretip-public-nav a[class*="caretipBtn"] {
+  color: #fff8f1 !important;
+}
+
+/* —— Full-bleed hero with white overlay + crossfading story frames —— */
+.caretip-landing .caretip-hero-section--fullbleed-light,
+.caretip-landing .caretip-hero-section--fullbleed-dark {
+  position: relative;
+  /* Shorter band so primary CTA stays above the fold */
+  min-height: clamp(28rem, 68vh, 38rem);
+  background: #1a2228;
+  --caretip-hero-fullbg-headline-size: clamp(2.85rem, 5.8vw, 4.85rem);
+  --caretip-hero-fullbg-min-h: clamp(28rem, 68vh, 38rem);
+}
+
+.caretip-landing .caretip-hero-section--fullbleed-light .caretip-hero-visual-band,
+.caretip-landing .caretip-hero-section--fullbleed-dark .caretip-hero-visual-band {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+}
+
+.caretip-landing .caretip-hero-section--fullbleed-light .caretip-hero-bg-layer,
+.caretip-landing .caretip-hero-section--fullbleed-light .caretip-hero-story-showcase-root,
+.caretip-landing .caretip-hero-section--fullbleed-light .caretip-hero-showcase-composition,
+.caretip-landing .caretip-hero-section--fullbleed-light .caretip-hero-media-shell,
+.caretip-landing .caretip-hero-section--fullbleed-light .caretip-hero-media-wrap,
+.caretip-landing .caretip-hero-section--fullbleed-light .caretip-hero-media-clip,
+.caretip-landing .caretip-hero-section--fullbleed-dark .caretip-hero-bg-layer,
+.caretip-landing .caretip-hero-section--fullbleed-dark .caretip-hero-story-showcase-root,
+.caretip-landing .caretip-hero-section--fullbleed-dark .caretip-hero-showcase-composition,
+.caretip-landing .caretip-hero-section--fullbleed-dark .caretip-hero-media-shell,
+.caretip-landing .caretip-hero-section--fullbleed-dark .caretip-hero-media-wrap,
+.caretip-landing .caretip-hero-section--fullbleed-dark .caretip-hero-media-clip {
+  position: absolute !important;
+  inset: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  max-width: none !important;
+  margin: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  overflow: hidden;
+}
+
+.caretip-landing .caretip-hero-section--fullbleed-light img.caretip-hero-story-frame,
+.caretip-landing .caretip-hero-section--fullbleed-dark img.caretip-hero-story-frame {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 40%;
+  border-radius: 0 !important;
+}
+
+.caretip-landing .caretip-hero-section--fullbleed-light .caretip-hero-bg-frame-layer,
+.caretip-landing .caretip-hero-section--fullbleed-dark .caretip-hero-bg-frame-layer {
+  position: absolute !important;
+  inset: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  display: block !important;
+}
+
+.caretip-landing .caretip-hero-section--fullbleed-light .caretip-hero-bg-overlay--light,
+.caretip-landing .caretip-hero-section--fullbleed-light .caretip-hero-bg-overlay,
+.caretip-landing .caretip-hero-section--fullbleed-dark .caretip-hero-bg-overlay--dark,
+.caretip-landing .caretip-hero-section--fullbleed-dark .caretip-hero-bg-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background:
+    linear-gradient(105deg, rgba(15, 20, 24, 0.82) 0%, rgba(15, 20, 24, 0.62) 42%, rgba(15, 20, 24, 0.38) 68%, rgba(15, 20, 24, 0.28) 100%),
+    linear-gradient(180deg, rgba(15, 20, 24, 0.35) 0%, transparent 28%, rgba(15, 20, 24, 0.45) 100%) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+.caretip-landing .caretip-hero-section--fullbleed-light .caretip-hero-full-bg-inner,
+.caretip-landing .caretip-hero-section--fullbleed-dark .caretip-hero-full-bg-inner {
+  position: relative;
+  z-index: 3;
+  width: min(1180px, calc(100% - 32px));
+  margin-left: clamp(1rem, 3.5vw, 2.75rem);
+  margin-right: auto;
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-start;
+  min-height: inherit;
+}
+
+.caretip-landing .caretip-hero-section--fullbleed-light .caretip-hero-full-bg-content,
+.caretip-landing .caretip-hero-section--fullbleed-dark .caretip-hero-full-bg-content {
+  max-width: min(100%, 34rem);
+  margin-inline: 0;
+  padding-block: clamp(5.25rem, 9vh, 6.75rem) clamp(1.75rem, 3.5vh, 2.75rem);
+  text-align: left;
+}
+
+.caretip-landing .caretip-hero-section--fullbleed-light .caretip-hero-brand-tagline__text,
+.caretip-landing .caretip-hero-section--fullbleed-dark .caretip-hero-brand-tagline__text {
+  color: #ffb06a !important;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.caretip-landing .caretip-hero-section--fullbleed-light .caretip-hero-brand-tagline__accent,
+.caretip-landing .caretip-hero-section--fullbleed-dark .caretip-hero-brand-tagline__accent {
+  background: #ffb06a !important;
+  box-shadow: none;
+}
+
+/* TrickyFreshString type scale — hero (EN + DE match German optical size) */
+.caretip-landing .caretip-hero-section--fullbleed-light h1.caretip-hero-headline,
+.caretip-landing .caretip-hero-section--fullbleed-light .caretip-hero-headline,
+.caretip-landing .caretip-hero-section--fullbleed-dark h1.caretip-hero-headline,
+.caretip-landing .caretip-hero-section--fullbleed-dark .caretip-hero-headline,
+.caretip-landing .caretip-hero-section[data-hero-art="en"].caretip-hero-section--fullbleed-dark h1.caretip-hero-headline,
+.caretip-landing .caretip-hero-section[data-hero-art="en"].caretip-hero-section--fullbleed-dark .caretip-hero-headline,
+.caretip-landing .caretip-hero-section[data-hero-art="de"].caretip-hero-section--fullbleed-dark h1.caretip-hero-headline,
+.caretip-landing .caretip-hero-section[data-hero-art="de"].caretip-hero-section--fullbleed-dark .caretip-hero-headline,
+.caretip-landing .caretip-hero-section[data-hero-art="de"].caretip-hero-section--fullbleed-light h1.caretip-hero-headline,
+.caretip-landing .caretip-hero-section[data-hero-art="de"].caretip-hero-section--fullbleed-light .caretip-hero-headline {
+  --caretip-hero-headline-size: clamp(2.85rem, 5.8vw, 4.85rem);
+  --caretip-hero-fullbg-headline-size: clamp(2.85rem, 5.8vw, 4.85rem);
+  font-size: clamp(2.85rem, 5.8vw, 4.85rem) !important;
+  letter-spacing: -0.055em !important;
+  line-height: 1.02 !important;
+  max-width: min(100%, 22ch);
+}
+
+.caretip-landing .caretip-hero-section[data-hero-art="de"] .caretip-hero-headline-line,
+.caretip-landing .caretip-hero-section[data-hero-art="de"] .caretip-hero-headline-line--controlled,
+.caretip-landing .caretip-hero-section[data-hero-art="de"] .caretip-hero-headline-line--static,
+.caretip-landing .caretip-hero-section[data-hero-art="en"] .caretip-hero-headline-line,
+.caretip-landing .caretip-hero-section[data-hero-art="en"] .caretip-hero-headline-line--controlled,
+.caretip-landing .caretip-hero-section[data-hero-art="en"] .caretip-hero-headline-line--static {
+  display: block;
+  max-width: 100%;
+}
+
+.caretip-landing .caretip-hero-section[data-hero-art="de"] .caretip-hero-headline-line + .caretip-hero-headline-line,
+.caretip-landing .caretip-hero-section[data-hero-art="de"] .caretip-hero-headline > span + span,
+.caretip-landing .caretip-hero-section[data-hero-art="en"] .caretip-hero-headline-line + .caretip-hero-headline-line,
+.caretip-landing .caretip-hero-section[data-hero-art="en"] .caretip-hero-headline > span + span {
+  margin-top: 0.08em !important;
+}
+
+.caretip-landing .caretip-hero-section--fullbleed-light .caretip-hero-subtitle,
+.caretip-landing .caretip-hero-section--fullbleed-light .caretip-hero-description-block,
+.caretip-landing .caretip-hero-section--fullbleed-light .caretip-hero-description-line,
+.caretip-landing .caretip-hero-section--fullbleed-dark .caretip-hero-subtitle,
+.caretip-landing .caretip-hero-section--fullbleed-dark .caretip-hero-description-block,
+.caretip-landing .caretip-hero-section--fullbleed-dark .caretip-hero-description-line {
+  font-size: 17px !important;
+  letter-spacing: -0.015em;
+  line-height: 1.55;
+  max-width: 430px;
+}
+
+.caretip-landing .caretip-hero-section--fullbleed-light h1.caretip-hero-headline,
+.caretip-landing .caretip-hero-section--fullbleed-light .caretip-hero-headline-line,
+.caretip-landing .caretip-hero-section--fullbleed-dark h1.caretip-hero-headline,
+.caretip-landing .caretip-hero-section--fullbleed-dark .caretip-hero-headline-line {
+  color: #fff8f0 !important;
+  text-shadow: 0 2px 24px rgba(0, 0, 0, 0.25);
+}
+
+.caretip-landing .caretip-hero-section--fullbleed-light .caretip-hero-headline-accent,
+.caretip-landing .caretip-hero-section--fullbleed-light h1 .bg-clip-text,
+.caretip-landing .caretip-hero-section--fullbleed-dark .caretip-hero-headline-accent,
+.caretip-landing .caretip-hero-section--fullbleed-dark h1 .bg-clip-text {
+  color: #ffb06a !important;
+  -webkit-text-fill-color: #ffb06a !important;
+  background: none !important;
+}
+
+.caretip-landing .caretip-hero-section--fullbleed-light .caretip-hero-subtitle,
+.caretip-landing .caretip-hero-section--fullbleed-light .caretip-hero-description-block,
+.caretip-landing .caretip-hero-section--fullbleed-light .caretip-hero-description-line,
+.caretip-landing .caretip-hero-section--fullbleed-dark .caretip-hero-subtitle,
+.caretip-landing .caretip-hero-section--fullbleed-dark .caretip-hero-description-block,
+.caretip-landing .caretip-hero-section--fullbleed-dark .caretip-hero-description-line {
+  color: rgba(255, 248, 240, 0.88) !important;
+}
+
+.caretip-landing .caretip-hero-section--fullbleed-light .caretip-hero-float-layer,
+.caretip-landing .caretip-hero-section--fullbleed-light .caretip-hero-showcase-ambient,
+.caretip-landing .caretip-hero-section--fullbleed-light .caretip-hero-media-tone,
+.caretip-landing .caretip-hero-section--fullbleed-dark .caretip-hero-float-layer,
+.caretip-landing .caretip-hero-section--fullbleed-dark .caretip-hero-showcase-ambient,
+.caretip-landing .caretip-hero-section--fullbleed-dark .caretip-hero-media-tone {
+  display: none !important;
+}
+
+@media (max-width: 640px) {
+  .caretip-landing .caretip-hero-section--fullbleed-light .caretip-hero-full-bg-inner,
+  .caretip-landing .caretip-hero-section--fullbleed-dark .caretip-hero-full-bg-inner {
+    width: min(100% - 24px, 500px);
+    margin-left: 12px;
+  }
+
+  .caretip-landing .caretip-hero-section--fullbleed-light .caretip-hero-full-bg-content,
+  .caretip-landing .caretip-hero-section--fullbleed-dark .caretip-hero-full-bg-content {
+    padding-block: clamp(4.75rem, 8vh, 6rem) clamp(1.5rem, 3vh, 2.25rem);
+  }
+}
+
+/* —— Hero: Replit-style split (legacy hooks) —— */
+.caretip-landing .caretip-hero-section--split {
+  position: relative;
+  min-height: 780px;
+  padding: 170px 0 72px;
+  background: var(--care-cream);
+  overflow: hidden;
+}
+
+.caretip-landing .caretip-hero-section--split::before {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 54%;
+  height: 100%;
+  background: radial-gradient(circle at 70% 30%, rgba(242, 197, 158, 0.52), transparent 56%);
+  content: "";
+  pointer-events: none;
+}
+
+.dark .caretip-landing .caretip-hero-section--split::before {
+  background: radial-gradient(circle at 70% 30%, rgba(233, 120, 28, 0.18), transparent 56%);
+}
+
+.caretip-landing .caretip-hero-split-grid {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  align-items: center;
+  grid-template-columns: 0.87fr 1.13fr;
+  gap: 64px;
+  width: min(1180px, calc(100% - 48px));
+  margin-inline: auto;
+}
+
+.caretip-landing .caretip-hero-section--split .caretip-hero-brand-tagline {
+  margin-bottom: 1.25rem;
+}
+
+.caretip-landing .caretip-hero-section--split .caretip-hero-brand-tagline__text {
+  color: var(--care-orange);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.caretip-landing .caretip-hero-section--split .caretip-hero-brand-tagline__accent {
+  width: 28px;
+  height: 1px;
+  border-radius: 0;
+  background: var(--care-orange);
+  box-shadow: none;
+}
+
+.caretip-landing .caretip-hero-section--split h1.caretip-hero-headline {
+  max-width: 580px;
+  margin: 0;
+  font-size: clamp(3.6rem, 7.2vw, 6.6rem);
+  font-weight: 500 !important;
+  letter-spacing: -0.075em;
+  line-height: 0.96;
+  color: var(--care-ink);
+}
+
+.caretip-landing .caretip-hero-section--split .caretip-hero-subtitle,
+.caretip-landing .caretip-hero-section--split .caretip-hero-description-block {
+  max-width: 430px;
+  margin: 30px 0 32px;
+  color: var(--care-slate);
+  font-size: 17px;
+  letter-spacing: -0.015em;
+  line-height: 1.55;
+}
+
+.caretip-landing .caretip-hero-section--split .caretip-hero-cta-row {
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 11px;
+}
+
+.caretip-landing .caretip-hero-section--split .caretip-hero-cta-button,
+.caretip-landing .caretip-hero-section--split a.caretip-hero-cta-button {
+  min-height: 44px;
+  border-radius: 100px;
+  padding-inline: 19px;
+  box-shadow: 0 5px 0 rgba(186, 84, 12, 0.12);
+}
+
+.caretip-landing .caretip-hero-image-wrap {
+  position: relative;
+  min-height: 512px;
+}
+
+.caretip-landing .caretip-hero-image-wrap::after {
+  position: absolute;
+  right: -4%;
+  bottom: -4%;
+  width: 74%;
+  height: 76%;
+  border: 1px solid rgba(233, 120, 28, 0.22);
+  border-radius: 52% 48% 45% 55%;
+  content: "";
+  transform: rotate(-8deg);
+  pointer-events: none;
+}
+
+.caretip-landing .caretip-hero-image-wrap .caretip-hero-story-showcase-root,
+.caretip-landing .caretip-hero-image-wrap .caretip-hero-showcase-composition,
+.caretip-landing .caretip-hero-image-wrap .caretip-hero-media-shell,
+.caretip-landing .caretip-hero-image-wrap .hero-showcase-stack,
+.caretip-landing .caretip-hero-image-wrap .caretip-hero-media-wrap,
+.caretip-landing .caretip-hero-image-wrap .caretip-hero-media-clip {
+  position: absolute;
+  z-index: 1;
+  top: 0;
+  right: 0;
+  width: 86%;
+  height: 100%;
+  margin: 0;
+  max-width: none;
+}
+
+.caretip-landing .caretip-hero-image-wrap .caretip-hero-media-clip,
+.caretip-landing .caretip-hero-image-wrap .caretip-hero-showcase-frame {
+  border-radius: 46% 46% 18px 18px;
+  overflow: hidden;
+  box-shadow: 0 26px 60px rgba(48, 35, 24, 0.19);
+  border: none;
+  height: 100%;
+  width: 100%;
+}
+
+.caretip-landing .caretip-hero-image-wrap img.caretip-hero-story-frame {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: inherit;
+}
+
+.caretip-landing .caretip-hero-image-wrap .caretip-hero-float-layer,
+.caretip-landing .caretip-hero-image-wrap .caretip-hero-showcase-ambient,
+.caretip-landing .caretip-hero-image-wrap .caretip-hero-media-tone {
+  display: none !important;
+}
+
+.caretip-landing .caretip-hero-image-caption {
+  position: absolute;
+  z-index: 2;
+  bottom: -21px;
+  left: 0;
+  max-width: 218px;
+  padding: 18px 20px;
+  border-radius: 16px;
+  background: var(--care-ink-deep);
+  color: #f6f0e6;
+  box-shadow: 0 12px 24px rgba(39, 54, 64, 0.18);
+}
+
+.caretip-landing .caretip-hero-image-caption strong {
+  display: block;
+  margin-bottom: 5px;
+  color: #f6c08f;
+  font-family: var(--font-hero-display);
+  font-size: 20px;
+  font-weight: 500;
+}
+
+.caretip-landing .caretip-hero-image-caption span {
+  color: #c9d2d1;
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+/* —— Section surfaces / rhythm —— */
+.caretip-landing .caretip-landing-surface,
+.caretip-landing .caretip-industries-teaser,
+.caretip-landing .caretip-audience-benefits,
+.caretip-landing section.caretip-landing-surface {
+  background: var(--care-cream);
+}
+
+.caretip-landing #payments-trust,
+.caretip-landing .caretip-payments-trust {
+  background: var(--care-sand);
+}
+
+.caretip-landing #live-in-minutes,
+.caretip-landing .caretip-simple-setup,
+.caretip-landing section[id*="setup"] {
+  background: var(--care-cream);
+}
+
+.caretip-landing .caretip-landing-main > section,
+.caretip-landing .caretip-landing-main [class*="caretip-"][class*="section"] {
+  scroll-margin-top: 100px;
+}
+
+.caretip-landing .caretip-industries-teaser,
+.caretip-landing .caretip-audience-benefits {
+  padding-block: clamp(4.5rem, 10vw, 8rem);
+}
+
+.caretip-landing .caretip-section-intro .text-xs,
+.caretip-landing [data-landing-accent],
+.caretip-landing .caretip-section-accent,
+.caretip-landing .caretip-landing-section-accent {
+  color: var(--care-orange);
+}
+
+/* Eyebrow accent line */
+.caretip-landing .caretip-hero-brand-tagline__accent {
+  background: var(--care-orange);
+}
+
+/* Pill CTAs across landing */
+.caretip-landing a.caretip-hero-cta-button,
+.caretip-landing a.caretip-section-cta-button,
+.caretip-landing .caretip-public-nav a[class*="caretipBtn"],
+.caretip-landing .caretip-features-cta-wise__actions a {
+  border-radius: 100px !important;
+}
+
+.caretip-landing .caretip-audience-benefits__card {
+  border-radius: 14px;
+  background: #fffaf4;
+  border: 1px solid rgba(31, 42, 53, 0.08);
+  box-shadow: 0 18px 40px rgba(63, 46, 29, 0.08);
+}
+
+.dark .caretip-landing .caretip-audience-benefits__card {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+.caretip-landing .caretip-audience-benefits__title {
+  font-family: var(--font-hero-display);
+  font-weight: 500;
+  letter-spacing: -0.03em;
+}
+
+/* Final CTA — solid orange band, high-contrast white copy (no white inset card) */
+.caretip-landing .caretip-landing-cta-wise,
+.caretip-landing #final-cta.caretip-landing-cta-wise {
+  position: relative;
+  padding: 4.25rem 0 3.75rem !important;
+  padding-inline: 0 !important;
+  background: var(--care-orange) !important;
+  color: #fff8f0 !important;
+  text-align: center;
+  overflow: hidden;
+  border: none;
+}
+
+.caretip-landing .caretip-landing-cta-wise::before,
+.caretip-landing .caretip-landing-cta-wise::after {
+  position: absolute;
+  border: 1px solid rgba(255, 248, 240, 0.21);
+  border-radius: 50%;
+  content: "";
+  pointer-events: none;
+}
+
+.caretip-landing .caretip-landing-cta-wise::before {
+  width: 600px;
+  height: 600px;
+  top: -370px;
+  left: -120px;
+}
+
+.caretip-landing .caretip-landing-cta-wise::after {
+  width: 500px;
+  height: 500px;
+  right: -180px;
+  bottom: -300px;
+}
+
+.caretip-landing .caretip-landing-cta-wise__inner,
+.caretip-landing #final-cta .caretip-landing-cta-wise__inner,
+.caretip-landing #final-cta .caretip-features-cta-wise__inner {
+  position: relative;
+  z-index: 1;
+  max-width: 720px;
+  margin-inline: auto;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  color: #fff8f0 !important;
+  padding-block: 0.5rem !important;
+}
+
+/* Landing final CTA only — do not force white titles onto Features/Pricing/FAQ CTAs */
+.caretip-landing #final-cta .caretip-features-cta-wise__title,
+.caretip-landing #final-cta h2,
+.caretip-landing .caretip-landing-cta-wise .caretip-features-cta-wise__title {
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+  font-size: clamp(3.1rem, 6vw, 5.9rem) !important;
+  letter-spacing: -0.06em;
+  line-height: 1.05;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.12);
+}
+
+.caretip-landing #final-cta .caretip-features-cta-wise__title .bg-clip-text,
+.caretip-landing #final-cta h2 .bg-clip-text,
+.caretip-landing #final-cta h2 span {
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+  background: none !important;
+}
+
+.caretip-landing .caretip-landing-cta-wise .caretip-pricing-cta-wise__body,
+.caretip-landing #final-cta .caretip-pricing-cta-wise__body,
+.caretip-landing #final-cta p {
+  color: rgba(255, 255, 255, 0.92) !important;
+  max-width: 430px;
+  margin-inline: auto;
+  font-weight: 500;
+}
+
+/* Marketing Features CTA keeps readable dark titles on elevated card */
+.caretip-features-page.caretip-landing .caretip-features-cta-wise__inner {
+  color: hsl(var(--foreground)) !important;
+  background: rgb(255 255 255) !important;
+  border: 1px solid rgb(228 228 231 / 0.9) !important;
+  box-shadow: var(--caretip-wise-cta-elev-shadow, 0 18px 50px rgba(15, 23, 42, 0.08)) !important;
+  max-width: var(--caretip-wise-cta-inner-max, min(100%, 52rem));
+  padding-block: clamp(3.5rem, 8vw, 5.5rem) !important;
+}
+
+.dark .caretip-features-page.caretip-landing .caretip-features-cta-wise__inner {
+  background: rgb(24 24 27) !important;
+  border-color: rgb(63 63 70 / 0.9) !important;
+}
+
+.caretip-features-page.caretip-landing .caretip-features-cta-wise__title,
+.caretip-features-page.caretip-landing .caretip-features-cta-wise__title .bg-clip-text,
+.caretip-features-page.caretip-landing .caretip-features-cta-wise__title span {
+  color: hsl(var(--foreground)) !important;
+  -webkit-text-fill-color: hsl(var(--foreground)) !important;
+  background: none !important;
+  font-size: clamp(1.5rem, 4vw, 2.5rem) !important;
+  text-shadow: none !important;
+}
+
+.caretip-landing .caretip-features-cta-wise__actions {
+  justify-content: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.caretip-landing #final-cta .caretip-features-cta-wise__actions a.caretip-hero-cta-button:first-child,
+.caretip-landing #final-cta .caretip-features-cta-wise__actions a:first-child {
+  background: #ffffff !important;
+  color: #1f2a35 !important;
+  border-color: #ffffff !important;
+}
+
+.caretip-landing #final-cta .caretip-features-cta-wise__actions a:last-child {
+  background: transparent !important;
+  color: #ffffff !important;
+  border: 1px solid rgba(255, 255, 255, 0.85) !important;
+}
+
+/* Final CTA trust pills — dark ink on white chips (readable on orange band) */
+.caretip-landing .caretip-landing-cta-wise__trust,
+.caretip-landing #final-cta .caretip-landing-cta-wise__trust,
+.caretip-landing #final-cta .caretip-trust-strip {
+  color: #1f2a35;
+}
+
+.caretip-landing #final-cta .caretip-trust-strip__item,
+html:not(.dark) .caretip-landing #final-cta .caretip-trust-strip__item,
+html:not(.dark) .caretip-landing .caretip-landing-cta-wise .caretip-trust-strip__item,
+.caretip-landing.caretip-landing--premium #final-cta .caretip-trust-strip__item {
+  color: #1f2a35 !important;
+  -webkit-text-fill-color: #1f2a35 !important;
+  background: #ffffff !important;
+  border: 1px solid rgba(255, 255, 255, 0.92) !important;
+  box-shadow: 0 6px 18px rgba(31, 42, 53, 0.12);
+}
+
+.caretip-landing #final-cta .caretip-trust-strip__check,
+.caretip-landing #final-cta .caretip-trust-strip svg,
+html:not(.dark) .caretip-landing #final-cta .caretip-trust-strip__check,
+.caretip-landing.caretip-landing--premium #final-cta .caretip-trust-strip__check {
+  color: #e9781c !important;
+  stroke: #e9781c !important;
+}
+
+.caretip-landing .caretip-industry-photo-card__cta {
+  color: #fff8ef !important;
+}
+
+/* Footer on landing */
+.caretip-landing .caretip-landing-footer,
+.caretip-landing footer.caretip-landing-footer {
+  background: var(--care-ink-deep) !important;
+  color: #e5e4dc;
+  border-top: none;
+}
+
+.caretip-landing .caretip-landing-footer a {
+  color: #e5e4dc;
+}
+
+.caretip-landing .caretip-landing-footer a:hover {
+  color: #f4c18d;
+}
+
+.caretip-landing .caretip-landing-footer h3,
+.caretip-landing .caretip-landing-footer [class*="heading"] {
+  color: #f4c18d;
+}
+
+/* —— Setup / motivation split polish —— */
+.caretip-landing .caretip-live-minutes-section,
+.caretip-landing #how-it-works {
+  background: var(--care-sand);
+  padding-block: clamp(4.5rem, 10vw, 8rem);
+}
+
+.caretip-landing .caretip-live-minutes-section .caretip-process-step-number {
+  font-family: var(--font-hero-display);
+  font-weight: 500;
+  color: var(--care-orange);
+}
+
+.caretip-landing .caretip-motivation-section,
+.caretip-landing section#recognition {
+  background: var(--care-cream);
+}
+
+/* Strengthen final CTA overrides against earlier refine sheets */
+.caretip-landing #final-cta.caretip-landing-cta-wise .caretip-features-cta-wise__title,
+.caretip-landing #final-cta .caretip-features-cta-wise__title {
+  font-family: var(--font-hero-display) !important;
+  font-weight: 500 !important;
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+}
+
+/* —— Marketing pages sharing .caretip-landing: keep body copy readable —— */
+.caretip-features-page.caretip-landing,
+.caretip-features-page.caretip-landing .caretip-landing-features-section,
+.caretip-features-page.caretip-landing .text-foreground,
+.caretip-features-page.caretip-landing h1,
+.caretip-features-page.caretip-landing h2:not(.caretip-features-cta-wise__title),
+.caretip-features-page.caretip-landing p {
+  color: var(--care-ink, #1f2a35);
+}
+
+.caretip-features-page.caretip-landing h1 .bg-clip-text,
+.caretip-features-page.caretip-landing h2 .bg-clip-text,
+.caretip-features-page.caretip-landing .text-transparent.bg-clip-text {
+  background-image: none !important;
+  color: var(--care-orange, #e9781c) !important;
+  -webkit-text-fill-color: var(--care-orange, #e9781c) !important;
+}
+
+.dark .caretip-features-page.caretip-landing,
+.dark .caretip-features-page.caretip-landing .caretip-landing-features-section,
+.dark .caretip-features-page.caretip-landing .text-foreground,
+.dark .caretip-features-page.caretip-landing h1,
+.dark .caretip-features-page.caretip-landing h2:not(.caretip-features-cta-wise__title),
+.dark .caretip-features-page.caretip-landing p {
+  color: var(--care-ink, #f3ebe0);
+}
+
+/* Public marketing Wise CTAs (Features/Pricing/FAQ/About) — never inherit landing final-CTA white */
+.caretip-features-cta-wise:not(.caretip-landing-cta-wise) .caretip-features-cta-wise__title,
+.caretip-about-cta-wise__title,
+.caretip-pricing-cta-wise__title,
+.caretip-faq-cta-wise__title {
+  color: hsl(var(--foreground)) !important;
+  -webkit-text-fill-color: hsl(var(--foreground)) !important;
+}
+
+.caretip-pricing-cta-wise__body,
+.caretip-faq-cta-wise__body {
+  color: hsl(var(--muted-foreground)) !important;
+  -webkit-text-fill-color: hsl(var(--muted-foreground)) !important;
+}
+
+.caretip-features-cta-wise:not(.caretip-landing-cta-wise) .caretip-features-cta-wise__inner,
+.caretip-about-cta-wise__inner,
+.caretip-pricing-cta-wise__inner,
+.caretip-faq-cta-wise__inner {
+  color: hsl(var(--foreground));
+}
+
+/* —— Industries second-section spacing —— */
+.caretip-landing .caretip-industries-teaser--photo-grid {
+  padding-block: clamp(4.5rem, 10vw, 8rem);
+  background: var(--care-cream, #f8f4ed);
+}
+
+.caretip-landing .caretip-industries-teaser--photo-grid .caretip-industries-teaser__overview-header {
+  text-align: center;
+  max-width: none;
+  width: 100%;
+  margin-inline: auto;
+  margin-bottom: clamp(2.5rem, 5vw, 4rem);
+}
+
+.caretip-landing .caretip-industries-teaser--photo-grid .caretip-industries-teaser__overview-header h2,
+.caretip-landing .caretip-industries-teaser--photo-grid .caretip-industries-teaser__sub {
+  max-width: 760px;
+  margin-inline: auto;
+}
+
+.caretip-landing .caretip-industries-teaser__overview-top {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+  margin-bottom: 0.85rem;
+}
+
+.caretip-landing .caretip-industry-view-all-nav {
+  appearance: none;
+  background: none;
+  border: none;
+  padding: 0;
+  margin: 0;
+  color: var(--care-ink, #1f2a35);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+  text-decoration-thickness: 1px;
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.caretip-landing .caretip-industry-view-all-nav:hover {
+  color: var(--care-orange, #e9781c);
+}
+
+/* Mobile default: directly above industry images */
+.caretip-landing .caretip-industry-view-all-nav-slot {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  margin-bottom: 0.85rem;
+}
+
+@media (min-width: 768px) {
+  .caretip-landing .caretip-industries-teaser__frame {
+    position: relative;
+  }
+
+  /* Desktop: upper-right of the section header area */
+  .caretip-landing .caretip-industry-view-all-nav-slot {
+    position: absolute;
+    top: 0.15rem;
+    right: clamp(1rem, 3vw, 2rem);
+    z-index: 2;
+    width: auto;
+    margin-bottom: 0;
+    justify-content: flex-end;
+  }
+}
+
+/* Mobile: center CTA buttons across landing */
+@media (max-width: 767px) {
+  .caretip-landing .caretip-hero-cta-row,
+  .caretip-landing .caretip-hero-section--full-bg .caretip-hero-cta-row,
+  .caretip-landing .caretip-hero-section--fullbleed-dark .caretip-hero-cta-row,
+  .caretip-landing .caretip-features-cta-wise__actions,
+  .caretip-landing #final-cta .caretip-features-cta-wise__actions,
+  .caretip-landing .caretip-landing-section-cta,
+  .caretip-landing .caretip-audience-benefits__cta {
+    align-items: center !important;
+    justify-content: center !important;
+    margin-inline: auto;
+    text-align: center;
+  }
+
+  .caretip-landing .caretip-hero-cta-unit,
+  .caretip-landing .caretip-hero-section--full-bg .caretip-hero-cta-unit,
+  .caretip-landing .caretip-hero-cta-button,
+  .caretip-landing .caretip-section-cta-button,
+  .caretip-landing .caretip-audience-benefits__cta {
+    margin-inline: auto !important;
+  }
+
+  .caretip-landing .caretip-audience-benefits__card {
+    align-items: center;
+    text-align: center;
+  }
+
+  .caretip-landing .caretip-audience-benefits__points,
+  .caretip-landing .caretip-audience-benefits__point {
+    align-items: flex-start;
+    text-align: left;
+    width: 100%;
+  }
+}
+
+/* TrickyFreshString section heading scale */
+.caretip-landing .caretip-industries-teaser h2,
+.caretip-landing .caretip-audience-benefits h2,
+.caretip-landing .caretip-industries-teaser .text-section-title,
+.caretip-landing .caretip-audience-benefits .text-section-title,
+.caretip-landing h2.text-section-title {
+  font-size: clamp(2.7rem, 5vw, 4.75rem) !important;
+  letter-spacing: -0.065em !important;
+  line-height: 1.02 !important;
+}
+
+.caretip-landing .caretip-industries-teaser__sub,
+.caretip-landing .caretip-industries-teaser .caretip-section-subtitle {
+  font-size: 16px !important;
+  line-height: 1.55;
+  max-width: 520px;
+  margin-inline: auto;
+}
+
+.caretip-landing .caretip-industries-teaser--photo-grid .caretip-industries-teaser__showcase-shell {
+  min-height: 0;
+  overflow: visible;
+  width: 100%;
+}
+
+.caretip-landing .caretip-industries-teaser--photo-grid .caretip-industries-teaser__frame {
+  overflow: visible;
+}
+
+/* —— Audience photo cards —— */
+.caretip-landing .caretip-audience-benefits__photo {
+  width: calc(100% + 3rem);
+  margin: -1.625rem -1.5rem 1.25rem;
+  height: clamp(260px, 32vw, 340px);
+  overflow: hidden;
+  border-radius: var(--caretip-saas-card-radius, 1.25rem) var(--caretip-saas-card-radius, 1.25rem) 0 0;
+  background: #1f2a35;
+}
+
+.caretip-landing .caretip-audience-benefits__photo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 72%;
+  transition: transform 0.55s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+
+/* Legacy laptop mockup helper (unused when photo is a lifestyle/product scene) */
+.caretip-landing .caretip-audience-benefits__photo--mockup {
+  height: clamp(240px, 28vw, 300px);
+  background: #f4f1ec;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem 1.25rem 0.75rem;
+}
+
+.caretip-landing .caretip-audience-benefits__photo--mockup img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: center bottom;
+}
+
+.caretip-landing .caretip-audience-benefits__card:hover .caretip-audience-benefits__photo img {
+  transform: scale(1.045);
+}
+
+.caretip-landing .caretip-audience-benefits__card:hover .caretip-audience-benefits__photo--mockup img {
+  transform: scale(1.02);
+}
+
+.caretip-landing .caretip-audience-benefits__card {
+  overflow: hidden;
+}
+
+.caretip-landing .caretip-audience-benefits__title {
+  font-size: clamp(1.55rem, 2.4vw, 2rem) !important;
+  letter-spacing: -0.03em;
+  line-height: 1.15;
+}
+
+/* —— Payments plain (no bordered card) —— */
+.caretip-landing .caretip-payments-trust--plain,
+.caretip-landing .caretip-payments-trust--split {
+  background: var(--care-sand, #eee7dc);
+  padding-block: clamp(3.5rem, 7vw, 5.5rem);
+}
+
+.caretip-landing .caretip-payments-trust--plain .caretip-payments-trust__inner {
+  max-width: 52rem;
+}
+
+.caretip-landing .caretip-payments-trust--plain .caretip-payments-trust__title {
+  margin-bottom: 1.75rem;
+}
+
+.caretip-landing .caretip-payments-trust__split {
+  display: contents;
+}
+
+.caretip-landing .caretip-payments-trust__card {
+  border: none !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+}
+
+/* —— Motivation story gallery —— */
+.caretip-landing .caretip-motivation-story-gallery {
+  display: grid;
+  grid-template-columns: 1.14fr 0.86fr;
+  gap: 12px;
+  width: 100%;
+  margin-bottom: 1.25rem;
+}
+
+.caretip-landing .caretip-motivation-story-gallery__img {
+  display: block;
+  width: 100%;
+  height: 280px;
+  border-radius: 15px;
+  object-fit: cover;
+}
+
+.caretip-landing .caretip-motivation-story-gallery__img--secondary {
+  height: 220px;
+  margin-top: 48px;
+}
+
+.caretip-landing .caretip-motivation-activity-wrap {
+  width: 100%;
+}
+
+@media (max-width: 640px) {
+  .caretip-landing .caretip-motivation-story-gallery {
+    grid-template-columns: 1fr;
+  }
+
+  .caretip-landing .caretip-motivation-story-gallery__img,
+  .caretip-landing .caretip-motivation-story-gallery__img--secondary {
+    height: 220px;
+    margin-top: 0;
+  }
+}
+
+.caretip-landing .caretip-hero-split-reveal--1 {
+  animation-delay: 0.1s;
+}
+.caretip-landing .caretip-hero-split-reveal--2 {
+  animation-delay: 0.2s;
+}
+.caretip-landing .caretip-hero-split-reveal--3 {
+  animation-delay: 0.3s;
+}
+
+@keyframes caretip-tf-reveal-up {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .caretip-landing .caretip-hero-split-reveal {
+    animation: none;
+  }
+}
+
+/* —— Responsive —— */
+@media (max-width: 1024px) {
+  .caretip-landing .caretip-hero-split-grid {
+    grid-template-columns: 1fr;
+    gap: 50px;
+  }
+
+  .caretip-landing .caretip-hero-section--split {
+    min-height: auto;
+    padding-top: 140px;
+  }
+
+  .caretip-landing .caretip-hero-image-wrap {
+    min-height: 440px;
+    order: 2;
+  }
+}
+
+@media (max-width: 640px) {
+  .caretip-landing .caretip-landing-nav-shell {
+    top: 9px;
+    width: calc(100% - 20px);
+  }
+
+  .caretip-landing .caretip-hero-section--split {
+    padding: 122px 0 64px;
+  }
+
+  .caretip-landing .caretip-hero-split-grid {
+    width: min(100% - 36px, 500px);
+    gap: 40px;
+  }
+
+  .caretip-landing .caretip-hero-section--split h1.caretip-hero-headline {
+    font-size: clamp(3.15rem, 16vw, 5rem);
+  }
+
+  .caretip-landing .caretip-hero-section--fullbleed-light h1.caretip-hero-headline,
+  .caretip-landing .caretip-hero-section--fullbleed-light .caretip-hero-headline,
+  .caretip-landing .caretip-hero-section--fullbleed-dark h1.caretip-hero-headline,
+  .caretip-landing .caretip-hero-section--fullbleed-dark .caretip-hero-headline,
+  .caretip-landing .caretip-hero-section[data-hero-art="de"].caretip-hero-section--fullbleed-dark h1.caretip-hero-headline,
+  .caretip-landing .caretip-hero-section[data-hero-art="de"].caretip-hero-section--fullbleed-dark .caretip-hero-headline,
+  .caretip-landing .caretip-hero-section[data-hero-art="de"].caretip-hero-section--fullbleed-light h1.caretip-hero-headline,
+  .caretip-landing .caretip-hero-section[data-hero-art="de"].caretip-hero-section--fullbleed-light .caretip-hero-headline,
+  .caretip-landing .caretip-hero-section[data-hero-art="en"].caretip-hero-section--fullbleed-dark h1.caretip-hero-headline,
+  .caretip-landing .caretip-hero-section[data-hero-art="en"].caretip-hero-section--fullbleed-dark .caretip-hero-headline {
+    --caretip-hero-headline-size: clamp(2.55rem, 11.5vw, 3.65rem);
+    --caretip-hero-fullbg-headline-size: clamp(2.55rem, 11.5vw, 3.65rem);
+    font-size: clamp(2.55rem, 11.5vw, 3.65rem) !important;
+    max-width: min(100%, 14ch);
+  }
+
+  .caretip-landing .caretip-industries-teaser h2,
+  .caretip-landing .caretip-audience-benefits h2,
+  .caretip-landing h2.text-section-title {
+    font-size: clamp(2.65rem, 13vw, 4rem) !important;
+  }
+
+  .caretip-landing .caretip-hero-image-wrap {
+    min-height: 350px;
+    margin-right: -8px;
+  }
+
+  .caretip-landing .caretip-hero-image-wrap .caretip-hero-story-showcase-root,
+  .caretip-landing .caretip-hero-image-wrap .caretip-hero-showcase-composition,
+  .caretip-landing .caretip-hero-image-wrap .caretip-hero-media-shell,
+  .caretip-landing .caretip-hero-image-wrap .hero-showcase-stack,
+  .caretip-landing .caretip-hero-image-wrap .caretip-hero-media-wrap {
+    width: 91%;
+  }
+
+  .caretip-landing .caretip-hero-image-caption {
+    bottom: -18px;
+    padding: 14px 15px;
+  }
+
+  .caretip-landing .caretip-hero-image-caption strong {
+    font-size: 17px;
+  }
+
+  .caretip-landing .caretip-landing-cta-wise,
+  .caretip-landing #final-cta.caretip-landing-cta-wise {
+    padding: 3.25rem 0 3rem !important;
+  }
+}

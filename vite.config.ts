@@ -219,6 +219,9 @@ export default defineConfig(({ mode }) => {
 
   server: {
     host: true,
+    watch: {
+      ignored: ['**/_reference/**', '**/TrickyFreshString.zip'],
+    },
     proxy: {
       '/uploads': {
         target: 'http://localhost:3001',

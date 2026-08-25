@@ -1,0 +1,192 @@
+/**
+ * Industries second-section grid — matches TrickyFreshString audience-grid
+ * (3 teaser cards, middle tall) + expandable remaining industries.
+ */
+
+.caretip-landing .caretip-industry-second-section {
+  width: 100%;
+}
+
+.caretip-landing .caretip-industry-photo-grid {
+  display: grid;
+  grid-template-columns: 1fr 1.32fr 1fr;
+  gap: 16px;
+  width: 100%;
+  align-items: end;
+}
+
+.caretip-landing .caretip-industry-photo-grid--more {
+  display: none;
+  margin-top: 16px;
+}
+
+.caretip-landing .caretip-industry-photo-grid--more-open {
+  display: grid;
+}
+
+.caretip-landing .caretip-industry-photo-card {
+  position: relative;
+  min-height: 440px;
+  overflow: hidden;
+  border-radius: 14px;
+  background: #d3c4b2;
+  isolation: isolate;
+}
+
+.caretip-landing .caretip-industry-photo-card--tall {
+  min-height: 500px;
+  transform: translateY(-34px);
+}
+
+.caretip-landing .caretip-industry-photo-card__media {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+
+.caretip-landing .caretip-industry-photo-card__img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  transition: transform 0.55s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+
+.caretip-landing .caretip-industry-photo-card--animate .caretip-industry-photo-card__img {
+  animation: caretip-industry-kenburns 18s ease-in-out infinite alternate;
+}
+
+.caretip-landing .caretip-industry-photo-card:nth-child(2) .caretip-industry-photo-card__img {
+  animation-delay: -4s;
+}
+
+.caretip-landing .caretip-industry-photo-card:nth-child(3) .caretip-industry-photo-card__img {
+  animation-delay: -8s;
+}
+
+.caretip-landing .caretip-industry-photo-card:hover .caretip-industry-photo-card__img {
+  transform: scale(1.045);
+  animation-play-state: paused;
+}
+
+.caretip-landing .caretip-industry-photo-card__overlay {
+  position: absolute;
+  inset: 36% 0 0;
+  background: linear-gradient(transparent, rgba(20, 27, 30, 0.76));
+  pointer-events: none;
+  z-index: 1;
+}
+
+.caretip-landing .caretip-industry-photo-card__label {
+  position: absolute;
+  z-index: 2;
+  right: 20px;
+  bottom: 19px;
+  left: 20px;
+  color: #fff8ef;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+}
+
+.caretip-landing .caretip-industry-photo-card__label small {
+  display: block;
+  color: #fac18f;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+}
+
+.caretip-landing .caretip-industry-photo-card__label strong {
+  font-family: var(--font-hero-display, "Playfair Display", Georgia, serif);
+  font-size: 27px;
+  font-weight: 500;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+  max-width: 18ch;
+}
+
+.caretip-landing .caretip-industry-photo-card__cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+  min-height: 36px;
+  padding: 0 14px;
+  border: 1px solid rgba(255, 248, 239, 0.45);
+  border-radius: 100px;
+  background: rgba(39, 54, 64, 0.55);
+  color: #fff8ef !important;
+  font-size: 12px;
+  font-weight: 700;
+  backdrop-filter: blur(8px);
+  transition: background-color 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+}
+
+.caretip-landing .caretip-industry-photo-card__cta:hover {
+  background: var(--care-orange, #e9781c);
+  border-color: var(--care-orange, #e9781c);
+  transform: translateY(-1px);
+}
+
+@keyframes caretip-industry-kenburns {
+  from {
+    transform: scale(1.02) translate3d(0, 0, 0);
+  }
+  to {
+    transform: scale(1.1) translate3d(-2%, -1%, 0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .caretip-landing .caretip-industry-photo-card--animate .caretip-industry-photo-card__img {
+    animation: none;
+  }
+}
+
+@media (max-width: 1024px) {
+  .caretip-landing .caretip-industry-photo-grid,
+  .caretip-landing .caretip-industry-photo-grid--more-open {
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+
+  .caretip-landing .caretip-industry-photo-card,
+  .caretip-landing .caretip-industry-photo-card--tall {
+    min-height: 350px;
+    transform: none;
+  }
+
+  .caretip-landing .caretip-industry-photo-grid > .caretip-industry-photo-card:first-child {
+    grid-column: span 2;
+    min-height: 380px;
+  }
+}
+
+@media (max-width: 640px) {
+  .caretip-landing .caretip-industry-photo-grid,
+  .caretip-landing .caretip-industry-photo-grid--more-open {
+    gap: 10px;
+  }
+
+  .caretip-landing .caretip-industry-photo-card,
+  .caretip-landing .caretip-industry-photo-card--tall {
+    min-height: 275px;
+  }
+
+  .caretip-landing .caretip-industry-photo-grid > .caretip-industry-photo-card:first-child {
+    min-height: 330px;
+  }
+
+  .caretip-landing .caretip-industry-photo-card__label {
+    right: 14px;
+    bottom: 13px;
+    left: 14px;
+  }
+
+  .caretip-landing .caretip-industry-photo-card__label strong {
+    font-size: 22px;
+  }
+}

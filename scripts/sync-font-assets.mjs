@@ -45,6 +45,22 @@ const fontAssets = [
     "@fontsource/manrope/files/manrope-latin-800-normal.woff2",
     "public/fonts/manrope/manrope-latin-800.woff2",
   ],
+  [
+    "@fontsource/playfair-display/files/playfair-display-latin-500-normal.woff2",
+    "public/fonts/playfair/playfair-display-latin-500-normal.woff2",
+  ],
+  [
+    "@fontsource/playfair-display/files/playfair-display-latin-500-italic.woff2",
+    "public/fonts/playfair/playfair-display-latin-500-italic.woff2",
+  ],
+  [
+    "@fontsource/playfair-display/files/playfair-display-latin-600-normal.woff2",
+    "public/fonts/playfair/playfair-display-latin-600-normal.woff2",
+  ],
+  [
+    "@fontsource/playfair-display/files/playfair-display-latin-600-italic.woff2",
+    "public/fonts/playfair/playfair-display-latin-600-italic.woff2",
+  ],
 ];
 
 async function exists(path) {

@@ -17,15 +17,16 @@ const brandAccentGradient =
 /**
  * Landing page design system — layout, spacing, typography (TipJar-inspired rhythm).
  *
- * Typography: Inter (UI/body); Manrope for landing hero H1 via `font-hero-display`.
+ * Typography: Inter (UI/body); Playfair Display for landing hero/section H1–H2
+ * via `font-hero-display` (see caretip-landing-trickyfresh-redesign.css).
  * Responsive rules:
  * - Phone (<md): left-aligned hero; centered section intros below lg
  * - clamp()-based type scale in `caretip-typography.css`
  */
 
-/** Hero headline — Manrope extrabold, oversized display scale. */
+/** Hero headline — Playfair display scale (weight refined in redesign CSS). */
 const heroHeadlineTone =
-  "font-hero-display font-extrabold text-foreground max-lg:text-left max-lg:text-wrap lg:text-pretty antialiased";
+  "font-hero-display font-medium text-foreground max-lg:text-left max-lg:text-wrap lg:text-pretty antialiased";
 /** Below lg — size/rhythm from caretip-landing-hero.css */
 const heroHeadlineMobile = "max-lg:tracking-[inherit]";
 /** Desktop scale — fluid sizes in caretip-landing-hero.css */
@@ -261,7 +262,7 @@ export const landingUi = {
     "caretip-hero-headline caretip-hero-headline--de caretip-hero-headline-anchor w-full antialiased text-left max-lg:mx-0",
   ),
   /** Hero animated keyword — same gradient as section accents (see `.caretip-hero-headline-accent`). */
-  heroHeadlineEmphasis: `font-inherit font-extrabold max-lg:tracking-[inherit] ${brandAccentGradient}`,
+  heroHeadlineEmphasis: `font-inherit font-medium italic max-lg:tracking-[inherit] ${brandAccentGradient}`,
   heroHeadlineLine:
     "caretip-hero-headline-line block text-foreground max-lg:[&:not(:first-child)]:mt-0 [&:not(:first-child)]:mt-1 md:[&:not(:first-child)]:mt-1.25 lg:[&:not(:first-child)]:mt-1",
   heroSubtitle: cnHeroSubtitle(

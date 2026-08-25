@@ -1,0 +1,93 @@
+/**
+ * Playfair Display + TrickyFreshString headline scale —
+ * Features, Industries, Pricing, FAQ only.
+ *
+ * Does NOT change global --font-hero-display (Manrope stays on auth/dashboards).
+ */
+
+.caretip-features-page,
+.caretip-pricing-page,
+.caretip-faq-page,
+.caretip-industry-page {
+  --font-hero-display: "Playfair Display", Georgia, "Times New Roman", serif;
+  --caretip-marketing-display: "Playfair Display", Georgia, "Times New Roman", serif;
+}
+
+.caretip-features-page h1,
+.caretip-features-page h2,
+.caretip-features-page .text-section-title,
+.caretip-features-page .caretip-features-hero-wise__title,
+.caretip-features-page .caretip-features-cta-wise__title,
+.caretip-features-page .font-hero-display,
+.caretip-pricing-page h1,
+.caretip-pricing-page h2,
+.caretip-pricing-page .text-section-title,
+.caretip-pricing-page .caretip-pricing-hero-wise__title,
+.caretip-pricing-page .caretip-pricing-cta-wise__title,
+.caretip-pricing-page .font-hero-display,
+.caretip-faq-page h1,
+.caretip-faq-page h2,
+.caretip-faq-page .text-section-title,
+.caretip-faq-page .caretip-faq-hero-wise__title,
+.caretip-faq-page .caretip-faq-cta-wise__title,
+.caretip-faq-page .font-hero-display,
+.caretip-industry-page h1,
+.caretip-industry-page h2,
+.caretip-industry-page h3,
+.caretip-industry-page .caretip-industry-page__headline,
+.caretip-industry-page .caretip-industry-page__section-title,
+.caretip-industry-page .caretip-industry-page__final-cta-title,
+.caretip-industry-page .font-hero-display {
+  font-family: var(--caretip-marketing-display) !important;
+  font-weight: 500 !important;
+  letter-spacing: -0.065em;
+  line-height: 1.05;
+}
+
+/* Page heroes — match landing section scale */
+.caretip-features-page .caretip-features-hero-wise__title,
+.caretip-features-page h1.text-section-title,
+.caretip-pricing-page .caretip-pricing-hero-wise__title,
+.caretip-faq-page .caretip-faq-hero-wise__title,
+.caretip-industry-page .caretip-industry-page__headline {
+  font-size: clamp(2.7rem, 5vw, 4.75rem) !important;
+  letter-spacing: -0.065em !important;
+  line-height: 1.02 !important;
+}
+
+.caretip-features-page .caretip-features-cta-wise__title,
+.caretip-pricing-page .caretip-pricing-cta-wise__title,
+.caretip-faq-page .caretip-faq-cta-wise__title,
+.caretip-industry-page .caretip-industry-page__final-cta-title,
+.caretip-industry-page .caretip-industry-page__section-title {
+  font-size: clamp(1.85rem, 3.2vw, 2.85rem) !important;
+  letter-spacing: -0.05em !important;
+  line-height: 1.08 !important;
+}
+
+/* Orange italic accents (hl / bg-clip) on these pages only */
+.caretip-features-page h1 .bg-clip-text,
+.caretip-features-page h2 .bg-clip-text,
+.caretip-features-page .text-transparent.bg-clip-text,
+.caretip-pricing-page h1 .bg-clip-text,
+.caretip-pricing-page h2 .bg-clip-text,
+.caretip-faq-page h1 .bg-clip-text,
+.caretip-faq-page h2 .bg-clip-text,
+.caretip-industry-page h1 .bg-clip-text,
+.caretip-industry-page h2 .bg-clip-text {
+  background-image: none !important;
+  color: #e9781c !important;
+  -webkit-text-fill-color: #e9781c !important;
+  font-style: italic;
+  font-weight: 500 !important;
+}
+
+@media (max-width: 640px) {
+  .caretip-features-page .caretip-features-hero-wise__title,
+  .caretip-features-page h1.text-section-title,
+  .caretip-pricing-page .caretip-pricing-hero-wise__title,
+  .caretip-faq-page .caretip-faq-hero-wise__title,
+  .caretip-industry-page .caretip-industry-page__headline {
+    font-size: clamp(2.65rem, 13vw, 4rem) !important;
+  }
+}

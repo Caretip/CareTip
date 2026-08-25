@@ -31,7 +31,7 @@ export function LandingPage() {
         className="pointer-events-none fixed inset-x-0 top-0 bottom-0 z-0 min-h-[100dvh]"
       />
       <div className="relative z-10 w-full min-w-0">
-        <div className="fixed top-0 left-0 right-0 z-50 w-full max-w-[100vw] overflow-x-clip">
+        <div className="caretip-landing-nav-shell">
           <Navigation />
         </div>
         <main className="caretip-landing-main w-full min-w-0 overflow-x-hidden">

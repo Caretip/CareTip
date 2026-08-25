@@ -13,6 +13,8 @@ import { landingUi } from "@/components/landing/landingUi";
 import { landingHeadlineHighlightComponents } from "@/components/landing/landingRichText";
 import { landingStaggerDelay } from "@/lib/landingMotion";
 import { cn } from "@/lib/utils";
+import businessVisual from "../../../../images/employee02.webp";
+import teamsVisual from "../../../../images/foremployee.webp";
 
 type AudienceCard = {
   id: "business" | "teams";
@@ -23,6 +25,8 @@ type AudienceCard = {
   points: Array<{ titleKey: string; bodyKey: string }>;
   ctaLabelKey: string;
   ctaTo: string;
+  image: string;
+  imageAltKey: string;
 };
 
 const CARDS: AudienceCard[] = [
@@ -39,6 +43,8 @@ const CARDS: AudienceCard[] = [
     ],
     ctaLabelKey: "businessCta",
     ctaTo: "/contact?intent=demo",
+    image: businessVisual,
+    imageAltKey: "businessSection.imageAlt",
   },
   {
     id: "teams",
@@ -53,12 +59,14 @@ const CARDS: AudienceCard[] = [
     ],
     ctaLabelKey: "teamsCta",
     ctaTo: "/join",
+    image: teamsVisual,
+    imageAltKey: "employeeSection.imageAlt",
   },
 ];
 
 /**
  * Combined business + employee landing block — side-by-side audience cards
- * (template: Benefits at a glance).
+ * with second-section-inspired photo headers.
  */
 export function LandingAudienceBenefitsSection() {
   const { t, i18n } = useTranslation();
@@ -76,6 +84,7 @@ export function LandingAudienceBenefitsSection() {
           body: t(`${prefix}.${p.bodyKey}`),
         })),
         ctaLabel: t(`${prefix}.${card.ctaLabelKey}`),
+        imageAlt: t(`landing.${card.imageAltKey}`),
       })),
     [t, i18n.language],
   );
@@ -83,7 +92,10 @@ export function LandingAudienceBenefitsSection() {
   return (
     <section
       id="business-section"
-      className={cn(landingUi.sectionWhite, "caretip-audience-benefits scroll-mt-[80px]")}
+      className={cn(
+        landingUi.sectionWhite,
+        "caretip-audience-benefits caretip-audience-benefits--photo scroll-mt-[80px]",
+      )}
       aria-labelledby="audience-benefits-heading"
     >
       <div className={cn(landingUi.sectionShell, "caretip-audience-benefits__inner px-4 sm:px-6 lg:px-8")}>
@@ -112,6 +124,9 @@ export function LandingAudienceBenefitsSection() {
                 className="caretip-audience-benefits__card"
                 delay={landingStaggerDelay(index + 1)}
               >
+                <div className="caretip-audience-benefits__photo">
+                  <img src={card.image} alt={card.imageAlt} loading="lazy" decoding="async" />
+                </div>
                 <p className="caretip-audience-benefits__role">{card.role}</p>
                 <span className="caretip-audience-benefits__icon" aria-hidden>
                   <Icon strokeWidth={1.75} />
@@ -145,7 +160,6 @@ export function LandingAudienceBenefitsSection() {
           })}
         </div>
       </div>
-      {/* Keep employee hash working for existing deep links */}
       <div id="for-employees" className="sr-only" aria-hidden />
     </section>
   );

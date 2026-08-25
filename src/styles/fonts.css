@@ -1,5 +1,6 @@
 /**
- * Inter (UI) + Manrope (marketing headings) — self-hosted; see caretip-font-faces.css.
+ * Inter (UI) + Manrope (marketing headings elsewhere) + Playfair Display
+ * (landing display headlines) — self-hosted; see caretip-font-faces.css.
  */
 :root {
   --font-inter: "Inter", "Inter Fallback", ui-sans-serif, system-ui, sans-serif;

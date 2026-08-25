@@ -5,7 +5,7 @@ import { landingCopyVisible, landingUi } from "@/components/landing/landingUi";
 import { cn } from "@/lib/utils";
 
 /**
- * Payment infrastructure trust strip — heading + accepted methods + Powered by Stripe.
+ * Payment infrastructure trust — heading + accepted methods (no bordered card).
  */
 export function PaymentsSection() {
   const { t } = useTranslation();
@@ -18,7 +18,7 @@ export function PaymentsSection() {
       className={cn(
         landingUi.section,
         landingUi.landingSurface,
-        "caretip-payments-trust caretip-payments-trust--marks relative overflow-hidden",
+        "caretip-payments-trust caretip-payments-trust--marks caretip-payments-trust--plain relative overflow-hidden",
       )}
     >
       <div className="caretip-payments-trust__inner relative mx-auto flex w-full flex-col items-center px-4 text-center sm:px-6">

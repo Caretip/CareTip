@@ -18,7 +18,7 @@ export type CareTipLandingHeroProps = {
   className?: string;
 };
 
-/** Full-bleed hospitality hero — background photo, overlay, layered copy. */
+/** Full-bleed hospitality hero — crossfading images, dark overlay, layered copy. */
 export function CareTipLandingHero({
   id,
   imageAlt,
@@ -77,7 +77,7 @@ export function CareTipLandingHero({
       id={id}
       data-hero-art={isDe ? "de" : "en"}
       className={cn(
-        "caretip-hero-section caretip-hero-section--full-bg relative isolate w-full min-w-0 overflow-hidden",
+        "caretip-hero-section caretip-hero-section--full-bg caretip-hero-section--fullbleed-dark relative isolate w-full min-w-0 overflow-hidden",
         "scroll-mt-[80px]",
         landingUi.heroSectionCinematic,
         className,
@@ -92,21 +92,23 @@ export function CareTipLandingHero({
             onActiveFrameChange={setActiveFrameKey}
           />
         </div>
-
-        <div className="caretip-hero-bg-overlay" aria-hidden />
+        <div className="caretip-hero-bg-overlay caretip-hero-bg-overlay--dark" aria-hidden />
       </div>
 
       <div className="caretip-hero-full-bg-inner relative z-[3] w-full">
         <div className="caretip-hero-full-bg-content caretip-hero-copy caretip-hero-copy-block">
           {landingCopyVisible(heroBrandTagline) ? (
-            <p className={landingUi.heroTagline} data-hero-brand-tagline="">
+            <p className={cn(landingUi.heroTagline, "caretip-hero-split-reveal")} data-hero-brand-tagline="">
               <span className={landingUi.heroTaglineAccent} aria-hidden />
               <span className={landingUi.heroTaglineText}>{heroBrandTagline}</span>
             </p>
           ) : null}
 
           <h1
-            className={cn(landingUi.heroHeadline, "mt-0")}
+            className={cn(
+              landingUi.heroHeadline,
+              "mt-0 caretip-hero-split-reveal caretip-hero-split-reveal--1",
+            )}
             data-hero-headline-mode={headlineMode}
           >
             {useStaticHeadline ? (
@@ -193,7 +195,7 @@ export function CareTipLandingHero({
               <div
                 className={cn(
                   landingUi.heroSubtitle,
-                  "caretip-hero-subtitle caretip-hero-description-block caretip-hero-description-block--mobile-lines",
+                  "caretip-hero-subtitle caretip-hero-description-block caretip-hero-description-block--mobile-lines caretip-hero-split-reveal caretip-hero-split-reveal--2",
                 )}
               >
                 {mobileDescriptionLines.map((line, index) => (
@@ -208,14 +210,19 @@ export function CareTipLandingHero({
                 layout="paragraphs"
                 className={cn(
                   landingUi.heroSubtitle,
-                  "caretip-hero-subtitle caretip-hero-description-block",
+                  "caretip-hero-subtitle caretip-hero-description-block caretip-hero-split-reveal caretip-hero-split-reveal--2",
                 )}
                 sentenceClassName="caretip-hero-description-line m-0"
               />
             )
           ) : null}
 
-          <div className={cn(landingUi.heroCtaRow, "caretip-hero-cta-cluster")}>
+          <div
+            className={cn(
+              landingUi.heroCtaRow,
+              "caretip-hero-cta-cluster caretip-hero-split-reveal caretip-hero-split-reveal--3",
+            )}
+          >
             <div className={landingUi.heroCtaUnit}>
               <Link
                 to="/signup"

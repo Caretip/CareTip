@@ -90,10 +90,12 @@ export const Navigation = memo(function Navigation({ variant: _variant = "defaul
     "hover:text-primary active:opacity-85 rounded-lg px-2.5 py-1.5 hover:bg-muted/60",
   );
 
+  const isLandingHome = location.pathname === "/";
   const headerSurface = cn(
     "caretip-public-nav border-b border-border/88",
     "bg-background/88 backdrop-blur-md md:backdrop-blur-lg",
     "shadow-[0_6px_32px_-18px_rgba(15,23,42,0.12)] dark:shadow-[0_8px_32px_-16px_rgba(0,0,0,0.45)]",
+    isLandingHome && "caretip-public-nav--landing",
   );
 
   const mobileDrawer =
@@ -251,7 +253,9 @@ export const Navigation = memo(function Navigation({ variant: _variant = "defaul
     <>
       <header
         className={cn(
-          "sticky top-0 left-0 right-0 z-50 w-full max-w-[100vw] overflow-x-clip",
+          isLandingHome
+            ? "relative z-50 w-full overflow-visible"
+            : "sticky top-0 left-0 right-0 z-50 w-full max-w-[100vw] overflow-x-clip",
           headerSurface,
         )}
       >
