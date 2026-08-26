@@ -29,6 +29,8 @@ import {
   listPlatformConnectPayouts,
   listPayoutsForBusiness,
   shouldApplyPayoutEvent,
+  __clearConnectPayoutSyncThrottleForTests,
+  __setListConnectPayoutsFnForTests,
   __setListPayoutBalanceTransactionsFnForTests,
   __setListPayoutBalanceTransactionPageFnForTests,
 } from "../src/services/stripeConnectPayout.service.js";
@@ -347,6 +349,8 @@ function runStatic() {
 }
 
 async function runMockedAndDb() {
+  __setListConnectPayoutsFnForTests(async () => ({ data: [], hasMore: false }));
+  __clearConnectPayoutSyncThrottleForTests();
   __setListPayoutBalanceTransactionsFnForTests(async () => []);
   const venueA = await createVenue("isoA");
   const venueB = await createVenue("isoB");
@@ -814,6 +818,8 @@ async function runMockedAndDb() {
       pass("J-reconciliation-completed-idempotent", "reconciliation_completed did not duplicate payout", "DATABASE_TESTS");
     } else fail("J-reconciliation-completed-idempotent", "duplicate after reconciliation event", "DATABASE_TESTS");
   } finally {
+    __setListConnectPayoutsFnForTests(null);
+    __clearConnectPayoutSyncThrottleForTests();
     __setListPayoutBalanceTransactionsFnForTests(null);
     __setListPayoutBalanceTransactionPageFnForTests(null);
     await destroyVenue(venueA);

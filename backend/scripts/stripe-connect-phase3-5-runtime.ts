@@ -35,6 +35,8 @@ import {
   listPlatformConnectPayouts,
   listPayoutsForBusiness,
   shouldApplyPayoutEvent,
+  __clearConnectPayoutSyncThrottleForTests,
+  __setListConnectPayoutsFnForTests,
   __setListPayoutBalanceTransactionsFnForTests,
 } from "../src/services/stripeConnectPayout.service.js";
 import * as connectController from "../src/controllers/connect.controller.js";
@@ -364,6 +366,8 @@ function runStatic() {
 }
 
 async function runMockedAndDb() {
+  __setListConnectPayoutsFnForTests(async () => ({ data: [], hasMore: false }));
+  __clearConnectPayoutSyncThrottleForTests();
   __setListPayoutBalanceTransactionsFnForTests(async () => []);
   const venueA = await createVenue("isoA");
   const venueB = await createVenue("isoB");
@@ -731,6 +735,8 @@ async function runMockedAndDb() {
       pass("X-fee-runtime", "CARETIP_FEE_PERCENT=10 + €0.49", "STATIC_ANALYSIS");
     } else fail("X-fee-runtime", `${CARETIP_FEE_PERCENT}+${CARETIP_FEE_FIXED_CENTS_EUR}`, "STATIC_ANALYSIS");
   } finally {
+    __setListConnectPayoutsFnForTests(null);
+    __clearConnectPayoutSyncThrottleForTests();
     __setListPayoutBalanceTransactionsFnForTests(null);
     await destroyVenue(venueA);
     await destroyVenue(venueB);

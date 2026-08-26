@@ -127,8 +127,8 @@
   --caretip-hero-gap-tagline: clamp(0.7rem, 1.2vh, 0.95rem);
   --caretip-hero-gap-headline-body: clamp(0.7rem, 1.2vh, 1rem);
   --caretip-hero-gap-body-cta: clamp(1.15rem, 2vh, 1.65rem);
-  /* Nav bar ~4–5.25rem; leave ~0.75–1.25rem under it */
-  padding-top: clamp(4.75rem, 4.35rem + 1.5vh, 5.75rem) !important;
+  /* Nav bar ~4–5.25rem; leave ~1.1–1.6rem under it so eyebrow isn’t tangled with nav */
+  padding-top: clamp(5.15rem, 4.75rem + 1.5vh, 6.15rem) !important;
   padding-bottom: clamp(1.75rem, 3.5vh, 2.75rem) !important;
 }
 
@@ -319,7 +319,7 @@
 @media (min-width: 1024px) {
   .caretip-landing .caretip-hero-section--fullbleed-light,
   .caretip-landing .caretip-hero-section--fullbleed-dark {
-    padding-top: clamp(5rem, 4.5rem + 1.25vh, 5.85rem) !important;
+    padding-top: clamp(5.4rem, 4.9rem + 1.25vh, 6.25rem) !important;
     padding-bottom: clamp(2rem, 3.5vh, 2.85rem) !important;
     min-height: clamp(28rem, 78vh, 38rem);
     --caretip-hero-fullbg-min-h: clamp(28rem, 78vh, 38rem);
@@ -330,7 +330,7 @@
   .caretip-landing .caretip-hero-section--fullbleed-light,
   .caretip-landing .caretip-hero-section--fullbleed-dark {
     /* Beat hero-mobile-stack 5.5rem+safe-area when that feels too tall */
-    padding-top: calc(clamp(4.35rem, 4.6rem + 0.5vh, 5.15rem) + env(safe-area-inset-top, 0px)) !important;
+    padding-top: calc(clamp(4.75rem, 5rem + 0.5vh, 5.55rem) + env(safe-area-inset-top, 0px)) !important;
     padding-bottom: clamp(1.5rem, 3vh, 2.25rem) !important;
     min-height: clamp(22rem, min(78vh, 34rem), 32rem);
     --caretip-hero-fullbg-min-h: clamp(22rem, min(78vh, 34rem), 32rem);
@@ -354,7 +354,7 @@
 
   .caretip-landing .caretip-hero-section--fullbleed-light,
   .caretip-landing .caretip-hero-section--fullbleed-dark {
-    padding-top: calc(clamp(4.15rem, 4.35rem + 0.4vh, 4.85rem) + env(safe-area-inset-top, 0px)) !important;
+    padding-top: calc(clamp(4.55rem, 4.75rem + 0.4vh, 5.25rem) + env(safe-area-inset-top, 0px)) !important;
     --caretip-hero-gap-body-cta: 1.05rem;
   }
 

@@ -30,6 +30,8 @@ import {
   handleConnectPayoutEvent,
   listPayoutsForBusiness,
   shouldApplyPayoutEvent,
+  __clearConnectPayoutSyncThrottleForTests,
+  __setListConnectPayoutsFnForTests,
   __setListPayoutBalanceTransactionsFnForTests,
   __setPayoutHandlerAfterUpsertHookForTests,
 } from "../src/services/stripeConnectPayout.service.js";
@@ -309,6 +311,16 @@ function runStatic() {
     fail("unique-stripe-payout-id", "Missing unique stripe payout id");
   }
 
+  if (
+    payoutSvc.includes("syncConnectPayoutsFromStripeForBusiness") &&
+    payoutSvc.includes("stripeAccount:") &&
+    payoutSvc.includes("payouts.list")
+  ) {
+    pass("sync-connected-account-scoped", "List sync uses stripe.payouts.list with stripeAccount");
+  } else {
+    fail("sync-connected-account-scoped", "Missing connected-account payout list sync");
+  }
+
   const paidThenPending = shouldApplyPayoutEvent({
     storedStatus: StripeConnectPayoutStatus.paid,
     storedEventCreated: 200,
@@ -329,6 +341,9 @@ function runStatic() {
 }
 
 async function runRuntime() {
+  // Default: do not hit live Stripe payouts.list during list/sync in this suite.
+  __setListConnectPayoutsFnForTests(async () => ({ data: [], hasMore: false }));
+  __clearConnectPayoutSyncThrottleForTests();
   __setListPayoutBalanceTransactionsFnForTests(async () => [
     {
       id: `txn_p3_${Date.now()}`,
@@ -344,6 +359,7 @@ async function runRuntime() {
 
   const venueA = await createVenue("a");
   const venueB = await createVenue("b");
+  const venueMissed = await createVenue("missed");
 
   try {
     const poA = `po_test_a_${Date.now()}`;
@@ -686,11 +702,87 @@ async function runRuntime() {
 
     if (CARETIP_FEE_PERCENT === 10 && CARETIP_FEE_FIXED_CENTS_EUR === 49) pass("Y-runtime-fee", "10% + €0.49");
     else fail("Y-runtime-fee", `${CARETIP_FEE_PERCENT}+${CARETIP_FEE_FIXED_CENTS_EUR}`);
+
+    // REGRESSION: Stripe shows PAID payout but CareTip DB empty (missed webhook) → list sync fills UI.
+    const missedPo = `po_test_missed_paid_${Date.now()}`;
+    const beforeMissed = await prisma.stripeConnectPayout.count({ where: { businessId: venueMissed.businessId } });
+    __clearConnectPayoutSyncThrottleForTests();
+    __setListConnectPayoutsFnForTests(async (acct) => {
+      if (acct !== venueMissed.stripeAccountId) return { data: [], hasMore: false };
+      return {
+        data: [
+          fakePayout({
+            id: missedPo,
+            amount: 7500,
+            currency: "eur",
+            status: "paid",
+            created: Math.floor(Date.now() / 1000) - 7 * 86400,
+          }),
+        ],
+        hasMore: false,
+      };
+    });
+    const syncedList = await listPayoutsForBusiness(venueMissed.businessId, { take: 50, skip: 0 });
+    const missedRow = await prisma.stripeConnectPayout.findUnique({ where: { stripePayoutId: missedPo } });
+    if (
+      beforeMissed === 0 &&
+      syncedList.total >= 1 &&
+      syncedList.items.some((i) => i.status === StripeConnectPayoutStatus.paid && i.amountCents === 7500) &&
+      missedRow?.businessId === venueMissed.businessId &&
+      missedRow.status === StripeConnectPayoutStatus.paid
+    ) {
+      pass(
+        "reg-stripe-paid-empty-caretip-sync",
+        "Paid Connect payout from Stripe list appears after missed webhook",
+      );
+    } else {
+      fail(
+        "reg-stripe-paid-empty-caretip-sync",
+        `before=${beforeMissed} total=${syncedList.total} status=${missedRow?.status} biz=${missedRow?.businessId}`,
+      );
+    }
+
+    // Sync must not leak another connected account's payouts into this business.
+    __clearConnectPayoutSyncThrottleForTests();
+    __setListConnectPayoutsFnForTests(async (acct) => {
+      if (acct !== venueB.stripeAccountId) return { data: [], hasMore: false };
+      return {
+        data: [fakePayout({ id: `po_test_b_only_${Date.now()}`, amount: 111, currency: "eur", status: "paid" })],
+        hasMore: false,
+      };
+    });
+    await listPayoutsForBusiness(venueB.businessId);
+    const aAfterBSync = await listPayoutsForBusiness(venueA.businessId);
+    if (!aAfterBSync.items.some((i) => i.amountCents === 111)) {
+      pass("reg-sync-tenant-isolation", "Business A list unaffected by Business B Stripe sync");
+    } else {
+      fail("reg-sync-tenant-isolation", "cross-tenant payout appeared on A");
+    }
+
+    // Empty DB + Stripe sync failure must not present as "No payouts yet".
+    __clearConnectPayoutSyncThrottleForTests();
+    __setListConnectPayoutsFnForTests(async () => null);
+    const emptyVenue = await createVenue("syncfail");
+    try {
+      let threw = false;
+      try {
+        await listPayoutsForBusiness(emptyVenue.businessId);
+      } catch {
+        threw = true;
+      }
+      if (threw) pass("reg-sync-fail-not-empty", "Stripe sync failure throws instead of empty list");
+      else fail("reg-sync-fail-not-empty", "empty list returned despite sync failure");
+    } finally {
+      await destroyVenue(emptyVenue);
+    }
   } finally {
+    __setListConnectPayoutsFnForTests(null);
+    __clearConnectPayoutSyncThrottleForTests();
     __setListPayoutBalanceTransactionsFnForTests(null);
     __setPayoutHandlerAfterUpsertHookForTests(null);
     await destroyVenue(venueA);
     await destroyVenue(venueB);
+    await destroyVenue(venueMissed);
   }
 }
 

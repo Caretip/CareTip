@@ -7,6 +7,7 @@ import { getResendFromAddress, sendResendEmail } from "./resendClient.js";
 import { resolveEmailPersonalizationForUser } from "../emails/emailPersonalization.js";
 import { buildPasswordResetContent, resolveUserPreferredLocale, type EmailLocale } from "../emails/i18nEmail.js";
 import { userMayAuthenticate } from "./accountAccess.service.js";
+import { revokeAllRefreshTokensForUser } from "./refreshToken.service.js";
 
 const RESET_TTL_MS = 60 * 60 * 1000; // 1 hour
 const RESET_EXPIRES_HOURS = RESET_TTL_MS / (60 * 60 * 1000);
@@ -151,4 +152,7 @@ export async function resetPasswordWithToken(plainToken: string, newPassword: st
     }),
     prisma.passwordResetToken.delete({ where: { id: row.id } }),
   ]);
+
+  // Same session invalidation as change-password (refresh revoke + authTokenVersion bump).
+  await revokeAllRefreshTokensForUser(row.userId);
 }

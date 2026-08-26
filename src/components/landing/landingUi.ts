@@ -44,7 +44,7 @@ function cnHeroSubtitle(layout: string) {
 
 /** Clears fixed nav + light breathing room (full-bleed hero; heavy pad lives in redesign CSS). */
 const heroSectionPadTop =
-  "max-lg:pt-[calc(4.5rem+env(safe-area-inset-top,0px))] max-lg:pb-3 lg:pt-[5.25rem] lg:pb-8 xl:pb-9";
+  "max-lg:pt-[calc(5rem+env(safe-area-inset-top,0px))] max-lg:pb-3 lg:pt-[5.75rem] lg:pb-8 xl:pb-9";
 /** Mobile-first stack rhythm between headline, lead, actions, and mockup. */
 const heroStackGapMobile = "mt-6 md:mt-7";
 /** Tighter gap above product shot on stacked mobile hero */

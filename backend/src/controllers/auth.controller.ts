@@ -1141,6 +1141,7 @@ export async function resetPassword(req: Request, res: Response) {
       return res.status(400).json({ message: "Token and password are required" });
     }
     await passwordResetService.resetPasswordWithToken(token, password);
+    clearRefreshCookie(res);
     return res.status(200).json({ ok: true, message: "Password updated. You can sign in now." });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Reset failed";
