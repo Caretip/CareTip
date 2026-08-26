@@ -54,20 +54,15 @@
 @media (max-width: 767px) {
   .caretip-public-nav nav {
     padding-inline: var(--caretip-mobile-gutter, 1.125rem);
-    min-height: 3.5rem;
+    min-height: 3.25rem;
   }
 
-  /* Logo + hamburger row — optical vertical center */
-  .caretip-public-nav nav > div {
+  /* Propina-style bar: menu | logo | language */
+  .caretip-public-nav__mobile-bar {
     align-items: center;
   }
 
-  .caretip-public-nav nav a[href="/"] {
-    display: inline-flex;
-    align-items: center;
-  }
-
-  .caretip-public-nav nav button[aria-controls="mobile-main-nav"] {
+  .caretip-public-nav__menu-btn {
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -75,12 +70,10 @@
     min-width: 2.75rem;
     min-height: 2.75rem;
     padding: 0.5rem;
-    /* Nudge slightly above geometric center for optical balance with the wordmark */
-    margin-top: -0.1875rem;
     line-height: 0;
   }
 
-  .caretip-public-nav nav button[aria-controls="mobile-main-nav"] svg {
+  .caretip-public-nav__menu-btn svg {
     display: block;
     width: 1.375rem;
     height: 1.375rem;
@@ -88,12 +81,10 @@
     flex-shrink: 0;
   }
 
-  /* Trailing cluster sits on the same optical midline as the logo */
-  .caretip-public-nav nav > div > div:last-child {
-    display: flex;
+  .caretip-public-nav__mobile-logo {
+    display: inline-flex;
     align-items: center;
-    align-self: center;
-    height: 100%;
+    justify-content: center;
   }
 
   .caretip-public-mobile-nav-drawer {
@@ -140,8 +131,15 @@
   }
 
   /* Primary CTA first — secondary slightly quieter via spacing only */
-  .caretip-public-mobile-nav-drawer__cta-primary {
+  .caretip-public-mobile-nav-drawer__cta-primary,
+  .caretip-public-mobile-nav-drawer__cta-secondary {
     order: 0;
+    width: 100%;
+    max-width: min(100%, 16.5rem);
+    margin-inline: auto;
+    min-height: 2.375rem;
+    height: 2.375rem;
+    border-radius: 0.75rem;
   }
 
   .caretip-public-mobile-nav-drawer__cta-secondary {

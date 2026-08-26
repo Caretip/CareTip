@@ -137,7 +137,6 @@ export const Navigation = memo(function Navigation({ variant: _variant = "defaul
                   className="caretip-public-mobile-nav-drawer__toolbar relative z-30 flex shrink-0 items-center gap-2"
                   onClick={(e) => e.stopPropagation()}
                 >
-                  <LanguageSwitcher variant="drawer" />
                   <ThemeQuickToggle variant="drawer" />
                   <button
                     type="button"
@@ -220,13 +219,13 @@ export const Navigation = memo(function Navigation({ variant: _variant = "defaul
               </div>
 
               <div className="shrink-0 border-t border-border/60 px-5 py-4 pb-[max(1.25rem,env(safe-area-inset-bottom))]">
-                <div className="flex flex-col gap-3">
+                <div className="caretip-public-mobile-nav-drawer__cta-stack flex flex-col items-center gap-3">
                   <PrefetchLink
                     to="/signup"
                     onClick={() => closeMobileMenu("navigate")}
                     className={cn(
                       landingUi.heroCtaPrimary,
-                      "caretip-public-mobile-nav-drawer__cta-primary !mx-0 w-full max-w-none",
+                      "caretip-public-mobile-nav-drawer__cta-primary mx-auto",
                     )}
                   >
                     {t("landing.showcase.primaryCta")}
@@ -236,7 +235,7 @@ export const Navigation = memo(function Navigation({ variant: _variant = "defaul
                     onClick={() => closeMobileMenu("navigate")}
                     className={cn(
                       landingUi.heroCtaSecondary,
-                      "caretip-public-mobile-nav-drawer__cta-secondary !mx-0 w-full max-w-none",
+                      "caretip-public-mobile-nav-drawer__cta-secondary mx-auto",
                     )}
                   >
                     {t("nav.requestDemo")}
@@ -263,20 +262,58 @@ export const Navigation = memo(function Navigation({ variant: _variant = "defaul
           className="relative mx-auto max-w-7xl min-h-0 min-w-0 px-4 py-2.5 sm:px-6 sm:py-3 lg:px-8 lg:py-3.5"
           aria-label={t("nav.mainNav")}
         >
-          <div className="relative grid min-h-0 min-w-0 max-w-full grid-cols-[minmax(0,auto)_minmax(0,1fr)_minmax(0,auto)] items-center gap-2 sm:gap-3 lg:gap-4">
+          {/* Mobile: hamburger | centered logo | language (Propina-style) */}
+          <div className="caretip-public-nav__mobile-bar relative flex min-h-11 items-center justify-between gap-2 lg:hidden">
+            <button
+              type="button"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                toggleMobileMenu();
+              }}
+              className={cn(
+                "caretip-public-nav__menu-btn relative z-[2] shrink-0 touch-manipulation rounded-lg p-2.5 transition-colors active:opacity-90",
+                "inline-flex h-11 w-11 items-center justify-center hover:bg-muted/80 active:bg-muted",
+              )}
+              style={{ color: "hsl(var(--foreground))" }}
+              aria-expanded={mobileMenuOpen}
+              aria-controls="mobile-main-nav"
+              aria-label={mobileMenuOpen ? t("nav.closeMenu") : t("nav.openMenu")}
+            >
+              {mobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+            </button>
+
             <PrefetchLink
               to="/"
               className={cn(
-                "relative z-[2] flex h-[3.5rem] min-h-[3.5rem] min-w-0 items-center overflow-hidden rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-primary/40 sm:h-[3.5rem] sm:min-h-[3.5rem] md:h-16 md:min-h-[4rem] lg:h-16 lg:min-h-[4rem] xl:h-[4.25rem] xl:min-h-[4.25rem]",
-                "max-w-[min(248px,42vw)] shrink-0 lg:max-w-[min(268px,28vw)]",
-                "touch-manipulation",
+                "caretip-public-nav__mobile-logo absolute left-1/2 top-1/2 z-[1] flex -translate-x-1/2 -translate-y-1/2",
+                "h-11 max-w-[min(11.5rem,52vw)] items-center justify-center overflow-hidden rounded-lg",
+                "outline-none focus-visible:ring-2 focus-visible:ring-primary/40 touch-manipulation",
+              )}
+            >
+              <CareTipLogo size="nav" variant="wordmark" />
+            </PrefetchLink>
+
+            <div className="caretip-public-nav__mobile-lang relative z-[2] flex shrink-0 items-center justify-end">
+              <LanguageSwitcher className="caretip-public-nav__lang-compact" />
+            </div>
+          </div>
+
+          {/* Desktop / laptop: logo | links | actions */}
+          <div className="relative hidden min-h-0 min-w-0 max-w-full grid-cols-[minmax(0,auto)_minmax(0,1fr)_minmax(0,auto)] items-center gap-2 sm:gap-3 lg:grid lg:gap-4">
+            <PrefetchLink
+              to="/"
+              className={cn(
+                "relative z-[2] flex h-16 min-h-[4rem] min-w-0 items-center overflow-hidden rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-primary/40",
+                "max-w-[min(268px,28vw)] shrink-0",
+                "touch-manipulation xl:h-[4.25rem] xl:min-h-[4.25rem]",
               )}
             >
               <CareTipLogo size="nav" variant="wordmark" />
             </PrefetchLink>
 
             <div
-              className="hidden min-w-0 items-center justify-center gap-1.5 overflow-x-clip lg:flex xl:gap-3 2xl:gap-5"
+              className="flex min-w-0 items-center justify-center gap-1.5 overflow-x-clip xl:gap-3 2xl:gap-5"
               aria-hidden={false}
             >
               {NAV_ROUTES_BEFORE_INDUSTRIES.map((route) => (
@@ -308,50 +345,29 @@ export const Navigation = memo(function Navigation({ variant: _variant = "defaul
               ))}
             </div>
 
-            <div className="relative z-[2] flex shrink-0 items-center justify-end gap-2 sm:gap-2.5 lg:gap-2.5 xl:gap-3.5">
-              <div className="hidden items-center gap-2 lg:flex xl:gap-3">
-                <ThemeQuickToggle />
-                <LanguageSwitcher />
-                <PrefetchLink
-                  to="/join"
-                  className={cn(
-                    landingUi.navCtaPrimary,
-                    "whitespace-nowrap",
-                    location.pathname === "/join" && "ring-2 ring-primary/25",
-                  )}
-                >
-                  {t("nav.staffPortal")}
-                </PrefetchLink>
-                <PrefetchLink
-                  to="/login"
-                  className={cn(
-                    linkClass,
-                    "whitespace-nowrap",
-                    location.pathname === "/login" && "text-primary bg-primary/[0.06] dark:bg-primary/[0.1]",
-                  )}
-                >
-                  {t("nav.logIn")}
-                </PrefetchLink>
-              </div>
-
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  toggleMobileMenu();
-                }}
+            <div className="relative z-[2] flex shrink-0 items-center justify-end gap-2.5 xl:gap-3.5">
+              <ThemeQuickToggle />
+              <LanguageSwitcher />
+              <PrefetchLink
+                to="/join"
                 className={cn(
-                  "relative shrink-0 touch-manipulation rounded-lg p-2.5 transition-colors active:opacity-90 lg:hidden",
-                  "inline-flex items-center justify-center hover:bg-muted/80 active:bg-muted",
+                  landingUi.navCtaPrimary,
+                  "whitespace-nowrap",
+                  location.pathname === "/join" && "ring-2 ring-primary/25",
                 )}
-                style={{ color: "hsl(var(--foreground))" }}
-                aria-expanded={mobileMenuOpen}
-                aria-controls="mobile-main-nav"
-                aria-label={mobileMenuOpen ? t("nav.closeMenu") : t("nav.openMenu")}
               >
-                {mobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
-              </button>
+                {t("nav.staffPortal")}
+              </PrefetchLink>
+              <PrefetchLink
+                to="/login"
+                className={cn(
+                  linkClass,
+                  "whitespace-nowrap",
+                  location.pathname === "/login" && "text-primary bg-primary/[0.06] dark:bg-primary/[0.1]",
+                )}
+              >
+                {t("nav.logIn")}
+              </PrefetchLink>
             </div>
           </div>
         </nav>

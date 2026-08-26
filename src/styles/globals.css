@@ -1591,18 +1591,26 @@ html[data-auth-sign-in-handoff] .caretip-dashboard-page-enter {
   color: hsl(var(--primary));
 }
 
-.caretip-public-mobile-nav-drawer__cta-primary {
+.caretip-public-mobile-nav-drawer__cta-stack {
   width: 100%;
-  min-height: 3rem;
-  font-size: 1rem;
-  font-weight: 600;
+  align-items: center;
 }
 
+.caretip-public-mobile-nav-drawer__cta-primary,
 .caretip-public-mobile-nav-drawer__cta-secondary {
-  width: 100%;
-  min-height: 3rem;
-  font-size: 1rem;
+  box-sizing: border-box;
+  width: 100% !important;
+  max-width: min(100%, 16.5rem) !important;
+  margin-inline: auto !important;
+  height: 2.375rem !important;
+  min-height: 2.375rem !important;
+  max-height: 2.375rem !important;
+  padding-block: 0 !important;
+  padding-inline: 1rem !important;
+  font-size: 0.8125rem !important;
   font-weight: 600;
+  line-height: 1;
+  border-radius: 0.75rem !important;
 }
 
 @keyframes caretip-drawer-backdrop-in {

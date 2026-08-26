@@ -1196,10 +1196,8 @@ html:not(.dark) .caretip-landing #final-cta .caretip-trust-strip__check,
   .caretip-landing .caretip-hero-section[data-hero-art="de"].caretip-hero-section--fullbleed-light .caretip-hero-headline,
   .caretip-landing .caretip-hero-section[data-hero-art="en"].caretip-hero-section--fullbleed-dark h1.caretip-hero-headline,
   .caretip-landing .caretip-hero-section[data-hero-art="en"].caretip-hero-section--fullbleed-dark .caretip-hero-headline {
-    --caretip-hero-headline-size: clamp(2.55rem, 11.5vw, 3.65rem);
-    --caretip-hero-fullbg-headline-size: clamp(2.55rem, 11.5vw, 3.65rem);
-    font-size: clamp(2.55rem, 11.5vw, 3.65rem) !important;
-    max-width: min(100%, 14ch);
+    /* Size/measure owned by caretip-marketing-mobile-headline.css on phones */
+    max-width: min(100%, 17.5rem);
   }
 
   .caretip-landing .caretip-industries-teaser h2,
