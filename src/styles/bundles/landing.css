@@ -47,3 +47,5 @@
 @import "../caretip-landing-optical-hierarchy-pass.css";
 /* TrickyFreshString visual redesign — load last so it wins within .caretip-landing */
 @import "../caretip-landing-trickyfresh-redesign.css";
+/* Mobile headline system — after redesign so phone type stays controlled */
+@import "../caretip-marketing-mobile-headline.css";

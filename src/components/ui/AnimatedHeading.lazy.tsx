@@ -20,27 +20,14 @@ function AnimatedHeadingFallback({
     .map((w) => w.trim())
     .filter(Boolean);
 
-  const words = text.split(" ");
+  const flatText = text.replace(/\n+/g, " ");
+  const lines = text.split("\n");
 
-  if (phrases.length === 0) {
-    return (
-      <span className={cn(containerClassName)}>
-        {words.map((word, i) => (
-          <Fragment key={`${i}-${word}`}>
-            {i > 0 ? " " : null}
-            <span className={cn("inline-block whitespace-nowrap", className)}>{word}</span>
-          </Fragment>
-        ))}
-      </span>
-    );
-  }
-
-  // Mirror highlight detection for CLS-stable static paint.
   const ranges: Array<{ start: number; end: number }> = [];
   for (const phrase of phrases) {
     let from = 0;
-    while (from < text.length) {
-      const index = text.indexOf(phrase, from);
+    while (from < flatText.length) {
+      const index = flatText.indexOf(phrase, from);
       if (index === -1) break;
       ranges.push({ start: index, end: index + phrase.length });
       from = index + phrase.length;
@@ -49,19 +36,38 @@ function AnimatedHeadingFallback({
 
   let cursor = 0;
   return (
-    <span className={cn(containerClassName)}>
-      {words.map((word, i) => {
-        if (i > 0) cursor += 1;
-        const start = cursor;
-        const end = start + word.length;
-        cursor = end;
-        const hl = ranges.some((r) => start < r.end && end > r.start);
+    <span className={cn(containerClassName)} aria-label={flatText}>
+      {lines.map((line, lineIndex) => {
+        if (lineIndex > 0) cursor += 1;
+        const words = line.split(" ");
         return (
-          <Fragment key={`${i}-${word}`}>
-            {i > 0 ? " " : null}
-            <span className={cn("inline-block whitespace-nowrap", className, hl && highlightClassName)}>
-              {word}
-            </span>
+          <Fragment key={`line-${lineIndex}`}>
+            {lineIndex > 0 ? (
+              <>
+                <br className="caretip-br--mobile" aria-hidden />{" "}
+              </>
+            ) : null}
+            {words.map((word, i) => {
+              if (i > 0) cursor += 1;
+              const start = cursor;
+              const end = start + word.length;
+              cursor = end;
+              const hl = ranges.some((r) => start < r.end && end > r.start);
+              return (
+                <Fragment key={`${lineIndex}-${i}-${word}`}>
+                  {i > 0 ? " " : null}
+                  <span
+                    className={cn(
+                      "inline-block whitespace-nowrap",
+                      className,
+                      hl && highlightClassName,
+                    )}
+                  >
+                    {word}
+                  </span>
+                </Fragment>
+              );
+            })}
           </Fragment>
         );
       })}

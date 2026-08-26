@@ -7,7 +7,7 @@ import { PublicPageShell } from "@/components/public/PublicPageShell";
 import { FeaturesPageFinalCta } from "@/components/public/features/FeaturesPageFinalCta";
 import { LandingReveal } from "@/components/landing/LandingReveal";
 import { LandingSectionAccent, type LandingAccentVariant } from "@/components/landing/LandingSectionAccent";
-import { landingHeadlineHighlightComponents } from "@/components/landing/landingRichText";
+import { landingHeadlineComponents } from "@/components/landing/landingRichText";
 import { landingCopyVisible, landingUi } from "@/components/landing/landingUi";
 import { landingType } from "@/components/landing/landingTypography";
 import { landingStaggerDelay } from "@/lib/landingMotion";
@@ -76,7 +76,7 @@ export function FeaturesPage() {
               <h1 className={cn(landingUi.sectionTitle, "caretip-landing-scroll-reveal--visible")}>
                 <Trans
                   i18nKey="landing.features.title"
-                  components={landingHeadlineHighlightComponents}
+                  components={landingHeadlineComponents}
                 />
               </h1>
               {landingCopyVisible(sectionSubtitle) ? (

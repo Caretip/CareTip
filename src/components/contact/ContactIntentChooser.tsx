@@ -3,6 +3,7 @@ import { Trans, useTranslation } from "react-i18next";
 import type { ContactIntent } from "@/components/contact/contactTypes";
 import { CONTACT_TRUST_KEYS } from "@/components/contact/contactTypes";
 import { contactPageUi } from "@/components/contact/contactPageUi";
+import { landingHeadlineBreakComponents } from "@/components/landing/landingRichText";
 import { cn } from "@/lib/utils";
 
 type ContactIntentChooserProps = {
@@ -40,7 +41,7 @@ export function ContactIntentChooser({ onSelect, className }: ContactIntentChoos
         <div className="caretip-contact-reveal caretip-contact-reveal--1">
           <p className="caretip-contact-eyebrow">{t("staticPages.contact.eyebrow")}</p>
           <h1 className={contactPageUi.headline}>
-            <Trans i18nKey="staticPages.contact.headline" components={{ br: <br /> }} />
+            <Trans i18nKey="staticPages.contact.headline" components={landingHeadlineBreakComponents} />
           </h1>
         </div>
         <p className={cn(contactPageUi.subhead, "caretip-contact-reveal caretip-contact-reveal--2")}>

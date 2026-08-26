@@ -3,15 +3,10 @@ import { useTranslation } from "react-i18next";
 import { landingUi } from "@/components/landing/landingUi";
 import { LandingReveal } from "@/components/landing/LandingReveal";
 import { LandingSectionAccent } from "@/components/landing/LandingSectionAccent";
+import { parseLandingHeadline } from "@/components/landing/landingRichText";
 import { AnimatedHeadingLazy } from "@/components/ui/AnimatedHeading.lazy";
 import { IndustryPhotoGrid } from "@/components/landing/IndustryPhotoGrid";
 import { cn } from "@/lib/utils";
-
-function parseLandingHeadline(raw: string): { text: string; highlight: string[] } {
-  const highlight = [...raw.matchAll(/<hl>(.*?)<\/hl>/gi)].map((m) => m[1] ?? "").filter(Boolean);
-  const text = raw.replace(/<\/?hl>/gi, "");
-  return { text, highlight };
-}
 
 const INDUSTRIES_FRAME =
   "mx-auto w-full min-w-0 max-w-7xl px-4 sm:px-6 lg:px-8";

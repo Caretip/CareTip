@@ -2855,7 +2855,7 @@
     "simpleSetup": {
       "pill": "Einrichtung in Minuten",
       "pillSub": "",
-      "title": "In wenigen Minuten <hl>startklar</hl>",
+      "title": "In wenigen Minuten<brm/><hl>startklar</hl>",
       "subtitle": "Vier Schritte von der Registrierung bis zum ersten Trinkgeld. Keine Hardware, kein IT-Projekt.",
       "step1Title": "Account erstellen",
       "step1Desc": "Dein Workspace ist in weniger als einer Minute bereit.",
@@ -3164,7 +3164,7 @@
     },
     "features": {
       "eyebrow": "Funktionen",
-      "title": "Alles in einem System. <hl>Überall einsatzbereit</hl>.",
+      "title": "Alles in einem System.<brm/><hl>Überall einsatzbereit</hl>.",
       "subtitle": "Individuelle QR-Codes, Analysen in Echtzeit und zentrale Standortkontrolle arbeiten Hand in Hand. Die smarte All-in-one-Plattform für moderne Betriebe.",
       "i1Title": "Individuell & Gebrandet",
       "i1Text": "Ein Scan im Look deiner Marke, und erstklassiger Service wird sofort belohnt.",
@@ -3318,7 +3318,7 @@
     },
     "finalCta": {
       "eyebrow": "In wenigen Minuten startklar",
-      "title": "Mehr Trinkgeld. Ab heute.",
+      "title": "Mehr Trinkgeld.<brm/>Ab heute.",
       "subtitle": "Bringen Sie Ihr Team noch heute auf die Überholspur. Ihre digitalen QR-Trinkgeldseiten sind im Handumdrehen eingerichtet, mit Trinkgeld-Tracking und voller Transparenz für Ihre Crew.",
       "cta": "Demo anfragen",
       "secondary": "Partner werden"
@@ -3381,7 +3381,7 @@
       }
     },
     "motivation": {
-      "title": "Endlich die <hl>Anerkennung</hl>, die dein Team verdient.",
+      "title": "Endlich die <hl>Anerkennung</hl>,<brm/>die dein Team verdient.",
       "subtitle": "Wer täglich vollen Einsatz zeigt, darf nicht unsichtbar bleiben. CareTip macht Leistung sichtbar, in Echtzeit, für dein Team und deine Führung.",
       "pill": "LIVE-ANERKENNUNG",
       "feedLabel": "AKTIVITÄT IN DEINEM BETRIEB",
@@ -3439,7 +3439,7 @@
     },
     "industriesTeaser": {
       "eyebrow": "ÜBERALL DORT IM EINSATZ...",
-      "overviewHeadline": "CareTip passt sich <hl>Ihrer Branche</hl> an.",
+      "overviewHeadline": "CareTip passt sich<brm/><hl>Ihrer Branche</hl> an.",
       "overviewSubheadline": "Entdecken Sie, wie einfach digitales Trinkgeld in Ihrem Bereich funktioniert.\nEin Klick bringt Sie zu den Details.",
       "teasersAria": "Branchen-Showcase",
       "learnMore": "Mehr erfahren",

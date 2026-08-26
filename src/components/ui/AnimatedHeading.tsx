@@ -58,31 +58,51 @@ function overlaps(
 }
 
 type WordToken = {
+  type: "word";
   word: string;
   start: number;
   end: number;
 };
 
-function tokenizeWords(text: string): WordToken[] {
-  const parts = text.split(" ");
-  const tokens: WordToken[] = [];
-  let cursor = 0;
+type BreakToken = {
+  type: "br";
+};
 
-  for (let i = 0; i < parts.length; i++) {
-    const word = parts[i] ?? "";
-    if (i > 0) cursor += 1; // account for the space separator
-    const start = cursor;
-    const end = start + word.length;
-    tokens.push({ word, start, end });
-    cursor = end;
-  }
+type HeadingToken = WordToken | BreakToken;
 
-  return tokens;
+/**
+ * Tokenize heading text. Newlines become mobile-only line breaks
+ * (`<br class="caretip-br--mobile" />`) so desktop can stay single-flow.
+ */
+function tokenizeHeading(text: string): { tokens: HeadingToken[]; flatText: string } {
+  const lines = text.split("\n");
+  const tokens: HeadingToken[] = [];
+  let flatCursor = 0;
+
+  lines.forEach((line, lineIndex) => {
+    if (lineIndex > 0) {
+      tokens.push({ type: "br" });
+      flatCursor += 1; // space separator in flat text
+    }
+
+    const parts = line.split(" ");
+    for (let i = 0; i < parts.length; i++) {
+      const word = parts[i] ?? "";
+      if (i > 0) flatCursor += 1;
+      const start = flatCursor;
+      const end = start + word.length;
+      tokens.push({ type: "word", word, start, end });
+      flatCursor = end;
+    }
+  });
+
+  return { tokens, flatText: text.replace(/\n+/g, " ") };
 }
 
 /**
  * Production heading reveal — animates whole words with natural browser wrapping.
  * Never splits words into characters. Typography comes from parent / `className`.
+ * `\n` in `text` inserts a mobile-only soft break (desktop keeps a space).
  */
 export const AnimatedHeading = memo(function AnimatedHeading({
   text,
@@ -107,44 +127,71 @@ export const AnimatedHeading = memo(function AnimatedHeading({
     [highlight],
   );
 
+  const { tokens, flatText } = useMemo(() => tokenizeHeading(text), [text]);
+
   const ranges = useMemo(
-    () => collectHighlightRanges(text, highlightPhrases),
-    [text, highlightPhrases],
+    () => collectHighlightRanges(flatText, highlightPhrases),
+    [flatText, highlightPhrases],
   );
 
-  const tokens = useMemo(() => tokenizeWords(text), [text]);
+  let wordIndex = 0;
 
   if (reduceMotion) {
     return (
       <span ref={ref} className={cn(containerClassName)}>
-        {tokens.map((token, i) => (
-          <Fragment key={`${i}-${token.word}`}>
-            {i > 0 ? " " : null}
-            <span
-              className={cn(
-                className,
-                overlaps(token.start, token.end, ranges) && highlightClassName,
-              )}
-            >
-              {token.word}
-            </span>
-          </Fragment>
-        ))}
+        {tokens.map((token, i) => {
+          if (token.type === "br") {
+            return (
+              <Fragment key={`br-${i}`}>
+                <br className="caretip-br--mobile" />{" "}
+              </Fragment>
+            );
+          }
+          const prev = tokens[i - 1];
+          const leadSpace = i > 0 && prev?.type === "word" ? " " : null;
+          return (
+            <Fragment key={`${i}-${token.word}`}>
+              {leadSpace}
+              <span
+                className={cn(
+                  className,
+                  overlaps(token.start, token.end, ranges) && highlightClassName,
+                )}
+              >
+                {token.word}
+              </span>
+            </Fragment>
+          );
+        })}
       </span>
     );
   }
 
   return (
-    <span ref={ref} className={cn(containerClassName)} aria-label={text}>
+    <span ref={ref} className={cn(containerClassName)} aria-label={flatText}>
       {tokens.map((token, i) => {
-        // Empty token from consecutive spaces — keep the separator only.
-        if (!token.word) {
-          return i > 0 ? <Fragment key={`space-${i}`}>{" "}</Fragment> : null;
+        if (token.type === "br") {
+          return (
+            <Fragment key={`br-${i}`}>
+              <br className="caretip-br--mobile" aria-hidden />{" "}
+            </Fragment>
+          );
         }
+
+        if (!token.word) {
+          const prev = tokens[i - 1];
+          return prev?.type === "word" ? (
+            <Fragment key={`space-${i}`}>{" "}</Fragment>
+          ) : null;
+        }
+
+        const delayIndex = wordIndex++;
+        const prev = tokens[i - 1];
+        const leadSpace = i > 0 && prev?.type === "word" ? " " : null;
 
         return (
           <Fragment key={`${i}-${token.word}`}>
-            {i > 0 ? " " : null}
+            {leadSpace}
             <motion.span
               aria-hidden
               initial="hidden"
@@ -152,11 +199,10 @@ export const AnimatedHeading = memo(function AnimatedHeading({
               variants={framerProps}
               transition={{
                 duration,
-                delay: inView ? i * stagger : 0,
+                delay: inView ? delayIndex * stagger : 0,
                 ease: "easeOut",
               }}
               className={cn(
-                // inline-block + nowrap keeps each word atomic; spaces outside allow natural wraps.
                 "inline-block whitespace-nowrap will-change-transform",
                 className,
                 overlaps(token.start, token.end, ranges) && highlightClassName,

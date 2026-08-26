@@ -10,7 +10,7 @@ import { PrefetchLink } from "@/app/components/PrefetchLink";
 import { LandingReveal } from "@/components/landing/LandingReveal";
 import { LandingSectionAccent } from "@/components/landing/LandingSectionAccent";
 import { landingUi } from "@/components/landing/landingUi";
-import { landingHeadlineHighlightComponents } from "@/components/landing/landingRichText";
+import { landingHeadlineComponents } from "@/components/landing/landingRichText";
 import { landingStaggerDelay } from "@/lib/landingMotion";
 import { cn } from "@/lib/utils";
 import businessVisual from "../../../../images/employee02.webp";
@@ -115,10 +115,7 @@ export function LandingAudienceBenefitsSection() {
             >
               <Trans
                 i18nKey={`${prefix}.headline`}
-                components={{
-                  ...landingHeadlineHighlightComponents,
-                  br: <br />,
-                }}
+                components={landingHeadlineComponents}
               />
             </h2>
           </header>

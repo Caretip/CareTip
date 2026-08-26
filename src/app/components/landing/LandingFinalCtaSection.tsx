@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import { LandingReveal } from "@/components/landing/LandingReveal";
 import { LandingCopySentences } from "@/components/landing/LandingCopySentences";
 import { AnimatedHeadingLazy } from "@/components/ui/AnimatedHeading.lazy";
+import { parseLandingHeadline } from "@/components/landing/landingRichText";
 import { landingCopyVisible, landingUi } from "@/components/landing/landingUi";
 
 /**
@@ -11,7 +12,7 @@ import { landingCopyVisible, landingUi } from "@/components/landing/landingUi";
 export function LandingFinalCtaSection() {
   const { t } = useTranslation();
   const sectionSubtitle = t("landing.finalCta.subtitle");
-  const sectionTitle = t("landing.finalCta.title");
+  const { text: sectionTitle } = parseLandingHeadline(t("landing.finalCta.title"));
 
   return (
     <section

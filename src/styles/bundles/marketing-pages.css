@@ -16,3 +16,5 @@
 @import "../caretip-mobile-optical-premium.css";
 /* Playfair + type scale: Features / Industries / Pricing / FAQ (Roboto headlines) */
 @import "../caretip-marketing-playfair-type.css";
+/* Mobile headline system — after type scale so phone composition stays controlled */
+@import "../caretip-marketing-mobile-headline.css";

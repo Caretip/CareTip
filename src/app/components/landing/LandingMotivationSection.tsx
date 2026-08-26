@@ -5,7 +5,7 @@ import { LandingBenefitChecklist } from "@/components/landing/LandingCheckBadge"
 import { LandingSectionAccent } from "@/components/landing/LandingSectionAccent";
 import { LandingReveal } from "@/components/landing/LandingReveal";
 import { landingCopyVisible, landingUi } from "@/components/landing/landingUi";
-import { landingHeadlineHighlightComponents } from "@/components/landing/landingRichText";
+import { landingHeadlineComponents } from "@/components/landing/landingRichText";
 import { cn } from "@/lib/utils";
 import { LandingMotivationActivityStack } from "./LandingMotivationActivityStack";
 import { LandingCopySentences } from "@/components/landing/LandingCopySentences";
@@ -49,7 +49,7 @@ export function LandingMotivationSection() {
             <h2 className={landingUi.headline}>
               <Trans
                 i18nKey="landing.motivation.title"
-                components={landingHeadlineHighlightComponents}
+                components={landingHeadlineComponents}
               />
             </h2>
 

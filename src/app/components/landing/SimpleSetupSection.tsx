@@ -10,18 +10,13 @@ import { landingCopyVisible, landingUi } from "@/components/landing/landingUi";
 import { landingType } from "@/components/landing/landingTypography";
 import { LandingSectionAccent } from "@/components/landing/LandingSectionAccent";
 import { LandingReveal } from "@/components/landing/LandingReveal";
+import { parseLandingHeadline } from "@/components/landing/landingRichText";
 import { AnimatedHeadingLazy } from "@/components/ui/AnimatedHeading.lazy";
 import { landingStaggerDelay } from "@/lib/landingMotion";
 import { cn } from "@/lib/utils";
 
 function formatStepNumber(index: number): string {
   return String(index + 1).padStart(2, "0");
-}
-
-function parseLandingHeadline(raw: string): { text: string; highlight: string[] } {
-  const highlight = [...raw.matchAll(/<hl>(.*?)<\/hl>/gi)].map((m) => m[1] ?? "").filter(Boolean);
-  const text = raw.replace(/<\/?hl>/gi, "");
-  return { text, highlight };
 }
 
 export function SimpleSetupSection() {

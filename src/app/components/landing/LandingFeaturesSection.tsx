@@ -10,6 +10,7 @@ import {
 } from "@/components/landing/LandingSectionAccent";
 import { LandingReveal } from "@/components/landing/LandingReveal";
 import { AnimatedHeadingLazy } from "@/components/ui/AnimatedHeading.lazy";
+import { parseLandingHeadline } from "@/components/landing/landingRichText";
 import { cn } from "@/lib/utils";
 
 const cardClassName = cn(
@@ -36,11 +37,9 @@ const featureAccentVariants: LandingAccentVariant[] = [
 export function LandingFeaturesSection() {
   const { t, i18n } = useTranslation();
   const sectionSubtitle = t("landing.features.subtitle");
-  const rawTitle = t("landing.features.title");
-  const featuresHighlight = [...rawTitle.matchAll(/<hl>(.*?)<\/hl>/gi)]
-    .map((m) => m[1] ?? "")
-    .filter(Boolean);
-  const featuresTitle = rawTitle.replace(/<\/?hl>/gi, "");
+  const { text: featuresTitle, highlight: featuresHighlight } = parseLandingHeadline(
+    t("landing.features.title"),
+  );
 
   const items = useMemo(
     () =>

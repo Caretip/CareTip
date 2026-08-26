@@ -2855,7 +2855,7 @@
     "simpleSetup": {
       "pill": "Setup in minutes",
       "pillSub": "",
-      "title": "A quick journey from <hl>setup to tips</hl>",
+      "title": "A quick journey from<brm/><hl>setup to tips</hl>",
       "subtitle": "Four steps from signup to your first tip. No hardware, no IT project.",
       "step1Title": "Create your account",
       "step1Desc": "Your workspace is ready in under a minute.",
@@ -3164,7 +3164,7 @@
     },
     "features": {
       "eyebrow": "Platform ecosystem",
-      "title": "One connected <hl>tipping platform</hl>",
+      "title": "One connected<brm/><hl>tipping platform</hl>",
       "subtitle": "QR codes, live analytics, and multi-location control working together so hospitality runs smoother.",
       "i1Title": "QR tipping pages",
       "i1Text": "Branded guest flows that reward great service in one scan.",
@@ -3318,7 +3318,7 @@
     },
     "finalCta": {
       "eyebrow": "Start tipping in minutes",
-      "title": "Start rewarding your team today",
+      "title": "Start rewarding<brm/>your team today",
       "subtitle": "Launch QR tipping in an afternoon, with tip tracking and team visibility built in.",
       "cta": "Request a demo",
       "secondary": "Become a partner"
@@ -3381,7 +3381,7 @@
       }
     },
     "motivation": {
-      "title": "Finally the <hl>recognition</hl> your team deserves.",
+      "title": "Finally the <hl>recognition</hl><brm/>your team deserves.",
       "subtitle": "Anyone who gives their all every day deserves to be seen. CareTip makes performance visible, in real time, for your team and your leadership.",
       "pill": "LIVE RECOGNITION",
       "feedLabel": "ACTIVITY IN YOUR BUSINESS",
@@ -3439,7 +3439,7 @@
     },
     "industriesTeaser": {
       "eyebrow": "IN USE EVERYWHERE...",
-      "overviewHeadline": "CareTip adapts to <hl>your industry</hl>.",
+      "overviewHeadline": "CareTip adapts to<brm/><hl>your industry</hl>.",
       "overviewSubheadline": "Discover how easy digital tipping works in your field.\nClick on any industry to see the details.",
       "teasersAria": "Industry showcase",
       "learnMore": "Learn more",
