@@ -1,6 +1,5 @@
 import { Link } from "react-router";
 import { useTranslation } from "react-i18next";
-import { LandingTrustComplianceStrip } from "@/app/components/landing/LandingTrustComplianceStrip";
 import { LandingReveal } from "@/components/landing/LandingReveal";
 import { LandingCopySentences } from "@/components/landing/LandingCopySentences";
 import { AnimatedHeadingLazy } from "@/components/ui/AnimatedHeading.lazy";
@@ -48,8 +47,6 @@ export function LandingFinalCtaSection() {
             {t("landing.finalCta.secondary")}
           </Link>
         </div>
-
-        <LandingTrustComplianceStrip className="caretip-landing-cta-wise__trust" />
       </LandingReveal>
     </section>
   );

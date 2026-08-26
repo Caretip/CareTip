@@ -7,6 +7,78 @@
   --caretip-legal-accent-rgb: 233 120 28;
   --caretip-legal-inner-max: min(100%, 72rem);
   background: hsl(var(--background));
+  text-align: left;
+}
+
+/* Header + body sit on the page surface — no cards, no hero band */
+.caretip-legal-document-page__header {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  text-align: left;
+  gap: 0.75rem;
+}
+
+.caretip-legal-document-page__title {
+  margin: 0;
+  width: 100%;
+  max-width: none;
+  text-align: left;
+  text-wrap: balance;
+}
+
+.caretip-legal-document-page__subtitle {
+  margin: 0;
+  width: 100%;
+  max-width: min(100%, 42rem);
+  text-align: left;
+}
+
+.caretip-legal-document-page__body {
+  box-shadow: none;
+  border: none;
+  background: transparent;
+  border-radius: 0;
+  padding: 0;
+  text-align: left;
+}
+
+.caretip-legal-document-page .caretip-legal-prose,
+.caretip-legal-document-page .caretip-legal-document__api-html,
+.caretip-legal-document-page .caretip-legal-prose :is(h1, h2, h3, h4, h5, h6, p, ul, ol, li, table, blockquote) {
+  text-align: left;
+}
+
+.caretip-legal-document-page .caretip-legal-prose :is(h1, h2, h3, h4) {
+  margin-inline: 0;
+}
+
+/* Kill any leftover hero/card chrome if nested elsewhere */
+.caretip-legal-document-page .caretip-public-page-hero-card,
+.caretip-legal-document-page .caretip-wise-full-bleed-band,
+.caretip-legal-document-page .caretip-marketing-card {
+  background: transparent !important;
+  box-shadow: none !important;
+  border: none !important;
+  border-radius: 0 !important;
+}
+
+.caretip-legal-document-page .caretip-public-page-header-hero-card__inner {
+  padding-block: 0;
+}
+
+/* Sidebar (if present): flat, not carded */
+.caretip-legal-document-page .caretip-legal-document__sidebar-card,
+.caretip-legal-document-page .caretip-legal-document__sidebar-help {
+  padding: 0;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.caretip-legal-document-page .caretip-legal-document__sidebar-link--active {
+  box-shadow: none;
 }
 
 .caretip-legal-document-page__main {

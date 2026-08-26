@@ -78,11 +78,14 @@
 .caretip-about-page .caretip-about-split__headline,
 .caretip-contact-page .caretip-contact-headline,
 .caretip-legal-document-page .caretip-legal-document__title,
+.caretip-legal-document-page .caretip-legal-document-page__title,
 .caretip-legal-document-page .caretip-public-page-header h1,
 .caretip-legal-document-page h1.text-section-title {
-  font-size: clamp(2.7rem, 5vw, 4.75rem) !important;
-  letter-spacing: -0.065em !important;
-  line-height: 1.02 !important;
+  font-size: clamp(1.5rem, 3.2vw, 2.125rem) !important;
+  letter-spacing: -0.04em !important;
+  line-height: 1.2 !important;
+  text-align: left !important;
+  margin-inline: 0 !important;
 }
 
 .caretip-features-page .caretip-features-cta-wise__title,
@@ -129,10 +132,15 @@
   .caretip-faq-page .caretip-faq-hero-wise__title,
   .caretip-industry-page .caretip-industry-page__headline,
   .caretip-about-page .caretip-about-split__headline,
-  .caretip-contact-page .caretip-contact-headline,
+  .caretip-contact-page .caretip-contact-headline {
+    font-size: clamp(2.65rem, 13vw, 4rem) !important;
+  }
+
   .caretip-legal-document-page .caretip-legal-document__title,
+  .caretip-legal-document-page .caretip-legal-document-page__title,
   .caretip-legal-document-page .caretip-public-page-header h1,
   .caretip-legal-document-page h1.text-section-title {
-    font-size: clamp(2.65rem, 13vw, 4rem) !important;
+    font-size: clamp(1.375rem, 5.5vw, 1.75rem) !important;
+    text-align: left !important;
   }
 }
