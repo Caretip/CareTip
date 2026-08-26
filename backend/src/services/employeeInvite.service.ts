@@ -9,6 +9,7 @@ import {
 } from "./inviteAbuseMonitor.service.js";
 import { onEmployeeInviteRedeemed } from "./push/notification.triggers.js";
 import { generateSlug, ensureUniqueSlug } from "../utils/slug.js";
+import { AUTH_REGISTER_GENERIC_MESSAGE } from "./authDisclosureMessages.js";
 
 /** Readable charset — excludes 0/O, 1/I/L to reduce transcription errors. */
 const INVITE_CODE_ALPHABET = "23456789ABCDEFGHJKMNPQRSTUVWXYZ";
@@ -480,7 +481,7 @@ export async function registerEmployeeWithInvite(input: RegisterWithInviteInput)
   const result = await prisma.$transaction(async (tx) => {
     const existing = await tx.user.findUnique({ where: { email }, select: { id: true } });
     if (existing) {
-      throw new Error("Email already registered");
+      throw new Error(AUTH_REGISTER_GENERIC_MESSAGE);
     }
 
     const invite = await lockActiveInviteForRedemption(tx, input.inviteCode);

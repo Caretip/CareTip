@@ -27,6 +27,10 @@ import { resolveEmailLocale, resolveUserPreferredLocale } from "../emails/i18nEm
 import { assertPlatformAdminMfaSessionAllowed } from "./mfaLogin.service.js";
 import { inferManagerOnboardingStep, type OnboardingStep } from "./onboardingProgress.service.js";
 import { kycStatusToLegacyMirror } from "../lib/verificationWorkflow.js";
+import {
+  AUTH_INVALID_CREDENTIALS_MESSAGE,
+  AUTH_REGISTER_GENERIC_MESSAGE,
+} from "./authDisclosureMessages.js";
 
 /** Mirrors the frontend `AuthResponse.user` shape (see `src/app/lib/api.ts`). */
 export interface AuthUserDto {
@@ -395,7 +399,7 @@ export async function registerBusiness(
 
   const existing = await prisma.user.findUnique({ where: { email }, select: { id: true } });
   if (existing) {
-    throw new Error("Email already registered");
+    throw new Error(AUTH_REGISTER_GENERIC_MESSAGE);
   }
 
   const baseName = (email.split("@")[0] || "My").trim();
@@ -479,7 +483,7 @@ export async function registerEmployee(
 
   const existing = await prisma.user.findUnique({ where: { email }, select: { id: true } });
   if (existing) {
-    throw new Error("Email already registered");
+    throw new Error(AUTH_REGISTER_GENERIC_MESSAGE);
   }
 
   const passwordHash = await bcrypt.hash(input.password, 10);
@@ -536,23 +540,22 @@ export async function validateLoginCredentials(input: LoginInput): Promise<UserF
   });
 
   if (!user || user.isActive !== true) {
-    throw new Error("Invalid email or password");
+    throw new Error(AUTH_INVALID_CREDENTIALS_MESSAGE);
   }
+
+  // Super Admin without platform flag: same message as bad credentials (no account-type oracle).
+  if (user.role === "SUPER_ADMIN" && !user.isPlatformAdmin) {
+    throw new Error(AUTH_INVALID_CREDENTIALS_MESSAGE);
+  }
+
+  // OAuth-only / missing password: same message as wrong password (no method disclosure).
   if (!user.passwordHash) {
-    const oauthCount = await prisma.oAuthAccount.count({ where: { userId: user.id } });
-    if (oauthCount > 0) {
-      throw new Error("This account uses social sign-in. Continue with Google, Apple, or Facebook.");
-    }
-    throw new Error("Invalid email or password");
+    throw new Error(AUTH_INVALID_CREDENTIALS_MESSAGE);
   }
 
   const ok = await bcrypt.compare(input.password, user.passwordHash);
   if (!ok) {
-    throw new Error("Invalid email or password");
-  }
-
-  if (user.role === "SUPER_ADMIN" && !user.isPlatformAdmin) {
-    throw new Error("This account does not have Super Admin permissions.");
+    throw new Error(AUTH_INVALID_CREDENTIALS_MESSAGE);
   }
 
   if (user.emailVerified !== true) {
@@ -597,14 +600,15 @@ export async function resendVerificationEmail(input: {
     select: { id: true, passwordHash: true, emailVerified: true, isActive: true },
   });
   if (!user || user.isActive !== true || !user.passwordHash) {
-    throw new Error("Invalid email or password");
+    throw new Error(AUTH_INVALID_CREDENTIALS_MESSAGE);
   }
   const ok = await bcrypt.compare(input.password, user.passwordHash);
   if (!ok) {
-    throw new Error("Invalid email or password");
+    throw new Error(AUTH_INVALID_CREDENTIALS_MESSAGE);
   }
+  // Already verified: same silent success as a send (no verification-state oracle).
   if (user.emailVerified === true) {
-    throw new Error("Email is already verified.");
+    return;
   }
   await sendVerificationEmailBestEffort(user.id, email, {
     explicitLocale: input.explicitLocale,
@@ -633,7 +637,7 @@ export async function resendVerificationEmailForSessionUser(
     throw new Error("Authentication required");
   }
   if (user.emailVerified === true) {
-    throw new Error("Email is already verified.");
+    return;
   }
   const email = normalizeLoginEmail(user.email);
   await sendVerificationEmailBestEffort(user.id, email, {

@@ -21,26 +21,38 @@ import {
   type OAuthProviderId,
   type VerifiedIdentity,
 } from "./oauth/verifyIdentity.js";
+import {
+  AUTH_OAUTH_GENERIC_FAILURE_MESSAGE,
+  AUTH_OAUTH_LINK_FAILED_MESSAGE,
+  AUTH_OAUTH_SIGN_IN_FAILED_CODE,
+} from "./authDisclosureMessages.js";
 
-/** @deprecated Prefer OAUTH_ACCOUNT_NOT_REGISTERED_* — kept for Google client aliases. */
-export const GOOGLE_ACCOUNT_NOT_REGISTERED_MESSAGE =
-  "This Google account is not registered with CareTip yet. Please create an account first.";
+/** Uniform public OAuth failure (no account-existence / linking / admin oracle). */
+export const OAUTH_SIGN_IN_FAILED_CODE = AUTH_OAUTH_SIGN_IN_FAILED_CODE;
+export const OAUTH_SIGN_IN_FAILED_MESSAGE = AUTH_OAUTH_GENERIC_FAILURE_MESSAGE;
+
+/**
+ * @deprecated Legacy codes/messages — public OAuth now returns {@link OAUTH_SIGN_IN_FAILED_*}.
+ * Kept so older clients mapping these strings still receive a safe generic via ERROR_MAP fallbacks.
+ */
+export const GOOGLE_ACCOUNT_NOT_REGISTERED_MESSAGE = OAUTH_SIGN_IN_FAILED_MESSAGE;
 export const GOOGLE_ACCOUNT_NOT_REGISTERED_CODE = "GOOGLE_ACCOUNT_NOT_REGISTERED" as const;
 export const GOOGLE_TOKEN_VERIFICATION_FAILED_CODE = OAUTH_TOKEN_VERIFICATION_FAILED_CODE;
 
 export const OAUTH_ACCOUNT_NOT_REGISTERED_CODE = "OAUTH_ACCOUNT_NOT_REGISTERED" as const;
-export const OAUTH_ACCOUNT_NOT_REGISTERED_MESSAGE =
-  "This social account is not registered with CareTip yet. Please create an account first.";
+export const OAUTH_ACCOUNT_NOT_REGISTERED_MESSAGE = OAUTH_SIGN_IN_FAILED_MESSAGE;
 
+/** @deprecated Use OAUTH_SIGN_IN_FAILED_CODE */
 export const OAUTH_LINKING_REQUIRED_CODE = "OAUTH_LINKING_REQUIRED" as const;
-export const OAUTH_LINKING_REQUIRED_MESSAGE =
-  "An account with this email already exists. Sign in with your existing method, then link this provider from Settings → Security → Linked Accounts.";
+/** @deprecated Use OAUTH_SIGN_IN_FAILED_MESSAGE */
+export const OAUTH_LINKING_REQUIRED_MESSAGE = OAUTH_SIGN_IN_FAILED_MESSAGE;
 
 export const OAUTH_EMAIL_REQUIRED_CODE = "OAUTH_EMAIL_REQUIRED" as const;
 export const OAUTH_EMAIL_REQUIRED_MESSAGE =
   "Facebook did not provide an email address. Enable email permission in Facebook Login, or use another sign-in method.";
 
-export const OAUTH_EMAIL_ALREADY_REGISTERED_MESSAGE = "Email already registered. Sign in instead.";
+/** @deprecated */
+export const OAUTH_EMAIL_ALREADY_REGISTERED_MESSAGE = OAUTH_SIGN_IN_FAILED_MESSAGE;
 
 export { OAuthTokenVerificationError, OAUTH_TOKEN_VERIFICATION_FAILED_CODE };
 /** @deprecated alias */
@@ -76,17 +88,32 @@ const userIncludeForOAuth = {
   oauthAccounts: { select: { provider: true, subject: true } },
 } as const;
 
-export class OAuthLinkingRequiredError extends Error {
-  readonly code = OAUTH_LINKING_REQUIRED_CODE;
+/** Public OAuth failure that must not distinguish account existence, linking, or admin routing. */
+export class OAuthSignInFailedError extends Error {
+  readonly code = OAUTH_SIGN_IN_FAILED_CODE;
+
+  constructor(message = OAUTH_SIGN_IN_FAILED_MESSAGE) {
+    super(message);
+    this.name = "OAuthSignInFailedError";
+    Object.setPrototypeOf(this, new.target.prototype);
+  }
+}
+
+/**
+ * @deprecated Prefer {@link OAuthSignInFailedError}. Kept for call-site compatibility;
+ * no longer exposes email/provider on the wire.
+ */
+export class OAuthLinkingRequiredError extends OAuthSignInFailedError {
+  /** @deprecated Not returned to clients */
   readonly email: string;
+  /** @deprecated Not returned to clients */
   readonly provider: OAuthProviderId;
 
   constructor(email: string, provider: OAuthProviderId) {
-    super(OAUTH_LINKING_REQUIRED_MESSAGE);
+    super(OAUTH_SIGN_IN_FAILED_MESSAGE);
     this.name = "OAuthLinkingRequiredError";
     this.email = email;
     this.provider = provider;
-    Object.setPrototypeOf(this, new.target.prototype);
   }
 }
 
@@ -177,29 +204,16 @@ export async function authenticateWithOAuth(
     let sessionUser = await findUserByOAuthSubject(provider, verified.subject);
 
     if (!sessionUser) {
-      // No linked OAuthAccount — never auto-link by email.
-      if (verified.email) {
-        const emailOwner = await prisma.user.findUnique({
-          where: { email: normalizeLoginEmail(verified.email) },
-          select: { id: true, role: true },
-        });
-        if (emailOwner) {
-          if (emailOwner.role === "SUPER_ADMIN") {
-            throw new Error("Use the Platform Admin sign-in for this account.");
-          }
-          throw new OAuthLinkingRequiredError(normalizeLoginEmail(verified.email), provider);
-        }
-      }
-      throw new Error(
-        provider === "google" ? GOOGLE_ACCOUNT_NOT_REGISTERED_MESSAGE : OAUTH_ACCOUNT_NOT_REGISTERED_MESSAGE,
-      );
+      // No linked OAuthAccount — never auto-link by email. Same failure for
+      // missing account, email-owned account, and admin routing (anti-enumeration).
+      throw new OAuthSignInFailedError();
     }
 
     if (sessionUser.isActive !== true) {
-      throw new Error("This account has been disabled.");
+      throw new OAuthSignInFailedError();
     }
     if (sessionUser.role === "SUPER_ADMIN") {
-      throw new Error("Use the Platform Admin sign-in for this account.");
+      throw new OAuthSignInFailedError();
     }
 
     // Persist Apple display name only when first provided (rare after first authorize).
@@ -260,7 +274,7 @@ export async function authenticateWithOAuth(
     select: { id: true },
   });
   if (existing) {
-    throw new OAuthLinkingRequiredError(email, provider);
+    throw new OAuthSignInFailedError();
   }
 
   const subjectTaken = await prisma.oAuthAccount.findUnique({
@@ -268,7 +282,7 @@ export async function authenticateWithOAuth(
     select: { id: true },
   });
   if (subjectTaken) {
-    throw new Error(OAUTH_ACCOUNT_NOT_REGISTERED_MESSAGE);
+    throw new OAuthSignInFailedError();
   }
 
   const intendedRole = body.intendedRole;
@@ -452,7 +466,7 @@ export async function linkOAuthProviderForUser(
     where: { provider_subject: { provider, subject: verified.subject } },
   });
   if (existingSubject && existingSubject.userId !== userId) {
-    throw new Error("This social account is already linked to another CareTip user.");
+    throw new Error(AUTH_OAUTH_LINK_FAILED_MESSAGE);
   }
   if (existingSubject && existingSubject.userId === userId) {
     return { provider, linked: true };

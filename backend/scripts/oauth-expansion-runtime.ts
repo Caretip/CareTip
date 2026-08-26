@@ -263,10 +263,15 @@ async function main() {
     }
 
     const linkErr = new oauthAuthService.OAuthLinkingRequiredError(passwordEmail, "google");
-    if (linkErr.code === "OAUTH_LINKING_REQUIRED") {
-      pass("Explicit linking required error code present");
+    if (linkErr.code === oauthAuthService.OAUTH_SIGN_IN_FAILED_CODE) {
+      pass("Linking-required error uses uniform OAUTH_SIGN_IN_FAILED code");
     } else {
-      fail("OAuthLinkingRequiredError code mismatch");
+      fail(`OAuthLinkingRequiredError code mismatch: ${linkErr.code}`);
+    }
+    if (!/already exists|Linked Accounts/i.test(linkErr.message)) {
+      pass("Linking-required message does not disclose account existence");
+    } else {
+      fail(`Expository linking message: ${linkErr.message}`);
     }
 
     // --- Password login messaging for OAuth-only ---
@@ -275,8 +280,8 @@ async function main() {
       fail("login() should reject OAuth-only without password");
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
-      if (msg.includes("social sign-in") || msg.includes("Google sign-in")) {
-        pass("login() rejects OAuth-only account password attempt");
+      if (msg === "Invalid email or password") {
+        pass("login() rejects OAuth-only with generic invalid credentials");
       } else {
         fail(`Unexpected login message: ${msg}`);
       }

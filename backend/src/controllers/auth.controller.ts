@@ -29,6 +29,11 @@ import {
   CLIENT_FALLBACK,
   EmailNotVerifiedLoginError,
 } from "../utils/httpErrors.js";
+import {
+  AUTH_INVALID_CREDENTIALS_MESSAGE,
+  AUTH_OAUTH_GENERIC_FAILURE_MESSAGE,
+  AUTH_OAUTH_SIGN_IN_FAILED_CODE,
+} from "../services/authDisclosureMessages.js";
 import * as auditService from "../services/audit.service.js";
 import * as mfaLoginService from "../services/mfaLogin.service.js";
 import {
@@ -97,19 +102,14 @@ function parseClientTimeZone(body: Record<string, unknown>): string | undefined 
 
 /** Thrown by auth.service.login — always safe to return to the client as 401. */
 const LOGIN_CLIENT_MESSAGES = new Set([
+  AUTH_INVALID_CREDENTIALS_MESSAGE,
   "Invalid email or password",
   "Login failed",
-  "This account uses Google sign-in.",
-  "This account uses social sign-in. Continue with Google, Apple, or Facebook.",
   "This account does not have Business permissions.",
   "This account does not have Staff permissions.",
-  "Use the Platform Admin sign-in for this account.",
 ]);
 
-const LOGIN_FORBIDDEN_MESSAGES = new Set([
-  "This account does not have Super Admin permissions.",
-  "This account has been disabled.",
-]);
+const LOGIN_FORBIDDEN_MESSAGES = new Set<string>([]);
 
 function isPrismaInfrastructureError(err: unknown): boolean {
   return (
@@ -671,11 +671,8 @@ export async function resendVerificationEmail(req: Request, res: Response) {
     });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Request failed";
-    if (message === "Invalid email or password") {
-      return res.status(401).json({ message });
-    }
-    if (message === "Email is already verified.") {
-      return res.status(400).json({ message });
+    if (message === "Invalid email or password" || message === AUTH_INVALID_CREDENTIALS_MESSAGE) {
+      return res.status(401).json({ message: AUTH_INVALID_CREDENTIALS_MESSAGE });
     }
     logServerError("auth.resendVerificationEmail", err);
     return res.status(503).json({
@@ -708,9 +705,6 @@ export async function resendVerificationEmailForSession(req: Request, res: Respo
     const message = err instanceof Error ? err.message : "Request failed";
     if (message === "Authentication required") {
       return res.status(401).json({ message });
-    }
-    if (message === "Email is already verified.") {
-      return res.status(400).json({ message });
     }
     logServerError("auth.resendVerificationEmailForSession", err);
     return res.status(503).json({
@@ -830,12 +824,13 @@ export async function oauth(req: Request, res: Response) {
         canResend: err.canResend,
       });
     }
-    if (err instanceof oauthAuthService.OAuthLinkingRequiredError) {
-      return res.status(409).json({
-        message: err.message,
-        code: err.code,
-        email: err.email,
-        provider: err.provider,
+    if (
+      err instanceof oauthAuthService.OAuthSignInFailedError ||
+      err instanceof oauthAuthService.OAuthLinkingRequiredError
+    ) {
+      return res.status(401).json({
+        message: AUTH_OAUTH_GENERIC_FAILURE_MESSAGE,
+        code: AUTH_OAUTH_SIGN_IN_FAILED_CODE,
       });
     }
     if (err instanceof oauthAuthService.OAuthEmailRequiredError) {
@@ -862,21 +857,23 @@ export async function oauth(req: Request, res: Response) {
       logServerError("auth.oauth", err);
       return res.status(503).json({ message: CLIENT_FALLBACK.loginUnexpected });
     }
+    // Legacy existence/linking/disabled/admin message strings → uniform response
     if (
       message === oauthAuthService.GOOGLE_ACCOUNT_NOT_REGISTERED_MESSAGE ||
-      message === oauthAuthService.OAUTH_ACCOUNT_NOT_REGISTERED_MESSAGE
+      message === oauthAuthService.OAUTH_ACCOUNT_NOT_REGISTERED_MESSAGE ||
+      message === oauthAuthService.OAUTH_LINKING_REQUIRED_MESSAGE ||
+      message === oauthAuthService.OAUTH_EMAIL_ALREADY_REGISTERED_MESSAGE ||
+      message === "Email already registered. Sign in instead." ||
+      message === "This account has been disabled." ||
+      message === "Use the Platform Admin sign-in for this account." ||
+      message === AUTH_OAUTH_GENERIC_FAILURE_MESSAGE
     ) {
-      return res.status(400).json({
-        message,
-        code:
-          message === oauthAuthService.GOOGLE_ACCOUNT_NOT_REGISTERED_MESSAGE
-            ? oauthAuthService.GOOGLE_ACCOUNT_NOT_REGISTERED_CODE
-            : oauthAuthService.OAUTH_ACCOUNT_NOT_REGISTERED_CODE,
+      return res.status(401).json({
+        message: AUTH_OAUTH_GENERIC_FAILURE_MESSAGE,
+        code: AUTH_OAUTH_SIGN_IN_FAILED_CODE,
       });
     }
     if (
-      message === "Email already registered. Sign in instead." ||
-      message === oauthAuthService.OAUTH_EMAIL_ALREADY_REGISTERED_MESSAGE ||
       message.includes("Invite code") ||
       message.includes("invite code") ||
       message.includes("Invalid or expired")
@@ -884,8 +881,6 @@ export async function oauth(req: Request, res: Response) {
       return res.status(400).json({ message });
     }
     if (
-      message === "This account has been disabled." ||
-      message === "Use the Platform Admin sign-in for this account." ||
       message === "Platform admin sign-in is not available with social login." ||
       message === "Platform admin sign-in is not available with Google."
     ) {
@@ -894,8 +889,8 @@ export async function oauth(req: Request, res: Response) {
     if (message.includes("Unsupported OAuth provider")) {
       return res.status(400).json({ message });
     }
-    if (message === "Invalid email or password") {
-      return res.status(401).json({ message });
+    if (message === AUTH_INVALID_CREDENTIALS_MESSAGE || message === "Invalid email or password") {
+      return res.status(401).json({ message: AUTH_INVALID_CREDENTIALS_MESSAGE });
     }
     logServerError("auth.oauth", err);
     return res.status(400).json({

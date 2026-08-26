@@ -131,9 +131,11 @@ export const de: MobileMessages = {
     facebookSignInCancelled: "Facebook-Anmeldung abgebrochen.",
     facebookNotConfigured: "Facebook-Anmeldung ist noch nicht verfügbar. Bitte nutzen Sie eine andere Anmeldemethode.",
     oauthAccountNotRegistered:
-      "Kein CareTip-Konto für diese Social-Anmeldung gefunden. Erstellen Sie ein Geschäftskonto oder treten Sie mit einer Einladung bei.",
+      "Die soziale Anmeldung konnte nicht abgeschlossen werden. Wenn Sie bereits ein CareTip-Konto haben, melden Sie sich an oder nutzen Sie „Passwort vergessen“.",
     oauthLinkingRequired:
-      "Ein Konto mit dieser E-Mail existiert bereits. Melden Sie sich mit Ihrem Passwort an und verknüpfen Sie den Anbieter unter Einstellungen → Sicherheit → Verknüpfte Konten.",
+      "Die soziale Anmeldung konnte nicht abgeschlossen werden. Wenn Sie bereits ein CareTip-Konto haben, melden Sie sich an oder nutzen Sie „Passwort vergessen“.",
+    oauthSignInFailed:
+      "Die soziale Anmeldung konnte nicht abgeschlossen werden. Wenn Sie bereits ein CareTip-Konto haben, melden Sie sich an oder nutzen Sie „Passwort vergessen“.",
     oauthEmailRequired:
       "Dieser Social-Anbieter hat keine E-Mail-Adresse geteilt. Versuchen Sie eine andere Anmeldemethode.",
     oauthTokenInvalid: "Social-Anmeldung konnte nicht bestätigt werden. Bitte erneut versuchen.",
@@ -148,7 +150,8 @@ export const de: MobileMessages = {
     haveInvitePrompt: "Wurden Sie zu einem Unternehmen eingeladen?",
     haveInviteLink: "Mit Einladung beitreten",
     haveInviteCta: "Ich habe eine Einladung",
-    registerFailed: "Konto konnte nicht erstellt werden. Bitte Angaben prüfen und erneut versuchen.",
+    registerFailed:
+      "Konto konnte nicht erstellt werden. Wenn Sie bereits ein CareTip-Konto haben, melden Sie sich an oder nutzen Sie „Passwort vergessen“.",
     inviteCode: "Einladungscode",
     forgotPasswordTitle: "Passwort vergessen",
     forgotPasswordSubtitle: "Geben Sie Ihre E-Mail ein. Wir senden einen Link zum Zurücksetzen.",

@@ -128,9 +128,12 @@ export const en: MobileMessages = {
     facebookSignInFailed: "We couldn't sign you in with Facebook. Please try again or use another sign-in method.",
     facebookSignInCancelled: "Facebook sign-in was cancelled.",
     facebookNotConfigured: "Facebook sign-in is not available yet. Please try another sign-in method.",
-    oauthAccountNotRegistered: "No CareTip account found for this social login. Create a business account, or join with an invite if you were invited.",
+    oauthAccountNotRegistered:
+      "We couldn't complete social sign-in. If you already have a CareTip account, please sign in or use Forgot Password to recover access.",
     oauthLinkingRequired:
-      "An account with this email already exists. Sign in with your password, then link this provider in Settings → Security → Linked Accounts.",
+      "We couldn't complete social sign-in. If you already have a CareTip account, please sign in or use Forgot Password to recover access.",
+    oauthSignInFailed:
+      "We couldn't complete social sign-in. If you already have a CareTip account, please sign in or use Forgot Password to recover access.",
     oauthEmailRequired: "This sign-in method didn't share an email address. Please try another way to sign in.",
     oauthTokenInvalid: "Social sign-in could not be verified. Please try again.",
     registerScreenTitle: "Create your Business",
@@ -144,7 +147,8 @@ export const en: MobileMessages = {
     haveInvitePrompt: "Were you invited to a business?",
     haveInviteLink: "Join with invite",
     haveInviteCta: "I have an invite",
-    registerFailed: "We couldn't create your account. Please check your details and try again.",
+    registerFailed:
+      "We couldn't create your account with these details. If you already have a CareTip account, please sign in or use Forgot Password to recover access.",
     inviteCode: "Invite Code",
     forgotPasswordTitle: "Forgot Password",
     forgotPasswordSubtitle: "Enter your email and we'll send a reset link.",

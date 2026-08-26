@@ -1582,7 +1582,7 @@
       "signUpWithFacebook": "Sign up with Facebook",
       "appleSdkUnavailable": "Apple Sign In is configured but the Apple JS SDK could not load. Check network access and Services ID settings.",
       "providerFailed": "{{provider}} sign-in failed. Please try again.",
-      "linkingRequiredToast": "An account with this email already exists. Sign in with your existing method, then link this provider from Settings → Security → Linked Accounts."
+      "linkingRequiredToast": "We couldn't complete social sign-in. If you already have a CareTip account, please sign in or use Forgot Password to recover access."
     },
     "recovery": {
       "backToSignIn": "Back to sign in"

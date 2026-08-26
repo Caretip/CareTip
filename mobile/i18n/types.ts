@@ -131,6 +131,7 @@ export type MobileMessages = {
     facebookNotConfigured: string;
     oauthAccountNotRegistered: string;
     oauthLinkingRequired: string;
+    oauthSignInFailed: string;
     oauthEmailRequired: string;
     oauthTokenInvalid: string;
     registerScreenTitle: string;

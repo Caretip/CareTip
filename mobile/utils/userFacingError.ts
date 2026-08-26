@@ -59,6 +59,7 @@ const CODE_TO_I18N: Record<string, string> = {
   OAUTH_ACCOUNT_NOT_REGISTERED: "auth.oauthAccountNotRegistered",
   GOOGLE_ACCOUNT_NOT_REGISTERED: "auth.oauthAccountNotRegistered",
   OAUTH_LINKING_REQUIRED: "auth.oauthLinkingRequired",
+  OAUTH_SIGN_IN_FAILED: "auth.oauthSignInFailed",
   OAUTH_EMAIL_REQUIRED: "auth.oauthEmailRequired",
   OAUTH_TOKEN_VERIFICATION_FAILED: "auth.oauthTokenInvalid",
   GOOGLE_TOKEN_VERIFICATION_FAILED: "auth.oauthTokenInvalid",
@@ -95,6 +96,10 @@ const MESSAGE_TO_I18N: Record<string, string> = {
   "this account has been disabled": "errors.unauthorized",
   "email already registered": "auth.registerFailed",
   "email already registered. sign in instead.": "auth.registerFailed",
+  "we couldn't create your account with these details. if you already have a caretip account, please sign in or use forgot password to recover access.":
+    "auth.registerFailed",
+  "we couldn't complete social sign-in. if you already have a caretip account, please sign in or use forgot password to recover access.":
+    "auth.oauthSignInFailed",
   "share_export_unavailable": "settings.menu.exportError",
   "share export unavailable": "settings.menu.exportError",
 };

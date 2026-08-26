@@ -5,6 +5,7 @@ import {
   GOOGLE_TOKEN_VERIFICATION_FAILED,
   OAUTH_ACCOUNT_NOT_REGISTERED,
   OAUTH_LINKING_REQUIRED,
+  OAUTH_SIGN_IN_FAILED,
   OAUTH_TOKEN_VERIFICATION_FAILED,
   OAUTH_EMAIL_REQUIRED,
 } from "@/constants/authErrors";
@@ -78,12 +79,11 @@ export function resolveOAuthErrorMessage(
   }
   if (
     normalized.code === GOOGLE_ACCOUNT_NOT_REGISTERED ||
-    normalized.code === OAUTH_ACCOUNT_NOT_REGISTERED
+    normalized.code === OAUTH_ACCOUNT_NOT_REGISTERED ||
+    normalized.code === OAUTH_LINKING_REQUIRED ||
+    normalized.code === OAUTH_SIGN_IN_FAILED
   ) {
-    return t("auth.oauthAccountNotRegistered");
-  }
-  if (normalized.code === OAUTH_LINKING_REQUIRED) {
-    return t("auth.oauthLinkingRequired");
+    return t("auth.oauthSignInFailed");
   }
   if (normalized.code === OAUTH_EMAIL_REQUIRED) {
     return t("auth.oauthEmailRequired");

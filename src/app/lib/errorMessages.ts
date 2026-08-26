@@ -10,6 +10,7 @@ import {
   GOOGLE_ACCOUNT_NOT_REGISTERED_CODE,
   OAUTH_ACCOUNT_NOT_REGISTERED_CODE,
   OAUTH_LINKING_REQUIRED_CODE,
+  OAUTH_SIGN_IN_FAILED_CODE,
   OAUTH_EMAIL_REQUIRED_CODE,
   OAUTH_TOKEN_VERIFICATION_FAILED_CODE,
   SUBSCRIPTION_REQUIRED_CODE,
@@ -67,7 +68,14 @@ export function isAbortError(error: unknown): boolean {
 
 const ERROR_MAP: Record<string, string> = {
   // Auth
-  "Email already registered": "This email is already in use. Try signing in or use a different email.",
+  "Email already registered":
+    "We couldn't create your account with these details. If you already have a CareTip account, please sign in or use Forgot Password to recover access.",
+  "We couldn't invite this email. If they already have a CareTip account, ask them to sign in instead.":
+    "We couldn't invite this email. If they already have a CareTip account, ask them to sign in instead.",
+  "We couldn't create your account with these details. If you already have a CareTip account, please sign in or use Forgot Password to recover access.":
+    "We couldn't create your account with these details. If you already have a CareTip account, please sign in or use Forgot Password to recover access.",
+  "This email is already in use. Try signing in or use a different email.":
+    "We couldn't create your account with these details. If you already have a CareTip account, please sign in or use Forgot Password to recover access.",
   "Invalid email or password": "Incorrect email or password. Please try again.",
   "Invalid or expired invite code": "This invite code is invalid or has expired. Ask your manager for a new code.",
   "Email and password are required": "Please enter your email and password.",
@@ -82,9 +90,9 @@ const ERROR_MAP: Record<string, string> = {
   "This account does not have Staff permissions.":
     "This account is not registered as staff.",
   "This account does not have Super Admin permissions.":
-    "This account isn’t a platform admin. Use Platform Admin sign-in only for super-admin accounts, or run admin:create.",
+    "Incorrect email or password. Please try again.",
   "Use the Platform Admin sign-in for this account.":
-    "Use the Platform Admin login page (/platform-admin/login) for this account. It’s a platform admin.",
+    "We couldn't complete social sign-in. If you already have a CareTip account, please sign in or use Forgot Password to recover access.",
   "We couldn't load dashboard stats. Please try again in a moment.":
     "We couldn't load dashboard stats. Please try again in a moment.",
   "Unable to load stats": "We couldn't load dashboard stats. Please try again in a moment.",
@@ -99,23 +107,32 @@ const ERROR_MAP: Record<string, string> = {
     "Sign-in isn't available right now. Please try again in a few minutes.",
   "Sign-in service is temporarily unavailable. Please try again shortly.":
     "Sign-in isn't available right now. Please try again in a few minutes.",
-  "This account uses Google sign-in.":
-    "This account uses social sign-in. Use Continue with Google, Apple, or Facebook instead of a password.",
+  "This account uses Google sign-in.": "Incorrect email or password. Please try again.",
   "Password sign-in is not set for this account. Use Google.":
-    "This account only uses social sign-in. Use Continue with Google, Apple, or Facebook.",
+    "Incorrect email or password. Please try again.",
+  "This account uses social sign-in. Continue with Google, Apple, or Facebook.":
+    "Incorrect email or password. Please try again.",
+  [OAUTH_SIGN_IN_FAILED_CODE]:
+    "We couldn't complete social sign-in. If you already have a CareTip account, please sign in or use Forgot Password to recover access.",
   [OAUTH_LINKING_REQUIRED_CODE]:
-    "An account with this email already exists. Sign in with your existing method, then link this provider from Settings → Security → Linked Accounts.",
+    "We couldn't complete social sign-in. If you already have a CareTip account, please sign in or use Forgot Password to recover access.",
   [OAUTH_EMAIL_REQUIRED_CODE]:
     "Facebook did not provide an email address. Enable email permission in Facebook Login, or use another sign-in method.",
   [OAUTH_TOKEN_VERIFICATION_FAILED_CODE]:
     "Social sign-in could not be verified. Please try again.",
   [OAUTH_ACCOUNT_NOT_REGISTERED_CODE]:
-    "This social account is not registered with CareTip yet. Please create an account first.",
+    "We couldn't complete social sign-in. If you already have a CareTip account, please sign in or use Forgot Password to recover access.",
   [GOOGLE_ACCOUNT_NOT_REGISTERED_CODE]:
-    "This Google account is not registered with CareTip yet. Please create an account first.",
-  "This account has been disabled.": "This account has been disabled. Contact support if you think this is a mistake.",
-  "Email is already verified.": "Your email is already verified. You can sign in.",
+    "We couldn't complete social sign-in. If you already have a CareTip account, please sign in or use Forgot Password to recover access.",
+  "We couldn't complete social sign-in. If you already have a CareTip account, please sign in or use Forgot Password to recover access.":
+    "We couldn't complete social sign-in. If you already have a CareTip account, please sign in or use Forgot Password to recover access.",
+  "Unable to link this social account.": "Unable to link this social account.",
+  "This social account is already linked to another CareTip user.": "Unable to link this social account.",
+  "This account has been disabled.": "Incorrect email or password. Please try again.",
+  "Email is already verified.": "If verification is needed for this account, we sent a link.",
   "We sent a new verification link to your email.": "We sent a new verification link. Check your inbox (and spam).",
+  "If verification is needed for this account, we sent a link.":
+    "If verification is needed for this account, we sent a link.",
   "Verification link is invalid or has expired.": "This link has expired. Request a new one.",
   "Verification token is required": "This link has expired. Request a new one.",
   "Email verification required": "Please verify your email using the link we sent you.",
@@ -228,8 +245,6 @@ const ERROR_MAP: Record<string, string> = {
   "We couldn't export your data. Please try again.": "We couldn't export your data. Please try again.",
   "We couldn't delete your account. Please try again.": "We couldn't delete your account. Please try again.",
   "We couldn't find this business.": "We couldn't find this business.",
-  "This email is already in use. Try signing in or use a different email.":
-    "This email is already in use. Try signing in or use a different email.",
   "Invalid amount or business context": "That tip amount or business details aren’t valid. Please try again.",
   "Invalid tip amount": "Please enter a valid tip amount.",
   "Amount too small": "That amount is too small for a tip. Please enter a larger amount.",
@@ -253,7 +268,8 @@ const ERROR_MAP: Record<string, string> = {
 
   // OAuth / signup
   "Invite code is required for staff sign-up.": "Enter the invite code from your manager to join as staff.",
-  "Email already registered. Sign in instead.": "That email already has an account. Sign in instead.",
+  "Email already registered. Sign in instead.":
+    "We couldn't create your account with these details. If you already have a CareTip account, please sign in or use Forgot Password to recover access.",
   "Google did not return an email for this account.": "Google didn’t share an email for this account. Try another Google account or contact support.",
 
   "Not allowed": "You’re not allowed to do that with your current account.",
@@ -329,10 +345,15 @@ export function toUserFriendlyMessage(error: unknown, options?: ToUserFriendlyMe
 
   if (
     isApiRequestError(error) &&
-    (error.code === GOOGLE_ACCOUNT_NOT_REGISTERED_CODE ||
-      error.code === OAUTH_ACCOUNT_NOT_REGISTERED_CODE)
+    (error.code === OAUTH_SIGN_IN_FAILED_CODE ||
+      error.code === GOOGLE_ACCOUNT_NOT_REGISTERED_CODE ||
+      error.code === OAUTH_ACCOUNT_NOT_REGISTERED_CODE ||
+      error.code === OAUTH_LINKING_REQUIRED_CODE)
   ) {
-    return localizeFriendlyMessageCopy(error.message);
+    return localizeFriendlyMessageCopy(
+      ERROR_MAP[OAUTH_SIGN_IN_FAILED_CODE] ??
+        "We couldn't complete social sign-in. If you already have a CareTip account, please sign in or use Forgot Password to recover access.",
+    );
   }
 
   if (isApiRequestError(error) && error.code === EMAIL_NOT_VERIFIED_CODE) {

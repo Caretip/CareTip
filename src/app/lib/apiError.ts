@@ -1,12 +1,15 @@
 export const EMAIL_NOT_VERIFIED_CODE = "EMAIL_NOT_VERIFIED" as const;
 
-/** Returned with 400 from POST /api/auth/oauth when Google login finds no CareTip user for that email. */
+/** Uniform public OAuth failure (no account-existence oracle). Prefer this over legacy codes. */
+export const OAUTH_SIGN_IN_FAILED_CODE = "OAUTH_SIGN_IN_FAILED" as const;
+
+/** @deprecated Legacy — API now returns OAUTH_SIGN_IN_FAILED */
 export const GOOGLE_ACCOUNT_NOT_REGISTERED_CODE = "GOOGLE_ACCOUNT_NOT_REGISTERED" as const;
 
-/** Returned with 400 from POST /api/auth/oauth when a non-Google social login finds no CareTip user. */
+/** @deprecated Legacy — API now returns OAUTH_SIGN_IN_FAILED */
 export const OAUTH_ACCOUNT_NOT_REGISTERED_CODE = "OAUTH_ACCOUNT_NOT_REGISTERED" as const;
 
-/** Returned with 409 when email exists and provider must be linked from Settings. */
+/** @deprecated Legacy — API now returns OAUTH_SIGN_IN_FAILED */
 export const OAUTH_LINKING_REQUIRED_CODE = "OAUTH_LINKING_REQUIRED" as const;
 
 /** Returned when Facebook (or similar) did not provide an email. */

@@ -111,7 +111,7 @@ function runErrorMapping(): void {
       t,
       provider,
     );
-    assert.equal(msg, "auth.oauthAccountNotRegistered");
+    assert.equal(msg, "auth.oauthSignInFailed");
     assert.doesNotMatch(msg, /OAuthAccountNotFound/i);
     assert.doesNotMatch(msg, /OAUTH_ACCOUNT_NOT_REGISTERED/);
     assert.doesNotMatch(msg, /GOOGLE_ACCOUNT_NOT_REGISTERED/);
@@ -122,8 +122,16 @@ function runErrorMapping(): void {
     t,
     "google",
   );
-  assert.equal(linking, "auth.oauthLinkingRequired");
+  assert.equal(linking, "auth.oauthSignInFailed");
   assert.doesNotMatch(linking, /OAUTH_LINKING_REQUIRED/);
+  assert.doesNotMatch(linking, /already exists/i);
+
+  const unified = resolveOAuthErrorMessage(
+    normalized("OAUTH_SIGN_IN_FAILED", "We couldn't complete social sign-in."),
+    t,
+    "google",
+  );
+  assert.equal(unified, "auth.oauthSignInFailed");
 
   const failed = resolveOAuthErrorMessage(new Error("prisma unique constraint"), t, "google");
   assert.equal(failed, "auth.googleSignInFailed");
@@ -134,6 +142,7 @@ function runErrorMapping(): void {
     true,
   );
   assert.equal(isOAuthAccountNotRegistered(normalized("OAUTH_LINKING_REQUIRED", "nope")), false);
+  assert.equal(isOAuthAccountNotRegistered(normalized("OAUTH_SIGN_IN_FAILED", "nope")), false);
 }
 
 function main(): void {

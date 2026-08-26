@@ -1,4 +1,9 @@
 import { Prisma } from "@prisma/client";
+import {
+  AUTH_OAUTH_GENERIC_FAILURE_MESSAGE,
+  AUTH_OAUTH_LINK_FAILED_MESSAGE,
+  AUTH_REGISTER_GENERIC_MESSAGE,
+} from "../services/authDisclosureMessages.js";
 
 /** Messages intentionally thrown from services for end users (never stack traces / DB internals). */
 const ALLOWED_CLIENT_MESSAGES = new Set<string>([
@@ -45,9 +50,11 @@ const ALLOWED_CLIENT_MESSAGES = new Set<string>([
   "Password must contain at least one special character (e.g. @, #, $, %)",
   // Auth service
   "Email already registered",
+  AUTH_REGISTER_GENERIC_MESSAGE,
   "Invalid or expired invite code",
   "Invalid email or password",
-  "This Google account is not registered with CareTip yet. Please create an account first.",
+  AUTH_OAUTH_GENERIC_FAILURE_MESSAGE,
+  AUTH_OAUTH_LINK_FAILED_MESSAGE,
   "This account does not have Business permissions.",
   "This account does not have Staff permissions.",
   "Current password is incorrect",
@@ -65,6 +72,7 @@ const ALLOWED_CLIENT_MESSAGES = new Set<string>([
   "Failed to generate invite code.",
   "Name cannot be empty",
   "Email already in use",
+  "We couldn't invite this email. If they already have a CareTip account, ask them to sign in instead.",
   "Name, email, and role are required",
   "Invalid location",
   "One or more tables are invalid",
@@ -137,7 +145,7 @@ export function logServerError(
 function prismaClientMessage(err: unknown): string | null {
   if (err instanceof Prisma.PrismaClientKnownRequestError) {
     if (err.code === "P2002") {
-      return "This email is already in use. Try signing in or use a different email.";
+      return AUTH_REGISTER_GENERIC_MESSAGE;
     }
     if (err.code === "P2025") {
       return "We couldn't find that record. It may have been removed.";

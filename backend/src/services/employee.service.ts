@@ -1065,7 +1065,9 @@ export async function createEmployeeWithActivation(
     select: { id: true },
   });
   if (existing) {
-    throw new Error("Email already registered");
+    throw new Error(
+      "We couldn't invite this email. If they already have a CareTip account, ask them to sign in instead.",
+    );
   }
 
   const business = await prisma.business.findUnique({

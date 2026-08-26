@@ -31,9 +31,6 @@ import {
   resendVerificationEmailAPI,
   isApiRequestError,
   EMAIL_NOT_VERIFIED_CODE,
-  GOOGLE_ACCOUNT_NOT_REGISTERED_CODE,
-  OAUTH_ACCOUNT_NOT_REGISTERED_CODE,
-  OAUTH_LINKING_REQUIRED_CODE,
   isMfaLoginChallenge,
   loginMfaEnableAPI,
   loginMfaVerifyAPI,
@@ -554,32 +551,13 @@ export function AuthPage() {
     } catch (err) {
       logClientError('AuthPage.oauth', err);
       endAuthSignInHandoff("AuthPage_oauth_error");
-      if (
-        isApiRequestError(err) &&
-        err.code === OAUTH_LINKING_REQUIRED_CODE
-      ) {
-        toast.error(t("auth.oauth.linkingRequiredToast"));
-        setError(t("auth.oauth.linkingRequiredToast"));
-        return;
-      }
-      if (
-        isApiRequestError(err) &&
-        (err.code === GOOGLE_ACCOUNT_NOT_REGISTERED_CODE ||
-          err.code === OAUTH_ACCOUNT_NOT_REGISTERED_CODE)
-      ) {
-        setIsLogin(false);
-        setError(toUserFriendlyMessage(err));
-        return;
-      }
+      setError(toUserFriendlyMessage(err));
       const raw = err instanceof Error ? err.message : String(err);
-      const msg = toUserFriendlyMessage(err);
       if (
         raw.includes('does not have Business permissions') ||
         raw.includes('does not have Staff permissions')
       ) {
-        toast.error(msg, { style: ROLE_MISMATCH_TOAST_STYLE });
-      } else {
-        setError(msg);
+        toast.error(toUserFriendlyMessage(err), { style: ROLE_MISMATCH_TOAST_STYLE });
       }
     } finally {
       authInFlightRef.current = false;

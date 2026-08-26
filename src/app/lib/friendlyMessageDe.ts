@@ -49,7 +49,11 @@ export const FRIENDLY_MESSAGE_DE: Record<string, string> = {
   "Google didn’t share an email for this account. Try another Google account or contact support.":
     "Google hat für dieses Konto keine E-Mail übermittelt. Versuchen Sie ein anderes Google-Konto oder kontaktieren Sie den Support.",
   "This Google account is not registered with CareTip yet. Please create an account first.":
-    "Dieses Google-Konto ist bei CareTip noch nicht registriert. Bitte legen Sie zuerst ein Konto an.",
+    "Die soziale Anmeldung konnte nicht abgeschlossen werden. Wenn Sie bereits ein CareTip-Konto haben, melden Sie sich an oder nutzen Sie „Passwort vergessen“.",
+  "We couldn't complete social sign-in. If you already have a CareTip account, please sign in or use Forgot Password to recover access.":
+    "Die soziale Anmeldung konnte nicht abgeschlossen werden. Wenn Sie bereits ein CareTip-Konto haben, melden Sie sich an oder nutzen Sie „Passwort vergessen“.",
+  "We couldn't create your account with these details. If you already have a CareTip account, please sign in or use Forgot Password to recover access.":
+    "Konto konnte nicht erstellt werden. Wenn Sie bereits ein CareTip-Konto haben, melden Sie sich an oder nutzen Sie „Passwort vergessen“.",
   "Incorrect email or password. Please try again.":
     "E-Mail oder Passwort ist nicht korrekt. Bitte versuchen Sie es erneut.",
   "Name can't be empty.": "Der Name darf nicht leer sein.",

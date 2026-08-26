@@ -1582,7 +1582,7 @@
       "signUpWithFacebook": "Mit Facebook registrieren",
       "appleSdkUnavailable": "Apple-Anmeldung ist konfiguriert, aber das Apple-JS-SDK konnte nicht geladen werden. Netzwerk und Services-ID prüfen.",
       "providerFailed": "{{provider}}-Anmeldung fehlgeschlagen. Bitte erneut versuchen.",
-      "linkingRequiredToast": "Ein Konto mit dieser E-Mail existiert bereits. Melden Sie sich mit Ihrer bestehenden Methode an und verknüpfen Sie den Anbieter unter Einstellungen → Sicherheit → Verknüpfte Konten."
+      "linkingRequiredToast": "Die soziale Anmeldung konnte nicht abgeschlossen werden. Wenn Sie bereits ein CareTip-Konto haben, melden Sie sich an oder nutzen Sie „Passwort vergessen“."
     },
     "recovery": {
       "backToSignIn": "Zurück zur Anmeldung"
