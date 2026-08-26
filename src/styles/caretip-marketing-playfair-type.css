@@ -76,7 +76,13 @@
 .caretip-faq-page .caretip-faq-hero-wise__title,
 .caretip-industry-page .caretip-industry-page__headline,
 .caretip-about-page .caretip-about-split__headline,
-.caretip-contact-page .caretip-contact-headline,
+.caretip-contact-page .caretip-contact-headline {
+  font-size: clamp(2.7rem, 5vw, 4.75rem) !important;
+  letter-spacing: -0.065em !important;
+  line-height: 1.02 !important;
+}
+
+/* Legal titles only — smaller, left-aligned (do not share hero scale) */
 .caretip-legal-document-page .caretip-legal-document__title,
 .caretip-legal-document-page .caretip-legal-document-page__title,
 .caretip-legal-document-page .caretip-public-page-header h1,
