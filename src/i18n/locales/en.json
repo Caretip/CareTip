@@ -235,7 +235,7 @@
     "contact": {
       "pageAria": "Contact CareTip",
       "eyebrow": "Contact",
-      "headline": "Let's help your business succeed.",
+      "headline": "Let's help your business<br/>succeed.",
       "supportingText": "Whether you need a demo, have product questions, or need technical support, our team is here to help.",
       "backToChooser": "Back to contact options",
       "servicesAria": "How we can help",
@@ -1237,7 +1237,7 @@
     },
     "faq": {
       "pageEyebrow": "HELP CENTER",
-      "pageTitle": "Questions? We've got answers.",
+      "pageTitle": "Questions?<br/>We've got answers.",
       "pageSubtitle": "Everything you need to know about CareTip, digital tipping, team management, and secure payouts.",
       "items": [
         {
@@ -3036,7 +3036,7 @@
     },
     "audienceBenefits": {
       "eyebrow": "BENEFITS AT A GLANCE",
-      "headline": "Full control for owners. <hl>More motivation</hl> for teams.",
+      "headline": "Full control for owners.<br/><hl>More motivation</hl> for teams.",
       "businessRole": "For business owners",
       "businessTitle": "Full transparency over your team",
       "businessBody": "Manage locations, QR codes, and payouts from a single dashboard.",

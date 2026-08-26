@@ -235,7 +235,7 @@
     "contact": {
       "pageAria": "CareTip kontaktieren",
       "eyebrow": "Kontakt",
-      "headline": "Lassen Sie uns Ihrem Betrieb zum Erfolg verhelfen.",
+      "headline": "Lassen Sie uns Ihrem Betrieb<br/>zum Erfolg verhelfen.",
       "supportingText": "Ob Demo, Produktfragen oder technischer Support, unser Team ist für Sie da.",
       "backToChooser": "Zurück zu den Kontaktoptionen",
       "servicesAria": "Wie wir helfen können",
@@ -1237,7 +1237,7 @@
     },
     "faq": {
       "pageEyebrow": "HILFE-CENTER",
-      "pageTitle": "Fragen? Wir haben Antworten.",
+      "pageTitle": "Fragen?<br/>Wir haben Antworten.",
       "pageSubtitle": "Alles, was Sie über CareTip, digitales Trinkgeld, Teammanagement und sichere Auszahlungen wissen müssen.",
       "items": [
         {
@@ -3036,7 +3036,7 @@
     },
     "audienceBenefits": {
       "eyebrow": "VORTEILE AUF EINEN BLICK",
-      "headline": "Volle Kontrolle für Inhaber. <hl>Mehr Motivation</hl> für Teams.",
+      "headline": "Volle Kontrolle für Inhaber.<br/><hl>Mehr Motivation</hl> für Teams.",
       "businessRole": "Für Betriebsinhaber",
       "businessTitle": "Volle Transparenz über Ihr Team",
       "businessBody": "Standorte, QR-Codes und Auszahlungen aus einem einzigen Dashboard steuern.",

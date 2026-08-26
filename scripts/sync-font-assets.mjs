@@ -1,10 +1,10 @@
 /**
- * Copies self-hosted Inter + Manrope assets into public/fonts for
- * absolute /fonts/... URLs in caretip-font-faces.css.
+ * Copies self-hosted Inter + Manrope + Playfair + Roboto assets into public/fonts
+ * for absolute /fonts/... URLs in caretip-font-faces.css.
  *
  * Inter: use the same @fontsource latin .woff files the app used before
  * (this package build does not ship matching .woff2 for those weights).
- * Manrope: .woff2 as before.
+ * Manrope / Playfair / Roboto: .woff2 as available.
  */
 import { copyFile, mkdir, access } from "node:fs/promises";
 import { dirname, join } from "node:path";
@@ -60,6 +60,22 @@ const fontAssets = [
   [
     "@fontsource/playfair-display/files/playfair-display-latin-600-italic.woff2",
     "public/fonts/playfair/playfair-display-latin-600-italic.woff2",
+  ],
+  [
+    "@fontsource/roboto/files/roboto-latin-500-normal.woff2",
+    "public/fonts/roboto/roboto-latin-500-normal.woff2",
+  ],
+  [
+    "@fontsource/roboto/files/roboto-latin-500-italic.woff2",
+    "public/fonts/roboto/roboto-latin-500-italic.woff2",
+  ],
+  [
+    "@fontsource/roboto/files/roboto-latin-600-normal.woff2",
+    "public/fonts/roboto/roboto-latin-600-normal.woff2",
+  ],
+  [
+    "@fontsource/roboto/files/roboto-latin-700-normal.woff2",
+    "public/fonts/roboto/roboto-latin-700-normal.woff2",
   ],
 ];
 

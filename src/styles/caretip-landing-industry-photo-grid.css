@@ -100,7 +100,7 @@
 }
 
 .caretip-landing .caretip-industry-photo-card__label strong {
-  font-family: var(--font-hero-display, "Playfair Display", Georgia, serif);
+  font-family: var(--font-hero-display, "Roboto", "Inter", ui-sans-serif, system-ui, sans-serif);
   font-size: 27px;
   font-weight: 500;
   line-height: 1.15;

@@ -88,7 +88,7 @@
   src: url("/fonts/manrope/manrope-latin-800.woff2") format("woff2");
 }
 
-/* Playfair Display — landing / marketing display headlines (TrickyFreshString reference) */
+/* Playfair Display — retained for optional serif use; marketing headlines use Roboto */
 @font-face {
   font-family: "Playfair Display";
   font-style: normal;
@@ -119,4 +119,37 @@
   font-weight: 600;
   font-display: swap;
   src: url("/fonts/playfair/playfair-display-latin-600-italic.woff2") format("woff2");
+}
+
+/* Roboto — marketing / landing display headlines */
+@font-face {
+  font-family: "Roboto";
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url("/fonts/roboto/roboto-latin-500-normal.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Roboto";
+  font-style: italic;
+  font-weight: 500;
+  font-display: swap;
+  src: url("/fonts/roboto/roboto-latin-500-italic.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Roboto";
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url("/fonts/roboto/roboto-latin-600-normal.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Roboto";
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url("/fonts/roboto/roboto-latin-700-normal.woff2") format("woff2");
 }

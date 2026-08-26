@@ -106,10 +106,19 @@ export function LandingAudienceBenefitsSection() {
                 {t(`${prefix}.eyebrow`)}
               </LandingSectionAccent>
             </div>
-            <h2 id="audience-benefits-heading" className={landingUi.sectionTitle}>
+            <h2
+              id="audience-benefits-heading"
+              className={cn(
+                landingUi.sectionTitle,
+                "caretip-audience-benefits__headline",
+              )}
+            >
               <Trans
                 i18nKey={`${prefix}.headline`}
-                components={landingHeadlineHighlightComponents}
+                components={{
+                  ...landingHeadlineHighlightComponents,
+                  br: <br />,
+                }}
               />
             </h2>
           </header>

@@ -14,5 +14,5 @@
 @import "../caretip-feature-check.css";
 @import "../caretip-legal-document-page.css";
 @import "../caretip-mobile-optical-premium.css";
-/* Playfair + type scale: Features / Industries / Pricing / FAQ only (not auth/dashboards) */
+/* Playfair + type scale: Features / Industries / Pricing / FAQ (Roboto headlines) */
 @import "../caretip-marketing-playfair-type.css";

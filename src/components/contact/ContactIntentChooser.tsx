@@ -1,5 +1,5 @@
 import { ArrowLeft, ArrowRight, CalendarDays, Check, Handshake, LifeBuoy } from "lucide-react";
-import { useTranslation } from "react-i18next";
+import { Trans, useTranslation } from "react-i18next";
 import type { ContactIntent } from "@/components/contact/contactTypes";
 import { CONTACT_TRUST_KEYS } from "@/components/contact/contactTypes";
 import { contactPageUi } from "@/components/contact/contactPageUi";
@@ -39,7 +39,9 @@ export function ContactIntentChooser({ onSelect, className }: ContactIntentChoos
       <header className={contactPageUi.intro}>
         <div className="caretip-contact-reveal caretip-contact-reveal--1">
           <p className="caretip-contact-eyebrow">{t("staticPages.contact.eyebrow")}</p>
-          <h1 className={contactPageUi.headline}>{t("staticPages.contact.headline")}</h1>
+          <h1 className={contactPageUi.headline}>
+            <Trans i18nKey="staticPages.contact.headline" components={{ br: <br /> }} />
+          </h1>
         </div>
         <p className={cn(contactPageUi.subhead, "caretip-contact-reveal caretip-contact-reveal--2")}>
           {t("staticPages.contact.supportingText")}

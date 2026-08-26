@@ -17,14 +17,14 @@ const brandAccentGradient =
 /**
  * Landing page design system — layout, spacing, typography (TipJar-inspired rhythm).
  *
- * Typography: Inter (UI/body); Playfair Display for landing hero/section H1–H2
+ * Typography: Inter (UI/body); Roboto for landing hero/section H1–H2
  * via `font-hero-display` (see caretip-landing-trickyfresh-redesign.css).
  * Responsive rules:
  * - Phone (<md): left-aligned hero; centered section intros below lg
  * - clamp()-based type scale in `caretip-typography.css`
  */
 
-/** Hero headline — Playfair display scale (weight refined in redesign CSS). */
+/** Hero headline — Roboto display scale (weight refined in redesign CSS). */
 const heroHeadlineTone =
   "font-hero-display font-medium text-foreground max-lg:text-left max-lg:text-wrap lg:text-pretty antialiased";
 /** Below lg — size/rhythm from caretip-landing-hero.css */

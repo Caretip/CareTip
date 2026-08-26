@@ -3,7 +3,7 @@
  * (artifacts/caretip-landing) design language.
  *
  * Scope: .caretip-landing only. Content/nav/routes remain CareTip.
- * Headline font: Playfair Display (Replit display face) — loaded via LandingPage.
+ * Headline font: Roboto — loaded via caretip-font-faces.css.
  */
 
 .caretip-landing {
@@ -14,7 +14,7 @@
   --care-coral: #f4d3bf;
   --care-slate: #53616b;
   --care-ink-deep: #273640;
-  --font-hero-display: "Playfair Display", Georgia, "Times New Roman", serif;
+  --font-hero-display: "Roboto", "Inter", ui-sans-serif, system-ui, sans-serif;
   --app-font-serif: var(--font-hero-display);
   background: var(--care-cream);
   color: var(--care-ink);
@@ -35,7 +35,7 @@
   color: var(--care-ink);
 }
 
-/* —— Playfair on major landing headlines —— */
+/* —— Roboto on major landing headlines —— */
 .caretip-landing h1.font-hero-display,
 .caretip-landing h1.caretip-hero-headline,
 .caretip-landing h2,
@@ -44,8 +44,8 @@
 .caretip-landing .text-section-title {
   font-family: var(--font-hero-display) !important;
   font-weight: 500 !important;
-  letter-spacing: -0.065em;
-  line-height: 1.05;
+  letter-spacing: -0.025em;
+  line-height: 1.08;
 }
 
 .caretip-landing .caretip-hero-headline-accent,
@@ -969,13 +969,22 @@ html:not(.dark) .caretip-landing #final-cta .caretip-trust-strip__check,
 
 /* TrickyFreshString section heading scale */
 .caretip-landing .caretip-industries-teaser h2,
-.caretip-landing .caretip-audience-benefits h2,
 .caretip-landing .caretip-industries-teaser .text-section-title,
-.caretip-landing .caretip-audience-benefits .text-section-title,
 .caretip-landing h2.text-section-title {
   font-size: clamp(2.7rem, 5vw, 4.75rem) !important;
-  letter-spacing: -0.065em !important;
-  line-height: 1.02 !important;
+  letter-spacing: -0.03em !important;
+  line-height: 1.08 !important;
+}
+
+/* Audience benefits: slightly smaller + two controlled lines */
+.caretip-landing .caretip-audience-benefits h2,
+.caretip-landing .caretip-audience-benefits .caretip-audience-benefits__headline,
+.caretip-landing .caretip-audience-benefits .text-section-title {
+  font-size: clamp(2.25rem, 4vw, 3.55rem) !important;
+  letter-spacing: -0.03em !important;
+  line-height: 1.12 !important;
+  max-width: min(100%, 30ch) !important;
+  text-wrap: pretty;
 }
 
 .caretip-landing .caretip-industries-teaser__sub,
@@ -1194,9 +1203,13 @@ html:not(.dark) .caretip-landing #final-cta .caretip-trust-strip__check,
   }
 
   .caretip-landing .caretip-industries-teaser h2,
-  .caretip-landing .caretip-audience-benefits h2,
   .caretip-landing h2.text-section-title {
     font-size: clamp(2.65rem, 13vw, 4rem) !important;
+  }
+
+  .caretip-landing .caretip-audience-benefits h2,
+  .caretip-landing .caretip-audience-benefits .caretip-audience-benefits__headline {
+    font-size: clamp(2.15rem, 9.5vw, 2.85rem) !important;
   }
 
   .caretip-landing .caretip-hero-image-wrap {
