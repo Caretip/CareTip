@@ -2,16 +2,16 @@ import { memo } from "react";
 import { cn } from "@/lib/utils";
 import type { DashboardStatusTone } from "@/app/lib/dashboardStatus/types";
 
-const toneClass: Record<DashboardStatusTone, string> = {
-  live: "border-emerald-500/25 bg-emerald-500/[0.06] text-foreground",
-  updating: "border-amber-500/25 bg-amber-500/[0.06] text-foreground",
-  action: "border-red-500/25 bg-red-500/[0.06] text-foreground",
+const textClass: Record<DashboardStatusTone, string> = {
+  live: "text-foreground",
+  updating: "text-foreground",
+  action: "text-foreground",
 };
 
 const dotClass: Record<DashboardStatusTone, string> = {
-  live: "bg-emerald-500 ring-2 ring-emerald-500/20",
-  updating: "bg-amber-500 ring-2 ring-amber-500/20 animate-pulse",
-  action: "bg-red-500 ring-2 ring-red-500/20",
+  live: "bg-emerald-500",
+  updating: "bg-amber-500 animate-pulse",
+  action: "bg-red-500",
 };
 
 export type DashboardStatusBadgeProps = {
@@ -27,17 +27,34 @@ export const DashboardStatusBadge = memo(function DashboardStatusBadge({
   description,
   className,
 }: DashboardStatusBadgeProps) {
+  const live = tone === "live";
+
   return (
     <span
       role="status"
       className={cn(
-        "inline-flex max-w-full items-center gap-2 rounded-full border px-2.5 py-1 text-xs font-medium",
-        toneClass[tone],
+        "inline-flex max-w-full items-center gap-1.5 text-xs font-medium",
+        textClass[tone],
         className,
       )}
       title={description}
     >
-      <span className={cn("h-2 w-2 shrink-0 rounded-full", dotClass[tone])} aria-hidden />
+      <span
+        className={cn(
+          "relative inline-flex h-2.5 w-2.5 shrink-0 items-center justify-center",
+          !live && "h-2 w-2",
+        )}
+        aria-hidden
+      >
+        {live ? (
+          <>
+            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-40" />
+            <span className={cn("inline-flex h-2 w-2 rounded-full", dotClass.live)} />
+          </>
+        ) : (
+          <span className={cn("h-2 w-2 rounded-full", dotClass[tone])} />
+        )}
+      </span>
       <span className="min-w-0 truncate">{label}</span>
     </span>
   );
