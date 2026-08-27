@@ -9,7 +9,11 @@ function leadApiUrl(path: string): string {
   return base ? `${base}${p}` : p;
 }
 
-async function postLead(path: string, body: Record<string, unknown>): Promise<LeadSubmitResult> {
+async function postLead(
+  path: string,
+  body: Record<string, unknown>,
+  fallbackEmail: string,
+): Promise<LeadSubmitResult> {
   try {
     const res = await fetch(leadApiUrl(path), {
       method: "POST",
@@ -22,11 +26,17 @@ async function postLead(path: string, body: Record<string, unknown>): Promise<Le
 
     const data = (await res.json().catch(() => ({}))) as { message?: string };
     if (!res.ok) {
-      return { ok: false, message: data.message || "Something went wrong. Please try again." };
+      return {
+        ok: false,
+        message: data.message || `Something went wrong. Please email ${fallbackEmail}.`,
+      };
     }
     return { ok: true };
   } catch {
-    return { ok: false, message: "Unable to reach the server. Please try again or email us directly." };
+    return {
+      ok: false,
+      message: `Unable to reach the server. Please email ${fallbackEmail}.`,
+    };
   }
 }
 
@@ -38,7 +48,7 @@ export function submitDemoLead(fields: {
   teamSize: string;
   message: string;
 }): Promise<LeadSubmitResult> {
-  return postLead("/api/leads/demo", fields);
+  return postLead("/api/leads/demo", fields, "info@caretip.de");
 }
 
 export function submitSupportLead(fields: {
@@ -47,5 +57,5 @@ export function submitSupportLead(fields: {
   category: string;
   message: string;
 }): Promise<LeadSubmitResult> {
-  return postLead("/api/leads/support", fields);
+  return postLead("/api/leads/support", fields, "support@caretip.de");
 }

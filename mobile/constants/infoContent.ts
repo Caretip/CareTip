@@ -1,3 +1,9 @@
+import {
+  CARETIP_INFO_MAILTO,
+  CARETIP_SUPPORT_MAILTO,
+  CARETIP_SUPPORT_TICKET_MAILTO,
+} from "./caretipContactEmails";
+
 export type FaqItem = {
   id: string;
   question: string;
@@ -14,12 +20,17 @@ export const CONTACT_CHANNEL_DEFS = [
   {
     id: "email" as const,
     icon: "mail-outline" as const,
-    href: "mailto:support@caretip.de",
+    href: CARETIP_SUPPORT_MAILTO,
+  },
+  {
+    id: "inquiry" as const,
+    icon: "chatbubble-ellipses-outline" as const,
+    href: CARETIP_INFO_MAILTO,
   },
   {
     id: "ticket" as const,
     icon: "ticket-outline" as const,
-    href: "mailto:support@caretip.de?subject=CareTip%20Support",
+    href: CARETIP_SUPPORT_TICKET_MAILTO,
   },
   {
     id: "phone" as const,

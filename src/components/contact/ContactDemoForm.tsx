@@ -4,6 +4,7 @@ import { Link } from "react-router";
 import { useTranslation } from "react-i18next";
 import { CONTACT_INDUSTRIES } from "@/app/data/caretipIndustries";
 import { submitDemoLead } from "@/app/lib/leadApi";
+import { openCaretipMailto, CARETIP_INFO_EMAIL } from "@/app/lib/caretipContactEmails";
 import { trackGoogleAdsConversion } from "@/app/lib/googleAdsConversion";
 import {
   Select,
@@ -81,8 +82,26 @@ export function ContactDemoForm({
       return;
     }
 
+    // Fallback: open the user's mail client addressed to the demo/info inbox.
+    openCaretipMailto({
+      mailbox: "info",
+      subject: `CareTip demo request — ${businessName}`,
+      body: [
+        `Name: ${fullName}`,
+        `Work email: ${workEmail}`,
+        `Business: ${businessName}`,
+        `Type: ${businessType}`,
+        `Team size: ${teamSize}`,
+        "",
+        message,
+      ].join("\n"),
+    });
     setStatus("error");
-    setErrorMessage(result.message);
+    setErrorMessage(
+      result.message.includes("email")
+        ? result.message
+        : `${result.message} You can also email ${CARETIP_INFO_EMAIL}.`,
+    );
   }
 
   return (

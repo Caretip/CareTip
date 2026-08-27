@@ -18,8 +18,9 @@ export type CrmLeadPayload = {
 function getLeadsInbox(): string {
   return (
     process.env.LEADS_INBOX_EMAIL?.trim() ||
+    process.env.INFO_INBOX_EMAIL?.trim() ||
     process.env.SALES_INBOX_EMAIL?.trim() ||
-    "sales@caretip.de"
+    "info@caretip.de"
   );
 }
 

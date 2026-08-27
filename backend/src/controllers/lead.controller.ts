@@ -63,7 +63,7 @@ export async function submitDemoLead(req: Request, res: Response) {
 
     const sent = await notifyLeadInbox(payload);
     if (!sent && process.env.NODE_ENV === "production") {
-      return res.status(503).json({ message: "Unable to send your request right now. Please email sales@caretip.de." });
+      return res.status(503).json({ message: "Unable to send your request right now. Please email info@caretip.de." });
     }
 
     return res.status(201).json({ ok: true, leadId: `demo_${Date.now()}` });

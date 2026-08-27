@@ -268,7 +268,7 @@ export const de: MobileMessages = {
       },
       support: {
         q: "Wie erreiche ich den Support?",
-        a: "Nutzen Sie Kontakt unter Entdecken Sie CareTip oder schreiben Sie an support@caretip.de. Geschäftskunden können auch ein Support-Ticket über den Kontakt-Bildschirm öffnen.",
+        a: "Nutzen Sie Kontakt unter Entdecken Sie CareTip oder schreiben Sie an support@caretip.de bei technischen Fragen. Für Demo-Anfragen und allgemeine Anliegen: info@caretip.de. Geschäftskunden können auch ein Support-Ticket über den Kontakt-Bildschirm öffnen.",
       },
     },
     about: {
@@ -286,8 +286,10 @@ export const de: MobileMessages = {
     contact: {
       whatsappTitle: "WhatsApp",
       whatsappSubtitle: "Mit CareTip-Support chatten",
-      emailTitle: "E-Mail",
+      emailTitle: "Technischer Support",
       emailSubtitle: "support@caretip.de",
+      inquiryTitle: "Demo & allgemeine Anfragen",
+      inquirySubtitle: "info@caretip.de",
       ticketTitle: "Support-Ticket",
       ticketSubtitle: "Anfrage auf caretip.de öffnen",
       phoneTitle: "Telefon",

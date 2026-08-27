@@ -4,6 +4,7 @@ import { ContactFlowBack } from "@/components/contact/ContactIntentChooser";
 import { ContactTrustRow } from "@/components/contact/ContactTrustRow";
 import { SALES_BULLET_COUNT } from "@/components/contact/contactTypes";
 import { contactPageUi } from "@/components/contact/contactPageUi";
+import { CARETIP_INFO_EMAIL, CARETIP_INFO_MAILTO } from "@/app/lib/caretipContactEmails";
 import { cn } from "@/lib/utils";
 
 type ContactSalesPanelProps = {
@@ -14,7 +15,7 @@ type ContactSalesPanelProps = {
 };
 
 /**
- * Sales & partnerships contact stage — editorial panel (no form; mailto sales).
+ * Sales & partnerships contact stage — editorial panel (no form; mailto info inbox).
  * Keeps existing demo/support forms untouched.
  */
 export function ContactSalesPanel({
@@ -27,7 +28,6 @@ export function ContactSalesPanel({
   const bullets = Array.from({ length: SALES_BULLET_COUNT }, (_, i) =>
     t(`staticPages.contact.sales.bullets.${i}`),
   );
-  const email = t("staticPages.contact.sales.email");
 
   return (
     <div className={cn(contactPageUi.flow, "caretip-contact-enter", className)}>
@@ -67,9 +67,9 @@ export function ContactSalesPanel({
             <p className="caretip-contact-sales-panel__body">
               {t("staticPages.contact.sales.panelBody")}
             </p>
-            <a className="caretip-contact-sales-panel__email" href={`mailto:${email}`}>
+            <a className="caretip-contact-sales-panel__email" href={CARETIP_INFO_MAILTO}>
               <Mail className="size-4 shrink-0" aria-hidden />
-              {email}
+              {CARETIP_INFO_EMAIL}
             </a>
             <p className="caretip-contact-sales-panel__sla">
               {t("staticPages.contact.sales.responseTime")}

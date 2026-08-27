@@ -114,7 +114,7 @@ function bundle(locale: EmailLocale): Bundle {
 export function getCareTipSupportEmail(): string {
   const fromEnv = process.env.CARETIP_SUPPORT_EMAIL?.trim();
   if (fromEnv && fromEnv.includes("@")) return fromEnv;
-  return "support@caretip.com";
+  return "support@caretip.de";
 }
 
 function footerExtras(_locale: EmailLocale): EmailFooterExtras {

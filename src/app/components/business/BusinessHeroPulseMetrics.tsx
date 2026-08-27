@@ -40,10 +40,10 @@ function PulseCard({ icon, tone, label, loading, count, amount }: PulseCardProps
       )}
     >
       <div className="business-hero-pulse-card__header">
-        <p className="business-hero-pulse-card__label">{label}</p>
         <div className="business-hero-pulse-card__icon" aria-hidden>
           <Icon className="business-hero-pulse-card__icon-glyph" strokeWidth={2.25} />
         </div>
+        <p className="business-hero-pulse-card__label">{label}</p>
       </div>
       <div className="business-hero-pulse-card__value">
         {loading ? (

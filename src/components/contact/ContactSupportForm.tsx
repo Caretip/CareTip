@@ -2,6 +2,7 @@ import { Check } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { submitSupportLead } from "@/app/lib/leadApi";
+import { openCaretipMailto, CARETIP_SUPPORT_EMAIL } from "@/app/lib/caretipContactEmails";
 import {
   Select,
   SelectContent,
@@ -58,8 +59,18 @@ export function ContactSupportForm({ onBack, onSwitchToDemo, className }: Contac
       return;
     }
 
+    // Fallback: open the user's mail client addressed to technical support.
+    openCaretipMailto({
+      mailbox: "support",
+      subject: `CareTip support — ${category}`,
+      body: [`Name: ${name}`, `Email: ${email}`, `Category: ${category}`, "", message].join("\n"),
+    });
     setStatus("error");
-    setErrorMessage(result.message);
+    setErrorMessage(
+      result.message.includes("email")
+        ? result.message
+        : `${result.message} You can also email ${CARETIP_SUPPORT_EMAIL}.`,
+    );
   }
 
   return (

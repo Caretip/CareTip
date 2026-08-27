@@ -22,7 +22,7 @@ export function getLocalizedFaqItems(t: TranslateFn): FaqItem[] {
   }));
 }
 
-export const CONTACT_CHANNEL_IDS = ["whatsapp", "email", "ticket", "phone"] as const;
+export const CONTACT_CHANNEL_IDS = ["whatsapp", "email", "inquiry", "ticket", "phone"] as const;
 
 export type ContactChannelId = (typeof CONTACT_CHANNEL_IDS)[number];
 

@@ -250,6 +250,8 @@ export type MobileMessages = {
       whatsappSubtitle: string;
       emailTitle: string;
       emailSubtitle: string;
+      inquiryTitle: string;
+      inquirySubtitle: string;
       ticketTitle: string;
       ticketSubtitle: string;
       phoneTitle: string;
