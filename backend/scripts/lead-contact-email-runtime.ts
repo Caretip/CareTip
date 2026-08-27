@@ -14,6 +14,7 @@ import type { Request, Response } from "express";
 import { leadSubmissionLimiter } from "../src/middleware/leadRateLimit.middleware.js";
 import * as leadController from "../src/controllers/lead.controller.js";
 import {
+  buildLeadNotificationContent,
   getLeadsInbox,
   getSupportInbox,
   notifyLeadInbox,
@@ -93,6 +94,103 @@ async function withMockedResend<T>(
   } finally {
     globalThis.fetch = original;
   }
+}
+
+function assertCleanLeadEmailBody(label: string, html: string, text: string, forbidden: string[]) {
+  const combined = `${html}\n${text}`;
+  const hits = forbidden.filter((f) => f && combined.includes(f));
+  if (hits.length) {
+    fail(`${label} email body still contains: ${hits.join(", ")}`);
+  } else {
+    pass(`${label} email body has no raw JSON/metadata leaks`);
+  }
+  if (combined.includes('"source": "caretip_contact"') || combined.includes('"userAgent"') || combined.includes('"metadata"')) {
+    fail(`${label} email body still looks like serialized CrmLeadPayload`);
+  } else {
+    pass(`${label} email body is not a serialized payload dump`);
+  }
+}
+
+function testLeadEmailPresentation() {
+  const demo = basePayload("demo", {
+    fullName: 'Ada <script>alert(1)</script>',
+    workEmail: "ada@example.com",
+    businessName: "Demo Cafe",
+    businessType: "cafe",
+    teamSize: "1-10",
+    message: "Please schedule a demo\nTomorrow morning",
+  });
+  demo.metadata = {
+    userAgent: "Mozilla/5.0 lead-test-agent",
+    referer: "https://caretip.de/contact",
+    ip: "203.0.113.50",
+  };
+
+  const demoContent = buildLeadNotificationContent(demo);
+  if (demoContent.html.includes("Demo Request") && demoContent.text.startsWith("Demo Request")) {
+    pass("demo content uses Demo Request heading");
+  } else fail("demo content heading missing");
+
+  if (
+    demoContent.text.includes("Name: Ada <script>alert(1)</script>") &&
+    demoContent.text.includes("Work email: ada@example.com") &&
+    demoContent.text.includes("Business name: Demo Cafe") &&
+    demoContent.text.includes("Message:") &&
+    demoContent.text.includes("Submitted:")
+  ) {
+    pass("demo plain-text includes lead fields only");
+  } else fail("demo plain-text missing expected lead fields");
+
+  if (demoContent.html.includes("Ada &lt;script&gt;alert(1)&lt;/script&gt;")) {
+    pass("demo HTML escapes user-supplied values");
+  } else fail("demo HTML escaping missing");
+
+  assertCleanLeadEmailBody("demo", demoContent.html, demoContent.text, [
+    "203.0.113.50",
+    "Mozilla/5.0 lead-test-agent",
+    "https://caretip.de/contact",
+    '"source"',
+    "caretip_contact",
+    "userAgent",
+    "referer",
+  ]);
+
+  const support = basePayload("support", {
+    name: "Sam Support",
+    email: "sam@example.com",
+    category: "technical",
+    message: "QR code issue",
+  });
+  support.metadata = {
+    userAgent: "SupportAgent/1.0",
+    referer: "https://caretip.de/contact?intent=support",
+    ip: "198.51.100.9",
+  };
+
+  const supportContent = buildLeadNotificationContent(support);
+  if (supportContent.html.includes("Support Request") && supportContent.text.startsWith("Support Request")) {
+    pass("support content uses Support Request heading");
+  } else fail("support content heading missing");
+
+  if (
+    supportContent.text.includes("Name: Sam Support") &&
+    supportContent.text.includes("Email: sam@example.com") &&
+    supportContent.text.includes("Category: technical") &&
+    supportContent.text.includes("Message:") &&
+    supportContent.text.includes("Submitted:")
+  ) {
+    pass("support plain-text includes lead fields only");
+  } else fail("support plain-text missing expected lead fields");
+
+  assertCleanLeadEmailBody("support", supportContent.html, supportContent.text, [
+    "198.51.100.9",
+    "SupportAgent/1.0",
+    "https://caretip.de/contact?intent=support",
+    '"source"',
+    "caretip_contact",
+    "userAgent",
+    "referer",
+  ]);
 }
 
 async function testDestinationsAndReplyTo() {
@@ -213,6 +311,21 @@ async function testDestinationsAndReplyTo() {
       } else {
         pass("support Resend payload includes non-empty reply_to");
       }
+
+      const demoHtml = String(demoCall.body.html ?? "");
+      const demoText = String(demoCall.body.text ?? "");
+      const supportHtml = String(supportCall.body.html ?? "");
+      const supportText = String(supportCall.body.text ?? "");
+      assertCleanLeadEmailBody("demo Resend", demoHtml, demoText, [
+        "attacker@evil.test",
+        '"metadata"',
+        "userAgent",
+      ]);
+      assertCleanLeadEmailBody("support Resend", supportHtml, supportText, [
+        "attacker@evil.test",
+        '"metadata"',
+        "userAgent",
+      ]);
     });
 
     const reply = resolveLeadReplyTo(
@@ -516,6 +629,19 @@ async function testLiveResendAcceptance(): Promise<{
       fail(`live support to unexpected: ${JSON.stringify(supportTo)}`);
     }
 
+    assertCleanLeadEmailBody(
+      "live demo",
+      String(demoReq?.body.html ?? ""),
+      String(demoReq?.body.text ?? ""),
+      ['"source"', "userAgent", "caretip_contact", "metadata"],
+    );
+    assertCleanLeadEmailBody(
+      "live support",
+      String(supportReq?.body.html ?? ""),
+      String(supportReq?.body.text ?? ""),
+      ['"source"', "userAgent", "caretip_contact", "metadata"],
+    );
+
     // Mailbox contents are not readable from this environment — do not claim inbox receipt.
     pass("inbox receipt not auto-verified (no mailbox access in this runner)");
     void demoCap;
@@ -530,6 +656,7 @@ async function testLiveResendAcceptance(): Promise<{
 }
 
 async function main() {
+  testLeadEmailPresentation();
   await testDestinationsAndReplyTo();
   await testResendFailureAndMissingConfig();
   await testControllerValidationAndDeliveryFlag();
