@@ -21,7 +21,7 @@ import { CustomerFlowShell } from "./CustomerFlowShell";
 import {
   CustomerJourneyBackButton,
 } from "./CustomerJourneyHeader";
-import { venueBrandFromFields, useCustomerVenueBrand } from "./customerJourneyBrand";
+import { useCustomerVenueBrand, mergeCustomerVenueBrand } from "./customerJourneyBrand";
 import { headerCompletePaymentFor } from "./customerJourneyHeaderCopy";
 import { performExternalStripeRedirect } from "../../lib/safeCheckoutRedirect";
 import {
@@ -249,9 +249,10 @@ export function PaymentPage() {
 
   const employeeDisplayName = employeeName ?? t("tipFlow.common.teamMember");
   const paymentHeader = headerCompletePaymentFor(t, employeeDisplayName);
-  const resolvedVenue = resolvedVenueSnapshot
-    ? venueBrandFromFields(resolvedVenueSnapshot.name, resolvedVenueSnapshot.logo)
-    : fetchedVenue;
+  const resolvedVenue = mergeCustomerVenueBrand(fetchedVenue, {
+    snapshot: resolvedVenueSnapshot,
+    fallbackName: fallbackVenue,
+  });
 
   return (
     <CustomerFlowShell

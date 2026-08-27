@@ -116,7 +116,7 @@ export function TipSuccessExperience({
   venue,
   employee,
   thankYouMessage,
-  supportingText: _supportingText,
+  supportingText,
   headline,
   tipAmount,
   receiptNumber,
@@ -135,6 +135,7 @@ export function TipSuccessExperience({
   const branding = venue.branding;
   const accent = guestBrandAccentColor(branding);
   const displayHeadline = headline ?? t("tipFlow.success.celebrationHeadline");
+  const venueContextLine = venue.contextLine || supportingText?.trim() || null;
   const fadeUp = reduceMotion
     ? {}
     : {
@@ -183,6 +184,9 @@ export function TipSuccessExperience({
               className={cn("mx-auto", embedded ? "mb-1.5" : "mb-2")}
             />
             <p className="customer-flow-success-surface__venue">{venue.name}</p>
+            {venueContextLine ? (
+              <div className="customer-flow-success-surface__venue-context">{venueContextLine}</div>
+            ) : null}
           </header>
 
           <motion.section

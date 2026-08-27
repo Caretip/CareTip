@@ -219,7 +219,7 @@
 
 .caretip-landing .caretip-hero-section--fullbleed-light .caretip-hero-brand-tagline__text,
 .caretip-landing .caretip-hero-section--fullbleed-dark .caretip-hero-brand-tagline__text {
-  color: #ffb06a !important;
+  color: var(--care-orange, #e9781c) !important;
   font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.14em;
@@ -228,8 +228,8 @@
 
 .caretip-landing .caretip-hero-section--fullbleed-light .caretip-hero-brand-tagline__accent,
 .caretip-landing .caretip-hero-section--fullbleed-dark .caretip-hero-brand-tagline__accent {
-  background: #ffb06a !important;
-  box-shadow: none;
+  background: var(--care-orange, #e9781c) !important;
+  box-shadow: 0 0 0 3px rgba(233, 120, 28, 0.18);
 }
 
 /* TrickyFreshString type scale — hero (EN + DE match German optical size) */
@@ -292,8 +292,8 @@
 .caretip-landing .caretip-hero-section--fullbleed-light h1 .bg-clip-text,
 .caretip-landing .caretip-hero-section--fullbleed-dark .caretip-hero-headline-accent,
 .caretip-landing .caretip-hero-section--fullbleed-dark h1 .bg-clip-text {
-  color: #ffb06a !important;
-  -webkit-text-fill-color: #ffb06a !important;
+  color: var(--care-orange, #e9781c) !important;
+  -webkit-text-fill-color: var(--care-orange, #e9781c) !important;
   background: none !important;
 }
 

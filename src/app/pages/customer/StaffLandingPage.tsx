@@ -16,7 +16,7 @@ import { customerFlowUi as cf } from "./customerFlowUi";
 import { CustomerJourneyHeader } from "./CustomerJourneyHeader";
 import { CustomerJourneyAttributionFooter } from "./CustomerJourneyCareTipAttribution";
 import { headerLeaveTipFor } from "./customerJourneyHeaderCopy";
-import { venueBrandFromResolved } from "./customerJourneyBrand";
+import { venueBrandFromResolved, useCustomerVenueBrand, mergeCustomerVenueBrand } from "./customerJourneyBrand";
 import {
   type CustomerEntryPhase,
   isCustomerEntryPending,
@@ -127,6 +127,30 @@ export function StaffLandingPage() {
     navigate("/payment");
   };
 
+  const fallbackVenue = t("tipFlow.common.venue");
+  const fetchedVenue = useCustomerVenueBrand(staff?.businessId, fallbackVenue);
+  const venueBrand = staff
+    ? mergeCustomerVenueBrand(
+        {
+          ...fetchedVenue,
+          branding: fetchedVenue.branding ?? staff.branding ?? null,
+          tagline:
+            fetchedVenue.tagline ??
+            (staff.branding?.premium && staff.branding.brandTagline?.trim()
+              ? staff.branding.brandTagline.trim()
+              : undefined),
+        },
+        {
+          snapshot: { name: staff.businessName, logo: staff.businessLogo ?? null },
+          fallbackName: fallbackVenue,
+        },
+      )
+    : venueBrandFromResolved({
+        businessName: fallbackVenue,
+        businessLogo: null,
+        branding: null,
+      });
+
   if (isCustomerEntryPending(phase)) {
     return (
       <CareTipPageLoader
@@ -163,11 +187,7 @@ export function StaffLandingPage() {
   return (
     <div className={cf.page}>
       <CustomerJourneyHeader
-        venue={venueBrandFromResolved({
-          businessName: staff.businessName,
-          businessLogo: staff.businessLogo ?? null,
-          branding: staff.branding ?? null,
-        })}
+        venue={venueBrand}
         stepTitle={profileHeader.stepTitle}
         trustMessage={profileHeader.trustMessage}
       />

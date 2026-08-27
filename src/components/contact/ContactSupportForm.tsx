@@ -2,7 +2,7 @@ import { Check } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { submitSupportLead } from "@/app/lib/leadApi";
-import { openCaretipMailto, CARETIP_SUPPORT_EMAIL } from "@/app/lib/caretipContactEmails";
+import { buildCaretipMailto, CARETIP_SUPPORT_EMAIL } from "@/app/lib/caretipContactEmails";
 import {
   Select,
   SelectContent,
@@ -29,6 +29,7 @@ export function ContactSupportForm({ onBack, onSwitchToDemo, className }: Contac
   const bullets = [0, 1, 2].map((i) => t(`staticPages.contact.support.bullets.${i}`));
   const [status, setStatus] = useState<FormStatus>("idle");
   const [errorMessage, setErrorMessage] = useState("");
+  const [fallbackMailto, setFallbackMailto] = useState<string | null>(null);
   const [category, setCategory] = useState("");
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -44,11 +45,13 @@ export function ContactSupportForm({ onBack, onSwitchToDemo, className }: Contac
     if (!name || !email || !category || !message) {
       setStatus("error");
       setErrorMessage(t("staticPages.contact.form.validation"));
+      setFallbackMailto(null);
       return;
     }
 
     setStatus("submitting");
     setErrorMessage("");
+    setFallbackMailto(null);
 
     const result = await submitSupportLead({ name, email, category, message });
 
@@ -59,17 +62,19 @@ export function ContactSupportForm({ onBack, onSwitchToDemo, className }: Contac
       return;
     }
 
-    // Fallback: open the user's mail client addressed to technical support.
-    openCaretipMailto({
-      mailbox: "support",
-      subject: `CareTip support — ${category}`,
-      body: [`Name: ${name}`, `Email: ${email}`, `Category: ${category}`, "", message].join("\n"),
-    });
+    // Do not auto-open mailto — that can feel like delivery succeeded.
+    setFallbackMailto(
+      buildCaretipMailto({
+        mailbox: "support",
+        subject: `CareTip support — ${category}`,
+        body: [`Name: ${name}`, `Email: ${email}`, `Category: ${category}`, "", message].join("\n"),
+      }),
+    );
     setStatus("error");
     setErrorMessage(
-      result.message.includes("email")
+      result.message.includes(CARETIP_SUPPORT_EMAIL)
         ? result.message
-        : `${result.message} You can also email ${CARETIP_SUPPORT_EMAIL}.`,
+        : `${t("staticPages.contact.form.notDelivered")} ${CARETIP_SUPPORT_EMAIL}.`,
     );
   }
 
@@ -168,9 +173,16 @@ export function ContactSupportForm({ onBack, onSwitchToDemo, className }: Contac
                 </div>
 
                 {status === "error" && errorMessage ? (
-                  <p className="caretip-contact-form-status caretip-contact-form-status--error" role="alert">
-                    {errorMessage}
-                  </p>
+                  <div className="caretip-contact-form-status caretip-contact-form-status--error" role="alert">
+                    <p>{errorMessage}</p>
+                    {fallbackMailto ? (
+                      <p className="mt-2">
+                        <a className="caretip-contact-inline-link font-semibold" href={fallbackMailto}>
+                          {t("staticPages.contact.form.emailFallbackLink")} ({CARETIP_SUPPORT_EMAIL})
+                        </a>
+                      </p>
+                    ) : null}
+                  </div>
                 ) : null}
 
                 <button type="submit" className={contactPageUi.submit} disabled={status === "submitting"}>

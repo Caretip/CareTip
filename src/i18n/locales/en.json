@@ -371,7 +371,9 @@
         "successTitle": "Thank you. We received your message",
         "demoSuccess": "Our team will reach out within one business day to schedule your demo.",
         "supportSuccess": "Our support team will follow up shortly with next steps.",
-        "validation": "Please complete all required fields before submitting."
+        "validation": "Please complete all required fields before submitting.",
+        "notDelivered": "Your message was not sent. Please try again, or email us directly at",
+        "emailFallbackLink": "Open email app"
       }
     },
     "about": {

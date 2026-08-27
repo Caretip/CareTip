@@ -17,7 +17,7 @@ import { CustomerFlowShell } from "./CustomerFlowShell";
 import {
   CustomerJourneyBackButton,
 } from "./CustomerJourneyHeader";
-import { venueBrandFromFields, useCustomerVenueBrand } from "./customerJourneyBrand";
+import { useCustomerVenueBrand, mergeCustomerVenueBrand } from "./customerJourneyBrand";
 import { headerChooseAmountFor } from "./customerJourneyHeaderCopy";
 
 export function TipAmountPage() {
@@ -197,15 +197,16 @@ export function TipAmountPage() {
     );
   };
 
-  const resolvedVenue = resolvedVenueSnapshot
-    ? venueBrandFromFields(resolvedVenueSnapshot.name, resolvedVenueSnapshot.logo)
-    : fetchedVenue;
+  const resolvedVenue = mergeCustomerVenueBrand(fetchedVenue, {
+    snapshot: resolvedVenueSnapshot,
+    fallbackName: fallbackVenue,
+    extraContextLine:
+      tippingLocationName && tippingTableName
+        ? t("tipFlow.atVenue", { location: tippingLocationName, table: tippingTableName })
+        : undefined,
+  });
   const employeeDisplayName = employeeName ?? t("tipFlow.common.teamMember");
   const amountHeader = headerChooseAmountFor(t, employeeDisplayName, { directStaffQr: directFromStaffQr });
-  const venueContext =
-    tippingLocationName && tippingTableName
-      ? t("tipFlow.atVenue", { location: tippingLocationName, table: tippingTableName })
-      : undefined;
 
   if (!employeeId) {
     return (
@@ -225,10 +226,7 @@ export function TipAmountPage() {
       headerLeading={
         <CustomerJourneyBackButton label={t("tipFlow.common.back")} onClick={handleBack} />
       }
-      venue={{
-        ...resolvedVenue,
-        contextLine: venueContext,
-      }}
+      venue={resolvedVenue}
       stepTitle={amountHeader.stepTitle}
       trustMessage={amountHeader.trustMessage}
       loading={!contextReady}

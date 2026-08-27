@@ -12,7 +12,7 @@ import { ProfileAvatar } from "../../components/ui/profile-avatar";
 import { CustomerJourneyHeader } from "./CustomerJourneyHeader";
 import { CustomerJourneyAttributionFooter } from "./CustomerJourneyCareTipAttribution";
 import { headerLeaveTipFor } from "./customerJourneyHeaderCopy";
-import { venueBrandFromResolved } from "./customerJourneyBrand";
+import { useCustomerVenueBrand, mergeCustomerVenueBrand } from "./customerJourneyBrand";
 import { getRepeatTipDataForBusiness } from "../../lib/repeatTip";
 import { markCustomerFlowEntered } from "../../lib/customerFlowGuard";
 import { formatEur } from "../../lib/formatEur";
@@ -144,6 +144,25 @@ export function StaffTipByPublicPathPage() {
   };
 
   const profileHeaderFor = (name: string) => headerLeaveTipFor(t, name);
+  const fallbackVenue = t("tipFlow.common.venue");
+  const fetchedVenue = useCustomerVenueBrand(staff?.businessId, fallbackVenue);
+  const venueBrand = staff
+    ? mergeCustomerVenueBrand(
+        {
+          ...fetchedVenue,
+          branding: fetchedVenue.branding ?? staff.branding ?? null,
+          tagline:
+            fetchedVenue.tagline ??
+            (staff.branding?.premium && staff.branding.brandTagline?.trim()
+              ? staff.branding.brandTagline.trim()
+              : undefined),
+        },
+        {
+          snapshot: { name: staff.businessName, logo: staff.businessLogo ?? null },
+          fallbackName: fallbackVenue,
+        },
+      )
+    : { name: fallbackVenue, logo: null };
 
   if (isCustomerEntryPending(phase)) {
     const pendingHeader = staff
@@ -151,15 +170,7 @@ export function StaffTipByPublicPathPage() {
       : profileHeaderFor(t("tipFlow.common.teamMember"));
     return (
       <CustomerFlowShell
-        venue={
-          staff
-            ? venueBrandFromResolved({
-                businessName: staff.businessName,
-                businessLogo: staff.businessLogo ?? null,
-                branding: staff.branding ?? null,
-              })
-            : { name: t("tipFlow.common.venue"), logo: null }
-        }
+        venue={venueBrand}
         stepTitle={pendingHeader.stepTitle}
         trustMessage={pendingHeader.trustMessage}
         loading
@@ -184,7 +195,7 @@ export function StaffTipByPublicPathPage() {
     const pendingHeader = profileHeaderFor(t("tipFlow.common.teamMember"));
     return (
       <CustomerFlowShell
-        venue={{ name: t("tipFlow.common.venue"), logo: null }}
+        venue={{ name: fallbackVenue, logo: null }}
         stepTitle={pendingHeader.stepTitle}
         trustMessage={pendingHeader.trustMessage}
         loading
@@ -199,11 +210,7 @@ export function StaffTipByPublicPathPage() {
   return (
     <div className={cf.page}>
       <CustomerJourneyHeader
-        venue={venueBrandFromResolved({
-          businessName: staff.businessName,
-          businessLogo: staff.businessLogo ?? null,
-          branding: staff.branding ?? null,
-        })}
+        venue={venueBrand}
         stepTitle={profileHeader.stepTitle}
         trustMessage={profileHeader.trustMessage}
       />

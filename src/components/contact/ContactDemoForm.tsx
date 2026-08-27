@@ -4,7 +4,7 @@ import { Link } from "react-router";
 import { useTranslation } from "react-i18next";
 import { CONTACT_INDUSTRIES } from "@/app/data/caretipIndustries";
 import { submitDemoLead } from "@/app/lib/leadApi";
-import { openCaretipMailto, CARETIP_INFO_EMAIL } from "@/app/lib/caretipContactEmails";
+import { buildCaretipMailto, CARETIP_INFO_EMAIL } from "@/app/lib/caretipContactEmails";
 import { trackGoogleAdsConversion } from "@/app/lib/googleAdsConversion";
 import {
   Select,
@@ -41,6 +41,7 @@ export function ContactDemoForm({
   );
   const [status, setStatus] = useState<FormStatus>("idle");
   const [errorMessage, setErrorMessage] = useState("");
+  const [fallbackMailto, setFallbackMailto] = useState<string | null>(null);
   const [businessType, setBusinessType] = useState("");
   const [teamSize, setTeamSize] = useState("");
 
@@ -58,11 +59,13 @@ export function ContactDemoForm({
     if (!fullName || !workEmail || !businessName || !businessType || !teamSize || !message) {
       setStatus("error");
       setErrorMessage(t("staticPages.contact.form.validation"));
+      setFallbackMailto(null);
       return;
     }
 
     setStatus("submitting");
     setErrorMessage("");
+    setFallbackMailto(null);
 
     const result = await submitDemoLead({
       fullName,
@@ -82,25 +85,28 @@ export function ContactDemoForm({
       return;
     }
 
-    // Fallback: open the user's mail client addressed to the demo/info inbox.
-    openCaretipMailto({
-      mailbox: "info",
-      subject: `CareTip demo request — ${businessName}`,
-      body: [
-        `Name: ${fullName}`,
-        `Work email: ${workEmail}`,
-        `Business: ${businessName}`,
-        `Type: ${businessType}`,
-        `Team size: ${teamSize}`,
-        "",
-        message,
-      ].join("\n"),
-    });
+    // Do not auto-open mailto — that can feel like delivery succeeded.
+    // Keep error state; offer an explicit optional email link.
+    setFallbackMailto(
+      buildCaretipMailto({
+        mailbox: "info",
+        subject: `CareTip demo request — ${businessName}`,
+        body: [
+          `Name: ${fullName}`,
+          `Work email: ${workEmail}`,
+          `Business: ${businessName}`,
+          `Type: ${businessType}`,
+          `Team size: ${teamSize}`,
+          "",
+          message,
+        ].join("\n"),
+      }),
+    );
     setStatus("error");
     setErrorMessage(
-      result.message.includes("email")
+      result.message.includes(CARETIP_INFO_EMAIL)
         ? result.message
-        : `${result.message} You can also email ${CARETIP_INFO_EMAIL}.`,
+        : `${t("staticPages.contact.form.notDelivered")} ${CARETIP_INFO_EMAIL}.`,
     );
   }
 
@@ -242,9 +248,16 @@ export function ContactDemoForm({
                 </div>
 
                 {status === "error" && errorMessage ? (
-                  <p className="caretip-contact-form-status caretip-contact-form-status--error" role="alert">
-                    {errorMessage}
-                  </p>
+                  <div className="caretip-contact-form-status caretip-contact-form-status--error" role="alert">
+                    <p>{errorMessage}</p>
+                    {fallbackMailto ? (
+                      <p className="mt-2">
+                        <a className="caretip-contact-inline-link font-semibold" href={fallbackMailto}>
+                          {t("staticPages.contact.form.emailFallbackLink")} ({CARETIP_INFO_EMAIL})
+                        </a>
+                      </p>
+                    ) : null}
+                  </div>
                 ) : null}
 
                 <button type="submit" className={contactPageUi.submit} disabled={status === "submitting"}>

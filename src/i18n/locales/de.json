@@ -371,7 +371,9 @@
         "successTitle": "Danke. Wir haben Ihre Nachricht erhalten",
         "demoSuccess": "Unser Team meldet sich innerhalb eines Werktags, um Ihre Demo zu planen.",
         "supportSuccess": "Unser Support-Team meldet sich in Kürze mit den nächsten Schritten.",
-        "validation": "Bitte füllen Sie alle Pflichtfelder aus, bevor Sie absenden."
+        "validation": "Bitte füllen Sie alle Pflichtfelder aus, bevor Sie absenden.",
+        "notDelivered": "Ihre Nachricht wurde nicht gesendet. Bitte versuchen Sie es erneut oder schreiben Sie uns direkt an",
+        "emailFallbackLink": "E-Mail-App öffnen"
       }
     },
     "about": {

@@ -89,6 +89,45 @@ export function venueBrandFromBusiness(
   };
 }
 
+/**
+ * Prefer the fetched venue brand (includes type · address) while optionally
+ * keeping a faster name/logo snapshot and an extra table/location line.
+ */
+export function mergeCustomerVenueBrand(
+  fetched: CustomerJourneyVenueBrand,
+  options?: {
+    snapshot?: { name: string; logo: string | null } | null;
+    extraContextLine?: string | null;
+    fallbackName?: string;
+  },
+): CustomerJourneyVenueBrand {
+  const snapshot = options?.snapshot ?? null;
+  const fallbackName = options?.fallbackName;
+  const name =
+    fetched.name && (!fallbackName || fetched.name !== fallbackName)
+      ? fetched.name
+      : (snapshot?.name?.trim() || fetched.name);
+  const logo = fetched.logo ?? snapshot?.logo ?? null;
+
+  const base =
+    typeof fetched.contextLine === "string" && fetched.contextLine.trim()
+      ? fetched.contextLine.trim()
+      : null;
+  const extra = options?.extraContextLine?.trim() || "";
+
+  let contextLine: ReactNode | undefined = fetched.contextLine;
+  if (extra) {
+    contextLine = base ? `${base} · ${extra}` : extra;
+  }
+
+  return {
+    ...fetched,
+    name,
+    logo,
+    contextLine: contextLine || undefined,
+  };
+}
+
 /** Resolve venue name/logo/branding for post-payment pages that only hold `businessId`. */
 export function useCustomerVenueBrand(
   businessId: string | null | undefined,
