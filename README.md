@@ -197,7 +197,7 @@ The API loads **repo root `.env` first**, then **`backend/.env`** (backend wins 
 | Variable | Purpose |
 |----------|---------|
 | `RESEND_API_KEY` | Resend API key (`re_...`). **Required in production** (`NODE_ENV=production`); optional in development (links logged to console). |
-| `RESEND_FROM` | **Sender** for all Resend mail. **Required in production.** Must be `you@verified-domain.com` or `CareTip <you@verified-domain.com>`. **Invalid:** a bare domain like `caretip.de` (Resend **422**). `RESEND_FROM_EMAIL` is an alias. In development only, invalid/missing values fall back to a dev sender with a warning. |
+| `RESEND_FROM` | **Transactional sender** (activation, password reset, verification, notifications). **Required in production.** Must be `you@verified-domain.com` or `CareTip <you@verified-domain.com>` (typically `CareTip <noreply@mail.caretip.de>`). **Invalid:** a bare domain like `caretip.de` (Resend **422**). `RESEND_FROM_EMAIL` is an alias. In development only, invalid/missing values fall back to a dev sender with a warning. Demo/Support lead From defaults to `hello@` / `support@` on the same verified domain (optional overrides: `RESEND_FROM_LEADS`, `RESEND_FROM_SUPPORT`). |
 
 Add your domain in the **Resend dashboard → Domains**, complete the DNS records Resend shows for **that account** (records are not portable between Resend accounts), then set `RESEND_FROM` to an address on that domain.
 

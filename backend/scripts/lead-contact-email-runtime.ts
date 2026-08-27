@@ -23,6 +23,7 @@ import {
   type CrmLeadPayload,
 } from "../src/services/leadNotification.service.js";
 import { assertProductionEmailEnv, getEmailHealthDiagnostics } from "../src/config/emailEnv.js";
+import { getLeadFromAddress, getResendFromAddress } from "../src/services/resendClient.js";
 
 const results: string[] = [];
 const pass = (m: string) => results.push(`PASS: ${m}`);
@@ -199,11 +200,20 @@ async function testDestinationsAndReplyTo() {
   const prevSales = process.env.SALES_INBOX_EMAIL;
   const prevSupport = process.env.SUPPORT_INBOX_EMAIL;
   const prevKey = process.env.RESEND_API_KEY;
+  const prevFrom = process.env.RESEND_FROM;
+  const prevFromEmail = process.env.RESEND_FROM_EMAIL;
+  const prevLeadsFrom = process.env.RESEND_FROM_LEADS;
+  const prevSupportFrom = process.env.RESEND_FROM_SUPPORT;
 
   try {
     process.env.LEADS_INBOX_EMAIL = "demo-inbox@caretip.test";
     process.env.SUPPORT_INBOX_EMAIL = "support-inbox@caretip.test";
     process.env.RESEND_API_KEY = process.env.RESEND_API_KEY?.trim() || "re_test_placeholder_key";
+    // Deterministic transactional From so lead senders derive hello@/support@ on mail.caretip.de
+    delete process.env.RESEND_FROM_EMAIL;
+    delete process.env.RESEND_FROM_LEADS;
+    delete process.env.RESEND_FROM_SUPPORT;
+    process.env.RESEND_FROM = "CareTip <noreply@mail.caretip.de>";
 
     if (resolveLeadDestination("demo") === "demo-inbox@caretip.test") {
       pass("demo destination uses LEADS_INBOX_EMAIL");
@@ -291,6 +301,37 @@ async function testDestinationsAndReplyTo() {
         pass("customer email is never used as authenticated From");
       } else fail("customer email incorrectly used as From");
 
+      const expectedDemoFrom = getLeadFromAddress("demo");
+      const expectedSupportFrom = getLeadFromAddress("support");
+      const transactionalFrom = getResendFromAddress();
+      if (demoFrom === "CareTip <hello@mail.caretip.de>") {
+        pass("demo From is CareTip <hello@mail.caretip.de>");
+      } else fail(`demo From exact mismatch: ${JSON.stringify(demoFrom)}`);
+
+      if (supportFrom === "CareTip <support@mail.caretip.de>") {
+        pass("support From is CareTip <support@mail.caretip.de>");
+      } else fail(`support From exact mismatch: ${JSON.stringify(supportFrom)}`);
+
+      if (demoFrom === expectedDemoFrom && /hello@/i.test(demoFrom) && !/noreply|no-reply/i.test(demoFrom)) {
+        pass(`demo From is human-facing (${demoFrom})`);
+      } else fail(`demo From unexpected: ${JSON.stringify(demoFrom)} expected ${JSON.stringify(expectedDemoFrom)}`);
+
+      if (
+        supportFrom === expectedSupportFrom &&
+        /<support@/i.test(supportFrom) &&
+        !/noreply|no-reply/i.test(supportFrom)
+      ) {
+        pass(`support From is human-facing (${supportFrom})`);
+      } else {
+        fail(`support From unexpected: ${JSON.stringify(supportFrom)} expected ${JSON.stringify(expectedSupportFrom)}`);
+      }
+
+      if (demoFrom !== transactionalFrom && supportFrom !== transactionalFrom) {
+        pass("lead From differs from transactional noreply From");
+      } else {
+        fail(`lead From must not reuse transactional From ${JSON.stringify(transactionalFrom)}`);
+      }
+
       const demoReply = demoCall.body.reply_to;
       const supportReply = supportCall.body.reply_to;
       if (demoReply === "customer.demo@example.com") {
@@ -344,6 +385,14 @@ async function testDestinationsAndReplyTo() {
     else process.env.SUPPORT_INBOX_EMAIL = prevSupport;
     if (prevKey === undefined) delete process.env.RESEND_API_KEY;
     else process.env.RESEND_API_KEY = prevKey;
+    if (prevFrom === undefined) delete process.env.RESEND_FROM;
+    else process.env.RESEND_FROM = prevFrom;
+    if (prevFromEmail === undefined) delete process.env.RESEND_FROM_EMAIL;
+    else process.env.RESEND_FROM_EMAIL = prevFromEmail;
+    if (prevLeadsFrom === undefined) delete process.env.RESEND_FROM_LEADS;
+    else process.env.RESEND_FROM_LEADS = prevLeadsFrom;
+    if (prevSupportFrom === undefined) delete process.env.RESEND_FROM_SUPPORT;
+    else process.env.RESEND_FROM_SUPPORT = prevSupportFrom;
   }
 }
 
@@ -594,13 +643,30 @@ async function testLiveResendAcceptance(): Promise<{
       (c) => c.body.reply_to === customerDemo || String(c.body.subject ?? "").includes("Demo request"),
     );
     const supportReq = captured.find(
-      (c) => c.body.reply_to === customerSupport || String(c.body.subject ?? "").includes("Support message"),
+      (c) => c.body.reply_to === customerSupport || String(c.body.subject ?? "").includes("Support request"),
     );
 
     if (demoReq?.body.reply_to === customerDemo) {
       pass("live demo Resend request payload reply_to = customer workEmail");
     } else {
       fail(`live demo reply_to missing/wrong: ${JSON.stringify(demoReq?.body.reply_to)}`);
+    }
+
+    const liveDemoFrom = String(demoReq?.body.from ?? "");
+    const liveSupportFrom = String(supportReq?.body.from ?? "");
+    if (liveDemoFrom === getLeadFromAddress("demo") && /hello@/i.test(liveDemoFrom) && !/noreply|no-reply/i.test(liveDemoFrom)) {
+      pass(`live demo From is human-facing (${liveDemoFrom})`);
+    } else {
+      fail(`live demo From unexpected: ${JSON.stringify(liveDemoFrom)}`);
+    }
+    if (
+      liveSupportFrom === getLeadFromAddress("support") &&
+      /<support@/i.test(liveSupportFrom) &&
+      !/noreply|no-reply/i.test(liveSupportFrom)
+    ) {
+      pass(`live support From is human-facing (${liveSupportFrom})`);
+    } else {
+      fail(`live support From unexpected: ${JSON.stringify(liveSupportFrom)}`);
     }
 
     const demoTo = demoReq?.body.to;

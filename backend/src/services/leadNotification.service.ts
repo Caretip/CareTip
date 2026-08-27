@@ -1,4 +1,4 @@
-import { getResendFromAddress, sendResendEmail } from "./resendClient.js";
+import { getLeadFromAddress, sendResendEmail } from "./resendClient.js";
 
 export type LeadType = "demo" | "support";
 
@@ -190,10 +190,10 @@ export async function notifyLeadInbox(payload: CrmLeadPayload): Promise<boolean>
   // Keep metadata for auditing — server logs only, never the inbox email body.
   logLeadDiagnostics(payload);
 
-  // Authenticated sender is always the verified Resend From — never the customer address.
-  // Customer email is Reply-To only (Resend `reply_to`).
+  // Human-facing lead From (hello@ / support@ on verified domain) — never customer, never noreply.
+  // Customer email is Reply-To only (Resend `reply_to`). Transactional mail keeps RESEND_FROM (noreply).
   return sendResendEmail("lead-notification", {
-    from: getResendFromAddress(),
+    from: getLeadFromAddress(payload.type),
     to: [to],
     replyTo,
     subject,

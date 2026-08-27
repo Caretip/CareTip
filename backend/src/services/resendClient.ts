@@ -5,11 +5,23 @@
  * (e.g. `caretip.de`) returns 422 validation_error.
  */
 
-import { getResendFromRaw, isValidResendFromFormat } from "../config/emailEnv.js";
+import {
+  getLeadFromOverrideRaw,
+  getResendFromRaw,
+  getResendSendingDomain,
+  isValidResendFromFormat,
+} from "../config/emailEnv.js";
 
 const DEFAULT_RESEND_FROM = "CareTip <no-reply@mail.caretip.com>";
+/** Fallback when transactional From domain cannot be parsed (same verified CareTip mail domain). */
+const DEFAULT_LEAD_SENDING_DOMAIN = "mail.caretip.de";
 
 let warnedInvalidResendFrom = false;
+
+function wrapCareTipFrom(emailOrNamed: string): string {
+  const raw = emailOrNamed.trim();
+  return raw.includes("<") ? raw : `CareTip <${raw}>`;
+}
 
 function getResendFromAddress(): string {
   const raw = getResendFromRaw();
@@ -20,7 +32,7 @@ function getResendFromAddress(): string {
     return DEFAULT_RESEND_FROM;
   }
   if (isValidResendFromFormat(raw)) {
-    return raw.includes("<") ? raw : `CareTip <${raw}>`;
+    return wrapCareTipFrom(raw);
   }
   if (process.env.NODE_ENV === "production") {
     throw new Error(`RESEND_FROM is invalid: ${JSON.stringify(raw)}`);
@@ -35,11 +47,32 @@ function getResendFromAddress(): string {
   return DEFAULT_RESEND_FROM;
 }
 
+/**
+ * Human-facing lead From on the verified sending domain (never noreply, never customer).
+ * Demo → hello@…  Support → support@…
+ * Optional overrides: RESEND_FROM_LEADS / RESEND_FROM_SUPPORT.
+ */
+function getLeadFromAddress(type: "demo" | "support"): string {
+  const override = getLeadFromOverrideRaw(type);
+  if (override) {
+    if (isValidResendFromFormat(override)) {
+      return wrapCareTipFrom(override);
+    }
+    console.warn(
+      `[resend] Invalid ${type === "demo" ? "RESEND_FROM_LEADS" : "RESEND_FROM_SUPPORT"}=${JSON.stringify(override)}; using domain default.`,
+    );
+  }
+
+  const domain = getResendSendingDomain() ?? DEFAULT_LEAD_SENDING_DOMAIN;
+  const local = type === "demo" ? "hello" : "support";
+  return `CareTip <${local}@${domain}>`;
+}
+
 function getResendApiKey(): string | undefined {
   return process.env.RESEND_API_KEY?.trim() || undefined;
 }
 
-export { getResendFromAddress };
+export { getResendFromAddress, getLeadFromAddress };
 
 export type ResendMailPayload = {
   from: string;

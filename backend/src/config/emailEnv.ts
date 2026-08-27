@@ -20,6 +20,38 @@ export function getResendFromRaw(): string | undefined {
   return raw || undefined;
 }
 
+/** Extract bare email from `user@host` or `Name <user@host>`. */
+export function extractEmailFromResendFrom(value: string): string | undefined {
+  const v = value.trim();
+  if (!v) return undefined;
+  const named = /^(.+?)\s*<([^\s<>]+@[^\s<>]+\.[^\s<>]+)>\s*$/.exec(v);
+  if (named?.[2]) return named[2].toLowerCase();
+  if (/^[^\s<>]+@[^\s<>]+\.[^\s<>]+$/.test(v)) return v.toLowerCase();
+  return undefined;
+}
+
+/**
+ * Domain of the transactional Resend From (e.g. `mail.caretip.de`).
+ * Used to place human-facing lead senders on the same verified domain.
+ */
+export function getResendSendingDomain(): string | undefined {
+  const raw = getResendFromRaw();
+  if (!raw) return undefined;
+  const email = extractEmailFromResendFrom(raw);
+  if (!email) return undefined;
+  const at = email.lastIndexOf("@");
+  return at > 0 ? email.slice(at + 1) : undefined;
+}
+
+/** Optional per-type lead From overrides (human-facing; never customer addresses). */
+export function getLeadFromOverrideRaw(type: "demo" | "support"): string | undefined {
+  const raw =
+    type === "demo"
+      ? process.env.RESEND_FROM_LEADS?.trim()
+      : process.env.RESEND_FROM_SUPPORT?.trim();
+  return raw || undefined;
+}
+
 export type EmailHealthDiagnostics = {
   /** True when production requirements are met (or dev has API key optional path). */
   configured: boolean;
