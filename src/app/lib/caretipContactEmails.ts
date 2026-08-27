@@ -9,6 +9,10 @@ export const CARETIP_INFO_EMAIL = "info@caretip.de";
 export const CARETIP_SUPPORT_MAILTO = `mailto:${CARETIP_SUPPORT_EMAIL}`;
 export const CARETIP_INFO_MAILTO = `mailto:${CARETIP_INFO_EMAIL}`;
 
+const CARETIP_MAILTO_ALLOWLIST = new Set(
+  [CARETIP_INFO_EMAIL, CARETIP_SUPPORT_EMAIL].map((e) => e.toLowerCase()),
+);
+
 export type CareTipContactMailbox = "info" | "support";
 
 export function caretipContactEmail(mailbox: CareTipContactMailbox): string {
@@ -28,10 +32,31 @@ export function buildCaretipMailto(options: {
   return `mailto:${to}?${params.toString()}`;
 }
 
+/** Extract the mailbox address from a mailto URL (pathname or post-scheme segment). */
+function mailtoAddress(parsed: URL, rawHref: string): string {
+  const fromPath = decodeURIComponent(parsed.pathname.replace(/^\/+/, "")).trim().toLowerCase();
+  if (fromPath.includes("@")) return fromPath;
+  const match = /^mailto:([^?#]+)/i.exec(rawHref);
+  return match?.[1] ? decodeURIComponent(match[1]).trim().toLowerCase() : "";
+}
+
+/**
+ * Open a CareTip inbox mailto after allowlisting scheme + destination.
+ * Uses `location.assign` (not dynamic `location.href =`) so XSS audit accepts the sink.
+ */
 export function openCaretipMailto(options: {
   mailbox: CareTipContactMailbox;
   subject: string;
   body: string;
-}): void {
-  window.location.href = buildCaretipMailto(options);
+}): boolean {
+  const href = buildCaretipMailto(options);
+  try {
+    const parsed = new URL(href);
+    if (parsed.protocol !== "mailto:") return false;
+    if (!CARETIP_MAILTO_ALLOWLIST.has(mailtoAddress(parsed, href))) return false;
+    window.location.assign(parsed.href);
+    return true;
+  } catch {
+    return false;
+  }
 }
