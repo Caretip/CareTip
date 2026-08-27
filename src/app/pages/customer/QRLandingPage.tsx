@@ -596,7 +596,7 @@ export function QRLandingPage() {
                     placeholder={t("tipFlow.qrLanding.searchPlaceholder")}
                     value={poolQuery}
                     onChange={(e) => setPoolQuery(e.target.value)}
-                    className={`${cf.inputField} border-0 bg-transparent shadow-none focus-visible:ring-0 py-3.5 pl-11 pr-4 placeholder:text-muted-foreground/65`}
+                    className={`${cf.inputField} border-0 bg-transparent shadow-none focus-visible:ring-0 py-3.5 pl-11 pr-4 placeholder:text-muted-foreground`}
                     autoComplete="off"
                   />
                 </div>

@@ -100,9 +100,40 @@
 
   input::placeholder,
   textarea::placeholder {
-    color: hsl(var(--muted-foreground) / 0.82);
+    /* Secondary to typed values, still readable — avoid stacking extra opacity cuts */
+    color: hsl(var(--muted-foreground));
     opacity: 1;
     font-weight: 500;
+  }
+
+  /* Autofill often washes text; force readable foreground on light/dark surfaces */
+  input:-webkit-autofill,
+  input:-webkit-autofill:hover,
+  input:-webkit-autofill:focus,
+  textarea:-webkit-autofill,
+  textarea:-webkit-autofill:hover,
+  textarea:-webkit-autofill:focus,
+  select:-webkit-autofill,
+  select:-webkit-autofill:hover,
+  select:-webkit-autofill:focus {
+    -webkit-text-fill-color: hsl(var(--foreground));
+    caret-color: hsl(var(--foreground));
+    box-shadow: 0 0 0 1000px hsl(var(--input-background)) inset;
+    transition: background-color 99999s ease-in-out 0s;
+  }
+
+  .dark input:-webkit-autofill,
+  .dark input:-webkit-autofill:hover,
+  .dark input:-webkit-autofill:focus,
+  .dark textarea:-webkit-autofill,
+  .dark textarea:-webkit-autofill:hover,
+  .dark textarea:-webkit-autofill:focus,
+  .dark select:-webkit-autofill,
+  .dark select:-webkit-autofill:hover,
+  .dark select:-webkit-autofill:focus {
+    -webkit-text-fill-color: hsl(var(--foreground));
+    caret-color: hsl(var(--foreground));
+    box-shadow: 0 0 0 1000px hsl(var(--input-background)) inset;
   }
 
   /*

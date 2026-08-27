@@ -9,13 +9,14 @@
   --mw-orange-hover: #d96810;
   --mw-orange-soft: #fff4e8;
   --mw-ink: #111827;
-  --mw-muted: #6b7280;
+  --mw-muted: #4b5563;
   --mw-border: #e5e7eb;
   --mw-border-strong: #d1d5db;
   --mw-surface: #f3f4f6;
   --mw-card: #ffffff;
   --mw-input: #ffffff;
-  --mw-placeholder: #9ca3af;
+  /* Secondary to typed values; slightly lighter than labels (--mw-muted) */
+  --mw-placeholder: #6b7280;
   --mw-otp-empty: #e5e7eb;
   --mw-otp-filled: #1f2937;
   --mw-switch-off: #d1d5db;
@@ -53,7 +54,7 @@
   --mw-surface: hsl(var(--background));
   --mw-card: hsl(var(--card));
   --mw-input: hsl(var(--input-background));
-  --mw-placeholder: hsl(var(--muted-foreground) / 0.72);
+  --mw-placeholder: hsl(var(--muted-foreground));
   --mw-otp-empty: hsl(var(--muted));
   --mw-otp-filled: hsl(var(--foreground) / 0.85);
   --mw-switch-off: hsl(var(--muted));
@@ -205,8 +206,8 @@
 
 .mw-auth-field__label {
   font-size: 0.8125rem;
-  font-weight: 500;
-  color: var(--mw-muted);
+  font-weight: 600;
+  color: var(--mw-ink);
   padding-left: 0.15rem;
 }
 

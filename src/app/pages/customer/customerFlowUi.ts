@@ -128,7 +128,7 @@ export const customerFlowUi = {
     "border-primary bg-primary/[0.08] shadow-[0_14px_36px_rgba(233,120,28,0.16)] ring-2 ring-primary/15 -translate-y-0.5",
 
   inputField:
-    "w-full rounded-[1.125rem] border border-black/[0.08] bg-white px-4 py-3.5 text-foreground shadow-[inset_0_1px_2px_rgba(0,0,0,0.02)] placeholder:text-muted-foreground/80 transition-[border-color,box-shadow] duration-150 focus-visible:border-primary/45 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/20 dark:border-white/10 dark:bg-card",
+    "w-full rounded-[1.125rem] border border-black/[0.08] bg-white px-4 py-3.5 text-foreground shadow-[inset_0_1px_2px_rgba(0,0,0,0.02)] placeholder:text-muted-foreground transition-[border-color,box-shadow] duration-150 focus-visible:border-primary/45 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/20 dark:border-white/10 dark:bg-card",
 
   inputAmount:
     "w-full rounded-[1.125rem] border-2 border-black/[0.08] bg-white py-4 pl-11 pr-4 text-3xl font-bold tabular-nums text-foreground shadow-[inset_0_1px_2px_rgba(0,0,0,0.02)] transition-[border-color,box-shadow] duration-150 focus-visible:border-primary/45 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/20 dark:border-white/10 dark:bg-card",

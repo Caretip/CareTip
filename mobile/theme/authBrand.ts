@@ -28,7 +28,7 @@ export const authBrand = {
   fieldBorderFocused: "rgba(233, 120, 28, 0.95)",
   fieldLabel: "rgba(255, 255, 255, 0.94)",
   fieldText: "#FFFFFF",
-  fieldPlaceholder: "rgba(255, 255, 255, 0.74)",
+  fieldPlaceholder: "rgba(255, 255, 255, 0.82)",
   fieldIcon: "rgba(255, 255, 255, 0.72)",
   fieldError: "#FCA5A5",
   heroTitle: "#FFFFFF",

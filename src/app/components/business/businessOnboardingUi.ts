@@ -34,19 +34,20 @@ export const onboardingOptionalBadge = cn(
 );
 
 export const onboardingFieldHint = cn(
-  "mt-2 text-xs leading-relaxed text-zinc-500 dark:text-zinc-500",
+  "mt-2 text-xs leading-relaxed text-zinc-600 dark:text-zinc-400",
 );
 
 export const onboardingInput = cn(
   "h-12 w-full rounded-xl border border-zinc-200/90 bg-white px-4",
-  "text-[15px] font-normal text-zinc-900 placeholder:text-zinc-400",
+  "text-[15px] font-normal text-zinc-900 placeholder:text-zinc-500",
   "transition-all duration-200 ease-out",
   "hover:border-zinc-300 hover:shadow-[0_1px_2px_rgba(0,0,0,0.04)]",
   "focus:border-orange-500 focus:outline-none focus:ring-4 focus:ring-orange-500/10 focus:shadow-[0_0_0_1px_rgba(249,115,22,0.35)]",
-  "disabled:cursor-not-allowed disabled:opacity-50",
-  "dark:border-zinc-700/90 dark:bg-zinc-950 dark:text-zinc-50 dark:placeholder:text-zinc-500",
+  "disabled:cursor-not-allowed disabled:bg-zinc-100 disabled:text-zinc-700 disabled:opacity-100",
+  "dark:border-zinc-700/90 dark:bg-zinc-950 dark:text-zinc-50 dark:placeholder:text-zinc-400",
   "dark:hover:border-zinc-600",
   "dark:focus:border-orange-500 dark:focus:ring-orange-500/15",
+  "dark:disabled:bg-zinc-900 dark:disabled:text-zinc-300",
 );
 
 export const onboardingSelect = cn(

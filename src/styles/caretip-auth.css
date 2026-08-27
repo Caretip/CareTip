@@ -1923,8 +1923,9 @@
 }
 
 .caretip-auth-field::placeholder {
-  color: rgba(82, 82, 82, 0.78);
+  color: rgb(82 82 82);
   font-weight: 500;
+  opacity: 1;
 }
 
 .caretip-auth-field:hover:not(:focus):not(:disabled):not([readonly]) {
@@ -1968,8 +1969,9 @@
 }
 
 .dark .caretip-auth-field::placeholder {
-  color: rgba(212, 212, 212, 0.72);
+  color: rgb(212 212 212);
   font-weight: 500;
+  opacity: 1;
 }
 
 .dark .caretip-auth-field:hover:not(:focus):not(:disabled):not([readonly]) {

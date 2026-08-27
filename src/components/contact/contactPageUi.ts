@@ -22,9 +22,9 @@ export const contactPageUi = {
   field: "caretip-contact-field",
   label: "caretip-contact-label",
   input:
-    "caretip-contact-input w-full rounded-xl border border-border/80 bg-transparent px-4 py-3 text-foreground placeholder:text-muted-foreground transition-[box-shadow,border-color,background-color] focus:outline-none focus:ring-2 focus:ring-primary/30",
+    "caretip-contact-input w-full rounded-xl border border-border/80 bg-input-background px-4 py-3 text-foreground placeholder:text-muted-foreground transition-[box-shadow,border-color,background-color] focus:outline-none focus:ring-2 focus:ring-primary/30",
   textarea:
-    "caretip-contact-input caretip-contact-textarea w-full resize-none rounded-xl border border-border/80 bg-transparent px-4 py-3 text-foreground placeholder:text-muted-foreground transition-[box-shadow,border-color,background-color] focus:outline-none focus:ring-2 focus:ring-primary/30",
+    "caretip-contact-input caretip-contact-textarea w-full resize-none rounded-xl border border-border/80 bg-input-background px-4 py-3 text-foreground placeholder:text-muted-foreground transition-[box-shadow,border-color,background-color] focus:outline-none focus:ring-2 focus:ring-primary/30",
   submit: cn(caretipBtnPrimary, "caretip-contact-submit w-full justify-center sm:w-auto sm:min-w-[11rem]"),
 } as const;
 
