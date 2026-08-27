@@ -61,12 +61,16 @@ export async function submitDemoLead(req: Request, res: Response) {
       message,
     });
 
+    // Destination comes only from backend inbox env — ignore any client-supplied to/inbox fields.
     const sent = await notifyLeadInbox(payload);
-    if (!sent && process.env.NODE_ENV === "production") {
-      return res.status(503).json({ message: "Unable to send your request right now. Please email info@caretip.de." });
+    if (!sent) {
+      return res.status(503).json({
+        message: "Unable to send your request right now. Please email info@caretip.de.",
+        delivered: false,
+      });
     }
 
-    return res.status(201).json({ ok: true, leadId: `demo_${Date.now()}` });
+    return res.status(201).json({ ok: true, delivered: true, leadId: `demo_${Date.now()}` });
   } catch (err) {
     logServerError("lead.demo", err);
     return res.status(500).json({ message: clientSafeMessage(err, CLIENT_FALLBACK.generic) });
@@ -94,14 +98,16 @@ export async function submitSupportLead(req: Request, res: Response) {
       message,
     });
 
+    // Destination comes only from backend inbox env — ignore any client-supplied to/inbox fields.
     const sent = await notifyLeadInbox(payload);
-    if (!sent && process.env.NODE_ENV === "production") {
+    if (!sent) {
       return res.status(503).json({
         message: "Unable to send your message right now. Please email support@caretip.de.",
+        delivered: false,
       });
     }
 
-    return res.status(201).json({ ok: true, leadId: `support_${Date.now()}` });
+    return res.status(201).json({ ok: true, delivered: true, leadId: `support_${Date.now()}` });
   } catch (err) {
     logServerError("lead.support", err);
     return res.status(500).json({ message: clientSafeMessage(err, CLIENT_FALLBACK.generic) });

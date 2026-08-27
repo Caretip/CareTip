@@ -15,7 +15,8 @@ export type CrmLeadPayload = {
   };
 };
 
-function getLeadsInbox(): string {
+/** Demo / sales / general inquiry inbox — backend env only (never from request body). */
+export function getLeadsInbox(): string {
   return (
     process.env.LEADS_INBOX_EMAIL?.trim() ||
     process.env.INFO_INBOX_EMAIL?.trim() ||
@@ -24,8 +25,23 @@ function getLeadsInbox(): string {
   );
 }
 
-function getSupportInbox(): string {
+/** Technical support inbox — backend env only (never from request body). */
+export function getSupportInbox(): string {
   return process.env.SUPPORT_INBOX_EMAIL?.trim() || "support@caretip.de";
+}
+
+export function resolveLeadDestination(type: LeadType): string {
+  return type === "demo" ? getLeadsInbox() : getSupportInbox();
+}
+
+/** Customer's submitted email for Reply-To (not used as authenticated From). */
+export function resolveLeadReplyTo(payload: CrmLeadPayload): string | undefined {
+  const raw =
+    payload.type === "demo"
+      ? payload.fields.workEmail?.trim()
+      : payload.fields.email?.trim();
+  if (!raw || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(raw)) return undefined;
+  return raw;
 }
 
 function escapeHtml(value: string): string {
@@ -52,8 +68,8 @@ function formatFieldsText(fields: Record<string, string>): string {
 }
 
 export async function notifyLeadInbox(payload: CrmLeadPayload): Promise<boolean> {
-  const to =
-    payload.type === "demo" ? getLeadsInbox() : getSupportInbox();
+  const to = resolveLeadDestination(payload.type);
+  const replyTo = resolveLeadReplyTo(payload);
   const subjectPrefix = payload.type === "demo" ? "Demo request" : "Support message";
   const name =
     payload.fields.fullName ||
@@ -76,9 +92,12 @@ export async function notifyLeadInbox(payload: CrmLeadPayload): Promise<boolean>
 
   const text = `${subjectPrefix}\n\n${formatFieldsText(payload.fields)}\n\n---\n${jsonBlock}`;
 
+  // Authenticated sender is always the verified Resend From — never the customer address.
+  // Customer email is Reply-To only (Resend `reply_to`).
   return sendResendEmail("lead-notification", {
     from: getResendFromAddress(),
     to: [to],
+    replyTo: replyTo,
     subject,
     html,
     text,

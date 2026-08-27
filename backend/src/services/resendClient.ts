@@ -48,7 +48,21 @@ export type ResendMailPayload = {
   html: string;
   /** Resend accepts optional plain-text part (improves deliverability). */
   text?: string;
+  /**
+   * Customer reply address only — never used as `from`.
+   * Sent to Resend as `reply_to` so staff can reply without spoofing the authenticated sender.
+   */
+  replyTo?: string | string[];
 };
+
+/** Normalize to a non-empty list of emails; drops blanks. Never returns []. */
+function normalizeReplyToAddresses(replyTo: string | string[] | undefined): string[] | undefined {
+  if (replyTo == null) return undefined;
+  const list = (Array.isArray(replyTo) ? replyTo : [replyTo])
+    .map((v) => String(v ?? "").trim())
+    .filter((v) => v.length > 0 && v.includes("@"));
+  return list.length > 0 ? list : undefined;
+}
 
 /**
  * Sends one message via Resend. Does not throw on failure — logs and returns success flag.
@@ -67,6 +81,8 @@ export async function sendResendEmail(logTag: string, payload: ResendMailPayload
     return false;
   }
 
+  const replyToAddresses = normalizeReplyToAddresses(payload.replyTo);
+
   const body: Record<string, unknown> = {
     from,
     to: payload.to,
@@ -75,6 +91,11 @@ export async function sendResendEmail(logTag: string, payload: ResendMailPayload
   };
   if (payload.text) {
     body.text = payload.text;
+  }
+  // Resend accepts string | string[]. Prefer a single string when one address
+  // so the dashboard/request log never shows an empty replyTo array.
+  if (replyToAddresses) {
+    body.reply_to = replyToAddresses.length === 1 ? replyToAddresses[0] : replyToAddresses;
   }
 
   try {
@@ -91,7 +112,10 @@ export async function sendResendEmail(logTag: string, payload: ResendMailPayload
       console.error("[resend] Email sending failed:", { tag: logTag, status: r.status, body: t.slice(0, 800) });
       return false;
     }
-    console.info(`[resend][${logTag}] Email sent`, { to: payload.to[0] });
+    console.info(`[resend][${logTag}] Email sent`, {
+      to: payload.to[0],
+      hasReplyTo: Boolean(replyToAddresses),
+    });
     return true;
   } catch (error) {
     console.error("[resend] Email sending failed:", { tag: logTag, error });
