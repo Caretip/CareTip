@@ -104,7 +104,7 @@ export function CustomerFlowShell({
         )}
 
         {!loading && showCareTipAttribution ? (
-          <div className="pt-6 sm:pt-8">
+          <div className="pt-4 sm:pt-6">
             <CustomerJourneyCareTipAttribution label={t("tipFlow.common.poweredByCareTip")} />
           </div>
         ) : null}

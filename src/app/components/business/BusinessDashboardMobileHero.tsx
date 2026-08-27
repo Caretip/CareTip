@@ -38,7 +38,7 @@ export const BusinessDashboardMobileHero = memo(function BusinessDashboardMobile
     >
       <div className="business-dashboard-mobile-hero__content">
         <div className="business-dashboard-mobile-hero__badge">
-          <Sparkles className="h-3.5 w-3.5 shrink-0 opacity-90" aria-hidden />
+          <Sparkles className="h-3.5 w-3.5 shrink-0 text-muted-foreground/80" aria-hidden />
           <span>
             {welcomeName
               ? t("business.hero.welcomeBackNamed", { name: welcomeName })

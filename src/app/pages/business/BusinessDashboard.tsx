@@ -385,13 +385,13 @@ export const BusinessDashboard = memo(function BusinessDashboard() {
           mobileAlign="left"
           className="business-hero-dashboard-root !mb-0"
           cardClassName="border-0 bg-transparent shadow-none max-lg:border-0 max-lg:bg-transparent max-lg:shadow-none lg:rounded-[calc(1.75rem-3px)] lg:border-0 lg:bg-transparent lg:shadow-none"
-          badgeClassName="business-hero-badge normal-case px-2.5 py-1 text-[11px] max-lg:text-[12px] font-medium tracking-normal shadow-none"
+          badgeClassName="business-hero-badge normal-case border-transparent bg-transparent px-0 py-0 text-[11px] max-lg:text-[12px] font-medium tracking-normal text-muted-foreground shadow-none"
           titleClassName="business-hero-title max-lg:!leading-[1.05] lg:!leading-[1.1] tracking-tight max-lg:text-left lg:max-w-[14ch] lg:text-left xl:text-[1.875rem]"
           descriptionClassName="business-hero-description !line-clamp-2 max-w-[32ch] leading-snug max-lg:mb-0 max-lg:text-left lg:max-w-sm"
           textColumnClassName="lg:py-1 xl:pr-1"
           badge={
             <>
-              <Sparkles className="h-3 w-3 shrink-0 opacity-90" aria-hidden />
+              <Sparkles className="h-3 w-3 shrink-0 text-muted-foreground/80" aria-hidden />
               <span>
                 {user.name
                   ? t("business.hero.welcomeBackNamed", { name: user.name.split(" ")[0] })

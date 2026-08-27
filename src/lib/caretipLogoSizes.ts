@@ -14,6 +14,8 @@ export const CARETIP_LOGO_WIDTH_PX = {
   customer: 100,
   badge: 72,
   badgeMax: 80,
+  /** Mobile dashboard header wordmark — compact, leaves room for actions */
+  headerMobile: 100,
   iconSm: 28,
   iconHeader: 32,
   iconMd: 36,
@@ -40,6 +42,8 @@ export const CARETIP_LOGO_SIZE_CLASS = {
   auth: "w-[96px] max-w-[112px] md:w-[120px] md:max-w-[132px] h-auto",
   customer: "w-[100px] h-auto max-w-full",
   badge: "w-[72px] max-w-[80px] h-auto",
+  /** Mobile dashboard header — mark + wordmark when space allows */
+  headerMobile: "w-[88px] min-[375px]:w-[96px] min-[400px]:w-[104px] h-auto max-w-full",
   /** Icon-only sizes (square) */
   iconSm: "h-7 w-7",
   /** Auth dashboard mobile header — ~32px brand mark */
@@ -71,6 +75,6 @@ export function resolveCareTipLogoSizeToken(size: string): CareTipLogoSizeToken 
   return CARETIP_LOGO_LEGACY_SIZE_MAP[size] ?? "sidebar";
 }
 
-export const DASHBOARD_HEADER_LOGO_CLASS = CARETIP_LOGO_SIZE_CLASS.drawer;
+export const DASHBOARD_HEADER_LOGO_CLASS = CARETIP_LOGO_SIZE_CLASS.headerMobile;
 export const DASHBOARD_DRAWER_LOGO_CLASS = CARETIP_LOGO_SIZE_CLASS.drawer;
 export const CUSTOMER_JOURNEY_HEADER_LOGO_CLASS = CARETIP_LOGO_SIZE_CLASS.customer;

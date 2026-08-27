@@ -1,7 +1,7 @@
 import { motion, useReducedMotion } from "motion/react";
-import { useCallback, useState, type ReactNode } from "react";
+import { useCallback, useId, useState, type CSSProperties, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
-import { Check, Lock, Receipt, ShieldCheck, Users } from "lucide-react";
+import { Check, Users } from "lucide-react";
 import { BusinessLogoMark } from "../../components/business/BusinessLogoMark";
 import { ProfileAvatar } from "../../components/ui/profile-avatar";
 import { LoadingSpinner } from "../../components/ui/loading-spinner";
@@ -38,66 +38,77 @@ export type TipSuccessExperienceProps = {
   showAttribution?: boolean;
 };
 
-function SuccessParticles({ accent }: { accent: string }) {
-  const spots = [
-    { left: "12%", top: "18%", delay: "0s", size: 6 },
-    { left: "82%", top: "14%", delay: "0.4s", size: 5 },
-    { left: "74%", top: "72%", delay: "0.8s", size: 7 },
-    { left: "18%", top: "78%", delay: "1.1s", size: 4 },
-    { left: "48%", top: "8%", delay: "0.6s", size: 5 },
-  ];
-  return (
-    <div className="customer-flow-success-particles pointer-events-none absolute inset-0 overflow-hidden" aria-hidden>
-      {spots.map((s, i) => (
-        <span
-          key={i}
-          className="customer-flow-success-particle"
-          style={{
-            left: s.left,
-            top: s.top,
-            width: s.size,
-            height: s.size,
-            animationDelay: s.delay,
-            background: accent,
-          }}
-        />
-      ))}
-    </div>
-  );
-}
-
 function SuccessHeroIcon({ accent, compact }: { accent: string; compact?: boolean }) {
   const reduceMotion = useReducedMotion();
   return (
     <motion.div
       className={cn(
         "customer-flow-success-hero relative mx-auto flex items-center justify-center",
-        compact ? "mb-3 size-[4.5rem] sm:mb-4 sm:size-[5rem]" : "mb-4 size-[6rem] sm:mb-5 sm:size-[6.5rem]",
+        compact ? "mb-2.5 size-[4rem] sm:mb-3 sm:size-[4.5rem]" : "mb-3 size-[5rem] sm:mb-3.5 sm:size-[5.5rem]",
       )}
       initial={reduceMotion ? false : { scale: 0.82, opacity: 0 }}
       animate={{ scale: 1, opacity: 1 }}
       transition={{ type: "spring", stiffness: 260, damping: 22, delay: 0.08 }}
       aria-hidden
     >
-      <span className="customer-flow-success-ripple customer-flow-success-ripple--1" style={{ borderColor: `${accent}40` }} />
-      <span className="customer-flow-success-ripple customer-flow-success-ripple--2" style={{ borderColor: `${accent}28` }} />
-      <span
-        className="customer-flow-success-hero__glow"
-        style={{ background: `radial-gradient(circle, ${accent}55 0%, transparent 70%)` }}
-      />
       <span
         className={cn(
           "customer-flow-success-hero__icon flex items-center justify-center rounded-full",
-          compact ? "size-[3.5rem] sm:size-[3.75rem]" : "size-[4.75rem] sm:size-[5.25rem]",
+          compact ? "size-[3.25rem] sm:size-[3.5rem]" : "size-[4rem] sm:size-[4.5rem]",
         )}
         style={{
           background: `linear-gradient(145deg, ${accent} 0%, #e9781c 55%, #c45f12 100%)`,
-          boxShadow: `0 18px 40px -14px ${accent}88, 0 0 0 10px ${accent}14`,
+          boxShadow: `0 14px 32px -12px ${accent}88, 0 0 0 8px ${accent}14`,
         }}
       >
-        <Check className={cn("text-white", compact ? "size-7 sm:size-8" : "size-10 sm:size-11")} strokeWidth={2.75} />
+        <Check className={cn("text-white", compact ? "size-6 sm:size-7" : "size-8 sm:size-9")} strokeWidth={2.75} />
       </span>
     </motion.div>
+  );
+}
+
+function CollapsibleReceipt({
+  receiptNumber,
+  tipAmount,
+  embedded,
+}: {
+  receiptNumber: string;
+  tipAmount?: number | null;
+  embedded?: boolean;
+}) {
+  const { t } = useTranslation();
+  const [open, setOpen] = useState(false);
+  const panelId = useId();
+
+  return (
+    <div className="customer-flow-success-receipt">
+      <button
+        type="button"
+        className="customer-flow-success-receipt__link"
+        aria-expanded={open}
+        aria-controls={panelId}
+        onClick={() => setOpen((v) => !v)}
+      >
+        {open ? t("tipFlow.success.hideReceipt") : t("tipFlow.success.viewReceipt")}
+      </button>
+      <div
+        id={panelId}
+        role="region"
+        aria-label={t("tipFlow.success.receipt")}
+        hidden={!open}
+        className={cn("customer-flow-success-receipt__panel", open && "is-open")}
+      >
+        <p className={cn("customer-flow-success-receipt__number", embedded && "text-sm")}>
+          {t("tipFlow.success.receiptReference", { code: receiptNumber })}
+        </p>
+        {tipAmount != null && tipAmount > 0 ? (
+          <p className="customer-flow-success-receipt__amount">
+            {t("tipFlow.success.tipAmount")}:{" "}
+            <span className="tabular-nums font-semibold">{formatEur(tipAmount)}</span>
+          </p>
+        ) : null}
+      </div>
+    </div>
   );
 }
 
@@ -127,7 +138,7 @@ export function TipSuccessExperience({
   const fadeUp = reduceMotion
     ? {}
     : {
-        initial: { y: 16, opacity: 0 },
+        initial: { y: 12, opacity: 0 },
         animate: { y: 0, opacity: 1 },
       };
 
@@ -149,52 +160,50 @@ export function TipSuccessExperience({
       style={guestSuccessPageStyle(branding)}
     >
       {!embedded ? (
-        <>
-          <div className="customer-flow-success-ambient" style={{ "--success-accent": accent } as React.CSSProperties} aria-hidden />
-          <SuccessParticles accent={accent} />
-        </>
+        <div className="customer-flow-success-ambient" style={{ "--success-accent": accent } as CSSProperties} aria-hidden />
       ) : null}
 
       <div
         className={cn(
           "caretip-container relative z-[1] mx-auto flex w-full max-w-lg flex-col items-center justify-center px-4",
-          embedded ? "py-4 sm:px-5 sm:py-5" : "min-h-[100dvh] justify-center py-6 sm:px-6 sm:py-10",
+          embedded ? "py-4 sm:px-5 sm:py-5" : "min-h-[100dvh] justify-center py-5 sm:px-6 sm:py-8",
         )}
       >
         <motion.article
-          className="customer-flow-success-card w-full"
-          style={{ "--success-accent": accent } as React.CSSProperties}
+          className="customer-flow-success-surface w-full"
+          style={{ "--success-accent": accent } as CSSProperties}
           {...fadeUp}
-          transition={{ delay: 0.12, duration: 0.45 }}
+          transition={{ delay: 0.08, duration: 0.35 }}
         >
-          <header className="customer-flow-success-card__brand text-center">
+          <header className="customer-flow-success-surface__brand text-center">
             <BusinessLogoMark
               logoPathOrUrl={venue.logo ?? null}
               businessName={venue.name}
               size="header"
-              className={cn("mx-auto", embedded ? "mb-2" : "mb-2.5")}
+              className={cn("mx-auto", embedded ? "mb-1.5" : "mb-2")}
             />
-            <h1 className="customer-flow-success-card__venue">{venue.name}</h1>
+            <p className="customer-flow-success-surface__venue">{venue.name}</p>
           </header>
 
           <motion.section
-            className={cn("customer-flow-success-confirmation text-center", embedded ? "mt-4" : "mt-4 sm:mt-5")}
+            className={cn("customer-flow-success-confirmation text-center", embedded ? "mt-3" : "mt-4")}
             aria-labelledby="tip-success-headline"
             {...fadeUp}
-            transition={{ delay: 0.14, duration: 0.4 }}
+            transition={{ delay: 0.1, duration: 0.35 }}
           >
             <SuccessHeroIcon accent={accent} compact={embedded} />
-            <h2 id="tip-success-headline" className="customer-flow-success-card__headline">
+            <p className="customer-flow-success-surface__status">{t("tipFlow.success.paymentSuccessful")}</p>
+            <h2 id="tip-success-headline" className="customer-flow-success-surface__headline">
               {displayHeadline}
             </h2>
-            <p className="customer-flow-success-card__thankyou">{thankYouMessage}</p>
+            <p className="customer-flow-success-surface__thankyou">{thankYouMessage}</p>
           </motion.section>
 
           <motion.section
-            className={cn("customer-flow-success-recipient", embedded ? "mt-4" : "mt-5 sm:mt-6")}
+            className={cn("customer-flow-success-recipient", embedded ? "mt-4" : "mt-5")}
             aria-label={t("tipFlow.success.recipientSummaryAria")}
             {...fadeUp}
-            transition={{ delay: 0.22, duration: 0.4 }}
+            transition={{ delay: 0.16, duration: 0.35 }}
           >
             <p className="customer-flow-success-recipient__label">
               {t("tipFlow.success.recipientLabel")}
@@ -218,42 +227,33 @@ export function TipSuccessExperience({
             </div>
           </motion.section>
 
-          {(tipAmount != null && tipAmount > 0) || showReceipt ? (
+          {showReceipt && receiptNumber ? (
             <motion.div
-              className={cn("customer-flow-success-summary", embedded ? "mt-5" : "mt-6 sm:mt-7")}
+              className={cn(embedded ? "mt-4" : "mt-5")}
               {...fadeUp}
-              transition={{ delay: 0.4, duration: 0.4 }}
+              transition={{ delay: 0.22, duration: 0.35 }}
             >
-              {tipAmount != null && tipAmount > 0 ? (
-                <div className="customer-flow-success-summary__amount-row">
-                  <span className="customer-flow-success-summary__amount-label">
-                    {t("tipFlow.success.tipAmount")}
-                  </span>
-                  <span className="customer-flow-success-summary__amount">{formatEur(tipAmount)}</span>
-                </div>
-              ) : null}
-              <ul className="customer-flow-success-summary__meta">
-                <li>
-                  <ShieldCheck className="size-4 shrink-0 text-emerald-600/80 dark:text-emerald-400/90" aria-hidden />
-                  {t("tipFlow.success.paymentCompleted")}
-                </li>
-                <li>
-                  <Lock className="size-4 shrink-0 text-emerald-600/80 dark:text-emerald-400/90" aria-hidden />
-                  {t("tipFlow.success.trustPoweredBy")}
-                </li>
-                {showReceipt && receiptNumber ? (
-                  <li className="customer-flow-success-summary__receipt">
-                    <Receipt className="size-4 shrink-0" aria-hidden />
-                    <span className="min-w-0 truncate text-sm tabular-nums">
-                      {t("tipFlow.success.receiptReference", { code: receiptNumber })}
-                    </span>
-                  </li>
-                ) : null}
-              </ul>
+              <CollapsibleReceipt
+                receiptNumber={receiptNumber}
+                tipAmount={tipAmount}
+                embedded={embedded}
+              />
             </motion.div>
+          ) : tipAmount != null && tipAmount > 0 ? (
+            <motion.p
+              className={cn(
+                "text-center text-sm text-muted-foreground",
+                embedded ? "mt-4" : "mt-5",
+              )}
+              {...fadeUp}
+              transition={{ delay: 0.22, duration: 0.35 }}
+            >
+              {t("tipFlow.success.tipAmount")}:{" "}
+              <span className="font-semibold tabular-nums text-foreground">{formatEur(tipAmount)}</span>
+            </motion.p>
           ) : null}
 
-          <div className={cn(cf.completionActions, embedded ? "mt-6" : "mt-7 sm:mt-8")}>
+          <div className={cn(cf.completionActions, embedded ? "mt-5" : "mt-6")}>
             <button
               type="button"
               onClick={() => runAction("primary", onPrimary)}
@@ -295,7 +295,7 @@ export function TipSuccessExperience({
         </motion.article>
 
         {showAttribution && !embedded ? (
-          <div className="mt-6 w-full max-w-md sm:mt-7">
+          <div className="mt-5 w-full max-w-md sm:mt-6">
             <CustomerJourneyCareTipAttribution label={t("tipFlow.common.poweredByCareTip")} />
           </div>
         ) : null}

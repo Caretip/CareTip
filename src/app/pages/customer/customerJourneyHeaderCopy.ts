@@ -19,6 +19,7 @@ export function headerChooseAmountFor(
 export function headerCompletePaymentFor(t: TFunction, name: string) {
   return {
     stepTitle: t("tipFlow.header.completePaymentFor", { name }),
+    /** Non-Stripe helper — Stripe security copy lives once on the payment body. */
     trustMessage: t("tipFlow.header.completePaymentHint"),
   };
 }

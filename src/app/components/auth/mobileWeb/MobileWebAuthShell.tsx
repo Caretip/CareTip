@@ -1,7 +1,7 @@
 import { useEffect, useState, type FormEvent, type ReactNode } from "react";
 import { Link } from "react-router";
 import { useTranslation } from "react-i18next";
-import { ChevronDown, ShieldCheck } from "lucide-react";
+import { ArrowLeft, ChevronDown, ShieldCheck } from "lucide-react";
 import { CareTipLogo } from "@/app/components/CareTipLogo";
 import type { AuthRole } from "@/components/ui/sign-in-card-2";
 import { changeAppLanguage, type AppLanguage } from "@/i18n/i18n";
@@ -13,6 +13,20 @@ import { OTPInput } from "./OTPInput";
 import { SocialLoginRow } from "./SocialLoginRow";
 import type { OAuthProviderId } from "@/app/lib/oauthProviderIds";
 import "@/styles/caretip-mobile-web-auth.css";
+
+function MobileWebAuthBackNav() {
+  const { t } = useTranslation();
+  const label = t("staticPages.common.backToHome");
+
+  return (
+    <div className="mw-auth-topbar">
+      <Link to="/" className="mw-auth-back" aria-label={label}>
+        <ArrowLeft className="mw-auth-back__icon" strokeWidth={2.25} aria-hidden />
+        <span className="mw-auth-back__label">{label}</span>
+      </Link>
+    </div>
+  );
+}
 
 export type MobileWebAuthMode = "login" | "register" | "otp";
 
@@ -95,6 +109,7 @@ export function MobileWebAuthShell({
     return (
       <div className="mw-auth" data-mw-auth="session">
         <div className="mw-auth__inner">
+          <MobileWebAuthBackNav />
           <div className="mw-auth-brand">
             <CareTipLogo size="auth" variant="wordmark" tone="auto" className="mw-auth-brand__logo" />
           </div>
@@ -108,6 +123,7 @@ export function MobileWebAuthShell({
     return (
       <div className="mw-auth" data-mw-auth="otp">
         <div className="mw-auth__inner">
+          <MobileWebAuthBackNav />
           <AuthCard variant="otp">
             <AuthHeader
               title={t("auth.mobileWebAuth.otpTitle")}
@@ -150,6 +166,7 @@ export function MobileWebAuthShell({
   return (
     <div className="mw-auth" data-mw-auth={mode}>
       <div className="mw-auth__inner">
+        <MobileWebAuthBackNav />
         <div className="mw-auth-brand">
           <CareTipLogo size="auth" variant="wordmark" tone="auto" className="mw-auth-brand__logo" />
         </div>

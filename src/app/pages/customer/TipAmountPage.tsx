@@ -3,7 +3,6 @@ import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { useTipFlow } from "../../context/TipFlowContext";
 import { logClientError } from "../../lib/clientLog";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { DEV_BYPASS_ENABLED, DEV_MOCK } from "../../lib/devCustomerBypass";
 import { hasRecentCustomerFlowEntry, markCustomerFlowEntered } from "../../lib/customerFlowGuard";
 import { paymentPathFromTipAmount } from "../../lib/tipFlowRoute";
@@ -255,87 +254,69 @@ export function TipAmountPage() {
         ) : undefined
       }
     >
-      <Card className={cf.cardShadcn}>
-        <CardHeader className={`${cf.cardHeaderPadding} pb-2`}>
-          <CardTitle className={cf.cardTitle}>{t("tipFlow.tipAmount.quickSelect")}</CardTitle>
-          <CardDescription className={cf.cardDesc}>{t("tipFlow.tipAmount.quickSelectDesc")}</CardDescription>
-        </CardHeader>
-        <CardContent className="px-5 pb-5 sm:px-6">
-          <div className="grid grid-cols-2 gap-3 sm:gap-3.5">
-            {presetAmounts.map((amount) => (
-              <button
-                key={amount}
-                type="button"
-                onClick={() => handleAmountSelect(amount)}
-                className={`${cf.tipPresetTile} ${
-                  selectedAmount === amount ? cf.tipPresetOn : cf.tipPresetIdle
-                }`}
-              >
-                <div className="mb-1 text-2xl font-bold tabular-nums text-foreground sm:text-[1.75rem]">
-                  {formatEur(amount, { minFrac: 0, maxFrac: 0 })}
-                </div>
-                <div className="text-sm text-muted-foreground">
-                  {t("tipFlow.tipAmount.tipAmountLabel")}
-                </div>
-              </button>
-            ))}
+      <section className="space-y-3" aria-label={t("tipFlow.tipAmount.quickSelect")}>
+        <div className="grid grid-cols-2 gap-2.5 sm:gap-3">
+          {presetAmounts.map((amount) => (
             <button
+              key={amount}
               type="button"
-              onClick={handleCustomClick}
-              className={`${cf.tipPresetTile} flex flex-col justify-center ${
-                showCustomInput ? cf.tipPresetOn : cf.tipPresetIdle
+              onClick={() => handleAmountSelect(amount)}
+              className={`${cf.tipPresetTile} ${
+                selectedAmount === amount && !showCustomInput ? cf.tipPresetOn : cf.tipPresetIdle
               }`}
             >
-              <div className="text-base font-bold text-foreground sm:text-lg">
-                {t("tipFlow.tipAmount.chooseYourAmount")}
+              <div className="mb-0.5 text-2xl font-bold tabular-nums text-foreground sm:text-[1.75rem]">
+                {formatEur(amount, { minFrac: 0, maxFrac: 0 })}
+              </div>
+              <div className="text-sm text-muted-foreground">
+                {t("tipFlow.tipAmount.tipAmountLabel")}
               </div>
             </button>
+          ))}
+          <button
+            type="button"
+            onClick={handleCustomClick}
+            className={`${cf.tipPresetTile} flex flex-col justify-center ${
+              showCustomInput ? cf.tipPresetOn : cf.tipPresetIdle
+            }`}
+          >
+            <div className="text-base font-bold text-foreground sm:text-lg">
+              {t("tipFlow.tipAmount.chooseYourAmount")}
+            </div>
+          </button>
+        </div>
+
+        {showCustomInput ? (
+          <div className="relative pt-1">
+            <label className="sr-only" htmlFor="tip-custom-amount">
+              {t("tipFlow.tipAmount.customTip")}
+            </label>
+            <div className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-2xl font-bold text-muted-foreground">
+              €
+            </div>
+            <input
+              id="tip-custom-amount"
+              type="number"
+              placeholder={t("tipFlow.tipAmount.amountPlaceholder")}
+              value={customAmount}
+              onChange={(e) => handleCustomInput(e.target.value)}
+              className={`${cf.inputAmount} pl-11 text-2xl sm:text-3xl`}
+              autoFocus
+              step="0.01"
+              min={MIN_TIP_AMOUNT_EUR}
+            />
           </div>
-        </CardContent>
-      </Card>
+        ) : null}
 
-      <Card className={cf.cardShadcn}>
-        <CardHeader className={`${cf.cardHeaderPadding} pb-2`}>
-          <CardTitle className={cf.cardTitle}>{t("tipFlow.tipAmount.customTip")}</CardTitle>
-          <CardDescription className={cf.cardDesc}>{t("tipFlow.tipAmount.customTipDesc")}</CardDescription>
-        </CardHeader>
-        <CardContent className="px-5 pb-5 sm:px-6">
-          {!showCustomInput ? (
-            <button type="button" onClick={handleCustomClick} className={cf.dashedCustomTrigger}>
-              <span className="text-sm font-medium text-muted-foreground">
-                {t("tipFlow.tipAmount.enterCustom")}
-              </span>
-            </button>
-          ) : (
-            <div className="relative">
-              <div className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-2xl font-bold text-muted-foreground">
-                €
-              </div>
-              <input
-                type="number"
-                placeholder={t("tipFlow.tipAmount.amountPlaceholder")}
-                value={customAmount}
-                onChange={(e) => handleCustomInput(e.target.value)}
-                className={`${cf.inputAmount} pl-11 text-2xl sm:text-3xl`}
-                autoFocus
-                step="0.01"
-                min={MIN_TIP_AMOUNT_EUR}
-              />
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      {selectedAmount ? (
-        <Card className={cf.cardAccentWash}>
-          <CardContent className="px-5 pb-5 pt-6 sm:px-6">
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-muted-foreground">{t("tipFlow.tipAmount.tipAmountLabel")}</span>
-              <span className="text-2xl font-bold text-foreground">{formatEur(selectedAmount)}</span>
-            </div>
-          </CardContent>
-        </Card>
-      ) : null}
+        {selectedAmount ? (
+          <div className={cf.selectedAmountRow}>
+            <span className="text-sm text-muted-foreground">{t("tipFlow.tipAmount.tipAmountLabel")}</span>
+            <span className="text-xl font-bold tabular-nums text-foreground sm:text-2xl">
+              {formatEur(selectedAmount)}
+            </span>
+          </div>
+        ) : null}
+      </section>
     </CustomerFlowShell>
   );
 }

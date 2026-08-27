@@ -380,13 +380,13 @@ export const EmployeeDashboard = memo(function EmployeeDashboard() {
           mobileAlign="left"
           className="!mb-0"
           cardClassName="border-0 bg-card shadow-none max-lg:border-0 max-lg:bg-transparent max-lg:shadow-none lg:rounded-[calc(1.75rem-3px)] lg:border-0 lg:bg-card lg:shadow-none"
-          badgeClassName="normal-case border-primary/15 bg-primary/[0.06] px-2.5 py-1 text-[11px] max-lg:text-[12px] font-medium tracking-normal text-primary/90 shadow-none"
+          badgeClassName="normal-case border-transparent bg-transparent px-0 py-0 text-[11px] max-lg:text-[12px] font-medium tracking-normal text-muted-foreground shadow-none"
           titleClassName="max-lg:!leading-[1.05] lg:!leading-[1.08] tracking-tight max-lg:mx-0 max-lg:max-w-[20ch] max-lg:text-left lg:max-w-[13ch] lg:text-left xl:text-[2.35rem]"
           descriptionClassName="!line-clamp-2 max-w-[34ch] leading-relaxed text-muted-foreground/90 max-lg:mx-0 max-lg:text-left lg:max-w-sm"
           textColumnClassName="lg:py-2 xl:pr-6"
           badge={
             <>
-              <Sparkles className="h-3 w-3 shrink-0 text-primary/75" aria-hidden />
+              <Sparkles className="h-3 w-3 shrink-0 text-muted-foreground/80" aria-hidden />
               <span>
                 {user.name
                   ? t("employee.hero.welcomeBackNamed", { name: user.name.split(" ")[0] })

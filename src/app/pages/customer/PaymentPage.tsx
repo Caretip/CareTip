@@ -1,7 +1,6 @@
 import { useNavigate, useSearchParams } from "react-router";
 import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
-import { Lock } from "lucide-react";
 import { toast } from "sonner";
 import { useTipFlow } from "../../context/TipFlowContext";
 import { createTipCheckoutSession } from "../../lib/api";
@@ -9,7 +8,6 @@ import { toUserFriendlyMessage } from "../../lib/errorMessages";
 import { logClientError } from "../../lib/clientLog";
 import { setPendingTipFromCheckout } from "../../lib/repeatTip";
 import { ProfileAvatar } from "../../components/ui/profile-avatar";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { DEV_BYPASS_ENABLED, DEV_MOCK } from "../../lib/devCustomerBypass";
 import { hasRecentCustomerFlowEntry, markCustomerFlowEntered } from "../../lib/customerFlowGuard";
 import {
@@ -312,59 +310,35 @@ export function PaymentPage() {
 
       {showCheckout ? (
         <>
-          <Card className={cf.paymentSummary}>
-            <CardContent className="p-0">
-              <div className="customer-flow-payment-summary__hero">
-                <ProfileAvatar
-                  src={employeeAvatar}
-                  displayName={employeeName ?? t("tipFlow.common.teamMember")}
-                  className={cf.employeeSummaryAvatar}
-                />
-                <div className="min-w-0">
-                  <p className={cf.paymentAmountLabel}>{t("tipFlow.payment.payingTipTo")}</p>
-                  <p className="truncate text-lg font-semibold tracking-tight text-foreground sm:text-xl">
-                    {employeeName ?? t("tipFlow.common.teamMember")}
-                  </p>
-                </div>
+          <section className={cf.paymentSummary} aria-label={t("tipFlow.payment.amountToPay")}>
+            <div className="customer-flow-payment-summary__hero">
+              <ProfileAvatar
+                src={employeeAvatar}
+                displayName={employeeName ?? t("tipFlow.common.teamMember")}
+                className={cf.employeeSummaryAvatar}
+              />
+              <div className="min-w-0">
+                <p className={cf.paymentAmountLabel}>{t("tipFlow.payment.payingTipTo")}</p>
+                <p className="truncate text-lg font-semibold tracking-tight text-foreground sm:text-xl">
+                  {employeeName ?? t("tipFlow.common.teamMember")}
+                </p>
               </div>
-              <div className="customer-flow-payment-summary__line">
-                <span className="text-muted-foreground">{t("tipFlow.tipAmount.tipAmountLabel")}</span>
-                <span className="font-medium tabular-nums text-foreground">{formatEur(tipAmountVal)}</span>
-              </div>
-              <div className="customer-flow-payment-summary__amount">
-                <span className="text-base font-semibold text-foreground sm:text-lg">
-                  {t("tipFlow.payment.amountToPay")}
-                </span>
-                <span className={cf.paymentAmountDisplay}>{formatEur(totalAmount)}</span>
-              </div>
-            </CardContent>
-          </Card>
+            </div>
+            <div className="customer-flow-payment-summary__amount">
+              <span className="text-base font-semibold text-foreground sm:text-lg">
+                {t("tipFlow.payment.amountToPay")}
+              </span>
+              <span className={cf.paymentAmountDisplay}>{formatEur(totalAmount)}</span>
+            </div>
+          </section>
 
-          <Card className={cf.cardShadcn}>
-            <CardHeader className={`${cf.cardHeaderPadding} pb-2`}>
-              <CardTitle className={cf.cardTitle}>{t("tipFlow.payment.selectMethodTitle")}</CardTitle>
-              <CardDescription className={cf.cardDesc}>
-                {t("tipFlow.payment.selectMethodDesc")}
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="px-5 pb-5 sm:px-6">
-              <PaymentMethodsAvailable />
-            </CardContent>
-          </Card>
-
-          <div className={cf.stripeNote}>{t("tipFlow.payment.stripeCardNote")}</div>
-
-          <Card className={cf.trustCard}>
-            <CardContent className="flex items-start gap-3.5 px-5 py-4 pl-6 sm:px-6 sm:pl-7">
-              <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-emerald-600/10 text-emerald-700 dark:text-emerald-400">
-                <Lock className="size-5" aria-hidden />
-              </div>
-              <div className="text-sm leading-relaxed text-muted-foreground">
-                <p className="mb-1 font-semibold text-foreground">{t("tipFlow.payment.secureTitle")}</p>
-                <p>{t("tipFlow.payment.secureBody")}</p>
-              </div>
-            </CardContent>
-          </Card>
+          <section className={cf.paymentMethodsBlock} aria-labelledby="payment-methods-heading">
+            <h2 id="payment-methods-heading" className={cf.paymentMethodsTitle}>
+              {t("tipFlow.payment.selectMethodTitle")}
+            </h2>
+            <PaymentMethodsAvailable />
+            <p className={cf.stripeNote}>{t("tipFlow.payment.secureCheckoutNote")}</p>
+          </section>
         </>
       ) : null}
     </CustomerFlowShell>

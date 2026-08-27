@@ -73,6 +73,49 @@
   gap: 1rem;
 }
 
+.mw-auth-topbar {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  margin-bottom: 0.125rem;
+}
+
+.mw-auth-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  min-height: 2.75rem;
+  padding: 0.375rem 0.25rem 0.375rem 0;
+  border-radius: 0.75rem;
+  color: var(--mw-ink);
+  font-size: 0.9375rem;
+  font-weight: 500;
+  line-height: 1.2;
+  text-decoration: none;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  transition: color 0.15s ease;
+}
+
+.mw-auth-back:hover {
+  color: var(--mw-orange);
+}
+
+.mw-auth-back:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--mw-orange) 55%, transparent);
+  outline-offset: 2px;
+}
+
+.mw-auth-back__icon {
+  width: 1.25rem;
+  height: 1.25rem;
+  flex-shrink: 0;
+}
+
+.mw-auth-back__label {
+  white-space: nowrap;
+}
+
 .mw-auth-brand {
   display: flex;
   justify-content: center;

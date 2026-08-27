@@ -44,13 +44,14 @@ export const customerFlowUi = {
   customerJourneyTrust:
     "inline-flex max-w-full items-center gap-1.5 text-xs font-normal leading-snug text-muted-foreground/70",
 
+  /** Flat page-surface footer — not a card. */
   customerJourneyAttribution:
-    "flex w-full flex-col items-center justify-center gap-2.5 rounded-[1.125rem] border border-black/[0.06] bg-[#fafaf8]/95 px-5 py-4 text-center shadow-[0_4px_18px_-14px_rgba(15,23,42,0.12)] dark:border-white/10 dark:bg-muted/20 sm:flex-row sm:gap-3.5",
+    "flex w-full flex-col items-center justify-center gap-2 px-1 py-2 text-center sm:flex-row sm:gap-2.5",
   customerJourneyAttributionCompact:
-    "inline-flex items-center justify-center gap-2.5 text-center",
-  customerJourneyAttributionLabel: "text-xs font-medium leading-snug text-muted-foreground sm:text-sm",
+    "inline-flex items-center justify-center gap-2 text-center",
+  customerJourneyAttributionLabel: "text-xs font-medium leading-snug text-muted-foreground/80 sm:text-[0.8125rem]",
   customerJourneyAttributionFooter:
-    "caretip-container mx-auto max-w-xl pb-8 pt-2 sm:pb-10",
+    "caretip-container mx-auto max-w-xl pb-8 pt-1 sm:pb-10",
 
   /** @deprecated Legacy title stack — use customerJourneyVenueName + stepTitle. */
   customerJourneyContent: "min-w-0 pt-4",
@@ -65,14 +66,14 @@ export const customerFlowUi = {
   backButton:
     "inline-flex shrink-0 items-center justify-center rounded-xl border border-black/[0.06] bg-white/80 px-2.5 py-2 text-sm font-semibold text-foreground shadow-[0_2px_8px_rgba(0,0,0,0.03)] transition-[transform,background-color,box-shadow] duration-150 ease-out hover:-translate-y-0.5 hover:bg-white hover:shadow-[0_4px_14px_rgba(0,0,0,0.06)] active:translate-y-0 disabled:opacity-40 dark:border-white/10 dark:bg-card/80 sm:px-3",
 
-  main: "caretip-container mx-auto max-w-xl space-y-5 py-7 sm:space-y-5 sm:py-9",
-  mainCompact: "caretip-container mx-auto max-w-xl space-y-4 py-6 sm:space-y-4 sm:py-8",
+  main: "caretip-container mx-auto max-w-xl space-y-5 py-5 sm:space-y-5 sm:py-8",
+  mainCompact: "caretip-container mx-auto max-w-xl space-y-4 py-4 sm:space-y-4 sm:py-7",
 
   fixedBottomBar:
     "fixed bottom-0 left-0 right-0 z-30 border-t border-black/[0.06] bg-white/92 backdrop-blur-md supports-[backdrop-filter]:bg-white/88 dark:border-white/10 dark:bg-background/95 shadow-[0_-12px_40px_-20px_rgba(15,23,42,0.1)]",
   /** Centers journey CTAs on desktop; full width on mobile. */
   fixedBottomInner:
-    "caretip-container mx-auto flex max-w-xl justify-center px-4 py-4 sm:px-6",
+    "caretip-container mx-auto flex max-w-xl justify-center px-4 py-3.5 sm:px-6 sm:py-4",
   /** Wrap fixed-bottom or inline primary actions — mobile full width, desktop capped. */
   journeyCtaStack: "flex w-full max-w-sm flex-col gap-3",
 
@@ -120,7 +121,7 @@ export const customerFlowUi = {
     "border-primary bg-primary/[0.08] shadow-[0_12px_32px_rgba(233,120,28,0.14)] ring-2 ring-primary/15 -translate-y-0.5",
 
   tipPresetTile:
-    "customer-flow-tip-preset flex min-h-[6.5rem] flex-col justify-center rounded-[1.125rem] border-2 p-4 text-left transition-[transform,border-color,box-shadow,background-color] duration-150 ease-out sm:min-h-[7rem]",
+    "customer-flow-tip-preset flex min-h-[5.75rem] flex-col justify-center rounded-[1.125rem] border-2 p-3.5 text-left transition-[transform,border-color,box-shadow,background-color] duration-150 ease-out sm:min-h-[6.5rem] sm:p-4",
   tipPresetIdle:
     "border-black/[0.08] bg-white shadow-[0_8px_30px_rgba(0,0,0,0.04)] hover:-translate-y-1 hover:border-primary/30 hover:shadow-[0_14px_36px_rgba(0,0,0,0.08)] dark:border-white/10 dark:bg-card",
   tipPresetOn:
@@ -139,22 +140,28 @@ export const customerFlowUi = {
   btnSecondaryLg: cn(caretipBtnSecondary, "w-full sm:max-w-sm"),
   btnAccentLg: cn(caretipBtnPrimary, "w-full sm:max-w-sm", "customer-flow-pay-cta"),
 
-  paymentSummary: cn(premiumCard, "customer-flow-payment-summary overflow-hidden"),
+  /** Amount review — light surface, not a heavy nested card stack. */
+  paymentSummary:
+    "customer-flow-payment-summary overflow-hidden rounded-2xl border border-black/[0.05] bg-white/80 dark:border-white/10 dark:bg-card/60",
   paymentAmountDisplay:
-    "text-[2rem] font-bold tabular-nums tracking-tight text-foreground sm:text-[2.375rem]",
+    "text-[1.875rem] font-bold tabular-nums tracking-tight text-foreground sm:text-[2.25rem]",
   paymentAmountLabel: "text-sm font-medium text-muted-foreground",
 
+  paymentMethodsBlock: "space-y-3",
+  paymentMethodsTitle: "text-[0.9375rem] font-semibold tracking-tight text-foreground sm:text-base",
+
   paymentMethodRow:
-    "customer-flow-payment-method flex w-full min-h-[4.75rem] items-center gap-4 rounded-[1.125rem] border border-black/[0.06] bg-white p-4 text-left shadow-[0_6px_24px_rgba(0,0,0,0.035)] transition-[transform,border-color,box-shadow,background-color] duration-150 ease-out sm:min-h-[5rem] dark:border-white/10 dark:bg-card",
-  paymentMethodOn:
-    "border-primary/40 bg-primary/[0.05] shadow-[0_10px_28px_rgba(233,120,28,0.1)] ring-1 ring-primary/12",
-  paymentMethodOff:
-    "hover:-translate-y-0.5 hover:border-primary/22 hover:shadow-[0_10px_28px_rgba(0,0,0,0.06)]",
+    "customer-flow-payment-method flex w-full min-h-[3.75rem] items-center gap-3.5 rounded-2xl border border-black/[0.06] bg-white px-3.5 py-3 text-left sm:min-h-[4rem] sm:gap-4 sm:px-4 dark:border-white/10 dark:bg-card",
+  paymentMethodOn: "border-primary/35 bg-primary/[0.04] ring-1 ring-primary/10",
+  paymentMethodOff: "",
 
   trustCard: cn(premiumCard, "customer-flow-trust border-emerald-600/10 bg-gradient-to-br from-emerald-50/80 via-white to-white dark:from-emerald-950/20 dark:via-card dark:to-card"),
 
-  stripeNote:
-    "rounded-[1.125rem] border border-black/[0.05] bg-[#fafaf8] px-4 py-3.5 text-sm leading-relaxed text-muted-foreground dark:bg-muted/15",
+  /** Single concise Stripe/security line — not a card. */
+  stripeNote: "text-center text-sm leading-snug text-muted-foreground",
+
+  selectedAmountRow:
+    "flex items-center justify-between gap-3 px-1 py-1",
 
   stateCenter:
     "flex min-h-[min(100dvh,48rem)] flex-col items-center justify-center px-4 py-12 text-center",

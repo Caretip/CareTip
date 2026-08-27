@@ -6,10 +6,10 @@ import { cn } from "@/lib/utils";
 
 const METHOD_IDS: PaymentMethodMarkId[] = ["apple-pay", "google-pay", "card"];
 
-const METHOD_I18N: Record<PaymentMethodMarkId, { name: string; desc: string }> = {
-  "apple-pay": { name: "applePay", desc: "applePayDesc" },
-  "google-pay": { name: "googlePay", desc: "googlePayDesc" },
-  card: { name: "card", desc: "cardDesc" },
+const METHOD_I18N: Record<PaymentMethodMarkId, string> = {
+  "apple-pay": "applePay",
+  "google-pay": "googlePay",
+  card: "card",
 };
 
 type PaymentMethodsAvailableProps = {
@@ -24,20 +24,12 @@ export function PaymentMethodsAvailable({ className }: PaymentMethodsAvailablePr
   const { t } = useTranslation();
 
   return (
-    <ul className={cn("space-y-3", className)} aria-label={t("tipFlow.payment.methodsAria")}>
-      {METHOD_IDS.map((id, index) => (
-        <li
-          key={id}
-          className={cn(
-            cf.paymentMethodRow,
-            cf.paymentMethodOff,
-            index === 2 && cf.paymentMethodOn,
-            "cursor-default active:scale-[0.99]",
-          )}
-        >
+    <ul className={cn("space-y-2.5", className)} aria-label={t("tipFlow.payment.methodsAria")}>
+      {METHOD_IDS.map((id) => (
+        <li key={id} className={cn(cf.paymentMethodRow, cf.paymentMethodOff, "cursor-default")}>
           <div
             className={cn(
-              "flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-black/[0.06] bg-[#fafaf8] p-1.5 shadow-[inset_0_1px_2px_rgba(0,0,0,0.02)] sm:h-14 sm:w-14 dark:bg-muted/40",
+              "flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-black/[0.06] bg-[#fafaf8] p-1.5 sm:h-11 sm:w-11 dark:bg-muted/40",
             )}
             aria-hidden
           >
@@ -45,10 +37,7 @@ export function PaymentMethodsAvailable({ className }: PaymentMethodsAvailablePr
           </div>
           <div className="min-w-0 flex-1 text-left">
             <div className="font-semibold text-foreground">
-              {t(`tipFlow.payment.methods.${METHOD_I18N[id].name}`)}
-            </div>
-            <div className="text-sm text-muted-foreground">
-              {t(`tipFlow.payment.methods.${METHOD_I18N[id].desc}`)}
+              {t(`tipFlow.payment.methods.${METHOD_I18N[id]}`)}
             </div>
           </div>
         </li>

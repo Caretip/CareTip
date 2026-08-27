@@ -65,21 +65,42 @@ function DashboardHeaderBar({
     <>
       <div
         className={cn(
-          "caretip-dashboard-header-row flex min-w-0 max-w-full items-center justify-between gap-2 px-3 py-2 sm:px-4 lg:gap-3 lg:px-8 lg:py-3.5",
+          "caretip-dashboard-header-row flex min-w-0 max-w-full items-center justify-between gap-2 px-3 py-2 sm:gap-2.5 sm:px-4",
+          "lg:gap-3 lg:px-8 lg:py-3.5",
         )}
       >
         <div className="caretip-dashboard-header-leading flex min-w-0 flex-1 items-center gap-2 lg:gap-3">
           <button
             type="button"
             onClick={onMenuClick}
-            className={cn(headerIconBtn, "min-h-9 min-w-9 p-2 lg:hidden")}
+            className={cn(headerIconBtn, "min-h-9 min-w-9 shrink-0 p-2 lg:hidden")}
             aria-label={t("shell.header.menuButtonAria")}
           >
             <Menu className="h-[1.125rem] w-[1.125rem] text-foreground" />
           </button>
 
-          <div className="caretip-dashboard-header-brand min-w-0 shrink-0 overflow-hidden lg:hidden">
-            <CareTipLogo size="iconHeader" variant="icon" />
+          {/*
+            Mobile CareTip branding — sits with the leading cluster (not centered over actions).
+            Wordmark when space allows; mark-only under 360px. Non-interactive.
+          */}
+          <div
+            className="caretip-dashboard-header-brand pointer-events-none flex min-w-0 shrink items-center lg:hidden"
+            role="img"
+            aria-label="CareTip"
+          >
+            <CareTipLogo
+              className="caretip-dashboard-header-brand__wordmark"
+              size="headerMobile"
+              variant="wordmark"
+              tone="auto"
+              alt=""
+            />
+            <CareTipLogo
+              className="caretip-dashboard-header-brand__mark"
+              size="iconHeader"
+              variant="icon"
+              alt=""
+            />
           </div>
 
           {!isBusinessManager ? (
@@ -93,7 +114,7 @@ function DashboardHeaderBar({
           )}
         </div>
 
-        <div className="caretip-dashboard-header-trailing flex shrink-0 items-center gap-1.5 sm:gap-2 lg:gap-3">
+        <div className="caretip-dashboard-header-trailing flex shrink-0 items-center justify-end gap-1 sm:gap-1.5 lg:gap-3">
           {!isBusinessManager ? (
             <DashboardHeaderSearchMobileToggle />
           ) : (
