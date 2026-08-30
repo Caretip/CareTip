@@ -8,6 +8,7 @@ import { NotificationType } from "./notification.types.js";
 import {
   deliverNotificationToUsers,
   deliverUserNotification,
+  type DeliveryChannel,
 } from "../notifications/notificationOrchestrator.service.js";
 
 function safeTrigger(label: string, fn: () => Promise<void>): void {
@@ -400,6 +401,7 @@ export function onPlatformOperationalAlert(params: {
   entityId?: string;
   localeTemplate?: import("../../notifications/notificationI18n.js").NotificationTemplate;
   metadata?: Record<string, string>;
+  channels?: Partial<Record<DeliveryChannel, boolean>>;
 }): void {
   safeTrigger("onPlatformOperationalAlert", async () => {
     const adminIds = await listPlatformAdminUserIds();
@@ -416,7 +418,7 @@ export function onPlatformOperationalAlert(params: {
         timestamp: new Date().toISOString(),
         metadata: { entityId, ...params.metadata },
       },
-      { dedupeKeyPrefix: `platform_op:${entityId}` },
+      { dedupeKeyPrefix: `platform_op:${entityId}`, channels: params.channels },
     );
   });
 }

@@ -8,6 +8,10 @@ function orderUrl(orderId: string): string {
   return `/dashboard/qr-studio/branding/orders/${encodeURIComponent(orderId)}`;
 }
 
+function adminOrderUrl(orderId: string): string {
+  return `/platform-admin/businesses/branding-orders/${encodeURIComponent(orderId)}`;
+}
+
 async function managerUserIdForBusiness(businessId: string): Promise<string | null> {
   const business = await prisma.business.findUnique({
     where: { id: businessId },
@@ -48,6 +52,59 @@ async function notifyBusinessOrder(input: {
   });
 }
 
+async function notifyPlatformAdminPhysicalQrPaid(input: {
+  businessId: string;
+  orderId: string;
+}): Promise<void> {
+  const order = await prisma.physicalQrOrder.findUnique({
+    where: { id: input.orderId },
+    select: {
+      id: true,
+      businessId: true,
+      quantity: true,
+      totalAmount: true,
+      currency: true,
+      paymentStatus: true,
+      fulfillmentStatus: true,
+      paidAt: true,
+      product: { select: { name: true } },
+      business: { select: { name: true, brandDisplayName: true } },
+    },
+  });
+  if (!order || order.businessId !== input.businessId) return;
+  if (order.paymentStatus !== "PAID") return;
+
+  const businessName =
+    order.business?.brandDisplayName?.trim() || order.business?.name || "A business";
+  const productLabel = order.product?.name ?? "Physical QR order";
+  const paidAtIso = order.paidAt?.toISOString() ?? new Date().toISOString();
+
+  onPlatformOperationalAlert({
+    title: "Physical QR order paid",
+    body: `${businessName} paid for a physical QR order.`,
+    url: adminOrderUrl(input.orderId),
+    entityId: input.orderId,
+    localeTemplate: {
+      id: "physical_qr_paid_admin",
+      params: {
+        businessName,
+        orderId: input.orderId,
+        productLabel,
+        quantity: order.quantity,
+        totalAmountCents: order.totalAmount,
+        currency: order.currency,
+        paidAtIso,
+      },
+    },
+    metadata: {
+      source: "physical_qr_order",
+      orderId: input.orderId,
+      businessId: input.businessId,
+    },
+    channels: { in_app: true, push: true, email: true },
+  });
+}
+
 export function notifyPhysicalQrPaymentReceived(input: { businessId: string; orderId: string }): void {
   void notifyBusinessOrder({
     ...input,
@@ -58,30 +115,7 @@ export function notifyPhysicalQrPaymentReceived(input: { businessId: string; ord
     email: true,
   }).catch(() => undefined);
 
-  void prisma.business
-    .findUnique({
-      where: { id: input.businessId },
-      select: { name: true, brandDisplayName: true },
-    })
-    .then((business) => {
-      const businessName = business?.brandDisplayName?.trim() || business?.name || "A business";
-      onPlatformOperationalAlert({
-        title: "Physical QR order paid",
-        body: `${businessName} paid for a physical QR order.`,
-        url: `/platform-admin/businesses/branding-orders/${encodeURIComponent(input.orderId)}`,
-        entityId: input.orderId,
-        localeTemplate: {
-          id: "physical_qr_paid_admin",
-          params: { businessName, orderId: input.orderId },
-        },
-        metadata: {
-          source: "physical_qr_order",
-          orderId: input.orderId,
-          businessId: input.businessId,
-        },
-      });
-    })
-    .catch(() => undefined);
+  void notifyPlatformAdminPhysicalQrPaid(input).catch(() => undefined);
 }
 
 export function notifyPhysicalQrPrinting(input: { businessId: string; orderId: string }): void {

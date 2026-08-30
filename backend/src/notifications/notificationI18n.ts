@@ -11,6 +11,26 @@ export function formatNotificationAmount(amount: number, locale: EmailLocale): s
   }).format(amount);
 }
 
+export function formatNotificationAmountCents(
+  cents: number,
+  currency: string,
+  locale: EmailLocale,
+): string {
+  return new Intl.NumberFormat(locale === "de" ? "de-DE" : "en-GB", {
+    style: "currency",
+    currency: currency?.trim() || "EUR",
+  }).format(cents / 100);
+}
+
+export function formatNotificationDateTime(iso: string, locale: EmailLocale): string {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return iso;
+  return new Intl.DateTimeFormat(locale === "de" ? "de-DE" : "en-GB", {
+    dateStyle: "medium",
+    timeStyle: "short",
+  }).format(d);
+}
+
 export type NotificationTemplate =
   | { id: "tip_received_employee"; params: { amount: number; customerName: string | null } }
   | { id: "tip_received_business"; params: { amount: number; employeeName: string } }
@@ -33,7 +53,18 @@ export type NotificationTemplate =
   | { id: "support_status_updated"; params: { status: string } }
   | { id: "support_inbox_title"; params: { ticketNumber: string; status: string; subject: string } }
   | { id: "physical_qr_paid" }
-  | { id: "physical_qr_paid_admin"; params: { businessName: string; orderId: string } }
+  | {
+      id: "physical_qr_paid_admin";
+      params: {
+        businessName: string;
+        orderId: string;
+        productLabel: string;
+        quantity: number;
+        totalAmountCents: number;
+        currency: string;
+        paidAtIso: string;
+      };
+    }
   | { id: "physical_qr_printing" }
   | { id: "physical_qr_shipped"; params: { trackingNumber: string | null } }
   | { id: "physical_qr_delivered" };
@@ -266,16 +297,31 @@ export function renderNotificationTemplate(
             title: "Payment received",
             body: "Your physical QR order has been paid for and is now being processed.",
           };
-    case "physical_qr_paid_admin":
+    case "physical_qr_paid_admin": {
+      const amount = formatNotificationAmountCents(
+        template.params.totalAmountCents,
+        template.params.currency,
+        locale,
+      );
+      const paidAt = formatNotificationDateTime(template.params.paidAtIso, locale);
       return de
         ? {
             title: "Physische QR-Bestellung bezahlt",
-            body: `${template.params.businessName} hat eine physische QR-Bestellung bezahlt.`,
+            body:
+              `${template.params.businessName} hat eine physische QR-Bestellung bezahlt — bereit zur Bearbeitung. ` +
+              `Bestellung: ${template.params.orderId}. Produkt: ${template.params.productLabel}. ` +
+              `Menge: ${template.params.quantity}. Betrag: ${amount}. Zahlung: Bezahlt. ` +
+              `Fulfillment: In Bearbeitung. Bezahlt am: ${paidAt}.`,
           }
         : {
             title: "Physical QR order paid",
-            body: `${template.params.businessName} paid for a physical QR order.`,
+            body:
+              `${template.params.businessName} paid for a physical QR order — ready for processing. ` +
+              `Order: ${template.params.orderId}. Product: ${template.params.productLabel}. ` +
+              `Quantity: ${template.params.quantity}. Amount: ${amount}. Payment: Paid. ` +
+              `Fulfillment: Processing. Paid at: ${paidAt}.`,
           };
+    }
     case "physical_qr_printing":
       return de
         ? {

@@ -74,6 +74,7 @@
     "test:sql-injection": "npm run test:sql-injection-audit && npm run test:sql-injection-smoke",
     "test:file-upload-pentest": "tsx scripts/file-upload-pentest.ts",
     "test:physical-qr": "tsx scripts/physical-qr-runtime.ts",
+    "test:physical-qr-notify": "dotenv -e ../.env -e .env -- tsx scripts/physical-qr-notify-runtime.ts",
     "test:digital-plain-qr": "tsx scripts/digital-plain-qr-runtime.ts",
     "test:employee-assignment-visibility": "dotenv -e ../.env -e .env -- tsx scripts/employee-assignment-visibility-runtime.ts",
     "test:notification-intelligence": "dotenv -e ../.env -e .env -- tsx scripts/notification-intelligence-runtime.ts",
