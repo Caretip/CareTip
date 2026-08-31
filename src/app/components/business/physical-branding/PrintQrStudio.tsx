@@ -83,7 +83,7 @@ export function PrintQrStudio() {
   const [printAddress, setPrintAddress] = useState("");
   const [recipientName, setRecipientName] = useState("");
   const [streetLine, setStreetLine] = useState("");
-  const [addressLine2, setAddressLine2] = useState("");
+  const [addressLine2] = useState("");
   const [city, setCity] = useState("");
   const [contactEmail, setContactEmail] = useState("");
   const [contactPhone, setContactPhone] = useState("");
