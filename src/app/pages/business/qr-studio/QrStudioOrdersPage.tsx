@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router";
 import { useTranslation } from "react-i18next";
-import { fetchPhysicalQrOrders, type PhysicalQrCustomerOrder } from "@/app/lib/api";
+import { toast } from "sonner";
+import { checkoutPhysicalQrOrder, fetchPhysicalQrOrders, type PhysicalQrCustomerOrder } from "@/app/lib/api";
+import { performExternalStripeRedirect } from "@/app/lib/externalStripeRedirect";
 import { PhysicalQrOrderCard } from "@/app/components/business/physical-branding/PhysicalQrOrderCard";
 import { QrStudioOrderListSkeleton } from "@/app/components/business/qr-studio/QrStudioLoadingSkeletons";
 import { QR_STUDIO_BASE } from "@/app/components/business/businessDashboardNav";
@@ -39,6 +41,23 @@ export function QrStudioOrdersPage() {
     };
   }, [reload]);
 
+  const payOrder = useCallback(
+    async (id: string) => {
+      setPayingOrderId(id);
+      try {
+        const session = await checkoutPhysicalQrOrder(id);
+        const redirected = performExternalStripeRedirect(session.url, "checkout");
+        if (!redirected.ok) {
+          throw new Error(t("business.qrStudio.physical.orderError"));
+        }
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : t("business.qrStudio.physical.orderError"));
+        setPayingOrderId(null);
+      }
+    },
+    [t],
+  );
+
   return (
     <div className="qr-studio-orders space-y-6 max-lg:space-y-4">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -65,12 +84,7 @@ export function QrStudioOrdersPage() {
               order={order}
               paying={payingOrderId === order.id}
               onPay={(id) => {
-                setPayingOrderId(id);
-                void import("@/app/lib/api").then(({ checkoutPhysicalQrOrder }) =>
-                  checkoutPhysicalQrOrder(id).then((session) => {
-                    window.location.href = session.url;
-                  }).finally(() => setPayingOrderId(null)),
-                );
+                void payOrder(id);
               }}
             />
           ))}

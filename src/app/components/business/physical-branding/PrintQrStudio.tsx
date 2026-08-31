@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useSearchParams } from "react-router";
+import { useNavigate, useSearchParams } from "react-router";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { ShoppingBag, Trash2, Minus, Plus } from "lucide-react";
@@ -54,6 +54,7 @@ function cartLineKey(type: string, subjectId?: string) {
 
 export function PrintQrStudio() {
   const { t, i18n } = useTranslation();
+  const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const printFocus = parseQrStudioPrintFocus(searchParams.get("focus"));
   const focusScrolledRef = useRef(false);
@@ -293,8 +294,8 @@ export function PrintQrStudio() {
         colorTokens: PHYSICAL_QR_DEFAULT_COLOR_TOKENS,
       });
       const session = await checkoutPhysicalQrBatch(batch.order.id);
-      if (session.zeroCost && session.url) {
-        window.location.href = session.url;
+      if (session.zeroCost) {
+        navigate(`/dashboard/qr-studio/orders/${encodeURIComponent(batch.order.id)}?checkout=success`);
         return;
       }
       const redirected = performExternalStripeRedirect(session.url, "checkout");
@@ -310,6 +311,7 @@ export function PrintQrStudio() {
     city,
     contactEmail,
     contactPhone,
+    navigate,
     printAddress,
     product,
     recipientName,
