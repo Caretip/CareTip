@@ -76,6 +76,22 @@ const CATALOG: Record<FeatureKey, FeatureCatalogEntry> = {
     featureListCount: 3,
     requiredTier: "premium",
   },
+  physicalQrPrinting: {
+    featureKey: "physicalQrPrinting",
+    titleKey: "subscription.features.physicalQrPrinting.title",
+    benefitKey: "subscription.features.physicalQrPrinting.benefit",
+    featureListPrefix: "subscription.features.physicalQrPrinting",
+    featureListCount: 3,
+    requiredTier: "basic",
+  },
+  physicalQrPrintingIncluded: {
+    featureKey: "physicalQrPrintingIncluded",
+    titleKey: "subscription.features.physicalQrPrintingIncluded.title",
+    benefitKey: "subscription.features.physicalQrPrintingIncluded.benefit",
+    featureListPrefix: "subscription.features.physicalQrPrintingIncluded",
+    featureListCount: 3,
+    requiredTier: "premium",
+  },
   advancedAnalytics: {
     featureKey: "advancedAnalytics",
     titleKey: "subscription.features.advancedAnalytics.title",

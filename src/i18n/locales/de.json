@@ -2456,6 +2456,20 @@
         "f1": "Live-Vorschau",
         "f2": "Pro-Tarif und höher"
       },
+      "physicalQrPrinting": {
+        "title": "Physischer QR-Druck",
+        "benefit": "Bestellen Sie gedruckte CareTip-A5-QR-Materialien für Standort und Team.",
+        "f0": "A5-Druckmaterialien im QR-Studio bestellen",
+        "f1": "Fulfillment- und Versandstatus verfolgen",
+        "f2": "Im Basic verfügbar (kostenpflichtiger Druck)"
+      },
+      "physicalQrPrintingIncluded": {
+        "title": "Physischer QR-Druck inklusive",
+        "benefit": "Pro enthält physischen QR-Druck — Bestellungen ohne separate Druckgebühr.",
+        "f0": "Physische QR-Bestellungen im Tarif enthalten",
+        "f1": "Kein Checkout für enthaltenen Druck",
+        "f2": "Pro-Tarif und höher"
+      },
       "employeeGoals": {
         "title": "Trinkgeldziele für Mitarbeitende",
         "benefit": "Mitarbeitende legen eigene Trinkgeldziele fest; Ihr Unternehmen verfolgt den Fortschritt, feiert Meilensteine und unterstützt die Team-Motivation.",

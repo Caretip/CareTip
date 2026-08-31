@@ -2456,6 +2456,20 @@
         "f1": "Live preview",
         "f2": "Pro plan and above"
       },
+      "physicalQrPrinting": {
+        "title": "Physical QR printing",
+        "benefit": "Order printed CareTip A5 QR materials for your venue and staff.",
+        "f0": "Order A5 print materials from QR Studio",
+        "f1": "Track fulfillment and shipping status",
+        "f2": "Available on Basic (paid printing)"
+      },
+      "physicalQrPrintingIncluded": {
+        "title": "Included physical QR printing",
+        "benefit": "Pro includes physical QR printing so orders can be placed without a separate print charge.",
+        "f0": "Physical QR orders included in your plan",
+        "f1": "No per-order print checkout for included printing",
+        "f2": "Pro plan and above"
+      },
       "employeeGoals": {
         "title": "Employee tip goals",
         "benefit": "Employees set their own tip goals; your business tracks progress, celebrates milestones, and supports team motivation.",
