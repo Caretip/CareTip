@@ -110,7 +110,7 @@ export function SignInCard2({
                   disabled={formBusy}
                   onClick={handleSignInTab}
                   className={cn(
-                    "flex-1 rounded-full py-1.5 text-sm font-semibold transition-[background-color,color] duration-150 ease-out",
+                    "flex-1 rounded-md py-1.5 text-sm font-semibold transition-[background-color,color] duration-150 ease-out",
                     isLogin ? "caretip-auth-tab-active" : "caretip-auth-tab-idle",
                     formBusy && "cursor-not-allowed opacity-60",
                   )}
@@ -124,7 +124,7 @@ export function SignInCard2({
                   disabled={formBusy}
                   onClick={handleSignUpTab}
                   className={cn(
-                    "flex-1 rounded-full py-1.5 text-sm font-semibold transition-[background-color,color] duration-150 ease-out",
+                    "flex-1 rounded-md py-1.5 text-sm font-semibold transition-[background-color,color] duration-150 ease-out",
                     !isLogin ? "caretip-auth-tab-active" : "caretip-auth-tab-idle",
                     formBusy && "cursor-not-allowed opacity-60",
                   )}

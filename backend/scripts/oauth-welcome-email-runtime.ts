@@ -108,6 +108,7 @@ function main() {
       "Generate QR codes",
       "Invite your staff",
       "Start receiving tips",
+      "cid:caretip-logo",
     ],
     "EN manager welcome",
   );

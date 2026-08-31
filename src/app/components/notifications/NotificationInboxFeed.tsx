@@ -303,6 +303,7 @@ export function NotificationInboxFeed({
     unreadCount,
     items,
     loading,
+    listError,
     nextCursor,
     loadNotifications,
     markRead,
@@ -321,10 +322,13 @@ export function NotificationInboxFeed({
   );
   const grouped = useMemo(() => groupNotificationsByDate(filteredList), [filteredList]);
 
-  const isInitialLoad = loading && rawList.length === 0;
+  const isInitialLoad = loading && rawList.length === 0 && !listError;
   const isRefreshing = loading && rawList.length > 0;
   const shownCount = rawList.length;
   const hasMore = Boolean(nextCursor);
+  const showLoadError = Boolean(listError) && rawList.length === 0 && !loading;
+  const showInconsistentUnreadEmpty =
+    !loading && !listError && rawList.length === 0 && unreadCount > 0;
 
   const openAction = (n: InboxNotification) => {
     void markRead(n.id);
@@ -447,6 +451,28 @@ export function NotificationInboxFeed({
 
         {isInitialLoad ? (
           <NotificationInboxListSkeleton rows={5} className="rounded-none border-0 shadow-none" />
+        ) : showLoadError || showInconsistentUnreadEmpty ? (
+          <div className="px-6 py-12 text-center">
+            <Bell className="mx-auto mb-2 h-7 w-7 text-muted-foreground/60" aria-hidden />
+            <p className="text-sm font-medium text-foreground">
+              {t("notifications.inbox.loadErrorTitle")}
+            </p>
+            <p className="mt-1 text-sm text-muted-foreground">
+              {listError?.trim() || t("notifications.inbox.loadError")}
+              {showInconsistentUnreadEmpty
+                ? ` ${t("notifications.inbox.loadErrorUnreadHint", { count: unreadCount })}`
+                : ""}
+            </p>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="mt-4"
+              onClick={() => void loadNotifications({ reset: true })}
+            >
+              {t("notifications.inbox.retry")}
+            </Button>
+          </div>
         ) : filteredList.length === 0 ? (
           rawList.length === 0 ? (
             <div className="px-6 py-12">

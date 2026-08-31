@@ -230,7 +230,7 @@ export function EmployeeSettingsPage() {
 
   return (
     <div className={employeeUi.page}>
-      <div className={cn(employeeUi.pageInner, "dashboard-page-narrow mx-auto max-w-2xl space-y-6")}>
+      <div className={cn(employeeUi.pageInner, "dashboard-page-narrow mx-auto max-w-2xl space-y-6 max-lg:space-y-5")}>
         <EmployeePageHeader
           title={t("employee.settings.title")}
           description={businessName || t("dashboard.venueDashboardFallback")}

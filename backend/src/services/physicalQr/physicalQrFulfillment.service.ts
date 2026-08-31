@@ -7,6 +7,7 @@ import {
   notifyPhysicalQrPrinting,
   notifyPhysicalQrShipped,
 } from "./physicalQrNotify.service.js";
+import { resolveOrderItemRows, toOrderItemDto, type PhysicalQrOrderLineProduct } from "./physicalQrOrder.service.js";
 
 export class PhysicalQrFulfillmentError extends Error {
   readonly code: string;
@@ -55,6 +56,7 @@ export async function listPhysicalQrOrdersForAdmin(opts: {
     },
     include: {
       product: true,
+      items: { include: { product: true }, orderBy: { createdAt: "asc" } },
       business: { select: { id: true, name: true, slug: true } },
     },
     orderBy: { placedAt: "desc" },
@@ -67,6 +69,7 @@ export async function getPhysicalQrOrderForAdmin(orderId: string) {
     where: { id: orderId },
     include: {
       product: true,
+      items: { include: { product: true }, orderBy: { createdAt: "asc" } },
       business: { select: { id: true, name: true, slug: true } },
     },
   });
@@ -91,6 +94,7 @@ async function transitionOrder(
     data: { fulfillmentStatus: to, ...extra },
     include: {
       product: true,
+      items: { include: { product: true }, orderBy: { createdAt: "asc" } },
       business: { select: { id: true, name: true, slug: true } },
     },
   });
@@ -146,9 +150,9 @@ export function toAdminOrderDto(row: {
   id: string;
   businessId: string;
   business?: { id: string; name: string; slug: string };
-  productId: string;
-  product?: { name: string; supportsAddress?: boolean };
-  qrContextType: string;
+  productId: string | null;
+  product?: PhysicalQrOrderLineProduct | null;
+  qrContextType: string | null;
   qrSubjectId: string | null;
   quantity: number;
   paymentStatus: string;
@@ -171,23 +175,45 @@ export function toAdminOrderDto(row: {
   addressSnapshot?: unknown;
   shippingSnapshot?: unknown;
   contactSnapshot?: unknown;
-  qrTargetUrlSnapshot?: string;
+  qrTargetUrlSnapshot?: string | null;
   stripePaymentIntentId?: string | null;
   businessNameSnapshot?: string;
   colorTokensSnapshot?: unknown;
   supportsAddress?: boolean;
+  items?: Array<{
+    id: string;
+    productId: string;
+    product?: PhysicalQrOrderLineProduct;
+    qrContextType: string;
+    qrSubjectId: string | null;
+    qrTargetUrlSnapshot: string;
+    labelSnapshot: string;
+    quantity: number;
+    unitPrice: number;
+    totalAmount: number;
+    addressSnapshot: unknown;
+    colorTokensSnapshot: unknown;
+  }>;
 }) {
+  const rawItems = resolveOrderItemRows(row as Parameters<typeof resolveOrderItemRows>[0]);
+  const items = rawItems.map(toOrderItemDto);
+  const first = items[0];
+  const itemCount = items.length;
+  const totalQuantity = items.reduce((sum, item) => sum + item.quantity, 0);
+
   return {
     id: row.id,
     businessId: row.businessId,
     businessName: row.business?.name ?? row.businessNameSnapshot ?? null,
     businessSlug: row.business?.slug ?? null,
-    productId: row.productId,
-    productName: row.product?.name ?? null,
-    supportsAddress: row.product?.supportsAddress ?? false,
-    qrContextType: row.qrContextType,
-    qrSubjectId: row.qrSubjectId,
-    quantity: row.quantity,
+    productId: first?.productId ?? row.productId ?? "",
+    productName: first?.productName ?? row.product?.name ?? null,
+    supportsAddress: first?.supportsAddress ?? row.product?.supportsAddress ?? false,
+    qrContextType: first?.qrContextType ?? row.qrContextType ?? "storefront",
+    qrSubjectId: first?.qrSubjectId ?? row.qrSubjectId ?? null,
+    quantity: totalQuantity,
+    itemCount,
+    items,
     paymentStatus: row.paymentStatus,
     fulfillmentStatus: row.fulfillmentStatus,
     carrier: row.carrier,
@@ -205,12 +231,12 @@ export function toAdminOrderDto(row: {
     totalAmount: row.totalAmount,
     processingClass: row.processingClass ?? null,
     processingCopySnapshot: row.processingCopySnapshot ?? null,
-    addressSnapshot: row.addressSnapshot ?? null,
+    addressSnapshot: first?.addressSnapshot ?? row.addressSnapshot ?? null,
     shippingSnapshot: row.shippingSnapshot ?? null,
     contactSnapshot: row.contactSnapshot ?? null,
-    qrTargetUrlSnapshot: row.qrTargetUrlSnapshot ?? null,
+    qrTargetUrlSnapshot: rawItems[0]?.qrTargetUrlSnapshot ?? row.qrTargetUrlSnapshot ?? null,
     stripePaymentIntentId: row.stripePaymentIntentId ?? null,
     businessNameSnapshot: row.businessNameSnapshot ?? null,
-    colorTokensSnapshot: row.colorTokensSnapshot ?? null,
+    colorTokensSnapshot: first?.colorTokensSnapshot ?? row.colorTokensSnapshot ?? null,
   };
 }

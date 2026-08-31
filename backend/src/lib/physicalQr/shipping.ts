@@ -42,10 +42,10 @@ export function parsePhysicalQrShippingSnapshot(raw: unknown): PhysicalQrShippin
     throw new PhysicalQrShippingError("RECIPIENT_REQUIRED", "Recipient name is required.");
   }
   if (!streetLine) {
-    throw new PhysicalQrShippingError("STREET_REQUIRED", "Street address is required.");
+    throw new PhysicalQrShippingError("STREET_REQUIRED", "Landmark is required.");
   }
-  if (!DE_POSTAL_RE.test(postalCode) || postalCode === "00000") {
-    throw new PhysicalQrShippingError("INVALID_POSTAL_CODE", "A German 5-digit postal code is required.");
+  if (postalCode && (!DE_POSTAL_RE.test(postalCode) || postalCode === "00000")) {
+    throw new PhysicalQrShippingError("INVALID_POSTAL_CODE", "Postal code must be a valid German 5-digit code when provided.");
   }
   if (!city) {
     throw new PhysicalQrShippingError("CITY_REQUIRED", "City is required.");
@@ -106,5 +106,6 @@ export function readPhysicalQrContactSnapshot(raw: unknown): PhysicalQrContactSn
 
 export function formatPhysicalQrShippingLine(snapshot: PhysicalQrShippingSnapshot): string {
   const line2 = snapshot.addressLine2 ? `, ${snapshot.addressLine2}` : "";
-  return `${snapshot.recipientName}, ${snapshot.streetLine}${line2}, ${snapshot.postalCode} ${snapshot.city}, ${snapshot.country}`;
+  const postalPart = snapshot.postalCode ? `, ${snapshot.postalCode}` : "";
+  return `${snapshot.recipientName}, ${snapshot.streetLine}${line2}${postalPart} ${snapshot.city}, ${snapshot.country}`;
 }

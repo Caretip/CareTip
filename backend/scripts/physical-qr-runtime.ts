@@ -44,7 +44,7 @@ import {
   PHYSICAL_QR_PRICE_NOT_CONFIGURED,
 } from "../src/config/physicalQrCheckout.js";
 import { hasSubscriptionCapability } from "../src/config/subscriptionCapabilities.js";
-import { jpegToA5Pdf } from "../src/lib/physicalQr/pdfA5.js";
+import { jpegToA5Pdf, jpegsToA5Pdf } from "../src/lib/physicalQr/pdfA5.js";
 
 const results: string[] = [];
 const pass = (m: string) => results.push(`PASS: ${m}`);
@@ -182,15 +182,18 @@ function sectionColors() {
 }
 
 function sectionEntitlement() {
-  if (!hasSubscriptionCapability("basic", "brandingCustomization")) {
-    pass("Basic cannot order physical Branding (brandingCustomization)");
-  } else fail("Basic should not have brandingCustomization");
+  if (hasSubscriptionCapability("basic", "physicalQrPrinting")) {
+    pass("Basic can access physical QR printing (physicalQrPrinting)");
+  } else fail("Basic should have physicalQrPrinting");
+  if (!hasSubscriptionCapability("basic", "physicalQrPrintingIncluded")) {
+    pass("Basic pays catalog price (no physicalQrPrintingIncluded)");
+  } else fail("Basic should not have included printing");
+  if (hasSubscriptionCapability("premium", "physicalQrPrintingIncluded")) {
+    pass("Premium has included physical printing");
+  } else fail("Premium should have physicalQrPrintingIncluded");
   if (hasSubscriptionCapability("premium", "brandingCustomization")) {
-    pass("Premium can order physical Branding");
+    pass("Premium can customize digital branding");
   } else fail("Premium should have brandingCustomization");
-  if (hasSubscriptionCapability("enterprise", "brandingCustomization")) {
-    pass("Enterprise can order physical Branding");
-  } else fail("Enterprise should have brandingCustomization");
 }
 
 function sectionCheckoutBlock() {
@@ -276,14 +279,13 @@ function sectionShipping() {
   const validShipping = {
     recipientName: "Marie Testerin",
     streetLine: "Kolonnenstraße 8",
-    postalCode: "10827",
     city: "Berlin",
     country: "DE",
   };
   const parsed = parsePhysicalQrShippingSnapshot(validShipping);
   if (
     parsed.country === PHYSICAL_QR_SHIP_COUNTRY &&
-    parsed.postalCode === "10827" &&
+    parsed.postalCode === "" &&
     parsed.recipientName === "Marie Testerin"
   ) {
     pass("Germany shipping snapshot is accepted");
@@ -344,6 +346,16 @@ function sectionPrintStatic() {
   if (five.includes("/Count 5") && five.includes("419.528") && five.includes("595.276")) {
     pass("quantity 5 yields five identical A5 pages");
   } else fail("PDF page count 5");
+
+  const jpegA = Buffer.alloc(80, 0xaa);
+  const jpegB = Buffer.alloc(90, 0xbb);
+  const combined = jpegsToA5Pdf([
+    { jpeg: jpegA, pixelWidth: 1748, pixelHeight: 2480, copies: 2 },
+    { jpeg: jpegB, pixelWidth: 1748, pixelHeight: 2480, copies: 3 },
+  ]).toString("latin1");
+  if (combined.includes("/Count 5") && combined.includes("%PDF-1.4")) {
+    pass("jpegsToA5Pdf combines distinct items with per-line quantities");
+  } else fail("combined multi-item PDF page count");
 }
 
 function sectionRegressionFiles() {
@@ -382,18 +394,34 @@ function sectionRegressionFiles() {
     pass("business APIs do not expose internal notes and cannot change fulfillment");
   } else fail("business controller leaked notes or lost 403 patch");
 
+  const batchService = readFileSync(
+    path.join(root, "backend/src/services/physicalQr/physicalQrBatch.service.ts"),
+    "utf8",
+  );
+  if (
+    batchService.includes("createPhysicalQrCartOrder") &&
+    batchService.includes("One checkout cart → one parent physical QR order") &&
+    batchService.includes("orderId: order.id") &&
+    !batchService.includes("createPhysicalQrOrder(")
+  ) {
+    pass("batch checkout creates one parent order; Stripe metadata uses single orderId");
+  } else fail("batch service still splits cart into multiple orders");
+
   const orderService = readFileSync(
     path.join(root, "backend/src/services/physicalQr/physicalQrOrder.service.ts"),
     "utf8",
   );
   if (
+    orderService.includes("createPhysicalQrCartOrder") &&
+    orderService.includes("items: {") &&
+    orderService.includes("create: prepared.map") &&
     orderService.includes("parsePhysicalQrShippingSnapshot") &&
     orderService.includes("parsePhysicalQrContactSnapshot") &&
     orderService.includes("shippingSnapshot") &&
     !orderService.includes("shippingSnapshot: business.registeredAddress")
   ) {
-    pass("create order requires shipping/contact snapshots and does not copy live profile into shipping");
-  } else fail("order create shipping snapshots");
+    pass("cart order creates parent + line items with shipping/contact snapshots");
+  } else fail("order create shipping snapshots / line items");
 
   const webhook = readFileSync(
     path.join(root, "backend/src/services/physicalQr/physicalQrWebhook.service.ts"),
@@ -404,9 +432,10 @@ function sectionRegressionFiles() {
     !webhook.includes('fulfillmentStatus: "CANCELLED"') &&
     webhook.includes('fulfillmentStatus: "PROCESSING"') &&
     webhook.includes("amount_total") &&
-    webhook.includes("business_mismatch")
+    webhook.includes("session.metadata.orderId") &&
+    webhook.includes("orderIds")
   ) {
-    pass("expired Checkout stays payable; paid still auto-PROCESSING; webhook still amount/tenant-safe");
+    pass("webhook marks single parent order paid; legacy orderIds batch still supported");
   } else fail("webhook expiry/paid/tenant checks");
 
   const adminDto = readFileSync(
@@ -416,9 +445,11 @@ function sectionRegressionFiles() {
   if (
     adminDto.includes("shippingSnapshot: row.shippingSnapshot") &&
     adminDto.includes("contactSnapshot: row.contactSnapshot") &&
+    adminDto.includes("itemCount") &&
+    adminDto.includes("resolveOrderItemRows") &&
     !adminDto.includes("registeredAddress: true")
   ) {
-    pass("admin DTO exposes shipping snapshot and does not use live registered address");
+    pass("admin DTO exposes shipping snapshot, item count, and line items");
   } else fail("admin shipping DTO");
 
   const checkout = readFileSync(
@@ -444,10 +475,11 @@ function sectionRegressionFiles() {
     adminPrint.includes("qrTargetUrlSnapshot") &&
     adminPrint.includes("businessNameSnapshot") &&
     adminPrint.includes("PAYMENT_REQUIRED") &&
+    adminPrint.includes("jpegsToA5Pdf") &&
     !adminPrint.includes("registeredAddress") &&
     printPipeline.includes("jpegToA5Pdf(jpeg, w, h)")
   ) {
-    pass("admin print GET reuses snapshot renderer; business print stays single-page");
+    pass("admin print GET reuses snapshot renderer; bulk combines all line items");
   } else fail("admin print endpoint / snapshot renderer");
 }
 

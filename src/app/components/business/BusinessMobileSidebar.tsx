@@ -10,7 +10,6 @@ import {
 } from "../../lib/authLogoutTransition";
 import { cn } from "@/lib/utils";
 import { DASHBOARD_SIDEBAR_NAV_CLASS } from "../CareTipLogo";
-import { BusinessLogoMark } from "./BusinessLogoMark";
 import { BusinessSidebarNavShell } from "./sidebar/BusinessSidebarNavShell";
 import { BusinessSidebarUpgradeCta } from "./sidebar/BusinessSidebarUpgradeCta";
 import { useBusinessGuidelines } from "@/app/contexts/BusinessGuidelinesContext";
@@ -28,7 +27,7 @@ export function BusinessMobileSidebar({ isOpen, onClose }: BusinessMobileSidebar
   const { t } = useTranslation();
   const { user, logout, exitImpersonation } = useAuth();
   const { openGuidelines } = useBusinessGuidelines();
-  const { venueName, logo, businessType } = useBusinessVenueBrand();
+  const { venueName, businessType } = useBusinessVenueBrand();
   const signingOut = useSyncExternalStore(
     subscribeAuthLogoutTransition,
     isAuthLogoutTransitionActive,
@@ -48,23 +47,14 @@ export function BusinessMobileSidebar({ isOpen, onClose }: BusinessMobileSidebar
           <Link
             to="/dashboard"
             onClick={onClose}
-            className="caretip-mobile-drawer-workspace__identity flex min-w-0 flex-1 flex-col gap-2.5 rounded-lg outline-none ring-sidebar-ring transition-colors hover:bg-sidebar-accent/60 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-sidebar"
+            className="caretip-mobile-drawer-workspace__identity caretip-mobile-drawer-workspace__identity--text-only flex min-w-0 flex-1 flex-col rounded-lg outline-none ring-sidebar-ring transition-colors hover:bg-sidebar-accent/60 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-sidebar"
           >
-            <BusinessLogoMark
-              key={`${logo ?? "no-logo"}-${venueName}`}
-              logoPathOrUrl={logo}
-              businessName={venueName}
-              size="dashboard"
-              className="shrink-0"
-            />
-            <div className="min-w-0 pr-1">
-              <p className="truncate text-[0.9375rem] font-semibold leading-snug text-sidebar-foreground">
-                {venueName}
-              </p>
-              <p className="mt-0.5 truncate text-xs font-medium text-sidebar-foreground/65">
-                {typeLabel}
-              </p>
-            </div>
+            <p className="truncate text-[0.9375rem] font-semibold leading-snug text-sidebar-foreground">
+              {venueName}
+            </p>
+            <p className="mt-0.5 truncate text-xs font-medium text-sidebar-foreground/65">
+              {typeLabel}
+            </p>
           </Link>
           <button
             type="button"

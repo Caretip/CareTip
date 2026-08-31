@@ -184,6 +184,23 @@ jobs:
         env:
           CI: "true"
 
+  # Static N+1 remediation guard (no DB). Protects F-01..F-08 batch patterns.
+  n1-query-guard:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
+      - name: Install backend deps
+        working-directory: backend
+        run: npm ci
+      - name: N+1 query regression
+        working-directory: backend
+        run: npm run test:n1-query
+
   sql-injection-guard:
     runs-on: ubuntu-latest
     services:

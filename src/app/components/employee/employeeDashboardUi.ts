@@ -64,7 +64,7 @@ export const employeeUi = {
   quickActionLabel: "block w-full min-w-0 text-center text-[0.8125rem] font-semibold leading-snug [text-wrap:balance]",
 
   listItem:
-    "employee-list-item rounded-lg border border-border bg-card shadow-sm transition-colors",
+    "employee-list-item rounded-lg border border-border bg-card shadow-sm transition-colors max-lg:rounded-md max-lg:shadow-none",
   listItemSelected: "bg-primary/[0.04] ring-1 ring-primary/20",
 
   statCard: `employee-stat-card ${DASHBOARD_METRIC_STAT_CARD_SHELL}`,

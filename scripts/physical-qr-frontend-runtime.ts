@@ -126,7 +126,7 @@ if (
 ) {
   pass("/templates redirects to Branding");
 } else fail("templates route should redirect to branding");
-if (routes.includes("branding/orders/:orderId") && routes.includes("businesses/branding-orders/:orderId")) {
+if (routes.includes("branding/orders/:orderId") && routes.includes("branding-orders/:orderId")) {
   pass("business and admin physical order detail routes exist");
 } else fail("missing physical order detail routes");
 
@@ -231,10 +231,13 @@ if (
   adminDetail.includes("internalNotes") &&
   adminDetail.includes("deliveryAddress") &&
   adminDetail.includes("deliveryMissingWarning") &&
+  adminDetail.includes("order.items") &&
+  adminDetail.includes("line items") &&
+  adminDetail.includes("total copies") &&
   !adminDetail.includes("PhysicalQrOrderThread") &&
   !adminDetail.includes("registeredAddress")
 ) {
-  pass("admin order detail has fulfillment controls and separate internal notes");
+  pass("admin order detail has fulfillment controls, line items, and separate internal notes");
 } else fail("admin fulfillment controls");
 
 if (
@@ -244,6 +247,59 @@ if (
 ) {
   pass("Download PDF is separate from Mark as printing");
 } else fail("Download PDF should stay separate from Mark as printing");
+
+if (
+  adminDetail.includes("downloadAllPdfs") &&
+  adminDetail.includes("preparingPdfs") &&
+  adminDetail.includes("if (downloadingPdf) return")
+) {
+  pass("admin bulk PDF download shows Preparing N PDFs and blocks double-click");
+} else fail("admin bulk PDF preparing state");
+
+const overviewPage = readFileSync(path.join(root, "src/app/pages/business/qr-studio/QrStudioOverviewPage.tsx"), "utf8");
+const ordersPage = readFileSync(path.join(root, "src/app/pages/business/qr-studio/QrStudioOrdersPage.tsx"), "utf8");
+const printStudio = readFileSync(path.join(root, "src/app/components/business/physical-branding/PrintQrStudio.tsx"), "utf8");
+const skeletons = readFileSync(
+  path.join(root, "src/app/components/business/qr-studio/QrStudioLoadingSkeletons.tsx"),
+  "utf8",
+);
+if (
+  skeletons.includes("QrStudioOverviewSkeleton") &&
+  skeletons.includes("QrStudioOrderListSkeleton") &&
+  skeletons.includes("PrintQrStudioSkeleton") &&
+  overviewPage.includes("QrStudioOverviewSkeleton") &&
+  ordersPage.includes("QrStudioOrderListSkeleton") &&
+  orderDetail.includes("QrStudioOrderDetailSkeleton") &&
+  printStudio.includes("PrintQrStudioSkeleton") &&
+  printStudio.includes("bootLoading")
+) {
+  pass("QR Studio pages use layout-preserving skeleton loading");
+} else fail("QR Studio skeleton loading");
+
+if (
+  orderUi.includes("isPhysicalQrIncludedOrder") &&
+  orderUi.includes("orderReceived") &&
+  orderUi.includes("stepOrderReceived") &&
+  orderDetail.includes("orderReceivedProcessing")
+) {
+  pass("Pro zero-cost orders use Order received copy instead of Payment received");
+} else fail("Pro order received messaging");
+if (
+  orderUi.includes("PHYSICAL_QR_QUANTITY_MIN = 1") &&
+  orderUi.includes("PHYSICAL_QR_QUANTITY_MAX = 50") &&
+  orderUi.includes("clampPhysicalQrQuantity")
+) {
+  pass("quantity clamp constants 1–50 in physicalQrOrderUi");
+} else fail("quantity clamp constants");
+if (
+  printStudio.includes("function QuantityStepper") &&
+  printStudio.includes("setLineQuantity") &&
+  printStudio.includes("clampPhysicalQrQuantity") &&
+  printStudio.includes("onQuantityChange") &&
+  printStudio.includes("quantity: line.quantity")
+) {
+  pass("PrintQrStudio cart has quantity stepper and sends line quantities");
+} else fail("PrintQrStudio quantity controls");
 
 const nav = readFileSync(path.join(root, "src/app/components/business/businessDashboardNav.ts"), "utf8");
 if (!nav.includes("qr-studio/templates")) pass("Templates nav entry removed");

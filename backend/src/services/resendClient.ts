@@ -11,6 +11,10 @@ import {
   getResendSendingDomain,
   isValidResendFromFormat,
 } from "../config/emailEnv.js";
+import {
+  CARETIP_EMAIL_LOGO_CID,
+  getCareTipEmailLogoAttachment,
+} from "../emails/emailLogo.js";
 
 const DEFAULT_RESEND_FROM = "CareTip <no-reply@mail.caretip.com>";
 /** Fallback when transactional From domain cannot be parsed (same verified CareTip mail domain). */
@@ -74,6 +78,14 @@ function getResendApiKey(): string | undefined {
 
 export { getResendFromAddress, getLeadFromAddress };
 
+export type ResendMailAttachment = {
+  filename: string;
+  content_id?: string;
+  content?: string;
+  path?: string;
+  content_type?: string;
+};
+
 export type ResendMailPayload = {
   from: string;
   to: string[];
@@ -86,6 +98,8 @@ export type ResendMailPayload = {
    * Sent to Resend as `reply_to` so staff can reply without spoofing the authenticated sender.
    */
   replyTo?: string | string[];
+  /** Optional attachments (inline CID logos, etc.). */
+  attachments?: ResendMailAttachment[];
 };
 
 /** Normalize to a non-empty list of emails; drops blanks. Never returns []. */
@@ -116,6 +130,18 @@ export async function sendResendEmail(logTag: string, payload: ResendMailPayload
 
   const replyToAddresses = normalizeReplyToAddresses(payload.replyTo);
 
+  const attachments = [...(payload.attachments ?? [])];
+  const needsLogo =
+    payload.html.includes(`cid:${CARETIP_EMAIL_LOGO_CID}`) &&
+    !attachments.some((a) => a.content_id === CARETIP_EMAIL_LOGO_CID);
+  if (needsLogo) {
+    const logo = getCareTipEmailLogoAttachment();
+    if (logo) attachments.push(logo);
+    else if (process.env.NODE_ENV !== "production") {
+      console.warn(`[resend][${logTag}] CareTip logo CID referenced but logo asset unavailable`);
+    }
+  }
+
   const body: Record<string, unknown> = {
     from,
     to: payload.to,
@@ -124,6 +150,9 @@ export async function sendResendEmail(logTag: string, payload: ResendMailPayload
   };
   if (payload.text) {
     body.text = payload.text;
+  }
+  if (attachments.length > 0) {
+    body.attachments = attachments;
   }
   // Resend accepts string | string[]. Prefer a single string when one address
   // so the dashboard/request log never shows an empty replyTo array.

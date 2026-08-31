@@ -33,8 +33,44 @@ export async function recordFeatureUtilizationBatch(
   businessId: string,
   keys: string[],
 ): Promise<void> {
-  const valid = keys.filter(isCommercialFeatureKey);
-  await Promise.all(valid.map((k) => recordFeatureUtilization(businessId, k)));
+  const unique = [...new Set(keys.filter(isCommercialFeatureKey))];
+  if (unique.length === 0) return;
+
+  const day = startOfUtcDay();
+  const now = new Date();
+  const existing = await prisma.featureUtilizationDaily.findMany({
+    where: { businessId, day, featureKey: { in: unique } },
+    select: { featureKey: true },
+  });
+  const existingKeys = new Set(existing.map((r) => r.featureKey));
+  const toCreate = unique.filter((k) => !existingKeys.has(k));
+  const toIncrement = unique.filter((k) => existingKeys.has(k));
+
+  if (toCreate.length > 0) {
+    await prisma.featureUtilizationDaily.createMany({
+      data: toCreate.map((featureKey) => ({
+        businessId,
+        featureKey,
+        day,
+        hitCount: 1,
+        lastUsedAt: now,
+      })),
+      skipDuplicates: true,
+    });
+  }
+
+  if (toIncrement.length > 0) {
+    await prisma.$transaction(
+      toIncrement.map((featureKey) =>
+        prisma.featureUtilizationDaily.update({
+          where: {
+            businessId_featureKey_day: { businessId, featureKey, day },
+          },
+          data: { hitCount: { increment: 1 }, lastUsedAt: now },
+        }),
+      ),
+    );
+  }
 }
 
 async function getTrackedUtilization(businessId: string, days = 30): Promise<Map<CommercialFeatureKey, FeatureUtilizationRow>> {

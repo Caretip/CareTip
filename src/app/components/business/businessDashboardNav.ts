@@ -58,17 +58,16 @@ export const businessDashboardNavItems: readonly BusinessDashboardNavItem[] = [
 ] as const;
 
 export const QR_STUDIO_BASE = "/dashboard/qr-studio" as const;
-export const QR_STUDIO_DEFAULT_HREF = `${QR_STUDIO_BASE}/employees` as const;
+export const QR_STUDIO_DEFAULT_HREF = `${QR_STUDIO_BASE}` as const;
 
 export const qrStudioSubNavItems = [
+  { labelKey: "business.qrStudio.nav.overview", href: `${QR_STUDIO_BASE}` },
+  { labelKey: "business.qrStudio.nav.business", href: `${QR_STUDIO_BASE}/business` },
   { labelKey: "business.qrStudio.nav.employees", href: `${QR_STUDIO_BASE}/employees` },
   { labelKey: "business.qrStudio.nav.tables", href: `${QR_STUDIO_BASE}/tables` },
   { labelKey: "business.qrStudio.nav.locations", href: `${QR_STUDIO_BASE}/locations` },
-  {
-    labelKey: "business.qrStudio.nav.branding",
-    href: `${QR_STUDIO_BASE}/branding`,
-    featureKey: "brandingCustomization" as FeatureKey,
-  },
+  { labelKey: "business.qrStudio.nav.print", href: `${QR_STUDIO_BASE}/print` },
+  { labelKey: "business.qrStudio.nav.orders", href: `${QR_STUDIO_BASE}/orders` },
 ] as const;
 
 export const TIPS_BASE = "/dashboard/tips" as const;

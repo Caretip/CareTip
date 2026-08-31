@@ -94,6 +94,25 @@ async function businessHoldDecision(
   return categoryHoldDecision(b, category);
 }
 
+/** Prefetch hold decisions for many businesses (1 query instead of N). */
+async function businessHoldDecisionsBatch(
+  businessIds: string[],
+  category: RetentionCategory,
+): Promise<Map<string, "held" | "clear" | "unknown">> {
+  const unique = [...new Set(businessIds.filter(Boolean))];
+  const map = new Map<string, "held" | "clear" | "unknown">();
+  if (unique.length === 0) return map;
+  const rows = await prisma.business.findMany({
+    where: { id: { in: unique } },
+    select: { id: true, legalHold: true, legalHoldCategories: true },
+  });
+  const byId = new Map(rows.map((r) => [r.id, r] as const));
+  for (const id of unique) {
+    map.set(id, categoryHoldDecision(byId.get(id) ?? null, category));
+  }
+  return map;
+}
+
 async function businessTimezone(businessId: string): Promise<string | null> {
   const b = await prisma.business.findUnique({
     where: { id: businessId },
@@ -194,23 +213,19 @@ export async function runAnalyticsTtl(opts?: {
   let skippedHeldBusinesses = 0;
   let skippedUnknownHold = 0;
   const dryRunRecords: RetentionDryRunRecord[] = [];
-  const heldBiz = new Set<string>();
-  const unknownBiz = new Set<string>();
-  const clearBiz = new Set<string>();
 
-  async function decision(businessId: string) {
-    if (heldBiz.has(businessId)) return "held" as const;
-    if (unknownBiz.has(businessId)) return "unknown" as const;
-    if (clearBiz.has(businessId)) return "clear" as const;
-    const d = await businessHoldDecision(businessId, "analytics");
-    if (d === "held") heldBiz.add(businessId);
-    else if (d === "unknown") unknownBiz.add(businessId);
-    else clearBiz.add(businessId);
-    return d;
-  }
+  const holdByBusiness = await businessHoldDecisionsBatch(
+    [
+      ...scans.map((r) => r.businessId),
+      ...visits.map((r) => r.businessId),
+      ...funnels.map((r) => r.businessId),
+    ],
+    "analytics",
+  );
 
+  const clearScanIds: string[] = [];
   for (const row of scans) {
-    const d = await decision(row.businessId);
+    const d = holdByBusiness.get(row.businessId) ?? "unknown";
     if (d === "held") {
       skippedHeldBusinesses += 1;
       dryRunRecords.push({
@@ -246,23 +261,12 @@ export async function runAnalyticsTtl(opts?: {
       legalHold: false,
       financialPreservation: "n/a",
     });
-    if (!dryRun) {
-      await prisma.qrScanEvent.update({
-        where: { id: row.id },
-        data: {
-          sessionId: QR_ANONYMIZED_SESSION_ID,
-          userAgent: null,
-          country: null,
-          city: null,
-          anonymizedAt: now,
-        },
-      });
-    }
-    anonymizedScans += 1;
+    clearScanIds.push(row.id);
   }
 
+  const clearVisitIds: string[] = [];
   for (const row of visits) {
-    const d = await decision(row.businessId);
+    const d = holdByBusiness.get(row.businessId) ?? "unknown";
     if (d !== "clear") {
       if (d === "held") skippedHeldBusinesses += 1;
       else skippedUnknownHold += 1;
@@ -277,17 +281,12 @@ export async function runAnalyticsTtl(opts?: {
       legalHold: false,
       financialPreservation: "n/a",
     });
-    if (!dryRun) {
-      await prisma.qrGuestVisit.update({
-        where: { id: row.id },
-        data: { sessionId: QR_ANONYMIZED_SESSION_ID, anonymizedAt: now },
-      });
-    }
-    anonymizedVisits += 1;
+    clearVisitIds.push(row.id);
   }
 
+  const clearFunnelIds: string[] = [];
   for (const row of funnels) {
-    const d = await decision(row.businessId);
+    const d = holdByBusiness.get(row.businessId) ?? "unknown";
     if (d !== "clear") {
       if (d === "held") skippedHeldBusinesses += 1;
       else skippedUnknownHold += 1;
@@ -302,13 +301,41 @@ export async function runAnalyticsTtl(opts?: {
       legalHold: false,
       financialPreservation: row.transactionId ? "preserved" : "n/a",
     });
-    if (!dryRun) {
-      await prisma.qrFunnelEvent.update({
-        where: { id: row.id },
+    clearFunnelIds.push(row.id);
+  }
+
+  if (!dryRun) {
+    if (clearScanIds.length > 0) {
+      const res = await prisma.qrScanEvent.updateMany({
+        where: { id: { in: clearScanIds } },
+        data: {
+          sessionId: QR_ANONYMIZED_SESSION_ID,
+          userAgent: null,
+          country: null,
+          city: null,
+          anonymizedAt: now,
+        },
+      });
+      anonymizedScans = res.count;
+    }
+    if (clearVisitIds.length > 0) {
+      const res = await prisma.qrGuestVisit.updateMany({
+        where: { id: { in: clearVisitIds } },
         data: { sessionId: QR_ANONYMIZED_SESSION_ID, anonymizedAt: now },
       });
+      anonymizedVisits = res.count;
     }
-    anonymizedFunnel += 1;
+    if (clearFunnelIds.length > 0) {
+      const res = await prisma.qrFunnelEvent.updateMany({
+        where: { id: { in: clearFunnelIds } },
+        data: { sessionId: QR_ANONYMIZED_SESSION_ID, anonymizedAt: now },
+      });
+      anonymizedFunnel = res.count;
+    }
+  } else {
+    anonymizedScans = clearScanIds.length;
+    anonymizedVisits = clearVisitIds.length;
+    anonymizedFunnel = clearFunnelIds.length;
   }
 
   for (const rec of dryRunRecords) {
@@ -623,13 +650,20 @@ export async function runNotifyCleanup(opts?: {
     take: BATCH,
   });
 
-  let deleted = 0;
+  if (candidates.length === 0) {
+    return { deleted: 0, alreadyComplete: true, dryRun };
+  }
+
+  const userIds = [...new Set(candidates.map((n) => n.userId))];
+  const users = await prisma.user.findMany({
+    where: { id: { in: userIds } },
+    select: { id: true, legalHold: true, legalHoldCategories: true },
+  });
+  const userById = new Map(users.map((u) => [u.id, u] as const));
+
+  const deletableIds: string[] = [];
   for (const n of candidates) {
-    const user = await prisma.user.findUnique({
-      where: { id: n.userId },
-      select: { legalHold: true, legalHoldCategories: true },
-    });
-    const d = categoryHoldDecision(user, "notify");
+    const d = categoryHoldDecision(userById.get(n.userId) ?? null, "notify");
     if (d !== "clear") continue;
     if (dryRun) {
       logDryRunRecord({
@@ -641,14 +675,24 @@ export async function runNotifyCleanup(opts?: {
         legalHold: false,
         financialPreservation: "n/a",
       });
-      deleted += 1;
+      deletableIds.push(n.id);
       continue;
     }
-    await prisma.notification.delete({ where: { id: n.id } });
-    deleted += 1;
+    deletableIds.push(n.id);
   }
 
-  return { deleted, alreadyComplete: deleted === 0, dryRun };
+  if (dryRun) {
+    return { deleted: deletableIds.length, alreadyComplete: deletableIds.length === 0, dryRun };
+  }
+
+  if (deletableIds.length === 0) {
+    return { deleted: 0, alreadyComplete: true, dryRun };
+  }
+
+  const res = await prisma.notification.deleteMany({
+    where: { id: { in: deletableIds } },
+  });
+  return { deleted: res.count, alreadyComplete: res.count === 0, dryRun };
 }
 
 export type GuestScrubResult = {
@@ -677,10 +721,16 @@ export async function runGuestScrub(opts?: {
     take: BATCH,
   });
 
+  const holdByBusiness = await businessHoldDecisionsBatch(
+    rows.map((r) => r.businessId),
+    "guest",
+  );
+
   let scrubbed = 0;
   let skipped = 0;
+  const clearIds: string[] = [];
   for (const row of rows) {
-    const d = await businessHoldDecision(row.businessId, "guest");
+    const d = holdByBusiness.get(row.businessId) ?? "unknown";
     if (d !== "clear") {
       skipped += 1;
       continue;
@@ -698,11 +748,15 @@ export async function runGuestScrub(opts?: {
       scrubbed += 1;
       continue;
     }
-    await prisma.tipFeedback.update({
-      where: { id: row.id },
+    clearIds.push(row.id);
+  }
+
+  if (!dryRun && clearIds.length > 0) {
+    const res = await prisma.tipFeedback.updateMany({
+      where: { id: { in: clearIds } },
       data: { customerName: null, nameAnonymizedAt: new Date() },
     });
-    scrubbed += 1;
+    scrubbed = res.count;
   }
 
   return {

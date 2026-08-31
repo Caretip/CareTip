@@ -30,7 +30,7 @@ export function QrStudioLayout() {
   });
   const { ready: entitlementsReady, hasActiveEntitlements } = businessContext ?? fallbackEntitlements;
 
-  const isBrandingStudio = pathname.includes("/qr-studio/branding");
+  const isPrintStudio = pathname.includes("/qr-studio/print");
   const canUseQr = canUseProductionQr(user?.onboardingVerificationStatus, Boolean(user?.impersonation));
   const entitlementsKnown = entitlementsReady || isEntitlementsSessionPrimed();
   const operationalAccess = entitlementsReady
@@ -51,7 +51,7 @@ export function QrStudioLayout() {
       <div
         className={cn(
           "dashboard-page-contained mx-auto min-w-0 w-full max-w-full",
-          isBrandingStudio ? "max-w-7xl" : "max-w-6xl",
+          isPrintStudio ? "max-w-7xl" : "max-w-6xl",
         )}
       >
         <BusinessModuleWorkspaceHeader

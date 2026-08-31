@@ -63,6 +63,13 @@ function RedirectLegacyBusinessDirectory() {
   return <Navigate to={`/${encodeURIComponent(s)}`} replace />;
 }
 
+/** Legacy `/platform-admin/businesses/branding-orders/:id` → standalone branding-orders module. */
+function LegacyPlatformBrandingOrderRedirect() {
+  const { orderId } = useParams<{ orderId: string }>();
+  if (!orderId?.trim()) return <Navigate to="/platform-admin/branding-orders" replace />;
+  return <Navigate to={`/platform-admin/branding-orders/${encodeURIComponent(orderId)}`} replace />;
+}
+
 // Error boundary: never show HTTP codes or raw error details
 function ErrorBoundary() {
   const error = useRouteError();
@@ -360,15 +367,19 @@ const routes: RouteObject[] = [
         path: 'qr-studio',
         lazy: routeLazy(() => import('./pages/business/qr-studio/QrStudioLayout'), 'QrStudioLayout'),
         children: [
-          { index: true, element: <Navigate to="/dashboard/qr-studio/employees" replace /> },
-          { path: 'gallery', element: <Navigate to="/dashboard/qr-studio/employees" replace /> },
+          { index: true, lazy: routeLazy(() => import('./pages/business/qr-studio/QrStudioOverviewPage'), 'QrStudioOverviewPage') },
+          { path: 'business', lazy: routeLazy(() => import('./pages/business/qr-studio/QrStudioBusinessPage'), 'QrStudioBusinessPage') },
+          { path: 'gallery', element: <Navigate to="/dashboard/qr-studio" replace /> },
           { path: 'employees', lazy: routeLazy(() => import('./pages/business/qr-studio/QrStudioEmployeesPage'), 'QrStudioEmployeesPage') },
           { path: 'locations', lazy: routeLazy(() => import('./pages/business/qr-studio/QrStudioLocationsPage'), 'QrStudioLocationsPage') },
-          { path: 'templates', element: <Navigate to="/dashboard/qr-studio/branding" replace /> },
+          { path: 'print', lazy: routeLazy(() => import('./pages/business/qr-studio/QrStudioPrintPage'), 'QrStudioPrintPage') },
+          { path: 'orders', lazy: routeLazy(() => import('./pages/business/qr-studio/QrStudioOrdersPage'), 'QrStudioOrdersPage') },
+          { path: 'orders/:orderId', lazy: routeLazy(() => import('./pages/business/qr-studio/PhysicalQrOrderDetailPage'), 'PhysicalQrOrderDetailPage') },
+          { path: 'templates', element: <Navigate to="/dashboard/qr-studio/print" replace /> },
           { path: 'branding/orders/:orderId', lazy: routeLazy(() => import('./pages/business/qr-studio/PhysicalQrOrderDetailPage'), 'PhysicalQrOrderDetailPage') },
-          { path: 'branding', lazy: routeLazy(() => import('./pages/business/qr-studio/QrStudioBrandingPage'), 'QrStudioBrandingPage') },
+          { path: 'branding', element: <Navigate to="/dashboard/qr-studio/print" replace /> },
           { path: 'tables', lazy: routeLazy(() => import('./pages/business/qr-studio/QrStudioTablesPage'), 'QrStudioTablesPage') },
-          { path: 'downloads', element: <Navigate to="/dashboard/qr-studio/employees" replace /> },
+          { path: 'downloads', element: <Navigate to="/dashboard/qr-studio" replace /> },
         ],
       },
       /* —— Customers module —— */
@@ -459,8 +470,13 @@ const routes: RouteObject[] = [
       { path: 'businesses/verification', element: <Navigate to="/platform-admin/businesses/kyc-verification" replace /> },
       { path: 'businesses/subscriptions', lazy: routeLazy(() => import('./pages/platform/PlatformBusinessSubscriptionsPage'), 'PlatformBusinessSubscriptionsPage') },
       { path: 'businesses/analytics', lazy: routeLazy(() => import('./pages/platform/PlatformBusinessAnalyticsPage'), 'PlatformBusinessAnalyticsPage') },
-      { path: 'businesses/branding-orders/:orderId', lazy: routeLazy(() => import('./pages/platform/PlatformPhysicalQrOrderDetailPage'), 'PlatformPhysicalQrOrderDetailPage') },
-      { path: 'businesses/branding-orders', lazy: routeLazy(() => import('./pages/platform/PlatformPhysicalQrOrdersPage'), 'PlatformPhysicalQrOrdersPage') },
+      { path: 'branding-orders/:orderId', lazy: routeLazy(() => import('./pages/platform/PlatformPhysicalQrOrderDetailPage'), 'PlatformPhysicalQrOrderDetailPage') },
+      { path: 'branding-orders', lazy: routeLazy(() => import('./pages/platform/PlatformPhysicalQrOrdersPage'), 'PlatformPhysicalQrOrdersPage') },
+      {
+        path: 'businesses/branding-orders/:orderId',
+        element: <LegacyPlatformBrandingOrderRedirect />,
+      },
+      { path: 'businesses/branding-orders', element: <Navigate to="/platform-admin/branding-orders" replace /> },
       { path: 'businesses/:id', lazy: routeLazy(() => import('./pages/platform/BusinessDetailPage'), 'BusinessDetailPage') },
       { path: 'businesses', element: <Navigate to="/platform-admin/businesses/onboarding-verification" replace /> },
       { path: 'revenue/transactions', lazy: routeLazy(() => import('./pages/platform/GlobalTransactionsPage'), 'GlobalTransactionsPage') },

@@ -51,7 +51,7 @@ export const EmployeeDashboardEarningsChart = memo(function EmployeeDashboardEar
       )}
       transition={{ delay: 0.4 }}
     >
-      <Card className={cn(employeeUi.cardStatic, employeeUi.chartCard, "w-full")}>
+      <Card className={cn(employeeUi.cardStatic, employeeUi.chartCard, "dashboard-chart-card w-full")}>
         <CardHeader className={employeeUi.cardHeader}>
           <CardTitle className={employeeUi.cardTitle}>{t("employee.dashboard.earningsTitle")}</CardTitle>
         </CardHeader>
@@ -87,8 +87,11 @@ export const EmployeeDashboardEarningsChart = memo(function EmployeeDashboardEar
                       stroke={DASHBOARD_CHART_AXIS}
                       tickLine={false}
                       axisLine={{ stroke: DASHBOARD_CHART_GRID }}
-                      style={{ fontSize: "11px" }}
+                      tick={{ fontSize: 11 }}
                       tickMargin={8}
+                      interval="preserveStartEnd"
+                      minTickGap={28}
+                      padding={{ left: 4, right: 4 }}
                     />
                     <YAxis
                       stroke={DASHBOARD_CHART_AXIS}

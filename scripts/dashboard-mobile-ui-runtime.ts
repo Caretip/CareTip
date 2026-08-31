@@ -39,6 +39,85 @@ if (globals.includes("employee-hero-cta-btn") && globals.includes("white-space: 
   pass("hero CTA allows wrapped labels on mobile");
 } else fail("hero CTA mobile wrap fix missing");
 
+const businessMobileSidebar = read("src/app/components/business/BusinessMobileSidebar.tsx");
+if (
+  !businessMobileSidebar.includes("BusinessLogoMark") &&
+  businessMobileSidebar.includes("caretip-mobile-drawer-workspace__identity--text-only")
+) {
+  pass("business mobile drawer uses text-only identity (logo stays in header)");
+} else fail("business mobile drawer still shows sidebar logo");
+
+const employeePageHeader = read("src/app/components/employee/EmployeePageHeader.tsx");
+if (
+  employeePageHeader.includes("employee-page-header--surface") &&
+  employeePageHeader.includes("max-lg:flex")
+) {
+  pass("employee page header uses surface-first mobile layout");
+} else fail("employee page header mobile surface layout missing");
+
+if (
+  mobileTheme.includes("employee-page-header--surface") &&
+  mobileTheme.includes("employee-settings-section") &&
+  mobileTheme.includes("physical-qr-order-detail")
+) {
+  pass("mobile theme surface-first rules extended");
+} else fail("mobile theme surface-first extension incomplete");
+
+const tipGoalsPage = read("src/app/pages/employee/EmployeeTipGoalsPage.tsx");
+if (tipGoalsPage.includes("dashboard-mobile-flat-surface")) {
+  pass("employee tip goals uses mobile-flat card");
+} else fail("employee tip goals mobile-flat missing");
+
+const emptyState = read("src/app/components/dashboard/DashboardWorkspaceEmptyState.tsx");
+if (emptyState.includes("dashboard-workspace-empty--compact")) {
+  pass("compact empty states use flat surface (no card chrome)");
+} else fail("compact empty states still use card chrome");
+
+const assignmentCard = read("src/app/components/employee/EmployeeAssignmentCard.tsx");
+if (
+  assignmentCard.includes("employee-assignment-panel") &&
+  !assignmentCard.includes("employeeUi.card") &&
+  assignmentCard.includes("EmployeeEmptyState")
+) {
+  pass("employee assignment panel is surface-first (no wrapping card)");
+} else fail("employee assignment still wrapped in decorative card");
+
+const performance = read("src/app/components/employee/EmployeePerformanceInsights.tsx");
+if (
+  performance.includes("dashboard-mobile-flat-surface") &&
+  performance.includes("employee-performance-insights__tile")
+) {
+  pass("employee performance insights uses flat surface + light tiles");
+} else fail("employee performance insights mobile flattening incomplete");
+
+const goalCard = read("src/app/components/employee/EmployeeGoalCard.tsx");
+if (goalCard.includes("employee-goal-card") && goalCard.includes("rounded-lg") && !goalCard.includes("rounded-2xl")) {
+  pass("employee goal card uses moderate radius (not oversized rounded-2xl)");
+} else fail("employee goal card still uses oversized radius");
+
+if (
+  mobileTheme.includes("dashboard-workspace-empty--compact") &&
+  mobileTheme.includes("employee-goal-card") &&
+  mobileTheme.includes("employee-hero-account-stats > div") &&
+  mobileTheme.includes("box-shadow: none !important")
+) {
+  pass("mobile theme densifies hero metrics and flattens empty/goal chrome");
+} else fail("mobile theme surface densify rules incomplete");
+
+const rnAssignment = read("mobile/features/employee/EmployeeAssignmentScreen.tsx");
+if (
+  rnAssignment.includes('surface="flat"') &&
+  rnAssignment.includes("tableList") &&
+  !rnAssignment.includes("GroupedList")
+) {
+  pass("RN assignment uses flat empty + divider list (no grouped card)");
+} else fail("RN assignment still uses grouped card chrome");
+
+const profilePage = read("src/app/pages/business/BusinessProfilePage.tsx");
+if (profilePage.includes("dashboard-mobile-flat-surface")) {
+  pass("business profile uses mobile-flat sections");
+} else fail("business profile mobile-flat missing");
+
 const staffPage = read("src/app/pages/business/StaffManagementPage.tsx");
 if (
   staffPage.includes("dashboard-mobile-flat-surface") &&

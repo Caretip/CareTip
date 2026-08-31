@@ -3712,6 +3712,22 @@ export type PhysicalQrContextOptions = {
   tables: PhysicalQrContextOption[];
 };
 
+export type PhysicalQrOrderItem = {
+  id: string;
+  productId: string;
+  productName: string | null;
+  templateId: string | null;
+  supportsAddress: boolean;
+  qrContextType: string;
+  qrSubjectId: string | null;
+  label: string;
+  quantity: number;
+  unitPrice: number;
+  totalAmount: number;
+  addressSnapshot: unknown;
+  colorTokensSnapshot: unknown;
+};
+
 export type PhysicalQrCustomerOrder = {
   id: string;
   productId: string;
@@ -3721,6 +3737,8 @@ export type PhysicalQrCustomerOrder = {
   qrContextType: string;
   qrSubjectId: string | null;
   quantity: number;
+  itemCount: number;
+  items: PhysicalQrOrderItem[];
   currency: string;
   unitPrice: number;
   totalAmount: number;
@@ -3838,6 +3856,53 @@ export async function checkoutPhysicalQrOrder(
   });
 }
 
+export async function createPhysicalQrBatch(payload: {
+  lineItems: Array<{
+    productId: string;
+    qrContextType: string;
+    qrSubjectId?: string;
+    quantity?: number;
+  }>;
+  address?: string;
+  shipping: {
+    recipientName: string;
+    streetLine: string;
+    addressLine2?: string;
+    postalCode: string;
+    city: string;
+    country: string;
+  };
+  contact: {
+    name: string;
+    email: string;
+    phone: string;
+  };
+  colorTokens: {
+    backgroundGradientStart: string;
+    backgroundGradientEnd: string;
+    primaryTextColor: string;
+    secondaryTextColor: string;
+  };
+}): Promise<{ order: PhysicalQrCustomerOrder }> {
+  return apiRequest(apiPath("/api/business/physical-qr/orders/batch"), {
+    method: "POST",
+    headers: getHeaders(),
+    credentials: "include",
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function checkoutPhysicalQrBatch(
+  orderId: string,
+): Promise<{ url: string; sessionId: string | null; zeroCost?: boolean }> {
+  return apiRequest(apiPath("/api/business/physical-qr/orders/batch/checkout"), {
+    method: "POST",
+    headers: getHeaders(),
+    credentials: "include",
+    body: JSON.stringify({ orderId }),
+  });
+}
+
 export type PhysicalQrAdminOrder = {
   id: string;
   businessId: string;
@@ -3847,6 +3912,8 @@ export type PhysicalQrAdminOrder = {
   supportsAddress: boolean;
   qrContextType: string;
   quantity: number;
+  itemCount: number;
+  items: PhysicalQrOrderItem[];
   paymentStatus: string;
   fulfillmentStatus: string;
   carrier: string | null;
@@ -3908,9 +3975,13 @@ export async function markPlatformPhysicalQrPrinting(orderId: string): Promise<P
 export async function downloadPlatformPhysicalQrOrderPrint(
   orderId: string,
   format: "pdf" | "png" = "pdf",
+  itemId?: string,
 ): Promise<void> {
   const token = getToken();
-  const qs = format === "png" ? "?format=png" : "?format=pdf";
+  const params = new URLSearchParams();
+  params.set("format", format);
+  if (itemId) params.set("itemId", itemId);
+  const qs = `?${params.toString()}`;
   const res = await fetch(
     apiPath(`/api/platform/physical-qr/orders/${encodeURIComponent(orderId)}/print${qs}`),
     {
@@ -3926,6 +3997,8 @@ export async function downloadPlatformPhysicalQrOrderPrint(
       const errData = (await res.json().catch(() => ({}))) as { message?: string; code?: string };
       if (errData.code === "PAYMENT_REQUIRED" || res.status === 409) {
         message = "Print files are available after payment is confirmed.";
+      } else if (errData.code === "PRINT_TOO_LARGE" || res.status === 413) {
+        message = errData.message || "Combined PDF is too large. Download line items individually.";
       } else if (errData.message) {
         message = errData.message;
       }

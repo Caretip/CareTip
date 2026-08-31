@@ -27,6 +27,7 @@ import {
   physicalQrShippingLine,
 } from "../../lib/physicalQrOrderUi";
 import { PhysicalQrOrderTimeline } from "../../components/business/physical-branding/PhysicalQrOrderTimeline";
+import { PlatformPhysicalQrOrderSkeleton } from "../../components/business/qr-studio/QrStudioLoadingSkeletons";
 import { PlatformPage, PlatformPageHeader } from "../../components/platform/PlatformPageChrome";
 import { platformUi } from "../../components/platform/platformDashboardUi";
 import { Button } from "@/components/ui/button";
@@ -46,6 +47,7 @@ export function PlatformPhysicalQrOrderDetailPage() {
   const [noteBody, setNoteBody] = useState("");
   const [busy, setBusy] = useState(false);
   const [downloadingPdf, setDownloadingPdf] = useState(false);
+  const [downloadingItemId, setDownloadingItemId] = useState<string | null>(null);
 
   const reload = useCallback(async () => {
     const data = await fetchPlatformPhysicalQrOrder(orderId);
@@ -60,14 +62,17 @@ export function PlatformPhysicalQrOrderDetailPage() {
     void reload().catch(() => toast.error(t("admin.physicalQr.loadError")));
   }, [reload, t]);
 
-  async function downloadPdf() {
+  async function downloadPdf(itemId?: string) {
+    if (downloadingPdf) return;
     setDownloadingPdf(true);
+    setDownloadingItemId(itemId ?? null);
     try {
-      await downloadPlatformPhysicalQrOrderPrint(orderId, "pdf");
+      await downloadPlatformPhysicalQrOrderPrint(orderId, "pdf", itemId);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : t("admin.physicalQr.downloadPdfError"));
     } finally {
       setDownloadingPdf(false);
+      setDownloadingItemId(null);
     }
   }
 
@@ -86,7 +91,7 @@ export function PlatformPhysicalQrOrderDetailPage() {
   if (!order) {
     return (
       <PlatformPage>
-        <p className="text-sm text-muted-foreground">{t("admin.physicalQr.loading")}</p>
+        <PlatformPhysicalQrOrderSkeleton />
       </PlatformPage>
     );
   }
@@ -94,10 +99,17 @@ export function PlatformPhysicalQrOrderDetailPage() {
   const address = physicalQrAddressLine(order.addressSnapshot);
   const shipTo = physicalQrShippingLine(order.shippingSnapshot);
   const contact = physicalQrContactFromUnknown(order.contactSnapshot);
+  const totalPages = order.quantity;
+  const bulkLabel =
+    order.itemCount > 1 || totalPages > 1
+      ? downloadingPdf && !downloadingItemId
+        ? t("admin.physicalQr.preparingPdfs", { count: totalPages })
+        : t("admin.physicalQr.downloadAllPdfs", { count: totalPages })
+      : t("admin.physicalQr.downloadPdf");
 
   return (
     <PlatformPage>
-      <Link to="/platform-admin/businesses/branding-orders" className={platformUi.backLink}>
+      <Link to="/platform-admin/branding-orders" className={platformUi.backLink}>
         {t("admin.physicalQr.back")}
       </Link>
       <PlatformPageHeader
@@ -111,9 +123,59 @@ export function PlatformPhysicalQrOrderDetailPage() {
           <p className="text-muted-foreground">{t("admin.physicalQr.business")}</p>
           <p className="font-medium">{order.businessName}</p>
         </div>
-        <div>
-          <p className="text-muted-foreground">{t("business.qrStudio.physical.qrType")}</p>
-          <p className="font-medium">{physicalQrContextLabel(order.qrContextType, t)}</p>
+        <div className="sm:col-span-2">
+          <p className="text-muted-foreground">{t("admin.physicalQr.orderItems", { defaultValue: "Items" })}</p>
+          {order.items.length > 0 ? (
+            <>
+              <p className="mt-0.5 text-xs text-muted-foreground">
+                {t("admin.physicalQr.orderItemsSummary", {
+                  lines: order.itemCount,
+                  copies: order.quantity,
+                  defaultValue: "{{lines}} line items · {{copies}} total copies",
+                })}
+              </p>
+              <div className="mt-2 overflow-x-auto rounded-md border border-border">
+                <table className="w-full min-w-[280px] text-sm">
+                  <thead>
+                    <tr className="border-b border-border bg-muted/30 text-left text-xs uppercase tracking-wide text-muted-foreground">
+                      <th className="px-3 py-2 font-medium">{t("admin.physicalQr.itemLabel", { defaultValue: "QR item" })}</th>
+                      <th className="px-3 py-2 font-medium">{t("admin.physicalQr.itemType", { defaultValue: "Type" })}</th>
+                      <th className="px-3 py-2 font-medium text-right">{t("admin.physicalQr.itemQty", { defaultValue: "Qty" })}</th>
+                      <th className="px-3 py-2 font-medium text-right">{t("admin.physicalQr.itemActions", { defaultValue: "Print" })}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {order.items.map((item) => (
+                      <tr key={item.id} className="border-b border-border/60 last:border-0">
+                        <td className="px-3 py-2 font-medium">{item.label}</td>
+                        <td className="px-3 py-2 text-muted-foreground">{physicalQrContextLabel(item.qrContextType, t)}</td>
+                        <td className="px-3 py-2 text-right tabular-nums">×{item.quantity}</td>
+                        <td className="px-3 py-2 text-right">
+                          {order.paymentStatus === "PAID" ? (
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant="outline"
+                              disabled={downloadingPdf}
+                              onClick={() => void downloadPdf(item.id)}
+                            >
+                              {downloadingPdf && downloadingItemId === item.id
+                                ? t("admin.physicalQr.preparingPdfs", { count: item.quantity })
+                                : t("admin.physicalQr.downloadPdf")}
+                            </Button>
+                          ) : (
+                            <span className="text-xs text-muted-foreground">—</span>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </>
+          ) : (
+            <p className="font-medium">{physicalQrContextLabel(order.qrContextType, t)}</p>
+          )}
         </div>
         <div>
           <p className="text-muted-foreground">{t("business.qrStudio.physical.printedAddress")}</p>
@@ -155,7 +217,7 @@ export function PlatformPhysicalQrOrderDetailPage() {
           <p className="text-muted-foreground">{t("business.qrStudio.physical.orders.payment")}</p>
           <p className="font-medium">
             {formatPhysicalQrMoney(order.totalAmount, order.currency, i18n.language)} ·{" "}
-            {physicalQrPaymentLabel(order.paymentStatus, t)}
+            {physicalQrPaymentLabel(order.paymentStatus, t, { totalAmount: order.totalAmount })}
           </p>
         </div>
         <div>
@@ -164,7 +226,9 @@ export function PlatformPhysicalQrOrderDetailPage() {
         </div>
         <div>
           <p className="text-muted-foreground">{t("business.qrStudio.physical.orders.status")}</p>
-          <p className="font-medium">{physicalQrFulfillmentLabel(order.fulfillmentStatus, t)}</p>
+          <p className="font-medium">
+            {physicalQrFulfillmentLabel(order.fulfillmentStatus, t, { totalAmount: order.totalAmount })}
+          </p>
         </div>
         <div>
           <p className="text-muted-foreground">{t("business.qrStudio.physical.orders.cutoff")}</p>
@@ -187,13 +251,12 @@ export function PlatformPhysicalQrOrderDetailPage() {
 
       <div className={`${platformUi.contentCard} mb-4 space-y-3`}>
         <p className="font-medium">
-          {t("admin.physicalQr.currentStatus")}: {physicalQrFulfillmentLabel(order.fulfillmentStatus, t)}
+          {t("admin.physicalQr.currentStatus")}:{" "}
+          {physicalQrFulfillmentLabel(order.fulfillmentStatus, t, { totalAmount: order.totalAmount })}
         </p>
         {order.paymentStatus === "PAID" ? (
           <Button type="button" variant="outline" disabled={downloadingPdf} onClick={() => void downloadPdf()}>
-            {order.quantity > 1
-              ? t("admin.physicalQr.downloadPdfQty", { count: order.quantity })
-              : t("admin.physicalQr.downloadPdf")}
+            {bulkLabel}
           </Button>
         ) : (
           <p className="text-sm text-muted-foreground">{t("admin.physicalQr.printUnpaidHint")}</p>

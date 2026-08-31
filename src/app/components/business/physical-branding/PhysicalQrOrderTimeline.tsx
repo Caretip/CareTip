@@ -17,6 +17,7 @@ type OrderLike = {
   deliveredAt?: string | null;
   paymentStatus: string;
   fulfillmentStatus: string;
+  totalAmount?: number | null;
 };
 
 export function PhysicalQrOrderTimeline({ order }: { order: OrderLike }) {

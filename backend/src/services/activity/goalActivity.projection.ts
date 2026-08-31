@@ -67,20 +67,43 @@ async function evaluateAndProjectGoalAchievements(ctx: TipGoalAchievementContext
 
   const employeeName = ctx.employeeName || employee.name;
 
+  // One tip scan covering all goal windows (avoids G aggregate round-trips).
+  let scanStartMs = now.getTime();
+  let scanEndMs = 0;
+  const windows: Array<{
+    goal: (typeof goals)[number];
+    goalAmount: number;
+    start: Date;
+    end: Date;
+  }> = [];
   for (const goal of goals) {
     const goalAmount = Number(goal.goalAmount);
     if (!(goalAmount > 0)) continue;
-
     const { start, end } = effectivePeriodBounds(goal.goalPeriod, goal.startDate, now, tz);
-    const agg = await prisma.transaction.aggregate({
-      where: {
-        employeeId: ctx.employeeId,
-        status: "success",
-        createdAt: { gte: start, lte: end },
-      },
-      _sum: { amount: true },
-    });
-    const current = agg._sum.amount != null ? Number(agg._sum.amount) : 0;
+    windows.push({ goal, goalAmount, start, end });
+    scanStartMs = Math.min(scanStartMs, start.getTime());
+    scanEndMs = Math.max(scanEndMs, end.getTime());
+  }
+  if (windows.length === 0) return;
+
+  const tips = await prisma.transaction.findMany({
+    where: {
+      employeeId: ctx.employeeId,
+      businessId: ctx.businessId,
+      status: "success",
+      createdAt: { gte: new Date(scanStartMs), lte: new Date(scanEndMs) },
+    },
+    select: { amount: true, createdAt: true },
+  });
+
+  for (const { goal, goalAmount, start, end } of windows) {
+    const startMs = start.getTime();
+    const endMs = end.getTime();
+    let current = 0;
+    for (const t of tips) {
+      const ts = t.createdAt.getTime();
+      if (ts >= startMs && ts <= endMs) current += Number(t.amount);
+    }
     const before = current - tipAmount;
     const crossed = current >= goalAmount && before < goalAmount;
     if (!crossed) continue;

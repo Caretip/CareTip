@@ -254,10 +254,10 @@ export function BusinessProfilePage({ embedded = false }: { embedded?: boolean }
         </p>
       )}
 
-      <Card className={cn(businessUi.cardStatic, "w-full")}>
-        <CardHeader className="border-b border-neutral-100/90">
+      <Card className={cn(businessUi.cardStatic, businessUi.mobileFlatSurface, "dashboard-mobile-flat-surface w-full")}>
+        <CardHeader className="border-b border-neutral-100/90 max-lg:border-0 max-lg:pb-2 max-lg:pt-0">
           <CardTitle className="text-base">{t("business.profilePage.logoTitle")}</CardTitle>
-          <CardDescription className={businessUi.cardDesc}>{t("business.profilePage.logoDesc")}</CardDescription>
+          <CardDescription className={cn(businessUi.cardDesc, businessUi.mobileHideDesc)}>{t("business.profilePage.logoDesc")}</CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col gap-6 pt-6 sm:flex-row sm:items-start">
           <div className="flex flex-col items-center gap-3 sm:items-start">
@@ -310,10 +310,10 @@ export function BusinessProfilePage({ embedded = false }: { embedded?: boolean }
         </CardContent>
       </Card>
 
-      <Card className={cn(businessUi.cardStatic, "w-full")}>
-        <CardHeader className="border-b border-neutral-100/90">
+      <Card className={cn(businessUi.cardStatic, businessUi.mobileFlatSurface, "dashboard-mobile-flat-surface w-full")}>
+        <CardHeader className="border-b border-neutral-100/90 max-lg:border-0 max-lg:pb-2 max-lg:pt-0">
           <CardTitle className="text-base">{t("business.profilePage.venueDetailsTitle")}</CardTitle>
-          <CardDescription className={businessUi.cardDesc}>{t("business.profilePage.venueDetailsDesc")}</CardDescription>
+          <CardDescription className={cn(businessUi.cardDesc, businessUi.mobileHideDesc)}>{t("business.profilePage.venueDetailsDesc")}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-5">
           <div className="space-y-2">
@@ -380,10 +380,10 @@ export function BusinessProfilePage({ embedded = false }: { embedded?: boolean }
         </CardContent>
       </Card>
 
-      <Card className={cn(businessUi.cardStatic, "w-full")}>
-        <CardHeader className="border-b border-neutral-100/90">
+      <Card className={cn(businessUi.cardStatic, businessUi.mobileFlatSurface, "dashboard-mobile-flat-surface w-full")}>
+        <CardHeader className="border-b border-neutral-100/90 max-lg:border-0 max-lg:pb-2 max-lg:pt-0">
           <CardTitle className="text-base">{t("business.profilePage.publicTitle")}</CardTitle>
-          <CardDescription className={businessUi.cardDesc}>{t("business.profilePage.publicDesc")}</CardDescription>
+          <CardDescription className={cn(businessUi.cardDesc, businessUi.mobileHideDesc)}>{t("business.profilePage.publicDesc")}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4 text-sm">
           <div>

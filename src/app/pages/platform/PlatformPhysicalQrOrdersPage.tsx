@@ -35,6 +35,7 @@ export function PlatformPhysicalQrOrdersPage() {
   const [orders, setOrders] = useState<PhysicalQrAdminOrder[]>([]);
   const [filter, setFilter] = useState<string>("all");
   const [q, setQ] = useState("");
+  const [loading, setLoading] = useState(true);
 
   async function reload(nextFilter = filter, nextQ = q) {
     const data = await fetchPlatformPhysicalQrOrders({
@@ -45,7 +46,9 @@ export function PlatformPhysicalQrOrdersPage() {
   }
 
   useEffect(() => {
-    void reload().catch(() => toast.error(t("admin.physicalQr.loadError")));
+    void reload()
+      .catch(() => toast.error(t("admin.physicalQr.loadError")))
+      .finally(() => setLoading(false));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [t]);
 
@@ -85,7 +88,19 @@ export function PlatformPhysicalQrOrdersPage() {
         />
       </div>
       <div className="mt-4 space-y-3">
-        {orders.length === 0 ? (
+        {loading ? (
+          <div className={platformUi.contentCard} role="status" aria-busy="true">
+            <div className="space-y-3">
+              {[0, 1, 2].map((row) => (
+                <div key={row} className="space-y-2 border-b border-border/50 pb-3 last:border-0 last:pb-0">
+                  <div className="h-4 w-40 animate-pulse rounded bg-muted" />
+                  <div className="h-3 w-64 max-w-full animate-pulse rounded bg-muted" />
+                  <div className="h-3 w-48 animate-pulse rounded bg-muted" />
+                </div>
+              ))}
+            </div>
+          </div>
+        ) : orders.length === 0 ? (
           <div className={platformUi.contentCard}>
             <p className="text-sm text-muted-foreground">{t("admin.physicalQr.empty")}</p>
           </div>
@@ -95,7 +110,7 @@ export function PlatformPhysicalQrOrdersPage() {
             return (
             <Link
               key={order.id}
-              to={`/platform-admin/businesses/branding-orders/${order.id}`}
+              to={`/platform-admin/branding-orders/${order.id}`}
               className={`${platformUi.contentCard} block hover:border-primary/40`}
             >
               <div className="flex flex-wrap items-start justify-between gap-3">
@@ -106,7 +121,15 @@ export function PlatformPhysicalQrOrdersPage() {
                     })}
                   </p>
                   <p className="text-sm text-muted-foreground">
-                    {order.businessName} · {physicalQrContextLabel(order.qrContextType, t)} · ×
+                    {order.businessName}
+                    {" · "}
+                    {order.itemCount > 1
+                      ? t("admin.physicalQr.itemCount", {
+                          count: order.itemCount,
+                          defaultValue: "{{count}} QR items",
+                        })
+                      : physicalQrContextLabel(order.qrContextType, t)}
+                    {" · ×"}
                     {order.quantity}
                     {shipping ? ` · ${shipping.city}, ${shipping.country}` : ""}
                   </p>
@@ -116,8 +139,8 @@ export function PlatformPhysicalQrOrdersPage() {
                 </p>
               </div>
               <p className="mt-2 text-sm">
-                {physicalQrPaymentLabel(order.paymentStatus, t)} ·{" "}
-                {physicalQrFulfillmentLabel(order.fulfillmentStatus, t)}
+                {physicalQrPaymentLabel(order.paymentStatus, t, { totalAmount: order.totalAmount })} ·{" "}
+                {physicalQrFulfillmentLabel(order.fulfillmentStatus, t, { totalAmount: order.totalAmount })}
               </p>
               <p className="mt-1 text-xs text-muted-foreground">
                 {formatBerlinDateTime(order.placedAt, i18n.language)}

@@ -404,9 +404,9 @@
 
 .caretip-auth-page .caretip-auth-card,
 .caretip-auth-shell .caretip-auth-card {
-  border-radius: 0.75rem;
+  border-radius: 1rem;
   border-width: 1px;
-  box-shadow: 0 1px 2px rgb(0 0 0 / 0.04);
+  box-shadow: none;
 }
 
 .caretip-auth-page .caretip-auth-card h1,

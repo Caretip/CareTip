@@ -27,7 +27,10 @@ function SidebarLink({
   onNavigate?: () => void;
 }) {
   const { t } = useTranslation();
-  const isActive = isPlatformAdminOverviewActive(pathname);
+  const isActive =
+    entry.id === "overview"
+      ? isPlatformAdminOverviewActive(pathname)
+      : pathname === entry.href || pathname.startsWith(`${entry.href}/`);
 
   return (
     <li>

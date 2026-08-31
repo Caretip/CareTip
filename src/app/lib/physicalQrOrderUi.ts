@@ -1,5 +1,15 @@
 import type { TFunction } from "i18next";
 
+/** Matches backend `PHYSICAL_QR_QUANTITY_MIN/MAX` in physicalQr/types.ts */
+export const PHYSICAL_QR_QUANTITY_MIN = 1;
+export const PHYSICAL_QR_QUANTITY_MAX = 50;
+
+export function clampPhysicalQrQuantity(raw: number): number {
+  if (!Number.isFinite(raw)) return PHYSICAL_QR_QUANTITY_MIN;
+  const n = Math.trunc(raw);
+  return Math.min(PHYSICAL_QR_QUANTITY_MAX, Math.max(PHYSICAL_QR_QUANTITY_MIN, n));
+}
+
 export const PHYSICAL_QR_BERLIN_TZ = "Europe/Berlin";
 
 export function physicalQrOrderNumber(id: string): string {
@@ -65,12 +75,10 @@ export type PhysicalQrDeliveryForm = {
 };
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const DE_POSTAL_RE = /^\d{5}$/;
 
 export function physicalQrDeliveryIsComplete(form: PhysicalQrDeliveryForm): boolean {
   const recipientName = form.recipientName.trim();
   const streetLine = form.streetLine.trim();
-  const postalCode = form.postalCode.trim().replace(/\s+/g, "");
   const city = form.city.trim();
   const country = form.country.trim().toUpperCase();
   const email = form.email.trim();
@@ -78,8 +86,6 @@ export function physicalQrDeliveryIsComplete(form: PhysicalQrDeliveryForm): bool
   return (
     Boolean(recipientName) &&
     Boolean(streetLine) &&
-    DE_POSTAL_RE.test(postalCode) &&
-    postalCode !== "00000" &&
     Boolean(city) &&
     country === PHYSICAL_QR_SHIP_COUNTRY &&
     EMAIL_RE.test(email) &&
@@ -95,7 +101,7 @@ export function physicalQrShippingFromUnknown(raw: unknown): PhysicalQrShippingS
   const postalCode = String(value.postalCode ?? "").trim();
   const city = String(value.city ?? "").trim();
   const country = String(value.country ?? "").trim();
-  if (!recipientName || !streetLine || !postalCode || !city || !country) return null;
+  if (!recipientName || !streetLine || !city || !country) return null;
   const addressLine2 = String(value.addressLine2 ?? "").trim();
   return {
     recipientName,
@@ -121,11 +127,24 @@ export function physicalQrShippingLine(snapshot: unknown): string | null {
   const shipping = physicalQrShippingFromUnknown(snapshot);
   if (!shipping) return null;
   const line2 = shipping.addressLine2 ? `, ${shipping.addressLine2}` : "";
-  return `${shipping.recipientName}, ${shipping.streetLine}${line2}, ${shipping.postalCode} ${shipping.city}, ${shipping.country}`;
+  return `${shipping.recipientName}, ${shipping.streetLine}${line2}${shipping.postalCode ? `, ${shipping.postalCode}` : ""} ${shipping.city}, ${shipping.country}`;
 }
 
-export function physicalQrPaymentLabel(paymentStatus: string, t: TFunction): string {
-  if (paymentStatus === "PAID") return t("business.qrStudio.physical.orders.paymentReceived");
+/** Pro / included printing: zero Stripe charge (totalAmount === 0). */
+export function isPhysicalQrIncludedOrder(order: { totalAmount?: number | null }): boolean {
+  return typeof order.totalAmount === "number" && order.totalAmount === 0;
+}
+
+export function physicalQrPaymentLabel(
+  paymentStatus: string,
+  t: TFunction,
+  options?: { totalAmount?: number | null },
+): string {
+  if (paymentStatus === "PAID") {
+    return isPhysicalQrIncludedOrder({ totalAmount: options?.totalAmount })
+      ? t("business.qrStudio.physical.orders.orderReceived")
+      : t("business.qrStudio.physical.orders.paymentReceived");
+  }
   if (paymentStatus === "FAILED") return t("business.qrStudio.physical.orders.paymentFailed");
   if (paymentStatus === "CANCELLED") return t("business.qrStudio.physical.orders.cancelled");
   return t("business.qrStudio.physical.orders.paymentPending");
@@ -282,12 +301,18 @@ export function physicalQrTimelineStepTone(stepId: PhysicalQrTimelineStepId): Ph
   }
 }
 
-export function physicalQrFulfillmentLabel(fulfillmentStatus: string, t: TFunction): string {
+export function physicalQrFulfillmentLabel(
+  fulfillmentStatus: string,
+  t: TFunction,
+  options?: { totalAmount?: number | null },
+): string {
   switch (fulfillmentStatus) {
     case "PENDING_PAYMENT":
       return t("business.qrStudio.physical.orders.paymentPending");
     case "PAID":
-      return t("business.qrStudio.physical.orders.paymentReceived");
+      return isPhysicalQrIncludedOrder({ totalAmount: options?.totalAmount })
+        ? t("business.qrStudio.physical.orders.orderReceived")
+        : t("business.qrStudio.physical.orders.paymentReceived");
     case "PROCESSING":
       return t("business.qrStudio.physical.orders.processing");
     case "PRINTING":
@@ -306,15 +331,18 @@ export function physicalQrFulfillmentLabel(fulfillmentStatus: string, t: TFuncti
 }
 
 export function physicalQrCustomerStatus(
-  order: { paymentStatus: string; fulfillmentStatus: string },
+  order: { paymentStatus: string; fulfillmentStatus: string; totalAmount?: number | null },
   t: TFunction,
   confirming?: boolean,
 ): { title: string; detail: string | null; tone: PhysicalQrStatusTone } {
   const tone = physicalQrCustomerStatusTone(order, confirming);
+  const included = isPhysicalQrIncludedOrder(order);
   if (confirming) {
     return {
       tone,
-      title: t("business.qrStudio.physical.orders.confirmingTitle"),
+      title: included
+        ? t("business.qrStudio.physical.orders.confirmingIncludedTitle")
+        : t("business.qrStudio.physical.orders.confirmingTitle"),
       detail: t("business.qrStudio.physical.orders.statusConfirmingDetail"),
     };
   }
@@ -359,8 +387,12 @@ export function physicalQrCustomerStatus(
   }
   return {
     tone,
-    title: t("business.qrStudio.physical.orders.paymentReceived"),
-    detail: t("business.qrStudio.physical.orders.statusProcessingDetail"),
+    title: included
+      ? t("business.qrStudio.physical.orders.orderReceived")
+      : t("business.qrStudio.physical.orders.paymentReceived"),
+    detail: included
+      ? t("business.qrStudio.physical.orders.orderReceivedProcessing")
+      : t("business.qrStudio.physical.orders.statusProcessingDetail"),
   };
 }
 
@@ -395,6 +427,7 @@ export function physicalQrTimeline(
     deliveredAt?: string | null;
     paymentStatus: string;
     fulfillmentStatus: string;
+    totalAmount?: number | null;
   },
   t: TFunction,
 ): PhysicalQrTimelineStep[] {
@@ -410,6 +443,7 @@ export function physicalQrTimeline(
   };
   const current = rank[order.fulfillmentStatus] ?? 0;
   const paid = order.paymentStatus === "PAID" || Boolean(order.paidAt) || current >= 2;
+  const included = isPhysicalQrIncludedOrder(order);
   return [
     {
       id: "placed",
@@ -419,7 +453,9 @@ export function physicalQrTimeline(
     },
     {
       id: "paid",
-      label: t("business.qrStudio.physical.orders.stepPaid"),
+      label: included
+        ? t("business.qrStudio.physical.orders.stepOrderReceived")
+        : t("business.qrStudio.physical.orders.stepPaid"),
       at: order.paidAt ?? null,
       done: paid,
     },

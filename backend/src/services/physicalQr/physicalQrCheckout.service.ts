@@ -7,7 +7,11 @@ import {
   assertPhysicalQrCheckoutReady,
 } from "../../config/physicalQrCheckout.js";
 import { readPhysicalQrContactSnapshot } from "../../lib/physicalQr/shipping.js";
-import { PhysicalQrOrderError, getPhysicalQrOrderForBusiness } from "./physicalQrOrder.service.js";
+import {
+  PhysicalQrOrderError,
+  getPhysicalQrOrderForBusiness,
+  resolveOrderItemRows,
+} from "./physicalQrOrder.service.js";
 
 /**
  * Dedicated platform Checkout for physical products.
@@ -19,6 +23,8 @@ export async function createPhysicalQrCheckoutSession(input: {
   orderId: string;
 }): Promise<{ url: string; sessionId: string }> {
   const order = await getPhysicalQrOrderForBusiness(input.businessId, input.orderId);
+  const items = resolveOrderItemRows(order);
+
   if (order.paymentStatus === "FAILED" && order.fulfillmentStatus === "PAYMENT_FAILED") {
     await prisma.physicalQrOrder.update({
       where: { id: order.id },
@@ -30,8 +36,15 @@ export async function createPhysicalQrCheckoutSession(input: {
   if (order.paymentStatus !== "PENDING" || order.fulfillmentStatus !== "PENDING_PAYMENT") {
     throw new PhysicalQrOrderError("ORDER_NOT_CHECKOUTABLE", "This order cannot be paid.", 409);
   }
-  const product = order.product;
-  assertPhysicalQrCheckoutReady(product);
+
+  for (const item of items) {
+    const product = item.product;
+    if (!product) {
+      throw new PhysicalQrOrderError("PRODUCT_NOT_FOUND", "Order product is missing.", 409);
+    }
+    assertPhysicalQrCheckoutReady(product);
+  }
+
   if (!isStripeConfigured()) {
     throw new PhysicalQrOrderError("STRIPE_NOT_CONFIGURED", "Payments are not configured.", 503);
   }
@@ -48,22 +61,20 @@ export async function createPhysicalQrCheckoutSession(input: {
   const contact = readPhysicalQrContactSnapshot(order.contactSnapshot);
   const session = await stripe.checkout.sessions.create({
     mode: "payment",
-    success_url: `${base}/dashboard/qr-studio/branding/orders/${order.id}?checkout=success`,
-    cancel_url: `${base}/dashboard/qr-studio/branding/orders/${order.id}?checkout=canceled`,
+    success_url: `${base}/dashboard/qr-studio/orders/${order.id}?checkout=success`,
+    cancel_url: `${base}/dashboard/qr-studio/orders/${order.id}?checkout=canceled`,
     ...(contact?.email ? { customer_email: contact.email } : {}),
-    line_items: [
-      {
-        quantity: order.quantity,
-        price_data: {
-          currency: "eur",
-          unit_amount: order.unitPrice,
-          product_data: {
-            name: product.name,
-            description: `Physical CareTip QR print (${order.qrContextType})`,
-          },
+    line_items: items.map((item) => ({
+      quantity: item.quantity,
+      price_data: {
+        currency: "eur",
+        unit_amount: item.unitPrice,
+        product_data: {
+          name: item.product?.name ?? "CareTip A5 flyer",
+          description: `${item.labelSnapshot} (${item.qrContextType})`,
         },
       },
-    ],
+    })),
     metadata: {
       source: PHYSICAL_QR_CHECKOUT_METADATA_SOURCE,
       orderId: order.id,

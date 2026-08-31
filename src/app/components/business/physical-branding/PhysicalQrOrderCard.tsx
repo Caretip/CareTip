@@ -31,16 +31,25 @@ export function PhysicalQrOrderCard({
   const showPay = Boolean(canPay) && !confirming;
   const status = physicalQrCustomerStatus(order, t, confirming);
   const productName = order.productName || t("business.qrStudio.physical.templateName");
+  const itemSummary =
+    order.itemCount > 1
+      ? t("business.qrStudio.physical.orders.itemCount", {
+          count: order.itemCount,
+          defaultValue: "{{count}} QR items",
+        })
+      : physicalQrContextLabel(order.qrContextType, t);
 
   return (
     <div className="py-4 first:pt-0 last:pb-0">
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0">
-          <p className="truncate font-medium leading-tight">{productName}</p>
+          <p className="truncate font-medium leading-tight">
+            {order.itemCount > 1 ? t("business.qrStudio.physical.orders.multiItemTitle", { defaultValue: "Print order" }) : productName}
+          </p>
           <p className="mt-0.5 text-sm text-muted-foreground">
             #{physicalQrOrderNumber(order.id)}
             {" · "}
-            {physicalQrContextLabel(order.qrContextType, t)}
+            {itemSummary}
             {" · "}
             {t("business.qrStudio.physical.orders.qtyShort", { count: order.quantity })}
           </p>
@@ -66,7 +75,7 @@ export function PhysicalQrOrderCard({
             </Button>
           ) : null}
           <Link
-            to={`/dashboard/qr-studio/branding/orders/${order.id}`}
+            to={`/dashboard/qr-studio/orders/${order.id}`}
             className="text-sm font-medium text-primary hover:underline"
           >
             {t("business.qrStudio.physical.orders.viewOrder")}

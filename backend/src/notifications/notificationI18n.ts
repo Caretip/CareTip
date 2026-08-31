@@ -53,6 +53,7 @@ export type NotificationTemplate =
   | { id: "support_status_updated"; params: { status: string } }
   | { id: "support_inbox_title"; params: { ticketNumber: string; status: string; subject: string } }
   | { id: "physical_qr_paid" }
+  | { id: "physical_qr_order_received" }
   | {
       id: "physical_qr_paid_admin";
       params: {
@@ -60,9 +61,24 @@ export type NotificationTemplate =
         orderId: string;
         productLabel: string;
         quantity: number;
+        itemLineCount: number;
+        lineItemsSummary: string;
         totalAmountCents: number;
         currency: string;
         paidAtIso: string;
+      };
+    }
+  | {
+      id: "physical_qr_order_received_admin";
+      params: {
+        businessName: string;
+        orderId: string;
+        productLabel: string;
+        quantity: number;
+        itemLineCount: number;
+        lineItemsSummary: string;
+        currency: string;
+        receivedAtIso: string;
       };
     }
   | { id: "physical_qr_printing" }
@@ -297,29 +313,89 @@ export function renderNotificationTemplate(
             title: "Payment received",
             body: "Your physical QR order has been paid for and is now being processed.",
           };
+    case "physical_qr_order_received":
+      return de
+        ? {
+            title: "Bestellung eingegangen",
+            body: "Ihre physische QR-Bestellung ist eingegangen und wird jetzt bearbeitet.",
+          }
+        : {
+            title: "Order received",
+            body: "Your physical QR order has been received and is now being processed.",
+          };
     case "physical_qr_paid_admin": {
+      const params = template.params;
+      if (!params || typeof params !== "object") {
+        return { title: "", body: "" };
+      }
       const amount = formatNotificationAmountCents(
-        template.params.totalAmountCents,
-        template.params.currency,
+        Number(params.totalAmountCents) || 0,
+        typeof params.currency === "string" ? params.currency : "EUR",
         locale,
       );
-      const paidAt = formatNotificationDateTime(template.params.paidAtIso, locale);
+      const paidAt = formatNotificationDateTime(
+        typeof params.paidAtIso === "string" ? params.paidAtIso : "",
+        locale,
+      );
+      const productLabel = typeof params.productLabel === "string" ? params.productLabel : "";
+      const summary =
+        typeof params.lineItemsSummary === "string" ? params.lineItemsSummary.trim() : "";
+      const itemsLine = summary || productLabel;
+      const businessName = typeof params.businessName === "string" ? params.businessName : "";
+      const orderId = typeof params.orderId === "string" ? params.orderId : "";
+      const itemLineCount = Number(params.itemLineCount) || 0;
+      const quantity = Number(params.quantity) || 0;
       return de
         ? {
             title: "Physische QR-Bestellung bezahlt",
             body:
-              `${template.params.businessName} hat eine physische QR-Bestellung bezahlt — bereit zur Bearbeitung. ` +
-              `Bestellung: ${template.params.orderId}. Produkt: ${template.params.productLabel}. ` +
-              `Menge: ${template.params.quantity}. Betrag: ${amount}. Zahlung: Bezahlt. ` +
+              `${businessName} hat eine physische QR-Bestellung bezahlt — bereit zur Bearbeitung. ` +
+              `Bestellung: ${orderId}. Positionen (${itemLineCount}): ${itemsLine}. ` +
+              `Gesamtmenge: ${quantity}. Betrag: ${amount}. Zahlung: Bezahlt. ` +
               `Fulfillment: In Bearbeitung. Bezahlt am: ${paidAt}.`,
           }
         : {
             title: "Physical QR order paid",
             body:
-              `${template.params.businessName} paid for a physical QR order — ready for processing. ` +
-              `Order: ${template.params.orderId}. Product: ${template.params.productLabel}. ` +
-              `Quantity: ${template.params.quantity}. Amount: ${amount}. Payment: Paid. ` +
+              `${businessName} paid for a physical QR order — ready for processing. ` +
+              `Order: ${orderId}. Items (${itemLineCount}): ${itemsLine}. ` +
+              `Total quantity: ${quantity}. Amount: ${amount}. Payment: Paid. ` +
               `Fulfillment: Processing. Paid at: ${paidAt}.`,
+          };
+    }
+    case "physical_qr_order_received_admin": {
+      const params = template.params;
+      if (!params || typeof params !== "object") {
+        return { title: "", body: "" };
+      }
+      const receivedAt = formatNotificationDateTime(
+        typeof params.receivedAtIso === "string" ? params.receivedAtIso : "",
+        locale,
+      );
+      const productLabel = typeof params.productLabel === "string" ? params.productLabel : "";
+      const summary =
+        typeof params.lineItemsSummary === "string" ? params.lineItemsSummary.trim() : "";
+      const itemsLine = summary || productLabel;
+      const businessName = typeof params.businessName === "string" ? params.businessName : "";
+      const orderId = typeof params.orderId === "string" ? params.orderId : "";
+      const itemLineCount = Number(params.itemLineCount) || 0;
+      const quantity = Number(params.quantity) || 0;
+      return de
+        ? {
+            title: "Physische QR-Bestellung eingegangen",
+            body:
+              `${businessName} hat eine physische QR-Bestellung aufgegeben (im Plan enthalten) — bereit zur Bearbeitung. ` +
+              `Bestellung: ${orderId}. Positionen (${itemLineCount}): ${itemsLine}. ` +
+              `Gesamtmenge: ${quantity}. Zahlung: Im Plan enthalten. ` +
+              `Fulfillment: In Bearbeitung. Eingegangen am: ${receivedAt}.`,
+          }
+        : {
+            title: "Physical QR order received",
+            body:
+              `${businessName} placed a physical QR order (included in plan) — ready for processing. ` +
+              `Order: ${orderId}. Items (${itemLineCount}): ${itemsLine}. ` +
+              `Total quantity: ${quantity}. Payment: Included in plan. ` +
+              `Fulfillment: Processing. Received at: ${receivedAt}.`,
           };
     }
     case "physical_qr_printing":
@@ -372,14 +448,18 @@ export function localizeNotificationPayload(
   },
 ): { title: string; body: string } {
   if (input.localeTemplate) {
-    const copy = renderNotificationTemplate(
-      resolveUserPreferredLocale(preferredLocale),
-      input.localeTemplate,
-    );
-    return {
-      title: copy.title || input.title,
-      body: copy.body || input.body,
-    };
+    try {
+      const copy = renderNotificationTemplate(
+        resolveUserPreferredLocale(preferredLocale),
+        input.localeTemplate,
+      );
+      return {
+        title: copy.title || input.title,
+        body: copy.body || input.body,
+      };
+    } catch {
+      return { title: input.title, body: input.body };
+    }
   }
   return { title: input.title, body: input.body };
 }

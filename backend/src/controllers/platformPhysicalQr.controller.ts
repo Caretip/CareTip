@@ -12,12 +12,13 @@ import {
   shipPhysicalQrOrder,
   toAdminOrderDto,
 } from "../services/physicalQr/physicalQrFulfillment.service.js";
+import { resolveOrderItemRows } from "../services/physicalQr/physicalQrOrder.service.js";
 import {
   listPhysicalQrInternalNotes,
   postPhysicalQrInternalNote,
 } from "../services/physicalQr/physicalQrMessage.service.js";
 import { renderPhysicalQrPrint } from "../lib/physicalQr/printPipeline.js";
-import { jpegToA5Pdf } from "../lib/physicalQr/pdfA5.js";
+import { jpegToA5Pdf, jpegsToA5Pdf } from "../lib/physicalQr/pdfA5.js";
 import { PHYSICAL_QR_QUANTITY_MAX, PHYSICAL_QR_QUANTITY_MIN } from "../lib/physicalQr/types.js";
 
 function mapErr(res: Response, err: unknown, ctx: string) {
@@ -60,6 +61,28 @@ export async function adminGetPhysicalQrOrder(req: Request, res: Response) {
   }
 }
 
+function itemPrintAddress(item: {
+  product?: { supportsAddress?: boolean } | null;
+  addressSnapshot: unknown;
+}): string | null {
+  const supportsAddress = Boolean(item.product?.supportsAddress);
+  if (
+    !supportsAddress ||
+    !item.addressSnapshot ||
+    typeof item.addressSnapshot !== "object"
+  ) {
+    return null;
+  }
+  return String((item.addressSnapshot as { line?: string }).line ?? "") || null;
+}
+
+function itemCopies(quantity: number): number {
+  return Math.min(
+    PHYSICAL_QR_QUANTITY_MAX,
+    Math.max(PHYSICAL_QR_QUANTITY_MIN, Number.isInteger(quantity) ? quantity : 1),
+  );
+}
+
 export async function adminPrintPhysicalQrOrder(req: Request, res: Response) {
   try {
     const row = await getPhysicalQrOrderForAdmin(String(req.params.orderId ?? ""));
@@ -70,39 +93,77 @@ export async function adminPrintPhysicalQrOrder(req: Request, res: Response) {
         message: "Print files are available after payment is confirmed.",
       });
     }
-    const product = row.product;
-    const address =
-      product.supportsAddress && row.addressSnapshot && typeof row.addressSnapshot === "object"
-        ? String((row.addressSnapshot as { line?: string }).line ?? "")
-        : null;
-    const printed = await renderPhysicalQrPrint({
-      targetUrl: row.qrTargetUrlSnapshot,
-      businessName: row.businessNameSnapshot,
-      address,
-      supportsAddress: product.supportsAddress,
-      colorTokens: (row.colorTokensSnapshot ?? {}) as {
-        backgroundGradientStart: string;
-        backgroundGradientEnd: string;
-        primaryTextColor: string;
-        secondaryTextColor: string;
-      },
-    });
-    const copies = Math.min(
-      PHYSICAL_QR_QUANTITY_MAX,
-      Math.max(PHYSICAL_QR_QUANTITY_MIN, Number.isInteger(row.quantity) ? row.quantity : 1),
-    );
-    const format = String(req.query.format ?? "pdf").toLowerCase();
-    if (format === "png") {
-      res.setHeader("Content-Type", "image/png");
-      return res.send(printed.png);
+    const itemId = String(req.query.itemId ?? "").trim();
+    const items = resolveOrderItemRows(row);
+    if (!items.length) {
+      return res.status(404).json({ success: false, message: "Print item not found." });
     }
-    const pdf = jpegToA5Pdf(printed.jpeg, printed.widthPx, printed.heightPx, copies);
-    res.setHeader("Content-Type", "application/pdf");
-    res.setHeader(
-      "Content-Disposition",
-      `attachment; filename="caretip-a5-${row.id}${copies > 1 ? `-x${copies}` : ""}.pdf"`,
-    );
-    return res.send(pdf);
+
+    const format = String(req.query.format ?? "pdf").toLowerCase();
+    const renderOne = async (item: (typeof items)[number]) => {
+      const product = item.product!;
+      return renderPhysicalQrPrint({
+        targetUrl: item.qrTargetUrlSnapshot,
+        businessName: row.businessNameSnapshot,
+        address: itemPrintAddress(item),
+        supportsAddress: product.supportsAddress,
+        colorTokens: (item.colorTokensSnapshot ?? {}) as {
+          backgroundGradientStart: string;
+          backgroundGradientEnd: string;
+          primaryTextColor: string;
+          secondaryTextColor: string;
+        },
+      });
+    };
+
+    // Single line item (explicit itemId, or legacy one-item order with PNG).
+    if (itemId || format === "png" || items.length === 1) {
+      const item = itemId ? items.find((i) => i.id === itemId) : items[0];
+      if (!item) {
+        return res.status(404).json({ success: false, message: "Print item not found." });
+      }
+      const printed = await renderOne(item);
+      const copies = itemCopies(item.quantity);
+      if (format === "png") {
+        res.setHeader("Content-Type", "image/png");
+        return res.send(printed.png);
+      }
+      const pdf = jpegToA5Pdf(printed.jpeg, printed.widthPx, printed.heightPx, copies);
+      res.setHeader("Content-Type", "application/pdf");
+      res.setHeader(
+        "Content-Disposition",
+        `attachment; filename="caretip-a5-${row.id}${copies > 1 ? `-x${copies}` : ""}.pdf"`,
+      );
+      return res.send(pdf);
+    }
+
+    // Bulk: one combined PDF with every line item × its quantity (same parent order only).
+    try {
+      const pages = [];
+      for (const item of items) {
+        const printed = await renderOne(item);
+        pages.push({
+          jpeg: printed.jpeg,
+          pixelWidth: printed.widthPx,
+          pixelHeight: printed.heightPx,
+          copies: itemCopies(item.quantity),
+        });
+      }
+      const totalPages = pages.reduce((sum, p) => sum + (p.copies ?? 1), 0);
+      const pdf = jpegsToA5Pdf(pages);
+      res.setHeader("Content-Type", "application/pdf");
+      res.setHeader(
+        "Content-Disposition",
+        `attachment; filename="caretip-a5-${row.id}-all-x${totalPages}.pdf"`,
+      );
+      return res.send(pdf);
+    } catch (bulkErr) {
+      const message = bulkErr instanceof Error ? bulkErr.message : "Could not build combined PDF.";
+      if (message.includes("exceeds")) {
+        return res.status(413).json({ success: false, code: "PRINT_TOO_LARGE", message });
+      }
+      throw bulkErr;
+    }
   } catch (err) {
     return mapErr(res, err, "physicalQr.admin.print");
   }

@@ -11,6 +11,7 @@ import { performExternalStripeRedirect } from "@/app/lib/externalStripeRedirect"
 import {
   formatBerlinDateTime,
   formatPhysicalQrMoney,
+  isPhysicalQrIncludedOrder,
   physicalQrAddressLine,
   physicalQrContactFromUnknown,
   physicalQrContextLabel,
@@ -22,6 +23,7 @@ import {
 } from "@/app/lib/physicalQrOrderUi";
 import { PhysicalQrOrderTimeline } from "../../../components/business/physical-branding/PhysicalQrOrderTimeline";
 import { PhysicalQrStatusBadge } from "../../../components/business/physical-branding/PhysicalQrStatusBadge";
+import { QrStudioOrderDetailSkeleton } from "../../../components/business/qr-studio/QrStudioLoadingSkeletons";
 import { useRequireAuth } from "../../../hooks/useRequireAuth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -102,7 +104,7 @@ export function PhysicalQrOrderDetailPage() {
     return <p className="text-sm text-destructive">{loadError}</p>;
   }
   if (!order) {
-    return <p className="text-sm text-muted-foreground">{t("business.qrStudio.physical.orders.loading")}</p>;
+    return <QrStudioOrderDetailSkeleton />;
   }
 
   const address = physicalQrAddressLine(order.addressSnapshot);
@@ -112,10 +114,11 @@ export function PhysicalQrOrderDetailPage() {
   const failed = order.paymentStatus === "FAILED" || order.fulfillmentStatus === "PAYMENT_FAILED";
   const showPay = Boolean(order.canPay) && !confirming;
   const status = physicalQrCustomerStatus(order, t, confirming);
+  const included = isPhysicalQrIncludedOrder(order);
 
   return (
-    <div className="space-y-6">
-      <Link to="/dashboard/qr-studio/branding" className="text-sm font-medium text-primary hover:underline">
+    <div className="physical-qr-order-detail space-y-6">
+      <Link to="/dashboard/qr-studio/print" className="text-sm font-medium text-primary hover:underline">
         {t("business.qrStudio.physical.orders.back")}
       </Link>
       <div>
@@ -128,27 +131,39 @@ export function PhysicalQrOrderDetailPage() {
       </div>
 
       {confirming ? (
-        <Card>
+        <Card className="physical-qr-order-detail__section dashboard-mobile-keep-card">
           <CardHeader>
-            <CardTitle>{t("business.qrStudio.physical.orders.confirmingTitle")}</CardTitle>
+            <CardTitle>
+              {included
+                ? t("business.qrStudio.physical.orders.confirmingIncludedTitle")
+                : t("business.qrStudio.physical.orders.confirmingTitle")}
+            </CardTitle>
           </CardHeader>
           <CardContent className="text-sm text-muted-foreground">
-            {t("business.qrStudio.physical.orders.confirmingBody")}
+            {included
+              ? t("business.qrStudio.physical.orders.confirmingIncludedBody")
+              : t("business.qrStudio.physical.orders.confirmingBody")}
           </CardContent>
         </Card>
       ) : paid && checkoutFlag === "success" ? (
-        <Card>
+        <Card className="physical-qr-order-detail__section dashboard-mobile-keep-card">
           <CardHeader>
-            <CardTitle>{t("business.qrStudio.physical.orders.paymentReceivedCheck")}</CardTitle>
+            <CardTitle>
+              {included
+                ? t("business.qrStudio.physical.orders.orderReceivedCheck")
+                : t("business.qrStudio.physical.orders.paymentReceivedCheck")}
+            </CardTitle>
           </CardHeader>
           <CardContent className="text-sm text-muted-foreground">
-            {t("business.qrStudio.physical.orders.thanksProcessing")}
+            {included
+              ? t("business.qrStudio.physical.orders.orderReceivedProcessing")
+              : t("business.qrStudio.physical.orders.thanksProcessing")}
           </CardContent>
         </Card>
       ) : null}
 
-      <Card>
-        <CardContent className="grid gap-3 pt-6 text-sm sm:grid-cols-2">
+      <Card className="physical-qr-order-detail__section">
+        <CardContent className="grid gap-3 pt-6 text-sm sm:grid-cols-2 max-lg:pt-3 max-lg:gap-2.5">
           <div>
             <p className="text-muted-foreground">{t("business.qrStudio.physical.orders.placed")}</p>
             <p className="font-medium">{formatBerlinDateTime(order.placedAt, i18n.language)}</p>
@@ -161,7 +176,17 @@ export function PhysicalQrOrderDetailPage() {
           </div>
           <div>
             <p className="text-muted-foreground">{t("business.qrStudio.physical.qrType")}</p>
-            <p className="font-medium">{physicalQrContextLabel(order.qrContextType, t)}</p>
+            {order.items.length > 1 ? (
+              <ul className="mt-1 space-y-1 text-sm font-medium">
+                {order.items.map((item) => (
+                  <li key={item.id}>
+                    {item.label} · {physicalQrContextLabel(item.qrContextType, t)} · ×{item.quantity}
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="font-medium">{physicalQrContextLabel(order.qrContextType, t)}</p>
+            )}
           </div>
           <div>
             <p className="text-muted-foreground">{t("business.qrStudio.physical.printedAddress")}</p>
@@ -238,11 +263,11 @@ export function PhysicalQrOrderDetailPage() {
         </Button>
       ) : null}
 
-      <Card>
-        <CardHeader>
+      <Card className="physical-qr-order-detail__section">
+        <CardHeader className="max-lg:px-0">
           <CardTitle>{t("business.qrStudio.physical.orders.progress")}</CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="max-lg:px-0">
           <PhysicalQrOrderTimeline order={order} />
         </CardContent>
       </Card>

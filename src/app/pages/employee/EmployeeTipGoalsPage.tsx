@@ -196,11 +196,11 @@ export function EmployeeTipGoalsPage() {
           }
         />
 
-        <Card className={cn(employeeUi.cardStatic, "w-full p-0")}>
+        <Card className={cn(employeeUi.cardStatic, employeeUi.mobileFlatSurface, "dashboard-mobile-flat-surface w-full p-0")}>
           <div className={employeeUi.cardHeader}>
             <h2 className={employeeUi.cardTitle}>{t("employee.tipGoals.manageTitle")}</h2>
             {t("employee.tipGoals.manageSubtitle").trim() ? (
-              <p className={employeeUi.cardDesc}>{t("employee.tipGoals.manageSubtitle")}</p>
+              <p className={cn(employeeUi.cardDesc, employeeUi.mobileHideDesc)}>{t("employee.tipGoals.manageSubtitle")}</p>
             ) : null}
           </div>
 
@@ -208,7 +208,7 @@ export function EmployeeTipGoalsPage() {
             <EmployeeGoalListSkeleton rows={4} />
           ) : loadError ? (
             <div className="px-5 py-8 sm:px-6">
-              <div className="rounded-2xl border border-border bg-muted/35 p-5">
+              <div className="rounded-lg border border-border bg-muted/35 p-4 sm:rounded-2xl sm:p-5 max-lg:border-border/60 max-lg:bg-transparent max-lg:px-0">
                 <p className="text-sm font-semibold text-foreground">{t("employee.tipGoals.couldNotLoad")}</p>
                 <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{loadError}</p>
                 <div className="mt-4 flex gap-2">

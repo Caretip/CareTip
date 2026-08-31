@@ -2,28 +2,28 @@ import type Stripe from "stripe";
 import { prisma } from "../../prisma.js";
 import { PHYSICAL_QR_CHECKOUT_METADATA_SOURCE } from "../../config/physicalQrCheckout.js";
 
-export async function handlePhysicalQrCheckoutSessionCompleted(
-  session: Stripe.Checkout.Session,
-): Promise<{ ok: boolean; reason?: string; duplicate?: boolean }> {
-  if (session.metadata?.source !== PHYSICAL_QR_CHECKOUT_METADATA_SOURCE) {
-    return { ok: false, reason: "wrong_source" };
-  }
-  const orderId = session.metadata.orderId?.trim();
-  const businessId = session.metadata.businessId?.trim();
-  if (!orderId || !businessId) {
-    return { ok: false, reason: "missing_metadata" };
-  }
-
-  const order = await prisma.physicalQrOrder.findUnique({ where: { id: orderId } });
-  if (!order) return { ok: false, reason: "order_not_found" };
-  if (order.businessId !== businessId) return { ok: false, reason: "business_mismatch" };
-
-  if (session.id && order.stripeCheckoutSessionId && order.stripeCheckoutSessionId !== session.id) {
-    return { ok: false, reason: "session_mismatch" };
+async function markParentOrderPaid(input: {
+  orderId: string;
+  businessId: string;
+  session: Stripe.Checkout.Session;
+}): Promise<{ ok: boolean; reason?: string; duplicate?: boolean }> {
+  const order = await prisma.physicalQrOrder.findFirst({
+    where: { id: input.orderId, businessId: input.businessId },
+  });
+  if (!order) {
+    return { ok: false, reason: "order_not_found" };
   }
 
-  if (typeof session.amount_total === "number" && session.amount_total !== order.totalAmount) {
+  if (typeof input.session.amount_total === "number" && input.session.amount_total !== order.totalAmount) {
     return { ok: false, reason: "amount_mismatch" };
+  }
+
+  if (
+    input.session.id &&
+    order.stripeCheckoutSessionId &&
+    order.stripeCheckoutSessionId !== input.session.id
+  ) {
+    return { ok: false, reason: "session_mismatch" };
   }
 
   if (order.paymentStatus === "PAID") {
@@ -31,37 +31,130 @@ export async function handlePhysicalQrCheckoutSessionCompleted(
   }
 
   const paymentIntentId =
-    typeof session.payment_intent === "string"
-      ? session.payment_intent
-      : session.payment_intent?.id ?? null;
+    typeof input.session.payment_intent === "string"
+      ? input.session.payment_intent
+      : input.session.payment_intent?.id ?? null;
 
+  const now = new Date();
   await prisma.physicalQrOrder.update({
     where: { id: order.id },
     data: {
       paymentStatus: "PAID",
       fulfillmentStatus: "PROCESSING",
-      stripeCheckoutSessionId: session.id,
+      stripeCheckoutSessionId: input.session.id,
       stripePaymentIntentId: paymentIntentId,
-      paidAt: new Date(),
-      processingAt: new Date(),
+      paidAt: now,
+      processingAt: now,
     },
   });
+
   const { notifyPhysicalQrPaymentReceived } = await import("./physicalQrNotify.service.js");
   notifyPhysicalQrPaymentReceived({ businessId: order.businessId, orderId: order.id });
   return { ok: true };
 }
 
+/** Legacy: multiple sibling orders from pre-migration batch checkout. */
+async function markLegacyBatchPaid(input: {
+  orderIds: string[];
+  businessId: string;
+  session: Stripe.Checkout.Session;
+}): Promise<{ ok: boolean; reason?: string; duplicate?: boolean }> {
+  const orders = await prisma.physicalQrOrder.findMany({
+    where: { id: { in: input.orderIds }, businessId: input.businessId },
+  });
+  if (orders.length !== input.orderIds.length) {
+    return { ok: false, reason: "order_not_found" };
+  }
+
+  const expectedTotal = orders.reduce((sum, o) => sum + o.totalAmount, 0);
+  if (typeof input.session.amount_total === "number" && input.session.amount_total !== expectedTotal) {
+    return { ok: false, reason: "amount_mismatch" };
+  }
+
+  if (orders.every((o) => o.paymentStatus === "PAID")) {
+    return { ok: true, duplicate: true };
+  }
+
+  const paymentIntentId =
+    typeof input.session.payment_intent === "string"
+      ? input.session.payment_intent
+      : input.session.payment_intent?.id ?? null;
+  const now = new Date();
+  const unpaid = orders.filter((o) => o.paymentStatus !== "PAID");
+
+  await prisma.$transaction(async (tx) => {
+    for (const order of unpaid) {
+      await tx.physicalQrOrder.update({
+        where: { id: order.id },
+        data: {
+          paymentStatus: "PAID",
+          fulfillmentStatus: "PROCESSING",
+          stripePaymentIntentId: paymentIntentId,
+          paidAt: now,
+          processingAt: now,
+        },
+      });
+    }
+  });
+
+  const primaryId = input.orderIds[0]!;
+  await prisma.physicalQrOrder.updateMany({
+    where: { id: { in: unpaid.map((o) => o.id) } },
+    data: { stripeCheckoutSessionId: input.session.id },
+  }).catch(() => {
+    /* legacy rows may violate unique session id when multiple siblings exist */
+  });
+
+  const { notifyPhysicalQrPaymentReceived } = await import("./physicalQrNotify.service.js");
+  notifyPhysicalQrPaymentReceived({ businessId: input.businessId, orderId: primaryId });
+  return { ok: true };
+}
+
+export async function handlePhysicalQrCheckoutSessionCompleted(
+  session: Stripe.Checkout.Session,
+): Promise<{ ok: boolean; reason?: string; duplicate?: boolean }> {
+  if (session.metadata?.source !== PHYSICAL_QR_CHECKOUT_METADATA_SOURCE) {
+    return { ok: false, reason: "wrong_source" };
+  }
+  const orderId = session.metadata.orderId?.trim();
+  const orderIdsRaw = session.metadata.orderIds?.trim();
+  const businessId = session.metadata.businessId?.trim();
+  if (!orderId || !businessId) {
+    return { ok: false, reason: "missing_metadata" };
+  }
+
+  const legacyIds = orderIdsRaw
+    ? orderIdsRaw.split(",").map((id) => id.trim()).filter(Boolean)
+    : [];
+
+  if (legacyIds.length > 1) {
+    return markLegacyBatchPaid({ orderIds: legacyIds, businessId, session });
+  }
+
+  return markParentOrderPaid({ orderId, businessId, session });
+}
+
 export async function handlePhysicalQrCheckoutExpired(session: Stripe.Checkout.Session): Promise<void> {
   if (session.metadata?.source !== PHYSICAL_QR_CHECKOUT_METADATA_SOURCE) return;
-  // Expired Checkout remains payable. Pay now creates a new Session on the same order.
+  // Expired Checkout remains payable. Pay now creates a new Session on the same parent order.
 }
 
 export async function handlePhysicalQrPaymentFailed(paymentIntent: Stripe.PaymentIntent): Promise<void> {
   const orderId = paymentIntent.metadata?.orderId?.trim();
-  if (!orderId || paymentIntent.metadata?.source !== PHYSICAL_QR_CHECKOUT_METADATA_SOURCE) return;
+  const orderIdsRaw = paymentIntent.metadata?.orderIds?.trim();
+  if (paymentIntent.metadata?.source !== PHYSICAL_QR_CHECKOUT_METADATA_SOURCE) return;
+
+  const orderIds = orderIdsRaw
+    ? orderIdsRaw.split(",").map((id) => id.trim()).filter(Boolean)
+    : orderId
+      ? [orderId]
+      : [];
+
+  if (!orderIds.length) return;
+
   await prisma.physicalQrOrder.updateMany({
     where: {
-      id: orderId,
+      id: { in: orderIds },
       paymentStatus: "PENDING",
     },
     data: {

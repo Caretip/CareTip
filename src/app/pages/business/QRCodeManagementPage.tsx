@@ -83,6 +83,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { DASH_BTN_PRIMARY, DASH_BTN_SECONDARY } from "@/components/ui/dashboard-styles";
 import { businessUi } from "@/app/components/business/businessDashboardUi";
+import { QrStudioOrderPrintButton } from "@/app/components/business/qr-studio/QrStudioOrderPrintButton";
 import {
   QrManagementCard,
   formatQrAssetUpdatedAt,
@@ -92,9 +93,10 @@ import {
 import { BusinessConfirmDialog } from "@/app/components/business/BusinessConfirmDialog";
 import { cn } from "@/lib/utils";
 
-type QrStudioViewMode = "gallery" | "employees" | "locations";
+type QrStudioViewMode = "gallery" | "employees" | "locations" | "business";
 
 function resolveEmbeddedQrMode(pathname: string): QrStudioViewMode {
+  if (pathname.includes("/qr-studio/business")) return "business";
   if (pathname.includes("/qr-studio/employees")) return "employees";
   if (pathname.includes("/qr-studio/locations")) return "locations";
   return "gallery";
@@ -104,7 +106,7 @@ type QRCodeManagementPageProps = {
   /** When true, parent QR Studio shell provides page chrome. */
   embedded?: boolean;
   /** Which QR collection to show when embedded in QR Studio. */
-  mode?: "gallery" | "employees" | "locations";
+  mode?: "gallery" | "employees" | "locations" | "business";
 };
 
 export function QRCodeManagementPage({
@@ -114,7 +116,7 @@ export function QRCodeManagementPage({
   const { t, i18n } = useTranslation();
   const { pathname } = useLocation();
   const viewMode: QrStudioViewMode = embedded ? resolveEmbeddedQrMode(pathname) : mode;
-  const needsEmployeeData = viewMode === "employees" || viewMode === "gallery";
+  const needsEmployeeData = viewMode === "employees" || viewMode === "gallery" || viewMode === "business";
   const needsVenueData = viewMode === "locations" || viewMode === "gallery";
   const { user, authHydrated, sessionValidated, isBusiness } = useRequireAuth();
   const { tier } = useSubscriptionEntitlements({
@@ -512,7 +514,7 @@ export function QRCodeManagementPage({
 
   useEffect(() => {
     if (studioBranding?.loading) return;
-    if (viewMode !== "employees") return;
+    if (viewMode !== "employees" && viewMode !== "business") return;
     const businessId = user?.businessId;
     if (!businessId) return;
     const cacheKey = `${businessId}|${businessSlug ?? ""}|${PLAIN_QR_RENDER_VERSION}`;
@@ -1371,17 +1373,20 @@ export function QRCodeManagementPage({
               </div>
             ) : null}
 
-            {viewMode === "employees" ? (
+            {viewMode === "business" ? (
               <div className="space-y-8">
                 {storefrontQrItem ? (
                   <div className="space-y-4">
-                    <div>
-                      <h2 className="text-base font-semibold text-foreground">
-                        {t("business.qrPage.storefrontQrHeading", { name: venueName })}
-                      </h2>
-                      <p className="mt-1 text-sm text-muted-foreground">
-                        {t("business.qrPage.storefrontQrDesc")}
-                      </p>
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                      <div>
+                        <h2 className="text-base font-semibold text-foreground">
+                          {t("business.qrPage.storefrontQrHeading", { name: venueName })}
+                        </h2>
+                        <p className="mt-1 text-sm text-muted-foreground">
+                          {t("business.qrPage.storefrontQrDesc")}
+                        </p>
+                      </div>
+                      {embedded ? <QrStudioOrderPrintButton category="business" /> : null}
                     </div>
                     {storefrontQrGenerating && !storefrontQr ? (
                       <div
@@ -1426,7 +1431,11 @@ export function QRCodeManagementPage({
                     )}
                   </div>
                 ) : null}
+              </div>
+            ) : null}
 
+            {viewMode === "employees" ? (
+                <>
                 {showInitialSkeleton ? (
                   <DashboardListSkeleton rows={5} minHeightClass="min-h-[240px]" />
                 ) : (
@@ -1441,19 +1450,22 @@ export function QRCodeManagementPage({
                       </p>
                     </div>
                     {embedded ? (
-                      <Button
-                        type="button"
-                        className={cn(businessUi.btnPrimary, "shrink-0")}
-                        onClick={handleGenerateAllPdf}
-                        disabled={qrLocked || bulkPdfLoading || safeEmployees.length === 0}
-                      >
-                        {bulkPdfLoading ? (
-                          <LoadingSpinner size="sm" className="mr-2 shrink-0" />
-                        ) : (
-                          <FileDown className="mr-2 h-4 w-4 shrink-0" />
-                        )}
-                        {t("business.qrPage.allPdfs")}
-                      </Button>
+                      <div className="flex shrink-0 flex-wrap gap-2">
+                        <QrStudioOrderPrintButton category="employees" />
+                        <Button
+                          type="button"
+                          className={cn(businessUi.btnPrimary, "shrink-0")}
+                          onClick={handleGenerateAllPdf}
+                          disabled={qrLocked || bulkPdfLoading || safeEmployees.length === 0}
+                        >
+                          {bulkPdfLoading ? (
+                            <LoadingSpinner size="sm" className="mr-2 shrink-0" />
+                          ) : (
+                            <FileDown className="mr-2 h-4 w-4 shrink-0" />
+                          )}
+                          {t("business.qrPage.allPdfs")}
+                        </Button>
+                      </div>
                     ) : null}
                   </div>
                   {safeEmployees.length === 0 ? (
@@ -1499,18 +1511,21 @@ export function QRCodeManagementPage({
                   )}
                   </div>
                 )}
-              </div>
+                </>
             ) : null}
 
             {viewMode === "locations" ? (
               <div className="space-y-4">
-                <div>
-                  <h2 className="text-base font-semibold text-foreground">
-                    {t("business.qrStudio.locations.pageTitle")}
-                  </h2>
-                  <p className="mt-1 text-sm text-muted-foreground">
-                    {t("business.qrStudio.locations.pageDesc")}
-                  </p>
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                  <div>
+                    <h2 className="text-base font-semibold text-foreground">
+                      {t("business.qrStudio.locations.pageTitle")}
+                    </h2>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      {t("business.qrStudio.locations.pageDesc")}
+                    </p>
+                  </div>
+                  {embedded ? <QrStudioOrderPrintButton category="locations" /> : null}
                 </div>
                 {locations.length === 0 ? (
                   <div className="py-16 text-center text-muted-foreground">

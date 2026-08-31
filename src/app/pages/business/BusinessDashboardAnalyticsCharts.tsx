@@ -69,10 +69,9 @@ export const BusinessDashboardAnalyticsCharts = memo(function BusinessDashboardA
   const tipsChartMotion = useDashboardBlockMotion(0.12);
   const employeeChartMotion = useDashboardBlockMotion(0.18);
 
-  const monthAxisInterval =
-    analyticsTimeframe === "month" && tipDistributionChartData.length > 10
-      ? Math.max(1, Math.floor(tipDistributionChartData.length / 6))
-      : 0;
+  /** Let Recharts drop overlapping ticks by width (year months / dense month days). */
+  const tipAxisMinTickGap =
+    analyticsTimeframe === "year" ? 36 : analyticsTimeframe === "month" ? 24 : 16;
 
   const tipsChartEmpty = !hasTipActivityInPeriod;
   const employeeChartEmpty =
@@ -111,7 +110,7 @@ export const BusinessDashboardAnalyticsCharts = memo(function BusinessDashboardA
                     <ResponsiveContainer width="100%" height="100%" minWidth={0} key={`${chartRenderKey}-tips`}>
                       <AreaChart
                         data={tipDistributionChartData}
-                        margin={{ top: 12, right: 12, left: 4, bottom: 4 }}
+                        margin={{ top: 12, right: 12, left: 4, bottom: 8 }}
                       >
                         <CartesianGrid strokeDasharray="4 6" stroke={BUSINESS_CHART_GRID} vertical={false} />
                         <XAxis
@@ -119,10 +118,11 @@ export const BusinessDashboardAnalyticsCharts = memo(function BusinessDashboardA
                           stroke={BUSINESS_CHART_AXIS}
                           tickLine={false}
                           axisLine={{ stroke: BUSINESS_CHART_GRID }}
-                          style={{ fontSize: "11px" }}
+                          tick={{ fontSize: 11 }}
                           tickMargin={8}
-                          interval={monthAxisInterval}
-                          minTickGap={analyticsTimeframe === "month" ? 12 : 8}
+                          interval="preserveStartEnd"
+                          minTickGap={tipAxisMinTickGap}
+                          padding={{ left: 4, right: 4 }}
                         />
                         <YAxis
                           stroke={BUSINESS_CHART_AXIS}

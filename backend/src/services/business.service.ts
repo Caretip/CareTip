@@ -211,8 +211,8 @@ export async function deleteBusinessCascadeUsers(businessId: string): Promise<vo
       throw err;
     }
 
-    for (const uid of staffUserIds) {
-      await tx.user.delete({ where: { id: uid } });
+    if (staffUserIds.length > 0) {
+      await tx.user.deleteMany({ where: { id: { in: staffUserIds } } });
     }
 
     await tx.user.delete({ where: { id: ownerUserId } });

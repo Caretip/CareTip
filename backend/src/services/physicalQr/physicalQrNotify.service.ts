@@ -9,7 +9,12 @@ function orderUrl(orderId: string): string {
 }
 
 function adminOrderUrl(orderId: string): string {
-  return `/platform-admin/businesses/branding-orders/${encodeURIComponent(orderId)}`;
+  return `/platform-admin/branding-orders/${encodeURIComponent(orderId)}`;
+}
+
+/** Pro included printing → €0 total; Basic paid orders have a positive total. */
+function isIncludedPhysicalQrOrder(totalAmount: number | null | undefined): boolean {
+  return (Number(totalAmount) || 0) <= 0;
 }
 
 async function managerUserIdForBusiness(businessId: string): Promise<string | null> {
@@ -52,10 +57,7 @@ async function notifyBusinessOrder(input: {
   });
 }
 
-async function notifyPlatformAdminPhysicalQrPaid(input: {
-  businessId: string;
-  orderId: string;
-}): Promise<void> {
+async function loadPaidOrderForNotify(input: { businessId: string; orderId: string }) {
   const order = await prisma.physicalQrOrder.findUnique({
     where: { id: input.orderId },
     select: {
@@ -69,15 +71,66 @@ async function notifyPlatformAdminPhysicalQrPaid(input: {
       paidAt: true,
       product: { select: { name: true } },
       business: { select: { name: true, brandDisplayName: true } },
+      items: {
+        orderBy: { createdAt: "asc" },
+        select: { labelSnapshot: true, quantity: true },
+      },
     },
   });
-  if (!order || order.businessId !== input.businessId) return;
-  if (order.paymentStatus !== "PAID") return;
+  if (!order || order.businessId !== input.businessId) return null;
+  if (order.paymentStatus !== "PAID") return null;
+  return order;
+}
+
+async function notifyPlatformAdminPhysicalQrOrder(input: {
+  businessId: string;
+  orderId: string;
+}): Promise<void> {
+  const order = await loadPaidOrderForNotify(input);
+  if (!order) return;
 
   const businessName =
     order.business?.brandDisplayName?.trim() || order.business?.name || "A business";
   const productLabel = order.product?.name ?? "Physical QR order";
-  const paidAtIso = order.paidAt?.toISOString() ?? new Date().toISOString();
+  const eventAtIso = order.paidAt?.toISOString() ?? new Date().toISOString();
+  const itemRows =
+    order.items.length > 0
+      ? order.items
+      : [{ labelSnapshot: productLabel, quantity: order.quantity }];
+  const itemLineCount = itemRows.length;
+  const lineItemsSummary = itemRows
+    .map((item) => `${item.labelSnapshot} × ${item.quantity}`)
+    .join("; ");
+  const included = isIncludedPhysicalQrOrder(order.totalAmount);
+
+  if (included) {
+    onPlatformOperationalAlert({
+      title: "Physical QR order received",
+      body: `${businessName} placed a physical QR order (included in plan).`,
+      url: adminOrderUrl(input.orderId),
+      entityId: input.orderId,
+      localeTemplate: {
+        id: "physical_qr_order_received_admin",
+        params: {
+          businessName,
+          orderId: input.orderId,
+          productLabel,
+          quantity: order.quantity,
+          itemLineCount,
+          lineItemsSummary,
+          currency: order.currency,
+          receivedAtIso: eventAtIso,
+        },
+      },
+      metadata: {
+        source: "physical_qr_order",
+        orderId: input.orderId,
+        businessId: input.businessId,
+      },
+      channels: { in_app: true, push: true, email: true },
+    });
+    return;
+  }
 
   onPlatformOperationalAlert({
     title: "Physical QR order paid",
@@ -91,9 +144,11 @@ async function notifyPlatformAdminPhysicalQrPaid(input: {
         orderId: input.orderId,
         productLabel,
         quantity: order.quantity,
+        itemLineCount,
+        lineItemsSummary,
         totalAmountCents: order.totalAmount,
         currency: order.currency,
-        paidAtIso,
+        paidAtIso: eventAtIso,
       },
     },
     metadata: {
@@ -105,17 +160,34 @@ async function notifyPlatformAdminPhysicalQrPaid(input: {
   });
 }
 
+/**
+ * Business + admin alerts when an order becomes PAID.
+ * Pro (€0 / included) → "Order received"; Basic (paid) → "Payment received".
+ */
 export function notifyPhysicalQrPaymentReceived(input: { businessId: string; orderId: string }): void {
-  void notifyBusinessOrder({
-    ...input,
-    title: "Payment received",
-    body: "Your physical QR order has been paid for and is now being processed.",
-    template: { id: "physical_qr_paid" },
-    dedupeKey: `physical-qr:${input.orderId}:paid`,
-    email: true,
-  }).catch(() => undefined);
+  void (async () => {
+    const order = await prisma.physicalQrOrder.findUnique({
+      where: { id: input.orderId },
+      select: { businessId: true, totalAmount: true, paymentStatus: true },
+    });
+    if (!order || order.businessId !== input.businessId) return;
+    if (order.paymentStatus !== "PAID") return;
 
-  void notifyPlatformAdminPhysicalQrPaid(input).catch(() => undefined);
+    const included = isIncludedPhysicalQrOrder(order.totalAmount);
+    await notifyBusinessOrder({
+      ...input,
+      title: included ? "Order received" : "Payment received",
+      body: included
+        ? "Your physical QR order has been received and is now being processed."
+        : "Your physical QR order has been paid for and is now being processed.",
+      template: included ? { id: "physical_qr_order_received" } : { id: "physical_qr_paid" },
+      // Shared dedupe key so Pro/Basic never double-fire for the same order lifecycle event.
+      dedupeKey: `physical-qr:${input.orderId}:paid`,
+      email: true,
+    });
+
+    await notifyPlatformAdminPhysicalQrOrder(input);
+  })().catch(() => undefined);
 }
 
 export function notifyPhysicalQrPrinting(input: { businessId: string; orderId: string }): void {

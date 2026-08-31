@@ -31,7 +31,7 @@ export function EmployeeAssignmentCard({ assignment, loading, showHeader = true 
         </div>
       ) : null}
 
-      <div className="employee-assignment-panel__body space-y-5 sm:space-y-6">
+      <div className="employee-assignment-panel__body space-y-4 sm:space-y-6">
         <section aria-labelledby="employee-assignment-location-heading">
           <h3 id="employee-assignment-location-heading" className="employee-assignment-panel__label">
             {t("employee.assignment.locationLabel")}
@@ -48,7 +48,7 @@ export function EmployeeAssignmentCard({ assignment, loading, showHeader = true 
           ) : (
             <EmployeeEmptyState
               compact
-              className="mt-2 !py-4"
+              className="mt-1.5 !py-2.5"
               title={t("employee.assignment.noLocationTitle")}
               description={t("employee.assignment.noLocationDesc")}
             />
@@ -68,7 +68,7 @@ export function EmployeeAssignmentCard({ assignment, loading, showHeader = true 
               {tables.map((table) => (
                 <li
                   key={table.id}
-                  className="flex items-start gap-2.5 py-3 first:pt-2 last:pb-0 sm:gap-3"
+                  className="flex items-start gap-2.5 py-2.5 first:pt-2 last:pb-0 sm:gap-3 sm:py-3"
                 >
                   <UtensilsCrossed
                     className="mt-0.5 h-4 w-4 shrink-0 text-[var(--caretip-brand-orange,#e9781c)]"
@@ -88,7 +88,7 @@ export function EmployeeAssignmentCard({ assignment, loading, showHeader = true 
           ) : (
             <EmployeeEmptyState
               compact
-              className="mt-2 !py-4"
+              className="mt-1.5 !py-2.5"
               title={t("employee.assignment.noTablesTitle")}
               description={t("employee.assignment.noTablesDesc")}
             />

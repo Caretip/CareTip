@@ -10,11 +10,21 @@ import {
   createPhysicalQrOrder,
   getPhysicalQrOrderForBusiness,
   listPhysicalQrOrdersForBusiness,
+  resolveOrderItemRows,
   toCustomerOrderDto,
 } from "../services/physicalQr/physicalQrOrder.service.js";
 import { createPhysicalQrCheckoutSession } from "../services/physicalQr/physicalQrCheckout.service.js";
+import {
+  createPhysicalQrBatchCheckoutSession,
+  createPhysicalQrBatchOrders,
+} from "../services/physicalQr/physicalQrBatch.service.js";
 import { PhysicalQrCheckoutBlockedError } from "../config/physicalQrCheckout.js";
 import { renderPhysicalQrPrint } from "../lib/physicalQr/printPipeline.js";
+import { jpegToA5Pdf } from "../lib/physicalQr/pdfA5.js";
+import {
+  PHYSICAL_QR_QUANTITY_MAX,
+  PHYSICAL_QR_QUANTITY_MIN,
+} from "../lib/physicalQr/types.js";
 
 function mapErr(res: Response, err: unknown, ctx: string) {
   if (err instanceof PhysicalQrOrderError) {
@@ -161,33 +171,84 @@ export async function printMyPhysicalQrOrder(req: Request, res: Response) {
         message: "Print files are available after payment is confirmed.",
       });
     }
-    const product = row.product;
+    const itemId = String(req.query.itemId ?? "").trim();
+    const items = resolveOrderItemRows(row);
+    const item = itemId ? items.find((i) => i.id === itemId) : items[0];
+    if (!item?.product) {
+      return res.status(404).json({ success: false, message: "Print item not found." });
+    }
+    const product = item.product;
     const address =
-      product.supportsAddress && row.addressSnapshot && typeof row.addressSnapshot === "object"
-        ? String((row.addressSnapshot as { line?: string }).line ?? "")
+      product.supportsAddress && item.addressSnapshot && typeof item.addressSnapshot === "object"
+        ? String((item.addressSnapshot as { line?: string }).line ?? "")
         : null;
     const printed = await renderPhysicalQrPrint({
-      targetUrl: row.qrTargetUrlSnapshot,
+      targetUrl: item.qrTargetUrlSnapshot,
       businessName: row.businessNameSnapshot,
       address,
       supportsAddress: product.supportsAddress,
-      colorTokens: (row.colorTokensSnapshot ?? {}) as {
+      colorTokens: (item.colorTokensSnapshot ?? {}) as {
         backgroundGradientStart: string;
         backgroundGradientEnd: string;
         primaryTextColor: string;
         secondaryTextColor: string;
       },
     });
+    const copies = Math.min(
+      PHYSICAL_QR_QUANTITY_MAX,
+      Math.max(PHYSICAL_QR_QUANTITY_MIN, Number.isInteger(item.quantity) ? item.quantity : 1),
+    );
     const format = String(req.query.format ?? "pdf").toLowerCase();
     if (format === "png") {
       res.setHeader("Content-Type", "image/png");
       return res.send(printed.png);
     }
+    const pdf = jpegToA5Pdf(printed.jpeg, printed.widthPx, printed.heightPx, copies);
     res.setHeader("Content-Type", "application/pdf");
-    res.setHeader("Content-Disposition", `attachment; filename="caretip-a5-${row.id}.pdf"`);
-    return res.send(printed.pdf);
+    res.setHeader(
+      "Content-Disposition",
+      `attachment; filename="caretip-a5-${row.id}${copies > 1 ? `-x${copies}` : ""}.pdf"`,
+    );
+    return res.send(pdf);
   } catch (err) {
     return mapErr(res, err, "physicalQr.print");
+  }
+}
+
+export async function createMyPhysicalQrBatch(req: Request, res: Response) {
+  try {
+    const auth = await requireManagerBusiness(req, res);
+    if (!auth) return;
+    const order = await createPhysicalQrBatchOrders({
+      businessId: auth.businessId,
+      userId: auth.userId,
+      lineItems: req.body?.lineItems,
+      address: req.body?.address,
+      shipping: req.body?.shipping,
+      contact: req.body?.contact,
+      colorTokens: req.body?.colorTokens,
+    });
+    return res.status(201).json({ order: toCustomerOrderDto(order) });
+  } catch (err) {
+    return mapErr(res, err, "physicalQr.createBatch");
+  }
+}
+
+export async function checkoutMyPhysicalQrBatch(req: Request, res: Response) {
+  try {
+    const auth = await requireManagerBusiness(req, res);
+    if (!auth) return;
+    const orderId =
+      String(req.body?.orderId ?? "").trim() ||
+      (Array.isArray(req.body?.orderIds) ? String(req.body.orderIds[0] ?? "").trim() : "");
+    const result = await createPhysicalQrBatchCheckoutSession({
+      businessId: auth.businessId,
+      userId: auth.userId,
+      orderId,
+    });
+    return res.json(result);
+  } catch (err) {
+    return mapErr(res, err, "physicalQr.batchCheckout");
   }
 }
 

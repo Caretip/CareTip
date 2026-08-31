@@ -76,19 +76,35 @@ export async function evaluateSetupPrompts(
   const now = new Date();
   const results: SetupPromptVisibility[] = [];
 
+  type Prepared = {
+    item: SetupPromptEvaluateItem;
+    key: string;
+    conditionVersion: string;
+  };
+  const prepared: Prepared[] = [];
   for (const item of items) {
     const conditionVersion = normalizeVersion(item.conditionVersion);
-    let key: string;
     try {
-      key = buildKey(item.kind, { userId, businessId });
+      const key = buildKey(item.kind, { userId, businessId });
+      prepared.push({ item, key, conditionVersion });
     } catch {
       results.push({ kind: item.kind, show: false, status: "none", remindAt: null });
-      continue;
     }
+  }
 
-    const existing = await prisma.setupNotificationState.findUnique({
-      where: { userId_notificationKey: { userId, notificationKey: key } },
-    });
+  const existingRows =
+    prepared.length === 0
+      ? []
+      : await prisma.setupNotificationState.findMany({
+          where: {
+            userId,
+            notificationKey: { in: prepared.map((p) => p.key) },
+          },
+        });
+  const existingByKey = new Map(existingRows.map((r) => [r.notificationKey, r] as const));
+
+  for (const { item, key, conditionVersion } of prepared) {
+    const existing = existingByKey.get(key) ?? null;
 
     if (!item.conditionActive) {
       if (existing && existing.status !== "resolved") {
@@ -108,7 +124,7 @@ export async function evaluateSetupPrompts(
 
     // Condition active
     if (!existing) {
-      await prisma.setupNotificationState.create({
+      const created = await prisma.setupNotificationState.create({
         data: {
           userId,
           notificationKey: key,
@@ -117,6 +133,7 @@ export async function evaluateSetupPrompts(
           conditionVersion,
         },
       });
+      existingByKey.set(key, created);
       results.push({ kind: item.kind, show: true, status: "active", remindAt: null });
       continue;
     }
@@ -135,6 +152,7 @@ export async function evaluateSetupPrompts(
           businessId: businessId ?? existing.businessId,
         },
       });
+      existingByKey.set(key, updated);
       results.push({
         kind: item.kind,
         show: true,

@@ -35,6 +35,7 @@ import { cn } from "@/lib/utils";
 import { businessUi } from "@/app/components/business/businessDashboardUi";
 import { BusinessResponsiveData } from "@/app/components/business/BusinessResponsiveData";
 import { TableItemMobileCard } from "@/app/components/business/businessDashboardMobileCards";
+import { QrStudioOrderPrintButton } from "@/app/components/business/qr-studio/QrStudioOrderPrintButton";
 import {
   getPageSessionCache,
   setPageSessionCache,
@@ -283,14 +284,17 @@ export function TablesPage({ embedded = false }: { embedded?: boolean } = {}) {
           ) : (
             <span className="hidden sm:block" />
           )}
-          <Button
-            type="button"
-            onClick={() => setModalOpen(true)}
-            disabled={!isBusiness || (ready && (!tableQrEnabled || atTableCap))}
-            className="w-full shrink-0 sm:w-auto"
-          >
-            {t("business.tablesPage.create")}
-          </Button>
+          <div className="flex w-full shrink-0 flex-col gap-2 sm:w-auto sm:flex-row">
+            <QrStudioOrderPrintButton category="tables" className="w-full sm:w-auto" />
+            <Button
+              type="button"
+              onClick={() => setModalOpen(true)}
+              disabled={!isBusiness || (ready && (!tableQrEnabled || atTableCap))}
+              className="w-full shrink-0 sm:w-auto"
+            >
+              {t("business.tablesPage.create")}
+            </Button>
+          </div>
         </div>
       )}
 

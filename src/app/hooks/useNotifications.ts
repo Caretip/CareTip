@@ -68,6 +68,7 @@ export function useNotifications({
   });
   const [items, setItems] = useState<InboxNotification[]>([]);
   const [loading, setLoading] = useState(false);
+  const [listError, setListError] = useState<string | null>(null);
   const [nextCursor, setNextCursor] = useState<string | null>(null);
   const loadedRef = useRef(false);
   const prevLocaleRef = useRef(uiLocale);
@@ -113,6 +114,7 @@ export function useNotifications({
         setUnreadIfChanged(setUnreadCount, cachedInbox.unreadCount);
         setNextCursor(cachedInbox.nextCursor);
         setLoading(false);
+        setListError(null);
         loadedRef.current = true;
       } else if (!opts?.quiet && (!hasVisible || opts?.append)) {
         setLoading(true);
@@ -133,6 +135,7 @@ export function useNotifications({
         setItems((prev) =>
           opts?.append && !opts?.reset ? [...prev, ...nextItems] : nextItems,
         );
+        setListError(null);
         if (!opts?.append && !opts?.cursor) {
           writeInboxSessionCache(filterKey, {
             items: res.items,
@@ -145,6 +148,11 @@ export function useNotifications({
         if (!isApiConnectivityError(err)) {
           logClientError("useNotifications.load", err);
         }
+        const message =
+          err instanceof Error && err.message.trim()
+            ? err.message
+            : t("notifications.inbox.loadError");
+        setListError(message);
       } finally {
         setLoading(false);
       }
@@ -285,6 +293,7 @@ export function useNotifications({
     if (!active) {
       setUnreadCount(0);
       setItems([]);
+      setListError(null);
       loadedRef.current = false;
       devSetHydrationPhase("notifications", "idle");
       return;
@@ -407,6 +416,7 @@ export function useNotifications({
     unreadCount,
     items,
     loading,
+    listError,
     nextCursor,
     connected: false,
     refreshUnread,

@@ -39,6 +39,13 @@ function parseLocaleTemplate(metadata: unknown): NotificationTemplate | undefine
   if (!raw || typeof raw !== "object" || Array.isArray(raw)) return undefined;
   const obj = raw as Record<string, unknown>;
   if (typeof obj.id !== "string" || !obj.id.trim()) return undefined;
+  // Incomplete templates (id without usable params) must not enter render —
+  // renderNotificationTemplate assumes params for most ids and would throw.
+  if ("params" in obj) {
+    if (obj.params == null || typeof obj.params !== "object" || Array.isArray(obj.params)) {
+      return undefined;
+    }
+  }
   return raw as NotificationTemplate;
 }
 
@@ -67,15 +74,20 @@ function localizedCopy(
 ): { title: string; message: string } {
   const template = resolveTemplate(row);
   if (!template) return { title: row.title, message: row.message };
-  const copy = localizeNotificationPayload(locale, {
-    title: row.title,
-    body: row.message,
-    localeTemplate: template,
-  });
-  return {
-    title: copy.title || row.title,
-    message: copy.body || row.message,
-  };
+  try {
+    const copy = localizeNotificationPayload(locale, {
+      title: row.title,
+      body: row.message,
+      localeTemplate: template,
+    });
+    return {
+      title: copy.title || row.title,
+      message: copy.body || row.message,
+    };
+  } catch {
+    // Never fail the whole inbox list because one row's template is corrupt.
+    return { title: row.title, message: row.message };
+  }
 }
 
 export function resolveNotificationLocale(
@@ -239,9 +251,14 @@ export async function listUserNotifications(
   });
 
   const hasMore = rows.length > limit;
-  const items = (hasMore ? rows.slice(0, limit) : rows).map((row) =>
-    toInboxDto(row, options?.locale),
-  );
+  const page = hasMore ? rows.slice(0, limit) : rows;
+  const items = page.map((row) => {
+    try {
+      return toInboxDto(row, options?.locale);
+    } catch {
+      return toInboxDto(row);
+    }
+  });
   const nextCursor = hasMore ? items[items.length - 1]?.id ?? null : null;
   return { items, nextCursor };
 }

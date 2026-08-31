@@ -47,15 +47,16 @@ function metaNumber(meta: Record<string, unknown>, key: string): number | undefi
 export function inferNotificationTemplate(input: InferInput): NotificationTemplate | undefined {
   const meta = input.metadata;
   const templateId = metaString(meta, "templateId");
-  if (templateId) {
+    if (templateId) {
     const params =
       meta.templateParams && typeof meta.templateParams === "object" && !Array.isArray(meta.templateParams)
         ? (meta.templateParams as Record<string, unknown>)
         : undefined;
+    // Never return an id-only cast — render paths require params for most templates.
     if (params && Object.keys(params).length > 0) {
       return { id: templateId, params } as NotificationTemplate;
     }
-    return { id: templateId } as NotificationTemplate;
+    return undefined;
   }
 
   const url = input.url ?? metaString(meta, "url");

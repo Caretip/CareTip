@@ -26,6 +26,8 @@ export type NotificationAlertDialogLabels = {
   close: string;
   viewAll: string;
   empty: string;
+  loadError?: string;
+  retry?: string;
   readLabel: string;
 };
 
@@ -33,6 +35,7 @@ export type NotificationAlertDialogProps = {
   items: NotificationAlertItem[];
   unreadCount: number;
   loading?: boolean;
+  listError?: string | null;
   open: boolean;
   className?: string;
   trigger?: ReactNode;
@@ -43,6 +46,7 @@ export type NotificationAlertDialogProps = {
   onMarkRead: (id: string) => void;
   onMarkAllRead: () => void;
   onItemActivate?: (id: string) => void;
+  onRetryList?: () => void;
 };
 
 function initialsFromTitle(title: string): string {
@@ -129,6 +133,7 @@ export function NotificationAlertDialog({
   items,
   unreadCount,
   loading = false,
+  listError = null,
   open,
   className,
   trigger,
@@ -139,6 +144,7 @@ export function NotificationAlertDialog({
   onMarkRead,
   onMarkAllRead,
   onItemActivate,
+  onRetryList,
 }: NotificationAlertDialogProps) {
   const handleViewAll = useCallback(() => {
     onOpenChange(false);
@@ -230,6 +236,17 @@ export function NotificationAlertDialog({
                       className="h-[72px] animate-pulse rounded-md bg-muted/80"
                     />
                   ))}
+                </div>
+              ) : previewItems.length === 0 && (listError || unreadCount > 0) ? (
+                <div className="space-y-3 py-4 text-center">
+                  <p className="text-sm text-muted-foreground">
+                    {labels.loadError ?? listError ?? labels.empty}
+                  </p>
+                  {onRetryList ? (
+                    <Button type="button" variant="outline" size="sm" onClick={onRetryList}>
+                      {labels.retry ?? "Retry"}
+                    </Button>
+                  ) : null}
                 </div>
               ) : previewItems.length === 0 ? (
                 <p className="py-6 text-center text-sm text-muted-foreground">{labels.empty}</p>

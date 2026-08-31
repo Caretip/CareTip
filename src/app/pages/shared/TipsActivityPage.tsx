@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/app/components/ui/EmptyState";
 import { cn } from "@/lib/utils";
 import { businessUi } from "@/app/components/business/businessDashboardUi";
+import { dashboardSharedUi } from "@/app/components/dashboard/dashboardSharedUi";
 import { employeeUi } from "@/app/components/employee/employeeDashboardUi";
 import { EmployeePageHeader } from "@/app/components/employee/EmployeePageHeader";
 import {
@@ -195,7 +196,7 @@ export function TipsActivityPage({ variant = "default", embedded = false }: Tips
               <CreditCard className="h-5 w-5" aria-hidden />
             </div>
           }
-          className="mb-6 sm:mb-8"
+          className="mb-4 max-lg:mb-3 sm:mb-8"
         />
       ) : !embedded ? (
         <header className="mb-6 sm:mb-8">
@@ -208,7 +209,7 @@ export function TipsActivityPage({ variant = "default", embedded = false }: Tips
         initial={{ y: 20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ duration: 0.5, delay: 0.1 }}
-        className={cn(ui.filterPanel, "mb-6 p-4 sm:p-6")}
+        className={cn(ui.filterPanel, dashboardSharedUi.mobileFlatSurface, "dashboard-mobile-flat-surface mb-6 p-4 sm:p-6 max-lg:mb-4 max-lg:p-0")}
       >
         <div className="flex flex-col gap-4 lg:flex-row">
           <div className="flex-1">
@@ -346,11 +347,11 @@ export function TipsActivityPage({ variant = "default", embedded = false }: Tips
         transition={{ duration: 0.5, delay: 0.2 }}
       >
         {showTipsSkeleton ? (
-          <div className={cn(ui.tablePanel, "overflow-hidden")}>
+          <div className={cn(ui.tablePanel, dashboardSharedUi.mobileFlatSurface, "dashboard-mobile-flat-surface overflow-hidden")}>
             <TipsActivityTableSkeleton />
           </div>
         ) : items.length === 0 ? (
-          <div className={cn(ui.tablePanel, "overflow-hidden")}>
+          <div className={cn(ui.tablePanel, dashboardSharedUi.mobileFlatSurface, "dashboard-mobile-flat-surface overflow-hidden")}>
             <EmptyState
               icon={<CreditCard className="h-6 w-6" aria-hidden />}
               title={

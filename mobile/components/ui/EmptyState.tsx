@@ -13,6 +13,8 @@ type EmptyStateProps = {
   message?: string;
   emoji?: string;
   variant?: EmptyVariant;
+  /** Flat = page-surface empty (no decorative card). Default card keeps emphasis. */
+  surface?: "card" | "flat";
   actionLabel?: string;
   onAction?: () => void;
 };
@@ -31,27 +33,31 @@ export function EmptyState({
   message,
   emoji,
   variant = "generic",
+  surface = "card",
   actionLabel,
   onAction,
 }: EmptyStateProps) {
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
+  const flat = surface === "flat";
 
   return (
     <View
-      style={styles.card}
+      style={[styles.card, flat ? styles.cardFlat : null]}
       accessible
       accessibilityLabel={[title, message].filter(Boolean).join(". ")}
     >
-      <View style={styles.iconWrap}>
-        {emoji ? (
-          <Text style={styles.emoji}>{emoji}</Text>
-        ) : (
-          <Ionicons name={ICONS[variant]} size={24} color={colors.primary} />
-        )}
-      </View>
-      <Text style={styles.title}>{title}</Text>
-      {message ? <Text style={styles.message}>{message}</Text> : null}
+      {flat ? null : (
+        <View style={styles.iconWrap}>
+          {emoji ? (
+            <Text style={styles.emoji}>{emoji}</Text>
+          ) : (
+            <Ionicons name={ICONS[variant]} size={24} color={colors.primary} />
+          )}
+        </View>
+      )}
+      <Text style={[styles.title, flat ? styles.titleFlat : null]}>{title}</Text>
+      {message ? <Text style={[styles.message, flat ? styles.messageFlat : null]}>{message}</Text> : null}
       {actionLabel && onAction ? (
         <Pressable
           accessibilityRole="button"
@@ -61,7 +67,7 @@ export function EmptyState({
           <Text style={styles.actionLabel}>{actionLabel}</Text>
         </Pressable>
       ) : null}
-      <BrandMark height={16} style={styles.brand} />
+      {flat ? null : <BrandMark height={16} style={styles.brand} />}
     </View>
   );
 }
@@ -79,6 +85,17 @@ function createStyles(colors: ColorPalette) {
       borderWidth: StyleSheet.hairlineWidth,
       borderColor: colors.border,
       ...shadows.sm,
+    },
+    cardFlat: {
+      marginVertical: spacing.xs,
+      paddingVertical: spacing.sm,
+      paddingHorizontal: 0,
+      alignItems: "flex-start",
+      gap: spacing.xs,
+      backgroundColor: "transparent",
+      borderRadius: 0,
+      borderWidth: 0,
+      ...shadows.none,
     },
     iconWrap: {
       width: surface.iconWellSize + 8,
@@ -98,11 +115,23 @@ function createStyles(colors: ColorPalette) {
       color: colors.foreground,
       textAlign: "center",
     },
+    titleFlat: {
+      ...typography.body,
+      fontWeight: "600",
+      fontSize: 14,
+      textAlign: "left",
+    },
     message: {
       ...typography.body,
       color: colors.mutedForeground,
       textAlign: "center",
       maxWidth: 300,
+    },
+    messageFlat: {
+      fontSize: 13,
+      lineHeight: 18,
+      textAlign: "left",
+      maxWidth: "100%",
     },
     action: {
       minHeight: touchTarget,

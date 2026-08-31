@@ -4,7 +4,7 @@ import { useFocusEffect } from "@react-navigation/native";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { MapPin, UtensilsCrossed } from "@/icons/lucide";
 import { LayeredScreen } from "@/components/ui/LayeredScreen";
-import { GroupedList, Section } from "@/components/ui/Section";
+import { Section } from "@/components/ui/Section";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { SkeletonMetricGrid } from "@/components/ui/Skeleton";
 import { AccessErrorState } from "@/components/ui/AccessErrorState";
@@ -60,7 +60,7 @@ export function EmployeeAssignmentScreen() {
         <View style={styles.stack}>
           <Section title={t("employeeAssignment.locationLabel")}>
             {assignment?.location ? (
-              <View style={styles.assignmentCard}>
+              <View style={styles.assignmentBlock}>
                 <MapPin size={16} color="#e9781c" />
                 <View style={styles.assignmentTextWrap}>
                   <Text style={styles.assignmentPrimary}>{assignment.location.name}</Text>
@@ -72,6 +72,7 @@ export function EmployeeAssignmentScreen() {
             ) : (
               <EmptyState
                 variant="generic"
+                surface="flat"
                 title={t("employeeAssignment.noLocationTitle")}
                 message={t("employeeAssignment.noLocationDesc")}
               />
@@ -80,10 +81,13 @@ export function EmployeeAssignmentScreen() {
 
           <Section title={t("employeeAssignment.tablesLabel")}>
             {assignment?.tables?.length ? (
-              <GroupedList>
-                {assignment.tables.map((table) => (
-                  <View key={table.id} style={styles.tableRow}>
-                    <UtensilsCrossed size={16} color="#64748b" />
+              <View style={styles.tableList}>
+                {assignment.tables.map((table, index) => (
+                  <View
+                    key={table.id}
+                    style={[styles.tableRow, index > 0 ? styles.tableRowBorder : null]}
+                  >
+                    <UtensilsCrossed size={16} color="#e9781c" />
                     <View style={styles.assignmentTextWrap}>
                       <Text style={styles.assignmentPrimary}>{table.name}</Text>
                       <Text style={styles.assignmentSecondary}>
@@ -94,10 +98,11 @@ export function EmployeeAssignmentScreen() {
                     </View>
                   </View>
                 ))}
-              </GroupedList>
+              </View>
             ) : (
               <EmptyState
                 variant="generic"
+                surface="flat"
                 title={t("employeeAssignment.noTablesTitle")}
                 message={t("employeeAssignment.noTablesDesc")}
               />
@@ -113,19 +118,24 @@ const styles = StyleSheet.create({
   stack: {
     gap: layered.sectionGap,
   },
-  assignmentCard: {
+  assignmentBlock: {
     flexDirection: "row",
     alignItems: "flex-start",
     gap: spacing.sm,
-    paddingVertical: spacing.sm,
-    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs,
+  },
+  tableList: {
+    gap: 0,
   },
   tableRow: {
     flexDirection: "row",
     alignItems: "flex-start",
     gap: spacing.sm,
     paddingVertical: spacing.sm,
-    paddingHorizontal: spacing.md,
+  },
+  tableRowBorder: {
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: "#e2e8f0",
   },
   assignmentTextWrap: {
     flex: 1,

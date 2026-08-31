@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils";
 
 export function EmployeeDashboardEarningsChartFallback() {
   return (
-    <Card className={cn(employeeUi.cardStatic, employeeUi.chartCard, "w-full")} aria-hidden>
+    <Card className={cn(employeeUi.cardStatic, employeeUi.chartCard, "dashboard-chart-card w-full")} aria-hidden>
       <CardHeader className={employeeUi.cardHeader}>
         <div className="h-6 w-36 rounded-md bg-muted/60" />
       </CardHeader>

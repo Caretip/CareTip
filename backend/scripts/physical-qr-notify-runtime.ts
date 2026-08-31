@@ -32,11 +32,28 @@ function sectionStaticRegression() {
   const passwordReset = readBackend("src/services/passwordReset.service.ts");
 
   if (
+    notify.includes("physical_qr_order_received") &&
+    notify.includes("isIncludedPhysicalQrOrder") &&
+    notify.includes('template: included ? { id: "physical_qr_order_received" } : { id: "physical_qr_paid" }')
+  ) {
+    pass("Pro/included orders use Order received email template");
+  } else fail("Pro/included vs Basic payment email branch missing");
+
+  if (
     notify.includes("channels: { in_app: true, push: true, email: true }") &&
     notify.includes("onPlatformOperationalAlert")
   ) {
     pass("admin paid notification enables in-app + push + email");
   } else fail("admin paid notification missing email channel");
+
+  if (
+    notify.includes("lineItemsSummary") &&
+    notify.includes("itemLineCount") &&
+    notify.includes("labelSnapshot") &&
+    notify.includes("order.items")
+  ) {
+    pass("admin paid notification includes line-item summary from order items");
+  } else fail("admin notify missing line-item summary");
 
   if (notify.includes('paymentStatus !== "PAID"')) {
     pass("admin notify guard skips non-PAID orders");
@@ -86,6 +103,14 @@ function sectionStaticRegression() {
     pass("physical QR notify reuses shared Resend client (no duplicate SDK)");
   } else fail("duplicate email infrastructure detected");
 
+  if (
+    resend.includes("getCareTipEmailLogoAttachment") &&
+    resend.includes("CARETIP_EMAIL_LOGO_CID") &&
+    resend.includes("attachments")
+  ) {
+    pass("Resend auto-attaches CareTip logo for CID brand mark");
+  } else fail("Resend CareTip logo CID attachment wiring missing");
+
   if (activation.includes("sendResendEmail") && passwordReset.includes("sendResendEmail")) {
     pass("activation/password-reset Resend paths present and untouched");
   } else fail("activation/password-reset email files regression");
@@ -101,8 +126,10 @@ function sectionTemplateCopy() {
     businessName: "Demo Venue",
     orderId: "ord_test_123",
     productLabel: "CareTip A5 flyer with address",
-    quantity: 3,
-    totalAmountCents: 2970,
+    quantity: 6,
+    itemLineCount: 3,
+    lineItemsSummary: "Solo Beauty Spa × 2; Jordan Park × 1; Table 12 Window × 3",
+    totalAmountCents: 5940,
     currency: "EUR",
     paidAtIso: "2026-08-30T10:15:00.000Z",
   };
@@ -118,12 +145,16 @@ function sectionTemplateCopy() {
     pass("DE admin template localized");
   } else fail("DE admin template copy");
 
-  if (en.body.includes("Quantity: 3") && en.body.includes("Processing") && en.body.includes("Paid")) {
-    pass("EN admin template includes quantity and status labels");
+  if (en.body.includes("Items (3):") && en.body.includes("Solo Beauty Spa × 2") && en.body.includes("Total quantity: 6")) {
+    pass("EN admin template includes line items and total quantity");
+  } else fail("EN admin template line items");
+
+  if (en.body.includes("Payment: Paid") && en.body.includes("Fulfillment: Processing") && en.body.includes("Paid at:")) {
+    pass("EN admin template includes status labels");
   } else fail("EN admin template detail fields");
 
-  const amount = formatNotificationAmountCents(2970, "EUR", "en");
-  if (amount.includes("29.70") || amount.includes("29,70")) {
+  const amount = formatNotificationAmountCents(5940, "EUR", "en");
+  if (amount.includes("59.40") || amount.includes("59,40")) {
     pass("amount formatter converts cents to currency");
   } else fail(`amount formatter got ${amount}`);
 
@@ -131,10 +162,34 @@ function sectionTemplateCopy() {
   if (when.length > 4 && !when.includes("Invalid")) {
     pass("paid-at datetime formatter produces readable value");
   } else fail("paid-at datetime formatter");
+
+  const includedParams = {
+    businessName: "Demo Venue",
+    orderId: "ord_test_pro",
+    productLabel: "CareTip A5 flyer with address",
+    quantity: 6,
+    itemLineCount: 3,
+    lineItemsSummary: "Solo Beauty Spa × 2; Jordan Park × 1; Table 12 Window × 3",
+    currency: "EUR",
+    receivedAtIso: "2026-08-30T10:15:00.000Z",
+  };
+  const includedEn = renderNotificationTemplate("en", {
+    id: "physical_qr_order_received_admin",
+    params: includedParams,
+  });
+  if (
+    includedEn.title === "Physical QR order received" &&
+    includedEn.body.includes("included in plan") &&
+    includedEn.body.includes("Payment: Included in plan") &&
+    !includedEn.body.includes("Payment: Paid")
+  ) {
+    pass("EN admin Pro/included template uses order received copy");
+  } else fail("EN admin Pro/included template copy");
 }
 
 function sectionBusinessTemplateUnchanged() {
   const en = renderNotificationTemplate("en", { id: "physical_qr_paid" });
+  const included = renderNotificationTemplate("en", { id: "physical_qr_order_received" });
   const printing = renderNotificationTemplate("en", { id: "physical_qr_printing" });
   const shipped = renderNotificationTemplate("en", {
     id: "physical_qr_shipped",
@@ -142,8 +197,16 @@ function sectionBusinessTemplateUnchanged() {
   });
   const delivered = renderNotificationTemplate("en", { id: "physical_qr_delivered" });
 
-  if (en.title === "Payment received") pass("business paid template unchanged");
+  if (en.title === "Payment received") pass("business paid template unchanged (Basic)");
   else fail("business paid template changed");
+
+  if (
+    included.title === "Order received" &&
+    /received and is now being processed/i.test(included.body) &&
+    !/paid for/i.test(included.body)
+  ) {
+    pass("business Pro/included template uses Order received");
+  } else fail("business Pro/included template missing or still payment copy");
 
   if (printing.title === "Printing" && shipped.title === "Shipped" && delivered.title === "Delivered") {
     pass("printing/shipped/delivered business templates unchanged");

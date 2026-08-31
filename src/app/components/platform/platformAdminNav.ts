@@ -3,6 +3,7 @@ import type { CareIconName } from "@/components/icons";
 export const PLATFORM_ADMIN_OVERVIEW_HREF = "/platform-admin/dashboard" as const;
 
 export const PLATFORM_BUSINESS_BASE = "/platform-admin/businesses" as const;
+export const PLATFORM_BRANDING_ORDERS_BASE = "/platform-admin/branding-orders" as const;
 export const PLATFORM_REVENUE_BASE = "/platform-admin/revenue" as const;
 export const PLATFORM_USERS_BASE = "/platform-admin/users" as const;
 export const PLATFORM_COMMUNICATION_BASE = "/platform-admin/communication" as const;
@@ -51,8 +52,14 @@ export const platformAdminNavEntries: readonly PlatformAdminNavEntry[] = [
       { labelKey: "admin.sidebar.business.kycVerification", href: `${PLATFORM_BUSINESS_BASE}/kyc-verification` },
       { labelKey: "admin.sidebar.business.subscriptions", href: `${PLATFORM_BUSINESS_BASE}/subscriptions` },
       { labelKey: "admin.sidebar.business.analytics", href: `${PLATFORM_BUSINESS_BASE}/analytics` },
-      { labelKey: "admin.sidebar.business.physicalQrOrders", href: `${PLATFORM_BUSINESS_BASE}/branding-orders` },
     ],
+  },
+  {
+    type: "link",
+    id: "physical-branding-orders",
+    labelKey: "admin.sidebar.navPhysicalBrandingOrders",
+    href: PLATFORM_BRANDING_ORDERS_BASE,
+    icon: "branding",
   },
   {
     type: "group",
@@ -122,6 +129,7 @@ export const platformAdminNavEntries: readonly PlatformAdminNavEntry[] = [
 
 const MODULE_PREFIXES = [
   PLATFORM_BUSINESS_BASE,
+  PLATFORM_BRANDING_ORDERS_BASE,
   PLATFORM_REVENUE_BASE,
   PLATFORM_USERS_BASE,
   PLATFORM_COMMUNICATION_BASE,

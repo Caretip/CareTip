@@ -20,6 +20,8 @@ export type SubscriptionCapability =
   | "tipManagement"
   | "basicAnalytics"
   | "qrTemplates"
+  | "physicalQrPrinting"
+  | "physicalQrPrintingIncluded"
   | "brandingCustomization"
   | "advancedAnalytics"
   | "csvExport"
@@ -51,11 +53,13 @@ const BASIC_CAPABILITIES: SubscriptionCapability[] = [
   "tableQr",
   "basicAnalytics",
   "qrTemplates",
+  "physicalQrPrinting",
   "teamManagement",
 ];
 
 const PRO_CAPABILITIES: SubscriptionCapability[] = [
   ...BASIC_CAPABILITIES,
+  "physicalQrPrintingIncluded",
   "brandingCustomization",
   "advancedAnalytics",
   "csvExport",

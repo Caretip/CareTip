@@ -203,6 +203,298 @@
   .caretip-dashboard-shell .stripe-connect-card {
     /* Mobile: status + action sit flat under the module header */
   }
+
+  /* ── Surface-first mobile rhythm (Netlify-style) ── */
+  .caretip-dashboard-shell.business-dashboard,
+  .caretip-dashboard-shell.employee-dashboard {
+    --dashboard-section-gap: 1rem;
+    --dashboard-block-gap: 1.25rem;
+  }
+
+  .caretip-dashboard-shell .employee-page__inner,
+  .caretip-dashboard-shell .business-page__inner,
+  .caretip-dashboard-shell .dashboard-page-narrow {
+    padding-top: 0.75rem;
+  }
+
+  .caretip-dashboard-shell .employee-page__inner.space-y-6 > :not([hidden]) ~ :not([hidden]),
+  .caretip-dashboard-shell .dashboard-page-narrow.space-y-6 > :not([hidden]) ~ :not([hidden]) {
+    --tw-space-y-reverse: 0;
+    margin-top: calc(1.25rem * calc(1 - var(--tw-space-y-reverse)));
+    margin-bottom: calc(1.25rem * var(--tw-space-y-reverse));
+  }
+
+  /* Business drawer — logo lives in header; identity is text-only */
+  .caretip-mobile-drawer-workspace__identity--text-only {
+    gap: 0;
+    padding-top: 0.125rem;
+    padding-bottom: 0.125rem;
+  }
+
+  /* Employee subpage headers — page surface, not card chrome */
+  .caretip-dashboard-shell.employee-dashboard .employee-page-header--surface {
+    margin-bottom: 1rem !important;
+    border: none !important;
+    box-shadow: none !important;
+    background: transparent !important;
+    background-image: none !important;
+    padding-bottom: 0 !important;
+  }
+
+  .caretip-dashboard-shell.employee-dashboard .employee-page-header--surface h1 {
+    font-size: 1.25rem;
+    line-height: 1.25;
+  }
+
+  /* Settings — divider sections instead of nested cards */
+  .caretip-dashboard-shell .employee-settings-section {
+    border: none !important;
+    box-shadow: none !important;
+    background: transparent !important;
+    border-radius: 0 !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+    padding-top: 1.125rem !important;
+    border-top: 1px solid hsl(var(--border) / 0.72) !important;
+  }
+
+  .caretip-dashboard-shell .employee-page-header--surface + .employee-settings-section,
+  .caretip-dashboard-shell .employee-page-header--surface + * .employee-settings-section:first-child,
+  .caretip-dashboard-shell .employee-page__inner > .employee-settings-section:first-of-type {
+    border-top: none !important;
+    padding-top: 0 !important;
+  }
+
+  /* Chart panels — light border, no shadow */
+  .caretip-dashboard-shell .dashboard-chart-card {
+    border: 1px solid hsl(var(--border) / 0.65) !important;
+    box-shadow: none !important;
+  }
+
+  .caretip-dashboard-shell .dashboard-chart-card > [class*="CardHeader"],
+  .caretip-dashboard-shell .dashboard-chart-card > .border-b {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+  }
+
+  .caretip-dashboard-shell .dashboard-chart-card > [class*="CardContent"],
+  .caretip-dashboard-shell .dashboard-chart-card > :not([class*="CardHeader"]) {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+  }
+
+  /* Filter / search panels — flat under page title */
+  .caretip-dashboard-shell .dashboard-filter-panel.dashboard-mobile-flat-surface,
+  .caretip-dashboard-shell .dashboard-surface-panel.dashboard-mobile-flat-surface {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+    padding-top: 0 !important;
+    margin-bottom: 1rem !important;
+  }
+
+  /* Table panels — surface list with row dividers */
+  .caretip-dashboard-shell .dashboard-table-panel.dashboard-mobile-flat-surface {
+    padding-bottom: 0 !important;
+  }
+
+  .caretip-dashboard-shell .dashboard-table-panel.dashboard-mobile-flat-surface tbody tr {
+    border-bottom: 1px solid hsl(var(--border) / 0.72);
+  }
+
+  .caretip-dashboard-shell .dashboard-table-panel.dashboard-mobile-flat-surface thead th:first-child,
+  .caretip-dashboard-shell .dashboard-table-panel.dashboard-mobile-flat-surface tbody td:first-child {
+    padding-left: 0 !important;
+  }
+
+  .caretip-dashboard-shell .dashboard-table-panel.dashboard-mobile-flat-surface thead th:last-child,
+  .caretip-dashboard-shell .dashboard-table-panel.dashboard-mobile-flat-surface tbody td:last-child {
+    padding-right: 0 !important;
+  }
+
+  /* Notification inbox — divider rows */
+  .caretip-dashboard-shell .dashboard-notification-card,
+  .caretip-dashboard-shell .dashboard-notification-card.dashboard-notification-card--unread {
+    border-radius: 0 !important;
+    border-left: none !important;
+    border-right: none !important;
+    border-top: none !important;
+    box-shadow: none !important;
+    border-bottom: 1px solid hsl(var(--border) / 0.72) !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+  }
+
+  .caretip-dashboard-shell .dashboard-inbox-page {
+    padding-top: 0.75rem !important;
+    padding-bottom: 1.5rem !important;
+  }
+
+  /* Business mobile list cards — lighter touch */
+  .caretip-dashboard-shell .business-mobile-card {
+    border: 1px solid hsl(var(--border) / 0.65) !important;
+    box-shadow: none !important;
+    border-radius: 0.5rem !important;
+  }
+
+  .caretip-dashboard-shell .business-mobile-list {
+    gap: 0.625rem;
+  }
+
+  /* Module workspace headers — flat on mobile */
+  .caretip-dashboard-shell .premium-workspace-header,
+  .caretip-dashboard-shell .dashboard-workspace-page-header,
+  .caretip-dashboard-shell .dashboard-workspace-module-header {
+    border: none !important;
+    box-shadow: none !important;
+    background: transparent !important;
+    margin-bottom: 1rem !important;
+    padding-bottom: 0 !important;
+  }
+
+  /* Physical QR order detail — flat info sections; keep status cards */
+  .caretip-dashboard-shell .physical-qr-order-detail > .space-y-6 {
+    gap: 1.25rem !important;
+  }
+
+  .caretip-dashboard-shell .physical-qr-order-detail .physical-qr-order-detail__section:not(.dashboard-mobile-keep-card) {
+    border: none !important;
+    box-shadow: none !important;
+    background: transparent !important;
+    border-radius: 0 !important;
+    border-top: 1px solid hsl(var(--border) / 0.72) !important;
+    padding-top: 1rem !important;
+  }
+
+  .caretip-dashboard-shell .physical-qr-order-detail .physical-qr-order-detail__section:not(.dashboard-mobile-keep-card) > [data-slot="card-header"],
+  .caretip-dashboard-shell .physical-qr-order-detail .physical-qr-order-detail__section:not(.dashboard-mobile-keep-card) > .flex.flex-col {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+    padding-top: 0 !important;
+  }
+
+  .caretip-dashboard-shell .physical-qr-order-detail .physical-qr-order-detail__section:not(.dashboard-mobile-keep-card) > [data-slot="card-content"] {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+    padding-top: 0.75rem !important;
+  }
+
+  .caretip-dashboard-shell .physical-qr-order-detail .dashboard-mobile-keep-card {
+    border: 1px solid hsl(var(--border) / 0.72) !important;
+    box-shadow: none !important;
+    border-radius: 0.5rem !important;
+  }
+
+  /* Nested cards — flatten unless explicitly kept */
+  .caretip-dashboard-shell .employee-card .employee-card:not(.dashboard-mobile-keep-card),
+  .caretip-dashboard-shell .business-card .business-card:not(.dashboard-mobile-keep-card) {
+    border: none !important;
+    box-shadow: none !important;
+    background: transparent !important;
+    border-radius: 0 !important;
+  }
+
+  /* Flat-surface card headers — align to page edge */
+  .caretip-dashboard-shell .dashboard-mobile-flat-surface > .border-b,
+  .caretip-dashboard-shell .dashboard-mobile-flat-surface > [class*="cardHeader"] {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+    border-color: hsl(var(--border) / 0.72) !important;
+  }
+
+  .caretip-dashboard-shell .dashboard-mobile-flat-surface .overflow-x-auto table thead th,
+  .caretip-dashboard-shell .dashboard-mobile-flat-surface .overflow-x-auto table tbody td {
+    padding-top: 0.625rem !important;
+    padding-bottom: 0.625rem !important;
+  }
+
+  /* Flat-surface card stacks — section dividers instead of nested boxes */
+  .caretip-dashboard-shell .dashboard-mobile-flat-surface + .dashboard-mobile-flat-surface {
+    border-top: 1px solid hsl(var(--border) / 0.72) !important;
+    margin-top: 0.25rem !important;
+    padding-top: 1.125rem !important;
+  }
+
+  /* Inline error / empty panels inside flat surfaces */
+  .caretip-dashboard-shell .dashboard-mobile-flat-surface .rounded-2xl.border {
+    border-radius: 0.5rem !important;
+    box-shadow: none !important;
+  }
+
+  /* Preserve KPI / stat emphasis */
+  .caretip-dashboard-shell .employee-stat-card,
+  .caretip-dashboard-shell .business-stat-card,
+  .caretip-dashboard-shell .dashboard-metric-stat-card {
+    box-shadow: var(--dash-card-shadow, 0 1px 2px rgb(0 0 0 / 0.04)) !important;
+  }
+
+  .dark .caretip-dashboard-shell .employee-stat-card,
+  .dark .caretip-dashboard-shell .business-stat-card {
+    box-shadow: 0 1px 2px rgb(0 0 0 / 0.22) !important;
+  }
+
+  /* Hero metric tiles — hairline only, less bulk */
+  .caretip-dashboard-shell .employee-hero-account-stats > div,
+  .caretip-dashboard-shell .business-hero-account-stats > div {
+    box-shadow: none !important;
+    border-radius: 0.5rem !important;
+    padding: 0.625rem 0.5rem !important;
+  }
+
+  .caretip-dashboard-shell .employee-dashboard-hero .employee-hero-chart-frame--photo {
+    border-radius: 1rem !important;
+    box-shadow: none !important;
+  }
+
+  /* Compact empty states — page surface, not nested cards */
+  .caretip-dashboard-shell .dashboard-workspace-empty--compact {
+    border: none !important;
+    box-shadow: none !important;
+    background: transparent !important;
+    border-radius: 0 !important;
+  }
+
+  /* Goal cards — keep hierarchy, drop heavy chrome */
+  .caretip-dashboard-shell .employee-goal-card {
+    border-radius: 0.5rem !important;
+    box-shadow: none !important;
+    border-color: hsl(var(--border) / 0.72) !important;
+  }
+
+  /* Performance insights — section surface + light tile grid */
+  .caretip-dashboard-shell .employee-performance-insights__grid {
+    gap: 0.625rem;
+  }
+
+  .caretip-dashboard-shell .employee-performance-insights__tile {
+    border-color: hsl(var(--border) / 0.65) !important;
+  }
+
+  /* Quick action tiles — less height domination */
+  .caretip-dashboard-shell .dashboard-action-tile {
+    box-shadow: none !important;
+    border-radius: 0.5rem !important;
+  }
+
+  .caretip-dashboard-shell .employee-page .dashboard-action-tile {
+    min-height: 4.75rem !important;
+    padding-top: 0.75rem !important;
+    padding-bottom: 0.75rem !important;
+  }
+
+  /* Assignment page — denser scan rhythm */
+  .caretip-dashboard-shell.employee-dashboard .employee-assignment-page .employee-page__inner {
+    padding-top: 0.625rem;
+  }
+
+  .caretip-dashboard-shell.employee-dashboard .employee-assignment-panel__body {
+    gap: 1rem;
+  }
+
+  /* Tip goals empty / create block inside flat surface */
+  .caretip-dashboard-shell .dashboard-mobile-flat-surface .rounded-lg.border.bg-muted\/35,
+  .caretip-dashboard-shell .dashboard-mobile-flat-surface [class*="bg-muted/35"] {
+    box-shadow: none !important;
+  }
 }
 
 @media (min-width: 1024px) {

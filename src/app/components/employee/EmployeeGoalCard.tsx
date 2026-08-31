@@ -197,7 +197,7 @@ export const EmployeeGoalCard = forwardRef<EmployeeGoalCardHandle, Props>(functi
 
   return (
     <>
-      <Card className={cn(employeeUi.card, "w-full rounded-2xl")}>
+      <Card className={cn(employeeUi.card, "employee-goal-card w-full rounded-lg max-lg:shadow-none")}>
         <CardHeader>
           <div className="flex items-start gap-3">
             <div className="rounded-lg bg-primary p-2 text-primary-foreground">

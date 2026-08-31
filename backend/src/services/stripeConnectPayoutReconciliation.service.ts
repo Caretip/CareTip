@@ -124,25 +124,46 @@ async function listBalanceTxPage(args: {
 }
 
 async function persistBalanceLines(payoutRowId: string, lines: BalanceTxLike[]): Promise<number> {
-  let written = 0;
-  for (const bt of lines) {
-    if (!bt.id || !Number.isInteger(bt.amount) || !Number.isInteger(bt.net)) continue;
+  const valid = lines.filter(
+    (bt) => bt.id && Number.isInteger(bt.amount) && Number.isInteger(bt.net),
+  );
+  if (valid.length === 0) return 0;
 
-    const existing = await prisma.stripeConnectPayoutBalanceLine.findUnique({
-      where: { stripeBalanceTransactionId: bt.id },
-      select: { payoutId: true },
-    });
-    if (existing && existing.payoutId !== payoutRowId) {
+  const ids = valid.map((bt) => bt.id);
+  const existingRows = await prisma.stripeConnectPayoutBalanceLine.findMany({
+    where: { stripeBalanceTransactionId: { in: ids } },
+    select: { stripeBalanceTransactionId: true, payoutId: true },
+  });
+  const existingByBt = new Map(
+    existingRows.map((r) => [r.stripeBalanceTransactionId, r.payoutId] as const),
+  );
+
+  const toCreate: Array<{
+    payoutId: string;
+    stripeBalanceTransactionId: string;
+    reportingCategory: string | null;
+    type: string;
+    amountCents: number;
+    feeCents: number;
+    netCents: number;
+    currency: string;
+    createdAtStripe: Date;
+  }> = [];
+  const toUpdate: BalanceTxLike[] = [];
+
+  for (const bt of valid) {
+    const existingPayoutId = existingByBt.get(bt.id);
+    if (existingPayoutId && existingPayoutId !== payoutRowId) {
       logPayoutOps("payout_reconciliation_line_conflict", {
         payoutRowId,
         btSuffix: bt.id.slice(-8),
       });
       continue;
     }
-
-    await prisma.stripeConnectPayoutBalanceLine.upsert({
-      where: { stripeBalanceTransactionId: bt.id },
-      create: {
+    if (existingPayoutId) {
+      toUpdate.push(bt);
+    } else {
+      toCreate.push({
         payoutId: payoutRowId,
         stripeBalanceTransactionId: bt.id,
         reportingCategory: (bt.reporting_category ?? null)?.toString().slice(0, 64) ?? null,
@@ -152,8 +173,24 @@ async function persistBalanceLines(payoutRowId: string, lines: BalanceTxLike[]):
         netCents: bt.net,
         currency: String(bt.currency ?? "eur").toLowerCase().slice(0, 8),
         createdAtStripe: unixToDate(bt.created) ?? new Date(),
-      },
-      update: {
+      });
+    }
+  }
+
+  let written = 0;
+  if (toCreate.length > 0) {
+    const created = await prisma.stripeConnectPayoutBalanceLine.createMany({
+      data: toCreate,
+      skipDuplicates: true,
+    });
+    written += created.count;
+  }
+
+  // Updates are uncommon after first reconcile; keep per-row upsert semantics for amount/fee refresh.
+  for (const bt of toUpdate) {
+    await prisma.stripeConnectPayoutBalanceLine.update({
+      where: { stripeBalanceTransactionId: bt.id },
+      data: {
         reportingCategory: (bt.reporting_category ?? null)?.toString().slice(0, 64) ?? null,
         type: String(bt.type ?? "unknown").slice(0, 64),
         amountCents: bt.amount,
@@ -164,6 +201,7 @@ async function persistBalanceLines(payoutRowId: string, lines: BalanceTxLike[]):
     });
     written += 1;
   }
+
   return written;
 }
 

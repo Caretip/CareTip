@@ -101,8 +101,10 @@ export const NotificationBell = memo(function NotificationBell({ className }: No
     unreadCount,
     items,
     loading,
+    listError,
     markRead,
     markAllRead,
+    loadNotifications,
   } = useNotifications({ enabled, loadList: open });
 
   const badge = unreadCount > 0;
@@ -127,6 +129,8 @@ export const NotificationBell = memo(function NotificationBell({ className }: No
       close: t("notifications.bell.close"),
       viewAll: t("notifications.bell.viewAll"),
       empty: t("notifications.bell.empty"),
+      loadError: t("notifications.inbox.loadError"),
+      retry: t("notifications.inbox.retry"),
       readLabel: t("notifications.bell.read"),
     }),
     [t],
@@ -173,6 +177,8 @@ export const NotificationBell = memo(function NotificationBell({ className }: No
       items={alertItems}
       unreadCount={unreadCount}
       loading={loading && list.length === 0}
+      listError={listError}
+      onRetryList={() => void loadNotifications({ reset: true })}
       labels={alertLabels}
       onViewAll={handleViewAll}
       onMarkRead={handleMarkRead}
