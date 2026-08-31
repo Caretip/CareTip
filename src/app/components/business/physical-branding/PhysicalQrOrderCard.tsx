@@ -9,6 +9,7 @@ import {
   physicalQrOrderNumber,
 } from "@/app/lib/physicalQrOrderUi";
 import { Button } from "@/components/ui/button";
+import { PhysicalQrStatusBadge } from "./PhysicalQrStatusBadge";
 
 export function PhysicalQrOrderCard({
   order,
@@ -52,8 +53,8 @@ export function PhysicalQrOrderCard({
         </p>
       </div>
       <div className="mt-3 flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
-        <div className="min-w-0">
-          <p className="text-sm font-medium">{status.title}</p>
+        <div className="min-w-0 space-y-1">
+          <PhysicalQrStatusBadge tone={status.tone} label={status.title} />
           {status.detail ? <p className="text-sm text-muted-foreground">{status.detail}</p> : null}
         </div>
         <div className="flex items-center gap-3">

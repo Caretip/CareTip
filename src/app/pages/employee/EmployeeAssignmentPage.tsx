@@ -56,8 +56,12 @@ export function EmployeeAssignmentPage() {
           title={t("employee.assignment.title")}
           description={t("employee.assignment.subtitle").trim() || undefined}
           backAriaLabel={t("employee.assignment.backAria")}
+          backVariant="subtle"
         />
-        <section className={cn(employeeUi.section, "pb-6")} aria-labelledby="employee-assignment-heading">
+        <section
+          className={cn(employeeUi.section, "employee-assignment-page__content pb-6")}
+          aria-labelledby="employee-assignment-heading"
+        >
           <h2 id="employee-assignment-heading" className="sr-only">
             {t("employee.assignment.title")}
           </h2>

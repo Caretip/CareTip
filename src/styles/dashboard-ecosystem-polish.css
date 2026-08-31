@@ -433,3 +433,59 @@
     gap: 1.25rem;
   }
 }
+
+/* Employee — My Assignment (flat surface, compact scan layout) */
+.caretip-dashboard-shell.employee-dashboard .employee-assignment-page .employee-page-header {
+  margin-bottom: 1.25rem;
+  border-bottom: none;
+  padding-bottom: 0;
+  box-shadow: none;
+}
+
+.caretip-dashboard-shell.employee-dashboard .employee-page-header--subtle .employee-page-header__back--subtle {
+  min-height: 2rem;
+  margin-bottom: 0.125rem;
+}
+
+.caretip-dashboard-shell.employee-dashboard .employee-assignment-page__content {
+  margin-top: 0;
+}
+
+.caretip-dashboard-shell.employee-dashboard .employee-assignment-panel__label {
+  margin: 0;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: hsl(var(--muted-foreground));
+}
+
+.caretip-dashboard-shell.employee-dashboard .employee-assignment-panel__table-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+@media (max-width: 639px) {
+  .caretip-dashboard-shell.employee-dashboard .employee-assignment-page .employee-page__inner {
+    padding-top: 0.75rem;
+  }
+
+  .caretip-dashboard-shell.employee-dashboard .employee-assignment-page .employee-page-header--subtle .employee-page-header__back--subtle {
+    font-size: 0.8125rem;
+  }
+
+  .caretip-dashboard-shell.employee-dashboard .employee-assignment-page .employee-page-header--subtle h1 {
+    font-size: 1.25rem;
+    line-height: 1.25;
+  }
+
+  .caretip-dashboard-shell.employee-dashboard .employee-assignment-panel__body {
+    gap: 1.125rem;
+  }
+
+  .caretip-dashboard-shell.employee-dashboard .employee-assignment-panel__table-list > li {
+    padding-top: 0.625rem;
+    padding-bottom: 0.625rem;
+  }
+}

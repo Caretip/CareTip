@@ -139,7 +139,7 @@
   background: hsl(var(--background));
 }
 
-/* Large circular blob — organic curved divider (CareTip slate + orange) */
+/* Large circular blob — organic curved divider (CareTip brand orange) */
 .caretip-auth-curved-blob {
   pointer-events: none;
   position: absolute;
@@ -153,9 +153,26 @@
   transform: translateY(-50%);
   transition: transform 1.8s ease-in-out, right 1.8s ease-in-out;
   background:
-    radial-gradient(circle at 28% 18%, rgba(233, 120, 28, 0.28) 0%, transparent 42%),
-    radial-gradient(circle at 72% 82%, rgba(233, 120, 28, 0.16) 0%, transparent 48%),
-    linear-gradient(145deg, #0f172a 0%, #111827 48%, #1e293b 100%);
+    radial-gradient(circle at 28% 18%, rgba(255, 255, 255, 0.22) 0%, transparent 42%),
+    radial-gradient(circle at 72% 82%, rgba(0, 0, 0, 0.14) 0%, transparent 48%),
+    linear-gradient(
+      145deg,
+      var(--caretip-brand-orange-light, #ff9e2d) 0%,
+      var(--caretip-brand-orange, #e9781c) 52%,
+      #c9650f 100%
+    );
+}
+
+.dark .caretip-auth-curved-blob {
+  background:
+    radial-gradient(circle at 28% 18%, rgba(255, 255, 255, 0.1) 0%, transparent 42%),
+    radial-gradient(circle at 72% 82%, rgba(0, 0, 0, 0.22) 0%, transparent 48%),
+    linear-gradient(
+      145deg,
+      #d96810 0%,
+      var(--caretip-brand-orange, #e9781c) 55%,
+      #a8550a 100%
+    );
 }
 
 .caretip-auth-curved-container--sign-up .caretip-auth-curved-blob {
@@ -382,14 +399,14 @@
   flex-shrink: 0;
   margin-top: 0;
   border-radius: 9999px;
-  border: 1px solid rgba(233, 120, 28, 0.28);
-  background: rgba(233, 120, 28, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  background: rgba(255, 255, 255, 0.14);
   padding: 0.3125rem 0.75rem;
   font-size: 0.6875rem;
   font-weight: 600;
   letter-spacing: 0.04em;
   text-transform: uppercase;
-  color: rgba(255, 220, 190, 0.92);
+  color: rgba(255, 255, 255, 0.95);
 }
 
 .caretip-auth-marketing__headline {
@@ -624,6 +641,10 @@
   width: 1rem;
   flex-shrink: 0;
   margin-top: 0.125rem;
+  color: rgba(255, 255, 255, 0.95);
+}
+
+.caretip-auth-curved-container--sign-up .caretip-auth-marketing__check {
   color: var(--caretip-brand-orange, #e9781c);
 }
 
@@ -783,14 +804,14 @@
     padding-bottom: 0.5rem;
   }
 
-  /* Curved transition into form surface */
+  /* Curved transition into form surface — CareTip orange lip */
   .caretip-auth-mobile-divider {
     display: block;
     flex: 0 0 auto;
     width: 100%;
     height: 1.25rem;
     margin-top: -1.25rem;
-    background: var(--caretip-auth-mobile-surface);
+    background: var(--caretip-brand-orange, #e9781c);
     border-radius: 1.25rem 1.25rem 0 0;
     position: relative;
     z-index: 2;

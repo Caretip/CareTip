@@ -21,6 +21,7 @@ import {
   physicalQrShippingLine,
 } from "@/app/lib/physicalQrOrderUi";
 import { PhysicalQrOrderTimeline } from "../../../components/business/physical-branding/PhysicalQrOrderTimeline";
+import { PhysicalQrStatusBadge } from "../../../components/business/physical-branding/PhysicalQrStatusBadge";
 import { useRequireAuth } from "../../../hooks/useRequireAuth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -188,8 +189,10 @@ export function PhysicalQrOrderDetailPage() {
           </div>
           <div>
             <p className="text-muted-foreground">{t("business.qrStudio.physical.orders.status")}</p>
-            <p className="font-medium">{status.title}</p>
-            {status.detail ? <p className="text-sm text-muted-foreground">{status.detail}</p> : null}
+            <div className="mt-1 space-y-1">
+              <PhysicalQrStatusBadge tone={status.tone} label={status.title} />
+              {status.detail ? <p className="text-sm text-muted-foreground">{status.detail}</p> : null}
+            </div>
           </div>
           <div className="sm:col-span-2">
             <p className="text-muted-foreground">{t("business.qrStudio.physical.orders.cutoff")}</p>

@@ -131,6 +131,157 @@ export function physicalQrPaymentLabel(paymentStatus: string, t: TFunction): str
   return t("business.qrStudio.physical.orders.paymentPending");
 }
 
+/** Distinct progress / payment indicator tones for physical QR order UI. */
+export type PhysicalQrStatusTone =
+  | "placed"
+  | "pending"
+  | "confirming"
+  | "paid"
+  | "processing"
+  | "printing"
+  | "shipped"
+  | "delivered"
+  | "failed"
+  | "cancelled";
+
+export function physicalQrPaymentStatusTone(paymentStatus: string): PhysicalQrStatusTone {
+  switch (paymentStatus) {
+    case "PAID":
+      return "paid";
+    case "FAILED":
+      return "failed";
+    case "CANCELLED":
+      return "cancelled";
+    default:
+      return "pending";
+  }
+}
+
+export function physicalQrFulfillmentStatusTone(fulfillmentStatus: string): PhysicalQrStatusTone {
+  switch (fulfillmentStatus) {
+    case "PENDING_PAYMENT":
+      return "pending";
+    case "PAID":
+      return "paid";
+    case "PROCESSING":
+      return "processing";
+    case "PRINTING":
+      return "printing";
+    case "SHIPPED":
+      return "shipped";
+    case "DELIVERED":
+      return "delivered";
+    case "CANCELLED":
+      return "cancelled";
+    case "PAYMENT_FAILED":
+      return "failed";
+    default:
+      return "processing";
+  }
+}
+
+export function physicalQrCustomerStatusTone(
+  order: { paymentStatus: string; fulfillmentStatus: string },
+  confirming?: boolean,
+): PhysicalQrStatusTone {
+  if (confirming) return "confirming";
+  const { paymentStatus: payment, fulfillmentStatus: fulfillment } = order;
+  if (payment === "FAILED" || fulfillment === "PAYMENT_FAILED") return "failed";
+  if (payment === "CANCELLED" || fulfillment === "CANCELLED") return "cancelled";
+  if (fulfillment === "PENDING_PAYMENT" || payment === "PENDING") return "pending";
+  if (fulfillment === "DELIVERED") return "delivered";
+  if (fulfillment === "SHIPPED") return "shipped";
+  if (fulfillment === "PRINTING") return "printing";
+  if (fulfillment === "PROCESSING") return "processing";
+  if (payment === "PAID" || fulfillment === "PAID") return "paid";
+  return "processing";
+}
+
+const PHYSICAL_QR_STATUS_BADGE: Record<PhysicalQrStatusTone, string> = {
+  placed:
+    "border-stone-200 bg-stone-100 text-stone-800 dark:border-stone-600/50 dark:bg-stone-900/45 dark:text-stone-200",
+  pending:
+    "border-amber-200 bg-amber-50 text-amber-950 dark:border-amber-700/55 dark:bg-amber-950/40 dark:text-amber-100",
+  confirming:
+    "border-sky-200 bg-sky-50 text-sky-950 dark:border-sky-700/55 dark:bg-sky-950/40 dark:text-sky-100",
+  paid:
+    "border-emerald-200 bg-emerald-50 text-emerald-950 dark:border-emerald-700/55 dark:bg-emerald-950/40 dark:text-emerald-100",
+  processing:
+    "border-blue-200 bg-blue-50 text-blue-950 dark:border-blue-700/55 dark:bg-blue-950/40 dark:text-blue-100",
+  printing:
+    "border-violet-200 bg-violet-50 text-violet-950 dark:border-violet-700/55 dark:bg-violet-950/40 dark:text-violet-100",
+  shipped:
+    "border-cyan-200 bg-cyan-50 text-cyan-950 dark:border-cyan-700/55 dark:bg-cyan-950/40 dark:text-cyan-100",
+  delivered:
+    "border-emerald-300 bg-emerald-100 text-emerald-950 dark:border-emerald-600/55 dark:bg-emerald-950/55 dark:text-emerald-50",
+  failed:
+    "border-red-200 bg-red-50 text-red-950 dark:border-red-800/55 dark:bg-red-950/45 dark:text-red-100",
+  cancelled: "border-border bg-muted/70 text-muted-foreground",
+};
+
+const PHYSICAL_QR_STATUS_DOT_DONE: Record<PhysicalQrStatusTone, string> = {
+  placed: "border-stone-400 bg-stone-500 text-white dark:border-stone-500 dark:bg-stone-400",
+  pending: "border-amber-500 bg-amber-500 text-white dark:border-amber-400 dark:bg-amber-500",
+  confirming: "border-sky-500 bg-sky-500 text-white dark:border-sky-400 dark:bg-sky-500",
+  paid: "border-emerald-500 bg-emerald-500 text-white dark:border-emerald-400 dark:bg-emerald-500",
+  processing: "border-blue-500 bg-blue-500 text-white dark:border-blue-400 dark:bg-blue-500",
+  printing: "border-violet-500 bg-violet-500 text-white dark:border-violet-400 dark:bg-violet-500",
+  shipped: "border-cyan-500 bg-cyan-500 text-white dark:border-cyan-400 dark:bg-cyan-500",
+  delivered: "border-emerald-600 bg-emerald-600 text-white dark:border-emerald-500 dark:bg-emerald-600",
+  failed: "border-red-500 bg-red-500 text-white dark:border-red-400 dark:bg-red-500",
+  cancelled: "border-muted-foreground/40 bg-muted text-muted-foreground",
+};
+
+const PHYSICAL_QR_STATUS_DOT_ACTIVE_RING: Record<PhysicalQrStatusTone, string> = {
+  placed: "ring-stone-300/80 dark:ring-stone-500/50",
+  pending: "ring-amber-300/90 dark:ring-amber-500/45",
+  confirming: "ring-sky-300/90 dark:ring-sky-500/45",
+  paid: "ring-emerald-300/90 dark:ring-emerald-500/45",
+  processing: "ring-blue-300/90 dark:ring-blue-500/45",
+  printing: "ring-violet-300/90 dark:ring-violet-500/45",
+  shipped: "ring-cyan-300/90 dark:ring-cyan-500/45",
+  delivered: "ring-emerald-400/90 dark:ring-emerald-500/45",
+  failed: "ring-red-300/90 dark:ring-red-500/45",
+  cancelled: "ring-border",
+};
+
+export function physicalQrStatusBadgeClasses(tone: PhysicalQrStatusTone): string {
+  return PHYSICAL_QR_STATUS_BADGE[tone] ?? PHYSICAL_QR_STATUS_BADGE.processing;
+}
+
+export function physicalQrStatusDotClasses(
+  tone: PhysicalQrStatusTone,
+  options: { done: boolean; active?: boolean },
+): string {
+  if (options.done) {
+    return PHYSICAL_QR_STATUS_DOT_DONE[tone] ?? PHYSICAL_QR_STATUS_DOT_DONE.processing;
+  }
+  if (options.active) {
+    const ring = PHYSICAL_QR_STATUS_DOT_ACTIVE_RING[tone] ?? PHYSICAL_QR_STATUS_DOT_ACTIVE_RING.processing;
+    return `border-border bg-background text-muted-foreground ring-2 ring-offset-2 ring-offset-background ${ring}`;
+  }
+  return "border-border bg-background text-muted-foreground";
+}
+
+export function physicalQrTimelineStepTone(stepId: PhysicalQrTimelineStepId): PhysicalQrStatusTone {
+  switch (stepId) {
+    case "placed":
+      return "placed";
+    case "paid":
+      return "paid";
+    case "processing":
+      return "processing";
+    case "printing":
+      return "printing";
+    case "shipped":
+      return "shipped";
+    case "delivered":
+      return "delivered";
+    default:
+      return "processing";
+  }
+}
+
 export function physicalQrFulfillmentLabel(fulfillmentStatus: string, t: TFunction): string {
   switch (fulfillmentStatus) {
     case "PENDING_PAYMENT":
@@ -158,9 +309,11 @@ export function physicalQrCustomerStatus(
   order: { paymentStatus: string; fulfillmentStatus: string },
   t: TFunction,
   confirming?: boolean,
-): { title: string; detail: string | null } {
+): { title: string; detail: string | null; tone: PhysicalQrStatusTone } {
+  const tone = physicalQrCustomerStatusTone(order, confirming);
   if (confirming) {
     return {
+      tone,
       title: t("business.qrStudio.physical.orders.confirmingTitle"),
       detail: t("business.qrStudio.physical.orders.statusConfirmingDetail"),
     };
@@ -169,32 +322,43 @@ export function physicalQrCustomerStatus(
   const fulfillment = order.fulfillmentStatus;
   if (payment === "FAILED" || fulfillment === "PAYMENT_FAILED") {
     return {
+      tone,
       title: t("business.qrStudio.physical.orders.paymentFailed"),
       detail: t("business.qrStudio.physical.orders.statusFailedDetail"),
     };
   }
   if (payment === "CANCELLED" || fulfillment === "CANCELLED") {
-    return { title: t("business.qrStudio.physical.orders.cancelled"), detail: null };
+    return { tone, title: t("business.qrStudio.physical.orders.cancelled"), detail: null };
   }
   if (fulfillment === "PENDING_PAYMENT" || payment === "PENDING") {
     return {
+      tone,
       title: t("business.qrStudio.physical.orders.paymentPending"),
       detail: t("business.qrStudio.physical.orders.statusPendingDetail"),
     };
   }
   if (fulfillment === "DELIVERED") {
-    return { title: t("business.qrStudio.physical.orders.delivered"), detail: null };
+    return { tone, title: t("business.qrStudio.physical.orders.delivered"), detail: null };
   }
   if (fulfillment === "SHIPPED") {
     return {
+      tone,
       title: t("business.qrStudio.physical.orders.shipped"),
       detail: t("business.qrStudio.physical.orders.statusShippedDetail"),
     };
   }
   if (fulfillment === "PRINTING") {
-    return { title: t("business.qrStudio.physical.orders.beingPrinted"), detail: null };
+    return { tone, title: t("business.qrStudio.physical.orders.beingPrinted"), detail: null };
+  }
+  if (fulfillment === "PROCESSING") {
+    return {
+      tone,
+      title: t("business.qrStudio.physical.orders.processing"),
+      detail: t("business.qrStudio.physical.orders.statusProcessingDetail"),
+    };
   }
   return {
+    tone,
     title: t("business.qrStudio.physical.orders.paymentReceived"),
     detail: t("business.qrStudio.physical.orders.statusProcessingDetail"),
   };

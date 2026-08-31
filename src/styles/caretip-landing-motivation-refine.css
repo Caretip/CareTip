@@ -635,6 +635,11 @@ html.dark .caretip-motivation-activity-feed-mobile__dot.caretip-motivation-activ
     padding: 0.15rem 0.45rem;
     font-size: 0.5625rem;
   }
+
+  /* Activity feed — show three highlights on mobile (tip, review, dashboard) */
+  .caretip-landing #recognition .caretip-motivation-activity__card:nth-child(n + 4) {
+    display: none;
+  }
 }
 
 @media (min-width: 768px) {
