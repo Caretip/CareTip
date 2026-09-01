@@ -136,12 +136,54 @@ export async function getBusinessByUserId(userId: string) {
   });
 }
 
+export type BusinessHardDeleteBlocker = "tips" | "refunds" | "connect_payouts" | "physical_qr_orders";
+
+/** Preflight refused an empty-venue wipe because protected Restrict history exists. */
+export class BusinessHardDeleteBlockedError extends Error {
+  readonly blocker: BusinessHardDeleteBlocker;
+  constructor(blocker: BusinessHardDeleteBlocker, message: string) {
+    super(message);
+    this.name = "BusinessHardDeleteBlockedError";
+    this.blocker = blocker;
+  }
+}
+
+/** Application deleted the owner User while Business.user_id still referenced them. */
+export class BusinessHardDeleteOrderError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "BusinessHardDeleteOrderError";
+  }
+}
+
+const HARD_DELETE_BLOCKED_MESSAGE: Record<BusinessHardDeleteBlocker, string> = {
+  tips: "Cannot hard-delete business with tips; use soft-close/deactivation instead.",
+  refunds: "Cannot hard-delete business with tip refunds; use soft-close/deactivation instead.",
+  connect_payouts: "Cannot hard-delete business with Connect payouts; use soft-close/deactivation instead.",
+  physical_qr_orders:
+    "Cannot hard-delete business with physical QR orders; use soft-close/deactivation instead.",
+};
+
+function prismaFkConstraintName(err: unknown): string {
+  if (!(err instanceof Prisma.PrismaClientKnownRequestError)) return "";
+  const meta = (err.meta ?? {}) as Record<string, unknown>;
+  return String(meta.constraint ?? meta.field_name ?? meta.fieldName ?? err.message ?? "");
+}
+
+function isPrismaForeignKeyError(err: unknown): boolean {
+  return err instanceof Prisma.PrismaClientKnownRequestError && (err.code === "P2003" || err.code === "P2014");
+}
+
+function mentionsBusinessesUserIdFkey(err: unknown): boolean {
+  const blob = `${prismaFkConstraintName(err)} ${err instanceof Error ? err.message : ""}`;
+  return /businesses_user_id_fkey/i.test(blob);
+}
+
 /**
- * Hard-delete a venue with empty financial history only (Slice D / D.1 / T-F02).
- * Business.user is Restrict — owner User cannot be deleted while Business exists.
- * Transaction.business + TipRefund.business are Restrict — DB refuses ledger wipe even if
- * application checks are bypassed.
- * Tips/refunds must never be cascade-wiped: refuse when ledger rows exist.
+ * Hard-delete a venue with empty protected history only (Slice D / D.1 / T-F02).
+ * Order: preflight Restrict children → delete Business (Cascade children) → staff Users → owner User.
+ * Never delete the owner User while Business.user_id still references them (Restrict).
+ * Do not CASCADE tips, refunds, Connect payouts, or physical QR orders.
  */
 export async function deleteBusinessCascadeUsers(businessId: string): Promise<void> {
   await prisma.$transaction(async (tx) => {
@@ -163,13 +205,28 @@ export async function deleteBusinessCascadeUsers(businessId: string): Promise<vo
       throw new Error("Business owner user has unexpected role; delete aborted");
     }
 
-    const [tipCount, refundCount] = await Promise.all([
+    const [tipCount, refundCount, payoutCount, physicalQrOrderCount] = await Promise.all([
       tx.transaction.count({ where: { businessId } }),
       tx.tipRefund.count({ where: { businessId } }),
+      tx.stripeConnectPayout.count({ where: { businessId } }),
+      tx.physicalQrOrder.count({ where: { businessId } }),
     ]);
-    if (tipCount > 0 || refundCount > 0) {
-      throw new Error(
-        "Cannot hard-delete business with financial history; use soft-close (SOLE_BUSINESS_OWNER / ledger retention)",
+    if (tipCount > 0) {
+      throw new BusinessHardDeleteBlockedError("tips", HARD_DELETE_BLOCKED_MESSAGE.tips);
+    }
+    if (refundCount > 0) {
+      throw new BusinessHardDeleteBlockedError("refunds", HARD_DELETE_BLOCKED_MESSAGE.refunds);
+    }
+    if (payoutCount > 0) {
+      throw new BusinessHardDeleteBlockedError(
+        "connect_payouts",
+        HARD_DELETE_BLOCKED_MESSAGE.connect_payouts,
+      );
+    }
+    if (physicalQrOrderCount > 0) {
+      throw new BusinessHardDeleteBlockedError(
+        "physical_qr_orders",
+        HARD_DELETE_BLOCKED_MESSAGE.physical_qr_orders,
       );
     }
 
@@ -196,26 +253,42 @@ export async function deleteBusinessCascadeUsers(businessId: string): Promise<vo
       staffUserIds.push(row.userId);
     }
 
-    // Delete Business first (Restrict prevents deleting owner while Business exists).
-    // Empty tip/refund ledger only — Restrict on tips/tip_refunds blocks ledger wipe at DB.
-    // Other child rows (employees, locations, …) still Cascade when ledger is empty.
+    // 1) Business first — Restrict owner FK forbids deleting User while this row exists.
+    // CASCADE children (employees, locations, invites, …) follow. Restrict ledger stays blocked by preflight.
     try {
       await tx.business.delete({ where: { id: businessId } });
     } catch (err) {
-      const { Prisma } = await import("@prisma/client");
-      if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === "P2003") {
+      if (isPrismaForeignKeyError(err)) {
         throw new Error(
-          "Cannot hard-delete business with financial history; use soft-close (SOLE_BUSINESS_OWNER / ledger retention)",
+          `Cannot hard-delete business: unexpected foreign-key constraint (${prismaFkConstraintName(err) || "unknown"}). Use soft-close/deactivation instead.`,
         );
       }
       throw err;
     }
 
+    // 2) Staff Users that belonged only to this venue.
     if (staffUserIds.length > 0) {
       await tx.user.deleteMany({ where: { id: { in: staffUserIds } } });
     }
 
-    await tx.user.delete({ where: { id: ownerUserId } });
+    // 3) Owner User only after Business is gone (businesses_user_id_fkey Restrict).
+    try {
+      await tx.user.delete({ where: { id: ownerUserId } });
+    } catch (err) {
+      if (isPrismaForeignKeyError(err) && mentionsBusinessesUserIdFkey(err)) {
+        const { logServerError } = await import("../utils/httpErrors.js");
+        logServerError("business.deleteBusinessCascadeUsers.ownerUser", err, {
+          businessId,
+          ownerUserId,
+          constraint: "businesses_user_id_fkey",
+          note: "Owner User is being deleted while Business still exists — deletion-order bug. Delete Business first.",
+        });
+        throw new BusinessHardDeleteOrderError(
+          "Deletion-order error: owner User cannot be deleted while Business still references it (businesses_user_id_fkey). Delete the Business first.",
+        );
+      }
+      throw err;
+    }
   });
 
   emitBusinessDataChanged(businessId, "business_deleted");

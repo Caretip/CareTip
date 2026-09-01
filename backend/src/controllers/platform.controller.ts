@@ -477,10 +477,18 @@ export async function deleteBusiness(req: Request, res: Response) {
     if (msg === "Business not found") {
       return res.status(404).json({ message: msg });
     }
+    if (err instanceof businessService.BusinessHardDeleteBlockedError) {
+      return res.status(400).json({ message: err.message, blocker: err.blocker });
+    }
+    if (err instanceof businessService.BusinessHardDeleteOrderError) {
+      logServerError("platform.deleteBusiness.deletionOrder", err);
+      return res.status(500).json({
+        message: clientSafeMessage(err, "We couldn't delete that business. Try again."),
+      });
+    }
     if (
       msg.startsWith("Cannot delete") ||
       msg.startsWith("Cannot hard-delete") ||
-      msg.includes("financial history") ||
       msg.includes("unexpected role") ||
       msg.includes("delete aborted")
     ) {

@@ -8,7 +8,7 @@ import "dotenv/config";
 import "../src/loadEnv.js";
 import bcrypt from "bcrypt";
 import { prisma } from "../src/prisma.js";
-import { deleteBusinessCascadeUsers } from "../src/services/business.service.js";
+import { deleteBusinessCascadeUsers, BusinessHardDeleteBlockedError } from "../src/services/business.service.js";
 import { softDeleteBusinessForAdmin } from "../src/services/businessOperationalLifecycle.service.js";
 import { requestAccountErasure } from "../src/services/erasureRequest.service.js";
 
@@ -82,7 +82,10 @@ async function main() {
     try {
       await deleteBusinessCascadeUsers(bizId);
     } catch (e) {
-      appBlockedTips = e instanceof Error && /financial history/i.test(e.message);
+      appBlockedTips =
+        e instanceof BusinessHardDeleteBlockedError
+          ? e.blocker === "tips"
+          : e instanceof Error && /with tips/i.test(e.message);
     }
     if (appBlockedTips) pass("app refuses hard-delete when transactions exist");
     else fail("app should refuse hard-delete when transactions exist");
@@ -116,7 +119,10 @@ async function main() {
       try {
         await deleteBusinessCascadeUsers(bizId);
       } catch (e) {
-        appBlockedRefunds = e instanceof Error && /financial history/i.test(e.message);
+        appBlockedRefunds =
+          e instanceof BusinessHardDeleteBlockedError
+            ? e.blocker === "refunds"
+            : e instanceof Error && /tip refunds/i.test(e.message);
       }
       if (appBlockedRefunds) pass("app refuses hard-delete when refunds exist (no tips)");
       else fail("app should refuse hard-delete when only refunds exist");
@@ -210,6 +216,22 @@ async function main() {
     if (softApiSafe) pass("soft-delete path does not destroy tip history");
     else fail("soft-delete path destroyed tip");
 
+    let softWithTipsRefused = false;
+    try {
+      await softDeleteBusinessForAdmin(softBizId, { adminUserId: softMgr.id, reason: "tips" });
+    } catch {
+      softWithTipsRefused = true;
+    }
+    if (
+      softWithTipsRefused &&
+      (await prisma.transaction.count({ where: { id: softTip.id } })) === 1 &&
+      (await prisma.business.count({ where: { id: softBizId } })) === 1
+    ) {
+      pass("G: soft-delete with tips refused by production rules; tips and business remain");
+    } else {
+      fail("G: soft-delete with tips should refuse and leave ledger/business");
+    }
+
     // Eligible soft-delete API (no tip history)
     const emptySoft = await prisma.user.create({
       data: {
@@ -243,6 +265,106 @@ async function main() {
       fail(`eligible soft-delete state unexpected: ${JSON.stringify(emptySoftBiz)}`);
     }
 
+    // D — physical QR orders Restrict preflight
+    const pqMgr = await prisma.user.create({
+      data: {
+        email: `slice-d1-pq-${tag}@caretip-test.local`,
+        passwordHash,
+        role: "MANAGER",
+        emailVerified: true,
+        business: {
+          create: {
+            name: "Slice D1 PQ",
+            slug: `slice-d1-pq-${tag}`,
+            verificationStatus: "verified",
+            subscriptionTier: "basic",
+          },
+        },
+      },
+      include: { business: true },
+    });
+    const pqBizId = pqMgr.business!.id;
+    createdBizIds.push(pqBizId);
+    createdUserIds.push(pqMgr.id);
+    await prisma.physicalQrOrder.create({
+      data: {
+        businessId: pqBizId,
+        userId: pqMgr.id,
+        quantity: 1,
+        unitPrice: 990,
+        totalAmount: 990,
+        currency: "EUR",
+        placedAt: new Date(),
+        processingClass: "SAME_DAY",
+        processingDeadlineAt: new Date(Date.now() + 3600_000),
+        processingCopySnapshot: {},
+        businessNameSnapshot: "Slice D1 PQ",
+      },
+    });
+    let pqBlocked = false;
+    try {
+      await deleteBusinessCascadeUsers(pqBizId);
+    } catch (e) {
+      pqBlocked =
+        e instanceof BusinessHardDeleteBlockedError
+          ? e.blocker === "physical_qr_orders"
+          : e instanceof Error && /physical QR orders/i.test(e.message);
+    }
+    if (pqBlocked && (await prisma.physicalQrOrder.count({ where: { businessId: pqBizId } })) === 1) {
+      pass("D: hard-delete refused when physical QR orders exist; orders intact");
+    } else {
+      fail("D: hard-delete should refuse physical QR orders");
+    }
+
+    // E — Connect payouts Restrict preflight
+    const poMgr = await prisma.user.create({
+      data: {
+        email: `slice-d1-po-${tag}@caretip-test.local`,
+        passwordHash,
+        role: "MANAGER",
+        emailVerified: true,
+        business: {
+          create: {
+            name: "Slice D1 Payout",
+            slug: `slice-d1-po-${tag}`,
+            verificationStatus: "verified",
+            subscriptionTier: "premium",
+          },
+        },
+      },
+      include: { business: true },
+    });
+    const poBizId = poMgr.business!.id;
+    createdBizIds.push(poBizId);
+    createdUserIds.push(poMgr.id);
+    await prisma.stripeConnectPayout.create({
+      data: {
+        businessId: poBizId,
+        stripeAccountId: `acct_slice_d1_${tag}`,
+        stripePayoutId: `po_slice_d1_${tag}`,
+        amountCents: 500,
+        currency: "eur",
+        status: "paid",
+        stripeCreatedAt: new Date(),
+        lastStripeEventCreated: 1,
+        lastStripeEventType: "payout.paid",
+      },
+    });
+    let poBlocked = false;
+    try {
+      await deleteBusinessCascadeUsers(poBizId);
+    } catch (e) {
+      poBlocked =
+        e instanceof BusinessHardDeleteBlockedError
+          ? e.blocker === "connect_payouts"
+          : e instanceof Error && /Connect payouts/i.test(e.message);
+    }
+    if (poBlocked && (await prisma.stripeConnectPayout.count({ where: { businessId: poBizId } })) === 1) {
+      pass("E: hard-delete refused when Connect payouts exist; payouts intact");
+    } else {
+      fail("E: hard-delete should refuse Connect payouts");
+    }
+
     // Empty/eligible Business hard-delete still works
     const emptyMgr = await prisma.user.create({
       data: {
@@ -262,12 +384,33 @@ async function main() {
       include: { business: true },
     });
     const emptyBizId = emptyMgr.business!.id;
-    // deleteBusinessCascadeUsers removes business + owner; don't track for cleanup
+    const emptyStaff = await prisma.user.create({
+      data: {
+        email: `slice-d1-empty-staff-${tag}@caretip-test.local`,
+        passwordHash,
+        role: "EMPLOYEE",
+        emailVerified: true,
+        employee: {
+          create: {
+            name: "Empty Staff",
+            jobTitle: "Bar",
+            businessId: emptyBizId,
+            isActive: true,
+            activationStatus: "active",
+          },
+        },
+      },
+    });
     await deleteBusinessCascadeUsers(emptyBizId);
     const emptyGone = await prisma.business.findUnique({ where: { id: emptyBizId } });
     const emptyUserGone = await prisma.user.findUnique({ where: { id: emptyMgr.id } });
-    if (!emptyGone && !emptyUserGone) pass("empty Business hard-delete still works");
-    else fail("empty Business hard-delete failed");
+    const emptyStaffGone = await prisma.user.findUnique({ where: { id: emptyStaff.id } });
+    const leftoverOwnerLink = await prisma.business.findFirst({ where: { userId: emptyMgr.id } });
+    if (!emptyGone && !emptyUserGone && !emptyStaffGone && !leftoverOwnerLink) {
+      pass("F: empty Business hard-delete removes business, cascades, staff, then owner");
+    } else {
+      fail("F: empty Business hard-delete failed");
+    }
 
     // Art. 17 cannot physically delete Business with financial records
     await prisma.transaction.create({
@@ -308,6 +451,8 @@ async function main() {
       .catch(() => undefined);
 
     for (const id of createdBizIds) {
+      await prisma.physicalQrOrder.deleteMany({ where: { businessId: id } }).catch(() => undefined);
+      await prisma.stripeConnectPayout.deleteMany({ where: { businessId: id } }).catch(() => undefined);
       await prisma.tipRefund.deleteMany({ where: { businessId: id } }).catch(() => undefined);
       await prisma.transaction.deleteMany({ where: { businessId: id } }).catch(() => undefined);
       await prisma.employee.deleteMany({ where: { businessId: id } }).catch(() => undefined);

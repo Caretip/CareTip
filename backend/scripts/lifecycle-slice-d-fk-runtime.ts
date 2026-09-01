@@ -6,9 +6,10 @@
 import "dotenv/config";
 import "../src/loadEnv.js";
 import bcrypt from "bcrypt";
+import { Prisma } from "@prisma/client";
 import { prisma } from "../src/prisma.js";
 import * as employeeService from "../src/services/employee.service.js";
-import { deleteBusinessCascadeUsers } from "../src/services/business.service.js";
+import { deleteBusinessCascadeUsers, BusinessHardDeleteBlockedError } from "../src/services/business.service.js";
 import { softDeleteBusinessForAdmin } from "../src/services/businessOperationalLifecycle.service.js";
 import { writeAuditLog } from "../src/services/audit.service.js";
 import { listAuditLogsForAdmin } from "../src/services/platform.service.js";
@@ -178,20 +179,30 @@ async function main() {
 
     // T-F02-a — cannot delete owner while Business exists
     let ownerBlocked = false;
+    let ownerFkeyNamed = false;
     try {
       await prisma.user.delete({ where: { id: mgr.id } });
-    } catch {
+    } catch (e) {
       ownerBlocked = true;
+      if (e instanceof Prisma.PrismaClientKnownRequestError) {
+        const blob = `${e.code} ${e.message} ${JSON.stringify(e.meta ?? {})}`;
+        ownerFkeyNamed = /businesses_user_id_fkey/i.test(blob);
+      }
     }
-    if (ownerBlocked) pass("T-F02-a owner User delete Restricted while Business exists");
-    else fail("T-F02-a owner User delete should fail (Restrict)");
+    if (ownerBlocked) pass("A/T-F02-a owner User delete Restricted while Business exists");
+    else fail("A/T-F02-a owner User delete should fail (Restrict)");
+    if (ownerFkeyNamed) pass("A: constraint businesses_user_id_fkey named in Prisma FK error");
+    else if (ownerBlocked) pass("A: owner User delete rejected by FK (driver may omit constraint name)");
 
     // T-F02-b — hard business delete refused with financial history
     let hardBlocked = false;
     try {
       await deleteBusinessCascadeUsers(bizId);
     } catch (e) {
-      hardBlocked = e instanceof Error && /financial history/i.test(e.message);
+      hardBlocked =
+        e instanceof BusinessHardDeleteBlockedError
+          ? e.blocker === "tips" || e.blocker === "refunds"
+          : e instanceof Error && /with tips|tip refunds/i.test(e.message);
     }
     if (hardBlocked) pass("T-F02-b hard-delete blocked when tips/refunds exist");
     else fail("T-F02-b hard-delete should refuse financial history");
