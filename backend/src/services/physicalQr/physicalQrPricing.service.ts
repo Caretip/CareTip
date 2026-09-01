@@ -1,3 +1,4 @@
+import type { Prisma } from "@prisma/client";
 import { prisma } from "../../prisma.js";
 import { hasFeature } from "../subscriptionEntitlement.service.js";
 import { PHYSICAL_QR_PROCESSING_TIMEZONE } from "../../lib/physicalQr/processing.js";
@@ -149,7 +150,7 @@ export async function clearPhysicalQrOrderMonthlyFreeQuota(orderId: string): Pro
 }
 
 /**
- * Persist Albertina columns without requiring a regenerated Prisma client.
+ * Persist Albertina quote snapshot and consumption flag.
  * monthly_free_quota_applied is consumption, not preview eligibility.
  * It is true only when this order has a quotaClaimedAt from a successful claim.
  */
@@ -174,23 +175,23 @@ export async function persistPhysicalQrAlbertinaOrderColumns(input: {
     else claimedAtIso = null;
   }
   const consumed = Boolean(claimedAtIso);
-  await prisma.$executeRawUnsafe(
-    `UPDATE physical_qr_orders
-     SET pricing_snapshot = $1::jsonb, monthly_free_quota_applied = $2
-     WHERE id = $3`,
-    JSON.stringify(snapshot),
-    consumed,
-    input.orderId,
-  );
+  await prisma.physicalQrOrder.update({
+    where: { id: input.orderId },
+    data: {
+      pricingSnapshot: snapshot as Prisma.InputJsonValue,
+      monthlyFreeQuotaApplied: consumed,
+    },
+  });
   for (const item of input.items ?? []) {
-    await prisma.$executeRawUnsafe(
-      `UPDATE physical_qr_order_items
-       SET location_id = $1, location_name_snapshot = $2
-       WHERE order_id = $3 AND qr_target_url_snapshot = $4`,
-      item.locationId,
-      item.locationName ? item.locationName.slice(0, 160) : null,
-      input.orderId,
-      item.qrTargetUrl,
-    );
+    await prisma.physicalQrOrderItem.updateMany({
+      where: {
+        orderId: input.orderId,
+        qrTargetUrlSnapshot: item.qrTargetUrl,
+      },
+      data: {
+        locationId: item.locationId,
+        locationNameSnapshot: item.locationName ? item.locationName.slice(0, 160) : null,
+      },
+    });
   }
 }
