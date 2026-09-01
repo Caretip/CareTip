@@ -866,6 +866,11 @@ model Business {
   legalHoldReleaseReason   String?                    @map("legal_hold_release_reason") @db.Text
   /** Set when non-essential assets are stripped; financial/Stripe mapping retained. */
   tombstonedAt             DateTime?                  @map("tombstoned_at")
+  /**
+   * Albertina Pro monthly free physical-QR order. Null = never used.
+   * Concurrent checkouts claim with UPDATE … WHERE unused this calendar month.
+   */
+  physicalQrFreeOrderUsedAt DateTime?                 @map("physical_qr_free_order_used_at")
   /** Venue / business creation time — platform growth SSOT (not manager user proxy). */
   createdAt                DateTime                   @default(now()) @map("created_at")
 
@@ -1493,6 +1498,9 @@ model PhysicalQrOrder {
   quantity                Int                          @default(0)
   unitPrice               Int                          @default(0) @map("unit_price")
   totalAmount             Int                          @map("total_amount")
+  /// Albertina package/quota breakdown (included prints, extras, totals). Source of truth with totalAmount.
+  pricingSnapshot         Json?                        @map("pricing_snapshot")
+  monthlyFreeQuotaApplied Boolean                      @default(false) @map("monthly_free_quota_applied")
   currency                String                       @db.VarChar(3)
   placedAt                DateTime                     @map("placed_at")
   processingClass         PhysicalQrProcessingClass    @map("processing_class")
@@ -1542,6 +1550,8 @@ model PhysicalQrOrderItem {
   qrSubjectId         String?               @map("qr_subject_id")
   qrTargetUrlSnapshot String                @map("qr_target_url_snapshot") @db.Text
   labelSnapshot       String                @map("label_snapshot") @db.VarChar(200)
+  locationId          String?               @map("location_id")
+  locationNameSnapshot String?              @map("location_name_snapshot") @db.VarChar(160)
   quantity            Int
   unitPrice           Int                   @map("unit_price")
   totalAmount         Int                   @map("total_amount")

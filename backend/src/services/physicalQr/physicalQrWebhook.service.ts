@@ -1,6 +1,15 @@
 import type Stripe from "stripe";
 import { prisma } from "../../prisma.js";
 import { PHYSICAL_QR_CHECKOUT_METADATA_SOURCE } from "../../config/physicalQrCheckout.js";
+import {
+  berlinCalendarMonthStart,
+  clearPhysicalQrOrderMonthlyFreeQuota,
+  hasPaidPhysicalQrMonthlyFreeOrderThisMonth,
+  parseStoredPhysicalQrQuote,
+  readPhysicalQrQuotaState,
+  releasePhysicalQrMonthlyFreeOrderClaim,
+  shouldReleasePhysicalQrQuotaOnExpire,
+} from "./physicalQrPricing.service.js";
 
 async function markParentOrderPaid(input: {
   orderId: string;
@@ -134,9 +143,67 @@ export async function handlePhysicalQrCheckoutSessionCompleted(
   return markParentOrderPaid({ orderId, businessId, session });
 }
 
-export async function handlePhysicalQrCheckoutExpired(session: Stripe.Checkout.Session): Promise<void> {
-  if (session.metadata?.source !== PHYSICAL_QR_CHECKOUT_METADATA_SOURCE) return;
-  // Expired Checkout remains payable. Pay now creates a new Session on the same parent order.
+export async function handlePhysicalQrCheckoutExpired(
+  session: Stripe.Checkout.Session,
+): Promise<{ released: boolean; reason?: string }> {
+  if (session.metadata?.source !== PHYSICAL_QR_CHECKOUT_METADATA_SOURCE) {
+    return { released: false, reason: "wrong_source" };
+  }
+  if (session.status && session.status !== "expired") {
+    return { released: false, reason: "session_not_expired" };
+  }
+
+  const orderId = session.metadata.orderId?.trim();
+  const businessId = session.metadata.businessId?.trim();
+  if (!orderId || !businessId) {
+    return { released: false, reason: "missing_metadata" };
+  }
+
+  const order = await prisma.physicalQrOrder.findFirst({
+    where: { id: orderId, businessId },
+    select: {
+      id: true,
+      paymentStatus: true,
+      stripeCheckoutSessionId: true,
+      monthlyFreeQuotaApplied: true,
+      pricingSnapshot: true,
+    },
+  });
+  if (!order) {
+    return { released: false, reason: "order_not_found" };
+  }
+
+  const stored = parseStoredPhysicalQrQuote(order.pricingSnapshot);
+  const quotaClaimedAt = stored?.quotaClaimedAt ? new Date(stored.quotaClaimedAt) : null;
+  if (!quotaClaimedAt || Number.isNaN(quotaClaimedAt.getTime())) {
+    return { released: false, reason: "not_releasable" };
+  }
+
+  const quota = await readPhysicalQrQuotaState(businessId);
+  const monthStart = berlinCalendarMonthStart(new Date(), quota?.timezone);
+  const paidFreeOrderThisMonth = await hasPaidPhysicalQrMonthlyFreeOrderThisMonth(businessId, monthStart);
+
+  if (
+    !quotaClaimedAt ||
+    !shouldReleasePhysicalQrQuotaOnExpire({
+      sessionId: session.id,
+      orderSessionId: order.stripeCheckoutSessionId,
+      paymentStatus: order.paymentStatus,
+      monthlyFreeQuotaApplied: order.monthlyFreeQuotaApplied,
+      quotaClaimedAt,
+      paidFreeOrderThisMonth,
+    })
+  ) {
+    return { released: false, reason: "not_releasable" };
+  }
+
+  await releasePhysicalQrMonthlyFreeOrderClaim({
+    businessId,
+    claimedAt: quotaClaimedAt,
+    previousUsedAt: null,
+  });
+  await clearPhysicalQrOrderMonthlyFreeQuota(order.id);
+  return { released: true };
 }
 
 export async function handlePhysicalQrPaymentFailed(paymentIntent: Stripe.PaymentIntent): Promise<void> {

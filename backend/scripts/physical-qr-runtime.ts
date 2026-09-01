@@ -43,8 +43,10 @@ import {
   PHYSICAL_QR_CHECKOUT_NOT_ACTIVATED,
   PHYSICAL_QR_PRICE_NOT_CONFIGURED,
 } from "../src/config/physicalQrCheckout.js";
+import { quotePhysicalQrPrints, resolvePhysicalQrCheckoutQuote, shouldReleasePhysicalQrQuotaOnExpire, isPhysicalQrFreeOrderUsedThisMonth, orderHasConsumedMonthlyFreeQuota } from "../src/lib/physicalQr/quote.js";
 import { hasSubscriptionCapability } from "../src/config/subscriptionCapabilities.js";
 import { jpegToA5Pdf, jpegsToA5Pdf } from "../src/lib/physicalQr/pdfA5.js";
+import { crc32, zipStore } from "../src/lib/physicalQr/zipStore.js";
 
 const results: string[] = [];
 const pass = (m: string) => results.push(`PASS: ${m}`);
@@ -181,12 +183,247 @@ function sectionColors() {
   else fail("low-contrast colours should be rejected");
 }
 
+function sectionAlbertinaPricing() {
+  const basic4 = quotePhysicalQrPrints({ printCount: 4, printingIncludedEligible: false, freeOrderAvailable: false });
+  const basic5 = quotePhysicalQrPrints({ printCount: 5, printingIncludedEligible: false, freeOrderAvailable: false });
+  const basic10 = quotePhysicalQrPrints({ printCount: 10, printingIncludedEligible: false, freeOrderAvailable: false });
+  if (basic4.totalCents === 1490) pass("Basic 4 prints = €14.90");
+  else fail(`Basic 4 got ${basic4.totalCents}`);
+  if (basic5.totalCents === 1620) pass("Basic 5 prints = €16.20");
+  else fail(`Basic 5 got ${basic5.totalCents}`);
+  if (basic10.totalCents === 2270) pass("Basic 10 prints = €22.70");
+  else fail(`Basic 10 got ${basic10.totalCents}`);
+
+  const pro8 = quotePhysicalQrPrints({ printCount: 8, printingIncludedEligible: true, freeOrderAvailable: true });
+  const pro9 = quotePhysicalQrPrints({ printCount: 9, printingIncludedEligible: true, freeOrderAvailable: true });
+  const pro10 = quotePhysicalQrPrints({ printCount: 10, printingIncludedEligible: true, freeOrderAvailable: true });
+  if (pro8.totalCents === 0 && pro8.freeOrderApplied) pass("Pro free order 8 prints = €0");
+  else fail(`Pro 8 got ${pro8.totalCents}`);
+  if (pro9.totalCents === 130) pass("Pro free order 9 prints = €1.30");
+  else fail(`Pro 9 got ${pro9.totalCents}`);
+  if (pro10.totalCents === 260) pass("Pro free order 10 prints = €2.60");
+  else fail(`Pro 10 got ${pro10.totalCents}`);
+
+  const proUsed = quotePhysicalQrPrints({ printCount: 4, printingIncludedEligible: true, freeOrderAvailable: false });
+  if (proUsed.totalCents === 1490 && !proUsed.freeOrderApplied) pass("Pro after quota used uses Basic package");
+  else fail(`Pro used quota got ${proUsed.totalCents}`);
+
+  const storedFree = quotePhysicalQrPrints({
+    printCount: 8,
+    printingIncludedEligible: true,
+    freeOrderAvailable: true,
+  });
+  const retrySameOrder = resolvePhysicalQrCheckoutQuote({
+    printCount: 8,
+    printingIncludedEligible: true,
+    freeOrderAvailable: false,
+    orderMonthlyFreeQuotaApplied: true,
+    storedQuote: { ...storedFree, quotaClaimedAt: "2026-08-31T10:00:00.000Z" },
+  });
+  if (
+    retrySameOrder.reuseStoredFreeQuote &&
+    retrySameOrder.quote.totalCents === 0 &&
+    retrySameOrder.quote.freeOrderApplied &&
+    retrySameOrder.quotaClaimedAt?.toISOString() === "2026-08-31T10:00:00.000Z"
+  ) {
+    pass("Same PENDING free order checkout retry keeps the free quote");
+  } else fail("same-order checkout retry lost the free quote");
+
+  const secondOrder = resolvePhysicalQrCheckoutQuote({
+    printCount: 4,
+    printingIncludedEligible: true,
+    freeOrderAvailable: false,
+    orderMonthlyFreeQuotaApplied: false,
+    storedQuote: null,
+  });
+  if (!secondOrder.reuseStoredFreeQuote && secondOrder.quote.totalCents === 1490 && !secondOrder.quote.freeOrderApplied) {
+    pass("Second unrelated Pro order after quota is consumed receives paid package pricing");
+  } else fail(`second Pro order after quota got ${secondOrder.quote.totalCents}`);
+
+  if (retrySameOrder.quote.totalCents === storedFree.totalCents) {
+    pass("Same PENDING free order totalAmount stays on the established free quote");
+  } else fail("retry checkout changed the free-order total");
+
+  const forgedClientFlag = resolvePhysicalQrCheckoutQuote({
+    printCount: 8,
+    printingIncludedEligible: true,
+    freeOrderAvailable: false,
+    orderMonthlyFreeQuotaApplied: false,
+    storedQuote: { ...storedFree, freeOrderApplied: true, quotaClaimedAt: "2026-08-31T10:00:00.000Z" },
+  });
+  if (!forgedClientFlag.reuseStoredFreeQuote && !forgedClientFlag.quote.freeOrderApplied && forgedClientFlag.quote.totalCents === 2010) {
+    pass("Client cannot fake monthly_free_quota_applied; unpaid package quote is used");
+  } else fail("forged free-quota snapshot was trusted");
+
+  const createPreview = quotePhysicalQrPrints({
+    printCount: 10,
+    printingIncludedEligible: true,
+    freeOrderAvailable: true,
+  });
+  const createNotConsumed = orderHasConsumedMonthlyFreeQuota({
+    monthlyFreeQuotaApplied: false,
+    storedQuote: createPreview,
+  });
+  if (createPreview.freeOrderApplied && createPreview.totalCents === 260 && !createNotConsumed.consumed) {
+    pass("TEST 1: create-time free preview is eligible, not consumed");
+  } else fail("create-time preview was treated as quota consumption");
+
+  const firstCheckout = resolvePhysicalQrCheckoutQuote({
+    printCount: 10,
+    printingIncludedEligible: true,
+    freeOrderAvailable: true,
+    orderMonthlyFreeQuotaApplied: false,
+    storedQuote: createPreview,
+  });
+  if (!firstCheckout.reuseStoredFreeQuote && firstCheckout.quote.freeOrderApplied && firstCheckout.quote.totalCents === 260) {
+    pass("TEST 2: first checkout of a new eligible order must claim (not reuse)");
+  } else fail("first checkout skipped the claim by reusing a create-time flag");
+
+  const stampedWithoutClaim = resolvePhysicalQrCheckoutQuote({
+    printCount: 10,
+    printingIncludedEligible: true,
+    freeOrderAvailable: true,
+    orderMonthlyFreeQuotaApplied: true,
+    storedQuote: createPreview,
+  });
+  if (!stampedWithoutClaim.reuseStoredFreeQuote && stampedWithoutClaim.quote.totalCents === 260) {
+    pass("TEST 2b: create-time monthly_free_quota_applied without quotaClaimedAt does not skip the claim");
+  } else fail("create-time flag alone reused the free quote");
+
+  const afterClaim10 = quotePhysicalQrPrints({
+    printCount: 10,
+    printingIncludedEligible: true,
+    freeOrderAvailable: false,
+  });
+  const afterClaim4 = quotePhysicalQrPrints({
+    printCount: 4,
+    printingIncludedEligible: true,
+    freeOrderAvailable: false,
+  });
+  if (afterClaim10.totalCents === 2270 && !afterClaim10.freeOrderApplied && afterClaim4.totalCents === 1490) {
+    pass("TEST 3 / TEST 10: second new order same Berlin month uses Basic package (10=€22.70, 4=€14.90)");
+  } else fail(`same-month second order got 10=${afterClaim10.totalCents} 4=${afterClaim4.totalCents}`);
+
+  const secondNewCheckout = resolvePhysicalQrCheckoutQuote({
+    printCount: 10,
+    printingIncludedEligible: true,
+    freeOrderAvailable: false,
+    orderMonthlyFreeQuotaApplied: false,
+    storedQuote: afterClaim10,
+  });
+  if (!secondNewCheckout.reuseStoredFreeQuote && secondNewCheckout.quote.totalCents === 2270) {
+    pass("TEST 10: two September orders without month-cross — second checkout is package, not free extras");
+  } else fail("second independent September order reused free pricing");
+
+  const retryAfterClaim = resolvePhysicalQrCheckoutQuote({
+    printCount: 10,
+    printingIncludedEligible: true,
+    freeOrderAvailable: false,
+    orderMonthlyFreeQuotaApplied: true,
+    storedQuote: { ...createPreview, quotaClaimedAt: "2026-09-01T10:00:00.000Z" },
+  });
+  if (
+    retryAfterClaim.reuseStoredFreeQuote &&
+    retryAfterClaim.quote.totalCents === 260 &&
+    retryAfterClaim.quotaClaimedAt?.toISOString() === "2026-09-01T10:00:00.000Z"
+  ) {
+    pass("TEST 4: same PENDING order retry keeps the established free quote and does not re-claim");
+  } else fail("same-order retry after a real claim lost the free quote");
+
+  const concurrentLoser = resolvePhysicalQrCheckoutQuote({
+    printCount: 10,
+    printingIncludedEligible: true,
+    freeOrderAvailable: false,
+    orderMonthlyFreeQuotaApplied: false,
+    storedQuote: createPreview,
+  });
+  if (!concurrentLoser.reuseStoredFreeQuote && concurrentLoser.quote.totalCents === 2270 && !concurrentLoser.quote.freeOrderApplied) {
+    pass("TEST 5: independent first checkout after the winner claimed receives package pricing (QUOTA_CHANGED if claim loses)");
+  } else fail("losing concurrent checkout still received a free quote");
+
+  const claimedAt = new Date("2026-08-31T10:00:00.000Z");
+  if (
+    !shouldReleasePhysicalQrQuotaOnExpire({
+      sessionId: "cs_this",
+      orderSessionId: "cs_this",
+      paymentStatus: "PENDING",
+      monthlyFreeQuotaApplied: false,
+      quotaClaimedAt: claimedAt,
+      paidFreeOrderThisMonth: false,
+    })
+  ) {
+    pass("Expired checkout with no free-quota claim does not release");
+  } else fail("unclaimed order must not release quota");
+
+  const july = new Date("2026-07-15T10:00:00.000Z");
+  const august = new Date("2026-08-20T10:00:00.000Z");
+  const aug31Berlin = DateTime.fromISO("2026-08-31T23:53:10", { zone: "Europe/Berlin" }).toJSDate();
+  const sep1Berlin = DateTime.fromISO("2026-09-01T01:04:09", { zone: "Europe/Berlin" }).toJSDate();
+  if (!isPhysicalQrFreeOrderUsedThisMonth(july, august) && isPhysicalQrFreeOrderUsedThisMonth(august, august)) {
+    pass("Next Berlin month is unaffected by last month's free-order claim");
+  } else fail("month boundary for free-order quota");
+  if (!isPhysicalQrFreeOrderUsedThisMonth(aug31Berlin, sep1Berlin) && isPhysicalQrFreeOrderUsedThisMonth(aug31Berlin, aug31Berlin)) {
+    pass("TEST 9: Aug 31 free-order used_at does not block a Sep 1 new free order");
+  } else fail("TEST 9 Berlin month-cross eligibility");
+  if (
+    shouldReleasePhysicalQrQuotaOnExpire({
+      sessionId: "cs_this",
+      orderSessionId: "cs_this",
+      paymentStatus: "PENDING",
+      monthlyFreeQuotaApplied: true,
+      quotaClaimedAt: claimedAt,
+      paidFreeOrderThisMonth: false,
+    })
+  ) {
+    pass("TEST 6: Expired Checkout can release its own unused monthly-free claim");
+  } else fail("expired session should release its own unused claim");
+
+  if (
+    !shouldReleasePhysicalQrQuotaOnExpire({
+      sessionId: "cs_this",
+      orderSessionId: "cs_this",
+      paymentStatus: "PAID",
+      monthlyFreeQuotaApplied: true,
+      quotaClaimedAt: claimedAt,
+      paidFreeOrderThisMonth: false,
+    })
+  ) {
+    pass("TEST 7: Paid free-order cannot have its monthly-free quota released");
+  } else fail("paid order must not release quota");
+
+  if (
+    !shouldReleasePhysicalQrQuotaOnExpire({
+      sessionId: "cs_other",
+      orderSessionId: "cs_this",
+      paymentStatus: "PENDING",
+      monthlyFreeQuotaApplied: true,
+      quotaClaimedAt: claimedAt,
+      paidFreeOrderThisMonth: false,
+    })
+  ) {
+    pass("TEST 8: Expired session for another order cannot release this order's claim");
+  } else fail("stale session must not release this order's claim");
+
+  if (
+    !shouldReleasePhysicalQrQuotaOnExpire({
+      sessionId: "cs_this",
+      orderSessionId: "cs_this",
+      paymentStatus: "PENDING",
+      monthlyFreeQuotaApplied: true,
+      quotaClaimedAt: claimedAt,
+      paidFreeOrderThisMonth: true,
+    })
+  ) {
+    pass("Expire does not release quota when a PAID free order already exists this month");
+  } else fail("paid free order this month must block expire release");
+}
+
 function sectionEntitlement() {
   if (hasSubscriptionCapability("basic", "physicalQrPrinting")) {
     pass("Basic can access physical QR printing (physicalQrPrinting)");
   } else fail("Basic should have physicalQrPrinting");
   if (!hasSubscriptionCapability("basic", "physicalQrPrintingIncluded")) {
-    pass("Basic pays catalog price (no physicalQrPrintingIncluded)");
+    pass("Basic is not eligible for monthly included printing quota");
   } else fail("Basic should not have included printing");
   if (hasSubscriptionCapability("premium", "physicalQrPrintingIncluded")) {
     pass("Premium has included physical printing");
@@ -356,6 +593,13 @@ function sectionPrintStatic() {
   if (combined.includes("/Count 5") && combined.includes("%PDF-1.4")) {
     pass("jpegsToA5Pdf combines distinct items with per-line quantities");
   } else fail("combined multi-item PDF page count");
+
+  if (crc32(Buffer.from("123456789")) === 0xcbf43926) pass("zip CRC32 matches the known ISO vector");
+  else fail("zip CRC32");
+  const zipped = zipStore([{ name: "caretip-a5-order.pdf", data: Buffer.from("%PDF-1.4 test") }]);
+  if (zipped.subarray(0, 4).equals(Buffer.from([0x50, 0x4b, 0x03, 0x04])) && zipped.includes(Buffer.from("caretip-a5-order.pdf"))) {
+    pass("zipStore packs existing PDFs without a new archive dependency");
+  } else fail("zipStore output");
 }
 
 function sectionRegressionFiles() {
@@ -415,6 +659,8 @@ function sectionRegressionFiles() {
     orderService.includes("createPhysicalQrCartOrder") &&
     orderService.includes("items: {") &&
     orderService.includes("create: prepared.map") &&
+    orderService.includes("assertBasicSingleLocation") &&
+    orderService.includes("quotePhysicalQrPrints") &&
     orderService.includes("parsePhysicalQrShippingSnapshot") &&
     orderService.includes("parsePhysicalQrContactSnapshot") &&
     orderService.includes("shippingSnapshot") &&
@@ -423,20 +669,103 @@ function sectionRegressionFiles() {
     pass("cart order creates parent + line items with shipping/contact snapshots");
   } else fail("order create shipping snapshots / line items");
 
+  const pricingService = readFileSync(
+    path.join(root, "backend/src/services/physicalQr/physicalQrPricing.service.ts"),
+    "utf8",
+  );
+  if (
+    pricingService.includes("tryClaimPhysicalQrMonthlyFreeOrder") &&
+    pricingService.includes("$executeRaw") &&
+    pricingService.includes("physical_qr_free_order_used_at") &&
+    pricingService.includes("Number(result) === 1") &&
+    pricingService.includes("AND (physical_qr_free_order_used_at IS NULL OR physical_qr_free_order_used_at < ${monthStart})") &&
+    orderService.includes("QUOTA_CHANGED") &&
+    orderService.includes("BASIC_SINGLE_LOCATION_REQUIRED") &&
+    batchService.includes("stripeLineItemsForPhysicalQrQuote") &&
+    batchService.includes("quantity: 1") &&
+    businessRoutes.includes('"/quote"') &&
+    businessController.includes("quoteMyPhysicalQrCart")
+  ) {
+    pass("Albertina quota claim is atomic; Basic multi-location rejected; Stripe charges quote total");
+  } else fail("Albertina server security/pricing wiring");
+
+  const createFn = orderService.slice(
+    orderService.indexOf("export async function createPhysicalQrCartOrder"),
+    orderService.indexOf("export async function createPhysicalQrOrder"),
+  );
+  const createPersist = createFn.slice(createFn.indexOf("persistPhysicalQrAlbertinaOrderColumns"));
+  if (
+    createFn.includes("monthlyFreeQuotaApplied: false") &&
+    createPersist.includes("quote,") &&
+    !createPersist.includes("quotaClaimedAt") &&
+    pricingService.includes("const consumed = Boolean(claimedAtIso)") &&
+    !pricingService.includes("input.quote.freeOrderApplied,")
+  ) {
+    pass("Create persists a preview snapshot without consuming the monthly quota");
+  } else fail("create still stamps monthly_free_quota_applied from the preview quote");
+
+  const lockFn = orderService.slice(
+    orderService.indexOf("export async function lockQuoteForPhysicalQrCheckout"),
+    orderService.indexOf("export { releasePhysicalQrMonthlyFreeOrderClaim }"),
+  );
+  if (
+    lockFn.includes("tryClaimPhysicalQrMonthlyFreeOrder") &&
+    lockFn.includes("reuseStoredFreeQuote") &&
+    !lockFn.includes("?? quota.usedAt") &&
+    pricingService.includes("hasPaidPhysicalQrMonthlyFreeOrderThisMonth") &&
+    pricingService.includes("payment_status::text = 'PAID'")
+  ) {
+    pass("First checkout claims atomically; reuse requires this order's quotaClaimedAt; used_at is primary");
+  } else fail("checkout claim/reuse wiring");
+
   const webhook = readFileSync(
     path.join(root, "backend/src/services/physicalQr/physicalQrWebhook.service.ts"),
     "utf8",
   );
   if (
-    webhook.includes("Expired Checkout remains payable") &&
+    webhook.includes("shouldReleasePhysicalQrQuotaOnExpire") &&
+    webhook.includes("clearPhysicalQrOrderMonthlyFreeQuota") &&
+    webhook.includes("releasePhysicalQrMonthlyFreeOrderClaim") &&
     !webhook.includes('fulfillmentStatus: "CANCELLED"') &&
     webhook.includes('fulfillmentStatus: "PROCESSING"') &&
     webhook.includes("amount_total") &&
     webhook.includes("session.metadata.orderId") &&
     webhook.includes("orderIds")
   ) {
-    pass("webhook marks single parent order paid; legacy orderIds batch still supported");
+    pass("webhook marks single parent order paid; expired Checkout can safely release unused quota");
   } else fail("webhook expiry/paid/tenant checks");
+
+  const expireAt = webhook.indexOf("export async function handlePhysicalQrCheckoutExpired");
+  const beforeExpire = expireAt >= 0 ? webhook.slice(0, expireAt) : "";
+  const expireBody = expireAt >= 0 ? webhook.slice(expireAt) : "";
+  if (
+    beforeExpire.includes("amount_total") &&
+    !beforeExpire.includes("await releasePhysicalQrMonthlyFreeOrderClaim") &&
+    expireBody.includes("await releasePhysicalQrMonthlyFreeOrderClaim")
+  ) {
+    pass("Successful checkout keeps the monthly quota consumed");
+  } else fail("completed webhook must not release quota");
+  if (
+    expireBody.includes("await releasePhysicalQrMonthlyFreeOrderClaim") &&
+    expireBody.includes("hasPaidPhysicalQrMonthlyFreeOrderThisMonth") &&
+    !expireBody.includes("quota?.usedAt") &&
+    expireBody.includes('reason: "not_releasable"')
+  ) {
+    pass("Expire release uses this order's quotaClaimedAt only; PAID free orders block release");
+  } else fail("expire must not fall back to another order's used_at");
+
+  const cartInput = orderService.slice(
+    orderService.indexOf("export type CreatePhysicalQrCartInput"),
+    orderService.indexOf("const ORDER_INCLUDE"),
+  );
+  if (
+    orderService.includes('paymentStatus !== "PENDING"') &&
+    orderService.includes("ORDER_NOT_CHECKOUTABLE") &&
+    !cartInput.includes("monthlyFreeQuotaApplied") &&
+    !cartInput.includes("totalAmount")
+  ) {
+    pass("Paid orders cannot be treated as pending free orders; client cannot send quota or totals");
+  } else fail("paid/pending checkout guard or client quota flag");
 
   const adminDto = readFileSync(
     path.join(root, "backend/src/services/physicalQr/physicalQrFulfillment.service.ts"),
@@ -456,8 +785,17 @@ function sectionRegressionFiles() {
     path.join(root, "backend/src/services/physicalQr/physicalQrCheckout.service.ts"),
     "utf8",
   );
-  if (checkout.includes("customer_email") && checkout.includes("price_data") && !checkout.includes("application_fee")) {
-    pass("Checkout stays platform price_data and can prefill customer_email");
+  if (
+    batchService.includes("customer_email") &&
+    batchService.includes("stripeLineItemsForPhysicalQrQuote") &&
+    batchService.includes("lockQuoteForPhysicalQrCheckout") &&
+    batchService.includes("previousSessionId") &&
+    orderService.includes("resolvePhysicalQrCheckoutQuote") &&
+    orderService.includes("reuseStoredFreeQuote") &&
+    checkout.includes("createPhysicalQrBatchCheckoutSession") &&
+    !checkout.includes("application_fee")
+  ) {
+    pass("Checkout reuses an already-claimed free quote and expires the prior Stripe session after the new id is saved");
   } else fail("checkout session shape");
 
   const adminPrint = readFileSync(
@@ -468,19 +806,40 @@ function sectionRegressionFiles() {
     path.join(root, "backend/src/lib/physicalQr/printPipeline.ts"),
     "utf8",
   );
+  const adminPrintService = readFileSync(
+    path.join(root, "backend/src/services/physicalQr/physicalQrAdminPrint.service.ts"),
+    "utf8",
+  );
   if (
     platformRoutes.includes("/physical-qr/orders/:orderId/print") &&
     adminPrint.includes("adminPrintPhysicalQrOrder") &&
     adminPrint.includes("renderPhysicalQrPrint") &&
-    adminPrint.includes("qrTargetUrlSnapshot") &&
-    adminPrint.includes("businessNameSnapshot") &&
     adminPrint.includes("PAYMENT_REQUIRED") &&
-    adminPrint.includes("jpegsToA5Pdf") &&
+    adminPrint.includes("buildPhysicalQrOrderPdfForAdmin") &&
+    adminPrint.includes("getPhysicalQrOrderForAdmin") &&
+    !adminPrint.includes("req.query.path") &&
     !adminPrint.includes("registeredAddress") &&
+    platformRoutes.includes("requirePlatformAdmin") &&
     printPipeline.includes("jpegToA5Pdf(jpeg, w, h)")
   ) {
     pass("admin print GET reuses snapshot renderer; bulk combines all line items");
   } else fail("admin print endpoint / snapshot renderer");
+
+  if (
+    adminPrint.includes("items.find((i) => i.id === itemId)") &&
+    adminPrintService.includes("jpegsToA5Pdf") &&
+    adminPrintService.includes("itemCopies") &&
+    adminPrintService.includes("all-x${pageCount}") &&
+    adminPrint.includes("adminPrintPhysicalQrOrdersBulk") &&
+    platformRoutes.includes("/physical-qr/orders/print-bulk") &&
+    adminPrint.includes("orderIds") &&
+    !adminPrint.includes("req.query.path") &&
+    !businessRoutes.includes("print-bulk") &&
+    !adminPrintService.includes("archiver") &&
+    adminPrintService.includes("zipStore")
+  ) {
+    pass("bulk ZIP reuses existing PDFs, authorizes each order id, and is platform-admin only");
+  } else fail("bulk PDF authorization / combined renderer");
 }
 
 async function sectionPrintDecode() {
@@ -639,6 +998,7 @@ async function main() {
   sectionProcessing();
   sectionTemplate();
   sectionColors();
+  sectionAlbertinaPricing();
   sectionEntitlement();
   sectionCheckoutBlock();
   sectionStatus();

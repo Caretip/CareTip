@@ -151,6 +151,8 @@ export function QRCodeManagementPage({
   const [businessLocation, setBusinessLocation] = useState<string | null>(null);
   const [venueLocations, setVenueLocations] = useState<LocationDTO[]>([]);
   const [venueTables, setVenueTables] = useState<TableDTO[]>([]);
+  const [venueLoading, setVenueLoading] = useState(needsVenueData);
+  const [venueError, setVenueError] = useState<string | null>(null);
   const [venueQrPreview, setVenueQrPreview] = useState<Record<string, string>>({});
   /** Stored API path for venue logo (PDF + print). */
   const [businessLogoPath, setBusinessLogoPath] = useState<string | null>(null);
@@ -396,8 +398,16 @@ export function QRCodeManagementPage({
   }, [loadEmployees, needsEmployeeData]);
 
   useEffect(() => {
+    if (!needsVenueData) {
+      setVenueLoading(false);
+      setVenueError(null);
+      return;
+    }
     if (!authHydrated || !sessionValidated) return;
-    if (!user?.businessId || !isBusiness || !needsVenueData) return;
+    if (!user?.businessId || !isBusiness) {
+      setVenueLoading(false);
+      return;
+    }
     let cancelled = false;
     const venueCacheKey = `business:qr-venues:${user.businessId}`;
     const venueCached = getPageSessionCache<{ locations: LocationDTO[]; tables: TableDTO[] }>(
@@ -407,6 +417,9 @@ export function QRCodeManagementPage({
     if (venueCached) {
       setVenueLocations(Array.isArray(venueCached.locations) ? venueCached.locations : []);
       setVenueTables(Array.isArray(venueCached.tables) ? venueCached.tables : []);
+      setVenueLoading(false);
+    } else {
+      setVenueLoading(true);
     }
     void (async () => {
       try {
@@ -417,19 +430,23 @@ export function QRCodeManagementPage({
         setVenueLocations(Array.isArray(locations) ? locations : []);
         setVenueTables(Array.isArray(tables) ? tables : []);
         setPageSessionCache(venueCacheKey, { locations, tables });
+        setVenueError(null);
       } catch (err) {
         if (cancelled) return;
         logClientError("QRCodeManagementPage.venues", err);
         if (!venueCached) {
           setVenueLocations([]);
           setVenueTables([]);
+          setVenueError(err instanceof Error ? err.message : t("business.qrStudio.physical.loadError"));
         }
+      } finally {
+        if (!cancelled) setVenueLoading(false);
       }
     })();
     return () => {
       cancelled = true;
     };
-  }, [authHydrated, sessionValidated, user?.businessId, isBusiness, needsVenueData]);
+  }, [authHydrated, sessionValidated, user?.businessId, isBusiness, needsVenueData, t]);
 
   const safeEmployees = Array.isArray(employees) ? employees : [];
   const safeVenueLocations = Array.isArray(venueLocations) ? venueLocations : [];
@@ -1106,7 +1123,11 @@ export function QRCodeManagementPage({
     if (emp) requestRegenerateEmployeeQr(emp);
   };
 
-  const isInitialQrLoad = loading && safeEmployees.length === 0;
+  const isInitialQrLoad = needsEmployeeData
+    ? loading && safeEmployees.length === 0
+    : needsVenueData
+      ? venueLoading && safeVenueLocations.length === 0
+      : false;
   const { showInitialSkeleton } = useBusinessPageBoot("qr", isInitialQrLoad);
 
   if (!user) return <BusinessSubPageShellSkeleton />;
@@ -1527,7 +1548,11 @@ export function QRCodeManagementPage({
                   </div>
                   {embedded ? <QrStudioOrderPrintButton category="locations" /> : null}
                 </div>
-                {locations.length === 0 ? (
+                {showInitialSkeleton || (venueLoading && locations.length === 0) ? (
+                  <DashboardListSkeleton rows={5} minHeightClass="min-h-[240px]" />
+                ) : venueError ? (
+                  <p className="text-sm text-destructive">{venueError}</p>
+                ) : locations.length === 0 ? (
                   <div className="py-16 text-center text-muted-foreground">
                     <p className="mb-6">{t("business.qrPage.noLocations")}</p>
                     <Link

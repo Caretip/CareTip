@@ -10,6 +10,25 @@ export function clampPhysicalQrQuantity(raw: number): number {
   return Math.min(PHYSICAL_QR_QUANTITY_MAX, Math.max(PHYSICAL_QR_QUANTITY_MIN, n));
 }
 
+export function groupPhysicalQrItemsByLocation<T extends { locationName?: string | null }>(
+  items: T[],
+  fallbackLabel = "Business",
+): Array<{ locationName: string; items: T[] }> {
+  const groups: Array<{ locationName: string; items: T[] }> = [];
+  const indexByName = new Map<string, number>();
+  for (const item of items) {
+    const locationName = item.locationName?.trim() || fallbackLabel;
+    const existing = indexByName.get(locationName);
+    if (existing == null) {
+      indexByName.set(locationName, groups.length);
+      groups.push({ locationName, items: [item] });
+    } else {
+      groups[existing]!.items.push(item);
+    }
+  }
+  return groups;
+}
+
 export const PHYSICAL_QR_BERLIN_TZ = "Europe/Berlin";
 
 export function physicalQrOrderNumber(id: string): string {

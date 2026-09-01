@@ -4,12 +4,14 @@ import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { ShoppingBag, Trash2, Minus, Plus } from "lucide-react";
 import { performExternalStripeRedirect } from "@/app/lib/externalStripeRedirect";
+import { ApiRequestError } from "@/app/lib/apiError";
 import {
   checkoutPhysicalQrBatch,
   createPhysicalQrBatch,
   fetchBusinessProfile,
   fetchPhysicalQrCatalog,
   fetchPhysicalQrContexts,
+  quotePhysicalQrCart,
   resolvePhysicalQrContext,
   type PhysicalQrCatalogProduct,
   type PhysicalQrContextOptions,
@@ -32,6 +34,11 @@ import {
   PHYSICAL_QR_QUANTITY_MAX,
   clampPhysicalQrQuantity,
 } from "@/app/lib/physicalQrOrderUi";
+import {
+  PHYSICAL_QR_PACKAGE_CENTS,
+  quotePhysicalQrPrints,
+  type PhysicalQrQuote,
+} from "@/app/lib/physicalQrPricing";
 import { businessUi } from "@/app/components/business/businessDashboardUi";
 import { PrintQrStudioSkeleton } from "@/app/components/business/qr-studio/QrStudioLoadingSkeletons";
 import {
@@ -46,6 +53,8 @@ export type PrintCartLine = {
   qrSubjectId?: string;
   label: string;
   quantity: number;
+  locationId?: string | null;
+  locationName?: string | null;
 };
 
 function cartLineKey(type: string, subjectId?: string) {
@@ -74,6 +83,7 @@ export function PrintQrStudio() {
   const entitlements = sharedEntitlements ?? fallbackEntitlements;
   const canOrder = entitlements.hasFeature("physicalQrPrinting");
   const printingIncluded = entitlements.hasFeature("physicalQrPrintingIncluded");
+  const canMultiLocation = printingIncluded;
 
   const [step, setStep] = useState<"select" | "shipping" | "review">("select");
   const [products, setProducts] = useState<PhysicalQrCatalogProduct[]>([]);
@@ -91,6 +101,7 @@ export function PrintQrStudio() {
   const [bootLoading, setBootLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [previewTargetUrl, setPreviewTargetUrl] = useState("");
+  const [serverQuote, setServerQuote] = useState<PhysicalQrQuote | null>(null);
 
   const product = products.find((p) => p.id === productId) ?? products[0] ?? null;
   const supportsAddress = Boolean(product?.supportsAddress);
@@ -133,9 +144,20 @@ export function PrintQrStudio() {
       currency: product?.currency || "EUR",
     }).format(cents / 100);
 
-  const unitCents = printingIncluded ? 0 : (product?.priceCents ?? 0);
-  const printSubtotal = cart.reduce((sum, line) => sum + unitCents * line.quantity, 0);
   const cartCount = cart.reduce((sum, line) => sum + line.quantity, 0);
+  const primaryLocationId = contexts?.primaryLocationId ?? null;
+  const primaryLocationName =
+    contexts?.locations.find((l) => l.id === primaryLocationId)?.label ||
+    contexts?.storefront.label ||
+    "";
+  const localQuote = quotePhysicalQrPrints({
+    printCount: cartCount,
+    printingIncludedEligible: printingIncluded,
+    freeOrderAvailable: Boolean(contexts?.freeOrderAvailable) && printingIncluded,
+  });
+  const quote =
+    serverQuote && serverQuote.printCount === cartCount ? serverQuote : localQuote;
+  const printSubtotal = quote.totalCents;
 
   const previewContext = useMemo(() => {
     const first = cart[0];
@@ -169,8 +191,63 @@ export function PrintQrStudio() {
     };
   }, [previewContext.qrContextType, previewContext.qrSubjectId]);
 
+  useEffect(() => {
+    if (canMultiLocation) return;
+    setCart((prev) => {
+      const ids = new Set(
+        prev.map((line) => line.locationId || primaryLocationId).filter((id): id is string => Boolean(id)),
+      );
+      if (ids.size <= 1) return prev;
+      toast.error(t("business.qrStudio.print.downgradeCartReset"));
+      return [];
+    });
+  }, [canMultiLocation, primaryLocationId, t]);
+
+  useEffect(() => {
+    if (!product || cart.length === 0) {
+      setServerQuote(null);
+      return;
+    }
+    let cancelled = false;
+    void quotePhysicalQrCart({
+      lineItems: cart.map((line) => ({
+        productId: product.id,
+        qrContextType: line.qrContextType,
+        qrSubjectId: line.qrContextType === "storefront" ? undefined : line.qrSubjectId,
+        quantity: line.quantity,
+      })),
+    })
+      .then((result) => {
+        if (cancelled) return;
+        setServerQuote(result.quote);
+        setContexts((prev) =>
+          prev ? { ...prev, freeOrderAvailable: result.freeOrderAvailable } : prev,
+        );
+      })
+      .catch((err) => {
+        if (cancelled) return;
+        const code = err instanceof ApiRequestError ? err.code : undefined;
+        if (code === "BASIC_SINGLE_LOCATION_REQUIRED" || code === "BASIC_PRIMARY_LOCATION_REQUIRED") {
+          toast.error(t("business.qrStudio.print.downgradeCartReset"));
+          setCart([]);
+        }
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [cart, product, t]);
+
   const toggleLine = useCallback((line: Omit<PrintCartLine, "quantity"> & { quantity?: number }) => {
     const key = cartLineKey(line.qrContextType, line.qrSubjectId);
+    const lineLocationId = line.locationId || primaryLocationId;
+    if (!canMultiLocation && primaryLocationId && lineLocationId && lineLocationId !== primaryLocationId) {
+      toast.error(
+        t("business.qrStudio.print.locationLocked", {
+          name: primaryLocationName || t("business.qrStudio.overview.businessTitle"),
+        }),
+      );
+      return;
+    }
     setCart((prev) => {
       const exists = prev.find((p) => cartLineKey(p.qrContextType, p.qrSubjectId) === key);
       if (exists) {
@@ -178,7 +255,7 @@ export function PrintQrStudio() {
       }
       return [...prev, { ...line, quantity: clampPhysicalQrQuantity(line.quantity ?? 1) }];
     });
-  }, []);
+  }, [canMultiLocation, primaryLocationId, primaryLocationName, t]);
 
   const setLineQuantity = useCallback((key: string, next: number) => {
     const qty = clampPhysicalQrQuantity(next);
@@ -203,8 +280,10 @@ export function PrintQrStudio() {
         items: [
           {
             qrContextType: "storefront" as const,
-            qrSubjectId: undefined,
+            qrSubjectId: undefined as string | undefined,
             label: contexts.storefront.label || t("business.qrStudio.overview.businessTitle"),
+            locationId: contexts.storefront.locationId ?? primaryLocationId,
+            locationName: primaryLocationName || contexts.storefront.label,
           },
         ],
       },
@@ -214,6 +293,10 @@ export function PrintQrStudio() {
           qrContextType: "employee" as const,
           qrSubjectId: e.id,
           label: e.label,
+          locationId: e.locationId ?? primaryLocationId,
+          locationName:
+            contexts.locations.find((l) => l.id === (e.locationId || primaryLocationId))?.label ||
+            primaryLocationName,
         })),
       },
       {
@@ -222,6 +305,9 @@ export function PrintQrStudio() {
           qrContextType: "table" as const,
           qrSubjectId: e.id,
           label: e.label,
+          locationId: e.locationId ?? primaryLocationId,
+          locationName:
+            contexts.locations.find((l) => l.id === e.locationId)?.label || primaryLocationName,
         })),
       },
       {
@@ -230,10 +316,14 @@ export function PrintQrStudio() {
           qrContextType: "location" as const,
           qrSubjectId: e.id,
           label: e.label,
+          locationId: e.id,
+          locationName: e.label,
         })),
       },
     ];
-  }, [contexts, t]);
+  }, [contexts, primaryLocationId, primaryLocationName, t]);
+
+  const catalogHasItems = selectionGroups.some((group) => group.items.length > 0);
 
   useEffect(() => {
     if (!printFocus || !contexts || focusScrolledRef.current) return;
@@ -301,7 +391,18 @@ export function PrintQrStudio() {
       const redirected = performExternalStripeRedirect(session.url, "checkout");
       if (!redirected.ok) throw new Error(t("business.qrStudio.physical.orderError"));
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : t("business.qrStudio.physical.orderError"));
+      const code = err instanceof ApiRequestError ? err.code : undefined;
+      if (code === "QUOTA_CHANGED") {
+        toast.error(t("business.qrStudio.print.quotaChanged"));
+        void fetchPhysicalQrContexts()
+          .then((ctx) => setContexts(ctx))
+          .catch(() => {});
+      } else if (code === "BASIC_SINGLE_LOCATION_REQUIRED" || code === "BASIC_PRIMARY_LOCATION_REQUIRED") {
+        toast.error(t("business.qrStudio.print.downgradeCartReset"));
+        setCart([]);
+      } else {
+        toast.error(err instanceof Error ? err.message : t("business.qrStudio.physical.orderError"));
+      }
       setSubmitting(false);
     }
   }, [
@@ -339,9 +440,17 @@ export function PrintQrStudio() {
     );
   }
 
+  if (loadError) {
+    return (
+      <div className="print-qr-studio space-y-8 max-lg:space-y-5">
+        <p className="text-sm text-muted-foreground">{t("business.qrStudio.print.intro")}</p>
+        <p className="text-sm text-destructive">{loadError}</p>
+      </div>
+    );
+  }
+
   return (
     <div className="print-qr-studio space-y-8 max-lg:space-y-5">
-      {loadError ? <p className="text-sm text-destructive">{loadError}</p> : null}
       {step === "select" ? (
         <p className="text-sm text-muted-foreground">{t("business.qrStudio.print.intro")}</p>
       ) : null}
@@ -381,9 +490,9 @@ export function PrintQrStudio() {
                       : t("business.qrStudio.physical.withoutAddress")}
                   </p>
                   <p className="mt-0.5 text-xs text-muted-foreground">
-                    {printingIncluded
-                      ? t("business.qrStudio.print.includedInPlan")
-                      : formatEur(item.priceCents ?? 0)}
+                    {quote.freeOrderApplied
+                      ? t("business.qrStudio.print.monthlyFreeAvailable")
+                      : t("business.qrStudio.print.packageFrom", { price: formatEur(PHYSICAL_QR_PACKAGE_CENTS) })}
                   </p>
                 </button>
               ))}
@@ -392,11 +501,17 @@ export function PrintQrStudio() {
 
           <section className="space-y-4">
             <h2 className="text-sm font-semibold text-foreground">{t("business.qrStudio.print.selectQrCodes")}</h2>
-            {selectionGroups.map((group) =>
+            {!catalogHasItems ? (
+              <p className="py-6 text-sm text-muted-foreground">
+                {t("business.qrStudio.print.emptyLocation")}
+              </p>
+            ) : (
+            selectionGroups.map((group) =>
               group.items.length === 0 ? null : (
                 (() => {
                   const groupFocus = printFocusForGroup(group.items[0]!.qrContextType);
                   const isFocused = printFocus === groupFocus;
+                  const isLocationGroup = group.items[0]?.qrContextType === "location";
                   return (
                 <div
                   key={group.title}
@@ -407,6 +522,13 @@ export function PrintQrStudio() {
                   )}
                 >
                   <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{group.title}</p>
+                  {!canMultiLocation && isLocationGroup ? (
+                    <p className="pb-1 text-[11px] leading-snug text-muted-foreground">
+                      {t("business.qrStudio.print.locationLocked", {
+                        name: primaryLocationName || t("business.qrStudio.overview.businessTitle"),
+                      })}
+                    </p>
+                  ) : null}
                   <ul className="divide-y divide-border/80 border-y border-border/80">
                     {group.items.map((item) => {
                       const selected = isSelected(item.qrContextType, item.qrSubjectId);
@@ -420,6 +542,8 @@ export function PrintQrStudio() {
                                 qrContextType: item.qrContextType,
                                 qrSubjectId: item.qrSubjectId,
                                 label: item.label,
+                                locationId: item.locationId,
+                                locationName: item.locationName,
                               })
                             }
                             className={cn(
@@ -446,7 +570,7 @@ export function PrintQrStudio() {
                   );
                 })()
               ),
-            )}
+            ))}
           </section>
 
           <CartSummary
@@ -454,6 +578,7 @@ export function PrintQrStudio() {
             cartCount={cartCount}
             printSubtotal={printSubtotal}
             formatEur={formatEur}
+            quote={quote}
             printingIncluded={printingIncluded}
             onContinue={() => setStep("shipping")}
             continueDisabled={cart.length === 0}
@@ -541,6 +666,7 @@ export function PrintQrStudio() {
             cartCount={cartCount}
             printSubtotal={printSubtotal}
             formatEur={formatEur}
+            quote={quote}
             printingIncluded={printingIncluded}
             detailed
             quantityEditable={false}
@@ -557,10 +683,10 @@ export function PrintQrStudio() {
             </Button>
             <Button type="button" className={businessUi.btnPrimary} disabled={!canCheckout} onClick={() => void placeBatchOrder()}>
               {submitting
-                ? printingIncluded
+                ? quote.totalCents === 0
                   ? t("business.qrStudio.print.placingOrder", { defaultValue: "Placing order…" })
                   : t("business.qrStudio.physical.ordering")
-                : printingIncluded
+                : quote.totalCents === 0
                   ? t("business.qrStudio.print.placeOrder", { defaultValue: "Place order" })
                   : t("business.qrStudio.print.checkout")}
             </Button>
@@ -576,6 +702,7 @@ function CartSummary({
   cartCount,
   printSubtotal,
   formatEur,
+  quote,
   printingIncluded,
   onContinue,
   continueDisabled,
@@ -589,13 +716,13 @@ function CartSummary({
   cartCount: number;
   printSubtotal: number;
   formatEur: (cents: number) => string;
-  printingIncluded: boolean;
+  quote: ReturnType<typeof quotePhysicalQrPrints>;
+  printingIncluded?: boolean;
   onContinue?: () => void;
   continueDisabled?: boolean;
   detailed?: boolean;
   onRemove?: (key: string) => void;
   onQuantityChange?: (key: string, quantity: number) => void;
-  /** When false (review / pay step), show quantity as read-only — no +/- controls. */
   quantityEditable?: boolean;
   t: (key: string, opts?: Record<string, unknown>) => string;
 }) {
@@ -608,57 +735,98 @@ function CartSummary({
     );
   }
 
+  const grouped = new Map<string, PrintCartLine[]>();
+  for (const line of cart) {
+    const name = line.locationName?.trim() || t("business.qrStudio.print.locationBusiness");
+    const rows = grouped.get(name) ?? [];
+    rows.push(line);
+    grouped.set(name, rows);
+  }
+
   return (
     <div className={cn("space-y-3", !detailed && "border-t border-border pt-4 max-lg:pt-3")}>
       <p className="text-sm font-semibold">{t("business.qrStudio.print.cartTitle", { count: cartCount })}</p>
-      <ul className="space-y-2 text-sm">
-        {cart.map((line) => {
-          const key = cartLineKey(line.qrContextType, line.qrSubjectId);
-          return (
-            <li key={key} className="flex flex-wrap items-center justify-between gap-2">
-              <span className="min-w-0 flex-1 truncate text-foreground">{line.label}</span>
-              <span className="flex shrink-0 items-center gap-2">
-                {quantityEditable && onQuantityChange ? (
-                  <QuantityStepper
-                    quantity={line.quantity}
-                    onDecrement={() => onQuantityChange(key, line.quantity - 1)}
-                    onIncrement={() => onQuantityChange(key, line.quantity + 1)}
-                    ariaLabel={t("business.qrStudio.print.quantityFor", {
-                      label: line.label,
-                      defaultValue: "Quantity for {{label}}",
-                    })}
-                  />
-                ) : (
-                  <span
-                    className="inline-flex min-w-[2.5rem] items-center justify-center rounded-md border border-border bg-muted/40 px-2.5 py-1.5 text-sm font-medium tabular-nums text-foreground"
-                    aria-label={t("business.qrStudio.print.quantityFor", {
-                      label: line.label,
-                      defaultValue: "Quantity for {{label}}",
-                    })}
-                  >
-                    ×{line.quantity}
-                  </span>
-                )}
-                {detailed && onRemove ? (
-                  <button
-                    type="button"
-                    className="text-destructive"
-                    onClick={() => onRemove(key)}
-                    aria-label={t("business.qrStudio.print.removeItem", { defaultValue: "Remove" })}
-                  >
-                    <Trash2 className="h-3.5 w-3.5" />
-                  </button>
-                ) : null}
-              </span>
-            </li>
-          );
-        })}
-      </ul>
+      <div className="space-y-3">
+        {[...grouped.entries()].map(([locationName, lines]) => (
+          <div key={locationName}>
+            {grouped.size > 1 || detailed ? (
+              <p className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                {locationName}
+              </p>
+            ) : null}
+            <ul className="space-y-2 text-sm">
+              {lines.map((line) => {
+                const key = cartLineKey(line.qrContextType, line.qrSubjectId);
+                return (
+                  <li key={key} className="flex flex-wrap items-center justify-between gap-2">
+                    <span className="min-w-0 flex-1 truncate text-foreground">{line.label}</span>
+                    <span className="flex shrink-0 items-center gap-2">
+                      {quantityEditable && onQuantityChange ? (
+                        <QuantityStepper
+                          quantity={line.quantity}
+                          onDecrement={() => onQuantityChange(key, line.quantity - 1)}
+                          onIncrement={() => onQuantityChange(key, line.quantity + 1)}
+                          ariaLabel={t("business.qrStudio.print.quantityFor", {
+                            label: line.label,
+                            defaultValue: "Quantity for {{label}}",
+                          })}
+                        />
+                      ) : (
+                        <span
+                          className="inline-flex min-w-[2.5rem] items-center justify-center rounded-md border border-border bg-muted/40 px-2.5 py-1.5 text-sm font-medium tabular-nums text-foreground"
+                          aria-label={t("business.qrStudio.print.quantityFor", {
+                            label: line.label,
+                            defaultValue: "Quantity for {{label}}",
+                          })}
+                        >
+                          ×{line.quantity}
+                        </span>
+                      )}
+                      {detailed && onRemove ? (
+                        <button
+                          type="button"
+                          className="text-destructive"
+                          onClick={() => onRemove(key)}
+                          aria-label={t("business.qrStudio.print.removeItem", { defaultValue: "Remove" })}
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
+                      ) : null}
+                    </span>
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+        ))}
+      </div>
       <div className="space-y-1 border-t border-border/80 pt-3 text-sm">
-        <div className="flex justify-between">
-          <span className="text-muted-foreground">{t("business.qrStudio.print.printing")}</span>
-          <span>{printingIncluded ? t("business.qrStudio.print.includedInPlan") : formatEur(printSubtotal)}</span>
+        {printingIncluded && quote.freeOrderApplied ? (
+          <p className="text-xs text-muted-foreground">{t("business.qrStudio.print.quotaApplied")}</p>
+        ) : printingIncluded && quote.printCount > 0 ? (
+          <p className="text-xs text-muted-foreground">
+            {t("business.qrStudio.print.quotaUsed")}
+          </p>
+        ) : null}
+        <div className="flex justify-between text-muted-foreground">
+          <span>
+            {quote.freeOrderApplied
+              ? t("business.qrStudio.print.freePrints", { count: quote.includedPrints })
+              : t("business.qrStudio.print.basePackage", { count: quote.includedPrints })}
+          </span>
+          <span>{quote.packageCents === 0 ? formatEur(0) : formatEur(quote.packageCents)}</span>
         </div>
+        {quote.extraPrints > 0 ? (
+          <div className="flex justify-between text-muted-foreground">
+            <span>
+              {t("business.qrStudio.print.extraPrints", {
+                count: quote.extraPrints,
+                price: formatEur(quote.extraUnitCents),
+              })}
+            </span>
+            <span>{formatEur(quote.extraCents)}</span>
+          </div>
+        ) : null}
         <div className="flex justify-between font-semibold">
           <span>{t("business.qrStudio.print.total")}</span>
           <span>{formatEur(printSubtotal)}</span>

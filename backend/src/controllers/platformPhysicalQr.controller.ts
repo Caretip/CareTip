@@ -18,8 +18,9 @@ import {
   postPhysicalQrInternalNote,
 } from "../services/physicalQr/physicalQrMessage.service.js";
 import { renderPhysicalQrPrint } from "../lib/physicalQr/printPipeline.js";
-import { jpegToA5Pdf, jpegsToA5Pdf } from "../lib/physicalQr/pdfA5.js";
+import { jpegToA5Pdf } from "../lib/physicalQr/pdfA5.js";
 import { PHYSICAL_QR_QUANTITY_MAX, PHYSICAL_QR_QUANTITY_MIN } from "../lib/physicalQr/types.js";
+import { buildPhysicalQrOrderPdfForAdmin, buildPhysicalQrOrdersZipForAdmin } from "../services/physicalQr/physicalQrAdminPrint.service.js";
 
 function mapErr(res: Response, err: unknown, ctx: string) {
   if (err instanceof PhysicalQrFulfillmentError) {
@@ -137,26 +138,11 @@ export async function adminPrintPhysicalQrOrder(req: Request, res: Response) {
       return res.send(pdf);
     }
 
-    // Bulk: one combined PDF with every line item × its quantity (same parent order only).
     try {
-      const pages = [];
-      for (const item of items) {
-        const printed = await renderOne(item);
-        pages.push({
-          jpeg: printed.jpeg,
-          pixelWidth: printed.widthPx,
-          pixelHeight: printed.heightPx,
-          copies: itemCopies(item.quantity),
-        });
-      }
-      const totalPages = pages.reduce((sum, p) => sum + (p.copies ?? 1), 0);
-      const pdf = jpegsToA5Pdf(pages);
+      const built = await buildPhysicalQrOrderPdfForAdmin(row, itemId || undefined);
       res.setHeader("Content-Type", "application/pdf");
-      res.setHeader(
-        "Content-Disposition",
-        `attachment; filename="caretip-a5-${row.id}-all-x${totalPages}.pdf"`,
-      );
-      return res.send(pdf);
+      res.setHeader("Content-Disposition", `attachment; filename="${built.filename}"`);
+      return res.send(built.pdf);
     } catch (bulkErr) {
       const message = bulkErr instanceof Error ? bulkErr.message : "Could not build combined PDF.";
       if (message.includes("exceeds")) {
@@ -166,6 +152,40 @@ export async function adminPrintPhysicalQrOrder(req: Request, res: Response) {
     }
   } catch (err) {
     return mapErr(res, err, "physicalQr.admin.print");
+  }
+}
+
+export async function adminPrintPhysicalQrOrdersBulk(req: Request, res: Response) {
+  try {
+    if (req.body?.path || req.body?.paths || req.body?.filePath) {
+      return res.status(400).json({ success: false, message: "Order IDs are required." });
+    }
+    const result = await buildPhysicalQrOrdersZipForAdmin(req.body?.orderIds);
+    if (result.requested <= 0) {
+      return res.status(400).json({ success: false, message: "Select at least one paid order." });
+    }
+    if (!result.zip) {
+      return res.status(422).json({
+        success: false,
+        code: "PRINT_BULK_FAILED",
+        message: "Unable to download PDFs. Try again.",
+        prepared: 0,
+        failed: result.failed,
+        requested: result.requested,
+      });
+    }
+    res.setHeader("Content-Type", "application/zip");
+    res.setHeader("Content-Disposition", 'attachment; filename="caretip-physical-qr-prints.zip"');
+    res.setHeader("X-CareTip-Print-Prepared", String(result.prepared));
+    res.setHeader("X-CareTip-Print-Failed", String(result.failed));
+    res.setHeader("X-CareTip-Print-Requested", String(result.requested));
+    res.setHeader(
+      "Access-Control-Expose-Headers",
+      "X-CareTip-Print-Prepared, X-CareTip-Print-Failed, X-CareTip-Print-Requested, Content-Disposition",
+    );
+    return res.send(result.zip);
+  } catch (err) {
+    return mapErr(res, err, "physicalQr.admin.printBulk");
   }
 }
 

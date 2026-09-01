@@ -188,6 +188,8 @@ export function toAdminOrderDto(row: {
     qrSubjectId: string | null;
     qrTargetUrlSnapshot: string;
     labelSnapshot: string;
+    locationId?: string | null;
+    locationNameSnapshot?: string | null;
     quantity: number;
     unitPrice: number;
     totalAmount: number;

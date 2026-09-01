@@ -20,6 +20,7 @@ import {
   physicalQrEstimatedFulfillmentLabel,
   physicalQrOrderNumber,
   physicalQrShippingLine,
+  groupPhysicalQrItemsByLocation,
 } from "@/app/lib/physicalQrOrderUi";
 import { PhysicalQrOrderTimeline } from "../../../components/business/physical-branding/PhysicalQrOrderTimeline";
 import { PhysicalQrStatusBadge } from "../../../components/business/physical-branding/PhysicalQrStatusBadge";
@@ -177,13 +178,25 @@ export function PhysicalQrOrderDetailPage() {
           <div>
             <p className="text-muted-foreground">{t("business.qrStudio.physical.qrType")}</p>
             {order.items.length > 1 ? (
-              <ul className="mt-1 space-y-1 text-sm font-medium">
-                {order.items.map((item) => (
-                  <li key={item.id}>
-                    {item.label} · {physicalQrContextLabel(item.qrContextType, t)} · ×{item.quantity}
-                  </li>
+              <div className="mt-1 space-y-3 text-sm font-medium">
+                {groupPhysicalQrItemsByLocation(
+                  order.items,
+                  t("business.qrStudio.print.locationBusiness"),
+                ).map((group) => (
+                  <div key={group.locationName}>
+                    <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                      {group.locationName}
+                    </p>
+                    <ul className="mt-1 space-y-1">
+                      {group.items.map((item) => (
+                        <li key={item.id}>
+                          {item.label} · {physicalQrContextLabel(item.qrContextType, t)} · ×{item.quantity}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
                 ))}
-              </ul>
+              </div>
             ) : (
               <p className="font-medium">{physicalQrContextLabel(order.qrContextType, t)}</p>
             )}

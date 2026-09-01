@@ -1,104 +1,28 @@
 import type Stripe from "stripe";
-import { prisma } from "../../prisma.js";
-import { getStripeClient, isStripeConfigured } from "../stripe.service.js";
-import { resolveCheckoutFrontendBaseUrl } from "../../config/frontendUrl.js";
 import {
   PHYSICAL_QR_CHECKOUT_METADATA_SOURCE,
-  assertPhysicalQrCheckoutReady,
 } from "../../config/physicalQrCheckout.js";
-import { readPhysicalQrContactSnapshot } from "../../lib/physicalQr/shipping.js";
-import {
-  PhysicalQrOrderError,
-  getPhysicalQrOrderForBusiness,
-  resolveOrderItemRows,
-} from "./physicalQrOrder.service.js";
+import { PhysicalQrOrderError } from "./physicalQrOrder.service.js";
+import { createPhysicalQrBatchCheckoutSession } from "./physicalQrBatch.service.js";
 
 /**
  * Dedicated platform Checkout for physical products.
  * Must never use Connect destination / tip PaymentIntent flows.
+ * Amount is the Albertina package quote (same path as batch checkout).
  */
 export async function createPhysicalQrCheckoutSession(input: {
   businessId: string;
   userId: string;
   orderId: string;
 }): Promise<{ url: string; sessionId: string }> {
-  const order = await getPhysicalQrOrderForBusiness(input.businessId, input.orderId);
-  const items = resolveOrderItemRows(order);
-
-  if (order.paymentStatus === "FAILED" && order.fulfillmentStatus === "PAYMENT_FAILED") {
-    await prisma.physicalQrOrder.update({
-      where: { id: order.id },
-      data: { paymentStatus: "PENDING", fulfillmentStatus: "PENDING_PAYMENT" },
-    });
-    order.paymentStatus = "PENDING";
-    order.fulfillmentStatus = "PENDING_PAYMENT";
-  }
-  if (order.paymentStatus !== "PENDING" || order.fulfillmentStatus !== "PENDING_PAYMENT") {
-    throw new PhysicalQrOrderError("ORDER_NOT_CHECKOUTABLE", "This order cannot be paid.", 409);
-  }
-
-  for (const item of items) {
-    const product = item.product;
-    if (!product) {
-      throw new PhysicalQrOrderError("PRODUCT_NOT_FOUND", "Order product is missing.", 409);
+  const result = await createPhysicalQrBatchCheckoutSession(input);
+  if (result.zeroCost || !result.sessionId || !result.url) {
+    if (result.zeroCost && result.url) {
+      return { url: result.url, sessionId: result.sessionId ?? "" };
     }
-    assertPhysicalQrCheckoutReady(product);
-  }
-
-  if (!isStripeConfigured()) {
-    throw new PhysicalQrOrderError("STRIPE_NOT_CONFIGURED", "Payments are not configured.", 503);
-  }
-
-  const base = resolveCheckoutFrontendBaseUrl().replace(/\/+$/, "");
-  const stripe = getStripeClient();
-  if (order.stripeCheckoutSessionId) {
-    try {
-      await stripe.checkout.sessions.expire(order.stripeCheckoutSessionId);
-    } catch {
-      /* Previous session may already be expired or completed. */
-    }
-  }
-  const contact = readPhysicalQrContactSnapshot(order.contactSnapshot);
-  const session = await stripe.checkout.sessions.create({
-    mode: "payment",
-    success_url: `${base}/dashboard/qr-studio/orders/${order.id}?checkout=success`,
-    cancel_url: `${base}/dashboard/qr-studio/orders/${order.id}?checkout=canceled`,
-    ...(contact?.email ? { customer_email: contact.email } : {}),
-    line_items: items.map((item) => ({
-      quantity: item.quantity,
-      price_data: {
-        currency: "eur",
-        unit_amount: item.unitPrice,
-        product_data: {
-          name: item.product?.name ?? "CareTip A5 flyer",
-          description: `${item.labelSnapshot} (${item.qrContextType})`,
-        },
-      },
-    })),
-    metadata: {
-      source: PHYSICAL_QR_CHECKOUT_METADATA_SOURCE,
-      orderId: order.id,
-      businessId: order.businessId,
-    },
-    payment_intent_data: {
-      metadata: {
-        source: PHYSICAL_QR_CHECKOUT_METADATA_SOURCE,
-        orderId: order.id,
-        businessId: order.businessId,
-      },
-    },
-  });
-
-  if (!session.url) {
     throw new PhysicalQrOrderError("CHECKOUT_SESSION_FAILED", "Checkout could not be created.", 502);
   }
-
-  await prisma.physicalQrOrder.update({
-    where: { id: order.id },
-    data: { stripeCheckoutSessionId: session.id },
-  });
-
-  return { url: session.url, sessionId: session.id };
+  return { url: result.url, sessionId: result.sessionId };
 }
 
 export function isPhysicalQrCheckoutSession(session: Stripe.Checkout.Session): boolean {

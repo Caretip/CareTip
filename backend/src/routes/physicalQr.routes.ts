@@ -15,6 +15,7 @@ router.post("/contexts/resolve", physicalQrController.resolvePhysicalQrContextEn
 router.get("/orders", physicalQrController.listMyPhysicalQrOrders);
 router.get("/orders/:orderId", physicalQrController.getMyPhysicalQrOrder);
 router.patch("/orders/:orderId", physicalQrController.patchMyPhysicalQrOrder);
+router.post("/quote", requirePhysicalOrdering, physicalQrController.quoteMyPhysicalQrCart);
 router.post("/orders", requirePhysicalOrdering, physicalQrController.createMyPhysicalQrOrder);
 router.post("/orders/batch", requirePhysicalOrdering, physicalQrController.createMyPhysicalQrBatch);
 router.post("/orders/batch/checkout", requirePhysicalOrdering, physicalQrController.checkoutMyPhysicalQrBatch);

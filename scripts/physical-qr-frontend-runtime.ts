@@ -18,7 +18,9 @@ import {
 import {
   PHYSICAL_QR_SHIP_COUNTRY,
   physicalQrDeliveryIsComplete,
+  groupPhysicalQrItemsByLocation,
 } from "../src/app/lib/physicalQrOrderUi.ts";
+import { quotePhysicalQrPrints } from "../src/app/lib/physicalQrPricing.ts";
 import {
   injectPhysicalQrSvg,
   svgHidesAddress,
@@ -121,11 +123,11 @@ for (const rel of digital) {
 
 const routes = readFileSync(path.join(root, "src/app/routes.tsx"), "utf8");
 if (
-  routes.includes('path: \'templates\'') &&
-  routes.includes('Navigate to="/dashboard/qr-studio/branding"')
+  routes.includes("path: 'templates'") &&
+  routes.includes('Navigate to="/dashboard/qr-studio/print"')
 ) {
-  pass("/templates redirects to Branding");
-} else fail("templates route should redirect to branding");
+  pass("/templates redirects to QR Studio print");
+} else fail("templates route should redirect to print");
 if (routes.includes("branding/orders/:orderId") && routes.includes("branding-orders/:orderId")) {
   pass("business and admin physical order detail routes exist");
 } else fail("missing physical order detail routes");
@@ -251,9 +253,12 @@ if (
 if (
   adminDetail.includes("downloadAllPdfs") &&
   adminDetail.includes("preparingPdfs") &&
-  adminDetail.includes("if (downloadingPdf) return")
+  adminDetail.includes("if (downloadingPdf) return") &&
+  adminDetail.includes("downloadAllPdfsDone") &&
+  adminDetail.includes("loadError") &&
+  adminDetail.includes("totalPages = order.quantity")
 ) {
-  pass("admin bulk PDF download shows Preparing N PDFs and blocks double-click");
+  pass("admin bulk PDF download shows Preparing N PDFs, blocks double-click, and reports combined-file success");
 } else fail("admin bulk PDF preparing state");
 
 const overviewPage = readFileSync(path.join(root, "src/app/pages/business/qr-studio/QrStudioOverviewPage.tsx"), "utf8");
@@ -275,6 +280,52 @@ if (
 ) {
   pass("QR Studio pages use layout-preserving skeleton loading");
 } else fail("QR Studio skeleton loading");
+
+const printLoadErrorAt = printStudio.indexOf("if (loadError)");
+const printEmptyAt = printStudio.indexOf("emptyLocation");
+const printBootAt = printStudio.indexOf("if (bootLoading)");
+if (
+  printBootAt >= 0 &&
+  printLoadErrorAt > printBootAt &&
+  printEmptyAt > printLoadErrorAt &&
+  printStudio.includes("PrintQrStudioSkeleton") &&
+  !printStudio.slice(printLoadErrorAt, printEmptyAt).includes("emptyLocation")
+) {
+  pass("Print QR Studio loading/error/empty are mutually exclusive");
+} else fail("Print QR Studio loading/error/empty overlap");
+
+const qrManagement = readFileSync(path.join(root, "src/app/pages/business/QRCodeManagementPage.tsx"), "utf8");
+if (
+  qrManagement.includes("venueLoading") &&
+  qrManagement.includes("venueError") &&
+  qrManagement.includes("DashboardListSkeleton") &&
+  qrManagement.includes("business.qrPage.noLocations")
+) {
+  pass("Locations QR page distinguishes loading, error, and empty");
+} else fail("Locations QR loading/error/empty");
+if (
+  overviewPage.includes("Promise.all") &&
+  ordersPage.includes("QrStudioOrderListSkeleton") &&
+  orderDetail.includes("if (loadError)") &&
+  qrManagement.includes("venueLoading")
+) {
+  pass("QR Studio overview, orders, detail, and category pages keep loading distinct from empty");
+} else fail("QR Studio navigation/loading surfaces");
+
+const platformOrders = readFileSync(
+  path.join(root, "src/app/pages/platform/PlatformPhysicalQrOrdersPage.tsx"),
+  "utf8",
+);
+if (
+  platformOrders.includes("error ?") &&
+  platformOrders.includes("admin.physicalQr.empty") &&
+  platformOrders.includes("aria-busy") &&
+  platformOrders.includes("downloadPlatformPhysicalQrOrdersZip") &&
+  platformOrders.includes('order.paymentStatus === "PAID"') &&
+  platformOrders.includes("bulkBusy || paidIds.length === 0")
+) {
+  pass("Admin QR order list distinguishes loading/error/empty and bulk-downloads only PAID orders");
+} else fail("Admin QR order list loading/error/empty");
 
 if (
   orderUi.includes("isPhysicalQrIncludedOrder") &&
@@ -300,6 +351,70 @@ if (
 ) {
   pass("PrintQrStudio cart has quantity stepper and sends line quantities");
 } else fail("PrintQrStudio quantity controls");
+if (
+  !printStudio.includes("print-location-filter") &&
+  printStudio.includes("locationLocked") &&
+  printStudio.includes("qrContextType === \"location\"") &&
+  printStudio.includes("quotePhysicalQrPrints") &&
+  printStudio.includes("quotePhysicalQrCart") &&
+  printStudio.includes("downgradeCartReset") &&
+  printStudio.includes("QUOTA_CHANGED")
+) {
+  pass("PrintQrStudio has location lock notice without a duplicate location dropdown");
+} else fail("PrintQrStudio Albertina location/quote delta missing");
+
+const pricing = readFileSync(path.join(root, "src/app/lib/physicalQrPricing.ts"), "utf8");
+if (
+  pricing.includes("PHYSICAL_QR_PACKAGE_CENTS = 1490") &&
+  pricing.includes("PHYSICAL_QR_EXTRA_PRINT_CENTS = 130") &&
+  pricing.includes("PHYSICAL_QR_PRO_FREE_INCLUDED_PRINTS = 8")
+) {
+  pass("Frontend quote constants match Albertina package");
+} else fail("Frontend quote constants");
+
+const basic4 = quotePhysicalQrPrints({ printCount: 4, printingIncludedEligible: false, freeOrderAvailable: false });
+const pro9 = quotePhysicalQrPrints({ printCount: 9, printingIncludedEligible: true, freeOrderAvailable: true });
+if (basic4.totalCents === 1490 && pro9.totalCents === 130) {
+  pass("Frontend quote matches Albertina 4-print package and Pro extra prints");
+} else fail(`Frontend quote got basic4=${basic4.totalCents} pro9=${pro9.totalCents}`);
+
+const grouped = groupPhysicalQrItemsByLocation([
+  { locationName: "Location A", id: "1" },
+  { locationName: "Location B", id: "2" },
+  { locationName: "Location A", id: "3" },
+]);
+if (grouped.length === 2 && grouped[0]?.items.length === 2 && grouped[1]?.items.length === 1) {
+  pass("Order items group by location without duplicating lines");
+} else fail("location grouping helper");
+
+const apiSrc = readFileSync(path.join(root, "src/app/lib/api.ts"), "utf8");
+if (apiSrc.includes("quotePhysicalQrCart") && apiSrc.includes("/api/business/physical-qr/quote")) {
+  pass("Frontend can request server-side physical QR quote");
+} else fail("missing quotePhysicalQrCart API");
+const createOrderFn = apiSrc.slice(
+  apiSrc.indexOf("export async function createPhysicalQrOrder"),
+  apiSrc.indexOf("export async function checkoutPhysicalQrOrder"),
+);
+const createBatchFn = apiSrc.slice(
+  apiSrc.indexOf("export async function createPhysicalQrBatch"),
+  apiSrc.indexOf("export async function checkoutPhysicalQrBatch"),
+);
+if (
+  !createOrderFn.includes("monthlyFreeQuotaApplied") &&
+  !createOrderFn.includes("freeOrderAvailable") &&
+  !createOrderFn.includes("totalAmount") &&
+  !createBatchFn.includes("monthlyFreeQuotaApplied") &&
+  !createBatchFn.includes("totalAmount")
+) {
+  pass("Frontend create payloads cannot send quota consumption or totals");
+} else fail("frontend create still sends quota or totals");
+if (
+  apiSrc.includes("downloadPlatformPhysicalQrOrdersZip") &&
+  apiSrc.includes("/api/platform/physical-qr/orders/print-bulk") &&
+  apiSrc.includes("downloadPlatformPhysicalQrOrderPrint")
+) {
+  pass("Admin bulk ZIP and individual PDF download helpers both exist");
+} else fail("missing bulk ZIP or individual PDF download helper");
 
 const nav = readFileSync(path.join(root, "src/app/components/business/businessDashboardNav.ts"), "utf8");
 if (!nav.includes("qr-studio/templates")) pass("Templates nav entry removed");

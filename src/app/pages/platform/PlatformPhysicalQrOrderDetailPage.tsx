@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState, Fragment } from "react";
 import { Link, useParams } from "react-router";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
@@ -25,6 +25,7 @@ import {
   physicalQrOrderNumber,
   physicalQrPaymentLabel,
   physicalQrShippingLine,
+  groupPhysicalQrItemsByLocation,
 } from "../../lib/physicalQrOrderUi";
 import { PhysicalQrOrderTimeline } from "../../components/business/physical-branding/PhysicalQrOrderTimeline";
 import { PlatformPhysicalQrOrderSkeleton } from "../../components/business/qr-studio/QrStudioLoadingSkeletons";
@@ -48,6 +49,7 @@ export function PlatformPhysicalQrOrderDetailPage() {
   const [busy, setBusy] = useState(false);
   const [downloadingPdf, setDownloadingPdf] = useState(false);
   const [downloadingItemId, setDownloadingItemId] = useState<string | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   const reload = useCallback(async () => {
     const data = await fetchPlatformPhysicalQrOrder(orderId);
@@ -56,10 +58,13 @@ export function PlatformPhysicalQrOrderDetailPage() {
     setCarrier(data.order.carrier ?? "");
     setTrackingNumber(data.order.trackingNumber ?? "");
     setTrackingUrl(data.order.trackingUrl ?? "");
+    setLoadError(null);
   }, [orderId]);
 
   useEffect(() => {
-    void reload().catch(() => toast.error(t("admin.physicalQr.loadError")));
+    void reload().catch((err) => {
+      setLoadError(err instanceof Error ? err.message : t("admin.physicalQr.loadError"));
+    });
   }, [reload, t]);
 
   async function downloadPdf(itemId?: string) {
@@ -68,6 +73,14 @@ export function PlatformPhysicalQrOrderDetailPage() {
     setDownloadingItemId(itemId ?? null);
     try {
       await downloadPlatformPhysicalQrOrderPrint(orderId, "pdf", itemId);
+      const pages = itemId
+        ? order?.items.find((item) => item.id === itemId)?.quantity ?? 1
+        : order?.quantity ?? 1;
+      toast.success(
+        itemId || pages <= 1
+          ? t("admin.physicalQr.downloadPdfDone")
+          : t("admin.physicalQr.downloadAllPdfsDone", { count: pages }),
+      );
     } catch (err) {
       toast.error(err instanceof Error ? err.message : t("admin.physicalQr.downloadPdfError"));
     } finally {
@@ -88,6 +101,14 @@ export function PlatformPhysicalQrOrderDetailPage() {
     }
   }
 
+  if (loadError) {
+    return (
+      <PlatformPage>
+        <p className="text-sm text-destructive">{loadError}</p>
+      </PlatformPage>
+    );
+  }
+
   if (!order) {
     return (
       <PlatformPage>
@@ -99,6 +120,10 @@ export function PlatformPhysicalQrOrderDetailPage() {
   const address = physicalQrAddressLine(order.addressSnapshot);
   const shipTo = physicalQrShippingLine(order.shippingSnapshot);
   const contact = physicalQrContactFromUnknown(order.contactSnapshot);
+  const groupedItems = groupPhysicalQrItemsByLocation(
+    order.items,
+    t("business.qrStudio.print.locationBusiness"),
+  );
   const totalPages = order.quantity;
   const bulkLabel =
     order.itemCount > 1 || totalPages > 1
@@ -145,7 +170,16 @@ export function PlatformPhysicalQrOrderDetailPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {order.items.map((item) => (
+                    {groupedItems.map((group) => (
+                      <Fragment key={group.locationName}>
+                        {groupedItems.length > 1 ? (
+                          <tr className="border-b border-border/60 bg-muted/20">
+                            <td colSpan={4} className="px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                              {group.locationName}
+                            </td>
+                          </tr>
+                        ) : null}
+                        {group.items.map((item) => (
                       <tr key={item.id} className="border-b border-border/60 last:border-0">
                         <td className="px-3 py-2 font-medium">{item.label}</td>
                         <td className="px-3 py-2 text-muted-foreground">{physicalQrContextLabel(item.qrContextType, t)}</td>
@@ -168,6 +202,8 @@ export function PlatformPhysicalQrOrderDetailPage() {
                           )}
                         </td>
                       </tr>
+                        ))}
+                      </Fragment>
                     ))}
                   </tbody>
                 </table>

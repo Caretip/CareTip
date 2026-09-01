@@ -10,6 +10,7 @@ import {
   createPhysicalQrOrder,
   getPhysicalQrOrderForBusiness,
   listPhysicalQrOrdersForBusiness,
+  quotePhysicalQrCartForBusiness,
   resolveOrderItemRows,
   toCustomerOrderDto,
 } from "../services/physicalQr/physicalQrOrder.service.js";
@@ -212,6 +213,20 @@ export async function printMyPhysicalQrOrder(req: Request, res: Response) {
     return res.send(pdf);
   } catch (err) {
     return mapErr(res, err, "physicalQr.print");
+  }
+}
+
+export async function quoteMyPhysicalQrCart(req: Request, res: Response) {
+  try {
+    const auth = await requireManagerBusiness(req, res);
+    if (!auth) return;
+    const result = await quotePhysicalQrCartForBusiness({
+      businessId: auth.businessId,
+      lineItems: req.body?.lineItems,
+    });
+    return res.json(result);
+  } catch (err) {
+    return mapErr(res, err, "physicalQr.quote");
   }
 }
 

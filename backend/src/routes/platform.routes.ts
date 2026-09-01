@@ -122,6 +122,10 @@ router.get("/physical-qr/orders", async (req, res) => {
   const { adminListPhysicalQrOrders } = await import("../controllers/platformPhysicalQr.controller.js");
   return adminListPhysicalQrOrders(req, res);
 });
+router.post("/physical-qr/orders/print-bulk", async (req, res) => {
+  const { adminPrintPhysicalQrOrdersBulk } = await import("../controllers/platformPhysicalQr.controller.js");
+  return adminPrintPhysicalQrOrdersBulk(req, res);
+});
 router.get("/physical-qr/orders/:orderId", async (req, res) => {
   const { adminGetPhysicalQrOrder } = await import("../controllers/platformPhysicalQr.controller.js");
   return adminGetPhysicalQrOrder(req, res);

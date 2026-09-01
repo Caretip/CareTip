@@ -3703,13 +3703,20 @@ export type PhysicalQrCatalogProduct = {
   checkoutBlock: string | null;
 };
 
-export type PhysicalQrContextOption = { id: string; label: string };
+export type PhysicalQrContextOption = {
+  id: string;
+  label: string;
+  locationId?: string | null;
+  isPrimary?: boolean;
+};
 
 export type PhysicalQrContextOptions = {
   storefront: PhysicalQrContextOption;
   employees: PhysicalQrContextOption[];
   locations: PhysicalQrContextOption[];
   tables: PhysicalQrContextOption[];
+  primaryLocationId?: string | null;
+  freeOrderAvailable?: boolean;
 };
 
 export type PhysicalQrOrderItem = {
@@ -3721,6 +3728,8 @@ export type PhysicalQrOrderItem = {
   qrContextType: string;
   qrSubjectId: string | null;
   label: string;
+  locationId?: string | null;
+  locationName?: string | null;
   quantity: number;
   unitPrice: number;
   totalAmount: number;
@@ -3742,6 +3751,17 @@ export type PhysicalQrCustomerOrder = {
   currency: string;
   unitPrice: number;
   totalAmount: number;
+  pricing?: {
+    printCount?: number;
+    freeOrderApplied?: boolean;
+    includedPrints?: number;
+    extraPrints?: number;
+    extraUnitCents?: number;
+    packageCents?: number;
+    extraCents?: number;
+    totalCents?: number;
+  } | null;
+  monthlyFreeQuotaApplied?: boolean;
   placedAt: string;
   processingClass: string;
   processingDeadlineAt: string;
@@ -3775,6 +3795,35 @@ export async function fetchPhysicalQrCatalog(): Promise<{ products: PhysicalQrCa
   return apiRequest(apiPath("/api/business/physical-qr/catalog"), {
     headers: getHeaders(),
     credentials: "include",
+  });
+}
+
+export async function quotePhysicalQrCart(payload: {
+  lineItems: Array<{
+    productId: string;
+    qrContextType: string;
+    qrSubjectId?: string;
+    quantity: number;
+  }>;
+}): Promise<{
+  quote: {
+    printCount: number;
+    freeOrderApplied: boolean;
+    includedPrints: number;
+    extraPrints: number;
+    extraUnitCents: number;
+    packageCents: number;
+    extraCents: number;
+    totalCents: number;
+  };
+  freeOrderAvailable: boolean;
+  primaryLocationId: string | null;
+}> {
+  return apiRequest(apiPath("/api/business/physical-qr/quote"), {
+    method: "POST",
+    headers: getHeaders(),
+    credentials: "include",
+    body: JSON.stringify(payload),
   });
 }
 
@@ -4016,6 +4065,50 @@ export async function downloadPlatformPhysicalQrOrderPrint(
   a.click();
   a.remove();
   URL.revokeObjectURL(url);
+}
+
+export async function downloadPlatformPhysicalQrOrdersZip(orderIds: string[]): Promise<{
+  prepared: number;
+  failed: number;
+  requested: number;
+}> {
+  const token = getToken();
+  const res = await fetch(apiPath("/api/platform/physical-qr/orders/print-bulk"), {
+    method: "POST",
+    headers: {
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      "Content-Type": "application/json",
+    },
+    credentials: "include",
+    body: JSON.stringify({ orderIds }),
+  });
+  if (!res.ok) {
+    const ct = res.headers.get("content-type") ?? "";
+    let message = "Unable to download PDFs. Try again.";
+    if (ct.includes("application/json")) {
+      const errData = (await res.json().catch(() => ({}))) as { message?: string };
+      if (errData.message) message = errData.message;
+    }
+    throw new Error(message);
+  }
+  const prepared = Number(res.headers.get("X-CareTip-Print-Prepared") ?? "0");
+  const failed = Number(res.headers.get("X-CareTip-Print-Failed") ?? "0");
+  const requested = Number(res.headers.get("X-CareTip-Print-Requested") ?? orderIds.length);
+  const blob = await res.blob();
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "caretip-physical-qr-prints.zip";
+  a.rel = "noopener";
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+  return {
+    prepared: Number.isFinite(prepared) ? prepared : 0,
+    failed: Number.isFinite(failed) ? failed : 0,
+    requested: Number.isFinite(requested) ? requested : orderIds.length,
+  };
 }
 
 export async function markPlatformPhysicalQrProcessing(orderId: string): Promise<PhysicalQrAdminOrder> {

@@ -40,6 +40,7 @@ import {
   PHYSICAL_QR_SHIP_COUNTRY,
   physicalQrDeliveryIsComplete,
 } from "@/app/lib/physicalQrOrderUi";
+import { quotePhysicalQrPrints } from "@/app/lib/physicalQrPricing";
 
 const QTY_MIN = 1;
 const QTY_MAX = 50;
@@ -81,6 +82,7 @@ export function PhysicalBrandingStudio() {
   });
   const entitlements = sharedEntitlements ?? fallbackEntitlements;
   const canOrder = entitlements.hasFeature("brandingCustomization");
+  const printingIncluded = entitlements.hasFeature("physicalQrPrintingIncluded");
 
   const [products, setProducts] = useState<PhysicalQrCatalogProduct[]>([]);
   const [productId, setProductId] = useState<string>("");
@@ -221,6 +223,11 @@ export function PhysicalBrandingStudio() {
       style: "currency",
       currency: product?.currency || "EUR",
     }).format(cents / 100);
+  const quote = quotePhysicalQrPrints({
+    printCount: quantity,
+    printingIncludedEligible: printingIncluded,
+    freeOrderAvailable: Boolean(contexts?.freeOrderAvailable) && printingIncluded,
+  });
   const missingQr = !targetUrl || (qrContextType !== "storefront" && !qrSubjectId);
   const missingAddress = supportsAddress && !printAddress.trim();
   const deliveryForm = {
@@ -578,17 +585,16 @@ export function PhysicalBrandingStudio() {
               </div>
             </div>
 
-            {product?.priceCents != null && product.priceCents > 0 ? (
+            {product ? (
               <div>
                 <p className="text-2xl font-semibold tracking-tight tabular-nums">
-                  {formatEur(product.priceCents * quantity)}
+                  {formatEur(quote.totalCents)}
                 </p>
                 <p className="text-sm text-muted-foreground">
-                  {quantity > 1
-                    ? t("business.qrStudio.physical.priceEach", { price: formatEur(product.priceCents) })
-                    : t("business.qrStudio.physical.pricePerFlyer")}
+                  {quote.freeOrderApplied
+                    ? t("business.qrStudio.print.quotaApplied")
+                    : t("business.qrStudio.print.basePackage", { count: quote.includedPrints })}
                 </p>
-                <p className="mt-0.5 text-xs text-muted-foreground">{t("business.qrStudio.physical.testPriceNote")}</p>
               </div>
             ) : null}
 
@@ -619,10 +625,8 @@ export function PhysicalBrandingStudio() {
               <div className="space-y-1 rounded-md border border-border px-3 py-2 text-sm">
                 <p className="font-medium">{t("business.qrStudio.physical.reviewTitle")}</p>
                 <p className="text-muted-foreground">
-                  {product.name} ┬À {t("business.qrStudio.physical.orders.qtyShort", { count: quantity })}
-                  {product.priceCents != null
-                    ? ` ┬À ${formatEur(product.priceCents * quantity)}`
-                    : ""}
+                  {product.name} · {t("business.qrStudio.physical.orders.qtyShort", { count: quantity })}
+                  {` · ${formatEur(quote.totalCents)}`}
                 </p>
                 <p>
                   {t("business.qrStudio.physical.reviewShipTo")}: {recipientName}, {streetLine}, {city},{" "}

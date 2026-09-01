@@ -10,6 +10,7 @@ import {
   canonicalStorefrontUrl,
   canonicalTableUrl,
 } from "../../lib/physicalQr/publicUrl.js";
+import { isPhysicalQrFreeOrderAvailable } from "./physicalQrPricing.service.js";
 
 export class PhysicalQrContextError extends Error {
   readonly code: string;
@@ -26,6 +27,8 @@ export type ResolvedPhysicalQrContext = {
   qrSubjectId: string | null;
   qrTargetUrl: string;
   label: string;
+  locationId: string | null;
+  locationName: string | null;
 };
 
 function assertNotSampleUrl(url: string): void {
@@ -38,10 +41,26 @@ function assertNotSampleUrl(url: string): void {
   }
 }
 
+export async function listBusinessLocationsForPrint(businessId: string): Promise<
+  Array<{ id: string; name: string }>
+> {
+  return prisma.location.findMany({
+    where: { businessId },
+    select: { id: true, name: true },
+    orderBy: { name: "asc" },
+  });
+}
+
+/** Stable primary venue: first location by name. Null when the business has no venue rows. */
+export function derivePrimaryLocationId(locations: Array<{ id: string }>): string | null {
+  return locations[0]?.id ?? null;
+}
+
 export async function resolvePhysicalQrContext(input: {
   businessId: string;
   qrContextType: unknown;
   qrSubjectId?: unknown;
+  locations?: Array<{ id: string; name: string }>;
 }): Promise<ResolvedPhysicalQrContext> {
   const type = String(input.qrContextType ?? "").trim() as PhysicalQrContextType;
   const subjectId =
@@ -57,6 +76,11 @@ export async function resolvePhysicalQrContext(input: {
     throw new PhysicalQrContextError("BUSINESS_NOT_FOUND", "Business not found", 404);
   }
 
+  const brand = business.brandDisplayName?.trim() || business.name;
+  const locations = input.locations ?? (await listBusinessLocationsForPrint(input.businessId));
+  const primaryId = derivePrimaryLocationId(locations);
+  const primaryName = locations.find((l) => l.id === primaryId)?.name ?? brand;
+
   if (type === "storefront") {
     const url = canonicalStorefrontUrl(business.slug);
     assertNotSampleUrl(url);
@@ -64,7 +88,9 @@ export async function resolvePhysicalQrContext(input: {
       qrContextType: "storefront",
       qrSubjectId: null,
       qrTargetUrl: url,
-      label: business.brandDisplayName?.trim() || business.name,
+      label: brand,
+      locationId: primaryId,
+      locationName: primaryName,
     };
   }
 
@@ -74,7 +100,7 @@ export async function resolvePhysicalQrContext(input: {
     }
     const employee = await prisma.employee.findFirst({
       where: { id: subjectId, isDeleted: false },
-      select: { id: true, name: true, slug: true, businessId: true },
+      select: { id: true, name: true, slug: true, businessId: true, locationId: true, location: { select: { name: true } } },
     });
     if (!employee || employee.businessId !== input.businessId) {
       throw new PhysicalQrContextError(
@@ -88,11 +114,14 @@ export async function resolvePhysicalQrContext(input: {
         ? canonicalEmployeeUrl(business.slug, employee.slug)
         : canonicalEmployeeLegacyUrl(employee.id);
     assertNotSampleUrl(url);
+    const locationId = employee.locationId || primaryId;
     return {
       qrContextType: "employee",
       qrSubjectId: employee.id,
       qrTargetUrl: url,
       label: employee.name,
+      locationId,
+      locationName: employee.location?.name ?? primaryName,
     };
   }
 
@@ -118,6 +147,8 @@ export async function resolvePhysicalQrContext(input: {
       qrSubjectId: location.id,
       qrTargetUrl: url,
       label: location.name,
+      locationId: location.id,
+      locationName: location.name,
     };
   }
 
@@ -130,6 +161,7 @@ export async function resolvePhysicalQrContext(input: {
       select: {
         id: true,
         name: true,
+        locationId: true,
         location: { select: { businessId: true, name: true } },
       },
     });
@@ -147,6 +179,8 @@ export async function resolvePhysicalQrContext(input: {
       qrSubjectId: table.id,
       qrTargetUrl: url,
       label: `${table.name} · ${table.location.name}`,
+      locationId: table.locationId,
+      locationName: table.location.name,
     };
   }
 
@@ -154,40 +188,51 @@ export async function resolvePhysicalQrContext(input: {
 }
 
 export async function listPhysicalQrContextOptions(businessId: string) {
-  const [business, employees, locations, tables] = await Promise.all([
+  const [business, employees, locations, tables, freeOrderAvailable] = await Promise.all([
     prisma.business.findUnique({
       where: { id: businessId },
       select: { id: true, name: true, brandDisplayName: true, slug: true },
     }),
     prisma.employee.findMany({
       where: { businessId, isDeleted: false, isActive: true },
-      select: { id: true, name: true, slug: true },
+      select: { id: true, name: true, slug: true, locationId: true },
       orderBy: { name: "asc" },
     }),
-    prisma.location.findMany({
-      where: { businessId },
-      select: { id: true, name: true },
-      orderBy: { name: "asc" },
-    }),
+    listBusinessLocationsForPrint(businessId),
     prisma.table.findMany({
       where: { location: { businessId } },
-      select: { id: true, name: true, location: { select: { name: true } } },
+      select: { id: true, name: true, locationId: true, location: { select: { name: true } } },
       orderBy: { name: "asc" },
     }),
+    isPhysicalQrFreeOrderAvailable(businessId),
   ]);
   if (!business) {
     throw new PhysicalQrContextError("BUSINESS_NOT_FOUND", "Business not found", 404);
   }
+  const primaryLocationId = derivePrimaryLocationId(locations);
   return {
     storefront: {
       id: business.id,
       label: business.brandDisplayName?.trim() || business.name,
+      locationId: primaryLocationId,
     },
-    employees: employees.map((e) => ({ id: e.id, label: e.name })),
-    locations: locations.map((l) => ({ id: l.id, label: l.name })),
+    employees: employees.map((e) => ({
+      id: e.id,
+      label: e.name,
+      locationId: e.locationId || primaryLocationId,
+    })),
+    locations: locations.map((l) => ({
+      id: l.id,
+      label: l.name,
+      locationId: l.id,
+      isPrimary: l.id === primaryLocationId,
+    })),
     tables: tables.map((t) => ({
       id: t.id,
       label: `${t.name} · ${t.location.name}`,
+      locationId: t.locationId,
     })),
+    primaryLocationId,
+    freeOrderAvailable,
   };
 }
