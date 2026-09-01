@@ -7,42 +7,32 @@ function ShimmerBar({ className }: { className?: string }) {
   );
 }
 
-/** Overview category rows + optional recent-orders block. */
+/** Overview recent-orders placeholder — intro and Business QR render without waiting. */
 export function QrStudioOverviewSkeleton({ className }: { className?: string }) {
   const aria = useDashboardShellAria();
   return (
-    <div className={cn("space-y-8 max-lg:space-y-6", className)} role="status" aria-busy="true" aria-label={aria.loading}>
-      <div className="space-y-3 border-y border-border/80 py-1">
-        {Array.from({ length: 4 }).map((_, i) => (
-          <div key={i} className="flex items-start gap-3 py-3.5 max-lg:py-3">
-            <ShimmerBar className="h-9 w-9 shrink-0 rounded-lg" />
+    <div
+      className={cn("divide-y divide-border/80 border-y border-border/80", className)}
+      role="status"
+      aria-busy="true"
+      aria-label={aria.loading}
+    >
+      {Array.from({ length: 2 }).map((_, i) => (
+        <div key={i} className="space-y-3 py-4">
+          <div className="flex justify-between gap-4">
             <div className="min-w-0 flex-1 space-y-2">
-              <ShimmerBar className="h-3.5 w-[40%] max-w-[10rem]" />
-              <ShimmerBar className="h-2.5 w-[72%] max-w-[18rem]" />
-              <ShimmerBar className="h-2.5 w-16" />
-              <div className="flex gap-2 pt-1">
-                <ShimmerBar className="h-8 w-16 rounded-md" />
-                <ShimmerBar className="h-8 w-16 rounded-md" />
-              </div>
+              <ShimmerBar className="h-3.5 w-[42%] max-w-[11rem]" />
+              <ShimmerBar className="h-2.5 w-[58%] max-w-[14rem]" />
+              <ShimmerBar className="h-2.5 w-36" />
             </div>
+            <ShimmerBar className="h-3.5 w-14 shrink-0" />
           </div>
-        ))}
-      </div>
-      <div className="space-y-3">
-        <ShimmerBar className="h-4 w-36" />
-        {Array.from({ length: 2 }).map((_, i) => (
-          <div key={i} className="space-y-2 border-b border-border/60 py-4">
-            <div className="flex justify-between gap-4">
-              <div className="min-w-0 flex-1 space-y-2">
-                <ShimmerBar className="h-3.5 w-[45%] max-w-[12rem]" />
-                <ShimmerBar className="h-2.5 w-[60%] max-w-[14rem]" />
-              </div>
-              <ShimmerBar className="h-3.5 w-14 shrink-0" />
-            </div>
+          <div className="flex items-center justify-between gap-3">
             <ShimmerBar className="h-6 w-24 rounded-full" />
+            <ShimmerBar className="h-3 w-20" />
           </div>
-        ))}
-      </div>
+        </div>
+      ))}
     </div>
   );
 }

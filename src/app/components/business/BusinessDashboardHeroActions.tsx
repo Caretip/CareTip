@@ -5,6 +5,7 @@ import { CareIcon } from "@/components/icons";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { businessUi } from "./businessDashboardUi";
+import { QR_STUDIO_BASE } from "./businessDashboardNav";
 
 type BusinessDashboardHeroActionsProps = {
   isPreviewMode: boolean;
@@ -42,7 +43,7 @@ export function BusinessDashboardHeroActions({
   return (
     <div className={cn("business-hero-cta-row", className)}>
       <Button type="button" className={cn(businessUi.btnPrimary, buttonClassName)} asChild>
-        <Link to="/dashboard/qr-studio/employees" className={businessUi.heroCtaLink}>
+        <Link to={QR_STUDIO_BASE} className={businessUi.heroCtaLink}>
           <CareIcon name="tableQr" size="sm" className="shrink-0" />
           {t("business.hero.openQrStudio")}
         </Link>

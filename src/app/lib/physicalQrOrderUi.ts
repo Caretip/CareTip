@@ -97,14 +97,12 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export function physicalQrDeliveryIsComplete(form: PhysicalQrDeliveryForm): boolean {
   const recipientName = form.recipientName.trim();
-  const streetLine = form.streetLine.trim();
   const city = form.city.trim();
   const country = form.country.trim().toUpperCase();
   const email = form.email.trim();
   const phone = form.phone.trim();
   return (
     Boolean(recipientName) &&
-    Boolean(streetLine) &&
     Boolean(city) &&
     country === PHYSICAL_QR_SHIP_COUNTRY &&
     EMAIL_RE.test(email) &&
@@ -120,7 +118,7 @@ export function physicalQrShippingFromUnknown(raw: unknown): PhysicalQrShippingS
   const postalCode = String(value.postalCode ?? "").trim();
   const city = String(value.city ?? "").trim();
   const country = String(value.country ?? "").trim();
-  if (!recipientName || !streetLine || !city || !country) return null;
+  if (!recipientName || !city || !country) return null;
   const addressLine2 = String(value.addressLine2 ?? "").trim();
   return {
     recipientName,
@@ -145,8 +143,10 @@ export function physicalQrContactFromUnknown(raw: unknown): PhysicalQrContactSna
 export function physicalQrShippingLine(snapshot: unknown): string | null {
   const shipping = physicalQrShippingFromUnknown(snapshot);
   if (!shipping) return null;
+  const street = shipping.streetLine.trim();
+  const streetPart = street ? `, ${street}` : "";
   const line2 = shipping.addressLine2 ? `, ${shipping.addressLine2}` : "";
-  return `${shipping.recipientName}, ${shipping.streetLine}${line2}${shipping.postalCode ? `, ${shipping.postalCode}` : ""} ${shipping.city}, ${shipping.country}`;
+  return `${shipping.recipientName}${streetPart}${line2}${shipping.postalCode ? `, ${shipping.postalCode}` : ""} ${shipping.city}, ${shipping.country}`;
 }
 
 /** Pro / included printing: zero Stripe charge (totalAmount === 0). */

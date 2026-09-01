@@ -18,6 +18,7 @@ import { createPhysicalQrCheckoutSession } from "../services/physicalQr/physical
 import {
   createPhysicalQrBatchCheckoutSession,
   createPhysicalQrBatchOrders,
+  createAndCheckoutPhysicalQrBatch,
 } from "../services/physicalQr/physicalQrBatch.service.js";
 import { PhysicalQrCheckoutBlockedError } from "../config/physicalQrCheckout.js";
 import { renderPhysicalQrPrint } from "../lib/physicalQr/printPipeline.js";
@@ -188,6 +189,7 @@ export async function printMyPhysicalQrOrder(req: Request, res: Response) {
       businessName: row.businessNameSnapshot,
       address,
       supportsAddress: product.supportsAddress,
+      templateId: product.templateId,
       colorTokens: (item.colorTokensSnapshot ?? {}) as {
         backgroundGradientStart: string;
         backgroundGradientEnd: string;
@@ -246,6 +248,30 @@ export async function createMyPhysicalQrBatch(req: Request, res: Response) {
     return res.status(201).json({ order: toCustomerOrderDto(order) });
   } catch (err) {
     return mapErr(res, err, "physicalQr.createBatch");
+  }
+}
+
+export async function payMyPhysicalQrBatch(req: Request, res: Response) {
+  try {
+    const auth = await requireManagerBusiness(req, res);
+    if (!auth) return;
+    const result = await createAndCheckoutPhysicalQrBatch({
+      businessId: auth.businessId,
+      userId: auth.userId,
+      lineItems: req.body?.lineItems,
+      address: req.body?.address,
+      shipping: req.body?.shipping,
+      contact: req.body?.contact,
+      colorTokens: req.body?.colorTokens,
+    });
+    return res.status(201).json({
+      url: result.url,
+      sessionId: result.sessionId,
+      zeroCost: result.zeroCost,
+      order: toCustomerOrderDto(result.order),
+    });
+  } catch (err) {
+    return mapErr(res, err, "physicalQr.payBatch");
   }
 }
 

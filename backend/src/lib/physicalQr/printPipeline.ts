@@ -11,6 +11,7 @@ import {
   PHYSICAL_QR_VIEWBOX_HEIGHT,
   PHYSICAL_QR_VIEWBOX_WIDTH,
   PHYSICAL_QR_ZONES,
+  physicalQrOverlayTextColor,
   type PhysicalQrColorTokens,
 } from "./types.js";
 import { jpegToA5Pdf } from "./pdfA5.js";
@@ -22,6 +23,7 @@ export type PhysicalQrPrintInput = {
   address: string | null;
   supportsAddress: boolean;
   colorTokens: PhysicalQrColorTokens;
+  templateId?: string | null;
 };
 
 export type PhysicalQrPrintResult = {
@@ -75,13 +77,16 @@ async function qrPngDataUrl(targetUrl: string): Promise<string> {
  */
 export async function renderPhysicalQrPrint(input: PhysicalQrPrintInput): Promise<PhysicalQrPrintResult> {
   const colors = assertPhysicalQrColorTokens(input.colorTokens);
+  const overlayTextColor = physicalQrOverlayTextColor(input.templateId, colors.secondaryTextColor);
+  const overlayTokens = { ...colors, secondaryTextColor: overlayTextColor };
   const qrDataUrl = await qrPngDataUrl(input.targetUrl);
   const svg = renderPhysicalQrSvg({
     qrDataUrl,
     businessName: input.businessName,
     address: input.supportsAddress ? input.address : null,
     supportsAddress: input.supportsAddress,
-    colorTokens: colors,
+    colorTokens: overlayTokens,
+    templateId: input.templateId,
   });
 
   const w = PHYSICAL_QR_PRINT_WIDTH_PX;
@@ -91,7 +96,7 @@ export async function renderPhysicalQrPrint(input: PhysicalQrPrintInput): Promis
   ctx.fillStyle = "#FFFFFF";
   ctx.fillRect(0, 0, w, h);
 
-  const artwork = await loadImage(readFileSync(resolvePhysicalQrArtworkPngPath()));
+  const artwork = await loadImage(readFileSync(resolvePhysicalQrArtworkPngPath(input.templateId)));
   ctx.drawImage(artwork, 0, 0, w, h);
 
   const qrImg = await loadImage(qrDataUrl);
@@ -101,7 +106,7 @@ export async function renderPhysicalQrPrint(input: PhysicalQrPrintInput): Promis
   ctx.imageSmoothingEnabled = true;
 
   ctx.textAlign = "center";
-  ctx.fillStyle = colors.secondaryTextColor;
+  ctx.fillStyle = overlayTextColor;
   const name = input.businessName.trim();
   if (name) {
     const nameSize = Math.min(vy(36), Math.max(vy(22), vx(560) / Math.max(8, name.length)));

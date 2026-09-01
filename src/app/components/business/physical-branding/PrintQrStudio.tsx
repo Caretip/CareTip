@@ -2,12 +2,11 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
-import { ShoppingBag, Trash2, Minus, Plus } from "lucide-react";
+import { ShoppingBag, Trash2, Minus, Plus, Eye } from "lucide-react";
 import { performExternalStripeRedirect } from "@/app/lib/externalStripeRedirect";
 import { ApiRequestError } from "@/app/lib/apiError";
 import {
-  checkoutPhysicalQrBatch,
-  createPhysicalQrBatch,
+  payPhysicalQrBatch,
   fetchBusinessProfile,
   fetchPhysicalQrCatalog,
   fetchPhysicalQrContexts,
@@ -17,16 +16,24 @@ import {
   type PhysicalQrContextOptions,
 } from "@/app/lib/api";
 import { PHYSICAL_QR_DEFAULT_COLOR_TOKENS } from "@/app/lib/physicalQrTemplate";
+import { logPhysicalQrPerf, physicalQrPerfNow } from "@/app/lib/physicalQrPerf";
 import { QR_STUDIO_SAMPLE_URL, useBusinessBrandingOptional } from "../../../contexts/BusinessBrandingContext";
 import { useRequireAuth } from "../../../hooks/useRequireAuth";
 import { useSubscriptionEntitlements } from "../../../hooks/useSubscriptionEntitlements";
 import { useBusinessEntitlementsContext } from "../../../contexts/BusinessEntitlementsContext";
 import { UpgradeCta } from "@/app/components/subscription/UpgradeCta";
+import { PhysicalQrPreview, useSharedPhysicalQrDataUrl } from "./PhysicalQrPreview";
+import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { PhysicalQrPreview } from "./PhysicalQrPreview";
-import { cn } from "@/lib/utils";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/app/components/ui/dialog";
 import {
   PHYSICAL_QR_SHIP_COUNTRY,
   physicalQrDeliveryIsComplete,
@@ -35,7 +42,6 @@ import {
   clampPhysicalQrQuantity,
 } from "@/app/lib/physicalQrOrderUi";
 import {
-  PHYSICAL_QR_PACKAGE_CENTS,
   quotePhysicalQrPrints,
   type PhysicalQrQuote,
 } from "@/app/lib/physicalQrPricing";
@@ -101,10 +107,26 @@ export function PrintQrStudio() {
   const [bootLoading, setBootLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [previewTargetUrl, setPreviewTargetUrl] = useState("");
+  const sharedQrDataUrl = useSharedPhysicalQrDataUrl(previewTargetUrl);
   const [serverQuote, setServerQuote] = useState<PhysicalQrQuote | null>(null);
+  const [previewProductId, setPreviewProductId] = useState<string | null>(null);
 
   const product = products.find((p) => p.id === productId) ?? products[0] ?? null;
   const supportsAddress = Boolean(product?.supportsAddress);
+  const previewProduct = products.find((p) => p.id === previewProductId) ?? null;
+
+  const templateLabel = useCallback(
+    (item: PhysicalQrCatalogProduct) => {
+      const design = t(`business.qrStudio.physical.templates.${item.templateId}`, {
+        defaultValue: item.name.replace(/\s+with(?:out)? address$/i, "").trim() || item.name,
+      });
+      const layout = item.supportsAddress
+        ? t("business.qrStudio.physical.withAddress")
+        : t("business.qrStudio.physical.withoutAddress");
+      return `${design} · ${layout}`;
+    },
+    [t],
+  );
 
   useEffect(() => {
     let cancelled = false;
@@ -209,31 +231,34 @@ export function PrintQrStudio() {
       return;
     }
     let cancelled = false;
-    void quotePhysicalQrCart({
-      lineItems: cart.map((line) => ({
-        productId: product.id,
-        qrContextType: line.qrContextType,
-        qrSubjectId: line.qrContextType === "storefront" ? undefined : line.qrSubjectId,
-        quantity: line.quantity,
-      })),
-    })
-      .then((result) => {
-        if (cancelled) return;
-        setServerQuote(result.quote);
-        setContexts((prev) =>
-          prev ? { ...prev, freeOrderAvailable: result.freeOrderAvailable } : prev,
-        );
+    const timer = window.setTimeout(() => {
+      void quotePhysicalQrCart({
+        lineItems: cart.map((line) => ({
+          productId: product.id,
+          qrContextType: line.qrContextType,
+          qrSubjectId: line.qrContextType === "storefront" ? undefined : line.qrSubjectId,
+          quantity: line.quantity,
+        })),
       })
-      .catch((err) => {
-        if (cancelled) return;
-        const code = err instanceof ApiRequestError ? err.code : undefined;
-        if (code === "BASIC_SINGLE_LOCATION_REQUIRED" || code === "BASIC_PRIMARY_LOCATION_REQUIRED") {
-          toast.error(t("business.qrStudio.print.downgradeCartReset"));
-          setCart([]);
-        }
-      });
+        .then((result) => {
+          if (cancelled) return;
+          setServerQuote(result.quote);
+          setContexts((prev) =>
+            prev ? { ...prev, freeOrderAvailable: result.freeOrderAvailable } : prev,
+          );
+        })
+        .catch((err) => {
+          if (cancelled) return;
+          const code = err instanceof ApiRequestError ? err.code : undefined;
+          if (code === "BASIC_SINGLE_LOCATION_REQUIRED" || code === "BASIC_PRIMARY_LOCATION_REQUIRED") {
+            toast.error(t("business.qrStudio.print.downgradeCartReset"));
+            setCart([]);
+          }
+        });
+    }, 250);
     return () => {
       cancelled = true;
+      window.clearTimeout(timer);
     };
   }, [cart, product, t]);
 
@@ -359,8 +384,12 @@ export function PrintQrStudio() {
   const placeBatchOrder = useCallback(async () => {
     if (!product || !canCheckout) return;
     setSubmitting(true);
+    const tClick = physicalQrPerfNow();
+    logPhysicalQrPerf("pay-click", 0);
     try {
-      const batch = await createPhysicalQrBatch({
+      const tApi = physicalQrPerfNow();
+      logPhysicalQrPerf("create-and-checkout-started", 0);
+      const session = await payPhysicalQrBatch({
         lineItems: cart.map((line) => ({
           productId: product.id,
           qrContextType: line.qrContextType,
@@ -383,11 +412,15 @@ export function PrintQrStudio() {
         },
         colorTokens: PHYSICAL_QR_DEFAULT_COLOR_TOKENS,
       });
-      const session = await checkoutPhysicalQrBatch(batch.order.id);
+      logPhysicalQrPerf("create-and-checkout-received", physicalQrPerfNow() - tApi, {
+        zeroCost: Boolean(session.zeroCost),
+      });
       if (session.zeroCost) {
-        navigate(`/dashboard/qr-studio/orders/${encodeURIComponent(batch.order.id)}?checkout=success`);
+        logPhysicalQrPerf("redirect-initiated", physicalQrPerfNow() - tClick, { zeroCost: true });
+        navigate(`/dashboard/qr-studio/orders/${encodeURIComponent(session.order.id)}?checkout=success`);
         return;
       }
+      logPhysicalQrPerf("redirect-initiated", physicalQrPerfNow() - tClick, { zeroCost: false });
       const redirected = performExternalStripeRedirect(session.url, "checkout");
       if (!redirected.ok) throw new Error(t("business.qrStudio.physical.orderError"));
     } catch (err) {
@@ -456,47 +489,71 @@ export function PrintQrStudio() {
       ) : null}
 
       {step === "select" ? (
-        <div className="grid items-start gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(240px,320px)]">
-          <div className="space-y-8 max-lg:space-y-5">
+        <div className="space-y-8 max-lg:space-y-5">
           <section className="space-y-3">
             <div>
               <h2 className="text-sm font-semibold text-foreground">{t("business.qrStudio.physical.chooseProduct")}</h2>
               <p className="mt-1 text-xs text-muted-foreground">{t("business.qrStudio.physical.chooseProductHint")}</p>
             </div>
+            {products.length === 0 ? (
+              <p className="py-6 text-sm text-muted-foreground">{t("business.qrStudio.physical.noTemplates")}</p>
+            ) : (
             <div className="grid gap-3 sm:grid-cols-2">
               {products.map((item) => (
-                <button
+                <div
                   key={item.id}
-                  type="button"
-                  onClick={() => setProductId(item.id)}
                   className={cn(
-                    "rounded-lg border p-2.5 text-left transition-colors",
+                    "rounded-lg border p-2 text-left transition-colors",
                     productId === item.id
                       ? "border-primary bg-primary/5 ring-1 ring-primary/20"
                       : "border-border hover:border-primary/40",
                   )}
                 >
-                  <PhysicalQrPreview
-                    compact
-                    businessName={businessName}
-                    address={item.supportsAddress ? printAddress : null}
-                    supportsAddress={item.supportsAddress}
-                    colorTokens={PHYSICAL_QR_DEFAULT_COLOR_TOKENS}
-                    targetUrl={previewTargetUrl}
-                  />
-                  <p className="mt-2 text-sm font-medium leading-tight">
-                    {item.supportsAddress
-                      ? t("business.qrStudio.physical.withAddress")
-                      : t("business.qrStudio.physical.withoutAddress")}
-                  </p>
-                  <p className="mt-0.5 text-xs text-muted-foreground">
-                    {quote.freeOrderApplied
-                      ? t("business.qrStudio.print.monthlyFreeAvailable")
-                      : t("business.qrStudio.print.packageFrom", { price: formatEur(PHYSICAL_QR_PACKAGE_CENTS) })}
-                  </p>
-                </button>
+                  <button
+                    type="button"
+                    onClick={() => setProductId(item.id)}
+                    className="flex w-full flex-col items-center text-left"
+                    aria-pressed={productId === item.id}
+                    aria-label={templateLabel(item)}
+                  >
+                    <PhysicalQrPreview
+                      compact
+                      className="mx-auto w-full max-w-[8.5rem]"
+                      templateId={item.templateId}
+                      businessName={businessName}
+                      address={item.supportsAddress ? printAddress : null}
+                      supportsAddress={item.supportsAddress}
+                      colorTokens={PHYSICAL_QR_DEFAULT_COLOR_TOKENS}
+                      targetUrl={previewTargetUrl}
+                      qrDataUrl={sharedQrDataUrl}
+                    />
+                    <p className="mt-2 w-full text-sm font-medium leading-tight">
+                      {t(`business.qrStudio.physical.templates.${item.templateId}`, {
+                        defaultValue: item.name.replace(/\s+with(?:out)? address$/i, "").trim() || item.name,
+                      })}
+                    </p>
+                    <p className="mt-0.5 w-full text-xs text-muted-foreground">
+                      {item.supportsAddress
+                        ? t("business.qrStudio.physical.withAddress")
+                        : t("business.qrStudio.physical.withoutAddress")}
+                    </p>
+                  </button>
+                  <button
+                    type="button"
+                    className="mt-1.5 inline-flex items-center gap-1 text-xs font-medium text-muted-foreground hover:text-foreground"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setPreviewProductId(item.id);
+                    }}
+                    aria-label={t("business.qrStudio.physical.previewTemplateAria", { name: templateLabel(item) })}
+                  >
+                    <Eye className="h-3.5 w-3.5" aria-hidden />
+                    {t("business.qrStudio.physical.previewAction")}
+                  </button>
+                </div>
               ))}
             </div>
+            )}
           </section>
 
           <section className="space-y-4">
@@ -585,25 +642,11 @@ export function PrintQrStudio() {
             onQuantityChange={setLineQuantity}
             t={t}
           />
-          </div>
-
-          <aside className="space-y-2 lg:sticky lg:top-4">
-            <p className="text-sm font-medium tracking-tight">{t("business.qrStudio.physical.preview")}</p>
-            <PhysicalQrPreview
-              businessName={businessName}
-              address={supportsAddress ? printAddress : null}
-              supportsAddress={supportsAddress}
-              colorTokens={PHYSICAL_QR_DEFAULT_COLOR_TOKENS}
-              targetUrl={previewTargetUrl}
-            />
-            <p className="text-xs text-muted-foreground">{t("business.qrStudio.physical.previewHint")}</p>
-          </aside>
         </div>
       ) : null}
 
       {step === "shipping" ? (
-        <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(240px,320px)]">
-          <div className="space-y-4">
+        <div className="space-y-4">
             <h2 className="text-sm font-semibold">{t("business.qrStudio.physical.deliveryTitle")}</h2>
             {supportsAddress ? (
               <div className="space-y-2">
@@ -646,16 +689,6 @@ export function PrintQrStudio() {
                 {t("business.qrStudio.print.continueToReview")}
               </Button>
             </div>
-          </div>
-          <aside className="hidden lg:block">
-            <PhysicalQrPreview
-              businessName={businessName}
-              address={supportsAddress ? printAddress : null}
-              supportsAddress={supportsAddress}
-              colorTokens={PHYSICAL_QR_DEFAULT_COLOR_TOKENS}
-              targetUrl={previewTargetUrl}
-            />
-          </aside>
         </div>
       ) : null}
 
@@ -693,6 +726,37 @@ export function PrintQrStudio() {
           </div>
         </div>
       ) : null}
+
+      <Dialog open={Boolean(previewProduct)} onOpenChange={(open) => { if (!open) setPreviewProductId(null); }}>
+        <DialogContent className="max-w-[min(100%-2rem,28rem)] sm:max-w-[28rem]">
+          <DialogHeader>
+            <DialogTitle>
+              {previewProduct
+                ? t(`business.qrStudio.physical.templates.${previewProduct.templateId}`, {
+                    defaultValue: previewProduct.name,
+                  })
+                : t("business.qrStudio.physical.preview")}
+            </DialogTitle>
+            <DialogDescription>
+              {previewProduct?.supportsAddress
+                ? t("business.qrStudio.physical.withAddress")
+                : t("business.qrStudio.physical.withoutAddress")}
+            </DialogDescription>
+          </DialogHeader>
+          {previewProduct ? (
+            <PhysicalQrPreview
+              className="mx-auto w-full max-w-[22rem]"
+              templateId={previewProduct.templateId}
+              businessName={businessName}
+              address={previewProduct.supportsAddress ? printAddress : null}
+              supportsAddress={previewProduct.supportsAddress}
+              colorTokens={PHYSICAL_QR_DEFAULT_COLOR_TOKENS}
+              targetUrl={previewTargetUrl}
+              qrDataUrl={sharedQrDataUrl}
+            />
+          ) : null}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

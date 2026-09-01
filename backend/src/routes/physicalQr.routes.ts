@@ -18,6 +18,7 @@ router.patch("/orders/:orderId", physicalQrController.patchMyPhysicalQrOrder);
 router.post("/quote", requirePhysicalOrdering, physicalQrController.quoteMyPhysicalQrCart);
 router.post("/orders", requirePhysicalOrdering, physicalQrController.createMyPhysicalQrOrder);
 router.post("/orders/batch", requirePhysicalOrdering, physicalQrController.createMyPhysicalQrBatch);
+router.post("/orders/batch/pay", requirePhysicalOrdering, physicalQrController.payMyPhysicalQrBatch);
 router.post("/orders/batch/checkout", requirePhysicalOrdering, physicalQrController.checkoutMyPhysicalQrBatch);
 router.post("/orders/:orderId/checkout", requirePhysicalOrdering, physicalQrController.checkoutMyPhysicalQrOrder);
 router.get("/orders/:orderId/print", requirePhysicalOrdering, physicalQrController.printMyPhysicalQrOrder);

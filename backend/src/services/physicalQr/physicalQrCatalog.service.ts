@@ -3,7 +3,11 @@ import {
   PHYSICAL_QR_CURRENCY,
   PHYSICAL_QR_PRODUCT_ADDRESS_ID,
   PHYSICAL_QR_PRODUCT_NO_ADDRESS_ID,
+  PHYSICAL_QR_TEMPLATE_CLASSIC_ID,
   PHYSICAL_QR_TEMPLATE_ID,
+  PHYSICAL_QR_TEMPLATE_LIGHT_ID,
+  PHYSICAL_QR_TEMPLATE_MIDNIGHT_ID,
+  PHYSICAL_QR_TEMPLATE_NATURE_ID,
   PHYSICAL_QR_TEST_UNIT_PRICE_CENTS,
 } from "../../lib/physicalQr/types.js";
 import {
@@ -13,29 +17,81 @@ import {
   PHYSICAL_QR_PRICE_NOT_CONFIGURED,
 } from "../../config/physicalQrCheckout.js";
 
+function flyerPair(input: {
+  addressId: string;
+  noAddressId: string;
+  templateId: string;
+  name: string;
+  withAddressDescription: string;
+  withoutAddressDescription: string;
+}) {
+  return [
+    {
+      id: input.addressId,
+      name: `${input.name} with address`,
+      description: input.withAddressDescription,
+      templateId: input.templateId,
+      supportsAddress: true,
+      active: true,
+      orderable: true,
+      priceCents: PHYSICAL_QR_TEST_UNIT_PRICE_CENTS,
+      currency: PHYSICAL_QR_CURRENCY,
+    },
+    {
+      id: input.noAddressId,
+      name: `${input.name} without address`,
+      description: input.withoutAddressDescription,
+      templateId: input.templateId,
+      supportsAddress: false,
+      active: true,
+      orderable: true,
+      priceCents: PHYSICAL_QR_TEST_UNIT_PRICE_CENTS,
+      currency: PHYSICAL_QR_CURRENCY,
+    },
+  ] as const;
+}
+
 export const PHYSICAL_QR_CATALOG_SEED = [
-  {
-    id: PHYSICAL_QR_PRODUCT_ADDRESS_ID,
-    name: "CareTip A5 flyer with address",
-    description: "A5 print with QR, business name, and printed address.",
+  ...flyerPair({
+    addressId: PHYSICAL_QR_PRODUCT_ADDRESS_ID,
+    noAddressId: PHYSICAL_QR_PRODUCT_NO_ADDRESS_ID,
     templateId: PHYSICAL_QR_TEMPLATE_ID,
-    supportsAddress: true,
-    active: true,
-    orderable: true,
-    priceCents: PHYSICAL_QR_TEST_UNIT_PRICE_CENTS,
-    currency: PHYSICAL_QR_CURRENCY,
-  },
-  {
-    id: PHYSICAL_QR_PRODUCT_NO_ADDRESS_ID,
-    name: "CareTip A5 flyer without address",
-    description: "A5 print with QR and business name only.",
-    templateId: PHYSICAL_QR_TEMPLATE_ID,
-    supportsAddress: false,
-    active: true,
-    orderable: true,
-    priceCents: PHYSICAL_QR_TEST_UNIT_PRICE_CENTS,
-    currency: PHYSICAL_QR_CURRENCY,
-  },
+    name: "CareTip A5 flyer",
+    withAddressDescription: "A5 print with QR, business name, and printed address.",
+    withoutAddressDescription: "A5 print with QR and business name only.",
+  }),
+  ...flyerPair({
+    addressId: "caretip-classic-address",
+    noAddressId: "caretip-classic-no-address",
+    templateId: PHYSICAL_QR_TEMPLATE_CLASSIC_ID,
+    name: "CareTip Classic",
+    withAddressDescription: "Classic A5 print with QR, business name, and printed address.",
+    withoutAddressDescription: "Classic A5 print with QR and business name only.",
+  }),
+  ...flyerPair({
+    addressId: "caretip-light-address",
+    noAddressId: "caretip-light-no-address",
+    templateId: PHYSICAL_QR_TEMPLATE_LIGHT_ID,
+    name: "CareTip Light",
+    withAddressDescription: "Light A5 print with QR, business name, and printed address.",
+    withoutAddressDescription: "Light A5 print with QR and business name only.",
+  }),
+  ...flyerPair({
+    addressId: "caretip-midnight-address",
+    noAddressId: "caretip-midnight-no-address",
+    templateId: PHYSICAL_QR_TEMPLATE_MIDNIGHT_ID,
+    name: "CareTip Midnight",
+    withAddressDescription: "Midnight A5 print with QR, business name, and printed address.",
+    withoutAddressDescription: "Midnight A5 print with QR and business name only.",
+  }),
+  ...flyerPair({
+    addressId: "caretip-nature-address",
+    noAddressId: "caretip-nature-no-address",
+    templateId: PHYSICAL_QR_TEMPLATE_NATURE_ID,
+    name: "CareTip Nature",
+    withAddressDescription: "Nature A5 print with QR, business name, and printed address.",
+    withoutAddressDescription: "Nature A5 print with QR and business name only.",
+  }),
 ] as const;
 
 export async function ensurePhysicalQrCatalog(): Promise<void> {

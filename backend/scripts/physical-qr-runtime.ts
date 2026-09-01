@@ -18,6 +18,8 @@ import {
 import {
   loadAuthoredPhysicalQrSvg,
   renderPhysicalQrSvg,
+  resolvePhysicalQrArtworkPngPath,
+  resolvePhysicalQrTemplateId,
   svgHidesAddress,
   svgShowsAddress,
 } from "../src/lib/physicalQr/svg.js";
@@ -28,6 +30,14 @@ import {
   PHYSICAL_QR_PRINT_WIDTH_MM,
   PHYSICAL_QR_PRINT_WIDTH_PX,
   PHYSICAL_QR_SAMPLE_URL_FORBIDDEN,
+  PHYSICAL_QR_TEMPLATE_CLASSIC_ID,
+  PHYSICAL_QR_TEMPLATE_ID,
+  PHYSICAL_QR_TEMPLATE_IDS,
+  PHYSICAL_QR_TEMPLATE_LIGHT_ID,
+  PHYSICAL_QR_TEMPLATE_MIDNIGHT_ID,
+  PHYSICAL_QR_TEMPLATE_NATURE_ID,
+  PHYSICAL_QR_LIGHT_OVERLAY_TEXT,
+  physicalQrOverlayTextColor,
 } from "../src/lib/physicalQr/types.js";
 import { validatePhysicalQrColorTokens } from "../src/lib/physicalQr/colors.js";
 import { canTransitionFulfillment, orderCanPay } from "../src/lib/physicalQr/status.js";
@@ -528,6 +538,16 @@ function sectionShipping() {
     pass("Germany shipping snapshot is accepted");
   } else fail("valid DE shipping");
 
+  const withoutLandmark = parsePhysicalQrShippingSnapshot({
+    recipientName: "Marie Testerin",
+    streetLine: "",
+    city: "Berlin",
+    country: "DE",
+  });
+  if (withoutLandmark.streetLine === "" && withoutLandmark.city === "Berlin") {
+    pass("Landmark/streetLine is optional on shipping snapshots");
+  } else fail("optional landmark shipping");
+
   expectShippingError("RECIPIENT_REQUIRED", () => parsePhysicalQrShippingSnapshot({}));
   expectShippingError("INVALID_COUNTRY", () =>
     parsePhysicalQrShippingSnapshot({ ...validShipping, country: "AT" }),
@@ -611,6 +631,14 @@ function sectionRegressionFiles() {
     "src/app/pages/business/qr-studio/QrStudioBrandingPage.tsx",
     "src/assets/physical-qr/caretip-a5.svg",
     "src/assets/physical-qr/caretip-a5-artwork.png",
+    "src/assets/physical-qr/caretip-light.png",
+    "src/assets/physical-qr/caretip-midnight.png",
+    "src/assets/physical-qr/caretip-nature.png",
+    "src/assets/physical-qr/caretip_classic.png",
+    "template/caretip-light.png",
+    "template/caretip-midnight.png",
+    "template/caretip-nature.png",
+    "template/caretip_classic.png",
     "template/A5_Flyer without Address.png",
   ];
   for (const rel of required) {
@@ -790,8 +818,14 @@ function sectionRegressionFiles() {
     batchService.includes("stripeLineItemsForPhysicalQrQuote") &&
     batchService.includes("lockQuoteForPhysicalQrCheckout") &&
     batchService.includes("previousSessionId") &&
+    batchService.includes("createAndCheckoutPhysicalQrBatch") &&
+    batchService.includes("await stripe.checkout.sessions.expire") &&
+    batchService.includes("locked.quote.totalCents === 0") &&
     orderService.includes("resolvePhysicalQrCheckoutQuote") &&
     orderService.includes("reuseStoredFreeQuote") &&
+    orderService.includes("productsById") &&
+    orderService.includes("where: { id: input.orderId, businessId: input.businessId }") &&
+    businessRoutes.includes("/orders/batch/pay") &&
     checkout.includes("createPhysicalQrBatchCheckoutSession") &&
     !checkout.includes("application_fee")
   ) {
@@ -836,7 +870,10 @@ function sectionRegressionFiles() {
     !adminPrint.includes("req.query.path") &&
     !businessRoutes.includes("print-bulk") &&
     !adminPrintService.includes("archiver") &&
-    adminPrintService.includes("zipStore")
+    adminPrintService.includes("zipStore") &&
+    printPipeline.includes("resolvePhysicalQrArtworkPngPath") &&
+    !printPipeline.includes(".webp") &&
+    !printPipeline.includes("physical-qr/display")
   ) {
     pass("bulk ZIP reuses existing PDFs, authorizes each order id, and is platform-admin only");
   } else fail("bulk PDF authorization / combined renderer");
@@ -994,6 +1031,66 @@ async function sectionOptionalDb() {
   }
 }
 
+function sectionPhysicalQrPrintTemplates() {
+  const unique = new Set(PHYSICAL_QR_TEMPLATE_IDS);
+  if (unique.size === PHYSICAL_QR_TEMPLATE_IDS.length && unique.has(PHYSICAL_QR_TEMPLATE_ID)) {
+    pass("physical print template IDs are unique and include the original A5 flyer");
+  } else fail("physical print template IDs");
+
+  if (resolvePhysicalQrTemplateId("../../etc/passwd") === PHYSICAL_QR_TEMPLATE_ID) {
+    pass("unknown/path-like template IDs fall back to the allowlisted original");
+  } else fail("template ID allowlist rejected traversal");
+  if (resolvePhysicalQrTemplateId(PHYSICAL_QR_TEMPLATE_CLASSIC_ID) === PHYSICAL_QR_TEMPLATE_CLASSIC_ID) {
+    pass("classic template ID is allowlisted");
+  } else fail("classic template ID");
+
+  if (
+    physicalQrOverlayTextColor(PHYSICAL_QR_TEMPLATE_CLASSIC_ID, "#1A1A1A") === PHYSICAL_QR_LIGHT_OVERLAY_TEXT &&
+    physicalQrOverlayTextColor(PHYSICAL_QR_TEMPLATE_MIDNIGHT_ID, "#1A1A1A") === PHYSICAL_QR_LIGHT_OVERLAY_TEXT &&
+    physicalQrOverlayTextColor(PHYSICAL_QR_TEMPLATE_LIGHT_ID, "#1A1A1A") === "#1A1A1A" &&
+    physicalQrOverlayTextColor(PHYSICAL_QR_TEMPLATE_NATURE_ID, "#1A1A1A") === "#1A1A1A" &&
+    physicalQrOverlayTextColor(PHYSICAL_QR_TEMPLATE_ID, "#1A1A1A") === "#1A1A1A"
+  ) {
+    pass("Classic and Midnight print overlay uses white name/address; Light/Nature/original stay dark");
+  } else fail("print overlay text color for dark templates");
+
+  const classicPath = resolvePhysicalQrArtworkPngPath(PHYSICAL_QR_TEMPLATE_CLASSIC_ID);
+  const originalPath = resolvePhysicalQrArtworkPngPath(PHYSICAL_QR_TEMPLATE_ID);
+  if (/caretip_classic\.png|caretip-classic\.png/i.test(classicPath)) {
+    pass("classic print artwork resolves to the classic image file");
+  } else fail(`classic artwork path ${classicPath}`);
+  if (classicPath !== originalPath) {
+    pass("new template artwork is distinct from the original A5 PNG");
+  } else fail("classic artwork collided with original");
+
+  const root = path.resolve(fileURLToPath(new URL("../..", import.meta.url)));
+  const catalog = readFileSync(path.join(root, "backend/src/services/physicalQr/physicalQrCatalog.service.ts"), "utf8");
+  const printPipeline = readFileSync(path.join(root, "backend/src/lib/physicalQr/printPipeline.ts"), "utf8");
+  const adminPrint = readFileSync(path.join(root, "backend/src/services/physicalQr/physicalQrAdminPrint.service.ts"), "utf8");
+  const ids = ["caretip-classic-address", "caretip-light-no-address", "caretip-midnight-address", "caretip-nature-no-address"];
+  if (ids.every((id) => catalog.includes(id)) && catalog.includes("PHYSICAL_QR_PRODUCT_ADDRESS_ID")) {
+    pass("catalog seed keeps original products and adds new design/address pairs");
+  } else fail("catalog seed missing new or original products");
+  if (
+    printPipeline.includes("templateId: input.templateId") &&
+    printPipeline.includes("resolvePhysicalQrArtworkPngPath(input.templateId)") &&
+    printPipeline.includes("physicalQrOverlayTextColor") &&
+    adminPrint.includes("templateId: product.templateId")
+  ) {
+    pass("PDF generation loads artwork from the order product templateId");
+  } else fail("print pipeline still hardcodes a single artwork file");
+
+  if (
+    printPipeline.includes("PHYSICAL_QR_ZONES.businessNameZone") &&
+    printPipeline.includes("PHYSICAL_QR_ZONES.addressZone") &&
+    printPipeline.includes("vy(nz.y + 38)") &&
+    printPipeline.includes("vy(az.y + 28 + i * 32)") &&
+    printPipeline.includes("vy(24)")
+  ) {
+    pass("PDF name/address still use viewBox zones, not the dashboard card CSS overlay");
+  } else fail("print pipeline name/address overlay changed");
+}
+
 async function main() {
   sectionProcessing();
   sectionTemplate();
@@ -1005,6 +1102,7 @@ async function main() {
   sectionShipping();
   sectionPrintStatic();
   sectionRegressionFiles();
+  sectionPhysicalQrPrintTemplates();
   await sectionPrintDecode();
   await sectionOptionalDb();
 

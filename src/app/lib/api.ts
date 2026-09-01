@@ -3952,6 +3952,47 @@ export async function checkoutPhysicalQrBatch(
   });
 }
 
+export async function payPhysicalQrBatch(payload: {
+  lineItems: Array<{
+    productId: string;
+    qrContextType: string;
+    qrSubjectId?: string;
+    quantity?: number;
+  }>;
+  address?: string;
+  shipping: {
+    recipientName: string;
+    streetLine: string;
+    addressLine2?: string;
+    postalCode: string;
+    city: string;
+    country: string;
+  };
+  contact: {
+    name: string;
+    email: string;
+    phone: string;
+  };
+  colorTokens: {
+    backgroundGradientStart: string;
+    backgroundGradientEnd: string;
+    primaryTextColor: string;
+    secondaryTextColor: string;
+  };
+}): Promise<{
+  url: string;
+  sessionId: string | null;
+  zeroCost?: boolean;
+  order: PhysicalQrCustomerOrder;
+}> {
+  return apiRequest(apiPath("/api/business/physical-qr/orders/batch/pay"), {
+    method: "POST",
+    headers: getHeaders(),
+    credentials: "include",
+    body: JSON.stringify(payload),
+  });
+}
+
 export type PhysicalQrAdminOrder = {
   id: string;
   businessId: string;

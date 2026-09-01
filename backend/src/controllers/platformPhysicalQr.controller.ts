@@ -108,6 +108,7 @@ export async function adminPrintPhysicalQrOrder(req: Request, res: Response) {
         businessName: row.businessNameSnapshot,
         address: itemPrintAddress(item),
         supportsAddress: product.supportsAddress,
+        templateId: product.templateId,
         colorTokens: (item.colorTokensSnapshot ?? {}) as {
           backgroundGradientStart: string;
           backgroundGradientEnd: string;

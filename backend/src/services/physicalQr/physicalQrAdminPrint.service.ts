@@ -49,6 +49,7 @@ async function renderItem(row: Awaited<ReturnType<typeof getPhysicalQrOrderForAd
     businessName: row.businessNameSnapshot,
     address: itemPrintAddress(item),
     supportsAddress: product.supportsAddress,
+    templateId: product.templateId,
     colorTokens: (item.colorTokensSnapshot ?? {}) as {
       backgroundGradientStart: string;
       backgroundGradientEnd: string;

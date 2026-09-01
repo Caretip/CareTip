@@ -143,6 +143,75 @@ export function PlatformPhysicalQrOrderDetailPage() {
         subtitle={order.businessName ?? ""}
       />
 
+      <div className={`${platformUi.contentCard} mb-4 space-y-3`}>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <p className="font-medium">
+            {t("admin.physicalQr.currentStatus")}:{" "}
+            {physicalQrFulfillmentLabel(order.fulfillmentStatus, t, { totalAmount: order.totalAmount })}
+          </p>
+          {order.paymentStatus === "PAID" ? (
+            <Button type="button" variant="outline" disabled={downloadingPdf} onClick={() => void downloadPdf()}>
+              {bulkLabel}
+            </Button>
+          ) : (
+            <p className="text-sm text-muted-foreground">{t("admin.physicalQr.printUnpaidHint")}</p>
+          )}
+        </div>
+        {order.fulfillmentStatus === "PAID" ? (
+          <Button type="button" disabled={busy} onClick={() => void run(() => markPlatformPhysicalQrProcessing(order.id))}>
+            {t("admin.physicalQr.markProcessing")}
+          </Button>
+        ) : null}
+        {order.fulfillmentStatus === "PROCESSING" ? (
+          <Button type="button" disabled={busy} onClick={() => void run(() => markPlatformPhysicalQrPrinting(order.id))}>
+            {t("admin.physicalQr.markPrinting")}
+          </Button>
+        ) : null}
+        {order.fulfillmentStatus === "PRINTING" ? (
+          <div className="grid gap-3 sm:grid-cols-3">
+            <div className="space-y-1">
+              <Label>{t("admin.physicalQr.carrier")}</Label>
+              <Input value={carrier} onChange={(e) => setCarrier(e.target.value)} />
+            </div>
+            <div className="space-y-1">
+              <Label>{t("admin.physicalQr.trackingNumber")}</Label>
+              <Input value={trackingNumber} onChange={(e) => setTrackingNumber(e.target.value)} />
+            </div>
+            <div className="space-y-1">
+              <Label>{t("admin.physicalQr.trackingUrl")}</Label>
+              <Input value={trackingUrl} onChange={(e) => setTrackingUrl(e.target.value)} />
+            </div>
+            <Button
+              type="button"
+              disabled={busy}
+              onClick={() =>
+                void run(() =>
+                  shipPlatformPhysicalQrOrder(order.id, {
+                    carrier,
+                    trackingNumber,
+                    trackingUrl: trackingUrl || undefined,
+                  }),
+                )
+              }
+            >
+              {t("admin.physicalQr.markShipped")}
+            </Button>
+          </div>
+        ) : null}
+        {order.fulfillmentStatus === "SHIPPED" ? (
+          <div className="space-y-2">
+            <p className="text-sm text-muted-foreground">
+              {t("admin.physicalQr.shippedAt")}: {order.shippedAt ? formatBerlinDateTime(order.shippedAt, i18n.language) : ""}
+              {order.carrier ? ` · ${order.carrier}` : ""}
+              {order.trackingNumber ? ` · ${order.trackingNumber}` : ""}
+            </p>
+            <Button type="button" disabled={busy} onClick={() => void run(() => deliverPlatformPhysicalQrOrder(order.id))}>
+              {t("admin.physicalQr.markDelivered")}
+            </Button>
+          </div>
+        ) : null}
+      </div>
+
       <div className={`${platformUi.contentCard} mb-4 grid gap-3 text-sm sm:grid-cols-2`}>
         <div>
           <p className="text-muted-foreground">{t("admin.physicalQr.business")}</p>
@@ -283,73 +352,6 @@ export function PlatformPhysicalQrOrderDetailPage() {
       <div className={`${platformUi.contentCard} mb-4`}>
         <p className="mb-3 font-medium">{t("business.qrStudio.physical.orders.progress")}</p>
         <PhysicalQrOrderTimeline order={order} />
-      </div>
-
-      <div className={`${platformUi.contentCard} mb-4 space-y-3`}>
-        <p className="font-medium">
-          {t("admin.physicalQr.currentStatus")}:{" "}
-          {physicalQrFulfillmentLabel(order.fulfillmentStatus, t, { totalAmount: order.totalAmount })}
-        </p>
-        {order.paymentStatus === "PAID" ? (
-          <Button type="button" variant="outline" disabled={downloadingPdf} onClick={() => void downloadPdf()}>
-            {bulkLabel}
-          </Button>
-        ) : (
-          <p className="text-sm text-muted-foreground">{t("admin.physicalQr.printUnpaidHint")}</p>
-        )}
-        {order.fulfillmentStatus === "PAID" ? (
-          <Button type="button" disabled={busy} onClick={() => void run(() => markPlatformPhysicalQrProcessing(order.id))}>
-            {t("admin.physicalQr.markProcessing")}
-          </Button>
-        ) : null}
-        {order.fulfillmentStatus === "PROCESSING" ? (
-          <Button type="button" disabled={busy} onClick={() => void run(() => markPlatformPhysicalQrPrinting(order.id))}>
-            {t("admin.physicalQr.markPrinting")}
-          </Button>
-        ) : null}
-        {order.fulfillmentStatus === "PRINTING" ? (
-          <div className="grid gap-3 sm:grid-cols-3">
-            <div className="space-y-1">
-              <Label>{t("admin.physicalQr.carrier")}</Label>
-              <Input value={carrier} onChange={(e) => setCarrier(e.target.value)} />
-            </div>
-            <div className="space-y-1">
-              <Label>{t("admin.physicalQr.trackingNumber")}</Label>
-              <Input value={trackingNumber} onChange={(e) => setTrackingNumber(e.target.value)} />
-            </div>
-            <div className="space-y-1">
-              <Label>{t("admin.physicalQr.trackingUrl")}</Label>
-              <Input value={trackingUrl} onChange={(e) => setTrackingUrl(e.target.value)} />
-            </div>
-            <Button
-              type="button"
-              disabled={busy}
-              onClick={() =>
-                void run(() =>
-                  shipPlatformPhysicalQrOrder(order.id, {
-                    carrier,
-                    trackingNumber,
-                    trackingUrl: trackingUrl || undefined,
-                  }),
-                )
-              }
-            >
-              {t("admin.physicalQr.markShipped")}
-            </Button>
-          </div>
-        ) : null}
-        {order.fulfillmentStatus === "SHIPPED" ? (
-          <div className="space-y-2">
-            <p className="text-sm text-muted-foreground">
-              {t("admin.physicalQr.shippedAt")}: {order.shippedAt ? formatBerlinDateTime(order.shippedAt, i18n.language) : ""}
-              {order.carrier ? ` · ${order.carrier}` : ""}
-              {order.trackingNumber ? ` · ${order.trackingNumber}` : ""}
-            </p>
-            <Button type="button" disabled={busy} onClick={() => void run(() => deliverPlatformPhysicalQrOrder(order.id))}>
-              {t("admin.physicalQr.markDelivered")}
-            </Button>
-          </div>
-        ) : null}
       </div>
 
       <div className={platformUi.contentCard}>

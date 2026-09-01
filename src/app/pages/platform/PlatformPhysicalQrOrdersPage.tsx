@@ -3,7 +3,7 @@ import { Link } from "react-router";
 import { useTranslation } from "react-i18next";
 import { Package } from "lucide-react";
 import { toast } from "sonner";
-import { fetchPlatformPhysicalQrOrders, downloadPlatformPhysicalQrOrdersZip, type PhysicalQrAdminOrder } from "../../lib/api";
+import { fetchPlatformPhysicalQrOrders, type PhysicalQrAdminOrder } from "../../lib/api";
 import {
   formatBerlinDateTime,
   formatPhysicalQrMoney,
@@ -37,7 +37,6 @@ export function PlatformPhysicalQrOrdersPage() {
   const [q, setQ] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [bulkBusy, setBulkBusy] = useState(false);
 
   async function reload(nextFilter = filter, nextQ = q) {
     const data = await fetchPlatformPhysicalQrOrders({
@@ -56,31 +55,6 @@ export function PlatformPhysicalQrOrdersPage() {
       .finally(() => setLoading(false));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [t]);
-
-  const paidIds = orders.filter((order) => order.paymentStatus === "PAID").map((order) => order.id);
-
-  async function downloadPaidPdfs() {
-    if (bulkBusy || paidIds.length === 0) return;
-    setBulkBusy(true);
-    try {
-      const result = await downloadPlatformPhysicalQrOrdersZip(paidIds);
-      if (result.failed > 0 && result.prepared > 0) {
-        toast.success(
-          t("admin.physicalQr.bulkZipPartial", {
-            ok: result.prepared,
-            total: result.requested,
-            failed: result.failed,
-          }),
-        );
-      } else if (result.prepared > 0) {
-        toast.success(t("admin.physicalQr.bulkZipDone", { count: result.prepared }));
-      }
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : t("admin.physicalQr.bulkZipFail"));
-    } finally {
-      setBulkBusy(false);
-    }
-  }
 
   return (
     <PlatformPage>
@@ -121,15 +95,6 @@ export function PlatformPhysicalQrOrdersPage() {
           }}
         />
       </div>
-      {!loading && !error && paidIds.length > 0 ? (
-        <div className="mt-4">
-          <Button type="button" variant="outline" disabled={bulkBusy} onClick={() => void downloadPaidPdfs()}>
-            {bulkBusy
-              ? t("admin.physicalQr.preparingPdfs", { count: paidIds.length })
-              : t("admin.physicalQr.downloadAllPdfs", { count: paidIds.length })}
-          </Button>
-        </div>
-      ) : null}
       <div className="mt-4 space-y-3">
         {loading ? (
           <div className={platformUi.contentCard} role="status" aria-busy="true">

@@ -41,9 +41,6 @@ export function parsePhysicalQrShippingSnapshot(raw: unknown): PhysicalQrShippin
   if (!recipientName) {
     throw new PhysicalQrShippingError("RECIPIENT_REQUIRED", "Recipient name is required.");
   }
-  if (!streetLine) {
-    throw new PhysicalQrShippingError("STREET_REQUIRED", "Landmark is required.");
-  }
   if (postalCode && (!DE_POSTAL_RE.test(postalCode) || postalCode === "00000")) {
     throw new PhysicalQrShippingError("INVALID_POSTAL_CODE", "Postal code must be a valid German 5-digit code when provided.");
   }
@@ -105,7 +102,9 @@ export function readPhysicalQrContactSnapshot(raw: unknown): PhysicalQrContactSn
 }
 
 export function formatPhysicalQrShippingLine(snapshot: PhysicalQrShippingSnapshot): string {
+  const street = snapshot.streetLine.trim();
+  const streetPart = street ? `, ${street}` : "";
   const line2 = snapshot.addressLine2 ? `, ${snapshot.addressLine2}` : "";
   const postalPart = snapshot.postalCode ? `, ${snapshot.postalCode}` : "";
-  return `${snapshot.recipientName}, ${snapshot.streetLine}${line2}${postalPart} ${snapshot.city}, ${snapshot.country}`;
+  return `${snapshot.recipientName}${streetPart}${line2}${postalPart} ${snapshot.city}, ${snapshot.country}`;
 }

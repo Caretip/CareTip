@@ -4,8 +4,15 @@ import { fileURLToPath } from "node:url";
 import { mergePhysicalQrColorTokens } from "./colors.js";
 import {
   PHYSICAL_QR_FONT_STATUS,
+  PHYSICAL_QR_TEMPLATE_CLASSIC_ID,
+  PHYSICAL_QR_TEMPLATE_ID,
+  PHYSICAL_QR_TEMPLATE_IDS,
+  PHYSICAL_QR_TEMPLATE_LIGHT_ID,
+  PHYSICAL_QR_TEMPLATE_MIDNIGHT_ID,
+  PHYSICAL_QR_TEMPLATE_NATURE_ID,
   PHYSICAL_QR_TEMPORARY_FONT_FAMILY,
   type PhysicalQrColorTokens,
+  type PhysicalQrTemplateId,
 } from "./types.js";
 
 export type PhysicalQrSvgInput = {
@@ -15,6 +22,7 @@ export type PhysicalQrSvgInput = {
   supportsAddress: boolean;
   colorTokens: PhysicalQrColorTokens;
   artworkDataUrl?: string | null;
+  templateId?: string | null;
 };
 
 const TOKEN = {
@@ -35,7 +43,23 @@ const TOKEN = {
 } as const;
 
 let cachedTemplate: string | null = null;
-let cachedArtworkDataUrl: string | null = null;
+const cachedArtworkDataUrl = new Map<string, string>();
+
+/** Allowlisted filenames per template ID. Order is search preference. */
+const ARTWORK_FILENAMES: Record<PhysicalQrTemplateId, readonly string[]> = {
+  [PHYSICAL_QR_TEMPLATE_ID]: ["caretip-a5-artwork.png", "A5_Flyer without Address.png"],
+  [PHYSICAL_QR_TEMPLATE_CLASSIC_ID]: ["caretip_classic.png", "caretip-classic.png"],
+  [PHYSICAL_QR_TEMPLATE_LIGHT_ID]: ["caretip-light.png"],
+  [PHYSICAL_QR_TEMPLATE_MIDNIGHT_ID]: ["caretip-midnight.png"],
+  [PHYSICAL_QR_TEMPLATE_NATURE_ID]: ["caretip-nature.png"],
+};
+
+export function resolvePhysicalQrTemplateId(raw: string | null | undefined): PhysicalQrTemplateId {
+  const id = String(raw ?? "").trim();
+  return (PHYSICAL_QR_TEMPLATE_IDS as readonly string[]).includes(id)
+    ? (id as PhysicalQrTemplateId)
+    : PHYSICAL_QR_TEMPLATE_ID;
+}
 
 function resolveExisting(candidates: string[]): string | null {
   for (const candidate of candidates) {
@@ -61,24 +85,37 @@ function resolveAuthoredSvgPath(): string {
   return found;
 }
 
-export function resolvePhysicalQrArtworkPngPath(): string {
+export function resolvePhysicalQrArtworkPngPath(templateId?: string | null): string {
+  const id = resolvePhysicalQrTemplateId(templateId);
   const here = path.dirname(fileURLToPath(import.meta.url));
-  const found = resolveExisting([
-    path.resolve(here, "../../../../src/assets/physical-qr/caretip-a5-artwork.png"),
-    path.resolve(process.cwd(), "../src/assets/physical-qr/caretip-a5-artwork.png"),
-    path.resolve(process.cwd(), "src/assets/physical-qr/caretip-a5-artwork.png"),
-    path.resolve(process.cwd(), "../template/A5_Flyer without Address.png"),
-    path.join(here, "caretip-a5-artwork.png"),
-  ]);
-  if (!found) throw new Error("Uploaded A5 artwork PNG not found");
+  const names = ARTWORK_FILENAMES[id];
+  const dirs = [
+    path.resolve(here, "../../../../src/assets/physical-qr"),
+    path.resolve(process.cwd(), "../src/assets/physical-qr"),
+    path.resolve(process.cwd(), "src/assets/physical-qr"),
+    path.resolve(process.cwd(), "../template"),
+    path.resolve(process.cwd(), "template"),
+    here,
+  ];
+  const candidates: string[] = [];
+  for (const dir of dirs) {
+    for (const name of names) {
+      candidates.push(path.join(dir, name));
+    }
+  }
+  const found = resolveExisting(candidates);
+  if (!found) throw new Error(`Uploaded A5 artwork PNG not found for template ${id}`);
   return found;
 }
 
-export function loadPhysicalQrArtworkDataUrl(): string {
-  if (cachedArtworkDataUrl) return cachedArtworkDataUrl;
-  const buf = readFileSync(resolvePhysicalQrArtworkPngPath());
-  cachedArtworkDataUrl = `data:image/png;base64,${buf.toString("base64")}`;
-  return cachedArtworkDataUrl;
+export function loadPhysicalQrArtworkDataUrl(templateId?: string | null): string {
+  const id = resolvePhysicalQrTemplateId(templateId);
+  const cached = cachedArtworkDataUrl.get(id);
+  if (cached) return cached;
+  const buf = readFileSync(resolvePhysicalQrArtworkPngPath(id));
+  const url = `data:image/png;base64,${buf.toString("base64")}`;
+  cachedArtworkDataUrl.set(id, url);
+  return url;
 }
 
 export function loadAuthoredPhysicalQrSvg(): string {
@@ -128,7 +165,7 @@ export function injectPhysicalQrSvg(template: string, input: PhysicalQrSvgInput)
   const hasQr = Boolean(input.qrDataUrl?.startsWith("data:image/"));
   const artworkHref = input.artworkDataUrl?.startsWith("data:image/")
     ? input.artworkDataUrl
-    : loadPhysicalQrArtworkDataUrl();
+    : loadPhysicalQrArtworkDataUrl(input.templateId);
 
   let svg = template;
   const replacements: Array<[string, string]> = [

@@ -7,6 +7,11 @@ import {
 } from "../../config/physicalQrCheckout.js";
 import { readPhysicalQrContactSnapshot } from "../../lib/physicalQr/shipping.js";
 import {
+  logPhysicalQrPerf,
+  physicalQrOrderSuffix,
+  physicalQrPerfNow,
+} from "../../lib/physicalQr/perfLog.js";
+import {
   PhysicalQrOrderError,
   createPhysicalQrCartOrder,
   getPhysicalQrOrderForBusiness,
@@ -14,6 +19,7 @@ import {
   releasePhysicalQrMonthlyFreeOrderClaim,
   resolveOrderItemRows,
   type CreatePhysicalQrCartInput,
+  type PhysicalQrOrderRecord,
 } from "./physicalQrOrder.service.js";
 import { notifyPhysicalQrPaymentReceived } from "./physicalQrNotify.service.js";
 import {
@@ -63,6 +69,36 @@ export async function createPhysicalQrBatchOrders(input: CreatePhysicalQrBatchIn
 }
 
 /**
+ * Create the pending order and immediately checkout it in one request.
+ * Zero-cost Pro monthly orders skip Stripe; paid orders create a Checkout session.
+ */
+export async function createAndCheckoutPhysicalQrBatch(input: CreatePhysicalQrBatchInput) {
+  const tAll = physicalQrPerfNow();
+  const tCreate = physicalQrPerfNow();
+  const order = await createPhysicalQrCartOrder(input);
+  logPhysicalQrPerf("create-order", physicalQrPerfNow() - tCreate, {
+    orderSuffix: physicalQrOrderSuffix(order.id),
+  });
+
+  const tCheckout = physicalQrPerfNow();
+  const result = await createPhysicalQrBatchCheckoutSession({
+    businessId: input.businessId,
+    userId: input.userId,
+    orderId: order.id,
+    loadedOrder: order as PhysicalQrOrderRecord,
+  });
+  logPhysicalQrPerf("checkout-request", physicalQrPerfNow() - tCheckout, {
+    orderSuffix: physicalQrOrderSuffix(order.id),
+    zeroCost: Boolean(result.zeroCost),
+  });
+  logPhysicalQrPerf("create-and-checkout", physicalQrPerfNow() - tAll, {
+    orderSuffix: physicalQrOrderSuffix(order.id),
+    zeroCost: Boolean(result.zeroCost),
+  });
+  return { ...result, order };
+}
+
+/**
  * Checkout a single parent order.
  * Stripe charges the Albertina package quote (one session, one amount).
  * True €0 quotes skip Stripe after atomically claiming the monthly free order when applicable.
@@ -71,13 +107,25 @@ export async function createPhysicalQrBatchCheckoutSession(input: {
   businessId: string;
   userId: string;
   orderId: string;
+  loadedOrder?: PhysicalQrOrderRecord;
 }): Promise<{ url: string; sessionId: string | null; zeroCost?: boolean; quote?: PhysicalQrQuote }> {
   const orderId = String(input.orderId ?? "").trim();
   if (!orderId) {
     throw new PhysicalQrOrderError("ORDER_ID_REQUIRED", "No order to checkout.", 400);
   }
 
-  const order = await getPhysicalQrOrderForBusiness(input.businessId, orderId);
+  const tFetch = physicalQrPerfNow();
+  const reused =
+    Boolean(input.loadedOrder) &&
+    input.loadedOrder?.id === orderId &&
+    input.loadedOrder?.businessId === input.businessId;
+  const order = reused
+    ? input.loadedOrder!
+    : await getPhysicalQrOrderForBusiness(input.businessId, orderId);
+  logPhysicalQrPerf("order-fetch", physicalQrPerfNow() - tFetch, {
+    orderSuffix: physicalQrOrderSuffix(order.id),
+    reused,
+  });
   const items = resolveOrderItemRows(order);
 
   if (!items.length) {
@@ -97,15 +145,20 @@ export async function createPhysicalQrBatchCheckoutSession(input: {
   }
 
   const printCount = items.reduce((sum, item) => sum + item.quantity, 0);
+  const tLock = physicalQrPerfNow();
   const locked = await lockQuoteForPhysicalQrCheckout({
     businessId: input.businessId,
     orderId: order.id,
     printCount,
   });
+  logPhysicalQrPerf("quote-lock", physicalQrPerfNow() - tLock, {
+    orderSuffix: physicalQrOrderSuffix(order.id),
+  });
   const base = resolveCheckoutFrontendBaseUrl().replace(/\/+$/, "");
 
   if (locked.quote.totalCents === 0) {
     const now = new Date();
+    const tZero = physicalQrPerfNow();
     await prisma.physicalQrOrder.update({
       where: { id: order.id },
       data: {
@@ -122,6 +175,15 @@ export async function createPhysicalQrBatchCheckoutSession(input: {
       quotaClaimedAt: locked.quotaClaimedAt,
     });
     notifyPhysicalQrPaymentReceived({ businessId: order.businessId, orderId: order.id });
+    logPhysicalQrPerf("stripe-session-create", 0, {
+      orderSuffix: physicalQrOrderSuffix(order.id),
+      zeroCost: true,
+      skipped: true,
+    });
+    logPhysicalQrPerf("zero-cost-complete", physicalQrPerfNow() - tZero, {
+      orderSuffix: physicalQrOrderSuffix(order.id),
+      zeroCost: true,
+    });
     return {
       url: `${base}/dashboard/qr-studio/orders/${order.id}?checkout=success`,
       sessionId: null,
@@ -147,6 +209,7 @@ export async function createPhysicalQrBatchCheckoutSession(input: {
   const previousSessionId = order.stripeCheckoutSessionId;
 
   try {
+    const tStripe = physicalQrPerfNow();
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
       success_url: `${base}/dashboard/qr-studio/orders/${order.id}?checkout=success`,
@@ -170,22 +233,34 @@ export async function createPhysicalQrBatchCheckoutSession(input: {
         },
       },
     });
+    logPhysicalQrPerf("stripe-session-create", physicalQrPerfNow() - tStripe, {
+      orderSuffix: physicalQrOrderSuffix(order.id),
+      zeroCost: false,
+    });
 
     if (!session.url) {
       throw new PhysicalQrOrderError("CHECKOUT_SESSION_FAILED", "Checkout could not be created.", 502);
     }
 
+    const tPersist = physicalQrPerfNow();
     await prisma.physicalQrOrder.update({
       where: { id: order.id },
       data: { stripeCheckoutSessionId: session.id, totalAmount: locked.quote.totalCents },
     });
+    logPhysicalQrPerf("stripe-session-persist", physicalQrPerfNow() - tPersist, {
+      orderSuffix: physicalQrOrderSuffix(order.id),
+    });
 
     if (previousSessionId && previousSessionId !== session.id) {
+      const tExpire = physicalQrPerfNow();
       try {
         await stripe.checkout.sessions.expire(previousSessionId);
       } catch {
         /* prior session may already be expired */
       }
+      logPhysicalQrPerf("stripe-session-expire", physicalQrPerfNow() - tExpire, {
+        orderSuffix: physicalQrOrderSuffix(order.id),
+      });
     }
 
     return { url: session.url, sessionId: session.id, quote: locked.quote };

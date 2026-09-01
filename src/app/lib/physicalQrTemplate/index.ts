@@ -9,6 +9,9 @@ export {
   PHYSICAL_QR_PRINT_WIDTH_PX,
   PHYSICAL_QR_TEMPORARY_FONT_FAMILY,
   PHYSICAL_QR_TEMPLATE_ID,
+  PHYSICAL_QR_TEMPLATE_IDS,
+  PHYSICAL_QR_LIGHT_OVERLAY_TEXT,
+  physicalQrOverlayTextColor,
   PHYSICAL_QR_VIEWBOX_HEIGHT,
   PHYSICAL_QR_VIEWBOX_WIDTH,
   type PhysicalQrColorTokens,
@@ -16,6 +19,7 @@ export {
   type PhysicalQrProductTemplate,
   type PhysicalQrRenderInput,
   type PhysicalQrSupportedField,
+  type PhysicalQrTemplateId,
   type PhysicalQrZone,
 } from "./types";
 export {
@@ -35,6 +39,7 @@ export {
   isPhysicalQrTemplateId,
   listPhysicalQrTemplates,
 } from "./registry";
+export { physicalQrArtworkSrc } from "./artwork";
 export { escapePhysicalQrXml, renderPhysicalQrSvg } from "./svg";
 export {
   injectPhysicalQrSvg,

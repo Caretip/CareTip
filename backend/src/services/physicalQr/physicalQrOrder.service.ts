@@ -151,13 +151,18 @@ async function prepareLine(
     clientAddress: unknown;
     colorTokens: PhysicalQrColorTokens;
     locations: Array<{ id: string; name: string }>;
+    productsById: Map<string, Awaited<ReturnType<typeof getPhysicalQrProductOrThrow>>>;
   },
 ): Promise<PreparedLine> {
   const productId = String(line.productId ?? "").trim();
   if (!productId) {
     throw new PhysicalQrOrderError("PRODUCT_REQUIRED", "Product is required");
   }
-  const product = await getPhysicalQrProductOrThrow(productId);
+  let product = shared.productsById.get(productId);
+  if (!product) {
+    product = await getPhysicalQrProductOrThrow(productId);
+    shared.productsById.set(productId, product);
+  }
   try {
     assertPhysicalQrCheckoutReady(product);
   } catch (err) {
@@ -307,6 +312,7 @@ export async function createPhysicalQrCartOrder(input: CreatePhysicalQrCartInput
     throw err;
   }
 
+  const productsById = new Map<string, Awaited<ReturnType<typeof getPhysicalQrProductOrThrow>>>();
   const prepared = await Promise.all(
     lines.map((line) =>
       prepareLine(input.businessId, line, {
@@ -314,6 +320,7 @@ export async function createPhysicalQrCartOrder(input: CreatePhysicalQrCartInput
         clientAddress: input.address,
         colorTokens,
         locations,
+        productsById,
       }),
     ),
   );

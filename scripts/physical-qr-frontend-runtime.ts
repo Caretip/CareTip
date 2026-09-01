@@ -5,11 +5,18 @@
 import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { getPhysicalQrTemplate, isPhysicalQrTemplateId, listPhysicalQrTemplates } from "../src/app/lib/physicalQrTemplate/registry.ts";
 import {
   PHYSICAL_QR_FONT_STATUS,
+  PHYSICAL_QR_LIGHT_OVERLAY_TEXT,
+  PHYSICAL_QR_TEMPLATE_CLASSIC_ID,
   PHYSICAL_QR_TEMPLATE_ID,
+  PHYSICAL_QR_TEMPLATE_IDS,
+  PHYSICAL_QR_TEMPLATE_LIGHT_ID,
+  PHYSICAL_QR_TEMPLATE_MIDNIGHT_ID,
+  PHYSICAL_QR_TEMPLATE_NATURE_ID,
+  physicalQrOverlayTextColor,
 } from "../src/app/lib/physicalQrTemplate/types.ts";
-import { getPhysicalQrTemplate } from "../src/app/lib/physicalQrTemplate/registry.ts";
 import {
   PHYSICAL_QR_DEFAULT_COLOR_TOKENS,
   tryParsePhysicalQrHex,
@@ -45,6 +52,90 @@ if (template.includes("viewBox=\"0 0 1410 2000\"") && template.includes("id=\"ph
 const artworkPng = path.join(root, "src/assets/physical-qr/caretip-a5-artwork.png");
 if (existsSync(artworkPng)) pass("uploaded A5 PNG copied to src/assets/physical-qr/caretip-a5-artwork.png");
 else fail("missing artwork PNG");
+const newArtwork = [
+  "src/assets/physical-qr/caretip-light.png",
+  "src/assets/physical-qr/caretip-midnight.png",
+  "src/assets/physical-qr/caretip-nature.png",
+  "src/assets/physical-qr/caretip_classic.png",
+  "template/caretip-light.png",
+  "template/caretip-midnight.png",
+  "template/caretip-nature.png",
+  "template/caretip_classic.png",
+];
+for (const rel of newArtwork) {
+  if (existsSync(path.join(root, rel))) pass(`new print template image present: ${rel}`);
+  else fail(`missing new print template image ${rel}`);
+}
+const displayArt = [
+  "src/assets/physical-qr/display/caretip-a5-artwork.thumb.webp",
+  "src/assets/physical-qr/display/caretip-a5-artwork.preview.webp",
+  "src/assets/physical-qr/display/caretip_classic.thumb.webp",
+  "src/assets/physical-qr/display/caretip_classic.preview.webp",
+  "src/assets/physical-qr/display/caretip-light.thumb.webp",
+  "src/assets/physical-qr/display/caretip-light.preview.webp",
+  "src/assets/physical-qr/display/caretip-midnight.thumb.webp",
+  "src/assets/physical-qr/display/caretip-midnight.preview.webp",
+  "src/assets/physical-qr/display/caretip-nature.thumb.webp",
+  "src/assets/physical-qr/display/caretip-nature.preview.webp",
+];
+for (const rel of displayArt) {
+  if (existsSync(path.join(root, rel))) pass(`display derivative present: ${rel}`);
+  else fail(`missing display derivative ${rel}`);
+}
+const artworkModule = readFileSync(path.join(root, "src/app/lib/physicalQrTemplate/artwork.ts"), "utf8");
+if (
+  artworkModule.includes(".thumb.webp") &&
+  artworkModule.includes(".preview.webp") &&
+  !artworkModule.includes('from "@/assets/physical-qr/caretip-a5-artwork.png"') &&
+  artworkModule.includes('display: PhysicalQrArtworkDisplay = "preview"')
+) {
+  pass("dashboard artwork uses WebP display derivatives, not print-master PNGs");
+} else fail("artwork.ts still bundles print-master PNGs");
+const listed = listPhysicalQrTemplates();
+const listedIds = listed.map((t) => t.id);
+if (listed.length === PHYSICAL_QR_TEMPLATE_IDS.length && new Set(listedIds).size === listed.length) {
+  pass("print template registry IDs are unique");
+} else fail("print template registry IDs");
+if (
+  isPhysicalQrTemplateId(PHYSICAL_QR_TEMPLATE_ID) &&
+  isPhysicalQrTemplateId(PHYSICAL_QR_TEMPLATE_CLASSIC_ID) &&
+  !isPhysicalQrTemplateId("../secret.png") &&
+  !isPhysicalQrTemplateId("/tmp/evil.png")
+) {
+  pass("template IDs are allowlisted; client paths are rejected");
+} else fail("template ID allowlist");
+if (
+  physicalQrOverlayTextColor(PHYSICAL_QR_TEMPLATE_CLASSIC_ID, "#1A1A1A") === PHYSICAL_QR_LIGHT_OVERLAY_TEXT &&
+  physicalQrOverlayTextColor(PHYSICAL_QR_TEMPLATE_MIDNIGHT_ID, "#1A1A1A") === PHYSICAL_QR_LIGHT_OVERLAY_TEXT &&
+  physicalQrOverlayTextColor(PHYSICAL_QR_TEMPLATE_LIGHT_ID, "#1A1A1A") === "#1A1A1A" &&
+  physicalQrOverlayTextColor(PHYSICAL_QR_TEMPLATE_NATURE_ID, "#1A1A1A") === "#1A1A1A" &&
+  physicalQrOverlayTextColor(PHYSICAL_QR_TEMPLATE_ID, "#1A1A1A") === "#1A1A1A"
+) {
+  pass("Classic and Midnight overlay name/address in white; Light/Nature/original stay dark");
+} else fail("overlay text color for dark print templates");
+const previewSrc = readFileSync(path.join(root, "src/app/components/business/physical-branding/PhysicalQrPreview.tsx"), "utf8");
+if (previewSrc.includes("physicalQrOverlayTextColor") && previewSrc.includes("overlayTextColor")) {
+  pass("Print QR preview uses template overlay color for name and address");
+} else fail("PhysicalQrPreview overlay color");
+if (
+  previewSrc.includes("object-contain") &&
+  previewSrc.includes('containerType: "inline-size"') &&
+  previewSrc.includes("NAME_FONT_CQW") &&
+  previewSrc.includes("ADDRESS_FONT_CQW") &&
+  previewSrc.includes("useSharedPhysicalQrDataUrl") &&
+  previewSrc.includes("providedQrDataUrl") &&
+  previewSrc.includes("width: 640") &&
+  !previewSrc.includes("PREVIEW_LAYOUT_WIDTH") &&
+  !previewSrc.includes("100cqw /") &&
+  !previewSrc.includes("object-cover") &&
+  !previewSrc.includes("0.65rem") &&
+  !previewSrc.includes("0.55rem")
+) {
+  pass("thumb and Preview share one flyer; type scales with cqw; artwork uses object-contain");
+} else fail("PhysicalQrPreview thumbnail crop/scale");
+if (!previewSrc.includes("transform: `scale")) {
+  pass("compact cards no longer layout at 22rem inside overflow-hidden");
+} else fail("compact 22rem scale wrapper still present");
 if (!template.includes("Kolonnenstraße")) {
   pass("authored SVG does not bake the sample PNG address");
 } else fail("sample address baked into SVG");
@@ -192,6 +283,20 @@ if (
 } else fail("valid DE delivery should enable pay");
 
 if (
+  physicalQrDeliveryIsComplete({
+    recipientName: "Marie Testerin",
+    streetLine: "",
+    postalCode: "",
+    city: "Berlin",
+    country: PHYSICAL_QR_SHIP_COUNTRY,
+    email: "marie@example.com",
+    phone: "+493012345678",
+  })
+) {
+  pass("delivery without Landmark still enables continue");
+} else fail("optional Landmark should not block delivery");
+
+if (
   !physicalQrDeliveryIsComplete({
     recipientName: "Marie Testerin",
     streetLine: "Kolonnenstraße 8",
@@ -256,7 +361,8 @@ if (
   adminDetail.includes("if (downloadingPdf) return") &&
   adminDetail.includes("downloadAllPdfsDone") &&
   adminDetail.includes("loadError") &&
-  adminDetail.includes("totalPages = order.quantity")
+  adminDetail.includes("totalPages = order.quantity") &&
+  adminDetail.indexOf("admin.physicalQr.currentStatus") < adminDetail.indexOf("admin.physicalQr.orderItems")
 ) {
   pass("admin bulk PDF download shows Preparing N PDFs, blocks double-click, and reports combined-file success");
 } else fail("admin bulk PDF preparing state");
@@ -305,6 +411,14 @@ if (
 } else fail("Locations QR loading/error/empty");
 if (
   overviewPage.includes("Promise.all") &&
+  overviewPage.includes('qrStudioViewPath("business")') &&
+  overviewPage.includes('qrStudioPrintPath("business")') &&
+  overviewPage.includes("ordersEmptyTitle") &&
+  overviewPage.includes("countTeam") &&
+  !overviewPage.includes("countActive") &&
+  !overviewPage.includes("PhysicalQrPreview") &&
+  !overviewPage.includes("qrcode") &&
+  !overviewPage.includes("quotePhysicalQrCart") &&
   ordersPage.includes("QrStudioOrderListSkeleton") &&
   orderDetail.includes("if (loadError)") &&
   qrManagement.includes("venueLoading")
@@ -320,11 +434,10 @@ if (
   platformOrders.includes("error ?") &&
   platformOrders.includes("admin.physicalQr.empty") &&
   platformOrders.includes("aria-busy") &&
-  platformOrders.includes("downloadPlatformPhysicalQrOrdersZip") &&
-  platformOrders.includes('order.paymentStatus === "PAID"') &&
-  platformOrders.includes("bulkBusy || paidIds.length === 0")
+  !platformOrders.includes("downloadPlatformPhysicalQrOrdersZip") &&
+  !platformOrders.includes("downloadPaidPdfs")
 ) {
-  pass("Admin QR order list distinguishes loading/error/empty and bulk-downloads only PAID orders");
+  pass("Admin QR order list distinguishes loading/error/empty and has no list-level Download all PDFs");
 } else fail("Admin QR order list loading/error/empty");
 
 if (
@@ -352,13 +465,31 @@ if (
   pass("PrintQrStudio cart has quantity stepper and sends line quantities");
 } else fail("PrintQrStudio quantity controls");
 if (
+  printStudio.includes("previewProductId") &&
+  printStudio.includes("Eye") &&
+  printStudio.includes("Dialog") &&
+  printStudio.includes("max-w-[8.5rem]") &&
+  printStudio.includes("max-w-[22rem]") &&
+  !printStudio.includes("lg:sticky") &&
+  printStudio.includes("noTemplates") &&
+  printStudio.indexOf("if (bootLoading)") < printStudio.indexOf("noTemplates")
+) {
+  pass("Print QR cards are compact, preview is eye/dialog-only, loading stays distinct from empty");
+} else fail("Print QR template card/preview UX");
+if (
   !printStudio.includes("print-location-filter") &&
   printStudio.includes("locationLocked") &&
   printStudio.includes("qrContextType === \"location\"") &&
   printStudio.includes("quotePhysicalQrPrints") &&
   printStudio.includes("quotePhysicalQrCart") &&
   printStudio.includes("downgradeCartReset") &&
-  printStudio.includes("QUOTA_CHANGED")
+  printStudio.includes("QUOTA_CHANGED") &&
+  printStudio.includes("payPhysicalQrBatch") &&
+  printStudio.includes("useSharedPhysicalQrDataUrl") &&
+  printStudio.includes("qrDataUrl={sharedQrDataUrl}") &&
+  printStudio.includes("250") &&
+  !printStudio.includes("checkoutPhysicalQrBatch") &&
+  !printStudio.includes("createPhysicalQrBatch(")
 ) {
   pass("PrintQrStudio has location lock notice without a duplicate location dropdown");
 } else fail("PrintQrStudio Albertina location/quote delta missing");
@@ -399,12 +530,19 @@ const createBatchFn = apiSrc.slice(
   apiSrc.indexOf("export async function createPhysicalQrBatch"),
   apiSrc.indexOf("export async function checkoutPhysicalQrBatch"),
 );
+const payBatchFn = apiSrc.slice(
+  apiSrc.indexOf("export async function payPhysicalQrBatch"),
+  apiSrc.indexOf("export type PhysicalQrAdminOrder"),
+);
 if (
   !createOrderFn.includes("monthlyFreeQuotaApplied") &&
   !createOrderFn.includes("freeOrderAvailable") &&
   !createOrderFn.includes("totalAmount") &&
   !createBatchFn.includes("monthlyFreeQuotaApplied") &&
-  !createBatchFn.includes("totalAmount")
+  !createBatchFn.includes("totalAmount") &&
+  !payBatchFn.includes("monthlyFreeQuotaApplied") &&
+  !payBatchFn.includes("totalAmount") &&
+  apiSrc.includes("/api/business/physical-qr/orders/batch/pay")
 ) {
   pass("Frontend create payloads cannot send quota consumption or totals");
 } else fail("frontend create still sends quota or totals");
