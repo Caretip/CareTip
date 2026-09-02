@@ -243,7 +243,7 @@ export function useEmployeeDashboardAnalytics(
   const abortRef = useRef(new Map<EmployeeAnalyticsTimeframe, AbortController>());
   const summaryPartialRef = useRef(new Map<EmployeeAnalyticsTimeframe, Partial<EmployeeTipsResponse>>());
   const analyticsPartialRef = useRef(new Map<EmployeeAnalyticsTimeframe, Partial<EmployeeTipsResponse>>());
-  const hasSettledLiveUiRef = useRef(Boolean(boot.hit) || isEmployeePeriodLiveSettled());
+  const hasSettledLiveUiRef = useRef(Boolean(boot.hit));
   /** Periods that completed at least one successful network fetch this dashboard session. */
   const networkSettledTfsRef = useRef(new Set<EmployeeAnalyticsTimeframe>());
   /** Periods whose summary scope returned confirmed period aggregates from the network. */
@@ -285,8 +285,6 @@ export function useEmployeeDashboardAnalytics(
   >(async () => {});
   const advancedAnalyticsEnabledRef = useRef(advancedAnalyticsEnabled);
   advancedAnalyticsEnabledRef.current = advancedAnalyticsEnabled;
-  const mountGenerationRef = useRef(0);
-  /** Avoid clearing settled UI on bootstrap before first enable (prevents load→content→load flicker). */
   const wasDashboardEnabledRef = useRef(false);
   const prefetchQueueRef = useRef<number | null>(null);
   const scheduleInactivePrefetchRef = useRef<(activeTf: EmployeeAnalyticsTimeframe) => void>(() => {});
@@ -728,15 +726,29 @@ export function useEmployeeDashboardAnalytics(
         void existingInflight
           .then(() => {
             if (tf !== tfRef.current || uiRequestSeqRef.current !== seq) return;
-            setSummaryLoading(false);
-            setAnalyticsLoading(false);
-            setIsRevalidating(false);
-            devSetHydrationPhase("metrics", "ready");
-            devSetHydrationPhase("charts", "ready");
-            devSetHydrationPhase("goals", "ready");
-            commitUiPayload(tf, seq, true);
-            markDashboardLiveSettled(hasSettledLiveUiRef);
-            scheduleInactivePrefetchRef.current(tf);
+            const committed = commitUiPayload(tf, seq, true);
+            if (committed || isPeriodSummaryReady(tf)) {
+              setSummaryLoading(false);
+              setAnalyticsLoading(false);
+              setIsRevalidating(false);
+              devSetHydrationPhase("metrics", "ready");
+              devSetHydrationPhase("charts", "ready");
+              devSetHydrationPhase("goals", "ready");
+              markDashboardLiveSettled(hasSettledLiveUiRef);
+              scheduleInactivePrefetchRef.current(tf);
+              return;
+            }
+            debugEmployeeAnalytics("inflight_attach_incomplete", {
+              requestedPeriod: tf,
+              requestSeq: seq,
+            });
+            if (loadInflightByTfRef.current.get(tf) === existingInflight) {
+              loadInflightByTfRef.current.delete(tf);
+            }
+            if (!payloadVisibleOnScreen()) {
+              setSummaryLoading(true);
+            }
+            void loadForRef.current(tf, { affectsUi: true, forceNetwork: true, silent: true });
           })
           .catch(() => {
             if (tf !== tfRef.current || uiRequestSeqRef.current !== seq) return;
@@ -1170,7 +1182,6 @@ export function useEmployeeDashboardAnalytics(
 
   useEffect(() => {
     if (!isActive) return;
-    const generation = ++mountGenerationRef.current;
     const tf = tfRef.current;
     if (!hasSettledLiveUiRef.current) {
       const peek = asEmployeeSwrEntry(peekEmployeePeriodSnapshot(tf));
@@ -1201,27 +1212,28 @@ export function useEmployeeDashboardAnalytics(
         );
       }
     }
-    const timer = window.setTimeout(() => {
-      if (mountGenerationRef.current !== generation) return;
-      debugEmployeeAnalytics("mount_load_start", {
-        requestedPeriod: tf,
-        activePeriod: tfRef.current,
-        currentSeq: uiRequestSeqRef.current,
-      });
-      const warmMount =
-        hasSettledLiveUiRef.current &&
-        (isPeriodSummaryReady(tf) || hasEmployeePayloadVisibleContent(payloadRef.current));
-      void loadForRef.current(tf, {
-        affectsUi: true,
-        soft: warmMount,
-        silent: warmMount,
-        forceNetwork: !hasSettledLiveUiRef.current,
-      });
-    }, 0);
+    const needsInitialPeriodNetwork = !isPeriodSummaryReady(tf);
+    if (needsInitialPeriodNetwork && !hasEmployeePayloadVisibleContent(payloadRef.current)) {
+      setSummaryLoading(true);
+      setAnalyticsLoading(true);
+    }
+    debugEmployeeAnalytics("mount_load_start", {
+      requestedPeriod: tf,
+      activePeriod: tfRef.current,
+      currentSeq: uiRequestSeqRef.current,
+      needsInitialPeriodNetwork,
+    });
+    void loadForRef.current(tf, {
+      affectsUi: true,
+      soft: !needsInitialPeriodNetwork,
+      silent: !needsInitialPeriodNetwork,
+      forceNetwork: needsInitialPeriodNetwork,
+    });
     return () => {
-      window.clearTimeout(timer);
-      mountGenerationRef.current += 1;
+      abortRef.current.get(tf)?.abort();
     };
+    // Period-ready helpers are ref-stable; re-run only when the dashboard becomes active.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isActive]);
 
   useEffect(() => {
@@ -1482,10 +1494,9 @@ export function useEmployeeDashboardAnalytics(
   );
 
   const isAnalyticsInitialLoad =
-    isActive &&
     !hasEmployeeAnalyticsPayload(displayPayload) &&
     !hasEmployeeAnalyticsPayload(payload) &&
-    (analyticsLoading || chartPayloadPending);
+    (!isActive || analyticsLoading || chartPayloadPending);
 
   const analyticsTimeframeLoading = isPeriodRefreshing ? analyticsTimeframe : null;
 

@@ -31,6 +31,7 @@ import {
 import { peekInboxSessionCache, writeInboxSessionCache } from "../src/app/lib/notificationInboxCache";
 import { setPageSessionCache } from "../src/app/lib/pageSessionCache";
 import { resetAllClientSessionCaches } from "../src/app/lib/resetAllClientSessionCaches";
+import { deriveDashboardMetricLoading } from "../src/app/lib/dashboardHydration";
 
 const results: string[] = [];
 const pass = (m: string) => results.push(`PASS: ${m}`);
@@ -284,6 +285,39 @@ if (
   pass("Period KPI skeleton is not latched on missing displayMetrics");
 } else {
   fail("Employee overview still stays on skeleton until period toggle");
+}
+
+const waitingForEnable = deriveDashboardMetricLoading({
+  enabled: false,
+  hasMetricsData: false,
+  valuesMatchPeriod: true,
+  summaryLoading: false,
+  isRevalidating: false,
+});
+const confirmedEmpty = deriveDashboardMetricLoading({
+  enabled: true,
+  hasMetricsData: true,
+  valuesMatchPeriod: true,
+  summaryLoading: false,
+  isRevalidating: false,
+});
+if (waitingForEnable.showMetricsSkeleton && !confirmedEmpty.showMetricsSkeleton) {
+  pass("Employee KPIs stay on skeleton until the dashboard is active, then show confirmed zeros");
+} else {
+  fail("Employee KPIs still paint default zeros before the initial period request");
+}
+
+if (
+  analytics.includes("inflight_attach_error") &&
+  analytics.includes("inflight_attach_incomplete") &&
+  analytics.includes("needsInitialPeriodNetwork") &&
+  analytics.includes('forceNetwork: needsInitialPeriodNetwork') &&
+  analytics.includes("mount_load_start") &&
+  !analytics.includes("window.setTimeout(() => {")
+) {
+  pass("Initial period analytics load on activate, and aborted inflight attaches retry instead of painting zeros");
+} else {
+  fail("Employee dashboard still skips or drops the initial period analytics load");
 }
 
 if (

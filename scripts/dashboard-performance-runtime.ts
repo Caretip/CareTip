@@ -49,6 +49,17 @@ if (
   fail("Employee dashboard still independently bootstraps entitlements/profile");
 }
 
+const employeeAnalytics = read("src/app/hooks/useEmployeeDashboardAnalytics.ts");
+if (
+  employeeAnalytics.includes("needsInitialPeriodNetwork") &&
+  employeeAnalytics.includes("inflight_attach_incomplete") &&
+  employeeAnalytics.includes("mount_load_start")
+) {
+  pass("Employee analytics start on activate without waiting for a period toggle");
+} else {
+  fail("Employee analytics still defer the first period fetch behind a toggle");
+}
+
 const feedback = read("src/app/components/business/RecentCustomerFeedbackPanel.tsx");
 if (
   feedback.includes("useBusinessEntitlementsContext") &&

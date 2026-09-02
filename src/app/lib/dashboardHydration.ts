@@ -29,7 +29,7 @@ export function markDashboardLiveSettled(ref: { current: boolean }): void {
   ref.current = true;
 }
 
-/** KPI cards: skeleton on cold load only; period switches use refresh shimmer. */
+/** KPI cards: skeleton on cold load and while the dashboard is not yet active. Period switches use refresh shimmer. */
 export function deriveDashboardMetricLoading(opts: {
   enabled: boolean;
   hasMetricsData: boolean;
@@ -51,7 +51,10 @@ export function deriveDashboardMetricLoading(opts: {
     hasStaleVisibleMetrics = false,
   } = opts;
   if (!enabled) {
-    return { showMetricsSkeleton: false, isPeriodRefreshing: false };
+    return {
+      showMetricsSkeleton: !hasMetricsData && !hasStaleVisibleMetrics,
+      isPeriodRefreshing: false,
+    };
   }
 
   const periodSwitchInFlight =
