@@ -277,7 +277,7 @@ export const BusinessDashboard = memo(function BusinessDashboard() {
     coveredByGlobalLoader: globalLoaderCoversBoot,
   } = useBusinessPageBoot("overview", metricsBootBlocking);
 
-  const periodMetricsLoading = showMetricsSkeleton || !displayMetrics;
+  const periodMetricsLoading = showMetricsSkeleton;
   const heroPulseLoading = !isMetricsSettled && !operationalPulse;
   const showGoalsLoading = isGoalsInitialLoad && !globalLoaderCoversBoot;
   const periodRefreshingLabel = t("dashboard.refresh.updating");

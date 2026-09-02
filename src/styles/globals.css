@@ -807,7 +807,7 @@ html[data-auth-sign-in-handoff] .caretip-dashboard-page-enter {
   flex-direction: column;
   gap: 0;
   width: 100%;
-  max-width: 22rem;
+  max-width: none;
 }
 
 /* Context bridge below hero metrics — transition into period analytics */
@@ -845,23 +845,17 @@ html[data-auth-sign-in-handoff] .caretip-dashboard-page-enter {
 
 .employee-dashboard-hero .employee-hero-cta-row {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  align-items: stretch;
   gap: 0.5rem;
-  width: auto;
+  width: 100%;
   max-width: 100%;
 }
 
-@media (min-width: 480px) {
-  .employee-dashboard-hero .employee-hero-cta-row {
-    flex-direction: row;
-    flex-wrap: wrap;
-    align-items: stretch;
-  }
-}
-
 .employee-dashboard-hero .employee-hero-cta-row > :is(a, button) {
-  flex: 1 1 auto;
-  width: 100%;
+  flex: 1 1 0%;
+  width: auto;
   min-width: 0;
   min-height: 2.75rem;
   height: auto !important;
@@ -870,14 +864,6 @@ html[data-auth-sign-in-handoff] .caretip-dashboard-page-enter {
   text-align: center;
   line-height: 1.25;
   padding-block: 0.5rem;
-}
-
-@media (min-width: 480px) {
-  .employee-dashboard-hero .employee-hero-cta-row > :is(a, button) {
-    flex: 0 1 auto;
-    width: auto;
-    white-space: nowrap;
-  }
 }
 
 /* Dashboard SWR — soft opacity while background revalidation runs */
@@ -1402,7 +1388,14 @@ html[data-auth-sign-in-handoff] .caretip-dashboard-page-enter {
     height: 2.75rem !important;
   }
 
-  .caretip-dashboard-shell .employee-dashboard-hero .dashboard-hero-actions .employee-hero-cta-row,
+  .caretip-dashboard-shell .employee-dashboard-hero .dashboard-hero-actions .employee-hero-cta-row {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    justify-content: flex-start;
+    gap: 0.5rem;
+  }
+
   .caretip-dashboard-shell .business-dashboard-hero .dashboard-hero-actions .business-hero-cta-row {
     display: flex;
     flex-direction: row;
@@ -1411,7 +1404,18 @@ html[data-auth-sign-in-handoff] .caretip-dashboard-page-enter {
     gap: 0.5rem;
   }
 
-  .caretip-dashboard-shell .employee-dashboard-hero .dashboard-hero-actions .employee-hero-cta-row > *,
+  .caretip-dashboard-shell .employee-dashboard-hero .dashboard-hero-actions .employee-hero-cta-row > * {
+    min-width: 0;
+    min-height: 2.75rem;
+    height: auto !important;
+    width: auto !important;
+    flex: 1 1 0%;
+    max-width: none !important;
+    white-space: normal;
+    text-align: center;
+    line-height: 1.25;
+  }
+
   .caretip-dashboard-shell .business-dashboard-hero .dashboard-hero-actions .business-hero-cta-row > * {
     min-width: 0;
     min-height: 2.75rem;
@@ -1422,19 +1426,6 @@ html[data-auth-sign-in-handoff] .caretip-dashboard-page-enter {
     white-space: nowrap;
     text-align: center;
     line-height: 1.25;
-  }
-}
-
-@media (max-width: 380px) {
-  .caretip-dashboard-shell .employee-dashboard-hero .dashboard-hero-actions .employee-hero-cta-row,
-  .caretip-dashboard-shell .business-dashboard-hero .dashboard-hero-actions .business-hero-cta-row {
-    flex-direction: column;
-  }
-
-  .caretip-dashboard-shell .employee-dashboard-hero .dashboard-hero-actions .employee-hero-cta-row > *,
-  .caretip-dashboard-shell .business-dashboard-hero .dashboard-hero-actions .business-hero-cta-row > * {
-    width: 100% !important;
-    white-space: normal;
   }
 }
 

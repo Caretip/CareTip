@@ -205,12 +205,18 @@ if (
   pass("Inbox empty body/hint cleared");
 } else fail("Inbox empty copy still present");
 
+if ((en?.business?.qrStudio?.subtitle ?? "x") === "") {
+  pass("QR Studio redundant subtitle cleared");
+} else fail("QR Studio subtitle still present");
+
+const locationsPageSrc = read("src/app/pages/business/LocationsPage.tsx");
 if (
-  (en?.business?.locationsPage?.subtitle ?? "x") === "" &&
-  (en?.business?.qrStudio?.subtitle ?? "x") === ""
+  typeof en?.business?.locationsPage?.subtitle === "string" &&
+  en.business.locationsPage.subtitle.length > 0 &&
+  locationsPageSrc.includes("hideSubtitleOnMobile")
 ) {
-  pass("Locations/QR Studio redundant subtitles cleared");
-} else fail("Locations/QR Studio subtitles still present");
+  pass("Locations / Tables subtitle exists and is hidden on mobile");
+} else fail("Locations / Tables subtitle should exist and use hideSubtitleOnMobile");
 
 const mobileEn = read("mobile/i18n/locales/en.ts");
 if (

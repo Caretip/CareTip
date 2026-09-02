@@ -10,11 +10,19 @@ import {
   fetchBusinessProfile,
   fetchPhysicalQrCatalog,
   fetchPhysicalQrContexts,
+  invalidatePhysicalQrContextsClientCache,
+  primePhysicalQrOrderClientCache,
   quotePhysicalQrCart,
   resolvePhysicalQrContext,
   type PhysicalQrCatalogProduct,
   type PhysicalQrContextOptions,
 } from "@/app/lib/api";
+import {
+  readPrintQrStudioSnapshot,
+  writePrintQrStudioSnapshot,
+  type PrintQrStudioCartLine,
+} from "@/app/lib/printQrStudioSessionCache";
+import { upsertPhysicalQrOrderInListSnapshot } from "@/app/lib/physicalQrOrdersSessionCache";
 import { PHYSICAL_QR_DEFAULT_COLOR_TOKENS } from "@/app/lib/physicalQrTemplate";
 import { logPhysicalQrPerf, physicalQrPerfNow } from "@/app/lib/physicalQrPerf";
 import { QR_STUDIO_SAMPLE_URL, useBusinessBrandingOptional } from "../../../contexts/BusinessBrandingContext";
@@ -40,6 +48,7 @@ import {
   PHYSICAL_QR_QUANTITY_MIN,
   PHYSICAL_QR_QUANTITY_MAX,
   clampPhysicalQrQuantity,
+  physicalQrTemplateDisplayName,
 } from "@/app/lib/physicalQrOrderUi";
 import {
   quotePhysicalQrPrints,
@@ -53,15 +62,7 @@ import {
   printFocusSectionId,
 } from "@/app/lib/qrStudioNav";
 
-export type PrintCartLine = {
-  id: string;
-  qrContextType: "storefront" | "employee" | "table" | "location";
-  qrSubjectId?: string;
-  label: string;
-  quantity: number;
-  locationId?: string | null;
-  locationName?: string | null;
-};
+export type PrintCartLine = PrintQrStudioCartLine;
 
 function cartLineKey(type: string, subjectId?: string) {
   return `${type}:${subjectId ?? "storefront"}`;
@@ -74,6 +75,8 @@ export function PrintQrStudio() {
   const printFocus = parseQrStudioPrintFocus(searchParams.get("focus"));
   const focusScrolledRef = useRef(false);
   const { user } = useRequireAuth();
+  const businessId = user?.businessId?.trim() || "";
+  const initialSnapshot = readPrintQrStudioSnapshot(businessId || user?.businessId);
   const branding = useBusinessBrandingOptional();
   const businessName =
     branding?.businessName?.trim() ||
@@ -92,24 +95,27 @@ export function PrintQrStudio() {
   const canMultiLocation = printingIncluded;
 
   const [step, setStep] = useState<"select" | "shipping" | "review">("select");
-  const [products, setProducts] = useState<PhysicalQrCatalogProduct[]>([]);
-  const [productId, setProductId] = useState("");
-  const [contexts, setContexts] = useState<PhysicalQrContextOptions | null>(null);
-  const [cart, setCart] = useState<PrintCartLine[]>([]);
-  const [printAddress, setPrintAddress] = useState("");
-  const [recipientName, setRecipientName] = useState("");
-  const [streetLine, setStreetLine] = useState("");
+  const [products, setProducts] = useState<PhysicalQrCatalogProduct[]>(() => initialSnapshot?.products ?? []);
+  const [productId, setProductId] = useState(initialSnapshot?.productId ?? "");
+  const [contexts, setContexts] = useState<PhysicalQrContextOptions | null>(
+    () => initialSnapshot?.contexts ?? null,
+  );
+  const [cart, setCart] = useState<PrintCartLine[]>(() => initialSnapshot?.cart ?? []);
+  const [printAddress, setPrintAddress] = useState(initialSnapshot?.printAddress ?? "");
+  const [recipientName, setRecipientName] = useState(initialSnapshot?.recipientName ?? "");
+  const [streetLine, setStreetLine] = useState(initialSnapshot?.streetLine ?? "");
   const [addressLine2] = useState("");
-  const [city, setCity] = useState("");
-  const [contactEmail, setContactEmail] = useState("");
-  const [contactPhone, setContactPhone] = useState("");
+  const [city, setCity] = useState(initialSnapshot?.city ?? "");
+  const [contactEmail, setContactEmail] = useState(initialSnapshot?.contactEmail ?? "");
+  const [contactPhone, setContactPhone] = useState(initialSnapshot?.contactPhone ?? "");
   const [submitting, setSubmitting] = useState(false);
-  const [bootLoading, setBootLoading] = useState(true);
+  const [bootLoading, setBootLoading] = useState(() => !initialSnapshot);
   const [loadError, setLoadError] = useState<string | null>(null);
-  const [previewTargetUrl, setPreviewTargetUrl] = useState("");
-  const sharedQrDataUrl = useSharedPhysicalQrDataUrl(previewTargetUrl);
+  const [previewTargetUrl, setPreviewTargetUrl] = useState(initialSnapshot?.previewTargetUrl ?? "");
+  const sharedQrDataUrl = useSharedPhysicalQrDataUrl(previewTargetUrl, businessId);
   const [serverQuote, setServerQuote] = useState<PhysicalQrQuote | null>(null);
   const [previewProductId, setPreviewProductId] = useState<string | null>(null);
+  const hydratedBusinessIdRef = useRef<string | null>(initialSnapshot?.businessId ?? null);
 
   const product = products.find((p) => p.id === productId) ?? products[0] ?? null;
   const supportsAddress = Boolean(product?.supportsAddress);
@@ -117,8 +123,9 @@ export function PrintQrStudio() {
 
   const templateLabel = useCallback(
     (item: PhysicalQrCatalogProduct) => {
-      const design = t(`business.qrStudio.physical.templates.${item.templateId}`, {
-        defaultValue: item.name.replace(/\s+with(?:out)? address$/i, "").trim() || item.name,
+      const design = physicalQrTemplateDisplayName(t, {
+        templateId: item.templateId,
+        productName: item.name,
       });
       const layout = item.supportsAddress
         ? t("business.qrStudio.physical.withAddress")
@@ -129,19 +136,70 @@ export function PrintQrStudio() {
   );
 
   useEffect(() => {
+    if (!businessId) return;
     let cancelled = false;
+    const snap = readPrintQrStudioSnapshot(businessId);
+    const switchedBusiness =
+      Boolean(hydratedBusinessIdRef.current) && hydratedBusinessIdRef.current !== businessId;
+    if (switchedBusiness) {
+      if (snap) {
+        setProducts(snap.products);
+        setProductId(snap.productId);
+        setContexts(snap.contexts);
+        setCart(snap.cart);
+        setPrintAddress(snap.printAddress);
+        setRecipientName(snap.recipientName);
+        setStreetLine(snap.streetLine);
+        setCity(snap.city);
+        setContactEmail(snap.contactEmail);
+        setContactPhone(snap.contactPhone);
+        setPreviewTargetUrl(snap.previewTargetUrl);
+        setBootLoading(false);
+        setLoadError(null);
+      } else {
+        setProducts([]);
+        setProductId("");
+        setContexts(null);
+        setCart([]);
+        setPreviewTargetUrl("");
+        setBootLoading(true);
+        setLoadError(null);
+      }
+      hydratedBusinessIdRef.current = businessId;
+    } else if (snap && hydratedBusinessIdRef.current !== businessId) {
+      hydratedBusinessIdRef.current = businessId;
+      setProducts(snap.products);
+      setProductId((prev) => prev || snap.productId);
+      setContexts(snap.contexts);
+      setCart(snap.cart);
+      setPrintAddress((prev) => prev || snap.printAddress);
+      setRecipientName((prev) => prev || snap.recipientName);
+      setStreetLine((prev) => prev || snap.streetLine);
+      setCity((prev) => prev || snap.city);
+      setContactEmail((prev) => prev || snap.contactEmail);
+      setContactPhone((prev) => prev || snap.contactPhone);
+      setPreviewTargetUrl((prev) => prev || snap.previewTargetUrl);
+      setBootLoading(false);
+      setLoadError(null);
+    } else if (snap) {
+      setBootLoading(false);
+    }
     void (async () => {
       try {
         const [catalog, ctx] = await Promise.all([
           fetchPhysicalQrCatalog(),
-          fetchPhysicalQrContexts(),
+          fetchPhysicalQrContexts({ revalidate: true }),
         ]);
         if (cancelled) return;
         setProducts(catalog.products);
         setProductId((prev) => prev || catalog.products[0]?.id || "");
         setContexts(ctx);
+        setLoadError(null);
       } catch (err) {
-        if (!cancelled) setLoadError(err instanceof Error ? err.message : t("business.qrStudio.physical.loadError"));
+        if (cancelled) return;
+        if (!snap) {
+          setLoadError(err instanceof Error ? err.message : t("business.qrStudio.physical.loadError"));
+        }
       } finally {
         if (!cancelled) setBootLoading(false);
       }
@@ -158,7 +216,7 @@ export function PrintQrStudio() {
     return () => {
       cancelled = true;
     };
-  }, [t, user?.email, user?.name]);
+  }, [businessId, t, user?.email, user?.name]);
 
   const formatEur = (cents: number) =>
     new Intl.NumberFormat(i18n.language.startsWith("de") ? "de-DE" : "en-GB", {
@@ -181,6 +239,38 @@ export function PrintQrStudio() {
     serverQuote && serverQuote.printCount === cartCount ? serverQuote : localQuote;
   const printSubtotal = quote.totalCents;
 
+  useEffect(() => {
+    if (!businessId || bootLoading || products.length === 0 || !contexts) return;
+    writePrintQrStudioSnapshot({
+      businessId,
+      products,
+      productId,
+      contexts,
+      cart,
+      printAddress,
+      recipientName,
+      streetLine,
+      city,
+      contactEmail,
+      contactPhone,
+      previewTargetUrl,
+    });
+  }, [
+    bootLoading,
+    businessId,
+    cart,
+    city,
+    contactEmail,
+    contactPhone,
+    contexts,
+    previewTargetUrl,
+    printAddress,
+    productId,
+    products,
+    recipientName,
+    streetLine,
+  ]);
+
   const previewContext = useMemo(() => {
     const first = cart[0];
     if (first) {
@@ -192,8 +282,12 @@ export function PrintQrStudio() {
     return { qrContextType: "storefront" as const, qrSubjectId: undefined };
   }, [cart]);
 
+  const previewTargetUrlRef = useRef(previewTargetUrl);
+  previewTargetUrlRef.current = previewTargetUrl;
+
   useEffect(() => {
     let cancelled = false;
+    const hadUrl = Boolean(previewTargetUrlRef.current.trim());
     void resolvePhysicalQrContext({
       qrContextType: previewContext.qrContextType,
       qrSubjectId:
@@ -206,7 +300,7 @@ export function PrintQrStudio() {
         );
       })
       .catch(() => {
-        if (!cancelled) setPreviewTargetUrl("");
+        if (!cancelled && !hadUrl) setPreviewTargetUrl("");
       });
     return () => {
       cancelled = true;
@@ -415,6 +509,10 @@ export function PrintQrStudio() {
       logPhysicalQrPerf("create-and-checkout-received", physicalQrPerfNow() - tApi, {
         zeroCost: Boolean(session.zeroCost),
       });
+      invalidatePhysicalQrContextsClientCache();
+      setCart([]);
+      primePhysicalQrOrderClientCache(session.order);
+      if (businessId) upsertPhysicalQrOrderInListSnapshot(businessId, session.order);
       if (session.zeroCost) {
         logPhysicalQrPerf("redirect-initiated", physicalQrPerfNow() - tClick, { zeroCost: true });
         navigate(`/dashboard/qr-studio/orders/${encodeURIComponent(session.order.id)}?checkout=success`);
@@ -427,7 +525,7 @@ export function PrintQrStudio() {
       const code = err instanceof ApiRequestError ? err.code : undefined;
       if (code === "QUOTA_CHANGED") {
         toast.error(t("business.qrStudio.print.quotaChanged"));
-        void fetchPhysicalQrContexts()
+        void fetchPhysicalQrContexts({ revalidate: true })
           .then((ctx) => setContexts(ctx))
           .catch(() => {});
       } else if (code === "BASIC_SINGLE_LOCATION_REQUIRED" || code === "BASIC_PRIMARY_LOCATION_REQUIRED") {
@@ -440,6 +538,7 @@ export function PrintQrStudio() {
     }
   }, [
     addressLine2,
+    businessId,
     canCheckout,
     cart,
     city,
@@ -528,8 +627,9 @@ export function PrintQrStudio() {
                       qrDataUrl={sharedQrDataUrl}
                     />
                     <p className="mt-2 w-full text-sm font-medium leading-tight">
-                      {t(`business.qrStudio.physical.templates.${item.templateId}`, {
-                        defaultValue: item.name.replace(/\s+with(?:out)? address$/i, "").trim() || item.name,
+                      {physicalQrTemplateDisplayName(t, {
+                        templateId: item.templateId,
+                        productName: item.name,
                       })}
                     </p>
                     <p className="mt-0.5 w-full text-xs text-muted-foreground">

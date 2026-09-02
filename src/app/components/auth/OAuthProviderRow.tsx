@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState, type ReactNode } from "react";
-import { GoogleLogin } from "@react-oauth/google";
+import { GoogleLogin, type CredentialResponse } from "@react-oauth/google";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -93,14 +93,9 @@ export function OAuthProviderRow({
   const googleClientId = googleOAuthWebClientId();
   const appleClientId = appleOAuthWebClientId();
   const facebookAppId = facebookOAuthWebAppId();
-  const [gsiMounted, setGsiMounted] = useState(false);
   const [gsiOriginError, setGsiOriginError] = useState(false);
   const [appleReady, setAppleReady] = useState<boolean | null>(null);
   const [providerBusy, setProviderBusy] = useState<OAuthProviderId | null>(null);
-
-  useEffect(() => {
-    setGsiMounted(true);
-  }, []);
 
   useEffect(() => {
     if (!appleClientId) {
@@ -115,6 +110,14 @@ export function OAuthProviderRow({
       cancelled = true;
     };
   }, [appleClientId]);
+
+  const onGoogleSuccess = useCallback(
+    (cred: CredentialResponse) => {
+      setGsiOriginError(false);
+      if (cred.credential) onSocialCredential("google", cred.credential);
+    },
+    [onSocialCredential],
+  );
 
   const onGoogleError = useCallback(() => {
     setGsiOriginError(true);
@@ -230,13 +233,10 @@ export function OAuthProviderRow({
                   draggable={false}
                 />
               )}
-              {gsiMounted && showGoogle && !disabled && !interactionBlocked ? (
-                <div className="caretip-oauth-circle__gsi">
+              {showGoogle ? (
+                <div className="caretip-oauth-circle__gsi" aria-hidden>
                   <GoogleLogin
-                    onSuccess={(cred) => {
-                      setGsiOriginError(false);
-                      if (cred.credential) onSocialCredential("google", cred.credential);
-                    }}
+                    onSuccess={onGoogleSuccess}
                     onError={onGoogleError}
                     useOneTap={false}
                     type="icon"
@@ -244,6 +244,10 @@ export function OAuthProviderRow({
                     theme="outline"
                     size="large"
                     text="continue_with"
+                    containerProps={{
+                      className: "caretip-oauth-gsi-host",
+                      style: { width: 44, height: 44 },
+                    }}
                   />
                 </div>
               ) : null}

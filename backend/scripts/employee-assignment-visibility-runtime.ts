@@ -420,7 +420,7 @@ async function main() {
     const webDashboard = readFromScript("../../src/app/pages/employee/EmployeeDashboard.tsx");
     if (
       webAssignmentPage.includes("EmployeeAssignmentCard") &&
-      webAssignmentPage.includes("clearEmployeeProfileClientCache") &&
+      webAssignmentPage.includes("readEmployeeAssignmentSnapshot") &&
       webNav.includes("/employee/assignment") &&
       !webDashboard.includes("EmployeeAssignmentCard")
     ) {

@@ -2,6 +2,7 @@ import {
   clearBusinessStatsClientCache,
   clearBusinessBrandingSettingsClientCache,
   clearBusinessProfileClientCache,
+  clearPhysicalQrPrintClientCache,
   clearEmployeeAccountClientCache,
   clearEmployeeProfileClientCache,
   clearEmployeeTipsClientCache,
@@ -9,11 +10,14 @@ import {
 import { clearAllPageSessionCache } from "./pageSessionCache";
 import { clearSubscriptionTierSession } from "./subscriptionSessionCache";
 import { clearBusinessDashboardSwrStore } from "../hooks/useBusinessDashboardStats";
-import { clearEmployeePeriodSwrStore } from "../hooks/useEmployeeDashboardAnalytics";
 import { clearEmployeeAccountSwrStore } from "../hooks/useEmployeeAccountSummary";
 import { clearVenueCatalogStore } from "./businessVenueCatalog";
 import { clearBusinessActivitySearchSnapshot } from "./businessActivitySearchSnapshot";
 import { resetQrStudioWarmCache } from "./qrStudioWarmCache";
+import { clearPrintQrStudioSessionCache } from "./printQrStudioSessionCache";
+import { clearPhysicalQrOrdersSessionCache } from "./physicalQrOrdersSessionCache";
+import { clearEmployeePageSessionCache } from "./employeePageSessionCache";
+import { clearEmployeePeriodSwrStore } from "./employeePeriodSessionCache";
 import { clearCheckoutIntent, clearCheckoutSyncExpectation } from "./checkoutIntent";
 
 /**
@@ -35,6 +39,10 @@ export function resetAllClientSessionCaches(): void {
   clearBusinessActivitySearchSnapshot();
   clearBusinessBrandingSettingsClientCache();
   resetQrStudioWarmCache();
+  clearPrintQrStudioSessionCache();
+  clearPhysicalQrOrdersSessionCache();
+  clearEmployeePageSessionCache();
+  clearPhysicalQrPrintClientCache();
   clearCheckoutIntent();
   clearCheckoutSyncExpectation();
 }

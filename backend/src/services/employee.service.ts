@@ -15,6 +15,7 @@ import {
   sendEmployeeActivationEmail,
 } from "./employeeActivationEmail.service.js";
 import { resolveUserPreferredLocale } from "../emails/i18nEmail.js";
+import { logServerError } from "../utils/httpErrors.js";
 import { absolutizePublicMediaPath } from "../utils/publicMediaUrl.js";
 import { getSubscriptionTierForBusinessId, resolveSubscriptionEntitlements } from "./subscriptionEntitlement.service.js";
 import { isPresetStaffRole } from "../config/staffRolePresets.js";
@@ -1060,20 +1061,21 @@ export async function createEmployeeWithActivation(
   const trimmedEmail = email.trim().toLowerCase();
 
   // Verify email is not already registered
-  const existing = await prisma.user.findUnique({
-    where: { email: trimmedEmail },
-    select: { id: true },
-  });
+  const [existing, business] = await Promise.all([
+    prisma.user.findUnique({
+      where: { email: trimmedEmail },
+      select: { id: true },
+    }),
+    prisma.business.findUnique({
+      where: { id: businessId },
+      select: { verificationStatus: true, name: true, userId: true },
+    }),
+  ]);
   if (existing) {
     throw new Error(
       "We couldn't invite this email. If they already have a CareTip account, ask them to sign in instead.",
     );
   }
-
-  const business = await prisma.business.findUnique({
-    where: { id: businessId },
-    select: { verificationStatus: true, name: true, userId: true },
-  });
   if (!business) {
     throw new Error("Business not found");
   }
@@ -1138,14 +1140,16 @@ export async function createEmployeeWithActivation(
   const expiresAt = new Date();
   expiresAt.setHours(expiresAt.getHours() + 24);
 
-  // Send activation email (best-effort; does not block employee creation)
-  await sendEmployeeActivationEmail({
+  // Best-effort invite email — the employee row is already committed.
+  void sendEmployeeActivationEmail({
     to: trimmedEmail,
     employeeName: employee.name,
     activationUrl: buildEmployeeActivationUrl(activationToken),
     expiresInHours: 24,
     businessName: business.name?.trim() || "CareTip",
     inviteeUserId: employee.userId,
+  }).catch((err) => {
+    logServerError("employee.createEmployeeWithActivation.email", err);
   });
 
   notifyBusinessRosterChanged(businessId, "staff_created");

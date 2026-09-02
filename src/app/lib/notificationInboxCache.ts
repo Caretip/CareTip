@@ -2,6 +2,7 @@ import type { InboxNotification } from "./api";
 import {
   getPageSessionCache,
   invalidatePageSessionCacheByPrefix,
+  peekPageSessionCache,
   setPageSessionCache,
   PAGE_CACHE_TTL_HIGH_MS,
 } from "./pageSessionCache";
@@ -16,6 +17,12 @@ type InboxCachePayload = {
 
 export function inboxSessionCacheKey(filterKey = "{}"): string {
   return `${INBOX_CACHE_PREFIX}${filterKey}`;
+}
+
+export function peekInboxSessionCache(
+  filterKey = "{}",
+): InboxCachePayload | null {
+  return peekPageSessionCache<InboxCachePayload>(inboxSessionCacheKey(filterKey));
 }
 
 export function readInboxSessionCache(

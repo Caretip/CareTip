@@ -654,9 +654,10 @@
 }
 
 .caretip-dashboard-shell.business-dashboard .fix-prompt--compact .fix-prompt__description {
-  display: none;
-  margin-top: 0;
+  display: block;
+  margin-top: 0.125rem;
   font-size: 0.75rem;
+  color: hsl(var(--muted-foreground));
 }
 
 @media (min-width: 640px) {

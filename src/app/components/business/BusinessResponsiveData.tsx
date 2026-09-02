@@ -17,7 +17,7 @@ export function BusinessResponsiveData({
   panelClassName,
 }: BusinessResponsiveDataProps) {
   return (
-    <div className={cn(businessUi.tablePanel, "overflow-hidden", panelClassName, className)}>
+    <div className={cn(businessUi.tablePanel, panelClassName, className)}>
       <div className={businessUi.mobileList}>{mobile}</div>
       <div className={businessUi.tableWrap}>{desktop}</div>
     </div>

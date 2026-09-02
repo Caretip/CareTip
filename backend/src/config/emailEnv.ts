@@ -52,6 +52,13 @@ export function getLeadFromOverrideRaw(type: "demo" | "support"): string | undef
   return raw || undefined;
 }
 
+/** Public support inbox for footers and transactional Reply-To. Not a secret. */
+export function getCareTipSupportEmail(): string {
+  const fromEnv = process.env.CARETIP_SUPPORT_EMAIL?.trim();
+  if (fromEnv && fromEnv.includes("@")) return fromEnv;
+  return "support@caretip.de";
+}
+
 export type EmailHealthDiagnostics = {
   /** True when production requirements are met (or dev has API key optional path). */
   configured: boolean;

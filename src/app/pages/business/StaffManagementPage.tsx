@@ -25,7 +25,7 @@ import { useCopyFeedback } from "../../hooks/useCopyFeedback";
 import { useMinWidthMedia } from "@/lib/motionPerf";
 import { useSocket } from "../../hooks/useSocket";
 import { useRealtimeFallback } from "../../hooks/useRealtimeFallback";
-import { fetchVenueCatalog, invalidateVenueCatalog } from "../../lib/businessVenueCatalog";
+import { fetchVenueCatalog } from "../../lib/businessVenueCatalog";
 import {
   generateInviteCode,
   getBusinessStats,
@@ -533,6 +533,31 @@ export function StaffManagementPage() {
         tableIds: addForm.tableIds,
         locale: inviteLocale,
       });
+      const row: StaffRow = {
+        id: created.id,
+        slug: null,
+        name: created.name,
+        role: created.jobTitle,
+        avatar: null,
+        tips: 0,
+        rating: null,
+        email: created.email,
+        phone: addForm.phone.trim(),
+        joinedDate: "",
+        growth: "",
+        isActive: false,
+        activationStatus: "pending_activation",
+        emailVerified: false,
+        passwordIsSet: false,
+        monthlyGoal: null,
+        locationId: created.locationId ?? (addForm.locationId.trim() || null),
+        assignedTableIds: created.assignedTableIds ?? addForm.tableIds,
+      };
+      setEmployees((prev) => {
+        const next = [row, ...prev.filter((e) => e.id !== row.id)];
+        if (user.businessId) setPageSessionCache(`business:staff:${user.businessId}`, next);
+        return next;
+      });
       setShowAddModal(false);
       setAddForm({
         name: "",
@@ -543,7 +568,8 @@ export function StaffManagementPage() {
         locationId: "",
         tableIds: [],
       });
-      await fetchEmployees();
+      invalidateStaffRosterCaches();
+      void fetchEmployees({ quiet: true, revalidate: true });
       toastOk(t("business.staffPage.toastInviteSent", { name: created.name }));
     } catch (err) {
       logClientError("StaffManagementPage", err);
@@ -645,10 +671,31 @@ export function StaffManagementPage() {
     }
     setSavingEdit(true);
     try {
-      await updateEmployee(editForm.id, payload);
+      const updated = await updateEmployee(editForm.id, payload);
+      setEmployees((prev) => {
+        const next = prev.map((e) =>
+          e.id === updated.id
+            ? {
+                ...e,
+                name: updated.name,
+                role: updated.jobTitle,
+                email: updated.email,
+                isActive: updated.isActive,
+                monthlyGoal: updated.monthlyGoal,
+                slug: updated.slug ?? e.slug,
+                avatar: updated.avatar ?? e.avatar,
+                locationId:
+                  updated.locationId !== undefined ? updated.locationId ?? null : e.locationId,
+                assignedTableIds: updated.assignedTableIds ?? e.assignedTableIds,
+              }
+            : e,
+        );
+        if (user?.businessId) setPageSessionCache(`business:staff:${user.businessId}`, next);
+        return next;
+      });
       setShowEditModal(false);
       invalidateStaffRosterCaches();
-      await fetchEmployees({ revalidate: true });
+      void fetchEmployees({ quiet: true, revalidate: true });
       toastOk(t("business.staffPage.toastStaffUpdated"));
     } catch (err) {
       logClientError("StaffManagementPage", err);
@@ -673,7 +720,7 @@ export function StaffManagementPage() {
       setShowDeleteModal(false);
       setDeleteTarget(null);
       invalidateStaffRosterCaches();
-      await fetchEmployees({ revalidate: true });
+      void fetchEmployees({ quiet: true, revalidate: true });
       toastOk(t("business.staffPage.toastStaffRemoved"));
     } catch (err) {
       logClientError("StaffManagementPage", err);

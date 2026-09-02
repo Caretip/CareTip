@@ -181,16 +181,19 @@
   padding-right: 0 !important;
 }
 
-.caretip-dashboard-shell.employee-dashboard .dashboard-inbox-page--flush {
+.caretip-dashboard-shell.employee-dashboard .dashboard-inbox-page--flush,
+.caretip-dashboard-shell.business-dashboard .dashboard-inbox-page--flush {
   width: 100%;
   max-width: none;
 }
 
-.caretip-dashboard-shell.employee-dashboard .dashboard-inbox-page--flush .caretip-mobile-notifications-inbox {
+.caretip-dashboard-shell.employee-dashboard .dashboard-inbox-page--flush .caretip-mobile-notifications-inbox,
+.caretip-dashboard-shell.business-dashboard .dashboard-inbox-page--flush .caretip-mobile-notifications-inbox {
   max-width: none;
 }
 
-.caretip-dashboard-shell.employee-dashboard .dashboard-inbox-page--flush .inbox-feed-panel {
+.caretip-dashboard-shell.employee-dashboard .dashboard-inbox-page--flush .inbox-feed-panel,
+.caretip-dashboard-shell.business-dashboard .dashboard-inbox-page--flush .inbox-feed-panel {
   width: 100%;
   border: none !important;
   border-radius: 0 !important;

@@ -39,6 +39,7 @@ import { cn } from "@/lib/utils";
 import {
   PHYSICAL_QR_SHIP_COUNTRY,
   physicalQrDeliveryIsComplete,
+  physicalQrTemplateDisplayName,
 } from "@/app/lib/physicalQrOrderUi";
 import { quotePhysicalQrPrints } from "@/app/lib/physicalQrPricing";
 
@@ -378,7 +379,12 @@ export function PhysicalBrandingStudio() {
                   colorTokens={PHYSICAL_QR_DEFAULT_COLOR_TOKENS}
                   targetUrl={targetUrl}
                 />
-                <p className="mt-2 text-sm font-medium leading-tight">{item.name}</p>
+                <p className="mt-2 text-sm font-medium leading-tight">
+                  {physicalQrTemplateDisplayName(t, {
+                    templateId: item.templateId,
+                    productName: item.name,
+                  })}
+                </p>
                 <p className="mt-0.5 text-xs text-muted-foreground">
                   {item.supportsAddress
                     ? t("business.qrStudio.physical.withAddress")
@@ -625,7 +631,11 @@ export function PhysicalBrandingStudio() {
               <div className="space-y-1 rounded-md border border-border px-3 py-2 text-sm">
                 <p className="font-medium">{t("business.qrStudio.physical.reviewTitle")}</p>
                 <p className="text-muted-foreground">
-                  {product.name} · {t("business.qrStudio.physical.orders.qtyShort", { count: quantity })}
+                  {physicalQrTemplateDisplayName(t, {
+                    templateId: product.templateId,
+                    productName: product.name,
+                  })}{" "}
+                  · {t("business.qrStudio.physical.orders.qtyShort", { count: quantity })}
                   {` · ${formatEur(quote.totalCents)}`}
                 </p>
                 <p>

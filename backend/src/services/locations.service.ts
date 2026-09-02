@@ -1,11 +1,11 @@
 import { prisma } from "../prisma.js";
 import {
   EntitlementDeniedError,
-  assertPlanLimitForBusiness,
   planLimitExceededPayload,
   resolveSubscriptionEntitlements,
   subscriptionRequiredPayload,
 } from "./subscriptionEntitlement.service.js";
+import { isWithinPlanLimit } from "../config/subscriptionCapabilities.js";
 import { emitBusinessDataChanged } from "../socket/socketEmitters.js";
 import { invalidateBusinessStatsCache } from "./business.service.js";
 
@@ -36,17 +36,15 @@ export async function createLocationForBusinessUser(
   if (!business) {
     throw new Error("Business not found");
   }
-  const entitlements = await resolveSubscriptionEntitlements(business.id);
+  const [entitlements, count] = await Promise.all([
+    resolveSubscriptionEntitlements(business.id),
+    prisma.location.count({ where: { businessId: business.id } }),
+  ]);
   if (!entitlements.hasActiveEntitlements) {
     throw new EntitlementDeniedError(403, subscriptionRequiredPayload("locationQr"));
   }
-  const count = await prisma.location.count({ where: { businessId: business.id } });
-  const limitCheck = await assertPlanLimitForBusiness(business.id, "locations", count);
-  if (!limitCheck.ok) {
-    if (limitCheck.reason === "no_entitlement") {
-      throw new EntitlementDeniedError(403, subscriptionRequiredPayload("locationQr"));
-    }
-    throw new EntitlementDeniedError(403, planLimitExceededPayload("locations", limitCheck.tier));
+  if (!isWithinPlanLimit(entitlements.subscriptionTier, "locations", count)) {
+    throw new EntitlementDeniedError(403, planLimitExceededPayload("locations", entitlements.subscriptionTier));
   }
   const desc = description?.trim();
   const loc = await prisma.location.create({

@@ -46,19 +46,13 @@ import { EmployeePageHeader } from "../../components/employee/EmployeePageHeader
 import { employeeUi } from "../../components/employee/employeeDashboardUi";
 import { cn } from "@/lib/utils";
 import {
-  getPageSessionCache,
-  setPageSessionCache,
-  PAGE_CACHE_TTL_LOW_MS,
-} from "../../lib/pageSessionCache";
+  readEmployeeSettingsSnapshot,
+  writeEmployeeSettingsSnapshot,
+  writeEmployeeAssignmentSnapshot,
+  type EmployeeSettingsSnapshot,
+} from "../../lib/employeePageSessionCache";
 
-type EmployeeSettingsCache = {
-  name: string;
-  bio: string;
-  businessName: string;
-  monthlyGoal: string;
-  emailNotif: boolean;
-  pushNotif: boolean;
-};
+type EmployeeSettingsCache = EmployeeSettingsSnapshot;
 
 const TEAL = "#e9781c";
 
@@ -66,14 +60,15 @@ export function EmployeeSettingsPage() {
   const { t, i18n } = useTranslation();
   const { user, logout, updateUser } = useRequireAuth();
   const navigate = useNavigate();
-  const [loading, setLoading] = useState(true);
+  const [boot] = useState(() => readEmployeeSettingsSnapshot(user?.id));
+  const [loading, setLoading] = useState(() => !boot);
   const [saving, setSaving] = useState(false);
-  const [name, setName] = useState("");
-  const [bio, setBio] = useState("");
-  const [businessName, setBusinessName] = useState<string>("");
-  const [monthlyGoal, setMonthlyGoal] = useState("");
-  const [emailNotif, setEmailNotif] = useState(true);
-  const [pushNotif, setPushNotif] = useState(true);
+  const [name, setName] = useState(() => boot?.name ?? "");
+  const [bio, setBio] = useState(() => boot?.bio ?? "");
+  const [businessName, setBusinessName] = useState<string>(() => boot?.businessName ?? "");
+  const [monthlyGoal, setMonthlyGoal] = useState(() => boot?.monthlyGoal ?? "");
+  const [emailNotif, setEmailNotif] = useState(() => boot?.emailNotif ?? true);
+  const [pushNotif, setPushNotif] = useState(() => boot?.pushNotif ?? true);
   const [currentPw, setCurrentPw] = useState("");
   const [newPw, setNewPw] = useState("");
   const [showCur, setShowCur] = useState(false);
@@ -83,8 +78,7 @@ export function EmployeeSettingsPage() {
   useEffect(() => {
     if (!user || user.role !== "employee") return;
     let cancelled = false;
-    const cacheKey = `employee:settings:${user.id}`;
-    const cached = getPageSessionCache<EmployeeSettingsCache>(cacheKey, PAGE_CACHE_TTL_LOW_MS);
+    const cached = readEmployeeSettingsSnapshot(user.id);
     if (cached) {
       setName(cached.name);
       setBio(cached.bio);
@@ -114,7 +108,8 @@ export function EmployeeSettingsPage() {
         setMonthlyGoal(snapshot.monthlyGoal);
         setEmailNotif(snapshot.emailNotif);
         setPushNotif(snapshot.pushNotif);
-        setPageSessionCache(cacheKey, snapshot);
+        writeEmployeeSettingsSnapshot(user.id, snapshot);
+        writeEmployeeAssignmentSnapshot(user.id, p.assignment);
         updateUser({ avatar: p.avatar ?? undefined, name: p.name });
       } catch (err) {
         logClientError("EmployeeSettingsPage", err);

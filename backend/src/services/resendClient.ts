@@ -9,6 +9,7 @@ import {
   getLeadFromOverrideRaw,
   getResendFromRaw,
   getResendSendingDomain,
+  getCareTipSupportEmail,
   isValidResendFromFormat,
 } from "../config/emailEnv.js";
 import {
@@ -128,7 +129,9 @@ export async function sendResendEmail(logTag: string, payload: ResendMailPayload
     return false;
   }
 
-  const replyToAddresses = normalizeReplyToAddresses(payload.replyTo);
+  const replyToAddresses = normalizeReplyToAddresses(
+    payload.replyTo ?? getCareTipSupportEmail(),
+  );
 
   const attachments = [...(payload.attachments ?? [])];
   const needsLogo =

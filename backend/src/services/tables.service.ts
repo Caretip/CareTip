@@ -3,12 +3,12 @@ import { prisma } from "../prisma.js";
 import { isOnboardingApprovedForPublicGoLive } from "../lib/verificationWorkflow.js";
 import {
   EntitlementDeniedError,
-  assertPlanLimitForBusiness,
   featureAccessDeniedPayload,
   planLimitExceededPayload,
   resolveSubscriptionEntitlements,
   subscriptionRequiredPayload,
 } from "./subscriptionEntitlement.service.js";
+import { isWithinPlanLimit } from "../config/subscriptionCapabilities.js";
 import { emitBusinessDataChanged } from "../socket/socketEmitters.js";
 import { invalidateBusinessStatsCache } from "./business.service.js";
 import * as locationsService from "./locations.service.js";
@@ -44,22 +44,20 @@ export async function createTableForBusinessUser(
   if (!business) {
     throw new Error("Business not found");
   }
-  const entitlements = await resolveSubscriptionEntitlements(business.id);
+  const [entitlements, tableCount] = await Promise.all([
+    resolveSubscriptionEntitlements(business.id),
+    prisma.table.count({
+      where: { location: { businessId: business.id } },
+    }),
+  ]);
   if (!entitlements.hasActiveEntitlements) {
     throw new EntitlementDeniedError(403, subscriptionRequiredPayload("tableQr"));
   }
   if (!entitlements.capabilities.includes("tableQr")) {
     throw new EntitlementDeniedError(403, featureAccessDeniedPayload(entitlements, "tableQr"));
   }
-  const tableCount = await prisma.table.count({
-    where: { location: { businessId: business.id } },
-  });
-  const limitCheck = await assertPlanLimitForBusiness(business.id, "tables", tableCount);
-  if (!limitCheck.ok) {
-    if (limitCheck.reason === "no_entitlement") {
-      throw new EntitlementDeniedError(403, subscriptionRequiredPayload("tableQr"));
-    }
-    throw new EntitlementDeniedError(403, planLimitExceededPayload("tables", limitCheck.tier));
+  if (!isWithinPlanLimit(entitlements.subscriptionTier, "tables", tableCount)) {
+    throw new EntitlementDeniedError(403, planLimitExceededPayload("tables", entitlements.subscriptionTier));
   }
   await locationsService.assertLocationOwnedByBusiness(input.locationId, business.id);
 
@@ -91,6 +89,9 @@ export async function createTableForBusinessUser(
       name,
       locationId: input.locationId,
       qrSlug,
+    },
+    include: {
+      location: { select: { id: true, name: true } },
     },
   });
   emitBusinessDataChanged(business.id, "table_created");

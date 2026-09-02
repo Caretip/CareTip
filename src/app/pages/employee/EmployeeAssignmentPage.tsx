@@ -3,40 +3,61 @@ import { useTranslation } from "react-i18next";
 import { useRequireAuth } from "../../hooks/useRequireAuth";
 import { useDashboardTabRefocus } from "../../hooks/useDashboardTabRefocus";
 import {
-  clearEmployeeProfileClientCache,
   getEmployeeProfile,
+  peekEmployeeProfileCache,
+  peekEmployeeProfileSession,
   type EmployeeSelfAssignment,
 } from "../../lib/api";
+import {
+  readEmployeeAssignmentSnapshot,
+  writeEmployeeAssignmentSnapshot,
+} from "../../lib/employeePageSessionCache";
 import { EmployeeAssignmentCard } from "../../components/employee/EmployeeAssignmentCard";
 import { EmployeePageHeader } from "../../components/employee/EmployeePageHeader";
 import { employeeUi } from "../../components/employee/employeeDashboardUi";
 import { cn } from "@/lib/utils";
 
+function readAssignmentFromSession(userId: string | undefined): EmployeeSelfAssignment | undefined {
+  if (!userId) return undefined;
+  return (
+    readEmployeeAssignmentSnapshot(userId) ??
+    peekEmployeeProfileSession()?.assignment ??
+    peekEmployeeProfileCache()?.assignment ??
+    undefined
+  );
+}
+
 export function EmployeeAssignmentPage() {
   const { t } = useTranslation();
   const { user, authHydrated, sessionValidated, authReady } = useRequireAuth();
-  const [assignment, setAssignment] = useState<EmployeeSelfAssignment | undefined>(undefined);
-  const [loaded, setLoaded] = useState(false);
+  const [boot] = useState(() => readAssignmentFromSession(user?.id));
+  const [assignment, setAssignment] = useState<EmployeeSelfAssignment | undefined>(boot);
+  const [loaded, setLoaded] = useState(() => boot !== undefined);
 
   const pageEnabled = Boolean(authReady && user?.role === "employee");
 
-  const loadAssignment = useCallback(async () => {
+  const loadAssignment = useCallback(async (opts?: { quiet?: boolean }) => {
     try {
       const profile = await getEmployeeProfile();
       setAssignment(profile.assignment);
+      if (user?.id) writeEmployeeAssignmentSnapshot(user.id, profile.assignment);
     } catch {
-      setAssignment(undefined);
+      if (!opts?.quiet) setAssignment(undefined);
     } finally {
       setLoaded(true);
     }
-  }, []);
+  }, [user?.id]);
 
   useEffect(() => {
     if (!authHydrated || !sessionValidated || !user || user.role !== "employee") return;
     let cancelled = false;
-    clearEmployeeProfileClientCache();
+    const cached = readAssignmentFromSession(user.id);
+    if (cached) {
+      setAssignment(cached);
+      setLoaded(true);
+    }
     void (async () => {
-      await loadAssignment();
+      await loadAssignment({ quiet: Boolean(cached) });
       if (cancelled) return;
     })();
     return () => {
@@ -45,8 +66,7 @@ export function EmployeeAssignmentPage() {
   }, [authHydrated, sessionValidated, user?.id, user?.role, loadAssignment]);
 
   useDashboardTabRefocus(() => {
-    clearEmployeeProfileClientCache();
-    void loadAssignment();
+    void loadAssignment({ quiet: true });
   }, pageEnabled);
 
   return (

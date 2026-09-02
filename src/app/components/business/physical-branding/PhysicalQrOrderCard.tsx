@@ -7,6 +7,7 @@ import {
   physicalQrContextLabel,
   physicalQrCustomerStatus,
   physicalQrOrderNumber,
+  physicalQrTemplateDisplayName,
 } from "@/app/lib/physicalQrOrderUi";
 import { Button } from "@/components/ui/button";
 import { PhysicalQrStatusBadge } from "./PhysicalQrStatusBadge";
@@ -30,7 +31,10 @@ export function PhysicalQrOrderCard({
       (order.paymentStatus === "FAILED" && order.fulfillmentStatus === "PAYMENT_FAILED"));
   const showPay = Boolean(canPay) && !confirming;
   const status = physicalQrCustomerStatus(order, t, confirming);
-  const productName = order.productName || t("business.qrStudio.physical.templateName");
+  const productName = physicalQrTemplateDisplayName(t, {
+    templateId: order.templateId,
+    productName: order.productName,
+  });
   const itemSummary =
     order.itemCount > 1
       ? t("business.qrStudio.physical.orders.itemCount", {

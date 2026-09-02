@@ -24,6 +24,7 @@ import {
 import { devSetHydrationPhase } from "../lib/dashboardDevDebug";
 import {
   patchDefaultInboxSessionCache,
+  peekInboxSessionCache,
   readInboxSessionCache,
   writeInboxSessionCache,
 } from "../lib/notificationInboxCache";
@@ -62,15 +63,27 @@ export function useNotifications({
   const socketReady = useDeferSocketConnect(active);
   // Interest only — do not subscribe to socket status (avoids Bell re-renders on connect).
   useSocketInstance(socketReady);
+  const filterKey = JSON.stringify(listFilters ?? {});
   const [unreadCount, setUnreadCount] = useState(() => {
-    const cached = readInboxSessionCache(JSON.stringify({}));
+    const cached = peekInboxSessionCache(filterKey) ?? readInboxSessionCache(filterKey);
     return cached?.unreadCount ?? 0;
   });
-  const [items, setItems] = useState<InboxNotification[]>([]);
+  const [items, setItems] = useState<InboxNotification[]>(() => {
+    if (!loadList) return [];
+    const cached = peekInboxSessionCache(filterKey) ?? readInboxSessionCache(filterKey);
+    return cached?.items ?? [];
+  });
   const [loading, setLoading] = useState(false);
   const [listError, setListError] = useState<string | null>(null);
-  const [nextCursor, setNextCursor] = useState<string | null>(null);
-  const loadedRef = useRef(false);
+  const [nextCursor, setNextCursor] = useState<string | null>(() => {
+    if (!loadList) return null;
+    const cached = peekInboxSessionCache(filterKey) ?? readInboxSessionCache(filterKey);
+    return cached?.nextCursor ?? null;
+  });
+  const loadedRef = useRef(
+    loadList &&
+      Boolean((peekInboxSessionCache(filterKey) ?? readInboxSessionCache(filterKey))?.items.length),
+  );
   const prevLocaleRef = useRef(uiLocale);
   const itemsRef = useRef<InboxNotification[]>([]);
   const unreadCountRef = useRef(0);
@@ -93,8 +106,6 @@ export function useNotifications({
     }
   }, [active]);
 
-  const filterKey = JSON.stringify(listFilters ?? {});
-
   const loadNotifications = useCallback(
     async (opts?: {
       append?: boolean;
@@ -104,7 +115,7 @@ export function useNotifications({
       quiet?: boolean;
     }) => {
       if (!active) return;
-      const cachedInbox = readInboxSessionCache(filterKey);
+      const cachedInbox = peekInboxSessionCache(filterKey) ?? readInboxSessionCache(filterKey);
       const hasVisible = itemsRef.current.length > 0;
       const useCachedFirst =
         !opts?.append && !opts?.cursor && cachedInbox !== null && !hasVisible;
@@ -305,7 +316,7 @@ export function useNotifications({
   /* Phase 1: closed bell — unread badge only; do not hydrate list into Bell state. */
   useEffect(() => {
     if (!active || loadList) return;
-    const cached = readInboxSessionCache(filterKey);
+    const cached = peekInboxSessionCache(filterKey) ?? readInboxSessionCache(filterKey);
     if (cached) {
       setUnreadIfChanged(setUnreadCount, cached.unreadCount);
     }
@@ -313,7 +324,7 @@ export function useNotifications({
 
   useEffect(() => {
     if (!active || !loadList) return;
-    const cachedInbox = readInboxSessionCache(filterKey);
+    const cachedInbox = peekInboxSessionCache(filterKey) ?? readInboxSessionCache(filterKey);
     if (cachedInbox) {
       setItems(localizeInboxNotifications(cachedInbox.items, t, i18n.language));
       setUnreadIfChanged(setUnreadCount, cachedInbox.unreadCount);

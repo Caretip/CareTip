@@ -29,6 +29,7 @@
     "test:tables-page-quota-ui": "node ./backend/node_modules/tsx/dist/cli.mjs ./scripts/tables-page-quota-ui-runtime.ts",
     "test:form-input-contrast": "node ./backend/node_modules/tsx/dist/cli.mjs ./scripts/form-input-contrast-runtime.ts",
     "test:copy-to-clipboard": "node ./backend/node_modules/tsx/dist/cli.mjs ./scripts/copy-to-clipboard-runtime.ts",
+    "test:locations-tables-management": "node ./backend/node_modules/tsx/dist/cli.mjs ./scripts/locations-tables-management-runtime.ts",
     "test:locations-page-quota-ui": "node ./backend/node_modules/tsx/dist/cli.mjs ./scripts/locations-page-quota-ui-runtime.ts",
     "test:subscription-entitlements-frontend": "node ./backend/node_modules/tsx/dist/cli.mjs ./scripts/subscription-entitlements-frontend-runtime.ts",
     "test:subscription-billing-ux-frontend": "node ./backend/node_modules/tsx/dist/cli.mjs ./scripts/subscription-billing-ux-frontend-runtime.ts",
@@ -45,9 +46,14 @@
     "test:digital-plain-qr-frontend": "node ./backend/node_modules/tsx/dist/cli.mjs ./scripts/digital-plain-qr-runtime.ts",
     "test:dashboard-mobile-ui": "node ./backend/node_modules/tsx/dist/cli.mjs ./scripts/dashboard-mobile-ui-runtime.ts",
     "test:dashboard-performance": "node ./backend/node_modules/tsx/dist/cli.mjs ./scripts/dashboard-performance-runtime.ts",
+    "test:mutation-ui-sync": "node ./backend/node_modules/tsx/dist/cli.mjs ./scripts/mutation-ui-sync-runtime.ts",
     "test:contact-lead-frontend": "node ./backend/node_modules/tsx/dist/cli.mjs ./scripts/contact-lead-frontend-runtime.ts",
     "test:notification-intelligence": "npm --prefix backend run test:notification-intelligence",
     "test:physical-qr-frontend": "node ./backend/node_modules/tsx/dist/cli.mjs ./scripts/physical-qr-frontend-runtime.ts",
+    "test:print-qr-studio-session": "node ./backend/node_modules/tsx/dist/cli.mjs ./scripts/print-qr-studio-session-runtime.ts",
+    "test:physical-qr-orders-session": "node ./backend/node_modules/tsx/dist/cli.mjs ./scripts/physical-qr-orders-session-runtime.ts",
+    "test:employee-page-session": "node ./backend/node_modules/tsx/dist/cli.mjs ./scripts/employee-page-session-runtime.ts",
+    "test:google-signin-gsi": "node ./backend/node_modules/tsx/dist/cli.mjs ./scripts/google-signin-gsi-lifecycle-runtime.ts",
     "test:stripe-connect-phase4-5-ui": "node ./backend/node_modules/tsx/dist/cli.mjs ./scripts/stripe-connect-phase4-5-ui-runtime.ts"
   },
   "dependencies": {

@@ -32,17 +32,17 @@ export async function fetchVenueCatalog(opts?: {
   trackVenueCatalogCacheMiss();
   trackVenueCatalogFetch();
 
-  const locations = await fetchLocations();
-  let tables: TableDTO[] = [];
-  try {
-    tables = await fetchTables({ silent: true });
-  } catch (err) {
-    if (!isApiSubscriptionRequiredError(err)) throw err;
-  }
+  const [locations, tablesResult] = await Promise.all([
+    fetchLocations(),
+    fetchTables({ silent: true }).catch((err) => {
+      if (!isApiSubscriptionRequiredError(err)) throw err;
+      return [] as TableDTO[];
+    }),
+  ]);
 
   const entry: VenueCatalogEntry = {
     locations: Array.isArray(locations) ? locations : [],
-    tables: Array.isArray(tables) ? tables : [],
+    tables: Array.isArray(tablesResult) ? tablesResult : [],
   };
   venueStore.set("venue-catalog", entry);
   return entry;
@@ -66,6 +66,30 @@ export async function fetchTablesCached(opts?: {
 
 export function invalidateVenueCatalog(): void {
   venueStore.delete("venue-catalog");
+}
+
+/** Write-through after a successful location/table mutation so other pages see it immediately. */
+export function writeVenueCatalog(entry: VenueCatalogEntry): void {
+  venueStore.set("venue-catalog", {
+    locations: entry.locations,
+    tables: entry.tables,
+  });
+}
+
+export function writeVenueCatalogLocations(locations: LocationDTO[]): void {
+  const prev = venueStore.peek("venue-catalog");
+  writeVenueCatalog({
+    locations,
+    tables: prev?.tables ?? [],
+  });
+}
+
+export function writeVenueCatalogTables(tables: TableDTO[], locations?: LocationDTO[]): void {
+  const prev = venueStore.peek("venue-catalog");
+  writeVenueCatalog({
+    locations: locations ?? prev?.locations ?? [],
+    tables,
+  });
 }
 
 export function clearVenueCatalogStore(): void {

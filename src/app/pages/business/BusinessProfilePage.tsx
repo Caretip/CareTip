@@ -175,12 +175,14 @@ export function BusinessProfilePage({ embedded = false }: { embedded?: boolean }
         await uploadMyBusinessLogo(pendingLogo);
         setPendingLogo(null);
       }
-      await putBusinessProfile({
+      const saved = await putBusinessProfile({
         name: name.trim(),
         businessType: businessType.trim() || null,
         location: location.trim() || null,
       });
-      const fresh = await fetchBusinessProfile();
+      const fresh = hadPendingLogo
+        ? await fetchBusinessProfile({ revalidate: true })
+        : saved;
       setProfile(fresh);
       applyProfileToForm(fresh);
       if (hadPendingLogo) setLogoBust((b) => b + 1);

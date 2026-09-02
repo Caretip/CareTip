@@ -1,21 +1,30 @@
 /**
- * Shared transactional email layout — calm, lightweight, mobile-friendly.
+ * Shared CareTip transactional email layout — table-based, email-client safe.
+ * One light surface, 1px hairline frame, centered type — no nested cards.
  */
 
-import { CARETIP_EMAIL_LOGO_CID } from "./emailLogo.js";
+import {
+  CARETIP_EMAIL_LOGO_CID,
+  resolveCareTipEmailLogoRemoteUrl,
+} from "./emailLogo.js";
 
 export const EMAIL = {
   brandOrange: "#e9781c",
   brandOrangeHover: "#d96a14",
   text: "#111111",
-  textSecondary: "#5c5c5c",
-  textMuted: "#8a8a8a",
-  textFooter: "#9ca3af",
-  pageBg: "#faf9f6",
-  cardBg: "#ffffff",
+  textSecondary: "#52525b",
+  textMuted: "#71717a",
+  textFooter: "#a1a1aa",
+  pageBg: "#f7f7f8",
+  cardBg: "#f7f7f8",
+  border: "#e4e4e7",
+  hairline: "#d4d4d8",
   font:
     "-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif",
 } as const;
+
+const WRAP = "word-break:break-word;overflow-wrap:anywhere;";
+const CENTER = `text-align:center;${WRAP}`;
 
 export function esc(s: string): string {
   return s
@@ -36,6 +45,8 @@ export function emailDocOpen(locale: string, title: string): string {
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="color-scheme" content="light">
+<meta name="supported-color-schemes" content="light">
 <title>${esc(title)}</title>
 <!--[if mso]><style type="text/css">body,table,td{font-family:Arial,Helvetica,sans-serif!important;}</style><![endif]-->
 </head>
@@ -48,23 +59,37 @@ export function emailDocClose(): string {
 
 export function emailPageWrap(inner: string): string {
   return `<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background-color:${EMAIL.pageBg};">
-<tr><td align="center" style="padding:32px 20px 40px;">
-<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="max-width:520px;width:100%;">
+<tr><td align="center" style="padding:24px 16px 40px;">
+<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="max-width:600px;width:100%;">
 ${inner}
 </table>
 </td></tr>
 </table>`;
 }
 
+function brandIconSrc(): string {
+  const remote = resolveCareTipEmailLogoRemoteUrl();
+  return remote || `cid:${CARETIP_EMAIL_LOGO_CID}`;
+}
+
+/** Centered 32px app icon + CareTip wordmark (HTML text, not a huge image). */
 export function emailBrandMark(brand: string): string {
-  // Inline CID — attached by sendResendEmail when HTML references this cid.
-  return `<tr><td style="padding:0 0 20px;text-align:center;">
-<img src="cid:${CARETIP_EMAIL_LOGO_CID}" width="160" height="50" alt="${esc(brand)}" style="display:inline-block;width:160px;max-width:48%;height:auto;border:0;outline:none;text-decoration:none;" />
+  const src = brandIconSrc();
+  return `<tr><td align="center" style="padding:40px 40px 28px;">
+<table role="presentation" cellspacing="0" cellpadding="0" border="0" align="center">
+<tr>
+<td valign="middle" style="padding:0;">
+<img src="${esc(src)}" width="32" height="32" alt="" style="display:block;width:32px;height:32px;border:0;outline:none;text-decoration:none;border-radius:8px;" />
+</td>
+<td valign="middle" style="padding:0 0 0 10px;font-size:17px;line-height:1.2;font-weight:600;letter-spacing:-0.02em;color:${EMAIL.text};">${esc(brand)}</td>
+</tr>
+</table>
 </td></tr>`;
 }
 
+/** Single 1px frame — same fill as the page, no nested white card. */
 export function emailCardOpen(): string {
-  return `<tr><td style="background:${EMAIL.cardBg};border-radius:16px;overflow:hidden;box-shadow:0 2px 16px rgba(17,17,17,0.05);">
+  return `<tr><td style="background:${EMAIL.cardBg};border:1px solid ${EMAIL.border};border-radius:8px;padding:0;">
 <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">`;
 }
 
@@ -73,28 +98,37 @@ export function emailCardClose(): string {
 </td></tr>`;
 }
 
-export function emailCardBody(padding = "32px 28px 28px"): string {
-  return `<tr><td style="padding:${padding};">`;
+export function emailCardBody(padding = "0 40px 40px"): string {
+  return `<tr><td align="center" style="padding:${padding};${CENTER}">`;
 }
 
 export function emailCardBodyEnd(): string {
   return `</td></tr>`;
 }
 
+/** Brand + body inside one thin frame. */
+export function emailFrameOpen(brand: string): string {
+  return `${emailCardOpen()}${emailBrandMark(brand)}${emailCardBody()}`;
+}
+
+export function emailFrameClose(): string {
+  return `${emailCardBodyEnd()}${emailCardClose()}`;
+}
+
 export function emailHeadline(text: string): string {
-  return `<p style="margin:0 0 8px;font-size:22px;line-height:1.3;font-weight:700;color:${EMAIL.text};">${esc(text)}</p>`;
+  return `<h1 style="margin:0 0 16px;font-size:28px;line-height:1.25;font-weight:700;letter-spacing:-0.03em;color:${EMAIL.text};${CENTER}">${esc(text)}</h1>`;
 }
 
 export function emailGreeting(text: string): string {
-  return `<p style="margin:0 0 16px;font-size:15px;line-height:1.55;color:${EMAIL.textSecondary};">${esc(text)}</p>`;
+  return `<p style="margin:0 0 16px;font-size:16px;line-height:1.6;color:${EMAIL.textSecondary};${CENTER}">${esc(text)}</p>`;
 }
 
 export function emailBodyText(text: string, marginBottom = "16px"): string {
-  return `<p style="margin:0 0 ${marginBottom};font-size:15px;line-height:1.6;color:${EMAIL.textSecondary};">${esc(text)}</p>`;
+  return `<p style="margin:0 0 ${marginBottom};font-size:16px;line-height:1.65;color:${EMAIL.textSecondary};${CENTER}">${esc(text)}</p>`;
 }
 
 export function emailBodyTextLast(text: string): string {
-  return `<p style="margin:0;font-size:15px;line-height:1.6;color:${EMAIL.textSecondary};">${esc(text)}</p>`;
+  return `<p style="margin:0;font-size:16px;line-height:1.65;color:${EMAIL.textSecondary};${CENTER}">${esc(text)}</p>`;
 }
 
 export function emailMetaBlock(rows: { label: string; value: string }[]): string {
@@ -102,57 +136,58 @@ export function emailMetaBlock(rows: { label: string; value: string }[]): string
   const items = rows
     .map(
       (r, i) =>
-        `<p style="margin:0${i < rows.length - 1 ? " 0 16px" : ""};font-size:15px;line-height:1.5;color:${EMAIL.text};">
-<span style="display:block;margin-bottom:4px;font-size:11px;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;color:${EMAIL.textMuted};">${esc(r.label)}</span>
+        `<p style="margin:0${i < rows.length - 1 ? " 0 14px" : ""};font-size:16px;line-height:1.5;color:${EMAIL.text};${CENTER}">
+<span style="display:block;margin-bottom:4px;font-size:12px;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;color:${EMAIL.textMuted};">${esc(r.label)}</span>
 ${esc(r.value)}
 </p>`,
     )
     .join("");
-  return `<div style="margin:24px 0 4px;padding:0;">${items}</div>`;
+  return `<div style="margin:24px 0 8px;padding:0;">${items}</div>`;
 }
 
 export function emailSubheading(text: string): string {
-  return `<p style="margin:28px 0 8px;font-size:14px;line-height:1.45;font-weight:600;color:${EMAIL.text};">${esc(text)}</p>`;
+  return `<p style="margin:28px 0 10px;font-size:15px;line-height:1.45;font-weight:600;color:${EMAIL.text};${CENTER}">${esc(text)}</p>`;
 }
 
 export function emailSupportText(text: string): string {
-  return `<p style="margin:0 0 12px;font-size:14px;line-height:1.55;color:${EMAIL.textMuted};">${esc(text)}</p>`;
+  return `<p style="margin:0 0 12px;font-size:15px;line-height:1.6;color:${EMAIL.textMuted};${CENTER}">${esc(text)}</p>`;
+}
+
+export function emailHairline(): string {
+  return `<table role="presentation" cellspacing="0" cellpadding="0" border="0" align="center" style="margin:28px auto 8px;">
+<tr><td style="width:40px;height:1px;background-color:${EMAIL.hairline};font-size:1px;line-height:1px;">&nbsp;</td></tr>
+</table>`;
 }
 
 export function emailCta(href: string, label: string, centered = true): string {
   const align = centered ? "center" : "left";
-  return `<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="margin:20px 0 4px;">
-<tr><td align="${align}">
-<table role="presentation" cellspacing="0" cellpadding="0" border="0">
-<tr><td align="center" style="border-radius:10px;background-color:${EMAIL.brandOrange};box-shadow:0 1px 6px rgba(233,120,28,0.18);">
-<a href="${esc(href)}" style="display:inline-block;padding:11px 22px;font-size:13px;font-weight:600;color:#ffffff;text-decoration:none;border-radius:10px;line-height:1.25;">${esc(label)}</a>
-</td></tr>
-</table>
+  return `<table role="presentation" cellspacing="0" cellpadding="0" border="0" align="${align}" style="margin:28px auto 0;">
+<tr><td align="center" style="border-radius:8px;background-color:${EMAIL.brandOrange};">
+<a href="${esc(href)}" style="display:inline-block;padding:12px 22px;font-size:15px;font-weight:600;color:#ffffff;text-decoration:none;border-radius:8px;line-height:1.25;text-align:center;">${esc(label)}</a>
 </td></tr>
 </table>`;
 }
 
 /** Short section label above bullet lists (e.g. “You can now:”). */
 export function emailSectionLabel(text: string): string {
-  return `<p style="margin:20px 0 10px;font-size:14px;line-height:1.45;font-weight:600;color:${EMAIL.text};">${esc(text)}</p>`;
+  return `<p style="margin:28px 0 12px;font-size:16px;line-height:1.45;font-weight:600;color:${EMAIL.text};${CENTER}">${esc(text)}</p>`;
 }
 
-/** Compact checkmark list for onboarding / feature highlights. */
+/** Compact checkmark list — shrink-wrapped so it stays centered, not a full-width card. */
 export function emailBulletList(items: string[]): string {
   if (items.length === 0) return "";
   const rows = items
     .map(
       (item) =>
-        `<tr><td valign="top" style="padding:0 0 8px;font-size:14px;line-height:1.55;color:${EMAIL.textSecondary};">
-<span style="color:${EMAIL.brandOrange};font-weight:700;padding-right:8px;">&#10003;</span>${esc(item)}
-</td></tr>`,
+        `<tr><td valign="top" align="left" width="22" style="padding:0 8px 10px 0;font-size:16px;line-height:1.55;color:${EMAIL.brandOrange};font-weight:700;">&#10003;</td>
+<td valign="top" align="left" style="padding:0 0 10px;font-size:16px;line-height:1.55;color:${EMAIL.textSecondary};text-align:left;${WRAP}">${esc(item)}</td></tr>`,
     )
     .join("");
-  return `<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="margin:0 0 4px;">${rows}</table>`;
+  return `<table role="presentation" cellspacing="0" cellpadding="0" border="0" align="center" style="margin:0 auto 4px;">${rows}</table>`;
 }
 
 export function emailFinePrint(text: string): string {
-  return `<p style="margin:16px 0 0;font-size:13px;line-height:1.5;color:${EMAIL.textMuted};">${esc(text)}</p>`;
+  return `<p style="margin:20px 0 0;font-size:13px;line-height:1.55;color:${EMAIL.textMuted};${CENTER}">${esc(text)}</p>`;
 }
 
 export type EmailFooterExtras = {
@@ -167,23 +202,23 @@ export function emailFooterBlock(
   extras?: EmailFooterExtras,
 ): string {
   const help = helpLine
-    ? `<p style="margin:0 0 10px;font-size:12px;line-height:1.5;color:${EMAIL.textMuted};">${esc(helpLine)}</p>`
+    ? `<p style="margin:0 0 12px;font-size:13px;line-height:1.55;color:${EMAIL.textMuted};${CENTER}">${esc(helpLine)}</p>`
     : "";
   const brand = extras?.brandLine?.trim()
-    ? `<p style="margin:0 0 6px;font-size:12px;font-weight:600;letter-spacing:0.02em;color:${EMAIL.textMuted};">${esc(extras.brandLine.trim())}</p>`
+    ? `<p style="margin:0 0 6px;font-size:13px;font-weight:600;color:${EMAIL.textMuted};">${esc(extras.brandLine.trim())}</p>`
     : "";
   const supportEmail = extras?.supportEmail?.trim();
   const support = supportEmail
-    ? `<p style="margin:0 0 8px;font-size:11px;line-height:1.5;color:${EMAIL.textFooter};"><a href="mailto:${esc(supportEmail)}" style="color:${EMAIL.brandOrange};text-decoration:none;">${esc(supportEmail)}</a></p>`
+    ? `<p style="margin:0 0 8px;font-size:12px;line-height:1.5;color:${EMAIL.textFooter};"><a href="mailto:${esc(supportEmail)}" style="color:${EMAIL.textMuted};text-decoration:underline;">${esc(supportEmail)}</a></p>`
     : "";
   const copyright = extras?.copyrightLine?.trim()
-    ? `<p style="margin:0 0 10px;font-size:11px;line-height:1.5;color:${EMAIL.textFooter};">${esc(extras.copyrightLine.trim())}</p>`
+    ? `<p style="margin:0 0 12px;font-size:12px;line-height:1.5;color:${EMAIL.textFooter};">${esc(extras.copyrightLine.trim())}</p>`
     : "";
-  return `<tr><td style="padding:28px 8px 0;text-align:center;border-top:1px solid rgba(17,17,17,0.06);">
+  return `<tr><td style="padding:28px 8px 0;text-align:center;">
 ${help}
 ${brand}
 ${support}
 ${copyright}
-<p style="margin:0;font-size:11px;line-height:1.55;color:${EMAIL.textFooter};">${esc(disclaimer)}</p>
+<p style="margin:0;font-size:12px;line-height:1.55;color:${EMAIL.textFooter};${CENTER}">${esc(disclaimer)}</p>
 </td></tr>`;
 }

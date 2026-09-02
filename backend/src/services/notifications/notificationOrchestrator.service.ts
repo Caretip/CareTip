@@ -13,6 +13,7 @@ import {
   emitNotificationCreated,
   emitNotificationUnreadCount,
 } from "../../socket/socketEmitters.js";
+import { logServerError } from "../../utils/httpErrors.js";
 
 export type DeliveryChannel = "in_app" | "push" | "email";
 
@@ -127,9 +128,11 @@ export async function deliverUserNotification(
             },
           }
         : deliveryPayload;
-    await sendNotification(input.userId, pushPayload, {
+    void sendNotification(input.userId, pushPayload, {
       bypassPreferences: input.bypassPreferences,
       dedupeKey: `push:${dedupeKey}`,
+    }).catch((err) => {
+      logServerError("notifications.deliverUserNotification.push", err);
     });
   }
 

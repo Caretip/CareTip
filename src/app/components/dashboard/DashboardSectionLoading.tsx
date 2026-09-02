@@ -11,6 +11,7 @@ export {
   NotificationInboxListSkeleton,
   NotificationPreviewListSkeleton,
   LocationCardGridSkeleton,
+  LocationTablesWorkspaceSkeleton,
   TablesListSkeleton,
   GlobalTransactionsTableSkeleton,
   StaffRosterTableSkeleton,

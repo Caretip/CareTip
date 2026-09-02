@@ -7,6 +7,10 @@ import {
   fetchPhysicalQrOrder,
   type PhysicalQrCustomerOrder,
 } from "@/app/lib/api";
+import {
+  readPhysicalQrOrderSnapshot,
+  writePhysicalQrOrderSnapshot,
+} from "@/app/lib/physicalQrOrdersSessionCache";
 import { performExternalStripeRedirect } from "@/app/lib/externalStripeRedirect";
 import {
   formatBerlinDateTime,
@@ -20,6 +24,7 @@ import {
   physicalQrEstimatedFulfillmentLabel,
   physicalQrOrderNumber,
   physicalQrShippingLine,
+  physicalQrTemplateDisplayName,
   groupPhysicalQrItemsByLocation,
 } from "@/app/lib/physicalQrOrderUi";
 import { PhysicalQrOrderTimeline } from "../../../components/business/physical-branding/PhysicalQrOrderTimeline";
@@ -30,21 +35,35 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export function PhysicalQrOrderDetailPage() {
-  useRequireAuth();
+  const { user } = useRequireAuth();
   const { t, i18n } = useTranslation();
   const { orderId = "" } = useParams<{ orderId: string }>();
   const [searchParams] = useSearchParams();
   const checkoutFlag = searchParams.get("checkout");
-  const [order, setOrder] = useState<PhysicalQrCustomerOrder | null>(null);
+  const businessId = user?.businessId?.trim() || "";
+  const [order, setOrder] = useState<PhysicalQrCustomerOrder | null>(() =>
+    readPhysicalQrOrderSnapshot(businessId, orderId),
+  );
   const [loadError, setLoadError] = useState<string | null>(null);
   const [paying, setPaying] = useState(false);
   const [confirming, setConfirming] = useState(checkoutFlag === "success");
 
+  useEffect(() => {
+    setLoadError(null);
+    const snap = readPhysicalQrOrderSnapshot(businessId, orderId);
+    if (snap) {
+      setOrder(snap);
+      return;
+    }
+    setOrder((prev) => (prev?.id === orderId ? prev : null));
+  }, [businessId, orderId]);
+
   const reload = useCallback(async () => {
-    const next = await fetchPhysicalQrOrder(orderId);
+    const next = await fetchPhysicalQrOrder(orderId, { revalidate: true });
     setOrder(next);
+    if (businessId) writePhysicalQrOrderSnapshot(businessId, next);
     return next;
-  }, [orderId]);
+  }, [businessId, orderId]);
 
   useEffect(() => {
     let cancelled = false;
@@ -56,7 +75,9 @@ export function PhysicalQrOrderDetailPage() {
         }
       })
       .catch((err) => {
-        if (!cancelled) setLoadError(err instanceof Error ? err.message : t("business.qrStudio.physical.loadError"));
+        if (!cancelled && !readPhysicalQrOrderSnapshot(businessId, orderId)) {
+          setLoadError(err instanceof Error ? err.message : t("business.qrStudio.physical.loadError"));
+        }
       });
     return () => {
       cancelled = true;
@@ -71,9 +92,10 @@ export function PhysicalQrOrderDetailPage() {
     const tick = async () => {
       attempts += 1;
       try {
-        const next = await fetchPhysicalQrOrder(orderId);
+        const next = await fetchPhysicalQrOrder(orderId, { revalidate: true });
         if (cancelled) return;
         setOrder(next);
+        if (businessId) writePhysicalQrOrderSnapshot(businessId, next);
         if (next.paymentStatus === "PAID" || next.paymentStatus === "FAILED" || attempts >= 15) {
           setConfirming(false);
           return;
@@ -87,7 +109,7 @@ export function PhysicalQrOrderDetailPage() {
     return () => {
       cancelled = true;
     };
-  }, [checkoutFlag, orderId]);
+  }, [checkoutFlag, orderId, businessId]);
 
   async function pay() {
     setPaying(true);
@@ -124,7 +146,10 @@ export function PhysicalQrOrderDetailPage() {
       </Link>
       <div>
         <h2 className="text-xl font-semibold tracking-tight">
-          {order.productName || t("business.qrStudio.physical.templateName")}
+          {physicalQrTemplateDisplayName(t, {
+            templateId: order.templateId,
+            productName: order.productName,
+          })}
         </h2>
         <p className="mt-1 text-sm text-muted-foreground">
           {t("business.qrStudio.physical.orders.orderNumber", { id: physicalQrOrderNumber(order.id) })}

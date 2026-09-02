@@ -1771,12 +1771,21 @@ export async function putBusinessProfile(body: {
   contactPhone?: string | null;
   website?: string | null;
 }): Promise<BusinessInfo> {
-  return apiRequest<BusinessInfo>(apiPath("/api/business/profile"), {
+  const result = await apiRequest<BusinessInfo>(apiPath("/api/business/profile"), {
     method: "PUT",
     headers: getHeaders(),
     body: JSON.stringify(body),
     credentials: "include",
   });
+  businessProfileCache = { at: Date.now(), data: result };
+  businessProfileInflight = null;
+  primeBusinessSubscriptionTier(result);
+  if (result.timezone) {
+    void import("./businessVenueTime").then(({ setCachedBusinessVenueTimezone }) => {
+      setCachedBusinessVenueTimezone(result.timezone);
+    });
+  }
+  return result;
 }
 
 export async function uploadMyBusinessLogo(file: File): Promise<{ success: boolean; path: string }> {
@@ -2478,7 +2487,7 @@ export async function getTipsByEmployee(
     `/api/tips/employee?${new URLSearchParams({ timeframe: tf, scope }).toString()}`,
   );
   logDashboardTenantRequest("GET /api/tips/employee", { timeframe: tf, scope });
-  if (inflight) {
+  if (inflight && !init?.signal) {
     const target = resolveDashboardApiDebugTarget(tipsUrl);
     if (target) devTrackDeduped(target.group, target.key, { ...target.meta, inflight: true });
     return inflight;
@@ -2554,6 +2563,11 @@ export interface EmployeeSelfProfile {
 const EMPLOYEE_PROFILE_CACHE_TTL_MS = 30_000;
 let employeeProfileCache: { data: EmployeeSelfProfile; at: number } | null = null;
 let employeeProfileInflight: Promise<EmployeeSelfProfile> | null = null;
+
+/** Last fetched employee profile, even if the short TTL has expired (remount paint). */
+export function peekEmployeeProfileSession(): EmployeeSelfProfile | null {
+  return employeeProfileCache?.data ?? null;
+}
 
 /** Synchronous read of the in-memory employee profile TTL cache (no network). */
 export function peekEmployeeProfileCache(): EmployeeSelfProfile | null {
@@ -3803,11 +3817,87 @@ export type PhysicalQrInternalNote = {
   createdAt: string;
 };
 
-export async function fetchPhysicalQrCatalog(): Promise<{ products: PhysicalQrCatalogProduct[] }> {
-  return apiRequest(apiPath("/api/business/physical-qr/catalog"), {
-    headers: getHeaders(),
-    credentials: "include",
+const PHYSICAL_QR_CATALOG_CLIENT_TTL_MS = 15 * 60 * 1000;
+const PHYSICAL_QR_CONTEXTS_CLIENT_TTL_MS = 45_000;
+const PHYSICAL_QR_ORDERS_CLIENT_TTL_MS = 45_000;
+
+let physicalQrCatalogCache: { at: number; data: { products: PhysicalQrCatalogProduct[] } } | null = null;
+let physicalQrCatalogInflight: Promise<{ products: PhysicalQrCatalogProduct[] }> | null = null;
+let physicalQrContextsCache: { at: number; data: PhysicalQrContextOptions } | null = null;
+let physicalQrContextsInflight: Promise<PhysicalQrContextOptions> | null = null;
+const physicalQrResolveCache = new Map<string, { at: number; data: PhysicalQrResolvedContext }>();
+const physicalQrResolveInflight = new Map<string, Promise<PhysicalQrResolvedContext>>();
+let physicalQrOrdersListCache: { at: number; data: { orders: PhysicalQrCustomerOrder[] } } | null = null;
+let physicalQrOrdersListInflight: Promise<{ orders: PhysicalQrCustomerOrder[] }> | null = null;
+const physicalQrOrderByIdCache = new Map<string, { at: number; data: PhysicalQrCustomerOrder }>();
+const physicalQrOrderByIdInflight = new Map<string, Promise<PhysicalQrCustomerOrder>>();
+
+export type PhysicalQrResolvedContext = {
+  qrTargetUrl: string;
+  qrContextType: string;
+  qrSubjectId: string | null;
+  label: string;
+};
+
+export function clearPhysicalQrPrintClientCache(): void {
+  physicalQrCatalogCache = null;
+  physicalQrCatalogInflight = null;
+  physicalQrContextsCache = null;
+  physicalQrContextsInflight = null;
+  physicalQrResolveCache.clear();
+  physicalQrResolveInflight.clear();
+  invalidatePhysicalQrOrdersClientCache();
+}
+
+export function invalidatePhysicalQrContextsClientCache(): void {
+  physicalQrContextsCache = null;
+  physicalQrContextsInflight = null;
+}
+
+export function invalidatePhysicalQrOrdersClientCache(): void {
+  physicalQrOrdersListCache = null;
+  physicalQrOrdersListInflight = null;
+  physicalQrOrderByIdCache.clear();
+  physicalQrOrderByIdInflight.clear();
+}
+
+export function primePhysicalQrOrderClientCache(order: PhysicalQrCustomerOrder): void {
+  physicalQrOrderByIdCache.set(order.id, { at: Date.now(), data: order });
+  if (!physicalQrOrdersListCache) {
+    physicalQrOrdersListCache = { at: Date.now(), data: { orders: [order] } };
+    return;
+  }
+  const orders = physicalQrOrdersListCache.data.orders;
+  const rest = orders.filter((row) => row.id !== order.id);
+  physicalQrOrdersListCache = { at: Date.now(), data: { orders: [order, ...rest] } };
+}
+
+export async function fetchPhysicalQrCatalog(opts?: {
+  revalidate?: boolean;
+}): Promise<{ products: PhysicalQrCatalogProduct[] }> {
+  const now = Date.now();
+  if (
+    !opts?.revalidate &&
+    physicalQrCatalogCache &&
+    now - physicalQrCatalogCache.at < PHYSICAL_QR_CATALOG_CLIENT_TTL_MS
+  ) {
+    return physicalQrCatalogCache.data;
+  }
+  if (physicalQrCatalogInflight) return physicalQrCatalogInflight;
+  const promise = apiRequest<{ products: PhysicalQrCatalogProduct[] }>(
+    apiPath("/api/business/physical-qr/catalog"),
+    {
+      headers: getHeaders(),
+      credentials: "include",
+    },
+  ).then((data) => {
+    physicalQrCatalogCache = { at: Date.now(), data };
+    return data;
   });
+  physicalQrCatalogInflight = promise.finally(() => {
+    physicalQrCatalogInflight = null;
+  });
+  return physicalQrCatalogInflight;
 }
 
 export async function quotePhysicalQrCart(payload: {
@@ -3839,37 +3929,139 @@ export async function quotePhysicalQrCart(payload: {
   });
 }
 
-export async function fetchPhysicalQrContexts(): Promise<PhysicalQrContextOptions> {
-  return apiRequest(apiPath("/api/business/physical-qr/contexts"), {
+export async function fetchPhysicalQrContexts(opts?: {
+  revalidate?: boolean;
+}): Promise<PhysicalQrContextOptions> {
+  const now = Date.now();
+  if (
+    !opts?.revalidate &&
+    physicalQrContextsCache &&
+    now - physicalQrContextsCache.at < PHYSICAL_QR_CONTEXTS_CLIENT_TTL_MS
+  ) {
+    return physicalQrContextsCache.data;
+  }
+  if (physicalQrContextsInflight) return physicalQrContextsInflight;
+  const promise = apiRequest<PhysicalQrContextOptions>(apiPath("/api/business/physical-qr/contexts"), {
     headers: getHeaders(),
     credentials: "include",
+  }).then((data) => {
+    physicalQrContextsCache = { at: Date.now(), data };
+    return data;
   });
+  physicalQrContextsInflight = promise.finally(() => {
+    physicalQrContextsInflight = null;
+  });
+  return physicalQrContextsInflight;
 }
 
-export async function resolvePhysicalQrContext(payload: {
-  qrContextType: string;
-  qrSubjectId?: string;
-}): Promise<{ qrTargetUrl: string; qrContextType: string; qrSubjectId: string | null; label: string }> {
-  return apiRequest(apiPath("/api/business/physical-qr/contexts/resolve"), {
-    method: "POST",
-    headers: getHeaders(),
-    credentials: "include",
-    body: JSON.stringify(payload),
-  });
+function physicalQrResolveKey(payload: { qrContextType: string; qrSubjectId?: string }): string {
+  return `${payload.qrContextType}:${payload.qrSubjectId ?? ""}`;
 }
 
-export async function fetchPhysicalQrOrders(): Promise<{ orders: PhysicalQrCustomerOrder[] }> {
-  return apiRequest(apiPath("/api/business/physical-qr/orders"), {
-    headers: getHeaders(),
-    credentials: "include",
+export async function resolvePhysicalQrContext(
+  payload: {
+    qrContextType: string;
+    qrSubjectId?: string;
+  },
+  opts?: { revalidate?: boolean },
+): Promise<PhysicalQrResolvedContext> {
+  const key = physicalQrResolveKey(payload);
+  const now = Date.now();
+  const cached = physicalQrResolveCache.get(key);
+  if (!opts?.revalidate && cached && now - cached.at < PHYSICAL_QR_CONTEXTS_CLIENT_TTL_MS) {
+    return cached.data;
+  }
+  const inflight = physicalQrResolveInflight.get(key);
+  if (inflight) return inflight;
+  const promise = apiRequest<PhysicalQrResolvedContext>(
+    apiPath("/api/business/physical-qr/contexts/resolve"),
+    {
+      method: "POST",
+      headers: getHeaders(),
+      credentials: "include",
+      body: JSON.stringify(payload),
+    },
+  ).then((data) => {
+    physicalQrResolveCache.set(key, { at: Date.now(), data });
+    return data;
   });
+  physicalQrResolveInflight.set(
+    key,
+    promise.finally(() => {
+      physicalQrResolveInflight.delete(key);
+    }),
+  );
+  return promise;
 }
 
-export async function fetchPhysicalQrOrder(orderId: string): Promise<PhysicalQrCustomerOrder> {
-  return apiRequest(apiPath(`/api/business/physical-qr/orders/${encodeURIComponent(orderId)}`), {
-    headers: getHeaders(),
-    credentials: "include",
+export async function fetchPhysicalQrOrders(opts?: {
+  revalidate?: boolean;
+}): Promise<{ orders: PhysicalQrCustomerOrder[] }> {
+  const now = Date.now();
+  if (
+    !opts?.revalidate &&
+    physicalQrOrdersListCache &&
+    now - physicalQrOrdersListCache.at < PHYSICAL_QR_ORDERS_CLIENT_TTL_MS
+  ) {
+    return physicalQrOrdersListCache.data;
+  }
+  if (physicalQrOrdersListInflight) return physicalQrOrdersListInflight;
+  const promise = apiRequest<{ orders: PhysicalQrCustomerOrder[] }>(
+    apiPath("/api/business/physical-qr/orders"),
+    {
+      headers: getHeaders(),
+      credentials: "include",
+    },
+  ).then((data) => {
+    const orders = Array.isArray(data.orders) ? data.orders : [];
+    const wrapped = { orders };
+    physicalQrOrdersListCache = { at: Date.now(), data: wrapped };
+    for (const order of orders) {
+      physicalQrOrderByIdCache.set(order.id, { at: Date.now(), data: order });
+    }
+    return wrapped;
   });
+  physicalQrOrdersListInflight = promise.finally(() => {
+    physicalQrOrdersListInflight = null;
+  });
+  return physicalQrOrdersListInflight;
+}
+
+export async function fetchPhysicalQrOrder(
+  orderId: string,
+  opts?: { revalidate?: boolean },
+): Promise<PhysicalQrCustomerOrder> {
+  const id = orderId.trim();
+  const now = Date.now();
+  const cached = physicalQrOrderByIdCache.get(id);
+  if (!opts?.revalidate && cached && now - cached.at < PHYSICAL_QR_ORDERS_CLIENT_TTL_MS) {
+    return cached.data;
+  }
+  const inflight = physicalQrOrderByIdInflight.get(id);
+  if (inflight) return inflight;
+  const promise = apiRequest<PhysicalQrCustomerOrder>(
+    apiPath(`/api/business/physical-qr/orders/${encodeURIComponent(id)}`),
+    {
+      headers: getHeaders(),
+      credentials: "include",
+    },
+  ).then((data) => {
+    physicalQrOrderByIdCache.set(id, { at: Date.now(), data });
+    if (physicalQrOrdersListCache) {
+      const orders = physicalQrOrdersListCache.data.orders;
+      const idx = orders.findIndex((row) => row.id === data.id);
+      const next = idx >= 0 ? orders.map((row) => (row.id === data.id ? data : row)) : [data, ...orders];
+      physicalQrOrdersListCache = { at: Date.now(), data: { orders: next } };
+    }
+    return data;
+  });
+  physicalQrOrderByIdInflight.set(
+    id,
+    promise.finally(() => {
+      physicalQrOrderByIdInflight.delete(id);
+    }),
+  );
+  return promise;
 }
 
 export async function createPhysicalQrOrder(payload: {
@@ -4210,7 +4402,7 @@ export async function createTableAPI(payload: {
   name: string;
   locationId: string;
   qrSlug?: string;
-}): Promise<{ id: string; name: string; qrSlug: string; locationId: string }> {
+}): Promise<TableDTO> {
   return apiRequest(apiPath("/api/tables"), {
     method: "POST",
     headers: getHeaders(),

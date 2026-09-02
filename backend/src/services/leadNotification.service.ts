@@ -1,4 +1,14 @@
 import { getLeadFromAddress, sendResendEmail } from "./resendClient.js";
+import {
+  emailDocClose,
+  emailDocOpen,
+  emailFooterBlock,
+  emailFrameClose,
+  emailFrameOpen,
+  emailHeadline,
+  emailPageWrap,
+} from "../emails/emailLayout.js";
+import { getCareTipSupportEmail } from "../config/emailEnv.js";
 
 export type LeadType = "demo" | "support";
 
@@ -66,14 +76,27 @@ function formatSubmittedAt(iso: string): string {
 
 function rowHtml(label: string, value: string): string {
   return `<tr>
-  <td style="padding:6px 16px 6px 0;font-weight:600;vertical-align:top;color:#3f3f46;white-space:nowrap">${escapeHtml(label)}</td>
+  <td style="padding:6px 16px 6px 0;font-weight:600;vertical-align:top;color:#3f3f46;word-break:break-word">${escapeHtml(label)}</td>
   <td style="padding:6px 0;vertical-align:top;color:#18181b">${escapeHtml(value).replace(/\n/g, "<br>")}</td>
 </tr>`;
 }
 
+function wrapLeadHtml(locale: string, title: string, body: string): string {
+  const inner = [
+    emailFrameOpen("CareTip"),
+    emailHeadline(title),
+    body,
+    emailFrameClose(),
+    emailFooterBlock(null, "CareTip", {
+      supportEmail: getCareTipSupportEmail(),
+    }),
+  ].join("");
+  return [emailDocOpen(locale === "de" ? "de" : "en", title), emailPageWrap(inner), emailDocClose()].join("");
+}
+
 function messageBlockHtml(message: string): string {
-  return `<p style="margin:0 0 6px;font-weight:600;color:#3f3f46">Message</p>
-<div style="margin:0;padding:12px 14px;border:1px solid #e4e4e7;border-radius:8px;background:#fafafa;color:#18181b;white-space:pre-wrap;line-height:1.5">${escapeHtml(message)}</div>`;
+  return `<p style="margin:16px 0 6px;font-weight:600;color:#3f3f46">Message</p>
+<p style="margin:0;color:#18181b;white-space:pre-wrap;line-height:1.5">${escapeHtml(message)}</p>`;
 }
 
 /** Build inbox-facing HTML/text — never includes raw payload JSON or request metadata. */
@@ -99,21 +122,16 @@ export function buildLeadNotificationContent(payload: CrmLeadPayload): {
     const message = field(payload.fields, "message");
 
     const subject = `[CareTip] Demo request — ${name}`;
-    const html = `<!DOCTYPE html>
-<html>
-<body style="margin:0;padding:24px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:15px;line-height:1.45;color:#18181b;background:#ffffff">
-  <h1 style="margin:0 0 16px;font-size:20px;font-weight:700;color:#18181b">Demo Request</h1>
-  <table role="presentation" cellpadding="0" cellspacing="0" style="border-collapse:collapse;width:100%;max-width:560px">
+    const body = `<table role="presentation" cellpadding="0" cellspacing="0" style="border-collapse:collapse;width:100%;text-align:left;">
     ${rowHtml("Name", fullName)}
     ${rowHtml("Work email", workEmail)}
     ${rowHtml("Business name", businessName)}
     ${rowHtml("Business type", businessType)}
     ${rowHtml("Team size", teamSize)}
   </table>
-  <div style="margin:18px 0 0;max-width:560px">${messageBlockHtml(message)}</div>
-  <p style="margin:18px 0 0;font-size:13px;color:#71717a">Submitted: ${escapeHtml(submitted)}</p>
-</body>
-</html>`;
+  <div style="margin:18px 0 0;">${messageBlockHtml(message)}</div>
+  <p style="margin:18px 0 0;font-size:13px;color:#71717a">Submitted: ${escapeHtml(submitted)}</p>`;
+    const html = wrapLeadHtml(payload.locale, "Demo Request", body);
 
     const text = [
       "Demo Request",
@@ -139,19 +157,14 @@ export function buildLeadNotificationContent(payload: CrmLeadPayload): {
   const message = field(payload.fields, "message");
 
   const subject = `[CareTip] Support request — ${name}`;
-  const html = `<!DOCTYPE html>
-<html>
-<body style="margin:0;padding:24px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:15px;line-height:1.45;color:#18181b;background:#ffffff">
-  <h1 style="margin:0 0 16px;font-size:20px;font-weight:700;color:#18181b">Support Request</h1>
-  <table role="presentation" cellpadding="0" cellspacing="0" style="border-collapse:collapse;width:100%;max-width:560px">
+  const body = `<table role="presentation" cellpadding="0" cellspacing="0" style="border-collapse:collapse;width:100%;text-align:left;">
     ${rowHtml("Name", supportName)}
     ${rowHtml("Email", email)}
     ${rowHtml("Category", category)}
   </table>
-  <div style="margin:18px 0 0;max-width:560px">${messageBlockHtml(message)}</div>
-  <p style="margin:18px 0 0;font-size:13px;color:#71717a">Submitted: ${escapeHtml(submitted)}</p>
-</body>
-</html>`;
+  <div style="margin:18px 0 0;">${messageBlockHtml(message)}</div>
+  <p style="margin:18px 0 0;font-size:13px;color:#71717a">Submitted: ${escapeHtml(submitted)}</p>`;
+  const html = wrapLeadHtml(payload.locale, "Support Request", body);
 
   const text = [
     "Support Request",

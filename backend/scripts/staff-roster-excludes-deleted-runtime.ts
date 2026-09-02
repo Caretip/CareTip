@@ -87,10 +87,20 @@ if (
   fail("pendingInviteCount must follow the team list, not a separate stale source");
 }
 
-if (staffPage.includes("invalidateStaffRosterCaches()") && staffPage.includes("fetchEmployees({ revalidate: true })")) {
-  pass("After delete, roster caches are invalidated and the list is refetched");
+if (staffPage.includes("invalidateStaffRosterCaches()") && staffPage.includes("fetchEmployees({ quiet: true, revalidate: true })")) {
+  pass("After delete, roster caches are invalidated and the list is quietly refetched");
 } else {
-  fail("Delete success path must invalidate + refetch roster");
+  fail("Delete success path must invalidate + quietly refetch roster");
+}
+
+if (
+  staffPage.includes("await createEmployee(") &&
+  staffPage.includes("activationStatus: \"pending_activation\"") &&
+  staffPage.includes("fetchEmployees({ quiet: true, revalidate: true })")
+) {
+  pass("After add, the created employee is applied locally then quietly revalidated");
+} else {
+  fail("Add-employee success must apply the mutation response and revalidate");
 }
 
 const failed = results.filter((r) => r.startsWith("FAIL:"));

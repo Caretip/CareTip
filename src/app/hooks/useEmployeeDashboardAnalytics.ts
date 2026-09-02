@@ -7,10 +7,20 @@ import {
   type EmployeeGoalProgress,
   type TipItem,
 } from "../lib/api";
+import { DASHBOARD_SWR_METRICS_TTL_MS } from "../lib/dashboardSwrCache";
 import {
-  createDashboardSwrStore,
-  DASHBOARD_SWR_METRICS_TTL_MS,
-} from "../lib/dashboardSwrCache";
+  clearEmployeePeriodSwrStore,
+  deleteEmployeePeriodSnapshot,
+  getEmployeePeriodLastTimeframe,
+  getEmployeePeriodSnapshot,
+  isEmployeePeriodLiveSettled,
+  markEmployeePeriodLiveSettled,
+  peekEmployeePeriodSnapshot,
+  setEmployeePeriodLastTimeframe,
+  writeEmployeePeriodSnapshot,
+  type EmployeePeriodSwrEntry,
+  type EmployeePeriodTimeframe,
+} from "../lib/employeePeriodSessionCache";
 import {
   canUsePeriodSwitchCache,
   deriveDashboardMetricLoading,
@@ -36,7 +46,7 @@ import {
 } from "../lib/dashboardVisibleContent";
 import { shouldRefetchOnAnalyticsCapabilityUpgrade } from "../lib/dashboardAnalyticsLifecycle";
 
-export type EmployeeAnalyticsTimeframe = "today" | "week" | "month";
+export type EmployeeAnalyticsTimeframe = EmployeePeriodTimeframe;
 
 type LiveNewTipPayload = {
   tip: TipItem;
@@ -124,14 +134,22 @@ type EmployeeSwrEntry = {
   at: number;
 };
 
-const employeePeriodSwrStore = createDashboardSwrStore<EmployeeSwrEntry>();
+export { clearEmployeePeriodSwrStore };
 
-export function clearEmployeePeriodSwrStore(): void {
-  employeePeriodSwrStore.clear();
+function asEmployeeSwrEntry(raw: EmployeePeriodSwrEntry | null): EmployeeSwrEntry | null {
+  return raw as EmployeeSwrEntry | null;
 }
 
-function swrKey(tf: EmployeeAnalyticsTimeframe): string {
-  return `employee:period:${tf}`;
+function lastKnownMetricsFromPayload(payload: AnalyticsPayload) {
+  return {
+    periodTipCount: payload.periodTipCount,
+    periodAmountEur: payload.periodAmountEur,
+    monthlyGoal: payload.monthlyGoal,
+    currentMonthTotal: payload.currentMonthTotal,
+    goalProgress: payload.goalProgress,
+    averageRating: payload.averageRating,
+    ratingCount: payload.ratingCount,
+  };
 }
 
 /** Summary scope returned explicit period aggregates — 0 is valid, synthesized defaults are not. */
@@ -183,14 +201,27 @@ export function useEmployeeDashboardAnalytics(
   sessionValidated: boolean,
   advancedAnalyticsEnabled = true,
 ) {
-  const [analyticsTimeframe, setAnalyticsTimeframe] = useState<EmployeeAnalyticsTimeframe>("today");
-  const [payload, setPayload] = useState<AnalyticsPayload | null>(null);
-  const [dataTimeframe, setDataTimeframe] = useState<EmployeeAnalyticsTimeframe | null>(null);
-  const [summaryLoading, setSummaryLoading] = useState(true);
-  const [analyticsLoading, setAnalyticsLoading] = useState(true);
+  const [boot] = useState(() => {
+    const tf = getEmployeePeriodLastTimeframe();
+    const hit = asEmployeeSwrEntry(peekEmployeePeriodSnapshot(tf));
+    return { tf, hit };
+  });
+  const [analyticsTimeframe, setAnalyticsTimeframe] = useState<EmployeeAnalyticsTimeframe>(boot.tf);
+  const [payload, setPayload] = useState<AnalyticsPayload | null>(() => boot.hit?.payload ?? null);
+  const [dataTimeframe, setDataTimeframe] = useState<EmployeeAnalyticsTimeframe | null>(
+    () => (boot.hit ? boot.tf : null),
+  );
+  const [summaryLoading, setSummaryLoading] = useState(() => !boot.hit);
+  const [analyticsLoading, setAnalyticsLoading] = useState(() => {
+    if (!boot.hit) return true;
+    return (
+      boot.hit.summary?.analyticsBundled !== true &&
+      !hasEmployeeAnalyticsPayload(boot.hit.analytics)
+    );
+  });
   const [isRevalidating, setIsRevalidating] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [lastUpdatedAt, setLastUpdatedAt] = useState<number | null>(null);
+  const [lastUpdatedAt, setLastUpdatedAt] = useState<number | null>(() => boot.hit?.at ?? null);
   const [dataRevision, setDataRevision] = useState(0);
   const [lastKnownGoodMetrics, setLastKnownGoodMetrics] = useState<{
     periodTipCount: number;
@@ -200,7 +231,7 @@ export function useEmployeeDashboardAnalytics(
     goalProgress: EmployeeGoalProgress | null;
     averageRating: number | null;
     ratingCount: number;
-  } | null>(null);
+  } | null>(() => (boot.hit?.payload ? lastKnownMetricsFromPayload(boot.hit.payload) : null));
 
   const tfRef = useRef(analyticsTimeframe);
   tfRef.current = analyticsTimeframe;
@@ -212,13 +243,29 @@ export function useEmployeeDashboardAnalytics(
   const abortRef = useRef(new Map<EmployeeAnalyticsTimeframe, AbortController>());
   const summaryPartialRef = useRef(new Map<EmployeeAnalyticsTimeframe, Partial<EmployeeTipsResponse>>());
   const analyticsPartialRef = useRef(new Map<EmployeeAnalyticsTimeframe, Partial<EmployeeTipsResponse>>());
-  const hasSettledLiveUiRef = useRef(false);
+  const hasSettledLiveUiRef = useRef(Boolean(boot.hit) || isEmployeePeriodLiveSettled());
   /** Periods that completed at least one successful network fetch this dashboard session. */
   const networkSettledTfsRef = useRef(new Set<EmployeeAnalyticsTimeframe>());
   /** Periods whose summary scope returned confirmed period aggregates from the network. */
   const summaryFetchedTfsRef = useRef(new Set<EmployeeAnalyticsTimeframe>());
   /** Periods whose analytics scope (or bundled summary) returned from the network. */
   const analyticsFetchedTfsRef = useRef(new Set<EmployeeAnalyticsTimeframe>());
+  if (boot.hit && summaryPartialRef.current.size === 0) {
+    summaryPartialRef.current.set(boot.tf, boot.hit.summary);
+    analyticsPartialRef.current.set(boot.tf, boot.hit.analytics);
+    if (isEmployeeSummaryPartialConfirmed(boot.hit.summary)) {
+      summaryFetchedTfsRef.current.add(boot.tf);
+      networkSettledTfsRef.current.add(boot.tf);
+    }
+    if (
+      boot.hit.summary?.analyticsBundled === true ||
+      hasEmployeeAnalyticsPayload(boot.hit.analytics)
+    ) {
+      analyticsFetchedTfsRef.current.add(boot.tf);
+      networkSettledTfsRef.current.add(boot.tf);
+    }
+    markEmployeePeriodLiveSettled();
+  }
   const analyticsDeferTimerRef = useRef<number | null>(null);
   const loadInflightByTfRef = useRef(
     new Map<EmployeeAnalyticsTimeframe, Promise<void>>(),
@@ -244,6 +291,8 @@ export function useEmployeeDashboardAnalytics(
   const prefetchQueueRef = useRef<number | null>(null);
   const scheduleInactivePrefetchRef = useRef<(activeTf: EmployeeAnalyticsTimeframe) => void>(() => {});
   const prevAdvancedAnalyticsRef = useRef<boolean | null>(null);
+  /** Background reconcile (socket/tab) — must not invalidate in-flight period loads. */
+  const quietRefreshGenRef = useRef(0);
 
   const isActive = enabled && sessionValidated;
   const isActiveRef = useRef(isActive);
@@ -278,16 +327,19 @@ export function useEmployeeDashboardAnalytics(
     const analytics = analyticsPartialRef.current.get(tf);
     const merged = mergeEmployeeTipsResponse(summary, analytics);
     if (!merged) return;
-    employeePeriodSwrStore.set(swrKey(tf), {
-      summary: summary ?? {},
-      analytics: analytics ?? {},
-      payload: payloadFromResponse(merged),
-      at: Date.now(),
+    writeEmployeePeriodSnapshot(tf, {
+      summary: (summary ?? {}) as Record<string, unknown>,
+      analytics: (analytics ?? {}) as Record<string, unknown>,
+      payload: payloadFromResponse(merged) as unknown as Record<string, unknown>,
     });
+    markEmployeePeriodLiveSettled();
   }, []);
 
   const hydrateFromSwr = useCallback((tf: EmployeeAnalyticsTimeframe): AnalyticsPayload | null => {
-    const hit = employeePeriodSwrStore.get(swrKey(tf), DASHBOARD_SWR_METRICS_TTL_MS);
+    const hit = asEmployeeSwrEntry(
+      getEmployeePeriodSnapshot(tf, DASHBOARD_SWR_METRICS_TTL_MS) ??
+        (isEmployeePeriodLiveSettled() ? peekEmployeePeriodSnapshot(tf) : null),
+    );
     if (!hit) return null;
     summaryPartialRef.current.set(tf, hit.summary);
     analyticsPartialRef.current.set(tf, hit.analytics);
@@ -494,6 +546,7 @@ export function useEmployeeDashboardAnalytics(
       }
       tfRef.current = tf;
       setAnalyticsTimeframe(tf);
+      setEmployeePeriodLastTimeframe(tf);
       const seq = ++uiRequestSeqRef.current;
 
       hydratePeriodSessionCache(tf);
@@ -688,12 +741,17 @@ export function useEmployeeDashboardAnalytics(
           .catch(() => {
             if (tf !== tfRef.current || uiRequestSeqRef.current !== seq) return;
             setIsRevalidating(false);
-            setSummaryLoading(false);
-            setAnalyticsLoading(false);
             debugEmployeeAnalytics("inflight_attach_error", {
               requestedPeriod: tf,
               requestSeq: seq,
             });
+            if (loadInflightByTfRef.current.get(tf) === existingInflight) {
+              loadInflightByTfRef.current.delete(tf);
+            }
+            if (!payloadVisibleOnScreen()) {
+              setSummaryLoading(true);
+            }
+            void loadForRef.current(tf, { affectsUi: true, forceNetwork: true, silent: true });
           });
         return existingInflight;
       }
@@ -1100,20 +1158,9 @@ export function useEmployeeDashboardAnalytics(
     abortRef.current.forEach((c) => c.abort());
     abortRef.current.clear();
     loadInflightByTfRef.current.clear();
-    clearEmployeeTipsClientCache();
-    employeePeriodSwrStore.clear();
-    hasSettledLiveUiRef.current = false;
-    networkSettledTfsRef.current.clear();
-    summaryFetchedTfsRef.current.clear();
-    analyticsFetchedTfsRef.current.clear();
-    summaryPartialRef.current.clear();
-    analyticsPartialRef.current.clear();
-    setPayload(null);
-    setDataTimeframe(null);
-    setLastKnownGoodMetrics(null);
-    setLastUpdatedAt(null);
-    setSummaryLoading(true);
-    setAnalyticsLoading(true);
+    quietRefreshGenRef.current += 1;
+    // Keep period snapshots for sidebar remounts. Logout still wipes via clearEmployeePeriodSwrStore.
+    hasSettledLiveUiRef.current = isEmployeePeriodLiveSettled();
     setIsRevalidating(false);
     setError(null);
     devSetHydrationPhase("metrics", "idle");
@@ -1124,15 +1171,38 @@ export function useEmployeeDashboardAnalytics(
   useEffect(() => {
     if (!isActive) return;
     const generation = ++mountGenerationRef.current;
+    const tf = tfRef.current;
     if (!hasSettledLiveUiRef.current) {
-      networkSettledTfsRef.current.clear();
-      summaryFetchedTfsRef.current.clear();
-      analyticsFetchedTfsRef.current.clear();
-      employeePeriodSwrStore.clear();
+      const peek = asEmployeeSwrEntry(peekEmployeePeriodSnapshot(tf));
+      if (peek) {
+        summaryPartialRef.current.set(tf, peek.summary);
+        analyticsPartialRef.current.set(tf, peek.analytics);
+        if (isEmployeeSummaryPartialConfirmed(peek.summary)) {
+          summaryFetchedTfsRef.current.add(tf);
+          networkSettledTfsRef.current.add(tf);
+        }
+        if (
+          peek.summary?.analyticsBundled === true ||
+          hasEmployeeAnalyticsPayload(peek.analytics)
+        ) {
+          analyticsFetchedTfsRef.current.add(tf);
+          networkSettledTfsRef.current.add(tf);
+        }
+        hasSettledLiveUiRef.current = true;
+        markEmployeePeriodLiveSettled();
+        setPayload(peek.payload);
+        setDataTimeframe(tf);
+        setLastKnownGoodMetrics(lastKnownMetricsFromPayload(peek.payload));
+        setLastUpdatedAt(peek.at);
+        setSummaryLoading(false);
+        setAnalyticsLoading(
+          peek.summary?.analyticsBundled !== true &&
+            !hasEmployeeAnalyticsPayload(peek.analytics),
+        );
+      }
     }
     const timer = window.setTimeout(() => {
       if (mountGenerationRef.current !== generation) return;
-      const tf = tfRef.current;
       debugEmployeeAnalytics("mount_load_start", {
         requestedPeriod: tf,
         activePeriod: tfRef.current,
@@ -1172,7 +1242,7 @@ export function useEmployeeDashboardAnalytics(
     }
     analyticsPartialRef.current.delete(tf);
     analyticsFetchedTfsRef.current.delete(tf);
-    employeePeriodSwrStore.delete(swrKey(tf));
+    deleteEmployeePeriodSnapshot(tf);
     setAnalyticsLoading(true);
     devSetHydrationPhase("charts", "loading");
     debugEmployeeAnalytics("entitlement_refetch", {
@@ -1191,12 +1261,13 @@ export function useEmployeeDashboardAnalytics(
   const refreshQuiet = useCallback(async () => {
     if (!isActiveRef.current) return;
     const tf = tfRef.current;
-    const seq = ++uiRequestSeqRef.current;
-    setIsRevalidating(true);
+    const gen = ++quietRefreshGenRef.current;
+    const stillThisQuiet = () =>
+      isActiveRef.current && quietRefreshGenRef.current === gen && tf === tfRef.current;
     clearEmployeeTipsClientCache(tf);
     try {
       const summaryData = await getTipsByEmployee(tf, { scope: "summary", silent: true });
-      if (uiRequestSeqRef.current !== seq || tf !== tfRef.current) return;
+      if (!stillThisQuiet()) return;
       if (isEmployeeSummaryPartialConfirmed(summaryData)) {
         summaryFetchedTfsRef.current.add(tf);
         networkSettledTfsRef.current.add(tf);
@@ -1210,7 +1281,7 @@ export function useEmployeeDashboardAnalytics(
         });
         analyticsFetchedTfsRef.current.add(tf);
       }
-      commitUiPayload(tf, seq, true);
+      commitUiPayload(tf, uiRequestSeqRef.current, true);
       const merged = mergeEmployeeTipsResponse(
         summaryData,
         analyticsPartialRef.current.get(tf),
@@ -1221,20 +1292,19 @@ export function useEmployeeDashboardAnalytics(
         advancedAnalyticsEnabledRef.current
       ) {
         const analyticsData = await getTipsByEmployee(tf, { scope: "analytics", silent: true });
-        if (uiRequestSeqRef.current !== seq || tf !== tfRef.current) return;
+        if (!stillThisQuiet()) return;
         analyticsPartialRef.current.set(tf, analyticsData);
         analyticsFetchedTfsRef.current.add(tf);
         networkSettledTfsRef.current.add(tf);
-        commitUiPayload(tf, seq, true);
+        commitUiPayload(tf, uiRequestSeqRef.current, true);
         const mergedAfter = mergeEmployeeTipsResponse(summaryData, analyticsData);
         if (mergedAfter) syncTipsFromResponse(mergedAfter);
       }
     } catch (e) {
+      if (isAbortError(e)) return;
       if (!isApiConnectivityError(e)) {
         logClientError("useEmployeeDashboardAnalytics.refreshQuiet", e);
       }
-    } finally {
-      if (uiRequestSeqRef.current === seq) setIsRevalidating(false);
     }
   }, [commitUiPayload, syncTipsFromResponse]);
 
@@ -1347,7 +1417,10 @@ export function useEmployeeDashboardAnalytics(
     ) {
       return false;
     }
-    const swrHit = employeePeriodSwrStore.get(swrKey(analyticsTimeframe), DASHBOARD_SWR_METRICS_TTL_MS);
+    const swrHit = asEmployeeSwrEntry(
+      getEmployeePeriodSnapshot(analyticsTimeframe, DASHBOARD_SWR_METRICS_TTL_MS) ??
+        (isEmployeePeriodLiveSettled() ? peekEmployeePeriodSnapshot(analyticsTimeframe) : null),
+    );
     return Boolean(
       swrHit?.payload &&
         isEmployeeSummaryFetched(swrHit.payload) &&

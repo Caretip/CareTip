@@ -131,37 +131,48 @@ if (
 }
 
 const page = read("src/app/pages/business/TablesPage.tsx");
+const management = read("src/app/pages/business/LocationsPage.tsx");
 const quotaCapUsesTableQrCard =
   /atTableCap[\s\S]{0,180}LockedFeatureCard featureKey="tableQr"/.test(page) ||
   /ready && atTableCap \?[\s\S]{0,120}LockedFeatureCard featureKey="tableQr"/.test(page);
 if (!quotaCapUsesTableQrCard) {
-  pass("TablesPage does not use LockedFeatureCard tableQr for atTableCap");
+  pass("QR Studio TablesPage does not use LockedFeatureCard tableQr for atTableCap");
 } else {
   fail("TablesPage still binds atTableCap to LockedFeatureCard tableQr");
 }
 
-if (!page.includes('featureKey="multiLocation"')) {
-  pass("TablesPage does not use multiLocation lock");
+if (!page.includes('featureKey="multiLocation"') && !management.includes('featureKey="multiLocation"')) {
+  pass("Tables surfaces do not use multiLocation lock");
 } else {
-  fail("TablesPage still references multiLocation");
+  fail("Tables still references multiLocation");
 }
 
 if (page.includes("LockedFeatureCard featureKey=\"tableQr\"") && page.includes("mainSurface === \"capability-lock\"")) {
-  pass("Genuine tableQr lock remains on capability-lock surface");
+  pass("Genuine tableQr lock remains on QR Studio capability-lock surface");
 } else {
   fail("Genuine tableQr LockedFeatureCard missing");
 }
 
-if (page.includes("business.tablesPage.quotaTitle") && page.includes("business.tablesPage.quotaBody")) {
-  pass("TablesPage uses table-limit quota copy");
+if (
+  management.includes("business.tablesPage.quotaTitle") &&
+  management.includes("business.tablesPage.quotaBody") &&
+  management.includes("isTablesCreateDisabled")
+) {
+  pass("Locations / Tables page uses table-limit quota copy and create disable");
 } else {
-  fail("TablesPage missing quota i18n keys");
+  fail("Locations / Tables page missing quota i18n keys");
 }
 
-if (page.includes("subscription.upgrade.upgradeToPremium") || page.includes("UpgradeCta")) {
-  fail("TablesPage quota path must not use UpgradeCta / Upgrade to Pro");
+if (management.includes("subscription.upgrade.upgradeToPremium") || management.includes("UpgradeCta")) {
+  fail("Locations / Tables quota path must not use UpgradeCta / Upgrade to Pro");
 } else {
-  pass("TablesPage quota UI does not use UpgradeCta");
+  pass("Locations / Tables quota UI does not use UpgradeCta");
+}
+
+if (!page.includes("createTableAPI") && !page.includes('t("business.tablesPage.create")')) {
+  pass("QR Studio TablesPage does not show Create Table");
+} else {
+  fail("QR Studio still contains table creation");
 }
 
 const failed = results.filter((r) => r.startsWith("FAIL:")).length;

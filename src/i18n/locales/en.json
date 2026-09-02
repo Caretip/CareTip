@@ -2537,7 +2537,7 @@
       "tips": "Tips",
       "team": "Team Management",
       "qrStudio": "QR Studio",
-      "locations": "Locations",
+      "locations": "Locations / Tables",
       "customers": "Customer Feedback",
       "stripe": "Stripe",
       "billing": "Billing",
@@ -3893,9 +3893,9 @@
       "action": "Open QR Studio"
     },
     "fixConnect": {
-      "title": "Connect Stripe",
-      "description": "Finish setup to receive tips.",
-      "action": "Continue Stripe setup"
+      "title": "Connect your Stripe account to enable tipping",
+      "description": "Guests cannot send tips until this venue’s Stripe account is connected.",
+      "action": "Connect Stripe"
     },
     "shell": {
       "sidebarAria": "Business dashboard navigation",
@@ -4362,11 +4362,16 @@
     "locationsPage": {
       "backAria": "Back to dashboard",
       "eyebrow": "Venues",
-      "title": "Locations",
-      "subtitle": "",
+      "title": "Locations / Tables",
+      "subtitle": "Create locations and the tables under them. Guest QR codes stay in QR Studio.",
       "addNew": "+ Add New Location",
       "loading": "Loading locations…",
-      "empty": "No locations yet.",
+      "empty": "Create your first location, then add tables under it.",
+      "tablesHeading": "Tables",
+      "tableCount": "({{count}})",
+      "emptyTables": "No tables in this location yet.",
+      "createTableDialogDesc": "Guests scan this table’s QR at {{name}} to open the tipping flow.",
+      "viewTableQr": "View QR",
       "toastNameRequired": "Please enter a location name.",
       "toastCreated": "Location created.",
       "toastUpdated": "Location updated.",
@@ -4860,6 +4865,13 @@
       "employees": {
         "pageTitle": "Employee QR codes",
         "pageDesc": "Personal codes for each team member. Print tags or share links."
+      },
+      "tables": {
+        "pageTitle": "Table QR codes",
+        "pageDesc": "Guest codes for each table. Create and manage tables under Locations / Tables.",
+        "emptyNeedLocation": "Add a location first, then create tables from Locations / Tables.",
+        "emptyNoTables": "Tables are created from Locations / Tables.",
+        "manageCta": "Manage Locations & Tables"
       },
       "locations": {
         "pageTitle": "Location QR codes",

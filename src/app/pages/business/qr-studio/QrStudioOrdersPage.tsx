@@ -4,31 +4,50 @@ import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { checkoutPhysicalQrOrder, fetchPhysicalQrOrders, type PhysicalQrCustomerOrder } from "@/app/lib/api";
 import { performExternalStripeRedirect } from "@/app/lib/externalStripeRedirect";
+import {
+  readPhysicalQrOrdersSnapshot,
+  writePhysicalQrOrdersSnapshot,
+} from "@/app/lib/physicalQrOrdersSessionCache";
 import { PhysicalQrOrderCard } from "@/app/components/business/physical-branding/PhysicalQrOrderCard";
 import { QrStudioOrderListSkeleton } from "@/app/components/business/qr-studio/QrStudioLoadingSkeletons";
 import { QR_STUDIO_BASE } from "@/app/components/business/businessDashboardNav";
 import { businessUi } from "@/app/components/business/businessDashboardUi";
 import { Button } from "@/components/ui/button";
+import { useRequireAuth } from "../../../hooks/useRequireAuth";
 
 export function QrStudioOrdersPage() {
   const { t } = useTranslation();
-  const [orders, setOrders] = useState<PhysicalQrCustomerOrder[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { user } = useRequireAuth();
+  const businessId = user?.businessId?.trim() || "";
+  const initial = readPhysicalQrOrdersSnapshot(businessId);
+  const [orders, setOrders] = useState<PhysicalQrCustomerOrder[]>(() => initial?.orders ?? []);
+  const [loading, setLoading] = useState(() => !initial);
   const [error, setError] = useState<string | null>(null);
   const [payingOrderId, setPayingOrderId] = useState<string | null>(null);
 
   const reload = useCallback(async () => {
     try {
-      const data = await fetchPhysicalQrOrders();
-      setOrders(data.orders ?? []);
+      const data = await fetchPhysicalQrOrders({ revalidate: true });
+      const next = data.orders ?? [];
+      setOrders(next);
       setError(null);
+      if (businessId) writePhysicalQrOrdersSnapshot(businessId, next);
     } catch (err) {
-      setError(err instanceof Error ? err.message : t("business.qrStudio.physical.loadError"));
+      if (!readPhysicalQrOrdersSnapshot(businessId)) {
+        setError(err instanceof Error ? err.message : t("business.qrStudio.physical.loadError"));
+      }
     }
-  }, [t]);
+  }, [businessId, t]);
 
   useEffect(() => {
+    if (!businessId) return;
     let cancelled = false;
+    const snap = readPhysicalQrOrdersSnapshot(businessId);
+    if (snap) {
+      setOrders(snap.orders);
+      setLoading(false);
+      setError(null);
+    }
     void (async () => {
       try {
         await reload();
@@ -39,7 +58,7 @@ export function QrStudioOrdersPage() {
     return () => {
       cancelled = true;
     };
-  }, [reload]);
+  }, [businessId, reload]);
 
   const payOrder = useCallback(
     async (id: string) => {
@@ -83,8 +102,8 @@ export function QrStudioOrdersPage() {
               key={order.id}
               order={order}
               paying={payingOrderId === order.id}
-              onPay={(id) => {
-                void payOrder(id);
+              onPay={(oid) => {
+                void payOrder(oid);
               }}
             />
           ))}

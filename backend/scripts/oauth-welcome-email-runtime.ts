@@ -108,10 +108,22 @@ function main() {
       "Generate QR codes",
       "Invite your staff",
       "Start receiving tips",
-      "cid:caretip-logo",
     ],
     "EN manager welcome",
   );
+  if (
+    en.html.includes("cid:caretip-logo") ||
+    en.html.includes("caretip-app-icon.png")
+  ) {
+    pass("EN welcome includes CareTip brand icon");
+  } else {
+    fail("EN welcome missing brand icon (cid or hosted app icon)");
+  }
+  if (en.html.includes("max-width:600px") && en.html.includes("Go to dashboard")) {
+    pass("EN welcome uses shared layout width and CTA");
+  } else {
+    fail("EN welcome layout/CTA");
+  }
 
   const de = buildWelcomeEmailContent({
     locale: "de",

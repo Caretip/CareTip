@@ -127,6 +127,43 @@ export function LocationCardGridSkeleton({
   );
 }
 
+/** Combined Locations / Tables management — one workspace, not two stacked page skeletons. */
+export function LocationTablesWorkspaceSkeleton({
+  sections = 2,
+  className,
+}: {
+  sections?: number;
+  className?: string;
+}) {
+  const aria = useDashboardShellAria();
+
+  return (
+    <ul
+      className={cn("space-y-4", className)}
+      role="status"
+      aria-busy="true"
+      aria-label={aria.loading}
+    >
+      {Array.from({ length: sections }).map((_, i) => (
+        <li key={i} className="rounded-lg border border-border bg-card p-4 sm:p-5">
+          <div className="flex gap-3">
+            <ShimmerBar className="h-10 w-10 shrink-0 rounded-lg" />
+            <div className="flex min-w-0 flex-1 flex-col gap-2">
+              <ShimmerBar className="h-4 w-[45%] max-w-[11rem]" />
+              <ShimmerBar className="h-3 w-[70%] max-w-[16rem]" />
+            </div>
+          </div>
+          <div className="mt-4 space-y-2 border-t border-border/70 pt-4">
+            <ShimmerBar className="h-3 w-16" />
+            <ShimmerBar className="h-10 w-full rounded-md" />
+            <ShimmerBar className="h-10 w-full rounded-md" />
+          </div>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
 /** Platform admin global transactions table. */
 export function GlobalTransactionsTableSkeleton({
   rows = 8,

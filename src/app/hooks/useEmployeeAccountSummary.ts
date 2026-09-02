@@ -30,8 +30,10 @@ export function primeEmployeeAccountSnapshot(snapshot: EmployeeAccountSnapshot):
  * Hero account balances — short-lived SWR with immediate background revalidation.
  */
 export function useEmployeeAccountSummary(enabled: boolean) {
-  const [snapshot, setSnapshot] = useState<EmployeeAccountSnapshot | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [snapshot, setSnapshot] = useState<EmployeeAccountSnapshot | null>(
+    () => accountSwrStore.peek(ACCOUNT_SWR_KEY),
+  );
+  const [loading, setLoading] = useState(() => !accountSwrStore.peek(ACCOUNT_SWR_KEY));
   const [isRevalidating, setIsRevalidating] = useState(false);
   const [lastUpdatedAt, setLastUpdatedAt] = useState<number | null>(null);
   const [dataRevision, setDataRevision] = useState(0);
@@ -54,8 +56,9 @@ export function useEmployeeAccountSummary(enabled: boolean) {
         soft: opts?.soft,
       });
       const cached = useCache
-        ? accountSwrStore.get(ACCOUNT_SWR_KEY, DASHBOARD_SWR_BALANCE_TTL_MS)
-        : null;
+        ? accountSwrStore.get(ACCOUNT_SWR_KEY, DASHBOARD_SWR_BALANCE_TTL_MS) ??
+          accountSwrStore.peek(ACCOUNT_SWR_KEY)
+        : accountSwrStore.peek(ACCOUNT_SWR_KEY);
       setIsRevalidating(true);
 
       if (cached) {
@@ -112,21 +115,18 @@ export function useEmployeeAccountSummary(enabled: boolean) {
     if (!enabled) {
       abortRef.current?.abort();
       abortRef.current = null;
-      clearEmployeeAccountClientCache();
-      accountSwrStore.clear();
-      hasSettledLiveUiRef.current = false;
-      setSnapshot(null);
-      setLoading(true);
       setIsRevalidating(false);
-      setLastUpdatedAt(null);
       devSetHydrationPhase("hero", "idle");
       return;
     }
 
-    const primed = accountSwrStore.get(ACCOUNT_SWR_KEY, DASHBOARD_SWR_BALANCE_TTL_MS);
+    const primed =
+      accountSwrStore.peek(ACCOUNT_SWR_KEY) ??
+      accountSwrStore.get(ACCOUNT_SWR_KEY, DASHBOARD_SWR_BALANCE_TTL_MS);
     if (primed) {
       setSnapshot(primed);
       setLoading(false);
+      hasSettledLiveUiRef.current = true;
       devSetHydrationPhase("hero", "ready");
       void loadAccountRef.current({ soft: true });
     } else {

@@ -2,6 +2,7 @@
  * Transactional email copy (en / de). Missing keys fall back to English at render time.
  */
 
+import { getCareTipSupportEmail } from "../config/emailEnv.js";
 import {
   formatLoginAlertDevice,
   formatLoginAlertTimestamp,
@@ -10,19 +11,17 @@ import {
 import {
   emailBodyText,
   emailBodyTextLast,
-  emailBrandMark,
   emailBulletList,
-  emailCardBody,
-  emailCardBodyEnd,
-  emailCardClose,
-  emailCardOpen,
   emailCta,
   emailDocClose,
   emailDocOpen,
   emailFinePrint,
   emailFooterBlock,
   type EmailFooterExtras,
+  emailFrameClose,
+  emailFrameOpen,
   emailGreeting,
+  emailHairline,
   emailHeadline,
   emailMetaBlock,
   emailPageWrap,
@@ -30,7 +29,6 @@ import {
   emailSectionLabel,
   emailSubheading,
   emailSupportText,
-  esc,
 } from "./emailLayout.js";
 
 export type EmailLocale = "en" | "de";
@@ -92,16 +90,16 @@ const common: Record<EmailLocale, Bundle> = {
     brand: "CareTip",
     greeting: "Hello,",
     footer:
-      "If you did not request this email, you can safely ignore it. This mailbox is not monitored.",
-    footerBrand: "CareTip Hospitality Platform",
+      "If you did not request this email, you can safely ignore it.",
+    footerBrand: "CareTip",
     footerCopyright: `© ${new Date().getFullYear()} CareTip`,
   },
   de: {
     brand: "CareTip",
     greeting: "Hallo,",
     footer:
-      "Wenn Sie diese E-Mail nicht angefordert haben, können Sie sie ignorieren. Dieses Postfach wird nicht überwacht.",
-    footerBrand: "CareTip Hospitality Platform",
+      "Wenn Sie diese E-Mail nicht angefordert haben, können Sie sie ignorieren.",
+    footerBrand: "CareTip",
     footerCopyright: `© ${new Date().getFullYear()} CareTip`,
   },
 };
@@ -111,11 +109,7 @@ function bundle(locale: EmailLocale): Bundle {
 }
 
 /** Support address shown in email footers (display only). */
-export function getCareTipSupportEmail(): string {
-  const fromEnv = process.env.CARETIP_SUPPORT_EMAIL?.trim();
-  if (fromEnv && fromEnv.includes("@")) return fromEnv;
-  return "support@caretip.de";
-}
+export { getCareTipSupportEmail } from "../config/emailEnv.js";
 
 function footerExtras(_locale: EmailLocale): EmailFooterExtras {
   return {
@@ -211,14 +205,12 @@ function renderStandardEmail(input: {
   const cta = input.cta ? emailCta(input.cta.href, input.cta.label) : "";
 
   const inner = [
-    emailBrandMark(b.brand),
-    emailCardOpen(),
-    emailCardBody(),
+    emailFrameOpen(b.brand),
     ...bodyParts,
     fine,
+    hasCta ? emailHairline() : "",
     cta,
-    emailCardBodyEnd(),
-    emailCardClose(),
+    emailFrameClose(),
     emailFooterBlock(input.helpLine ?? null, b.footer, footerExtras(loc)),
   ].join("");
 
@@ -484,17 +476,15 @@ export function buildEmployeeActivationContent(input: {
 
   const locBundle = bundle(loc);
   const inner = [
-    emailBrandMark(locBundle.brand),
-    emailCardOpen(),
-    emailCardBody(),
+    emailFrameOpen(locBundle.brand),
     emailHeadline(copy.headline),
     emailGreeting(greeting),
     emailBodyText(copy.line1),
     emailBodyTextLast(copy.line2),
+    emailHairline(),
     emailCta(input.activationUrl, copy.cta),
     emailFinePrint(expires),
-    emailCardBodyEnd(),
-    emailCardClose(),
+    emailFrameClose(),
     emailFooterBlock(null, locBundle.footer, footerExtras(loc)),
   ].join("");
 
@@ -615,9 +605,7 @@ export function buildLoginAlertContent(input: {
   });
 
   const inner = [
-    emailBrandMark(b.brand),
-    emailCardOpen(),
-    emailCardBody(),
+    emailFrameOpen(b.brand),
     emailHeadline(copy.headline),
     emailGreeting(greeting),
     emailBodyText(copy.intro),
@@ -625,9 +613,9 @@ export function buildLoginAlertContent(input: {
     emailSupportText(copy.okLine),
     emailSubheading(copy.warnTitle),
     emailBodyTextLast(copy.warnBody),
+    emailHairline(),
     emailCta(securityUrl, copy.cta),
-    emailCardBodyEnd(),
-    emailCardClose(),
+    emailFrameClose(),
     emailFooterBlock(copy.help, b.footer, footerExtras(loc)),
   ].join("");
 
@@ -687,15 +675,12 @@ export function buildGenericNotificationContent(input: {
   });
 
   const inner = [
-    emailBrandMark(b.brand),
-    emailCardOpen(),
-    emailCardBody(),
+    emailFrameOpen(b.brand),
     emailHeadline(subject),
     emailGreeting(greeting),
     emailBodyTextLast(body),
-    ...(url && url.length > 0 ? [emailCta(url, actionLabel)] : []),
-    emailCardBodyEnd(),
-    emailCardClose(),
+    ...(url && url.length > 0 ? [emailHairline(), emailCta(url, actionLabel)] : []),
+    emailFrameClose(),
     emailFooterBlock(null, b.footer, footerExtras(loc)),
   ].join("");
 

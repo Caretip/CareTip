@@ -39,7 +39,8 @@ import { useSubscriptionEntitlements } from "../../hooks/useSubscriptionEntitlem
 import { DashboardRealtimeStatusStrip } from "../../components/dashboard/DashboardRealtimeStatusStrip";
 import { DashboardRefreshIndicator } from "../../components/dashboard/DashboardRefreshIndicator";
 import { EmployeeDashboardRealtimeSync } from "../../components/employee/EmployeeDashboardRealtimeSync";
-import { getEmployeeProfile, ensureEmployeeSlug, peekEmployeeProfileCache } from "../../lib/api";
+import { getEmployeeProfile, ensureEmployeeSlug, peekEmployeeProfileCache, peekEmployeeProfileSession, type EmployeeSelfAssignment } from "../../lib/api";
+import { writeEmployeeAssignmentSnapshot } from "../../lib/employeePageSessionCache";
 import { useEmployeeDashboardAnalytics } from "../../hooks/useEmployeeDashboardAnalytics";
 import { FeatureGate } from "../../components/subscription/FeatureGate";
 import { EmployeeDashboardMetricsGrid } from "../../components/employee/EmployeeDashboardMetricsGrid";
@@ -131,11 +132,17 @@ export const EmployeeDashboard = memo(function EmployeeDashboard() {
 
   const [error, setError] = useState<string | null>(null);
   /** `undefined` = not loaded yet; `null` = no slug in DB */
-  const [staffSlug, setStaffSlug] = useState<string | null | undefined>(undefined);
+  const [staffSlug, setStaffSlug] = useState<string | null | undefined>(
+    () => peekEmployeeProfileSession()?.slug ?? peekEmployeeProfileCache()?.slug,
+  );
   /** Public venue slug from `/api/employees/me` for canonical tip URLs */
-  const [employeeBusinessSlug, setEmployeeBusinessSlug] = useState<string | null | undefined>(undefined);
+  const [employeeBusinessSlug, setEmployeeBusinessSlug] = useState<string | null | undefined>(
+    () => peekEmployeeProfileSession()?.businessSlug ?? peekEmployeeProfileCache()?.businessSlug,
+  );
   /** Employee row id from `/api/employees/me` - must match QR `Employee.id`, not auth `User.id` */
-  const [employeeRecordId, setEmployeeRecordId] = useState<string | null>(null);
+  const [employeeRecordId, setEmployeeRecordId] = useState<string | null>(
+    () => peekEmployeeProfileSession()?.id ?? peekEmployeeProfileCache()?.id ?? null,
+  );
   const [qrModalOpen, setQrModalOpen] = useState(false);
   const [generatingSlug, setGeneratingSlug] = useState(false);
 
@@ -147,16 +154,19 @@ export const EmployeeDashboard = memo(function EmployeeDashboard() {
       id: string;
       avatar?: string | null;
       name?: string;
+      assignment?: EmployeeSelfAssignment;
     }) => {
       setStaffSlug(p.slug ?? null);
       setEmployeeBusinessSlug(p.businessSlug ?? null);
       setEmployeeRecordId(p.id);
       updateUser({ avatar: p.avatar ?? undefined, name: p.name });
+      if (user.id && p.assignment) {
+        writeEmployeeAssignmentSnapshot(user.id, p.assignment);
+      }
     };
-    const cached = peekEmployeeProfileCache();
+    const cached = peekEmployeeProfileSession() ?? peekEmployeeProfileCache();
     if (cached) {
       applyProfile(cached);
-      return;
     }
     let cancelled = false;
     const loadProfile = async () => {
@@ -166,9 +176,11 @@ export const EmployeeDashboard = memo(function EmployeeDashboard() {
         applyProfile(p);
       } catch {
         if (cancelled) return;
-        setStaffSlug(null);
-        setEmployeeBusinessSlug(null);
-        setEmployeeRecordId(null);
+        if (!cached) {
+          setStaffSlug(null);
+          setEmployeeBusinessSlug(null);
+          setEmployeeRecordId(null);
+        }
       }
     };
     void loadProfile();
@@ -311,7 +323,7 @@ export const EmployeeDashboard = memo(function EmployeeDashboard() {
 
   const valuesMatchPeriod = useDevDemo || valuesMatchAnalyticsPeriod;
 
-  const periodMetricsLoading = showMetricsSkeleton || (!useDevDemo && !displayMetrics);
+  const periodMetricsLoading = showMetricsSkeleton;
   const showChartLoading = isAnalyticsInitialLoad;
   const metricsSettledForPeriod = isMetricsSettled;
   const periodRefreshingLabel = t("dashboard.refresh.updating");
@@ -461,7 +473,7 @@ export const EmployeeDashboard = memo(function EmployeeDashboard() {
                 motionReady ? { duration: 0.4, delay: 0.08, ease: "easeOut" } : { duration: 0 }
               }
             >
-              <div className="employee-hero-cta-row">
+              <div className="employee-hero-cta-row flex flex-row flex-nowrap items-stretch gap-2">
                 <Button
                   type="button"
                   onClick={() => void handleQrQuickAction()}

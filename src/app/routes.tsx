@@ -419,7 +419,7 @@ const routes: RouteObject[] = [
       /* Legacy redirects */
       { path: 'staff-management', element: <Navigate to="/dashboard/team/employees" replace /> },
       { path: 'qr-code-management', element: <Navigate to="/dashboard/qr-studio/employees" replace /> },
-      { path: 'tables', element: <Navigate to="/dashboard/qr-studio/tables" replace /> },
+      { path: 'tables', element: <Navigate to="/dashboard/locations" replace /> },
       { path: 'transactions', element: <Navigate to="/dashboard/tips/transactions" replace /> },
       { path: 'customer-feedback', element: <Navigate to="/dashboard/customers/feedback" replace /> },
       { path: 'support', lazy: routeLazy(() => import('./pages/business/BusinessSupportPage'), 'BusinessSupportPage') },
@@ -758,7 +758,7 @@ const routes: RouteObject[] = [
   },
   {
     path: '/business/dashboard/tables',
-    element: <Navigate to="/dashboard/qr-studio/tables" replace />,
+    element: <Navigate to="/dashboard/locations" replace />,
     errorElement: <ErrorBoundary />,
   },
   {
@@ -788,7 +788,7 @@ const routes: RouteObject[] = [
   },
   {
     path: '/business-dashboard/tables',
-    element: <Navigate to="/dashboard/qr-studio/tables" replace />,
+    element: <Navigate to="/dashboard/locations" replace />,
     errorElement: <ErrorBoundary />,
   },
   // Public business team QR (Path B) — must stay below /business/dashboard* static routes

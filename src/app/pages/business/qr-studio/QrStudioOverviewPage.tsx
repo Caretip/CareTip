@@ -8,6 +8,10 @@ import { dashboardWorkspaceUi } from "@/app/components/dashboard/dashboardWorksp
 import { Button } from "@/components/ui/button";
 import { getEmployees, fetchPhysicalQrOrders, type PhysicalQrCustomerOrder } from "@/app/lib/api";
 import { fetchVenueCatalog } from "@/app/lib/businessVenueCatalog";
+import {
+  readPhysicalQrOrdersSnapshot,
+  writePhysicalQrOrdersSnapshot,
+} from "@/app/lib/physicalQrOrdersSessionCache";
 import { useRequireAuth } from "../../../hooks/useRequireAuth";
 import { PhysicalQrStatusBadge } from "@/app/components/business/physical-branding/PhysicalQrStatusBadge";
 import { QrStudioOverviewSkeleton } from "@/app/components/business/qr-studio/QrStudioLoadingSkeletons";
@@ -47,20 +51,29 @@ function QrCornerAccent({ className }: { className?: string }) {
 export function QrStudioOverviewPage() {
   const { t, i18n } = useTranslation();
   const { user } = useRequireAuth();
+  const businessId = user?.businessId?.trim() || "";
+  const initialOrders = readPhysicalQrOrdersSnapshot(businessId);
   const [counts, setCounts] = useState<OverviewCounts>({ employees: 0, tables: 0, locations: 0 });
-  const [orders, setOrders] = useState<PhysicalQrCustomerOrder[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [orders, setOrders] = useState<PhysicalQrCustomerOrder[]>(
+    () => (initialOrders?.orders ?? []).slice(0, 2),
+  );
+  const [loading, setLoading] = useState(() => !initialOrders);
 
   useEffect(() => {
     let cancelled = false;
+    const snap = readPhysicalQrOrdersSnapshot(businessId);
+    if (snap) {
+      setOrders(snap.orders.slice(0, 2));
+      setLoading(false);
+    }
     void (async () => {
       try {
         const [staff, venue, history] = await Promise.all([
-          user?.businessId
-            ? getEmployees(user.businessId).catch(() => [] as Awaited<ReturnType<typeof getEmployees>>)
+          businessId
+            ? getEmployees(businessId).catch(() => [] as Awaited<ReturnType<typeof getEmployees>>)
             : Promise.resolve([]),
           fetchVenueCatalog().catch(() => ({ locations: [], tables: [] })),
-          fetchPhysicalQrOrders().catch(() => ({ orders: [] as PhysicalQrCustomerOrder[] })),
+          fetchPhysicalQrOrders({ revalidate: true }).catch(() => ({ orders: [] as PhysicalQrCustomerOrder[] })),
         ]);
         if (cancelled) return;
         setCounts({
@@ -68,7 +81,9 @@ export function QrStudioOverviewPage() {
           tables: venue.tables?.length ?? 0,
           locations: venue.locations?.length ?? 0,
         });
-        setOrders((history.orders ?? []).slice(0, 2));
+        const next = history.orders ?? [];
+        setOrders(next.slice(0, 2));
+        if (businessId) writePhysicalQrOrdersSnapshot(businessId, next);
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -76,7 +91,7 @@ export function QrStudioOverviewPage() {
     return () => {
       cancelled = true;
     };
-  }, [user?.businessId]);
+  }, [businessId]);
 
   const printHref = `${QR_STUDIO_BASE}/print`;
   const ordersHref = `${QR_STUDIO_BASE}/orders`;

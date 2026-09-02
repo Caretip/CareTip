@@ -3893,9 +3893,9 @@
       "action": "QR-Studio öffnen"
     },
     "fixConnect": {
-      "title": "Stripe verbinden",
-      "description": "Setup abschließen, um Trinkgelder zu erhalten.",
-      "action": "Stripe-Setup fortsetzen"
+      "title": "Stripe-Konto verbinden, um Trinkgeld zu aktivieren",
+      "description": "Gäste können kein Trinkgeld senden, bis das Stripe-Konto dieses Standorts verbunden ist.",
+      "action": "Stripe verbinden"
     },
     "shell": {
       "sidebarAria": "Unternehmens-Dashboard-Navigation",
@@ -4367,6 +4367,11 @@
       "addNew": "+ Neuer Standort",
       "loading": "Standorte werden geladen…",
       "empty": "Legen Sie zuerst einen Standort an und fügen Sie dann Tische hinzu.",
+      "tablesHeading": "Tische",
+      "tableCount": "({{count}})",
+      "emptyTables": "In diesem Standort gibt es noch keine Tische.",
+      "createTableDialogDesc": "Gäste scannen den QR-Code dieses Tisches in {{name}}, um den Trinkgeldfluss zu öffnen.",
+      "viewTableQr": "QR anzeigen",
       "toastNameRequired": "Bitte geben Sie einen Standortnamen ein.",
       "toastCreated": "Standort angelegt.",
       "toastUpdated": "Standort aktualisiert.",
@@ -4958,6 +4963,13 @@
       "employees": {
         "pageTitle": "Mitarbeiter-QR-Codes",
         "pageDesc": "Persönliche Codes pro Teammitglied. Tags drucken oder Links teilen."
+      },
+      "tables": {
+        "pageTitle": "Tisch-QR-Codes",
+        "pageDesc": "Gäste-Codes für jeden Tisch. Anlegen und Verwalten unter Standorte / Tische.",
+        "emptyNeedLocation": "Legen Sie zuerst einen Standort an und erstellen Sie Tische unter Standorte / Tische.",
+        "emptyNoTables": "Tische werden unter Standorte / Tische angelegt.",
+        "manageCta": "Standorte & Tische verwalten"
       },
       "locations": {
         "pageTitle": "Standort-QR-Codes",

@@ -24,7 +24,11 @@ import {
   getPageSessionCache,
   setPageSessionCache,
   PAGE_CACHE_TTL_HIGH_MS,
+  PAGE_CACHE_TTL_LOW_MS,
 } from "@/app/lib/pageSessionCache";
+import {
+  readEmployeeTipsHistorySnapshot,
+} from "@/app/lib/employeePageSessionCache";
 import { useBusinessPageBoot } from "@/app/lib/useBusinessPageBoot";
 import { withIdleSuppressSync } from "@/app/lib/idleSuppress";
 import { formatVenueDateTime, resolveBusinessTimezone, setCachedBusinessVenueTimezone, venueLocalTodayKey } from "@/app/lib/businessVenueTime";
@@ -82,10 +86,13 @@ export function TipsActivityPage({ variant = "default", embedded = false }: Tips
   const [customTo, setCustomTo] = useState("");
   const [page, setPage] = useState(1);
 
-  const [items, setItems] = useState<TipActivityRow[]>([]);
-  const [total, setTotal] = useState(0);
-  const [dataTimezone, setDataTimezone] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [boot] = useState(() =>
+    isEmployeeHistory ? readEmployeeTipsHistorySnapshot(user?.id, user?.role) : null,
+  );
+  const [items, setItems] = useState<TipActivityRow[]>(() => boot?.items ?? []);
+  const [total, setTotal] = useState(() => boot?.total ?? 0);
+  const [dataTimezone, setDataTimezone] = useState<string | null>(() => boot?.timezone ?? null);
+  const [loading, setLoading] = useState(() => !boot);
   const [exporting, setExporting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -119,7 +126,8 @@ export function TipsActivityPage({ variant = "default", embedded = false }: Tips
       return;
     }
     const cacheKey = `tips-activity:${variant}:${user.id}:${user.role}:${status}:${range}:${skip}:${customFrom}:${customTo}:${debouncedQ}`;
-    const cached = getPageSessionCache<TipsActivityCache>(cacheKey, PAGE_CACHE_TTL_HIGH_MS);
+    const ttlMs = isEmployeeHistory ? PAGE_CACHE_TTL_LOW_MS : PAGE_CACHE_TTL_HIGH_MS;
+    const cached = getPageSessionCache<TipsActivityCache>(cacheKey, ttlMs);
     const useCachedFirst = !quiet && cached !== null;
     if (useCachedFirst) {
       setItems(cached.items);

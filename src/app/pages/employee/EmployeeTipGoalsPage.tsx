@@ -27,10 +27,9 @@ import { EmployeeEmptyState } from "../../components/employee/EmployeeEmptyState
 import { employeeUi } from "../../components/employee/employeeDashboardUi";
 import { venueLocalTodayKey, resolveBusinessTimezone } from "../../lib/businessVenueTime";
 import {
-  getPageSessionCache,
-  setPageSessionCache,
-  PAGE_CACHE_TTL_MEDIUM_MS,
-} from "../../lib/pageSessionCache";
+  readEmployeeGoalsSnapshot,
+  writeEmployeeGoalsSnapshot,
+} from "../../lib/employeePageSessionCache";
 
 function formatEur(value: number): string {
   try {
@@ -50,8 +49,9 @@ export function EmployeeTipGoalsPage() {
     enabled: authReady && user?.role === "employee",
     role: user?.role === "employee" ? "employee" : null,
   });
-  const [loading, setLoading] = useState(true);
-  const [goals, setGoals] = useState<EmployeeGoalRow[]>([]);
+  const [boot] = useState(() => readEmployeeGoalsSnapshot(user?.id));
+  const [loading, setLoading] = useState(() => !boot);
+  const [goals, setGoals] = useState<EmployeeGoalRow[]>(() => boot ?? []);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<EmployeeGoalRow | null>(null);
@@ -63,13 +63,20 @@ export function EmployeeTipGoalsPage() {
   const [period, setPeriod] = useState<GoalPeriod>("monthly");
   const [startDate, setStartDate] = useState("");
 
+  const applyGoals = useCallback(
+    (next: EmployeeGoalRow[]) => {
+      setGoals(next);
+      if (user?.id) writeEmployeeGoalsSnapshot(user.id, next);
+    },
+    [user?.id],
+  );
+
   const refresh = useCallback(async () => {
     try {
       const data = await listMyGoals();
       const next = data.goals ?? [];
-      setGoals(next);
+      applyGoals(next);
       setLoadError(null);
-      if (user?.id) setPageSessionCache(`employee:goals:${user.id}`, next);
       return next;
     } catch (e) {
       logClientError("EmployeeTipGoalsPage.refresh", e);
@@ -77,7 +84,7 @@ export function EmployeeTipGoalsPage() {
       setLoadError(e instanceof Error ? e.message : t("employee.tipGoals.loadFailed"));
       return null;
     }
-  }, [t, user?.id]);
+  }, [applyGoals, t]);
 
   useEffect(() => {
     if (!authReady) return;
@@ -87,8 +94,7 @@ export function EmployeeTipGoalsPage() {
     }
     if (!user || user.role !== "employee") return;
     let cancelled = false;
-    const cacheKey = `employee:goals:${user.id}`;
-    const cached = getPageSessionCache<EmployeeGoalRow[]>(cacheKey, PAGE_CACHE_TTL_MEDIUM_MS);
+    const cached = readEmployeeGoalsSnapshot(user.id);
     if (cached) {
       setGoals(cached);
       setLoading(false);
@@ -280,8 +286,11 @@ export function EmployeeTipGoalsPage() {
                               setBusyGoalId(g.id);
                               void (async () => {
                                 try {
-                                  await archiveMyGoal(g.id);
-                                  await refresh();
+                                  const { goal } = await archiveMyGoal(g.id);
+                                  applyGoals(
+                                    goals.map((row) => (row.id === goal.id ? goal : row)),
+                                  );
+                                  void refresh();
                                 } catch (e) {
                                   logClientError("EmployeeTipGoalsPage.archive", e);
                                 } finally {
@@ -303,7 +312,8 @@ export function EmployeeTipGoalsPage() {
                               void (async () => {
                                 try {
                                   await deleteMyGoalById(g.id);
-                                  await refresh();
+                                  applyGoals(goals.filter((row) => row.id !== g.id));
+                                  void refresh();
                                 } catch (e) {
                                   logClientError("EmployeeTipGoalsPage.delete", e);
                                 } finally {
@@ -392,22 +402,24 @@ export function EmployeeTipGoalsPage() {
                   void (async () => {
                     try {
                       if (editing) {
-                        await updateMyGoal(editing.id, {
+                        const { goal } = await updateMyGoal(editing.id, {
                           name: name.trim(),
                           goalAmount: n,
                           goalPeriod: period,
                           startDate: startDate.trim(),
                         });
+                        applyGoals(goals.map((row) => (row.id === goal.id ? goal : row)));
                       } else {
-                        await createMyGoal({
+                        const { goal } = await createMyGoal({
                           name: name.trim(),
                           goalAmount: n,
                           goalPeriod: period,
                           startDate: startDate.trim(),
                         });
+                        applyGoals([goal, ...goals.filter((row) => row.id !== goal.id)]);
                       }
                       setOpen(false);
-                      await refresh();
+                      void refresh();
                     } catch (e) {
                       logClientError("EmployeeTipGoalsPage.saveGoal", e);
                     } finally {

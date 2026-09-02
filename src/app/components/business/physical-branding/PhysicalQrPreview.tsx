@@ -1,6 +1,10 @@
 import { useEffect, useState } from "react";
 import type { PhysicalQrColorTokens } from "@/app/lib/physicalQrTemplate";
 import { physicalQrArtworkSrc, physicalQrOverlayTextColor } from "@/app/lib/physicalQrTemplate";
+import {
+  getCachedPrintQrDataUrl,
+  setCachedPrintQrDataUrl,
+} from "@/app/lib/printQrStudioSessionCache";
 import { cn } from "@/lib/utils";
 
 const ART_W = 1410;
@@ -23,8 +27,13 @@ function isPreviewPlaceholderUrl(url: string): boolean {
 }
 
 /** Encode the shared Print QR preview target once (640px) for every catalog card + dialog. */
-export function useSharedPhysicalQrDataUrl(targetUrl: string): string | null {
-  const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
+export function useSharedPhysicalQrDataUrl(
+  targetUrl: string,
+  businessId?: string | null,
+): string | null {
+  const [qrDataUrl, setQrDataUrl] = useState<string | null>(() =>
+    getCachedPrintQrDataUrl(businessId, targetUrl),
+  );
 
   useEffect(() => {
     let cancelled = false;
@@ -33,15 +42,22 @@ export function useSharedPhysicalQrDataUrl(targetUrl: string): string | null {
       setQrDataUrl(null);
       return;
     }
+    const hit = getCachedPrintQrDataUrl(businessId, url);
+    if (hit) {
+      setQrDataUrl(hit);
+      return;
+    }
     void import("qrcode").then(({ toDataURL }) =>
       toDataURL(url, { ...QR_ENCODE_OPTIONS, width: 640 }).then((data) => {
-        if (!cancelled) setQrDataUrl(data);
+        if (cancelled) return;
+        setCachedPrintQrDataUrl(businessId, url, data);
+        setQrDataUrl(data);
       }),
     );
     return () => {
       cancelled = true;
     };
-  }, [targetUrl]);
+  }, [targetUrl, businessId]);
 
   return qrDataUrl;
 }

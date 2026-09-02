@@ -57,6 +57,9 @@ export const businessDashboardNavItems: readonly BusinessDashboardNavItem[] = [
   { labelKey: "dashboardNav.business.settings", href: "/dashboard/settings", icon: "settings" },
 ] as const;
 
+/** Combined location + table management (create/edit/delete). QR Studio only displays QRs. */
+export const VENUE_MANAGEMENT_HREF = "/dashboard/locations" as const;
+
 export const QR_STUDIO_BASE = "/dashboard/qr-studio" as const;
 export const QR_STUDIO_DEFAULT_HREF = `${QR_STUDIO_BASE}` as const;
 
