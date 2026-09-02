@@ -34,14 +34,14 @@ export const platformUi = {
 
   contentCard: "dashboard-panel-card rounded-lg border border-border bg-card p-4 shadow-sm sm:p-5",
 
-  /** Overview hub — softer cards aligned with business dashboard rhythm. */
-  overviewHero: "rounded-lg border border-border bg-card shadow-sm",
+  /** Overview hub — content on the page surface (Netlify-style). */
+  overviewHero: "bg-transparent",
   overviewSection: "platform-admin-overview-section",
   overviewKpiGrid:
     "platform-admin-overview-kpis grid grid-cols-1 items-stretch gap-4 sm:grid-cols-2 sm:gap-5 lg:grid-cols-4 lg:gap-5",
   overviewTeaserGrid: "platform-admin-overview-teasers grid items-stretch gap-6 sm:gap-7 lg:grid-cols-2 lg:gap-8",
   overviewTeaserCard:
-    "dashboard-panel-card flex h-full min-h-[12rem] flex-col rounded-lg border border-border bg-card p-5 shadow-sm sm:p-6",
+    "flex h-full min-h-0 flex-col border-t border-border/70 bg-transparent p-0 pt-5 shadow-none",
 
   dataPanel: "overflow-hidden rounded-lg border border-border bg-card shadow-sm",
   mobileList: "space-y-2.5 p-3 max-lg:p-3 lg:hidden",
@@ -74,6 +74,13 @@ export const platformUi = {
   analyticsCardDesc: "text-pretty text-xs leading-relaxed text-muted-foreground sm:text-sm",
   analyticsCardBody: "p-4 pt-5 sm:p-5 sm:pt-6",
   analyticsChartWrap: "h-[220px] w-full min-w-0 sm:h-[240px]",
+
+  /** Overview charts sit on the page surface — other admin analytics pages keep cards. */
+  overviewAnalyticsCard: "overflow-hidden rounded-none border-0 bg-transparent shadow-none",
+  overviewAnalyticsCardHeader: "space-y-1.5 border-b border-border/70 bg-transparent px-0 pb-3 pt-0",
+  overviewAnalyticsCardBody: "px-0 pb-0 pt-5",
+  overviewAnalyticsCardTitle: "text-sm font-semibold text-foreground sm:text-base",
+  overviewAnalyticsCardDesc: "text-pretty text-xs leading-relaxed text-muted-foreground sm:text-sm",
 
   businessesPanel: "overflow-hidden rounded-lg border border-border bg-card shadow-sm",
   businessesPanelHeader:

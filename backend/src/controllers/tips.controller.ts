@@ -23,7 +23,7 @@ import {
   hasFeature,
   maskEmployeeGoalsInResponse,
   subscriptionBypass,
-  subscriptionRequiredPayload,
+  featureAccessDeniedPayloadForBusiness,
 } from "../services/subscriptionEntitlement.service.js";
 
 function tipsErrorHttpStatus(err: unknown): number {
@@ -95,7 +95,7 @@ export async function getByEmployee(req: Request, res: Response) {
     if (!subscriptionBypass(req) && scope !== "summary") {
       const tier = await getSubscriptionTierForBusinessId(employee.businessId);
       if (!isEmployeeTipsScopeAllowedForTier(tier, scope)) {
-        return res.status(403).json(subscriptionRequiredPayload("advancedAnalytics"));
+        return res.status(403).json(await featureAccessDeniedPayloadForBusiness(employee.businessId, "advancedAnalytics"));
       }
     }
 
@@ -346,7 +346,7 @@ export async function getByBusiness(req: Request, res: Response) {
       }) &&
       !(await hasFeature(b.id, "advancedAnalytics"))
     ) {
-      return res.status(403).json(subscriptionRequiredPayload("advancedAnalytics"));
+      return res.status(403).json(await featureAccessDeniedPayloadForBusiness(b.id, "advancedAnalytics"));
     }
 
     if (employeeId) {
@@ -461,7 +461,7 @@ export async function listByEmployee(req: Request, res: Response) {
       }) &&
       !(await hasFeature(employee.businessId, "advancedAnalytics"))
     ) {
-      return res.status(403).json(subscriptionRequiredPayload("advancedAnalytics"));
+      return res.status(403).json(await featureAccessDeniedPayloadForBusiness(employee.businessId, "advancedAnalytics"));
     }
 
     const tz = employee.businessTimezone;

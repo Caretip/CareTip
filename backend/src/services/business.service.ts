@@ -538,11 +538,12 @@ async function loadBusinessDashboardContextImpl(businessId: string): Promise<Bus
     logDashboardPhase("business.myStats.summary", "metaRosterSql", () =>
       prisma.$queryRaw<BusinessRosterCountsRow[]>(Prisma.sql`
     SELECT
-      (SELECT COUNT(*)::int FROM employees e WHERE e.business_id = ${businessId}) AS roster_total,
+      (SELECT COUNT(*)::int FROM employees e WHERE e.business_id = ${businessId} AND e.is_deleted = false) AS roster_total,
       (SELECT COUNT(*)::int
        FROM employees e
        INNER JOIN "User" u ON u.id = e.user_id
        WHERE e.business_id = ${businessId}
+         AND e.is_deleted = false
          AND e.is_active = true
          AND e.activation_status = 'active'
          AND u.email_verified = true
@@ -550,6 +551,7 @@ async function loadBusinessDashboardContextImpl(businessId: string): Promise<Bus
       (SELECT COUNT(*)::int
        FROM employees e
        WHERE e.business_id = ${businessId}
+         AND e.is_deleted = false
          AND (e.slug IS NULL OR TRIM(e.slug) = '')
       ) AS missing_qr
   `),
@@ -772,6 +774,9 @@ function buildChartFromSqlBundle(
   return [];
 }
 
+/** Soft-deleted staff must not appear in Team Management or dashboard roster analytics. */
+const STAFF_ROSTER_EMPLOYEE_WHERE = { isDeleted: false } as const;
+
 async function loadBusinessAnalyticsEmployees(
   businessId: string,
   opts?: { includeAssignments?: boolean },
@@ -828,14 +833,14 @@ async function loadBusinessAnalyticsEmployees(
 
   try {
       return await prisma.employee.findMany({
-      where: { businessId },
+      where: { businessId, ...STAFF_ROSTER_EMPLOYEE_WHERE },
       orderBy: [{ isActive: "desc" }, { name: "asc" }],
       select: extendedEmployeeSelect,
     });
   } catch (extendedErr) {
     try {
       const rows = await prisma.employee.findMany({
-        where: { businessId },
+        where: { businessId, ...STAFF_ROSTER_EMPLOYEE_WHERE },
         orderBy: [{ isActive: "desc" }, { name: "asc" }],
         select: legacyEmployeeSelect,
       });
@@ -850,7 +855,7 @@ async function loadBusinessAnalyticsEmployees(
         legacyErr instanceof Error ? legacyErr.message : legacyErr,
       );
       return prisma.employee.findMany({
-        where: { businessId },
+        where: { businessId, ...STAFF_ROSTER_EMPLOYEE_WHERE },
         orderBy: [{ isActive: "desc" }, { name: "asc" }],
         select: minimalEmployeeSelect,
       });

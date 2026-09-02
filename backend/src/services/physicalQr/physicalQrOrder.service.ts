@@ -1,5 +1,9 @@
 import { prisma } from "../../prisma.js";
-import { hasFeature } from "../subscriptionEntitlement.service.js";
+import {
+  featureAccessDeniedPayload,
+  hasFeatureForEntitlements,
+  resolveSubscriptionEntitlements,
+} from "../subscriptionEntitlement.service.js";
 import { assertPhysicalQrColorTokens, PhysicalQrColorError } from "../../lib/physicalQr/colors.js";
 import { freezePhysicalQrProcessing } from "../../lib/physicalQr/processing.js";
 import {
@@ -260,12 +264,10 @@ export async function quotePhysicalQrCartForBusiness(input: {
 }
 
 export async function createPhysicalQrCartOrder(input: CreatePhysicalQrCartInput) {
-  if (!(await hasFeature(input.businessId, "physicalQrPrinting"))) {
-    throw new PhysicalQrOrderError(
-      "SUBSCRIPTION_REQUIRED",
-      "Physical QR printing requires an active subscription.",
-      403,
-    );
+  const entitlements = await resolveSubscriptionEntitlements(input.businessId);
+  if (!hasFeatureForEntitlements(entitlements, "physicalQrPrinting")) {
+    const denied = featureAccessDeniedPayload(entitlements, "physicalQrPrinting");
+    throw new PhysicalQrOrderError(denied.code, denied.message, 403);
   }
 
   const lines = parseLineItems(input.lineItems);
@@ -446,7 +448,8 @@ export async function listPhysicalQrOrdersForBusiness(businessId: string) {
   return prisma.physicalQrOrder.findMany({
     where: { businessId },
     include: ORDER_INCLUDE,
-    orderBy: { createdAt: "desc" },
+    // placedAt is the order timestamp and matches physical_qr_orders_business_id_placed_at_idx
+    orderBy: { placedAt: "desc" },
     take: 50,
   });
 }

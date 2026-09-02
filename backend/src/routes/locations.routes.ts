@@ -11,7 +11,6 @@ router.get(
   authMiddleware,
   requireVerifiedEmail,
   requireRole(Role.MANAGER),
-  requireOperationalSubscription(),
   locationsController.listLocations,
 );
 router.post(
@@ -27,7 +26,6 @@ router.patch(
   authMiddleware,
   requireVerifiedEmail,
   requireRole(Role.MANAGER),
-  requireOperationalSubscription(),
   locationsController.updateLocation,
 );
 router.delete(
@@ -35,7 +33,6 @@ router.delete(
   authMiddleware,
   requireVerifiedEmail,
   requireRole(Role.MANAGER),
-  requireOperationalSubscription(),
   locationsController.deleteLocation,
 );
 

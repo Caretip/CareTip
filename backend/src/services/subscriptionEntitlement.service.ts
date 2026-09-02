@@ -24,10 +24,17 @@ import { prisma } from "../prisma.js";
 
 export type { SubscriptionEntitlementState, SubscriptionLifecycleStatus } from "../lib/subscription/subscriptionEntitlementTypes.js";
 export { EMPTY_SUBSCRIPTION_ENTITLEMENTS } from "../lib/subscription/subscriptionEntitlementTypes.js";
+export { EntitlementDeniedError, isEntitlementDeniedError } from "../lib/subscription/entitlementHttpError.js";
 
 export const SUBSCRIPTION_REQUIRED_CODE = "SUBSCRIPTION_REQUIRED" as const;
+export const PLAN_CAPABILITY_REQUIRED_CODE = "PLAN_CAPABILITY_REQUIRED" as const;
+export { PLAN_LIMIT_EXCEEDED_CODE };
 
 export type FeatureKey = SubscriptionCapability;
+
+const ACTIVE_SUBSCRIPTION_REQUIRED_MESSAGE =
+  "An active subscription is required to use this feature.";
+const PRO_CAPABILITY_REQUIRED_MESSAGE = "This feature is available on Pro.";
 
 function capabilitiesForPlan(plan: SubscriptionPlanKey): SubscriptionCapability[] {
   const tier = mapPlanKeyToBusinessTier(plan);
@@ -229,12 +236,41 @@ export function businessHasCapability(
 
 export function subscriptionRequiredPayload(capability: SubscriptionCapability | FeatureKey) {
   return {
-    success: false,
+    success: false as const,
     code: SUBSCRIPTION_REQUIRED_CODE,
     capability,
     requiredTier: minimumTierForCapability(capability),
-    message: "An active subscription is required to use this feature.",
+    message: ACTIVE_SUBSCRIPTION_REQUIRED_MESSAGE,
   };
+}
+
+/** Entitled plan that does not include this capability (not "no subscription"). */
+export function planCapabilityRequiredPayload(capability: SubscriptionCapability | FeatureKey) {
+  return {
+    success: false as const,
+    code: PLAN_CAPABILITY_REQUIRED_CODE,
+    capability,
+    requiredTier: minimumTierForCapability(capability),
+    message: PRO_CAPABILITY_REQUIRED_MESSAGE,
+  };
+}
+
+export function featureAccessDeniedPayload(
+  state: SubscriptionEntitlementState,
+  featureKey: FeatureKey,
+) {
+  if (!state.hasActiveEntitlements) {
+    return subscriptionRequiredPayload(featureKey);
+  }
+  return planCapabilityRequiredPayload(featureKey);
+}
+
+export async function featureAccessDeniedPayloadForBusiness(
+  businessId: string,
+  featureKey: FeatureKey,
+) {
+  const state = await resolveSubscriptionEntitlements(businessId);
+  return featureAccessDeniedPayload(state, featureKey);
 }
 
 export function planLimitExceededPayload(
@@ -243,7 +279,7 @@ export function planLimitExceededPayload(
 ) {
   const limit = getPlanLimitForResource(tier, resource);
   return {
-    success: false,
+    success: false as const,
     code: PLAN_LIMIT_EXCEEDED_CODE,
     resource,
     limit,
@@ -259,15 +295,18 @@ export async function assertPlanLimitForBusiness(
   businessId: string,
   resource: PlanResourceLimit,
   currentCount: number,
-): Promise<{ ok: true } | { ok: false; tier: BusinessSubscriptionTier | null }> {
+): Promise<
+  | { ok: true }
+  | { ok: false; reason: "no_entitlement" | "quota"; tier: BusinessSubscriptionTier | null }
+> {
   const state = await resolveSubscriptionEntitlements(businessId);
   if (!state.hasActiveEntitlements) {
-    return { ok: false, tier: null };
+    return { ok: false, reason: "no_entitlement", tier: null };
   }
   if (isWithinPlanLimit(state.subscriptionTier, resource, currentCount)) {
     return { ok: true };
   }
-  return { ok: false, tier: state.subscriptionTier };
+  return { ok: false, reason: "quota", tier: state.subscriptionTier };
 }
 
 export function maskEmployeeGoalsInResponse<T extends Record<string, unknown>>(
@@ -317,10 +356,11 @@ export function requireFeature(featureKey: FeatureKey) {
     if (!businessId) {
       return res.status(403).json({ message: "Insufficient permissions" });
     }
-    if (await hasFeature(businessId, featureKey)) {
+    const state = await resolveSubscriptionEntitlements(businessId);
+    if (hasFeatureForEntitlements(state, featureKey)) {
       return next();
     }
-    return res.status(403).json(subscriptionRequiredPayload(featureKey));
+    return res.status(403).json(featureAccessDeniedPayload(state, featureKey));
   };
 }
 
@@ -335,36 +375,8 @@ export async function enforceFeatureForRequest(
     res.status(403).json({ message: "Insufficient permissions" });
     return false;
   }
-  if (await hasFeature(businessId, featureKey)) return true;
-  res.status(403).json(subscriptionRequiredPayload(featureKey));
-  return false;
-}
-
-export async function requireActiveSubscriptionForRequest(
-  req: Request,
-  res: Response,
-): Promise<SubscriptionEntitlementState | null> {
-  if (subscriptionBypass(req)) {
-    return {
-      status: SubscriptionStatus.active,
-      plan: "premium",
-      capabilities: capabilitiesForPlan("premium"),
-      limits: getPlanLimitsForTier(BusinessSubscriptionTier.premium),
-      subscriptionTier: BusinessSubscriptionTier.premium,
-      hasActiveEntitlements: true,
-      accessSource: "subscription",
-      sponsoredProgrammeKey: null,
-    };
-  }
-  const businessId = await resolveBusinessIdForRequest(req);
-  if (!businessId) {
-    res.status(403).json({ message: "Insufficient permissions" });
-    return null;
-  }
   const state = await resolveSubscriptionEntitlements(businessId);
-  if (!state.hasActiveEntitlements) {
-    res.status(403).json(subscriptionRequiredPayload("tableQr"));
-    return null;
-  }
-  return state;
+  if (hasFeatureForEntitlements(state, featureKey)) return true;
+  res.status(403).json(featureAccessDeniedPayload(state, featureKey));
+  return false;
 }

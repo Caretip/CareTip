@@ -239,6 +239,18 @@ export const FRIENDLY_MESSAGE_DE: Record<string, string> = {
     "Der Dienst ist vorübergehend nicht verfügbar. Bitte versuchen Sie es später erneut.",
   "This venue cannot accept tips right now.":
     "Diese Location kann derzeit kein Trinkgeld entgegennehmen.",
+  "An active subscription is required to use this feature.":
+    "Für diese Funktion ist ein aktives Abonnement erforderlich.",
+  "An active subscription is required to manage locations.":
+    "Zum Verwalten von Standorten ist ein aktives Abonnement erforderlich.",
+  "This feature is available on Pro.":
+    "Diese Funktion ist im Pro-Tarif verfügbar.",
+  "Your plan supports one location. Upgrade to Business for multi-location support.":
+    "Ihr Tarif unterstützt einen Standort. Wechseln Sie zu Business für mehrere Standorte.",
+  "Your plan supports one table. Upgrade to Business for multiple tables.":
+    "Ihr Tarif unterstützt einen Tisch. Wechseln Sie zu Business für mehrere Tische.",
+  "You've reached a limit on your current plan.":
+    "Sie haben ein Limit Ihres aktuellen Tarifs erreicht.",
 };
 
 export function translateFriendlyMessageToDe(english: string): string {

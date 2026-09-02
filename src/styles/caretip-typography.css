@@ -177,7 +177,11 @@ html.caretip-font-inter {
   letter-spacing: -0.004em;
 }
 
-@utility text-input {
+/**
+ * Form control size — named `text-type-input` so it does not collide with
+ * Tailwind’s `text-input` color utility (`--color-input` is the input border).
+ */
+@utility text-type-input {
   font-size: var(--caretip-input-size);
   line-height: 1.45;
   letter-spacing: -0.006em;

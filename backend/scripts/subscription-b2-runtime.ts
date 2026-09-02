@@ -17,12 +17,16 @@ import {
 } from "../src/config/subscriptionCapabilities.js";
 import { buildNestedSubscriptionCreateData } from "../src/services/subscription.service.js";
 import {
+  PLAN_LIMIT_EXCEEDED_CODE,
   getSubscriptionTierForBusinessId,
   hasFeature,
   hasFeatureForTier,
+  isEntitlementDeniedError,
   maskEmployeeGoalsInResponse,
 } from "../src/services/subscriptionEntitlement.service.js";
-import { createLocationForBusinessUser } from "../src/services/locations.service.js";
+import { createLocationForBusinessUser, deleteLocationForBusinessUser, listLocationsForBusinessUser, updateLocationForBusinessUser } from "../src/services/locations.service.js";
+import { createTableForBusinessUser, listTablesForBusinessUser } from "../src/services/tables.service.js";
+import { updateManagerBusinessProfile } from "../src/services/business.service.js";
 
 const BASIC_CAPS: SubscriptionCapability[] = [
   "tipManagement",
@@ -31,6 +35,7 @@ const BASIC_CAPS: SubscriptionCapability[] = [
   "tableQr",
   "basicAnalytics",
   "qrTemplates",
+  "physicalQrPrinting",
   "teamManagement",
 ];
 
@@ -78,6 +83,28 @@ async function createTestBusiness(
   return { businessId: user.business.id, userId: user.id };
 }
 
+async function createUnentitledTestBusiness(): Promise<{ businessId: string; userId: string }> {
+  const tag = `b2-none-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+  const passwordHash = await bcrypt.hash("TestPass1!", 10);
+  const user = await prisma.user.create({
+    data: {
+      email: `${tag}@caretip-test.local`,
+      passwordHash,
+      role: "MANAGER",
+      emailVerified: true,
+      business: {
+        create: {
+          name: `${tag} venue`,
+          slug: `${tag}-venue`,
+        },
+      },
+    },
+    include: { business: true },
+  });
+  if (!user.business) throw new Error("business missing after create");
+  return { businessId: user.business.id, userId: user.id };
+}
+
 function testTierMatrix(): boolean {
   let ok = true;
   for (const feature of BASIC_CAPS) {
@@ -116,19 +143,39 @@ function testTipsQueryHelpers(): boolean {
     fail("business tips: scope=full should require advanced analytics");
     ok = false;
   }
+  if (!businessTipsQueryRequiresAdvancedAnalytics({ scope: "analytics" })) {
+    fail("business tips: scope=analytics should require advanced analytics");
+    ok = false;
+  }
   if (businessTipsQueryRequiresAdvancedAnalytics({ range: "week" })) {
     fail("business tips: preset range only should not require advanced analytics");
     ok = false;
   }
-  if (!employeeTipsListQueryRequiresAdvancedAnalytics({ range: "custom" })) {
-    fail("employee tips list: custom range should require advanced analytics");
+  if (businessTipsQueryRequiresAdvancedAnalytics({ employeeId: "emp-1" })) {
+    fail("business tips: employee filter must not require advanced analytics");
+    ok = false;
+  }
+  if (businessTipsQueryRequiresAdvancedAnalytics({ locationId: "loc-1" })) {
+    fail("business tips: location filter must not require advanced analytics");
+    ok = false;
+  }
+  if (businessTipsQueryRequiresAdvancedAnalytics({ tableId: "tbl-1" })) {
+    fail("business tips: table filter must not require advanced analytics");
+    ok = false;
+  }
+  if (businessTipsQueryRequiresAdvancedAnalytics({ range: "custom" })) {
+    fail("business tips: custom range must not require advanced analytics");
+    ok = false;
+  }
+  if (employeeTipsListQueryRequiresAdvancedAnalytics({ range: "custom" })) {
+    fail("employee tips list: custom range must not require advanced analytics");
     ok = false;
   }
   if (employeeTipsListQueryRequiresAdvancedAnalytics({ range: "month" })) {
     fail("employee tips list: preset month should not require advanced analytics");
     ok = false;
   }
-  if (ok) pass("tips query helpers: basic vs premium access rules");
+  if (ok) pass("tips query helpers: filters operational, reporting scopes remain Pro");
   return ok;
 }
 
@@ -203,13 +250,25 @@ async function testMultiLocationBasicCap(): Promise<boolean> {
     fail("basic tier should not create a second location");
     return false;
   } catch (err) {
-    const msg = err instanceof Error ? err.message : String(err);
-    if (!msg.includes("one location")) {
-      fail(`basic second location: unexpected error: ${msg}`);
+    if (!isEntitlementDeniedError(err)) {
+      const msg = err instanceof Error ? err.message : String(err);
+      fail(`basic second location: expected quota entitlement error, got: ${msg}`);
+      return false;
+    }
+    if (err.payload.code !== PLAN_LIMIT_EXCEEDED_CODE) {
+      fail(`basic second location: expected PLAN_LIMIT_EXCEEDED, got ${err.payload.code}`);
+      return false;
+    }
+    if (!err.payload.message.includes("one location")) {
+      fail(`basic second location: unexpected message: ${err.payload.message}`);
+      return false;
+    }
+    if (/active subscription is required/i.test(err.payload.message)) {
+      fail("basic second location must not use subscription-required copy");
       return false;
     }
   }
-  pass("multi-location: basic capped at one location on create");
+  pass("multi-location: basic first location allowed, second blocked as quota");
   return true;
 }
 
@@ -218,6 +277,112 @@ async function testMultiLocationPremiumUnlimited(): Promise<boolean> {
   await createLocationForBusinessUser(userId, "Site A");
   await createLocationForBusinessUser(userId, "Site B");
   pass("multi-location: premium may create multiple locations");
+  return true;
+}
+
+async function testTablesBasicCap(): Promise<boolean> {
+  const { userId } = await createTestBusiness(BusinessSubscriptionTier.basic);
+  const loc = await createLocationForBusinessUser(userId, "Dining room");
+  await createTableForBusinessUser(userId, { name: "Table 1", locationId: loc.id });
+  try {
+    await createTableForBusinessUser(userId, { name: "Table 2", locationId: loc.id });
+    fail("basic tier should not create a second table");
+    return false;
+  } catch (err) {
+    if (!isEntitlementDeniedError(err)) {
+      const msg = err instanceof Error ? err.message : String(err);
+      fail(`basic second table: expected quota entitlement error, got: ${msg}`);
+      return false;
+    }
+    if (err.payload.code !== PLAN_LIMIT_EXCEEDED_CODE) {
+      fail(`basic second table: expected PLAN_LIMIT_EXCEEDED, got ${err.payload.code}`);
+      return false;
+    }
+    if (!err.payload.message.includes("one table")) {
+      fail(`basic second table: unexpected message: ${err.payload.message}`);
+      return false;
+    }
+    if (/active subscription is required/i.test(err.payload.message)) {
+      fail("basic second table must not use subscription-required copy");
+      return false;
+    }
+    if (/multi-location/i.test(err.payload.message)) {
+      fail("basic second table must not use multi-location copy");
+      return false;
+    }
+  }
+  pass("tables: basic first table allowed, second blocked as quota");
+  return true;
+}
+
+async function testOperationalAccessWithoutEntitlement(): Promise<boolean> {
+  const unentitled = await createUnentitledTestBusiness();
+  const other = await createTestBusiness(BusinessSubscriptionTier.basic);
+  const loc = await prisma.location.create({
+    data: { name: "Owned site", businessId: unentitled.businessId },
+  });
+  await prisma.table.create({
+    data: {
+      name: "Owned table",
+      locationId: loc.id,
+      qrSlug: `t-${unentitled.businessId.slice(0, 12)}`,
+    },
+  });
+
+  const listed = await listLocationsForBusinessUser(unentitled.userId);
+  if (!listed.some((row) => row.id === loc.id)) {
+    fail("unentitled manager must GET their own locations");
+    return false;
+  }
+  const tables = await listTablesForBusinessUser(unentitled.userId);
+  if (!tables.some((row) => row.name === "Owned table")) {
+    fail("unentitled manager must GET their own tables");
+    return false;
+  }
+
+  const renamed = await updateLocationForBusinessUser(unentitled.userId, loc.id, "Renamed site");
+  if (renamed.name !== "Renamed site") {
+    fail("unentitled manager must edit an owned location");
+    return false;
+  }
+
+  try {
+    await updateLocationForBusinessUser(other.userId, loc.id, "Hijack");
+    fail("cross-business location update must be rejected");
+    return false;
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    if (!/not found/i.test(msg)) {
+      fail(`cross-business update: unexpected error ${msg}`);
+      return false;
+    }
+  }
+
+  await updateManagerBusinessProfile(unentitled.userId, { name: "Unentitled venue" });
+
+  await deleteLocationForBusinessUser(unentitled.userId, loc.id);
+  const afterDelete = await listLocationsForBusinessUser(unentitled.userId);
+  if (afterDelete.some((row) => row.id === loc.id)) {
+    fail("owned location delete did not remove the row");
+    return false;
+  }
+
+  pass("operational GET/edit/delete locations+tables do not require a subscription");
+  return true;
+}
+
+async function testBasicProfileAndLocationLifecycle(): Promise<boolean> {
+  const { userId } = await createTestBusiness(BusinessSubscriptionTier.basic);
+  await updateManagerBusinessProfile(userId, { name: "Basic profile venue" });
+  const loc = await createLocationForBusinessUser(userId, "First site");
+  const edited = await updateLocationForBusinessUser(userId, loc.id, "First site edited");
+  if (edited.name !== "First site edited") {
+    fail("basic manager must edit the existing location");
+    return false;
+  }
+  await deleteLocationForBusinessUser(userId, loc.id);
+  await createLocationForBusinessUser(userId, "Recreated site");
+  pass("basic profile edit, location edit/delete, and recreate-after-delete follow quota");
   return true;
 }
 
@@ -230,6 +395,9 @@ async function main() {
   ok = (await testHasFeatureDbTiers()) && ok;
   ok = (await testMultiLocationBasicCap()) && ok;
   ok = (await testMultiLocationPremiumUnlimited()) && ok;
+  ok = (await testTablesBasicCap()) && ok;
+  ok = (await testOperationalAccessWithoutEntitlement()) && ok;
+  ok = (await testBasicProfileAndLocationLifecycle()) && ok;
 
   if (capabilitiesForTier(BusinessSubscriptionTier.basic).length !== BASIC_CAPS.length) {
     fail("basic tier capability count mismatch");

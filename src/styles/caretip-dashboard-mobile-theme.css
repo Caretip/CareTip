@@ -70,8 +70,8 @@
   }
 
   .caretip-dashboard-shell .employee-dashboard-hero .employee-hero-chart-frame--photo {
-    border-color: hsl(var(--border) / 0.88) !important;
-    background: hsl(var(--card)) !important;
+    border: none !important;
+    background: transparent !important;
   }
 
   /* ── Chart / panel shells ── */
@@ -441,7 +441,7 @@
   }
 
   .caretip-dashboard-shell .employee-dashboard-hero .employee-hero-chart-frame--photo {
-    border-radius: 1rem !important;
+    border-radius: 0 !important;
     box-shadow: none !important;
   }
 

@@ -697,6 +697,14 @@ function sectionRegressionFiles() {
     pass("cart order creates parent + line items with shipping/contact snapshots");
   } else fail("order create shipping snapshots / line items");
 
+  if (
+    orderService.includes("where: { businessId }") &&
+    orderService.includes('orderBy: { placedAt: "desc" }') &&
+    orderService.includes("take: 50")
+  ) {
+    pass("business order history filters by businessId and sorts by placedAt (indexed)");
+  } else fail("business physical QR order list must use businessId + placedAt");
+
   const pricingService = readFileSync(
     path.join(root, "backend/src/services/physicalQr/physicalQrPricing.service.ts"),
     "utf8",

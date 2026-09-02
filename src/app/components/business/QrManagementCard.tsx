@@ -310,9 +310,13 @@ export const QrManagementCard = memo(function QrManagementCard({
           </div>
         ) : null}
         <div className="flex flex-wrap justify-end gap-2">
-          <Button type="button" variant="outline" size="sm" onClick={() => onCopy(item.id, item.qrUrl)}>
-            <Copy className="mr-2 h-4 w-4" />
-            {t("business.qrPage.copyUrlAria")}
+          <Button type="button" variant="outline" size="sm" onClick={() => void onCopy(item.id, item.qrUrl)}>
+            {copiedId === item.id ? (
+              <Check className="mr-2 h-4 w-4" />
+            ) : (
+              <Copy className="mr-2 h-4 w-4" />
+            )}
+            {copiedId === item.id ? t("common.copied") : t("business.qrPage.copyUrlAria")}
           </Button>
           <Button
             type="button"
@@ -369,9 +373,9 @@ export const QrManagementCard = memo(function QrManagementCard({
                 <code className="flex-1 truncate font-mono text-xs text-foreground">{item.qrUrl}</code>
                 <button
                   type="button"
-                  onClick={() => onCopy(item.id, item.qrUrl)}
+                  onClick={() => void onCopy(item.id, item.qrUrl)}
                   className="flex-shrink-0 rounded-lg p-2 transition-colors hover:bg-background"
-                  aria-label={t("business.qrPage.copyUrlAria")}
+                  aria-label={copiedId === item.id ? t("common.copied") : t("business.qrPage.copyUrlAria")}
                 >
                   {copiedId === item.id ? (
                     <Check className="h-4 w-4 text-primary" />
@@ -457,9 +461,9 @@ export const QrManagementCard = memo(function QrManagementCard({
               <code className="flex-1 truncate font-mono text-xs text-foreground">{item.qrUrl}</code>
               <button
                 type="button"
-                onClick={() => onCopy(item.id, item.qrUrl)}
+                onClick={() => void onCopy(item.id, item.qrUrl)}
                 className="flex-shrink-0 rounded-lg p-2 transition-colors hover:bg-background"
-                aria-label={t("business.qrPage.copyUrlAria")}
+                aria-label={copiedId === item.id ? t("common.copied") : t("business.qrPage.copyUrlAria")}
               >
                 {copiedId === item.id ? (
                   <Check className="h-4 w-4 text-primary" />

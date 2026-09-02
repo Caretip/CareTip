@@ -108,6 +108,12 @@
   box-shadow: none !important;
 }
 
+.caretip-dashboard-shell.platform-dashboard .platform-admin-overview-hero {
+  border: none !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
 .caretip-dashboard-shell .platform-admin-hero__atmosphere {
   display: none !important;
 }
@@ -154,6 +160,49 @@
   box-shadow: none !important;
   text-shadow: none !important;
   backdrop-filter: none !important;
+}
+
+.caretip-dashboard-shell .employee-dashboard-hero .employee-hero-shell {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
+}
+
+.caretip-dashboard-shell.employee-dashboard .employee-dashboard-fix-prompt {
+  width: 100%;
+  max-width: none;
+  margin-bottom: 1rem;
+  border: none !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+}
+
+.caretip-dashboard-shell.employee-dashboard .dashboard-inbox-page--flush {
+  width: 100%;
+  max-width: none;
+}
+
+.caretip-dashboard-shell.employee-dashboard .dashboard-inbox-page--flush .caretip-mobile-notifications-inbox {
+  max-width: none;
+}
+
+.caretip-dashboard-shell.employee-dashboard .dashboard-inbox-page--flush .inbox-feed-panel {
+  width: 100%;
+  border: none !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+.caretip-dashboard-shell.employee-dashboard .employee-tip-goals-surface {
+  width: 100%;
+  background: transparent;
+  border: none;
+  box-shadow: none;
 }
 
 .caretip-dashboard-shell .business-hero-illustration-glow,
@@ -242,10 +291,11 @@
   }
 
   .caretip-dashboard-shell .employee-dashboard-hero .employee-hero-chart-frame--photo {
-    border: 1px solid hsl(var(--border) / 0.88);
-    background: hsl(var(--card));
-    border-radius: 1rem;
-    overflow: hidden;
+    border: none;
+    background: transparent;
+    border-radius: 0;
+    overflow: visible;
+    box-shadow: none;
   }
 
   .caretip-dashboard-shell .business-hero-pulse-card__value {

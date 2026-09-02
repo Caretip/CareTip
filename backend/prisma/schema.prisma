@@ -989,6 +989,8 @@ model Table {
   employeeTableAssignments EmployeeTableAssignment[]
   qrScanEvents             QrScanEvent[]
 
+  /// Tables are always listed/counted via location (and location.businessId join).
+  @@index([locationId])
   @@map("venue_tables")
 }
 

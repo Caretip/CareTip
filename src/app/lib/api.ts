@@ -18,6 +18,8 @@ import {
   GOOGLE_ACCOUNT_NOT_REGISTERED_CODE,
   PENDING_VERIFICATION_CODE,
   SUBSCRIPTION_REQUIRED_CODE,
+  PLAN_CAPABILITY_REQUIRED_CODE,
+  PLAN_LIMIT_EXCEEDED_CODE,
 } from "./apiError";
 import { resolveApiBaseUrl } from "./apiOrigin";
 import { logClientError } from "./clientLog";
@@ -422,7 +424,10 @@ async function handleRes<T>(res: Response, opts?: { silent?: boolean }): Promise
       (body.code === PENDING_VERIFICATION_CODE ||
         body.message?.toLowerCase().includes("pending verification"));
     const isExpectedSubscriptionRequired =
-      res.status === 403 && body.code === SUBSCRIPTION_REQUIRED_CODE;
+      res.status === 403 &&
+      (body.code === SUBSCRIPTION_REQUIRED_CODE ||
+        body.code === PLAN_CAPABILITY_REQUIRED_CODE ||
+        body.code === PLAN_LIMIT_EXCEEDED_CODE);
     if (
       !opts?.silent &&
       !(refreshPath && res.status >= 500) &&
@@ -2549,6 +2554,13 @@ export interface EmployeeSelfProfile {
 const EMPLOYEE_PROFILE_CACHE_TTL_MS = 30_000;
 let employeeProfileCache: { data: EmployeeSelfProfile; at: number } | null = null;
 let employeeProfileInflight: Promise<EmployeeSelfProfile> | null = null;
+
+/** Synchronous read of the in-memory employee profile TTL cache (no network). */
+export function peekEmployeeProfileCache(): EmployeeSelfProfile | null {
+  if (!employeeProfileCache) return null;
+  if (Date.now() - employeeProfileCache.at >= EMPLOYEE_PROFILE_CACHE_TTL_MS) return null;
+  return employeeProfileCache.data;
+}
 
 export function clearEmployeeProfileClientCache(): void {
   employeeProfileCache = null;

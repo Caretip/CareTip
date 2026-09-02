@@ -13,6 +13,8 @@ import {
   OAUTH_SIGN_IN_FAILED_CODE,
   OAUTH_EMAIL_REQUIRED_CODE,
   OAUTH_TOKEN_VERIFICATION_FAILED_CODE,
+  PLAN_CAPABILITY_REQUIRED_CODE,
+  PLAN_LIMIT_EXCEEDED_CODE,
   SUBSCRIPTION_REQUIRED_CODE,
 } from "./apiError";
 import { translateFriendlyMessageToDe } from "./friendlyMessageDe";
@@ -362,7 +364,19 @@ export function toUserFriendlyMessage(error: unknown, options?: ToUserFriendlyMe
 
   if (isApiRequestError(error) && error.code === SUBSCRIPTION_REQUIRED_CODE) {
     return localizeFriendlyMessageCopy(
-      error.message?.trim() || "This feature requires a Premium subscription.",
+      error.message?.trim() || "An active subscription is required to use this feature.",
+    );
+  }
+
+  if (isApiRequestError(error) && error.code === PLAN_CAPABILITY_REQUIRED_CODE) {
+    return localizeFriendlyMessageCopy(
+      error.message?.trim() || "This feature is available on Pro.",
+    );
+  }
+
+  if (isApiRequestError(error) && error.code === PLAN_LIMIT_EXCEEDED_CODE) {
+    return localizeFriendlyMessageCopy(
+      error.message?.trim() || "You've reached a limit on your current plan.",
     );
   }
 

@@ -1,8 +1,10 @@
 import { prisma } from "../prisma.js";
 import {
+  EntitlementDeniedError,
   assertPlanLimitForBusiness,
   planLimitExceededPayload,
   resolveSubscriptionEntitlements,
+  subscriptionRequiredPayload,
 } from "./subscriptionEntitlement.service.js";
 import { emitBusinessDataChanged } from "../socket/socketEmitters.js";
 import { invalidateBusinessStatsCache } from "./business.service.js";
@@ -36,13 +38,15 @@ export async function createLocationForBusinessUser(
   }
   const entitlements = await resolveSubscriptionEntitlements(business.id);
   if (!entitlements.hasActiveEntitlements) {
-    throw new Error("An active subscription is required to manage locations.");
+    throw new EntitlementDeniedError(403, subscriptionRequiredPayload("locationQr"));
   }
   const count = await prisma.location.count({ where: { businessId: business.id } });
   const limitCheck = await assertPlanLimitForBusiness(business.id, "locations", count);
   if (!limitCheck.ok) {
-    const payload = planLimitExceededPayload("locations", limitCheck.tier);
-    throw new Error(payload.message);
+    if (limitCheck.reason === "no_entitlement") {
+      throw new EntitlementDeniedError(403, subscriptionRequiredPayload("locationQr"));
+    }
+    throw new EntitlementDeniedError(403, planLimitExceededPayload("locations", limitCheck.tier));
   }
   const desc = description?.trim();
   const loc = await prisma.location.create({
@@ -89,10 +93,6 @@ export async function updateLocationForBusinessUser(
     throw new Error("Location name is required");
   }
   const businessId = await resolveBusinessIdForUser(userId);
-  const entitlements = await resolveSubscriptionEntitlements(businessId);
-  if (!entitlements.hasActiveEntitlements) {
-    throw new Error("An active subscription is required to manage locations.");
-  }
   await assertLocationOwnedByBusiness(locationId, businessId);
   const data: { name: string; description?: string | null } = { name: trimmed };
   if (typeof description === "string") {
@@ -110,10 +110,6 @@ export async function updateLocationForBusinessUser(
 
 export async function deleteLocationForBusinessUser(userId: string, locationId: string) {
   const businessId = await resolveBusinessIdForUser(userId);
-  const entitlements = await resolveSubscriptionEntitlements(businessId);
-  if (!entitlements.hasActiveEntitlements) {
-    throw new Error("An active subscription is required to manage locations.");
-  }
   await assertLocationOwnedByBusiness(locationId, businessId);
   // Cascades venue tables; tip history / employees keep rows with locationId set null.
   await prisma.location.delete({ where: { id: locationId } });

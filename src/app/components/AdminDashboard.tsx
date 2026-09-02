@@ -17,8 +17,8 @@ import {
   type PlatformAnalytics,
   type PlatformSubscriptionMonitoring,
 } from "../lib/api";
-import { logClientError } from "../lib/clientLog";
 import { useAuth } from "../hooks/useAuth";
+import { logClientError } from "../lib/clientLog";
 import { PlatformStatCard } from "./platform/PlatformStatCard";
 import { PlatformOverviewTeaserCard } from "./platform/PlatformOverviewTeaserCard";
 import { PlatformBusinessMobileCard } from "./platform/PlatformBusinessMobileCard";
@@ -94,7 +94,11 @@ export const AdminDashboard = memo(function AdminDashboard() {
   );
 
   useEffect(() => {
+    if (!authHydrated || !sessionValidated || user?.role !== "platform_admin") return;
+
     let cancelled = false;
+    let heavyIdleId: number | null = null;
+    let heavyTimeoutId: ReturnType<typeof setTimeout> | null = null;
 
     const loadCritical = async () => {
       setCriticalLoading(true);
@@ -183,15 +187,31 @@ export const AdminDashboard = memo(function AdminDashboard() {
       }
     };
 
-    // Fire stages together; each section settles on its own loading flag (no global gate).
+    // KPI + secondary load immediately. Heavy commercial/analytics waits until idle
+    // so it does not contend with health/stats/onboarding on first paint.
     void loadCritical();
     void loadSecondary();
-    void loadHeavy();
+    if (typeof requestIdleCallback === "function") {
+      heavyIdleId = requestIdleCallback(
+        () => {
+          if (!cancelled) void loadHeavy();
+        },
+        { timeout: 1200 },
+      );
+    } else {
+      heavyTimeoutId = window.setTimeout(() => {
+        if (!cancelled) void loadHeavy();
+      }, 400);
+    }
 
     return () => {
       cancelled = true;
+      if (heavyIdleId != null && typeof cancelIdleCallback === "function") {
+        cancelIdleCallback(heavyIdleId);
+      }
+      if (heavyTimeoutId != null) window.clearTimeout(heavyTimeoutId);
     };
-  }, []);
+  }, [authHydrated, sessionValidated, user?.role]);
 
   const activeBusinessesCount = onboardingMetrics?.approved ?? 0;
   const pendingOnboardingCount = onboardingMetrics?.submitted ?? 0;
@@ -354,24 +374,30 @@ export const AdminDashboard = memo(function AdminDashboard() {
               ) : onboardingTeaser.length === 0 ? (
                 <p className="text-sm text-muted-foreground">{t("admin.overview.verification.empty")}</p>
               ) : (
-                <ul className="space-y-2">
-                  {onboardingTeaser.map((b) => (
-                    <li key={b.id} className="hidden sm:block">
-                      <Link
-                        to={`${PLATFORM_BUSINESS_BASE}/${b.id}`}
-                        className="flex items-center justify-between rounded-lg border border-border/80 px-3 py-2 text-sm transition-colors hover:bg-muted/40"
-                      >
-                        <span className="font-medium text-foreground">{b.name}</span>
-                        <span className="text-xs text-muted-foreground">{b.ownerEmail}</span>
-                      </Link>
-                    </li>
-                  ))}
-                  <div className="space-y-2 sm:hidden">
+                <>
+                  <ul className="hidden divide-y divide-border/60 sm:block">
                     {onboardingTeaser.map((b) => (
-                      <PlatformBusinessMobileCard key={b.id} business={b} />
+                      <li key={b.id}>
+                        <Link
+                          to={`${PLATFORM_BUSINESS_BASE}/${b.id}`}
+                          className="flex items-center justify-between py-2.5 text-sm transition-colors hover:text-foreground"
+                        >
+                          <span className="font-medium text-foreground">{b.name}</span>
+                          <span className="text-xs text-muted-foreground">{b.ownerEmail}</span>
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                  <div className="divide-y divide-border/60 sm:hidden">
+                    {onboardingTeaser.map((b) => (
+                      <PlatformBusinessMobileCard
+                        key={b.id}
+                        business={b}
+                        className="rounded-none border-0 bg-transparent p-0 py-2.5 shadow-none"
+                      />
                     ))}
                   </div>
-                </ul>
+                </>
               )}
             </PlatformOverviewTeaserCard>
 
@@ -399,18 +425,18 @@ export const AdminDashboard = memo(function AdminDashboard() {
           viewAllLabel={t("admin.overview.viewAll")}
           metrics={[]}
           loading={secondaryLoading}
-          className="max-w-3xl"
+          className="w-full max-w-none"
         >
           {secondaryLoading ? (
             <p className="text-sm text-muted-foreground">{t("admin.overview.recentActivity.empty")}</p>
           ) : recentLogs.length === 0 ? (
             <p className="text-sm text-muted-foreground">{t("admin.overview.recentActivity.empty")}</p>
           ) : (
-            <ul className="space-y-2">
+            <ul className="divide-y divide-border/60">
               {recentLogs.map((row, i) => (
                 <li
                   key={`${row.action}-${row.at}-${i}`}
-                  className="flex flex-col gap-0.5 rounded-lg border border-border/70 px-3 py-2 text-sm sm:flex-row sm:items-center sm:justify-between"
+                  className="flex flex-col gap-0.5 py-2.5 text-sm sm:flex-row sm:items-center sm:justify-between"
                 >
                   <span className="font-medium text-foreground">{row.action}</span>
                   <span className="text-xs text-muted-foreground">

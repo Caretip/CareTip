@@ -34,12 +34,13 @@ const EmployeeDashboardEarningsChart = lazy(() =>
   })),
 );
 import { useRequireAuth } from "../../hooks/useRequireAuth";
+import { useEmployeeEntitlementsContext } from "../../contexts/EmployeeEntitlementsContext";
+import { useSubscriptionEntitlements } from "../../hooks/useSubscriptionEntitlements";
 import { DashboardRealtimeStatusStrip } from "../../components/dashboard/DashboardRealtimeStatusStrip";
 import { DashboardRefreshIndicator } from "../../components/dashboard/DashboardRefreshIndicator";
 import { EmployeeDashboardRealtimeSync } from "../../components/employee/EmployeeDashboardRealtimeSync";
-import { getEmployeeProfile, ensureEmployeeSlug } from "../../lib/api";
+import { getEmployeeProfile, ensureEmployeeSlug, peekEmployeeProfileCache } from "../../lib/api";
 import { useEmployeeDashboardAnalytics } from "../../hooks/useEmployeeDashboardAnalytics";
-import { useSubscriptionEntitlements } from "../../hooks/useSubscriptionEntitlements";
 import { FeatureGate } from "../../components/subscription/FeatureGate";
 import { EmployeeDashboardMetricsGrid } from "../../components/employee/EmployeeDashboardMetricsGrid";
 import { DashboardAnalyticsPeriodToggle } from "../../components/dashboard/DashboardAnalyticsPeriodToggle";
@@ -69,6 +70,7 @@ import {
   devMockEmployeeSummary,
   shouldUseEmployeeDashboardDevDemo,
 } from "../../lib/devAnalyticsMocks";
+import { isEntitlementsSessionPrimed } from "../../lib/subscriptionEntitlementFastPath";
 import { isWalkthroughDemoEmployee } from "../../lib/walkthroughDemo";
 
 type AnalyticsTimeframe = "today" | "week" | "month";
@@ -82,12 +84,18 @@ export const EmployeeDashboard = memo(function EmployeeDashboard() {
 
   const dashboardEnabled = user?.role === "employee" && authReady;
 
-  const { advancedAnalyticsEnabled, hasFeature, ready: entitlementsReady } = useSubscriptionEntitlements({
-    enabled: dashboardEnabled,
-    role: user?.role === "employee" ? "employee" : null,
+  const employeeEntitlements = useEmployeeEntitlementsContext();
+  const fallbackEntitlements = useSubscriptionEntitlements({
+    enabled: dashboardEnabled && employeeEntitlements == null,
+    role: dashboardEnabled ? "employee" : null,
   });
+  const { advancedAnalyticsEnabled, hasFeature, ready: entitlementsReady } =
+    employeeEntitlements ?? fallbackEntitlements;
 
-  const dashboardDataReady = dashboardEnabled && entitlementsReady && sessionValidated;
+  const dashboardDataReady =
+    dashboardEnabled &&
+    sessionValidated &&
+    (entitlementsReady || isEntitlementsSessionPrimed());
 
   const {
     analyticsTimeframe,
@@ -133,15 +141,29 @@ export const EmployeeDashboard = memo(function EmployeeDashboard() {
 
   useEffect(() => {
     if (!authHydrated || !sessionValidated || !user || user.role !== "employee") return;
+    const applyProfile = (p: {
+      slug?: string | null;
+      businessSlug?: string | null;
+      id: string;
+      avatar?: string | null;
+      name?: string;
+    }) => {
+      setStaffSlug(p.slug ?? null);
+      setEmployeeBusinessSlug(p.businessSlug ?? null);
+      setEmployeeRecordId(p.id);
+      updateUser({ avatar: p.avatar ?? undefined, name: p.name });
+    };
+    const cached = peekEmployeeProfileCache();
+    if (cached) {
+      applyProfile(cached);
+      return;
+    }
     let cancelled = false;
     const loadProfile = async () => {
       try {
         const p = await getEmployeeProfile();
         if (cancelled) return;
-        setStaffSlug(p.slug ?? null);
-        setEmployeeBusinessSlug(p.businessSlug ?? null);
-        setEmployeeRecordId(p.id);
-        updateUser({ avatar: p.avatar ?? undefined, name: p.name });
+        applyProfile(p);
       } catch {
         if (cancelled) return;
         setStaffSlug(null);
@@ -339,7 +361,6 @@ export const EmployeeDashboard = memo(function EmployeeDashboard() {
     params.delete("qr");
     const next = params.toString();
     navigate(next ? `${location.pathname}?${next}` : location.pathname, { replace: true });
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- avoid URL-trigger loop
   }, [location.pathname, location.search, navigate, sessionValidated, user?.role, handleQrQuickAction]);
 
   if (!user) {
@@ -379,7 +400,7 @@ export const EmployeeDashboard = memo(function EmployeeDashboard() {
           actionsPlacement="belowText"
           mobileAlign="left"
           className="!mb-0"
-          cardClassName="border-0 bg-card shadow-none max-lg:border-0 max-lg:bg-transparent max-lg:shadow-none lg:rounded-[calc(1.75rem-3px)] lg:border-0 lg:bg-card lg:shadow-none"
+          cardClassName="employee-hero-shell border-0 bg-transparent shadow-none lg:rounded-none lg:border-0 lg:bg-transparent lg:shadow-none"
           badgeClassName="normal-case border-transparent bg-transparent px-0 py-0 text-[11px] max-lg:text-[12px] font-medium tracking-normal text-muted-foreground shadow-none"
           titleClassName="max-lg:!leading-[1.05] lg:!leading-[1.08] tracking-tight max-lg:mx-0 max-lg:max-w-[20ch] max-lg:text-left lg:max-w-[13ch] lg:text-left xl:text-[2.35rem]"
           descriptionClassName="!line-clamp-2 max-w-[34ch] leading-relaxed text-muted-foreground/90 max-lg:mx-0 max-lg:text-left lg:max-w-sm"
@@ -412,8 +433,7 @@ export const EmployeeDashboard = memo(function EmployeeDashboard() {
               <div
                 className={cn(
                   "employee-hero-chart-frame employee-hero-chart-frame--photo",
-                  "dashboard-hero-media-frame relative mx-auto w-full max-w-full min-h-0 overflow-hidden",
-                  "rounded-[1.75rem]",
+                  "relative mx-auto w-full max-w-full min-h-0 overflow-visible",
                 )}
               >
                 <MarketingPicture
@@ -503,18 +523,6 @@ export const EmployeeDashboard = memo(function EmployeeDashboard() {
                   </dd>
                 </div>
                 <div>
-                  <dt>{t("employee.hero.statMonthEarnings")}</dt>
-                  <dd>
-                    {showHeroMetricsSkeleton ? (
-                      <DashboardHeroMetricSkeleton variant="currency" />
-                    ) : (
-                      <span className="dashboard-hero-metric-value--live">
-                        <CountUpMetric value={displayCurrentMonthTotal} kind="eur" format={formatEur} />
-                      </span>
-                    )}
-                  </dd>
-                </div>
-                <div>
                   <dt>{t("employee.hero.statTotalSupporters")}</dt>
                   <dd>
                     {showHeroMetricsSkeleton ? (
@@ -597,6 +605,7 @@ export const EmployeeDashboard = memo(function EmployeeDashboard() {
             description={t("employee.dashboard.fixPhotoDesc")}
             actionLabel={t("employee.dashboard.fixPhotoAction")}
             actionTo="/employee/settings"
+            className="employee-dashboard-fix-prompt"
           />
 
           <motion.div

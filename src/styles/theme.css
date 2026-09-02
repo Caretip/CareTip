@@ -95,15 +95,22 @@
   input,
   textarea,
   select {
-    @apply font-sans text-input font-normal text-foreground;
+    @apply font-sans text-type-input font-normal text-foreground;
+    color: hsl(var(--foreground));
+  }
+
+  input:disabled,
+  textarea:disabled,
+  select:disabled {
+    color: hsl(var(--foreground) / 0.75);
   }
 
   input::placeholder,
   textarea::placeholder {
-    /* Secondary to typed values, still readable — avoid stacking extra opacity cuts */
-    color: hsl(var(--muted-foreground));
+    /* Example/hint text — muted vs typed values (`color` above) */
+    color: hsl(var(--muted-foreground) / 0.62);
     opacity: 1;
-    font-weight: 500;
+    font-weight: 400;
   }
 
   /* Autofill often washes text; force readable foreground on light/dark surfaces */

@@ -33,6 +33,7 @@ function messageOf(error: ReturnType<typeof axiosLike>): string {
 
 function isSubscriptionRequiredError(error: ReturnType<typeof axiosLike>): boolean {
   if (codeOf(error) === "SUBSCRIPTION_REQUIRED") return true;
+  if (codeOf(error) === "PLAN_CAPABILITY_REQUIRED") return true;
   if (codeOf(error) === "PLAN_LIMIT_EXCEEDED") return true;
   return /subscription is required|plan limit/i.test(messageOf(error));
 }
@@ -70,12 +71,18 @@ function run() {
   assert.equal(isPremiumAnalyticsTier("premium"), true);
 
   const sub = axiosLike(403, "SUBSCRIPTION_REQUIRED", "An active subscription is required");
+  const cap = axiosLike(403, "PLAN_CAPABILITY_REQUIRED", "This feature is available on Pro.");
+  const quota = axiosLike(403, "PLAN_LIMIT_EXCEEDED", "Your plan supports one table.");
   const onboard = axiosLike(403, "ONBOARDING_INCOMPLETE", "Complete onboarding before accessing");
   const auth = axiosLike(401, "AUTH_REQUIRED", "Authentication required");
   const perm = axiosLike(403, undefined, "Insufficient permissions");
 
   assert.equal(isSubscriptionRequiredError(sub), true);
   assert.equal(isPermissionError(sub), false);
+  assert.equal(isSubscriptionRequiredError(cap), true);
+  assert.equal(isPermissionError(cap), false);
+  assert.equal(isSubscriptionRequiredError(quota), true);
+  assert.equal(isPermissionError(quota), false);
   assert.equal(isOnboardingIncompleteError(onboard), true);
   assert.equal(isPermissionError(onboard), false);
   assert.equal(isAuthenticationError(auth), true);

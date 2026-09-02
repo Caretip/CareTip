@@ -6,6 +6,10 @@ import { toast } from "sonner";
 import { useRequireAuth } from "../../hooks/useRequireAuth";
 import { useSubscriptionEntitlements } from "../../hooks/useSubscriptionEntitlements";
 import { LocationsMultiLocationUpgradeCard } from "../../components/business/LocationsMultiLocationUpgradeCard";
+import {
+  isAtLocationCap,
+  shouldShowMultiLocationUpgradeCard,
+} from "../../lib/locationsPageQuotaUi";
 import { fetchLocationsCached, invalidateVenueCatalog } from "../../lib/businessVenueCatalog";
 import {
   createLocationAPI,
@@ -91,9 +95,16 @@ export function LocationsPage() {
     void load();
   }, [load]);
 
-  const atSingleLocationCap =
-    ready && limits.maxLocations != null && locations.length >= limits.maxLocations;
-  const showBasicUpgradeCard = ready && !hasFeature("multiLocation");
+  const atSingleLocationCap = isAtLocationCap({
+    ready,
+    maxLocations: limits.maxLocations,
+    locationCount: locations.length,
+  });
+  const showBasicUpgradeCard = shouldShowMultiLocationUpgradeCard({
+    ready,
+    hasMultiLocation: hasFeature("multiLocation"),
+    atLocationCap: atSingleLocationCap,
+  });
 
   const isInitialLocationsLoad = loading && locations.length === 0;
   const { showInitialSkeleton } = useBusinessPageBoot("locations", isInitialLocationsLoad);
@@ -206,12 +217,10 @@ export function LocationsPage() {
         {showInitialSkeleton ? (
           <LocationCardGridSkeleton />
         ) : locations.length === 0 ? (
-          showBasicUpgradeCard ? null : (
-            <div className={cn(businessUi.cardStatic, "py-16 text-center text-muted-foreground border-dashed")}>
-              <MapPin className="w-10 h-10 mx-auto mb-3 opacity-50" />
-              <p>{t("business.locationsPage.empty")}</p>
-            </div>
-          )
+          <div className={cn(businessUi.cardStatic, "py-16 text-center text-muted-foreground border-dashed")}>
+            <MapPin className="w-10 h-10 mx-auto mb-3 opacity-50" />
+            <p>{t("business.locationsPage.empty")}</p>
+          </div>
         ) : (
           <ul className="grid gap-3 sm:grid-cols-2">
             {locations.map((loc) => (

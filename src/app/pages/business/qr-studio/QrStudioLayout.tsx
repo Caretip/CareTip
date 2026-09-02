@@ -7,15 +7,8 @@ import {
   resolveQrStudioAccessBlock,
 } from "../../../components/business/QrStudioAccessPanel";
 import { BusinessBrandingProvider } from "../../../contexts/BusinessBrandingContext";
-import { useBusinessEntitlementsContext } from "../../../contexts/BusinessEntitlementsContext";
-import { useSubscriptionEntitlements } from "../../../hooks/useSubscriptionEntitlements";
 import { useRequireAuth } from "../../../hooks/useRequireAuth";
 import { canUseProductionQr } from "../../../lib/businessVerificationCapabilities";
-import {
-  isEntitlementsSessionPrimed,
-  sessionHasActiveEntitlements,
-} from "../../../lib/subscriptionEntitlementFastPath";
-import { FeatureGatePending } from "../../../components/subscription/FeatureGatePending";
 import { cn } from "@/lib/utils";
 import { businessUi } from "@/app/components/business/businessDashboardUi";
 
@@ -23,28 +16,10 @@ export function QrStudioLayout() {
   const { t } = useTranslation();
   const { pathname } = useLocation();
   const { user } = useRequireAuth();
-  const businessContext = useBusinessEntitlementsContext();
-  const fallbackEntitlements = useSubscriptionEntitlements({
-    enabled: user?.role === "business" && businessContext == null,
-    role: user?.role === "business" ? "business" : null,
-  });
-  const { ready: entitlementsReady, hasActiveEntitlements } = businessContext ?? fallbackEntitlements;
 
   const isPrintStudio = pathname.includes("/qr-studio/print");
   const canUseQr = canUseProductionQr(user?.onboardingVerificationStatus, Boolean(user?.impersonation));
-  const entitlementsKnown = entitlementsReady || isEntitlementsSessionPrimed();
-  const operationalAccess = entitlementsReady
-    ? hasActiveEntitlements
-    : sessionHasActiveEntitlements();
-
-  const accessBlock = resolveQrStudioAccessBlock(
-    entitlementsKnown,
-    operationalAccess,
-    canUseQr,
-  );
-
-  const showOutlet = entitlementsReady && accessBlock == null;
-  const showPending = !entitlementsReady && accessBlock == null;
+  const accessBlock = resolveQrStudioAccessBlock(canUseQr);
 
   return (
     <div className={cn("min-w-0 w-full overflow-x-clip", businessUi.modulePageShell)}>
@@ -72,13 +47,11 @@ export function QrStudioLayout() {
           <div className="py-8 sm:py-12">
             <QrStudioAccessPanel reason={accessBlock} onboardingVerificationStatus={user?.onboardingVerificationStatus} />
           </div>
-        ) : showPending ? (
-          <FeatureGatePending className="mx-auto max-w-2xl" />
-        ) : showOutlet ? (
+        ) : (
           <BusinessBrandingProvider canEdit>
             <Outlet />
           </BusinessBrandingProvider>
-        ) : null}
+        )}
       </div>
     </div>
   );

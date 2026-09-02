@@ -243,15 +243,8 @@ export function QrStudioAccessPanel({ reason, onboardingVerificationStatus, clas
 }
 
 export function resolveQrStudioAccessBlock(
-  entitlementsReady: boolean,
-  hasOperationalSubscription: boolean,
   canUseProductionQr: boolean,
 ): QrStudioAccessBlockReason | null {
-  if (!entitlementsReady) return null;
-  const needsSubscription = !hasOperationalSubscription;
-  const needsVerification = !canUseProductionQr;
-  if (!needsSubscription && !needsVerification) return null;
-  if (needsSubscription && needsVerification) return "both";
-  if (needsSubscription) return "subscription";
-  return "verification";
+  if (!canUseProductionQr) return "verification";
+  return null;
 }

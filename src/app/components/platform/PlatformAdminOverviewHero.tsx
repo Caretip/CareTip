@@ -53,7 +53,7 @@ export function PlatformAdminOverviewHero({ health, adminName, locale }: Platfor
 
   return (
     <section
-      className={cn(platformUi.overviewHero, "platform-admin-overview-hero mb-8 sm:mb-10")}
+      className={cn(platformUi.overviewHero, "platform-admin-overview-hero")}
       aria-labelledby="platform-overview-hero-title"
     >
       <div className="platform-admin-overview-hero__inner">

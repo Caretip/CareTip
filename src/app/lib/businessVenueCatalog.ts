@@ -1,7 +1,5 @@
 import { fetchLocations, fetchTables, type LocationDTO, type TableDTO } from "./api";
 import { isApiSubscriptionRequiredError } from "./apiError";
-import { hasSubscriptionCapability } from "./subscriptionCapabilities";
-import { getSubscriptionTierFromSession } from "./subscriptionSessionCache";
 import { createDashboardSwrStore } from "./dashboardSwrCache";
 import { trackVenueCatalogCacheHit, trackVenueCatalogCacheMiss, trackVenueCatalogFetch } from "./realtime/realtimeMetrics";
 
@@ -36,15 +34,10 @@ export async function fetchVenueCatalog(opts?: {
 
   const locations = await fetchLocations();
   let tables: TableDTO[] = [];
-  const tier = getSubscriptionTierFromSession();
-  const canLoadTables = !tier || hasSubscriptionCapability(tier, "tableQr");
-  if (canLoadTables) {
-    try {
-      tables = await fetchTables({ silent: true });
-    } catch (err) {
-      // Table QR is Premium — Starter accounts should not error when the catalog preloads.
-      if (!isApiSubscriptionRequiredError(err)) throw err;
-    }
+  try {
+    tables = await fetchTables({ silent: true });
+  } catch (err) {
+    if (!isApiSubscriptionRequiredError(err)) throw err;
   }
 
   const entry: VenueCatalogEntry = {

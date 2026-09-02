@@ -137,7 +137,7 @@ export function isEmployeeTipsScopeAllowedForTier(
 /** @deprecated Use getPlanLimitForResource(tier, "locations") */
 export const BASIC_MAX_LOCATIONS = PLAN_LIMITS.basic.maxLocations ?? 1;
 
-/** Manager tips ledger: advanced filters / full scope require Premium+. */
+/** Manager tips reporting scopes require Premium+. Operational filters do not. */
 export function businessTipsQueryRequiresAdvancedAnalytics(query: {
   scope?: string;
   employeeId?: string;
@@ -147,20 +147,14 @@ export function businessTipsQueryRequiresAdvancedAnalytics(query: {
   from?: Date | null;
   to?: Date | null;
 }): boolean {
-  if (query.scope === "full" || query.scope === "analytics") return true;
-  if (query.employeeId || query.locationId || query.tableId) return true;
-  if (query.range === "custom") return true;
-  if (query.from || query.to) return true;
-  return false;
+  return query.scope === "full" || query.scope === "analytics";
 }
 
-/** Employee tip history: custom date ranges require Premium+. */
-export function employeeTipsListQueryRequiresAdvancedAnalytics(query: {
+/** Employee tip history listing is operational; reporting scopes stay on analytics APIs. */
+export function employeeTipsListQueryRequiresAdvancedAnalytics(_query: {
   range?: string;
   from?: Date | null;
   to?: Date | null;
 }): boolean {
-  if (query.range === "custom") return true;
-  if (query.from || query.to) return true;
   return false;
 }

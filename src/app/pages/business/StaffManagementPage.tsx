@@ -13,6 +13,7 @@ import {
   Phone,
   KeyRound,
   Copy,
+  Check,
   RefreshCw,
   Trash2,
   Users,
@@ -20,6 +21,7 @@ import {
   Plus,
 } from "lucide-react";
 import { useRequireAuth } from "../../hooks/useRequireAuth";
+import { useCopyFeedback } from "../../hooks/useCopyFeedback";
 import { useMinWidthMedia } from "@/lib/motionPerf";
 import { useSocket } from "../../hooks/useSocket";
 import { useRealtimeFallback } from "../../hooks/useRealtimeFallback";
@@ -243,9 +245,16 @@ function rosterNoteText(noteKey: StaffRosterNoteKey | null, t: (k: string) => st
   return t("business.staffPage.rosterPendingPassword");
 }
 
+function sameStringIdSet(a: string[], b: string[]): boolean {
+  if (a.length !== b.length) return false;
+  const set = new Set(a);
+  return b.every((id) => set.has(id));
+}
+
 export function StaffManagementPage() {
   const { t, i18n } = useTranslation();
   const { user, isBusiness, authHydrated, sessionValidated } = useRequireAuth();
+  const { copy: copyToClipboard, isCopied } = useCopyFeedback();
   const isLargeScreen = useMinWidthMedia(1024);
   const { hasFeature, advancedAnalyticsEnabled } = useSubscriptionEntitlements({
     enabled: isBusiness,
@@ -253,6 +262,7 @@ export function StaffManagementPage() {
   });
   const canGrowTeam = hasFeature("teamManagement");
   const canCreateCustomJobTitles = hasFeature("customJobTitles");
+  const canSetEmployeeGoals = hasFeature("employeeGoals");
   const [searchQuery, setSearchQuery] = useState("");
   const [showAddModal, setShowAddModal] = useState(false);
   const [addForm, setAddForm] = useState({
@@ -485,10 +495,8 @@ export function StaffManagementPage() {
 
   const handleCopyCode = async () => {
     if (!inviteCode) return;
-    try {
-      await navigator.clipboard.writeText(inviteCode);
-    } catch (err) {
-      logClientError("StaffManagementPage", err);
+    const ok = await copyToClipboard("invite", inviteCode);
+    if (!ok) {
       toastErr(t("business.staffPage.toastCopyFailed"));
     }
   };
@@ -595,28 +603,49 @@ export function StaffManagementPage() {
       toastErr(t("business.staffPage.toastCustomRoleProRequired"));
       return;
     }
-    let monthlyGoal: number | null | undefined = undefined;
-    if (editForm.monthlyGoal.trim() === "") {
-      monthlyGoal = null;
-    } else {
-      const n = parseFloat(editForm.monthlyGoal);
-      if (Number.isNaN(n) || n < 0) {
-        toastErr(t("business.staffPage.toastMonthlyGoalInvalid"));
-        return;
+    const previous = employees.find((e) => e.id === editForm.id);
+    const payload: {
+      name: string;
+      role: string;
+      email: string;
+      isActive: boolean;
+      monthlyGoal?: number | null;
+      locationId?: string | null;
+      tableIds?: string[];
+    } = {
+      name,
+      role,
+      email,
+      isActive: editForm.isActive,
+    };
+    if (canSetEmployeeGoals) {
+      const rawGoal = editForm.monthlyGoal.trim();
+      let nextGoal: number | null = null;
+      if (rawGoal !== "") {
+        const n = parseFloat(rawGoal);
+        if (Number.isNaN(n) || n < 0) {
+          toastErr(t("business.staffPage.toastMonthlyGoalInvalid"));
+          return;
+        }
+        nextGoal = n;
       }
-      monthlyGoal = n;
+      const prevGoal = previous?.monthlyGoal ?? null;
+      if (nextGoal !== prevGoal) {
+        payload.monthlyGoal = nextGoal;
+      }
+    }
+    const nextLocationId = editForm.locationId.trim() ? editForm.locationId : null;
+    const prevLocationId = previous?.locationId ?? null;
+    const assignmentsChanged =
+      nextLocationId !== prevLocationId ||
+      !sameStringIdSet(editForm.tableIds, previous?.assignedTableIds ?? []);
+    if (assignmentsChanged) {
+      payload.locationId = nextLocationId;
+      payload.tableIds = editForm.tableIds;
     }
     setSavingEdit(true);
     try {
-      await updateEmployee(editForm.id, {
-        name,
-        role,
-        email,
-        monthlyGoal,
-        isActive: editForm.isActive,
-        locationId: editForm.locationId.trim() ? editForm.locationId : null,
-        tableIds: editForm.tableIds,
-      });
+      await updateEmployee(editForm.id, payload);
       setShowEditModal(false);
       invalidateStaffRosterCaches();
       await fetchEmployees({ revalidate: true });
@@ -636,9 +665,11 @@ export function StaffManagementPage() {
 
   const handleDeleteConfirm = async () => {
     if (!deleteTarget) return;
+    const removedId = deleteTarget.id;
     setDeleting(true);
     try {
-      await deleteEmployee(deleteTarget.id);
+      await deleteEmployee(removedId);
+      setEmployees((prev) => prev.filter((e) => e.id !== removedId));
       setShowDeleteModal(false);
       setDeleteTarget(null);
       invalidateStaffRosterCaches();
@@ -809,9 +840,11 @@ export function StaffManagementPage() {
                       onClick={handleCopyCode}
                     >
                       <HeroPanelButtonIcon>
-                        <Copy aria-hidden />
+                        {isCopied("invite") ? <Check aria-hidden /> : <Copy aria-hidden />}
                       </HeroPanelButtonIcon>
-                      <span className="leading-snug">{t("business.staffPage.copy")}</span>
+                      <span className="leading-snug">
+                        {isCopied("invite") ? t("common.copied") : t("business.staffPage.copy")}
+                      </span>
                     </HeroPanelButton>
                     <HeroPanelButton
                       type="button"
@@ -1509,17 +1542,19 @@ export function StaffManagementPage() {
                       className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
                     />
                   </div>
-                  <div>
-                    <label className="mb-1 block text-sm text-muted-foreground">{t("business.staffPage.monthlyGoalUsd")}</label>
-                    <input
-                      type="text"
-                      inputMode="decimal"
-                      placeholder={t("business.staffPage.placeholderNoGoal")}
-                      value={editForm.monthlyGoal}
-                      onChange={(e) => setEditForm((f) => ({ ...f, monthlyGoal: e.target.value }))}
-                      className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-                    />
-                  </div>
+                  {canSetEmployeeGoals ? (
+                    <div>
+                      <label className="mb-1 block text-sm text-muted-foreground">{t("business.staffPage.monthlyGoalUsd")}</label>
+                      <input
+                        type="text"
+                        inputMode="decimal"
+                        placeholder={t("business.staffPage.placeholderNoGoal")}
+                        value={editForm.monthlyGoal}
+                        onChange={(e) => setEditForm((f) => ({ ...f, monthlyGoal: e.target.value }))}
+                        className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+                      />
+                    </div>
+                  ) : null}
                 </div>
                 <div>
                   <label className="mb-1 block text-sm text-muted-foreground">{t("business.staffPage.labelAssignedLocation")}</label>

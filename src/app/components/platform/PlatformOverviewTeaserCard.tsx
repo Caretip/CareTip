@@ -42,7 +42,9 @@ export function PlatformOverviewTeaserCard({
     : metrics;
 
   return (
-    <section className={cn(platformUi.overviewTeaserCard, "flex h-full min-h-[12rem] flex-col", className)}>
+    <section
+      className={cn(platformUi.overviewTeaserCard, "flex h-full min-h-0 flex-col", className)}
+    >
       <div className="mb-5 flex items-start justify-between gap-4">
         <div className="min-w-0">
           <h2 className="text-sm font-semibold tracking-tight text-foreground sm:text-base">{title}</h2>
@@ -67,10 +69,7 @@ export function PlatformOverviewTeaserCard({
           {metricItems.map((metric, i) => (
             <div
               key={`${metric.label}-${i}`}
-              className={cn(
-                "platform-overview-teaser-metric rounded-lg border border-border/80 bg-muted/15",
-                loading && "animate-pulse",
-              )}
+              className={cn("platform-overview-teaser-metric", loading && "animate-pulse")}
             >
               <p className="platform-overview-teaser-metric__label">{metric.label}</p>
               <p className="platform-overview-teaser-metric__value tabular-nums text-foreground">

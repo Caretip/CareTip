@@ -170,7 +170,9 @@
         "permission": "You don't have permission to view this data.",
         "hint": "Your filters are still applied. Retry to refresh the results."
       }
-    }
+    },
+    "copied": "Copied",
+    "unableToCopy": "Unable to copy"
   },
   "idleSession": {
     "warningTitle": "Still there?",
@@ -4394,6 +4396,9 @@
       "emptyNeedLocation": "Add a location first, then create tables under it.",
       "goToLocations": "Go to Locations",
       "emptyNoTables": "No tables yet. Create one to get a guest QR link.",
+      "quotaTitle": "Table limit reached",
+      "quotaBody": "Your plan supports one table. Upgrade to Business for multiple tables.",
+      "createDisabledAtCapAria": "Create table is unavailable. Your plan includes one table.",
       "thTable": "Table",
       "thLocation": "Location",
       "thGuestLink": "Guest link",

@@ -5,6 +5,8 @@ import { CareIcon } from "@/components/icons";
 import { useTranslation } from "react-i18next";
 
 import { useAuth } from "../../hooks/useAuth";
+import { useEmployeeEntitlementsContext } from "../../contexts/EmployeeEntitlementsContext";
+import { useSubscriptionEntitlements } from "../../hooks/useSubscriptionEntitlements";
 import {
   isAuthLogoutTransitionActive,
   subscribeAuthLogoutTransition,
@@ -17,7 +19,6 @@ import {
   isEmployeeDashboardNavActive,
   showEmployeeNavSubscriptionLock,
 } from "./employeeDashboardNav";
-import { useSubscriptionEntitlements } from "../../hooks/useSubscriptionEntitlements";
 import { MobileDrawer } from "../ui/MobileDrawer";
 import {
   dashboardSidebarIconButtonIdle,
@@ -51,10 +52,12 @@ export function EmployeeMobileSidebar({
     isAuthLogoutTransitionActive,
     () => false,
   );
-  const { tier, ready: entitlementsReady } = useSubscriptionEntitlements({
-    enabled: user?.role === "employee",
+  const employeeEntitlements = useEmployeeEntitlementsContext();
+  const fallbackEntitlements = useSubscriptionEntitlements({
+    enabled: user?.role === "employee" && employeeEntitlements == null,
     role: user?.role === "employee" ? "employee" : null,
   });
+  const { tier, ready: entitlementsReady } = employeeEntitlements ?? fallbackEntitlements;
   const navItems = employeeDashboardNavItems;
 
   const venueName = String(businessBranding?.businessName ?? "").trim() || t("dashboard.venueDashboardFallback");

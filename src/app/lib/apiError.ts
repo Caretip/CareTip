@@ -18,8 +18,14 @@ export const OAUTH_EMAIL_REQUIRED_CODE = "OAUTH_EMAIL_REQUIRED" as const;
 /** Returned when the provider identity token could not be verified. */
 export const OAUTH_TOKEN_VERIFICATION_FAILED_CODE = "OAUTH_TOKEN_VERIFICATION_FAILED" as const;
 
-/** Returned with 403 when a Premium capability is required (see subscriptionCapabilities). */
+/** Returned with 403 when the business has no entitled subscription. */
 export const SUBSCRIPTION_REQUIRED_CODE = "SUBSCRIPTION_REQUIRED" as const;
+
+/** Returned with 403 when a plan capability is required (entitled account, missing feature). */
+export const PLAN_CAPABILITY_REQUIRED_CODE = "PLAN_CAPABILITY_REQUIRED" as const;
+
+/** Returned with 403 when a numerical plan limit is exceeded. */
+export const PLAN_LIMIT_EXCEEDED_CODE = "PLAN_LIMIT_EXCEEDED" as const;
 
 /** Legacy — broad platform gate (pre-refactor). Prefer GO_LIVE_REQUIRED_CODE. */
 export const PENDING_VERIFICATION_CODE = "PENDING_VERIFICATION" as const;

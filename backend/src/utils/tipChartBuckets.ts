@@ -645,6 +645,7 @@ export async function queryBusinessDashboardMetaAndSummaryMetrics(opts: {
       FROM employees e
       LEFT JOIN "User" u ON u.id = e.user_id
       WHERE e.business_id = ${opts.businessId}
+        AND e.is_deleted = false
     )
     SELECT
       biz.id,
@@ -720,6 +721,7 @@ export async function queryBusinessDashboardMetaAndSummaryMetrics(opts: {
       FROM employees e
       LEFT JOIN "User" u ON u.id = e.user_id
       WHERE e.business_id = ${opts.businessId}
+        AND e.is_deleted = false
     )
     SELECT
       b.id,

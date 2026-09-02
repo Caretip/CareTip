@@ -2,9 +2,12 @@ import { randomBytes } from "crypto";
 import { prisma } from "../prisma.js";
 import { isOnboardingApprovedForPublicGoLive } from "../lib/verificationWorkflow.js";
 import {
+  EntitlementDeniedError,
   assertPlanLimitForBusiness,
+  featureAccessDeniedPayload,
   planLimitExceededPayload,
   resolveSubscriptionEntitlements,
+  subscriptionRequiredPayload,
 } from "./subscriptionEntitlement.service.js";
 import { emitBusinessDataChanged } from "../socket/socketEmitters.js";
 import { invalidateBusinessStatsCache } from "./business.service.js";
@@ -43,18 +46,20 @@ export async function createTableForBusinessUser(
   }
   const entitlements = await resolveSubscriptionEntitlements(business.id);
   if (!entitlements.hasActiveEntitlements) {
-    throw new Error("An active subscription is required to manage tables.");
+    throw new EntitlementDeniedError(403, subscriptionRequiredPayload("tableQr"));
   }
   if (!entitlements.capabilities.includes("tableQr")) {
-    throw new Error("Table QR is not available on your current plan.");
+    throw new EntitlementDeniedError(403, featureAccessDeniedPayload(entitlements, "tableQr"));
   }
   const tableCount = await prisma.table.count({
     where: { location: { businessId: business.id } },
   });
   const limitCheck = await assertPlanLimitForBusiness(business.id, "tables", tableCount);
   if (!limitCheck.ok) {
-    const payload = planLimitExceededPayload("tables", limitCheck.tier);
-    throw new Error(payload.message);
+    if (limitCheck.reason === "no_entitlement") {
+      throw new EntitlementDeniedError(403, subscriptionRequiredPayload("tableQr"));
+    }
+    throw new EntitlementDeniedError(403, planLimitExceededPayload("tables", limitCheck.tier));
   }
   await locationsService.assertLocationOwnedByBusiness(input.locationId, business.id);
 

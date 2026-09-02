@@ -1,5 +1,6 @@
 import type { Request, Response } from "express";
 import * as tablesService from "../services/tables.service.js";
+import { isEntitlementDeniedError } from "../services/subscriptionEntitlement.service.js";
 import { logServerError, clientSafeMessage, CLIENT_FALLBACK } from "../utils/httpErrors.js";
 
 export async function listTables(req: Request, res: Response) {
@@ -35,6 +36,9 @@ export async function createTable(req: Request, res: Response) {
     });
     return res.status(201).json(table);
   } catch (err) {
+    if (isEntitlementDeniedError(err)) {
+      return res.status(err.status).json(err.payload);
+    }
     logServerError("tables.create", err);
     return res.status(400).json({
       message: clientSafeMessage(err, CLIENT_FALLBACK.business),

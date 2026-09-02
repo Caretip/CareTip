@@ -7,7 +7,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "../ui/dialog";
-import { Download, Link as LinkIcon } from "lucide-react";
+import { Check, Download, Link as LinkIcon } from "lucide-react";
 import { toast } from "sonner";
 import { publicEmployeeTipUrl, qrEmployeeLegacyUrl } from "../../lib/appPublicUrl";
 import {
@@ -17,6 +17,7 @@ import {
   renderPlainEmployeeQrToDataUrlLegacy,
 } from "../../lib/plainQr";
 import { logClientError } from "../../lib/clientLog";
+import { useCopyFeedback } from "../../hooks/useCopyFeedback";
 
 type EmployeeQRCodeModalProps = {
   open: boolean;
@@ -38,6 +39,7 @@ export function EmployeeQRCodeModal({
   employeeSlug,
 }: EmployeeQRCodeModalProps) {
   const { t } = useTranslation();
+  const { copy, isCopied } = useCopyFeedback();
   const [dataUrl, setDataUrl] = useState("");
   const [imgLoading, setImgLoading] = useState(false);
 
@@ -71,10 +73,8 @@ export function EmployeeQRCodeModal({
   const shareUrl = useSlugPair ? publicEmployeeTipUrl(bs!, es!) : qrEmployeeLegacyUrl(employeeId);
 
   const copyLink = async () => {
-    try {
-      await navigator.clipboard.writeText(shareUrl);
-    } catch (err) {
-      logClientError("EmployeeQRCodeModal", err);
+    const ok = await copy("share", shareUrl);
+    if (!ok) {
       toast.error(t("employee.qrModal.toastCopyFailed"));
     }
   };
@@ -125,8 +125,12 @@ export function EmployeeQRCodeModal({
               onClick={() => void copyLink()}
               className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground shadow-sm disabled:opacity-50"
             >
-              <LinkIcon className="w-4 h-4 shrink-0" />
-              {t("employee.qrModal.copyLinkButton")}
+              {isCopied("share") ? (
+                <Check className="w-4 h-4 shrink-0" />
+              ) : (
+                <LinkIcon className="w-4 h-4 shrink-0" />
+              )}
+              {isCopied("share") ? t("common.copied") : t("employee.qrModal.copyLinkButton")}
             </button>
           </div>
           <p className="text-xs text-muted-foreground text-center break-all px-2">

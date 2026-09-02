@@ -30,6 +30,29 @@ function parseLocationIdFromBody(body: { locationId?: unknown }): string | null 
   return s === "" ? null : s;
 }
 
+/** True when the client is setting a numeric goal — not omitting or clearing (`null` / `""`). */
+function isSettingNumericMonthlyGoal(monthlyGoal: unknown): boolean {
+  return monthlyGoal !== undefined && monthlyGoal !== null && monthlyGoal !== "";
+}
+
+/**
+ * `employeeGoals` applies only to setting a goal amount.
+ * Omitting `monthlyGoal` or sending `null` (clear) is not a Pro-gated profile edit.
+ */
+async function enforceEmployeeGoalsIfSettingMonthlyGoal(
+  req: Request,
+  res: Response,
+  monthlyGoal: unknown,
+): Promise<boolean> {
+  if (!isSettingNumericMonthlyGoal(monthlyGoal)) return true;
+  const n = Number(monthlyGoal);
+  if (Number.isNaN(n) || n < 0) {
+    res.status(400).json({ message: "Monthly goal must be a non-negative number" });
+    return false;
+  }
+  return enforceFeatureForRequest(req, res, "employeeGoals");
+}
+
 export async function ensureMySlug(req: Request, res: Response) {
   try {
     const userId = req.user?.userId ?? req.user?.id;
@@ -76,16 +99,8 @@ export async function patchMyProfile(req: Request, res: Response) {
       return res.status(401).json({ message: "Authentication required" });
     }
     const { name, bio, monthlyGoal, emailNotifications, pushNotifications, phone } = req.body;
-    if (monthlyGoal !== undefined) {
-      if (monthlyGoal !== null) {
-        const n = Number(monthlyGoal);
-        if (Number.isNaN(n) || n < 0) {
-          return res.status(400).json({ message: "Monthly goal must be a non-negative number" });
-        }
-      }
-      if (!(await enforceFeatureForRequest(req, res, "employeeGoals"))) {
-        return;
-      }
+    if (!(await enforceEmployeeGoalsIfSettingMonthlyGoal(req, res, monthlyGoal))) {
+      return;
     }
     const updated = await employeeService.updateEmployeeSelf(userId, {
       ...(name !== undefined ? { name: String(name) } : {}),
@@ -282,10 +297,8 @@ export async function updateEmployee(req: Request, res: Response) {
     if (tableIds !== undefined && !Array.isArray(tableIds)) {
       return res.status(400).json({ message: "tableIds must be an array" });
     }
-    if (monthlyGoal !== undefined) {
-      if (!(await enforceFeatureForRequest(req, res, "employeeGoals"))) {
-        return;
-      }
+    if (!(await enforceEmployeeGoalsIfSettingMonthlyGoal(req, res, monthlyGoal))) {
+      return;
     }
     const tableIdList =
       tableIds === undefined

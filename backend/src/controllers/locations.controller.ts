@@ -1,5 +1,6 @@
 import type { Request, Response } from "express";
 import * as locationsService from "../services/locations.service.js";
+import { isEntitlementDeniedError } from "../services/subscriptionEntitlement.service.js";
 import { logServerError, clientSafeMessage, CLIENT_FALLBACK } from "../utils/httpErrors.js";
 
 export async function listLocations(req: Request, res: Response) {
@@ -33,6 +34,9 @@ export async function createLocation(req: Request, res: Response) {
     const location = await locationsService.createLocationForBusinessUser(userId, name, description);
     return res.status(201).json(location);
   } catch (err) {
+    if (isEntitlementDeniedError(err)) {
+      return res.status(err.status).json(err.payload);
+    }
     logServerError("locations.create", err);
     return res.status(400).json({
       message: clientSafeMessage(err, CLIENT_FALLBACK.business),

@@ -13,6 +13,7 @@ import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
 import { logClientError } from "../../lib/clientLog";
 import { useRequireAuth } from "../../hooks/useRequireAuth";
+import { useCopyFeedback } from "../../hooks/useCopyFeedback";
 import { useSubscriptionEntitlements } from "../../hooks/useSubscriptionEntitlements";
 import { canUseProductionQr } from "../../lib/businessVerificationCapabilities";
 import { onboardingStatusLabel } from "../../lib/verificationWorkflowUi";
@@ -127,10 +128,10 @@ export function QRCodeManagementPage({
   /** QR Studio SSOT — never reconstruct branding when provider is present. */
   const studioBranding = useBusinessBrandingOptional();
   const usesStudioSsot = studioBranding != null;
+  const { copy, copiedKey } = useCopyFeedback();
   const [onboardingVerificationStatus, setOnboardingVerificationStatus] = useState<
     import("../../lib/api").OnboardingVerificationStatus | null
   >(null);
-  const [copiedId, setCopiedId] = useState<string | null>(null);
   const [employees, setEmployees] = useState<EmployeeItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [qrImages, setQrImages] = useState<Record<string, string>>({});
@@ -822,10 +823,9 @@ export function QRCodeManagementPage({
     venueQrPreview,
   ]);
 
-  const handleCopy = (id: string, url: string) => {
-    navigator.clipboard.writeText(url);
-    setCopiedId(id);
-    setTimeout(() => setCopiedId(null), 2000);
+  const handleCopy = async (id: string, url: string) => {
+    const ok = await copy(id, url);
+    if (!ok) toast.error(t("common.unableToCopy"));
   };
 
   const scanMetaForKey = (key: string) => qrScanMeta[key];
@@ -1335,7 +1335,7 @@ export function QRCodeManagementPage({
                         layout="library"
                         metadata={asset.metadata}
                         previewDataUrl={asset.previewDataUrl}
-                        copiedId={copiedId}
+                        copiedId={copiedKey}
                         qrLocked={qrLocked}
                         regeneratingId={regeneratingId}
                         onCopy={handleCopy}
@@ -1436,7 +1436,7 @@ export function QRCodeManagementPage({
                         item={storefrontQrItem}
                         type="storefront"
                         previewDataUrl={storefrontQr}
-                        copiedId={copiedId}
+                        copiedId={copiedKey}
                         qrLocked={qrLocked}
                         regeneratingId={regeneratingId}
                         onCopy={handleCopy}
@@ -1518,7 +1518,7 @@ export function QRCodeManagementPage({
                           }}
                           type="employee"
                           previewDataUrl={qrImages[employee.id]}
-                          copiedId={copiedId}
+                          copiedId={copiedKey}
                           qrLocked={qrLocked}
                           regeneratingId={regeneratingId}
                           onCopy={handleCopy}
@@ -1569,7 +1569,7 @@ export function QRCodeManagementPage({
                       item={{ ...location, role: location.address }}
                       type="location"
                       previewDataUrl={venueQrPreview[`loc-${location.id}`]}
-                      copiedId={copiedId}
+                          copiedId={copiedKey}
                       qrLocked={qrLocked}
                       regeneratingId={regeneratingId}
                       onCopy={handleCopy}

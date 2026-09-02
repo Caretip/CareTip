@@ -14,7 +14,7 @@ import { isStatsScopeAllowedForTier } from "../config/subscriptionCapabilities.j
 import {
   getSubscriptionTierForBusinessId,
   subscriptionBypass,
-  subscriptionRequiredPayload,
+  featureAccessDeniedPayloadForBusiness,
 } from "../services/subscriptionEntitlement.service.js";
 import { getBusinessQrAnalytics, type QrAnalyticsTimeframe } from "../services/qr/qrAnalytics.service.js";
 
@@ -483,7 +483,7 @@ export async function getMyStats(req: Request, res: Response) {
     if (!subscriptionBypass(req)) {
       const tier = await getSubscriptionTierForBusinessId(business.id);
       if (!isStatsScopeAllowedForTier(tier, scope)) {
-        return res.status(403).json(subscriptionRequiredPayload("advancedAnalytics"));
+        return res.status(403).json(await featureAccessDeniedPayloadForBusiness(business.id, "advancedAnalytics"));
       }
     }
     const stats = await logDashboardTiming(
@@ -543,7 +543,7 @@ export async function getMyQrAnalytics(req: Request, res: Response) {
     if (!subscriptionBypass(req)) {
       const tier = await getSubscriptionTierForBusinessId(business.id);
       if (!isStatsScopeAllowedForTier(tier, "analytics")) {
-        return res.status(403).json(subscriptionRequiredPayload("advancedAnalytics"));
+        return res.status(403).json(await featureAccessDeniedPayloadForBusiness(business.id, "advancedAnalytics"));
       }
     }
     const analytics = await getBusinessQrAnalytics(business.id, timeframe);

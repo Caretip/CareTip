@@ -203,7 +203,10 @@
   justify-content: flex-end;
   gap: 0.25rem;
   min-height: 4.5rem;
-  padding: 0.875rem 1rem !important;
+  padding: 0.875rem 1rem;
+  border: 1px solid hsl(var(--border) / 0.8);
+  border-radius: var(--dash-card-radius, 0.5rem);
+  background: hsl(var(--card));
 }
 
 .caretip-dashboard-shell.platform-dashboard .platform-overview-teaser-metric__value {
@@ -463,34 +466,23 @@
   letter-spacing: -0.01em;
 }
 
-/* Platform overview hero — spacious executive framing */
+/* Platform overview hero — type on the page surface */
 .caretip-dashboard-shell .platform-admin-overview-hero {
-  overflow: hidden;
+  overflow: visible;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
 }
 
 .caretip-dashboard-shell .platform-admin-overview-hero__inner {
-  padding: 2rem 2.5rem 2.25rem !important; /* 32px × 40px vertical breathing */
-  min-height: 10.5rem;
-}
-
-@media (min-width: 640px) {
-  .caretip-dashboard-shell .platform-admin-overview-hero__inner {
-    padding: 2.25rem 2.75rem 2.5rem !important; /* 36px × 44px */
-    min-height: 11rem;
-  }
-}
-
-@media (min-width: 1024px) {
-  .caretip-dashboard-shell .platform-admin-overview-hero__inner {
-    padding: 2.5rem 3rem 2.75rem !important; /* 40px × 48px */
-    min-height: 11.5rem;
-  }
+  padding: 0 !important;
+  min-height: 0;
 }
 
 .caretip-dashboard-shell .platform-admin-overview-hero__grid {
   display: flex;
   flex-direction: column;
-  gap: 1.75rem;
+  gap: 1.25rem;
 }
 
 @media (min-width: 1024px) {

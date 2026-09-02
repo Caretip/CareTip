@@ -170,7 +170,9 @@
         "permission": "Sie haben keine Berechtigung, diese Daten anzuzeigen.",
         "hint": "Ihre Filter bleiben aktiv. Erneut versuchen, um die Ergebnisse zu aktualisieren."
       }
-    }
+    },
+    "copied": "Kopiert",
+    "unableToCopy": "Kopieren nicht möglich"
   },
   "idleSession": {
     "warningTitle": "Noch da?",
@@ -4394,6 +4396,9 @@
       "emptyNeedLocation": "Zuerst einen Standort anlegen, dann Tische darunter.",
       "goToLocations": "Zu Standorten",
       "emptyNoTables": "Noch keine Tische. Legen Sie einen an, um einen Gäste-Link zu erhalten.",
+      "quotaTitle": "Tischlimit erreicht",
+      "quotaBody": "Ihr Tarif umfasst einen Tisch. Für mehrere Tische auf Business upgraden.",
+      "createDisabledAtCapAria": "Tisch anlegen nicht verfügbar. Ihr Tarif umfasst einen Tisch.",
       "thTable": "Tisch",
       "thLocation": "Standort",
       "thGuestLink": "Gäste-Link",

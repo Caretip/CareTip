@@ -1,11 +1,18 @@
 import { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router";
 import { useTranslation } from "react-i18next";
-import { Copy, Download, Eye, LayoutGrid, Printer } from "lucide-react";
+import { Check, Copy, Download, Eye, LayoutGrid, Printer } from "lucide-react";
 import { toast } from "sonner";
 import { useRequireAuth } from "../../hooks/useRequireAuth";
+import { useCopyFeedback } from "../../hooks/useCopyFeedback";
 import { useSubscriptionEntitlements } from "../../hooks/useSubscriptionEntitlements";
 import { LockedFeatureCard } from "../../components/subscription/LockedFeatureCard";
+import {
+  isAtTableCap,
+  isTablesCreateDisabled,
+  resolveTablesPageMainSurface,
+  shouldShowTableQuotaNotice,
+} from "../../lib/tablesPageQuotaUi";
 import { fetchVenueCatalog, invalidateVenueCatalog } from "../../lib/businessVenueCatalog";
 import {
   createTableAPI,
@@ -47,6 +54,7 @@ type TablesPageCache = { locations: LocationDTO[]; tables: TableDTO[] };
 export function TablesPage({ embedded = false }: { embedded?: boolean } = {}) {
   const { t } = useTranslation();
   const { user, isBusiness } = useRequireAuth();
+  const { copy, isCopied } = useCopyFeedback();
   const { tier, ready, hasFeature, limits } = useSubscriptionEntitlements({
     enabled: isBusiness,
     role: "business",
@@ -65,11 +73,19 @@ export function TablesPage({ embedded = false }: { embedded?: boolean } = {}) {
     user?.onboardingVerificationStatus,
     Boolean(user?.impersonation),
   );
-  const atTableCap =
-    ready &&
-    tableQrEnabled &&
-    limits.maxTables != null &&
-    tables.length >= limits.maxTables;
+  const atTableCap = isAtTableCap({
+    ready,
+    tableQrEnabled,
+    maxTables: limits.maxTables,
+    tableCount: tables.length,
+  });
+  const createDisabled = isTablesCreateDisabled({
+    isBusiness,
+    ready,
+    tableQrEnabled,
+    atTableCap,
+  });
+  const showTableQuotaNotice = shouldShowTableQuotaNotice({ tableQrEnabled, atTableCap });
 
   const loadAll = useCallback(async (opts?: { quiet?: boolean }) => {
     const quiet = opts?.quiet === true;
@@ -149,9 +165,16 @@ export function TablesPage({ embedded = false }: { embedded?: boolean } = {}) {
 
   const tableUrl = (tableId: string) => qrTableUrl(tableId);
 
-  const copyLink = (tableId: string) => {
-    void navigator.clipboard.writeText(tableUrl(tableId));
+  const copyLink = async (tableId: string) => {
+    const ok = await copy(tableId, tableUrl(tableId));
+    if (!ok) toast.error(t("common.unableToCopy"));
   };
+
+  const copyButtonLabel = (tableId: string) =>
+    isCopied(tableId) ? t("common.copied") : t("business.tablesPage.copy");
+
+  const copyButtonIcon = (tableId: string) =>
+    isCopied(tableId) ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />;
 
   const previewTable = previewTableId ? tables.find((row) => row.id === previewTableId) : null;
 
@@ -228,6 +251,10 @@ export function TablesPage({ embedded = false }: { embedded?: boolean } = {}) {
       toast.error(t("business.tablesPage.toastNeedLocation"));
       return;
     }
+    if (atTableCap) {
+      toast.error(t("business.tablesPage.quotaBody"));
+      return;
+    }
     setSaving(true);
     try {
       await createTableAPI({ name: trimmed, locationId });
@@ -245,6 +272,14 @@ export function TablesPage({ embedded = false }: { embedded?: boolean } = {}) {
 
   const isInitialTablesLoad = !ready || loading;
   const { showInitialSkeleton } = useBusinessPageBoot("tables", isInitialTablesLoad);
+  const mainSurface = resolveTablesPageMainSurface({
+    ready,
+    tableQrEnabled,
+    showInitialSkeleton,
+    locationCount: locations.length,
+    tableCount: tables.length,
+  });
+  const quotaNoticeId = "tables-quota-notice";
 
   return (
     <div className={cn(embedded ? "text-foreground" : "min-h-screen bg-background")}>
@@ -270,7 +305,10 @@ export function TablesPage({ embedded = false }: { embedded?: boolean } = {}) {
             <Button
               type="button"
               onClick={() => setModalOpen(true)}
-              disabled={!isBusiness || (ready && (!tableQrEnabled || atTableCap))}
+              disabled={createDisabled}
+              aria-disabled={createDisabled}
+              aria-describedby={showTableQuotaNotice ? quotaNoticeId : undefined}
+              title={showTableQuotaNotice ? t("business.tablesPage.createDisabledAtCapAria") : undefined}
               className="w-full shrink-0 sm:w-auto"
             >
               {t("business.tablesPage.create")}
@@ -289,7 +327,10 @@ export function TablesPage({ embedded = false }: { embedded?: boolean } = {}) {
             <Button
               type="button"
               onClick={() => setModalOpen(true)}
-              disabled={!isBusiness || (ready && (!tableQrEnabled || atTableCap))}
+              disabled={createDisabled}
+              aria-disabled={createDisabled}
+              aria-describedby={showTableQuotaNotice ? quotaNoticeId : undefined}
+              title={showTableQuotaNotice ? t("business.tablesPage.createDisabledAtCapAria") : undefined}
               className="w-full shrink-0 sm:w-auto"
             >
               {t("business.tablesPage.create")}
@@ -305,17 +346,29 @@ export function TablesPage({ embedded = false }: { embedded?: boolean } = {}) {
             : "dashboard-page-contained mx-auto w-full max-w-5xl px-4 py-8 sm:px-6",
         )}
       >
-        {ready && !tableQrEnabled ? (
+        {mainSurface === "capability-lock" ? (
           <LockedFeatureCard featureKey="tableQr" tier={tier} />
-        ) : ready && atTableCap ? (
-          <div className="mb-6">
-            <LockedFeatureCard featureKey="multiLocation" tier={tier} />
-          </div>
-        ) : showInitialSkeleton ? (
+        ) : (
+          <>
+        {showTableQuotaNotice ? (
+          <section
+            id={quotaNoticeId}
+            className={cn(businessUi.cardStatic, "mb-6 p-4 sm:p-5")}
+            aria-labelledby="tables-quota-title"
+          >
+            <h2 id="tables-quota-title" className="text-sm font-semibold text-foreground">
+              {t("business.tablesPage.quotaTitle")}
+            </h2>
+            <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">
+              {t("business.tablesPage.quotaBody")}
+            </p>
+          </section>
+        ) : null}
+        {mainSurface === "loading" ? (
           <div className={cn(businessUi.tablePanel, "-mx-4 px-4 sm:mx-0 sm:px-0")}>
             <TablesListSkeleton />
           </div>
-        ) : locations.length === 0 ? (
+        ) : mainSurface === "need-location" ? (
           <div className={cn(businessUi.cardStatic, "py-16 text-center text-muted-foreground border-dashed")}>
             <LayoutGrid className="w-10 h-10 mx-auto mb-3 opacity-50" />
             <p className="mb-4">{t("business.tablesPage.emptyNeedLocation")}</p>
@@ -326,7 +379,7 @@ export function TablesPage({ embedded = false }: { embedded?: boolean } = {}) {
               {t("business.tablesPage.goToLocations")}
             </Link>
           </div>
-        ) : tables.length === 0 ? (
+        ) : mainSurface === "empty" ? (
           <div className={cn(businessUi.cardStatic, "py-16 text-center text-muted-foreground border-dashed")}>
             <LayoutGrid className="w-10 h-10 mx-auto mb-3 opacity-50" />
             <p>{t("business.tablesPage.emptyNoTables")}</p>
@@ -343,8 +396,9 @@ export function TablesPage({ embedded = false }: { embedded?: boolean } = {}) {
                     locationName={row.location.name}
                     guestUrl={tableUrl(row.id)}
                     qrDataUrl={qrImages[row.id]}
-                    onCopy={() => copyLink(row.id)}
-                    copyLabel={t("business.tablesPage.copy")}
+                    onCopy={() => void copyLink(row.id)}
+                    copyLabel={copyButtonLabel(row.id)}
+                    copied={isCopied(row.id)}
                     extraActions={tableQrActions(row)}
                   />
                 ))}
@@ -387,11 +441,11 @@ export function TablesPage({ embedded = false }: { embedded?: boolean } = {}) {
                         <div className="flex flex-wrap items-center gap-1.5">
                           <button
                             type="button"
-                            onClick={() => copyLink(row.id)}
+                            onClick={() => void copyLink(row.id)}
                             className="inline-flex items-center gap-1 text-xs font-medium px-2 py-1 rounded-md border border-border hover:bg-muted"
                           >
-                            <Copy className="w-3.5 h-3.5" />
-                            {t("business.tablesPage.copy")}
+                            {copyButtonIcon(row.id)}
+                            {copyButtonLabel(row.id)}
                           </button>
                           {tableQrActions(row)}
                         </div>
@@ -403,9 +457,17 @@ export function TablesPage({ embedded = false }: { embedded?: boolean } = {}) {
             }
           />
         )}
+          </>
+        )}
       </div>
 
-      <Dialog open={modalOpen} onOpenChange={setModalOpen}>
+      <Dialog
+        open={modalOpen}
+        onOpenChange={(open) => {
+          if (open && createDisabled) return;
+          setModalOpen(open);
+        }}
+      >
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>{t("business.tablesPage.dialogTitle")}</DialogTitle>
@@ -476,9 +538,13 @@ export function TablesPage({ embedded = false }: { embedded?: boolean } = {}) {
           ) : null}
           {previewTable ? (
             <div className="flex flex-wrap justify-end gap-2">
-              <Button type="button" variant="outline" size="sm" onClick={() => copyLink(previewTable.id)}>
-                <Copy className="mr-2 h-4 w-4" />
-                {t("business.tablesPage.copy")}
+              <Button type="button" variant="outline" size="sm" onClick={() => void copyLink(previewTable.id)}>
+                {isCopied(previewTable.id) ? (
+                  <Check className="mr-2 h-4 w-4" />
+                ) : (
+                  <Copy className="mr-2 h-4 w-4" />
+                )}
+                {copyButtonLabel(previewTable.id)}
               </Button>
               <Button
                 type="button"

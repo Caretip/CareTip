@@ -759,6 +759,7 @@ export const de: MobileMessages = {
     subscriptionRequiredTitle: "Plan-Upgrade erforderlich",
     subscriptionRequiredBody:
       "Diese Ansicht benötigt einen höheren CareTip-Plan. Ihr Dashboard funktioniert weiterhin mit Basic. Analytics nach dem Upgrade öffnen.",
+    planCapabilityRequired: "Diese Funktion ist im Pro-Tarif verfügbar.",
     planLimitExceeded:
       "Sie haben das Limit Ihres aktuellen Plans erreicht. Bitte Plan aktualisieren oder Auswahl ändern und erneut versuchen.",
     onboardingIncompleteTitle: "Zuerst Einrichtung abschließen",

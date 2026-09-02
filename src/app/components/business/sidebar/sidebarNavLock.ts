@@ -14,7 +14,13 @@ export type SidebarNavEntitlementView = {
   hasFeature: (featureKey: FeatureKey) => boolean;
 };
 
-const ALWAYS_OPEN_PREFIXES = ["/dashboard/billing", "/dashboard/stripe", "/dashboard/settings"] as const;
+const ALWAYS_OPEN_PREFIXES = [
+  "/dashboard/billing",
+  "/dashboard/stripe",
+  "/dashboard/settings",
+  "/dashboard/qr-studio",
+  "/dashboard/locations",
+] as const;
 
 const GROUP_MODULE_FEATURE: Record<string, FeatureKey> = {
   "qr-studio": "employeeQr",

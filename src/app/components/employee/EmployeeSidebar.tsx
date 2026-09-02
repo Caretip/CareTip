@@ -6,6 +6,8 @@ import { Lock, Loader2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 import { useAuth } from "../../hooks/useAuth";
+import { useEmployeeEntitlementsContext } from "../../contexts/EmployeeEntitlementsContext";
+import { useSubscriptionEntitlements } from "../../hooks/useSubscriptionEntitlements";
 import {
   isAuthLogoutTransitionActive,
   subscribeAuthLogoutTransition,
@@ -21,7 +23,6 @@ import {
   isEmployeeDashboardNavActive,
   showEmployeeNavSubscriptionLock,
 } from "./employeeDashboardNav";
-import { useSubscriptionEntitlements } from "../../hooks/useSubscriptionEntitlements";
 import { useDashboardRenderProbe } from "../../hooks/useDashboardRuntimeProfile";
 import {
   DASHBOARD_SIDEBAR_SHELL_CLASS,
@@ -53,10 +54,12 @@ export const EmployeeSidebar = memo(function EmployeeSidebar({
     isAuthLogoutTransitionActive,
     () => false,
   );
-  const { tier, ready: entitlementsReady } = useSubscriptionEntitlements({
-    enabled: user?.role === "employee",
+  const employeeEntitlements = useEmployeeEntitlementsContext();
+  const fallbackEntitlements = useSubscriptionEntitlements({
+    enabled: user?.role === "employee" && employeeEntitlements == null,
     role: user?.role === "employee" ? "employee" : null,
   });
+  const { tier, ready: entitlementsReady } = employeeEntitlements ?? fallbackEntitlements;
   const navItems = employeeDashboardNavItems;
 
   const venueName =

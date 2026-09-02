@@ -101,14 +101,14 @@ export function PlatformOverviewSummaryCharts({
         </h2>
       </div>
       <div className={platformUi.analyticsChartsGrid}>
-        <Card className={platformUi.analyticsCard}>
-          <CardHeader className={platformUi.analyticsCardHeader}>
+        <Card className={platformUi.overviewAnalyticsCard}>
+          <CardHeader className={platformUi.overviewAnalyticsCardHeader}>
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0 space-y-1">
-                <CardTitle className={platformUi.analyticsCardTitle}>
+                <CardTitle className={platformUi.overviewAnalyticsCardTitle}>
                   {t("admin.overview.charts.tipsTitle")}
                 </CardTitle>
-                <CardDescription className={platformUi.analyticsCardDesc}>
+                <CardDescription className={platformUi.overviewAnalyticsCardDesc}>
                   {t("admin.overview.charts.tipsDesc")}
                 </CardDescription>
               </div>
@@ -121,7 +121,7 @@ export function PlatformOverviewSummaryCharts({
               </Link>
             </div>
           </CardHeader>
-          <CardContent className={platformUi.analyticsCardBody}>
+          <CardContent className={platformUi.overviewAnalyticsCardBody}>
             <div className={platformUi.analyticsChartWrap}>
               <DashboardStableChartSlot loading={loading} skeleton={<DashboardChartSkeleton />}>
                 {tipsEmpty ? (
@@ -162,14 +162,14 @@ export function PlatformOverviewSummaryCharts({
           </CardContent>
         </Card>
 
-        <Card className={platformUi.analyticsCard}>
-          <CardHeader className={platformUi.analyticsCardHeader}>
+        <Card className={platformUi.overviewAnalyticsCard}>
+          <CardHeader className={platformUi.overviewAnalyticsCardHeader}>
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0 space-y-1">
-                <CardTitle className={platformUi.analyticsCardTitle}>
+                <CardTitle className={platformUi.overviewAnalyticsCardTitle}>
                   {t("admin.overview.charts.subscriptionsTitle")}
                 </CardTitle>
-                <CardDescription className={platformUi.analyticsCardDesc}>
+                <CardDescription className={platformUi.overviewAnalyticsCardDesc}>
                   {t("admin.overview.charts.subscriptionsDesc")}
                 </CardDescription>
               </div>
@@ -182,7 +182,7 @@ export function PlatformOverviewSummaryCharts({
               </Link>
             </div>
           </CardHeader>
-          <CardContent className={platformUi.analyticsCardBody}>
+          <CardContent className={platformUi.overviewAnalyticsCardBody}>
             <div className={platformUi.analyticsChartWrap}>
               <DashboardStableChartSlot loading={loading} skeleton={<DashboardChartSkeleton barHeights={[48, 72, 36, 64, 52]} />}>
                 {subsEmpty ? (

@@ -53,7 +53,7 @@ export const caretipType = {
   /** Form labels — slightly stronger than caption. */
   label: "font-sans text-label font-semibold text-foreground",
   /** Inputs — match body size for readability. */
-  input: "font-sans text-input font-normal text-foreground",
+  input: "font-sans text-type-input font-normal text-foreground",
   /** Helper / field hints / validation (secondary). */
   helper: "font-sans text-helper font-medium text-muted-foreground",
   /** Badge / chip chrome (11px). */

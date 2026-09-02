@@ -64,9 +64,13 @@ if (
 } else fail("mobile theme surface-first extension incomplete");
 
 const tipGoalsPage = read("src/app/pages/employee/EmployeeTipGoalsPage.tsx");
-if (tipGoalsPage.includes("dashboard-mobile-flat-surface")) {
-  pass("employee tip goals uses mobile-flat card");
-} else fail("employee tip goals mobile-flat missing");
+if (
+  tipGoalsPage.includes("employee-tip-goals-surface") &&
+  !tipGoalsPage.includes("employeeUi.cardStatic") &&
+  !tipGoalsPage.includes("<Card ")
+) {
+  pass("employee tip goals uses flat surface (no wrapping card)");
+} else fail("employee tip goals still uses a wrapping card");
 
 const emptyState = read("src/app/components/dashboard/DashboardWorkspaceEmptyState.tsx");
 if (emptyState.includes("dashboard-workspace-empty--compact")) {

@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import type { FeatureKey } from "@/app/lib/subscriptionCapabilities";
 import { useSubscriptionEntitlements } from "@/app/hooks/useSubscriptionEntitlements";
 import { useBusinessEntitlementsContext } from "@/app/contexts/BusinessEntitlementsContext";
+import { useEmployeeEntitlementsContext } from "@/app/contexts/EmployeeEntitlementsContext";
 import {
   isEntitlementsSessionPrimed,
   sessionHasFeature,
@@ -27,12 +28,16 @@ type FeatureGateProps = {
 
 function useEntitlementsForGate(role: "business" | "employee", enabled: boolean) {
   const businessContext = useBusinessEntitlementsContext();
+  const employeeContext = useEmployeeEntitlementsContext();
   const useSharedBusiness = enabled && role === "business" && businessContext != null;
+  const useSharedEmployee = enabled && role === "employee" && employeeContext != null;
   const fallback = useSubscriptionEntitlements({
-    enabled: enabled && !useSharedBusiness,
+    enabled: enabled && !useSharedBusiness && !useSharedEmployee,
     role: enabled ? role : null,
   });
-  return useSharedBusiness ? businessContext : fallback;
+  if (useSharedBusiness) return businessContext;
+  if (useSharedEmployee) return employeeContext;
+  return fallback;
 }
 
 export function FeatureGate({

@@ -45,6 +45,7 @@ const CODE_TO_I18N: Record<string, string> = {
   RATE_LIMITED: "errors.rateLimited",
   TOO_MANY_REQUESTS: "errors.rateLimited",
   SUBSCRIPTION_REQUIRED: "errors.subscriptionRequiredBody",
+  PLAN_CAPABILITY_REQUIRED: "errors.planCapabilityRequired",
   PLAN_LIMIT_EXCEEDED: "errors.planLimitExceeded",
   ONBOARDING_INCOMPLETE: "errors.onboardingIncompleteBody",
   FORBIDDEN: "errors.forbidden",
@@ -82,6 +83,7 @@ const MESSAGE_TO_I18N: Record<string, string> = {
   "too many requests": "errors.rateLimited",
   "rate limit exceeded": "errors.rateLimited",
   "subscription is required": "errors.subscriptionRequiredBody",
+  "this feature is available on pro.": "errors.planCapabilityRequired",
   "plan limit exceeded": "errors.planLimitExceeded",
   "complete onboarding": "errors.onboardingIncompleteBody",
   "network error": "errors.offline",
@@ -124,6 +126,7 @@ export function isSubscriptionRequiredError(error: unknown): boolean {
   if (!error) return false;
   const normalized = normalizeApiError(error);
   if (normalized.code === "SUBSCRIPTION_REQUIRED") return true;
+  if (normalized.code === "PLAN_CAPABILITY_REQUIRED") return true;
   if (normalized.code === "PLAN_LIMIT_EXCEEDED") return true;
   const raw =
     typeof error === "string"
@@ -244,6 +247,7 @@ export function formatUserFacingError(
   }
   if (isSubscriptionRequiredError(error)) {
     if (code === "PLAN_LIMIT_EXCEEDED") return pick("errors.planLimitExceeded");
+    if (code === "PLAN_CAPABILITY_REQUIRED") return pick("errors.planCapabilityRequired");
     return pick("errors.subscriptionRequiredBody");
   }
 

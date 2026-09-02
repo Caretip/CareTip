@@ -15,6 +15,7 @@ import { logClientError } from "@/app/lib/clientLog";
 import { isApiPendingVerificationError, isApiSubscriptionRequiredError } from "@/app/lib/apiError";
 import { scheduleIdleWork } from "@/lib/publicRouteDefer";
 import { useInViewActive } from "@/lib/motionPerf";
+import { useBusinessEntitlementsContext } from "@/app/contexts/BusinessEntitlementsContext";
 import { useSubscriptionEntitlements } from "@/app/hooks/useSubscriptionEntitlements";
 
 export const DASHBOARD_CUSTOMER_FEEDBACK_TEASER_LIMIT = 3;
@@ -32,10 +33,12 @@ export function RecentCustomerFeedbackPanel({
   const { ref: panelRef, active: panelVisible } = useInViewActive<HTMLDivElement>({
     rootMargin: "160px 0px",
   });
-  const { ready, hasFeature, hasActiveEntitlements } = useSubscriptionEntitlements({
-    enabled,
-    role: "business",
+  const businessEntitlements = useBusinessEntitlementsContext();
+  const fallbackEntitlements = useSubscriptionEntitlements({
+    enabled: enabled && businessEntitlements == null,
+    role: enabled ? "business" : null,
   });
+  const { ready, hasFeature, hasActiveEntitlements } = businessEntitlements ?? fallbackEntitlements;
   const entitled = ready && hasActiveEntitlements && hasFeature("customerFeedback");
   const [loading, setLoading] = useState(true);
   const [summary, setSummary] = useState<CustomerFeedbackSummary | null>(null);

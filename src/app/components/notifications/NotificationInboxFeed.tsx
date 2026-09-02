@@ -274,6 +274,8 @@ export type NotificationInboxFeedProps = {
   listFilters?: NotificationListFilters;
   pageTitle: string;
   pageSubtitle: string;
+  /** Employee inbox: no card chrome; list sits on the page background at full width. */
+  flushSurface?: boolean;
 };
 
 export function NotificationInboxFeed({
@@ -283,6 +285,7 @@ export function NotificationInboxFeed({
   listFilters,
   pageTitle,
   pageSubtitle,
+  flushSurface = false,
 }: NotificationInboxFeedProps) {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -347,7 +350,12 @@ export function NotificationInboxFeed({
   };
 
   return (
-    <div className="mx-auto w-full min-w-0 max-w-3xl space-y-4 pb-8 sm:space-y-5 caretip-mobile-notifications-inbox">
+    <div
+      className={cn(
+        "mx-auto w-full min-w-0 space-y-4 pb-8 sm:space-y-5 caretip-mobile-notifications-inbox",
+        flushSurface ? "max-w-none" : "max-w-3xl",
+      )}
+    >
       {/* Header */}
       <BusinessModuleWorkspaceHeader
         personality="notifications"
@@ -378,7 +386,14 @@ export function NotificationInboxFeed({
         })}
       </p>
 
-      <div className="overflow-hidden rounded-2xl border border-border/80 bg-card shadow-sm">
+      <div
+        className={cn(
+          "inbox-feed-panel",
+          flushSurface
+            ? "w-full overflow-visible rounded-none border-0 bg-transparent shadow-none"
+            : "overflow-hidden rounded-2xl border border-border/80 bg-card shadow-sm",
+        )}
+      >
         <div className="border-b border-border/70 px-3.5 py-3.5 sm:px-5 sm:py-4">
           <form
             className="flex gap-2"

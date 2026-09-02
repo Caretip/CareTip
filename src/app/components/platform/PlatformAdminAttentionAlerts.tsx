@@ -22,7 +22,7 @@ export function PlatformAdminAttentionAlerts({ alerts, className }: PlatformAdmi
 
   return (
     <section
-      className={cn("rounded-lg border border-amber-500/25 bg-amber-500/5 p-4 sm:p-5", className)}
+      className={cn("border-b border-border/70 pb-6", className)}
       aria-labelledby="platform-attention-heading"
     >
       <div className="mb-3 flex items-center gap-2">
@@ -31,14 +31,14 @@ export function PlatformAdminAttentionAlerts({ alerts, className }: PlatformAdmi
           {t("admin.overview.alerts.title")}
         </h2>
       </div>
-      <ul className="space-y-2">
+      <ul className="divide-y divide-border/60">
         {alerts.map((alert) => (
           <li key={alert.id}>
             <Link
               to={alert.href}
               className={cn(
-                "group flex items-center justify-between gap-3 rounded-lg border border-border/70 bg-card/80 px-3 py-2.5 text-sm transition-colors hover:bg-muted/40",
-                alert.severity === "critical" && "border-destructive/30 bg-destructive/5 hover:bg-destructive/10",
+                "group flex items-center justify-between gap-3 py-2.5 text-sm transition-colors hover:text-foreground",
+                alert.severity === "critical" && "text-destructive",
               )}
             >
               <span className="min-w-0 text-foreground">{alert.message}</span>

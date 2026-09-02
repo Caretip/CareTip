@@ -17,7 +17,6 @@ import {
 import { logClientError } from "../../lib/clientLog";
 import { EmployeeGoalListSkeleton } from "../../components/dashboard/DashboardSectionLoading";
 import { Button } from "../../components/ui/button";
-import { Card } from "../../components/ui/card";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "../../components/ui/dialog";
 import { Input } from "../../components/ui/input";
 import { Label } from "../../components/ui/label";
@@ -196,8 +195,8 @@ export function EmployeeTipGoalsPage() {
           }
         />
 
-        <Card className={cn(employeeUi.cardStatic, employeeUi.mobileFlatSurface, "dashboard-mobile-flat-surface w-full p-0")}>
-          <div className={employeeUi.cardHeader}>
+        <section className="employee-tip-goals-surface mt-6 w-full">
+          <div className="mb-4 border-b border-border/70 pb-3">
             <h2 className={employeeUi.cardTitle}>{t("employee.tipGoals.manageTitle")}</h2>
             {t("employee.tipGoals.manageSubtitle").trim() ? (
               <p className={cn(employeeUi.cardDesc, employeeUi.mobileHideDesc)}>{t("employee.tipGoals.manageSubtitle")}</p>
@@ -207,15 +206,13 @@ export function EmployeeTipGoalsPage() {
           {isInitialGoalsLoad ? (
             <EmployeeGoalListSkeleton rows={4} />
           ) : loadError ? (
-            <div className="px-5 py-8 sm:px-6">
-              <div className="rounded-lg border border-border bg-muted/35 p-4 sm:rounded-2xl sm:p-5 max-lg:border-border/60 max-lg:bg-transparent max-lg:px-0">
-                <p className="text-sm font-semibold text-foreground">{t("employee.tipGoals.couldNotLoad")}</p>
-                <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{loadError}</p>
-                <div className="mt-4 flex gap-2">
-                  <Button type="button" variant="outline" className={employeeUi.btnSecondary} onClick={() => void refresh()}>
-                    {t("employee.tipGoals.retry")}
-                  </Button>
-                </div>
+            <div className="py-6">
+              <p className="text-sm font-semibold text-foreground">{t("employee.tipGoals.couldNotLoad")}</p>
+              <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{loadError}</p>
+              <div className="mt-4 flex gap-2">
+                <Button type="button" variant="outline" className={employeeUi.btnSecondary} onClick={() => void refresh()}>
+                  {t("employee.tipGoals.retry")}
+                </Button>
               </div>
             </div>
           ) : empty ? (
@@ -228,8 +225,8 @@ export function EmployeeTipGoalsPage() {
             <div className="w-full overflow-x-auto">
               <table className="w-full border-collapse text-sm">
                 <thead>
-                  <tr className="border-b border-border bg-muted/35 text-left">
-                    <th className="whitespace-nowrap px-5 py-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground sm:px-6">
+                  <tr className="border-b border-border text-left">
+                    <th className="whitespace-nowrap px-0 py-3 pr-5 text-xs font-semibold uppercase tracking-wide text-muted-foreground sm:pr-6">
                       {t("employee.tipGoals.colName")}
                     </th>
                     <th className="whitespace-nowrap px-5 py-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground sm:px-6">
@@ -246,7 +243,7 @@ export function EmployeeTipGoalsPage() {
                 <tbody>
                   {sortedGoals.map((g) => (
                     <tr key={g.id} className="border-t border-border/90">
-                      <td className="px-5 py-4 font-medium text-foreground sm:px-6">
+                      <td className="px-0 py-4 pr-5 font-medium text-foreground sm:pr-6">
                         <div className="flex items-center gap-2">
                           <span className="truncate">{g.name}</span>
                           {g.status === "archived" ? (
@@ -328,7 +325,7 @@ export function EmployeeTipGoalsPage() {
               </table>
             </div>
           )}
-        </Card>
+        </section>
 
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogContent className="rounded-2xl border-border sm:max-w-md">

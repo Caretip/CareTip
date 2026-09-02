@@ -742,6 +742,7 @@ export const en: MobileMessages = {
     subscriptionRequiredTitle: "Plan upgrade needed",
     subscriptionRequiredBody:
       "This view needs a higher CareTip plan. Your dashboard still works on Basic. Open Analytics after upgrading.",
+    planCapabilityRequired: "This feature is available on Pro.",
     planLimitExceeded:
       "You've reached the limit for your current plan. Upgrade your plan or change the selection and try again.",
     onboardingIncompleteTitle: "Finish setup first",

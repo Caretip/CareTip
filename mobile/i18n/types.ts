@@ -709,6 +709,7 @@ export type MobileMessages = {
     permissionBody: string;
     subscriptionRequiredTitle: string;
     subscriptionRequiredBody: string;
+    planCapabilityRequired: string;
     planLimitExceeded: string;
     onboardingIncompleteTitle: string;
     onboardingIncompleteBody: string;

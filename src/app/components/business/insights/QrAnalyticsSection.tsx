@@ -1,6 +1,7 @@
 import { lazy, Suspense } from "react";
 import { useTranslation } from "react-i18next";
 import { useRequireAuth } from "../../../hooks/useRequireAuth";
+import { useBusinessEntitlementsContext } from "../../../contexts/BusinessEntitlementsContext";
 import { useSubscriptionEntitlements } from "../../../hooks/useSubscriptionEntitlements";
 import { useBusinessQrAnalytics } from "../../../hooks/useBusinessQrAnalytics";
 import type { BusinessQrAnalytics, BusinessQrAnalyticsTimeframe } from "../../../lib/api";
@@ -30,10 +31,12 @@ export function QrAnalyticsSection({
 }: QrAnalyticsSectionProps) {
   const { t } = useTranslation();
   const { user, sessionValidated } = useRequireAuth();
-  const { advancedAnalyticsEnabled } = useSubscriptionEntitlements({
-    enabled: user?.role === "business" && sessionValidated,
+  const businessEntitlements = useBusinessEntitlementsContext();
+  const fallbackEntitlements = useSubscriptionEntitlements({
+    enabled: user?.role === "business" && sessionValidated && businessEntitlements == null,
     role: user?.role === "business" ? "business" : null,
   });
+  const { advancedAnalyticsEnabled } = businessEntitlements ?? fallbackEntitlements;
   const useHook = dataProp === undefined;
   const qr = useBusinessQrAnalytics(
     useHook && Boolean(sessionValidated && user?.role === "business" && advancedAnalyticsEnabled),

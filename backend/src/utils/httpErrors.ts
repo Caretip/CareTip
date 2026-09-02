@@ -1,4 +1,5 @@
 import { Prisma } from "@prisma/client";
+import { EntitlementDeniedError } from "../lib/subscription/entitlementHttpError.js";
 import {
   AUTH_OAUTH_GENERIC_FAILURE_MESSAGE,
   AUTH_OAUTH_LINK_FAILED_MESSAGE,
@@ -109,6 +110,12 @@ const ALLOWED_CLIENT_MESSAGES = new Set<string>([
   "Account pending verification.",
   "This staff member is not available for tips right now.",
   "This feature is available after your venue is approved to go live.",
+  "An active subscription is required to use this feature.",
+  "An active subscription is required to manage locations.",
+  "This feature is available on Pro.",
+  "Your plan supports one location. Upgrade to Business for multi-location support.",
+  "Your plan supports one table. Upgrade to Business for multiple tables.",
+  "You've reached a limit on your current plan.",
 ]);
 
 /** Thrown from auth login when credentials are valid but `emailVerified` is false. */
@@ -215,6 +222,10 @@ export function clientSafeMessage(err: unknown, fallback: string): string {
   }
   if (err instanceof Prisma.PrismaClientRustPanicError) {
     return fallback;
+  }
+
+  if (err instanceof EntitlementDeniedError) {
+    return err.payload.message;
   }
 
   const msg = err instanceof Error ? err.message : "";

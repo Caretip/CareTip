@@ -16,6 +16,7 @@ import { RouteChunkBoundary } from "../routing/RouteChunkBoundary";
 import { useDashboardLayoutPaintReady, useGlobalAppLoadingActive } from "../lib/globalAppLoading";
 import { useWarmPrefetchAuthLoginRoute } from "../lib/useWarmPrefetchAuthLoginRoute";
 import { useWarmPrefetchLandingRoute } from "../lib/useWarmPrefetchLandingRoute";
+import { EmployeeEntitlementsProvider } from "../contexts/EmployeeEntitlementsContext";
 import { useMinWidthMedia } from "@/lib/motionPerf";
 import {
   useDashboardHeaderProfile,
@@ -72,38 +73,40 @@ export function EmployeeLayout() {
   useWarmPrefetchLandingRoute(isAppReady);
 
   return (
-    <div className="relative min-h-screen bg-background">
-      <PushNotificationSync />
-      <NotificationInboxSync />
-      <div className="relative z-10">
-        {isAppReady ? (
-          isLargeScreen ? <EmployeeSidebar businessBranding={branding} /> : null
-        ) : isLargeScreen && !globalLoaderActive ? (
-          <SidebarSkeleton />
-        ) : null}
-        <EmployeeMobileSidebar
-          isOpen={mobileMenuOpen}
-          onClose={closeMobileMenu}
-          businessBranding={branding}
-        />
+    <EmployeeEntitlementsProvider>
+      <div className="relative min-h-screen bg-background">
+        <PushNotificationSync />
+        <NotificationInboxSync />
+        <div className="relative z-10">
+          {isAppReady ? (
+            isLargeScreen ? <EmployeeSidebar businessBranding={branding} /> : null
+          ) : isLargeScreen && !globalLoaderActive ? (
+            <SidebarSkeleton />
+          ) : null}
+          <EmployeeMobileSidebar
+            isOpen={mobileMenuOpen}
+            onClose={closeMobileMenu}
+            businessBranding={branding}
+          />
 
-        <div
-          className={cn(
-            "caretip-dashboard-shell dashboard-workspace font-sans flex min-h-screen min-w-0 flex-col overflow-x-hidden lg:pl-64",
-            EMPLOYEE_DASHBOARD_ROOT,
-          )}
-        >
-          <DashboardHeader onMenuClick={openMobileMenu} />
-          <main className="caretip-dashboard-page-enter min-w-0 flex-1 overflow-x-clip">
-            <RouteChunkBoundary variant="shell" registrationKey="employee-outlet">
-              <DashboardReactProfiler id="employee:Outlet">
-                <RouteOutletTransition />
-              </DashboardReactProfiler>
-            </RouteChunkBoundary>
-          </main>
-          <Footer variant="minimal" />
+          <div
+            className={cn(
+              "caretip-dashboard-shell dashboard-workspace font-sans flex min-h-screen min-w-0 flex-col overflow-x-hidden lg:pl-64",
+              EMPLOYEE_DASHBOARD_ROOT,
+            )}
+          >
+            <DashboardHeader onMenuClick={openMobileMenu} />
+            <main className="caretip-dashboard-page-enter min-w-0 flex-1 overflow-x-clip">
+              <RouteChunkBoundary variant="shell" registrationKey="employee-outlet">
+                <DashboardReactProfiler id="employee:Outlet">
+                  <RouteOutletTransition />
+                </DashboardReactProfiler>
+              </RouteChunkBoundary>
+            </main>
+            <Footer variant="minimal" />
+          </div>
         </div>
       </div>
-    </div>
+    </EmployeeEntitlementsProvider>
   );
 }

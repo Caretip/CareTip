@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
-import { Copy } from "lucide-react";
+import { Check, Copy } from "lucide-react";
 import type { TipActivityRow, TipStatus } from "../../lib/api";
 import { formatEur } from "../../lib/formatEur";
 import { formatVenueDateTime, resolveBusinessTimezone } from "../../lib/businessVenueTime";
@@ -80,6 +80,7 @@ type TableItemMobileCardProps = {
   guestUrl: string;
   onCopy: () => void;
   copyLabel: string;
+  copied?: boolean;
   qrDataUrl?: string;
   extraActions?: ReactNode;
 };
@@ -90,6 +91,7 @@ export function TableItemMobileCard({
   guestUrl,
   onCopy,
   copyLabel,
+  copied = false,
   qrDataUrl,
   extraActions,
 }: TableItemMobileCardProps) {
@@ -107,7 +109,7 @@ export function TableItemMobileCard({
           onClick={onCopy}
           className="inline-flex min-h-[44px] shrink-0 touch-manipulation items-center gap-1 rounded-xl border border-border px-3 py-2 text-xs font-medium hover:bg-muted"
         >
-          <Copy className="h-3.5 w-3.5" aria-hidden />
+          {copied ? <Check className="h-3.5 w-3.5" aria-hidden /> : <Copy className="h-3.5 w-3.5" aria-hidden />}
           {copyLabel}
         </button>
       </div>
