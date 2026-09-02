@@ -57,10 +57,6 @@ const newArtwork = [
   "src/assets/physical-qr/caretip-midnight.png",
   "src/assets/physical-qr/caretip-nature.png",
   "src/assets/physical-qr/caretip_classic.png",
-  "template/caretip-light.png",
-  "template/caretip-midnight.png",
-  "template/caretip-nature.png",
-  "template/caretip_classic.png",
 ];
 for (const rel of newArtwork) {
   if (existsSync(path.join(root, rel))) pass(`new print template image present: ${rel}`);

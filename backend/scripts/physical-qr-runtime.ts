@@ -635,11 +635,6 @@ function sectionRegressionFiles() {
     "src/assets/physical-qr/caretip-midnight.png",
     "src/assets/physical-qr/caretip-nature.png",
     "src/assets/physical-qr/caretip_classic.png",
-    "template/caretip-light.png",
-    "template/caretip-midnight.png",
-    "template/caretip-nature.png",
-    "template/caretip_classic.png",
-    "template/A5_Flyer without Address.png",
   ];
   for (const rel of required) {
     if (existsSync(path.join(root, rel))) pass(`digital Branding still present: ${rel}`);

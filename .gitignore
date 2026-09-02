@@ -134,6 +134,9 @@ docs/**/hero-layout-audit/
 caretip_adjustment.pdf/
 caretip-translations.pdf/
 
+# --- Local design dumps (print art ships from src/assets/physical-qr) ---
+/template/
+
 # --- Large duplicate raster assets (enable after WebP migration) ---
 # After `git rm --cached images/*.png` for pairs that have .webp siblings:
 # images/**/*.png
