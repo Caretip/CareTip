@@ -133,7 +133,7 @@ export function PlatformPhysicalQrOrderDetailPage() {
       : t("admin.physicalQr.downloadPdf");
 
   return (
-    <PlatformPage>
+    <PlatformPage className="platform-physical-qr">
       <Link to="/platform-admin/branding-orders" className={platformUi.backLink}>
         {t("admin.physicalQr.back")}
       </Link>
@@ -143,27 +143,43 @@ export function PlatformPhysicalQrOrderDetailPage() {
         subtitle={order.businessName ?? ""}
       />
 
-      <div className={`${platformUi.contentCard} mb-4 space-y-3`}>
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <p className="font-medium">
+      <div className={`${platformUi.contentCard} mb-4 min-w-0 space-y-3`}>
+        <div className="flex min-w-0 flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
+          <p className="min-w-0 break-words font-medium">
             {t("admin.physicalQr.currentStatus")}:{" "}
             {physicalQrFulfillmentLabel(order.fulfillmentStatus, t, { totalAmount: order.totalAmount })}
           </p>
           {order.paymentStatus === "PAID" ? (
-            <Button type="button" variant="outline" disabled={downloadingPdf} onClick={() => void downloadPdf()}>
+            <Button
+              type="button"
+              variant="outline"
+              className="h-auto max-w-full whitespace-normal"
+              disabled={downloadingPdf}
+              onClick={() => void downloadPdf()}
+            >
               {bulkLabel}
             </Button>
           ) : (
-            <p className="text-sm text-muted-foreground">{t("admin.physicalQr.printUnpaidHint")}</p>
+            <p className="break-words text-sm text-muted-foreground">{t("admin.physicalQr.printUnpaidHint")}</p>
           )}
         </div>
         {order.fulfillmentStatus === "PAID" ? (
-          <Button type="button" disabled={busy} onClick={() => void run(() => markPlatformPhysicalQrProcessing(order.id))}>
+          <Button
+            type="button"
+            className="h-auto max-w-full whitespace-normal"
+            disabled={busy}
+            onClick={() => void run(() => markPlatformPhysicalQrProcessing(order.id))}
+          >
             {t("admin.physicalQr.markProcessing")}
           </Button>
         ) : null}
         {order.fulfillmentStatus === "PROCESSING" ? (
-          <Button type="button" disabled={busy} onClick={() => void run(() => markPlatformPhysicalQrPrinting(order.id))}>
+          <Button
+            type="button"
+            className="h-auto max-w-full whitespace-normal"
+            disabled={busy}
+            onClick={() => void run(() => markPlatformPhysicalQrPrinting(order.id))}
+          >
             {t("admin.physicalQr.markPrinting")}
           </Button>
         ) : null}
@@ -183,6 +199,7 @@ export function PlatformPhysicalQrOrderDetailPage() {
             </div>
             <Button
               type="button"
+              className="h-auto max-w-full whitespace-normal sm:col-span-3"
               disabled={busy}
               onClick={() =>
                 void run(() =>
@@ -200,35 +217,75 @@ export function PlatformPhysicalQrOrderDetailPage() {
         ) : null}
         {order.fulfillmentStatus === "SHIPPED" ? (
           <div className="space-y-2">
-            <p className="text-sm text-muted-foreground">
+            <p className="break-words text-sm text-muted-foreground">
               {t("admin.physicalQr.shippedAt")}: {order.shippedAt ? formatBerlinDateTime(order.shippedAt, i18n.language) : ""}
               {order.carrier ? ` · ${order.carrier}` : ""}
               {order.trackingNumber ? ` · ${order.trackingNumber}` : ""}
             </p>
-            <Button type="button" disabled={busy} onClick={() => void run(() => deliverPlatformPhysicalQrOrder(order.id))}>
+            <Button
+              type="button"
+              className="h-auto max-w-full whitespace-normal"
+              disabled={busy}
+              onClick={() => void run(() => deliverPlatformPhysicalQrOrder(order.id))}
+            >
               {t("admin.physicalQr.markDelivered")}
             </Button>
           </div>
         ) : null}
       </div>
 
-      <div className={`${platformUi.contentCard} mb-4 grid gap-3 text-sm sm:grid-cols-2`}>
-        <div>
+      <div className={`${platformUi.contentCard} mb-4 grid min-w-0 gap-3 text-sm sm:grid-cols-2`}>
+        <div className="min-w-0">
           <p className="text-muted-foreground">{t("admin.physicalQr.business")}</p>
-          <p className="font-medium">{order.businessName}</p>
+          <p className="break-words font-medium">{order.businessName}</p>
         </div>
-        <div className="sm:col-span-2">
+        <div className="min-w-0 sm:col-span-2">
           <p className="text-muted-foreground">{t("admin.physicalQr.orderItems", { defaultValue: "Items" })}</p>
           {order.items.length > 0 ? (
             <>
-              <p className="mt-0.5 text-xs text-muted-foreground">
+              <p className="mt-0.5 break-words text-xs text-muted-foreground">
                 {t("admin.physicalQr.orderItemsSummary", {
                   lines: order.itemCount,
                   copies: order.quantity,
                   defaultValue: "{{lines}} line items · {{copies}} total copies",
                 })}
               </p>
-              <div className="mt-2 overflow-x-auto rounded-md border border-border">
+              <div className="mt-2 space-y-2 lg:hidden">
+                {groupedItems.map((group) => (
+                  <div key={group.locationName} className="space-y-2">
+                    {groupedItems.length > 1 ? (
+                      <p className="break-words text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                        {group.locationName}
+                      </p>
+                    ) : null}
+                    {group.items.map((item) => (
+                      <div key={item.id} className="min-w-0 rounded-md border border-border p-3">
+                        <p className="break-words font-medium">{item.label}</p>
+                        <p className="mt-0.5 break-words text-xs text-muted-foreground">
+                          {physicalQrContextLabel(item.qrContextType, t)} · ×{item.quantity}
+                        </p>
+                        {order.paymentStatus === "PAID" ? (
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="outline"
+                            className="mt-2 h-auto w-full max-w-full whitespace-normal"
+                            disabled={downloadingPdf}
+                            onClick={() => void downloadPdf(item.id)}
+                          >
+                            {downloadingPdf && downloadingItemId === item.id
+                              ? t("admin.physicalQr.preparingPdfs", { count: item.quantity })
+                              : t("admin.physicalQr.downloadPdf")}
+                          </Button>
+                        ) : (
+                          <p className="mt-2 text-xs text-muted-foreground">—</p>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                ))}
+              </div>
+              <div className="mt-2 hidden max-w-full overflow-x-auto rounded-md border border-border lg:block">
                 <table className="w-full min-w-[280px] text-sm">
                   <thead>
                     <tr className="border-b border-border bg-muted/30 text-left text-xs uppercase tracking-wide text-muted-foreground">
@@ -250,8 +307,8 @@ export function PlatformPhysicalQrOrderDetailPage() {
                         ) : null}
                         {group.items.map((item) => (
                       <tr key={item.id} className="border-b border-border/60 last:border-0">
-                        <td className="px-3 py-2 font-medium">{item.label}</td>
-                        <td className="px-3 py-2 text-muted-foreground">{physicalQrContextLabel(item.qrContextType, t)}</td>
+                        <td className="max-w-[12rem] break-words px-3 py-2 font-medium">{item.label}</td>
+                        <td className="whitespace-nowrap px-3 py-2 text-muted-foreground">{physicalQrContextLabel(item.qrContextType, t)}</td>
                         <td className="px-3 py-2 text-right tabular-nums">×{item.quantity}</td>
                         <td className="px-3 py-2 text-right">
                           {order.paymentStatus === "PAID" ? (
@@ -282,21 +339,21 @@ export function PlatformPhysicalQrOrderDetailPage() {
             <p className="font-medium">{physicalQrContextLabel(order.qrContextType, t)}</p>
           )}
         </div>
-        <div>
+        <div className="min-w-0">
           <p className="text-muted-foreground">{t("business.qrStudio.physical.printedAddress")}</p>
-          <p className="font-medium">
+          <p className="break-words font-medium">
             {order.supportsAddress
               ? address || t("business.qrStudio.physical.withAddress")
               : t("business.qrStudio.physical.withoutAddress")}
           </p>
         </div>
-        <div>
+        <div className="min-w-0">
           <p className="text-muted-foreground">{t("admin.physicalQr.deliveryAddress")}</p>
-          <p className="font-medium">{shipTo || t("admin.physicalQr.deliveryNotCollected")}</p>
+          <p className="break-words font-medium">{shipTo || t("admin.physicalQr.deliveryNotCollected")}</p>
         </div>
-        <div>
+        <div className="min-w-0">
           <p className="text-muted-foreground">{t("admin.physicalQr.contact")}</p>
-          <p className="font-medium">
+          <p className="break-words font-medium">
             {contact
               ? [contact.name, contact.email, contact.phone].filter(Boolean).join(" · ")
               : t("admin.physicalQr.deliveryNotCollected")}
@@ -314,38 +371,38 @@ export function PlatformPhysicalQrOrderDetailPage() {
             <p className="break-all font-medium">{order.stripePaymentIntentId}</p>
           </div>
         ) : null}
-        <div>
+        <div className="min-w-0">
           <p className="text-muted-foreground">{t("business.qrStudio.physical.quantity")}</p>
           <p className="font-medium">{order.quantity}</p>
         </div>
-        <div>
+        <div className="min-w-0">
           <p className="text-muted-foreground">{t("business.qrStudio.physical.orders.payment")}</p>
-          <p className="font-medium">
+          <p className="break-words font-medium">
             {formatPhysicalQrMoney(order.totalAmount, order.currency, i18n.language)} ·{" "}
             {physicalQrPaymentLabel(order.paymentStatus, t, { totalAmount: order.totalAmount })}
           </p>
         </div>
-        <div>
+        <div className="min-w-0">
           <p className="text-muted-foreground">{t("business.qrStudio.physical.orders.placed")}</p>
-          <p className="font-medium">{formatBerlinDateTime(order.placedAt, i18n.language)}</p>
+          <p className="break-words font-medium">{formatBerlinDateTime(order.placedAt, i18n.language)}</p>
         </div>
-        <div>
+        <div className="min-w-0">
           <p className="text-muted-foreground">{t("business.qrStudio.physical.orders.status")}</p>
-          <p className="font-medium">
+          <p className="break-words font-medium">
             {physicalQrFulfillmentLabel(order.fulfillmentStatus, t, { totalAmount: order.totalAmount })}
           </p>
         </div>
-        <div>
+        <div className="min-w-0">
           <p className="text-muted-foreground">{t("business.qrStudio.physical.orders.cutoff")}</p>
-          <p className="font-medium">{physicalQrCutoffLabel(order.processingClass, t)}</p>
+          <p className="break-words font-medium">{physicalQrCutoffLabel(order.processingClass, t)}</p>
         </div>
-        <div>
+        <div className="min-w-0">
           <p className="text-muted-foreground">{t("business.qrStudio.physical.orders.estimatedFulfillment")}</p>
-          <p className="font-medium">{physicalQrEstimatedFulfillmentLabel(order.processingClass, t)}</p>
+          <p className="break-words font-medium">{physicalQrEstimatedFulfillmentLabel(order.processingClass, t)}</p>
         </div>
-        <p className="sm:col-span-2 text-muted-foreground">{t("business.qrStudio.physical.deliveryAfterShip")}</p>
+        <p className="sm:col-span-2 break-words text-muted-foreground">{t("business.qrStudio.physical.deliveryAfterShip")}</p>
         {!shipTo ? (
-          <p className="sm:col-span-2 text-sm text-destructive">{t("admin.physicalQr.deliveryMissingWarning")}</p>
+          <p className="sm:col-span-2 break-words text-sm text-destructive">{t("admin.physicalQr.deliveryMissingWarning")}</p>
         ) : null}
       </div>
 

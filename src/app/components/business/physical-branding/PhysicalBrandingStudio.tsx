@@ -333,7 +333,7 @@ export function PhysicalBrandingStudio() {
           : [];
 
   return (
-    <section className="mb-10 space-y-10" aria-labelledby="physical-branding-title">
+    <section className="physical-branding-studio mb-10 min-w-0 w-full max-w-full space-y-10" aria-labelledby="physical-branding-title">
       <div>
         <h2 id="physical-branding-title" className="text-xl font-semibold tracking-tight">
           {t("business.qrStudio.physical.title")}
@@ -353,19 +353,19 @@ export function PhysicalBrandingStudio() {
         </div>
       ) : null}
 
-      <div className="grid items-start gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(260px,380px)]">
+      <div className="grid min-w-0 items-start gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,380px)]">
         <StudioField
           title={t("business.qrStudio.physical.chooseProduct")}
           hint={t("business.qrStudio.physical.chooseProductHint")}
         >
-          <div className="grid gap-3 sm:grid-cols-2">
+          <div className="grid min-w-0 grid-cols-1 gap-3 sm:grid-cols-2">
             {products.map((item) => (
               <button
                 key={item.id}
                 type="button"
                 onClick={() => setProductId(item.id)}
                 className={cn(
-                  "rounded-lg border p-2.5 text-left transition-colors",
+                  "min-w-0 rounded-lg border p-2.5 text-left transition-colors",
                   productId === item.id
                     ? "border-primary bg-primary/5"
                     : "border-border hover:border-primary/40",
@@ -373,13 +373,14 @@ export function PhysicalBrandingStudio() {
               >
                 <PhysicalQrPreview
                   compact
+                  className="mx-auto w-full max-w-[8.5rem]"
                   businessName={businessName}
                   address={item.supportsAddress ? printAddress : null}
                   supportsAddress={item.supportsAddress}
                   colorTokens={PHYSICAL_QR_DEFAULT_COLOR_TOKENS}
                   targetUrl={targetUrl}
                 />
-                <p className="mt-2 text-sm font-medium leading-tight">
+                <p className="mt-2 min-w-0 break-words text-sm font-medium leading-tight">
                   {physicalQrTemplateDisplayName(t, {
                     templateId: item.templateId,
                     productName: item.name,
@@ -395,7 +396,7 @@ export function PhysicalBrandingStudio() {
           </div>
         </StudioField>
 
-        <aside className="h-fit space-y-2 lg:sticky lg:top-4 lg:col-start-2 lg:row-span-7 lg:row-start-1">
+        <aside className="h-fit min-w-0 space-y-2 lg:sticky lg:top-4 lg:col-start-2 lg:row-span-7 lg:row-start-1">
           <p className="text-sm font-medium tracking-tight lg:hidden">
             {t("business.qrStudio.physical.preview")}
           </p>
@@ -560,7 +561,7 @@ export function PhysicalBrandingStudio() {
 
         <StudioField title={t("business.qrStudio.physical.order")}>
           <div className="space-y-4">
-            <div className="flex items-center gap-3">
+            <div className="flex min-w-0 flex-wrap items-center gap-3">
               <Label htmlFor="physical-qty">{t("business.qrStudio.physical.quantity")}</Label>
               <div className="inline-flex items-center overflow-hidden rounded-md border border-border">
                 <button
@@ -630,7 +631,7 @@ export function PhysicalBrandingStudio() {
             {!missingDelivery && product ? (
               <div className="space-y-1 rounded-md border border-border px-3 py-2 text-sm">
                 <p className="font-medium">{t("business.qrStudio.physical.reviewTitle")}</p>
-                <p className="text-muted-foreground">
+                <p className="break-words text-muted-foreground">
                   {physicalQrTemplateDisplayName(t, {
                     templateId: product.templateId,
                     productName: product.name,
@@ -638,7 +639,7 @@ export function PhysicalBrandingStudio() {
                   · {t("business.qrStudio.physical.orders.qtyShort", { count: quantity })}
                   {` · ${formatEur(quote.totalCents)}`}
                 </p>
-                <p>
+                <p className="break-words">
                   {t("business.qrStudio.physical.reviewShipTo")}: {recipientName}, {streetLine}, {city},{" "}
                   {PHYSICAL_QR_SHIP_COUNTRY}
                 </p>

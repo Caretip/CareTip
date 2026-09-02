@@ -210,6 +210,17 @@ if (routes.includes("qr-studio/QrStudioPrintPage") && routes.includes("path: 'pr
   fail("Order Print route drifted");
 }
 
+if (
+  printStudio.includes("print-qr-studio__actions") &&
+  printStudio.includes("break-words") &&
+  printStudio.includes("ring-inset") &&
+  !printStudio.includes("-mx-3")
+) {
+  pass("Order Print studio wraps cart/actions instead of clipping on mobile");
+} else {
+  fail("Order Print studio mobile wrap missing");
+}
+
 const failed = results.filter((r) => r.startsWith("FAIL:")).length;
 console.log(results.join("\n"));
 if (failed) {

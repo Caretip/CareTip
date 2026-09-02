@@ -45,9 +45,9 @@ export function PhysicalQrOrderCard({
 
   return (
     <div className="py-4 first:pt-0 last:pb-0">
-      <div className="flex items-start justify-between gap-4">
+      <div className="flex min-w-0 items-start justify-between gap-3">
         <div className="min-w-0">
-          <p className="truncate font-medium leading-tight">
+          <p className="break-words font-medium leading-tight">
             {order.itemCount > 1 ? t("business.qrStudio.physical.orders.multiItemTitle", { defaultValue: "Print order" }) : productName}
           </p>
           <p className="mt-0.5 text-sm text-muted-foreground">

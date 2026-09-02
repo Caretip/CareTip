@@ -63,6 +63,15 @@ if (
   pass("mobile theme surface-first rules extended");
 } else fail("mobile theme surface-first extension incomplete");
 
+const mobileCss = read("src/styles/caretip-dashboard-mobile.css");
+if (
+  mobileCss.includes(".print-qr-studio") &&
+  mobileCss.includes(".platform-physical-qr") &&
+  mobileCss.includes("overflow-wrap: anywhere")
+) {
+  pass("mobile CSS contains print studio and admin physical branding");
+} else fail("mobile CSS missing physical branding containment");
+
 const tipGoalsPage = read("src/app/pages/employee/EmployeeTipGoalsPage.tsx");
 if (
   tipGoalsPage.includes("employee-tip-goals-surface") &&

@@ -149,7 +149,7 @@ export function PhysicalQrPreview({
         ) : null}
         {name ? (
           <p
-            className="absolute left-[8%] right-[8%] text-center font-bold leading-tight"
+            className="absolute left-[8%] right-[8%] break-words text-center font-bold leading-tight"
             style={{
               top: `${(NAME_TOP / ART_H) * 100}%`,
               color: overlayTextColor,
@@ -161,7 +161,7 @@ export function PhysicalQrPreview({
         ) : null}
         {showAddress ? (
           <p
-            className="absolute left-[8%] right-[8%] text-center leading-snug"
+            className="absolute left-[8%] right-[8%] break-words text-center leading-snug"
             style={{
               top: `${(ADDRESS_TOP / ART_H) * 100}%`,
               color: overlayTextColor,

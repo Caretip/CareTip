@@ -565,7 +565,7 @@ export function PrintQrStudio() {
 
   if (bootLoading) {
     return (
-      <div className="print-qr-studio space-y-8 max-lg:space-y-5">
+      <div className="print-qr-studio min-w-0 w-full max-w-full space-y-8 max-lg:space-y-5">
         <p className="text-sm text-muted-foreground">{t("business.qrStudio.print.intro")}</p>
         <PrintQrStudioSkeleton />
       </div>
@@ -574,7 +574,7 @@ export function PrintQrStudio() {
 
   if (loadError) {
     return (
-      <div className="print-qr-studio space-y-8 max-lg:space-y-5">
+      <div className="print-qr-studio min-w-0 w-full max-w-full space-y-8 max-lg:space-y-5">
         <p className="text-sm text-muted-foreground">{t("business.qrStudio.print.intro")}</p>
         <p className="text-sm text-destructive">{loadError}</p>
       </div>
@@ -582,7 +582,7 @@ export function PrintQrStudio() {
   }
 
   return (
-    <div className="print-qr-studio space-y-8 max-lg:space-y-5">
+    <div className="print-qr-studio min-w-0 w-full max-w-full space-y-8 max-lg:space-y-5">
       {step === "select" ? (
         <p className="text-sm text-muted-foreground">{t("business.qrStudio.print.intro")}</p>
       ) : null}
@@ -597,12 +597,12 @@ export function PrintQrStudio() {
             {products.length === 0 ? (
               <p className="py-6 text-sm text-muted-foreground">{t("business.qrStudio.physical.noTemplates")}</p>
             ) : (
-            <div className="grid gap-3 sm:grid-cols-2">
+            <div className="grid min-w-0 grid-cols-1 gap-3 sm:grid-cols-2">
               {products.map((item) => (
                 <div
                   key={item.id}
                   className={cn(
-                    "rounded-lg border p-2 text-left transition-colors",
+                    "min-w-0 rounded-lg border p-2 text-left transition-colors",
                     productId === item.id
                       ? "border-primary bg-primary/5 ring-1 ring-primary/20"
                       : "border-border hover:border-primary/40",
@@ -611,7 +611,7 @@ export function PrintQrStudio() {
                   <button
                     type="button"
                     onClick={() => setProductId(item.id)}
-                    className="flex w-full flex-col items-center text-left"
+                    className="flex w-full min-w-0 flex-col items-center text-left"
                     aria-pressed={productId === item.id}
                     aria-label={templateLabel(item)}
                   >
@@ -626,13 +626,13 @@ export function PrintQrStudio() {
                       targetUrl={previewTargetUrl}
                       qrDataUrl={sharedQrDataUrl}
                     />
-                    <p className="mt-2 w-full text-sm font-medium leading-tight">
+                    <p className="mt-2 w-full min-w-0 break-words text-sm font-medium leading-tight">
                       {physicalQrTemplateDisplayName(t, {
                         templateId: item.templateId,
                         productName: item.name,
                       })}
                     </p>
-                    <p className="mt-0.5 w-full text-xs text-muted-foreground">
+                    <p className="mt-0.5 w-full min-w-0 break-words text-xs text-muted-foreground">
                       {item.supportsAddress
                         ? t("business.qrStudio.physical.withAddress")
                         : t("business.qrStudio.physical.withoutAddress")}
@@ -675,7 +675,7 @@ export function PrintQrStudio() {
                   id={printFocusSectionId(groupFocus)}
                   className={cn(
                     "scroll-mt-24 space-y-1 rounded-lg transition-colors",
-                    isFocused && "ring-2 ring-primary/25 bg-primary/[0.03] p-3 -mx-3",
+                    isFocused && "bg-primary/[0.03] p-3 ring-2 ring-inset ring-primary/25",
                   )}
                 >
                   <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{group.title}</p>
@@ -704,20 +704,20 @@ export function PrintQrStudio() {
                               })
                             }
                             className={cn(
-                              "flex w-full items-center gap-3 py-2.5 text-left text-sm transition-colors",
+                              "flex w-full min-w-0 items-start gap-3 py-2.5 text-left text-sm transition-colors",
                               selected && "bg-primary/[0.04]",
                             )}
                           >
                             <span
                               className={cn(
-                                "flex h-5 w-5 shrink-0 items-center justify-center rounded border text-xs",
+                                "mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded border text-xs",
                                 selected ? "border-primary bg-primary text-primary-foreground" : "border-border",
                               )}
                               aria-hidden
                             >
                               {selected ? "✓" : ""}
                             </span>
-                            <span className="min-w-0 flex-1 truncate font-medium">{item.label}</span>
+                            <span className="min-w-0 flex-1 break-words font-medium">{item.label}</span>
                           </button>
                         </li>
                       );
@@ -776,13 +776,13 @@ export function PrintQrStudio() {
                 <Input id="ship-phone" value={contactPhone} onChange={(e) => setContactPhone(e.target.value)} />
               </div>
             </div>
-            <div className="flex gap-2 pt-2">
-              <Button type="button" variant="outline" onClick={() => setStep("select")}>
+            <div className="print-qr-studio__actions flex flex-col-reverse gap-2 pt-2 sm:flex-row">
+              <Button type="button" variant="outline" className="h-auto whitespace-normal sm:w-auto" onClick={() => setStep("select")}>
                 {t("business.qrStudio.print.backToSelect")}
               </Button>
               <Button
                 type="button"
-                className={businessUi.btnPrimary}
+                className={cn(businessUi.btnPrimary, "h-auto whitespace-normal sm:w-auto")}
                 disabled={missingDelivery || missingAddress}
                 onClick={() => setStep("review")}
               >
@@ -810,11 +810,11 @@ export function PrintQrStudio() {
             }
             t={t}
           />
-          <div className="flex flex-wrap gap-2">
-            <Button type="button" variant="outline" disabled={submitting} onClick={() => setStep("shipping")}>
+          <div className="print-qr-studio__actions flex flex-col-reverse gap-2 sm:flex-row sm:flex-wrap">
+            <Button type="button" variant="outline" className="h-auto whitespace-normal sm:w-auto" disabled={submitting} onClick={() => setStep("shipping")}>
               {t("business.qrStudio.print.backToShipping")}
             </Button>
-            <Button type="button" className={businessUi.btnPrimary} disabled={!canCheckout} onClick={() => void placeBatchOrder()}>
+            <Button type="button" className={cn(businessUi.btnPrimary, "h-auto whitespace-normal sm:w-auto")} disabled={!canCheckout} onClick={() => void placeBatchOrder()}>
               {submitting
                 ? quote.totalCents === 0
                   ? t("business.qrStudio.print.placingOrder", { defaultValue: "Placing order…" })
@@ -828,7 +828,7 @@ export function PrintQrStudio() {
       ) : null}
 
       <Dialog open={Boolean(previewProduct)} onOpenChange={(open) => { if (!open) setPreviewProductId(null); }}>
-        <DialogContent className="max-w-[min(100%-2rem,28rem)] sm:max-w-[28rem]">
+        <DialogContent className="max-w-[min(100%-1.5rem,28rem)] sm:max-w-[28rem]">
           <DialogHeader>
             <DialogTitle>
               {previewProduct
@@ -922,9 +922,9 @@ function CartSummary({
               {lines.map((line) => {
                 const key = cartLineKey(line.qrContextType, line.qrSubjectId);
                 return (
-                  <li key={key} className="flex flex-wrap items-center justify-between gap-2">
-                    <span className="min-w-0 flex-1 truncate text-foreground">{line.label}</span>
-                    <span className="flex shrink-0 items-center gap-2">
+                  <li key={key} className="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                    <span className="min-w-0 break-words text-foreground">{line.label}</span>
+                    <span className="flex shrink-0 items-center gap-2 self-end sm:self-auto">
                       {quantityEditable && onQuantityChange ? (
                         <QuantityStepper
                           quantity={line.quantity}
@@ -972,28 +972,28 @@ function CartSummary({
             {t("business.qrStudio.print.quotaUsed")}
           </p>
         ) : null}
-        <div className="flex justify-between text-muted-foreground">
-          <span>
+        <div className="flex justify-between gap-3 text-muted-foreground">
+          <span className="min-w-0 break-words">
             {quote.freeOrderApplied
               ? t("business.qrStudio.print.freePrints", { count: quote.includedPrints })
               : t("business.qrStudio.print.basePackage", { count: quote.includedPrints })}
           </span>
-          <span>{quote.packageCents === 0 ? formatEur(0) : formatEur(quote.packageCents)}</span>
+          <span className="shrink-0 tabular-nums">{quote.packageCents === 0 ? formatEur(0) : formatEur(quote.packageCents)}</span>
         </div>
         {quote.extraPrints > 0 ? (
-          <div className="flex justify-between text-muted-foreground">
-            <span>
+          <div className="flex justify-between gap-3 text-muted-foreground">
+            <span className="min-w-0 break-words">
               {t("business.qrStudio.print.extraPrints", {
                 count: quote.extraPrints,
                 price: formatEur(quote.extraUnitCents),
               })}
             </span>
-            <span>{formatEur(quote.extraCents)}</span>
+            <span className="shrink-0 tabular-nums">{formatEur(quote.extraCents)}</span>
           </div>
         ) : null}
-        <div className="flex justify-between font-semibold">
-          <span>{t("business.qrStudio.print.total")}</span>
-          <span>{formatEur(printSubtotal)}</span>
+        <div className="flex justify-between gap-3 font-semibold">
+          <span className="min-w-0 break-words">{t("business.qrStudio.print.total")}</span>
+          <span className="shrink-0 tabular-nums">{formatEur(printSubtotal)}</span>
         </div>
       </div>
       {onContinue ? (

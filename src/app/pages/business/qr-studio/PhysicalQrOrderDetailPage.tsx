@@ -214,7 +214,7 @@ export function PhysicalQrOrderDetailPage() {
                     </p>
                     <ul className="mt-1 space-y-1">
                       {group.items.map((item) => (
-                        <li key={item.id}>
+                        <li key={item.id} className="break-words">
                           {item.label} · {physicalQrContextLabel(item.qrContextType, t)} · ×{item.quantity}
                         </li>
                       ))}

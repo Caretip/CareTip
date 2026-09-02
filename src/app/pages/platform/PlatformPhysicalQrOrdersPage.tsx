@@ -57,18 +57,19 @@ export function PlatformPhysicalQrOrdersPage() {
   }, [t]);
 
   return (
-    <PlatformPage>
+    <PlatformPage className="platform-physical-qr">
       <PlatformPageHeader
         icon={Package}
         title={t("admin.physicalQr.title")}
         subtitle={t("admin.physicalQr.subtitle")}
       />
-      <div className="mb-4 flex flex-wrap gap-2">
+      <div className="mb-4 flex max-w-full flex-wrap gap-2">
         {FILTERS.map((id) => (
           <Button
             key={id}
             type="button"
             size="sm"
+            className="h-auto max-w-full whitespace-normal"
             variant={filter === id ? "default" : "outline"}
             onClick={() => {
               setFilter(id);
@@ -123,16 +124,16 @@ export function PlatformPhysicalQrOrdersPage() {
             <Link
               key={order.id}
               to={`/platform-admin/branding-orders/${order.id}`}
-              className={`${platformUi.contentCard} block hover:border-primary/40`}
+              className={`${platformUi.contentCard} block min-w-0 hover:border-primary/40`}
             >
-              <div className="flex flex-wrap items-start justify-between gap-3">
-                <div>
-                  <p className="font-medium">
+              <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-start sm:justify-between sm:gap-3">
+                <div className="min-w-0">
+                  <p className="break-words font-medium">
                     {t("business.qrStudio.physical.orders.orderNumber", {
                       id: physicalQrOrderNumber(order.id),
                     })}
                   </p>
-                  <p className="text-sm text-muted-foreground">
+                  <p className="break-words text-sm text-muted-foreground">
                     {order.businessName}
                     {" · "}
                     {order.itemCount > 1
@@ -146,15 +147,15 @@ export function PlatformPhysicalQrOrdersPage() {
                     {shipping ? ` · ${shipping.city}, ${shipping.country}` : ""}
                   </p>
                 </div>
-                <p className="text-sm font-semibold">
+                <p className="shrink-0 text-sm font-semibold tabular-nums sm:text-right">
                   {formatPhysicalQrMoney(order.totalAmount, order.currency, i18n.language)}
                 </p>
               </div>
-              <p className="mt-2 text-sm">
+              <p className="mt-2 break-words text-sm">
                 {physicalQrPaymentLabel(order.paymentStatus, t, { totalAmount: order.totalAmount })} ·{" "}
                 {physicalQrFulfillmentLabel(order.fulfillmentStatus, t, { totalAmount: order.totalAmount })}
               </p>
-              <p className="mt-1 text-xs text-muted-foreground">
+              <p className="mt-1 break-words text-xs text-muted-foreground">
                 {formatBerlinDateTime(order.placedAt, i18n.language)}
                 {order.updatedAt ? ` · ${formatBerlinDateTime(order.updatedAt, i18n.language)}` : ""}
               </p>

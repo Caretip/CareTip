@@ -437,6 +437,36 @@ if (
 } else fail("Admin QR order list loading/error/empty");
 
 if (
+  platformOrders.includes("platform-physical-qr") &&
+  platformOrders.includes("whitespace-normal") &&
+  platformOrders.includes("break-words") &&
+  platformOrders.includes("min-w-0")
+) {
+  pass("Admin physical branding order list wraps filter chips and order copy on mobile");
+} else fail("Admin physical branding order list mobile wrap");
+
+if (
+  adminDetail.includes("platform-physical-qr") &&
+  adminDetail.includes("lg:hidden") &&
+  adminDetail.includes("hidden") &&
+  adminDetail.includes("lg:block") &&
+  adminDetail.includes("whitespace-normal") &&
+  adminDetail.includes("break-words")
+) {
+  pass("Admin physical branding order detail stacks items and wraps actions on mobile");
+} else fail("Admin physical branding order detail mobile layout");
+
+if (
+  printStudio.includes("print-qr-studio__actions") &&
+  printStudio.includes("break-words") &&
+  printStudio.includes("ring-inset") &&
+  !printStudio.includes("-mx-3") &&
+  !printStudio.includes("truncate font-medium")
+) {
+  pass("Print QR studio keeps labels and actions inside the mobile viewport");
+} else fail("Print QR studio mobile overflow");
+
+if (
   orderUi.includes("isPhysicalQrIncludedOrder") &&
   orderUi.includes("orderReceived") &&
   orderUi.includes("stepOrderReceived") &&
