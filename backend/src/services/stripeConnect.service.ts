@@ -108,6 +108,21 @@ export function accountsV2RetrievePath(accountId: string): string {
   return `${STRIPE_ACCOUNTS_V2_CREATE_PATH}/${encodeURIComponent(accountId)}`;
 }
 
+/** Includes required to read V2 capability status (charges/payouts). */
+export const ACCOUNTS_V2_STATUS_INCLUDES = [
+  "configuration.merchant",
+  "configuration.recipient",
+  "identity",
+  "requirements",
+] as const;
+
+export function accountsV2RetrievePathWithIncludes(accountId: string): string {
+  const query = ACCOUNTS_V2_STATUS_INCLUDES.map((item) => `include=${encodeURIComponent(item)}`).join(
+    "&",
+  );
+  return `${accountsV2RetrievePath(accountId)}?${query}`;
+}
+
 /** Configurations requested when CareTip creates a new V2 account. Existing accounts may differ. */
 export const CARETIP_NEW_ACCOUNT_V2_CONFIGURATIONS = ["merchant", "recipient"] as const;
 
@@ -196,6 +211,18 @@ export function buildAccountsV2AccountLinkParams(input: {
 
 function isStripeConnectedAccountId(id: string): boolean {
   return /^acct_[A-Za-z0-9_]+$/.test(id) && id.length >= 10 && id.length <= 128;
+}
+
+/** Runtime test fixtures — never send these to live Stripe. */
+function isSyntheticConnectAccountId(id: string): boolean {
+  return /^acct_(p\d+_|stale_|ready_|unknown_|shared_)/i.test(id);
+}
+
+function isStripeAccountUnreachable(err: unknown): boolean {
+  if (isStripeResourceMissing(err)) return true;
+  if (!err || typeof err !== "object") return false;
+  const code = (err as { code?: unknown }).code;
+  return code === "account_invalid" || code === "invalid_fields";
 }
 
 function stripeOpsMeta(err: unknown): Record<string, unknown> {
@@ -372,6 +399,101 @@ function snapshotFromStripeAccount(account: Stripe.Account): {
   };
 }
 
+type ConnectCapabilitySnapshot = ReturnType<typeof snapshotFromStripeAccount>;
+
+function isStripeCapabilityActive(status: unknown): boolean {
+  return typeof status === "string" && status.trim().toLowerCase() === "active";
+}
+
+function readNestedStatus(root: unknown, path: string[]): unknown {
+  let cur: unknown = root;
+  for (const key of path) {
+    if (!cur || typeof cur !== "object") return undefined;
+    cur = (cur as Record<string, unknown>)[key];
+  }
+  return cur;
+}
+
+function parseV2RequirementCounts(requirements: unknown): {
+  currentlyDueCount: number;
+  pastDueCount: number;
+  disabledReason: string | null;
+} {
+  if (!requirements || typeof requirements !== "object") {
+    return { currentlyDueCount: 0, pastDueCount: 0, disabledReason: null };
+  }
+  const req = requirements as {
+    currently_due?: unknown;
+    past_due?: unknown;
+    entries?: unknown;
+    disabled_reason?: unknown;
+  };
+  const currentlyDueCount = Array.isArray(req.currently_due)
+    ? req.currently_due.length
+    : Array.isArray(req.entries)
+      ? req.entries.length
+      : 0;
+  const pastDueCount = Array.isArray(req.past_due) ? req.past_due.length : 0;
+  const disabledReason =
+    typeof req.disabled_reason === "string" && req.disabled_reason.trim()
+      ? req.disabled_reason.trim().slice(0, 128)
+      : null;
+  return { currentlyDueCount, pastDueCount, disabledReason };
+}
+
+/**
+ * Accounts V2 has no top-level charges_enabled / payouts_enabled.
+ * Map merchant card_payments + recipient/merchant stripe_balance instead.
+ */
+export function snapshotFromV2CoreAccount(payload: unknown): ConnectCapabilitySnapshot {
+  const configuration = readNestedStatus(payload, ["configuration"]);
+  const chargesEnabled = isStripeCapabilityActive(
+    readNestedStatus(configuration, ["merchant", "capabilities", "card_payments", "status"]),
+  );
+  const payoutsEnabled =
+    isStripeCapabilityActive(
+      readNestedStatus(configuration, [
+        "recipient",
+        "capabilities",
+        "stripe_balance",
+        "stripe_transfers",
+        "status",
+      ]),
+    ) ||
+    isStripeCapabilityActive(
+      readNestedStatus(configuration, ["merchant", "capabilities", "stripe_balance", "payouts", "status"]),
+    );
+  const identity = readNestedStatus(payload, ["identity"]);
+  const { currentlyDueCount, pastDueCount, disabledReason } = parseV2RequirementCounts(
+    readNestedStatus(payload, ["requirements"]),
+  );
+  const detailsSubmitted =
+    Boolean(identity && typeof identity === "object") ||
+    (currentlyDueCount === 0 && (chargesEnabled || payoutsEnabled));
+  const status = deriveStripeConnectStatus({
+    hasAccount: true,
+    chargesEnabled,
+    payoutsEnabled,
+    detailsSubmitted,
+    currentlyDueCount,
+    pastDueCount,
+    disabledReason,
+  });
+  return {
+    chargesEnabled,
+    payoutsEnabled,
+    detailsSubmitted,
+    currentlyDueCount,
+    pastDueCount,
+    disabledReason,
+    status,
+  };
+}
+
+export function isConnectCapabilityReady(snap: Pick<ConnectCapabilitySnapshot, "chargesEnabled" | "payoutsEnabled" | "disabledReason">): boolean {
+  return snap.chargesEnabled && snap.payoutsEnabled && !snap.disabledReason;
+}
+
 function toStatusDto(row: {
   stripeAccountId: string | null;
   stripeConnectStatus: StripeConnectStatus;
@@ -472,6 +594,7 @@ type CreateV2AccountLinkFn = (
 type RetrieveAccountFn = (accountId: string) => Promise<Stripe.Account>;
 
 type RetrieveV2AppliedConfigurationsFn = (accountId: string) => Promise<string[] | null>;
+type RetrieveV2CoreAccountFn = (accountId: string) => Promise<unknown | null>;
 
 /** Test seam — production uses Stripe Accounts V2 via rawRequest. */
 let createAccountFn: CreateAccountFn | null = null;
@@ -479,6 +602,7 @@ let createV2AccountFn: CreateV2AccountFn | null = null;
 let createV2AccountLinkFn: CreateV2AccountLinkFn | null = null;
 let retrieveAccountFn: RetrieveAccountFn | null = null;
 let retrieveV2AppliedConfigurationsFn: RetrieveV2AppliedConfigurationsFn | null = null;
+let retrieveV2CoreAccountFn: RetrieveV2CoreAccountFn | null = null;
 
 export function __setCreateAccountFnForTests(fn: CreateAccountFn | null): void {
   createAccountFn = fn;
@@ -500,6 +624,10 @@ export function __setRetrieveV2AppliedConfigurationsFnForTests(
   fn: RetrieveV2AppliedConfigurationsFn | null,
 ): void {
   retrieveV2AppliedConfigurationsFn = fn;
+}
+
+export function __setRetrieveV2CoreAccountFnForTests(fn: RetrieveV2CoreAccountFn | null): void {
+  retrieveV2CoreAccountFn = fn;
 }
 
 async function retrieveConnectedAccount(accountId: string): Promise<Stripe.Account> {
@@ -524,13 +652,8 @@ async function retrieveV2AppliedConfigurations(accountId: string): Promise<strin
   if (createV2AccountLinkFn) return [...CARETIP_NEW_ACCOUNT_V2_CONFIGURATIONS];
   if (!isStripeConfigured()) return null;
   try {
-    const payload = await getStripeClient().rawRequest(
-      "GET",
-      accountsV2RetrievePath(accountId),
-      // stripe-node types forbid null, but {} is sent as a GET body and 404s the V2 retrieve.
-      null as unknown as { [key: string]: unknown },
-      accountsV2GetRequestOptions(),
-    );
+    const payload = await retrieveV2CoreAccount(accountId);
+    if (payload == null) return null;
     return parseV2AppliedConfigurations(payload);
   } catch (err) {
     if (isStripeResourceMissing(err)) {
@@ -542,6 +665,120 @@ async function retrieveV2AppliedConfigurations(accountId: string): Promise<strin
     }
     throw err;
   }
+}
+
+async function retrieveV2CoreAccount(accountId: string): Promise<unknown | null> {
+  if (retrieveV2CoreAccountFn) return retrieveV2CoreAccountFn(accountId);
+  if (retrieveV2AppliedConfigurationsFn) return null;
+  if (createV2AccountFn || createV2AccountLinkFn || createAccountFn) return null;
+  if (isSyntheticConnectAccountId(accountId)) return null;
+  if (!isStripeConfigured()) return null;
+  try {
+    return await getStripeClient().rawRequest(
+      "GET",
+      accountsV2RetrievePathWithIncludes(accountId),
+      null as unknown as { [key: string]: unknown },
+      accountsV2GetRequestOptions(),
+    );
+  } catch (err) {
+    if (isStripeAccountUnreachable(err)) {
+      console.info("[stripe.connect] v2.accounts.retrieve_not_found", {
+        accountSuffix: accountId.slice(-8),
+        ...stripeOpsMeta(err),
+      });
+      return null;
+    }
+    throw err;
+  }
+}
+
+/**
+ * Prefer Accounts V2 capability status; fall back to V1 Account fields.
+ * Returns null when Stripe cannot be reached — callers keep the last DB mirror.
+ */
+export async function retrieveConnectCapabilitySnapshot(
+  accountId: string,
+): Promise<ConnectCapabilitySnapshot | null> {
+  const trimmed = accountId.trim();
+  if (!isStripeConnectedAccountId(trimmed)) return null;
+
+  let v2Snap: ConnectCapabilitySnapshot | null = null;
+  try {
+    const v2 = await retrieveV2CoreAccount(trimmed);
+    if (v2 && typeof v2 === "object") {
+      const objectType = (v2 as { object?: unknown }).object;
+      const hasConfigs = Array.isArray((v2 as { applied_configurations?: unknown }).applied_configurations);
+      if (objectType === "v2.core.account" || hasConfigs) {
+        v2Snap = snapshotFromV2CoreAccount(v2);
+        if (isConnectCapabilityReady(v2Snap)) return v2Snap;
+      }
+    }
+  } catch (err) {
+    logServerError("stripeConnect.v2.accounts.retrieve.status", err, {
+      accountSuffix: trimmed.slice(-8),
+      ...stripeOpsMeta(err),
+    });
+  }
+
+  if (createAccountFn && !retrieveAccountFn) return v2Snap;
+  if (isSyntheticConnectAccountId(trimmed) && !retrieveAccountFn) return v2Snap;
+
+  try {
+    const v1 = await retrieveConnectedAccount(trimmed);
+    if (!v1?.id) return v2Snap;
+    const v1Snap = snapshotFromStripeAccount(v1);
+    if (isConnectCapabilityReady(v1Snap)) return v1Snap;
+    return v2Snap ?? v1Snap;
+  } catch (err) {
+    if (isStripeAccountUnreachable(err)) return v2Snap;
+    logServerError("stripeConnect.accounts.retrieve.status", err, {
+      accountSuffix: trimmed.slice(-8),
+      ...stripeOpsMeta(err),
+    });
+    return v2Snap;
+  }
+}
+
+/**
+ * Re-read Stripe and persist the CareTip Connect mirror.
+ * Does not create accounts. Never trusts client-supplied account IDs.
+ */
+export async function refreshConnectStatusFromStripe(businessId: string): Promise<{
+  refreshed: boolean;
+  source: "v2" | "v1" | "none";
+}> {
+  const trimmed = businessId.trim();
+  if (!trimmed) return { refreshed: false, source: "none" };
+
+  const business = await prisma.business.findUnique({
+    where: { id: trimmed },
+    select: CONNECT_SELECT,
+  });
+  if (!business?.stripeAccountId?.trim()) {
+    return { refreshed: false, source: "none" };
+  }
+
+  const accountId = business.stripeAccountId.trim();
+  const snap = await retrieveConnectCapabilitySnapshot(accountId);
+  if (!snap) return { refreshed: false, source: "none" };
+
+  const acceptedAt = new Date();
+  const updated = await prisma.business.updateMany({
+    where: { id: business.id, stripeAccountId: accountId },
+    data: connectStatusDataFromSnap(snap, acceptedAt),
+  });
+  if (updated.count !== 1) return { refreshed: false, source: "none" };
+
+  console.info("[stripe.connect] status_refreshed", {
+    businessId: business.id,
+    accountSuffix: accountId.slice(-8),
+    previousStatus: business.stripeConnectStatus,
+    nextStatus: snap.status,
+    chargesEnabled: snap.chargesEnabled,
+    payoutsEnabled: snap.payoutsEnabled,
+    requirementsDue: snap.currentlyDueCount,
+  });
+  return { refreshed: true, source: snap.chargesEnabled || snap.payoutsEnabled ? "v2" : "v1" };
 }
 
 /**
@@ -1020,7 +1257,29 @@ export async function handleConnectAccountUpdated(
     return { matched: true, businessId: business.id, skippedStale: true };
   }
 
-  const snap = snapshotFromStripeAccount(account);
+  const snapFromEvent = snapshotFromStripeAccount(account);
+  let snap = snapFromEvent;
+  if (snap.status !== StripeConnectStatus.ready) {
+    try {
+      const v2 = await retrieveV2CoreAccount(accountId);
+      if (v2) {
+        const live = snapshotFromV2CoreAccount(v2);
+        if (isConnectCapabilityReady(live)) {
+          snap = live;
+          console.info("[stripe.connect] account.updated upgraded_from_v2", {
+            businessId: business.id,
+            accountSuffix: accountId.slice(-8),
+          });
+        }
+      }
+    } catch (err) {
+      logServerError("stripeConnect.account.updated.live_upgrade", err, {
+        businessId: business.id,
+        accountSuffix: accountId.slice(-8),
+        ...stripeOpsMeta(err),
+      });
+    }
+  }
   const acceptedAt =
     eventCreatedUnix != null && eventCreatedUnix > 0
       ? new Date(eventCreatedUnix * 1000)
@@ -1063,8 +1322,12 @@ export const __test = {
   accountsV2RequestOptions,
   accountsV2GetRequestOptions,
   v2JsonUtf8ContentLength,
-  isStripeConnectedAccountId,
-  parseV2CreatedAccountId,
+  snapshotFromV2CoreAccount,
+  isConnectCapabilityReady,
+  retrieveConnectCapabilitySnapshot,
+  refreshConnectStatusFromStripe,
+  accountsV2RetrievePathWithIncludes,
+  __setRetrieveV2CoreAccountFnForTests,
   __setCreateAccountFnForTests,
   __setCreateV2AccountFnForTests,
   __setCreateV2AccountLinkFnForTests,

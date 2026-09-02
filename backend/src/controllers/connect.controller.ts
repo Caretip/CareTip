@@ -4,6 +4,7 @@ import { prisma } from "../prisma.js";
 import {
   createExpressAccountOnboardingLink,
   getConnectStatusForBusiness,
+  refreshConnectStatusFromStripe,
   StripeConnectError,
 } from "../services/stripeConnect.service.js";
 import {
@@ -68,7 +69,11 @@ export async function getMyConnectStatus(req: Request, res: Response) {
     const ctx = await resolveManagerBusiness(req);
     if (!ctx.ok) return res.status(ctx.status).json({ message: ctx.message });
 
-    // Ignore any client-supplied businessId / stripeAccountId — status is for JWT business only.
+    try {
+      await refreshConnectStatusFromStripe(ctx.businessId);
+    } catch (err) {
+      logServerError("connect.refreshConnectStatusFromStripe", err, { businessId: ctx.businessId });
+    }
     const status = await getConnectStatusForBusiness(ctx.businessId);
     return res.json(status);
   } catch (err) {

@@ -8,6 +8,7 @@ import type Stripe from "stripe";
 import { StripeConnectStatus } from "@prisma/client";
 import { prisma } from "../prisma.js";
 import { TipPaymentEligibilityError } from "./tipPaymentEligibility.service.js";
+import { refreshConnectStatusFromStripe } from "./stripeConnect.service.js";
 
 /** Guest-safe — never include acct ids, requirements, or internal Connect status. */
 export const CONNECT_TIP_UNAVAILABLE_MSG = "This venue cannot accept tips right now.";
@@ -26,8 +27,9 @@ function logConnectTipBlocked(reason: string, businessId: string): void {
 /**
  * Fail-closed Connect readiness for destination charges.
  *
- * Checkout creation uses the Phase 1.6 CareTip **mirror** (no live Stripe retrieve)
- * so guest session create stays fast and does not depend on Stripe availability.
+ * Checkout creation uses the CareTip Connect mirror. When that mirror is stale
+ * (account stored but not ready), one live Stripe refresh is attempted before
+ * failing closed. Ready venues skip the extra retrieve.
  *
  * Successful Checkout webhooks additionally retrieve the live connected account
  * (see stripe.service handleSuccessfulTipPayment) before ledger credit.
@@ -86,6 +88,31 @@ export async function assertBusinessReadyForConnectTipDestination(
   if (!accountId.startsWith("acct_")) {
     logConnectTipBlocked("INVALID_ACCOUNT_ID_SHAPE", business.id);
     throw new TipPaymentEligibilityError(CONNECT_TIP_UNAVAILABLE_MSG, CONNECT_NOT_READY_CODE);
+  }
+
+  if (
+    business.stripeConnectStatus !== StripeConnectStatus.ready ||
+    business.stripeChargesEnabled !== true ||
+    business.stripePayoutsEnabled !== true
+  ) {
+    try {
+      await refreshConnectStatusFromStripe(business.id);
+    } catch {
+      // Fail closed on the re-read below — never treat a Stripe error as connected.
+    }
+    const refreshed = await prisma.business.findUnique({
+      where: { id: business.id },
+      select: {
+        stripeConnectStatus: true,
+        stripeChargesEnabled: true,
+        stripePayoutsEnabled: true,
+      },
+    });
+    if (refreshed) {
+      business.stripeConnectStatus = refreshed.stripeConnectStatus;
+      business.stripeChargesEnabled = refreshed.stripeChargesEnabled;
+      business.stripePayoutsEnabled = refreshed.stripePayoutsEnabled;
+    }
   }
 
   if (business.stripeConnectStatus !== StripeConnectStatus.ready) {

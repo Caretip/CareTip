@@ -20,6 +20,10 @@ import {
   CONNECT_TIP_UNAVAILABLE_MSG,
   destinationAccountIdFromPaymentIntent,
 } from "./connectTipDestination.service.js";
+import {
+  isConnectCapabilityReady,
+  retrieveConnectCapabilitySnapshot,
+} from "./stripeConnect.service.js";
 import { recordCheckoutFunnelEvent } from "./checkoutFunnelMetrics.service.js";
 import { QR_FUNNEL_EVENT_TYPES, recordQrFunnelEvent } from "./qr/qrFunnelEvent.service.js";
 import { allocateTipReceiptNumber } from "./tipReceipt.service.js";
@@ -126,7 +130,28 @@ async function retrieveConnectedAccountForWebhook(stripeAccountId: string): Prom
   if (connectedAccountRetrieveFnForTests) {
     return connectedAccountRetrieveFnForTests(stripeAccountId);
   }
-  return getStripe().accounts.retrieve(stripeAccountId);
+  const v1 = await getStripe().accounts.retrieve(stripeAccountId);
+  if (
+    v1.charges_enabled === true &&
+    v1.payouts_enabled === true &&
+    !v1.requirements?.disabled_reason
+  ) {
+    return v1;
+  }
+  try {
+    const live = await retrieveConnectCapabilitySnapshot(stripeAccountId);
+    if (live && isConnectCapabilityReady(live)) {
+      return {
+        id: v1.id,
+        charges_enabled: live.chargesEnabled,
+        payouts_enabled: live.payoutsEnabled,
+        requirements: { disabled_reason: live.disabledReason },
+      };
+    }
+  } catch {
+    // Fall through to the V1 object — fail-closed assert below.
+  }
+  return v1;
 }
 
 function assertLiveConnectedAccountCapable(account: {

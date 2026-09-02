@@ -25,6 +25,8 @@ import {
   ensureExpressConnectedAccountForBusiness,
   getConnectStatusForBusiness,
   handleConnectAccountUpdated,
+  refreshConnectStatusFromStripe,
+  snapshotFromV2CoreAccount,
   StripeConnectError,
   v2JsonUtf8ContentLength,
   __setCreateAccountFnForTests,
@@ -32,6 +34,7 @@ import {
   __setCreateV2AccountLinkFnForTests,
   __setRetrieveAccountFnForTests,
   __setRetrieveV2AppliedConfigurationsFnForTests,
+  __setRetrieveV2CoreAccountFnForTests,
   __setSerializeConnectEnsureForTests,
 } from "../src/services/stripeConnect.service.js";
 
@@ -238,6 +241,56 @@ function runStatic(): void {
   if (webhook.includes('event.type === "account.updated"') && webhook.includes("handleConnectAccountUpdated")) {
     pass("K-static-account-updated", "account.updated still maps via stored stripeAccountId");
   } else fail("K-static-account-updated", "account.updated wiring missing");
+
+  if (
+    connectCtrl.includes("refreshConnectStatusFromStripe") &&
+    connectSvc.includes("snapshotFromV2CoreAccount") &&
+    connectSvc.includes("accountsV2RetrievePathWithIncludes") &&
+    dest.includes("refreshConnectStatusFromStripe")
+  ) {
+    pass(
+      "M-static-live-status-refresh",
+      "Manager status + stale destination gates live-refresh V2 capabilities",
+    );
+  } else fail("M-static-live-status-refresh", "Live Connect status refresh missing");
+
+  const v2Ready = snapshotFromV2CoreAccount({
+    object: "v2.core.account",
+    applied_configurations: ["merchant", "recipient"],
+    configuration: {
+      merchant: {
+        capabilities: {
+          card_payments: { status: "active" },
+          stripe_balance: { payouts: { status: "active" } },
+        },
+      },
+      recipient: {
+        capabilities: { stripe_balance: { stripe_transfers: { status: "active" } } },
+      },
+    },
+    identity: { country: "de" },
+    requirements: { entries: [] },
+  });
+  const v2Restricted = snapshotFromV2CoreAccount({
+    object: "v2.core.account",
+    applied_configurations: ["merchant", "recipient"],
+    configuration: {
+      merchant: { capabilities: { card_payments: { status: "restricted" } } },
+      recipient: { capabilities: { stripe_balance: { stripe_transfers: { status: "restricted" } } } },
+    },
+    requirements: { entries: [{}, {}] },
+  });
+  if (
+    v2Ready.status === StripeConnectStatus.ready &&
+    v2Ready.chargesEnabled &&
+    v2Ready.payoutsEnabled &&
+    v2Restricted.status !== StripeConnectStatus.ready &&
+    !v2Restricted.chargesEnabled
+  ) {
+    pass("M-static-v2-capability-map", "V2 merchant/recipient active maps to ready; restricted does not");
+  } else {
+    fail("M-static-v2-capability-map", `ready=${v2Ready.status} restricted=${v2Restricted.status}`);
+  }
 
   if (schema.includes("stripeAccountId") && schema.includes("@unique") && schema.includes("model StripeConnectPayout")) {
     pass("schema-unchanged-shape", "Business.stripeAccountId unique + payout models present");
@@ -656,11 +709,91 @@ async function runDbSuite(): Promise<void> {
     if (!unknown.matched && unknown.businessId == null) {
       pass("L-unknown-account", "Unknown Stripe account not attached");
     } else fail("L-unknown-account", `matched=${unknown.matched}`);
+
+    await withTestBusiness("stale-mirror", async ({ businessId }) => {
+      const acct = `acct_stale_${Date.now()}`;
+      await prisma.business.update({
+        where: { id: businessId },
+        data: {
+          stripeAccountId: acct,
+          stripeConnectStatus: StripeConnectStatus.restricted,
+          stripeChargesEnabled: false,
+          stripePayoutsEnabled: false,
+          stripeDetailsSubmitted: false,
+          stripeConnectRequirementsDue: 16,
+          stripeConnectDisabledReason: "requirements.past_due",
+          stripeConnectUpdatedAt: new Date("2026-08-17T08:05:29.000Z"),
+        },
+      });
+      __setRetrieveV2CoreAccountFnForTests(async () => ({
+        id: acct,
+        object: "v2.core.account",
+        applied_configurations: ["merchant", "recipient"],
+        configuration: {
+          merchant: {
+            capabilities: {
+              card_payments: { status: "active" },
+              stripe_balance: { payouts: { status: "active" } },
+            },
+          },
+          recipient: {
+            capabilities: { stripe_balance: { stripe_transfers: { status: "active" } } },
+          },
+        },
+        identity: { country: "de" },
+        requirements: { entries: [] },
+      }));
+      const refreshed = await refreshConnectStatusFromStripe(businessId);
+      const status = await getConnectStatusForBusiness(businessId);
+      if (
+        refreshed.refreshed &&
+        status.status === StripeConnectStatus.ready &&
+        status.hasAccount &&
+        status.readyForPayouts &&
+        status.chargesEnabled &&
+        status.payoutsEnabled
+      ) {
+        pass("M-stale-mirror-refresh", "Stale restricted mirror becomes ready from live V2 capabilities");
+      } else {
+        fail(
+          "M-stale-mirror-refresh",
+          `refreshed=${refreshed.refreshed} status=${status.status} ready=${status.readyForPayouts}`,
+        );
+      }
+
+      __setRetrieveV2CoreAccountFnForTests(async () => {
+        const err = new Error("stripe_unavailable") as Error & { statusCode: number };
+        err.statusCode = 500;
+        throw err;
+      });
+      __setRetrieveAccountFnForTests(async () => {
+        const err = new Error("stripe_unavailable") as Error & { statusCode: number };
+        err.statusCode = 500;
+        throw err;
+      });
+      const failed = await refreshConnectStatusFromStripe(businessId);
+      const afterError = await getConnectStatusForBusiness(businessId);
+      if (
+        !failed.refreshed &&
+        afterError.hasAccount &&
+        afterError.status === StripeConnectStatus.ready
+      ) {
+        pass("M-stripe-error-not-disconnected", "Stripe API error keeps last mirror instead of not_connected");
+      } else {
+        fail(
+          "M-stripe-error-not-disconnected",
+          `refreshed=${failed.refreshed} status=${afterError.status} hasAccount=${afterError.hasAccount}`,
+        );
+      }
+      __setRetrieveV2CoreAccountFnForTests(null);
+      __setRetrieveAccountFnForTests(null);
+    });
   } finally {
     __setCreateV2AccountFnForTests(null);
     __setCreateV2AccountLinkFnForTests(null);
     __setRetrieveAccountFnForTests(null);
     __setRetrieveV2AppliedConfigurationsFnForTests(null);
+    __setRetrieveV2CoreAccountFnForTests(null);
     __setCreateAccountFnForTests(null);
   }
 }

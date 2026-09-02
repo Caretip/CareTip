@@ -98,6 +98,15 @@ function runStaticSecurity() {
     fail("account-updated-webhook", "account.updated not wired");
   }
 
+  if (
+    connectCtrl.includes("refreshConnectStatusFromStripe") &&
+    connectSvc.includes("snapshotFromV2CoreAccount")
+  ) {
+    pass("status-live-refresh", "GET /connect/status live-refreshes the Connect mirror from Stripe");
+  } else {
+    fail("status-live-refresh", "Status endpoint still reads a stale Connect mirror only");
+  }
+
   if (webhook.includes("verifyWebhookSignature")) {
     pass("webhook-signature-preserved", "Webhook still verifies Stripe signatures");
   } else {
