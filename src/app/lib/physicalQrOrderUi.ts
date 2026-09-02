@@ -421,6 +421,49 @@ export function physicalQrContextLabel(type: string, t: TFunction): string {
   return translated === key ? type : translated;
 }
 
+/** Localized print-template name. Catalog `productName` is English-only. */
+const PRINT_TEMPLATE_ALIAS: Record<string, string> = {
+  "caretip a5 flyer": "caretip-a5-flyer",
+  "caretip signature": "caretip-a5-flyer",
+  "caretip signatur": "caretip-a5-flyer",
+  "caretip classic": "caretip-classic",
+  "caretip klassik": "caretip-classic",
+  "caretip light": "caretip-light",
+  "caretip hell": "caretip-light",
+  "caretip midnight": "caretip-midnight",
+  "caretip mitternacht": "caretip-midnight",
+  "caretip nature": "caretip-nature",
+  "caretip natur": "caretip-nature",
+};
+
+function normalizePrintTemplateToken(value: string): string {
+  return value
+    .trim()
+    .toLowerCase()
+    .replace(/\s+with(?:out)? address$/i, "")
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim();
+}
+
+export function physicalQrTemplateDisplayName(
+  t: TFunction,
+  opts: { templateId?: string | null; productName?: string | null },
+): string {
+  const fromId = PRINT_TEMPLATE_ALIAS[normalizePrintTemplateToken(opts.templateId ?? "")] ?? String(opts.templateId ?? "").trim();
+  const fromName = PRINT_TEMPLATE_ALIAS[normalizePrintTemplateToken(opts.productName ?? "")];
+  const resolvedId = fromId || fromName || "";
+  if (resolvedId) {
+    const key = `business.qrStudio.physical.templates.${resolvedId}`;
+    const label = t(key);
+    if (label && label !== key) return label;
+  }
+  const stored = opts.productName?.trim();
+  if (stored) {
+    return stored.replace(/\s+with(?:out)? address$/i, "").trim() || stored;
+  }
+  return t("business.qrStudio.physical.templateName");
+}
+
 export type PhysicalQrTimelineStepId =
   | "placed"
   | "paid"
