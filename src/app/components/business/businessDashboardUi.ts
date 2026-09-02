@@ -54,9 +54,9 @@ export const businessUi = {
   heroBadge:
     "dashboard-hero-badge--compact normal-case tracking-[0.06em] max-lg:gap-1.5 max-lg:px-2 max-lg:py-0.5 max-lg:text-[10px] sm:px-2.5 sm:py-0.5",
   heroActionBtn: "h-11 min-h-11 w-full max-w-full px-5 text-sm font-semibold sm:w-auto sm:max-w-none",
-  /** Hero dashboard CTA pair — wrap long labels (e.g. Manage QR codes). */
+  /** Hero dashboard CTA pair — padding sized to short destination labels. */
   heroCtaLink:
-    "inline-flex min-w-0 items-center justify-center gap-1.5 px-2 text-center text-xs font-semibold leading-snug [text-wrap:balance] sm:gap-2 sm:px-3 sm:text-sm",
+    "inline-flex min-w-0 items-center justify-center gap-1.5 px-3.5 text-center text-sm font-semibold leading-snug sm:gap-2 sm:px-4",
   atAGlanceCard:
     "business-card dashboard-at-a-glance mt-3 w-full rounded-lg border border-border bg-card shadow-sm max-lg:mt-2.5",
   atAGlanceContent: "dashboard-at-a-glance__content p-0",

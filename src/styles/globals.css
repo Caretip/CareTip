@@ -846,19 +846,22 @@ html[data-auth-sign-in-handoff] .caretip-dashboard-page-enter {
 .employee-dashboard-hero .employee-hero-cta-row {
   display: flex;
   flex-direction: column;
-  gap: 0.625rem;
-  width: 100%;
+  gap: 0.5rem;
+  width: auto;
+  max-width: 100%;
 }
 
 @media (min-width: 480px) {
   .employee-dashboard-hero .employee-hero-cta-row {
     flex-direction: row;
+    flex-wrap: wrap;
     align-items: stretch;
   }
 }
 
 .employee-dashboard-hero .employee-hero-cta-row > :is(a, button) {
-  flex: 1 1 0;
+  flex: 1 1 auto;
+  width: 100%;
   min-width: 0;
   min-height: 2.75rem;
   height: auto !important;
@@ -867,6 +870,14 @@ html[data-auth-sign-in-handoff] .caretip-dashboard-page-enter {
   text-align: center;
   line-height: 1.25;
   padding-block: 0.5rem;
+}
+
+@media (min-width: 480px) {
+  .employee-dashboard-hero .employee-hero-cta-row > :is(a, button) {
+    flex: 0 1 auto;
+    width: auto;
+    white-space: nowrap;
+  }
 }
 
 /* Dashboard SWR — soft opacity while background revalidation runs */
@@ -1226,29 +1237,41 @@ html[data-auth-sign-in-handoff] .caretip-dashboard-page-enter {
 .business-dashboard-hero .business-hero-cta-row {
   display: flex;
   flex-direction: column;
-  gap: 0.625rem;
-  width: 100%;
+  gap: 0.5rem;
+  width: auto;
+  max-width: 100%;
 }
 
 @media (min-width: 480px) {
   .business-dashboard-hero .business-hero-cta-row {
     flex-direction: row;
+    flex-wrap: wrap;
     align-items: stretch;
   }
 }
 
 .business-dashboard-hero .business-hero-cta-row > :is(a, button) {
-  flex: 1 1 0;
+  flex: 1 1 auto;
+  width: 100%;
   min-width: 0;
   min-height: 2.75rem;
   height: auto !important;
-  padding-inline: 0.625rem;
+  padding-inline: 0.875rem;
   padding-block: 0.5rem;
   justify-content: center;
   text-align: center;
   white-space: normal;
   line-height: 1.25;
   overflow: visible;
+}
+
+@media (min-width: 480px) {
+  .business-dashboard-hero .business-hero-cta-row > :is(a, button) {
+    flex: 0 1 auto;
+    width: auto;
+    white-space: nowrap;
+    padding-inline: 1rem;
+  }
 }
 
 .business-dashboard-hero .business-hero-account-stats {
@@ -1381,8 +1404,10 @@ html[data-auth-sign-in-handoff] .caretip-dashboard-page-enter {
 
   .caretip-dashboard-shell .employee-dashboard-hero .dashboard-hero-actions .employee-hero-cta-row,
   .caretip-dashboard-shell .business-dashboard-hero .dashboard-hero-actions .business-hero-cta-row {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: flex-start;
     gap: 0.5rem;
   }
 
@@ -1391,9 +1416,10 @@ html[data-auth-sign-in-handoff] .caretip-dashboard-page-enter {
     min-width: 0;
     min-height: 2.75rem;
     height: auto !important;
-    width: 100% !important;
+    width: auto !important;
+    flex: 0 1 auto;
     max-width: none !important;
-    white-space: normal;
+    white-space: nowrap;
     text-align: center;
     line-height: 1.25;
   }
@@ -1402,7 +1428,13 @@ html[data-auth-sign-in-handoff] .caretip-dashboard-page-enter {
 @media (max-width: 380px) {
   .caretip-dashboard-shell .employee-dashboard-hero .dashboard-hero-actions .employee-hero-cta-row,
   .caretip-dashboard-shell .business-dashboard-hero .dashboard-hero-actions .business-hero-cta-row {
-    grid-template-columns: 1fr;
+    flex-direction: column;
+  }
+
+  .caretip-dashboard-shell .employee-dashboard-hero .dashboard-hero-actions .employee-hero-cta-row > *,
+  .caretip-dashboard-shell .business-dashboard-hero .dashboard-hero-actions .business-hero-cta-row > * {
+    width: 100% !important;
+    white-space: normal;
   }
 }
 

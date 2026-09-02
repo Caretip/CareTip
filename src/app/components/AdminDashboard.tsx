@@ -98,7 +98,7 @@ export const AdminDashboard = memo(function AdminDashboard() {
 
     let cancelled = false;
     let heavyIdleId: number | null = null;
-    let heavyTimeoutId: ReturnType<typeof setTimeout> | null = null;
+    let heavyTimeoutId: number | null = null;
 
     const loadCritical = async () => {
       setCriticalLoading(true);

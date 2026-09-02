@@ -52,11 +52,11 @@ export const employeeUi = {
   periodBtnActive: dashboardPeriodUi.periodBtnActive,
   periodBtnIdle: dashboardPeriodUi.periodBtnIdle,
 
-  /** Hero CTA pair — allow long labels (e.g. DE “Trinkgeldziel setzen”) to wrap */
+  /** Hero CTA pair — size to the label; wrap only when the row is stacked. */
   heroCtaBtn:
-    "min-w-0 flex-1 basis-0 !h-auto min-h-11 py-2 !whitespace-normal text-center !leading-snug [text-wrap:balance]",
+    "min-w-0 !h-auto min-h-11 px-3.5 py-2 text-center !leading-snug sm:px-4",
   heroCtaLink:
-    "inline-flex min-w-0 w-full items-center justify-center gap-1.5 text-center leading-snug [text-wrap:balance] sm:gap-2",
+    "inline-flex min-w-0 items-center justify-center gap-1.5 text-center leading-snug sm:gap-2",
 
   /** Quick actions grid — stacked icon + label tiles */
   quickActionTile:

@@ -441,8 +441,8 @@ export const BusinessDashboard = memo(function BusinessDashboard() {
             >
               <BusinessDashboardHeroActions
                 isPreviewMode={isPreviewMode}
-                buttonClassName="min-w-0 w-full max-lg:w-full"
-                secondaryButtonClassName="min-w-0 w-full max-lg:w-full"
+                buttonClassName="min-w-0 max-lg:w-full"
+                secondaryButtonClassName="min-w-0 max-lg:w-full"
               />
               <dl
                 className={cn(
