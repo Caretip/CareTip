@@ -54,8 +54,6 @@ import {
 
 type EmployeeSettingsCache = EmployeeSettingsSnapshot;
 
-const TEAL = "#e9781c";
-
 export function EmployeeSettingsPage() {
   const { t, i18n } = useTranslation();
   const { user, logout, updateUser } = useRequireAuth();
@@ -185,7 +183,7 @@ export function EmployeeSettingsPage() {
       await changePasswordAPI(currentPw, newPw);
       setCurrentPw("");
       setNewPw("");
-      toast.success(t("employee.settings.toastPasswordUpdated"), { style: { background: TEAL, color: "#fff" } });
+      toast.success(t("employee.settings.toastPasswordUpdated"));
     } catch (err) {
       logClientError("EmployeeSettingsPage", err);
       toast.error(toUserFriendlyMessage(err, { audience: "employee" }));
@@ -225,7 +223,7 @@ export function EmployeeSettingsPage() {
 
   return (
     <div className={employeeUi.page}>
-      <div className={cn(employeeUi.pageInner, "dashboard-page-narrow mx-auto max-w-2xl space-y-6 max-lg:space-y-5")}>
+      <div className={cn(employeeUi.pageInner, "dashboard-page-narrow mx-auto max-w-2xl space-y-0")}>
         <EmployeePageHeader
           title={t("employee.settings.title")}
           description={businessName || t("dashboard.venueDashboardFallback")}
@@ -250,7 +248,7 @@ export function EmployeeSettingsPage() {
               key={user.avatar ?? "none"}
               src={user.avatar}
               displayName={user.name ?? "You"}
-              className="h-24 w-24 border-2 border-border shadow-md sm:h-28 sm:w-28"
+              className="h-24 w-24 border border-border sm:h-28 sm:w-28"
             />
           </div>
           <label className={cn(employeeUi.btnPrimary, "inline-flex cursor-pointer items-center gap-2 text-sm font-medium disabled:opacity-50")}>
@@ -347,16 +345,21 @@ export function EmployeeSettingsPage() {
                 {showNew ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
               </button>
             </div>
-            <div className="mt-2 h-1 rounded-full bg-muted overflow-hidden">
+            <div className="employee-password-meter" aria-hidden>
               <div
-                className="h-full rounded-full transition-all"
+                className="h-full transition-all"
                 style={{
                   width: `${strength.score}%`,
-                  backgroundColor: strength.strength === "strong" ? TEAL : strength.strength === "fair" ? "#fb923c" : "#ef4444",
+                  backgroundColor:
+                    strength.strength === "strong"
+                      ? "hsl(var(--chart-2, 142 46% 42%))"
+                      : strength.strength === "fair"
+                        ? "hsl(var(--muted-foreground))"
+                        : "hsl(var(--destructive))",
                 }}
               />
             </div>
-            <ul className="mt-2 space-y-1 text-xs text-muted-foreground">
+            <ul className="employee-password-checklist">
               {[
                 { key: "minLength", label: t("employee.settings.pwMinLength"), met: checklist.minLength },
                 { key: "upper", label: t("employee.settings.pwUpper"), met: checklist.hasUppercase },
@@ -364,10 +367,8 @@ export function EmployeeSettingsPage() {
                 { key: "num", label: t("employee.settings.pwNumber"), met: checklist.hasNumber },
                 { key: "spec", label: t("employee.settings.pwSpecial"), met: checklist.hasSpecial },
               ].map(({ key, label, met }) => (
-                <li key={key} className={`flex items-center gap-2 ${met ? "text-primary" : ""}`}>
-                  <span className={`flex h-4 w-4 items-center justify-center rounded-full ${met ? "bg-primary text-white" : "bg-muted"}`}>
-                    {met ? <Check className="w-2.5 h-2.5" /> : null}
-                  </span>
+                <li key={key} className={met ? "is-met" : undefined}>
+                  <Check className={cn("h-3 w-3 shrink-0", met ? "opacity-100" : "opacity-30")} aria-hidden />
                   {label}
                 </li>
               ))}
@@ -431,9 +432,15 @@ export function EmployeeSettingsPage() {
           <Button type="button" variant="outline" onClick={handleDownload} className={cn(employeeUi.btnSecondary, "w-full sm:w-auto")}>
             {t("employee.settings.downloadMyData")}
           </Button>
+        </section>
+
+        <section className={cn(employeeUi.settingsSection, "employee-settings-section--danger")}>
+          <h3 className={employeeUi.settingsHeading}>
+            {t("employee.settings.dangerZone")}
+          </h3>
           <AlertDialog>
             <AlertDialogTrigger asChild>
-              <Button type="button" variant="destructive" className="w-full sm:w-auto">
+              <Button type="button" variant="destructive" className="w-full rounded-md sm:w-auto">
                 {t("employee.settings.deleteAccount")}
               </Button>
             </AlertDialogTrigger>

@@ -86,7 +86,7 @@ export function EmployeeQRCodeModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="rounded-2xl border-border sm:max-w-md">
+      <DialogContent className="rounded-lg border-border sm:max-w-md">
         <DialogHeader>
           <DialogTitle>{t("employee.qrModal.title")}</DialogTitle>
           <DialogDescription>
@@ -94,7 +94,7 @@ export function EmployeeQRCodeModal({
           </DialogDescription>
         </DialogHeader>
         <div className="flex flex-col items-center gap-4 py-2">
-          <div className="flex min-h-[280px] w-full items-center justify-center rounded-2xl border border-border bg-white p-4">
+          <div className="flex min-h-[280px] w-full items-center justify-center rounded-md border border-border bg-white p-4">
             {imgLoading ? (
               <div className="w-full max-w-[280px]">
                 <div className="aspect-square w-full animate-pulse rounded-xl bg-muted" />
@@ -110,20 +110,20 @@ export function EmployeeQRCodeModal({
               />
             ) : null}
           </div>
-          <div className="flex flex-col sm:flex-row gap-3 w-full">
+          <div className="flex w-full flex-col gap-2 sm:flex-row">
             <button
               type="button"
               onClick={download}
               disabled={imgLoading || !dataUrl}
-              className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground shadow-sm disabled:pointer-events-none disabled:opacity-50"
+              className="caretip-btn-primary inline-flex flex-1 items-center justify-center gap-2 rounded-md px-4 py-3 text-sm font-semibold text-white disabled:pointer-events-none disabled:opacity-50"
             >
-              <Download className="w-4 h-4 shrink-0" />
+              <Download className="h-4 w-4 shrink-0" />
               {t("employee.qrModal.downloadImage")}
             </button>
             <button
               type="button"
               onClick={() => void copyLink()}
-              className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground shadow-sm disabled:opacity-50"
+              className="caretip-btn-secondary inline-flex flex-1 items-center justify-center gap-2 rounded-md border border-border bg-background px-4 py-3 text-sm font-semibold text-foreground hover:bg-muted/60 disabled:opacity-50"
             >
               {isCopied("share") ? (
                 <Check className="w-4 h-4 shrink-0" />

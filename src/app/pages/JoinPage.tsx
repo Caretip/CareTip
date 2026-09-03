@@ -52,7 +52,7 @@ export function JoinPage() {
           <div className="caretip-auth-card caretip-auth-card--stable caretip-auth-card--recovery">
             <AuthCardBrandMark />
             <div className="caretip-auth-header">
-              <p className="text-sm font-semibold text-primary">{t("join.eyebrow")}</p>
+              <p className="text-sm font-semibold text-muted-foreground">{t("join.eyebrow")}</p>
               <h1 className="caretip-auth-title !pt-2">{t("join.title")}</h1>
               <p className="caretip-auth-subtitle">{t("join.subtitle")}</p>
             </div>

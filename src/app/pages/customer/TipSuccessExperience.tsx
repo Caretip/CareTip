@@ -57,8 +57,8 @@ function SuccessHeroIcon({ accent, compact }: { accent: string; compact?: boolea
           compact ? "size-[3.25rem] sm:size-[3.5rem]" : "size-[4rem] sm:size-[4.5rem]",
         )}
         style={{
-          background: `linear-gradient(145deg, ${accent} 0%, #e9781c 55%, #c45f12 100%)`,
-          boxShadow: `0 14px 32px -12px ${accent}88, 0 0 0 8px ${accent}14`,
+          background: accent,
+          boxShadow: `0 0 0 6px ${accent}22`,
         }}
       >
         <Check className={cn("text-white", compact ? "size-6 sm:size-7" : "size-8 sm:size-9")} strokeWidth={2.75} />

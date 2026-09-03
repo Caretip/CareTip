@@ -2,7 +2,6 @@ import { Link, useLocation } from "react-router";
 import { useTranslation } from "react-i18next";
 import type { LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { businessUi } from "@/app/components/business/businessDashboardUi";
 
 export type BusinessModuleSubNavItem = {
   labelKey: string;
@@ -23,7 +22,7 @@ export function BusinessModuleSubNav({ items, ariaLabelKey, className }: Busines
 
   return (
     <nav className={cn("business-module-sub-nav", className)} aria-label={t(ariaLabelKey)}>
-      <div className="flex gap-2 overflow-x-auto pb-1 snap-x snap-mandatory scroll-px-1 [-webkit-overflow-scrolling:touch] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+      <div className="flex gap-0.5 overflow-x-auto pb-0 snap-x snap-mandatory scroll-px-1 [-webkit-overflow-scrolling:touch] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {items.map((item) => {
           const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
           const Icon = item.icon;
@@ -32,10 +31,8 @@ export function BusinessModuleSubNav({ items, ariaLabelKey, className }: Busines
               key={item.href}
               to={item.href}
               className={cn(
-                "inline-flex min-h-[44px] shrink-0 snap-start touch-manipulation items-center gap-2 rounded-lg border px-3.5 py-2 text-sm font-medium transition-colors",
-                active
-                  ? "border-primary/30 bg-primary/[0.06] text-foreground"
-                  : cn(businessUi.cardStatic, "text-muted-foreground hover:text-foreground"),
+                "inline-flex min-h-[44px] shrink-0 snap-start touch-manipulation items-center gap-2 px-3 py-2 text-sm font-medium transition-colors",
+                active ? "text-foreground" : "text-muted-foreground hover:text-foreground",
               )}
               aria-current={active ? "page" : undefined}
             >

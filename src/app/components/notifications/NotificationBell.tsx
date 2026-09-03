@@ -188,7 +188,7 @@ export const NotificationBell = memo(function NotificationBell({ className }: No
         <button
           type="button"
           className={cn(
-            "relative inline-flex min-h-[44px] min-w-[44px] touch-manipulation items-center justify-center rounded-xl p-2 transition-colors hover:bg-muted active:scale-[0.97] active:opacity-90",
+            "relative inline-flex min-h-[44px] min-w-[44px] touch-manipulation items-center justify-center rounded-lg p-2 transition-colors hover:bg-muted",
             open && "bg-muted",
             className,
           )}
@@ -201,7 +201,7 @@ export const NotificationBell = memo(function NotificationBell({ className }: No
           <CareIcon name="notifications" size="md" className="text-foreground" />
           {badge ? (
             <span
-              className="absolute right-1 top-1 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-accent px-1 text-[10px] font-semibold leading-none text-accent-foreground"
+              className="absolute right-1 top-1 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-primary px-1 text-[10px] font-semibold leading-none text-primary-foreground"
               aria-hidden
             >
               {unreadCount > 9 ? "9+" : unreadCount}

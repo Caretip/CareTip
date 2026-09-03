@@ -1620,6 +1620,15 @@
       "updatePassword": "Update password",
       "hintWeak": "Use 8+ characters with upper, lower, number, and special (e.g. @#$%)."
     },
+    "activateEmployee": {
+      "invalidLink": "This activation link is invalid.",
+      "doneTitle": "Account activated",
+      "doneSubtitle": "Your password is set. You can sign in now.",
+      "title": "Set your password",
+      "subtitle": "This link expires in 24 hours.",
+      "submit": "Set your password",
+      "saving": "Setting password"
+    },
     "checkEmail": {
       "successTitle": "Email verified",
       "successSubtitle": "Your account has been successfully verified.",
@@ -2004,7 +2013,9 @@
       "noBusinessContextDesc": "Scan the CareTip QR at your table or counter so we know which team you are tipping. You can also open the link from your receipt or table card.",
       "noBusinessContextCta": "Go to home",
       "emptyTeam": "No team members found.",
-      "topRatedBadge": "Top"
+      "topRatedBadge": "Top",
+      "newMember": "New member",
+      "tipsCount": "{{count}} tips"
     },
     "tableLanding": {
       "loading": "Loading table…",

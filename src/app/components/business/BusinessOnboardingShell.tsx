@@ -19,7 +19,7 @@ export function BusinessOnboardingHeader() {
     <header className="business-onboarding-header">
       <Link
         to="/"
-        className="inline-flex shrink-0 rounded-lg transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500/40"
+        className="inline-flex shrink-0 rounded-lg transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
       >
         <CareTipLogo size="auth" align="center" />
       </Link>
@@ -45,11 +45,11 @@ export function BusinessOnboardingProgressHeader({ step }: BusinessOnboardingPro
       aria-label={t("business.onboarding.progressAria")}
     >
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <p className="text-sm font-medium text-zinc-600 dark:text-zinc-400">
+        <p className="text-sm font-medium text-muted-foreground">
           {t("business.onboarding.formStepLabel", { current: step, total: TOTAL_STEPS })}
         </p>
         {isFinal ? (
-          <span className="inline-flex items-center rounded-full bg-orange-500/10 px-2.5 py-0.5 text-xs font-semibold tracking-wide text-orange-700 ring-1 ring-orange-500/20 dark:text-orange-300">
+          <span className="text-xs font-medium text-muted-foreground">
             {t("business.onboarding.finalStep.badge")}
           </span>
         ) : null}

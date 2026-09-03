@@ -1,6 +1,6 @@
 import { Link } from "react-router";
 import { useTranslation } from "react-i18next";
-import { Download, FileDown, Printer, Sparkles } from "lucide-react";
+import { Download, FileDown, Printer } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { businessUi } from "@/app/components/business/businessDashboardUi";
@@ -48,8 +48,7 @@ export function QrStudioDownloadsPage() {
 
       <Card className={`${businessUi.cardStatic} border-dashed`}>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-base">
-            <Sparkles className="h-4 w-4 text-primary" aria-hidden />
+          <CardTitle className="text-base">
             {t("business.qrStudio.downloads.futureTitle")}
           </CardTitle>
           <CardDescription className={businessUi.cardDesc}>

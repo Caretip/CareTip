@@ -373,17 +373,14 @@ export function LocationsPage() {
             <p>{t("business.locationsPage.empty")}</p>
           </div>
         ) : (
-          <ul className="space-y-4">
+          <ul>
             {locations.map((loc) => {
               const locTables = tablesByLocation.get(loc.id) ?? [];
               return (
-                <li key={loc.id} className={cn(businessUi.cardStatic, "overflow-visible p-4 sm:p-5")}>
+                <li key={loc.id} className="business-location-row overflow-visible py-4 sm:py-5">
                   <div className="flex gap-3 items-start">
-                    <div
-                      className="w-10 h-10 rounded-lg flex items-center justify-center shrink-0"
-                      style={{ backgroundColor: `${ACTION_TEAL}20` }}
-                    >
-                      <MapPin className="w-5 h-5" style={{ color: ACTION_TEAL }} />
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-muted/50 text-muted-foreground">
+                      <MapPin className="h-5 w-5" aria-hidden />
                     </div>
                     <div className="min-w-0 flex-1">
                       <p className="font-semibold text-foreground">{loc.name}</p>

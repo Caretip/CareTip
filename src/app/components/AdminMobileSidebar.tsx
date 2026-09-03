@@ -43,7 +43,7 @@ export function AdminMobileSidebar({ isOpen, onClose }: AdminMobileSidebarProps)
             type="button"
             onClick={onClose}
             className={cn(
-              "touch-manipulation flex min-h-[44px] min-w-[44px] shrink-0 items-center justify-center rounded-xl p-2.5",
+              "touch-manipulation flex min-h-[44px] min-w-[44px] shrink-0 items-center justify-center rounded-lg p-2.5",
               dashboardSidebarIconButtonIdle,
             )}
             aria-label={t("admin.sidebar.closeMenuAria")}
@@ -72,13 +72,13 @@ export function AdminMobileSidebar({ isOpen, onClose }: AdminMobileSidebarProps)
       </div>
 
       <div className="border-t border-sidebar-border p-3 sm:p-4">
-        <div className="flex items-center gap-3 rounded-lg border border-sidebar-border bg-sidebar-accent px-3 py-2.5">
-          <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary font-medium text-primary-foreground">
+        <div className="admin-identity flex items-center gap-3 px-1 py-2">
+          <div className="admin-identity__avatar flex h-9 w-9 items-center justify-center rounded-full font-medium">
             {displayName.charAt(0)}
           </div>
           <div className="min-w-0 flex-1">
             <p className="truncate text-sm font-medium text-sidebar-foreground">{displayName}</p>
-            <p className="truncate text-xs text-sidebar-foreground/65">{user?.email || 'admin@example.com'}</p>
+            <p className="truncate text-xs text-sidebar-foreground/65">{user?.email ?? ""}</p>
           </div>
         </div>
       </div>

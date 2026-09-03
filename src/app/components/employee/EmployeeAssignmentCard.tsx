@@ -1,8 +1,7 @@
-import { UtensilsCrossed } from "lucide-react";
+import { MapPin, UtensilsCrossed } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import type { EmployeeSelfAssignment } from "../../lib/api";
 import { EmployeeEmptyState } from "./EmployeeEmptyState";
-import { cn } from "@/lib/utils";
 
 type Props = {
   assignment: EmployeeSelfAssignment | undefined;
@@ -39,11 +38,17 @@ export function EmployeeAssignmentCard({ assignment, loading, showHeader = true 
           {loading && assignment === undefined ? (
             <p className="mt-2 text-sm text-muted-foreground">{t("employee.assignment.loading")}</p>
           ) : hasLocation && location ? (
-            <div className="mt-2 space-y-1">
-              <p className="text-base font-semibold leading-snug text-foreground">{location.name}</p>
-              {location.description ? (
-                <p className="text-sm leading-relaxed text-muted-foreground">{location.description}</p>
-              ) : null}
+            <div className="mt-2 flex items-start gap-2.5">
+              <MapPin
+                className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground"
+                aria-hidden
+              />
+              <div className="min-w-0 space-y-1">
+                <p className="text-base font-semibold leading-snug text-foreground">{location.name}</p>
+                {location.description ? (
+                  <p className="text-sm leading-relaxed text-muted-foreground">{location.description}</p>
+                ) : null}
+              </div>
             </div>
           ) : (
             <EmployeeEmptyState
@@ -71,7 +76,7 @@ export function EmployeeAssignmentCard({ assignment, loading, showHeader = true 
                   className="flex items-start gap-2.5 py-2.5 first:pt-2 last:pb-0 sm:gap-3 sm:py-3"
                 >
                   <UtensilsCrossed
-                    className="mt-0.5 h-4 w-4 shrink-0 text-[var(--caretip-brand-orange,#e9781c)]"
+                    className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground"
                     aria-hidden
                   />
                   <div className="min-w-0 flex-1">

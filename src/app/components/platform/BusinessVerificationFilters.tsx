@@ -271,7 +271,7 @@ function ActiveFilterChips({
           key={chip.key}
           type="button"
           onClick={() => onRemoveChip(chip.key)}
-          className="inline-flex min-h-[36px] items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1 text-xs font-medium text-foreground transition-colors hover:bg-muted/50"
+          className="inline-flex min-h-[36px] items-center gap-1.5 rounded-lg border border-border bg-card px-3 py-1 text-xs font-medium text-foreground transition-colors hover:bg-muted/50"
         >
           <span>{chip.label}</span>
           <X className="h-3.5 w-3.5 text-muted-foreground" aria-hidden />

@@ -78,19 +78,18 @@ const NotificationRow = memo(function NotificationRow({
         }
       }}
       className={cn(
-        "flex w-full min-w-0 cursor-pointer gap-3 overflow-hidden rounded-md p-3 transition-colors duration-150",
-        notification.read
-          ? "bg-muted/60 hover:bg-muted/80"
-          : "border border-primary/15 bg-primary/5 shadow-sm hover:bg-primary/[0.08] dark:bg-primary/10",
+        "flex w-full min-w-0 cursor-pointer gap-3 overflow-hidden px-1 py-3 transition-colors duration-150",
+        "rounded-none hover:bg-muted/40",
+        notification.read ? "bg-transparent" : "bg-muted/25 shadow-[inset_2px_0_0_hsl(var(--primary))]",
       )}
       onClick={onSelect}
     >
       <div
         className={cn(
-          "flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-sm font-medium",
+          "flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-xs font-medium",
           notification.read
             ? "bg-muted text-muted-foreground"
-            : "bg-primary/15 text-primary dark:bg-primary/25 dark:text-[#f0a84d]",
+            : "bg-muted text-foreground",
         )}
       >
         {initials}
@@ -112,15 +111,12 @@ const NotificationRow = memo(function NotificationRow({
         </div>
         <p className="line-clamp-2 break-words text-xs text-muted-foreground">{notification.message}</p>
         {notification.read ? (
-          <div className="mt-1.5 flex items-center text-xs text-primary">
+          <div className="mt-1.5 flex items-center text-xs text-muted-foreground">
             <Check className="mr-1 h-3 w-3" aria-hidden />
             {readLabel}
           </div>
         ) : null}
       </div>
-      {!notification.read ? (
-        <span className="mt-2 h-2.5 w-2.5 shrink-0 rounded-full bg-primary" aria-hidden />
-      ) : null}
     </div>
   );
 });
@@ -193,20 +189,18 @@ export function NotificationAlertDialog({
         collisionPadding={12}
         onOpenAutoFocus={(e) => e.preventDefault()}
         className={cn(
-          "caretip-notification-panel flex max-h-[min(92dvh,32rem)] w-[min(100vw-2rem,28rem)] flex-col gap-0 overflow-hidden border-2 border-primary/20 bg-background p-0 shadow-lg",
+          "caretip-notification-panel flex max-h-[min(92dvh,32rem)] w-[min(100vw-2rem,28rem)] flex-col gap-0 overflow-hidden",
+          "rounded-lg border border-border bg-popover p-0 shadow-none",
           "data-[state=open]:animate-in data-[state=closed]:animate-out",
           "data-[state=open]:fade-in-0 data-[state=closed]:fade-out-0",
-          "data-[state=open]:zoom-in-95 data-[state=closed]:zoom-out-95",
-          "data-[side=bottom]:slide-in-from-top-2 data-[side=top]:slide-in-from-bottom-2",
-          "duration-200 origin-[var(--radix-popover-content-transform-origin)]",
+          "duration-150 origin-[var(--radix-popover-content-transform-origin)]",
         )}
       >
         <div className="flex min-h-0 flex-1 flex-col overflow-hidden px-4 pt-4">
           <div className="shrink-0 space-y-2 text-left">
             <div className="flex flex-wrap items-start justify-between gap-x-2 gap-y-1">
               <div className="flex min-w-0 items-center gap-2">
-                <BellRing className="h-5 w-5 shrink-0 text-primary" aria-hidden />
-                <h2 className="truncate text-lg font-semibold leading-none tracking-tight">
+                <h2 className="truncate text-base font-semibold leading-snug tracking-tight text-foreground">
                   {labels.title}
                 </h2>
               </div>
@@ -216,7 +210,7 @@ export function NotificationAlertDialog({
                   variant="ghost"
                   size="sm"
                   onClick={handleMarkAllRead}
-                  className="h-auto max-w-full shrink-0 px-2 py-1 text-xs text-primary hover:text-primary/80"
+                  className="h-auto max-w-full shrink-0 px-2 py-1 text-xs font-medium text-muted-foreground hover:bg-transparent hover:text-foreground"
                 >
                   <span className="truncate">{labels.markAllRead}</span>
                 </Button>
@@ -227,13 +221,13 @@ export function NotificationAlertDialog({
             </p>
           </div>
           <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain py-3">
-            <div className="space-y-2">
+            <div className="divide-y divide-border/70">
               {loading ? (
                 <div className="space-y-2" aria-busy aria-live="polite">
                   {[0, 1, 2].map((i) => (
                     <div
                       key={i}
-                      className="h-[72px] animate-pulse rounded-md bg-muted/80"
+                      className="h-[72px] animate-pulse rounded-lg bg-muted/80"
                     />
                   ))}
                 </div>
@@ -263,18 +257,18 @@ export function NotificationAlertDialog({
             </div>
           </div>
         </div>
-        <div className="flex shrink-0 flex-col-reverse gap-2 border-t border-border p-4 sm:flex-row sm:justify-stretch">
+        <div className="flex shrink-0 flex-col-reverse gap-2 border-t border-border/70 p-4 sm:flex-row sm:justify-stretch">
           <Button
             type="button"
             variant="outline"
-            className="mt-0 w-full min-w-0 border-primary/25 text-primary hover:bg-primary/5 sm:flex-1"
+            className="mt-0 w-full min-w-0 rounded-lg sm:flex-1"
             onClick={() => onOpenChange(false)}
           >
             <span className="truncate">{labels.close}</span>
           </Button>
           <Button
             type="button"
-            className="w-full min-w-0 bg-primary text-primary-foreground hover:bg-primary/90 sm:flex-1"
+            className="w-full min-w-0 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 sm:flex-1"
             onClick={handleViewAll}
           >
             <span className="truncate">{labels.viewAll}</span>

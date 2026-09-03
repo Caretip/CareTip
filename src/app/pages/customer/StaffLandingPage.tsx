@@ -25,8 +25,6 @@ import {
 } from "../../lib/customerRouteTransition";
 import { navFlashLog } from "../../lib/navigationFlashAudit";
 
-const BRAND_ORANGE = "#e9781c";
-
 /**
  * /staff/:slug — Individual QR (Path A).
  * Default: skip the profile step and open tip amount with employee context (verify on that screen).
@@ -196,22 +194,19 @@ export function StaffLandingPage() {
         <motion.div
           initial={{ y: 14, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
-          className={`${cf.cardShadcn} border border-border/60 bg-card px-6 py-8 text-center shadow-[0_14px_42px_-22px_rgba(15,23,42,0.2)]`}
+          className={`${cf.cardShadcn} px-6 py-8 text-center`}
         >
-          <div
-            className="mx-auto mb-5 inline-flex rounded-full"
-            style={{ boxShadow: `0 0 0 3px ${BRAND_ORANGE}33` }}
-          >
+          <div className="mx-auto mb-5 inline-flex">
             <ProfileAvatar
               src={staff.avatar}
               displayName={staff.name}
-              className="mx-auto size-[7.25rem] ring-[6px] ring-background"
+              className="mx-auto size-[7.25rem] ring-1 ring-border"
             />
           </div>
           <h2 className="text-balance text-2xl font-bold tracking-tight text-foreground">{staff.name}</h2>
-          <p className="mt-1.5 text-sm font-semibold" style={{ color: BRAND_ORANGE }}>
-            {staff.jobTitle}
-          </p>
+          {staff.jobTitle ? (
+            <p className="mt-1.5 text-sm font-medium text-muted-foreground">{staff.jobTitle}</p>
+          ) : null}
 
           {staff.bio ? <p className="mt-5 text-left text-sm leading-relaxed text-muted-foreground">{staff.bio}</p> : null}
 

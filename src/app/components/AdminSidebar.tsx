@@ -30,9 +30,9 @@ export const AdminSidebar = memo(function AdminSidebar() {
 
   return (
     <motion.aside
-      initial={{ x: -20, opacity: 0 }}
+      initial={false}
       animate={{ x: 0, opacity: 1 }}
-      transition={{ duration: 0.5 }}
+      transition={{ duration: 0.2 }}
       className={cn("admin-sidebar", DASHBOARD_SIDEBAR_SHELL_CLASS)}
     >
       <div className={DASHBOARD_SIDEBAR_BRAND_CLASS}>
@@ -63,13 +63,13 @@ export const AdminSidebar = memo(function AdminSidebar() {
       </div>
 
       <div className="border-t border-sidebar-border p-3 sm:p-4">
-        <div className="flex items-center gap-3 rounded-lg border border-border bg-muted px-3 py-2.5">
-          <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary font-medium text-primary-foreground">
+        <div className="admin-identity flex items-center gap-3 px-1 py-2">
+          <div className="admin-identity__avatar flex h-9 w-9 items-center justify-center rounded-full font-medium">
             {displayName.charAt(0)}
           </div>
           <div className="min-w-0 flex-1">
             <p className="truncate text-sm font-medium text-foreground">{displayName}</p>
-            <p className="truncate text-xs text-muted-foreground">{user?.email || 'admin@example.com'}</p>
+            <p className="truncate text-xs text-muted-foreground">{user?.email ?? ""}</p>
           </div>
         </div>
       </div>

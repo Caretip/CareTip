@@ -149,19 +149,19 @@ export const landingUi = {
   sectionAccentDot:
     "h-1.5 w-1.5 shrink-0 rounded-full bg-[#e9781c] shadow-[0_0_0_3px_rgba(233,120,28,0.16)]",
   sectionAccentText:
-    "text-xs font-semibold uppercase tracking-[0.18em] text-[#e9781c]",
+    "text-xs font-medium tracking-normal text-muted-foreground",
   sectionAccentTextMuted:
-    "text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground",
+    "text-xs font-medium tracking-normal text-muted-foreground",
   /** Feature-card label (not a section eyebrow). */
   sectionAccentCompact: "relative inline-flex w-fit items-center max-lg:mx-auto lg:mx-0",
   sectionAccentTextCompact:
-    `text-[11px] font-semibold uppercase tracking-[0.14em] ${brandAccentGradient}`,
+    "text-[11px] font-medium tracking-normal text-muted-foreground",
   sectionAccentIcon:
     "h-3 w-3 shrink-0 text-primary caretip-brand-accent-icon",
   sectionAccentIconMuted:
     "h-3 w-3 shrink-0 text-muted-foreground/80",
   sectionAccentGlow:
-    "pointer-events-none absolute -inset-x-3.5 -inset-y-1.5 -z-10 rounded-full bg-[radial-gradient(ellipse_at_center,rgba(233,120,28,0.13),transparent_72%)] opacity-52 blur-md",
+    "pointer-events-none absolute -inset-x-3.5 -inset-y-1.5 -z-10 hidden",
   sectionAccentLine:
     "h-px w-6 shrink-0 bg-gradient-to-r from-primary/60 via-primary/35 to-transparent",
   brandAccentIconWrap:
@@ -221,14 +221,13 @@ export const landingUi = {
   ),
   showcaseVisualCol:
     "flex w-full min-w-0 max-w-full flex-col items-center justify-center max-lg:max-w-lg lg:max-w-none lg:justify-self-center",
-  showcaseVisualGlow:
-    "pointer-events-none absolute -inset-3 rounded-[2rem] bg-[radial-gradient(ellipse_80%_70%_at_50%_55%,rgba(17,17,17,0.04),transparent_68%)] max-lg:-inset-2 sm:-inset-6",
+  showcaseVisualGlow: "hidden",
   showcaseVisualFrame:
-    "caretip-showcase-visual-frame relative mx-auto w-full overflow-hidden rounded-2xl border border-border bg-card shadow-sm",
+    "caretip-showcase-visual-frame relative mx-auto w-full overflow-hidden rounded-lg border border-border bg-card",
   showcaseVisualImg: "aspect-[5/4] w-full object-cover",
 
   visualFrame:
-    "mx-auto w-full overflow-hidden rounded-2xl border border-border bg-card shadow-sm sm:rounded-[2rem] lg:rounded-[2.5rem]",
+    "mx-auto w-full overflow-hidden rounded-lg border border-border bg-card sm:rounded-xl",
   visualImgContain:
     "mx-auto block h-auto max-h-[min(40vh,320px)] w-full max-w-full object-contain object-center sm:max-h-[min(48vh,420px)] lg:max-h-none",
 
@@ -247,7 +246,7 @@ export const landingUi = {
   heroTagline:
     "caretip-hero-brand-tagline caretip-hero-message__tagline inline-flex w-fit max-w-full items-center gap-2.5 text-left",
   heroTaglineText:
-    "caretip-hero-brand-tagline__text font-sans font-medium text-[0.8125rem] leading-snug tracking-[0.1em] text-primary dark:text-primary sm:text-[0.875rem] sm:tracking-[0.11em]",
+    "caretip-hero-brand-tagline__text font-sans font-medium text-[0.8125rem] leading-snug tracking-normal text-primary dark:text-primary sm:text-[0.875rem]",
   heroTaglineAccent:
     "caretip-hero-brand-tagline__accent size-1.5 shrink-0 rounded-full bg-primary shadow-[0_0_0_3px_rgba(233,120,28,0.16)]",
   heroHeadline: cnHeroHeadline(

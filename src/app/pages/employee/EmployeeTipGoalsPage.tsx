@@ -40,7 +40,66 @@ function formatEur(value: number): string {
 }
 
 const iconBtn =
-  "inline-flex h-9 w-9 items-center justify-center rounded-xl border border-border bg-card text-foreground transition-colors hover:bg-muted/60";
+  "inline-flex h-9 w-9 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted/70 hover:text-foreground";
+
+function GoalStatusBadge({ status, label }: { status: EmployeeGoalRow["status"]; label: string }) {
+  return (
+    <span
+      className={cn(
+        "text-[0.6875rem] font-medium",
+        status === "archived" ? "text-muted-foreground" : "text-foreground",
+      )}
+    >
+      {label}
+    </span>
+  );
+}
+
+function GoalRowActions({
+  goal,
+  busy,
+  onEdit,
+  onArchive,
+  onDelete,
+  editAria,
+  archiveAria,
+  deleteAria,
+}: {
+  goal: EmployeeGoalRow;
+  busy: boolean;
+  onEdit: () => void;
+  onArchive: () => void;
+  onDelete: () => void;
+  editAria: string;
+  archiveAria: string;
+  deleteAria: string;
+}) {
+  return (
+    <div className="flex items-center gap-1">
+      <button type="button" onClick={onEdit} className={iconBtn} aria-label={editAria} disabled={busy}>
+        <Pencil className="h-4 w-4" />
+      </button>
+      <button
+        type="button"
+        onClick={onArchive}
+        className={cn(iconBtn, goal.status === "archived" && "cursor-not-allowed opacity-40")}
+        aria-label={archiveAria}
+        disabled={busy || goal.status === "archived"}
+      >
+        <Check className="h-4 w-4" />
+      </button>
+      <button
+        type="button"
+        onClick={onDelete}
+        className={cn(iconBtn, "text-destructive hover:bg-destructive/10 hover:text-destructive")}
+        aria-label={deleteAria}
+        disabled={busy}
+      >
+        <Trash2 className="h-4 w-4" />
+      </button>
+    </div>
+  );
+}
 
 export function EmployeeTipGoalsPage() {
   const { t } = useTranslation();
@@ -143,6 +202,45 @@ export function EmployeeTipGoalsPage() {
 
   const periodLabel = (p: GoalPeriod) => t(`business.period.${p}`);
 
+  const handleArchiveGoal = useCallback(
+    (g: EmployeeGoalRow) => {
+      if (g.status === "archived") return;
+      if (!window.confirm(t("employee.tipGoals.confirmArchive"))) return;
+      setBusyGoalId(g.id);
+      void (async () => {
+        try {
+          const { goal } = await archiveMyGoal(g.id);
+          applyGoals(goals.map((row) => (row.id === goal.id ? goal : row)));
+          void refresh();
+        } catch (e) {
+          logClientError("EmployeeTipGoalsPage.archive", e);
+        } finally {
+          setBusyGoalId(null);
+        }
+      })();
+    },
+    [applyGoals, goals, refresh, t],
+  );
+
+  const handleDeleteGoal = useCallback(
+    (g: EmployeeGoalRow) => {
+      if (!window.confirm(t("employee.tipGoals.confirmDelete"))) return;
+      setBusyGoalId(g.id);
+      void (async () => {
+        try {
+          await deleteMyGoalById(g.id);
+          applyGoals(goals.filter((row) => row.id !== g.id));
+          void refresh();
+        } catch (e) {
+          logClientError("EmployeeTipGoalsPage.delete", e);
+        } finally {
+          setBusyGoalId(null);
+        }
+      })();
+    },
+    [applyGoals, goals, refresh, t],
+  );
+
   const isInitialGoalsLoad = loading && goals.length === 0;
 
   if (!user || user.role !== "employee") {
@@ -228,39 +326,39 @@ export function EmployeeTipGoalsPage() {
               description={t("employee.tipGoals.emptySubtitle")}
             />
           ) : (
-            <div className="w-full overflow-x-auto">
+            <>
+            <div className="employee-goals-table-wrap w-full overflow-x-auto">
               <table className="w-full border-collapse text-sm">
                 <thead>
-                  <tr className="border-b border-border text-left">
-                    <th className="whitespace-nowrap px-0 py-3 pr-5 text-xs font-semibold uppercase tracking-wide text-muted-foreground sm:pr-6">
+                  <tr className="border-b border-border/70 text-left">
+                    <th className="whitespace-nowrap px-0 py-3 pr-5 text-xs font-medium text-muted-foreground sm:pr-6">
                       {t("employee.tipGoals.colName")}
                     </th>
-                    <th className="whitespace-nowrap px-5 py-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground sm:px-6">
+                    <th className="whitespace-nowrap px-5 py-3 text-xs font-medium text-muted-foreground sm:px-6">
                       {t("employee.tipGoals.colTarget")}
                     </th>
-                    <th className="whitespace-nowrap px-5 py-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground sm:px-6">
+                    <th className="whitespace-nowrap px-5 py-3 text-xs font-medium text-muted-foreground sm:px-6">
                       {t("employee.tipGoals.colPeriod")}
                     </th>
-                    <th className="whitespace-nowrap px-5 py-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground sm:px-6">
+                    <th className="whitespace-nowrap px-5 py-3 text-xs font-medium text-muted-foreground sm:px-6">
                       {t("employee.tipGoals.colActions")}
                     </th>
                   </tr>
                 </thead>
                 <tbody>
                   {sortedGoals.map((g) => (
-                    <tr key={g.id} className="border-t border-border/90">
+                    <tr key={g.id} className="border-t border-border/70">
                       <td className="px-0 py-4 pr-5 font-medium text-foreground sm:pr-6">
-                        <div className="flex items-center gap-2">
+                        <div className="flex min-w-0 items-baseline gap-2">
                           <span className="truncate">{g.name}</span>
-                          {g.status === "archived" ? (
-                            <span className="rounded-full bg-muted px-2 py-0.5 text-[11px] font-semibold text-muted-foreground">
-                              {t("employee.tipGoals.statusArchived")}
-                            </span>
-                          ) : (
-                            <span className="rounded-full bg-emerald-500/10 px-2 py-0.5 text-[11px] font-semibold text-emerald-700">
-                              {t("employee.tipGoals.statusActive")}
-                            </span>
-                          )}
+                          <GoalStatusBadge
+                            status={g.status}
+                            label={
+                              g.status === "archived"
+                                ? t("employee.tipGoals.statusArchived")
+                                : t("employee.tipGoals.statusActive")
+                            }
+                          />
                         </div>
                       </td>
                       <td className="px-5 py-4 tabular-nums text-foreground sm:px-6">
@@ -268,77 +366,61 @@ export function EmployeeTipGoalsPage() {
                       </td>
                       <td className="px-5 py-4 text-foreground sm:px-6">{periodLabel(g.goalPeriod)}</td>
                       <td className="px-5 py-4 sm:px-6">
-                        <div className="flex items-center gap-2">
-                          <button
-                            type="button"
-                            onClick={() => openEdit(g)}
-                            className={iconBtn}
-                            aria-label={t("employee.tipGoals.editAria")}
-                            disabled={busyGoalId === g.id}
-                          >
-                            <Pencil className="h-4 w-4" />
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              if (g.status === "archived") return;
-                              if (!window.confirm(t("employee.tipGoals.confirmArchive"))) return;
-                              setBusyGoalId(g.id);
-                              void (async () => {
-                                try {
-                                  const { goal } = await archiveMyGoal(g.id);
-                                  applyGoals(
-                                    goals.map((row) => (row.id === goal.id ? goal : row)),
-                                  );
-                                  void refresh();
-                                } catch (e) {
-                                  logClientError("EmployeeTipGoalsPage.archive", e);
-                                } finally {
-                                  setBusyGoalId(null);
-                                }
-                              })();
-                            }}
-                            className={cn(iconBtn, g.status === "archived" && "cursor-not-allowed opacity-40")}
-                            aria-label={t("employee.tipGoals.archiveAria")}
-                            disabled={busyGoalId === g.id || g.status === "archived"}
-                          >
-                            <Check className="h-4 w-4" />
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              if (!window.confirm(t("employee.tipGoals.confirmDelete"))) return;
-                              setBusyGoalId(g.id);
-                              void (async () => {
-                                try {
-                                  await deleteMyGoalById(g.id);
-                                  applyGoals(goals.filter((row) => row.id !== g.id));
-                                  void refresh();
-                                } catch (e) {
-                                  logClientError("EmployeeTipGoalsPage.delete", e);
-                                } finally {
-                                  setBusyGoalId(null);
-                                }
-                              })();
-                            }}
-                            className={cn(iconBtn, "text-red-500 hover:bg-red-50")}
-                            aria-label={t("employee.tipGoals.deleteAria")}
-                            disabled={busyGoalId === g.id}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </button>
-                        </div>
+                        <GoalRowActions
+                          goal={g}
+                          busy={busyGoalId === g.id}
+                          onEdit={() => openEdit(g)}
+                          onArchive={() => handleArchiveGoal(g)}
+                          onDelete={() => handleDeleteGoal(g)}
+                          editAria={t("employee.tipGoals.editAria")}
+                          archiveAria={t("employee.tipGoals.archiveAria")}
+                          deleteAria={t("employee.tipGoals.deleteAria")}
+                        />
                       </td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
+            <ul className="employee-goals-list" role="list">
+              {sortedGoals.map((g) => (
+                <li key={g.id} className="employee-goals-list__row">
+                  <p className="employee-goals-list__name min-w-0 truncate">{g.name}</p>
+                  <div className="employee-goals-list__actions">
+                    <GoalRowActions
+                      goal={g}
+                      busy={busyGoalId === g.id}
+                      onEdit={() => openEdit(g)}
+                      onArchive={() => handleArchiveGoal(g)}
+                      onDelete={() => handleDeleteGoal(g)}
+                      editAria={t("employee.tipGoals.editAria")}
+                      archiveAria={t("employee.tipGoals.archiveAria")}
+                      deleteAria={t("employee.tipGoals.deleteAria")}
+                    />
+                  </div>
+                  <p className="employee-goals-list__meta">
+                    {formatEur(Number(g.goalAmount) || 0)}
+                    {" · "}
+                    {periodLabel(g.goalPeriod)}
+                    {" · "}
+                    <GoalStatusBadge
+                      status={g.status}
+                      label={
+                        g.status === "archived"
+                          ? t("employee.tipGoals.statusArchived")
+                          : t("employee.tipGoals.statusActive")
+                      }
+                    />
+                  </p>
+                </li>
+              ))}
+            </ul>
+            </>
           )}
         </section>
 
         <Dialog open={open} onOpenChange={setOpen}>
-          <DialogContent className="rounded-2xl border-border sm:max-w-md">
+          <DialogContent className="rounded-lg border-border sm:max-w-md">
             <DialogHeader>
               <DialogTitle>{editing ? t("employee.tipGoals.dialogEdit") : t("employee.tipGoals.dialogCreate")}</DialogTitle>
               <DialogDescription>{t("employee.tipGoals.dialogDesc")}</DialogDescription>

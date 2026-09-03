@@ -16,7 +16,7 @@ export const platformUi = {
 
   pageHeader: "platform-admin-page-header mb-5 max-lg:mb-6",
   pageTitleRow: "flex items-start gap-3",
-  pageTitleIcon: "mt-0.5 h-6 w-6 shrink-0 text-primary sm:h-7 sm:w-7",
+  pageTitleIcon: "mt-0.5 h-6 w-6 shrink-0 text-muted-foreground sm:h-7 sm:w-7",
   pageTitle:
     "platform-admin-page-title text-xl font-semibold tracking-tight text-foreground sm:text-[1.375rem] lg:text-[1.5rem]",
   pageSubtitle:
@@ -26,13 +26,13 @@ export const platformUi = {
   searchWrap: "relative w-full max-w-xl",
   searchIcon: "pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground",
   searchInput:
-    "w-full min-h-[2.5rem] rounded-lg border border-border bg-card py-2 pl-10 pr-4 text-sm shadow-sm transition-[border-color,box-shadow] focus:border-primary/35 focus:outline-none focus:ring-2 focus:ring-primary/12",
+    "w-full min-h-[2.5rem] rounded-lg border border-border bg-background py-2 pl-10 pr-4 text-sm text-foreground placeholder:text-muted-foreground transition-[border-color,box-shadow] focus:border-primary/35 focus:outline-none focus:ring-2 focus:ring-primary/12",
   searchHint: "mt-2 text-xs leading-relaxed text-muted-foreground",
 
   backLink:
     "mb-5 inline-flex min-h-[44px] touch-manipulation items-center gap-2 text-sm font-medium text-primary transition-colors hover:text-foreground",
 
-  contentCard: "dashboard-panel-card rounded-lg border border-border bg-card p-4 shadow-sm sm:p-5",
+  contentCard: "dashboard-panel-card rounded-lg border border-border/70 bg-card p-4 sm:p-5",
 
   /** Overview hub — content on the page surface (Netlify-style). */
   overviewHero: "bg-transparent",
@@ -43,20 +43,20 @@ export const platformUi = {
   overviewTeaserCard:
     "flex h-full min-h-0 flex-col border-t border-border/70 bg-transparent p-0 pt-5 shadow-none",
 
-  dataPanel: "overflow-hidden rounded-lg border border-border bg-card shadow-sm",
+  dataPanel: "overflow-hidden rounded-lg border border-border/70 bg-card",
   mobileList: "space-y-2.5 p-3 max-lg:p-3 lg:hidden",
   tableWrap: "hidden overflow-x-auto lg:block",
   table: "w-full text-sm",
   tableHeadRow: "border-b border-border bg-muted/30 text-left",
   tableTh:
-    "px-4 py-2.5 text-xs font-medium uppercase tracking-wide text-muted-foreground lg:normal-case lg:tracking-normal",
+    "px-4 py-2.5 text-xs font-medium text-muted-foreground",
   tableRow: "border-b border-border/60 transition-colors hover:bg-muted/25",
   tableTd: "px-4 py-2.5",
   panelFooter: "border-t border-border px-4 py-2.5 text-xs leading-relaxed text-muted-foreground",
   emptyState: "px-4 py-10 text-center text-sm text-muted-foreground",
 
   mobileCard:
-    "block rounded-lg border border-border bg-card p-4 shadow-sm transition-colors hover:bg-muted/20 active:bg-muted/30",
+    "block rounded-lg border border-border/70 bg-card p-4 transition-colors hover:bg-muted/20 active:bg-muted/30",
 
   /** Single column on phone; 2-up from sm; 3-up from lg; 5-up only on very wide viewports. */
   statGrid:
@@ -68,7 +68,7 @@ export const platformUi = {
   analyticsControls: "flex w-full flex-col gap-2.5 max-lg:gap-3 sm:w-auto sm:max-w-[min(100%,16rem)] sm:items-end",
   analyticsChartsGrid: "platform-admin-charts-grid grid grid-cols-1 gap-4 max-lg:gap-5 lg:grid-cols-2 lg:gap-5",
 
-  analyticsCard: "overflow-hidden rounded-lg border border-border bg-card shadow-sm",
+  analyticsCard: "overflow-hidden rounded-lg border border-border/70 bg-card",
   analyticsCardHeader: "space-y-1.5 border-b border-border bg-muted/25 px-4 pb-3 pt-4 sm:px-5",
   analyticsCardTitle: "text-sm font-semibold text-foreground sm:text-base",
   analyticsCardDesc: "text-pretty text-xs leading-relaxed text-muted-foreground sm:text-sm",
@@ -82,7 +82,7 @@ export const platformUi = {
   overviewAnalyticsCardTitle: "text-sm font-semibold text-foreground sm:text-base",
   overviewAnalyticsCardDesc: "text-pretty text-xs leading-relaxed text-muted-foreground sm:text-sm",
 
-  businessesPanel: "overflow-hidden rounded-lg border border-border bg-card shadow-sm",
+  businessesPanel: "overflow-hidden rounded-lg border border-border/70 bg-card",
   businessesPanelHeader:
     "flex items-center justify-between gap-3 border-b border-border bg-muted/25 px-4 py-3 max-lg:px-4",
   businessesSearchWrap: "border-b border-border px-4 py-3",

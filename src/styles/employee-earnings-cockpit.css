@@ -6,15 +6,15 @@
 .caretip-dashboard-shell.employee-dashboard .employee-qr-signature {
   display: flex;
   flex-direction: column;
-  gap: 0.875rem;
+  gap: 0.75rem;
   width: 100%;
   max-width: 100%;
   min-width: 0;
-  padding: 1rem 1rem 1rem 1.125rem;
-  border: 1px solid hsl(var(--border) / 0.8);
-  border-radius: 1rem;
-  background: hsl(var(--card));
-  box-shadow: inset 3px 0 0 hsl(var(--primary));
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
 }
 
 .caretip-dashboard-shell.employee-dashboard .employee-qr-signature__title {
@@ -120,19 +120,7 @@
   color: hsl(var(--foreground));
 }
 
-/* Pill period selector */
-.caretip-dashboard-shell.employee-dashboard .employee-period-toggle {
-  border-radius: 999px;
-  border-color: transparent;
-  background: hsl(var(--muted) / 0.7) !important;
-  box-shadow: none;
-  padding: 0.25rem;
-}
-
-.caretip-dashboard-shell.employee-dashboard .employee-period-toggle .dashboard-period-toggle__btn,
-.caretip-dashboard-shell.employee-dashboard .employee-period-toggle button {
-  border-radius: 999px !important;
-}
+/* Period selector chrome lives in employee-web-design.css (text tabs). */
 
 @media (max-width: 360px) {
   .caretip-dashboard-shell.employee-dashboard .employee-hero-account-stats--open {
@@ -156,9 +144,10 @@
 
 .caretip-dashboard-shell.employee-dashboard .employee-period-summary__row {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr) minmax(0, 1fr);
   column-gap: 0;
   min-width: 0;
+  align-items: start;
 }
 
 .caretip-dashboard-shell.employee-dashboard .employee-period-summary__metric {
@@ -174,6 +163,10 @@
   padding-left: 1.25rem;
 }
 
+.caretip-dashboard-shell.employee-dashboard .employee-period-summary__secondary {
+  display: contents;
+}
+
 .caretip-dashboard-shell.employee-dashboard .employee-period-summary__metric:last-child {
   padding-right: 0;
   border-right: 0;
@@ -181,23 +174,29 @@
 
 .caretip-dashboard-shell.employee-dashboard .employee-period-summary__label {
   margin: 0 0 0.35rem;
-  font-size: 0.6875rem;
-  font-weight: 600;
-  letter-spacing: 0.055em;
+  font-size: 0.75rem;
+  font-weight: 500;
+  letter-spacing: 0.01em;
   line-height: 1.3;
-  text-transform: uppercase;
+  text-transform: none;
   color: hsl(var(--muted-foreground));
 }
 
 .caretip-dashboard-shell.employee-dashboard .employee-period-summary__value {
   margin: 0;
-  font-size: clamp(1.25rem, 2.6vw, 1.625rem);
-  font-weight: 700;
-  letter-spacing: -0.03em;
+  font-size: clamp(1.125rem, 2.2vw, 1.375rem);
+  font-weight: 650;
+  letter-spacing: -0.025em;
   line-height: 1.15;
   font-variant-numeric: tabular-nums;
   color: hsl(var(--foreground));
   overflow-wrap: anywhere;
+}
+
+.caretip-dashboard-shell.employee-dashboard .employee-period-summary__metric--primary .employee-period-summary__value {
+  font-size: clamp(1.5rem, 3vw, 1.875rem);
+  font-weight: 700;
+  letter-spacing: -0.035em;
 }
 
 .caretip-dashboard-shell.employee-dashboard .employee-period-summary__hint {
@@ -330,25 +329,44 @@
   min-height: 0;
 }
 
-@media (max-width: 479px) {
+@media (max-width: 1023px) {
   .caretip-dashboard-shell.employee-dashboard .employee-period-summary__row {
-    grid-template-columns: minmax(0, 1fr);
-    gap: 0.75rem;
+    grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+    align-items: stretch;
+    column-gap: 0;
+  }
+
+  .caretip-dashboard-shell.employee-dashboard .employee-period-summary__secondary {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 1.5rem;
+    min-width: 0;
+    min-height: 100%;
+    padding: 0.1rem 0 0.1rem 1rem;
+    border-left: 1px solid hsl(var(--border) / 0.55);
   }
 
   .caretip-dashboard-shell.employee-dashboard .employee-period-summary__metric {
-    padding: 0 0 0.75rem;
+    padding: 0;
     border-right: 0;
-    border-bottom: 1px solid hsl(var(--border) / 0.45);
+    border-bottom: 0;
   }
 
   .caretip-dashboard-shell.employee-dashboard .employee-period-summary__metric:not(:first-child) {
     padding-left: 0;
   }
 
-  .caretip-dashboard-shell.employee-dashboard .employee-period-summary__metric:last-child {
-    padding-bottom: 0.15rem;
-    border-bottom: 0;
+  .caretip-dashboard-shell.employee-dashboard .employee-period-summary__metric--primary {
+    padding-right: 1rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+
+  .caretip-dashboard-shell.employee-dashboard .employee-period-summary__secondary .employee-period-summary__metric {
+    padding: 0;
+    border: 0;
   }
 
   .caretip-dashboard-shell.employee-dashboard .employee-period-summary__streak-hint {
@@ -359,7 +377,7 @@
 @media (max-width: 1023px) {
   .caretip-dashboard-shell.employee-dashboard .employee-qr-signature {
     gap: 0.5rem;
-    padding: 0.625rem 0.75rem 0.625rem 0.875rem;
+    padding: 0;
   }
 
   .caretip-dashboard-shell.employee-dashboard .employee-qr-signature__copy {

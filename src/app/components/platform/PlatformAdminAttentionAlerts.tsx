@@ -42,7 +42,7 @@ export function PlatformAdminAttentionAlerts({ alerts, className }: PlatformAdmi
               )}
             >
               <span className="min-w-0 text-foreground">{alert.message}</span>
-              <span className="inline-flex shrink-0 items-center gap-1 text-xs font-medium text-accent">
+              <span className="inline-flex shrink-0 items-center gap-1 text-xs font-medium text-muted-foreground group-hover:text-foreground">
                 {t("admin.overview.alerts.review")}
                 <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" aria-hidden />
               </span>

@@ -26,6 +26,7 @@ export function NotificationInboxPage() {
       className={cn(
         "dashboard-inbox-page w-full min-w-0 px-4 py-5 sm:px-6 sm:py-6",
         flushSurface && "dashboard-inbox-page--flush",
+        isEmployee && "employee-inbox-page",
       )}
     >
       <NotificationInboxFeed

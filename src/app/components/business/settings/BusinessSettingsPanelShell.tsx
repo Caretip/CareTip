@@ -29,9 +29,8 @@ export function BusinessSettingsPanelShell({
   return (
     <section
       className={cn(
-        grouped ? businessUi.cardStatic : dashboardWorkspaceUi.card,
-        businessUi.settingsPanel,
-        grouped ? "p-5 sm:p-6" : dashboardWorkspaceUi.cardPad,
+        grouped ? "business-card business-card--tool p-5 sm:p-6" : businessUi.settingsSection,
+        !grouped && businessUi.settingsPanel,
         className,
       )}
     >

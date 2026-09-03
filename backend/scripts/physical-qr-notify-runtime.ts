@@ -141,7 +141,7 @@ function sectionTemplateCopy() {
     pass("EN admin template title/body include business and order id");
   } else fail("EN admin template copy");
 
-  if (de.title === "Physische QR-Bestellung bezahlt" && de.body.includes("Demo Venue")) {
+  if (de.title === "Physische QR Bestellung bezahlt" && de.body.includes("Demo Venue")) {
     pass("DE admin template localized");
   } else fail("DE admin template copy");
 

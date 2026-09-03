@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils";
 
 const caretipBtnBase = [
   "inline-flex shrink-0 touch-manipulation items-center justify-center gap-2",
-  "whitespace-nowrap rounded-xl font-sans !leading-none tracking-tight",
+  "whitespace-nowrap rounded-lg font-sans !leading-none tracking-tight",
   "transition-[box-shadow,background-color,border-color,opacity] duration-200 ease-out",
   "active:opacity-[0.96]",
   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#e9781c]/45 focus-visible:ring-offset-2 focus-visible:ring-offset-background",

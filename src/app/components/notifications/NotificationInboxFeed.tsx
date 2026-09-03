@@ -369,7 +369,11 @@ export function NotificationInboxFeed({
               type="button"
               variant="outline"
               size="sm"
-              className="w-full shrink-0 gap-1.5 border-white/25 bg-white/10 text-white hover:bg-white/15 hover:text-white sm:w-auto"
+              className={cn(
+                "w-full shrink-0 gap-1.5 sm:w-auto",
+                !flushSurface &&
+                  "border-white/25 bg-white/10 text-white hover:bg-white/15 hover:text-white",
+              )}
               onClick={() => void markAllRead()}
             >
               <CheckCheck className="h-4 w-4" aria-hidden />

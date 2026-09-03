@@ -79,10 +79,8 @@ import {
 } from "../../lib/qrStudioPerformance";
 import { logQrStudioSync } from "../../lib/qrStudioSyncDiagnostics";
 import { DashboardHero } from "@/components/ui/dashboard-hero";
-import { TracingBeam } from "@/components/ui/tracing-beam";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { DASH_BTN_PRIMARY, DASH_BTN_SECONDARY } from "@/components/ui/dashboard-styles";
 import { businessUi } from "@/app/components/business/businessDashboardUi";
 import { QrStudioOrderPrintButton } from "@/app/components/business/qr-studio/QrStudioOrderPrintButton";
 import {
@@ -1307,7 +1305,7 @@ export function QRCodeManagementPage({
         </div>
       ) : null}
 
-      <TracingBeam className={cn(embedded ? "mt-6" : businessUi.subPageMain, "pb-4")}>
+      <div className={cn(embedded ? "mt-6" : businessUi.subPageMain, "pb-4")}>
         <div className="space-y-6">
           <div className="w-full min-w-0">
             {viewMode === "gallery" && user?.businessId ? (
@@ -1587,7 +1585,7 @@ export function QRCodeManagementPage({
             ) : null}
           </div>
         </div>
-      </TracingBeam>
+      </div>
 
       <BusinessConfirmDialog
         open={pendingDestructiveAction != null}

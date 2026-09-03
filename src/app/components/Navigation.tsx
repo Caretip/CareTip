@@ -93,8 +93,7 @@ export const Navigation = memo(function Navigation({ variant: _variant = "defaul
   const isLandingHome = location.pathname === "/";
   const headerSurface = cn(
     "caretip-public-nav border-b border-border/88",
-    "bg-background/88 backdrop-blur-md md:backdrop-blur-lg",
-    "shadow-[0_6px_32px_-18px_rgba(15,23,42,0.12)] dark:shadow-[0_8px_32px_-16px_rgba(0,0,0,0.45)]",
+    "bg-background/92 backdrop-blur-md md:backdrop-blur-lg",
     isLandingHome && "caretip-public-nav--landing",
   );
 

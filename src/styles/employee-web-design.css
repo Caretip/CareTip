@@ -1,0 +1,414 @@
+/**
+ * CareTip employee WEB design language.
+ * Scoped to `.caretip-dashboard-shell.employee-dashboard`.
+ * Type, spacing, and alignment over cards, pills, and orange wash.
+ */
+
+.caretip-dashboard-shell.employee-dashboard {
+  --emp-radius: 0.5rem;
+  --emp-radius-sm: 0.375rem;
+  --emp-hairline: hsl(var(--border) / 0.7);
+  --dash-card-radius: 0.5rem;
+  --dash-card-shadow: none;
+}
+
+/* —— Typography —— */
+.caretip-dashboard-shell.employee-dashboard .employee-page-header h1,
+.caretip-dashboard-shell.employee-dashboard .employee-page-title {
+  font-size: 1.5rem;
+  font-weight: 650;
+  letter-spacing: -0.028em;
+  line-height: 1.2;
+}
+
+@media (min-width: 640px) {
+  .caretip-dashboard-shell.employee-dashboard .employee-page-header h1 {
+    font-size: 1.625rem;
+  }
+}
+
+.caretip-dashboard-shell.employee-dashboard .employee-page-header p,
+.caretip-dashboard-shell.employee-dashboard .employee-page-desc {
+  color: hsl(var(--muted-foreground) / 0.92);
+}
+
+.caretip-dashboard-shell.employee-dashboard .employee-settings-heading,
+.caretip-dashboard-shell.employee-dashboard .employee-settings-section h3 {
+  font-size: 0.9375rem;
+  font-weight: 650;
+  letter-spacing: -0.015em;
+}
+
+.caretip-dashboard-shell.employee-dashboard .employee-period-summary__label {
+  text-transform: none;
+  letter-spacing: 0.01em;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+/* —— Navigation: rail, not pills —— */
+.caretip-dashboard-shell.employee-dashboard .employee-dash-nav-link,
+.employee-sidebar .employee-dash-nav-link,
+.caretip-mobile-drawer-panel .employee-dash-nav-link {
+  border-radius: var(--emp-radius-sm) !important;
+  box-shadow: none !important;
+  min-height: 2.75rem;
+}
+
+.caretip-dashboard-shell.employee-dashboard .employee-dash-nav-link--active,
+.employee-sidebar .employee-dash-nav-link--active,
+.caretip-mobile-drawer-panel .employee-dash-nav-link--active {
+  background: hsl(var(--sidebar-accent) / 0.35) !important;
+  color: hsl(var(--foreground)) !important;
+  box-shadow: inset 2px 0 0 hsl(var(--primary)) !important;
+  border-radius: 0 var(--emp-radius-sm) var(--emp-radius-sm) 0 !important;
+}
+
+.dark .caretip-dashboard-shell.employee-dashboard .employee-dash-nav-link--active,
+.dark .employee-sidebar .employee-dash-nav-link--active,
+.dark .caretip-mobile-drawer-panel .employee-dash-nav-link--active {
+  background: hsl(var(--sidebar-accent) / 0.45) !important;
+}
+
+.caretip-dashboard-shell.employee-dashboard .employee-dash-nav-link:not(.employee-dash-nav-link--active):hover,
+.employee-sidebar .employee-dash-nav-link:not(.employee-dash-nav-link--active):hover {
+  background: hsl(var(--sidebar-accent) / 0.65) !important;
+}
+
+/* —— Period selector: text tabs —— */
+.caretip-dashboard-shell.employee-dashboard .employee-period-toggle {
+  display: flex;
+  width: 100%;
+  max-width: 100%;
+  gap: 0;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  border-bottom: 1px solid var(--emp-hairline) !important;
+}
+
+@media (min-width: 640px) {
+  .caretip-dashboard-shell.employee-dashboard .employee-period-toggle {
+    width: fit-content;
+  }
+}
+
+.caretip-dashboard-shell.employee-dashboard .employee-period-toggle .dashboard-period-toggle__btn,
+.caretip-dashboard-shell.employee-dashboard .employee-period-toggle button {
+  position: relative;
+  min-height: 2.5rem !important;
+  padding: 0.5rem 0.875rem !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  font-size: 0.8125rem !important;
+  font-weight: 500 !important;
+  color: hsl(var(--muted-foreground)) !important;
+}
+
+.caretip-dashboard-shell.employee-dashboard .employee-period-toggle button[aria-pressed="true"],
+.caretip-dashboard-shell.employee-dashboard .employee-period-toggle button.bg-primary {
+  font-weight: 650 !important;
+  color: hsl(var(--foreground)) !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+.caretip-dashboard-shell.employee-dashboard .employee-period-toggle button[aria-pressed="true"]::after {
+  content: "";
+  position: absolute;
+  right: 0.75rem;
+  bottom: -1px;
+  left: 0.75rem;
+  height: 2px;
+  background: hsl(var(--primary));
+}
+
+.caretip-dashboard-shell.employee-dashboard .employee-period-toggle button:hover {
+  color: hsl(var(--foreground)) !important;
+  background: transparent !important;
+}
+
+.caretip-dashboard-shell.employee-dashboard .employee-period-toggle button:active {
+  transform: none !important;
+}
+
+/* —— Surfaces: fewer cards —— */
+.caretip-dashboard-shell.employee-dashboard .employee-card,
+.caretip-dashboard-shell.employee-dashboard .employee-settings-section,
+.caretip-dashboard-shell.employee-dashboard .dashboard-settings-panel {
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+.caretip-dashboard-shell.employee-dashboard .employee-settings-section {
+  padding: 1.25rem 0 !important;
+  border-top: 1px solid var(--emp-hairline) !important;
+}
+
+.caretip-dashboard-shell.employee-dashboard .employee-settings-section:first-of-type {
+  border-top: 0 !important;
+  padding-top: 0.25rem !important;
+}
+
+.caretip-dashboard-shell.employee-dashboard .employee-page-header {
+  border-color: var(--emp-hairline) !important;
+  box-shadow: none !important;
+  background: transparent !important;
+}
+
+.caretip-dashboard-shell.employee-dashboard .employee-page-header__back:not(.employee-page-header__back--subtle) {
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  padding-inline: 0 !important;
+  color: hsl(var(--muted-foreground));
+}
+
+.caretip-dashboard-shell.employee-dashboard .employee-qr-signature {
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  padding: 0;
+}
+
+.caretip-dashboard-shell.employee-dashboard .employee-icon-tile,
+.caretip-dashboard-shell.employee-dashboard .employee-page-header .inline-flex.rounded-lg {
+  background: hsl(var(--muted) / 0.45);
+  color: hsl(var(--foreground));
+}
+
+/* Hero: sit on the same page grid — no extra card padding */
+.caretip-dashboard-shell.employee-dashboard .employee-dashboard-hero > div:first-child,
+.caretip-dashboard-shell.employee-dashboard .employee-dashboard-hero .dashboard-hero-container {
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+}
+
+.caretip-dashboard-shell.employee-dashboard .employee-dashboard-hero .dashboard-hero-container {
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+}
+
+.caretip-dashboard-shell.employee-dashboard .employee-hero-chart-frame--photo,
+.caretip-dashboard-shell.employee-dashboard .employee-hero-chart-frame--photo .employee-hero-chart-frame__img {
+  border-radius: 0.75rem !important;
+  overflow: hidden;
+}
+
+/* Buttons: moderately rounded, not capsules */
+.caretip-dashboard-shell.employee-dashboard .caretip-btn-primary,
+.caretip-dashboard-shell.employee-dashboard .caretip-btn-secondary,
+.caretip-dashboard-shell.employee-dashboard .caretip-btn-ghost {
+  border-radius: var(--emp-radius) !important;
+}
+
+.caretip-dashboard-shell.employee-dashboard .employee-hero-cta-row > :is(a, button) {
+  border-radius: var(--emp-radius) !important;
+}
+
+/* Inbox: list, not stacked cards / pills */
+.caretip-dashboard-shell.employee-dashboard .inbox-feed-panel button.rounded-full {
+  border-radius: var(--emp-radius-sm) !important;
+}
+
+.caretip-dashboard-shell.employee-dashboard .inbox-feed-panel button.border-primary\/40,
+.caretip-dashboard-shell.employee-dashboard .inbox-feed-panel button.bg-primary {
+  background: transparent !important;
+  color: hsl(var(--foreground)) !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+  box-shadow: inset 0 -2px 0 hsl(var(--primary)) !important;
+}
+
+.caretip-dashboard-shell.employee-dashboard .dashboard-notification-card {
+  border: 0 !important;
+  border-radius: 0 !important;
+  border-bottom: 1px solid var(--emp-hairline) !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+.caretip-dashboard-shell.employee-dashboard .dashboard-notification-card--unread {
+  background: hsl(var(--primary) / 0.04) !important;
+}
+
+.caretip-dashboard-shell.employee-dashboard .employee-goals-list {
+  display: none;
+}
+
+@media (max-width: 1023px) {
+  .caretip-dashboard-shell.employee-dashboard .employee-goals-table-wrap {
+    display: none;
+  }
+
+  .caretip-dashboard-shell.employee-dashboard .employee-goals-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+}
+
+.caretip-dashboard-shell.employee-dashboard .employee-goals-list__row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.35rem 0.75rem;
+  padding: 0.875rem 0;
+  border-bottom: 1px solid var(--emp-hairline);
+}
+
+.caretip-dashboard-shell.employee-dashboard .employee-goals-list__name {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: hsl(var(--foreground));
+}
+
+.caretip-dashboard-shell.employee-dashboard .employee-goals-list__meta {
+  grid-column: 1;
+  font-size: 0.8125rem;
+  color: hsl(var(--muted-foreground));
+}
+
+.caretip-dashboard-shell.employee-dashboard .employee-goals-list__actions {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  align-self: center;
+}
+
+.caretip-dashboard-shell.employee-dashboard .employee-goals-table-wrap table th {
+  text-transform: none;
+  letter-spacing: 0.01em;
+  font-weight: 500;
+}
+
+/* Password checklist: inline with field, not a badge stack */
+.caretip-dashboard-shell.employee-dashboard .employee-password-checklist {
+  margin-top: 0.5rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.375rem 0.75rem;
+}
+
+.caretip-dashboard-shell.employee-dashboard .employee-password-checklist li {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.75rem;
+  color: hsl(var(--muted-foreground));
+}
+
+.caretip-dashboard-shell.employee-dashboard .employee-password-checklist li.is-met {
+  color: hsl(var(--foreground));
+}
+
+.caretip-dashboard-shell.employee-dashboard .employee-password-meter {
+  height: 0.1875rem;
+  margin-top: 0.5rem;
+  overflow: hidden;
+  border-radius: 999px;
+  background: hsl(var(--muted));
+}
+
+/* Assignment labels */
+.caretip-dashboard-shell.employee-dashboard .employee-assignment-panel__label {
+  font-size: 0.75rem;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  color: hsl(var(--muted-foreground));
+}
+
+/* Destructive settings block stays distinct without dominating */
+.caretip-dashboard-shell.employee-dashboard .employee-settings-section--danger {
+  border-top: 1px solid hsl(var(--destructive) / 0.28) !important;
+}
+
+/* Chart: connected, not a boxed widget */
+.caretip-dashboard-shell.employee-dashboard .employee-period-chart {
+  border-top-color: var(--emp-hairline) !important;
+}
+
+/* Setup prompt — quiet strip, not an orange card */
+.caretip-dashboard-shell.employee-dashboard .employee-dashboard-fix-prompt {
+  margin-bottom: 1.25rem;
+  border: 1px solid var(--emp-hairline) !important;
+  border-radius: var(--emp-radius) !important;
+  background: hsl(var(--muted) / 0.28) !important;
+  box-shadow: none !important;
+}
+
+/* Tip history filters/tables: open, not boxed */
+.caretip-dashboard-shell.employee-dashboard .dashboard-filter-panel,
+.caretip-dashboard-shell.employee-dashboard .dashboard-table-panel {
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+.caretip-dashboard-shell.employee-dashboard .dashboard-filter-panel {
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+}
+
+/* Inbox: list rows, text-tab filters */
+.caretip-dashboard-shell.employee-dashboard .inbox-feed-panel > div > div.mt-3 button {
+  border-radius: 0 !important;
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  font-size: 0.8125rem !important;
+  font-weight: 500 !important;
+  color: hsl(var(--muted-foreground)) !important;
+}
+
+.caretip-dashboard-shell.employee-dashboard .inbox-feed-panel > div > div.mt-3 button.bg-primary,
+.caretip-dashboard-shell.employee-dashboard .inbox-feed-panel > div > div.mt-3 button.border-primary\/40 {
+  color: hsl(var(--foreground)) !important;
+  font-weight: 650 !important;
+  box-shadow: inset 0 -2px 0 hsl(var(--primary)) !important;
+}
+
+.caretip-dashboard-shell.employee-dashboard .inbox-feed-panel article {
+  background: transparent !important;
+}
+
+.caretip-dashboard-shell.employee-dashboard .inbox-feed-panel article [class*="rounded-xl"],
+.caretip-dashboard-shell.employee-dashboard .inbox-feed-panel article [class*="rounded-2xl"] {
+  border-radius: var(--emp-radius) !important;
+}
+
+.caretip-dashboard-shell.employee-dashboard .inbox-feed-panel h2 {
+  background: transparent !important;
+  text-transform: none !important;
+  letter-spacing: 0.02em !important;
+  font-size: 0.75rem !important;
+  font-weight: 650 !important;
+}
+
+.caretip-dashboard-shell.employee-dashboard .inbox-feed-panel article span.uppercase {
+  text-transform: none !important;
+  letter-spacing: 0.02em !important;
+  background: transparent !important;
+  padding-inline: 0 !important;
+  border-radius: 0 !important;
+}
+
+/* Alignment: keep employee pages on the shared container grid */
+.caretip-dashboard-shell.employee-dashboard .employee-page__inner,
+.caretip-dashboard-shell.employee-dashboard .dashboard-inbox-page {
+  max-width: 80rem;
+}
+
+@media (max-width: 639px) {
+  .caretip-dashboard-shell.employee-dashboard .employee-period-toggle button {
+    flex: 1 1 0;
+    padding-inline: 0.5rem !important;
+    font-size: 0.75rem !important;
+  }
+}

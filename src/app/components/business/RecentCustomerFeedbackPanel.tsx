@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { MessageSquare, Star } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { DashboardViewAllLink } from "@/app/components/dashboard/DashboardViewAllLink";
 import { listBusinessCustomerFeedback, type CustomerFeedbackSummary } from "@/app/lib/api";
@@ -30,7 +29,7 @@ export function RecentCustomerFeedbackPanel({
   className,
 }: RecentCustomerFeedbackPanelProps) {
   const { t } = useTranslation();
-  const { ref: panelRef, active: panelVisible } = useInViewActive<HTMLDivElement>({
+  const { ref: panelRef, active: panelVisible } = useInViewActive<HTMLElement>({
     rootMargin: "160px 0px",
   });
   const businessEntitlements = useBusinessEntitlementsContext();
@@ -91,14 +90,17 @@ export function RecentCustomerFeedbackPanel({
   }, [enabled, entitled, load, panelVisible, ready]);
 
   return (
-    <Card
+    <section
       ref={panelRef}
-      className={cn(businessUi.cardStatic, "business-dashboard-panel-card business-dashboard-panel-card--secondary w-full", className)}
+      className={cn("business-dashboard-feedback w-full", className)}
+      aria-labelledby="business-dashboard-feedback-heading"
     >
-      <CardHeader className="business-dashboard-panel-card__header flex flex-row items-start justify-between gap-4 space-y-0">
+      <header className="flex flex-row items-start justify-between gap-4 py-3">
         <div className="min-w-0 space-y-1">
-          <CardTitle className="text-base font-semibold">{t("business.customerFeedback.recentTitle")}</CardTitle>
-          <CardDescription className={businessUi.cardDesc}>
+          <h2 id="business-dashboard-feedback-heading" className="text-base font-semibold tracking-tight">
+            {t("business.customerFeedback.recentTitle")}
+          </h2>
+          <p className={businessUi.cardDesc}>
             {summary && summary.feedbackCount > 0
               ? t("business.customerFeedback.recentDescWithStats", {
                   count: summary.feedbackCount,
@@ -106,11 +108,11 @@ export function RecentCustomerFeedbackPanel({
                     summary.averageRating != null ? summary.averageRating.toFixed(1) : "—",
                 })
               : t("business.customerFeedback.recentDesc")}
-          </CardDescription>
+          </p>
         </div>
         <DashboardViewAllLink to={CUSTOMERS_BASE}>{t("dashboard.viewAll")}</DashboardViewAllLink>
-      </CardHeader>
-      <CardContent className="business-dashboard-panel-card__content pt-0">
+      </header>
+      <div>
         {loading ? (
           <DashboardListSkeleton minHeightClass="min-h-[200px]" />
         ) : error ? (
@@ -139,7 +141,7 @@ export function RecentCustomerFeedbackPanel({
             ))}
           </div>
         )}
-      </CardContent>
-    </Card>
+      </div>
+    </section>
   );
 }

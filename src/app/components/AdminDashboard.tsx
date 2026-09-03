@@ -284,7 +284,7 @@ export const AdminDashboard = memo(function AdminDashboard() {
 
         <section aria-labelledby="platform-kpis-heading" className="platform-overview-kpis">
           <div className="mb-5 flex items-end justify-between gap-3">
-            <h2 id="platform-kpis-heading" className="text-sm font-semibold text-foreground sm:text-base">
+            <h2 id="platform-kpis-heading" className="text-xs font-medium tracking-normal text-muted-foreground">
               {t("admin.overview.kpisTitle")}
             </h2>
           </div>

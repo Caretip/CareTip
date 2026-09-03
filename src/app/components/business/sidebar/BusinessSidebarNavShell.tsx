@@ -202,7 +202,7 @@ function SidebarGroup({
         className={cn(
           "business-dash-nav-link flex w-full items-center gap-3 px-3 py-2.5 text-left text-sm font-medium transition-colors",
           groupActive
-            ? "bg-sidebar-accent font-semibold text-sidebar-foreground"
+            ? "business-dash-nav-link--active font-semibold text-sidebar-foreground"
             : dashboardSidebarNavLinkIdle,
         )}
         aria-expanded={isExpanded}

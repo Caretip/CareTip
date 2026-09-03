@@ -31,22 +31,20 @@ export function PlatformAdminOverviewHero({ health, adminName, locale }: Platfor
     if (status === "operational") {
       return {
         label: t("admin.overview.hero.statusOperational"),
-        className:
-          "border-emerald-500/20 bg-emerald-500/[0.07] text-emerald-800 hover:border-emerald-500/30 hover:bg-emerald-500/[0.1] dark:border-emerald-500/25 dark:bg-emerald-500/10 dark:text-emerald-300",
+        className: "text-foreground",
         dot: "bg-emerald-500",
       };
     }
     if (status === "degraded") {
       return {
         label: t("admin.overview.hero.statusDegraded"),
-        className:
-          "border-amber-500/20 bg-amber-500/[0.07] text-amber-900 hover:border-amber-500/30 hover:bg-amber-500/[0.1] dark:border-amber-500/25 dark:bg-amber-500/10 dark:text-amber-200",
+        className: "text-foreground",
         dot: "bg-amber-500",
       };
     }
     return {
       label: t("admin.overview.hero.statusChecking"),
-      className: "border-border/80 bg-muted/40 text-muted-foreground",
+      className: "text-muted-foreground",
       dot: "bg-muted-foreground/50 animate-pulse",
     };
   }, [status, t]);

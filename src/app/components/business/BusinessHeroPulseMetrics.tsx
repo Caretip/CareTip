@@ -1,5 +1,4 @@
 import { memo } from "react";
-import { Clock, CalendarDays } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
 import { CountUpMetric } from "../dashboard/CountUpMetric";
@@ -18,37 +17,24 @@ type BusinessHeroPulseMetricsProps = {
   className?: string;
 };
 
-type PulseCardProps = {
-  icon: "clock" | "calendar";
-  tone: "amber" | "orange";
-  label: string;
+function PulseValue({
+  loading,
+  count,
+  amount,
+}: {
   loading: boolean;
   count: number | null;
   amount: number | null;
-};
-
-function PulseCard({ icon, tone, label, loading, count, amount }: PulseCardProps) {
+}) {
   const { t } = useTranslation();
-  const Icon = icon === "clock" ? Clock : CalendarDays;
   const hasTips = count != null && count > 0;
 
   return (
-    <article
-      className={cn(
-        "business-hero-pulse-card",
-        tone === "amber" ? "business-hero-pulse-card--amber" : "business-hero-pulse-card--orange",
-      )}
-    >
-      <div className="business-hero-pulse-card__header">
-        <div className="business-hero-pulse-card__icon" aria-hidden>
-          <Icon className="business-hero-pulse-card__icon-glyph" strokeWidth={2.25} />
-        </div>
-        <p className="business-hero-pulse-card__label">{label}</p>
-      </div>
-      <div className="business-hero-pulse-card__value">
-        {loading ? (
-          <DashboardHeroMetricSkeleton variant="pulse" />
-        ) : count != null ? (
+    <>
+      {loading ? (
+        <DashboardHeroMetricSkeleton variant="pulse" />
+      ) : count != null ? (
+        <>
           <span className="dashboard-hero-metric-value--live">
             <CountUpMetric
               value={count}
@@ -61,26 +47,20 @@ function PulseCard({ icon, tone, label, loading, count, amount }: PulseCardProps
               }}
             />
           </span>
-        ) : (
-          <span>{t("format.noDataYet")}</span>
-        )}
-      </div>
-      <p className="business-hero-pulse-card__sub">
-        {loading ? (
-          "\u00a0"
-        ) : hasTips && amount != null ? (
-          <span className="dashboard-hero-metric-value--live">
-            <CountUpMetric
-              value={amount}
-              kind="eur"
-              format={(n) => t("business.hero.pulse.volume", { amount: formatEur(n) })}
-            />
-          </span>
-        ) : (
-          t("format.noDataYet")
-        )}
-      </p>
-    </article>
+          {hasTips && amount != null ? (
+            <span className="business-hero-pulse-subline dashboard-hero-metric-value--live text-muted-foreground/90">
+              <CountUpMetric
+                value={amount}
+                kind="eur"
+                format={(n) => t("business.hero.pulse.volume", { amount: formatEur(n) })}
+              />
+            </span>
+          ) : null}
+        </>
+      ) : (
+        <span className="block">{t("format.noDataYet")}</span>
+      )}
+    </>
   );
 }
 
@@ -93,33 +73,36 @@ export const BusinessHeroPulseMetrics = memo(function BusinessHeroPulseMetrics({
   const { t } = useTranslation();
 
   return (
-    <div
+    <dl
       className={cn(
-        "business-hero-pulse-grid dashboard-swr-swap",
+        "business-hero-account-stats business-hero-account-stats--open dashboard-swr-swap",
         loading && "dashboard-hero-account-stats--loading",
         isRefreshing && "dashboard-swr-swap--revalidating",
         className,
       )}
-      role="group"
       aria-label={t("business.hero.pulse.sectionLabel")}
       aria-busy={loading}
     >
-      <PulseCard
-        icon="clock"
-        tone="amber"
-        label={t("business.hero.pulse.lastHour")}
-        loading={loading}
-        count={pulse?.tipsLast60m.count ?? null}
-        amount={pulse?.tipsLast60m.amount ?? null}
-      />
-      <PulseCard
-        icon="calendar"
-        tone="orange"
-        label={t("business.hero.pulse.today")}
-        loading={loading}
-        count={pulse?.tipsToday.count ?? null}
-        amount={pulse?.tipsToday.amount ?? null}
-      />
-    </div>
+      <div>
+        <dt>{t("business.hero.pulse.lastHour")}</dt>
+        <dd>
+          <PulseValue
+            loading={loading}
+            count={pulse?.tipsLast60m.count ?? null}
+            amount={pulse?.tipsLast60m.amount ?? null}
+          />
+        </dd>
+      </div>
+      <div>
+        <dt>{t("business.hero.pulse.today")}</dt>
+        <dd>
+          <PulseValue
+            loading={loading}
+            count={pulse?.tipsToday.count ?? null}
+            amount={pulse?.tipsToday.amount ?? null}
+          />
+        </dd>
+      </div>
+    </dl>
   );
 });

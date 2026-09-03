@@ -60,8 +60,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { cn } from "@/lib/utils";
 import { dashboardSharedUi } from "../../components/dashboard/dashboardSharedUi";
 import {
-  DASH_BTN_PRIMARY,
-  DASH_BTN_SECONDARY,
   DASH_EMPTY_ICON,
   DASH_EMPTY_STATE,
 } from "@/components/ui/dashboard-styles";

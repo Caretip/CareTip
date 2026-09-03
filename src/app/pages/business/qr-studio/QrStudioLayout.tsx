@@ -1,6 +1,6 @@
 import { Outlet, useLocation } from "react-router";
 import { useTranslation } from "react-i18next";
-import { QrCode, Sparkles } from "lucide-react";
+import { QrCode } from "lucide-react";
 import { BusinessModuleWorkspaceHeader } from "../../../components/business/BusinessModuleWorkspaceHeader";
 import {
   QrStudioAccessPanel,
@@ -32,12 +32,7 @@ export function QrStudioLayout() {
         <BusinessModuleWorkspaceHeader
           personality="qrStudio"
           badge={t("premium.qrStudio.badge")}
-          feature={
-            <span className="inline-flex items-center gap-1.5">
-              <Sparkles className="h-3.5 w-3.5 text-primary" aria-hidden />
-              {t("premium.qrStudio.feature")}
-            </span>
-          }
+          feature={t("premium.qrStudio.feature")}
           icon={QrCode}
           title={t("business.qrStudio.title")}
           subtitle={t("business.qrStudio.subtitle")}

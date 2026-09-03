@@ -26,7 +26,7 @@ const featureAccentVariants: LandingAccentVariant[] = [
 ];
 
 const cardClassName = cn(
-  "caretip-landing-card caretip-landing-feature-card group relative flex h-full flex-col overflow-hidden rounded-2xl",
+  "caretip-landing-card caretip-landing-feature-card group relative flex h-full flex-col overflow-hidden rounded-lg",
   "border border-border/80 bg-card/95",
 );
 

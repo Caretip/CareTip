@@ -17,20 +17,20 @@ export const publicPageUi = {
     "caretip-marketing-lead max-w-[min(100%,36rem)] text-body-copy leading-[1.72] text-muted-foreground sm:max-w-[min(100%,38rem)]",
   sectionGap: "mt-12 sm:mt-16 lg:mt-20",
   card:
-    "caretip-marketing-card rounded-2xl border border-border/80 bg-card/95 shadow-[0_2px_8px_rgba(15,23,42,0.04),0_12px_32px_-12px_rgba(15,23,42,0.08)]",
+    "caretip-marketing-card rounded-lg border border-border/80 bg-card",
   cardPad: "p-6 sm:p-7",
   insetPanel:
     "rounded-xl border border-border/70 bg-muted/40 p-4 text-sm leading-relaxed text-muted-foreground",
   sectionTitle: "font-hero-display text-section-title font-bold text-foreground",
   cardInteractive:
-    "transition-[box-shadow,border-color,transform] duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:-translate-y-0.5 hover:border-primary/25 hover:shadow-[0_4px_12px_rgba(15,23,42,0.06),0_16px_40px_-12px_rgba(233,120,28,0.12)] dark:hover:border-primary/35",
+    "transition-[border-color] duration-200 hover:border-foreground/25",
   mutedBand:
-    "rounded-2xl border border-border/50 bg-secondary/40 px-1 py-6 sm:rounded-3xl sm:px-2 sm:py-8",
+    "rounded-lg border border-border/50 bg-secondary/40 px-1 py-6 sm:px-2 sm:py-8",
   ctaPanel:
-    "rounded-2xl border border-border/80 bg-card p-6 text-center shadow-[0_8px_32px_-12px_rgba(15,23,42,0.12)] sm:p-8",
+    "rounded-lg border border-border/80 bg-card p-6 text-center sm:p-8",
   ctaPrimary: `${caretipBtnPrimary} no-underline`,
   trustChip:
-    "inline-flex items-center gap-1.5 rounded-full border border-border/80 bg-card px-3.5 py-1.5 text-[0.6875rem] font-semibold uppercase tracking-[0.12em] text-foreground/80 shadow-[0_1px_4px_rgba(15,23,42,0.05)] sm:text-xs",
+    "inline-flex items-center gap-1.5 text-[0.8125rem] font-medium text-muted-foreground",
   trustChipDot: "h-1.5 w-1.5 shrink-0 rounded-full bg-primary",
   proseWrap: "mx-auto max-w-4xl",
   wideWrap: "mx-auto max-w-5xl",
@@ -47,7 +47,7 @@ export const publicPageUi = {
   legalFooterText: "text-sm text-muted-foreground",
   legalFooterStrong: "font-semibold text-foreground",
   legalInsetTitle: "mb-2 text-lg font-semibold text-foreground",
-  miniCard: "rounded-xl border border-border/70 bg-card p-3 text-center",
+  miniCard: "rounded-lg border border-border/70 bg-card p-3 text-center",
   miniCardTitle: "mb-1 text-xs font-semibold text-foreground",
   miniCardSubtitle: "text-xs text-muted-foreground",
 } as const;

@@ -124,7 +124,7 @@ function DashboardHeaderBar({
             <NotificationBell
               className={cn(
                 headerIconBtn,
-                "relative min-h-9 min-w-9 p-1.5 lg:min-h-11 lg:min-w-11 lg:rounded-xl lg:p-2",
+                "relative min-h-9 min-w-9 p-1.5 lg:min-h-11 lg:min-w-11 lg:rounded-lg lg:p-2",
               )}
             />
           ) : null}

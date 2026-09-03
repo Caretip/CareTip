@@ -191,16 +191,16 @@ export function SelectEmployeePage() {
                           <span className="text-xs font-medium text-foreground">{employee.rating}</span>
                         </>
                       ) : (
-                        <span className="text-xs text-muted-foreground">New Member</span>
+                        <span className="text-xs text-muted-foreground">{t("tipFlow.selectEmployee.newMember")}</span>
                       )}
                     </div>
-                    <span className="text-xs text-muted-foreground">{employee.tips} tips</span>
+                    <span className="text-xs text-muted-foreground">{t("tipFlow.selectEmployee.tipsCount", { count: employee.tips })}</span>
                   </div>
                 </div>
 
                 {selectedEmployee === String(employee.id) ? (
-                  <div className="absolute inset-0 flex items-center justify-center rounded-[1.125rem] bg-primary/10">
-                    <div className="flex size-10 items-center justify-center rounded-full bg-primary shadow-[0_6px_18px_rgba(233,120,28,0.28)]">
+                  <div className="absolute inset-0 flex items-center justify-center rounded-lg bg-primary/10">
+                    <div className="flex size-10 items-center justify-center rounded-lg bg-primary">
                       <svg className="size-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                       </svg>

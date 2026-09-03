@@ -59,19 +59,19 @@ export function PlatformTransactionMobileCard({ row }: { row: GlobalTransactionR
       </p>
       <dl className="mt-3 grid grid-cols-2 gap-x-3 gap-y-2 text-xs">
         <div>
-          <dt className="font-medium uppercase tracking-wide text-muted-foreground">
+          <dt className="font-medium text-muted-foreground">
             {t("admin.globalTransactionsPage.colAmountEur")}
           </dt>
           <dd className="mt-0.5 text-sm font-semibold tabular-nums">{formatEur(row.amountEur)}</dd>
         </div>
         <div>
-          <dt className="font-medium uppercase tracking-wide text-muted-foreground">
+          <dt className="font-medium text-muted-foreground">
             {t("admin.globalTransactionsPage.colNetToStaff")}
           </dt>
           <dd className="mt-0.5 text-sm font-semibold tabular-nums">{formatOptionalEur(row.netToStaffEur)}</dd>
         </div>
         <div className="col-span-2">
-          <dt className="font-medium uppercase tracking-wide text-muted-foreground">
+          <dt className="font-medium text-muted-foreground">
             {t("admin.globalTransactionsPage.colCaretipFee")}
           </dt>
           <dd className="mt-0.5 text-sm tabular-nums text-muted-foreground">
@@ -120,13 +120,13 @@ export function PlatformRefundMobileCard({
       <p className="mt-1 text-xs text-muted-foreground">{row.employeeName}</p>
       <dl className="mt-3 grid grid-cols-2 gap-x-3 gap-y-2 text-xs">
         <div>
-          <dt className="font-medium uppercase tracking-wide text-muted-foreground">
+          <dt className="font-medium text-muted-foreground">
             {t("admin.refundsPage.colRefundAmount")}
           </dt>
           <dd className="mt-0.5 text-sm font-semibold tabular-nums">{formatEur(row.refundAmountEur)}</dd>
         </div>
         <div>
-          <dt className="font-medium uppercase tracking-wide text-muted-foreground">
+          <dt className="font-medium text-muted-foreground">
             {t("admin.refundsPage.colReason")}
           </dt>
           <dd className="mt-0.5 text-sm">{t(`admin.refundsPage.reason.${row.reason}`, { defaultValue: row.reason })}</dd>
@@ -231,14 +231,14 @@ export function PlatformBusinessVerificationMobileCard({
       </div>
       <dl className="mt-3 space-y-2 text-xs">
         <div>
-          <dt className="font-medium uppercase tracking-wide text-muted-foreground">
+          <dt className="font-medium text-muted-foreground">
             {t("admin.businessVerificationPage.colContact")}
           </dt>
           <dd className="mt-0.5 text-foreground">{b.contactEmail ?? t("format.notAvailable")}</dd>
           {b.contactPhone ? <dd className="text-muted-foreground">{b.contactPhone}</dd> : null}
         </div>
         <div>
-          <dt className="font-medium uppercase tracking-wide text-muted-foreground">
+          <dt className="font-medium text-muted-foreground">
             {t("admin.businessVerificationPage.colLiveTips")}
           </dt>
           <dd className="mt-0.5 font-semibold tabular-nums">{formatEur(b.totalTipsEur ?? 0)}</dd>

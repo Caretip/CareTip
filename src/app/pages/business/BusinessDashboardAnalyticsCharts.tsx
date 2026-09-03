@@ -20,7 +20,6 @@ import { CareIcon } from "@/components/icons";
 import { useDashboardBlockMotion } from "@/lib/motionPerf";
 import { formatEur } from "../../lib/formatEur";
 import { cn } from "@/lib/utils";
-import { Card, CardContent, CardHeader, CardTitle } from "../../components/ui/card";
 import { DashboardChartSkeleton } from "../../components/dashboard/DashboardAnalyticsLoader";
 import {
   DashboardStableChartSlot,
@@ -83,13 +82,11 @@ export const BusinessDashboardAnalyticsCharts = memo(function BusinessDashboardA
         {...tipsChartMotion}
         className="flex h-full min-h-0 w-full"
       >
-        <Card className={cn(businessUi.cardStatic, "business-dashboard-chart-card business-dashboard-panel-card w-full")}>
-          <CardHeader className="business-dashboard-panel-card__header">
-            <CardTitle className="text-lg leading-snug">{t("business.dashboard.tipsPerformanceTitle")}</CardTitle>
-          </CardHeader>
-          <CardContent
+        <section className="business-period-chart business-dashboard-chart-card w-full min-w-0">
+          <h2 className="business-period-chart__title">{t("business.dashboard.tipsPerformanceTitle")}</h2>
+          <div
             className={cn(
-              "business-dashboard-panel-card__content min-w-0 flex-1 overflow-x-auto overflow-y-visible transition-opacity duration-300",
+              "min-w-0 flex-1 overflow-x-auto overflow-y-visible transition-opacity duration-300",
             )}
           >
             <DashboardStableChartSlot
@@ -150,28 +147,26 @@ export const BusinessDashboardAnalyticsCharts = memo(function BusinessDashboardA
                 </DeferredContentFade>
               )}
             </DashboardStableChartSlot>
-          </CardContent>
-        </Card>
+          </div>
+        </section>
       </motion.div>
 
       <motion.div
         {...employeeChartMotion}
         className="flex h-full min-h-0 w-full"
       >
-        <Card className={cn(businessUi.cardStatic, "business-dashboard-chart-card business-dashboard-panel-card w-full")}>
-          <CardHeader className="business-dashboard-panel-card__header">
-            <div className="flex w-full min-w-0 items-start justify-between gap-3">
-              <CardTitle className="text-lg leading-snug">{t("business.dashboard.employeePerformanceTitle")}</CardTitle>
+        <section className="business-period-chart business-dashboard-chart-card w-full min-w-0">
+          <div className="mb-3 flex w-full min-w-0 items-start justify-between gap-3">
+            <h2 className="business-period-chart__title mb-0">{t("business.dashboard.employeePerformanceTitle")}</h2>
               {!employeeChartEmpty ? (
                 <DashboardViewAllLink to={TOP_PERFORMERS_PAGE_PATH}>
                   {t("business.dashboard.viewAllTopPerformers")}
                 </DashboardViewAllLink>
               ) : null}
-            </div>
-          </CardHeader>
-          <CardContent
+          </div>
+          <div
             className={cn(
-              "business-dashboard-panel-card__content min-w-0 flex-1 overflow-x-auto overflow-y-visible transition-opacity duration-300",
+              "min-w-0 flex-1 overflow-x-auto overflow-y-visible transition-opacity duration-300",
             )}
           >
             <DashboardStableChartSlot
@@ -252,8 +247,8 @@ export const BusinessDashboardAnalyticsCharts = memo(function BusinessDashboardA
                 </DeferredContentFade>
               )}
             </DashboardStableChartSlot>
-          </CardContent>
-        </Card>
+          </div>
+        </section>
       </motion.div>
     </div>
   );

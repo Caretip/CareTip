@@ -25,7 +25,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "../ui/dialog";
-import { DASH_BTN_PRIMARY, DASH_BTN_SECONDARY } from "@/components/ui/dashboard-styles";
 import { businessUi } from "@/app/components/business/businessDashboardUi";
 import { downloadQrDataUrlPng } from "../../lib/qrExport";
 import { cn } from "@/lib/utils";
@@ -189,7 +188,7 @@ export const QrManagementCard = memo(function QrManagementCard({
             size="sm"
             variant="outline"
             onClick={() => setPreviewOpen(true)}
-            className={DASH_BTN_SECONDARY}
+            className={cn(businessUi.btnSecondary, "h-9")}
           >
             <Eye className="mr-2 h-4 w-4" />
             {t("business.qrStudio.gallery.preview")}
@@ -200,7 +199,7 @@ export const QrManagementCard = memo(function QrManagementCard({
             variant="outline"
             onClick={handleDownloadPng}
             disabled={qrLocked || exportBlocked}
-            className={DASH_BTN_SECONDARY}
+            className={cn(businessUi.btnSecondary, "h-9")}
           >
             <Download className="mr-2 h-4 w-4" />
             {t("business.qrStudio.gallery.downloadPng")}
@@ -215,7 +214,7 @@ export const QrManagementCard = memo(function QrManagementCard({
             variant="outline"
             onClick={() => onEmployeePrint?.(item, previewDataUrl)}
             disabled={qrLocked || exportBlocked}
-            className={DASH_BTN_SECONDARY}
+            className={cn(businessUi.btnSecondary, "h-9")}
           >
             <Printer className="mr-2 h-4 w-4" />
             {t("business.qrPage.print")}
@@ -225,7 +224,7 @@ export const QrManagementCard = memo(function QrManagementCard({
             size="sm"
             onClick={() => onEmployeePrintPdf?.(item)}
             disabled={qrLocked || !item.qrUrl?.trim() || exportBlocked}
-            className={DASH_BTN_PRIMARY}
+            className={cn(businessUi.btnPrimary, "h-9")}
           >
             <FileDown className="mr-2 h-4 w-4" />
             {t("business.qrPage.downloadPdfLayout")}
@@ -236,7 +235,7 @@ export const QrManagementCard = memo(function QrManagementCard({
             variant={item.slug ? "outline" : "default"}
             onClick={() => onEmployeeRegenerate?.(item)}
             disabled={qrLocked || regeneratingId === item.id}
-            className={item.slug ? DASH_BTN_SECONDARY : DASH_BTN_PRIMARY}
+            className={cn(item.slug ? businessUi.btnSecondary : businessUi.btnPrimary, "h-9")}
           >
             {regeneratingId === item.id ? (
               <LoadingSpinner size="sm" />
@@ -256,7 +255,7 @@ export const QrManagementCard = memo(function QrManagementCard({
               variant="outline"
               onClick={onRegenerateBusinessQr}
               disabled={qrLocked || regeneratingId === "storefront"}
-              className={DASH_BTN_SECONDARY}
+              className={cn(businessUi.btnSecondary, "h-9")}
             >
               {regeneratingId === "storefront" ? (
                 <LoadingSpinner size="sm" />
@@ -272,7 +271,7 @@ export const QrManagementCard = memo(function QrManagementCard({
             variant="outline"
             onClick={() => onVenuePrint?.(item, type, previewDataUrl)}
             disabled={qrLocked || exportBlocked}
-            className={DASH_BTN_SECONDARY}
+            className={cn(businessUi.btnSecondary, "h-9")}
           >
             <Printer className="mr-2 h-4 w-4" />
             {t("business.qrPage.print")}
@@ -282,7 +281,7 @@ export const QrManagementCard = memo(function QrManagementCard({
             size="sm"
             onClick={() => onVenuePrintPdf?.(item, type, previewDataUrl)}
             disabled={qrLocked || !previewDataUrl || exportBlocked}
-            className={DASH_BTN_PRIMARY}
+            className={cn(businessUi.btnPrimary, "h-9")}
           >
             <FileDown className="mr-2 h-4 w-4" />
             {t("business.qrPage.downloadPdfLayout")}

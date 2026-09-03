@@ -1,0 +1,213 @@
+/**
+ * CareTip public web — landing, marketing, auth, onboarding, guest tipping.
+ * Does not target .caretip-dashboard-shell (Business / Employee / Admin).
+ */
+
+:is(
+  .caretip-landing,
+  .caretip-marketing-page,
+  .caretip-public-page,
+  .caretip-auth-page,
+  .caretip-auth-shell,
+  .business-onboarding-page,
+  .customer-flow
+) {
+  --ct-public-radius: 0.5rem;
+  --ct-public-radius-lg: 0.75rem;
+  --ct-public-hairline: hsl(var(--border) / 0.72);
+}
+
+/* —— Shared buttons: moderate radius, less glow —— */
+:is(
+  .caretip-landing,
+  .caretip-marketing-page,
+  .caretip-public-page,
+  .caretip-auth-page,
+  .caretip-auth-shell,
+  .business-onboarding-page,
+  .customer-flow
+) :is(.caretip-btn-primary, .caretip-btn-secondary, .caretip-btn-ghost, .caretip-cta-primary) {
+  border-radius: var(--ct-public-radius) !important;
+}
+
+:is(
+  .caretip-landing,
+  .caretip-marketing-page,
+  .caretip-public-page,
+  .caretip-auth-page,
+  .caretip-auth-shell,
+  .business-onboarding-page,
+  .customer-flow
+) :is(.caretip-btn-primary, .caretip-cta-primary) {
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.16) inset, 0 1px 2px rgba(15, 23, 42, 0.08) !important;
+}
+
+/* —— Landing / marketing: quieter chrome, keep hero personality —— */
+.caretip-landing .caretip-public-nav,
+.caretip-marketing-page .caretip-public-nav {
+  box-shadow: none;
+}
+
+.caretip-landing .caretip-section-intro [data-landing-accent],
+.caretip-marketing-page .caretip-section-intro [data-landing-accent] {
+  letter-spacing: 0;
+}
+
+.caretip-landing .caretip-showcase-visual-frame,
+.caretip-landing .caretip-hero-media-clip,
+.caretip-landing .caretip-landing-feature-card,
+.caretip-marketing-page .caretip-landing-feature-card,
+.caretip-marketing-page .caretip-marketing-card {
+  border-radius: var(--ct-public-radius-lg) !important;
+  box-shadow: none !important;
+}
+
+.caretip-landing .caretip-landing-card,
+.caretip-marketing-page .caretip-landing-card {
+  border-radius: var(--ct-public-radius-lg);
+  box-shadow: none;
+}
+
+.caretip-landing .caretip-brand-accent-icon {
+  box-shadow: none;
+}
+
+.caretip-landing .caretip-audience-benefits__card {
+  border-radius: var(--ct-public-radius-lg) !important;
+  box-shadow: none !important;
+  transform: none !important;
+}
+
+.caretip-landing .caretip-landing-cta-wise::before,
+.caretip-landing .caretip-landing-cta-wise::after {
+  display: none !important;
+}
+
+.caretip-landing .caretip-motivation-ambient {
+  display: none !important;
+}
+
+.caretip-landing .caretip-marketing-icon-chip {
+  background: hsl(var(--muted)) !important;
+  color: hsl(var(--foreground)) !important;
+  border-radius: var(--ct-public-radius) !important;
+  box-shadow: none !important;
+}
+
+.caretip-landing .caretip-marketing-icon-chip svg,
+.caretip-landing .caretip-marketing-icon-chip .lucide {
+  color: hsl(var(--primary)) !important;
+  stroke: hsl(var(--primary)) !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .caretip-landing .caretip-landing-scroll-reveal,
+  .caretip-landing .caretip-hero-split-reveal {
+    animation: none !important;
+    transition: none !important;
+    transform: none !important;
+    opacity: 1 !important;
+  }
+}
+
+/* —— Auth: calm canvas, no competing atmosphere —— */
+.caretip-auth-page,
+.caretip-auth-shell {
+  background-color: hsl(var(--background)) !important;
+}
+
+.caretip-auth-atmosphere__warm-top,
+.caretip-auth-atmosphere__warm-bottom,
+.caretip-auth-atmosphere__grain {
+  opacity: 0.18;
+}
+
+.caretip-auth-card {
+  border-radius: var(--ct-public-radius-lg) !important;
+  box-shadow: none !important;
+  border-color: var(--ct-public-hairline) !important;
+}
+
+.caretip-auth-field,
+.caretip-auth-page input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]),
+.caretip-auth-shell input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]) {
+  border-radius: var(--ct-public-radius) !important;
+  color: hsl(var(--foreground));
+}
+
+.caretip-auth-page input::placeholder,
+.caretip-auth-shell input::placeholder {
+  color: hsl(var(--muted-foreground));
+  opacity: 1;
+}
+
+.caretip-auth-title {
+  letter-spacing: -0.03em;
+  font-weight: 650;
+}
+
+/* Do not restyle Google GIS overlay / hit target. */
+.caretip-oauth-circle {
+  border-radius: 9999px;
+}
+
+/* —— Onboarding —— */
+.business-onboarding-page {
+  background-image: none !important;
+  background-color: hsl(var(--background)) !important;
+}
+
+.business-onboarding-stepper__connector {
+  background: hsl(var(--primary)) !important;
+  border-radius: 1px !important;
+  height: 2px !important;
+}
+
+.business-onboarding-stepper__dot {
+  border-radius: var(--ct-public-radius) !important;
+  box-shadow: none !important;
+}
+
+.business-onboarding-stepper__dot--current {
+  background: hsl(var(--primary)) !important;
+  color: #fff !important;
+}
+
+.business-onboarding-stepper__dot--completed {
+  background: hsl(var(--foreground) / 0.88) !important;
+  color: hsl(var(--background)) !important;
+}
+
+/* —— Customer tipping: conversion-first, not fintech cards —— */
+.customer-flow {
+  background: hsl(var(--background)) !important;
+}
+
+.customer-flow .customer-journey-toolbar .customer-journey-back,
+.customer-flow button.rounded-xl,
+.customer-flow .customer-flow-tip-preset,
+.customer-flow .customer-flow-employee-card,
+.customer-flow .customer-flow-payment-method,
+.customer-flow .customer-flow-payment-summary {
+  border-radius: var(--ct-public-radius) !important;
+  box-shadow: none !important;
+}
+
+.customer-flow .customer-flow-tip-preset {
+  min-height: 4.75rem !important;
+  transform: none !important;
+}
+
+.customer-flow .customer-flow-employee-card {
+  transform: none !important;
+}
+
+.customer-flow .customer-flow-success-hero__icon {
+  box-shadow: none !important;
+}
+
+.customer-flow .fixed.bottom-0 {
+  box-shadow: none !important;
+  backdrop-filter: none;
+  background: hsl(var(--background) / 0.96) !important;
+}

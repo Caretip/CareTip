@@ -70,7 +70,7 @@ function SidebarChildLink({
         to={child.href}
         onClick={onNavigate}
         className={cn(
-          "business-sidebar-child-link flex w-full flex-col items-stretch py-2 pl-11 pr-3 text-left text-[13px] font-medium transition-colors",
+          "admin-sidebar-child-link business-sidebar-child-link flex w-full flex-col items-stretch py-2 pl-11 pr-3 text-left text-[13px] font-medium transition-colors",
           childActive
             ? "text-primary before:bg-primary"
             : "text-sidebar-foreground/75 hover:text-sidebar-foreground before:bg-transparent",

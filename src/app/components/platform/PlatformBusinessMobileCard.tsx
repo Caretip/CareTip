@@ -31,13 +31,13 @@ export function PlatformBusinessMobileCard({ business: b, className }: PlatformB
           </div>
           <dl className="mt-3 grid grid-cols-2 gap-x-3 gap-y-2 text-xs">
             <div>
-              <dt className="font-medium uppercase tracking-wide text-muted-foreground">{t("admin.colTipsEur")}</dt>
+              <dt className="font-medium text-muted-foreground">{t("admin.colTipsEur")}</dt>
               <dd className="mt-0.5 text-sm font-semibold tabular-nums text-foreground">
                 {formatEur(b.totalTipsEur ?? 0)}
               </dd>
             </div>
             <div>
-              <dt className="font-medium uppercase tracking-wide text-muted-foreground">{t("admin.colStaffLoc")}</dt>
+              <dt className="font-medium text-muted-foreground">{t("admin.colStaffLoc")}</dt>
               <dd className="mt-0.5 text-sm font-medium tabular-nums text-foreground">
                 {b.staffCount ?? 0} / {b.locationCount ?? 0}
               </dd>

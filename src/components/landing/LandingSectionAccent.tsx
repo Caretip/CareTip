@@ -18,7 +18,7 @@ type LandingSectionAccentProps = {
   className?: string;
 };
 
-/** Section eyebrow: glowing dot + uppercase label (no pill chrome). */
+/** Section eyebrow: small accent + sentence-case label (no pill chrome). */
 export function LandingSectionAccent({
   children,
   muted = false,

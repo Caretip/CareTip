@@ -24,7 +24,7 @@ export function EmployeePageHeader({
   description,
   backTo = "/employee/dashboard",
   backAriaLabel = "Back",
-  backVariant = "default",
+  backVariant = "subtle",
   actions,
   leading,
   className,
@@ -44,7 +44,7 @@ export function EmployeePageHeader({
       <div
         className={cn(
           employeeUi.pageHeaderInner,
-          alwaysSubtle ? "flex flex-col gap-2" : "hidden max-lg:flex max-lg:flex-col max-lg:gap-2",
+          alwaysSubtle ? "flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between" : "hidden max-lg:flex max-lg:flex-col max-lg:gap-2",
         )}
       >
         <Link to={backTo} className={subtleBackLinkClass}>

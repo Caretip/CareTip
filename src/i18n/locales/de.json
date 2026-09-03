@@ -1620,6 +1620,15 @@
       "updatePassword": "Passwort aktualisieren",
       "hintWeak": "Mind. 8 Zeichen mit Groß-, Kleinbuchstaben, Zahl und Sonderzeichen (z. B. @#$%)."
     },
+    "activateEmployee": {
+      "invalidLink": "Dieser Aktivierungslink ist ungültig.",
+      "doneTitle": "Konto aktiviert",
+      "doneSubtitle": "Ihr Passwort ist festgelegt. Sie können sich jetzt anmelden.",
+      "title": "Passwort festlegen",
+      "subtitle": "Dieser Link läuft in 24 Stunden ab.",
+      "submit": "Passwort festlegen",
+      "saving": "Passwort wird festgelegt…"
+    },
     "checkEmail": {
       "successTitle": "E-Mail bestätigt",
       "successSubtitle": "Ihr Konto wurde erfolgreich bestätigt.",
@@ -2004,7 +2013,9 @@
       "noBusinessContextDesc": "Scannen Sie den CareTip-QR an Ihrem Tisch oder Tresen, damit wir wissen, welches Team Sie bedient hat. Sie können den Link auch von Ihrer Rechnung oder Tischkarte öffnen.",
       "noBusinessContextCta": "Zur Startseite",
       "emptyTeam": "Keine Teammitglieder gefunden.",
-      "topRatedBadge": "Top"
+      "topRatedBadge": "Top",
+      "newMember": "Neues Teammitglied",
+      "tipsCount": "{{count}} Trinkgelder"
     },
     "tableLanding": {
       "loading": "Tisch wird geladen…",

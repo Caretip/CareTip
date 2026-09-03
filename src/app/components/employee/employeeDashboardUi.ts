@@ -28,24 +28,24 @@ export const employeeUi = {
     "employee-dashboard-stats-grid grid w-full min-w-0 grid-cols-2 items-stretch gap-3 gap-y-3 sm:gap-3.5 md:grid-cols-3 md:gap-4 lg:grid-cols-3 lg:gap-5",
 
   card:
-    "employee-card overflow-hidden rounded-lg border border-border bg-card shadow-sm",
+    "employee-card overflow-hidden",
   cardStatic:
-    "employee-card overflow-hidden rounded-lg border border-border bg-card shadow-sm",
-  cardPad: "p-4 sm:p-5 md:p-6",
-  cardHeader: "border-b border-border px-4 py-3.5 sm:px-6 sm:py-4",
-  cardTitle: "text-base font-semibold tracking-tight text-foreground",
+    "employee-card overflow-hidden",
+  cardPad: "p-0 sm:p-0",
+  cardHeader: "px-0 py-3",
+  cardTitle: "text-[0.9375rem] font-semibold tracking-tight text-foreground",
 
-  pageHeader: "employee-page-header mb-5 border-b border-border pb-4 sm:pb-5",
+  pageHeader: "employee-page-header mb-5 border-b border-border/70 pb-4 sm:pb-5",
   pageHeaderInner: "flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between sm:gap-6",
-  pageTitle: "text-xl font-bold tracking-tight text-foreground sm:text-2xl",
-  pageDesc: "mt-1.5 max-w-prose text-sm leading-relaxed text-muted-foreground",
+  pageTitle: "employee-page-title text-xl font-semibold tracking-tight text-foreground sm:text-[1.625rem]",
+  pageDesc: "employee-page-desc mt-1.5 max-w-prose text-sm leading-relaxed text-muted-foreground",
 
   btnPrimary: caretipBtnPrimary,
   btnSecondary: caretipBtnSecondary,
   btnGhost: caretipBtnGhost,
 
-  iconTile: "inline-flex rounded-lg bg-primary/10 p-2.5",
-  iconTileMuted: "inline-flex rounded-lg bg-muted p-2.5 text-muted-foreground",
+  iconTile: "employee-icon-tile inline-flex rounded-md bg-muted/50 p-2",
+  iconTileMuted: "employee-icon-tile inline-flex rounded-md bg-muted/50 p-2 text-muted-foreground",
 
   periodToggle: `employee-period-toggle ${dashboardPeriodUi.periodToggle}`,
   periodBtn: dashboardPeriodUi.periodBtn,
@@ -64,7 +64,7 @@ export const employeeUi = {
   quickActionLabel: "block w-full min-w-0 text-center text-[0.8125rem] font-semibold leading-snug [text-wrap:balance]",
 
   listItem:
-    "employee-list-item rounded-lg border border-border bg-card shadow-sm transition-colors max-lg:rounded-md max-lg:shadow-none",
+    "employee-list-item border-b border-border/70 py-3 transition-colors",
   listItemSelected: "bg-primary/[0.04] ring-1 ring-primary/20",
 
   statCard: `employee-stat-card ${DASHBOARD_METRIC_STAT_CARD_SHELL}`,
@@ -78,8 +78,8 @@ export const employeeUi = {
   emptyDesc: "mt-2 max-w-sm text-sm leading-relaxed text-muted-foreground",
 
   settingsSection:
-    "employee-settings-section dashboard-settings-panel space-y-4 rounded-lg border border-border bg-card p-4 shadow-sm sm:p-5",
-  settingsHeading: "text-base font-semibold tracking-tight text-foreground",
+    "employee-settings-section space-y-4 py-5",
+  settingsHeading: "employee-settings-heading text-[0.9375rem] font-semibold tracking-tight text-foreground",
 
   ...dashboardSharedRest,
 } as const;

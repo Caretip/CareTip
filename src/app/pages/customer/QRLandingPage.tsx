@@ -29,8 +29,6 @@ import { markCustomerFlowEntered } from "../../lib/customerFlowGuard";
 import { getRepeatTipDataForBusiness } from "../../lib/repeatTip";
 import { formatEur } from "../../lib/formatEur";
 import { customerFlowUi as cf } from "./customerFlowUi";
-
-const BRAND_ORANGE = "#e9781c";
 const presetAmounts = [5, 10, 15, 20];
 
 export function QRLandingPage() {
@@ -231,7 +229,7 @@ export function QRLandingPage() {
           return;
         }
         setRepeatCard({ employee: emp, amount: d.lastAmount, timestamp: d.timestamp });
-      } catch (e) {
+      } catch {
         if (!cancelled) setRepeatCard(null);
       }
     })();
@@ -555,7 +553,7 @@ export function QRLandingPage() {
         {(businessData.employeeCount != null && businessData.employeeCount > 0) ||
         (poolEmployees != null && poolEmployees.length > 0) ? (
           <motion.div initial={{ y: 12, opacity: 0 }} animate={{ y: 0, opacity: 1 }}>
-            <div className="flex items-center gap-3 rounded-[1.125rem] border border-black/[0.06] bg-primary/[0.04] p-4">
+            <div className="flex items-center gap-3 rounded-lg border border-border/70 bg-muted/30 p-4">
               <Users className="h-6 w-6 shrink-0 text-primary" />
               <span className="text-sm font-medium text-foreground">
                 {t("tipFlow.qrLanding.staffReady", {
@@ -573,7 +571,7 @@ export function QRLandingPage() {
               <div className="h-10 w-full animate-pulse rounded-lg bg-muted" />
               <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
                 {[1, 2, 3, 4, 5, 6].map((k) => (
-                  <div key={k} className="aspect-[4/5] animate-pulse rounded-2xl bg-muted" />
+                  <div key={k} className="aspect-[4/5] animate-pulse rounded-lg bg-muted" />
                 ))}
               </div>
             </CardContent>
@@ -589,7 +587,7 @@ export function QRLandingPage() {
           >
             <Card className={cf.cardSearchLight}>
               <CardContent className="space-y-5 px-5 pb-6 pt-5 sm:px-7 sm:pt-6">
-                <div className="relative rounded-[1.125rem] border border-black/[0.04] bg-white p-0.5 shadow-[inset_0_1px_2px_rgba(0,0,0,0.02)] dark:border-white/10 dark:bg-card">
+                <div className="relative rounded-lg border border-border/70 bg-background">
                   <Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground/60" />
                   <input
                     type="search"

@@ -307,7 +307,7 @@ export function renderNotificationTemplate(
       return de
         ? {
             title: "Zahlung eingegangen",
-            body: "Ihre physische QR-Bestellung wurde bezahlt und wird jetzt bearbeitet.",
+            body: "Ihre physische QR Bestellung wurde bezahlt und wird jetzt bearbeitet.",
           }
         : {
             title: "Payment received",
@@ -317,7 +317,7 @@ export function renderNotificationTemplate(
       return de
         ? {
             title: "Bestellung eingegangen",
-            body: "Ihre physische QR-Bestellung ist eingegangen und wird jetzt bearbeitet.",
+            body: "Ihre physische QR Bestellung ist eingegangen und wird jetzt bearbeitet.",
           }
         : {
             title: "Order received",
@@ -347,9 +347,9 @@ export function renderNotificationTemplate(
       const quantity = Number(params.quantity) || 0;
       return de
         ? {
-            title: "Physische QR-Bestellung bezahlt",
+            title: "Physische QR Bestellung bezahlt",
             body:
-              `${businessName} hat eine physische QR-Bestellung bezahlt — bereit zur Bearbeitung. ` +
+              `${businessName} hat eine physische QR Bestellung bezahlt. Bereit zur Bearbeitung. ` +
               `Bestellung: ${orderId}. Positionen (${itemLineCount}): ${itemsLine}. ` +
               `Gesamtmenge: ${quantity}. Betrag: ${amount}. Zahlung: Bezahlt. ` +
               `Fulfillment: In Bearbeitung. Bezahlt am: ${paidAt}.`,
@@ -357,7 +357,7 @@ export function renderNotificationTemplate(
         : {
             title: "Physical QR order paid",
             body:
-              `${businessName} paid for a physical QR order — ready for processing. ` +
+              `${businessName} paid for a physical QR order. Ready for processing. ` +
               `Order: ${orderId}. Items (${itemLineCount}): ${itemsLine}. ` +
               `Total quantity: ${quantity}. Amount: ${amount}. Payment: Paid. ` +
               `Fulfillment: Processing. Paid at: ${paidAt}.`,
@@ -382,9 +382,9 @@ export function renderNotificationTemplate(
       const quantity = Number(params.quantity) || 0;
       return de
         ? {
-            title: "Physische QR-Bestellung eingegangen",
+            title: "Physische QR Bestellung eingegangen",
             body:
-              `${businessName} hat eine physische QR-Bestellung aufgegeben (im Plan enthalten) — bereit zur Bearbeitung. ` +
+              `${businessName} hat eine physische QR Bestellung aufgegeben (im Plan enthalten). Bereit zur Bearbeitung. ` +
               `Bestellung: ${orderId}. Positionen (${itemLineCount}): ${itemsLine}. ` +
               `Gesamtmenge: ${quantity}. Zahlung: Im Plan enthalten. ` +
               `Fulfillment: In Bearbeitung. Eingegangen am: ${receivedAt}.`,
@@ -392,7 +392,7 @@ export function renderNotificationTemplate(
         : {
             title: "Physical QR order received",
             body:
-              `${businessName} placed a physical QR order (included in plan) — ready for processing. ` +
+              `${businessName} placed a physical QR order (included in plan). Ready for processing. ` +
               `Order: ${orderId}. Items (${itemLineCount}): ${itemsLine}. ` +
               `Total quantity: ${quantity}. Payment: Included in plan. ` +
               `Fulfillment: Processing. Received at: ${receivedAt}.`,
@@ -402,7 +402,7 @@ export function renderNotificationTemplate(
       return de
         ? {
             title: "Druck",
-            body: "Ihre physische QR-Bestellung wird jetzt gedruckt.",
+            body: "Ihre physische QR Bestellung wird jetzt gedruckt.",
           }
         : {
             title: "Printing",
@@ -414,8 +414,8 @@ export function renderNotificationTemplate(
         ? {
             title: "Versendet",
             body: tracking
-              ? `Ihre physische QR-Bestellung wurde versendet. Sendungsnummer: ${tracking}`
-              : "Ihre physische QR-Bestellung wurde versendet.",
+              ? `Ihre physische QR Bestellung wurde versendet. Sendungsnummer: ${tracking}`
+              : "Ihre physische QR Bestellung wurde versendet.",
           }
         : {
             title: "Shipped",
@@ -428,7 +428,7 @@ export function renderNotificationTemplate(
       return de
         ? {
             title: "Zugestellt",
-            body: "Ihre physische QR-Bestellung wurde zugestellt.",
+            body: "Ihre physische QR Bestellung wurde zugestellt.",
           }
         : {
             title: "Delivered",

@@ -12,3 +12,20 @@
 @import "../caretip-platform-ui-polish.css";
 @import "../business-dashboard-premium-ui-polish.css";
 @import "../employee-earnings-cockpit.css";
+@import "../employee-web-design.css";
+@import "../business-web-design.css";
+@import "../admin-web-design.css";
+
+/* Portaled notification popover — not inside .caretip-dashboard-shell */
+.caretip-notification-panel {
+  border-radius: 0.5rem !important;
+  border-color: hsl(var(--border) / 0.85) !important;
+  box-shadow: none !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .caretip-notification-panel {
+    animation: none !important;
+    transition: none !important;
+  }
+}

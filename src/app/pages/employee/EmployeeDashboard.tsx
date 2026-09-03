@@ -19,7 +19,6 @@ import { logClientError } from "../../lib/clientLog";
 import {
   QrCode,
   Loader2,
-  Sparkles,
   Target,
   Lock,
 } from "lucide-react";
@@ -52,7 +51,6 @@ import { MarketingPicture } from "@/lib/marketingPicture";
 import { cn } from "@/lib/utils";
 import { DashboardHero } from "@/components/ui/dashboard-hero";
 import { PremiumPageHero } from "../../components/premium/PremiumPageHero";
-import { TracingBeam } from "@/components/ui/tracing-beam";
 import { Button } from "@/components/ui/button";
 import {
   DashboardHeroMetricSkeleton,
@@ -425,14 +423,9 @@ export const EmployeeDashboard = memo(function EmployeeDashboard() {
           descriptionClassName="!line-clamp-2 max-w-[34ch] leading-relaxed text-muted-foreground/90 max-lg:mx-0 max-lg:text-left lg:max-w-sm"
           textColumnClassName="lg:py-2 xl:pr-6"
           badge={
-            <>
-              <Sparkles className="h-3 w-3 shrink-0 text-muted-foreground/80" aria-hidden />
-              <span>
-                {user.name
-                  ? t("employee.hero.welcomeBackNamed", { name: user.name.split(" ")[0] })
-                  : t("employee.hero.welcomeBack")}
-              </span>
-            </>
+            user.name
+              ? t("employee.hero.welcomeBackNamed", { name: user.name.split(" ")[0] })
+              : t("employee.hero.welcomeBack")
           }
           title={
             <>
@@ -569,7 +562,7 @@ export const EmployeeDashboard = memo(function EmployeeDashboard() {
         </PremiumPageHero>
       </div>
 
-      <TracingBeam className={cn(employeeUi.pageInner, "employee-dashboard-body !pt-2 sm:!pt-3")}>
+      <div className={cn(employeeUi.pageInner, "employee-dashboard-body !pt-2 sm:!pt-3")}>
         <section
           className={cn(
             "employee-dashboard-analytics-intro mb-1",
@@ -672,7 +665,7 @@ export const EmployeeDashboard = memo(function EmployeeDashboard() {
           </div>
           </FeatureGate>
         </div>
-      </TracingBeam>
+      </div>
 
       {qrEmployeeId && user.role === "employee" && (
         <EmployeeQRCodeModal

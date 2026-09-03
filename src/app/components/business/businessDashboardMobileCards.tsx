@@ -47,7 +47,7 @@ export function TipActivityMobileCard({
       <dl className="mt-3 grid grid-cols-1 gap-2 text-xs">
         {showStaffColumn ? (
           <div>
-            <dt className="font-medium uppercase tracking-wide text-muted-foreground">
+            <dt className="font-medium text-muted-foreground">
               {t("business.tipsActivity.thStaff")}
             </dt>
             <dd className="mt-0.5 text-sm text-foreground">
@@ -56,13 +56,13 @@ export function TipActivityMobileCard({
           </div>
         ) : null}
         <div>
-          <dt className="font-medium uppercase tracking-wide text-muted-foreground">
+          <dt className="font-medium text-muted-foreground">
             {t("business.tipsActivity.thLocationTable")}
           </dt>
           <dd className="mt-0.5 text-sm text-muted-foreground">{locationDetail}</dd>
         </div>
         <div>
-          <dt className="font-medium uppercase tracking-wide text-muted-foreground">
+          <dt className="font-medium text-muted-foreground">
             {t("business.tipsActivity.thDateTime")}
           </dt>
           <dd className="mt-0.5 text-sm text-muted-foreground">
@@ -162,25 +162,25 @@ export function EmployeeGoalMobileCard({
       </div>
       <dl className="mt-3 grid grid-cols-2 gap-x-3 gap-y-2 text-xs">
         <div>
-          <dt className="font-medium uppercase tracking-wide text-muted-foreground">
+          <dt className="font-medium text-muted-foreground">
             {t("business.dashboard.tablePeriod")}
           </dt>
           <dd className="mt-0.5 text-sm text-muted-foreground">{periodLabel}</dd>
         </div>
         <div>
-          <dt className="font-medium uppercase tracking-wide text-muted-foreground">
+          <dt className="font-medium text-muted-foreground">
             {t("business.dashboard.tableProgress")}
           </dt>
           <dd className="mt-0.5 text-sm font-semibold tabular-nums">{goal.percent}%</dd>
         </div>
         <div>
-          <dt className="font-medium uppercase tracking-wide text-muted-foreground">
+          <dt className="font-medium text-muted-foreground">
             {t("business.dashboard.tableTarget")}
           </dt>
           <dd className="mt-0.5 text-sm tabular-nums">{formatEur(goal.goalAmount)}</dd>
         </div>
         <div>
-          <dt className="font-medium uppercase tracking-wide text-muted-foreground">
+          <dt className="font-medium text-muted-foreground">
             {t("business.dashboard.tableCurrent")}
           </dt>
           <dd className="mt-0.5 text-sm tabular-nums">{formatEur(goal.currentAmount)}</dd>

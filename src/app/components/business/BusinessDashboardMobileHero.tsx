@@ -1,6 +1,5 @@
 import { memo } from "react";
 import { motion } from "motion/react";
-import { Sparkles } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
 import { MarketingPicture } from "@/lib/marketingPicture";
@@ -13,7 +12,7 @@ import {
 import { BusinessDashboardHeroActions } from "./BusinessDashboardHeroActions";
 
 type BusinessDashboardMobileHeroProps = {
-  welcomeName?: string;
+  venueLabel?: string;
   isPreviewMode: boolean;
   heroPulseLoading: boolean;
   operationalPulse: BusinessHeroOperationalPulse | null;
@@ -22,7 +21,7 @@ type BusinessDashboardMobileHeroProps = {
 };
 
 export const BusinessDashboardMobileHero = memo(function BusinessDashboardMobileHero({
-  welcomeName,
+  venueLabel,
   isPreviewMode,
   heroPulseLoading,
   operationalPulse,
@@ -38,10 +37,9 @@ export const BusinessDashboardMobileHero = memo(function BusinessDashboardMobile
     >
       <div className="business-dashboard-mobile-hero__content">
         <div className="business-dashboard-mobile-hero__badge">
-          <Sparkles className="h-3.5 w-3.5 shrink-0 text-muted-foreground/80" aria-hidden />
           <span>
-            {welcomeName
-              ? t("business.hero.welcomeBackNamed", { name: welcomeName })
+            {venueLabel
+              ? venueLabel
               : t("business.hero.welcomeBack")}
           </span>
         </div>
@@ -52,26 +50,6 @@ export const BusinessDashboardMobileHero = memo(function BusinessDashboardMobile
         </h1>
 
         <p className="business-dashboard-mobile-hero__description">{t("business.hero.sub")}</p>
-
-        <div className="business-dashboard-mobile-hero__visual" aria-hidden>
-          <div className="business-dashboard-mobile-hero__visual-frame">
-            <MarketingPicture
-              src={bizzyHeroWebp}
-              webpSrc={bizzyHeroWebp}
-              avifSrc={bizzyHeroAvif}
-              alt=""
-              className="business-dashboard-mobile-hero__visual-img"
-              sizes="(max-width: 640px) 100vw, 320px"
-              width={320}
-              height={240}
-              priority
-              loading="eager"
-              fetchPriority="high"
-              fadeIn={false}
-              decoding="sync"
-            />
-          </div>
-        </div>
 
         <motion.div
           className="business-dashboard-mobile-hero__actions"
@@ -92,6 +70,26 @@ export const BusinessDashboardMobileHero = memo(function BusinessDashboardMobile
             secondaryButtonClassName="business-dashboard-mobile-hero__btn business-dashboard-mobile-hero__btn--secondary"
           />
         </motion.div>
+
+        <div className="business-dashboard-mobile-hero__visual" aria-hidden>
+          <div className="business-dashboard-mobile-hero__visual-frame">
+            <MarketingPicture
+              src={bizzyHeroWebp}
+              webpSrc={bizzyHeroWebp}
+              avifSrc={bizzyHeroAvif}
+              alt=""
+              className="business-dashboard-mobile-hero__visual-img"
+              sizes="(max-width: 640px) 100vw, 320px"
+              width={320}
+              height={240}
+              priority
+              loading="eager"
+              fetchPriority="high"
+              fadeIn={false}
+              decoding="sync"
+            />
+          </div>
+        </div>
       </div>
     </section>
   );

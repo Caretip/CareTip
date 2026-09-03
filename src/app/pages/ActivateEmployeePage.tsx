@@ -41,8 +41,8 @@ export function ActivateEmployeePage() {
   const mismatchHint = useMemo(() => {
     if (confirm.length === 0) return null;
     if (newPassword === confirm) return null;
-    return "Passwords do not match.";
-  }, [newPassword, confirm]);
+    return t("auth.page.errorPasswordsMismatch");
+  }, [newPassword, confirm, t]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -80,12 +80,12 @@ export function ActivateEmployeePage() {
   if (!rawToken) {
     return (
       <AuthRecoveryLayout authLane="employee" marketingScene="passwordSetup">
-        <p className="text-center text-sm text-red-600">This activation link is invalid.</p>
+        <p className="text-center text-sm text-red-600">{t("auth.activateEmployee.invalidLink")}</p>
         <Link
           to="/employee/login"
           className="mt-4 block text-center text-sm font-medium text-primary hover:underline"
         >
-          Go to login
+          {t("auth.reset.backToLogin")}
         </Link>
       </AuthRecoveryLayout>
     );
@@ -95,14 +95,14 @@ export function ActivateEmployeePage() {
     return (
       <AuthRecoveryLayout authLane="employee" marketingScene="activation" showFooterLink={false}>
         <div className="space-y-4 text-center">
-          <h1 className="caretip-auth-title !pt-0">Account activated</h1>
-          <p className="caretip-auth-subtitle !mt-2">Your password is set. You can sign in now.</p>
+          <h1 className="caretip-auth-title !pt-0">{t("auth.activateEmployee.doneTitle")}</h1>
+          <p className="caretip-auth-subtitle !mt-2">{t("auth.activateEmployee.doneSubtitle")}</p>
           <button
             type="button"
             onClick={() => navigate("/employee/login", { replace: true })}
             className={cn(caretipBtnPrimaryFull, "caretip-auth-submit")}
           >
-            Back to login
+            {t("auth.reset.backToLogin")}
           </button>
         </div>
       </AuthRecoveryLayout>
@@ -113,8 +113,8 @@ export function ActivateEmployeePage() {
     <AuthRecoveryLayout
       authLane="employee"
       marketingScene="passwordSetup"
-      title="Set your password"
-      subtitle="This link expires in 24 hours."
+      title={t("auth.activateEmployee.title")}
+      subtitle={t("auth.activateEmployee.subtitle")}
     >
       <div className="space-y-4">
         <div className="flex flex-col items-center gap-2 text-center">
@@ -130,7 +130,7 @@ export function ActivateEmployeePage() {
         <form onSubmit={(e) => void handleSubmit(e)} className="caretip-auth-form">
           <div>
             <label htmlFor="activate-new" className="caretip-auth-label">
-              Password
+              {t("auth.page.labelPassword")}
             </label>
             <div className="relative">
               <input
@@ -145,7 +145,7 @@ export function ActivateEmployeePage() {
                 type="button"
                 className="caretip-auth-field-toggle"
                 onClick={() => setShowNew(!showNew)}
-                aria-label={showNew ? "Hide password" : "Show password"}
+                aria-label={showNew ? t("auth.page.hidePassword") : t("auth.page.showPassword")}
               >
                 {showNew ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
               </button>
@@ -153,7 +153,7 @@ export function ActivateEmployeePage() {
           </div>
           <div>
             <label htmlFor="activate-confirm" className="caretip-auth-label">
-              Confirm password
+              {t("auth.page.labelConfirmPassword")}
             </label>
             <div className="relative">
               <input
@@ -168,7 +168,7 @@ export function ActivateEmployeePage() {
                 type="button"
                 className="caretip-auth-field-toggle"
                 onClick={() => setShowConfirm(!showConfirm)}
-                aria-label={showConfirm ? "Hide password" : "Show password"}
+                aria-label={showConfirm ? t("auth.page.hidePassword") : t("auth.page.showPassword")}
               >
                 {showConfirm ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
               </button>
@@ -179,16 +179,14 @@ export function ActivateEmployeePage() {
           <AuthStableSubmitButton
             type="submit"
             loading={submitting}
-            loadingAriaLabel="Setting password"
+            loadingAriaLabel={t("auth.activateEmployee.saving")}
             disabled={!canSubmit}
             className="disabled:cursor-not-allowed"
           >
-            Set your password
+            {t("auth.activateEmployee.submit")}
           </AuthStableSubmitButton>
           <p className="caretip-auth-form-status-slot text-center">
-            {!strong && newPassword.length > 0
-              ? "Use 8+ characters with upper, lower, number, and special (e.g. @#$%)."
-              : null}
+            {!strong && newPassword.length > 0 ? t("auth.reset.hintWeak") : null}
           </p>
           <AuthTrustStrip />
         </form>
@@ -196,4 +194,3 @@ export function ActivateEmployeePage() {
     </AuthRecoveryLayout>
   );
 }
-
