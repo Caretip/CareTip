@@ -2,7 +2,7 @@ import { test, expect } from "@playwright/test";
 import { installMockAuthRefresh, primeE2ESessionToken } from "./helpers/mockAuthRefresh";
 import { findOverflowOffenders, readPageOverflow } from "./helpers/overflowAudit";
 
-const MOBILE_WIDTHS = [320, 360, 375, 390, 430] as const;
+const MOBILE_WIDTHS = [320, 360, 375, 390, 412, 430] as const;
 
 function jsonResponse(data: unknown, delayMs = 0) {
   return async () => {

@@ -17,11 +17,9 @@ import { runWithViewportScrollPreserved } from "../../lib/dashboardScrollStabili
 import { toUserFriendlyMessage } from "../../lib/errorMessages";
 import { logClientError } from "../../lib/clientLog";
 import {
-  Star,
   QrCode,
   Loader2,
   Sparkles,
-  Settings,
   Target,
   Lock,
 } from "lucide-react";
@@ -56,7 +54,6 @@ import { DashboardHero } from "@/components/ui/dashboard-hero";
 import { PremiumPageHero } from "../../components/premium/PremiumPageHero";
 import { TracingBeam } from "@/components/ui/tracing-beam";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   DashboardHeroMetricSkeleton,
 } from "../../components/dashboard/DashboardAnalyticsLoader";
@@ -282,6 +279,16 @@ export const EmployeeDashboard = memo(function EmployeeDashboard() {
     const ratingCount = useDevDemo
       ? 12
       : (displayPayload?.ratingCount ?? displayMetrics?.ratingCount ?? 0);
+    const goalCurrent =
+      displayGoalProgress != null
+        ? displayGoalProgress.currentAmount
+        : displayMonthlyGoal != null
+          ? displayCurrentMonthTotal
+          : null;
+    const goalTarget =
+      displayGoalProgress != null
+        ? displayGoalProgress.goalAmount
+        : displayMonthlyGoal;
     const goalPct =
       displayGoalProgress != null
         ? displayGoalProgress.goalAmount > 0
@@ -293,7 +300,7 @@ export const EmployeeDashboard = memo(function EmployeeDashboard() {
     const tipStreakDays = useDevDemo
       ? 3
       : computeEmployeeTipStreakDays(displayPayload?.tips ?? []);
-    return { periodTipCount, periodAmountEur, goalPct, rating, ratingCount, tipStreakDays };
+    return { periodTipCount, periodAmountEur, goalPct, goalCurrent, goalTarget, rating, ratingCount, tipStreakDays };
   }, [
     devPeriodSummary,
     displayMetrics,
@@ -414,7 +421,7 @@ export const EmployeeDashboard = memo(function EmployeeDashboard() {
           className="!mb-0"
           cardClassName="employee-hero-shell border-0 bg-transparent shadow-none lg:rounded-none lg:border-0 lg:bg-transparent lg:shadow-none"
           badgeClassName="normal-case border-transparent bg-transparent px-0 py-0 text-[11px] max-lg:text-[12px] font-medium tracking-normal text-muted-foreground shadow-none"
-          titleClassName="max-lg:!leading-[1.05] lg:!leading-[1.08] tracking-tight max-lg:mx-0 max-lg:max-w-[20ch] max-lg:text-left lg:max-w-[13ch] lg:text-left xl:text-[2.35rem]"
+          titleClassName="max-lg:!leading-[1.08] lg:!leading-[1.08] tracking-tight max-lg:mx-0 max-lg:max-w-[22ch] max-lg:!text-[1.75rem] max-lg:text-left lg:max-w-[18ch] lg:!text-[2.25rem] lg:text-left xl:!text-[2.55rem]"
           descriptionClassName="!line-clamp-2 max-w-[34ch] leading-relaxed text-muted-foreground/90 max-lg:mx-0 max-lg:text-left lg:max-w-sm"
           textColumnClassName="lg:py-2 xl:pr-6"
           badge={
@@ -431,7 +438,7 @@ export const EmployeeDashboard = memo(function EmployeeDashboard() {
             <>
               {t("employee.hero.headlineLine1")}
               <br />
-              <span className="text-foreground/85">{t("employee.hero.headlineLine2")}</span>
+              <span>{t("employee.hero.headlineLine2")}</span>
             </>
           }
           description={t("employee.hero.sub")}
@@ -473,43 +480,9 @@ export const EmployeeDashboard = memo(function EmployeeDashboard() {
                 motionReady ? { duration: 0.4, delay: 0.08, ease: "easeOut" } : { duration: 0 }
               }
             >
-              <div className="employee-hero-cta-row flex flex-row flex-nowrap items-stretch gap-2">
-                <Button
-                  type="button"
-                  onClick={() => void handleQrQuickAction()}
-                  disabled={slugLoading || generatingSlug}
-                  className={cn(employeeUi.btnPrimary, employeeUi.heroCtaBtn)}
-                >
-                  {generatingSlug ? (
-                    <>
-                      <Loader2 className="h-4 w-4 shrink-0 animate-spin" />
-                      {t("employee.hero.generating")}
-                    </>
-                  ) : (
-                    <>
-                      <QrCode className="h-4 w-4 shrink-0" />
-                      {t("employee.hero.myQr")}
-                    </>
-                  )}
-                </Button>
-                <Button
-                  type="button"
-                  variant="outline"
-                  className={cn(employeeUi.btnSecondary, employeeUi.heroCtaBtn)}
-                  asChild
-                >
-                  <Link to="/employee/tip-goals" className={employeeUi.heroCtaLink}>
-                    <Target className="h-4 w-4 shrink-0" />
-                    {t("employee.hero.setTipGoal")}
-                    {entitlementsReady && !hasFeature("employeeGoals") ? (
-                      <Lock className="h-3.5 w-3.5 shrink-0 opacity-70" aria-hidden />
-                    ) : null}
-                  </Link>
-                </Button>
-              </div>
               <dl
                 className={cn(
-                  "employee-hero-account-stats dashboard-swr-swap",
+                  "employee-hero-account-stats employee-hero-account-stats--open dashboard-swr-swap",
                   showHeroMetricsSkeleton && "dashboard-hero-account-stats--loading",
                   analyticsPeriodRefreshing && "dashboard-swr-swap--revalidating",
                 )}
@@ -550,6 +523,46 @@ export const EmployeeDashboard = memo(function EmployeeDashboard() {
                   </dd>
                 </div>
               </dl>
+              <div className="employee-qr-signature">
+                <div className="employee-qr-signature__copy">
+                  <p className="employee-qr-signature__title">{t("employee.hero.qrSignatureTitle")}</p>
+                  <p className="employee-qr-signature__body">{t("employee.hero.qrSignatureBody")}</p>
+                </div>
+                <div className="employee-hero-cta-row employee-qr-signature__row flex flex-row flex-nowrap items-stretch gap-2">
+                <Button
+                  type="button"
+                  onClick={() => void handleQrQuickAction()}
+                  disabled={slugLoading || generatingSlug}
+                  className={cn(employeeUi.btnPrimary, employeeUi.heroCtaBtn, "employee-hero-cta-btn")}
+                >
+                  {generatingSlug ? (
+                    <>
+                      <Loader2 className="h-4 w-4 shrink-0 animate-spin" />
+                      {t("employee.hero.generating")}
+                    </>
+                  ) : (
+                    <>
+                      <QrCode className="h-4 w-4 shrink-0" />
+                      {t("employee.hero.myQr")}
+                    </>
+                  )}
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  className={cn(employeeUi.btnSecondary, employeeUi.heroCtaBtn, "employee-hero-cta-btn")}
+                  asChild
+                >
+                  <Link to="/employee/tip-goals" className={employeeUi.heroCtaLink}>
+                    <Target className="h-4 w-4 shrink-0" />
+                    {t("employee.hero.setTipGoal")}
+                    {entitlementsReady && !hasFeature("employeeGoals") ? (
+                      <Lock className="h-3.5 w-3.5 shrink-0 opacity-70" aria-hidden />
+                    ) : null}
+                  </Link>
+                </Button>
+                </div>
+              </div>
             </motion.div>
           }
         />
@@ -567,14 +580,15 @@ export const EmployeeDashboard = memo(function EmployeeDashboard() {
           aria-busy={periodMetricsLoading || analyticsPeriodRefreshing || undefined}
         >
           <div className="employee-dashboard-analytics-intro__head">
-            <div className="min-w-0 space-y-1">
+            <div className="employee-dashboard-analytics-intro__titles min-w-0">
               <h2
                 id="employee-analytics-period-heading"
-                className="text-base font-semibold tracking-tight text-foreground"
+                className="text-[1.0625rem] font-semibold tracking-tight text-foreground sm:text-lg"
               >
                 {t("employee.dashboard.analyticsSectionTitle")}
               </h2>
               <DashboardRefreshIndicator
+                className="employee-analytics-freshness"
                 isRefreshing={isPeriodSyncing}
                 lastUpdatedAt={metricsRefreshLastUpdatedAt}
                 refreshFailed={Boolean(analyticsError && hasVisibleMetrics)}
@@ -590,6 +604,7 @@ export const EmployeeDashboard = memo(function EmployeeDashboard() {
             />
           </div>
           <DashboardAnalyticsPeriodToggle
+            className={employeeUi.periodToggle}
             ariaLabel={t("employee.dashboard.analyticsPeriodAria")}
             value={analyticsTimeframe}
             onChange={(period) => {

@@ -386,7 +386,7 @@ export const BusinessDashboard = memo(function BusinessDashboard() {
           className="business-hero-dashboard-root !mb-0"
           cardClassName="border-0 bg-transparent shadow-none max-lg:border-0 max-lg:bg-transparent max-lg:shadow-none lg:rounded-[calc(1.75rem-3px)] lg:border-0 lg:bg-transparent lg:shadow-none"
           badgeClassName="business-hero-badge normal-case border-transparent bg-transparent px-0 py-0 text-[11px] max-lg:text-[12px] font-medium tracking-normal text-muted-foreground shadow-none"
-          titleClassName="business-hero-title max-lg:!leading-[1.05] lg:!leading-[1.1] tracking-tight max-lg:text-left lg:max-w-[14ch] lg:text-left xl:text-[1.875rem]"
+          titleClassName="business-hero-title max-lg:!leading-[1.08] lg:!leading-[1.08] tracking-tight max-lg:mx-0 max-lg:max-w-[22ch] max-lg:!text-[1.75rem] max-lg:text-left lg:max-w-[18ch] lg:!text-[2.25rem] lg:text-left xl:!text-[2.55rem]"
           descriptionClassName="business-hero-description !line-clamp-2 max-w-[32ch] leading-snug max-lg:mb-0 max-lg:text-left lg:max-w-sm"
           textColumnClassName="lg:py-1 xl:pr-1"
           badge={
@@ -403,7 +403,8 @@ export const BusinessDashboard = memo(function BusinessDashboard() {
             <>
               {t("business.hero.headlineLine1")}
               <br />
-              <span className="business-hero-title">{t("business.hero.headlineLine2")}</span>            </>
+              <span>{t("business.hero.headlineLine2")}</span>
+            </>
           }
           description={t("business.hero.sub")}
           image={
@@ -439,14 +440,9 @@ export const BusinessDashboard = memo(function BusinessDashboard() {
                 motionReady ? { duration: 0.4, delay: 0.08, ease: "easeOut" } : { duration: 0 }
               }
             >
-              <BusinessDashboardHeroActions
-                isPreviewMode={isPreviewMode}
-                buttonClassName="min-w-0 max-lg:w-full"
-                secondaryButtonClassName="min-w-0 max-lg:w-full"
-              />
               <dl
                 className={cn(
-                  "business-hero-account-stats dashboard-swr-swap",
+                  "business-hero-account-stats business-hero-account-stats--open dashboard-swr-swap",
                   heroPulseLoading && "dashboard-hero-account-stats--loading",
                   isPeriodRefreshing && "dashboard-swr-swap--revalidating",
                 )}
@@ -526,6 +522,11 @@ export const BusinessDashboard = memo(function BusinessDashboard() {
                   </dd>
                 </div>
               </dl>
+              <BusinessDashboardHeroActions
+                isPreviewMode={isPreviewMode}
+                buttonClassName="min-w-0 max-lg:w-full"
+                secondaryButtonClassName="min-w-0 max-lg:w-full"
+              />
             </motion.div>
           }
         />

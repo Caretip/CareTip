@@ -1215,9 +1215,9 @@ html[data-auth-sign-in-handoff] .caretip-dashboard-page-enter {
 .business-dashboard-hero .business-hero-cta-block {
   display: flex;
   flex-direction: column;
-  gap: 0;
+  gap: 1rem;
   width: 100%;
-  max-width: 24rem;
+  max-width: none;
 }
 
 .business-dashboard-hero .business-hero-cta-row {
@@ -1265,9 +1265,9 @@ html[data-auth-sign-in-handoff] .caretip-dashboard-page-enter {
   grid-template-columns: repeat(2, minmax(0, 1fr));
   column-gap: 1.25rem;
   row-gap: 0;
-  padding-top: 1.125rem;
-  margin-top: 0.875rem;
-  border-top: 1px solid hsl(var(--border) / 0.5);
+  padding-top: 0;
+  margin-top: 0;
+  border-top: 0;
 }
 
 .business-dashboard-hero .business-hero-account-stats dd {

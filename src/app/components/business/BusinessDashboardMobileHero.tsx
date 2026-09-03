@@ -79,6 +79,12 @@ export const BusinessDashboardMobileHero = memo(function BusinessDashboardMobile
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.35, ease: "easeOut" }}
         >
+          <BusinessHeroPulseMetrics
+            loading={heroPulseLoading}
+            pulse={operationalPulse}
+            isRefreshing={isPeriodRefreshing}
+            className="business-dashboard-mobile-hero__metrics"
+          />
           <BusinessDashboardHeroActions
             isPreviewMode={isPreviewMode}
             className="business-dashboard-mobile-hero__cta-row"
@@ -86,13 +92,6 @@ export const BusinessDashboardMobileHero = memo(function BusinessDashboardMobile
             secondaryButtonClassName="business-dashboard-mobile-hero__btn business-dashboard-mobile-hero__btn--secondary"
           />
         </motion.div>
-
-        <BusinessHeroPulseMetrics
-          loading={heroPulseLoading}
-          pulse={operationalPulse}
-          isRefreshing={isPeriodRefreshing}
-          className="business-dashboard-mobile-hero__metrics"
-        />
       </div>
     </section>
   );

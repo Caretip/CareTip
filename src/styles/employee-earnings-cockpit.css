@@ -1,0 +1,460 @@
+/**
+ * Employee hero QR/action card — presentation only.
+ * Scoped to `.caretip-dashboard-shell.employee-dashboard`.
+ */
+
+.caretip-dashboard-shell.employee-dashboard .employee-qr-signature {
+  display: flex;
+  flex-direction: column;
+  gap: 0.875rem;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  padding: 1rem 1rem 1rem 1.125rem;
+  border: 1px solid hsl(var(--border) / 0.8);
+  border-radius: 1rem;
+  background: hsl(var(--card));
+  box-shadow: inset 3px 0 0 hsl(var(--primary));
+}
+
+.caretip-dashboard-shell.employee-dashboard .employee-qr-signature__title {
+  margin: 0;
+  font-size: 0.9375rem;
+  font-weight: 650;
+  color: hsl(var(--foreground));
+}
+
+.caretip-dashboard-shell.employee-dashboard .employee-qr-signature__body {
+  margin: 0.25rem 0 0;
+  font-size: 0.8125rem;
+  line-height: 1.45;
+  color: hsl(var(--muted-foreground));
+}
+
+.caretip-dashboard-shell.employee-dashboard .employee-qr-signature .employee-hero-cta-row {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  align-items: stretch;
+  gap: 0.5rem;
+  width: 100%;
+  max-width: 100%;
+}
+
+.caretip-dashboard-shell.employee-dashboard .employee-qr-signature .employee-hero-cta-row > :is(a, button) {
+  flex: 1 1 0%;
+  width: auto;
+  min-width: 0;
+  min-height: 2.75rem;
+  height: auto !important;
+  justify-content: center;
+  white-space: normal;
+  text-align: center;
+  line-height: 1.25;
+  padding-block: 0.5rem;
+  padding-inline: 0.875rem;
+}
+
+@media (max-width: 360px) {
+  .caretip-dashboard-shell.employee-dashboard .employee-qr-signature .employee-hero-cta-row {
+    flex-wrap: wrap;
+  }
+}
+
+/* Open (un-carded) hero earnings + tip count */
+.caretip-dashboard-shell.employee-dashboard .employee-hero-account-stats--open {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  column-gap: 1.25rem;
+  row-gap: 0;
+  margin: 0 0 1rem;
+  padding: 0;
+  border: 0;
+}
+
+.caretip-dashboard-shell.employee-dashboard .employee-hero-account-stats--open > div {
+  display: flex;
+  flex-direction: column-reverse;
+  align-items: flex-start;
+  justify-content: flex-start;
+  gap: 0.35rem;
+  min-width: 0;
+  margin: 0;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  min-height: 0 !important;
+}
+
+.caretip-dashboard-shell.employee-dashboard .employee-hero-account-stats--open dt {
+  min-height: 0 !important;
+  display: block;
+  margin: 0;
+  font-size: 0.6875rem;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  text-transform: none;
+  color: hsl(var(--muted-foreground));
+}
+
+.caretip-dashboard-shell.employee-dashboard .employee-hero-account-stats--open > div:first-child dd {
+  min-height: 0;
+  font-size: clamp(1.375rem, 3.8vw, 1.75rem);
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 1.15;
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+  color: hsl(var(--foreground));
+}
+
+.caretip-dashboard-shell.employee-dashboard .employee-hero-account-stats--open > div:last-child dd {
+  min-height: 0;
+  font-size: clamp(1.25rem, 3.2vw, 1.5rem);
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  line-height: 1.15;
+  font-variant-numeric: tabular-nums;
+  color: hsl(var(--foreground));
+}
+
+/* Pill period selector */
+.caretip-dashboard-shell.employee-dashboard .employee-period-toggle {
+  border-radius: 999px;
+  border-color: transparent;
+  background: hsl(var(--muted) / 0.7) !important;
+  box-shadow: none;
+  padding: 0.25rem;
+}
+
+.caretip-dashboard-shell.employee-dashboard .employee-period-toggle .dashboard-period-toggle__btn,
+.caretip-dashboard-shell.employee-dashboard .employee-period-toggle button {
+  border-radius: 999px !important;
+}
+
+@media (max-width: 360px) {
+  .caretip-dashboard-shell.employee-dashboard .employee-hero-account-stats--open {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.75rem;
+  }
+}
+
+/* Period analytics — one metric row, not three cards */
+.caretip-dashboard-shell.employee-dashboard .employee-period-summary {
+  display: flex;
+  flex-direction: column;
+  gap: 0.875rem !important;
+  min-width: 0;
+  max-width: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.caretip-dashboard-shell.employee-dashboard .employee-period-summary__row {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  column-gap: 0;
+  min-width: 0;
+}
+
+.caretip-dashboard-shell.employee-dashboard .employee-period-summary__metric {
+  min-width: 0;
+  padding: 0.15rem 1.25rem 0.15rem 0;
+  border: 0;
+  border-right: 1px solid hsl(var(--border) / 0.55);
+  background: transparent;
+  box-shadow: none;
+}
+
+.caretip-dashboard-shell.employee-dashboard .employee-period-summary__metric:not(:first-child) {
+  padding-left: 1.25rem;
+}
+
+.caretip-dashboard-shell.employee-dashboard .employee-period-summary__metric:last-child {
+  padding-right: 0;
+  border-right: 0;
+}
+
+.caretip-dashboard-shell.employee-dashboard .employee-period-summary__label {
+  margin: 0 0 0.35rem;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.055em;
+  line-height: 1.3;
+  text-transform: uppercase;
+  color: hsl(var(--muted-foreground));
+}
+
+.caretip-dashboard-shell.employee-dashboard .employee-period-summary__value {
+  margin: 0;
+  font-size: clamp(1.25rem, 2.6vw, 1.625rem);
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 1.15;
+  font-variant-numeric: tabular-nums;
+  color: hsl(var(--foreground));
+  overflow-wrap: anywhere;
+}
+
+.caretip-dashboard-shell.employee-dashboard .employee-period-summary__hint {
+  margin: 0.3rem 0 0;
+  font-size: 0.8125rem;
+  line-height: 1.35;
+  color: hsl(var(--muted-foreground));
+}
+
+.caretip-dashboard-shell.employee-dashboard .employee-period-summary__hint:empty {
+  display: none;
+}
+
+.caretip-dashboard-shell.employee-dashboard .employee-period-summary__bar {
+  width: min(5.75rem, 72%);
+  height: 0.25rem;
+  margin-top: 0.55rem;
+  overflow: hidden;
+  border-radius: 999px;
+  background: hsl(var(--muted));
+}
+
+.caretip-dashboard-shell.employee-dashboard .employee-period-summary__bar-fill {
+  height: 100%;
+  border-radius: inherit;
+  background: hsl(var(--primary));
+}
+
+.caretip-dashboard-shell.employee-dashboard .employee-period-summary__streak {
+  min-width: 0;
+  padding: 0.65rem 0 0;
+  border: 0;
+  border-top: 1px solid hsl(var(--border) / 0.5);
+  background: transparent;
+}
+
+.caretip-dashboard-shell.employee-dashboard .employee-period-summary__streak-line {
+  display: flex;
+  align-items: baseline;
+  gap: 0.4rem;
+  margin: 0;
+  min-width: 0;
+  font-size: 0.875rem;
+  line-height: 1.35;
+  color: hsl(var(--foreground));
+}
+
+.caretip-dashboard-shell.employee-dashboard .employee-period-summary__streak-icon {
+  width: 0.875rem;
+  height: 0.875rem;
+  flex-shrink: 0;
+  translate: 0 0.1rem;
+  color: hsl(var(--primary));
+}
+
+.caretip-dashboard-shell.employee-dashboard .employee-period-summary__streak-label {
+  margin-left: 0.4rem;
+  font-weight: 500;
+  color: hsl(var(--foreground) / 0.88);
+}
+
+.caretip-dashboard-shell.employee-dashboard .employee-period-summary__streak-hint {
+  margin: 0.2rem 0 0 1.275rem;
+  font-size: 0.75rem;
+  line-height: 1.4;
+  color: hsl(var(--muted-foreground) / 0.92);
+}
+
+.caretip-dashboard-shell.employee-dashboard .employee-analytics-freshness {
+  margin-top: 0.15rem;
+  font-size: 0.6875rem !important;
+  font-weight: 450 !important;
+  letter-spacing: 0.01em;
+  color: hsl(var(--muted-foreground) / 0.68) !important;
+}
+
+.caretip-dashboard-shell.employee-dashboard .employee-dashboard-analytics-intro__titles {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+}
+
+.caretip-dashboard-shell.employee-dashboard .employee-dashboard-analytics-intro {
+  gap: 0.75rem;
+}
+
+.caretip-dashboard-shell.employee-dashboard .employee-period-toggle {
+  min-height: 2.5rem;
+}
+
+.caretip-dashboard-shell.employee-dashboard .employee-period-chart {
+  margin-top: 0.25rem;
+  padding: 0 !important;
+  border: 0 !important;
+  border-top: 1px solid hsl(var(--border) / 0.5) !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+.caretip-dashboard-shell.employee-dashboard .employee-period-chart__title {
+  margin: 0 0 0.75rem;
+  padding-top: 1rem;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  line-height: 1.3;
+  color: hsl(var(--foreground));
+}
+
+.caretip-dashboard-shell.employee-dashboard .employee-period-chart__title-skel {
+  width: 11rem;
+  height: 0.9rem;
+  margin: 1rem 0 0.75rem;
+  border-radius: 0.25rem;
+  background: hsl(var(--muted) / 0.65);
+}
+
+.caretip-dashboard-shell.employee-dashboard .employee-period-chart__empty,
+.caretip-dashboard-shell.employee-dashboard .employee-period-chart .dashboard-chart-empty {
+  background: transparent !important;
+}
+
+.caretip-dashboard-shell.employee-dashboard .employee-period-chart .dashboard-chart-empty::before {
+  display: none !important;
+  content: none !important;
+}
+
+.caretip-dashboard-shell.employee-dashboard .employee-dashboard-charts-band {
+  min-height: 0;
+}
+
+@media (max-width: 479px) {
+  .caretip-dashboard-shell.employee-dashboard .employee-period-summary__row {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.75rem;
+  }
+
+  .caretip-dashboard-shell.employee-dashboard .employee-period-summary__metric {
+    padding: 0 0 0.75rem;
+    border-right: 0;
+    border-bottom: 1px solid hsl(var(--border) / 0.45);
+  }
+
+  .caretip-dashboard-shell.employee-dashboard .employee-period-summary__metric:not(:first-child) {
+    padding-left: 0;
+  }
+
+  .caretip-dashboard-shell.employee-dashboard .employee-period-summary__metric:last-child {
+    padding-bottom: 0.15rem;
+    border-bottom: 0;
+  }
+
+  .caretip-dashboard-shell.employee-dashboard .employee-period-summary__streak-hint {
+    margin-left: 0;
+  }
+}
+
+@media (max-width: 1023px) {
+  .caretip-dashboard-shell.employee-dashboard .employee-qr-signature {
+    gap: 0.5rem;
+    padding: 0.625rem 0.75rem 0.625rem 0.875rem;
+  }
+
+  .caretip-dashboard-shell.employee-dashboard .employee-qr-signature__copy {
+    display: none;
+  }
+
+  .caretip-dashboard-shell.employee-dashboard .employee-qr-signature .employee-hero-cta-row,
+  .caretip-dashboard-shell.employee-dashboard .employee-hero-cta-row {
+    gap: 0.375rem;
+    flex-wrap: nowrap;
+  }
+
+  .caretip-dashboard-shell.employee-dashboard .employee-qr-signature .employee-hero-cta-row > :is(a, button),
+  .caretip-dashboard-shell.employee-dashboard .employee-hero-cta-row > :is(a, button),
+  .caretip-dashboard-shell.employee-dashboard .dashboard-hero-actions .employee-hero-cta-row > * {
+    min-height: 2.25rem !important;
+    height: 2.25rem !important;
+    max-height: 2.25rem;
+    padding-block: 0 !important;
+    padding-inline: 0.5rem !important;
+    font-size: 0.75rem !important;
+    line-height: 1.1 !important;
+    white-space: nowrap !important;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .caretip-dashboard-shell.employee-dashboard .employee-qr-signature .employee-hero-cta-row svg {
+    width: 0.875rem;
+    height: 0.875rem;
+  }
+}
+
+/* Business hero — open metrics matching employee */
+.caretip-dashboard-shell.business-dashboard .business-hero-account-stats--open {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  column-gap: 1.25rem;
+  row-gap: 0;
+  width: 100%;
+  max-width: 100%;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.caretip-dashboard-shell.business-dashboard .business-hero-account-stats--open > div {
+  display: flex;
+  flex-direction: column-reverse;
+  align-items: flex-start;
+  justify-content: flex-start;
+  gap: 0.35rem;
+  min-width: 0;
+  margin: 0;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  min-height: 0 !important;
+}
+
+.caretip-dashboard-shell.business-dashboard .business-hero-account-stats--open dt {
+  min-height: 0 !important;
+  display: block;
+  margin: 0;
+  font-size: 0.6875rem;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  text-transform: none;
+  color: hsl(var(--muted-foreground));
+}
+
+.caretip-dashboard-shell.business-dashboard .business-hero-account-stats--open > div:first-child dd {
+  min-height: 0;
+  font-size: clamp(1.375rem, 3.8vw, 1.75rem);
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 1.15;
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+  color: hsl(var(--foreground));
+}
+
+.caretip-dashboard-shell.business-dashboard .business-hero-account-stats--open > div:last-child dd {
+  min-height: 0;
+  font-size: clamp(1.25rem, 3.2vw, 1.5rem);
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  line-height: 1.15;
+  font-variant-numeric: tabular-nums;
+  color: hsl(var(--foreground));
+}
+
+.caretip-dashboard-shell.business-dashboard .business-hero-account-stats--open .business-hero-pulse-subline {
+  font-size: 0.8125rem;
+  font-weight: 500;
+}
