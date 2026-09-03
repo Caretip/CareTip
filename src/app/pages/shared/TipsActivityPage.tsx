@@ -1,8 +1,11 @@
 import { useCallback, useEffect, useState } from "react";
 import { motion } from "motion/react";
 import { useTranslation } from "react-i18next";
-import { ChevronDown, CreditCard, Download, Search } from "lucide-react";
+import { CalendarDays, ChevronDown, CreditCard, Download, Search } from "lucide-react";
+import type { DateRange } from "react-day-picker";
 import { Button } from "@/components/ui/button";
+import { Calendar } from "@/app/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/app/components/ui/popover";
 import { EmptyState } from "@/app/components/ui/EmptyState";
 import { cn } from "@/lib/utils";
 import { businessUi } from "@/app/components/business/businessDashboardUi";
@@ -41,6 +44,19 @@ type TipsActivityCache = {
 
 function formatTipRowAt(iso: string, localeTag: string, timezone?: string | null): string {
   return formatVenueDateTime(iso, resolveBusinessTimezone(timezone), localeTag);
+}
+
+function ymdToLocalDate(ymd: string): Date | undefined {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(ymd)) return undefined;
+  const [y, m, d] = ymd.split("-").map(Number);
+  return new Date(y, m - 1, d);
+}
+
+function localDateToYmd(d: Date): string {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
 }
 
 function csvEscape(v: string): string {
@@ -269,26 +285,37 @@ export function TipsActivityPage({ variant = "default", embedded = false }: Tips
             </div>
 
             {range === "custom" ? (
-              <div className="flex items-center gap-2">
-                <input
-                  type="date"
-                  value={customFrom}
-                  onChange={(e) => {
-                    setPage(1);
-                    setCustomFrom(e.target.value);
-                  }}
-                  className="appearance-none px-3 py-3 bg-input-background border border-border rounded-lg text-sm"
-                />
-                <input
-                  type="date"
-                  value={customTo}
-                  onChange={(e) => {
-                    setPage(1);
-                    setCustomTo(e.target.value);
-                  }}
-                  className="appearance-none px-3 py-3 bg-input-background border border-border rounded-lg text-sm"
-                />
-              </div>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="h-auto min-h-[2.75rem] justify-start gap-2 rounded-lg px-3 py-3 text-sm font-normal"
+                  >
+                    <CalendarDays className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden />
+                    <span className="truncate">
+                      {customFrom && customTo
+                        ? copy("rangeBounds", { from: customFrom, to: customTo })
+                        : copy("rangePickDates")}
+                    </span>
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="end">
+                  <Calendar
+                    mode="range"
+                    numberOfMonths={1}
+                    selected={{
+                      from: ymdToLocalDate(customFrom),
+                      to: ymdToLocalDate(customTo),
+                    }}
+                    onSelect={(next: DateRange | undefined) => {
+                      setPage(1);
+                      setCustomFrom(next?.from ? localDateToYmd(next.from) : "");
+                      setCustomTo(next?.to ? localDateToYmd(next.to) : next?.from ? localDateToYmd(next.from) : "");
+                    }}
+                  />
+                </PopoverContent>
+              </Popover>
             ) : null}
 
             {canExportCsv ? (
