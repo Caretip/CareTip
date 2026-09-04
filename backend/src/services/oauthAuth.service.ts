@@ -6,6 +6,7 @@ import {
   type AuthIntendedRole,
   type AuthResult,
 } from "./auth.service.js";
+import { needsMfaLoginChallenge } from "./mfaLogin.service.js";
 import { scheduleWelcomeEmailBestEffort } from "./emailVerification.service.js";
 import { applyEmailVerificationBypassIfEligible } from "./emailVerificationBypass.service.js";
 import { isSubscriptionBasicDefaultEnabled } from "../config/featureFlags.js";
@@ -69,6 +70,34 @@ type OAuthBody = {
   location?: string;
   locale?: string;
 };
+
+/** OAuth identity succeeded but TOTP is still required — no access JWT is minted. */
+export type OAuthMfaPendingResult = { mfaPending: true; userId: string };
+
+export type OAuthAuthOutcome = AuthResult | OAuthMfaPendingResult;
+
+export function isOAuthMfaPending(result: OAuthAuthOutcome): result is OAuthMfaPendingResult {
+  return (
+    typeof result === "object" &&
+    result != null &&
+    "mfaPending" in result &&
+    result.mfaPending === true &&
+    typeof result.userId === "string"
+  );
+}
+
+function completeOAuthSession(
+  user: Parameters<typeof needsMfaLoginChallenge>[0] & { id: string },
+  sessionUser: Parameters<typeof authResultForUserRecord>[0],
+  log: Record<string, unknown>,
+): OAuthAuthOutcome {
+  if (needsMfaLoginChallenge(user)) {
+    return { mfaPending: true, userId: user.id };
+  }
+  const session = authResultForUserRecord(sessionUser);
+  console.info("[oauth] SESSION_CREATED", JSON.stringify({ userId: session.user.id, ...log }));
+  return session;
+}
 
 const businessIncludeForOAuth = {
   select: {
@@ -172,7 +201,7 @@ export async function authenticateWithOAuth(
   providerRaw: string,
   body: OAuthBody,
   opts?: { acceptLanguage?: string | null },
-): Promise<AuthResult> {
+): Promise<OAuthAuthOutcome> {
   if (!isOAuthProviderId(providerRaw)) {
     throw new Error("Unsupported OAuth provider. Use google, apple, or facebook.");
   }
@@ -243,17 +272,11 @@ export async function authenticateWithOAuth(
       }
     }
 
-    const session = authResultForUserRecord(sessionUser);
-    console.info(
-      "[oauth] SESSION_CREATED",
-      JSON.stringify({
-        userId: session.user.id,
-        role: session.user.role,
-        provider,
-        channel: "login",
-      }),
-    );
-    return session;
+    return completeOAuthSession(sessionUser, sessionUser, {
+      role: sessionUser.role,
+      provider,
+      channel: "login",
+    });
   }
 
   /** Sign up — requires email for all providers (Apple first auth usually includes it). */
@@ -321,17 +344,11 @@ export async function authenticateWithOAuth(
     });
     if (!full) throw new Error("Registration failed");
 
-    const session = authResultForUserRecord(full);
-    console.info(
-      "[oauth] SESSION_CREATED",
-      JSON.stringify({
-        userId: session.user.id,
-        role: session.user.role,
-        provider,
-        channel: "employee_invite",
-      }),
-    );
-    return session;
+    return completeOAuthSession(full, full, {
+      role: full.role,
+      provider,
+      channel: "employee_invite",
+    });
   }
 
   if (intendedRole === "MANAGER") {
@@ -411,17 +428,11 @@ export async function authenticateWithOAuth(
       logContext: "oauth_manager_signup",
     });
 
-    const session = authResultForUserRecord(created);
-    console.info(
-      "[oauth] SESSION_CREATED",
-      JSON.stringify({
-        userId: session.user.id,
-        role: session.user.role,
-        provider,
-        businessId: session.user.businessId ?? null,
-      }),
-    );
-    return session;
+    return completeOAuthSession(created, created, {
+      role: created.role,
+      provider,
+      businessId: created.business?.id ?? null,
+    });
   }
 
   if (intendedRole === "EMPLOYEE") {

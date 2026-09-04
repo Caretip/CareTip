@@ -278,6 +278,7 @@ function jwtPayloadForUser(
     type: ACCESS_JWT_TYPE,
     tv: user.authTokenVersion ?? 0,
   };
+  /** Session-bound access: present on tokens issued with a refresh row. Legacy tokens may omit `sid`. */
   const sid = ctx?.refreshSessionId?.trim();
   if (sid) payload.sid = sid;
   return payload;

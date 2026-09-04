@@ -126,8 +126,8 @@ export function MobileWebAuthShell({
           <MobileWebAuthBackNav />
           <AuthCard variant="otp">
             <AuthHeader
-              title={t("auth.mobileWebAuth.otpTitle")}
-              subtitle={t("auth.mobileWebAuth.otpSubtitle")}
+              title={onResend ? t("auth.mobileWebAuth.otpTitle") : t("auth.page.mfaCodeLabel")}
+              subtitle={onResend ? t("auth.mobileWebAuth.otpSubtitle") : t("auth.page.mfaSubtitle")}
               icon={
                 <div className="mw-auth-header__icon-badge" aria-hidden>
                   <ShieldCheck className="h-7 w-7" strokeWidth={2.25} />
@@ -141,17 +141,19 @@ export function MobileWebAuthShell({
                 disabled={busy}
                 ariaLabel={t("auth.mobileWebAuth.otpAria")}
               />
+              {onResend ? (
               <p className="mw-auth-resend">
                 {t("auth.mobileWebAuth.otpResendPrompt")}{" "}
                 <button
                   type="button"
                   className="mw-auth-resend__action"
-                  disabled={busy || resendBusy || !onResend}
-                  onClick={() => onResend?.()}
+                  disabled={busy || resendBusy}
+                  onClick={() => onResend()}
                 >
                   {t("auth.mobileWebAuth.otpResend")}
                 </button>
               </p>
+              ) : null}
               {error ? <p className="mw-auth-error">{error}</p> : <p className="mw-auth-error" />}
               <AuthButton loading={busy} loadingLabel={t("auth.mobileWebAuth.verifying")}>
                 {t("auth.mobileWebAuth.verify")}

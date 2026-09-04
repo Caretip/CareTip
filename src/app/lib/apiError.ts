@@ -33,7 +33,14 @@ export const PENDING_VERIFICATION_CODE = "PENDING_VERIFICATION" as const;
 /** Returned with 403 when a go-live capability (QR, tipping, payments) is not approved yet. */
 export const GO_LIVE_REQUIRED_CODE = "GO_LIVE_REQUIRED" as const;
 
-/** Structured API failure from {@link apiRequest} / {@link handleRes} when the server returns JSON with `code`. */
+/** Returned when a TOTP code is structurally valid but does not match. */
+export const MFA_INVALID_CODE = "MFA_INVALID_CODE" as const;
+
+/** Returned when the pending MFA JWT has expired. */
+export const MFA_CHALLENGE_EXPIRED = "MFA_CHALLENGE_EXPIRED" as const;
+
+/** Returned when the pending MFA JWT is malformed or already used. */
+export const MFA_CHALLENGE_INVALID = "MFA_CHALLENGE_INVALID" as const;
 export class ApiRequestError extends Error {
   constructor(
     message: string,

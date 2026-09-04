@@ -426,14 +426,6 @@ const PRINT_TEMPLATE_ALIAS: Record<string, string> = {
   "caretip a5 flyer": "caretip-a5-flyer",
   "caretip signature": "caretip-a5-flyer",
   "caretip signatur": "caretip-a5-flyer",
-  "caretip classic": "caretip-classic",
-  "caretip klassik": "caretip-classic",
-  "caretip light": "caretip-light",
-  "caretip hell": "caretip-light",
-  "caretip midnight": "caretip-midnight",
-  "caretip mitternacht": "caretip-midnight",
-  "caretip nature": "caretip-nature",
-  "caretip natur": "caretip-nature",
 };
 
 function normalizePrintTemplateToken(value: string): string {

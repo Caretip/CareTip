@@ -6,6 +6,7 @@ import {
   resolveJwtSubject,
   verifyJwt,
 } from "./jwtConfig.js";
+import { isPendingMfaLoginJwt } from "../services/mfaLogin.service.js";
 
 /** Grace period after access JWT expiry — allows session recovery when refresh cookie was lost (e.g. dev proxy misconfig). */
 const EXPIRED_ACCESS_GRACE_MS = 14 * 24 * 60 * 60 * 1000;
@@ -55,7 +56,7 @@ export function userIdFromAccessTokenForRefresh(bearer: string): string | null {
 
   try {
     const decoded = verifyJwt<DecodedAccessClaims & JwtPayload>(token);
-    if (!isAllowedAccessJwtType(decoded.type)) return null;
+    if (isPendingMfaLoginJwt(decoded) || !isAllowedAccessJwtType(decoded.type)) return null;
     return resolveJwtSubject(decoded);
   } catch (err) {
     if (!(err instanceof jwt.TokenExpiredError)) return null;
@@ -64,7 +65,7 @@ export function userIdFromAccessTokenForRefresh(bearer: string): string | null {
       const decoded = verifyJwt<DecodedAccessClaims & JwtPayload & { exp?: number }>(token, {
         ignoreExpiration: true,
       });
-      if (!isAllowedAccessJwtType(decoded.type)) return null;
+      if (isPendingMfaLoginJwt(decoded) || !isAllowedAccessJwtType(decoded.type)) return null;
       const exp = decoded.exp;
       if (typeof exp === "number" && Date.now() - exp * 1000 > EXPIRED_ACCESS_GRACE_MS) {
         return null;

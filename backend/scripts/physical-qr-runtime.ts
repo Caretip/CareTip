@@ -30,13 +30,8 @@ import {
   PHYSICAL_QR_PRINT_WIDTH_MM,
   PHYSICAL_QR_PRINT_WIDTH_PX,
   PHYSICAL_QR_SAMPLE_URL_FORBIDDEN,
-  PHYSICAL_QR_TEMPLATE_CLASSIC_ID,
   PHYSICAL_QR_TEMPLATE_ID,
   PHYSICAL_QR_TEMPLATE_IDS,
-  PHYSICAL_QR_TEMPLATE_LIGHT_ID,
-  PHYSICAL_QR_TEMPLATE_MIDNIGHT_ID,
-  PHYSICAL_QR_TEMPLATE_NATURE_ID,
-  PHYSICAL_QR_LIGHT_OVERLAY_TEXT,
   physicalQrOverlayTextColor,
 } from "../src/lib/physicalQr/types.js";
 import { validatePhysicalQrColorTokens } from "../src/lib/physicalQr/colors.js";
@@ -631,10 +626,6 @@ function sectionRegressionFiles() {
     "src/app/pages/business/qr-studio/QrStudioBrandingPage.tsx",
     "src/assets/physical-qr/caretip-a5.svg",
     "src/assets/physical-qr/caretip-a5-artwork.png",
-    "src/assets/physical-qr/caretip-light.png",
-    "src/assets/physical-qr/caretip-midnight.png",
-    "src/assets/physical-qr/caretip-nature.png",
-    "src/assets/physical-qr/caretip_classic.png",
   ];
   for (const rel of required) {
     if (existsSync(path.join(root, rel))) pass(`digital Branding still present: ${rel}`);
@@ -1043,37 +1034,35 @@ function sectionPhysicalQrPrintTemplates() {
   if (resolvePhysicalQrTemplateId("../../etc/passwd") === PHYSICAL_QR_TEMPLATE_ID) {
     pass("unknown/path-like template IDs fall back to the allowlisted original");
   } else fail("template ID allowlist rejected traversal");
-  if (resolvePhysicalQrTemplateId(PHYSICAL_QR_TEMPLATE_CLASSIC_ID) === PHYSICAL_QR_TEMPLATE_CLASSIC_ID) {
-    pass("classic template ID is allowlisted");
-  } else fail("classic template ID");
+  if (resolvePhysicalQrTemplateId("caretip-classic") === PHYSICAL_QR_TEMPLATE_ID) {
+    pass("retired template IDs fall back to CareTip Signature artwork");
+  } else fail("retired template ID fallback");
 
   if (
-    physicalQrOverlayTextColor(PHYSICAL_QR_TEMPLATE_CLASSIC_ID, "#1A1A1A") === PHYSICAL_QR_LIGHT_OVERLAY_TEXT &&
-    physicalQrOverlayTextColor(PHYSICAL_QR_TEMPLATE_MIDNIGHT_ID, "#1A1A1A") === PHYSICAL_QR_LIGHT_OVERLAY_TEXT &&
-    physicalQrOverlayTextColor(PHYSICAL_QR_TEMPLATE_LIGHT_ID, "#1A1A1A") === "#1A1A1A" &&
-    physicalQrOverlayTextColor(PHYSICAL_QR_TEMPLATE_NATURE_ID, "#1A1A1A") === "#1A1A1A" &&
-    physicalQrOverlayTextColor(PHYSICAL_QR_TEMPLATE_ID, "#1A1A1A") === "#1A1A1A"
+    physicalQrOverlayTextColor(PHYSICAL_QR_TEMPLATE_ID, "#1A1A1A") === "#1A1A1A" &&
+    physicalQrOverlayTextColor("caretip-classic", "#1A1A1A") === "#1A1A1A"
   ) {
-    pass("Classic and Midnight print overlay uses white name/address; Light/Nature/original stay dark");
-  } else fail("print overlay text color for dark templates");
+    pass("CareTip Signature print overlay uses the configured name/address colour");
+  } else fail("print overlay text color");
 
-  const classicPath = resolvePhysicalQrArtworkPngPath(PHYSICAL_QR_TEMPLATE_CLASSIC_ID);
+  const retiredPath = resolvePhysicalQrArtworkPngPath("caretip-classic");
   const originalPath = resolvePhysicalQrArtworkPngPath(PHYSICAL_QR_TEMPLATE_ID);
-  if (/caretip_classic\.png|caretip-classic\.png/i.test(classicPath)) {
-    pass("classic print artwork resolves to the classic image file");
-  } else fail(`classic artwork path ${classicPath}`);
-  if (classicPath !== originalPath) {
-    pass("new template artwork is distinct from the original A5 PNG");
-  } else fail("classic artwork collided with original");
+  if (retiredPath === originalPath && /caretip-a5-artwork\.png/i.test(originalPath)) {
+    pass("retired template print resolves to CareTip Signature artwork");
+  } else fail(`retired artwork path ${retiredPath}`);
 
   const root = path.resolve(fileURLToPath(new URL("../..", import.meta.url)));
   const catalog = readFileSync(path.join(root, "backend/src/services/physicalQr/physicalQrCatalog.service.ts"), "utf8");
   const printPipeline = readFileSync(path.join(root, "backend/src/lib/physicalQr/printPipeline.ts"), "utf8");
   const adminPrint = readFileSync(path.join(root, "backend/src/services/physicalQr/physicalQrAdminPrint.service.ts"), "utf8");
-  const ids = ["caretip-classic-address", "caretip-light-no-address", "caretip-midnight-address", "caretip-nature-no-address"];
-  if (ids.every((id) => catalog.includes(id)) && catalog.includes("PHYSICAL_QR_PRODUCT_ADDRESS_ID")) {
-    pass("catalog seed keeps original products and adds new design/address pairs");
-  } else fail("catalog seed missing new or original products");
+  if (
+    catalog.includes("PHYSICAL_QR_PRODUCT_ADDRESS_ID") &&
+    catalog.includes("RETIRED_PHYSICAL_QR_PRODUCT_IDS") &&
+    catalog.includes("CareTip A5 flyer") &&
+    !catalog.includes("CareTip Classic")
+  ) {
+    pass("catalog seed keeps Signature products and retires unused designs");
+  } else fail("catalog seed missing Signature products or retirement list");
   if (
     printPipeline.includes("templateId: input.templateId") &&
     printPipeline.includes("resolvePhysicalQrArtworkPngPath(input.templateId)") &&

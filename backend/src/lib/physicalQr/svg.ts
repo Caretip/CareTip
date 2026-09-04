@@ -4,12 +4,8 @@ import { fileURLToPath } from "node:url";
 import { mergePhysicalQrColorTokens } from "./colors.js";
 import {
   PHYSICAL_QR_FONT_STATUS,
-  PHYSICAL_QR_TEMPLATE_CLASSIC_ID,
   PHYSICAL_QR_TEMPLATE_ID,
   PHYSICAL_QR_TEMPLATE_IDS,
-  PHYSICAL_QR_TEMPLATE_LIGHT_ID,
-  PHYSICAL_QR_TEMPLATE_MIDNIGHT_ID,
-  PHYSICAL_QR_TEMPLATE_NATURE_ID,
   PHYSICAL_QR_TEMPORARY_FONT_FAMILY,
   type PhysicalQrColorTokens,
   type PhysicalQrTemplateId,
@@ -48,10 +44,6 @@ const cachedArtworkDataUrl = new Map<string, string>();
 /** Allowlisted filenames per template ID. Order is search preference. */
 const ARTWORK_FILENAMES: Record<PhysicalQrTemplateId, readonly string[]> = {
   [PHYSICAL_QR_TEMPLATE_ID]: ["caretip-a5-artwork.png", "A5_Flyer without Address.png"],
-  [PHYSICAL_QR_TEMPLATE_CLASSIC_ID]: ["caretip_classic.png", "caretip-classic.png"],
-  [PHYSICAL_QR_TEMPLATE_LIGHT_ID]: ["caretip-light.png"],
-  [PHYSICAL_QR_TEMPLATE_MIDNIGHT_ID]: ["caretip-midnight.png"],
-  [PHYSICAL_QR_TEMPLATE_NATURE_ID]: ["caretip-nature.png"],
 };
 
 export function resolvePhysicalQrTemplateId(raw: string | null | undefined): PhysicalQrTemplateId {

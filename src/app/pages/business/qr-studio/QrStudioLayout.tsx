@@ -22,11 +22,18 @@ export function QrStudioLayout() {
   const accessBlock = resolveQrStudioAccessBlock(canUseQr);
 
   return (
-    <div className={cn("min-w-0 w-full overflow-x-clip", businessUi.modulePageShell)}>
+    <div
+      className={cn(
+        "min-w-0 w-full overflow-x-clip",
+        isPrintStudio
+          ? "business-module-page bg-background px-4 pb-8 sm:px-6 lg:px-8"
+          : businessUi.modulePageShell,
+      )}
+    >
       <div
         className={cn(
           "dashboard-page-contained mx-auto min-w-0 w-full max-w-full",
-          isPrintStudio ? "max-w-7xl" : "max-w-6xl",
+          isPrintStudio ? "max-w-none" : "max-w-6xl",
         )}
       >
         <BusinessModuleWorkspaceHeader
@@ -37,6 +44,7 @@ export function QrStudioLayout() {
           title={t("business.qrStudio.title")}
           subtitle={t("business.qrStudio.subtitle")}
           hideSubtitleOnMobile
+          className={isPrintStudio ? "mb-4 pb-3" : undefined}
         />
         {accessBlock ? (
           <div className="py-8 sm:py-12">

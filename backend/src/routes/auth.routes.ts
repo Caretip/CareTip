@@ -15,6 +15,7 @@ import {
 import {
   changePasswordRateLimit,
   mfaTotpRateLimit,
+  mfaLoginChallengeRateLimit,
 } from "../middleware/securityRateLimit.middleware.js";
 import { requireTrustedOrigin } from "../middleware/requireTrustedOrigin.middleware.js";
 import { requireCaretipClientHeader } from "../middleware/requireCaretipClientHeader.middleware.js";
@@ -34,8 +35,8 @@ router.post(
   authController.cancelDeletion,
 );
 router.post("/login/mfa/setup", loginRateLimit, authController.loginMfaSetup);
-router.post("/login/mfa/enable", mfaTotpRateLimit, authController.loginMfaEnable);
-router.post("/login/mfa/verify", mfaTotpRateLimit, authController.loginMfaVerify);
+router.post("/login/mfa/enable", mfaLoginChallengeRateLimit, authController.loginMfaEnable);
+router.post("/login/mfa/verify", mfaLoginChallengeRateLimit, authController.loginMfaVerify);
 router.post(
   "/resend-verification-email",
   resendVerificationRateLimit,
@@ -99,7 +100,7 @@ router.patch("/me", authMiddleware, requireVerifiedEmail, authController.patchMe
 
 // 2FA (TOTP) management (does not change login flow by itself)
 router.get("/2fa/status", authMiddleware, authController.twoFactorStatus);
-router.post("/2fa/setup", authMiddleware, authController.twoFactorSetup);
+router.post("/2fa/setup", authMiddleware, mfaTotpRateLimit, authController.twoFactorSetup);
 router.post("/2fa/enable", authMiddleware, mfaTotpRateLimit, authController.twoFactorEnable);
 router.post("/2fa/disable", authMiddleware, mfaTotpRateLimit, authController.twoFactorDisable);
 

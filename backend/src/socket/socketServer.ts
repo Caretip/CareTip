@@ -9,6 +9,7 @@ import {
   verifyJwt,
   type DecodedAccessClaims,
 } from "../lib/jwtConfig.js";
+import { isPendingMfaLoginJwt } from "../services/mfaLogin.service.js";
 
 import { businessIdFromPublicSocketRoomToken } from "../services/publicSocketToken.service.js";
 
@@ -78,7 +79,7 @@ export function initSocketServer(httpServer: HttpServer): Server {
       }
 
       const decoded = verifyJwt<JwtLike>(token);
-      if (!isAllowedAccessJwtType(decoded.type)) {
+      if (isPendingMfaLoginJwt(decoded) || !isAllowedAccessJwtType(decoded.type)) {
         return next(new Error("Unauthorized"));
       }
       const userId = resolveJwtSubject(decoded);

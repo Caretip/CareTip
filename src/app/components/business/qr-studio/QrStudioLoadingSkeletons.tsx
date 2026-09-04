@@ -112,47 +112,39 @@ export function PrintQrStudioSkeleton({ className }: { className?: string }) {
   const aria = useDashboardShellAria();
   return (
     <div
-      className={cn(
-        "grid items-start gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(240px,320px)]",
-        className,
-      )}
+      className={cn("print-qr-studio__workspace", className)}
       role="status"
       aria-busy="true"
       aria-label={aria.loading}
     >
-      <div className="space-y-8 max-lg:space-y-5">
-        <div className="space-y-3">
-          <ShimmerBar className="h-3.5 w-36" />
-          <ShimmerBar className="h-2.5 w-52" />
-          <div className="grid gap-3 sm:grid-cols-2">
-            {Array.from({ length: 2 }).map((_, i) => (
-              <div key={i} className="space-y-2 rounded-lg border border-border p-2.5">
-                <ShimmerBar className="aspect-[148/210] w-full rounded-md" />
-                <ShimmerBar className="h-3.5 w-28" />
-                <ShimmerBar className="h-2.5 w-16" />
-              </div>
-            ))}
-          </div>
-        </div>
-        <div className="space-y-3">
-          <ShimmerBar className="h-3.5 w-40" />
-          {Array.from({ length: 5 }).map((_, i) => (
-            <div key={i} className="flex items-center gap-3 border-b border-border/60 py-3">
-              <ShimmerBar className="h-5 w-5 shrink-0 rounded" />
-              <div className="min-w-0 flex-1 space-y-1.5">
-                <ShimmerBar className="h-3.5 w-[50%] max-w-[12rem]" />
-                <ShimmerBar className="h-2.5 w-20" />
-              </div>
+      <section className="min-w-0 space-y-2">
+        <ShimmerBar className="h-3.5 w-36" />
+        <ShimmerBar className="h-2.5 w-52" />
+        <div className="grid gap-2.5 grid-cols-1 min-[420px]:grid-cols-2">
+          {Array.from({ length: 2 }).map((_, i) => (
+            <div key={i} className="space-y-2 rounded-md border border-border p-2">
+              <ShimmerBar className="mx-auto aspect-[148/210] w-full max-w-[8.5rem] rounded-md" />
+              <ShimmerBar className="h-3.5 w-28" />
+              <ShimmerBar className="h-2.5 w-16" />
             </div>
           ))}
         </div>
-      </div>
-      <div className="space-y-3 rounded-lg border border-border p-4">
-        <ShimmerBar className="h-3.5 w-24" />
+      </section>
+      <section className="min-w-0 space-y-2">
+        <ShimmerBar className="h-3.5 w-40" />
+        {Array.from({ length: 5 }).map((_, i) => (
+          <div key={i} className="flex min-h-10 items-center gap-2.5 border-b border-border/60 py-2">
+            <ShimmerBar className="h-4 w-4 shrink-0 rounded" />
+            <ShimmerBar className="h-3.5 w-[50%] max-w-[12rem]" />
+          </div>
+        ))}
+      </section>
+      <aside className="print-qr-studio__summary min-w-0 space-y-2">
+        <ShimmerBar className="h-3.5 w-28" />
         <ShimmerBar className="h-2.5 w-full" />
         <ShimmerBar className="h-2.5 w-[80%]" />
-        <ShimmerBar className="mt-2 h-10 w-full rounded-md" />
-      </div>
+        <ShimmerBar className="mt-1 h-9 w-full rounded-md" />
+      </aside>
     </div>
   );
 }

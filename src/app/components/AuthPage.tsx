@@ -35,6 +35,7 @@ import {
   loginMfaEnableAPI,
   loginMfaVerifyAPI,
 } from '../lib/api';
+import { classifyMfaVerifyFailure, MFA_CHALLENGE_INVALID } from '../lib/mfaLoginErrors';
 import type { OAuthProviderId } from '../lib/oauthProviderIds';
 import { validateInviteCode } from "../lib/api";
 import { logClientError } from '../lib/clientLog';
@@ -448,9 +449,9 @@ export function AuthPage() {
   const handleMfaSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
-    const code = otpCode.trim();
-    if (!pendingMfaToken || code.length < 6) {
-      setError(t('auth.mobileWebAuth.mfaCodeRequired'));
+    const code = otpCode.replace(/\D/g, "").slice(0, 6);
+    if (!pendingMfaToken || code.length !== 6) {
+      setError(t('auth.page.mfaCodeRequired'));
       return;
     }
     if (authInFlightRef.current) return;
@@ -467,9 +468,28 @@ export function AuthPage() {
       setOtpCode('');
       await redirectAfterAuth(sessionUser);
     } catch (err) {
-      logClientError('AuthPage.mfa', err);
+      const kind = classifyMfaVerifyFailure(err);
+      if (kind === "unavailable" || kind === "rate_limited") {
+        logClientError('AuthPage.mfa', err);
+      }
       endAuthSignInHandoff('AuthPage_mfa_error');
-      setError(toUserFriendlyMessage(err));
+      if (kind === "challenge_ended") {
+        setPendingMfaToken('');
+        setMfaSetupRequired(false);
+        setOtpCode('');
+        const invalidChallenge = isApiRequestError(err) && err.code === MFA_CHALLENGE_INVALID;
+        setError(t(invalidChallenge ? 'auth.page.mfaChallengeInvalid' : 'auth.page.mfaChallengeExpired'));
+      } else if (kind === "invalid_code") {
+        setOtpCode('');
+        setError(t('auth.page.mfaInvalidCode'));
+        requestAnimationFrame(() => {
+          document.getElementById('auth-mfa-code')?.focus();
+        });
+      } else if (kind === "rate_limited") {
+        setError(t('auth.page.mfaRateLimited'));
+      } else {
+        setError(t('auth.page.mfaVerifyUnavailable'));
+      }
     } finally {
       authInFlightRef.current = false;
       if (!postAuthRedirectRef.current) {
@@ -543,6 +563,15 @@ export function AuthPage() {
             }
           : {}),
       });
+      if (isMfaLoginChallenge(loggedIn)) {
+        endAuthSignInHandoff("AuthPage_mfa_challenge");
+        setPendingMfaToken(loggedIn.pendingMfaToken);
+        setMfaSetupRequired(Boolean(loggedIn.mfaSetupRequired));
+        setOtpCode('');
+        setIsSubmitting(false);
+        setAuthFlowInProgress(false);
+        return;
+      }
       if (!isLogin && authLane === 'employee') {
         clearValidatedInviteContext();
       }
@@ -731,6 +760,59 @@ export function AuthPage() {
         >
           {showAuthenticatedSessionHint ? (
             sessionHintBanner
+          ) : pendingMfaToken ? (
+          <form
+            onSubmit={(e) => void handleMfaSubmit(e)}
+            aria-busy={isSubmitting}
+            className="caretip-auth-form text-foreground"
+            noValidate
+          >
+              <p className="text-sm leading-snug text-muted-foreground">
+                {t("auth.page.mfaSubtitle")}
+              </p>
+            <AuthFieldGroup label={t("auth.page.mfaCodeLabel")} htmlFor="auth-mfa-code">
+              <input
+                id="auth-mfa-code"
+                placeholder={t("auth.page.mfaCodePlaceholder")}
+                type="text"
+                inputMode="numeric"
+                autoComplete="one-time-code"
+                autoFocus
+                maxLength={6}
+                value={otpCode}
+                onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                className={FIELD_CLASS}
+                aria-invalid={Boolean(error) || undefined}
+                aria-describedby={error ? "auth-mfa-error" : undefined}
+              />
+            </AuthFieldGroup>
+            <AuthErrorSlot>
+              {error ? (
+                <p id="auth-mfa-error" className="text-sm font-medium text-red-600 dark:text-red-400" role="alert">
+                  {error}
+                </p>
+              ) : null}
+            </AuthErrorSlot>
+            <AuthStableSubmitButton
+              type="submit"
+              disabled={isSubmitting || otpCode.replace(/\D/g, "").length !== 6}
+              className="caretip-auth-submit relative"
+            >
+              {isSubmitting ? t("auth.mobileWebAuth.verifying") : t("auth.page.mfaVerify")}
+            </AuthStableSubmitButton>
+            <button
+              type="button"
+              className="mt-3 text-sm font-semibold text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
+              onClick={() => {
+                setPendingMfaToken("");
+                setMfaSetupRequired(false);
+                setOtpCode("");
+                setError("");
+              }}
+            >
+              {t("auth.recovery.backToSignIn")}
+            </button>
+          </form>
           ) : showSignInForm ? (
           <form
             onSubmit={handleSubmit}

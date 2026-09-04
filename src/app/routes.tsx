@@ -359,7 +359,7 @@ const routes: RouteObject[] = [
           { path: 'employees', lazy: routeLazy(() => import('./pages/business/team/BusinessTeamEmployeesPage'), 'BusinessTeamEmployeesPage') },
           { path: 'goals', element: <Navigate to="/dashboard/team/employees" replace /> },
           { path: 'performance', lazy: routeLazy(() => import('./pages/business/team/BusinessTeamPerformancePage'), 'BusinessTeamPerformancePage') },
-          { path: 'top-performers', lazy: routeLazy(() => import('./pages/business/team/BusinessTeamTopPerformersPage'), 'BusinessTeamTopPerformersPage') },
+          { path: 'top-performers', element: <Navigate to="/dashboard/team/performance?tab=leaderboard" replace /> },
         ],
       },
       /* —— QR Studio module —— */
@@ -367,9 +367,10 @@ const routes: RouteObject[] = [
         path: 'qr-studio',
         lazy: routeLazy(() => import('./pages/business/qr-studio/QrStudioLayout'), 'QrStudioLayout'),
         children: [
-          { index: true, lazy: routeLazy(() => import('./pages/business/qr-studio/QrStudioOverviewPage'), 'QrStudioOverviewPage') },
+          { index: true, element: <Navigate to="/dashboard/qr-studio/business" replace /> },
+          { path: 'overview', element: <Navigate to="/dashboard/qr-studio/business" replace /> },
           { path: 'business', lazy: routeLazy(() => import('./pages/business/qr-studio/QrStudioBusinessPage'), 'QrStudioBusinessPage') },
-          { path: 'gallery', element: <Navigate to="/dashboard/qr-studio" replace /> },
+          { path: 'gallery', element: <Navigate to="/dashboard/qr-studio/business" replace /> },
           { path: 'employees', lazy: routeLazy(() => import('./pages/business/qr-studio/QrStudioEmployeesPage'), 'QrStudioEmployeesPage') },
           { path: 'locations', lazy: routeLazy(() => import('./pages/business/qr-studio/QrStudioLocationsPage'), 'QrStudioLocationsPage') },
           { path: 'print', lazy: routeLazy(() => import('./pages/business/qr-studio/QrStudioPrintPage'), 'QrStudioPrintPage') },
@@ -379,7 +380,7 @@ const routes: RouteObject[] = [
           { path: 'branding/orders/:orderId', lazy: routeLazy(() => import('./pages/business/qr-studio/PhysicalQrOrderDetailPage'), 'PhysicalQrOrderDetailPage') },
           { path: 'branding', element: <Navigate to="/dashboard/qr-studio/print" replace /> },
           { path: 'tables', lazy: routeLazy(() => import('./pages/business/qr-studio/QrStudioTablesPage'), 'QrStudioTablesPage') },
-          { path: 'downloads', element: <Navigate to="/dashboard/qr-studio" replace /> },
+          { path: 'downloads', element: <Navigate to="/dashboard/qr-studio/business" replace /> },
         ],
       },
       /* —— Customers module —— */

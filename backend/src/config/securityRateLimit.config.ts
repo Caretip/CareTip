@@ -18,6 +18,7 @@ export const securityRateLimits = {
     lock: {
       maxFailures: envInt("SEC_MFA_MAX_FAILURES", 5),
       windowMs: AUTH_WINDOW_15M_MS,
+      /** Duration of the failure/lock bucket. Defaults to the 15m window; not a second independent timer. */
       lockoutMs: envInt("SEC_MFA_LOCKOUT_MS", 15 * 60 * 1000),
     },
   },

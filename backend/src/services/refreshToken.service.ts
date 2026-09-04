@@ -137,6 +137,40 @@ export async function revokeAllRefreshTokensForUser(userId: string): Promise<voi
 }
 
 /**
+ * Revoke other devices' refresh sessions, keeping `keepSessionId`.
+ * Does not bump authTokenVersion so the current access JWT stays valid until expiry.
+ */
+export async function revokeOtherRefreshTokensForUser(
+  userId: string,
+  keepSessionId: string,
+): Promise<number> {
+  const keep = keepSessionId.trim();
+  if (!userId.trim() || !keep) return 0;
+  const owned = await prisma.refreshToken.findFirst({
+    where: { id: keep, userId },
+    select: { id: true },
+  });
+  if (!owned) return 0;
+  const result = await prisma.refreshToken.updateMany({
+    where: { userId, revokedAt: null, NOT: { id: keep } },
+    data: { revokedAt: new Date() },
+  });
+  return result.count;
+}
+
+export async function refreshSessionIdFromRawToken(token: string): Promise<string | null> {
+  const raw = String(token ?? "").trim();
+  if (!raw) return null;
+  const tokenHash = sha256Hex(raw);
+  const row = await prisma.refreshToken.findUnique({
+    where: { tokenHash },
+    select: { id: true, userId: true, revokedAt: true, expiresAt: true },
+  });
+  if (!row || row.revokedAt != null || row.expiresAt.getTime() <= Date.now()) return null;
+  return row.id;
+}
+
+/**
  * Rotates a refresh token inside a transaction (race-safe).
  * Reuse of a revoked refresh token revokes all refresh sessions for that user.
  */

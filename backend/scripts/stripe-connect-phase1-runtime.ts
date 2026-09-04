@@ -195,6 +195,32 @@ function runStatusDerivation() {
       expect: StripeConnectStatus.ready,
     },
     {
+      id: "status-ready-despite-past-due",
+      input: {
+        hasAccount: true,
+        chargesEnabled: true,
+        payoutsEnabled: true,
+        detailsSubmitted: true,
+        currentlyDueCount: 0,
+        pastDueCount: 16,
+        disabledReason: "requirements.past_due",
+      },
+      expect: StripeConnectStatus.ready,
+    },
+    {
+      id: "status-restricted-past-due",
+      input: {
+        hasAccount: true,
+        chargesEnabled: false,
+        payoutsEnabled: false,
+        detailsSubmitted: true,
+        currentlyDueCount: 0,
+        pastDueCount: 16,
+        disabledReason: "requirements.past_due",
+      },
+      expect: StripeConnectStatus.restricted,
+    },
+    {
       id: "status-restricted-disabled",
       input: {
         hasAccount: true,

@@ -16,6 +16,9 @@ import {
   PLAN_CAPABILITY_REQUIRED_CODE,
   PLAN_LIMIT_EXCEEDED_CODE,
   SUBSCRIPTION_REQUIRED_CODE,
+  MFA_INVALID_CODE,
+  MFA_CHALLENGE_EXPIRED,
+  MFA_CHALLENGE_INVALID,
 } from "./apiError";
 import { translateFriendlyMessageToDe } from "./friendlyMessageDe";
 
@@ -164,6 +167,22 @@ const ERROR_MAP: Record<string, string> = {
   "Authentication required": "Please sign in to continue.",
   "Invalid or expired token": "Your session has expired. Please sign in again.",
   "Insufficient permissions": "You don't have permission to do this.",
+  [MFA_INVALID_CODE]:
+    "Invalid authentication code. Please check your authenticator app and try again.",
+  [MFA_CHALLENGE_EXPIRED]: "Your verification session has expired. Please sign in again.",
+  [MFA_CHALLENGE_INVALID]: "Your verification session is no longer valid. Please sign in again.",
+  "Invalid authentication code. Please check your authenticator app and try again.":
+    "Invalid authentication code. Please check your authenticator app and try again.",
+  "Your verification session has expired. Please sign in again.":
+    "Your verification session has expired. Please sign in again.",
+  "Your verification session is no longer valid. Please sign in again.":
+    "Your verification session is no longer valid. Please sign in again.",
+  "We couldn't verify your code right now. Please try again.":
+    "We couldn't verify your code right now. Please try again.",
+  "Too many verification attempts. Please try again later.":
+    "Too many verification attempts. Please wait a moment and try again.",
+  "Too many failed verification attempts. Please try again later.":
+    "Too many verification attempts. Please wait a moment and try again.",
 
   // Business / employees
   "Only business owners can add employees": "Only business owners can add employees.",

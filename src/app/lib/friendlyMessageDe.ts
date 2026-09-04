@@ -56,6 +56,16 @@ export const FRIENDLY_MESSAGE_DE: Record<string, string> = {
     "Konto konnte nicht erstellt werden. Wenn Sie bereits ein CareTip-Konto haben, melden Sie sich an oder nutzen Sie „Passwort vergessen“.",
   "Incorrect email or password. Please try again.":
     "E-Mail oder Passwort ist nicht korrekt. Bitte versuchen Sie es erneut.",
+  "Invalid authentication code. Please check your authenticator app and try again.":
+    "Ungültiger Authentifizierungscode. Bitte überprüfen Sie Ihre Authenticator-App und versuchen Sie es erneut.",
+  "Your verification session has expired. Please sign in again.":
+    "Ihre Verifizierungssitzung ist abgelaufen. Bitte melden Sie sich erneut an.",
+  "Your verification session is no longer valid. Please sign in again.":
+    "Ihre Verifizierungssitzung ist nicht mehr gültig. Bitte melden Sie sich erneut an.",
+  "We couldn't verify your code right now. Please try again.":
+    "Ihr Code konnte gerade nicht überprüft werden. Bitte versuchen Sie es erneut.",
+  "Too many verification attempts. Please wait a moment and try again.":
+    "Zu viele Versuche. Bitte warten Sie einen Moment und versuchen Sie es erneut.",
   "Name can't be empty.": "Der Name darf nicht leer sein.",
   "One or more selected tables aren’t valid.": "Ein oder mehrere ausgewählte Tische sind ungültig.",
   "Only business owners can add employees.": "Nur Inhaber können Mitarbeitende hinzufügen.",

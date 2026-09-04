@@ -7,6 +7,7 @@ import { AuthCardBrandMark } from "@/app/components/auth/AuthCardBrandMark";
 import { useAuth, getPostAuthRedirect } from "../../hooks/useAuth";
 import { toUserFriendlyMessage } from "../../lib/errorMessages";
 import { isApiRequestError, EMAIL_NOT_VERIFIED_CODE } from "../../lib/apiError";
+import { classifyMfaVerifyFailure, MFA_CHALLENGE_INVALID } from "../../lib/mfaLoginErrors";
 import { logClientError } from "../../lib/clientLog";
 import { isPlatformAdminSessionRole, shouldShowLoginSessionResumeUi } from "../../lib/authSession";
 import { shouldShowAuthBootstrapShell } from "../../lib/authBootstrapUi";
@@ -162,8 +163,8 @@ export function PlatformAdminLoginPage() {
   const handleMfaSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
-    const code = mfaCode.trim();
-    if (!pendingMfaToken || !code) {
+    const code = mfaCode.replace(/\D/g, "").slice(0, 6);
+    if (!pendingMfaToken || code.length !== 6) {
       setError(t("admin.loginPage.mfaCodeRequired", { defaultValue: "Enter the 6-digit code from your authenticator app." }));
       return;
     }
@@ -181,8 +182,27 @@ export function PlatformAdminLoginPage() {
       await redirectAfterAuth();
       return;
     } catch (err) {
-      logClientError("PlatformAdminLoginPage.mfa", err);
-      setError(toUserFriendlyMessage(err));
+      const kind = classifyMfaVerifyFailure(err);
+      if (kind === "unavailable" || kind === "rate_limited") {
+        logClientError("PlatformAdminLoginPage.mfa", err);
+      }
+      if (kind === "challenge_ended") {
+        setPendingMfaToken("");
+        setMfaStep("password");
+        setQrDataUrl("");
+        setMfaCode("");
+        const invalidChallenge = isApiRequestError(err) && err.code === MFA_CHALLENGE_INVALID;
+        setError(
+          t(invalidChallenge ? "auth.page.mfaChallengeInvalid" : "auth.page.mfaChallengeExpired"),
+        );
+      } else if (kind === "invalid_code") {
+        setMfaCode("");
+        setError(t("auth.page.mfaInvalidCode"));
+      } else if (kind === "rate_limited") {
+        setError(t("auth.page.mfaRateLimited"));
+      } else {
+        setError(t("auth.page.mfaVerifyUnavailable"));
+      }
     } finally {
       authInFlightRef.current = false;
       if (!postAuthRedirectRef.current) {
@@ -378,9 +398,9 @@ export function PlatformAdminLoginPage() {
                     type="text"
                     inputMode="numeric"
                     autoComplete="one-time-code"
-                    maxLength={8}
+                    maxLength={6}
                     value={mfaCode}
-                    onChange={(e) => setMfaCode(e.target.value.replace(/\s/g, ""))}
+                    onChange={(e) => setMfaCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
                     className={FIELD_CLASS}
                   />
 
@@ -392,7 +412,7 @@ export function PlatformAdminLoginPage() {
 
                   <button
                     type="submit"
-                    disabled={submitting}
+                    disabled={submitting || mfaCode.replace(/\D/g, "").length !== 6}
                     className={cn(caretipBtnPrimaryFull, "caretip-auth-submit relative disabled:cursor-not-allowed")}
                   >
                     {submitting ? (

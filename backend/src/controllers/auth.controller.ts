@@ -18,10 +18,13 @@ import {
   parseCookie,
   refreshCookieMaxAgeMs,
   refreshCookieName,
+  refreshSessionIdFromRawToken,
   rotateRefreshToken,
   revokeRefreshTokenAndGetUserId,
   revokeAllRefreshTokensForUser,
+  revokeOtherRefreshTokensForUser,
   setRefreshCookie,
+  CARETIP_REFRESH_HEADER,
 } from "../services/refreshToken.service.js";
 import {
   logServerError,
@@ -36,6 +39,15 @@ import {
 } from "../services/authDisclosureMessages.js";
 import * as auditService from "../services/audit.service.js";
 import * as mfaLoginService from "../services/mfaLogin.service.js";
+import {
+  MFA_CHALLENGE_EXPIRED,
+  MFA_CHALLENGE_EXPIRED_MESSAGE,
+  MFA_CHALLENGE_INVALID,
+  MFA_CHALLENGE_INVALID_MESSAGE,
+  MFA_INVALID_CODE,
+  MFA_INVALID_CODE_MESSAGE,
+  MFA_VERIFY_UNAVAILABLE_MESSAGE,
+} from "../constants/mfaErrors.js";
 import {
   extractLoginRequestContext,
   handlePostLoginNotifications,
@@ -59,27 +71,41 @@ async function issueRefreshSessionForUser(
   return result;
 }
 
+function jsonMfaLoginChallenge(
+  req: Request,
+  res: Response,
+  user: {
+    id: string;
+    twoFactorEnabled: boolean;
+    role: Awaited<ReturnType<typeof authService.validateLoginCredentials>>["role"];
+    isPlatformAdmin: boolean;
+  },
+) {
+  const mfaSetupRequired = mfaLoginService.mfaSetupRequiredForLogin(user);
+  const pendingMfaToken = mfaLoginService.signPendingMfaLoginToken(user.id);
+  void auditService.writeAuditLog({
+    userId: user.id,
+    action: "mfa.login.challenge",
+    metadata: JSON.stringify({
+      method: req.method,
+      path: req.originalUrl ?? req.url,
+      mfaSetupRequired,
+    }),
+  });
+  return res.json({
+    mfaRequired: true,
+    mfaSetupRequired,
+    pendingMfaToken,
+  });
+}
+
 async function respondAfterPasswordLogin(
   req: Request,
   res: Response,
   user: Awaited<ReturnType<typeof authService.validateLoginCredentials>>,
 ) {
-  if (mfaLoginService.isPlatformAdminAccount(user)) {
-    const pendingMfaToken = mfaLoginService.signPendingMfaLoginToken(user.id);
-    void auditService.writeAuditLog({
-      userId: user.id,
-      action: "mfa.login.challenge",
-      metadata: JSON.stringify({
-        method: req.method,
-        path: req.originalUrl ?? req.url,
-        mfaSetupRequired: user.twoFactorEnabled !== true,
-      }),
-    });
-    return res.json({
-      mfaRequired: true,
-      mfaSetupRequired: user.twoFactorEnabled !== true,
-      pendingMfaToken,
-    });
+  if (mfaLoginService.needsMfaLoginChallenge(user)) {
+    return jsonMfaLoginChallenge(req, res, user);
   }
 
   try {
@@ -139,6 +165,64 @@ async function verifyTotpWithLockout(
 
 function mfaLockedResponse(res: Response) {
   return res.status(429).json({ message: mfaLockoutMessage() });
+}
+
+function respondMfaChallengeFailure(res: Response, reason: "expired" | "invalid") {
+  if (reason === "expired") {
+    return res.status(401).json({
+      message: MFA_CHALLENGE_EXPIRED_MESSAGE,
+      code: MFA_CHALLENGE_EXPIRED,
+    });
+  }
+  return res.status(401).json({
+    message: MFA_CHALLENGE_INVALID_MESSAGE,
+    code: MFA_CHALLENGE_INVALID,
+  });
+}
+
+function respondInvalidTotp(res: Response, status: 400 | 401) {
+  return res.status(status).json({
+    message: MFA_INVALID_CODE_MESSAGE,
+    code: MFA_INVALID_CODE,
+  });
+}
+
+/** Keep the current refresh session; revoke other devices. Never guesses a session id. */
+async function resolveCurrentRefreshSessionId(req: Request, userId: string): Promise<string | null> {
+  const sid = typeof req.user?.sid === "string" ? req.user.sid.trim() : "";
+  if (sid) {
+    const owned = await prisma.refreshToken.findFirst({
+      where: {
+        id: sid,
+        userId,
+        revokedAt: null,
+        expiresAt: { gt: new Date() },
+      },
+      select: { id: true },
+    });
+    if (owned) return owned.id;
+  }
+
+  const headerRaw = req.get(CARETIP_REFRESH_HEADER)?.trim() || "";
+  const cookieRaw = parseCookie(req.headers.cookie, refreshCookieName()) ?? "";
+  for (const raw of [cookieRaw, headerRaw]) {
+    if (!raw) continue;
+    const id = await refreshSessionIdFromRawToken(raw);
+    if (!id) continue;
+    const owned = await prisma.refreshToken.findFirst({
+      where: { id, userId, revokedAt: null, expiresAt: { gt: new Date() } },
+      select: { id: true },
+    });
+    if (owned) return owned.id;
+  }
+  return null;
+}
+
+function sessionRequiredForMfaChange(res: Response) {
+  return res.status(401).json({
+    message: "Please sign in again to continue.",
+    code: "SESSION_STALE",
+  });
 }
 
 function isForbiddenSuperAdminRolePayload(body: Record<string, unknown>): boolean {
@@ -279,7 +363,7 @@ export async function login(req: Request, res: Response) {
         .catch(() => {});
     }
 
-    if (!mfaLoginService.isPlatformAdminAccount(user)) {
+    if (!mfaLoginService.needsMfaLoginChallenge(user)) {
       void (async () => {
         try {
           const { ip, userAgent } = extractLoginRequestContext(req);
@@ -346,11 +430,9 @@ export async function loginMfaSetup(req: Request, res: Response) {
     if (!pendingMfaToken) {
       return res.status(400).json({ message: "pendingMfaToken is required" });
     }
-    const userId = mfaLoginService.userIdFromPendingMfaLoginToken(pendingMfaToken);
-    if (!userId) {
-      return res.status(401).json({ message: "Authentication required" });
-    }
-    const admin = await mfaLoginService.loadPlatformAdminForMfaLogin(userId);
+    const parsed = mfaLoginService.parsePendingMfaLoginToken(pendingMfaToken);
+    if (!parsed.ok) return respondMfaChallengeFailure(res, parsed.reason);
+    const admin = await mfaLoginService.loadPlatformAdminForMfaLogin(parsed.userId);
     if (!admin) {
       return res.status(403).json({ message: "Insufficient permissions" });
     }
@@ -376,7 +458,7 @@ export async function loginMfaSetup(req: Request, res: Response) {
     return res.json({ otpauthUrl, qrDataUrl });
   } catch (err) {
     logServerError("auth.loginMfaSetup", err);
-    return res.status(400).json({ message: clientSafeMessage(err, CLIENT_FALLBACK.loginUnexpected) });
+    return res.status(503).json({ message: MFA_VERIFY_UNAVAILABLE_MESSAGE });
   }
 }
 
@@ -384,15 +466,14 @@ export async function loginMfaEnable(req: Request, res: Response) {
   try {
     const body = req.body as { pendingMfaToken?: unknown; code?: unknown };
     const pendingMfaToken = String(body.pendingMfaToken ?? "").trim();
-    const code = String(body.code ?? "").trim();
-    if (!pendingMfaToken || !code) {
+    if (!pendingMfaToken) {
       return res.status(400).json({ message: "pendingMfaToken and code are required" });
     }
-    const userId = mfaLoginService.userIdFromPendingMfaLoginToken(pendingMfaToken);
-    if (!userId) {
-      return res.status(401).json({ message: "Authentication required" });
-    }
-    const admin = await mfaLoginService.loadPlatformAdminForMfaLogin(userId);
+    const parsed = mfaLoginService.parsePendingMfaLoginToken(pendingMfaToken);
+    if (!parsed.ok) return respondMfaChallengeFailure(res, parsed.reason);
+    const code = mfaLoginService.normalizeLoginTotp(body.code);
+    if (!code) return respondInvalidTotp(res, 400);
+    const admin = await mfaLoginService.loadPlatformAdminForMfaLogin(parsed.userId);
     if (!admin) {
       return res.status(403).json({ message: "Insufficient permissions" });
     }
@@ -410,8 +491,14 @@ export async function loginMfaEnable(req: Request, res: Response) {
         action: "mfa.login.enable_failed",
         metadata: JSON.stringify({ reason: "invalid_code" }),
       });
-      return res.status(400).json({ message: "Invalid verification code" });
+      return respondInvalidTotp(res, 400);
     }
+
+    const consumed = await mfaLoginService.consumeMfaChallengeJti(parsed.jti);
+    if (consumed === "unavailable") {
+      return res.status(503).json({ message: MFA_VERIFY_UNAVAILABLE_MESSAGE });
+    }
+    if (consumed !== "consumed") return respondMfaChallengeFailure(res, "invalid");
 
     await prisma.user.update({
       where: { id: admin.id },
@@ -445,7 +532,7 @@ export async function loginMfaEnable(req: Request, res: Response) {
     return res.json(result);
   } catch (err) {
     logServerError("auth.loginMfaEnable", err);
-    return res.status(400).json({ message: clientSafeMessage(err, CLIENT_FALLBACK.loginUnexpected) });
+    return res.status(503).json({ message: MFA_VERIFY_UNAVAILABLE_MESSAGE });
   }
 }
 
@@ -453,50 +540,55 @@ export async function loginMfaVerify(req: Request, res: Response) {
   try {
     const body = req.body as { pendingMfaToken?: unknown; code?: unknown };
     const pendingMfaToken = String(body.pendingMfaToken ?? "").trim();
-    const code = String(body.code ?? "").trim();
-    if (!pendingMfaToken || !code) {
+    if (!pendingMfaToken) {
       return res.status(400).json({ message: "pendingMfaToken and code are required" });
     }
-    const userId = mfaLoginService.userIdFromPendingMfaLoginToken(pendingMfaToken);
-    if (!userId) {
-      return res.status(401).json({ message: "Authentication required" });
-    }
-    const admin = await mfaLoginService.loadPlatformAdminForMfaLogin(userId);
-    if (!admin) {
+    const parsed = mfaLoginService.parsePendingMfaLoginToken(pendingMfaToken);
+    if (!parsed.ok) return respondMfaChallengeFailure(res, parsed.reason);
+    const code = mfaLoginService.normalizeLoginTotp(body.code);
+    if (!code) return respondInvalidTotp(res, 401);
+    const mfaUser = await mfaLoginService.loadUserForMfaVerify(parsed.userId);
+    if (!mfaUser) {
       return res.status(403).json({ message: "Insufficient permissions" });
     }
-    if (!admin.twoFactorEnabled || !admin.twoFactorSecret) {
+    if (!mfaUser.twoFactorEnabled || !mfaUser.twoFactorSecret) {
       return res.status(403).json({
         message: "MFA setup is required before signing in.",
         code: "MFA_SETUP_REQUIRED",
       });
     }
-    const outcome = await verifyTotpWithLockout(admin.id, () =>
-      mfaLoginService.verifyTotpCode(admin.twoFactorSecret!, code),
+    const outcome = await verifyTotpWithLockout(mfaUser.id, () =>
+      mfaLoginService.verifyTotpCode(mfaUser.twoFactorSecret!, code),
     );
     if (outcome === "locked") return mfaLockedResponse(res);
     if (outcome === "invalid") {
       void auditService.writeAuditLog({
-        userId: admin.id,
+        userId: mfaUser.id,
         action: "mfa.login.verify_failed",
         metadata: JSON.stringify({ reason: "invalid_code" }),
       });
-      return res.status(401).json({ message: "Invalid verification code" });
+      return respondInvalidTotp(res, 401);
     }
 
+    const consumed = await mfaLoginService.consumeMfaChallengeJti(parsed.jti);
+    if (consumed === "unavailable") {
+      return res.status(503).json({ message: MFA_VERIFY_UNAVAILABLE_MESSAGE });
+    }
+    if (consumed !== "consumed") return respondMfaChallengeFailure(res, "invalid");
+
     void auditService.writeAuditLog({
-      userId: admin.id,
+      userId: mfaUser.id,
       action: "mfa.login.success",
       metadata: JSON.stringify({ path: req.originalUrl ?? req.url }),
     });
 
-    const result = await issueRefreshSessionForUser(res, admin.id);
+    const result = await issueRefreshSessionForUser(res, mfaUser.id);
     void (async () => {
       try {
         const { ip, userAgent } = extractLoginRequestContext(req);
         await handlePostLoginNotifications({
-          userId: admin.id,
-          email: admin.email,
+          userId: mfaUser.id,
+          email: mfaUser.email,
           ip,
           userAgent,
         });
@@ -507,7 +599,7 @@ export async function loginMfaVerify(req: Request, res: Response) {
     return res.json(result);
   } catch (err) {
     logServerError("auth.loginMfaVerify", err);
-    return res.status(400).json({ message: clientSafeMessage(err, CLIENT_FALLBACK.loginUnexpected) });
+    return res.status(503).json({ message: MFA_VERIFY_UNAVAILABLE_MESSAGE });
   }
 }
 
@@ -531,8 +623,14 @@ export async function twoFactorSetup(req: Request, res: Response) {
     const userId = req.user?.userId ?? req.user?.id;
     if (!userId) return res.status(401).json({ message: "Authentication required" });
 
-    const user = await prisma.user.findUnique({ where: { id: userId }, select: { email: true } });
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { email: true, twoFactorEnabled: true },
+    });
     if (!user?.email) return res.status(404).json({ message: "User not found" });
+    if (user.twoFactorEnabled === true) {
+      return res.status(409).json({ message: "Two-factor authentication is already enabled." });
+    }
 
     const secret = speakeasy.generateSecret({
       name: `CareTip (${user.email})`,
@@ -550,7 +648,7 @@ export async function twoFactorSetup(req: Request, res: Response) {
     return res.json({ otpauthUrl, qrDataUrl });
   } catch (err) {
     logServerError("auth.twoFactorSetup", err);
-    return res.status(400).json({ message: clientSafeMessage(err, CLIENT_FALLBACK.loginUnexpected) });
+    return res.status(503).json({ message: MFA_VERIFY_UNAVAILABLE_MESSAGE });
   }
 }
 
@@ -558,28 +656,29 @@ export async function twoFactorEnable(req: Request, res: Response) {
   try {
     const userId = req.user?.userId ?? req.user?.id;
     if (!userId) return res.status(401).json({ message: "Authentication required" });
-    const code = String((req.body as { code?: unknown })?.code ?? "").trim();
-    if (!code) return res.status(400).json({ message: "Verification code is required" });
+    const code = mfaLoginService.normalizeLoginTotp((req.body as { code?: unknown })?.code);
+    if (!code) return respondInvalidTotp(res, 400);
 
     const u = await prisma.user.findUnique({
       where: { id: userId },
-      select: { twoFactorTempSecret: true },
+      select: { twoFactorTempSecret: true, twoFactorEnabled: true },
     });
+    if (u?.twoFactorEnabled === true) {
+      return res.status(409).json({ message: "Two-factor authentication is already enabled." });
+    }
     const temp = u?.twoFactorTempSecret ?? null;
     if (!temp) return res.status(400).json({ message: "2FA setup has not been started" });
 
     const outcome = await verifyTotpWithLockout(userId, () =>
-      speakeasy.totp.verify({
-        secret: temp,
-        encoding: "base32",
-        token: code,
-        window: 1,
-      }),
+      mfaLoginService.verifyTotpCode(temp, code),
     );
     if (outcome === "locked") return mfaLockedResponse(res);
     if (outcome === "invalid") {
-      return res.status(400).json({ message: "Invalid verification code" });
+      return respondInvalidTotp(res, 400);
     }
+
+    const keepSessionId = await resolveCurrentRefreshSessionId(req, userId);
+    if (!keepSessionId) return sessionRequiredForMfaChange(res);
 
     await prisma.user.update({
       where: { id: userId },
@@ -590,10 +689,18 @@ export async function twoFactorEnable(req: Request, res: Response) {
       },
     });
 
+    const otherRevoked = await revokeOtherRefreshTokensForUser(userId, keepSessionId);
+
+    void auditService.writeAuditLog({
+      userId,
+      action: "mfa.enabled",
+      metadata: JSON.stringify({ path: req.originalUrl ?? req.url, otherSessionsRevoked: otherRevoked }),
+    });
+
     return res.json({ enabled: true });
   } catch (err) {
     logServerError("auth.twoFactorEnable", err);
-    return res.status(400).json({ message: clientSafeMessage(err, CLIENT_FALLBACK.loginUnexpected) });
+    return res.status(503).json({ message: MFA_VERIFY_UNAVAILABLE_MESSAGE });
   }
 }
 
@@ -601,8 +708,8 @@ export async function twoFactorDisable(req: Request, res: Response) {
   try {
     const userId = req.user?.userId ?? req.user?.id;
     if (!userId) return res.status(401).json({ message: "Authentication required" });
-    const code = String((req.body as { code?: unknown })?.code ?? "").trim();
-    if (!code) return res.status(400).json({ message: "Verification code is required" });
+    const code = mfaLoginService.normalizeLoginTotp((req.body as { code?: unknown })?.code);
+    if (!code) return respondInvalidTotp(res, 400);
 
     const u = await prisma.user.findUnique({
       where: { id: userId },
@@ -620,27 +727,33 @@ export async function twoFactorDisable(req: Request, res: Response) {
 
     const secret = u.twoFactorSecret;
     const outcome = await verifyTotpWithLockout(userId, () =>
-      speakeasy.totp.verify({
-        secret,
-        encoding: "base32",
-        token: code,
-        window: 1,
-      }),
+      mfaLoginService.verifyTotpCode(secret, code),
     );
     if (outcome === "locked") return mfaLockedResponse(res);
     if (outcome === "invalid") {
-      return res.status(400).json({ message: "Invalid verification code" });
+      return respondInvalidTotp(res, 400);
     }
+
+    const keepSessionId = await resolveCurrentRefreshSessionId(req, userId);
+    if (!keepSessionId) return sessionRequiredForMfaChange(res);
 
     await prisma.user.update({
       where: { id: userId },
       data: { twoFactorEnabled: false, twoFactorSecret: null, twoFactorTempSecret: null },
     });
 
+    const otherRevoked = await revokeOtherRefreshTokensForUser(userId, keepSessionId);
+
+    void auditService.writeAuditLog({
+      userId,
+      action: "mfa.disabled",
+      metadata: JSON.stringify({ path: req.originalUrl ?? req.url, otherSessionsRevoked: otherRevoked }),
+    });
+
     return res.json({ enabled: false });
   } catch (err) {
     logServerError("auth.twoFactorDisable", err);
-    return res.status(400).json({ message: clientSafeMessage(err, CLIENT_FALLBACK.loginUnexpected) });
+    return res.status(503).json({ message: MFA_VERIFY_UNAVAILABLE_MESSAGE });
   }
 }
 
@@ -758,6 +871,21 @@ export async function oauth(req: Request, res: Response) {
       },
       { acceptLanguage: req.get("accept-language") ?? undefined },
     );
+    if (oauthAuthService.isOAuthMfaPending(result)) {
+      const oauthMfaUser = await prisma.user.findUnique({
+        where: { id: result.userId },
+        select: {
+          id: true,
+          twoFactorEnabled: true,
+          role: true,
+          isPlatformAdmin: true,
+        },
+      });
+      if (!oauthMfaUser || !mfaLoginService.needsMfaLoginChallenge(oauthMfaUser)) {
+        return res.status(401).json({ message: AUTH_INVALID_CREDENTIALS_MESSAGE });
+      }
+      return jsonMfaLoginChallenge(req, res, oauthMfaUser);
+    }
     if (
       !result ||
       typeof result !== "object" ||
@@ -1263,6 +1391,13 @@ export async function activateEmployee(req: Request, res: Response) {
     }
 
     const result = await authService.activateEmployee(token, password);
+    const activatedMfa = await prisma.user.findUnique({
+      where: { id: result.user.id },
+      select: { id: true, twoFactorEnabled: true, role: true, isPlatformAdmin: true },
+    });
+    if (activatedMfa && mfaLoginService.needsMfaLoginChallenge(activatedMfa)) {
+      return jsonMfaLoginChallenge(req, res, activatedMfa);
+    }
     try {
       const rt = await issueRefreshToken(result.user.id);
       const session = await authService.authResultForUserId(result.user.id, {

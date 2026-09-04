@@ -1049,7 +1049,7 @@ export async function oauthAPI(payload: {
   location?: string;
   inviteCode?: string;
   locale?: "en" | "de";
-}): Promise<AuthResponse> {
+}): Promise<LoginApiResult> {
   const timeZone = getBrowserTimeZone();
   const raw = await apiRequest<unknown>(apiPath("/api/auth/oauth"), {
     method: "POST",
@@ -1071,6 +1071,9 @@ export async function oauthAPI(payload: {
     }),
     credentials: "include",
   });
+  if (isMfaLoginChallenge(raw)) {
+    return raw;
+  }
   const parsed = parseAuthResponsePayload(raw);
   if (!parsed) {
     logClientError("api.oauthAPI", new Error("Incomplete OAuth auth response"), {
@@ -3719,6 +3722,7 @@ export type PhysicalQrCatalogProduct = {
   name: string;
   description: string;
   templateId: string;
+  previewAsset?: string | null;
   supportsAddress: boolean;
   active: boolean;
   orderable: boolean;

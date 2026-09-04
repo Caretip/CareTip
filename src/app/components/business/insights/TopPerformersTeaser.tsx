@@ -7,7 +7,9 @@ import { businessUi } from "../businessDashboardUi";
 import { formatEur } from "../../../lib/formatEur";
 import { cn } from "@/lib/utils";
 
-export const TOP_PERFORMERS_PAGE_PATH = "/dashboard/team/top-performers";
+import { TEAM_LEADERBOARD_HREF } from "../businessDashboardNav";
+
+export const TOP_PERFORMERS_PAGE_PATH = TEAM_LEADERBOARD_HREF;
 
 export const DASHBOARD_EMPLOYEE_TEASER_LIMIT = 3;
 
@@ -34,7 +36,7 @@ export function TopPerformersTeaser({ employees, loading }: TopPerformersTeaserP
           <Trophy className="h-4 w-4 text-primary" aria-hidden />
           {t("business.dashboard.topPerformers")}
         </CardTitle>
-        <DashboardViewAllLink to={TOP_PERFORMERS_PAGE_PATH}>
+        <DashboardViewAllLink to={TEAM_LEADERBOARD_HREF}>
           {t("business.dashboard.viewAllTopPerformers")}
         </DashboardViewAllLink>
       </CardHeader>

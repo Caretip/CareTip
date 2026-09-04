@@ -21,10 +21,11 @@ export class MfaVerifyLockedError extends Error {
 /** Call before processing a TOTP verify attempt (does not increment counters). */
 export async function assertMfaVerifyAllowed(userId: string): Promise<void> {
   const { lock } = securityRateLimits.mfaFailure;
+  const windowMs = lock.lockoutMs > 0 ? lock.lockoutMs : lock.windowMs;
   const peek = await peekLimitDistributed({
     key: failureKey(userId),
     maxPerWindow: lock.maxFailures,
-    windowMs: lock.windowMs,
+    windowMs,
   });
   if (!peek.allowed) {
     throw new MfaVerifyLockedError();
@@ -34,10 +35,11 @@ export async function assertMfaVerifyAllowed(userId: string): Promise<void> {
 /** Record a failed TOTP attempt; may activate lockout for the failure window. */
 export async function recordMfaVerifyFailure(userId: string): Promise<void> {
   const { lock } = securityRateLimits.mfaFailure;
+  const windowMs = lock.lockoutMs > 0 ? lock.lockoutMs : lock.windowMs;
   await checkAndIncrementLimitDistributed({
     key: failureKey(userId),
     maxPerWindow: lock.maxFailures,
-    windowMs: lock.windowMs,
+    windowMs,
   });
 }
 

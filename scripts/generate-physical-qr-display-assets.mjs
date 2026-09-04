@@ -13,10 +13,6 @@ const outDir = join(srcDir, "display");
 
 const MASTERS = [
   "caretip-a5-artwork.png",
-  "caretip_classic.png",
-  "caretip-light.png",
-  "caretip-midnight.png",
-  "caretip-nature.png",
 ];
 
 const VARIANTS = [

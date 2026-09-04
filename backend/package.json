@@ -40,6 +40,7 @@
     "test:activity-center-phase-b": "dotenv -e ../.env -e .env -- tsx scripts/activity-center-phase-b-runtime.ts",
     "test:sprint4-tenant-isolation": "dotenv -e ../.env -e .env -- tsx scripts/sprint4-tenant-isolation-runtime.ts",
     "test:security-hardening": "dotenv -e ../.env -e .env -- tsx scripts/security-hardening-runtime.ts",
+    "test:business-2fa-login": "dotenv -e ../.env -e .env -- tsx scripts/business-2fa-login-runtime.ts",
     "test:auth-enumeration": "dotenv -e ../.env -e .env -- tsx scripts/auth-enumeration-disclosure-runtime.ts",
     "test:lead-contact-email": "dotenv -e ../.env -e .env -- tsx scripts/lead-contact-email-runtime.ts",
     "test:n1-query": "tsx scripts/n1-query-regression-runtime.ts",

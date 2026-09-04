@@ -179,11 +179,11 @@ const payoutHint = en?.business?.billing?.payouts?.hint as string | undefined;
 const tipsSubtitle = en?.business?.tips?.subtitle as string | undefined;
 const liveDesc = en?.business?.tips?.liveDesc as string | undefined;
 
-if (statusIncomplete === "Stripe setup incomplete") {
+if (statusIncomplete === "Action Required") {
   pass("Stripe incomplete status is one short line");
 } else fail(`Stripe incomplete status unexpected: ${statusIncomplete}`);
 
-if (statusReady === "Stripe ready") {
+if (statusReady === "Connected & Ready") {
   pass("Stripe ready status is one short line");
 } else fail(`Stripe ready status unexpected: ${statusReady}`);
 

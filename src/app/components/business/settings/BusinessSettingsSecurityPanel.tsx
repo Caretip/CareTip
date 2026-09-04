@@ -209,9 +209,10 @@ export function BusinessSettingsSecurityPanel({ loading, twoFactorEnabled, setTw
             <div className="space-y-3">
               <input
                 value={twoFactorCode}
-                onChange={(e) => setTwoFactorCode(e.target.value)}
+                onChange={(e) => setTwoFactorCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
                 placeholder={t("business.accountSettings.phCode")}
                 inputMode="numeric"
+                maxLength={6}
                 className="w-full rounded-lg border border-border px-4 py-3 text-sm"
               />
               <button
@@ -242,8 +243,10 @@ export function BusinessSettingsSecurityPanel({ loading, twoFactorEnabled, setTw
           <div className="mt-6 space-y-3 rounded-lg border border-border bg-muted/20 p-4">
             <input
               value={twoFactorCode}
-              onChange={(e) => setTwoFactorCode(e.target.value)}
+              onChange={(e) => setTwoFactorCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
               placeholder={t("business.accountSettings.phCode")}
+              inputMode="numeric"
+              maxLength={6}
               className="w-full rounded-lg border border-border px-4 py-3 text-sm"
             />
             <div className="flex gap-2">

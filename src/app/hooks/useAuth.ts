@@ -17,6 +17,7 @@ import {
   markLogoutPending,
   type AuthResponse,
   type LoginApiResult,
+  type MfaLoginChallenge,
 } from "../lib/api";
 import { getMemoryAccessToken, subscribeMemoryAccessToken } from "../lib/accessTokenStore";
 import {
@@ -435,7 +436,7 @@ export function useAuth() {
       location?: string;
       inviteCode?: string;
     }
-  ): Promise<User> => {
+  ): Promise<User | MfaLoginChallenge> => {
     const data = await oauthAPI({
       provider,
       idToken,
@@ -448,6 +449,9 @@ export function useAuth() {
       inviteCode: options.inviteCode,
       locale: requestLocale,
     });
+    if (isMfaLoginChallenge(data)) {
+      return data;
+    }
     const u = persistAuthResponse(data);
     bumpSessionEpoch();
     commitAuthUser(u);

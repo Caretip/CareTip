@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
-import { ShoppingBag, Trash2, Minus, Plus, Eye } from "lucide-react";
+import { ShoppingBag, Trash2, Minus, Plus, Eye, ChevronDown } from "lucide-react";
 import { performExternalStripeRedirect } from "@/app/lib/externalStripeRedirect";
 import { ApiRequestError } from "@/app/lib/apiError";
 import {
@@ -16,6 +16,7 @@ import {
   resolvePhysicalQrContext,
   type PhysicalQrCatalogProduct,
   type PhysicalQrContextOptions,
+  type ConnectStatus,
 } from "@/app/lib/api";
 import {
   readPrintQrStudioSnapshot,
@@ -57,10 +58,23 @@ import {
 import { businessUi } from "@/app/components/business/businessDashboardUi";
 import { PrintQrStudioSkeleton } from "@/app/components/business/qr-studio/QrStudioLoadingSkeletons";
 import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/app/components/ui/collapsible";
+import {
   parseQrStudioPrintFocus,
   printFocusForGroup,
   printFocusSectionId,
 } from "@/app/lib/qrStudioNav";
+import {
+  fetchConnectStatusCached,
+  readConnectStatusSnapshot,
+} from "@/app/lib/stripeConnectStatusCache";
+import {
+  stripeConnectPrintBadgeKey,
+  stripeConnectTrafficLight,
+} from "@/app/lib/stripeConnectPresentation";
 
 export type PrintCartLine = PrintQrStudioCartLine;
 
@@ -115,6 +129,9 @@ export function PrintQrStudio() {
   const sharedQrDataUrl = useSharedPhysicalQrDataUrl(previewTargetUrl, businessId);
   const [serverQuote, setServerQuote] = useState<PhysicalQrQuote | null>(null);
   const [previewProductId, setPreviewProductId] = useState<string | null>(null);
+  const [designFilter, setDesignFilter] = useState("all");
+  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({});
+  const [connectStatus, setConnectStatus] = useState<ConnectStatus | null>(() => readConnectStatusSnapshot());
   const hydratedBusinessIdRef = useRef<string | null>(initialSnapshot?.businessId ?? null);
 
   const product = products.find((p) => p.id === productId) ?? products[0] ?? null;
@@ -134,6 +151,42 @@ export function PrintQrStudio() {
     },
     [t],
   );
+
+  const designOptions = useMemo(() => {
+    const seen = new Set<string>();
+    const options: { id: string; label: string }[] = [];
+    for (const item of products) {
+      if (seen.has(item.templateId)) continue;
+      seen.add(item.templateId);
+      options.push({
+        id: item.templateId,
+        label: physicalQrTemplateDisplayName(t, {
+          templateId: item.templateId,
+          productName: item.name,
+        }),
+      });
+    }
+    return options;
+  }, [products, t]);
+
+  const visibleProducts = useMemo(() => {
+    return products.filter((item) => {
+      if (designFilter !== "all" && item.templateId !== designFilter) return false;
+      return true;
+    });
+  }, [designFilter, products]);
+
+  useEffect(() => {
+    let cancelled = false;
+    void fetchConnectStatusCached()
+      .then((status) => {
+        if (!cancelled) setConnectStatus(status);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   useEffect(() => {
     if (!businessId) return;
@@ -565,7 +618,7 @@ export function PrintQrStudio() {
 
   if (bootLoading) {
     return (
-      <div className="print-qr-studio min-w-0 w-full max-w-full space-y-8 max-lg:space-y-5">
+      <div className="print-qr-studio min-w-0 w-full max-w-full space-y-4 max-lg:space-y-4">
         <p className="text-sm text-muted-foreground">{t("business.qrStudio.print.intro")}</p>
         <PrintQrStudioSkeleton />
       </div>
@@ -574,7 +627,7 @@ export function PrintQrStudio() {
 
   if (loadError) {
     return (
-      <div className="print-qr-studio min-w-0 w-full max-w-full space-y-8 max-lg:space-y-5">
+      <div className="print-qr-studio min-w-0 w-full max-w-full space-y-4 max-lg:space-y-4">
         <p className="text-sm text-muted-foreground">{t("business.qrStudio.print.intro")}</p>
         <p className="text-sm text-destructive">{loadError}</p>
       </div>
@@ -582,84 +635,147 @@ export function PrintQrStudio() {
   }
 
   return (
-    <div className="print-qr-studio min-w-0 w-full max-w-full space-y-8 max-lg:space-y-5">
+    <div className="print-qr-studio min-w-0 w-full max-w-full space-y-4 max-lg:space-y-4">
       {step === "select" ? (
-        <p className="text-sm text-muted-foreground">{t("business.qrStudio.print.intro")}</p>
+        <div className="flex flex-col gap-1.5 sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-sm leading-snug text-muted-foreground">{t("business.qrStudio.print.intro")}</p>
+          {connectStatus ? (
+            <p
+              className={cn(
+                "shrink-0 text-xs font-medium",
+                stripeConnectTrafficLight(connectStatus) === "green" && "text-emerald-700 dark:text-emerald-400",
+                stripeConnectTrafficLight(connectStatus) === "yellow" && "text-amber-700 dark:text-amber-400",
+                stripeConnectTrafficLight(connectStatus) === "red" && "text-red-700 dark:text-red-400",
+              )}
+              role="status"
+            >
+              {t(stripeConnectPrintBadgeKey(connectStatus))}
+            </p>
+          ) : null}
+        </div>
       ) : null}
 
       {step === "select" ? (
-        <div className="space-y-8 max-lg:space-y-5">
-          <section className="space-y-3">
-            <div>
-              <h2 className="text-sm font-semibold text-foreground">{t("business.qrStudio.physical.chooseProduct")}</h2>
-              <p className="mt-1 text-xs text-muted-foreground">{t("business.qrStudio.physical.chooseProductHint")}</p>
+        <div className="print-qr-studio__workspace">
+          <section className="min-w-0 space-y-2">
+            <div className="space-y-1.5">
+              <h2 className="print-qr-studio__col-title">{t("business.qrStudio.physical.chooseProduct")}</h2>
+              <p className="text-xs leading-snug text-muted-foreground">{t("business.qrStudio.physical.chooseProductHint")}</p>
+              {designOptions.length > 1 ? (
+              <div className="flex flex-wrap gap-1" role="group" aria-label={t("business.qrStudio.print.designFilter")}>
+                <button
+                  type="button"
+                  className={cn(
+                    "inline-flex h-7 items-center rounded-md border px-2 text-[11px] font-medium",
+                    designFilter === "all" ? "border-foreground bg-foreground text-background" : "border-border",
+                  )}
+                  aria-pressed={designFilter === "all"}
+                  onClick={() => setDesignFilter("all")}
+                >
+                  {t("business.qrStudio.print.designFilterAll")}
+                </button>
+                {designOptions.map((opt) => (
+                  <button
+                    key={opt.id}
+                    type="button"
+                    className={cn(
+                      "inline-flex h-7 items-center rounded-md border px-2 text-[11px] font-medium",
+                      designFilter === opt.id ? "border-foreground bg-foreground text-background" : "border-border",
+                    )}
+                    aria-pressed={designFilter === opt.id}
+                    onClick={() => setDesignFilter(opt.id)}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+              ) : null}
             </div>
-            {products.length === 0 ? (
-              <p className="py-6 text-sm text-muted-foreground">{t("business.qrStudio.physical.noTemplates")}</p>
+            {visibleProducts.length === 0 ? (
+              <p className="py-3 text-sm text-muted-foreground">{t("business.qrStudio.physical.noTemplates")}</p>
             ) : (
-            <div className="grid min-w-0 grid-cols-1 gap-3 sm:grid-cols-2">
-              {products.map((item) => (
+            <div className="grid min-w-0 grid-cols-1 gap-2.5 min-[420px]:grid-cols-2">
+              {visibleProducts.map((item) => {
+                const selected = productId === item.id;
+                return (
                 <div
                   key={item.id}
                   className={cn(
-                    "min-w-0 rounded-lg border p-2 text-left transition-colors",
-                    productId === item.id
-                      ? "border-primary bg-primary/5 ring-1 ring-primary/20"
-                      : "border-border hover:border-primary/40",
+                    "print-qr-product-card flex min-w-0 flex-col rounded-md border p-2 text-left",
+                    selected ? "is-selected" : "border-border hover:border-foreground/30",
                   )}
                 >
-                  <button
-                    type="button"
-                    onClick={() => setProductId(item.id)}
-                    className="flex w-full min-w-0 flex-col items-center text-left"
-                    aria-pressed={productId === item.id}
-                    aria-label={templateLabel(item)}
-                  >
-                    <PhysicalQrPreview
-                      compact
-                      className="mx-auto w-full max-w-[8.5rem]"
-                      templateId={item.templateId}
-                      businessName={businessName}
-                      address={item.supportsAddress ? printAddress : null}
-                      supportsAddress={item.supportsAddress}
-                      colorTokens={PHYSICAL_QR_DEFAULT_COLOR_TOKENS}
-                      targetUrl={previewTargetUrl}
-                      qrDataUrl={sharedQrDataUrl}
-                    />
-                    <p className="mt-2 w-full min-w-0 break-words text-sm font-medium leading-tight">
+                  <div className="flex w-full min-w-0 flex-col items-center text-left">
+                    {item.previewAsset ? (
+                      <img
+                        src={item.previewAsset}
+                        alt=""
+                        loading="lazy"
+                        decoding="async"
+                        className="mx-auto h-auto w-full max-w-[8.5rem] object-contain"
+                      />
+                    ) : (
+                      <PhysicalQrPreview
+                        compact
+                        className="mx-auto w-full max-w-[8.5rem]"
+                        templateId={item.templateId}
+                        businessName={businessName}
+                        address={item.supportsAddress ? printAddress : null}
+                        supportsAddress={item.supportsAddress}
+                        colorTokens={PHYSICAL_QR_DEFAULT_COLOR_TOKENS}
+                        targetUrl={previewTargetUrl}
+                        qrDataUrl={sharedQrDataUrl}
+                      />
+                    )}
+                    <p className="mt-1.5 w-full min-w-0 break-words text-sm font-medium leading-tight">
                       {physicalQrTemplateDisplayName(t, {
                         templateId: item.templateId,
                         productName: item.name,
                       })}
                     </p>
-                    <p className="mt-0.5 w-full min-w-0 break-words text-xs text-muted-foreground">
-                      {item.supportsAddress
-                        ? t("business.qrStudio.physical.withAddress")
-                        : t("business.qrStudio.physical.withoutAddress")}
+                    <p className="mt-0.5 w-full min-w-0 break-words text-xs leading-snug text-muted-foreground">
+                      {item.description?.trim()
+                        ? item.description
+                        : item.supportsAddress
+                          ? t("business.qrStudio.physical.withAddress")
+                          : t("business.qrStudio.physical.withoutAddress")}
                     </p>
-                  </button>
-                  <button
-                    type="button"
-                    className="mt-1.5 inline-flex items-center gap-1 text-xs font-medium text-muted-foreground hover:text-foreground"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setPreviewProductId(item.id);
-                    }}
-                    aria-label={t("business.qrStudio.physical.previewTemplateAria", { name: templateLabel(item) })}
-                  >
-                    <Eye className="h-3.5 w-3.5" aria-hidden />
-                    {t("business.qrStudio.physical.previewAction")}
-                  </button>
+                  </div>
+                  <div className="mt-2 flex flex-wrap items-center gap-2">
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant={selected ? "default" : "outline"}
+                      className="h-8"
+                      aria-pressed={selected}
+                      aria-label={templateLabel(item)}
+                      onClick={() => setProductId(item.id)}
+                    >
+                      {selected
+                        ? t("business.qrStudio.print.selectedProduct")
+                        : t("business.qrStudio.print.selectProduct")}
+                    </Button>
+                    <button
+                      type="button"
+                      className="inline-flex min-h-8 items-center gap-1 text-xs font-medium text-muted-foreground hover:text-foreground"
+                      onClick={() => setPreviewProductId(item.id)}
+                      aria-label={t("business.qrStudio.physical.previewTemplateAria", { name: templateLabel(item) })}
+                    >
+                      <Eye className="h-3.5 w-3.5" aria-hidden />
+                      {t("business.qrStudio.physical.previewAction")}
+                    </button>
+                  </div>
                 </div>
-              ))}
+                );
+              })}
             </div>
             )}
           </section>
 
-          <section className="space-y-4">
-            <h2 className="text-sm font-semibold text-foreground">{t("business.qrStudio.print.selectQrCodes")}</h2>
+          <section className="min-w-0 space-y-2">
+            <h2 className="print-qr-studio__col-title">{t("business.qrStudio.print.selectQrCodes")}</h2>
             {!catalogHasItems ? (
-              <p className="py-6 text-sm text-muted-foreground">
+              <p className="py-3 text-sm text-muted-foreground">
                 {t("business.qrStudio.print.emptyLocation")}
               </p>
             ) : (
@@ -669,79 +785,101 @@ export function PrintQrStudio() {
                   const groupFocus = printFocusForGroup(group.items[0]!.qrContextType);
                   const isFocused = printFocus === groupFocus;
                   const isLocationGroup = group.items[0]?.qrContextType === "location";
+                  const assigned = group.items.filter((item) =>
+                    isSelected(item.qrContextType, item.qrSubjectId),
+                  ).length;
+                  const expanded = openGroups[group.title] ?? true;
                   return (
-                <div
+                <Collapsible
                   key={group.title}
+                  open={expanded}
+                  onOpenChange={(next) => setOpenGroups((prev) => ({ ...prev, [group.title]: next }))}
+                >
+                <div
                   id={printFocusSectionId(groupFocus)}
                   className={cn(
-                    "scroll-mt-24 space-y-1 rounded-lg transition-colors",
-                    isFocused && "bg-primary/[0.03] p-3 ring-2 ring-inset ring-primary/25",
+                    "scroll-mt-24 rounded-md border border-border/80",
+                    isFocused && "border-foreground/40 ring-1 ring-inset ring-foreground/15",
                   )}
                 >
-                  <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{group.title}</p>
+                  <CollapsibleTrigger type="button" className="flex min-h-10 w-full items-center justify-between gap-2 px-2.5 py-2 text-left">
+                    <span>
+                      <span className="block text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                        {group.title}
+                      </span>
+                      <span className="text-xs text-muted-foreground">
+                        {t("business.qrStudio.print.assignedCount", { count: assigned })}
+                      </span>
+                    </span>
+                    <ChevronDown
+                      className={cn("h-4 w-4 shrink-0 text-muted-foreground transition-transform", expanded && "rotate-180")}
+                      aria-hidden
+                    />
+                  </CollapsibleTrigger>
+                  <CollapsibleContent>
                   {!canMultiLocation && isLocationGroup ? (
-                    <p className="pb-1 text-[11px] leading-snug text-muted-foreground">
+                    <p className="px-2.5 pb-1.5 text-[11px] leading-snug text-muted-foreground">
                       {t("business.qrStudio.print.locationLocked", {
                         name: primaryLocationName || t("business.qrStudio.overview.businessTitle"),
                       })}
                     </p>
                   ) : null}
-                  <ul className="divide-y divide-border/80 border-y border-border/80">
+                  <ul className="border-t border-border/80">
                     {group.items.map((item) => {
                       const selected = isSelected(item.qrContextType, item.qrSubjectId);
+                      const lineId = cartLineKey(item.qrContextType, item.qrSubjectId);
                       return (
-                        <li key={cartLineKey(item.qrContextType, item.qrSubjectId)}>
-                          <button
-                            type="button"
-                            onClick={() =>
-                              toggleLine({
-                                id: cartLineKey(item.qrContextType, item.qrSubjectId),
-                                qrContextType: item.qrContextType,
-                                qrSubjectId: item.qrSubjectId,
-                                label: item.label,
-                                locationId: item.locationId,
-                                locationName: item.locationName,
-                              })
-                            }
-                            className={cn(
-                              "flex w-full min-w-0 items-start gap-3 py-2.5 text-left text-sm transition-colors",
-                              selected && "bg-primary/[0.04]",
-                            )}
-                          >
-                            <span
-                              className={cn(
-                                "mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded border text-xs",
-                                selected ? "border-primary bg-primary text-primary-foreground" : "border-border",
-                              )}
-                              aria-hidden
-                            >
-                              {selected ? "✓" : ""}
-                            </span>
+                        <li key={lineId} className="border-b border-border/60 last:border-b-0">
+                          <label className="flex min-h-10 w-full min-w-0 cursor-pointer items-center gap-2.5 px-2.5 py-2 text-sm">
+                            <input
+                              type="checkbox"
+                              className="h-4 w-4 shrink-0 accent-foreground"
+                              checked={selected}
+                              onChange={() =>
+                                toggleLine({
+                                  id: lineId,
+                                  qrContextType: item.qrContextType,
+                                  qrSubjectId: item.qrSubjectId,
+                                  label: item.label,
+                                  locationId: item.locationId,
+                                  locationName: item.locationName,
+                                })
+                              }
+                            />
                             <span className="min-w-0 flex-1 break-words font-medium">{item.label}</span>
-                          </button>
+                          </label>
                         </li>
                       );
                     })}
                   </ul>
+                  </CollapsibleContent>
                 </div>
+                </Collapsible>
                   );
                 })()
               ),
             ))}
           </section>
 
-          <CartSummary
-            cart={cart}
-            cartCount={cartCount}
-            printSubtotal={printSubtotal}
-            formatEur={formatEur}
-            quote={quote}
-            printingIncluded={printingIncluded}
-            onContinue={() => setStep("shipping")}
-            continueDisabled={cart.length === 0}
-            onQuantityChange={setLineQuantity}
-            t={t}
-          />
+          <aside className="print-qr-studio__summary min-w-0 space-y-2">
+            <h2 className="print-qr-studio__col-title">
+              {t("business.qrStudio.print.cartTitle", { count: cartCount })}
+            </h2>
+            <CartSummary
+              cart={cart}
+              cartCount={cartCount}
+              printSubtotal={printSubtotal}
+              formatEur={formatEur}
+              quote={quote}
+              printingIncluded={printingIncluded}
+              onContinue={() => setStep("shipping")}
+              continueDisabled={cart.length === 0}
+              onQuantityChange={setLineQuantity}
+              hideTitle
+              compact
+              t={t}
+            />
+          </aside>
         </div>
       ) : null}
 
@@ -874,6 +1012,8 @@ function CartSummary({
   onRemove,
   onQuantityChange,
   quantityEditable = true,
+  hideTitle = false,
+  compact = false,
   t,
 }: {
   cart: PrintCartLine[];
@@ -888,13 +1028,27 @@ function CartSummary({
   onRemove?: (key: string) => void;
   onQuantityChange?: (key: string, quantity: number) => void;
   quantityEditable?: boolean;
+  hideTitle?: boolean;
+  compact?: boolean;
   t: (key: string, opts?: Record<string, unknown>) => string;
 }) {
   if (cart.length === 0) {
     return (
-      <div className="flex items-center gap-2 rounded-lg border border-dashed border-border px-4 py-6 text-sm text-muted-foreground max-lg:border-0 max-lg:px-0">
-        <ShoppingBag className="h-4 w-4 shrink-0" aria-hidden />
-        {t("business.qrStudio.print.cartEmpty")}
+      <div className="space-y-2.5">
+        <div
+          className={cn(
+            "flex items-center gap-2 rounded-md border border-dashed border-border text-sm text-muted-foreground max-lg:border-0 max-lg:px-0",
+            compact ? "px-3 py-3" : "px-4 py-6",
+          )}
+        >
+          <ShoppingBag className="h-4 w-4 shrink-0" aria-hidden />
+          {t("business.qrStudio.print.cartEmpty")}
+        </div>
+        {onContinue ? (
+          <Button type="button" className={cn(businessUi.btnPrimary, "w-full")} disabled={continueDisabled} onClick={onContinue}>
+            {t("business.qrStudio.print.continueToShipping")}
+          </Button>
+        ) : null}
       </div>
     );
   }
@@ -908,8 +1062,10 @@ function CartSummary({
   }
 
   return (
-    <div className={cn("space-y-3", !detailed && "border-t border-border pt-4 max-lg:pt-3")}>
-      <p className="text-sm font-semibold">{t("business.qrStudio.print.cartTitle", { count: cartCount })}</p>
+    <div className={cn("space-y-2.5", !detailed && !compact && "border-t border-border pt-4 max-lg:pt-3")}>
+      {hideTitle ? null : (
+        <p className="text-sm font-semibold">{t("business.qrStudio.print.cartTitle", { count: cartCount })}</p>
+      )}
       <div className="space-y-3">
         {[...grouped.entries()].map(([locationName, lines]) => (
           <div key={locationName}>

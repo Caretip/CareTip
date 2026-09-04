@@ -339,12 +339,14 @@ export function deriveStripeConnectStatus(input: {
 }): StripeConnectStatus {
   if (!input.hasAccount) return StripeConnectStatus.not_connected;
 
-  if (input.disabledReason || input.pastDueCount > 0) {
-    return StripeConnectStatus.restricted;
-  }
-
+  // Tip routing key is charges + payouts. Stripe can leave past_due / disabled_reason
+  // populated after payments are already active; that must not keep CareTip restricted.
   if (input.chargesEnabled && input.payoutsEnabled) {
     return StripeConnectStatus.ready;
+  }
+
+  if (input.disabledReason || input.pastDueCount > 0) {
+    return StripeConnectStatus.restricted;
   }
 
   if (input.currentlyDueCount > 0) {
@@ -490,8 +492,8 @@ export function snapshotFromV2CoreAccount(payload: unknown): ConnectCapabilitySn
   };
 }
 
-export function isConnectCapabilityReady(snap: Pick<ConnectCapabilitySnapshot, "chargesEnabled" | "payoutsEnabled" | "disabledReason">): boolean {
-  return snap.chargesEnabled && snap.payoutsEnabled && !snap.disabledReason;
+export function isConnectCapabilityReady(snap: Pick<ConnectCapabilitySnapshot, "chargesEnabled" | "payoutsEnabled">): boolean {
+  return snap.chargesEnabled && snap.payoutsEnabled;
 }
 
 function toStatusDto(row: {

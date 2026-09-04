@@ -3,11 +3,7 @@ import {
   PHYSICAL_QR_CURRENCY,
   PHYSICAL_QR_PRODUCT_ADDRESS_ID,
   PHYSICAL_QR_PRODUCT_NO_ADDRESS_ID,
-  PHYSICAL_QR_TEMPLATE_CLASSIC_ID,
   PHYSICAL_QR_TEMPLATE_ID,
-  PHYSICAL_QR_TEMPLATE_LIGHT_ID,
-  PHYSICAL_QR_TEMPLATE_MIDNIGHT_ID,
-  PHYSICAL_QR_TEMPLATE_NATURE_ID,
   PHYSICAL_QR_TEST_UNIT_PRICE_CENTS,
 } from "../../lib/physicalQr/types.js";
 import {
@@ -60,38 +56,18 @@ export const PHYSICAL_QR_CATALOG_SEED = [
     withAddressDescription: "A5 print with QR, business name, and printed address.",
     withoutAddressDescription: "A5 print with QR and business name only.",
   }),
-  ...flyerPair({
-    addressId: "caretip-classic-address",
-    noAddressId: "caretip-classic-no-address",
-    templateId: PHYSICAL_QR_TEMPLATE_CLASSIC_ID,
-    name: "CareTip Classic",
-    withAddressDescription: "Classic A5 print with QR, business name, and printed address.",
-    withoutAddressDescription: "Classic A5 print with QR and business name only.",
-  }),
-  ...flyerPair({
-    addressId: "caretip-light-address",
-    noAddressId: "caretip-light-no-address",
-    templateId: PHYSICAL_QR_TEMPLATE_LIGHT_ID,
-    name: "CareTip Light",
-    withAddressDescription: "Light A5 print with QR, business name, and printed address.",
-    withoutAddressDescription: "Light A5 print with QR and business name only.",
-  }),
-  ...flyerPair({
-    addressId: "caretip-midnight-address",
-    noAddressId: "caretip-midnight-no-address",
-    templateId: PHYSICAL_QR_TEMPLATE_MIDNIGHT_ID,
-    name: "CareTip Midnight",
-    withAddressDescription: "Midnight A5 print with QR, business name, and printed address.",
-    withoutAddressDescription: "Midnight A5 print with QR and business name only.",
-  }),
-  ...flyerPair({
-    addressId: "caretip-nature-address",
-    noAddressId: "caretip-nature-no-address",
-    templateId: PHYSICAL_QR_TEMPLATE_NATURE_ID,
-    name: "CareTip Nature",
-    withAddressDescription: "Nature A5 print with QR, business name, and printed address.",
-    withoutAddressDescription: "Nature A5 print with QR and business name only.",
-  }),
+] as const;
+
+/** Retired design SKUs — keep rows for historical orders; never list or sell. */
+export const RETIRED_PHYSICAL_QR_PRODUCT_IDS = [
+  "caretip-classic-address",
+  "caretip-classic-no-address",
+  "caretip-light-address",
+  "caretip-light-no-address",
+  "caretip-midnight-address",
+  "caretip-midnight-no-address",
+  "caretip-nature-address",
+  "caretip-nature-no-address",
 ] as const;
 
 export async function ensurePhysicalQrCatalog(): Promise<void> {
@@ -107,9 +83,14 @@ export async function ensurePhysicalQrCatalog(): Promise<void> {
         currency: product.currency,
         orderable: product.orderable,
         priceCents: product.priceCents,
+        active: true,
       },
     });
   }
+  await prisma.physicalQrProduct.updateMany({
+    where: { id: { in: [...RETIRED_PHYSICAL_QR_PRODUCT_IDS] } },
+    data: { active: false, orderable: false },
+  });
 }
 
 export function catalogPublicDto(product: {
@@ -156,7 +137,7 @@ export function catalogPublicDto(product: {
 export async function listActivePhysicalQrProducts() {
   await ensurePhysicalQrCatalog();
   const rows = await prisma.physicalQrProduct.findMany({
-    where: { active: true },
+    where: { active: true, templateId: PHYSICAL_QR_TEMPLATE_ID },
     orderBy: { name: "asc" },
   });
   return rows.map(catalogPublicDto);
@@ -165,7 +146,7 @@ export async function listActivePhysicalQrProducts() {
 export async function getPhysicalQrProductOrThrow(id: string) {
   await ensurePhysicalQrCatalog();
   const row = await prisma.physicalQrProduct.findUnique({ where: { id } });
-  if (!row || !row.active) {
+  if (!row || !row.active || row.templateId !== PHYSICAL_QR_TEMPLATE_ID) {
     throw new Error("PHYSICAL_QR_PRODUCT_NOT_FOUND");
   }
   return row;

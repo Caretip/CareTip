@@ -7,12 +7,8 @@ import {
   PHYSICAL_QR_PRINT_WIDTH_MM,
   PHYSICAL_QR_PRINT_WIDTH_PX,
   PHYSICAL_QR_TEMPORARY_FONT_FAMILY,
-  PHYSICAL_QR_TEMPLATE_CLASSIC_ID,
   PHYSICAL_QR_TEMPLATE_ID,
   PHYSICAL_QR_TEMPLATE_IDS,
-  PHYSICAL_QR_TEMPLATE_LIGHT_ID,
-  PHYSICAL_QR_TEMPLATE_MIDNIGHT_ID,
-  PHYSICAL_QR_TEMPLATE_NATURE_ID,
   PHYSICAL_QR_VIEWBOX_HEIGHT,
   PHYSICAL_QR_VIEWBOX_WIDTH,
   type PhysicalQrProductTemplate,
@@ -57,29 +53,7 @@ export const CARETIP_A5_FLYER_TEMPLATE = a5Template(
   "business.qrStudio.physical.templateDesc",
 );
 
-const TEMPLATES: readonly PhysicalQrProductTemplate[] = [
-  CARETIP_A5_FLYER_TEMPLATE,
-  a5Template(
-    PHYSICAL_QR_TEMPLATE_CLASSIC_ID,
-    "business.qrStudio.physical.templateClassic",
-    "business.qrStudio.physical.templateClassicDesc",
-  ),
-  a5Template(
-    PHYSICAL_QR_TEMPLATE_LIGHT_ID,
-    "business.qrStudio.physical.templateLight",
-    "business.qrStudio.physical.templateLightDesc",
-  ),
-  a5Template(
-    PHYSICAL_QR_TEMPLATE_MIDNIGHT_ID,
-    "business.qrStudio.physical.templateMidnight",
-    "business.qrStudio.physical.templateMidnightDesc",
-  ),
-  a5Template(
-    PHYSICAL_QR_TEMPLATE_NATURE_ID,
-    "business.qrStudio.physical.templateNature",
-    "business.qrStudio.physical.templateNatureDesc",
-  ),
-];
+const TEMPLATES: readonly PhysicalQrProductTemplate[] = [CARETIP_A5_FLYER_TEMPLATE];
 
 const BY_ID = new Map<string, PhysicalQrProductTemplate>(TEMPLATES.map((tpl) => [tpl.id, tpl]));
 

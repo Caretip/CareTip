@@ -8,13 +8,8 @@ import { fileURLToPath } from "node:url";
 import { getPhysicalQrTemplate, isPhysicalQrTemplateId, listPhysicalQrTemplates } from "../src/app/lib/physicalQrTemplate/registry.ts";
 import {
   PHYSICAL_QR_FONT_STATUS,
-  PHYSICAL_QR_LIGHT_OVERLAY_TEXT,
-  PHYSICAL_QR_TEMPLATE_CLASSIC_ID,
   PHYSICAL_QR_TEMPLATE_ID,
   PHYSICAL_QR_TEMPLATE_IDS,
-  PHYSICAL_QR_TEMPLATE_LIGHT_ID,
-  PHYSICAL_QR_TEMPLATE_MIDNIGHT_ID,
-  PHYSICAL_QR_TEMPLATE_NATURE_ID,
   physicalQrOverlayTextColor,
 } from "../src/app/lib/physicalQrTemplate/types.ts";
 import {
@@ -52,19 +47,19 @@ if (template.includes("viewBox=\"0 0 1410 2000\"") && template.includes("id=\"ph
 const artworkPng = path.join(root, "src/assets/physical-qr/caretip-a5-artwork.png");
 if (existsSync(artworkPng)) pass("uploaded A5 PNG copied to src/assets/physical-qr/caretip-a5-artwork.png");
 else fail("missing artwork PNG");
-const newArtwork = [
+const displayArt = [
+  "src/assets/physical-qr/display/caretip-a5-artwork.thumb.webp",
+  "src/assets/physical-qr/display/caretip-a5-artwork.preview.webp",
+];
+for (const rel of displayArt) {
+  if (existsSync(path.join(root, rel))) pass(`display derivative present: ${rel}`);
+  else fail(`missing display derivative ${rel}`);
+}
+const retiredArt = [
   "src/assets/physical-qr/caretip-light.png",
   "src/assets/physical-qr/caretip-midnight.png",
   "src/assets/physical-qr/caretip-nature.png",
   "src/assets/physical-qr/caretip_classic.png",
-];
-for (const rel of newArtwork) {
-  if (existsSync(path.join(root, rel))) pass(`new print template image present: ${rel}`);
-  else fail(`missing new print template image ${rel}`);
-}
-const displayArt = [
-  "src/assets/physical-qr/display/caretip-a5-artwork.thumb.webp",
-  "src/assets/physical-qr/display/caretip-a5-artwork.preview.webp",
   "src/assets/physical-qr/display/caretip_classic.thumb.webp",
   "src/assets/physical-qr/display/caretip_classic.preview.webp",
   "src/assets/physical-qr/display/caretip-light.thumb.webp",
@@ -74,9 +69,9 @@ const displayArt = [
   "src/assets/physical-qr/display/caretip-nature.thumb.webp",
   "src/assets/physical-qr/display/caretip-nature.preview.webp",
 ];
-for (const rel of displayArt) {
-  if (existsSync(path.join(root, rel))) pass(`display derivative present: ${rel}`);
-  else fail(`missing display derivative ${rel}`);
+for (const rel of retiredArt) {
+  if (!existsSync(path.join(root, rel))) pass(`retired print template removed: ${rel}`);
+  else fail(`retired print template still present: ${rel}`);
 }
 const artworkModule = readFileSync(path.join(root, "src/app/lib/physicalQrTemplate/artwork.ts"), "utf8");
 if (
@@ -94,21 +89,20 @@ if (listed.length === PHYSICAL_QR_TEMPLATE_IDS.length && new Set(listedIds).size
 } else fail("print template registry IDs");
 if (
   isPhysicalQrTemplateId(PHYSICAL_QR_TEMPLATE_ID) &&
-  isPhysicalQrTemplateId(PHYSICAL_QR_TEMPLATE_CLASSIC_ID) &&
+  listed.length === 1 &&
+  listed[0]?.id === PHYSICAL_QR_TEMPLATE_ID &&
+  !isPhysicalQrTemplateId("caretip-classic") &&
   !isPhysicalQrTemplateId("../secret.png") &&
   !isPhysicalQrTemplateId("/tmp/evil.png")
 ) {
   pass("template IDs are allowlisted; client paths are rejected");
 } else fail("template ID allowlist");
 if (
-  physicalQrOverlayTextColor(PHYSICAL_QR_TEMPLATE_CLASSIC_ID, "#1A1A1A") === PHYSICAL_QR_LIGHT_OVERLAY_TEXT &&
-  physicalQrOverlayTextColor(PHYSICAL_QR_TEMPLATE_MIDNIGHT_ID, "#1A1A1A") === PHYSICAL_QR_LIGHT_OVERLAY_TEXT &&
-  physicalQrOverlayTextColor(PHYSICAL_QR_TEMPLATE_LIGHT_ID, "#1A1A1A") === "#1A1A1A" &&
-  physicalQrOverlayTextColor(PHYSICAL_QR_TEMPLATE_NATURE_ID, "#1A1A1A") === "#1A1A1A" &&
-  physicalQrOverlayTextColor(PHYSICAL_QR_TEMPLATE_ID, "#1A1A1A") === "#1A1A1A"
+  physicalQrOverlayTextColor(PHYSICAL_QR_TEMPLATE_ID, "#1A1A1A") === "#1A1A1A" &&
+  physicalQrOverlayTextColor("caretip-classic", "#1A1A1A") === "#1A1A1A"
 ) {
-  pass("Classic and Midnight overlay name/address in white; Light/Nature/original stay dark");
-} else fail("overlay text color for dark print templates");
+  pass("CareTip Signature overlay uses the configured name/address colour");
+} else fail("overlay text color for print templates");
 const previewSrc = readFileSync(path.join(root, "src/app/components/business/physical-branding/PhysicalQrPreview.tsx"), "utf8");
 if (previewSrc.includes("physicalQrOverlayTextColor") && previewSrc.includes("overlayTextColor")) {
   pass("Print QR preview uses template overlay color for name and address");

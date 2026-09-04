@@ -1,5 +1,5 @@
 import type { CareIconName } from "@/components/icons";
-import { Users, TrendingUp, Trophy } from "lucide-react";
+import { Users, TrendingUp } from "lucide-react";
 import {
   hasFeature,
   type BusinessSubscriptionTier,
@@ -21,6 +21,8 @@ export type BusinessSidebarChildNavItem = {
   labelKey: string;
   href: string;
   featureKey?: FeatureKey;
+  /** Visual separator above this child (e.g. QR Studio print vs codes). */
+  dividerBefore?: boolean;
 };
 
 export type BusinessSidebarNavEntry =
@@ -61,15 +63,15 @@ export const businessDashboardNavItems: readonly BusinessDashboardNavItem[] = [
 export const VENUE_MANAGEMENT_HREF = "/dashboard/locations" as const;
 
 export const QR_STUDIO_BASE = "/dashboard/qr-studio" as const;
-export const QR_STUDIO_DEFAULT_HREF = `${QR_STUDIO_BASE}` as const;
+/** First QR Studio workspace: Main QR Code (overview hub is removed from nav). */
+export const QR_STUDIO_DEFAULT_HREF = `${QR_STUDIO_BASE}/business` as const;
 
 export const qrStudioSubNavItems = [
-  { labelKey: "business.qrStudio.nav.overview", href: `${QR_STUDIO_BASE}` },
   { labelKey: "business.qrStudio.nav.business", href: `${QR_STUDIO_BASE}/business` },
   { labelKey: "business.qrStudio.nav.employees", href: `${QR_STUDIO_BASE}/employees` },
   { labelKey: "business.qrStudio.nav.tables", href: `${QR_STUDIO_BASE}/tables` },
   { labelKey: "business.qrStudio.nav.locations", href: `${QR_STUDIO_BASE}/locations` },
-  { labelKey: "business.qrStudio.nav.print", href: `${QR_STUDIO_BASE}/print` },
+  { labelKey: "business.qrStudio.nav.print", href: `${QR_STUDIO_BASE}/print`, dividerBefore: true },
   { labelKey: "business.qrStudio.nav.orders", href: `${QR_STUDIO_BASE}/orders` },
 ] as const;
 
@@ -85,13 +87,14 @@ export const tipsSubNavItems = [
 ] as const;
 
 export const TEAM_BASE = "/dashboard/team" as const;
+export const TEAM_PERFORMANCE_HREF = `${TEAM_BASE}/performance` as const;
+export const TEAM_LEADERBOARD_HREF = `${TEAM_PERFORMANCE_HREF}?tab=leaderboard` as const;
 export const teamSubNavItems = [
   { labelKey: "business.team.nav.employees", href: `${TEAM_BASE}/employees`, icon: Users },
-  { labelKey: "business.team.nav.performance", href: `${TEAM_BASE}/performance`, icon: TrendingUp, featureKey: "advancedAnalytics" as FeatureKey },
   {
-    labelKey: "business.team.nav.topPerformers",
-    href: `${TEAM_BASE}/top-performers`,
-    icon: Trophy,
+    labelKey: "business.team.nav.performance",
+    href: TEAM_PERFORMANCE_HREF,
+    icon: TrendingUp,
     featureKey: "advancedAnalytics" as FeatureKey,
   },
 ] as const;
@@ -306,5 +309,5 @@ export function resolveActiveSidebarGroupId(pathname: string, search: string): s
   return null;
 }
 
-/** QR Studio default hub — employee QR codes (gallery/downloads pages removed). */
+/** QR Studio default workspace — Main QR Code (gallery/downloads pages removed). */
 export const QR_STUDIO_GALLERY_HREF = QR_STUDIO_DEFAULT_HREF;

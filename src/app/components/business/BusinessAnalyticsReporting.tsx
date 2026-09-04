@@ -236,7 +236,7 @@ export function BusinessAnalyticsReporting({
         />
         <p className="text-sm text-muted-foreground">
           {t("business.tips.analytics.rankingsHint")}{" "}
-          <Link to="/dashboard/team/top-performers" className="font-medium text-primary underline-offset-2 hover:underline">
+          <Link to="/dashboard/team/performance?tab=leaderboard" className="font-medium text-primary underline-offset-2 hover:underline">
             {t("business.team.nav.topPerformers")}
           </Link>
         </p>

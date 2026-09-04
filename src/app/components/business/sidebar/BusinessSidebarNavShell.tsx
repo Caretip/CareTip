@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, useLocation } from "react-router";
+import { Link, useLocation, useNavigate } from "react-router";
 import { Lock } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { CareIcon } from "@/components/icons";
@@ -133,7 +133,7 @@ function SidebarChildNavItem({
 
   if (lock.locked) {
     return (
-      <li>
+      <li className={child.dividerBefore ? "mt-2 border-t border-sidebar-border/80 pt-2" : undefined}>
         <Tooltip>
           <TooltipTrigger asChild>
             <button
@@ -158,7 +158,7 @@ function SidebarChildNavItem({
   }
 
   return (
-    <li>
+    <li className={child.dividerBefore ? "mt-2 border-t border-sidebar-border/80 pt-2" : undefined}>
       <Link
         to={child.href}
         onClick={onNavigate}
@@ -191,14 +191,27 @@ function SidebarGroup({
   onLockedClick: (state: LockedDialogState) => void;
 }) {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const groupActive = isBusinessSidebarGroupActive(entry, pathname, search);
   const panelId = `business-sidebar-group-${entry.id}`;
+
+  function handleGroupClick() {
+    if (isExpanded) {
+      onToggle();
+      return;
+    }
+    onToggle();
+    if (!groupActive) {
+      navigate(entry.defaultHref);
+      onNavigate?.();
+    }
+  }
 
   return (
     <li className="business-sidebar-group">
       <button
         type="button"
-        onClick={onToggle}
+        onClick={handleGroupClick}
         className={cn(
           "business-dash-nav-link flex w-full items-center gap-3 px-3 py-2.5 text-left text-sm font-medium transition-colors",
           groupActive

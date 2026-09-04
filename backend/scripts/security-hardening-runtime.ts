@@ -7,8 +7,11 @@ import "../src/loadEnv.js";
 import { isExpiredAccessTokenRefreshAllowed } from "../src/lib/accessTokenRefresh.js";
 import {
   isPlatformAdminAccount,
+  needsMfaLoginChallenge,
+  mfaSetupRequiredForLogin,
   signPendingMfaLoginToken,
   userIdFromPendingMfaLoginToken,
+  isPendingMfaLoginJwt,
   verifyTotpCode,
 } from "../src/services/mfaLogin.service.js";
 import * as authService from "../src/services/auth.service.js";
@@ -49,6 +52,43 @@ function main() {
     pass("TOTP rejects invalid code");
   } else {
     fail("TOTP should reject invalid code");
+  }
+
+  if (needsMfaLoginChallenge({ role: "MANAGER", isPlatformAdmin: false, twoFactorEnabled: true })) {
+    pass("manager with 2FA enabled requires login challenge");
+  } else {
+    fail("manager with 2FA enabled must require login challenge");
+  }
+
+  if (needsMfaLoginChallenge({ role: "MANAGER", isPlatformAdmin: false, twoFactorEnabled: false })) {
+    fail("manager without 2FA must not require login challenge");
+  } else {
+    pass("manager without 2FA skips login challenge");
+  }
+
+  if (needsMfaLoginChallenge({ role: "EMPLOYEE", isPlatformAdmin: false, twoFactorEnabled: false })) {
+    fail("employee without 2FA must not require login challenge");
+  } else {
+    pass("employee without 2FA skips login challenge");
+  }
+
+  if (!needsMfaLoginChallenge({ role: "SUPER_ADMIN", isPlatformAdmin: true, twoFactorEnabled: false })) {
+    fail("platform admin without 2FA must still challenge (setup)");
+  } else {
+    pass("platform admin always challenges at login");
+  }
+
+  if (mfaSetupRequiredForLogin({ role: "MANAGER", isPlatformAdmin: false, twoFactorEnabled: true })) {
+    fail("business 2FA login must not force authenticator setup at sign-in");
+  } else {
+    pass("business 2FA login is verify-only after enrollment");
+  }
+
+  const pendingDecoded = { purpose: "mfa_login_pending" as const };
+  if (!isPendingMfaLoginJwt(pendingDecoded)) {
+    fail("pending MFA JWT detector");
+  } else {
+    pass("pending MFA JWT is not treated as an access token purpose");
   }
 
   if (typeof authService.validateLoginCredentials !== "function") {

@@ -11,6 +11,7 @@ import {
   resolveJwtSubject,
   verifyJwt,
 } from "../lib/jwtConfig.js";
+import { isPendingMfaLoginJwt } from "../services/mfaLogin.service.js";
 
 export interface JwtPayload {
   /** Canonical subject (user id). */
@@ -103,7 +104,7 @@ export function optionalAuthMiddleware(req: Request, res: Response, next: NextFu
   void (async () => {
     try {
       const decoded = verifyJwt<DecodedAccessClaims>(token);
-      if (!isAllowedAccessJwtType(decoded.type)) return next();
+      if (isPendingMfaLoginJwt(decoded) || !isAllowedAccessJwtType(decoded.type)) return next();
       const payload = normalizeJwtPayload(decoded);
       if (!payload) return next();
       // Even for optional-auth endpoints, never trust a stale/revoked/disabled session.
@@ -129,7 +130,7 @@ export function authMiddleware(req: Request, res: Response, next: NextFunction) 
   void (async () => {
     try {
       const decoded = verifyJwt<DecodedAccessClaims>(token);
-      if (!isAllowedAccessJwtType(decoded.type)) {
+      if (isPendingMfaLoginJwt(decoded) || !isAllowedAccessJwtType(decoded.type)) {
         return res.status(401).json({ message: "Invalid or expired token", code: "TOKEN_INVALID" });
       }
       const payload = normalizeJwtPayload(decoded);

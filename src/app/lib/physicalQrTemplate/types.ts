@@ -16,33 +16,16 @@ export const PHYSICAL_QR_PRINT_HEIGHT_PX = Math.round(
 );
 
 export const PHYSICAL_QR_TEMPLATE_ID = "caretip-a5-flyer" as const;
-export const PHYSICAL_QR_TEMPLATE_CLASSIC_ID = "caretip-classic" as const;
-export const PHYSICAL_QR_TEMPLATE_LIGHT_ID = "caretip-light" as const;
-export const PHYSICAL_QR_TEMPLATE_MIDNIGHT_ID = "caretip-midnight" as const;
-export const PHYSICAL_QR_TEMPLATE_NATURE_ID = "caretip-nature" as const;
 
 /** Allowlisted print artwork IDs. Never accept a client filesystem path. */
-export const PHYSICAL_QR_TEMPLATE_IDS = [
-  PHYSICAL_QR_TEMPLATE_ID,
-  PHYSICAL_QR_TEMPLATE_CLASSIC_ID,
-  PHYSICAL_QR_TEMPLATE_LIGHT_ID,
-  PHYSICAL_QR_TEMPLATE_MIDNIGHT_ID,
-  PHYSICAL_QR_TEMPLATE_NATURE_ID,
-] as const;
+export const PHYSICAL_QR_TEMPLATE_IDS = [PHYSICAL_QR_TEMPLATE_ID] as const;
 
 export type PhysicalQrTemplateId = (typeof PHYSICAL_QR_TEMPLATE_IDS)[number];
 
-/** Classic / Midnight artwork is dark; name and address overlay must be light. */
-export const PHYSICAL_QR_LIGHT_OVERLAY_TEXT = "#FFFFFF";
-
 export function physicalQrOverlayTextColor(
-  templateId: string | null | undefined,
+  _templateId: string | null | undefined,
   fallback: string,
 ): string {
-  const id = String(templateId ?? "").trim();
-  if (id === PHYSICAL_QR_TEMPLATE_CLASSIC_ID || id === PHYSICAL_QR_TEMPLATE_MIDNIGHT_ID) {
-    return PHYSICAL_QR_LIGHT_OVERLAY_TEXT;
-  }
   return fallback;
 }
 

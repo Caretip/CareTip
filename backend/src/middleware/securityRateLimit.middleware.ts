@@ -3,6 +3,7 @@ import { resolveJwtSubject, verifyJwt, type DecodedAccessClaims } from "../lib/j
 import { securityRateLimits } from "../config/securityRateLimit.config.js";
 import type { RateLimitLayer } from "../utils/layeredRateLimit.js";
 import { enforceRateLimitLayersDistributed } from "../utils/rateLimitStore.js";
+import { userIdFromPendingMfaLoginToken } from "../services/mfaLogin.service.js";
 
 function clientIp(req: Request): string {
   const ip = req.ip?.trim();
@@ -90,6 +91,22 @@ export const mfaTotpRateLimit = createAuthUserLimiter(
   securityRateLimits.mfaTotp,
   MFA_MSG,
 );
+
+/**
+ * Login-time TOTP (no Bearer session). User bucket is taken from the pending MFA JWT
+ * in the body — not from Authorization — so a stolen header cannot tax another account.
+ */
+export const mfaLoginChallengeRateLimit: RequestHandler = (req, res, next) => {
+  const ip = clientIp(req);
+  const { mfaTotp: lim } = securityRateLimits;
+  const pending = String((req.body as { pendingMfaToken?: unknown } | undefined)?.pendingMfaToken ?? "");
+  const uid = userIdFromPendingMfaLoginToken(pending);
+  const layers: RateLimitLayer[] = [{ name: "ip", key: `sec:mfa-totp:ip:${ip}`, ...lim.ip }];
+  if (uid) {
+    layers.push({ name: "user", key: `sec:mfa-totp:user:${uid}`, ...lim.user });
+  }
+  runLayers(req, res, next, layers, MFA_MSG, "mfa-totp");
+};
 
 export const feedbackTipRateLimit: RequestHandler = (req, res, next) => {
   const ip = clientIp(req);
