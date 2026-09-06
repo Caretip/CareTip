@@ -1,5 +1,6 @@
 /**
- * Pre-React boot locale — runs before `#caretip-html-boot` is revealed.
+ * Pre-React boot locale — runs in <head> (CSP-safe external file).
+ * Visibility of `#caretip-html-boot` is CSS, not this script.
  * Must stay in sync with:
  *   - `I18N_STORAGE_KEY` / `readStoredLanguage` (src/i18n)
  *   - `resolveInitialBootLoadingMessage` (src/app/lib/appLoadingContexts.ts)
@@ -68,6 +69,50 @@
     },
     resolveBootTagline: resolveBootTagline,
   };
+
+  /**
+   * Locale/tagline only. Visibility is CSS (`display: flex` + `caretip-html-boot-active` on <html>).
+   * Must not live in an inline <script>: production CSP is script-src 'self' (no 'unsafe-inline').
+   */
+  function applyHtmlBootCopy() {
+    try {
+      var lng = readBootLanguage();
+      var copy = COPY[lng === "en" ? "en" : "de"];
+      var tagline = resolveBootTagline(copy, global.location && global.location.pathname);
+      var doc = global.document;
+      if (!doc) return;
+      doc.documentElement.setAttribute("lang", lng);
+      doc.documentElement.classList.add("caretip-html-boot-active");
+      var taglineEl = doc.getElementById("caretip-html-boot-tagline");
+      if (taglineEl) taglineEl.textContent = tagline;
+      var el = doc.getElementById("caretip-html-boot");
+      if (el) {
+        el.setAttribute("aria-label", "CareTip — " + tagline);
+        el.removeAttribute("hidden");
+      }
+    } catch (_) {
+      /* ignore */
+    }
+  }
+
+  try {
+    var docEl = global.document && global.document.documentElement;
+    if (docEl) {
+      var bootLng = readBootLanguage();
+      docEl.setAttribute("lang", bootLng);
+      docEl.classList.add("caretip-html-boot-active");
+    }
+  } catch (_) {
+    /* ignore */
+  }
+
+  if (global.document) {
+    if (global.document.readyState === "loading") {
+      global.document.addEventListener("DOMContentLoaded", applyHtmlBootCopy);
+    } else {
+      applyHtmlBootCopy();
+    }
+  }
 })(
   typeof globalThis !== "undefined" && typeof globalThis.window !== "undefined"
     ? globalThis.window

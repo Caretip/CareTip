@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html
-  lang="en"
-  class="caretip-font-inter"
+  lang="de"
+  class="caretip-font-inter caretip-html-boot-active"
   style="font-family: Inter, 'Inter Fallback', ui-sans-serif, system-ui, sans-serif"
 >
   <head>
@@ -42,7 +42,7 @@
       }
 
       #caretip-html-boot {
-        display: none;
+        display: flex;
         position: fixed;
         inset: 0;
         z-index: 9997;
@@ -238,7 +238,7 @@
   </head>
 
   <body style="margin: 0">
-    <div id="caretip-html-boot" role="status" aria-busy="true" hidden>
+    <div id="caretip-html-boot" role="status" aria-busy="true" aria-label="CareTip — Wird eingerichtet…">
       <div class="caretip-html-boot__mark">
         <div class="caretip-html-boot__icon-wrap" aria-hidden="true">
           <img
@@ -254,38 +254,10 @@
           <span class="caretip-html-boot__indeterminate"></span>
         </span>
         <p class="caretip-html-boot__tagline" id="caretip-html-boot-tagline">
-          Getting things ready…
+          Wird eingerichtet…
         </p>
       </div>
     </div>
-    <script>
-      (function () {
-        var lng = "de";
-        var tagline = "Wird eingerichtet…";
-        try {
-          var bootLocale = window.CareTipBootLocale;
-          if (bootLocale) {
-            lng = bootLocale.readBootLanguage();
-            var copy = bootLocale.getCopy(lng);
-            if (copy) {
-              tagline = bootLocale.resolveBootTagline
-                ? bootLocale.resolveBootTagline(copy, location.pathname)
-                : copy.gettingReady || tagline;
-            }
-          }
-          document.documentElement.setAttribute("lang", lng);
-        } catch (_) {
-          /* ignore */
-        }
-        var taglineEl = document.getElementById("caretip-html-boot-tagline");
-        if (taglineEl) taglineEl.textContent = tagline;
-        var el = document.getElementById("caretip-html-boot");
-        if (!el) return;
-        el.setAttribute("aria-label", "CareTip — " + tagline);
-        el.removeAttribute("hidden");
-        document.documentElement.classList.add("caretip-html-boot-active");
-      })();
-    </script>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

@@ -30,10 +30,20 @@ if (html.includes('id="caretip-html-boot"') && html.includes("caretip-html-boot_
 } else fail("HTML cold-boot mark/track/tagline missing");
 
 if (
+  html.includes("caretip-html-boot-active") &&
+  /#caretip-html-boot\s*\{[^}]*display:\s*flex/.test(html) &&
+  !/#caretip-html-boot\s*\{[^}]*display:\s*none/.test(html) &&
+  !/<div id="caretip-html-boot"[^>]*\shidden[\s>]/.test(html) &&
+  !/<script>\s*\(function \(\)/.test(html)
+) {
+  pass("HTML cold-boot is CSS-visible without inline JS (CSP script-src 'self')");
+} else fail("HTML cold-boot still hidden until inline script");
+
+if (
   !html.includes("caretip-html-boot-message") &&
   !html.includes("caretip-html-boot-sub") &&
   !html.includes("caretip-html-boot__brand") &&
-  html.includes("Getting things ready")
+  html.includes("Wird eingerichtet")
 ) {
   pass("HTML cold-boot has a single getting-ready sentence (no brand word + extra lines)");
 } else fail("HTML cold-boot still has extra copy besides the tagline");
@@ -42,7 +52,11 @@ if (html.includes('role="status"') && html.includes('aria-busy="true"') && html.
   pass("HTML boot has loading semantics + one visible sentence");
 } else fail("HTML boot a11y semantics incomplete");
 
-if (html.includes("resolveBootTagline") && bootLocale.includes("resolveBootTagline") && bootLocale.includes("settingUpWorkspace")) {
+if (
+  bootLocale.includes("resolveBootTagline") &&
+  bootLocale.includes("settingUpWorkspace") &&
+  bootLocale.includes("applyHtmlBootCopy")
+) {
   pass("HTML boot tagline is path-aware (guest / onboarding / default)");
 } else fail("HTML boot path-aware tagline missing");
 
