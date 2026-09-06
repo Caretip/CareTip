@@ -23,7 +23,8 @@ import {
   physicalQrCutoffLabel,
   physicalQrEstimatedFulfillmentLabel,
   physicalQrOrderNumber,
-  physicalQrShippingLine,
+  physicalQrPaymentLabel,
+  physicalQrShippingFromUnknown,
   physicalQrTemplateDisplayName,
   groupPhysicalQrItemsByLocation,
 } from "@/app/lib/physicalQrOrderUi";
@@ -32,7 +33,9 @@ import { PhysicalQrStatusBadge } from "../../../components/business/physical-bra
 import { QrStudioOrderDetailSkeleton } from "../../../components/business/qr-studio/QrStudioLoadingSkeletons";
 import { useRequireAuth } from "../../../hooks/useRequireAuth";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { QR_STUDIO_BASE } from "../../../components/business/businessDashboardNav";
+import { businessUi } from "../../../components/business/businessDashboardUi";
+import { cn } from "@/lib/utils";
 
 export function PhysicalQrOrderDetailPage() {
   const { user } = useRequireAuth();
@@ -127,188 +130,205 @@ export function PhysicalQrOrderDetailPage() {
     return <p className="text-sm text-destructive">{loadError}</p>;
   }
   if (!order) {
-    return <QrStudioOrderDetailSkeleton />;
+    return <QrStudioOrderDetailSkeleton className="physical-qr-order-detail" />;
   }
 
   const address = physicalQrAddressLine(order.addressSnapshot);
-  const shipTo = physicalQrShippingLine(order.shippingSnapshot);
+  const shipping = physicalQrShippingFromUnknown(order.shippingSnapshot);
   const contact = physicalQrContactFromUnknown(order.contactSnapshot);
-  const paid = order.paymentStatus === "PAID";
   const failed = order.paymentStatus === "FAILED" || order.fulfillmentStatus === "PAYMENT_FAILED";
   const showPay = Boolean(order.canPay) && !confirming;
   const status = physicalQrCustomerStatus(order, t, confirming);
   const included = isPhysicalQrIncludedOrder(order);
+  const productName = physicalQrTemplateDisplayName(t, {
+    templateId: order.templateId,
+    productName: order.productName,
+  });
+  const groups = groupPhysicalQrItemsByLocation(
+    order.items,
+    t("business.qrStudio.print.locationBusiness"),
+  );
+  const showConfirmingNotice = confirming;
+  const progressDetail =
+    status.detail && status.tone !== "paid" ? status.detail : null;
 
   return (
-    <div className="physical-qr-order-detail space-y-6">
-      <Link to="/dashboard/qr-studio/print" className="text-sm font-medium text-primary hover:underline">
-        {t("business.qrStudio.physical.orders.back")}
-      </Link>
-      <div>
-        <h2 className="text-xl font-semibold tracking-tight">
-          {physicalQrTemplateDisplayName(t, {
-            templateId: order.templateId,
-            productName: order.productName,
-          })}
-        </h2>
-        <p className="mt-1 text-sm text-muted-foreground">
+    <article className="physical-qr-order-detail">
+      <header className="pq-order-header">
+        <Link to={`${QR_STUDIO_BASE}/orders`} className="pq-order-header__back">
+          {t("business.qrStudio.physical.orders.back")}
+        </Link>
+        <h1 className="pq-order-header__title">
           {t("business.qrStudio.physical.orders.orderNumber", { id: physicalQrOrderNumber(order.id) })}
+        </h1>
+        <p className="pq-order-header__meta">
+          {t("business.qrStudio.physical.orders.placed")} {formatBerlinDateTime(order.placedAt, i18n.language)}
         </p>
-      </div>
+        <div className="pq-order-header__status">
+          <PhysicalQrStatusBadge tone={status.tone} label={status.title} />
+        </div>
+      </header>
 
-      {confirming ? (
-        <Card className="physical-qr-order-detail__section dashboard-mobile-keep-card">
-          <CardHeader>
-            <CardTitle>
-              {included
-                ? t("business.qrStudio.physical.orders.confirmingIncludedTitle")
-                : t("business.qrStudio.physical.orders.confirmingTitle")}
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="text-sm text-muted-foreground">
+      {showConfirmingNotice ? (
+        <div className="pq-order-notice" role="status">
+          <p className="pq-order-notice__title">
+            {included
+              ? t("business.qrStudio.physical.orders.confirmingIncludedTitle")
+              : t("business.qrStudio.physical.orders.confirmingTitle")}
+          </p>
+          <p className="pq-order-notice__body">
             {included
               ? t("business.qrStudio.physical.orders.confirmingIncludedBody")
               : t("business.qrStudio.physical.orders.confirmingBody")}
-          </CardContent>
-        </Card>
-      ) : paid && checkoutFlag === "success" ? (
-        <Card className="physical-qr-order-detail__section dashboard-mobile-keep-card">
-          <CardHeader>
-            <CardTitle>
-              {included
-                ? t("business.qrStudio.physical.orders.orderReceivedCheck")
-                : t("business.qrStudio.physical.orders.paymentReceivedCheck")}
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="text-sm text-muted-foreground">
-            {included
-              ? t("business.qrStudio.physical.orders.orderReceivedProcessing")
-              : t("business.qrStudio.physical.orders.thanksProcessing")}
-          </CardContent>
-        </Card>
+          </p>
+        </div>
       ) : null}
 
-      <Card className="physical-qr-order-detail__section">
-        <CardContent className="grid gap-3 pt-6 text-sm sm:grid-cols-2 max-lg:pt-3 max-lg:gap-2.5">
+      <section className="pq-order-section pq-order-summary" aria-labelledby="pq-order-summary-heading">
+        <div className="min-w-0">
+          <h2 id="pq-order-summary-heading" className="pq-order-section__title">
+            {t("business.qrStudio.physical.orders.sectionOrder")}
+          </h2>
+          <p className="pq-order-product">{productName}</p>
+          <p className="mt-1 text-sm text-muted-foreground">
+            {order.supportsAddress
+              ? address || t("business.qrStudio.physical.withAddress")
+              : t("business.qrStudio.physical.withoutAddress")}
+          </p>
+          {order.items.length > 0 ? (
+            <div className="mt-4">
+              {groups.map((group) => (
+                <div key={group.locationName} className="pq-item-group">
+                  {groups.length > 1 ? <p className="pq-item-group__name">{group.locationName}</p> : null}
+                  {group.items.map((item) => (
+                    <div key={item.id} className="pq-item-row">
+                      <div className="min-w-0">
+                        <p className="pq-item-row__name">{item.label}</p>
+                        <p className="pq-item-row__meta">{physicalQrContextLabel(item.qrContextType, t)}</p>
+                      </div>
+                      <span className="pq-item-row__qty">×{item.quantity}</span>
+                    </div>
+                  ))}
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="mt-3 text-sm">
+              {physicalQrContextLabel(order.qrContextType, t)} · ×{order.quantity}
+            </p>
+          )}
+        </div>
+        <aside className="pq-order-aside">
           <div>
-            <p className="text-muted-foreground">{t("business.qrStudio.physical.orders.placed")}</p>
-            <p className="font-medium">{formatBerlinDateTime(order.placedAt, i18n.language)}</p>
-          </div>
-          <div>
-            <p className="text-muted-foreground">{t("business.qrStudio.physical.orders.payment")}</p>
-            <p className="font-medium">
+            <p className="pq-meta__label">{t("business.qrStudio.physical.orders.orderTotalLabel")}</p>
+            <p className="pq-meta__value pq-meta__value--total">
               {formatPhysicalQrMoney(order.totalAmount, order.currency, i18n.language)}
             </p>
           </div>
           <div>
-            <p className="text-muted-foreground">{t("business.qrStudio.physical.qrType")}</p>
-            {order.items.length > 1 ? (
-              <div className="mt-1 space-y-3 text-sm font-medium">
-                {groupPhysicalQrItemsByLocation(
-                  order.items,
-                  t("business.qrStudio.print.locationBusiness"),
-                ).map((group) => (
-                  <div key={group.locationName}>
-                    <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
-                      {group.locationName}
-                    </p>
-                    <ul className="mt-1 space-y-1">
-                      {group.items.map((item) => (
-                        <li key={item.id} className="break-words">
-                          {item.label} · {physicalQrContextLabel(item.qrContextType, t)} · ×{item.quantity}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                ))}
+            <p className="pq-meta__label">{t("business.qrStudio.physical.orders.payment")}</p>
+            <p className="pq-meta__value pq-meta__value--quiet">
+              {physicalQrPaymentLabel(order.paymentStatus, t, { totalAmount: order.totalAmount })}
+            </p>
+            {order.paidAt ? (
+              <p className="mt-0.5 text-xs text-muted-foreground">
+                {formatBerlinDateTime(order.paidAt, i18n.language)}
+              </p>
+            ) : null}
+          </div>
+          <div>
+            <p className="pq-meta__label">{t("business.qrStudio.physical.orders.status")}</p>
+            <p className="pq-meta__value pq-meta__value--quiet">{status.title}</p>
+          </div>
+        </aside>
+      </section>
+
+      <section className="pq-order-section" aria-labelledby="pq-order-delivery-heading">
+        <h2 id="pq-order-delivery-heading" className="pq-order-section__title">
+          {t("business.qrStudio.physical.orders.sectionDelivery")}
+        </h2>
+        <div className="grid gap-5 sm:grid-cols-2">
+          <div className="min-w-0">
+            <p className="pq-meta__label">{t("business.qrStudio.physical.shipTo")}</p>
+            {shipping ? (
+              <div className="pq-meta__value pq-meta__value--quiet mt-1 space-y-0.5">
+                <p>{shipping.recipientName}</p>
+                {shipping.streetLine ? <p>{shipping.streetLine}</p> : null}
+                {shipping.addressLine2 ? <p>{shipping.addressLine2}</p> : null}
+                <p>
+                  {[shipping.postalCode, shipping.city].filter(Boolean).join(" ")}
+                  {shipping.country ? `, ${shipping.country}` : ""}
+                </p>
               </div>
             ) : (
-              <p className="font-medium">{physicalQrContextLabel(order.qrContextType, t)}</p>
+              <p className="pq-meta__value pq-meta__value--quiet">
+                {t("business.qrStudio.physical.deliveryNotCollected")}
+              </p>
             )}
           </div>
-          <div>
-            <p className="text-muted-foreground">{t("business.qrStudio.physical.printedAddress")}</p>
-            <p className="font-medium">
-              {order.supportsAddress
-                ? address || t("business.qrStudio.physical.withAddress")
-                : t("business.qrStudio.physical.withoutAddress")}
+          <div className="min-w-0">
+            {contact ? (
+              <>
+                <p className="pq-meta__label">{t("business.qrStudio.physical.contact")}</p>
+                <div className="pq-meta__value pq-meta__value--quiet mt-1 space-y-0.5">
+                  {contact.name ? <p>{contact.name}</p> : null}
+                  {contact.email ? <p className="break-all">{contact.email}</p> : null}
+                  {contact.phone ? <p>{contact.phone}</p> : null}
+                </div>
+              </>
+            ) : null}
+          </div>
+        </div>
+        {order.shippedAt ? (
+          <div className="mt-5 space-y-1 text-sm">
+            <p>
+              {t("business.qrStudio.physical.shippedAt")}: {formatBerlinDateTime(order.shippedAt, i18n.language)}
             </p>
-          </div>
-          <div>
-            <p className="text-muted-foreground">{t("business.qrStudio.physical.shipTo")}</p>
-            <p className="font-medium">{shipTo || t("business.qrStudio.physical.deliveryNotCollected")}</p>
-          </div>
-          {contact ? (
-            <div className="sm:col-span-2">
-              <p className="text-muted-foreground">{t("business.qrStudio.physical.contact")}</p>
-              <p className="font-medium">
-                {[contact.name, contact.email, contact.phone].filter(Boolean).join(" · ")}
-              </p>
-            </div>
-          ) : null}
-          <div>
-            <p className="text-muted-foreground">{t("business.qrStudio.physical.quantity")}</p>
-            <p className="font-medium">{order.quantity}</p>
-          </div>
-          <div>
-            <p className="text-muted-foreground">{t("business.qrStudio.physical.orders.status")}</p>
-            <div className="mt-1 space-y-1">
-              <PhysicalQrStatusBadge tone={status.tone} label={status.title} />
-              {status.detail ? <p className="text-sm text-muted-foreground">{status.detail}</p> : null}
-            </div>
-          </div>
-          <div className="sm:col-span-2">
-            <p className="text-muted-foreground">{t("business.qrStudio.physical.orders.cutoff")}</p>
-            <p className="font-medium">{physicalQrCutoffLabel(order.processingClass, t)}</p>
-          </div>
-          <div className="sm:col-span-2">
-            <p className="text-muted-foreground">{t("business.qrStudio.physical.orders.estimatedFulfillment")}</p>
-            <p className="font-medium">{physicalQrEstimatedFulfillmentLabel(order.processingClass, t)}</p>
-          </div>
-          <div className="sm:col-span-2 text-muted-foreground">
-            {t("business.qrStudio.physical.deliveryAfterShip")}
-          </div>
-          {order.shippedAt ? (
-            <div className="sm:col-span-2 space-y-1">
+            {order.carrier ? (
               <p>
-                {t("business.qrStudio.physical.shippedAt")}: {formatBerlinDateTime(order.shippedAt, i18n.language)}
+                {t("business.qrStudio.physical.carrier")}: {order.carrier}
               </p>
-              {order.carrier ? (
-                <p>
-                  {t("business.qrStudio.physical.carrier")}: {order.carrier}
-                </p>
-              ) : null}
-              {order.trackingNumber ? (
-                <p>
-                  {t("business.qrStudio.physical.tracking")}:{" "}
-                  {order.trackingUrl ? (
-                    <a className="underline" href={order.trackingUrl} target="_blank" rel="noreferrer">
-                      {order.trackingNumber}
-                    </a>
-                  ) : (
-                    order.trackingNumber
-                  )}
-                </p>
-              ) : null}
-            </div>
-          ) : null}
-        </CardContent>
-      </Card>
+            ) : null}
+            {order.trackingNumber ? (
+              <p>
+                {t("business.qrStudio.physical.tracking")}:{" "}
+                {order.trackingUrl ? (
+                  <a className="underline" href={order.trackingUrl} target="_blank" rel="noreferrer">
+                    {order.trackingNumber}
+                  </a>
+                ) : (
+                  order.trackingNumber
+                )}
+              </p>
+            ) : null}
+          </div>
+        ) : (
+          <p className="mt-5 text-sm text-muted-foreground">
+            {physicalQrEstimatedFulfillmentLabel(order.processingClass, t)}{" "}
+            {physicalQrCutoffLabel(order.processingClass, t)}. {t("business.qrStudio.physical.deliveryAfterShip")}
+          </p>
+        )}
+      </section>
 
       {showPay ? (
-        <Button type="button" disabled={paying} onClick={() => void pay()}>
-          {failed ? t("business.qrStudio.physical.orders.tryPaymentAgain") : t("business.qrStudio.physical.payNow")}
-        </Button>
+        <div className="pq-order-section">
+          <Button
+            type="button"
+            disabled={paying}
+            onClick={() => void pay()}
+            className={cn(businessUi.btnPrimary)}
+          >
+            {failed ? t("business.qrStudio.physical.orders.tryPaymentAgain") : t("business.qrStudio.physical.payNow")}
+          </Button>
+        </div>
       ) : null}
 
-      <Card className="physical-qr-order-detail__section">
-        <CardHeader className="max-lg:px-0">
-          <CardTitle>{t("business.qrStudio.physical.orders.progress")}</CardTitle>
-        </CardHeader>
-        <CardContent className="max-lg:px-0">
-          <PhysicalQrOrderTimeline order={order} />
-        </CardContent>
-      </Card>
-    </div>
+      <section className="pq-order-section" aria-labelledby="pq-order-progress-heading">
+        <h2 id="pq-order-progress-heading" className="pq-order-section__title">
+          {t("business.qrStudio.physical.orders.progress")}
+        </h2>
+        <PhysicalQrOrderTimeline order={order} currentDetail={progressDetail} />
+      </section>
+    </article>
   );
 }

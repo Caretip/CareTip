@@ -56,6 +56,17 @@ import {
   onboardingSubhead,
 } from "../components/business/businessOnboardingUi";
 import { BUSINESS_TYPE_OPTIONS } from "../lib/businessVenueOptions";
+import {
+  callingCodeForCountry,
+  inferCountryFromPhone,
+  listSupportedCountryIsos,
+  normalizeOptionalContactPhone,
+  normalizeOptionalWebsiteUrl,
+  type ContactFieldErrorCode,
+} from "../lib/contactFieldValidation";
+import { isApiRequestError } from "../lib/apiError";
+import type { CountryCode } from "libphonenumber-js";
+import { parsePhoneNumberFromString } from "libphonenumber-js";
 
 const PAGE_HEADLINE_KEYS = [
   "business.onboarding.stepTitle.businessDetails",
@@ -70,7 +81,7 @@ const PAGE_DESC_KEYS = [
 ] as const;
 
 export function BusinessOnboardingPage() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const { user, sessionValidated, setHasCompletedOnboarding, refetchUser, logout } = useAuth();
   const [step, setStep] = useState<OnboardingStep>(1);
@@ -80,7 +91,13 @@ export function BusinessOnboardingPage() {
   const [businessType, setBusinessType] = useState("");
   const [registeredAddress, setRegisteredAddress] = useState("");
   const [contactPhone, setContactPhone] = useState("");
+  const [contactCountry, setContactCountry] = useState<CountryCode>("DE");
   const [website, setWebsite] = useState("");
+  const [fieldErrors, setFieldErrors] = useState<{
+    contactPhone?: string;
+    contactPhoneCountry?: string;
+    website?: string;
+  }>({});
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [savedLogoPath, setSavedLogoPath] = useState<string | null>(null);
   const [employeeCount, setEmployeeCount] = useState(0);
@@ -141,7 +158,13 @@ export function BusinessOnboardingPage() {
           setLegalBusinessName(profile.name ?? "");
           setBusinessType(profile.type ?? "");
           setRegisteredAddress(profile.registeredAddress ?? "");
-          setContactPhone(profile.contactPhone ?? "");
+          const storedPhone = profile.contactPhone ?? "";
+          const inferred = inferCountryFromPhone(storedPhone);
+          const parsedStored = storedPhone ? parsePhoneNumberFromString(storedPhone) : undefined;
+          setContactCountry(inferred ?? "DE");
+          setContactPhone(
+            parsedStored?.isValid() ? parsedStored.formatNational() : storedPhone.replace(/^\+/, ""),
+          );
           setWebsite(profile.website ?? "");
           setSavedLogoPath(profile.logo ?? null);
           setEmployeeCount(profile.employeeCount ?? 0);
@@ -159,6 +182,36 @@ export function BusinessOnboardingPage() {
       cancelled = true;
     };
   }, [navigate, refetchUser, sessionValidated, user]);
+
+  const countryOptions = useMemo(() => {
+    const language = i18n.language || "en";
+    const display = new Intl.DisplayNames([language], { type: "region" });
+    return listSupportedCountryIsos().map((iso) => {
+      const name = display.of(iso) ?? iso;
+      return { iso, label: `${name} (${callingCodeForCountry(iso)})` };
+    });
+  }, [i18n.language]);
+
+  const contactErrorMessage = (code: ContactFieldErrorCode) => {
+    if (code === "INVALID_CONTACT_COUNTRY") return t("business.onboarding.errors.country");
+    if (code === "INVALID_CONTACT_PHONE") return t("business.onboarding.errors.phone");
+    return t("business.onboarding.errors.website");
+  };
+
+  const validateContactFields = () => {
+    const next: { contactPhone?: string; contactPhoneCountry?: string; website?: string } = {};
+    const phoneResult = normalizeOptionalContactPhone(contactPhone, contactCountry);
+    if (!phoneResult.ok) {
+      if (phoneResult.code === "INVALID_CONTACT_COUNTRY") next.contactPhoneCountry = contactErrorMessage(phoneResult.code);
+      else next.contactPhone = contactErrorMessage(phoneResult.code);
+    }
+    const websiteResult = normalizeOptionalWebsiteUrl(website);
+    if (!websiteResult.ok) {
+      next.website = contactErrorMessage(websiteResult.code);
+    }
+    setFieldErrors(next);
+    return { ok: Object.keys(next).length === 0, phoneResult, websiteResult };
+  };
 
   const canContinue = useMemo(() => {
     if (step === 1) return legalBusinessName.trim().length > 1 && businessType.trim().length > 0;
@@ -201,10 +254,15 @@ export function BusinessOnboardingPage() {
       return;
     }
     if (targetStep === 2) {
+      const validated = validateContactFields();
+      if (!validated.ok || !validated.phoneResult.ok || !validated.websiteResult.ok) {
+        throw new Error("ONBOARDING_CONTACT_INVALID");
+      }
       await patchBusinessProfile({
         registeredAddress: registeredAddress.trim() || null,
-        contactPhone: contactPhone.trim() || null,
-        website: website.trim() || null,
+        contactPhone: validated.phoneResult.e164,
+        contactPhoneCountry: validated.phoneResult.country,
+        website: validated.websiteResult.value,
       });
       if (logoFile) {
         try {
@@ -280,8 +338,25 @@ export function BusinessOnboardingPage() {
       setBusy(false);
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
+      if (msg === "ONBOARDING_CONTACT_INVALID") {
+        setBusy(false);
+        return;
+      }
       if (msg.includes("Authentication required") || msg.includes("Invalid or expired token")) {
         handleAuthFailure();
+        setBusy(false);
+        return;
+      }
+      if (isApiRequestError(err)) {
+        if (err.code === "INVALID_CONTACT_COUNTRY") {
+          setFieldErrors((prev) => ({ ...prev, contactPhoneCountry: t("business.onboarding.errors.country") }));
+        } else if (err.code === "INVALID_CONTACT_PHONE") {
+          setFieldErrors((prev) => ({ ...prev, contactPhone: t("business.onboarding.errors.phone") }));
+        } else if (err.code === "INVALID_WEBSITE_URL") {
+          setFieldErrors((prev) => ({ ...prev, website: t("business.onboarding.errors.website") }));
+        } else {
+          toast.error(toUserFriendlyMessage(err));
+        }
         setBusy(false);
         return;
       }
@@ -480,20 +555,48 @@ export function BusinessOnboardingPage() {
                                   onChange={setRegisteredAddress}
                                   hint={t("business.onboarding.fields.addressHint")}
                                 />
-                                <BusinessOnboardingTextField
-                                  label={t("business.onboarding.fields.phone")}
-                                  placeholder={t("business.onboarding.fields.phonePlaceholder")}
-                                  value={contactPhone}
-                                  onChange={setContactPhone}
-                                  hint={t("business.onboarding.fields.phoneHint")}
-                                  optional
-                                />
+                                <div className="grid gap-6 sm:grid-cols-[minmax(0,14rem)_minmax(0,1fr)]">
+                                  <BusinessOnboardingSelectField
+                                    label={t("business.onboarding.fields.country")}
+                                    placeholder={t("business.onboarding.fields.countryPlaceholder")}
+                                    value={contactCountry}
+                                    onChange={(v) => {
+                                      setContactCountry((v || "DE") as CountryCode);
+                                      setFieldErrors((prev) => ({ ...prev, contactPhoneCountry: undefined, contactPhone: undefined }));
+                                    }}
+                                    hint={t("business.onboarding.fields.countryHint")}
+                                    error={fieldErrors.contactPhoneCountry}
+                                    optional
+                                  >
+                                    {countryOptions.map((opt) => (
+                                      <option key={opt.iso} value={opt.iso}>
+                                        {opt.label}
+                                      </option>
+                                    ))}
+                                  </BusinessOnboardingSelectField>
+                                  <BusinessOnboardingTextField
+                                    label={t("business.onboarding.fields.phone")}
+                                    placeholder={t("business.onboarding.fields.phonePlaceholder")}
+                                    value={contactPhone}
+                                    onChange={(v) => {
+                                      setContactPhone(v);
+                                      setFieldErrors((prev) => ({ ...prev, contactPhone: undefined }));
+                                    }}
+                                    hint={t("business.onboarding.fields.phoneHint")}
+                                    error={fieldErrors.contactPhone}
+                                    optional
+                                  />
+                                </div>
                                 <BusinessOnboardingTextField
                                   label={t("business.onboarding.fields.website")}
                                   placeholder={t("business.onboarding.fields.websitePlaceholder")}
                                   value={website}
-                                  onChange={setWebsite}
+                                  onChange={(v) => {
+                                    setWebsite(v);
+                                    setFieldErrors((prev) => ({ ...prev, website: undefined }));
+                                  }}
                                   hint={t("business.onboarding.fields.websiteHint")}
+                                  error={fieldErrors.website}
                                   optional
                                 />
                               </div>

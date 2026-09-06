@@ -39,6 +39,11 @@ import { logDashboardPhase } from "../utils/dashboardTiming.js";
 import { inferManagerOnboardingStep } from "./onboardingProgress.service.js";
 import { queryEmployeeRatingAggregates } from "./feedback.service.js";
 import {
+  normalizeOptionalContactPhone,
+  normalizeOptionalWebsiteUrl,
+  ProfileFieldValidationError,
+} from "../lib/contactFieldValidation.js";
+import {
   buildBusinessDailyTipDistribution,
   buildYearChartFromMonthTotals,
   buildAllTimeChartFromYearTotals,
@@ -1409,6 +1414,7 @@ export async function updateManagerBusinessProfile(
     location?: string | null;
     registeredAddress?: string | null;
     contactPhone?: string | null;
+    contactPhoneCountry?: string | null;
     website?: string | null;
   }
 ): Promise<{ id: string }> {
@@ -1438,10 +1444,25 @@ export async function updateManagerBusinessProfile(
       : undefined;
   const nextAddress =
     data.registeredAddress !== undefined ? (data.registeredAddress?.trim() || null) : undefined;
-  const nextPhone =
-    data.contactPhone !== undefined ? (data.contactPhone?.trim() || null) : undefined;
-  const nextWebsite =
-    data.website !== undefined ? (data.website?.trim() || null) : undefined;
+  const nextPhone = (() => {
+    if (data.contactPhone === undefined) return undefined;
+    const result = normalizeOptionalContactPhone(data.contactPhone, data.contactPhoneCountry);
+    if (!result.ok) {
+      throw new ProfileFieldValidationError(
+        result.code === "INVALID_CONTACT_COUNTRY" ? "contactPhoneCountry" : "contactPhone",
+        result.code,
+      );
+    }
+    return result.e164;
+  })();
+  const nextWebsite = (() => {
+    if (data.website === undefined) return undefined;
+    const result = normalizeOptionalWebsiteUrl(data.website);
+    if (!result.ok) {
+      throw new ProfileFieldValidationError("website", result.code);
+    }
+    return result.value;
+  })();
 
   await prisma.business.update({
     where: { id: b.id },

@@ -17,6 +17,7 @@ import { sanitizeIanaTimezone, DEFAULT_BUSINESS_TIMEZONE } from "../utils/busine
 import { DateTime } from "luxon";
 import { isPrismaPoolTimeout } from "../utils/prismaErrors.js";
 import { parseBoundedSkip } from "../utils/paginationLimits.js";
+import { ProfileFieldValidationError } from "../lib/contactFieldValidation.js";
 import {
   SPONSORED_CAPABILITY_PROFILE_KEYS,
   SPONSORED_PROGRAMMES,
@@ -618,6 +619,13 @@ export async function updateBusiness(req: Request, res: Response) {
     });
     return res.json({ success: true, business });
   } catch (err) {
+    if (err instanceof ProfileFieldValidationError) {
+      return res.status(400).json({
+        message: err.message,
+        code: err.code,
+        field: err.field,
+      });
+    }
     logServerError("platform.updateBusiness", err);
     return res.status(400).json({
       message: clientSafeMessage(err, "We couldn't save business details. Try again."),

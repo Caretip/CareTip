@@ -17,6 +17,12 @@ import {
   featureAccessDeniedPayloadForBusiness,
 } from "../services/subscriptionEntitlement.service.js";
 import { getBusinessQrAnalytics, type QrAnalyticsTimeframe } from "../services/qr/qrAnalytics.service.js";
+import {
+  INVALID_CONTACT_COUNTRY,
+  INVALID_CONTACT_PHONE,
+  INVALID_WEBSITE_URL,
+  ProfileFieldValidationError,
+} from "../lib/contactFieldValidation.js";
 
 function statsErrorHttpStatus(err: unknown): number {
   if (err instanceof StatsFetchError) {
@@ -136,6 +142,24 @@ export async function listInviteHistory(req: Request, res: Response) {
   }
 }
 
+function asOptionalString(
+  value: unknown,
+  field: "contactPhone" | "contactPhoneCountry" | "website",
+): string | null | undefined {
+  if (value === undefined) return undefined;
+  if (value === null) return null;
+  if (typeof value !== "string") {
+    const code =
+      field === "website"
+        ? INVALID_WEBSITE_URL
+        : field === "contactPhoneCountry"
+          ? INVALID_CONTACT_COUNTRY
+          : INVALID_CONTACT_PHONE;
+    throw new ProfileFieldValidationError(field, code);
+  }
+  return value;
+}
+
 function parseProfileBody(body: Record<string, unknown>): Parameters<typeof businessService.updateManagerBusinessProfile>[1] {
   const name =
     typeof body.name === "string"
@@ -150,8 +174,9 @@ function parseProfileBody(body: Record<string, unknown>): Parameters<typeof busi
     location: body.location === undefined ? undefined : (body.location as string | null),
     registeredAddress:
       body.registeredAddress === undefined ? undefined : (body.registeredAddress as string | null),
-    contactPhone: body.contactPhone === undefined ? undefined : (body.contactPhone as string | null),
-    website: body.website === undefined ? undefined : (body.website as string | null),
+    contactPhone: asOptionalString(body.contactPhone, "contactPhone"),
+    contactPhoneCountry: asOptionalString(body.contactPhoneCountry, "contactPhoneCountry"),
+    website: asOptionalString(body.website, "website"),
   };
 }
 
@@ -166,6 +191,13 @@ export async function patchMyProfile(req: Request, res: Response) {
     const profile = await businessService.getManagerBusinessProfile(userId);
     return res.json(profile);
   } catch (err) {
+    if (err instanceof ProfileFieldValidationError) {
+      return res.status(400).json({
+        message: err.message,
+        code: err.code,
+        field: err.field,
+      });
+    }
     logServerError("business.patchMyProfile", err);
     return res.status(400).json({
       message: clientSafeMessage(err, CLIENT_FALLBACK.business),

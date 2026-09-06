@@ -18,7 +18,6 @@ import {
   mapPricingTierToPlanKey,
   type PricingTierKey,
 } from "../../../../data/pricingPlanCatalog";
-import { buildBillingPlanComparisonFeatures } from "../../../../data/billingPlanComparisonFeatures";
 import {
   hasOperationalBillingPlan,
   resolveBillingPlanKey,
@@ -320,8 +319,8 @@ export function BillingPlanManagement({
     <div className="billing-plan-management space-y-6">
       <div className="billing-plan-management__controls flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="min-w-0">
-          <h3 id="billing-cycle-heading" className={dashboardWorkspaceUi.subsectionTitle}>
-            {t("business.billing.billingCycle")}
+          <h3 id="choose-plan-heading" className={dashboardWorkspaceUi.subsectionTitle}>
+            {t("business.billing.choosePlan")}
           </h3>
           {billingCycle === "yearly" ? (
             <p className="mt-1 text-sm font-medium text-primary">
@@ -335,7 +334,7 @@ export function BillingPlanManagement({
             value={billingCycle}
             onChange={onBillingCycleChange}
             className={cn("caretip-pricing-billing-toggle--in-panel w-full sm:w-auto sm:max-w-[16.5rem]")}
-            aria-labelledby="billing-cycle-heading"
+            aria-labelledby="choose-plan-heading"
           />
 
           {canCheckout && billing.hasStripeBilling && !billing.cancelAtPeriodEnd ? (
@@ -380,9 +379,6 @@ export function BillingPlanManagement({
                 badge={resolveBadge(tier.tierKey)}
                 footer={renderTierFooter(tier.tierKey, tier.name)}
                 subscriptionInfo={renderSubscriptionInfo(tier.tierKey)}
-                variant="subscription"
-                showFeatures
-                featureList={buildBillingPlanComparisonFeatures(t, tier.tierKey)}
               />
             </div>
           ))}

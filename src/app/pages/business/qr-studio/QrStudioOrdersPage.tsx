@@ -14,6 +14,7 @@ import { QR_STUDIO_BASE } from "@/app/components/business/businessDashboardNav";
 import { businessUi } from "@/app/components/business/businessDashboardUi";
 import { Button } from "@/components/ui/button";
 import { useRequireAuth } from "../../../hooks/useRequireAuth";
+import { cn } from "@/lib/utils";
 
 export function QrStudioOrdersPage() {
   const { t } = useTranslation();
@@ -96,11 +97,13 @@ export function QrStudioOrdersPage() {
           <p className="mt-1 text-sm text-muted-foreground">{t("business.qrStudio.orders.emptyDesc")}</p>
         </div>
       ) : (
-        <div className="divide-y divide-border/80 border-y border-border/80">
+        <>
+        <div className="divide-y divide-border/80 border-y border-border/80 lg:hidden">
           {orders.map((order) => (
             <PhysicalQrOrderCard
               key={order.id}
               order={order}
+              layout="list"
               paying={payingOrderId === order.id}
               onPay={(oid) => {
                 void payOrder(oid);
@@ -108,6 +111,34 @@ export function QrStudioOrdersPage() {
             />
           ))}
         </div>
+        <div className={cn(businessUi.tableWrap, "border-y border-border/80")}>
+          <table className="pq-order-table">
+            <thead>
+              <tr>
+                <th>{t("business.qrStudio.physical.orders.colOrder")}</th>
+                <th>{t("business.qrStudio.physical.orders.colProduct")}</th>
+                <th>{t("business.qrStudio.physical.orders.colDate")}</th>
+                <th>{t("business.qrStudio.physical.orders.colAmount")}</th>
+                <th>{t("business.qrStudio.physical.orders.status")}</th>
+                <th className="text-right">{t("business.qrStudio.physical.orders.colAction")}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {orders.map((order) => (
+                <PhysicalQrOrderCard
+                  key={order.id}
+                  order={order}
+                  layout="table"
+                  paying={payingOrderId === order.id}
+                  onPay={(oid) => {
+                    void payOrder(oid);
+                  }}
+                />
+              ))}
+            </tbody>
+          </table>
+        </div>
+        </>
       )}
     </div>
   );

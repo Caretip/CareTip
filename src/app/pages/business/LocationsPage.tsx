@@ -285,7 +285,9 @@ export function LocationsPage() {
       return;
     }
     if (atTableCap) {
-      toast.error(t("business.tablesPage.quotaBody"));
+      toast.warning(t("business.tablesPage.quotaTitle"), {
+        description: t("business.tablesPage.quotaBody"),
+      });
       return;
     }
     const locationId = tableLocation.id;
@@ -351,18 +353,23 @@ export function LocationsPage() {
 
       <div className={cn(businessUi.subPageMain, "dashboard-page-contained max-w-5xl")}>
         {showTableQuotaNotice ? (
-          <section
+          <div
             id="tables-quota-notice"
-            className={cn(businessUi.cardStatic, "mb-6 p-4 sm:p-5")}
-            aria-labelledby="tables-quota-title"
+            role="status"
+            className="mb-4 flex max-w-xl items-center gap-2.5 rounded-md border border-amber-500/25 border-l-[3px] border-l-amber-500 bg-amber-50/90 px-3 py-1.5 dark:border-amber-400/20 dark:border-l-amber-400 dark:bg-amber-950/35"
           >
-            <h2 id="tables-quota-title" className="text-sm font-semibold text-foreground">
-              {t("business.tablesPage.quotaTitle")}
-            </h2>
-            <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">
-              {t("business.tablesPage.quotaBody")}
+            <span
+              className="h-2 w-2 shrink-0 rounded-full bg-amber-500 dark:bg-amber-400"
+              aria-hidden
+            />
+            <p className="min-w-0 text-xs leading-snug text-amber-950 dark:text-amber-50">
+              <span className="font-semibold">{t("business.tablesPage.quotaTitle")}</span>
+              <span className="text-amber-900/80 dark:text-amber-100/80">
+                {" "}
+                {t("business.tablesPage.quotaBody")}
+              </span>
             </p>
-          </section>
+          </div>
         ) : null}
 
         {showInitialSkeleton ? (

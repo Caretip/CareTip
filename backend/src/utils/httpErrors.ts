@@ -116,6 +116,9 @@ const ALLOWED_CLIENT_MESSAGES = new Set<string>([
   "Your plan supports one location. Upgrade to Business for multi-location support.",
   "Your plan supports one table. Upgrade to Business for multiple tables.",
   "You've reached a limit on your current plan.",
+  "Select a supported country code.",
+  "Enter a valid phone number.",
+  "Enter a valid website URL, including https://.",
 ]);
 
 /** Thrown from auth login when credentials are valid but `emailVerified` is false. */

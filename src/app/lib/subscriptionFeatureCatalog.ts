@@ -50,7 +50,7 @@ const CATALOG: Record<FeatureKey, FeatureCatalogEntry> = {
     benefitKey: "subscription.features.customerFeedback.benefit",
     featureListPrefix: "subscription.features.customerFeedback",
     featureListCount: 4,
-    requiredTier: "basic",
+    requiredTier: "premium",
   },
   tipManagement: {
     featureKey: "tipManagement",
@@ -74,7 +74,7 @@ const CATALOG: Record<FeatureKey, FeatureCatalogEntry> = {
     benefitKey: "subscription.features.qrTemplates.benefit",
     featureListPrefix: "subscription.features.qrTemplates",
     featureListCount: 3,
-    requiredTier: "premium",
+    requiredTier: "basic",
   },
   physicalQrPrinting: {
     featureKey: "physicalQrPrinting",
@@ -106,7 +106,7 @@ const CATALOG: Record<FeatureKey, FeatureCatalogEntry> = {
     benefitKey: "subscription.features.csvExport.benefit",
     featureListPrefix: "subscription.features.csvExport",
     featureListCount: 3,
-    requiredTier: "basic",
+    requiredTier: "premium",
   },
   multiLocation: {
     featureKey: "multiLocation",
@@ -193,6 +193,10 @@ export function getFeatureCatalog(featureKey: FeatureKey): FeatureCatalogEntry {
     featureListCount: 2,
     requiredTier: isEnterpriseFeatureKey(featureKey) ? "enterprise" : minimumTierForFeature(featureKey),
   };
+}
+
+export function allFeatureCatalogEntries(): FeatureCatalogEntry[] {
+  return Object.values(CATALOG);
 }
 
 export function featureListKeys(entry: FeatureCatalogEntry): string[] {

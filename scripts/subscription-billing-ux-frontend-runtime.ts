@@ -231,9 +231,26 @@ function testManagePlanPortalRouting(): boolean {
   return ok;
 }
 
+function testUnsubscribedIsNotBasic(): boolean {
+  const none = mockBilling({
+    planKey: null,
+    subscriptionTier: null,
+    status: "none",
+    accessSource: "none",
+    billingCycle: null,
+  });
+  if (hasOperationalBillingPlan(none)) {
+    fail("accessSource=none with no planKey must not be treated as an operational plan");
+    return false;
+  }
+  pass("true unsubscribed is distinct from entitled Basic");
+  return true;
+}
+
 function main(): void {
   const checks = [
     testBasicOperational(),
+    testUnsubscribedIsNotBasic(),
     testTrialExpiredOnBasic(),
     testActiveProTrialDoesNotShowUsedMessage(),
     testPaidProDoesNotShowUsedMessage(),

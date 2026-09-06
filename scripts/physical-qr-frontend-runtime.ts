@@ -329,8 +329,7 @@ if (
   adminDetail.includes("deliveryAddress") &&
   adminDetail.includes("deliveryMissingWarning") &&
   adminDetail.includes("order.items") &&
-  adminDetail.includes("line items") &&
-  adminDetail.includes("total copies") &&
+  adminDetail.includes("orderItemsSummary") &&
   !adminDetail.includes("PhysicalQrOrderThread") &&
   !adminDetail.includes("registeredAddress")
 ) {
@@ -352,7 +351,7 @@ if (
   adminDetail.includes("downloadAllPdfsDone") &&
   adminDetail.includes("loadError") &&
   adminDetail.includes("totalPages = order.quantity") &&
-  adminDetail.indexOf("admin.physicalQr.currentStatus") < adminDetail.indexOf("admin.physicalQr.orderItems")
+  adminDetail.indexOf("admin.physicalQr.colFulfillment") < adminDetail.indexOf("admin.physicalQr.orderItems")
 ) {
   pass("admin bulk PDF download shows Preparing N PDFs, blocks double-click, and reports combined-file success");
 } else fail("admin bulk PDF preparing state");
@@ -464,7 +463,7 @@ if (
   orderUi.includes("isPhysicalQrIncludedOrder") &&
   orderUi.includes("orderReceived") &&
   orderUi.includes("stepOrderReceived") &&
-  orderDetail.includes("orderReceivedProcessing")
+  orderUi.includes("orderReceivedProcessing")
 ) {
   pass("Pro zero-cost orders use Order received copy instead of Payment received");
 } else fail("Pro order received messaging");

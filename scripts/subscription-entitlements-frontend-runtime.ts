@@ -10,6 +10,7 @@ import {
   type FeatureKey,
   type SubscriptionCapability,
 } from "../src/app/lib/subscriptionCapabilities";
+import { allFeatureCatalogEntries } from "../src/app/lib/subscriptionFeatureCatalog";
 import { resolveSidebarNavLock } from "../src/app/components/business/sidebar/sidebarNavLock";
 import { resolveQrStudioAccessBlock } from "../src/app/components/business/QrStudioAccessPanel";
 import {
@@ -278,6 +279,19 @@ function testErrorCodeSemantics(): boolean {
   return ok;
 }
 
+function testFeatureCatalogTiers(): boolean {
+  let ok = true;
+  for (const entry of allFeatureCatalogEntries()) {
+    const expected = minimumTierForFeature(entry.featureKey);
+    if (entry.requiredTier !== expected) {
+      fail(`catalog ${entry.featureKey} requiredTier=${entry.requiredTier} expected=${expected}`);
+      ok = false;
+    }
+  }
+  if (ok) pass("feature catalog requiredTier matches capability matrix");
+  return ok;
+}
+
 function testPhase1EmployeeProfileRegression(): boolean {
   const root = path.dirname(fileURLToPath(new URL(".", import.meta.url)));
   const staff = readFileSync(path.join(root, "src/app/pages/business/StaffManagementPage.tsx"), "utf8");
@@ -386,6 +400,7 @@ function main(): void {
     testSidebarLocks(),
     testFrontendBackendMatrixAlignment(),
     testErrorCodeSemantics(),
+    testFeatureCatalogTiers(),
     testPhase1EmployeeProfileRegression(),
     testPhase3OperationalAccess(),
   ];

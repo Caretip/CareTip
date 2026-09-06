@@ -1,10 +1,8 @@
 import { Check } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import {
-  formatBerlinDateTime,
-  physicalQrStatusDotClasses,
+  formatBerlinDateCompact,
   physicalQrTimeline,
-  physicalQrTimelineStepTone,
 } from "@/app/lib/physicalQrOrderUi";
 import { cn } from "@/lib/utils";
 
@@ -20,41 +18,53 @@ type OrderLike = {
   totalAmount?: number | null;
 };
 
-export function PhysicalQrOrderTimeline({ order }: { order: OrderLike }) {
+export function PhysicalQrOrderTimeline({
+  order,
+  currentDetail,
+}: {
+  order: OrderLike;
+  currentDetail?: string | null;
+}) {
   const { t, i18n } = useTranslation();
   const steps = physicalQrTimeline(order, t);
-  const activeIndex = steps.findIndex((step) => !step.done);
+  const firstPending = steps.findIndex((step) => !step.done);
+  const currentIndex = firstPending === -1 ? steps.length - 1 : firstPending;
 
   return (
-    <ol className="space-y-3">
+    <ol className="pq-progress" aria-label={t("business.qrStudio.physical.orders.progress")}>
       {steps.map((step, index) => {
-        const tone = physicalQrTimelineStepTone(step.id);
-        const isActive = activeIndex === index;
+        const isActive = index === currentIndex;
+        const stateLabel = step.done
+          ? t("business.qrStudio.physical.orders.stepComplete")
+          : isActive
+            ? t("business.qrStudio.physical.orders.stepCurrent")
+            : t("business.qrStudio.physical.orders.pending");
+
         return (
-          <li key={step.id} className="flex items-start gap-3">
-            <span
-              className={cn(
-                "mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border text-[10px] transition-colors",
-                physicalQrStatusDotClasses(tone, { done: step.done, active: isActive }),
-              )}
-              aria-hidden
-            >
-              {step.done ? <Check className="h-3 w-3" strokeWidth={2.5} /> : null}
+          <li
+            key={step.id}
+            className={cn(
+              "pq-progress__step",
+              step.done && "pq-progress__step--done",
+              isActive && "pq-progress__step--current",
+              !step.done && !isActive && "pq-progress__step--pending",
+            )}
+            aria-current={isActive ? "step" : undefined}
+          >
+            <span className="pq-progress__marker" aria-hidden>
+              {step.done ? <Check className="h-2.5 w-2.5" strokeWidth={3} /> : null}
             </span>
-            <div className="min-w-0 flex-1">
-              <p
-                className={cn(
-                  "text-sm font-medium",
-                  step.done || isActive ? "text-foreground" : "text-muted-foreground",
-                )}
-              >
-                {step.label}
-              </p>
-              <p className="text-xs text-muted-foreground">
+            <div className="pq-progress__copy min-w-0">
+              <p className="pq-progress__label">{step.label}</p>
+              <p className="pq-progress__meta">
+                <span className="sr-only">{stateLabel}. </span>
                 {step.at
-                  ? formatBerlinDateTime(step.at, i18n.language)
-                  : t("business.qrStudio.physical.orders.pending")}
+                  ? formatBerlinDateCompact(step.at, i18n.language)
+                  : isActive
+                    ? t("business.qrStudio.physical.orders.stepCurrent")
+                    : t("business.qrStudio.physical.orders.pending")}
               </p>
+              {isActive && currentDetail ? <p className="pq-progress__detail">{currentDetail}</p> : null}
             </div>
           </li>
         );

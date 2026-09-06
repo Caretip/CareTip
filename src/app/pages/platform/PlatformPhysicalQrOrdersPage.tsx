@@ -5,18 +5,18 @@ import { Package } from "lucide-react";
 import { toast } from "sonner";
 import { fetchPlatformPhysicalQrOrders, type PhysicalQrAdminOrder } from "../../lib/api";
 import {
-  formatBerlinDateTime,
+  formatBerlinDateCompact,
   formatPhysicalQrMoney,
   physicalQrContextLabel,
   physicalQrFulfillmentLabel,
   physicalQrOrderNumber,
   physicalQrPaymentLabel,
-  physicalQrShippingFromUnknown,
 } from "../../lib/physicalQrOrderUi";
 import { PlatformPage, PlatformPageHeader } from "../../components/platform/PlatformPageChrome";
 import { platformUi } from "../../components/platform/platformDashboardUi";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 const FILTERS = [
   "all",
@@ -96,74 +96,115 @@ export function PlatformPhysicalQrOrdersPage() {
           }}
         />
       </div>
-      <div className="mt-4 space-y-3">
-        {loading ? (
-          <div className={platformUi.contentCard} role="status" aria-busy="true">
-            <div className="space-y-3">
-              {[0, 1, 2].map((row) => (
-                <div key={row} className="space-y-2 border-b border-border/50 pb-3 last:border-0 last:pb-0">
-                  <div className="h-4 w-40 animate-pulse rounded bg-muted" />
-                  <div className="h-3 w-64 max-w-full animate-pulse rounded bg-muted" />
-                  <div className="h-3 w-48 animate-pulse rounded bg-muted" />
-                </div>
-              ))}
-            </div>
+
+      {loading ? (
+        <div className={`${platformUi.dataPanel} mt-4`} role="status" aria-busy="true">
+          <div className="space-y-3 p-4">
+            {[0, 1, 2, 3].map((row) => (
+              <div key={row} className="h-8 animate-pulse rounded bg-muted" />
+            ))}
           </div>
-        ) : error ? (
-          <div className={platformUi.contentCard}>
-            <p className="text-sm text-destructive">{error}</p>
+        </div>
+      ) : error ? (
+        <p className="mt-4 text-sm text-destructive">{error}</p>
+      ) : orders.length === 0 ? (
+        <p className="mt-6 text-sm text-muted-foreground">{t("admin.physicalQr.empty")}</p>
+      ) : (
+        <>
+          <div className="mt-4 divide-y divide-border/80 border-y border-border/80 lg:hidden">
+            {orders.map((order) => (
+              <AdminOrderListRow key={order.id} order={order} compact />
+            ))}
           </div>
-        ) : orders.length === 0 ? (
-          <div className={platformUi.contentCard}>
-            <p className="text-sm text-muted-foreground">{t("admin.physicalQr.empty")}</p>
+          <div className={cn(platformUi.tableWrap, "mt-4 border-y border-border/80")}>
+            <table className="pq-order-table">
+              <thead>
+                <tr>
+                  <th>{t("admin.physicalQr.colOrder")}</th>
+                  <th>{t("admin.physicalQr.business")}</th>
+                  <th>{t("admin.physicalQr.colItems")}</th>
+                  <th>{t("admin.physicalQr.colPayment")}</th>
+                  <th>{t("admin.physicalQr.colFulfillment")}</th>
+                  <th>{t("admin.physicalQr.colPlaced")}</th>
+                  <th className="text-right">{t("admin.physicalQr.colAction")}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {orders.map((order) => (
+                  <AdminOrderListRow key={order.id} order={order} />
+                ))}
+              </tbody>
+            </table>
           </div>
-        ) : (
-          orders.map((order) => {
-            const shipping = physicalQrShippingFromUnknown(order.shippingSnapshot);
-            return (
-            <Link
-              key={order.id}
-              to={`/platform-admin/branding-orders/${order.id}`}
-              className={`${platformUi.contentCard} block min-w-0 hover:border-primary/40`}
-            >
-              <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-start sm:justify-between sm:gap-3">
-                <div className="min-w-0">
-                  <p className="break-words font-medium">
-                    {t("business.qrStudio.physical.orders.orderNumber", {
-                      id: physicalQrOrderNumber(order.id),
-                    })}
-                  </p>
-                  <p className="break-words text-sm text-muted-foreground">
-                    {order.businessName}
-                    {" · "}
-                    {order.itemCount > 1
-                      ? t("admin.physicalQr.itemCount", {
-                          count: order.itemCount,
-                          defaultValue: "{{count}} QR items",
-                        })
-                      : physicalQrContextLabel(order.qrContextType, t)}
-                    {" · ×"}
-                    {order.quantity}
-                    {shipping ? ` · ${shipping.city}, ${shipping.country}` : ""}
-                  </p>
-                </div>
-                <p className="shrink-0 text-sm font-semibold tabular-nums sm:text-right">
-                  {formatPhysicalQrMoney(order.totalAmount, order.currency, i18n.language)}
-                </p>
-              </div>
-              <p className="mt-2 break-words text-sm">
-                {physicalQrPaymentLabel(order.paymentStatus, t, { totalAmount: order.totalAmount })} ·{" "}
-                {physicalQrFulfillmentLabel(order.fulfillmentStatus, t, { totalAmount: order.totalAmount })}
-              </p>
-              <p className="mt-1 break-words text-xs text-muted-foreground">
-                {formatBerlinDateTime(order.placedAt, i18n.language)}
-                {order.updatedAt ? ` · ${formatBerlinDateTime(order.updatedAt, i18n.language)}` : ""}
-              </p>
-            </Link>
-            );
-          })
-        )}
-      </div>
+        </>
+      )}
     </PlatformPage>
+  );
+}
+
+function AdminOrderListRow({
+  order,
+  compact,
+}: {
+  order: PhysicalQrAdminOrder;
+  compact?: boolean;
+}) {
+  const { t, i18n } = useTranslation();
+  const href = `/platform-admin/branding-orders/${order.id}`;
+  const items =
+    order.itemCount > 1
+      ? t("admin.physicalQr.itemCount", { count: order.itemCount, defaultValue: "{{count}} QR items" })
+      : physicalQrContextLabel(order.qrContextType, t);
+
+  if (compact) {
+    return (
+      <Link to={href} className="block py-3.5">
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <p className="font-medium">#{physicalQrOrderNumber(order.id)}</p>
+            <p className="mt-0.5 break-words text-sm text-muted-foreground">
+              {order.businessName} · {items} · ×{order.quantity}
+            </p>
+          </div>
+          <p className="shrink-0 text-sm font-semibold tabular-nums">
+            {formatPhysicalQrMoney(order.totalAmount, order.currency, i18n.language)}
+          </p>
+        </div>
+        <p className="mt-2 text-sm">
+          {physicalQrPaymentLabel(order.paymentStatus, t, { totalAmount: order.totalAmount })}
+          {" · "}
+          {physicalQrFulfillmentLabel(order.fulfillmentStatus, t, { totalAmount: order.totalAmount })}
+        </p>
+        <p className="mt-0.5 text-xs text-muted-foreground">
+          {formatBerlinDateCompact(order.placedAt, i18n.language)}
+        </p>
+      </Link>
+    );
+  }
+
+  return (
+    <tr>
+      <td>
+        <Link to={href} className="font-medium hover:underline">
+          #{physicalQrOrderNumber(order.id)}
+        </Link>
+      </td>
+      <td className="min-w-0 break-words">{order.businessName}</td>
+      <td className="text-muted-foreground">
+        {items} · ×{order.quantity}
+      </td>
+      <td>{physicalQrPaymentLabel(order.paymentStatus, t, { totalAmount: order.totalAmount })}</td>
+      <td className="font-medium">
+        {physicalQrFulfillmentLabel(order.fulfillmentStatus, t, { totalAmount: order.totalAmount })}
+      </td>
+      <td className="whitespace-nowrap text-muted-foreground">
+        {formatBerlinDateCompact(order.placedAt, i18n.language)}
+      </td>
+      <td className="text-right">
+        <Link to={href} className="text-sm font-medium text-primary hover:underline">
+          {t("admin.physicalQr.openOrder")}
+        </Link>
+      </td>
+    </tr>
   );
 }

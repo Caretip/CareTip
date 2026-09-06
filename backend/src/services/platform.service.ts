@@ -20,6 +20,10 @@ import {
 import { parseKycDocuments, type KycDocuments } from "./kyc.service.js";
 import { sanitizeLikeContainsSearch } from "../utils/likeSearch.js";
 import { updateSubscriptionMirrorPlanTransactional } from "./subscription.service.js";
+import {
+  normalizeOptionalContactPhone,
+  ProfileFieldValidationError,
+} from "../lib/contactFieldValidation.js";
 
 const KYC_SLA_HOURS = 48;
 
@@ -379,12 +383,21 @@ export async function updateBusinessKyc(
     registeredAddress?: string | null;
   }
 ) {
+  const nextPhone = (() => {
+    if (data.contactPhone === undefined) return undefined;
+    const result = normalizeOptionalContactPhone(data.contactPhone, null);
+    if (!result.ok) {
+      throw new ProfileFieldValidationError("contactPhone", result.code);
+    }
+    return result.e164;
+  })();
+
   await prisma.business.update({
     where: { id: businessId },
     data: {
       ...(data.legalContactName !== undefined && { legalContactName: data.legalContactName }),
       ...(data.contactEmail !== undefined && { contactEmail: data.contactEmail }),
-      ...(data.contactPhone !== undefined && { contactPhone: data.contactPhone }),
+      ...(nextPhone !== undefined && { contactPhone: nextPhone }),
       ...(data.website !== undefined && { website: data.website }),
       ...(data.registeredAddress !== undefined && { registeredAddress: data.registeredAddress }),
     },

@@ -1,0 +1,341 @@
+/* Physical QR order history / detail — content-driven, not card grids. */
+
+.physical-qr-order-detail {
+  max-width: 42rem;
+}
+
+.pq-order-header {
+  margin-bottom: 1.75rem;
+}
+
+.pq-order-header__back {
+  display: inline-flex;
+  margin-bottom: 0.75rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: hsl(var(--primary));
+}
+
+.pq-order-header__back:hover {
+  text-decoration: underline;
+}
+
+.pq-order-header__title {
+  font-size: 1.25rem;
+  font-weight: 650;
+  letter-spacing: -0.02em;
+  line-height: 1.25;
+  color: hsl(var(--foreground));
+  overflow-wrap: anywhere;
+}
+
+.pq-order-header__meta {
+  margin-top: 0.35rem;
+  font-size: 0.8125rem;
+  color: hsl(var(--muted-foreground));
+}
+
+.pq-order-header__status {
+  margin-top: 0.75rem;
+}
+
+.pq-order-notice {
+  margin-bottom: 1.5rem;
+  padding: 0.75rem 0;
+  border-top: 1px solid hsl(var(--border) / 0.7);
+  border-bottom: 1px solid hsl(var(--border) / 0.7);
+}
+
+.pq-order-notice__title {
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.pq-order-notice__body {
+  margin-top: 0.25rem;
+  font-size: 0.8125rem;
+  color: hsl(var(--muted-foreground));
+}
+
+.pq-order-section {
+  padding: 1.35rem 0;
+  border-top: 1px solid hsl(var(--border) / 0.75);
+}
+
+.pq-order-section__title {
+  margin-bottom: 0.85rem;
+  font-size: 0.6875rem;
+  font-weight: 650;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: hsl(var(--muted-foreground));
+}
+
+.pq-order-summary {
+  display: grid;
+  gap: 1.25rem 2rem;
+}
+
+@media (min-width: 768px) {
+  .pq-order-summary {
+    grid-template-columns: minmax(0, 1fr) minmax(11rem, 14rem);
+    align-items: start;
+  }
+}
+
+.pq-order-product {
+  font-size: 1.0625rem;
+  font-weight: 650;
+  letter-spacing: -0.015em;
+}
+
+.pq-order-aside {
+  display: grid;
+  gap: 0.85rem;
+}
+
+@media (min-width: 768px) {
+  .pq-order-aside {
+    padding-left: 1.25rem;
+    border-left: 1px solid hsl(var(--border) / 0.75);
+  }
+}
+
+.pq-meta__label {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: hsl(var(--muted-foreground));
+}
+
+.pq-meta__value {
+  margin-top: 0.2rem;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.pq-meta__value--quiet {
+  font-weight: 500;
+  font-size: 0.875rem;
+  color: hsl(var(--foreground));
+}
+
+.pq-meta__value--total {
+  font-size: 1.25rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+}
+
+.pq-item-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.55rem 0;
+  border-top: 1px solid hsl(var(--border) / 0.55);
+}
+
+.pq-item-row:first-of-type {
+  border-top: 0;
+  padding-top: 0;
+}
+
+.pq-item-row__name {
+  min-width: 0;
+  font-size: 0.875rem;
+  font-weight: 550;
+  overflow-wrap: anywhere;
+}
+
+.pq-item-row__meta {
+  margin-top: 0.15rem;
+  font-size: 0.75rem;
+  color: hsl(var(--muted-foreground));
+}
+
+.pq-item-row__qty {
+  flex-shrink: 0;
+  font-size: 0.75rem;
+  color: hsl(var(--muted-foreground));
+  font-variant-numeric: tabular-nums;
+}
+
+.pq-item-group {
+  margin-top: 0.75rem;
+}
+
+.pq-item-group__name {
+  margin-bottom: 0.15rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: hsl(var(--muted-foreground));
+}
+
+.pq-progress {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.pq-progress__step {
+  display: grid;
+  grid-template-columns: 0.75rem 1fr;
+  column-gap: 0.75rem;
+  position: relative;
+  padding-bottom: 1rem;
+}
+
+.pq-progress__step:last-child {
+  padding-bottom: 0;
+}
+
+.pq-progress__step:not(:last-child)::before {
+  content: "";
+  position: absolute;
+  left: 0.3rem;
+  top: 0.85rem;
+  bottom: 0;
+  width: 1px;
+  background: hsl(var(--border));
+}
+
+.pq-progress__step--done:not(:last-child)::before {
+  background: hsl(var(--foreground) / 0.28);
+}
+
+.pq-progress__marker {
+  width: 0.75rem;
+  height: 0.75rem;
+  margin-top: 0.2rem;
+  border-radius: 999px;
+  border: 1.5px solid hsl(var(--border));
+  background: hsl(var(--background));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: hsl(var(--background));
+}
+
+.pq-progress__step--done .pq-progress__marker {
+  border-color: hsl(var(--foreground) / 0.55);
+  background: hsl(var(--foreground) / 0.72);
+}
+
+.pq-progress__step--current .pq-progress__marker {
+  border-color: hsl(var(--foreground));
+  background: hsl(var(--foreground));
+  box-shadow: 0 0 0 3px hsl(var(--foreground) / 0.12);
+}
+
+.pq-progress__label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: hsl(var(--muted-foreground));
+}
+
+.pq-progress__step--done .pq-progress__label,
+.pq-progress__step--current .pq-progress__label {
+  font-weight: 600;
+  color: hsl(var(--foreground));
+}
+
+.pq-progress__meta,
+.pq-progress__detail {
+  margin-top: 0.1rem;
+  font-size: 0.75rem;
+  color: hsl(var(--muted-foreground));
+}
+
+.pq-progress__step--current .pq-progress__detail {
+  color: hsl(var(--foreground) / 0.78);
+}
+
+@media (min-width: 768px) {
+  .pq-progress {
+    flex-direction: row;
+    gap: 0;
+  }
+
+  .pq-progress__step {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    grid-template-columns: none;
+    padding-bottom: 0;
+    padding-right: 0.5rem;
+  }
+
+  .pq-progress__step:not(:last-child)::before {
+    left: 0.75rem;
+    right: 0;
+    top: 0.35rem;
+    bottom: auto;
+    width: auto;
+    height: 1px;
+  }
+
+  .pq-progress__copy {
+    margin-top: 0.55rem;
+  }
+}
+
+.pq-order-table {
+  width: 100%;
+  font-size: 0.875rem;
+}
+
+.pq-order-table th {
+  padding: 0.55rem 0.75rem 0.55rem 0;
+  text-align: left;
+  font-size: 0.6875rem;
+  font-weight: 650;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: hsl(var(--muted-foreground));
+  border-bottom: 1px solid hsl(var(--border) / 0.8);
+}
+
+.pq-order-table td {
+  padding: 0.85rem 0.75rem 0.85rem 0;
+  border-bottom: 1px solid hsl(var(--border) / 0.55);
+  vertical-align: top;
+}
+
+.pq-order-table tr:last-child td {
+  border-bottom: 0;
+}
+
+.pq-ops-strip {
+  display: grid;
+  gap: 1rem;
+  padding: 1rem 0 1.25rem;
+  border-bottom: 1px solid hsl(var(--border) / 0.75);
+}
+
+@media (min-width: 640px) {
+  .pq-ops-strip {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.pq-admin-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  padding: 1rem 0;
+}
+
+.platform-physical-qr .pq-fulfillment-workspace {
+  max-width: 72rem;
+}
+
+.pq-fulfillment-workspace .pq-order-section:first-of-type {
+  border-top: 0;
+  padding-top: 0.5rem;
+}

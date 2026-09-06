@@ -3,8 +3,8 @@ import type { PricingTierKey } from "./pricingConfig";
 
 const BILLING_PLAN_FEATURE_SLOTS: Record<PricingTierKey, number> = {
   starter: 5,
-  business: 7,
-  enterprise: 5,
+  business: 5,
+  enterprise: 4,
 };
 
 /** Subscription-page plan comparison bullets (distinct from public marketing copy). */

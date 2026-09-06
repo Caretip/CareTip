@@ -1679,6 +1679,7 @@ export async function patchBusinessProfile(body: {
   location?: string | null;
   registeredAddress?: string | null;
   contactPhone?: string | null;
+  contactPhoneCountry?: string | null;
   website?: string | null;
 }): Promise<BusinessInfo> {
   const result = await apiRequest<BusinessInfo>(apiPath("/api/business/profile"), {

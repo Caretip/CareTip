@@ -141,13 +141,6 @@ export function BillingSubscriptionSummary({
     });
   }
 
-  if (billing.hasStripeBilling) {
-    detailRows.push({
-      label: t("business.billing.subscriptionSummary.paymentMethod"),
-      value: t("business.billing.subscriptionSummary.paymentMethodManaged"),
-    });
-  }
-
   /** SaaS rule: free/basic → pricing; paid/trial with Stripe → Customer Portal. Label always “Manage Plan”. */
   const openPortal = Boolean(onOpenStripePortal && shouldManagePlanOpenStripePortal(billing));
   const badgeStatus = onBasic

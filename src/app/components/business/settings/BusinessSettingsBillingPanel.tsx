@@ -17,8 +17,6 @@ import { BillingPlanManagement } from "./billing/BillingPlanManagement";
 import { BillingTrialSection, BILLING_START_TRIAL_HASH } from "./billing/BillingTrialSection";
 import { BillingSubscriptionLifecycle } from "./billing/BillingSubscriptionLifecycle";
 import { BillingSubscriptionSummary } from "./billing/BillingSubscriptionSummary";
-import { dashboardWorkspaceUi } from "@/app/components/dashboard/dashboardWorkspaceUi";
-import { cn } from "@/lib/utils";
 import { BILLING_PLANS_SECTION_ID, scrollToBillingPlansSection } from "../../../lib/activateCareTipNavigation";
 
 export function BusinessSettingsBillingPanel() {
@@ -122,12 +120,7 @@ export function BusinessSettingsBillingPanel() {
 
       {data.accessSource !== "sponsored" ? (
         <section id="billing-plans" className="billing-settings-panel__plans space-y-6">
-          <div>
-            <h2 className={dashboardWorkspaceUi.sectionTitle}>{t("business.billing.planComparisonTitle")}</h2>
-            <p className={cn(dashboardWorkspaceUi.pageDescription, "mt-1")}>
-              {t("business.billing.planComparisonDesc")}
-            </p>
-          </div>
+          <span id={BILLING_START_TRIAL_HASH} className="sr-only" />
 
           <BillingTrialSection
             billing={data}

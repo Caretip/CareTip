@@ -52,6 +52,22 @@ export function formatBerlinDateTime(iso: string | null | undefined, locale: str
   return `${pick("day")} ${pick("month")} ${pick("year")} · ${pick("hour")}:${pick("minute")} Berlin`;
 }
 
+export function formatBerlinDateCompact(iso: string | null | undefined, locale: string): string {
+  if (!iso) return "";
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return "";
+  const parts = new Intl.DateTimeFormat(locale.startsWith("de") ? "de-DE" : "en-GB", {
+    timeZone: PHYSICAL_QR_BERLIN_TZ,
+    day: "2-digit",
+    month: "short",
+    hour: "2-digit",
+    minute: "2-digit",
+    hourCycle: "h23",
+  }).formatToParts(date);
+  const pick = (type: Intl.DateTimeFormatPartTypes) => parts.find((part) => part.type === type)?.value ?? "";
+  return `${pick("day")} ${pick("month")} · ${pick("hour")}:${pick("minute")}`;
+}
+
 export function formatPhysicalQrMoney(cents: number, currency: string, locale: string): string {
   return new Intl.NumberFormat(locale.startsWith("de") ? "de-DE" : "en-GB", {
     style: "currency",
@@ -538,6 +554,27 @@ export function physicalQrTimeline(
       done: Boolean(order.deliveredAt) || current >= 6,
     },
   ];
+}
+
+export function physicalQrAdminNextStep(
+  fulfillmentStatus: string,
+  t: TFunction,
+): string | null {
+  switch (fulfillmentStatus) {
+    case "PENDING_PAYMENT":
+    case "PAYMENT_FAILED":
+      return t("admin.physicalQr.nextAwaitingPayment");
+    case "PAID":
+      return t("admin.physicalQr.nextMarkProcessing");
+    case "PROCESSING":
+      return t("admin.physicalQr.nextMarkPrinting");
+    case "PRINTING":
+      return t("admin.physicalQr.nextMarkShipped");
+    case "SHIPPED":
+      return t("admin.physicalQr.nextMarkDelivered");
+    default:
+      return null;
+  }
 }
 
 export function physicalQrCutoffLabel(processingClass: string | null | undefined, t: TFunction): string {

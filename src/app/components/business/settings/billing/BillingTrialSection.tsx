@@ -142,37 +142,11 @@ export function BillingTrialSection({
 
   if (billing.trialEligible) {
     return (
-      <>
-        <section
-          id={BILLING_START_TRIAL_HASH}
-          className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"
-          aria-labelledby="billing-trial-promo-title"
-        >
-          <div className="min-w-0">
-            <h3 id="billing-trial-promo-title" className={dashboardWorkspaceUi.sectionTitle}>
-              {t("business.billing.trialFlow.promoTitle")}
-            </h3>
-            <p className={cn(dashboardWorkspaceUi.helperText, "mt-1 max-w-2xl")}>
-              {t("business.billing.trialFlow.promoBody")}
-            </p>
-          </div>
-          <button
-            type="button"
-            onClick={() => setDialogOpen(true)}
-            className={cn(dashboardWorkspaceUi.btnPrimary, "w-full shrink-0 justify-center sm:w-auto")}
-          >
-            {t("business.billing.trialFlow.promoCta")}
-          </button>
-        </section>
-        <p className="text-center text-xs text-muted-foreground">
-          {t("business.billing.trialFlow.orSubscribeBelow")}
-        </p>
-        <BillingTrialPlanDialog
-          open={dialogOpen}
-          onOpenChange={setDialogOpen}
-          billingCycle={billingCycle}
-        />
-      </>
+      <BillingTrialPlanDialog
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+        billingCycle={billingCycle}
+      />
     );
   }
 

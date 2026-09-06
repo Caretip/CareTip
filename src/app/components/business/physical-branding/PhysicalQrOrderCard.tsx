@@ -2,7 +2,7 @@ import { Link } from "react-router";
 import { useTranslation } from "react-i18next";
 import type { PhysicalQrCustomerOrder } from "@/app/lib/api";
 import {
-  formatBerlinDateTime,
+  formatBerlinDateCompact,
   formatPhysicalQrMoney,
   physicalQrContextLabel,
   physicalQrCustomerStatus,
@@ -17,11 +17,13 @@ export function PhysicalQrOrderCard({
   confirming,
   onPay,
   paying,
+  layout = "list",
 }: {
   order: PhysicalQrCustomerOrder;
   confirming?: boolean;
   onPay?: (orderId: string) => void;
   paying?: boolean;
+  layout?: "list" | "table";
 }) {
   const { t, i18n } = useTranslation();
   const failed = order.paymentStatus === "FAILED" || order.fulfillmentStatus === "PAYMENT_FAILED";
@@ -42,48 +44,79 @@ export function PhysicalQrOrderCard({
           defaultValue: "{{count}} QR items",
         })
       : physicalQrContextLabel(order.qrContextType, t);
+  const href = `/dashboard/qr-studio/orders/${order.id}`;
 
-  return (
-    <div className="py-4 first:pt-0 last:pb-0">
-      <div className="flex min-w-0 items-start justify-between gap-3">
-        <div className="min-w-0">
-          <p className="break-words font-medium leading-tight">
-            {order.itemCount > 1 ? t("business.qrStudio.physical.orders.multiItemTitle", { defaultValue: "Print order" }) : productName}
-          </p>
-          <p className="mt-0.5 text-sm text-muted-foreground">
+  if (layout === "table") {
+    return (
+      <tr>
+        <td>
+          <Link to={href} className="font-medium text-foreground hover:underline">
             #{physicalQrOrderNumber(order.id)}
-            {" · "}
-            {itemSummary}
-            {" · "}
-            {t("business.qrStudio.physical.orders.qtyShort", { count: order.quantity })}
+          </Link>
+        </td>
+        <td className="min-w-0">
+          <p className="truncate font-medium">{productName}</p>
+          <p className="text-xs text-muted-foreground">
+            {itemSummary} · {t("business.qrStudio.physical.orders.qtyShort", { count: order.quantity })}
           </p>
-          <p className="mt-0.5 text-sm text-muted-foreground">
-            {formatBerlinDateTime(order.placedAt, i18n.language)}
-          </p>
-        </div>
-        <p className="shrink-0 text-sm font-semibold tabular-nums">
+        </td>
+        <td className="whitespace-nowrap text-muted-foreground">
+          {formatBerlinDateCompact(order.placedAt, i18n.language)}
+        </td>
+        <td className="whitespace-nowrap font-semibold tabular-nums">
           {formatPhysicalQrMoney(order.totalAmount, order.currency, i18n.language)}
-        </p>
-      </div>
-      <div className="mt-3 flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
-        <div className="min-w-0 space-y-1">
+        </td>
+        <td>
           <PhysicalQrStatusBadge tone={status.tone} label={status.title} />
-          {status.detail ? <p className="text-sm text-muted-foreground">{status.detail}</p> : null}
-        </div>
-        <div className="flex items-center gap-3">
+        </td>
+        <td className="text-right">
           {showPay ? (
             <Button type="button" size="sm" disabled={paying} onClick={() => onPay?.(order.id)}>
               {failed
                 ? t("business.qrStudio.physical.orders.tryPaymentAgain")
                 : t("business.qrStudio.physical.payNow")}
             </Button>
-          ) : null}
-          <Link
-            to={`/dashboard/qr-studio/orders/${order.id}`}
-            className="text-sm font-medium text-primary hover:underline"
-          >
-            {t("business.qrStudio.physical.orders.viewOrder")}
-          </Link>
+          ) : (
+            <Link to={href} className="text-sm font-medium text-primary hover:underline">
+              {t("business.qrStudio.physical.orders.viewOrder")}
+            </Link>
+          )}
+        </td>
+      </tr>
+    );
+  }
+
+  return (
+    <div className="py-3.5 first:pt-0 last:pb-0">
+        <div className="flex min-w-0 items-start justify-between gap-3">
+          <div className="min-w-0">
+            <Link to={href} className="break-words font-medium leading-tight hover:underline">
+              #{physicalQrOrderNumber(order.id)}
+            </Link>
+            <p className="mt-0.5 text-sm text-muted-foreground">
+              {productName} · {itemSummary} · {t("business.qrStudio.physical.orders.qtyShort", { count: order.quantity })}
+            </p>
+            <p className="mt-0.5 text-xs text-muted-foreground">
+              {formatBerlinDateCompact(order.placedAt, i18n.language)}
+            </p>
+          </div>
+          <p className="shrink-0 text-sm font-semibold tabular-nums">
+            {formatPhysicalQrMoney(order.totalAmount, order.currency, i18n.language)}
+          </p>
+        </div>
+        <div className="mt-2.5 flex flex-wrap items-center justify-between gap-2">
+          <PhysicalQrStatusBadge tone={status.tone} label={status.title} />
+          <div className="flex items-center gap-3">
+            {showPay ? (
+              <Button type="button" size="sm" disabled={paying} onClick={() => onPay?.(order.id)}>
+                {failed
+                  ? t("business.qrStudio.physical.orders.tryPaymentAgain")
+                  : t("business.qrStudio.physical.payNow")}
+              </Button>
+            ) : null}
+            <Link to={href} className="text-sm font-medium text-primary hover:underline">
+              {t("business.qrStudio.physical.orders.viewOrder")}
+            </Link>
         </div>
       </div>
     </div>
