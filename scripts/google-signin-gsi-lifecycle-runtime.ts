@@ -22,6 +22,7 @@ const row = read("src/app/components/auth/OAuthProviderRow.tsx");
 const css = read("src/styles/caretip-oauth-circles.css");
 const authCss = read("src/styles/caretip-auth.css");
 const app = read("src/app/App.tsx");
+const oauthScope = read("src/app/components/auth/AuthGoogleOAuthScope.tsx");
 const verifier = read("backend/src/services/oauth/googleVerifier.ts");
 
 if (!row.includes("gsiMounted") && !row.includes("setGsiMounted")) {
@@ -94,7 +95,18 @@ if (authCss.includes(".caretip-auth-oauth iframe") && authCss.includes("min-heig
   fail("Unexpected caretip-auth.css oauth iframe drift");
 }
 
-if (app.includes("GoogleOAuthProvider") && row.includes("GoogleLogin") && row.includes("onSocialCredential")) {
+if (app.includes("GoogleOAuthProvider")) {
+  fail("GoogleOAuthProvider must not wrap the public landing App tree");
+} else {
+  pass("Public App tree does not mount GIS on caretip.de first paint");
+}
+
+if (
+  oauthScope.includes("GoogleOAuthProvider") &&
+  row.includes("AuthGoogleOAuthScope") &&
+  row.includes("GoogleLogin") &&
+  row.includes("onSocialCredential")
+) {
   pass("GIS still flows Provider → GoogleLogin → onSocialCredential (no custom fake button)");
 } else {
   fail("Do not replace the official GIS button with a custom control");

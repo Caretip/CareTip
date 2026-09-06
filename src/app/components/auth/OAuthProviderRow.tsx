@@ -14,6 +14,7 @@ import { requestAppleIdToken, isAppleSdkAvailable } from "@/app/lib/appleOAuthWe
 import { requestFacebookAccessToken } from "@/app/lib/facebookOAuthWeb";
 import { logClientError } from "@/app/lib/clientLog";
 import { toUserFriendlyMessage } from "@/app/lib/errorMessages";
+import { AuthGoogleOAuthScope } from "@/app/components/auth/AuthGoogleOAuthScope";
 import "@/styles/caretip-oauth-circles.css";
 
 /** Desktop / mobile-web order: Google → Facebook → Apple. */
@@ -60,6 +61,9 @@ function OAuthLogoButton({
           src={OAUTH_LOGO_SRC[provider]}
           alt=""
           aria-hidden
+          width={44}
+          height={44}
+          decoding="async"
           className="caretip-oauth-circle__logo"
           draggable={false}
         />
@@ -177,6 +181,7 @@ export function OAuthProviderRow({
   }
 
   return (
+    <AuthGoogleOAuthScope>
     <div
       className={cn(
         "caretip-oauth-circles",
@@ -229,6 +234,9 @@ export function OAuthProviderRow({
                   src={OAUTH_LOGO_SRC.google}
                   alt=""
                   aria-hidden
+                  width={44}
+                  height={44}
+                  decoding="async"
                   className="caretip-oauth-circle__logo"
                   draggable={false}
                 />
@@ -292,5 +300,6 @@ export function OAuthProviderRow({
         );
       })}
     </div>
+    </AuthGoogleOAuthScope>
   );
 }

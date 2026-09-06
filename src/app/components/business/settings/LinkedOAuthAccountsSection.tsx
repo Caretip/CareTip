@@ -21,6 +21,7 @@ import { requestAppleIdToken, isAppleSdkAvailable } from "../../../lib/appleOAut
 import { requestFacebookAccessToken } from "../../../lib/facebookOAuthWeb";
 import { logClientError } from "../../../lib/clientLog";
 import { toUserFriendlyMessage } from "../../../lib/errorMessages";
+import { AuthGoogleOAuthScope } from "@/app/components/auth/AuthGoogleOAuthScope";
 
 const TEAL = "#e9781c";
 
@@ -137,6 +138,7 @@ export function LinkedOAuthAccountsSection({ loading }: { loading?: boolean }) {
   }
 
   return (
+    <AuthGoogleOAuthScope>
     <div className="space-y-4">
       {!hasPassword ? (
         <p className="text-xs text-muted-foreground">
@@ -232,5 +234,6 @@ export function LinkedOAuthAccountsSection({ loading }: { loading?: boolean }) {
         </ul>
       )}
     </div>
+    </AuthGoogleOAuthScope>
   );
 }
