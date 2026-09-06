@@ -3,6 +3,7 @@ import * as businessService from "../services/business.service.js";
 import { prisma } from "../prisma.js";
 import {
   createExpressAccountOnboardingLink,
+  createExpressDashboardLoginLink,
   getConnectStatusForBusiness,
   refreshConnectStatusFromStripe,
   StripeConnectError,
@@ -62,6 +63,42 @@ function connectClientMessage(err: unknown): string {
   return clientSafeMessage(err, CLIENT_FALLBACK.generic);
 }
 
+/** Reject client-steered tenancy, account ids, and redirect URLs. Uses JWT business only. */
+function rejectClientConnectSteering(req: Request, res: Response): boolean {
+  const body = (req.body ?? {}) as Record<string, unknown>;
+  const query = (req.query ?? {}) as Record<string, unknown>;
+  if (
+    body.businessId != null ||
+    body.stripeAccountId != null ||
+    body.accountId != null ||
+    query.businessId != null ||
+    query.stripeAccountId != null ||
+    query.accountId != null
+  ) {
+    res.status(400).json({
+      message: "Invalid request.",
+      code: "CONNECT_CLIENT_ACCOUNT_FORBIDDEN",
+    });
+    return true;
+  }
+  if (
+    body.returnUrl != null ||
+    body.refreshUrl != null ||
+    body.country != null ||
+    body.redirectUrl != null ||
+    query.returnUrl != null ||
+    query.refreshUrl != null ||
+    query.redirectUrl != null
+  ) {
+    res.status(400).json({
+      message: "Invalid request.",
+      code: "CONNECT_CLIENT_URL_FORBIDDEN",
+    });
+    return true;
+  }
+  return false;
+}
+
 /**
  * GET /api/me/connect/status
  */
@@ -94,21 +131,7 @@ export async function postMyConnectAccountLink(req: Request, res: Response) {
   try {
     const ctx = await resolveManagerBusiness(req);
     if (!ctx.ok) return res.status(ctx.status).json({ message: ctx.message });
-
-    // Explicitly reject client attempts to steer tenancy or account id.
-    const body = (req.body ?? {}) as Record<string, unknown>;
-    if (body.businessId != null || body.stripeAccountId != null || body.accountId != null) {
-      return res.status(400).json({
-        message: "Invalid request.",
-        code: "CONNECT_CLIENT_ACCOUNT_FORBIDDEN",
-      });
-    }
-    if (body.returnUrl != null || body.refreshUrl != null || body.country != null) {
-      return res.status(400).json({
-        message: "Invalid request.",
-        code: "CONNECT_CLIENT_URL_FORBIDDEN",
-      });
-    }
+    if (rejectClientConnectSteering(req, res)) return;
 
     const result = await createExpressAccountOnboardingLink({
       businessId: ctx.businessId,
@@ -119,6 +142,27 @@ export async function postMyConnectAccountLink(req: Request, res: Response) {
     return res.json({ url: result.url });
   } catch (err) {
     logServerError("connect.postMyConnectAccountLink", err);
+    if (err instanceof StripeConnectError) {
+      return res.status(err.httpStatus).json({ message: err.message, code: err.code });
+    }
+    return res.status(400).json({ message: connectClientMessage(err) });
+  }
+}
+
+/**
+ * POST /api/me/connect/login-link
+ * Express Dashboard Login Link for the manager's stored connected account.
+ */
+export async function postMyConnectLoginLink(req: Request, res: Response) {
+  try {
+    const ctx = await resolveManagerBusiness(req);
+    if (!ctx.ok) return res.status(ctx.status).json({ message: ctx.message });
+    if (rejectClientConnectSteering(req, res)) return;
+
+    const result = await createExpressDashboardLoginLink({ businessId: ctx.businessId });
+    return res.json({ url: result.url });
+  } catch (err) {
+    logServerError("connect.postMyConnectLoginLink", err);
     if (err instanceof StripeConnectError) {
       return res.status(err.httpStatus).json({ message: err.message, code: err.code });
     }

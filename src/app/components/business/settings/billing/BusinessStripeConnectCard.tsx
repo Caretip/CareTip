@@ -3,11 +3,12 @@ import { Link, useSearchParams } from "react-router";
 import { useTranslation } from "react-i18next";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
-import { createConnectAccountLink, type ConnectStatus } from "../../../../lib/api";
+import { createConnectAccountLink, createConnectLoginLink, type ConnectStatus } from "../../../../lib/api";
 import { fetchConnectStatusCached } from "../../../../lib/stripeConnectStatusCache";
 import {
   stripeConnectCtaKey,
   stripeConnectHeadlineKey,
+  stripeConnectShowsDashboardAccess,
   stripeConnectTrafficLight,
 } from "../../../../lib/stripeConnectPresentation";
 import { formatBerlinDateTime } from "../../../../lib/physicalQrOrderUi";
@@ -39,7 +40,7 @@ export function BusinessStripeConnectCard() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [data, setData] = useState<ConnectStatus | null>(null);
   const [loading, setLoading] = useState(true);
-  const [busy, setBusy] = useState(false);
+  const [busy, setBusy] = useState<"onboarding" | "dashboard" | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const venueName =
@@ -48,7 +49,7 @@ export function BusinessStripeConnectCard() {
   useAppLoadingRegistration(
     "stripe-connect-onboarding",
     APP_LOADING_PRIORITY.APP_INIT,
-    busy,
+    busy != null,
     t("common.loading.checkout"),
   );
 
@@ -86,17 +87,32 @@ export function BusinessStripeConnectCard() {
   }, [searchParams, setSearchParams, reload, t]);
 
   async function startOnboarding() {
-    setBusy(true);
+    setBusy("onboarding");
     try {
       const { url } = await createConnectAccountLink();
       const redirect = performExternalStripeRedirect(url, "connect");
       if (!redirect.ok) {
         toast.error(t("business.billing.connect.startError"));
-        setBusy(false);
+        setBusy(null);
       }
     } catch (err) {
       toast.error(toUserFriendlyMessage(err) || t("business.billing.connect.startError"));
-      setBusy(false);
+      setBusy(null);
+    }
+  }
+
+  async function startDashboard() {
+    setBusy("dashboard");
+    try {
+      const { url } = await createConnectLoginLink();
+      const redirect = performExternalStripeRedirect(url, "expressDashboard");
+      if (!redirect.ok) {
+        toast.error(t("business.billing.connect.openDashboardError"));
+        setBusy(null);
+      }
+    } catch (err) {
+      toast.error(toUserFriendlyMessage(err) || t("business.billing.connect.openDashboardError"));
+      setBusy(null);
     }
   }
 
@@ -132,11 +148,13 @@ export function BusinessStripeConnectCard() {
   const canStart = data.stripeConfigured;
   const light = stripeConnectTrafficLight(data);
   const ctaKey = stripeConnectCtaKey(data);
+  const showDashboard = stripeConnectShowsDashboardAccess(data);
   const statusLabel = t(stripeConnectHeadlineKey(data));
   const lastSync =
     data.updatedAt && data.updatedAt.trim()
       ? formatBerlinDateTime(data.updatedAt, i18n.language)
       : null;
+  const actionBusy = busy != null;
 
   return (
     <section className="stripe-connect-card space-y-5" aria-labelledby="stripe-connect-status">
@@ -181,20 +199,42 @@ export function BusinessStripeConnectCard() {
           {ctaKey && canStart ? (
             <button
               type="button"
-              disabled={busy}
+              disabled={actionBusy}
+              aria-busy={busy === "onboarding"}
               onClick={() => void startOnboarding()}
               className={cn(
                 "inline-flex h-10 w-full shrink-0 items-center justify-center rounded-md px-4 text-sm font-semibold transition sm:w-auto",
                 "bg-foreground text-background hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50",
               )}
             >
-              {busy ? (
+              {busy === "onboarding" ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden />
                   {t("business.billing.connect.starting")}
                 </>
               ) : (
                 t(ctaKey)
+              )}
+            </button>
+          ) : null}
+          {showDashboard && canStart ? (
+            <button
+              type="button"
+              disabled={actionBusy}
+              aria-busy={busy === "dashboard"}
+              onClick={() => void startDashboard()}
+              className={cn(
+                "inline-flex h-10 w-full shrink-0 items-center justify-center rounded-md px-4 text-sm font-semibold transition sm:w-auto",
+                "bg-foreground text-background hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50",
+              )}
+            >
+              {busy === "dashboard" ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden />
+                  {t("business.billing.connect.starting")}
+                </>
+              ) : (
+                t("business.billing.connect.openDashboard")
               )}
             </button>
           ) : null}
@@ -245,7 +285,7 @@ export function BusinessStripeConnectCard() {
               </span>
               <button
                 type="button"
-                disabled={busy}
+                disabled={actionBusy}
                 onClick={() => void startOnboarding()}
                 className="font-medium text-muted-foreground underline underline-offset-2 hover:text-foreground"
               >

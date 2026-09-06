@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Banknote, Loader2 } from "lucide-react";
 import {
+  createConnectLoginLink,
   getMyConnectPayout,
   listMyConnectPayouts,
   type ConnectPayout,
@@ -11,7 +12,7 @@ import {
   formatConnectPayoutDate,
   sanitizePayoutFailureDisplay,
 } from "../../../../lib/connectPayoutDisplay";
-import { ConnectPayoutReconBadge, ConnectPayoutStatusBadge } from "../../../connect/ConnectPayoutBadges";
+import { ConnectPayoutStatusBadge } from "../../../connect/ConnectPayoutBadges";
 import {
   ConnectPayoutDetailDialog,
   useConnectPayoutDetail,
@@ -21,6 +22,8 @@ import { ListFilterLoadError } from "../../../shared/ListFilterLoadError";
 import { classifyFetchError } from "../../../../lib/listFilterUx";
 import { logClientError } from "../../../../lib/clientLog";
 import { toUserFriendlyMessage } from "../../../../lib/errorMessages";
+import { performExternalStripeRedirect } from "../../../../lib/externalStripeRedirect";
+import { toast } from "sonner";
 import { dashboardWorkspaceUi } from "../../../dashboard/dashboardWorkspaceUi";
 import { cn } from "@/lib/utils";
 
@@ -34,6 +37,7 @@ export function ConnectPayoutsPanel({ loading: bootLoading }: { loading?: boolea
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [errorKind, setErrorKind] = useState<ReturnType<typeof classifyFetchError>>("api");
+  const [dashboardBusy, setDashboardBusy] = useState(false);
   const detail = useConnectPayoutDetail(getMyConnectPayout);
 
   const load = useCallback(
@@ -58,6 +62,21 @@ export function ConnectPayoutsPanel({ loading: bootLoading }: { loading?: boolea
     [t],
   );
 
+  async function openStripeDashboard() {
+    setDashboardBusy(true);
+    try {
+      const { url } = await createConnectLoginLink();
+      const redirect = performExternalStripeRedirect(url, "expressDashboard");
+      if (!redirect.ok) {
+        toast.error(t("business.billing.connect.openDashboardError"));
+        setDashboardBusy(false);
+      }
+    } catch (err) {
+      toast.error(toUserFriendlyMessage(err) || t("business.billing.connect.openDashboardError"));
+      setDashboardBusy(false);
+    }
+  }
+
   useEffect(() => {
     void load(0);
   }, [load]);
@@ -75,19 +94,47 @@ export function ConnectPayoutsPanel({ loading: bootLoading }: { loading?: boolea
     return <ListFilterLoadError kind={errorKind} message={error} onRetry={() => void load(skip)} />;
   }
 
+  const toolbar = (
+    <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+      <p className="text-sm text-muted-foreground">{t("business.billing.payouts.hint")}</p>
+      <button
+        type="button"
+        disabled={dashboardBusy}
+        aria-busy={dashboardBusy}
+        onClick={() => void openStripeDashboard()}
+        className={cn(
+          "inline-flex h-10 w-full shrink-0 items-center justify-center rounded-md px-4 text-sm font-semibold sm:w-auto",
+          "bg-foreground text-background hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50",
+        )}
+      >
+        {dashboardBusy ? (
+          <>
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden />
+            {t("business.billing.connect.starting")}
+          </>
+        ) : (
+          t("business.billing.payouts.viewInStripe")
+        )}
+      </button>
+    </div>
+  );
+
   if (items.length === 0) {
     return (
-      <EmptyState
-        icon={<Banknote className="h-8 w-8 text-muted-foreground/60" aria-hidden />}
-        title={t("business.billing.payouts.emptyTitle")}
-        description={t("business.billing.payouts.emptyBody")}
-      />
+      <div className="space-y-4">
+        {toolbar}
+        <EmptyState
+          icon={<Banknote className="h-8 w-8 text-muted-foreground/60" aria-hidden />}
+          title={t("business.billing.payouts.emptyTitle")}
+          description={t("business.billing.payouts.emptyBody")}
+        />
+      </div>
     );
   }
 
   return (
     <div className="space-y-4">
-      <p className="text-sm text-muted-foreground">{t("business.billing.payouts.hint")}</p>
+      {toolbar}
 
       <div className="space-y-2.5 md:hidden">
         {items.map((payout) => (
@@ -109,7 +156,6 @@ export function ConnectPayoutsPanel({ loading: bootLoading }: { loading?: boolea
               <th scope="col" className="px-4 py-2.5 font-medium">{t("business.billing.payouts.colStatus")}</th>
               <th scope="col" className="px-4 py-2.5 font-medium">{t("business.billing.payouts.colArrival")}</th>
               <th scope="col" className="px-4 py-2.5 font-medium">{t("business.billing.payouts.colCreated")}</th>
-              <th scope="col" className="px-4 py-2.5 font-medium">{t("business.billing.payouts.colReconciliation")}</th>
               <th scope="col" className="px-4 py-2.5 font-medium">{t("business.billing.payouts.colFailure")}</th>
             </tr>
           </thead>
@@ -144,13 +190,9 @@ export function ConnectPayoutsPanel({ loading: bootLoading }: { loading?: boolea
                   <td className="px-4 py-3 text-muted-foreground">
                     {formatConnectPayoutDate(payout.stripeCreatedAt, i18n.language)}
                   </td>
-                  <td className="px-4 py-3">
-                    <ConnectPayoutReconBadge
-                      status={payout.reconciliationStatus}
-                      lineCount={payout.balanceLineCount}
-                    />
+                  <td className={cn("px-4 py-3", failure ? "font-medium text-red-800 dark:text-red-200" : "text-muted-foreground")}>
+                    {failure ?? "—"}
                   </td>
-                  <td className="px-4 py-3 text-muted-foreground">{failure ?? "—"}</td>
                 </tr>
               );
             })}
@@ -231,6 +273,9 @@ function PayoutCard({
       </div>
       <div className="mt-2 text-xs text-muted-foreground">
         {t("business.billing.payouts.colArrival")}: {formatConnectPayoutDate(payout.arrivalDate, locale)}
+      </div>
+      <div className="mt-1 text-xs text-muted-foreground">
+        {t("business.billing.payouts.colCreated")}: {formatConnectPayoutDate(payout.stripeCreatedAt, locale)}
       </div>
       {failure ? <p className="mt-2 text-xs text-destructive">{failure}</p> : null}
     </button>

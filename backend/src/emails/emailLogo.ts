@@ -1,22 +1,30 @@
 /**
- * CareTip logo/icon for transactional emails.
- * Prefer the orange app icon (works on a white canvas). The old wordmark PNG is black-backed
- * and disappears or looks like a bar in Gmail.
+ * CareTip mark for transactional emails.
+ *
+ * Remote `<img src>` must be a publicly fetchable HTTPS PNG. Gmail cannot load
+ * localhost, and SPA hosts that return HTML 200 for unknown paths look like a
+ * broken image. `caretip-email-mark.png` is local-only until deployed; production
+ * currently serves HTML for that URL. Use the live `/brand/caretip-app-icon.png`.
  */
 import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { isLocalCheckoutHostname } from "../config/frontendUrl.js";
 
-/** Must match `<img src="cid:…">` in emailBrandMark. */
+/** Must match `<img src="cid:…">` if a caller still emits CID (should not in HTML). */
 export const CARETIP_EMAIL_LOGO_CID = "caretip-logo";
 
-const ICON_FILENAME = "caretip-app-icon.png";
+const EMAIL_MARK_FILENAME = "caretip-email-mark.png";
+const LIVE_PUBLIC_ICON_FILENAME = "caretip-app-icon.png";
 const LEGACY_LOGO_FILENAME = "caretip-logo-primary.png";
+const PUBLIC_BRAND_ORIGIN = "https://caretip.de";
+
+const ALLOWED_LOGO_HOSTS = new Set(["caretip.de", "www.caretip.de"]);
 
 function candidateIconPaths(): string[] {
   const here = path.dirname(fileURLToPath(import.meta.url));
   const cwd = process.cwd();
-  const names = [ICON_FILENAME, LEGACY_LOGO_FILENAME];
+  const names = [EMAIL_MARK_FILENAME, LIVE_PUBLIC_ICON_FILENAME, LEGACY_LOGO_FILENAME];
   const dirs = [
     path.join(cwd, "assets", "email"),
     path.join(here, "..", "..", "assets", "email"),
@@ -38,22 +46,32 @@ export function resolveCareTipEmailLogoPath(): string | null {
   return null;
 }
 
-/** Hosted HTTPS icon — Gmail often hides CID-only images. */
-export function resolveCareTipEmailLogoRemoteUrl(): string | null {
-  const origin = (
-    process.env.FRONTEND_URL ||
-    process.env.NEXT_PUBLIC_APP_URL ||
-    process.env.VITE_APP_URL ||
-    process.env.BASE_URL ||
-    ""
-  )
-    .trim()
-    .replace(/\/$/, "");
-  if (origin) return `${origin}/brand/${ICON_FILENAME}`;
-  if (process.env.NODE_ENV === "production") {
-    return `https://caretip.de/brand/${ICON_FILENAME}`;
+function isAllowedPublicPngUrl(raw: string): boolean {
+  try {
+    const u = new URL(raw.trim());
+    if (u.protocol !== "https:") return false;
+    if (isLocalCheckoutHostname(u.hostname)) return false;
+    const host = u.hostname.replace(/^www\./, "").toLowerCase();
+    if (!ALLOWED_LOGO_HOSTS.has(u.hostname.toLowerCase()) && !ALLOWED_LOGO_HOSTS.has(host)) {
+      return false;
+    }
+    if (u.username || u.password) return false;
+    if (!/^\/brand\/[a-z0-9._-]+\.png$/i.test(u.pathname)) return false;
+    return true;
+  } catch {
+    return false;
   }
-  return null;
+}
+
+/**
+ * Hosted HTTPS PNG that email clients can fetch without cookies/JWT.
+ * Never uses FRONTEND_URL (often localhost in local Resend sends).
+ * Optional CARETIP_EMAIL_LOGO_URL must be https://caretip.de/brand/*.png.
+ */
+export function resolveCareTipEmailLogoRemoteUrl(): string {
+  const override = process.env.CARETIP_EMAIL_LOGO_URL?.trim() ?? "";
+  if (override && isAllowedPublicPngUrl(override)) return override;
+  return `${PUBLIC_BRAND_ORIGIN}/brand/${LIVE_PUBLIC_ICON_FILENAME}`;
 }
 
 export type CareTipEmailLogoAttachment = {
@@ -62,29 +80,28 @@ export type CareTipEmailLogoAttachment = {
   content?: string;
   path?: string;
   content_type: string;
+  content_disposition: "inline";
 };
 
 /**
- * Resend inline attachment for the brand icon. Prefer local base64; else remote path.
+ * Resend inline attachment — only used if HTML still contains cid:caretip-logo.
  */
 export function getCareTipEmailLogoAttachment(): CareTipEmailLogoAttachment | null {
   const local = resolveCareTipEmailLogoPath();
   if (local) {
     return {
-      filename: ICON_FILENAME,
+      filename: path.basename(local),
       content_id: CARETIP_EMAIL_LOGO_CID,
       content_type: "image/png",
+      content_disposition: "inline",
       content: readFileSync(local).toString("base64"),
     };
   }
-  const remote = resolveCareTipEmailLogoRemoteUrl();
-  if (remote) {
-    return {
-      filename: ICON_FILENAME,
-      content_id: CARETIP_EMAIL_LOGO_CID,
-      content_type: "image/png",
-      path: remote,
-    };
-  }
-  return null;
+  return {
+    filename: LIVE_PUBLIC_ICON_FILENAME,
+    content_id: CARETIP_EMAIL_LOGO_CID,
+    content_type: "image/png",
+    content_disposition: "inline",
+    path: resolveCareTipEmailLogoRemoteUrl(),
+  };
 }

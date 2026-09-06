@@ -2850,6 +2850,16 @@ export async function createConnectAccountLink(): Promise<{ url: string }> {
   });
 }
 
+/** Express Dashboard Login Link — server uses stored stripeAccountId; generated on click. */
+export async function createConnectLoginLink(): Promise<{ url: string }> {
+  return apiRequest(apiPath("/api/me/connect/login-link"), {
+    method: "POST",
+    headers: getHeaders(),
+    credentials: "include",
+    body: JSON.stringify({}),
+  });
+}
+
 export type ConnectPayoutStatus =
   | "pending"
   | "in_transit"

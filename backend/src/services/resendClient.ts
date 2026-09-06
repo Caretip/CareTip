@@ -85,6 +85,8 @@ export type ResendMailAttachment = {
   content?: string;
   path?: string;
   content_type?: string;
+  /** Inline so CID images are not shown as paperclip attachments. */
+  content_disposition?: "inline" | "attachment";
 };
 
 export type ResendMailPayload = {

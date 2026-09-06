@@ -254,6 +254,7 @@ function runStatic() {
   const fees = read("src/config/fees.ts");
   const jobs = read("src/routes/internalJobs.routes.ts");
   const ui = read(join("..", "src/app/components/business/settings/billing/ConnectPayoutsPanel.tsx"));
+  const payoutDetail = read(join("..", "src/app/components/connect/ConnectPayoutDetailDialog.tsx"));
 
   const forbidden = [
     /\.payouts\.create\s*\(/,
@@ -329,7 +330,7 @@ function runStatic() {
   }
 
   if (
-    ui.includes("reconciliationStatus") &&
+    payoutDetail.includes("reconciliationStatus") &&
     ui.includes("formatConnectPayoutAmount") &&
     ui.includes("amountCents") &&
     !ui.includes("formatEur") &&
@@ -338,9 +339,20 @@ function runStatic() {
     !ui.toLowerCase().includes("withdraw") &&
     !ui.toLowerCase().includes("pay now")
   ) {
-    pass("T-ui-safe-fields", "Manager UI shows recon; currency-safe amount; no IBAN/withdraw", "STATIC_ANALYSIS");
+    pass("T-ui-safe-fields", "Manager list is currency-safe; recon stays in payout detail", "STATIC_ANALYSIS");
   } else {
     fail("T-ui-safe-fields", "Manager payout UI fields unexpected", "STATIC_ANALYSIS");
+  }
+
+  const payoutSvc = read("src/services/stripeConnectPayout.service.ts");
+  if (
+    payoutSvc.includes("maybeTickPayoutReconciliationForBusiness") &&
+    payoutSvc.includes("tickConnectPayoutReconciliation") &&
+    payoutSvc.includes("runReconciliation: false")
+  ) {
+    pass("L-list-recon-tick", "Payout list resumes balance-line recon; API sync still does not inline-recon every payout", "STATIC_ANALYSIS");
+  } else {
+    fail("L-list-recon-tick", "Manager payout list missing throttled reconciliation tick", "STATIC_ANALYSIS");
   }
 
   if (CARETIP_FEE_PERCENT === 10 && CARETIP_FEE_FIXED_CENTS_EUR === 49) {

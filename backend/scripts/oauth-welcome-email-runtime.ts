@@ -112,12 +112,13 @@ function main() {
     "EN manager welcome",
   );
   if (
-    en.html.includes("cid:caretip-logo") ||
-    en.html.includes("caretip-app-icon.png")
+    en.html.includes("https://caretip.de/brand/caretip-app-icon.png") &&
+    !en.html.includes("cid:caretip-logo") &&
+    !en.html.includes("localhost")
   ) {
-    pass("EN welcome includes CareTip brand icon");
+    pass("EN welcome includes hosted CareTip email mark");
   } else {
-    fail("EN welcome missing brand icon (cid or hosted app icon)");
+    fail("EN welcome missing hosted CareTip email mark");
   }
   if (en.html.includes("max-width:600px") && en.html.includes("Go to dashboard")) {
     pass("EN welcome uses shared layout width and CTA");

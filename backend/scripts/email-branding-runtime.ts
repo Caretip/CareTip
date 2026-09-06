@@ -32,11 +32,19 @@ const activateUrl = "https://caretip.de/activate?token=sample";
 const longName = "Alexandria-Maximiliane-Constantinopolis";
 const longBiz = "Riverside Conservatory & Seasonal Tasting Room International";
 
+function imgCount(html: string): number {
+  return html.match(/<img\b/gi)?.length ?? 0;
+}
+
 function hasBrandHeader(html: string): boolean {
-  return (
-    html.includes("cid:caretip-logo") ||
-    html.includes("caretip-app-icon.png")
-  ) && /font-weight:600[^>]*>CareTip</.test(html);
+  const hosted =
+    html.includes("https://caretip.de/brand/caretip-app-icon.png") &&
+    !html.includes("localhost") &&
+    !html.includes("127.0.0.1") &&
+    !html.includes("caretip-email-mark.png");
+  const wordmark = /color:#ffffff[^>]*>CareTip</.test(html);
+  const darkBar = html.includes("background-color:#111111");
+  return hosted && wordmark && darkBar && !html.includes("cid:caretip-logo");
 }
 
 const welcomeEn = buildWelcomeEmailContent({
@@ -93,6 +101,22 @@ if (
 if (hasBrandHeader(welcomeEn.html) && welcomeEn.html.includes("max-width:600px")) {
   pass("Shared layout: icon+wordmark header and 600px column");
 } else fail("Shared layout header/width");
+
+if (imgCount(welcomeEn.html) === 1 && welcomeEn.html.includes('alt="CareTip"')) {
+  pass("Welcome email has a single CareTip header image");
+} else fail("Welcome email image count / alt");
+
+if (!welcomeEn.html.includes("cid:caretip-logo") && !welcomeEn.html.includes("localhost")) {
+  pass("Welcome HTML uses hosted logo URL, not CID or localhost");
+} else fail("Welcome HTML still references CID or localhost logo");
+
+if (
+  welcomeEn.html.includes("background-color:#111111") &&
+  welcomeEn.html.includes("color:#ffffff") &&
+  welcomeEn.html.includes("https://caretip.de/brand/caretip-app-icon.png")
+) {
+  pass("Dark header with white CareTip wordmark and live public PNG");
+} else fail("Dark header / white wordmark / live PNG");
 
 if (
   welcomeEn.html.includes("border:1px solid") &&
@@ -195,11 +219,34 @@ if (lead.html.includes("Demo Request") && lead.html.includes("alex@example.com")
   pass("Lead demo email uses shared header and keeps fields");
 } else fail("Lead demo email");
 
+const sharedLayoutSamples = [
+  ["verify", verify.html],
+  ["reset", reset.html],
+  ["invite", invite.html],
+  ["login-alert", alert.html],
+  ["notification", note.html],
+  ["lead", lead.html],
+] as const;
+if (sharedLayoutSamples.every(([, html]) => imgCount(html) === 1 && hasBrandHeader(html))) {
+  pass("All shared-layout templates have one hosted header mark outside the card");
+} else fail("A shared-layout template is missing the single header mark");
+
 const resendSrc = readFileSync(path.join(backendRoot, "src/services/resendClient.ts"), "utf8");
+const logoSrc = readFileSync(path.join(backendRoot, "src/emails/emailLogo.ts"), "utf8");
 if (resendSrc.includes("payload.replyTo ?? getCareTipSupportEmail()")) {
   pass("Transactional mail defaults Reply-To to CareTip support when unset");
 } else {
   fail("Resend client missing support Reply-To default");
+}
+if (resendSrc.includes("needsLogo") && resendSrc.includes("CARETIP_EMAIL_LOGO_CID")) {
+  pass("Logo MIME attach only when HTML still uses CID");
+} else {
+  fail("Resend client no longer gates logo attach on CID");
+}
+if (logoSrc.includes('content_disposition: "inline"') && logoSrc.includes("caretip-app-icon.png")) {
+  pass("Email logo resolver prefers live public PNG and inline CID fallback");
+} else {
+  fail("Email logo resolver missing live public PNG or inline disposition");
 }
 
 mkdirSync(previewDir, { recursive: true });

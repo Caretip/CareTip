@@ -14,7 +14,7 @@ const STRIPE_CONNECT_ALLOWED_HOSTS: ReadonlySet<string> = new Set([
   STRIPE_CONNECT_HOST_V2,
 ]);
 
-export type StripeRedirectKind = "checkout" | "portal" | "connect";
+export type StripeRedirectKind = "checkout" | "portal" | "connect" | "expressDashboard";
 
 export type ExternalStripeRedirectResult =
   | { ok: true; navigated: true }
@@ -23,7 +23,20 @@ export type ExternalStripeRedirectResult =
 function allowedHostsForKind(kind: StripeRedirectKind): ReadonlySet<string> {
   if (kind === "portal") return new Set([STRIPE_BILLING_PORTAL_HOST]);
   if (kind === "connect") return STRIPE_CONNECT_ALLOWED_HOSTS;
+  if (kind === "expressDashboard") {
+    return new Set(["stripe.com", STRIPE_CONNECT_HOST_V1]);
+  }
   return new Set([STRIPE_CHECKOUT_HOST]);
+}
+
+function isAllowedExpressDashboardPath(parsed: URL): boolean {
+  if (parsed.hostname === STRIPE_CONNECT_HOST_V1) {
+    return parsed.pathname.startsWith("/express") || parsed.pathname.startsWith("/express_login");
+  }
+  if (parsed.hostname === "stripe.com") {
+    return parsed.pathname.startsWith("/express/") || parsed.pathname === "/express";
+  }
+  return false;
 }
 
 function parseStripeRedirectUrl(rawUrl: string, kind: StripeRedirectKind): URL {
@@ -39,6 +52,9 @@ function parseStripeRedirectUrl(rawUrl: string, kind: StripeRedirectKind): URL {
   const allowed = allowedHostsForKind(kind);
   if (!allowed.has(parsed.hostname)) {
     throw new Error("Redirect URL must be hosted by Stripe");
+  }
+  if (kind === "expressDashboard" && !isAllowedExpressDashboardPath(parsed)) {
+    throw new Error("Redirect URL must be a Stripe Express Dashboard login link");
   }
   return parsed;
 }
@@ -59,7 +75,7 @@ export function isAllowedStripeRedirectUrl(
 }
 
 /**
- * Navigate to a Stripe-hosted checkout, billing portal, or Connect onboarding URL.
+ * Navigate to a Stripe-hosted checkout, billing portal, Connect onboarding, or Express Dashboard URL.
  * On success, keeps caller loading state active — the browser is leaving the SPA.
  * Only release loading when this returns `{ ok: false }` or throws.
  */

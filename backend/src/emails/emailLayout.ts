@@ -3,10 +3,7 @@
  * One light surface, 1px hairline frame, centered type — no nested cards.
  */
 
-import {
-  CARETIP_EMAIL_LOGO_CID,
-  resolveCareTipEmailLogoRemoteUrl,
-} from "./emailLogo.js";
+import { resolveCareTipEmailLogoRemoteUrl } from "./emailLogo.js";
 
 export const EMAIL = {
   brandOrange: "#e9781c",
@@ -17,6 +14,8 @@ export const EMAIL = {
   textFooter: "#a1a1aa",
   pageBg: "#f7f7f8",
   cardBg: "#f7f7f8",
+  headerBg: "#111111",
+  headerText: "#ffffff",
   border: "#e4e4e7",
   hairline: "#d4d4d8",
   font:
@@ -68,20 +67,22 @@ ${inner}
 }
 
 function brandIconSrc(): string {
-  const remote = resolveCareTipEmailLogoRemoteUrl();
-  return remote || `cid:${CARETIP_EMAIL_LOGO_CID}`;
+  return resolveCareTipEmailLogoRemoteUrl();
 }
 
-/** Centered 32px app icon + CareTip wordmark (HTML text, not a huge image). */
+/**
+ * Dark CareTip brand header. Public HTTPS PNG + independent HTML wordmark
+ * (white, inline color) so the name remains if the image fails to load.
+ */
 export function emailBrandMark(brand: string): string {
   const src = brandIconSrc();
-  return `<tr><td align="center" style="padding:40px 40px 28px;">
+  return `<tr><td align="center" bgcolor="${EMAIL.headerBg}" style="background-color:${EMAIL.headerBg};padding:18px 24px;">
 <table role="presentation" cellspacing="0" cellpadding="0" border="0" align="center">
 <tr>
-<td valign="middle" style="padding:0;">
-<img src="${esc(src)}" width="32" height="32" alt="" style="display:block;width:32px;height:32px;border:0;outline:none;text-decoration:none;border-radius:8px;" />
+<td valign="middle" style="padding:0;line-height:0;">
+<img src="${esc(src)}" width="32" height="32" alt="CareTip" style="display:block;width:32px;height:32px;border:0;outline:none;text-decoration:none;" />
 </td>
-<td valign="middle" style="padding:0 0 0 10px;font-size:17px;line-height:1.2;font-weight:600;letter-spacing:-0.02em;color:${EMAIL.text};">${esc(brand)}</td>
+<td valign="middle" style="padding:0 0 0 10px;font-size:17px;line-height:1.2;font-weight:600;letter-spacing:-0.02em;color:${EMAIL.headerText};">${esc(brand)}</td>
 </tr>
 </table>
 </td></tr>`;
@@ -98,7 +99,7 @@ export function emailCardClose(): string {
 </td></tr>`;
 }
 
-export function emailCardBody(padding = "0 40px 40px"): string {
+export function emailCardBody(padding = "32px 40px 40px"): string {
   return `<tr><td align="center" style="padding:${padding};${CENTER}">`;
 }
 
@@ -106,7 +107,7 @@ export function emailCardBodyEnd(): string {
   return `</td></tr>`;
 }
 
-/** Brand + body inside one thin frame. */
+/** Dark brand header as the first row of the framed message, then body. */
 export function emailFrameOpen(brand: string): string {
   return `${emailCardOpen()}${emailBrandMark(brand)}${emailCardBody()}`;
 }

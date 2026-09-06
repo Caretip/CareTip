@@ -597,11 +597,13 @@ type RetrieveAccountFn = (accountId: string) => Promise<Stripe.Account>;
 
 type RetrieveV2AppliedConfigurationsFn = (accountId: string) => Promise<string[] | null>;
 type RetrieveV2CoreAccountFn = (accountId: string) => Promise<unknown | null>;
+type CreateLoginLinkFn = (accountId: string) => Promise<{ url: string }>;
 
 /** Test seam — production uses Stripe Accounts V2 via rawRequest. */
 let createAccountFn: CreateAccountFn | null = null;
 let createV2AccountFn: CreateV2AccountFn | null = null;
 let createV2AccountLinkFn: CreateV2AccountLinkFn | null = null;
+let createLoginLinkFn: CreateLoginLinkFn | null = null;
 let retrieveAccountFn: RetrieveAccountFn | null = null;
 let retrieveV2AppliedConfigurationsFn: RetrieveV2AppliedConfigurationsFn | null = null;
 let retrieveV2CoreAccountFn: RetrieveV2CoreAccountFn | null = null;
@@ -616,6 +618,10 @@ export function __setCreateV2AccountFnForTests(fn: CreateV2AccountFn | null): vo
 
 export function __setCreateV2AccountLinkFnForTests(fn: CreateV2AccountLinkFn | null): void {
   createV2AccountLinkFn = fn;
+}
+
+export function __setCreateLoginLinkFnForTests(fn: CreateLoginLinkFn | null): void {
+  createLoginLinkFn = fn;
 }
 
 export function __setRetrieveAccountFnForTests(fn: RetrieveAccountFn | null): void {
@@ -1197,6 +1203,71 @@ export async function createExpressAccountOnboardingLink(params: {
   return { url, accountId };
 }
 
+const CONNECT_USER_LOGIN_LINK_FAILED =
+  "Unable to open your Stripe Dashboard right now. Please try again.";
+
+/**
+ * Express Dashboard Login Link for the stored connected account.
+ * V1 Login Links API (`accounts.createLoginLink`) — supported for Express / v2 `dashboard: "express"`.
+ * Distinct from Account Links (`account_onboarding`). Never persisted.
+ */
+export async function createExpressDashboardLoginLink(params: {
+  businessId: string;
+}): Promise<{ url: string }> {
+  const business = await prisma.business.findUnique({
+    where: { id: params.businessId },
+    select: { deletedAt: true, legalHold: true, stripeAccountId: true },
+  });
+  if (!business) {
+    throw new StripeConnectError("Business not found", "BUSINESS_NOT_FOUND", 404);
+  }
+  assertBusinessMayMutateConnect(business);
+
+  const accountId = business.stripeAccountId?.trim() ?? "";
+  if (!accountId || !isStripeConnectedAccountId(accountId)) {
+    throw new StripeConnectError(
+      "Connect Stripe before opening the Stripe Dashboard.",
+      "STRIPE_CONNECT_NO_ACCOUNT",
+      400,
+    );
+  }
+
+  if (!isStripeConfigured() && !createLoginLinkFn) {
+    throw new StripeConnectError(
+      "Payment processing is not configured yet.",
+      "STRIPE_NOT_CONFIGURED",
+      503,
+    );
+  }
+
+  try {
+    const link = createLoginLinkFn
+      ? await createLoginLinkFn(accountId)
+      : await getStripeClient().accounts.createLoginLink(accountId);
+    const url = typeof link?.url === "string" ? link.url.trim() : "";
+    if (!url.startsWith("https://")) {
+      throw new StripeConnectError(
+        CONNECT_USER_LOGIN_LINK_FAILED,
+        "STRIPE_LOGIN_LINK_EMPTY",
+        502,
+      );
+    }
+    return { url };
+  } catch (err) {
+    if (err instanceof StripeConnectError) throw err;
+    logServerError("stripeConnect.accounts.createLoginLink", err, {
+      businessId: params.businessId,
+      accountSuffix: accountId.slice(-8),
+      ...stripeOpsMeta(err),
+    });
+    throw new StripeConnectError(
+      CONNECT_USER_LOGIN_LINK_FAILED,
+      "STRIPE_LOGIN_LINK_FAILED",
+      502,
+    );
+  }
+}
+
 export async function getConnectStatusForBusiness(businessId: string): Promise<ConnectStatusDto> {
   const business = await prisma.business.findUnique({
     where: { id: businessId },
@@ -1333,6 +1404,7 @@ export const __test = {
   __setCreateAccountFnForTests,
   __setCreateV2AccountFnForTests,
   __setCreateV2AccountLinkFnForTests,
+  __setCreateLoginLinkFnForTests,
   __setRetrieveAccountFnForTests,
   __setRetrieveV2AppliedConfigurationsFnForTests,
   __setSerializeConnectEnsureForTests,

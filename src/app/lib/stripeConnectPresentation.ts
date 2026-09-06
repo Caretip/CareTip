@@ -30,6 +30,15 @@ export function stripeConnectCtaKey(data: ConnectStatus): string | null {
   return "business.billing.connect.connect";
 }
 
+/** Ready + configured + stored account — show Express Dashboard Login Link CTA. */
+export function stripeConnectShowsDashboardAccess(data: ConnectStatus): boolean {
+  return (
+    stripeConnectTrafficLight(data) === "green" &&
+    data.stripeConfigured === true &&
+    data.hasAccount === true
+  );
+}
+
 export function stripeConnectPrintBadgeKey(data: ConnectStatus): string {
   const light = stripeConnectTrafficLight(data);
   if (light === "green") return "business.qrStudio.print.stripeReady";

@@ -118,7 +118,7 @@ function runStatic(): void {
     connectSvc.includes("rawRequest") &&
     connectSvc.includes('dashboard: "express"') &&
     connectSvc.includes("DEFAULT_ACCOUNTS_V2_API_VERSION") &&
-    !connectSvc.includes("getStripeClient().accounts.create")
+    !connectSvc.includes("getStripeClient().accounts.create(")
   ) {
     pass("A-static-v2-create", "New accounts use POST /v2/core/accounts (not V1 accounts.create)");
   } else {

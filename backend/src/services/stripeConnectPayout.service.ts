@@ -18,6 +18,7 @@ import {
   RECON_MAX_PAGES_WEBHOOK,
   reconcileConnectPayoutBalanceLines,
   reconStatusEligibleWhere,
+  tickConnectPayoutReconciliation,
 } from "./stripeConnectPayoutReconciliation.service.js";
 
 export {
@@ -27,8 +28,11 @@ export {
 
 /** Throttle opportunistic Stripe → DB sync on manager payout list (not continuous polling). */
 export const CONNECT_PAYOUT_LIST_SYNC_TTL_MS = 60_000;
+/** Resume incomplete balance-line recon when a manager opens payout history. */
+export const CONNECT_PAYOUT_RECON_LIST_TTL_MS = 60_000;
 const CONNECT_PAYOUT_SYNC_PAGE_SIZE = 50;
 const CONNECT_PAYOUT_SYNC_MAX_PAGES = 2;
+const CONNECT_PAYOUT_RECON_LIST_LIMIT = 8;
 
 export type ConnectPayoutListPage = {
   data: Stripe.Payout[];
@@ -42,6 +46,7 @@ type ListConnectPayoutsFn = (
 
 let listConnectPayoutsFn: ListConnectPayoutsFn | null = null;
 const lastConnectPayoutSyncAtByBusiness = new Map<string, number>();
+const lastConnectPayoutReconAtByBusiness = new Map<string, number>();
 
 export function __setListConnectPayoutsFnForTests(fn: ListConnectPayoutsFn | null): void {
   listConnectPayoutsFn = fn;
@@ -49,6 +54,7 @@ export function __setListConnectPayoutsFnForTests(fn: ListConnectPayoutsFn | nul
 
 export function __clearConnectPayoutSyncThrottleForTests(): void {
   lastConnectPayoutSyncAtByBusiness.clear();
+  lastConnectPayoutReconAtByBusiness.clear();
 }
 
 async function listConnectPayoutsFromStripe(
@@ -729,6 +735,26 @@ export async function syncConnectPayoutsFromStripeForBusiness(
   });
 }
 
+/**
+ * Resume pending/partial/failed balance-line recon for this business only.
+ * Does not list Stripe payouts. Does not initiate payouts. Throttled like API sync.
+ */
+async function maybeTickPayoutReconciliationForBusiness(businessId: string): Promise<void> {
+  const now = Date.now();
+  const last = lastConnectPayoutReconAtByBusiness.get(businessId) ?? 0;
+  if (now - last < CONNECT_PAYOUT_RECON_LIST_TTL_MS) return;
+  lastConnectPayoutReconAtByBusiness.set(businessId, now);
+  try {
+    await tickConnectPayoutReconciliation({
+      businessId,
+      limit: CONNECT_PAYOUT_RECON_LIST_LIMIT,
+      maxPages: RECON_MAX_PAGES_WEBHOOK,
+    });
+  } catch (err) {
+    logServerError("stripe.connectPayout.list_recon_tick", err, { businessId });
+  }
+}
+
 const payoutListSelect = {
   id: true,
   businessId: true,
@@ -767,6 +793,8 @@ export async function listPayoutsForBusiness(
     throw new Error("Unable to synchronize payouts from Stripe. Please try again.");
   }
 
+  await maybeTickPayoutReconciliationForBusiness(businessId);
+
   const [total, rows] = await Promise.all([
     prisma.stripeConnectPayout.count({ where }),
     prisma.stripeConnectPayout.findMany({
@@ -790,6 +818,20 @@ export async function getPayoutForBusiness(
   businessId: string,
   payoutId: string,
 ): Promise<ConnectPayoutDto | null> {
+  const existing = await prisma.stripeConnectPayout.findFirst({
+    where: { id: payoutId, businessId },
+    select: { id: true, reconciliationStatus: true },
+  });
+  if (!existing) return null;
+
+  if (existing.reconciliationStatus !== StripeConnectPayoutReconciliationStatus.complete) {
+    try {
+      await reconcileConnectPayoutBalanceLines(existing.id, { maxPages: 10 });
+    } catch (err) {
+      logServerError("stripe.connectPayout.detail_recon", err, { businessId, payoutId });
+    }
+  }
+
   const row = await prisma.stripeConnectPayout.findFirst({
     where: { id: payoutId, businessId },
     include: { balanceLines: { orderBy: { createdAtStripe: "desc" } } },

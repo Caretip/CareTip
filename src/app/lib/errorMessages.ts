@@ -238,6 +238,9 @@ const ERROR_MAP: Record<string, string> = {
   STRIPE_ACCOUNT_TENANT_CONFLICT: "Stripe connection couldn't be started. Please try again.",
   STRIPE_ACCOUNT_LINK_FAILED: "Stripe connection couldn't be started. Please try again.",
   STRIPE_ACCOUNT_LINK_EMPTY: "Stripe connection couldn't be started. Please try again.",
+  STRIPE_LOGIN_LINK_FAILED: "Unable to open your Stripe Dashboard right now. Please try again.",
+  STRIPE_LOGIN_LINK_EMPTY: "Unable to open your Stripe Dashboard right now. Please try again.",
+  STRIPE_CONNECT_NO_ACCOUNT: "Connect Stripe before opening the Stripe Dashboard.",
   STRIPE_ACCOUNT_PERSIST_FAILED: "Stripe connection couldn't be started. Please try again.",
   "Stripe connection couldn't be started. Please try again.":
     "Stripe connection couldn't be started. Please try again.",

@@ -12,6 +12,11 @@ import {
 import { classifyFetchError } from "../src/app/lib/listFilterUx";
 import { ApiRequestError } from "../src/app/lib/apiError";
 import { isAllowedStripeRedirectUrl } from "../src/app/lib/externalStripeRedirect";
+import {
+  stripeConnectCtaKey,
+  stripeConnectShowsDashboardAccess,
+} from "../src/app/lib/stripeConnectPresentation";
+import type { ConnectStatus } from "../src/app/lib/api";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const results: string[] = [];
@@ -223,6 +228,55 @@ function testDetailAndOnboardingPresent(): boolean {
     fail("Connect card must surface charges/payouts disabled copy");
     ok = false;
   }
+  if (
+    !connect.includes("createConnectLoginLink") ||
+    !connect.includes("startDashboard") ||
+    !connect.includes('performExternalStripeRedirect(url, "expressDashboard")') ||
+    !connect.includes("openDashboard")
+  ) {
+    fail("READY dashboard CTA must call Login Link helper, not Account Links");
+    ok = false;
+  }
+  if (!connect.includes("createConnectAccountLink") || !connect.includes("startOnboarding")) {
+    fail("Onboarding Account Link helper must remain");
+    ok = false;
+  }
+  const dashboardFn = connect.slice(connect.indexOf("async function startDashboard"), connect.indexOf("if (loading && !data)"));
+  if (dashboardFn.includes("createConnectAccountLink") || dashboardFn.includes('"connect"')) {
+    fail("Open Stripe Dashboard must not reuse Account Link onboarding");
+    ok = false;
+  }
+  const onboardFn = connect.slice(connect.indexOf("async function startOnboarding"), connect.indexOf("async function startDashboard"));
+  if (!onboardFn.includes("createConnectAccountLink") || onboardFn.includes("createConnectLoginLink")) {
+    fail("Update Stripe details / onboarding must keep Account Links");
+    ok = false;
+  }
+  if (!connect.includes("/dashboard/stripe/payouts") || !connect.includes("viewPayouts")) {
+    fail("Payout history link must remain on Connect card");
+    ok = false;
+  }
+  const api = read("src/app/lib/api.ts");
+  if (
+    !api.includes('apiPath("/api/me/connect/login-link")') ||
+    !api.includes("export async function createConnectLoginLink") ||
+    !api.includes('apiPath("/api/me/connect/account-link")')
+  ) {
+    fail("Frontend must keep separate account-link and login-link helpers");
+    ok = false;
+  }
+  if (api.includes("connect.stripe.com") && api.includes("createConnectLoginLink") && /createConnectLoginLink[\s\S]{0,400}connect\.stripe\.com/.test(api) === false) {
+    // login helper should not hardcode Stripe hosts
+  }
+  const loginHelper = api.slice(api.indexOf("createConnectLoginLink"), api.indexOf("createConnectLoginLink") + 500);
+  if (loginHelper.includes("connect.stripe.com") || loginHelper.includes("stripe.com/express")) {
+    fail("Frontend Login Link helper must not hardcode Stripe Dashboard URLs");
+    ok = false;
+  }
+  const statusCache = read("src/app/lib/stripeConnectStatusCache.ts");
+  if (statusCache.includes("createConnectLoginLink") || statusCache.includes("login-link")) {
+    fail("Connect status fetch must not generate Login Links");
+    ok = false;
+  }
   const admin = read("src/app/pages/platform/revenue/PlatformConnectPayoutsPage.tsx");
   if (!admin.includes("filterCurrency") || !admin.includes("createdFrom") || !admin.includes("fetchPlatformConnectPayout")) {
     fail("admin payouts page missing currency/date filters or detail fetch");
@@ -317,7 +371,157 @@ function testConnectRedirectAllowlist(): boolean {
     ok = false;
   }
 
+  if (
+    !isAllowedStripeRedirectUrl("https://stripe.com/express/Ln7FfnNpUcCU", "expressDashboard") ||
+    !isAllowedStripeRedirectUrl("https://connect.stripe.com/express/acct_test", "expressDashboard")
+  ) {
+    fail("Express Dashboard redirect must allow stripe.com/express and connect.stripe.com/express");
+    ok = false;
+  }
+  if (
+    isAllowedStripeRedirectUrl("https://stripe.com/express/Ln7FfnNpUcCU", "connect") ||
+    isAllowedStripeRedirectUrl("https://stripe.com/docs", "expressDashboard") ||
+    isAllowedStripeRedirectUrl("https://dashboard.stripe.com/acct_x", "expressDashboard") ||
+    isAllowedStripeRedirectUrl("https://stripe.com/connect", "expressDashboard")
+  ) {
+    fail("Express Dashboard allowlist must not accept onboarding/docs/full dashboard hosts");
+    ok = false;
+  }
+
   if (ok) pass("Connect redirect allows exact V1/V2 Stripe hosts; rejects wildcards and other kinds");
+  return ok;
+}
+
+function sampleConnectStatus(overrides: Partial<ConnectStatus>): ConnectStatus {
+  return {
+    status: "not_connected",
+    stripeConfigured: true,
+    hasAccount: false,
+    chargesEnabled: false,
+    payoutsEnabled: false,
+    detailsSubmitted: false,
+    requirementsDueCount: 0,
+    disabledReason: null,
+    updatedAt: null,
+    readyForPayouts: false,
+    ...overrides,
+  };
+}
+
+function testDashboardPresentationAndCopy(): boolean {
+  let ok = true;
+  const ready = sampleConnectStatus({
+    status: "ready",
+    hasAccount: true,
+    chargesEnabled: true,
+    payoutsEnabled: true,
+    detailsSubmitted: true,
+    readyForPayouts: true,
+  });
+  const incomplete = sampleConnectStatus({
+    status: "onboarding_incomplete",
+    hasAccount: true,
+  });
+  const disconnected = sampleConnectStatus({ status: "not_connected" });
+
+  if (stripeConnectCtaKey(ready) !== null || !stripeConnectShowsDashboardAccess(ready)) {
+    fail("READY must hide onboarding CTA and show dashboard access");
+    ok = false;
+  }
+  if (
+    stripeConnectCtaKey(incomplete) !== "business.billing.connect.continue" ||
+    stripeConnectShowsDashboardAccess(incomplete)
+  ) {
+    fail("incomplete must keep onboarding CTA and hide dashboard");
+    ok = false;
+  }
+  if (
+    stripeConnectCtaKey(disconnected) !== "business.billing.connect.connect" ||
+    stripeConnectShowsDashboardAccess(disconnected)
+  ) {
+    fail("not-connected must keep Connect CTA and hide dashboard");
+    ok = false;
+  }
+
+  const en = JSON.parse(read("src/i18n/locales/en.json")) as {
+    business: { billing: { connect: Record<string, string> } };
+  };
+  const de = JSON.parse(read("src/i18n/locales/de.json")) as {
+    business: { billing: { connect: Record<string, string> } };
+  };
+  const enC = en.business.billing.connect;
+  const deC = de.business.billing.connect;
+  if (
+    enC.openDashboard !== "Open Stripe Dashboard" ||
+    deC.openDashboard !== "Stripe-Dashboard öffnen" ||
+    !enC.openDashboardError ||
+    !deC.openDashboardError ||
+    /full stripe dashboard/i.test(enC.openDashboard) ||
+    /full stripe dashboard/i.test(enC.statusReadyBody) ||
+    /Express/i.test(enC.openDashboard) ||
+    /Express/i.test(deC.openDashboard) ||
+    /login_link/i.test(enC.openDashboard)
+  ) {
+    fail("EN/DE dashboard copy missing or uses internal Stripe terms");
+    ok = false;
+  }
+  if (!enC.manage || !deC.manage || !enC.viewPayouts || !deC.viewPayouts) {
+    fail("Update details / payout history copy missing");
+    ok = false;
+  }
+
+  if (ok) pass("READY dashboard CTA presentation + EN/DE copy");
+  return ok;
+}
+
+function testPayoutHistoryUx(): boolean {
+  let ok = true;
+  const badges = read("src/app/components/connect/ConnectPayoutBadges.tsx");
+  if (badges.includes("text-success") || badges.includes("bg-success")) {
+    fail("Payout status must not use low-contrast --success token");
+    ok = false;
+  }
+  if (!badges.includes("font-semibold text-foreground") || !badges.includes("rounded-full")) {
+    fail("Paid status must be readable text with a non-color-only marker");
+    ok = false;
+  }
+  const panel = read("src/app/components/business/settings/billing/ConnectPayoutsPanel.tsx");
+  if (panel.includes("ConnectPayoutReconBadge") || panel.includes("colReconciliation")) {
+    fail("Manager payout table must not promote CareTip sync as a primary column");
+    ok = false;
+  }
+  if (
+    !panel.includes("createConnectLoginLink") ||
+    !panel.includes('performExternalStripeRedirect(url, "expressDashboard")') ||
+    !panel.includes("viewInStripe")
+  ) {
+    fail("Payout page must offer Stripe Dashboard via Login Link on click");
+    ok = false;
+  }
+  if (panel.includes("createConnectLoginLink()") && panel.includes("useEffect") && /useEffect\([\s\S]*createConnectLoginLink/.test(panel)) {
+    fail("Login Links must not be generated on payout page load");
+    ok = false;
+  }
+  const en = JSON.parse(read("src/i18n/locales/en.json")) as {
+    business: { billing: { payouts: Record<string, string> } };
+  };
+  const de = JSON.parse(read("src/i18n/locales/de.json")) as {
+    business: { billing: { payouts: Record<string, string> } };
+  };
+  if (en.business.billing.payouts.viewInStripe !== "View detailed payouts in Stripe") {
+    fail("EN viewInStripe copy missing");
+    ok = false;
+  }
+  if (de.business.billing.payouts.viewInStripe !== "Auszahlungsdetails in Stripe anzeigen") {
+    fail("DE viewInStripe copy missing");
+    ok = false;
+  }
+  const detail = read("src/app/components/connect/ConnectPayoutDetailDialog.tsx");
+  if (!detail.includes("ConnectPayoutReconBadge") || !detail.includes("reconExplainI18nKey")) {
+    fail("Payout detail must retain reconciliation meaning");
+    ok = false;
+  }
+  if (ok) pass("Payout history status contrast, demoted sync, Stripe Dashboard CTA");
   return ok;
 }
 
@@ -332,6 +536,8 @@ failed += testEmployeePayoutAction() ? 0 : 1;
 failed += testDetailAndOnboardingPresent() ? 0 : 1;
 failed += testConnectReturnUrlsAndFee() ? 0 : 1;
 failed += testConnectRedirectAllowlist() ? 0 : 1;
+failed += testDashboardPresentationAndCopy() ? 0 : 1;
+failed += testPayoutHistoryUx() ? 0 : 1;
 
 for (const line of results) console.log(line);
 console.log(failed === 0 ? `\nOK: ${results.length} checks` : `\nFAILED: ${failed} check group(s)`);

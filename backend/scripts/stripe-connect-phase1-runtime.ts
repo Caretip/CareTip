@@ -15,6 +15,9 @@ import { prisma } from "../src/prisma.js";
 import {
   deriveStripeConnectStatus,
   handleConnectAccountUpdated,
+  createExpressDashboardLoginLink,
+  StripeConnectError,
+  __setCreateLoginLinkFnForTests,
 } from "../src/services/stripeConnect.service.js";
 
 type Result = { id: string; pass: boolean; detail: string };
@@ -47,7 +50,7 @@ function runStaticSecurity() {
     connectSvc.includes('dashboard: "express"') &&
     connectSvc.includes('STRIPE_ACCOUNTS_V2_CREATE_PATH') &&
     connectSvc.includes("/v2/core/accounts") &&
-    !connectSvc.includes("getStripeClient().accounts.create")
+    !connectSvc.includes("getStripeClient().accounts.create(")
   ) {
     pass("express-account-create", "New Connect accounts created via Accounts V2 POST /v2/core/accounts");
   } else {
@@ -90,6 +93,44 @@ function runStaticSecurity() {
     pass("manager-auth-routes", "Connect routes are manager-auth gated and mounted");
   } else {
     fail("manager-auth-routes", "Connect routes auth/mount incomplete");
+  }
+
+  if (
+    connectRoutes.includes('router.post("/connect/login-link"') &&
+    connectRoutes.includes("postMyConnectLoginLink") &&
+    connectCtrl.includes("createExpressDashboardLoginLink") &&
+    connectCtrl.includes("rejectClientConnectSteering") &&
+    connectSvc.includes("accounts.createLoginLink") &&
+    connectSvc.includes("createExpressDashboardLoginLink")
+  ) {
+    pass("express-login-link", "Manager Login Link endpoint uses stored account + Stripe createLoginLink");
+  } else {
+    fail("express-login-link", "Missing Express Dashboard Login Link wiring");
+  }
+
+  const statusFn = connectCtrl.slice(
+    connectCtrl.indexOf("getMyConnectStatus"),
+    connectCtrl.indexOf("postMyConnectAccountLink"),
+  );
+  if (
+    statusFn.includes("createExpressDashboardLoginLink") ||
+    statusFn.includes("createLoginLink")
+  ) {
+    fail("login-link-not-on-status", "GET /connect/status must not generate Login Links");
+  } else {
+    pass("login-link-not-on-status", "Login Links are not generated during status fetch");
+  }
+
+  if (
+    connectSvc.includes('dashboard: "express"') &&
+    !connectSvc.includes('dashboard: "full"') &&
+    !connectSvc.includes('dashboard: "none"') &&
+    !connectSvc.includes('type: "standard"') &&
+    !connectSvc.includes('type: "custom"')
+  ) {
+    pass("express-type-preserved", "Account create remains Express-class (no Standard/Custom)");
+  } else {
+    fail("express-type-preserved", "Account type/dashboard create params changed");
   }
 
   if (webhook.includes("account.updated") && webhook.includes("handleConnectAccountUpdated")) {
@@ -308,6 +349,16 @@ async function runDbIsolationTests(): Promise<void> {
     },
   });
 
+  const userNone = await prisma.user.create({
+    data: {
+      email: `mgr_none_${suffix}@example.com`,
+      passwordHash,
+      role: Role.MANAGER,
+      emailVerified: true,
+      hasCompletedOnboarding: true,
+    },
+  });
+
   const bizA = await prisma.business.create({
     data: {
       name: `Connect A ${suffix}`,
@@ -324,6 +375,13 @@ async function runDbIsolationTests(): Promise<void> {
       userId: userB.id,
       stripeAccountId: `acct_test_b_${suffix}`,
       stripeConnectStatus: StripeConnectStatus.onboarding_incomplete,
+    },
+  });
+  const bizNone = await prisma.business.create({
+    data: {
+      name: `Connect None ${suffix}`,
+      slug: `connect-none-${suffix}`,
+      userId: userNone.id,
     },
   });
 
@@ -407,9 +465,77 @@ async function runDbIsolationTests(): Promise<void> {
     } else {
       fail("webhook-duplicate-idempotent", "Duplicate update broke status");
     }
+
+    const seenAccountIds: string[] = [];
+    __setCreateLoginLinkFnForTests(async (accountId) => {
+      seenAccountIds.push(accountId);
+      return { url: `https://stripe.com/express/test_${accountId.slice(-6)}` };
+    });
+    try {
+      const linkA = await createExpressDashboardLoginLink({ businessId: bizA.id });
+      if (
+        linkA.url.startsWith("https://stripe.com/express/") &&
+        Object.keys(linkA).length === 1 &&
+        seenAccountIds.length === 1 &&
+        seenAccountIds[0] === bizA.stripeAccountId
+      ) {
+        pass("login-link-own-account", "Login Link uses stored stripeAccountId and returns url only");
+      } else {
+        fail("login-link-own-account", `Unexpected login link result ${JSON.stringify(linkA)} ids=${seenAccountIds.join(",")}`);
+      }
+
+      const linkB = await createExpressDashboardLoginLink({ businessId: bizB.id });
+      if (seenAccountIds[1] === bizB.stripeAccountId && linkB.url.includes("express")) {
+        pass("login-link-tenant-isolation", "Business B Login Link uses B's stored account, not A's");
+      } else {
+        fail("login-link-tenant-isolation", `Cross-tenant account ids ${seenAccountIds.join(",")}`);
+      }
+
+      try {
+        await createExpressDashboardLoginLink({ businessId: bizNone.id });
+        fail("login-link-no-account", "Missing stripeAccountId should reject");
+      } catch (err) {
+        if (err instanceof StripeConnectError && err.code === "STRIPE_CONNECT_NO_ACCOUNT" && err.httpStatus === 400) {
+          pass("login-link-no-account", "No connected account is rejected without Stripe call");
+        } else {
+          fail("login-link-no-account", `Unexpected no-account error ${String(err)}`);
+        }
+      }
+
+      __setCreateLoginLinkFnForTests(async () => {
+        throw new Error("stripe_unavailable_sk_live_dummy");
+      });
+      try {
+        await createExpressDashboardLoginLink({ businessId: bizA.id });
+        fail("login-link-stripe-error", "Stripe failure should map to StripeConnectError");
+      } catch (err) {
+        const safe =
+          err instanceof StripeConnectError &&
+          err.code === "STRIPE_LOGIN_LINK_FAILED" &&
+          !err.message.includes("sk_live") &&
+          err.message.includes("Stripe Dashboard");
+        if (safe) {
+          pass("login-link-stripe-error", "Stripe errors become user-safe Login Link failures");
+        } else {
+          fail("login-link-stripe-error", `Unsafe or unexpected error ${String(err)}`);
+        }
+      }
+
+      const after = await prisma.business.findUnique({
+        where: { id: bizA.id },
+        select: { stripeAccountId: true },
+      });
+      if (after?.stripeAccountId === bizA.stripeAccountId) {
+        pass("login-link-not-persisted", "Login Link generation does not change stored stripeAccountId");
+      } else {
+        fail("login-link-not-persisted", "stripeAccountId mutated by Login Link");
+      }
+    } finally {
+      __setCreateLoginLinkFnForTests(null);
+    }
   } finally {
-    await prisma.business.deleteMany({ where: { id: { in: [bizA.id, bizB.id] } } });
-    await prisma.user.deleteMany({ where: { id: { in: [userA.id, userB.id] } } });
+    await prisma.business.deleteMany({ where: { id: { in: [bizA.id, bizB.id, bizNone.id] } } });
+    await prisma.user.deleteMany({ where: { id: { in: [userA.id, userB.id, userNone.id] } } });
   }
 }
 
