@@ -8,6 +8,11 @@ import { Footer } from "../components/Footer";
 import { LandingPageBelowFold, prefetchLandingBelowFoldSections } from "./LandingPageBelowFold";
 import { warmLandingHeroLcpImage } from "@/lib/landingHeroStoryAssets";
 import { scheduleMobileDeferredWork } from "@/lib/mobilePerf";
+import {
+  dispatchLandingMediaResume,
+  refreshLandingDecodedImages,
+  syncDocumentHiddenClass,
+} from "@/lib/landingMediaResume";
 import "@/styles/bundles/marketing-shell.css";
 import "@/styles/bundles/landing.css";
 
@@ -26,6 +31,29 @@ export function LandingPage() {
   const isDe = i18n.language?.toLowerCase().startsWith("de");
 
   useLandingShellReady("about-section");
+
+  useEffect(() => {
+    syncDocumentHiddenClass();
+    const onVisibility = () => {
+      syncDocumentHiddenClass();
+      if (document.visibilityState === "visible") {
+        dispatchLandingMediaResume();
+        requestAnimationFrame(() => refreshLandingDecodedImages());
+      }
+    };
+    const onPageShow = () => {
+      syncDocumentHiddenClass();
+      dispatchLandingMediaResume();
+      requestAnimationFrame(() => refreshLandingDecodedImages());
+    };
+    document.addEventListener("visibilitychange", onVisibility);
+    window.addEventListener("pageshow", onPageShow);
+    return () => {
+      document.removeEventListener("visibilitychange", onVisibility);
+      window.removeEventListener("pageshow", onPageShow);
+      document.documentElement.classList.remove("caretip-document-hidden");
+    };
+  }, []);
 
   return (
     <div

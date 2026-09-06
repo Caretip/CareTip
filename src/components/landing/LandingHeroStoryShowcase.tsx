@@ -16,7 +16,10 @@ import {
   type HeroStoryFrame,
 } from "@/lib/landingHeroStoryAssets";
 
-import { LandingHeroFloatingCards } from "@/components/landing/LandingHeroFloatingCards";
+import {
+  CARETIP_LANDING_RESUME_EVENT,
+  isDocumentHidden,
+} from "@/lib/landingMediaResume";
 import { landingUi } from "@/components/landing/landingUi";
 import { cn } from "@/lib/utils";
 
@@ -133,6 +136,7 @@ export function LandingHeroStoryShowcase({
     if (reduceMotion || storyFrames.length < 2) return;
 
     const timer = globalThis.setInterval(() => {
+      if (isDocumentHidden()) return;
       if (isBackground && incomingIndex !== null) return;
 
       const nextIndex = (activeIndex + 1) % storyFrames.length;
@@ -162,6 +166,31 @@ export function LandingHeroStoryShowcase({
 
     return () => globalThis.clearInterval(timer);
   }, [reduceMotion, markFrameReady, activeIndex, incomingIndex, isBackground, storyFrames]);
+
+  useEffect(() => {
+    const settleCrossfade = () => {
+      setIncomingIndex((incoming) => {
+        if (incoming === null) return incoming;
+        setDisplayedIndex(incoming);
+        return null;
+      });
+      if (transitionTimerRef.current !== null) {
+        globalThis.clearTimeout(transitionTimerRef.current);
+        transitionTimerRef.current = null;
+      }
+    };
+
+    const onHiddenOrResume = () => {
+      settleCrossfade();
+    };
+
+    document.addEventListener("visibilitychange", onHiddenOrResume);
+    window.addEventListener(CARETIP_LANDING_RESUME_EVENT, onHiddenOrResume);
+    return () => {
+      document.removeEventListener("visibilitychange", onHiddenOrResume);
+      window.removeEventListener(CARETIP_LANDING_RESUME_EVENT, onHiddenOrResume);
+    };
+  }, []);
 
   useEffect(() => {
     return () => {
@@ -256,8 +285,8 @@ export function LandingHeroStoryShowcase({
                       !isBackground && isCardActive && "caretip-hero-story-frame--active",
                       isReady && "caretip-hero-story-frame--ready",
                     )}
-                    loading={isLcpFrame ? "eager" : "lazy"}
-                    decoding={isLcpFrame ? "sync" : "async"}
+                    loading={isLcpFrame || isBackground ? "eager" : "lazy"}
+                    decoding={isLcpFrame || isDisplayed || isIncoming ? "sync" : "async"}
                     sizes={imageSizes}
                     onLoad={isLcpFrame ? handleLcpFrameLoad : () => markFrameReady(frame.key)}
                     {...(isLcpFrame

@@ -69,6 +69,10 @@
   animation-play-state: paused;
 }
 
+html.caretip-document-hidden .caretip-landing .caretip-industry-photo-card--animate .caretip-industry-photo-card__img {
+  animation-play-state: paused;
+}
+
 .caretip-landing .caretip-industry-photo-card__overlay {
   position: absolute;
   inset: 36% 0 0;

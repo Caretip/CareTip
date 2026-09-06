@@ -1,5 +1,6 @@
 import { useEffect, useRef, type CSSProperties, type RefObject } from "react";
 import { usePrefersReducedMotion } from "./usePrefersReducedMotion";
+import { CARETIP_LANDING_RESUME_EVENT } from "./landingMediaResume";
 
 const REVEAL_CLASS = "caretip-landing-scroll-reveal";
 const REVEAL_VISIBLE_CLASS = "caretip-landing-scroll-reveal--visible";
@@ -42,7 +43,7 @@ export function useLandingReveal(delayS = 0): {
 
     const attachObserver = () => {
       if (el.classList.contains(REVEAL_VISIBLE_CLASS)) return;
-
+      observer?.disconnect();
       observer = new IntersectionObserver(
         ([entry]) => {
           if (entry?.isIntersecting) {
@@ -60,9 +61,20 @@ export function useLandingReveal(delayS = 0): {
       if (!markVisibleIfInView()) attachObserver();
     });
 
+    const onResume = () => {
+      if (el.classList.contains(REVEAL_VISIBLE_CLASS)) return;
+      if (!markVisibleIfInView()) attachObserver();
+    };
+    document.addEventListener("visibilitychange", onResume);
+    window.addEventListener("pageshow", onResume);
+    window.addEventListener(CARETIP_LANDING_RESUME_EVENT, onResume);
+
     return () => {
       cancelAnimationFrame(raf);
       observer?.disconnect();
+      document.removeEventListener("visibilitychange", onResume);
+      window.removeEventListener("pageshow", onResume);
+      window.removeEventListener(CARETIP_LANDING_RESUME_EVENT, onResume);
     };
   }, [reduceMotion]);
 
