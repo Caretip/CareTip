@@ -11,7 +11,8 @@ import {
   getPayoutForBusiness,
   listPayoutsForBusiness,
 } from "../services/stripeConnectPayout.service.js";
-import { CLIENT_FALLBACK, clientSafeMessage, logServerError } from "../utils/httpErrors.js";
+import { parseBoundedSkip } from "../utils/paginationLimits.js";
+import { clientSafeMessage, CLIENT_FALLBACK, logServerError } from "../utils/httpErrors.js";
 
 function getUserId(req: Request): string | null {
   const uid = req.user?.userId ?? req.user?.id;
@@ -135,7 +136,7 @@ export async function listMyConnectPayouts(req: Request, res: Response) {
     if (!ctx.ok) return res.status(ctx.status).json({ message: ctx.message });
 
     const take = Math.min(Math.max(Number(req.query.take) || 50, 1), 100);
-    const skip = Math.max(Number(req.query.skip) || 0, 0);
+    const skip = parseBoundedSkip(req.query.skip);
     const result = await listPayoutsForBusiness(ctx.businessId, { take, skip });
     return res.json(result);
   } catch (err) {

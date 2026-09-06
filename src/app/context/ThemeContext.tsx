@@ -23,7 +23,7 @@ type ThemeContextValue = {
 
 export const THEME_STORAGE_KEY = "caretip-theme";
 /** Used when nothing is stored yet. Toggle still offers light / dark / system. */
-export const DEFAULT_THEME_PREFERENCE: ThemePreference = "dark";
+export const DEFAULT_THEME_PREFERENCE: ThemePreference = "light";
 
 function getSystemTheme(): ResolvedTheme {
   if (typeof window === "undefined") return "dark";

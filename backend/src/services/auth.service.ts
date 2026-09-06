@@ -1,11 +1,12 @@
 import bcrypt from "bcrypt";
-import { type BusinessVerificationStatus, type Role, type User } from "@prisma/client";
+import { Prisma, type BusinessVerificationStatus, type Role, type User } from "@prisma/client";
 import { prisma } from "../prisma.js";
 import { validatePassword } from "../utils/passwordValidation.js";
-import { EmailNotVerifiedLoginError } from "../utils/httpErrors.js";
+import { issueRefreshToken } from "./refreshToken.service.js";
 import {
   ACCESS_JWT_TYPE,
   IMPERSONATION_JWT_TYPE,
+  buildImpersonationJwtPayload,
   signJwt,
 } from "../lib/jwtConfig.js";
 import { generateUniqueBusinessSlugForName } from "./business.service.js";
@@ -25,6 +26,7 @@ import { applyEmailVerificationBypassIfEligible } from "./emailVerificationBypas
 import { absolutizePublicMediaPath } from "../utils/publicMediaUrl.js";
 import { resolveEmailLocale, resolveUserPreferredLocale } from "../emails/i18nEmail.js";
 import { assertPlatformAdminMfaSessionAllowed } from "./mfaLogin.service.js";
+import { EmailNotVerifiedLoginError } from "../utils/httpErrors.js";
 import { inferManagerOnboardingStep, type OnboardingStep } from "./onboardingProgress.service.js";
 import { kycStatusToLegacyMirror } from "../lib/verificationWorkflow.js";
 import {
@@ -108,20 +110,43 @@ export function signAuthJwt(payload: Record<string, unknown>): string {
   return signJwt(payload, jwtExpiresIn());
 }
 
+export { buildImpersonationJwtPayload };
+
 export function signImpersonationToken(
   targetUserId: string,
   _targetEmail: string,
-  platformAdminUserId: string
+  platformAdminUserId: string,
+  session: { authTokenVersion: number; refreshSessionId: string },
 ): string {
   return signJwt(
-    {
-      sub: targetUserId,
-      role: "MANAGER",
-      type: IMPERSONATION_JWT_TYPE,
-      impersonatedBy: platformAdminUserId,
-    },
+    buildImpersonationJwtPayload({
+      targetUserId,
+      platformAdminUserId,
+      authTokenVersion: session.authTokenVersion,
+      refreshSessionId: session.refreshSessionId,
+    }),
     impersonationJwtExpiresIn(),
   );
+}
+
+/** Issue a refresh-row-bound impersonation access JWT (password reset / refresh revoke invalidates it). */
+export async function issueImpersonationAccessToken(
+  targetUserId: string,
+  targetEmail: string,
+  platformAdminUserId: string,
+): Promise<string> {
+  const target = await prisma.user.findUnique({
+    where: { id: targetUserId },
+    select: { authTokenVersion: true },
+  });
+  if (!target) {
+    throw new Error("Business not found");
+  }
+  const rt = await issueRefreshToken(targetUserId);
+  return signImpersonationToken(targetUserId, targetEmail, platformAdminUserId, {
+    authTokenVersion: target.authTokenVersion ?? 0,
+    refreshSessionId: rt.id,
+  });
 }
 
 type BusinessForAuthResult = {
@@ -698,11 +723,15 @@ export async function activateEmployee(token: string, password: string): Promise
   const employee = await prisma.employee.findUnique({
     where: { id: validated.employeeId },
     include: {
-      user: { select: { id: true, email: true, passwordHash: true } },
+      user: { select: { id: true, email: true, passwordHash: true, isActive: true, accountStatus: true } },
       business: { select: { verificationStatus: true } },
     },
   });
-  if (!employee || employee.activationStatus !== "pending_activation") {
+  if (
+    !employee ||
+    employee.isDeleted === true ||
+    employee.activationStatus !== "pending_activation"
+  ) {
     throw new Error("Invalid or expired token");
   }
 
@@ -712,6 +741,9 @@ export async function activateEmployee(token: string, password: string): Promise
       throw new Error("Invalid or expired token");
     }
     if (linkedUser.passwordHash != null) {
+      throw new Error("Invalid or expired token");
+    }
+    if (linkedUser.isActive !== true || linkedUser.accountStatus !== "active") {
       throw new Error("Invalid or expired token");
     }
   } else {
@@ -743,12 +775,31 @@ export async function activateEmployee(token: string, password: string): Promise
   // Dashboard activation (password setup only): same transaction, user row first — password stored,
   // email treated as confirmed for login, then employee becomes active. No email-verification tokens.
   await prisma.$transaction(async (tx) => {
+    const eligible = await tx.$queryRaw<Array<{ id: string }>>(Prisma.sql`
+      SELECT id FROM employees
+      WHERE id = ${employee.id}
+        AND is_deleted = false
+        AND activation_status = 'pending_activation'
+      FOR UPDATE
+    `);
+    if (eligible.length !== 1) {
+      throw new Error("Invalid or expired token");
+    }
+
     if (linkedUser && employee.userId) {
       resolvedUserId = employee.userId;
-      await tx.user.update({
-        where: { id: employee.userId },
+      const userOk = await tx.user.updateMany({
+        where: {
+          id: employee.userId,
+          passwordHash: null,
+          isActive: true,
+          accountStatus: "active",
+        },
         data: { passwordHash, emailVerified: true },
       });
+      if (userOk.count !== 1) {
+        throw new Error("Invalid or expired token");
+      }
       await tx.employee.update({
         where: { id: employee.id },
         data: { activationStatus: "active", slug },
@@ -773,9 +824,8 @@ export async function activateEmployee(token: string, password: string): Promise
         },
       });
     }
-  });
-
-  await employeeActivationService.consumeActivationToken(employee.id);
+    await employeeActivationService.consumeActivationToken(employee.id, tx);
+  }, { timeout: 20_000, maxWait: 10_000 });
 
   const businessName =
     (

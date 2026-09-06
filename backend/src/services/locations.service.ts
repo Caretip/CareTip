@@ -1,11 +1,13 @@
 import { prisma } from "../prisma.js";
+import type { Prisma } from "@prisma/client";
 import {
   EntitlementDeniedError,
   planLimitExceededPayload,
   resolveSubscriptionEntitlements,
   subscriptionRequiredPayload,
 } from "./subscriptionEntitlement.service.js";
-import { isWithinPlanLimit } from "../config/subscriptionCapabilities.js";
+import { getPlanLimitForResource, isWithinPlanLimit } from "../config/subscriptionCapabilities.js";
+import { lockPlanResourceQuota } from "../lib/planResourceQuotaLock.js";
 import { emitBusinessDataChanged } from "../socket/socketEmitters.js";
 import { invalidateBusinessStatsCache } from "./business.service.js";
 
@@ -36,31 +38,42 @@ export async function createLocationForBusinessUser(
   if (!business) {
     throw new Error("Business not found");
   }
-  const [entitlements, count] = await Promise.all([
-    resolveSubscriptionEntitlements(business.id),
-    prisma.location.count({ where: { businessId: business.id } }),
-  ]);
+  const entitlements = await resolveSubscriptionEntitlements(business.id);
   if (!entitlements.hasActiveEntitlements) {
     throw new EntitlementDeniedError(403, subscriptionRequiredPayload("locationQr"));
   }
-  if (!isWithinPlanLimit(entitlements.subscriptionTier, "locations", count)) {
-    throw new EntitlementDeniedError(403, planLimitExceededPayload("locations", entitlements.subscriptionTier));
-  }
   const desc = description?.trim();
-  const loc = await prisma.location.create({
-    data: {
-      name: trimmed,
-      businessId: business.id,
-      ...(desc ? { description: desc } : {}),
-    },
-  });
+  const loc = await prisma.$transaction(async (tx) => {
+    const limit = getPlanLimitForResource(entitlements.subscriptionTier, "locations");
+    if (limit !== null) {
+      await lockPlanResourceQuota(tx, "locations", business.id);
+    }
+    const count = await tx.location.count({ where: { businessId: business.id } });
+    if (!isWithinPlanLimit(entitlements.subscriptionTier, "locations", count)) {
+      throw new EntitlementDeniedError(
+        403,
+        planLimitExceededPayload("locations", entitlements.subscriptionTier),
+      );
+    }
+    return tx.location.create({
+      data: {
+        name: trimmed,
+        businessId: business.id,
+        ...(desc ? { description: desc } : {}),
+      },
+    });
+  }, { timeout: 15_000, maxWait: 10_000 });
   emitBusinessDataChanged(business.id, "location_created");
   invalidateBusinessStatsCache(business.id);
   return loc;
 }
 
-export async function assertLocationOwnedByBusiness(locationId: string, businessId: string) {
-  const loc = await prisma.location.findFirst({
+export async function assertLocationOwnedByBusiness(
+  locationId: string,
+  businessId: string,
+  db: Prisma.TransactionClient | typeof prisma = prisma,
+) {
+  const loc = await db.location.findFirst({
     where: { id: locationId, businessId },
   });
   if (!loc) {

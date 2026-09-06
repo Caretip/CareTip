@@ -5,12 +5,14 @@ import { prisma } from "../prisma.js";
 import { socketCorsOptions } from "../config/cors.js";
 import {
   isAllowedAccessJwtType,
-  resolveJwtSubject,
   verifyJwt,
   type DecodedAccessClaims,
 } from "../lib/jwtConfig.js";
 import { isPendingMfaLoginJwt } from "../services/mfaLogin.service.js";
-
+import {
+  assertAccessJwtStillValid,
+  normalizeJwtPayload,
+} from "../middleware/auth.middleware.js";
 import { businessIdFromPublicSocketRoomToken } from "../services/publicSocketToken.service.js";
 
 let io: Server | null = null;
@@ -82,10 +84,14 @@ export function initSocketServer(httpServer: HttpServer): Server {
       if (isPendingMfaLoginJwt(decoded) || !isAllowedAccessJwtType(decoded.type)) {
         return next(new Error("Unauthorized"));
       }
-      const userId = resolveJwtSubject(decoded);
-      if (!userId) {
+      const sessionPayload = normalizeJwtPayload(decoded);
+      if (!sessionPayload) {
         return next(new Error("Unauthorized"));
       }
+      if (await assertAccessJwtStillValid(sessionPayload)) {
+        return next(new Error("Unauthorized"));
+      }
+      const userId = sessionPayload.sub;
 
       const userRow = await prisma.user.findUnique({
         where: { id: userId },

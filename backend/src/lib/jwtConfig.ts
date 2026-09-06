@@ -68,3 +68,43 @@ export function isAllowedAccessJwtType(type: unknown): boolean {
   if (type === ACCESS_JWT_TYPE || type === IMPERSONATION_JWT_TYPE) return true;
   return false;
 }
+
+/**
+ * Session-bound impersonation claims. Used by `signImpersonationToken`.
+ */
+export function buildImpersonationJwtPayload(params: {
+  targetUserId: string;
+  platformAdminUserId: string;
+  authTokenVersion: number;
+  refreshSessionId: string;
+}): Record<string, unknown> {
+  return {
+    sub: params.targetUserId,
+    role: "MANAGER",
+    type: IMPERSONATION_JWT_TYPE,
+    impersonatedBy: params.platformAdminUserId,
+    tv: params.authTokenVersion,
+    sid: params.refreshSessionId,
+  };
+}
+
+/**
+ * Impersonation JWTs always require `tv` + `sid`.
+ * Production access JWTs also require them (no sid-less residual session).
+ */
+export function accessTokenMissingRequiredSessionBind(payload: {
+  type?: unknown;
+  tv?: unknown;
+  sid?: unknown;
+}): boolean {
+  const sid = typeof payload.sid === "string" ? payload.sid.trim() : "";
+  const hasTv = typeof payload.tv === "number";
+  const hasSid = Boolean(sid);
+  if (payload.type === IMPERSONATION_JWT_TYPE) {
+    return !hasTv || !hasSid;
+  }
+  if (process.env.NODE_ENV === "production") {
+    return !hasTv || !hasSid;
+  }
+  return false;
+}

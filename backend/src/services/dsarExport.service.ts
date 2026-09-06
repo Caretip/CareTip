@@ -16,7 +16,7 @@ import { writeAuditLog } from "./audit.service.js";
 import { logDryRunRecord, type RetentionDryRunRecord } from "./retentionDryRun.js";
 import {
   assertAllowedDsarObjectPath,
-  createSignedUrlForPrivateObject,
+  createSignedUrlForDsarObject,
   isAllowedDsarObjectPath,
   isSupabaseStorageConfigured,
   removeDsarStorageObject,
@@ -811,9 +811,10 @@ export async function downloadDsarExportForUser(opts: {
   }
 
   if (payload.artifact.kind === "private_storage") {
-    const url = await createSignedUrlForPrivateObject(
+    const url = await createSignedUrlForDsarObject(
       payload.artifact.bucket,
       payload.artifact.objectPath,
+      opts.userId,
       SIGNED_URL_TTL_SEC,
     );
     return { mode: "redirect", url, expiresAt: payload.expiresAt };

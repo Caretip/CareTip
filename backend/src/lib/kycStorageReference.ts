@@ -1,4 +1,10 @@
-import { parseSupabasePublicStorageUrl } from "../lib/supabaseStorageClient.js";
+import {
+  parseSupabasePublicStorageUrl,
+  supabaseKycStorageBucketName,
+} from "./supabaseStorageClient.js";
+import { isAllowedKycDiskPathForBusiness as isAllowedKycDiskPathForBusinessResolved } from "./kycDiskPath.js";
+
+export { isAllowedKycDiskPathForBusiness } from "./kycDiskPath.js";
 
 export const KYC_OBJECT_REF_PREFIX = "kyc-object:";
 export const KYC_DISK_REF_PREFIX = "kyc-disk:";
@@ -22,6 +28,29 @@ export function extractBusinessIdFromKycObjectPath(objectPath: string): string |
   return m?.[1] ?? null;
 }
 
+export function extractBusinessIdFromPlatformVerificationPath(objectPath: string): string | null {
+  const m = objectPath.replace(/^\/+/, "").match(/^platform-verification\/([^/]+)\//);
+  return m?.[1] ?? null;
+}
+
+/** True iff bucket+path are the configured KYC bucket and a tenant-scoped verification key. */
+export function isAllowedKycObjectRef(bucket: string, objectPath: string, businessId: string): boolean {
+  if (bucket !== supabaseKycStorageBucketName()) return false;
+  return isAllowedKycObjectPathForBusiness(businessId, objectPath);
+}
+
+export function isAllowedPlatformVerificationObjectPath(businessId: string, objectPath: string): boolean {
+  const key = objectPath.replace(/^\/+/, "").replace(/\/+/g, "/");
+  const safeBiz = businessId.replace(/[^a-zA-Z0-9-_]/g, "");
+  if (!safeBiz || key.includes("..") || key.startsWith("exports/") || key.startsWith("dsar/")) {
+    return false;
+  }
+  return (
+    key.startsWith(`platform-verification/${safeBiz}/`) &&
+    key.length > `platform-verification/${safeBiz}/`.length
+  );
+}
+
 export function extractBusinessIdFromKycDiskPath(relativePath: string): string | null {
   const m = relativePath.match(/^uploads\/kyc\/([^/]+)\//);
   return m?.[1] ?? null;
@@ -37,14 +66,6 @@ export function isAllowedKycObjectPathForBusiness(businessId: string, objectPath
   return key.startsWith(`verification/${safeBiz}/`) && key.length > `verification/${safeBiz}/`.length;
 }
 
-/** Strict allowlist for on-disk KYC: uploads/kyc/{businessId}/... */
-export function isAllowedKycDiskPathForBusiness(businessId: string, relativePath: string): boolean {
-  const rel = relativePath.replace(/^\/+/, "").replace(/\/+/g, "/");
-  const safeBiz = businessId.replace(/[^a-zA-Z0-9-_]/g, "");
-  if (!safeBiz || rel.includes("..")) return false;
-  return rel.startsWith(`uploads/kyc/${safeBiz}/`) && rel.length > `uploads/kyc/${safeBiz}/`.length;
-}
-
 export function parseKycStorageReference(raw: string): ParsedKycStorageRef | null {
   const s = raw.trim();
   if (!s) return null;
@@ -57,13 +78,15 @@ export function parseKycStorageReference(raw: string): ParsedKycStorageRef | nul
     const objectPath = rest.slice(slash + 1);
     const businessId = extractBusinessIdFromKycObjectPath(objectPath);
     if (!bucket || !objectPath || !businessId) return null;
+    if (!isAllowedKycObjectRef(bucket, objectPath, businessId)) return null;
     return { kind: "kyc-object", bucket, objectPath, businessId };
   }
 
   if (s.startsWith(KYC_DISK_REF_PREFIX)) {
-    const relativePath = s.slice(KYC_DISK_REF_PREFIX.length);
+    const relativePath = s.slice(KYC_DISK_REF_PREFIX.length).replace(/\\/g, "/");
     const businessId = extractBusinessIdFromKycDiskPath(relativePath);
     if (!relativePath || !businessId) return null;
+    if (!isAllowedKycDiskPathForBusinessResolved(businessId, relativePath)) return null;
     return { kind: "kyc-disk", relativePath, businessId };
   }
 
@@ -131,7 +154,7 @@ export function resolveKycDestroyTarget(
 
   if (parsed.kind === "kyc-disk") {
     if (parsed.businessId !== biz) return { ok: false, reason: "cross_business_ref" };
-    if (!isAllowedKycDiskPathForBusiness(biz, parsed.relativePath)) {
+    if (!isAllowedKycDiskPathForBusinessResolved(biz, parsed.relativePath)) {
       return { ok: false, reason: "path_not_allowlisted" };
     }
     return {
@@ -151,7 +174,7 @@ export function resolveKycDestroyTarget(
     }
     const rel = pathPart.replace(/^\/+/, "");
     // Accept /uploads/kyc/{biz}/... only — never arbitrary /uploads/platform logos.
-    if (!isAllowedKycDiskPathForBusiness(biz, rel)) {
+    if (!isAllowedKycDiskPathForBusinessResolved(biz, rel)) {
       return { ok: false, reason: "legacy_path_not_allowlisted" };
     }
     return { ok: true, target: { kind: "disk", relativePath: rel, sourceRef: raw } };

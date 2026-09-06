@@ -332,6 +332,7 @@ export async function requestAccountErasure(userId: string): Promise<ErasureRequ
         activationStatus: "pending_activation",
       },
     }),
+    prisma.employeeActivationToken.deleteMany({ where: { employeeId: user.employee.id } }),
     prisma.user.update({
       where: { id: userId },
       data: userErasurePendingData(now),

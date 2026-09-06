@@ -129,6 +129,29 @@ export function assertAllowedDsarObjectPath(objectPath: string): string {
   return key;
 }
 
+/**
+ * Signed URLs for DSAR artifacts must target the DSAR bucket and exports/{userId}/{jobId}.json.
+ */
+export function assertDsarSignedUrlTarget(
+  bucket: string,
+  objectPath: string,
+  userId: string,
+): { bucket: string; objectPath: string } {
+  const dsarBucket = supabaseDsarStorageBucketName();
+  if (bucket !== dsarBucket) {
+    throw new Error("Invalid document reference.");
+  }
+  const key = assertAllowedDsarObjectPath(objectPath);
+  const safeUser = String(userId ?? "").replace(/[^a-zA-Z0-9_-]/g, "");
+  if (!safeUser || safeUser !== String(userId ?? "").trim()) {
+    throw new Error("Invalid document reference.");
+  }
+  if (!key.startsWith(`exports/${safeUser}/`)) {
+    throw new Error("Invalid document reference.");
+  }
+  return { bucket: dsarBucket, objectPath: key };
+}
+
 export function kycSignedUrlTtlSeconds(): number {
   const raw = Number(process.env.KYC_SIGNED_URL_TTL_SECONDS ?? 300);
   if (!Number.isFinite(raw) || raw < 60 || raw > 3600) return 300;
@@ -360,6 +383,7 @@ export async function removeUploadedObjectByPublicUrlIfPossible(publicUrl: strin
   if (!isSupabaseStorageConfigured()) return;
   const parsed = parseSupabasePublicStorageUrl(publicUrl);
   if (!parsed) return;
+  if (parsed.bucket !== supabaseStorageBucketName()) return;
   try {
     const supabase = getServiceClient();
     await supabase.storage.from(parsed.bucket).remove([parsed.objectPath]);
@@ -375,6 +399,10 @@ export async function uploadBufferToSupabasePrivateObject(
   buffer: Buffer,
   contentType: string,
 ): Promise<{ bucket: string; objectPath: string }> {
+  const kycBucket = supabaseKycStorageBucketName();
+  if (bucket !== kycBucket) {
+    throw new Error("We couldn't save your file. Please try again.");
+  }
   await ensureSupabaseKycBucketReady();
 
   const key = objectKey.replace(/^\/+/, "").replace(/\/+/g, "/");
@@ -399,6 +427,9 @@ export async function assertPrivateObjectExists(bucket: string, objectPath: stri
   if (!isSupabaseStorageConfigured()) {
     throw new Error("File upload isn't available right now. Please try again later.");
   }
+  if (bucket !== supabaseKycStorageBucketName()) {
+    throw new Error("We couldn't confirm the upload. Please try again.");
+  }
   const supabase = getServiceClient();
   const { error } = await supabase.storage.from(bucket).download(objectPath);
   if (error) {
@@ -422,6 +453,16 @@ export async function createSignedUrlForPrivateObject(
     throw new Error("We couldn't access this document. Please try again.");
   }
   return data.signedUrl;
+}
+
+export async function createSignedUrlForDsarObject(
+  bucket: string,
+  objectPath: string,
+  userId: string,
+  expiresInSeconds: number,
+): Promise<string> {
+  const target = assertDsarSignedUrlTarget(bucket, objectPath, userId);
+  return createSignedUrlForPrivateObject(target.bucket, target.objectPath, expiresInSeconds);
 }
 
 export async function removePrivateStorageObject(bucket: string, objectPath: string): Promise<void> {

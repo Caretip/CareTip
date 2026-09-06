@@ -29,7 +29,7 @@ type IndustryCardData = {
 };
 
 /** Three teaser industries matching second-section layout (middle card tall). */
-const TEASER_IDS: readonly IndustryPageId[] = ["gastronomy", "hotels", "logistics"];
+const TEASER_IDS: readonly IndustryPageId[] = ["gastronomy", "field-service", "logistics"];
 
 /**
  * Second-section layout: three static photo cards + Learn more on each.

@@ -7,6 +7,7 @@ import {
   ACCESS_JWT_TYPE,
   IMPERSONATION_JWT_TYPE,
   type DecodedAccessClaims,
+  accessTokenMissingRequiredSessionBind,
   isAllowedAccessJwtType,
   resolveJwtSubject,
   verifyJwt,
@@ -38,7 +39,7 @@ declare global {
   }
 }
 
-function normalizeJwtPayload(decoded: DecodedAccessClaims): JwtPayload | null {
+export function normalizeJwtPayload(decoded: DecodedAccessClaims): JwtPayload | null {
   const sub = resolveJwtSubject(decoded);
   if (!sub || !decoded.role) return null;
   return {
@@ -54,7 +55,10 @@ function normalizeJwtPayload(decoded: DecodedAccessClaims): JwtPayload | null {
   };
 }
 
-async function assertAccessJwtStillValid(payload: JwtPayload): Promise<string | null> {
+export async function assertAccessJwtStillValid(payload: JwtPayload): Promise<string | null> {
+  if (accessTokenMissingRequiredSessionBind(payload)) {
+    return "SESSION_STALE";
+  }
   const uid = payload.sub;
   const userRow = await prisma.user.findUnique({
     where: { id: uid },

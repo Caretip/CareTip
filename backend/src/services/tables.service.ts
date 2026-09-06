@@ -8,7 +8,8 @@ import {
   resolveSubscriptionEntitlements,
   subscriptionRequiredPayload,
 } from "./subscriptionEntitlement.service.js";
-import { isWithinPlanLimit } from "../config/subscriptionCapabilities.js";
+import { getPlanLimitForResource, isWithinPlanLimit } from "../config/subscriptionCapabilities.js";
+import { lockPlanResourceQuota } from "../lib/planResourceQuotaLock.js";
 import { emitBusinessDataChanged } from "../socket/socketEmitters.js";
 import { invalidateBusinessStatsCache } from "./business.service.js";
 import * as locationsService from "./locations.service.js";
@@ -44,56 +45,61 @@ export async function createTableForBusinessUser(
   if (!business) {
     throw new Error("Business not found");
   }
-  const [entitlements, tableCount] = await Promise.all([
-    resolveSubscriptionEntitlements(business.id),
-    prisma.table.count({
-      where: { location: { businessId: business.id } },
-    }),
-  ]);
+  const entitlements = await resolveSubscriptionEntitlements(business.id);
   if (!entitlements.hasActiveEntitlements) {
     throw new EntitlementDeniedError(403, subscriptionRequiredPayload("tableQr"));
   }
   if (!entitlements.capabilities.includes("tableQr")) {
     throw new EntitlementDeniedError(403, featureAccessDeniedPayload(entitlements, "tableQr"));
   }
-  if (!isWithinPlanLimit(entitlements.subscriptionTier, "tables", tableCount)) {
-    throw new EntitlementDeniedError(403, planLimitExceededPayload("tables", entitlements.subscriptionTier));
-  }
-  await locationsService.assertLocationOwnedByBusiness(input.locationId, business.id);
 
-  let qrSlug = input.qrSlug?.trim();
-  if (qrSlug) {
-    if (!/^[a-zA-Z0-9_-]{3,128}$/.test(qrSlug)) {
-      throw new Error("qrSlug must be 3–128 characters: letters, numbers, hyphens, underscores");
+  const table = await prisma.$transaction(async (tx) => {
+    const limit = getPlanLimitForResource(entitlements.subscriptionTier, "tables");
+    if (limit !== null) {
+      await lockPlanResourceQuota(tx, "tables", business.id);
     }
-    const taken = await prisma.table.findUnique({ where: { qrSlug } });
-    if (taken) {
-      throw new Error("This QR slug is already in use");
+    const tableCount = await tx.table.count({
+      where: { location: { businessId: business.id } },
+    });
+    if (!isWithinPlanLimit(entitlements.subscriptionTier, "tables", tableCount)) {
+      throw new EntitlementDeniedError(403, planLimitExceededPayload("tables", entitlements.subscriptionTier));
     }
-  } else {
-    for (let i = 0; i < 5; i++) {
-      const candidate = generateQrSlug();
-      const exists = await prisma.table.findUnique({ where: { qrSlug: candidate } });
-      if (!exists) {
-        qrSlug = candidate;
-        break;
+    await locationsService.assertLocationOwnedByBusiness(input.locationId, business.id, tx);
+
+    let qrSlug = input.qrSlug?.trim();
+    if (qrSlug) {
+      if (!/^[a-zA-Z0-9_-]{3,128}$/.test(qrSlug)) {
+        throw new Error("qrSlug must be 3–128 characters: letters, numbers, hyphens, underscores");
+      }
+      const taken = await tx.table.findUnique({ where: { qrSlug } });
+      if (taken) {
+        throw new Error("This QR slug is already in use");
+      }
+    } else {
+      for (let i = 0; i < 5; i++) {
+        const candidate = generateQrSlug();
+        const exists = await tx.table.findUnique({ where: { qrSlug: candidate } });
+        if (!exists) {
+          qrSlug = candidate;
+          break;
+        }
+      }
+      if (!qrSlug) {
+        throw new Error("Could not generate a unique QR slug");
       }
     }
-    if (!qrSlug) {
-      throw new Error("Could not generate a unique QR slug");
-    }
-  }
 
-  const table = await prisma.table.create({
-    data: {
-      name,
-      locationId: input.locationId,
-      qrSlug,
-    },
-    include: {
-      location: { select: { id: true, name: true } },
-    },
-  });
+    return tx.table.create({
+      data: {
+        name,
+        locationId: input.locationId,
+        qrSlug,
+      },
+      include: {
+        location: { select: { id: true, name: true } },
+      },
+    });
+  }, { timeout: 15_000, maxWait: 10_000 });
   emitBusinessDataChanged(business.id, "table_created");
   invalidateBusinessStatsCache(business.id);
   return table;

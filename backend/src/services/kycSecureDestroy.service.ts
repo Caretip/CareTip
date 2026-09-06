@@ -21,7 +21,6 @@
  */
 
 import { existsSync, unlinkSync } from "node:fs";
-import path from "node:path";
 import { Prisma, type BusinessLifecycle, type DataLifecycleJob } from "@prisma/client";
 import { prisma } from "../prisma.js";
 import {
@@ -33,6 +32,7 @@ import {
   resolveKycDestroyTarget,
   type KycDestroyTarget,
 } from "../lib/kycStorageReference.js";
+import { resolveKycDiskPathForBusiness } from "../lib/kycDiskPath.js";
 import { parseKycDocuments } from "./kyc.service.js";
 import { calendarYearRetentionEligibleAt } from "./retentionCalendar.js";
 import { KYC_RETENTION_YEARS } from "./retentionPolicy.constants.js";
@@ -377,11 +377,11 @@ async function defaultDestroyKycStorage(target: KycDestroyTarget, businessId: st
     return;
   }
   // Disk path — no Supabase required; still fail if unlink errors unexpectedly.
-  const fp = path.join(process.cwd(), target.relativePath);
-  if (!existsSync(fp)) {
-    return; // already gone — idempotent
+  const resolved = resolveKycDiskPathForBusiness(businessId, target.relativePath);
+  if (!resolved.ok || !existsSync(resolved.absolutePath)) {
+    return;
   }
-  unlinkSync(fp);
+  unlinkSync(resolved.absolutePath);
 }
 
 async function writeDurableKycAudit(

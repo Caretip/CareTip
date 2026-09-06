@@ -11,7 +11,7 @@ import {
   CARETIP_FEE_PERCENT,
   calculateTipPlatformFeeCents,
 } from "../config/fees.js";
-import { impersonationAuthUserDto, signImpersonationToken } from "./auth.service.js";
+import { impersonationAuthUserDto, issueImpersonationAccessToken } from "./auth.service.js";
 import {
   getCachedOrLoad,
   invalidateCacheKey,
@@ -568,7 +568,11 @@ export async function impersonateBusinessManager(
     throw new Error("Business not found");
   }
 
-  const token = signImpersonationToken(business.userId, business.user.email, platformAdminUserId);
+  const token = await issueImpersonationAccessToken(
+    business.userId,
+    business.user.email,
+    platformAdminUserId,
+  );
 
   return {
     token,

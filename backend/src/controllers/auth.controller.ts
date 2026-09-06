@@ -115,8 +115,7 @@ async function respondAfterPasswordLogin(
     return res.json(result);
   } catch (e) {
     logServerError("auth.login.issueRefreshToken", e);
-    const result = authService.authResultForUserRecord(user);
-    return res.json(result);
+    return res.status(503).json({ message: "We couldn't start your session. Please try again." });
   }
 }
 
@@ -1218,6 +1217,11 @@ export async function logout(req: Request, res: Response) {
     res.json({ ok: true });
 
     if (logoutUserId) {
+      void import("../socket/socketServer.js")
+        .then(({ disconnectUserSockets }) => {
+          disconnectUserSockets(logoutUserId!);
+        })
+        .catch((err) => logServerError("auth.logout.sockets", err));
       void import("../services/push/pushNotification.service.js")
         .then(({ removeAllPushDeviceTokensForUser }) =>
           removeAllPushDeviceTokensForUser(logoutUserId!),
@@ -1407,8 +1411,8 @@ export async function activateEmployee(req: Request, res: Response) {
       return res.status(200).json(session);
     } catch (e) {
       logServerError("auth.activateEmployee.issueRefreshToken", e);
+      return res.status(503).json({ message: "Account activated, but we couldn't start your session. Please sign in." });
     }
-    return res.status(200).json(result);
   } catch (err) {
     logServerError("auth.activateEmployee", err);
     const message = err instanceof Error ? err.message : "Activation failed";

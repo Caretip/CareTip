@@ -13,6 +13,7 @@ import {
   buildKycObjectStorageRef,
   parseKycStorageReference,
 } from "../lib/kycStorageReference.js";
+import { resolveKycDiskPathForBusiness } from "../lib/kycDiskPath.js";
 import {
   isSupabaseStorageConfigured,
   supabaseStorageBucketName,
@@ -355,24 +356,27 @@ export async function removeStoredUploadReferenceIfPossible(storedRef: string): 
   }
   if (parsed.kind === "kyc-disk") {
     try {
-      const fp = path.join(process.cwd(), parsed.relativePath);
-      if (existsSync(fp)) {
-        const { unlinkSync } = await import("fs");
-        unlinkSync(fp);
-      }
+      const resolved = resolveKycDiskPathForBusiness(parsed.businessId, parsed.relativePath);
+      if (!resolved.ok || !existsSync(resolved.absolutePath)) return;
+      const { unlinkSync } = await import("fs");
+      unlinkSync(resolved.absolutePath);
     } catch {
       /* ignore */
     }
   }
 }
 
-export function readKycDiskFile(relativePath: string): { buffer: Buffer; contentType: string } {
-  const fp = path.join(process.cwd(), relativePath);
-  if (!existsSync(fp)) {
+export function readKycDiskFile(
+  relativePath: string,
+  businessId: string,
+  opts?: { cwd?: string },
+): { buffer: Buffer; contentType: string } {
+  const resolved = resolveKycDiskPathForBusiness(businessId, relativePath, opts);
+  if (!resolved.ok || !existsSync(resolved.absolutePath)) {
     throw new Error("Document not found.");
   }
-  const buffer = readFileSync(fp);
-  const ext = path.extname(fp).toLowerCase();
+  const buffer = readFileSync(resolved.absolutePath);
+  const ext = path.extname(resolved.absolutePath).toLowerCase();
   const contentType =
     ext === ".pdf"
       ? "application/pdf"

@@ -1,6 +1,9 @@
 import crypto from "crypto";
+import type { Prisma } from "@prisma/client";
 import { prisma } from "../prisma.js";
 import { absolutizePublicMediaPath } from "../utils/publicMediaUrl.js";
+
+type ActivationDb = Prisma.TransactionClient | typeof prisma;
 
 /**
  * Generates a secure activation token for employee onboarding.
@@ -71,6 +74,8 @@ export async function validateActivationToken(
         select: {
           id: true,
           name: true,
+          isDeleted: true,
+          activationStatus: true,
           business: { select: { name: true, logoPath: true } },
         },
       },
@@ -86,6 +91,10 @@ export async function validateActivationToken(
     return null;
   }
 
+  if (record.employee.isDeleted === true || record.employee.activationStatus !== "pending_activation") {
+    return null;
+  }
+
   return {
     employeeId: record.employee.id,
     email: record.email,
@@ -98,8 +107,11 @@ export async function validateActivationToken(
 /**
  * Consumes an activation token after successful activation.
  */
-export async function consumeActivationToken(employeeId: string): Promise<void> {
-  await prisma.employeeActivationToken.deleteMany({
+export async function consumeActivationToken(
+  employeeId: string,
+  db: ActivationDb = prisma,
+): Promise<void> {
+  await db.employeeActivationToken.deleteMany({
     where: { employeeId },
   });
 }

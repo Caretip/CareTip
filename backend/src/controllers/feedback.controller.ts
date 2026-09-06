@@ -4,11 +4,12 @@ import * as businessService from "../services/business.service.js";
 import * as feedbackService from "../services/feedback.service.js";
 import { getTipCheckoutContext, isStripeConfigured } from "../services/stripe.service.js";
 import { logServerError, clientSafeMessage, CLIENT_FALLBACK } from "../utils/httpErrors.js";
+import { parseBoundedSkip } from "../utils/paginationLimits.js";
 import { logDashboardTenant } from "../utils/dashboardTenantLog.js";
 
 function parseTakeSkip(req: Request): { take: number; skip: number } {
   const take = Math.max(1, Math.min(100, Number(req.query.take ?? 20) || 20));
-  const skip = Math.max(0, Number(req.query.skip ?? 0) || 0);
+  const skip = parseBoundedSkip(req.query.skip);
   return { take, skip };
 }
 

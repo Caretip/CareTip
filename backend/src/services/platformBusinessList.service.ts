@@ -1,6 +1,7 @@
 import { Prisma } from "@prisma/client";
 import { prisma } from "../prisma.js";
 import { sanitizeLikeContainsSearch } from "../utils/likeSearch.js";
+import { parseBoundedSkip } from "../utils/paginationLimits.js";
 import { parseKycDocuments, type KycDocuments } from "./kyc.service.js";
 import {
   isKycSlaBreached,
@@ -445,8 +446,8 @@ export function parseBusinessListQuery(query: Record<string, unknown>): ListPlat
   const page = Math.max(Number(query.page) || 0, 0);
   const skip =
     query.skip != null && query.skip !== ""
-      ? Math.max(Number(query.skip) || 0, 0)
-      : page * take;
+      ? parseBoundedSkip(query.skip)
+      : parseBoundedSkip(page * take);
 
   return {
     q: typeof query.q === "string" ? query.q : undefined,

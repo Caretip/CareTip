@@ -63,7 +63,8 @@ export const corsMiddlewareOptions: CorsOptions = {
     callback(null, false);
   },
   credentials: true,
-  exposedHeaders: ["X-CareTip-Refresh"],
+  // Do not CORS-expose the refresh token. Native clients can still read X-CareTip-Refresh;
+  // browsers must use the HttpOnly cookie only.
 };
 
 export const socketCorsOptions = {

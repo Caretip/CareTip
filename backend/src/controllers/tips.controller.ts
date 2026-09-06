@@ -14,6 +14,7 @@ import {
 import { logServerError, clientSafeMessage, CLIENT_FALLBACK } from "../utils/httpErrors.js";
 import { logDashboardTiming } from "../utils/dashboardTiming.js";
 import { logDashboardTenant } from "../utils/dashboardTenantLog.js";
+import { parseBoundedSkip } from "../utils/paginationLimits.js";
 import { runSerializedByKey } from "../utils/serializedByKey.js";
 import { businessUtcRangeForLocalDates, businessUtcRangeForTimeframe, sanitizeIanaTimezone } from "../utils/businessTime.js";
 import { sanitizeLikeContainsSearch } from "../utils/likeSearch.js";
@@ -238,7 +239,7 @@ function parseTakeSkip(req: Request): { take: number; skip: number } {
   const takeRaw = req.query.take;
   const skipRaw = req.query.skip;
   const take = Math.max(1, Math.min(200, Number(takeRaw ?? 50) || 50));
-  const skip = Math.max(0, Number(skipRaw ?? 0) || 0);
+  const skip = parseBoundedSkip(skipRaw);
   return { take, skip };
 }
 

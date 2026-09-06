@@ -2,7 +2,7 @@
   try {
     var saved = localStorage.getItem("caretip-theme");
     var preference =
-      saved === "light" || saved === "dark" || saved === "system" ? saved : "dark";
+      saved === "light" || saved === "dark" || saved === "system" ? saved : "light";
     var resolved =
       preference === "system"
         ? window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches

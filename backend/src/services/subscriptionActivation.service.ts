@@ -3,6 +3,7 @@ import type Stripe from "stripe";
 import { mapStripePriceToPlanKey } from "../lib/subscription/mapStripePriceToPlanKey.js";
 import type { SubscriptionPlanKey } from "@prisma/client";
 import { STRIPE_BILLING_AUDIT_TYPES, BILLING_CHECKOUT_METADATA_KEYS } from "../lib/subscription/subscriptionAuditTypes.js";
+import { checkoutSessionBoundToBusiness } from "../lib/subscription/checkoutSessionOwnership.js";
 import { isSubscriptionMirrorEntitled } from "../lib/subscription/subscriptionMirrorEntitlement.js";
 import { logTrialSync } from "../lib/subscription/trialSyncDebugLog.js";
 import { prisma } from "../prisma.js";
@@ -280,9 +281,11 @@ export async function tryActivateSubscriptionFromStripeForBusiness(params: {
       expand: ["subscription"],
     });
     const sessionMeta = metadataLookup(session.metadata);
-    if (sessionMeta.caretipBusinessId && sessionMeta.caretipBusinessId !== params.businessId) {
+    if (!checkoutSessionBoundToBusiness(session, params.businessId)) {
       logTrialSync("activation.checkout_session.skip", {
-        reason: "session_business_mismatch",
+        reason: sessionMeta.caretipBusinessId
+          ? "session_business_mismatch"
+          : "session_business_metadata_missing",
         checkoutSessionId: params.checkoutSessionId,
       });
       return "ignored";

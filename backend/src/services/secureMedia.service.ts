@@ -4,10 +4,14 @@ import {
   createSignedUrlForPrivateObject,
   kycSignedUrlTtlSeconds,
   parseSupabasePublicStorageUrl,
+  supabaseKycStorageBucketName,
 } from "../lib/supabaseStorageClient.js";
 import {
   KYC_DISK_REF_PREFIX,
   KYC_OBJECT_REF_PREFIX,
+  extractBusinessIdFromPlatformVerificationPath,
+  isAllowedKycObjectRef,
+  isAllowedPlatformVerificationObjectPath,
   parseKycStorageReference,
 } from "../lib/kycStorageReference.js";
 import { readKycDiskFile } from "./upload.service.js";
@@ -39,7 +43,7 @@ export async function userCanAccessKycStorageRef(
       businessId = parsed.businessId;
     } else if (parsed.kind === "legacy-public-url") {
       const object = parseSupabasePublicStorageUrl(parsed.url);
-      const m = object?.objectPath.match(/^platform-verification\/([^/]+)\//);
+      const m = object?.objectPath.match(/^(?:platform-verification|verification)\/([^/]+)\//);
       businessId = m?.[1] ?? null;
     } else if (parsed.kind === "legacy-disk-url") {
       const m = parsed.url.match(/\/uploads\/(?:platform\/businesses|kyc)\/([^/]+)\//);
@@ -72,6 +76,9 @@ export async function resolveSecureKycMediaAccess(
   }
 
   if (parsed.kind === "kyc-object") {
+    if (!isAllowedKycObjectRef(parsed.bucket, parsed.objectPath, parsed.businessId)) {
+      throw new Error("Invalid document reference.");
+    }
     const url = await createSignedUrlForPrivateObject(parsed.bucket, parsed.objectPath);
     return { mode: "signed", url, expiresIn: kycSignedUrlTtlSeconds() };
   }
@@ -84,8 +91,19 @@ export async function resolveSecureKycMediaAccess(
 
   if (parsed.kind === "legacy-public-url") {
     const object = parseSupabasePublicStorageUrl(parsed.url);
-    if (object && /\/platform-verification\//.test(object.objectPath)) {
-      const url = await createSignedUrlForPrivateObject(object.bucket, object.objectPath).catch(() => parsed.url);
+    if (object && object.bucket === supabaseKycStorageBucketName()) {
+      const biz =
+        extractBusinessIdFromPlatformVerificationPath(object.objectPath) ??
+        object.objectPath.match(/^verification\/([^/]+)\//)?.[1] ??
+        null;
+      const pathOk =
+        biz &&
+        (isAllowedPlatformVerificationObjectPath(biz, object.objectPath) ||
+          isAllowedKycObjectRef(object.bucket, object.objectPath, biz));
+      if (!pathOk) {
+        throw new Error("Invalid document reference.");
+      }
+      const url = await createSignedUrlForPrivateObject(object.bucket, object.objectPath);
       return { mode: "signed", url, expiresIn: kycSignedUrlTtlSeconds() };
     }
     return { mode: "signed", url: parsed.url, expiresIn: 0 };
@@ -112,5 +130,5 @@ export function loadKycDiskStreamPayload(ref: string): { buffer: Buffer; content
   if (!parsed || parsed.kind !== "kyc-disk") {
     throw new Error("Invalid document reference.");
   }
-  return readKycDiskFile(parsed.relativePath);
+  return readKycDiskFile(parsed.relativePath, parsed.businessId);
 }

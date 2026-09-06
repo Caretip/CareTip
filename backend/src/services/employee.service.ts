@@ -645,6 +645,7 @@ export async function deleteEmployeeForBusiness(businessId: string, employeeId: 
         phone: null,
       },
     });
+    await tx.employeeActivationToken.deleteMany({ where: { employeeId: emp.id } });
     if (emp.userId) {
       await tx.user.update({
         where: { id: emp.userId },

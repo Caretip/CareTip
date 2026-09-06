@@ -16,6 +16,7 @@ import { removeUploadedObjectByPublicUrlIfPossible } from "../lib/supabaseStorag
 import { sanitizeIanaTimezone, DEFAULT_BUSINESS_TIMEZONE } from "../utils/businessTime.js";
 import { DateTime } from "luxon";
 import { isPrismaPoolTimeout } from "../utils/prismaErrors.js";
+import { parseBoundedSkip } from "../utils/paginationLimits.js";
 import {
   SPONSORED_CAPABILITY_PROFILE_KEYS,
   SPONSORED_PROGRAMMES,
@@ -158,7 +159,7 @@ export async function listTransactions(req: Request, res: Response) {
   try {
     const q = typeof req.query.q === "string" ? req.query.q : undefined;
     const take = Math.min(Math.max(Number(req.query.take) || 50, 1), 100);
-    const skip = Math.max(Number(req.query.skip) || 0, 0);
+    const skip = parseBoundedSkip(req.query.skip);
     const result = await platformService.listGlobalTransactions({ q, take, skip });
     return res.json(result);
   } catch (err) {
@@ -175,7 +176,7 @@ export async function listRefunds(req: Request, res: Response) {
     const kind = typeof req.query.kind === "string" ? req.query.kind : undefined;
     const status = typeof req.query.status === "string" ? req.query.status : undefined;
     const take = Math.min(Math.max(Number(req.query.take) || 50, 1), 100);
-    const skip = Math.max(Number(req.query.skip) || 0, 0);
+    const skip = parseBoundedSkip(req.query.skip);
     const { listTipRefunds } = await import("../services/finance/tipRefunds.service.js");
     const result = await listTipRefunds({ q, take, skip, kind, status });
     return res.json(result);
@@ -201,7 +202,7 @@ export async function listConnectPayouts(req: Request, res: Response) {
     const createdFrom = typeof req.query.createdFrom === "string" ? req.query.createdFrom : undefined;
     const createdTo = typeof req.query.createdTo === "string" ? req.query.createdTo : undefined;
     const take = Math.min(Math.max(Number(req.query.take) || 50, 1), 100);
-    const skip = Math.max(Number(req.query.skip) || 0, 0);
+    const skip = parseBoundedSkip(req.query.skip);
     const { listPlatformConnectPayouts } = await import("../services/stripeConnectPayout.service.js");
     const result = await listPlatformConnectPayouts({
       q,
@@ -569,7 +570,7 @@ export async function updateBusinessOperationalStatus(req: Request, res: Respons
 export async function listAuditLogs(req: Request, res: Response) {
   try {
     const take = Math.min(Math.max(Number(req.query.take) || 100, 1), 200);
-    const skip = Math.max(Number(req.query.skip) || 0, 0);
+    const skip = parseBoundedSkip(req.query.skip);
     const result = await platformService.listAuditLogsForAdmin({ take, skip });
     return res.json(result);
   } catch (err) {
@@ -627,7 +628,7 @@ export async function updateBusiness(req: Request, res: Response) {
 export async function listAnnouncements(req: Request, res: Response) {
   try {
     const take = Math.min(Math.max(Number(req.query.take) || 50, 1), 200);
-    const skip = Math.max(Number(req.query.skip) || 0, 0);
+    const skip = parseBoundedSkip(req.query.skip);
     const result = await platformService.listAnnouncementsForAdmin({ take, skip });
     return res.json(result);
   } catch (err) {
@@ -750,7 +751,7 @@ export async function listSubscriptionActivity(req: Request, res: Response) {
     const filter = allowedFilters.has(filterRaw) ? filterRaw : "all";
     const q = typeof req.query.q === "string" ? req.query.q : undefined;
     const take = Math.min(Math.max(Number(req.query.take) || 25, 1), 100);
-    const skip = Math.max(Number(req.query.skip) || 0, 0);
+    const skip = parseBoundedSkip(req.query.skip);
     const sortRaw = typeof req.query.sort === "string" ? req.query.sort : "date";
     const sort = ["date", "business", "status", "amount"].includes(sortRaw)
       ? (sortRaw as "date" | "business" | "status" | "amount")
