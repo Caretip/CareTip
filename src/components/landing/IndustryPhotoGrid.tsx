@@ -8,7 +8,7 @@ import {
 import { INDUSTRY_MEDIA } from "@/app/data/industryMedia";
 import { warmIndustryHero } from "@/lib/industryHeroAssets";
 import { cn } from "@/lib/utils";
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, type Ref } from "react";
 import { useTranslation } from "react-i18next";
 import { ArrowUpRight } from "lucide-react";
 
@@ -17,6 +17,7 @@ type IndustryPhotoGridProps = {
   /** When true, show industries beyond the three teaser cards. */
   showAll?: boolean;
   morePanelId?: string;
+  morePanelRef?: Ref<HTMLDivElement>;
 };
 
 type IndustryCardData = {
@@ -39,6 +40,7 @@ export function IndustryPhotoGrid({
   className,
   showAll = false,
   morePanelId,
+  morePanelRef,
 }: IndustryPhotoGridProps) {
   const { t } = useTranslation();
   const reduceMotion = usePrefersReducedMotion();
@@ -105,8 +107,9 @@ export function IndustryPhotoGrid({
 
       <div
         id={morePanelId}
+        ref={morePanelRef}
         className={cn(
-          "caretip-industry-photo-grid caretip-industry-photo-grid--more",
+          "caretip-industry-photo-grid caretip-industry-photo-grid--more scroll-mt-[80px]",
           showAll && "caretip-industry-photo-grid--more-open",
         )}
         role="list"

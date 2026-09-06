@@ -1,4 +1,4 @@
-import { useId, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { landingUi } from "@/components/landing/landingUi";
 import { LandingReveal } from "@/components/landing/LandingReveal";
@@ -6,6 +6,7 @@ import { LandingSectionAccent } from "@/components/landing/LandingSectionAccent"
 import { parseLandingHeadline } from "@/components/landing/landingRichText";
 import { AnimatedHeadingLazy } from "@/components/ui/AnimatedHeading.lazy";
 import { IndustryPhotoGrid } from "@/components/landing/IndustryPhotoGrid";
+import { usePrefersReducedMotion } from "@/lib/usePrefersReducedMotion";
 import { cn } from "@/lib/utils";
 
 const INDUSTRIES_FRAME =
@@ -18,7 +19,29 @@ export function LandingIndustriesTeaserSection() {
   const { t } = useTranslation();
   const prefix = "landing.industriesTeaser";
   const morePanelId = useId();
+  const morePanelRef = useRef<HTMLDivElement>(null);
+  const reduceMotion = usePrefersReducedMotion();
   const [showAll, setShowAll] = useState(false);
+
+  useEffect(() => {
+    if (!showAll) return;
+    const node = morePanelRef.current;
+    if (!node) return;
+    let inner = 0;
+    const outer = window.requestAnimationFrame(() => {
+      inner = window.requestAnimationFrame(() => {
+        node.scrollIntoView({
+          behavior: reduceMotion ? "auto" : "smooth",
+          block: "start",
+        });
+      });
+    });
+    return () => {
+      window.cancelAnimationFrame(outer);
+      window.cancelAnimationFrame(inner);
+    };
+  }, [showAll, reduceMotion]);
+
   const { text: overviewHeadline, highlight: overviewHighlight } = parseLandingHeadline(
     t(`${prefix}.overviewHeadline`),
   );
@@ -70,7 +93,11 @@ export function LandingIndustriesTeaserSection() {
               {showAll ? t(`${prefix}.showFewerIndustries`) : t(`${prefix}.viewAllIndustries`)}
             </button>
           </div>
-          <IndustryPhotoGrid showAll={showAll} morePanelId={morePanelId} />
+          <IndustryPhotoGrid
+            showAll={showAll}
+            morePanelId={morePanelId}
+            morePanelRef={morePanelRef}
+          />
         </LandingReveal>
       </div>
     </section>
