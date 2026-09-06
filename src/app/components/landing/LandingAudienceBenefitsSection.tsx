@@ -14,7 +14,9 @@ import { landingHeadlineComponents } from "@/components/landing/landingRichText"
 import { landingStaggerDelay } from "@/lib/landingMotion";
 import { cn } from "@/lib/utils";
 import businessVisual from "../../../../images/employee02.webp";
+import businessVisualAvif from "../../../../images/employee02.avif";
 import teamsVisual from "../../../../images/foremployee.webp";
+import teamsVisualAvif from "../../../../images/foremployee.avif";
 
 type AudienceCard = {
   id: "business" | "teams";
@@ -26,8 +28,23 @@ type AudienceCard = {
   ctaLabelKey: string;
   ctaTo: string;
   image: string;
+  imageAvif: string;
   imageAltKey: string;
 };
+
+function warmAudienceBenefitImages(): void {
+  if (typeof window === "undefined") return;
+  for (const src of [businessVisualAvif, teamsVisualAvif]) {
+    const img = new Image();
+    img.decoding = "async";
+    img.setAttribute("fetchpriority", "low");
+    img.src = src;
+  }
+}
+
+if (typeof window !== "undefined") {
+  warmAudienceBenefitImages();
+}
 
 const CARDS: AudienceCard[] = [
   {
@@ -44,6 +61,7 @@ const CARDS: AudienceCard[] = [
     ctaLabelKey: "businessCta",
     ctaTo: "/contact?intent=demo",
     image: businessVisual,
+    imageAvif: businessVisualAvif,
     imageAltKey: "businessSection.imageAlt",
   },
   {
@@ -60,6 +78,7 @@ const CARDS: AudienceCard[] = [
     ctaLabelKey: "teamsCta",
     ctaTo: "/join",
     image: teamsVisual,
+    imageAvif: teamsVisualAvif,
     imageAltKey: "employeeSection.imageAlt",
   },
 ];
@@ -131,7 +150,10 @@ export function LandingAudienceBenefitsSection() {
                 delay={landingStaggerDelay(index + 1)}
               >
                 <div className="caretip-audience-benefits__photo">
-                  <img src={card.image} alt={card.imageAlt} loading="lazy" decoding="async" />
+                  <picture>
+                    <source type="image/avif" srcSet={card.imageAvif} />
+                    <img src={card.image} alt={card.imageAlt} loading="lazy" decoding="async" />
+                  </picture>
                 </div>
                 <p className="caretip-audience-benefits__role">{card.role}</p>
                 <span className="caretip-audience-benefits__icon" aria-hidden>

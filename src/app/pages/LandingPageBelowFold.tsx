@@ -49,6 +49,31 @@ const loadLandingFinalCtaSection = () =>
     default: mod.LandingFinalCtaSection,
   }));
 
+const INDUSTRY_TEASER_WARM_IDS = ["gastronomy", "field-service", "logistics"] as const;
+
+/**
+ * After LCP is warm: fetch below-fold JS (and the next photos) so scrolling
+ * does not wait on chunk discovery. Does not eager-mount sections or compete
+ * with the hero download.
+ */
+export function prefetchLandingBelowFoldSections(): void {
+  void loadLandingIndustriesTeaserSection().then(() => {
+    void import("@/lib/industryHeroAssets").then((mod) => {
+      for (const id of INDUSTRY_TEASER_WARM_IDS) {
+        void mod.warmIndustryHero(id, { priority: "low" });
+      }
+    });
+  });
+  void loadLandingAudienceBenefitsSection();
+  void loadPaymentsSection();
+  void loadSimpleSetupSection();
+  void loadLandingMotivationSection();
+  if (SHOW_LANDING_SOCIAL_PROOF) {
+    void loadLandingSocialProofSection();
+  }
+  void loadLandingFinalCtaSection();
+}
+
 /**
  * Below-the-fold landing — industry overview + combined audience benefits + product sections.
  */

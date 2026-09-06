@@ -5,13 +5,19 @@ import { useLandingShellReady } from "../lib/useLandingShellReady";
 import { Navigation } from "../components/Navigation";
 import { CareTipLandingHero } from "@/components/landing/CareTipLandingHero";
 import { Footer } from "../components/Footer";
-import { LandingPageBelowFold } from "./LandingPageBelowFold";
+import { LandingPageBelowFold, prefetchLandingBelowFoldSections } from "./LandingPageBelowFold";
 import { warmLandingHeroLcpImage } from "@/lib/landingHeroStoryAssets";
+import { scheduleMobileDeferredWork } from "@/lib/mobilePerf";
 import "@/styles/bundles/marketing-shell.css";
 import "@/styles/bundles/landing.css";
 
 /** Begin LCP warm as soon as the landing chunk evaluates (SPA + cold). */
-void warmLandingHeroLcpImage();
+void warmLandingHeroLcpImage().then(() => {
+  scheduleMobileDeferredWork(() => prefetchLandingBelowFoldSections(), {
+    desktopTimeoutMs: 280,
+    mobileTimeoutMs: 900,
+  });
+});
 
 /** Landing has no email/password forms; autofill mitigations live on `AuthPage` (login/signup). */
 export function LandingPage() {

@@ -65,8 +65,12 @@ assert(
   "return visits must not reopen the branded overlay",
 );
 assert(
-  landingPage.includes("void warmLandingHeroLcpImage()"),
-  "landing chunk still warms LCP on evaluate",
+  landingPage.includes("prefetchLandingBelowFoldSections"),
+  "landing must prefetch below-fold sections only after LCP warm",
+);
+assert(
+  read("src/app/pages/LandingPageBelowFold.tsx").includes("prefetchLandingBelowFoldSections"),
+  "below-fold prefetch helper must exist",
 );
 const heroHost = read("src/components/landing/CareTipLandingHero.tsx");
 assert(heroHost.includes('variant="background"'), "CareTipLandingHero uses background variant");
