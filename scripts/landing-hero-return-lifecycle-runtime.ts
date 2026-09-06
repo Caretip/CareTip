@@ -45,12 +45,42 @@ assert(
   "hero story visibility CSS must stay loaded on public pages after leaving /",
 );
 assert(
-  showcase.includes("isLandingHeroLcpWarm()"),
-  "showcase must seed LCP ready state from the warm bitmap on remount",
+  !showcase.includes("isLandingHeroLcpWarm()"),
+  "showcase must not treat the off-DOM warm Image as a painted LCP (logout remount)",
+);
+assert(
+  showcase.includes("naturalWidth > 0"),
+  "LCP complete must wait for the mounted <img> bitmap",
 );
 assert(
   showcase.includes("useLayoutEffect"),
   "LCP complete sync must run before paint, not after",
+);
+assert(
+  showcase.includes("LandingHeroFloatingCards"),
+  "card variant must keep LandingHeroFloatingCards imported",
+);
+assert(
+  showcase.includes('visibilityState === "hidden"'),
+  "hero crossfade must settle when the document hides, not on every visibility tick",
+);
+
+const mediaResume = read("src/lib/landingMediaResume.ts");
+assert(
+  mediaResume.includes("paintRecoveryPending") && mediaResume.includes("decodeInFlight"),
+  "resume decode() must be guarded (once per hide/show, not every pageshow/focus)",
+);
+assert(
+  landingPage.includes("noteLandingDocumentHidden") && landingPage.includes("consumeLandingPaintRecovery"),
+  "landing must decode only after a real hide/bfcache restore",
+);
+assert(
+  storyCss.includes("caretip-hero-bg-frame-layer:first-child"),
+  "first cover frame must stay opaque so both frames cannot be opacity 0",
+);
+assert(
+  assets.includes("isDomLandingHeroLcpComplete"),
+  "DOM LCP completeness must be distinct from the warm Image Map",
 );
 assert(
   assets.includes("warmImageBySrc") && assets.includes("getWarmLandingHeroImage"),

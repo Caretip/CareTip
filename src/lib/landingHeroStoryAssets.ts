@@ -90,16 +90,20 @@ export function getWarmLandingHeroImage(): HTMLImageElement | undefined {
   return undefined;
 }
 
-export function isLandingHeroLcpWarm(): boolean {
-  if (typeof window === "undefined") return false;
-  if (getWarmLandingHeroImage()) return true;
-
+export function isDomLandingHeroLcpComplete(): boolean {
+  if (typeof document === "undefined") return false;
   const domImg = document.querySelector('[data-hero-frame="wyc"] img');
   return (
     domImg instanceof HTMLImageElement &&
     domImg.complete &&
     domImg.naturalWidth > 0
   );
+}
+
+/** Off-DOM warm bitmap or currently mounted LCP <img>. Not the same as a painted hero. */
+export function isLandingHeroLcpWarm(): boolean {
+  if (typeof window === "undefined") return false;
+  return Boolean(getWarmLandingHeroImage()) || isDomLandingHeroLcpComplete();
 }
 
 /**

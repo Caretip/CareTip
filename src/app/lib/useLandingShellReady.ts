@@ -7,7 +7,7 @@ import {
 import { resolveAppLoadingContextMessage } from "./appLoadingContexts";
 import { isAppShellInteractive } from "./appShellLifecycle";
 import {
-  isLandingHeroLcpWarm,
+  isDomLandingHeroLcpComplete,
   warmLandingHeroLcpImage,
 } from "@/lib/landingHeroStoryAssets";
 
@@ -56,9 +56,7 @@ function isLandingShellLayoutStable(heroId: string): boolean {
 }
 
 function isHeroLcpPainted(): boolean {
-  if (isLandingHeroLcpWarm()) return true;
-  const img = document.querySelector('[data-hero-frame="wyc"] img');
-  return img instanceof HTMLImageElement && img.complete && img.naturalWidth > 0;
+  return isDomLandingHeroLcpComplete();
 }
 
 /**

@@ -1,13 +1,17 @@
 /**
  * Restore landing photographs after the document is hidden.
  * Chrome often drops GPU tiles for transform/opacity stacks; scroll then
- * retriggers decode. We pause compositing work while hidden and decode on resume.
+ * retriggers decode. We pause compositing work while hidden and decode once
+ * on resume — never on every render, scroll, or focus.
  */
 export const CARETIP_DOCUMENT_HIDDEN_CLASS = "caretip-document-hidden";
 export const CARETIP_LANDING_RESUME_EVENT = "caretip-landing-media-resume";
 
 const LANDING_IMG_SELECTOR =
   ".caretip-hero-story-frame, .caretip-industry-photo-card__img";
+
+let paintRecoveryPending = false;
+let decodeInFlight = false;
 
 export function isDocumentHidden(): boolean {
   return typeof document !== "undefined" && document.visibilityState === "hidden";
@@ -18,15 +22,37 @@ export function syncDocumentHiddenClass(): void {
   document.documentElement.classList.toggle(CARETIP_DOCUMENT_HIDDEN_CLASS, isDocumentHidden());
 }
 
+export function noteLandingDocumentHidden(): void {
+  paintRecoveryPending = true;
+}
+
+export function consumeLandingPaintRecovery(): boolean {
+  if (!paintRecoveryPending) return false;
+  paintRecoveryPending = false;
+  return true;
+}
+
 /** Re-decode already-complete bitmaps so compositor tiles can be rebuilt without a scroll. */
 export function refreshLandingDecodedImages(root: ParentNode = document): void {
+  if (decodeInFlight) return;
+  decodeInFlight = true;
+
   const imgs = root.querySelectorAll<HTMLImageElement>(LANDING_IMG_SELECTOR);
+  const tasks: Promise<void>[] = [];
   for (const img of imgs) {
     if (!img.complete || img.naturalWidth < 1) continue;
-    if (typeof img.decode === "function") {
-      void img.decode().catch(() => undefined);
-    }
+    if (typeof img.decode !== "function") continue;
+    tasks.push(
+      img.decode().then(
+        () => undefined,
+        () => undefined,
+      ),
+    );
   }
+
+  void Promise.all(tasks).finally(() => {
+    decodeInFlight = false;
+  });
 }
 
 export function dispatchLandingMediaResume(): void {

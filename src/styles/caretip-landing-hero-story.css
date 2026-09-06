@@ -37,6 +37,17 @@
   transition: none;
 }
 
+/*
+ * Base layer: the first cover frame stays opaque so a remount or a paused
+ * crossfade cannot leave the stack at opacity 0 / 0 (dark empty hero).
+ */
+.caretip-landing
+  .caretip-hero-bg-layer
+  .caretip-hero-bg-frame-layer:first-child
+  .caretip-hero-story-frame--bg-cover {
+  opacity: 1;
+}
+
 .caretip-landing
   .caretip-hero-bg-layer
   .caretip-hero-story-frame--bg-cover.caretip-hero-story-frame--displayed,

@@ -9,7 +9,9 @@ import { LandingPageBelowFold, prefetchLandingBelowFoldSections } from "./Landin
 import { warmLandingHeroLcpImage } from "@/lib/landingHeroStoryAssets";
 import { scheduleMobileDeferredWork } from "@/lib/mobilePerf";
 import {
+  consumeLandingPaintRecovery,
   dispatchLandingMediaResume,
+  noteLandingDocumentHidden,
   refreshLandingDecodedImages,
   syncDocumentHiddenClass,
 } from "@/lib/landingMediaResume";
@@ -34,17 +36,25 @@ export function LandingPage() {
 
   useEffect(() => {
     syncDocumentHiddenClass();
-    const onVisibility = () => {
-      syncDocumentHiddenClass();
-      if (document.visibilityState === "visible") {
-        dispatchLandingMediaResume();
-        requestAnimationFrame(() => refreshLandingDecodedImages());
-      }
-    };
-    const onPageShow = () => {
-      syncDocumentHiddenClass();
+
+    const recoverPaintIfNeeded = () => {
+      if (!consumeLandingPaintRecovery()) return;
       dispatchLandingMediaResume();
       requestAnimationFrame(() => refreshLandingDecodedImages());
+    };
+
+    const onVisibility = () => {
+      syncDocumentHiddenClass();
+      if (document.visibilityState === "hidden") {
+        noteLandingDocumentHidden();
+        return;
+      }
+      recoverPaintIfNeeded();
+    };
+    const onPageShow = (event: PageTransitionEvent) => {
+      syncDocumentHiddenClass();
+      if (event.persisted) noteLandingDocumentHidden();
+      recoverPaintIfNeeded();
     };
     document.addEventListener("visibilitychange", onVisibility);
     window.addEventListener("pageshow", onPageShow);

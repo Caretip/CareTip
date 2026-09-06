@@ -62,6 +62,7 @@ export function useLandingReveal(delayS = 0): {
     });
 
     const onResume = () => {
+      if (document.visibilityState === "hidden") return;
       if (el.classList.contains(REVEAL_VISIBLE_CLASS)) return;
       if (!markVisibleIfInView()) attachObserver();
     };

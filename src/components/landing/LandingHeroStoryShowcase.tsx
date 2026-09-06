@@ -9,7 +9,6 @@ import {
 import { usePrefersReducedMotion } from "@/lib/usePrefersReducedMotion";
 import {
   LCP_HERO_STORY_FRAME,
-  isLandingHeroLcpWarm,
   loadDeferredHeroStoryFrame,
   preloadHeroFrame,
   warmLandingHeroLcpImage,
@@ -20,6 +19,7 @@ import {
   CARETIP_LANDING_RESUME_EVENT,
   isDocumentHidden,
 } from "@/lib/landingMediaResume";
+import { LandingHeroFloatingCards } from "@/components/landing/LandingHeroFloatingCards";
 import { landingUi } from "@/components/landing/landingUi";
 import { cn } from "@/lib/utils";
 
@@ -58,12 +58,13 @@ export function LandingHeroStoryShowcase({
   const [activeIndex, setActiveIndex] = useState(0);
   const [displayedIndex, setDisplayedIndex] = useState(0);
   const [incomingIndex, setIncomingIndex] = useState<number | null>(null);
-  const [frameReady, setFrameReady] = useState<Record<string, boolean>>(() =>
-    isLandingHeroLcpWarm() ? { [LCP_HERO_STORY_FRAME.key]: true } : {},
-  );
-  const [lcpComplete, setLcpComplete] = useState(() => isLandingHeroLcpWarm());
+  const [frameReady, setFrameReady] = useState<Record<string, boolean>>({});
+  const [lcpComplete, setLcpComplete] = useState(false);
   const lcpImgRef = useRef<HTMLImageElement | null>(null);
   const frameReadyRef = useRef(frameReady);
+  const activeIndexRef = useRef(activeIndex);
+  const incomingIndexRef = useRef(incomingIndex);
+  const storyFramesRef = useRef(storyFrames);
   const transitionTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const deferredFrameLoadRef = useRef<Promise<void> | null>(null);
   const onLcpReadyRef = useRef(onLcpReady);
@@ -94,6 +95,12 @@ export function LandingHeroStoryShowcase({
   }, [frameReady]);
 
   useEffect(() => {
+    activeIndexRef.current = activeIndex;
+    incomingIndexRef.current = incomingIndex;
+    storyFramesRef.current = storyFrames;
+  }, [activeIndex, incomingIndex, storyFrames]);
+
+  useEffect(() => {
     onActiveFrameChange?.(activeFrameKey);
   }, [activeFrameKey, onActiveFrameChange]);
 
@@ -110,11 +117,6 @@ export function LandingHeroStoryShowcase({
       lcpPicture.complete &&
       lcpPicture.naturalWidth > 0
     ) {
-      handleLcpFrameLoad();
-      return;
-    }
-
-    if (isLandingHeroLcpWarm()) {
       handleLcpFrameLoad();
     }
   }, [handleLcpFrameLoad, lcpComplete]);
@@ -133,14 +135,15 @@ export function LandingHeroStoryShowcase({
   }, [lcpComplete, markFrameReady, reduceMotion, storyFrames.length]);
 
   useEffect(() => {
-    if (reduceMotion || storyFrames.length < 2) return;
+    if (reduceMotion || !lcpComplete || storyFrames.length < 2) return;
 
     const timer = globalThis.setInterval(() => {
       if (isDocumentHidden()) return;
-      if (isBackground && incomingIndex !== null) return;
+      if (isBackground && incomingIndexRef.current !== null) return;
 
-      const nextIndex = (activeIndex + 1) % storyFrames.length;
-      const nextFrame = storyFrames[nextIndex];
+      const frames = storyFramesRef.current;
+      const nextIndex = (activeIndexRef.current + 1) % frames.length;
+      const nextFrame = frames[nextIndex];
       if (!nextFrame) return;
 
       if (!frameReadyRef.current[nextFrame.key]) {
@@ -149,6 +152,7 @@ export function LandingHeroStoryShowcase({
       }
 
       if (isBackground) {
+        incomingIndexRef.current = nextIndex;
         setIncomingIndex(nextIndex);
         setActiveIndex(nextIndex);
         if (transitionTimerRef.current !== null) {
@@ -156,6 +160,7 @@ export function LandingHeroStoryShowcase({
         }
         transitionTimerRef.current = globalThis.setTimeout(() => {
           setDisplayedIndex(nextIndex);
+          incomingIndexRef.current = null;
           setIncomingIndex(null);
           transitionTimerRef.current = null;
         }, BG_CROSSFADE_MS);
@@ -165,30 +170,33 @@ export function LandingHeroStoryShowcase({
     }, STORY_CYCLE_MS);
 
     return () => globalThis.clearInterval(timer);
-  }, [reduceMotion, markFrameReady, activeIndex, incomingIndex, isBackground, storyFrames]);
+  }, [reduceMotion, markFrameReady, isBackground, lcpComplete, storyFrames.length]);
 
   useEffect(() => {
     const settleCrossfade = () => {
-      setIncomingIndex((incoming) => {
-        if (incoming === null) return incoming;
-        setDisplayedIndex(incoming);
-        return null;
-      });
+      const incoming = incomingIndexRef.current;
+      if (incoming === null) return;
+      incomingIndexRef.current = null;
+      setDisplayedIndex(incoming);
+      setIncomingIndex(null);
       if (transitionTimerRef.current !== null) {
         globalThis.clearTimeout(transitionTimerRef.current);
         transitionTimerRef.current = null;
       }
     };
 
-    const onHiddenOrResume = () => {
+    const onVisibility = () => {
+      if (document.visibilityState === "hidden") settleCrossfade();
+    };
+    const onResume = () => {
       settleCrossfade();
     };
 
-    document.addEventListener("visibilitychange", onHiddenOrResume);
-    window.addEventListener(CARETIP_LANDING_RESUME_EVENT, onHiddenOrResume);
+    document.addEventListener("visibilitychange", onVisibility);
+    window.addEventListener(CARETIP_LANDING_RESUME_EVENT, onResume);
     return () => {
-      document.removeEventListener("visibilitychange", onHiddenOrResume);
-      window.removeEventListener(CARETIP_LANDING_RESUME_EVENT, onHiddenOrResume);
+      document.removeEventListener("visibilitychange", onVisibility);
+      window.removeEventListener(CARETIP_LANDING_RESUME_EVENT, onResume);
     };
   }, []);
 
