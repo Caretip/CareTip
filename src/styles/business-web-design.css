@@ -330,17 +330,21 @@
 
 @media (max-width: 1023px) {
   .caretip-dashboard-shell.business-dashboard .business-dashboard-mobile-hero__visual {
-    width: min(100%, 18rem);
+    width: 100%;
+    max-width: none;
     margin: 0.25rem auto 0;
   }
 
   .caretip-dashboard-shell.business-dashboard .business-dashboard-mobile-hero__visual-frame {
-    height: min(12.5rem, 42vw) !important;
-    min-height: 8.5rem !important;
+    aspect-ratio: 16 / 10;
+    height: auto !important;
+    min-height: 0 !important;
+    max-width: none;
     border-radius: 0.75rem !important;
     border: 0 !important;
     background: transparent !important;
     box-shadow: none !important;
+    overflow: hidden !important;
   }
 
   .caretip-dashboard-shell.business-dashboard .business-dashboard-mobile-hero__metrics.business-hero-account-stats--open {
@@ -361,6 +365,11 @@
 .caretip-dashboard-shell.business-dashboard .business-hero-illustration,
 .caretip-dashboard-shell.business-dashboard .business-dashboard-mobile-hero__visual-img {
   border-radius: 0.75rem !important;
+  width: 100% !important;
+  height: 100% !important;
+  max-height: none !important;
+  object-fit: cover !important;
+  object-position: center;
 }
 
 .caretip-dashboard-shell.business-dashboard .business-hero-pulse-card,

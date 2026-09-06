@@ -396,13 +396,15 @@ export const BusinessDashboard = memo(function BusinessDashboard() {
               transition={motionReady ? { duration: 0.45, ease: "easeOut" } : { duration: 0 }}
               className="business-hero-visual relative flex w-full max-w-full flex-col items-center justify-center touch-manipulation max-lg:mx-auto lg:items-start lg:justify-start lg:justify-self-stretch"
             >
-              <div className="business-hero-illustration-card w-full overflow-hidden">
+              <div className="business-hero-illustration-card relative w-full overflow-hidden">
                 <MarketingPicture
                   src={bizzyHeroWebp}
                   webpSrc={bizzyHeroWebp}
                   avifSrc={bizzyHeroAvif}
                   alt=""
-                  className="business-hero-illustration relative z-[1] block w-full max-w-[min(100%,20rem)] object-cover object-center max-lg:mx-auto lg:max-w-none lg:object-left"
+                  width={640}
+                  height={480}
+                  className="business-hero-illustration relative z-[1] block h-full w-full object-cover object-center"
                   priority
                   loading="eager"
                   fetchPriority="high"

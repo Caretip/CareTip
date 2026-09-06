@@ -36,13 +36,13 @@
 }
 
 @media (min-width: 1024px) {
-  /* 50 / 50 column balance — text left, illustration right */
+  /* Wider media column so the landscape hero can expand on both sides */
   .caretip-dashboard-shell.business-dashboard .business-dashboard-hero .dashboard-hero-container.hidden.lg\:grid > .lg\:col-span-5 {
-    grid-column: 1 / span 6;
+    grid-column: 1 / span 5;
   }
 
   .caretip-dashboard-shell.business-dashboard .business-dashboard-hero .dashboard-hero-media-column {
-    grid-column: 7 / span 6;
+    grid-column: 6 / span 7;
     justify-content: flex-start !important;
     align-items: stretch !important;
   }
@@ -104,34 +104,45 @@
 }
 
 .caretip-dashboard-shell.business-dashboard .business-hero-illustration-card {
+  position: relative;
   width: 100%;
-  max-width: min(100%, 22rem);
-  margin-inline: auto;
+  max-width: none;
+  aspect-ratio: 16 / 10;
+  height: auto;
+  min-height: 0;
+  margin-inline: 0;
+  overflow: hidden;
+}
+
+.caretip-dashboard-shell.business-dashboard .business-hero-illustration-card > picture {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
 }
 
 .caretip-dashboard-shell.business-dashboard .business-hero-illustration {
+  position: absolute !important;
+  inset: 0;
   width: 100% !important;
-  max-width: 100% !important;
-  max-height: min(34svh, 240px) !important;
+  max-width: none !important;
+  height: 100% !important;
+  max-height: none !important;
   margin-inline: 0;
+  object-fit: cover !important;
   object-position: center;
 }
 
 @media (min-width: 1024px) {
   .caretip-dashboard-shell.business-dashboard .business-hero-illustration-card {
-    max-width: 100%;
+    max-width: none;
+    width: 100%;
     margin-inline: 0;
   }
 
   .caretip-dashboard-shell.business-dashboard .business-hero-illustration {
-    max-height: 18.5rem !important;
-    object-position: left center;
-  }
-}
-
-@media (min-width: 1280px) {
-  .caretip-dashboard-shell.business-dashboard .business-hero-illustration {
-    max-height: 20.5rem !important;
+    object-position: center;
   }
 }
 
@@ -175,21 +186,35 @@
   }
 
   .caretip-dashboard-shell.business-dashboard .business-dashboard-mobile-hero__visual-frame {
+    position: relative;
     width: 100%;
-    height: min(16.5rem, 52vw);
-    min-height: 11rem;
+    max-width: none;
+    aspect-ratio: 16 / 10;
+    height: auto;
+    min-height: 0;
+    margin-inline: 0;
     overflow: hidden;
     padding: 0;
-    border-radius: 1rem;
-    border: 1px solid hsl(var(--border) / 0.9);
-    background: hsl(var(--card));
-    box-shadow: var(--dash-card-shadow, 0 10px 36px -14px rgba(15, 23, 42, 0.1));
+    border: none;
+    background: transparent;
+    box-shadow: none;
   }
 
-  .caretip-dashboard-shell.business-dashboard .business-dashboard-mobile-hero__visual-img {
+  .caretip-dashboard-shell.business-dashboard .business-dashboard-mobile-hero__visual-frame > picture {
+    position: absolute;
+    inset: 0;
     display: block;
     width: 100%;
     height: 100%;
+  }
+
+  .caretip-dashboard-shell.business-dashboard .business-dashboard-mobile-hero__visual-img {
+    position: absolute;
+    inset: 0;
+    display: block;
+    width: 100%;
+    height: 100%;
+    max-height: none;
     object-fit: cover;
     object-position: center;
   }

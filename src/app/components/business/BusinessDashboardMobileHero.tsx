@@ -79,9 +79,9 @@ export const BusinessDashboardMobileHero = memo(function BusinessDashboardMobile
               avifSrc={bizzyHeroAvif}
               alt=""
               className="business-dashboard-mobile-hero__visual-img"
-              sizes="(max-width: 640px) 100vw, 320px"
-              width={320}
-              height={240}
+              sizes="(max-width: 1023px) 100vw, 640px"
+              width={640}
+              height={480}
               priority
               loading="eager"
               fetchPriority="high"

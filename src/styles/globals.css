@@ -1141,18 +1141,35 @@ html[data-auth-sign-in-handoff] .caretip-dashboard-page-enter {
   }
 }
 
-/* Business hero illustration — clipped inside rounded card. */
+/* Business hero illustration — landscape 4:3 frame (asset canvas is square). */
 .business-dashboard-hero .business-hero-illustration-card {
-  border-color: hsl(var(--border) / 0.9);
-  box-shadow: 0 1px 2px rgb(0 0 0 / 0.04);
+  position: relative;
+  width: 100%;
+  max-width: none;
+  aspect-ratio: 16 / 10;
+  height: auto;
+  min-height: 0;
+  overflow: hidden;
+  border: none;
+  background: transparent;
+  box-shadow: none;
+}
+
+.business-dashboard-hero .business-hero-illustration-card > picture {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
 }
 
 .business-dashboard-hero .business-hero-illustration {
-  position: static !important;
+  position: absolute !important;
+  inset: 0;
   display: block;
   width: 100% !important;
-  height: auto !important;
-  max-height: min(48svh, 360px);
+  height: 100% !important;
+  max-height: none;
   object-fit: cover !important;
   object-position: center;
   transform: none !important;
@@ -1163,9 +1180,9 @@ html[data-auth-sign-in-handoff] .caretip-dashboard-page-enter {
 }
 
 @media (min-width: 1024px) {
-  .business-dashboard-hero .business-hero-illustration {
+  .business-dashboard-hero .business-hero-illustration-card {
     width: 100%;
-    object-position: left center;
+    max-width: none;
   }
 }
 
