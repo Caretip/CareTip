@@ -50,6 +50,7 @@
     "test:mutation-ui-sync": "node ./backend/node_modules/tsx/dist/cli.mjs ./scripts/mutation-ui-sync-runtime.ts",
     "test:contact-lead-frontend": "node ./backend/node_modules/tsx/dist/cli.mjs ./scripts/contact-lead-frontend-runtime.ts",
     "test:notification-intelligence": "npm --prefix backend run test:notification-intelligence",
+    "test:landing-hero-return-lifecycle": "node ./backend/node_modules/tsx/dist/cli.mjs ./scripts/landing-hero-return-lifecycle-runtime.ts",
     "test:physical-qr-frontend": "node ./backend/node_modules/tsx/dist/cli.mjs ./scripts/physical-qr-frontend-runtime.ts",
     "test:print-qr-studio-session": "node ./backend/node_modules/tsx/dist/cli.mjs ./scripts/print-qr-studio-session-runtime.ts",
     "test:physical-qr-orders-session": "node ./backend/node_modules/tsx/dist/cli.mjs ./scripts/physical-qr-orders-session-runtime.ts",

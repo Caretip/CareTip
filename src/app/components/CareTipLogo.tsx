@@ -1,5 +1,5 @@
 import type { ImgHTMLAttributes } from "react";
-import { useEffect, useRef, useState } from "react";
+import { useLayoutEffect, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 import {
   resolveCareTipBrandSrc,
@@ -108,7 +108,7 @@ function CareTipLogoImg({
   const imgRef = useRef<HTMLImageElement>(null);
   const [ready, setReady] = useState(priority);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     const img = imgRef.current;
     if (img?.complete && img.naturalWidth > 0) {
       setReady(true);

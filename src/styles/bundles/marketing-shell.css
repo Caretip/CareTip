@@ -1,5 +1,10 @@
 /* Marketing shell — Navigation, Footer, shared public page chrome. */
 @import "../caretip-public-motion.css";
+/*
+ * Hero story visibility lives here so leaving `/` does not drop the rules.
+ * Selectors are scoped to `.caretip-landing` — no effect on other public pages.
+ */
+@import "../caretip-landing-hero-story.css";
 @import "../caretip-marketing-theme.css";
 @import "../caretip-public-pages-brand.css";
 @import "../caretip-public-marketing-mobile.css";

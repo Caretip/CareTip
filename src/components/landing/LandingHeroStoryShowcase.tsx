@@ -1,7 +1,15 @@
-import { useCallback, useEffect, useRef, useState, type ImgHTMLAttributes } from "react";
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type ImgHTMLAttributes,
+} from "react";
 import { usePrefersReducedMotion } from "@/lib/usePrefersReducedMotion";
 import {
   LCP_HERO_STORY_FRAME,
+  isLandingHeroLcpWarm,
   loadDeferredHeroStoryFrame,
   preloadHeroFrame,
   warmLandingHeroLcpImage,
@@ -47,8 +55,11 @@ export function LandingHeroStoryShowcase({
   const [activeIndex, setActiveIndex] = useState(0);
   const [displayedIndex, setDisplayedIndex] = useState(0);
   const [incomingIndex, setIncomingIndex] = useState<number | null>(null);
-  const [frameReady, setFrameReady] = useState<Record<string, boolean>>({});
-  const [lcpComplete, setLcpComplete] = useState(false);
+  const [frameReady, setFrameReady] = useState<Record<string, boolean>>(() =>
+    isLandingHeroLcpWarm() ? { [LCP_HERO_STORY_FRAME.key]: true } : {},
+  );
+  const [lcpComplete, setLcpComplete] = useState(() => isLandingHeroLcpWarm());
+  const lcpImgRef = useRef<HTMLImageElement | null>(null);
   const frameReadyRef = useRef(frameReady);
   const transitionTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const deferredFrameLoadRef = useRef<Promise<void> | null>(null);
@@ -87,15 +98,20 @@ export function LandingHeroStoryShowcase({
     void warmLandingHeroLcpImage();
   }, []);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (lcpComplete) return;
 
-    const lcpPicture = document.querySelector('[data-hero-frame="wyc"] img');
+    const lcpPicture = lcpImgRef.current ?? document.querySelector('[data-hero-frame="wyc"] img');
     if (
       lcpPicture instanceof HTMLImageElement &&
       lcpPicture.complete &&
       lcpPicture.naturalWidth > 0
     ) {
+      handleLcpFrameLoad();
+      return;
+    }
+
+    if (isLandingHeroLcpWarm()) {
       handleLcpFrameLoad();
     }
   }, [handleLcpFrameLoad, lcpComplete]);
@@ -224,6 +240,7 @@ export function LandingHeroStoryShowcase({
                   {frame.avif ? <source type="image/avif" srcSet={frame.avif} /> : null}
                   {frame.webp ? <source type="image/webp" srcSet={frame.webp} /> : null}
                   <img
+                    ref={isLcpFrame ? lcpImgRef : undefined}
                     src={frame.webp ?? frame.src}
                     alt={isVisible ? alt : ""}
                     aria-hidden={!isVisible}

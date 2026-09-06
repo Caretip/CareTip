@@ -82,11 +82,17 @@ export function ensureLandingHeroLcpPreloadLink(): void {
   link.setAttribute("fetchpriority", "high");
 }
 
-export function isLandingHeroLcpWarm(): boolean {
-  if (typeof window === "undefined") return false;
+export function getWarmLandingHeroImage(): HTMLImageElement | undefined {
+  if (typeof window === "undefined") return undefined;
   const { href } = getLandingHeroLcpPreload();
   const warm = warmImageBySrc.get(href);
-  if (warm?.complete && warm.naturalWidth > 0) return true;
+  if (warm?.complete && warm.naturalWidth > 0) return warm;
+  return undefined;
+}
+
+export function isLandingHeroLcpWarm(): boolean {
+  if (typeof window === "undefined") return false;
+  if (getWarmLandingHeroImage()) return true;
 
   const domImg = document.querySelector('[data-hero-frame="wyc"] img');
   return (

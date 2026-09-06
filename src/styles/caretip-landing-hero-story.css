@@ -1,13 +1,18 @@
 /* Hero story frames — crossfade stack (distinct from hospitality marquee below). */
 
-.caretip-landing .caretip-hero-media-clip .caretip-hero-story-frame {
+/*
+ * Card / framed showcase only. The full-bleed landing hero must never inherit
+ * opacity:0 + a 1.35s fade — on SPA remount that paints a blank hole even when
+ * the LCP bytes are already in memory.
+ */
+.caretip-landing .caretip-hero-media-clip:not(.caretip-hero-media-clip--background) .caretip-hero-story-frame {
   position: relative;
   z-index: 0;
   opacity: 0;
   transition: opacity 1.35s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-.caretip-landing .caretip-hero-media-clip .caretip-hero-story-frame--active {
+.caretip-landing .caretip-hero-media-clip:not(.caretip-hero-media-clip--background) .caretip-hero-story-frame--active {
   z-index: 1;
   opacity: 1;
 }
@@ -28,27 +33,37 @@
   width: 100%;
   height: 100%;
   opacity: 0;
-  /* No transition on first paint — otherwise LCP fades in after the headline. */
+  /* No transition on first paint / remount — otherwise LCP fades in after the headline. */
+  transition: none;
+}
+
+.caretip-landing
+  .caretip-hero-bg-layer
+  .caretip-hero-story-frame--bg-cover.caretip-hero-story-frame--displayed,
+.caretip-landing
+  .caretip-hero-bg-layer
+  .caretip-hero-story-frame--bg-cover.caretip-hero-story-frame--incoming {
+  opacity: 1;
   transition: none;
 }
 
 .caretip-landing .caretip-hero-bg-layer .caretip-hero-story-frame--displayed {
   z-index: 1;
-  opacity: 1;
 }
 
 .caretip-landing .caretip-hero-bg-layer .caretip-hero-story-frame--incoming {
   z-index: 2;
-  opacity: 1;
 }
 
-/* Crossfade only while swapping story frames (not on initial mount). */
-.caretip-landing .caretip-hero-bg-layer:has([data-hero-crossfading="1"]) .caretip-hero-story-frame--bg-cover {
+/* Crossfade only while swapping story frames (not on initial mount or return). */
+.caretip-landing
+  .caretip-hero-bg-layer:has([data-hero-crossfading="1"])
+  .caretip-hero-story-frame--bg-cover {
   transition: opacity 0.9s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .caretip-landing .caretip-hero-media-clip .caretip-hero-story-frame {
+  .caretip-landing .caretip-hero-media-clip:not(.caretip-hero-media-clip--background) .caretip-hero-story-frame {
     transition: none !important;
   }
 
