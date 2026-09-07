@@ -104,5 +104,13 @@ assert(
 );
 const heroHost = read("src/components/landing/CareTipLandingHero.tsx");
 assert(heroHost.includes('variant="background"'), "CareTipLandingHero uses background variant");
+assert(
+  !showcase.includes('loading="lazy"') && showcase.includes('loading="eager"'),
+  "hero story frames must never use native lazy loading",
+);
+assert(
+  showcase.includes("isLcpFrame") && showcase.includes('fetchpriority: "high"') && showcase.includes('fetchpriority: "low"'),
+  "only the LCP hero frame may use fetchpriority high; the second frame stays low",
+);
 
 console.log("landing-hero-return-lifecycle: ok");

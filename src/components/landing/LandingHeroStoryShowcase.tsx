@@ -249,16 +249,6 @@ export function LandingHeroStoryShowcase({
               const isVisible = isDisplayed || isIncoming || isCardActive;
               const isLcpFrame = index === 0;
 
-              if (
-                index > 0 &&
-                !isReady &&
-                !isDisplayed &&
-                !isIncoming &&
-                !isCardActive
-              ) {
-                return null;
-              }
-
               return (
                 <picture
                   key={frame.key}
@@ -293,7 +283,7 @@ export function LandingHeroStoryShowcase({
                       !isBackground && isCardActive && "caretip-hero-story-frame--active",
                       isReady && "caretip-hero-story-frame--ready",
                     )}
-                    loading={isLcpFrame || isBackground ? "eager" : "lazy"}
+                    loading="eager"
                     decoding={isLcpFrame || isDisplayed || isIncoming ? "sync" : "async"}
                     sizes={imageSizes}
                     onLoad={isLcpFrame ? handleLcpFrameLoad : () => markFrameReady(frame.key)}
