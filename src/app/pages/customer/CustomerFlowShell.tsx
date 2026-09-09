@@ -18,8 +18,9 @@ import { isAppShellInteractive } from "@/app/lib/appShellLifecycle";
 type CustomerFlowShellProps = {
   headerLeading?: ReactNode;
   headerTrailing?: ReactNode;
-  venue: CustomerJourneyVenueBrand;
+  venue?: CustomerJourneyVenueBrand;
   employee?: CustomerJourneyEmployeeIdentity;
+  headerVariant?: "venue" | "employee";
   stepTitle?: string;
   trustMessage?: ReactNode;
   showCareTipAttribution?: boolean;
@@ -42,6 +43,7 @@ export function CustomerFlowShell({
   headerLeading,
   venue,
   employee,
+  headerVariant = "venue",
   stepTitle,
   trustMessage,
   showCareTipAttribution = true,
@@ -76,6 +78,7 @@ export function CustomerFlowShell({
         trailing={headerTrailing}
         venue={venue}
         employee={employee}
+        variant={headerVariant}
         stepTitle={stepTitle}
         trustMessage={trustMessage}
       />

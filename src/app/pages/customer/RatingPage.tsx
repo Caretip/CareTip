@@ -1,7 +1,7 @@
 import { useNavigate, useSearchParams } from "react-router";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { MessageSquare, Send, Sparkles, Star } from "lucide-react";
+import { MessageSquare, Send, Star } from "lucide-react";
 import { toast } from "sonner";
 import { useTipFlow } from "../../context/TipFlowContext";
 import { submitTipFeedback } from "../../lib/api";
@@ -13,7 +13,6 @@ import { customerFlowUi as cf } from "./customerFlowUi";
 import { useVerifiedTipSession, isVerifiedTipSessionReady } from "../../hooks/useVerifiedTipSession";
 import { CustomerFlowShell } from "./CustomerFlowShell";
 import { useCustomerVenueBrand } from "./customerJourneyBrand";
-import { headerLeaveFeedbackFor } from "./customerJourneyHeaderCopy";
 
 /** Canonical English values sent to the API; labels are translated in the UI. */
 const FEEDBACK_TAGS = [
@@ -154,7 +153,6 @@ export function RatingPage() {
 
   const displayEmployeeName =
     readyContext?.employee?.name ?? employeeName ?? t("tipFlow.common.aTeamMember");
-  const feedbackHeader = headerLeaveFeedbackFor(t, displayEmployeeName);
   const showVerifyingPayment =
     Boolean(sessionId) &&
     (verification.phase === "pending" || verification.phase === "timeout");
@@ -163,11 +161,11 @@ export function RatingPage() {
     return (
       <CustomerFlowShell
         venue={venueBrand}
-        stepTitle={feedbackHeader.stepTitle}
+        stepTitle={t("tipFlow.success.celebrationHeadline")}
         trustMessage={
           verification.phase === "pending"
             ? t("tipFlow.completion.processingSubtitle")
-            : feedbackHeader.trustMessage
+            : t("tipFlow.completion.tipSentTo", { name: displayEmployeeName })
         }
         loading
         loadingContext="stripeReturn"
@@ -194,8 +192,8 @@ export function RatingPage() {
     <CustomerFlowShell
       withBottomCta
       venue={venueBrand}
-      stepTitle={feedbackHeader.stepTitle}
-      trustMessage={feedbackHeader.trustMessage}
+      stepTitle={t("tipFlow.success.celebrationHeadline")}
+      trustMessage={t("tipFlow.completion.tipSentTo", { name: displayEmployeeName })}
       bottomBar={
         <div className={cf.fixedBottomBar}>
           <div className={cf.fixedBottomInner}>
@@ -218,26 +216,15 @@ export function RatingPage() {
       }
     >
       {!sessionId ? (
-        <div className={`${cf.cardMuted} px-5 py-5 text-sm leading-relaxed text-muted-foreground sm:px-6`}>
-          {t("tipFlow.rating.needsSession")}
-        </div>
+        <p className="text-center text-sm text-muted-foreground">{t("tipFlow.rating.needsSession")}</p>
       ) : null}
 
-      <div className={`${cf.card} px-5 py-6 sm:px-7 sm:py-7`}>
-        <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
-          <div>
-            <h2 className={`${cf.cardTitle} text-[0.9375rem]`}>{t("tipFlow.rating.tapToRate")}</h2>
-            <p className={`${cf.cardDesc} mt-1 text-xs`}>{t("tipFlow.rating.optionalForStaff")}</p>
-          </div>
-          {showVerifyingPayment ? (
-            <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2.5 py-1 text-[11px] font-semibold text-muted-foreground">
-              <Sparkles className="h-3.5 w-3.5" />
-              {t("common.loading.stripeReturn")}
-            </span>
-          ) : null}
-        </div>
-
-        <div className="mt-6 flex flex-wrap items-center justify-center gap-1 sm:gap-1.5">
+      <section className="space-y-3 text-center" aria-label={t("tipFlow.rating.tapToRate")}>
+        <h2 className={cf.surfaceSectionLabel}>{t("tipFlow.rating.tapToRate")}</h2>
+        {showVerifyingPayment ? (
+          <p className="text-xs text-muted-foreground">{t("common.loading.stripeReturn")}</p>
+        ) : null}
+        <div className="flex flex-wrap items-center justify-center gap-1 sm:gap-1.5">
           {[1, 2, 3, 4, 5].map((star) => (
             <button
               key={star}
@@ -245,35 +232,23 @@ export function RatingPage() {
               className={`${cf.starButton} ${star <= rating && rating > 0 ? cf.starButtonActive : ""}`}
               type="button"
               aria-label={t("tipFlow.rating.starAria", { n: star })}
+              aria-pressed={star <= rating && rating > 0}
             >
               <Star
                 className={[
                   "size-11 transition-colors sm:size-12",
                   star <= rating
-                    ? "fill-primary text-primary drop-shadow-[0_2px_6px_rgba(233,120,28,0.25)]"
+                    ? "fill-primary text-primary"
                     : "text-muted-foreground/55",
                 ].join(" ")}
               />
             </button>
           ))}
         </div>
-        <p className="mt-4 text-center text-xs text-muted-foreground">
-          {rating === 0
-            ? t("tipFlow.rating.hint0")
-            : rating === 5
-              ? t("tipFlow.rating.hint5")
-              : rating === 4
-                ? t("tipFlow.rating.hint4")
-                : rating === 3
-                  ? t("tipFlow.rating.hint3")
-                  : rating === 2
-                    ? t("tipFlow.rating.hint2")
-                    : t("tipFlow.rating.hint1")}
-        </p>
-      </div>
+      </section>
 
-      <div className={`${cf.card} px-5 py-6 sm:px-7 sm:py-7`}>
-        <h2 className={`${cf.cardTitle} mb-4 text-[0.9375rem]`}>{t("tipFlow.rating.quickCompliments")}</h2>
+      <section className="space-y-3" aria-label={t("tipFlow.rating.quickCompliments")}>
+        <h2 className={cf.surfaceSectionLabel}>{t("tipFlow.rating.quickCompliments")}</h2>
         <div className="flex flex-wrap gap-2">
           {FEEDBACK_TAGS.map(({ key, api }) => (
             <button
@@ -281,17 +256,18 @@ export function RatingPage() {
               onClick={() => handleTagToggle(api)}
               className={`${cf.tagPill} ${selectedTags.includes(api) ? cf.tagPillOn : cf.tagPillIdle}`}
               type="button"
+              aria-pressed={selectedTags.includes(api)}
             >
               {t(`tipFlow.rating.tags.${key}`)}
             </button>
           ))}
         </div>
-      </div>
+      </section>
 
-      <div className={`${cf.card} px-5 py-6 sm:px-7 sm:py-7`}>
-        <div className="mb-4 flex items-center gap-2">
+      <section className="space-y-3">
+        <div className="flex items-center gap-2">
           <MessageSquare className="size-5 shrink-0 text-primary" aria-hidden />
-          <h2 className={`${cf.cardTitle} text-[0.9375rem]`}>{t("tipFlow.rating.optionalNote")}</h2>
+          <h2 className={cf.surfaceSectionLabel}>{t("tipFlow.rating.optionalNote")}</h2>
         </div>
         <textarea
           value={comment}
@@ -300,22 +276,19 @@ export function RatingPage() {
           rows={3}
           className={`${cf.inputField} resize-none leading-relaxed`}
         />
-        <div className="mt-4">
-          <label className="mb-1.5 block text-xs font-semibold text-muted-foreground">
+        <div>
+          <label className="mb-1.5 block text-xs font-semibold text-muted-foreground" htmlFor="rating-customer-name">
             {t("tipFlow.rating.yourName")}
           </label>
           <input
+            id="rating-customer-name"
             value={customerName}
             onChange={(e) => setCustomerName(e.target.value)}
             placeholder={t("tipFlow.rating.namePlaceholder")}
             className={`${cf.inputField} py-2.5 text-sm`}
           />
         </div>
-      </div>
-
-      <div className={`${cf.cardMuted} px-5 py-4 sm:px-6`}>
-        <p className="text-xs leading-relaxed text-muted-foreground">{t("tipFlow.rating.footerHint")}</p>
-      </div>
+      </section>
     </CustomerFlowShell>
   );
 }

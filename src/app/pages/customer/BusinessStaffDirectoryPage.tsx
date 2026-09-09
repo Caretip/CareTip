@@ -1,8 +1,6 @@
 import { useNavigate, useParams, Link } from "react-router";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { motion } from "motion/react";
 import { useTranslation } from "react-i18next";
-import { Building2, Search } from "lucide-react";
 import { useTipFlow } from "../../context/TipFlowContext";
 import {
   getBusinessStaffDirectory,
@@ -13,16 +11,14 @@ import {
 import { toUserFriendlyMessage } from "../../lib/errorMessages";
 import { logClientError } from "../../lib/clientLog";
 import { CareTipPageLoader } from "../../components/CareTipPageLoader";
-import { ProfileAvatar } from "../../components/ui/profile-avatar";
 import { usePublicSocket } from "../../hooks/usePublicSocket";
 import { useRealtimeFallback } from "../../hooks/useRealtimeFallback";
-import { LiveConnectionBadge } from "../../components/LiveConnectionBadge";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { customerFlowUi as cf } from "./customerFlowUi";
 import { CustomerJourneyHeader, CustomerJourneyHomeButton } from "./CustomerJourneyHeader";
 import { CustomerJourneyAttributionFooter } from "./CustomerJourneyCareTipAttribution";
 import { venueBrandFromBusiness } from "./customerJourneyBrand";
 import { headerSelectTeamMember } from "./customerJourneyHeaderCopy";
+import { CustomerTeamPicker } from "./CustomerTeamPicker";
 
 /**
  * Path B: `/{businessSlug}` (legacy redirect from `/business/:businessSlug`) — Business QR (staff directory).
@@ -72,7 +68,7 @@ export function BusinessStaffDirectoryPage() {
     return () => {
       cancelled = true;
     };
-  }, [businessSlug, setBusinessId]);
+  }, [businessSlug, setBusinessId, t]);
 
   const filtered = useMemo(() => {
     const list = data?.employees ?? [];
@@ -106,7 +102,7 @@ export function BusinessStaffDirectoryPage() {
   };
 
   const businessIdForSocket = data?.business.id ?? null;
-  const { socket, connected, connectionStatus } = usePublicSocket(businessIdForSocket);
+  const { socket, connected } = usePublicSocket(businessIdForSocket);
 
   const reloadDirectory = useCallback(async () => {
     const raw = businessSlug?.trim().toLowerCase();
@@ -163,82 +159,23 @@ export function BusinessStaffDirectoryPage() {
             onClick={() => navigate("/")}
           />
         }
-        trailing={<LiveConnectionBadge status={connectionStatus} className="shrink-0" />}
         venue={venueBrandFromBusiness(data.business)}
         stepTitle={teamHeader.stepTitle}
-        trustMessage={teamHeader.trustMessage}
       />
 
-      <div className={`${cf.main} lg:space-y-8`}>
-        <Card className={cf.cardSearchLight}>
-          <CardHeader className={`${cf.cardHeaderPadding} pb-3`}>
-            <CardTitle className={cf.cardTitle}>{t("tipFlow.locationLanding.searchTitle")}</CardTitle>
-            <CardDescription className={cf.cardDesc}>{t("tipFlow.locationLanding.searchDesc")}</CardDescription>
-          </CardHeader>
-          <CardContent className="px-5 pb-5 sm:px-6">
-            <div className="relative">
-              <Search className="pointer-events-none absolute left-3.5 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
-              <input
-                type="search"
-                placeholder={t("tipFlow.qrLanding.searchPlaceholder")}
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                className={`${cf.inputField} pl-11`}
-                autoComplete="off"
-              />
-            </div>
-          </CardContent>
-        </Card>
-
-        <motion.div initial={{ y: 10, opacity: 0 }} animate={{ y: 0, opacity: 1 }}>
-          <Card className={cf.cardShadcn}>
-            <CardHeader className={`${cf.cardHeaderPadding} pb-3`}>
-              <CardTitle className={cf.cardTitle}>{t("tipFlow.locationLanding.teamTitle")}</CardTitle>
-              <CardDescription className={cf.cardDesc}>{t("tipFlow.locationLanding.teamDesc")}</CardDescription>
-            </CardHeader>
-            <CardContent className="px-5 pb-5 sm:px-6">
-              {filtered.length === 0 ? (
-                <p className="py-12 text-center text-sm text-muted-foreground">{t("tipFlow.qrLanding.noMatches")}</p>
-              ) : (
-                <ul className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 sm:gap-5">
-                  {filtered.map((emp, index) => (
-                    <motion.li
-                      key={emp.id}
-                      initial={{ opacity: 0, y: 8 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: index * 0.03 }}
-                    >
-                      <button
-                        type="button"
-                        onClick={() => pickEmployee(emp)}
-                        className={cf.employeeCard}
-                      >
-                        <ProfileAvatar
-                          src={emp.avatar}
-                          displayName={emp.name}
-                          className={cf.employeeAvatar}
-                        />
-                        <div className="min-w-0 text-center">
-                          <span className="line-clamp-2 text-sm font-semibold leading-tight text-foreground">
-                            {emp.name}
-                          </span>
-                          <span className="mt-1 line-clamp-2 text-xs text-muted-foreground">{emp.jobTitle}</span>
-                        </div>
-                      </button>
-                    </motion.li>
-                  ))}
-                </ul>
-              )}
-            </CardContent>
-          </Card>
-        </motion.div>
-
-        <Card className={cf.trustCard}>
-          <CardContent className="flex items-center justify-center gap-2 px-5 py-4 text-center text-xs font-medium leading-relaxed text-muted-foreground">
-            <Building2 className="size-4 shrink-0 text-emerald-700/75 dark:text-emerald-400/80" aria-hidden />
-            <span>{t("tipFlow.qrLanding.secureFooter")}</span>
-          </CardContent>
-        </Card>
+      <div className={cf.mainTeam}>
+        <CustomerTeamPicker
+          searchLabel={t("tipFlow.locationLanding.searchTitle")}
+          searchPlaceholder={t("tipFlow.qrLanding.searchPlaceholder")}
+          teamLabel={t("tipFlow.locationLanding.teamTitle")}
+          emptyLabel={t("tipFlow.qrLanding.noMatches")}
+          query={query}
+          onQueryChange={setQuery}
+          employees={filtered}
+          onPick={pickEmployee}
+          tipButtonLabel={t("tipFlow.qrLanding.tipCta")}
+          tipButtonAria={(name) => t("tipFlow.locationLanding.tipPerson", { name })}
+        />
       </div>
 
       <CustomerJourneyAttributionFooter label={t("tipFlow.common.poweredByCareTip")} />

@@ -221,15 +221,15 @@ function runFrontendUrlUnits() {
   else fail("E-trailing-slash", stripped);
 
   const success = `${stripped}/rating?session_id={CHECKOUT_SESSION_ID}`;
-  const cancel = `${stripped}/payment?canceled=1`;
+  const cancel = `${stripped}/tip-amount?employeeId=EMP&canceled=1`;
   if (
     success.endsWith("/rating?session_id={CHECKOUT_SESSION_ID}") &&
-    cancel.endsWith("/payment?canceled=1") &&
-    !success.includes("//rating") &&
-    !cancel.includes("//payment")
+    cancel.includes("/tip-amount?") &&
+    cancel.includes("canceled=1") &&
+    !success.includes("//rating")
   ) {
     pass("F-success-url", "success URL ends /rating?session_id={CHECKOUT_SESSION_ID}");
-    pass("G-cancel-url", "cancel URL ends /payment?canceled=1");
+    pass("G-cancel-url", "cancel URL is /tip-amount with canceled=1");
   } else {
     fail("F-success-url", success);
     fail("G-cancel-url", cancel);
@@ -576,11 +576,12 @@ async function runRuntime(): Promise<void> {
       created?.payment_intent_data?.transfer_data?.destination === a.stripeAccountId &&
       created.payment_intent_data?.application_fee_amount === 149 &&
       created.success_url?.includes("/rating?session_id=") &&
-      created.cancel_url?.includes("/payment?canceled=1") &&
+      created.cancel_url?.includes("/tip-amount?") &&
+      created.cancel_url?.includes("canceled=1") &&
       !created.success_url.includes("//rating")
     ) {
       pass("F-checkout-success-url", "Checkout success_url /rating?session_id=");
-      pass("G-checkout-cancel-url", "Checkout cancel_url /payment?canceled=1");
+      pass("G-checkout-cancel-url", "Checkout cancel_url /tip-amount?canceled=1");
       pass("AD-checkout-dest-server", "Stripe dest = Business.stripeAccountId");
     } else fail("F-checkout-success-url", "Checkout URL/dest incorrect");
 

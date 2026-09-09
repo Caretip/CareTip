@@ -10,6 +10,7 @@ type BusinessConfirmDialogProps = {
   confirmLabel: string;
   confirming?: boolean;
   confirmDisabled?: boolean;
+  confirmVariant?: "destructive" | "default";
   onCancel: () => void;
   onConfirm: () => void;
 };
@@ -23,6 +24,7 @@ export function BusinessConfirmDialog({
   confirmLabel,
   confirming = false,
   confirmDisabled = false,
+  confirmVariant = "destructive",
   onCancel,
   onConfirm,
 }: BusinessConfirmDialogProps) {
@@ -50,7 +52,7 @@ export function BusinessConfirmDialog({
           </Button>
           <Button
             type="button"
-            variant="destructive"
+            variant={confirmVariant}
             className="flex-1"
             disabled={confirmDisabled || confirming}
             onClick={onConfirm}

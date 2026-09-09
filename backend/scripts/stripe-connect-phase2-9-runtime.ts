@@ -220,12 +220,12 @@ function runFrontendUrlUnits() {
   }
 
   const success = `${prod}/rating?session_id={CHECKOUT_SESSION_ID}`;
-  const cancel = `${prod}/payment?canceled=1`;
+  const cancel = `${prod}/tip-amount`;
   if (success === "https://caretip.de/rating?session_id={CHECKOUT_SESSION_ID}") {
     pass("J-success-url", "https://caretip.de/rating?session_id={CHECKOUT_SESSION_ID}");
   } else fail("J-success-url", success);
-  if (cancel === "https://caretip.de/payment?canceled=1") {
-    pass("K-cancel-url", "https://caretip.de/payment?canceled=1");
+  if (cancel === "https://caretip.de/tip-amount") {
+    pass("K-cancel-url", "https://caretip.de/tip-amount (employeeId + canceled=1 appended at session create)");
   } else fail("K-cancel-url", cancel);
 
   const local = resolveCheckoutFrontendBaseUrl({
@@ -568,11 +568,12 @@ async function runRuntime(): Promise<void> {
       created?.payment_intent_data?.transfer_data?.destination === a.stripeAccountId &&
       created.payment_intent_data?.application_fee_amount === 149 &&
       created.success_url?.includes("/rating?session_id=") &&
-      created.cancel_url?.includes("/payment?canceled=1") &&
+      created.cancel_url?.includes("/tip-amount?") &&
+      created.cancel_url?.includes("canceled=1") &&
       !created.success_url.includes("//rating")
     ) {
       pass("J-checkout-success-url", "Checkout success_url /rating?session_id=");
-      pass("K-checkout-cancel-url", "Checkout cancel_url /payment?canceled=1");
+      pass("K-checkout-cancel-url", "Checkout cancel_url /tip-amount?canceled=1");
       pass("AC-checkout-dest-server", "Stripe dest = Business.stripeAccountId");
     } else fail("J-checkout-success-url", "Checkout URL/dest incorrect");
 

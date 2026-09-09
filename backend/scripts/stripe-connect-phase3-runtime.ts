@@ -248,9 +248,10 @@ function runStatic() {
   if (
     connectRoutes.includes("listMyConnectPayouts") &&
     connectRoutes.includes("requireRole(Role.MANAGER)") &&
-    connectRoutes.includes("authMiddleware")
+    connectRoutes.includes("authMiddleware") &&
+    connectRoutes.includes("postMyInstantPayout")
   ) {
-    pass("N-role-static", "Manager payout list uses auth + MANAGER role");
+    pass("N-role-static", "Manager payout list and Instant Payout use auth + MANAGER role");
   } else {
     fail("N-role-static", "Manager payout route missing auth/role");
   }

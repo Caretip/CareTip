@@ -94,6 +94,7 @@
     "test:stripe-connect-phase3": "dotenv -e ../.env -e .env -- tsx scripts/stripe-connect-phase3-runtime.ts",
     "test:stripe-connect-phase3-5": "dotenv -e ../.env -e .env -- tsx scripts/stripe-connect-phase3-5-runtime.ts",
     "test:stripe-connect-phase4": "dotenv -e ../.env -e .env -- tsx scripts/stripe-connect-phase4-runtime.ts",
+    "test:stripe-connect-instant-payout": "dotenv -e ../.env -e .env -- tsx scripts/stripe-connect-instant-payout-runtime.ts",
     "preflight:stripe-connect-phase2-8": "dotenv -e ../.env -e .env -- tsx src/stripeConnectPhase28PreflightCli.ts",
     "preflight:stripe-connect-phase2-9": "dotenv -e ../.env -e .env -- tsx src/stripeConnectPhase29PreflightCli.ts",
     "preflight:stripe-connect-phase3-5": "dotenv -e ../.env -e .env -- tsx src/stripeConnectPhase35PreflightCli.ts",

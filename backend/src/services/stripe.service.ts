@@ -326,6 +326,15 @@ export interface CreateTipCheckoutSessionResult {
   url: string | null;
 }
 
+/** Stripe cancel returns to tip amount (employee-scoped). Never accepts a client-supplied URL. */
+export function guestTipCheckoutCancelUrl(frontendBase: string, employeeId: string): string {
+  const origin = frontendBase.replace(/\/+$/, "");
+  const url = new URL("/tip-amount", `${origin}/`);
+  url.searchParams.set("employeeId", employeeId);
+  url.searchParams.set("canceled", "1");
+  return url.toString();
+}
+
 async function resolveLocationTable(
   businessId: string,
   locationId?: string | null,
@@ -541,7 +550,7 @@ export async function createTipCheckoutSession(
       },
       // Post-checkout: go directly to optional feedback page (no extra success screen).
       success_url: `${base}/rating?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${base}/payment?canceled=1`,
+      cancel_url: guestTipCheckoutCancelUrl(base, employeeId),
       metadata,
     });
   } catch (e) {

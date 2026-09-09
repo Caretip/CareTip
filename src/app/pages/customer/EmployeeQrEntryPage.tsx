@@ -1,18 +1,17 @@
 import { useNavigate, useParams, Link } from "react-router";
 import { useEffect, useState } from "react";
-import { motion } from "motion/react";
 import { useTranslation } from "react-i18next";
 import { useTipFlow } from "../../context/TipFlowContext";
 import { getEmployeeById, recordGuestQrScanOnce } from "../../lib/api";
 import { toUserFriendlyMessage } from "../../lib/errorMessages";
 import { logClientError } from "../../lib/clientLog";
 import { CareTipPageLoader } from "../../components/CareTipPageLoader";
-import { Card, CardContent } from "@/components/ui/card";
-import { ProfileAvatar } from "../../components/ui/profile-avatar";
 import { getRepeatTipDataForBusiness } from "../../lib/repeatTip";
 import { markCustomerFlowEntered } from "../../lib/customerFlowGuard";
 import { formatEur } from "../../lib/formatEur";
+import { startGuestTipCheckout } from "../../lib/startGuestTipCheckout";
 import { customerFlowUi as cf } from "./customerFlowUi";
+import { CustomerRepeatTipPrompt } from "./CustomerRepeatTipPrompt";
 import {
   type CustomerEntryPhase,
   scheduleCustomerRouteRedirect,
@@ -35,6 +34,7 @@ export function EmployeeQrEntryPage() {
   );
   const [repeatAmount, setRepeatAmount] = useState<number | null>(null);
   const [repeatDismissed, setRepeatDismissed] = useState(false);
+  const [checkingOut, setCheckingOut] = useState(false);
 
   useEffect(() => {
     const raw = employeeId?.trim();
@@ -116,58 +116,43 @@ export function EmployeeQrEntryPage() {
   return (
     <div className={cf.page}>
       <div className={`${cf.main} pb-16 sm:pb-20`}>
-        <motion.div initial={{ y: 12, opacity: 0 }} animate={{ y: 0, opacity: 1 }}>
-          <Card className={cf.cardShadcn}>
-            <CardContent className="space-y-4 p-5 sm:p-6">
-              <div className="flex items-start justify-between gap-4">
-                <div className="min-w-0">
-                  <p className="text-sm font-semibold text-foreground">{t("tipFlow.qrLanding.repeatWelcome")}</p>
-                  <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
-                    {t("tipFlow.qrLanding.repeatBody", {
-                      name: emp.name ?? t("tipFlow.common.teamMember"),
-                    })}
-                  </p>
-                  <p className="mt-2 text-xs font-semibold text-primary">
-                    {t("tipFlow.qrLanding.repeatLastTip", { amount: formatEur(repeatAmount) })}
-                  </p>
-                </div>
-                <ProfileAvatar
-                  src={emp.avatar ?? undefined}
-                  displayName={emp.name ?? t("tipFlow.common.teamMember")}
-                  className="size-14 shrink-0 ring-2 ring-primary/22"
-                />
-              </div>
-              <div className="flex flex-col gap-3 sm:flex-row">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setBusinessId(emp.businessId);
-                    setEmployee(emp.id, emp.name, emp.avatar ?? undefined);
-                    setStaffProfileSlug(null);
-                    setAmount(repeatAmount);
-                    markCustomerFlowEntered();
-                    navigate("/payment");
-                  }}
-                  className={`${cf.btnPrimaryLg} py-3.5 text-sm sm:flex-1`}
-                >
-                  {t("tipFlow.qrLanding.tipAgain")}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setRepeatDismissed(true);
-                    const qs = new URLSearchParams({ employeeId: emp.id });
-                    qs.set("direct", "1");
-                    navigate(`/tip-amount?${qs.toString()}`, { replace: true });
-                  }}
-                  className={`${cf.btnSecondaryLg} py-3.5 text-sm sm:flex-1`}
-                >
-                  {t("tipFlow.staffLanding.chooseDifferentAmount")}
-                </button>
-              </div>
-            </CardContent>
-          </Card>
-        </motion.div>
+        <CustomerRepeatTipPrompt
+          employeeName={emp.name ?? t("tipFlow.common.teamMember")}
+          employeeAvatar={emp.avatar}
+          body={t("tipFlow.qrLanding.repeatBody", {
+            name: emp.name ?? t("tipFlow.common.teamMember"),
+          })}
+          lastTipLabel={t("tipFlow.qrLanding.repeatLastTip", { amount: formatEur(repeatAmount) })}
+          primaryLabel={t("tipFlow.qrLanding.tipAgain")}
+          secondaryLabel={t("tipFlow.staffLanding.chooseDifferentAmount")}
+          primaryDisabled={checkingOut}
+          onPrimary={() => {
+            void (async () => {
+              setBusinessId(emp.businessId);
+              setEmployee(emp.id, emp.name, emp.avatar ?? undefined);
+              setStaffProfileSlug(null);
+              setAmount(repeatAmount);
+              markCustomerFlowEntered();
+              setCheckingOut(true);
+              const result = await startGuestTipCheckout(
+                {
+                  amount: repeatAmount,
+                  employeeId: emp.id,
+                  businessId: emp.businessId,
+                  employeeName: emp.name,
+                },
+                t("tipFlow.payment.checkoutStartError"),
+              );
+              if (result !== "redirected") setCheckingOut(false);
+            })();
+          }}
+          onSecondary={() => {
+            setRepeatDismissed(true);
+            const qs = new URLSearchParams({ employeeId: emp.id });
+            qs.set("direct", "1");
+            navigate(`/tip-amount?${qs.toString()}`, { replace: true });
+          }}
+        />
       </div>
     </div>
   );

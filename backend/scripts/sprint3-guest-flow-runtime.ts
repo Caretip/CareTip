@@ -57,14 +57,13 @@ async function main() {
 
   const tipAmount = read("src/app/pages/customer/TipAmountPage.tsx");
   const paymentPage = read("src/app/pages/customer/PaymentPage.tsx");
+  const startCheckout = read("src/app/lib/startGuestTipCheckout.ts");
   const guestPay =
-    tipAmount.includes("navigate") ||
-    tipAmount.includes("/payment") ||
-    paymentPage.includes("createTipCheckoutSession") ||
-    paymentPage.includes("checkout") ||
-    paymentPage.includes("session");
-  if (guestPay) pass("guest payment flow wired (tip-amount → payment/checkout)");
-  else fail("guest payment flow not found in TipAmountPage/PaymentPage");
+    tipAmount.includes("startGuestTipCheckout") ||
+    startCheckout.includes("createTipCheckoutSession") ||
+    paymentPage.includes("/tip-amount");
+  if (guestPay) pass("guest payment flow wired (tip-amount → Stripe Checkout)");
+  else fail("guest payment flow not found in TipAmountPage/startGuestTipCheckout");
 
   const ratingPage = read("src/app/pages/customer/RatingPage.tsx");
   if (ratingPage.includes("session_id") || ratingPage.includes("sessionId")) {

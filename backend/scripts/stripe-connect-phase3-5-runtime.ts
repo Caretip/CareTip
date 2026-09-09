@@ -298,35 +298,42 @@ function runStatic() {
   const srcRoot = join(backendRoot, "src");
   const srcFiles = walkSrcTs(srcRoot);
   const srcBlob = srcFiles.map((p) => readFileSync(p, "utf8")).join("\n");
+  const observationBlob = srcFiles
+    .filter((p) => !p.replace(/\\/g, "/").endsWith("services/stripeConnectInstantPayout.service.ts"))
+    .map((p) => readFileSync(p, "utf8"))
+    .join("\n");
+  const instantSvc = read("src/services/stripeConnectInstantPayout.service.ts");
   const routesConnect = read("src/routes/connect.routes.ts");
   const routesPlatform = read("src/routes/platform.routes.ts");
   const stripeSvc = read("src/services/stripe.service.ts");
   const fees = read("src/config/fees.ts");
   const ui = read(join("..", "src/app/components/business/settings/billing/ConnectPayoutsPanel.tsx"));
 
-  const forbidden = [
-    /\.payouts\.create\s*\(/,
+  const forbiddenOutsideInstant = [
     /\.payouts\.cancel\s*\(/,
     /\.externalAccounts\.create\s*\(/,
     /\.externalAccounts\.update\s*\(/,
   ];
-  const hits = forbidden.filter((re) => re.test(srcBlob));
-  if (hits.length === 0) {
-    pass("V-no-manual-payout-creation", "backend/src has no payouts.create/cancel or externalAccounts mutate", "STATIC_ANALYSIS");
-    pass("W-no-payouts-create", "production application code has no .payouts.create(", "STATIC_ANALYSIS");
+  const observationHasCreate = /\.payouts\.create\s*\(/.test(observationBlob);
+  const instantHasCreate = /\.payouts\.create\s*\(/.test(instantSvc) && instantSvc.includes('method: "instant"');
+  const hits = forbiddenOutsideInstant.filter((re) => re.test(srcBlob));
+  if (hits.length === 0 && !observationHasCreate && instantHasCreate) {
+    pass("V-no-manual-payout-creation", "payouts.create only in Instant Payout service; no cancel/externalAccounts mutate", "STATIC_ANALYSIS");
+    pass("W-no-payouts-create", "observation path has no payouts.create; Instant create is isolated", "STATIC_ANALYSIS");
   } else {
     fail("V-no-manual-payout-creation", "forbidden Stripe mutate API in backend/src", "STATIC_ANALYSIS");
-    fail("W-no-payouts-create", "payouts.create present in backend/src", "STATIC_ANALYSIS");
+    fail("W-no-payouts-create", "payouts.create missing from Instant service or leaked into observation", "STATIC_ANALYSIS");
   }
 
   if (
     routesConnect.includes("listMyConnectPayouts") &&
     !routesConnect.includes('router.post("/connect/payouts"') &&
+    routesConnect.includes('router.post("/connect/instant-payout"') &&
     !routesPlatform.includes('router.post("/connect-payouts"') &&
     !routesPlatform.includes("router.patch(\"/connect-payouts\"") &&
     !routesPlatform.includes("router.delete(\"/connect-payouts\"")
   ) {
-    pass("Q-admin-read-only-static", "No payout mutation HTTP routes", "STATIC_ANALYSIS");
+    pass("Q-admin-read-only-static", "History remains GET-only; Instant Payout is a dedicated POST", "STATIC_ANALYSIS");
   } else {
     fail("Q-admin-read-only-static", "Unexpected payout mutation route", "STATIC_ANALYSIS");
   }

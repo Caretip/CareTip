@@ -325,6 +325,18 @@ const ERROR_MAP: Record<string, string> = {
     "Logo upload timed out. Try again with a smaller image.",
   "The service is temporarily unavailable. Please try again later.":
     "The service is temporarily unavailable. Please try again later.",
+
+  INSTANT_PAYOUT_NO_INSTANT_DESTINATION:
+    "Add a payout method that supports Instant Payout, then try again.",
+  INSTANT_PAYOUT_ZERO_BALANCE: "There’s no Instant Payout balance available right now.",
+  INSTANT_PAYOUT_BELOW_MINIMUM: "This balance is too small for an Instant Payout.",
+  INSTANT_PAYOUT_NOT_CONNECTED: "Connect Stripe before requesting an Instant Payout.",
+  INSTANT_PAYOUT_PAYOUTS_DISABLED: "Payouts aren’t enabled on this account yet.",
+  INSTANT_PAYOUT_COUNTRY_UNSUPPORTED: "Instant Payout isn’t available for this account yet.",
+  INSTANT_PAYOUT_INSUFFICIENT: "There isn’t enough Instant Payout balance for this request.",
+  INSTANT_PAYOUT_UNSUPPORTED: "Instant Payout isn’t available for this account.",
+  INSTANT_PAYOUT_STRIPE_ERROR: "We couldn’t start this Instant Payout. Please try again.",
+  INSTANT_PAYOUT_IDEMPOTENCY_REQUIRED: "We couldn’t start this Instant Payout. Please try again.",
 };
 
 const EMPLOYEE_QR_BUSINESS_KYC_HINT =

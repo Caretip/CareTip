@@ -1,24 +1,26 @@
 import { useNavigate, useSearchParams } from "react-router";
 import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
+import { toast } from "sonner";
 import { useTipFlow } from "../../context/TipFlowContext";
 import { logClientError } from "../../lib/clientLog";
 import { DEV_BYPASS_ENABLED, DEV_MOCK } from "../../lib/devCustomerBypass";
 import { hasRecentCustomerFlowEntry, markCustomerFlowEntered } from "../../lib/customerFlowGuard";
-import { paymentPathFromTipAmount } from "../../lib/tipFlowRoute";
 import {
   isCustomerEmployeeContextReady,
   resolveCustomerEmployeeContext,
 } from "../../lib/resolveCustomerEmployeeContext";
+import { startGuestTipCheckout } from "../../lib/startGuestTipCheckout";
 import { formatEur } from "../../lib/formatEur";
 import { isTipAmountInRangeEur, MIN_TIP_AMOUNT_EUR } from "../../lib/tipAmountLimits";
 import { customerFlowUi as cf } from "./customerFlowUi";
 import { CustomerFlowShell } from "./CustomerFlowShell";
+import { CustomerJourneyBackButton } from "./CustomerJourneyHeader";
 import {
-  CustomerJourneyBackButton,
-} from "./CustomerJourneyHeader";
-import { useCustomerVenueBrand, mergeCustomerVenueBrand } from "./customerJourneyBrand";
-import { headerChooseAmountFor } from "./customerJourneyHeaderCopy";
+  APP_LOADING_PRIORITY,
+  useAppLoadingRegistration,
+} from "../../lib/globalAppLoading";
+import { resolveAppLoadingContextMessage } from "../../lib/appLoadingContexts";
 
 export function TipAmountPage() {
   const { t } = useTranslation();
@@ -28,15 +30,14 @@ export function TipAmountPage() {
   const returnSlug = searchParams.get("returnSlug");
   const returnBusinessSlug = searchParams.get("returnBusinessSlug");
   const returnEmployeeSlug = searchParams.get("returnEmployeeSlug");
-  const directFromStaffQr = searchParams.get("direct") === "1";
   const {
     businessId,
     employeeId: employeeIdCtx,
     employeeName,
     employeeAvatar,
     tableQrSlug,
-    tippingLocationName,
-    tippingTableName,
+    locationId,
+    tableId,
     setBusinessId,
     setEmployee,
     setAmount,
@@ -45,12 +46,7 @@ export function TipAmountPage() {
   const [customAmount, setCustomAmount] = useState("");
   const [showCustomInput, setShowCustomInput] = useState(false);
   const [contextReady, setContextReady] = useState(false);
-  const [resolvedVenueSnapshot, setResolvedVenueSnapshot] = useState<{
-    name: string;
-    logo: string | null;
-  } | null>(null);
-  const fallbackVenue = t("tipFlow.common.venue");
-  const fetchedVenue = useCustomerVenueBrand(businessId, fallbackVenue);
+  const [processing, setProcessing] = useState(false);
 
   useEffect(() => {
     if (!employeeId) return;
@@ -64,20 +60,6 @@ export function TipAmountPage() {
       })
     ) {
       setContextReady(true);
-      if (!resolvedVenueSnapshot && businessId) {
-        void resolveCustomerEmployeeContext({
-          employeeId,
-          returnSlug,
-          returnBusinessSlug,
-          returnEmployeeSlug,
-          fallbackTeamMemberLabel: t("tipFlow.common.teamMember"),
-          fallbackVenueLabel: fallbackVenue,
-        })
-          .then((resolved) => {
-            setResolvedVenueSnapshot({ name: resolved.businessName, logo: resolved.businessLogo });
-          })
-          .catch((err) => logClientError("TipAmountPage.resolveVenue", err));
-      }
       return;
     }
 
@@ -99,7 +81,6 @@ export function TipAmountPage() {
         if (cancelled) return;
         setBusinessId(resolved.businessId);
         setEmployee(resolved.employeeId, resolved.employeeName, resolved.employeeAvatar);
-        setResolvedVenueSnapshot({ name: resolved.businessName, logo: resolved.businessLogo });
         markCustomerFlowEntered();
         setContextReady(true);
       } catch (err) {
@@ -124,8 +105,6 @@ export function TipAmountPage() {
     setBusinessId,
     setEmployee,
     t,
-    fallbackVenue,
-    resolvedVenueSnapshot,
   ]);
 
   useEffect(() => {
@@ -138,6 +117,14 @@ export function TipAmountPage() {
     }
     navigate(businessId ? `/qr-landing/${businessId}` : "/", { replace: true });
   }, [employeeId, businessId, navigate]);
+
+  useEffect(() => {
+    if (searchParams.get("canceled") === "1") {
+      toast.message(t("tipFlow.payment.canceledTitle"), {
+        description: t("tipFlow.payment.canceledDesc"),
+      });
+    }
+  }, [searchParams, t]);
 
   const presetAmounts = [5, 10, 15];
 
@@ -178,41 +165,46 @@ export function TipAmountPage() {
       navigate(`/table/${encodeURIComponent(tableQrSlug)}`);
       return;
     }
-    navigate(businessId ? `/qr-landing/${businessId}` : "/");
+    navigate(businessId ? `/qr-landing/${businessId}` : "/", { replace: true });
   };
 
-  const handleContinue = () => {
+  const stripeRedirectMessage = resolveAppLoadingContextMessage("stripeRedirect", t);
+
+  useAppLoadingRegistration(
+    "tip-amount-stripe-redirect",
+    APP_LOADING_PRIORITY.ROUTE_GUARD,
+    processing,
+    stripeRedirectMessage,
+  );
+
+  const handleContinue = async () => {
     const resolvedEmployeeId = employeeId ?? employeeIdCtx;
     if (!selectedAmount || !resolvedEmployeeId) return;
     if (!isTipAmountInRangeEur(selectedAmount)) return;
     if (!businessId) return;
     setAmount(selectedAmount);
-    navigate(
-      paymentPathFromTipAmount({
+    setProcessing(true);
+    const result = await startGuestTipCheckout(
+      {
+        amount: selectedAmount,
         employeeId: resolvedEmployeeId,
-        returnSlug,
-        returnBusinessSlug,
-        returnEmployeeSlug,
-      }),
+        businessId,
+        employeeName,
+        locationId,
+        tableId,
+      },
+      t("tipFlow.payment.checkoutStartError"),
     );
+    if (result !== "redirected") setProcessing(false);
   };
 
-  const resolvedVenue = mergeCustomerVenueBrand(fetchedVenue, {
-    snapshot: resolvedVenueSnapshot,
-    fallbackName: fallbackVenue,
-    extraContextLine:
-      tippingLocationName && tippingTableName
-        ? t("tipFlow.atVenue", { location: tippingLocationName, table: tippingTableName })
-        : undefined,
-  });
   const employeeDisplayName = employeeName ?? t("tipFlow.common.teamMember");
-  const amountHeader = headerChooseAmountFor(t, employeeDisplayName, { directStaffQr: directFromStaffQr });
 
   if (!employeeId) {
     return (
       <CustomerFlowShell
-        venue={{ name: fallbackVenue, logo: null }}
-        stepTitle={t("tipFlow.tipAmount.chooseTitle")}
+        headerVariant="employee"
+        employee={{ name: t("tipFlow.common.teamMember") }}
         loading
         loadingContext="tipPage"
         loadingRegistrationKey="tip-amount-journey"
@@ -223,12 +215,19 @@ export function TipAmountPage() {
   return (
     <CustomerFlowShell
       withBottomCta={Boolean(selectedAmount)}
+      headerVariant="employee"
       headerLeading={
-        <CustomerJourneyBackButton label={t("tipFlow.common.back")} onClick={handleBack} />
+        <CustomerJourneyBackButton
+          label={t("tipFlow.common.back")}
+          onClick={handleBack}
+          disabled={processing}
+        />
       }
-      venue={resolvedVenue}
-      stepTitle={amountHeader.stepTitle}
-      trustMessage={amountHeader.trustMessage}
+        employee={{
+          name: employeeDisplayName,
+          avatar: employeeAvatar ?? null,
+        }}
+        stepTitle={t("tipFlow.tipAmount.choosePrompt")}
       loading={!contextReady}
       loadingContext="tipPage"
       loadingRegistrationKey="tip-amount-journey"
@@ -240,11 +239,18 @@ export function TipAmountPage() {
               <div className={cf.journeyCtaStack}>
                 <button
                   type="button"
-                  onClick={handleContinue}
-                  disabled={!businessId}
+                  onClick={() => void handleContinue()}
+                  disabled={!businessId || processing}
                   className={cf.btnPrimaryLg}
                 >
-                  {t("tipFlow.tipAmount.continuePayment")}
+                  {processing ? (
+                    <>
+                      <span className="inline-block size-5 animate-spin rounded-full border-2 border-white/35 border-t-white" />
+                      {stripeRedirectMessage}
+                    </>
+                  ) : (
+                    t("tipFlow.tipAmount.continuePayment")
+                  )}
                 </button>
               </div>
             </div>
@@ -259,28 +265,27 @@ export function TipAmountPage() {
               key={amount}
               type="button"
               onClick={() => handleAmountSelect(amount)}
+              aria-pressed={selectedAmount === amount && !showCustomInput}
               className={`${cf.tipPresetTile} ${
                 selectedAmount === amount && !showCustomInput ? cf.tipPresetOn : cf.tipPresetIdle
               }`}
             >
-              <div className="mb-0.5 text-2xl font-bold tabular-nums text-foreground sm:text-[1.75rem]">
+              <span className="text-2xl font-bold tabular-nums text-foreground sm:text-[1.75rem]">
                 {formatEur(amount, { minFrac: 0, maxFrac: 0 })}
-              </div>
-              <div className="text-sm text-muted-foreground">
-                {t("tipFlow.tipAmount.tipAmountLabel")}
-              </div>
+              </span>
             </button>
           ))}
           <button
             type="button"
             onClick={handleCustomClick}
+            aria-pressed={showCustomInput}
             className={`${cf.tipPresetTile} flex flex-col justify-center ${
               showCustomInput ? cf.tipPresetOn : cf.tipPresetIdle
             }`}
           >
-            <div className="text-base font-bold text-foreground sm:text-lg">
+            <span className="text-sm font-semibold text-foreground sm:text-base">
               {t("tipFlow.tipAmount.chooseYourAmount")}
-            </div>
+            </span>
           </button>
         </div>
 
@@ -303,15 +308,6 @@ export function TipAmountPage() {
               step="0.01"
               min={MIN_TIP_AMOUNT_EUR}
             />
-          </div>
-        ) : null}
-
-        {selectedAmount ? (
-          <div className={cf.selectedAmountRow}>
-            <span className="text-sm text-muted-foreground">{t("tipFlow.tipAmount.tipAmountLabel")}</span>
-            <span className="text-xl font-bold tabular-nums text-foreground sm:text-2xl">
-              {formatEur(selectedAmount)}
-            </span>
           </div>
         ) : null}
       </section>

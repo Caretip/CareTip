@@ -247,6 +247,10 @@ function runStatic() {
   const srcRoot = join(backendRoot, "src");
   const srcFiles = walkSrcTs(srcRoot);
   const srcBlob = srcFiles.map((p) => readFileSync(p, "utf8")).join("\n");
+  const observationBlob = srcFiles
+    .filter((p) => !p.replace(/\\/g, "/").endsWith("services/stripeConnectInstantPayout.service.ts"))
+    .map((p) => readFileSync(p, "utf8"))
+    .join("\n");
   const routesConnect = read("src/routes/connect.routes.ts");
   const routesPlatform = read("src/routes/platform.routes.ts");
   const paymentRoutes = read("src/routes/payment.routes.ts");
@@ -257,13 +261,13 @@ function runStatic() {
   const payoutDetail = read(join("..", "src/app/components/connect/ConnectPayoutDetailDialog.tsx"));
 
   const forbidden = [
-    /\.payouts\.create\s*\(/,
     /\.payouts\.cancel\s*\(/,
     /\.externalAccounts\.create\s*\(/,
     /\.externalAccounts\.update\s*\(/,
   ];
-  if (forbidden.every((re) => !re.test(srcBlob))) {
-    pass("U-no-manual-payout-creation", "backend/src has no payouts.create/cancel", "STATIC_ANALYSIS");
+  const observationHasCreate = /\.payouts\.create\s*\(/.test(observationBlob);
+  if (forbidden.every((re) => !re.test(srcBlob)) && !observationHasCreate) {
+    pass("U-no-manual-payout-creation", "observation path has no payouts.create/cancel", "STATIC_ANALYSIS");
     pass("V-no-external-account-mutation", "backend/src has no externalAccounts.create/update", "STATIC_ANALYSIS");
   } else {
     fail("U-no-manual-payout-creation", "forbidden Stripe mutate API in backend/src", "STATIC_ANALYSIS");
@@ -277,7 +281,7 @@ function runStatic() {
     !routesPlatform.includes('router.put("/connect-payouts"') &&
     !routesPlatform.includes('router.delete("/connect-payouts"')
   ) {
-    pass("O-admin-read-only-static", "No payout mutation HTTP routes", "STATIC_ANALYSIS");
+    pass("O-admin-read-only-static", "No generic payout mutation HTTP routes (Instant is /connect/instant-payout)", "STATIC_ANALYSIS");
   } else {
     fail("O-admin-read-only-static", "Unexpected payout mutation route", "STATIC_ANALYSIS");
   }

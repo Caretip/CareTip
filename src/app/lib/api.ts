@@ -2860,6 +2860,55 @@ export async function createConnectLoginLink(): Promise<{ url: string }> {
   });
 }
 
+export type InstantPayoutReason =
+  | "not_connected"
+  | "stripe_not_configured"
+  | "business_closed"
+  | "payouts_disabled"
+  | "country_unsupported"
+  | "no_instant_destination"
+  | "zero_balance"
+  | "below_minimum"
+  | "eligible";
+
+export type InstantPayoutEligibility = {
+  connected: boolean;
+  eligible: boolean;
+  reason: InstantPayoutReason;
+  payoutsEnabled: boolean;
+  currency: string | null;
+  instantAvailableGrossCents: number;
+  instantAvailableNetCents: number;
+  availableCents: number;
+  pendingCents: number;
+  platformFeeCents: number;
+  feeConfigured: boolean;
+  targetTotalFeeBps: number;
+  displayedFeeBps: number | null;
+  destinationLast4: string | null;
+  destinationKind: "card" | "bank_account" | null;
+  canOpenExpressDashboard: boolean;
+};
+
+export async function getInstantPayoutEligibility(): Promise<InstantPayoutEligibility> {
+  return apiRequest(apiPath("/api/me/connect/instant-payout"), {
+    headers: getHeaders(),
+    credentials: "include",
+  });
+}
+
+export async function createInstantPayout(idempotencyKey: string): Promise<{
+  payout: ConnectPayout;
+  eligibility: InstantPayoutEligibility;
+}> {
+  return apiRequest(apiPath("/api/me/connect/instant-payout"), {
+    method: "POST",
+    headers: getHeaders(),
+    credentials: "include",
+    body: JSON.stringify({ idempotencyKey }),
+  });
+}
+
 export type ConnectPayoutStatus =
   | "pending"
   | "in_transit"

@@ -584,6 +584,33 @@ async function persistAttributedConnectPayout(args: {
   });
 }
 
+/** Persist a Stripe payout object after Instant create (same table as webhooks). */
+export async function ingestStripePayoutObjectForBusiness(args: {
+  businessId: string;
+  stripeAccountId: string;
+  payout: Stripe.Payout;
+  eventType?: string;
+  eventId?: string | null;
+}): Promise<HandleConnectPayoutResult> {
+  const parsed = parsePayoutObject(args.payout);
+  if (!parsed) {
+    return { matched: false, reason: "invalid_payout_object" };
+  }
+  return persistAttributedConnectPayout({
+    businessId: args.businessId,
+    stripeAccountId: args.stripeAccountId,
+    parsed,
+    eventCreated: Math.floor(Date.now() / 1000),
+    eventType: args.eventType ?? "payout.api_create",
+    eventId: args.eventId ?? null,
+    runReconciliation: false,
+  });
+}
+
+export function invalidateConnectPayoutListSyncThrottle(businessId: string): void {
+  lastConnectPayoutSyncAtByBusiness.delete(businessId);
+}
+
 /**
  * Persist a verified Stripe payout event. Attribution is event.account only.
  */

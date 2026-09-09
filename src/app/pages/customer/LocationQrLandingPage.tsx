@@ -1,8 +1,7 @@
 import { useNavigate, useParams, Link } from "react-router";
 import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { motion } from "motion/react";
-import { MapPin, Search } from "lucide-react";
+import { MapPin } from "lucide-react";
 import { useTipFlow } from "../../context/TipFlowContext";
 import {
   getPublicLocationContext,
@@ -13,16 +12,17 @@ import {
 import { toUserFriendlyMessage } from "../../lib/errorMessages";
 import { logClientError } from "../../lib/clientLog";
 import { CareTipPageLoader } from "../../components/CareTipPageLoader";
-import { ProfileAvatar } from "../../components/ui/profile-avatar";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { getRepeatTipDataForBusiness } from "../../lib/repeatTip";
 import { markCustomerFlowEntered } from "../../lib/customerFlowGuard";
 import { formatEur } from "../../lib/formatEur";
+import { startGuestTipCheckout } from "../../lib/startGuestTipCheckout";
 import { customerFlowUi as cf } from "./customerFlowUi";
 import { CustomerJourneyHeader, CustomerJourneyHomeButton } from "./CustomerJourneyHeader";
 import { CustomerJourneyAttributionFooter } from "./CustomerJourneyCareTipAttribution";
 import { venueBrandFromBusiness } from "./customerJourneyBrand";
 import { headerSelectTeamMember } from "./customerJourneyHeaderCopy";
+import { CustomerTeamPicker } from "./CustomerTeamPicker";
+import { CustomerRepeatTipPrompt } from "./CustomerRepeatTipPrompt";
 
 /**
  * /qr/location/:locationId — Venue QR: business team list in context of one location.
@@ -37,6 +37,7 @@ export function LocationQrLandingPage() {
   const [data, setData] = useState<PublicLocationContextResponse | null>(null);
   const [query, setQuery] = useState("");
   const [repeatDismissed, setRepeatDismissed] = useState(false);
+  const [checkingOut, setCheckingOut] = useState(false);
 
   useEffect(() => {
     const raw = locationId?.trim();
@@ -145,6 +146,34 @@ export function LocationQrLandingPage() {
 
   const teamHeader = headerSelectTeamMember(t);
 
+  const handleRepeatTip = async () => {
+    if (!repeatCandidate || !data) return;
+    setBusinessId(data.business.id);
+    setEmployee(
+      repeatCandidate.emp.id,
+      repeatCandidate.emp.name ?? t("tipFlow.common.teamMember"),
+      repeatCandidate.emp.avatar ?? undefined,
+    );
+    const bs = data.business.slug?.trim();
+    const es = repeatCandidate.emp.slug?.trim();
+    if (bs && es) setStaffTipReturnPath(bs, es);
+    else setStaffProfileSlug(repeatCandidate.emp.slug);
+    setAmount(repeatCandidate.amount);
+    markCustomerFlowEntered();
+    setCheckingOut(true);
+    const result = await startGuestTipCheckout(
+      {
+        amount: repeatCandidate.amount,
+        employeeId: repeatCandidate.emp.id,
+        businessId: data.business.id,
+        employeeName: repeatCandidate.emp.name,
+        locationId: data.location.id,
+      },
+      t("tipFlow.payment.checkoutStartError"),
+    );
+    if (result !== "redirected") setCheckingOut(false);
+  };
+
   return (
     <div className={`${cf.page} pb-8 sm:pb-10`}>
       <CustomerJourneyHeader
@@ -161,125 +190,37 @@ export function LocationQrLandingPage() {
           </span>
         ))}
         stepTitle={teamHeader.stepTitle}
-        trustMessage={teamHeader.trustMessage}
       />
 
-      <div className={`${cf.main} lg:space-y-7`}>
+      <div className={`${cf.mainTeam} space-y-8`}>
         {repeatCandidate ? (
-          <motion.div initial={{ y: 12, opacity: 0 }} animate={{ y: 0, opacity: 1 }}>
-            <Card className={cf.cardShadcn}>
-              <CardContent className="p-5 sm:p-6">
-                <div className="flex items-start justify-between gap-4">
-                  <div className="min-w-0">
-                    <p className="text-sm font-semibold text-foreground">{t("tipFlow.qrLanding.repeatWelcome")}</p>
-                    <p className="mt-1 text-sm text-muted-foreground">
-                      {t("tipFlow.qrLanding.repeatBody", {
-                        name: repeatCandidate.emp.name ?? t("tipFlow.common.teamMember"),
-                      })}
-                    </p>
-                    <p className="mt-2 text-xs font-semibold text-primary">
-                      {t("tipFlow.qrLanding.repeatLastTip", { amount: formatEur(repeatCandidate.amount) })}
-                    </p>
-                  </div>
-                  <ProfileAvatar
-                    src={repeatCandidate.emp.avatar}
-                    displayName={repeatCandidate.emp.name ?? t("tipFlow.common.teamMember")}
-                    className="h-12 w-12 shrink-0 ring-2 ring-primary/20"
-                  />
-                </div>
-                <div className="mt-4 flex flex-col gap-3 sm:flex-row">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setBusinessId(data.business.id);
-                      setEmployee(
-                        repeatCandidate.emp.id,
-                        repeatCandidate.emp.name ?? t("tipFlow.common.teamMember"),
-                        repeatCandidate.emp.avatar ?? undefined,
-                      );
-                      const bs = data.business.slug?.trim();
-                      const es = repeatCandidate.emp.slug?.trim();
-                      if (bs && es) setStaffTipReturnPath(bs, es);
-                      else setStaffProfileSlug(repeatCandidate.emp.slug);
-                      setAmount(repeatCandidate.amount);
-                      markCustomerFlowEntered();
-                      navigate("/payment");
-                    }}
-                    className={`${cf.btnPrimaryLg} py-3.5 text-sm sm:flex-1`}
-                  >
-                    {t("tipFlow.qrLanding.tipAgain")}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setRepeatDismissed(true)}
-                    className={`${cf.btnSecondaryLg} py-3.5 text-sm sm:flex-1`}
-                  >
-                    {t("tipFlow.qrLanding.chooseDifferentStaff")}
-                  </button>
-                </div>
-              </CardContent>
-            </Card>
-          </motion.div>
+          <CustomerRepeatTipPrompt
+            employeeName={repeatCandidate.emp.name ?? t("tipFlow.common.teamMember")}
+            employeeAvatar={repeatCandidate.emp.avatar}
+            body={t("tipFlow.qrLanding.repeatBody", {
+              name: repeatCandidate.emp.name ?? t("tipFlow.common.teamMember"),
+            })}
+            lastTipLabel={t("tipFlow.qrLanding.repeatLastTip", { amount: formatEur(repeatCandidate.amount) })}
+            primaryLabel={t("tipFlow.qrLanding.tipAgain")}
+            secondaryLabel={t("tipFlow.qrLanding.chooseDifferentStaff")}
+            onPrimary={() => void handleRepeatTip()}
+            onSecondary={() => setRepeatDismissed(true)}
+            primaryDisabled={checkingOut}
+          />
         ) : null}
 
-        <Card className={cf.cardSearchLight}>
-          <CardHeader className={`${cf.cardHeaderPadding} pb-2`}>
-            <CardTitle className={cf.cardTitle}>{t("tipFlow.locationLanding.searchTitle")}</CardTitle>
-            <CardDescription className={cf.cardDesc}>{t("tipFlow.locationLanding.searchDesc")}</CardDescription>
-          </CardHeader>
-          <CardContent className="px-5 pb-5 sm:px-6">
-            <div className="relative">
-              <Search className="pointer-events-none absolute left-3.5 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
-              <input
-                type="search"
-                placeholder={t("tipFlow.qrLanding.searchPlaceholder")}
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                className={`${cf.inputField} pl-11`}
-                autoComplete="off"
-              />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className={cf.cardShadcn}>
-          <CardHeader className={`${cf.cardHeaderPadding} pb-2`}>
-            <CardTitle className={cf.cardTitle}>{t("tipFlow.locationLanding.teamTitle")}</CardTitle>
-            <CardDescription className={cf.cardDesc}>{t("tipFlow.locationLanding.teamDesc")}</CardDescription>
-          </CardHeader>
-          <CardContent className="px-5 pb-5 sm:px-6">
-            {filtered.length === 0 ? (
-              <p className="py-8 text-center text-sm text-muted-foreground">{t("tipFlow.locationLanding.noMatches")}</p>
-            ) : (
-              <ul className="grid grid-cols-2 gap-4 sm:grid-cols-3 sm:gap-5">
-                {filtered.map((emp, index) => (
-                  <motion.li
-                    key={emp.id}
-                    initial={{ opacity: 0, y: 8 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: index * 0.03 }}
-                  >
-                    <button
-                      type="button"
-                      onClick={() => pickEmployee(emp)}
-                      className={cf.employeeCard}
-                    >
-                      <ProfileAvatar
-                        src={emp.avatar}
-                        displayName={emp.name}
-                        className={cf.employeeAvatar}
-                      />
-                      <span className="line-clamp-2 text-center text-sm font-semibold leading-tight text-foreground">
-                        {emp.name}
-                      </span>
-                      <span className="line-clamp-2 text-center text-xs text-muted-foreground">{emp.jobTitle}</span>
-                    </button>
-                  </motion.li>
-                ))}
-              </ul>
-            )}
-          </CardContent>
-        </Card>
+        <CustomerTeamPicker
+          searchLabel={t("tipFlow.locationLanding.searchTitle")}
+          searchPlaceholder={t("tipFlow.qrLanding.searchPlaceholder")}
+          teamLabel={t("tipFlow.locationLanding.teamTitle")}
+          emptyLabel={t("tipFlow.locationLanding.noMatches")}
+          query={query}
+          onQueryChange={setQuery}
+          employees={filtered}
+          onPick={pickEmployee}
+          tipButtonLabel={t("tipFlow.qrLanding.tipCta")}
+          tipButtonAria={(name) => t("tipFlow.locationLanding.tipPerson", { name })}
+        />
       </div>
 
       <CustomerJourneyAttributionFooter label={t("tipFlow.common.poweredByCareTip")} />

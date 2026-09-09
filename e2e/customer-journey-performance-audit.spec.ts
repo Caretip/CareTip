@@ -387,7 +387,7 @@ test.describe("Customer journey performance audit", () => {
       await auditRoute(
         `/qr-landing/${MOCK.businessId}`,
         "h1, h2",
-        "ul.grid button, button[type='button']",
+        "ul[data-customer-team] button, button[type='button']",
       ),
     );
 
@@ -397,14 +397,6 @@ test.describe("Customer journey performance audit", () => {
         `/tip-amount?employeeId=${MOCK.employeeId}&returnBusinessSlug=${MOCK.businessSlug}&returnEmployeeSlug=${MOCK.employeeSlug}&direct=1`,
         "h1",
         "button:has-text('€'), button:has-text('5'), button:has-text('10')",
-      ),
-    );
-
-    report.pages.push(
-      await auditRoute(
-        `/payment?employeeId=${MOCK.employeeId}&amount=10&returnBusinessSlug=${MOCK.businessSlug}&returnEmployeeSlug=${MOCK.employeeSlug}`,
-        "h1",
-        "button:has-text('Pay'), button:has-text('Zahlen'), button:has-text('€')",
       ),
     );
 
@@ -428,10 +420,10 @@ test.describe("Customer journey performance audit", () => {
     activeRoute = "transition:qr-landing";
     await page.addInitScript(PERF_OBSERVER_INIT);
     await page.goto(`/qr-landing/${MOCK.businessId}`, { waitUntil: "domcontentloaded" });
-    await page.waitForSelector("ul.grid button, button[type='button']", { timeout: 20_000 });
+    await page.waitForSelector("ul[data-customer-team] button, button[type='button']", { timeout: 20_000 });
 
     const t1 = Date.now();
-    const employeeBtn = page.locator("ul.grid button").first();
+    const employeeBtn = page.locator("ul[data-customer-team] button").first();
     await employeeBtn.click();
     await page.waitForURL(/tip-amount/, { timeout: 15_000 });
     const urlChange1 = Date.now();
@@ -452,15 +444,15 @@ test.describe("Customer journey performance audit", () => {
     await expect(continueBtn).toBeVisible({ timeout: 10_000 });
     const t2 = Date.now();
     await continueBtn.click();
-    await page.waitForURL(/payment/, { timeout: 15_000 });
-    const urlChange2 = Date.now();
-    await page.waitForSelector("button:has-text('Pay'), button:has-text('Zahlen'), button:has-text('€')", { timeout: 15_000 });
+    await page.waitForSelector("button:has-text('Continue'), button:has-text('Weiter'), [aria-busy='true']", {
+      timeout: 15_000,
+    }).catch(() => undefined);
     const interactive2 = Date.now();
     report.transitions.push({
       from: "Tip Amount",
-      to: "Payment",
-      clickToUrlChangeMs: urlChange2 - t2,
-      urlChangeToInteractiveMs: interactive2 - urlChange2,
+      to: "Stripe Checkout start",
+      clickToUrlChangeMs: interactive2 - t2,
+      urlChangeToInteractiveMs: 0,
       totalMs: interactive2 - t2,
       loaderFlashDuringTransition: 0,
     });

@@ -7,6 +7,7 @@ import "@/styles/bundles/customer.css";
 import { cn } from "@/lib/utils";
 import {
   caretipBtnPrimary,
+  caretipBtnPrimaryCompact,
   caretipBtnSecondary,
 } from "@/lib/caretipButtonSystem";
 
@@ -23,19 +24,24 @@ export const customerFlowUi = {
   headerInner:
     "caretip-container flex min-w-0 items-center gap-3 py-3.5 sm:gap-4 sm:py-4",
 
-  customerJourneyHeader: "caretip-container customer-journey-header pt-6 pb-4 sm:pt-6 sm:pb-4",
+  customerJourneyHeader: "caretip-container customer-journey-header pt-3 pb-3 sm:pt-4 sm:pb-4",
   customerJourneyToolbar:
-    "customer-journey-toolbar mb-4 grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)] items-center gap-x-2",
+    "customer-journey-toolbar mb-3 grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)] items-center gap-x-2",
   customerJourneyToolbarSide: "flex min-w-0 items-center",
-  customerJourneyVenueRow: "flex min-w-0 items-center gap-3 sm:gap-3.5",
+  customerJourneyVenueRow: "flex min-w-0 flex-col items-center gap-2 text-center",
   customerJourneyVenueName:
-    "customer-journey-venue-name text-balance text-xl font-semibold leading-tight tracking-tight text-foreground sm:text-[1.375rem]",
+    "customer-journey-venue-name text-balance text-lg font-semibold leading-tight tracking-tight text-foreground sm:text-xl",
   customerJourneyVenueTagline:
     "mt-0.5 text-xs font-medium leading-snug text-muted-foreground/85 sm:text-[0.8125rem]",
   customerJourneyVenueContext: "mt-1 text-xs leading-snug text-muted-foreground sm:text-[0.8125rem]",
-  customerJourneyStepTitle: "mt-4 text-sm font-medium leading-snug text-foreground/90 sm:text-[0.9375rem]",
-  customerJourneyEmployee: "mt-2 text-sm font-semibold leading-snug text-foreground sm:text-[0.9375rem]",
-  customerJourneyTrustWrap: "mt-2.5 sm:mt-3",
+  customerJourneyStepTitle:
+    "mt-3 text-center text-sm font-medium leading-snug text-foreground/90 sm:text-[0.9375rem]",
+  customerJourneyEmployee: "mt-1.5 text-center text-sm font-semibold leading-snug text-foreground sm:text-[0.9375rem]",
+  customerJourneyTrustWrap: "mt-2 flex justify-center sm:mt-2.5",
+  customerJourneyEmployeeFocus: "flex flex-col items-center text-center",
+  customerJourneyEmployeeFocusName:
+    "mt-3 text-balance text-xl font-semibold leading-tight tracking-tight text-foreground sm:text-[1.375rem]",
+  surfaceSectionLabel: "text-sm font-semibold tracking-tight text-foreground",
   customerJourneyTrust:
     "inline-flex max-w-full items-center gap-1.5 text-xs font-normal leading-snug text-muted-foreground/70",
 
@@ -59,8 +65,10 @@ export const customerFlowUi = {
   backButton:
     "inline-flex shrink-0 items-center justify-center rounded-lg border border-border/70 bg-background px-2.5 py-2 text-sm font-semibold text-foreground sm:px-3",
 
-  main: "caretip-container mx-auto max-w-xl space-y-5 py-5 sm:space-y-5 sm:py-8",
-  mainCompact: "caretip-container mx-auto max-w-xl space-y-4 py-4 sm:space-y-4 sm:py-7",
+  main: "caretip-container mx-auto max-w-xl space-y-5 py-4 sm:space-y-5 sm:py-6",
+  /** Team / QR landing — wide enough for a 2–3 column employee grid. */
+  mainTeam: "caretip-container mx-auto max-w-4xl space-y-5 py-4 sm:space-y-5 sm:py-6",
+  mainCompact: "caretip-container mx-auto max-w-md space-y-4 py-3 sm:space-y-4 sm:py-5",
 
   fixedBottomBar:
     "fixed bottom-0 left-0 right-0 z-30 border-t border-border/70 bg-background/96",
@@ -83,11 +91,19 @@ export const customerFlowUi = {
   cardDesc: "text-sm leading-relaxed text-muted-foreground",
 
   employeeCard:
-    "customer-flow-employee-card flex w-full flex-col items-center gap-3 rounded-lg border border-border/70 bg-card p-4 text-center sm:gap-3.5 sm:p-5",
+    "customer-flow-employee-card flex w-full flex-col items-center gap-2 rounded-xl p-3 text-center sm:gap-2.5 sm:p-3.5",
+  employeePick:
+    "customer-flow-employee-pick flex min-h-[7.25rem] w-full flex-col items-center gap-2 rounded-xl px-2 py-3 text-center transition-colors hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 sm:min-h-[7.75rem]",
+  /** Square employee photo frame (QR landing and other customer steps). */
+  employeePhotoSquare: "rounded-md ring-1 ring-border/50",
+  employeeGridPhoto:
+    "aspect-square h-auto w-full max-w-[8.75rem] rounded-md ring-1 ring-border/50 sm:max-w-[9.5rem]",
+  employeeTipCta: cn(caretipBtnPrimaryCompact, "mt-2.5 min-h-11 min-w-[4.75rem] px-5"),
   employeeCardSelected:
-    "border-primary bg-primary/[0.06] ring-1 ring-primary/25",
+    "bg-primary/[0.06] ring-1 ring-primary/25",
   employeeAvatar:
-    "h-[5.5rem] w-[5.5rem] ring-[3px] ring-border sm:h-24 sm:w-24",
+    "h-16 w-16 ring-2 ring-border sm:h-[4.5rem] sm:w-[4.5rem]",
+  employeePickAvatar: "h-16 w-16 ring-2 ring-border sm:h-[4.25rem] sm:w-[4.25rem]",
 
   employeeSummaryCard: cn(quietSurface, "customer-flow-employee-summary"),
   employeeSummaryAvatar:
@@ -101,11 +117,11 @@ export const customerFlowUi = {
     "border-primary bg-primary/[0.06] ring-1 ring-primary/20",
 
   tipPresetTile:
-    "customer-flow-tip-preset flex min-h-[4.75rem] flex-col justify-center rounded-lg border p-3.5 text-left sm:min-h-[5.25rem] sm:p-4",
+    "customer-flow-tip-preset flex min-h-[3.75rem] flex-col items-center justify-center rounded-xl p-3 text-center sm:min-h-[4.25rem] sm:p-3.5",
   tipPresetIdle:
-    "border-border/70 bg-card hover:border-foreground/25",
+    "bg-muted/40 hover:bg-muted/70",
   tipPresetOn:
-    "border-primary bg-primary/[0.06] ring-1 ring-primary/20",
+    "bg-primary/[0.12] text-foreground ring-2 ring-primary/50",
 
   inputField:
     "w-full rounded-lg border border-border bg-background px-4 py-3.5 text-foreground placeholder:text-muted-foreground focus-visible:border-primary/45 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/20",

@@ -1,4 +1,4 @@
-/** Query params so /payment can rehydrate tip context after in-memory state is lost. */
+/** Query params so /payment bookmarks can recover tip-amount context. */
 export function paymentPathFromTipAmount(opts: {
   employeeId: string;
   returnSlug?: string | null;
@@ -12,5 +12,5 @@ export function paymentPathFromTipAmount(opts: {
   } else if (opts.returnSlug) {
     qs.set("returnSlug", opts.returnSlug);
   }
-  return `/payment?${qs.toString()}`;
+  return `/tip-amount?${qs.toString()}`;
 }

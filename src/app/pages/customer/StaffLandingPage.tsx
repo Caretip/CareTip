@@ -1,6 +1,5 @@
 import { useNavigate, useParams, Link, useSearchParams } from "react-router";
 import { useEffect, useState } from "react";
-import { motion } from "motion/react";
 import { useTranslation } from "react-i18next";
 import { Heart } from "lucide-react";
 import { useTipFlow } from "../../context/TipFlowContext";
@@ -12,10 +11,10 @@ import { ProfileAvatar } from "../../components/ui/profile-avatar";
 import { getRepeatTipDataForBusiness } from "../../lib/repeatTip";
 import { markCustomerFlowEntered } from "../../lib/customerFlowGuard";
 import { formatEur } from "../../lib/formatEur";
+import { startGuestTipCheckout } from "../../lib/startGuestTipCheckout";
 import { customerFlowUi as cf } from "./customerFlowUi";
 import { CustomerJourneyHeader } from "./CustomerJourneyHeader";
 import { CustomerJourneyAttributionFooter } from "./CustomerJourneyCareTipAttribution";
-import { headerLeaveTipFor } from "./customerJourneyHeaderCopy";
 import { venueBrandFromResolved, useCustomerVenueBrand, mergeCustomerVenueBrand } from "./customerJourneyBrand";
 import {
   type CustomerEntryPhase,
@@ -42,6 +41,7 @@ export function StaffLandingPage() {
   const [staff, setStaff] = useState<StaffBySlugResponse | null>(null);
   const [showRepeatPrompt, setShowRepeatPrompt] = useState(false);
   const [repeatAmount, setRepeatAmount] = useState<number | null>(null);
+  const [checkingOut, setCheckingOut] = useState(false);
 
   useEffect(() => {
     if (!slugParam?.trim()) {
@@ -115,14 +115,24 @@ export function StaffLandingPage() {
     );
   };
 
-  const handleRepeatTip = () => {
+  const handleRepeatTip = async () => {
     if (!staff || repeatAmount == null || !slugParam?.trim()) return;
     setBusinessId(staff.businessId);
     setEmployee(staff.id, staff.name, staff.avatar ?? undefined);
     setStaffProfileSlug(slugParam.trim());
     setAmount(repeatAmount);
     markCustomerFlowEntered();
-    navigate("/payment");
+    setCheckingOut(true);
+    const result = await startGuestTipCheckout(
+      {
+        amount: repeatAmount,
+        employeeId: staff.id,
+        businessId: staff.businessId,
+        employeeName: staff.name,
+      },
+      t("tipFlow.payment.checkoutStartError"),
+    );
+    if (result !== "redirected") setCheckingOut(false);
   };
 
   const fallbackVenue = t("tipFlow.common.venue");
@@ -180,30 +190,21 @@ export function StaffLandingPage() {
     );
   }
 
-  const profileHeader = staff ? headerLeaveTipFor(t, staff.name) : headerLeaveTipFor(t, t("tipFlow.common.teamMember"));
-
   return (
     <div className={cf.page}>
-      <CustomerJourneyHeader
-        venue={venueBrand}
-        stepTitle={profileHeader.stepTitle}
-        trustMessage={profileHeader.trustMessage}
-      />
+      <CustomerJourneyHeader venue={venueBrand} />
 
       <div className={`${cf.main} max-w-xl pb-8 sm:pb-10`}>
-        <motion.div
-          initial={{ y: 14, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          className={`${cf.cardShadcn} px-6 py-8 text-center`}
-        >
+        <div className="px-1 py-6 text-center sm:py-8">
           <div className="mx-auto mb-5 inline-flex">
             <ProfileAvatar
               src={staff.avatar}
               displayName={staff.name}
-              className="mx-auto size-[7.25rem] ring-1 ring-border"
+              variant="square"
+              className={`mx-auto size-[6.5rem] ${cf.employeePhotoSquare}`}
             />
           </div>
-          <h2 className="text-balance text-2xl font-bold tracking-tight text-foreground">{staff.name}</h2>
+          <h2 className="text-balance text-2xl font-semibold tracking-tight text-foreground">{staff.name}</h2>
           {staff.jobTitle ? (
             <p className="mt-1.5 text-sm font-medium text-muted-foreground">{staff.jobTitle}</p>
           ) : null}
@@ -214,7 +215,8 @@ export function StaffLandingPage() {
             <div className="mt-7 space-y-3">
               <button
                 type="button"
-                onClick={handleRepeatTip}
+                onClick={() => void handleRepeatTip()}
+                disabled={checkingOut}
                 className={`${cf.btnPrimaryLg} py-4 text-[0.9375rem]`}
               >
                 <Heart className="size-5 shrink-0" aria-hidden />
@@ -230,7 +232,7 @@ export function StaffLandingPage() {
               {t("tipFlow.staffLanding.leaveTipButton")}
             </button>
           )}
-        </motion.div>
+        </div>
 
         <CustomerJourneyAttributionFooter label={t("tipFlow.common.poweredByCareTip")} />
       </div>

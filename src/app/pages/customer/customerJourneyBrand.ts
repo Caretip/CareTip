@@ -19,6 +19,7 @@ export type CustomerJourneyVenueBrand = {
 export type CustomerJourneyEmployeeIdentity = {
   name: string;
   role?: string | null;
+  avatar?: string | null;
 };
 
 export function venueBrandFromResolved(
@@ -74,11 +75,9 @@ export function venueBrandFromBusiness(
     branding?.premium && branding.brandTagline?.trim() ? branding.brandTagline.trim() : undefined;
   const derivedContext =
     contextLine ??
-    (branding?.premium && branding.welcomeMessage
-      ? branding.welcomeMessage
-      : business.type || business.location
-        ? [business.type, business.location].filter(Boolean).join(" · ")
-        : undefined);
+    (business.type || business.location
+      ? [business.type, business.location].filter(Boolean).join(" · ")
+      : undefined);
 
   return {
     name: displayName,

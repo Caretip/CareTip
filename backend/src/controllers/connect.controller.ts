@@ -12,6 +12,10 @@ import {
   getPayoutForBusiness,
   listPayoutsForBusiness,
 } from "../services/stripeConnectPayout.service.js";
+import {
+  createInstantPayoutForBusiness,
+  getInstantPayoutEligibilityForBusiness,
+} from "../services/stripeConnectInstantPayout.service.js";
 import { parseBoundedSkip } from "../utils/paginationLimits.js";
 import { clientSafeMessage, CLIENT_FALLBACK, logServerError } from "../utils/httpErrors.js";
 
@@ -205,6 +209,71 @@ export async function getMyConnectPayout(req: Request, res: Response) {
     return res.json(payout);
   } catch (err) {
     logServerError("connect.getMyConnectPayout", err);
+    return res.status(400).json({ message: connectClientMessage(err) });
+  }
+}
+
+function rejectInstantPayoutClientSteering(req: Request, res: Response): boolean {
+  if (rejectClientConnectSteering(req, res)) return true;
+  const body = (req.body ?? {}) as Record<string, unknown>;
+  if (
+    body.amount != null ||
+    body.amountCents != null ||
+    body.currency != null ||
+    body.destination != null ||
+    body.balance != null ||
+    body.fee != null ||
+    body.eligible != null
+  ) {
+    res.status(400).json({
+      message: "Invalid request.",
+      code: "CONNECT_CLIENT_PAYOUT_STEERING_FORBIDDEN",
+    });
+    return true;
+  }
+  return false;
+}
+
+/**
+ * GET /api/me/connect/instant-payout
+ * Stripe-authoritative Instant Payout eligibility for the JWT business.
+ */
+export async function getMyInstantPayoutEligibility(req: Request, res: Response) {
+  try {
+    const ctx = await resolveManagerBusiness(req);
+    if (!ctx.ok) return res.status(ctx.status).json({ message: ctx.message });
+
+    const eligibility = await getInstantPayoutEligibilityForBusiness(ctx.businessId);
+    return res.json(eligibility);
+  } catch (err) {
+    logServerError("connect.getMyInstantPayoutEligibility", err);
+    if (err instanceof StripeConnectError) {
+      return res.status(err.httpStatus).json({ message: err.message, code: err.code });
+    }
+    return res.status(400).json({ message: connectClientMessage(err) });
+  }
+}
+
+/**
+ * POST /api/me/connect/instant-payout
+ * Creates an Instant Payout for the JWT business. Amount/destination from Stripe only.
+ */
+export async function postMyInstantPayout(req: Request, res: Response) {
+  try {
+    const ctx = await resolveManagerBusiness(req);
+    if (!ctx.ok) return res.status(ctx.status).json({ message: ctx.message });
+    if (rejectInstantPayoutClientSteering(req, res)) return;
+
+    const result = await createInstantPayoutForBusiness({
+      businessId: ctx.businessId,
+      idempotencyKey: (req.body as { idempotencyKey?: unknown } | undefined)?.idempotencyKey,
+    });
+    return res.status(201).json(result);
+  } catch (err) {
+    logServerError("connect.postMyInstantPayout", err);
+    if (err instanceof StripeConnectError) {
+      return res.status(err.httpStatus).json({ message: err.message, code: err.code });
+    }
     return res.status(400).json({ message: connectClientMessage(err) });
   }
 }

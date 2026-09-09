@@ -1,11 +1,15 @@
+import { Link } from "react-router";
 import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Banknote, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import {
   createConnectLoginLink,
+  createInstantPayout,
+  getInstantPayoutEligibility,
   getMyConnectPayout,
   listMyConnectPayouts,
   type ConnectPayout,
+  type InstantPayoutEligibility,
 } from "../../../../lib/api";
 import {
   formatConnectPayoutAmount,
@@ -17,7 +21,6 @@ import {
   ConnectPayoutDetailDialog,
   useConnectPayoutDetail,
 } from "../../../connect/ConnectPayoutDetailDialog";
-import { EmptyState } from "../../../ui/EmptyState";
 import { ListFilterLoadError } from "../../../shared/ListFilterLoadError";
 import { classifyFetchError } from "../../../../lib/listFilterUx";
 import { logClientError } from "../../../../lib/clientLog";
@@ -25,24 +28,59 @@ import { toUserFriendlyMessage } from "../../../../lib/errorMessages";
 import { performExternalStripeRedirect } from "../../../../lib/externalStripeRedirect";
 import { toast } from "sonner";
 import { dashboardWorkspaceUi } from "../../../dashboard/dashboardWorkspaceUi";
+import { businessUi } from "../../../business/businessDashboardUi";
 import { cn } from "@/lib/utils";
+import { caretipBtnPrimaryCompact } from "@/lib/caretipButtonSystem";
+import { caretipType } from "@/lib/typography/caretipType";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "../../../ui/dialog";
+import { Button } from "@/components/ui/button";
 
 const PAGE_SIZE = 20;
+
+function formatMaskedMethod(last4: string | null): string | null {
+  if (!last4) return null;
+  return `•••• ${last4}`;
+}
+
+/** Fee row only when Stripe net_available reported a positive platform Instant application fee. */
+function hasChargedInstantFee(eligibility: InstantPayoutEligibility): boolean {
+  return eligibility.feeConfigured && eligibility.platformFeeCents > 0;
+}
+
+function feeRateLabel(eligibility: InstantPayoutEligibility): string | null {
+  if (!hasChargedInstantFee(eligibility)) return null;
+  const bps = eligibility.displayedFeeBps;
+  if (typeof bps !== "number" || !Number.isFinite(bps) || bps <= 0) return null;
+  const pct = bps / 100;
+  return Number.isInteger(pct) ? String(pct) : pct.toFixed(1);
+}
 
 export function ConnectPayoutsPanel({ loading: bootLoading }: { loading?: boolean }) {
   const { t, i18n } = useTranslation();
   const [items, setItems] = useState<ConnectPayout[]>([]);
   const [total, setTotal] = useState(0);
   const [skip, setSkip] = useState(0);
-  const [loading, setLoading] = useState(true);
+  const [historyLoading, setHistoryLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [errorKind, setErrorKind] = useState<ReturnType<typeof classifyFetchError>>("api");
   const [dashboardBusy, setDashboardBusy] = useState(false);
+  const [eligibility, setEligibility] = useState<InstantPayoutEligibility | null>(null);
+  const [eligibilityLoading, setEligibilityLoading] = useState(true);
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [payoutBusy, setPayoutBusy] = useState(false);
+  const [idempotencyKey, setIdempotencyKey] = useState("");
   const detail = useConnectPayoutDetail(getMyConnectPayout);
 
-  const load = useCallback(
+  const loadHistory = useCallback(
     async (nextSkip: number) => {
-      setLoading(true);
+      setHistoryLoading(true);
       setError(null);
       try {
         const res = await listMyConnectPayouts({ take: PAGE_SIZE, skip: nextSkip });
@@ -56,13 +94,27 @@ export function ConnectPayoutsPanel({ loading: bootLoading }: { loading?: boolea
         setItems([]);
         setTotal(0);
       } finally {
-        setLoading(false);
+        setHistoryLoading(false);
       }
     },
     [t],
   );
 
+  const loadEligibility = useCallback(async () => {
+    setEligibilityLoading(true);
+    try {
+      const next = await getInstantPayoutEligibility();
+      setEligibility(next);
+    } catch (err) {
+      logClientError("ConnectPayoutsPanel.instant", err);
+      setEligibility(null);
+    } finally {
+      setEligibilityLoading(false);
+    }
+  }, []);
+
   async function openStripeDashboard() {
+    if (dashboardBusy) return;
     setDashboardBusy(true);
     try {
       const { url } = await createConnectLoginLink();
@@ -77,158 +129,183 @@ export function ConnectPayoutsPanel({ loading: bootLoading }: { loading?: boolea
     }
   }
 
+  function openInstantConfirm() {
+    if (!eligibility?.eligible || payoutBusy) return;
+    setIdempotencyKey(
+      typeof crypto !== "undefined" && "randomUUID" in crypto
+        ? crypto.randomUUID()
+        : `ip_${Date.now()}_${Math.random().toString(36).slice(2, 12)}`,
+    );
+    setConfirmOpen(true);
+  }
+
+  async function confirmInstantPayout() {
+    if (!idempotencyKey || payoutBusy || !eligibility?.eligible) return;
+    setPayoutBusy(true);
+    try {
+      const result = await createInstantPayout(idempotencyKey);
+      setEligibility(result.eligibility);
+      setConfirmOpen(false);
+      setItems((prev) => {
+        if (prev.some((row) => row.id === result.payout.id)) return prev;
+        return [result.payout, ...prev];
+      });
+      setTotal((n) => n + 1);
+      toast.success(t("business.billing.payouts.instant.success"));
+      await loadHistory(0);
+    } catch (err) {
+      logClientError("ConnectPayoutsPanel.instantCreate", err);
+      toast.error(toUserFriendlyMessage(err) || t("business.billing.payouts.instant.createError"));
+    } finally {
+      setPayoutBusy(false);
+    }
+  }
+
   useEffect(() => {
-    void load(0);
-  }, [load]);
+    void loadHistory(0);
+    void loadEligibility();
+  }, [loadHistory, loadEligibility]);
 
-  if (bootLoading || (loading && items.length === 0 && !error)) {
-    return (
-      <div className="flex min-h-[120px] items-center justify-center text-muted-foreground">
-        <Loader2 className="h-6 w-6 animate-spin" aria-hidden />
-        <span className="sr-only">{t("business.billing.payouts.loading")}</span>
-      </div>
-    );
-  }
-
-  if (error) {
-    return <ListFilterLoadError kind={errorKind} message={error} onRetry={() => void load(skip)} />;
-  }
-
-  const toolbar = (
-    <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-      <p className="text-sm text-muted-foreground">{t("business.billing.payouts.hint")}</p>
-      <button
-        type="button"
-        disabled={dashboardBusy}
-        aria-busy={dashboardBusy}
-        onClick={() => void openStripeDashboard()}
-        className={cn(
-          "inline-flex h-10 w-full shrink-0 items-center justify-center rounded-md px-4 text-sm font-semibold sm:w-auto",
-          "bg-foreground text-background hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50",
-        )}
-      >
-        {dashboardBusy ? (
-          <>
-            <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden />
-            {t("business.billing.connect.starting")}
-          </>
-        ) : (
-          t("business.billing.payouts.viewInStripe")
-        )}
-      </button>
-    </div>
-  );
-
-  if (items.length === 0) {
-    return (
-      <div className="space-y-4">
-        {toolbar}
-        <EmptyState
-          icon={<Banknote className="h-8 w-8 text-muted-foreground/60" aria-hidden />}
-          title={t("business.billing.payouts.emptyTitle")}
-          description={t("business.billing.payouts.emptyBody")}
-        />
-      </div>
-    );
-  }
+  const locale = i18n.language;
 
   return (
-    <div className="space-y-4">
-      {toolbar}
+    <div className="space-y-10">
+      <InstantBalanceSection
+        bootLoading={Boolean(bootLoading)}
+        eligibility={eligibility}
+        loading={eligibilityLoading}
+        locale={locale}
+        dashboardBusy={dashboardBusy}
+        payoutBusy={payoutBusy}
+        onRetryEligibility={() => void loadEligibility()}
+        onOpenDashboard={() => void openStripeDashboard()}
+        onRequestPayout={openInstantConfirm}
+      />
 
-      <div className="space-y-2.5 md:hidden">
-        {items.map((payout) => (
-          <PayoutCard
-            key={payout.id}
-            payout={payout}
-            locale={i18n.language}
-            onOpen={() => detail.openFor(payout.id, payout)}
-          />
-        ))}
-      </div>
-
-      <div className="hidden overflow-x-auto rounded-xl border border-border md:block">
-        <table className="w-full min-w-[720px] text-left text-sm">
-          <caption className="sr-only">{t("business.billing.payouts.tableCaption")}</caption>
-          <thead className="border-b border-border bg-muted/40 text-xs uppercase tracking-wide text-muted-foreground">
-            <tr>
-              <th scope="col" className="px-4 py-2.5 font-medium">{t("business.billing.payouts.colAmount")}</th>
-              <th scope="col" className="px-4 py-2.5 font-medium">{t("business.billing.payouts.colStatus")}</th>
-              <th scope="col" className="px-4 py-2.5 font-medium">{t("business.billing.payouts.colArrival")}</th>
-              <th scope="col" className="px-4 py-2.5 font-medium">{t("business.billing.payouts.colCreated")}</th>
-              <th scope="col" className="px-4 py-2.5 font-medium">{t("business.billing.payouts.colFailure")}</th>
-            </tr>
-          </thead>
-          <tbody>
-            {items.map((payout) => {
-              const failure =
-                payout.status === "failed"
-                  ? sanitizePayoutFailureDisplay(payout.failureMessage) ||
-                    payout.failureCode ||
-                    t("business.billing.payouts.failedFallback")
-                  : payout.status === "canceled"
-                    ? t("business.billing.payouts.canceledFallback")
-                    : null;
-              return (
-                <tr key={payout.id} className="border-b border-border/70 last:border-0">
-                  <td className="px-4 py-3 font-medium tabular-nums">
-                    <button
-                      type="button"
-                      className="text-left underline-offset-2 hover:underline"
-                      onClick={() => detail.openFor(payout.id, payout)}
-                    >
-                      {formatConnectPayoutAmount(payout.amountCents, payout.currency, i18n.language)}
-                      <span className="sr-only">, {t("business.billing.payouts.openDetail")}</span>
-                    </button>
-                  </td>
-                  <td className="px-4 py-3">
-                    <ConnectPayoutStatusBadge status={payout.status} />
-                  </td>
-                  <td className="px-4 py-3 text-muted-foreground">
-                    {formatConnectPayoutDate(payout.arrivalDate, i18n.language)}
-                  </td>
-                  <td className="px-4 py-3 text-muted-foreground">
-                    {formatConnectPayoutDate(payout.stripeCreatedAt, i18n.language)}
-                  </td>
-                  <td className={cn("px-4 py-3", failure ? "font-medium text-red-800 dark:text-red-200" : "text-muted-foreground")}>
-                    {failure ?? "—"}
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
-
-      {total > PAGE_SIZE ? (
-        <div className="flex items-center justify-between text-sm text-muted-foreground">
-          <span>
-            {t("business.billing.payouts.showing", {
-              from: skip + 1,
-              to: Math.min(skip + items.length, total),
-              total,
-            })}
-          </span>
-          <div className="flex gap-2">
-            <button
-              type="button"
-              className={cn(dashboardWorkspaceUi.btnGhost, "underline-offset-2 disabled:opacity-40")}
-              disabled={skip === 0 || loading}
-              onClick={() => void load(Math.max(0, skip - PAGE_SIZE))}
-            >
-              {t("business.billing.payouts.prev")}
-            </button>
-            <button
-              type="button"
-              className={cn(dashboardWorkspaceUi.btnGhost, "underline-offset-2 disabled:opacity-40")}
-              disabled={skip + PAGE_SIZE >= total || loading}
-              onClick={() => void load(skip + PAGE_SIZE)}
-            >
-              {t("business.billing.payouts.next")}
-            </button>
+      <section aria-labelledby="caretip-payout-history-heading">
+        <div className="mb-4 flex flex-col gap-2 border-b border-border pb-3 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <h2 id="caretip-payout-history-heading" className={dashboardWorkspaceUi.subsectionTitle}>
+              {t("business.billing.payouts.historyTitle")}
+            </h2>
+            <p className={cn("mt-1", dashboardWorkspaceUi.helperText)}>{t("business.billing.payouts.hint")}</p>
           </div>
+          <button
+            type="button"
+            disabled={dashboardBusy}
+            aria-busy={dashboardBusy}
+            onClick={() => void openStripeDashboard()}
+            className={cn(
+              "self-start text-sm font-medium text-muted-foreground underline-offset-2 hover:text-foreground hover:underline",
+              "disabled:cursor-not-allowed disabled:opacity-50",
+            )}
+          >
+            {dashboardBusy ? t("business.billing.connect.starting") : t("business.billing.payouts.viewInStripe")}
+          </button>
         </div>
-      ) : null}
+
+        {error ? (
+          <ListFilterLoadError kind={errorKind} message={error} onRetry={() => void loadHistory(skip)} />
+        ) : historyLoading && items.length === 0 ? (
+          <HistorySkeleton />
+        ) : items.length === 0 ? (
+          <p className="py-6 text-sm text-muted-foreground">{t("business.billing.payouts.emptyBody")}</p>
+        ) : (
+          <>
+            <div className={businessUi.mobileList}>
+              {items.map((payout) => (
+                <PayoutMobileRow
+                  key={payout.id}
+                  payout={payout}
+                  locale={locale}
+                  onOpen={() => detail.openFor(payout.id, payout)}
+                />
+              ))}
+            </div>
+
+            <div className={businessUi.tableWrap}>
+              <table className="w-full min-w-[640px] text-left text-sm">
+                <caption className="sr-only">{t("business.billing.payouts.tableCaption")}</caption>
+                <thead>
+                  <tr className="border-b border-border text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                    <th scope="col" className="py-2.5 pr-4 font-medium">{t("business.billing.payouts.colAmount")}</th>
+                    <th scope="col" className="py-2.5 pr-4 font-medium">{t("business.billing.payouts.colStatus")}</th>
+                    <th scope="col" className="py-2.5 pr-4 font-medium">{t("business.billing.payouts.colArrival")}</th>
+                    <th scope="col" className="py-2.5 pr-4 font-medium">{t("business.billing.payouts.colCreated")}</th>
+                    <th scope="col" className="py-2.5 font-medium">{t("business.billing.payouts.colFailure")}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {items.map((payout) => {
+                    const issue = payoutIssueText(payout, t);
+                    return (
+                      <tr key={payout.id} className="border-b border-border/70 last:border-0">
+                        <td className="py-3 pr-4 font-medium tabular-nums">
+                          <button
+                            type="button"
+                            className="text-left underline-offset-2 hover:underline"
+                            onClick={() => detail.openFor(payout.id, payout)}
+                          >
+                            {formatConnectPayoutAmount(payout.amountCents, payout.currency, locale)}
+                            {payout.method === "instant" ? (
+                              <span className="ml-2 text-xs font-medium text-muted-foreground">
+                                {t("business.billing.payouts.methodInstant")}
+                              </span>
+                            ) : null}
+                            <span className="sr-only">, {t("business.billing.payouts.openDetail")}</span>
+                          </button>
+                        </td>
+                        <td className="py-3 pr-4">
+                          <ConnectPayoutStatusBadge status={payout.status} />
+                        </td>
+                        <td className="py-3 pr-4 text-muted-foreground">
+                          {formatConnectPayoutDate(payout.arrivalDate, locale)}
+                        </td>
+                        <td className="py-3 pr-4 text-muted-foreground">
+                          {formatConnectPayoutDate(payout.stripeCreatedAt, locale)}
+                        </td>
+                        <td className={cn("py-3", issue ? "font-medium text-red-800 dark:text-red-200" : "text-muted-foreground")}>
+                          {issue ?? "—"}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+
+            {total > PAGE_SIZE ? (
+              <div className="mt-4 flex items-center justify-between text-sm text-muted-foreground">
+                <span>
+                  {t("business.billing.payouts.showing", {
+                    from: skip + 1,
+                    to: Math.min(skip + items.length, total),
+                    total,
+                  })}
+                </span>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    className={cn(dashboardWorkspaceUi.btnGhost, "h-9 min-h-9 px-3 text-sm")}
+                    disabled={skip === 0 || historyLoading}
+                    onClick={() => void loadHistory(Math.max(0, skip - PAGE_SIZE))}
+                  >
+                    {t("business.billing.payouts.prev")}
+                  </button>
+                  <button
+                    type="button"
+                    className={cn(dashboardWorkspaceUi.btnGhost, "h-9 min-h-9 px-3 text-sm")}
+                    disabled={skip + PAGE_SIZE >= total || historyLoading}
+                    onClick={() => void loadHistory(skip + PAGE_SIZE)}
+                  >
+                    {t("business.billing.payouts.next")}
+                  </button>
+                </div>
+              </div>
+            ) : null}
+          </>
+        )}
+      </section>
 
       <ConnectPayoutDetailDialog
         open={detail.open}
@@ -238,11 +315,313 @@ export function ConnectPayoutsPanel({ loading: bootLoading }: { loading?: boolea
         loading={detail.loading}
         error={detail.error}
       />
+      <InstantPayoutConfirmDialog
+        open={confirmOpen}
+        eligibility={eligibility}
+        locale={locale}
+        confirming={payoutBusy}
+        onCancel={() => setConfirmOpen(false)}
+        onConfirm={() => void confirmInstantPayout()}
+      />
     </div>
   );
 }
 
-function PayoutCard({
+function payoutIssueText(
+  payout: ConnectPayout,
+  t: (key: string) => string,
+): string | null {
+  if (payout.status === "failed") {
+    return sanitizePayoutFailureDisplay(payout.failureMessage) || t("business.billing.payouts.failedFallback");
+  }
+  if (payout.status === "canceled") {
+    return t("business.billing.payouts.canceledFallback");
+  }
+  return null;
+}
+
+function InstantBalanceSection({
+  bootLoading,
+  eligibility,
+  loading,
+  locale,
+  dashboardBusy,
+  payoutBusy,
+  onRetryEligibility,
+  onOpenDashboard,
+  onRequestPayout,
+}: {
+  bootLoading: boolean;
+  eligibility: InstantPayoutEligibility | null;
+  loading: boolean;
+  locale: string;
+  dashboardBusy: boolean;
+  payoutBusy: boolean;
+  onRetryEligibility: () => void;
+  onOpenDashboard: () => void;
+  onRequestPayout: () => void;
+}) {
+  const { t } = useTranslation();
+  const currency = eligibility?.currency || "eur";
+  const showFee = eligibility ? hasChargedInstantFee(eligibility) : false;
+  const rate = eligibility ? feeRateLabel(eligibility) : null;
+  const headlineCents = eligibility
+    ? showFee
+      ? eligibility.instantAvailableGrossCents
+      : eligibility.instantAvailableNetCents
+    : 0;
+  const receiveCents = eligibility?.instantAvailableNetCents ?? 0;
+  const feeCents = eligibility?.platformFeeCents ?? 0;
+  const masked = formatMaskedMethod(eligibility?.destinationLast4 ?? null);
+
+  return (
+    <section aria-labelledby="caretip-payout-balance-heading" className="border-b border-border pb-8">
+      <p className={dashboardWorkspaceUi.eyebrow}>{t("business.billing.payouts.instant.balanceEyebrow")}</p>
+      <h2 id="caretip-payout-balance-heading" className="sr-only">
+        {t("business.billing.payouts.instant.balanceEyebrow")}
+      </h2>
+
+      {bootLoading || loading ? (
+        <div className="mt-4 space-y-3" aria-busy="true">
+          <div className="h-10 w-48 max-w-full animate-pulse rounded-md bg-muted" />
+          <div className="h-4 w-32 animate-pulse rounded-md bg-muted" />
+          <span className="sr-only">{t("business.billing.payouts.instant.checking")}</span>
+        </div>
+      ) : !eligibility ? (
+        <div className="mt-4 space-y-3">
+          <p className="text-sm text-muted-foreground">{t("business.billing.payouts.instant.loadError")}</p>
+          <button type="button" onClick={onRetryEligibility} className={cn(dashboardWorkspaceUi.btnGhost, "h-10 min-h-10 px-4 text-sm")}>
+            {t("business.billing.payouts.instant.retry")}
+          </button>
+        </div>
+      ) : (
+        <div className="mt-4">
+          <p className={cn(caretipType.kpiValue, "text-3xl sm:text-4xl")}>
+            {formatConnectPayoutAmount(headlineCents, currency, locale)}
+          </p>
+          <p className="mt-1 text-sm text-muted-foreground">
+            {eligibility.eligible
+              ? t("business.billing.payouts.instant.availableNow")
+              : t(`business.billing.payouts.instant.reason.${eligibility.reason}`)}
+          </p>
+
+          {eligibility.eligible ? (
+            <div className="mt-6 space-y-4">
+              <button
+                type="button"
+                disabled={payoutBusy}
+                aria-busy={payoutBusy}
+                onClick={onRequestPayout}
+                className={caretipBtnPrimaryCompact}
+              >
+                {payoutBusy ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+                    {t("business.billing.payouts.instant.ctaSending")}
+                  </>
+                ) : (
+                  t("business.billing.payouts.instant.ctaAmount", {
+                    amount: formatConnectPayoutAmount(receiveCents, currency, locale),
+                  })
+                )}
+              </button>
+
+              <dl className="space-y-1.5 text-sm text-muted-foreground">
+                {masked ? (
+                  <div className="flex flex-wrap gap-x-2">
+                    <dt>{t("business.billing.payouts.instant.methodLabel")}</dt>
+                    <dd className="font-medium text-foreground">
+                      {masked}
+                      <span className="ml-2 font-normal text-muted-foreground">
+                        {t("business.billing.payouts.instant.instantEligible")}
+                      </span>
+                    </dd>
+                  </div>
+                ) : null}
+                {showFee ? (
+                  <>
+                    <div className="flex flex-wrap gap-x-2">
+                      <dt>{t("business.billing.payouts.instant.fee")}</dt>
+                      <dd className="font-medium text-foreground">
+                        {rate
+                          ? t("business.billing.payouts.instant.feeWithRate", {
+                              amount: formatConnectPayoutAmount(feeCents, currency, locale),
+                              rate,
+                            })
+                          : formatConnectPayoutAmount(feeCents, currency, locale)}
+                      </dd>
+                    </div>
+                    <div className="flex flex-wrap gap-x-2">
+                      <dt>{t("business.billing.payouts.instant.youReceive")}</dt>
+                      <dd className="font-medium text-foreground">
+                        {formatConnectPayoutAmount(receiveCents, currency, locale)}
+                      </dd>
+                    </div>
+                  </>
+                ) : null}
+              </dl>
+
+              {eligibility.canOpenExpressDashboard ? (
+                <button
+                  type="button"
+                  disabled={dashboardBusy}
+                  onClick={onOpenDashboard}
+                  className="text-sm font-medium text-muted-foreground underline-offset-2 hover:text-foreground hover:underline disabled:opacity-50"
+                >
+                  {t("business.billing.payouts.instant.changeMethod")}
+                </button>
+              ) : null}
+            </div>
+          ) : (
+            <IneligibleInstantActions
+              eligibility={eligibility}
+              dashboardBusy={dashboardBusy}
+              onOpenDashboard={onOpenDashboard}
+            />
+          )}
+        </div>
+      )}
+    </section>
+  );
+}
+
+function IneligibleInstantActions({
+  eligibility,
+  dashboardBusy,
+  onOpenDashboard,
+}: {
+  eligibility: InstantPayoutEligibility;
+  dashboardBusy: boolean;
+  onOpenDashboard: () => void;
+}) {
+  const { t } = useTranslation();
+  const reason = eligibility.reason;
+
+  if (reason === "not_connected") {
+    return (
+      <div className="mt-6">
+        <Link to="/dashboard/stripe/connect" className={cn(dashboardWorkspaceUi.btnSecondary, "h-10 min-h-10 px-4 text-sm")}>
+          {t("business.billing.payouts.instant.connectCta")}
+        </Link>
+      </div>
+    );
+  }
+
+  const showDashboard =
+    eligibility.canOpenExpressDashboard ||
+    reason === "no_instant_destination" ||
+    reason === "payouts_disabled" ||
+    reason === "country_unsupported";
+  if (!showDashboard) return null;
+
+  const dashboardLabel =
+    reason === "no_instant_destination"
+      ? t("business.billing.payouts.instant.addDestinationCta")
+      : t("business.billing.payouts.instant.openStripe");
+
+  return (
+    <div className="mt-6">
+      <button
+        type="button"
+        disabled={dashboardBusy}
+        onClick={onOpenDashboard}
+        className={cn(dashboardWorkspaceUi.btnSecondary, "h-10 min-h-10 px-4 text-sm")}
+      >
+        {dashboardLabel}
+      </button>
+    </div>
+  );
+}
+
+function InstantPayoutConfirmDialog({
+  open,
+  eligibility,
+  locale,
+  confirming,
+  onCancel,
+  onConfirm,
+}: {
+  open: boolean;
+  eligibility: InstantPayoutEligibility | null;
+  locale: string;
+  confirming: boolean;
+  onCancel: () => void;
+  onConfirm: () => void;
+}) {
+  const { t } = useTranslation();
+  if (!eligibility) return null;
+  const currency = eligibility.currency || "eur";
+  const showFee = hasChargedInstantFee(eligibility);
+  const rate = feeRateLabel(eligibility);
+  const sendCents = showFee ? eligibility.instantAvailableGrossCents : eligibility.instantAvailableNetCents;
+  const masked =
+    formatMaskedMethod(eligibility.destinationLast4) ?? t("business.billing.payouts.instant.methodUnknown");
+
+  return (
+    <Dialog open={open} onOpenChange={(next) => { if (!next && !confirming) onCancel(); }}>
+      <DialogContent className="sm:max-w-md" aria-describedby="instant-payout-confirm-desc">
+        <DialogHeader>
+          <DialogTitle>{t("business.billing.payouts.instant.confirmTitle")}</DialogTitle>
+          <DialogDescription id="instant-payout-confirm-desc">
+            {t("business.billing.payouts.instant.confirmLead")}
+          </DialogDescription>
+        </DialogHeader>
+        <dl className="space-y-3 text-sm">
+          <div className="flex items-baseline justify-between gap-4">
+            <dt className="text-muted-foreground">{t("business.billing.payouts.instant.confirmSending")}</dt>
+            <dd className="text-lg font-semibold tabular-nums text-foreground">
+              {formatConnectPayoutAmount(sendCents, currency, locale)}
+            </dd>
+          </div>
+          {showFee ? (
+            <>
+              <div className="flex items-baseline justify-between gap-4">
+                <dt className="text-muted-foreground">{t("business.billing.payouts.instant.fee")}</dt>
+                <dd className="tabular-nums font-medium text-foreground">
+                  {rate
+                    ? t("business.billing.payouts.instant.feeWithRate", {
+                        amount: formatConnectPayoutAmount(eligibility.platformFeeCents, currency, locale),
+                        rate,
+                      })
+                    : formatConnectPayoutAmount(eligibility.platformFeeCents, currency, locale)}
+                </dd>
+              </div>
+              <div className="flex items-baseline justify-between gap-4 border-t border-border pt-3">
+                <dt className="text-muted-foreground">{t("business.billing.payouts.instant.youReceive")}</dt>
+                <dd className="text-lg font-semibold tabular-nums text-foreground">
+                  {formatConnectPayoutAmount(eligibility.instantAvailableNetCents, currency, locale)}
+                </dd>
+              </div>
+            </>
+          ) : null}
+          <div className="flex items-baseline justify-between gap-4">
+            <dt className="text-muted-foreground">{t("business.billing.payouts.instant.methodLabel")}</dt>
+            <dd className="font-medium text-foreground">{masked}</dd>
+          </div>
+          <div className="flex items-baseline justify-between gap-4">
+            <dt className="text-muted-foreground">{t("business.billing.payouts.instant.arrivalLabel")}</dt>
+            <dd className="text-foreground">{t("business.billing.payouts.instant.confirmArrival")}</dd>
+          </div>
+        </dl>
+        <DialogFooter className="gap-2 sm:justify-end">
+          <Button type="button" variant="outline" onClick={onCancel} disabled={confirming}>
+            {t("common.cancel")}
+          </Button>
+          <button
+            type="button"
+            className={caretipBtnPrimaryCompact}
+            disabled={confirming || !eligibility.eligible}
+            onClick={onConfirm}
+          >
+            {confirming ? t("business.billing.payouts.instant.ctaSending") : t("business.billing.payouts.instant.confirmCta")}
+          </button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function PayoutMobileRow({
   payout,
   locale,
   onOpen,
@@ -252,32 +631,34 @@ function PayoutCard({
   onOpen: () => void;
 }) {
   const { t } = useTranslation();
-  const failure =
-    payout.status === "failed"
-      ? sanitizePayoutFailureDisplay(payout.failureMessage) ||
-        payout.failureCode ||
-        t("business.billing.payouts.failedFallback")
-      : null;
+  const issue = payoutIssueText(payout, t);
   return (
-    <button
-      type="button"
-      onClick={onOpen}
-      className="w-full rounded-xl border border-border bg-card p-4 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
-      aria-label={`${formatConnectPayoutAmount(payout.amountCents, payout.currency, locale)}, ${t("business.billing.payouts.openDetail")}`}
-    >
+    <button type="button" onClick={onOpen} className={cn(businessUi.mobileCard, "w-full text-left")}>
       <div className="flex items-start justify-between gap-3">
         <div className="font-medium tabular-nums">
           {formatConnectPayoutAmount(payout.amountCents, payout.currency, locale)}
+          {payout.method === "instant" ? (
+            <span className="ml-2 text-xs font-medium text-muted-foreground">
+              {t("business.billing.payouts.methodInstant")}
+            </span>
+          ) : null}
         </div>
         <ConnectPayoutStatusBadge status={payout.status} />
       </div>
-      <div className="mt-2 text-xs text-muted-foreground">
+      <div className="mt-1.5 text-xs text-muted-foreground">
         {t("business.billing.payouts.colArrival")}: {formatConnectPayoutDate(payout.arrivalDate, locale)}
       </div>
-      <div className="mt-1 text-xs text-muted-foreground">
-        {t("business.billing.payouts.colCreated")}: {formatConnectPayoutDate(payout.stripeCreatedAt, locale)}
-      </div>
-      {failure ? <p className="mt-2 text-xs text-destructive">{failure}</p> : null}
+      {issue ? <p className="mt-1.5 text-xs text-destructive">{issue}</p> : null}
     </button>
+  );
+}
+
+function HistorySkeleton() {
+  return (
+    <div className="space-y-3" aria-hidden>
+      <div className="h-10 animate-pulse rounded-md bg-muted" />
+      <div className="h-10 animate-pulse rounded-md bg-muted" />
+      <div className="h-10 animate-pulse rounded-md bg-muted" />
+    </div>
   );
 }

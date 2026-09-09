@@ -18,5 +18,7 @@ router.post("/connect/account-link", ...managerConnect, connectController.postMy
 router.post("/connect/login-link", ...managerConnect, connectController.postMyConnectLoginLink);
 router.get("/connect/payouts", ...managerConnect, connectController.listMyConnectPayouts);
 router.get("/connect/payouts/:id", ...managerConnect, connectController.getMyConnectPayout);
+router.get("/connect/instant-payout", ...managerConnect, connectController.getMyInstantPayoutEligibility);
+router.post("/connect/instant-payout", ...managerConnect, connectController.postMyInstantPayout);
 
 export default router;

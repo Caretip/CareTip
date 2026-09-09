@@ -16,6 +16,7 @@ import { useCustomerVenueBrand, mergeCustomerVenueBrand } from "./customerJourne
 import { getRepeatTipDataForBusiness } from "../../lib/repeatTip";
 import { markCustomerFlowEntered } from "../../lib/customerFlowGuard";
 import { formatEur } from "../../lib/formatEur";
+import { startGuestTipCheckout } from "../../lib/startGuestTipCheckout";
 import { customerFlowUi as cf } from "./customerFlowUi";
 import {
   type CustomerEntryPhase,
@@ -43,6 +44,7 @@ export function StaffTipByPublicPathPage() {
   const [staff, setStaff] = useState<StaffBySlugResponse | null>(null);
   const [showRepeatPrompt, setShowRepeatPrompt] = useState(false);
   const [repeatAmount, setRepeatAmount] = useState<number | null>(null);
+  const [checkingOut, setCheckingOut] = useState(false);
 
   useEffect(() => {
     const schedule = () => prefetchCustomerFlowRoutes();
@@ -131,14 +133,24 @@ export function StaffTipByPublicPathPage() {
     navigate(`/tip-amount?${qs.toString()}`);
   };
 
-  const handleRepeatTip = () => {
+  const handleRepeatTip = async () => {
     if (!staff || repeatAmount == null || !bizParam?.trim() || !empParam?.trim()) return;
     setBusinessId(staff.businessId);
     setEmployee(staff.id, staff.name, staff.avatar ?? undefined);
     setStaffTipReturnPath(bizParam.trim().toLowerCase(), empParam.trim().toLowerCase());
     setAmount(repeatAmount);
     markCustomerFlowEntered();
-    navigate("/payment");
+    setCheckingOut(true);
+    const result = await startGuestTipCheckout(
+      {
+        amount: repeatAmount,
+        employeeId: staff.id,
+        businessId: staff.businessId,
+        employeeName: staff.name,
+      },
+      t("tipFlow.payment.checkoutStartError"),
+    );
+    if (result !== "redirected") setCheckingOut(false);
   };
 
   const profileHeaderFor = (name: string) => headerLeaveTipFor(t, name);
@@ -203,26 +215,21 @@ export function StaffTipByPublicPathPage() {
     );
   }
 
-  const profileHeader = profileHeaderFor(staff.name);
-
   return (
     <div className={cf.page}>
-      <CustomerJourneyHeader
-        venue={venueBrand}
-        stepTitle={profileHeader.stepTitle}
-        trustMessage={profileHeader.trustMessage}
-      />
+      <CustomerJourneyHeader venue={venueBrand} />
 
       <div className={`${cf.main} max-w-xl pb-8 sm:pb-10`}>
-        <div className={`${cf.card} px-6 py-8 text-center sm:px-8 sm:py-9`}>
+        <div className="px-1 py-6 text-center sm:py-8">
           <div className="mx-auto mb-5 inline-flex">
             <ProfileAvatar
               src={staff.avatar}
               displayName={staff.name}
-              className="mx-auto size-[7.25rem] ring-1 ring-border"
+              variant="square"
+              className={`mx-auto size-[6.5rem] ${cf.employeePhotoSquare}`}
             />
           </div>
-          <h2 className="text-balance text-2xl font-bold tracking-tight text-foreground">{staff.name}</h2>
+          <h2 className="text-balance text-2xl font-semibold tracking-tight text-foreground">{staff.name}</h2>
           {staff.jobTitle ? (
             <p className="mt-1.5 text-sm font-medium text-muted-foreground">{staff.jobTitle}</p>
           ) : null}
@@ -231,7 +238,12 @@ export function StaffTipByPublicPathPage() {
 
           {showRepeatPrompt && repeatAmount ? (
             <div className="mt-7 space-y-3">
-              <button type="button" onClick={handleRepeatTip} className={`${cf.btnPrimaryLg} py-4 text-[0.9375rem]`}>
+              <button
+                type="button"
+                onClick={() => void handleRepeatTip()}
+                disabled={checkingOut}
+                className={`${cf.btnPrimaryLg} py-4 text-[0.9375rem]`}
+              >
                 <Heart className="size-5 shrink-0" aria-hidden />
                 {t("tipFlow.staffLanding.tipAgainWithAmount", { amount: formatEur(repeatAmount) })}
               </button>

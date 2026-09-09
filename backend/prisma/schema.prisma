@@ -202,6 +202,13 @@ enum StripeConnectPayoutReconciliationStatus {
   failed
 }
 
+/// Local record so Instant Payout create retries cannot double-pay.
+enum StripeConnectInstantPayoutRequestStatus {
+  pending
+  submitted
+  failed
+}
+
 enum GoalPeriod {
   daily
   weekly
@@ -760,6 +767,25 @@ model StripeConnectPayoutBalanceLine {
   @@map("stripe_connect_payout_balance_lines")
 }
 
+/// Idempotency ledger for manager-initiated Instant Payouts. Not a second payout history table.
+model StripeConnectInstantPayoutRequest {
+  id             String                                 @id @default(cuid())
+  businessId     String                                 @map("business_id")
+  idempotencyKey String                                 @unique @map("idempotency_key") @db.VarChar(160)
+  amountCents    Int                                    @map("amount_cents")
+  currency       String                                 @db.VarChar(8)
+  stripePayoutId String?                                @map("stripe_payout_id") @db.VarChar(128)
+  status         StripeConnectInstantPayoutRequestStatus
+  failureCode    String?                                @map("failure_code") @db.VarChar(64)
+  createdAt      DateTime                               @default(now()) @map("created_at")
+  updatedAt      DateTime                               @updatedAt @map("updated_at")
+
+  business Business @relation(fields: [businessId], references: [id], onDelete: Restrict)
+
+  @@index([businessId, createdAt(sort: Desc)])
+  @@map("stripe_connect_instant_payout_requests")
+}
+
 model Business {
   id                  String    @id @default(cuid())
   name                String
@@ -890,6 +916,7 @@ model Business {
   transactions   Transaction[]
   tipRefunds     TipRefund[]
   stripeConnectPayouts StripeConnectPayout[]
+  stripeConnectInstantPayoutRequests StripeConnectInstantPayoutRequest[]
   locations      Location[]
   supportTickets SupportTicket[]
   employeeInvites EmployeeInvite[]

@@ -216,8 +216,10 @@ export function TipSuccessExperience({
               <ProfileAvatar
                 src={employee.avatar}
                 displayName={employee.name}
+                variant="square"
                 className={cn(
-                  "customer-flow-success-recipient__avatar shrink-0 ring-2",
+                  "customer-flow-success-recipient__avatar shrink-0",
+                  cf.employeePhotoSquare,
                   embedded ? "h-10 w-10" : "h-11 w-11 sm:h-12 sm:w-12",
                 )}
                 lightbox={false}

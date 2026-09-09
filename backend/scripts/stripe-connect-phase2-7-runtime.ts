@@ -327,9 +327,9 @@ function runFrontendUrlUnits() {
     else fail("J-trailing-slash", stripped);
 
     const ratingBase = `${stripped}/rating?session_id={CHECKOUT_SESSION_ID}`;
-    const cancelBase = `${stripped}/payment?canceled=1`;
-    if (ratingBase.includes("/rating?") && cancelBase.includes("/payment?canceled=1") && !ratingBase.includes("//rating")) {
-      pass("J-success-cancel-paths", "success /rating and cancel /payment?canceled=1");
+    const cancelBase = `${stripped}/tip-amount?employeeId=EMP&canceled=1`;
+    if (ratingBase.includes("/rating?") && cancelBase.includes("/tip-amount?") && cancelBase.includes("canceled=1") && !ratingBase.includes("//rating")) {
+      pass("J-success-cancel-paths", "success /rating and cancel /tip-amount?canceled=1");
     } else fail("J-success-cancel-paths", "path construction broken");
 
     try {
@@ -474,10 +474,11 @@ async function runRuntime(): Promise<void> {
       created?.payment_intent_data?.transfer_data?.destination === a.stripeAccountId &&
       created.payment_intent_data?.application_fee_amount === 149 &&
       created.success_url?.includes("/rating?session_id=") &&
-      created.cancel_url?.includes("/payment?canceled=1")
+      created.cancel_url?.includes("/tip-amount?") &&
+      created.cancel_url?.includes("canceled=1")
     ) {
       pass("A-checkout-dest-fee", "Checkout dest=Business.stripeAccountId fee=149");
-      pass("J-checkout-urls", "success_url /rating and cancel_url /payment?canceled=1");
+      pass("J-checkout-urls", "success_url /rating and cancel_url /tip-amount?canceled=1");
     } else fail("A-checkout-dest-fee", "Checkout params incorrect");
 
     captured.length = 0;
