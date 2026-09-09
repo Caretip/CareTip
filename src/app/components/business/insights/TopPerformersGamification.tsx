@@ -2,7 +2,7 @@ import { useTranslation } from "react-i18next";
 import { Award, Crown, Sparkles, Star, Trophy } from "lucide-react";
 import type { BusinessDashboardStats } from "../../../lib/api";
 import { formatEur } from "../../../lib/formatEur";
-import { ProfileAvatar } from "../../ui/profile-avatar";
+import { EmployeeProfilePhoto } from "../../ui/profile-avatar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { businessUi } from "../businessDashboardUi";
 import { cn } from "@/lib/utils";
@@ -74,7 +74,7 @@ export function EmployeeAwardsSection({ employees, goals }: EmployeeAwardsSectio
                 </p>
                 <div className="mt-1 flex items-center gap-2">
                   {name ? (
-                    <ProfileAvatar src={avatar} displayName={name} className="h-8 w-8" />
+                    <EmployeeProfilePhoto src={avatar} displayName={name} className="h-8 w-8" />
                   ) : null}
                   <div className="min-w-0">
                     <p className="truncate text-sm font-semibold">{name ?? "—"}</p>

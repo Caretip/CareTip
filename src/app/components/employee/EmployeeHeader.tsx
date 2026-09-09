@@ -1,7 +1,7 @@
 import { Link } from "react-router";
 import { Bell, Settings, LogOut } from "lucide-react";
 import type { User } from "../../hooks/useAuth";
-import { ProfileAvatar } from "../ui/profile-avatar";
+import { EmployeeProfilePhoto } from "../ui/profile-avatar";
 
 const TEAL = "#e9781c";
 
@@ -17,7 +17,7 @@ export function EmployeeHeader({ user, onLogout }: EmployeeHeaderProps) {
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-3">
             <div className="shrink-0" style={{ boxShadow: `0 0 0 2px ${TEAL}` }}>
-              <ProfileAvatar
+              <EmployeeProfilePhoto
                 src={user.avatar}
                 displayName={user.name ?? "Employee"}
                 className="h-12 w-12 ring-0"

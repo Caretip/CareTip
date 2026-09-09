@@ -4,6 +4,9 @@ import { LetterAvatar } from "./letter-avatar";
 import { cn } from "./utils";
 import { Dialog, DialogContent, DialogTitle } from "./dialog";
 
+/** Square employee photo — matches the QR customer journey (`rounded-md` + light ring). */
+export const employeePhotoFrameClass = "rounded-md ring-1 ring-border/50";
+
 export type ProfileAvatarProps = {
   /** Raw URL from API (absolute, relative `/uploads/...`, or null). */
   src?: string | null;
@@ -69,7 +72,7 @@ export function ProfileAvatar({
       <div
         className={cn(
           "relative shrink-0 overflow-hidden bg-muted",
-          isSquare ? "rounded-none" : "rounded-full",
+          isSquare ? "rounded-md" : "rounded-full",
           "min-h-8 min-w-8",
           canLightbox && "cursor-zoom-in",
           className
@@ -82,7 +85,7 @@ export function ProfileAvatar({
               onClick={() => setLightboxOpen(true)}
               className={cn(
                 "absolute inset-0 z-[1] h-full w-full p-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
-                isSquare ? "rounded-none" : "rounded-full"
+                isSquare ? "rounded-md" : "rounded-full"
               )}
               aria-label={`View ${name} profile photo full size`}
             >
@@ -110,7 +113,7 @@ export function ProfileAvatar({
               size="full"
               className={cn(
                 "h-full w-full min-h-0 min-w-0 text-2xl",
-                isSquare ? "rounded-none" : "rounded-full"
+                isSquare ? "rounded-md" : "rounded-full"
               )}
             />
           </div>
@@ -133,5 +136,17 @@ export function ProfileAvatar({
         </Dialog>
       ) : null}
     </>
+  );
+}
+
+/** Employee / team-member photo — same square frame as the QR customer journey. */
+export function EmployeeProfilePhoto(props: Omit<ProfileAvatarProps, "variant">) {
+  const { className, ...rest } = props;
+  return (
+    <ProfileAvatar
+      {...rest}
+      variant="square"
+      className={cn(employeePhotoFrameClass, "aspect-square", className)}
+    />
   );
 }

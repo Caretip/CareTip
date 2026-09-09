@@ -1,7 +1,7 @@
 import { useTranslation } from "react-i18next";
 import { Trophy } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ProfileAvatar } from "../../ui/profile-avatar";
+import { EmployeeProfilePhoto } from "../../ui/profile-avatar";
 import { DashboardViewAllLink } from "../../dashboard/DashboardViewAllLink";
 import { businessUi } from "../businessDashboardUi";
 import { formatEur } from "../../../lib/formatEur";
@@ -57,7 +57,7 @@ export function TopPerformersTeaser({ employees, loading }: TopPerformersTeaserP
                 <span className="business-dashboard-top-performer-rank" aria-hidden>
                   #{index + 1}
                 </span>
-                <ProfileAvatar
+                <EmployeeProfilePhoto
                   src={employee.avatar}
                   displayName={employee.name}
                   className="business-dashboard-top-performer-avatar h-11 w-11"

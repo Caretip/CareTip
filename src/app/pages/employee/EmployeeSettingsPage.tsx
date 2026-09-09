@@ -41,7 +41,7 @@ import {
   AlertDialogTrigger,
 } from "../../components/ui/alert-dialog";
 import { Button } from "../../components/ui/button";
-import { ProfileAvatar } from "../../components/ui/profile-avatar";
+import { EmployeeProfilePhoto } from "../../components/ui/profile-avatar";
 import { EmployeePageHeader } from "../../components/employee/EmployeePageHeader";
 import { employeeUi } from "../../components/employee/employeeDashboardUi";
 import { cn } from "@/lib/utils";
@@ -244,11 +244,11 @@ export function EmployeeSettingsPage() {
             {t("employee.settings.photoSection")}
           </h3>
           <div className="flex flex-col items-start gap-4 sm:flex-row sm:items-center">
-            <ProfileAvatar
+            <EmployeeProfilePhoto
               key={user.avatar ?? "none"}
               src={user.avatar}
               displayName={user.name ?? "You"}
-              className="h-24 w-24 border border-border sm:h-28 sm:w-28"
+              className="h-24 w-24 sm:h-28 sm:w-28"
             />
           </div>
           <label className={cn(employeeUi.btnPrimary, "inline-flex cursor-pointer items-center gap-2 text-sm font-medium disabled:opacity-50")}>

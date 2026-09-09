@@ -5,7 +5,7 @@ import { useTranslation } from "react-i18next";
 import { useAuth } from "../hooks/useAuth";
 import { CareTipLogo } from "./CareTipLogo";
 import { BusinessLogoMark } from "./business/BusinessLogoMark";
-import { ProfileAvatar } from "./ui/profile-avatar";
+import { EmployeeProfilePhoto, ProfileAvatar } from "./ui/profile-avatar";
 import { useBusinessVenueBrand } from "../hooks/useBusinessVenueBrand";
 import { NotificationBell } from "@/app/components/notifications/NotificationBell";
 import { ThemeQuickToggle } from "@/app/components/theme/ThemeQuickToggle";
@@ -60,6 +60,7 @@ function DashboardHeaderBar({
   businessLogo: string | null;
 }) {
   const { t } = useTranslation();
+  const HeaderPhoto = user?.role === "employee" ? EmployeeProfilePhoto : ProfileAvatar;
 
   return (
     <>
@@ -156,13 +157,14 @@ function DashboardHeaderBar({
                 displayEmail={displayEmail}
                 avatarSrc={user?.avatar}
                 settingsHref={settingsHref}
+                employeePhoto={user?.role === "employee"}
               />
               <div className="hidden items-center gap-3 border-l border-border pl-3 lg:flex">
                 <div className="text-right">
                   <p className="text-sm font-medium text-foreground">{displayName}</p>
                   <p className="max-w-[180px] truncate text-xs text-muted-foreground">{displayEmail}</p>
                 </div>
-                <ProfileAvatar
+                <HeaderPhoto
                   key={user?.avatar ?? user?.id ?? "header-avatar"}
                   src={user?.avatar}
                   displayName={displayName}

@@ -4,7 +4,7 @@ import { Building2, MapPin, Users } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { CareTipLogo } from "../CareTipLogo";
 import { BusinessLogoMark } from "./BusinessLogoMark";
-import { ProfileAvatar } from "../ui/profile-avatar";
+import { EmployeeProfilePhoto } from "../ui/profile-avatar";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { customerFlowUi as cf } from "../../pages/customer/customerFlowUi";
 import { cn } from "@/lib/utils";
@@ -76,7 +76,7 @@ function PreviewStaffCard({
                   member.isPlaceholder && "business-onboarding-guest-preview__staff-tile--placeholder",
                 )}
               >
-                <ProfileAvatar
+                <EmployeeProfilePhoto
                   src={member.photoUrl}
                   displayName={member.displayName}
                   lightbox={false}

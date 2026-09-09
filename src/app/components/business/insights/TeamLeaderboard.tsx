@@ -3,7 +3,7 @@ import { useTranslation } from "react-i18next";
 import { Medal, TrendingUp } from "lucide-react";
 import type { BusinessDashboardStats } from "../../../lib/api";
 import { formatEur } from "../../../lib/formatEur";
-import { ProfileAvatar } from "../../ui/profile-avatar";
+import { EmployeeProfilePhoto } from "../../ui/profile-avatar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { businessUi } from "../businessDashboardUi";
 import { cn } from "@/lib/utils";
@@ -49,7 +49,7 @@ export function TeamLeaderboard({ employees, goals, loading }: TeamLeaderboardPr
             {Array.from({ length: 5 }).map((_, i) => (
               <div key={i} className="flex animate-pulse items-center gap-3 px-4 py-4">
                 <div className="h-8 w-8 rounded-full bg-muted" />
-                <div className="h-10 w-10 rounded-full bg-muted" />
+                <div className="h-10 w-10 rounded-md bg-muted" />
                 <div className="flex-1 space-y-2">
                   <div className="h-3 w-28 rounded bg-muted" />
                   <div className="h-2 w-20 rounded bg-muted" />
@@ -74,7 +74,7 @@ export function TeamLeaderboard({ employees, goals, loading }: TeamLeaderboardPr
                   >
                     {row.rank <= 3 ? <Medal className="h-4 w-4" aria-hidden /> : row.rank}
                   </span>
-                  <ProfileAvatar src={row.avatar} displayName={row.name} className="h-10 w-10" />
+                  <EmployeeProfilePhoto src={row.avatar} displayName={row.name} className="h-10 w-10" />
                   <div className="min-w-0 flex-1">
                     <p className="truncate font-medium text-foreground">{row.name}</p>
                     <p className="truncate text-xs text-muted-foreground">{row.jobTitle}</p>

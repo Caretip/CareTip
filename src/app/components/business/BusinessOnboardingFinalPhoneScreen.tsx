@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Building2, Lock, Signal, Users, Wifi } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { BusinessLogoMark } from "./BusinessLogoMark";
-import { ProfileAvatar } from "../ui/profile-avatar";
+import { EmployeeProfilePhoto } from "../ui/profile-avatar";
 import { customerFlowUi as cf } from "../../pages/customer/customerFlowUi";
 import { cn } from "@/lib/utils";
 import type { TipPreviewStaffMember } from "./BusinessOnboardingGuestPreview.types";
@@ -89,7 +89,7 @@ function TippableStaffGrid({
                   isSelected ? cf.selectableOn : cf.selectableIdle,
                 )}
               >
-                <ProfileAvatar
+                <EmployeeProfilePhoto
                   src={member.photoUrl}
                   displayName={member.displayName}
                   lightbox={false}

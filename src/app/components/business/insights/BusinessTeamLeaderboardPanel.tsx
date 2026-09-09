@@ -6,7 +6,7 @@ import { LocationLeaderboard } from "./LocationLeaderboard";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { businessUi } from "../businessDashboardUi";
 import { formatEur } from "../../../lib/formatEur";
-import { ProfileAvatar } from "../../ui/profile-avatar";
+import { EmployeeProfilePhoto } from "../../ui/profile-avatar";
 import type { useBusinessTipsModuleData } from "../../../hooks/useBusinessTipsModuleData";
 
 type TipsModuleData = ReturnType<typeof useBusinessTipsModuleData>;
@@ -92,7 +92,7 @@ export function BusinessTeamLeaderboardPanel({
                     return (
                       <div key={i} className="flex items-center gap-3 px-4 py-3">
                         <span className="w-5 text-xs font-bold text-muted-foreground">{i + 1}</span>
-                        <ProfileAvatar src={avatar} displayName={name} className="h-8 w-8" />
+                        <EmployeeProfilePhoto src={avatar} displayName={name} className="h-8 w-8" />
                         <span className="min-w-0 flex-1 truncate text-sm font-medium">{name}</span>
                         <span className="text-xs font-semibold tabular-nums">
                           {"employee" in row ? metric(row as never) : metric(row as never)}
@@ -127,7 +127,7 @@ export function BusinessTeamLeaderboardPanel({
             ) : (
               topByRating.map((e) => (
                 <div key={e.id} className="flex items-center gap-3 px-4 py-3.5">
-                  <ProfileAvatar src={e.avatar} displayName={e.name} className="h-9 w-9" />
+                  <EmployeeProfilePhoto src={e.avatar} displayName={e.name} className="h-9 w-9" />
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-medium">{e.name}</p>
                     <p className="text-xs text-muted-foreground">{formatEur(e.tipsTotal)}</p>

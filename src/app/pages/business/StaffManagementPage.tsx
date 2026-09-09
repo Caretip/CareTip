@@ -45,7 +45,7 @@ import { TeamGrowthUpgradeNotice } from "../../components/subscription/TeamGrowt
 import { isApiSubscriptionRequiredError } from "../../lib/apiError";
 import { StaffRosterTableSkeleton, InlineSpinner } from "../../components/dashboard/DashboardSectionLoading";
 import { useBusinessPageBoot } from "../../lib/useBusinessPageBoot";
-import { ProfileAvatar } from "../../components/ui/profile-avatar";
+import { EmployeeProfilePhoto } from "../../components/ui/profile-avatar";
 import { toUserFriendlyMessage } from "../../lib/errorMessages";
 import { canUseProductionQr } from "../../lib/businessVerificationCapabilities";
 import { logClientError } from "../../lib/clientLog";
@@ -1092,7 +1092,7 @@ export function StaffManagementPage() {
                 >
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-3">
-                      <ProfileAvatar
+                      <EmployeeProfilePhoto
                         src={employee.avatar}
                         displayName={employee.name}
                         className="h-10 w-10"
@@ -1243,7 +1243,7 @@ export function StaffManagementPage() {
             >
               <div className="flex items-start justify-between mb-4 gap-2">
                 <div className="flex items-center gap-3 min-w-0">
-                  <ProfileAvatar
+                  <EmployeeProfilePhoto
                     src={employee.avatar}
                     displayName={employee.name}
                     className="h-12 w-12 shrink-0"

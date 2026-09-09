@@ -1,7 +1,7 @@
 import { Link } from "react-router";
 import { Settings } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { ProfileAvatar } from "../ui/profile-avatar";
+import { EmployeeProfilePhoto, ProfileAvatar } from "../ui/profile-avatar";
 import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
 import { cn } from "@/lib/utils";
 
@@ -10,6 +10,7 @@ type DashboardHeaderMobileProfileProps = {
   displayEmail: string;
   avatarSrc?: string | null;
   settingsHref: string;
+  employeePhoto?: boolean;
   className?: string;
 };
 
@@ -18,9 +19,11 @@ export function DashboardHeaderMobileProfile({
   displayEmail,
   avatarSrc,
   settingsHref,
+  employeePhoto = false,
   className,
 }: DashboardHeaderMobileProfileProps) {
   const { t } = useTranslation();
+  const HeaderPhoto = employeePhoto ? EmployeeProfilePhoto : ProfileAvatar;
 
   return (
     <Popover>
@@ -33,7 +36,7 @@ export function DashboardHeaderMobileProfile({
           )}
           aria-label={t("shell.header.profileMenuAria")}
         >
-          <ProfileAvatar
+          <HeaderPhoto
             src={avatarSrc}
             displayName={displayName}
             className="h-8 w-8 ring-2 ring-accent/25"
@@ -48,7 +51,7 @@ export function DashboardHeaderMobileProfile({
       >
         <div className="border-b border-border/80 px-4 py-3">
           <div className="flex items-center gap-3">
-            <ProfileAvatar
+            <HeaderPhoto
               src={avatarSrc}
               displayName={displayName}
               className="h-10 w-10 ring-2 ring-accent/25"

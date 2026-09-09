@@ -14,7 +14,7 @@ import {
   Store,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { ProfileAvatar } from "../ui/profile-avatar";
+import { EmployeeProfilePhoto } from "../ui/profile-avatar";
 import { LoadingSpinner } from "../ui/loading-spinner";
 import { Button } from "@/components/ui/button";
 import { formatVenueDateTime, resolveBusinessTimezone } from "../../lib/businessVenueTime";
@@ -339,7 +339,7 @@ export const QrManagementCard = memo(function QrManagementCard({
             <div className="mb-3 flex items-start justify-between gap-2">
               <div className="flex min-w-0 items-start gap-2.5">
                 {type === "employee" ? (
-                  <ProfileAvatar src={item.avatar} displayName={item.name} className="h-9 w-9 shrink-0" />
+                  <EmployeeProfilePhoto src={item.avatar} displayName={item.name} className="h-9 w-9 shrink-0" />
                 ) : (
                   <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
                     <QrTypeIcon type={type} />
@@ -427,7 +427,7 @@ export const QrManagementCard = memo(function QrManagementCard({
             )}
             {type === "employee" && (
               <div className="mb-2 flex items-center gap-3">
-                <ProfileAvatar src={item.avatar} displayName={item.name} className="h-10 w-10" />
+                <EmployeeProfilePhoto src={item.avatar} displayName={item.name} className="h-10 w-10" />
                 <div>
                   <h3 className="font-semibold text-foreground">{item.name}</h3>
                   <p className="text-sm text-muted-foreground">{item.role}</p>
