@@ -38,6 +38,7 @@ import testRoutes from "./routes/test.routes.js";
 import meRoutes from "./routes/settings.routes.js";
 import billingRoutes from "./routes/billing.routes.js";
 import connectRoutes from "./routes/connect.routes.js";
+import employeeConnectRoutes from "./routes/employeeConnect.routes.js";
 import mobileRoutes from "./routes/mobile.routes.js";
 import pushRoutes from "./routes/push.routes.js";
 import notificationsRoutes from "./routes/notifications.routes.js";
@@ -195,6 +196,7 @@ app.use("/api/mobile", mobileRoutes);
 app.use("/api/me", meRoutes);
 app.use("/api/me", billingRoutes);
 app.use("/api/me", connectRoutes);
+app.use("/api/me", employeeConnectRoutes);
 app.use("/api/me/notifications", notificationsRoutes);
 /** Registered on the app (not the sub-router) so `/me/stats` is never interpreted as `/:businessId`. */
 app.get(

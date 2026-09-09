@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router";
+import { useNavigate, Navigate, useSearchParams } from "react-router";
 import { Settings, Upload, Check, Eye, EyeOff } from "lucide-react";
 import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
@@ -58,6 +58,8 @@ export function EmployeeSettingsPage() {
   const { t, i18n } = useTranslation();
   const { user, logout, updateUser } = useRequireAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const payoutConnect = searchParams.get("payoutConnect");
   const [boot] = useState(() => readEmployeeSettingsSnapshot(user?.id));
   const [loading, setLoading] = useState(() => !boot);
   const [saving, setSaving] = useState(false);
@@ -219,6 +221,12 @@ export function EmployeeSettingsPage() {
 
   if (!user || user.role !== "employee") {
     return null;
+  }
+
+  if (payoutConnect === "return" || payoutConnect === "refresh") {
+    const next = new URLSearchParams();
+    next.set("payoutConnect", payoutConnect);
+    return <Navigate to={`/employee/payouts?${next.toString()}`} replace />;
   }
 
   return (

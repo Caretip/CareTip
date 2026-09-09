@@ -37,6 +37,7 @@ import {
   clearBusinessStatsClientCache,
   type LocationDTO,
   type TableDTO,
+  type EmployeePayoutConnectionState,
 } from "../../lib/api";
 import { formatEur } from "../../lib/formatEur";
 import { downloadPlainEmployeeQr, downloadPlainEmployeeQrLegacy } from "../../lib/plainQr";
@@ -201,6 +202,7 @@ type StaffRow = {
   monthlyGoal: number | null;
   locationId: string | null;
   assignedTableIds: string[];
+  payoutConnectState?: EmployeePayoutConnectionState;
 };
 
 function isFullyOnboardedDashboardStaff(emp: StaffRow): boolean {
@@ -228,6 +230,14 @@ function staffRosterNoteKey(emp: StaffRow): StaffRosterNoteKey | null {
     return null;
   }
   return null;
+}
+
+function staffPayoutConnectLabel(
+  state: EmployeePayoutConnectionState | undefined,
+  t: (key: string) => string,
+): string {
+  const key = state ?? "not_connected";
+  return t(`business.staffPage.payoutState.${key}`);
 }
 
 function rosterNoteClassName(noteKey: StaffRosterNoteKey | null): string {
@@ -375,6 +385,7 @@ export function StaffManagementPage() {
         monthlyGoal: e.monthlyGoal ?? null,
         locationId: e.locationId ?? null,
         assignedTableIds: e.assignedTableIds ?? [],
+        payoutConnectState: e.payoutConnectState ?? "not_connected",
       }));
       setEmployees(mapped);
       if (cacheKey) setPageSessionCache(cacheKey, mapped);
@@ -550,6 +561,7 @@ export function StaffManagementPage() {
         monthlyGoal: null,
         locationId: created.locationId ?? (addForm.locationId.trim() || null),
         assignedTableIds: created.assignedTableIds ?? addForm.tableIds,
+        payoutConnectState: "not_connected",
       };
       setEmployees((prev) => {
         const next = [row, ...prev.filter((e) => e.id !== row.id)];
@@ -1105,6 +1117,10 @@ export function StaffManagementPage() {
                         {rosterNote ? (
                           <p className={rosterNoteClassName(rosterKey)}>{rosterNote}</p>
                         ) : null}
+                        <p className="mt-0.5 text-xs text-muted-foreground">
+                          {t("business.staffPage.payoutAccount")}:{" "}
+                          {staffPayoutConnectLabel(employee.payoutConnectState, t)}
+                        </p>
                       </div>
                     </div>
                   </td>
@@ -1254,6 +1270,10 @@ export function StaffManagementPage() {
                     {rosterNote ? (
                       <p className={rosterNoteClassName(rosterKey)}>{rosterNote}</p>
                     ) : null}
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      {t("business.staffPage.payoutAccount")}:{" "}
+                      {staffPayoutConnectLabel(employee.payoutConnectState, t)}
+                    </p>
                     <p className="text-xs text-muted-foreground mt-0.5">
                       {employee.locationId
                         ? venueOptions.find((l) => l.id === employee.locationId)?.name ?? t("business.staffPage.na")

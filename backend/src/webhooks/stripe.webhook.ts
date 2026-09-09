@@ -12,6 +12,8 @@ import {
   isSubscriptionCheckoutSession,
 } from "../services/stripeBillingWebhook.service.js";
 import { handleConnectAccountUpdated } from "../services/stripeConnect.service.js";
+import { handleEmployeeConnectAccountUpdated } from "../services/employeeStripeConnect.service.js";
+import { attributeStripeConnectAccount } from "../services/connectAccountOwnership.service.js";
 import {
   handleConnectPayoutEvent,
   isConnectPayoutEventType,
@@ -107,8 +109,24 @@ router.post("/stripe", async (req: Request, res: Response) => {
 
     if (event.type === "account.updated") {
       const account = event.data.object as Stripe.Account;
-      await handleConnectAccountUpdated(account, { eventCreatedUnix: event.created });
-      // Mark only after handler completes so Stripe can retry on failure.
+      const accountId = account.id?.trim() ?? "";
+      const attribution = accountId
+        ? await attributeStripeConnectAccount(accountId)
+        : { kind: "unknown" as const };
+
+      if (attribution.kind === "collision") {
+        console.error("[stripe.webhook] account.updated collision — no status applied", {
+          eventId: event.id,
+          accountSuffix: accountId.slice(-8),
+        });
+      } else if (attribution.kind === "employee") {
+        await handleEmployeeConnectAccountUpdated(account, { eventCreatedUnix: event.created });
+      } else if (attribution.kind === "business") {
+        await handleConnectAccountUpdated(account, { eventCreatedUnix: event.created });
+      } else {
+        await handleConnectAccountUpdated(account, { eventCreatedUnix: event.created });
+        await handleEmployeeConnectAccountUpdated(account, { eventCreatedUnix: event.created });
+      }
       await markStripeWebhookEventProcessed(event.id, event.type);
       return res.json({ received: true });
     }

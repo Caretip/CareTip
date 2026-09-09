@@ -31,7 +31,6 @@ import { dashboardWorkspaceUi } from "../../../dashboard/dashboardWorkspaceUi";
 import { businessUi } from "../../../business/businessDashboardUi";
 import { cn } from "@/lib/utils";
 import { caretipBtnPrimaryCompact } from "@/lib/caretipButtonSystem";
-import { caretipType } from "@/lib/typography/caretipType";
 import {
   Dialog,
   DialogContent,
@@ -373,112 +372,150 @@ function InstantBalanceSection({
   const receiveCents = eligibility?.instantAvailableNetCents ?? 0;
   const feeCents = eligibility?.platformFeeCents ?? 0;
   const masked = formatMaskedMethod(eligibility?.destinationLast4 ?? null);
+  const showInstantRail =
+    !eligibility ||
+    eligibility.eligible ||
+    eligibility.reason === "not_connected" ||
+    eligibility.reason === "no_instant_destination" ||
+    eligibility.reason === "payouts_disabled" ||
+    eligibility.reason === "country_unsupported" ||
+    eligibility.canOpenExpressDashboard;
 
   return (
     <section aria-labelledby="caretip-payout-balance-heading" className="border-b border-border pb-8">
-      <p className={dashboardWorkspaceUi.eyebrow}>{t("business.billing.payouts.instant.balanceEyebrow")}</p>
       <h2 id="caretip-payout-balance-heading" className="sr-only">
         {t("business.billing.payouts.instant.balanceEyebrow")}
       </h2>
 
       {bootLoading || loading ? (
-        <div className="mt-4 space-y-3" aria-busy="true">
-          <div className="h-10 w-48 max-w-full animate-pulse rounded-md bg-muted" />
-          <div className="h-4 w-32 animate-pulse rounded-md bg-muted" />
+        <div className="mt-1 max-w-3xl space-y-6" aria-busy="true">
+          <div className="space-y-3">
+            <div className="h-3 w-24 animate-pulse rounded-md bg-muted" />
+            <div className="h-11 w-44 max-w-full animate-pulse rounded-md bg-muted" />
+            <div className="h-4 w-28 animate-pulse rounded-md bg-muted" />
+          </div>
+          <div className="h-px bg-border" />
+          <div className="space-y-3">
+            <div className="h-4 w-36 animate-pulse rounded-md bg-muted" />
+            <div className="h-9 w-32 animate-pulse rounded-md bg-muted" />
+            <div className="h-10 w-48 animate-pulse rounded-md bg-muted" />
+          </div>
           <span className="sr-only">{t("business.billing.payouts.instant.checking")}</span>
         </div>
       ) : !eligibility ? (
-        <div className="mt-4 space-y-3">
+        <div className="mt-1 max-w-xl space-y-3">
           <p className="text-sm text-muted-foreground">{t("business.billing.payouts.instant.loadError")}</p>
           <button type="button" onClick={onRetryEligibility} className={cn(dashboardWorkspaceUi.btnGhost, "h-10 min-h-10 px-4 text-sm")}>
             {t("business.billing.payouts.instant.retry")}
           </button>
         </div>
       ) : (
-        <div className="mt-4">
-          <p className={cn(caretipType.kpiValue, "text-3xl sm:text-4xl")}>
-            {formatConnectPayoutAmount(headlineCents, currency, locale)}
-          </p>
-          <p className="mt-1 text-sm text-muted-foreground">
-            {eligibility.eligible
-              ? t("business.billing.payouts.instant.availableNow")
-              : t(`business.billing.payouts.instant.reason.${eligibility.reason}`)}
-          </p>
+        <div
+          className={cn(
+            "mt-1 grid max-w-4xl gap-8 lg:items-start lg:gap-x-12",
+            showInstantRail && "lg:grid-cols-[minmax(0,18rem)_minmax(0,1fr)]",
+          )}
+        >
+          <div>
+            <p className="text-xs font-medium text-muted-foreground">
+              {t("business.billing.payouts.instant.balanceEyebrow")}
+            </p>
+            <p className="mt-2 text-3xl font-semibold tabular-nums tracking-tight text-foreground sm:text-4xl">
+              {formatConnectPayoutAmount(headlineCents, currency, locale)}
+            </p>
+            <p className="mt-1.5 text-sm text-muted-foreground">
+              {eligibility.eligible
+                ? t("business.billing.payouts.instant.availableNow")
+                : t(`business.billing.payouts.instant.reason.${eligibility.reason}`)}
+            </p>
+          </div>
 
-          {eligibility.eligible ? (
-            <div className="mt-6 space-y-4">
-              <button
-                type="button"
-                disabled={payoutBusy}
-                aria-busy={payoutBusy}
-                onClick={onRequestPayout}
-                className={caretipBtnPrimaryCompact}
-              >
-                {payoutBusy ? (
-                  <>
-                    <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
-                    {t("business.billing.payouts.instant.ctaSending")}
-                  </>
-                ) : (
-                  t("business.billing.payouts.instant.ctaAmount", {
-                    amount: formatConnectPayoutAmount(receiveCents, currency, locale),
-                  })
-                )}
-              </button>
+          {showInstantRail ? (
+          <div className="border-t border-border pt-6 lg:border-l lg:border-t-0 lg:pl-10 lg:pt-0">
+            <p className="text-sm font-semibold text-foreground">
+              {t("business.billing.payouts.instant.sectionTitle")}
+            </p>
 
-              <dl className="space-y-1.5 text-sm text-muted-foreground">
-                {masked ? (
-                  <div className="flex flex-wrap gap-x-2">
-                    <dt>{t("business.billing.payouts.instant.methodLabel")}</dt>
-                    <dd className="font-medium text-foreground">
-                      {masked}
-                      <span className="ml-2 font-normal text-muted-foreground">
-                        {t("business.billing.payouts.instant.instantEligible")}
-                      </span>
-                    </dd>
+            {eligibility.eligible ? (
+              <div className="mt-4 space-y-5">
+                <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between sm:gap-8">
+                  <div>
+                    <p className="text-xs font-medium text-muted-foreground">
+                      {t("business.billing.payouts.instant.youReceive")}
+                    </p>
+                    <p className="mt-1 text-2xl font-semibold tabular-nums tracking-tight text-foreground">
+                      {formatConnectPayoutAmount(receiveCents, currency, locale)}
+                    </p>
+                    <span className="sr-only">{t("business.billing.payouts.instant.youReceiveHint")}</span>
                   </div>
-                ) : null}
-                {showFee ? (
-                  <>
-                    <div className="flex flex-wrap gap-x-2">
-                      <dt>{t("business.billing.payouts.instant.fee")}</dt>
-                      <dd className="font-medium text-foreground">
+                  <button
+                    type="button"
+                    disabled={payoutBusy}
+                    aria-busy={payoutBusy}
+                    onClick={onRequestPayout}
+                    className={cn(caretipBtnPrimaryCompact, "w-full sm:w-auto")}
+                  >
+                    {payoutBusy ? (
+                      <>
+                        <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+                        {t("business.billing.payouts.instant.ctaSending")}
+                      </>
+                    ) : (
+                      t("business.billing.payouts.instant.ctaAmount", {
+                        amount: formatConnectPayoutAmount(receiveCents, currency, locale),
+                      })
+                    )}
+                  </button>
+                </div>
+
+                <div className="space-y-2 text-sm text-muted-foreground">
+                  {masked ? (
+                    <p>
+                      <span className="sr-only">{t("business.billing.payouts.instant.methodLabel")}: </span>
+                      {t("business.billing.payouts.instant.methodEligible", {
+                        method: masked,
+                        status: t("business.billing.payouts.instant.instantEligible"),
+                      })}
+                    </p>
+                  ) : null}
+                  {showFee ? (
+                    <p>
+                      {t("business.billing.payouts.instant.fee")}{" "}
+                      <span className="tabular-nums text-foreground/80">
                         {rate
                           ? t("business.billing.payouts.instant.feeWithRate", {
                               amount: formatConnectPayoutAmount(feeCents, currency, locale),
                               rate,
                             })
                           : formatConnectPayoutAmount(feeCents, currency, locale)}
-                      </dd>
-                    </div>
-                    <div className="flex flex-wrap gap-x-2">
-                      <dt>{t("business.billing.payouts.instant.youReceive")}</dt>
-                      <dd className="font-medium text-foreground">
-                        {formatConnectPayoutAmount(receiveCents, currency, locale)}
-                      </dd>
-                    </div>
-                  </>
-                ) : null}
-              </dl>
-
-              {eligibility.canOpenExpressDashboard ? (
-                <button
-                  type="button"
-                  disabled={dashboardBusy}
-                  onClick={onOpenDashboard}
-                  className="text-sm font-medium text-muted-foreground underline-offset-2 hover:text-foreground hover:underline disabled:opacity-50"
-                >
-                  {t("business.billing.payouts.instant.changeMethod")}
-                </button>
-              ) : null}
-            </div>
-          ) : (
-            <IneligibleInstantActions
-              eligibility={eligibility}
-              dashboardBusy={dashboardBusy}
-              onOpenDashboard={onOpenDashboard}
-            />
-          )}
+                      </span>
+                    </p>
+                  ) : null}
+                  {eligibility.canOpenExpressDashboard ? (
+                    <p>
+                      <button
+                        type="button"
+                        disabled={dashboardBusy}
+                        onClick={onOpenDashboard}
+                        className="font-medium text-muted-foreground underline-offset-2 hover:text-foreground hover:underline disabled:opacity-50"
+                      >
+                        {t("business.billing.payouts.instant.changeMethod")}
+                      </button>
+                    </p>
+                  ) : null}
+                </div>
+              </div>
+            ) : (
+              <div className="mt-4">
+                <IneligibleInstantActions
+                  eligibility={eligibility}
+                  dashboardBusy={dashboardBusy}
+                  onOpenDashboard={onOpenDashboard}
+                />
+              </div>
+            )}
+          </div>
+          ) : null}
         </div>
       )}
     </section>
@@ -499,11 +536,9 @@ function IneligibleInstantActions({
 
   if (reason === "not_connected") {
     return (
-      <div className="mt-6">
-        <Link to="/dashboard/stripe/connect" className={cn(dashboardWorkspaceUi.btnSecondary, "h-10 min-h-10 px-4 text-sm")}>
-          {t("business.billing.payouts.instant.connectCta")}
-        </Link>
-      </div>
+      <Link to="/dashboard/stripe/connect" className={cn(dashboardWorkspaceUi.btnSecondary, "h-10 min-h-10 px-4 text-sm")}>
+        {t("business.billing.payouts.instant.connectCta")}
+      </Link>
     );
   }
 
@@ -520,16 +555,14 @@ function IneligibleInstantActions({
       : t("business.billing.payouts.instant.openStripe");
 
   return (
-    <div className="mt-6">
-      <button
-        type="button"
-        disabled={dashboardBusy}
-        onClick={onOpenDashboard}
-        className={cn(dashboardWorkspaceUi.btnSecondary, "h-10 min-h-10 px-4 text-sm")}
-      >
-        {dashboardLabel}
-      </button>
-    </div>
+    <button
+      type="button"
+      disabled={dashboardBusy}
+      onClick={onOpenDashboard}
+      className={cn(dashboardWorkspaceUi.btnSecondary, "h-10 min-h-10 px-4 text-sm")}
+    >
+      {dashboardLabel}
+    </button>
   );
 }
 

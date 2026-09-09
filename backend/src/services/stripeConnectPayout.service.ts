@@ -14,6 +14,7 @@ import { prisma } from "../prisma.js";
 import { logServerError } from "../utils/httpErrors.js";
 import { runSerializedByKey } from "../utils/serializedByKey.js";
 import { getStripeClient } from "./stripe.service.js";
+import { attributeStripeConnectAccount } from "./connectAccountOwnership.service.js";
 import {
   RECON_MAX_PAGES_TICK,
   RECON_MAX_PAGES_WEBHOOK,
@@ -701,6 +702,22 @@ export async function handleConnectPayoutEvent(event: Stripe.Event): Promise<Han
   });
 
   if (businesses.length !== 1) {
+    const attribution = await attributeStripeConnectAccount(accountId);
+    if (attribution.kind === "employee") {
+      console.info("[stripe.connectPayout] employee_account_ignored", {
+        accountSuffix: accountSuffix(accountId),
+        eventType: event.type,
+        employeeId: attribution.employeeId,
+      });
+      return { matched: false, reason: "employee_account" };
+    }
+    if (attribution.kind === "collision") {
+      console.error("[stripe.connectPayout] account_id_collision", {
+        accountSuffix: accountSuffix(accountId),
+        eventType: event.type,
+      });
+      return { matched: false, reason: "ambiguous_account" };
+    }
     console.info("[stripe.connectPayout] unmatched_account", {
       accountSuffix: accountSuffix(accountId),
       matchCount: businesses.length,

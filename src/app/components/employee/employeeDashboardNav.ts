@@ -23,6 +23,7 @@ export const employeeDashboardNavItems: readonly EmployeeDashboardNavItem[] = [
     icon: "tipGoals",
     featureKey: "employeeGoals",
   },
+  { labelKey: "dashboardNav.employee.payouts", href: "/employee/payouts", icon: "earnings" },
   { labelKey: "dashboardNav.employee.settings", href: "/employee/settings", icon: "settings" },
 ] as const;
 

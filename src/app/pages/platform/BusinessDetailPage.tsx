@@ -266,6 +266,45 @@ export function BusinessDetailPage() {
               />
             ) : null}
 
+            <div className="rounded-lg border border-border/80 bg-muted/20 p-4 space-y-3">
+              <p className="text-sm font-medium text-foreground">
+                {t("admin.businessDetailPage.employeePayoutSection")}
+              </p>
+              <p className="text-xs text-muted-foreground">
+                {t("admin.businessDetailPage.employeePayoutSectionHint")}
+              </p>
+              {row.employeePayoutAccounts && row.employeePayoutAccounts.length > 0 ? (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="text-left text-muted-foreground">
+                        <th className="py-1 pr-3 font-medium">{t("admin.businessDetailPage.employeePayoutColName")}</th>
+                        <th className="py-1 pr-3 font-medium">{t("admin.businessDetailPage.employeePayoutColStatus")}</th>
+                        <th className="py-1 font-medium">{t("admin.businessDetailPage.employeePayoutColSuffix")}</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {row.employeePayoutAccounts.map((emp) => (
+                        <tr key={emp.employeeId} className="border-t border-border/60">
+                          <td className="py-2 pr-3">{emp.name}</td>
+                          <td className="py-2 pr-3">
+                            {t(`admin.businessDetailPage.payoutState.${emp.connectionState}`)}
+                          </td>
+                          <td className="py-2 font-mono text-xs text-muted-foreground">
+                            {emp.accountSuffix ? `••••${emp.accountSuffix}` : "—"}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground">
+                  {t("admin.businessDetailPage.employeePayoutEmpty")}
+                </p>
+              )}
+            </div>
+
             <dl className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
               <div>
                 <dt className="text-muted-foreground">{t("admin.businessDetailPage.dtTotalTips")}</dt>

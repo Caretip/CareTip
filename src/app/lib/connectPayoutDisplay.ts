@@ -2,15 +2,23 @@ import type {
   ConnectPayoutReconciliationStatus,
   ConnectPayoutStatus,
 } from "./api";
+import { formatEur } from "./formatEur";
 
-/** Display Stripe integer cents in the payout's own currency. Never converts to EUR. */
+/**
+ * Display Stripe integer cents in the payout's own currency. Never converts FX.
+ * EUR uses CareTip `formatEur` (€ prefix, de-DE grouping) so payouts match analytics.
+ * Non-EUR keeps Intl with the active UI locale.
+ */
 export function formatConnectPayoutAmount(
   amountCents: number,
   currency: string,
   locale: string,
 ): string {
   const code = (currency || "eur").trim().toUpperCase() || "EUR";
-  const major = amountCents / 100;
+  const major = Number.isFinite(amountCents) ? amountCents / 100 : 0;
+  if (code === "EUR") {
+    return formatEur(major);
+  }
   try {
     return new Intl.NumberFormat(locale || "en", {
       style: "currency",

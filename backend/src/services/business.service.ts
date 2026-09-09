@@ -9,6 +9,7 @@ import { StatsFetchError, logStatsPhase } from "../utils/statsErrors.js";
 import { randomBytes } from "node:crypto";
 import { generateSlug, ensureUniqueSlug } from "../utils/slug.js";
 import { prisma } from "../prisma.js";
+import { toEmployeePayoutConnectionState } from "../lib/employeePayoutConnectState.js";
 import { isSubscriptionBasicDefaultEnabled } from "../config/featureFlags.js";
 import { provisionInternalBasicSubscription } from "./subscription.service.js";
 import { emitBusinessDataChanged, emitPlatformDataUpdated } from "../socket/socketEmitters.js";
@@ -797,6 +798,12 @@ async function loadBusinessAnalyticsEmployees(
     isActive: true,
     activationStatus: true,
     monthlyGoal: true,
+    stripeAccount: {
+      select: {
+        stripeConnectStatus: true,
+        stripeAccountId: true,
+      },
+    },
     user: {
       select: {
         email: true,
@@ -827,6 +834,12 @@ async function loadBusinessAnalyticsEmployees(
     isActive: true,
     activationStatus: true,
     monthlyGoal: true,
+    stripeAccount: {
+      select: {
+        stripeConnectStatus: true,
+        stripeAccountId: true,
+      },
+    },
     user: {
       select: {
         email: true,
@@ -961,6 +974,17 @@ function mapEmployeesToStats(
         "tableAssignments" in emp && Array.isArray(emp.tableAssignments)
           ? emp.tableAssignments.map((ta: { table: { id: string } }) => ta.table.id)
           : [],
+      payoutConnectState: toEmployeePayoutConnectionState(
+        "stripeAccount" in emp && emp.stripeAccount
+          ? emp.stripeAccount.stripeConnectStatus
+          : null,
+        Boolean(
+          "stripeAccount" in emp &&
+            emp.stripeAccount &&
+            typeof emp.stripeAccount.stripeAccountId === "string" &&
+            emp.stripeAccount.stripeAccountId.trim(),
+        ),
+      ),
       tipsTotal: agg.total,
       tipCount: agg.count,
       rating: ratingAgg && ratingAgg.count > 0 ? ratingAgg.average : null,

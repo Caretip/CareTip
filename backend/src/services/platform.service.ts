@@ -18,6 +18,8 @@ import {
   invalidateCacheKeyPrefix,
 } from "../utils/shortLivedCache.js";
 import { parseKycDocuments, type KycDocuments } from "./kyc.service.js";
+import { toEmployeePayoutConnectionState } from "../lib/employeePayoutConnectState.js";
+import { stripeAccountSuffix } from "./connectAccountOwnership.service.js";
 import { sanitizeLikeContainsSearch } from "../utils/likeSearch.js";
 import { updateSubscriptionMirrorPlanTransactional } from "./subscription.service.js";
 import {
@@ -269,7 +271,7 @@ export async function verifyBusiness(businessId: string) {
 }
 
 export async function getBusinessForAdmin(businessId: string) {
-  const [b, tipSum, successTipCount] = await Promise.all([
+  const [b, tipSum, successTipCount, employeePayoutRows] = await Promise.all([
     prisma.business.findUnique({
       where: { id: businessId },
       include: {
@@ -282,6 +284,21 @@ export async function getBusinessForAdmin(businessId: string) {
       _sum: { amount: true },
     }),
     prisma.transaction.count({ where: { businessId, status: "success" } }),
+    prisma.employee.findMany({
+      where: { businessId, isDeleted: false },
+      select: {
+        id: true,
+        name: true,
+        stripeAccount: {
+          select: {
+            stripeAccountId: true,
+            stripeConnectStatus: true,
+          },
+        },
+      },
+      orderBy: { name: "asc" },
+      take: 200,
+    }),
   ]);
   if (!b) return null;
   if (b.deletedAt) return null;
@@ -317,6 +334,17 @@ export async function getBusinessForAdmin(businessId: string) {
     totalTipsEur: Number(tipSum._sum.amount ?? 0),
     successTipCount,
     subscriptionTier: b.subscriptionTier,
+    employeePayoutAccounts: employeePayoutRows.map((row) => ({
+      employeeId: row.id,
+      name: row.name,
+      connectionState: toEmployeePayoutConnectionState(
+        row.stripeAccount?.stripeConnectStatus ?? null,
+        Boolean(row.stripeAccount?.stripeAccountId?.trim()),
+      ),
+      accountSuffix: row.stripeAccount?.stripeAccountId
+        ? stripeAccountSuffix(row.stripeAccount.stripeAccountId)
+        : null,
+    })),
   };
 }
 

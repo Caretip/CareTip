@@ -1223,6 +1223,8 @@ export interface BusinessDashboardStats {
     monthlyGoal?: number | null;
     locationId?: string | null;
     assignedTableIds?: string[];
+    /** Neutral Stripe payout-account connection — not a claim that tips are routed there. */
+    payoutConnectState?: EmployeePayoutConnectionState;
   }>;
   /** Employee-created tip goals (read-only for managers). */
   employeeGoals?: Array<{
@@ -2857,6 +2859,49 @@ export async function createConnectAccountLink(): Promise<{ url: string }> {
 /** Express Dashboard Login Link — server uses stored stripeAccountId; generated on click. */
 export async function createConnectLoginLink(): Promise<{ url: string }> {
   return apiRequest(apiPath("/api/me/connect/login-link"), {
+    method: "POST",
+    headers: getHeaders(),
+    credentials: "include",
+    body: JSON.stringify({}),
+  });
+}
+
+export type EmployeePayoutConnectionState =
+  | "not_connected"
+  | "setup_required"
+  | "action_required"
+  | "restricted"
+  | "connected";
+
+export interface EmployeeConnectStatus {
+  connectionState: EmployeePayoutConnectionState;
+  stripeConfigured: boolean;
+  hasAccount: boolean;
+  detailsSubmitted: boolean;
+  payoutsEnabled: boolean;
+  canOpenDashboard: boolean;
+  updatedAt: string | null;
+}
+
+export async function getEmployeeConnectStatus(): Promise<EmployeeConnectStatus> {
+  return apiRequest<EmployeeConnectStatus>(apiPath("/api/me/employee-connect/status"), {
+    method: "GET",
+    headers: getHeaders(),
+    credentials: "include",
+  });
+}
+
+export async function createEmployeeConnectAccountLink(): Promise<{ url: string }> {
+  return apiRequest(apiPath("/api/me/employee-connect/account-link"), {
+    method: "POST",
+    headers: getHeaders(),
+    credentials: "include",
+    body: JSON.stringify({}),
+  });
+}
+
+export async function createEmployeeConnectLoginLink(): Promise<{ url: string }> {
+  return apiRequest(apiPath("/api/me/employee-connect/login-link"), {
     method: "POST",
     headers: getHeaders(),
     credentials: "include",
@@ -4944,6 +4989,12 @@ export interface PlatformBusinessRow {
   /** When false, the owner account is suspended */
   ownerIsActive?: boolean;
   operationalStatus?: PlatformBusinessOperationalStatus;
+  employeePayoutAccounts?: Array<{
+    employeeId: string;
+    name: string;
+    connectionState: EmployeePayoutConnectionState;
+    accountSuffix: string | null;
+  }>;
 }
 
 export type PlatformBusinessStatusFilter =

@@ -728,6 +728,7 @@ const routes: RouteObject[] = [
           { path: 'inbox', lazy: routeLazy(() => import('./pages/shared/NotificationInboxPage'), 'NotificationInboxPage') },
           { path: 'assignment', lazy: routeLazy(() => import('./pages/employee/EmployeeAssignmentPage'), 'EmployeeAssignmentPage') },
           { path: 'tip-goals', lazy: routeLazy(() => import('./pages/employee/EmployeeTipGoalsPage'), 'EmployeeTipGoalsPage') },
+          { path: 'payouts', lazy: routeLazy(() => import('./pages/employee/EmployeePayoutsPage'), 'EmployeePayoutsPage') },
           { path: 'settings', lazy: routeLazy(() => import('./pages/employee/EmployeeSettingsPage'), 'EmployeeSettingsPage') },
         ],
       },

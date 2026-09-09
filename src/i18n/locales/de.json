@@ -2565,6 +2565,7 @@
       "tipHistory": "Trinkgeldverlauf",
       "assignment": "Meine Zuweisung",
       "tipGoals": "Trinkgeldziele",
+      "payouts": "Auszahlungen",
       "settings": "Einstellungen"
     },
     "business": {
@@ -3767,6 +3768,33 @@
       "deletePermanently": "Endgültig löschen",
       "dialogCancel": "Abbrechen"
     },
+    "payouts": {
+      "title": "Auszahlungen",
+      "subtitle": "Verbinden und verwalten Sie Ihr Stripe-Auszahlungskonto.",
+      "backAria": "Zurück",
+      "sectionTitle": "Auszahlungskonto",
+      "sectionHint": "Verbinden Sie Ihr Auszahlungskonto, damit CareTip Sie auszahlen kann, sobald Mitarbeiter-Auszahlungen aktiviert sind.",
+      "stripeHandles": "Stripe übernimmt Ihre Auszahlungsdaten und die Verifizierung sicher.",
+      "connectedBody": "Ihr Stripe-Auszahlungskonto ist verbunden.",
+      "loading": "Auszahlungskonto wird geladen…",
+      "loadError": "Status des Auszahlungskontos konnte nicht geladen werden.",
+      "connectCta": "Auszahlungskonto verbinden",
+      "continueSetup": "Einrichtung fortsetzen",
+      "openDashboard": "Stripe-Dashboard öffnen",
+      "connectFailed": "Einrichtung des Auszahlungskontos konnte nicht gestartet werden.",
+      "dashboardFailed": "Stripe-Dashboard konnte nicht geöffnet werden.",
+      "redirectFailed": "Stripe konnte nicht geöffnet werden.",
+      "linkExpired": "Dieser Einrichtungs-Link ist abgelaufen. Bitte erneut starten.",
+      "returned": "Zurück von Stripe. Der Status wird in Kürze aktualisiert.",
+      "notConfigured": "Die Einrichtung des Auszahlungskontos ist noch nicht verfügbar.",
+      "state": {
+        "not_connected": "Nicht verbunden",
+        "setup_required": "Einrichtung erforderlich",
+        "action_required": "Handlung erforderlich",
+        "restricted": "Eingeschränkt",
+        "connected": "Verbunden"
+      }
+    },
     "hero": {
       "headlineLine1": "Ihre Einnahmen",
       "headlineLine2": "auf einen Blick",
@@ -4742,6 +4770,14 @@
       "thQrAssignment": "QR-Zuweisung",
       "thContact": "Kontakt",
       "thTipsMonth": "Trinkgeld (gesamt)",
+      "payoutAccount": "Auszahlungskonto",
+      "payoutState": {
+        "not_connected": "Nicht verbunden",
+        "setup_required": "Einrichtung erforderlich",
+        "action_required": "Handlung erforderlich",
+        "restricted": "Eingeschränkt",
+        "connected": "Verbunden"
+      },
       "thRating": "Bewertung",
       "thActive": "Aktiv",
       "thActions": "Aktionen",
@@ -6047,6 +6083,9 @@
         "instant": {
           "balanceEyebrow": "Ihr Guthaben",
           "availableNow": "Jetzt verfügbar",
+          "sectionTitle": "Sofort auszahlen",
+          "youReceiveHint": "Nach der Gebühr für die Sofortauszahlung, falls eine anfällt.",
+          "methodEligible": "{{method}} · {{status}}",
           "lead": "Überweisen Sie verfügbares Guthaben auf Ihre Auszahlungsmethode.",
           "checking": "Verfügbares Guthaben wird geprüft…",
           "loadError": "Das Sofortauszahlungsguthaben konnte nicht geladen werden. Bitte erneut versuchen.",
@@ -6063,7 +6102,7 @@
           "openStripe": "Stripe öffnen",
           "methodLabel": "Auszahlungsmethode",
           "methodUnknown": "Auszahlungsmethode",
-          "instantEligible": "Für Sofortauszahlung geeignet",
+          "instantEligible": "Sofort möglich",
           "confirmTitle": "Sofortauszahlung bestätigen",
           "confirmLead": "Prüfen Sie den Betrag, bevor Sie senden.",
           "confirmSending": "Sie senden",
@@ -7903,6 +7942,19 @@
       "dtRegisteredAddress": "Registrierte Adresse",
       "dtStaffLocations": "Team / Standorte",
       "staffLocationsLine": "{{staff}} Teammitglieder, {{locations}} Standorte",
+      "employeePayoutSection": "Mitarbeiter-Auszahlungskonten",
+      "employeePayoutSectionHint": "Nur Verbindungsstatus. Das ändert derzeit nicht, wohin Kundentrinkgelder fließen.",
+      "employeePayoutEmpty": "Noch keine Mitarbeiter.",
+      "employeePayoutColName": "Mitarbeiter",
+      "employeePayoutColStatus": "Auszahlungskonto",
+      "employeePayoutColSuffix": "Konto",
+      "payoutState": {
+        "not_connected": "Nicht verbunden",
+        "setup_required": "Einrichtung erforderlich",
+        "action_required": "Handlung erforderlich",
+        "restricted": "Eingeschränkt",
+        "connected": "Verbunden"
+      },
       "openLogo": "Logo öffnen",
       "openKycDocument": "KYC-Dokument öffnen",
       "editDetails": "Details bearbeiten",

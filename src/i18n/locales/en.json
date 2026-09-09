@@ -2565,6 +2565,7 @@
       "tipHistory": "Tip history",
       "assignment": "My assignment",
       "tipGoals": "Tip goals",
+      "payouts": "Payouts",
       "settings": "Settings"
     },
     "business": {
@@ -3767,6 +3768,33 @@
       "deletePermanently": "Delete permanently",
       "dialogCancel": "Cancel"
     },
+    "payouts": {
+      "title": "Payouts",
+      "subtitle": "Connect and manage your Stripe payout account.",
+      "backAria": "Back",
+      "sectionTitle": "Payout account",
+      "sectionHint": "Connect your payout account so CareTip can pay you when employee payouts are enabled.",
+      "stripeHandles": "Stripe securely handles your payout details and verification.",
+      "connectedBody": "Your Stripe payout account is connected.",
+      "loading": "Loading payout account…",
+      "loadError": "Could not load payout account status.",
+      "connectCta": "Connect your payout account",
+      "continueSetup": "Continue setup",
+      "openDashboard": "Open Stripe Dashboard",
+      "connectFailed": "Could not start payout account setup.",
+      "dashboardFailed": "Could not open the Stripe Dashboard.",
+      "redirectFailed": "Could not open Stripe.",
+      "linkExpired": "That setup link expired. Start again to continue.",
+      "returned": "Returned from Stripe. Status will update shortly.",
+      "notConfigured": "Payout account setup is not available yet.",
+      "state": {
+        "not_connected": "Not connected",
+        "setup_required": "Setup required",
+        "action_required": "Action required",
+        "restricted": "Restricted",
+        "connected": "Connected"
+      }
+    },
     "hero": {
       "headlineLine1": "Your earnings",
       "headlineLine2": "at a glance",
@@ -4742,6 +4770,14 @@
       "thQrAssignment": "QR assignment",
       "thContact": "Contact",
       "thTipsMonth": "Tips (all time)",
+      "payoutAccount": "Payout account",
+      "payoutState": {
+        "not_connected": "Not connected",
+        "setup_required": "Setup required",
+        "action_required": "Action required",
+        "restricted": "Restricted",
+        "connected": "Connected"
+      },
       "thRating": "Rating",
       "thActive": "Active",
       "thActions": "Actions",
@@ -6050,6 +6086,9 @@
         "instant": {
           "balanceEyebrow": "Your balance",
           "availableNow": "Available now",
+          "sectionTitle": "Get paid instantly",
+          "youReceiveHint": "After the Instant Payout fee, if one applies.",
+          "methodEligible": "{{method}} · {{status}}",
           "lead": "Get available funds onto your payout method.",
           "checking": "Checking available balance…",
           "loadError": "We couldn’t load your Instant Payout balance. Try again.",
@@ -7906,6 +7945,19 @@
       "dtRegisteredAddress": "Registered address",
       "dtStaffLocations": "Staff / locations",
       "staffLocationsLine": "{{staff}} staff, {{locations}} locations",
+      "employeePayoutSection": "Staff payout accounts",
+      "employeePayoutSectionHint": "Connection status only. This does not change where customer tips are currently paid.",
+      "employeePayoutEmpty": "No staff members yet.",
+      "employeePayoutColName": "Employee",
+      "employeePayoutColStatus": "Payout account",
+      "employeePayoutColSuffix": "Account",
+      "payoutState": {
+        "not_connected": "Not connected",
+        "setup_required": "Setup required",
+        "action_required": "Action required",
+        "restricted": "Restricted",
+        "connected": "Connected"
+      },
       "openLogo": "Open logo",
       "openKycDocument": "Open KYC document",
       "editDetails": "Edit details",

@@ -41,12 +41,12 @@ export class StripeConnectError extends Error {
   }
 }
 
-function frontendBaseUrl(): string {
+export function frontendBaseUrl(): string {
   return (process.env.FRONTEND_URL ?? "http://localhost:5173").replace(/\/$/, "");
 }
 
 /** ISO country for Express account create — server-only; never from client. */
-function connectDefaultCountry(): string {
+export function connectDefaultCountry(): string {
   const raw = process.env.STRIPE_CONNECT_DEFAULT_COUNTRY?.trim().toUpperCase();
   if (raw && /^[A-Z]{2}$/.test(raw)) return raw;
   return "DE";
@@ -209,7 +209,7 @@ export function buildAccountsV2AccountLinkParams(input: {
   };
 }
 
-function isStripeConnectedAccountId(id: string): boolean {
+export function isStripeConnectedAccountId(id: string): boolean {
   return /^acct_[A-Za-z0-9_]+$/.test(id) && id.length >= 10 && id.length <= 128;
 }
 
@@ -362,7 +362,7 @@ export function deriveStripeConnectStatus(input: {
   return StripeConnectStatus.onboarding_incomplete;
 }
 
-function snapshotFromStripeAccount(account: Stripe.Account): {
+export function snapshotFromStripeAccount(account: Stripe.Account): {
   chargesEnabled: boolean;
   payoutsEnabled: boolean;
   detailsSubmitted: boolean;
@@ -1201,6 +1201,21 @@ export async function createExpressAccountOnboardingLink(params: {
   });
 
   return { url, accountId };
+}
+
+/** Account Links for a stored connected account. Return/refresh URLs must be server-fixed. */
+export async function createConnectOnboardingLinkUrl(input: {
+  accountId: string;
+  ownerId: string;
+  refreshUrl: string;
+  returnUrl: string;
+}): Promise<string> {
+  return createOnboardingLinkUrl({
+    accountId: input.accountId,
+    businessId: input.ownerId,
+    refreshUrl: input.refreshUrl,
+    returnUrl: input.returnUrl,
+  });
 }
 
 const CONNECT_USER_LOGIN_LINK_FAILED =

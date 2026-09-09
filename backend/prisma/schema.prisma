@@ -1096,11 +1096,33 @@ model Employee {
   activationTokens EmployeeActivationToken[]
   inviteRedemptions EmployeeInviteRedemption[]
   qrScanEvents      QrScanEvent[]
+  stripeAccount     EmployeeStripeAccount?
 
   @@index([businessId, locationId])
   @@index([businessId, isActive, name])
   @@index([businessId, isDeleted])
   @@map("employees")
+}
+
+/// Employee Stripe Connect Express (recipient) account. Not a wallet and not tip routing.
+/// Unique stripeAccountId must never collide with Business.stripeAccountId (enforced in services).
+model EmployeeStripeAccount {
+  id                           String              @id @default(cuid())
+  employeeId                   String              @unique @map("employee_id")
+  stripeAccountId              String              @unique @map("stripe_account_id")
+  stripeConnectStatus          StripeConnectStatus @default(onboarding_required) @map("stripe_connect_status")
+  stripePayoutsEnabled         Boolean             @default(false) @map("stripe_payouts_enabled")
+  stripeDetailsSubmitted       Boolean             @default(false) @map("stripe_details_submitted")
+  stripeConnectDisabledReason  String?             @map("stripe_connect_disabled_reason") @db.VarChar(128)
+  stripeConnectRequirementsDue Int                 @default(0) @map("stripe_connect_requirements_due")
+  stripeConnectUpdatedAt       DateTime?           @map("stripe_connect_updated_at")
+  createdAt                    DateTime            @default(now()) @map("created_at")
+  updatedAt                    DateTime            @updatedAt @map("updated_at")
+
+  employee Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  @@index([stripeConnectStatus])
+  @@map("employee_stripe_accounts")
 }
 
 /// Employee-created tip goals (multiple rows per employee). Business has read-only visibility via stats API.
