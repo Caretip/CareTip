@@ -6,6 +6,7 @@ import {
   venueLocalHour,
   venueLocalWeekDayKeys,
 } from "./businessVenueTime";
+import { comparableGrowthPercent } from "./businessAnalytics/analyticsPeriodMetrics";
 
 /**
  * Business intelligence aggregates — Sprint 6: traceable KPIs from tips, employees,
@@ -26,8 +27,10 @@ export type BusinessIntelligenceInput = {
   /** SQL rankings for selected timeframe (authoritative). */
   locationRankings?: Array<{ id: string | null; name: string; tipsEur: number; tipCount: number }>;
   tableRankings?: Array<{ id: string | null; name: string; tipsEur: number; tipCount: number }>;
-  /** Server growth % vs prior equal window; null when unavailable. */
+  /** Server growth % vs prior equal window; null when unavailable or not comparable. */
   growthPercent?: number | null;
+  /** Prior equal-length window totals from SQL (authoritative for growth). */
+  priorPeriod?: { totalTips: number; tipCount: number } | null;
   peakHour?: number | null;
   bestShift?: "morning" | "afternoon" | "evening" | "late" | null;
   avgTipsPerShift?: number | null;
@@ -48,6 +51,8 @@ export type RevenueAnalytics = {
   totalTips: number;
   tipCount: number;
   growthPercent: number;
+  /** False when prior-period volume is zero — do not present growthPercent as a real rate. */
+  growthComparable: boolean;
   averageTip: number;
   dailyRevenue: number;
   weeklyRevenue: number;
@@ -105,10 +110,15 @@ function aggregateByKey(
  */
 export function computeRevenueAnalytics(input: BusinessIntelligenceInput): RevenueAnalytics {
   const { period, week, today, dailyTipDistribution } = input;
-  const growthPercent =
-    typeof input.growthPercent === "number" && Number.isFinite(input.growthPercent)
-      ? Math.round(input.growthPercent)
-      : 0;
+  const priorTotal = input.priorPeriod?.totalTips;
+  const fromPrior =
+    typeof priorTotal === "number"
+      ? comparableGrowthPercent(period.totalTips, priorTotal)
+      : null;
+  const growthComparable = fromPrior !== null;
+  const growthPercent = growthComparable
+    ? fromPrior
+    : 0;
 
   const lastDayAmount =
     dailyTipDistribution.length > 0
@@ -119,6 +129,7 @@ export function computeRevenueAnalytics(input: BusinessIntelligenceInput): Reven
     totalTips: period.totalTips,
     tipCount: period.tipCount,
     growthPercent,
+    growthComparable,
     averageTip: period.averageTip,
     dailyRevenue: lastDayAmount || today.totalTips,
     weeklyRevenue: week.totalTips,
@@ -327,10 +338,11 @@ export function computeBusinessHealthScore(input: BusinessIntelligenceInput): Bu
   const revenue = computeRevenueAnalytics(input);
   const ops = computeOperationalMetrics(input);
   const { period } = input;
+  const growthForHealth = revenue.growthComparable ? revenue.growthPercent : 0;
 
   const revenueGrowth = Math.min(
     HEALTH_COMPONENT_MAX,
-    Math.max(0, HEALTH_COMPONENT_MAX / 2 + (revenue.growthPercent / 100) * (HEALTH_COMPONENT_MAX / 2)),
+    Math.max(0, HEALTH_COMPONENT_MAX / 2 + (growthForHealth / 100) * (HEALTH_COMPONENT_MAX / 2)),
   );
 
   const participationRatio =
@@ -418,7 +430,7 @@ export function generateExecutiveInsights(input: BusinessIntelligenceInput): Exe
   const insights = computeBusinessInsights(input);
   const out: ExecutiveInsight[] = [];
 
-  if (revenue.growthPercent !== 0) {
+  if (revenue.growthComparable && revenue.growthPercent !== 0) {
     out.push({
       id: "tip-growth",
       messageKey: "business.team.performance.executive.insights.tipGrowth",
@@ -540,7 +552,7 @@ export function generateExecutiveRisks(input: BusinessIntelligenceInput): Execut
   const qrMomentum = computeQrScanMomentum(input.qrAnalytics);
   const out: ExecutiveRisk[] = [];
 
-  if (revenue.growthPercent < -5) {
+  if (revenue.growthComparable && revenue.growthPercent < -5) {
     out.push({
       id: "tip-volume-decline",
       messageKey: "business.team.performance.executive.risks.tipVolumeDecline",
@@ -833,7 +845,7 @@ export function generateOpportunities(input: BusinessIntelligenceInput): Executi
     });
   }
 
-  if (revenue.growthPercent > 10) {
+  if (revenue.growthComparable && revenue.growthPercent > 10) {
     out.push({
       id: "tip-growth-opportunity",
       messageKey: "business.team.performance.executive.opportunities.tipGrowth",
@@ -953,7 +965,7 @@ export function generateExecutiveSummary(
 ): ExecutiveSummary {
   const clauses: ExecutiveSummary["clauses"] = [];
 
-  if (ctx.revenue.growthPercent > 5) {
+  if (ctx.revenue.growthComparable && ctx.revenue.growthPercent > 5) {
     clauses.push({
       key: "business.team.performance.executive.summary.revenueHealthy",
       params: { percent: ctx.revenue.growthPercent },

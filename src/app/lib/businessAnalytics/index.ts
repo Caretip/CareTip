@@ -8,6 +8,13 @@ export type {
 } from "./types";
 
 export {
+  averageTipValue,
+  comparableGrowthPercent,
+  shouldShowCurrentWeekContext,
+  analyticsStoreKey,
+} from "./analyticsPeriodMetrics";
+
+export {
   EMPTY_PERIOD_SNAPSHOT,
   snapshotFromStats,
   todaySnapshotFromPulse,

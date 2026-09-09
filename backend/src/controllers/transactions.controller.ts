@@ -17,7 +17,10 @@ export async function exportTransactions(req: Request, res: Response) {
     }
 
     const tz = sanitizeIanaTimezone((business as { timezone?: string | null }).timezone);
-    const tips = await businessService.getTipsForExport(business.id);
+    const rangeRaw = typeof req.query.range === "string" ? req.query.range.trim() : "";
+    const range =
+      rangeRaw === "week" || rangeRaw === "month" || rangeRaw === "year" ? rangeRaw : undefined;
+    const tips = await businessService.getTipsForExport(business.id, { range, timezone: tz });
     const rows = tips.map((t) => {
       // tips.created_at is naive UTC wall time; project to venue local for SSOT day labels.
       const local = DateTime.fromJSDate(t.createdAt, { zone: "utc" }).setZone(tz);
@@ -53,7 +56,8 @@ export async function exportTransactions(req: Request, res: Response) {
     ];
     const csv = json2csv.parse(rows, { fields });
     const dateStr = DateTime.now().setZone(tz).toFormat("yyyy-MM-dd");
-    const filename = `CareTip_Transactions_${dateStr}.csv`;
+    const rangeSuffix = range ? `_${range}` : "";
+    const filename = `CareTip_Transactions${rangeSuffix}_${dateStr}.csv`;
 
     res.setHeader("Content-Type", "text/csv; charset=utf-8");
     res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);

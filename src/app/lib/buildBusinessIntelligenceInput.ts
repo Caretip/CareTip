@@ -29,6 +29,7 @@ export type BuildBiInputParams = {
   bestShift?: BusinessDashboardStats["bestShift"];
   avgTipsPerShift?: number | null;
   completedShifts?: number | null;
+  priorPeriod?: { totalTips: number; tipCount: number } | null;
 };
 
 /** Build BI input from period-scoped stats — timeframe-agnostic field names (Sprint 3D). */
@@ -50,6 +51,7 @@ export function buildBusinessIntelligenceInput(params: BuildBiInputParams) {
     bestShift: params.bestShift ?? null,
     avgTipsPerShift: params.avgTipsPerShift ?? null,
     completedShifts: params.completedShifts ?? null,
+    priorPeriod: params.priorPeriod ?? null,
   };
 }
 

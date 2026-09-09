@@ -172,6 +172,7 @@ export function buildBusinessAnalyticsDTO(bundle: BusinessAnalyticsBundle): Busi
     locationRankings: bundle.periodStats.locationRankings,
     tableRankings: bundle.periodStats.tableRankings,
     growthPercent: bundle.periodStats.growthPercent,
+    priorPeriod: bundle.periodStats.priorPeriod ?? null,
     peakHour: bundle.periodStats.peakHour,
     bestShift: bundle.periodStats.bestShift,
     avgTipsPerShift: bundle.periodStats.avgTipsPerShift,

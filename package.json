@@ -56,6 +56,7 @@
     "test:physical-qr-orders-session": "node ./backend/node_modules/tsx/dist/cli.mjs ./scripts/physical-qr-orders-session-runtime.ts",
     "test:employee-page-session": "node ./backend/node_modules/tsx/dist/cli.mjs ./scripts/employee-page-session-runtime.ts",
     "test:google-signin-gsi": "node ./backend/node_modules/tsx/dist/cli.mjs ./scripts/google-signin-gsi-lifecycle-runtime.ts",
+    "test:business-analytics-integrity": "node ./backend/node_modules/tsx/dist/cli.mjs ./scripts/business-analytics-integrity-runtime.ts",
     "test:stripe-connect-phase4-5-ui": "node ./backend/node_modules/tsx/dist/cli.mjs ./scripts/stripe-connect-phase4-5-ui-runtime.ts"
   },
   "dependencies": {

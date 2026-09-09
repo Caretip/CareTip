@@ -20,6 +20,7 @@ import { cn } from "@/lib/utils";
 import { formatEur } from "../../lib/formatEur";
 import { downloadBusinessTransactionsExport } from "../../lib/api";
 import { toUserFriendlyMessage } from "../../lib/errorMessages";
+import { shouldShowCurrentWeekContext } from "../../lib/businessAnalytics/analyticsPeriodMetrics";
 import type { useBusinessIntelligenceData } from "../../hooks/useBusinessIntelligenceData";
 import type { TopTipSourceRow } from "../../lib/businessIntelligence";
 import type { AnalyticsTimeframe } from "../../hooks/useBusinessDashboardStats";
@@ -93,7 +94,7 @@ export function BusinessAnalyticsReporting({
   revenueTimeframe,
   onRevenueTimeframeChange,
   qrTimeframe,
-  onQrTimeframeChange,
+  onQrTimeframeChange: _onQrTimeframeChange,
 }: BusinessAnalyticsReportingProps) {
   const { t } = useTranslation();
   const [exporting, setExporting] = useState(false);
@@ -101,7 +102,7 @@ export function BusinessAnalyticsReporting({
   const handleExport = async () => {
     setExporting(true);
     try {
-      await downloadBusinessTransactionsExport();
+      await downloadBusinessTransactionsExport(revenueTimeframe);
     } catch (e) {
       toast.error(toUserFriendlyMessage(e));
     } finally {
@@ -109,14 +110,35 @@ export function BusinessAnalyticsReporting({
     }
   };
 
+  const displayTimeframe = data.displayTimeframe ?? revenueTimeframe;
   const periodLabel =
-    revenueTimeframe === "week"
+    displayTimeframe === "week"
       ? t("dashboard.filter_week")
-      : revenueTimeframe === "year"
+      : displayTimeframe === "year"
         ? t("dashboard.filter_year")
         : t("dashboard.filter_month");
 
   const revenueGrowth = data.bi.revenue.growthPercent;
+  const growthComparable = data.bi.revenue.growthComparable;
+  const showWeekContext = shouldShowCurrentWeekContext({
+    timeframe: displayTimeframe,
+    periodTotal: data.period.totalTips,
+    periodCount: data.period.tipCount,
+    weekTotal: data.week.totalTips,
+    weekCount: data.week.tipCount,
+  });
+  const employeesReceivedKey =
+    displayTimeframe === "week"
+      ? "business.tips.analytics.cards.employeesReceivedThisWeek"
+      : displayTimeframe === "year"
+        ? "business.tips.analytics.cards.employeesReceivedThisYear"
+        : "business.tips.analytics.cards.employeesReceivedThisMonth";
+  const growthOverviewKey =
+    displayTimeframe === "week"
+      ? "business.team.performance.bi.growthOverviewWeek"
+      : displayTimeframe === "year"
+        ? "business.team.performance.bi.growthOverviewYear"
+        : "business.team.performance.bi.growthOverviewMonth";
   const refreshingLabel = t("dashboard.refresh.updating");
   const cardsInitialLoading = data.isInitialAnalyticsLoading;
   const cardsRefreshing = data.isAnalyticsRefreshing;
@@ -152,22 +174,23 @@ export function BusinessAnalyticsReporting({
     {
       label: t("business.tips.analytics.cards.tipVolume"),
       value: <CountUpMetric value={data.period.totalTips} kind="eur" format={formatEur} />,
-      trend: t("premium.summaryBanner.growthValue", { percent: revenueGrowth }),
-      trendDirection: revenueGrowth >= 0 ? "up" : "down",
+      trend: growthComparable
+        ? t(growthOverviewKey, { percent: revenueGrowth })
+        : t("business.team.performance.bi.noPriorPeriod"),
+      trendDirection: !growthComparable ? "neutral" : revenueGrowth >= 0 ? "up" : "down",
     },
     {
       label: t("business.tips.analytics.cards.totalTips"),
       value: <CountUpMetric value={data.period.tipCount} kind="integer" />,
-      trend:
-        revenueTimeframe === "week"
-          ? undefined
-          : t("business.tips.analytics.cards.tipsThisWeek", { count: data.week.tipCount }),
+      trend: showWeekContext
+        ? t("business.tips.analytics.cards.tipsThisWeek", { count: data.week.tipCount })
+        : undefined,
       trendDirection: "neutral" as const,
     },
     {
       label: t("business.tips.analytics.cards.activeEmployees"),
       value: <CountUpMetric value={data.bi.operational.activeEmployees} kind="integer" />,
-      trend: t("business.tips.analytics.cards.employeesReceivedTips", {
+      trend: t(employeesReceivedKey, {
         count: data.bi.operational.employeesReceivingTips,
       }),
       trendDirection: "neutral" as const,
@@ -207,7 +230,7 @@ export function BusinessAnalyticsReporting({
         </h2>
         <RevenueAnalyticsCards
           data={data.input}
-          timeframe={revenueTimeframe}
+          timeframe={displayTimeframe}
           variant="detail"
           loading={cardsInitialLoading}
           refreshing={cardsRefreshing}

@@ -1,7 +1,13 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { ChevronDown } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { de, enUS } from "date-fns/locale";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/app/components/ui/collapsible";
 import {
   Area,
   AreaChart,
@@ -30,11 +36,13 @@ type QrAnalyticsLivePanelProps = {
 function MetricTile({
   label,
   value,
+  hint,
   loading,
   refreshing,
 }: {
   label: string;
   value: number;
+  hint?: string;
   loading?: boolean;
   refreshing?: boolean;
 }) {
@@ -45,6 +53,7 @@ function MetricTile({
       <p className="mt-1 text-lg font-semibold tabular-nums text-foreground">
         {showPlaceholder ? "—" : <CountUpMetric value={value} kind="integer" />}
       </p>
+      {hint ? <p className="mt-0.5 text-[11px] leading-snug text-muted-foreground/90">{hint}</p> : null}
     </div>
   );
 }
@@ -59,6 +68,7 @@ export function QrAnalyticsLivePanel({
 }: QrAnalyticsLivePanelProps) {
   const { t, i18n } = useTranslation();
   const timeLocale = i18n.language?.toLowerCase().startsWith("de") ? de : enUS;
+  const [recentOpen, setRecentOpen] = useState(false);
 
   const topQr = useMemo(() => {
     if (!data) return null;
@@ -79,9 +89,21 @@ export function QrAnalyticsLivePanel({
     <div className={cn("space-y-4", className)}>
       <div className={cn("grid gap-3", compact ? "grid-cols-2" : "grid-cols-2 sm:grid-cols-3")}>
         <MetricTile label={t("business.qrAnalytics.totalScans")} value={data?.totalScans ?? 0} loading={loading} refreshing={refreshing} />
-        <MetricTile label={t("business.qrAnalytics.uniqueVisitors")} value={data?.uniqueScans ?? 0} loading={loading} refreshing={refreshing} />
+        <MetricTile
+          label={t("business.qrAnalytics.uniqueVisitors")}
+          hint={t("business.qrAnalytics.uniqueVisitorsHint")}
+          value={data?.uniqueScans ?? 0}
+          loading={loading}
+          refreshing={refreshing}
+        />
         {!compact ? (
-          <MetricTile label={t("business.qrAnalytics.repeatScans")} value={data?.repeatScans ?? 0} loading={loading} refreshing={refreshing} />
+          <MetricTile
+            label={t("business.qrAnalytics.repeatScans")}
+            hint={t("business.qrAnalytics.repeatScansHint")}
+            value={data?.repeatScans ?? 0}
+            loading={loading}
+            refreshing={refreshing}
+          />
         ) : null}
       </div>
 
@@ -148,21 +170,40 @@ export function QrAnalyticsLivePanel({
       ) : null}
 
       {!compact && data && data.recentScans.length > 0 ? (
-        <div className="space-y-2">
-          <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-            {t("business.qrAnalytics.recentActivity")}
-          </p>
-          <ul className="divide-y divide-border/60 rounded-xl border border-border/60">
-            {data.recentScans.map((row, i) => (
-              <li key={`${row.scannedAt}-${i}`} className="flex items-center justify-between gap-3 px-3 py-2.5 text-sm">
-                <span className="min-w-0 truncate font-medium">{row.label}</span>
-                <span className="shrink-0 text-xs text-muted-foreground">
-                  {formatDistanceToNow(new Date(row.scannedAt), { addSuffix: true, locale: timeLocale })}
-                </span>
-              </li>
-            ))}
-          </ul>
-        </div>
+        <Collapsible open={recentOpen} onOpenChange={setRecentOpen}>
+          <div className="rounded-xl border border-border/60">
+            <CollapsibleTrigger
+              type="button"
+              className="flex min-h-10 w-full items-center justify-between gap-2 px-3 py-2.5 text-left"
+            >
+              <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                {t("business.qrAnalytics.recentActivity")}
+              </span>
+              <ChevronDown
+                className={cn(
+                  "h-4 w-4 shrink-0 text-muted-foreground transition-transform",
+                  recentOpen && "rotate-180",
+                )}
+                aria-hidden
+              />
+            </CollapsibleTrigger>
+            <CollapsibleContent>
+              <ul className="divide-y divide-border/60 border-t border-border/60">
+                {data.recentScans.map((row, i) => (
+                  <li
+                    key={`${row.scannedAt}-${i}`}
+                    className="flex items-center justify-between gap-3 px-3 py-2.5 text-sm"
+                  >
+                    <span className="min-w-0 truncate font-medium">{row.label}</span>
+                    <span className="shrink-0 text-xs text-muted-foreground">
+                      {formatDistanceToNow(new Date(row.scannedAt), { addSuffix: true, locale: timeLocale })}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </CollapsibleContent>
+          </div>
+        </Collapsible>
       ) : null}
     </div>
   );

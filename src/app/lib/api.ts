@@ -1251,8 +1251,8 @@ export interface BusinessDashboardStats {
   tableRankings?: Array<{ id: string | null; name: string; tipsEur: number; tipCount: number }>;
   /** Prior equal-length window tip totals for growth %. */
   priorPeriod?: { totalTips: number; tipCount: number };
-  /** Period-over-prior growth % from SQL (WoW / MoM / YoY by timeframe). */
-  growthPercent?: number;
+  /** Period-over-prior growth % from SQL (null when prior volume is 0). */
+  growthPercent?: number | null;
   /** Venue-local peak tip hour 0–23 from SQL (null if no tips). */
   peakHour?: number | null;
   /** Best shift key from SQL: morning | afternoon | evening | late. */
@@ -1452,9 +1452,12 @@ export async function getBusinessStats(
  * Downloads all tips for the authenticated business as CSV (server resolves business from JWT only).
  * Filename: CareTip_Transactions_YYYY-MM-DD.csv
  */
-export async function downloadBusinessTransactionsExport(): Promise<void> {
+export async function downloadBusinessTransactionsExport(
+  range?: "week" | "month" | "year",
+): Promise<void> {
   const token = getToken();
-  const res = await fetch(apiPath("/api/transactions/export"), {
+  const qs = range ? `?range=${encodeURIComponent(range)}` : "";
+  const res = await fetch(apiPath(`/api/transactions/export${qs}`), {
     method: "GET",
     headers: token ? { Authorization: `Bearer ${token}` } : {},
     credentials: "include",
@@ -1479,7 +1482,8 @@ export async function downloadBusinessTransactionsExport(): Promise<void> {
   const blob = await res.blob();
   const { venueLocalTodayKey, resolveBusinessTimezone } = await import("./businessVenueTime");
   const dateStr = venueLocalTodayKey(resolveBusinessTimezone());
-  const filename = `CareTip_Transactions_${dateStr}.csv`;
+  const rangeSuffix = range ? `_${range}` : "";
+  const filename = `CareTip_Transactions${rangeSuffix}_${dateStr}.csv`;
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;

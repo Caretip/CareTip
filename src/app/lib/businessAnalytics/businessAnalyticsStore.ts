@@ -1,10 +1,12 @@
 import { createDashboardSwrStore, DASHBOARD_SWR_METRICS_TTL_MS } from "../dashboardSwrCache";
+import { getAuthUser } from "../authUserStore";
+import { analyticsStoreKey } from "./analyticsPeriodMetrics";
 import type { AnalyticsTimeframe, BusinessAnalyticsBundle } from "./types";
 
 const bundleStore = createDashboardSwrStore<BusinessAnalyticsBundle>();
 
 function storeKey(timeframe: AnalyticsTimeframe): string {
-  return `business-analytics:${timeframe}`;
+  return analyticsStoreKey(getAuthUser()?.businessId, timeframe);
 }
 
 export function getBusinessAnalyticsBundle(

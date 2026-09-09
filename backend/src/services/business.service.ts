@@ -35,6 +35,7 @@ import {
   primeCachedValue,
 } from "../utils/shortLivedCache.js";
 import { runSerializedByKey } from "../utils/serializedByKey.js";
+import { comparableTipGrowthPercent } from "../lib/analyticsGrowth.js";
 import { logDashboardPhase } from "../utils/dashboardTiming.js";
 import { inferManagerOnboardingStep } from "./onboardingProgress.service.js";
 import { queryEmployeeRatingAggregates } from "./feedback.service.js";
@@ -1142,12 +1143,7 @@ async function getBusinessStatsAnalyticsImpl(
 
   const periodTotalTips = bundle.summary.periodAmount;
   const prior = bundle.priorPeriod;
-  const growthPercent =
-    prior.totalTips > 0
-      ? Math.round(((periodTotalTips - prior.totalTips) / prior.totalTips) * 100)
-      : periodTotalTips > 0
-        ? 100
-        : 0;
+  const growthPercent = comparableTipGrowthPercent(periodTotalTips, prior.totalTips);
 
   logStatsPhase("analytics_ok", {
     ...ctx,
@@ -1231,12 +1227,7 @@ async function getBusinessStatsImpl(
     ).length;
 
     const prior = bundle.priorPeriod;
-    const growthPercent =
-      prior.totalTips > 0
-        ? Math.round(((totalTips - prior.totalTips) / prior.totalTips) * 100)
-        : totalTips > 0
-          ? 100
-          : 0;
+    const growthPercent = comparableTipGrowthPercent(totalTips, prior.totalTips);
 
     const payload = {
       id: business.id,
@@ -1288,9 +1279,23 @@ async function getBusinessStatsImpl(
 }
 
 /** All tips for a business (export); caller must ensure businessId is authorized. */
-export async function getTipsForExport(businessId: string) {
+export async function getTipsForExport(
+  businessId: string,
+  options?: {
+    range?: "week" | "month" | "year";
+    timezone?: string;
+  },
+) {
+  const where: Prisma.TransactionWhereInput = { businessId };
+  if (options?.range) {
+    const tz = sanitizeIanaTimezone(options.timezone);
+    const bounds = businessUtcRangeForTimeframe(options.range, tz);
+    if (bounds) {
+      where.createdAt = { gte: bounds.startUtc, lte: bounds.endUtc };
+    }
+  }
   return prisma.transaction.findMany({
-    where: { businessId },
+    where,
     orderBy: { createdAt: "desc" },
     include: {
       employee: { select: { id: true, name: true, jobTitle: true } },

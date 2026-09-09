@@ -118,6 +118,7 @@ const EMPTY_DTO: BusinessAnalyticsDTO = {
     locationRankings: [],
     tableRankings: [],
     growthPercent: null,
+    priorPeriod: null,
     peakHour: null,
     bestShift: null,
     avgTipsPerShift: null,
@@ -133,6 +134,7 @@ const EMPTY_DTO: BusinessAnalyticsDTO = {
       tipCount: 0,
 
       growthPercent: 0,
+      growthComparable: false,
 
       averageTip: 0,
 
@@ -646,6 +648,8 @@ export function useBusinessAnalytics(
     isAnalyticsRefreshing,
 
     valuesMatchPeriod,
+
+    displayTimeframe: dto?.timeframe ?? timeframe,
 
     timeframe,
 
