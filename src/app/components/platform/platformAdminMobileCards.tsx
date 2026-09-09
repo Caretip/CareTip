@@ -31,6 +31,12 @@ function formatTransactionAt(iso: string, locale: string): string {
   }
 }
 
+function tipStatusClass(status: string): string {
+  if (status === "success") return "bg-success text-success-foreground";
+  if (status === "failed") return "bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-200";
+  return "bg-amber-100 text-amber-900 dark:bg-amber-900/40 dark:text-amber-100";
+}
+
 export function PlatformTransactionMobileCard({ row }: { row: GlobalTransactionRow }) {
   const { t, i18n } = useTranslation();
   const payoutClass =
@@ -57,6 +63,11 @@ export function PlatformTransactionMobileCard({ row }: { row: GlobalTransactionR
       <p className="mt-1 text-xs tabular-nums text-muted-foreground" title={row.createdAt}>
         {formatTransactionAt(row.createdAt, i18n.language)}
       </p>
+      <div className="mt-2">
+        <span className={cn("inline-flex rounded px-2 py-0.5 text-[11px] font-medium", tipStatusClass(row.tipStatus))}>
+          {t(`admin.globalTransactionsPage.tipStatus.${row.tipStatus}`, { defaultValue: row.tipStatus })}
+        </span>
+      </div>
       <dl className="mt-3 grid grid-cols-2 gap-x-3 gap-y-2 text-xs">
         <div>
           <dt className="font-medium text-muted-foreground">

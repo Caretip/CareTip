@@ -14,6 +14,8 @@ import { LoadingSpinner } from "@/app/components/ui/loading-spinner";
 import type { AppLoadingContext } from "@/app/lib/appLoadingContexts";
 import { resolveAppLoadingContextMessage } from "@/app/lib/appLoadingContexts";
 import { isAppShellInteractive } from "@/app/lib/appShellLifecycle";
+import { isHtmlBootElementPresent } from "@/app/lib/htmlMarketingBootBridge";
+import { readDocumentOrStoredLanguage } from "@/i18n/i18n";
 
 type CustomerFlowShellProps = {
   headerLeading?: ReactNode;
@@ -62,7 +64,8 @@ export function CustomerFlowShell({
   const softNav = isAppShellInteractive();
   const overlayMessage =
     loadingMessage ??
-    resolveAppLoadingContextMessage(loadingContext, t);
+    resolveAppLoadingContextMessage(loadingContext, t, readDocumentOrStoredLanguage());
+  const holdUnderHtmlBoot = isHtmlBootElementPresent();
 
   useAppLoadingRegistration(
     loadingRegistrationKey,
@@ -71,46 +74,58 @@ export function CustomerFlowShell({
     overlayMessage,
   );
 
+  const compactCanvas =
+    typeof mainClassName === "string" && mainClassName.includes("customer-flow-canvas--compact");
+  const pageClass = withBottomCta
+    ? compactCanvas
+      ? cf.pageWithBottomCtaCompact
+      : cf.pageWithBottomCta
+    : compactCanvas
+      ? cf.pageCompact
+      : cf.page;
+
   return (
-    <div className={cn(withBottomCta ? cf.pageWithBottomCta : cf.page, className)}>
-      <CustomerJourneyHeader
-        leading={headerLeading}
-        trailing={headerTrailing}
-        venue={venue}
-        employee={employee}
-        variant={headerVariant}
-        stepTitle={stepTitle}
-        trustMessage={trustMessage}
-      />
+    <div className={cn(pageClass, className)}>
+      <div className={cf.frame}>
+        <CustomerJourneyHeader
+          leading={headerLeading}
+          trailing={headerTrailing}
+          venue={venue}
+          employee={employee}
+          variant={headerVariant}
+          stepTitle={stepTitle}
+          trustMessage={trustMessage}
+        />
 
-      <div className={cn(cf.main, mainClassName)}>
-        {loading ? (
-          softNav ? (
-            <div
-              className="flex min-h-[40vh] flex-col items-center justify-center gap-3 py-16 sm:py-20"
-              role="status"
-              aria-busy="true"
-              aria-live="polite"
-            >
-              <LoadingSpinner size="lg" />
-              {overlayMessage ? (
-                <p className="max-w-sm text-center text-sm text-muted-foreground">
-                  {overlayMessage}
-                </p>
-              ) : null}
-            </div>
+        <div className={cn(cf.main, mainClassName)}>
+          {loading ? (
+            softNav && !holdUnderHtmlBoot ? (
+              <div
+                className="flex min-h-[40vh] flex-col items-center justify-center gap-3 py-16 sm:py-20"
+                role="status"
+                aria-busy="true"
+                aria-live="polite"
+              >
+                <LoadingSpinner size="lg" />
+                {overlayMessage ? (
+                  <p className="max-w-sm text-center text-sm text-muted-foreground">
+                    {overlayMessage}
+                  </p>
+                ) : null}
+              </div>
+            ) : (
+              <GlobalAppLoadingHold className="min-h-[40vh] py-16 sm:py-20" />
+            )
           ) : (
-            <GlobalAppLoadingHold className="min-h-[40vh] py-16 sm:py-20" />
-          )
-        ) : (
-          children
-        )}
+            children
+          )}
 
-        {!loading && showCareTipAttribution ? (
-          <div className="pt-4 sm:pt-6">
-            <CustomerJourneyCareTipAttribution label={t("tipFlow.common.poweredByCareTip")} />
-          </div>
-        ) : null}
+          {!loading && showCareTipAttribution ? (
+            <div className="pt-4 sm:pt-6">
+              <CustomerJourneyCareTipAttribution label={t("tipFlow.common.poweredByCareTip")} />
+            </div>
+          ) : null}
+        </div>
       </div>
 
       {!loading ? bottomBar : null}

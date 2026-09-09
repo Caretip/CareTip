@@ -5,6 +5,7 @@ import { Banknote } from "lucide-react";
 import {
   fetchPlatformConnectPayout,
   fetchPlatformConnectPayouts,
+  retryPlatformConnectPayoutReconciliation,
   type PlatformConnectPayout,
 } from "../../../lib/api";
 import { logClientError } from "../../../lib/clientLog";
@@ -13,6 +14,7 @@ import { GlobalTransactionsTableSkeleton } from "../../../components/dashboard/D
 import {
   formatConnectPayoutAmount,
   formatConnectPayoutDate,
+  payoutMethodI18nKey,
   reconExplainI18nKey,
   sanitizePayoutFailureDisplay,
 } from "../../../lib/connectPayoutDisplay";
@@ -65,6 +67,7 @@ export function PlatformConnectPayoutsPage() {
   const status = searchParams.get("status") ?? "all";
   const recon = searchParams.get("recon") ?? "all";
   const currency = searchParams.get("currency") ?? "all";
+  const method = searchParams.get("method") ?? "all";
   const createdFrom = searchParams.get("from") ?? "";
   const createdTo = searchParams.get("to") ?? "";
   const businessId = searchParams.get("businessId") ?? "";
@@ -75,6 +78,7 @@ export function PlatformConnectPayoutsPage() {
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [loadErrorKind, setLoadErrorKind] = useState<ReturnType<typeof classifyFetchError>>("api");
+  const [retrying, setRetrying] = useState(false);
   const loadGenRef = useRef(0);
   const detail = useConnectPayoutDetail(fetchPlatformConnectPayout);
 
@@ -141,6 +145,7 @@ export function PlatformConnectPayoutsPage() {
         status: status !== "all" ? status : undefined,
         reconciliationStatus: recon !== "all" ? recon : undefined,
         currency: currency !== "all" ? currency : undefined,
+        method: method !== "all" ? method : undefined,
         createdFrom: dateToStartIso(createdFrom),
         createdTo: dateToEndIso(createdTo),
         businessId: businessId.trim() || undefined,
@@ -160,7 +165,7 @@ export function PlatformConnectPayoutsPage() {
     } finally {
       if (gen === loadGenRef.current) setLoading(false);
     }
-  }, [debouncedQ, status, recon, currency, createdFrom, createdTo, businessId, page]);
+  }, [debouncedQ, status, recon, currency, method, createdFrom, createdTo, businessId, page]);
 
   useEffect(() => {
     void load();
@@ -168,6 +173,21 @@ export function PlatformConnectPayoutsPage() {
 
   const from = total === 0 ? 0 : page * PAGE_SIZE + 1;
   const to = Math.min((page + 1) * PAGE_SIZE, total);
+
+  const retrySync = useCallback(async () => {
+    const id = detail.payout?.id;
+    if (!id) return;
+    setRetrying(true);
+    try {
+      await retryPlatformConnectPayoutReconciliation(id);
+      detail.openFor(id);
+      await load();
+    } catch (e) {
+      logClientError("PlatformConnectPayoutsRetry", e);
+    } finally {
+      setRetrying(false);
+    }
+  }, [detail, load]);
 
   return (
     <PlatformPage>
@@ -197,6 +217,19 @@ export function PlatformConnectPayoutsPage() {
               <option value="paid">{t("business.billing.payouts.status.paid")}</option>
               <option value="failed">{t("business.billing.payouts.status.failed")}</option>
               <option value="canceled">{t("business.billing.payouts.status.canceled")}</option>
+            </select>
+          </label>
+          <label className="text-sm text-muted-foreground">
+            <span className="mb-1 block">{t("admin.connectPayoutsPage.filterMethod")}</span>
+            <select
+              className={FILTER_SELECT}
+              value={method}
+              onChange={(e) => setFilter("method", e.target.value)}
+            >
+              <option value="all">{t("admin.connectPayoutsPage.methodFilter.all")}</option>
+              <option value="instant">{t("business.billing.payouts.methodInstant")}</option>
+              <option value="standard">{t("business.billing.payouts.methodStandard")}</option>
+              <option value="unknown">{t("business.billing.payouts.methodUnknown")}</option>
             </select>
           </label>
           <label className="text-sm text-muted-foreground">
@@ -295,6 +328,9 @@ export function PlatformConnectPayoutsPage() {
                     {t("admin.connectPayoutsPage.colAmount")}
                   </th>
                   <th scope="col" className="px-4 py-2.5 font-medium">
+                    {t("admin.connectPayoutsPage.colMethod")}
+                  </th>
+                  <th scope="col" className="px-4 py-2.5 font-medium">
                     {t("admin.connectPayoutsPage.colStatus")}
                   </th>
                   <th scope="col" className="px-4 py-2.5 font-medium">
@@ -332,12 +368,14 @@ export function PlatformConnectPayoutsPage() {
                           <span className="font-medium">{payout.businessName}</span>
                           <span className="sr-only">, {t("business.billing.payouts.openDetail")}</span>
                         </button>
-                        {payout.stripeAccountSuffix ? (
-                          <div className="text-xs text-muted-foreground">…{payout.stripeAccountSuffix}</div>
-                        ) : null}
                       </td>
-                      <td className="px-4 py-3 font-medium tabular-nums">
-                        {formatConnectPayoutAmount(payout.amountCents, payout.currency, i18n.language)}
+                      <td className="px-4 py-3">
+                        <div className="font-medium tabular-nums">
+                          {formatConnectPayoutAmount(payout.amountCents, payout.currency, i18n.language)}
+                        </div>
+                      </td>
+                      <td className="px-4 py-3 text-muted-foreground">
+                        {t(payoutMethodI18nKey(payout.method))}
                       </td>
                       <td className="px-4 py-3">
                         <ConnectPayoutStatusBadge status={payout.status} />
@@ -397,6 +435,8 @@ export function PlatformConnectPayoutsPage() {
         loading={detail.loading}
         error={detail.error}
         showBusiness
+        onRetrySync={() => void retrySync()}
+        retrying={retrying}
       />
     </PlatformPage>
   );
@@ -424,6 +464,7 @@ function AdminPayoutCard({
       <div className="mt-1 tabular-nums">
         {formatConnectPayoutAmount(payout.amountCents, payout.currency, locale)}
       </div>
+      <p className="mt-1 text-xs text-muted-foreground">{t(payoutMethodI18nKey(payout.method))}</p>
       <div className="mt-2 flex flex-wrap gap-2">
         <ConnectPayoutStatusBadge status={payout.status} />
         <ConnectPayoutReconBadge status={payout.reconciliationStatus} lineCount={payout.balanceLineCount} />

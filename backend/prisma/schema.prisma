@@ -715,6 +715,9 @@ model StripeConnectPayout {
   arrivalDate            DateTime?                 @map("arrival_date")
   method                 String?                   @db.VarChar(32)
   payoutType             String?                   @map("payout_type") @db.VarChar(32)
+  /// Stripe `application_fee_amount` on the Payout object when present. Never derived from a % in CareTip.
+  applicationFeeAmountCents Int?                   @map("application_fee_amount_cents")
+  stripeApplicationFeeId    String?                @map("stripe_application_fee_id") @db.VarChar(128)
   description            String?                   @db.VarChar(255)
   failureCode            String?                   @map("failure_code") @db.VarChar(64)
   failureMessage         String?                   @map("failure_message") @db.VarChar(255)
@@ -743,6 +746,7 @@ model StripeConnectPayout {
   @@index([stripeAccountId])
   @@index([status, stripeCreatedAt(sort: Desc)])
   @@index([reconciliationStatus, reconciliationLastAttemptAt])
+  @@index([method, stripeCreatedAt(sort: Desc)])
   @@map("stripe_connect_payouts")
 }
 
@@ -783,6 +787,7 @@ model StripeConnectInstantPayoutRequest {
   business Business @relation(fields: [businessId], references: [id], onDelete: Restrict)
 
   @@index([businessId, createdAt(sort: Desc)])
+  @@index([stripePayoutId])
   @@map("stripe_connect_instant_payout_requests")
 }
 

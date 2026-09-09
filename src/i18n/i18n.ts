@@ -6,7 +6,6 @@ import {
   endAppLanguageChange,
 } from "../app/lib/appLanguageLoading";
 import { registerI18nIntegrityDev } from "./i18nIntegrityDev";
-import { scheduleMobileDeferredWork } from "../lib/mobilePerf";
 
 export type AppLanguage = "de" | "en";
 
@@ -23,6 +22,27 @@ export function readStoredLanguage(): AppLanguage {
   return "de";
 }
 
+/**
+ * Language already applied to the document by `boot-locale.js` (first paint).
+ * Prefer this over i18n `resolvedLanguage` so React cannot paint the other locale
+ * while the HTML boot sentence is still German (or English).
+ */
+export function readDocumentOrStoredLanguage(): AppLanguage {
+  if (typeof document !== "undefined") {
+    const raw = document.documentElement.getAttribute("lang")?.toLowerCase() ?? "";
+    if (raw === "en" || raw.startsWith("en-")) return "en";
+    if (raw === "de" || raw.startsWith("de-")) return "de";
+  }
+  return readStoredLanguage();
+}
+
+export function resolveAppLanguageFromCode(lng: string | undefined): AppLanguage {
+  const raw = (lng ?? "").toLowerCase();
+  if (raw === "de" || raw.startsWith("de-")) return "de";
+  if (raw === "en" || raw.startsWith("en-")) return "en";
+  return "de";
+}
+
 let initPromise: Promise<typeof i18n> | null = null;
 
 async function loadLocaleBundle(lng: AppLanguage): Promise<TranslationBundle> {
@@ -31,17 +51,6 @@ async function loadLocaleBundle(lng: AppLanguage): Promise<TranslationBundle> {
       ? await import("./locales/en.json")
       : await import("./locales/de.json");
   return (mod as { default?: TranslationBundle }).default ?? (mod as TranslationBundle);
-}
-
-function scheduleFallbackLocaleLoad(activeLng: AppLanguage): void {
-  const fallbackLng: AppLanguage = activeLng === "de" ? "en" : "de";
-  scheduleMobileDeferredWork(() => {
-    void (async () => {
-      if (i18n.hasResourceBundle(fallbackLng, "translation")) return;
-      const bundle = await loadLocaleBundle(fallbackLng);
-      i18n.addResourceBundle(fallbackLng, "translation", bundle, true, true);
-    })();
-  });
 }
 
 /** Ensure translation resources exist before switching language. */
@@ -56,7 +65,7 @@ export async function ensureLocaleBundle(lng: AppLanguage): Promise<void> {
  * Switch UI language after the target locale bundle is loaded (avoids missing keys).
  */
 export async function changeAppLanguage(lng: AppLanguage): Promise<void> {
-  const current = i18n.language?.startsWith("de") ? "de" : "en";
+  const current = resolveAppLanguageFromCode(i18n.language);
   if (current === lng) return;
   beginAppLanguageChange();
   try {
@@ -69,7 +78,8 @@ export async function changeAppLanguage(lng: AppLanguage): Promise<void> {
 
 /**
  * Initialize i18n before first React render.
- * Active locale loads first; the alternate locale is deferred to idle.
+ * Load only the active locale. Never fall back to the other product language
+ * (English must not appear while the customer is in German, and vice versa).
  * Locale preference matches public/boot-locale.js (default `de`).
  */
 export function ensureI18nReady(): Promise<typeof i18n> {
@@ -77,7 +87,7 @@ export function ensureI18nReady(): Promise<typeof i18n> {
   if (initPromise) return initPromise;
 
   initPromise = (async () => {
-    const lng = readStoredLanguage();
+    const lng = readDocumentOrStoredLanguage();
     const primary = await loadLocaleBundle(lng);
     const resources: Record<string, { translation: TranslationBundle }> = {
       [lng]: { translation: primary },
@@ -86,18 +96,24 @@ export function ensureI18nReady(): Promise<typeof i18n> {
     await i18n.use(initReactI18next).init({
       resources,
       lng,
-      fallbackLng: "en",
+      fallbackLng: lng,
       supportedLngs: ["de", "en"],
+      load: "currentOnly",
       interpolation: { escapeValue: false },
       react: { useSuspense: false },
     });
 
-    scheduleFallbackLocaleLoad(lng);
+    if (typeof document !== "undefined") {
+      document.documentElement.setAttribute("lang", lng);
+    }
 
     i18n.on("languageChanged", (nextLng) => {
       try {
         if (nextLng === "en" || nextLng === "de") {
           localStorage.setItem(I18N_STORAGE_KEY, nextLng);
+          if (typeof document !== "undefined") {
+            document.documentElement.setAttribute("lang", nextLng);
+          }
         }
       } catch {
         /* ignore */

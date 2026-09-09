@@ -245,7 +245,7 @@ export const AdminDashboard = memo(function AdminDashboard() {
         message: t("admin.overview.alerts.failedPaymentsToday", {
           count: failedPaymentsToday,
         }),
-        href: `${PLATFORM_REVENUE_BASE}/failed-payments`,
+        href: `${PLATFORM_REVENUE_BASE}/failed-billing?filter=failed`,
         severity: "warning",
       });
     }

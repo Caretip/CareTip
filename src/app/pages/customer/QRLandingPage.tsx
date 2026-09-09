@@ -27,7 +27,7 @@ import { CustomerRepeatTipPrompt } from "./CustomerRepeatTipPrompt";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { DEV_BYPASS_ENABLED, DEV_MOCK } from "../../lib/devCustomerBypass";
 import { markCustomerFlowEntered } from "../../lib/customerFlowGuard";
-import { getRepeatTipDataForBusiness } from "../../lib/repeatTip";
+import { isHtmlBootElementPresent } from "../../lib/htmlMarketingBootBridge";
 import { formatEur } from "../../lib/formatEur";
 import { customerFlowUi as cf } from "./customerFlowUi";
 
@@ -412,7 +412,8 @@ export function QRLandingPage() {
   const teamHeader = headerSelectTeamMember(t);
 
   return (
-    <div className={cf.page}>
+    <div className={cf.pageTeam}>
+      <div className={cf.frame}>
       <CustomerJourneyHeader
         venue={venueBrandFromBusiness(businessData, tableContextLine)}
         stepTitle={teamHeader.stepTitle}
@@ -460,7 +461,7 @@ export function QRLandingPage() {
           />
         ) : null}
 
-        {businessData.slug?.trim() && poolLoading ? (
+        {businessData.slug?.trim() && poolLoading && !isHtmlBootElementPresent() ? (
           <p className="py-8 text-center text-sm text-muted-foreground">{t("common.loading.tipPage")}</p>
         ) : null}
 
@@ -494,6 +495,7 @@ export function QRLandingPage() {
         ) : null}
 
         <CustomerJourneyAttributionFooter label={t("tipFlow.common.poweredByCareTip")} />
+      </div>
       </div>
     </div>
   );

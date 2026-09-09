@@ -4,6 +4,28 @@
 
 .customer-flow {
   -webkit-font-smoothing: antialiased;
+  /* Focused tipping canvas — not the global 80rem dashboard container. */
+  --customer-flow-canvas: 36rem; /* matches existing cf.main (max-w-xl) */
+}
+
+.customer-flow.customer-flow--team {
+  --customer-flow-canvas: 42rem; /* 3-col employee grid without dashboard stretch */
+}
+
+.customer-flow.customer-flow--compact {
+  --customer-flow-canvas: 28rem; /* matches existing cf.mainCompact (max-w-md) */
+}
+
+.customer-flow .caretip-container {
+  max-width: var(--customer-flow-canvas);
+}
+
+/* One centered column: header + body + footer (not a full-bleed dashboard chrome). */
+.customer-flow-frame {
+  width: 100%;
+  max-width: var(--customer-flow-canvas);
+  margin-left: auto;
+  margin-right: auto;
 }
 
 .customer-flow .caretip-btn-primary,
@@ -23,10 +45,6 @@
 }
 
 /* —— Customer journey header —— */
-.customer-flow .customer-journey-header {
-  max-width: 100%;
-}
-
 .customer-flow .customer-journey-toolbar {
   min-height: 2.25rem;
 }

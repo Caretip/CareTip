@@ -151,7 +151,8 @@ export function BusinessStaffDirectoryPage() {
   const teamHeader = headerSelectTeamMember(t);
 
   return (
-    <div className={`${cf.page} pb-10 sm:pb-12`}>
+    <div className={`${cf.pageTeam} pb-10 sm:pb-12`}>
+      <div className={cf.frame}>
       <CustomerJourneyHeader
         leading={
           <CustomerJourneyHomeButton
@@ -179,6 +180,7 @@ export function BusinessStaffDirectoryPage() {
       </div>
 
       <CustomerJourneyAttributionFooter label={t("tipFlow.common.poweredByCareTip")} />
+      </div>
     </div>
   );
 }

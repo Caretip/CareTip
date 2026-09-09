@@ -85,7 +85,7 @@
       "revenueTrend": "Umsatztrend",
       "scanTrend": "Scan-Trend",
       "conversionTrend": "Conversion-Trend",
-      "growthValue": "{{percent}} % vs. Monatsdurchschnitt",
+      "growthValue": "{{percent}} % gegenüber Vorperiode",
       "scanWeekValue": "{{count}} Scans diese Woche",
       "conversionHint": "Scan-zu-Trinkgeld-Rate"
     },
@@ -5463,15 +5463,23 @@
         "periodAria": "Analysezeitraum",
         "revenuePeriodAria": "Umsatz-Analysezeitraum",
         "qrPeriodAria": "QR-Analysezeitraum",
+        "overviewPeriodHint": "Überblick und Details gelten für {{period}}.",
         "cards": {
-          "totalTips": "Trinkgeld gesamt",
+          "totalTips": "Trinkgelder",
+          "tipVolume": "Trinkgeldvolumen",
           "activeEmployees": "Aktive Mitarbeitende",
           "conversion": "Conversion-Rate",
           "satisfaction": "Gästezufriedenheit",
           "tipCount": "{{count}} Trinkgeld diesen Monat",
+          "tipCountThisWeek": "{{count}} Trinkgeld diese Woche",
+          "tipCountThisMonth": "{{count}} Trinkgeld diesen Monat",
+          "tipCountThisYear": "{{count}} Trinkgeld dieses Jahr",
+          "tipsThisWeek": "{{count}} diese Woche",
+          "employeesReceivedTips": "{{count}} mit Trinkgeld in diesem Zeitraum",
           "satisfactionHint": "Aus {{count}} Bewertungen"
         },
         "sections": {
+          "periodDetail": "Zeitraumdetails",
           "employees": "Mitarbeiter-Analysen",
           "locations": "Standort- & Tisch-Analysen",
           "topQr": "Top-QR-Codes",
@@ -5958,6 +5966,9 @@
         "colReconciliation": "CareTip-Abgleich",
         "colFailure": "Auszahlungsproblem",
         "colBalanceLines": "Saldo-Aktivität",
+        "colMethod": "Methode",
+        "colInstantFee": "Sofortauszahlungsgebühr",
+        "colInstantRequest": "Sofort-Anfragebetrag",
         "failedFallback": "Stripe konnte diese Auszahlung nicht abschließen.",
         "canceledFallback": "Diese Auszahlung wurde storniert.",
         "openDetail": "Auszahlungsdetails anzeigen",
@@ -5981,18 +5992,20 @@
         "reconciliation": {
           "pending": "Abgleich ausstehend",
           "in_progress": "Abgleich läuft",
-          "complete": "Abgeglichen",
-          "partial": "Teilweise abgeglichen",
-          "failed": "Abgleich fehlgeschlagen"
+          "complete": "Synchronisiert",
+          "partial": "Teilweise synchronisiert",
+          "failed": "Prüfung nötig"
         },
         "reconExplain": {
           "pending": "Die Auszahlung existiert. CareTip hat die zugehörige Stripe-Saldoaktivität noch nicht vollständig gelesen.",
           "in_progress": "CareTip synchronisiert die Stripe-Saldoaktivität für diese Auszahlung.",
           "complete": "CareTip hat die verfügbare Stripe-Saldoaktivität für diese Auszahlung synchronisiert.",
           "partial": "Die Auszahlung existiert, aber CareTip hat noch nicht die gesamte zugehörige Stripe-Saldoaktivität synchronisiert.",
-          "failed": "Die Auszahlung selbst ist unverändert. CareTip konnte die Stripe-Saldoaktivität nicht vollständig synchronisieren."
+          "failed": "Der Stripe-Auszahlungsstatus ist unverändert. CareTip konnte die Stripe-Saldoaktivität nicht vollständig synchronisieren. Wiederholen Sie den Abgleich in den Details."
         },
         "methodInstant": "Sofort",
+        "methodStandard": "Standard",
+        "methodUnknown": "Unbekannt",
         "historyTitle": "Auszahlungsverlauf",
         "instant": {
           "balanceEyebrow": "Ihr Guthaben",
@@ -6556,15 +6569,15 @@
       },
       "widgets": {
         "successRate": "Erfolgsquote (30 T.)",
-        "failedToday": "Fehlgeschlagene Zahlungen heute",
-        "failedWeek": "Fehlgeschlagene Zahlungen diese Woche",
+        "failedToday": "Fehlgeschlagene Rechnungszahlungen heute",
+        "failedWeek": "Fehlgeschlagene Rechnungszahlungen diese Woche",
         "trialsEndingSoon": "Testphasen enden bald",
         "renewalsDueToday": "Verlängerungen heute fällig"
       },
       "filters": {
         "all": "Alle",
         "successful": "Erfolgreich",
-        "failed": "Fehlgeschlagen",
+        "failed": "Rechnungszahlung fehlgeschlagen",
         "trialing": "Testphase",
         "active": "Aktiv",
         "cancelled": "Gekündigt",
@@ -6742,10 +6755,9 @@
       },
       "revenue": {
         "transactions": "Globale Transaktionen",
-        "failedPayments": "Fehlgeschlagene Zahlungen",
+        "failedBilling": "Fehlgeschlagene Abrechnung",
         "successfulSubscriptions": "Erfolgreiche Abonnements",
-        "failedSubscriptions": "Fehlgeschlagene Abonnements",
-        "refunds": "Fehlgeschlagene Tips",
+        "refunds": "Erstattungen",
         "connectPayouts": "Connect-Auszahlungen"
       },
       "users": {
@@ -7201,6 +7213,10 @@
         "title": "Fehlgeschlagene Zahlungen",
         "subtitle": "Abonnements mit fehlgeschlagenen oder überfälligen Zahlungsversuchen."
       },
+      "failedBilling": {
+        "title": "Fehlgeschlagene Abrechnung",
+        "subtitle": "Fehlgeschlagene Abo-Rechnungen und überfällige CareTip-Abrechnung."
+      },
       "successfulSubscriptions": {
         "title": "Erfolgreiche Abonnements",
         "subtitle": "Aktive bezahlte Abonnements mit erfolgreicher Abrechnung."
@@ -7287,7 +7303,7 @@
     },
     "connectPayoutsPage": {
       "title": "Connect-Auszahlungen",
-      "subtitle": "Stripe-Auszahlungen von verbundenen Express-Konten auf das Bankkonto der Location. Nur Beobachtung. CareTip löst keine Auszahlungen aus. Das sind keine einzelnen Gäste-Tips und keine Mitarbeiter-Auszahlungen.",
+      "subtitle": "Stripe-Auszahlungen von verbundenen Express-Konten, einschließlich automatischer Standard-Auszahlungen und managerseitiger Sofortauszahlungen. Das sind keine einzelnen Gäste-Tips.",
       "searchPlaceholder": "Nach Betriebsname suchen…",
       "searchAria": "Connect-Auszahlungen nach Betriebsname suchen",
       "filterStatus": "Auszahlungsstatus",
@@ -7297,13 +7313,21 @@
       "businessFilterActive": "Auszahlungen für einen Betrieb werden angezeigt.",
       "clearBusinessFilter": "Alle Betriebe anzeigen",
       "colBusiness": "Betrieb",
-      "colAmount": "Betrag",
+      "colAmount": "Auszahlung",
+      "colMethod": "Methode",
       "colStatus": "Auszahlungsstatus",
       "colArrival": "Erwartete Ankunft",
       "colCreated": "Erstellt",
       "colFailure": "Auszahlungsproblem",
       "colReconciliation": "CareTip-Abgleich",
       "filterReconciliation": "CareTip-Abgleich",
+      "filterMethod": "Methode",
+      "stripeAccount": "Stripe-Connect-Konto",
+      "viewInStripe": "Stripe",
+      "openStripePayout": "Auszahlung in Stripe öffnen",
+      "openStripeAccount": "Connect-Konto in Stripe öffnen",
+      "retrySync": "CareTip-Abgleich wiederholen",
+      "retryingSync": "Wird wiederholt…",
       "footerShowing": "{{from}}–{{to}} von {{total}}",
       "prevPage": "Zurück",
       "nextPage": "Weiter",
@@ -7312,6 +7336,9 @@
       },
       "reconFilter": {
         "all": "Alle Abgleiche"
+      },
+      "methodFilter": {
+        "all": "Alle Methoden"
       },
       "currencyFilter": {
         "all": "Alle Währungen"
@@ -7327,13 +7354,13 @@
       "reconciliation": {
         "pending": "Abgleich ausstehend",
         "in_progress": "Abgleich läuft",
-        "complete": "Abgeglichen",
-        "partial": "Teilweise abgeglichen",
-        "failed": "Abgleich fehlgeschlagen"
+        "complete": "Synchronisiert",
+        "partial": "Teilweise synchronisiert",
+        "failed": "Prüfung nötig"
       },
       "empty": {
         "title": "Noch keine Connect-Auszahlungen",
-        "description": "Auszahlungen erscheinen hier, nachdem Stripe Geld vom verfügbaren Guthaben eines verbundenen Kontos sendet. CareTip erzeugt diese Auszahlungen nicht."
+        "description": "Auszahlungen erscheinen hier, nachdem Stripe verfügbares Guthaben eines verbundenen Kontos auszahlt, einschließlich in CareTip angeforderter Sofortauszahlungen."
       }
     },
     "refundsPage": {
@@ -7417,6 +7444,16 @@
       "colCaretipFee": "CareTip-Gebühr",
       "colNetToStaff": "Netto an Team",
       "colPayout": "Tip-Ledger",
+      "colTipStatus": "Tip-Status",
+      "filterTipStatus": "Tip-Status",
+      "tipStatusFilter": {
+        "all": "Alle"
+      },
+      "tipStatus": {
+        "success": "Erfolgreich",
+        "pending": "Ausstehend",
+        "failed": "Fehlgeschlagen"
+      },
       "loading": "Laden…",
       "empty": "Keine Transaktionen gefunden.",
       "summaryDefault": "{{total}} Transaktionen angezeigt",

@@ -9,12 +9,18 @@ type PlatformRevenueSubscriptionActivityPageProps = {
   initialFilter: PlatformSubscriptionActivityFilter;
   titleKey: string;
   subtitleKey: string;
+  allowedFilters?: readonly PlatformSubscriptionActivityFilter[];
+  onFilterChange?: (filter: PlatformSubscriptionActivityFilter) => void;
+  hideActivityFilters?: boolean;
 };
 
 export function PlatformRevenueSubscriptionActivityPage({
   initialFilter,
   titleKey,
   subtitleKey,
+  allowedFilters,
+  onFilterChange,
+  hideActivityFilters = true,
 }: PlatformRevenueSubscriptionActivityPageProps) {
   const { t } = useTranslation();
   return (
@@ -25,7 +31,9 @@ export function PlatformRevenueSubscriptionActivityPage({
           part="activity"
           embedded
           initialFilter={initialFilter}
-          hideActivityFilters
+          allowedFilters={allowedFilters}
+          onFilterChange={onFilterChange}
+          hideActivityFilters={hideActivityFilters}
         />
       </Suspense>
     </PlatformPage>

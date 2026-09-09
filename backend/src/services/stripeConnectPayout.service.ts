@@ -15,6 +15,7 @@ import { logServerError } from "../utils/httpErrors.js";
 import { runSerializedByKey } from "../utils/serializedByKey.js";
 import { getStripeClient } from "./stripe.service.js";
 import {
+  RECON_MAX_PAGES_TICK,
   RECON_MAX_PAGES_WEBHOOK,
   reconcileConnectPayoutBalanceLines,
   reconStatusEligibleWhere,
@@ -24,6 +25,7 @@ import {
 export {
   __setListPayoutBalanceTransactionsFnForTests,
   __setListPayoutBalanceTransactionPageFnForTests,
+  __setRetrievePayoutForReconFnForTests,
 } from "./stripeConnectPayoutReconciliation.service.js";
 
 /** Throttle opportunistic Stripe → DB sync on manager payout list (not continuous polling). */
@@ -193,6 +195,28 @@ function unixToDate(unix: number | null | undefined): Date | null {
   return new Date(unix * 1000);
 }
 
+function stripeDashboardUrls(accountId: string, payoutId: string): {
+  stripeDashboardAccountUrl: string;
+  stripeDashboardPayoutUrl: string;
+} {
+  const secret = process.env.STRIPE_SECRET_KEY?.trim() ?? "";
+  const test = secret.startsWith("sk_test_");
+  const base = test ? "https://dashboard.stripe.com/test" : "https://dashboard.stripe.com";
+  return {
+    stripeDashboardAccountUrl: `${base}/connect/accounts/${accountId}`,
+    stripeDashboardPayoutUrl: `${base}/connect/accounts/${accountId}/payouts/${payoutId}`,
+  };
+}
+
+function applicationFeeIdFromPayout(obj: Stripe.Payout): string | null {
+  const fee = obj.application_fee;
+  if (typeof fee === "string" && fee.startsWith("fee_")) return fee.slice(0, 128);
+  if (fee && typeof fee === "object" && "id" in fee && typeof fee.id === "string") {
+    return fee.id.slice(0, 128);
+  }
+  return null;
+}
+
 export type ConnectPayoutBalanceLineDto = {
   reportingCategory: string | null;
   type: string;
@@ -222,14 +246,20 @@ export type ConnectPayoutDto = {
   failedAt: string | null;
   canceledAt: string | null;
   reconciliationStatus: StripeConnectPayoutReconciliationStatus;
+  reconciliationLastError: string | null;
   balanceLineCount: number;
   balanceLines?: ConnectPayoutBalanceLineDto[];
+  applicationFeeAmountCents: number | null;
+  stripeApplicationFeeId: string | null;
+  instantRequestAmountCents: number | null;
 };
 
 export type PlatformConnectPayoutDto = ConnectPayoutDto & {
   businessId: string;
   businessName: string;
   stripeAccountSuffix: string;
+  stripeDashboardAccountUrl: string | null;
+  stripeDashboardPayoutUrl: string | null;
 };
 
 type PayoutRow = {
@@ -251,6 +281,10 @@ type PayoutRow = {
   failedAt: Date | null;
   canceledAt: Date | null;
   reconciliationStatus?: StripeConnectPayoutReconciliationStatus;
+  reconciliationLastError?: string | null;
+  applicationFeeAmountCents?: number | null;
+  stripeApplicationFeeId?: string | null;
+  instantRequestAmountCents?: number | null;
   business?: { name: string };
   balanceLines?: Array<{
     reportingCategory: string | null;
@@ -303,6 +337,10 @@ function toPayoutDto(row: PayoutRow, includeLines: boolean): ConnectPayoutDto {
     failedAt: row.failedAt?.toISOString() ?? null,
     canceledAt: row.canceledAt?.toISOString() ?? null,
     reconciliationStatus: row.reconciliationStatus ?? StripeConnectPayoutReconciliationStatus.pending,
+    reconciliationLastError: row.reconciliationLastError ?? null,
+    applicationFeeAmountCents: row.applicationFeeAmountCents ?? null,
+    stripeApplicationFeeId: row.stripeApplicationFeeId ?? null,
+    instantRequestAmountCents: row.instantRequestAmountCents ?? null,
     balanceLineCount: lineCount,
     ...(includeLines && row.balanceLines
       ? { balanceLines: row.balanceLines.map(mapBalanceLine) }
@@ -360,6 +398,8 @@ function parsePayoutObject(obj: Stripe.Payout): {
   failureCode: string | null;
   failureMessage: string | null;
   stripeCreatedAt: Date;
+  applicationFeeAmountCents: number | null;
+  stripeApplicationFeeId: string | null;
 } | null {
   const stripePayoutId = obj.id?.trim();
   if (!stripePayoutId || !stripePayoutId.startsWith("po_")) return null;
@@ -379,6 +419,8 @@ function parsePayoutObject(obj: Stripe.Payout): {
     failureCode: typeof obj.failure_code === "string" ? obj.failure_code.slice(0, 64) : null,
     failureMessage: sanitizePayoutFailureMessage(obj.failure_message),
     stripeCreatedAt: unixToDate(obj.created) ?? new Date(),
+    applicationFeeAmountCents: Number.isInteger(obj.application_fee_amount) ? obj.application_fee_amount : null,
+    stripeApplicationFeeId: applicationFeeIdFromPayout(obj),
   };
 }
 
@@ -483,6 +525,8 @@ async function persistAttributedConnectPayout(args: {
           method: parsed.method,
           payoutType: parsed.payoutType,
           description: parsed.description,
+          applicationFeeAmountCents: parsed.applicationFeeAmountCents,
+          stripeApplicationFeeId: parsed.stripeApplicationFeeId,
           failureCode:
             parsed.status === StripeConnectPayoutStatus.failed
               ? parsed.failureCode
@@ -542,6 +586,8 @@ async function persistAttributedConnectPayout(args: {
         method: parsed.method,
         payoutType: parsed.payoutType,
         description: parsed.description,
+        applicationFeeAmountCents: parsed.applicationFeeAmountCents,
+        stripeApplicationFeeId: parsed.stripeApplicationFeeId,
         failureCode: parsed.status === StripeConnectPayoutStatus.failed ? parsed.failureCode : null,
         failureMessage: parsed.status === StripeConnectPayoutStatus.failed ? parsed.failureMessage : null,
         stripeCreatedAt: parsed.stripeCreatedAt,
@@ -801,6 +847,9 @@ const payoutListSelect = {
   failedAt: true,
   canceledAt: true,
   reconciliationStatus: true,
+  reconciliationLastError: true,
+  applicationFeeAmountCents: true,
+  stripeApplicationFeeId: true,
   _count: { select: { balanceLines: true } },
 } as const;
 
@@ -882,6 +931,7 @@ export async function listPlatformConnectPayouts(opts?: {
   status?: string;
   reconciliationStatus?: string;
   currency?: string;
+  method?: string;
   createdFrom?: string;
   createdTo?: string;
   q?: string;
@@ -902,6 +952,12 @@ export async function listPlatformConnectPayouts(opts?: {
   }
   const reconWhere = reconStatusEligibleWhere(opts?.reconciliationStatus);
   if (reconWhere) and.push(reconWhere);
+  const methodRaw = opts?.method?.trim().toLowerCase();
+  if (methodRaw === "instant" || methodRaw === "standard") {
+    and.push({ method: methodRaw });
+  } else if (methodRaw === "unknown") {
+    and.push({ OR: [{ method: null }, { method: "" }] });
+  }
   const currency = opts?.currency?.trim().toLowerCase();
   if (currency) {
     and.push({ currency });
@@ -948,6 +1004,8 @@ export async function listPlatformConnectPayouts(opts?: {
       businessId: row.businessId,
       businessName: row.business.name,
       stripeAccountSuffix: accountSuffix(row.stripeAccountId),
+      stripeDashboardAccountUrl: null,
+      stripeDashboardPayoutUrl: null,
     };
     assertSafeDto(dto);
     return dto;
@@ -956,6 +1014,20 @@ export async function listPlatformConnectPayouts(opts?: {
 }
 
 export async function getPlatformConnectPayout(payoutId: string): Promise<PlatformConnectPayoutDto | null> {
+  const existing = await prisma.stripeConnectPayout.findFirst({
+    where: { id: payoutId },
+    select: { id: true, reconciliationStatus: true },
+  });
+  if (!existing) return null;
+
+  if (existing.reconciliationStatus !== StripeConnectPayoutReconciliationStatus.complete) {
+    try {
+      await reconcileConnectPayoutBalanceLines(existing.id, { maxPages: 10 });
+    } catch (err) {
+      logServerError("stripe.connectPayout.platform_detail_recon", err, { payoutId });
+    }
+  }
+
   const row = await prisma.stripeConnectPayout.findFirst({
     where: { id: payoutId },
     include: {
@@ -964,10 +1036,20 @@ export async function getPlatformConnectPayout(payoutId: string): Promise<Platfo
     },
   });
   if (!row) return null;
+
+  const instantReq = row.stripePayoutId
+    ? await prisma.stripeConnectInstantPayoutRequest.findFirst({
+        where: { stripePayoutId: row.stripePayoutId, businessId: row.businessId, status: "submitted" },
+        select: { amountCents: true },
+      })
+    : null;
+
+  const dash = stripeDashboardUrls(row.stripeAccountId, row.stripePayoutId);
   const dto: PlatformConnectPayoutDto = {
     ...toPayoutDto(
       {
         ...row,
+        instantRequestAmountCents: instantReq?.amountCents ?? null,
         _count: { balanceLines: row.balanceLines.length },
       },
       true,
@@ -975,9 +1057,23 @@ export async function getPlatformConnectPayout(payoutId: string): Promise<Platfo
     businessId: row.businessId,
     businessName: row.business.name,
     stripeAccountSuffix: accountSuffix(row.stripeAccountId),
+    stripeDashboardAccountUrl: dash.stripeDashboardAccountUrl,
+    stripeDashboardPayoutUrl: dash.stripeDashboardPayoutUrl,
   };
   assertSafeDto(dto);
   return dto;
+}
+
+export async function retryPlatformConnectPayoutReconciliation(
+  payoutId: string,
+): Promise<{ ok: boolean; status: StripeConnectPayoutReconciliationStatus; reason: string } | null> {
+  const existing = await prisma.stripeConnectPayout.findFirst({
+    where: { id: payoutId },
+    select: { id: true },
+  });
+  if (!existing) return null;
+  const recon = await reconcileConnectPayoutBalanceLines(existing.id, { maxPages: RECON_MAX_PAGES_TICK });
+  return { ok: recon.status === StripeConnectPayoutReconciliationStatus.complete, status: recon.status, reason: recon.reason };
 }
 
 export const __test = {

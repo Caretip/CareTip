@@ -61,7 +61,7 @@ export function CustomerTeamPicker<T extends CustomerTeamPickerEmployee>({
           <p className="py-10 text-center text-sm text-muted-foreground">{emptyLabel}</p>
         ) : (
           <ul
-            className="mt-4 grid grid-cols-2 gap-x-4 gap-y-7 sm:grid-cols-3 sm:gap-x-5 sm:gap-y-8 lg:gap-x-8 lg:gap-y-10"
+            className="mt-4 grid grid-cols-2 gap-x-4 gap-y-7 sm:grid-cols-3 sm:gap-x-5 sm:gap-y-8"
             data-customer-team
           >
             {employees.map((emp) => (

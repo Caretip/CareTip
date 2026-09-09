@@ -33,6 +33,7 @@ import {
   __setListConnectPayoutsFnForTests,
   __setListPayoutBalanceTransactionsFnForTests,
   __setListPayoutBalanceTransactionPageFnForTests,
+  __setRetrievePayoutForReconFnForTests,
 } from "../src/services/stripeConnectPayout.service.js";
 import {
   reconcileConnectPayoutBalanceLines,
@@ -660,6 +661,61 @@ async function runMockedAndDb() {
     } else {
       fail("L-reconciliation-retry", JSON.stringify({ tick, recon: afterTick?.reconciliationStatus }), "DATABASE_TESTS");
     }
+
+    __setListPayoutBalanceTransactionsFnForTests(async () => null);
+    const retrieveBt = fakeBt(`txn_p4_retrieve_${Date.now()}`, 410);
+    __setRetrievePayoutForReconFnForTests(async () => ({
+      balanceTransaction: retrieveBt,
+      applicationFeeAmountCents: 12,
+      stripeApplicationFeeId: "fee_test_p4",
+      method: "instant",
+    }));
+    const retrievePo = `po_test_p4_retrieve_${Date.now()}`;
+    await handleConnectPayoutEvent(
+      fakePayoutEvent({
+        eventId: `evt_p4_retrieve_${Date.now()}`,
+        type: "payout.paid",
+        account: venueA.stripeAccountId,
+        created: t0 + 80,
+        payout: fakePayout({
+          id: retrievePo,
+          amount: 410,
+          currency: "eur",
+          status: "paid",
+          method: "instant",
+        }),
+      }),
+    );
+    const retrieveRow = await prisma.stripeConnectPayout.findUnique({
+      where: { stripePayoutId: retrievePo },
+      include: { _count: { select: { balanceLines: true } } },
+    });
+    if (
+      retrieveRow?.status === StripeConnectPayoutStatus.paid &&
+      retrieveRow.reconciliationStatus === StripeConnectPayoutReconciliationStatus.complete &&
+      retrieveRow.method === "instant" &&
+      retrieveRow.applicationFeeAmountCents === 12 &&
+      retrieveRow._count.balanceLines === 1
+    ) {
+      pass(
+        "M-instant-retrieve-fallback",
+        "list BT failure recovered via payout retrieve; Paid + complete; fee persisted from Stripe object",
+        "MOCKED_SECURITY_TESTS",
+      );
+    } else {
+      fail(
+        "M-instant-retrieve-fallback",
+        JSON.stringify({
+          status: retrieveRow?.status,
+          recon: retrieveRow?.reconciliationStatus,
+          method: retrieveRow?.method,
+          fee: retrieveRow?.applicationFeeAmountCents,
+          lines: retrieveRow?._count.balanceLines,
+        }),
+        "MOCKED_SECURITY_TESTS",
+      );
+    }
+    __setRetrievePayoutForReconFnForTests(null);
 
     const concReconPo = `po_test_p4_crecon_${Date.now()}`;
     const concReconRow = await prisma.stripeConnectPayout.create({

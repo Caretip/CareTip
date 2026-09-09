@@ -11,6 +11,7 @@ import type { ConnectPayout, ConnectPayoutBalanceLine, PlatformConnectPayout } f
 import {
   formatConnectPayoutAmount,
   formatConnectPayoutDate,
+  payoutMethodI18nKey,
   reconExplainI18nKey,
   sanitizePayoutFailureDisplay,
 } from "../../lib/connectPayoutDisplay";
@@ -35,6 +36,8 @@ export function ConnectPayoutDetailDialog({
   loading,
   error,
   showBusiness,
+  onRetrySync,
+  retrying,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -43,6 +46,8 @@ export function ConnectPayoutDetailDialog({
   loading: boolean;
   error: string | null;
   showBusiness?: boolean;
+  onRetrySync?: () => void;
+  retrying?: boolean;
 }) {
   const { t, i18n } = useTranslation();
   const admin = payout && "businessName" in payout ? payout : null;
@@ -77,17 +82,20 @@ export function ConnectPayoutDetailDialog({
             {showBusiness && admin ? (
               <DetailRow label={t("admin.connectPayoutsPage.colBusiness")}>
                 <span className="font-medium">{admin.businessName}</span>
-                {admin.stripeAccountSuffix ? (
-                  <span className="mt-0.5 block text-xs text-muted-foreground">
-                    …{admin.stripeAccountSuffix}
-                  </span>
-                ) : null}
+              </DetailRow>
+            ) : null}
+            {showBusiness && admin?.stripeAccountSuffix ? (
+              <DetailRow label={t("admin.connectPayoutsPage.stripeAccount")}>
+                …{admin.stripeAccountSuffix}
               </DetailRow>
             ) : null}
             <DetailRow label={t("business.billing.payouts.colAmount")}>
               <span className="font-medium tabular-nums">
                 {formatConnectPayoutAmount(payout.amountCents, payout.currency, i18n.language)}
               </span>
+            </DetailRow>
+            <DetailRow label={t("business.billing.payouts.colMethod")}>
+              {t(payoutMethodI18nKey(payout.method))}
             </DetailRow>
             <DetailRow label={t("business.billing.payouts.colStatus")}>
               <ConnectPayoutStatusBadge status={payout.status} />
@@ -130,8 +138,68 @@ export function ConnectPayoutDetailDialog({
                 <p className="text-xs text-muted-foreground">
                   {t(reconExplainI18nKey(payout.reconciliationStatus))}
                 </p>
+                {onRetrySync && payout.reconciliationStatus !== "complete" ? (
+                  <button
+                    type="button"
+                    className="mt-1 text-sm font-medium text-primary underline-offset-2 hover:underline disabled:opacity-50"
+                    onClick={() => onRetrySync()}
+                    disabled={retrying || loading}
+                  >
+                    {retrying
+                      ? t("admin.connectPayoutsPage.retryingSync")
+                      : t("admin.connectPayoutsPage.retrySync")}
+                  </button>
+                ) : null}
               </div>
             </DetailRow>
+            {typeof payout.applicationFeeAmountCents === "number" ? (
+              <DetailRow label={t("business.billing.payouts.colInstantFee")}>
+                <span className="tabular-nums">
+                  {formatConnectPayoutAmount(
+                    payout.applicationFeeAmountCents,
+                    payout.currency,
+                    i18n.language,
+                  )}
+                </span>
+              </DetailRow>
+            ) : null}
+            {typeof payout.instantRequestAmountCents === "number" ? (
+              <DetailRow label={t("business.billing.payouts.colInstantRequest")}>
+                <span className="tabular-nums">
+                  {formatConnectPayoutAmount(
+                    payout.instantRequestAmountCents,
+                    payout.currency,
+                    i18n.language,
+                  )}
+                </span>
+              </DetailRow>
+            ) : null}
+            {admin?.stripeDashboardPayoutUrl || admin?.stripeDashboardAccountUrl ? (
+              <DetailRow label={t("admin.connectPayoutsPage.viewInStripe")}>
+                <div className="flex flex-col gap-1">
+                  {admin.stripeDashboardPayoutUrl ? (
+                    <a
+                      href={admin.stripeDashboardPayoutUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-sm font-medium text-primary underline-offset-2 hover:underline"
+                    >
+                      {t("admin.connectPayoutsPage.openStripePayout")}
+                    </a>
+                  ) : null}
+                  {admin.stripeDashboardAccountUrl ? (
+                    <a
+                      href={admin.stripeDashboardAccountUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-sm text-muted-foreground underline-offset-2 hover:underline"
+                    >
+                      {t("admin.connectPayoutsPage.openStripeAccount")}
+                    </a>
+                  ) : null}
+                </div>
+              </DetailRow>
+            ) : null}
             {payout.balanceLines && payout.balanceLines.length > 0 ? (
               <DetailRow label={t("business.billing.payouts.colBalanceLines")}>
                 <BalanceLineList lines={payout.balanceLines} locale={i18n.language} />

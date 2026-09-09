@@ -14,6 +14,23 @@ export function isHtmlBootBridgeActive(): boolean {
   return document.documentElement.classList.contains(ACTIVE_CLASS);
 }
 
+/** True while the first-paint boot node is still in the document (including fade-out). */
+export function isHtmlBootElementPresent(): boolean {
+  if (typeof document === "undefined") return false;
+  return document.getElementById(BOOT_ID) != null;
+}
+
+/**
+ * React must not mount a second CareTip loading screen while the HTML boot node exists.
+ * Ownership is the DOM node, not only the `caretip-html-boot-active` class.
+ */
+export function shouldMountReactBootOverlay(
+  overlayPresented: boolean,
+  htmlBootElementPresent: boolean = isHtmlBootElementPresent(),
+): boolean {
+  return overlayPresented && !htmlBootElementPresent;
+}
+
 /** Replace the single visible boot sentence in place. Never add a second line. */
 export function setHtmlBootBridgeTagline(message: string | undefined): void {
   if (typeof document === "undefined" || !message?.trim()) return;

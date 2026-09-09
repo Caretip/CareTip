@@ -481,6 +481,7 @@ const routes: RouteObject[] = [
       { path: 'businesses/:id', lazy: routeLazy(() => import('./pages/platform/BusinessDetailPage'), 'BusinessDetailPage') },
       { path: 'businesses', element: <Navigate to="/platform-admin/businesses/onboarding-verification" replace /> },
       { path: 'revenue/transactions', lazy: routeLazy(() => import('./pages/platform/GlobalTransactionsPage'), 'GlobalTransactionsPage') },
+      { path: 'revenue/failed-billing', lazy: routeLazy(() => import('./pages/platform/revenue/PlatformFailedBillingPage'), 'PlatformFailedBillingPage') },
       { path: 'revenue/failed-payments', lazy: routeLazy(() => import('./pages/platform/revenue/PlatformFailedPaymentsPage'), 'PlatformFailedPaymentsPage') },
       { path: 'revenue/successful-subscriptions', lazy: routeLazy(() => import('./pages/platform/revenue/PlatformSuccessfulSubscriptionsPage'), 'PlatformSuccessfulSubscriptionsPage') },
       { path: 'revenue/failed-subscriptions', lazy: routeLazy(() => import('./pages/platform/revenue/PlatformFailedSubscriptionsPage'), 'PlatformFailedSubscriptionsPage') },

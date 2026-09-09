@@ -61,6 +61,27 @@ function payoutBadgeClass(status: string): string {
   return "bg-amber-100 text-amber-900 dark:bg-amber-900/40 dark:text-amber-100";
 }
 
+function tipStatusLabel(status: string, t: TFunction) {
+  const key = `admin.globalTransactionsPage.tipStatus.${status}`;
+  const label = t(key);
+  return label === key ? status : label;
+}
+
+function tipStatusBadgeClass(status: string): string {
+  if (status === "success") {
+    return "bg-success text-success-foreground dark:bg-success/80 dark:text-success-foreground";
+  }
+  if (status === "failed") {
+    return "bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-200";
+  }
+  return "bg-amber-100 text-amber-900 dark:bg-amber-900/40 dark:text-amber-100";
+}
+
+function readTipStatus(sp: URLSearchParams): string {
+  const raw = sp.get("status") ?? "all";
+  return raw === "success" || raw === "pending" || raw === "failed" ? raw : "all";
+}
+
 function readPage(sp: URLSearchParams): number {
   const raw = Number(sp.get("page") ?? "0");
   return Number.isFinite(raw) && raw >= 0 ? raw : 0;
@@ -71,6 +92,7 @@ export function GlobalTransactionsPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const q = searchParams.get("q") ?? "";
   const page = readPage(searchParams);
+  const tipStatus = readTipStatus(searchParams);
   const [debouncedQ, setDebouncedQ] = useState(q);
   const [items, setItems] = useState<GlobalTransactionRow[]>([]);
   const [total, setTotal] = useState(0);
@@ -95,6 +117,17 @@ export function GlobalTransactionsPage() {
     [searchParams, setSearchParams],
   );
 
+  const setTipStatus = useCallback(
+    (next: string) => {
+      const sp = new URLSearchParams(searchParams);
+      if (next && next !== "all") sp.set("status", next);
+      else sp.delete("status");
+      sp.delete("page");
+      setSearchParams(sp, { replace: true });
+    },
+    [searchParams, setSearchParams],
+  );
+
   const setPage = useCallback(
     (next: number) => {
       const sp = new URLSearchParams(searchParams);
@@ -109,10 +142,11 @@ export function GlobalTransactionsPage() {
     const gen = ++loadGenRef.current;
     setLoading(true);
     setLoadError(null);
-    const cacheKey = `platform:transactions:${debouncedQ || "_"}:${page}`;
+    const cacheKey = `platform:transactions:${debouncedQ || "_"}:${tipStatus}:${page}`;
     try {
       const res = await fetchPlatformTransactions({
         q: debouncedQ || undefined,
+        status: tipStatus,
         take: PAGE_SIZE,
         skip: page * PAGE_SIZE,
       });
@@ -130,7 +164,7 @@ export function GlobalTransactionsPage() {
     } finally {
       if (gen === loadGenRef.current) setLoading(false);
     }
-  }, [debouncedQ, page]);
+  }, [debouncedQ, page, tipStatus]);
 
   useEffect(() => {
     void load();
@@ -210,6 +244,22 @@ export function GlobalTransactionsPage() {
         hint={t("admin.globalTransactionsPage.hintLiveSearch")}
       />
 
+      <div className="mb-3 flex flex-wrap items-end gap-3">
+        <label className="flex min-w-[10rem] flex-col gap-1 text-xs font-medium text-muted-foreground">
+          {t("admin.globalTransactionsPage.filterTipStatus")}
+          <select
+            className="min-h-[40px] rounded-lg border border-border bg-background px-3 text-sm text-foreground"
+            value={tipStatus}
+            onChange={(e) => setTipStatus(e.target.value)}
+          >
+            <option value="all">{t("admin.globalTransactionsPage.tipStatusFilter.all")}</option>
+            <option value="success">{t("admin.globalTransactionsPage.tipStatus.success")}</option>
+            <option value="pending">{t("admin.globalTransactionsPage.tipStatus.pending")}</option>
+            <option value="failed">{t("admin.globalTransactionsPage.tipStatus.failed")}</option>
+          </select>
+        </label>
+      </div>
+
       {!loadError && !showTableLoading ? (
         <p className="mb-3 text-sm font-medium text-foreground" role="status">
           {filterSummary}
@@ -236,6 +286,7 @@ export function GlobalTransactionsPage() {
                 <th className={platformUi.tableTh}>{t("admin.globalTransactionsPage.colTransaction")}</th>
                 <th className={platformUi.tableTh}>{t("admin.globalTransactionsPage.colBusiness")}</th>
                 <th className={platformUi.tableTh}>{t("admin.globalTransactionsPage.colDateTime")}</th>
+                <th className={platformUi.tableTh}>{t("admin.globalTransactionsPage.colTipStatus")}</th>
                 <th className={`${platformUi.tableTh} text-right`}>{t("admin.globalTransactionsPage.colAmountEur")}</th>
                 <th className={`${platformUi.tableTh} text-right`}>{t("admin.globalTransactionsPage.colCaretipFee")}</th>
                 <th className={`${platformUi.tableTh} text-right`}>{t("admin.globalTransactionsPage.colNetToStaff")}</th>
@@ -247,7 +298,7 @@ export function GlobalTransactionsPage() {
                 <GlobalTransactionsTableSkeleton />
               ) : loadError ? (
                 <tr>
-                  <td colSpan={7} className="p-0">
+                  <td colSpan={8} className="p-0">
                     <ListFilterLoadError
                       message={loadError}
                       kind={loadErrorKind}
@@ -258,7 +309,7 @@ export function GlobalTransactionsPage() {
                 </tr>
               ) : items.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="p-0">
+                  <td colSpan={8} className="p-0">
                     <EmptyState compact title={emptyCopy.title} description={emptyCopy.description} />
                   </td>
                 </tr>
@@ -279,6 +330,13 @@ export function GlobalTransactionsPage() {
                       title={row.createdAt}
                     >
                       {formatTransactionAt(row.createdAt, i18n.language)}
+                    </td>
+                    <td className={platformUi.tableTd}>
+                      <span
+                        className={`inline-flex rounded px-2 py-0.5 text-xs font-medium ${tipStatusBadgeClass(row.tipStatus)}`}
+                      >
+                        {tipStatusLabel(row.tipStatus, t)}
+                      </span>
                     </td>
                     <td className={`${platformUi.tableTd} text-right tabular-nums`}>{formatEur(row.amountEur)}</td>
                     <td className={`${platformUi.tableTd} text-right tabular-nums text-muted-foreground`}>

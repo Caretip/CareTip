@@ -161,7 +161,8 @@ export async function listTransactions(req: Request, res: Response) {
     const q = typeof req.query.q === "string" ? req.query.q : undefined;
     const take = Math.min(Math.max(Number(req.query.take) || 50, 1), 100);
     const skip = parseBoundedSkip(req.query.skip);
-    const result = await platformService.listGlobalTransactions({ q, take, skip });
+    const status = typeof req.query.status === "string" ? req.query.status : undefined;
+    const result = await platformService.listGlobalTransactions({ q, take, skip, status });
     return res.json(result);
   } catch (err) {
     logServerError("platform.listTransactions", err);
@@ -200,6 +201,7 @@ export async function listConnectPayouts(req: Request, res: Response) {
     const reconciliationStatus =
       typeof req.query.reconciliationStatus === "string" ? req.query.reconciliationStatus : undefined;
     const currency = typeof req.query.currency === "string" ? req.query.currency : undefined;
+    const method = typeof req.query.method === "string" ? req.query.method : undefined;
     const createdFrom = typeof req.query.createdFrom === "string" ? req.query.createdFrom : undefined;
     const createdTo = typeof req.query.createdTo === "string" ? req.query.createdTo : undefined;
     const take = Math.min(Math.max(Number(req.query.take) || 50, 1), 100);
@@ -211,6 +213,7 @@ export async function listConnectPayouts(req: Request, res: Response) {
       businessId,
       reconciliationStatus,
       currency,
+      method,
       createdFrom,
       createdTo,
       take,
@@ -239,6 +242,31 @@ export async function getConnectPayout(req: Request, res: Response) {
     logServerError("platform.getConnectPayout", err);
     return res.status(500).json({
       message: clientSafeMessage(err, "We couldn't load that payout. Try again."),
+    });
+  }
+}
+
+export async function retryConnectPayoutReconciliation(req: Request, res: Response) {
+  try {
+    const id = typeof req.params.id === "string" ? req.params.id.trim() : "";
+    if (!id) return res.status(400).json({ message: "Invalid payout id" });
+    const { retryPlatformConnectPayoutReconciliation } = await import(
+      "../services/stripeConnectPayout.service.js"
+    );
+    const result = await retryPlatformConnectPayoutReconciliation(id);
+    if (!result) return res.status(404).json({ message: "Payout not found" });
+    const uid = req.user?.sub ?? req.user?.userId ?? req.user?.id ?? null;
+    const { writeAuditLog } = await import("../services/audit.service.js");
+    await writeAuditLog({
+      userId: uid,
+      action: "platform.connect_payout.retry_reconciliation",
+      metadata: JSON.stringify({ payoutId: id, status: result.status, reason: result.reason }),
+    });
+    return res.json(result);
+  } catch (err) {
+    logServerError("platform.retryConnectPayoutReconciliation", err);
+    return res.status(500).json({
+      message: clientSafeMessage(err, "We couldn't retry CareTip sync. Try again."),
     });
   }
 }

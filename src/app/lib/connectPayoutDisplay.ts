@@ -57,3 +57,17 @@ export function reconExplainI18nKey(status: ConnectPayoutReconciliationStatus | 
   const s = status ?? "pending";
   return `business.billing.payouts.reconExplain.${s}`;
 }
+
+export function payoutMethodKind(method: string | null | undefined): "instant" | "standard" | "unknown" {
+  const raw = String(method ?? "").trim().toLowerCase();
+  if (raw === "instant") return "instant";
+  if (raw === "standard") return "standard";
+  return "unknown";
+}
+
+export function payoutMethodI18nKey(method: string | null | undefined): string {
+  const kind = payoutMethodKind(method);
+  if (kind === "instant") return "business.billing.payouts.methodInstant";
+  if (kind === "standard") return "business.billing.payouts.methodStandard";
+  return "business.billing.payouts.methodUnknown";
+}

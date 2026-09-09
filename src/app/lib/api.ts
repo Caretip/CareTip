@@ -2953,14 +2953,20 @@ export type ConnectPayout = {
   failedAt: string | null;
   canceledAt: string | null;
   reconciliationStatus: ConnectPayoutReconciliationStatus;
+  reconciliationLastError?: string | null;
   balanceLineCount: number;
   balanceLines?: ConnectPayoutBalanceLine[];
+  applicationFeeAmountCents?: number | null;
+  stripeApplicationFeeId?: string | null;
+  instantRequestAmountCents?: number | null;
 };
 
 export type PlatformConnectPayout = ConnectPayout & {
   businessId: string;
   businessName: string;
   stripeAccountSuffix: string;
+  stripeDashboardAccountUrl?: string | null;
+  stripeDashboardPayoutUrl?: string | null;
 };
 
 export async function listMyConnectPayouts(params?: {
@@ -2999,6 +3005,7 @@ export async function fetchPlatformConnectPayouts(params: {
   status?: string;
   reconciliationStatus?: string;
   currency?: string;
+  method?: string;
   createdFrom?: string;
   createdTo?: string;
   businessId?: string;
@@ -3008,6 +3015,7 @@ export async function fetchPlatformConnectPayouts(params: {
   if (params.status) sp.set("status", params.status);
   if (params.reconciliationStatus) sp.set("reconciliationStatus", params.reconciliationStatus);
   if (params.currency) sp.set("currency", params.currency);
+  if (params.method) sp.set("method", params.method);
   if (params.createdFrom) sp.set("createdFrom", params.createdFrom);
   if (params.createdTo) sp.set("createdTo", params.createdTo);
   if (params.businessId) sp.set("businessId", params.businessId);
@@ -3018,6 +3026,15 @@ export async function fetchPlatformConnectPayouts(params: {
     headers: getHeaders(),
     credentials: "include",
   });
+}
+
+export async function retryPlatformConnectPayoutReconciliation(
+  id: string,
+): Promise<{ ok: boolean; status: ConnectPayoutReconciliationStatus; reason: string }> {
+  return apiRequest(
+    apiPath(`/api/platform/connect-payout-reconciliation/${encodeURIComponent(id)}/retry`),
+    { method: "POST", headers: getHeaders(), credentials: "include" },
+  );
 }
 
 export async function createBillingCheckoutSession(params: {
@@ -4783,9 +4800,11 @@ export async function fetchPlatformTransactions(params: {
   q?: string;
   take?: number;
   skip?: number;
+  status?: string;
 }): Promise<{ items: GlobalTransactionRow[]; total: number }> {
   const sp = new URLSearchParams();
   if (params.q) sp.set("q", params.q);
+  if (params.status && params.status !== "all") sp.set("status", params.status);
   if (params.take != null) sp.set("take", String(params.take));
   if (params.skip != null) sp.set("skip", String(params.skip));
   const qs = sp.toString();

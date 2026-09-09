@@ -14,7 +14,7 @@ import { DashboardChartsIdleMount } from "../dashboard/DashboardChartsIdleMount"
 import { CountUpMetric } from "../dashboard/CountUpMetric";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { DashboardWorkspaceSummaryCard } from "../dashboard/DashboardWorkspaceSummaryCard";
+import { DashboardWorkspaceSummaryCard, type DashboardWorkspaceSummaryMetric } from "../dashboard/DashboardWorkspaceSummaryCard";
 import { businessUi } from "./businessDashboardUi";
 import { cn } from "@/lib/utils";
 import { formatEur } from "../../lib/formatEur";
@@ -136,68 +136,79 @@ export function BusinessAnalyticsReporting({
           : t("dashboard.filter_month"),
   }));
 
+  const periodToggle = (
+    <DashboardAnalyticsPeriodToggle
+      ariaLabel={t("business.tips.analytics.periodAria")}
+      value={revenueTimeframe}
+      onChange={onRevenueTimeframeChange}
+      options={periodOptions.map((option) => ({
+        ...option,
+        loading: data.isAnalyticsRefreshing && revenueTimeframe === option.id,
+      }))}
+    />
+  );
+
+  const overviewMetrics: DashboardWorkspaceSummaryMetric[] = [
+    {
+      label: t("business.tips.analytics.cards.tipVolume"),
+      value: <CountUpMetric value={data.period.totalTips} kind="eur" format={formatEur} />,
+      trend: t("premium.summaryBanner.growthValue", { percent: revenueGrowth }),
+      trendDirection: revenueGrowth >= 0 ? "up" : "down",
+    },
+    {
+      label: t("business.tips.analytics.cards.totalTips"),
+      value: <CountUpMetric value={data.period.tipCount} kind="integer" />,
+      trend:
+        revenueTimeframe === "week"
+          ? undefined
+          : t("business.tips.analytics.cards.tipsThisWeek", { count: data.week.tipCount }),
+      trendDirection: "neutral" as const,
+    },
+    {
+      label: t("business.tips.analytics.cards.activeEmployees"),
+      value: <CountUpMetric value={data.bi.operational.activeEmployees} kind="integer" />,
+      trend: t("business.tips.analytics.cards.employeesReceivedTips", {
+        count: data.bi.operational.employeesReceivingTips,
+      }),
+      trendDirection: "neutral" as const,
+    },
+  ];
+
   return (
     <div className="caretip-mobile-analytics-report space-y-6 md:space-y-8">
-      <DashboardWorkspaceSummaryCard
-        title={t("premium.summaryBanner.title")}
-        periodLabel={periodLabel}
-        metrics={[
-          {
-            label: t("premium.summaryBanner.revenueTrend"),
-            value: <CountUpMetric value={data.period.totalTips} kind="eur" format={formatEur} />,
-            trend: t("premium.summaryBanner.growthValue", { percent: revenueGrowth }),
-            trendDirection: revenueGrowth >= 0 ? "up" : "down",
-          },
-          {
-            label: t("business.tips.analytics.cards.totalTips"),
-            value: <CountUpMetric value={data.period.tipCount} kind="integer" />,
-            trend: t("business.tips.live.cards.tipCount", { count: data.week.tipCount }),
-            trendDirection: "neutral",
-          },
-          {
-            label: t("business.tips.analytics.cards.activeEmployees"),
-            value: <CountUpMetric value={data.bi.operational.activeEmployees} kind="integer" />,
-            trend: t("business.tips.analytics.employeeTipCount", {
-              count: data.bi.operational.employeesReceivingTips,
-            }),
-            trendDirection: "neutral",
-          },
-        ]}
-      />
-
-      <section className="space-y-3" aria-labelledby="business-revenue-analytics-heading">
-        <div className="flex flex-wrap items-start justify-between gap-3">
-          <div className="min-w-0 space-y-1">
-            <h2
-              id="business-revenue-analytics-heading"
-              className="text-sm font-semibold uppercase tracking-wide text-muted-foreground"
-            >
-              {t("business.team.performance.bi.revenueTitle")}
-            </h2>
-            <DashboardRefreshIndicator
-              isRefreshing={cardsRefreshing}
-              lastUpdatedAt={data.lastUpdatedAt}
-            />
-          </div>
-          <DashboardStatusStrip items={analyticsStatusItems} />
-        </div>
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <DashboardRefreshIndicator
+          isRefreshing={cardsRefreshing}
+          lastUpdatedAt={data.lastUpdatedAt}
+        />
         <div className="flex flex-wrap items-center justify-end gap-2">
-          <DashboardAnalyticsPeriodToggle
-            ariaLabel={t("business.tips.analytics.revenuePeriodAria")}
-            value={revenueTimeframe}
-            onChange={onRevenueTimeframeChange}
-            options={periodOptions.map((option) => ({
-              ...option,
-              loading: data.isAnalyticsRefreshing && revenueTimeframe === option.id,
-            }))}
-          />
+          {periodToggle}
           <Button type="button" variant="outline" size="sm" disabled={exporting} onClick={() => void handleExport()}>
             <Download className="mr-2 h-4 w-4" aria-hidden />
             {t("business.tips.analytics.reporting.export")}
           </Button>
         </div>
+      </div>
+      <DashboardStatusStrip items={analyticsStatusItems} />
+
+      <DashboardWorkspaceSummaryCard
+        title={t("premium.summaryBanner.title")}
+        eyebrow={t("business.tips.analytics.overviewPeriodHint", { period: periodLabel })}
+        periodLabel={periodLabel}
+        metrics={overviewMetrics}
+      />
+
+      <section className="space-y-3" aria-labelledby="business-revenue-analytics-heading">
+        <h2
+          id="business-revenue-analytics-heading"
+          className="text-sm font-semibold uppercase tracking-wide text-muted-foreground"
+        >
+          {t("business.tips.analytics.sections.periodDetail")}
+        </h2>
         <RevenueAnalyticsCards
           data={data.input}
+          timeframe={revenueTimeframe}
+          variant="detail"
           loading={cardsInitialLoading}
           refreshing={cardsRefreshing}
           refreshingLabel={refreshingLabel}

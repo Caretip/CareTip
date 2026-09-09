@@ -72,6 +72,7 @@
     "test:api-security-sprint": "dotenv -e ../.env -e .env -- tsx scripts/api-security-sprint-runtime.ts",
     "test:sql-injection-audit": "tsx scripts/sql-injection-audit.ts",
     "test:sql-injection-smoke": "dotenv -e ../.env -e .env -- tsx scripts/sql-injection-smoke-runtime.ts",
+    "test:admin-failed-transactions-clarity": "dotenv -e ../.env -e .env -- tsx scripts/admin-failed-transactions-clarity-runtime.ts",
     "test:sql-injection": "npm run test:sql-injection-audit && npm run test:sql-injection-smoke",
     "test:file-upload-pentest": "tsx scripts/file-upload-pentest.ts",
     "test:kyc-disk-path-jail": "tsx scripts/kyc-disk-path-jail.ts",

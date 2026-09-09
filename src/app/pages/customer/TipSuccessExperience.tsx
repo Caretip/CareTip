@@ -139,7 +139,7 @@ export function TipSuccessExperience({
   return (
     <div
       className={cn(
-        "customer-flow customer-flow-success-page",
+        "customer-flow customer-flow--compact customer-flow-success-page",
         embedded ? "customer-flow-success-page--embedded min-h-0" : "min-h-[100dvh]",
       )}
       style={guestSuccessPageStyle(branding)}

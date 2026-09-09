@@ -4,7 +4,7 @@ import { Check, Globe } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Popover, PopoverContent, PopoverTrigger } from "@/app/components/ui/popover";
 import { patchMyAccountSettings, hasClientAccessToken } from "@/app/lib/api";
-import { changeAppLanguage, type AppLanguage } from "@/i18n/i18n";
+import { changeAppLanguage, resolveAppLanguageFromCode, type AppLanguage } from "@/i18n/i18n";
 
 type LanguageSwitcherProps = {
   className?: string;
@@ -19,7 +19,7 @@ export const LanguageSwitcher = memo(function LanguageSwitcher({
   const { i18n, t } = useTranslation();
   const [open, setOpen] = useState(false);
   const [pendingLang, setPendingLang] = useState<AppLanguage | null>(null);
-  const active = i18n.resolvedLanguage?.toLowerCase().startsWith("de") ? "de" : "en";
+  const active = resolveAppLanguageFromCode(i18n.language || i18n.resolvedLanguage);
   const displayLang = pendingLang ?? active;
 
   const isInline = variant === "inline";

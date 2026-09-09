@@ -69,9 +69,8 @@ export const platformAdminNavEntries: readonly PlatformAdminNavEntry[] = [
     defaultHref: `${PLATFORM_REVENUE_BASE}/transactions`,
     children: [
       { labelKey: "admin.sidebar.revenue.transactions", href: `${PLATFORM_REVENUE_BASE}/transactions` },
-      { labelKey: "admin.sidebar.revenue.failedPayments", href: `${PLATFORM_REVENUE_BASE}/failed-payments` },
+      { labelKey: "admin.sidebar.revenue.failedBilling", href: `${PLATFORM_REVENUE_BASE}/failed-billing` },
       { labelKey: "admin.sidebar.revenue.successfulSubscriptions", href: `${PLATFORM_REVENUE_BASE}/successful-subscriptions` },
-      { labelKey: "admin.sidebar.revenue.failedSubscriptions", href: `${PLATFORM_REVENUE_BASE}/failed-subscriptions` },
       { labelKey: "admin.sidebar.revenue.refunds", href: `${PLATFORM_REVENUE_BASE}/refunds` },
       { labelKey: "admin.sidebar.revenue.connectPayouts", href: `${PLATFORM_REVENUE_BASE}/connect-payouts` },
     ],

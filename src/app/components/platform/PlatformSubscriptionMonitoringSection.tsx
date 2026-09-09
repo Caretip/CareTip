@@ -177,7 +177,9 @@ type PlatformSubscriptionMonitoringSectionProps = {
   /** When true, omit outer Card chrome (parent provides collapsible header). */
   embedded?: boolean;
   initialFilter?: PlatformSubscriptionActivityFilter;
-  /** Hide filter chips when the page preset is fixed (e.g. failed payments module). */
+  allowedFilters?: readonly PlatformSubscriptionActivityFilter[];
+  onFilterChange?: (filter: PlatformSubscriptionActivityFilter) => void;
+  /** Hide filter chips when the page preset is fixed (e.g. successful subscriptions). */
   hideActivityFilters?: boolean;
 };
 
@@ -185,6 +187,8 @@ export function PlatformSubscriptionMonitoringSection({
   part = "full",
   embedded = false,
   initialFilter = "all",
+  allowedFilters,
+  onFilterChange,
   hideActivityFilters = false,
 }: PlatformSubscriptionMonitoringSectionProps) {
   const { t, i18n } = useTranslation();
@@ -262,6 +266,7 @@ export function PlatformSubscriptionMonitoringSection({
     if (showActivity) void loadActivity();
   }, [loadActivity, showActivity]);
 
+  const visibleFilters = allowedFilters?.length ? allowedFilters : ACTIVITY_FILTERS;
   const pageCount = Math.max(1, Math.ceil(activityTotal / PAGE_SIZE));
   const overview = monitoring?.overview;
   const widgets = monitoring?.widgets;
@@ -364,13 +369,16 @@ export function PlatformSubscriptionMonitoringSection({
 
         {!hideActivityFilters ? (
           <div className="flex gap-2 overflow-x-auto pb-0.5 [-webkit-overflow-scrolling:touch] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-            {ACTIVITY_FILTERS.map((chip) => {
+            {visibleFilters.map((chip) => {
               const active = filter === chip;
               return (
                 <button
                   key={chip}
                   type="button"
-                  onClick={() => setFilter(chip)}
+                  onClick={() => {
+                    setFilter(chip);
+                    onFilterChange?.(chip);
+                  }}
                   className={cn(
                     "inline-flex min-h-[40px] shrink-0 touch-manipulation items-center rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors",
                     active

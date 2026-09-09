@@ -46,8 +46,21 @@ type ListBalanceTxPageFn = (args: {
   limit: number;
 }) => Promise<BalanceTxPage | null>;
 
+export type RetrievedPayoutRecon = {
+  balanceTransaction: BalanceTxLike | null;
+  applicationFeeAmountCents: number | null;
+  stripeApplicationFeeId: string | null;
+  method: string | null;
+};
+
+type RetrievePayoutFn = (args: {
+  stripePayoutId: string;
+  stripeAccountId: string;
+}) => Promise<RetrievedPayoutRecon | null>;
+
 let listBalanceTxOverride: ListBalanceTxFn | null = null;
 let listBalanceTxPageOverride: ListBalanceTxPageFn | null = null;
+let retrievePayoutOverride: RetrievePayoutFn | null = null;
 
 export function __setListPayoutBalanceTransactionsFnForTests(fn: ListBalanceTxFn | null): void {
   listBalanceTxOverride = fn;
@@ -55,6 +68,72 @@ export function __setListPayoutBalanceTransactionsFnForTests(fn: ListBalanceTxFn
 
 export function __setListPayoutBalanceTransactionPageFnForTests(fn: ListBalanceTxPageFn | null): void {
   listBalanceTxPageOverride = fn;
+}
+
+export function __setRetrievePayoutForReconFnForTests(fn: RetrievePayoutFn | null): void {
+  retrievePayoutOverride = fn;
+}
+
+function usingListMocks(): boolean {
+  return Boolean(listBalanceTxOverride || listBalanceTxPageOverride);
+}
+
+function payoutApplicationFeeId(payout: Stripe.Payout): string | null {
+  const fee = payout.application_fee;
+  if (typeof fee === "string" && fee.startsWith("fee_")) return fee.slice(0, 128);
+  if (fee && typeof fee === "object" && "id" in fee && typeof fee.id === "string") {
+    return fee.id.slice(0, 128);
+  }
+  return null;
+}
+
+function balanceTxFromStripe(bt: Stripe.BalanceTransaction | string | null | undefined): BalanceTxLike | null {
+  if (!bt || typeof bt === "string") return null;
+  if (!bt.id || !Number.isInteger(bt.amount) || !Number.isInteger(bt.net)) return null;
+  return {
+    id: bt.id,
+    type: bt.type,
+    reporting_category: bt.reporting_category ?? null,
+    amount: bt.amount,
+    fee: Number.isInteger(bt.fee) ? bt.fee : 0,
+    net: bt.net,
+    currency: String(bt.currency ?? "eur"),
+    created: bt.created,
+  };
+}
+
+async function retrievePayoutForRecon(args: {
+  stripePayoutId: string;
+  stripeAccountId: string;
+}): Promise<RetrievedPayoutRecon | null> {
+  if (retrievePayoutOverride) {
+    return retrievePayoutOverride(args);
+  }
+  if (usingListMocks()) {
+    return null;
+  }
+  try {
+    const stripe = getStripeClient();
+    const payout = await stripe.payouts.retrieve(
+      args.stripePayoutId,
+      { expand: ["balance_transaction"] },
+      { stripeAccount: args.stripeAccountId },
+    );
+    return {
+      balanceTransaction: balanceTxFromStripe(payout.balance_transaction),
+      applicationFeeAmountCents: Number.isInteger(payout.application_fee_amount)
+        ? payout.application_fee_amount
+        : null,
+      stripeApplicationFeeId: payoutApplicationFeeId(payout),
+      method: typeof payout.method === "string" ? payout.method.slice(0, 32) : null,
+    };
+  } catch (err) {
+    logServerError("stripe.connectPayout.payoutRetrieve", err, {
+      payoutSuffix: args.stripePayoutId.slice(-8),
+      accountSuffix: accountSuffix(args.stripeAccountId),
+    });
+    return null;
+  }
 }
 
 function accountSuffix(accountId: string): string {
@@ -205,6 +284,58 @@ async function persistBalanceLines(payoutRowId: string, lines: BalanceTxLike[]):
   return written;
 }
 
+async function applyRetrievedPayoutMetadata(
+  payoutRowId: string,
+  retrieved: RetrievedPayoutRecon,
+): Promise<void> {
+  await prisma.stripeConnectPayout.update({
+    where: { id: payoutRowId },
+    data: {
+      ...(retrieved.method ? { method: retrieved.method } : {}),
+      applicationFeeAmountCents: retrieved.applicationFeeAmountCents,
+      stripeApplicationFeeId: retrieved.stripeApplicationFeeId,
+    },
+  });
+}
+
+async function completeReconFromRetrieve(
+  row: { id: string; businessId: string; stripePayoutId: string; stripeAccountId: string },
+  linesWritten: number,
+): Promise<ReconcilePayoutResult | null> {
+  const retrieved = await retrievePayoutForRecon({
+    stripePayoutId: row.stripePayoutId,
+    stripeAccountId: row.stripeAccountId,
+  });
+  if (!retrieved) return null;
+  await applyRetrievedPayoutMetadata(row.id, retrieved);
+  let extra = 0;
+  if (retrieved.balanceTransaction) {
+    extra = await persistBalanceLines(row.id, [retrieved.balanceTransaction]);
+  }
+  const total = linesWritten + extra;
+  await prisma.stripeConnectPayout.update({
+    where: { id: row.id },
+    data: {
+      reconciliationStatus: StripeConnectPayoutReconciliationStatus.complete,
+      reconciliationHasMore: false,
+      reconciliationLastError: null,
+      reconciliationCompletedAt: new Date(),
+      reconciliationLastAttemptAt: new Date(),
+    },
+  });
+  logPayoutOps("payout_reconciliation_completed", {
+    businessId: row.businessId,
+    payoutSuffix: row.stripePayoutId.slice(-8),
+    linesWritten: total,
+    source: "payout_retrieve_fallback",
+  });
+  return {
+    status: StripeConnectPayoutReconciliationStatus.complete,
+    linesWritten: total,
+    reason: retrieved.balanceTransaction ? "complete_from_payout_retrieve" : "complete_empty_payout_bt",
+  };
+}
+
 export type ReconcilePayoutResult = {
   status: StripeConnectPayoutReconciliationStatus;
   linesWritten: number;
@@ -270,6 +401,8 @@ export async function reconcileConnectPayoutBalanceLines(
       });
 
       if (page === null) {
+        const fallback = await completeReconFromRetrieve(row, linesWritten);
+        if (fallback) return fallback;
         await prisma.stripeConnectPayout.update({
           where: { id: row.id },
           data: {
@@ -307,6 +440,10 @@ export async function reconcileConnectPayoutBalanceLines(
     }
 
     if (!hasMore) {
+      if (linesWritten === 0 && !row.reconciliationCursor) {
+        const fallback = await completeReconFromRetrieve(row, linesWritten);
+        if (fallback) return fallback;
+      }
       await prisma.stripeConnectPayout.update({
         where: { id: row.id },
         data: {

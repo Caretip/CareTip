@@ -1,5 +1,5 @@
 import Stripe from "stripe";
-import { Prisma, Role } from "@prisma/client";
+import { Prisma, Role, TipStatus } from "@prisma/client";
 import { prisma } from "../prisma.js";
 import {
   emitBusinessDataChanged,
@@ -153,12 +153,24 @@ export async function getGlobalPlatformStats() {
   return getCachedOrLoad("platform:stats", PLATFORM_STATS_CACHE_TTL_MS, getGlobalPlatformStatsImpl);
 }
 
+export function parsePlatformTipStatusFilter(raw: unknown): TipStatus | undefined {
+  if (raw === TipStatus.success || raw === TipStatus.pending || raw === TipStatus.failed) {
+    return raw;
+  }
+  return undefined;
+}
+
 export async function listGlobalTransactions(params: {
   q?: string;
   take: number;
   skip: number;
+  status?: unknown;
 }) {
   const where: Prisma.TransactionWhereInput = {};
+  const tipStatus = parsePlatformTipStatusFilter(params.status);
+  if (tipStatus) {
+    where.status = tipStatus;
+  }
   const q = sanitizeLikeContainsSearch(params.q);
   if (q) {
     where.OR = [

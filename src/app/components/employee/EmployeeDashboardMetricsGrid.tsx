@@ -61,9 +61,6 @@ function EmployeeDashboardMetricsGridInner({
     : null;
   const showShortGoalBar = goalHasProgress && displayGoalPct != null && displayGoalPct > 0;
   const goalRemaining = hasGoal ? Math.max(0, (goalTarget ?? 0) - goalProgressAmount) : 0;
-  const goalHint = hasGoal
-    ? `${t("employee.dashboard.goalEarned", { amount: formatEur(goalProgressAmount) })} · ${t("employee.dashboard.goalRemaining", { amount: formatEur(goalRemaining) })}`
-    : null;
 
   return (
     <div
@@ -93,27 +90,29 @@ function EmployeeDashboardMetricsGridInner({
         </div>
 
         <div className="employee-period-summary__secondary">
-          <div className="employee-period-summary__metric">
+          <div className="employee-period-summary__metric employee-period-summary__metric--ratings">
             <p className="employee-period-summary__label">{t("employee.dashboard.statRatings")}</p>
-            <p className="employee-period-summary__value">
-              {cardsLoading ? (
-                <DashboardHeroMetricSkeleton variant="count" />
-              ) : cardsSettled && rating != null ? (
-                <CountUpMetric value={rating} format={(n) => n.toFixed(1)} />
-              ) : cardsSettled ? (
-                t("format.notAvailable")
-              ) : null}
-            </p>
-            <p className="employee-period-summary__hint">
-              {cardsLoading
-                ? null
-                : cardsSettled
-                  ? t("employee.dashboard.periodRatingsHint", { count: ratingCount })
-                  : null}
-            </p>
+            <div className="employee-period-summary__metric-aside">
+              <p className="employee-period-summary__value">
+                {cardsLoading ? (
+                  <DashboardHeroMetricSkeleton variant="count" />
+                ) : cardsSettled && rating != null ? (
+                  <CountUpMetric value={rating} format={(n) => n.toFixed(1)} />
+                ) : cardsSettled ? (
+                  t("format.notAvailable")
+                ) : null}
+              </p>
+              <p className="employee-period-summary__hint">
+                {cardsLoading
+                  ? null
+                  : cardsSettled
+                    ? t("employee.dashboard.periodRatingsHint", { count: ratingCount })
+                    : null}
+              </p>
+            </div>
           </div>
 
-          <div className="employee-period-summary__metric">
+          <div className="employee-period-summary__metric employee-period-summary__metric--goal">
             <p className="employee-period-summary__label">{t("employee.dashboard.statMonthlyGoal")}</p>
             <p className="employee-period-summary__value">
               {cardsLoading ? (
@@ -124,8 +123,22 @@ function EmployeeDashboardMetricsGridInner({
                 t("format.notAvailable")
               ) : null}
             </p>
-            <p className="employee-period-summary__hint">
-              {cardsLoading ? null : hasGoal ? goalHint : cardsSettled ? t("employee.dashboard.noMonthlyGoal") : null}
+            <p className="employee-period-summary__hint employee-period-summary__goal-meta">
+              {cardsLoading ? null : hasGoal ? (
+                <>
+                  <span className="employee-period-summary__goal-earned">
+                    {t("employee.dashboard.goalEarned", { amount: formatEur(goalProgressAmount) })}
+                  </span>
+                  <span className="employee-period-summary__goal-sep" aria-hidden>
+                    {" · "}
+                  </span>
+                  <span className="employee-period-summary__goal-remaining">
+                    {t("employee.dashboard.goalRemaining", { amount: formatEur(goalRemaining) })}
+                  </span>
+                </>
+              ) : cardsSettled ? (
+                t("employee.dashboard.noMonthlyGoal")
+              ) : null}
             </p>
             {showShortGoalBar ? (
               <div

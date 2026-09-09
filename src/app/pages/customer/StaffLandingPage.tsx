@@ -192,6 +192,7 @@ export function StaffLandingPage() {
 
   return (
     <div className={cf.page}>
+      <div className={cf.frame}>
       <CustomerJourneyHeader venue={venueBrand} />
 
       <div className={`${cf.main} max-w-xl pb-8 sm:pb-10`}>
@@ -235,6 +236,7 @@ export function StaffLandingPage() {
         </div>
 
         <CustomerJourneyAttributionFooter label={t("tipFlow.common.poweredByCareTip")} />
+      </div>
       </div>
     </div>
   );

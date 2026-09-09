@@ -23,11 +23,12 @@ import {
 import {
   beginHtmlBootBridgeExit,
   dismissHtmlMarketingBootBridge,
-  isHtmlBootBridgeActive,
+  isHtmlBootElementPresent,
   setHtmlBootBridgeTagline,
+  shouldMountReactBootOverlay,
 } from "../lib/htmlMarketingBootBridge";
 import { resolveInitialBootLoadingMessage } from "../lib/appLoadingContexts";
-import i18n from "@/i18n/i18n";
+import i18n, { readDocumentOrStoredLanguage } from "@/i18n/i18n";
 import { traceLoaderRegistration, warnLoaderDiagDeadlock } from "../lib/loaderDiagFlags";
 import {
   OVERLAY_EXIT_DEBOUNCE_MS,
@@ -122,10 +123,13 @@ function createInitialRegistrations(): Map<string, Registration> {
   if (!shouldRegisterInitialAppBoot(readInitialPathname())) {
     return initial;
   }
+  const lng = readDocumentOrStoredLanguage();
   initial.set(BOOTSTRAP_KEY, {
     key: BOOTSTRAP_KEY,
     priority: APP_LOADING_PRIORITY.AUTH,
-    message: resolveInitialBootLoadingMessage(readInitialPathname(), i18n.t.bind(i18n)),
+    message: resolveInitialBootLoadingMessage(readInitialPathname(), (key, options) =>
+      i18n.t(key, { lng, ...(typeof options === "object" && options ? options : {}) }),
+    ),
   });
   return initial;
 }
@@ -163,7 +167,7 @@ export function AppLoadingManagerProvider({ children }: { children: React.ReactN
    * Cold URL entry: HTML `#caretip-html-boot` is the only visual loader until fade-out.
    * React tracks readiness but must not mount a second CareTip screen on top.
    */
-  const [htmlBootOwnsVisual, setHtmlBootOwnsVisual] = useState(() => isHtmlBootBridgeActive());
+  const [htmlBootOwnsVisual, setHtmlBootOwnsVisual] = useState(() => isHtmlBootElementPresent());
   const htmlBootOwnsVisualRef = useRef(htmlBootOwnsVisual);
   htmlBootOwnsVisualRef.current = htmlBootOwnsVisual;
   const lastWinnerKeyRef = useRef<string | null>(initialColdBootPending ? BOOTSTRAP_KEY : null);
@@ -320,6 +324,7 @@ export function AppLoadingManagerProvider({ children }: { children: React.ReactN
         return next;
       });
       setOverlayPhase("hidden");
+      dismissHtmlMarketingBootBridge();
       setHtmlBootOwnsVisual(false);
       markAppShellInteractive();
     });
@@ -611,8 +616,8 @@ export function AppLoadingManagerProvider({ children }: { children: React.ReactN
     ],
   );
 
-  /* React CareTip screen only after HTML cold boot is gone (soft nav / auth transitions). */
-  const renderReactOverlay = overlayPresented && !htmlBootOwnsVisual;
+  /* React CareTip screen only after the HTML boot node is removed — never stacked on it. */
+  const renderReactOverlay = shouldMountReactBootOverlay(overlayPresented);
 
   useEffect(() => {
     /* Safety: if HTML somehow stays after we already moved on, force-clear after long stall. */

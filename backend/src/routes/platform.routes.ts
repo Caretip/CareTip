@@ -38,6 +38,10 @@ router.get("/refunds", platformController.listRefunds);
 router.get("/refunds/export", platformController.exportRefunds);
 router.get("/connect-payouts", platformController.listConnectPayouts);
 router.get("/connect-payouts/:id", platformController.getConnectPayout);
+router.post(
+  "/connect-payout-reconciliation/:id/retry",
+  platformController.retryConnectPayoutReconciliation,
+);
 router.get("/audit-logs", platformController.listAuditLogs);
 router.get("/kyc/metrics", platformController.getKycQueueMetrics);
 router.get("/onboarding/metrics", platformController.getOnboardingQueueMetrics);

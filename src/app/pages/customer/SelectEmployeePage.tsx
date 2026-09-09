@@ -126,6 +126,7 @@ export function SelectEmployeePage() {
 
   return (
     <CustomerFlowShell
+      className="customer-flow--team"
       withBottomCta={Boolean(selectedEmployee)}
       headerLeading={
         <CustomerJourneyBackButton label={t("tipFlow.common.back")} onClick={handleBack} />

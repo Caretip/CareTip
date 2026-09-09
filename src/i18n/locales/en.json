@@ -85,7 +85,7 @@
       "revenueTrend": "Revenue trend",
       "scanTrend": "Scan trend",
       "conversionTrend": "Conversion trend",
-      "growthValue": "{{percent}}% vs monthly avg",
+      "growthValue": "{{percent}} % vs previous period",
       "scanWeekValue": "{{count}} scans this week",
       "conversionHint": "Scan-to-tip rate"
     },
@@ -5426,15 +5426,23 @@
         "periodAria": "Analytics period",
         "revenuePeriodAria": "Revenue analytics period",
         "qrPeriodAria": "QR analytics period",
+        "overviewPeriodHint": "Overview and details use {{period}}.",
         "cards": {
-          "totalTips": "Total tips",
+          "totalTips": "Tips",
+          "tipVolume": "Tip volume",
           "activeEmployees": "Active employees",
           "conversion": "Conversion rate",
           "satisfaction": "Guest satisfaction",
           "tipCount": "{{count}} tips this month",
+          "tipCountThisWeek": "{{count}} tips this week",
+          "tipCountThisMonth": "{{count}} tips this month",
+          "tipCountThisYear": "{{count}} tips this year",
+          "tipsThisWeek": "{{count}} this week",
+          "employeesReceivedTips": "{{count}} received tips in this period",
           "satisfactionHint": "From {{count}} ratings"
         },
         "sections": {
+          "periodDetail": "Period details",
           "employees": "Employee analytics",
           "locations": "Location & table analytics",
           "topQr": "Top QR codes",
@@ -5961,6 +5969,9 @@
         "colReconciliation": "CareTip sync",
         "colFailure": "Payout issue",
         "colBalanceLines": "Balance activity",
+        "colMethod": "Method",
+        "colInstantFee": "Instant payout fee",
+        "colInstantRequest": "Instant request amount",
         "failedFallback": "Stripe could not complete this payout.",
         "canceledFallback": "This payout was canceled.",
         "openDetail": "View payout details",
@@ -5984,18 +5995,20 @@
         "reconciliation": {
           "pending": "Sync pending",
           "in_progress": "Syncing",
-          "complete": "Reconciled",
-          "partial": "Partially reconciled",
-          "failed": "Sync failed"
+          "complete": "Synced",
+          "partial": "Partially synced",
+          "failed": "Needs attention"
         },
         "reconExplain": {
           "pending": "The payout exists. CareTip has not finished reading Stripe’s related balance activity.",
           "in_progress": "CareTip is synchronizing Stripe balance activity for this payout.",
           "complete": "CareTip has synchronized the Stripe balance activity available for this payout.",
           "partial": "The payout exists, but CareTip has not yet synchronized all related Stripe balance activity.",
-          "failed": "The payout itself is unchanged. CareTip could not finish synchronizing Stripe balance activity."
+          "failed": "The Stripe payout status is unchanged. CareTip could not finish synchronizing Stripe balance activity. Retry from payout details."
         },
         "methodInstant": "Instant",
+        "methodStandard": "Standard",
+        "methodUnknown": "Unknown",
         "historyTitle": "Payout history",
         "instant": {
           "balanceEyebrow": "Your balance",
@@ -6559,15 +6572,15 @@
       },
       "widgets": {
         "successRate": "Success rate (30d)",
-        "failedToday": "Failed payments today",
-        "failedWeek": "Failed payments this week",
+        "failedToday": "Failed invoice payments today",
+        "failedWeek": "Failed invoice payments this week",
         "trialsEndingSoon": "Trials ending soon",
         "renewalsDueToday": "Renewals due today"
       },
       "filters": {
         "all": "All",
         "successful": "Successful",
-        "failed": "Failed",
+        "failed": "Invoice payment failed",
         "trialing": "Trialing",
         "active": "Active",
         "cancelled": "Cancelled",
@@ -6745,10 +6758,9 @@
       },
       "revenue": {
         "transactions": "Global Transactions",
-        "failedPayments": "Failed Payments",
+        "failedBilling": "Failed billing",
         "successfulSubscriptions": "Successful Subscriptions",
-        "failedSubscriptions": "Failed Subscriptions",
-        "refunds": "Failed tips",
+        "refunds": "Refunds",
         "connectPayouts": "Connect payouts"
       },
       "users": {
@@ -7204,6 +7216,10 @@
         "title": "Failed payments",
         "subtitle": "Subscriptions with failed or past-due payment attempts."
       },
+      "failedBilling": {
+        "title": "Failed billing",
+        "subtitle": "Subscription invoice failures and past-due CareTip billing."
+      },
       "successfulSubscriptions": {
         "title": "Successful subscriptions",
         "subtitle": "Active paid subscriptions with successful billing."
@@ -7290,7 +7306,7 @@
     },
     "connectPayoutsPage": {
       "title": "Connect payouts",
-      "subtitle": "Stripe payouts from connected Express accounts to each venue’s bank. Observation only. CareTip does not initiate payouts. These are not individual guest tips or employee withdrawals.",
+      "subtitle": "Stripe payouts from connected Express accounts, including automatic Standard payouts and manager-initiated Instant Payouts. These are not individual guest tips.",
       "searchPlaceholder": "Search by business name…",
       "searchAria": "Search Connect payouts by business name",
       "filterStatus": "Payout status",
@@ -7300,13 +7316,21 @@
       "businessFilterActive": "Showing payouts for one business.",
       "clearBusinessFilter": "Show all businesses",
       "colBusiness": "Business",
-      "colAmount": "Amount",
+      "colAmount": "Payout",
+      "colMethod": "Method",
       "colStatus": "Payout status",
       "colArrival": "Expected arrival",
       "colCreated": "Created",
       "colFailure": "Payout issue",
       "colReconciliation": "CareTip sync",
       "filterReconciliation": "CareTip sync",
+      "filterMethod": "Method",
+      "stripeAccount": "Stripe connected account",
+      "viewInStripe": "Stripe",
+      "openStripePayout": "Open payout in Stripe",
+      "openStripeAccount": "Open connected account in Stripe",
+      "retrySync": "Retry CareTip sync",
+      "retryingSync": "Retrying…",
       "footerShowing": "{{from}}–{{to}} of {{total}}",
       "prevPage": "Previous",
       "nextPage": "Next",
@@ -7315,6 +7339,9 @@
       },
       "reconFilter": {
         "all": "All sync states"
+      },
+      "methodFilter": {
+        "all": "All methods"
       },
       "currencyFilter": {
         "all": "All currencies"
@@ -7330,13 +7357,13 @@
       "reconciliation": {
         "pending": "Sync pending",
         "in_progress": "Syncing",
-        "complete": "Reconciled",
-        "partial": "Partially reconciled",
-        "failed": "Sync failed"
+        "complete": "Synced",
+        "partial": "Partially synced",
+        "failed": "Needs attention"
       },
       "empty": {
         "title": "No Connect payouts yet",
-        "description": "Payouts appear here after Stripe sends funds from a connected account’s available balance. CareTip does not create these payouts."
+        "description": "Payouts appear here after Stripe pays a connected account’s available balance, including Instant Payouts requested in CareTip."
       }
     },
     "refundsPage": {
@@ -7420,6 +7447,16 @@
       "colCaretipFee": "CareTip fee",
       "colNetToStaff": "Net to staff",
       "colPayout": "Tip ledger",
+      "colTipStatus": "Tip status",
+      "filterTipStatus": "Tip status",
+      "tipStatusFilter": {
+        "all": "All"
+      },
+      "tipStatus": {
+        "success": "Succeeded",
+        "pending": "Pending",
+        "failed": "Failed"
+      },
       "loading": "Loading…",
       "empty": "No transactions found.",
       "summaryDefault": "Showing {{total}} transactions",

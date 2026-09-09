@@ -115,6 +115,7 @@ export function EmployeeQrEntryPage() {
 
   return (
     <div className={cf.page}>
+      <div className={cf.frame}>
       <div className={`${cf.main} pb-16 sm:pb-20`}>
         <CustomerRepeatTipPrompt
           employeeName={emp.name ?? t("tipFlow.common.teamMember")}
@@ -153,6 +154,7 @@ export function EmployeeQrEntryPage() {
             navigate(`/tip-amount?${qs.toString()}`, { replace: true });
           }}
         />
+      </div>
       </div>
     </div>
   );

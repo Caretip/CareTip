@@ -42,7 +42,7 @@
       }
 
       #caretip-html-boot {
-        display: flex;
+        display: none;
         position: fixed;
         inset: 0;
         z-index: 9997;
@@ -234,7 +234,6 @@
     <meta property="og:image" content="/brand/caretip-logo-tagline.png" />
     <meta name="twitter:image" content="/brand/caretip-logo-tagline.png" />
     <script src="/theme-init.js"></script>
-    <script src="/boot-locale.js"></script>
   </head>
 
   <body style="margin: 0">
@@ -258,6 +257,7 @@
         </p>
       </div>
     </div>
+    <script src="/boot-locale.js"></script>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

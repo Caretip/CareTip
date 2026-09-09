@@ -405,10 +405,29 @@
   max-width: 80rem;
 }
 
-@media (max-width: 639px) {
+@media (max-width: 767px) {
+  .caretip-dashboard-shell.employee-dashboard .employee-period-toggle {
+    width: 100%;
+  }
+
   .caretip-dashboard-shell.employee-dashboard .employee-period-toggle button {
     flex: 1 1 0;
-    padding-inline: 0.5rem !important;
+    min-width: 0;
+    min-height: 2.375rem !important;
+    padding-inline: 0.25rem !important;
+    font-size: 0.8125rem !important;
+    white-space: nowrap;
+  }
+
+  .caretip-dashboard-shell.employee-dashboard .employee-period-toggle button[aria-pressed="true"]::after {
+    right: 0.35rem;
+    left: 0.35rem;
+  }
+}
+
+@media (max-width: 360px) {
+  .caretip-dashboard-shell.employee-dashboard .employee-period-toggle button {
     font-size: 0.75rem !important;
+    padding-inline: 0.125rem !important;
   }
 }

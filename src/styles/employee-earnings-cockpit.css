@@ -374,6 +374,126 @@
   }
 }
 
+/* Phone-only period analytics: stacked hierarchy (desktop 3-col row is unchanged). */
+@media (max-width: 767px) {
+  .caretip-dashboard-shell.employee-dashboard .employee-period-summary {
+    gap: 0 !important;
+  }
+
+  .caretip-dashboard-shell.employee-dashboard .employee-period-summary__row {
+    display: flex;
+    flex-direction: column;
+    grid-template-columns: none;
+    align-items: stretch;
+  }
+
+  .caretip-dashboard-shell.employee-dashboard .employee-period-summary__secondary {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    gap: 0;
+    min-height: 0;
+    padding: 0;
+    border-left: 0;
+  }
+
+  .caretip-dashboard-shell.employee-dashboard .employee-period-summary__metric,
+  .caretip-dashboard-shell.employee-dashboard .employee-period-summary__metric:not(:first-child),
+  .caretip-dashboard-shell.employee-dashboard .employee-period-summary__metric--primary,
+  .caretip-dashboard-shell.employee-dashboard .employee-period-summary__secondary .employee-period-summary__metric {
+    display: block;
+    padding: 1.05rem 0 1.1rem;
+    border: 0;
+    border-bottom: 1px solid hsl(var(--border) / 0.5);
+  }
+
+  .caretip-dashboard-shell.employee-dashboard .employee-period-summary__metric--primary {
+    justify-content: flex-start;
+    padding-top: 0.35rem;
+    padding-right: 0;
+  }
+
+  .caretip-dashboard-shell.employee-dashboard .employee-period-summary__metric--primary .employee-period-summary__value {
+    font-size: clamp(1.75rem, 8.5vw, 2.125rem);
+    font-weight: 700;
+    letter-spacing: -0.04em;
+    line-height: 1.08;
+  }
+
+  .caretip-dashboard-shell.employee-dashboard .employee-period-summary__metric--ratings {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    column-gap: 0.75rem;
+  }
+
+  .caretip-dashboard-shell.employee-dashboard .employee-period-summary__metric--ratings .employee-period-summary__label {
+    margin: 0;
+  }
+
+  .caretip-dashboard-shell.employee-dashboard .employee-period-summary__metric-aside {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    text-align: right;
+    min-width: 0;
+  }
+
+  .caretip-dashboard-shell.employee-dashboard .employee-period-summary__metric--ratings .employee-period-summary__value {
+    font-size: 1.25rem;
+    font-weight: 650;
+  }
+
+  .caretip-dashboard-shell.employee-dashboard .employee-period-summary__metric--ratings .employee-period-summary__hint {
+    margin-top: 0.15rem;
+  }
+
+  .caretip-dashboard-shell.employee-dashboard .employee-period-summary__metric--goal {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    column-gap: 0.75rem;
+    border-bottom: 0;
+    padding-bottom: 0.35rem;
+  }
+
+  .caretip-dashboard-shell.employee-dashboard .employee-period-summary__metric--goal .employee-period-summary__label {
+    margin: 0;
+  }
+
+  .caretip-dashboard-shell.employee-dashboard .employee-period-summary__metric--goal .employee-period-summary__value {
+    font-size: 1.375rem;
+    font-weight: 650;
+    text-align: right;
+  }
+
+  .caretip-dashboard-shell.employee-dashboard .employee-period-summary__goal-meta {
+    grid-column: 1 / -1;
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 0.75rem;
+    margin-top: 0.55rem;
+    flex-wrap: wrap;
+  }
+
+  .caretip-dashboard-shell.employee-dashboard .employee-period-summary__goal-sep {
+    display: none;
+  }
+
+  .caretip-dashboard-shell.employee-dashboard .employee-period-summary__metric--goal .employee-period-summary__bar {
+    grid-column: 1 / -1;
+    width: 100%;
+    height: 0.3125rem;
+    margin-top: 0.6rem;
+  }
+
+  .caretip-dashboard-shell.employee-dashboard .employee-period-summary__streak {
+    padding-top: 0.95rem;
+    border-top: 1px solid hsl(var(--border) / 0.5);
+  }
+}
+
 @media (max-width: 1023px) {
   .caretip-dashboard-shell.employee-dashboard .employee-qr-signature {
     gap: 0.5rem;

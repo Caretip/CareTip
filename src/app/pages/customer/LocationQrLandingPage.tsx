@@ -175,7 +175,8 @@ export function LocationQrLandingPage() {
   };
 
   return (
-    <div className={`${cf.page} pb-8 sm:pb-10`}>
+    <div className={`${cf.pageTeam} pb-8 sm:pb-10`}>
+      <div className={cf.frame}>
       <CustomerJourneyHeader
         leading={
           <CustomerJourneyHomeButton
@@ -224,6 +225,7 @@ export function LocationQrLandingPage() {
       </div>
 
       <CustomerJourneyAttributionFooter label={t("tipFlow.common.poweredByCareTip")} />
+      </div>
     </div>
   );
 }

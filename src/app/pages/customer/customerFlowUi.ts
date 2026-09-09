@@ -16,15 +16,22 @@ const quietSurface =
 
 export const customerFlowUi = {
   page: "customer-flow min-h-screen bg-background",
+  pageTeam: "customer-flow customer-flow--team min-h-screen bg-background",
+  pageCompact: "customer-flow customer-flow--compact min-h-screen bg-background",
   pageWithBottomCta: "customer-flow min-h-screen bg-background pb-28 sm:pb-32",
+  pageWithBottomCtaCompact:
+    "customer-flow customer-flow--compact min-h-screen bg-background pb-28 sm:pb-32",
+
+  /** Centered customer column on tablet/desktop; full width on phones. */
+  frame: "customer-flow-frame w-full",
 
   stickyHeader:
-    "sticky top-0 z-20 border-b border-border/70 bg-background/95",
+    "sticky top-0 z-20 w-full border-b border-border/70 bg-background/95",
 
   headerInner:
     "caretip-container flex min-w-0 items-center gap-3 py-3.5 sm:gap-4 sm:py-4",
 
-  customerJourneyHeader: "caretip-container customer-journey-header pt-3 pb-3 sm:pt-4 sm:pb-4",
+  customerJourneyHeader: "caretip-container customer-journey-header mx-auto pt-3 pb-3 sm:pt-4 sm:pb-4",
   customerJourneyToolbar:
     "customer-journey-toolbar mb-3 grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)] items-center gap-x-2",
   customerJourneyToolbarSide: "flex min-w-0 items-center",
@@ -51,7 +58,7 @@ export const customerFlowUi = {
     "inline-flex items-center justify-center gap-2 text-center",
   customerJourneyAttributionLabel: "text-xs font-medium leading-snug text-muted-foreground/80 sm:text-[0.8125rem]",
   customerJourneyAttributionFooter:
-    "caretip-container mx-auto max-w-xl pb-8 pt-1 sm:pb-10",
+    "mx-auto w-full pb-8 pt-1 sm:pb-10",
 
   customerJourneyContent: "min-w-0 pt-4",
   customerJourneyTitle:
@@ -66,9 +73,11 @@ export const customerFlowUi = {
     "inline-flex shrink-0 items-center justify-center rounded-lg border border-border/70 bg-background px-2.5 py-2 text-sm font-semibold text-foreground sm:px-3",
 
   main: "caretip-container mx-auto max-w-xl space-y-5 py-4 sm:space-y-5 sm:py-6",
-  /** Team / QR landing — wide enough for a 2–3 column employee grid. */
-  mainTeam: "caretip-container mx-auto max-w-4xl space-y-5 py-4 sm:space-y-5 sm:py-6",
-  mainCompact: "caretip-container mx-auto max-w-md space-y-4 py-3 sm:space-y-4 sm:py-5",
+  /** Team / QR landing — wide enough for a 2–3 column employee grid, not dashboard-wide. */
+  mainTeam:
+    "caretip-container mx-auto max-w-2xl space-y-5 py-4 sm:space-y-5 sm:py-6",
+  mainCompact:
+    "caretip-container customer-flow-canvas--compact mx-auto max-w-md space-y-4 py-3 sm:space-y-4 sm:py-5",
 
   fixedBottomBar:
     "fixed bottom-0 left-0 right-0 z-30 border-t border-border/70 bg-background/96",

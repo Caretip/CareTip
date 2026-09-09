@@ -11,6 +11,8 @@ import {
   type AppLoadingContext,
 } from "../lib/appLoadingContexts";
 import { isAppShellInteractive } from "../lib/appShellLifecycle";
+import { isHtmlBootElementPresent } from "../lib/htmlMarketingBootBridge";
+import { readDocumentOrStoredLanguage } from "@/i18n/i18n";
 
 /** Branded CareTip mark for loading states — app icon (constrained space). */
 export function CareTipLoadingTitle({
@@ -59,8 +61,9 @@ export function CareTipBrandedLoaderMark({
   tagline?: string;
 }) {
   const { t } = useTranslation();
+  const lng = readDocumentOrStoredLanguage();
   const withTagline = showTagline ?? !compact;
-  const tagline = taglineOverride?.trim() || t("common.gettingReady");
+  const tagline = taglineOverride?.trim() || t("common.gettingReady", { lng });
 
   return (
     <div
@@ -122,8 +125,11 @@ export function CareTipPageLoader({
   const isFullScreen = variant === "wait" || variant === "fullscreen";
   const keepProgressCopy =
     Boolean(message) || (context != null && TIP_PROGRESS_CONTEXTS.has(context));
+  const lng = readDocumentOrStoredLanguage();
   const resolvedMessage =
-    message ?? (context ? resolveAppLoadingContextMessage(context, t) : undefined);
+    message ?? (context ? resolveAppLoadingContextMessage(context, t, lng) : undefined);
+
+  const holdUnderHtmlBoot = isHtmlBootElementPresent();
 
   useAppLoadingRegistration(
     registrationKey ?? `caretip-page-loader:${autoKey}`,
@@ -139,8 +145,8 @@ export function CareTipPageLoader({
         ? "flex flex-col items-center justify-center py-16 px-4"
         : "flex flex-col items-center justify-center";
 
-  /* Cold entry: stay under the global CareTip overlay. */
-  if (isFullScreen && !softNav) {
+  /* Cold entry, or HTML boot still covering: no second loading sentence. */
+  if ((isFullScreen && !softNav) || holdUnderHtmlBoot) {
     return <GlobalAppLoadingHold className={className} />;
   }
 

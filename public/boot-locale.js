@@ -1,14 +1,68 @@
 /**
- * Pre-React boot locale — runs in <head> (CSP-safe external file).
- * Visibility of `#caretip-html-boot` is CSS, not this script.
+ * Pre-React boot locale — runs immediately after `#caretip-html-boot` (CSP-safe external file).
+ * Visibility of `#caretip-html-boot` is CSS (`html.caretip-html-boot-active`), not this script.
  * Must stay in sync with:
  *   - `I18N_STORAGE_KEY` / `readStoredLanguage` (src/i18n)
- *   - `resolveInitialBootLoadingMessage` (src/app/lib/appLoadingContexts.ts)
+ *   - `resolveCustomerJourneyBootContext` (src/app/lib/appLoadingContexts.ts)
+ *   - `RESERVED_TOP_LEVEL_SEGMENTS` (src/app/lib/publicRoutes.ts)
  *   - `common.gettingReady` / guest-journey keys in locale JSON
  * One sentence only — never pair a tagline with a second boot line.
  */
 (function (global) {
   var STORAGE_KEY = "caretip_i18n_language";
+
+  /** Keep in sync with `RESERVED_TOP_LEVEL_SEGMENTS` in publicRoutes.ts */
+  var RESERVED_TOP = {
+    admin: 1,
+    auth: 1,
+    activate: 1,
+    blog: 1,
+    business: 1,
+    "business-dashboard": 1,
+    careers: 1,
+    "check-email": 1,
+    contact: 1,
+    cookies: 1,
+    "create-rule": 1,
+    "create-skill": 1,
+    dashboard: 1,
+    employee: 1,
+    "employee-dashboard": 1,
+    faq: 1,
+    features: 1,
+    "forgot-password": 1,
+    "get-started": 1,
+    help: 1,
+    "hero-animation-demo": 1,
+    "hero-demo": 1,
+    "how-it-works": 1,
+    imprint: 1,
+    join: 1,
+    login: 1,
+    "mobile-app": 1,
+    onboarding: 1,
+    payment: 1,
+    "platform-admin": 1,
+    pricing: 1,
+    privacy: 1,
+    qr: 1,
+    "qr-landing": 1,
+    rating: 1,
+    "reset-password": 1,
+    "saas-3d-hero": 1,
+    "select-employee": 1,
+    signup: 1,
+    staff: 1,
+    success: 1,
+    table: 1,
+    terms: 1,
+    "tip-amount": 1,
+    "tip-complete": 1,
+    unauthorized: 1,
+    "verification-pending": 1,
+    verify: 1,
+    "verify-email": 1,
+  };
 
   /** Default for the German product surface when no preference is stored. */
   function readBootLanguage() {
@@ -42,6 +96,19 @@
     },
   };
 
+  function isGuestSlugPath(path) {
+    var parts = String(path || "/")
+      .split("/")
+      .filter(Boolean);
+    if (parts.length !== 1 && parts.length !== 2) return false;
+    var head = (parts[0] || "").toLowerCase();
+    if (!head || RESERVED_TOP[head]) return false;
+    for (var i = 0; i < parts.length; i++) {
+      if (!parts[i] || parts[i].indexOf(".") !== -1) return false;
+    }
+    return true;
+  }
+
   function resolveBootTagline(copy, pathname) {
     var path = String(pathname || "/").split("?")[0].split("#")[0];
     if (path === "/payment") return copy.checkout;
@@ -54,7 +121,8 @@
       path.indexOf("/staff/") === 0 ||
       path.indexOf("/qr/") === 0 ||
       path.indexOf("/qr-landing/") === 0 ||
-      path.indexOf("/table/") === 0
+      path.indexOf("/table/") === 0 ||
+      isGuestSlugPath(path)
     ) {
       return copy.tipPage;
     }
@@ -68,10 +136,11 @@
       return COPY[lng === "en" ? "en" : "de"];
     },
     resolveBootTagline: resolveBootTagline,
+    isGuestSlugPath: isGuestSlugPath,
   };
 
   /**
-   * Locale/tagline only. Visibility is CSS (`display: flex` + `caretip-html-boot-active` on <html>).
+   * Locale/tagline only. Visibility is CSS (`display: none` unless `caretip-html-boot-active`).
    * Must not live in an inline <script>: production CSP is script-src 'self' (no 'unsafe-inline').
    */
   function applyHtmlBootCopy() {
@@ -107,7 +176,9 @@
   }
 
   if (global.document) {
-    if (global.document.readyState === "loading") {
+    if (global.document.getElementById("caretip-html-boot-tagline")) {
+      applyHtmlBootCopy();
+    } else if (global.document.readyState === "loading") {
       global.document.addEventListener("DOMContentLoaded", applyHtmlBootCopy);
     } else {
       applyHtmlBootCopy();

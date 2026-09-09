@@ -1,13 +1,7 @@
 import type { TFunction } from "i18next";
 import { isPublicAuthenticationPath } from "./authSession";
-import { isPublicMarketingPath } from "./publicRoutes";
-
-/** `/{businessSlug}/{employeeSlug}` public team directory paths. */
-function isPublicBusinessSlugPath(pathname: string): boolean {
-  const segments = pathname.split("/").filter(Boolean);
-  if (segments.length !== 2) return false;
-  return isPublicMarketingPath(pathname);
-}
+import { isPublicBusinessSlugPath, isPublicMarketingPath } from "./publicRoutes";
+import type { AppLanguage } from "@/i18n/i18n";
 
 /** Action-aware loader contexts — map to `common.loading.*` i18n keys. */
 export type AppLoadingContext =
@@ -54,8 +48,11 @@ const CONTEXT_I18N_KEY: Record<AppLoadingContext, string> = {
 export function resolveAppLoadingContextMessage(
   context: AppLoadingContext,
   t: TFunction,
+  lng?: AppLanguage,
 ): string {
-  return t(CONTEXT_I18N_KEY[context]);
+  return lng
+    ? t(CONTEXT_I18N_KEY[context], { lng })
+    : t(CONTEXT_I18N_KEY[context]);
 }
 
 function normalizePath(pathname: string): string {
@@ -87,8 +84,7 @@ export function resolveCustomerJourneyBootContext(pathname: string): AppLoadingC
     return "tipPage";
   }
 
-  const slugSegments = p.split("/").filter(Boolean);
-  if (slugSegments.length === 2 && isPublicBusinessSlugPath(p)) {
+  if (isPublicBusinessSlugPath(p)) {
     return "tipPage";
   }
 
@@ -163,8 +159,7 @@ export function resolveRouteLoadingMessage(pathname: string, t: TFunction): stri
     return resolveAppLoadingContextMessage("findingRecipient", t);
   }
 
-  const slugSegments = p.split("/").filter(Boolean);
-  if (slugSegments.length === 2 && isPublicBusinessSlugPath(p)) {
+  if (isPublicBusinessSlugPath(p)) {
     return resolveAppLoadingContextMessage("findingRecipient", t);
   }
 

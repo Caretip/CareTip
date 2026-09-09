@@ -105,7 +105,7 @@ const RESERVED_TOP_LEVEL_SEGMENTS = new Set([
 ]);
 
 /** `/{businessSlug}` and `/{businessSlug}/{employeeSlug}` public team QR paths. */
-function isPublicBusinessSlugPath(pathname: string): boolean {
+export function isPublicBusinessSlugPath(pathname: string): boolean {
   const segments = pathname.split("/").filter(Boolean);
   if (segments.length !== 1 && segments.length !== 2) return false;
   const head = segments[0]?.toLowerCase() ?? "";
