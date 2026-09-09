@@ -28,6 +28,7 @@ import {
   shouldMountReactBootOverlay,
 } from "../lib/htmlMarketingBootBridge";
 import { resolveInitialBootLoadingMessage } from "../lib/appLoadingContexts";
+import type { TFunction } from "i18next";
 import i18n, { readDocumentOrStoredLanguage } from "@/i18n/i18n";
 import { traceLoaderRegistration, warnLoaderDiagDeadlock } from "../lib/loaderDiagFlags";
 import {
@@ -127,8 +128,9 @@ function createInitialRegistrations(): Map<string, Registration> {
   initial.set(BOOTSTRAP_KEY, {
     key: BOOTSTRAP_KEY,
     priority: APP_LOADING_PRIORITY.AUTH,
-    message: resolveInitialBootLoadingMessage(readInitialPathname(), (key, options) =>
-      i18n.t(key, { lng, ...(typeof options === "object" && options ? options : {}) }),
+    message: resolveInitialBootLoadingMessage(
+      readInitialPathname(),
+      ((key: string) => i18n.t(key, { lng })) as TFunction,
     ),
   });
   return initial;

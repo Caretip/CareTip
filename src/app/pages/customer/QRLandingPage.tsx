@@ -29,6 +29,7 @@ import { DEV_BYPASS_ENABLED, DEV_MOCK } from "../../lib/devCustomerBypass";
 import { markCustomerFlowEntered } from "../../lib/customerFlowGuard";
 import { isHtmlBootElementPresent } from "../../lib/htmlMarketingBootBridge";
 import { formatEur } from "../../lib/formatEur";
+import { getRepeatTipDataForBusiness } from "../../lib/repeatTip";
 import { customerFlowUi as cf } from "./customerFlowUi";
 
 export function QRLandingPage() {
