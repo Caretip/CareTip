@@ -204,34 +204,34 @@
       "trustChips": {
         "liveMinutes": "Live in minutes",
         "noApp": "No app download",
-        "instantPayouts": "Transparent tip tracking",
+        "instantPayouts": "Instant Payouts",
         "secureOnboarding": "Secure onboarding",
         "worksInstantly": "Works instantly"
       },
       "trustChipsFeatures": {
         "liveMinutes": "Quick Start",
         "noApp": "No app download",
-        "instantPayouts": "Transparent tip tracking",
+        "instantPayouts": "Instant Payouts",
         "secureOnboarding": "Secure onboarding",
         "worksInstantly": "Works instantly"
       },
       "trustChipsFaq": {
         "liveMinutes": "Live in minutes",
         "noApp": "No app download",
-        "instantPayouts": "Transparent tip tracking",
+        "instantPayouts": "Instant Payouts",
         "secureOnboarding": "Secure onboarding",
         "worksInstantly": "Instant results"
       },
       "trustChipsPricing": {
         "noApp": "No app download required",
-        "instantPayouts": "Tip records",
+        "instantPayouts": "Instant Payouts",
         "secureOnboarding": "Secure onboarding",
         "worksInstantly": "Ready for immediate use"
       },
       "trustChipsHowItWorks": {
         "liveMinutes": "Live in minutes",
         "noApp": "No app download required",
-        "instantPayouts": "Transparent tip tracking",
+        "instantPayouts": "Instant Payouts",
         "secureOnboarding": "Secure onboarding"
       }
     },
@@ -443,9 +443,9 @@
           "body": "Employees receive real-time tip updates, keep full overview of their earnings, and start every workday highly motivated."
         },
         "payouts": {
-          "title": "Tip tracking & security",
-          "subtitle": "Secure processing and transparent tip records your team can trust.",
-          "body": "Fully protected processing and traceable tip records provide maximum security and reliability for your employees."
+          "title": "Instant Payouts",
+          "subtitle": "Access eligible earnings when you need them.",
+          "body": "Eligible businesses can request Instant Payouts from available tip earnings in CareTip. Availability depends on Stripe eligibility and the connected payout destination."
         },
         "analytics": {
           "title": "Full clarity in analytics",
@@ -465,7 +465,7 @@
     },
     "pricing": {
       "pageTitle": "Fair and Transparent Price",
-      "pageSubtitle": "Everything you need to launch digital tipping for your hospitality business. No hidden fees, secure Stripe payments, flexible contracts, and a free 4-week trial to get started.",
+      "pageSubtitle": "Everything you need to launch digital tipping for your hospitality business. No hidden fees, secure Stripe payments, Instant Payouts for eligible businesses, flexible contracts, and a free 4-week trial to get started.",
       "hero": {
         "badge": "Transparent Pricing",
         "featuresAria": "Platform highlights",
@@ -709,7 +709,7 @@
         },
         "general": {
           "pageTitle": "Fair and Transparent Price",
-          "pageSubtitle": "Everything you need to launch digital tipping for your hospitality business. No hidden fees, secure Stripe payments, flexible contracts, and a free 4-week trial to get started.",
+          "pageSubtitle": "Everything you need to launch digital tipping for your hospitality business. No hidden fees, secure Stripe payments, Instant Payouts for eligible businesses, flexible contracts, and a free 4-week trial to get started.",
           "sectionTitle": "True recognition is all about simplicity.",
           "sectionSubtitle": "With CareTip, you can spotlight your team's outstanding service and reward them directly. Delight your guests, boost team morale, and turn customers into loyal brand advocates."
         }
@@ -919,7 +919,7 @@
         },
         {
           "icon": "earnings",
-          "label": "Tip tracking"
+          "label": "Instant Payouts"
         },
         {
           "icon": "goals",
@@ -949,8 +949,8 @@
       "s6Body": "Staff get real-time notifications when a tip lands. They see live earnings, activity in their wallet, and confidence that great service was recognized immediately.",
       "s7Title": "Valuable insights",
       "s7Body": "Owners and managers monitor tips by location, shift, and team member. Analytics widgets, top performer cards, and activity feeds keep the floor and back office aligned.",
-      "s8Title": "Track & manage tips",
-      "s8Body": "Every tip is recorded in CareTip with clear records for managers and staff. Businesses distribute tips on their own schedule; CareTip keeps the audit trail transparent.",
+      "s8Title": "Track & manage payouts",
+      "s8Body": "Every tip is recorded in CareTip with clear records for managers and staff. Eligible businesses can request Instant Payouts from available earnings. Internal tip distribution stays on your schedule; CareTip keeps the audit trail transparent.",
       "s9Title": "Measurable growth",
       "s9Body": "Higher tip participation, happier teams, and stronger guest experiences compound over time. CareTip helps you measure engagement and celebrate momentum across every location.",
       "trustTitle": "Trust and speed for every shift",
@@ -969,7 +969,7 @@
         "customerTip": "Guest payment",
         "employeeTip": "Employee notification",
         "analytics": "Manager dashboard",
-        "payout": "Tip records",
+        "payout": "Instant Payouts",
         "growth": "Business growth"
       },
       "mock": {
@@ -987,11 +987,11 @@
         "earningsToday": "Today's earnings",
         "earningsValue": "€186.50",
         "earningsDelta": "+12% vs yesterday",
-        "payoutSuccess": "Tips recorded",
-        "payoutSub": "Ready for daily distribution",
+        "payoutSuccess": "Instant Payout",
+        "payoutSub": "Eligible funds, on request",
         "withdrawLabel": "Today's tips",
         "withdrawAmount": "€1,240.00",
-        "withdrawCta": "View records",
+        "withdrawCta": "Request payout",
         "metricTips": "Tips this week",
         "metricTop": "Top performer",
         "metricTopName": "Mina K. · Front of house",
@@ -1243,7 +1243,7 @@
     "faq": {
       "pageEyebrow": "HELP CENTER",
       "pageTitle": "Questions?<br/>We've got answers.",
-      "pageSubtitle": "Everything you need to know about CareTip, digital tipping, team management, and secure payouts.",
+      "pageSubtitle": "Everything you need to know about CareTip, digital tipping, team management, and Instant Payouts for eligible businesses.",
       "items": [
         {
           "q": "Are payments and customer data secure?",
@@ -1282,6 +1282,14 @@
           "a": "Yes, and that is our core promise. Every payment is directly assigned to the employee profile linked to the QR code. Business owners and employees can track earnings transparently in the dashboard at any time. No tip is ever lost."
         },
         {
+          "q": "Can I receive my earnings instantly?",
+          "a": "Eligible businesses can request an Instant Payout from their available balance in CareTip. Availability depends on Stripe eligibility and the connected payout destination. Instant Payout is not automatic and is not available to every account."
+        },
+        {
+          "q": "Where can I see detailed payout information?",
+          "a": "CareTip is where you review payout history and request Instant Payouts. For detailed account and banking information, open your Stripe Dashboard from CareTip. CareTip does not replace Stripe's full financial dashboard."
+        },
+        {
           "q": "Are digital tips tax-free for my team?",
           "a": "Yes. In Germany, voluntary tips for employees are completely exempt from income tax and social security contributions under Section 3 No. 51 EStG. CareTip is technically designed to preserve this tax-free status 100%, with payments flowing as voluntary guest contributions directly to employees, with no employer withholding. We still recommend a one-time check with your tax advisor for your specific business structure."
         }
@@ -1301,7 +1309,7 @@
         "benefit1": "Team management",
         "benefit2": "QR tipping activation",
         "benefit3": "Real-time analytics",
-        "benefit4": "Secure payouts"
+        "benefit4": "Instant Payouts"
       },
       "signUp": {
         "panelAria": "Start your CareTip journey",
@@ -3094,7 +3102,7 @@
       "headline": "Full control for owners.<br/><hl>More motivation</hl> for teams.",
       "businessRole": "For business owners",
       "businessTitle": "Full transparency over your team",
-      "businessBody": "Manage locations, QR codes, and payouts from a single dashboard.",
+      "businessBody": "Manage locations, QR codes, and Instant Payouts from a single dashboard.",
       "businessP1Title": "Real-Time Team Performance",
       "businessP1Body": "Track tip trends across shifts.",
       "businessP2Title": "Fair Distribution",
@@ -3165,7 +3173,7 @@
         "earnings": "Employee earnings",
         "analytics": "Business analytics",
         "feedback": "Guest feedback",
-        "payout": "Tip records"
+        "payout": "Instant Payouts"
       },
       "scenes": {
         "notif": {
@@ -3207,7 +3215,7 @@
           "r3": "Will definitely come back"
         },
         "payout": {
-          "queue": "Tip records",
+          "queue": "Instant Payouts",
           "via": "Stripe",
           "r1": "€420.00",
           "r2": "€318.50",
@@ -3233,9 +3241,9 @@
       "i4Title": "Tip history",
       "i4Text": "A clear audit trail when finance needs answers fast.",
       "i4Tag": "Export ready",
-      "i5Title": "Tip tracking",
-      "i5Text": "Track and manage tips with clear records for managers and staff.",
-      "i5Tag": "Transparent records",
+      "i5Title": "Instant Payouts",
+      "i5Text": "Eligible businesses can request Instant Payouts from available earnings when they need them.",
+      "i5Tag": "On request",
       "i6Title": "Feedback & ratings",
       "i6Text": "Guest feedback while the experience is still fresh.",
       "i6Tag": "Guest rated"

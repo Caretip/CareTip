@@ -204,34 +204,34 @@
       "trustChips": {
         "liveMinutes": "In wenigen Minuten startklar",
         "noApp": "Kein App-Download nötig",
-        "instantPayouts": "Transparente Trinkgeld-Verwaltung",
+        "instantPayouts": "Sofortauszahlungen",
         "secureOnboarding": "Sicheres Onboarding",
         "worksInstantly": "Sofort einsatzbereit"
       },
       "trustChipsFeatures": {
         "liveMinutes": "Quick Start",
         "noApp": "Kein App-Download nötig",
-        "instantPayouts": "Transparente Trinkgeld-Verwaltung",
+        "instantPayouts": "Sofortauszahlungen",
         "secureOnboarding": "Sicheres Onboarding",
         "worksInstantly": "Sofort einsatzbereit"
       },
       "trustChipsFaq": {
         "liveMinutes": "In wenigen Minuten startklar",
         "noApp": "Kein App-Download nötig",
-        "instantPayouts": "Transparente Trinkgeld-Verwaltung",
+        "instantPayouts": "Sofortauszahlungen",
         "secureOnboarding": "Sicheres Onboarding",
         "worksInstantly": "Sofort spürbare Effekte"
       },
       "trustChipsPricing": {
         "noApp": "Kein App-Download nötig",
-        "instantPayouts": "Trinkgeld-Übersicht",
+        "instantPayouts": "Sofortauszahlungen",
         "secureOnboarding": "Sicheres Onboarding",
         "worksInstantly": "Sofort einsatzbereit"
       },
       "trustChipsHowItWorks": {
         "liveMinutes": "In wenigen Minuten live",
         "noApp": "Kein App-Download erforderlich",
-        "instantPayouts": "Transparente Trinkgeld-Verwaltung",
+        "instantPayouts": "Sofortauszahlungen",
         "secureOnboarding": "Sicheres Onboarding"
       }
     },
@@ -443,9 +443,9 @@
           "body": "Mitarbeiter erhalten Trinkgeld-Updates in Echtzeit, behalten den absoluten Überblick über ihre Einnahmen und starten hochmotiviert in jeden Arbeitstag."
         },
         "payouts": {
-          "title": "Trinkgeld-Tracking & Sicherheit",
-          "subtitle": "Sichere Verarbeitung und transparente Trinkgeld-Belege, denen Ihr Team voll vertraut.",
-          "body": "Eine absolut geschützte Abwicklung und lückenlos nachvollziehbare Trinkgeld-Aufzeichnungen sorgen für maximale Sicherheit und Verlässlichkeit bei Ihren Mitarbeitern."
+          "title": "Sofortauszahlungen",
+          "subtitle": "Verfügbare Einnahmen abrufen, wenn Sie sie brauchen.",
+          "body": "Berechtigte Betriebe können in CareTip eine Sofortauszahlung aus verfügbaren Trinkgeld-Einnahmen anfordern. Die Verfügbarkeit hängt von der Stripe-Berechtigung und dem hinterlegten Auszahlungsziel ab."
         },
         "analytics": {
           "title": "Voller Durchblick bei den Analysen",
@@ -465,7 +465,7 @@
     },
     "pricing": {
       "pageTitle": "Fairer und transparenter Preis",
-      "pageSubtitle": "Alles, was Sie brauchen, um digitales Trinkgeld für Ihr Gastgewerbe zu starten. Keine versteckten Gebühren, sichere Stripe-Zahlungen, flexible Verträge und eine kostenlose 4-wöchige Testphase.",
+      "pageSubtitle": "Alles, was Sie brauchen, um digitales Trinkgeld für Ihr Gastgewerbe zu starten. Keine versteckten Gebühren, sichere Stripe-Zahlungen, Sofortauszahlungen für berechtigte Betriebe, flexible Verträge und eine kostenlose 4-wöchige Testphase.",
       "hero": {
         "badge": "Transparente Preise",
         "featuresAria": "Plattform-Highlights",
@@ -709,7 +709,7 @@
         },
         "general": {
           "pageTitle": "Fairer und transparenter Preis",
-          "pageSubtitle": "Alles, was Sie brauchen, um digitales Trinkgeld für Ihr Gastgewerbe zu starten. Keine versteckten Gebühren, sichere Stripe-Zahlungen, flexible Verträge und eine kostenlose 4-wöchige Testphase.",
+          "pageSubtitle": "Alles, was Sie brauchen, um digitales Trinkgeld für Ihr Gastgewerbe zu starten. Keine versteckten Gebühren, sichere Stripe-Zahlungen, Sofortauszahlungen für berechtigte Betriebe, flexible Verträge und eine kostenlose 4-wöchige Testphase.",
           "sectionTitle": "Echte Anerkennung lebt von einfachen Wegen.",
           "sectionSubtitle": "Mit CareTip machen Sie den herausragenden Service Ihres Teams sichtbar und belohnen ihn direkt. Begeistern Sie Ihre Gäste, stärken Sie die Motivation Ihrer Mitarbeiter und binden Sie Kunden an Ihre Marke."
         }
@@ -919,7 +919,7 @@
         },
         {
           "icon": "earnings",
-          "label": "Trinkgeld-Tracking"
+          "label": "Sofortauszahlungen"
         },
         {
           "icon": "goals",
@@ -949,8 +949,8 @@
       "s6Body": "Ihr Personal erhält Echtzeit-Benachrichtigungen, sobald ein Trinkgeld eingeht. Die Mitarbeiter sehen ihre aktuellen Einnahmen sowie alle Aktivitäten in ihrer digitalen Wallet, für das sichere Gefühl, dass großartiger Service sofort anerkannt wird.",
       "s7Title": "Wertvolle Insights",
       "s7Body": "Inhaber, Stations- und Teamleiter überblicken die Trinkgelder ganz einfach nach Standort, Schicht oder Bereich. Übersichtliche Analytics-Widgets, Einblicke in besondere Team-Leistungen und Live-Aktivitäts-Feeds sorgen dafür, dass die Teams vor Ort und die Verwaltung stets optimal aufeinander abgestimmt sind.",
-      "s8Title": "Trinkgelder verfolgen & verwalten",
-      "s8Body": "Jedes Trinkgeld wird in CareTip mit klaren Belegen erfasst. Betriebe verteilen Trinkgelder nach eigenem Rhythmus; CareTip hält die Übersicht transparent.",
+      "s8Title": "Auszahlungen verfolgen und steuern",
+      "s8Body": "Jedes Trinkgeld wird in CareTip mit klaren Belegen erfasst. Berechtigte Betriebe können eine Sofortauszahlung aus verfügbaren Einnahmen anfordern. Die interne Trinkgeldverteilung bleibt in Ihrem Rhythmus; CareTip hält die Übersicht transparent.",
       "s9Title": "Messbares Wachstum",
       "s9Body": "Höhere Trinkgeldbeteiligung, zufriedenere Teams und eine stärkere Kundenbindung verstärken sich im Laufe der Zeit gegenseitig. CareTip hilft Ihnen dabei, das Engagement zu messen und positive Entwicklungen an jedem einzelnen Standort oder in jedem Team zu feiern.",
       "trustTitle": "Voller Überblick und transparente Trinkgeld-Verwaltung für jedes Team",
@@ -969,7 +969,7 @@
         "customerTip": "Gästezahlung",
         "employeeTip": "Mitarbeiterhinweis",
         "analytics": "Manager Dashboard",
-        "payout": "Auszahlungen",
+        "payout": "Sofortauszahlungen",
         "growth": "Wachstum"
       },
       "mock": {
@@ -987,11 +987,11 @@
         "earningsToday": "Heutiger Verdienst",
         "earningsValue": "186,50 €",
         "earningsDelta": "+12 % vs. gestern",
-        "payoutSuccess": "Trinkgeld erfasst",
-        "payoutSub": "Transparente Aufzeichnung",
+        "payoutSuccess": "Sofortauszahlung",
+        "payoutSub": "Verfügbar auf Anfrage",
         "withdrawLabel": "Heute erfasst",
         "withdrawAmount": "1.240,00 €",
-        "withdrawCta": "Details ansehen",
+        "withdrawCta": "Auszahlung anfordern",
         "metricTips": "Trinkgelder diese Woche",
         "metricTop": "Top Performer",
         "metricTopName": "Mina K. · Front of house",
@@ -1243,7 +1243,7 @@
     "faq": {
       "pageEyebrow": "HILFE-CENTER",
       "pageTitle": "Fragen?<br/>Wir haben Antworten.",
-      "pageSubtitle": "Alles, was Sie über CareTip, digitales Trinkgeld, Teammanagement und sichere Auszahlungen wissen müssen.",
+      "pageSubtitle": "Alles, was Sie über CareTip, digitales Trinkgeld, Teammanagement und Sofortauszahlungen für berechtigte Betriebe wissen müssen.",
       "items": [
         {
           "q": "Sind Zahlungen und Kundendaten sicher?",
@@ -1282,6 +1282,14 @@
           "a": "Ja, und das ist unser Kernversprechen. Jede Zahlung wird direkt dem Mitarbeiterprofil zugeordnet, das mit dem QR-Code verknüpft ist. Betreiber und Mitarbeiter können Einnahmen jederzeit transparent im Dashboard einsehen. Kein Trinkgeld geht verloren."
         },
         {
+          "q": "Kann ich meine Einnahmen sofort auszahlen lassen?",
+          "a": "Berechtigte Betriebe können in CareTip eine Sofortauszahlung aus dem verfügbaren Guthaben anfordern. Die Verfügbarkeit hängt von der Stripe-Berechtigung und dem hinterlegten Auszahlungsziel ab. Sofortauszahlungen erfolgen nicht automatisch und stehen nicht jedem Konto zur Verfügung."
+        },
+        {
+          "q": "Wo sehe ich detaillierte Auszahlungsinformationen?",
+          "a": "In CareTip sehen Sie den Auszahlungsverlauf und können Sofortauszahlungen anfordern. Detaillierte Konto- und Bankinformationen finden Sie im Stripe-Dashboard, das Sie aus CareTip öffnen können. CareTip ersetzt das vollständige Stripe-Finanzdashboard nicht."
+        },
+        {
           "q": "Ist digitales Trinkgeld für mein Team steuerfrei?",
           "a": "Ja. In Deutschland ist freiwilliges Trinkgeld für Arbeitnehmer nach § 3 Nr. 51 EStG vollständig lohnsteuer- und sozialversicherungsfrei. CareTip ist technisch so konzipiert, dass dieser steuerfreie Charakter zu 100 % erhalten bleibt, wobei die Zahlungen als freiwillige Leistung des Gastes direkt an eure Mitarbeiter fließen, ohne Einbehalt durch den Arbeitgeber. Wir empfehlen dennoch eine einmalige Abstimmung mit eurem Steuerberater."
         }
@@ -1301,7 +1309,7 @@
         "benefit1": "Teamverwaltung",
         "benefit2": "QR-Trinkgeld-Aktivierung",
         "benefit3": "Echtzeit-Analysen",
-        "benefit4": "Sichere Auszahlungen"
+        "benefit4": "Sofortauszahlungen"
       },
       "signUp": {
         "panelAria": "Start mit CareTip",
@@ -3094,7 +3102,7 @@
       "headline": "Volle Kontrolle für Inhaber.<br/><hl>Mehr Motivation</hl> für Teams.",
       "businessRole": "Für Betriebsinhaber",
       "businessTitle": "Volle Transparenz über Ihr Team",
-      "businessBody": "Standorte, QR-Codes und Auszahlungen aus einem einzigen Dashboard steuern.",
+      "businessBody": "Standorte, QR-Codes und Sofortauszahlungen aus einem einzigen Dashboard steuern.",
       "businessP1Title": "Team-Performance in Echtzeit",
       "businessP1Body": "Trinkgeld-Trends über Schichten hinweg verfolgen.",
       "businessP2Title": "Faire Verteilung",
@@ -3165,7 +3173,7 @@
         "earnings": "Mitarbeiter-Einnahmen",
         "analytics": "Business-Analytics",
         "feedback": "Gästefeedback",
-        "payout": "Trinkgeld-Übersicht"
+        "payout": "Sofortauszahlungen"
       },
       "scenes": {
         "notif": {
@@ -3207,7 +3215,7 @@
           "r3": "Kommen definitiv wieder"
         },
         "payout": {
-          "queue": "Trinkgeld-Übersicht",
+          "queue": "Sofortauszahlungen",
           "via": "Stripe",
           "r1": "€420,00",
           "r2": "€318,50",
@@ -3233,9 +3241,9 @@
       "i4Title": "Exportbereit",
       "i4Text": "Finanzamtskonforme Daten auf Knopfdruck, genau dann, wenn deine Buchhaltung sie braucht.",
       "i4Tag": "Lückenloser Trinkgeld-Verlauf",
-      "i5Title": "Trinkgeld-Tracking",
-      "i5Text": "Trinkgelder lückenlos verfolgen und verwalten mit klaren Belegen für Führung und Team.",
-      "i5Tag": "Transparente Übersicht",
+      "i5Title": "Sofortauszahlungen",
+      "i5Text": "Berechtigte Betriebe können Sofortauszahlungen aus verfügbaren Einnahmen anfordern, wenn sie sie brauchen.",
+      "i5Tag": "Auf Anfrage",
       "i6Title": "Echtes Feedback",
       "i6Text": "Direkte Anerkennung von Gästen und Kunden, solange das Erlebnis noch frisch ist.",
       "i6Tag": "Bewertungen & Lob"
