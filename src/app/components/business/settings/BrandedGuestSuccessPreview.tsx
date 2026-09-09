@@ -37,7 +37,7 @@ export function BrandedGuestSuccessPreview({
 
   const confirmationMessage = resolveGuestThankYouMessage(
     { premium: branding.premium, thankYouMessage: thankYouMessage ?? branding.thankYouMessage },
-    t("tipFlow.success.tipAndFeedbackReceived"),
+    t("tipFlow.success.tipSentConfirmation"),
   );
 
   return (
@@ -58,7 +58,7 @@ export function BrandedGuestSuccessPreview({
         thankYouMessage={confirmationMessage}
         tipAmount={12}
         showReceipt={false}
-        primaryLabel={t("tipFlow.completion.tipAnotherMember")}
+        primaryLabel={t("tipFlow.completion.tipSomeoneElse")}
         secondaryLabel={t("tipFlow.completion.exit")}
         onPrimary={() => {}}
         onSecondary={() => {}}

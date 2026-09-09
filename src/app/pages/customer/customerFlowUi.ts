@@ -162,20 +162,20 @@ export const customerFlowUi = {
   stateError: "mb-2 max-w-md text-sm font-medium text-destructive",
 
   starButton:
-    "customer-flow-star inline-flex min-h-[3.25rem] min-w-[3.25rem] items-center justify-center rounded-lg p-1.5 hover:bg-muted sm:min-h-[3.5rem] sm:min-w-[3.5rem]",
-  starButtonActive: "bg-primary/[0.08] ring-1 ring-primary/20",
+    "customer-flow-star inline-flex min-h-11 min-w-11 items-center justify-center rounded-md p-1 hover:bg-muted/60 sm:min-h-12 sm:min-w-12",
+  starButtonActive: "bg-primary/[0.08]",
 
-  tagPill:
-    "rounded-md px-4 py-2.5 text-sm font-semibold ring-1 ring-inset sm:min-h-[2.75rem]",
-  tagPillIdle:
-    "bg-card text-foreground ring-border/80",
-  tagPillOn:
-    "bg-primary text-primary-foreground ring-primary/25",
+  tagChip:
+    "rounded-full px-3 py-1.5 text-sm font-medium ring-1 ring-inset",
+  tagChipIdle:
+    "bg-transparent text-foreground ring-border/70",
+  tagChipOn:
+    "bg-primary text-primary-foreground ring-primary",
 
   skipAction:
     "flex min-h-[2.75rem] w-full items-center justify-center rounded-lg text-sm font-medium text-muted-foreground/90 hover:text-foreground",
 
-  completionActions: "mx-auto flex w-full max-w-sm flex-col items-stretch gap-3",
+  completionActions: "mx-auto flex w-full max-w-xs flex-col items-center gap-1.5",
   completionPrimaryBtn: cn(caretipBtnPrimary, "w-full"),
   completionSecondaryBtn: cn(caretipBtnSecondary, "w-full"),
   completionTextAction:

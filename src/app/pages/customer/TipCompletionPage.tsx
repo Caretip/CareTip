@@ -17,7 +17,6 @@ export function TipCompletionPage() {
   const { reset, businessId: tipFlowBusinessId, employeeName: tipFlowEmployeeName, amount } = useTipFlow();
 
   const sessionId = searchParams.get("session_id")?.trim() ?? "";
-  const feedbackSubmitted = searchParams.get("feedbackSubmitted") === "1";
 
   const verification = useVerifiedTipSession(sessionId);
   const ready = isVerifiedTipSessionReady(verification);
@@ -39,9 +38,10 @@ export function TipCompletionPage() {
   );
   const employee = useTipSuccessEmployeeProfile(context?.employee?.id, employeeFallback);
   const tipAmount = amount != null && Number.isFinite(amount) && amount > 0 ? amount : null;
-  const thankYouMessage = feedbackSubmitted
-    ? t("tipFlow.success.tipAndFeedbackReceived")
-    : resolveGuestThankYouMessage(venueBrand.branding, t("tipFlow.success.tipSentConfirmation"));
+  const thankYouMessage = resolveGuestThankYouMessage(
+    venueBrand.branding,
+    t("tipFlow.success.tipSentConfirmation"),
+  );
 
   useEffect(() => {
     if (!sessionId) {
@@ -116,7 +116,7 @@ export function TipCompletionPage() {
       headline={t("tipFlow.success.celebrationHeadline")}
       tipAmount={tipAmount}
       receiptNumber={context.receiptNumber}
-      primaryLabel={t("tipFlow.completion.tipAnotherMember")}
+      primaryLabel={t("tipFlow.completion.tipSomeoneElse")}
       secondaryLabel={t("tipFlow.completion.exit")}
       onPrimary={tipAnother}
       onSecondary={exit}

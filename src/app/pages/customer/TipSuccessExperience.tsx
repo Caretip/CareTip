@@ -1,18 +1,14 @@
 import { motion, useReducedMotion } from "motion/react";
 import { useCallback, useId, useState, type CSSProperties, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
-import { Check, Users } from "lucide-react";
-import { BusinessLogoMark } from "../../components/business/BusinessLogoMark";
+import { Check } from "lucide-react";
 import { ProfileAvatar } from "../../components/ui/profile-avatar";
 import { LoadingSpinner } from "../../components/ui/loading-spinner";
 import { CustomerJourneyCareTipAttribution } from "./CustomerJourneyCareTipAttribution";
 import type { CustomerJourneyVenueBrand } from "./customerJourneyBrand";
 import { guestBrandAccentColor } from "../../lib/businessBranding";
 import { formatEur } from "../../lib/formatEur";
-import {
-  guestSuccessPageStyle,
-  guestSuccessPrimaryButtonStyle,
-} from "./guestBrandingPresentation";
+import { guestSuccessPageStyle } from "./guestBrandingPresentation";
 import type { TipSuccessEmployeeProfile } from "./useTipSuccessEmployeeProfile";
 import { customerFlowUi as cf } from "./customerFlowUi";
 import { cn } from "@/lib/utils";
@@ -42,27 +38,17 @@ function SuccessHeroIcon({ accent, compact }: { accent: string; compact?: boolea
   const reduceMotion = useReducedMotion();
   return (
     <motion.div
-      className={cn(
-        "customer-flow-success-hero relative mx-auto flex items-center justify-center",
-        compact ? "mb-2.5 size-[4rem] sm:mb-3 sm:size-[4.5rem]" : "mb-3 size-[5rem] sm:mb-3.5 sm:size-[5.5rem]",
-      )}
-      initial={reduceMotion ? false : { scale: 0.82, opacity: 0 }}
+      className={cn("mx-auto flex items-center justify-center", compact ? "mb-2" : "mb-3")}
+      initial={reduceMotion ? false : { scale: 0.88, opacity: 0 }}
       animate={{ scale: 1, opacity: 1 }}
-      transition={{ type: "spring", stiffness: 260, damping: 22, delay: 0.08 }}
+      transition={{ type: "spring", stiffness: 280, damping: 24, delay: 0.06 }}
       aria-hidden
     >
-      <span
-        className={cn(
-          "customer-flow-success-hero__icon flex items-center justify-center rounded-full",
-          compact ? "size-[3.25rem] sm:size-[3.5rem]" : "size-[4rem] sm:size-[4.5rem]",
-        )}
-        style={{
-          background: accent,
-          boxShadow: `0 0 0 6px ${accent}22`,
-        }}
-      >
-        <Check className={cn("text-white", compact ? "size-6 sm:size-7" : "size-8 sm:size-9")} strokeWidth={2.75} />
-      </span>
+      <Check
+        className={cn(compact ? "size-8" : "size-9 sm:size-10")}
+        strokeWidth={2.5}
+        style={{ color: accent }}
+      />
     </motion.div>
   );
 }
@@ -116,7 +102,6 @@ export function TipSuccessExperience({
   venue,
   employee,
   thankYouMessage,
-  supportingText,
   headline,
   tipAmount,
   receiptNumber,
@@ -135,11 +120,10 @@ export function TipSuccessExperience({
   const branding = venue.branding;
   const accent = guestBrandAccentColor(branding);
   const displayHeadline = headline ?? t("tipFlow.success.celebrationHeadline");
-  const venueContextLine = venue.contextLine || supportingText?.trim() || null;
   const fadeUp = reduceMotion
     ? {}
     : {
-        initial: { y: 12, opacity: 0 },
+        initial: { y: 10, opacity: 0 },
         animate: { y: 0, opacity: 1 },
       };
 
@@ -160,84 +144,56 @@ export function TipSuccessExperience({
       )}
       style={guestSuccessPageStyle(branding)}
     >
-      {!embedded ? (
-        <div className="customer-flow-success-ambient" style={{ "--success-accent": accent } as CSSProperties} aria-hidden />
-      ) : null}
-
       <div
         className={cn(
-          "caretip-container relative z-[1] mx-auto flex w-full max-w-lg flex-col items-center justify-center px-4",
-          embedded ? "py-4 sm:px-5 sm:py-5" : "min-h-[100dvh] justify-center py-5 sm:px-6 sm:py-8",
+          "caretip-container relative z-[1] mx-auto flex w-full max-w-md flex-col items-center px-4",
+          embedded ? "py-4 sm:px-5 sm:py-5" : "min-h-[100dvh] justify-center py-8 sm:px-6 sm:py-10",
         )}
       >
-        <motion.article
-          className="customer-flow-success-surface w-full"
+        <div
+          className="customer-flow-success-surface w-full text-center"
           style={{ "--success-accent": accent } as CSSProperties}
-          {...fadeUp}
-          transition={{ delay: 0.08, duration: 0.35 }}
         >
-          <header className="customer-flow-success-surface__brand text-center">
-            <BusinessLogoMark
-              logoPathOrUrl={venue.logo ?? null}
-              businessName={venue.name}
-              size="header"
-              className={cn("mx-auto", embedded ? "mb-1.5" : "mb-2")}
-            />
-            <p className="customer-flow-success-surface__venue">{venue.name}</p>
-            {venueContextLine ? (
-              <div className="customer-flow-success-surface__venue-context">{venueContextLine}</div>
-            ) : null}
-          </header>
-
           <motion.section
-            className={cn("customer-flow-success-confirmation text-center", embedded ? "mt-3" : "mt-4")}
             aria-labelledby="tip-success-headline"
             {...fadeUp}
-            transition={{ delay: 0.1, duration: 0.35 }}
+            transition={{ delay: 0.06, duration: 0.3 }}
           >
             <SuccessHeroIcon accent={accent} compact={embedded} />
-            <p className="customer-flow-success-surface__status">{t("tipFlow.success.paymentSuccessful")}</p>
-            <h2 id="tip-success-headline" className="customer-flow-success-surface__headline">
+            <h1 id="tip-success-headline" className="customer-flow-success-surface__headline">
               {displayHeadline}
-            </h2>
+            </h1>
             <p className="customer-flow-success-surface__thankyou">{thankYouMessage}</p>
           </motion.section>
 
           <motion.section
-            className={cn("customer-flow-success-recipient", embedded ? "mt-4" : "mt-5")}
+            className={cn("customer-flow-success-recipient", embedded ? "mt-5" : "mt-7")}
             aria-label={t("tipFlow.success.recipientSummaryAria")}
             {...fadeUp}
-            transition={{ delay: 0.16, duration: 0.35 }}
+            transition={{ delay: 0.12, duration: 0.3 }}
           >
-            <p className="customer-flow-success-recipient__label">
-              {t("tipFlow.success.recipientLabel")}
-            </p>
-            <div className="customer-flow-success-recipient__row">
-              <ProfileAvatar
-                src={employee.avatar}
-                displayName={employee.name}
-                variant="square"
-                className={cn(
-                  "customer-flow-success-recipient__avatar shrink-0",
-                  cf.employeePhotoSquare,
-                  embedded ? "h-10 w-10" : "h-11 w-11 sm:h-12 sm:w-12",
-                )}
-                lightbox={false}
-              />
-              <div className="min-w-0 text-left">
-                <p className="customer-flow-success-recipient__name">{employee.name}</p>
-                {employee.role ? (
-                  <p className="customer-flow-success-recipient__role">{employee.role}</p>
-                ) : null}
-              </div>
-            </div>
+            <ProfileAvatar
+              src={employee.avatar}
+              displayName={employee.name}
+              variant="square"
+              className={cn(
+                "customer-flow-success-recipient__avatar mx-auto shrink-0",
+                cf.employeePhotoSquare,
+                embedded ? "h-14 w-14" : "h-16 w-16 sm:h-[4.5rem] sm:w-[4.5rem]",
+              )}
+              lightbox={false}
+            />
+            <p className="customer-flow-success-recipient__name mt-2.5 truncate">{employee.name}</p>
+            {employee.role ? (
+              <p className="customer-flow-success-recipient__role truncate">{employee.role}</p>
+            ) : null}
           </motion.section>
 
           {showReceipt && receiptNumber ? (
             <motion.div
               className={cn(embedded ? "mt-4" : "mt-5")}
               {...fadeUp}
-              transition={{ delay: 0.22, duration: 0.35 }}
+              transition={{ delay: 0.16, duration: 0.3 }}
             >
               <CollapsibleReceipt
                 receiptNumber={receiptNumber}
@@ -247,19 +203,16 @@ export function TipSuccessExperience({
             </motion.div>
           ) : tipAmount != null && tipAmount > 0 ? (
             <motion.p
-              className={cn(
-                "text-center text-sm text-muted-foreground",
-                embedded ? "mt-4" : "mt-5",
-              )}
+              className={cn("text-center text-sm text-muted-foreground", embedded ? "mt-4" : "mt-5")}
               {...fadeUp}
-              transition={{ delay: 0.22, duration: 0.35 }}
+              transition={{ delay: 0.16, duration: 0.3 }}
             >
               {t("tipFlow.success.tipAmount")}:{" "}
               <span className="font-semibold tabular-nums text-foreground">{formatEur(tipAmount)}</span>
             </motion.p>
           ) : null}
 
-          <div className={cn(cf.completionActions, embedded ? "mt-5" : "mt-6")}>
+          <div className={cn(cf.completionActions, embedded ? "mt-5" : "mt-7")}>
             <button
               type="button"
               onClick={() => runAction("primary", onPrimary)}
@@ -268,7 +221,7 @@ export function TipSuccessExperience({
                 "customer-flow-success-primary-btn",
                 actionBusy === "primary" && "customer-flow-success-primary-btn--busy",
               )}
-              style={guestSuccessPrimaryButtonStyle(branding)}
+              style={{ backgroundColor: accent, borderColor: accent }}
               tabIndex={embedded ? -1 : undefined}
               aria-disabled={embedded || actionBusy != null || undefined}
               aria-busy={actionBusy === "primary"}
@@ -276,7 +229,7 @@ export function TipSuccessExperience({
               {actionBusy === "primary" ? (
                 <LoadingSpinner size="sm" className="shrink-0 text-white" />
               ) : (
-                primaryIcon ?? <Users className="size-5 shrink-0" aria-hidden />
+                primaryIcon
               )}
               {primaryLabel}
             </button>
@@ -292,16 +245,14 @@ export function TipSuccessExperience({
               aria-disabled={embedded || actionBusy != null || undefined}
               aria-busy={actionBusy === "secondary"}
             >
-              {actionBusy === "secondary" ? (
-                <LoadingSpinner size="sm" className="shrink-0" />
-              ) : null}
+              {actionBusy === "secondary" ? <LoadingSpinner size="sm" className="shrink-0" /> : null}
               {secondaryLabel}
             </button>
           </div>
-        </motion.article>
+        </div>
 
         {showAttribution && !embedded ? (
-          <div className="mt-5 w-full max-w-md sm:mt-6">
+          <div className="mt-8 w-full max-w-md sm:mt-10">
             <CustomerJourneyCareTipAttribution label={t("tipFlow.common.poweredByCareTip")} />
           </div>
         ) : null}
