@@ -2,6 +2,7 @@
  * Tip refund / chargeback / dispute ledger — Stripe SSOT.
  * Never invent rows from tip status=failed.
  */
+import Stripe from "stripe";
 import { Prisma, TipRefundKind, TipRefundStatus } from "@prisma/client";
 import { prisma } from "../../prisma.js";
 
@@ -226,6 +227,55 @@ export async function upsertStripeDisputeEvent(input: {
       });
     }
   }
+}
+
+/**
+ * charge.dispute.created can arrive before checkout.session.completed writes the
+ * Transaction. The webhook then skips (no business link) and marks the event
+ * processed, so Stripe will not retry. Re-read the Charge after a successful tip
+ * ledger write and apply any already-open dispute.
+ */
+export async function applyExistingStripeDisputeAfterSuccessfulTip(params: {
+  paymentIntentId: string;
+  stripeChargeId: string | null;
+}): Promise<void> {
+  const chargeId = params.stripeChargeId?.trim() ?? "";
+  if (!chargeId.startsWith("ch_")) return;
+
+  const { getStripeClient } = await import("../stripe.service.js");
+  const stripe = getStripeClient();
+  const charge = (await stripe.charges.retrieve(chargeId, {
+    expand: ["dispute"],
+  })) as Stripe.Charge & { dispute?: string | Stripe.Dispute | null };
+  if (!charge.disputed) return;
+
+  const disputeObj =
+    charge.dispute && typeof charge.dispute === "object" ? (charge.dispute as Stripe.Dispute) : null;
+  const disputeId =
+    typeof charge.dispute === "string" ? charge.dispute : disputeObj?.id ?? null;
+  if (!disputeId) return;
+
+  const dispute =
+    disputeObj && typeof disputeObj.status === "string"
+      ? disputeObj
+      : await stripe.disputes.retrieve(disputeId);
+
+  const piFromCharge =
+    typeof charge.payment_intent === "string"
+      ? charge.payment_intent
+      : charge.payment_intent?.id ?? params.paymentIntentId;
+
+  await upsertStripeDisputeEvent({
+    stripeDisputeId: dispute.id,
+    stripeChargeId: charge.id,
+    stripePaymentIntentId: piFromCharge,
+    amountCents: dispute.amount,
+    currency: dispute.currency,
+    status: dispute.status,
+    reason: typeof dispute.reason === "string" ? dispute.reason : null,
+    occurredAt: new Date((dispute.created ?? Math.floor(Date.now() / 1000)) * 1000),
+    stripeEventAccount: null,
+  });
 }
 
 export async function listTipRefunds(params: {

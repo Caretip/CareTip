@@ -937,6 +937,20 @@ export async function handlePaymentSuccess(paymentIntentId: string): Promise<voi
     }
   });
 
+  if (piForPayable) {
+    try {
+      const { applyExistingStripeDisputeAfterSuccessfulTip } = await import(
+        "./finance/tipRefunds.service.js"
+      );
+      await applyExistingStripeDisputeAfterSuccessfulTip({
+        paymentIntentId,
+        stripeChargeId: stripeChargeIdFromPaymentIntent(piForPayable),
+      });
+    } catch (err) {
+      logServerError("stripe.handlePaymentSuccess.existingDispute", err, { paymentIntentId });
+    }
+  }
+
   const emitSnapshot = await loadTipEmitSnapshot(pending.employeeId, pending.businessId);
   if (!emitSnapshot) {
     return;
@@ -1199,6 +1213,22 @@ export async function handleSuccessfulTipPayment(session: Stripe.Checkout.Sessio
     });
 
     console.log("TIP CREATED", tip.id);
+
+    try {
+      const { applyExistingStripeDisputeAfterSuccessfulTip } = await import(
+        "./finance/tipRefunds.service.js"
+      );
+      await applyExistingStripeDisputeAfterSuccessfulTip({
+        paymentIntentId: piId,
+        stripeChargeId: stripeChargeIdFromPaymentIntent(paymentIntent),
+      });
+    } catch (err) {
+      logServerError("stripe.handleSuccessfulTipPayment.existingDispute", err, {
+        paymentIntentId: piId,
+        sessionId: session.id,
+      });
+    }
+
     console.info("[tip-reconcile] webhook_tip_created", {
       checkoutSessionId: session.id,
       paymentIntentId: piId,

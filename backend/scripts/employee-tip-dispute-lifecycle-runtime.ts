@@ -92,6 +92,19 @@ function runStatic() {
   } else {
     fail("remaining-partial-dispute", "remaining math");
   }
+  const stripeSvc = read("src/services/stripe.service.ts");
+  const refundsAgain = read("src/services/finance/tipRefunds.service.ts");
+  if (
+    stripeSvc.includes("applyExistingStripeDisputeAfterSuccessfulTip") &&
+    refundsAgain.includes("applyExistingStripeDisputeAfterSuccessfulTip")
+  ) {
+    pass(
+      "success-handler-reapplies-existing-dispute",
+      "Successful tip write re-reads an already-open Stripe dispute after the ledger exists",
+    );
+  } else {
+    fail("success-handler-reapplies-existing-dispute", "backfill hook missing");
+  }
 }
 
 async function disputeEvent(
@@ -544,6 +557,67 @@ async function runDb() {
 
     pass("21-refund-regression-covered-by-routing-suite", "Refund cases remain in test:employee-tip-direct-routing");
     pass("22-fee-851-covered-by-routing-suite", "€10 → €8.51 remaining math remains in test:employee-tip-direct-routing");
+
+    const earlyPi = `pi_dp_beforeledger_${suffix}`;
+    const earlyCharge = `ch_dp_beforeledger_${suffix}`;
+    const earlyDispute = `dp_beforeledger_${suffix}`;
+    await upsertStripeDisputeEvent({
+      stripeDisputeId: earlyDispute,
+      stripePaymentIntentId: earlyPi,
+      stripeChargeId: earlyCharge,
+      amountCents: 1000,
+      status: "needs_response",
+      occurredAt: new Date(),
+    });
+    const skippedEarly = await prisma.tipRefund.findUnique({ where: { stripeDisputeId: earlyDispute } });
+    const lateTip = await prisma.transaction.create({
+      data: {
+        amount: 10,
+        status: TipStatus.success,
+        stripePaymentIntentId: earlyPi,
+        employeeId: employee.id,
+        businessId: business.id,
+      },
+    });
+    await prisma.employeeTipPayable.create({
+      data: {
+        transactionId: lateTip.id,
+        employeeId: employee.id,
+        businessId: business.id,
+        routingMode: EmployeeTipPayoutMode.direct_to_employee,
+        chargeModel: EmployeeTipChargeModel.platform_hold,
+        status: EmployeeTipPayableStatus.held_platform,
+        grossCents: 1000,
+        platformFeeCents: 149,
+        payableCents: 851,
+        stripePaymentIntentId: earlyPi,
+        stripeChargeId: earlyCharge,
+      },
+    });
+    await upsertStripeDisputeEvent({
+      stripeDisputeId: earlyDispute,
+      stripePaymentIntentId: earlyPi,
+      stripeChargeId: earlyCharge,
+      amountCents: 1000,
+      status: "needs_response",
+      occurredAt: new Date(),
+    });
+    const afterBackfill = await prisma.employeeTipPayable.findUnique({ where: { transactionId: lateTip.id } });
+    if (
+      skippedEarly == null &&
+      afterBackfill?.disputedOpenCents === 851 &&
+      remainingPayableCents(afterBackfill) === 0
+    ) {
+      pass(
+        "23-dispute-before-ledger-then-backfill",
+        "Dispute webhook skip before Transaction does not permanently omit freeze once ledger exists",
+      );
+    } else {
+      fail(
+        "23-dispute-before-ledger-then-backfill",
+        JSON.stringify({ skippedEarly, afterBackfill }),
+      );
+    }
   } finally {
     __setEmployeeTipTransferCreateFnForTests(null);
     __setEmployeeTipTransferReversalFnForTests(null);
