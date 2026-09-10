@@ -247,6 +247,7 @@ router.post("/stripe", async (req: Request, res: Response) => {
         status: dispute.status,
         reason: typeof dispute.reason === "string" ? dispute.reason : null,
         occurredAt: new Date((dispute.created ?? Math.floor(Date.now() / 1000)) * 1000),
+        stripeEventAccount: typeof event.account === "string" ? event.account : null,
       });
     }
 

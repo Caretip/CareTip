@@ -78,6 +78,13 @@ export async function upsertStripeRefundEvent(input: {
     cancelled: TipRefundStatus.canceled,
   };
   const status = statusMap[String(input.status).toLowerCase()] ?? TipRefundStatus.pending;
+  const alreadyApplied =
+    (
+      await prisma.tipRefund.findUnique({
+        where: { stripeRefundId: input.stripeRefundId },
+        select: { status: true },
+      })
+    )?.status === TipRefundStatus.succeeded;
   const amountEur = Number((input.amountCents / 100).toFixed(2));
 
   await prisma.tipRefund.upsert({
@@ -104,6 +111,48 @@ export async function upsertStripeRefundEvent(input: {
       tipId: linked.tipId ?? undefined,
     },
   });
+  const tipId = linked.tipId ?? input.tipId ?? null;
+  if (status === TipRefundStatus.succeeded && !alreadyApplied && tipId) {
+    const { applyRefundToEmployeePayable } = await import("../employeeTipPayable.service.js");
+    await applyRefundToEmployeePayable({
+      transactionId: tipId,
+      refundedCents: input.amountCents,
+    });
+  }
+}
+
+function mapStripeDisputeStatus(statusRaw: string): TipRefundStatus {
+  const s = String(statusRaw).toLowerCase();
+  if (s === "won" || s === "warning_closed") return TipRefundStatus.won;
+  if (s === "lost" || s === "charge_refunded") return TipRefundStatus.lost;
+  return TipRefundStatus.needs_response;
+}
+
+function mergeDisputeLedgerStatus(
+  previous: TipRefundStatus | undefined,
+  incoming: TipRefundStatus,
+): TipRefundStatus {
+  const terminal = (status: TipRefundStatus) =>
+    status === TipRefundStatus.won || status === TipRefundStatus.lost;
+  if (previous && terminal(previous) && !terminal(incoming)) return previous;
+  return incoming;
+}
+
+async function resolveBusinessFromChargeId(
+  stripeChargeId: string | null | undefined,
+): Promise<{ businessId: string; tipId: string; amountEur: number } | null> {
+  const chargeId = stripeChargeId?.trim();
+  if (!chargeId) return null;
+  const payable = await prisma.employeeTipPayable.findFirst({
+    where: { stripeChargeId: chargeId },
+    select: { businessId: true, transactionId: true, transaction: { select: { amount: true } } },
+  });
+  if (!payable) return null;
+  return {
+    businessId: payable.businessId,
+    tipId: payable.transactionId,
+    amountEur: Number(payable.transaction.amount),
+  };
 }
 
 export async function upsertStripeDisputeEvent(input: {
@@ -115,11 +164,11 @@ export async function upsertStripeDisputeEvent(input: {
   status: string;
   reason?: string | null;
   occurredAt: Date;
+  stripeEventAccount?: string | null;
 }): Promise<void> {
-  let linked = await resolveBusinessFromPaymentIntent(input.stripePaymentIntentId);
-  if (!linked && input.stripeChargeId) {
-    // Charge id alone: try tip via PI later; skip if unknown
-  }
+  const linked =
+    (await resolveBusinessFromPaymentIntent(input.stripePaymentIntentId)) ??
+    (await resolveBusinessFromChargeId(input.stripeChargeId));
   if (!linked?.businessId) {
     console.warn("[tipRefunds] skip dispute — no business link", {
       stripeDisputeId: input.stripeDisputeId,
@@ -127,16 +176,12 @@ export async function upsertStripeDisputeEvent(input: {
     return;
   }
 
-  const statusRaw = String(input.status).toLowerCase();
-  let status: TipRefundStatus = TipRefundStatus.needs_response;
-  if (statusRaw === "won") status = TipRefundStatus.won;
-  else if (statusRaw === "lost") status = TipRefundStatus.lost;
-  else if (statusRaw === "warning_closed" || statusRaw === "charge_refunded") {
-    status = TipRefundStatus.lost;
-  } else if (statusRaw.includes("under_review") || statusRaw === "warning_needs_response") {
-    status = TipRefundStatus.needs_response;
-  }
-
+  const incomingStatus = mapStripeDisputeStatus(input.status);
+  const existing = await prisma.tipRefund.findUnique({
+    where: { stripeDisputeId: input.stripeDisputeId },
+    select: { status: true },
+  });
+  const status = mergeDisputeLedgerStatus(existing?.status, incomingStatus);
   const amountEur = Number((input.amountCents / 100).toFixed(2));
 
   await prisma.tipRefund.upsert({
@@ -160,8 +205,27 @@ export async function upsertStripeDisputeEvent(input: {
       amountEur,
       reason: input.reason?.slice(0, 120) ?? undefined,
       stripeChargeId: input.stripeChargeId ?? undefined,
+      tipId: linked.tipId ?? undefined,
     },
   });
+
+  if (linked.tipId) {
+    const { applyDisputeToEmployeePayable } = await import("../employeeTipPayable.service.js");
+    const phaseStatus =
+      status === TipRefundStatus.won ? "won" : status === TipRefundStatus.lost ? "lost" : input.status;
+    const result = await applyDisputeToEmployeePayable({
+      transactionId: linked.tipId,
+      stripeDisputeId: input.stripeDisputeId,
+      disputeAmountCents: input.amountCents,
+      stripeStatus: phaseStatus,
+      stripeEventAccount: input.stripeEventAccount,
+    });
+    if (result === "skipped_mismatch") {
+      console.warn("[tipRefunds] dispute payable skipped — connected account mismatch", {
+        stripeDisputeId: input.stripeDisputeId,
+      });
+    }
+  }
 }
 
 export async function listTipRefunds(params: {

@@ -15,6 +15,7 @@ import { logClientError } from "../../lib/clientLog";
 import { performExternalStripeRedirect } from "../../lib/externalStripeRedirect";
 import { employeeUi } from "./employeeDashboardUi";
 import { Button } from "../ui/button";
+import { formatEur } from "../../lib/formatEur";
 import { cn } from "@/lib/utils";
 
 function stateTone(state: EmployeePayoutConnectionState): string {
@@ -128,6 +129,39 @@ export function EmployeePayoutAccountCard() {
               ? t("employee.payouts.connectedBody")
               : t("employee.payouts.stripeHandles")}
           </p>
+          {(data?.heldPlatformCents ?? 0) > 0 ? (
+            <div className="rounded-lg bg-background/60 p-3 space-y-1">
+              <p className="text-sm font-medium">{t("employee.payouts.heldTitle")}</p>
+              <p className="text-sm">{formatEur((data?.heldPlatformCents ?? 0) / 100)}</p>
+              <p className="text-xs text-muted-foreground">{t("employee.payouts.heldBody")}</p>
+              <p className="text-xs text-muted-foreground">{t("employee.payouts.notStripeBalance")}</p>
+            </div>
+          ) : null}
+          {(data?.disputedOpenCents ?? 0) > 0 ? (
+            <div className="rounded-lg bg-background/60 p-3 space-y-1">
+              <p className="text-sm font-medium">{t("employee.payouts.disputedOpenTitle")}</p>
+              <p className="text-sm">{formatEur((data?.disputedOpenCents ?? 0) / 100)}</p>
+              <p className="text-xs text-muted-foreground">{t("employee.payouts.disputedOpenBody")}</p>
+              <p className="text-xs text-muted-foreground">{t("employee.payouts.notStripeBalance")}</p>
+            </div>
+          ) : null}
+          {(data?.disputedLostCents ?? 0) > 0 ? (
+            <div className="rounded-lg bg-background/60 p-3 space-y-1">
+              <p className="text-sm font-medium">{t("employee.payouts.disputedLostTitle")}</p>
+              <p className="text-sm">{formatEur((data?.disputedLostCents ?? 0) / 100)}</p>
+              <p className="text-xs text-muted-foreground">{t("employee.payouts.disputedLostBody")}</p>
+              <p className="text-xs text-muted-foreground">{t("employee.payouts.notStripeBalance")}</p>
+            </div>
+          ) : null}
+          {(data?.destinationSettledCents ?? 0) + (data?.transferredCents ?? 0) > 0 ? (
+            <div className="rounded-lg bg-background/60 p-3 space-y-1">
+              <p className="text-sm font-medium">{t("employee.payouts.settledTitle")}</p>
+              <p className="text-sm">
+                {formatEur(((data?.destinationSettledCents ?? 0) + (data?.transferredCents ?? 0)) / 100)}
+              </p>
+              <p className="text-xs text-muted-foreground">{t("employee.payouts.notStripeBalance")}</p>
+            </div>
+          ) : null}
           <div className="flex flex-wrap gap-2">
             <Button
               type="button"

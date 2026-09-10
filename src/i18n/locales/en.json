@@ -3773,9 +3773,17 @@
       "subtitle": "Connect and manage your Stripe payout account.",
       "backAria": "Back",
       "sectionTitle": "Payout account",
-      "sectionHint": "Connect your payout account so CareTip can pay you when employee payouts are enabled.",
+      "sectionHint": "Connect your payout account. Regular payouts to your bank follow Stripe’s schedule and are free from CareTip.",
       "stripeHandles": "Stripe securely handles your payout details and verification.",
-      "connectedBody": "Your Stripe payout account is connected.",
+      "connectedBody": "Your Stripe payout account is connected. New tips can be paid to this account when your business uses direct employee payouts.",
+      "heldTitle": "Held for your account",
+      "heldBody": "These tips were received before your payout account was ready. They are released after Stripe confirms your account can receive transfers.",
+      "settledTitle": "Paid to your Stripe account",
+      "notStripeBalance": "This is CareTip’s payable record, not a live Stripe wallet number.",
+      "disputedOpenTitle": "Under dispute review",
+      "disputedOpenBody": "This amount is frozen in CareTip’s payable record until Stripe closes the dispute. It is not available to transfer.",
+      "disputedLostTitle": "No longer payable",
+      "disputedLostBody": "Stripe recorded this dispute as lost. CareTip does not treat this amount as earnings.",
       "loading": "Loading payout account…",
       "loadError": "Could not load payout account status.",
       "connectCta": "Connect your payout account",
@@ -6002,6 +6010,26 @@
       "nav": {
         "connect": "Connect",
         "payouts": "Payouts"
+      },
+      "tipRouting": {
+        "title": "Employee tip payouts",
+        "hint": "This applies to new tips only. Tips already paid keep their original routing.",
+        "loading": "Loading payout preference…",
+        "save": "Save",
+        "saving": "Saving…",
+        "saved": "Employee tip payout preference saved.",
+        "saveError": "Could not save payout preference.",
+        "loadError": "Could not load payout preference.",
+        "mode": {
+          "direct_to_employee": {
+            "label": "Pay employees directly",
+            "body": "When a staff member has connected their payout account, their tips go to that account. If they have not connected yet, the customer can still tip; those amounts are held until the account is ready."
+          },
+          "business_distribution": {
+            "label": "Business receives first",
+            "body": "Guest tips continue to land on the business Stripe account, including Instant Payout. Automatic staff transfers from that balance are not enabled yet."
+          }
+        }
       }
     },
     "billing": {

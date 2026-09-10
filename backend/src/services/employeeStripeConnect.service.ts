@@ -1,6 +1,6 @@
 /**
- * Employee Stripe Connect Express (recipient) foundation.
- * Does not change Checkout destination, tip fees, Transfers, or Business Instant Payout.
+ * Employee Stripe Connect Express (recipient) onboarding and status.
+ * Checkout destination is resolved in employeeTipRouting.service.ts.
  */
 import Stripe from "stripe";
 import { Prisma, StripeConnectStatus } from "@prisma/client";
@@ -9,6 +9,7 @@ import { logServerError } from "../utils/httpErrors.js";
 import { runSerializedByKey } from "../utils/serializedByKey.js";
 import { writeAuditLog } from "./audit.service.js";
 import { toEmployeePayoutConnectionState } from "../lib/employeePayoutConnectState.js";
+import { employeePayableSummaryForEmployee } from "./employeeTipPayable.service.js";
 import { getStripeClient, isStripeConfigured } from "./stripe.service.js";
 import {
   STRIPE_ACCOUNTS_V2_CREATE_PATH,
@@ -35,6 +36,12 @@ export type EmployeeConnectStatusDto = {
   payoutsEnabled: boolean;
   canOpenDashboard: boolean;
   updatedAt: string | null;
+  heldPlatformCents: number;
+  destinationSettledCents: number;
+  transferredCents: number;
+  refundedCents: number;
+  disputedOpenCents: number;
+  disputedLostCents: number;
 };
 
 type CreateV2AccountFn = (
@@ -170,6 +177,12 @@ function toEmployeeConnectDto(row: {
     payoutsEnabled: row?.stripePayoutsEnabled === true,
     canOpenDashboard: hasAccount,
     updatedAt: row?.stripeConnectUpdatedAt?.toISOString() ?? null,
+    heldPlatformCents: 0,
+    destinationSettledCents: 0,
+    transferredCents: 0,
+    refundedCents: 0,
+    disputedOpenCents: 0,
+    disputedLostCents: 0,
   };
 }
 
@@ -261,7 +274,9 @@ export async function getEmployeeConnectStatusForUser(
   const row = await prisma.employeeStripeAccount.findUnique({
     where: { employeeId: actor.employeeId },
   });
-  return toEmployeeConnectDto(row);
+  const dto = toEmployeeConnectDto(row);
+  const summary = await employeePayableSummaryForEmployee(actor.employeeId);
+  return { ...dto, ...summary };
 }
 
 export async function refreshEmployeeConnectStatusFromStripe(userId: string): Promise<void> {
@@ -561,5 +576,19 @@ export async function handleEmployeeConnectAccountUpdated(
   if (updated.count === 0) {
     return { matched: true, employeeId: row.employeeId, skippedStale: true };
   }
+
+  const nextStatus = employeeConnectStatusDataFromSnap(snap, acceptedAt).stripeConnectStatus;
+  if (nextStatus === StripeConnectStatus.ready && snap.payoutsEnabled) {
+    void import("./employeeTipRelease.service.js")
+      .then(({ releaseHeldPlatformPayablesForEmployee }) =>
+        releaseHeldPlatformPayablesForEmployee(row.employeeId),
+      )
+      .catch((err) => {
+        logServerError("employeeStripeConnect.releaseAfterReady", err, {
+          employeeId: row.employeeId,
+        });
+      });
+  }
+
   return { matched: true, employeeId: row.employeeId, skippedStale: false };
 }

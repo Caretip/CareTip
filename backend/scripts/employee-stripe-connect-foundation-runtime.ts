@@ -58,13 +58,14 @@ function runStaticGuards() {
   const schema = read("prisma/schema.prisma");
 
   if (
+    checkout.includes("resolveTipCheckoutRouting") &&
     checkout.includes("transfer_data") &&
-    checkout.includes("assertBusinessReadyForConnectTipDestination") &&
-    !checkout.includes("EmployeeStripeAccount")
+    checkout.includes("assertCapturedTipConnect") &&
+    !checkout.includes("createInstantPayoutForEmployee")
   ) {
-    pass("checkout-destination-unchanged", "Guest Checkout still destinations to Business Connect");
+    pass("checkout-uses-server-routing", "Checkout destination is server-resolved (employee, business, or platform hold)");
   } else {
-    fail("checkout-destination-unchanged", "Checkout destination logic looks altered");
+    fail("checkout-uses-server-routing", "Checkout routing helper missing");
   }
 
   if (fees.includes("CARETIP_FEE_PERCENT") && fees.includes("CARETIP_FEE_FIXED_CENTS_EUR")) {

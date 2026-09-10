@@ -3,6 +3,7 @@ import { Role } from "@prisma/client";
 import { authMiddleware, requireRole, requireVerifiedEmail } from "../middleware/auth.middleware.js";
 import { requireCompletedOnboarding } from "../middleware/requireCompletedOnboarding.middleware.js";
 import * as connectController from "../controllers/connect.controller.js";
+import * as employeeTipPayoutModeController from "../controllers/employeeTipPayoutMode.controller.js";
 
 const router = Router();
 
@@ -20,5 +21,15 @@ router.get("/connect/payouts", ...managerConnect, connectController.listMyConnec
 router.get("/connect/payouts/:id", ...managerConnect, connectController.getMyConnectPayout);
 router.get("/connect/instant-payout", ...managerConnect, connectController.getMyInstantPayoutEligibility);
 router.post("/connect/instant-payout", ...managerConnect, connectController.postMyInstantPayout);
+router.get(
+  "/connect/employee-tip-payout-mode",
+  ...managerConnect,
+  employeeTipPayoutModeController.getMyEmployeeTipPayoutMode,
+);
+router.patch(
+  "/connect/employee-tip-payout-mode",
+  ...managerConnect,
+  employeeTipPayoutModeController.patchMyEmployeeTipPayoutMode,
+);
 
 export default router;

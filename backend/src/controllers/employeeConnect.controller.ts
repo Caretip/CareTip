@@ -7,6 +7,7 @@ import {
   createEmployeeConnectLoginLink,
   getEmployeeConnectStatusForUser,
   refreshEmployeeConnectStatusFromStripe,
+  resolveActiveEmployeeForConnect,
 } from "../services/employeeStripeConnect.service.js";
 import { clientSafeMessage, CLIENT_FALLBACK, logServerError } from "../utils/httpErrors.js";
 
@@ -72,6 +73,16 @@ export async function getMyEmployeeConnectStatus(req: Request, res: Response) {
       logServerError("employeeConnect.refresh", err, { userId });
     }
     const status = await getEmployeeConnectStatusForUser(userId);
+    if (status.connectionState === "connected" && status.heldPlatformCents > 0) {
+      const actor = await resolveActiveEmployeeForConnect(userId);
+      void import("../services/employeeTipRelease.service.js")
+        .then(({ releaseHeldPlatformPayablesForEmployee }) =>
+          releaseHeldPlatformPayablesForEmployee(actor.employeeId),
+        )
+        .catch((err) => {
+          logServerError("employeeConnect.releaseOnStatus", err, { userId });
+        });
+    }
     return res.json(status);
   } catch (err) {
     logServerError("employeeConnect.getMyEmployeeConnectStatus", err);

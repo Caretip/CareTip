@@ -1,3 +1,10 @@
+/**
+ * Guest tip Checkout and PaymentIntent success handlers.
+ *
+ * Venue Connect gate: assertBusinessReadyForConnectTipDestination
+ * Destination ownership: assertPaymentIntentDestinationMatchesBusiness
+ * (both applied through resolveTipCheckoutRouting / assertPaidTipConnectInvariants).
+ */
 import Stripe from "stripe";
 import { emitNewTip } from "../socket/emitTip.js";
 import { prisma } from "../prisma.js";
@@ -13,8 +20,6 @@ import {
   TipPaymentEligibilityError,
 } from "./tipPaymentEligibility.service.js";
 import {
-  assertBusinessReadyForConnectTipDestination,
-  assertPaymentIntentDestinationMatchesBusiness,
   CONNECT_LIVE_ACCOUNT_NOT_CAPABLE_CODE,
   CONNECT_PAYMENT_INVARIANT_CODE,
   CONNECT_TIP_UNAVAILABLE_MSG,
@@ -24,6 +29,14 @@ import {
   isConnectCapabilityReady,
   retrieveConnectCapabilitySnapshot,
 } from "./stripeConnect.service.js";
+import {
+  assertPaidTipConnectInvariants,
+  destinationTransferIdFromPaymentIntent,
+  resolveTipCheckoutRouting,
+  stripeChargeIdFromPaymentIntent,
+  type PaidTipConnectSnapshot,
+} from "./employeeTipRouting.service.js";
+import { createEmployeeTipPayableForSuccessfulTip } from "./employeeTipPayable.service.js";
 import { recordCheckoutFunnelEvent } from "./checkoutFunnelMetrics.service.js";
 import { QR_FUNNEL_EVENT_TYPES, recordQrFunnelEvent } from "./qr/qrFunnelEvent.service.js";
 import { allocateTipReceiptNumber } from "./tipReceipt.service.js";
@@ -118,7 +131,9 @@ async function retrievePaymentIntentForWebhook(
   if (paymentIntentsRetrieveFnForTests) {
     return paymentIntentsRetrieveFnForTests(paymentIntentId);
   }
-  return getStripe().paymentIntents.retrieve(paymentIntentId);
+  return getStripe().paymentIntents.retrieve(paymentIntentId, {
+    expand: ["latest_charge"],
+  });
 }
 
 async function retrieveConnectedAccountForWebhook(stripeAccountId: string): Promise<{
@@ -152,6 +167,46 @@ async function retrieveConnectedAccountForWebhook(stripeAccountId: string): Prom
     // Fall through to the V1 object — fail-closed assert below.
   }
   return v1;
+}
+
+async function retrieveConnectedRecipientForWebhook(stripeAccountId: string): Promise<{
+  id: string;
+  payouts_enabled?: boolean | null;
+  requirements?: { disabled_reason?: string | null } | null;
+}> {
+  if (connectedAccountRetrieveFnForTests) {
+    return connectedAccountRetrieveFnForTests(stripeAccountId);
+  }
+  const v1 = await getStripe().accounts.retrieve(stripeAccountId);
+  if (v1.payouts_enabled === true && !v1.requirements?.disabled_reason) {
+    return v1;
+  }
+  try {
+    const live = await retrieveConnectCapabilitySnapshot(stripeAccountId);
+    if (live?.payoutsEnabled) {
+      return {
+        id: v1.id,
+        payouts_enabled: true,
+        requirements: { disabled_reason: live.disabledReason },
+      };
+    }
+  } catch {
+    // Fail closed in assertLiveRecipientAccountCapable.
+  }
+  return v1;
+}
+
+async function assertCapturedTipConnect(params: {
+  paymentIntent: Stripe.PaymentIntent;
+  employeeId: string;
+  businessId: string;
+}): Promise<PaidTipConnectSnapshot> {
+  return assertPaidTipConnectInvariants({
+    ...params,
+    retrieveMerchantAccount: retrieveConnectedAccountForWebhook,
+    retrieveRecipientAccount: retrieveConnectedRecipientForWebhook,
+    assertMerchantCapable: assertLiveConnectedAccountCapable,
+  });
 }
 
 function assertLiveConnectedAccountCapable(account: {
@@ -462,8 +517,10 @@ async function emitTipSocketWithSnapshot(
 
 /**
  * Stripe Checkout — Apple Pay / Google Pay / card on Stripe-hosted page (EUR).
- * Destination charge: application fee retained by CareTip; remainder routed to
- * Business.stripeAccountId (server-resolved Express account). Never from the client.
+ * Destination charge when the Connect recipient is known at Checkout:
+ * application fee retained by CareTip; remainder to Business or Employee Express.
+ * Unconnected Direct-to-Employee tips charge the platform (no transfer_data) and
+ * are released later. Destination is never taken from the client.
  */
 export async function createTipCheckoutSession(
   input: CreateTipCheckoutSessionInput,
@@ -490,8 +547,7 @@ export async function createTipCheckoutSession(
   const tipForRecord = total;
 
   await assertEmployeeEligibleForTipPayment(employeeId, businessId);
-  const { stripeAccountId: destinationAccountId } =
-    await assertBusinessReadyForConnectTipDestination(businessId);
+  const routing = await resolveTipCheckoutRouting(businessId, employeeId);
 
   const { locationId: locId, tableId: tblId } = await resolveLocationTable(
     businessId,
@@ -513,7 +569,8 @@ export async function createTipCheckoutSession(
     businessId,
     source: "checkout_session",
     // Attribution only — never the authority for destination or fee.
-    connectAccountId: destinationAccountId,
+    connectAccountId: routing.destinationAccountId ?? "platform",
+    caretipChargeModel: routing.chargeModel,
   };
   if (locId) metadata.locationId = locId;
   if (tblId) metadata.tableId = tblId;
@@ -542,12 +599,16 @@ export async function createTipCheckoutSession(
           quantity: 1,
         },
       ],
-      payment_intent_data: {
-        application_fee_amount: platformFeeCents,
-        transfer_data: {
-          destination: destinationAccountId,
-        },
-      },
+      ...(routing.destinationAccountId
+        ? {
+            payment_intent_data: {
+              application_fee_amount: platformFeeCents,
+              transfer_data: {
+                destination: routing.destinationAccountId,
+              },
+            },
+          }
+        : {}),
       // Post-checkout: go directly to optional feedback page (no extra success screen).
       success_url: `${base}/rating?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: guestTipCheckoutCancelUrl(base, employeeId),
@@ -587,17 +648,32 @@ async function refundTipPaymentForEligibilityFailure(
   logTipPaymentEligibilityBlocked(source, { paymentIntentId, ...context }, eligibilityErr);
 
   try {
-    const refundParams: Stripe.RefundCreateParams = {
-      payment_intent: paymentIntentId,
-      // Destination charges transfer the full amount then take application_fee_amount
-      // on that transfer. Stripe requires reverse_transfer when refunding that fee.
-      refund_application_fee: true,
-      reverse_transfer: true,
-      metadata: {
-        caretip_refund_reason: "eligibility_failure",
-        caretip_context: source,
-      },
-    };
+    let dest: string | null = null;
+    try {
+      const pi = await retrievePaymentIntentForWebhook(paymentIntentId, null);
+      dest = destinationAccountIdFromPaymentIntent(pi);
+    } catch (piErr) {
+      logServerError("stripe.eligibility_refund.retrieve_pi", piErr, { paymentIntentId });
+    }
+    const refundParams: Stripe.RefundCreateParams = dest
+      ? {
+          payment_intent: paymentIntentId,
+          // Destination charges transfer the full amount then take application_fee_amount
+          // on that transfer. Stripe requires reverse_transfer when refunding that fee.
+          refund_application_fee: true,
+          reverse_transfer: true,
+          metadata: {
+            caretip_refund_reason: "eligibility_failure",
+            caretip_context: source,
+          },
+        }
+      : {
+          payment_intent: paymentIntentId,
+          metadata: {
+            caretip_refund_reason: "eligibility_failure",
+            caretip_context: source,
+          },
+        };
     const refundOptions: Stripe.RequestOptions = {
       idempotencyKey: `eligibility_refund:${paymentIntentId}`,
     };
@@ -754,25 +830,27 @@ export async function handlePaymentSuccess(paymentIntentId: string): Promise<voi
     return;
   }
 
+  let connectSnapshot: PaidTipConnectSnapshot | null = null;
+  let piForPayable: Stripe.PaymentIntent | null = null;
   try {
     if (!pending.employeeId) {
       throw new Error("Tip has no linked employee");
     }
     await assertEmployeeEligibleForTipPayment(pending.employeeId, pending.businessId);
-    const { stripeAccountId: expectedDestination } =
-      await assertBusinessReadyForConnectTipDestination(pending.businessId);
     const piForAssert = await retrievePaymentIntentForWebhook(paymentIntentId, null);
-    assertPaymentIntentDestinationMatchesBusiness({
-      paymentIntentDestination: destinationAccountIdFromPaymentIntent(piForAssert),
-      businessStripeAccountId: expectedDestination,
+    piForPayable = piForAssert;
+    connectSnapshot = await assertCapturedTipConnect({
+      paymentIntent: piForAssert,
+      employeeId: pending.employeeId,
       businessId: pending.businessId,
     });
     const expectedFee = calculateTipPlatformFeeCents(piForAssert.amount_received ?? piForAssert.amount);
-    if (piForAssert.application_fee_amount !== expectedFee) {
+    if (
+      connectSnapshot.destinationAccountId &&
+      piForAssert.application_fee_amount !== expectedFee
+    ) {
       throw new TipPaymentEligibilityError(CONNECT_TIP_UNAVAILABLE_MSG, CONNECT_PAYMENT_INVARIANT_CODE);
     }
-    const liveAccount = await retrieveConnectedAccountForWebhook(expectedDestination);
-    assertLiveConnectedAccountCapable(liveAccount, expectedDestination);
   } catch (err) {
     if (!(err instanceof TipPaymentEligibilityError) && !(err instanceof Error && err.message === "Tip has no linked employee")) {
       throw err;
@@ -839,6 +917,24 @@ export async function handlePaymentSuccess(paymentIntentId: string): Promise<voi
       where: { id: pending.id },
       data: { ...data, receiptNumber },
     });
+    if (connectSnapshot && pending.employeeId) {
+        const grossCents = piForPayable
+          ? (piForPayable.amount_received ?? piForPayable.amount)
+          : Math.round(Number(pending.amount) * 100);
+        await createEmployeeTipPayableForSuccessfulTip({
+          tx,
+          transactionId: pending.id,
+          employeeId: pending.employeeId,
+          businessId: pending.businessId,
+          paymentIntentId,
+          grossCents,
+          snapshot: connectSnapshot,
+          stripeChargeId: piForPayable ? stripeChargeIdFromPaymentIntent(piForPayable) : null,
+          destinationTransferId: piForPayable
+            ? destinationTransferIdFromPaymentIntent(piForPayable)
+            : null,
+        });
+    }
   });
 
   const emitSnapshot = await loadTipEmitSnapshot(pending.employeeId, pending.businessId);
@@ -1023,17 +1119,16 @@ export async function handleSuccessfulTipPayment(session: Stripe.Checkout.Sessio
     return;
   }
 
+  let paidConnectSnapshot: PaidTipConnectSnapshot;
   try {
     await assertEmployeeEligibleForTipPayment(employeeId, businessId);
-    const { stripeAccountId: expectedDestination } =
-      await assertBusinessReadyForConnectTipDestination(businessId);
-    assertPaymentIntentDestinationMatchesBusiness({
-      paymentIntentDestination: destinationAccountIdFromPaymentIntent(paymentIntent),
-      businessStripeAccountId: expectedDestination,
+    paidConnectSnapshot = await assertCapturedTipConnect({
+      paymentIntent,
+      employeeId,
       businessId,
     });
     const expectedFee = calculateTipPlatformFeeCents(piCents);
-    if (paymentIntent.application_fee_amount !== expectedFee) {
+    if (paidConnectSnapshot.destinationAccountId && paymentIntent.application_fee_amount !== expectedFee) {
       console.warn("[stripe.connect.fee_mismatch]", {
         businessId,
         expectedFee,
@@ -1041,18 +1136,6 @@ export async function handleSuccessfulTipPayment(session: Stripe.Checkout.Sessio
       });
       throw new TipPaymentEligibilityError(CONNECT_TIP_UNAVAILABLE_MSG, CONNECT_PAYMENT_INVARIANT_CODE);
     }
-    let liveAccount;
-    try {
-      liveAccount = await retrieveConnectedAccountForWebhook(expectedDestination);
-    } catch (retrieveErr) {
-      if (retrieveErr instanceof TipPaymentEligibilityError) throw retrieveErr;
-      console.error("[stripe.connect.live_retrieve_failed]", {
-        businessId,
-        reason: "STRIPE_RETRIEVE_ERROR",
-      });
-      throw retrieveErr;
-    }
-    assertLiveConnectedAccountCapable(liveAccount, expectedDestination);
   } catch (err) {
     if (!(err instanceof TipPaymentEligibilityError)) {
       throw err;
@@ -1098,9 +1181,21 @@ export async function handleSuccessfulTipPayment(session: Stripe.Checkout.Sessio
   try {
     const tip = await prisma.$transaction(async (tx) => {
       const receiptNumber = await allocateTipReceiptNumber(tx);
-      return tx.transaction.create({
+      const created = await tx.transaction.create({
         data: { ...payload, receiptNumber },
       });
+      await createEmployeeTipPayableForSuccessfulTip({
+        tx,
+        transactionId: created.id,
+        employeeId,
+        businessId,
+        paymentIntentId: piId,
+        grossCents: piCents,
+        snapshot: paidConnectSnapshot,
+        stripeChargeId: stripeChargeIdFromPaymentIntent(paymentIntent),
+        destinationTransferId: destinationTransferIdFromPaymentIntent(paymentIntent),
+      });
+      return created;
     });
 
     console.log("TIP CREATED", tip.id);

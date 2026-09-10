@@ -209,6 +209,29 @@ enum StripeConnectInstantPayoutRequestStatus {
   failed
 }
 
+/// Frozen on each new tip. Changing the Business setting never rewrites historical payables.
+enum EmployeeTipPayoutMode {
+  direct_to_employee
+  business_distribution
+}
+
+/// Stripe charge shape actually used for that tip (from PaymentIntent, not client metadata).
+enum EmployeeTipChargeModel {
+  destination_employee
+  destination_business
+  platform_hold
+}
+
+enum EmployeeTipPayableStatus {
+  held_platform
+  held_business
+  destination_settled
+  transferring
+  transferred
+  transfer_failed
+  refunded
+}
+
 enum GoalPeriod {
   daily
   weekly
@@ -812,6 +835,8 @@ model Business {
   /// Count of `requirements.currently_due` items (not the raw list).
   stripeConnectRequirementsDue Int @default(0) @map("stripe_connect_requirements_due")
   stripeConnectUpdatedAt DateTime? @map("stripe_connect_updated_at")
+  /// Server-authoritative routing for NEW tips only. Default: pay connected employees directly.
+  employeeTipPayoutMode EmployeeTipPayoutMode @default(direct_to_employee) @map("employee_tip_payout_mode")
   /// Platform Stripe Customer for checkout reuse before a Subscription row exists (Option A).
   stripeCustomerId    String?   @unique @map("stripe_customer_id")
   userId              String    @unique @map("user_id")
@@ -922,6 +947,7 @@ model Business {
   tipRefunds     TipRefund[]
   stripeConnectPayouts StripeConnectPayout[]
   stripeConnectInstantPayoutRequests StripeConnectInstantPayoutRequest[]
+  employeeTipPayables EmployeeTipPayable[]
   locations      Location[]
   supportTickets SupportTicket[]
   employeeInvites EmployeeInvite[]
@@ -1097,6 +1123,7 @@ model Employee {
   inviteRedemptions EmployeeInviteRedemption[]
   qrScanEvents      QrScanEvent[]
   stripeAccount     EmployeeStripeAccount?
+  tipPayables       EmployeeTipPayable[]
 
   @@index([businessId, locationId])
   @@index([businessId, isActive, name])
@@ -1123,6 +1150,44 @@ model EmployeeStripeAccount {
 
   @@index([stripeConnectStatus])
   @@map("employee_stripe_accounts")
+}
+
+/// Per-tip employee payable. Integer cents only. Not SUM(tips.amount) and not Transaction.payoutStatus.
+model EmployeeTipPayable {
+  id                         String                   @id @default(cuid())
+  transactionId              String                   @unique @map("transaction_id")
+  employeeId                 String?                  @map("employee_id")
+  businessId                 String                   @map("business_id")
+  routingMode                EmployeeTipPayoutMode    @map("routing_mode")
+  chargeModel                EmployeeTipChargeModel   @map("charge_model")
+  status                     EmployeeTipPayableStatus
+  grossCents                 Int                      @map("gross_cents")
+  platformFeeCents           Int                      @map("platform_fee_cents")
+  payableCents               Int                      @map("payable_cents")
+  transferredCents           Int                      @default(0) @map("transferred_cents")
+  reversedCents              Int                      @default(0) @map("reversed_cents")
+  refundedCents              Int                      @default(0) @map("refunded_cents")
+  disputedOpenCents          Int                      @default(0) @map("disputed_open_cents")
+  disputedLostCents          Int                      @default(0) @map("disputed_lost_cents")
+  stripeDisputeId            String?                  @map("stripe_dispute_id")
+  stripePaymentIntentId      String                   @map("stripe_payment_intent_id")
+  stripeChargeId             String?                  @map("stripe_charge_id")
+  stripeDestinationAccountId String?                  @map("stripe_destination_account_id")
+  stripeTransferId           String?                  @unique @map("stripe_transfer_id")
+  lastTransferError          String?                  @map("last_transfer_error") @db.VarChar(180)
+  createdAt                  DateTime                 @default(now()) @map("created_at")
+  updatedAt                  DateTime                 @updatedAt @map("updated_at")
+
+  transaction Transaction @relation(fields: [transactionId], references: [id], onDelete: Restrict)
+  employee    Employee?   @relation(fields: [employeeId], references: [id], onDelete: SetNull)
+  business    Business    @relation(fields: [businessId], references: [id], onDelete: Restrict)
+
+  @@index([employeeId, status])
+  @@index([businessId, routingMode, status])
+  @@index([stripePaymentIntentId])
+  @@index([stripeDisputeId])
+  @@index([status, createdAt])
+  @@map("employee_tip_payables")
 }
 
 /// Employee-created tip goals (multiple rows per employee). Business has read-only visibility via stats API.
@@ -1168,6 +1233,7 @@ model Transaction {
   table    Table?       @relation(fields: [tableId], references: [id], onDelete: SetNull)
   feedback TipFeedback?
   tipRefunds TipRefund[]
+  employeeTipPayable EmployeeTipPayable?
 
   @@index([businessId])
   @@index([employeeId, status, createdAt(sort: Desc)])

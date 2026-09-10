@@ -2881,6 +2881,33 @@ export interface EmployeeConnectStatus {
   payoutsEnabled: boolean;
   canOpenDashboard: boolean;
   updatedAt: string | null;
+  heldPlatformCents?: number;
+  destinationSettledCents?: number;
+  transferredCents?: number;
+  refundedCents?: number;
+  disputedOpenCents?: number;
+  disputedLostCents?: number;
+}
+
+export type EmployeeTipPayoutMode = "direct_to_employee" | "business_distribution";
+
+export async function getEmployeeTipPayoutMode(): Promise<{ mode: EmployeeTipPayoutMode }> {
+  return apiRequest(apiPath("/api/me/connect/employee-tip-payout-mode"), {
+    method: "GET",
+    headers: getHeaders(),
+    credentials: "include",
+  });
+}
+
+export async function patchEmployeeTipPayoutMode(
+  mode: EmployeeTipPayoutMode,
+): Promise<{ mode: EmployeeTipPayoutMode }> {
+  return apiRequest(apiPath("/api/me/connect/employee-tip-payout-mode"), {
+    method: "PATCH",
+    headers: getHeaders(),
+    credentials: "include",
+    body: JSON.stringify({ mode }),
+  });
 }
 
 export async function getEmployeeConnectStatus(): Promise<EmployeeConnectStatus> {

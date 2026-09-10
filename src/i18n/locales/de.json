@@ -3773,9 +3773,17 @@
       "subtitle": "Verbinden und verwalten Sie Ihr Stripe-Auszahlungskonto.",
       "backAria": "Zurück",
       "sectionTitle": "Auszahlungskonto",
-      "sectionHint": "Verbinden Sie Ihr Auszahlungskonto, damit CareTip Sie auszahlen kann, sobald Mitarbeiter-Auszahlungen aktiviert sind.",
+      "sectionHint": "Verbinden Sie Ihr Auszahlungskonto. Reguläre Auszahlungen auf Ihr Konto folgen dem Stripe-Zeitplan und sind von CareTip aus kostenlos.",
       "stripeHandles": "Stripe übernimmt Ihre Auszahlungsdaten und die Verifizierung sicher.",
-      "connectedBody": "Ihr Stripe-Auszahlungskonto ist verbunden.",
+      "connectedBody": "Ihr Stripe-Auszahlungskonto ist verbunden. Neue Trinkgelder können dorthin fließen, wenn das Unternehmen Direktauszahlung nutzt.",
+      "heldTitle": "Für Ihr Konto gehalten",
+      "heldBody": "Dieses Trinkgeld kam vor der Kontoverbindung. Es wird freigegeben, sobald Stripe bestätigt, dass Überweisungen möglich sind.",
+      "settledTitle": "Auf Ihr Stripe-Konto gezahlt",
+      "notStripeBalance": "Das ist CareTips Zahlungsverpflichtung, kein Live-Stripe-Saldo.",
+      "disputedOpenTitle": "In Streitprüfung",
+      "disputedOpenBody": "Dieser Betrag ist in CareTips Zahlungsdaten eingefroren, bis Stripe den Dispute schließt. Er wird nicht überwiesen.",
+      "disputedLostTitle": "Nicht mehr auszahlbar",
+      "disputedLostBody": "Stripe hat diesen Dispute als verloren erfasst. CareTip behandelt den Betrag nicht als Verdienst.",
       "loading": "Auszahlungskonto wird geladen…",
       "loadError": "Status des Auszahlungskontos konnte nicht geladen werden.",
       "connectCta": "Auszahlungskonto verbinden",
@@ -5999,6 +6007,26 @@
       "nav": {
         "connect": "Verbindung",
         "payouts": "Auszahlungen"
+      },
+      "tipRouting": {
+        "title": "Mitarbeiter-Trinkgeld",
+        "hint": "Gilt nur für neue Trinkgelder. Bereits gezahlte Beträge behalten ihre ursprüngliche Weiterleitung.",
+        "loading": "Einstellung wird geladen…",
+        "save": "Speichern",
+        "saving": "Speichern…",
+        "saved": "Trinkgeld-Weiterleitung gespeichert.",
+        "saveError": "Weiterleitung konnte nicht gespeichert werden.",
+        "loadError": "Weiterleitung konnte nicht geladen werden.",
+        "mode": {
+          "direct_to_employee": {
+            "label": "Direkt an Mitarbeiter zahlen",
+            "body": "Ist das Auszahlungskonto verbunden, geht das Trinkgeld dorthin. Ohne Verbindung kann der Gast trotzdem zahlen; der Betrag wird gehalten, bis das Konto bereit ist."
+          },
+          "business_distribution": {
+            "label": "Zuerst an das Unternehmen",
+            "body": "Trinkgeld landet weiter auf dem Stripe-Konto des Unternehmens, inklusive Sofortauszahlung. Automatische Mitarbeiter-Transfers von diesem Guthaben sind noch nicht aktiv."
+          }
+        }
       }
     },
     "billing": {
