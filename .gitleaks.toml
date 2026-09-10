@@ -37,6 +37,8 @@ regexes = [
   '''YOUR_DEMO_PASSWORD''',
   '''password123''',
   '''Demo1234!''',
+  '''phase32a_jordan_instant_01''',
+  '''phase32a_steer_denied_01''',
   '''PROJECT_REF:PASSWORD''',
   '''postgres\.PROJECT_REF:PASSWORD''',
 ]

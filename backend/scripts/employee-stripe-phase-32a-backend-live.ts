@@ -20,7 +20,8 @@ const SAM_EMAIL = "sam.p26_1786691378148@caretip-test.local";
 const PASSWORD = process.env.PHASE26_PASSWORD?.trim() || "Phase26E2E!23";
 const EXPECTED_SHA = "eb2169a2";
 const EVIDENCE_DIR = join(process.cwd(), "..", "security-audit", "phase-32a-evidence");
-const IDEMPOTENCY_KEY = "phase32a_jordan_instant_01";
+const JORDAN_INSTANT_IDEMPOTENCY = "phase32a_jordan_instant_01";
+const STEER_DENIED_IDEMPOTENCY = "phase32a_steer_denied_01";
 
 function suffix(id: string | null | undefined) {
   const s = (id ?? "").trim();
@@ -222,12 +223,12 @@ async function main() {
     instantPost = await renderJson("/api/me/employee-connect/instant-payout", {
       method: "POST",
       token: jordanAuth.token,
-      body: JSON.stringify({ idempotencyKey: IDEMPOTENCY_KEY }),
+      body: JSON.stringify({ idempotencyKey: JORDAN_INSTANT_IDEMPOTENCY }),
     });
     instantReplay = await renderJson("/api/me/employee-connect/instant-payout", {
       method: "POST",
       token: jordanAuth.token,
-      body: JSON.stringify({ idempotencyKey: IDEMPOTENCY_KEY }),
+      body: JSON.stringify({ idempotencyKey: JORDAN_INSTANT_IDEMPOTENCY }),
     });
   }
   evidence.instantPost = instantPost ? { status: instantPost.status, body: redact(instantPost.json) } : { skipped: true };
@@ -239,7 +240,7 @@ async function main() {
     method: "POST",
     token: jordanAuth.token,
     body: JSON.stringify({
-      idempotencyKey: "phase32a_steer_denied_01",
+      idempotencyKey: STEER_DENIED_IDEMPOTENCY,
       destination: "ba_attacker",
       employeeId: "emp_attacker",
       stripeAccountId: "acct_attacker",
