@@ -69,11 +69,13 @@ export type InstantPayoutEligibilityDto = {
   canOpenExpressDashboard: boolean;
 };
 
-type InstantSnapshot = InstantPayoutEligibilityDto & {
+export type InstantAccountSnapshot = InstantPayoutEligibilityDto & {
   stripeAccountId: string;
   destinationId: string | null;
   accountCountry: string | null;
 };
+
+type InstantSnapshot = InstantAccountSnapshot;
 
 type RetrieveBalanceFn = (stripeAccountId: string) => Promise<Stripe.Balance>;
 type ListExternalAccountsFn = (stripeAccountId: string) => Promise<Stripe.ApiList<Stripe.BankAccount | Stripe.Card>>;
@@ -126,7 +128,11 @@ function instantMinCents(currency: string): number {
   return currency === "eur" ? EUR_INSTANT_MIN_CENTS : 50;
 }
 
-function instantMaxCents(currency: string): number {
+export function stripeInstantPayoutMinCents(currency: string): number {
+  return instantMinCents(currency);
+}
+
+export function instantPayoutMaxCents(currency: string): number {
   return currency === "eur" ? EUR_INSTANT_MAX_CENTS : 999_900;
 }
 
@@ -168,7 +174,7 @@ function emptyEligibility(partial: Partial<InstantPayoutEligibilityDto> & { reas
   };
 }
 
-function toPublicEligibility(snap: InstantSnapshot): InstantPayoutEligibilityDto {
+export function toPublicInstantEligibility(snap: InstantSnapshot): InstantPayoutEligibilityDto {
   const { stripeAccountId: _a, destinationId: _d, accountCountry: _c, ...pub } = snap;
   return pub;
 }
@@ -212,7 +218,16 @@ function kindOf(account: Stripe.BankAccount | Stripe.Card): "card" | "bank_accou
   return account.object === "card" ? "card" : "bank_account";
 }
 
-async function buildSnapshot(businessId: string): Promise<InstantSnapshot> {
+/**
+ * Stripe-authoritative Instant eligibility for a connected account.
+ * minNetCents is a CareTip floor on top of Stripe's currency minimum (EU Instant min is 40¢).
+ */
+export async function evaluateInstantPayoutForStripeAccount(args: {
+  stripeAccountId: string;
+  payoutsEnabledFallback: boolean;
+  minNetCents?: number;
+  logContext?: Record<string, unknown>;
+}): Promise<InstantSnapshot> {
   if (!isStripeConfigured() && !retrieveBalanceFn) {
     return {
       ...emptyEligibility({ reason: "stripe_not_configured" }),
@@ -222,21 +237,7 @@ async function buildSnapshot(businessId: string): Promise<InstantSnapshot> {
     };
   }
 
-  const business = await prisma.business.findUnique({
-    where: { id: businessId },
-    select: {
-      deletedAt: true,
-      legalHold: true,
-      stripeAccountId: true,
-      stripePayoutsEnabled: true,
-    },
-  });
-  if (!business) {
-    throw new StripeConnectError("Business not found", "BUSINESS_NOT_FOUND", 404);
-  }
-  assertBusinessMayPayout(business);
-
-  const stripeAccountId = business.stripeAccountId?.trim() ?? "";
+  const stripeAccountId = args.stripeAccountId.trim();
   if (!stripeAccountId.startsWith("acct_")) {
     return {
       ...emptyEligibility({ reason: "not_connected" }),
@@ -246,15 +247,14 @@ async function buildSnapshot(businessId: string): Promise<InstantSnapshot> {
     };
   }
 
-  const baseOpenDash = true;
   const platform = platformCountry();
   if (!isInstantCountry(platform)) {
     return {
       ...emptyEligibility({
         connected: true,
         reason: "country_unsupported",
-        payoutsEnabled: business.stripePayoutsEnabled,
-        canOpenExpressDashboard: baseOpenDash,
+        payoutsEnabled: args.payoutsEnabledFallback,
+        canOpenExpressDashboard: true,
       }),
       stripeAccountId,
       destinationId: null,
@@ -272,12 +272,12 @@ async function buildSnapshot(businessId: string): Promise<InstantSnapshot> {
       listExternalAccounts(stripeAccountId),
     ]);
   } catch (err) {
-    logServerError("stripeConnectInstantPayout.eligibility_stripe", err, { businessId });
+    logServerError("stripeConnectInstantPayout.eligibility_stripe", err, args.logContext ?? {});
     throw new StripeConnectError(SAFE_CREATE_MSG, "INSTANT_PAYOUT_STRIPE_ERROR", 502);
   }
 
   const accountCountry = String(account.country ?? "").toUpperCase() || null;
-  const payoutsEnabled = account.payouts_enabled === true || business.stripePayoutsEnabled;
+  const payoutsEnabled = account.payouts_enabled === true || args.payoutsEnabledFallback;
   if (!payoutsEnabled) {
     return {
       ...emptyEligibility({
@@ -358,7 +358,7 @@ async function buildSnapshot(businessId: string): Promise<InstantSnapshot> {
 
   const platformFeeCents = Math.max(0, gross - net);
   const displayedFeeBps = gross > 0 ? Math.round((platformFeeCents / gross) * 10_000) : null;
-  const min = instantMinCents(currency);
+  const min = Math.max(instantMinCents(currency), Math.max(0, args.minNetCents ?? 0));
 
   let reason: InstantPayoutReason = "eligible";
   let eligible = true;
@@ -393,14 +393,61 @@ async function buildSnapshot(businessId: string): Promise<InstantSnapshot> {
   };
 }
 
+async function buildSnapshot(businessId: string): Promise<InstantSnapshot> {
+  const business = await prisma.business.findUnique({
+    where: { id: businessId },
+    select: {
+      deletedAt: true,
+      legalHold: true,
+      stripeAccountId: true,
+      stripePayoutsEnabled: true,
+    },
+  });
+  if (!business) {
+    throw new StripeConnectError("Business not found", "BUSINESS_NOT_FOUND", 404);
+  }
+  assertBusinessMayPayout(business);
+
+  return evaluateInstantPayoutForStripeAccount({
+    stripeAccountId: business.stripeAccountId?.trim() ?? "",
+    payoutsEnabledFallback: business.stripePayoutsEnabled,
+    minNetCents: 0,
+    logContext: { businessId },
+  });
+}
+
+export async function createInstantPayoutOnConnectedAccount(args: {
+  stripeAccountId: string;
+  amountCents: number;
+  currency: string;
+  destination: string;
+  idempotencyKey: string;
+}): Promise<Stripe.Payout> {
+  if (createInstantPayoutFn) {
+    return createInstantPayoutFn(args);
+  }
+  return getStripeClient().payouts.create(
+    {
+      amount: args.amountCents,
+      currency: args.currency,
+      method: "instant",
+      destination: args.destination,
+    },
+    {
+      stripeAccount: args.stripeAccountId,
+      idempotencyKey: args.idempotencyKey,
+    },
+  );
+}
+
 export async function getInstantPayoutEligibilityForBusiness(
   businessId: string,
 ): Promise<InstantPayoutEligibilityDto> {
   const snap = await buildSnapshot(businessId);
-  return toPublicEligibility(snap);
+  return toPublicInstantEligibility(snap);
 }
 
-function normalizeIdempotencyKey(raw: unknown): string {
+export function normalizeInstantPayoutIdempotencyKey(raw: unknown): string {
   if (typeof raw !== "string") {
     throw new StripeConnectError("Invalid request.", "INSTANT_PAYOUT_IDEMPOTENCY_REQUIRED", 400);
   }
@@ -411,7 +458,7 @@ function normalizeIdempotencyKey(raw: unknown): string {
   return key;
 }
 
-function mapStripeCreateError(err: unknown): StripeConnectError {
+export function mapInstantPayoutCreateError(err: unknown): StripeConnectError {
   const code =
     err && typeof err === "object" && "code" in err ? String((err as { code?: string }).code ?? "") : "";
   if (code === "balance_insufficient") {
@@ -436,7 +483,7 @@ export async function createInstantPayoutForBusiness(args: {
   businessId: string;
   idempotencyKey: unknown;
 }): Promise<{ payout: ConnectPayoutDto; eligibility: InstantPayoutEligibilityDto }> {
-  const idempotencyKey = normalizeIdempotencyKey(args.idempotencyKey);
+  const idempotencyKey = normalizeInstantPayoutIdempotencyKey(args.idempotencyKey);
   const ledgerKey = `caretip_instant_payout:${args.businessId}:${idempotencyKey}`;
 
   return runSerializedByKey(`instant-payout:${args.businessId}`, async () => {
@@ -469,7 +516,7 @@ export async function createInstantPayoutForBusiness(args: {
     }
 
     const amountCents = snap.instantAvailableNetCents;
-    const max = instantMaxCents(snap.currency);
+    const max = instantPayoutMaxCents(snap.currency);
     if (amountCents > max) {
       throw new StripeConnectError(
         "This Instant Payout exceeds Stripe’s maximum for this currency.",
@@ -501,35 +548,20 @@ export async function createInstantPayoutForBusiness(args: {
       if (payout) {
         const dto = await getPayoutForBusiness(args.businessId, payout.id);
         if (dto) {
-          return { payout: dto, eligibility: toPublicEligibility(snap) };
+          return { payout: dto, eligibility: toPublicInstantEligibility(snap) };
         }
       }
     }
 
     let stripePayout: Stripe.Payout;
     try {
-      if (createInstantPayoutFn) {
-        stripePayout = await createInstantPayoutFn({
-          stripeAccountId: snap.stripeAccountId,
-          amountCents,
-          currency: snap.currency,
-          destination: snap.destinationId,
-          idempotencyKey: ledgerKey,
-        });
-      } else {
-        stripePayout = await getStripeClient().payouts.create(
-          {
-            amount: amountCents,
-            currency: snap.currency,
-            method: "instant",
-            destination: snap.destinationId,
-          },
-          {
-            stripeAccount: snap.stripeAccountId,
-            idempotencyKey: ledgerKey,
-          },
-        );
-      }
+      stripePayout = await createInstantPayoutOnConnectedAccount({
+        stripeAccountId: snap.stripeAccountId,
+        amountCents,
+        currency: snap.currency,
+        destination: snap.destinationId,
+        idempotencyKey: ledgerKey,
+      });
     } catch (err) {
       await prisma.stripeConnectInstantPayoutRequest.update({
         where: { id: request.id },
@@ -538,7 +570,7 @@ export async function createInstantPayoutForBusiness(args: {
           failureCode: "stripe_create_failed",
         },
       });
-      throw mapStripeCreateError(err);
+      throw mapInstantPayoutCreateError(err);
     }
 
     await prisma.stripeConnectInstantPayoutRequest.update({

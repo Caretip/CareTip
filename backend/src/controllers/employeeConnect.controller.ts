@@ -10,6 +10,11 @@ import {
   resolveActiveEmployeeForConnect,
 } from "../services/employeeStripeConnect.service.js";
 import { listEmployeePayableActivityForEmployee } from "../services/employeeTipPayable.service.js";
+import {
+  createEmployeeInstantPayoutForUser,
+  getEmployeeInstantPayoutEligibilityForUser,
+} from "../services/employeeInstantPayout.service.js";
+import { listEmployeeStripeBankPayoutsForUser } from "../services/employeeStripeBankPayouts.service.js";
 import { clientSafeMessage, CLIENT_FALLBACK, logServerError } from "../utils/httpErrors.js";
 
 function getUserId(req: Request): string | null {
@@ -33,10 +38,16 @@ function rejectClientEmployeeConnectSteering(req: Request, res: Response): boole
     body.accountId != null ||
     body.destination != null ||
     body.amount != null ||
+    body.fee != null ||
+    body.feeBps != null ||
+    body.application_fee_amount != null ||
     query.businessId != null ||
     query.employeeId != null ||
     query.stripeAccountId != null ||
-    query.accountId != null
+    query.accountId != null ||
+    query.destination != null ||
+    query.amount != null ||
+    query.fee != null
   ) {
     res.status(400).json({
       message: "Invalid request.",
@@ -143,6 +154,59 @@ export async function postMyEmployeeConnectLoginLink(req: Request, res: Response
     return res.json({ url: result.url });
   } catch (err) {
     logServerError("employeeConnect.postMyEmployeeConnectLoginLink", err);
+    if (err instanceof StripeConnectError) {
+      return res.status(err.httpStatus).json({ message: err.message, code: err.code });
+    }
+    return res.status(400).json({ message: connectClientMessage(err) });
+  }
+}
+
+export async function getMyEmployeeInstantPayout(req: Request, res: Response) {
+  try {
+    const userId = getUserId(req);
+    if (!userId) return res.status(401).json({ message: "Authentication required" });
+    if (rejectClientEmployeeConnectSteering(req, res)) return;
+    const eligibility = await getEmployeeInstantPayoutEligibilityForUser(userId);
+    return res.json(eligibility);
+  } catch (err) {
+    logServerError("employeeConnect.getMyEmployeeInstantPayout", err);
+    if (err instanceof StripeConnectError) {
+      return res.status(err.httpStatus).json({ message: err.message, code: err.code });
+    }
+    return res.status(400).json({ message: connectClientMessage(err) });
+  }
+}
+
+export async function postMyEmployeeInstantPayout(req: Request, res: Response) {
+  try {
+    const userId = getUserId(req);
+    if (!userId) return res.status(401).json({ message: "Authentication required" });
+    if (rejectClientEmployeeConnectSteering(req, res)) return;
+    const result = await createEmployeeInstantPayoutForUser({
+      userId,
+      idempotencyKey: (req.body ?? {}).idempotencyKey,
+    });
+    return res.json(result);
+  } catch (err) {
+    logServerError("employeeConnect.postMyEmployeeInstantPayout", err);
+    if (err instanceof StripeConnectError) {
+      return res.status(err.httpStatus).json({ message: err.message, code: err.code });
+    }
+    return res.status(400).json({ message: connectClientMessage(err) });
+  }
+}
+
+export async function getMyEmployeeStripeBankPayouts(req: Request, res: Response) {
+  try {
+    const userId = getUserId(req);
+    if (!userId) return res.status(401).json({ message: "Authentication required" });
+    if (rejectClientEmployeeConnectSteering(req, res)) return;
+    const takeRaw = Number(req.query.take);
+    const take = Number.isInteger(takeRaw) ? takeRaw : 20;
+    const result = await listEmployeeStripeBankPayoutsForUser(userId, { take });
+    return res.json(result);
+  } catch (err) {
+    logServerError("employeeConnect.getMyEmployeeStripeBankPayouts", err);
     if (err instanceof StripeConnectError) {
       return res.status(err.httpStatus).json({ message: err.message, code: err.code });
     }

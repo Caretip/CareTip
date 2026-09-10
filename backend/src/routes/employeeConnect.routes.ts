@@ -27,5 +27,20 @@ router.post(
   ...employeeConnect,
   employeeConnectController.postMyEmployeeConnectLoginLink,
 );
+router.get(
+  "/employee-connect/instant-payout",
+  ...employeeConnect,
+  employeeConnectController.getMyEmployeeInstantPayout,
+);
+router.post(
+  "/employee-connect/instant-payout",
+  ...employeeConnect,
+  employeeConnectController.postMyEmployeeInstantPayout,
+);
+router.get(
+  "/employee-connect/stripe-payouts",
+  ...employeeConnect,
+  employeeConnectController.getMyEmployeeStripeBankPayouts,
+);
 
 export default router;

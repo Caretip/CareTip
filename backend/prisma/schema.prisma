@@ -1124,6 +1124,7 @@ model Employee {
   qrScanEvents      QrScanEvent[]
   stripeAccount     EmployeeStripeAccount?
   tipPayables       EmployeeTipPayable[]
+  instantPayoutRequests EmployeeInstantPayoutRequest[]
 
   @@index([businessId, locationId])
   @@index([businessId, isActive, name])
@@ -1150,6 +1151,26 @@ model EmployeeStripeAccount {
 
   @@index([stripeConnectStatus])
   @@map("employee_stripe_accounts")
+}
+
+/// Idempotency ledger for employee-initiated Instant Payouts. Not Business StripeConnectPayout.
+model EmployeeInstantPayoutRequest {
+  id             String                                 @id @default(cuid())
+  employeeId     String                                 @map("employee_id")
+  idempotencyKey String                                 @unique @map("idempotency_key") @db.VarChar(160)
+  amountCents    Int                                    @map("amount_cents")
+  currency       String                                 @db.VarChar(8)
+  stripePayoutId String?                                @map("stripe_payout_id") @db.VarChar(128)
+  status         StripeConnectInstantPayoutRequestStatus
+  failureCode    String?                                @map("failure_code") @db.VarChar(64)
+  createdAt      DateTime                               @default(now()) @map("created_at")
+  updatedAt      DateTime                               @updatedAt @map("updated_at")
+
+  employee Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  @@index([employeeId, createdAt(sort: Desc)])
+  @@index([stripePayoutId])
+  @@map("employee_instant_payout_requests")
 }
 
 /// Per-tip employee payable. Integer cents only. Not SUM(tips.amount) and not Transaction.payoutStatus.
