@@ -39,6 +39,12 @@ export type TipCheckoutRouting =
       routingMode: typeof EmployeeTipPayoutMode.direct_to_employee;
       destinationAccountId: null;
       applyApplicationFee: false;
+    }
+  | {
+      chargeModel: typeof EmployeeTipChargeModel.platform_hold;
+      routingMode: typeof EmployeeTipPayoutMode.business_distribution;
+      destinationAccountId: null;
+      applyApplicationFee: false;
     };
 
 export type PaidTipConnectSnapshot = {
@@ -46,6 +52,17 @@ export type PaidTipConnectSnapshot = {
   routingMode: EmployeeTipPayoutMode;
   destinationAccountId: string | null;
 };
+
+/** Frozen at Checkout via server-set PaymentIntent metadata — never from the client body. */
+export function routingModeFromStripeMetadata(
+  metadata: Stripe.Metadata | null | undefined,
+): EmployeeTipPayoutMode {
+  const raw = typeof metadata?.caretipRoutingMode === "string" ? metadata.caretipRoutingMode.trim() : "";
+  if (raw === EmployeeTipPayoutMode.business_distribution) {
+    return EmployeeTipPayoutMode.business_distribution;
+  }
+  return EmployeeTipPayoutMode.direct_to_employee;
+}
 
 export function isEmployeeRecipientReady(row: {
   stripeAccountId: string | null;
@@ -64,8 +81,7 @@ export async function resolveTipCheckoutRouting(
   businessId: string,
   employeeId: string,
 ): Promise<TipCheckoutRouting> {
-  const { stripeAccountId: businessAccountId } =
-    await assertBusinessReadyForConnectTipDestination(businessId);
+  await assertBusinessReadyForConnectTipDestination(businessId);
 
   const business = await prisma.business.findUnique({
     where: { id: businessId },
@@ -74,11 +90,13 @@ export async function resolveTipCheckoutRouting(
   const mode = business?.employeeTipPayoutMode ?? EmployeeTipPayoutMode.direct_to_employee;
 
   if (mode === EmployeeTipPayoutMode.business_distribution) {
+    // Gate 5: platform charge + later employee SCT. Never destination-charge the
+    // Business Express balance — Instant / automatic payouts could drain it.
     return {
-      chargeModel: EmployeeTipChargeModel.destination_business,
+      chargeModel: EmployeeTipChargeModel.platform_hold,
       routingMode: EmployeeTipPayoutMode.business_distribution,
-      destinationAccountId: businessAccountId,
-      applyApplicationFee: true,
+      destinationAccountId: null,
+      applyApplicationFee: false,
     };
   }
 
@@ -197,7 +215,7 @@ export async function assertPaidTipConnectInvariants(params: {
     }
     return {
       chargeModel: EmployeeTipChargeModel.platform_hold,
-      routingMode: EmployeeTipPayoutMode.direct_to_employee,
+      routingMode: routingModeFromStripeMetadata(paymentIntent.metadata),
       destinationAccountId: null,
     };
   }

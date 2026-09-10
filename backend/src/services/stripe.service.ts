@@ -571,6 +571,7 @@ export async function createTipCheckoutSession(
     // Attribution only — never the authority for destination or fee.
     connectAccountId: routing.destinationAccountId ?? "platform",
     caretipChargeModel: routing.chargeModel,
+    caretipRoutingMode: routing.routingMode,
   };
   if (locId) metadata.locationId = locId;
   if (tblId) metadata.tableId = tblId;
@@ -599,16 +600,22 @@ export async function createTipCheckoutSession(
           quantity: 1,
         },
       ],
-      ...(routing.destinationAccountId
-        ? {
-            payment_intent_data: {
+      payment_intent_data: {
+        metadata: {
+          employeeId,
+          businessId,
+          caretipChargeModel: routing.chargeModel,
+          caretipRoutingMode: routing.routingMode,
+        },
+        ...(routing.destinationAccountId
+          ? {
               application_fee_amount: platformFeeCents,
               transfer_data: {
                 destination: routing.destinationAccountId,
               },
-            },
-          }
-        : {}),
+            }
+          : {}),
+      },
       // Post-checkout: go directly to optional feedback page (no extra success screen).
       success_url: `${base}/rating?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: guestTipCheckoutCancelUrl(base, employeeId),

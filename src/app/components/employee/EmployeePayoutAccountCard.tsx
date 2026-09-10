@@ -8,28 +8,30 @@ import {
   createEmployeeConnectLoginLink,
   getEmployeeConnectStatus,
   type EmployeeConnectStatus,
-  type EmployeePayoutConnectionState,
 } from "../../lib/api";
 import { toUserFriendlyMessage } from "../../lib/errorMessages";
 import { logClientError } from "../../lib/clientLog";
 import { performExternalStripeRedirect } from "../../lib/externalStripeRedirect";
-import { employeeUi } from "./employeeDashboardUi";
 import { Button } from "../ui/button";
 import { formatEur } from "../../lib/formatEur";
-import { cn } from "@/lib/utils";
+import { FinanceStatusDot, type FinanceStatusTone } from "../finance/FinanceStatusDot";
+import {
+  employeePayoutBodyKey,
+  employeePayoutPrimaryCta,
+  employeePayoutPrimaryCtaKey,
+  employeePayoutUiPhase,
+  isEmployeePayoutReady,
+} from "./employeePayoutAccountPresentation";
 
-function stateTone(state: EmployeePayoutConnectionState): string {
-  if (state === "connected") {
-    return "border-l-emerald-600 bg-emerald-50/80 text-emerald-950 dark:border-l-emerald-500 dark:bg-emerald-950/25 dark:text-emerald-50";
-  }
-  if (state === "setup_required" || state === "action_required") {
-    return "border-l-amber-500 bg-amber-50/80 text-amber-950 dark:border-l-amber-400 dark:bg-amber-950/25 dark:text-amber-50";
-  }
-  if (state === "restricted") {
-    return "border-l-red-600 bg-red-50/80 text-red-950 dark:border-l-red-500 dark:bg-red-950/30 dark:text-red-50";
-  }
-  return "border-l-border bg-muted/40 text-foreground";
+function phaseTone(phase: ReturnType<typeof employeePayoutUiPhase>): FinanceStatusTone {
+  if (phase === "ready") return "success";
+  if (phase === "error") return "danger";
+  if (phase === "attention" || phase === "setup_incomplete") return "warning";
+  return "neutral";
 }
+
+const ctaClass =
+  "h-auto min-h-11 w-full min-w-0 whitespace-normal px-3 py-2 text-center leading-snug sm:w-auto sm:min-w-[11rem]";
 
 export function EmployeePayoutAccountCard() {
   const { t } = useTranslation();
@@ -105,95 +107,131 @@ export function EmployeePayoutAccountCard() {
     }
   };
 
+  const phase = employeePayoutUiPhase({ loading, error, data });
   const state = data?.connectionState ?? "not_connected";
+  const ready = isEmployeePayoutReady(data);
+  const primaryCta = employeePayoutPrimaryCta(phase);
+  const held = data?.heldPlatformCents ?? 0;
+  const disputedOpen = data?.disputedOpenCents ?? 0;
+  const disputedLost = data?.disputedLostCents ?? 0;
+  const refunded = data?.refundedCents ?? 0;
+  const routed = (data?.destinationSettledCents ?? 0) + (data?.transferredCents ?? 0);
+
+  const metrics = [
+    { key: "routed", cents: routed, label: t("employee.payouts.metric.routed") },
+    { key: "held", cents: held, label: t("employee.payouts.metric.held") },
+    { key: "refunded", cents: refunded, label: t("employee.payouts.metric.refunded") },
+    { key: "disputed", cents: disputedOpen, label: t("employee.payouts.metric.disputed") },
+  ];
 
   return (
-    <section className={employeeUi.settingsSection}>
-      <h3 className={employeeUi.settingsHeading}>{t("employee.payouts.sectionTitle")}</h3>
-      <p className="text-sm text-muted-foreground">{t("employee.payouts.sectionHint")}</p>
-
-      {loading && !data ? (
-        <div className="flex items-center gap-2 text-sm text-muted-foreground py-4">
+    <div className="space-y-8">
+      {phase === "loading" ? (
+        <div className="flex items-center gap-2 py-6 text-sm text-muted-foreground" role="status">
           <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
           {t("employee.payouts.loading")}
         </div>
-      ) : error && !data ? (
-        <p className="text-sm text-destructive">{error}</p>
-      ) : (
-        <div className={cn("rounded-xl border border-l-4 p-4 space-y-3", stateTone(state))}>
-          <p className="text-sm font-semibold">
-            {t(`employee.payouts.state.${state}`)}
-          </p>
-          <p className="text-sm opacity-90">
-            {state === "connected"
-              ? t("employee.payouts.connectedBody")
-              : t("employee.payouts.stripeHandles")}
-          </p>
-          {(data?.heldPlatformCents ?? 0) > 0 ? (
-            <div className="rounded-lg bg-background/60 p-3 space-y-1">
-              <p className="text-sm font-medium">{t("employee.payouts.heldTitle")}</p>
-              <p className="text-sm">{formatEur((data?.heldPlatformCents ?? 0) / 100)}</p>
-              <p className="text-xs text-muted-foreground">{t("employee.payouts.heldBody")}</p>
-              <p className="text-xs text-muted-foreground">{t("employee.payouts.notStripeBalance")}</p>
-            </div>
-          ) : null}
-          {(data?.disputedOpenCents ?? 0) > 0 ? (
-            <div className="rounded-lg bg-background/60 p-3 space-y-1">
-              <p className="text-sm font-medium">{t("employee.payouts.disputedOpenTitle")}</p>
-              <p className="text-sm">{formatEur((data?.disputedOpenCents ?? 0) / 100)}</p>
-              <p className="text-xs text-muted-foreground">{t("employee.payouts.disputedOpenBody")}</p>
-              <p className="text-xs text-muted-foreground">{t("employee.payouts.notStripeBalance")}</p>
-            </div>
-          ) : null}
-          {(data?.disputedLostCents ?? 0) > 0 ? (
-            <div className="rounded-lg bg-background/60 p-3 space-y-1">
-              <p className="text-sm font-medium">{t("employee.payouts.disputedLostTitle")}</p>
-              <p className="text-sm">{formatEur((data?.disputedLostCents ?? 0) / 100)}</p>
-              <p className="text-xs text-muted-foreground">{t("employee.payouts.disputedLostBody")}</p>
-              <p className="text-xs text-muted-foreground">{t("employee.payouts.notStripeBalance")}</p>
-            </div>
-          ) : null}
-          {(data?.destinationSettledCents ?? 0) + (data?.transferredCents ?? 0) > 0 ? (
-            <div className="rounded-lg bg-background/60 p-3 space-y-1">
-              <p className="text-sm font-medium">{t("employee.payouts.settledTitle")}</p>
-              <p className="text-sm">
-                {formatEur(((data?.destinationSettledCents ?? 0) + (data?.transferredCents ?? 0)) / 100)}
-              </p>
-              <p className="text-xs text-muted-foreground">{t("employee.payouts.notStripeBalance")}</p>
-            </div>
-          ) : null}
-          <div className="flex flex-wrap gap-2">
-            <Button
-              type="button"
-              onClick={() => void onConnect()}
-              disabled={busy != null || data?.stripeConfigured === false}
-            >
-              {busy === "onboarding" ? (
-                <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
-              ) : null}
-              {data?.hasAccount
-                ? t("employee.payouts.continueSetup")
-                : t("employee.payouts.connectCta")}
-            </Button>
-            {data?.canOpenDashboard ? (
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => void onDashboard()}
-                disabled={busy != null}
-              >
-                {busy === "dashboard" ? (
-                  <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
-                ) : null}
-                {t("employee.payouts.openDashboard")}
-              </Button>
-            ) : null}
-          </div>
-          {data?.stripeConfigured === false ? (
-            <p className="text-xs opacity-80">{t("employee.payouts.notConfigured")}</p>
-          ) : null}
+      ) : phase === "error" ? (
+        <div className="space-y-3" role="alert">
+          <p className="text-sm text-destructive">{error}</p>
+          <p className="text-xs text-muted-foreground">{t("employee.payouts.statusErrorHint")}</p>
+          <Button type="button" variant="outline" className={ctaClass} onClick={() => void reload()}>
+            {t("employee.payouts.retry")}
+          </Button>
         </div>
+      ) : (
+        <>
+          <section className="space-y-4" aria-labelledby="employee-payout-account-heading">
+            <div className="flex flex-col gap-4 border-b border-border/80 pb-5 sm:flex-row sm:items-start sm:justify-between">
+              <div className="min-w-0 space-y-1">
+                <p className="text-[0.6875rem] font-medium uppercase tracking-wide text-muted-foreground">
+                  {t("employee.payouts.sectionTitle")}
+                </p>
+                <h2 id="employee-payout-account-heading" className="text-base font-semibold tracking-tight">
+                  {ready ? t("employee.payouts.readyBadge") : t(`employee.payouts.state.${state}`)}
+                </h2>
+                <FinanceStatusDot
+                  tone={phaseTone(phase)}
+                  label={t(`employee.payouts.state.${state}`)}
+                  className="text-sm"
+                />
+                <p className="max-w-xl text-sm leading-snug text-muted-foreground">
+                  {t(employeePayoutBodyKey(phase, state))}
+                </p>
+              </div>
+              <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:flex-wrap sm:justify-end">
+                {ready && data?.canOpenDashboard ? (
+                  <Button
+                    type="button"
+                    className={ctaClass}
+                    onClick={() => void onDashboard()}
+                    disabled={busy != null}
+                    data-payout-cta="dashboard"
+                  >
+                    {busy === "dashboard" ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : null}
+                    {t("employee.payouts.openDashboard")}
+                  </Button>
+                ) : null}
+                {primaryCta ? (
+                  <Button
+                    type="button"
+                    variant={ready ? "outline" : "default"}
+                    className={ctaClass}
+                    onClick={() => void onConnect()}
+                    disabled={busy != null || data?.stripeConfigured === false}
+                    data-payout-cta={primaryCta}
+                  >
+                    {busy === "onboarding" ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : null}
+                    {t(employeePayoutPrimaryCtaKey(primaryCta))}
+                  </Button>
+                ) : null}
+                {!ready && data?.canOpenDashboard ? (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className={ctaClass}
+                    onClick={() => void onDashboard()}
+                    disabled={busy != null}
+                    data-payout-cta="dashboard"
+                  >
+                    {busy === "dashboard" ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : null}
+                    {t("employee.payouts.openDashboard")}
+                  </Button>
+                ) : null}
+              </div>
+            </div>
+            {data?.stripeConfigured === false ? (
+              <p className="text-xs text-muted-foreground">{t("employee.payouts.notConfigured")}</p>
+            ) : null}
+          </section>
+
+          <section aria-labelledby="employee-payout-summary-heading">
+            <div className="mb-3 flex items-end justify-between gap-3">
+              <h2 id="employee-payout-summary-heading" className="text-base font-semibold tracking-tight">
+                {t("employee.payouts.summaryTitle")}
+              </h2>
+              <p className="text-xs text-muted-foreground">{t("employee.payouts.notStripeBalance")}</p>
+            </div>
+            <dl className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+              {metrics.map((metric) => (
+                <div key={metric.key} className="min-w-0">
+                  <dt className="text-[0.6875rem] font-medium uppercase tracking-wide text-muted-foreground">
+                    {metric.label}
+                  </dt>
+                  <dd className="mt-1 text-lg font-semibold tabular-nums tracking-tight">
+                    {formatEur(metric.cents / 100)}
+                  </dd>
+                </div>
+              ))}
+            </dl>
+            {disputedLost > 0 ? (
+              <p className="mt-2 text-xs text-muted-foreground">
+                {t("employee.payouts.disputedLostTitle")}: {formatEur(disputedLost / 100)}
+              </p>
+            ) : null}
+          </section>
+        </>
       )}
-    </section>
+    </div>
   );
 }

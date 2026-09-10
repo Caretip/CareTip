@@ -12,6 +12,11 @@ const employeeConnect = [
 ] as const;
 
 router.get("/employee-connect/status", ...employeeConnect, employeeConnectController.getMyEmployeeConnectStatus);
+router.get(
+  "/employee-connect/payables",
+  ...employeeConnect,
+  employeeConnectController.getMyEmployeePayableActivity,
+);
 router.post(
   "/employee-connect/account-link",
   ...employeeConnect,

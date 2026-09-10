@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { Link, useSearchParams } from "react-router";
+import { useSearchParams } from "react-router";
 import { useTranslation } from "react-i18next";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
@@ -19,16 +19,14 @@ import {
 } from "../../../../lib/globalAppLoading";
 import { performExternalStripeRedirect } from "../../../../lib/externalStripeRedirect";
 import { useRequireAuth } from "../../../../hooks/useRequireAuth";
+import { Button } from "../../../ui/button";
+import { FinanceStatusDot, type FinanceStatusTone } from "../../../finance/FinanceStatusDot";
 import { cn } from "@/lib/utils";
 
-function statusToneClass(light: ReturnType<typeof stripeConnectTrafficLight>): string {
-  if (light === "green") {
-    return "border-l-emerald-600 bg-emerald-50/80 text-emerald-950 dark:border-l-emerald-500 dark:bg-emerald-950/25 dark:text-emerald-50";
-  }
-  if (light === "yellow") {
-    return "border-l-amber-500 bg-amber-50/80 text-amber-950 dark:border-l-amber-400 dark:bg-amber-950/25 dark:text-amber-50";
-  }
-  return "border-l-red-600 bg-red-50/80 text-red-950 dark:border-l-red-500 dark:bg-red-950/30 dark:text-red-50";
+function connectTone(light: ReturnType<typeof stripeConnectTrafficLight>): FinanceStatusTone {
+  if (light === "green") return "success";
+  if (light === "yellow") return "warning";
+  return "danger";
 }
 
 /**
@@ -43,8 +41,7 @@ export function BusinessStripeConnectCard() {
   const [busy, setBusy] = useState<"onboarding" | "dashboard" | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const venueName =
-    user?.businessName?.trim() || user?.name?.trim() || "";
+  const venueName = user?.businessName?.trim() || user?.name?.trim() || "";
 
   useAppLoadingRegistration(
     "stripe-connect-onboarding",
@@ -118,7 +115,7 @@ export function BusinessStripeConnectCard() {
 
   if (loading && !data) {
     return (
-      <div className="flex min-h-[80px] items-center gap-2 text-sm text-muted-foreground">
+      <div className="flex min-h-[72px] items-center gap-2 text-sm text-muted-foreground" role="status">
         <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
         <span>{t("business.billing.connect.loading")}</span>
       </div>
@@ -127,18 +124,11 @@ export function BusinessStripeConnectCard() {
 
   if (error && !data) {
     return (
-      <div
-        className="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800 dark:border-red-900/40 dark:bg-red-950/30 dark:text-red-200"
-        role="alert"
-      >
-        <p>{error}</p>
-        <button
-          type="button"
-          onClick={() => void reload(true)}
-          className="mt-2 font-semibold underline underline-offset-2"
-        >
+      <div className="space-y-3 py-2" role="alert">
+        <p className="text-sm text-destructive">{error}</p>
+        <Button type="button" variant="outline" size="sm" onClick={() => void reload(true)}>
           {t("business.billing.retry")}
-        </button>
+        </Button>
       </div>
     );
   }
@@ -155,155 +145,119 @@ export function BusinessStripeConnectCard() {
       ? formatBerlinDateTime(data.updatedAt, i18n.language)
       : null;
   const actionBusy = busy != null;
+  const tone = connectTone(light);
+  const showUpdate = light === "green" && canStart && data.hasAccount;
+  const showOnboardingPrimary = Boolean(ctaKey && canStart);
 
   return (
-    <section className="stripe-connect-card space-y-5" aria-labelledby="stripe-connect-status">
-      <div
-        className={cn(
-          "border-l-[3px] px-4 py-3 sm:px-5 sm:py-4",
-          statusToneClass(light),
-        )}
-        role="status"
-        aria-live="polite"
-      >
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-          <div className="min-w-0 space-y-1.5">
-            <p
-              id="stripe-connect-status"
-              className="text-base font-semibold tracking-tight"
-              data-connect-status={data.status}
-              data-connect-readiness={light === "green" ? "ready" : "required"}
-            >
-              {statusLabel}
+    <section className="space-y-6" aria-labelledby="stripe-connect-overview">
+      <div className="flex flex-col gap-4 border-b border-border/80 pb-5 sm:flex-row sm:items-start sm:justify-between">
+        <div className="min-w-0 space-y-1">
+          <h2 id="stripe-connect-overview" className="sr-only">
+            {t("business.billing.connect.accountSummaryTitle")}
+          </h2>
+          <FinanceStatusDot
+            tone={tone}
+            label={statusLabel}
+            className="text-[0.8125rem]"
+          />
+          {lastSync ? (
+            <p className="text-xs text-muted-foreground">
+              {t("business.billing.connect.lastSyncLabel")}: {lastSync}
             </p>
-            {!data.stripeConfigured ? (
-              <p className="text-sm opacity-90">{t("business.billing.connect.notConfigured")}</p>
-            ) : (
-              <p className="text-sm opacity-90">
-                {t(
-                  light === "green"
-                    ? "business.billing.connect.statusReadyBody"
-                    : light === "yellow"
-                      ? "business.billing.connect.nextStepHint"
-                      : "business.billing.connect.statusNotConnectedBody",
-                )}
-              </p>
-            )}
-            {data.stripeConfigured && data.hasAccount && !data.chargesEnabled ? (
-              <p className="text-sm opacity-90">{t("business.billing.connect.chargesOff")}</p>
-            ) : null}
-            {data.stripeConfigured && data.hasAccount && !data.payoutsEnabled ? (
-              <p className="text-sm opacity-90">{t("business.billing.connect.payoutsOff")}</p>
-            ) : null}
-          </div>
-          {ctaKey && canStart ? (
-            <button
-              type="button"
-              disabled={actionBusy}
-              aria-busy={busy === "onboarding"}
-              onClick={() => void startOnboarding()}
-              className={cn(
-                "inline-flex h-10 w-full shrink-0 items-center justify-center rounded-md px-4 text-sm font-semibold transition sm:w-auto",
-                "bg-foreground text-background hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50",
-              )}
-            >
-              {busy === "onboarding" ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden />
-                  {t("business.billing.connect.starting")}
-                </>
-              ) : (
-                t(ctaKey)
-              )}
-            </button>
           ) : null}
+        </div>
+        <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:flex-wrap sm:justify-end">
           {showDashboard && canStart ? (
-            <button
+            <Button
               type="button"
               disabled={actionBusy}
               aria-busy={busy === "dashboard"}
               onClick={() => void startDashboard()}
-              className={cn(
-                "inline-flex h-10 w-full shrink-0 items-center justify-center rounded-md px-4 text-sm font-semibold transition sm:w-auto",
-                "bg-foreground text-background hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50",
-              )}
+              className="h-auto min-h-10 w-full whitespace-normal sm:w-auto"
             >
-              {busy === "dashboard" ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden />
-                  {t("business.billing.connect.starting")}
-                </>
-              ) : (
-                t("business.billing.connect.openDashboard")
-              )}
-            </button>
+              {busy === "dashboard" ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : null}
+              {t("business.billing.connect.openDashboard")}
+            </Button>
+          ) : null}
+          {showOnboardingPrimary ? (
+            <Button
+              type="button"
+              variant={showDashboard ? "outline" : "default"}
+              disabled={actionBusy}
+              aria-busy={busy === "onboarding"}
+              onClick={() => void startOnboarding()}
+              className="h-auto min-h-10 w-full whitespace-normal sm:w-auto"
+            >
+              {busy === "onboarding" ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : null}
+              {t(ctaKey!)}
+            </Button>
+          ) : null}
+          {showUpdate ? (
+            <Button
+              type="button"
+              variant="outline"
+              disabled={actionBusy}
+              onClick={() => void startOnboarding()}
+              className="h-auto min-h-10 w-full whitespace-normal sm:w-auto"
+            >
+              {t("business.billing.connect.manage")}
+            </Button>
           ) : null}
         </div>
       </div>
 
-      {data.hasAccount ? (
-        <dl className="grid gap-3 border-t border-border/80 pt-4 text-sm sm:grid-cols-3">
-          <div>
-            <dt className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-              {t("business.billing.connect.accountVenueLabel")}
-            </dt>
-            <dd className="mt-1 font-medium text-foreground">{venueName || "—"}</dd>
-          </div>
-          <div>
-            <dt className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-              {t("business.billing.connect.payoutStatusLabel")}
-            </dt>
-            <dd className="mt-1 font-medium text-foreground">
-              {data.payoutsEnabled
-                ? t("business.billing.connect.payoutEnabled")
-                : t("business.billing.connect.payoutRestricted")}
-            </dd>
-          </div>
-          <div>
-            <dt className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-              {t("business.billing.connect.lastSyncLabel")}
-            </dt>
-            <dd className="mt-1 font-medium text-foreground">
-              {lastSync || t("business.billing.connect.lastSyncUnavailable")}
-            </dd>
-          </div>
-        </dl>
+      {!data.stripeConfigured ? (
+        <p className="text-sm text-muted-foreground">{t("business.billing.connect.notConfigured")}</p>
       ) : null}
 
-      {data.hasAccount ? (
-        <p className="text-sm">
-          <Link
-            to="/dashboard/stripe/payouts"
-            className="font-medium text-foreground underline underline-offset-2 hover:text-primary"
+      <dl className="grid grid-cols-1 gap-x-6 gap-y-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="min-w-0">
+          <dt className="text-[0.6875rem] font-medium uppercase tracking-wide text-muted-foreground">
+            {t("business.billing.connect.accountVenueLabel")}
+          </dt>
+          <dd className="mt-1 truncate text-sm font-medium">{venueName || "—"}</dd>
+        </div>
+        <div>
+          <dt className="text-[0.6875rem] font-medium uppercase tracking-wide text-muted-foreground">
+            {t("business.billing.connect.payoutStatusLabel")}
+          </dt>
+          <dd className="mt-1 text-sm font-medium">
+            {data.hasAccount
+              ? data.payoutsEnabled
+                ? t("business.billing.connect.payoutEnabled")
+                : t("business.billing.connect.payoutRestricted")
+              : "—"}
+          </dd>
+        </div>
+        <div>
+          <dt className="text-[0.6875rem] font-medium uppercase tracking-wide text-muted-foreground">
+            {t("business.billing.connect.accountStatusLabel")}
+          </dt>
+          <dd
+            className="mt-1 text-sm font-medium"
+            data-connect-status={data.status}
+            data-connect-readiness={light === "green" ? "ready" : "required"}
           >
-            {t("business.billing.connect.viewPayouts")}
-          </Link>
-          {light === "green" && canStart ? (
-            <>
-              <span className="mx-2 text-muted-foreground" aria-hidden>
-                ·
-              </span>
-              <button
-                type="button"
-                disabled={actionBusy}
-                onClick={() => void startOnboarding()}
-                className="font-medium text-muted-foreground underline underline-offset-2 hover:text-foreground"
-              >
-                {t("business.billing.connect.manage")}
-              </button>
-            </>
-          ) : null}
-        </p>
-      ) : (
-        <p className="text-sm">
-          <Link
-            to="/dashboard/stripe/payouts"
-            className="font-medium text-foreground underline underline-offset-2 hover:text-primary"
-          >
-            {t("business.billing.connect.viewPayouts")}
-          </Link>
-        </p>
-      )}
+            {statusLabel}
+          </dd>
+        </div>
+        <div>
+          <dt className="text-[0.6875rem] font-medium uppercase tracking-wide text-muted-foreground">
+            {t("business.billing.connect.lastSyncLabel")}
+          </dt>
+          <dd className="mt-1 text-sm font-medium">
+            {lastSync || t("business.billing.connect.lastSyncUnavailable")}
+          </dd>
+        </div>
+      </dl>
+
+      {data.stripeConfigured && data.hasAccount && !data.chargesEnabled ? (
+        <p className="text-xs text-muted-foreground">{t("business.billing.connect.chargesOff")}</p>
+      ) : null}
+      {data.stripeConfigured && data.hasAccount && !data.payoutsEnabled ? (
+        <p className="text-xs text-muted-foreground">{t("business.billing.connect.payoutsOff")}</p>
+      ) : null}
     </section>
   );
 }

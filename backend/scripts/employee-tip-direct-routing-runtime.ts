@@ -18,7 +18,7 @@ import bcrypt from "bcrypt";
 import { prisma } from "../src/prisma.js";
 import { calculateTipPlatformFeeCents, CARETIP_FEE_PERCENT, CARETIP_FEE_FIXED_CENTS_EUR } from "../src/config/fees.js";
 import { remainingPayableCents, routingModeFromClient, applyRefundToEmployeePayable } from "../src/services/employeeTipPayable.service.js";
-import { isEmployeeRecipientReady, resolveTipCheckoutRouting } from "../src/services/employeeTipRouting.service.js";
+import { isEmployeeRecipientReady, resolveTipCheckoutRouting, routingModeFromStripeMetadata } from "../src/services/employeeTipRouting.service.js";
 import {
   releaseHeldPlatformPayablesForEmployee,
   __setEmployeeTipTransferCreateFnForTests,
@@ -60,6 +60,22 @@ function runStatic() {
     pass("fee-example-20eur", "€20.00 → €2.49 fee → €17.51 payable");
   } else {
     fail("fee-example-20eur", String(calculateTipPlatformFeeCents(2000)));
+  }
+  if (
+    routingModeFromStripeMetadata({ caretipRoutingMode: "business_distribution" }) ===
+      EmployeeTipPayoutMode.business_distribution &&
+    routingModeFromStripeMetadata({ caretipRoutingMode: "direct_to_employee" }) ===
+      EmployeeTipPayoutMode.direct_to_employee &&
+    routingModeFromStripeMetadata({}) === EmployeeTipPayoutMode.direct_to_employee
+  ) {
+    pass("gate5-routing-metadata", "PI metadata freezes business_distribution vs direct");
+  } else {
+    fail("gate5-routing-metadata", "metadata parse mismatch");
+  }
+  if (checkout.includes("caretipRoutingMode") && checkout.includes("payment_intent_data")) {
+    pass("gate5-checkout-metadata", "Checkout writes caretipRoutingMode onto the PaymentIntent");
+  } else {
+    fail("gate5-checkout-metadata", "checkout metadata missing");
   }
   const release = read("src/services/employeeTipRelease.service.ts");
   if (
@@ -200,12 +216,16 @@ async function runDb() {
     });
     const businessFirst = await resolveTipCheckoutRouting(business.id, employee.id);
     if (
-      businessFirst.chargeModel === EmployeeTipChargeModel.destination_business &&
-      businessFirst.destinationAccountId === `acct_rt_biz_${suffix}`
+      businessFirst.chargeModel === EmployeeTipChargeModel.platform_hold &&
+      businessFirst.routingMode === EmployeeTipPayoutMode.business_distribution &&
+      businessFirst.destinationAccountId === null
     ) {
-      pass("business-distribution-destination", "Business-first mode still destinations to venue Connect");
+      pass(
+        "business-distribution-platform-hold",
+        "Gate 5 Business Distribution charges the platform, not Business Express",
+      );
     } else {
-      fail("business-distribution-destination", JSON.stringify(businessFirst));
+      fail("business-distribution-platform-hold", JSON.stringify(businessFirst));
     }
 
     const tip = await prisma.transaction.create({
@@ -287,10 +307,14 @@ async function runDb() {
     });
     const bizUnconnected = await resolveTipCheckoutRouting(business.id, employee.id);
     if (
-      bizUnconnected.chargeModel === EmployeeTipChargeModel.destination_business &&
-      bizUnconnected.destinationAccountId === `acct_rt_biz_${suffix}`
+      bizUnconnected.chargeModel === EmployeeTipChargeModel.platform_hold &&
+      bizUnconnected.routingMode === EmployeeTipPayoutMode.business_distribution &&
+      bizUnconnected.destinationAccountId === null
     ) {
-      pass("business-distribution-unconnected", "Business-first unconnected staff still destination to Business");
+      pass(
+        "business-distribution-unconnected",
+        "Unconnected Gate 5 staff still platform-hold (guest checkout not blocked)",
+      );
     } else {
       fail("business-distribution-unconnected", JSON.stringify(bizUnconnected));
     }
@@ -336,6 +360,57 @@ async function runDb() {
         stripeDetailsSubmitted: true,
       },
     });
+
+    const gate5Tip = await prisma.transaction.create({
+      data: {
+        amount: 10,
+        status: TipStatus.success,
+        stripePaymentIntentId: `pi_rt_g5_${suffix}`,
+        employeeId: employee.id,
+        businessId: business.id,
+      },
+    });
+    const gate5Payable = await prisma.employeeTipPayable.create({
+      data: {
+        transactionId: gate5Tip.id,
+        employeeId: employee.id,
+        businessId: business.id,
+        routingMode: EmployeeTipPayoutMode.business_distribution,
+        chargeModel: EmployeeTipChargeModel.platform_hold,
+        status: EmployeeTipPayableStatus.held_platform,
+        grossCents: 1000,
+        platformFeeCents: 149,
+        payableCents: 851,
+        stripePaymentIntentId: `pi_rt_g5_${suffix}`,
+        stripeChargeId: `ch_rt_g5_${suffix}`,
+      },
+    });
+    let gate5Calls = 0;
+    __setEmployeeTipTransferCreateFnForTests(async (params, options) => {
+      gate5Calls += 1;
+      if (params.destination !== `acct_rt_emp_${suffix}`) throw new Error("gate5 dest");
+      if (params.amount !== 851) throw new Error("gate5 amount");
+      if (options.idempotencyKey !== `emp_tip_release:${gate5Payable.id}`) throw new Error("gate5 idem");
+      if (params.source_transaction !== `ch_rt_g5_${suffix}`) throw new Error("gate5 source");
+      return { id: `tr_rt_g5_${suffix}`, amount: 851 };
+    });
+    const gate5First = await releaseHeldPlatformPayablesForEmployee(employee.id);
+    const gate5Second = await releaseHeldPlatformPayablesForEmployee(employee.id);
+    const gate5After = await prisma.employeeTipPayable.findUnique({ where: { id: gate5Payable.id } });
+    if (
+      gate5First.released === 1 &&
+      gate5Second.released === 0 &&
+      gate5Calls === 1 &&
+      gate5After?.stripeTransferId === `tr_rt_g5_${suffix}` &&
+      remainingPayableCents(gate5After) === 0
+    ) {
+      pass("gate5-release-platform-hold", "Gate 5 uses existing SCT release; one Transfer of remaining payable");
+    } else {
+      fail(
+        "gate5-release-platform-hold",
+        JSON.stringify({ gate5First, gate5Second, gate5Calls, transferId: gate5After?.stripeTransferId }),
+      );
+    }
 
     const holdTip = await prisma.transaction.create({
       data: {

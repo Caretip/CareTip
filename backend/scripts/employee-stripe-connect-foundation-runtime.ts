@@ -8,7 +8,7 @@ import "dotenv/config";
 import "../src/loadEnv.js";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import { Role, StripeConnectStatus } from "@prisma/client";
+import { EmployeeTipPayableStatus, Role, StripeConnectStatus } from "@prisma/client";
 import type Stripe from "stripe";
 import bcrypt from "bcrypt";
 import { prisma } from "../src/prisma.js";
@@ -31,6 +31,12 @@ import {
 } from "../src/services/stripeConnect.service.js";
 import { handleConnectPayoutEvent } from "../src/services/stripeConnectPayout.service.js";
 import { toEmployeePayoutConnectionState } from "../src/lib/employeePayoutConnectState.js";
+import { employeePayableActivityCents } from "../src/services/employeeTipPayable.service.js";
+import {
+  employeePayoutPrimaryCta,
+  employeePayoutUiPhase,
+  isEmployeePayoutReady,
+} from "../../src/app/components/employee/employeePayoutAccountPresentation.ts";
 
 type Result = { id: string; pass: boolean; detail: string };
 const results: Result[] = [];
@@ -124,6 +130,30 @@ function runStaticGuards() {
   }
 
   if (
+    routes.includes("/employee-connect/payables") &&
+    ctrl.includes("getMyEmployeePayableActivity") &&
+    ctrl.includes("listEmployeePayableActivityForEmployee")
+  ) {
+    pass("employee-payable-activity-route", "Read-only employee-scoped payable activity endpoint");
+  } else {
+    fail("employee-payable-activity-route", "Missing payables GET");
+  }
+
+  const payableSvc = read("src/services/employeeTipPayable.service.ts");
+  const listStart = payableSvc.indexOf("export async function listEmployeePayableActivityForEmployee");
+  const listFn = listStart >= 0 ? payableSvc.slice(listStart, listStart + 1600) : "";
+  if (
+    listFn.includes("activityCents") &&
+    !listFn.includes("stripeTransferId") &&
+    !listFn.includes("stripeAccountId") &&
+    !listFn.includes("stripeDestinationAccountId")
+  ) {
+    pass("employee-activity-no-secrets", "Payable activity DTO omits Transfer IDs and acct ids");
+  } else {
+    fail("employee-activity-no-secrets", "Activity list helper missing or leaks Stripe ids");
+  }
+
+  if (
     webhook.includes("attributeStripeConnectAccount") &&
     webhook.includes("handleEmployeeConnectAccountUpdated")
   ) {
@@ -153,6 +183,7 @@ function runStaticGuards() {
     webNav.includes("dashboardNav.employee.payouts") &&
     appRoutes.includes("EmployeePayoutsPage") &&
     payoutsPage.includes("EmployeePayoutAccountCard") &&
+    payoutsPage.includes("EmployeePayoutActivityList") &&
     !settingsPage.includes("EmployeePayoutAccountCard") &&
     settingsPage.includes("/employee/payouts") &&
     empSvc.includes("/employee/payouts?payoutConnect=")
@@ -180,6 +211,107 @@ function runStaticGuards() {
     pass("neutral-connected-wording", "UI state is connected, not a routing claim");
   } else {
     fail("neutral-connected-wording", "Unexpected UI mapping");
+  }
+
+  const none = employeePayoutUiPhase({
+    loading: false,
+    error: null,
+    data: {
+      connectionState: "not_connected",
+      stripeConfigured: true,
+      hasAccount: false,
+      detailsSubmitted: false,
+      payoutsEnabled: false,
+      canOpenDashboard: false,
+      updatedAt: null,
+    },
+  });
+  const incomplete = employeePayoutUiPhase({
+    loading: false,
+    error: null,
+    data: {
+      connectionState: "setup_required",
+      stripeConfigured: true,
+      hasAccount: true,
+      detailsSubmitted: false,
+      payoutsEnabled: false,
+      canOpenDashboard: true,
+      updatedAt: null,
+    },
+  });
+  const readyUi = employeePayoutUiPhase({
+    loading: false,
+    error: null,
+    data: {
+      connectionState: "connected",
+      stripeConfigured: true,
+      hasAccount: true,
+      detailsSubmitted: true,
+      payoutsEnabled: true,
+      canOpenDashboard: true,
+      updatedAt: null,
+    },
+  });
+  const errUi = employeePayoutUiPhase({ loading: false, error: "fail", data: null });
+  const loadUi = employeePayoutUiPhase({ loading: true, error: null, data: null });
+  if (
+    none === "not_connected" &&
+    employeePayoutPrimaryCta(none) === "connect" &&
+    incomplete === "setup_incomplete" &&
+    employeePayoutPrimaryCta(incomplete) === "complete" &&
+    readyUi === "ready" &&
+    employeePayoutPrimaryCta(readyUi) === "update" &&
+    isEmployeePayoutReady({
+      connectionState: "connected",
+      payoutsEnabled: true,
+      hasAccount: true,
+    }) &&
+    !isEmployeePayoutReady({
+      connectionState: "connected",
+      payoutsEnabled: false,
+      hasAccount: true,
+    }) &&
+    errUi === "error" &&
+    loadUi === "loading"
+  ) {
+    pass("payout-cta-states", "Connect / Complete setup / Update details / error / loading");
+  } else {
+    fail("payout-cta-states", JSON.stringify({ none, incomplete, readyUi, errUi, loadUi }));
+  }
+
+  const en = read("../src/i18n/locales/en.json");
+  const de = read("../src/i18n/locales/de.json");
+  if (
+    en.includes("Update Stripe details") &&
+    de.includes("Stripe-Daten aktualisieren") &&
+    en.includes("Complete Stripe setup") &&
+    de.includes("Stripe-Einrichtung abschließen") &&
+    en.includes("CareTip payout activity") &&
+    de.includes("CareTip-Auszahlungsaktivität")
+  ) {
+    pass("payout-cta-i18n", "EN/DE payout CTAs present");
+  } else {
+    fail("payout-cta-i18n", "missing translation keys");
+  }
+
+  const heldCents = employeePayableActivityCents({
+    status: EmployeeTipPayableStatus.held_platform,
+    payableCents: 851,
+    transferredCents: 0,
+    reversedCents: 0,
+    refundedCents: 0,
+  });
+  const routedCents = employeePayableActivityCents({
+    status: EmployeeTipPayableStatus.destination_settled,
+    payableCents: 851,
+    transferredCents: 851,
+    reversedCents: 0,
+    refundedCents: 0,
+  });
+  if (heldCents === 851 && routedCents === 851) {
+    pass("activity-cents-from-ledger", "Activity amounts use remaining / netTransferred helpers");
+  } else {
+    fail("activity-cents-from-ledger", JSON.stringify({ heldCents, routedCents }));
   }
 }
 

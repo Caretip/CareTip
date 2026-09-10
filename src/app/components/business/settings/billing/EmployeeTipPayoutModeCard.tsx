@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { Landmark, Wallet } from "lucide-react";
 import { toast } from "sonner";
 import {
   getEmployeeTipPayoutMode,
@@ -56,43 +57,65 @@ export function EmployeeTipPayoutModeCard() {
   };
 
   return (
-    <section className="rounded-2xl border border-border bg-card p-5 space-y-4">
+    <section className="space-y-4" aria-labelledby="employee-tip-routing-heading">
       <div>
-        <h3 className="text-base font-semibold">{t("business.stripe.tipRouting.title")}</h3>
-        <p className="text-sm text-muted-foreground mt-1">{t("business.stripe.tipRouting.hint")}</p>
+        <h2 id="employee-tip-routing-heading" className="text-base font-semibold tracking-tight">
+          {t("business.stripe.tipRouting.title")}
+        </h2>
+        <p className="mt-1 text-sm text-muted-foreground">{t("business.stripe.tipRouting.hint")}</p>
       </div>
       {loading ? (
         <p className="text-sm text-muted-foreground">{t("business.stripe.tipRouting.loading")}</p>
       ) : (
-        <fieldset className="space-y-3" disabled={saving}>
+        <fieldset className="grid gap-3 md:grid-cols-2" disabled={saving}>
           <legend className="sr-only">{t("business.stripe.tipRouting.title")}</legend>
-          {MODES.map((option) => (
-            <label
-              key={option}
-              className={cn(
-                "flex gap-3 rounded-xl border p-3 cursor-pointer",
-                draft === option ? "border-foreground/40 bg-muted/40" : "border-border",
-              )}
-            >
-              <input
-                type="radio"
-                name="employeeTipPayoutMode"
-                className="mt-1"
-                checked={draft === option}
-                onChange={() => setDraft(option)}
-              />
-              <span>
-                <span className="block text-sm font-medium">
-                  {t(`business.stripe.tipRouting.mode.${option}.label`)}
+          {MODES.map((option) => {
+            const selected = draft === option;
+            const Icon = option === "direct_to_employee" ? Wallet : Landmark;
+            return (
+              <label
+                key={option}
+                className={cn(
+                  "relative flex cursor-pointer gap-3 rounded-lg border p-4 transition-colors",
+                  selected
+                    ? "border-foreground/25 bg-muted/40 ring-1 ring-foreground/15"
+                    : "border-border hover:border-foreground/20",
+                )}
+              >
+                <input
+                  type="radio"
+                  name="employeeTipPayoutMode"
+                  className="sr-only"
+                  checked={selected}
+                  onChange={() => setDraft(option)}
+                />
+                <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-muted text-foreground">
+                  <Icon className="h-4 w-4" aria-hidden />
                 </span>
-                <span className="block text-sm text-muted-foreground mt-0.5">
-                  {t(`business.stripe.tipRouting.mode.${option}.body`)}
+                <span className="min-w-0 space-y-1">
+                  <span className="flex flex-wrap items-center gap-2">
+                    <span className="text-sm font-semibold leading-snug">
+                      {t(`business.stripe.tipRouting.mode.${option}.label`)}
+                    </span>
+                    {mode === option ? (
+                      <span className="rounded-full bg-emerald-600/10 px-1.5 py-0.5 text-[0.625rem] font-semibold uppercase tracking-wide text-emerald-800 dark:text-emerald-200">
+                        {t("business.stripe.tipRouting.active")}
+                      </span>
+                    ) : null}
+                  </span>
+                  <span className="block text-sm leading-snug text-muted-foreground">
+                    {t(`business.stripe.tipRouting.mode.${option}.body`)}
+                  </span>
+                  <span className="block text-xs leading-snug text-muted-foreground">
+                    {t(`business.stripe.tipRouting.mode.${option}.note`)}
+                  </span>
                 </span>
-              </span>
-            </label>
-          ))}
+              </label>
+            );
+          })}
         </fieldset>
       )}
+      <p className="text-xs text-muted-foreground">{t("business.stripe.tipRouting.appliesNew")}</p>
       <Button type="button" onClick={() => void onSave()} disabled={loading || saving || draft === mode}>
         {saving ? t("business.stripe.tipRouting.saving") : t("business.stripe.tipRouting.save")}
       </Button>

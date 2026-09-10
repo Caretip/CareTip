@@ -2918,6 +2918,44 @@ export async function getEmployeeConnectStatus(): Promise<EmployeeConnectStatus>
   });
 }
 
+export type EmployeePayableActivityStatus =
+  | "held_platform"
+  | "held_business"
+  | "destination_settled"
+  | "transferring"
+  | "transferred"
+  | "transfer_failed"
+  | "refunded";
+
+export interface EmployeePayableActivityItem {
+  id: string;
+  createdAt: string;
+  status: EmployeePayableActivityStatus;
+  payableCents: number;
+  transferredCents: number;
+  reversedCents: number;
+  refundedCents: number;
+  remainingPayableCents: number;
+  disputedOpenCents: number;
+  disputedLostCents: number;
+  activityCents: number;
+}
+
+export async function listEmployeePayableActivity(params?: {
+  take?: number;
+  skip?: number;
+}): Promise<{ items: EmployeePayableActivityItem[]; total: number }> {
+  const q = new URLSearchParams();
+  if (params?.take != null) q.set("take", String(params.take));
+  if (params?.skip != null) q.set("skip", String(params.skip));
+  const suffix = q.toString() ? `?${q.toString()}` : "";
+  return apiRequest(apiPath(`/api/me/employee-connect/payables${suffix}`), {
+    method: "GET",
+    headers: getHeaders(),
+    credentials: "include",
+  });
+}
+
 export async function createEmployeeConnectAccountLink(): Promise<{ url: string }> {
   return apiRequest(apiPath("/api/me/employee-connect/account-link"), {
     method: "POST",

@@ -390,6 +390,84 @@ export async function employeePayableSummaryForEmployee(employeeId: string): Pro
   };
 }
 
+export type EmployeePayableActivityItem = {
+  id: string;
+  createdAt: string;
+  status: EmployeeTipPayableStatus;
+  payableCents: number;
+  transferredCents: number;
+  reversedCents: number;
+  refundedCents: number;
+  remainingPayableCents: number;
+  disputedOpenCents: number;
+  disputedLostCents: number;
+  activityCents: number;
+};
+
+export function employeePayableActivityCents(row: EmployeePayableMoneyRow & {
+  status: EmployeeTipPayableStatus;
+}): number {
+  if (
+    row.status === EmployeeTipPayableStatus.destination_settled ||
+    row.status === EmployeeTipPayableStatus.transferred
+  ) {
+    return netTransferredCents(row);
+  }
+  if (row.status === EmployeeTipPayableStatus.refunded) {
+    return row.refundedCents;
+  }
+  return remainingPayableCents(row);
+}
+
+/** Employee-scoped CareTip payable activity. Never Stripe bank payouts. */
+export async function listEmployeePayableActivityForEmployee(
+  employeeId: string,
+  params?: { take?: number; skip?: number },
+): Promise<{ items: EmployeePayableActivityItem[]; total: number }> {
+  const take = Math.min(50, Math.max(1, params?.take ?? 20));
+  const skip = Math.min(5_000, Math.max(0, params?.skip ?? 0));
+  const where = { employeeId };
+  const [total, rows] = await prisma.$transaction([
+    prisma.employeeTipPayable.count({ where }),
+    prisma.employeeTipPayable.findMany({
+      where,
+      orderBy: { createdAt: "desc" },
+      take,
+      skip,
+      select: {
+        id: true,
+        createdAt: true,
+        status: true,
+        payableCents: true,
+        transferredCents: true,
+        reversedCents: true,
+        refundedCents: true,
+        disputedOpenCents: true,
+        disputedLostCents: true,
+      },
+    }),
+  ]);
+  return {
+    total,
+    items: rows.map((row) => {
+      const remaining = remainingPayableCents(row);
+      return {
+        id: row.id,
+        createdAt: row.createdAt.toISOString(),
+        status: row.status,
+        payableCents: row.payableCents,
+        transferredCents: row.transferredCents,
+        reversedCents: row.reversedCents,
+        refundedCents: row.refundedCents,
+        remainingPayableCents: remaining,
+        disputedOpenCents: row.disputedOpenCents,
+        disputedLostCents: row.disputedLostCents,
+        activityCents: employeePayableActivityCents(row),
+      };
+    }),
+  };
+}
+
 export function routingModeFromClient(value: unknown): EmployeeTipPayoutMode | null {
   if (value === "direct_to_employee" || value === EmployeeTipPayoutMode.direct_to_employee) {
     return EmployeeTipPayoutMode.direct_to_employee;

@@ -9,6 +9,7 @@ import {
   refreshEmployeeConnectStatusFromStripe,
   resolveActiveEmployeeForConnect,
 } from "../services/employeeStripeConnect.service.js";
+import { listEmployeePayableActivityForEmployee } from "../services/employeeTipPayable.service.js";
 import { clientSafeMessage, CLIENT_FALLBACK, logServerError } from "../utils/httpErrors.js";
 
 function getUserId(req: Request): string | null {
@@ -86,6 +87,28 @@ export async function getMyEmployeeConnectStatus(req: Request, res: Response) {
     return res.json(status);
   } catch (err) {
     logServerError("employeeConnect.getMyEmployeeConnectStatus", err);
+    if (err instanceof StripeConnectError) {
+      return res.status(err.httpStatus).json({ message: err.message, code: err.code });
+    }
+    return res.status(400).json({ message: connectClientMessage(err) });
+  }
+}
+
+export async function getMyEmployeePayableActivity(req: Request, res: Response) {
+  try {
+    const userId = getUserId(req);
+    if (!userId) return res.status(401).json({ message: "Authentication required" });
+    if (rejectClientEmployeeConnectSteering(req, res)) return;
+
+    const actor = await resolveActiveEmployeeForConnect(userId);
+    const takeRaw = Number(req.query.take);
+    const skipRaw = Number(req.query.skip);
+    const take = Number.isInteger(takeRaw) ? takeRaw : 20;
+    const skip = Number.isInteger(skipRaw) ? skipRaw : 0;
+    const result = await listEmployeePayableActivityForEmployee(actor.employeeId, { take, skip });
+    return res.json(result);
+  } catch (err) {
+    logServerError("employeeConnect.getMyEmployeePayableActivity", err);
     if (err instanceof StripeConnectError) {
       return res.status(err.httpStatus).json({ message: err.message, code: err.code });
     }

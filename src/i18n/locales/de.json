@@ -3770,15 +3770,26 @@
     },
     "payouts": {
       "title": "Auszahlungen",
-      "subtitle": "Verbinden und verwalten Sie Ihr Stripe-Auszahlungskonto.",
+      "subtitle": "Verwalten Sie Ihr Stripe-Auszahlungskonto und verfolgen Sie weitergeleitete Trinkgelder.",
       "backAria": "Zurück",
       "sectionTitle": "Auszahlungskonto",
-      "sectionHint": "Verbinden Sie Ihr Auszahlungskonto. Reguläre Auszahlungen auf Ihr Konto folgen dem Stripe-Zeitplan und sind von CareTip aus kostenlos.",
+      "sectionHint": "CareTip sendet keine Sofortauszahlungen an Mitarbeiter. Reguläre Bankauszahlungen übernimmt Stripe; für Sie sind sie bei CareTip kostenlos.",
       "stripeHandles": "Stripe übernimmt Ihre Auszahlungsdaten und die Verifizierung sicher.",
-      "connectedBody": "Ihr Stripe-Auszahlungskonto ist verbunden. Neue Trinkgelder können dorthin fließen, wenn das Unternehmen Direktauszahlung nutzt.",
-      "heldTitle": "Für Ihr Konto gehalten",
-      "heldBody": "Dieses Trinkgeld kam vor der Kontoverbindung. Es wird freigegeben, sobald Stripe bestätigt, dass Überweisungen möglich sind.",
-      "settledTitle": "Auf Ihr Stripe-Konto gezahlt",
+      "connectedBody": "Ihr Stripe-Auszahlungskonto ist verbunden und bereit.",
+      "readyBody": "Ihr Stripe-Auszahlungskonto ist verbunden und kann berechtigte Mitarbeiter-Trinkgelder empfangen. Stripe zahlt nach eigenem Zeitplan auf Ihr Bankkonto aus.",
+      "readyBadge": "Bereit für berechtigte Trinkgelder",
+      "notConnectedBody": "Verbinden Sie Stripe, um berechtigte Trinkgelder auf Ihr Auszahlungskonto zu erhalten. Gäste können schon vorher Trinkgeld geben.",
+      "incompleteBody": "Stripe benötigt weitere Angaben, bevor dieses Auszahlungskonto Überweisungen empfangen kann.",
+      "attentionBody": "Stripe erfordert Aufmerksamkeit für dieses Auszahlungskonto. Es gilt nicht als bereit für Überweisungen.",
+      "heldTitle": "Trinkgeld wartet auf Auszahlungs-Einrichtung",
+      "heldBody": "Diese Beträge werden auf der CareTip-Plattform gehalten, bis Stripe bestätigt, dass Ihr Auszahlungskonto Überweisungen empfangen kann.",
+      "settledTitle": "An Ihr Stripe-Auszahlungskonto weitergeleitet",
+      "settledBody": "Diese Beträge wurden an Ihr verbundenes Stripe-Auszahlungskonto gesendet. Bankauszahlungen folgen dem Stripe-Zeitplan.",
+      "emptyLedger": "Noch keine gehaltenen oder weitergeleiteten Beträge.",
+      "statusErrorHint": "CareTip konnte den Stripe-Status nicht aktualisieren. Das gilt nicht als bereit.",
+      "retry": "Erneut versuchen",
+      "completeSetup": "Stripe-Einrichtung abschließen",
+      "updateDetails": "Stripe-Daten aktualisieren",
       "notStripeBalance": "Das ist CareTips Zahlungsverpflichtung, kein Live-Stripe-Saldo.",
       "disputedOpenTitle": "In Streitprüfung",
       "disputedOpenBody": "Dieser Betrag ist in CareTips Zahlungsdaten eingefroren, bis Stripe den Dispute schließt. Er wird nicht überwiesen.",
@@ -3786,8 +3797,8 @@
       "disputedLostBody": "Stripe hat diesen Dispute als verloren erfasst. CareTip behandelt den Betrag nicht als Verdienst.",
       "loading": "Auszahlungskonto wird geladen…",
       "loadError": "Status des Auszahlungskontos konnte nicht geladen werden.",
-      "connectCta": "Auszahlungskonto verbinden",
-      "continueSetup": "Einrichtung fortsetzen",
+      "connectCta": "Stripe verbinden",
+      "continueSetup": "Stripe-Einrichtung abschließen",
       "openDashboard": "Stripe-Dashboard öffnen",
       "connectFailed": "Einrichtung des Auszahlungskontos konnte nicht gestartet werden.",
       "dashboardFailed": "Stripe-Dashboard konnte nicht geöffnet werden.",
@@ -3801,6 +3812,75 @@
         "action_required": "Handlung erforderlich",
         "restricted": "Eingeschränkt",
         "connected": "Verbunden"
+      },
+      "summaryTitle": "CareTip-Zahlungsdaten",
+      "metric": {
+        "routed": "An Stripe geleitet",
+        "held": "Gehalten",
+        "refunded": "Erstattet",
+        "disputed": "In Prüfung"
+      },
+      "stripeSchedule": "Stripe überweist verfügbares Guthaben nach Ihrem Stripe-Auszahlungsplan auf Ihr Bankkonto.",
+      "bankPayoutsNote": "Bankauszahlungen verwaltet Stripe. CareTip erfasst Überweisungen auf Ihr Stripe-Auszahlungskonto, nicht Auszahlungen auf Ihr Bankkonto.",
+      "instant": {
+        "eyebrow": "Sofortauszahlung",
+        "title": "Geld jetzt erhalten",
+        "lead": "Zahlt verfügbares Stripe-Guthaben auf Ihre sofortfähige Auszahlungsmethode. Das ist nicht der reguläre Stripe-Bankplan.",
+        "checking": "Sofortauszahlung wird geprüft…",
+        "loadError": "Sofortauszahlung konnte nicht geladen werden.",
+        "cta": "Geld jetzt erhalten",
+        "ready": "Sofortauszahlung ist verfügbar",
+        "processing": "Ihre Sofortauszahlung wird verarbeitet.",
+        "success": "Sofortauszahlung gesendet.",
+        "failed": "Sofortauszahlung konnte nicht abgeschlossen werden.",
+        "underMin": "Sofortauszahlung ist ab {{amount}} verfügbar.",
+        "unavailable": "Sofortauszahlung ist für dieses Konto derzeit nicht verfügbar.",
+        "minimum": "Minimum {{amount}}",
+        "feeStripe": "Stripe-Sofortgebühr {{fee}} ({{amount}}). CareTip berechnet keine zweite Gebühr.",
+        "feeUnknown": "Falls Stripe eine Sofortgebühr erhebt, kommt sie von diesem Stripe-Saldo. CareTip addiert keine zweiten 2,5 %."
+      },
+      "bankHistory": {
+        "title": "Stripe-Bankauszahlungen",
+        "hint": "Auszahlungen von Ihrem Stripe-Konto auf Bank oder Debitkarte. Details im Stripe-Dashboard.",
+        "loading": "Stripe-Auszahlungen werden geladen…",
+        "loadError": "Stripe-Bankauszahlungsverlauf konnte nicht geladen werden.",
+        "empty": "Noch keine Stripe-Bankauszahlungen.",
+        "useDashboard": "Verbinden Sie Stripe und öffnen Sie das Stripe-Dashboard für den Bankverlauf.",
+        "method": {
+          "instant": "Sofort",
+          "standard": "Standard",
+          "unknown": "Auszahlung"
+        }
+      },
+      "activityTitle": "CareTip-Auszahlungsaktivität",
+      "activityHint": "Jede Zeile ist eine CareTip-Zahlungsverpflichtung — eine Überweisung auf Ihr Stripe-Konto oder ein noch gehaltener Betrag. Das ist kein Bank-Auszahlungsverlauf.",
+      "activityLoading": "Aktivität wird geladen…",
+      "activityLoadError": "Aktivität konnte nicht geladen werden.",
+      "emptyActivityTitle": "Noch keine Auszahlungsaktivität",
+      "emptyActivityBody": "Berechtigte Trinkgelder erscheinen hier, sobald sie an Ihr Stripe-Auszahlungskonto geleitet werden.",
+      "colDate": "Datum",
+      "colDescription": "Beschreibung",
+      "colAmount": "Betrag",
+      "colStatus": "Status",
+      "activityKind": {
+        "held": "Bei CareTip gehalten",
+        "held_venue": "Bei Betriebsverteilung gehalten",
+        "transferring": "Überweisung läuft",
+        "transferred": "An Stripe überwiesen",
+        "destination_routed": "An Stripe geleitet",
+        "refunded": "Erstattungsanpassung",
+        "failed": "Überweisung fehlgeschlagen",
+        "disputed": "In Streitprüfung"
+      },
+      "activityStatus": {
+        "held": "Ausstehend",
+        "held_venue": "Ausstehend",
+        "transferring": "Ausstehend",
+        "transferred": "Abgeschlossen",
+        "destination_routed": "Abgeschlossen",
+        "refunded": "Erstattet",
+        "failed": "Fehlgeschlagen",
+        "disputed": "Ausstehend"
       }
     },
     "hero": {
@@ -6001,16 +6081,18 @@
     },
     "stripe": {
       "moduleEyebrow": "Trinkgeld & Auszahlungen",
-      "moduleTitle": "Stripe",
-      "moduleSubtitle": "Stripe verbinden, um Trinkgeld zu empfangen.",
+      "moduleTitle": "Stripe Connect",
+      "moduleSubtitle": "Empfangen Sie Gästetrinkgeld sicher über Stripe.",
       "payoutsSubtitle": "Verfügbares Guthaben, Sofortauszahlungen und letzte Überweisungen.",
       "nav": {
         "connect": "Verbindung",
         "payouts": "Auszahlungen"
       },
       "tipRouting": {
-        "title": "Mitarbeiter-Trinkgeld",
-        "hint": "Gilt nur für neue Trinkgelder. Bereits gezahlte Beträge behalten ihre ursprüngliche Weiterleitung.",
+        "title": "Mitarbeiter-Trinkgeld-Weiterleitung",
+        "hint": "Legen Sie fest, wohin neue Mitarbeiter-Trinkgelder geleitet werden.",
+        "active": "Aktiv",
+        "appliesNew": "Gilt nur für neue Trinkgelder.",
         "loading": "Einstellung wird geladen…",
         "save": "Speichern",
         "saving": "Speichern…",
@@ -6020,11 +6102,13 @@
         "mode": {
           "direct_to_employee": {
             "label": "Direkt an Mitarbeiter zahlen",
-            "body": "Ist das Auszahlungskonto verbunden, geht das Trinkgeld dorthin. Ohne Verbindung kann der Gast trotzdem zahlen; der Betrag wird gehalten, bis das Konto bereit ist."
+            "body": "Verbundene Mitarbeiter erhalten berechtigte Trinkgelder direkt auf ihr Stripe-Auszahlungskonto.",
+            "note": "Ohne Verbindung wird der Betrag gehalten, bis das Auszahlungskonto bereit ist."
           },
           "business_distribution": {
-            "label": "Zuerst an das Unternehmen",
-            "body": "Trinkgeld landet weiter auf dem Stripe-Konto des Unternehmens, inklusive Sofortauszahlung. Automatische Mitarbeiter-Transfers von diesem Guthaben sind noch nicht aktiv."
+            "label": "CareTip hält, dann zahlt an Mitarbeiter",
+            "body": "Neue Trinkgelder bleiben bei CareTip, bis der Mitarbeiter bereit ist. Dann überweist CareTip den Mitarbeiteranteil.",
+            "note": "Die Business-Sofortauszahlung kann gehaltene Mitarbeiterbeträge nicht abbuchen."
           }
         }
       }
@@ -6107,6 +6191,8 @@
         "methodInstant": "Sofort",
         "methodStandard": "Standard",
         "methodUnknown": "Unbekannt",
+        "activityTitle": "Auszahlungsaktivität",
+        "activityHint": "Aktuelle Stripe-Auszahlungen auf das Bankkonto des Betriebs. Das sind keine Mitarbeiter-Überweisungen.",
         "historyTitle": "Auszahlungsverlauf",
         "instant": {
           "balanceEyebrow": "Ihr Guthaben",
@@ -6185,10 +6271,11 @@
         "statusIncomplete": "Handlung erforderlich",
         "statusAttention": "Handlung erforderlich",
         "statusActionBody": "Stripe benötigt weitere Informationen (z. B. Ausweisdokument), um Auszahlungen freizuschalten.",
-        "statusReady": "Verbunden & Betriebsbereit",
+        "statusReady": "Verbunden",
         "statusReadyBody": "Ihr Stripe-Konto ist verbunden. Öffnen Sie das Stripe-Dashboard oder sehen Sie den Auszahlungsverlauf in CareTip ein.",
         "nextStepHint": "Stripe benötigt weitere Informationen (z. B. Ausweisdokument), um Auszahlungen freizuschalten.",
-        "accountSummaryTitle": "Kontodetails",
+        "accountStatusLabel": "Stripe-Kontostatus",
+        "accountSummaryTitle": "Verbindungsübersicht",
         "accountVenueLabel": "Verbundener Betrieb",
         "payoutStatusLabel": "Auszahlungsstatus",
         "payoutEnabled": "Aktiviert",

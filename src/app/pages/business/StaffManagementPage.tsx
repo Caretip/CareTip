@@ -47,6 +47,7 @@ import { isApiSubscriptionRequiredError } from "../../lib/apiError";
 import { StaffRosterTableSkeleton, InlineSpinner } from "../../components/dashboard/DashboardSectionLoading";
 import { useBusinessPageBoot } from "../../lib/useBusinessPageBoot";
 import { EmployeeProfilePhoto } from "../../components/ui/profile-avatar";
+import { StaffPayoutConnectBadge } from "../../components/business/staff/StaffPayoutConnectBadge";
 import { toUserFriendlyMessage } from "../../lib/errorMessages";
 import { canUseProductionQr } from "../../lib/businessVerificationCapabilities";
 import { logClientError } from "../../lib/clientLog";
@@ -230,14 +231,6 @@ function staffRosterNoteKey(emp: StaffRow): StaffRosterNoteKey | null {
     return null;
   }
   return null;
-}
-
-function staffPayoutConnectLabel(
-  state: EmployeePayoutConnectionState | undefined,
-  t: (key: string) => string,
-): string {
-  const key = state ?? "not_connected";
-  return t(`business.staffPage.payoutState.${key}`);
 }
 
 function rosterNoteClassName(noteKey: StaffRosterNoteKey | null): string {
@@ -1117,10 +1110,7 @@ export function StaffManagementPage() {
                         {rosterNote ? (
                           <p className={rosterNoteClassName(rosterKey)}>{rosterNote}</p>
                         ) : null}
-                        <p className="mt-0.5 text-xs text-muted-foreground">
-                          {t("business.staffPage.payoutAccount")}:{" "}
-                          {staffPayoutConnectLabel(employee.payoutConnectState, t)}
-                        </p>
+                        <StaffPayoutConnectBadge state={employee.payoutConnectState} />
                       </div>
                     </div>
                   </td>
@@ -1270,10 +1260,9 @@ export function StaffManagementPage() {
                     {rosterNote ? (
                       <p className={rosterNoteClassName(rosterKey)}>{rosterNote}</p>
                     ) : null}
-                    <p className="text-xs text-muted-foreground mt-0.5">
-                      {t("business.staffPage.payoutAccount")}:{" "}
-                      {staffPayoutConnectLabel(employee.payoutConnectState, t)}
-                    </p>
+                    <div className="mt-0.5">
+                      <StaffPayoutConnectBadge state={employee.payoutConnectState} />
+                    </div>
                     <p className="text-xs text-muted-foreground mt-0.5">
                       {employee.locationId
                         ? venueOptions.find((l) => l.id === employee.locationId)?.name ?? t("business.staffPage.na")

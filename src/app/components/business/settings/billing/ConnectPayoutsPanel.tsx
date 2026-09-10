@@ -185,9 +185,9 @@ export function ConnectPayoutsPanel({ loading: bootLoading }: { loading?: boolea
         <div className="mb-4 flex flex-col gap-2 border-b border-border pb-3 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <h2 id="caretip-payout-history-heading" className={dashboardWorkspaceUi.subsectionTitle}>
-              {t("business.billing.payouts.historyTitle")}
+              {t("business.billing.payouts.activityTitle")}
             </h2>
-            <p className={cn("mt-1", dashboardWorkspaceUi.helperText)}>{t("business.billing.payouts.hint")}</p>
+            <p className={cn("mt-1", dashboardWorkspaceUi.helperText)}>{t("business.billing.payouts.activityHint")}</p>
           </div>
           <button
             type="button"

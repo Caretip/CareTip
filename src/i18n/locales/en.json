@@ -3770,15 +3770,24 @@
     },
     "payouts": {
       "title": "Payouts",
-      "subtitle": "Connect and manage your Stripe payout account.",
+      "subtitle": "Manage your Stripe payout account and track tips routed to you.",
       "backAria": "Back",
       "sectionTitle": "Payout account",
-      "sectionHint": "Connect your payout account. Regular payouts to your bank follow Stripe’s schedule and are free from CareTip.",
+      "sectionHint": "CareTip never sends employee Instant Payouts. Regular bank payouts are handled by Stripe and are free from CareTip.",
       "stripeHandles": "Stripe securely handles your payout details and verification.",
-      "connectedBody": "Your Stripe payout account is connected. New tips can be paid to this account when your business uses direct employee payouts.",
-      "heldTitle": "Held for your account",
-      "heldBody": "These tips were received before your payout account was ready. They are released after Stripe confirms your account can receive transfers.",
-      "settledTitle": "Paid to your Stripe account",
+      "connectedBody": "Your Stripe payout account is connected and ready.",
+      "readyBody": "Your Stripe payout account is connected and ready to receive eligible employee tips. Stripe pays out to your bank on its schedule.",
+      "readyBadge": "Ready to receive eligible tips",
+      "notConnectedBody": "Connect Stripe to receive eligible tips on your payout account. Guests can still tip before you finish setup.",
+      "incompleteBody": "Stripe needs more information before this payout account can receive transfers.",
+      "attentionBody": "Stripe requires attention on this payout account. It is not treated as ready to receive transfers.",
+      "heldTitle": "Tips awaiting payout setup",
+      "heldBody": "These amounts are held on the CareTip platform until Stripe confirms your payout account can receive transfers.",
+      "settledTitle": "Routed to your Stripe payout account",
+      "settledBody": "These amounts were sent to your connected Stripe payout account. Bank payouts follow Stripe’s schedule.",
+      "emptyLedger": "No held or routed tip amounts to show yet.",
+      "statusErrorHint": "CareTip could not refresh Stripe status. This is not treated as ready.",
+      "retry": "Try again",
       "notStripeBalance": "This is CareTip’s payable record, not a live Stripe wallet number.",
       "disputedOpenTitle": "Under dispute review",
       "disputedOpenBody": "This amount is frozen in CareTip’s payable record until Stripe closes the dispute. It is not available to transfer.",
@@ -3786,8 +3795,10 @@
       "disputedLostBody": "Stripe recorded this dispute as lost. CareTip does not treat this amount as earnings.",
       "loading": "Loading payout account…",
       "loadError": "Could not load payout account status.",
-      "connectCta": "Connect your payout account",
-      "continueSetup": "Continue setup",
+      "connectCta": "Connect Stripe",
+      "completeSetup": "Complete Stripe setup",
+      "updateDetails": "Update Stripe details",
+      "continueSetup": "Complete Stripe setup",
       "openDashboard": "Open Stripe Dashboard",
       "connectFailed": "Could not start payout account setup.",
       "dashboardFailed": "Could not open the Stripe Dashboard.",
@@ -3801,6 +3812,75 @@
         "action_required": "Action required",
         "restricted": "Restricted",
         "connected": "Connected"
+      },
+      "summaryTitle": "CareTip payable record",
+      "metric": {
+        "routed": "Routed to Stripe",
+        "held": "Held",
+        "refunded": "Refunded",
+        "disputed": "Under dispute"
+      },
+      "stripeSchedule": "Stripe sends your available funds to your bank according to your Stripe payout schedule.",
+      "bankPayoutsNote": "Bank payouts are managed by Stripe. CareTip records transfers to your Stripe payout account, not payouts to your bank.",
+      "instant": {
+        "eyebrow": "Instant payout",
+        "title": "Receive funds now",
+        "lead": "Pays available Stripe balance to your Instant-eligible payout method. This is not Stripe’s regular bank schedule.",
+        "checking": "Checking Instant Payout availability…",
+        "loadError": "Could not load Instant Payout availability.",
+        "cta": "Receive funds now",
+        "ready": "Instant payout is available",
+        "processing": "Your instant payout is being processed.",
+        "success": "Instant payout sent.",
+        "failed": "Instant payout could not be completed.",
+        "underMin": "Instant payout is available from {{amount}}.",
+        "unavailable": "Instant payout isn't currently available for this account.",
+        "minimum": "Minimum {{amount}}",
+        "feeStripe": "Stripe Instant fee {{fee}} ({{amount}}). CareTip does not add a second fee.",
+        "feeUnknown": "If Stripe charges an Instant fee, it is taken from this Stripe balance. CareTip does not add a second 2.5%."
+      },
+      "bankHistory": {
+        "title": "Stripe bank payouts",
+        "hint": "Payouts from your Stripe account to your bank or debit card. Open Stripe Dashboard for full bank details.",
+        "loading": "Loading Stripe payouts…",
+        "loadError": "Could not load Stripe bank payout history.",
+        "empty": "No Stripe bank payouts to show yet.",
+        "useDashboard": "Connect Stripe, then open the Stripe Dashboard for bank payout history.",
+        "method": {
+          "instant": "Instant",
+          "standard": "Standard",
+          "unknown": "Payout"
+        }
+      },
+      "activityTitle": "CareTip payout activity",
+      "activityHint": "Each row is a CareTip payable — a transfer to your Stripe account or an amount still held. This is not your bank payout history.",
+      "activityLoading": "Loading payout activity…",
+      "activityLoadError": "Could not load payout activity.",
+      "emptyActivityTitle": "No payout activity yet",
+      "emptyActivityBody": "Eligible tips will appear here when they are routed to your Stripe payout account.",
+      "colDate": "Date",
+      "colDescription": "Description",
+      "colAmount": "Amount",
+      "colStatus": "Status",
+      "activityKind": {
+        "held": "Held on CareTip",
+        "held_venue": "Held with venue distribution",
+        "transferring": "Transfer in progress",
+        "transferred": "Transferred to Stripe",
+        "destination_routed": "Routed to Stripe",
+        "refunded": "Refund adjustment",
+        "failed": "Transfer failed",
+        "disputed": "Under dispute review"
+      },
+      "activityStatus": {
+        "held": "Pending",
+        "held_venue": "Pending",
+        "transferring": "Pending",
+        "transferred": "Completed",
+        "destination_routed": "Completed",
+        "refunded": "Refunded",
+        "failed": "Failed",
+        "disputed": "Pending"
       }
     },
     "hero": {
@@ -6004,16 +6084,18 @@
     },
     "stripe": {
       "moduleEyebrow": "Tips & payouts",
-      "moduleTitle": "Stripe",
-      "moduleSubtitle": "Connect Stripe to receive guest tips.",
+      "moduleTitle": "Stripe Connect",
+      "moduleSubtitle": "Receive guest tips securely through Stripe.",
       "payoutsSubtitle": "See your available balance, send Instant Payouts, and review recent transfers.",
       "nav": {
         "connect": "Connect",
         "payouts": "Payouts"
       },
       "tipRouting": {
-        "title": "Employee tip payouts",
-        "hint": "This applies to new tips only. Tips already paid keep their original routing.",
+        "title": "Employee tip routing",
+        "hint": "Choose where new employee tips are routed.",
+        "active": "Active",
+        "appliesNew": "Applies to new tips only.",
         "loading": "Loading payout preference…",
         "save": "Save",
         "saving": "Saving…",
@@ -6023,11 +6105,13 @@
         "mode": {
           "direct_to_employee": {
             "label": "Pay employees directly",
-            "body": "When a staff member has connected their payout account, their tips go to that account. If they have not connected yet, the customer can still tip; those amounts are held until the account is ready."
+            "body": "Connected employees receive eligible tips directly in their Stripe payout account.",
+            "note": "Unconnected employees are held until their payout account is ready."
           },
           "business_distribution": {
-            "label": "Business receives first",
-            "body": "Guest tips continue to land on the business Stripe account, including Instant Payout. Automatic staff transfers from that balance are not enabled yet."
+            "label": "CareTip holds, then pays employees",
+            "body": "New tips stay on CareTip until the employee is ready, then CareTip transfers the employee’s share.",
+            "note": "Business Instant Payout cannot drain employee-held funds."
           }
         }
       }
@@ -6110,6 +6194,8 @@
         "methodInstant": "Instant",
         "methodStandard": "Standard",
         "methodUnknown": "Unknown",
+        "activityTitle": "Payout activity",
+        "activityHint": "Recent Stripe payouts to the venue’s bank. These are not employee tip transfers.",
         "historyTitle": "Payout history",
         "instant": {
           "balanceEyebrow": "Your balance",
@@ -6188,10 +6274,11 @@
         "statusIncomplete": "Action Required",
         "statusAttention": "Action Required",
         "statusActionBody": "Stripe needs additional information (e.g., ID verification) to enable payouts.",
-        "statusReady": "Connected & Ready",
+        "statusReady": "Connected",
         "statusReadyBody": "Your Stripe account is connected. Open the Stripe Dashboard or review payout history in CareTip.",
         "nextStepHint": "Stripe needs additional information (e.g., ID verification) to enable payouts.",
-        "accountSummaryTitle": "Account details",
+        "accountStatusLabel": "Stripe account status",
+        "accountSummaryTitle": "Connection overview",
         "accountVenueLabel": "Connected venue",
         "payoutStatusLabel": "Payout status",
         "payoutEnabled": "Enabled",
