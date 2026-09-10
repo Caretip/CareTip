@@ -393,6 +393,30 @@ export type MobileMessages = {
     ratingsHint: string;
     successfulTipsHint: string;
   };
+  employeePayouts: {
+    title: string;
+    subtitle: string;
+    loadError: string;
+    reactivateCta: string;
+    pausedTitle: string;
+    pausedBody: string;
+    reactivated: string;
+    instantTitle: string;
+    instantLead: string;
+    instantCta: string;
+    instantChecking: string;
+    instantUnavailable: string;
+    instantSuccess: string;
+    instantFailed: string;
+    instantMin: string;
+    instantFee: string;
+    historyTitle: string;
+    historyEmpty: string;
+    historyHint: string;
+    dashboardCta: string;
+    updateDetailsCta: string;
+    noSteerHint: string;
+  };
   employeeAssignment: {
     eyebrow: string;
     title: string;

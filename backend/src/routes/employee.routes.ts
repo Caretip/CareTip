@@ -67,6 +67,13 @@ router.patch(
   employeeController.patchMyProfile,
 );
 router.post(
+  "/me/reactivate-receiving",
+  authMiddleware,
+  requireVerifiedEmail,
+  requireRole(Role.EMPLOYEE),
+  employeeController.postMyReactivateReceiving,
+);
+router.post(
   "/me/avatar",
   authMiddleware,
   requireVerifiedEmail,

@@ -1,6 +1,6 @@
 import { useRef } from "react";
 import { useFrame } from "@react-three/fiber";
-import { RoundedBox } from "@react-three/drei";
+import { RoundedBox } from "@react-three/drei/core/RoundedBox.js";
 import type { Group } from "three";
 
 type CardProps = {

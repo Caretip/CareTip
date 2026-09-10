@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Receipt } from "lucide-react";
 import {
@@ -10,48 +10,58 @@ import { formatBerlinDateTime } from "../../lib/physicalQrOrderUi";
 import { logClientError } from "../../lib/clientLog";
 import { toUserFriendlyMessage } from "../../lib/errorMessages";
 import { employeeUi } from "./employeeDashboardUi";
-import { FinanceStatusDot } from "../finance/FinanceStatusDot";
+import { FinanceStatusPill } from "../finance/FinanceStatusPill";
 import {
   employeePayoutActivityKind,
   employeePayoutActivityKindKey,
   employeePayoutActivityStatusKey,
   employeePayoutActivityTone,
 } from "./employeePayoutActivityPresentation";
+import { Button } from "../ui/button";
 import { cn } from "@/lib/utils";
+
+const PAGE_SIZE = 25;
 
 export function EmployeePayoutActivityList() {
   const { t, i18n } = useTranslation();
   const [items, setItems] = useState<EmployeePayableActivityItem[] | null>(null);
+  const [total, setTotal] = useState(0);
+  const [skip, setSkip] = useState(0);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    let cancelled = false;
-    void listEmployeePayableActivity({ take: 20, skip: 0 })
-      .then((res) => {
-        if (!cancelled) {
+  const load = useCallback(
+    (nextSkip: number) => {
+      setItems(null);
+      setError(null);
+      void listEmployeePayableActivity({ take: PAGE_SIZE, skip: nextSkip })
+        .then((res) => {
           setItems(res.items);
-          setError(null);
-        }
-      })
-      .catch((err) => {
-        logClientError("EmployeePayoutActivityList", err);
-        if (!cancelled) {
+          setTotal(res.total);
+          setSkip(nextSkip);
+        })
+        .catch((err) => {
+          logClientError("EmployeePayoutActivityList", err);
           setItems([]);
           setError(toUserFriendlyMessage(err) || t("employee.payouts.activityLoadError"));
-        }
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [t]);
+        });
+    },
+    [t],
+  );
+
+  useEffect(() => {
+    load(0);
+  }, [load]);
+
+  const from = total === 0 ? 0 : skip + 1;
+  const to = Math.min(skip + PAGE_SIZE, total);
 
   return (
     <section className="space-y-3" aria-labelledby="employee-payout-activity-heading">
       <div>
-        <h2 id="employee-payout-activity-heading" className="text-base font-semibold tracking-tight">
-          {t("employee.payouts.activityTitle")}
+        <h2 id="employee-payout-activity-heading" className="sr-only">
+          {t("employee.payouts.history.caretipTab")}
         </h2>
-        <p className="mt-1 text-sm text-muted-foreground">{t("employee.payouts.activityHint")}</p>
+        <p className="text-sm text-muted-foreground">{t("employee.payouts.history.caretipHint")}</p>
       </div>
       {items == null ? (
         <p className="text-sm text-muted-foreground">{t("employee.payouts.activityLoading")}</p>
@@ -76,7 +86,7 @@ export function EmployeePayoutActivityList() {
           </ul>
           <div className="hidden overflow-x-auto md:block">
             <table className="w-full text-left text-sm">
-              <caption className="sr-only">{t("employee.payouts.activityTitle")}</caption>
+              <caption className="sr-only">{t("employee.payouts.history.caretipTab")}</caption>
               <thead>
                 <tr className="border-b border-border text-[0.6875rem] font-medium uppercase tracking-wide text-muted-foreground">
                   <th scope="col" className="py-2 pr-3 font-medium">
@@ -106,7 +116,7 @@ export function EmployeePayoutActivityList() {
                         {formatEur(row.activityCents / 100)}
                       </td>
                       <td className="py-2.5">
-                        <FinanceStatusDot
+                        <FinanceStatusPill
                           tone={employeePayoutActivityTone(kind)}
                           label={t(employeePayoutActivityStatusKey(kind))}
                         />
@@ -117,6 +127,27 @@ export function EmployeePayoutActivityList() {
               </tbody>
             </table>
           </div>
+          {total > PAGE_SIZE ? (
+            <div className="flex items-center justify-between gap-3 pt-2">
+              <p className="text-xs text-muted-foreground">
+                {t("employee.payouts.history.showing", { from, to, total })}
+              </p>
+              <div className="flex gap-2">
+                <Button type="button" variant="outline" size="sm" disabled={skip <= 0} onClick={() => load(Math.max(0, skip - PAGE_SIZE))}>
+                  {t("employee.payouts.history.prev")}
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  disabled={skip + PAGE_SIZE >= total}
+                  onClick={() => load(skip + PAGE_SIZE)}
+                >
+                  {t("employee.payouts.history.next")}
+                </Button>
+              </div>
+            </div>
+          ) : null}
         </>
       )}
     </section>
@@ -132,11 +163,10 @@ function ActivityMobileRow({ row, locale }: { row: EmployeePayableActivityItem; 
         <p className="text-sm font-medium">{t(employeePayoutActivityKindKey(kind))}</p>
         <p className="mt-0.5 text-xs text-muted-foreground">{formatBerlinDateTime(row.createdAt, locale)}</p>
         <div className="mt-1">
-          <FinanceStatusDot
-            tone={employeePayoutActivityTone(kind)}
-            label={t(employeePayoutActivityStatusKey(kind))}
-            className="text-xs"
-          />
+        <FinanceStatusPill
+          tone={employeePayoutActivityTone(kind)}
+          label={t(employeePayoutActivityStatusKey(kind))}
+        />
         </div>
       </div>
       <p className="shrink-0 text-sm font-semibold tabular-nums">{formatEur(row.activityCents / 100)}</p>

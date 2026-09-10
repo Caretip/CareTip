@@ -1112,6 +1112,16 @@ model Employee {
    * Optional venue for multi-QR flows; must belong to the same business.
    */
   locationId         String?                  @map("location_id")
+  /**
+   * CareTip QR receiving pause (45-day tip inactivity). Independent of Stripe Connect
+   * and of manager-toggled Employee.isActive. Null = receiving is not paused by this job.
+   */
+  receivingPausedAt            DateTime? @map("receiving_paused_at")
+  receivingPausedReason        String?   @map("receiving_paused_reason") @db.VarChar(64)
+  receivingResumedAt           DateTime? @map("receiving_resumed_at")
+  inactivityWarningSentAt      DateTime? @map("inactivity_warning_sent_at")
+  inactivityAdminNotifiedAt    DateTime? @map("inactivity_admin_notified_at")
+  createdAt                    DateTime  @default(now()) @map("created_at")
 
   business         Business                  @relation(fields: [businessId], references: [id], onDelete: Cascade)
   user             User?                     @relation(fields: [userId], references: [id], onDelete: SetNull)

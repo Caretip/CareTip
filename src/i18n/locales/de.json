@@ -2566,6 +2566,9 @@
       "assignment": "Meine Zuweisung",
       "tipGoals": "Trinkgeldziele",
       "payouts": "Auszahlungen",
+      "payments": "Zahlungen",
+      "paymentsConnect": "Verbinden",
+      "paymentsHistory": "Auszahlungshistorie",
       "settings": "Einstellungen"
     },
     "business": {
@@ -3768,8 +3771,33 @@
       "deletePermanently": "Endgültig löschen",
       "dialogCancel": "Abbrechen"
     },
+    "receiving": {
+      "pausedTitle": "Ihr Profil ist inaktiv",
+      "pausedBody": "Ihr QR-Code ist vorübergehend pausiert, weil 45 Tage lang kein anrechenbares Trinkgeld eingegangen ist. Ihr Stripe-Konto bleibt verbunden. Reaktivieren Sie das Profil, um wieder Trinkgeld zu empfangen.",
+      "reactivateCta": "Profil reaktivieren",
+      "reactivated": "Ihr Profil ist wieder aktiv.",
+      "reactivateFailed": "Das Profil konnte nicht reaktiviert werden. Bitte erneut versuchen."
+    },
     "payouts": {
       "title": "Auszahlungen",
+      "connectTitle": "Verbinden",
+      "connectSubtitle": "Verwalten Sie Ihr Stripe-Auszahlungskonto und greifen Sie auf verfügbare Beträge zu.",
+      "history": {
+        "title": "Auszahlungshistorie",
+        "subtitle": "Verfolgen Sie Überweisungen auf Ihr Stripe-Konto und Auszahlungen von Stripe auf Ihr Bankkonto.",
+        "tabsAria": "Auszahlungshistorie",
+        "caretipTab": "CareTip-Überweisungen",
+        "bankTab": "Bankauszahlungen",
+        "caretipHint": "Überweisungen von CareTip auf Ihr Stripe-Auszahlungskonto.",
+        "bankHint": "Auszahlungen von Stripe auf Ihr Bankkonto.",
+        "showing": "{{from}}–{{to}} von {{total}}",
+        "prev": "Zurück",
+        "next": "Weiter"
+      },
+      "accountTitle": "Stripe-Auszahlungskonto",
+      "connectedReady": "Verbunden und bereit",
+      "availableTitle": "Verfügbar zur Auszahlung",
+      "availableNow": "Jetzt verfügbar",
       "subtitle": "Verwalten Sie Ihr Stripe-Auszahlungskonto und verfolgen Sie weitergeleitete Trinkgelder.",
       "backAria": "Zurück",
       "sectionTitle": "Auszahlungskonto",
@@ -3808,8 +3836,8 @@
       "notConfigured": "Die Einrichtung des Auszahlungskontos ist noch nicht verfügbar.",
       "state": {
         "not_connected": "Nicht verbunden",
-        "setup_required": "Einrichtung erforderlich",
-        "action_required": "Handlung erforderlich",
+        "setup_required": "Einrichtung unvollständig",
+        "action_required": "Aufmerksamkeit erforderlich",
         "restricted": "Eingeschränkt",
         "connected": "Verbunden"
       },
@@ -3824,7 +3852,12 @@
       "bankPayoutsNote": "Bankauszahlungen verwaltet Stripe. CareTip erfasst Überweisungen auf Ihr Stripe-Auszahlungskonto, nicht Auszahlungen auf Ihr Bankkonto.",
       "instant": {
         "eyebrow": "Sofortauszahlung",
-        "title": "Geld jetzt erhalten",
+        "title": "Sofort auszahlen lassen",
+        "youReceive": "Sie erhalten",
+        "ctaAmount": "{{amount}} sofort erhalten",
+        "feeLine": "Gebühr {{amount}} ({{percent}})",
+        "feeAmountOnly": "Gebühr {{amount}}",
+        "eligible": "Sofortauszahlung möglich",
         "lead": "Zahlt verfügbares Stripe-Guthaben auf Ihre sofortfähige Auszahlungsmethode. Das ist nicht der reguläre Stripe-Bankplan.",
         "checking": "Sofortauszahlung wird geprüft…",
         "loadError": "Sofortauszahlung konnte nicht geladen werden.",
@@ -3834,10 +3867,19 @@
         "success": "Sofortauszahlung gesendet.",
         "failed": "Sofortauszahlung konnte nicht abgeschlossen werden.",
         "underMin": "Sofortauszahlung ist ab {{amount}} verfügbar.",
+        "belowMinExplain": "Sofortauszahlung ist verfügbar, sobald Ihr Guthaben {{amount}} erreicht.",
+        "belowMinAria": "Sofortauszahlung nicht verfügbar, bis Ihr Guthaben {{amount}} erreicht.",
+        "feeDot": "Gebühr {{amount}} · {{percent}}",
         "unavailable": "Sofortauszahlung ist für dieses Konto derzeit nicht verfügbar.",
         "minimum": "Minimum {{amount}}",
         "feeStripe": "Stripe-Sofortgebühr {{fee}} ({{amount}}). CareTip berechnet keine zweite Gebühr.",
-        "feeUnknown": "Falls Stripe eine Sofortgebühr erhebt, kommt sie von diesem Stripe-Saldo. CareTip addiert keine zweiten 2,5 %."
+        "feeUnknown": "Falls Stripe eine Sofortgebühr erhebt, kommt sie von diesem Stripe-Saldo. CareTip addiert keine zweiten 2,5 %.",
+        "reason": {
+          "no_instant_destination": "Hinterlegen Sie in Stripe eine sofortfähige Auszahlungsmethode, um Sofortauszahlung zu nutzen.",
+          "payouts_disabled": "Auszahlungen sind auf diesem Stripe-Konto noch nicht aktiviert.",
+          "country_unsupported": "Sofortauszahlung ist für das Land dieses Kontos nicht verfügbar.",
+          "business_closed": "Sofortauszahlung ist für diesen Betrieb derzeit nicht verfügbar."
+        }
       },
       "bankHistory": {
         "title": "Stripe-Bankauszahlungen",
@@ -3850,6 +3892,14 @@
           "instant": "Sofort",
           "standard": "Standard",
           "unknown": "Auszahlung"
+        },
+        "colMethod": "Methode",
+        "status": {
+          "paid": "Ausgezahlt",
+          "pending": "Ausstehend",
+          "in_transit": "Unterwegs",
+          "canceled": "Storniert",
+          "failed": "Fehlgeschlagen"
         }
       },
       "activityTitle": "CareTip-Auszahlungsaktivität",
@@ -6191,8 +6241,10 @@
         "methodInstant": "Sofort",
         "methodStandard": "Standard",
         "methodUnknown": "Unbekannt",
-        "activityTitle": "Auszahlungsaktivität",
-        "activityHint": "Aktuelle Stripe-Auszahlungen auf das Bankkonto des Betriebs. Das sind keine Mitarbeiter-Überweisungen.",
+        "activityTitle": "Aktuelle Auszahlungen",
+        "activityHint": "Auszahlungen von Ihrem Business-Stripe-Konto auf Ihr Bankkonto.",
+        "lastPayoutLabel": "Letzte Auszahlung",
+        "payoutStatusLabel": "Auszahlungsstatus",
         "historyTitle": "Auszahlungsverlauf",
         "instant": {
           "balanceEyebrow": "Ihr Guthaben",
@@ -6272,6 +6324,10 @@
         "statusAttention": "Handlung erforderlich",
         "statusActionBody": "Stripe benötigt weitere Informationen (z. B. Ausweisdokument), um Auszahlungen freizuschalten.",
         "statusReady": "Verbunden",
+        "connectedReady": "Verbunden und bereit",
+        "stripeAccountTitle": "Stripe-Konto",
+        "expressAccount": "Stripe-Express-Konto",
+        "payoutsEnabledPill": "Auszahlungen aktiviert",
         "statusReadyBody": "Ihr Stripe-Konto ist verbunden. Öffnen Sie das Stripe-Dashboard oder sehen Sie den Auszahlungsverlauf in CareTip ein.",
         "nextStepHint": "Stripe benötigt weitere Informationen (z. B. Ausweisdokument), um Auszahlungen freizuschalten.",
         "accountStatusLabel": "Stripe-Kontostatus",

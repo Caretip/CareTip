@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Landmark, Wallet } from "lucide-react";
 import { toast } from "sonner";
 import {
   getEmployeeTipPayoutMode,
@@ -10,6 +9,7 @@ import {
 import { toUserFriendlyMessage } from "../../../../lib/errorMessages";
 import { logClientError } from "../../../../lib/clientLog";
 import { Button } from "../../../ui/button";
+import { FinanceStatusPill } from "../../../finance/FinanceStatusPill";
 import { cn } from "@/lib/utils";
 
 const MODES: EmployeeTipPayoutMode[] = ["direct_to_employee", "business_distribution"];
@@ -71,7 +71,6 @@ export function EmployeeTipPayoutModeCard() {
           <legend className="sr-only">{t("business.stripe.tipRouting.title")}</legend>
           {MODES.map((option) => {
             const selected = draft === option;
-            const Icon = option === "direct_to_employee" ? Wallet : Landmark;
             return (
               <label
                 key={option}
@@ -89,18 +88,13 @@ export function EmployeeTipPayoutModeCard() {
                   checked={selected}
                   onChange={() => setDraft(option)}
                 />
-                <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-muted text-foreground">
-                  <Icon className="h-4 w-4" aria-hidden />
-                </span>
-                <span className="min-w-0 space-y-1">
+                <span className="min-w-0 space-y-1.5">
                   <span className="flex flex-wrap items-center gap-2">
                     <span className="text-sm font-semibold leading-snug">
                       {t(`business.stripe.tipRouting.mode.${option}.label`)}
                     </span>
                     {mode === option ? (
-                      <span className="rounded-full bg-emerald-600/10 px-1.5 py-0.5 text-[0.625rem] font-semibold uppercase tracking-wide text-emerald-800 dark:text-emerald-200">
-                        {t("business.stripe.tipRouting.active")}
-                      </span>
+                      <FinanceStatusPill tone="success" label={t("business.stripe.tipRouting.active")} />
                     ) : null}
                   </span>
                   <span className="block text-sm leading-snug text-muted-foreground">

@@ -1,4 +1,4 @@
-import { MeshReflectorMaterial } from "@react-three/drei";
+import { MeshReflectorMaterial } from "@react-three/drei/core/MeshReflectorMaterial.js";
 
 type Props = {
   /** Lower resolution on small viewports. */

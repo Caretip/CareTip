@@ -36,7 +36,7 @@ import { useSubscriptionEntitlements } from "../../hooks/useSubscriptionEntitlem
 import { DashboardRealtimeStatusStrip } from "../../components/dashboard/DashboardRealtimeStatusStrip";
 import { DashboardRefreshIndicator } from "../../components/dashboard/DashboardRefreshIndicator";
 import { EmployeeDashboardRealtimeSync } from "../../components/employee/EmployeeDashboardRealtimeSync";
-import { getEmployeeProfile, ensureEmployeeSlug, peekEmployeeProfileCache, peekEmployeeProfileSession, type EmployeeSelfAssignment } from "../../lib/api";
+import { getEmployeeProfile, ensureEmployeeSlug, peekEmployeeProfileCache, peekEmployeeProfileSession, clearEmployeeProfileClientCache, type EmployeeSelfAssignment } from "../../lib/api";
 import { writeEmployeeAssignmentSnapshot } from "../../lib/employeePageSessionCache";
 import { useEmployeeDashboardAnalytics } from "../../hooks/useEmployeeDashboardAnalytics";
 import { FeatureGate } from "../../components/subscription/FeatureGate";
@@ -58,6 +58,7 @@ import {
 import { CountUpMetric } from "../../components/dashboard/CountUpMetric";
 import { computeEmployeeTipStreakDays } from "../../lib/employeeFormat";
 import { employeeUi } from "../../components/employee/employeeDashboardUi";
+import { EmployeeReceivingPausedBanner } from "../../components/employee/EmployeeReceivingPausedBanner";
 import {
   devMockEmployeeAccountSummary,
   devMockEmployeeChartSeries,
@@ -140,6 +141,9 @@ export const EmployeeDashboard = memo(function EmployeeDashboard() {
   );
   const [qrModalOpen, setQrModalOpen] = useState(false);
   const [generatingSlug, setGeneratingSlug] = useState(false);
+  const [receivingPaused, setReceivingPaused] = useState(
+    () => peekEmployeeProfileSession()?.receivingPaused === true || peekEmployeeProfileCache()?.receivingPaused === true,
+  );
 
   useEffect(() => {
     if (!authHydrated || !sessionValidated || !user || user.role !== "employee") return;
@@ -150,10 +154,12 @@ export const EmployeeDashboard = memo(function EmployeeDashboard() {
       avatar?: string | null;
       name?: string;
       assignment?: EmployeeSelfAssignment;
+      receivingPaused?: boolean;
     }) => {
       setStaffSlug(p.slug ?? null);
       setEmployeeBusinessSlug(p.businessSlug ?? null);
       setEmployeeRecordId(p.id);
+      setReceivingPaused(p.receivingPaused === true);
       updateUser({ avatar: p.avatar ?? undefined, name: p.name });
       if (user.id && p.assignment) {
         writeEmployeeAssignmentSnapshot(user.id, p.assignment);
@@ -410,6 +416,13 @@ export const EmployeeDashboard = memo(function EmployeeDashboard() {
         applyLiveTip={applyLiveTip}
       />
       <div className={employeeUi.pageInner}>
+        <EmployeeReceivingPausedBanner
+          receivingPaused={receivingPaused}
+          onReactivated={() => {
+            clearEmployeeProfileClientCache();
+            void getEmployeeProfile().then((p) => setReceivingPaused(p.receivingPaused === true));
+          }}
+        />
         <PremiumPageHero className="employee-dashboard-hero mb-7 sm:mb-8 lg:mb-7">
         <DashboardHero
           stackHeroOnMobile

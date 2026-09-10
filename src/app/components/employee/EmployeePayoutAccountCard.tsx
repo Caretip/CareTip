@@ -13,8 +13,8 @@ import { toUserFriendlyMessage } from "../../lib/errorMessages";
 import { logClientError } from "../../lib/clientLog";
 import { performExternalStripeRedirect } from "../../lib/externalStripeRedirect";
 import { Button } from "../ui/button";
-import { formatEur } from "../../lib/formatEur";
-import { FinanceStatusDot, type FinanceStatusTone } from "../finance/FinanceStatusDot";
+import { FinanceStatusPill } from "../finance/FinanceStatusPill";
+import type { FinanceStatusTone } from "../finance/FinanceStatusDot";
 import {
   employeePayoutBodyKey,
   employeePayoutPrimaryCta,
@@ -111,23 +111,11 @@ export function EmployeePayoutAccountCard() {
   const state = data?.connectionState ?? "not_connected";
   const ready = isEmployeePayoutReady(data);
   const primaryCta = employeePayoutPrimaryCta(phase);
-  const held = data?.heldPlatformCents ?? 0;
-  const disputedOpen = data?.disputedOpenCents ?? 0;
-  const disputedLost = data?.disputedLostCents ?? 0;
-  const refunded = data?.refundedCents ?? 0;
-  const routed = (data?.destinationSettledCents ?? 0) + (data?.transferredCents ?? 0);
-
-  const metrics = [
-    { key: "routed", cents: routed, label: t("employee.payouts.metric.routed") },
-    { key: "held", cents: held, label: t("employee.payouts.metric.held") },
-    { key: "refunded", cents: refunded, label: t("employee.payouts.metric.refunded") },
-    { key: "disputed", cents: disputedOpen, label: t("employee.payouts.metric.disputed") },
-  ];
 
   return (
-    <div className="space-y-8">
+    <div>
       {phase === "loading" ? (
-        <div className="flex items-center gap-2 py-6 text-sm text-muted-foreground" role="status">
+        <div className="flex items-center gap-2 py-4 text-sm text-muted-foreground" role="status">
           <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
           {t("employee.payouts.loading")}
         </div>
@@ -140,97 +128,67 @@ export function EmployeePayoutAccountCard() {
           </Button>
         </div>
       ) : (
-        <>
-          <section className="space-y-4" aria-labelledby="employee-payout-account-heading">
-            <div className="flex flex-col gap-4 border-b border-border/80 pb-5 sm:flex-row sm:items-start sm:justify-between">
-              <div className="min-w-0 space-y-1">
-                <p className="text-[0.6875rem] font-medium uppercase tracking-wide text-muted-foreground">
-                  {t("employee.payouts.sectionTitle")}
-                </p>
-                <h2 id="employee-payout-account-heading" className="text-base font-semibold tracking-tight">
-                  {ready ? t("employee.payouts.readyBadge") : t(`employee.payouts.state.${state}`)}
-                </h2>
-                <FinanceStatusDot
-                  tone={phaseTone(phase)}
-                  label={t(`employee.payouts.state.${state}`)}
-                  className="text-sm"
-                />
-                <p className="max-w-xl text-sm leading-snug text-muted-foreground">
-                  {t(employeePayoutBodyKey(phase, state))}
-                </p>
-              </div>
-              <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:flex-wrap sm:justify-end">
-                {ready && data?.canOpenDashboard ? (
-                  <Button
-                    type="button"
-                    className={ctaClass}
-                    onClick={() => void onDashboard()}
-                    disabled={busy != null}
-                    data-payout-cta="dashboard"
-                  >
-                    {busy === "dashboard" ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : null}
-                    {t("employee.payouts.openDashboard")}
-                  </Button>
-                ) : null}
-                {primaryCta ? (
-                  <Button
-                    type="button"
-                    variant={ready ? "outline" : "default"}
-                    className={ctaClass}
-                    onClick={() => void onConnect()}
-                    disabled={busy != null || data?.stripeConfigured === false}
-                    data-payout-cta={primaryCta}
-                  >
-                    {busy === "onboarding" ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : null}
-                    {t(employeePayoutPrimaryCtaKey(primaryCta))}
-                  </Button>
-                ) : null}
-                {!ready && data?.canOpenDashboard ? (
-                  <Button
-                    type="button"
-                    variant="outline"
-                    className={ctaClass}
-                    onClick={() => void onDashboard()}
-                    disabled={busy != null}
-                    data-payout-cta="dashboard"
-                  >
-                    {busy === "dashboard" ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : null}
-                    {t("employee.payouts.openDashboard")}
-                  </Button>
-                ) : null}
-              </div>
-            </div>
-            {data?.stripeConfigured === false ? (
-              <p className="text-xs text-muted-foreground">{t("employee.payouts.notConfigured")}</p>
-            ) : null}
-          </section>
-
-          <section aria-labelledby="employee-payout-summary-heading">
-            <div className="mb-3 flex items-end justify-between gap-3">
-              <h2 id="employee-payout-summary-heading" className="text-base font-semibold tracking-tight">
-                {t("employee.payouts.summaryTitle")}
+        <section className="space-y-4" aria-labelledby="employee-payout-account-heading">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+            <div className="min-w-0 space-y-2">
+              <h2 id="employee-payout-account-heading" className="text-base font-semibold tracking-tight">
+                {t("employee.payouts.accountTitle")}
               </h2>
-              <p className="text-xs text-muted-foreground">{t("employee.payouts.notStripeBalance")}</p>
-            </div>
-            <dl className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-              {metrics.map((metric) => (
-                <div key={metric.key} className="min-w-0">
-                  <dt className="text-[0.6875rem] font-medium uppercase tracking-wide text-muted-foreground">
-                    {metric.label}
-                  </dt>
-                  <dd className="mt-1 text-lg font-semibold tabular-nums tracking-tight">
-                    {formatEur(metric.cents / 100)}
-                  </dd>
-                </div>
-              ))}
-            </dl>
-            {disputedLost > 0 ? (
-              <p className="mt-2 text-xs text-muted-foreground">
-                {t("employee.payouts.disputedLostTitle")}: {formatEur(disputedLost / 100)}
+              <FinanceStatusPill
+                tone={phaseTone(phase)}
+                label={ready ? t("employee.payouts.connectedReady") : t(`employee.payouts.state.${state}`)}
+              />
+              <p className="max-w-xl text-sm leading-snug text-muted-foreground">
+                {phase === "ready"
+                  ? t("employee.payouts.stripeSchedule")
+                  : t(employeePayoutBodyKey(phase, state))}
               </p>
-            ) : null}
-          </section>
-        </>
+            </div>
+            <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:flex-wrap sm:justify-end">
+              {ready && data?.canOpenDashboard ? (
+                <Button
+                  type="button"
+                  className={ctaClass}
+                  onClick={() => void onDashboard()}
+                  disabled={busy != null}
+                  data-payout-cta="dashboard"
+                >
+                  {busy === "dashboard" ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : null}
+                  {t("employee.payouts.openDashboard")}
+                </Button>
+              ) : null}
+              {primaryCta ? (
+                <Button
+                  type="button"
+                  variant={ready ? "outline" : "default"}
+                  className={ctaClass}
+                  onClick={() => void onConnect()}
+                  disabled={busy != null || data?.stripeConfigured === false}
+                  data-payout-cta={primaryCta}
+                >
+                  {busy === "onboarding" ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : null}
+                  {t(employeePayoutPrimaryCtaKey(primaryCta))}
+                </Button>
+              ) : null}
+              {!ready && data?.canOpenDashboard ? (
+                <Button
+                  type="button"
+                  variant="outline"
+                  className={ctaClass}
+                  onClick={() => void onDashboard()}
+                  disabled={busy != null}
+                  data-payout-cta="dashboard"
+                >
+                  {busy === "dashboard" ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : null}
+                  {t("employee.payouts.openDashboard")}
+                </Button>
+              ) : null}
+            </div>
+          </div>
+          {data?.stripeConfigured === false ? (
+            <p className="text-xs text-muted-foreground">{t("employee.payouts.notConfigured")}</p>
+          ) : null}
+        </section>
       )}
     </div>
   );

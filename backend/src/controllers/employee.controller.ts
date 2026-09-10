@@ -92,6 +92,34 @@ export async function getMyProfile(req: Request, res: Response) {
   }
 }
 
+export async function postMyReactivateReceiving(req: Request, res: Response) {
+  try {
+    const userId = req.user?.userId ?? req.user?.id;
+    if (!userId) {
+      return res.status(401).json({ message: "Authentication required" });
+    }
+    const { reactivateEmployeeReceivingForUser } = await import(
+      "../services/employeeStripeInactivity.service.js"
+    );
+    const { StripeConnectError } = await import("../services/stripeConnect.service.js");
+    try {
+      const result = await reactivateEmployeeReceivingForUser(userId);
+      const profile = await employeeService.getEmployeeProfileForUser(userId);
+      return res.json({ ...profile, receivingPaused: result.receivingPaused });
+    } catch (err) {
+      if (err instanceof StripeConnectError) {
+        return res.status(err.httpStatus).json({ message: err.message, code: err.code });
+      }
+      throw err;
+    }
+  } catch (err) {
+    logServerError("employee.postMyReactivateReceiving", err);
+    return res.status(400).json({
+      message: clientSafeMessage(err, CLIENT_FALLBACK.employee),
+    });
+  }
+}
+
 export async function patchMyProfile(req: Request, res: Response) {
   try {
     const userId = req.user?.userId ?? req.user?.id;

@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { createConnectAccountLink, createConnectLoginLink, type ConnectStatus } from "../../../../lib/api";
 import { fetchConnectStatusCached } from "../../../../lib/stripeConnectStatusCache";
 import {
+  stripeConnectBodyKey,
   stripeConnectCtaKey,
   stripeConnectHeadlineKey,
   stripeConnectShowsDashboardAccess,
@@ -20,8 +21,8 @@ import {
 import { performExternalStripeRedirect } from "../../../../lib/externalStripeRedirect";
 import { useRequireAuth } from "../../../../hooks/useRequireAuth";
 import { Button } from "../../../ui/button";
-import { FinanceStatusDot, type FinanceStatusTone } from "../../../finance/FinanceStatusDot";
-import { cn } from "@/lib/utils";
+import { FinanceStatusPill } from "../../../finance/FinanceStatusPill";
+import type { FinanceStatusTone } from "../../../finance/FinanceStatusDot";
 
 function connectTone(light: ReturnType<typeof stripeConnectTrafficLight>): FinanceStatusTone {
   if (light === "green") return "success";
@@ -149,22 +150,46 @@ export function BusinessStripeConnectCard() {
   const showUpdate = light === "green" && canStart && data.hasAccount;
   const showOnboardingPrimary = Boolean(ctaKey && canStart);
 
+  const headline =
+    light === "green" ? t("business.billing.connect.connectedReady") : statusLabel;
+
   return (
     <section className="space-y-6" aria-labelledby="stripe-connect-overview">
-      <div className="flex flex-col gap-4 border-b border-border/80 pb-5 sm:flex-row sm:items-start sm:justify-between">
-        <div className="min-w-0 space-y-1">
-          <h2 id="stripe-connect-overview" className="sr-only">
-            {t("business.billing.connect.accountSummaryTitle")}
+      <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
+        <div className="min-w-0 space-y-2">
+          <h2 id="stripe-connect-overview" className="text-base font-semibold tracking-tight">
+            {t("business.billing.connect.stripeAccountTitle")}
           </h2>
-          <FinanceStatusDot
-            tone={tone}
-            label={statusLabel}
-            className="text-[0.8125rem]"
-          />
-          {lastSync ? (
-            <p className="text-xs text-muted-foreground">
-              {t("business.billing.connect.lastSyncLabel")}: {lastSync}
-            </p>
+          <p
+            className="text-xl font-semibold tracking-tight sm:text-2xl"
+            data-connect-status={data.status}
+            data-connect-readiness={light === "green" ? "ready" : "required"}
+          >
+            {headline}
+          </p>
+          {venueName ? <p className="text-sm font-medium">{venueName}</p> : null}
+          {data.hasAccount ? (
+            <p className="text-sm text-muted-foreground">{t("business.billing.connect.expressAccount")}</p>
+          ) : null}
+          <div className="flex flex-wrap items-center gap-2">
+            <FinanceStatusPill tone={tone} label={statusLabel} />
+            {data.hasAccount ? (
+              <FinanceStatusPill
+                tone={data.payoutsEnabled ? "success" : "warning"}
+                label={
+                  data.payoutsEnabled
+                    ? t("business.billing.connect.payoutsEnabledPill")
+                    : t("business.billing.connect.payoutRestricted")
+                }
+              />
+            ) : null}
+          </div>
+          <p className="text-xs text-muted-foreground">
+            {t("business.billing.connect.lastSyncLabel")}:{" "}
+            {lastSync || t("business.billing.connect.lastSyncUnavailable")}
+          </p>
+          {light !== "green" ? (
+            <p className="max-w-xl text-sm text-muted-foreground">{t(stripeConnectBodyKey(data))}</p>
           ) : null}
         </div>
         <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:flex-wrap sm:justify-end">
@@ -210,47 +235,6 @@ export function BusinessStripeConnectCard() {
       {!data.stripeConfigured ? (
         <p className="text-sm text-muted-foreground">{t("business.billing.connect.notConfigured")}</p>
       ) : null}
-
-      <dl className="grid grid-cols-1 gap-x-6 gap-y-4 sm:grid-cols-2 lg:grid-cols-4">
-        <div className="min-w-0">
-          <dt className="text-[0.6875rem] font-medium uppercase tracking-wide text-muted-foreground">
-            {t("business.billing.connect.accountVenueLabel")}
-          </dt>
-          <dd className="mt-1 truncate text-sm font-medium">{venueName || "—"}</dd>
-        </div>
-        <div>
-          <dt className="text-[0.6875rem] font-medium uppercase tracking-wide text-muted-foreground">
-            {t("business.billing.connect.payoutStatusLabel")}
-          </dt>
-          <dd className="mt-1 text-sm font-medium">
-            {data.hasAccount
-              ? data.payoutsEnabled
-                ? t("business.billing.connect.payoutEnabled")
-                : t("business.billing.connect.payoutRestricted")
-              : "—"}
-          </dd>
-        </div>
-        <div>
-          <dt className="text-[0.6875rem] font-medium uppercase tracking-wide text-muted-foreground">
-            {t("business.billing.connect.accountStatusLabel")}
-          </dt>
-          <dd
-            className="mt-1 text-sm font-medium"
-            data-connect-status={data.status}
-            data-connect-readiness={light === "green" ? "ready" : "required"}
-          >
-            {statusLabel}
-          </dd>
-        </div>
-        <div>
-          <dt className="text-[0.6875rem] font-medium uppercase tracking-wide text-muted-foreground">
-            {t("business.billing.connect.lastSyncLabel")}
-          </dt>
-          <dd className="mt-1 text-sm font-medium">
-            {lastSync || t("business.billing.connect.lastSyncUnavailable")}
-          </dd>
-        </div>
-      </dl>
 
       {data.stripeConfigured && data.hasAccount && !data.chargesEnabled ? (
         <p className="text-xs text-muted-foreground">{t("business.billing.connect.chargesOff")}</p>

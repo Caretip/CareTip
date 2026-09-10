@@ -83,7 +83,9 @@ export type NotificationTemplate =
     }
   | { id: "physical_qr_printing" }
   | { id: "physical_qr_shipped"; params: { trackingNumber: string | null } }
-  | { id: "physical_qr_delivered" };
+  | { id: "physical_qr_delivered" }
+  | { id: "employee_inactivity_warning" }
+  | { id: "employee_inactivity_admin"; params: { employeeName: string } };
 
 export function renderNotificationTemplate(
   locale: EmailLocale,
@@ -433,6 +435,26 @@ export function renderNotificationTemplate(
         : {
             title: "Delivered",
             body: "Your physical QR order has been delivered.",
+          };
+    case "employee_inactivity_warning":
+      return de
+        ? {
+            title: "Ihr Profil wird in 10 Tagen inaktiv gesetzt",
+            body: "Ihr Profil wird in 10 Tagen wegen Inaktivität inaktiv gesetzt.",
+          }
+        : {
+            title: "Your profile will be set to inactive in 10 days due to inactivity",
+            body: "Your profile will be set to inactive in 10 days due to inactivity",
+          };
+    case "employee_inactivity_admin":
+      return de
+        ? {
+            title: "Teammitglied wegen Inaktivität inaktiv gesetzt",
+            body: `${template.params.employeeName} wurde in CareTip inaktiv gesetzt, weil 45 Tage lang kein anrechenbares Trinkgeld eingegangen ist. Das Stripe-Konto bleibt verbunden.`,
+          }
+        : {
+            title: "A team member was set inactive due to inactivity",
+            body: `${template.params.employeeName} was set inactive in CareTip after 45 days without an eligible tip. Their Stripe account was not disconnected.`,
           };
     default:
       return { title: "", body: "" };

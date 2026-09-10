@@ -2566,6 +2566,9 @@
       "assignment": "My assignment",
       "tipGoals": "Tip goals",
       "payouts": "Payouts",
+      "payments": "Payments",
+      "paymentsConnect": "Connect",
+      "paymentsHistory": "Payout history",
       "settings": "Settings"
     },
     "business": {
@@ -3768,8 +3771,33 @@
       "deletePermanently": "Delete permanently",
       "dialogCancel": "Cancel"
     },
+    "receiving": {
+      "pausedTitle": "Your profile is inactive",
+      "pausedBody": "Your QR code is temporarily paused because there were no eligible tips for 45 days. Your Stripe account stays connected. Reactivate to receive tips again.",
+      "reactivateCta": "Reactivate Profile",
+      "reactivated": "Your profile is active again.",
+      "reactivateFailed": "Could not reactivate your profile. Please try again."
+    },
     "payouts": {
       "title": "Payouts",
+      "connectTitle": "Connect",
+      "connectSubtitle": "Manage your Stripe payout account and access your available funds.",
+      "history": {
+        "title": "Payout history",
+        "subtitle": "Track money transferred to your Stripe account and payouts from Stripe to your bank.",
+        "tabsAria": "Payout history",
+        "caretipTab": "CareTip transfers",
+        "bankTab": "Bank payouts",
+        "caretipHint": "Transfers from CareTip to your Stripe payout account.",
+        "bankHint": "Payouts from Stripe to your bank account.",
+        "showing": "Showing {{from}}–{{to}} of {{total}}",
+        "prev": "Previous",
+        "next": "Next"
+      },
+      "accountTitle": "Stripe payout account",
+      "connectedReady": "Connected & ready",
+      "availableTitle": "Available to withdraw",
+      "availableNow": "Available now",
       "subtitle": "Manage your Stripe payout account and track tips routed to you.",
       "backAria": "Back",
       "sectionTitle": "Payout account",
@@ -3808,8 +3836,8 @@
       "notConfigured": "Payout account setup is not available yet.",
       "state": {
         "not_connected": "Not connected",
-        "setup_required": "Setup required",
-        "action_required": "Action required",
+        "setup_required": "Setup incomplete",
+        "action_required": "Attention required",
         "restricted": "Restricted",
         "connected": "Connected"
       },
@@ -3824,7 +3852,12 @@
       "bankPayoutsNote": "Bank payouts are managed by Stripe. CareTip records transfers to your Stripe payout account, not payouts to your bank.",
       "instant": {
         "eyebrow": "Instant payout",
-        "title": "Receive funds now",
+        "title": "Get paid instantly",
+        "youReceive": "You'll receive",
+        "ctaAmount": "Get {{amount}} instantly",
+        "feeLine": "Fee {{amount}} ({{percent}})",
+        "feeAmountOnly": "Fee {{amount}}",
+        "eligible": "Instant eligible",
         "lead": "Pays available Stripe balance to your Instant-eligible payout method. This is not Stripe’s regular bank schedule.",
         "checking": "Checking Instant Payout availability…",
         "loadError": "Could not load Instant Payout availability.",
@@ -3834,10 +3867,19 @@
         "success": "Instant payout sent.",
         "failed": "Instant payout could not be completed.",
         "underMin": "Instant payout is available from {{amount}}.",
+        "belowMinExplain": "Instant Payout becomes available when your balance reaches {{amount}}.",
+        "belowMinAria": "Instant Payout unavailable until your balance reaches {{amount}}.",
+        "feeDot": "Fee {{amount}} · {{percent}}",
         "unavailable": "Instant payout isn't currently available for this account.",
         "minimum": "Minimum {{amount}}",
         "feeStripe": "Stripe Instant fee {{fee}} ({{amount}}). CareTip does not add a second fee.",
-        "feeUnknown": "If Stripe charges an Instant fee, it is taken from this Stripe balance. CareTip does not add a second 2.5%."
+        "feeUnknown": "If Stripe charges an Instant fee, it is taken from this Stripe balance. CareTip does not add a second 2.5%.",
+        "reason": {
+          "no_instant_destination": "Add an Instant-eligible payout method in Stripe to use Instant Payout.",
+          "payouts_disabled": "Payouts are not enabled on this Stripe account yet.",
+          "country_unsupported": "Instant Payout is not available for this account’s country.",
+          "business_closed": "Instant Payout is not available for this workplace right now."
+        }
       },
       "bankHistory": {
         "title": "Stripe bank payouts",
@@ -3850,6 +3892,14 @@
           "instant": "Instant",
           "standard": "Standard",
           "unknown": "Payout"
+        },
+        "colMethod": "Method",
+        "status": {
+          "paid": "Paid",
+          "pending": "Pending",
+          "in_transit": "In transit",
+          "canceled": "Canceled",
+          "failed": "Failed"
         }
       },
       "activityTitle": "CareTip payout activity",
@@ -6194,8 +6244,10 @@
         "methodInstant": "Instant",
         "methodStandard": "Standard",
         "methodUnknown": "Unknown",
-        "activityTitle": "Payout activity",
-        "activityHint": "Recent Stripe payouts to the venue’s bank. These are not employee tip transfers.",
+        "activityTitle": "Recent payouts",
+        "activityHint": "Payouts from your business Stripe account to your bank.",
+        "lastPayoutLabel": "Last payout",
+        "payoutStatusLabel": "Payout status",
         "historyTitle": "Payout history",
         "instant": {
           "balanceEyebrow": "Your balance",
@@ -6275,6 +6327,10 @@
         "statusAttention": "Action Required",
         "statusActionBody": "Stripe needs additional information (e.g., ID verification) to enable payouts.",
         "statusReady": "Connected",
+        "connectedReady": "Connected & ready",
+        "stripeAccountTitle": "Stripe account",
+        "expressAccount": "Stripe Express account",
+        "payoutsEnabledPill": "Payouts enabled",
         "statusReadyBody": "Your Stripe account is connected. Open the Stripe Dashboard or review payout history in CareTip.",
         "nextStepHint": "Stripe needs additional information (e.g., ID verification) to enable payouts.",
         "accountStatusLabel": "Stripe account status",

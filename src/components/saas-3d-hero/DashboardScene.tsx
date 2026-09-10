@@ -1,6 +1,7 @@
 import { Suspense, useLayoutEffect, useRef } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
-import { ContactShadows, Environment, Html, RoundedBox } from "@react-three/drei";
+import { ContactShadows, Environment, Html } from "@react-three/drei";
+import { RoundedBox } from "@react-three/drei/core/RoundedBox.js";
 import type { Group } from "three";
 import { DashboardUiLayer } from "./DashboardUiLayer";
 import { FloatingDepthCards } from "./FloatingDepthCards";

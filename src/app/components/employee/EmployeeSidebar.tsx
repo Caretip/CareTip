@@ -1,8 +1,8 @@
 import { motion } from "motion/react";
 import { memo, useSyncExternalStore } from "react";
-import { Link, useLocation, useNavigate } from "react-router";
+import { Link } from "react-router";
+import { Loader2 } from "lucide-react";
 import { CareIcon } from "@/components/icons";
-import { Lock, Loader2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 import { useAuth } from "../../hooks/useAuth";
@@ -18,21 +18,13 @@ import {
   DASHBOARD_SIDEBAR_NAV_CLASS,
 } from "../CareTipLogo";
 import { BusinessLogoMark } from "../business/BusinessLogoMark";
-import {
-  employeeDashboardNavItems,
-  isEmployeeDashboardNavActive,
-  showEmployeeNavSubscriptionLock,
-} from "./employeeDashboardNav";
+import { EMPLOYEE_DASHBOARD_HOME } from "./employeeDashboardNav";
+import { EmployeeSidebarNav } from "./EmployeeSidebarNav";
 import { useDashboardRenderProbe } from "../../hooks/useDashboardRuntimeProfile";
 import {
   DASHBOARD_SIDEBAR_SHELL_CLASS,
-  dashboardSidebarNavLinkActive,
-  dashboardSidebarNavLinkBase,
-  dashboardSidebarNavLinkIdle,
   dashboardSidebarSignOutButton,
 } from "@/lib/theme/dashboardSidebarUi";
-
-const EMPLOYEE_DASHBOARD_HOME = employeeDashboardNavItems[0]!.href;
 
 type EmployeeBusinessBranding = {
   businessLogo: string | null;
@@ -46,8 +38,6 @@ export const EmployeeSidebar = memo(function EmployeeSidebar({
 }) {
   useDashboardRenderProbe("employee:EmployeeSidebar");
   const { t } = useTranslation();
-  const location = useLocation();
-  const navigate = useNavigate();
   const { logout, user } = useAuth();
   const signingOut = useSyncExternalStore(
     subscribeAuthLogoutTransition,
@@ -60,7 +50,6 @@ export const EmployeeSidebar = memo(function EmployeeSidebar({
     role: user?.role === "employee" ? "employee" : null,
   });
   const { tier, ready: entitlementsReady } = employeeEntitlements ?? fallbackEntitlements;
-  const navItems = employeeDashboardNavItems;
 
   const venueName =
     String(businessBranding?.businessName ?? "").trim() || t("dashboard.venueDashboardFallback");
@@ -90,37 +79,7 @@ export const EmployeeSidebar = memo(function EmployeeSidebar({
       </div>
 
       <nav className={DASHBOARD_SIDEBAR_NAV_CLASS}>
-        <ul className="space-y-0.5">
-          {navItems.map((item) => {
-            const isActive = isEmployeeDashboardNavActive(item.href, location.pathname);
-            const subscriptionLocked = showEmployeeNavSubscriptionLock(entitlementsReady, item, tier);
-            return (
-              <li key={item.href}>
-                <Link
-                  to={item.href}
-                  className={cn(
-                    "employee-dash-nav-link",
-                    dashboardSidebarNavLinkBase,
-                    isActive
-                      ? cn("employee-dash-nav-link--active", dashboardSidebarNavLinkActive)
-                      : dashboardSidebarNavLinkIdle,
-                  )}
-                >
-                  <CareIcon name={item.icon} size="nav" />
-                  <span className="flex min-w-0 flex-1 items-center gap-2 tracking-tight">
-                    <span className="truncate">{t(item.labelKey)}</span>
-                    {subscriptionLocked ? (
-                      <Lock
-                        className="h-3.5 w-3.5 shrink-0 opacity-70"
-                        aria-label={t("subscription.nav.lockedAria", { feature: t(item.labelKey) })}
-                      />
-                    ) : null}
-                  </span>
-                </Link>
-              </li>
-            );
-          })}
-        </ul>
+        <EmployeeSidebarNav entitlementsReady={entitlementsReady} tier={tier} />
       </nav>
 
       <div className="mt-auto shrink-0 border-t border-sidebar-border px-4 pb-4 pt-3">

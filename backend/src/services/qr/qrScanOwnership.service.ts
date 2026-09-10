@@ -1,4 +1,5 @@
 import { prisma } from "../../prisma.js";
+import { readCareTipReceivingPaused } from "../employeeReceivingPause.lookup.js";
 
 export const QR_SCAN_OWNERSHIP_MISMATCH_CODE = "QR_SCAN_OWNERSHIP_MISMATCH" as const;
 
@@ -80,6 +81,9 @@ export async function assertQrScanTargetsBelongToBusiness(
       throw new QrScanOwnershipError("employeeId does not belong to this business");
     }
     if (!employee.isActive) {
+      throw new QrScanOwnershipError("employeeId does not belong to this business");
+    }
+    if (await readCareTipReceivingPaused(employee.id)) {
       throw new QrScanOwnershipError("employeeId does not belong to this business");
     }
   }

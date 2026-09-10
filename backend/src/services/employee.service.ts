@@ -19,6 +19,7 @@ import { logServerError } from "../utils/httpErrors.js";
 import { absolutizePublicMediaPath } from "../utils/publicMediaUrl.js";
 import { getSubscriptionTierForBusinessId, resolveSubscriptionEntitlements } from "./subscriptionEntitlement.service.js";
 import { isPresetStaffRole } from "../config/staffRolePresets.js";
+import { readCareTipReceivingPaused } from "./employeeReceivingPause.lookup.js";
 
 import {
   GO_LIVE_REQUIRED_MESSAGE,
@@ -222,6 +223,13 @@ export async function getEmployeeById(employeeId: string): Promise<EmployeeDetai
   }
   if (!emp.isActive) {
     console.warn("[employee.getEmployeeById] employee inactive", {
+      scannedRouteId: employeeId,
+      dbLookupId: emp.id,
+    });
+    return null;
+  }
+  if (await readCareTipReceivingPaused(emp.id)) {
+    console.warn("[employee.getEmployeeById] employee receiving paused", {
       scannedRouteId: employeeId,
       dbLookupId: emp.id,
     });
@@ -706,6 +714,8 @@ export interface EmployeeSelfProfile {
   sponsoredProgrammeKey?: string | null;
   /** Manager-assigned venue location and tables (read-only for the employee). */
   assignment: EmployeeSelfAssignment;
+  /** CareTip QR pause (45-day inactivity). Stripe stays connected. */
+  receivingPaused: boolean;
 }
 
 type EmployeeAssignmentSource = {
@@ -793,6 +803,7 @@ export async function getEmployeeProfileForUser(userId: string): Promise<Employe
     if (!emp) return null;
     if (!emp.user) return null;
     const entitlements = await resolveSubscriptionEntitlements(emp.businessId);
+    const receivingPaused = await readCareTipReceivingPaused(emp.id);
     return {
       id: emp.id,
       name: emp.name,
@@ -814,6 +825,7 @@ export async function getEmployeeProfileForUser(userId: string): Promise<Employe
       hasActiveSubscription: entitlements.hasActiveEntitlements,
       accessSource: entitlements.accessSource,
       sponsoredProgrammeKey: entitlements.sponsoredProgrammeKey,
+      receivingPaused,
       assignment: buildEmployeeSelfAssignment({
         businessId: emp.businessId,
         location: emp.location,
@@ -821,7 +833,11 @@ export async function getEmployeeProfileForUser(userId: string): Promise<Employe
       }),
     };
   } catch (e) {
-    if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2022") {
+    const stalePauseSelect =
+      (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2022") ||
+      (e instanceof Prisma.PrismaClientValidationError &&
+        String(e.message).includes("receivingPausedAt"));
+    if (stalePauseSelect) {
       const emp = await prisma.employee.findUnique({
         where: { userId },
         select: {
@@ -838,6 +854,7 @@ export async function getEmployeeProfileForUser(userId: string): Promise<Employe
       if (!emp) return null;
       if (!emp.user) return null;
       const entitlements = await resolveSubscriptionEntitlements(emp.businessId);
+      const receivingPaused = await readCareTipReceivingPaused(emp.id);
       return {
         id: emp.id,
         name: emp.name,
@@ -859,6 +876,7 @@ export async function getEmployeeProfileForUser(userId: string): Promise<Employe
         hasActiveSubscription: entitlements.hasActiveEntitlements,
         accessSource: entitlements.accessSource,
         sponsoredProgrammeKey: entitlements.sponsoredProgrammeKey,
+        receivingPaused,
         assignment: { location: null, tables: [] },
       };
     }

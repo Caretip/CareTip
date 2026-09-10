@@ -181,6 +181,23 @@ export function ConnectPayoutsPanel({ loading: bootLoading }: { loading?: boolea
         onRequestPayout={openInstantConfirm}
       />
 
+      {!historyLoading && items[0] ? (
+        <dl className="grid max-w-3xl gap-4 sm:grid-cols-2">
+          <div>
+            <dt className="text-xs font-medium text-muted-foreground">{t("business.billing.payouts.lastPayoutLabel")}</dt>
+            <dd className="mt-1 text-sm font-medium tabular-nums">
+              {formatConnectPayoutAmount(items[0].amountCents, items[0].currency, locale)}
+            </dd>
+          </div>
+          <div>
+            <dt className="text-xs font-medium text-muted-foreground">{t("business.billing.payouts.payoutStatusLabel")}</dt>
+            <dd className="mt-1">
+              <ConnectPayoutStatusBadge status={items[0].status} />
+            </dd>
+          </div>
+        </dl>
+      ) : null}
+
       <section aria-labelledby="caretip-payout-history-heading">
         <div className="mb-4 flex flex-col gap-2 border-b border-border pb-3 sm:flex-row sm:items-end sm:justify-between">
           <div>

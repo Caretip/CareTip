@@ -177,20 +177,28 @@ function runStaticGuards() {
   const webNav = read("../src/app/components/employee/employeeDashboardNav.ts");
   const settingsPage = read("../src/app/pages/employee/EmployeeSettingsPage.tsx");
   const payoutsPage = read("../src/app/pages/employee/EmployeePayoutsPage.tsx");
+  const connectPage = read("../src/app/pages/employee/EmployeePaymentsConnectPage.tsx");
+  const historyPage = read("../src/app/pages/employee/EmployeePayoutHistoryPage.tsx");
   const appRoutes = read("../src/app/routes.tsx");
   if (
-    webNav.includes('href: "/employee/payouts"') &&
-    webNav.includes("dashboardNav.employee.payouts") &&
+    webNav.includes("EMPLOYEE_PAYMENTS_CONNECT_HREF") &&
+    webNav.includes("dashboardNav.employee.payments") &&
+    webNav.includes("dashboardNav.employee.paymentsConnect") &&
+    webNav.includes("dashboardNav.employee.paymentsHistory") &&
+    appRoutes.includes("EmployeePaymentsConnectPage") &&
+    appRoutes.includes("EmployeePayoutHistoryPage") &&
     appRoutes.includes("EmployeePayoutsPage") &&
-    payoutsPage.includes("EmployeePayoutAccountCard") &&
-    payoutsPage.includes("EmployeePayoutActivityList") &&
+    connectPage.includes("EmployeePayoutAccountCard") &&
+    historyPage.includes("EmployeePayoutActivityList") &&
+    historyPage.includes("EmployeeStripeBankPayoutList") &&
+    payoutsPage.includes("EMPLOYEE_PAYMENTS_CONNECT_HREF") &&
     !settingsPage.includes("EmployeePayoutAccountCard") &&
     settingsPage.includes("/employee/payouts") &&
     empSvc.includes("/employee/payouts?payoutConnect=")
   ) {
-    pass("payouts-nav-ia", "Payouts is a dedicated employee route; Settings redirects Stripe return");
+    pass("payouts-nav-ia", "Payments Connect/History IA; Stripe return still /employee/payouts");
   } else {
-    fail("payouts-nav-ia", "Employee Payouts IA incomplete");
+    fail("payouts-nav-ia", "Employee Payments IA incomplete");
   }
 
   const ready = deriveEmployeeRecipientConnectStatus({

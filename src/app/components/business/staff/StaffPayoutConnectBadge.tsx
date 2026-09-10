@@ -1,5 +1,5 @@
 import { useTranslation } from "react-i18next";
-import type { EmployeePayoutConnectionState } from "../../lib/api";
+import type { EmployeePayoutConnectionState } from "../../../lib/api";
 import { cn } from "@/lib/utils";
 
 const TONE: Record<EmployeePayoutConnectionState, string> = {

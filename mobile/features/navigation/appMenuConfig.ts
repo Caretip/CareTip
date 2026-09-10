@@ -1,4 +1,5 @@
 import type { Router } from "expo-router";
+import { EMPLOYEE_PAYOUTS_HREF } from "@/features/navigation/employeeRoutes";
 import {
   BarChart3,
   LineChart,
@@ -6,6 +7,7 @@ import {
   QrCode,
   Settings,
   Trophy,
+  Wallet,
 } from "@/icons/lucide";
 import type { LucideIcon } from "@/types/lucide";
 
@@ -63,6 +65,12 @@ export function buildEmployeeAppMenu(router: Router, _inboxBadge?: number): AppM
       labelKey: "employeeAssignment.title",
       icon: MapPin,
       onPress: () => router.push("/(app)/employee/assignment"),
+    },
+    {
+      id: "payouts",
+      labelKey: "employeePayouts.title",
+      icon: Wallet,
+      onPress: () => router.push(EMPLOYEE_PAYOUTS_HREF),
     },
     {
       id: "settings",

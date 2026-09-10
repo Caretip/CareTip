@@ -1,4 +1,5 @@
 import { prisma } from "../prisma.js";
+import { readCareTipReceivingPaused } from "./employeeReceivingPause.lookup.js";
 import {
   GO_LIVE_REQUIRED_CODE,
   GO_LIVE_REQUIRED_MESSAGE,
@@ -91,6 +92,10 @@ export async function assertEmployeeEligibleForTipPayment(
 
   if (!emp.isActive) {
     throw new TipPaymentEligibilityError(EMPLOYEE_UNAVAILABLE_MSG, "EMPLOYEE_INACTIVE");
+  }
+
+  if (await readCareTipReceivingPaused(emp.id)) {
+    throw new TipPaymentEligibilityError(EMPLOYEE_UNAVAILABLE_MSG, "EMPLOYEE_RECEIVING_PAUSED");
   }
 
   if (emp.activationStatus !== "active") {

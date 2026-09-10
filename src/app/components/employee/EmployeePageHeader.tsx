@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils";
 import { employeeUi } from "./employeeDashboardUi";
 
 type EmployeePageHeaderProps = {
+  kicker?: string;
   title: string;
   description?: string;
   backTo?: string;
@@ -20,6 +21,7 @@ const subtleBackLinkClass =
   "employee-page-header__back employee-page-header__back--subtle inline-flex w-fit min-h-[2.75rem] items-center gap-0.5 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground";
 
 export function EmployeePageHeader({
+  kicker,
   title,
   description,
   backTo = "/employee/dashboard",
@@ -53,6 +55,9 @@ export function EmployeePageHeader({
         </Link>
         <div className="min-w-0">
           {leading ? <div className="mb-2 shrink-0">{leading}</div> : null}
+          {kicker ? (
+            <p className="text-[0.6875rem] font-medium uppercase tracking-wide text-muted-foreground">{kicker}</p>
+          ) : null}
           <h1 className={employeeUi.pageTitle}>{title}</h1>
           {description ? (
             <p className={cn(employeeUi.pageDesc, "max-lg:mt-1 max-lg:text-[0.8125rem]")}>{description}</p>
@@ -75,6 +80,9 @@ export function EmployeePageHeader({
             </Link>
             {leading ? <div className="shrink-0">{leading}</div> : null}
             <div className="min-w-0 flex-1">
+              {kicker ? (
+                <p className="text-[0.6875rem] font-medium uppercase tracking-wide text-muted-foreground">{kicker}</p>
+              ) : null}
               <h1 className={employeeUi.pageTitle}>{title}</h1>
               {description ? <p className={employeeUi.pageDesc}>{description}</p> : null}
             </div>

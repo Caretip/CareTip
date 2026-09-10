@@ -109,8 +109,8 @@ function testNavigationBoundaries(): boolean {
     ok = false;
   }
   const employeeNav = read("src/app/components/employee/employeeDashboardNav.ts");
-  if (/payout/i.test(employeeNav) || /stripe/i.test(employeeNav)) {
-    fail("employee nav must not include Connect payouts or Stripe");
+  if (employeeNav.includes("/dashboard/stripe") || employeeNav.includes("dashboardNav.business.stripe")) {
+    fail("employee nav must not include manager Stripe");
     ok = false;
   }
   const routes = read("src/app/routes.tsx");

@@ -215,6 +215,42 @@ function runStatic() {
   } else {
     fail("not-business-payout-table", "business payout ingest leaked");
   }
+  const instantCard = readFileSync(join(backendRoot, "../src/app/components/employee/EmployeeInstantPayoutCard.tsx"), "utf8");
+  const instantUi = readFileSync(
+    join(backendRoot, "../src/app/components/employee/employeeInstantPayoutPresentation.ts"),
+    "utf8",
+  );
+  const instantApi = readFileSync(join(backendRoot, "../src/app/lib/api.ts"), "utf8");
+  if (
+    instantUi.includes('reason === "below_minimum"') &&
+    instantUi.includes('return "threshold"') &&
+    instantCard.includes("employeeInstantShowCta") &&
+    instantCard.includes('data-instant-cta') &&
+    instantCard.includes("disabled={!ctaEnabled}")
+  ) {
+    pass("ui-below-min-cta", "Connect Instant CTA stays visible when below minimum");
+  } else {
+    fail("ui-below-min-cta", "below-minimum CTA presentation missing");
+  }
+  if (
+    !instantCard.includes("displayedFeeBps") &&
+    instantUi.includes("Do not use displayedFeeBps") &&
+    !instantCard.includes("* 0.025") &&
+    !instantCard.includes("0.975")
+  ) {
+    pass("ui-no-second-fee", "Employee Instant UI does not use displayedFeeBps or homemade 2.5%");
+  } else {
+    fail("ui-no-second-fee", "frontend fee presentation unsafe");
+  }
+  const createSnippet = instantApi.slice(
+    instantApi.indexOf("export async function createEmployeeInstantPayout"),
+    instantApi.indexOf("export async function listEmployeeStripeBankPayouts"),
+  );
+  if (createSnippet.includes("body: JSON.stringify({ idempotencyKey })")) {
+    pass("ui-no-client-steering", "Employee Instant POST body is idempotencyKey only");
+  } else {
+    fail("ui-no-client-steering", "client Instant POST contract changed");
+  }
 }
 
 async function main() {

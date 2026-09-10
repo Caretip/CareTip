@@ -2568,6 +2568,8 @@ export interface EmployeeSelfProfile {
   sponsoredProgrammeKey?: string | null;
   /** Manager-assigned venue location and tables (read-only for the employee). */
   assignment: EmployeeSelfAssignment;
+  /** CareTip QR pause after 45 days without an eligible tip. Stripe stays connected. */
+  receivingPaused?: boolean;
 }
 
 const EMPLOYEE_PROFILE_CACHE_TTL_MS = 30_000;
@@ -2971,6 +2973,65 @@ export async function createEmployeeConnectLoginLink(): Promise<{ url: string }>
     headers: getHeaders(),
     credentials: "include",
     body: JSON.stringify({}),
+  });
+}
+
+export async function reactivateEmployeeReceiving(): Promise<EmployeeSelfProfile & { receivingPaused: boolean }> {
+  return apiRequest(apiPath("/api/employees/me/reactivate-receiving"), {
+    method: "POST",
+    headers: getHeaders(),
+    credentials: "include",
+    body: JSON.stringify({}),
+  });
+}
+
+export type EmployeeInstantPayoutEligibility = InstantPayoutEligibility & {
+  minPayoutCents: number;
+  stakeholderMinCents: number;
+  stripeMinCents: number;
+  feeSource: "stripe_platform_pricing" | "unknown";
+};
+
+export async function getEmployeeInstantPayoutEligibility(): Promise<EmployeeInstantPayoutEligibility> {
+  return apiRequest(apiPath("/api/me/employee-connect/instant-payout"), {
+    headers: getHeaders(),
+    credentials: "include",
+  });
+}
+
+export async function createEmployeeInstantPayout(idempotencyKey: string): Promise<{
+  payout: {
+    requestId: string;
+    amountCents: number;
+    currency: string;
+    status: string;
+    method: "instant";
+  };
+  eligibility: EmployeeInstantPayoutEligibility;
+}> {
+  return apiRequest(apiPath("/api/me/employee-connect/instant-payout"), {
+    method: "POST",
+    headers: getHeaders(),
+    credentials: "include",
+    body: JSON.stringify({ idempotencyKey }),
+  });
+}
+
+export type EmployeeStripeBankPayoutItem = {
+  createdAt: string;
+  amountCents: number;
+  currency: string;
+  status: string;
+  method: "instant" | "standard" | "unknown";
+};
+
+export async function listEmployeeStripeBankPayouts(params?: {
+  take?: number;
+}): Promise<{ items: EmployeeStripeBankPayoutItem[]; stripeReadable: boolean }> {
+  const q = params?.take != null ? `?take=${encodeURIComponent(String(params.take))}` : "";
+  return apiRequest(apiPath(`/api/me/employee-connect/stripe-payouts${q}`), {
+    headers: getHeaders(),
+    credentials: "include",
   });
 }
 

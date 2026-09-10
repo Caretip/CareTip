@@ -70,7 +70,7 @@ async function isFirebaseMessagingSupported(): Promise<boolean> {
   } catch {
     messagingSupportedCache = false;
   }
-  return messagingSupportedCache;
+  return messagingSupportedCache ?? false;
 }
 
 export function isWebPushSupported(): boolean {
@@ -468,7 +468,7 @@ function startForegroundMessagingIfNeeded(): void {
     const msg = await getMessagingInstance(config);
     if (!msg || cancelled) return;
 
-    unsubscribeOnMessage = onMessage(msg, (payload) => {
+    unsubscribeOnMessage = onMessage(msg, (payload: MessagePayload) => {
       const { title, body } = payloadTitleBody(payload);
       const data = payload.data as Record<string, string> | undefined;
       if (!shouldDisplayUserFacingPush(data)) return;

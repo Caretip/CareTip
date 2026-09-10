@@ -36,6 +36,7 @@ export type EmployeeProfile = {
   subscriptionTier?: "basic" | "premium" | "enterprise" | null;
   hasActiveSubscription?: boolean;
   assignment: EmployeeAssignment;
+  receivingPaused?: boolean;
   [key: string]: unknown;
 };
 

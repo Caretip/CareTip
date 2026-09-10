@@ -180,4 +180,19 @@ router.post("/connect-payout-reconciliation-tick", async (req, res) => {
   return res.json({ ok: true, ...result });
 });
 
+/**
+ * POST /api/internal/jobs/employee-stripe-inactivity-tick
+ * Daily review of 45-day tip inactivity. Does not disconnect Stripe accounts.
+ */
+router.post("/employee-stripe-inactivity-tick", async (req, res) => {
+  if (!authorizeCronRequest(req)) {
+    return res.status(401).json({ message: "Unauthorized" });
+  }
+  const { tickEmployeeStripeInactivity } = await import(
+    "../services/employeeStripeInactivity.service.js"
+  );
+  const result = await tickEmployeeStripeInactivity();
+  return res.json({ ok: true, ...result });
+});
+
 export default router;

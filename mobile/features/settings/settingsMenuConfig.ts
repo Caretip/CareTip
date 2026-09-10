@@ -13,7 +13,9 @@ import Plug from "lucide-react-native/icons/plug";
 import Shield from "lucide-react-native/icons/shield";
 import User from "lucide-react-native/icons/user";
 import Users from "lucide-react-native/icons/users";
+import Wallet from "lucide-react-native/icons/wallet";
 import { openAuthenticatedBillingWeb } from "@/utils/openBillingWeb";
+import { EMPLOYEE_PAYOUTS_HREF } from "@/features/navigation/employeeRoutes";
 import type { SettingsMenuConfig } from "@/features/settings/settingsMenuTypes";
 
 export function buildBusinessSettingsMenu(router: Router): SettingsMenuConfig {
@@ -156,6 +158,13 @@ export function buildEmployeeSettingsMenu(router: Router): SettingsMenuConfig {
             descriptionKey: "settings.menu.profileDesc",
             icon: User,
             onPress: () => router.push(`${base}/profile`),
+          },
+          {
+            id: "payouts",
+            labelKey: "employeePayouts.title",
+            descriptionKey: "employeePayouts.subtitle",
+            icon: Wallet,
+            onPress: () => router.push(EMPLOYEE_PAYOUTS_HREF),
           },
           {
             id: "language",

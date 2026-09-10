@@ -1,6 +1,6 @@
-import { Link, useLocation } from "react-router";
+import { Link } from "react-router";
 import { useSyncExternalStore } from "react";
-import { Lock, Loader2, X } from "lucide-react";
+import { Loader2, X } from "lucide-react";
 import { CareIcon } from "@/components/icons";
 import { useTranslation } from "react-i18next";
 
@@ -14,21 +14,13 @@ import {
 import { cn } from "@/lib/utils";
 import { DASHBOARD_SIDEBAR_NAV_CLASS } from "../CareTipLogo";
 import { BusinessLogoMark } from "../business/BusinessLogoMark";
-import {
-  employeeDashboardNavItems,
-  isEmployeeDashboardNavActive,
-  showEmployeeNavSubscriptionLock,
-} from "./employeeDashboardNav";
+import { EMPLOYEE_DASHBOARD_HOME } from "./employeeDashboardNav";
+import { EmployeeSidebarNav } from "./EmployeeSidebarNav";
 import { MobileDrawer } from "../ui/MobileDrawer";
 import {
   dashboardSidebarIconButtonIdle,
-  dashboardSidebarNavLinkActive,
-  dashboardSidebarNavLinkBase,
-  dashboardSidebarNavLinkIdle,
   dashboardSidebarSignOutButton,
 } from "@/lib/theme/dashboardSidebarUi";
-
-const EMPLOYEE_DASHBOARD_HOME = employeeDashboardNavItems[0]!.href;
 
 type EmployeeMobileSidebarProps = {
   isOpen: boolean;
@@ -45,7 +37,6 @@ export function EmployeeMobileSidebar({
   businessBranding,
 }: EmployeeMobileSidebarProps) {
   const { t } = useTranslation();
-  const location = useLocation();
   const { logout, user } = useAuth();
   const signingOut = useSyncExternalStore(
     subscribeAuthLogoutTransition,
@@ -58,7 +49,6 @@ export function EmployeeMobileSidebar({
     role: user?.role === "employee" ? "employee" : null,
   });
   const { tier, ready: entitlementsReady } = employeeEntitlements ?? fallbackEntitlements;
-  const navItems = employeeDashboardNavItems;
 
   const venueName = String(businessBranding?.businessName ?? "").trim() || t("dashboard.venueDashboardFallback");
 
@@ -113,38 +103,7 @@ export function EmployeeMobileSidebar({
       </div>
 
       <nav className={DASHBOARD_SIDEBAR_NAV_CLASS}>
-        <ul className="space-y-0.5">
-          {navItems.map((item) => {
-            const isActive = isEmployeeDashboardNavActive(item.href, location.pathname);
-            const subscriptionLocked = showEmployeeNavSubscriptionLock(entitlementsReady, item, tier);
-            return (
-              <li key={item.href}>
-                <Link
-                  to={item.href}
-                  onClick={onClose}
-                  className={cn(
-                    "employee-dash-nav-link",
-                    dashboardSidebarNavLinkBase,
-                    isActive
-                      ? cn("employee-dash-nav-link--active", dashboardSidebarNavLinkActive)
-                      : dashboardSidebarNavLinkIdle,
-                  )}
-                >
-                  <CareIcon name={item.icon} size="nav" />
-                  <span className="flex min-w-0 flex-1 items-center gap-2">
-                    <span className="truncate tracking-tight">{t(item.labelKey)}</span>
-                    {subscriptionLocked ? (
-                      <Lock
-                        className="h-3.5 w-3.5 shrink-0 opacity-70"
-                        aria-label={t("subscription.nav.lockedAria", { feature: t(item.labelKey) })}
-                      />
-                    ) : null}
-                  </span>
-                </Link>
-              </li>
-            );
-          })}
-        </ul>
+        <EmployeeSidebarNav entitlementsReady={entitlementsReady} tier={tier} onNavigate={onClose} />
       </nav>
 
       <div className="shrink-0 border-t border-sidebar-border px-4 pb-4 pt-3">

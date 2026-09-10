@@ -46,3 +46,20 @@ services:
         value: https://caretip.onrender.com
       - key: CARE_TIP_INTERNAL_JOB_PATH
         value: /api/internal/jobs/category-retention-tick
+
+  - type: cron
+    name: caretip-employee-stripe-inactivity-tick
+    runtime: node
+    rootDir: backend
+    plan: starter
+    buildCommand: "true"
+    startCommand: node scripts/render-category-retention-http.mjs
+    # Daily 06:15 UTC — review 45-day employee tip inactivity. Does not disconnect Stripe.
+    schedule: "15 6 * * *"
+    envVars:
+      - key: CRON_SECRET
+        sync: false
+      - key: CARE_TIP_API_ORIGIN
+        value: https://caretip.onrender.com
+      - key: CARE_TIP_INTERNAL_JOB_PATH
+        value: /api/internal/jobs/employee-stripe-inactivity-tick

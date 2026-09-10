@@ -1,5 +1,6 @@
-import { StyleSheet, View } from "react-native";
+import { StyleSheet, View, Text, Pressable } from "react-native";
 import { useRouter } from "expo-router";
+import { EMPLOYEE_PAYOUTS_HREF } from "@/features/navigation/employeeRoutes";
 import { useMemo } from "react";
 import { Bell, QrCode, Wallet } from "@/icons/lucide";
 import { HeroBalanceCard } from "@/components/ui/HeroBalanceCard";
@@ -72,6 +73,12 @@ export function EmployeeDashboardScreen() {
         icon: Bell,
         onPress: () => router.push("/(app)/employee/notifications"),
       },
+      {
+        id: "payouts",
+        label: t("employeePayouts.title"),
+        icon: Wallet,
+        onPress: () => router.push(EMPLOYEE_PAYOUTS_HREF),
+      },
     ],
     [router, t],
   );
@@ -114,6 +121,17 @@ export function EmployeeDashboardScreen() {
         />
       ) : (
         <View style={styles.stack}>
+          {profile?.receivingPaused ? (
+            <Pressable
+              onPress={() => router.push(EMPLOYEE_PAYOUTS_HREF)}
+              accessibilityRole="button"
+              accessibilityLabel={t("employeePayouts.reactivateCta")}
+            >
+              <Text style={styles.pauseTitle}>{t("employeePayouts.pausedTitle")}</Text>
+              <Text style={styles.pauseBody}>{t("employeePayouts.pausedBody")}</Text>
+              <Text style={styles.pauseCta}>{t("employeePayouts.reactivateCta")}</Text>
+            </Pressable>
+          ) : null}
           <View style={styles.heroBlock}>
               <HeroBalanceCard
                 label={t("employeeDashboard.periodEarnings")}
@@ -185,5 +203,19 @@ const styles = StyleSheet.create({
   },
   heroBlock: {
     gap: spacing.xl,
+  },
+  pauseTitle: {
+    fontSize: 16,
+    fontWeight: "600",
+  },
+  pauseBody: {
+    marginTop: 4,
+    fontSize: 14,
+    opacity: 0.75,
+  },
+  pauseCta: {
+    marginTop: 8,
+    fontSize: 15,
+    fontWeight: "600",
   },
 });
