@@ -29,6 +29,19 @@ export function employeeInstantShowEligiblePill(mode: EmployeeInstantUiMode): bo
   return mode === "ready" || mode === "threshold";
 }
 
+/**
+ * Instant UI uses Stripe Instant balance, not CareTip venue-distribution payables.
+ * Under Business Distribution, only show Instant when Stripe Instant is actually ready
+ * so venue-managed tips are not presented as employee withdrawal funds.
+ */
+export function employeeInstantVisibleForTipRouting(
+  businessDistribution: boolean,
+  mode: EmployeeInstantUiMode,
+): boolean {
+  if (businessDistribution) return mode === "ready";
+  return mode !== "hidden";
+}
+
 export function employeeInstantBlockedReasonKey(reason: InstantPayoutReason): string {
   if (reason === "no_instant_destination") return "employee.payouts.instant.reason.no_instant_destination";
   if (reason === "payouts_disabled") return "employee.payouts.instant.reason.payouts_disabled";

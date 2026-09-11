@@ -6,6 +6,7 @@ import { AuthErrorSlot, AuthStableSubmitButton } from "@/app/components/auth/Aut
 import { AuthFieldGroup } from "@/app/components/auth/AuthFieldGroup";
 import { AuthSplitLayout } from "@/app/components/auth/AuthSplitLayout";
 import { AuthCardBrandMark } from "@/app/components/auth/AuthCardBrandMark";
+import { AuthBackToHomeNav } from "@/app/components/auth/AuthBackToHomeNav";
 import { AuthTrustStrip } from "@/app/components/auth/AuthTrustStrip";
 import { validateInviteCode } from "../lib/api";
 import { toUserFriendlyMessage } from "../lib/errorMessages";
@@ -47,7 +48,11 @@ export function JoinPage() {
 
   return (
     <div className="caretip-auth-page font-sans">
-      <AuthSplitLayout authLane="employee" marketingScene="invite">
+      <AuthSplitLayout
+        authLane="employee"
+        marketingScene="invite"
+        topSlot={<AuthBackToHomeNav className="lg:hidden" showLogo={false} />}
+      >
         <div className="caretip-auth-card-wrap">
           <div className="caretip-auth-card caretip-auth-card--stable caretip-auth-card--recovery">
             <AuthCardBrandMark />

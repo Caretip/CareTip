@@ -34,6 +34,30 @@ export function employeeInstantCtaEnabled(mode: EmployeeInstantUiMode): boolean 
   return mode === "ready";
 }
 
+/** Instant uses Stripe Instant balance only. Hide under venue distribution unless Instant is ready. */
+export function employeeInstantVisibleForTipRouting(
+  businessDistribution: boolean,
+  mode: EmployeeInstantUiMode,
+): boolean {
+  if (businessDistribution) return mode === "ready";
+  return mode !== "hidden";
+}
+
+export function employeePayoutShowConnectPrompt(
+  businessDistribution: boolean,
+  connectionState: string,
+): boolean {
+  return !businessDistribution && connectionState === "not_connected";
+}
+
+export function employeePayoutShowSetupPrompt(
+  businessDistribution: boolean,
+  connectionState: string,
+): boolean {
+  if (businessDistribution) return false;
+  return connectionState === "setup_required" || connectionState === "action_required";
+}
+
 /**
  * Employee-facing Instant rate is the configured 2.5% target (250 bps).
  * Do not use displayedFeeBps. Do not compute a fee from the receive amount.

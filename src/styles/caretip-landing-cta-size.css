@@ -60,3 +60,13 @@
   min-width: 0 !important;
   flex: 0 1 auto;
 }
+
+/* Hero dual path — join is outline/secondary; do not inherit primary orange glow. */
+.caretip-landing .caretip-hero-cta-button--join {
+  box-shadow: 0 1px 3px rgba(17, 17, 17, 0.05) !important;
+  font-weight: 600 !important;
+}
+
+.caretip-landing .caretip-hero-cta-button--join:hover {
+  box-shadow: 0 2px 8px rgba(17, 17, 17, 0.07) !important;
+}

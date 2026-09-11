@@ -2814,6 +2814,7 @@
       "step3Title": "Alle sehen klar",
       "step3Text": "Mitarbeitende sehen Einnahmen; Sie sehen Leistung, ohne Extraaufwand.",
       "primaryCta": "Jetzt Konto erstellen",
+      "primaryCtaMobile": "Konto erstellen",
       "primaryCtaHint": "Für Betreiber & Manager",
       "secondaryCta": "Team beitreten",
       "secondaryCtaHint": "Für eingeladene Mitarbeitende",
@@ -3784,8 +3785,8 @@
       "connectSubtitle": "Verwalten Sie Ihr Stripe-Auszahlungskonto und greifen Sie auf verfügbare Beträge zu.",
       "distribution": {
         "kicker": "Trinkgeldverteilung",
-        "title": "Ihr Betrieb verteilt die Mitarbeiter-Trinkgelder",
-        "titleNamed": "{{name}} verteilt die Mitarbeiter-Trinkgelder.",
+        "title": "Ihr Betrieb verwaltet die Verteilung der Mitarbeiter-Trinkgelder.",
+        "titleNamed": "{{name}} verwaltet die Verteilung der Mitarbeiter-Trinkgelder.",
         "body": "Trinkgelder gehen zuerst an Ihren Betrieb. Der Betrieb entscheidet, wie und wann Ihr Anteil ausgezahlt wird.",
         "note": "Diese Trinkgelder werden nicht direkt auf Ihr Stripe-Konto überwiesen."
       },
@@ -3802,6 +3803,7 @@
         "next": "Weiter"
       },
       "accountTitle": "Stripe-Auszahlungskonto",
+      "accountTitleCompact": "Stripe-Konto",
       "connectedReady": "Verbunden und bereit",
       "availableTitle": "Verfügbar zur Auszahlung",
       "availableNow": "Jetzt verfügbar",

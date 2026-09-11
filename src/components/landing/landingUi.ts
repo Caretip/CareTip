@@ -274,9 +274,13 @@ export const landingUi = {
   heroTrust:
     "caretip-hero-trust",
   heroCtaRow:
-    "caretip-hero-cta-row caretip-landing-cta-row relative z-10 flex w-full flex-col gap-2 [&_a]:no-underline max-lg:items-start max-lg:justify-start lg:items-start",
+    "caretip-hero-cta-row caretip-landing-cta-row relative z-10 flex w-full flex-row flex-nowrap items-stretch gap-2 [&_a]:no-underline max-lg:justify-start lg:items-start",
   heroCtaUnit:
-    "caretip-hero-cta-unit caretip-landing-cta-unit flex w-full max-w-[min(100%,18.5rem)] flex-col items-stretch gap-0.5 max-lg:mx-0 lg:max-w-[16.5rem]",
+    "caretip-hero-cta-unit caretip-landing-cta-unit flex min-w-0 flex-col items-stretch gap-0.5 max-lg:mx-0",
+  heroCtaUnitPrimary:
+    "caretip-hero-cta-unit caretip-hero-cta-unit--primary caretip-landing-cta-unit flex min-w-0 flex-col items-stretch gap-0.5 max-lg:mx-0 lg:max-w-[16.5rem]",
+  heroCtaUnitSecondary:
+    "caretip-hero-cta-unit caretip-hero-cta-unit--secondary caretip-landing-cta-unit flex min-w-0 flex-col items-stretch gap-0.5 max-lg:mx-0 lg:hidden",
   heroCtaHint:
     "caretip-hero-cta-hint caretip-landing-cta-hint w-full text-center text-[10px] font-medium leading-[1.25] tracking-[0.02em] text-muted-foreground sm:text-[11px] sm:leading-[1.3]",
   sectionCtaCluster:
@@ -295,6 +299,9 @@ export const landingUi = {
   navCtaPrimary: cnCtaPrimary(`${caretipBtnPrimaryCompact} no-underline`),
   heroCtaSecondary: cnCta(
     `${caretipBtnSecondary} caretip-hero-cta-button w-full min-w-0 items-center justify-center gap-1.5 text-center no-underline ${ctaPrimarySize} max-lg:mx-0 max-lg:max-w-[min(100%,17.5rem)] lg:max-w-none`,
+  ),
+  heroCtaJoin: cnCta(
+    `${caretipBtnSecondary} caretip-hero-cta-button caretip-hero-cta-button--join w-full min-w-0 items-center justify-center gap-1.5 text-center no-underline ${landingCtaSize} max-lg:mx-0`,
   ),
   heroMediaCol:
     `relative z-0 order-2 flex min-h-0 w-full min-w-0 max-w-full items-stretch justify-center px-0 ${heroStackGapMediaMobile} max-md:pt-0 max-md:pb-0 md:mt-0 md:justify-center md:self-center`,

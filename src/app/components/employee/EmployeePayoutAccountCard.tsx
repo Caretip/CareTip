@@ -16,9 +16,12 @@ import { Button } from "../ui/button";
 import { FinanceStatusPill } from "../finance/FinanceStatusPill";
 import type { FinanceStatusTone } from "../finance/FinanceStatusDot";
 import {
-  employeePayoutBodyKey,
+  employeeConnectIsBusinessDistribution,
+  employeePayoutAccountBodyKey,
   employeePayoutPrimaryCta,
   employeePayoutPrimaryCtaKey,
+  employeePayoutShowAccountSection,
+  employeePayoutShowPrimaryStripeCta,
   employeePayoutUiPhase,
   isEmployeePayoutReady,
 } from "./employeePayoutAccountPresentation";
@@ -33,7 +36,10 @@ function phaseTone(phase: ReturnType<typeof employeePayoutUiPhase>): FinanceStat
 const ctaClass =
   "h-auto min-h-11 w-full min-w-0 whitespace-normal px-3 py-2 text-center leading-snug sm:w-auto sm:min-w-[11rem]";
 
-export function EmployeePayoutAccountCard() {
+export function EmployeePayoutAccountCard(props: {
+  /** Authoritative Business routing from connect status; optional until this card’s own load completes. */
+  businessDistribution?: boolean;
+}) {
   const { t } = useTranslation();
   const [searchParams, setSearchParams] = useSearchParams();
   const [data, setData] = useState<EmployeeConnectStatus | null>(null);
@@ -111,6 +117,14 @@ export function EmployeePayoutAccountCard() {
   const state = data?.connectionState ?? "not_connected";
   const ready = isEmployeePayoutReady(data);
   const primaryCta = employeePayoutPrimaryCta(phase);
+  const businessDistribution =
+    employeeConnectIsBusinessDistribution(data) || props.businessDistribution === true;
+  const bodyKey = employeePayoutAccountBodyKey(businessDistribution, phase, state);
+  const showPrimaryCta = employeePayoutShowPrimaryStripeCta(businessDistribution, phase);
+
+  if (!employeePayoutShowAccountSection(businessDistribution, phase)) {
+    return null;
+  }
 
   return (
     <div>
@@ -132,17 +146,23 @@ export function EmployeePayoutAccountCard() {
           <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
             <div className="min-w-0 space-y-2">
               <h2 id="employee-payout-account-heading" className="text-base font-semibold tracking-tight">
-                {t("employee.payouts.accountTitle")}
+                {t(
+                  businessDistribution
+                    ? "employee.payouts.accountTitleCompact"
+                    : "employee.payouts.accountTitle",
+                )}
               </h2>
               <FinanceStatusPill
                 tone={phaseTone(phase)}
                 label={ready ? t("employee.payouts.connectedReady") : t(`employee.payouts.state.${state}`)}
               />
-              <p className="max-w-xl text-sm leading-snug text-muted-foreground">
-                {phase === "ready"
-                  ? t("employee.payouts.stripeSchedule")
-                  : t(employeePayoutBodyKey(phase, state))}
-              </p>
+              {phase === "ready" && !businessDistribution ? (
+                <p className="max-w-xl text-sm leading-snug text-muted-foreground">
+                  {t("employee.payouts.stripeSchedule")}
+                </p>
+              ) : bodyKey ? (
+                <p className="max-w-xl text-sm leading-snug text-muted-foreground">{t(bodyKey)}</p>
+              ) : null}
             </div>
             <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:flex-wrap sm:justify-end">
               {ready && data?.canOpenDashboard ? (
@@ -157,7 +177,7 @@ export function EmployeePayoutAccountCard() {
                   {t("employee.payouts.openDashboard")}
                 </Button>
               ) : null}
-              {primaryCta ? (
+              {showPrimaryCta && primaryCta ? (
                 <Button
                   type="button"
                   variant={ready ? "outline" : "default"}

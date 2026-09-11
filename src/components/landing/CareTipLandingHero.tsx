@@ -1,6 +1,7 @@
 import { Link } from "react-router";
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { UserPlus } from "lucide-react";
 
 import { landingCopyVisible, landingUi } from "@/components/landing/landingUi";
 import { LandingHeroAnimatedWord } from "@/components/landing/LandingHeroAnimatedWord";
@@ -42,6 +43,11 @@ export function CareTipLandingHero({
   const heroHeadline = t("landing.showcase.heroHeadline");
   const heroHeadlineMobile = t("landing.showcase.heroHeadlineMobile");
   const isMobileHeadline = useMediaQuery("(max-width: 767px)");
+  const isCompactHeroCta = useMediaQuery("(max-width: 1023px)");
+  const primaryCtaLabel = t("landing.showcase.primaryCta");
+  const primaryCtaMobile = t("landing.showcase.primaryCtaMobile");
+  const activePrimaryCta =
+    isCompactHeroCta && landingCopyVisible(primaryCtaMobile) ? primaryCtaMobile : primaryCtaLabel;
   const activeHeadline =
     isMobileHeadline && landingCopyVisible(heroHeadlineMobile) ? heroHeadlineMobile : heroHeadline;
 
@@ -223,13 +229,19 @@ export function CareTipLandingHero({
               "caretip-hero-cta-cluster caretip-hero-split-reveal caretip-hero-split-reveal--3",
             )}
           >
-            <div className={landingUi.heroCtaUnit}>
+            <div className={landingUi.heroCtaUnitPrimary}>
               <Link
                 to="/signup"
                 className={landingUi.heroCtaPrimary}
-                aria-label={t("landing.showcase.primaryCta")}
+                aria-label={activePrimaryCta}
               >
-                {t("landing.showcase.primaryCta")}
+                {activePrimaryCta}
+              </Link>
+            </div>
+            <div className={landingUi.heroCtaUnitSecondary}>
+              <Link to="/join" className={landingUi.heroCtaJoin}>
+                <UserPlus className="h-3.5 w-3.5 shrink-0 opacity-80" aria-hidden="true" />
+                {t("landing.showcase.secondaryCta")}
               </Link>
             </div>
           </div>

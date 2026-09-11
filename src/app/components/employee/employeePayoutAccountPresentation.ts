@@ -1,4 +1,5 @@
 import type { EmployeeConnectStatus, EmployeePayoutConnectionState } from "../../lib/api";
+import { isEmployeeBusinessDistributionMode } from "./employeePayoutActivityPresentation";
 
 export type EmployeePayoutPrimaryCta = "connect" | "complete" | "update";
 
@@ -55,4 +56,45 @@ export function employeePayoutPrimaryCtaKey(cta: EmployeePayoutPrimaryCta): stri
   if (cta === "connect") return "employee.payouts.connectCta";
   if (cta === "update") return "employee.payouts.updateDetails";
   return "employee.payouts.completeSetup";
+}
+
+/** Server-resolved Business routing mode from employee connect status. */
+export function employeeConnectIsBusinessDistribution(
+  data: Pick<EmployeeConnectStatus, "employeeTipPayoutMode"> | null | undefined,
+): boolean {
+  return isEmployeeBusinessDistributionMode(data?.employeeTipPayoutMode);
+}
+
+/**
+ * BUSINESS_RECEIVES: hide the Stripe account block when there is nothing to show
+ * besides a Connect-to-receive-tips prompt.
+ */
+export function employeePayoutShowAccountSection(
+  businessDistribution: boolean,
+  phase: EmployeePayoutUiPhase,
+): boolean {
+  if (phase === "loading" || phase === "error") return true;
+  if (businessDistribution && phase === "not_connected") return false;
+  return true;
+}
+
+/**
+ * DIRECT: existing Connect / Complete / Update CTAs.
+ * BUSINESS_RECEIVES: never Connect or Complete-for-tips; Update only if already connected.
+ */
+export function employeePayoutShowPrimaryStripeCta(
+  businessDistribution: boolean,
+  phase: EmployeePayoutUiPhase,
+): boolean {
+  if (businessDistribution) return phase === "ready";
+  return employeePayoutPrimaryCta(phase) != null;
+}
+
+export function employeePayoutAccountBodyKey(
+  businessDistribution: boolean,
+  phase: EmployeePayoutUiPhase,
+  state: EmployeePayoutConnectionState,
+): string | null {
+  if (businessDistribution) return null;
+  return employeePayoutBodyKey(phase, state);
 }

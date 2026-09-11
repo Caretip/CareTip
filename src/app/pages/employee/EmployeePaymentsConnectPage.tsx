@@ -14,6 +14,7 @@ export function EmployeePaymentsConnectPage() {
   const { t } = useTranslation();
   const [receivingPaused, setReceivingPaused] = useState(false);
   const [businessName, setBusinessName] = useState("");
+  const [routingReady, setRoutingReady] = useState(false);
   const [businessDistribution, setBusinessDistribution] = useState(false);
 
   const load = useCallback(() => {
@@ -24,8 +25,14 @@ export function EmployeePaymentsConnectPage() {
       })
       .catch(() => undefined);
     void getEmployeeConnectStatus()
-      .then((s) => setBusinessDistribution(isEmployeeBusinessDistributionMode(s.employeeTipPayoutMode)))
-      .catch(() => setBusinessDistribution(false));
+      .then((s) => {
+        setBusinessDistribution(isEmployeeBusinessDistributionMode(s.employeeTipPayoutMode));
+        setRoutingReady(true);
+      })
+      .catch(() => {
+        setBusinessDistribution(false);
+        setRoutingReady(true);
+      });
   }, []);
 
   useEffect(() => {
@@ -44,8 +51,11 @@ export function EmployeePaymentsConnectPage() {
         />
         <EmployeeReceivingPausedBanner receivingPaused={receivingPaused} onReactivated={load} />
         {businessDistribution ? <EmployeeTipDistributionNotice businessName={businessName} /> : null}
-        <EmployeeInstantPayoutCard />
-        <EmployeePayoutAccountCard />
+        <EmployeeInstantPayoutCard
+          businessDistribution={businessDistribution}
+          routingReady={routingReady}
+        />
+        <EmployeePayoutAccountCard businessDistribution={businessDistribution} />
       </div>
     </div>
   );

@@ -27,11 +27,6 @@ const NAV_ROUTES_AFTER_INDUSTRIES = [
   { to: "/contact" as const, nameKey: "nav.contact" },
 ] as const;
 
-/** Mobile-only — Join Team sits with nav links (not a competing CTA). */
-const NAV_ROUTES_MOBILE_EXTRA = [
-  { to: "/join" as const, nameKey: "nav.staffPortal", accent: true },
-] as const;
-
 export type NavigationVariant = "default" | "dark";
 
 export const Navigation = memo(function Navigation({ variant: _variant = "default" }: { variant?: NavigationVariant }) {
@@ -177,19 +172,6 @@ export const Navigation = memo(function Navigation({ variant: _variant = "defaul
                       to={route.to}
                       className={cn(
                         "caretip-public-mobile-nav-drawer__nav-link min-h-14",
-                        location.pathname === route.to && "caretip-public-mobile-nav-drawer__nav-link--active",
-                      )}
-                      onClick={() => closeMobileMenu("navigate")}
-                    >
-                      {t(route.nameKey)}
-                    </PrefetchLink>
-                  ))}
-                  {NAV_ROUTES_MOBILE_EXTRA.map((route) => (
-                    <PrefetchLink
-                      key={route.to}
-                      to={route.to}
-                      className={cn(
-                        "caretip-public-mobile-nav-drawer__nav-link caretip-public-mobile-nav-drawer__nav-link--accent min-h-14",
                         location.pathname === route.to && "caretip-public-mobile-nav-drawer__nav-link--active",
                       )}
                       onClick={() => closeMobileMenu("navigate")}
@@ -347,16 +329,6 @@ export const Navigation = memo(function Navigation({ variant: _variant = "defaul
             <div className="relative z-[2] flex shrink-0 items-center justify-end gap-2.5 xl:gap-3.5">
               <ThemeQuickToggle />
               <LanguageSwitcher />
-              <PrefetchLink
-                to="/join"
-                className={cn(
-                  landingUi.navCtaPrimary,
-                  "whitespace-nowrap",
-                  location.pathname === "/join" && "ring-2 ring-primary/25",
-                )}
-              >
-                {t("nav.staffPortal")}
-              </PrefetchLink>
               <PrefetchLink
                 to="/login"
                 className={cn(

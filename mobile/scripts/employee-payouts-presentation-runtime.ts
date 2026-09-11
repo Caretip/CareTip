@@ -9,9 +9,12 @@ import {
   employeeInstantFeePercentLabel,
   employeeInstantShowCta,
   employeeInstantUiMode,
+  employeeInstantVisibleForTipRouting,
   employeePayoutActivityKind,
   employeePayoutActivityShowsStatusPill,
   employeePayoutActivityTone,
+  employeePayoutShowConnectPrompt,
+  employeePayoutShowSetupPrompt,
   isEmployeeBusinessDistributionMode,
 } from "../features/employee/payouts/employeeInstantPayoutPresentation";
 import { formatCentsEur, formatMaskedLast4 } from "../features/employee/payouts/payoutDisplay";
@@ -55,6 +58,15 @@ assert.equal(employeePayoutActivityTone("held"), "warning");
 assert.equal(isEmployeeBusinessDistributionMode("business_distribution"), true);
 assert.equal(isEmployeeBusinessDistributionMode("direct_to_employee"), false);
 assert.equal(isEmployeeBusinessDistributionMode(undefined), false);
+
+assert.equal(employeePayoutShowConnectPrompt(false, "not_connected"), true);
+assert.equal(employeePayoutShowConnectPrompt(true, "not_connected"), false);
+assert.equal(employeePayoutShowConnectPrompt(true, "connected"), false);
+assert.equal(employeePayoutShowSetupPrompt(false, "setup_required"), true);
+assert.equal(employeePayoutShowSetupPrompt(true, "setup_required"), false);
+assert.equal(employeeInstantVisibleForTipRouting(true, "ready"), true);
+assert.equal(employeeInstantVisibleForTipRouting(true, "threshold"), false);
+assert.equal(employeeInstantVisibleForTipRouting(false, "threshold"), true);
 
 assert.equal(formatEur(60.03), "€60,03");
 assert.equal(formatCentsEur(12258), "€122,58");

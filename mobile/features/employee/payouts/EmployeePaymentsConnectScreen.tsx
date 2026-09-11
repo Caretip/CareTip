@@ -30,6 +30,9 @@ import {
   employeeInstantFeePercentLabel,
   employeeInstantShowCta,
   employeeInstantUiMode,
+  employeeInstantVisibleForTipRouting,
+  employeePayoutShowConnectPrompt,
+  employeePayoutShowSetupPrompt,
   isEmployeeBusinessDistributionMode,
 } from "@/features/employee/payouts/employeeInstantPayoutPresentation";
 import {
@@ -160,8 +163,20 @@ export function EmployeePaymentsConnectScreen() {
     );
   }
 
-  const moneyLoading = instantQuery.isLoading && !instantQuery.data;
-  const moneyError = instantQuery.isError && !instantQuery.data;
+  const routingKnown = Boolean(connect) || connectQuery.isError;
+  const moneyLoading = instantQuery.isLoading && !instantQuery.data && !businessDistribution;
+  const moneyError = instantQuery.isError && !instantQuery.data && !businessDistribution;
+  const showConnectPrompt =
+    routingKnown && employeePayoutShowConnectPrompt(businessDistribution, connectionState);
+  const showSetupPrompt =
+    routingKnown && employeePayoutShowSetupPrompt(businessDistribution, connectionState);
+  const showInstantBlock = employeeInstantVisibleForTipRouting(businessDistribution, mode);
+  const showAvailableBalance =
+    showInstantBlock && connectionState !== "not_connected";
+  const showAccountBlock =
+    connectionState === "connected" ||
+    connectionState === "restricted" ||
+    (businessDistribution && connectionState !== "not_connected" && Boolean(connect?.hasAccount));
 
   const blockedReason = (() => {
     const reason = eligibility?.reason;
@@ -239,7 +254,7 @@ export function EmployeePaymentsConnectScreen() {
         />
       ) : (
         <>
-          {connectionState !== "not_connected" ? (
+          {showAvailableBalance ? (
             <View
               style={styles.balanceBlock}
               accessible
@@ -286,7 +301,7 @@ export function EmployeePaymentsConnectScreen() {
                 style={styles.rectCta}
               />
             </View>
-          ) : connectionState === "not_connected" ? (
+          ) : showConnectPrompt ? (
             <View style={styles.compactCard}>
               <Text style={styles.cardTitle} {...textA11y}>
                 {t("employeePayouts.connectStripeTitle")}
@@ -302,7 +317,7 @@ export function EmployeePaymentsConnectScreen() {
                 style={styles.rectCta}
               />
             </View>
-          ) : connectionState === "setup_required" || connectionState === "action_required" ? (
+          ) : showSetupPrompt ? (
             <View style={styles.compactCard}>
               <Text style={styles.cardTitle} {...textA11y}>
                 {t("employeePayouts.setupTitle")}
@@ -318,7 +333,7 @@ export function EmployeePaymentsConnectScreen() {
                 style={styles.rectCta}
               />
             </View>
-          ) : (
+          ) : showInstantBlock ? (
             <View style={styles.compactCard}>
               <Text style={styles.cardTitle} {...textA11y}>
                 {t("employeePayouts.instantTitle")}
@@ -413,9 +428,9 @@ export function EmployeePaymentsConnectScreen() {
                 </Text>
               ) : null}
             </View>
-          )}
+          ) : null}
 
-          {connectionState === "connected" || connectionState === "restricted" ? (
+          {showAccountBlock ? (
             <View style={styles.accountBlock}>
               <Text style={styles.sectionLabel} {...textA11y}>
                 {t("employeePayouts.stripeAccount")}
@@ -425,7 +440,9 @@ export function EmployeePaymentsConnectScreen() {
                   <Text style={styles.body} {...textA11y}>
                     {connectionState === "connected"
                       ? t("employeePayouts.connectedReady")
-                      : t("employeePayouts.restrictedTitle")}
+                      : connectionState === "restricted"
+                        ? t("employeePayouts.restrictedTitle")
+                        : t("employeePayouts.setupTitle")}
                   </Text>
                   {last4 ? (
                     <Text style={styles.muted} {...textA11y}>

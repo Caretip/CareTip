@@ -2814,8 +2814,9 @@
       "step3Title": "Everyone sees clarity",
       "step3Text": "Staff see earnings; you see performance, without the busywork.",
       "primaryCta": "Create Business Account",
+      "primaryCtaMobile": "Create Account",
       "primaryCtaHint": "For venue owners and managers",
-      "secondaryCta": "Join Team",
+      "secondaryCta": "Join team",
       "secondaryCtaHint": "For invited staff members",
       "tabQrLabel": "QR scan",
       "tabQrAlt": "Phone showing CareTip QR tipping screen",
@@ -3784,7 +3785,7 @@
       "connectSubtitle": "Manage your Stripe payout account and access your available funds.",
       "distribution": {
         "kicker": "Tip distribution",
-        "title": "Your business manages tip distribution",
+        "title": "Your business manages employee tip distribution.",
         "titleNamed": "{{name}} manages employee tip distribution.",
         "body": "Employee tips are received by your business. Your business decides how and when to distribute your share.",
         "note": "These tips are not paid directly to your Stripe account."
@@ -3802,6 +3803,7 @@
         "next": "Next"
       },
       "accountTitle": "Stripe payout account",
+      "accountTitleCompact": "Stripe account",
       "connectedReady": "Connected & ready",
       "availableTitle": "Available to withdraw",
       "availableNow": "Available now",

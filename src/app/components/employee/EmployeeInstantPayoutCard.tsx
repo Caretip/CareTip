@@ -19,6 +19,7 @@ import {
   employeeInstantShowCta,
   employeeInstantShowEligiblePill,
   employeeInstantUiMode,
+  employeeInstantVisibleForTipRouting,
 } from "./employeeInstantPayoutPresentation";
 
 function newIdempotencyKey(): string {
@@ -30,7 +31,10 @@ function newIdempotencyKey(): string {
 const ctaClass =
   "h-auto min-h-11 w-full min-w-0 whitespace-normal px-4 py-2.5 text-center leading-snug sm:w-auto sm:min-w-[12rem]";
 
-export function EmployeeInstantPayoutCard() {
+export function EmployeeInstantPayoutCard(props: {
+  businessDistribution?: boolean;
+  routingReady?: boolean;
+}) {
   const { t } = useTranslation();
   const [eligibility, setEligibility] = useState<EmployeeInstantPayoutEligibility | null>(null);
   const [loading, setLoading] = useState(true);
@@ -78,7 +82,14 @@ export function EmployeeInstantPayoutCard() {
     }
   };
 
+  if (props.routingReady === false) {
+    return null;
+  }
+
   if (loading) {
+    if (props.businessDistribution) {
+      return null;
+    }
     return (
       <div className="flex items-center gap-2 py-4 text-sm text-muted-foreground" role="status">
         <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
@@ -88,6 +99,9 @@ export function EmployeeInstantPayoutCard() {
   }
 
   if (error) {
+    if (props.businessDistribution) {
+      return null;
+    }
     return (
       <div className="space-y-3" role="alert">
         <p className="text-sm text-destructive">{error}</p>
@@ -99,7 +113,7 @@ export function EmployeeInstantPayoutCard() {
   }
 
   const mode = employeeInstantUiMode(eligibility);
-  if (mode === "hidden" || !eligibility) {
+  if (!eligibility || !employeeInstantVisibleForTipRouting(props.businessDistribution === true, mode)) {
     return null;
   }
 
