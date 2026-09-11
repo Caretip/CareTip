@@ -95,6 +95,36 @@ assert(
   "return visits must not reopen the branded overlay",
 );
 assert(
+  shellReady.includes("useAppLoadingRegistration") && shellReady.includes("false"),
+  "landing must not hold the global overlay for hero LCP",
+);
+assert(
+  !shellReady.includes("HERO_LCP_WAIT_MS"),
+  "landing overlay must not wait up to 2.5s for hero decode",
+);
+assert(
+  !shellReady.includes("isHeroLcpPainted"),
+  "landing overlay must not wait for LCP completeness",
+);
+
+const indexHtml = read("index.html");
+assert(
+  !indexHtml.includes("manrope-latin-800"),
+  "do not preload Manrope on the critical path (competes with LCP image)",
+);
+assert(
+  read("src/main.tsx").includes('import("./app/pages/LandingPage")'),
+  "landing JS must prefetch in parallel with i18n",
+);
+assert(
+  read("src/app/context/AppLoadingManager.tsx").includes("isPublicShellPath"),
+  "public shells must skip the React app-boot overlay",
+);
+assert(
+  read("public/_headers").includes("max-age=31536000, immutable"),
+  "hashed assets must be immutable-cached in production headers",
+);
+assert(
   landingPage.includes("prefetchLandingBelowFoldSections"),
   "landing must prefetch below-fold sections only after LCP warm",
 );

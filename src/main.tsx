@@ -35,17 +35,33 @@ function scheduleHeroDisplayFont(): void {
 
 scheduleHeroDisplayFont();
 migrateLegacyAccessTokenFromStorage();
+
+/** Overlap landing JS with i18n JSON so `/` is not a waterfall. */
+function prefetchPublicEntryGraph(): void {
+  if (typeof window === "undefined") return;
+  const p = window.location.pathname.split("?")[0]?.split("#")[0] ?? "/";
+  if (p === "/") {
+    void import("./app/pages/LandingPage");
+  }
+}
+prefetchPublicEntryGraph();
+
 scheduleMobileDeferredWork(() => wakeRemoteApi(), { mobileTimeoutMs: 3500, desktopTimeoutMs: 900 });
 
 if (import.meta.env.PROD) {
-  void import("virtual:pwa-register").then(({ registerSW }) => {
-    const updateSW = registerSW({
-      immediate: true,
-      onNeedRefresh() {
-        updateSW(true);
-      },
-    });
-  });
+  scheduleMobileDeferredWork(
+    () => {
+      void import("virtual:pwa-register").then(({ registerSW }) => {
+        const updateSW = registerSW({
+          immediate: true,
+          onNeedRefresh() {
+            updateSW(true);
+          },
+        });
+      });
+    },
+    { mobileTimeoutMs: 4500, desktopTimeoutMs: 2000 },
+  );
 }
 
 void ensureI18nReady()

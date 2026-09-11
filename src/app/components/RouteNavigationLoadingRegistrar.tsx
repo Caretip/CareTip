@@ -23,8 +23,7 @@ function isStandaloneDisplayMode(): boolean {
 /**
  * Cold entry only: branded overlay while React Router resolves the first paint.
  * After the shell is interactive, SPA navigations never re-register the global loader.
- *
- * Landing (`/`) keeps `app-boot` until `landing-shell-ready` owns the overlay on cold boot.
+ * Public marketing (including `/`) releases `app-boot` as soon as the route is idle.
  */
 export function RouteNavigationLoadingRegistrar({ children }: { children: ReactNode }) {
   const navigation = useNavigation();
@@ -45,11 +44,8 @@ export function RouteNavigationLoadingRegistrar({ children }: { children: ReactN
   );
 
   useEffect(() => {
-    /* Landing readiness owns the cold handoff — never drop app-boot here. */
-    if (pathOnly === "/") return;
-
     const shouldReleaseBoot =
-      isPublicMarketingPath(pathname) || isStandaloneDisplayMode();
+      pathOnly === "/" || isPublicMarketingPath(pathname) || isStandaloneDisplayMode();
     if (!shouldReleaseBoot) return;
     if (navigation.state === "loading") return;
 

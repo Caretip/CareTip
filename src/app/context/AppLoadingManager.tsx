@@ -54,6 +54,7 @@ import {
   subscribeAuthPostLoginTransition,
 } from "../lib/authPostLoginTransition";
 import { registerAuthSoftNavColdBootDismiss, shouldBlockOverlayDuringSignInHandoff } from "../lib/authSoftNavHandoff";
+import { isPublicShellPath } from "../lib/publicRoutes";
 /** Block APP_INIT from re-opening the overlay shortly after a full dismiss (paint-ready race). */
 const OVERLAY_REENTRY_LOCK_MS = 600;
 
@@ -112,11 +113,12 @@ function readInitialPathname(): string {
 }
 
 /**
- * Initial bootstrap overlay for every cold load (URL entry, refresh, deep link).
- * Always registers so React matches the HTML CareTip boot — no path-based gap.
+ * Cold-boot overlay is for protected / guest-checkout journeys that have no
+ * first-paint content yet. Public marketing, auth forms, and guest shells must
+ * not wait on app-boot — HTML `#caretip-html-boot` already covers JS download.
  */
-function shouldRegisterInitialAppBoot(_pathname: string): boolean {
-  return true;
+function shouldRegisterInitialAppBoot(pathname: string): boolean {
+  return !isPublicShellPath(pathname);
 }
 
 function createInitialRegistrations(): Map<string, Registration> {
@@ -330,6 +332,21 @@ export function AppLoadingManagerProvider({ children }: { children: React.ReactN
       setHtmlBootOwnsVisual(false);
       markAppShellInteractive();
     });
+  }, []);
+
+  useLayoutEffect(() => {
+    if (shouldRegisterInitialAppBoot(readInitialPathname())) return;
+    if (!isHtmlBootElementPresent()) {
+      markAppShellInteractive();
+      return;
+    }
+    beginHtmlBootBridgeExit();
+    const id = window.setTimeout(() => {
+      dismissHtmlMarketingBootBridge();
+      setHtmlBootOwnsVisual(false);
+      markAppShellInteractive();
+    }, OVERLAY_FADE_MS);
+    return () => window.clearTimeout(id);
   }, []);
 
   useEffect(() => {

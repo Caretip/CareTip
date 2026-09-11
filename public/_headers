@@ -1,10 +1,24 @@
-# Netlify (caretip.de): security headers for the SPA static host.
-# Copied to dist/ on `vite build`. Mirrors vercel.json for parity if Vercel previews are used.
-# CSP source of truth: scripts/spa-csp-policy.mjs
-/*
-  Content-Security-Policy: default-src 'self'; script-src 'self' https://accounts.google.com https://www.gstatic.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self'; connect-src 'self' https://caretip.de https://www.caretip.de https://*.caretip.de wss://*.caretip.de https://*.onrender.com wss://*.onrender.com https://oauth2.googleapis.com https://www.googleapis.com https://accounts.google.com https://firebase.googleapis.com https://firebaseinstallations.googleapis.com https://fcmregistrations.googleapis.com https://*.googleapis.com https://*.ingest.sentry.io https://*.ingest.de.sentry.io; frame-src https://accounts.google.com; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; frame-ancestors 'none'; form-action 'self'
-  X-Content-Type-Options: nosniff
-  X-Frame-Options: DENY
-  Referrer-Policy: strict-origin-when-cross-origin
-  Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=()
-  Strict-Transport-Security: max-age=31536000; includeSubDomains; preload
+# Netlify (caretip.de): security headers for the SPA static host.
+# Copied to dist/ on `vite build`. Mirrors vercel.json for parity if Vercel previews are used.
+# CSP source of truth: scripts/spa-csp-policy.mjs
+
+# Hashed Vite assets — safe to cache forever (filename includes content hash).
+/assets/*
+  Cache-Control: public, max-age=31536000, immutable
+
+/fonts/*
+  Cache-Control: public, max-age=31536000, immutable
+
+/sw.js
+  Cache-Control: public, max-age=0, must-revalidate
+
+/workbox-*.js
+  Cache-Control: public, max-age=0, must-revalidate
+
+/*
+  Content-Security-Policy: default-src 'self'; script-src 'self' https://accounts.google.com https://www.gstatic.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self'; connect-src 'self' https://caretip.de https://www.caretip.de https://*.caretip.de wss://*.caretip.de https://*.onrender.com wss://*.onrender.com https://oauth2.googleapis.com https://www.googleapis.com https://accounts.google.com https://firebase.googleapis.com https://firebaseinstallations.googleapis.com https://fcmregistrations.googleapis.com https://*.googleapis.com https://*.ingest.sentry.io https://*.ingest.de.sentry.io; frame-src https://accounts.google.com; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; frame-ancestors 'none'; form-action 'self'
+  X-Content-Type-Options: nosniff
+  X-Frame-Options: DENY
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=()
+  Strict-Transport-Security: max-age=31536000; includeSubDomains; preload

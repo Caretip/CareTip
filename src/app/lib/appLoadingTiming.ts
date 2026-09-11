@@ -14,7 +14,6 @@ export const DEFAULT_MIN_OVERLAY_VISIBLE_MS = 320;
 export const PREMIUM_MIN_OVERLAY_VISIBLE_MS = 720;
 
 const PREMIUM_OVERLAY_KEYS = new Set([
-  "app-boot",
   "billing-plan-checkout",
   "billing-trial-checkout",
   "onboarding-submit",
