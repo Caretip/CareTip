@@ -213,18 +213,19 @@
   .caretip-landing .caretip-hero-section--full-bg .caretip-hero-cta-button {
     width: auto !important;
     min-width: 0 !important;
-    max-width: 13.25rem !important;
-    min-height: 2.375rem !important;
-    height: 2.375rem !important;
-    padding: 0 1rem !important;
-    font-size: 0.8125rem !important;
-    font-weight: 600 !important;
+    max-width: none !important;
+    min-height: 2.75rem !important;
+    height: 2.75rem !important;
+    padding: 0 1.75rem !important;
+    font-size: 0.9375rem !important;
+    font-weight: 700 !important;
     line-height: 1 !important;
     letter-spacing: -0.01em;
-    border-radius: 0.6875rem !important;
+    border-radius: 0.5rem !important;
     margin-inline: 0;
     justify-content: center;
     text-align: center;
+    box-shadow: none;
   }
 
   /*

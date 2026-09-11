@@ -3,6 +3,8 @@ import {
   caretipBtnPrimary,
   caretipBtnPrimaryCompact,
   caretipBtnSecondary,
+  caretipBtnSizePrimary,
+  caretipBtnSizeSecondary,
 } from "@/lib/caretipButtonSystem";
 
 /** True when landing copy should render (non-empty after trim). */
@@ -94,13 +96,12 @@ function cnCta(layout: string) {
  * Landing CTA footprint — one size for hero + every landing section/final button.
  * Height matches the label (text-sm / 0.9375rem); do not drift above or below.
  */
-const landingCtaSize =
-  "h-10 min-h-10 lg:h-11 lg:min-h-11 px-5 lg:px-6 text-sm lg:text-[0.9375rem] font-semibold";
-const heroCtaPrimarySize = `${landingCtaSize} max-lg:min-w-[11.5rem] max-lg:max-w-[min(100%,16.5rem)] lg:min-w-[12.5rem]`;
+const landingCtaSize = caretipBtnSizePrimary;
+const heroCtaPrimarySize = `${landingCtaSize} max-lg:min-w-0 lg:min-w-[12.5rem]`;
 const sectionCtaSize = landingCtaSize;
 const sectionCtaWidth = "w-full min-w-0 max-w-full";
 /** Showcase / legacy primary row — same height as hero, slightly wider min. */
-const ctaPrimarySize = `${landingCtaSize} max-lg:min-w-[11.5rem] max-lg:max-w-[min(100%,17.5rem)] lg:min-w-[12.5rem]`;
+const ctaPrimarySize = `${landingCtaSize} max-lg:min-w-0 lg:min-w-[12.5rem]`;
 
 export const landingUi = {
   /** Section surface — background from caretip-landing-section-flow.css (light). */
@@ -301,7 +302,7 @@ export const landingUi = {
     `${caretipBtnSecondary} caretip-hero-cta-button w-full min-w-0 items-center justify-center gap-1.5 text-center no-underline ${ctaPrimarySize} max-lg:mx-0 max-lg:max-w-[min(100%,17.5rem)] lg:max-w-none`,
   ),
   heroCtaJoin: cnCta(
-    `${caretipBtnSecondary} caretip-hero-cta-button caretip-hero-cta-button--join w-full min-w-0 items-center justify-center gap-1.5 text-center no-underline ${landingCtaSize} max-lg:mx-0`,
+    `${caretipBtnSecondary} caretip-hero-cta-button caretip-hero-cta-button--join w-full min-w-0 items-center justify-center gap-2 text-center no-underline ${caretipBtnSizeSecondary} max-lg:mx-0`,
   ),
   heroMediaCol:
     `relative z-0 order-2 flex min-h-0 w-full min-w-0 max-w-full items-stretch justify-center px-0 ${heroStackGapMediaMobile} max-md:pt-0 max-md:pb-0 md:mt-0 md:justify-center md:self-center`,

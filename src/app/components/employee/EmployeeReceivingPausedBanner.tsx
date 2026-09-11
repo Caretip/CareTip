@@ -8,6 +8,8 @@ import {
 import { toUserFriendlyMessage } from "../../lib/errorMessages";
 import { logClientError } from "../../lib/clientLog";
 import { Button } from "../ui/button";
+import { caretipBtnPrimary } from "@/lib/caretipButtonSystem";
+import { cn } from "@/lib/utils";
 
 export function EmployeeReceivingPausedBanner(props: {
   receivingPaused: boolean;
@@ -43,7 +45,12 @@ export function EmployeeReceivingPausedBanner(props: {
         {t("employee.receiving.pausedTitle")}
       </h2>
       <p className="mt-1 text-sm leading-relaxed text-muted-foreground">{t("employee.receiving.pausedBody")}</p>
-      <Button type="button" className="mt-3 min-h-11" onClick={() => void onReactivate()} disabled={busy}>
+      <Button
+        type="button"
+        className={cn(caretipBtnPrimary, "mt-3 h-auto min-h-11 whitespace-normal")}
+        onClick={() => void onReactivate()}
+        disabled={busy}
+      >
         {t("employee.receiving.reactivateCta")}
       </Button>
     </section>

@@ -192,7 +192,7 @@
 
   .caretip-landing .caretip-hero-section--fullbleed-dark .caretip-hero-cta-cluster,
   .caretip-landing .caretip-hero-section--fullbleed-light .caretip-hero-cta-cluster {
-    margin-top: 0.35rem;
+    margin-top: 0.875rem;
   }
 
   .caretip-landing .caretip-hero-section--fullbleed-dark .caretip-hero-subtitle,
@@ -306,9 +306,8 @@
   }
 
   .caretip-landing .caretip-hero-section--full-bg .caretip-hero-cta-button--join {
-    padding-inline: 0.8rem !important;
+    padding-inline: 1.5rem !important;
     gap: 0.375rem !important;
-    box-shadow: 0 1px 3px rgba(17, 17, 17, 0.05) !important;
     font-weight: 600 !important;
   }
 }
@@ -319,11 +318,11 @@
   }
 
   .caretip-landing .caretip-hero-section--full-bg .caretip-hero-cta-row .caretip-hero-cta-button {
-    padding-inline: 0.85rem !important;
+    padding-inline: 1rem !important;
   }
 
   .caretip-landing .caretip-hero-section--full-bg .caretip-hero-cta-button--join {
-    padding-inline: 0.7rem !important;
+    padding-inline: 0.875rem !important;
   }
 }
 

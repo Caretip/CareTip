@@ -6199,6 +6199,7 @@
       "payouts": {
         "hint": "Recent transfers to your payout method.",
         "viewInStripe": "View full payout details in Stripe",
+        "headerDashboardCta": "View in Stripe",
         "loadError": "Could not load payout history.",
         "loading": "Loading payouts",
         "emptyTitle": "No payouts yet",

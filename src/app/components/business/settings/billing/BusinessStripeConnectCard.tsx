@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useState } from "react";
 import { useSearchParams } from "react-router";
 import { useTranslation } from "react-i18next";
 import { Loader2 } from "lucide-react";
@@ -21,8 +21,11 @@ import {
 import { performExternalStripeRedirect } from "../../../../lib/externalStripeRedirect";
 import { useRequireAuth } from "../../../../hooks/useRequireAuth";
 import { Button } from "../../../ui/button";
+import { businessUi } from "../../businessDashboardUi";
+import { cn } from "@/lib/utils";
 import { FinanceStatusPill } from "../../../finance/FinanceStatusPill";
 import type { FinanceStatusTone } from "../../../finance/FinanceStatusDot";
+import { useBusinessStripeHeaderActions } from "../../BusinessStripeHeaderActions";
 
 function connectTone(light: ReturnType<typeof stripeConnectTrafficLight>): FinanceStatusTone {
   if (light === "green") return "success";
@@ -30,12 +33,18 @@ function connectTone(light: ReturnType<typeof stripeConnectTrafficLight>): Finan
   return "danger";
 }
 
+const headerActionClass = cn(
+  businessUi.btnPrimary,
+  "h-auto min-h-11 w-full whitespace-normal px-5 sm:w-auto",
+);
+
 /**
  * Stripe Connect Express status — traffic-light presentation of backend ConnectStatus.
  */
 export function BusinessStripeConnectCard() {
   const { t, i18n } = useTranslation();
   const { user } = useRequireAuth();
+  const headerActions = useBusinessStripeHeaderActions();
   const [searchParams, setSearchParams] = useSearchParams();
   const [data, setData] = useState<ConnectStatus | null>(null);
   const [loading, setLoading] = useState(true);
@@ -84,7 +93,7 @@ export function BusinessStripeConnectCard() {
     setSearchParams(next, { replace: true });
   }, [searchParams, setSearchParams, reload, t]);
 
-  async function startOnboarding() {
+  const startOnboarding = useCallback(async function startOnboarding() {
     setBusy("onboarding");
     try {
       const { url } = await createConnectAccountLink();
@@ -97,9 +106,9 @@ export function BusinessStripeConnectCard() {
       toast.error(toUserFriendlyMessage(err) || t("business.billing.connect.startError"));
       setBusy(null);
     }
-  }
+  }, [t]);
 
-  async function startDashboard() {
+  const startDashboard = useCallback(async function startDashboard() {
     setBusy("dashboard");
     try {
       const { url } = await createConnectLoginLink();
@@ -112,7 +121,31 @@ export function BusinessStripeConnectCard() {
       toast.error(toUserFriendlyMessage(err) || t("business.billing.connect.openDashboardError"));
       setBusy(null);
     }
-  }
+  }, [t]);
+
+  const showDashboard = Boolean(data && stripeConnectShowsDashboardAccess(data) && data.stripeConfigured);
+
+  useLayoutEffect(() => {
+    const setActions = headerActions?.setActions;
+    if (!setActions) return;
+    if (!showDashboard) {
+      setActions(null);
+      return;
+    }
+    setActions(
+      <Button
+        type="button"
+        disabled={busy != null}
+        aria-busy={busy === "dashboard"}
+        onClick={() => void startDashboard()}
+        className={headerActionClass}
+      >
+        {busy === "dashboard" ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : null}
+        {t("business.billing.connect.openDashboard")}
+      </Button>,
+    );
+    return () => setActions(null);
+  }, [headerActions, showDashboard, busy, startDashboard, t]);
 
   if (loading && !data) {
     return (
@@ -127,7 +160,13 @@ export function BusinessStripeConnectCard() {
     return (
       <div className="space-y-3 py-2" role="alert">
         <p className="text-sm text-destructive">{error}</p>
-        <Button type="button" variant="outline" size="sm" onClick={() => void reload(true)}>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          className={businessUi.btnSecondary}
+          onClick={() => void reload(true)}
+        >
           {t("business.billing.retry")}
         </Button>
       </div>
@@ -139,7 +178,6 @@ export function BusinessStripeConnectCard() {
   const canStart = data.stripeConfigured;
   const light = stripeConnectTrafficLight(data);
   const ctaKey = stripeConnectCtaKey(data);
-  const showDashboard = stripeConnectShowsDashboardAccess(data);
   const statusLabel = t(stripeConnectHeadlineKey(data));
   const lastSync =
     data.updatedAt && data.updatedAt.trim()
@@ -153,66 +191,62 @@ export function BusinessStripeConnectCard() {
   const headline =
     light === "green" ? t("business.billing.connect.connectedReady") : statusLabel;
 
+  const sectionActions = showOnboardingPrimary || showUpdate;
+
   return (
-    <section className="space-y-6" aria-labelledby="stripe-connect-overview">
-      <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
-        <div className="min-w-0 space-y-2">
-          <h2 id="stripe-connect-overview" className="text-base font-semibold tracking-tight">
-            {t("business.billing.connect.stripeAccountTitle")}
-          </h2>
-          <p
-            className="text-xl font-semibold tracking-tight sm:text-2xl"
-            data-connect-status={data.status}
-            data-connect-readiness={light === "green" ? "ready" : "required"}
-          >
-            {headline}
-          </p>
-          {venueName ? <p className="text-sm font-medium">{venueName}</p> : null}
+    <section
+      className="stripe-connect-card space-y-5"
+      aria-labelledby="stripe-connect-overview"
+    >
+      <div className="min-w-0 space-y-2">
+        <h2 id="stripe-connect-overview" className="text-base font-semibold tracking-tight">
+          {t("business.billing.connect.stripeAccountTitle")}
+        </h2>
+        <p
+          className="text-xl font-semibold tracking-tight sm:text-2xl"
+          data-connect-status={data.status}
+          data-connect-readiness={light === "green" ? "ready" : "required"}
+        >
+          {headline}
+        </p>
+        {venueName ? <p className="text-sm font-medium">{venueName}</p> : null}
+        {data.hasAccount ? (
+          <p className="text-sm text-muted-foreground">{t("business.billing.connect.expressAccount")}</p>
+        ) : null}
+        <div className="flex flex-wrap items-center gap-2">
+          <FinanceStatusPill tone={tone} label={statusLabel} />
           {data.hasAccount ? (
-            <p className="text-sm text-muted-foreground">{t("business.billing.connect.expressAccount")}</p>
-          ) : null}
-          <div className="flex flex-wrap items-center gap-2">
-            <FinanceStatusPill tone={tone} label={statusLabel} />
-            {data.hasAccount ? (
-              <FinanceStatusPill
-                tone={data.payoutsEnabled ? "success" : "warning"}
-                label={
-                  data.payoutsEnabled
-                    ? t("business.billing.connect.payoutsEnabledPill")
-                    : t("business.billing.connect.payoutRestricted")
-                }
-              />
-            ) : null}
-          </div>
-          <p className="text-xs text-muted-foreground">
-            {t("business.billing.connect.lastSyncLabel")}:{" "}
-            {lastSync || t("business.billing.connect.lastSyncUnavailable")}
-          </p>
-          {light !== "green" ? (
-            <p className="max-w-xl text-sm text-muted-foreground">{t(stripeConnectBodyKey(data))}</p>
+            <FinanceStatusPill
+              tone={data.payoutsEnabled ? "success" : "warning"}
+              label={
+                data.payoutsEnabled
+                  ? t("business.billing.connect.payoutsEnabledPill")
+                  : t("business.billing.connect.payoutRestricted")
+              }
+            />
           ) : null}
         </div>
-        <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:flex-wrap sm:justify-end">
-          {showDashboard && canStart ? (
-            <Button
-              type="button"
-              disabled={actionBusy}
-              aria-busy={busy === "dashboard"}
-              onClick={() => void startDashboard()}
-              className="h-auto min-h-10 w-full whitespace-normal sm:w-auto"
-            >
-              {busy === "dashboard" ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : null}
-              {t("business.billing.connect.openDashboard")}
-            </Button>
-          ) : null}
+        <p className="text-xs text-muted-foreground">
+          {t("business.billing.connect.lastSyncLabel")}:{" "}
+          {lastSync || t("business.billing.connect.lastSyncUnavailable")}
+        </p>
+        {light !== "green" ? (
+          <p className="max-w-xl text-sm text-muted-foreground">{t(stripeConnectBodyKey(data))}</p>
+        ) : null}
+      </div>
+
+      {sectionActions ? (
+        <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:flex-wrap">
           {showOnboardingPrimary ? (
             <Button
               type="button"
-              variant={showDashboard ? "outline" : "default"}
               disabled={actionBusy}
               aria-busy={busy === "onboarding"}
               onClick={() => void startOnboarding()}
-              className="h-auto min-h-10 w-full whitespace-normal sm:w-auto"
+              className={cn(
+                businessUi.btnPrimary,
+                "h-auto min-h-11 w-full whitespace-normal sm:w-auto",
+              )}
             >
               {busy === "onboarding" ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : null}
               {t(ctaKey!)}
@@ -224,13 +258,13 @@ export function BusinessStripeConnectCard() {
               variant="outline"
               disabled={actionBusy}
               onClick={() => void startOnboarding()}
-              className="h-auto min-h-10 w-full whitespace-normal sm:w-auto"
+              className={cn(businessUi.btnSecondary, "h-auto min-h-11 w-full whitespace-normal sm:w-auto")}
             >
               {t("business.billing.connect.manage")}
             </Button>
           ) : null}
         </div>
-      </div>
+      ) : null}
 
       {!data.stripeConfigured ? (
         <p className="text-sm text-muted-foreground">{t("business.billing.connect.notConfigured")}</p>

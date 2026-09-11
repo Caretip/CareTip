@@ -26,7 +26,9 @@
   .caretip-auth-shell,
   .business-onboarding-page,
   .customer-flow
-) :is(.caretip-btn-primary, .caretip-btn-secondary, .caretip-btn-ghost, .caretip-cta-primary) {
+) :is(.caretip-btn-primary, .caretip-btn-secondary, .caretip-btn-ghost, .caretip-cta-primary),
+.caretip-landing a.caretip-hero-cta-button,
+.caretip-landing a.caretip-section-cta-button {
   border-radius: var(--ct-public-radius) !important;
 }
 

@@ -13,6 +13,9 @@ import { toUserFriendlyMessage } from "../../lib/errorMessages";
 import { logClientError } from "../../lib/clientLog";
 import { performExternalStripeRedirect } from "../../lib/externalStripeRedirect";
 import { Button } from "../ui/button";
+import { employeeUi } from "./employeeDashboardUi";
+import { caretipBtnPrimary } from "@/lib/caretipButtonSystem";
+import { cn } from "@/lib/utils";
 import { FinanceStatusPill } from "../finance/FinanceStatusPill";
 import type { FinanceStatusTone } from "../finance/FinanceStatusDot";
 import {
@@ -33,8 +36,8 @@ function phaseTone(phase: ReturnType<typeof employeePayoutUiPhase>): FinanceStat
   return "neutral";
 }
 
-const ctaClass =
-  "h-auto min-h-11 w-full min-w-0 whitespace-normal px-3 py-2 text-center leading-snug sm:w-auto sm:min-w-[11rem]";
+const payoutActionClass =
+  "h-auto min-h-11 w-full min-w-0 whitespace-normal px-4 py-2 text-center leading-snug sm:w-auto sm:min-w-[11rem]";
 
 export function EmployeePayoutAccountCard(props: {
   /** Authoritative Business routing from connect status; optional until this card’s own load completes. */
@@ -137,7 +140,12 @@ export function EmployeePayoutAccountCard(props: {
         <div className="space-y-3" role="alert">
           <p className="text-sm text-destructive">{error}</p>
           <p className="text-xs text-muted-foreground">{t("employee.payouts.statusErrorHint")}</p>
-          <Button type="button" variant="outline" className={ctaClass} onClick={() => void reload()}>
+          <Button
+            type="button"
+            variant="outline"
+            className={cn(employeeUi.btnSecondary, payoutActionClass)}
+            onClick={() => void reload()}
+          >
             {t("employee.payouts.retry")}
           </Button>
         </div>
@@ -168,7 +176,7 @@ export function EmployeePayoutAccountCard(props: {
               {ready && data?.canOpenDashboard ? (
                 <Button
                   type="button"
-                  className={ctaClass}
+                  className={cn(caretipBtnPrimary, payoutActionClass)}
                   onClick={() => void onDashboard()}
                   disabled={busy != null}
                   data-payout-cta="dashboard"
@@ -181,7 +189,7 @@ export function EmployeePayoutAccountCard(props: {
                 <Button
                   type="button"
                   variant={ready ? "outline" : "default"}
-                  className={ctaClass}
+                  className={cn(ready ? employeeUi.btnSecondary : caretipBtnPrimary, payoutActionClass)}
                   onClick={() => void onConnect()}
                   disabled={busy != null || data?.stripeConfigured === false}
                   data-payout-cta={primaryCta}
@@ -194,7 +202,7 @@ export function EmployeePayoutAccountCard(props: {
                 <Button
                   type="button"
                   variant="outline"
-                  className={ctaClass}
+                  className={cn(employeeUi.btnSecondary, payoutActionClass)}
                   onClick={() => void onDashboard()}
                   disabled={busy != null}
                   data-payout-cta="dashboard"

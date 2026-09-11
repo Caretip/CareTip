@@ -4,26 +4,18 @@
  */
 
 .caretip-landing {
-  --caretip-landing-cta-h: 2.5rem;
-  --caretip-landing-cta-px: 1.25rem;
-  --caretip-landing-cta-fs: 0.875rem;
-  --caretip-landing-cta-fw: 600;
-  --caretip-landing-cta-radius: 0.75rem;
-}
-
-@media (max-width: 767px) {
-  .caretip-landing {
-    --caretip-landing-cta-h: 2.375rem;
-    --caretip-landing-cta-px: 1rem;
-    --caretip-landing-cta-fs: 0.8125rem;
-  }
+  /* Match Business Dashboard hero / caretipBtnPrimary (h-11, rounded-lg) */
+  --caretip-landing-cta-h: 2.75rem;
+  --caretip-landing-cta-px: 1.75rem;
+  --caretip-landing-cta-fs: 0.9375rem;
+  --caretip-landing-cta-fw: 700;
+  --caretip-landing-cta-radius: 0.5rem;
 }
 
 @media (min-width: 1024px) {
   .caretip-landing {
-    --caretip-landing-cta-h: 2.625rem;
-    --caretip-landing-cta-px: 1.5rem;
-    --caretip-landing-cta-fs: 0.9375rem;
+    --caretip-landing-cta-h: 3rem;
+    --caretip-landing-cta-px: 2rem;
   }
 }
 

@@ -448,9 +448,8 @@
 .caretip-landing .caretip-hero-section--split .caretip-hero-cta-button,
 .caretip-landing .caretip-hero-section--split a.caretip-hero-cta-button {
   min-height: 44px;
-  border-radius: 100px;
+  border-radius: 0.5rem;
   padding-inline: 19px;
-  box-shadow: 0 5px 0 rgba(186, 84, 12, 0.12);
 }
 
 .caretip-landing .caretip-hero-image-wrap {
@@ -579,12 +578,12 @@
   background: var(--care-orange);
 }
 
-/* Pill CTAs across landing */
+/* Action CTAs — same 0.5rem radius as Business Dashboard / caretipBtn */
 .caretip-landing a.caretip-hero-cta-button,
 .caretip-landing a.caretip-section-cta-button,
 .caretip-landing .caretip-public-nav a[class*="caretipBtn"],
 .caretip-landing .caretip-features-cta-wise__actions a {
-  border-radius: 100px !important;
+  border-radius: 0.5rem !important;
 }
 
 .caretip-landing .caretip-audience-benefits__card {

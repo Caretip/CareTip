@@ -6196,6 +6196,7 @@
       "payouts": {
         "hint": "Letzte Überweisungen auf Ihre Auszahlungsmethode.",
         "viewInStripe": "Vollständige Auszahlungsdetails in Stripe",
+        "headerDashboardCta": "In Stripe anzeigen",
         "loadError": "Auszahlungsverlauf konnte nicht geladen werden.",
         "loading": "Auszahlungen werden geladen",
         "emptyTitle": "Noch keine Auszahlungen",

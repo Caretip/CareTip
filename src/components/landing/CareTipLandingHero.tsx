@@ -240,7 +240,7 @@ export function CareTipLandingHero({
             </div>
             <div className={landingUi.heroCtaUnitSecondary}>
               <Link to="/join" className={landingUi.heroCtaJoin}>
-                <UserPlus className="h-3.5 w-3.5 shrink-0 opacity-80" aria-hidden="true" />
+                <UserPlus className="h-4 w-4 shrink-0" aria-hidden="true" />
                 {t("landing.showcase.secondaryCta")}
               </Link>
             </div>

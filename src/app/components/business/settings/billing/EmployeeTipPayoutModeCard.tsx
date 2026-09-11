@@ -9,6 +9,7 @@ import {
 import { toUserFriendlyMessage } from "../../../../lib/errorMessages";
 import { logClientError } from "../../../../lib/clientLog";
 import { Button } from "../../../ui/button";
+import { businessUi } from "../../businessDashboardUi";
 import { FinanceStatusPill } from "../../../finance/FinanceStatusPill";
 import { cn } from "@/lib/utils";
 
@@ -110,7 +111,12 @@ export function EmployeeTipPayoutModeCard() {
         </fieldset>
       )}
       <p className="text-xs text-muted-foreground">{t("business.stripe.tipRouting.appliesNew")}</p>
-      <Button type="button" onClick={() => void onSave()} disabled={loading || saving || draft === mode}>
+      <Button
+        type="button"
+        className={businessUi.btnPrimary}
+        onClick={() => void onSave()}
+        disabled={loading || saving || draft === mode}
+      >
         {saving ? t("business.stripe.tipRouting.saving") : t("business.stripe.tipRouting.save")}
       </Button>
     </section>

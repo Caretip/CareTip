@@ -143,7 +143,7 @@ if (
 const stripeCard = read("src/app/components/business/settings/billing/BusinessStripeConnectCard.tsx");
 if (
   stripeCard.includes("stripe-connect-card") &&
-  stripeCard.includes("nextStepHint") &&
+  stripeCard.includes("stripeConnectBodyKey") &&
   !stripeCard.includes("readinessRequired") &&
   !stripeCard.includes("business.billing.connect.title")
 ) {

@@ -11,6 +11,9 @@ import { formatEur } from "../../lib/formatEur";
 import { logClientError } from "../../lib/clientLog";
 import { toUserFriendlyMessage } from "../../lib/errorMessages";
 import { Button } from "../ui/button";
+import { employeeUi } from "./employeeDashboardUi";
+import { caretipBtnPrimary } from "@/lib/caretipButtonSystem";
+import { cn } from "@/lib/utils";
 import { FinanceStatusPill } from "../finance/FinanceStatusPill";
 import {
   employeeInstantBlockedReasonKey,
@@ -28,7 +31,7 @@ function newIdempotencyKey(): string {
     : `eip_${Date.now()}_${Math.random().toString(36).slice(2, 12)}`;
 }
 
-const ctaClass =
+const payoutActionClass =
   "h-auto min-h-11 w-full min-w-0 whitespace-normal px-4 py-2.5 text-center leading-snug sm:w-auto sm:min-w-[12rem]";
 
 export function EmployeeInstantPayoutCard(props: {
@@ -105,7 +108,7 @@ export function EmployeeInstantPayoutCard(props: {
     return (
       <div className="space-y-3" role="alert">
         <p className="text-sm text-destructive">{error}</p>
-        <Button type="button" variant="outline" onClick={() => void reload()}>
+        <Button type="button" variant="outline" className={employeeUi.btnSecondary} onClick={() => void reload()}>
           {t("employee.payouts.retry")}
         </Button>
       </div>
@@ -184,7 +187,7 @@ export function EmployeeInstantPayoutCard(props: {
         {showCta ? (
           <Button
             type="button"
-            className={ctaClass}
+            className={cn(caretipBtnPrimary, payoutActionClass)}
             onClick={() => void onRequest()}
             disabled={!ctaEnabled}
             aria-busy={busy}
