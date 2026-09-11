@@ -24,6 +24,8 @@ export default tseslint.config(
       "playwright.config.ts",
       "eslint.config.js",
       "src/imports/pasted_text/**",
+      // Node assert runners; excluded from tsconfig as src/**/*.runtime.ts
+      "src/**/*.runtime.ts",
       "public/firebase-messaging-sw.js",
       "public/fcm-sw-handler.js",
       "public/theme-init.js",
