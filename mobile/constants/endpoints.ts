@@ -63,6 +63,8 @@ export const API_ENDPOINTS = {
     reactivateReceiving: "/api/employees/me/reactivate-receiving",
     instantPayout: "/api/me/employee-connect/instant-payout",
     stripePayouts: "/api/me/employee-connect/stripe-payouts",
+    connectStatus: "/api/me/employee-connect/status",
+    payables: "/api/me/employee-connect/payables",
     connectLoginLink: "/api/me/employee-connect/login-link",
     connectAccountLink: "/api/me/employee-connect/account-link",
     tips: "/api/tips/employee",

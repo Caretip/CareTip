@@ -1,26 +1,92 @@
 import { apiClient } from "@/services/api/client";
 import { API_ENDPOINTS } from "@/constants/endpoints";
+import type { InstantPayoutReason } from "@/features/employee/payouts/employeeInstantPayoutPresentation";
+
+export type EmployeePayoutConnectionState =
+  | "not_connected"
+  | "setup_required"
+  | "action_required"
+  | "restricted"
+  | "connected";
+
+export type EmployeeConnectStatus = {
+  connectionState: EmployeePayoutConnectionState;
+  stripeConfigured: boolean;
+  hasAccount: boolean;
+  detailsSubmitted: boolean;
+  payoutsEnabled: boolean;
+  canOpenDashboard: boolean;
+  updatedAt: string | null;
+};
 
 export type EmployeeInstantEligibility = {
+  connected: boolean;
   eligible: boolean;
-  reason: string;
+  reason: InstantPayoutReason | string;
+  payoutsEnabled: boolean;
+  currency: string | null;
+  instantAvailableGrossCents: number;
   instantAvailableNetCents: number;
-  minPayoutCents: number;
+  availableCents: number;
+  pendingCents: number;
   platformFeeCents: number;
   feeConfigured: boolean;
+  targetTotalFeeBps: number;
   displayedFeeBps: number | null;
+  destinationLast4: string | null;
+  destinationKind: "card" | "bank_account" | null;
+  canOpenExpressDashboard: boolean;
+  minPayoutCents: number;
+  stakeholderMinCents?: number;
+  stripeMinCents?: number;
+  feeSource?: "stripe_platform_pricing" | "unknown";
+};
+
+export type EmployeeInstantPayoutResult = {
+  requestId: string;
+  amountCents: number;
+  currency: string;
+  status: "pending" | "submitted" | "failed" | string;
+  method: "instant";
 };
 
 export type EmployeeStripeBankPayoutItem = {
+  stripePayoutId?: string | null;
   createdAt: string;
   amountCents: number;
   currency: string;
   status: string;
   method: "instant" | "standard" | "unknown";
+  destinationLast4?: string | null;
 };
 
-function newIdempotencyKey(): string {
+export type EmployeePayableActivityItem = {
+  id: string;
+  createdAt: string;
+  status: string;
+  payableCents: number;
+  transferredCents: number;
+  reversedCents: number;
+  refundedCents: number;
+  remainingPayableCents: number;
+  disputedOpenCents: number;
+  disputedLostCents: number;
+  activityCents: number;
+};
+
+export function newEmployeeInstantIdempotencyKey(): string {
   return `eip_${Date.now()}_${Math.random().toString(36).slice(2, 12)}`;
+}
+
+let employeeInstantPayoutInFlight = false;
+
+export function isEmployeeInstantPayoutInFlight(): boolean {
+  return employeeInstantPayoutInFlight;
+}
+
+export async function fetchEmployeeConnectStatus(): Promise<EmployeeConnectStatus> {
+  const { data } = await apiClient.get<EmployeeConnectStatus>(API_ENDPOINTS.employees.connectStatus);
+  return data;
 }
 
 export async function fetchEmployeeInstantPayoutEligibility(): Promise<EmployeeInstantEligibility> {
@@ -28,14 +94,23 @@ export async function fetchEmployeeInstantPayoutEligibility(): Promise<EmployeeI
   return data;
 }
 
-export async function requestEmployeeInstantPayout(): Promise<{
+export async function requestEmployeeInstantPayout(idempotencyKey: string): Promise<{
+  payout: EmployeeInstantPayoutResult;
   eligibility: EmployeeInstantEligibility;
 }> {
-  const { data } = await apiClient.post<{ eligibility: EmployeeInstantEligibility }>(
-    API_ENDPOINTS.employees.instantPayout,
-    { idempotencyKey: newIdempotencyKey() },
-  );
-  return data;
+  if (employeeInstantPayoutInFlight) {
+    return Promise.reject(new Error("INSTANT_IN_FLIGHT"));
+  }
+  employeeInstantPayoutInFlight = true;
+  try {
+    const { data } = await apiClient.post<{
+      payout: EmployeeInstantPayoutResult;
+      eligibility: EmployeeInstantEligibility;
+    }>(API_ENDPOINTS.employees.instantPayout, { idempotencyKey });
+    return data;
+  } finally {
+    employeeInstantPayoutInFlight = false;
+  }
 }
 
 export async function fetchEmployeeStripeBankPayouts(): Promise<{
@@ -44,7 +119,18 @@ export async function fetchEmployeeStripeBankPayouts(): Promise<{
 }> {
   const { data } = await apiClient.get<{ items: EmployeeStripeBankPayoutItem[]; stripeReadable: boolean }>(
     API_ENDPOINTS.employees.stripePayouts,
-    { params: { take: 20 } },
+    { params: { take: 50 } },
+  );
+  return data;
+}
+
+export async function fetchEmployeePayableActivity(): Promise<{
+  items: EmployeePayableActivityItem[];
+  total: number;
+}> {
+  const { data } = await apiClient.get<{ items: EmployeePayableActivityItem[]; total: number }>(
+    API_ENDPOINTS.employees.payables,
+    { params: { take: 50, skip: 0 } },
   );
   return data;
 }

@@ -10,11 +10,15 @@ import { StripeConnectError } from "./stripeConnect.service.js";
 import { resolveActiveEmployeeForConnect } from "./employeeStripeConnect.service.js";
 
 export type EmployeeStripeBankPayoutItem = {
+  /** Stripe payout id (`po_…`) when Stripe returns one. Never invented. */
+  stripePayoutId: string | null;
   createdAt: string;
   amountCents: number;
   currency: string;
   status: string;
   method: "instant" | "standard" | "unknown";
+  /** Last four of the payout destination when Stripe expands it. Never a full account number. */
+  destinationLast4: string | null;
 };
 
 type ListPayoutsFn = (stripeAccountId: string, limit: number) => Promise<Stripe.ApiList<Stripe.Payout>>;
@@ -30,6 +34,19 @@ function methodOf(payout: Stripe.Payout): EmployeeStripeBankPayoutItem["method"]
   if (m === "instant") return "instant";
   if (m === "standard") return "standard";
   return "unknown";
+}
+
+function stripePayoutIdOf(payout: Stripe.Payout): string | null {
+  const id = typeof payout.id === "string" ? payout.id.trim() : "";
+  return id.startsWith("po_") ? id : null;
+}
+
+function destinationLast4Of(payout: Stripe.Payout): string | null {
+  const dest = payout.destination;
+  if (!dest || typeof dest === "string") return null;
+  if ("deleted" in dest && dest.deleted) return null;
+  const last4 = "last4" in dest ? dest.last4 : null;
+  return typeof last4 === "string" && /^\d{2,4}$/.test(last4) ? last4.slice(-4) : null;
 }
 
 export async function listEmployeeStripeBankPayoutsForUser(
@@ -53,13 +70,18 @@ export async function listEmployeeStripeBankPayoutsForUser(
   try {
     const list = listPayoutsFn
       ? await listPayoutsFn(stripeAccountId, take)
-      : await getStripeClient().payouts.list({ limit: take }, { stripeAccount: stripeAccountId });
+      : await getStripeClient().payouts.list(
+          { limit: take, expand: ["data.destination"] },
+          { stripeAccount: stripeAccountId },
+        );
     const items: EmployeeStripeBankPayoutItem[] = (list.data ?? []).map((payout) => ({
+      stripePayoutId: stripePayoutIdOf(payout),
       createdAt: new Date((payout.created ?? 0) * 1000).toISOString(),
       amountCents: Number.isInteger(payout.amount) ? payout.amount : 0,
       currency: String(payout.currency ?? "eur").toLowerCase(),
       status: String(payout.status ?? "unknown"),
       method: methodOf(payout),
+      destinationLast4: destinationLast4Of(payout),
     }));
     return { items, stripeReadable: true };
   } catch (err) {
