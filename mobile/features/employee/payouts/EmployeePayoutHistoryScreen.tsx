@@ -20,6 +20,7 @@ import {
 import {
   bankPayoutStatusTone,
   employeePayoutActivityKind,
+  employeePayoutActivityShowsStatusPill,
   employeePayoutActivityTone,
 } from "@/features/employee/payouts/employeeInstantPayoutPresentation";
 import {
@@ -40,6 +41,11 @@ import type { ColorPalette } from "@/theme/colors";
 
 type HistoryTab = "caretip" | "bank";
 
+function activityTitle(kind: ReturnType<typeof employeePayoutActivityKind>, t: (k: string) => string) {
+  if (kind === "held_venue") return t("employeePayouts.venueDistribution");
+  return t("employeePayouts.caretipTransfer");
+}
+
 function activityStatusLabel(kind: ReturnType<typeof employeePayoutActivityKind>, t: (k: string) => string) {
   if (kind === "transferred") return t("employeePayouts.activityTransferred");
   if (kind === "destination_routed") return t("employeePayouts.activityRouted");
@@ -52,6 +58,7 @@ function activityStatusLabel(kind: ReturnType<typeof employeePayoutActivityKind>
 }
 
 function activityDestination(kind: ReturnType<typeof employeePayoutActivityKind>, t: (k: string) => string) {
+  if (kind === "held_venue") return t("employeePayouts.destVenue");
   if (kind === "transferred" || kind === "destination_routed") return t("employeePayouts.paidToStripe");
   return t("employeePayouts.destStripe");
 }
@@ -80,12 +87,12 @@ export function EmployeePayoutHistoryScreen() {
     const kind = employeePayoutActivityKind(row);
     setDetail({
       kind: "caretip",
-      title: t("employeePayouts.caretipTransfer"),
+      title: activityTitle(kind, t),
       amountCents: row.activityCents,
       statusLabel: activityStatusLabel(kind, t),
       statusTone: employeePayoutActivityTone(kind),
       createdAt: row.createdAt,
-      destination: t("employeePayouts.destStripe"),
+      destination: activityDestination(kind, t),
       methodLabel: null,
       reference: null,
     });
@@ -146,7 +153,7 @@ export function EmployeePayoutHistoryScreen() {
             {payablesQuery.data.items.map((row) => {
               const kind = employeePayoutActivityKind(row);
               const a11y = [
-                t("employeePayouts.caretipTransfer"),
+                activityTitle(kind, t),
                 formatCentsEur(row.activityCents),
                 activityStatusLabel(kind, t),
                 formatPayoutDateTime(row.createdAt),
@@ -162,7 +169,7 @@ export function EmployeePayoutHistoryScreen() {
                 >
                   <View style={styles.rowMain}>
                     <Text style={styles.rowTitle} {...textA11y}>
-                      {t("employeePayouts.caretipTransfer")}
+                      {activityTitle(kind, t)}
                     </Text>
                     <Text style={styles.rowMeta} {...textA11y}>
                       {formatPayoutDateTime(row.createdAt)}
@@ -175,7 +182,13 @@ export function EmployeePayoutHistoryScreen() {
                     <Text style={styles.rowAmount} {...textA11y}>
                       {formatCentsEur(row.activityCents)}
                     </Text>
-                    <StatusPill label={activityStatusLabel(kind, t)} tone={employeePayoutActivityTone(kind)} />
+                    {employeePayoutActivityShowsStatusPill(kind) ? (
+                      <StatusPill label={activityStatusLabel(kind, t)} tone={employeePayoutActivityTone(kind)} />
+                    ) : (
+                      <Text style={styles.rowMeta} {...textA11y}>
+                        {activityStatusLabel(kind, t)}
+                      </Text>
+                    )}
                   </View>
                 </Pressable>
               );

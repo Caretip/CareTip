@@ -396,6 +396,11 @@ export type MobileMessages = {
   employeePayouts: {
     title: string;
     subtitle: string;
+    distributionKicker: string;
+    distributionTitle: string;
+    distributionTitleNamed: string;
+    distributionBody: string;
+    distributionNote: string;
     loadError: string;
     loadPayoutInfoTitle: string;
     loadPayoutInfoBody: string;
@@ -455,6 +460,8 @@ export type MobileMessages = {
     caretipTransfer: string;
     paidToStripe: string;
     destStripe: string;
+    destVenue: string;
+    venueDistribution: string;
     bankPayout: string;
     instantBankPayout: string;
     historyEmptyBank: string;

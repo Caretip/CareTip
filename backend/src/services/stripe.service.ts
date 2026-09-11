@@ -520,7 +520,8 @@ async function emitTipSocketWithSnapshot(
  * Destination charge when the Connect recipient is known at Checkout:
  * application fee retained by CareTip; remainder to Business or Employee Express.
  * Unconnected Direct-to-Employee tips charge the platform (no transfer_data) and
- * are released later. Destination is never taken from the client.
+ * are released later. Business-distribution tips destination-charge the Business
+ * Express account. Destination is never taken from the client.
  */
 export async function createTipCheckoutSession(
   input: CreateTipCheckoutSessionInput,

@@ -3,7 +3,11 @@
  * Idempotent: unique transactionId, unique stripeTransferId, Stripe idempotency key.
  */
 import Stripe from "stripe";
-import { EmployeeTipChargeModel, EmployeeTipPayableStatus } from "@prisma/client";
+import {
+  EmployeeTipChargeModel,
+  EmployeeTipPayableStatus,
+  EmployeeTipPayoutMode,
+} from "@prisma/client";
 import { prisma } from "../prisma.js";
 import { runSerializedByKey } from "../utils/serializedByKey.js";
 import { logServerError } from "../utils/httpErrors.js";
@@ -96,6 +100,7 @@ export async function releaseHeldPlatformPayablesForEmployee(employeeId: string)
       where: {
         employeeId,
         chargeModel: EmployeeTipChargeModel.platform_hold,
+        routingMode: EmployeeTipPayoutMode.direct_to_employee,
         status: {
           in: [
             EmployeeTipPayableStatus.held_platform,
@@ -123,6 +128,8 @@ export async function releaseHeldPlatformPayablesForEmployee(employeeId: string)
           where: {
             id: row.id,
             stripeTransferId: null,
+            chargeModel: EmployeeTipChargeModel.platform_hold,
+            routingMode: EmployeeTipPayoutMode.direct_to_employee,
             status: {
               in: [EmployeeTipPayableStatus.held_platform, EmployeeTipPayableStatus.transfer_failed],
             },

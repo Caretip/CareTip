@@ -4,18 +4,28 @@ import { EmployeePageHeader } from "../../components/employee/EmployeePageHeader
 import { EmployeePayoutAccountCard } from "../../components/employee/EmployeePayoutAccountCard";
 import { EmployeeInstantPayoutCard } from "../../components/employee/EmployeeInstantPayoutCard";
 import { EmployeeReceivingPausedBanner } from "../../components/employee/EmployeeReceivingPausedBanner";
+import { EmployeeTipDistributionNotice } from "../../components/employee/EmployeeTipDistributionNotice";
+import { isEmployeeBusinessDistributionMode } from "../../components/employee/employeePayoutActivityPresentation";
 import { employeeUi } from "../../components/employee/employeeDashboardUi";
 import { cn } from "@/lib/utils";
-import { getEmployeeProfile } from "../../lib/api";
+import { getEmployeeConnectStatus, getEmployeeProfile } from "../../lib/api";
 
 export function EmployeePaymentsConnectPage() {
   const { t } = useTranslation();
   const [receivingPaused, setReceivingPaused] = useState(false);
+  const [businessName, setBusinessName] = useState("");
+  const [businessDistribution, setBusinessDistribution] = useState(false);
 
   const load = useCallback(() => {
     void getEmployeeProfile({ silent: true })
-      .then((p) => setReceivingPaused(p.receivingPaused === true))
+      .then((p) => {
+        setReceivingPaused(p.receivingPaused === true);
+        setBusinessName(p.businessName?.trim() ?? "");
+      })
       .catch(() => undefined);
+    void getEmployeeConnectStatus()
+      .then((s) => setBusinessDistribution(isEmployeeBusinessDistributionMode(s.employeeTipPayoutMode)))
+      .catch(() => setBusinessDistribution(false));
   }, []);
 
   useEffect(() => {
@@ -33,6 +43,7 @@ export function EmployeePaymentsConnectPage() {
           backVariant="subtle"
         />
         <EmployeeReceivingPausedBanner receivingPaused={receivingPaused} onReactivated={load} />
+        {businessDistribution ? <EmployeeTipDistributionNotice businessName={businessName} /> : null}
         <EmployeeInstantPayoutCard />
         <EmployeePayoutAccountCard />
       </div>

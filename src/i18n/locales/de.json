@@ -3782,6 +3782,13 @@
       "title": "Auszahlungen",
       "connectTitle": "Verbinden",
       "connectSubtitle": "Verwalten Sie Ihr Stripe-Auszahlungskonto und greifen Sie auf verfügbare Beträge zu.",
+      "distribution": {
+        "kicker": "Trinkgeldverteilung",
+        "title": "Ihr Betrieb verteilt die Mitarbeiter-Trinkgelder",
+        "titleNamed": "{{name}} verteilt die Mitarbeiter-Trinkgelder.",
+        "body": "Trinkgelder gehen zuerst an Ihren Betrieb. Der Betrieb entscheidet, wie und wann Ihr Anteil ausgezahlt wird.",
+        "note": "Diese Trinkgelder werden nicht direkt auf Ihr Stripe-Konto überwiesen."
+      },
       "history": {
         "title": "Auszahlungshistorie",
         "subtitle": "Verfolgen Sie Überweisungen auf Ihr Stripe-Konto und Auszahlungen von Stripe auf Ihr Bankkonto.",
@@ -3914,7 +3921,7 @@
       "colStatus": "Status",
       "activityKind": {
         "held": "Bei CareTip gehalten",
-        "held_venue": "Bei Betriebsverteilung gehalten",
+        "held_venue": "Betriebsverteilung",
         "transferring": "Überweisung läuft",
         "transferred": "An Stripe überwiesen",
         "destination_routed": "An Stripe geleitet",
@@ -3924,7 +3931,8 @@
       },
       "activityStatus": {
         "held": "Ausstehend",
-        "held_venue": "Ausstehend",
+        "held_venue": "—",
+        "held_venueAria": "Betriebsverteilung — keine CareTip-Auszahlung",
         "transferring": "Ausstehend",
         "transferred": "Abgeschlossen",
         "destination_routed": "Abgeschlossen",
@@ -6139,8 +6147,8 @@
         "payouts": "Auszahlungen"
       },
       "tipRouting": {
-        "title": "Mitarbeiter-Trinkgeld-Weiterleitung",
-        "hint": "Legen Sie fest, wohin neue Mitarbeiter-Trinkgelder geleitet werden.",
+        "title": "Wie sollen Mitarbeiter-Trinkgelder ausgezahlt werden?",
+        "hint": "Diese Einstellung gilt nur für neue Mitarbeiter-Trinkgelder.",
         "active": "Aktiv",
         "appliesNew": "Gilt nur für neue Trinkgelder.",
         "loading": "Einstellung wird geladen…",
@@ -6151,14 +6159,14 @@
         "loadError": "Weiterleitung konnte nicht geladen werden.",
         "mode": {
           "direct_to_employee": {
-            "label": "Direkt an Mitarbeiter zahlen",
-            "body": "Verbundene Mitarbeiter erhalten berechtigte Trinkgelder direkt auf ihr Stripe-Auszahlungskonto.",
-            "note": "Ohne Verbindung wird der Betrag gehalten, bis das Auszahlungskonto bereit ist."
+            "label": "Mitarbeiter über CareTip auszahlen",
+            "body": "CareTip leitet berechtigte Mitarbeiter-Trinkgelder automatisch auf deren verbundene Stripe-Konten.",
+            "note": "Ohne Stripe-Verbindung hält CareTip den Anteil, bis der Mitarbeiter bereit ist."
           },
           "business_distribution": {
-            "label": "CareTip hält, dann zahlt an Mitarbeiter",
-            "body": "Neue Trinkgelder bleiben bei CareTip, bis der Mitarbeiter bereit ist. Dann überweist CareTip den Mitarbeiteranteil.",
-            "note": "Die Business-Sofortauszahlung kann gehaltene Mitarbeiterbeträge nicht abbuchen."
+            "label": "Betrieb verteilt Mitarbeiter-Trinkgelder",
+            "body": "Mitarbeiter-Trinkgelder gehen auf Ihr betriebliches Stripe-Konto. Sie heben das Geld ab und verteilen es selbst an die Mitarbeiter.",
+            "note": "CareTip erfasst die Zuordnung zum Mitarbeiter, zahlt Mitarbeiter in diesem Modus aber nicht automatisch aus."
           }
         }
       }

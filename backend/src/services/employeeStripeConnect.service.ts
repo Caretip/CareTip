@@ -3,7 +3,7 @@
  * Checkout destination is resolved in employeeTipRouting.service.ts.
  */
 import Stripe from "stripe";
-import { Prisma, StripeConnectStatus } from "@prisma/client";
+import { Prisma, StripeConnectStatus, EmployeeTipPayoutMode } from "@prisma/client";
 import { prisma } from "../prisma.js";
 import { logServerError } from "../utils/httpErrors.js";
 import { runSerializedByKey } from "../utils/serializedByKey.js";
@@ -42,6 +42,8 @@ export type EmployeeConnectStatusDto = {
   refundedCents: number;
   disputedOpenCents: number;
   disputedLostCents: number;
+  /** Authoritative Business setting. Never client-supplied. */
+  employeeTipPayoutMode: EmployeeTipPayoutMode;
 };
 
 type CreateV2AccountFn = (
@@ -183,6 +185,7 @@ function toEmployeeConnectDto(row: {
     refundedCents: 0,
     disputedOpenCents: 0,
     disputedLostCents: 0,
+    employeeTipPayoutMode: EmployeeTipPayoutMode.direct_to_employee,
   };
 }
 
@@ -276,7 +279,16 @@ export async function getEmployeeConnectStatusForUser(
   });
   const dto = toEmployeeConnectDto(row);
   const summary = await employeePayableSummaryForEmployee(actor.employeeId);
-  return { ...dto, ...summary };
+  const business = await prisma.business.findUnique({
+    where: { id: actor.businessId },
+    select: { employeeTipPayoutMode: true },
+  });
+  return {
+    ...dto,
+    ...summary,
+    employeeTipPayoutMode:
+      business?.employeeTipPayoutMode ?? EmployeeTipPayoutMode.direct_to_employee,
+  };
 }
 
 export async function refreshEmployeeConnectStatusFromStripe(userId: string): Promise<void> {

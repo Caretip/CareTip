@@ -107,6 +107,7 @@ export async function createEmployeeTipPayableForSuccessfulTip(params: {
   }
 
   const destSettled = params.snapshot.chargeModel === EmployeeTipChargeModel.destination_employee;
+  const destBusiness = params.snapshot.chargeModel === EmployeeTipChargeModel.destination_business;
   const status = initialStatus(params.snapshot.chargeModel);
   // Interactive `tx` is Omit<PrismaClient, …>; use the same delegate as the root client.
   const payables = (params.tx as unknown as { employeeTipPayable: typeof prisma.employeeTipPayable })
@@ -134,7 +135,9 @@ export async function createEmployeeTipPayableForSuccessfulTip(params: {
         stripePaymentIntentId: params.paymentIntentId,
         stripeChargeId: params.stripeChargeId,
         stripeDestinationAccountId: params.snapshot.destinationAccountId,
-        stripeTransferId: destSettled ? params.destinationTransferId : null,
+        // Destination-charge Transfer id (employee or business). transferredCents
+        // stays 0 for destination_business — CareTip does not owe an employee SCT.
+        stripeTransferId: destSettled || destBusiness ? params.destinationTransferId : null,
       },
     });
   } catch (err) {

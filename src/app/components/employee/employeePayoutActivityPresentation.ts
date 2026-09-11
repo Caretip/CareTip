@@ -12,6 +12,7 @@ export type EmployeePayoutActivityKind =
 
 export type EmployeePayoutActivityTone = "success" | "warning" | "neutral" | "danger";
 
+/** Frozen payable status `held_business` — not the current Business setting. */
 export function employeePayoutActivityKind(
   row: Pick<EmployeePayableActivityItem, "status" | "disputedOpenCents">,
 ): EmployeePayoutActivityKind {
@@ -29,10 +30,20 @@ export function employeePayoutActivityKind(
 export function employeePayoutActivityTone(kind: EmployeePayoutActivityKind): EmployeePayoutActivityTone {
   if (kind === "transferred" || kind === "destination_routed") return "success";
   if (kind === "failed") return "danger";
-  if (kind === "held" || kind === "held_venue" || kind === "transferring" || kind === "disputed") {
+  if (kind === "held_venue") return "neutral";
+  if (kind === "held" || kind === "transferring" || kind === "disputed") {
     return "warning";
   }
   return "neutral";
+}
+
+/** Venue-distribution rows are complete as CareTip records — not a pending employee payout. */
+export function employeePayoutActivityShowsStatusPill(kind: EmployeePayoutActivityKind): boolean {
+  return kind !== "held_venue";
+}
+
+export function isEmployeeBusinessDistributionMode(mode: string | null | undefined): boolean {
+  return mode === "business_distribution";
 }
 
 export function employeePayoutActivityKindKey(kind: EmployeePayoutActivityKind): string {

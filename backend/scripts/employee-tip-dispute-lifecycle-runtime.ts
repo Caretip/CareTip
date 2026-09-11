@@ -532,9 +532,37 @@ async function runDb() {
       bizRelease.released === 0 &&
       bizTransfers === 0
     ) {
-      pass("19-business-distribution-no-employee-transfer", "Business-routed dispute does not Transfer or reverse employee funds");
+      pass("19-business-receives-dispute-lost", "BUSINESS_RECEIVES lost dispute does not Transfer or reverse employee funds");
     } else {
-      fail("19-business-distribution-no-employee-transfer", JSON.stringify({ bizRow, bizReversals, bizRelease, bizTransfers }));
+      fail("19-business-receives-dispute-lost", JSON.stringify({ bizRow, bizReversals, bizRelease, bizTransfers }));
+    }
+
+    const bizOpen = await makeTip({
+      model: EmployeeTipChargeModel.destination_business,
+      status: EmployeeTipPayableStatus.held_business,
+      dest: `acct_dp_biz_${suffix}`,
+      tag: "bizopen",
+    });
+    await disputeEvent(suffix, bizOpen.pi, `dp_bizopen_${suffix}`, "needs_response", 1000);
+    const bizOpenRow = await prisma.employeeTipPayable.findUnique({ where: { id: bizOpen.payable.id } });
+    if (bizOpenRow?.disputedOpenCents === 851 && bizReversals === 0) {
+      pass("19b-business-receives-dispute-created", "BUSINESS_RECEIVES open dispute freezes ledger without employee reversal");
+    } else {
+      fail("19b-business-receives-dispute-created", JSON.stringify(bizOpenRow));
+    }
+    await disputeEvent(suffix, bizOpen.pi, `dp_bizopen_${suffix}`, "needs_response", 1000);
+    const bizDup = await prisma.employeeTipPayable.findUnique({ where: { id: bizOpen.payable.id } });
+    if (bizDup?.disputedOpenCents === 851 && bizDup.stripeDisputeId === `dp_bizopen_${suffix}`) {
+      pass("19c-business-receives-dispute-duplicate", "Duplicate dispute.created does not double exposure");
+    } else {
+      fail("19c-business-receives-dispute-duplicate", JSON.stringify(bizDup));
+    }
+    await disputeEvent(suffix, bizOpen.pi, `dp_bizopen_${suffix}`, "won", 1000);
+    const bizWon = await prisma.employeeTipPayable.findUnique({ where: { id: bizOpen.payable.id } });
+    if (bizWon?.disputedOpenCents === 0 && bizWon.disputedLostCents === 0 && bizReversals === 0) {
+      pass("19d-business-receives-dispute-won", "Won BUSINESS_RECEIVES dispute clears exposure without employee reversal");
+    } else {
+      fail("19d-business-receives-dispute-won", JSON.stringify(bizWon));
     }
 
     const mismatch = await makeTip({

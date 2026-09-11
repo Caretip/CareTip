@@ -14,6 +14,7 @@ import { FinanceStatusPill } from "../finance/FinanceStatusPill";
 import {
   employeePayoutActivityKind,
   employeePayoutActivityKindKey,
+  employeePayoutActivityShowsStatusPill,
   employeePayoutActivityStatusKey,
   employeePayoutActivityTone,
 } from "./employeePayoutActivityPresentation";
@@ -116,10 +117,16 @@ export function EmployeePayoutActivityList() {
                         {formatEur(row.activityCents / 100)}
                       </td>
                       <td className="py-2.5">
-                        <FinanceStatusPill
-                          tone={employeePayoutActivityTone(kind)}
-                          label={t(employeePayoutActivityStatusKey(kind))}
-                        />
+                        {employeePayoutActivityShowsStatusPill(kind) ? (
+                          <FinanceStatusPill
+                            tone={employeePayoutActivityTone(kind)}
+                            label={t(employeePayoutActivityStatusKey(kind))}
+                          />
+                        ) : (
+                          <span className="text-sm text-muted-foreground" aria-label={t("employee.payouts.activityStatus.held_venueAria")}>
+                            {t(employeePayoutActivityStatusKey(kind))}
+                          </span>
+                        )}
                       </td>
                     </tr>
                   );
@@ -163,10 +170,16 @@ function ActivityMobileRow({ row, locale }: { row: EmployeePayableActivityItem; 
         <p className="text-sm font-medium">{t(employeePayoutActivityKindKey(kind))}</p>
         <p className="mt-0.5 text-xs text-muted-foreground">{formatBerlinDateTime(row.createdAt, locale)}</p>
         <div className="mt-1">
-        <FinanceStatusPill
-          tone={employeePayoutActivityTone(kind)}
-          label={t(employeePayoutActivityStatusKey(kind))}
-        />
+          {employeePayoutActivityShowsStatusPill(kind) ? (
+            <FinanceStatusPill
+              tone={employeePayoutActivityTone(kind)}
+              label={t(employeePayoutActivityStatusKey(kind))}
+            />
+          ) : (
+            <span className="text-xs text-muted-foreground" aria-label={t("employee.payouts.activityStatus.held_venueAria")}>
+              {t(employeePayoutActivityStatusKey(kind))}
+            </span>
+          )}
         </div>
       </div>
       <p className="shrink-0 text-sm font-semibold tabular-nums">{formatEur(row.activityCents / 100)}</p>

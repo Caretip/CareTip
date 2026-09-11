@@ -10,6 +10,9 @@ import {
   employeeInstantShowCta,
   employeeInstantUiMode,
   employeePayoutActivityKind,
+  employeePayoutActivityShowsStatusPill,
+  employeePayoutActivityTone,
+  isEmployeeBusinessDistributionMode,
 } from "../features/employee/payouts/employeeInstantPayoutPresentation";
 import { formatCentsEur, formatMaskedLast4 } from "../features/employee/payouts/payoutDisplay";
 import { formatEur } from "../utils/format";
@@ -43,6 +46,15 @@ assert.equal(
 assert.equal(employeePayoutActivityKind({ status: "transferred", disputedOpenCents: 0 }), "transferred");
 assert.equal(employeePayoutActivityKind({ status: "destination_settled", disputedOpenCents: 0 }), "destination_routed");
 assert.equal(employeePayoutActivityKind({ status: "transferred", disputedOpenCents: 1 }), "disputed");
+assert.equal(employeePayoutActivityKind({ status: "held_business", disputedOpenCents: 0 }), "held_venue");
+assert.equal(employeePayoutActivityKind({ status: "held_platform", disputedOpenCents: 0 }), "held");
+assert.equal(employeePayoutActivityShowsStatusPill("held_venue"), false);
+assert.equal(employeePayoutActivityShowsStatusPill("held"), true);
+assert.equal(employeePayoutActivityTone("held_venue"), "neutral");
+assert.equal(employeePayoutActivityTone("held"), "warning");
+assert.equal(isEmployeeBusinessDistributionMode("business_distribution"), true);
+assert.equal(isEmployeeBusinessDistributionMode("direct_to_employee"), false);
+assert.equal(isEmployeeBusinessDistributionMode(undefined), false);
 
 assert.equal(formatEur(60.03), "€60,03");
 assert.equal(formatCentsEur(12258), "€122,58");

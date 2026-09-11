@@ -76,10 +76,19 @@ export function employeePayoutActivityTone(
 ): "success" | "warning" | "danger" | "neutral" {
   if (kind === "transferred" || kind === "destination_routed") return "success";
   if (kind === "failed") return "danger";
-  if (kind === "held" || kind === "held_venue" || kind === "transferring" || kind === "disputed") {
+  if (kind === "held_venue") return "neutral";
+  if (kind === "held" || kind === "transferring" || kind === "disputed") {
     return "warning";
   }
   return "neutral";
+}
+
+export function employeePayoutActivityShowsStatusPill(kind: EmployeePayoutActivityKind): boolean {
+  return kind !== "held_venue";
+}
+
+export function isEmployeeBusinessDistributionMode(mode: string | null | undefined): boolean {
+  return mode === "business_distribution";
 }
 
 export function bankPayoutStatusTone(

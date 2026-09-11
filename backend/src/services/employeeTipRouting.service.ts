@@ -81,7 +81,8 @@ export async function resolveTipCheckoutRouting(
   businessId: string,
   employeeId: string,
 ): Promise<TipCheckoutRouting> {
-  await assertBusinessReadyForConnectTipDestination(businessId);
+  const { stripeAccountId: businessStripeAccountId } =
+    await assertBusinessReadyForConnectTipDestination(businessId);
 
   const business = await prisma.business.findUnique({
     where: { id: businessId },
@@ -90,13 +91,13 @@ export async function resolveTipCheckoutRouting(
   const mode = business?.employeeTipPayoutMode ?? EmployeeTipPayoutMode.direct_to_employee;
 
   if (mode === EmployeeTipPayoutMode.business_distribution) {
-    // Gate 5: platform charge + later employee SCT. Never destination-charge the
-    // Business Express balance — Instant / automatic payouts could drain it.
+    // BUSINESS_RECEIVES: destination-charge the Business Express account.
+    // Employee Stripe status never selects destination and never blocks Checkout.
     return {
-      chargeModel: EmployeeTipChargeModel.platform_hold,
+      chargeModel: EmployeeTipChargeModel.destination_business,
       routingMode: EmployeeTipPayoutMode.business_distribution,
-      destinationAccountId: null,
-      applyApplicationFee: false,
+      destinationAccountId: businessStripeAccountId,
+      applyApplicationFee: true,
     };
   }
 

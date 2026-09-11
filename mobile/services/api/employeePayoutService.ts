@@ -17,6 +17,7 @@ export type EmployeeConnectStatus = {
   payoutsEnabled: boolean;
   canOpenDashboard: boolean;
   updatedAt: string | null;
+  employeeTipPayoutMode?: "direct_to_employee" | "business_distribution";
 };
 
 export type EmployeeInstantEligibility = {

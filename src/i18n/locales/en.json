@@ -3782,6 +3782,13 @@
       "title": "Payouts",
       "connectTitle": "Connect",
       "connectSubtitle": "Manage your Stripe payout account and access your available funds.",
+      "distribution": {
+        "kicker": "Tip distribution",
+        "title": "Your business manages tip distribution",
+        "titleNamed": "{{name}} manages employee tip distribution.",
+        "body": "Employee tips are received by your business. Your business decides how and when to distribute your share.",
+        "note": "These tips are not paid directly to your Stripe account."
+      },
       "history": {
         "title": "Payout history",
         "subtitle": "Track money transferred to your Stripe account and payouts from Stripe to your bank.",
@@ -3914,7 +3921,7 @@
       "colStatus": "Status",
       "activityKind": {
         "held": "Held on CareTip",
-        "held_venue": "Held with venue distribution",
+        "held_venue": "Venue distribution",
         "transferring": "Transfer in progress",
         "transferred": "Transferred to Stripe",
         "destination_routed": "Routed to Stripe",
@@ -3924,7 +3931,8 @@
       },
       "activityStatus": {
         "held": "Pending",
-        "held_venue": "Pending",
+        "held_venue": "—",
+        "held_venueAria": "Venue distribution — not a CareTip payout",
         "transferring": "Pending",
         "transferred": "Completed",
         "destination_routed": "Completed",
@@ -6142,8 +6150,8 @@
         "payouts": "Payouts"
       },
       "tipRouting": {
-        "title": "Employee tip routing",
-        "hint": "Choose where new employee tips are routed.",
+        "title": "How should employee tips be paid?",
+        "hint": "This setting applies to new employee tips only.",
         "active": "Active",
         "appliesNew": "Applies to new tips only.",
         "loading": "Loading payout preference…",
@@ -6154,14 +6162,14 @@
         "loadError": "Could not load payout preference.",
         "mode": {
           "direct_to_employee": {
-            "label": "Pay employees directly",
-            "body": "Connected employees receive eligible tips directly in their Stripe payout account.",
-            "note": "Unconnected employees are held until their payout account is ready."
+            "label": "Pay employees through CareTip",
+            "body": "CareTip automatically routes eligible employee tips to their connected Stripe accounts.",
+            "note": "If an employee has not connected Stripe yet, CareTip holds their share until they are ready."
           },
           "business_distribution": {
-            "label": "CareTip holds, then pays employees",
-            "body": "New tips stay on CareTip until the employee is ready, then CareTip transfers the employee’s share.",
-            "note": "Business Instant Payout cannot drain employee-held funds."
+            "label": "Business distributes employee tips",
+            "body": "Employee tips are paid to your business Stripe account. You withdraw the funds and distribute them to employees yourself.",
+            "note": "CareTip records employee tip attribution but does not automatically pay employees in this mode."
           }
         }
       }

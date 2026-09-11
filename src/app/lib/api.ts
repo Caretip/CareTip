@@ -2889,6 +2889,8 @@ export interface EmployeeConnectStatus {
   refundedCents?: number;
   disputedOpenCents?: number;
   disputedLostCents?: number;
+  /** Current Business routing setting for this employee's venue. Server-resolved. */
+  employeeTipPayoutMode?: EmployeeTipPayoutMode;
 }
 
 export type EmployeeTipPayoutMode = "direct_to_employee" | "business_distribution";

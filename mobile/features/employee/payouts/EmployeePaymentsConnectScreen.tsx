@@ -30,6 +30,7 @@ import {
   employeeInstantFeePercentLabel,
   employeeInstantShowCta,
   employeeInstantUiMode,
+  isEmployeeBusinessDistributionMode,
 } from "@/features/employee/payouts/employeeInstantPayoutPresentation";
 import {
   formatCentsEur,
@@ -78,6 +79,8 @@ export function EmployeePaymentsConnectScreen() {
   const eligibility = instantQuery.data;
   const connect = connectQuery.data;
   const mode = employeeInstantUiMode(eligibility ?? null);
+  const businessDistribution = isEmployeeBusinessDistributionMode(connect?.employeeTipPayoutMode);
+  const venueName = profileQuery.data?.businessName?.trim() ?? "";
   const last4 = formatMaskedLast4(eligibility?.destinationLast4);
   const gross = eligibility?.instantAvailableGrossCents ?? 0;
   const net = eligibility?.instantAvailableNetCents ?? 0;
@@ -199,6 +202,25 @@ export function EmployeePaymentsConnectScreen() {
             disabled={busy != null}
             style={styles.rectCta}
           />
+        </View>
+      ) : null}
+
+      {businessDistribution ? (
+        <View style={styles.distCard} accessibilityRole="summary">
+          <Text style={styles.sectionLabel} {...textA11y}>
+            {t("employeePayouts.distributionKicker")}
+          </Text>
+          <Text style={styles.noticeTitle} {...textA11y}>
+            {venueName
+              ? t("employeePayouts.distributionTitleNamed", { name: venueName })
+              : t("employeePayouts.distributionTitle")}
+          </Text>
+          <Text style={styles.muted} {...textA11y}>
+            {t("employeePayouts.distributionBody")}
+          </Text>
+          <Text style={styles.muted} {...textA11y}>
+            {t("employeePayouts.distributionNote")}
+          </Text>
         </View>
       ) : null}
 
@@ -487,6 +509,14 @@ function createStyles(colors: ColorPalette) {
     },
     notice: { gap: spacing.sm },
     noticeTitle: { ...typography.h3, color: colors.foreground },
+    distCard: {
+      gap: spacing.xs,
+      padding: spacing.md,
+      borderRadius: radius.lg,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: colors.border,
+      backgroundColor: colors.muted,
+    },
     successCard: { gap: spacing.sm, paddingTop: spacing.md, alignItems: "flex-start" },
     successCheck: { ...typography.h1, color: colors.success },
     accountBlock: {
