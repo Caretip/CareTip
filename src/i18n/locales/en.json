@@ -6272,14 +6272,18 @@
           "in_progress": "Syncing",
           "complete": "Synced",
           "partial": "Partially synced",
-          "failed": "Needs attention"
+          "failed": "Needs attention",
+          "stripe_observed": "Stripe",
+          "ledger": "CareTip"
         },
         "reconExplain": {
           "pending": "The payout exists. CareTip has not finished reading Stripe’s related balance activity.",
           "in_progress": "CareTip is synchronizing Stripe balance activity for this payout.",
           "complete": "CareTip has synchronized the Stripe balance activity available for this payout.",
           "partial": "The payout exists, but CareTip has not yet synchronized all related Stripe balance activity.",
-          "failed": "The Stripe payout status is unchanged. CareTip could not finish synchronizing Stripe balance activity. Retry from payout details."
+          "failed": "The Stripe payout status is unchanged. CareTip could not finish synchronizing Stripe balance activity. Retry from payout details.",
+          "stripe_observed": "This is a Stripe payout observation for an employee connected account. CareTip does not run business balance-line sync on employee payouts.",
+          "ledger": "This CareTip → employee Stripe transfer is recorded on the employee payable. It is not a bank payout."
         },
         "methodInstant": "Instant",
         "methodStandard": "Standard",
@@ -7593,29 +7597,45 @@
     },
     "connectPayoutsPage": {
       "title": "Connect payouts",
-      "subtitle": "Stripe payouts from connected Express accounts, including automatic Standard payouts and manager-initiated Instant Payouts. These are not individual guest tips.",
-      "searchPlaceholder": "Search by business name…",
-      "searchAria": "Search Connect payouts by business name",
-      "filterStatus": "Payout status",
+      "subtitle": "Track Stripe payouts and transfers for businesses and employees.",
+      "searchPlaceholder": "Search business, employee, or Stripe id…",
+      "searchAria": "Search Connect activity by business, employee, or Stripe id",
+      "filterStatus": "Status",
       "filterCurrency": "Currency",
       "filterFrom": "Created from",
       "filterTo": "Created to",
-      "businessFilterActive": "Showing payouts for one business.",
+      "filterRecipient": "Recipient",
+      "filterMovement": "Movement",
+      "businessFilterActive": "Showing activity for one business.",
       "clearBusinessFilter": "Show all businesses",
+      "colRecipient": "Recipient",
       "colBusiness": "Business",
-      "colAmount": "Payout",
+      "colType": "Type",
+      "colAmount": "Amount",
       "colMethod": "Method",
-      "colStatus": "Payout status",
+      "colStatus": "Status",
       "colArrival": "Expected arrival",
       "colCreated": "Created",
-      "colFailure": "Payout issue",
+      "colFailure": "Issue",
       "colReconciliation": "CareTip sync",
       "filterReconciliation": "CareTip sync",
-      "filterMethod": "Method",
+      "filterMethod": "Payout method",
       "stripeAccount": "Stripe connected account",
+      "stripeObject": "Stripe object",
+      "source": "Source",
+      "sourceStripe": "Stripe",
+      "sourceCareTip": "CareTip",
+      "recipientEmployee": "Employee",
+      "recipientBusiness": "Business",
+      "routingMode": "Tip routing",
+      "chargeModel": "Charge model",
+      "payableStatus": "Transfer status",
+      "grossAmount": "Gross tip",
+      "reversedAmount": "Reversed",
       "viewInStripe": "Stripe",
       "openStripePayout": "Open payout in Stripe",
       "openStripeAccount": "Open connected account in Stripe",
+      "openStripeTransfer": "Open transfer in Stripe",
       "retrySync": "Retry CareTip sync",
       "retryingSync": "Retrying…",
       "footerShowing": "{{from}}–{{to}} of {{total}}",
@@ -7629,6 +7649,22 @@
       },
       "methodFilter": {
         "all": "All methods"
+      },
+      "recipientFilter": {
+        "all": "All",
+        "business": "Business",
+        "employee": "Employee"
+      },
+      "movementFilter": {
+        "all": "All payout activity",
+        "bank_payout": "Bank payouts",
+        "instant_payout": "Instant payouts",
+        "caretip_transfer": "CareTip transfers"
+      },
+      "movement": {
+        "bank_payout": "Bank payout",
+        "instant_payout": "Instant",
+        "caretip_transfer": "CareTip transfer"
       },
       "currencyFilter": {
         "all": "All currencies"
@@ -7646,11 +7682,13 @@
         "in_progress": "Syncing",
         "complete": "Synced",
         "partial": "Partially synced",
-        "failed": "Needs attention"
+        "failed": "Needs attention",
+        "stripe_observed": "Stripe",
+        "ledger": "CareTip"
       },
       "empty": {
-        "title": "No Connect payouts yet",
-        "description": "Payouts appear here after Stripe pays a connected account’s available balance, including Instant Payouts requested in CareTip."
+        "title": "No Connect activity yet",
+        "description": "Business and employee Stripe payouts appear after Stripe pays a connected account. CareTip transfers appear after CareTip moves funds to an employee Stripe account."
       }
     },
     "refundsPage": {

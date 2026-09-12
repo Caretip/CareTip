@@ -387,7 +387,7 @@ async function reconcileAfterPersist(payoutRowId: string, eventType: string): Pr
   }
 }
 
-function parsePayoutObject(obj: Stripe.Payout): {
+export function parsePayoutObject(obj: Stripe.Payout): {
   stripePayoutId: string;
   amountCents: number;
   currency: string;
@@ -430,6 +430,7 @@ export type HandleConnectPayoutResult = {
   skippedStale?: boolean;
   payoutRowId?: string | null;
   businessId?: string | null;
+  employeeId?: string | null;
   reason?: string;
 };
 
@@ -701,23 +702,41 @@ export async function handleConnectPayoutEvent(event: Stripe.Event): Promise<Han
     select: { id: true, stripeAccountId: true },
   });
 
-  if (businesses.length !== 1) {
-    const attribution = await attributeStripeConnectAccount(accountId);
-    if (attribution.kind === "employee") {
-      console.info("[stripe.connectPayout] employee_account_ignored", {
-        accountSuffix: accountSuffix(accountId),
-        eventType: event.type,
-        employeeId: attribution.employeeId,
-      });
-      return { matched: false, reason: "employee_account" };
-    }
-    if (attribution.kind === "collision") {
-      console.error("[stripe.connectPayout] account_id_collision", {
-        accountSuffix: accountSuffix(accountId),
-        eventType: event.type,
-      });
-      return { matched: false, reason: "ambiguous_account" };
-    }
+  if (businesses.length > 1) {
+    console.error("[stripe.connectPayout] account_id_collision", {
+      accountSuffix: accountSuffix(accountId),
+      eventType: event.type,
+      matchCount: businesses.length,
+    });
+    return { matched: false, reason: "ambiguous_account" };
+  }
+
+  const attribution = await attributeStripeConnectAccount(accountId);
+  if (attribution.kind === "collision") {
+    console.error("[stripe.connectPayout] account_id_collision", {
+      accountSuffix: accountSuffix(accountId),
+      eventType: event.type,
+    });
+    return { matched: false, reason: "ambiguous_account" };
+  }
+
+  if (attribution.kind === "employee") {
+    const { persistEmployeeConnectPayout } = await import("./employeeStripePayout.service.js");
+    const persisted = await persistEmployeeConnectPayout({
+      employeeId: attribution.employeeId,
+      stripeAccountId: accountId,
+      parsed,
+      eventCreated: typeof event.created === "number" && event.created > 0 ? event.created : 0,
+      eventType: event.type,
+      eventId: event.id,
+    });
+    return {
+      ...persisted,
+      reason: persisted.reason ?? "employee_payout",
+    };
+  }
+
+  if (businesses.length !== 1 || attribution.kind !== "business") {
     console.info("[stripe.connectPayout] unmatched_account", {
       accountSuffix: accountSuffix(accountId),
       matchCount: businesses.length,
@@ -974,6 +993,8 @@ export async function listPlatformConnectPayouts(opts?: {
     and.push({ method: methodRaw });
   } else if (methodRaw === "unknown") {
     and.push({ OR: [{ method: null }, { method: "" }] });
+  } else if (methodRaw === "not_instant") {
+    and.push({ OR: [{ method: null }, { method: "" }, { method: { not: "instant" } }] });
   }
   const currency = opts?.currency?.trim().toLowerCase();
   if (currency) {
@@ -991,12 +1012,15 @@ export async function listPlatformConnectPayouts(opts?: {
   }
   const q = opts?.q?.trim();
   if (q) {
-    and.push({
-      OR: [
-        { business: { name: { contains: q, mode: "insensitive" } } },
-        { id: { contains: q, mode: "insensitive" } },
-      ],
-    });
+    const idOr: Prisma.StripeConnectPayoutWhereInput[] = [
+      { business: { name: { contains: q, mode: "insensitive" } } },
+      { id: { contains: q, mode: "insensitive" } },
+      { stripePayoutId: { contains: q, mode: "insensitive" } },
+    ];
+    if (q.length >= 4) {
+      idOr.push({ stripeAccountId: { endsWith: q } });
+    }
+    and.push({ OR: idOr });
   }
 
   const where: Prisma.StripeConnectPayoutWhereInput = and.length ? { AND: and } : {};

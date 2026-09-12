@@ -83,6 +83,7 @@ export async function listEmployeeStripeBankPayoutsForUser(
       method: methodOf(payout),
       destinationLast4: destinationLast4Of(payout),
     }));
+    void persistObservedEmployeePayouts(actor.employeeId, stripeAccountId, list.data ?? []);
     return { items, stripeReadable: true };
   } catch (err) {
     logServerError("employeeStripeBankPayouts.list", err, { userId });
@@ -92,4 +93,21 @@ export async function listEmployeeStripeBankPayoutsForUser(
       502,
     );
   }
+}
+
+function persistObservedEmployeePayouts(
+  employeeId: string,
+  stripeAccountId: string,
+  payouts: Stripe.Payout[],
+): void {
+  void (async () => {
+    const { persistEmployeePayoutFromStripeObject } = await import("./employeeStripePayout.service.js");
+    for (const payout of payouts) {
+      try {
+        await persistEmployeePayoutFromStripeObject({ employeeId, stripeAccountId, payout });
+      } catch (err) {
+        logServerError("employeeStripeBankPayouts.observe", err, { employeeId });
+      }
+    }
+  })();
 }

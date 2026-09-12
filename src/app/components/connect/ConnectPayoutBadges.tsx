@@ -24,7 +24,7 @@ export function payoutStatusClass(status: ConnectPayoutStatus | string): string 
 }
 
 export function reconStatusClass(status: ConnectPayoutReconciliationStatus | string | undefined): string {
-  if (status === "complete") return "font-medium text-foreground";
+  if (status === "complete" || status === "stripe_observed" || status === "ledger") return "font-medium text-foreground";
   if (status === "failed") return "font-medium text-red-800 dark:text-red-200";
   if (status === "partial") return "font-medium text-foreground";
   return "font-medium text-muted-foreground";

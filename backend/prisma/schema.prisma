@@ -947,6 +947,7 @@ model Business {
   tipRefunds     TipRefund[]
   stripeConnectPayouts StripeConnectPayout[]
   stripeConnectInstantPayoutRequests StripeConnectInstantPayoutRequest[]
+  employeeStripePayouts EmployeeStripePayout[]
   employeeTipPayables EmployeeTipPayable[]
   locations      Location[]
   supportTickets SupportTicket[]
@@ -1135,6 +1136,7 @@ model Employee {
   stripeAccount     EmployeeStripeAccount?
   tipPayables       EmployeeTipPayable[]
   instantPayoutRequests EmployeeInstantPayoutRequest[]
+  stripePayouts         EmployeeStripePayout[]
 
   @@index([businessId, locationId])
   @@index([businessId, isActive, name])
@@ -1161,6 +1163,46 @@ model EmployeeStripeAccount {
 
   @@index([stripeConnectStatus])
   @@map("employee_stripe_accounts")
+}
+
+/// Stripe → employee bank/card payout observation. Not StripeConnectPayout (business-only).
+/// Not EmployeeTipPayable (CareTip → employee Stripe transfer).
+model EmployeeStripePayout {
+  id                     String                    @id @default(cuid())
+  employeeId             String                    @map("employee_id")
+  businessId             String                    @map("business_id")
+  stripeAccountId        String                    @map("stripe_account_id")
+  stripePayoutId         String                    @unique @map("stripe_payout_id")
+  amountCents            Int                       @map("amount_cents")
+  currency               String                    @db.VarChar(8)
+  status                 StripeConnectPayoutStatus
+  arrivalDate            DateTime?                 @map("arrival_date")
+  method                 String?                   @db.VarChar(32)
+  payoutType             String?                   @map("payout_type") @db.VarChar(32)
+  applicationFeeAmountCents Int?                   @map("application_fee_amount_cents")
+  stripeApplicationFeeId    String?                @map("stripe_application_fee_id") @db.VarChar(128)
+  description            String?                   @db.VarChar(255)
+  failureCode            String?                   @map("failure_code") @db.VarChar(64)
+  failureMessage         String?                   @map("failure_message") @db.VarChar(255)
+  stripeCreatedAt        DateTime                  @map("stripe_created_at")
+  lastStripeEventCreated Int                       @map("last_stripe_event_created")
+  lastStripeEventType    String                    @map("last_stripe_event_type") @db.VarChar(64)
+  lastStripeEventId      String?                   @map("last_stripe_event_id") @db.VarChar(128)
+  paidAt                 DateTime?                 @map("paid_at")
+  failedAt               DateTime?                 @map("failed_at")
+  canceledAt             DateTime?                 @map("canceled_at")
+  createdAt              DateTime                  @default(now()) @map("created_at")
+  updatedAt              DateTime                  @updatedAt @map("updated_at")
+
+  employee Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  business Business @relation(fields: [businessId], references: [id], onDelete: Restrict)
+
+  @@index([employeeId, stripeCreatedAt(sort: Desc)])
+  @@index([businessId, stripeCreatedAt(sort: Desc)])
+  @@index([stripeAccountId])
+  @@index([status, stripeCreatedAt(sort: Desc)])
+  @@index([method, stripeCreatedAt(sort: Desc)])
+  @@map("employee_stripe_payouts")
 }
 
 /// Idempotency ledger for employee-initiated Instant Payouts. Not Business StripeConnectPayout.

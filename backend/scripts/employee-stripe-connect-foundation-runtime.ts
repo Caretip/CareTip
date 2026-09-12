@@ -162,16 +162,22 @@ function runStaticGuards() {
     fail("webhook-attribution", "Webhook attribution missing");
   }
 
-  if (payoutSvc.includes("employee_account")) {
-    pass("payout-employee-not-business-row", "Employee payout events are not attached as Business payouts");
+  if (payoutSvc.includes("persistEmployeeConnectPayout") && payoutSvc.includes("employee_payout")) {
+    pass("payout-employee-not-business-row", "Employee payout events persist to EmployeeStripePayout, not Business");
   } else {
-    fail("payout-employee-not-business-row", "Payout handler missing employee_account branch");
+    fail("payout-employee-not-business-row", "Payout handler missing employee persist branch");
   }
 
   if (schema.includes("model EmployeeStripeAccount") && schema.includes("employee_stripe_accounts")) {
     pass("schema-employee-stripe-account", "Dedicated EmployeeStripeAccount model present");
   } else {
     fail("schema-employee-stripe-account", "Model missing");
+  }
+
+  if (schema.includes("model EmployeeStripePayout") && schema.includes("employee_stripe_payouts")) {
+    pass("schema-employee-stripe-payout", "Dedicated EmployeeStripePayout observation model present");
+  } else {
+    fail("schema-employee-stripe-payout", "EmployeeStripePayout model missing");
   }
 
   const webNav = read("../src/app/components/employee/employeeDashboardNav.ts");
@@ -570,10 +576,25 @@ async function runDbTests(): Promise<void> {
     const payoutRows = await prisma.stripeConnectPayout.findMany({
       where: { stripePayoutId: `po_emp_${suffix}` },
     });
-    if (!payout.matched && payout.reason === "employee_account" && payoutRows.length === 0) {
-      pass("employee-payout-not-business-table", "Employee payout event did not create StripeConnectPayout");
+    const employeePayoutRows = await prisma.employeeStripePayout.findMany({
+      where: { stripePayoutId: `po_emp_${suffix}` },
+    });
+    if (
+      payout.matched &&
+      payout.reason === "employee_payout" &&
+      payoutRows.length === 0 &&
+      employeePayoutRows.length === 1 &&
+      employeePayoutRows[0]?.employeeId === empA.id
+    ) {
+      pass(
+        "employee-payout-not-business-table",
+        "Employee payout event persisted to EmployeeStripePayout only",
+      );
     } else {
-      fail("employee-payout-not-business-table", JSON.stringify({ payout, rows: payoutRows.length }));
+      fail(
+        "employee-payout-not-business-table",
+        JSON.stringify({ payout, businessRows: payoutRows.length, employeeRows: employeePayoutRows.length }),
+      );
     }
   } finally {
     __setEmployeeCreateV2AccountFnForTests(null);

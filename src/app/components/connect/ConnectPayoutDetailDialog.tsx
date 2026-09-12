@@ -80,8 +80,37 @@ export function ConnectPayoutDetailDialog({
         ) : payout ? (
           <dl>
             {showBusiness && admin ? (
+              <DetailRow label={t("admin.connectPayoutsPage.colRecipient")}>
+                <span className="font-medium">
+                  {admin.recipientName || admin.employeeName || admin.businessName}
+                </span>
+                <span className="mt-0.5 block text-xs text-muted-foreground">
+                  {admin.recipientKind === "employee"
+                    ? t("admin.connectPayoutsPage.recipientEmployee")
+                    : t("admin.connectPayoutsPage.recipientBusiness")}
+                </span>
+              </DetailRow>
+            ) : null}
+            {showBusiness && admin?.recipientKind === "employee" ? (
               <DetailRow label={t("admin.connectPayoutsPage.colBusiness")}>
                 <span className="font-medium">{admin.businessName}</span>
+              </DetailRow>
+            ) : null}
+            {showBusiness && admin && admin.recipientKind !== "employee" ? (
+              <DetailRow label={t("admin.connectPayoutsPage.colBusiness")}>
+                <span className="font-medium">{admin.businessName}</span>
+              </DetailRow>
+            ) : null}
+            {showBusiness && admin?.movementKind ? (
+              <DetailRow label={t("admin.connectPayoutsPage.colType")}>
+                {t(`admin.connectPayoutsPage.movement.${admin.movementKind}`)}
+              </DetailRow>
+            ) : null}
+            {showBusiness && admin?.source ? (
+              <DetailRow label={t("admin.connectPayoutsPage.source")}>
+                {admin.source === "caretip"
+                  ? t("admin.connectPayoutsPage.sourceCareTip")
+                  : t("admin.connectPayoutsPage.sourceStripe")}
               </DetailRow>
             ) : null}
             {showBusiness && admin?.stripeAccountSuffix ? (
@@ -89,23 +118,61 @@ export function ConnectPayoutDetailDialog({
                 …{admin.stripeAccountSuffix}
               </DetailRow>
             ) : null}
+            {showBusiness && admin?.stripeObjectId ? (
+              <DetailRow label={t("admin.connectPayoutsPage.stripeObject")}>
+                <span className="break-all font-mono text-xs">{admin.stripeObjectId}</span>
+              </DetailRow>
+            ) : null}
+            {showBusiness && admin?.routingMode ? (
+              <DetailRow label={t("admin.connectPayoutsPage.routingMode")}>
+                {admin.routingMode}
+              </DetailRow>
+            ) : null}
+            {showBusiness && admin?.chargeModel ? (
+              <DetailRow label={t("admin.connectPayoutsPage.chargeModel")}>
+                {admin.chargeModel}
+              </DetailRow>
+            ) : null}
+            {showBusiness && typeof admin?.grossCents === "number" ? (
+              <DetailRow label={t("admin.connectPayoutsPage.grossAmount")}>
+                {formatConnectPayoutAmount(admin.grossCents, payout.currency, i18n.language)}
+              </DetailRow>
+            ) : null}
+            {showBusiness && typeof admin?.reversedCents === "number" && admin.reversedCents > 0 ? (
+              <DetailRow label={t("admin.connectPayoutsPage.reversedAmount")}>
+                {formatConnectPayoutAmount(admin.reversedCents, payout.currency, i18n.language)}
+              </DetailRow>
+            ) : null}
             <DetailRow label={t("business.billing.payouts.colAmount")}>
               <span className="font-medium tabular-nums">
                 {formatConnectPayoutAmount(payout.amountCents, payout.currency, i18n.language)}
               </span>
             </DetailRow>
-            <DetailRow label={t("business.billing.payouts.colMethod")}>
-              {t(payoutMethodI18nKey(payout.method))}
-            </DetailRow>
-            <DetailRow label={t("business.billing.payouts.colStatus")}>
-              <ConnectPayoutStatusBadge status={payout.status} />
-            </DetailRow>
+            {admin?.activityKind === "caretip_transfer" ? (
+              <DetailRow label={t("business.billing.payouts.colStatus")}>
+                <ConnectPayoutStatusBadge status={payout.status} />
+                {admin.payableStatus ? (
+                  <span className="mt-0.5 block text-xs text-muted-foreground">{admin.payableStatus}</span>
+                ) : null}
+              </DetailRow>
+            ) : (
+              <DetailRow label={t("business.billing.payouts.colMethod")}>
+                {t(payoutMethodI18nKey(payout.method))}
+              </DetailRow>
+            )}
+            {admin?.activityKind === "caretip_transfer" ? null : (
+              <DetailRow label={t("business.billing.payouts.colStatus")}>
+                <ConnectPayoutStatusBadge status={payout.status} />
+              </DetailRow>
+            )}
             <DetailRow label={t("business.billing.payouts.colCreated")}>
               {formatConnectPayoutDate(payout.stripeCreatedAt, i18n.language)}
             </DetailRow>
-            <DetailRow label={t("business.billing.payouts.colArrival")}>
-              {formatConnectPayoutDate(payout.arrivalDate, i18n.language)}
-            </DetailRow>
+            {admin?.activityKind === "caretip_transfer" ? null : (
+              <DetailRow label={t("business.billing.payouts.colArrival")}>
+                {formatConnectPayoutDate(payout.arrivalDate, i18n.language)}
+              </DetailRow>
+            )}
             {payout.paidAt ? (
               <DetailRow label={t("business.billing.payouts.colPaid")}>
                 {formatConnectPayoutDate(payout.paidAt, i18n.language)}
@@ -138,7 +205,11 @@ export function ConnectPayoutDetailDialog({
                 <p className="text-xs text-muted-foreground">
                   {t(reconExplainI18nKey(payout.reconciliationStatus))}
                 </p>
-                {onRetrySync && payout.reconciliationStatus !== "complete" ? (
+                {onRetrySync &&
+                admin?.canRetryReconciliation !== false &&
+                payout.reconciliationStatus !== "complete" &&
+                payout.reconciliationStatus !== "stripe_observed" &&
+                payout.reconciliationStatus !== "ledger" ? (
                   <button
                     type="button"
                     className="mt-1 text-sm font-medium text-primary underline-offset-2 hover:underline disabled:opacity-50"
@@ -184,7 +255,9 @@ export function ConnectPayoutDetailDialog({
                       rel="noopener noreferrer"
                       className="text-sm font-medium text-primary underline-offset-2 hover:underline"
                     >
-                      {t("admin.connectPayoutsPage.openStripePayout")}
+                      {admin.activityKind === "caretip_transfer"
+                        ? t("admin.connectPayoutsPage.openStripeTransfer")
+                        : t("admin.connectPayoutsPage.openStripePayout")}
                     </a>
                   ) : null}
                   {admin.stripeDashboardAccountUrl ? (
@@ -200,7 +273,7 @@ export function ConnectPayoutDetailDialog({
                 </div>
               </DetailRow>
             ) : null}
-            {payout.balanceLines && payout.balanceLines.length > 0 ? (
+            {payout.balanceLines && payout.balanceLines.length > 0 && admin?.activityKind !== "employee_payout" && admin?.activityKind !== "caretip_transfer" ? (
               <DetailRow label={t("business.billing.payouts.colBalanceLines")}>
                 <BalanceLineList lines={payout.balanceLines} locale={i18n.language} />
               </DetailRow>

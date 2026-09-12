@@ -3119,7 +3119,9 @@ export type ConnectPayoutReconciliationStatus =
   | "in_progress"
   | "complete"
   | "partial"
-  | "failed";
+  | "failed"
+  | "stripe_observed"
+  | "ledger";
 
 export type ConnectPayoutBalanceLine = {
   reportingCategory: string | null;
@@ -3164,6 +3166,23 @@ export type PlatformConnectPayout = ConnectPayout & {
   stripeAccountSuffix: string;
   stripeDashboardAccountUrl?: string | null;
   stripeDashboardPayoutUrl?: string | null;
+  recipientKind?: "business" | "employee";
+  activityKind?: "business_payout" | "employee_payout" | "caretip_transfer";
+  movementKind?: "bank_payout" | "instant_payout" | "caretip_transfer";
+  employeeId?: string | null;
+  employeeName?: string | null;
+  recipientName?: string;
+  source?: "stripe" | "caretip";
+  stripeObjectId?: string | null;
+  stripeObjectKind?: "payout" | "transfer" | null;
+  routingMode?: string | null;
+  chargeModel?: string | null;
+  payableStatus?: string | null;
+  reversedCents?: number | null;
+  refundedCents?: number | null;
+  grossCents?: number | null;
+  transferredCents?: number | null;
+  canRetryReconciliation?: boolean;
 };
 
 export async function listMyConnectPayouts(params?: {
@@ -3206,6 +3225,8 @@ export async function fetchPlatformConnectPayouts(params: {
   createdFrom?: string;
   createdTo?: string;
   businessId?: string;
+  recipient?: string;
+  movement?: string;
 }): Promise<{ items: PlatformConnectPayout[]; total: number }> {
   const sp = new URLSearchParams();
   if (params.q) sp.set("q", params.q);
@@ -3216,6 +3237,8 @@ export async function fetchPlatformConnectPayouts(params: {
   if (params.createdFrom) sp.set("createdFrom", params.createdFrom);
   if (params.createdTo) sp.set("createdTo", params.createdTo);
   if (params.businessId) sp.set("businessId", params.businessId);
+  if (params.recipient) sp.set("recipient", params.recipient);
+  if (params.movement) sp.set("movement", params.movement);
   if (params.take != null) sp.set("take", String(params.take));
   if (params.skip != null) sp.set("skip", String(params.skip));
   const qs = sp.toString();

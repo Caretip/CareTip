@@ -14,8 +14,6 @@ import { GlobalTransactionsTableSkeleton } from "../../../components/dashboard/D
 import {
   formatConnectPayoutAmount,
   formatConnectPayoutDate,
-  payoutMethodI18nKey,
-  reconExplainI18nKey,
   sanitizePayoutFailureDisplay,
 } from "../../../lib/connectPayoutDisplay";
 import {
@@ -68,6 +66,8 @@ export function PlatformConnectPayoutsPage() {
   const recon = searchParams.get("recon") ?? "all";
   const currency = searchParams.get("currency") ?? "all";
   const method = searchParams.get("method") ?? "all";
+  const recipient = searchParams.get("recipient") ?? "all";
+  const movement = searchParams.get("movement") ?? "all";
   const createdFrom = searchParams.get("from") ?? "";
   const createdTo = searchParams.get("to") ?? "";
   const businessId = searchParams.get("businessId") ?? "";
@@ -146,6 +146,8 @@ export function PlatformConnectPayoutsPage() {
         reconciliationStatus: recon !== "all" ? recon : undefined,
         currency: currency !== "all" ? currency : undefined,
         method: method !== "all" ? method : undefined,
+        recipient: recipient !== "all" ? recipient : undefined,
+        movement: movement !== "all" ? movement : undefined,
         createdFrom: dateToStartIso(createdFrom),
         createdTo: dateToEndIso(createdTo),
         businessId: businessId.trim() || undefined,
@@ -165,7 +167,7 @@ export function PlatformConnectPayoutsPage() {
     } finally {
       if (gen === loadGenRef.current) setLoading(false);
     }
-  }, [debouncedQ, status, recon, currency, method, createdFrom, createdTo, businessId, page]);
+  }, [debouncedQ, status, recon, currency, method, recipient, movement, createdFrom, createdTo, businessId, page]);
 
   useEffect(() => {
     void load();
@@ -176,7 +178,7 @@ export function PlatformConnectPayoutsPage() {
 
   const retrySync = useCallback(async () => {
     const id = detail.payout?.id;
-    if (!id) return;
+    if (!id || detail.payout?.canRetryReconciliation === false) return;
     setRetrying(true);
     try {
       await retryPlatformConnectPayoutReconciliation(id);
@@ -204,6 +206,31 @@ export function PlatformConnectPayoutsPage() {
           ariaLabel={t("admin.connectPayoutsPage.searchAria")}
         />
         <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end">
+          <label className="text-sm text-muted-foreground">
+            <span className="mb-1 block">{t("admin.connectPayoutsPage.filterRecipient")}</span>
+            <select
+              className={FILTER_SELECT}
+              value={recipient}
+              onChange={(e) => setFilter("recipient", e.target.value)}
+            >
+              <option value="all">{t("admin.connectPayoutsPage.recipientFilter.all")}</option>
+              <option value="business">{t("admin.connectPayoutsPage.recipientFilter.business")}</option>
+              <option value="employee">{t("admin.connectPayoutsPage.recipientFilter.employee")}</option>
+            </select>
+          </label>
+          <label className="text-sm text-muted-foreground">
+            <span className="mb-1 block">{t("admin.connectPayoutsPage.filterMovement")}</span>
+            <select
+              className={FILTER_SELECT}
+              value={movement}
+              onChange={(e) => setFilter("movement", e.target.value)}
+            >
+              <option value="all">{t("admin.connectPayoutsPage.movementFilter.all")}</option>
+              <option value="bank_payout">{t("admin.connectPayoutsPage.movementFilter.bank_payout")}</option>
+              <option value="instant_payout">{t("admin.connectPayoutsPage.movementFilter.instant_payout")}</option>
+              <option value="caretip_transfer">{t("admin.connectPayoutsPage.movementFilter.caretip_transfer")}</option>
+            </select>
+          </label>
           <label className="text-sm text-muted-foreground">
             <span className="mb-1 block">{t("admin.connectPayoutsPage.filterStatus")}</span>
             <select
@@ -322,22 +349,22 @@ export function PlatformConnectPayoutsPage() {
               <thead className="border-b border-border bg-muted/40 text-xs uppercase tracking-wide text-muted-foreground">
                 <tr>
                   <th scope="col" className="px-4 py-2.5 font-medium">
-                    {t("admin.connectPayoutsPage.colBusiness")}
+                    {t("admin.connectPayoutsPage.colRecipient")}
+                  </th>
+                  <th scope="col" className="px-4 py-2.5 font-medium">
+                    {t("admin.connectPayoutsPage.colType")}
                   </th>
                   <th scope="col" className="px-4 py-2.5 font-medium">
                     {t("admin.connectPayoutsPage.colAmount")}
                   </th>
                   <th scope="col" className="px-4 py-2.5 font-medium">
-                    {t("admin.connectPayoutsPage.colMethod")}
-                  </th>
-                  <th scope="col" className="px-4 py-2.5 font-medium">
                     {t("admin.connectPayoutsPage.colStatus")}
                   </th>
                   <th scope="col" className="px-4 py-2.5 font-medium">
-                    {t("admin.connectPayoutsPage.colArrival")}
+                    {t("admin.connectPayoutsPage.colCreated")}
                   </th>
                   <th scope="col" className="px-4 py-2.5 font-medium">
-                    {t("admin.connectPayoutsPage.colCreated")}
+                    {t("admin.connectPayoutsPage.colArrival")}
                   </th>
                   <th scope="col" className="px-4 py-2.5 font-medium">
                     {t("admin.connectPayoutsPage.colReconciliation")}
@@ -365,26 +392,30 @@ export function PlatformConnectPayoutsPage() {
                           className="text-left underline-offset-2 hover:underline"
                           onClick={() => detail.openFor(payout.id, payout)}
                         >
-                          <span className="font-medium">{payout.businessName}</span>
+                          <span className="font-medium">{recipientLabel(payout)}</span>
+                          <span className="mt-0.5 block text-xs text-muted-foreground">
+                            {payout.recipientKind === "employee"
+                              ? t("admin.connectPayoutsPage.recipientEmployee")
+                              : t("admin.connectPayoutsPage.recipientBusiness")}
+                            {payout.recipientKind === "employee" ? ` · ${payout.businessName}` : ""}
+                          </span>
                           <span className="sr-only">, {t("business.billing.payouts.openDetail")}</span>
                         </button>
                       </td>
+                      <td className="px-4 py-3 text-muted-foreground">{t(movementI18nKey(payout))}</td>
                       <td className="px-4 py-3">
                         <div className="font-medium tabular-nums">
                           {formatConnectPayoutAmount(payout.amountCents, payout.currency, i18n.language)}
                         </div>
                       </td>
-                      <td className="px-4 py-3 text-muted-foreground">
-                        {t(payoutMethodI18nKey(payout.method))}
-                      </td>
                       <td className="px-4 py-3">
                         <ConnectPayoutStatusBadge status={payout.status} />
                       </td>
                       <td className="px-4 py-3 text-muted-foreground">
-                        {formatConnectPayoutDate(payout.arrivalDate, i18n.language)}
+                        {formatConnectPayoutDate(payout.stripeCreatedAt, i18n.language)}
                       </td>
                       <td className="px-4 py-3 text-muted-foreground">
-                        {formatConnectPayoutDate(payout.stripeCreatedAt, i18n.language)}
+                        {formatConnectPayoutDate(payout.arrivalDate, i18n.language)}
                       </td>
                       <td className="px-4 py-3">
                         <ConnectPayoutReconBadge
@@ -435,7 +466,7 @@ export function PlatformConnectPayoutsPage() {
         loading={detail.loading}
         error={detail.error}
         showBusiness
-        onRetrySync={() => void retrySync()}
+        onRetrySync={detail.payout?.canRetryReconciliation === false ? undefined : () => void retrySync()}
         retrying={retrying}
       />
     </PlatformPage>
@@ -460,17 +491,37 @@ function AdminPayoutCard({
       : null;
   return (
     <button type="button" onClick={onOpen} className={`${platformUi.mobileCard} w-full text-left`}>
-      <div className="font-medium">{payout.businessName}</div>
+      <div className="font-medium">{recipientLabel(payout)}</div>
+      <p className="mt-0.5 text-xs text-muted-foreground">
+        {payout.recipientKind === "employee"
+          ? t("admin.connectPayoutsPage.recipientEmployee")
+          : t("admin.connectPayoutsPage.recipientBusiness")}
+        {payout.recipientKind === "employee" ? ` · ${payout.businessName}` : ""}
+      </p>
       <div className="mt-1 tabular-nums">
         {formatConnectPayoutAmount(payout.amountCents, payout.currency, locale)}
       </div>
-      <p className="mt-1 text-xs text-muted-foreground">{t(payoutMethodI18nKey(payout.method))}</p>
+      <p className="mt-1 text-xs text-muted-foreground">{t(movementI18nKey(payout))}</p>
       <div className="mt-2 flex flex-wrap gap-2">
         <ConnectPayoutStatusBadge status={payout.status} />
         <ConnectPayoutReconBadge status={payout.reconciliationStatus} lineCount={payout.balanceLineCount} />
       </div>
-      <p className="mt-2 text-xs text-muted-foreground">{t(reconExplainI18nKey(payout.reconciliationStatus))}</p>
       {failure ? <p className="mt-2 text-xs text-muted-foreground">{failure}</p> : null}
     </button>
   );
+}
+
+function recipientLabel(payout: PlatformConnectPayout): string {
+  return payout.recipientName || payout.employeeName || payout.businessName;
+}
+
+function movementI18nKey(payout: PlatformConnectPayout): string {
+  const kind =
+    payout.movementKind ||
+    (payout.activityKind === "caretip_transfer"
+      ? "caretip_transfer"
+      : String(payout.method ?? "").toLowerCase() === "instant"
+        ? "instant_payout"
+        : "bank_payout");
+  return `admin.connectPayoutsPage.movement.${kind}`;
 }

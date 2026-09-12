@@ -6269,14 +6269,18 @@
           "in_progress": "Abgleich läuft",
           "complete": "Synchronisiert",
           "partial": "Teilweise synchronisiert",
-          "failed": "Prüfung nötig"
+          "failed": "Prüfung nötig",
+          "stripe_observed": "Stripe",
+          "ledger": "CareTip"
         },
         "reconExplain": {
           "pending": "Die Auszahlung existiert. CareTip hat die zugehörige Stripe-Saldoaktivität noch nicht vollständig gelesen.",
           "in_progress": "CareTip synchronisiert die Stripe-Saldoaktivität für diese Auszahlung.",
           "complete": "CareTip hat die verfügbare Stripe-Saldoaktivität für diese Auszahlung synchronisiert.",
           "partial": "Die Auszahlung existiert, aber CareTip hat noch nicht die gesamte zugehörige Stripe-Saldoaktivität synchronisiert.",
-          "failed": "Der Stripe-Auszahlungsstatus ist unverändert. CareTip konnte die Stripe-Saldoaktivität nicht vollständig synchronisieren. Wiederholen Sie den Abgleich in den Details."
+          "failed": "Der Stripe-Auszahlungsstatus ist unverändert. CareTip konnte die Stripe-Saldoaktivität nicht vollständig synchronisieren. Wiederholen Sie den Abgleich in den Details.",
+          "stripe_observed": "Dies ist eine Stripe-Auszahlungsbeobachtung für ein Mitarbeiter-Connect-Konto. CareTip führt keinen Business-Saldoabgleich für Mitarbeiter-Auszahlungen aus.",
+          "ledger": "Diese CareTip-Überweisung auf das Mitarbeiter-Stripe-Konto ist auf der Mitarbeiter-Forderung erfasst. Das ist keine Bankauszahlung."
         },
         "methodInstant": "Sofort",
         "methodStandard": "Standard",
@@ -7590,29 +7594,45 @@
     },
     "connectPayoutsPage": {
       "title": "Connect-Auszahlungen",
-      "subtitle": "Stripe-Auszahlungen von verbundenen Express-Konten, einschließlich automatischer Standard-Auszahlungen und managerseitiger Sofortauszahlungen. Das sind keine einzelnen Gäste-Tips.",
-      "searchPlaceholder": "Nach Betriebsname suchen…",
-      "searchAria": "Connect-Auszahlungen nach Betriebsname suchen",
-      "filterStatus": "Auszahlungsstatus",
+      "subtitle": "Stripe-Auszahlungen und Überweisungen für Betriebe und Mitarbeiter nachverfolgen.",
+      "searchPlaceholder": "Betrieb, Mitarbeiter oder Stripe-ID suchen…",
+      "searchAria": "Connect-Aktivität nach Betrieb, Mitarbeiter oder Stripe-ID suchen",
+      "filterStatus": "Status",
       "filterCurrency": "Währung",
       "filterFrom": "Erstellt von",
       "filterTo": "Erstellt bis",
-      "businessFilterActive": "Auszahlungen für einen Betrieb werden angezeigt.",
+      "filterRecipient": "Empfänger",
+      "filterMovement": "Bewegung",
+      "businessFilterActive": "Aktivität für einen Betrieb wird angezeigt.",
       "clearBusinessFilter": "Alle Betriebe anzeigen",
+      "colRecipient": "Empfänger",
       "colBusiness": "Betrieb",
-      "colAmount": "Auszahlung",
+      "colType": "Typ",
+      "colAmount": "Betrag",
       "colMethod": "Methode",
-      "colStatus": "Auszahlungsstatus",
+      "colStatus": "Status",
       "colArrival": "Erwartete Ankunft",
       "colCreated": "Erstellt",
-      "colFailure": "Auszahlungsproblem",
+      "colFailure": "Problem",
       "colReconciliation": "CareTip-Abgleich",
       "filterReconciliation": "CareTip-Abgleich",
-      "filterMethod": "Methode",
+      "filterMethod": "Auszahlungsmethode",
       "stripeAccount": "Stripe-Connect-Konto",
+      "stripeObject": "Stripe-Objekt",
+      "source": "Quelle",
+      "sourceStripe": "Stripe",
+      "sourceCareTip": "CareTip",
+      "recipientEmployee": "Mitarbeiter",
+      "recipientBusiness": "Betrieb",
+      "routingMode": "Tip-Routing",
+      "chargeModel": "Charge-Modell",
+      "payableStatus": "Überweisungsstatus",
+      "grossAmount": "Brutto-Tip",
+      "reversedAmount": "Storniert",
       "viewInStripe": "Stripe",
       "openStripePayout": "Auszahlung in Stripe öffnen",
       "openStripeAccount": "Connect-Konto in Stripe öffnen",
+      "openStripeTransfer": "Überweisung in Stripe öffnen",
       "retrySync": "CareTip-Abgleich wiederholen",
       "retryingSync": "Wird wiederholt…",
       "footerShowing": "{{from}}–{{to}} von {{total}}",
@@ -7626,6 +7646,22 @@
       },
       "methodFilter": {
         "all": "Alle Methoden"
+      },
+      "recipientFilter": {
+        "all": "Alle",
+        "business": "Betrieb",
+        "employee": "Mitarbeiter"
+      },
+      "movementFilter": {
+        "all": "Alle Auszahlungsaktivitäten",
+        "bank_payout": "Bankauszahlungen",
+        "instant_payout": "Sofortauszahlungen",
+        "caretip_transfer": "CareTip-Überweisungen"
+      },
+      "movement": {
+        "bank_payout": "Bankauszahlung",
+        "instant_payout": "Sofort",
+        "caretip_transfer": "CareTip-Überweisung"
       },
       "currencyFilter": {
         "all": "Alle Währungen"
@@ -7643,11 +7679,13 @@
         "in_progress": "Abgleich läuft",
         "complete": "Synchronisiert",
         "partial": "Teilweise synchronisiert",
-        "failed": "Prüfung nötig"
+        "failed": "Prüfung nötig",
+        "stripe_observed": "Stripe",
+        "ledger": "CareTip"
       },
       "empty": {
-        "title": "Noch keine Connect-Auszahlungen",
-        "description": "Auszahlungen erscheinen hier, nachdem Stripe verfügbares Guthaben eines verbundenen Kontos auszahlt, einschließlich in CareTip angeforderter Sofortauszahlungen."
+        "title": "Noch keine Connect-Aktivität",
+        "description": "Betriebs- und Mitarbeiter-Stripe-Auszahlungen erscheinen, nachdem Stripe ein verbundenes Konto auszahlt. CareTip-Überweisungen erscheinen, nachdem CareTip Guthaben auf ein Mitarbeiter-Stripe-Konto bewegt."
       }
     },
     "refundsPage": {

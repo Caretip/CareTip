@@ -204,10 +204,12 @@ export async function listConnectPayouts(req: Request, res: Response) {
     const method = typeof req.query.method === "string" ? req.query.method : undefined;
     const createdFrom = typeof req.query.createdFrom === "string" ? req.query.createdFrom : undefined;
     const createdTo = typeof req.query.createdTo === "string" ? req.query.createdTo : undefined;
+    const recipient = typeof req.query.recipient === "string" ? req.query.recipient : undefined;
+    const movement = typeof req.query.movement === "string" ? req.query.movement : undefined;
     const take = Math.min(Math.max(Number(req.query.take) || 50, 1), 100);
     const skip = parseBoundedSkip(req.query.skip);
-    const { listPlatformConnectPayouts } = await import("../services/stripeConnectPayout.service.js");
-    const result = await listPlatformConnectPayouts({
+    const { listPlatformConnectActivity } = await import("../services/platformConnectActivity.service.js");
+    const result = await listPlatformConnectActivity({
       q,
       status,
       businessId,
@@ -216,6 +218,8 @@ export async function listConnectPayouts(req: Request, res: Response) {
       method,
       createdFrom,
       createdTo,
+      recipient,
+      movement,
       take,
       skip,
     });
@@ -234,8 +238,8 @@ export async function getConnectPayout(req: Request, res: Response) {
   try {
     const id = typeof req.params.id === "string" ? req.params.id.trim() : "";
     if (!id) return res.status(400).json({ message: "Invalid payout id" });
-    const { getPlatformConnectPayout } = await import("../services/stripeConnectPayout.service.js");
-    const payout = await getPlatformConnectPayout(id);
+    const { getPlatformConnectActivity } = await import("../services/platformConnectActivity.service.js");
+    const payout = await getPlatformConnectActivity(id);
     if (!payout) return res.status(404).json({ message: "Payout not found" });
     return res.json(payout);
   } catch (err) {
@@ -250,6 +254,9 @@ export async function retryConnectPayoutReconciliation(req: Request, res: Respon
   try {
     const id = typeof req.params.id === "string" ? req.params.id.trim() : "";
     if (!id) return res.status(400).json({ message: "Invalid payout id" });
+    if (id.startsWith("ep_") || id.startsWith("ct_")) {
+      return res.status(400).json({ message: "CareTip sync retry applies to business payouts only." });
+    }
     const { retryPlatformConnectPayoutReconciliation } = await import(
       "../services/stripeConnectPayout.service.js"
     );
