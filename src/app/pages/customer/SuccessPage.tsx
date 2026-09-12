@@ -121,7 +121,13 @@ export function SuccessPage() {
     verification.phase === "failed" ||
     verification.phase === "error"
   ) {
-    return null;
+    return (
+      <CareTipPageLoader
+        variant="wait"
+        context="stripeReturn"
+        registrationKey="success-page-redirect"
+      />
+    );
   }
 
   if (!verified) {

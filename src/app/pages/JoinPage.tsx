@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { useNavigate, useParams, Link } from "react-router";
 import { useTranslation } from "react-i18next";
+import "@/styles/bundles/auth.css";
 import { KeyRound } from "lucide-react";
 import { AuthErrorSlot, AuthStableSubmitButton } from "@/app/components/auth/AuthFormStability";
 import { AuthFieldGroup } from "@/app/components/auth/AuthFieldGroup";

@@ -131,3 +131,30 @@ export function isPublicShellPath(pathname: string): boolean {
   const p = pathname.split("?")[0]?.split("#")[0] ?? "/";
   return isPublicMarketingPath(p) || isPublicAuthenticationPath(p);
 }
+
+function normalizePathname(pathname: string): string {
+  return pathname.split("?")[0]?.split("#")[0] ?? "/";
+}
+
+/**
+ * Authenticated layouts that keep chrome mounted across child navigations.
+ * Root Outlet replacements (public ↔ public, app → login) are the blank-screen risk.
+ */
+export function isAuthenticatedAppShellPath(pathname: string): boolean {
+  const p = normalizePathname(pathname);
+  if (p === "/employee/login") return false;
+  if (p === "/platform-admin/login" || p === "/platform-admin/signup") return false;
+  if (p === "/onboarding" || p.startsWith("/onboarding/")) return true;
+  if (p === "/verification-pending" || p.startsWith("/verification-pending")) return true;
+  if (p === "/awaiting-approval") return true;
+  if (p.startsWith("/subscription/")) return true;
+  if (p === "/dashboard" || p.startsWith("/dashboard/")) return true;
+  if (p === "/employee" || p.startsWith("/employee/")) return true;
+  if (p === "/platform-admin" || p.startsWith("/platform-admin/")) return true;
+  return false;
+}
+
+/** Nested dashboard/admin/employee child swap — layout stays; do not cover the whole viewport. */
+export function isInShellAuthenticatedNavigation(fromPath: string, toPath: string): boolean {
+  return isAuthenticatedAppShellPath(fromPath) && isAuthenticatedAppShellPath(toPath);
+}

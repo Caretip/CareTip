@@ -23,14 +23,11 @@ import {
   routeLazyDefault,
   businessLayoutLazy,
   employeeLayoutLazy,
-  authPageLazy,
-  joinPageLazy,
   forgotPasswordPageLazy,
   resetPasswordPageLazy,
   activateEmployeePageLazy,
   verifyEmailPageLazy,
   checkEmailPageLazy,
-  platformAdminLoginPageLazy,
   unauthorizedPageLazy,
 } from './routing/routeLazy';
 import { ProtectedRoute } from './components/ProtectedRoute';
@@ -43,6 +40,13 @@ import { DashboardProfilerRoot } from "./hooks/useDashboardRuntimeProfile";
 import { useNavigationFlashProbe } from './hooks/useNavigationFlashProbe';
 import { CookieConsentRoot } from './components/cookie/CookieConsentRoot';
 import { LandingPage } from './pages/LandingPage';
+import { AuthPage } from './components/AuthPage';
+import { JoinPage } from './pages/JoinPage';
+import { PlatformAdminLoginPage } from './pages/platform/PlatformAdminLoginPage';
+import { AuthLogoutHandoffCover } from "./components/auth/AuthLogoutHandoffCover";
+import { RootSpaRouteHold } from "./routing/RootSpaRouteHold";
+import { isChunkLoadFailure } from "./lib/chunkLoadRecovery";
+import "@/styles/bundles/auth.css";
 
 const LoaderDiagRuntime = import.meta.env.DEV
   ? React.lazy(() =>
@@ -86,10 +90,20 @@ function ErrorBoundary() {
     logClientError('RouteErrorBoundary', error);
   }, [error]);
   const is404 = isRouteErrorResponse(error) && error.status === 404;
-  const title = is404 ? "Page not found" : "This page couldn’t load";
+  const chunkFailed =
+    !is404 &&
+    (isChunkLoadFailure(error) ||
+      (isRouteErrorResponse(error) && isChunkLoadFailure(error.data)));
+  const title = is404
+    ? "Page not found"
+    : chunkFailed
+      ? "CareTip needs a refresh"
+      : "This page couldn’t load";
   const message = is404
     ? "The page you're looking for doesn't exist or may have been moved."
-    : "Navigation hit an unexpected problem. Go home and try again, or refresh if you were in the middle of something.";
+    : chunkFailed
+      ? "This version of CareTip is out of date in this browser. Refresh to load the latest screens."
+      : "Navigation hit an unexpected problem. Go home and try again, or refresh if you were in the middle of something.";
 
   return (
     <div
@@ -99,12 +113,22 @@ function ErrorBoundary() {
       <div className="text-center px-4 max-w-md">
         <h1 className="text-2xl sm:text-3xl font-bold mb-4 text-foreground">{title}</h1>
         <p className="mb-6 text-muted-foreground">{message}</p>
-        <a
-          href="/"
-          className="inline-block px-6 py-3 rounded-lg bg-primary text-primary-foreground hover:bg-primary-hover transition-colors"
-        >
-          Go back home
-        </a>
+        {chunkFailed ? (
+          <button
+            type="button"
+            className="inline-block px-6 py-3 rounded-lg bg-primary text-primary-foreground hover:bg-primary-hover transition-colors"
+            onClick={() => window.location.reload()}
+          >
+            Refresh
+          </button>
+        ) : (
+          <a
+            href="/"
+            className="inline-block px-6 py-3 rounded-lg bg-primary text-primary-foreground hover:bg-primary-hover transition-colors"
+          >
+            Go back home
+          </a>
+        )}
       </div>
     </div>
   );
@@ -128,6 +152,8 @@ function RootLayout() {
       <IdleSessionController />
       <ScrollToTop />
       <SignInHandoffCover />
+      <AuthLogoutHandoffCover />
+      <RootSpaRouteHold />
       <DashboardProfilerRoot />
       <RouteNavigationLoadingRegistrar>
         <AuthBootstrapLoadingRegistrar>
@@ -171,12 +197,13 @@ const routes: RouteObject[] = [
   },
   {
     path: '/auth',
-    lazy: authPageLazy,
+    // Eager with `/login`: RR `lazy` does not suspend Outlet — logout would white-screen.
+    Component: AuthPage,
     errorElement: <ErrorBoundary />,
   },
   {
     path: '/login',
-    lazy: authPageLazy,
+    Component: AuthPage,
     errorElement: <ErrorBoundary />,
   },
   {
@@ -191,7 +218,7 @@ const routes: RouteObject[] = [
   },
   {
     path: '/employee/login',
-    lazy: authPageLazy,
+    Component: AuthPage,
     errorElement: <ErrorBoundary />,
   },
   {
@@ -261,22 +288,22 @@ const routes: RouteObject[] = [
   },
   {
     path: '/join',
-    lazy: joinPageLazy,
+    Component: JoinPage,
     errorElement: <ErrorBoundary />,
   },
   {
     path: '/join/signup',
-    lazy: authPageLazy,
+    Component: AuthPage,
     errorElement: <ErrorBoundary />,
   },
   {
     path: '/join/:code',
-    lazy: joinPageLazy,
+    Component: JoinPage,
     errorElement: <ErrorBoundary />,
   },
   {
     path: '/signup',
-    lazy: authPageLazy,
+    Component: AuthPage,
     errorElement: <ErrorBoundary />,
   },
   {
@@ -443,7 +470,7 @@ const routes: RouteObject[] = [
   },
   {
     path: '/platform-admin/login',
-    lazy: platformAdminLoginPageLazy,
+    Component: PlatformAdminLoginPage,
     errorElement: <ErrorBoundary />,
   },
   {

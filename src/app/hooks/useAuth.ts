@@ -479,7 +479,7 @@ export function useAuth() {
       beginAuthLogoutTransition(snapshot.loginPath);
     });
     markLogoutPending();
-    // Warm the same lazy promise RR will await so logout overlay covers chunk+CSS load.
+    // Login/admin-login are eager; prefetch still warms CSS for remaining lazy auth cousins.
     prefetchAuthLoginRoute(snapshot.loginPath);
 
     // Clear session before route swap so AuthPage never paints authenticated chrome mid-handoff.

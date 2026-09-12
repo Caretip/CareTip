@@ -46,11 +46,20 @@ test.describe("Landing HTML boot handoff", () => {
           w.__caretipUncoveredEmpty = true;
         }
       };
-      new MutationObserver(check).observe(document.documentElement, {
-        subtree: true,
-        childList: true,
-        attributes: true,
-      });
+      const startObserver = () => {
+        const el = document.documentElement;
+        if (!el) {
+          document.addEventListener("DOMContentLoaded", startObserver, { once: true });
+          return;
+        }
+        new MutationObserver(check).observe(el, {
+          subtree: true,
+          childList: true,
+          attributes: true,
+        });
+        check();
+      };
+      startObserver();
     });
 
     await page.goto("/", { waitUntil: "domcontentloaded" });

@@ -2,6 +2,7 @@ import { useState, useRef, useCallback, useEffect, useSyncExternalStore } from "
 import { flushSync } from "react-dom";
 import { useNavigate, Link, useLocation } from "react-router";
 import { useTranslation } from "react-i18next";
+import "@/styles/bundles/auth.css";
 import { Eye, EyeOff, Loader2, ShieldCheck } from "lucide-react";
 import { AuthCardBrandMark } from "@/app/components/auth/AuthCardBrandMark";
 import { useAuth, getPostAuthRedirect } from "../../hooks/useAuth";

@@ -143,7 +143,7 @@ export default defineConfig(({ mode }) => {
       },
       workbox: {
         /** Bump when PWA shell/manifest semantics change so old precaches are abandoned. */
-        cacheId: 'caretip-pwa-v11',
+        cacheId: 'caretip-pwa-v12',
         /** Ensure old precaches are removed when SW updates. */
         cleanupOutdatedCaches: true,
         /**

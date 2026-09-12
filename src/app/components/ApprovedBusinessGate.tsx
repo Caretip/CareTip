@@ -10,7 +10,7 @@ import { isApiConnectivityError } from "../lib/errorMessages";
 
 /**
  * Keeps manager subscription entitlements and split verification fields fresh.
- * Does not gate the dashboard shell.
+ * Does not gate the dashboard shell — never unmount the outlet to an empty tree.
  */
 export function ApprovedBusinessGate() {
   const { user, updateUser, sessionValidated, authStatus } = useAuth();
@@ -69,8 +69,6 @@ export function ApprovedBusinessGate() {
       window.removeEventListener(BILLING_CHECKOUT_SYNCED_EVENT, refreshProfile);
     };
   }, [canSyncProfile, updateUser]);
-
-  if (!user) return null;
 
   return <Outlet />;
 }

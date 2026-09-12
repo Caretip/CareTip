@@ -8,8 +8,8 @@ import {
 } from "../lib/authLogoutTransition";
 
 /**
- * Owns logout transition lifecycle without a branded loading screen.
- * Logout redirects immediately; destination login renders naturally.
+ * Owns logout transition lifecycle (max-timeout safety).
+ * Visual cover is {@link AuthLogoutHandoffCover} — this registrar must not leave the viewport empty.
  */
 export function AuthLogoutTransitionRegistrar({ children }: { children: ReactNode }) {
   const active = useSyncExternalStore(

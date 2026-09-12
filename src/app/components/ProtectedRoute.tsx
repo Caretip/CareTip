@@ -78,6 +78,7 @@ export function ProtectedRoute({
   );
 
   if (logoutTransitionActive) {
+    // AuthLogoutHandoffCover owns the viewport; do not paint protected chrome after session clear.
     return null;
   }
 

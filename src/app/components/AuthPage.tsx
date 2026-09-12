@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef, useSyncExternalStore } from '
 import { flushSync } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import { Link, useNavigate, useLocation } from 'react-router';
+import "@/styles/bundles/auth.css";
 import { AuthFieldGroup } from './auth/AuthFieldGroup';
 import { AuthEmployeeVenueBanner } from './auth/AuthEmployeeVenueBanner';
 import { AuthTrustStrip } from './auth/AuthTrustStrip';
