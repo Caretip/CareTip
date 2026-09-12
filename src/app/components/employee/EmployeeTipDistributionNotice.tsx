@@ -15,9 +15,9 @@ export function EmployeeTipDistributionNotice(props: {
       className="rounded-xl border border-border bg-muted/30 px-4 py-4"
       aria-labelledby="employee-tip-distribution-heading"
     >
-      <p className="text-[0.6875rem] font-medium uppercase tracking-wide text-muted-foreground">
+      <span className="inline-flex w-fit max-w-full items-center rounded-full bg-primary px-2.5 py-0.5 text-[0.6875rem] font-semibold uppercase tracking-wide text-primary-foreground">
         {t("employee.payouts.distribution.kicker")}
-      </p>
+      </span>
       <div className="mt-2 flex gap-3">
         <span className="mt-0.5 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-muted text-muted-foreground">
           <Building2 className="h-4 w-4" aria-hidden />

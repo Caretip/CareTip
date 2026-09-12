@@ -222,9 +222,11 @@ export function EmployeePaymentsConnectScreen() {
 
       {businessDistribution ? (
         <View style={styles.distCard} accessibilityRole="summary">
-          <Text style={styles.sectionLabel} {...textA11y}>
-            {t("employeePayouts.distributionKicker")}
-          </Text>
+          <View style={styles.distBadge}>
+            <Text style={styles.distBadgeText} {...textA11y}>
+              {t("employeePayouts.distributionKicker")}
+            </Text>
+          </View>
           <Text style={styles.noticeTitle} {...textA11y}>
             {venueName
               ? t("employeePayouts.distributionTitleNamed", { name: venueName })
@@ -533,6 +535,21 @@ function createStyles(colors: ColorPalette) {
       borderWidth: StyleSheet.hairlineWidth,
       borderColor: colors.border,
       backgroundColor: colors.muted,
+    },
+    distBadge: {
+      alignSelf: "flex-start",
+      borderRadius: 999,
+      backgroundColor: colors.primary,
+      paddingHorizontal: spacing.md,
+      paddingVertical: spacing.xs,
+    },
+    distBadgeText: {
+      ...typography.caption,
+      color: colors.primaryForeground,
+      fontWeight: "700",
+      fontSize: 11,
+      letterSpacing: 0.4,
+      textTransform: "uppercase",
     },
     successCard: { gap: spacing.sm, paddingTop: spacing.md, alignItems: "flex-start" },
     successCheck: { ...typography.h1, color: colors.success },

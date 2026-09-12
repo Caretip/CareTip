@@ -175,6 +175,18 @@
     "copied": "Copied",
     "unableToCopy": "Unable to copy"
   },
+  "pwaInstall": {
+    "regionAria": "Install CareTip",
+    "iosRegionAria": "Add CareTip to Home Screen",
+    "title": "Install CareTip",
+    "body": "Add the app for quick access and offline support.",
+    "install": "Install",
+    "notNow": "Not now",
+    "dismiss": "Dismiss",
+    "iosTitle": "Add to Home Screen",
+    "iosBody": "Tap <share>Share</share>, then <homescreen>Add to Home Screen</homescreen> to install CareTip.",
+    "gotIt": "Got it"
+  },
   "idleSession": {
     "warningTitle": "Still there?",
     "warningBody": "You’ll be signed out in {{seconds}}s for security. Stay signed in to continue.",

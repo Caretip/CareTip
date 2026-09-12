@@ -175,6 +175,18 @@
     "copied": "Kopiert",
     "unableToCopy": "Kopieren nicht möglich"
   },
+  "pwaInstall": {
+    "regionAria": "CareTip installieren",
+    "iosRegionAria": "CareTip zum Home-Bildschirm hinzufügen",
+    "title": "CareTip installieren",
+    "body": "App hinzufügen für schnellen Zugriff und Offline-Nutzung.",
+    "install": "Installieren",
+    "notNow": "Später",
+    "dismiss": "Schließen",
+    "iosTitle": "Zum Home-Bildschirm",
+    "iosBody": "Tippen Sie auf <share>Teilen</share> und dann auf <homescreen>Zum Home-Bildschirm</homescreen>, um CareTip zu installieren.",
+    "gotIt": "Verstanden"
+  },
   "idleSession": {
     "warningTitle": "Noch da?",
     "warningBody": "Sie werden in {{seconds}}s aus Sicherheitsgründen abgemeldet. Bleiben Sie angemeldet, um fortzufahren.",
