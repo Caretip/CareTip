@@ -43,10 +43,10 @@ export function BusinessStripePayoutsPage() {
             className="h-10 w-full max-w-full sm:w-fit"
             aria-label={t("business.stripe.payoutsWorkspace.toggleAria")}
           >
-            <TabsTrigger value="caretip" className="min-w-0 flex-1 px-5 sm:flex-none sm:min-w-[7.5rem]">
+            <TabsTrigger value="caretip" className="min-w-0 flex-1 whitespace-normal px-3 py-1.5 sm:flex-none sm:min-w-[7.5rem] sm:whitespace-nowrap sm:px-5">
               {t("business.stripe.payoutsWorkspace.caretipLabel")}
             </TabsTrigger>
-            <TabsTrigger value="business" className="min-w-0 flex-1 px-5 sm:flex-none sm:min-w-[7.5rem]">
+            <TabsTrigger value="business" className="min-w-0 flex-1 whitespace-normal px-3 py-1.5 sm:flex-none sm:min-w-[7.5rem] sm:whitespace-nowrap sm:px-5">
               {t("business.stripe.payoutsWorkspace.businessLabel")}
             </TabsTrigger>
           </TabsList>

@@ -36,7 +36,7 @@ export function EmployeePayoutDashboardMetrics({
   };
 
   return (
-    <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 sm:gap-3.5">
+    <div className="grid grid-cols-1 gap-3 md:grid-cols-3 md:gap-3.5">
       <MetricCard
         icon={CalendarDays}
         label={t("employee.payouts.dashboard.kpiInstant")}
@@ -83,14 +83,14 @@ function MetricCard({
   hint: string;
 }) {
   return (
-    <section className={cn(panel, "min-h-[8.25rem]")}>
+    <section className={cn(panel, "min-h-0 md:min-h-[8.25rem]")}>
       <div className="flex items-start gap-3">
         <span className="inline-flex size-9 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground">
           <Icon className="size-4" aria-hidden />
         </span>
         <div className="min-w-0">
           <h2 className="text-sm font-medium text-foreground">{label}</h2>
-          <p className="mt-3 text-[1.75rem] font-semibold tabular-nums tracking-tight text-foreground sm:text-[1.875rem]">
+          <p className="mt-3 break-words text-[1.75rem] font-semibold tabular-nums tracking-tight text-foreground sm:text-[1.875rem]">
             {value}
           </p>
           <p className="mt-1 text-xs leading-snug text-muted-foreground">{hint}</p>

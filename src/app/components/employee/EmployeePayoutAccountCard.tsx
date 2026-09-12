@@ -160,8 +160,8 @@ export function EmployeePayoutAccountCard(props: {
           )}
           aria-labelledby="employee-payout-account-heading"
         >
-          <div className="flex items-start justify-between gap-3">
-            <h2 id="employee-payout-account-heading" className="text-base font-semibold tracking-tight">
+          <div className="flex min-w-0 flex-wrap items-start justify-between gap-3">
+            <h2 id="employee-payout-account-heading" className="min-w-0 text-base font-semibold tracking-tight">
               {t(
                 businessDistribution
                   ? "employee.payouts.accountTitleCompact"
@@ -173,7 +173,7 @@ export function EmployeePayoutAccountCard(props: {
             {props.layout === "rail" && ready && data?.canOpenDashboard ? (
               <button
                 type="button"
-                className="text-sm font-medium text-primary underline-offset-2 hover:underline disabled:opacity-50"
+                className="max-w-full text-left text-sm font-medium text-primary underline-offset-2 hover:underline disabled:opacity-50"
                 onClick={() => void onDashboard()}
                 disabled={busy != null}
                 data-payout-cta="dashboard"

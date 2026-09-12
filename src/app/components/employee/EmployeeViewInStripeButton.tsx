@@ -36,7 +36,7 @@ export function EmployeeViewInStripeButton({ className }: { className?: string }
       aria-label={t("employee.payouts.history.viewInStripeAria")}
       onClick={() => void onOpen()}
       className={cn(
-        "shrink-0 whitespace-nowrap text-sm font-medium text-primary underline-offset-2 hover:underline",
+        "shrink-0 text-sm font-medium text-primary underline-offset-2 hover:underline",
         "disabled:cursor-not-allowed disabled:opacity-50",
         className,
       )}

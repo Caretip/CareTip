@@ -160,17 +160,17 @@ export function EmployeeInstantPayoutCard(props: {
         className="rounded-2xl border border-border/70 bg-card p-5"
         aria-labelledby="employee-instant-heading"
       >
-        <h2 id="employee-instant-heading" className="sr-only">
+        <h2 id="employee-instant-heading" className="text-sm font-medium text-foreground">
           {t("employee.payouts.instant.title")}
         </h2>
-        <p className="text-[1.75rem] font-semibold tabular-nums tracking-tight sm:text-[1.875rem]">
+        <p className="mt-2 text-[1.75rem] font-semibold tabular-nums tracking-tight sm:text-[1.875rem]">
           {receiveLabel}
         </p>
         <p className="mt-1 text-sm text-muted-foreground">{t("employee.payouts.instant.youReceive")}</p>
         <div className="mt-4 space-y-2.5 border-t border-border/70 pt-4 text-sm">
           <div className="flex items-start justify-between gap-3">
-            <span className="text-muted-foreground">{t("employee.payouts.dashboard.gross")}</span>
-            <span className="tabular-nums">{formatEur((gross > 0 ? gross : net) / 100)}</span>
+            <span className="min-w-0 text-muted-foreground">{t("employee.payouts.dashboard.gross")}</span>
+            <span className="shrink-0 tabular-nums">{formatEur((gross > 0 ? gross : net) / 100)}</span>
           </div>
           {mode === "ready" || mode === "threshold" ? (
             eligibility.feeConfigured && eligibility.platformFeeCents > 0 ? (
@@ -189,8 +189,8 @@ export function EmployeeInstantPayoutCard(props: {
             )
           ) : null}
           <div className="flex items-start justify-between gap-3 border-t border-border/70 pt-2.5 font-medium">
-            <span>{t("employee.payouts.dashboard.net")}</span>
-            <span className="tabular-nums">{receiveLabel}</span>
+            <span className="min-w-0">{t("employee.payouts.dashboard.net")}</span>
+            <span className="shrink-0 tabular-nums">{receiveLabel}</span>
           </div>
         </div>
         {last4 ? <p className="mt-3 text-sm text-muted-foreground">•••• {last4}</p> : null}
@@ -210,7 +210,7 @@ export function EmployeeInstantPayoutCard(props: {
         {showCta ? (
           <Button
             type="button"
-            className={cn(caretipBtnPrimary, "mt-5 h-11 w-full min-w-0 rounded-full px-4")}
+            className={cn(caretipBtnPrimary, "mt-5 h-auto min-h-11 w-full min-w-0 rounded-full px-4 py-2.5 text-center leading-snug whitespace-normal")}
             onClick={() => void onRequest()}
             disabled={!ctaEnabled}
             aria-busy={busy}

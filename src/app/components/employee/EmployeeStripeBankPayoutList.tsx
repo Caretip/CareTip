@@ -111,12 +111,14 @@ export function EmployeeStripeBankPayoutList({
               <p className="text-sm font-medium">{t(`employee.payouts.bankHistory.method.${row.method}`)}</p>
               <p className="text-xs text-muted-foreground">{formatPayoutDate(bankDisplayDateIso(row), i18n.language)}</p>
               {row.stripePayoutId ? (
-                <p className="font-mono text-[0.6875rem] text-muted-foreground">{payoutRef(row)}</p>
+                <p className="truncate font-mono text-[0.6875rem] text-muted-foreground" title={row.stripePayoutId}>
+                  {payoutRef(row)}
+                </p>
               ) : null}
               <FinanceStatusPill
                 tone={bankStatusTone(row.status)}
                 label={bankStatusLabel(row.status, t)}
-                className={bankStatusPillClass(row.status)}
+                className={cn("max-w-full whitespace-normal", bankStatusPillClass(row.status))}
               />
             </div>
             <p className="shrink-0 text-sm font-semibold tabular-nums">{formatEur(row.amountCents / 100)}</p>
@@ -152,8 +154,8 @@ export function EmployeeStripeBankPayoutList({
             {items.map((row, index) => (
               <tr key={`${row.createdAt}-${row.amountCents}-${index}`} className="border-b border-border/70 last:border-0">
                 <td className="py-3.5 pr-3 text-muted-foreground">{formatPayoutDate(bankDisplayDateIso(row), i18n.language)}</td>
-                <td className="py-3.5 pr-3 font-mono text-xs text-muted-foreground">{payoutRef(row)}</td>
-                <td className="py-3.5 pr-3 font-medium tabular-nums">{formatEur(row.amountCents / 100)}</td>
+                <td className="max-w-[10rem] truncate py-3.5 pr-3 font-mono text-xs text-muted-foreground" title={row.stripePayoutId ?? undefined}>{payoutRef(row)}</td>
+                <td className="whitespace-nowrap py-3.5 pr-3 font-medium tabular-nums">{formatEur(row.amountCents / 100)}</td>
                 <td className="py-3.5 pr-3 text-muted-foreground">
                   {row.destinationLast4
                     ? t("employee.payouts.dashboard.methodMaskedLast4", { last4: row.destinationLast4 })
@@ -190,7 +192,6 @@ export function EmployeeStripeBankPayoutList({
           >
             {t("employee.payouts.history.bankTab")}
           </h2>
-          {panel ? null : <p className="text-sm text-muted-foreground">{t("employee.payouts.history.bankHint")}</p>}
         </div>
         {panel ? (
           <Link

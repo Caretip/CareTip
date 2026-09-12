@@ -107,16 +107,12 @@ export function EmployeeTipPayoutModeCard({
                   <span className="block text-sm leading-snug text-muted-foreground">
                     {t(`business.stripe.tipRouting.mode.${option}.body`)}
                   </span>
-                  <span className="block text-xs leading-snug text-muted-foreground">
-                    {t(`business.stripe.tipRouting.mode.${option}.note`)}
-                  </span>
                 </span>
               </label>
             );
           })}
         </fieldset>
       )}
-      <p className="text-xs text-muted-foreground">{t("business.stripe.tipRouting.appliesNew")}</p>
       <Button
         type="button"
         className={businessUi.btnPrimary}

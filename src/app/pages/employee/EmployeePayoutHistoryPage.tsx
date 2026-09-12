@@ -19,12 +19,26 @@ export function EmployeePayoutHistoryPage() {
           description={t("employee.payouts.history.subtitle")}
           backAriaLabel={t("employee.payouts.backAria")}
           backVariant="subtle"
-          actions={<EmployeeViewInStripeButton />}
+          actions={
+            <div className="w-full min-w-0 sm:w-auto">
+              <EmployeeViewInStripeButton className="whitespace-normal" />
+            </div>
+          }
         />
         <Tabs defaultValue="caretip" className="gap-6">
           <TabsList className="h-auto w-full max-w-full flex-wrap sm:w-fit" aria-label={t("employee.payouts.history.tabsAria")}>
-            <TabsTrigger value="caretip">{t("employee.payouts.history.caretipTab")}</TabsTrigger>
-            <TabsTrigger value="bank">{t("employee.payouts.history.bankTab")}</TabsTrigger>
+            <TabsTrigger
+              value="caretip"
+              className="h-auto min-h-9 min-w-0 flex-1 whitespace-normal px-2.5 py-1.5 text-center leading-snug sm:flex-none sm:whitespace-nowrap"
+            >
+              {t("employee.payouts.history.caretipTab")}
+            </TabsTrigger>
+            <TabsTrigger
+              value="bank"
+              className="h-auto min-h-9 min-w-0 flex-1 whitespace-normal px-2.5 py-1.5 text-center leading-snug sm:flex-none sm:whitespace-nowrap"
+            >
+              {t("employee.payouts.history.bankTab")}
+            </TabsTrigger>
           </TabsList>
           <TabsContent value="caretip">
             <EmployeePayoutActivityList />

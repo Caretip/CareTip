@@ -77,8 +77,8 @@ export function EmployeePaymentsConnectPage() {
           backAriaLabel={t("employee.payouts.backAria")}
           backVariant="subtle"
           actions={
-            <div className="flex flex-wrap items-center gap-2">
-              <Button asChild variant="outline" className={employeeUi.btnSecondary}>
+            <div className="flex w-full min-w-0 flex-wrap items-center gap-2 sm:w-auto">
+              <Button asChild variant="outline" className={cn(employeeUi.btnSecondary, "h-auto min-h-11 w-full whitespace-normal sm:w-auto")}>
                 <Link to={EMPLOYEE_PAYMENTS_HISTORY_HREF}>{t("employee.payouts.dashboard.viewHistory")}</Link>
               </Button>
             </div>
@@ -87,9 +87,8 @@ export function EmployeePaymentsConnectPage() {
         <EmployeeReceivingPausedBanner receivingPaused={receivingPaused} onReactivated={load} />
         {businessDistribution ? <EmployeeTipDistributionNotice businessName={businessName} /> : null}
         <EmployeePayoutDashboardMetrics eligibility={eligibility} loading={metricsLoading} />
-        <div className="grid items-start gap-4 xl:grid-cols-[minmax(0,1fr)_21rem]">
-          <EmployeeStripeBankPayoutList variant="panel" take={8} />
-          <div className="space-y-4">
+        <div className="grid min-w-0 items-start gap-4 xl:grid-cols-[minmax(0,1fr)_21rem]">
+          <div className="order-1 min-w-0 space-y-4 xl:order-2">
             <EmployeeInstantPayoutCard
               businessDistribution={businessDistribution}
               routingReady={routingReady}
@@ -106,6 +105,9 @@ export function EmployeePaymentsConnectPage() {
               destinationKind={eligibility?.destinationKind ?? null}
               layout="rail"
             />
+          </div>
+          <div className="order-2 min-w-0 xl:order-1">
+            <EmployeeStripeBankPayoutList variant="panel" take={8} />
           </div>
         </div>
       </div>

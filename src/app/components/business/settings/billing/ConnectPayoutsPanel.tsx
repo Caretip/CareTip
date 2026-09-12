@@ -199,12 +199,12 @@ export function ConnectPayoutsPanel({ loading: bootLoading }: { loading?: boolea
         locale={locale}
       />
 
-      <div className="grid items-start gap-4 xl:grid-cols-[minmax(0,1fr)_21rem]">
+      <div className="grid min-w-0 items-start gap-4 xl:grid-cols-[minmax(0,1fr)_21rem]">
       <section
-        className="rounded-2xl border border-border/70 bg-card p-5"
+        className="order-2 min-w-0 rounded-2xl border border-border/70 bg-card p-5 xl:order-1"
         aria-labelledby="caretip-payout-history-heading"
       >
-        <div className="mb-4 flex items-start justify-between gap-3">
+        <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
           <h2 id="caretip-payout-history-heading" className="min-w-0 text-base font-semibold tracking-tight">
             {t("business.billing.payouts.activityTitle")}
           </h2>
@@ -215,7 +215,7 @@ export function ConnectPayoutsPanel({ loading: bootLoading }: { loading?: boolea
             aria-label={t("business.billing.payouts.viewInStripe")}
             onClick={() => void openStripeDashboard()}
             className={cn(
-              "shrink-0 whitespace-nowrap text-sm font-medium text-primary underline-offset-2 hover:underline",
+              "w-fit shrink-0 text-sm font-medium text-primary underline-offset-2 hover:underline",
               "disabled:cursor-not-allowed disabled:opacity-50",
             )}
           >
@@ -309,11 +309,11 @@ export function ConnectPayoutsPanel({ loading: bootLoading }: { loading?: boolea
                             className="text-left text-foreground underline-offset-2 hover:underline"
                             onClick={() => detail.openFor(payout.id, payout)}
                           >
-                            {payoutRefLabel(payout.id)}
+                            <span title={payout.id}>{payoutRefLabel(payout.id)}</span>
                             <span className="sr-only">, {t("business.billing.payouts.openDetail")}</span>
                           </button>
                         </td>
-                        <td className="py-3 pr-4 font-medium tabular-nums">
+                        <td className="whitespace-nowrap py-3 pr-4 font-medium tabular-nums">
                           {formatConnectPayoutAmount(payout.amountCents, payout.currency, locale)}
                         </td>
                         <td className="py-3 pr-4 text-muted-foreground">
@@ -343,15 +343,15 @@ export function ConnectPayoutsPanel({ loading: bootLoading }: { loading?: boolea
             </div>
 
             {total > PAGE_SIZE ? (
-              <div className="mt-4 flex items-center justify-between text-sm text-muted-foreground">
-                <span>
+              <div className="mt-4 flex flex-col gap-3 text-sm text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
+                <span className="min-w-0">
                   {t("business.billing.payouts.showing", {
                     from: skip + 1,
                     to: Math.min(skip + items.length, total),
                     total,
                   })}
                 </span>
-                <div className="flex gap-2">
+                <div className="flex flex-wrap gap-2">
                   <button
                     type="button"
                     className={cn(dashboardWorkspaceUi.btnGhost, "h-9 min-h-9 px-3 text-sm")}
@@ -375,7 +375,7 @@ export function ConnectPayoutsPanel({ loading: bootLoading }: { loading?: boolea
         )}
       </section>
 
-      <div className="space-y-4">
+      <div className="order-1 min-w-0 space-y-4 xl:order-2">
         <InstantBalanceSection
           bootLoading={Boolean(bootLoading)}
           eligibility={eligibility}
@@ -483,12 +483,15 @@ function InstantBalanceSection({
     );
   }
 
+  const thresholdBlocked =
+    eligibility.reason === "below_minimum" || eligibility.reason === "zero_balance";
+
   return (
-    <section className="rounded-2xl border border-border/70 bg-card p-5" aria-labelledby="caretip-payout-balance-heading">
-      <h2 id="caretip-payout-balance-heading" className="sr-only">
+    <section className="min-w-0 rounded-2xl border border-border/70 bg-card p-5" aria-labelledby="caretip-payout-balance-heading">
+      <h2 id="caretip-payout-balance-heading" className="text-sm font-medium text-foreground">
         {t("business.billing.payouts.instant.sectionTitle")}
       </h2>
-      <p className="text-[1.75rem] font-semibold tabular-nums tracking-tight sm:text-[1.875rem]">
+      <p className="mt-2 text-[1.75rem] font-semibold tabular-nums tracking-tight sm:text-[1.875rem]">
         {formatConnectPayoutAmount(receiveCents, currency, locale)}
       </p>
       <p className="mt-1 text-sm text-muted-foreground">
@@ -500,20 +503,20 @@ function InstantBalanceSection({
         <>
           <div className="mt-4 space-y-2.5 border-t border-border/70 pt-4 text-sm">
             <div className="flex items-start justify-between gap-3">
-              <span className="text-muted-foreground">{t("business.stripe.payoutsWorkspace.business.gross")}</span>
-              <span className="tabular-nums">{formatConnectPayoutAmount(grossCents, currency, locale)}</span>
+              <span className="min-w-0 text-muted-foreground">{t("business.stripe.payoutsWorkspace.business.gross")}</span>
+              <span className="shrink-0 tabular-nums">{formatConnectPayoutAmount(grossCents, currency, locale)}</span>
             </div>
             {showFee ? (
               <div className="flex items-start justify-between gap-3">
-                <span className="text-muted-foreground">{t("business.billing.payouts.instant.fee")}</span>
-                <span className="tabular-nums text-red-700 dark:text-red-300">
+                <span className="min-w-0 text-muted-foreground">{t("business.billing.payouts.instant.fee")}</span>
+                <span className="shrink-0 tabular-nums text-red-700 dark:text-red-300">
                   −{formatConnectPayoutAmount(feeCents, currency, locale)}
                 </span>
               </div>
             ) : null}
             <div className="flex items-start justify-between gap-3 border-t border-border/70 pt-2.5 font-medium">
-              <span>{t("business.stripe.payoutsWorkspace.business.net")}</span>
-              <span className="tabular-nums">{formatConnectPayoutAmount(receiveCents, currency, locale)}</span>
+              <span className="min-w-0">{t("business.stripe.payoutsWorkspace.business.net")}</span>
+              <span className="shrink-0 tabular-nums">{formatConnectPayoutAmount(receiveCents, currency, locale)}</span>
             </div>
           </div>
           {last4 ? <p className="mt-3 text-sm text-muted-foreground">•••• {last4}</p> : null}
@@ -532,7 +535,7 @@ function InstantBalanceSection({
             disabled={payoutBusy}
             aria-busy={payoutBusy}
             onClick={onRequestPayout}
-            className={cn(caretipBtnPrimaryCompact, "mt-5 w-full")}
+            className={cn(caretipBtnPrimaryCompact, "mt-5 h-auto min-h-11 w-full whitespace-normal")}
           >
             {payoutBusy ? (
               <>
@@ -547,7 +550,22 @@ function InstantBalanceSection({
           </button>
         </>
       ) : (
-        <div className="mt-4">
+        <div className="mt-4 space-y-3">
+          {thresholdBlocked && last4 ? (
+            <p className="text-sm text-muted-foreground">•••• {last4}</p>
+          ) : null}
+          {thresholdBlocked ? (
+            <button
+              type="button"
+              disabled
+              aria-disabled="true"
+              className={cn(caretipBtnPrimaryCompact, "h-auto min-h-11 w-full whitespace-normal")}
+            >
+              {t("business.billing.payouts.instant.ctaAmount", {
+                amount: formatConnectPayoutAmount(receiveCents, currency, locale),
+              })}
+            </button>
+          ) : null}
           <IneligibleInstantActions
             eligibility={eligibility}
             dashboardBusy={dashboardBusy}
@@ -573,7 +591,7 @@ function IneligibleInstantActions({
 
   if (reason === "not_connected") {
     return (
-      <Link to="/dashboard/stripe/connect" className={cn(dashboardWorkspaceUi.btnSecondary, "h-10 min-h-10 px-4 text-sm")}>
+      <Link to="/dashboard/stripe/connect" className={cn(dashboardWorkspaceUi.btnSecondary, "inline-flex h-auto min-h-10 w-full items-center justify-center whitespace-normal px-4 text-sm sm:w-auto")}>
         {t("business.billing.payouts.instant.connectCta")}
       </Link>
     );
@@ -596,7 +614,7 @@ function IneligibleInstantActions({
       type="button"
       disabled={dashboardBusy}
       onClick={onOpenDashboard}
-      className={cn(dashboardWorkspaceUi.btnSecondary, "h-10 min-h-10 px-4 text-sm")}
+      className={cn(dashboardWorkspaceUi.btnSecondary, "h-auto min-h-10 w-full whitespace-normal px-4 text-sm sm:w-auto")}
     >
       {dashboardLabel}
     </button>
@@ -638,23 +656,23 @@ function InstantPayoutConfirmDialog({
         </DialogHeader>
         <dl className="space-y-3 text-sm">
           {showFee ? (
-            <div className="flex items-baseline justify-between gap-4">
-              <dt className="text-muted-foreground">{t("business.stripe.payoutsWorkspace.business.gross")}</dt>
-              <dd className="tabular-nums font-medium text-foreground">
+            <div className="flex items-start justify-between gap-3">
+              <dt className="min-w-0 text-muted-foreground">{t("business.stripe.payoutsWorkspace.business.gross")}</dt>
+              <dd className="shrink-0 tabular-nums font-medium text-foreground">
                 {formatConnectPayoutAmount(eligibility.instantAvailableGrossCents, currency, locale)}
               </dd>
             </div>
           ) : null}
-          <div className="flex items-baseline justify-between gap-4">
-            <dt className="text-muted-foreground">{t("business.billing.payouts.instant.confirmSending")}</dt>
-            <dd className="text-lg font-semibold tabular-nums text-foreground">
+          <div className="flex items-start justify-between gap-3">
+            <dt className="min-w-0 text-muted-foreground">{t("business.billing.payouts.instant.confirmSending")}</dt>
+            <dd className="shrink-0 text-lg font-semibold tabular-nums text-foreground">
               {formatConnectPayoutAmount(sendCents, currency, locale)}
             </dd>
           </div>
           {showFee ? (
-            <div className="flex items-baseline justify-between gap-4">
-              <dt className="text-muted-foreground">{t("business.billing.payouts.instant.fee")}</dt>
-              <dd className="tabular-nums font-medium text-foreground">
+            <div className="flex items-start justify-between gap-3">
+              <dt className="min-w-0 text-muted-foreground">{t("business.billing.payouts.instant.fee")}</dt>
+              <dd className="min-w-0 text-right tabular-nums font-medium text-foreground">
                 {rate
                   ? t("business.billing.payouts.instant.feeWithRate", {
                       amount: formatConnectPayoutAmount(eligibility.platformFeeCents, currency, locale),
@@ -664,13 +682,13 @@ function InstantPayoutConfirmDialog({
               </dd>
             </div>
           ) : null}
-          <div className="flex items-baseline justify-between gap-4">
-            <dt className="text-muted-foreground">{t("business.billing.payouts.instant.methodLabel")}</dt>
-            <dd className="font-medium text-foreground">{masked}</dd>
+          <div className="flex items-start justify-between gap-3">
+            <dt className="min-w-0 text-muted-foreground">{t("business.billing.payouts.instant.methodLabel")}</dt>
+            <dd className="min-w-0 text-right font-medium text-foreground">{masked}</dd>
           </div>
-          <div className="flex items-baseline justify-between gap-4">
-            <dt className="text-muted-foreground">{t("business.billing.payouts.instant.arrivalLabel")}</dt>
-            <dd className="text-foreground">{t("business.billing.payouts.instant.confirmArrival")}</dd>
+          <div className="flex items-start justify-between gap-3">
+            <dt className="min-w-0 text-muted-foreground">{t("business.billing.payouts.instant.arrivalLabel")}</dt>
+            <dd className="min-w-0 text-right text-foreground">{t("business.billing.payouts.instant.confirmArrival")}</dd>
           </div>
         </dl>
         <DialogFooter className="gap-2 sm:justify-end">
@@ -703,15 +721,17 @@ function PayoutMobileRow({
   const { t } = useTranslation();
   const issue = payoutIssueText(payout, t);
   return (
-    <button type="button" onClick={onOpen} className={cn(businessUi.mobileCard, "w-full text-left")}>
+    <button type="button" onClick={onOpen} className={cn(businessUi.mobileCard, "w-full min-w-0 text-left")}>
       <div className="flex items-start justify-between gap-3">
-        <div>
-          <p className="text-xs text-muted-foreground">{payoutRefLabel(payout.id)}</p>
+        <div className="min-w-0">
+          <p className="truncate font-mono text-xs text-muted-foreground" title={payout.id}>
+            {payoutRefLabel(payout.id)}
+          </p>
           <div className="mt-0.5 font-medium tabular-nums">
             {formatConnectPayoutAmount(payout.amountCents, payout.currency, locale)}
           </div>
         </div>
-        <ConnectPayoutStatusBadge status={payout.status} />
+        <ConnectPayoutStatusBadge className="max-w-[48%] shrink-0 text-right leading-snug" status={payout.status} />
       </div>
       <div className="mt-1.5 text-xs text-muted-foreground">
         {payout.method === "instant"
@@ -757,13 +777,13 @@ function BusinessPayoutMethodCard({
     >
       <div className="pointer-events-none absolute -right-8 -top-10 size-32 rounded-full bg-white/15" />
       <div className="pointer-events-none absolute -bottom-12 right-10 size-28 rounded-full bg-white/10" />
-      <div className="relative flex items-start justify-between gap-3">
-        <p className="text-sm font-semibold tracking-tight">{label}</p>
-        <span className="rounded-full bg-white/20 px-2 py-0.5 text-[0.625rem] font-semibold uppercase tracking-wide">
+      <div className="relative flex min-w-0 flex-wrap items-start justify-between gap-3">
+        <p className="min-w-0 text-sm font-semibold tracking-tight">{label}</p>
+        <span className="shrink-0 rounded-full bg-white/20 px-2 py-0.5 text-[0.625rem] font-semibold uppercase tracking-wide">
           {t("business.stripe.payoutsWorkspace.business.methodDefault")}
         </span>
       </div>
-      <p className="relative mt-8 font-mono text-lg tracking-[0.28em]">
+      <p className="relative mt-8 break-all font-mono text-lg tracking-[0.2em] sm:tracking-[0.28em]">
         {last4 ? `···· ···· ${last4}` : t("business.stripe.payoutsWorkspace.business.methodMasked")}
       </p>
     </div>
@@ -827,16 +847,16 @@ function BusinessPayoutMetrics({
   ] as const;
 
   return (
-    <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 sm:gap-3.5">
+    <div className="grid grid-cols-1 gap-3 md:grid-cols-3 md:gap-3.5">
       {cards.map((card) => (
-        <section key={card.label} className="min-h-[8.25rem] rounded-2xl border border-border/70 bg-card p-4 shadow-none sm:p-5">
+        <section key={card.label} className="min-h-0 rounded-2xl border border-border/70 bg-card p-4 shadow-none md:min-h-[8.25rem] sm:p-5">
           <div className="flex items-start gap-3">
             <span className="inline-flex size-9 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground">
               <card.icon className="size-4" aria-hidden />
             </span>
             <div className="min-w-0">
               <h2 className="text-sm font-medium text-foreground">{card.label}</h2>
-              <p className="mt-3 text-[1.75rem] font-semibold tabular-nums tracking-tight text-foreground sm:text-[1.875rem]">
+              <p className="mt-3 break-words text-[1.75rem] font-semibold tabular-nums tracking-tight text-foreground sm:text-[1.875rem]">
                 {card.value}
               </p>
               <p className="mt-1 text-xs leading-snug text-muted-foreground">{card.hint}</p>

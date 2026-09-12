@@ -40,7 +40,7 @@ export function ConnectPayoutStatusBadge({
   const { t } = useTranslation();
   const label = t(payoutStatusI18nKey(status), { defaultValue: status });
   return (
-    <span className={cn("inline-flex items-center gap-2 text-sm", statusTextClass(status), className)}>
+    <span className={cn("inline-flex max-w-full flex-wrap items-center gap-2 text-sm", statusTextClass(status), className)}>
       <span className={cn("size-2 shrink-0 rounded-full", statusDotClass(status))} aria-hidden />
       <span className="sr-only">{t("business.billing.payouts.colStatus")}: </span>
       {label}

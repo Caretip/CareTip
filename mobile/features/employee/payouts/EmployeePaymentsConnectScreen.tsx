@@ -233,9 +233,6 @@ export function EmployeePaymentsConnectScreen() {
               : t("employeePayouts.distributionTitle")}
           </Text>
           <Text style={styles.muted} {...textA11y}>
-            {t("employeePayouts.distributionBody")}
-          </Text>
-          <Text style={styles.muted} {...textA11y}>
             {t("employeePayouts.distributionNote")}
           </Text>
         </View>

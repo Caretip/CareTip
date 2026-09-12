@@ -115,13 +115,7 @@ export function BusinessPayoutsCareTipView() {
             ? t("business.stripe.payoutsWorkspace.caretip.businessLead")
             : t("business.stripe.payoutsWorkspace.caretip.directLead")}
         </p>
-        {isBusinessDistribution ? (
-          <ol className="mt-4 max-w-xl space-y-1.5 text-sm text-foreground">
-            <li>{t("business.stripe.payoutsWorkspace.caretip.businessStep1")}</li>
-            <li>{t("business.stripe.payoutsWorkspace.caretip.businessStep2")}</li>
-            <li>{t("business.stripe.payoutsWorkspace.caretip.businessStep3")}</li>
-          </ol>
-        ) : (
+        {isBusinessDistribution ? null : (
           <dl className="mt-4 grid gap-3 sm:grid-cols-2">
             <div className="rounded-lg border border-border/80 bg-muted/20 p-3">
               <dt className="text-xs font-medium text-muted-foreground">
@@ -141,7 +135,6 @@ export function BusinessPayoutsCareTipView() {
             </div>
           </dl>
         )}
-        <p className="mt-4 text-xs text-muted-foreground">{t("business.stripe.payoutsWorkspace.caretip.appliesNew")}</p>
         <Button asChild variant="outline" className={cn(businessUi.btnSecondary, "mt-4 h-auto min-h-11")}>
           <Link to="/dashboard/stripe/connect">{t("business.stripe.payoutsWorkspace.caretip.changeOnConnect")}</Link>
         </Button>
@@ -201,9 +194,10 @@ export function BusinessPayoutsCareTipView() {
             <div className={businessUi.mobileList}>
               {rows.map((row) => (
                 <div key={row.id} className={businessUi.mobileCard}>
-                  <p className="text-sm font-medium">{row.name}</p>
+                  <p className="min-w-0 break-words text-sm font-medium">{row.name}</p>
                   <div className="mt-2">
                     <FinanceStatusPill
+                      className="max-w-full whitespace-normal"
                       tone={PILL_TONE[row.connectionState]}
                       label={t(`business.staffPage.payoutState.${row.connectionState}`)}
                     />
@@ -227,7 +221,7 @@ export function BusinessPayoutsCareTipView() {
                 <tbody>
                   {rows.map((row) => (
                     <tr key={row.id} className="border-b border-border/70 last:border-0">
-                      <td className="py-3 pr-4 font-medium">{row.name}</td>
+                      <td className="max-w-[20rem] py-3 pr-4 font-medium break-words">{row.name}</td>
                       <td className="py-3">
                         <FinanceStatusPill
                           className="w-fit"

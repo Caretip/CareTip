@@ -171,7 +171,7 @@
    ============================================================================= */
 @media (max-width: 767px) {
   .caretip-landing .caretip-hero-section--full-bg {
-    --caretip-hero-gap-body-cta: 2.25rem;
+    --caretip-hero-gap-body-cta: 0.75rem;
     --caretip-hero-gap-cta-trust: 1rem;
     --caretip-hero-gap-trust-benefits: 1.25rem;
   }

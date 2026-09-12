@@ -54,8 +54,8 @@
     --caretip-hero-body-size: clamp(1rem, 2.8vw, 1.0625rem);
     --caretip-hero-body-lh: 1.55;
     --caretip-hero-gap-tagline: 0.875rem;
-    --caretip-hero-gap-headline-body: 0.9375rem;
-    --caretip-hero-gap-body-cta: 2.25rem;
+    --caretip-hero-gap-headline-body: 0.75rem;
+    --caretip-hero-gap-body-cta: 0.75rem;
     --caretip-hero-gap-cta-trust: 0.875rem;
     --caretip-hero-gap-trust-benefits: 1.125rem;
     --caretip-hero-subtitle-measure: min(100%, 18rem);

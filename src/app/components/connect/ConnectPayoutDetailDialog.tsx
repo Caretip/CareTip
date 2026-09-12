@@ -79,6 +79,9 @@ export function ConnectPayoutDetailDialog({
           </p>
         ) : payout ? (
           <dl>
+            <DetailRow label={t("business.stripe.payoutsWorkspace.business.colPayout")}>
+              <span className="break-all font-mono text-xs">{payout.id}</span>
+            </DetailRow>
             {showBusiness && admin ? (
               <DetailRow label={t("admin.connectPayoutsPage.colRecipient")}>
                 <span className="font-medium">

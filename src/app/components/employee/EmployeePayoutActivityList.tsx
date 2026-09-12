@@ -62,7 +62,6 @@ export function EmployeePayoutActivityList() {
         <h2 id="employee-payout-activity-heading" className="sr-only">
           {t("employee.payouts.history.caretipTab")}
         </h2>
-        <p className="text-sm text-muted-foreground">{t("employee.payouts.history.caretipHint")}</p>
       </div>
       {items == null ? (
         <p className="text-sm text-muted-foreground">{t("employee.payouts.activityLoading")}</p>
@@ -109,11 +108,11 @@ export function EmployeePayoutActivityList() {
                   const kind = employeePayoutActivityKind(row);
                   return (
                     <tr key={row.id} className="border-b border-border/70 last:border-0">
-                      <td className="py-2.5 pr-3 text-muted-foreground">
+                      <td className="whitespace-nowrap py-2.5 pr-3 text-muted-foreground">
                         {formatBerlinDateTime(row.createdAt, i18n.language)}
                       </td>
-                      <td className="py-2.5 pr-3">{t(employeePayoutActivityKindKey(kind))}</td>
-                      <td className="py-2.5 pr-3 text-right font-medium tabular-nums">
+                      <td className="max-w-[18rem] py-2.5 pr-3">{t(employeePayoutActivityKindKey(kind))}</td>
+                      <td className="whitespace-nowrap py-2.5 pr-3 text-right font-medium tabular-nums">
                         {formatEur(row.activityCents / 100)}
                       </td>
                       <td className="py-2.5">
@@ -135,11 +134,11 @@ export function EmployeePayoutActivityList() {
             </table>
           </div>
           {total > PAGE_SIZE ? (
-            <div className="flex items-center justify-between gap-3 pt-2">
-              <p className="text-xs text-muted-foreground">
+            <div className="flex flex-col gap-3 pt-2 sm:flex-row sm:items-center sm:justify-between">
+              <p className="min-w-0 text-xs text-muted-foreground">
                 {t("employee.payouts.history.showing", { from, to, total })}
               </p>
-              <div className="flex gap-2">
+              <div className="flex flex-wrap gap-2">
                 <Button type="button" variant="outline" size="sm" disabled={skip <= 0} onClick={() => load(Math.max(0, skip - PAGE_SIZE))}>
                   {t("employee.payouts.history.prev")}
                 </Button>
@@ -172,6 +171,7 @@ function ActivityMobileRow({ row, locale }: { row: EmployeePayableActivityItem; 
         <div className="mt-1">
           {employeePayoutActivityShowsStatusPill(kind) ? (
             <FinanceStatusPill
+              className="max-w-full whitespace-normal"
               tone={employeePayoutActivityTone(kind)}
               label={t(employeePayoutActivityStatusKey(kind))}
             />

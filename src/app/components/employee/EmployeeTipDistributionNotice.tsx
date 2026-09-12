@@ -26,8 +26,7 @@ export function EmployeeTipDistributionNotice(props: {
           <h2 id="employee-tip-distribution-heading" className="text-sm font-semibold tracking-tight">
             {title}
           </h2>
-          <p className="text-sm leading-snug text-muted-foreground">{t("employee.payouts.distribution.body")}</p>
-          <p className="text-xs leading-snug text-muted-foreground">{t("employee.payouts.distribution.note")}</p>
+          <p className="text-sm leading-snug text-muted-foreground">{t("employee.payouts.distribution.note")}</p>
         </div>
       </div>
     </section>
