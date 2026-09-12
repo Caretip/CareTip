@@ -227,6 +227,12 @@ function runStaticGuards() {
     fail("neutral-connected-wording", "Unexpected UI mapping");
   }
 
+  if (toEmployeePayoutConnectionState(StripeConnectStatus.ready, true, false) === "action_required") {
+    pass("ready-without-payouts-not-connected", "ready + payouts disabled is not shown as connected");
+  } else {
+    fail("ready-without-payouts-not-connected", "Expected action_required when payouts are disabled");
+  }
+
   const none = employeePayoutUiPhase({
     loading: false,
     error: null,

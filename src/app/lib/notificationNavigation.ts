@@ -104,8 +104,8 @@ export function resolveInboxNotificationDestination(
   }
 
   if (type === "payout_paid" || type === "payout_completed") {
-    if (role === "employee") return "/employee/tip-history";
-    if (role === "business") return "/dashboard/tips/transactions";
+    if (role === "employee") return "/employee/payments/history";
+    if (role === "business") return "/dashboard/stripe/payouts";
   }
 
   if (type === "employee_invited") {
@@ -155,7 +155,7 @@ export function resolveInboxNotificationActionKey(
   const tid = templateId(notification);
 
   if (type === "tip_received" || type === "qr_payment_success") return "viewTip";
-  if (type === "payout_paid" || type === "payout_completed") return "viewTip";
+  if (type === "payout_paid" || type === "payout_completed") return "viewPayout";
   if (type === "employee_invited" && tid !== "employee_activated") return "viewTeam";
   if (type === "qr_scan") return "viewQrCodes";
   if (type === "new_login") return "reviewSecurity";

@@ -43,7 +43,7 @@ import { FeatureGate } from "../../components/subscription/FeatureGate";
 import { EmployeeDashboardMetricsGrid } from "../../components/employee/EmployeeDashboardMetricsGrid";
 import { DashboardAnalyticsPeriodToggle } from "../../components/dashboard/DashboardAnalyticsPeriodToggle";
 import { formatEur } from "../../lib/formatEur";
-import { FixPrompt } from "../../components/FixPrompt";
+import { EmployeeStripeConnectPrompt } from "../../components/employee/EmployeeStripeConnectPrompt";
 import { EmployeeQRCodeModal } from "../../components/employee/EmployeeQRCodeModal";
 import employeeHeroWebp from "../../../../images/foremployee.webp";
 import employeeHeroAvif from "../../../../images/foremployee.avif";
@@ -630,14 +630,8 @@ export const EmployeeDashboard = memo(function EmployeeDashboard() {
         </section>
 
         <div className={cn(employeeUi.section, "employee-dashboard-section pb-6 pt-1")}>
-          <FixPrompt
-            id="profilePhoto"
-            issueActive={!user.avatar}
-            conditionVersion={user.avatar ? "has_photo" : "missing_photo"}
-            title={t("employee.dashboard.fixPhotoTitle")}
-            description={t("employee.dashboard.fixPhotoDesc")}
-            actionLabel={t("employee.dashboard.fixPhotoAction")}
-            actionTo="/employee/settings"
+          <EmployeeStripeConnectPrompt
+            density="compact"
             className="employee-dashboard-fix-prompt"
           />
 

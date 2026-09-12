@@ -959,8 +959,15 @@ export async function handlePaymentSuccess(paymentIntentId: string): Promise<voi
     }
   }
 
-  const emitSnapshot = await loadTipEmitSnapshot(pending.employeeId, pending.businessId);
+  let emitSnapshot = await loadTipEmitSnapshot(pending.employeeId, pending.businessId);
   if (!emitSnapshot) {
+    emitSnapshot = await loadTipEmitSnapshot(null, pending.businessId);
+  }
+  if (!emitSnapshot) {
+    console.info("[realtime] tip.emit_skipped_no_snapshot", {
+      paymentIntentId,
+      businessId: pending.businessId,
+    });
     return;
   }
 
@@ -1278,6 +1285,21 @@ export async function handleSuccessfulTipPayment(session: Stripe.Checkout.Sessio
         { ...tip, customerName: customerNameRaw || null },
         emitSnapshot,
       );
+    } else {
+      const fallback =
+        (await loadTipEmitSnapshot(tip.employeeId, tip.businessId)) ??
+        (await loadTipEmitSnapshot(null, tip.businessId));
+      if (fallback) {
+        await emitTipSocketWithSnapshot(
+          { ...tip, customerName: customerNameRaw || null },
+          fallback,
+        );
+      } else {
+        console.info("[realtime] tip.emit_skipped_no_snapshot", {
+          tipId: tip.id,
+          businessId: tip.businessId,
+        });
+      }
     }
   } catch (err) {
     const code = (err as { code?: string })?.code;

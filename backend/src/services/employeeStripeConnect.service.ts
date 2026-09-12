@@ -172,6 +172,7 @@ function toEmployeeConnectDto(row: {
     connectionState: toEmployeePayoutConnectionState(
       hasAccount ? row?.stripeConnectStatus : StripeConnectStatus.not_connected,
       hasAccount,
+      row?.stripePayoutsEnabled === true,
     ),
     stripeConfigured: isStripeConfigured(),
     hasAccount,

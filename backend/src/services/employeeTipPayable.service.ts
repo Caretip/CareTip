@@ -471,6 +471,32 @@ export async function listEmployeePayableActivityForEmployee(
   };
 }
 
+/**
+ * Read-only observability for the Business Payouts CareTip view.
+ * Does not change routing, transfers, or payable amounts.
+ */
+export async function employeeTipHoldObservabilityForBusiness(businessId: string): Promise<{
+  heldPlatformCents: number;
+  heldRowCount: number;
+}> {
+  const rows = await prisma.employeeTipPayable.findMany({
+    where: { businessId, status: EmployeeTipPayableStatus.held_platform },
+    select: {
+      payableCents: true,
+      transferredCents: true,
+      reversedCents: true,
+      refundedCents: true,
+      disputedOpenCents: true,
+      disputedLostCents: true,
+    },
+  });
+  let heldPlatformCents = 0;
+  for (const row of rows) {
+    heldPlatformCents += remainingPayableCents(row);
+  }
+  return { heldPlatformCents, heldRowCount: rows.length };
+}
+
 export function routingModeFromClient(value: unknown): EmployeeTipPayoutMode | null {
   if (value === "direct_to_employee" || value === EmployeeTipPayoutMode.direct_to_employee) {
     return EmployeeTipPayoutMode.direct_to_employee;

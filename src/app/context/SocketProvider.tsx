@@ -112,7 +112,13 @@ export function SocketProvider({ children }: { children: ReactNode }) {
       setConnected(false);
       setConnectionStatus("disconnected");
     };
-    const onReconnectAttempt = () => setConnectionStatus("reconnecting");
+    const onReconnectAttempt = () => {
+      setConnectionStatus("reconnecting");
+      const fresh = getMemoryAccessToken();
+      if (fresh) {
+        s.auth = { token: fresh };
+      }
+    };
     const onReconnect = () => {
       setConnected(true);
       setConnectionStatus("connected");

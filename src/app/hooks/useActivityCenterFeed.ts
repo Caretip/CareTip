@@ -275,8 +275,8 @@ export function useActivityCenterFeed({ enabled, businessId, filter }: UseActivi
     if (!socket || !enabled) return;
     return subscribeActivityCreated(socket, (item, meta) => {
       const dedupeId = meta?.eventId ?? item.id;
-      if (!shouldProcessRealtimeEvent(dedupeId)) return;
-      if (!shouldProcessRealtimeEvent(`activity-row:${item.id}`)) return;
+      if (!shouldProcessRealtimeEvent(dedupeId, "activity-center")) return;
+      if (!shouldProcessRealtimeEvent(`activity-row:${item.id}`, "activity-center")) return;
       if (businessId && meta?.businessId && meta.businessId !== businessId) return;
       setPool((prev) => mergeById(prev, [item], "prepend"));
       if (matchesActivityFilter(item, filterRef.current, timezoneRef.current)) {

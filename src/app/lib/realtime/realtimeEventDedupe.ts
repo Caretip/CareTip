@@ -10,12 +10,31 @@ function pruneSeen(set: Set<string>): void {
   for (const id of drop) set.delete(id);
 }
 
-export function shouldProcessRealtimeEvent(eventId: string | undefined | null): boolean {
+/**
+ * Deduplicate canonical + legacy socket aliases *per consumer*.
+ * A global (unscoped) set would let the first dashboard listener swallow
+ * `tip.received` so a second listener never patched KPIs / charts.
+ */
+export function shouldProcessRealtimeEvent(
+  eventId: string | undefined | null,
+  scope = "default",
+): boolean {
   if (!eventId?.trim()) return true;
-  if (seenEventIds.has(eventId)) return false;
-  seenEventIds.add(eventId);
+  const key = `${scope}::${eventId.trim()}`;
+  if (seenEventIds.has(key)) return false;
+  seenEventIds.add(key);
   pruneSeen(seenEventIds);
   return true;
+}
+
+/** Collapse `tip.received` envelope UUID and legacy `tip_received` onto the tip id. */
+export function tipRealtimeDedupeId(
+  payload: { tip?: { id?: string } } | null | undefined,
+  eventId?: string,
+): string | undefined {
+  const tipId = payload?.tip?.id?.trim();
+  if (tipId) return `tip:${tipId}`;
+  return eventId?.trim() || undefined;
 }
 
 /** Dedupe inbox notifications across legacy + canonical socket events. */
@@ -29,7 +48,7 @@ export function shouldProcessNotificationRealtime(
     seenNotificationIds.add(nid);
     pruneSeen(seenNotificationIds);
   }
-  return shouldProcessRealtimeEvent(eventId ?? nid);
+  return shouldProcessRealtimeEvent(eventId ?? nid, "inbox");
 }
 
 export function resetRealtimeEventDedupeForTests(): void {

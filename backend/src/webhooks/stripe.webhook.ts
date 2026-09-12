@@ -57,6 +57,7 @@ const TIP_EVENT_TYPES = new Set([
 const CONNECT_EVENT_TYPES = new Set(["account.updated"]);
 
 router.post("/stripe", async (req: Request, res: Response) => {
+  const webhookReceivedAt = Date.now();
   const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
   const sig = req.headers["stripe-signature"];
 
@@ -263,10 +264,16 @@ router.post("/stripe", async (req: Request, res: Response) => {
       phase: "event_handler",
       eventType: event.type,
       eventId: event.id,
+      durationMs: Date.now() - webhookReceivedAt,
     });
     return res.status(500).json({ received: false });
   }
 
+  console.info("[stripe.webhook] processed", {
+    eventId: event.id,
+    type: event.type,
+    durationMs: Date.now() - webhookReceivedAt,
+  });
   res.json({ received: true });
 });
 

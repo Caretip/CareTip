@@ -11,6 +11,7 @@ import {
 import {
   getPayoutForBusiness,
   listPayoutsForBusiness,
+  summarizePayoutsForBusiness,
 } from "../services/stripeConnectPayout.service.js";
 import {
   createInstantPayoutForBusiness,
@@ -185,10 +186,29 @@ export async function listMyConnectPayouts(req: Request, res: Response) {
 
     const take = Math.min(Math.max(Number(req.query.take) || 50, 1), 100);
     const skip = parseBoundedSkip(req.query.skip);
-    const result = await listPayoutsForBusiness(ctx.businessId, { take, skip });
+    const q = typeof req.query.q === "string" ? req.query.q : undefined;
+    const status = typeof req.query.status === "string" ? req.query.status : undefined;
+    const method = typeof req.query.method === "string" ? req.query.method : undefined;
+    const result = await listPayoutsForBusiness(ctx.businessId, { take, skip, q, status, method });
     return res.json(result);
   } catch (err) {
     logServerError("connect.listMyConnectPayouts", err);
+    return res.status(400).json({ message: connectClientMessage(err) });
+  }
+}
+
+/**
+ * GET /api/me/connect/payouts/summary
+ * StripeConnectPayout aggregates for the JWT business. Not a frontend total.
+ */
+export async function getMyConnectPayoutSummary(req: Request, res: Response) {
+  try {
+    const ctx = await resolveManagerBusiness(req);
+    if (!ctx.ok) return res.status(ctx.status).json({ message: ctx.message });
+    const summary = await summarizePayoutsForBusiness(ctx.businessId);
+    return res.json(summary);
+  } catch (err) {
+    logServerError("connect.getMyConnectPayoutSummary", err);
     return res.status(400).json({ message: connectClientMessage(err) });
   }
 }

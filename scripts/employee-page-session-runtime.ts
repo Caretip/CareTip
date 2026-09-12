@@ -344,11 +344,13 @@ if (
 const tipHistory = read("src/app/pages/shared/TipsActivityPage.tsx");
 if (
   tipHistory.includes("readEmployeeTipsHistorySnapshot") &&
-  tipHistory.includes("() => boot?.items ?? []")
+  tipHistory.includes("() => boot?.items ?? []") &&
+  tipHistory.includes("useTipsActivityRealtime") &&
+  tipHistory.includes("mergeLiveTipIntoActivity")
 ) {
-  pass("Tip History sync-inits list state from the session snapshot");
+  pass("Tip History sync-inits list state from the session snapshot and applies live tips");
 } else {
-  fail("Tip History still starts empty then hydrates in an effect");
+  fail("Tip History still starts empty then hydrates in an effect, or is missing realtime merge");
 }
 
 const goals = read("src/app/pages/employee/EmployeeTipGoalsPage.tsx");

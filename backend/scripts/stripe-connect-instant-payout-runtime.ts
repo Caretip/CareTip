@@ -258,7 +258,9 @@ function runStatic() {
     !en.includes("Platform Instant application fee") &&
     !de.includes("Platform Instant application fee") &&
     JSON.parse(en).common.cancel &&
-    JSON.parse(de).common.cancel
+    JSON.parse(de).common.cancel &&
+    ui.includes("const sendCents = eligibility.instantAvailableNetCents") &&
+    !ui.includes("showFee ? eligibility.instantAvailableGrossCents")
   ) {
     pass("static-ui-i18n", "Payouts panel + EN/DE Instant copy + common.cancel present");
   } else {
@@ -328,6 +330,70 @@ async function runMocked() {
     } else {
       fail("create-idempotent", `calls=${createCalls} ids ${created.payout.id} vs ${replay.payout.id}`);
     }
+
+    if (elig.balancesRetrieved === true && elig.availableCents === 10_000) {
+      pass("elig-standard-balances", "Standard available comes from Stripe balance.available");
+    } else {
+      fail("elig-standard-balances", JSON.stringify(elig));
+    }
+
+    await prisma.business.update({
+      where: { id: venue.businessId },
+      data: { stripePayoutsEnabled: false },
+    });
+    __setInstantPayoutStripeFnsForTests({
+      ...eligibleStripeFns(),
+      retrieveAccount: async () => ({ country: "DE", payouts_enabled: false, charges_enabled: true }),
+      retrieveBalance: async () =>
+        ({
+          object: "balance",
+          available: [{ amount: 1234, currency: "eur" }],
+          pending: [{ amount: 5678, currency: "eur" }],
+          instant_available: [{ amount: 900, currency: "eur" }],
+        }) as unknown as Stripe.Balance,
+    });
+    const disabledBal = await getInstantPayoutEligibilityForBusiness(venue.businessId);
+    if (
+      !disabledBal.eligible &&
+      disabledBal.reason === "payouts_disabled" &&
+      disabledBal.balancesRetrieved === true &&
+      disabledBal.availableCents === 1234 &&
+      disabledBal.pendingCents === 5678
+    ) {
+      pass("elig-payouts-disabled-keeps-standard-balances", "Instant-ineligible still returns Stripe available/pending");
+    } else {
+      fail("elig-payouts-disabled-keeps-standard-balances", JSON.stringify(disabledBal));
+    }
+    await prisma.business.update({
+      where: { id: venue.businessId },
+      data: { stripePayoutsEnabled: true },
+    });
+
+    __setInstantPayoutStripeFnsForTests({
+      ...eligibleStripeFns(),
+      createInstantPayout: async (args) => {
+        createCalls += 1;
+        return {
+          id: "po_test_instant_ok",
+          object: "payout",
+          amount: args.amountCents,
+          arrival_date: Math.floor(Date.now() / 1000),
+          automatic: false,
+          created: Math.floor(Date.now() / 1000),
+          currency: "eur",
+          description: null,
+          destination: args.destination,
+          failure_code: null,
+          failure_message: null,
+          livemode: false,
+          metadata: {},
+          method: "instant",
+          source_type: "card",
+          status: "pending",
+          type: "bank_account",
+        } as Stripe.Payout;
+      },
+    });
 
     const paidEvent = {
       id: `evt_ip_paid_${Date.now()}`,
@@ -417,12 +483,23 @@ async function runMocked() {
     __setInstantPayoutStripeFnsForTests({
       retrieveAccount: async () => ({ country: "BR", payouts_enabled: true, charges_enabled: true }),
       retrieveBalance: async () =>
-        ({ object: "balance", available: [], pending: [], instant_available: [] }) as unknown as Stripe.Balance,
+        ({
+          object: "balance",
+          available: [{ amount: 2222, currency: "eur" }],
+          pending: [{ amount: 1111, currency: "eur" }],
+          instant_available: [],
+        }) as unknown as Stripe.Balance,
       listExternalAccounts: async () =>
         ({ object: "list", data: [], has_more: false }) as unknown as Stripe.ApiList<Stripe.BankAccount | Stripe.Card>,
     });
     const br = await getInstantPayoutEligibilityForBusiness(venueB.businessId);
-    if (!br.eligible && br.reason === "country_unsupported") {
+    if (
+      !br.eligible &&
+      br.reason === "country_unsupported" &&
+      br.balancesRetrieved === true &&
+      br.availableCents === 2222 &&
+      br.pendingCents === 1111
+    ) {
       pass("elig-country", "Unsupported connected-account country is not treated as eligible");
     } else {
       fail("elig-country", JSON.stringify(br));

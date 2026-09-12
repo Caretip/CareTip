@@ -3040,11 +3040,14 @@ export async function createEmployeeInstantPayout(idempotencyKey: string): Promi
 }
 
 export type EmployeeStripeBankPayoutItem = {
+  stripePayoutId?: string | null;
   createdAt: string;
+  arrivalDate?: string | null;
   amountCents: number;
   currency: string;
   status: string;
   method: "instant" | "standard" | "unknown";
+  destinationLast4?: string | null;
 };
 
 export async function listEmployeeStripeBankPayouts(params?: {
@@ -3078,6 +3081,8 @@ export type InstantPayoutEligibility = {
   instantAvailableNetCents: number;
   availableCents: number;
   pendingCents: number;
+  /** False when Stripe Balance was not retrieved — do not treat cents as €0.00. */
+  balancesRetrieved?: boolean;
   platformFeeCents: number;
   feeConfigured: boolean;
   targetTotalFeeBps: number;
@@ -3188,15 +3193,58 @@ export type PlatformConnectPayout = ConnectPayout & {
 export async function listMyConnectPayouts(params?: {
   take?: number;
   skip?: number;
+  q?: string;
+  status?: string;
+  method?: string;
 }): Promise<{ items: ConnectPayout[]; total: number }> {
   const sp = new URLSearchParams();
   if (params?.take != null) sp.set("take", String(params.take));
   if (params?.skip != null) sp.set("skip", String(params.skip));
+  if (params?.q) sp.set("q", params.q);
+  if (params?.status) sp.set("status", params.status);
+  if (params?.method) sp.set("method", params.method);
   const qs = sp.toString();
   return apiRequest<{ items: ConnectPayout[]; total: number }>(
     apiPath(`/api/me/connect/payouts${qs ? `?${qs}` : ""}`),
     { method: "GET", headers: getHeaders(), credentials: "include" },
   );
+}
+
+export type BusinessConnectPayoutSummary = {
+  currency: string;
+  mixedCurrency: boolean;
+  totalCount: number;
+  pendingCount: number;
+  pendingAmountCents: number;
+  inTransitCount: number;
+  completedCount: number;
+  completedAmountCents: number;
+  failedCount: number;
+  failedAmountCents: number;
+  canceledCount: number;
+  totalAmountSentCents: number;
+};
+
+export async function getMyConnectPayoutSummary(): Promise<BusinessConnectPayoutSummary> {
+  return apiRequest<BusinessConnectPayoutSummary>(apiPath("/api/me/connect/payouts/summary"), {
+    method: "GET",
+    headers: getHeaders(),
+    credentials: "include",
+  });
+}
+
+export type EmployeeTipRoutingOverview = {
+  mode: EmployeeTipPayoutMode;
+  heldPlatformCents: number;
+  heldRowCount: number;
+};
+
+export async function getEmployeeTipRoutingOverview(): Promise<EmployeeTipRoutingOverview> {
+  return apiRequest<EmployeeTipRoutingOverview>(apiPath("/api/me/connect/employee-tip-routing-overview"), {
+    method: "GET",
+    headers: getHeaders(),
+    credentials: "include",
+  });
 }
 
 export async function getMyConnectPayout(id: string): Promise<ConnectPayout> {

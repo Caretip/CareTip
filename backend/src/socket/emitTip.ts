@@ -33,6 +33,7 @@ export interface NewTipPayload {
  */
 export function emitNewTip(payload: NewTipPayload): void {
   const io = getSocketIO();
+  const publishedAt = new Date().toISOString();
   if (io) {
     if (payload.employeeId) {
       emitTipReceivedCanonical(payload.businessId, payload.employeeId, payload);
@@ -40,6 +41,17 @@ export function emitNewTip(payload: NewTipPayload): void {
       io.to(`employee:${payload.employeeId}`).emit("tip_received", payload);
     }
     io.to(`business:${payload.businessId}`).emit("tip_received", payload);
+    console.info("[realtime] tip.published", {
+      tipId: payload.tip.id,
+      businessId: payload.businessId,
+      hasEmployee: Boolean(payload.employeeId),
+      publishedAt,
+    });
+  } else {
+    console.info("[realtime] tip.publish_skipped_no_socket", {
+      tipId: payload.tip.id,
+      businessId: payload.businessId,
+    });
   }
 
   /** Activity Center projection — coexists with tip sockets; UI migrates in Phase C. */

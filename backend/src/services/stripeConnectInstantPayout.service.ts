@@ -60,6 +60,11 @@ export type InstantPayoutEligibilityDto = {
   instantAvailableNetCents: number;
   availableCents: number;
   pendingCents: number;
+  /**
+   * True only after Stripe Balance was retrieved for this account.
+   * When false, available/pending/instant cents are not Stripe-authoritative (do not display as €0.00).
+   */
+  balancesRetrieved: boolean;
   platformFeeCents: number;
   feeConfigured: boolean;
   targetTotalFeeBps: number;
@@ -163,6 +168,7 @@ function emptyEligibility(partial: Partial<InstantPayoutEligibilityDto> & { reas
     instantAvailableNetCents: 0,
     availableCents: 0,
     pendingCents: 0,
+    balancesRetrieved: false,
     platformFeeCents: 0,
     feeConfigured: false,
     targetTotalFeeBps: CARETIP_INSTANT_PAYOUT_TARGET_TOTAL_FEE_BPS,
@@ -182,6 +188,28 @@ export function toPublicInstantEligibility(snap: InstantSnapshot): InstantPayout
 function balanceAmount(entries: Stripe.Balance.Available[] | undefined, currency: string): number {
   const row = (entries ?? []).find((e) => String(e.currency).toLowerCase() === currency);
   return typeof row?.amount === "number" && Number.isInteger(row.amount) ? row.amount : 0;
+}
+
+function currencyFromBalance(balance: Stripe.Balance): string {
+  const rows = [...(balance.available ?? []), ...(balance.pending ?? [])];
+  const eur = rows.find((row) => String(row.currency).toLowerCase() === "eur");
+  return String((eur ?? rows[0])?.currency ?? "eur").toLowerCase().slice(0, 8);
+}
+
+function withStandardStripeBalances(
+  partial: Partial<InstantPayoutEligibilityDto> & { reason: InstantPayoutReason },
+  balance: Stripe.Balance,
+  currency: string,
+): InstantPayoutEligibilityDto {
+  return {
+    ...emptyEligibility({
+      ...partial,
+      currency,
+      balancesRetrieved: true,
+      availableCents: balanceAmount(balance.available, currency),
+      pendingCents: balanceAmount(balance.pending, currency),
+    }),
+  };
 }
 
 async function retrieveBalance(stripeAccountId: string): Promise<Stripe.Balance> {
@@ -247,21 +275,6 @@ export async function evaluateInstantPayoutForStripeAccount(args: {
     };
   }
 
-  const platform = platformCountry();
-  if (!isInstantCountry(platform)) {
-    return {
-      ...emptyEligibility({
-        connected: true,
-        reason: "country_unsupported",
-        payoutsEnabled: args.payoutsEnabledFallback,
-        canOpenExpressDashboard: true,
-      }),
-      stripeAccountId,
-      destinationId: null,
-      accountCountry: null,
-    };
-  }
-
   let account: Pick<Stripe.Account, "country" | "payouts_enabled" | "charges_enabled">;
   let balance: Stripe.Balance;
   let externals: Stripe.ApiList<Stripe.BankAccount | Stripe.Card>;
@@ -278,28 +291,21 @@ export async function evaluateInstantPayoutForStripeAccount(args: {
 
   const accountCountry = String(account.country ?? "").toUpperCase() || null;
   const payoutsEnabled = account.payouts_enabled === true || args.payoutsEnabledFallback;
-  if (!payoutsEnabled) {
-    return {
-      ...emptyEligibility({
-        connected: true,
-        reason: "payouts_disabled",
-        payoutsEnabled: false,
-        canOpenExpressDashboard: true,
-      }),
-      stripeAccountId,
-      destinationId: null,
-      accountCountry,
-    };
-  }
+  const standardCurrency = currencyFromBalance(balance);
 
-  if (!isInstantCountry(accountCountry)) {
+  if (!isInstantCountry(platformCountry()) || !payoutsEnabled || !isInstantCountry(accountCountry)) {
+    const reason: InstantPayoutReason = !payoutsEnabled ? "payouts_disabled" : "country_unsupported";
     return {
-      ...emptyEligibility({
-        connected: true,
-        reason: "country_unsupported",
-        payoutsEnabled: true,
-        canOpenExpressDashboard: true,
-      }),
+      ...withStandardStripeBalances(
+        {
+          connected: true,
+          reason,
+          payoutsEnabled,
+          canOpenExpressDashboard: true,
+        },
+        balance,
+        standardCurrency,
+      ),
       stripeAccountId,
       destinationId: null,
       accountCountry,
@@ -348,6 +354,7 @@ export async function evaluateInstantPayoutForStripeAccount(args: {
         instantAvailableNetCents: Math.max(0, net),
         availableCents: balanceAmount(balance.available, currency),
         pendingCents: balanceAmount(balance.pending, currency),
+        balancesRetrieved: true,
         canOpenExpressDashboard: true,
       }),
       stripeAccountId,
@@ -380,6 +387,7 @@ export async function evaluateInstantPayoutForStripeAccount(args: {
     instantAvailableNetCents: Math.max(0, net),
     availableCents: balanceAmount(balance.available, currency),
     pendingCents: balanceAmount(balance.pending, currency),
+    balancesRetrieved: true,
     platformFeeCents,
     feeConfigured,
     targetTotalFeeBps: CARETIP_INSTANT_PAYOUT_TARGET_TOTAL_FEE_BPS,

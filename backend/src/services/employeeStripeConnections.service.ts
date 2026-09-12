@@ -27,6 +27,7 @@ export async function listEmployeeStripeConnectionsForBusiness(
         select: {
           stripeAccountId: true,
           stripeConnectStatus: true,
+          stripePayoutsEnabled: true,
         },
       },
     },
@@ -44,6 +45,7 @@ export async function listEmployeeStripeConnectionsForBusiness(
       connectionState: toEmployeePayoutConnectionState(
         row.stripeAccount?.stripeConnectStatus ?? null,
         hasAccount,
+        row.stripeAccount?.stripePayoutsEnabled === true,
       ),
       accountSuffix: suffix || null,
     };

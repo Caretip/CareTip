@@ -293,6 +293,7 @@ export async function getBusinessForAdmin(businessId: string) {
           select: {
             stripeAccountId: true,
             stripeConnectStatus: true,
+            stripePayoutsEnabled: true,
           },
         },
       },
@@ -340,6 +341,7 @@ export async function getBusinessForAdmin(businessId: string) {
       connectionState: toEmployeePayoutConnectionState(
         row.stripeAccount?.stripeConnectStatus ?? null,
         Boolean(row.stripeAccount?.stripeAccountId?.trim()),
+        row.stripeAccount?.stripePayoutsEnabled === true,
       ),
       accountSuffix: row.stripeAccount?.stripeAccountId
         ? stripeAccountSuffix(row.stripeAccount.stripeAccountId)

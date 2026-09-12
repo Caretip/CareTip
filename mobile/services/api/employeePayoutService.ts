@@ -30,6 +30,7 @@ export type EmployeeInstantEligibility = {
   instantAvailableNetCents: number;
   availableCents: number;
   pendingCents: number;
+  balancesRetrieved?: boolean;
   platformFeeCents: number;
   feeConfigured: boolean;
   targetTotalFeeBps: number;
@@ -54,6 +55,7 @@ export type EmployeeInstantPayoutResult = {
 export type EmployeeStripeBankPayoutItem = {
   stripePayoutId?: string | null;
   createdAt: string;
+  arrivalDate?: string | null;
   amountCents: number;
   currency: string;
   status: string;

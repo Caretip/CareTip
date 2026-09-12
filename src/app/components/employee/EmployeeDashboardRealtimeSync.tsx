@@ -3,6 +3,7 @@ import { useDeferSocketConnect, useSocketInstance, useSocketStatus } from "../..
 import { useRealtimeFallback } from "../../hooks/useRealtimeFallback";
 import { useDashboardTabRefocus } from "../../hooks/useDashboardTabRefocus";
 import { subscribeTipReceived } from "../../lib/realtime/subscribeTipReceived";
+import { shouldProcessRealtimeEvent, tipRealtimeDedupeId } from "../../lib/realtime/realtimeEventDedupe";
 import { recordNewEmployeeTip } from "../../lib/employeeNotificationStore";
 import { playChaChingSound } from "../../lib/tipSounds";
 import { isProtectedApiReady } from "../../lib/authRestore";
@@ -45,14 +46,17 @@ export function EmployeeDashboardRealtimeSync({
   useEffect(() => {
     if (!socket || !employeeId) return;
 
-    return subscribeTipReceived(socket, (payload) => {
+    return subscribeTipReceived(socket, (payload, eventId) => {
+      if (!shouldProcessRealtimeEvent(tipRealtimeDedupeId(payload, eventId), "employee-dashboard-tips")) {
+        return;
+      }
       if (payload.employeeId !== employeeId) return;
 
       recordNewEmployeeTip(employeeId, payload.tip);
 
       applyLiveTip({
         tip: payload.tip,
-        employeeId: payload.employeeId,
+        employeeId,
         currentMonthTotal: payload.currentMonthTotal ?? 0,
         monthlyGoal: payload.monthlyGoal ?? null,
       });

@@ -19,7 +19,13 @@ async function businessIdForUser(userId: string): Promise<string | null> {
     where: { userId },
     select: { id: true },
   });
-  return business?.id ?? null;
+  if (business?.id) return business.id;
+  const employee = await prisma.employee.findUnique({
+    where: { userId },
+    select: { businessId: true, isDeleted: true },
+  });
+  if (!employee || employee.isDeleted) return null;
+  return employee.businessId;
 }
 
 function parseItems(raw: unknown): SetupPromptEvaluateItem[] | null {

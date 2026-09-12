@@ -889,15 +889,128 @@ const payoutListSelect = {
   _count: { select: { balanceLines: true } },
 } as const;
 
+export type BusinessPayoutListFilters = {
+  take?: number;
+  skip?: number;
+  q?: string;
+  status?: string;
+  method?: string;
+};
+
+function businessPayoutListWhere(
+  businessId: string,
+  opts?: Pick<BusinessPayoutListFilters, "q" | "status" | "method">,
+): Prisma.StripeConnectPayoutWhereInput {
+  const and: Prisma.StripeConnectPayoutWhereInput[] = [{ businessId }];
+  const statusRaw = opts?.status?.trim().toLowerCase();
+  if (statusRaw && statusRaw !== "all") {
+    const mapped = mapStripePayoutStatus(statusRaw);
+    if (mapped !== StripeConnectPayoutStatus.unknown || statusRaw === "unknown") {
+      and.push({ status: mapped });
+    }
+  }
+  const methodRaw = opts?.method?.trim().toLowerCase();
+  if (methodRaw === "instant" || methodRaw === "standard") {
+    and.push({ method: methodRaw });
+  }
+  const q = opts?.q?.trim().slice(0, 64);
+  if (q) {
+    and.push({
+      OR: [
+        { id: { contains: q, mode: "insensitive" } },
+        { stripePayoutId: { contains: q, mode: "insensitive" } },
+        { description: { contains: q, mode: "insensitive" } },
+      ],
+    });
+  }
+  return { AND: and };
+}
+
+export type BusinessPayoutSummaryDto = {
+  currency: string;
+  mixedCurrency: boolean;
+  totalCount: number;
+  pendingCount: number;
+  pendingAmountCents: number;
+  inTransitCount: number;
+  completedCount: number;
+  completedAmountCents: number;
+  failedCount: number;
+  failedAmountCents: number;
+  canceledCount: number;
+  totalAmountSentCents: number;
+};
+
+/**
+ * Stripe-synced StripeConnectPayout aggregates for this business only.
+ * Totals are server-side sums of stored Stripe payout amounts (integer cents).
+ * Does not convert FX. Does not include CareTip transfers or employee bank payouts.
+ */
+export async function summarizePayoutsForBusiness(businessId: string): Promise<BusinessPayoutSummaryDto> {
+  const existingCount = await prisma.stripeConnectPayout.count({ where: { businessId } });
+  await syncConnectPayoutsFromStripeForBusiness(businessId, { force: existingCount === 0 });
+
+  const groups = await prisma.stripeConnectPayout.groupBy({
+    by: ["status", "currency"],
+    where: { businessId },
+    _sum: { amountCents: true },
+    _count: { _all: true },
+  });
+
+  const currencies = [...new Set(groups.map((g) => g.currency.toLowerCase()))];
+  const currency = currencies.includes("eur") ? "eur" : (currencies[0] ?? "eur");
+  const mixedCurrency = currencies.length > 1;
+  const inCurrency = groups.filter((g) => g.currency.toLowerCase() === currency);
+
+  const empty: BusinessPayoutSummaryDto = {
+    currency,
+    mixedCurrency,
+    totalCount: 0,
+    pendingCount: 0,
+    pendingAmountCents: 0,
+    inTransitCount: 0,
+    completedCount: 0,
+    completedAmountCents: 0,
+    failedCount: 0,
+    failedAmountCents: 0,
+    canceledCount: 0,
+    totalAmountSentCents: 0,
+  };
+
+  return inCurrency.reduce((acc, g) => {
+    const count = g._count._all;
+    const amount = g._sum.amountCents ?? 0;
+    acc.totalCount += count;
+    if (g.status === StripeConnectPayoutStatus.pending) {
+      acc.pendingCount += count;
+      acc.pendingAmountCents += amount;
+    } else if (g.status === StripeConnectPayoutStatus.in_transit) {
+      acc.inTransitCount += count;
+      acc.pendingCount += count;
+      acc.pendingAmountCents += amount;
+    } else if (g.status === StripeConnectPayoutStatus.paid) {
+      acc.completedCount += count;
+      acc.completedAmountCents += amount;
+      acc.totalAmountSentCents += amount;
+    } else if (g.status === StripeConnectPayoutStatus.failed) {
+      acc.failedCount += count;
+      acc.failedAmountCents += amount;
+    } else if (g.status === StripeConnectPayoutStatus.canceled) {
+      acc.canceledCount += count;
+    }
+    return acc;
+  }, empty);
+}
+
 export async function listPayoutsForBusiness(
   businessId: string,
-  opts?: { take?: number; skip?: number },
+  opts?: BusinessPayoutListFilters,
 ): Promise<{ items: ConnectPayoutDto[]; total: number }> {
   const take = Math.min(Math.max(opts?.take ?? 50, 1), 100);
   const skip = Math.max(opts?.skip ?? 0, 0);
-  const where = { businessId };
+  const where = businessPayoutListWhere(businessId, opts);
 
-  const existingCount = await prisma.stripeConnectPayout.count({ where });
+  const existingCount = await prisma.stripeConnectPayout.count({ where: { businessId } });
   const sync = await syncConnectPayoutsFromStripeForBusiness(businessId, {
     force: existingCount === 0,
   });

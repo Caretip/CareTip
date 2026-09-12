@@ -204,11 +204,18 @@ function testGuestConnectMapping(): boolean {
 function testEmployeePayoutAction(): boolean {
   let ok = true;
   const nav = read("src/app/lib/notificationNavigation.ts");
-  if (!nav.includes('if (type === "payout_paid" || type === "payout_completed") return "viewTip"')) {
-    fail("legacy payout notifications must use viewTip, not viewPayout");
+  if (!nav.includes('if (type === "payout_paid" || type === "payout_completed") return "viewPayout"')) {
+    fail("payout notifications must use viewPayout");
     ok = false;
   }
-  if (ok) pass("legacy payout notifications deep-link as tip records");
+  if (
+    !nav.includes('return "/employee/payments/history"') ||
+    !nav.includes('return "/dashboard/stripe/payouts"')
+  ) {
+    fail("payout notifications must deep-link to Stripe payout history");
+    ok = false;
+  }
+  if (ok) pass("payout notifications deep-link to payout history");
   return ok;
 }
 
@@ -251,14 +258,13 @@ function testDetailAndOnboardingPresent(): boolean {
     fail("Update Stripe details / onboarding must keep Account Links");
     ok = false;
   }
-  const employeeConnections = read(
-    "src/app/components/business/settings/billing/EmployeeStripeConnectionsCard.tsx",
+  const connectPage = read("src/app/pages/business/stripe/BusinessStripePages.tsx");
+  const connectFn = connectPage.slice(
+    connectPage.indexOf("export function BusinessStripeConnectPage"),
+    connectPage.indexOf("export function BusinessStripePayoutsPage"),
   );
-  if (
-    !employeeConnections.includes("/dashboard/stripe/payouts") ||
-    !employeeConnections.includes("viewPayouts")
-  ) {
-    fail("Payout history link must remain on Connect employee connections heading");
+  if (connectFn.includes("EmployeeStripeConnectionsCard") || connectFn.includes("getEmployeeStripeConnections")) {
+    fail("Connect page must not duplicate employee Stripe connections; that roster lives on CareTip Payouts");
     ok = false;
   }
   const api = read("src/app/lib/api.ts");
@@ -538,22 +544,26 @@ function testConnectPagePayoutOwnership(): boolean {
     fail("Connect page must not duplicate recent payouts");
     ok = false;
   }
-  if (!pages.includes("EmployeeStripeConnectionsCard") || !pages.includes("ConnectPayoutsPanel")) {
-    fail("Connect must show employee connections; Payouts must keep ConnectPayoutsPanel");
+  if (pages.includes("EmployeeStripeConnectionsCard")) {
+    fail("Connect page must not render EmployeeStripeConnectionsCard");
     ok = false;
   }
-  const connections = read(
-    "src/app/components/business/settings/billing/EmployeeStripeConnectionsCard.tsx",
+  if (!pages.includes("ConnectPayoutsPanel") || !pages.includes("BusinessPayoutsCareTipView")) {
+    fail("Payouts must keep ConnectPayoutsPanel and CareTip employee-connection view");
+    ok = false;
+  }
+  const caretip = read(
+    "src/app/components/business/settings/billing/BusinessPayoutsCareTipView.tsx",
   );
-  if (connections.includes("listMyConnectPayouts") || connections.includes("activityTitle")) {
-    fail("Employee connections section must not render payout history");
+  if (caretip.includes("listMyConnectPayouts") || caretip.includes("activityTitle")) {
+    fail("CareTip employee connections must not render business payout history");
     ok = false;
   }
   if (
-    !connections.includes("getEmployeeStripeConnections") ||
-    connections.includes("getBusinessStats")
+    !caretip.includes("getEmployeeStripeConnections") ||
+    caretip.includes("getBusinessStats")
   ) {
-    fail("Employee connections must use the dedicated snapshot endpoint");
+    fail("Employee connections on CareTip Payouts must use the dedicated snapshot endpoint");
     ok = false;
   }
   const svc = read("backend/src/services/employeeStripeConnections.service.ts");
@@ -570,7 +580,7 @@ function testConnectPagePayoutOwnership(): boolean {
     fail("Payouts page must remain the owner of payout history");
     ok = false;
   }
-  if (ok) pass("Connect owns connections; Payouts owns payout history");
+  if (ok) pass("Connect owns business Stripe + routing; CareTip Payouts owns employee connections");
   return ok;
 }
 

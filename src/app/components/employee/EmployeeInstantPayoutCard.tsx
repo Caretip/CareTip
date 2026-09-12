@@ -37,33 +37,50 @@ const payoutActionClass =
 export function EmployeeInstantPayoutCard(props: {
   businessDistribution?: boolean;
   routingReady?: boolean;
+  /** Compact right-rail layout used on the Payouts dashboard. */
+  layout?: "stack" | "rail";
+  sharedEligibility?: EmployeeInstantPayoutEligibility | null;
+  sharedLoading?: boolean;
+  sharedError?: string | null;
+  onSharedReload?: () => Promise<void>;
+  onSharedEligibilityChange?: (next: EmployeeInstantPayoutEligibility) => void;
 }) {
   const { t } = useTranslation();
-  const [eligibility, setEligibility] = useState<EmployeeInstantPayoutEligibility | null>(null);
-  const [loading, setLoading] = useState(true);
+  const controlled = typeof props.onSharedReload === "function";
+  const [localEligibility, setLocalEligibility] = useState<EmployeeInstantPayoutEligibility | null>(null);
+  const [localLoading, setLocalLoading] = useState(true);
   const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [localError, setLocalError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const inFlightKey = useRef<string | null>(null);
 
+  const eligibility = controlled ? (props.sharedEligibility ?? null) : localEligibility;
+  const loading = controlled ? Boolean(props.sharedLoading) : localLoading;
+  const error = controlled ? (props.sharedError ?? null) : localError;
+
   const reload = useCallback(async () => {
-    setLoading(true);
-    setError(null);
+    if (props.onSharedReload) {
+      await props.onSharedReload();
+      return;
+    }
+    setLocalLoading(true);
+    setLocalError(null);
     try {
       const next = await getEmployeeInstantPayoutEligibility();
-      setEligibility(next);
+      setLocalEligibility(next);
     } catch (err) {
       logClientError("EmployeeInstantPayoutCard", err);
-      setError(toUserFriendlyMessage(err) || t("employee.payouts.instant.loadError"));
-      setEligibility(null);
+      setLocalError(toUserFriendlyMessage(err) || t("employee.payouts.instant.loadError"));
+      setLocalEligibility(null);
     } finally {
-      setLoading(false);
+      setLocalLoading(false);
     }
-  }, [t]);
+  }, [props.onSharedReload, t]);
 
   useEffect(() => {
+    if (controlled) return;
     void reload();
-  }, [reload]);
+  }, [reload, controlled]);
 
   const onRequest = async () => {
     if (!eligibility?.eligible || busy || inFlightKey.current) return;
@@ -73,7 +90,11 @@ export function EmployeeInstantPayoutCard(props: {
     setSuccess(false);
     try {
       const result = await createEmployeeInstantPayout(key);
-      setEligibility(result.eligibility);
+      if (props.onSharedEligibilityChange) {
+        props.onSharedEligibilityChange(result.eligibility);
+      } else {
+        setLocalEligibility(result.eligibility);
+      }
       setSuccess(true);
       toast.success(t("employee.payouts.instant.success"));
     } catch (err) {
@@ -130,7 +151,89 @@ export function EmployeeInstantPayoutCard(props: {
   const last4 = eligibility.destinationLast4;
   const showCta = employeeInstantShowCta(mode);
   const ctaEnabled = employeeInstantCtaEnabled(mode) && !busy;
+  const rail = props.layout === "rail";
   const thresholdId = "employee-instant-threshold";
+
+  if (rail) {
+    return (
+      <section
+        className="rounded-2xl border border-border/70 bg-card p-5"
+        aria-labelledby="employee-instant-heading"
+      >
+        <h2 id="employee-instant-heading" className="sr-only">
+          {t("employee.payouts.instant.title")}
+        </h2>
+        <p className="text-[1.75rem] font-semibold tabular-nums tracking-tight sm:text-[1.875rem]">
+          {receiveLabel}
+        </p>
+        <p className="mt-1 text-sm text-muted-foreground">{t("employee.payouts.instant.youReceive")}</p>
+        <div className="mt-4 space-y-2.5 border-t border-border/70 pt-4 text-sm">
+          <div className="flex items-start justify-between gap-3">
+            <span className="text-muted-foreground">{t("employee.payouts.dashboard.gross")}</span>
+            <span className="tabular-nums">{formatEur((gross > 0 ? gross : net) / 100)}</span>
+          </div>
+          {mode === "ready" || mode === "threshold" ? (
+            eligibility.feeConfigured && eligibility.platformFeeCents > 0 ? (
+              <div className="flex items-start justify-between gap-3">
+                <span className="text-muted-foreground">
+                  {percent
+                    ? t("employee.payouts.dashboard.feeWithPercent", { percent })
+                    : t("employee.payouts.dashboard.fee")}
+                </span>
+                <span className="tabular-nums text-red-700 dark:text-red-300">
+                  −{formatEur(eligibility.platformFeeCents / 100)}
+                </span>
+              </div>
+            ) : (
+              <p className="text-xs text-muted-foreground">{t("employee.payouts.instant.feeUnknown")}</p>
+            )
+          ) : null}
+          <div className="flex items-start justify-between gap-3 border-t border-border/70 pt-2.5 font-medium">
+            <span>{t("employee.payouts.dashboard.net")}</span>
+            <span className="tabular-nums">{receiveLabel}</span>
+          </div>
+        </div>
+        {last4 ? <p className="mt-3 text-sm text-muted-foreground">•••• {last4}</p> : null}
+        {employeeInstantShowEligiblePill(mode) ? (
+          <div className="mt-2">
+            <FinanceStatusPill tone="success" label={t("employee.payouts.instant.eligible")} />
+          </div>
+        ) : null}
+        {mode === "threshold" ? (
+          <p id={thresholdId} className="mt-3 text-sm text-muted-foreground">
+            {t("employee.payouts.instant.belowMinExplain", { amount: minLabel })}
+          </p>
+        ) : null}
+        {mode === "blocked" ? (
+          <p className="mt-3 text-sm text-muted-foreground">{t(employeeInstantBlockedReasonKey(eligibility.reason))}</p>
+        ) : null}
+        {showCta ? (
+          <Button
+            type="button"
+            className={cn(caretipBtnPrimary, "mt-5 h-11 w-full min-w-0 rounded-full px-4")}
+            onClick={() => void onRequest()}
+            disabled={!ctaEnabled}
+            aria-busy={busy}
+            aria-describedby={mode === "threshold" ? thresholdId : undefined}
+            data-instant-cta={ctaEnabled ? "enabled" : "disabled"}
+          >
+            {busy ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : null}
+            {busy
+              ? t("employee.payouts.instant.processing")
+              : t("employee.payouts.instant.ctaAmount", { amount: receiveLabel })}
+          </Button>
+        ) : null}
+        {mode === "threshold" ? (
+          <p className="sr-only">{t("employee.payouts.instant.belowMinAria", { amount: minLabel })}</p>
+        ) : null}
+        {success ? (
+          <p className="mt-3 text-sm text-muted-foreground" role="status">
+            {t("employee.payouts.instant.success")}
+          </p>
+        ) : null}
+      </section>
+    );
+  }
 
   return (
     <div className="space-y-8">

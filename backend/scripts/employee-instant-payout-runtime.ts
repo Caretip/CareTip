@@ -424,11 +424,13 @@ async function main() {
         has_more: false,
         data: [
           {
+            id: "po_emp_hist_1",
             amount: 3000,
             currency: "eur",
             status: "paid",
             method: "instant",
             created: 1_700_000_000,
+            arrival_date: 1_700_086_400,
           },
         ],
       } as unknown as Stripe.ApiList<Stripe.Payout>;
@@ -439,6 +441,11 @@ async function main() {
       pass("history-own-only", "Employee sees only own Stripe payout list");
     } else {
       fail("history-own-only", JSON.stringify({ ownHist, otherHist }));
+    }
+    if (ownHist.items[0]?.arrivalDate === new Date(1_700_086_400 * 1000).toISOString()) {
+      pass("history-arrival-date", "Bank payout list exposes Stripe arrival_date");
+    } else {
+      fail("history-arrival-date", JSON.stringify(ownHist.items[0]));
     }
 
     const emptyHist = mockRes();

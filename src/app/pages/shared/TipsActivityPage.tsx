@@ -26,12 +26,18 @@ import { TipActivityMobileCard } from "@/app/components/business/businessDashboa
 import {
   getPageSessionCache,
   setPageSessionCache,
+  invalidatePageSessionCacheByPrefix,
   PAGE_CACHE_TTL_HIGH_MS,
   PAGE_CACHE_TTL_LOW_MS,
 } from "@/app/lib/pageSessionCache";
 import {
+  EMPLOYEE_TIPS_HISTORY_CACHE_PREFIX,
   readEmployeeTipsHistorySnapshot,
 } from "@/app/lib/employeePageSessionCache";
+import { useTipsActivityRealtime } from "@/app/hooks/useTipsActivityRealtime";
+import { mergeLiveTipIntoActivity } from "@/app/lib/realtime/mergeLiveTipIntoActivity";
+import type { LiveNewTipPayload } from "@/app/lib/realtime/realtimeContracts";
+import { isProtectedApiReady } from "@/app/lib/authRestore";
 import { useBusinessPageBoot } from "@/app/lib/useBusinessPageBoot";
 import { withIdleSuppressSync } from "@/app/lib/idleSuppress";
 import { formatVenueDateTime, resolveBusinessTimezone, setCachedBusinessVenueTimezone, venueLocalTodayKey } from "@/app/lib/businessVenueTime";
@@ -191,6 +197,39 @@ export function TipsActivityPage({ variant = "default", embedded = false }: Tips
   useEffect(() => {
     void load();
   }, [load]);
+
+  const applyLiveTip = useCallback(
+    (payload: LiveNewTipPayload) => {
+      invalidatePageSessionCacheByPrefix(`tips-activity:${variant}:`);
+      invalidatePageSessionCacheByPrefix(EMPLOYEE_TIPS_HISTORY_CACHE_PREFIX);
+      const statusOk = status === "all" || payload.tip.status === status;
+      if (skip === 0 && !debouncedQ && statusOk) {
+        setItems((prev) => mergeLiveTipIntoActivity(prev, payload).items);
+      }
+      void load({ quiet: true });
+    },
+    [debouncedQ, load, skip, status, variant],
+  );
+
+  const catchUpTips = useCallback(() => {
+    invalidatePageSessionCacheByPrefix(`tips-activity:${variant}:`);
+    invalidatePageSessionCacheByPrefix(EMPLOYEE_TIPS_HISTORY_CACHE_PREFIX);
+    void load({ quiet: true });
+  }, [load, variant]);
+
+  useTipsActivityRealtime({
+    enabled:
+      Boolean(user) &&
+      sessionValidated &&
+      isProtectedApiReady() &&
+      (user?.role === "business" || user?.role === "employee"),
+    role: user?.role,
+    businessId: user?.businessId,
+    employeeId: user?.employeeId,
+    variant: isEmployeeHistory ? "employee-history" : "default",
+    onLiveTip: applyLiveTip,
+    onCatchUp: catchUpTips,
+  });
 
   const exportDisabled = !canExportCsv || exporting || loading || items.length === 0;
   const ui = isEmployeeHistory || user?.role === "employee" ? employeeUi : businessUi;

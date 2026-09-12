@@ -13,6 +13,8 @@ export type EmployeeStripeBankPayoutItem = {
   /** Stripe payout id (`po_…`) when Stripe returns one. Never invented. */
   stripePayoutId: string | null;
   createdAt: string;
+  /** Stripe `arrival_date` when present. Never invented. */
+  arrivalDate: string | null;
   amountCents: number;
   currency: string;
   status: string;
@@ -49,6 +51,12 @@ function destinationLast4Of(payout: Stripe.Payout): string | null {
   return typeof last4 === "string" && /^\d{2,4}$/.test(last4) ? last4.slice(-4) : null;
 }
 
+function arrivalDateOf(payout: Stripe.Payout): string | null {
+  const arrival = payout.arrival_date;
+  if (typeof arrival !== "number" || !Number.isFinite(arrival) || arrival <= 0) return null;
+  return new Date(arrival * 1000).toISOString();
+}
+
 export async function listEmployeeStripeBankPayoutsForUser(
   userId: string,
   opts?: { take?: number },
@@ -77,6 +85,7 @@ export async function listEmployeeStripeBankPayoutsForUser(
     const items: EmployeeStripeBankPayoutItem[] = (list.data ?? []).map((payout) => ({
       stripePayoutId: stripePayoutIdOf(payout),
       createdAt: new Date((payout.created ?? 0) * 1000).toISOString(),
+      arrivalDate: arrivalDateOf(payout),
       amountCents: Number.isInteger(payout.amount) ? payout.amount : 0,
       currency: String(payout.currency ?? "eur").toLowerCase(),
       status: String(payout.status ?? "unknown"),

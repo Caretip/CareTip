@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Alert, Linking, Pressable, StyleSheet, Text, View } from "react-native";
 import { useQuery } from "@tanstack/react-query";
 import { Screen } from "@/components/ui/Screen";
 import { ScreenHeader } from "@/components/ui/ScreenHeader";
@@ -14,6 +14,7 @@ import { useAuthUserId, useUserQueryKeys } from "@/services/api/queryKeys";
 import {
   fetchEmployeePayableActivity,
   fetchEmployeeStripeBankPayouts,
+  openEmployeeStripeDashboard,
   type EmployeePayableActivityItem,
   type EmployeeStripeBankPayoutItem,
 } from "@/services/api/employeePayoutService";
@@ -71,6 +72,7 @@ export function EmployeePayoutHistoryScreen() {
   const keys = useUserQueryKeys();
   const [tab, setTab] = useState<HistoryTab>("caretip");
   const [detail, setDetail] = useState<PayoutDetailModel | null>(null);
+  const [openingStripe, setOpeningStripe] = useState(false);
 
   const payablesQuery = useQuery({
     queryKey: [...keys.employeeMe, "payables"] as const,
@@ -113,6 +115,19 @@ export function EmployeePayoutHistoryScreen() {
     });
   };
 
+  const openStripe = async () => {
+    if (openingStripe) return;
+    setOpeningStripe(true);
+    try {
+      const { url } = await openEmployeeStripeDashboard();
+      if (url) await Linking.openURL(url);
+    } catch {
+      Alert.alert(t("employeePayouts.loadError"));
+    } finally {
+      setOpeningStripe(false);
+    }
+  };
+
   return (
     <Screen
       refreshing={payablesQuery.isRefetching || bankQuery.isRefetching}
@@ -122,7 +137,21 @@ export function EmployeePayoutHistoryScreen() {
       }}
       contentContainerStyle={{ gap: spacing.lg }}
     >
-      <ScreenHeader title={t("employeePayouts.historyTitle")} subtitle={t("employeePayouts.historySubtitle")} />
+      <ScreenHeader
+        title={t("employeePayouts.historyTitle")}
+        subtitle={t("employeePayouts.historySubtitle")}
+        trailing={
+          <Pressable
+            onPress={() => void openStripe()}
+            disabled={openingStripe}
+            accessibilityRole="link"
+            accessibilityLabel={t("employeePayouts.viewInStripe")}
+            hitSlop={8}
+          >
+            <Text style={styles.viewInStripe}>{t("employeePayouts.viewInStripe")}</Text>
+          </Pressable>
+        }
+      />
       <PeriodToggle
         value={tab}
         options={[
@@ -285,6 +314,13 @@ function createStyles(colors: ColorPalette) {
       borderBottomColor: colors.border,
     },
     pressed: { opacity: 0.72 },
+    viewInStripe: {
+      ...typography.caption,
+      color: colors.primary,
+      fontWeight: "600",
+      textAlign: "right",
+      maxWidth: 120,
+    },
     rowMain: { flex: 1, gap: 2 },
     rowEnd: { alignItems: "flex-end", gap: spacing.xs },
     rowTitle: { ...typography.body, color: colors.foreground, fontWeight: "600" },

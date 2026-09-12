@@ -18,6 +18,7 @@ const managerConnect = [
 router.get("/connect/status", ...managerConnect, connectController.getMyConnectStatus);
 router.post("/connect/account-link", ...managerConnect, connectController.postMyConnectAccountLink);
 router.post("/connect/login-link", ...managerConnect, connectController.postMyConnectLoginLink);
+router.get("/connect/payouts/summary", ...managerConnect, connectController.getMyConnectPayoutSummary);
 router.get("/connect/payouts", ...managerConnect, connectController.listMyConnectPayouts);
 router.get("/connect/payouts/:id", ...managerConnect, connectController.getMyConnectPayout);
 router.get("/connect/instant-payout", ...managerConnect, connectController.getMyInstantPayoutEligibility);
@@ -26,6 +27,11 @@ router.get(
   "/connect/employee-tip-payout-mode",
   ...managerConnect,
   employeeTipPayoutModeController.getMyEmployeeTipPayoutMode,
+);
+router.get(
+  "/connect/employee-tip-routing-overview",
+  ...managerConnect,
+  employeeTipPayoutModeController.getMyEmployeeTipRoutingOverview,
 );
 router.patch(
   "/connect/employee-tip-payout-mode",

@@ -9,10 +9,14 @@ function pruneSeen(set: Set<string>): void {
   for (const id of drop) set.delete(id);
 }
 
-export function shouldProcessRealtimeEvent(eventId: string | undefined | null): boolean {
+export function shouldProcessRealtimeEvent(
+  eventId: string | undefined | null,
+  scope = "default",
+): boolean {
   if (!eventId?.trim()) return true;
-  if (seenEventIds.has(eventId)) return false;
-  seenEventIds.add(eventId);
+  const key = `${scope}::${eventId.trim()}`;
+  if (seenEventIds.has(key)) return false;
+  seenEventIds.add(key);
   pruneSeen(seenEventIds);
   return true;
 }

@@ -2,6 +2,7 @@ import { useTranslation } from "react-i18next";
 import { EmployeePageHeader } from "../../components/employee/EmployeePageHeader";
 import { EmployeePayoutActivityList } from "../../components/employee/EmployeePayoutActivityList";
 import { EmployeeStripeBankPayoutList } from "../../components/employee/EmployeeStripeBankPayoutList";
+import { EmployeeViewInStripeButton } from "../../components/employee/EmployeeViewInStripeButton";
 import { employeeUi } from "../../components/employee/employeeDashboardUi";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../../components/ui/tabs";
 import { cn } from "@/lib/utils";
@@ -11,13 +12,14 @@ export function EmployeePayoutHistoryPage() {
 
   return (
     <div className={cn(employeeUi.page, "employee-payout-history-page")}>
-      <div className={cn(employeeUi.pageInner, "mx-auto max-w-3xl space-y-8")}>
+      <div className={cn(employeeUi.pageInner, "mx-auto max-w-6xl space-y-8")}>
         <EmployeePageHeader
           kicker={t("dashboardNav.employee.payments")}
           title={t("employee.payouts.history.title")}
           description={t("employee.payouts.history.subtitle")}
           backAriaLabel={t("employee.payouts.backAria")}
           backVariant="subtle"
+          actions={<EmployeeViewInStripeButton />}
         />
         <Tabs defaultValue="caretip" className="gap-6">
           <TabsList className="h-auto w-full max-w-full flex-wrap sm:w-fit" aria-label={t("employee.payouts.history.tabsAria")}>

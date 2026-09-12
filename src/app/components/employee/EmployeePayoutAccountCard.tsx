@@ -13,6 +13,7 @@ import { toUserFriendlyMessage } from "../../lib/errorMessages";
 import { logClientError } from "../../lib/clientLog";
 import { performExternalStripeRedirect } from "../../lib/externalStripeRedirect";
 import { Button } from "../ui/button";
+import { EmployeePayoutMethodCard } from "./EmployeePayoutMethodCard";
 import { employeeUi } from "./employeeDashboardUi";
 import { caretipBtnPrimary } from "@/lib/caretipButtonSystem";
 import { cn } from "@/lib/utils";
@@ -42,6 +43,9 @@ const payoutActionClass =
 export function EmployeePayoutAccountCard(props: {
   /** Authoritative Business routing from connect status; optional until this card’s own load completes. */
   businessDistribution?: boolean;
+  last4?: string | null;
+  destinationKind?: "card" | "bank_account" | null;
+  layout?: "stack" | "rail";
 }) {
   const { t } = useTranslation();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -150,30 +154,53 @@ export function EmployeePayoutAccountCard(props: {
           </Button>
         </div>
       ) : (
-        <section className="space-y-4" aria-labelledby="employee-payout-account-heading">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-            <div className="min-w-0 space-y-2">
-              <h2 id="employee-payout-account-heading" className="text-base font-semibold tracking-tight">
-                {t(
-                  businessDistribution
-                    ? "employee.payouts.accountTitleCompact"
+        <section
+          className={cn(
+            props.layout === "rail" ? "rounded-2xl border border-border/70 bg-card p-5" : "space-y-4",
+          )}
+          aria-labelledby="employee-payout-account-heading"
+        >
+          <div className="flex items-start justify-between gap-3">
+            <h2 id="employee-payout-account-heading" className="text-base font-semibold tracking-tight">
+              {t(
+                businessDistribution
+                  ? "employee.payouts.accountTitleCompact"
+                  : props.layout === "rail"
+                    ? "employee.payouts.dashboard.payoutAccount"
                     : "employee.payouts.accountTitle",
-                )}
-              </h2>
-              <FinanceStatusPill
-                tone={phaseTone(phase)}
-                label={ready ? t("employee.payouts.connectedReady") : t(`employee.payouts.state.${state}`)}
-              />
-              {phase === "ready" && !businessDistribution ? (
-                <p className="max-w-xl text-sm leading-snug text-muted-foreground">
-                  {t("employee.payouts.stripeSchedule")}
-                </p>
-              ) : bodyKey ? (
-                <p className="max-w-xl text-sm leading-snug text-muted-foreground">{t(bodyKey)}</p>
-              ) : null}
+              )}
+            </h2>
+            {props.layout === "rail" && ready && data?.canOpenDashboard ? (
+              <button
+                type="button"
+                className="text-sm font-medium text-primary underline-offset-2 hover:underline disabled:opacity-50"
+                onClick={() => void onDashboard()}
+                disabled={busy != null}
+                data-payout-cta="dashboard"
+              >
+                {t("employee.payouts.dashboard.changeAccount")}
+              </button>
+            ) : null}
+          </div>
+          {props.layout === "rail" && (props.last4 || ready) ? (
+            <div className="mt-4">
+              <EmployeePayoutMethodCard last4={props.last4 ?? null} kind={props.destinationKind ?? null} />
             </div>
-            <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:flex-wrap sm:justify-end">
-              {ready && data?.canOpenDashboard ? (
+          ) : null}
+          <div className={cn("space-y-3", props.layout === "rail" ? "mt-4" : "mt-2")}>
+            <FinanceStatusPill
+              tone={phaseTone(phase)}
+              label={ready ? t("employee.payouts.connectedReady") : t(`employee.payouts.state.${state}`)}
+            />
+            {phase === "ready" && !businessDistribution ? (
+              <p className="max-w-xl text-sm leading-snug text-muted-foreground">
+                {t("employee.payouts.stripeSchedule")}
+              </p>
+            ) : bodyKey ? (
+              <p className="max-w-xl text-sm leading-snug text-muted-foreground">{t(bodyKey)}</p>
+            ) : null}
+            <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:flex-wrap">
+              {props.layout === "rail" && ready && data?.canOpenDashboard ? null : ready && data?.canOpenDashboard ? (
                 <Button
                   type="button"
                   className={cn(caretipBtnPrimary, payoutActionClass)}
@@ -214,7 +241,7 @@ export function EmployeePayoutAccountCard(props: {
             </div>
           </div>
           {data?.stripeConfigured === false ? (
-            <p className="text-xs text-muted-foreground">{t("employee.payouts.notConfigured")}</p>
+            <p className="mt-3 text-xs text-muted-foreground">{t("employee.payouts.notConfigured")}</p>
           ) : null}
         </section>
       )}

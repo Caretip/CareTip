@@ -2,7 +2,7 @@ import { useEffect } from "react";
 import { useDeferSocketConnect, useSocketInstance, useSocketStatus } from "../../hooks/useSocket";
 import { useRealtimeFallback } from "../../hooks/useRealtimeFallback";
 import { subscribeTipReceived } from "../../lib/realtime/subscribeTipReceived";
-import { shouldProcessRealtimeEvent } from "../../lib/realtime/realtimeEventDedupe";
+import { shouldProcessRealtimeEvent, tipRealtimeDedupeId } from "../../lib/realtime/realtimeEventDedupe";
 import type { LiveNewTipPayload } from "../../lib/realtime/realtimeContracts";
 
 type BusinessDashboardRealtimeSyncProps = {
@@ -45,7 +45,9 @@ export function BusinessDashboardRealtimeSync({
     if (!socket || !enabled || !businessId) return;
 
     return subscribeTipReceived(socket, (payload, eventId) => {
-      if (!shouldProcessRealtimeEvent(eventId)) return;
+      if (!shouldProcessRealtimeEvent(tipRealtimeDedupeId(payload, eventId), "business-dashboard-tips")) {
+        return;
+      }
       if (payload.businessId !== businessId) return;
       applyLiveTip(payload);
     });

@@ -34,7 +34,7 @@ export type RealtimeEventEnvelope<T = unknown> = {
 
 export type LiveNewTipPayload = {
   tip: { id: string; amount: number; status: string; createdAt: string };
-  employeeId: string;
+  employeeId: string | null;
   employeeName?: string;
   /** Guest/tipper name when available from payment metadata or transaction row. */
   customerName?: string | null;

@@ -55,7 +55,7 @@ export function useBusinessQrAnalytics(
   useEffect(() => {
     if (!socket || !enabled) return;
     const onQr = (raw: { eventId?: string }) => {
-      if (!shouldProcessRealtimeEvent(raw.eventId)) return;
+      if (!shouldProcessRealtimeEvent(raw.eventId, "business-qr-analytics")) return;
       scheduleReconcile();
     };
     socket.on(REALTIME_EVENTS.QR_SCANNED, onQr);

@@ -14,10 +14,12 @@ export type EmployeePayoutConnectionState =
 export function toEmployeePayoutConnectionState(
   status: StripeConnectStatus | null | undefined,
   hasAccount: boolean,
+  payoutsEnabled?: boolean | null,
 ): EmployeePayoutConnectionState {
   if (!hasAccount) return "not_connected";
   switch (status) {
     case StripeConnectStatus.ready:
+      if (payoutsEnabled === false) return "action_required";
       return "connected";
     case StripeConnectStatus.restricted:
       return "restricted";

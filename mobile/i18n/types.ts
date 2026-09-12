@@ -451,6 +451,7 @@ export type MobileMessages = {
     connectedReady: string;
     payoutAccount: string;
     dashboardCta: string;
+    viewInStripe: string;
     updateDetailsCta: string;
     historyTitle: string;
     historySubtitle: string;

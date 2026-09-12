@@ -802,6 +802,7 @@ async function loadBusinessAnalyticsEmployees(
       select: {
         stripeConnectStatus: true,
         stripeAccountId: true,
+        stripePayoutsEnabled: true,
       },
     },
     user: {
@@ -838,6 +839,7 @@ async function loadBusinessAnalyticsEmployees(
       select: {
         stripeConnectStatus: true,
         stripeAccountId: true,
+        stripePayoutsEnabled: true,
       },
     },
     user: {
@@ -984,6 +986,9 @@ function mapEmployeesToStats(
             typeof emp.stripeAccount.stripeAccountId === "string" &&
             emp.stripeAccount.stripeAccountId.trim(),
         ),
+        "stripeAccount" in emp && emp.stripeAccount
+          ? emp.stripeAccount.stripePayoutsEnabled === true
+          : undefined,
       ),
       tipsTotal: agg.total,
       tipCount: agg.count,

@@ -1335,6 +1335,7 @@ export function useEmployeeDashboardAnalytics(
       if (!prevMerged) return;
 
       const existing = prevMerged.tips ?? [];
+      if (existing.some((row) => row.id === p.tip.id)) return;
       const nextTips = [p.tip, ...existing].slice(0, 50);
 
       const summaryNext: Partial<EmployeeTipsResponse> = {

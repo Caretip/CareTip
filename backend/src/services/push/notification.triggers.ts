@@ -131,7 +131,7 @@ export function onPayoutCompleted(
       select: { role: true },
     });
     const payoutUrl =
-      user?.role === "MANAGER" ? "/dashboard/tips/transactions" : "/employee/transactions";
+      user?.role === "MANAGER" ? "/dashboard/stripe/payouts" : "/employee/payments/history";
 
     await deliverUserNotification({
       userId,

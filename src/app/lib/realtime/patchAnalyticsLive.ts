@@ -175,7 +175,7 @@ export function patchLiveTipAcrossTimeframes(
     amount: payload.tip.amount,
     status: payload.tip.status,
     createdAt: payload.tip.createdAt,
-    employeeId: payload.employeeId,
+    employeeId: payload.employeeId ?? "",
     locationId: null,
     tableId: null,
     staffName: employeeName ?? payload.employeeName ?? null,
