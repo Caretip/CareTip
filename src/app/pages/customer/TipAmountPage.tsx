@@ -45,8 +45,17 @@ export function TipAmountPage() {
   const [selectedAmount, setSelectedAmount] = useState<number | null>(null);
   const [customAmount, setCustomAmount] = useState("");
   const [showCustomInput, setShowCustomInput] = useState(false);
-  const [contextReady, setContextReady] = useState(false);
   const [processing, setProcessing] = useState(false);
+  const [contextReady, setContextReady] = useState(() =>
+    Boolean(
+      employeeId &&
+        isCustomerEmployeeContextReady(employeeId, {
+          businessId,
+          employeeId: employeeIdCtx,
+          employeeName,
+        }),
+    ),
+  );
 
   useEffect(() => {
     if (!employeeId) return;

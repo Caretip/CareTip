@@ -1,6 +1,6 @@
 /**
  * Pre-React boot locale — runs immediately after `#caretip-html-boot` (CSP-safe external file).
- * Visibility of `#caretip-html-boot` is CSS (`html.caretip-html-boot-active`), not this script.
+ * Visibility of `#caretip-html-boot` is CSS (`#caretip-html-boot { display: flex }` until the node is removed).
  * Must stay in sync with:
  *   - `I18N_STORAGE_KEY` / `readStoredLanguage` (src/i18n)
  *   - `resolveCustomerJourneyBootContext` (src/app/lib/appLoadingContexts.ts)
@@ -140,7 +140,7 @@
   };
 
   /**
-   * Locale/tagline only. Visibility is CSS (`display: none` unless `caretip-html-boot-active`).
+   * Locale/tagline only. Visibility is CSS (`#caretip-html-boot { display: flex }` until the node is removed).
    * Must not live in an inline <script>: production CSP is script-src 'self' (no 'unsafe-inline').
    */
   function applyHtmlBootCopy() {
@@ -175,13 +175,102 @@
     /* ignore */
   }
 
+  function isCustomerBootPath(path) {
+    if (
+      path === "/payment" ||
+      path === "/success" ||
+      path === "/rating" ||
+      path === "/tip-complete" ||
+      path === "/tip-amount" ||
+      path === "/select-employee"
+    ) {
+      return true;
+    }
+    if (
+      path.indexOf("/staff/") === 0 ||
+      path.indexOf("/qr/") === 0 ||
+      path.indexOf("/qr-landing/") === 0 ||
+      path.indexOf("/table/") === 0
+    ) {
+      return true;
+    }
+    return isGuestSlugPath(path);
+  }
+
+  /**
+   * Public `/` and guest tip URLs must not uncover an empty #root.
+   * Keep #caretip-html-boot until the destination sets [data-caretip-route-ready]
+   * (or `.caretip-landing` on `/`). Not a timeout.
+   */
+  function publicLandingRouteCommitted() {
+    var doc = global.document;
+    if (!doc) return false;
+    var path = String((global.location && global.location.pathname) || "/")
+      .split("?")[0]
+      .split("#")[0];
+    if (path === "/") {
+      return Boolean(doc.querySelector(".caretip-landing, [data-caretip-route-ready]"));
+    }
+    if (isCustomerBootPath(path)) {
+      return Boolean(doc.querySelector("[data-caretip-route-ready]"));
+    }
+    return true;
+  }
+
+  function installPublicLandingBootRetain() {
+    var doc = global.document;
+    var html = doc && doc.documentElement;
+    if (!doc || !html || typeof html.getAttribute !== "function") return;
+    if (html.getAttribute("data-caretip-boot-retain") === "1") return;
+    if (typeof Element === "undefined" || typeof Node === "undefined") return;
+    if (!Element.prototype || !Node.prototype) return;
+    html.setAttribute("data-caretip-boot-retain", "1");
+
+    var nativeElRemove = Element.prototype.remove;
+    Element.prototype.remove = function () {
+      if (this && this.id === "caretip-html-boot" && !publicLandingRouteCommitted()) return;
+      return nativeElRemove.call(this);
+    };
+
+    var nativeRemoveChild = Node.prototype.removeChild;
+    Node.prototype.removeChild = function (child) {
+      if (child && child.id === "caretip-html-boot" && !publicLandingRouteCommitted()) {
+        return child;
+      }
+      return nativeRemoveChild.call(this, child);
+    };
+
+    var html = doc.documentElement;
+    if (html && html.classList) {
+      var nativeClassRemove = html.classList.remove.bind(html.classList);
+      html.classList.remove = function () {
+        var names = Array.prototype.slice.call(arguments);
+        if (
+          names.indexOf("caretip-html-boot-active") !== -1 &&
+          !publicLandingRouteCommitted()
+        ) {
+          names = names.filter(function (name) {
+            return name !== "caretip-html-boot-active";
+          });
+          if (!names.length) return;
+        }
+        return nativeClassRemove.apply(html.classList, names);
+      };
+    }
+  }
+
   if (global.document) {
     if (global.document.getElementById("caretip-html-boot-tagline")) {
       applyHtmlBootCopy();
+      installPublicLandingBootRetain();
     } else if (global.document.readyState === "loading") {
-      global.document.addEventListener("DOMContentLoaded", applyHtmlBootCopy);
+      global.document.addEventListener("DOMContentLoaded", function () {
+        applyHtmlBootCopy();
+        installPublicLandingBootRetain();
+      });
     } else {
       applyHtmlBootCopy();
+      installPublicLandingBootRetain();
     }
   }
 })(

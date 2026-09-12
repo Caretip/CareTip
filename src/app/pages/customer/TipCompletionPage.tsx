@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import { clearCustomerFlowEntry } from "../../lib/customerFlowGuard";
 import { useTipFlow } from "../../context/TipFlowContext";
 import { useVerifiedTipSession, isVerifiedTipSessionReady } from "../../hooks/useVerifiedTipSession";
+import { CareTipPageLoader } from "../../components/CareTipPageLoader";
 import { TipPaymentProcessingView } from "./TipPaymentProcessingView";
 import { useCustomerVenueBrand } from "./customerJourneyBrand";
 import { resolveGuestThankYouMessage } from "../../lib/businessBranding";
@@ -66,11 +67,10 @@ export function TipCompletionPage() {
 
   if (verification.phase === "loading" || verification.phase === "pending") {
     return (
-      <TipPaymentProcessingView
-        venue={venueBrand}
-        employeeName={tipFlowEmployeeName ?? undefined}
-        title={t("tipFlow.completion.processingTitle")}
-        subtitle={t("tipFlow.completion.processingSubtitle")}
+      <CareTipPageLoader
+        variant="wait"
+        context="stripeReturn"
+        registrationKey="tip-completion-loading"
       />
     );
   }

@@ -51,6 +51,7 @@
     "test:contact-lead-frontend": "node ./backend/node_modules/tsx/dist/cli.mjs ./scripts/contact-lead-frontend-runtime.ts",
     "test:notification-intelligence": "npm --prefix backend run test:notification-intelligence",
     "test:landing-hero-return-lifecycle": "node ./backend/node_modules/tsx/dist/cli.mjs ./scripts/landing-hero-return-lifecycle-runtime.ts",
+    "test:production-landing-blank-probe": "node ./backend/node_modules/tsx/dist/cli.mjs ./scripts/production-landing-blank-probe.ts",
     "test:physical-qr-frontend": "node ./backend/node_modules/tsx/dist/cli.mjs ./scripts/physical-qr-frontend-runtime.ts",
     "test:print-qr-studio-session": "node ./backend/node_modules/tsx/dist/cli.mjs ./scripts/print-qr-studio-session-runtime.ts",
     "test:physical-qr-orders-session": "node ./backend/node_modules/tsx/dist/cli.mjs ./scripts/physical-qr-orders-session-runtime.ts",
@@ -58,7 +59,8 @@
     "test:notifications-realtime-deep": "node ./backend/node_modules/tsx/dist/cli.mjs ./scripts/notifications-realtime-deep-runtime.ts",
     "test:google-signin-gsi": "node ./backend/node_modules/tsx/dist/cli.mjs ./scripts/google-signin-gsi-lifecycle-runtime.ts",
     "test:business-analytics-integrity": "node ./backend/node_modules/tsx/dist/cli.mjs ./scripts/business-analytics-integrity-runtime.ts",
-    "test:stripe-connect-phase4-5-ui": "node ./backend/node_modules/tsx/dist/cli.mjs ./scripts/stripe-connect-phase4-5-ui-runtime.ts"
+    "test:stripe-connect-phase4-5-ui": "node ./backend/node_modules/tsx/dist/cli.mjs ./scripts/stripe-connect-phase4-5-ui-runtime.ts",
+    "test:stripe-payments-responsive": "node ./backend/node_modules/tsx/dist/cli.mjs ./scripts/stripe-payments-responsive-runtime.ts"
   },
   "dependencies": {
     "@fontsource/inter": "^5.2.8",

@@ -16,6 +16,7 @@ import { resolveAppLoadingContextMessage } from "@/app/lib/appLoadingContexts";
 import { isAppShellInteractive } from "@/app/lib/appShellLifecycle";
 import { isHtmlBootElementPresent } from "@/app/lib/htmlMarketingBootBridge";
 import { readDocumentOrStoredLanguage } from "@/i18n/i18n";
+import { usePublicHtmlBootHandoff } from "@/app/lib/usePublicHtmlBootHandoff";
 
 type CustomerFlowShellProps = {
   headerLeading?: ReactNode;
@@ -66,6 +67,7 @@ export function CustomerFlowShell({
     loadingMessage ??
     resolveAppLoadingContextMessage(loadingContext, t, readDocumentOrStoredLanguage());
   const holdUnderHtmlBoot = isHtmlBootElementPresent();
+  usePublicHtmlBootHandoff(loading !== true);
 
   useAppLoadingRegistration(
     loadingRegistrationKey,
@@ -85,7 +87,10 @@ export function CustomerFlowShell({
       : cf.page;
 
   return (
-    <div className={cn(pageClass, className)}>
+    <div
+      className={cn(pageClass, className)}
+      {...(!loading ? { "data-caretip-route-ready": "" } : {})}
+    >
       <div className={cf.frame}>
         <CustomerJourneyHeader
           leading={headerLeading}

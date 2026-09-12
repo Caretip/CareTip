@@ -4,10 +4,26 @@
  * The boot screen has exactly one loading sentence (`#caretip-html-boot-tagline`).
  */
 
+import { isCustomerJourneyPath } from "./appLoadingJourney";
+
 const BOOT_ID = "caretip-html-boot";
 const ACTIVE_CLASS = "caretip-html-boot-active";
 const EXITING_CLASS = "caretip-html-boot--exiting";
 const TAGLINE_ID = "caretip-html-boot-tagline";
+
+function readPathname(): string {
+  if (typeof window === "undefined") return "/";
+  return window.location.pathname.split("?")[0]?.split("#")[0] ?? "/";
+}
+
+/** Keep first-paint boot until the public destination has real DOM (not an empty Outlet). */
+export function shouldRetainHtmlBootUntilLandingCommit(): boolean {
+  if (typeof document === "undefined") return false;
+  if (document.querySelector(".caretip-landing, [data-caretip-route-ready]")) return false;
+  const p = readPathname();
+  if (p === "/") return true;
+  return isCustomerJourneyPath(p);
+}
 
 export function isHtmlBootBridgeActive(): boolean {
   if (typeof document === "undefined") return false;
@@ -56,6 +72,7 @@ export function setHtmlBootBridgeSub(_message?: string): void {
 /** Start the same fade-out motion used by AppBrandedLoadingScreen. */
 export function beginHtmlBootBridgeExit(): void {
   if (typeof document === "undefined") return;
+  if (shouldRetainHtmlBootUntilLandingCommit()) return;
   const boot = document.getElementById(BOOT_ID);
   if (!boot) return;
   boot.classList.add(EXITING_CLASS);
@@ -64,6 +81,7 @@ export function beginHtmlBootBridgeExit(): void {
 
 export function dismissHtmlMarketingBootBridge(): void {
   if (typeof document === "undefined") return;
+  if (shouldRetainHtmlBootUntilLandingCommit()) return;
   document.documentElement.classList.remove(ACTIVE_CLASS);
   document.getElementById(BOOT_ID)?.remove();
 }

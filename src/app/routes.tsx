@@ -16,6 +16,7 @@ import { LanguageChangeLoadingRegistrar } from "./components/LanguageChangeLoadi
 import { RouteNavigationLoadingRegistrar } from "./components/RouteNavigationLoadingRegistrar";
 import { IdleSessionController } from "./components/IdleSessionController";
 import { useMarkAppShellReadyOptional } from "./context/AppLoadingSplashContext";
+import { useCompleteHtmlBootAfterPublicPaint } from "./context/AppLoadingManager";
 import { RouteChunkBoundary } from "./routing/RouteChunkBoundary";
 import {
   routeLazy,
@@ -41,6 +42,7 @@ import { SignInHandoffCover } from "./components/auth/SignInHandoffCover";
 import { DashboardProfilerRoot } from "./hooks/useDashboardRuntimeProfile";
 import { useNavigationFlashProbe } from './hooks/useNavigationFlashProbe';
 import { CookieConsentRoot } from './components/cookie/CookieConsentRoot';
+import { LandingPage } from './pages/LandingPage';
 
 const LoaderDiagRuntime = import.meta.env.DEV
   ? React.lazy(() =>
@@ -74,9 +76,11 @@ function LegacyPlatformBrandingOrderRedirect() {
 function ErrorBoundary() {
   const error = useRouteError();
   const markShellReady = useMarkAppShellReadyOptional();
+  const completeHtmlBootAfterPublicPaint = useCompleteHtmlBootAfterPublicPaint();
   useLayoutEffect(() => {
     markShellReady?.();
-  }, [markShellReady]);
+    return completeHtmlBootAfterPublicPaint();
+  }, [markShellReady, completeHtmlBootAfterPublicPaint]);
 
   useEffect(() => {
     logClientError('RouteErrorBoundary', error);
@@ -88,7 +92,10 @@ function ErrorBoundary() {
     : "Navigation hit an unexpected problem. Go home and try again, or refresh if you were in the middle of something.";
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background">
+    <div
+      data-caretip-route-ready=""
+      className="min-h-screen flex items-center justify-center bg-background"
+    >
       <div className="text-center px-4 max-w-md">
         <h1 className="text-2xl sm:text-3xl font-bold mb-4 text-foreground">{title}</h1>
         <p className="mb-6 text-muted-foreground">{message}</p>
@@ -147,10 +154,9 @@ const routes: RouteObject[] = [
     children: [
   {
     path: '/',
-    lazy: async () => {
-      const { LandingPage } = await import('./pages/LandingPage');
-      return { Component: LandingPage };
-    },
+    // Eager: React Router `lazy` does not suspend Outlet. A lazy `/` leaves #root empty
+    // (MinimalRouteFallback / #fcfbf8) after the HTML boot is dismissed — the production white screen.
+    Component: LandingPage,
     errorElement: <ErrorBoundary />,
   },
   {

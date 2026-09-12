@@ -11,6 +11,7 @@ import { formatEur } from "../../lib/formatEur";
 import { guestSuccessPageStyle } from "./guestBrandingPresentation";
 import type { TipSuccessEmployeeProfile } from "./useTipSuccessEmployeeProfile";
 import { customerFlowUi as cf } from "./customerFlowUi";
+import { usePublicHtmlBootHandoff } from "../../lib/usePublicHtmlBootHandoff";
 import { cn } from "@/lib/utils";
 
 export type TipSuccessExperienceProps = {
@@ -136,8 +137,11 @@ export function TipSuccessExperience({
     [actionBusy, embedded],
   );
 
+  usePublicHtmlBootHandoff(!embedded);
+
   return (
     <div
+      {...(!embedded ? { "data-caretip-route-ready": "" } : {})}
       className={cn(
         "customer-flow customer-flow--compact customer-flow-success-page",
         embedded ? "customer-flow-success-page--embedded min-h-0" : "min-h-[100dvh]",

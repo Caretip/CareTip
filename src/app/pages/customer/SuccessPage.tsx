@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { useTipFlow } from "../../context/TipFlowContext";
 import { toUserFriendlyMessage } from "../../lib/errorMessages";
 import { clearCustomerFlowEntry } from "../../lib/customerFlowGuard";
+import { CareTipPageLoader } from "../../components/CareTipPageLoader";
 import { TipPaymentProcessingView } from "./TipPaymentProcessingView";
 import { DEV_BYPASS_ENABLED, DEV_MOCK } from "../../lib/devCustomerBypass";
 import { useVerifiedTipSession, isVerifiedTipSessionReady } from "../../hooks/useVerifiedTipSession";
@@ -96,10 +97,10 @@ export function SuccessPage() {
 
   if (verification.phase === "loading" || verification.phase === "pending") {
     return (
-      <TipPaymentProcessingView
-        employeeName={employeeName ?? undefined}
-        title={t("tipFlow.completion.processingTitle")}
-        subtitle={t("tipFlow.completion.processingSubtitle")}
+      <CareTipPageLoader
+        variant="wait"
+        context="stripeReturn"
+        registrationKey="success-page-verification"
       />
     );
   }
@@ -125,10 +126,10 @@ export function SuccessPage() {
 
   if (!verified) {
     return (
-      <TipPaymentProcessingView
-        employeeName={employeeName ?? undefined}
-        title={t("tipFlow.completion.processingTitle")}
-        subtitle={t("tipFlow.completion.processingSubtitle")}
+      <CareTipPageLoader
+        variant="wait"
+        context="stripeReturn"
+        registrationKey="success-page-verification"
       />
     );
   }

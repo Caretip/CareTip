@@ -22,6 +22,7 @@ import {
   scheduleCustomerRouteRedirect,
   shouldShowCustomerEntryFailure,
 } from "../../lib/customerRouteTransition";
+import { usePublicHtmlBootHandoff } from "../../lib/usePublicHtmlBootHandoff";
 import { navFlashLog } from "../../lib/navigationFlashAudit";
 
 /**
@@ -42,6 +43,7 @@ export function StaffLandingPage() {
   const [showRepeatPrompt, setShowRepeatPrompt] = useState(false);
   const [repeatAmount, setRepeatAmount] = useState<number | null>(null);
   const [checkingOut, setCheckingOut] = useState(false);
+  usePublicHtmlBootHandoff(phase === "ready" && Boolean(staff));
 
   useEffect(() => {
     if (!slugParam?.trim()) {
@@ -191,7 +193,7 @@ export function StaffLandingPage() {
   }
 
   return (
-    <div className={cf.page}>
+    <div className={cf.page} data-caretip-route-ready="">
       <div className={cf.frame}>
       <CustomerJourneyHeader venue={venueBrand} />
 

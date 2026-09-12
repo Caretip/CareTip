@@ -87,8 +87,8 @@ function run() {
   const indexHtml = read("index.html");
   assert.match(
     indexHtml,
-    /#caretip-html-boot \{\s*display:\s*none;/s,
-    "HTML boot must not display unless html.caretip-html-boot-active",
+    /#caretip-html-boot \{\s*display:\s*flex;/s,
+    "HTML boot stays painted even if html.caretip-html-boot-active is stripped during React start",
   );
   assert.match(indexHtml, /html\.caretip-html-boot-active #caretip-html-boot/);
   assert.match(indexHtml, /<script src="\/boot-locale\.js"><\/script>/);

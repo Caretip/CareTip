@@ -87,8 +87,9 @@ assert(
   "warm cache helper must exist without inventing new network preloads",
 );
 assert(
-  routes.includes("path: '/'") && routes.includes("import('./pages/LandingPage')"),
-  "landing remains a lazy route (no keep-alive of the whole page)",
+  /path:\s*'\/',\s*\n\s*\/\/ Eager[\s\S]*?Component:\s*LandingPage/.test(routes) &&
+    !/path:\s*'\/',\s*\n\s*lazy:/.test(routes),
+  "/ must ship LandingPage eagerly so the first Outlet commit is the landing page, not an empty lazy hole",
 );
 assert(
   shellReady.includes("softNav") && shellReady.includes("isAppShellInteractive()"),
@@ -117,8 +118,39 @@ assert(
   "landing JS must prefetch in parallel with i18n",
 );
 assert(
+  /path:\s*'\/',\s*\n\s*\/\/ Eager[\s\S]*?Component:\s*LandingPage/.test(routes) &&
+    !/path:\s*'\/',\s*\n\s*lazy:/.test(routes),
+  "/ must ship LandingPage eagerly so the first Outlet commit is the landing page, not an empty lazy hole",
+);
+assert(
   read("src/app/context/AppLoadingManager.tsx").includes("isPublicShellPath"),
   "public shells must skip the React app-boot overlay",
+);
+assert(
+  read("src/app/context/AppLoadingManager.tsx").includes("completeHtmlBootAfterPublicPaint"),
+  "HTML boot fade must wait for public route commit, not React mount",
+);
+assert(
+  shellReady.includes("completeHtmlBootAfterPublicPaint"),
+  "landing must fade HTML boot only after LandingPage commits",
+);
+assert(
+  read("src/app/lib/htmlMarketingBootBridge.ts").includes("isCustomerJourneyPath"),
+  "HTML boot retain must cover guest tip URLs as well as /",
+);
+assert(
+  read("public/boot-locale.js").includes("installPublicLandingBootRetain"),
+  "pre-React boot-locale must refuse HTML boot removal on / until landing commits",
+);
+assert(
+  read("src/app/context/AppLoadingManager.tsx").includes(
+    "HTML boot must stay until completeHtmlBootAfterPublicPaint",
+  ),
+  "React overlay exit must not dismiss HTML boot while / landing is still loading",
+);
+assert(
+  read("src/app/context/AppLoadingManager.tsx").includes("requestAnimationFrame"),
+  "HTML boot fade must wait for a landing paint frame, not an arbitrary timeout",
 );
 assert(
   read("public/_headers").includes("max-age=31536000, immutable"),

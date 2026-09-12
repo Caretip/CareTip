@@ -161,6 +161,10 @@ if (bridge.includes("caretip-html-boot") && main.includes("dismissHtmlMarketingB
   pass("Bootstrap failure dismisses HTML boot; bridge owns HTML fade-out");
 } else fail("HTML boot bridge / failure path incomplete");
 
+if (bootLocale.includes("installPublicLandingBootRetain") && bootLocale.includes("publicLandingRouteCommitted")) {
+  pass("HTML boot node cannot be removed on / until landing (or error) DOM exists");
+} else fail("Pre-React landing boot retain missing");
+
 const splashPages = [
   "src/app/pages/SplashPage.tsx",
   "src/app/pages/BrandedSplashPage.tsx",
