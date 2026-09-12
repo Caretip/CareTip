@@ -251,8 +251,14 @@ function testDetailAndOnboardingPresent(): boolean {
     fail("Update Stripe details / onboarding must keep Account Links");
     ok = false;
   }
-  if (!connect.includes("/dashboard/stripe/payouts") || !connect.includes("viewPayouts")) {
-    fail("Payout history link must remain on Connect card");
+  const employeeConnections = read(
+    "src/app/components/business/settings/billing/EmployeeStripeConnectionsCard.tsx",
+  );
+  if (
+    !employeeConnections.includes("/dashboard/stripe/payouts") ||
+    !employeeConnections.includes("viewPayouts")
+  ) {
+    fail("Payout history link must remain on Connect employee connections heading");
     ok = false;
   }
   const api = read("src/app/lib/api.ts");
@@ -525,6 +531,49 @@ function testPayoutHistoryUx(): boolean {
   return ok;
 }
 
+function testConnectPagePayoutOwnership(): boolean {
+  let ok = true;
+  const pages = read("src/app/pages/business/stripe/BusinessStripePages.tsx");
+  if (pages.includes("BusinessRecentPayoutsPreview") || pages.includes("listMyConnectPayouts")) {
+    fail("Connect page must not duplicate recent payouts");
+    ok = false;
+  }
+  if (!pages.includes("EmployeeStripeConnectionsCard") || !pages.includes("ConnectPayoutsPanel")) {
+    fail("Connect must show employee connections; Payouts must keep ConnectPayoutsPanel");
+    ok = false;
+  }
+  const connections = read(
+    "src/app/components/business/settings/billing/EmployeeStripeConnectionsCard.tsx",
+  );
+  if (connections.includes("listMyConnectPayouts") || connections.includes("activityTitle")) {
+    fail("Employee connections section must not render payout history");
+    ok = false;
+  }
+  if (
+    !connections.includes("getEmployeeStripeConnections") ||
+    connections.includes("getBusinessStats")
+  ) {
+    fail("Employee connections must use the dedicated snapshot endpoint");
+    ok = false;
+  }
+  const svc = read("backend/src/services/employeeStripeConnections.service.ts");
+  if (svc.includes("stripe.accounts") || svc.includes("stripe.payouts") || svc.includes("acct_")) {
+    fail("Employee connections snapshot must not call Stripe or expose full account ids");
+    ok = false;
+  }
+  if (!svc.includes("stripeAccountSuffix") || !svc.includes("toEmployeePayoutConnectionState")) {
+    fail("Employee connections must reuse authoritative status + suffix helpers");
+    ok = false;
+  }
+  const panel = read("src/app/components/business/settings/billing/ConnectPayoutsPanel.tsx");
+  if (!panel.includes("listMyConnectPayouts") || !panel.includes("activityTitle")) {
+    fail("Payouts page must remain the owner of payout history");
+    ok = false;
+  }
+  if (ok) pass("Connect owns connections; Payouts owns payout history");
+  return ok;
+}
+
 let failed = 0;
 failed += testAmountFormatting() ? 0 : 1;
 failed += testFailureSanitization() ? 0 : 1;
@@ -538,6 +587,7 @@ failed += testConnectReturnUrlsAndFee() ? 0 : 1;
 failed += testConnectRedirectAllowlist() ? 0 : 1;
 failed += testDashboardPresentationAndCopy() ? 0 : 1;
 failed += testPayoutHistoryUx() ? 0 : 1;
+failed += testConnectPagePayoutOwnership() ? 0 : 1;
 
 for (const line of results) console.log(line);
 console.log(failed === 0 ? `\nOK: ${results.length} checks` : `\nFAILED: ${failed} check group(s)`);

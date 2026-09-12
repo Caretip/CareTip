@@ -1,5 +1,5 @@
 import { Link } from "react-router";
-import { useCallback, useEffect, useLayoutEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Loader2 } from "lucide-react";
 import {
@@ -40,14 +40,8 @@ import {
   DialogTitle,
 } from "../../../ui/dialog";
 import { Button } from "@/components/ui/button";
-import { useBusinessStripeHeaderActions } from "../../BusinessStripeHeaderActions";
 
 const PAGE_SIZE = 20;
-
-const headerActionClass = cn(
-  businessUi.btnSecondary,
-  "h-auto min-h-11 w-full whitespace-normal bg-white px-5 sm:w-auto",
-);
 
 function formatMaskedMethod(last4: string | null): string | null {
   if (!last4) return null;
@@ -69,7 +63,6 @@ function feeRateLabel(eligibility: InstantPayoutEligibility): string | null {
 
 export function ConnectPayoutsPanel({ loading: bootLoading }: { loading?: boolean }) {
   const { t, i18n } = useTranslation();
-  const headerActions = useBusinessStripeHeaderActions();
   const [items, setItems] = useState<ConnectPayout[]>([]);
   const [total, setTotal] = useState(0);
   const [skip, setSkip] = useState(0);
@@ -135,31 +128,6 @@ export function ConnectPayoutsPanel({ loading: bootLoading }: { loading?: boolea
     }
   }, [dashboardBusy, t]);
 
-  const showHeaderDashboard = Boolean(eligibility?.canOpenExpressDashboard);
-
-  useLayoutEffect(() => {
-    const setActions = headerActions?.setActions;
-    if (!setActions) return;
-    if (!showHeaderDashboard) {
-      setActions(null);
-      return;
-    }
-    setActions(
-      <Button
-        type="button"
-        variant="outline"
-        disabled={dashboardBusy}
-        aria-busy={dashboardBusy}
-        onClick={() => void openStripeDashboard()}
-        className={headerActionClass}
-      >
-        {dashboardBusy ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : null}
-        {dashboardBusy ? t("business.billing.connect.starting") : t("business.billing.payouts.headerDashboardCta")}
-      </Button>,
-    );
-    return () => setActions(null);
-  }, [headerActions, showHeaderDashboard, dashboardBusy, openStripeDashboard, t]);
-
   function openInstantConfirm() {
     if (!eligibility?.eligible || payoutBusy) return;
     setIdempotencyKey(
@@ -200,7 +168,7 @@ export function ConnectPayoutsPanel({ loading: bootLoading }: { loading?: boolea
   const locale = i18n.language;
 
   return (
-    <div className="space-y-10">
+    <div className="space-y-12 sm:space-y-14">
       <InstantBalanceSection
         bootLoading={Boolean(bootLoading)}
         eligibility={eligibility}
@@ -214,26 +182,25 @@ export function ConnectPayoutsPanel({ loading: bootLoading }: { loading?: boolea
       />
 
       <section aria-labelledby="caretip-payout-history-heading">
-        <div className="mb-4 flex flex-col gap-2 border-b border-border pb-3 sm:flex-row sm:items-end sm:justify-between">
-          <div>
-            <h2 id="caretip-payout-history-heading" className={dashboardWorkspaceUi.subsectionTitle}>
-              {t("business.billing.payouts.activityTitle")}
-            </h2>
-            <p className={cn("mt-1", dashboardWorkspaceUi.helperText)}>{t("business.billing.payouts.activityHint")}</p>
-          </div>
+        <div className="mb-2 flex items-baseline justify-between gap-3">
+          <h2 id="caretip-payout-history-heading" className={cn(dashboardWorkspaceUi.subsectionTitle, "min-w-0")}>
+            {t("business.billing.payouts.activityTitle")}
+          </h2>
           <button
             type="button"
             disabled={dashboardBusy}
             aria-busy={dashboardBusy}
+            aria-label={t("business.billing.payouts.viewInStripe")}
             onClick={() => void openStripeDashboard()}
             className={cn(
-              "self-start text-sm font-medium text-muted-foreground underline-offset-2 hover:text-foreground hover:underline",
+              "shrink-0 whitespace-nowrap text-sm font-medium text-muted-foreground underline-offset-2 hover:text-foreground hover:underline",
               "disabled:cursor-not-allowed disabled:opacity-50",
             )}
           >
-            {dashboardBusy ? t("business.billing.connect.starting") : t("business.billing.payouts.viewInStripe")}
+            {dashboardBusy ? t("business.billing.connect.starting") : t("business.billing.payouts.headerDashboardCta")}
           </button>
         </div>
+        <p className={cn("mb-5", dashboardWorkspaceUi.helperText)}>{t("business.billing.payouts.activityHint")}</p>
 
         {error ? (
           <ListFilterLoadError kind={errorKind} message={error} onRetry={() => void loadHistory(skip)} />
@@ -414,19 +381,17 @@ function InstantBalanceSection({
     eligibility.canOpenExpressDashboard;
 
   return (
-    <section aria-labelledby="caretip-payout-balance-heading" className="border-b border-border pb-5">
-      <h2 id="caretip-payout-balance-heading" className="sr-only">
-        {t("business.billing.payouts.instant.balanceEyebrow")}
-      </h2>
-
+    <section aria-labelledby="caretip-payout-balance-heading">
       {bootLoading || loading ? (
-        <div className="mt-1 max-w-3xl space-y-6" aria-busy="true">
+        <div className="max-w-4xl space-y-8" aria-busy="true">
+          <h2 id="caretip-payout-balance-heading" className="sr-only">
+            {t("business.billing.payouts.instant.balanceEyebrow")}
+          </h2>
           <div className="space-y-3">
             <div className="h-3 w-24 animate-pulse rounded-md bg-muted" />
             <div className="h-11 w-44 max-w-full animate-pulse rounded-md bg-muted" />
             <div className="h-4 w-28 animate-pulse rounded-md bg-muted" />
           </div>
-          <div className="h-px bg-border" />
           <div className="space-y-3">
             <div className="h-4 w-36 animate-pulse rounded-md bg-muted" />
             <div className="h-9 w-32 animate-pulse rounded-md bg-muted" />
@@ -435,7 +400,10 @@ function InstantBalanceSection({
           <span className="sr-only">{t("business.billing.payouts.instant.checking")}</span>
         </div>
       ) : !eligibility ? (
-        <div className="mt-1 max-w-xl space-y-3">
+        <div className="max-w-xl space-y-3">
+          <h2 id="caretip-payout-balance-heading" className="sr-only">
+            {t("business.billing.payouts.instant.balanceEyebrow")}
+          </h2>
           <p className="text-sm text-muted-foreground">{t("business.billing.payouts.instant.loadError")}</p>
           <button type="button" onClick={onRetryEligibility} className={cn(dashboardWorkspaceUi.btnGhost, "h-10 min-h-10 px-4 text-sm")}>
             {t("business.billing.payouts.instant.retry")}
@@ -444,14 +412,14 @@ function InstantBalanceSection({
       ) : (
         <div
           className={cn(
-            "mt-1 grid max-w-4xl gap-8 lg:items-start lg:gap-x-12",
+            "grid max-w-4xl items-start gap-8 lg:gap-x-16",
             showInstantRail && "lg:grid-cols-[minmax(0,18rem)_minmax(0,1fr)]",
           )}
         >
-          <div className="text-center lg:self-center">
-            <p className="text-xs font-medium text-muted-foreground">
+          <div className="min-w-0">
+            <h2 id="caretip-payout-balance-heading" className="text-xs font-medium text-muted-foreground">
               {t("business.billing.payouts.instant.balanceEyebrow")}
-            </p>
+            </h2>
             <p className="mt-2 text-3xl font-semibold tabular-nums tracking-tight text-foreground sm:text-4xl">
               {formatConnectPayoutAmount(headlineCents, currency, locale)}
             </p>
@@ -463,10 +431,10 @@ function InstantBalanceSection({
           </div>
 
           {showInstantRail ? (
-          <div className="flex flex-col border-t border-border pt-6 lg:border-l lg:border-t-0 lg:pl-10 lg:pt-0">
-            <p className="text-sm font-semibold text-foreground">
+          <div className="flex min-w-0 flex-col">
+            <h3 className="text-sm font-semibold text-foreground">
               {t("business.billing.payouts.instant.sectionTitle")}
-            </p>
+            </h3>
 
             {eligibility.eligible ? (
               <>
@@ -524,7 +492,7 @@ function InstantBalanceSection({
                   onClick={onRequestPayout}
                   className={cn(
                     caretipBtnPrimaryCompact,
-                    "mt-5 w-full self-end sm:mt-6 sm:w-auto",
+                    "mt-5 w-full self-start sm:mt-6 sm:w-auto",
                   )}
                 >
                   {payoutBusy ? (
@@ -540,7 +508,7 @@ function InstantBalanceSection({
                 </button>
               </>
             ) : (
-              <div className="mt-4 self-end">
+              <div className="mt-4 self-start">
                 <IneligibleInstantActions
                   eligibility={eligibility}
                   dashboardBusy={dashboardBusy}

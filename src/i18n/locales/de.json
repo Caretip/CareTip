@@ -6171,6 +6171,35 @@
             "note": "CareTip erfasst die Zuordnung zum Mitarbeiter, zahlt Mitarbeiter in diesem Modus aber nicht automatisch aus."
           }
         }
+      },
+      "employeeConnections": {
+        "title": "Stripe-Verbindungen der Mitarbeiter",
+        "subtitleDirect": "Mitarbeiter mit verbundenem Stripe-Auszahlungskonto können berechtigte Trinkgelder direkt erhalten.",
+        "subtitleBusiness": "Stripe-Verbindungen der Mitarbeiter sind nicht erforderlich, solange Ihr Betrieb die Verteilung übernimmt.",
+        "connectedLabel": "Verbunden",
+        "needsAttentionLabel": "Handlungsbedarf",
+        "employeeCount_one": "{{count}} Mitarbeiter",
+        "employeeCount_other": "{{count}} Mitarbeiter",
+        "loading": "Mitarbeiter-Stripe-Verbindungen werden geladen…",
+        "loadError": "Mitarbeiter-Stripe-Verbindungen konnten nicht geladen werden.",
+        "retry": "Erneut versuchen",
+        "emptyRoster": "Noch keine Mitarbeiter in diesem Team.",
+        "emptyDirect": "Noch kein Mitarbeiter hat ein Stripe-Auszahlungskonto verbunden.",
+        "emptyBusiness": "Kein Mitarbeiter hat Stripe verbunden. Das ist für die betriebliche Verteilung nicht erforderlich.",
+        "accountMasked": "Stripe-Konto •••• {{suffix}}",
+        "hintNotConnectedDirect": "Mitarbeiter muss Stripe verbinden",
+        "hintNotConnectedBusiness": "Stripe ist in diesem Modus optional",
+        "hintSetup": "Stripe-Einrichtung unvollständig",
+        "hintAction": "Stripe benötigt weitere Angaben",
+        "hintRestricted": "Stripe hat dieses Konto eingeschränkt",
+        "hintConnected": "Stripe-Auszahlungskonto verbunden",
+        "hintConnectedBusiness": "Verbunden — für die aktuelle Weiterleitung nicht erforderlich",
+        "viewEmployees": "Mitarbeiter anzeigen",
+        "hideEmployees": "Mitarbeiterliste ausblenden",
+        "showMore": "Alle Mitarbeiter anzeigen ({{count}})",
+        "showLess": "Weniger anzeigen",
+        "truncated": "Die ersten 200 Mitarbeiter werden angezeigt.",
+        "viewTeam": "Team anzeigen"
       }
     },
     "billing": {

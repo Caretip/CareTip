@@ -6,6 +6,7 @@ import {
   type Variants,
 } from "framer-motion";
 
+import { HeadlineMobileBreak } from "@/components/ui/HeadlineMobileBreak";
 import { cn } from "@/lib/utils";
 
 export type AnimatedHeadingProps = {
@@ -72,7 +73,7 @@ type HeadingToken = WordToken | BreakToken;
 
 /**
  * Tokenize heading text. Newlines become mobile-only line breaks
- * (`<br class="caretip-br--mobile" />`) so desktop can stay single-flow.
+ * (`HeadlineMobileBreak`) so desktop can stay single-flow with a real word space.
  */
 function tokenizeHeading(text: string): { tokens: HeadingToken[]; flatText: string } {
   const lines = text.split("\n");
@@ -143,7 +144,7 @@ export const AnimatedHeading = memo(function AnimatedHeading({
           if (token.type === "br") {
             return (
               <Fragment key={`br-${i}`}>
-                <br className="caretip-br--mobile" />{" "}
+                <HeadlineMobileBreak aria-hidden={false} />
               </Fragment>
             );
           }
@@ -173,7 +174,7 @@ export const AnimatedHeading = memo(function AnimatedHeading({
         if (token.type === "br") {
           return (
             <Fragment key={`br-${i}`}>
-              <br className="caretip-br--mobile" aria-hidden />{" "}
+              <HeadlineMobileBreak />
             </Fragment>
           );
         }

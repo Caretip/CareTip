@@ -1,5 +1,7 @@
 import type { ReactElement } from "react";
 
+import { HeadlineMobileBreak } from "@/components/ui/HeadlineMobileBreak";
+
 /** i18n inline tags for landing copy (`<bold>…</bold>`). */
 export const landingBoldComponents: Record<string, ReactElement> = {
   bold: <strong className="font-semibold text-foreground" />,
@@ -21,7 +23,7 @@ export const landingHeadlineHighlightComponents: Record<string, ReactElement> = 
  */
 export const landingHeadlineBreakComponents: Record<string, ReactElement> = {
   br: <br />,
-  brm: <br className="caretip-br--mobile" />,
+  brm: <HeadlineMobileBreak />,
   brd: <br className="caretip-br--desktop" />,
 };
 
@@ -33,7 +35,7 @@ export const landingHeadlineComponents: Record<string, ReactElement> = {
 
 /**
  * Strip highlight tags and normalize composition markers for AnimatedHeading.
- * `<brm/>` / `<br/>` → `\n` (mobile soft break; desktop keeps a space).
+ * `<brm/>` / `<br/>` → `\n` (mobile soft break; desktop word space via HeadlineMobileBreak).
  */
 export function parseLandingHeadline(raw: string): { text: string; highlight: string[] } {
   const highlight = [...raw.matchAll(/<hl>(.*?)<\/hl>/gi)].map((m) => m[1] ?? "").filter(Boolean);

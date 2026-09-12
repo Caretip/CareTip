@@ -102,17 +102,18 @@ function runStatic() {
   const connectRoutes = read("src/routes/connect.routes.ts");
   if (
     connectRoutes.includes("requireRole(Role.MANAGER)") &&
-    connectRoutes.includes("employee-tip-payout-mode")
+    connectRoutes.includes("employee-tip-payout-mode") &&
+    connectRoutes.includes("employee-stripe-connections")
   ) {
-    pass("mode-route-manager-only", "Payout mode routes require manager JWT");
+    pass("mode-route-manager-only", "Payout mode and employee connection routes require manager JWT");
   } else {
     fail("mode-route-manager-only", "manager guard missing");
   }
   const empRoutes = read("src/routes/employeeConnect.routes.ts");
-  if (!empRoutes.includes("employee-tip-payout-mode")) {
-    pass("employee-cannot-patch-mode-route", "Employee Connect routes do not expose routing mode");
+  if (!empRoutes.includes("employee-tip-payout-mode") && !empRoutes.includes("employee-stripe-connections")) {
+    pass("employee-cannot-patch-mode-route", "Employee Connect routes do not expose routing mode or team Stripe status");
   } else {
-    fail("employee-cannot-patch-mode-route", "mode route leaked to employee");
+    fail("employee-cannot-patch-mode-route", "mode or team connections route leaked to employee");
   }
   if (fees.includes("CARETIP_FEE_PERCENT") && checkout.includes("calculateTipPlatformFeeCents")) {
     pass("fee-wired", "Checkout still uses calculateTipPlatformFeeCents");

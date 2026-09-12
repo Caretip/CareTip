@@ -15,6 +15,11 @@
   br.caretip-br--desktop {
     display: none !important;
   }
+
+  /* Hide the desktop word-gap so the next line does not start with a space */
+  .caretip-br--desktop-gap {
+    display: none !important;
+  }
 }
 
 @media (max-width: 767px) {
@@ -52,6 +57,7 @@
   }
 
   /* —— Landing: section H2 + shared titles —— */
+  .caretip-landing h1.text-section-title,
   .caretip-landing h2.text-section-title,
   .caretip-landing .text-section-title,
   .caretip-landing h2.caretip-mobile-section-headline,

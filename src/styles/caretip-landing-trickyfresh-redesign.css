@@ -969,10 +969,16 @@ html:not(.dark) .caretip-landing #final-cta .caretip-trust-strip__check,
 /* TrickyFreshString section heading scale */
 .caretip-landing .caretip-industries-teaser h2,
 .caretip-landing .caretip-industries-teaser .text-section-title,
+.caretip-landing h1.text-section-title,
 .caretip-landing h2.text-section-title {
   font-size: clamp(2.7rem, 5vw, 4.75rem) !important;
   letter-spacing: -0.03em !important;
   line-height: 1.08 !important;
+}
+
+.caretip-landing h1.text-section-title span,
+.caretip-landing h2.text-section-title span {
+  font-size: inherit;
 }
 
 /* Audience benefits: slightly smaller + two controlled lines */
@@ -1200,6 +1206,7 @@ html:not(.dark) .caretip-landing #final-cta .caretip-trust-strip__check,
   }
 
   .caretip-landing .caretip-industries-teaser h2,
+  .caretip-landing h1.text-section-title,
   .caretip-landing h2.text-section-title {
     font-size: clamp(2.65rem, 13vw, 4rem) !important;
   }

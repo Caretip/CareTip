@@ -1,5 +1,6 @@
 import { Fragment, lazy, Suspense } from "react";
 
+import { HeadlineMobileBreak } from "@/components/ui/HeadlineMobileBreak";
 import { cn } from "@/lib/utils";
 import type { AnimatedHeadingProps } from "./AnimatedHeading";
 
@@ -42,11 +43,7 @@ function AnimatedHeadingFallback({
         const words = line.split(" ");
         return (
           <Fragment key={`line-${lineIndex}`}>
-            {lineIndex > 0 ? (
-              <>
-                <br className="caretip-br--mobile" aria-hidden />{" "}
-              </>
-            ) : null}
+            {lineIndex > 0 ? <HeadlineMobileBreak /> : null}
             {words.map((word, i) => {
               if (i > 0) cursor += 1;
               const start = cursor;

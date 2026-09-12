@@ -6174,6 +6174,35 @@
             "note": "CareTip records employee tip attribution but does not automatically pay employees in this mode."
           }
         }
+      },
+      "employeeConnections": {
+        "title": "Employee Stripe connections",
+        "subtitleDirect": "Employees with a connected Stripe payout account can receive eligible tips directly.",
+        "subtitleBusiness": "Employee Stripe connections are not required while your business manages tip distribution.",
+        "connectedLabel": "Connected",
+        "needsAttentionLabel": "Needs attention",
+        "employeeCount_one": "{{count}} employee",
+        "employeeCount_other": "{{count}} employees",
+        "loading": "Loading employee Stripe connections…",
+        "loadError": "Could not load employee Stripe connections.",
+        "retry": "Retry",
+        "emptyRoster": "No employees on this team yet.",
+        "emptyDirect": "No employees have connected a Stripe payout account yet.",
+        "emptyBusiness": "No employees have connected Stripe. That is not required for business-managed distribution.",
+        "accountMasked": "Stripe account •••• {{suffix}}",
+        "hintNotConnectedDirect": "Employee needs to connect Stripe",
+        "hintNotConnectedBusiness": "Stripe is optional in this routing mode",
+        "hintSetup": "Stripe setup is incomplete",
+        "hintAction": "Stripe needs more information",
+        "hintRestricted": "Stripe has restricted this account",
+        "hintConnected": "Stripe payout account connected",
+        "hintConnectedBusiness": "Connected — not required for current routing",
+        "viewEmployees": "View employees",
+        "hideEmployees": "Hide employee list",
+        "showMore": "Show all employees ({{count}})",
+        "showLess": "Show fewer",
+        "truncated": "Showing the first 200 employees.",
+        "viewTeam": "View team"
       }
     },
     "billing": {

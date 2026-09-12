@@ -4,6 +4,7 @@ import { authMiddleware, requireRole, requireVerifiedEmail } from "../middleware
 import { requireCompletedOnboarding } from "../middleware/requireCompletedOnboarding.middleware.js";
 import * as connectController from "../controllers/connect.controller.js";
 import * as employeeTipPayoutModeController from "../controllers/employeeTipPayoutMode.controller.js";
+import * as employeeStripeConnectionsController from "../controllers/employeeStripeConnections.controller.js";
 
 const router = Router();
 
@@ -30,6 +31,11 @@ router.patch(
   "/connect/employee-tip-payout-mode",
   ...managerConnect,
   employeeTipPayoutModeController.patchMyEmployeeTipPayoutMode,
+);
+router.get(
+  "/connect/employee-stripe-connections",
+  ...managerConnect,
+  employeeStripeConnectionsController.getMyEmployeeStripeConnections,
 );
 
 export default router;

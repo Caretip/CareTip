@@ -15,7 +15,11 @@ import { cn } from "@/lib/utils";
 
 const MODES: EmployeeTipPayoutMode[] = ["direct_to_employee", "business_distribution"];
 
-export function EmployeeTipPayoutModeCard() {
+export function EmployeeTipPayoutModeCard({
+  onModeChange,
+}: {
+  onModeChange?: (mode: EmployeeTipPayoutMode) => void;
+}) {
   const { t } = useTranslation();
   const [mode, setMode] = useState<EmployeeTipPayoutMode>("direct_to_employee");
   const [draft, setDraft] = useState<EmployeeTipPayoutMode>("direct_to_employee");
@@ -29,6 +33,7 @@ export function EmployeeTipPayoutModeCard() {
         if (cancelled) return;
         setMode(res.mode);
         setDraft(res.mode);
+        onModeChange?.(res.mode);
       })
       .catch((err) => {
         logClientError("EmployeeTipPayoutModeCard", err);
@@ -40,7 +45,7 @@ export function EmployeeTipPayoutModeCard() {
     return () => {
       cancelled = true;
     };
-  }, [t]);
+  }, [t, onModeChange]);
 
   const onSave = async () => {
     setSaving(true);
@@ -48,6 +53,7 @@ export function EmployeeTipPayoutModeCard() {
       const res = await patchEmployeeTipPayoutMode(draft);
       setMode(res.mode);
       setDraft(res.mode);
+      onModeChange?.(res.mode);
       toast.success(t("business.stripe.tipRouting.saved"));
     } catch (err) {
       logClientError("EmployeeTipPayoutModeCard.save", err);

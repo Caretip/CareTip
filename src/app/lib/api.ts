@@ -2914,6 +2914,26 @@ export async function patchEmployeeTipPayoutMode(
   });
 }
 
+export type ManagerEmployeeStripeConnection = {
+  id: string;
+  name: string;
+  connectionState: EmployeePayoutConnectionState;
+  accountSuffix: string | null;
+};
+
+export type ManagerEmployeeStripeConnections = {
+  employees: ManagerEmployeeStripeConnection[];
+  truncated: boolean;
+};
+
+export async function getEmployeeStripeConnections(): Promise<ManagerEmployeeStripeConnections> {
+  return apiRequest(apiPath("/api/me/connect/employee-stripe-connections"), {
+    method: "GET",
+    headers: getHeaders(),
+    credentials: "include",
+  });
+}
+
 export async function getEmployeeConnectStatus(): Promise<EmployeeConnectStatus> {
   return apiRequest<EmployeeConnectStatus>(apiPath("/api/me/employee-connect/status"), {
     method: "GET",
