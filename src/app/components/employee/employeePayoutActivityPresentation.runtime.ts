@@ -20,6 +20,50 @@ import {
 import { employeeInstantUiMode, employeeInstantVisibleForTipRouting } from "./employeeInstantPayoutPresentation";
 
 assert.equal(employeePayoutActivityKind({ status: "held_business", disputedOpenCents: 0 }), "held_venue");
+assert.equal(
+  employeePayoutActivityKind({
+    status: "held_platform",
+    disputedOpenCents: 0,
+    chargeModel: "destination_business",
+    routingMode: "business_distribution",
+  }),
+  "held_venue",
+);
+assert.equal(
+  employeePayoutActivityKind({
+    status: "held_platform",
+    disputedOpenCents: 0,
+    chargeModel: "platform_hold",
+    routingMode: "direct_to_employee",
+  }),
+  "held",
+);
+assert.equal(
+  employeePayoutActivityKind({
+    status: "destination_settled",
+    disputedOpenCents: 0,
+    chargeModel: "destination_employee",
+    routingMode: "direct_to_employee",
+  }),
+  "destination_routed",
+);
+assert.equal(
+  employeePayoutActivityKind({
+    status: "held_business",
+    disputedOpenCents: 0,
+    chargeModel: "destination_business",
+    routingMode: "business_distribution",
+  }),
+  "held_venue",
+);
+assert.equal(
+  employeePayoutActivityKind({
+    presentationKind: "held_venue",
+    status: "held_platform",
+    disputedOpenCents: 0,
+  }),
+  "held_venue",
+);
 assert.equal(employeePayoutActivityKind({ status: "held_platform", disputedOpenCents: 0 }), "held");
 assert.equal(employeePayoutActivityKind({ status: "destination_settled", disputedOpenCents: 0 }), "destination_routed");
 assert.equal(employeePayoutActivityKind({ status: "transferred", disputedOpenCents: 0 }), "transferred");

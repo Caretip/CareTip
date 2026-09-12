@@ -20,8 +20,11 @@ import {
 } from "@/services/api/employeePayoutService";
 import {
   bankPayoutStatusTone,
+  employeePayoutActivityDestinationKey,
   employeePayoutActivityKind,
   employeePayoutActivityShowsStatusPill,
+  employeePayoutActivityStatusKey,
+  employeePayoutActivityTitleKey,
   employeePayoutActivityTone,
 } from "@/features/employee/payouts/employeeInstantPayoutPresentation";
 import {
@@ -42,28 +45,6 @@ import type { ColorPalette } from "@/theme/colors";
 
 type HistoryTab = "caretip" | "bank";
 
-function activityTitle(kind: ReturnType<typeof employeePayoutActivityKind>, t: (k: string) => string) {
-  if (kind === "held_venue") return t("employeePayouts.venueDistribution");
-  return t("employeePayouts.caretipTransfer");
-}
-
-function activityStatusLabel(kind: ReturnType<typeof employeePayoutActivityKind>, t: (k: string) => string) {
-  if (kind === "transferred") return t("employeePayouts.activityTransferred");
-  if (kind === "destination_routed") return t("employeePayouts.activityRouted");
-  if (kind === "held") return t("employeePayouts.activityHeld");
-  if (kind === "held_venue") return t("employeePayouts.activityHeldVenue");
-  if (kind === "transferring") return t("employeePayouts.activityTransferring");
-  if (kind === "refunded") return t("employeePayouts.activityRefunded");
-  if (kind === "failed") return t("employeePayouts.activityFailed");
-  return t("employeePayouts.activityDisputed");
-}
-
-function activityDestination(kind: ReturnType<typeof employeePayoutActivityKind>, t: (k: string) => string) {
-  if (kind === "held_venue") return t("employeePayouts.destVenue");
-  if (kind === "transferred" || kind === "destination_routed") return t("employeePayouts.paidToStripe");
-  return t("employeePayouts.destStripe");
-}
-
 export function EmployeePayoutHistoryScreen() {
   const { t } = useI18n();
   const { colors } = useTheme();
@@ -78,6 +59,7 @@ export function EmployeePayoutHistoryScreen() {
     queryKey: [...keys.employeeMe, "payables"] as const,
     queryFn: fetchEmployeePayableActivity,
     enabled: Boolean(userId),
+    staleTime: 0,
   });
   const bankQuery = useQuery({
     queryKey: [...keys.employeeMe, "stripe-payouts"] as const,
@@ -87,14 +69,15 @@ export function EmployeePayoutHistoryScreen() {
 
   const openCaretip = (row: EmployeePayableActivityItem) => {
     const kind = employeePayoutActivityKind(row);
+    const destKey = employeePayoutActivityDestinationKey(kind);
     setDetail({
       kind: "caretip",
-      title: activityTitle(kind, t),
+      title: t(employeePayoutActivityTitleKey(kind)),
       amountCents: row.activityCents,
-      statusLabel: activityStatusLabel(kind, t),
+      statusLabel: t(employeePayoutActivityStatusKey(kind)),
       statusTone: employeePayoutActivityTone(kind),
       createdAt: row.createdAt,
-      destination: activityDestination(kind, t),
+      destination: destKey ? t(destKey) : null,
       methodLabel: null,
       reference: null,
     });
@@ -181,13 +164,17 @@ export function EmployeePayoutHistoryScreen() {
           <View style={styles.list}>
             {payablesQuery.data.items.map((row) => {
               const kind = employeePayoutActivityKind(row);
+              const destKey = employeePayoutActivityDestinationKey(kind);
+              const destLabel = destKey ? t(destKey) : null;
               const a11y = [
-                activityTitle(kind, t),
+                t(employeePayoutActivityTitleKey(kind)),
                 formatCentsEur(row.activityCents),
-                activityStatusLabel(kind, t),
+                t(employeePayoutActivityStatusKey(kind)),
                 formatPayoutDateTime(row.createdAt),
-                activityDestination(kind, t),
-              ].join(". ");
+                destLabel,
+              ]
+                .filter(Boolean)
+                .join(". ");
               return (
                 <Pressable
                   key={row.id}
@@ -198,24 +185,26 @@ export function EmployeePayoutHistoryScreen() {
                 >
                   <View style={styles.rowMain}>
                     <Text style={styles.rowTitle} {...textA11y}>
-                      {activityTitle(kind, t)}
+                      {t(employeePayoutActivityTitleKey(kind))}
                     </Text>
                     <Text style={styles.rowMeta} {...textA11y}>
                       {formatPayoutDateTime(row.createdAt)}
                     </Text>
-                    <Text style={styles.rowMeta} {...textA11y}>
-                      {activityDestination(kind, t)}
-                    </Text>
+                    {destLabel ? (
+                      <Text style={styles.rowMeta} {...textA11y}>
+                        {destLabel}
+                      </Text>
+                    ) : null}
                   </View>
                   <View style={styles.rowEnd}>
                     <Text style={styles.rowAmount} {...textA11y}>
                       {formatCentsEur(row.activityCents)}
                     </Text>
                     {employeePayoutActivityShowsStatusPill(kind) ? (
-                      <StatusPill label={activityStatusLabel(kind, t)} tone={employeePayoutActivityTone(kind)} />
+                      <StatusPill label={t(employeePayoutActivityStatusKey(kind))} tone={employeePayoutActivityTone(kind)} />
                     ) : (
                       <Text style={styles.rowMeta} {...textA11y}>
-                        {activityStatusLabel(kind, t)}
+                        {t(employeePayoutActivityStatusKey(kind))}
                       </Text>
                     )}
                   </View>

@@ -141,9 +141,12 @@ function runStaticGuards() {
 
   const payableSvc = read("src/services/employeeTipPayable.service.ts");
   const listStart = payableSvc.indexOf("export async function listEmployeePayableActivityForEmployee");
-  const listFn = listStart >= 0 ? payableSvc.slice(listStart, listStart + 1600) : "";
+  const listFn = listStart >= 0 ? payableSvc.slice(listStart, listStart + 3600) : "";
   if (
     listFn.includes("activityCents") &&
+    listFn.includes("routingMode") &&
+    listFn.includes("chargeModel") &&
+    listFn.includes("presentationKind") &&
     !listFn.includes("stripeTransferId") &&
     !listFn.includes("stripeAccountId") &&
     !listFn.includes("stripeDestinationAccountId")

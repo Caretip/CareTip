@@ -12,18 +12,31 @@ export type EmployeePayoutActivityKind =
 
 export type EmployeePayoutActivityTone = "success" | "warning" | "neutral" | "danger";
 
-/** Frozen payable status `held_business` — not the current Business setting. */
+/** Frozen payable fields on THAT row — not the current Business setting or Connect state. */
 export function employeePayoutActivityKind(
-  row: Pick<EmployeePayableActivityItem, "status" | "disputedOpenCents">,
+  row: Pick<EmployeePayableActivityItem, "status" | "disputedOpenCents"> & {
+    presentationKind?: EmployeePayoutActivityKind | null;
+    chargeModel?: string | null;
+    routingMode?: string | null;
+  },
 ): EmployeePayoutActivityKind {
+  if (row.presentationKind) return row.presentationKind;
   if ((row.disputedOpenCents ?? 0) > 0) return "disputed";
   const status: EmployeePayableActivityStatus = row.status;
   if (status === "refunded") return "refunded";
   if (status === "transfer_failed") return "failed";
+  const venueDistribution =
+    row.chargeModel === "destination_business" ||
+    status === "held_business" ||
+    (row.routingMode === "business_distribution" &&
+      row.chargeModel !== "destination_employee" &&
+      status !== "transferred" &&
+      status !== "destination_settled" &&
+      status !== "transferring");
+  if (venueDistribution) return "held_venue";
   if (status === "destination_settled") return "destination_routed";
   if (status === "transferred") return "transferred";
   if (status === "transferring") return "transferring";
-  if (status === "held_business") return "held_venue";
   return "held";
 }
 

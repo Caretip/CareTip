@@ -83,15 +83,27 @@ export type EmployeePayoutActivityKind =
 export function employeePayoutActivityKind(row: {
   status: string;
   disputedOpenCents: number;
+  presentationKind?: EmployeePayoutActivityKind | null;
+  chargeModel?: string | null;
+  routingMode?: string | null;
 }): EmployeePayoutActivityKind {
+  if (row.presentationKind) return row.presentationKind;
   if ((row.disputedOpenCents ?? 0) > 0) return "disputed";
   const status = row.status;
   if (status === "refunded") return "refunded";
   if (status === "transfer_failed") return "failed";
+  const venueDistribution =
+    row.chargeModel === "destination_business" ||
+    status === "held_business" ||
+    (row.routingMode === "business_distribution" &&
+      row.chargeModel !== "destination_employee" &&
+      status !== "transferred" &&
+      status !== "destination_settled" &&
+      status !== "transferring");
+  if (venueDistribution) return "held_venue";
   if (status === "destination_settled") return "destination_routed";
   if (status === "transferred") return "transferred";
   if (status === "transferring") return "transferring";
-  if (status === "held_business") return "held_venue";
   return "held";
 }
 
@@ -113,6 +125,38 @@ export function employeePayoutActivityShowsStatusPill(kind: EmployeePayoutActivi
 
 export function isEmployeeBusinessDistributionMode(mode: string | null | undefined): boolean {
   return mode === "business_distribution";
+}
+
+/** Row title: frozen presentation kind, never current Connect status. */
+export function employeePayoutActivityTitleKey(kind: EmployeePayoutActivityKind): string {
+  if (kind === "held_venue") return "employeePayouts.venueDistribution";
+  if (kind === "held") return "employeePayouts.activityKindHeld";
+  if (kind === "transferring") return "employeePayouts.activityKindTransferring";
+  if (kind === "transferred") return "employeePayouts.caretipTransfer";
+  if (kind === "destination_routed") return "employeePayouts.activityKindRouted";
+  if (kind === "refunded") return "employeePayouts.activityKindRefunded";
+  if (kind === "failed") return "employeePayouts.activityKindFailed";
+  return "employeePayouts.activityKindDisputed";
+}
+
+export function employeePayoutActivityStatusKey(kind: EmployeePayoutActivityKind): string {
+  if (kind === "transferred") return "employeePayouts.activityTransferred";
+  if (kind === "destination_routed") return "employeePayouts.activityRouted";
+  if (kind === "held") return "employeePayouts.activityHeld";
+  if (kind === "held_venue") return "employeePayouts.activityHeldVenue";
+  if (kind === "transferring") return "employeePayouts.activityTransferring";
+  if (kind === "refunded") return "employeePayouts.activityRefunded";
+  if (kind === "failed") return "employeePayouts.activityFailed";
+  return "employeePayouts.activityDisputed";
+}
+
+/** Destination line from frozen kind. Null when a destination would be misleading. */
+export function employeePayoutActivityDestinationKey(
+  kind: EmployeePayoutActivityKind,
+): string | null {
+  if (kind === "held" || kind === "transferring") return "employeePayouts.destHeld";
+  if (kind === "transferred" || kind === "destination_routed") return "employeePayouts.destStripe";
+  return null;
 }
 
 export function bankPayoutStatusTone(

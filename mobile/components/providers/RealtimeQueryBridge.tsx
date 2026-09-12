@@ -79,6 +79,10 @@ export function RealtimeQueryBridge() {
       if (keys.has("empTips")) {
         void queryClient.invalidateQueries({ queryKey: qk.employeeTips });
         void queryClient.invalidateQueries({ queryKey: qk.employeeTipList });
+        void queryClient.invalidateQueries({ queryKey: [...qk.employeeMe, "payables"] });
+        void queryClient.invalidateQueries({ queryKey: [...qk.employeeMe, "instant-payout"] });
+        void queryClient.invalidateQueries({ queryKey: [...qk.employeeMe, "stripe-payouts"] });
+        void queryClient.invalidateQueries({ queryKey: [...qk.employeeMe, "connect-status"] });
       }
       if (keys.has("inbox")) {
         void queryClient.invalidateQueries({ queryKey: qk.notifications });

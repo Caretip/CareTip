@@ -462,6 +462,7 @@ export type MobileMessages = {
     paidToStripe: string;
     destStripe: string;
     destVenue: string;
+    destHeld: string;
     venueDistribution: string;
     bankPayout: string;
     instantBankPayout: string;
@@ -495,6 +496,12 @@ export type MobileMessages = {
     activityRefunded: string;
     activityFailed: string;
     activityDisputed: string;
+    activityKindHeld: string;
+    activityKindTransferring: string;
+    activityKindRouted: string;
+    activityKindRefunded: string;
+    activityKindFailed: string;
+    activityKindDisputed: string;
   };
   employeeAssignment: {
     eyebrow: string;

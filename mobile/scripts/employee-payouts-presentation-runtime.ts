@@ -13,6 +13,8 @@ import {
   employeePayoutActivityKind,
   employeePayoutActivityShowsStatusPill,
   employeePayoutActivityTone,
+  employeePayoutActivityTitleKey,
+  employeePayoutActivityDestinationKey,
   employeePayoutShowConnectPrompt,
   employeePayoutShowSetupPrompt,
   isEmployeeBusinessDistributionMode,
@@ -51,6 +53,48 @@ assert.equal(employeePayoutActivityKind({ status: "destination_settled", dispute
 assert.equal(employeePayoutActivityKind({ status: "transferred", disputedOpenCents: 1 }), "disputed");
 assert.equal(employeePayoutActivityKind({ status: "held_business", disputedOpenCents: 0 }), "held_venue");
 assert.equal(employeePayoutActivityKind({ status: "held_platform", disputedOpenCents: 0 }), "held");
+assert.equal(
+  employeePayoutActivityKind({
+    status: "held_platform",
+    disputedOpenCents: 0,
+    chargeModel: "destination_business",
+    routingMode: "business_distribution",
+  }),
+  "held_venue",
+);
+assert.equal(
+  employeePayoutActivityKind({
+    status: "held_platform",
+    disputedOpenCents: 0,
+    chargeModel: "platform_hold",
+    routingMode: "direct_to_employee",
+  }),
+  "held",
+);
+assert.equal(
+  employeePayoutActivityKind({
+    status: "destination_settled",
+    disputedOpenCents: 0,
+    chargeModel: "destination_employee",
+    routingMode: "business_distribution",
+  }),
+  "destination_routed",
+);
+assert.equal(
+  employeePayoutActivityKind({
+    presentationKind: "held_venue",
+    status: "held_platform",
+    disputedOpenCents: 0,
+  }),
+  "held_venue",
+);
+assert.equal(employeePayoutActivityTitleKey("held_venue"), "employeePayouts.venueDistribution");
+assert.equal(employeePayoutActivityTitleKey("held"), "employeePayouts.activityKindHeld");
+assert.equal(employeePayoutActivityTitleKey("transferred"), "employeePayouts.caretipTransfer");
+assert.equal(employeePayoutActivityDestinationKey("held_venue"), null);
+assert.equal(employeePayoutActivityDestinationKey("held"), "employeePayouts.destHeld");
+assert.equal(employeePayoutActivityDestinationKey("transferred"), "employeePayouts.destStripe");
+assert.equal(employeePayoutActivityDestinationKey("destination_routed"), "employeePayouts.destStripe");
 assert.equal(employeePayoutActivityShowsStatusPill("held_venue"), false);
 assert.equal(employeePayoutActivityShowsStatusPill("held"), true);
 assert.equal(employeePayoutActivityTone("held_venue"), "neutral");

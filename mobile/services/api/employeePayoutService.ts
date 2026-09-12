@@ -63,10 +63,23 @@ export type EmployeeStripeBankPayoutItem = {
   destinationLast4?: string | null;
 };
 
+export type EmployeePayablePresentationKind =
+  | "held"
+  | "held_venue"
+  | "transferring"
+  | "transferred"
+  | "destination_routed"
+  | "refunded"
+  | "failed"
+  | "disputed";
+
 export type EmployeePayableActivityItem = {
   id: string;
   createdAt: string;
   status: string;
+  routingMode?: "direct_to_employee" | "business_distribution";
+  chargeModel?: "destination_employee" | "destination_business" | "platform_hold";
+  presentationKind?: EmployeePayablePresentationKind;
   payableCents: number;
   transferredCents: number;
   reversedCents: number;

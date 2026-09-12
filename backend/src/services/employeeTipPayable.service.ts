@@ -12,6 +12,13 @@ import { prisma } from "../prisma.js";
 import { calculateTipPlatformFeeCents } from "../config/fees.js";
 import { runSerializedByKey } from "../utils/serializedByKey.js";
 import type { PaidTipConnectSnapshot } from "./employeeTipRouting.service.js";
+import {
+  employeePayablePresentationKind,
+  type EmployeePayablePresentationKind,
+} from "./employeePayableActivityPresentation.js";
+
+export type { EmployeePayablePresentationKind };
+export { employeePayablePresentationKind };
 
 export type EmployeePayableMoneyRow = {
   payableCents: number;
@@ -397,6 +404,9 @@ export type EmployeePayableActivityItem = {
   id: string;
   createdAt: string;
   status: EmployeeTipPayableStatus;
+  routingMode: EmployeeTipPayoutMode;
+  chargeModel: EmployeeTipChargeModel;
+  presentationKind: EmployeePayablePresentationKind;
   payableCents: number;
   transferredCents: number;
   reversedCents: number;
@@ -441,6 +451,8 @@ export async function listEmployeePayableActivityForEmployee(
         id: true,
         createdAt: true,
         status: true,
+        routingMode: true,
+        chargeModel: true,
         payableCents: true,
         transferredCents: true,
         reversedCents: true,
@@ -458,6 +470,9 @@ export async function listEmployeePayableActivityForEmployee(
         id: row.id,
         createdAt: row.createdAt.toISOString(),
         status: row.status,
+        routingMode: row.routingMode,
+        chargeModel: row.chargeModel,
+        presentationKind: employeePayablePresentationKind(row),
         payableCents: row.payableCents,
         transferredCents: row.transferredCents,
         reversedCents: row.reversedCents,

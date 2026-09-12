@@ -2951,10 +2951,23 @@ export type EmployeePayableActivityStatus =
   | "transfer_failed"
   | "refunded";
 
+export type EmployeePayablePresentationKind =
+  | "held"
+  | "held_venue"
+  | "transferring"
+  | "transferred"
+  | "destination_routed"
+  | "refunded"
+  | "failed"
+  | "disputed";
+
 export interface EmployeePayableActivityItem {
   id: string;
   createdAt: string;
   status: EmployeePayableActivityStatus;
+  routingMode?: "direct_to_employee" | "business_distribution";
+  chargeModel?: "destination_employee" | "destination_business" | "platform_hold";
+  presentationKind?: EmployeePayablePresentationKind;
   payableCents: number;
   transferredCents: number;
   reversedCents: number;
