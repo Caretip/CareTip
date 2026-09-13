@@ -1,5 +1,3 @@
-import type { ImgHTMLAttributes } from "react";
-
 import type { PublicGuestBranding } from "../../lib/businessBranding";
 import { DEFAULT_BRAND_PRIMARY_COLOR } from "../../lib/businessBranding";
 import { cn } from "@/lib/utils";
@@ -40,10 +38,11 @@ export function CustomerVenueBanner({ branding, className }: CustomerVenueBanner
       <img
         src={bannerSrc}
         alt=""
+        width={1200}
+        height={256}
         className="h-full w-full object-cover"
-        loading="lazy"
         decoding="async"
-        {...({ fetchpriority: "low" } as ImgHTMLAttributes<HTMLImageElement>)}
+        fetchPriority="high"
       />
       <div
         className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/10 via-transparent to-black/20"

@@ -9,6 +9,7 @@ import {
 } from "../utils/businessTime.js";
 import { getCachedOrLoad, invalidateCacheKey, invalidateCacheKeyPrefix } from "../utils/shortLivedCache.js";
 import { emitGoalUpdatedCanonical } from "../socket/realtimeContracts.js";
+import { selectMonthlyGoalMirrorAmount } from "./employeeMonthlyGoalMirror.js";
 
 const BUSINESS_GOALS_CACHE_TTL_MS = 60_000;
 
@@ -20,6 +21,122 @@ function invalidateBusinessGoalsListCache(businessId: string): void {
 function invalidateUserGoalProgressCache(userId: string): void {
   invalidateCacheKeyPrefix(`goal-progress:${userId}:`);
   invalidateCacheKeyPrefix(`emp-tips-ctx:${userId}`);
+}
+
+export { selectMonthlyGoalMirrorAmount } from "./employeeMonthlyGoalMirror.js";
+
+export async function syncEmployeeMonthlyGoalMirror(employeeId: string): Promise<number | null> {
+  const active = await prisma.employeeGoal.findMany({
+    where: { employeeId, status: EmployeeGoalStatus.active },
+    select: { goalAmount: true, goalPeriod: true, updatedAt: true },
+  });
+  const amount = selectMonthlyGoalMirrorAmount(active);
+  await prisma.employee.update({
+    where: { id: employeeId },
+    data: { monthlyGoal: amount },
+  });
+  return amount;
+}
+
+/** Drop cached Overview / Business stats that embed goal progress. Never touches tip/account caches. */
+export function invalidateEmployeeGoalReadCaches(opts: {
+  userId?: string | null;
+  employeeId: string;
+  businessId: string;
+}): void {
+  if (opts.userId) invalidateUserGoalProgressCache(opts.userId);
+  invalidateCacheKeyPrefix(`emp-period-summary:${opts.employeeId}:`);
+  invalidateCacheKeyPrefix(`emp-dash-summary:${opts.employeeId}:`);
+  invalidateCacheKeyPrefix(`emp-dash-summary-bundle:${opts.employeeId}:`);
+  invalidateCacheKeyPrefix(`emp-period-analytics:${opts.employeeId}:`);
+  invalidateBusinessGoalsListCache(opts.businessId);
+  invalidateCacheKeyPrefix(`business-stats:${opts.businessId}:`);
+  invalidateCacheKeyPrefix(`business-stats-summary:${opts.businessId}:`);
+  invalidateCacheKeyPrefix(`business-stats-analytics:${opts.businessId}:`);
+  invalidateCacheKeyPrefix(`biz-dash-summary:${opts.businessId}:`);
+  invalidateCacheKeyPrefix(`biz-dash-extras:${opts.businessId}`);
+  invalidateCacheKeyPrefix(`biz-dash-employees:${opts.businessId}:`);
+}
+
+async function afterEmployeeGoalMutation(opts: {
+  employeeId: string;
+  userId?: string | null;
+  businessId: string;
+  goalId: string;
+  payload: Record<string, unknown>;
+}): Promise<void> {
+  await syncEmployeeMonthlyGoalMirror(opts.employeeId);
+  invalidateEmployeeGoalReadCaches(opts);
+  emitGoalUpdatedCanonical(opts.businessId, opts.employeeId, opts.goalId, opts.payload);
+}
+
+function todayUtcDateKey(): string {
+  return new Date().toISOString().slice(0, 10);
+}
+
+/**
+ * Settings / staff `monthlyGoal` writes must mutate `employee_goals`, not only the legacy column.
+ * Clearing the monthly field archives monthly goals only (weekly/daily stay).
+ */
+export async function applyEmployeeMonthlyGoalFromColumn(
+  employeeId: string,
+  monthlyGoal: number | null,
+  opts: { userId?: string | null; businessId: string },
+): Promise<void> {
+  if (monthlyGoal === null) {
+    await prisma.employeeGoal.updateMany({
+      where: {
+        employeeId,
+        status: EmployeeGoalStatus.active,
+        goalPeriod: GoalPeriod.monthly,
+      },
+      data: { status: EmployeeGoalStatus.archived },
+    });
+  } else {
+    const existing = await prisma.employeeGoal.findFirst({
+      where: {
+        employeeId,
+        status: EmployeeGoalStatus.active,
+        goalPeriod: GoalPeriod.monthly,
+      },
+      orderBy: [{ updatedAt: "desc" }],
+      select: { id: true },
+    });
+    const sd = new Date(`${todayUtcDateKey()}T12:00:00.000Z`);
+    if (existing) {
+      await prisma.employeeGoal.update({
+        where: { id: existing.id },
+        data: { goalAmount: monthlyGoal, startDate: sd, status: EmployeeGoalStatus.active },
+      });
+    } else {
+      await prisma.employeeGoal.create({
+        data: {
+          employeeId,
+          name: "Tip goal",
+          goalAmount: monthlyGoal,
+          goalPeriod: GoalPeriod.monthly,
+          status: EmployeeGoalStatus.active,
+          startDate: sd,
+        },
+      });
+    }
+  }
+  const latest = await prisma.employeeGoal.findFirst({
+    where: { employeeId, status: EmployeeGoalStatus.active },
+    orderBy: [{ updatedAt: "desc" }],
+    select: { id: true, goalAmount: true, status: true, updatedAt: true },
+  });
+  await afterEmployeeGoalMutation({
+    employeeId,
+    userId: opts.userId,
+    businessId: opts.businessId,
+    goalId: latest?.id ?? "monthly-cleared",
+    payload: {
+      goalAmount: latest != null ? Number(latest.goalAmount) : null,
+      status: latest?.status ?? "deleted",
+      updatedAt: (latest?.updatedAt ?? new Date()).toISOString(),
+    },
+  });
 }
 
 export type GoalProgressStatus = "achieved" | "on_track" | "below_target";
@@ -352,17 +469,21 @@ export async function upsertMyGoal(
     goalPeriod: row.goalPeriod,
     startDate: row.startDate,
   });
-  invalidateUserGoalProgressCache(userId);
   const empBiz = await prisma.employee.findUnique({
     where: { id: emp.id },
-    select: { businessId: true },
+    select: { businessId: true, userId: true },
   });
-  if (empBiz?.businessId) invalidateBusinessGoalsListCache(empBiz.businessId);
   if (empBiz?.businessId) {
-    emitGoalUpdatedCanonical(empBiz.businessId, emp.id, row.id, {
-      goalAmount: Number(row.goalAmount),
-      status: row.status,
-      updatedAt: row.updatedAt.toISOString(),
+    await afterEmployeeGoalMutation({
+      employeeId: emp.id,
+      userId: empBiz.userId ?? userId,
+      businessId: empBiz.businessId,
+      goalId: row.id,
+      payload: {
+        goalAmount: Number(row.goalAmount),
+        status: row.status,
+        updatedAt: row.updatedAt.toISOString(),
+      },
     });
   }
   return { ...(p as GoalWithProgress), name: row.name, lifecycleStatus: row.status };
@@ -374,10 +495,15 @@ export async function deleteMyGoal(userId: string): Promise<void> {
     select: { id: true, businessId: true },
   });
   if (!emp) throw new Error("Employee not found");
-  // Back-compat: delete active goal only.
+  // Back-compat: delete active goal rows only — never tips, payables, or payouts.
   await prisma.employeeGoal.deleteMany({ where: { employeeId: emp.id, status: EmployeeGoalStatus.active } });
-  invalidateUserGoalProgressCache(userId);
-  invalidateBusinessGoalsListCache(emp.businessId);
+  await afterEmployeeGoalMutation({
+    employeeId: emp.id,
+    userId,
+    businessId: emp.businessId,
+    goalId: "cleared",
+    payload: { goalAmount: null, status: "deleted", updatedAt: new Date().toISOString() },
+  });
 }
 
 export async function listEmployeeGoalsForBusiness(
@@ -581,17 +707,21 @@ export async function createMyGoal(
       startDate: sd,
     },
   });
-  invalidateUserGoalProgressCache(userId);
   const empBiz = await prisma.employee.findUnique({
     where: { id: emp.id },
-    select: { businessId: true },
+    select: { businessId: true, userId: true },
   });
-  if (empBiz?.businessId) invalidateBusinessGoalsListCache(empBiz.businessId);
   if (empBiz?.businessId) {
-    emitGoalUpdatedCanonical(empBiz.businessId, emp.id, row.id, {
-      goalAmount: Number(row.goalAmount),
-      status: row.status,
-      updatedAt: row.updatedAt.toISOString(),
+    await afterEmployeeGoalMutation({
+      employeeId: emp.id,
+      userId: empBiz.userId ?? userId,
+      businessId: empBiz.businessId,
+      goalId: row.id,
+      payload: {
+        goalAmount: Number(row.goalAmount),
+        status: row.status,
+        updatedAt: row.updatedAt.toISOString(),
+      },
     });
   }
   return {
@@ -627,17 +757,21 @@ export async function updateMyGoal(
       ...(sd !== undefined ? { startDate: sd } : {}),
     },
   });
-  invalidateUserGoalProgressCache(userId);
   const empBiz = await prisma.employee.findUnique({
     where: { id: emp.id },
-    select: { businessId: true },
+    select: { businessId: true, userId: true },
   });
-  if (empBiz?.businessId) invalidateBusinessGoalsListCache(empBiz.businessId);
   if (empBiz?.businessId) {
-    emitGoalUpdatedCanonical(empBiz.businessId, emp.id, next.id, {
-      goalAmount: Number(next.goalAmount),
-      status: next.status,
-      updatedAt: next.updatedAt.toISOString(),
+    await afterEmployeeGoalMutation({
+      employeeId: emp.id,
+      userId: empBiz.userId ?? userId,
+      businessId: empBiz.businessId,
+      goalId: next.id,
+      payload: {
+        goalAmount: Number(next.goalAmount),
+        status: next.status,
+        updatedAt: next.updatedAt.toISOString(),
+      },
     });
   }
   return {
@@ -661,17 +795,21 @@ export async function archiveMyGoal(userId: string, goalId: string): Promise<Emp
     where: { id: row.id },
     data: { status: EmployeeGoalStatus.archived },
   });
-  invalidateUserGoalProgressCache(userId);
   const empBiz = await prisma.employee.findUnique({
     where: { id: emp.id },
-    select: { businessId: true },
+    select: { businessId: true, userId: true },
   });
-  if (empBiz?.businessId) invalidateBusinessGoalsListCache(empBiz.businessId);
   if (empBiz?.businessId) {
-    emitGoalUpdatedCanonical(empBiz.businessId, emp.id, next.id, {
-      goalAmount: Number(next.goalAmount),
-      status: next.status,
-      updatedAt: next.updatedAt.toISOString(),
+    await afterEmployeeGoalMutation({
+      employeeId: emp.id,
+      userId: empBiz.userId ?? userId,
+      businessId: empBiz.businessId,
+      goalId: next.id,
+      payload: {
+        goalAmount: Number(next.goalAmount),
+        status: next.status,
+        updatedAt: next.updatedAt.toISOString(),
+      },
     });
   }
   return {
@@ -687,15 +825,19 @@ export async function archiveMyGoal(userId: string, goalId: string): Promise<Emp
 }
 
 export async function deleteMyGoalById(userId: string, goalId: string): Promise<void> {
-  const emp = await prisma.employee.findUnique({ where: { userId }, select: { id: true } });
+  const emp = await prisma.employee.findUnique({
+    where: { userId },
+    select: { id: true, businessId: true, userId: true },
+  });
   if (!emp) throw new Error("Employee not found");
   const row = await prisma.employeeGoal.findFirst({ where: { id: goalId, employeeId: emp.id } });
   if (!row) throw new Error("Goal not found");
   await prisma.employeeGoal.delete({ where: { id: row.id } });
-  invalidateUserGoalProgressCache(userId);
-  const empBiz = await prisma.employee.findUnique({
-    where: { id: emp.id },
-    select: { businessId: true },
+  await afterEmployeeGoalMutation({
+    employeeId: emp.id,
+    userId: emp.userId ?? userId,
+    businessId: emp.businessId,
+    goalId: row.id,
+    payload: { goalAmount: null, status: "deleted", updatedAt: new Date().toISOString() },
   });
-  if (empBiz?.businessId) invalidateBusinessGoalsListCache(empBiz.businessId);
 }

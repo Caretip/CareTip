@@ -216,12 +216,6 @@ export const EmployeeDashboard = memo(function EmployeeDashboard() {
   const devGoalBundle = useDevDemo ? devMockEmployeeGoalBundle() : null;
   const devPeriodSummary = useDevDemo ? devMockEmployeeSummary(analyticsTimeframe) : null;
 
-  const displayCurrentMonthTotal =
-    devGoalBundle?.currentMonthTotal ??
-    displayPayload?.currentMonthTotal ??
-    displayMetrics?.currentMonthTotal ??
-    0;
-
   const displayAccountSummary = useDevDemo
     ? { ...devMockEmployeeAccountSummary(), loaded: true }
     : heroAccountReady && heroPayload
@@ -266,8 +260,6 @@ export const EmployeeDashboard = memo(function EmployeeDashboard() {
   const displayChartSeries = useDevDemo
     ? devMockEmployeeChartSeries(analyticsTimeframe)
     : (chartPayload?.chartSeries ?? []);
-  const displayMonthlyGoal =
-    devGoalBundle?.monthlyGoal ?? displayPayload?.monthlyGoal ?? displayMetrics?.monthlyGoal ?? null;
   const displayGoalProgress =
     devGoalBundle?.goal ?? displayPayload?.goalProgress ?? displayMetrics?.goalProgress ?? null;
   const businessTimezone = chartPayload?.businessTimezone ?? null;
@@ -283,24 +275,14 @@ export const EmployeeDashboard = memo(function EmployeeDashboard() {
     const ratingCount = useDevDemo
       ? 12
       : (displayPayload?.ratingCount ?? displayMetrics?.ratingCount ?? 0);
-    const goalCurrent =
-      displayGoalProgress != null
-        ? displayGoalProgress.currentAmount
-        : displayMonthlyGoal != null
-          ? displayCurrentMonthTotal
-          : null;
-    const goalTarget =
-      displayGoalProgress != null
-        ? displayGoalProgress.goalAmount
-        : displayMonthlyGoal;
+    const goalCurrent = displayGoalProgress != null ? displayGoalProgress.currentAmount : null;
+    const goalTarget = displayGoalProgress != null ? displayGoalProgress.goalAmount : null;
     const goalPct =
       displayGoalProgress != null
         ? displayGoalProgress.goalAmount > 0
           ? displayGoalProgress.percent ?? 0
           : 0
-        : displayMonthlyGoal != null && displayMonthlyGoal > 0
-          ? Math.min(100, Math.round((displayCurrentMonthTotal / displayMonthlyGoal) * 100))
-          : null;
+        : null;
     const tipStreakDays = useDevDemo
       ? 3
       : computeEmployeeTipStreakDays(displayPayload?.tips ?? []);
@@ -310,8 +292,6 @@ export const EmployeeDashboard = memo(function EmployeeDashboard() {
     displayMetrics,
     useDevDemo,
     displayGoalProgress,
-    displayMonthlyGoal,
-    displayCurrentMonthTotal,
     displayPayload?.averageRating,
     displayPayload?.ratingCount,
     displayPayload?.tips,

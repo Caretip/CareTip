@@ -7,7 +7,7 @@ import {
   type EmployeeGoalProgress,
   type TipItem,
 } from "../lib/api";
-import { DASHBOARD_SWR_METRICS_TTL_MS } from "../lib/dashboardSwrCache";
+import { subscribeEmployeeGoalClientInvalidation } from "../lib/employeeGoalClientSync";
 import {
   clearEmployeePeriodSwrStore,
   deleteEmployeePeriodSnapshot,
@@ -1146,6 +1146,25 @@ export function useEmployeeDashboardAnalytics(
   );
 
   loadForRef.current = loadFor;
+
+  useEffect(() => {
+    return subscribeEmployeeGoalClientInvalidation(() => {
+      if (!isActiveRef.current) return;
+      setLastKnownGoodMetrics((prev) =>
+        prev ? { ...prev, monthlyGoal: null, goalProgress: null } : null,
+      );
+      const tf = tfRef.current;
+      summaryPartialRef.current.delete(tf);
+      analyticsPartialRef.current.delete(tf);
+      clearEmployeeTipsClientCache(tf);
+      void loadForRef.current(tf, {
+        affectsUi: true,
+        soft: false,
+        silent: true,
+        forceNetwork: true,
+      });
+    });
+  }, []);
 
   /** Phase 1: load only the active employee timeframe — no week/month background prefetch. */
   const scheduleInactivePrefetch = useCallback((_activeTf: EmployeeAnalyticsTimeframe) => {

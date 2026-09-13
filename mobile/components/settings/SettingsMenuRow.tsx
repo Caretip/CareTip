@@ -48,10 +48,11 @@ export function SettingsMenuRow({
         accessibilityHint={description}
         hitSlop={{ top: 4, bottom: 4, left: 0, right: 0 }}
         onPress={() => {
-          hapticLight();
+          if (!destructive) hapticLight();
           onPress();
         }}
         onPressIn={() => {
+          if (destructive) return;
           scale.value = withSpring(0.985, motion.spring.press);
         }}
         onPressOut={() => {

@@ -1,0 +1,237 @@
+{
+  "expectedSha": "eb2169a2",
+  "minCents": 3000,
+  "health": {
+    "status": "ok",
+    "database": "connected",
+    "environment": "production",
+    "uptime": 95.830215063
+  },
+  "jordan": {
+    "employee": "…zyqvmue4",
+    "acct": "…w9huq7LT",
+    "status": "ready",
+    "payoutsEnabled": true
+  },
+  "auth": {
+    "jordan": 200,
+    "manager": 200,
+    "sam": 200,
+    "jordanHasToken": true
+  },
+  "capability": {
+    "payoutsEnabled": true
+  },
+  "balanceBefore": {
+    "livemode": false,
+    "available": 0,
+    "pending": 12565,
+    "instantGross": 12565,
+    "instantNet": 12258,
+    "feeImplied": 307,
+    "displayedFeeBps": 244
+  },
+  "snapBefore": {
+    "eligible": true,
+    "reason": "eligible",
+    "net": 12258,
+    "gross": 12565,
+    "destLast4": "3000",
+    "destKind": "bank_account",
+    "payoutsEnabled": true
+  },
+  "instantGet": {
+    "status": 200,
+    "body": {
+      "connected": true,
+      "eligible": true,
+      "reason": "eligible",
+      "payoutsEnabled": true,
+      "currency": "eur",
+      "instantAvailableGrossCents": 12565,
+      "instantAvailableNetCents": 12258,
+      "availableCents": 0,
+      "pendingCents": 12565,
+      "platformFeeCents": 307,
+      "feeConfigured": true,
+      "targetTotalFeeBps": 250,
+      "displayedFeeBps": 244,
+      "destinationLast4": "3000",
+      "destinationKind": "bank_account",
+      "canOpenExpressDashboard": true,
+      "minPayoutCents": 3000,
+      "stakeholderMinCents": 3000,
+      "stripeMinCents": 40,
+      "feeSource": "stripe_platform_pricing"
+    }
+  },
+  "authz": {
+    "guestInstant": 401,
+    "mgrInstant": 403,
+    "mgrPayouts": 403,
+    "guestPayouts": 401
+  },
+  "instantPost": {
+    "status": 200,
+    "body": {
+      "payout": {
+        "requestId": "cmtw22ee8000bop48k5nsnouk",
+        "amountCents": 12258,
+        "currency": "eur",
+        "status": "submitted",
+        "method": "instant"
+      },
+      "eligibility": {
+        "connected": true,
+        "eligible": false,
+        "reason": "zero_balance",
+        "payoutsEnabled": true,
+        "currency": "eur",
+        "instantAvailableGrossCents": 1,
+        "instantAvailableNetCents": 0,
+        "availableCents": 0,
+        "pendingCents": 1,
+        "platformFeeCents": 1,
+        "feeConfigured": true,
+        "targetTotalFeeBps": 250,
+        "displayedFeeBps": 10000,
+        "destinationLast4": "3000",
+        "destinationKind": "bank_account",
+        "canOpenExpressDashboard": true,
+        "minPayoutCents": 3000,
+        "stakeholderMinCents": 3000,
+        "stripeMinCents": 40,
+        "feeSource": "stripe_platform_pricing"
+      }
+    }
+  },
+  "instantReplay": {
+    "status": 200,
+    "body": {
+      "payout": {
+        "requestId": "cmtw22ee8000bop48k5nsnouk",
+        "amountCents": 12258,
+        "currency": "eur",
+        "status": "submitted",
+        "method": "instant"
+      },
+      "eligibility": {
+        "connected": true,
+        "eligible": false,
+        "reason": "zero_balance",
+        "payoutsEnabled": true,
+        "currency": "eur",
+        "instantAvailableGrossCents": 1,
+        "instantAvailableNetCents": 0,
+        "availableCents": 0,
+        "pendingCents": 1,
+        "platformFeeCents": 1,
+        "feeConfigured": true,
+        "targetTotalFeeBps": 250,
+        "displayedFeeBps": 10000,
+        "destinationLast4": "3000",
+        "destinationKind": "bank_account",
+        "canOpenExpressDashboard": true,
+        "minPayoutCents": 3000,
+        "stakeholderMinCents": 3000,
+        "stripeMinCents": 40,
+        "feeSource": "stripe_platform_pricing"
+      }
+    }
+  },
+  "steering": {
+    "status": 400,
+    "body": {
+      "message": "Invalid request.",
+      "code": "CONNECT_CLIENT_ACCOUNT_FORBIDDEN"
+    }
+  },
+  "dbRequest": {
+    "payout": "…QgsJQjny",
+    "amountCents": 12258,
+    "status": "submitted"
+  },
+  "stripePayoutList": {
+    "count": 1,
+    "ids": [
+      "…QgsJQjny"
+    ],
+    "methods": [
+      "instant"
+    ],
+    "amounts": [
+      12258
+    ]
+  },
+  "businessPayoutRowForEmployeePo": null,
+  "stripePayout": {
+    "id": "…QgsJQjny",
+    "livemode": false,
+    "amount": 12258,
+    "currency": "eur",
+    "method": "instant",
+    "status": "paid",
+    "type": "bank_account",
+    "arrivalDate": 1789076687,
+    "applicationFee": "fee_1UEFlz66w9huq7LTlvdDPLXg",
+    "dest": "…Gj5uVMPI"
+  },
+  "balanceTxn": {
+    "id": "…bpcvGIXY",
+    "amount": -12258,
+    "fee": 306,
+    "net": -12564,
+    "currency": "eur",
+    "type": "payout",
+    "reportingCategory": "payout",
+    "feeDetails": [
+      {
+        "type": "application_fee",
+        "amount": 306,
+        "currency": "eur",
+        "description": "CareTip  Sandbox application fee"
+      }
+    ]
+  },
+  "history": {
+    "status": 200,
+    "body": {
+      "items": [
+        {
+          "createdAt": "2026-09-10T21:44:47.000Z",
+          "amountCents": 12258,
+          "currency": "eur",
+          "status": "paid",
+          "method": "instant"
+        }
+      ],
+      "stripeReadable": true
+    }
+  },
+  "samHistory": {
+    "status": 200,
+    "body": {
+      "items": [],
+      "stripeReadable": true
+    }
+  },
+  "historySteer": {
+    "status": 400,
+    "body": {
+      "message": "Invalid request.",
+      "code": "CONNECT_CLIENT_ACCOUNT_FORBIDDEN"
+    }
+  },
+  "employeeOnBusinessInstant": {
+    "status": 403,
+    "body": {
+      "message": "Insufficient permissions"
+    }
+  },
+  "balanceAfter": {
+    "available": 0,
+    "pending": 1,
+    "instantGross": 1,
+    "instantNet": 0
+  }
+}

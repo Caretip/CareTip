@@ -7,7 +7,13 @@
   /* Faster taps — no 300ms delay on legacy WebKit. */
   .caretip-dashboard-shell button,
   .caretip-dashboard-shell a[role="button"],
+  .caretip-dashboard-shell a[href],
   .caretip-dashboard-shell [role="tab"],
+  .caretip-dashboard-shell [role="button"],
+  .caretip-dashboard-shell [role="menuitem"],
+  .caretip-dashboard-shell [role="switch"],
+  .caretip-dashboard-shell [role="checkbox"],
+  .caretip-dashboard-shell label,
   .caretip-public-marketing-page button,
   .caretip-public-marketing-page a[href] {
     touch-action: manipulation;

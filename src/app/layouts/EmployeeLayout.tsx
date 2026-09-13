@@ -7,7 +7,7 @@ import { useAuth } from "../hooks/useAuth";
 import { SidebarSkeleton } from "../components/ui/sidebar-skeleton";
 import { EmployeeSidebar } from "../components/employee/EmployeeSidebar";
 import { EmployeeMobileSidebar } from "../components/employee/EmployeeMobileSidebar";
-import { getEmployeeProfile } from "../lib/api";
+import { getEmployeeProfile, peekEmployeeProfileSession } from "../lib/api";
 import { EMPLOYEE_DASHBOARD_ROOT } from "../components/employee/employeeDashboardUi";
 import { cn } from "@/lib/utils";
 import { PushNotificationSync } from "../components/PushNotificationSync";
@@ -40,7 +40,14 @@ export function EmployeeLayout() {
   const isAppReady = authStatus === "authenticated" && user?.role === "employee";
   const isLargeScreen = useMinWidthMedia(1024);
   const globalLoaderActive = useGlobalAppLoadingActive();
-  const [branding, setBranding] = useState<EmployeeBusinessBranding | null>(null);
+  const [branding, setBranding] = useState<EmployeeBusinessBranding | null>(() => {
+    const cached = peekEmployeeProfileSession();
+    if (!cached) return null;
+    return {
+      businessLogo: cached.businessLogo ?? null,
+      businessName: cached.businessName ?? "Business",
+    };
+  });
 
   useDashboardLayoutProfile("employee");
   useDashboardSidebarProfile("employee", Boolean(isAppReady && isLargeScreen));

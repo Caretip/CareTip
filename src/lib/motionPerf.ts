@@ -16,11 +16,11 @@ export function landingFadeRevealWithDelay(_delay = 0) {
   return {} as const;
 }
 
-/** Dashboard block entrance — opacity-first, minimal travel. */
+/** Dashboard block entrance — never start invisible (blank gap after the shell paints). */
 export const dashboardBlockMotion = {
-  initial: { opacity: 0, y: 8 },
+  initial: false as const,
   animate: { opacity: 1, y: 0 },
-  transition: { duration: 0.35, ease: [0.22, 1, 0.36, 1] as const },
+  transition: { duration: 0.2, ease: [0.22, 1, 0.36, 1] as const },
 } as const;
 
 /** Respects reduced motion; optional stagger delay for chart blocks. */
@@ -37,12 +37,10 @@ export function useDashboardBlockMotion(extraDelay = 0) {
     }
     if (coarsePointer) {
       return {
-        initial: { opacity: 0 },
+        initial: false as const,
         animate: { opacity: 1, y: 0 },
         transition: {
-          duration: 0.22,
-          ease: [0.22, 1, 0.36, 1] as const,
-          ...(extraDelay > 0 ? { delay: extraDelay * 0.45 } : {}),
+          duration: 0,
         },
       };
     }

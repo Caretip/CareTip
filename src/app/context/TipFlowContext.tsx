@@ -1,11 +1,12 @@
 import {
   createContext,
-  useContext,
-  useState,
   useCallback,
+  useContext,
   useMemo,
+  useState,
   type ReactNode,
 } from "react";
+import { IsolateProviderChildren } from "../lib/isolateProviderChildren";
 
 export interface TipFlowState {
   businessId: string | null;
@@ -163,7 +164,9 @@ export function TipFlowProvider({ children }: { children: ReactNode }) {
   );
 
   return (
-    <TipFlowContext.Provider value={value}>{children}</TipFlowContext.Provider>
+    <TipFlowContext.Provider value={value}>
+      <IsolateProviderChildren>{children}</IsolateProviderChildren>
+    </TipFlowContext.Provider>
   );
 }
 

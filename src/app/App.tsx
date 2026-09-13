@@ -14,8 +14,12 @@ const PwaInstallPrompt = lazy(() =>
   import('./components/PwaInstallPrompt').then((m) => ({ default: m.PwaInstallPrompt })),
 );
 
-function AppTree() {
+function ThemedToaster() {
   const { resolvedTheme } = useTheme();
+  return <Toaster theme={resolvedTheme} position="top-center" closeButton />;
+}
+
+function AppTree() {
   return (
     <CookieConsentProvider>
       <TipFlowProvider>
@@ -27,7 +31,7 @@ function AppTree() {
               </SocketProvider>
             </AppLoadingManagerProvider>
           </AuthProvider>
-          <Toaster theme={resolvedTheme} position="top-center" closeButton />
+          <ThemedToaster />
           <Suspense fallback={null}>
             <PwaInstallPrompt />
           </Suspense>

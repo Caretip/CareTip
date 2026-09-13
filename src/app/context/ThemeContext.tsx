@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
+import { IsolateProviderChildren } from "../lib/isolateProviderChildren";
 
 /** User-selected theme preference. */
 export type ThemePreference = "light" | "dark" | "system";
@@ -106,7 +107,11 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     };
   }, [preference, resolvedTheme]);
 
-  return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;
+  return (
+    <ThemeContext.Provider value={value}>
+      <IsolateProviderChildren>{children}</IsolateProviderChildren>
+    </ThemeContext.Provider>
+  );
 }
 
 export function useTheme() {

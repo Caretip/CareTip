@@ -84,6 +84,10 @@ export function RealtimeQueryBridge() {
         void queryClient.invalidateQueries({ queryKey: [...qk.employeeMe, "stripe-payouts"] });
         void queryClient.invalidateQueries({ queryKey: [...qk.employeeMe, "connect-status"] });
       }
+      if (keys.has("empGoal")) {
+        void queryClient.invalidateQueries({ queryKey: qk.employeeTips });
+        void queryClient.invalidateQueries({ queryKey: qk.employeeMe });
+      }
       if (keys.has("inbox")) {
         void queryClient.invalidateQueries({ queryKey: qk.notifications });
         void queryClient.invalidateQueries({ queryKey: qk.notificationUnread });
@@ -148,7 +152,7 @@ export function RealtimeQueryBridge() {
         return;
       }
       if (eventName === REALTIME_EVENTS.GOAL_UPDATED) {
-        schedule(["stats", "empTips", "employees"]);
+        schedule(["stats", "employees", "settings", "empGoal"]);
         return;
       }
       // Avatar / employee profile changes — full media surface refresh once.

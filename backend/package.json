@@ -101,6 +101,7 @@
     "test:employee-stripe-connect-foundation": "dotenv -e ../.env -e .env -- tsx scripts/employee-stripe-connect-foundation-runtime.ts",
     "test:employee-tip-direct-routing": "dotenv -e ../.env -e .env -- tsx scripts/employee-tip-direct-routing-runtime.ts",
     "test:employee-payable-activity-presentation": "tsx scripts/employee-payable-activity-presentation-runtime.ts",
+    "test:employee-goal-sync": "tsx scripts/employee-goal-sync-runtime.ts",
     "test:employee-tip-dispute-lifecycle": "dotenv -e ../.env -e .env -- tsx scripts/employee-tip-dispute-lifecycle-runtime.ts",
     "test:employee-stripe-sandbox-lifecycle": "dotenv -e ../.env -e .env -- tsx scripts/employee-stripe-sandbox-lifecycle-verification.ts",
     "preflight:stripe-connect-phase2-8": "dotenv -e ../.env -e .env -- tsx src/stripeConnectPhase28PreflightCli.ts",

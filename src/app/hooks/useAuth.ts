@@ -333,12 +333,9 @@ export function useAuth() {
   const [user, setUserSnapshot] = useState<User | null>(() => getAuthUser());
   const [, syncAuthFlags] = useReducer((n: number) => n + 1, 0);
   const { authHydrated, sessionValidated } = getAuthSessionFlags();
-  /** Re-read in-memory access token so proactive refresh tracks rotation after login/refresh. */
-  const accessTokenSnapshot = getMemoryAccessToken();
 
   useEffect(() => subscribeAuthUser(() => setUserSnapshot(getAuthUser())), []);
   useEffect(() => subscribeAuthSessionFlags(() => syncAuthFlags()), []);
-  useEffect(() => subscribeMemoryAccessToken(() => syncAuthFlags()), []);
 
   useEffect(() => {
     const onStorageSync = () => {
@@ -356,34 +353,50 @@ export function useAuth() {
 
   /** Proactively refresh shortly before access token expiry so API calls rarely see 401. */
   useEffect(() => {
-    if (!user || !accessTokenSnapshot || !sessionValidated) return;
-    const payload = decodeJwtPayload(accessTokenSnapshot);
-    if (!payload || typeof payload !== "object") return;
-    const exp = (payload as { exp?: unknown }).exp;
-    if (typeof exp !== "number") return;
-    const renewSkewMs = 90_000;
-    const delay = Math.max(4_000, exp * 1000 - Date.now() - renewSkewMs);
+    if (!user || !sessionValidated) return;
+
     let cancelled = false;
-    const id = window.setTimeout(() => {
-      void (async () => {
-        if (cancelled) return;
-        // Idle logout in flight: do not refresh / resurrect the session being torn down.
-        if (isIdleLogoutInFlight()) return;
-        try {
-          const data = await refreshSessionAPI();
-          bumpSessionEpoch();
-          const u = persistAuthResponse(data);
-          if (!cancelled && !isIdleLogoutInFlight()) commitAuthUser(u);
-        } catch {
-          // Leave handling to the next API 401 + silent refresh, or bootstrap on reload.
-        }
-      })();
-    }, delay);
+    let timerId: number | null = null;
+
+    const armRefreshTimer = () => {
+      if (timerId !== null) {
+        window.clearTimeout(timerId);
+        timerId = null;
+      }
+      const token = getMemoryAccessToken();
+      if (!token || cancelled) return;
+      const payload = decodeJwtPayload(token);
+      if (!payload || typeof payload !== "object") return;
+      const exp = (payload as { exp?: unknown }).exp;
+      if (typeof exp !== "number") return;
+      const renewSkewMs = 90_000;
+      const delay = Math.max(4_000, exp * 1000 - Date.now() - renewSkewMs);
+      timerId = window.setTimeout(() => {
+        void (async () => {
+          if (cancelled) return;
+          // Idle logout in flight: do not refresh / resurrect the session being torn down.
+          if (isIdleLogoutInFlight()) return;
+          try {
+            const data = await refreshSessionAPI();
+            bumpSessionEpoch();
+            const u = persistAuthResponse(data);
+            if (!cancelled && !isIdleLogoutInFlight()) commitAuthUser(u);
+          } catch {
+            // Leave handling to the next API 401 + silent refresh, or bootstrap on reload.
+          }
+        })();
+      }, delay);
+    };
+
+    armRefreshTimer();
+    const unsubToken = subscribeMemoryAccessToken(armRefreshTimer);
+
     return () => {
       cancelled = true;
-      window.clearTimeout(id);
+      unsubToken();
+      if (timerId !== null) window.clearTimeout(timerId);
     };
-  }, [user?.id, accessTokenSnapshot, sessionValidated]);
+  }, [user?.id, sessionValidated]);
 
   useEffect(() => {
     if (!authHydrated || !sessionValidated) return;

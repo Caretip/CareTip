@@ -1,0 +1,10 @@
+{
+  "ok": true,
+  "gate5Acceptance": true,
+  "unpaidProbe": { "session": "nWWxAGeu", "routing": "business_distribution", "charge": "platform_hold", "dest": null, "fee": null, "livemode": false },
+  "pi": { "id": "1t5pW4qL", "amount": 1000, "fee": null, "dest": null, "routing": "business_distribution", "chargeModel": "platform_hold", "livemode": false },
+  "charge": { "id": "11kgxJGX", "amount": 1000, "dest": null, "appFee": null, "livemode": false },
+  "sct": { "id": "1r73VpKM", "amount": 851, "dest": "w9huq7LT", "source": "11kgxJGX", "count": 1, "livemode": false },
+  "direct": { "id": "1wwtLGzB", "fee": 149, "routing": "direct_to_employee", "charge": "destination_employee" },
+  "modeRestored": "direct_to_employee"
+}

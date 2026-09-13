@@ -22,7 +22,7 @@ export const dashboardSidebarIconButtonIdle =
   "transition-colors hover:bg-sidebar-accent";
 
 export const dashboardSidebarSignOutButton =
-  "flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sidebar-foreground/90 transition-colors hover:bg-sidebar-accent hover:text-sidebar-foreground";
+  "touch-manipulation flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sidebar-foreground/90 transition-colors hover:bg-sidebar-accent hover:text-sidebar-foreground";
 
 /** Sidebar billing entry — nav rhythm with primary accent. */
 export const dashboardSidebarUpgradeLink =

@@ -8,6 +8,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
+import { IsolateProviderChildren } from "../lib/isolateProviderChildren";
 import type { Socket } from "socket.io-client";
 import { resolveApiBaseUrl } from "../lib/apiOrigin";
 import { AUTH_STORAGE_SYNC_EVENT } from "../lib/authStorageSync";
@@ -180,7 +181,9 @@ export function SocketProvider({ children }: { children: ReactNode }) {
 
   return (
     <SocketInstanceContext.Provider value={instanceValue}>
-      <SocketStatusContext.Provider value={statusValue}>{children}</SocketStatusContext.Provider>
+      <SocketStatusContext.Provider value={statusValue}>
+        <IsolateProviderChildren>{children}</IsolateProviderChildren>
+      </SocketStatusContext.Provider>
     </SocketInstanceContext.Provider>
   );
 }

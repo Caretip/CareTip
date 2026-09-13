@@ -9,6 +9,7 @@ import React, {
   useState,
   useSyncExternalStore,
 } from "react";
+import { IsolateProviderChildren } from "../lib/isolateProviderChildren";
 import { AppBrandedLoadingScreen } from "../components/AppBrandedLoadingScreen";
 import {
   APP_LOADING_PRIORITY,
@@ -65,7 +66,7 @@ type Registration = {
   message?: string;
 };
 
-type AppLoadingManagerContextValue = {
+type AppLoadingActionsContextValue = {
   register: (
     key: string,
     priority: AppLoadingPriority,
@@ -75,10 +76,10 @@ type AppLoadingManagerContextValue = {
   releaseAppBootOverlay: () => void;
   /** Public lazy routes: fade HTML boot only after the page has committed to the DOM. */
   completeHtmlBootAfterPublicPaint: () => () => void;
-  overlayVisible: boolean;
 };
 
-const AppLoadingManagerContext = createContext<AppLoadingManagerContextValue | null>(null);
+const AppLoadingActionsContext = createContext<AppLoadingActionsContextValue | null>(null);
+const AppLoadingOverlayVisibleContext = createContext(false);
 
 export function useAppLoadingRegistration(
   key: string,
@@ -86,7 +87,7 @@ export function useAppLoadingRegistration(
   active: boolean,
   message?: string,
 ): void {
-  const ctx = useContext(AppLoadingManagerContext);
+  const ctx = useContext(AppLoadingActionsContext);
   const register = ctx?.register;
 
   useLayoutEffect(() => {
@@ -100,13 +101,13 @@ export function useAppLoadingRegistration(
 
 /** Drop the initial app-boot registration (public routes render without the bootstrap overlay). */
 export function useReleaseAppBootOverlay(): () => void {
-  const ctx = useContext(AppLoadingManagerContext);
+  const ctx = useContext(AppLoadingActionsContext);
   return ctx?.releaseAppBootOverlay ?? (() => undefined);
 }
 
 /** Fade `#caretip-html-boot` after the public route has committed — never while `#root` is empty. */
 export function useCompleteHtmlBootAfterPublicPaint(): () => void {
-  const ctx = useContext(AppLoadingManagerContext);
+  const ctx = useContext(AppLoadingActionsContext);
   return ctx?.completeHtmlBootAfterPublicPaint ?? (() => () => undefined);
 }
 
@@ -694,22 +695,16 @@ export function AppLoadingManagerProvider({ children }: { children: React.ReactN
   }, [winnerRequested, winner?.key, mergedRegistrations, overlayPhase]);
 
   const overlayPresented = overlayPhase === "visible" || overlayPhase === "exiting";
+  const overlayVisible =
+    overlayPresented || winnerRequested || Boolean(authIntentOverlayKey);
 
-  const value = useMemo(
+  const actions = useMemo(
     () => ({
       register,
       releaseAppBootOverlay,
       completeHtmlBootAfterPublicPaint,
-      overlayVisible: overlayPresented || winnerRequested || Boolean(authIntentOverlayKey),
     }),
-    [
-      register,
-      releaseAppBootOverlay,
-      completeHtmlBootAfterPublicPaint,
-      winnerRequested,
-      overlayPresented,
-      authIntentOverlayKey,
-    ],
+    [register, releaseAppBootOverlay, completeHtmlBootAfterPublicPaint],
   );
 
   /* React CareTip screen only after the HTML boot node is removed — never stacked on it
@@ -735,24 +730,25 @@ export function AppLoadingManagerProvider({ children }: { children: React.ReactN
   }, [htmlBootOwnsVisual]);
 
   return (
-    <AppLoadingManagerContext.Provider value={value}>
-      {children}
-      {renderReactOverlay ? (
-        <AppBrandedLoadingScreen
-          fixed
-          message={displayOverlayMessage}
-          suppressStatusMessage={false}
-          allowStartupFallback={false}
-          exiting={overlayPhase === "exiting"}
-        />
-      ) : null}
-    </AppLoadingManagerContext.Provider>
+    <AppLoadingActionsContext.Provider value={actions}>
+      <AppLoadingOverlayVisibleContext.Provider value={overlayVisible}>
+        <IsolateProviderChildren>{children}</IsolateProviderChildren>
+        {renderReactOverlay ? (
+          <AppBrandedLoadingScreen
+            fixed
+            message={displayOverlayMessage}
+            suppressStatusMessage={false}
+            allowStartupFallback={false}
+            exiting={overlayPhase === "exiting"}
+          />
+        ) : null}
+      </AppLoadingOverlayVisibleContext.Provider>
+    </AppLoadingActionsContext.Provider>
   );
 }
 
 export function useAppLoadingOverlayActive(): boolean {
-  const ctx = useContext(AppLoadingManagerContext);
-  return ctx?.overlayVisible ?? false;
+  return useContext(AppLoadingOverlayVisibleContext);
 }
 
 export { APP_LOADING_PRIORITY };

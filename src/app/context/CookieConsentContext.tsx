@@ -17,6 +17,7 @@ import {
   type CookieConsentRecord,
 } from "../lib/cookieConsent";
 import { applyCookieConsentScripts } from "../lib/cookieConsentScripts";
+import { IsolateProviderChildren } from "../lib/isolateProviderChildren";
 
 type CookieConsentContextValue = {
   consent: CookieConsentRecord | null;
@@ -124,7 +125,11 @@ export function CookieConsentProvider({ children }: { children: ReactNode }) {
     ],
   );
 
-  return <CookieConsentContext.Provider value={value}>{children}</CookieConsentContext.Provider>;
+  return (
+    <CookieConsentContext.Provider value={value}>
+      <IsolateProviderChildren>{children}</IsolateProviderChildren>
+    </CookieConsentContext.Provider>
+  );
 }
 
 export function useCookieConsent(): CookieConsentContextValue {

@@ -1,7 +1,12 @@
 import { X } from 'lucide-react';
 import { CareIcon } from '@/components/icons';
 import { useTranslation } from 'react-i18next';
+import { useSyncExternalStore } from 'react';
 import { useAuth } from '../hooks/useAuth';
+import {
+  isAuthLogoutTransitionActive,
+  subscribeAuthLogoutTransition,
+} from '../lib/authLogoutTransition';
 import { cn } from '@/lib/utils';
 import {
   CareTipLogo,
@@ -22,6 +27,11 @@ interface AdminMobileSidebarProps {
 export function AdminMobileSidebar({ isOpen, onClose }: AdminMobileSidebarProps) {
   const { t } = useTranslation();
   const { user, logout } = useAuth();
+  const signingOut = useSyncExternalStore(
+    subscribeAuthLogoutTransition,
+    isAuthLogoutTransitionActive,
+    () => false,
+  );
   const displayName = user?.name || t('admin.fallbackAdminName');
 
   return (
@@ -60,9 +70,11 @@ export function AdminMobileSidebar({ isOpen, onClose }: AdminMobileSidebarProps)
       <div className="px-4 pb-4">
         <button
           type="button"
+          disabled={signingOut}
+          aria-busy={signingOut}
           onClick={() => {
+            if (signingOut) return;
             logout();
-            onClose();
           }}
           className={dashboardSidebarSignOutButton}
         >

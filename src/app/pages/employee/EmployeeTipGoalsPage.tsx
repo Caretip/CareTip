@@ -30,6 +30,7 @@ import {
   readEmployeeGoalsSnapshot,
   writeEmployeeGoalsSnapshot,
 } from "../../lib/employeePageSessionCache";
+import { invalidateEmployeeGoalClientCaches } from "../../lib/employeeGoalClientSync";
 
 function formatEur(value: number): string {
   try {
@@ -211,6 +212,7 @@ export function EmployeeTipGoalsPage() {
         try {
           const { goal } = await archiveMyGoal(g.id);
           applyGoals(goals.map((row) => (row.id === goal.id ? goal : row)));
+          invalidateEmployeeGoalClientCaches();
           void refresh();
         } catch (e) {
           logClientError("EmployeeTipGoalsPage.archive", e);
@@ -230,6 +232,7 @@ export function EmployeeTipGoalsPage() {
         try {
           await deleteMyGoalById(g.id);
           applyGoals(goals.filter((row) => row.id !== g.id));
+          invalidateEmployeeGoalClientCaches();
           void refresh();
         } catch (e) {
           logClientError("EmployeeTipGoalsPage.delete", e);
@@ -501,6 +504,7 @@ export function EmployeeTipGoalsPage() {
                         applyGoals([goal, ...goals.filter((row) => row.id !== goal.id)]);
                       }
                       setOpen(false);
+                      invalidateEmployeeGoalClientCaches();
                       void refresh();
                     } catch (e) {
                       logClientError("EmployeeTipGoalsPage.saveGoal", e);

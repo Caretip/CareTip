@@ -102,8 +102,8 @@ export function BusinessMobileSidebar({ isOpen, onClose }: BusinessMobileSidebar
               onClose();
               return;
             }
+            /* Do not close the drawer: unmount + overflow unlock races the logout cover (mobile jitter). */
             logout();
-            onClose();
           }}
           className={dashboardSidebarSignOutButton}
         >

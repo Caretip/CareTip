@@ -318,6 +318,7 @@ export function maskEmployeeGoalsInResponse<T extends Record<string, unknown>>(
     ...body,
     goal: null,
     monthlyGoal: null,
+    goalProgress: null,
   };
 }
 

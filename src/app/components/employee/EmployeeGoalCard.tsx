@@ -26,6 +26,7 @@ import {
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { employeeUi } from "./employeeDashboardUi";
+import { invalidateEmployeeGoalClientCaches } from "../../lib/employeeGoalClientSync";
 import {
   Select,
   SelectContent,
@@ -144,6 +145,7 @@ export const EmployeeGoalCard = forwardRef<EmployeeGoalCardHandle, Props>(functi
         startDate: startDate.trim(),
       });
       setOpen(false);
+      invalidateEmployeeGoalClientCaches();
       onUpdated();
     } catch (e) {
       logClientError("EmployeeGoalCard.save", e);
@@ -161,6 +163,7 @@ export const EmployeeGoalCard = forwardRef<EmployeeGoalCardHandle, Props>(functi
     try {
       await deleteEmployeeGoal();
       setOpen(false);
+      invalidateEmployeeGoalClientCaches();
       onUpdated();
     } catch (e) {
       logClientError("EmployeeGoalCard.delete", e);
@@ -186,6 +189,7 @@ export const EmployeeGoalCard = forwardRef<EmployeeGoalCardHandle, Props>(functi
         goalPeriod: goal.goalPeriod,
         startDate: goal.startDate,
       });
+      invalidateEmployeeGoalClientCaches();
       onUpdated();
     } catch (e) {
       logClientError("EmployeeGoalCard.markAchieved", e);

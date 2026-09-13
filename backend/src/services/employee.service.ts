@@ -20,6 +20,7 @@ import { absolutizePublicMediaPath } from "../utils/publicMediaUrl.js";
 import { getSubscriptionTierForBusinessId, resolveSubscriptionEntitlements } from "./subscriptionEntitlement.service.js";
 import { isPresetStaffRole } from "../config/staffRolePresets.js";
 import { readCareTipReceivingPaused } from "./employeeReceivingPause.lookup.js";
+import { applyEmployeeMonthlyGoalFromColumn } from "./goal.service.js";
 
 import {
   GO_LIVE_REQUIRED_MESSAGE,
@@ -370,9 +371,6 @@ export async function updateEmployeeForBusiness(
     data: {
       ...(nameTrimmed !== undefined ? { name: nameTrimmed } : {}),
       ...(jobTitle !== undefined && jobTitle.trim() ? { jobTitle: jobTitle.trim() } : {}),
-      ...(monthlyGoal !== undefined
-        ? { monthlyGoal: monthlyGoal === null ? null : monthlyGoal }
-        : {}),
       ...(isActive !== undefined ? { isActive } : {}),
       ...(resolvedAssignments
         ? {
@@ -389,6 +387,13 @@ export async function updateEmployeeForBusiness(
     },
     });
   });
+
+  if (monthlyGoal !== undefined) {
+    await applyEmployeeMonthlyGoalFromColumn(employeeId, monthlyGoal, {
+      userId: emp.userId,
+      businessId,
+    });
+  }
 
   if (
     nameTrimmed !== undefined &&
@@ -941,7 +946,7 @@ export async function updateEmployeeSelf(
 ): Promise<EmployeeSelfProfile> {
   const emp = await prisma.employee.findUnique({
     where: { userId },
-    select: { id: true },
+    select: { id: true, businessId: true, userId: true },
   });
   if (!emp) {
     throw new Error("Employee not found");
@@ -953,13 +958,17 @@ export async function updateEmployeeSelf(
       ...(input.name !== undefined ? { name: input.name.trim() } : {}),
       ...(input.bio !== undefined ? { bio: input.bio?.trim() || null } : {}),
       ...(input.phone !== undefined ? { phone: input.phone?.trim() || null } : {}),
-      ...(input.monthlyGoal !== undefined
-        ? { monthlyGoal: input.monthlyGoal === null ? null : input.monthlyGoal }
-        : {}),
       ...(input.emailNotifications !== undefined ? { emailNotifications: input.emailNotifications } : {}),
       ...(input.pushNotifications !== undefined ? { pushNotifications: input.pushNotifications } : {}),
     },
   });
+
+  if (input.monthlyGoal !== undefined) {
+    await applyEmployeeMonthlyGoalFromColumn(emp.id, input.monthlyGoal, {
+      userId: emp.userId ?? userId,
+      businessId: emp.businessId,
+    });
+  }
 
   const updated = await getEmployeeProfileForUser(userId);
   if (!updated) throw new Error("Update failed");

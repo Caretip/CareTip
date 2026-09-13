@@ -51,6 +51,7 @@ import {
   writeEmployeeAssignmentSnapshot,
   type EmployeeSettingsSnapshot,
 } from "../../lib/employeePageSessionCache";
+import { invalidateEmployeeGoalClientCaches } from "../../lib/employeeGoalClientSync";
 
 type EmployeeSettingsCache = EmployeeSettingsSnapshot;
 
@@ -140,6 +141,7 @@ export function EmployeeSettingsPage() {
         emailNotifications: emailNotif,
         pushNotifications: pushNotif,
       });
+      invalidateEmployeeGoalClientCaches();
       if (pushNotif) {
         await registerFcmDeviceToken({ requestPermission: true, dedupe: false });
       } else {

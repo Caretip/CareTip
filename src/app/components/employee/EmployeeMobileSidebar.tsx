@@ -113,8 +113,8 @@ export function EmployeeMobileSidebar({
           aria-busy={signingOut}
           onClick={() => {
             if (signingOut) return;
+            /* Do not close the drawer: unmount + overflow unlock races the logout cover (mobile jitter). */
             logout();
-            onClose();
           }}
           className={cn("employee-dash-nav-link", dashboardSidebarSignOutButton)}
         >

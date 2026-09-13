@@ -21,13 +21,18 @@ export function EmployeePerformanceInsights({
   tips,
   goalProgress,
   periodAmountEur,
-  monthlyGoal,
   loading,
 }: EmployeePerformanceInsightsProps) {
   const { t } = useTranslation();
 
   const streak = useMemo(() => computeEmployeeTipStreakDays(tips), [tips]);
-  const goalPercent = goalProgress?.percent ?? (monthlyGoal && monthlyGoal > 0 ? Math.min(100, (periodAmountEur / monthlyGoal) * 100) : 0);
+  const hasGoal = goalProgress != null && goalProgress.goalAmount > 0;
+  const goalPercent = hasGoal
+    ? (goalProgress.percent ??
+      (goalProgress.goalAmount > 0
+        ? Math.min(100, (goalProgress.currentAmount / goalProgress.goalAmount) * 100)
+        : 0))
+    : 0;
 
   return (
     <Card
@@ -55,10 +60,12 @@ export function EmployeePerformanceInsights({
               <span className="text-xs font-semibold uppercase tracking-wide">{t("employee.performance.goal")}</span>
             </div>
             <p className="text-2xl font-semibold tabular-nums text-foreground max-lg:text-xl">
-              {loading ? "—" : <CountUpMetric value={goalPercent} kind="percent" />}
+              {loading ? "—" : hasGoal ? <CountUpMetric value={goalPercent} kind="percent" /> : t("format.notAvailable")}
             </p>
             <p className="mt-1 text-xs text-muted-foreground">
-              {monthlyGoal ? t("employee.performance.goalTarget", { amount: formatEur(monthlyGoal) }) : t("employee.performance.goalOpen")}
+              {hasGoal
+                ? t("employee.performance.goalTarget", { amount: formatEur(goalProgress.goalAmount) })
+                : t("employee.performance.goalOpen")}
             </p>
           </div>
           <div className="employee-performance-insights__tile rounded-xl border border-border/60 bg-muted/20 p-4 max-lg:rounded-lg max-lg:bg-transparent max-lg:p-3">

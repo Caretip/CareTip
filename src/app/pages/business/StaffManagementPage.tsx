@@ -24,6 +24,7 @@ import { useRequireAuth } from "../../hooks/useRequireAuth";
 import { useCopyFeedback } from "../../hooks/useCopyFeedback";
 import { useMinWidthMedia } from "@/lib/motionPerf";
 import { useSocket } from "../../hooks/useSocket";
+import { REALTIME_EVENTS } from "../../lib/realtime/realtimeContracts";
 import { useRealtimeFallback } from "../../hooks/useRealtimeFallback";
 import { fetchVenueCatalog } from "../../lib/businessVenueCatalog";
 import {
@@ -406,9 +407,11 @@ export function StaffManagementPage() {
     const sync = () => void fetchEmployees({ quiet: true, revalidate: true });
     socket.on("business_data_updated", sync);
     socket.on("verification_updated", sync);
+    socket.on(REALTIME_EVENTS.GOAL_UPDATED, sync);
     return () => {
       socket.off("business_data_updated", sync);
       socket.off("verification_updated", sync);
+      socket.off(REALTIME_EVENTS.GOAL_UPDATED, sync);
     };
   }, [socket, isBusiness, fetchEmployees]);
 

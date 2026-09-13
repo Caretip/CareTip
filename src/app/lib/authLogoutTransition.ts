@@ -65,6 +65,7 @@ export function beginAuthLogoutTransition(loginPath = "/login"): void {
   const normalized = loginPath.split("?")[0]?.split("#")[0] ?? loginPath;
   // Drop residual cold-boot CareTip overlay — logout must not reopen the branded screen.
   prepareAuthSoftNavHandoff();
+  lockLogoutViewport();
   active = true;
   targetLoginPath = normalized;
   authPageReady = false;
@@ -83,6 +84,18 @@ export function signalLogoutAuthPageReady(): void {
   maybeScheduleEnd();
 }
 
+const LOGOUT_VIEWPORT_LOCK_CLASS = "caretip-logout-viewport-lock";
+
+function lockLogoutViewport(): void {
+  if (typeof document === "undefined") return;
+  document.documentElement.classList.add(LOGOUT_VIEWPORT_LOCK_CLASS);
+}
+
+function unlockLogoutViewport(): void {
+  if (typeof document === "undefined") return;
+  document.documentElement.classList.remove(LOGOUT_VIEWPORT_LOCK_CLASS);
+}
+
 /** Finish logout — keeps brief bootstrap suppress window on the login route. */
 export function endAuthLogoutTransition(): void {
   if (!active) return;
@@ -90,6 +103,7 @@ export function endAuthLogoutTransition(): void {
   targetLoginPath = null;
   authPageReady = false;
   clearEndTimer();
+  unlockLogoutViewport();
   bootstrapSuppressUntil = Date.now() + POST_LOGOUT_BOOTSTRAP_SUPPRESS_MS;
   clearLogoutPending();
   authDebug("logout_transition_end");

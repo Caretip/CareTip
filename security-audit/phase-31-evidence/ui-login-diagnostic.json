@@ -1,0 +1,27 @@
+{
+  "steps": [
+    "login_url=https://caretip.de/employee/login",
+    "after_submit=https://caretip.de/employee/dashboard",
+    "dashboard=https://caretip.de/employee/dashboard",
+    "payouts=https://caretip.de/employee/payouts"
+  ],
+  "nav": [
+    "Maria Testerin",
+    "Überblick",
+    "Posteingang",
+    "Trinkgeldverlauf",
+    "Meine Zuweisung",
+    "Trinkgeldziele",
+    "Einstellungen",
+    "Abmelden",
+    "2",
+    "DE",
+    "Mein QR-Code",
+    "Trinkgeldziele",
+    "Heute",
+    "Diese Woche",
+    "Diesen Monat"
+  ],
+  "dashText": "Maria Testerin\n\nÜberblick\nPosteingang\nTrinkgeldverlauf\nMeine Zuweisung\nTrinkgeldziele\nEinstellungen\nAbmelden\n2\nDE\n\nJordan Park\n\njordan.p26_1786691378148@caretip-test.local\n\nWillkommen zurück, Jordan\nIhre Einnahmen\nauf einen Blick\nGesamteinnahmen\n€300,00\nErfolgreiche Trinkgelde\n30\n\nIhr QR-Code\n\nGäste können Ihnen direkt Trinkgeld geben.\n\nMein QR-Code\nTrinkgeldziele\nZeitraum-Analysen\nGerade aktualisiert\nAktiv\nHeute\nDiese Woche\nDiesen Monat\n\nTrinkgeld gesamt\n\n€180,00\n\n18 Trinkgeld\n\nBewertungen\n\nk. A.\n\n0 Bewertungen\n\nMonatsziel\n\n66%\n\n€278,00 verdient · Noch €142,00\n\n1 TageTrinkgeld-Serie\n\nGeschätzt aus den letzten Trinkgeld-Tagen in diesem Feed\n\nEinnahmen im Zeitverlauf\n0:00\n2:00\n4:00\n6:00\n8:00\n10:00\n12:00\n14:00\n16:00\n18:00\n20:00\n23:00\n0\n25\n50\n75\n100\n\n© CareTip 2026\n\n0",
+  "payoutText": "Wir konnten dieses Unternehmen nicht finden.\n\nZur Startseite"
+}

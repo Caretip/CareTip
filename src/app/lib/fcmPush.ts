@@ -1,11 +1,5 @@
-import { initializeApp, type FirebaseApp } from "firebase/app";
-import {
-  getMessaging,
-  getToken,
-  onMessage,
-  type MessagePayload,
-  type Messaging,
-} from "firebase/messaging";
+import type { FirebaseApp } from "firebase/app";
+import type { MessagePayload, Messaging } from "firebase/messaging";
 import {
   deleteAllPushDeviceTokensApi,
   deletePushDeviceTokenApi,
@@ -177,6 +171,10 @@ async function serviceWorkerRegistration(): Promise<ServiceWorkerRegistration | 
 async function getMessagingInstance(config: FirebaseWebConfig): Promise<Messaging | null> {
   if (!(await isFirebaseMessagingSupported())) return null;
   try {
+    const [{ initializeApp }, { getMessaging }] = await Promise.all([
+      import("firebase/app"),
+      import("firebase/messaging"),
+    ]);
     if (!firebaseApp) {
       firebaseApp = initializeApp({
         apiKey: config.apiKey,
@@ -244,6 +242,7 @@ async function obtainFcmTokenFromBrowser(opts?: ObtainFcmTokenOptions): Promise<
   if (!msg) return null;
 
   try {
+    const { getToken } = await import("firebase/messaging");
     return await getToken(msg, {
       vapidKey: config.vapidKey,
       serviceWorkerRegistration: reg,
@@ -367,6 +366,7 @@ export async function unregisterFcmDeviceToken(): Promise<void> {
       const reg = await serviceWorkerRegistration();
       const msg = await getMessagingInstance(config);
       if (msg && reg) {
+        const { getToken } = await import("firebase/messaging");
         const token = await getToken(msg, {
           vapidKey: config.vapidKey,
           serviceWorkerRegistration: reg,
@@ -468,6 +468,7 @@ function startForegroundMessagingIfNeeded(): void {
     const msg = await getMessagingInstance(config);
     if (!msg || cancelled) return;
 
+    const { onMessage } = await import("firebase/messaging");
     unsubscribeOnMessage = onMessage(msg, (payload: MessagePayload) => {
       const { title, body } = payloadTitleBody(payload);
       const data = payload.data as Record<string, string> | undefined;

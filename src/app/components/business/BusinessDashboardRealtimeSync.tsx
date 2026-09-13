@@ -4,6 +4,8 @@ import { useRealtimeFallback } from "../../hooks/useRealtimeFallback";
 import { subscribeTipReceived } from "../../lib/realtime/subscribeTipReceived";
 import { shouldProcessRealtimeEvent, tipRealtimeDedupeId } from "../../lib/realtime/realtimeEventDedupe";
 import type { LiveNewTipPayload } from "../../lib/realtime/realtimeContracts";
+import { REALTIME_EVENTS } from "../../lib/realtime/realtimeContracts";
+import { invalidateBusinessAnalytics } from "../../lib/businessAnalytics";
 
 type BusinessDashboardRealtimeSyncProps = {
   enabled: boolean;
@@ -33,11 +35,17 @@ export function BusinessDashboardRealtimeSync({
   useEffect(() => {
     if (!socket || !enabled) return;
     const sync = () => refreshStatsQuiet();
+    const onGoalUpdated = () => {
+      invalidateBusinessAnalytics("all");
+      refreshStatsQuiet();
+    };
     socket.on("business_data_updated", sync);
     socket.on("verification_updated", sync);
+    socket.on(REALTIME_EVENTS.GOAL_UPDATED, onGoalUpdated);
     return () => {
       socket.off("business_data_updated", sync);
       socket.off("verification_updated", sync);
+      socket.off(REALTIME_EVENTS.GOAL_UPDATED, onGoalUpdated);
     };
   }, [socket, enabled, refreshStatsQuiet]);
 

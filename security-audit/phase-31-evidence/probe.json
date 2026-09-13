@@ -1,0 +1,311 @@
+{
+  "startedAt": "2026-09-10T20:03:01.500Z",
+  "employeeInstantMinCents": 3000,
+  "health": {
+    "status": "ok",
+    "database": "connected",
+    "environment": "production",
+    "uptime": 2195.999286659,
+    "version": null,
+    "git": null,
+    "commit": null
+  },
+  "ids": {
+    "jordan": "…zyqvmue4",
+    "jordanAcct": "…w9huq7LT",
+    "sam": "…53uh307q",
+    "samAcct": "…w9VBMpwu"
+  },
+  "auth": {
+    "manager": 200,
+    "jordan": 200,
+    "sam": 200,
+    "tokensPresent": "(omitted)"
+  },
+  "deployedEmployeeApis": {
+    "jordanStatus": {
+      "status": 200,
+      "body": {
+        "connectionState": "connected",
+        "stripeConfigured": true,
+        "hasAccount": true,
+        "detailsSubmitted": true,
+        "payoutsEnabled": true,
+        "canOpenDashboard": true,
+        "updatedAt": "2026-09-10T20:03:08.418Z",
+        "heldPlatformCents": 0,
+        "destinationSettledCents": 6808,
+        "transferredCents": 3855,
+        "refundedCents": 1902,
+        "disputedOpenCents": 0,
+        "disputedLostCents": 1702
+      }
+    },
+    "samStatus": {
+      "status": 200,
+      "body": {
+        "connectionState": "action_required",
+        "stripeConfigured": true,
+        "hasAccount": true,
+        "detailsSubmitted": true,
+        "payoutsEnabled": false,
+        "canOpenDashboard": true,
+        "updatedAt": "2026-09-10T20:03:09.703Z",
+        "heldPlatformCents": 7559,
+        "destinationSettledCents": 0,
+        "transferredCents": 0,
+        "refundedCents": 951,
+        "disputedOpenCents": 0,
+        "disputedLostCents": 851
+      }
+    },
+    "jordanPayablesStatus": 200,
+    "instantGet": {
+      "status": 404,
+      "body": {
+        "message": "Cannot GET /api/me/employee-connect/instant-payout"
+      }
+    },
+    "instantPostSteering": {
+      "status": 404,
+      "body": {
+        "message": "Cannot POST /api/me/employee-connect/instant-payout"
+      }
+    },
+    "stripePayouts": {
+      "status": 404,
+      "body": {
+        "message": "Cannot GET /api/me/employee-connect/stripe-payouts"
+      }
+    },
+    "guestInstant": {
+      "status": 404,
+      "body": {
+        "message": "Cannot GET /api/me/employee-connect/instant-payout"
+      }
+    },
+    "managerInstant": {
+      "status": 404,
+      "body": {
+        "message": "Cannot GET /api/me/employee-connect/instant-payout"
+      }
+    },
+    "samInstant": {
+      "status": 404,
+      "body": {
+        "message": "Cannot GET /api/me/employee-connect/instant-payout"
+      }
+    },
+    "managerPayouts": {
+      "status": 404,
+      "body": {
+        "message": "Cannot GET /api/me/employee-connect/stripe-payouts"
+      }
+    },
+    "guestPayouts": {
+      "status": 404,
+      "body": {
+        "message": "Cannot GET /api/me/employee-connect/stripe-payouts"
+      }
+    }
+  },
+  "jordanStripe": {
+    "livemode": false,
+    "country": "DE",
+    "payoutsEnabled": true,
+    "chargesEnabled": true,
+    "currentlyDueCount": 0,
+    "currentlyDueSample": [],
+    "transfersCapability": "active",
+    "snapshotStatus": "ready",
+    "snapshotPayoutsEnabled": true,
+    "dbStatus": "ready",
+    "dbPayoutsEnabled": true
+  },
+  "jordanBalance": {
+    "livemode": false,
+    "available": [
+      {
+        "amount": 0,
+        "currency": "eur"
+      }
+    ],
+    "pending": [
+      {
+        "amount": 10863,
+        "currency": "eur"
+      }
+    ],
+    "instantAvailable": [
+      {
+        "amount": 10863,
+        "currency": "eur",
+        "netAvailable": [
+          {
+            "amount": 10598,
+            "destination": "ba_1UE8pi66w9huq7LTGj5uVMPI",
+            "source_types": {
+              "card": 10598
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "jordanExternalAccounts": [
+    {
+      "object": "bank_account",
+      "last4": "3000",
+      "currency": "eur",
+      "availablePayoutMethods": [
+        "standard",
+        "instant"
+      ]
+    }
+  ],
+  "jordanPayoutsList": {
+    "count": 0,
+    "livemodeAnyTrue": false,
+    "items": []
+  },
+  "localInstantSnapshot": {
+    "connected": true,
+    "eligible": true,
+    "reason": "eligible",
+    "payoutsEnabled": true,
+    "currency": "eur",
+    "instantAvailableGrossCents": 10863,
+    "instantAvailableNetCents": 10598,
+    "availableCents": 0,
+    "pendingCents": 10863,
+    "platformFeeCents": 265,
+    "feeConfigured": true,
+    "targetTotalFeeBps": 250,
+    "displayedFeeBps": 244,
+    "destinationLast4": "3000",
+    "destinationKind": "bank_account",
+    "canOpenExpressDashboard": true,
+    "stripeAccountId": "…w9huq7LT",
+    "destinationId": "…Gj5uVMPI",
+    "accountCountry": "DE"
+  },
+  "businessMode": "direct_to_employee",
+  "businessAcct": "…w9gjO8I0",
+  "ui": {
+    "jordan-desktop-en.png": {
+      "notes": [
+        "url=https://caretip.de/employee/payouts",
+        "langAttr=en",
+        "hasAcctId=false",
+        "hasSk=false",
+        "openDashboard=false",
+        "updateDetails=false",
+        "continueSetup=false",
+        "connectStripe=false",
+        "completeSetup=false",
+        "instantCard=false",
+        "min30=false",
+        "payableNote=false",
+        "bankNote=false",
+        "overflowX=false"
+      ],
+      "snippet": "We couldn't find this business.\n\nGo home\nCookie settings\n\nChoose which optional cookies CareTip may use. Essential cookies are always active because the site cannot function without them.\n\nEssential cookies\n\nRequired for login, security, sessions, and language. Always active.\n\nAnalytics cookies\n\nHelp us measure performance and diagnose errors (e.g. Sentry, Google Analytics when enabled).\n\nFunctional cookies\n\nEnable enhanced features such as saved preferences, chat widgets, or embedded content.\n\nMarketing cookies\n\nMeasure advertising effectiveness (e.g. Google Ads, social pixels when enabled).\n\nPrivacy policy\n\nSave preferences\nAccept all\nReject non-essential"
+    },
+    "jordan-desktop-de.png": {
+      "notes": [
+        "url=https://caretip.de/employee/payouts",
+        "langAttr=de",
+        "hasAcctId=false",
+        "hasSk=false",
+        "openDashboard=false",
+        "updateDetails=false",
+        "continueSetup=false",
+        "connectStripe=false",
+        "completeSetup=false",
+        "instantCard=false",
+        "min30=false",
+        "payableNote=false",
+        "bankNote=false",
+        "overflowX=false"
+      ],
+      "snippet": "Wir konnten dieses Unternehmen nicht finden.\n\nZur Startseite\nCookie-Einstellungen\n\nWählen Sie, welche optionalen Cookies CareTip verwenden darf. Notwendige Cookies sind immer aktiv, weil die Website sonst nicht funktioniert.\n\nNotwendige Cookies\n\nErforderlich für Anmeldung, Sicherheit, Sitzungen und Sprache. Immer aktiv.\n\nAnalytics-Cookies\n\nHelfen bei Performance-Messung und Fehlerdiagnose (z. B. Sentry, Google Analytics bei Aktivierung).\n\nFunktionale Cookies\n\nErmöglichen erweiterte Funktionen wie gespeicherte Präferenzen, Chat oder eingebettete Inhalte.\n\nMarketing-Cookies\n\nMessen Werbewirkung (z. B. Google Ads, Social-Pixel bei Aktivierung).\n\nDatenschutzerklärung\n\nEinstellungen speichern\nAlle akzeptieren\nNicht notwendige ablehnen"
+    },
+    "jordan-mobile-en.png": {
+      "notes": [
+        "url=https://caretip.de/employee/payouts",
+        "langAttr=en",
+        "hasAcctId=false",
+        "hasSk=false",
+        "openDashboard=false",
+        "updateDetails=false",
+        "continueSetup=false",
+        "connectStripe=false",
+        "completeSetup=false",
+        "instantCard=false",
+        "min30=false",
+        "payableNote=false",
+        "bankNote=false",
+        "overflowX=false"
+      ],
+      "snippet": "We couldn't find this business.\n\nGo home\nCookie settings\n\nChoose which optional cookies CareTip may use. Essential cookies are always active because the site cannot function without them.\n\nEssential cookies\n\nRequired for login, security, sessions, and language. Always active.\n\nAnalytics cookies\n\nHelp us measure performance and diagnose errors (e.g. Sentry, Google Analytics when enabled).\n\nFunctional cookies\n\nEnable enhanced features such as saved preferences, chat widgets, or embedded content.\n\nMarketing cookies\n\nMeasure advertising effectiveness (e.g. Google Ads, social pixels when enabled).\n\nPrivacy policy\n\nSave preferences\nAccept all\nReject non-essential"
+    },
+    "jordan-mobile-de.png": {
+      "notes": [
+        "url=https://caretip.de/employee/payouts",
+        "langAttr=de",
+        "hasAcctId=false",
+        "hasSk=false",
+        "openDashboard=false",
+        "updateDetails=false",
+        "continueSetup=false",
+        "connectStripe=false",
+        "completeSetup=false",
+        "instantCard=false",
+        "min30=false",
+        "payableNote=false",
+        "bankNote=false",
+        "overflowX=false"
+      ],
+      "snippet": "Wir konnten dieses Unternehmen nicht finden.\n\nZur Startseite\nCookie-Einstellungen\n\nWählen Sie, welche optionalen Cookies CareTip verwenden darf. Notwendige Cookies sind immer aktiv, weil die Website sonst nicht funktioniert.\n\nNotwendige Cookies\n\nErforderlich für Anmeldung, Sicherheit, Sitzungen und Sprache. Immer aktiv.\n\nAnalytics-Cookies\n\nHelfen bei Performance-Messung und Fehlerdiagnose (z. B. Sentry, Google Analytics bei Aktivierung).\n\nFunktionale Cookies\n\nErmöglichen erweiterte Funktionen wie gespeicherte Präferenzen, Chat oder eingebettete Inhalte.\n\nMarketing-Cookies\n\nMessen Werbewirkung (z. B. Google Ads, Social-Pixel bei Aktivierung).\n\nDatenschutzerklärung\n\nEinstellungen speichern\nAlle akzeptieren\nNicht notwendige ablehnen"
+    },
+    "sam-desktop-en.png": {
+      "notes": [
+        "url=https://caretip.de/employee/payouts",
+        "langAttr=en",
+        "hasAcctId=false",
+        "hasSk=false",
+        "openDashboard=false",
+        "updateDetails=false",
+        "continueSetup=false",
+        "connectStripe=false",
+        "completeSetup=false",
+        "instantCard=false",
+        "min30=false",
+        "payableNote=false",
+        "bankNote=false",
+        "overflowX=false"
+      ],
+      "snippet": "We couldn't find this business.\n\nGo home\nCookie settings\n\nChoose which optional cookies CareTip may use. Essential cookies are always active because the site cannot function without them.\n\nEssential cookies\n\nRequired for login, security, sessions, and language. Always active.\n\nAnalytics cookies\n\nHelp us measure performance and diagnose errors (e.g. Sentry, Google Analytics when enabled).\n\nFunctional cookies\n\nEnable enhanced features such as saved preferences, chat widgets, or embedded content.\n\nMarketing cookies\n\nMeasure advertising effectiveness (e.g. Google Ads, social pixels when enabled).\n\nPrivacy policy\n\nSave preferences\nAccept all\nReject non-essential"
+    },
+    "sam-mobile-de.png": {
+      "notes": [
+        "url=https://caretip.de/employee/payouts",
+        "langAttr=de",
+        "hasAcctId=false",
+        "hasSk=false",
+        "openDashboard=false",
+        "updateDetails=false",
+        "continueSetup=false",
+        "connectStripe=false",
+        "completeSetup=false",
+        "instantCard=false",
+        "min30=false",
+        "payableNote=false",
+        "bankNote=false",
+        "overflowX=false"
+      ],
+      "snippet": "Wir konnten dieses Unternehmen nicht finden.\n\nZur Startseite\nCookie-Einstellungen\n\nWählen Sie, welche optionalen Cookies CareTip verwenden darf. Notwendige Cookies sind immer aktiv, weil die Website sonst nicht funktioniert.\n\nNotwendige Cookies\n\nErforderlich für Anmeldung, Sicherheit, Sitzungen und Sprache. Immer aktiv.\n\nAnalytics-Cookies\n\nHelfen bei Performance-Messung und Fehlerdiagnose (z. B. Sentry, Google Analytics bei Aktivierung).\n\nFunktionale Cookies\n\nErmöglichen erweiterte Funktionen wie gespeicherte Präferenzen, Chat oder eingebettete Inhalte.\n\nMarketing-Cookies\n\nMessen Werbewirkung (z. B. Google Ads, Social-Pixel bei Aktivierung).\n\nDatenschutzerklärung\n\nEinstellungen speichern\nAlle akzeptieren\nNicht notwendige ablehnen"
+    }
+  },
+  "finishedAt": "2026-09-10T20:04:14.332Z"
+}

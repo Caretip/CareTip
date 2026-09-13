@@ -3,6 +3,8 @@ import { useDeferSocketConnect, useSocketInstance, useSocketStatus } from "../..
 import { useRealtimeFallback } from "../../hooks/useRealtimeFallback";
 import { useDashboardTabRefocus } from "../../hooks/useDashboardTabRefocus";
 import { subscribeTipReceived } from "../../lib/realtime/subscribeTipReceived";
+import { REALTIME_EVENTS } from "../../lib/realtime/realtimeContracts";
+import { invalidateEmployeeGoalClientCaches } from "../../lib/employeeGoalClientSync";
 import { shouldProcessRealtimeEvent, tipRealtimeDedupeId } from "../../lib/realtime/realtimeEventDedupe";
 import { recordNewEmployeeTip } from "../../lib/employeeNotificationStore";
 import { playChaChingSound } from "../../lib/tipSounds";
@@ -42,6 +44,18 @@ export function EmployeeDashboardRealtimeSync({
 
   useRealtimeFallback(connected, refreshDashboardQuiet);
   useDashboardTabRefocus(refreshDashboardQuiet, dashboardDataReady);
+
+  useEffect(() => {
+    if (!socket || !employeeId) return;
+    const onGoalUpdated = () => {
+      invalidateEmployeeGoalClientCaches();
+      refreshDashboardQuiet();
+    };
+    socket.on(REALTIME_EVENTS.GOAL_UPDATED, onGoalUpdated);
+    return () => {
+      socket.off(REALTIME_EVENTS.GOAL_UPDATED, onGoalUpdated);
+    };
+  }, [socket, employeeId, refreshDashboardQuiet]);
 
   useEffect(() => {
     if (!socket || !employeeId) return;

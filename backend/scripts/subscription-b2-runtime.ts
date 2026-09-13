@@ -181,10 +181,10 @@ function testTipsQueryHelpers(): boolean {
 
 function testMaskEmployeeGoals(): boolean {
   const masked = maskEmployeeGoalsInResponse(
-    { goal: { id: "g1" }, monthlyGoal: 100, tips: [] },
+    { goal: { id: "g1" }, monthlyGoal: 100, goalProgress: { percent: 100 }, tips: [] },
     false,
   );
-  if (masked.goal !== null || masked.monthlyGoal !== null) {
+  if (masked.goal !== null || masked.monthlyGoal !== null || masked.goalProgress !== null) {
     fail("maskEmployeeGoalsInResponse should null goal fields when disabled");
     return false;
   }

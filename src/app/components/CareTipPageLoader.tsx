@@ -49,6 +49,7 @@ export function CareTipBrandedLoaderMark({
   className,
   showTagline,
   tagline: taglineOverride,
+  calm = false,
 }: {
   compact?: boolean;
   className?: string;
@@ -59,6 +60,8 @@ export function CareTipBrandedLoaderMark({
    * user-facing stage is active. One tagline only.
    */
   tagline?: string;
+  /** Hide the moving progress bar (logout cover). */
+  calm?: boolean;
 }) {
   const { t } = useTranslation();
   const lng = readDocumentOrStoredLanguage();
@@ -70,15 +73,18 @@ export function CareTipBrandedLoaderMark({
       className={cn(
         "app-branded-loader__mark",
         compact && "app-branded-loader__mark--compact",
+        calm && "app-branded-loader__mark--calm",
         className,
       )}
     >
       <div className="app-branded-loader__icon-wrap" aria-hidden>
         <CareTipLoadingTitle compact={compact} className="app-branded-loader__title" />
       </div>
-      <span className="app-branded-loader__track" aria-hidden>
-        <span className="app-branded-loader__indeterminate" />
-      </span>
+      {calm ? null : (
+        <span className="app-branded-loader__track" aria-hidden>
+          <span className="app-branded-loader__indeterminate" />
+        </span>
+      )}
       {withTagline ? (
         <p className="app-branded-loader__tagline">{tagline}</p>
       ) : null}

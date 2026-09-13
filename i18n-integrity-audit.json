@@ -1,0 +1,62 @@
+{
+  "generatedAt": "2026-08-20T13:12:04.760Z",
+  "stats": {
+    "keysReferenced": 2840,
+    "missingEn": 4,
+    "missingDe": 4,
+    "enOnlyInDeGap": 0
+  },
+  "missingEn": [
+    {
+      "key": "auth.checkEmail.continueOnWeb",
+      "files": [
+        "src/app/components/auth/EmailVerificationSuccessScreen.tsx"
+      ]
+    },
+    {
+      "key": "auth.checkEmail.openApp",
+      "files": [
+        "src/app/components/auth/EmailVerificationSuccessScreen.tsx"
+      ]
+    },
+    {
+      "key": "auth.checkEmail.successSubtitleMobile",
+      "files": [
+        "src/app/components/auth/EmailVerificationSuccessScreen.tsx"
+      ]
+    },
+    {
+      "key": "common.dismiss",
+      "files": [
+        "src/app/components/business/VerificationPendingBanner.tsx"
+      ]
+    }
+  ],
+  "missingDe": [
+    {
+      "key": "auth.checkEmail.continueOnWeb",
+      "files": [
+        "src/app/components/auth/EmailVerificationSuccessScreen.tsx"
+      ]
+    },
+    {
+      "key": "auth.checkEmail.openApp",
+      "files": [
+        "src/app/components/auth/EmailVerificationSuccessScreen.tsx"
+      ]
+    },
+    {
+      "key": "auth.checkEmail.successSubtitleMobile",
+      "files": [
+        "src/app/components/auth/EmailVerificationSuccessScreen.tsx"
+      ]
+    },
+    {
+      "key": "common.dismiss",
+      "files": [
+        "src/app/components/business/VerificationPendingBanner.tsx"
+      ]
+    }
+  ],
+  "deOnlyMissingFromEn": []
+}

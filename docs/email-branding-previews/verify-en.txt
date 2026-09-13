@@ -1,0 +1,15 @@
+Hi Max,
+
+Verify your email
+
+Please verify your email address to activate your CareTip account for QR tipping and team insights.
+
+This link expires in 1 hour.
+
+Verify email: https://caretip.de/verify-email?token=sample-token
+
+CareTip
+© 2026 CareTip
+support@caretip.de
+
+If you did not request this email, you can safely ignore it.

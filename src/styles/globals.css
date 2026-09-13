@@ -147,12 +147,11 @@ textarea::placeholder {
   }
 }
 
-/* Dashboard: reserve analytics band height to reduce second-wave layout jump */
+/* Dashboard workspace: never fade/translate the shell on mount (blank gap + jitter). */
 .caretip-dashboard-page-enter {
-  animation: caretip-page-enter 0.28s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation: none;
 }
 
-/* Post-login soft-nav: paint dashboard at full opacity immediately (no blank fade-in). */
 html[data-auth-post-login] .caretip-dashboard-page-enter,
 html[data-auth-sign-in-handoff] .caretip-dashboard-page-enter {
   animation: none;
@@ -1683,4 +1682,15 @@ html[data-auth-sign-in-handoff] .caretip-dashboard-page-enter {
   .caretip-mobile-drawer-panel--open-left {
     animation: none;
   }
+}
+
+/* Logout: keep viewport locked so drawer unmount cannot restore overflow (iOS jump). */
+html.caretip-logout-viewport-lock,
+html.caretip-logout-viewport-lock body {
+  overflow: hidden !important;
+  overscroll-behavior: none;
+}
+
+.caretip-logout-handoff-cover {
+  touch-action: none;
 }
