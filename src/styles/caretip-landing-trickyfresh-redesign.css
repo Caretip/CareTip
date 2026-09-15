@@ -1012,14 +1012,20 @@ html:not(.dark) .caretip-landing #final-cta .caretip-trust-strip__check,
 
 /* —— Audience photo cards —— */
 .caretip-landing .caretip-audience-benefits__photo {
-  width: calc(100% + 3rem);
-  margin: -1.625rem -1.5rem 1.25rem;
-  height: clamp(320px, 38vw, 400px);
+  box-sizing: border-box;
+  width: calc(100% + (2 * var(--ab-pad-x, 1.5rem)));
+  max-width: none;
+  min-width: 0;
+  margin: calc(-1 * var(--ab-pad-top, 1.625rem)) calc(-1 * var(--ab-pad-x, 1.5rem)) 1.25rem;
+  height: auto;
+  aspect-ratio: 16 / 10;
+  max-height: min(22rem, 52vw);
+  min-height: 11.5rem;
   overflow: hidden;
   border-radius: var(--caretip-saas-card-radius, 1.25rem) var(--caretip-saas-card-radius, 1.25rem) 0 0;
   background: #f4f1ec;
   display: flex;
-  align-items: center;
+  align-items: stretch;
   justify-content: center;
 }
 
@@ -1027,11 +1033,14 @@ html:not(.dark) .caretip-landing #final-cta .caretip-trust-strip__check,
   display: block;
   width: 100%;
   height: 100%;
+  min-width: 0;
+  min-height: 0;
 }
 
 .caretip-landing .caretip-audience-benefits__photo img {
   display: block;
   width: 100%;
+  max-width: 100%;
   height: 100%;
   object-fit: cover;
   object-position: center center;
@@ -1067,11 +1076,17 @@ html:not(.dark) .caretip-landing #final-cta .caretip-trust-strip__check,
 
 @media (max-width: 640px) {
   .caretip-landing .caretip-audience-benefits__photo {
-    height: clamp(270px, 64vw, 340px);
+    aspect-ratio: 4 / 3;
+    min-height: 10rem;
+    max-height: min(16.5rem, 58vw);
   }
 
   .caretip-landing .caretip-audience-benefits__photo--phone img {
-    object-position: 50% 28%;
+    object-position: 50% 22%;
+  }
+
+  .caretip-landing .caretip-audience-benefits__photo--business img {
+    object-position: center 18%;
   }
 }
 

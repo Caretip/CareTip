@@ -155,7 +155,13 @@ export function LandingAudienceBenefitsSection() {
                 <div className={cn("caretip-audience-benefits__photo", card.photoClass)}>
                   <picture>
                     {card.imageAvif ? <source type="image/avif" srcSet={card.imageAvif} /> : null}
-                    <img src={card.image} alt={card.imageAlt} loading="lazy" decoding="async" />
+                    <img
+                      src={card.image}
+                      alt={card.imageAlt}
+                      loading="lazy"
+                      decoding="async"
+                      sizes="(min-width: 1024px) 34rem, calc(100vw - 2rem)"
+                    />
                   </picture>
                 </div>
                 <p className="caretip-audience-benefits__role">{card.role}</p>

@@ -5,12 +5,15 @@
 
 .caretip-landing .caretip-audience-benefits {
   padding-block: clamp(3rem, 7vw, 5.75rem);
+  overflow-x: clip;
 }
 
 .caretip-landing .caretip-audience-benefits__inner {
   display: flex;
   flex-direction: column;
   gap: clamp(2rem, 4vw, 3rem);
+  min-width: 0;
+  max-width: 100%;
 }
 
 .caretip-landing .caretip-audience-benefits__grid {
@@ -20,6 +23,12 @@
   width: 100%;
   max-width: min(100%, 68rem);
   margin-inline: auto;
+  min-width: 0;
+}
+
+.caretip-landing .caretip-audience-benefits__grid > * {
+  min-width: 0;
+  max-width: 100%;
 }
 
 @media (min-width: 1024px) {
@@ -30,12 +39,16 @@
 }
 
 .caretip-landing .caretip-audience-benefits__card {
+  --ab-pad-x: 1.5rem;
+  --ab-pad-top: 1.625rem;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
   gap: 0;
   height: 100%;
-  padding: 1.625rem 1.5rem 1.625rem;
+  min-width: 0;
+  max-width: 100%;
+  padding: var(--ab-pad-top) var(--ab-pad-x) 1.625rem;
   border-radius: var(--caretip-saas-card-radius, 1.25rem);
   border: 1px solid rgba(0, 0, 0, 0.06);
   background: #ffffff;
@@ -176,7 +189,9 @@ html.dark .caretip-landing .caretip-audience-benefits__card {
 
 @media (min-width: 1024px) {
   .caretip-landing .caretip-audience-benefits__card {
-    padding: 2rem 1.875rem 1.875rem; /* 28–32px */
+    --ab-pad-x: 1.875rem;
+    --ab-pad-top: 2rem;
+    padding: var(--ab-pad-top) var(--ab-pad-x) 1.875rem;
   }
 
   .caretip-landing .caretip-audience-benefits__cta {

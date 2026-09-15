@@ -292,7 +292,9 @@
 /* —— Adjacent audience cards (recent landing change): mobile density —— */
 @media (max-width: 767px) {
   .caretip-landing .caretip-audience-benefits__card {
-    padding: 1.35rem 1.2rem 1.4rem;
+    --ab-pad-x: 1.2rem;
+    --ab-pad-top: 1.35rem;
+    padding: var(--ab-pad-top) var(--ab-pad-x) 1.4rem;
   }
 
   .caretip-landing .caretip-audience-benefits__title {
