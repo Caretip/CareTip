@@ -1159,6 +1159,7 @@ html:not(.dark) .caretip-landing #final-cta .caretip-trust-strip__check,
 
 .caretip-landing .caretip-motivation-story-gallery--single .caretip-motivation-story-gallery__img {
   height: min(420px, 52vw);
+  object-position: center 22%;
 }
 
 .caretip-landing .caretip-motivation-story-gallery__snippet {
@@ -1180,11 +1181,28 @@ html:not(.dark) .caretip-landing #final-cta .caretip-trust-strip__check,
   backdrop-filter: blur(8px);
 }
 
-@media (max-width: 767px) {
+/* Keep the tip chip below faces on phone/tablet crops of the Amina photo. */
+@media (max-width: 1023px) {
   .caretip-landing .caretip-motivation-story-gallery__snippet {
-    top: auto;
-    bottom: 14px;
+    top: unset;
+    bottom: 16px;
     left: 14px;
+    right: auto;
+  }
+
+  .caretip-landing .caretip-motivation-story-gallery--single .caretip-motivation-story-gallery__img {
+    object-position: center 18%;
+  }
+}
+
+@media (max-width: 640px) {
+  .caretip-landing .caretip-motivation-story-gallery__snippet {
+    bottom: 12px;
+    left: 12px;
+    font-size: 11px;
+    padding: 0.35rem 0.65rem;
+    white-space: normal;
+    max-width: min(14.5rem, calc(100% - 24px));
   }
 }
 
