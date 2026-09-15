@@ -29,6 +29,7 @@ export type TipSuccessExperienceProps = {
   onPrimary: () => void;
   onSecondary: () => void;
   primaryIcon?: ReactNode;
+  extraActions?: ReactNode;
   showReceipt?: boolean;
   /** Compact layout for manager branding previews. */
   embedded?: boolean;
@@ -111,6 +112,7 @@ export function TipSuccessExperience({
   onPrimary,
   onSecondary,
   primaryIcon,
+  extraActions,
   showReceipt = true,
   embedded = false,
   showAttribution = true,
@@ -215,6 +217,8 @@ export function TipSuccessExperience({
               <span className="font-semibold tabular-nums text-foreground">{formatEur(tipAmount)}</span>
             </motion.p>
           ) : null}
+
+          {extraActions}
 
           <div className={cn(cf.completionActions, embedded ? "mt-5" : "mt-7")}>
             <button

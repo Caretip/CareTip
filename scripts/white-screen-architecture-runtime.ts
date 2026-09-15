@@ -48,8 +48,15 @@ assert(routes.includes("<SignInHandoffCover />"), "Sign In cover must remain");
 
 assert(logoutCover.includes("data-testid=\"auth-logout-handoff-cover\""), "logout cover must be queryable");
 assert(logoutCover.includes("common.signingOut"), "logout cover uses signing-out copy, not an empty viewport");
+assert(logoutCover.includes("useSignalLogoutDestinationReady"), "logout cover must release when the login route commits");
 assert(spaHold.includes("isInShellAuthenticatedNavigation"), "SPA hold must skip nested dashboard child swaps");
 assert(spaHold.includes("isAppShellInteractive"), "SPA hold must not restack CareTip splash on cold boot");
+
+const employeeLayout = read("src/app/layouts/EmployeeLayout.tsx");
+assert(
+  employeeLayout.includes('useWarmPrefetchAuthLoginRoute("/employee/login"'),
+  "employee shell must prefetch staff login, not business /login",
+);
 
 assert(routeLazy.includes("loadRouteModuleWithRetry"), "lazy routes must retry stale chunks once");
 assert(chunkLib.includes("RECOVERY_COOLDOWN_MS") || chunkLib.includes("30_000"), "chunk document reload must be cooldown-bounded");
@@ -57,7 +64,11 @@ assert(main.includes("vite:preloadError"), "entry must handle Vite preload/chunk
 assert(main.includes("paintBootstrapFailure"), "i18n/bootstrap failure must paint recovery UI, not dismiss boot onto empty #root");
 
 assert(!approvedGate.includes("if (!user) return null"), "ApprovedBusinessGate must not blank the outlet when user is cleared");
-assert(protectedRoute.includes("AuthLogoutHandoffCover"), "ProtectedRoute logout null must be documented against the cover");
+assert(protectedRoute.includes("AuthLogoutHandoffCover"), "ProtectedRoute logout handoff must stay documented against the cover");
+assert(
+  !/if \(logoutTransitionActive\) \{\s*return null;/.test(protectedRoute),
+  "ProtectedRoute must not synchronously unmount the shell on logout (employee sign-out stall)",
+);
 
 assert(
   !/verification\.phase === "error"[\s\S]{0,180}return null/.test(success),

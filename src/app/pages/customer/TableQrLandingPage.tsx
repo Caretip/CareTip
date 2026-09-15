@@ -23,6 +23,8 @@ import { venueBrandFromBusiness } from "./customerJourneyBrand";
 import { headerSelectTeamMember } from "./customerJourneyHeaderCopy";
 import { CustomerTeamPicker } from "./CustomerTeamPicker";
 import { CustomerRepeatTipPrompt } from "./CustomerRepeatTipPrompt";
+import { applyGuestTipVenueSearchParams } from "../../lib/guestEmployeeTippingVenue";
+import { usePublicHtmlBootHandoff } from "../../lib/usePublicHtmlBootHandoff";
 
 /**
  * /qr/table/:tableId — Table QR by id: venue + table context, then same team selection as directory.
@@ -39,6 +41,7 @@ export function TableQrLandingPage() {
   const [query, setQuery] = useState("");
   const [repeatDismissed, setRepeatDismissed] = useState(false);
   const [checkingOut, setCheckingOut] = useState(false);
+  usePublicHtmlBootHandoff(!loading && !error && Boolean(data));
 
   useEffect(() => {
     const raw = tableId?.trim();
@@ -85,7 +88,7 @@ export function TableQrLandingPage() {
     return () => {
       cancelled = true;
     };
-  }, [tableId, setBusinessId, setTippingVenue, t]);
+  }, [tableId, setBusinessId, setTippingVenue]);
 
   const filtered = useMemo(() => {
     const list = data?.employees ?? [];
@@ -103,6 +106,10 @@ export function TableQrLandingPage() {
     setBusinessId(data.business.id);
     setEmployee(emp.id, emp.name, emp.avatar ?? undefined);
     const qs = new URLSearchParams({ employeeId: emp.id });
+    applyGuestTipVenueSearchParams(qs, {
+      locationId: data.location.id,
+      tableId: data.table.id,
+    });
     const bizSlug = data.business.slug?.trim();
     const empSlug = emp.slug?.trim();
     if (bizSlug && empSlug) {
@@ -154,6 +161,7 @@ export function TableQrLandingPage() {
 
   const handleRepeatTip = async () => {
     if (!repeatCandidate || !data) return;
+    if (checkingOut) return;
     setBusinessId(data.business.id);
     setEmployee(
       repeatCandidate.emp.id,
@@ -178,11 +186,11 @@ export function TableQrLandingPage() {
       },
       t("tipFlow.payment.checkoutStartError"),
     );
-    if (result !== "redirected") setCheckingOut(false);
+    if (result === "failed") setCheckingOut(false);
   };
 
   return (
-    <div className={`${cf.pageTeam} pb-8 sm:pb-10`}>
+    <div className={`${cf.pageTeam} pb-8 sm:pb-10`} data-caretip-route-ready="">
       <div className={cf.frame}>
       <CustomerJourneyHeader
         leading={

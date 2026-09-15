@@ -722,6 +722,65 @@
   pointer-events: none;
 }
 
+.customer-flow-external-reviews {
+  margin-top: 0.25rem;
+  text-align: center;
+}
+
+.customer-flow-external-reviews__title {
+  font-size: 0.875rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: hsl(var(--foreground));
+}
+
+.customer-flow-external-reviews__hint {
+  margin-top: 0.35rem;
+  font-size: 0.75rem;
+  line-height: 1.45;
+  color: hsl(var(--muted-foreground));
+  text-wrap: pretty;
+}
+
+.customer-flow-external-reviews__actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}
+
+.customer-flow-external-review-btn {
+  display: inline-flex;
+  width: 100%;
+  min-height: 2.75rem;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  border-radius: 0.5rem;
+  border: 1px solid hsl(var(--border) / 0.9);
+  background: hsl(var(--background));
+  padding: 0.5rem 0.85rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  line-height: 1.25;
+  color: hsl(var(--foreground));
+  text-decoration: none;
+  text-wrap: balance;
+  white-space: normal;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.customer-flow-external-review-btn:hover {
+  background: hsl(var(--muted) / 0.45);
+}
+
+.customer-flow-external-review-btn:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--success-accent, #e9781c) 70%, transparent);
+  outline-offset: 2px;
+}
+
 .customer-flow-success-trust {
   font-size: 0.75rem;
   line-height: 1.55;

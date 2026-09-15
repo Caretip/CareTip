@@ -1,15 +1,15 @@
-import restaurantWebp from "../../../images/new-gastronomy001.webp";
-import restaurantAvif from "../../../images/new-gastronomy001.avif";
-import logisticsWebp from "../../../images/Logistik.webp";
-import logisticsAvif from "../../../images/Logistik.avif";
+import restaurantWebp from "../../../images/Theke.webp";
+import restaurantAvif from "../../../images/Theke.avif";
+import hotelsHeroWebp from "../../../images/Rezeption hotel.webp";
+import hotelsHeroAvif from "../../../images/Rezeption hotel.avif";
 import midwivesWebp from "../../../images/new-mid.webp";
 import midwivesAvif from "../../../images/new-mid.avif";
+import logisticsWebp from "../../../images/Logistik.webp";
+import logisticsAvif from "../../../images/Logistik.avif";
 import fairsWebp from "../../../images/event001.webp";
 import fairsAvif from "../../../images/event001.avif";
 import fieldServiceWebp from "../../../images/Handwerker.webp";
 import fieldServiceAvif from "../../../images/Handwerker.avif";
-import repWebp from "../../../images/rep.webp";
-import repAvif from "../../../images/rep.avif";
 import industryBenefitWebp from "../../../images/industry-benefit.webp";
 import industryBenefitAvif from "../../../images/industry-benefit.avif";
 import mockupAdjusted002Webp from "../../../images/mockupadjusted-002.webp";
@@ -37,7 +37,7 @@ export const INDUSTRY_MEDIA: Record<IndustryPageId, IndustryMedia> = {
     benefits: INDUSTRY_BENEFIT,
   },
   hotels: {
-    hero: { webp: repWebp, avif: repAvif },
+    hero: { webp: hotelsHeroWebp, avif: hotelsHeroAvif },
     benefits: HOTELS_BENEFIT,
   },
   logistics: {

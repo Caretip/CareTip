@@ -1,7 +1,40 @@
 import type { Request, Response } from "express";
 import * as locationsService from "../services/locations.service.js";
+import type { LocationReviewLinkPatch } from "../services/locations.service.js";
 import { isEntitlementDeniedError } from "../services/subscriptionEntitlement.service.js";
 import { logServerError, clientSafeMessage, CLIENT_FALLBACK } from "../utils/httpErrors.js";
+import {
+  INVALID_GOOGLE_PLACE_ID,
+  INVALID_TRIPADVISOR_REVIEW_URL,
+} from "../lib/externalReviewLinks.js";
+
+function optionalBodyString(
+  body: Record<string, unknown>,
+  key: string,
+  invalidMessage: string,
+): string | null | undefined {
+  if (!(key in body)) return undefined;
+  const raw = body[key];
+  if (raw == null) return null;
+  if (typeof raw !== "string") {
+    throw new Error(invalidMessage);
+  }
+  return raw;
+}
+
+function reviewLinksFromBody(body: unknown): LocationReviewLinkPatch | undefined {
+  if (!body || typeof body !== "object") return undefined;
+  const rec = body as Record<string, unknown>;
+  const patch: LocationReviewLinkPatch = {};
+  if ("googlePlaceId" in rec) {
+    patch.googlePlaceId = optionalBodyString(rec, "googlePlaceId", INVALID_GOOGLE_PLACE_ID) ?? null;
+  }
+  if ("tripadvisorReviewUrl" in rec) {
+    patch.tripadvisorReviewUrl =
+      optionalBodyString(rec, "tripadvisorReviewUrl", INVALID_TRIPADVISOR_REVIEW_URL) ?? null;
+  }
+  return Object.keys(patch).length > 0 ? patch : undefined;
+}
 
 export async function listLocations(req: Request, res: Response) {
   try {
@@ -31,7 +64,12 @@ export async function createLocation(req: Request, res: Response) {
     }
     const description =
       typeof req.body?.description === "string" ? req.body.description : undefined;
-    const location = await locationsService.createLocationForBusinessUser(userId, name, description);
+    const location = await locationsService.createLocationForBusinessUser(
+      userId,
+      name,
+      description,
+      reviewLinksFromBody(req.body),
+    );
     return res.status(201).json(location);
   } catch (err) {
     if (isEntitlementDeniedError(err)) {
@@ -69,6 +107,7 @@ export async function updateLocation(req: Request, res: Response) {
       locationId,
       name,
       description,
+      reviewLinksFromBody(req.body),
     );
     return res.json(location);
   } catch (err) {

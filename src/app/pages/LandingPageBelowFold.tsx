@@ -49,7 +49,7 @@ const loadLandingFinalCtaSection = () =>
     default: mod.LandingFinalCtaSection,
   }));
 
-const INDUSTRY_TEASER_WARM_IDS = ["gastronomy", "field-service", "logistics"] as const;
+const INDUSTRY_TEASER_WARM_IDS = ["hotels", "logistics", "gastronomy"] as const;
 
 /**
  * After LCP is warm: fetch below-fold JS (and the next photos) so scrolling

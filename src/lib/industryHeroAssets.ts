@@ -18,7 +18,13 @@ const inflightById = new Map<IndustryPageId, Promise<void>>();
 
 function preferHeroHref(industryId: IndustryPageId): { href: string; type: string; fallback: string } {
   const hero = INDUSTRY_MEDIA[industryId].hero;
-  return { href: hero.avif, type: "image/avif", fallback: hero.webp };
+  if (hero.avif.toLowerCase().includes(".avif")) {
+    return { href: hero.avif, type: "image/avif", fallback: hero.webp };
+  }
+  if (hero.webp.toLowerCase().includes(".webp")) {
+    return { href: hero.webp, type: "image/webp", fallback: hero.webp };
+  }
+  return { href: hero.webp, type: "image/jpeg", fallback: hero.webp };
 }
 
 export function isIndustryHeroWarm(industryId: IndustryPageId): boolean {

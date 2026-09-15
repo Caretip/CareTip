@@ -16,6 +16,9 @@ import {
   shouldShowTrialExpiredUpgrade,
 } from "../src/app/lib/billingDisplayState";
 import type { BillingStatus } from "../src/app/lib/api";
+import { readFileSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 
 const results: string[] = [];
 const pass = (m: string) => results.push(`PASS: ${m}`);
@@ -247,6 +250,19 @@ function testUnsubscribedIsNotBasic(): boolean {
   return true;
 }
 
+function testActivationCheckoutLock(): boolean {
+  const src = readFileSync(
+    join(dirname(fileURLToPath(import.meta.url)), "../src/app/lib/activateCareTipCheckout.ts"),
+    "utf8",
+  );
+  if (!src.includes("activationCheckoutInFlight") || !src.includes('"busy"')) {
+    fail("billing activation checkout must reject overlapping taps");
+    return false;
+  }
+  pass("billing activation checkout ignores overlapping taps");
+  return true;
+}
+
 function main(): void {
   const checks = [
     testBasicOperational(),
@@ -256,6 +272,7 @@ function main(): void {
     testPaidProDoesNotShowUsedMessage(),
     testCheckoutIntentBasicSkipped(),
     testManagePlanPortalRouting(),
+    testActivationCheckoutLock(),
   ];
   console.log(results.join("\n"));
   if (checks.some((c) => !c)) {

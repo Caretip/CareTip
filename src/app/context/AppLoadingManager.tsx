@@ -304,58 +304,56 @@ export function AppLoadingManagerProvider({ children }: { children: React.ReactN
    * the public page commits under the boot node, then fade.
    */
   const completeHtmlBootAfterPublicPaint = useCallback((): (() => void) => {
-    if (shouldRetainHtmlBootUntilLandingCommit()) {
-      return () => undefined;
-    }
     if (!isHtmlBootElementPresent()) {
+      htmlBootOwnsVisualRef.current = false;
       setHtmlBootOwnsVisual(false);
       markAppShellInteractive();
       return () => undefined;
     }
-    if (htmlBootHandoffStartedRef.current) {
+    beginHtmlBootBridgeExit();
+    dismissHtmlMarketingBootBridge();
+    if (isHtmlBootElementPresent()) {
+      htmlBootHandoffStartedRef.current = false;
       return () => undefined;
     }
     htmlBootHandoffStartedRef.current = true;
-    let fadeTimer: number | null = null;
-    let innerRaf = 0;
-    const outerRaf = window.requestAnimationFrame(() => {
-      innerRaf = window.requestAnimationFrame(() => {
-        if (shouldRetainHtmlBootUntilLandingCommit()) {
-          htmlBootHandoffStartedRef.current = false;
-          return;
-        }
-        beginHtmlBootBridgeExit();
-        fadeTimer = window.setTimeout(() => {
-          dismissHtmlMarketingBootBridge();
-          setHtmlBootOwnsVisual(false);
-          setOverlayPhase("hidden");
-          markAppShellInteractive();
-        }, OVERLAY_FADE_MS);
-      });
-    });
-    return () => {
-      window.cancelAnimationFrame(outerRaf);
-      window.cancelAnimationFrame(innerRaf);
-      if (fadeTimer !== null) window.clearTimeout(fadeTimer);
-      htmlBootHandoffStartedRef.current = false;
-      const boot = document.getElementById("caretip-html-boot");
-      boot?.classList.remove("caretip-html-boot--exiting");
-      boot?.setAttribute("aria-busy", "true");
-    };
+    htmlBootOwnsVisualRef.current = false;
+    setHtmlBootOwnsVisual(false);
+    setOverlayPhase("hidden");
+    markAppShellInteractive();
+    return () => undefined;
   }, []);
 
   useEffect(() => {
-    if (!htmlBootOwnsVisual) return undefined;
+    let nested = false;
     const tryHandoff = () => {
-      if (shouldRetainHtmlBootUntilLandingCommit()) return;
-      if (!isHtmlBootElementPresent()) return;
-      completeHtmlBootAfterPublicPaint();
+      if (nested) return;
+      nested = true;
+      try {
+        if (!isHtmlBootElementPresent()) {
+          if (htmlBootOwnsVisualRef.current) {
+            htmlBootOwnsVisualRef.current = false;
+            setHtmlBootOwnsVisual(false);
+            markAppShellInteractive();
+          }
+          return;
+        }
+        if (shouldRetainHtmlBootUntilLandingCommit()) return;
+        completeHtmlBootAfterPublicPaint();
+      } finally {
+        nested = false;
+      }
     };
     const mo = new MutationObserver(tryHandoff);
-    mo.observe(document.documentElement, { subtree: true, childList: true, attributes: true });
+    mo.observe(document.documentElement, {
+      subtree: true,
+      childList: true,
+      attributes: true,
+      attributeFilter: ["data-caretip-route-ready"],
+    });
     tryHandoff();
     return () => mo.disconnect();
-  }, [htmlBootOwnsVisual, completeHtmlBootAfterPublicPaint]);
+  }, [completeHtmlBootAfterPublicPaint]);
 
   /** Login/logout soft-nav: instantly clear cold-boot overlay so it cannot flash after auth. */
   useEffect(() => {
@@ -621,14 +619,6 @@ export function AppLoadingManagerProvider({ children }: { children: React.ReactN
 
     /* Public `/` lazy Outlet: React overlay may exit while LandingPage is still loading.
        HTML boot must stay until completeHtmlBootAfterPublicPaint — do not steal that handoff. */
-    if (htmlBootOwnsVisualRef.current && shouldRetainHtmlBootUntilLandingCommit()) {
-      const id = window.setTimeout(() => {
-        setOverlayPhase("hidden");
-        lastWinnerKeyRef.current = null;
-        lastJourneyMessageRef.current = undefined;
-      }, OVERLAY_FADE_MS);
-      return () => window.clearTimeout(id);
-    }
 
     if (htmlBootOwnsVisualRef.current) {
       htmlBootHandoffStartedRef.current = true;
@@ -714,20 +704,6 @@ export function AppLoadingManagerProvider({ children }: { children: React.ReactN
     document.querySelector(".caretip-landing, [data-caretip-route-ready]") != null;
   const renderReactOverlay =
     shouldMountReactBootOverlay(overlayPresented) && !publicDestinationReady;
-
-  useEffect(() => {
-    /* Safety: if HTML somehow stays after we already moved on, force-clear after long stall. */
-    if (!htmlBootOwnsVisual) return;
-    const id = window.setTimeout(() => {
-      if (!htmlBootOwnsVisualRef.current) return;
-      if (import.meta.env.DEV) {
-        console.warn("[GlobalAppLoading] HTML boot safety dismiss after 20s");
-      }
-      dismissHtmlMarketingBootBridge();
-      setHtmlBootOwnsVisual(false);
-    }, 20_000);
-    return () => window.clearTimeout(id);
-  }, [htmlBootOwnsVisual]);
 
   return (
     <AppLoadingActionsContext.Provider value={actions}>

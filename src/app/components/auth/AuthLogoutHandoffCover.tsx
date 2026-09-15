@@ -4,14 +4,16 @@ import {
   isAuthLogoutTransitionActive,
   subscribeAuthLogoutTransition,
 } from "../../lib/authLogoutTransition";
+import { useSignalLogoutDestinationReady } from "../../lib/useSignalLogoutAuthPageReady";
 import { AuthBootstrapShell } from "./AuthBootstrapShell";
 
 /**
- * Logout visual owner: authenticated tree may unmount before login chrome commits.
- * React Router `lazy` does not suspend Outlet — without this cover the viewport is empty.
+ * Logout visual owner: covers the SPA swap until the signed-out login route commits.
+ * React Router `lazy` does not suspend Outlet — without this cover the viewport can be empty.
  */
 export function AuthLogoutHandoffCover() {
   const { t } = useTranslation();
+  useSignalLogoutDestinationReady();
   const visible = useSyncExternalStore(
     subscribeAuthLogoutTransition,
     isAuthLogoutTransitionActive,

@@ -40,6 +40,8 @@ import { DashboardProfilerRoot } from "./hooks/useDashboardRuntimeProfile";
 import { useNavigationFlashProbe } from './hooks/useNavigationFlashProbe';
 import { CookieConsentRoot } from './components/cookie/CookieConsentRoot';
 import { LandingPage } from './pages/LandingPage';
+import { TipAmountPage } from './pages/customer/TipAmountPage';
+import { EmployeeQrEntryPage } from './pages/customer/EmployeeQrEntryPage';
 import { AuthPage } from './components/AuthPage';
 import { JoinPage } from './pages/JoinPage';
 import { PlatformAdminLoginPage } from './pages/platform/PlatformAdminLoginPage';
@@ -687,7 +689,7 @@ const routes: RouteObject[] = [
   },
   {
     path: '/qr/employee/:employeeId',
-    lazy: routeLazy(() => import('./pages/customer/EmployeeQrEntryPage'), 'EmployeeQrEntryPage'),
+    Component: EmployeeQrEntryPage,
     errorElement: <ErrorBoundary />,
   },
   {
@@ -717,7 +719,7 @@ const routes: RouteObject[] = [
   },
   {
     path: '/tip-amount',
-    lazy: routeLazy(() => import('./pages/customer/TipAmountPage'), 'TipAmountPage'),
+    Component: TipAmountPage,
     errorElement: <ErrorBoundary />,
   },
   {

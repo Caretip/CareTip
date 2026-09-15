@@ -83,6 +83,8 @@ const ALLOWED_CLIENT_MESSAGES = new Set<string>([
   "Not allowed",
   // Locations / tables (venue QR)
   "Location name is required",
+  "Enter a valid Google Place ID.",
+  "Enter a valid TripAdvisor review URL, including https://.",
   "Table name is required",
   "name and locationId are required",
   "name is required",

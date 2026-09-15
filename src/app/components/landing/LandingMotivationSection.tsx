@@ -9,8 +9,8 @@ import { landingHeadlineComponents } from "@/components/landing/landingRichText"
 import { cn } from "@/lib/utils";
 import { LandingMotivationActivityStack } from "./LandingMotivationActivityStack";
 import { LandingCopySentences } from "@/components/landing/LandingCopySentences";
-import storyPrimary from "../../../../images/story-hero02.webp";
-import storySecondary from "../../../../images/FYP.webp";
+import aminaWebp from "../../../../images/amina.webp";
+import aminaAvif from "../../../../images/amina.avif";
 
 export function LandingMotivationSection() {
   const { t, i18n } = useTranslation();
@@ -88,21 +88,21 @@ export function LandingMotivationSection() {
             "caretip-motivation-visual lg:order-2 lg:justify-end",
           )}
         >
-          <div className="caretip-motivation-story-gallery">
-            <img
-              src={storyPrimary}
-              alt=""
-              className="caretip-motivation-story-gallery__img caretip-motivation-story-gallery__img--primary"
-              loading="lazy"
-              decoding="async"
-            />
-            <img
-              src={storySecondary}
-              alt=""
-              className="caretip-motivation-story-gallery__img caretip-motivation-story-gallery__img--secondary"
-              loading="lazy"
-              decoding="async"
-            />
+          <div className="caretip-motivation-story-gallery caretip-motivation-story-gallery--single">
+            <picture>
+              <source type="image/avif" srcSet={aminaAvif} />
+              <source type="image/webp" srcSet={aminaWebp} />
+              <img
+                src={aminaWebp}
+                alt=""
+                className="caretip-motivation-story-gallery__img caretip-motivation-story-gallery__img--primary"
+                loading="lazy"
+                decoding="async"
+              />
+            </picture>
+            <p className="caretip-motivation-story-gallery__snippet">
+              {t("landing.industriesTeaser.snippets.tipsToday")}
+            </p>
           </div>
           <div className="caretip-motivation-activity-wrap">
             <LandingMotivationActivityStack />

@@ -14,14 +14,21 @@ export type GuestTipCheckoutInput = {
   tableId?: string | null;
 };
 
+export type GuestTipCheckoutResult = "redirected" | "failed" | "busy";
+
+/** Sync lock — React `processing` state is too late to stop a double-tap. */
+let guestTipCheckoutInFlight = false;
+
 /**
  * Create a guest Checkout Session (server-owned fees/destination) and hand off to Stripe.
- * Returns whether the browser left CareTip for hosted Checkout.
+ * Concurrent calls return `"busy"` so only one session is created.
  */
 export async function startGuestTipCheckout(
   input: GuestTipCheckoutInput,
   checkoutStartErrorMessage: string,
-): Promise<"redirected" | "failed"> {
+): Promise<GuestTipCheckoutResult> {
+  if (guestTipCheckoutInFlight) return "busy";
+  guestTipCheckoutInFlight = true;
   try {
     const { sessionId, url } = await createTipCheckoutSession({
       amount: input.amount,
@@ -33,6 +40,7 @@ export async function startGuestTipCheckout(
     });
     if (!url) {
       toast.error(checkoutStartErrorMessage);
+      guestTipCheckoutInFlight = false;
       return "failed";
     }
     setPendingTipFromCheckout({
@@ -45,10 +53,12 @@ export async function startGuestTipCheckout(
     const redirect = performExternalStripeRedirect(url, "checkout");
     if (!redirect.ok) {
       toast.error(checkoutStartErrorMessage);
+      guestTipCheckoutInFlight = false;
       return "failed";
     }
     return "redirected";
   } catch (err) {
+    guestTipCheckoutInFlight = false;
     logClientError("startGuestTipCheckout", err);
     toast.error(toUserFriendlyMessage(err));
     return "failed";

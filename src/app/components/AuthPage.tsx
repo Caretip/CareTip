@@ -7,6 +7,7 @@ import { AuthFieldGroup } from './auth/AuthFieldGroup';
 import { AuthEmployeeVenueBanner } from './auth/AuthEmployeeVenueBanner';
 import { AuthTrustStrip } from './auth/AuthTrustStrip';
 import { beginAuthPostLoginTransition, isAuthPostLoginTransitionActive, subscribeAuthPostLoginTransition } from '../lib/authPostLoginTransition';
+import { isAuthLogoutTransitionActive, subscribeAuthLogoutTransition } from '../lib/authLogoutTransition';
 import {
   beginAuthSignInHandoff,
   markSignInHandoffAuthCompleted,
@@ -613,6 +614,11 @@ export function AuthPage() {
 
   const resumeSessionPending = user != null && !sessionValidated;
 
+  const logoutHandoffActive = useSyncExternalStore(
+    subscribeAuthLogoutTransition,
+    isAuthLogoutTransitionActive,
+    () => false,
+  );
   const postLoginTransitionActive = useSyncExternalStore(
     subscribeAuthPostLoginTransition,
     isAuthPostLoginTransitionActive,
@@ -630,10 +636,11 @@ export function AuthPage() {
 
   const loginChromeReady =
     !inviteGateBlocking &&
-    !shouldShowAuthBootstrapShell({
-      authStatus,
-      authTransitionPending,
-    });
+    (logoutHandoffActive ||
+      !shouldShowAuthBootstrapShell({
+        authStatus,
+        authTransitionPending,
+      }));
   useSignalLogoutAuthPageReady(loginChromeReady);
 
   if (inviteGateBlocking) {

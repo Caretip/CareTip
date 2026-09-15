@@ -71,6 +71,11 @@ async function main() {
   } else {
     fail("RatingPage missing session_id handling");
   }
+  if (ratingPage.includes("submitTipFeedback") && ratingPage.includes("handleSkip")) {
+    pass("RatingPage still submits optional CareTip feedback and allows skip");
+  } else {
+    fail("Do not remove CareTip optional feedback from RatingPage");
+  }
 
   // --- Static: backend payment + webhook ---
   const stripeSvc = read("backend/src/services/stripe.service.ts");

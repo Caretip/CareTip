@@ -16,7 +16,10 @@ import {
   type CustomerEntryPhase,
   scheduleCustomerRouteRedirect,
 } from "../../lib/customerRouteTransition";
+import { tippingVenueFromEmployeeAssignment, applyGuestTipVenueSearchParams } from "../../lib/guestEmployeeTippingVenue";
+import { rememberGuestTipEmployee } from "../../lib/resolveCustomerEmployeeContext";
 import { navFlashLog } from "../../lib/navigationFlashAudit";
+import { usePublicHtmlBootHandoff } from "../../lib/usePublicHtmlBootHandoff";
 
 /**
  * /qr/employee/:employeeId — Deep link by employee id (parallel to `/staff/:slug`).
@@ -26,15 +29,21 @@ export function EmployeeQrEntryPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { employeeId } = useParams<{ employeeId: string }>();
-  const { setBusinessId, setEmployee, setStaffProfileSlug, setAmount } = useTipFlow();
+  const { setBusinessId, setEmployee, setStaffProfileSlug, setAmount, setTippingVenue } = useTipFlow();
   const [error, setError] = useState<string | null>(null);
   const [phase, setPhase] = useState<CustomerEntryPhase>("loading");
-  const [emp, setEmp] = useState<{ id: string; name: string; avatar?: string | null; businessId: string } | null>(
-    null
-  );
+  const [emp, setEmp] = useState<{
+    id: string;
+    name: string;
+    avatar?: string | null;
+    businessId: string;
+    locationId?: string | null;
+    locationName?: string | null;
+  } | null>(null);
   const [repeatAmount, setRepeatAmount] = useState<number | null>(null);
   const [repeatDismissed, setRepeatDismissed] = useState(false);
   const [checkingOut, setCheckingOut] = useState(false);
+  usePublicHtmlBootHandoff(phase === "ready" && Boolean(emp));
 
   useEffect(() => {
     const raw = employeeId?.trim();
@@ -51,6 +60,17 @@ export function EmployeeQrEntryPage() {
       try {
         const emp = await getEmployeeById(raw);
         if (cancelled) return;
+        rememberGuestTipEmployee({
+          businessId: emp.businessId,
+          employeeId: emp.id,
+          employeeName: emp.name,
+          employeeAvatar: emp.avatar ?? undefined,
+          businessName: emp.businessName ?? "",
+          businessLogo: emp.businessLogo ?? null,
+          branding: emp.branding ?? null,
+          locationId: emp.locationId ?? null,
+          locationName: emp.locationName ?? null,
+        });
         recordGuestQrScanOnce({
           businessId: emp.businessId,
           scanType: "employee_legacy_id",
@@ -60,6 +80,7 @@ export function EmployeeQrEntryPage() {
         setEmp(emp);
         setBusinessId(emp.businessId);
         setEmployee(emp.id, emp.name, emp.avatar ?? undefined);
+        setTippingVenue(tippingVenueFromEmployeeAssignment(emp.locationId, emp.locationName));
         setStaffProfileSlug(null);
         navFlashLog("data_load_settled", { path: `/qr/employee/${raw}` });
         const d = getRepeatTipDataForBusiness(emp.businessId);
@@ -70,6 +91,7 @@ export function EmployeeQrEntryPage() {
         }
         const qs = new URLSearchParams({ employeeId: emp.id });
         qs.set("direct", "1");
+        applyGuestTipVenueSearchParams(qs, { locationId: emp.locationId });
         setPhase("redirecting");
         scheduleCustomerRouteRedirect(`/tip-amount?${qs.toString()}`, navigate, {
           replace: true,
@@ -86,7 +108,7 @@ export function EmployeeQrEntryPage() {
     return () => {
       cancelled = true;
     };
-  }, [employeeId, navigate, repeatDismissed, setBusinessId, setEmployee, setStaffProfileSlug]);
+    }, [employeeId, navigate, repeatDismissed, setBusinessId, setEmployee, setStaffProfileSlug, setTippingVenue]);
 
   if (error) {
     return (
@@ -114,7 +136,7 @@ export function EmployeeQrEntryPage() {
   }
 
   return (
-    <div className={cf.page}>
+    <div className={cf.page} data-caretip-route-ready="">
       <div className={cf.frame}>
       <div className={`${cf.main} pb-16 sm:pb-20`}>
         <CustomerRepeatTipPrompt
@@ -129,6 +151,7 @@ export function EmployeeQrEntryPage() {
           primaryDisabled={checkingOut}
           onPrimary={() => {
             void (async () => {
+              if (checkingOut) return;
               setBusinessId(emp.businessId);
               setEmployee(emp.id, emp.name, emp.avatar ?? undefined);
               setStaffProfileSlug(null);
@@ -141,16 +164,19 @@ export function EmployeeQrEntryPage() {
                   employeeId: emp.id,
                   businessId: emp.businessId,
                   employeeName: emp.name,
+                  locationId: emp.locationId,
+                  tableId: null,
                 },
                 t("tipFlow.payment.checkoutStartError"),
               );
-              if (result !== "redirected") setCheckingOut(false);
+              if (result === "failed") setCheckingOut(false);
             })();
           }}
           onSecondary={() => {
             setRepeatDismissed(true);
             const qs = new URLSearchParams({ employeeId: emp.id });
             qs.set("direct", "1");
+            applyGuestTipVenueSearchParams(qs, { locationId: emp.locationId });
             navigate(`/tip-amount?${qs.toString()}`, { replace: true });
           }}
         />

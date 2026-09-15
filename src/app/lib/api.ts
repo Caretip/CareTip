@@ -53,6 +53,7 @@ import {
   setMemoryAccessToken,
 } from "./accessTokenStore";
 import { guestQrScanHeaders, getOrCreateQrScanSessionId } from "./qrScanSession";
+import { coerceLocationReviewLinkFields, sanitizeGuestExternalReviews } from "./externalReviewLinks";
 
 const AUTH_REFRESH_PATHNAME = "/api/auth/refresh";
 
@@ -329,7 +330,19 @@ function requestUrlPathname(url: string): string {
 
 function requestUsesCaretipProtectedApi(url: string): boolean {
   const p = requestUrlPathname(url);
+  if (isPublicGuestTipApiPath(p)) return false;
   return p.startsWith("/api/") || p.startsWith("/uploads/");
+}
+
+/** Public guest tip APIs must not wait on auth bootstrap. */
+function isPublicGuestTipApiPath(p: string): boolean {
+  if (p.startsWith("/api/staff/")) return true;
+  if (p.startsWith("/api/tipping-context")) return true;
+  if (p.startsWith("/api/payments/create-tip-session")) return true;
+  if (p.startsWith("/api/payments/tip-session")) return true;
+  if (p.startsWith("/api/qr/scan")) return true;
+  if (/^\/api\/employees\/(?!me(?:\/|$))[^/]+$/.test(p)) return true;
+  return false;
 }
 
 /**
@@ -381,6 +394,10 @@ function getHeaders(): HeadersInit {
   const token = getToken();
   if (token) headers["Authorization"] = `Bearer ${token}`;
   return headers;
+}
+
+function getGuestJsonHeaders(): HeadersInit {
+  return { "Content-Type": "application/json", ...guestQrScanHeaders() };
 }
 
 /** Always produces valid JSON; never double-encodes an already-serialized JSON string. */
@@ -563,7 +580,8 @@ async function apiRequest<T>(url: string, init?: RequestInit): Promise<T> {
 
   try {
     if (devDebug) devTrackStart(devDebug.group, devDebug.key, devDebug.meta);
-    res = await fetchWithNetworkRetry(url, attachLatestBearer(init));
+    const guestTip = isPublicGuestTipApiPath(requestUrlPathname(url));
+    res = await fetchWithNetworkRetry(url, guestTip ? init : attachLatestBearer(init));
   } catch (err) {
     if (isAbortError(err)) {
       if (devDebug) devTrackEnd(devDebug.group, devDebug.key, "aborted", err);
@@ -1964,11 +1982,13 @@ export interface EmployeeDetail {
   businessName?: string;
   branding?: import("./businessBranding").PublicGuestBranding | null;
   slug: string | null;
+  locationId?: string | null;
+  locationName?: string | null;
 }
 
 export async function getEmployeeById(employeeId: string): Promise<EmployeeDetail> {
   return apiRequest(apiPath(`/api/employees/${encodeURIComponent(employeeId)}`), {
-    headers: { ...getHeaders(), ...guestQrScanHeaders() },
+    headers: getGuestJsonHeaders(),
   });
 }
 
@@ -1984,11 +2004,13 @@ export interface StaffBySlugResponse {
   businessSlug: string;
   businessLogo?: string | null;
   branding?: import("./businessBranding").PublicGuestBranding | null;
+  locationId?: string | null;
+  locationName?: string | null;
 }
 
 export async function getStaffBySlug(slug: string): Promise<StaffBySlugResponse> {
   return apiRequest(apiPath(`/api/staff/${encodeURIComponent(slug)}`), {
-    headers: { ...getHeaders(), ...guestQrScanHeaders() },
+    headers: getGuestJsonHeaders(),
   });
 }
 
@@ -2000,7 +2022,7 @@ export async function getStaffByBusinessEmployeeSlug(
     apiPath(
       `/api/staff/directory/business/${encodeURIComponent(businessSlug)}/employee/${encodeURIComponent(employeeSlug)}`
     ),
-    { headers: { ...getHeaders(), ...guestQrScanHeaders() } }
+    { headers: getGuestJsonHeaders() }
   );
 }
 
@@ -4016,6 +4038,8 @@ export interface LocationDTO {
   name: string;
   description: string | null;
   businessId: string;
+  googlePlaceId?: string | null;
+  tripadvisorReviewUrl?: string | null;
 }
 
 export async function fetchLocations(): Promise<LocationDTO[]> {
@@ -4023,31 +4047,43 @@ export async function fetchLocations(): Promise<LocationDTO[]> {
     headers: getHeaders(),
     credentials: "include",
   });
-  return normalizeApiList<LocationDTO>(raw, ["locations", "items", "data"]);
+  return normalizeApiList<LocationDTO>(raw, ["locations", "items", "data"]).map((loc) => ({
+    ...loc,
+    ...coerceLocationReviewLinkFields(loc),
+  }));
 }
 
 export async function createLocationAPI(payload: {
   name: string;
   description?: string;
+  googlePlaceId?: string | null;
+  tripadvisorReviewUrl?: string | null;
 }): Promise<LocationDTO> {
-  return apiRequest<LocationDTO>(apiPath("/api/locations"), {
+  const loc = await apiRequest<LocationDTO>(apiPath("/api/locations"), {
     method: "POST",
     headers: getHeaders(),
     body: JSON.stringify(payload),
     credentials: "include",
   });
+  return { ...loc, ...coerceLocationReviewLinkFields(loc) };
 }
 
 export async function updateLocationAPI(
   locationId: string,
-  payload: { name: string; description?: string | null },
+  payload: {
+    name: string;
+    description?: string | null;
+    googlePlaceId?: string | null;
+    tripadvisorReviewUrl?: string | null;
+  },
 ): Promise<LocationDTO> {
-  return apiRequest<LocationDTO>(apiPath(`/api/locations/${encodeURIComponent(locationId)}`), {
+  const loc = await apiRequest<LocationDTO>(apiPath(`/api/locations/${encodeURIComponent(locationId)}`), {
     method: "PATCH",
     headers: getHeaders(),
     body: JSON.stringify(payload),
     credentials: "include",
   });
+  return { ...loc, ...coerceLocationReviewLinkFields(loc) };
 }
 
 export async function deleteLocationAPI(locationId: string): Promise<void> {
@@ -4826,6 +4862,10 @@ export type TipSessionContextResponse =
       locationId: string | null;
       tableId: string | null;
       customerName: string | null;
+      externalReviews?: {
+        googleWriteReviewUrl: string | null;
+        tripadvisorReviewUrl: string | null;
+      } | null;
     };
 
 export type TipSessionReadyContext = Extract<TipSessionContextResponse, { status: "ready" }>;
@@ -4837,7 +4877,8 @@ export async function getTipSessionContext(sessionId: string): Promise<TipSessio
   try {
     res = await fetchWithNetworkRetry(url, {
       method: "GET",
-      headers: { "Content-Type": "application/json" },
+      cache: "no-store",
+      headers: { "Content-Type": "application/json", "Cache-Control": "no-store" },
     });
   } catch (err) {
     logClientError("api.getTipSessionContext", err, { sessionId });
@@ -4874,7 +4915,12 @@ export async function getTipSessionContext(sessionId: string): Promise<TipSessio
     };
   }
   if (res.ok && data.status === "ready" && typeof data.sessionId === "string") {
-    return data as TipSessionReadyContext;
+    return {
+      ...(data as TipSessionReadyContext),
+      externalReviews: sanitizeGuestExternalReviews(
+        (data as TipSessionReadyContext).externalReviews,
+      ),
+    };
   }
 
   const message =

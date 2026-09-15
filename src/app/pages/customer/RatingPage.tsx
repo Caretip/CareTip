@@ -9,11 +9,14 @@ import { toUserFriendlyMessage } from "../../lib/errorMessages";
 import { logClientError } from "../../lib/clientLog";
 import { DEV_BYPASS_ENABLED, DEV_MOCK } from "../../lib/devCustomerBypass";
 import { clearCustomerFlowEntry } from "../../lib/customerFlowGuard";
+import { CareTipPageLoader } from "../../components/CareTipPageLoader";
 import { customerFlowUi as cf } from "./customerFlowUi";
 import { useVerifiedTipSession, isVerifiedTipSessionReady } from "../../hooks/useVerifiedTipSession";
 import { CustomerFlowShell } from "./CustomerFlowShell";
 import { useCustomerVenueBrand } from "./customerJourneyBrand";
 import { ProfileAvatar } from "../../components/ui/profile-avatar";
+import { GuestExternalReviewLinks } from "./GuestExternalReviewLinks";
+import { guestReviewExperience, sanitizeGuestExternalReviews } from "../../lib/externalReviewLinks";
 
 /** Canonical English values sent to the API; labels are translated in the UI. */
 const FEEDBACK_TAGS = [
@@ -41,6 +44,10 @@ export function RatingPage() {
   });
   const sessionReady = isVerifiedTipSessionReady(verification);
   const readyContext = sessionReady ? verification.context : null;
+  const externalReviews = sessionReady
+    ? sanitizeGuestExternalReviews(readyContext?.externalReviews)
+    : null;
+  const reviewExperience = guestReviewExperience(externalReviews);
 
   useEffect(() => {
     if (import.meta.env.DEV) return;
@@ -157,17 +164,13 @@ export function RatingPage() {
   const displayEmployeeName =
     readyContext?.employee?.name ?? employeeName ?? t("tipFlow.common.aTeamMember");
   const displayEmployeeAvatar = readyContext?.employee?.avatar ?? employeeAvatar ?? null;
-  const showVerifyingPayment =
-    Boolean(sessionId) &&
-    (verification.phase === "pending" || verification.phase === "timeout");
 
   if (sessionId && (verification.phase === "loading" || verification.phase === "pending")) {
     return (
-      <CustomerFlowShell
-        venue={venueBrand}
-        loading
-        loadingContext="stripeReturn"
-        loadingRegistrationKey="rating-page-verification"
+      <CareTipPageLoader
+        variant="wait"
+        context="stripeReturn"
+        registrationKey="rating-page-verification"
       />
     );
   }
@@ -199,88 +202,103 @@ export function RatingPage() {
         <p className="mt-2.5 text-base font-semibold leading-tight text-foreground">{displayEmployeeName}</p>
       </div>
 
-      <section className="space-y-2.5 text-center" aria-label={t("tipFlow.rating.experiencePrompt")}>
-        <h2 className="text-sm font-medium text-foreground">{t("tipFlow.rating.experiencePrompt")}</h2>
-        {showVerifyingPayment ? (
-          <p className="text-xs text-muted-foreground">{t("common.loading.stripeReturn")}</p>
-        ) : null}
-        <div
-          className="flex items-center justify-center gap-0.5 sm:gap-1"
-          role="radiogroup"
-          aria-label={t("tipFlow.rating.experiencePrompt")}
-        >
-          {[1, 2, 3, 4, 5].map((star) => {
-            const selected = star <= rating && rating > 0;
-            return (
-              <button
-                key={star}
-                onClick={() => setRating(star)}
-                className={cf.starButton}
-                type="button"
-                role="radio"
-                aria-label={t("tipFlow.rating.starAria", { n: star })}
-                aria-checked={selected}
-              >
-                <Star
-                  className={[
-                    "size-10 transition-colors sm:size-11",
-                    selected ? "fill-primary text-primary" : "text-muted-foreground/50",
-                  ].join(" ")}
-                />
-              </button>
-            );
-          })}
-        </div>
-      </section>
-
-      <div className="flex flex-wrap justify-center gap-1.5" role="group" aria-label={t("tipFlow.rating.quickCompliments")}>
-        {FEEDBACK_TAGS.map(({ key, api }) => {
-          const on = selectedTags.includes(api);
-          return (
+      {reviewExperience === "external" ? (
+        <>
+          <GuestExternalReviewLinks reviews={externalReviews} />
+          <div className={`${cf.completionActions} pt-1`}>
             <button
-              key={api}
-              onClick={() => handleTagToggle(api)}
-              className={`${cf.tagChip} ${on ? cf.tagChipOn : cf.tagChipIdle}`}
               type="button"
-              aria-pressed={on}
+              onClick={handleSkip}
+              className={cf.completionTextAction}
+              aria-label={t("tipFlow.rating.skipAria")}
             >
-              {t(`tipFlow.rating.tags.${key}`)}
+              {t("tipFlow.rating.skip")}
             </button>
-          );
-        })}
-      </div>
+          </div>
+        </>
+      ) : (
+        <>
+          <section className="space-y-2.5 text-center" aria-label={t("tipFlow.rating.experiencePrompt")}>
+            <h2 className="text-sm font-medium text-foreground">{t("tipFlow.rating.experiencePrompt")}</h2>
+            <div
+              className="flex items-center justify-center gap-0.5 sm:gap-1"
+              role="radiogroup"
+              aria-label={t("tipFlow.rating.experiencePrompt")}
+            >
+              {[1, 2, 3, 4, 5].map((star) => {
+                const selected = star <= rating && rating > 0;
+                return (
+                  <button
+                    key={star}
+                    onClick={() => setRating(star)}
+                    className={cf.starButton}
+                    type="button"
+                    role="radio"
+                    aria-label={t("tipFlow.rating.starAria", { n: star })}
+                    aria-checked={selected}
+                  >
+                    <Star
+                      className={[
+                        "size-10 transition-colors sm:size-11",
+                        selected ? "fill-primary text-primary" : "text-muted-foreground/50",
+                      ].join(" ")}
+                    />
+                  </button>
+                );
+              })}
+            </div>
+          </section>
 
-      <div>
-        <textarea
-          id="rating-note"
-          value={comment}
-          onChange={(e) => setComment(e.target.value.slice(0, COMMENT_MAX))}
-          placeholder={t("tipFlow.rating.notePlaceholder")}
-          rows={2}
-          maxLength={COMMENT_MAX}
-          aria-label={t("tipFlow.rating.optionalNote")}
-          className={`${cf.inputField} min-h-[4.5rem] resize-none py-2.5 text-sm leading-relaxed`}
-        />
-      </div>
+          <div className="flex flex-wrap justify-center gap-1.5" role="group" aria-label={t("tipFlow.rating.quickCompliments")}>
+            {FEEDBACK_TAGS.map(({ key, api }) => {
+              const on = selectedTags.includes(api);
+              return (
+                <button
+                  key={api}
+                  onClick={() => handleTagToggle(api)}
+                  className={`${cf.tagChip} ${on ? cf.tagChipOn : cf.tagChipIdle}`}
+                  type="button"
+                  aria-pressed={on}
+                >
+                  {t(`tipFlow.rating.tags.${key}`)}
+                </button>
+              );
+            })}
+          </div>
 
-      <div className={`${cf.completionActions} pt-1`}>
-        <button
-          type="button"
-          onClick={handleSubmit}
-          disabled={submitting || showVerifyingPayment}
-          className={`${cf.completionPrimaryBtn} whitespace-nowrap disabled:pointer-events-none disabled:opacity-50`}
-        >
-          {submitting ? t("tipFlow.rating.submitting") : t("tipFlow.rating.submit")}
-        </button>
-        <button
-          type="button"
-          onClick={handleSkip}
-          className={cf.completionTextAction}
-          aria-label={t("tipFlow.rating.skipAria")}
-        >
-          {t("tipFlow.rating.skip")}
-        </button>
-      </div>
+          <div>
+            <textarea
+              id="rating-note"
+              value={comment}
+              onChange={(e) => setComment(e.target.value.slice(0, COMMENT_MAX))}
+              placeholder={t("tipFlow.rating.notePlaceholder")}
+              rows={2}
+              maxLength={COMMENT_MAX}
+              aria-label={t("tipFlow.rating.optionalNote")}
+              className={`${cf.inputField} min-h-[4.5rem] resize-none py-2.5 text-sm leading-relaxed`}
+            />
+          </div>
+
+          <div className={`${cf.completionActions} pt-1`}>
+            <button
+              type="button"
+              onClick={handleSubmit}
+              disabled={submitting}
+              className={`${cf.completionPrimaryBtn} whitespace-nowrap disabled:pointer-events-none disabled:opacity-50`}
+            >
+              {submitting ? t("tipFlow.rating.submitting") : t("tipFlow.rating.submit")}
+            </button>
+            <button
+              type="button"
+              onClick={handleSkip}
+              className={cf.completionTextAction}
+              aria-label={t("tipFlow.rating.skipAria")}
+            >
+              {t("tipFlow.rating.skip")}
+            </button>
+          </div>
+        </>
+      )}
     </CustomerFlowShell>
   );
 }

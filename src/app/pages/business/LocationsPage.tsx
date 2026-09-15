@@ -15,7 +15,18 @@ import {
   isTablesCreateDisabled,
   shouldShowTableQuotaNotice,
 } from "../../lib/tablesPageQuotaUi";
-import { fetchVenueCatalog, writeVenueCatalog } from "../../lib/businessVenueCatalog";
+import { fetchVenueCatalog, invalidateVenueCatalog, writeVenueCatalog } from "../../lib/businessVenueCatalog";
+import {
+  getPageSessionCache,
+  invalidatePageSessionCache,
+  setPageSessionCache,
+  PAGE_CACHE_TTL_LOW_MS,
+} from "../../lib/pageSessionCache";
+import {
+  coerceLocationReviewLinkFields,
+  normalizeGooglePlaceId,
+  normalizeTripadvisorReviewUrl,
+} from "../../lib/externalReviewLinks";
 import {
   createLocationAPI,
   createTableAPI,
@@ -44,11 +55,6 @@ import { businessUi } from "@/app/components/business/businessDashboardUi";
 import { BusinessModuleWorkspaceHeader } from "../../components/business/BusinessModuleWorkspaceHeader";
 import { QR_STUDIO_BASE } from "../../components/business/businessDashboardNav";
 import { LockedFeatureCard } from "../../components/subscription/LockedFeatureCard";
-import {
-  getPageSessionCache,
-  setPageSessionCache,
-  PAGE_CACHE_TTL_LOW_MS,
-} from "../../lib/pageSessionCache";
 
 const ACTION_TEAL = "#e9781c";
 const TABLES_QR_HREF = `${QR_STUDIO_BASE}/tables`;
@@ -61,6 +67,10 @@ function sortLocations(list: LocationDTO[]): LocationDTO[] {
 
 function sortTables(list: TableDTO[]): TableDTO[] {
   return [...list].sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: "base" }));
+}
+
+function withReviewLinkFields(loc: LocationDTO): LocationDTO {
+  return { ...loc, ...coerceLocationReviewLinkFields(loc) };
 }
 
 export function LocationsPage() {
@@ -83,10 +93,12 @@ export function LocationsPage() {
   const [deleting, setDeleting] = useState(false);
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
+  const [googlePlaceId, setGooglePlaceId] = useState("");
+  const [tripadvisorReviewUrl, setTripadvisorReviewUrl] = useState("");
   const [tableName, setTableName] = useState("");
 
   const applyVenue = useCallback((next: VenueBundle) => {
-    const locationsNext = sortLocations(next.locations);
+    const locationsNext = sortLocations(next.locations.map(withReviewLinkFields));
     const tablesNext = sortTables(next.tables);
     setLocations(locationsNext);
     setTables(tablesNext);
@@ -177,6 +189,8 @@ export function LocationsPage() {
     setEditing(null);
     setName("");
     setDescription("");
+    setGooglePlaceId("");
+    setTripadvisorReviewUrl("");
     setModalOpen(true);
   };
 
@@ -184,6 +198,8 @@ export function LocationsPage() {
     setEditing(loc);
     setName(loc.name);
     setDescription(loc.description ?? "");
+    setGooglePlaceId(loc.googlePlaceId ?? "");
+    setTripadvisorReviewUrl(loc.tripadvisorReviewUrl ?? "");
     setModalOpen(true);
   };
 
@@ -193,6 +209,8 @@ export function LocationsPage() {
     setEditing(null);
     setName("");
     setDescription("");
+    setGooglePlaceId("");
+    setTripadvisorReviewUrl("");
   };
 
   const openCreateTable = (loc: LocationDTO) => {
@@ -213,15 +231,33 @@ export function LocationsPage() {
       toast.error(t("business.locationsPage.toastNameRequired"));
       return;
     }
+    const googleParsed = normalizeGooglePlaceId(googlePlaceId);
+    if (!googleParsed.ok) {
+      toast.error(t("business.locationsPage.toastInvalidGooglePlaceId"));
+      return;
+    }
+    const tripParsed = normalizeTripadvisorReviewUrl(tripadvisorReviewUrl);
+    if (!tripParsed.ok) {
+      toast.error(t("business.locationsPage.toastInvalidTripadvisorUrl"));
+      return;
+    }
+    const reviewPayload = {
+      googlePlaceId: googleParsed.value,
+      tripadvisorReviewUrl: tripParsed.value,
+    };
     setSaving(true);
     try {
       if (editing) {
         const updated = await updateLocationAPI(editing.id, {
           name: trimmed,
           description: description.trim() || null,
+          ...reviewPayload,
         });
+        invalidateVenueCatalog();
+        invalidatePageSessionCache("business:locations");
+        invalidatePageSessionCache("business:tables-bundle");
         applyVenue({
-          locations: locations.map((row) => (row.id === updated.id ? { ...row, ...updated } : row)),
+          locations: locations.map((row) => (row.id === updated.id ? withReviewLinkFields(updated) : row)),
           tables: tables.map((row) =>
             row.locationId === updated.id
               ? { ...row, location: { id: updated.id, name: updated.name } }
@@ -233,9 +269,13 @@ export function LocationsPage() {
         const created = await createLocationAPI({
           name: trimmed,
           description: description.trim() || undefined,
+          ...reviewPayload,
         });
+        invalidateVenueCatalog();
+        invalidatePageSessionCache("business:locations");
+        invalidatePageSessionCache("business:tables-bundle");
         applyVenue({
-          locations: [...locations, created],
+          locations: [...locations, withReviewLinkFields(created)],
           tables,
         });
         toast.success(t("business.locationsPage.toastCreated"));
@@ -244,6 +284,8 @@ export function LocationsPage() {
       setEditing(null);
       setName("");
       setDescription("");
+      setGooglePlaceId("");
+      setTripadvisorReviewUrl("");
       void load({ quiet: true });
     } catch (e) {
       logClientError("LocationsPage", e);
@@ -391,6 +433,20 @@ export function LocationsPage() {
                     </div>
                     <div className="min-w-0 flex-1">
                       <p className="font-semibold text-foreground">{loc.name}</p>
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        {t("business.locationsPage.googleStatus", {
+                          status: loc.googlePlaceId
+                            ? t("business.locationsPage.reviewConfigured")
+                            : t("business.locationsPage.reviewNotConfigured"),
+                        })}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {t("business.locationsPage.tripadvisorStatus", {
+                          status: loc.tripadvisorReviewUrl
+                            ? t("business.locationsPage.reviewConfigured")
+                            : t("business.locationsPage.reviewNotConfigured"),
+                        })}
+                      </p>
                       {loc.description ? (
                         <p className="text-sm text-muted-foreground mt-1 line-clamp-3">{loc.description}</p>
                       ) : null}
@@ -492,7 +548,7 @@ export function LocationsPage() {
       </div>
 
       <Dialog open={modalOpen} onOpenChange={(open) => (open ? setModalOpen(true) : closeModal())}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="max-h-[90dvh] overflow-y-auto sm:max-w-lg">
           <DialogHeader>
             <DialogTitle>
               {editing
@@ -529,6 +585,58 @@ export function LocationsPage() {
                 onChange={(e) => setDescription(e.target.value)}
                 autoComplete="off"
               />
+            </div>
+            <div className="space-y-3 rounded-lg border border-border/70 bg-muted/20 px-3 py-3">
+              <div className="space-y-1">
+                <p className="text-sm font-medium text-foreground">
+                  {t("business.locationsPage.reviewsSectionTitle")}
+                </p>
+                <p className="text-xs leading-relaxed text-muted-foreground">
+                  {t("business.locationsPage.reviewsSectionDesc")}
+                </p>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="loc-google-place">{t("business.locationsPage.labelGoogleReview")}</Label>
+                <p className="text-xs leading-relaxed text-muted-foreground">
+                  {t("business.locationsPage.googlePlaceIdHelp")}
+                </p>
+                <p className="text-xs leading-relaxed text-muted-foreground">
+                  {googlePlaceId.trim()
+                    ? t("business.locationsPage.reviewConfigured")
+                    : t("business.locationsPage.reviewNotConfigured")}
+                </p>
+                <input
+                  id="loc-google-place"
+                  className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm"
+                  placeholder={t("business.locationsPage.placeholderGooglePlaceId")}
+                  value={googlePlaceId}
+                  onChange={(e) => setGooglePlaceId(e.target.value)}
+                  autoComplete="off"
+                  spellCheck={false}
+                  inputMode="text"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="loc-tripadvisor">{t("business.locationsPage.labelTripadvisor")}</Label>
+                <p className="text-xs leading-relaxed text-muted-foreground">
+                  {t("business.locationsPage.tripadvisorHint")}
+                </p>
+                <p className="text-xs leading-relaxed text-muted-foreground">
+                  {tripadvisorReviewUrl.trim()
+                    ? t("business.locationsPage.reviewConfigured")
+                    : t("business.locationsPage.reviewNotConfigured")}
+                </p>
+                <input
+                  id="loc-tripadvisor"
+                  className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm"
+                  placeholder={t("business.locationsPage.placeholderTripadvisor")}
+                  value={tripadvisorReviewUrl}
+                  onChange={(e) => setTripadvisorReviewUrl(e.target.value)}
+                  autoComplete="off"
+                  spellCheck={false}
+                  inputMode="url"
+                />
+              </div>
             </div>
           </div>
           <DialogFooter className="gap-2 sm:gap-0">

@@ -1034,6 +1034,13 @@ model Location {
   id           String        @id @default(cuid())
   name         String
   description  String?       @db.Text
+  /**
+   * Optional Google Place ID. Guest write-review URL is derived at read time:
+   * https://search.google.com/local/writereview?placeid=PLACE_ID
+   */
+  googlePlaceId String? @map("google_place_id") @db.VarChar(256)
+  /** Optional HTTPS TripAdvisor review URL. Empty/null = not configured. */
+  tripadvisorReviewUrl String? @map("tripadvisor_review_url") @db.VarChar(2048)
   businessId   String        @map("business_id")
   business     Business      @relation(fields: [businessId], references: [id], onDelete: Cascade)
   tables       Table[]

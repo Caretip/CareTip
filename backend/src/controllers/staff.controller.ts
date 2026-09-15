@@ -82,6 +82,8 @@ type StaffBySlugRow = {
   jobTitle: string;
   bio?: string | null;
   businessId: string;
+  locationId: string | null;
+  location: { name: string } | null;
   business: {
     id: string;
     name: string;
@@ -113,6 +115,8 @@ async function findActiveStaffBySlug(trimmedSlug: string): Promise<StaffBySlugRo
     jobTitle: true,
     bio: true,
     businessId: true,
+    locationId: true,
+    location: { select: { name: true } },
     business: { select: { ...BUSINESS_BRANDING_SELECT, slug: true, onboardingVerificationStatus: true } },
   } as const;
   try {
@@ -144,6 +148,8 @@ async function findActiveStaffBySlug(trimmedSlug: string): Promise<StaffBySlugRo
           jobTitle: true,
           bio: true,
           businessId: true,
+          locationId: true,
+          location: { select: { name: true } },
           business: { select: { ...BUSINESS_BRANDING_SELECT, slug: true, onboardingVerificationStatus: true } },
         },
       });
@@ -166,6 +172,8 @@ async function buildPublicStaffTipResponse(employee: StaffBySlugRow) {
     businessSlug: employee.business.slug,
     businessLogo: branding.logoPath,
     branding,
+    locationId: employee.locationId ?? null,
+    locationName: employee.location?.name ?? null,
   };
 }
 
@@ -199,6 +207,8 @@ export async function getStaffByBusinessAndEmployeeSlug(req: Request, res: Respo
       jobTitle: true,
       bio: true,
       businessId: true,
+      locationId: true,
+      location: { select: { name: true } },
       business: { select: { ...BUSINESS_BRANDING_SELECT, slug: true, onboardingVerificationStatus: true } },
     } as const;
 

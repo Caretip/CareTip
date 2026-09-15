@@ -22,8 +22,10 @@ import {
   scheduleCustomerRouteRedirect,
   shouldShowCustomerEntryFailure,
 } from "../../lib/customerRouteTransition";
-import { usePublicHtmlBootHandoff } from "../../lib/usePublicHtmlBootHandoff";
+import { tippingVenueFromEmployeeAssignment, applyGuestTipVenueSearchParams } from "../../lib/guestEmployeeTippingVenue";
+import { rememberGuestTipEmployee } from "../../lib/resolveCustomerEmployeeContext";
 import { navFlashLog } from "../../lib/navigationFlashAudit";
+import { usePublicHtmlBootHandoff } from "../../lib/usePublicHtmlBootHandoff";
 
 /**
  * /staff/:slug — Individual QR (Path A).
@@ -36,7 +38,7 @@ export function StaffLandingPage() {
   const [searchParams] = useSearchParams();
   const previewProfile = searchParams.get("preview") === "1";
   const { slug: slugParam } = useParams<{ slug: string }>();
-  const { setBusinessId, setEmployee, setStaffProfileSlug, setAmount } = useTipFlow();
+  const { setBusinessId, setEmployee, setStaffProfileSlug, setAmount, setTippingVenue } = useTipFlow();
   const [phase, setPhase] = useState<CustomerEntryPhase>("loading");
   const [error, setError] = useState<string | null>(null);
   const [staff, setStaff] = useState<StaffBySlugResponse | null>(null);
@@ -60,6 +62,17 @@ export function StaffLandingPage() {
       try {
         const data = await getStaffBySlug(slug);
         if (cancelled) return;
+        rememberGuestTipEmployee({
+          businessId: data.businessId,
+          employeeId: data.id,
+          employeeName: data.name,
+          employeeAvatar: data.avatar ?? undefined,
+          businessName: data.businessName,
+          businessLogo: data.businessLogo ?? null,
+          branding: data.branding ?? null,
+          locationId: data.locationId ?? null,
+          locationName: data.locationName ?? null,
+        });
         recordGuestQrScanOnce({
           businessId: data.businessId,
           scanType: "employee_legacy_slug",
@@ -68,6 +81,7 @@ export function StaffLandingPage() {
         });
         setBusinessId(data.businessId);
         setEmployee(data.id, data.name, data.avatar ?? undefined);
+        setTippingVenue(tippingVenueFromEmployeeAssignment(data.locationId, data.locationName));
         setStaffProfileSlug(slug);
         navFlashLog("data_load_settled", { path: `/staff/${slug}`, preview: previewProfile });
         if (!previewProfile) {
@@ -79,9 +93,15 @@ export function StaffLandingPage() {
             setPhase("ready");
             return;
           }
+          const qs = new URLSearchParams({
+            employeeId: data.id,
+            returnSlug: slug,
+            direct: "1",
+          });
+          applyGuestTipVenueSearchParams(qs, { locationId: data.locationId });
           setPhase("redirecting");
           scheduleCustomerRouteRedirect(
-            `/tip-amount?employeeId=${encodeURIComponent(data.id)}&returnSlug=${encodeURIComponent(slug)}&direct=1`,
+            `/tip-amount?${qs.toString()}`,
             navigate,
             { replace: true, from: `/staff/${slug}` },
           );
@@ -108,17 +128,23 @@ export function StaffLandingPage() {
     setBusinessId,
     setEmployee,
     setStaffProfileSlug,
+    setTippingVenue,
   ]);
 
   const handleLeaveTip = () => {
     if (!staff || !slugParam?.trim()) return;
-    navigate(
-      `/tip-amount?employeeId=${encodeURIComponent(staff.id)}&returnSlug=${encodeURIComponent(slugParam.trim())}&direct=1`
-    );
+    const qs = new URLSearchParams({
+      employeeId: staff.id,
+      returnSlug: slugParam.trim(),
+      direct: "1",
+    });
+    applyGuestTipVenueSearchParams(qs, { locationId: staff.locationId });
+    navigate(`/tip-amount?${qs.toString()}`);
   };
 
   const handleRepeatTip = async () => {
     if (!staff || repeatAmount == null || !slugParam?.trim()) return;
+    if (checkingOut) return;
     setBusinessId(staff.businessId);
     setEmployee(staff.id, staff.name, staff.avatar ?? undefined);
     setStaffProfileSlug(slugParam.trim());
@@ -131,10 +157,11 @@ export function StaffLandingPage() {
         employeeId: staff.id,
         businessId: staff.businessId,
         employeeName: staff.name,
+        locationId: staff.locationId,
       },
       t("tipFlow.payment.checkoutStartError"),
     );
-    if (result !== "redirected") setCheckingOut(false);
+    if (result === "failed") setCheckingOut(false);
   };
 
   const fallbackVenue = t("tipFlow.common.venue");

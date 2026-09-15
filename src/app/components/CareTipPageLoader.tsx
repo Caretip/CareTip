@@ -140,7 +140,7 @@ export function CareTipPageLoader({
   useAppLoadingRegistration(
     registrationKey ?? `caretip-page-loader:${autoKey}`,
     APP_LOADING_PRIORITY.ROUTE_GUARD,
-    isFullScreen && !softNav,
+    isFullScreen && !softNav && !holdUnderHtmlBoot,
     keepProgressCopy ? resolvedMessage : undefined,
   );
 
@@ -151,8 +151,8 @@ export function CareTipPageLoader({
         ? "flex flex-col items-center justify-center py-16 px-4"
         : "flex flex-col items-center justify-center";
 
-  /* Cold entry, or HTML boot still covering: no second loading sentence. */
-  if ((isFullScreen && !softNav) || holdUnderHtmlBoot) {
+  /* Cold entry under HTML boot, or cold overlay: no second loading sentence. */
+  if (holdUnderHtmlBoot || (isFullScreen && !softNav)) {
     return <GlobalAppLoadingHold className={className} />;
   }
 

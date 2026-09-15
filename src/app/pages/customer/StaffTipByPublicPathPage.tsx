@@ -25,6 +25,9 @@ import {
   shouldShowCustomerEntryFailure,
 } from "../../lib/customerRouteTransition";
 import { navFlashLog } from "../../lib/navigationFlashAudit";
+import { tippingVenueFromEmployeeAssignment, applyGuestTipVenueSearchParams } from "../../lib/guestEmployeeTippingVenue";
+import { rememberGuestTipEmployee } from "../../lib/resolveCustomerEmployeeContext";
+import { usePublicHtmlBootHandoff } from "../../lib/usePublicHtmlBootHandoff";
 
 /**
  * `/{businessSlug}/{employeeSlug}` — canonical human-readable employee tip entry.
@@ -38,13 +41,14 @@ export function StaffTipByPublicPathPage() {
     businessSlug: string;
     employeeSlug: string;
   }>();
-  const { setBusinessId, setEmployee, setStaffTipReturnPath, setAmount } = useTipFlow();
+  const { setBusinessId, setEmployee, setStaffTipReturnPath, setAmount, setTippingVenue } = useTipFlow();
   const [phase, setPhase] = useState<CustomerEntryPhase>("loading");
   const [error, setError] = useState<string | null>(null);
   const [staff, setStaff] = useState<StaffBySlugResponse | null>(null);
   const [showRepeatPrompt, setShowRepeatPrompt] = useState(false);
   const [repeatAmount, setRepeatAmount] = useState<number | null>(null);
   const [checkingOut, setCheckingOut] = useState(false);
+  usePublicHtmlBootHandoff(phase === "ready" && Boolean(staff));
 
   useEffect(() => {
     const schedule = () => prefetchCustomerFlowRoutes();
@@ -72,6 +76,17 @@ export function StaffTipByPublicPathPage() {
       try {
         const data = await getStaffByBusinessEmployeeSlug(b, e);
         if (cancelled) return;
+        rememberGuestTipEmployee({
+          businessId: data.businessId,
+          employeeId: data.id,
+          employeeName: data.name,
+          employeeAvatar: data.avatar ?? undefined,
+          businessName: data.businessName,
+          businessLogo: data.businessLogo ?? null,
+          branding: data.branding ?? null,
+          locationId: data.locationId ?? null,
+          locationName: data.locationName ?? null,
+        });
         recordGuestQrScanOnce({
           businessId: data.businessId,
           scanType: "employee",
@@ -80,6 +95,7 @@ export function StaffTipByPublicPathPage() {
         });
         setBusinessId(data.businessId);
         setEmployee(data.id, data.name, data.avatar ?? undefined);
+        setTippingVenue(tippingVenueFromEmployeeAssignment(data.locationId, data.locationName));
         setStaffTipReturnPath(b, e);
         navFlashLog("data_load_settled", { path: `/${b}/${e}`, preview: previewProfile });
         if (!previewProfile) {
@@ -97,6 +113,7 @@ export function StaffTipByPublicPathPage() {
             returnEmployeeSlug: e,
             direct: "1",
           });
+          applyGuestTipVenueSearchParams(qs, { locationId: data.locationId });
           setPhase("redirecting");
           scheduleCustomerRouteRedirect(`/tip-amount?${qs.toString()}`, navigate, {
             replace: true,
@@ -118,7 +135,7 @@ export function StaffTipByPublicPathPage() {
     return () => {
       cancelled = true;
     };
-  }, [bizParam, empParam, previewProfile, navigate, setBusinessId, setEmployee, setStaffTipReturnPath, t]);
+  }, [bizParam, empParam, previewProfile, navigate, setBusinessId, setEmployee, setStaffTipReturnPath, setTippingVenue]);
 
   const handleLeaveTip = () => {
     if (!staff || !bizParam?.trim() || !empParam?.trim()) return;
@@ -130,11 +147,13 @@ export function StaffTipByPublicPathPage() {
       returnEmployeeSlug: e,
       direct: "1",
     });
+    applyGuestTipVenueSearchParams(qs, { locationId: staff.locationId });
     navigate(`/tip-amount?${qs.toString()}`);
   };
 
   const handleRepeatTip = async () => {
     if (!staff || repeatAmount == null || !bizParam?.trim() || !empParam?.trim()) return;
+    if (checkingOut) return;
     setBusinessId(staff.businessId);
     setEmployee(staff.id, staff.name, staff.avatar ?? undefined);
     setStaffTipReturnPath(bizParam.trim().toLowerCase(), empParam.trim().toLowerCase());
@@ -147,10 +166,11 @@ export function StaffTipByPublicPathPage() {
         employeeId: staff.id,
         businessId: staff.businessId,
         employeeName: staff.name,
+        locationId: staff.locationId,
       },
       t("tipFlow.payment.checkoutStartError"),
     );
-    if (result !== "redirected") setCheckingOut(false);
+    if (result === "failed") setCheckingOut(false);
   };
 
   const profileHeaderFor = (name: string) => headerLeaveTipFor(t, name);
@@ -216,7 +236,7 @@ export function StaffTipByPublicPathPage() {
   }
 
   return (
-    <div className={cf.page}>
+    <div className={cf.page} data-caretip-route-ready="">
       <div className={cf.frame}>
       <CustomerJourneyHeader venue={venueBrand} />
 

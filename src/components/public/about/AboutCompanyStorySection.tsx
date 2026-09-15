@@ -1,7 +1,5 @@
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
-import aboutUsWebp from "../../../../images/about-us.webp";
-import { MarketingPicture } from "@/lib/marketingPicture";
 import { cn } from "@/lib/utils";
 import { usePublicScrollReveal } from "@/lib/usePublicScrollReveal";
 
@@ -10,7 +8,6 @@ const STORY_PARAGRAPH_KEYS = ["p1", "p2", "p3", "p4"] as const;
 export function AboutCompanyStorySection() {
   const { t, i18n } = useTranslation();
   const textReveal = usePublicScrollReveal<HTMLDivElement>(0);
-  const visualReveal = usePublicScrollReveal<HTMLDivElement>(0.06);
 
   const paragraphs = useMemo(() => {
     return STORY_PARAGRAPH_KEYS.map((key) => {
@@ -22,7 +19,7 @@ export function AboutCompanyStorySection() {
 
   return (
     <section className="caretip-about-split" aria-labelledby="about-story-title">
-      <div className="caretip-about-page__inner caretip-about-split__grid">
+      <div className="caretip-about-page__inner caretip-about-split__grid caretip-about-split__grid--copy-only">
         <div
           ref={textReveal.ref}
           style={textReveal.style}
@@ -37,22 +34,6 @@ export function AboutCompanyStorySection() {
               <p key={paragraph.slice(0, 48)}>{paragraph}</p>
             ))}
           </div>
-        </div>
-
-        <div
-          ref={visualReveal.ref}
-          style={visualReveal.style}
-          className={cn(visualReveal.className, "caretip-about-split__media")}
-        >
-          <MarketingPicture
-            src={aboutUsWebp}
-            webpSrc={aboutUsWebp}
-            alt={t("staticPages.about.story.imageAlt")}
-            className="caretip-about-split__photo"
-            priority
-            fadeIn={false}
-            decoding="async"
-          />
         </div>
       </div>
     </section>

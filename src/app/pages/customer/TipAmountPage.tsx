@@ -1,16 +1,23 @@
 import { useNavigate, useSearchParams } from "react-router";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useLayoutEffect, useMemo, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { useTipFlow } from "../../context/TipFlowContext";
 import { logClientError } from "../../lib/clientLog";
 import { DEV_BYPASS_ENABLED, DEV_MOCK } from "../../lib/devCustomerBypass";
-import { hasRecentCustomerFlowEntry, markCustomerFlowEntered } from "../../lib/customerFlowGuard";
+import { markCustomerFlowEntered } from "../../lib/customerFlowGuard";
 import {
   isCustomerEmployeeContextReady,
+  peekGuestTipEmployee,
+  rememberGuestTipEmployee,
   resolveCustomerEmployeeContext,
+  type ResolvedCustomerEmployee,
 } from "../../lib/resolveCustomerEmployeeContext";
 import { startGuestTipCheckout } from "../../lib/startGuestTipCheckout";
+import {
+  tippingVenueFromEmployeeAssignment,
+  tippingVenueFromGuestSearchParams,
+} from "../../lib/guestEmployeeTippingVenue";
 import { formatEur } from "../../lib/formatEur";
 import { isTipAmountInRangeEur, MIN_TIP_AMOUNT_EUR } from "../../lib/tipAmountLimits";
 import { customerFlowUi as cf } from "./customerFlowUi";
@@ -30,6 +37,14 @@ export function TipAmountPage() {
   const returnSlug = searchParams.get("returnSlug");
   const returnBusinessSlug = searchParams.get("returnBusinessSlug");
   const returnEmployeeSlug = searchParams.get("returnEmployeeSlug");
+  const urlLocationId = searchParams.get("locationId");
+  const urlTableId = searchParams.get("tableId");
+  const journeyVenue = useMemo(() => {
+    const qs = new URLSearchParams();
+    if (urlLocationId) qs.set("locationId", urlLocationId);
+    if (urlTableId) qs.set("tableId", urlTableId);
+    return tippingVenueFromGuestSearchParams(qs);
+  }, [urlLocationId, urlTableId]);
   const {
     businessId,
     employeeId: employeeIdCtx,
@@ -41,26 +56,47 @@ export function TipAmountPage() {
     setBusinessId,
     setEmployee,
     setAmount,
+    setTippingVenue,
   } = useTipFlow();
   const [selectedAmount, setSelectedAmount] = useState<number | null>(null);
   const [customAmount, setCustomAmount] = useState("");
   const [showCustomInput, setShowCustomInput] = useState(false);
   const [processing, setProcessing] = useState(false);
+  const resolveLabelsRef = useRef({
+    fallbackTeamMemberLabel: t("tipFlow.common.teamMember"),
+    fallbackVenueLabel: t("tipFlow.common.venue"),
+  });
+  resolveLabelsRef.current = {
+    fallbackTeamMemberLabel: t("tipFlow.common.teamMember"),
+    fallbackVenueLabel: t("tipFlow.common.venue"),
+  };
   const [contextReady, setContextReady] = useState(() =>
     Boolean(
       employeeId &&
-        isCustomerEmployeeContextReady(employeeId, {
-          businessId,
-          employeeId: employeeIdCtx,
-          employeeName,
-        }),
+        (peekGuestTipEmployee(employeeId) ||
+          isCustomerEmployeeContextReady(employeeId, {
+            businessId,
+            employeeId: employeeIdCtx,
+            employeeName,
+          })),
     ),
   );
 
-  useEffect(() => {
-    if (!employeeId) return;
-    let cancelled = false;
+  const applyResolved = (resolved: ResolvedCustomerEmployee) => {
+    rememberGuestTipEmployee(resolved);
+    setBusinessId(resolved.businessId);
+    setEmployee(resolved.employeeId, resolved.employeeName, resolved.employeeAvatar);
+    if (!urlLocationId?.trim() && !urlTableId?.trim()) {
+      setTippingVenue(
+        tippingVenueFromEmployeeAssignment(resolved.locationId, resolved.locationName),
+      );
+    }
+    markCustomerFlowEntered();
+    setContextReady(true);
+  };
 
+  useLayoutEffect(() => {
+    if (!employeeId) return;
     if (
       isCustomerEmployeeContextReady(employeeId, {
         businessId,
@@ -71,27 +107,52 @@ export function TipAmountPage() {
       setContextReady(true);
       return;
     }
+    const cached = peekGuestTipEmployee(employeeId);
+    if (cached) applyResolved(cached);
+    // Apply QR identity before paint so HTML boot can dismiss on the first ready frame.
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- one-shot hydrate from QR cache
+  }, [employeeId]);
+
+  useEffect(() => {
+    if (journeyVenue) setTippingVenue(journeyVenue);
+  }, [journeyVenue, setTippingVenue]);
+
+  useEffect(() => {
+    if (!employeeId) return;
+    let cancelled = false;
+
+    if (
+      isCustomerEmployeeContextReady(employeeId, {
+        businessId,
+        employeeId: employeeIdCtx,
+        employeeName,
+      }) ||
+      peekGuestTipEmployee(employeeId)
+    ) {
+      const cached = peekGuestTipEmployee(employeeId);
+      if (cached && !isCustomerEmployeeContextReady(employeeId, {
+        businessId,
+        employeeId: employeeIdCtx,
+        employeeName,
+      })) {
+        applyResolved(cached);
+      } else {
+        setContextReady(true);
+      }
+      return;
+    }
 
     (async () => {
-      if (!import.meta.env.DEV && hasRecentCustomerFlowEntry() && businessId && employeeName) {
-        if (!cancelled) setContextReady(true);
-        return;
-      }
-
       try {
         const resolved = await resolveCustomerEmployeeContext({
           employeeId,
           returnSlug,
           returnBusinessSlug,
           returnEmployeeSlug,
-          fallbackTeamMemberLabel: t("tipFlow.common.teamMember"),
-          fallbackVenueLabel: t("tipFlow.common.venue"),
+          ...resolveLabelsRef.current,
         });
         if (cancelled) return;
-        setBusinessId(resolved.businessId);
-        setEmployee(resolved.employeeId, resolved.employeeName, resolved.employeeAvatar);
-        markCustomerFlowEntered();
-        setContextReady(true);
+        applyResolved(resolved);
       } catch (err) {
         if (cancelled) return;
         logClientError("TipAmountPage.resolve", err);
@@ -102,6 +163,8 @@ export function TipAmountPage() {
     return () => {
       cancelled = true;
     };
+    // Do not depend on TipFlow locationId / journeyVenue / i18n `t`: those
+    // change after URL venue hydrate and cancel GET /api/employees/:id.
   }, [
     businessId,
     employeeId,
@@ -113,7 +176,9 @@ export function TipAmountPage() {
     returnEmployeeSlug,
     setBusinessId,
     setEmployee,
-    t,
+    setTippingVenue,
+    urlLocationId,
+    urlTableId,
   ]);
 
   useEffect(() => {
@@ -191,6 +256,7 @@ export function TipAmountPage() {
     if (!selectedAmount || !resolvedEmployeeId) return;
     if (!isTipAmountInRangeEur(selectedAmount)) return;
     if (!businessId) return;
+    if (processing) return;
     setAmount(selectedAmount);
     setProcessing(true);
     const result = await startGuestTipCheckout(
@@ -204,7 +270,7 @@ export function TipAmountPage() {
       },
       t("tipFlow.payment.checkoutStartError"),
     );
-    if (result !== "redirected") setProcessing(false);
+    if (result === "failed") setProcessing(false);
   };
 
   const employeeDisplayName = employeeName ?? t("tipFlow.common.teamMember");

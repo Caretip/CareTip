@@ -71,17 +71,27 @@ export function TipFlowProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<TipFlowState>(defaultState);
 
   const setBusinessId = useCallback((id: string | null) => {
-    setState((prev) => ({ ...prev, businessId: id }));
+    setState((prev) => (prev.businessId === id ? prev : { ...prev, businessId: id }));
   }, []);
 
   const setEmployee = useCallback(
     (id: string, name: string, avatar?: string) => {
-      setState((prev) => ({
-        ...prev,
-        employeeId: id,
-        employeeName: name,
-        employeeAvatar: avatar ?? prev.employeeAvatar,
-      }));
+      setState((prev) => {
+        const nextAvatar = avatar ?? prev.employeeAvatar;
+        if (
+          prev.employeeId === id &&
+          prev.employeeName === name &&
+          prev.employeeAvatar === nextAvatar
+        ) {
+          return prev;
+        }
+        return {
+          ...prev,
+          employeeId: id,
+          employeeName: name,
+          employeeAvatar: nextAvatar,
+        };
+      });
     },
     []
   );
@@ -105,25 +115,47 @@ export function TipFlowProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const setTippingVenue = useCallback((venue: TippingVenuePayload | null) => {
-    setState((prev) =>
-      venue
-        ? {
-            ...prev,
-            locationId: venue.locationId,
-            tableId: venue.tableId ?? null,
-            tippingLocationName: venue.locationName,
-            tippingTableName: venue.tableName ?? null,
-            tableQrSlug: venue.qrSlug ?? null,
-          }
-        : {
-            ...prev,
-            locationId: null,
-            tableId: null,
-            tippingLocationName: null,
-            tippingTableName: null,
-            tableQrSlug: null,
-          }
-    );
+    setState((prev) => {
+      if (!venue) {
+        if (
+          prev.locationId == null &&
+          prev.tableId == null &&
+          prev.tippingLocationName == null &&
+          prev.tippingTableName == null &&
+          prev.tableQrSlug == null
+        ) {
+          return prev;
+        }
+        return {
+          ...prev,
+          locationId: null,
+          tableId: null,
+          tippingLocationName: null,
+          tippingTableName: null,
+          tableQrSlug: null,
+        };
+      }
+      const tableId = venue.tableId ?? null;
+      const tableName = venue.tableName ?? null;
+      const qrSlug = venue.qrSlug ?? null;
+      if (
+        prev.locationId === venue.locationId &&
+        prev.tableId === tableId &&
+        prev.tippingLocationName === venue.locationName &&
+        prev.tippingTableName === tableName &&
+        prev.tableQrSlug === qrSlug
+      ) {
+        return prev;
+      }
+      return {
+        ...prev,
+        locationId: venue.locationId,
+        tableId,
+        tippingLocationName: venue.locationName,
+        tippingTableName: tableName,
+        tableQrSlug: qrSlug,
+      };
+    });
   }, []);
 
   const setAmount = useCallback((amount: number) => {

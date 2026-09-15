@@ -123,6 +123,7 @@ export function PrintQrStudio() {
   const [contactEmail, setContactEmail] = useState(initialSnapshot?.contactEmail ?? "");
   const [contactPhone, setContactPhone] = useState(initialSnapshot?.contactPhone ?? "");
   const [submitting, setSubmitting] = useState(false);
+  const printCheckoutInFlight = useRef(false);
   const [bootLoading, setBootLoading] = useState(() => !initialSnapshot);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [previewTargetUrl, setPreviewTargetUrl] = useState(initialSnapshot?.previewTargetUrl ?? "");
@@ -529,7 +530,8 @@ export function PrintQrStudio() {
     !submitting;
 
   const placeBatchOrder = useCallback(async () => {
-    if (!product || !canCheckout) return;
+    if (!product || !canCheckout || printCheckoutInFlight.current) return;
+    printCheckoutInFlight.current = true;
     setSubmitting(true);
     const tClick = physicalQrPerfNow();
     logPhysicalQrPerf("pay-click", 0);
@@ -587,6 +589,7 @@ export function PrintQrStudio() {
       } else {
         toast.error(err instanceof Error ? err.message : t("business.qrStudio.physical.orderError"));
       }
+      printCheckoutInFlight.current = false;
       setSubmitting(false);
     }
   }, [

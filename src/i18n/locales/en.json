@@ -2174,7 +2174,12 @@
       "leaveFeedback": "Leave optional feedback",
       "leavePage": "Leave page",
       "backHome": "Back to home",
-      "emailReceipt": "A receipt has been sent to your email"
+      "emailReceipt": "A receipt has been sent to your email",
+      "externalReviewsHeading": "Leave a public review",
+      "externalReviewsHint": "Your feedback helps support our team. These buttons open Google or TripAdvisor in a new tab.",
+      "reviewOnGoogle": "Review us on Google",
+      "reviewOnTripadvisor": "Review us on TripAdvisor",
+      "opensExternal": "(opens in a new tab)"
     },
     "rating": {
       "devCaptured": "DEV: feedback captured locally",
@@ -3523,6 +3528,10 @@
       "overviewSubheadline": "Discover how easy digital tipping works in your field.\nClick on any industry to see the details.",
       "teasersAria": "Industry showcase",
       "learnMore": "Learn more",
+      "snippets": {
+        "tipsUp": "24% more tips today",
+        "tipsToday": "Tips today €284"
+      },
       "viewAllIndustries": "View more industries",
       "showFewerIndustries": "Show fewer industries",
       "navPrev": "Previous industry",
@@ -4666,6 +4675,21 @@
       "placeholderName": "e.g. Main Bar",
       "labelDescription": "Description (optional)",
       "placeholderDescription": "Notes for staff, not shown to guests.",
+      "reviewsSectionTitle": "Public review links (optional)",
+      "reviewsSectionDesc": "After a successful tip, guests see these public review buttons instead of the CareTip form. Leave both blank to keep CareTip feedback.",
+      "labelGoogleReview": "Google review link",
+      "googlePlaceIdLabel": "Google Place ID",
+      "googlePlaceIdHelp": "Guests get a Google “write a review” page for this location. In Google Maps, open the venue, share the link, and copy the Place ID (or use Google’s Place ID finder).",
+      "placeholderGooglePlaceId": "e.g. ChIJJ…",
+      "labelTripadvisor": "TripAdvisor review link",
+      "tripadvisorHint": "Paste the HTTPS page where guests write a TripAdvisor review.",
+      "placeholderTripadvisor": "https://www.tripadvisor.com/…",
+      "reviewConfigured": "Configured",
+      "reviewNotConfigured": "Not configured",
+      "googleStatus": "Google: {{status}}",
+      "tripadvisorStatus": "TripAdvisor: {{status}}",
+      "toastInvalidGooglePlaceId": "Enter a valid Google Place ID, or leave it blank.",
+      "toastInvalidTripadvisorUrl": "Enter a valid TripAdvisor https:// URL, or leave it blank.",
       "cancel": "Cancel",
       "save": "Save"
     },
@@ -4961,6 +4985,11 @@
       "thContact": "Contact",
       "thTipsMonth": "Tips (all time)",
       "payoutAccount": "Payout account",
+      "payoutIndicator": {
+        "connected": "Stripe connected",
+        "not_connected": "Stripe not connected",
+        "action_required": "Stripe action required"
+      },
       "payoutState": {
         "not_connected": "Not connected",
         "setup_required": "Setup required",

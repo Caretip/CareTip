@@ -423,6 +423,9 @@ html.dark .caretip-industry-page__final-cta-secondary:hover {
 .caretip-contact-page .caretip-contact-input,
 .caretip-contact-page .caretip-contact-select-trigger {
   min-height: 2.75rem;
+  font-family: inherit;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
 }
 
 .caretip-contact-page .caretip-contact-field {

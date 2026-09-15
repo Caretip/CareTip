@@ -381,12 +381,21 @@ export interface CreateTipCheckoutSessionResult {
   url: string | null;
 }
 
-/** Stripe cancel returns to tip amount (employee-scoped). Never accepts a client-supplied URL. */
-export function guestTipCheckoutCancelUrl(frontendBase: string, employeeId: string): string {
+/** Stripe cancel returns to tip amount. Never accepts a client-supplied URL. */
+export function guestTipCheckoutCancelUrl(
+  frontendBase: string,
+  employeeId: string,
+  locationId?: string | null,
+  tableId?: string | null,
+): string {
   const origin = frontendBase.replace(/\/+$/, "");
   const url = new URL("/tip-amount", `${origin}/`);
   url.searchParams.set("employeeId", employeeId);
   url.searchParams.set("canceled", "1");
+  const loc = locationId?.trim();
+  const tbl = tableId?.trim();
+  if (loc) url.searchParams.set("locationId", loc);
+  if (tbl) url.searchParams.set("tableId", tbl);
   return url.toString();
 }
 
@@ -424,6 +433,40 @@ async function resolveLocationTable(
     }
   }
   return { locationId: resolvedLocationId, tableId: resolvedTableId };
+}
+
+/**
+ * Venue on a tip:
+ * 1. Explicit table QR (table.locationId)
+ * 2. Explicit location QR / checkout locationId
+ * 3. Else the employee's assigned Location (Employee.locationId) — employee/staff QR
+ *
+ * Never invent the business's first/only Location when the employee has no assignment.
+ */
+export async function resolveTipVenueIds(
+  businessId: string,
+  employeeId?: string | null,
+  locationId?: string | null,
+  tableId?: string | null,
+): Promise<{ locationId: string | null; tableId: string | null }> {
+  const fromQr = await resolveLocationTable(businessId, locationId, tableId);
+  if (fromQr.tableId || fromQr.locationId) return fromQr;
+
+  const empId = typeof employeeId === "string" && employeeId.trim() ? employeeId.trim() : null;
+  if (!empId) return fromQr;
+
+  const emp = await prisma.employee.findFirst({
+    where: { id: empId, businessId, isDeleted: false },
+    select: { locationId: true },
+  });
+  const assigned = emp?.locationId?.trim() || null;
+  if (!assigned) return fromQr;
+
+  const loc = await prisma.location.findFirst({
+    where: { id: assigned, businessId },
+    select: { id: true },
+  });
+  return { locationId: loc?.id ?? null, tableId: null };
 }
 
 async function loadTipEmitSnapshot(
@@ -550,8 +593,9 @@ export async function createTipCheckoutSession(
   await assertEmployeeEligibleForTipPayment(employeeId, businessId);
   const routing = await resolveTipCheckoutRouting(businessId, employeeId);
 
-  const { locationId: locId, tableId: tblId } = await resolveLocationTable(
+  const { locationId: locId, tableId: tblId } = await resolveTipVenueIds(
     businessId,
+    employeeId,
     input.locationId,
     input.tableId,
   );
@@ -607,6 +651,8 @@ export async function createTipCheckoutSession(
           businessId,
           caretipChargeModel: routing.chargeModel,
           caretipRoutingMode: routing.routingMode,
+          ...(locId ? { locationId: locId } : {}),
+          ...(tblId ? { tableId: tblId } : {}),
         },
         ...(routing.destinationAccountId
           ? {
@@ -619,7 +665,7 @@ export async function createTipCheckoutSession(
       },
       // Post-checkout: go directly to optional feedback page (no extra success screen).
       success_url: `${base}/rating?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: guestTipCheckoutCancelUrl(base, employeeId),
+      cancel_url: guestTipCheckoutCancelUrl(base, employeeId, locId, tblId),
       metadata,
     });
   } catch (e) {
@@ -1185,7 +1231,14 @@ export async function handleSuccessfulTipPayment(session: Stripe.Checkout.Sessio
   let locId: string | null = null;
   let tblId: string | null = null;
   try {
-    const r = await resolveLocationTable(businessId, md.locationId ?? null, md.tableId ?? null);
+    // Checkout session metadata is the originating venue snapshot. Do not re-read
+    // Employee.locationId here — the staff member may have moved after Checkout started.
+    const r = await resolveTipVenueIds(
+      businessId,
+      null,
+      typeof md.locationId === "string" ? md.locationId : null,
+      typeof md.tableId === "string" ? md.tableId : null,
+    );
     locId = r.locationId;
     tblId = r.tableId;
   } catch {

@@ -183,6 +183,9 @@ export interface EmployeeDetail {
   businessName: string;
   /** Public `Employee.slug` when set. */
   slug: string | null;
+  /** Assigned venue for employee/staff QR tips and review links. Null if unassigned. */
+  locationId: string | null;
+  locationName: string | null;
 }
 
 export async function getEmployeeById(employeeId: string): Promise<EmployeeDetail | null> {
@@ -199,6 +202,8 @@ export async function getEmployeeById(employeeId: string): Promise<EmployeeDetai
       isDeleted: true,
       activationStatus: true,
       businessId: true,
+      locationId: true,
+      location: { select: { name: true } },
       business: {
         select: {
           kycVerificationStatus: true,
@@ -273,6 +278,8 @@ export async function getEmployeeById(employeeId: string): Promise<EmployeeDetai
     businessLogo: absolutizePublicMediaPath(emp.business.logoPath ?? null),
     businessName: emp.business.name ?? "",
     slug: emp.slug ?? null,
+    locationId: emp.locationId ?? null,
+    locationName: emp.location?.name ?? null,
   };
 }
 

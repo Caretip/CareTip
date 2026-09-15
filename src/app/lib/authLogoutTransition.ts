@@ -52,6 +52,19 @@ export function getAuthLogoutTargetPath(): string | null {
   return targetLoginPath;
 }
 
+export function normalizeLogoutPath(pathname: string): string {
+  return pathname.split("?")[0]?.split("#")[0] ?? pathname;
+}
+
+/** True when the router has committed the role-specific signed-out login URL. */
+export function isLogoutHandoffDestinationReady(
+  pathname: string,
+  targetLoginPath: string | null,
+): boolean {
+  if (!targetLoginPath) return false;
+  return normalizeLogoutPath(pathname) === normalizeLogoutPath(targetLoginPath);
+}
+
 export function isPostLogoutBootstrapSuppress(): boolean {
   return Date.now() < bootstrapSuppressUntil;
 }

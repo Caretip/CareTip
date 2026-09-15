@@ -10,7 +10,7 @@ import {
   useAppLoadingRegistration,
 } from "@/app/context/AppLoadingManager";
 import { GlobalAppLoadingHold } from "@/app/components/GlobalAppLoadingHold";
-import { LoadingSpinner } from "@/app/components/ui/loading-spinner";
+import { CareTipBrandedLoaderMark } from "@/app/components/CareTipPageLoader";
 import type { AppLoadingContext } from "@/app/lib/appLoadingContexts";
 import { resolveAppLoadingContextMessage } from "@/app/lib/appLoadingContexts";
 import { isAppShellInteractive } from "@/app/lib/appShellLifecycle";
@@ -39,8 +39,8 @@ type CustomerFlowShellProps = {
 };
 
 /**
- * Persistent customer journey shell — header stays mounted while body loads.
- * Cold entry uses the global brand overlay; in-journey waits keep progress copy in-shell.
+ * Customer journey shell. Wait states do not paint this chrome — HTML boot or one branded mark owns the wait.
+ * Destination paint sets `[data-caretip-route-ready]` and dismisses HTML boot.
  */
 export function CustomerFlowShell({
   headerLeading,
@@ -67,12 +67,12 @@ export function CustomerFlowShell({
     loadingMessage ??
     resolveAppLoadingContextMessage(loadingContext, t, readDocumentOrStoredLanguage());
   const holdUnderHtmlBoot = isHtmlBootElementPresent();
-  usePublicHtmlBootHandoff(loading !== true);
+  usePublicHtmlBootHandoff(!loading);
 
   useAppLoadingRegistration(
     loadingRegistrationKey,
     APP_LOADING_PRIORITY.ROUTE_GUARD,
-    loading && !softNav,
+    loading && !softNav && !holdUnderHtmlBoot,
     overlayMessage,
   );
 
@@ -86,10 +86,30 @@ export function CustomerFlowShell({
       ? cf.pageCompact
       : cf.page;
 
+  if (loading) {
+    if (holdUnderHtmlBoot || !softNav) {
+      return <GlobalAppLoadingHold className={className} />;
+    }
+    return (
+      <div
+        className={cn(
+          "flex min-h-[100dvh] flex-col items-center justify-center bg-background px-6",
+          className,
+        )}
+        role="status"
+        aria-busy="true"
+        aria-live="polite"
+      >
+        <CareTipBrandedLoaderMark tagline={overlayMessage} showTagline />
+      </div>
+    );
+  }
+
   return (
     <div
       className={cn(pageClass, className)}
-      {...(!loading ? { "data-caretip-route-ready": "" } : {})}
+      data-caretip-route-ready=""
+      data-caretip-public-committed=""
     >
       <div className={cf.frame}>
         <CustomerJourneyHeader
@@ -103,29 +123,9 @@ export function CustomerFlowShell({
         />
 
         <div className={cn(cf.main, mainClassName)}>
-          {loading ? (
-            softNav && !holdUnderHtmlBoot ? (
-              <div
-                className="flex min-h-[40vh] flex-col items-center justify-center gap-3 py-16 sm:py-20"
-                role="status"
-                aria-busy="true"
-                aria-live="polite"
-              >
-                <LoadingSpinner size="lg" />
-                {overlayMessage ? (
-                  <p className="max-w-sm text-center text-sm text-muted-foreground">
-                    {overlayMessage}
-                  </p>
-                ) : null}
-              </div>
-            ) : (
-              <GlobalAppLoadingHold className="min-h-[40vh] py-16 sm:py-20" />
-            )
-          ) : (
-            children
-          )}
+          {children}
 
-          {!loading && showCareTipAttribution ? (
+          {showCareTipAttribution ? (
             <div className="pt-4 sm:pt-6">
               <CustomerJourneyCareTipAttribution label={t("tipFlow.common.poweredByCareTip")} />
             </div>
@@ -133,7 +133,7 @@ export function CustomerFlowShell({
         </div>
       </div>
 
-      {!loading ? bottomBar : null}
+      {bottomBar}
     </div>
   );
 }

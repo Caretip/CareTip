@@ -230,6 +230,13 @@ if (orderCard.includes("showPay = Boolean(canPay) && !confirming") && orderCard.
 } else fail("Pay now confirming gate");
 
 const studio = readFileSync(path.join(root, "src/app/components/business/physical-branding/PhysicalBrandingStudio.tsx"), "utf8");
+if (studio.includes("printCheckoutInFlight")) {
+  pass("Physical QR order checkout ignores overlapping taps");
+} else fail("Physical QR checkout needs a sync in-flight lock");
+const printStudioPay = readFileSync(path.join(root, "src/app/components/business/physical-branding/PrintQrStudio.tsx"), "utf8");
+if (printStudioPay.includes("printCheckoutInFlight") && printStudioPay.includes("placeBatchOrder")) {
+  pass("Print QR Studio pay ignores overlapping taps");
+} else fail("Print QR Studio checkout needs a sync in-flight lock");
 const en = readFileSync(path.join(root, "src/i18n/locales/en.json"), "utf8");
 if (
   !studio.includes("CardTitle") &&

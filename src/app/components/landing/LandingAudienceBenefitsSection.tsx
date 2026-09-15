@@ -13,10 +13,10 @@ import { landingUi } from "@/components/landing/landingUi";
 import { landingHeadlineComponents } from "@/components/landing/landingRichText";
 import { landingStaggerDelay } from "@/lib/landingMotion";
 import { cn } from "@/lib/utils";
-import businessVisual from "../../../../images/employee02.webp";
-import businessVisualAvif from "../../../../images/employee02.avif";
-import teamsVisual from "../../../../images/foremployee.webp";
-import teamsVisualAvif from "../../../../images/foremployee.avif";
+import businessVisual from "../../../../images/germ.webp";
+import businessVisualAvif from "../../../../images/germ.avif";
+import teamsVisual from "../../../../images/phone-screen.webp";
+import teamsVisualAvif from "../../../../images/phone-screen.avif";
 
 type AudienceCard = {
   id: "business" | "teams";
@@ -28,8 +28,9 @@ type AudienceCard = {
   ctaLabelKey: string;
   ctaTo: string;
   image: string;
-  imageAvif: string;
+  imageAvif?: string;
   imageAltKey: string;
+  photoClass?: string;
 };
 
 function warmAudienceBenefitImages(): void {
@@ -63,6 +64,7 @@ const CARDS: AudienceCard[] = [
     image: businessVisual,
     imageAvif: businessVisualAvif,
     imageAltKey: "businessSection.imageAlt",
+    photoClass: "caretip-audience-benefits__photo--business",
   },
   {
     id: "teams",
@@ -80,6 +82,7 @@ const CARDS: AudienceCard[] = [
     image: teamsVisual,
     imageAvif: teamsVisualAvif,
     imageAltKey: "employeeSection.imageAlt",
+    photoClass: "caretip-audience-benefits__photo--phone",
   },
 ];
 
@@ -149,9 +152,9 @@ export function LandingAudienceBenefitsSection() {
                 className="caretip-audience-benefits__card"
                 delay={landingStaggerDelay(index + 1)}
               >
-                <div className="caretip-audience-benefits__photo">
+                <div className={cn("caretip-audience-benefits__photo", card.photoClass)}>
                   <picture>
-                    <source type="image/avif" srcSet={card.imageAvif} />
+                    {card.imageAvif ? <source type="image/avif" srcSet={card.imageAvif} /> : null}
                     <img src={card.image} alt={card.imageAlt} loading="lazy" decoding="async" />
                   </picture>
                 </div>

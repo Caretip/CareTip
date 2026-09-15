@@ -31,6 +31,17 @@ export type VerifiedTipSessionState =
   | { phase: "timeout"; sessionId: string; stripePaid: boolean }
   | { phase: "error"; sessionId: string; message: string };
 
+let readyCache: { sessionId: string; context: TipSessionReadyContext } | null = null;
+
+function rememberVerifiedTipSession(sessionId: string, context: TipSessionReadyContext): void {
+  readyCache = { sessionId, context };
+}
+
+function peekVerifiedTipSession(sessionId: string): TipSessionReadyContext | null {
+  if (!readyCache || readyCache.sessionId !== sessionId) return null;
+  return readyCache.context;
+}
+
 type UseVerifiedTipSessionOptions = {
   enabled?: boolean;
   maxPollAttempts?: number;
@@ -64,9 +75,13 @@ export function useVerifiedTipSession(
   const isDevMockSession =
     allowDevMock && DEV_BYPASS_ENABLED && sessionId === DEV_MOCK.sessionId;
 
-  const [state, setState] = useState<VerifiedTipSessionState>(() =>
-    !sessionId.trim() ? { phase: "error", sessionId: "", message: "missing_session" } : { phase: "loading" },
-  );
+  const [state, setState] = useState<VerifiedTipSessionState>(() => {
+    const trimmed = sessionId.trim();
+    if (!trimmed) return { phase: "error", sessionId: "", message: "missing_session" };
+    const cached = peekVerifiedTipSession(trimmed);
+    if (cached) return { phase: "ready", sessionId: trimmed, context: cached };
+    return { phase: "loading" };
+  });
 
   useEffect(() => {
     if (!enabled) return;
@@ -89,10 +104,18 @@ export function useVerifiedTipSession(
         locationId: DEV_MOCK.venue.locationId,
         tableId: DEV_MOCK.venue.tableId,
         customerName: "Dev Customer",
+        externalReviews: null,
       };
       markCustomerFlowEntered();
       onVerifiedTipPaymentSession(DEV_MOCK.sessionId, mockContext);
+      rememberVerifiedTipSession(trimmed, mockContext);
       setState({ phase: "ready", sessionId: trimmed, context: mockContext });
+      return;
+    }
+
+    const cached = peekVerifiedTipSession(trimmed);
+    if (cached) {
+      setState({ phase: "ready", sessionId: trimmed, context: cached });
       return;
     }
 
@@ -116,6 +139,7 @@ export function useVerifiedTipSession(
       });
       markCustomerFlowEntered();
       onVerifiedTipPaymentSession(trimmed, ctx);
+      rememberVerifiedTipSession(trimmed, ctx);
       setState({ phase: "ready", sessionId: trimmed, context: ctx });
     };
 

@@ -98,6 +98,7 @@ export function ActivateCareTipCta({
       className={baseClass}
       disabled={busy}
       onClick={() => {
+        if (busy) return;
         setBusy(true);
         void startActivationCheckout("trial", t, {
           navigate,
@@ -132,6 +133,7 @@ export function ActivationPlanButtons({
   );
 
   async function handle(plan: ActivationCheckoutPlan) {
+    if (busy !== null) return;
     setBusy(plan);
     try {
       const result = await startActivationCheckout(plan, t, { navigate });

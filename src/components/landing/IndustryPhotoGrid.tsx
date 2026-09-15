@@ -8,17 +8,15 @@ import {
 import { INDUSTRY_MEDIA } from "@/app/data/industryMedia";
 import { warmIndustryHero } from "@/lib/industryHeroAssets";
 import { cn } from "@/lib/utils";
-import { useEffect, useMemo, type Ref } from "react";
+import { useEffect, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { ArrowUpRight } from "lucide-react";
 
 type IndustryPhotoGridProps = {
   className?: string;
-  /** When true, show industries beyond the three teaser cards. */
-  showAll?: boolean;
-  morePanelId?: string;
-  morePanelRef?: Ref<HTMLDivElement>;
 };
+
+type IndustrySnippetKey = "tipsUp" | "tipsToday";
 
 type IndustryCardData = {
   id: IndustryPageId;
@@ -27,61 +25,38 @@ type IndustryCardData = {
   href: string;
   webp: string;
   avif: string;
+  snippetKey?: IndustrySnippetKey;
 };
 
-/** Three teaser industries matching second-section layout (middle card tall). */
-const TEASER_IDS: readonly IndustryPageId[] = ["gastronomy", "field-service", "logistics"];
+const INDUSTRY_SNIPPETS: Partial<Record<IndustryPageId, IndustrySnippetKey>> = {
+  gastronomy: "tipsUp",
+};
 
 /**
- * Second-section layout: three static photo cards + Learn more on each.
- * Expanded industries are controlled by the section header “View all” nav.
+ * Homepage industries — all six cards visible in the PDF order.
  */
-export function IndustryPhotoGrid({
-  className,
-  showAll = false,
-  morePanelId,
-  morePanelRef,
-}: IndustryPhotoGridProps) {
+export function IndustryPhotoGrid({ className }: IndustryPhotoGridProps) {
   const { t } = useTranslation();
   const reduceMotion = usePrefersReducedMotion();
   const prefix = "landing.industriesTeaser";
   const learnMore = t(`${prefix}.learnMore`);
 
-  const moreIds = useMemo(
-    () => ALL_INDUSTRY_PAGE_IDS.filter((id) => !TEASER_IDS.includes(id)),
-    [],
-  );
-
-  const teaserCards = useMemo(
+  const cards = useMemo(
     () =>
-      TEASER_IDS.map((id) => ({
+      ALL_INDUSTRY_PAGE_IDS.map((id) => ({
         id,
         title: t(`${prefix}.cards.${id}.title`),
         teaser: t(`${prefix}.cards.${id}.teaser`),
         href: industryPath(id),
         webp: INDUSTRY_MEDIA[id].hero.webp,
         avif: INDUSTRY_MEDIA[id].hero.avif,
+        snippetKey: INDUSTRY_SNIPPETS[id],
       })),
     [t],
   );
 
-  const moreCards = useMemo(
-    () =>
-      moreIds.map((id) => ({
-        id,
-        title: t(`${prefix}.cards.${id}.title`),
-        teaser: t(`${prefix}.cards.${id}.teaser`),
-        href: industryPath(id),
-        webp: INDUSTRY_MEDIA[id].hero.webp,
-        avif: INDUSTRY_MEDIA[id].hero.avif,
-      })),
-    [t, moreIds],
-  );
-
-  // Warm only the three visible teaser heroes. Remaining industries are
-  // idle-warmed / hover-warmed elsewhere — avoid decoding every hero on mount.
   useEffect(() => {
-    for (const id of TEASER_IDS) {
+    for (const id of ALL_INDUSTRY_PAGE_IDS) {
       void warmIndustryHero(id, { priority: "low" });
     }
   }, []);
@@ -89,41 +64,22 @@ export function IndustryPhotoGrid({
   return (
     <div className={cn("caretip-industry-second-section", className)}>
       <div
-        className="caretip-industry-photo-grid"
+        className="caretip-industry-photo-grid caretip-industry-photo-grid--all-six"
         role="list"
         aria-label={t(`${prefix}.teasersAria`)}
       >
-        {teaserCards.map((card, index) => (
+        {cards.map((card, index) => (
           <IndustryPhotoCard
             key={card.id}
             card={card}
             ctaLabel={learnMore}
-            tall={index === 1}
             index={index}
             animate={!reduceMotion}
-          />
-        ))}
-      </div>
-
-      <div
-        id={morePanelId}
-        ref={morePanelRef}
-        className={cn(
-          "caretip-industry-photo-grid caretip-industry-photo-grid--more scroll-mt-[80px]",
-          showAll && "caretip-industry-photo-grid--more-open",
-        )}
-        role="list"
-        hidden={!showAll}
-        aria-hidden={!showAll}
-      >
-        {moreCards.map((card, index) => (
-          <IndustryPhotoCard
-            key={card.id}
-            card={card}
-            ctaLabel={learnMore}
-            tall={index === 1}
-            index={index + 3}
-            animate={!reduceMotion}
+            snippet={
+              card.snippetKey
+                ? t(`${prefix}.snippets.${card.snippetKey}`)
+                : undefined
+            }
           />
         ))}
       </div>
@@ -131,25 +87,32 @@ export function IndustryPhotoGrid({
   );
 }
 
+function isAvifSrc(src: string): boolean {
+  return src.toLowerCase().includes(".avif");
+}
+
+function isWebpSrc(src: string): boolean {
+  return src.toLowerCase().includes(".webp");
+}
+
 function IndustryPhotoCard({
   card,
   ctaLabel,
-  tall,
   index,
   animate,
+  snippet,
 }: {
   card: IndustryCardData;
   ctaLabel: string;
-  tall: boolean;
   index: number;
   animate: boolean;
+  snippet?: string;
 }) {
   return (
     <article
       role="listitem"
       className={cn(
         "caretip-industry-photo-card",
-        tall && "caretip-industry-photo-card--tall",
         animate && "caretip-industry-photo-card--animate",
       )}
       data-industry={card.id}
@@ -157,8 +120,8 @@ function IndustryPhotoCard({
     >
       <div className="caretip-industry-photo-card__media">
         <picture>
-          <source type="image/avif" srcSet={card.avif} />
-          <source type="image/webp" srcSet={card.webp} />
+          {isAvifSrc(card.avif) ? <source type="image/avif" srcSet={card.avif} /> : null}
+          {isWebpSrc(card.webp) ? <source type="image/webp" srcSet={card.webp} /> : null}
           <img
             src={card.webp}
             alt=""
@@ -170,6 +133,8 @@ function IndustryPhotoCard({
       </div>
 
       <div className="caretip-industry-photo-card__overlay" aria-hidden />
+
+      {snippet ? <p className="caretip-industry-photo-card__snippet">{snippet}</p> : null}
 
       <div className="caretip-industry-photo-card__label">
         <small>{card.title}</small>

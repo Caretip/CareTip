@@ -24,14 +24,16 @@ export function ContactReassurancePanel({ variant, className }: ContactReassuran
       <h3 className="caretip-contact-reassurance__title">{t(`${prefix}.title`)}</h3>
       <p className="caretip-contact-reassurance__body">{t(`${prefix}.body`)}</p>
       <p className="caretip-contact-reassurance__team">{t(`${prefix}.team`)}</p>
-      <a className="caretip-contact-reassurance__email" href={mailto}>
-        <Mail className="size-4 shrink-0" aria-hidden />
-        {email}
-      </a>
-      <p className="caretip-contact-reassurance__sla">
-        <Clock className="size-3.5 shrink-0" aria-hidden />
-        {t(`${prefix}.responseTime`)}
-      </p>
+      <div className="caretip-contact-reassurance__contact">
+        <a className="caretip-contact-reassurance__email" href={mailto}>
+          <Mail className="size-4 shrink-0" aria-hidden />
+          {email}
+        </a>
+        <p className="caretip-contact-reassurance__sla">
+          <Clock className="size-3.5 shrink-0" aria-hidden />
+          {t(`${prefix}.responseTime`)}
+        </p>
+      </div>
     </aside>
   );
 }

@@ -78,8 +78,10 @@ export function ProtectedRoute({
   );
 
   if (logoutTransitionActive) {
-    // AuthLogoutHandoffCover owns the viewport; do not paint protected chrome after session clear.
-    return null;
+    // Keep the current tree until the login route commits. Returning null unmounted the
+    // entire employee/business shell synchronously under AuthLogoutHandoffCover, which
+    // delayed AuthPage and left "Signing you out…" on screen. The cover is z-10000.
+    return <>{children}</>;
   }
 
   /**

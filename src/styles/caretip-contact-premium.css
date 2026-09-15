@@ -369,9 +369,15 @@ html.dark .caretip-contact-intent-card__body {
 
 @media (min-width: 1024px) {
   .caretip-contact-layout--form {
-    grid-template-columns: minmax(0, 14.5rem) minmax(0, 1fr);
-    gap: 2.5rem 3.5rem;
+    grid-template-columns: minmax(0, 16rem) minmax(0, 1fr);
+    gap: 2.5rem 4rem;
     align-items: start;
+  }
+
+  .caretip-contact-layout--form .caretip-contact-form-stage {
+    max-width: 36rem;
+    width: 100%;
+    justify-self: end;
   }
 }
 
@@ -585,7 +591,9 @@ html.dark .caretip-contact-label {
   border-radius: 0.75rem;
   border-color: rgb(229 229 229 / 0.95);
   background: transparent;
-  font-size: 0.9375rem;
+  font-family: inherit;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
   transition:
     border-color 0.2s ease,
     box-shadow 0.2s ease;
@@ -701,11 +709,19 @@ html.dark .caretip-contact-reassurance__team {
   color: rgb(163 163 163);
 }
 
+.caretip-contact-reassurance__contact {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.625rem;
+  margin-top: 0.75rem;
+}
+
 .caretip-contact-reassurance__email {
   display: inline-flex;
   align-items: center;
   gap: 0.375rem;
-  margin-top: 0.75rem;
+  margin-top: 0;
   font-size: 0.875rem;
   font-weight: 600;
   color: var(--caretip-brand-orange, #e9781c);
@@ -721,7 +737,7 @@ html.dark .caretip-contact-reassurance__team {
   display: inline-flex;
   align-items: center;
   gap: 0.375rem;
-  margin: 0.5rem 0 0;
+  margin: 0;
   font-size: 0.75rem;
   font-weight: 500;
   color: rgb(115 115 115);

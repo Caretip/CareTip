@@ -62,7 +62,13 @@ export function TipCompletionPage() {
   }, [navigate, verification.phase]);
 
   if (!sessionId) {
-    return null;
+    return (
+      <CareTipPageLoader
+        variant="wait"
+        context="stripeReturn"
+        registrationKey="tip-completion-loading"
+      />
+    );
   }
 
   if (verification.phase === "loading" || verification.phase === "pending") {
@@ -87,7 +93,13 @@ export function TipCompletionPage() {
   }
 
   if (!ready || !context) {
-    return null;
+    return (
+      <CareTipPageLoader
+        variant="wait"
+        context="stripeReturn"
+        registrationKey="tip-completion-loading"
+      />
+    );
   }
 
   const businessId = context.businessId;

@@ -66,6 +66,11 @@ function run() {
   const success = read("src/app/pages/customer/TipSuccessExperience.tsx");
   assert.match(success, /customer-flow--compact/);
   assert.match(success, /max-w-md/);
+  assert.match(success, /extraActions/);
+
+  const externalCss = read("src/styles/caretip-customer-flow-premium.css");
+  assert.match(externalCss, /\.customer-flow-external-review-btn/);
+  assert.match(externalCss, /white-space:\s*normal/);
 
   const landingLang = read("src/i18n/i18n.ts");
   assert.match(landingLang, /fallbackLng:\s*lng/);

@@ -76,7 +76,7 @@ export function EmployeeLayout() {
   }, [authStatus, user?.role]);
 
   useDashboardLayoutPaintReady("employee-layout-paint", isAppReady);
-  useWarmPrefetchAuthLoginRoute("/login", isAppReady);
+  useWarmPrefetchAuthLoginRoute("/employee/login", isAppReady);
   useWarmPrefetchLandingRoute(isAppReady);
 
   return (

@@ -11,6 +11,7 @@ import { absolutizePublicMediaPath } from "../utils/publicMediaUrl.js";
 import { resolveScanSessionId } from "../services/qr/qrScanRequestContext.js";
 import { QR_FUNNEL_EVENT_TYPES, recordQrFunnelEvent } from "../services/qr/qrFunnelEvent.service.js";
 import { ensureTransactionReceiptNumber } from "../services/tipReceipt.service.js";
+import { toPublicGuestExternalReviews } from "../lib/externalReviewLinks.js";
 
 /** Client must never steer Connect destination or platform fee. */
 export const TIP_CONNECT_CLIENT_FORBIDDEN_KEYS = [
@@ -198,6 +199,7 @@ export async function getTipSessionContext(req: Request, res: Response) {
       });
     }
 
+    res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate");
     const ctx = await getTipCheckoutContext(sessionId);
 
     if (ctx.checkoutStatus === "expired") {
@@ -226,6 +228,9 @@ export async function getTipSessionContext(req: Request, res: Response) {
             tableId: true,
             receiptNumber: true,
             createdAt: true,
+            location: {
+              select: { googlePlaceId: true, tripadvisorReviewUrl: true },
+            },
           },
         })
       : null;
@@ -295,6 +300,7 @@ export async function getTipSessionContext(req: Request, res: Response) {
         locationId: tx.locationId,
         tableId: tx.tableId,
         customerName: ctx.customerName,
+        externalReviews: toPublicGuestExternalReviews(tx.location),
       });
     }
 

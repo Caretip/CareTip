@@ -54,7 +54,8 @@ export function RoleProtectedRoute({ allowedRoles, children }: RoleProtectedRout
   );
 
   if (logoutTransitionActive) {
-    return null;
+    // Same as ProtectedRoute: do not synchronously unmount the shell under the logout cover.
+    return <>{children}</>;
   }
 
   if (gate.blocking) {

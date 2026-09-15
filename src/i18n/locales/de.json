@@ -2174,7 +2174,12 @@
       "leaveFeedback": "Optionales Feedback hinterlassen",
       "leavePage": "Seite verlassen",
       "backHome": "Zur Startseite",
-      "emailReceipt": "Eine Quittung wurde an Ihre E-Mail gesendet"
+      "emailReceipt": "Eine Quittung wurde an Ihre E-Mail gesendet",
+      "externalReviewsHeading": "Öffentliche Bewertung hinterlassen",
+      "externalReviewsHint": "Ihr Feedback unterstützt unser Team. Die Schaltflächen öffnen Google oder TripAdvisor in einem neuen Tab.",
+      "reviewOnGoogle": "Bei Google bewerten",
+      "reviewOnTripadvisor": "Bei TripAdvisor bewerten",
+      "opensExternal": "(öffnet in einem neuen Tab)"
     },
     "rating": {
       "devCaptured": "DEV: Feedback lokal erfasst",
@@ -3523,6 +3528,10 @@
       "overviewSubheadline": "Entdecken Sie, wie einfach digitales Trinkgeld in Ihrem Bereich funktioniert.\nEin Klick bringt Sie zu den Details.",
       "teasersAria": "Branchen-Showcase",
       "learnMore": "Mehr erfahren",
+      "snippets": {
+        "tipsUp": "heute 24% mehr Trinkgeld",
+        "tipsToday": "Trinkgeld heute 284€"
+      },
       "viewAllIndustries": "Weitere Branchen anzeigen",
       "showFewerIndustries": "Weniger Branchen anzeigen",
       "navPrev": "Vorherige Branche",
@@ -4666,6 +4675,21 @@
       "placeholderName": "z. B. Hauptbar",
       "labelDescription": "Beschreibung (optional)",
       "placeholderDescription": "Interne Notizen für das Team, nicht für Gäste sichtbar.",
+      "reviewsSectionTitle": "Öffentliche Bewertungslinks (optional)",
+      "reviewsSectionDesc": "Nach einem erfolgreichen Trinkgeld sehen Gäste diese öffentlichen Bewertungsbuttons statt des CareTip-Formulars. Beide Felder leer lassen, um CareTip-Feedback zu behalten.",
+      "labelGoogleReview": "Google-Bewertungslink",
+      "googlePlaceIdLabel": "Google Place ID",
+      "googlePlaceIdHelp": "Gäste erhalten eine Google-Seite „Bewertung schreiben“ für diesen Standort. Öffnen Sie den Ort in Google Maps, teilen Sie den Link und kopieren Sie die Place ID (oder nutzen Sie Googles Place-ID-Suche).",
+      "placeholderGooglePlaceId": "z. B. ChIJJ…",
+      "labelTripadvisor": "TripAdvisor-Bewertungslink",
+      "tripadvisorHint": "Fügen Sie die HTTPS-Seite ein, auf der Gäste eine TripAdvisor-Bewertung schreiben.",
+      "placeholderTripadvisor": "https://www.tripadvisor.com/…",
+      "reviewConfigured": "Konfiguriert",
+      "reviewNotConfigured": "Nicht konfiguriert",
+      "googleStatus": "Google: {{status}}",
+      "tripadvisorStatus": "TripAdvisor: {{status}}",
+      "toastInvalidGooglePlaceId": "Geben Sie eine gültige Google Place ID ein oder lassen Sie das Feld leer.",
+      "toastInvalidTripadvisorUrl": "Geben Sie eine gültige TripAdvisor-https://-URL ein oder lassen Sie das Feld leer.",
       "cancel": "Abbrechen",
       "save": "Speichern"
     },
@@ -4961,6 +4985,11 @@
       "thContact": "Kontakt",
       "thTipsMonth": "Trinkgeld (gesamt)",
       "payoutAccount": "Auszahlungskonto",
+      "payoutIndicator": {
+        "connected": "Stripe verbunden",
+        "not_connected": "Stripe nicht verbunden",
+        "action_required": "Stripe Handlung erforderlich"
+      },
       "payoutState": {
         "not_connected": "Nicht verbunden",
         "setup_required": "Einrichtung erforderlich",

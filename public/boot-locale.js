@@ -198,9 +198,9 @@
   }
 
   /**
-   * Public `/` and guest tip URLs must not uncover an empty #root.
-   * Keep #caretip-html-boot until the destination sets [data-caretip-route-ready]
-   * (or `.caretip-landing` on `/`). Not a timeout.
+   * Public `/` must not uncover an empty #root.
+   * Guest tip URLs keep #caretip-html-boot until `[data-caretip-route-ready]`
+   * (the destination page, not a wait placeholder). Not a timeout.
    */
   function publicLandingRouteCommitted() {
     var doc = global.document;
@@ -209,7 +209,9 @@
       .split("?")[0]
       .split("#")[0];
     if (path === "/") {
-      return Boolean(doc.querySelector(".caretip-landing, [data-caretip-route-ready]"));
+      return Boolean(
+        doc.querySelector(".caretip-landing, [data-caretip-route-ready], [data-caretip-public-committed]"),
+      );
     }
     if (isCustomerBootPath(path)) {
       return Boolean(doc.querySelector("[data-caretip-route-ready]"));

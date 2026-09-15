@@ -27,6 +27,8 @@
     "db:employee-verify-guard": "tsx scripts/employee-verify-guard-runtime.ts",
     "test:sprint2-security": "dotenv -e ../.env -e .env -- tsx scripts/sprint2-security-guard-runtime.ts",
     "test:sprint3-guest-flow": "dotenv -e ../.env -e .env -- tsx scripts/sprint3-guest-flow-runtime.ts",
+    "test:external-review-links": "dotenv -e ../.env -e .env -- tsx scripts/external-review-links-runtime.ts",
+    "test:external-review-links-live-e2e": "dotenv -e ../.env -e .env -- tsx scripts/external-review-links-live-e2e.ts",
     "test:sprint3-kyc": "dotenv -e ../.env -e .env -- tsx scripts/sprint3-kyc-runtime.ts",
     "test:sprint4-payment-e2e": "dotenv -e ../.env -e .env -- tsx scripts/sprint4-payment-e2e-runtime.ts",
     "test:sprint4-qr-intelligence": "dotenv -e ../.env -e .env -- tsx scripts/sprint4-qr-intelligence-validation.ts",

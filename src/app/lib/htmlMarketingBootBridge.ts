@@ -19,10 +19,16 @@ function readPathname(): string {
 /** Keep first-paint boot until the public destination has real DOM (not an empty Outlet). */
 export function shouldRetainHtmlBootUntilLandingCommit(): boolean {
   if (typeof document === "undefined") return false;
-  if (document.querySelector(".caretip-landing, [data-caretip-route-ready]")) return false;
   const p = readPathname();
-  if (p === "/") return true;
-  return isCustomerJourneyPath(p);
+  if (p === "/") {
+    return !document.querySelector(
+      ".caretip-landing, [data-caretip-route-ready], [data-caretip-public-committed]",
+    );
+  }
+  if (isCustomerJourneyPath(p)) {
+    return document.querySelector("[data-caretip-route-ready]") == null;
+  }
+  return false;
 }
 
 export function isHtmlBootBridgeActive(): boolean {
@@ -72,16 +78,17 @@ export function setHtmlBootBridgeSub(_message?: string): void {
 /** Start the same fade-out motion used by AppBrandedLoadingScreen. */
 export function beginHtmlBootBridgeExit(): void {
   if (typeof document === "undefined") return;
-  if (shouldRetainHtmlBootUntilLandingCommit()) return;
   const boot = document.getElementById(BOOT_ID);
   if (!boot) return;
+  if (boot.classList.contains(EXITING_CLASS) && boot.getAttribute("aria-busy") === "false") {
+    return;
+  }
   boot.classList.add(EXITING_CLASS);
   boot.setAttribute("aria-busy", "false");
 }
 
 export function dismissHtmlMarketingBootBridge(): void {
   if (typeof document === "undefined") return;
-  if (shouldRetainHtmlBootUntilLandingCommit()) return;
   document.documentElement.classList.remove(ACTIVE_CLASS);
   document.getElementById(BOOT_ID)?.remove();
 }

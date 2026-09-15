@@ -1,41 +1,27 @@
 /**
- * Industries second-section grid — matches TrickyFreshString audience-grid
- * (3 teaser cards, middle tall) + expandable remaining industries.
+ * Industries second-section grid — all six industries visible (3×2).
  */
 
 .caretip-landing .caretip-industry-second-section {
   width: 100%;
 }
 
-.caretip-landing .caretip-industry-photo-grid {
+.caretip-landing .caretip-industry-photo-grid,
+.caretip-landing .caretip-industry-photo-grid--all-six {
   display: grid;
-  grid-template-columns: 1fr 1.32fr 1fr;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 16px;
   width: 100%;
-  align-items: end;
-}
-
-.caretip-landing .caretip-industry-photo-grid--more {
-  display: none;
-  margin-top: 16px;
-}
-
-.caretip-landing .caretip-industry-photo-grid--more-open {
-  display: grid;
+  align-items: stretch;
 }
 
 .caretip-landing .caretip-industry-photo-card {
   position: relative;
-  min-height: 440px;
+  min-height: 380px;
   overflow: hidden;
   border-radius: 14px;
   background: #d3c4b2;
   isolation: isolate;
-}
-
-.caretip-landing .caretip-industry-photo-card--tall {
-  min-height: 500px;
-  transform: translateY(-34px);
 }
 
 .caretip-landing .caretip-industry-photo-card__media {
@@ -64,6 +50,18 @@
   animation-delay: -8s;
 }
 
+.caretip-landing .caretip-industry-photo-card:nth-child(4) .caretip-industry-photo-card__img {
+  animation-delay: -6s;
+}
+
+.caretip-landing .caretip-industry-photo-card:nth-child(5) .caretip-industry-photo-card__img {
+  animation-delay: -10s;
+}
+
+.caretip-landing .caretip-industry-photo-card:nth-child(6) .caretip-industry-photo-card__img {
+  animation-delay: -2s;
+}
+
 .caretip-landing .caretip-industry-photo-card:hover .caretip-industry-photo-card__img {
   transform: scale(1.045);
   animation-play-state: paused;
@@ -79,6 +77,24 @@ html.caretip-document-hidden .caretip-landing .caretip-industry-photo-card--anim
   background: linear-gradient(transparent, rgba(20, 27, 30, 0.76));
   pointer-events: none;
   z-index: 1;
+}
+
+.caretip-landing .caretip-industry-photo-card__snippet {
+  position: absolute;
+  z-index: 2;
+  top: 16px;
+  left: 16px;
+  max-width: calc(100% - 32px);
+  margin: 0;
+  padding: 0.4rem 0.7rem;
+  border-radius: 999px;
+  background: rgba(20, 27, 30, 0.72);
+  color: #fff8ef;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  line-height: 1.3;
+  backdrop-filter: blur(8px);
 }
 
 .caretip-landing .caretip-industry-photo-card__label {
@@ -152,36 +168,25 @@ html.caretip-document-hidden .caretip-landing .caretip-industry-photo-card--anim
 
 @media (max-width: 1024px) {
   .caretip-landing .caretip-industry-photo-grid,
-  .caretip-landing .caretip-industry-photo-grid--more-open {
+  .caretip-landing .caretip-industry-photo-grid--all-six {
     grid-template-columns: 1fr 1fr;
     gap: 12px;
   }
 
-  .caretip-landing .caretip-industry-photo-card,
-  .caretip-landing .caretip-industry-photo-card--tall {
-    min-height: 350px;
-    transform: none;
-  }
-
-  .caretip-landing .caretip-industry-photo-grid > .caretip-industry-photo-card:first-child {
-    grid-column: span 2;
-    min-height: 380px;
+  .caretip-landing .caretip-industry-photo-card {
+    min-height: 320px;
   }
 }
 
 @media (max-width: 640px) {
   .caretip-landing .caretip-industry-photo-grid,
-  .caretip-landing .caretip-industry-photo-grid--more-open {
+  .caretip-landing .caretip-industry-photo-grid--all-six {
+    grid-template-columns: 1fr;
     gap: 10px;
   }
 
-  .caretip-landing .caretip-industry-photo-card,
-  .caretip-landing .caretip-industry-photo-card--tall {
+  .caretip-landing .caretip-industry-photo-card {
     min-height: 275px;
-  }
-
-  .caretip-landing .caretip-industry-photo-grid > .caretip-industry-photo-card:first-child {
-    min-height: 330px;
   }
 
   .caretip-landing .caretip-industry-photo-card__label {

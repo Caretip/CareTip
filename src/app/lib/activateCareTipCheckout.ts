@@ -16,7 +16,14 @@ import { withIdleSuppress } from "@/app/lib/idleSuppress";
 
 export type ActivationCheckoutPlan = "trial" | "pro";
 
-export type ActivationCheckoutResult = "trial_navigated" | "stripe_navigated" | "failed";
+export type ActivationCheckoutResult =
+  | "trial_navigated"
+  | "stripe_navigated"
+  | "failed"
+  | "busy";
+
+/** Sync lock — React `busy` is too late to stop a double-tap on billing checkout. */
+let activationCheckoutInFlight = false;
 
 async function closeOverlayThenTrialNavigate(
   navigate?: NavigateFunction,
@@ -43,25 +50,34 @@ export async function startActivationCheckout(
     navigate?: NavigateFunction;
   },
 ): Promise<ActivationCheckoutResult> {
-  if (plan === "trial") {
-    await closeOverlayThenTrialNavigate(options?.navigate, options?.closeBeforeNavigate);
-    return "trial_navigated";
-  }
-
-  return withIdleSuppress("billing-checkout-create", async () => {
-    primeCheckoutSyncExpectation("premium");
-    const session = await createBillingCheckoutSession({
-      planKey: "premium",
-      billingCycle: "monthly",
-      checkoutFlow: "billing",
-    });
-    const redirect = performExternalStripeRedirect(session.url, "checkout");
-    if (!redirect.ok) {
-      toast.error(t("business.billing.checkoutNoUrl"));
-      return "failed";
+  if (activationCheckoutInFlight) return "busy";
+  activationCheckoutInFlight = true;
+  let keepLock = false;
+  try {
+    if (plan === "trial") {
+      await closeOverlayThenTrialNavigate(options?.navigate, options?.closeBeforeNavigate);
+      return "trial_navigated";
     }
-    return "stripe_navigated";
-  });
+
+    const result = await withIdleSuppress("billing-checkout-create", async () => {
+      primeCheckoutSyncExpectation("premium");
+      const session = await createBillingCheckoutSession({
+        planKey: "premium",
+        billingCycle: "monthly",
+        checkoutFlow: "billing",
+      });
+      const redirect = performExternalStripeRedirect(session.url, "checkout");
+      if (!redirect.ok) {
+        toast.error(t("business.billing.checkoutNoUrl"));
+        return "failed" as const;
+      }
+      return "stripe_navigated" as const;
+    });
+    keepLock = result === "stripe_navigated";
+    return result;
+  } finally {
+    if (!keepLock) activationCheckoutInFlight = false;
+  }
 }
 
 export function activationCheckoutErrorMessage(err: unknown, t: TFunction): string {

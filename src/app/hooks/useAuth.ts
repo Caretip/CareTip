@@ -502,7 +502,7 @@ export function useAuth() {
       navigate(snapshot.loginPath, { replace: true });
     });
 
-    // Overlay ends when the login surface paints (signalLogoutAuthPageReady) — not here.
+    // Overlay ends when the login route commits (cover destination signal / AuthPage chrome).
     authDebug("logout_navigate", {
       loginPath: snapshot.loginPath,
       clientCleanupMs: Math.round(clientCleanupMs),

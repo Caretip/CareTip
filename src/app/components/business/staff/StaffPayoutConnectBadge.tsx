@@ -2,17 +2,18 @@ import { useTranslation } from "react-i18next";
 import type { EmployeePayoutConnectionState } from "../../../lib/api";
 import { cn } from "@/lib/utils";
 
-const TONE: Record<EmployeePayoutConnectionState, string> = {
-  connected:
-    "bg-emerald-50 text-emerald-900 ring-1 ring-emerald-200/80 dark:bg-emerald-950/40 dark:text-emerald-100 dark:ring-emerald-800/60",
-  setup_required:
-    "bg-amber-50 text-amber-950 ring-1 ring-amber-200/80 dark:bg-amber-950/35 dark:text-amber-100 dark:ring-amber-800/50",
-  action_required:
-    "bg-amber-50 text-amber-950 ring-1 ring-amber-200/80 dark:bg-amber-950/35 dark:text-amber-100 dark:ring-amber-800/50",
-  restricted:
-    "bg-red-50 text-red-900 ring-1 ring-red-200/80 dark:bg-red-950/40 dark:text-red-100 dark:ring-red-800/60",
-  not_connected:
-    "bg-muted text-muted-foreground ring-1 ring-border",
+type IndicatorKey = "connected" | "not_connected" | "action_required";
+
+function indicatorKey(state: EmployeePayoutConnectionState | undefined): IndicatorKey {
+  if (state === "connected") return "connected";
+  if (state === "not_connected" || state == null) return "not_connected";
+  return "action_required";
+}
+
+const DOT: Record<IndicatorKey, string> = {
+  connected: "bg-emerald-500",
+  not_connected: "bg-neutral-400 dark:bg-neutral-500",
+  action_required: "bg-amber-500",
 };
 
 export function StaffPayoutConnectBadge({
@@ -21,15 +22,11 @@ export function StaffPayoutConnectBadge({
   state: EmployeePayoutConnectionState | undefined;
 }) {
   const { t } = useTranslation();
-  const key = state ?? "not_connected";
+  const key = indicatorKey(state);
   return (
-    <span
-      className={cn(
-        "mt-1 inline-flex max-w-full items-center rounded-full px-2 py-0.5 text-[0.6875rem] font-medium leading-tight",
-        TONE[key],
-      )}
-    >
-      {t("business.staffPage.payoutAccount")}: {t(`business.staffPage.payoutState.${key}`)}
-    </span>
+    <p className="mt-0.5 flex items-center gap-1.5 text-xs font-normal leading-tight text-muted-foreground">
+      <span className={cn("inline-block size-1.5 shrink-0 rounded-full", DOT[key])} aria-hidden />
+      {t(`business.staffPage.payoutIndicator.${key}`)}
+    </p>
   );
 }

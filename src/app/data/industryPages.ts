@@ -21,11 +21,6 @@ export type IndustryNavItem = {
 /** Primary Industries dropdown + footer list — all live industry pages. */
 export const INDUSTRY_NAV_ITEMS: IndustryNavItem[] = [
   {
-    id: "gastronomy",
-    path: "/industries/gastronomy",
-    labelKey: "nav.industriesMenu.gastronomy",
-  },
-  {
     id: "hotels",
     path: "/industries/hotels",
     labelKey: "nav.industriesMenu.hotels",
@@ -36,19 +31,24 @@ export const INDUSTRY_NAV_ITEMS: IndustryNavItem[] = [
     labelKey: "nav.industriesMenu.logistics",
   },
   {
+    id: "gastronomy",
+    path: "/industries/gastronomy",
+    labelKey: "nav.industriesMenu.gastronomy",
+  },
+  {
     id: "midwives",
     path: "/industries/midwives",
     labelKey: "nav.industriesMenu.midwives",
   },
   {
-    id: "fairs",
-    path: "/industries/fairs",
-    labelKey: "nav.industriesMenu.fairs",
-  },
-  {
     id: "field-service",
     path: "/industries/field-service",
     labelKey: "nav.industriesMenu.field-service",
+  },
+  {
+    id: "fairs",
+    path: "/industries/fairs",
+    labelKey: "nav.industriesMenu.fairs",
   },
 ];
 
@@ -57,12 +57,12 @@ export const INDUSTRY_TEASER_IDS = ["midwives", "field-service"] as const;
 
 /** All pages that share the industry template (nav + teaser destinations). */
 export const ALL_INDUSTRY_PAGE_IDS: IndustryPageId[] = [
-  "gastronomy",
   "hotels",
   "logistics",
+  "gastronomy",
   "midwives",
-  "fairs",
   "field-service",
+  "fairs",
 ];
 
 export function isIndustryPageId(value: string): value is IndustryPageId {

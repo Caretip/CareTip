@@ -194,11 +194,23 @@ if (
   en.business?.qrStudio?.tables?.manageCta &&
   de.business?.qrStudio?.tables?.manageCta &&
   en.business?.qrStudio?.tables?.emptyNoTables &&
-  de.business?.qrStudio?.tables?.emptyNoTables
+  de.business?.qrStudio?.tables?.emptyNoTables &&
+  en.business?.locationsPage?.reviewsSectionTitle &&
+  de.business?.locationsPage?.reviewsSectionTitle
 ) {
   pass("English and German copy exist for the combined page and QR Studio empty state");
 } else {
   fail("Missing EN/DE strings for Locations / Tables or QR Studio tables empty state");
+}
+
+if (
+  management.includes("googlePlaceId") &&
+  management.includes("tripadvisorReviewUrl") &&
+  management.includes("normalizeGooglePlaceId")
+) {
+  pass("Locations dialog configures Google Place ID and TripAdvisor URL");
+} else {
+  fail("Locations page missing review-link fields");
 }
 
 const catalog = read("src/app/lib/businessVenueCatalog.ts");

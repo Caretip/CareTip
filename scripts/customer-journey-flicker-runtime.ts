@@ -20,8 +20,10 @@ function assert(condition: unknown, message: string): void {
 
 const tipAmount = read("src/app/pages/customer/TipAmountPage.tsx");
 assert(
-  tipAmount.includes("useState(() =>") && tipAmount.includes("isCustomerEmployeeContextReady"),
-  "TipAmountPage must not start loading=true when employee context is already in memory",
+  tipAmount.includes("useState(() =>") &&
+    tipAmount.includes("isCustomerEmployeeContextReady") &&
+    tipAmount.includes("loading={!contextReady}"),
+  "TipAmountPage must keep the opening wait until employee context is ready, then hand off",
 );
 
 const staff = read("src/app/pages/customer/StaffLandingPage.tsx");
@@ -50,14 +52,41 @@ assert(
 
 const bootLocale = read("public/boot-locale.js");
 assert(
-  bootLocale.includes("isCustomerBootPath") && bootLocale.includes("[data-caretip-route-ready]"),
-  "boot-locale must retain the HTML boot on guest paths until route-ready",
+  bootLocale.includes("isCustomerBootPath") &&
+    bootLocale.includes('return Boolean(doc.querySelector("[data-caretip-route-ready]"));'),
+  "boot-locale must keep HTML boot on guest paths until destination route-ready (not wait placeholders)",
 );
 
 const shell = read("src/app/pages/customer/CustomerFlowShell.tsx");
 assert(
-  shell.includes("data-caretip-route-ready") && shell.includes("usePublicHtmlBootHandoff"),
+  shell.includes("data-caretip-route-ready") && shell.includes("usePublicHtmlBootHandoff(!loading)"),
   "customer shell marks destination-ready and hands off HTML boot only when not loading",
+);
+
+const empQr = read("src/app/pages/customer/EmployeeQrEntryPage.tsx");
+assert(
+  empQr.includes('usePublicHtmlBootHandoff(phase === "ready" && Boolean(emp))'),
+  "Employee QR must not dismiss HTML boot while identity is still fetching",
+);
+assert(
+  tipAmount.includes("peekGuestTipEmployee") &&
+    tipAmount.includes("loading={!contextReady}") &&
+    empQr.includes("rememberGuestTipEmployee"),
+  "Employee QR must cache identity so /tip-amount does not wait on a second employee GET",
+);
+
+const rating = read("src/app/pages/customer/RatingPage.tsx");
+assert(
+  rating.includes('registrationKey="rating-page-verification"') &&
+    rating.includes('context="stripeReturn"') &&
+    !rating.includes("showVerifyingPayment"),
+  "Rating verification uses one stripeReturn wait loader, not a second inline confirming line",
+);
+
+const sessionHook = read("src/app/hooks/useVerifiedTipSession.ts");
+assert(
+  sessionHook.includes("peekVerifiedTipSession") && sessionHook.includes("rememberVerifiedTipSession"),
+  "Verified tip session must be remembered so /rating does not replay Confirming after /success",
 );
 
 const heroStack = read("src/styles/caretip-landing-hero-mobile-stack.css");
@@ -66,8 +95,23 @@ assert(
   "mobile hero CTA gap must be compact (not 2.25rem under the supporting copy)",
 );
 
+const manager = read("src/app/context/AppLoadingManager.tsx");
+assert(
+  manager.includes('attributeFilter: ["data-caretip-route-ready"]') &&
+    !manager.includes("{ subtree: true, childList: true, attributes: true }"),
+  "HTML boot MutationObserver must not watch every document attribute (renderer crash)",
+);
+
+const tipFlow = read("src/app/context/TipFlowContext.tsx");
+assert(
+  tipFlow.includes("prev.businessId === id ? prev") &&
+    tipFlow.includes("prev.locationId === venue.locationId"),
+  "TipFlow venue/employee setters must no-op when values are unchanged",
+);
 const checkout = read("src/app/lib/startGuestTipCheckout.ts");
 assert(checkout.includes("createTipCheckoutSession"), "guest checkout still uses one server session create");
-assert(tipAmount.includes("if (result !== \"redirected\") setProcessing(false)"), "tip submit stays locked until redirect");
+assert(checkout.includes("guestTipCheckoutInFlight"), "guest checkout must reject overlapping Pay taps");
+assert(tipAmount.includes('if (result === "failed") setProcessing(false)'), "tip submit stays locked until redirect or failure");
+assert(tipAmount.includes("if (processing) return"), "tip amount ignores clicks while checkout is already starting");
 
 console.log("customer-journey-flicker-runtime: ok");

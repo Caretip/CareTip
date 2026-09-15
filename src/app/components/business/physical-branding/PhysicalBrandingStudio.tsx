@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { useSearchParams } from "react-router";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
@@ -107,6 +107,7 @@ export function PhysicalBrandingStudio() {
   const [orders, setOrders] = useState<PhysicalQrCustomerOrder[]>([]);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const printCheckoutInFlight = useRef(false);
   const [payingOrderId, setPayingOrderId] = useState<string | null>(null);
   const [confirmingOrderId, setConfirmingOrderId] = useState<string | null>(
     checkoutFlag === "success" && returningOrderId ? returningOrderId : null,
@@ -260,7 +261,8 @@ export function PhysicalBrandingStudio() {
   }, [t]);
 
   const placeOrder = useCallback(async () => {
-    if (!product || !canSubmit) return;
+    if (!product || !canSubmit || printCheckoutInFlight.current) return;
+    printCheckoutInFlight.current = true;
     setSubmitting(true);
     try {
       const order = await createPhysicalQrOrder({
@@ -286,6 +288,7 @@ export function PhysicalBrandingStudio() {
       });
       await startCheckout(order.id);
     } catch (err) {
+      printCheckoutInFlight.current = false;
       toast.error(err instanceof Error ? err.message : t("business.qrStudio.physical.orderError"));
       setSubmitting(false);
       void fetchPhysicalQrOrders()
@@ -312,10 +315,13 @@ export function PhysicalBrandingStudio() {
 
   const payExisting = useCallback(
     async (orderId: string) => {
+      if (printCheckoutInFlight.current) return;
+      printCheckoutInFlight.current = true;
       setPayingOrderId(orderId);
       try {
         await startCheckout(orderId);
       } catch (err) {
+        printCheckoutInFlight.current = false;
         toast.error(err instanceof Error ? err.message : t("business.qrStudio.physical.orderError"));
         setPayingOrderId(null);
       }

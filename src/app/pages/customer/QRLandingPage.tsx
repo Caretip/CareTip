@@ -31,6 +31,7 @@ import { isHtmlBootElementPresent } from "../../lib/htmlMarketingBootBridge";
 import { formatEur } from "../../lib/formatEur";
 import { getRepeatTipDataForBusiness } from "../../lib/repeatTip";
 import { customerFlowUi as cf } from "./customerFlowUi";
+import { usePublicHtmlBootHandoff } from "../../lib/usePublicHtmlBootHandoff";
 
 export function QRLandingPage() {
   const { t } = useTranslation();
@@ -77,6 +78,7 @@ export function QRLandingPage() {
   const [selectedEmployee, setSelectedEmployee] = useState<EmployeeDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  usePublicHtmlBootHandoff(!loading && !error && Boolean(businessData));
 
   /** Public staff list when business has a directory slug (general business QR). */
   const [poolEmployees, setPoolEmployees] = useState<BusinessDirectoryEmployee[] | null>(null);
@@ -202,7 +204,6 @@ export function QRLandingPage() {
     setBusinessId,
     setEmployee,
     setTippingVenue,
-    t,
   ]);
 
   // Repeat tip: check local last-tip data for this business and validate employee still exists.
@@ -413,7 +414,7 @@ export function QRLandingPage() {
   const teamHeader = headerSelectTeamMember(t);
 
   return (
-    <div className={cf.pageTeam}>
+    <div className={cf.pageTeam} data-caretip-route-ready="">
       <div className={cf.frame}>
       <CustomerJourneyHeader
         venue={venueBrandFromBusiness(businessData, tableContextLine)}
@@ -433,6 +434,7 @@ export function QRLandingPage() {
             secondaryLabel={t("tipFlow.qrLanding.repeatNotNow")}
             onPrimary={() => {
               void (async () => {
+                if (checkingOut) return;
                 setBusinessId(businessData.id);
                 setEmployee(
                   repeatCard.employee.id,
@@ -451,7 +453,7 @@ export function QRLandingPage() {
                   },
                   t("tipFlow.payment.checkoutStartError"),
                 );
-                if (result !== "redirected") setCheckingOut(false);
+                if (result === "failed") setCheckingOut(false);
               })();
             }}
             onSecondary={() => {
@@ -463,7 +465,7 @@ export function QRLandingPage() {
         ) : null}
 
         {businessData.slug?.trim() && poolLoading && !isHtmlBootElementPresent() ? (
-          <p className="py-8 text-center text-sm text-muted-foreground">{t("common.loading.tipPage")}</p>
+          <div className="py-8" role="status" aria-busy="true" aria-label={t("common.loading.findingRecipient")} />
         ) : null}
 
         {showInlinePool ? (
