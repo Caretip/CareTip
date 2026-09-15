@@ -45,6 +45,7 @@ import {
   isEmployeeSummaryFetched,
 } from "../lib/dashboardVisibleContent";
 import { shouldRefetchOnAnalyticsCapabilityUpgrade } from "../lib/dashboardAnalyticsLifecycle";
+import { DASHBOARD_SWR_METRICS_TTL_MS } from "../lib/dashboardSwrCache";
 
 export type EmployeeAnalyticsTimeframe = EmployeePeriodTimeframe;
 
