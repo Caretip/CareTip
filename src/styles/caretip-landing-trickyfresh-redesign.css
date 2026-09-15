@@ -1180,6 +1180,14 @@ html:not(.dark) .caretip-landing #final-cta .caretip-trust-strip__check,
   backdrop-filter: blur(8px);
 }
 
+@media (max-width: 767px) {
+  .caretip-landing .caretip-motivation-story-gallery__snippet {
+    top: auto;
+    bottom: 14px;
+    left: 14px;
+  }
+}
+
 .caretip-landing .caretip-motivation-story-gallery__img {
   display: block;
   width: 100%;
