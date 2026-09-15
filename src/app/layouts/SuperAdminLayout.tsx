@@ -49,7 +49,7 @@ export function SuperAdminLayout() {
       <div className="relative z-10">
         {isAppReady ? (
           isLargeScreen ? <AdminSidebar /> : null
-        ) : isLargeScreen && !globalLoaderActive ? (
+        ) : isLargeScreen && !globalLoaderActive && user?.role === "platform_admin" ? (
           <SidebarSkeleton />
         ) : null}
         <AdminMobileSidebar isOpen={mobileMenuOpen} onClose={closeMobileMenu} />

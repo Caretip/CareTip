@@ -70,6 +70,15 @@
     "overview": "Overview",
     "shortcuts": "Shortcuts"
   },
+  "payouts": {
+    "instantTerms": {
+      "acceptPrefix": "I confirm that I have read and accept the",
+      "link": "Terms and Conditions",
+      "acceptSuffix": "for Instant Payouts.",
+      "required": "Accept the Terms and Conditions to continue.",
+      "accepted": "Instant Payout Terms accepted."
+    }
+  },
   "format": {
     "notAvailable": "N/A",
     "noDataYet": "No data yet",
@@ -3888,7 +3897,7 @@
         "kpiAvailable": "Available balance",
         "kpiAvailableHint": "Stripe standard available balance.",
         "kpiPending": "Pending",
-        "kpiPendingHint": "Not yet available.",
+        "kpiPendingHint": "These funds are still settling with Stripe and are not available for payout yet.",
         "kpiUnavailable": "This Stripe balance could not be loaded.",
         "viewHistory": "View statements",
         "payoutAccount": "Payout account",
@@ -6322,7 +6331,7 @@
           "kpiAvailable": "Available balance",
           "kpiAvailableHint": "Stripe standard available balance.",
           "kpiPending": "Pending balance",
-          "kpiPendingHint": "Not yet available.",
+          "kpiPendingHint": "These funds are still settling with Stripe and are not available for payout yet.",
           "gross": "Before fee",
           "net": "You receive",
           "methodBank": "Bank account",

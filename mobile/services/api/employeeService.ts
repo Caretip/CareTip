@@ -4,6 +4,7 @@ import { writeEmployeeDataExportPdf } from "@/services/export/writeEmployeeDataE
 import type { EmployeeDataExportPdfLocale } from "@/services/export/buildEmployeeDataExportHtml";
 import { sharePdf, cleanupShareTempFiles, type ShareOutcome } from "@/services/share";
 import type { EmployeeProfile, EmployeeTimeframe, EmployeeTipsStats } from "@/types/employee";
+import { asFiniteNumber } from "@/types/employee";
 
 export async function fetchEmployeeProfile(): Promise<EmployeeProfile> {
   const { data } = await apiClient.get<EmployeeProfile>(API_ENDPOINTS.employees.me);
@@ -18,7 +19,15 @@ export async function fetchEmployeeTips(
   const { data } = await apiClient.get<EmployeeTipsStats>(API_ENDPOINTS.employees.tips, {
     params: { timeframe, scope: "summary" },
   });
-  return data;
+  return {
+    ...data,
+    periodAmountEur: asFiniteNumber(data.periodAmountEur) ?? data.periodAmountEur,
+    totalEarningsEur: asFiniteNumber(data.totalEarningsEur),
+    paidOutEur: asFiniteNumber(data.paidOutEur),
+    periodTipCount: asFiniteNumber(data.periodTipCount) ?? data.periodTipCount,
+    averageRating: asFiniteNumber(data.averageRating) ?? data.averageRating,
+    ratingCount: asFiniteNumber(data.ratingCount) ?? data.ratingCount,
+  };
 }
 
 /**

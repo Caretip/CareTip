@@ -4,6 +4,7 @@
  */
 
 import type { AuthResponse } from "./api";
+import { getSessionEpoch } from "./authSessionEpoch";
 
 export type SessionBootstrapResult =
   | { kind: "authenticated"; data: AuthResponse }
@@ -20,14 +21,20 @@ let sessionValidated = false;
 let onboardingStatusFromServer = false;
 let bootstrapPromise: Promise<SessionBootstrapResult> | null = null;
 let lastBootstrapResult: SessionBootstrapResult | null = null;
+let lastBootstrapEpoch = -1;
 
 export type BootstrapResultHandler = (result: SessionBootstrapResult) => void;
 
 let bootstrapResultHandler: BootstrapResultHandler | null = null;
 
-function deliverBootstrapResult(result: SessionBootstrapResult): void {
+function deliverBootstrapResult(result: SessionBootstrapResult, epochAtStart: number): void {
   lastBootstrapResult = result;
+  lastBootstrapEpoch = epochAtStart;
   queueMicrotask(() => {
+    // Login/logout bumps the epoch — never let an older refresh overwrite the live session or flags.
+    if (getSessionEpoch() !== epochAtStart) {
+      return;
+    }
     bootstrapResultHandler?.(result);
     authHydrated = true;
     // Transient refresh failures must NOT unlock protected APIs (prevents 401/500 storms).
@@ -39,7 +46,7 @@ function deliverBootstrapResult(result: SessionBootstrapResult): void {
 /** Registers the handler that applies bootstrap results to shared auth state. */
 export function registerBootstrapResultHandler(handler: BootstrapResultHandler): void {
   bootstrapResultHandler = handler;
-  if (lastBootstrapResult) {
+  if (lastBootstrapResult && getSessionEpoch() === lastBootstrapEpoch) {
     queueMicrotask(() => bootstrapResultHandler?.(lastBootstrapResult!));
   }
 }
@@ -79,6 +86,7 @@ export function resetSessionBootstrap(): void {
   bootstrapPromise = null;
   bootstrapResultHandler = null;
   lastBootstrapResult = null;
+  lastBootstrapEpoch = -1;
   authHydrated = false;
   sessionValidated = false;
   onboardingStatusFromServer = false;
@@ -91,6 +99,7 @@ export function resetSessionBootstrap(): void {
  */
 export function runSessionBootstrapOnce(run: BootstrapRunner): Promise<SessionBootstrapResult> {
   if (!bootstrapPromise) {
+    const epochAtStart = getSessionEpoch();
     bootstrapPromise = (async (): Promise<SessionBootstrapResult> => {
       try {
         return await run();
@@ -98,7 +107,7 @@ export function runSessionBootstrapOnce(run: BootstrapRunner): Promise<SessionBo
         return { kind: "unauthenticated" as const };
       }
     })().then((result) => {
-      deliverBootstrapResult(result);
+      deliverBootstrapResult(result, epochAtStart);
       return result;
     });
   }

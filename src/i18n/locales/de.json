@@ -70,6 +70,15 @@
     "overview": "Überblick",
     "shortcuts": "Verknüpfungen"
   },
+  "payouts": {
+    "instantTerms": {
+      "acceptPrefix": "Ich bestätige, dass ich die",
+      "link": "Allgemeinen Geschäftsbedingungen",
+      "acceptSuffix": "für Sofortauszahlungen gelesen habe und akzeptiere.",
+      "required": "Bitte akzeptieren Sie die Allgemeinen Geschäftsbedingungen, um fortzufahren.",
+      "accepted": "AGB für Sofortauszahlungen akzeptiert."
+    }
+  },
   "format": {
     "notAvailable": "k. A.",
     "noDataYet": "Noch keine Daten",
@@ -3888,7 +3897,7 @@
         "kpiAvailable": "Verfügbares Guthaben",
         "kpiAvailableHint": "Verfügbares Stripe-Standardguthaben.",
         "kpiPending": "Ausstehend",
-        "kpiPendingHint": "Noch nicht verfügbar.",
+        "kpiPendingHint": "Diese Beträge sind bei Stripe noch in der Abwicklung und daher noch nicht für eine Auszahlung verfügbar.",
         "kpiUnavailable": "Dieses Stripe-Guthaben konnte nicht geladen werden.",
         "viewHistory": "Auszüge anzeigen",
         "payoutAccount": "Auszahlungskonto",
@@ -6319,7 +6328,7 @@
           "kpiAvailable": "Verfügbares Guthaben",
           "kpiAvailableHint": "Verfügbares Stripe-Standardguthaben.",
           "kpiPending": "Ausstehendes Guthaben",
-          "kpiPendingHint": "Noch nicht verfügbar.",
+          "kpiPendingHint": "Diese Beträge sind bei Stripe noch in der Abwicklung und daher noch nicht für eine Auszahlung verfügbar.",
           "gross": "Vor Gebühr",
           "net": "Sie erhalten",
           "methodBank": "Bankkonto",

@@ -24,6 +24,7 @@ import {
 } from "./business/BusinessDashboardSearch";
 import { DashboardHeaderMobileProfile } from "./dashboard/DashboardHeaderMobileProfile";
 import { cn } from "@/lib/utils";
+import { resolveDashboardHeaderIdentity } from "../lib/dashboardHeaderIdentity";
 
 interface DashboardHeaderProps {
   onMenuClick?: () => void;
@@ -43,6 +44,8 @@ function DashboardHeaderBar({
   showShellControls,
   displayName,
   displayEmail,
+  showProfileCluster,
+  searchMode,
   settingsHref,
   user,
   venueName,
@@ -54,6 +57,8 @@ function DashboardHeaderBar({
   showShellControls: boolean;
   displayName: string;
   displayEmail: string;
+  showProfileCluster: boolean;
+  searchMode: "business" | "directory" | "none";
   settingsHref: string;
   user: ReturnType<typeof useAuth>["user"];
   venueName: string;
@@ -104,23 +109,23 @@ function DashboardHeaderBar({
             />
           </div>
 
-          {!isBusinessManager ? (
-            <div className="hidden min-w-0 flex-1 lg:block">
-              <DashboardHeaderSearchDesktop />
-            </div>
-          ) : (
+          {searchMode === "business" ? (
             <div className="hidden min-w-0 flex-1 lg:block">
               <BusinessDashboardSearch variant="desktop" />
             </div>
-          )}
+          ) : searchMode === "directory" ? (
+            <div className="hidden min-w-0 flex-1 lg:block">
+              <DashboardHeaderSearchDesktop />
+            </div>
+          ) : null}
         </div>
 
         <div className="caretip-dashboard-header-trailing flex shrink-0 items-center justify-end gap-1 sm:gap-1.5 lg:gap-3">
-          {!isBusinessManager ? (
-            <DashboardHeaderSearchMobileToggle />
-          ) : (
+          {searchMode === "business" ? (
             <BusinessDashboardSearchMobileToggle />
-          )}
+          ) : searchMode === "directory" ? (
+            <DashboardHeaderSearchMobileToggle />
+          ) : null}
           {showShellControls ? (
             <NotificationBell
               className={cn(
@@ -150,7 +155,7 @@ function DashboardHeaderBar({
                 fallbackTone="muted"
               />
             </Link>
-          ) : (
+          ) : showProfileCluster ? (
             <>
               <DashboardHeaderMobileProfile
                 displayName={displayName}
@@ -162,7 +167,9 @@ function DashboardHeaderBar({
               <div className="hidden items-center gap-3 border-l border-border pl-3 lg:flex">
                 <div className="text-right">
                   <p className="text-sm font-medium text-foreground">{displayName}</p>
-                  <p className="max-w-[180px] truncate text-xs text-muted-foreground">{displayEmail}</p>
+                  {displayEmail ? (
+                    <p className="max-w-[180px] truncate text-xs text-muted-foreground">{displayEmail}</p>
+                  ) : null}
                 </div>
                 <HeaderPhoto
                   key={user?.avatar ?? user?.id ?? "header-avatar"}
@@ -173,15 +180,15 @@ function DashboardHeaderBar({
                 />
               </div>
             </>
-          )}
+          ) : null}
         </div>
       </div>
 
-      {!isBusinessManager ? (
-        <DashboardHeaderSearchPanel />
-      ) : (
+      {searchMode === "business" ? (
         <BusinessDashboardSearchPanel />
-      )}
+      ) : searchMode === "directory" ? (
+        <DashboardHeaderSearchPanel />
+      ) : null}
     </>
   );
 }
@@ -192,8 +199,12 @@ export const DashboardHeader = memo(function DashboardHeader({ onMenuClick }: Da
   const isPlatformAdmin = user?.role === "platform_admin";
   const isBusinessManager = user?.role === "business";
   const { venueName, logo: businessLogo } = useBusinessVenueBrand();
-  const displayName = user?.name?.trim() || t("shell.header.adminFallback");
-  const displayEmail = user?.email?.trim() || t("shell.header.platformAdminEmail");
+  const identity = resolveDashboardHeaderIdentity(user, {
+    platformAdminName: t("shell.header.adminFallback"),
+    platformAdminEmail: t("shell.header.platformAdminEmail"),
+  });
+  const displayName = identity.displayName;
+  const displayEmail = identity.displayEmail;
 
   const settingsHref =
     user?.role === "employee"
@@ -205,6 +216,12 @@ export const DashboardHeader = memo(function DashboardHeader({ onMenuClick }: Da
   const showShellControls =
     user?.role === "employee" || user?.role === "business" || user?.role === "platform_admin";
 
+  const searchMode: "business" | "directory" | "none" = isBusinessManager
+    ? "business"
+    : user?.role === "employee" || isPlatformAdmin
+      ? "directory"
+      : "none";
+
   const barProps = {
     onMenuClick,
     isPlatformAdmin,
@@ -212,6 +229,8 @@ export const DashboardHeader = memo(function DashboardHeader({ onMenuClick }: Da
     showShellControls,
     displayName,
     displayEmail,
+    showProfileCluster: identity.showProfileCluster,
+    searchMode,
     settingsHref,
     user,
     venueName,
@@ -220,14 +239,16 @@ export const DashboardHeader = memo(function DashboardHeader({ onMenuClick }: Da
 
   return (
     <header className="caretip-dashboard-header-bar sticky top-0 z-30 border-b border-border/80 bg-background/95 backdrop-blur-[4px]">
-      {isBusinessManager ? (
+      {searchMode === "business" ? (
         <BusinessDashboardSearchProvider>
           <DashboardHeaderBar {...barProps} />
         </BusinessDashboardSearchProvider>
-      ) : (
+      ) : searchMode === "directory" ? (
         <DashboardHeaderSearchProvider isPlatformAdmin={isPlatformAdmin}>
           <DashboardHeaderBar {...barProps} />
         </DashboardHeaderSearchProvider>
+      ) : (
+        <DashboardHeaderBar {...barProps} />
       )}
     </header>
   );

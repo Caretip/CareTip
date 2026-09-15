@@ -26,6 +26,10 @@ import {
 } from "../src/services/stripeConnectInstantPayout.service.js";
 import { StripeConnectError } from "../src/services/stripeConnect.service.js";
 import {
+  INSTANT_PAYOUT_TERMS_CONTEXT_BUSINESS,
+  getInstantPayoutTermsRequirement,
+} from "../src/lib/instantPayoutTerms.js";
+import {
   handleConnectPayoutEvent,
   isConnectPayoutEventType,
   __setListPayoutBalanceTransactionsFnForTests,
@@ -319,10 +323,14 @@ async function runMocked() {
 
     const created = await createInstantPayoutForBusiness({
       businessId: venue.businessId,
+      userId: venue.managerId,
       idempotencyKey: "idem_instant_ok_aaaaaaaa",
+      termsVersion: (await getInstantPayoutTermsRequirement(INSTANT_PAYOUT_TERMS_CONTEXT_BUSINESS, "en"))
+        .version,
     });
     const replay = await createInstantPayoutForBusiness({
       businessId: venue.businessId,
+      userId: venue.managerId,
       idempotencyKey: "idem_instant_ok_aaaaaaaa",
     });
     if (createCalls === 1 && created.payout.id === replay.payout.id && created.payout.method === "instant") {
@@ -469,6 +477,7 @@ async function runMocked() {
     try {
       await createInstantPayoutForBusiness({
         businessId: venueB.businessId,
+        userId: venueB.managerId,
         idempotencyKey: "idem_instant_fail_bbbbbbbb",
       });
       fail("create-ineligible", "ineligible create should throw");

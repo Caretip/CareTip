@@ -14,6 +14,10 @@ import { runSerializedByKey } from "../utils/serializedByKey.js";
 import { getStripeClient, isStripeConfigured } from "./stripe.service.js";
 import { StripeConnectError } from "./stripeConnect.service.js";
 import {
+  INSTANT_PAYOUT_TERMS_CONTEXT_BUSINESS,
+  assertAndRecordInstantPayoutTerms,
+} from "../lib/instantPayoutTerms.js";
+import {
   getPayoutForBusiness,
   ingestStripePayoutObjectForBusiness,
   invalidateConnectPayoutListSyncThrottle,
@@ -489,7 +493,10 @@ export function mapInstantPayoutCreateError(err: unknown): StripeConnectError {
 
 export async function createInstantPayoutForBusiness(args: {
   businessId: string;
+  userId: string;
   idempotencyKey: unknown;
+  termsVersion?: unknown;
+  language?: string;
 }): Promise<{ payout: ConnectPayoutDto; eligibility: InstantPayoutEligibilityDto }> {
   const idempotencyKey = normalizeInstantPayoutIdempotencyKey(args.idempotencyKey);
   const ledgerKey = `caretip_instant_payout:${args.businessId}:${idempotencyKey}`;
@@ -532,6 +539,14 @@ export async function createInstantPayoutForBusiness(args: {
         400,
       );
     }
+
+    await assertAndRecordInstantPayoutTerms({
+      userId: args.userId,
+      context: INSTANT_PAYOUT_TERMS_CONTEXT_BUSINESS,
+      submittedVersion: args.termsVersion,
+      language: args.language,
+      idempotencyKey: ledgerKey,
+    });
 
     const request = existing
       ? existing

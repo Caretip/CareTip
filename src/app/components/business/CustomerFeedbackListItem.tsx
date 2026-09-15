@@ -3,6 +3,7 @@ import { Star } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import type { CustomerFeedbackRow } from "@/app/lib/api";
 import { formatVenueDateTime, resolveBusinessTimezone } from "@/app/lib/businessVenueTime";
+import { localizeFeedbackTag } from "../../lib/feedbackTagLabels";
 import { cn } from "@/lib/utils";
 
 const PREVIEW_MAX_CHARS = 160;
@@ -117,7 +118,7 @@ export function CustomerFeedbackListItem({ item, className }: CustomerFeedbackLi
               key={tag}
               className="rounded-full bg-muted/80 px-2.5 py-0.5 text-[0.6875rem] font-medium text-muted-foreground"
             >
-              {tag}
+              {localizeFeedbackTag(tag, t)}
             </li>
           ))}
         </ul>

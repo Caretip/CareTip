@@ -59,3 +59,12 @@ export type EmployeeTipsStats = {
   totalSupporters?: number;
   chartSeries?: Array<{ label: string; amount: number }>;
 };
+
+export function asFiniteNumber(value: unknown): number | undefined {
+  if (typeof value === "number" && Number.isFinite(value)) return value;
+  if (typeof value === "string" && value.trim()) {
+    const n = Number(value);
+    if (Number.isFinite(n)) return n;
+  }
+  return undefined;
+}

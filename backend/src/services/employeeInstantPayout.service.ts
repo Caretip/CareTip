@@ -24,6 +24,10 @@ import {
   type InstantPayoutReason,
 } from "./stripeConnectInstantPayout.service.js";
 import { resolveActiveEmployeeForConnect } from "./employeeStripeConnect.service.js";
+import {
+  INSTANT_PAYOUT_TERMS_CONTEXT_EMPLOYEE,
+  assertAndRecordInstantPayoutTerms,
+} from "../lib/instantPayoutTerms.js";
 
 export type EmployeeInstantPayoutEligibilityDto = InstantPayoutEligibilityDto & {
   minPayoutCents: number;
@@ -129,6 +133,8 @@ function toDto(row: {
 export async function createEmployeeInstantPayoutForUser(args: {
   userId: string;
   idempotencyKey: unknown;
+  termsVersion?: unknown;
+  language?: string;
 }): Promise<{ payout: EmployeeInstantPayoutDto; eligibility: EmployeeInstantPayoutEligibilityDto }> {
   const actor = await resolveActiveEmployeeForConnect(args.userId);
   const idempotencyKey = normalizeInstantPayoutIdempotencyKey(args.idempotencyKey);
@@ -190,6 +196,14 @@ export async function createEmployeeInstantPayoutForUser(args: {
         400,
       );
     }
+
+    await assertAndRecordInstantPayoutTerms({
+      userId: args.userId,
+      context: INSTANT_PAYOUT_TERMS_CONTEXT_EMPLOYEE,
+      submittedVersion: args.termsVersion,
+      language: args.language,
+      idempotencyKey: ledgerKey,
+    });
 
     const request = existing
       ? existing

@@ -40,6 +40,7 @@ import {
   DialogTitle,
 } from "../../../ui/dialog";
 import { Button } from "@/components/ui/button";
+import { InstantPayoutTermsCheckbox } from "../../../finance/InstantPayoutTermsCheckbox";
 
 const PAGE_SIZE = 20;
 
@@ -85,6 +86,7 @@ export function ConnectPayoutsPanel({ loading: bootLoading }: { loading?: boolea
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [payoutBusy, setPayoutBusy] = useState(false);
   const [idempotencyKey, setIdempotencyKey] = useState("");
+  const [termsAccepted, setTermsAccepted] = useState(false);
   const detail = useConnectPayoutDetail(getMyConnectPayout);
 
   const loadHistory = useCallback(
@@ -145,7 +147,7 @@ export function ConnectPayoutsPanel({ loading: bootLoading }: { loading?: boolea
   }, [dashboardBusy, t]);
 
   function openInstantConfirm() {
-    if (!eligibility?.eligible || payoutBusy) return;
+    if (!eligibility?.eligible || payoutBusy || !termsAccepted || !eligibility.terms?.version) return;
     setIdempotencyKey(
       typeof crypto !== "undefined" && "randomUUID" in crypto
         ? crypto.randomUUID()
@@ -155,10 +157,11 @@ export function ConnectPayoutsPanel({ loading: bootLoading }: { loading?: boolea
   }
 
   async function confirmInstantPayout() {
-    if (!idempotencyKey || payoutBusy || !eligibility?.eligible) return;
+    const termsVersion = eligibility?.terms?.version?.trim();
+    if (!idempotencyKey || payoutBusy || !eligibility?.eligible || !termsAccepted || !termsVersion) return;
     setPayoutBusy(true);
     try {
-      const result = await createInstantPayout(idempotencyKey);
+      const result = await createInstantPayout(idempotencyKey, termsVersion);
       setEligibility(result.eligibility);
       setConfirmOpen(false);
       setItems((prev) => {
@@ -383,6 +386,8 @@ export function ConnectPayoutsPanel({ loading: bootLoading }: { loading?: boolea
           locale={locale}
           dashboardBusy={dashboardBusy}
           payoutBusy={payoutBusy}
+          termsAccepted={termsAccepted}
+          onTermsAcceptedChange={setTermsAccepted}
           onRetryEligibility={() => void loadEligibility()}
           onOpenDashboard={() => void openStripeDashboard()}
           onRequestPayout={openInstantConfirm}
@@ -407,6 +412,8 @@ export function ConnectPayoutsPanel({ loading: bootLoading }: { loading?: boolea
         eligibility={eligibility}
         locale={locale}
         confirming={payoutBusy}
+        termsAccepted={termsAccepted}
+        onTermsAcceptedChange={setTermsAccepted}
         onCancel={() => setConfirmOpen(false)}
         onConfirm={() => void confirmInstantPayout()}
       />
@@ -434,6 +441,8 @@ function InstantBalanceSection({
   locale,
   dashboardBusy,
   payoutBusy,
+  termsAccepted,
+  onTermsAcceptedChange,
   onRetryEligibility,
   onOpenDashboard,
   onRequestPayout,
@@ -444,6 +453,8 @@ function InstantBalanceSection({
   locale: string;
   dashboardBusy: boolean;
   payoutBusy: boolean;
+  termsAccepted: boolean;
+  onTermsAcceptedChange: (next: boolean) => void;
   onRetryEligibility: () => void;
   onOpenDashboard: () => void;
   onRequestPayout: () => void;
@@ -530,12 +541,21 @@ function InstantBalanceSection({
               {t("business.billing.payouts.instant.changeMethod")}
             </button>
           ) : null}
+          <div className="mt-5">
+            <InstantPayoutTermsCheckbox
+              checked={termsAccepted}
+              onCheckedChange={onTermsAcceptedChange}
+              disabled={payoutBusy}
+              termsPath={eligibility.terms?.path || "/terms"}
+              id="business-instant-terms"
+            />
+          </div>
           <button
             type="button"
-            disabled={payoutBusy}
+            disabled={payoutBusy || !termsAccepted || !eligibility.terms?.version}
             aria-busy={payoutBusy}
             onClick={onRequestPayout}
-            className={cn(caretipBtnPrimaryCompact, "mt-5 h-auto min-h-11 w-full whitespace-normal")}
+            className={cn(caretipBtnPrimaryCompact, "mt-3 h-auto min-h-11 w-full whitespace-normal")}
           >
             {payoutBusy ? (
               <>
@@ -626,6 +646,8 @@ function InstantPayoutConfirmDialog({
   eligibility,
   locale,
   confirming,
+  termsAccepted,
+  onTermsAcceptedChange,
   onCancel,
   onConfirm,
 }: {
@@ -633,6 +655,8 @@ function InstantPayoutConfirmDialog({
   eligibility: InstantPayoutEligibility | null;
   locale: string;
   confirming: boolean;
+  termsAccepted: boolean;
+  onTermsAcceptedChange: (next: boolean) => void;
   onCancel: () => void;
   onConfirm: () => void;
 }) {
@@ -691,6 +715,13 @@ function InstantPayoutConfirmDialog({
             <dd className="min-w-0 text-right text-foreground">{t("business.billing.payouts.instant.confirmArrival")}</dd>
           </div>
         </dl>
+        <InstantPayoutTermsCheckbox
+          checked={termsAccepted}
+          onCheckedChange={onTermsAcceptedChange}
+          disabled={confirming}
+          termsPath={eligibility.terms?.path || "/terms"}
+          id="business-instant-terms-confirm"
+        />
         <DialogFooter className="gap-2 sm:justify-end">
           <Button type="button" variant="outline" onClick={onCancel} disabled={confirming}>
             {t("common.cancel")}
@@ -698,7 +729,7 @@ function InstantPayoutConfirmDialog({
           <button
             type="button"
             className={caretipBtnPrimaryCompact}
-            disabled={confirming || !eligibility.eligible}
+            disabled={confirming || !eligibility.eligible || !termsAccepted}
             onClick={onConfirm}
           >
             {confirming ? t("business.billing.payouts.instant.ctaSending") : t("business.billing.payouts.instant.confirmCta")}

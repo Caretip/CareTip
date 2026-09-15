@@ -151,9 +151,11 @@ export function EmployeeDashboardScreen() {
                     }),
                   },
                   {
-                    label: t("employeeDashboard.paidOut"),
-                    value: formatEur(tips?.paidOutEur),
-                    hint: t("employeeDashboard.successfulPayouts"),
+                    label: t("employeeDashboard.totalEarnings"),
+                    value: formatEur(tips?.totalEarningsEur),
+                    hint: t("employeeDashboard.successfulTipsHint", {
+                      count: formatCount(tips?.totalSupporters),
+                    }),
                   },
                 ]}
               />

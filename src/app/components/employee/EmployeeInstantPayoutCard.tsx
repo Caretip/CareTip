@@ -10,6 +10,7 @@ import {
 import { formatEur } from "../../lib/formatEur";
 import { logClientError } from "../../lib/clientLog";
 import { toUserFriendlyMessage } from "../../lib/errorMessages";
+import { InstantPayoutTermsCheckbox } from "../finance/InstantPayoutTermsCheckbox";
 import { Button } from "../ui/button";
 import { employeeUi } from "./employeeDashboardUi";
 import { caretipBtnPrimary } from "@/lib/caretipButtonSystem";
@@ -52,6 +53,7 @@ export function EmployeeInstantPayoutCard(props: {
   const [busy, setBusy] = useState(false);
   const [localError, setLocalError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+  const [termsAccepted, setTermsAccepted] = useState(false);
   const inFlightKey = useRef<string | null>(null);
 
   const eligibility = controlled ? (props.sharedEligibility ?? null) : localEligibility;
@@ -83,13 +85,14 @@ export function EmployeeInstantPayoutCard(props: {
   }, [reload, controlled]);
 
   const onRequest = async () => {
-    if (!eligibility?.eligible || busy || inFlightKey.current) return;
+    const termsVersion = eligibility?.terms?.version?.trim();
+    if (!eligibility?.eligible || busy || inFlightKey.current || !termsAccepted || !termsVersion) return;
     const key = newIdempotencyKey();
     inFlightKey.current = key;
     setBusy(true);
     setSuccess(false);
     try {
-      const result = await createEmployeeInstantPayout(key);
+      const result = await createEmployeeInstantPayout(key, termsVersion);
       if (props.onSharedEligibilityChange) {
         props.onSharedEligibilityChange(result.eligibility);
       } else {
@@ -150,7 +153,9 @@ export function EmployeeInstantPayoutCard(props: {
   const percent = employeeInstantFeePercentLabel(eligibility);
   const last4 = eligibility.destinationLast4;
   const showCta = employeeInstantShowCta(mode);
-  const ctaEnabled = employeeInstantCtaEnabled(mode) && !busy;
+  const termsVersion = eligibility.terms?.version?.trim() ?? "";
+  const termsPath = eligibility.terms?.path || "/terms";
+  const ctaEnabled = employeeInstantCtaEnabled(mode) && !busy && termsAccepted && Boolean(termsVersion);
   const rail = props.layout === "rail";
   const thresholdId = "employee-instant-threshold";
 
@@ -208,9 +213,19 @@ export function EmployeeInstantPayoutCard(props: {
           <p className="mt-3 text-sm text-muted-foreground">{t(employeeInstantBlockedReasonKey(eligibility.reason))}</p>
         ) : null}
         {showCta ? (
+          <>
+            <div className="mt-5">
+              <InstantPayoutTermsCheckbox
+                checked={termsAccepted}
+                onCheckedChange={setTermsAccepted}
+                disabled={busy}
+                termsPath={termsPath}
+                id="employee-instant-terms-rail"
+              />
+            </div>
           <Button
             type="button"
-            className={cn(caretipBtnPrimary, "mt-5 h-auto min-h-11 w-full min-w-0 rounded-full px-4 py-2.5 text-center leading-snug whitespace-normal")}
+            className={cn(caretipBtnPrimary, "mt-3 h-auto min-h-11 w-full min-w-0 rounded-full px-4 py-2.5 text-center leading-snug whitespace-normal")}
             onClick={() => void onRequest()}
             disabled={!ctaEnabled}
             aria-busy={busy}
@@ -222,6 +237,7 @@ export function EmployeeInstantPayoutCard(props: {
               ? t("employee.payouts.instant.processing")
               : t("employee.payouts.instant.ctaAmount", { amount: receiveLabel })}
           </Button>
+          </>
         ) : null}
         {mode === "threshold" ? (
           <p className="sr-only">{t("employee.payouts.instant.belowMinAria", { amount: minLabel })}</p>
@@ -288,6 +304,14 @@ export function EmployeeInstantPayoutCard(props: {
         ) : null}
 
         {showCta ? (
+          <>
+            <InstantPayoutTermsCheckbox
+              checked={termsAccepted}
+              onCheckedChange={setTermsAccepted}
+              disabled={busy}
+              termsPath={termsPath}
+              id="employee-instant-terms"
+            />
           <Button
             type="button"
             className={cn(caretipBtnPrimary, payoutActionClass)}
@@ -302,6 +326,7 @@ export function EmployeeInstantPayoutCard(props: {
               ? t("employee.payouts.instant.processing")
               : t("employee.payouts.instant.ctaAmount", { amount: receiveLabel })}
           </Button>
+          </>
         ) : null}
 
         {mode === "threshold" ? (

@@ -19,6 +19,11 @@ import {
 } from "../services/stripeConnectInstantPayout.service.js";
 import { parseBoundedSkip } from "../utils/paginationLimits.js";
 import { clientSafeMessage, CLIENT_FALLBACK, logServerError } from "../utils/httpErrors.js";
+import {
+  INSTANT_PAYOUT_TERMS_CONTEXT_BUSINESS,
+  languageFromRequest,
+  withInstantPayoutTerms,
+} from "../lib/instantPayoutTerms.js";
 
 function getUserId(req: Request): string | null {
   const uid = req.user?.userId ?? req.user?.id;
@@ -264,7 +269,13 @@ export async function getMyInstantPayoutEligibility(req: Request, res: Response)
     if (!ctx.ok) return res.status(ctx.status).json({ message: ctx.message });
 
     const eligibility = await getInstantPayoutEligibilityForBusiness(ctx.businessId);
-    return res.json(eligibility);
+    return res.json(
+      await withInstantPayoutTerms(
+        eligibility,
+        INSTANT_PAYOUT_TERMS_CONTEXT_BUSINESS,
+        languageFromRequest(req),
+      ),
+    );
   } catch (err) {
     logServerError("connect.getMyInstantPayoutEligibility", err);
     if (err instanceof StripeConnectError) {
@@ -284,9 +295,13 @@ export async function postMyInstantPayout(req: Request, res: Response) {
     if (!ctx.ok) return res.status(ctx.status).json({ message: ctx.message });
     if (rejectInstantPayoutClientSteering(req, res)) return;
 
+    const body = req.body as { idempotencyKey?: unknown; termsVersion?: unknown } | undefined;
     const result = await createInstantPayoutForBusiness({
       businessId: ctx.businessId,
-      idempotencyKey: (req.body as { idempotencyKey?: unknown } | undefined)?.idempotencyKey,
+      userId: ctx.userId,
+      idempotencyKey: body?.idempotencyKey,
+      termsVersion: body?.termsVersion,
+      language: languageFromRequest(req),
     });
     return res.status(201).json(result);
   } catch (err) {

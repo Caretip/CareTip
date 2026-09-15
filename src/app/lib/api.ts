@@ -3056,7 +3056,10 @@ export async function getEmployeeInstantPayoutEligibility(): Promise<EmployeeIns
   });
 }
 
-export async function createEmployeeInstantPayout(idempotencyKey: string): Promise<{
+export async function createEmployeeInstantPayout(
+  idempotencyKey: string,
+  termsVersion: string,
+): Promise<{
   payout: {
     requestId: string;
     amountCents: number;
@@ -3070,7 +3073,7 @@ export async function createEmployeeInstantPayout(idempotencyKey: string): Promi
     method: "POST",
     headers: getHeaders(),
     credentials: "include",
-    body: JSON.stringify({ idempotencyKey }),
+    body: JSON.stringify({ idempotencyKey, termsVersion }),
   });
 }
 
@@ -3106,6 +3109,14 @@ export type InstantPayoutReason =
   | "below_minimum"
   | "eligible";
 
+export type InstantPayoutTermsRequirement = {
+  documentType: "terms_conditions";
+  version: string;
+  language: string;
+  path: "/terms";
+  context: "instant_payout_employee" | "instant_payout_business";
+};
+
 export type InstantPayoutEligibility = {
   connected: boolean;
   eligible: boolean;
@@ -3125,6 +3136,7 @@ export type InstantPayoutEligibility = {
   destinationLast4: string | null;
   destinationKind: "card" | "bank_account" | null;
   canOpenExpressDashboard: boolean;
+  terms?: InstantPayoutTermsRequirement;
 };
 
 export async function getInstantPayoutEligibility(): Promise<InstantPayoutEligibility> {
@@ -3134,7 +3146,10 @@ export async function getInstantPayoutEligibility(): Promise<InstantPayoutEligib
   });
 }
 
-export async function createInstantPayout(idempotencyKey: string): Promise<{
+export async function createInstantPayout(
+  idempotencyKey: string,
+  termsVersion: string,
+): Promise<{
   payout: ConnectPayout;
   eligibility: InstantPayoutEligibility;
 }> {
@@ -3142,7 +3157,7 @@ export async function createInstantPayout(idempotencyKey: string): Promise<{
     method: "POST",
     headers: getHeaders(),
     credentials: "include",
-    body: JSON.stringify({ idempotencyKey }),
+    body: JSON.stringify({ idempotencyKey, termsVersion }),
   });
 }
 

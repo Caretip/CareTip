@@ -16,6 +16,11 @@ import {
 } from "../services/employeeInstantPayout.service.js";
 import { listEmployeeStripeBankPayoutsForUser } from "../services/employeeStripeBankPayouts.service.js";
 import { clientSafeMessage, CLIENT_FALLBACK, logServerError } from "../utils/httpErrors.js";
+import {
+  INSTANT_PAYOUT_TERMS_CONTEXT_EMPLOYEE,
+  languageFromRequest,
+  withInstantPayoutTerms,
+} from "../lib/instantPayoutTerms.js";
 
 function getUserId(req: Request): string | null {
   const uid = req.user?.userId ?? req.user?.id;
@@ -167,7 +172,13 @@ export async function getMyEmployeeInstantPayout(req: Request, res: Response) {
     if (!userId) return res.status(401).json({ message: "Authentication required" });
     if (rejectClientEmployeeConnectSteering(req, res)) return;
     const eligibility = await getEmployeeInstantPayoutEligibilityForUser(userId);
-    return res.json(eligibility);
+    return res.json(
+      await withInstantPayoutTerms(
+        eligibility,
+        INSTANT_PAYOUT_TERMS_CONTEXT_EMPLOYEE,
+        languageFromRequest(req),
+      ),
+    );
   } catch (err) {
     logServerError("employeeConnect.getMyEmployeeInstantPayout", err);
     if (err instanceof StripeConnectError) {
@@ -182,9 +193,12 @@ export async function postMyEmployeeInstantPayout(req: Request, res: Response) {
     const userId = getUserId(req);
     if (!userId) return res.status(401).json({ message: "Authentication required" });
     if (rejectClientEmployeeConnectSteering(req, res)) return;
+    const body = (req.body ?? {}) as { idempotencyKey?: unknown; termsVersion?: unknown };
     const result = await createEmployeeInstantPayoutForUser({
       userId,
-      idempotencyKey: (req.body ?? {}).idempotencyKey,
+      idempotencyKey: body.idempotencyKey,
+      termsVersion: body.termsVersion,
+      language: languageFromRequest(req),
     });
     return res.json(result);
   } catch (err) {

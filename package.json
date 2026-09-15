@@ -55,6 +55,7 @@
     "test:production-landing-blank-probe": "node ./backend/node_modules/tsx/dist/cli.mjs ./scripts/production-landing-blank-probe.ts",
     "test:white-screen-architecture": "node ./backend/node_modules/tsx/dist/cli.mjs ./scripts/white-screen-architecture-runtime.ts",
     "test:employee-signout": "node ./backend/node_modules/tsx/dist/cli.mjs ./scripts/employee-signout-runtime.ts",
+    "test:dashboard-header-identity": "node ./backend/node_modules/tsx/dist/cli.mjs ./scripts/dashboard-header-identity-runtime.ts",
     "test:app-performance-architecture": "node ./backend/node_modules/tsx/dist/cli.mjs ./scripts/app-performance-architecture-runtime.ts",
     "test:employee-goal-sync-architecture": "node ./backend/node_modules/tsx/dist/cli.mjs ./scripts/employee-goal-sync-architecture-runtime.ts",
     "test:employee-goal-sync": "npm --prefix backend run test:employee-goal-sync && npm run test:employee-goal-sync-architecture",

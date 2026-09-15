@@ -42,6 +42,13 @@ export type EmployeeInstantEligibility = {
   stakeholderMinCents?: number;
   stripeMinCents?: number;
   feeSource?: "stripe_platform_pricing" | "unknown";
+  terms?: {
+    documentType: "terms_conditions";
+    version: string;
+    language: string;
+    path: "/terms";
+    context: "instant_payout_employee" | "instant_payout_business";
+  };
 };
 
 export type EmployeeInstantPayoutResult = {
@@ -110,7 +117,10 @@ export async function fetchEmployeeInstantPayoutEligibility(): Promise<EmployeeI
   return data;
 }
 
-export async function requestEmployeeInstantPayout(idempotencyKey: string): Promise<{
+export async function requestEmployeeInstantPayout(
+  idempotencyKey: string,
+  termsVersion: string,
+): Promise<{
   payout: EmployeeInstantPayoutResult;
   eligibility: EmployeeInstantEligibility;
 }> {
@@ -122,7 +132,7 @@ export async function requestEmployeeInstantPayout(idempotencyKey: string): Prom
     const { data } = await apiClient.post<{
       payout: EmployeeInstantPayoutResult;
       eligibility: EmployeeInstantEligibility;
-    }>(API_ENDPOINTS.employees.instantPayout, { idempotencyKey });
+    }>(API_ENDPOINTS.employees.instantPayout, { idempotencyKey, termsVersion });
     return data;
   } finally {
     employeeInstantPayoutInFlight = false;

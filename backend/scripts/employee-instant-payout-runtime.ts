@@ -23,6 +23,10 @@ import {
 } from "../src/services/stripeConnectInstantPayout.service.js";
 import { StripeConnectError } from "../src/services/stripeConnect.service.js";
 import {
+  INSTANT_PAYOUT_TERMS_CONTEXT_EMPLOYEE,
+  getInstantPayoutTermsRequirement,
+} from "../src/lib/instantPayoutTerms.js";
+import {
   __setEmployeeStripePayoutListFnForTests,
   listEmployeeStripeBankPayoutsForUser,
 } from "../src/services/employeeStripeBankPayouts.service.js";
@@ -246,10 +250,52 @@ function runStatic() {
     instantApi.indexOf("export async function createEmployeeInstantPayout"),
     instantApi.indexOf("export async function listEmployeeStripeBankPayouts"),
   );
-  if (createSnippet.includes("body: JSON.stringify({ idempotencyKey })")) {
-    pass("ui-no-client-steering", "Employee Instant POST body is idempotencyKey only");
+  if (createSnippet.includes("JSON.stringify({ idempotencyKey, termsVersion })")) {
+    pass("ui-no-client-steering", "Employee Instant POST body is idempotencyKey + termsVersion");
   } else {
     fail("ui-no-client-steering", "client Instant POST contract changed");
+  }
+  if (instantCard.includes("InstantPayoutTermsCheckbox") && instantCard.includes("termsAccepted")) {
+    pass("ui-instant-terms-checkbox", "Employee Instant UI requires Terms checkbox");
+  } else {
+    fail("ui-instant-terms-checkbox", "Terms checkbox missing");
+  }
+  const en = readFileSync(join(backendRoot, "../src/i18n/locales/en.json"), "utf8");
+  const de = readFileSync(join(backendRoot, "../src/i18n/locales/de.json"), "utf8");
+  const enPending = JSON.parse(en) as {
+    employee: { payouts: { dashboard: { kpiPendingHint: string } } };
+    business: { stripe: { payoutsWorkspace: { business: { kpiPendingHint: string } } } };
+  };
+  const dePending = JSON.parse(de) as typeof enPending;
+  const pendingHints = [
+    enPending.employee.payouts.dashboard.kpiPendingHint,
+    enPending.business.stripe.payoutsWorkspace.business.kpiPendingHint,
+    dePending.employee.payouts.dashboard.kpiPendingHint,
+    dePending.business.stripe.payoutsWorkspace.business.kpiPendingHint,
+  ];
+  if (
+    pendingHints[0].includes("settling with Stripe") &&
+    pendingHints[2].includes("Abwicklung") &&
+    pendingHints.every((h) => !h.includes("7-day") && !h.includes("7-Tage"))
+  ) {
+    pass("ui-pending-explain", "Pending KPI explains Stripe settlement without a CareTip 7-day hold");
+  } else {
+    fail("ui-pending-explain", pendingHints.join(" | "));
+  }
+  const dash = readFileSync(join(backendRoot, "../mobile/features/employee/EmployeeDashboardScreen.tsx"), "utf8");
+  if (dash.includes("tips?.totalEarningsEur") && !dash.includes("tips?.paidOutEur")) {
+    pass("mobile-earnings-parity", "Mobile dashboard KPI uses totalEarningsEur like web hero");
+  } else {
+    fail("mobile-earnings-parity", "Mobile still maps paidOutEur for the comparable web total");
+  }
+  const feedbackItem = readFileSync(
+    join(backendRoot, "../src/app/components/business/CustomerFeedbackListItem.tsx"),
+    "utf8",
+  );
+  if (feedbackItem.includes("localizeFeedbackTag")) {
+    pass("feedback-tag-i18n", "Business feedback tags use localized display labels");
+  } else {
+    fail("feedback-tag-i18n", "feedback tags still render raw stored English");
   }
 }
 
@@ -299,9 +345,38 @@ async function main() {
     } else {
       fail("elig-30.00", JSON.stringify(atMin));
     }
+    try {
+      await createEmployeeInstantPayoutForUser({
+        userId: venue.employeeUserId,
+        idempotencyKey: "idem_emp_terms_missing1",
+      });
+      fail("create-terms-required", "should reject without termsVersion");
+    } catch (err) {
+      if (err instanceof StripeConnectError && err.code === "INSTANT_PAYOUT_TERMS_REQUIRED") {
+        pass("create-terms-required", "Eligible Instant Payout rejected without Terms version");
+      } else {
+        fail("create-terms-required", String(err));
+      }
+    }
+    try {
+      await createEmployeeInstantPayoutForUser({
+        userId: venue.employeeUserId,
+        idempotencyKey: "idem_emp_terms_stale_aaa",
+        termsVersion: "not-the-current-version",
+      });
+      fail("create-terms-stale", "should reject stale terms");
+    } catch (err) {
+      if (err instanceof StripeConnectError && err.code === "INSTANT_PAYOUT_TERMS_VERSION_STALE") {
+        pass("create-terms-stale", "Stale Instant Payout Terms version rejected");
+      } else {
+        fail("create-terms-stale", String(err));
+      }
+    }
     const first = await createEmployeeInstantPayoutForUser({
       userId: venue.employeeUserId,
       idempotencyKey: "idem_emp_30_bbbbbbbb",
+      termsVersion: (await getInstantPayoutTermsRequirement(INSTANT_PAYOUT_TERMS_CONTEXT_EMPLOYEE, "en"))
+        .version,
     });
     const replay = await createEmployeeInstantPayoutForUser({
       userId: venue.employeeUserId,
@@ -311,6 +386,15 @@ async function main() {
       pass("create-30-idempotent", "€30 create is idempotent");
     } else {
       fail("create-30-idempotent", JSON.stringify({ first, replay, created }));
+    }
+    const consent = await prisma.auditLog.findFirst({
+      where: { userId: venue.employeeUserId, action: "instant_payout_terms_accepted" },
+      orderBy: { createdAt: "desc" },
+    });
+    if (consent?.metadata?.includes('"legalVersion"')) {
+      pass("terms-audit-recorded", "Instant Payout Terms acceptance stored on AuditLog");
+    } else {
+      fail("terms-audit-recorded", JSON.stringify(consent));
     }
 
     __setInstantPayoutStripeFnsForTests({
@@ -366,6 +450,8 @@ async function main() {
       await createEmployeeInstantPayoutForUser({
         userId: venue.employeeUserId,
         idempotencyKey: "idem_emp_fail_cccccccc",
+        termsVersion: (await getInstantPayoutTermsRequirement(INSTANT_PAYOUT_TERMS_CONTEXT_EMPLOYEE, "en"))
+          .version,
       });
       fail("stripe-failure", "should throw");
     } catch (err) {

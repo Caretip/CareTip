@@ -414,6 +414,12 @@ export type MobileMessages = {
     availableNow: string;
     readyWithdraw: string;
     availableForInstant: string;
+    pendingLabel: string;
+    pendingHint: string;
+    instantTermsPrefix: string;
+    instantTermsLink: string;
+    instantTermsSuffix: string;
+    instantTermsRequired: string;
     instantTitle: string;
     instantLead: string;
     youllReceive: string;

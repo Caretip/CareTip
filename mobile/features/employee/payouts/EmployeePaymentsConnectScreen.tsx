@@ -1,5 +1,5 @@
 import { useMemo, useRef, useState } from "react";
-import { Alert, Linking, Pressable, StyleSheet, Text, View } from "react-native";
+import { Alert, Linking, Pressable, StyleSheet, Switch, Text, View } from "react-native";
 import { useRouter } from "expo-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Ionicons } from "@expo/vector-icons";
@@ -55,6 +55,7 @@ export function EmployeePaymentsConnectScreen() {
   const queryClient = useQueryClient();
   const [busy, setBusy] = useState<"instant" | "reactivate" | "dash" | "update" | "connect" | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [termsAccepted, setTermsAccepted] = useState(false);
   const [success, setSuccess] = useState<{
     payout: EmployeeInstantPayoutResult;
     last4: string | null;
@@ -92,7 +93,13 @@ export function EmployeePaymentsConnectScreen() {
   const feeCents = eligibility?.platformFeeCents ?? 0;
   const feePercent = eligibility ? employeeInstantFeePercentLabel(eligibility) : null;
   const showInstantCta = employeeInstantShowCta(mode);
-  const ctaEnabled = employeeInstantCtaEnabled(mode) && busy !== "instant" && !inFlightKey.current;
+  const termsVersion = eligibility?.terms?.version?.trim() ?? "";
+  const ctaEnabled =
+    employeeInstantCtaEnabled(mode) &&
+    busy !== "instant" &&
+    !inFlightKey.current &&
+    termsAccepted &&
+    Boolean(termsVersion);
   const connectionState = connect?.connectionState ?? (eligibility?.connected ? "connected" : "not_connected");
 
   const refreshMoney = async () => {
@@ -100,20 +107,29 @@ export function EmployeePaymentsConnectScreen() {
   };
 
   const onInstant = async () => {
-    if (!employeeInstantCtaEnabled(mode) || busy || inFlightKey.current || isEmployeeInstantPayoutInFlight()) return;
+    if (
+      !employeeInstantCtaEnabled(mode) ||
+      busy ||
+      inFlightKey.current ||
+      isEmployeeInstantPayoutInFlight() ||
+      !termsAccepted ||
+      !termsVersion
+    )
+      return;
     const key = newEmployeeInstantIdempotencyKey();
     inFlightKey.current = key;
     setBusy("instant");
     setSubmitError(null);
     setSuccess(null);
     try {
-      const result = await requestEmployeeInstantPayout(key);
+      const result = await requestEmployeeInstantPayout(key, termsVersion);
       setSuccess({
         payout: result.payout,
         last4: result.eligibility.destinationLast4 ?? eligibility?.destinationLast4 ?? null,
       });
       await instantQuery.refetch();
       await queryClient.invalidateQueries({ queryKey: [...keys.employeeMe, "stripe-payouts"] });
+      await queryClient.invalidateQueries({ queryKey: keys.employeeTips });
     } catch (err) {
       if (err instanceof Error && err.message === "INSTANT_IN_FLIGHT") return;
       setSubmitError(friendlyErrorMessage(err, t("employeePayouts.instantFailed"), t));
@@ -271,6 +287,24 @@ export function EmployeePaymentsConnectScreen() {
             </View>
           ) : null}
 
+          {showAvailableBalance && eligibility?.balancesRetrieved === true ? (
+            <View
+              style={styles.balanceBlock}
+              accessible
+              accessibilityLabel={`${t("employeePayouts.pendingLabel")}. ${formatCentsEur(eligibility.pendingCents)}. ${t("employeePayouts.pendingHint")}`}
+            >
+              <Text style={styles.sectionLabel} {...textA11y}>
+                {t("employeePayouts.pendingLabel")}
+              </Text>
+              <Text style={styles.heroAmount} {...metricTextA11y}>
+                {formatCentsEur(eligibility.pendingCents)}
+              </Text>
+              <Text style={styles.muted} {...textA11y}>
+                {t("employeePayouts.pendingHint")}
+              </Text>
+            </View>
+          ) : null}
+
           {success ? (
             <View style={styles.successCard} accessibilityRole="summary">
               <Text style={styles.successCheck} importantForAccessibility="no" accessibilityElementsHidden>
@@ -389,6 +423,41 @@ export function EmployeePaymentsConnectScreen() {
                     <Text style={styles.muted} {...textA11y}>
                       {t("employeePayouts.feeLabel")} {formatCentsEur(feeCents)}
                       {feePercent ? ` · ${feePercent}` : ""}
+                    </Text>
+                  ) : null}
+
+                  {showInstantCta ? (
+                    <Pressable
+                      onPress={() => setTermsAccepted((v) => !v)}
+                      disabled={busy === "instant"}
+                      accessibilityRole="checkbox"
+                      accessibilityState={{ checked: termsAccepted, disabled: busy === "instant" }}
+                      accessibilityLabel={`${t("employeePayouts.instantTermsPrefix")} ${t("employeePayouts.instantTermsLink")} ${t("employeePayouts.instantTermsSuffix")}`}
+                      style={styles.termsRow}
+                    >
+                      <Switch
+                        value={termsAccepted}
+                        onValueChange={setTermsAccepted}
+                        disabled={busy === "instant"}
+                        accessibilityElementsHidden
+                        importantForAccessibility="no"
+                      />
+                      <Text style={styles.termsText} {...textA11y}>
+                        {t("employeePayouts.instantTermsPrefix")}{" "}
+                        <Text
+                          style={styles.termsLink}
+                          onPress={() => router.push("/(app)/info/terms")}
+                          accessibilityRole="link"
+                        >
+                          {t("employeePayouts.instantTermsLink")}
+                        </Text>{" "}
+                        {t("employeePayouts.instantTermsSuffix")}
+                      </Text>
+                    </Pressable>
+                  ) : null}
+                  {showInstantCta && !termsAccepted ? (
+                    <Text style={styles.helper} {...textA11y}>
+                      {t("employeePayouts.instantTermsRequired")}
                     </Text>
                   ) : null}
 
@@ -517,6 +586,14 @@ function createStyles(colors: ColorPalette) {
     kvLabel: { ...typography.caption, color: colors.mutedForeground, fontWeight: "600" },
     kvValue: { ...typography.h3, color: colors.foreground, fontWeight: "700" },
     helper: { ...typography.caption, color: colors.mutedForeground, marginTop: spacing.xs },
+    termsRow: {
+      flexDirection: "row",
+      alignItems: "flex-start",
+      gap: spacing.sm,
+      marginTop: spacing.md,
+    },
+    termsText: { ...typography.smallBody, color: colors.foreground, flex: 1 },
+    termsLink: { ...typography.smallBody, color: colors.primary, fontWeight: "600" },
     error: { ...typography.smallBody, color: colors.destructive },
     rectCta: {
       borderRadius: radius.lg,

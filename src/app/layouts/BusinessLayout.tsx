@@ -122,7 +122,7 @@ export function BusinessLayout() {
           <div className="relative z-10">
             {isAppReady ? (
               isLargeScreen ? <BusinessSidebar /> : null
-            ) : isLargeScreen && !globalLoaderActive ? (
+            ) : isLargeScreen && !globalLoaderActive && user?.role === "business" ? (
               <SidebarSkeleton />
             ) : null}
             <BusinessMobileSidebar isOpen={mobileMenuOpen} onClose={closeMobileMenu} />

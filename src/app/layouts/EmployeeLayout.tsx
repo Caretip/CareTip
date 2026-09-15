@@ -87,7 +87,7 @@ export function EmployeeLayout() {
         <div className="relative z-10">
           {isAppReady ? (
             isLargeScreen ? <EmployeeSidebar businessBranding={branding} /> : null
-          ) : isLargeScreen && !globalLoaderActive ? (
+          ) : isLargeScreen && !globalLoaderActive && user?.role === "employee" ? (
             <SidebarSkeleton />
           ) : null}
           <EmployeeMobileSidebar

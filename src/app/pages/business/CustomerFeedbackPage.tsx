@@ -21,6 +21,7 @@ import { BusinessSubPageShellSkeleton } from "@/app/components/dashboard/Busines
 import { DashboardListSkeleton } from "@/app/components/dashboard/DashboardSectionLoading";
 import { useBusinessPageBoot } from "@/app/lib/useBusinessPageBoot";
 import { CustomerFeedbackListItem } from "@/app/components/business/CustomerFeedbackListItem";
+import { localizeFeedbackTag } from "@/app/lib/feedbackTagLabels";
 import { BusinessStatCard } from "@/app/components/business/BusinessStatCard";
 import { CountUpMetric } from "@/app/components/dashboard/CountUpMetric";
 import { businessUi } from "@/app/components/business/businessDashboardUi";
@@ -506,7 +507,7 @@ export function CustomerFeedbackPage() {
                         key={tag}
                         className="flex items-center justify-between gap-2 text-sm"
                       >
-                        <span className="truncate font-medium text-foreground">{tag}</span>
+                        <span className="truncate font-medium text-foreground">{localizeFeedbackTag(tag, t)}</span>
                         <span className="tabular-nums text-muted-foreground">{count}</span>
                       </li>
                     ))}
@@ -532,7 +533,7 @@ export function CustomerFeedbackPage() {
                         key={tag}
                         className="flex items-center justify-between gap-2 text-sm"
                       >
-                        <span className="truncate font-medium text-foreground">{tag}</span>
+                        <span className="truncate font-medium text-foreground">{localizeFeedbackTag(tag, t)}</span>
                         <span className="tabular-nums text-muted-foreground">{count}</span>
                       </li>
                     ))}
