@@ -1,4 +1,4 @@
-import { createBillingCheckoutSession } from "@/app/lib/api";
+import { createBillingCheckoutSession, fetchMerchantLegalAcceptanceStatus } from "@/app/lib/api";
 import { primeCheckoutSyncExpectation } from "@/app/lib/checkoutIntent";
 import { toUserFriendlyMessage } from "@/app/lib/errorMessages";
 import {
@@ -61,6 +61,16 @@ export async function startActivationCheckout(
 
     const result = await withIdleSuppress("billing-checkout-create", async () => {
       primeCheckoutSyncExpectation("premium");
+      try {
+        const status = await fetchMerchantLegalAcceptanceStatus();
+        if (!status.accepted) {
+          // No inline checkbox here — route to billing trial UI for legal acceptance.
+          await closeOverlayThenTrialNavigate(options?.navigate, options?.closeBeforeNavigate);
+          return "trial_navigated" as const;
+        }
+      } catch {
+        /* If status cannot be loaded, still attempt checkout; backend will enforce. */
+      }
       const session = await createBillingCheckoutSession({
         planKey: "premium",
         billingCycle: "monthly",

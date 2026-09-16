@@ -1,7 +1,7 @@
 import { useMemo, useRef, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
+import { Linking, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import { Redirect, useLocalSearchParams, useRouter } from "expo-router";
 import { AuthExperienceShell } from "@/components/auth/AuthExperienceShell";
 import { AuthField } from "@/components/auth/AuthField";
@@ -22,6 +22,7 @@ import { authCardStyles, authFloatingDivider } from "@/components/auth/authCardS
 import { authBrand } from "@/theme/authBrand";
 import { spacing, touchTarget, typography } from "@/theme";
 import type { OAuthProvider } from "@/types/auth";
+import { authWebPaths, resolveAuthWebUrl } from "@/constants/authLinks";
 
 function goToSignupChoice(router: ReturnType<typeof useRouter>) {
   if (router.canGoBack()) router.back();
@@ -38,6 +39,7 @@ export function RegisterScreen() {
   const { t } = useI18n();
   const params = useLocalSearchParams<{ role?: string; inviteCode?: string; businessName?: string }>();
   const [formError, setFormError] = useState<string | null>(null);
+  const [merchantLegalAccepted, setMerchantLegalAccepted] = useState(false);
   const passwordRef = useRef<TextInput>(null);
   const managerRegisterSchema = useMemo(() => createManagerRegisterSchema(t), [t]);
 
@@ -86,17 +88,30 @@ export function RegisterScreen() {
   const busy = isSubmitting || socialBusy;
 
   const onSocial = (provider: OAuthProvider) => {
-    void runSocialAuth(provider, { isLogin: false, intendedRole: "MANAGER" });
+    if (!merchantLegalAccepted) {
+      setFormError(t("auth.merchantLegalRequired"));
+      return;
+    }
+    void runSocialAuth(provider, {
+      isLogin: false,
+      intendedRole: "MANAGER",
+      merchantLegalAccepted: true,
+    });
   };
 
   const onSubmit = handleSubmit(async (values) => {
     setFormError(null);
+    if (!merchantLegalAccepted) {
+      setFormError(t("auth.merchantLegalRequired"));
+      return;
+    }
     try {
       const created = await authService.register({
         email: values.email.trim(),
         password: values.password,
         role: "business",
         locale: resolveLoginLocale(),
+        merchantLegalAccepted: true,
       });
       router.replace({
         pathname: "/(auth)/verify-email",
@@ -106,6 +121,10 @@ export function RegisterScreen() {
       setFormError(friendlyErrorMessage(error, t("auth.registerFailed"), t));
     }
   });
+
+  const openLegal = (path: string) => {
+    void Linking.openURL(resolveAuthWebUrl(path));
+  };
 
   return (
     <AuthExperienceShell showSecondaryActions={false}>
@@ -200,11 +219,40 @@ export function RegisterScreen() {
           </Text>
         ) : null}
 
+        <Pressable
+          accessibilityRole="checkbox"
+          accessibilityState={{ checked: merchantLegalAccepted }}
+          onPress={() => setMerchantLegalAccepted((v) => !v)}
+          style={styles.legalRow}
+        >
+          <View style={[styles.checkbox, merchantLegalAccepted && styles.checkboxChecked]} />
+          <Text style={styles.legalText}>
+            {t("auth.merchantLegalPrefix")}{" "}
+            <Text style={styles.legalLink} onPress={() => openLegal(authWebPaths.terms)}>
+              {t("auth.merchantLegalTerms")}
+            </Text>
+            {", "}
+            <Text style={styles.legalLink} onPress={() => openLegal(authWebPaths.avv)}>
+              {t("auth.merchantLegalDpa")}
+            </Text>
+            {", "}
+            <Text style={styles.legalLink} onPress={() => openLegal(authWebPaths.plv)}>
+              {t("auth.merchantLegalPlv")}
+            </Text>
+            {". "}
+            {t("auth.merchantLegalPrivacyPrefix")}{" "}
+            <Text style={styles.legalLink} onPress={() => openLegal(authWebPaths.privacy)}>
+              {t("auth.merchantLegalPrivacy")}
+            </Text>
+            .
+          </Text>
+        </Pressable>
+
         <AuthContinueButton
           label={t("auth.createBusinessAccountCta")}
           onPress={onSubmit}
           loading={isSubmitting}
-          disabled={socialBusy}
+          disabled={socialBusy || !merchantLegalAccepted}
         />
 
         <Pressable
@@ -259,5 +307,34 @@ const styles = StyleSheet.create({
     ...typography.body,
     color: authBrand.orange,
     fontWeight: "700",
+  },
+  legalRow: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: spacing.sm,
+    paddingVertical: spacing.xs,
+  },
+  checkbox: {
+    marginTop: 2,
+    width: 18,
+    height: 18,
+    borderRadius: 4,
+    borderWidth: 1.5,
+    borderColor: authBrand.heroSubtitle,
+  },
+  checkboxChecked: {
+    backgroundColor: authBrand.orange,
+    borderColor: authBrand.orange,
+  },
+  legalText: {
+    flex: 1,
+    ...typography.caption,
+    color: authBrand.heroSubtitle,
+    lineHeight: 18,
+  },
+  legalLink: {
+    color: authBrand.orange,
+    fontWeight: "600",
+    textDecorationLine: "underline",
   },
 });

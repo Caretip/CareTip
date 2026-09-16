@@ -607,6 +607,21 @@ const routes: RouteObject[] = [
     errorElement: <ErrorBoundary />,
   },
   {
+    path: '/avv',
+    lazy: routeLazy(() => import('./pages/AvvPage'), 'AvvPage'),
+    errorElement: <ErrorBoundary />,
+  },
+  {
+    path: '/dpa',
+    element: <Navigate to="/avv" replace />,
+    errorElement: <ErrorBoundary />,
+  },
+  {
+    path: '/plv',
+    lazy: routeLazy(() => import('./pages/PlvPage'), 'PriceServicesListPage'),
+    errorElement: <ErrorBoundary />,
+  },
+  {
     path: '/about',
     lazy: routeLazy(() => import('./pages/AboutPage'), 'AboutPage'),
     errorElement: <ErrorBoundary />,

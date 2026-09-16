@@ -20,6 +20,7 @@ import {
 } from '../lib/authSignInHandoff';
 import { useSignalLogoutAuthPageReady } from '../lib/useSignalLogoutAuthPageReady';
 import { AuthOAuthButtons } from './AuthOAuthButtons';
+import { MerchantLegalAcceptanceCheckbox } from './legal/MerchantLegalAcceptanceCheckbox';
 import { SignInCard2, type AuthRole } from '@/components/ui/sign-in-card-2';
 import { useAuth, type User, parseUser } from '../hooks/useAuth';
 import { Eye, EyeOff, Check } from 'lucide-react';
@@ -144,6 +145,7 @@ export function AuthPage() {
   const [pendingMfaToken, setPendingMfaToken] = useState('');
   const [mfaSetupRequired, setMfaSetupRequired] = useState(false);
   const [otpCode, setOtpCode] = useState('');
+  const [merchantLegalAccepted, setMerchantLegalAccepted] = useState(false);
   const { login, register, loginWithOAuth, logout, user, sessionValidated, authStatus, completeAuthLogin } = useAuth();
   const authInFlightRef = useRef(false);
   const postAuthRedirectRef = useRef<string | null>(null);
@@ -335,6 +337,10 @@ export function AuthPage() {
         setError(t("auth.page.errorInviteRequired"));
         return;
       }
+      if (authLane === 'business' && !merchantLegalAccepted) {
+        setError(t("auth.merchantLegalAcceptance.requiredError"));
+        return;
+      }
     }
 
     if (authInFlightRef.current) return;
@@ -364,6 +370,7 @@ export function AuthPage() {
           name: name.trim() ? name.trim() : undefined,
           role: role as 'business' | 'employee',
           inviteCode: authLane === 'employee' ? resolvedInviteCode : undefined,
+          ...(authLane === 'business' ? { merchantLegalAccepted: true } : {}),
         };
         if (authLane === 'employee') {
           await validateInviteCode(resolvedInviteCode);
@@ -543,6 +550,10 @@ export function AuthPage() {
         return;
       }
     }
+    if (!isLogin && authLane === 'business' && !merchantLegalAccepted) {
+      setError(t("auth.merchantLegalAcceptance.requiredError"));
+      return;
+    }
     if (authInFlightRef.current) return;
     authInFlightRef.current = true;
     beginAuthSignInHandoff();
@@ -562,6 +573,7 @@ export function AuthPage() {
               intendedRole: role,
               name: name.trim() ? name.trim() : undefined,
               inviteCode: authLane === 'employee' ? resolvedInviteCode : undefined,
+              ...(authLane === 'business' ? { merchantLegalAccepted: true } : {}),
             }
           : {}),
       });
@@ -608,7 +620,8 @@ export function AuthPage() {
       !validateEmail(email) ||
       !isPasswordStrong(password) ||
       password !== confirmPassword ||
-      employeeSignupIncomplete);
+      employeeSignupIncomplete ||
+      (authLane === 'business' && !merchantLegalAccepted));
 
   const showEmployeeSignupFields = !isLogin && authLane === 'employee';
 
@@ -749,6 +762,8 @@ export function AuthPage() {
               pendingMfaToken ? undefined : () => void handleResendVerification()
             }
             onSocialCredential={(provider, token) => void runSocialOAuth(provider, token)}
+            merchantLegalAccepted={merchantLegalAccepted}
+            onMerchantLegalAcceptedChange={setMerchantLegalAccepted}
             sessionBanner={showAuthenticatedSessionHint ? sessionHintBanner : null}
           />
         ) : null}
@@ -1060,6 +1075,14 @@ export function AuthPage() {
                 </Link>
               </div>
             )}
+
+            {!isLogin && authLane === 'business' ? (
+              <MerchantLegalAcceptanceCheckbox
+                checked={merchantLegalAccepted}
+                onCheckedChange={setMerchantLegalAccepted}
+                className="pt-1"
+              />
+            ) : null}
 
             <AuthStableSubmitButton
               type="submit"

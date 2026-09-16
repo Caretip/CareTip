@@ -16,6 +16,7 @@ import { BusinessSettingsAppearancePanel } from "../../components/business/setti
 import { BusinessSettingsSecurityPanel } from "../../components/business/settings/BusinessSettingsSecurityPanel";
 import { BusinessSettingsNotificationsPanel } from "../../components/business/settings/BusinessSettingsNotificationsPanel";
 import { BusinessSettingsIntegrationsPanel } from "../../components/business/settings/BusinessSettingsIntegrationsPanel";
+import { BusinessSettingsPrivacyLegalPanel } from "../../components/business/settings/BusinessSettingsPrivacyLegalPanel";
 import { useBusinessSettingsData } from "../../components/business/settings/useBusinessSettingsData";
 import { dashboardWorkspaceUi } from "@/app/components/dashboard/dashboardWorkspaceUi";
 import { businessUi } from "@/app/components/business/businessDashboardUi";
@@ -80,6 +81,7 @@ export function BusinessSettingsPage() {
           {section === "notifications" ? <BusinessSettingsNotificationsPanel {...settings} /> : null}
           {section === "security" ? <BusinessSettingsSecurityPanel {...settings} /> : null}
           {section === "integrations" ? <BusinessSettingsIntegrationsPanel /> : null}
+          {section === "privacy-legal" ? <BusinessSettingsPrivacyLegalPanel /> : null}
         </div>
       </div>
     </main>

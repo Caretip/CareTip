@@ -1704,6 +1704,11 @@
       "body": "You do not have permission to view this page. If you are a platform administrator, sign in from the platform admin login.",
       "home": "Home",
       "platformLogin": "Platform admin login"
+    },
+    "merchantLegalAcceptance": {
+      "label": "I accept the <terms>Terms of Service</terms>, the <dpa>Data Processing Agreement (DPA)</dpa>, and the <plv>Price & Services List</plv>. I have read and acknowledged the <privacy>Privacy Policy</privacy>.",
+      "requiredHint": "Required to create a business account.",
+      "requiredError": "Please accept the Terms of Service, DPA, Price & Services List, and acknowledge the Privacy Policy to continue."
     }
   },
   "notifications": {
@@ -3617,7 +3622,9 @@
     "terms": "Terms",
     "cookies": "Cookies",
     "cookieSettings": "Cookie settings",
-    "imprint": "Imprint"
+    "imprint": "Imprint",
+    "dpa": "DPA / AVV",
+    "plv": "Price & Services List"
   },
   "employee": {
     "earnings_today": "Today",
@@ -6080,7 +6087,9 @@
         "integrations": "Integrations",
         "integrationsDesc": "Connect third-party tools and webhooks",
         "language": "Language",
-        "languageDesc": "Display language for your dashboard"
+        "languageDesc": "Display language for your dashboard",
+        "privacyLegal": "Privacy & Legal",
+        "privacyLegalDesc": "View CareTip legal documents including DPA and Price & Services List"
       },
       "integrations": {
         "comingSoon": "POS, PMS, and webhook integrations are coming soon."
@@ -6114,6 +6123,18 @@
         "brandingDesc": "Customize guest-facing QR experiences",
         "brandingCardTitle": "QR code management",
         "brandingCardDesc": "Download, print, and regenerate venue and staff QR codes"
+      },
+      "privacyLegal": {
+        "termsTitle": "Terms of Service",
+        "termsDesc": "Merchant terms hosted by CareTip (content managed by IT-Recht Kanzlei).",
+        "privacyTitle": "Privacy Policy",
+        "privacyDesc": "Privacy policy hosted by CareTip (content managed by IT-Recht Kanzlei).",
+        "dpaTitle": "Data Processing Agreement (DPA / AVV)",
+        "dpaDesc": "CareTip-controlled processing agreement PDF for merchants.",
+        "plvTitle": "Price & Services List (PLV)",
+        "plvDesc": "CareTip-controlled price and services list PDF (valid from August 2026).",
+        "view": "View",
+        "download": "Download"
       }
     },
     "branding": {
@@ -8689,6 +8710,12 @@
     "loading": "Loading document…",
     "loadError": "We couldn't load this document. Please try again.",
     "tryAgain": "Try again",
-    "versionLine": "Version {{version}} · Updated {{date}}"
+    "versionLine": "Version {{version}} · Updated {{date}}",
+    "dpaTitle": "Data Processing Agreement (DPA / AVV)",
+    "plvTitle": "Price & Services List (PLV)",
+    "dpaBlurb": "CareTip data processing agreement for merchants (Art. 28 GDPR). Open or download the official PDF.",
+    "plvBlurb": "Official CareTip price and services list for merchants. Open or download the official PDF.",
+    "viewPdf": "View PDF",
+    "downloadPdf": "Download PDF"
   }
 }

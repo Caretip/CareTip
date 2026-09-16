@@ -38,6 +38,12 @@ import {
   AUTH_OAUTH_SIGN_IN_FAILED_CODE,
 } from "../services/authDisclosureMessages.js";
 import * as auditService from "../services/audit.service.js";
+import {
+  MERCHANT_LEGAL_ACCEPTANCE_CONTEXT,
+  MERCHANT_LEGAL_ACCEPTANCE_REQUIRED_MSG,
+  assertAndRecordMerchantLegalAcceptance,
+  parseMerchantLegalAcceptedFlag,
+} from "../lib/merchantLegalAcceptance.js";
 import * as mfaLoginService from "../services/mfaLogin.service.js";
 import {
   MFA_CHALLENGE_EXPIRED,
@@ -292,6 +298,16 @@ export async function register(req: Request, res: Response) {
     }
 
     if (role === "business") {
+      if (
+        !parseMerchantLegalAcceptedFlag(
+          body.merchantLegalAccepted ?? body.legalAccepted ?? body.acceptMerchantLegal,
+        )
+      ) {
+        return res.status(400).json({
+          message: MERCHANT_LEGAL_ACCEPTANCE_REQUIRED_MSG,
+          code: "MERCHANT_LEGAL_ACCEPTANCE_REQUIRED",
+        });
+      }
       const result = await authService.registerBusiness(
         {
           email,
@@ -301,6 +317,17 @@ export async function register(req: Request, res: Response) {
         },
         { acceptLanguage, platform },
       );
+      try {
+        await assertAndRecordMerchantLegalAcceptance({
+          userId: result.user.id,
+          accepted: true,
+          context: MERCHANT_LEGAL_ACCEPTANCE_CONTEXT.signup,
+          language: locale ?? acceptLanguage?.slice(0, 2),
+          businessId: result.user.businessId ?? null,
+        });
+      } catch (acceptErr) {
+        logServerError("auth.register.merchantLegalAcceptance", acceptErr);
+      }
       clearRefreshCookie(res);
       return res.status(201).json(result);
     }
@@ -853,6 +880,19 @@ export async function oauth(req: Request, res: Response) {
       });
     }
 
+    if (
+      !isLogin &&
+      intendedRole === "MANAGER" &&
+      !parseMerchantLegalAcceptedFlag(
+        body.merchantLegalAccepted ?? body.legalAccepted ?? body.acceptMerchantLegal,
+      )
+    ) {
+      return res.status(400).json({
+        message: MERCHANT_LEGAL_ACCEPTANCE_REQUIRED_MSG,
+        code: "MERCHANT_LEGAL_ACCEPTANCE_REQUIRED",
+      });
+    }
+
     const locale =
       typeof body.locale === "string" && body.locale.trim() ? body.locale.trim() : undefined;
     const result = await oauthAuthService.authenticateWithOAuth(
@@ -937,6 +977,19 @@ export async function oauth(req: Request, res: Response) {
           isLogin,
         }),
       );
+      if (!isLogin && session.user.role === "MANAGER") {
+        try {
+          await assertAndRecordMerchantLegalAcceptance({
+            userId: session.user.id,
+            accepted: true,
+            context: MERCHANT_LEGAL_ACCEPTANCE_CONTEXT.oauth_signup,
+            language: locale ?? req.get("accept-language")?.slice(0, 2),
+            businessId: session.user.businessId ?? null,
+          });
+        } catch (acceptErr) {
+          logServerError("auth.oauth.merchantLegalAcceptance", acceptErr);
+        }
+      }
       return res.status(isLogin ? 200 : 201).json(session);
     } catch (e) {
       logServerError("auth.oauth.issueRefreshToken", e);

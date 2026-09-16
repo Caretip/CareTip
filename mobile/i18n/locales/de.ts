@@ -152,6 +152,14 @@ export const de: MobileMessages = {
     haveInviteCta: "Ich habe eine Einladung",
     registerFailed:
       "Konto konnte nicht erstellt werden. Wenn Sie bereits ein CareTip-Konto haben, melden Sie sich an oder nutzen Sie „Passwort vergessen“.",
+    merchantLegalRequired:
+      "Bitte akzeptieren Sie die AGB, die AVV und das Preis- und Leistungsverzeichnis und bestätigen Sie die Datenschutzerklärung, um fortzufahren.",
+    merchantLegalPrefix: "Ich akzeptiere die",
+    merchantLegalTerms: "Allgemeinen Geschäftsbedingungen",
+    merchantLegalDpa: "Vereinbarung zur Auftragsverarbeitung (AVV)",
+    merchantLegalPlv: "Preis- und Leistungsverzeichnis",
+    merchantLegalPrivacyPrefix: "Ich habe gelesen und zur Kenntnis genommen die",
+    merchantLegalPrivacy: "Datenschutzerklärung",
     inviteCode: "Einladungscode",
     forgotPasswordTitle: "Passwort vergessen",
     forgotPasswordSubtitle: "Geben Sie Ihre E-Mail ein. Wir senden einen Link zum Zurücksetzen.",

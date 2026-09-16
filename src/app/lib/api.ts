@@ -774,6 +774,8 @@ export async function registerAPI(payload: {
   inviteCode?: string;
   /** Sent as `locale` for email + `users.preferred_locale` on sign-up. */
   locale?: "en" | "de";
+  /** Required for business (merchant) registration. */
+  merchantLegalAccepted?: boolean;
 }): Promise<RegisterPendingResponse> {
   return apiRequest<RegisterPendingResponse>(apiPath("/api/auth/register"), {
     method: "POST",
@@ -1067,6 +1069,7 @@ export async function oauthAPI(payload: {
   location?: string;
   inviteCode?: string;
   locale?: "en" | "de";
+  merchantLegalAccepted?: boolean;
 }): Promise<LoginApiResult> {
   const timeZone = getBrowserTimeZone();
   const raw = await apiRequest<unknown>(apiPath("/api/auth/oauth"), {
@@ -1085,6 +1088,7 @@ export async function oauthAPI(payload: {
       ...(payload.location ? { location: payload.location } : {}),
       ...(payload.inviteCode ? { inviteCode: payload.inviteCode } : {}),
       ...(payload.locale ? { locale: payload.locale } : {}),
+      ...(payload.merchantLegalAccepted === true ? { merchantLegalAccepted: true } : {}),
       ...(timeZone ? { timeZone } : {}),
     }),
     credentials: "include",
@@ -1504,15 +1508,8 @@ export async function downloadBusinessTransactionsExport(
   const dateStr = venueLocalTodayKey(resolveBusinessTimezone());
   const rangeSuffix = range ? `_${range}` : "";
   const filename = `CareTip_Transactions${rangeSuffix}_${dateStr}.csv`;
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = filename;
-  a.rel = "noopener";
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
+  const { downloadBlobAsFile } = await import("./downloadBlobAsFile");
+  downloadBlobAsFile(blob, filename);
 
   try {
     const { recordFeatureUtilizationNow } = await import("./commercial/featureUtilizationTracker");
@@ -3361,12 +3358,35 @@ export async function createBillingCheckoutSession(params: {
   includeTrial?: boolean;
   /** billing = dashboard upgrade (default); onboarding = pricing → signup flow */
   checkoutFlow?: "billing" | "onboarding";
+  /** Required when the merchant has not yet recorded B2B legal acceptance. */
+  merchantLegalAccepted?: boolean;
 }): Promise<{ sessionId: string; url: string | null }> {
   return apiRequest(apiPath("/api/me/billing/checkout"), {
     method: "POST",
     headers: getHeaders(),
     credentials: "include",
     body: JSON.stringify(params),
+  });
+}
+
+export async function fetchMerchantLegalAcceptanceStatus(): Promise<{
+  accepted: boolean;
+  documents: {
+    termsPath: string;
+    privacyPath: string;
+    dpaPath: string;
+    plvPath: string;
+    termsVersion: string;
+    privacyVersion: string;
+    dpaContentSha256: string;
+    plvContentSha256: string;
+    plvValidFrom: string;
+  };
+}> {
+  return apiRequest(apiPath("/api/legal/merchant-acceptance-status"), {
+    method: "GET",
+    headers: getHeaders(),
+    credentials: "include",
   });
 }
 
@@ -3911,15 +3931,8 @@ export async function downloadMyDataExport(): Promise<void> {
     throw new Error(toUserFriendlyMessage(new Error("Could not download your data.")));
   }
   const blob = await res.blob();
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = `caretip-my-data-${new Date().toISOString().slice(0, 10)}.json`;
-  a.rel = "noopener";
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
+  const { downloadBlobAsFile } = await import("./downloadBlobAsFile");
+  downloadBlobAsFile(blob, `caretip-my-data-${new Date().toISOString().slice(0, 10)}.json`);
 }
 
 export async function deleteMyEmployeeAccount(): Promise<void> {
@@ -4713,16 +4726,11 @@ export async function downloadPlatformPhysicalQrOrderPrint(
     throw new Error(message);
   }
   const blob = await res.blob();
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download =
-    format === "png" ? `caretip-a5-${orderId}.png` : `caretip-a5-${orderId}.pdf`;
-  a.rel = "noopener";
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  URL.revokeObjectURL(url);
+  const { downloadBlobAsFile } = await import("./downloadBlobAsFile");
+  downloadBlobAsFile(
+    blob,
+    format === "png" ? `caretip-a5-${orderId}.png` : `caretip-a5-${orderId}.pdf`,
+  );
 }
 
 export async function downloadPlatformPhysicalQrOrdersZip(orderIds: string[]): Promise<{
@@ -4753,15 +4761,8 @@ export async function downloadPlatformPhysicalQrOrdersZip(orderIds: string[]): P
   const failed = Number(res.headers.get("X-CareTip-Print-Failed") ?? "0");
   const requested = Number(res.headers.get("X-CareTip-Print-Requested") ?? orderIds.length);
   const blob = await res.blob();
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = "caretip-physical-qr-prints.zip";
-  a.rel = "noopener";
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  URL.revokeObjectURL(url);
+  const { downloadBlobAsFile } = await import("./downloadBlobAsFile");
+  downloadBlobAsFile(blob, "caretip-physical-qr-prints.zip");
   return {
     prepared: Number.isFinite(prepared) ? prepared : 0,
     failed: Number.isFinite(failed) ? failed : 0,
@@ -5223,15 +5224,8 @@ export async function downloadPlatformRefundsCsv(params: {
     throw new Error("No refund data available");
   }
   const blob = await res.blob();
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = "caretip-refunds-ledger.csv";
-  a.rel = "noopener";
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  URL.revokeObjectURL(url);
+  const { downloadBlobAsFile } = await import("./downloadBlobAsFile");
+  downloadBlobAsFile(blob, "caretip-refunds-ledger.csv");
 }
 
 export type PlatformBusinessOperationalStatus = "active" | "suspended" | "inactive";

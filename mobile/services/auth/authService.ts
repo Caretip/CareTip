@@ -191,6 +191,7 @@ export async function oauthLogin(payload: OAuthRequest): Promise<SignInResult> {
       ...(payload.inviteCode ? { inviteCode: normalizeInviteCode(payload.inviteCode) } : {}),
       ...(payload.locale ? { locale: payload.locale } : {}),
       ...(payload.timeZone ? { timeZone: payload.timeZone } : {}),
+      ...(payload.merchantLegalAccepted === true ? { merchantLegalAccepted: true } : {}),
     });
 
     logOAuthFlowDiag("response", {

@@ -149,6 +149,14 @@ export const en: MobileMessages = {
     haveInviteCta: "I have an invite",
     registerFailed:
       "We couldn't create your account with these details. If you already have a CareTip account, please sign in or use Forgot Password to recover access.",
+    merchantLegalRequired:
+      "Please accept the Terms of Service, DPA, Price & Services List, and acknowledge the Privacy Policy to continue.",
+    merchantLegalPrefix: "I accept the",
+    merchantLegalTerms: "Terms of Service",
+    merchantLegalDpa: "Data Processing Agreement (DPA)",
+    merchantLegalPlv: "Price & Services List",
+    merchantLegalPrivacyPrefix: "I have read and acknowledged the",
+    merchantLegalPrivacy: "Privacy Policy",
     inviteCode: "Invite Code",
     forgotPasswordTitle: "Forgot Password",
     forgotPasswordSubtitle: "Enter your email and we'll send a reset link.",

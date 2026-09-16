@@ -51,3 +51,5 @@
 @import "../caretip-public-web-design.css";
 /* CTA size/radius lock — after redesign so action buttons match Business Dashboard hero */
 @import "../caretip-landing-cta-size.css";
+/* Optical balancing — spacing/composition only; must load last */
+@import "../caretip-marketing-pages-optical-balance.css";

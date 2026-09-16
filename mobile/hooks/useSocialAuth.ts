@@ -47,6 +47,7 @@ type SocialAuthMode = {
   intendedRole?: UserRole;
   name?: string;
   inviteCode?: string;
+  merchantLegalAccepted?: boolean;
 };
 
 type UseSocialAuthOptions = {
@@ -156,6 +157,9 @@ export function useSocialAuth(options?: UseSocialAuthOptions) {
           inviteCode: mode.inviteCode,
           locale: resolveLoginLocale(),
           timeZone: resolveTimeZone(),
+          ...(mode.merchantLegalAccepted === true
+            ? { merchantLegalAccepted: true }
+            : {}),
         });
 
         if (isMfaChallenge(result)) {

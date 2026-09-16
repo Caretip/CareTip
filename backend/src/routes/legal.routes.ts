@@ -5,6 +5,7 @@ import {
   legalWebhookBodyParser,
 } from "../middleware/legalWebhookBody.middleware.js";
 import { legalWebhookJsonAuth } from "../middleware/legalWebhookJsonAuth.middleware.js";
+import { authMiddleware } from "../middleware/auth.middleware.js";
 import type { RequestHandler } from "express";
 
 const router = Router();
@@ -21,6 +22,25 @@ const legalWebhookAuthGate: RequestHandler = (req, res, next) => {
 router.get("/privacy", legalController.getPrivacyDocument);
 router.get("/terms", legalController.getTermsDocument);
 router.get("/impressum", legalController.getImpressumDocument);
+/** Public CareTip-controlled PDFs (identical for all merchants). */
+router.get("/controlled", legalController.listCareTipControlledLegalDocuments);
+router.get("/avv.pdf", (req, res, next) => {
+  req.params.docId = "avv";
+  void legalController.getCareTipControlledPdf(req, res, next);
+});
+router.get("/dpa.pdf", (req, res, next) => {
+  req.params.docId = "avv";
+  void legalController.getCareTipControlledPdf(req, res, next);
+});
+router.get("/plv.pdf", (req, res, next) => {
+  req.params.docId = "plv";
+  void legalController.getCareTipControlledPdf(req, res, next);
+});
+router.get(
+  "/merchant-acceptance-status",
+  authMiddleware,
+  legalController.getMerchantLegalAcceptanceStatus,
+);
 router.post("/webhook", legalWebhookBodyParser, legalWebhookAuthGate, legalController.postLegalWebhook);
 
 export default router;

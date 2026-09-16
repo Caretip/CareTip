@@ -1,0 +1,217 @@
+/**
+ * Marketing pages — optical balancing pass (spacing / composition only).
+ * Typography (font-size, weight, line-height, letter-spacing) is intentionally untouched.
+ * Loads last in landing + marketing bundles so it can correct cascade conflicts.
+ */
+
+/* =============================================================================
+   1. Landing hero — exit rhythm + min-height (no vh-forced dead zones)
+   ============================================================================= */
+
+/* Mobile: marketing-mobile-headline forced min(100svh) + ~1.15rem bottom pad →
+   top-heavy stack with a clipped exit into the next section. Restore calm bottom
+   breathing room and a content-led min-height without filling the whole viewport. */
+@media (max-width: 767px) {
+  .caretip-landing.caretip-landing--premium .caretip-hero-section--fullbleed-light,
+  .caretip-landing.caretip-landing--premium .caretip-hero-section--fullbleed-dark,
+  .caretip-landing .caretip-hero-section.caretip-hero-section--fullbleed-light,
+  .caretip-landing .caretip-hero-section.caretip-hero-section--fullbleed-dark {
+    min-height: clamp(26rem, 78svh, 36rem);
+    --caretip-hero-fullbg-min-h: clamp(26rem, 78svh, 36rem);
+    /* Keep nav clearance; open the bottom exit into industries */
+    padding-top: calc(clamp(4.5rem, 4.65rem + 0.35vh, 5.15rem) + env(safe-area-inset-top, 0px)) !important;
+    padding-bottom: calc(2.5rem + env(safe-area-inset-bottom, 0px)) !important;
+    /* Rem-based narrative gaps — avoid vh drift that disconnects CTA from copy */
+    --caretip-hero-gap-tagline: 0.7rem;
+    --caretip-hero-gap-headline-body: 0.7rem;
+    --caretip-hero-gap-body-cta: 1.05rem;
+  }
+
+  .caretip-landing .caretip-hero-section--fullbleed-dark .caretip-hero-cta-cluster,
+  .caretip-landing .caretip-hero-section--fullbleed-light .caretip-hero-cta-cluster {
+    margin-top: 1rem;
+  }
+
+  .caretip-landing .caretip-hero-full-bg-content.caretip-hero-copy,
+  .caretip-landing .caretip-hero-copy-block {
+    gap: 0.55rem;
+  }
+}
+
+@media (min-width: 768px) and (max-width: 1023px) {
+  .caretip-landing.caretip-landing--premium .caretip-hero-section--fullbleed-light,
+  .caretip-landing.caretip-landing--premium .caretip-hero-section--fullbleed-dark,
+  .caretip-landing .caretip-hero-section.caretip-hero-section--fullbleed-light,
+  .caretip-landing .caretip-hero-section.caretip-hero-section--fullbleed-dark {
+    min-height: clamp(24rem, 72svh, 34rem);
+    --caretip-hero-fullbg-min-h: clamp(24rem, 72svh, 34rem);
+    padding-bottom: clamp(2.25rem, 4vw, 3rem) !important;
+    --caretip-hero-gap-tagline: 0.75rem;
+    --caretip-hero-gap-headline-body: 0.8rem;
+    --caretip-hero-gap-body-cta: 1.2rem;
+  }
+}
+
+/* Desktop: soften asymmetric pad (was ~88 / 32) and vh min-height dead zones */
+@media (min-width: 1024px) {
+  .caretip-landing.caretip-landing--premium .caretip-hero-section--fullbleed-light,
+  .caretip-landing.caretip-landing--premium .caretip-hero-section--fullbleed-dark,
+  .caretip-landing .caretip-hero-section.caretip-hero-section--fullbleed-light,
+  .caretip-landing .caretip-hero-section.caretip-hero-section--fullbleed-dark {
+    min-height: clamp(30rem, 70svh, 42rem);
+    --caretip-hero-fullbg-min-h: clamp(30rem, 70svh, 42rem);
+    padding-top: clamp(5.5rem, 5rem + 1vw, 6.5rem) !important;
+    padding-bottom: clamp(2.75rem, 4.5vw, 3.75rem) !important;
+    --caretip-hero-gap-tagline: 0.85rem;
+    --caretip-hero-gap-headline-body: 1rem;
+    --caretip-hero-gap-body-cta: 1.5rem;
+  }
+
+  .caretip-landing .caretip-hero-section--fullbleed-light .caretip-hero-full-bg-content,
+  .caretip-landing .caretip-hero-section--fullbleed-dark .caretip-hero-full-bg-content {
+    padding-block: 0.5rem 1.75rem;
+  }
+}
+
+@media (min-width: 1280px) {
+  .caretip-landing.caretip-landing--premium .caretip-hero-section--fullbleed-light,
+  .caretip-landing.caretip-landing--premium .caretip-hero-section--fullbleed-dark,
+  .caretip-landing .caretip-hero-section.caretip-hero-section--fullbleed-light,
+  .caretip-landing .caretip-hero-section.caretip-hero-section--fullbleed-dark {
+    --caretip-hero-gap-body-cta: 1.625rem;
+    padding-bottom: clamp(3rem, 4vw, 4rem) !important;
+  }
+}
+
+/* =============================================================================
+   2. Landing section transitions — slightly calmer joins (mobile)
+   ============================================================================= */
+
+@media (max-width: 767px) {
+  .caretip-landing #industries.caretip-landing-industry-showcase,
+  .caretip-landing #industries {
+    padding-top: clamp(2.25rem, 5vw, 3rem);
+  }
+
+  .caretip-landing #final-cta.caretip-landing-final-cta,
+  .caretip-landing .caretip-landing-final-cta {
+    padding-top: 2.75rem;
+    padding-bottom: 2.75rem;
+  }
+
+  .caretip-landing .caretip-landing-footer {
+    padding-top: 1.25rem;
+  }
+}
+
+/* =============================================================================
+   3. Pricing hero — reclaim intended card padding (optical-refine overrode it)
+   ============================================================================= */
+
+/*
+ * `.caretip-public-page-hero-card__inner` in marketing-optical-refine sets a taller
+ * padding-block than `.caretip-pricing-hero-v2__card-inner`. Same element, later
+ * rule wins → airy pricing hero. Re-assert pricing rhythm with higher specificity.
+ */
+.caretip-pricing-page .caretip-pricing-hero-v2__card-inner {
+  padding-block: clamp(2rem, 3.5vw, 2.85rem);
+}
+
+.caretip-pricing-page .caretip-pricing-hero-v2__back {
+  margin-bottom: 0.75rem;
+}
+
+.caretip-pricing-page .caretip-pricing-hero-v2__features {
+  margin-top: 1.05rem;
+}
+
+.caretip-pricing-page .caretip-pricing-hero-v2__title {
+  margin-top: 0.7rem;
+}
+
+.caretip-pricing-page .caretip-pricing-hero-v2__subtitle {
+  margin-top: 0.7rem;
+}
+
+@media (min-width: 1024px) {
+  .caretip-pricing-page .caretip-pricing-hero-v2__card-inner {
+    padding-block: clamp(2.15rem, 3.25vw, 3rem);
+  }
+
+  .caretip-pricing-page .caretip-pricing-hero-v2__features {
+    margin-top: 1.15rem;
+  }
+}
+
+/* Plans section — slightly tighter start after hero (optical-refine was generous) */
+.caretip-pricing-page--wise .caretip-pricing-plans-wise {
+  padding-block-start: clamp(2.25rem, 4.5vw, 3.25rem);
+}
+
+/* =============================================================================
+   4. Shared public marketing pages — hero / main rhythm
+   ============================================================================= */
+
+/* Generic public hero cards (About / FAQ / Features) — keep presence, trim excess */
+.caretip-public-page .caretip-public-page-hero-card__inner:not(.caretip-pricing-hero-v2__card-inner) {
+  padding-block: clamp(2.35rem, 5.5vw, 3.65rem);
+}
+
+@media (max-width: 767px) {
+  .caretip-public-page .caretip-public-back-link {
+    margin-bottom: 0.25rem;
+  }
+}
+
+/* Contact / About — headline → lead stays connected to following content */
+.caretip-contact-page .caretip-contact-subhead,
+.caretip-about-page .caretip-about-hero-wise__body {
+  margin-top: clamp(0.85rem, 1.8vw, 1.15rem);
+}
+
+.caretip-faq-page .caretip-faq-content {
+  padding-block-start: clamp(1.75rem, 3.5vw, 2.5rem);
+}
+
+/* =============================================================================
+   5. Footer — denser legal column after AVV/PLV/cookies expansion
+   ============================================================================= */
+
+.caretip-site-footer .caretip-site-footer-col ul > li + li {
+  margin-top: 0.7rem;
+}
+
+@media (max-width: 767px) {
+  .caretip-site-footer .caretip-site-footer-link-columns {
+    row-gap: 1.75rem;
+  }
+
+  .caretip-site-footer .caretip-site-footer-columns {
+    margin-bottom: 2.5rem;
+  }
+
+  .caretip-site-footer > .relative.max-w-7xl {
+    padding-top: 2.5rem;
+    padding-bottom: 2.5rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .caretip-site-footer .caretip-site-footer-col ul > li + li {
+    margin-top: 0.65rem;
+  }
+}
+
+/* =============================================================================
+   6. Industry marketing pages — section join polish
+   ============================================================================= */
+
+.caretip-industry-page__steps,
+.caretip-industry-page__benefits {
+  padding-block: clamp(2.75rem, 5.5vw, 4.25rem);
+}
+
+.caretip-industry-page__faq {
+  padding-block-start: clamp(2.5rem, 5vw, 3.75rem);
+  padding-block-end: clamp(3.5rem, 7vw, 5rem);
+}

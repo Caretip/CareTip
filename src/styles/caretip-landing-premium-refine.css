@@ -236,6 +236,16 @@ html:not(.dark) .caretip-landing .caretip-showcase-float-card {
   }
 }
 
+/* Für Service-Teams — taller product image on mobile only (desktop keeps aspect-[5/4]) */
+@media (max-width: 767px) {
+  .caretip-landing #for-employees .caretip-showcase-visual-frame img {
+    aspect-ratio: 4 / 5 !important;
+    height: auto;
+    width: 100%;
+    object-fit: cover;
+  }
+}
+
 /* Employee / business split sections — CTA spacing handled by action-cluster gap */
 .caretip-landing #for-employees .caretip-landing-section-cta,
 .caretip-landing #for-employees .caretip-split-showcase-cta,

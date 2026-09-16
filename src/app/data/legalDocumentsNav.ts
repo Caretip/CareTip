@@ -2,6 +2,8 @@
 export const LEGAL_DOCUMENT_ROUTES = [
   { id: "terms", path: "/terms" },
   { id: "privacy", path: "/privacy" },
+  { id: "dpa", path: "/avv" },
+  { id: "plv", path: "/plv" },
   { id: "cookies", path: "/cookies" },
   { id: "imprint", path: "/imprint" },
 ] as const;

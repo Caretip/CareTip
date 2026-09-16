@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent, type ReactNode } from "react";
+import { type FormEvent, type ReactNode } from "react";
 import { Link } from "react-router";
 import { useTranslation } from "react-i18next";
 import { ArrowLeft, ChevronDown, ShieldCheck } from "lucide-react";
@@ -11,6 +11,7 @@ import { AuthHeader } from "./AuthHeader";
 import { AuthInput } from "./AuthInput";
 import { OTPInput } from "./OTPInput";
 import { SocialLoginRow } from "./SocialLoginRow";
+import { MerchantLegalAcceptanceCheckbox } from "@/app/components/legal/MerchantLegalAcceptanceCheckbox";
 import type { OAuthProviderId } from "@/app/lib/oauthProviderIds";
 import "@/styles/caretip-mobile-web-auth.css";
 
@@ -56,6 +57,8 @@ export type MobileWebAuthShellProps = {
   onResend?: () => void;
   onSocialCredential: (provider: OAuthProviderId, idToken: string) => void;
   sessionBanner?: ReactNode;
+  merchantLegalAccepted?: boolean;
+  onMerchantLegalAcceptedChange?: (v: boolean) => void;
 };
 
 export function MobileWebAuthShell({
@@ -84,11 +87,13 @@ export function MobileWebAuthShell({
   onResend,
   onSocialCredential,
   sessionBanner,
+  merchantLegalAccepted = false,
+  onMerchantLegalAcceptedChange,
 }: MobileWebAuthShellProps) {
   const { t, i18n } = useTranslation();
-  const [termsAccepted, setTermsAccepted] = useState(false);
   const isEmployee = authLane === "employee";
   const isLogin = mode === "login";
+  const legalGateOk = isLogin || isEmployee || merchantLegalAccepted;
   const allowSocialSignUp =
     isLogin ||
     !isEmployee ||
@@ -96,10 +101,6 @@ export function MobileWebAuthShell({
   const activeLang: AppLanguage = i18n.resolvedLanguage?.toLowerCase().startsWith("de")
     ? "de"
     : "en";
-
-  useEffect(() => {
-    if (mode !== "register") setTermsAccepted(false);
-  }, [mode]);
 
   const toggleLocale = () => {
     void changeAppLanguage(activeLang === "de" ? "en" : "de");
@@ -196,7 +197,7 @@ export function MobileWebAuthShell({
           <form
             className="mw-auth-form"
             onSubmit={(e) => {
-              if (!isLogin && !termsAccepted) {
+              if (!legalGateOk) {
                 e.preventDefault();
                 return;
               }
@@ -303,23 +304,14 @@ export function MobileWebAuthShell({
                   {t("auth.page.forgotPassword")}
                 </Link>
               </div>
-            ) : (
-              <label className="mw-auth-checkbox">
-                <input
-                  type="checkbox"
-                  className="mw-auth-checkbox__box"
-                  checked={termsAccepted}
-                  onChange={(e) => setTermsAccepted(e.target.checked)}
-                  disabled={busy}
-                />
-                <span className="mw-auth-checkbox__text">
-                  {t("auth.mobileWebAuth.agreePrefix")}{" "}
-                  <Link to="/terms" className="mw-auth-checkbox__link">
-                    {t("auth.mobileWebAuth.termsLink")}
-                  </Link>
-                </span>
-              </label>
-            )}
+            ) : !isEmployee ? (
+              <MerchantLegalAcceptanceCheckbox
+                checked={merchantLegalAccepted}
+                onCheckedChange={(v) => onMerchantLegalAcceptedChange?.(v)}
+                dense
+                className="mw-auth-checkbox"
+              />
+            ) : null}
 
             {error ? <p className="mw-auth-error">{error}</p> : <p className="mw-auth-error" />}
 
@@ -339,7 +331,7 @@ export function MobileWebAuthShell({
               loadingLabel={
                 isLogin ? t("common.loading.signingIn") : t("auth.page.creatingAccountWait")
               }
-              disabled={!isLogin && !termsAccepted}
+              disabled={!legalGateOk}
             >
               {isLogin ? t("auth.mobileWebAuth.logIn") : t("auth.mobileWebAuth.signUp")}
             </AuthButton>

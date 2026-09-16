@@ -45,6 +45,7 @@ export type OAuthRequest = {
   inviteCode?: string;
   locale?: AppLocale;
   timeZone?: string;
+  merchantLegalAccepted?: boolean;
 };
 
 export type LinkedOAuthAccount = {
@@ -104,6 +105,7 @@ export type RegisterRequest = {
   role: RegisterRole;
   inviteCode?: string;
   locale?: AppLocale;
+  merchantLegalAccepted?: boolean;
 };
 
 export type RegisterPendingResponse = {

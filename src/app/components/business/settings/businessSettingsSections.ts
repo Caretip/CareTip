@@ -6,7 +6,8 @@ export type BusinessSettingsSectionId =
   | "business"
   | "notifications"
   | "security"
-  | "integrations";
+  | "integrations"
+  | "privacy-legal";
 
 export type BusinessSettingsSection = {
   id: BusinessSettingsSectionId;
@@ -51,6 +52,12 @@ export const BUSINESS_SETTINGS_SECTIONS: readonly BusinessSettingsSection[] = [
     labelKey: "business.settings.sections.integrations",
     descriptionKey: "business.settings.sections.integrationsDesc",
     icon: "support",
+  },
+  {
+    id: "privacy-legal",
+    labelKey: "business.settings.sections.privacyLegal",
+    descriptionKey: "business.settings.sections.privacyLegalDesc",
+    icon: "security",
   },
 ] as const;
 

@@ -1,10 +1,3 @@
-import { useEffect, useState } from "react";
-import { Link } from "react-router";
-import { Loader2 } from "lucide-react";
-import { useTranslation } from "react-i18next";
-import { toast } from "sonner";
-import type { BillingStatus } from "@/app/lib/api";
-import { createBillingCheckoutSession } from "@/app/lib/api";
 import { toUserFriendlyMessage } from "@/app/lib/errorMessages";
 import {
   APP_LOADING_PRIORITY,
@@ -25,6 +18,13 @@ import {
 } from "@/app/components/ui/dialog";
 import { dashboardWorkspaceUi } from "@/app/components/dashboard/dashboardWorkspaceUi";
 import { performExternalStripeRedirect } from "@/app/lib/externalStripeRedirect";
+import { useMerchantCheckoutLegalGate } from "@/app/components/legal/useMerchantCheckoutLegalGate";
+import { useEffect, useState } from "react";
+import { Link } from "react-router";
+import { Loader2 } from "lucide-react";
+import { useTranslation } from "react-i18next";
+import { toast } from "sonner";
+import type { BillingStatus } from "@/app/lib/api";
 
 type BillingTrialPlanDialogProps = {
   open: boolean;
@@ -40,6 +40,7 @@ export function BillingTrialPlanDialog({
 }: BillingTrialPlanDialogProps) {
   const { t } = useTranslation();
   const [busy, setBusy] = useState(false);
+  const { LegalGate, canProceed, startCheckout } = useMerchantCheckoutLegalGate();
   const priceLabel =
     billingCycle === "yearly"
       ? t("staticPages.pricing.tiers.business.feeYearly")
@@ -53,9 +54,13 @@ export function BillingTrialPlanDialog({
   );
 
   async function startTrialCheckout() {
+    if (!canProceed) {
+      toast.error(t("auth.merchantLegalAcceptance.requiredError"));
+      return;
+    }
     setBusy(true);
     try {
-      const session = await createBillingCheckoutSession({
+      const session = await startCheckout({
         planKey: "premium",
         billingCycle,
         includeTrial: true,
@@ -91,12 +96,13 @@ export function BillingTrialPlanDialog({
           <p className="text-sm leading-relaxed text-muted-foreground">
             {t("business.billing.trialFlow.firstChargeNote", { price: priceLabel })}
           </p>
+          {LegalGate}
         </div>
 
         <DialogFooter className="flex-col gap-2 border-t border-border/60 bg-muted/10 px-6 py-4 sm:flex-col">
           <button
             type="button"
-            disabled={busy}
+            disabled={busy || !canProceed}
             onClick={() => void startTrialCheckout()}
             className={cn(dashboardWorkspaceUi.btnPrimary, "w-full justify-center")}
             aria-busy={busy || undefined}
@@ -163,6 +169,7 @@ export function BillingTrialSection({
 function BillingTrialExpiredUpgrade({ billingCycle }: { billingCycle: "monthly" | "yearly" }) {
   const { t } = useTranslation();
   const [busy, setBusy] = useState(false);
+  const { LegalGate, canProceed, startCheckout } = useMerchantCheckoutLegalGate();
 
   useAppLoadingRegistration(
     "billing-trial-expired-checkout",
@@ -172,9 +179,13 @@ function BillingTrialExpiredUpgrade({ billingCycle }: { billingCycle: "monthly" 
   );
 
   async function handleUpgrade() {
+    if (!canProceed) {
+      toast.error(t("auth.merchantLegalAcceptance.requiredError"));
+      return;
+    }
     setBusy(true);
     try {
-      const session = await createBillingCheckoutSession({
+      const session = await startCheckout({
         planKey: "premium",
         billingCycle,
         includeTrial: false,
@@ -200,9 +211,10 @@ function BillingTrialExpiredUpgrade({ billingCycle }: { billingCycle: "monthly" 
       <p className={cn(dashboardWorkspaceUi.helperText, "mt-1.5")}>
         {t("business.billing.trialFlow.expiredBody")}
       </p>
+      <div className="mt-3">{LegalGate}</div>
       <button
         type="button"
-        disabled={busy}
+        disabled={busy || !canProceed}
         onClick={() => void handleUpgrade()}
         className={cn(dashboardWorkspaceUi.btnPrimary, "mt-4 inline-flex w-full justify-center sm:w-auto")}
         aria-busy={busy || undefined}

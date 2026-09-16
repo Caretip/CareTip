@@ -5,6 +5,17 @@ import {
   upsertLegalDocumentsFromWebhook,
 } from "../services/legalDocument.service.js";
 import {
+  getCareTipControlledLegalDocMeta,
+  listCareTipControlledLegalDocs,
+  normalizeCareTipLegalLanguage,
+  parseCareTipControlledLegalDocId,
+  readCareTipControlledPdf,
+} from "../lib/caretipControlledLegalDocs.js";
+import {
+  getMerchantLegalDocumentSnapshot,
+  hasMerchantLegalAcceptance,
+} from "../lib/merchantLegalAcceptance.js";
+import {
   buildItRechtXmlResponse,
   buildItRechtAuthErrorXml,
 } from "../services/itRechtKanzlei/itRechtKanzleiXmlBuilder.js";
@@ -102,6 +113,85 @@ export const getTermsDocument: RequestHandler = async (req, res) => {
 
 export const getImpressumDocument: RequestHandler = async (req, res) => {
   await sendLegalDocument(res, LegalDocumentType.impressum, resolveLanguage(req));
+};
+
+export const getCareTipControlledPdf: RequestHandler = async (req, res) => {
+  try {
+    const id = parseCareTipControlledLegalDocId(req.params.docId);
+    if (!id) {
+      res.status(404).json({ message: "Legal document is not available." });
+      return;
+    }
+    const language = normalizeCareTipLegalLanguage(
+      typeof req.query.lang === "string"
+        ? req.query.lang
+        : typeof req.query.language === "string"
+          ? req.query.language
+          : resolveLanguage(req),
+    );
+    const meta = getCareTipControlledLegalDocMeta(id, language);
+    const pdf = readCareTipControlledPdf(id, language);
+    const download =
+      req.query.download === "1" ||
+      req.query.download === "true" ||
+      String(req.query.disposition ?? "").toLowerCase() === "attachment";
+    res.setHeader("Content-Type", "application/pdf");
+    res.setHeader(
+      "Content-Disposition",
+      `${download ? "attachment" : "inline"}; filename="${meta.filename}"`,
+    );
+    // Language is part of the URL (?lang=); keep short public cache and vary on query.
+    res.setHeader("Cache-Control", "public, max-age=300, must-revalidate");
+    res.setHeader("Vary", "Accept-Language");
+    res.setHeader("X-CareTip-Legal-Doc", id);
+    res.setHeader("X-CareTip-Legal-Language", language);
+    res.setHeader("X-CareTip-Content-SHA256", meta.contentSha256);
+    res.send(pdf);
+  } catch (err) {
+    logServerError("legal.getCareTipControlledPdf", err);
+    res.status(500).json({ message: clientSafeMessage(err, CLIENT_FALLBACK.generic) });
+  }
+};
+
+export const listCareTipControlledLegalDocuments: RequestHandler = async (req, res) => {
+  try {
+    const language = normalizeCareTipLegalLanguage(resolveLanguage(req));
+    const documents = listCareTipControlledLegalDocs(language).map((doc) => ({
+      id: doc.id,
+      language: doc.language,
+      path: doc.path,
+      apiPath: doc.apiPath,
+      filename: doc.filename,
+      validFrom: doc.validFrom ?? null,
+      contentSha256: doc.contentSha256,
+      titleEn: doc.titleEn,
+      titleDe: doc.titleDe,
+    }));
+    res.json({ language, documents });
+  } catch (err) {
+    logServerError("legal.listCareTipControlled", err);
+    res.status(500).json({ message: clientSafeMessage(err, CLIENT_FALLBACK.generic) });
+  }
+};
+
+export const getMerchantLegalAcceptanceStatus: RequestHandler = async (req, res) => {
+  try {
+    const userId =
+      (typeof req.user?.sub === "string" && req.user.sub) ||
+      (typeof req.user?.userId === "string" && req.user.userId) ||
+      (typeof req.user?.id === "string" && req.user.id) ||
+      null;
+    if (!userId) {
+      res.status(401).json({ message: "Authentication required." });
+      return;
+    }
+    const accepted = await hasMerchantLegalAcceptance(userId);
+    const snapshot = await getMerchantLegalDocumentSnapshot(resolveLanguage(req));
+    res.json({ accepted, documents: snapshot });
+  } catch (err) {
+    logServerError("legal.getMerchantLegalAcceptanceStatus", err);
+    res.status(500).json({ message: clientSafeMessage(err, CLIENT_FALLBACK.generic) });
+  }
 };
 
 async function handleItRechtXmlWebhook(req: Parameters<RequestHandler>[0], res: Parameters<RequestHandler>[1]): Promise<void> {

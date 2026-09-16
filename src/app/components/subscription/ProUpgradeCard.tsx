@@ -3,7 +3,6 @@ import { Link } from "react-router";
 import { Check, Loader2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
-import { createBillingCheckoutSession } from "@/app/lib/api";
 import { toUserFriendlyMessage } from "@/app/lib/errorMessages";
 import { useBillingStatus } from "@/app/hooks/useBillingStatus";
 import { BILLING_SUBSCRIPTION_PATH } from "@/app/lib/activateCareTipNavigation";
@@ -12,6 +11,7 @@ import {
   useAppLoadingRegistration,
 } from "@/app/lib/globalAppLoading";
 import { performExternalStripeRedirect } from "@/app/lib/externalStripeRedirect";
+import { useMerchantCheckoutLegalGate } from "@/app/components/legal/useMerchantCheckoutLegalGate";
 import { cn } from "@/lib/utils";
 
 const PRO_UPGRADE_FEATURE_KEYS = [
@@ -32,6 +32,7 @@ export function ProUpgradeCard({ className }: ProUpgradeCardProps) {
   const { t } = useTranslation();
   const { data: billing } = useBillingStatus();
   const [checkoutBusy, setCheckoutBusy] = useState(false);
+  const { LegalGate, canProceed, startCheckout } = useMerchantCheckoutLegalGate();
 
   useAppLoadingRegistration(
     "pro-upgrade-checkout",
@@ -46,9 +47,13 @@ export function ProUpgradeCard({ className }: ProUpgradeCardProps) {
   const canCheckout = Boolean(billing?.billingEnabled && billing.stripeConfigured);
 
   async function startProCheckout(includeTrial: boolean) {
+    if (!canProceed) {
+      toast.error(t("auth.merchantLegalAcceptance.requiredError"));
+      return;
+    }
     setCheckoutBusy(true);
     try {
-      const session = await createBillingCheckoutSession({
+      const session = await startCheckout({
         planKey: "premium",
         billingCycle: billing?.billingCycle ?? "monthly",
         includeTrial,
@@ -86,11 +91,12 @@ export function ProUpgradeCard({ className }: ProUpgradeCardProps) {
         </ul>
 
         <div className="pro-upgrade-card__actions">
+          {LegalGate}
           {trialEligible ? (
             <>
               <button
                 type="button"
-                disabled={checkoutBusy}
+                disabled={checkoutBusy || !canProceed}
                 onClick={() => void startProCheckout(true)}
                 className="pro-upgrade-card__cta pro-upgrade-card__cta--primary"
                 aria-busy={checkoutBusy || undefined}
@@ -105,7 +111,7 @@ export function ProUpgradeCard({ className }: ProUpgradeCardProps) {
           ) : canCheckout ? (
             <button
               type="button"
-              disabled={checkoutBusy}
+              disabled={checkoutBusy || !canProceed}
               onClick={() => void startProCheckout(false)}
               className="pro-upgrade-card__cta pro-upgrade-card__cta--primary"
               aria-busy={checkoutBusy || undefined}

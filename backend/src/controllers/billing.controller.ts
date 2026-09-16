@@ -26,9 +26,13 @@ import {
   normalizeStripePriceIdEnv,
   stripeCheckoutPriceEnvKey,
 } from "../lib/subscription/stripePricePlanCatalog.js";
+import {
+  MerchantLegalAcceptanceError,
+  requireMerchantLegalAcceptanceForCheckout,
+} from "../lib/merchantLegalAcceptance.js";
 
 function getUserId(req: Request): string | null {
-  const uid = req.user?.userId ?? req.user?.id;
+  const uid = req.user?.sub ?? req.user?.userId ?? req.user?.id;
   return typeof uid === "string" && uid.trim() ? uid.trim() : null;
 }
 
@@ -214,6 +218,26 @@ export async function postMyBillingCheckout(req: Request, res: Response) {
     const priceEnvKey =
       planKey === "premium" ? stripeCheckoutPriceEnvKey(billingCycleResolved) : null;
     const configuredPriceId = resolveConfiguredPriceId(planKey, billingCycleResolved);
+
+    try {
+      await requireMerchantLegalAcceptanceForCheckout({
+        userId: ctx.userId,
+        accepted:
+          requestBody.merchantLegalAccepted ??
+          requestBody.legalAccepted ??
+          requestBody.acceptMerchantLegal,
+        businessId: ctx.businessId,
+        language: typeof requestBody.locale === "string" ? requestBody.locale : undefined,
+      });
+    } catch (legalErr) {
+      if (legalErr instanceof MerchantLegalAcceptanceError) {
+        return res.status(legalErr.status).json({
+          message: legalErr.message,
+          code: legalErr.code,
+        });
+      }
+      throw legalErr;
+    }
 
     const mirror = await prisma.subscription.findUnique({
       where: { businessId: ctx.businessId },

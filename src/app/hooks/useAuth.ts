@@ -167,6 +167,7 @@ export interface RegisterPayload {
   businessType?: string;
   location?: string;
   inviteCode?: string;
+  merchantLegalAccepted?: boolean;
 }
 
 export type RegisterResult = {
@@ -448,6 +449,7 @@ export function useAuth() {
       businessType?: string;
       location?: string;
       inviteCode?: string;
+      merchantLegalAccepted?: boolean;
     }
   ): Promise<User | MfaLoginChallenge> => {
     const data = await oauthAPI({
@@ -461,6 +463,9 @@ export function useAuth() {
       location: options.location,
       inviteCode: options.inviteCode,
       locale: requestLocale,
+      ...(options.merchantLegalAccepted === true
+        ? { merchantLegalAccepted: true }
+        : {}),
     });
     if (isMfaLoginChallenge(data)) {
       return data;

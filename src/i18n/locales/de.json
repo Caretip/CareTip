@@ -1704,6 +1704,11 @@
       "body": "Sie haben keine Berechtigung für diese Seite. Wenn Sie Plattform-Administrator sind, melden Sie sich über die Plattform-Admin-Anmeldung an.",
       "home": "Startseite",
       "platformLogin": "Plattform-Admin-Anmeldung"
+    },
+    "merchantLegalAcceptance": {
+      "label": "Ich akzeptiere die <terms>Allgemeinen Geschäftsbedingungen</terms>, die <dpa>Vereinbarung zur Auftragsverarbeitung (AVV)</dpa> und das <plv>Preis- und Leistungsverzeichnis</plv>. Ich habe die <privacy>Datenschutzerklärung</privacy> gelesen und zur Kenntnis genommen.",
+      "requiredHint": "Erforderlich zur Erstellung eines Geschäftskontos.",
+      "requiredError": "Bitte akzeptieren Sie die AGB, die AVV und das Preis- und Leistungsverzeichnis und bestätigen Sie die Datenschutzerklärung, um fortzufahren."
     }
   },
   "notifications": {
@@ -3617,7 +3622,9 @@
     "terms": "AGB",
     "cookies": "Cookies",
     "cookieSettings": "Cookie-Einstellungen",
-    "imprint": "Impressum"
+    "imprint": "Impressum",
+    "dpa": "AVV / DPA",
+    "plv": "Preis- und Leistungsverzeichnis"
   },
   "employee": {
     "earnings_today": "Heute",
@@ -6077,7 +6084,9 @@
         "integrations": "Integrationen",
         "integrationsDesc": "Drittanbieter-Tools und Webhooks verbinden",
         "language": "Sprache",
-        "languageDesc": "Anzeigesprache für Ihr Dashboard"
+        "languageDesc": "Anzeigesprache für Ihr Dashboard",
+        "privacyLegal": "Datenschutz & Rechtliches",
+        "privacyLegalDesc": "CareTip-Rechtsdokumente einschließlich AVV und Preis- und Leistungsverzeichnis einsehen"
       },
       "integrations": {
         "comingSoon": "POS-, PMS- und Webhook-Integrationen kommen demnächst."
@@ -6111,6 +6120,18 @@
         "brandingDesc": "Gäste-QR-Erlebnisse anpassen",
         "brandingCardTitle": "QR-Code-Verwaltung",
         "brandingCardDesc": "QR-Codes für Betrieb und Team herunterladen, drucken und neu generieren"
+      },
+      "privacyLegal": {
+        "termsTitle": "Allgemeine Geschäftsbedingungen",
+        "termsDesc": "Von CareTip bereitgestellte AGB (Inhalt von IT-Recht Kanzlei verwaltet).",
+        "privacyTitle": "Datenschutzerklärung",
+        "privacyDesc": "Von CareTip bereitgestellte Datenschutzerklärung (Inhalt von IT-Recht Kanzlei verwaltet).",
+        "dpaTitle": "Vereinbarung zur Auftragsverarbeitung (AVV / DPA)",
+        "dpaDesc": "CareTip-kontrolliertes AVV-PDF für Unternehmen.",
+        "plvTitle": "Preis- und Leistungsverzeichnis (PLV)",
+        "plvDesc": "CareTip-kontrolliertes Preis- und Leistungsverzeichnis (gültig ab August 2026).",
+        "view": "Ansehen",
+        "download": "Herunterladen"
       }
     },
     "branding": {
@@ -8686,6 +8707,12 @@
     "loading": "Dokument wird geladen…",
     "loadError": "Dieses Dokument konnte nicht geladen werden. Bitte erneut versuchen.",
     "tryAgain": "Erneut versuchen",
-    "versionLine": "Version {{version}} · Aktualisiert {{date}}"
+    "versionLine": "Version {{version}} · Aktualisiert {{date}}",
+    "dpaTitle": "Vereinbarung zur Auftragsverarbeitung (AVV / DPA)",
+    "plvTitle": "Preis- und Leistungsverzeichnis (PLV)",
+    "dpaBlurb": "CareTip-Auftragsverarbeitungsvertrag für Unternehmen (Art. 28 DSGVO). Offizielles PDF ansehen oder herunterladen.",
+    "plvBlurb": "Offizielles CareTip Preis- und Leistungsverzeichnis für Unternehmen. Offizielles PDF ansehen oder herunterladen.",
+    "viewPdf": "PDF ansehen",
+    "downloadPdf": "PDF herunterladen"
   }
 }
