@@ -24,18 +24,16 @@ router.get("/terms", legalController.getTermsDocument);
 router.get("/impressum", legalController.getImpressumDocument);
 /** Public CareTip-controlled PDFs (identical for all merchants). */
 router.get("/controlled", legalController.listCareTipControlledLegalDocuments);
-router.get("/avv.pdf", (req, res, next) => {
-  req.params.docId = "avv";
-  void legalController.getCareTipControlledPdf(req, res, next);
-});
-router.get("/dpa.pdf", (req, res, next) => {
-  req.params.docId = "avv";
-  void legalController.getCareTipControlledPdf(req, res, next);
-});
-router.get("/plv.pdf", (req, res, next) => {
-  req.params.docId = "plv";
-  void legalController.getCareTipControlledPdf(req, res, next);
-});
+/** Fixed PDF paths — inject docId because these routes have no `:docId` param. */
+function serveControlledPdf(docId: string): RequestHandler {
+  return (req, res, next) => {
+    Object.assign(req.params, { docId });
+    void legalController.getCareTipControlledPdf(req, res, next);
+  };
+}
+router.get("/avv.pdf", serveControlledPdf("avv"));
+router.get("/dpa.pdf", serveControlledPdf("avv"));
+router.get("/plv.pdf", serveControlledPdf("plv"));
 router.get(
   "/merchant-acceptance-status",
   authMiddleware,

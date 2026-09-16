@@ -33,9 +33,31 @@ function paintBootstrapFailure(): void {
   wrap.style.background = "#fcfbf8";
   wrap.style.padding = "24px";
   wrap.style.fontFamily = "system-ui,sans-serif";
-  wrap.innerHTML =
-    '<div style="text-align:center;max-width:28rem"><h1 style="font-size:1.25rem;color:#1a1a1a">CareTip couldn’t start</h1><p style="margin-top:8px;color:#5c5c5c;font-size:0.875rem">Refresh the page. If this keeps happening, try again in a moment.</p><button type="button" style="margin-top:24px;padding:10px 20px;border-radius:8px;background:#c45c26;color:#fff;border:0;cursor:pointer">Refresh</button></div>';
-  wrap.querySelector("button")?.addEventListener("click", () => window.location.reload());
+  const card = document.createElement("div");
+  card.style.textAlign = "center";
+  card.style.maxWidth = "28rem";
+  const title = document.createElement("h1");
+  title.style.fontSize = "1.25rem";
+  title.style.color = "#1a1a1a";
+  title.textContent = "CareTip couldn’t start";
+  const body = document.createElement("p");
+  body.style.marginTop = "8px";
+  body.style.color = "#5c5c5c";
+  body.style.fontSize = "0.875rem";
+  body.textContent = "Refresh the page. If this keeps happening, try again in a moment.";
+  const button = document.createElement("button");
+  button.type = "button";
+  button.style.marginTop = "24px";
+  button.style.padding = "10px 20px";
+  button.style.borderRadius = "8px";
+  button.style.background = "#c45c26";
+  button.style.color = "#fff";
+  button.style.border = "0";
+  button.style.cursor = "pointer";
+  button.textContent = "Refresh";
+  button.addEventListener("click", () => window.location.reload());
+  card.append(title, body, button);
+  wrap.appendChild(card);
   root.appendChild(wrap);
 }
 
