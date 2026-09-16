@@ -71,7 +71,9 @@ export type TrialReminderRunResult = {
 
 /**
  * Send 7 / 3 / 1-day trial ending reminders for trialing subscriptions.
- * Idempotent via `trialReminderSent` JSON on the subscription mirror.
+ * Uses mirrored Stripe `trialEndsAt` (not checkout+N). Idempotent via `trialReminderSent`.
+ * Skips cancel_at_period_end trials — they will not auto-convert to paid.
+ * One subscription failure does not abort the rest of the run.
  */
 export async function runTrialReminderEmails(): Promise<TrialReminderRunResult> {
   if (!isSubscriptionTrialEnabled()) {
@@ -83,6 +85,8 @@ export async function runTrialReminderEmails(): Promise<TrialReminderRunResult> 
     where: {
       status: SubscriptionStatus.trialing,
       trialEndsAt: { gt: now },
+      // Already scheduled not to renew — do not warn about an upcoming automatic charge.
+      cancelAtPeriodEnd: false,
     },
     select: {
       id: true,
@@ -101,55 +105,59 @@ export async function runTrialReminderEmails(): Promise<TrialReminderRunResult> 
   let skipped = 0;
 
   for (const sub of subscriptions) {
-    if (!sub.trialEndsAt) {
+    try {
+      if (!sub.trialEndsAt) {
+        skipped += 1;
+        continue;
+      }
+
+      const daysLeft = daysUntilTrialEnd(sub.trialEndsAt);
+      const dueDay = REMINDER_DAYS.find((d) => daysLeft === Number(d));
+      if (!dueDay) {
+        skipped += 1;
+        continue;
+      }
+
+      const sentMap = parseRemindersSent(sub.trialReminderSent);
+      if (sentMap[dueDay]) {
+        skipped += 1;
+        continue;
+      }
+
+      const manager = sub.business.user;
+      if (!manager?.email) {
+        skipped += 1;
+        continue;
+      }
+
+      const locale = resolveLocale(manager.preferredLocale);
+      const copy = reminderCopy(dueDay, locale);
+      const billingUrl = `${(process.env.FRONTEND_URL ?? "http://localhost:5173").replace(/\/$/, "")}/dashboard/settings`;
+
+      await sendLocalizedUserNotificationEmail({
+        to: manager.email,
+        userId: manager.id,
+        preferredLocale: manager.preferredLocale,
+        title: copy.title,
+        bodyText: copy.body,
+        actionUrl: billingUrl,
+        actionLabel: locale === "de" ? "Abrechnung öffnen" : "Open billing",
+      });
+
+      const updatedSent: TrialRemindersSent = {
+        ...sentMap,
+        [dueDay]: now.toISOString(),
+      };
+
+      await prisma.subscription.update({
+        where: { id: sub.id },
+        data: { trialReminderSent: updatedSent },
+      });
+
+      sent += 1;
+    } catch {
       skipped += 1;
-      continue;
     }
-
-    const daysLeft = daysUntilTrialEnd(sub.trialEndsAt);
-    const dueDay = REMINDER_DAYS.find((d) => daysLeft === Number(d));
-    if (!dueDay) {
-      skipped += 1;
-      continue;
-    }
-
-    const sentMap = parseRemindersSent(sub.trialReminderSent);
-    if (sentMap[dueDay]) {
-      skipped += 1;
-      continue;
-    }
-
-    const manager = sub.business.user;
-    if (!manager?.email) {
-      skipped += 1;
-      continue;
-    }
-
-    const locale = resolveLocale(manager.preferredLocale);
-    const copy = reminderCopy(dueDay, locale);
-    const billingUrl = `${(process.env.FRONTEND_URL ?? "http://localhost:5173").replace(/\/$/, "")}/dashboard/settings`;
-
-    await sendLocalizedUserNotificationEmail({
-      to: manager.email,
-      userId: manager.id,
-      preferredLocale: manager.preferredLocale,
-      title: copy.title,
-      bodyText: copy.body,
-      actionUrl: billingUrl,
-      actionLabel: locale === "de" ? "Abrechnung öffnen" : "Open billing",
-    });
-
-    const updatedSent: TrialRemindersSent = {
-      ...sentMap,
-      [dueDay]: now.toISOString(),
-    };
-
-    await prisma.subscription.update({
-      where: { id: sub.id },
-      data: { trialReminderSent: updatedSent },
-    });
-
-    sent += 1;
   }
 
   return { scanned: subscriptions.length, sent, skipped };

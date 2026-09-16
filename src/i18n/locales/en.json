@@ -486,7 +486,7 @@
     },
     "pricing": {
       "pageTitle": "Fair and Transparent Price",
-      "pageSubtitle": "Everything you need to launch digital tipping for your hospitality business. No hidden fees, secure Stripe payments, Instant Payouts for eligible businesses, flexible contracts, and a free 4-week trial to get started.",
+      "pageSubtitle": "Everything you need to launch digital tipping for your hospitality business. No hidden fees, secure Stripe payments, Instant Payouts for eligible businesses, flexible contracts, and a free 30-day trial to get started.",
       "hero": {
         "badge": "Transparent Pricing",
         "featuresAria": "Platform highlights",
@@ -504,8 +504,8 @@
             "body": "Enterprise-grade security and compliance."
           },
           "trial": {
-            "title": "4 Week Free Trial",
-            "body": "Full Business features with automatic activation after signup."
+            "title": "30-Day Free Trial",
+            "body": "Full Pro features with automatic activation after signup."
           }
         },
         "trustRow": {
@@ -638,9 +638,9 @@
       },
       "trialCta": {
         "title": "Try CareTip risk-free",
-        "body": "Start with a 4-week free Pro trial. Your subscription converts to paid automatically when the trial ends unless you cancel.",
-        "button": "Start 4 Week Free Trial",
-        "paymentNote": "Payment details required before the trial begins.",
+        "body": "Start with a 30-day free Pro trial. Your subscription converts to paid automatically when the trial ends unless you cancel.",
+        "button": "Start 30-day free trial",
+        "paymentNote": "Payment details required before the trial begins. Your first payment is charged when the 30-day trial ends.",
         "conversionNote": "After the trial, your plan renews automatically on your selected billing cycle until cancelled."
       },
       "transactionFeeNotice": "plus transaction fee",
@@ -676,7 +676,7 @@
           "f3": "Advanced analytics",
           "f4": "Reports and CSV export",
           "button": "Upgrade to Pro",
-          "trialButton": "Start 4-week trial",
+          "trialButton": "Start 30-day free trial",
           "subscribeButton": "Start 30-day free trial"
         },
         "enterprise": {
@@ -730,7 +730,7 @@
         },
         "general": {
           "pageTitle": "Fair and Transparent Price",
-          "pageSubtitle": "Everything you need to launch digital tipping for your hospitality business. No hidden fees, secure Stripe payments, Instant Payouts for eligible businesses, flexible contracts, and a free 4-week trial to get started.",
+          "pageSubtitle": "Everything you need to launch digital tipping for your hospitality business. No hidden fees, secure Stripe payments, Instant Payouts for eligible businesses, flexible contracts, and a free 30-day trial to get started.",
           "sectionTitle": "True recognition is all about simplicity.",
           "sectionSubtitle": "With CareTip, you can spotlight your team's outstanding service and reward them directly. Delight your guests, boost team morale, and turn customers into loyal brand advocates."
         }
@@ -2395,8 +2395,8 @@
       "eyebrow": "Upgrade to Pro",
       "title": "Unlock Pro features",
       "body": "You are on Basic with full access to tipping, QR, and team tools. Upgrade to Pro for advanced analytics, branding, exports, and more.",
-      "trialCta": "Start 4-Week Pro Trial",
-      "trialHint": "Pro trial · card required",
+      "trialCta": "Start 30-day free trial",
+      "trialHint": "30-day Pro trial · card required",
       "proCta": "Subscribe to Pro",
       "proHint": "€29/month · advanced features",
       "upgradeCta": "Upgrade to Pro",
@@ -6669,7 +6669,7 @@
       "checkoutCanceled": "Checkout canceled. No changes were made.",
       "activationToast": {
         "trialTitle": "Trial started",
-        "trialBody": "Your 4-week {{plan}} trial is now active.",
+        "trialBody": "Your 30-day {{plan}} trial is now active.",
         "subscriptionTitle": "Subscription activated",
         "subscriptionBody": "Your {{plan}} subscription is now active.",
         "planUpdatedTitle": "Plan updated",
@@ -6690,17 +6690,18 @@
       "checkoutError": "Could not start checkout.",
       "checkoutNoUrl": "Checkout session did not return a URL.",
       "portalError": "Could not open the billing portal.",
-      "startTrial": "Start 4 Week Free Trial",
+      "startTrial": "Start 30-day free trial",
       "trialFlow": {
         "recommended": "Recommended for new users",
-        "promoTitle": "Start your 4-week Pro trial",
-        "promoBody": "Try Pro features on top of your Basic plan. Payment details are collected now; you are not charged until the trial ends.",
-        "promoCta": "Start 4-Week Pro Trial",
+        "promoTitle": "Start your 30-day Pro trial",
+        "promoBody": "Try Pro features on top of your Basic plan. Payment details are collected now; you are not charged until the 30-day trial ends unless you cancel.",
+        "promoCta": "Start 30-day free trial",
         "promoCtaAlt": "Start Pro trial",
         "orSubscribeBelow": "Or subscribe to Pro below",
         "chooseTitle": "Start your Pro trial",
-        "chooseDesc": "Your 4-week trial upgrades Basic to Pro. You can subscribe or cancel before the trial ends.",
-        "confirmCta": "Start 4-Week Pro Trial",
+        "chooseDesc": "Your 30-day free trial upgrades Basic to Pro. It converts to a paid subscription when the trial ends unless you cancel before then.",
+        "confirmCta": "Start 30-day free trial",
+        "firstChargeNote": "First payment: charged when the 30-day trial ends ({{price}}).",
         "enterpriseNote": "Contact sales",
         "alreadyUsed": "Your Pro trial has been used. Subscribe to Pro below to unlock advanced features.",
         "expiredTitle": "Your Pro trial has ended",
@@ -6714,7 +6715,7 @@
           "enterprise": "Custom rollout for your organization. Contact our sales team."
         }
       },
-      "trialPaymentNote": "Payment details required before the trial begins. Converts to a paid subscription when the trial ends.",
+      "trialPaymentNote": "Payment details required before the trial begins. Your first payment will be charged when the 30-day trial ends unless you cancel.",
       "lifecycle": {
         "title": "Subscription & cancellation",
         "subtitle": "Understand your renewal dates and when billing stops.",

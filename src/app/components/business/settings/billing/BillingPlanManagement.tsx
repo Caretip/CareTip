@@ -234,6 +234,9 @@ export function BillingPlanManagement({
               t("business.billing.trialFlow.promoCta")
             )}
           </button>
+          <p className="text-center text-[11px] leading-snug text-muted-foreground">
+            {t("business.billing.trialPaymentNote")}
+          </p>
           <button
             type="button"
             disabled={!canCheckout || busyPlan !== null}

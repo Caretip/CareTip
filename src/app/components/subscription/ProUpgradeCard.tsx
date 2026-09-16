@@ -87,16 +87,21 @@ export function ProUpgradeCard({ className }: ProUpgradeCardProps) {
 
         <div className="pro-upgrade-card__actions">
           {trialEligible ? (
-            <button
-              type="button"
-              disabled={checkoutBusy}
-              onClick={() => void startProCheckout(true)}
-              className="pro-upgrade-card__cta pro-upgrade-card__cta--primary"
-              aria-busy={checkoutBusy || undefined}
-            >
-              {checkoutBusy ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : null}
-              {t("business.billing.trialFlow.promoCta")}
-            </button>
+            <>
+              <button
+                type="button"
+                disabled={checkoutBusy}
+                onClick={() => void startProCheckout(true)}
+                className="pro-upgrade-card__cta pro-upgrade-card__cta--primary"
+                aria-busy={checkoutBusy || undefined}
+              >
+                {checkoutBusy ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : null}
+                {t("business.billing.trialFlow.promoCta")}
+              </button>
+              <p className="pro-upgrade-card__trial-note text-center text-[11px] leading-snug text-muted-foreground">
+                {t("business.billing.trialPaymentNote")}
+              </p>
+            </>
           ) : canCheckout ? (
             <button
               type="button"

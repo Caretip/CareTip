@@ -200,6 +200,17 @@ export async function createPlatformSubscriptionCheckoutSession(params: {
       success_url: successUrl,
       cancel_url: cancelUrl,
       subscription_data: subscriptionData,
+      // Supplement Stripe's native trial UI at the authorize step (Pro trial only).
+      ...(trialEligible
+        ? {
+            custom_text: {
+              submit: {
+                message:
+                  "Your 30-day free Pro trial starts after checkout. Your first payment is charged when the trial ends unless you cancel before then.",
+              },
+            },
+          }
+        : {}),
       metadata: {
         [BILLING_CHECKOUT_METADATA_KEYS.businessId]: params.businessId,
         ...(subscriptionId

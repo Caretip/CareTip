@@ -1,7 +1,7 @@
-# CareTip — category-retention Cron Jobs only.
+# CareTip — Render Cron Jobs (Blueprint).
 #
 # This Blueprint does NOT create the jobs until you apply it in the Render Dashboard
-# (or create the two Cron Jobs manually using docs/GDPR_CATEGORY_RETENTION_RENDER_CRON.md).
+# (or create Cron Jobs manually using the matching docs).
 # Cursor cannot create Render resources from this repository.
 #
 # Do not put CRON_SECRET (or any secret value) in this file.
@@ -10,6 +10,23 @@
 # Do not add KYC, tombstone, anonymization, or financial-delete cron services.
 
 services:
+  - type: cron
+    name: caretip-trial-reminders
+    runtime: node
+    rootDir: backend
+    plan: starter
+    buildCommand: "true"
+    startCommand: node scripts/render-category-retention-http.mjs
+    # Daily 07:00 UTC — 7 / 3 / 1-day Pro trial ending reminders (idempotent).
+    schedule: "0 7 * * *"
+    envVars:
+      - key: CRON_SECRET
+        sync: false
+      - key: CARE_TIP_API_ORIGIN
+        value: https://caretip.onrender.com
+      - key: CARE_TIP_INTERNAL_JOB_PATH
+        value: /api/internal/jobs/trial-reminders
+
   - type: cron
     name: caretip-category-retention-sweep
     runtime: node

@@ -1,8 +1,8 @@
-/** Platform subscription free trial — Stripe Checkout `trial_period_days`. */
+/** Platform subscription free trial — Stripe Checkout `trial_period_days`. Product truth: 30 days. */
 export const SUBSCRIPTION_TRIAL_PERIOD_DAYS = (() => {
   const raw = process.env.STRIPE_TRIAL_PERIOD_DAYS?.trim();
-  const n = raw ? Number.parseInt(raw, 10) : 28;
-  return Number.isFinite(n) && n > 0 ? n : 28;
+  const n = raw ? Number.parseInt(raw, 10) : 30;
+  return Number.isFinite(n) && n > 0 ? n : 30;
 })();
 
 export function isSubscriptionTrialEnabled(): boolean {

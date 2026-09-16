@@ -32,7 +32,7 @@ type BillingTrialPlanDialogProps = {
   billingCycle: "monthly" | "yearly";
 };
 
-/** Pro-only trial — upgrades Basic → Pro for 4 weeks. */
+/** Pro-only trial — upgrades Basic → Pro for 30 days. */
 export function BillingTrialPlanDialog({
   open,
   onOpenChange,
@@ -40,6 +40,10 @@ export function BillingTrialPlanDialog({
 }: BillingTrialPlanDialogProps) {
   const { t } = useTranslation();
   const [busy, setBusy] = useState(false);
+  const priceLabel =
+    billingCycle === "yearly"
+      ? t("staticPages.pricing.tiers.business.feeYearly")
+      : t("staticPages.pricing.tiers.business.feeMonthly");
 
   useAppLoadingRegistration(
     "billing-trial-checkout",
@@ -80,9 +84,12 @@ export function BillingTrialPlanDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="px-6 py-5">
+        <div className="space-y-3 px-6 py-5">
           <p className="rounded-lg border border-primary/15 bg-primary/[0.05] px-4 py-3 text-sm leading-relaxed text-muted-foreground">
             {t("business.billing.trialFlow.planHint.premium")}
+          </p>
+          <p className="text-sm leading-relaxed text-muted-foreground">
+            {t("business.billing.trialFlow.firstChargeNote", { price: priceLabel })}
           </p>
         </div>
 

@@ -486,7 +486,7 @@
     },
     "pricing": {
       "pageTitle": "Fairer und transparenter Preis",
-      "pageSubtitle": "Alles, was Sie brauchen, um digitales Trinkgeld für Ihr Gastgewerbe zu starten. Keine versteckten Gebühren, sichere Stripe-Zahlungen, Sofortauszahlungen für berechtigte Betriebe, flexible Verträge und eine kostenlose 4-wöchige Testphase.",
+      "pageSubtitle": "Alles, was Sie brauchen, um digitales Trinkgeld für Ihr Gastgewerbe zu starten. Keine versteckten Gebühren, sichere Stripe-Zahlungen, Sofortauszahlungen für berechtigte Betriebe, flexible Verträge und eine kostenlose 30-Tage-Testphase.",
       "hero": {
         "badge": "Transparente Preise",
         "featuresAria": "Plattform-Highlights",
@@ -504,8 +504,8 @@
             "body": "Enterprise-Sicherheit und Compliance."
           },
           "trial": {
-            "title": "4 Wochen kostenlos testen",
-            "body": "Volle Business-Funktionen mit automatischer Aktivierung nach der Anmeldung."
+            "title": "30 Tage kostenlos testen",
+            "body": "Volle Pro-Funktionen mit automatischer Aktivierung nach der Anmeldung."
           }
         },
         "trustRow": {
@@ -638,9 +638,9 @@
       },
       "trialCta": {
         "title": "CareTip risikofrei testen",
-        "body": "Starten Sie mit einer 4-wöchigen kostenlosen Pro-Testphase. Nach Ablauf wird automatisch ein kostenpflichtiges Abo aktiviert, sofern Sie nicht kündigen.",
-        "button": "4 Wochen kostenlos testen",
-        "paymentNote": "Zahlungsdaten werden vor Beginn der Testphase benötigt.",
+        "body": "Starten Sie mit einer kostenlosen 30-Tage-Pro-Testphase. Nach Ablauf wird automatisch ein kostenpflichtiges Abo aktiviert, sofern Sie nicht kündigen.",
+        "button": "30 Tage kostenlos testen",
+        "paymentNote": "Zahlungsdaten werden vor Beginn der Testphase benötigt. Die erste Zahlung erfolgt am Ende der 30-Tage-Testphase.",
         "conversionNote": "Nach der Testphase verlängert sich Ihr Plan automatisch im gewählten Abrechnungsrhythmus, bis Sie kündigen."
       },
       "transactionFeeNotice": "zzgl. Transaktionsgebühr",
@@ -676,7 +676,7 @@
           "f3": "Erweiterte Analysen",
           "f4": "Berichte und CSV-Export",
           "button": "Auf Pro upgraden",
-          "trialButton": "4-Wochen-Test starten",
+          "trialButton": "30 Tage kostenlos testen",
           "subscribeButton": "30 Tage kostenlos testen"
         },
         "enterprise": {
@@ -730,7 +730,7 @@
         },
         "general": {
           "pageTitle": "Fairer und transparenter Preis",
-          "pageSubtitle": "Alles, was Sie brauchen, um digitales Trinkgeld für Ihr Gastgewerbe zu starten. Keine versteckten Gebühren, sichere Stripe-Zahlungen, Sofortauszahlungen für berechtigte Betriebe, flexible Verträge und eine kostenlose 4-wöchige Testphase.",
+          "pageSubtitle": "Alles, was Sie brauchen, um digitales Trinkgeld für Ihr Gastgewerbe zu starten. Keine versteckten Gebühren, sichere Stripe-Zahlungen, Sofortauszahlungen für berechtigte Betriebe, flexible Verträge und eine kostenlose 30-Tage-Testphase.",
           "sectionTitle": "Echte Anerkennung lebt von einfachen Wegen.",
           "sectionSubtitle": "Mit CareTip machen Sie den herausragenden Service Ihres Teams sichtbar und belohnen ihn direkt. Begeistern Sie Ihre Gäste, stärken Sie die Motivation Ihrer Mitarbeiter und binden Sie Kunden an Ihre Marke."
         }
@@ -2395,8 +2395,8 @@
       "eyebrow": "Auf Pro upgraden",
       "title": "Pro-Funktionen freischalten",
       "body": "Sie nutzen Basic mit vollem Zugang zu Trinkgeld, QR und Team-Tools. Upgraden Sie auf Pro für erweiterte Analysen, Branding, Exporte und mehr.",
-      "trialCta": "4-Wochen-Pro-Test starten",
-      "trialHint": "Pro-Testphase · Karte erforderlich",
+      "trialCta": "30 Tage kostenlos testen",
+      "trialHint": "30-Tage-Pro-Test · Karte erforderlich",
       "proCta": "Pro abonnieren",
       "proHint": "29 €/Monat · erweiterte Funktionen",
       "upgradeCta": "Auf Pro upgraden",
@@ -6666,7 +6666,7 @@
       "checkoutCanceled": "Checkout abgebrochen. Keine Änderungen.",
       "activationToast": {
         "trialTitle": "Testphase gestartet",
-        "trialBody": "Ihre 4-wöchige {{plan}}-Testphase ist jetzt aktiv.",
+        "trialBody": "Ihre 30-tägige {{plan}}-Testphase ist jetzt aktiv.",
         "subscriptionTitle": "Abo aktiviert",
         "subscriptionBody": "Ihr {{plan}}-Abo ist jetzt aktiv.",
         "planUpdatedTitle": "Tarif aktualisiert",
@@ -6687,17 +6687,18 @@
       "checkoutError": "Checkout konnte nicht gestartet werden.",
       "checkoutNoUrl": "Checkout ohne URL zurückgegeben.",
       "portalError": "Abrechnungsportal konnte nicht geöffnet werden.",
-      "startTrial": "4 Wochen kostenlos testen",
+      "startTrial": "30 Tage kostenlos testen",
       "trialFlow": {
         "recommended": "Empfohlen für neue Nutzer",
-        "promoTitle": "Starten Sie Ihre 4-wöchige Pro-Testphase",
-        "promoBody": "Testen Sie Pro-Funktionen zusätzlich zu Ihrem Basic-Plan. Zahlungsdaten werden jetzt erfasst; die Belastung erfolgt erst nach Ende der Testphase.",
-        "promoCta": "4-Wochen-Pro-Test starten",
+        "promoTitle": "Starten Sie Ihre 30-Tage-Pro-Testphase",
+        "promoBody": "Testen Sie Pro-Funktionen zusätzlich zu Ihrem Basic-Plan. Zahlungsdaten werden jetzt erfasst; die erste Zahlung erfolgt am Ende der 30-Tage-Testphase, sofern Sie nicht vorher kündigen.",
+        "promoCta": "30 Tage kostenlos testen",
         "promoCtaAlt": "Pro-Testphase starten",
         "orSubscribeBelow": "Oder Pro unten abonnieren",
         "chooseTitle": "Pro-Testphase starten",
-        "chooseDesc": "Ihre 4-wöchige Testphase upgraded Basic auf Pro. Sie können vor Ende der Testphase abonnieren oder kündigen.",
-        "confirmCta": "4-Wochen-Pro-Test starten",
+        "chooseDesc": "Ihre kostenlose 30-Tage-Testphase upgraded Basic auf Pro. Nach Ablauf wird automatisch ein kostenpflichtiges Abo aktiviert, sofern Sie nicht vorher kündigen.",
+        "confirmCta": "30 Tage kostenlos testen",
+        "firstChargeNote": "Erste Zahlung: am Ende der 30-Tage-Testphase ({{price}}).",
         "enterpriseNote": "Vertrieb kontaktieren",
         "alreadyUsed": "Ihre Pro-Testphase wurde bereits genutzt. Abonnieren Sie Pro unten für erweiterte Funktionen.",
         "expiredTitle": "Ihre Pro-Testphase ist beendet",
@@ -6711,7 +6712,7 @@
           "enterprise": "Individuelle Einführung für Ihre Organisation. Vertrieb kontaktieren."
         }
       },
-      "trialPaymentNote": "Zahlungsdaten werden vor Beginn der Testphase benötigt. Nach der Testphase wird ein kostenpflichtiges Abo aktiviert.",
+      "trialPaymentNote": "Zahlungsdaten werden vor Beginn der Testphase benötigt. Die erste Zahlung erfolgt am Ende der 30-Tage-Testphase, sofern Sie nicht kündigen.",
       "lifecycle": {
         "title": "Abo & Kündigung",
         "subtitle": "Verlängerungs- und Kündigungstermine auf einen Blick.",

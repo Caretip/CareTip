@@ -70,8 +70,9 @@ function testCancelDuringTrialPreservesAccess(): boolean {
     trialExpiredAt: null,
   };
   const tier = resolveBusinessTierDualWrite(snapshot);
-  if (tier !== null) {
-    fail("cancel during trial (future effective): tier should not downgrade yet");
+  // cancel_at_period_end with future effective date: still entitled until trial/period end.
+  if (tier !== "premium") {
+    fail(`cancel during trial (future effective): expected premium until end, got ${tier}`);
     return false;
   }
   pass("cancel during trial preserves premium until trial end");
