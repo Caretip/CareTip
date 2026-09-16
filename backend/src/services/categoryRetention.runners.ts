@@ -319,11 +319,20 @@ export async function runAnalyticsTtl(opts?: {
       anonymizedScans = res.count;
     }
     if (clearVisitIds.length > 0) {
-      const res = await prisma.qrGuestVisit.updateMany({
-        where: { id: { in: clearVisitIds } },
-        data: { sessionId: QR_ANONYMIZED_SESSION_ID, anonymizedAt: now },
-      });
-      anonymizedVisits = res.count;
+      // Partial unique index: (business_id, session_id) WHERE status = 'active'.
+      // Collapsing many active rows onto QR_ANONYMIZED_SESSION_ID would violate it —
+      // expire active visits first so anonymized sessions can safely share "anon".
+      const [, visitAnon] = await prisma.$transaction([
+        prisma.qrGuestVisit.updateMany({
+          where: { id: { in: clearVisitIds }, status: "active" },
+          data: { status: "expired" },
+        }),
+        prisma.qrGuestVisit.updateMany({
+          where: { id: { in: clearVisitIds } },
+          data: { sessionId: QR_ANONYMIZED_SESSION_ID, anonymizedAt: now },
+        }),
+      ]);
+      anonymizedVisits = visitAnon.count;
     }
     if (clearFunnelIds.length > 0) {
       const res = await prisma.qrFunnelEvent.updateMany({
