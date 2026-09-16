@@ -49,7 +49,6 @@ export const Footer = memo(function Footer({
         { name: t("footer.terms"), to: "/terms" },
         { name: t("footer.dpa"), to: "/avv" },
         { name: t("footer.plv"), to: "/plv" },
-        { name: t("footer.linkPricing"), to: "/pricing" },
         { name: t("footer.cookies"), to: "/cookies" },
         { name: t("footer.cookieSettings"), to: "__cookie_settings__" },
         { name: t("footer.imprint"), to: "/imprint" },
