@@ -24,9 +24,8 @@ export function MerchantLegalAcceptanceCheckbox({
 }: Props) {
   const { t } = useTranslation();
 
-  const linkClass = dense
-    ? "underline underline-offset-2 text-inherit font-medium"
-    : "underline underline-offset-2 text-primary font-medium hover:opacity-90";
+  const linkClass =
+    "underline underline-offset-2 text-primary font-medium hover:opacity-90";
 
   return (
     <label
