@@ -509,7 +509,7 @@
 }
 
 .caretip-dashboard-shell .platform-admin-overview-hero__welcome.dashboard-formal-greeting-badge {
-  color: hsl(var(--primary));
+  color: hsl(var(--foreground));
   margin-bottom: 0.375rem;
 }
 

@@ -162,13 +162,13 @@
   backdrop-filter: none !important;
 }
 
-/* Formal Hello greeting on hero eyebrow/badge — CareTip brand orange */
+/* Formal Hello greeting on hero eyebrow/badge — black (foreground) */
 .caretip-dashboard-shell .dashboard-formal-greeting-badge,
 .caretip-dashboard-shell .business-dashboard-hero .business-hero-badge.dashboard-formal-greeting-badge,
 .caretip-dashboard-shell .employee-dashboard-hero .dashboard-formal-greeting-badge,
 .caretip-dashboard-shell .business-dashboard-mobile-hero__badge.dashboard-formal-greeting-badge,
 .caretip-dashboard-shell .platform-admin-overview-hero__welcome.dashboard-formal-greeting-badge {
-  color: hsl(var(--primary)) !important;
+  color: hsl(var(--foreground)) !important;
 }
 
 /* Tighten badge → headline spacing (formal greeting eyebrows) */

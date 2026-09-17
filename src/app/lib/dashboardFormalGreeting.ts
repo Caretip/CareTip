@@ -27,6 +27,6 @@ export function formatDashboardFormalGreeting(
   return t("dashboard.formalGreeting.hello");
 }
 
-/** Marker + brand orange for hero eyebrow/badge greeting text. */
+/** Marker + black text for hero eyebrow/badge greeting (Hello + name). */
 export const dashboardFormalGreetingBadgeClassName =
-  "dashboard-formal-greeting-badge text-primary break-words max-w-[min(100%,42ch)]";
+  "dashboard-formal-greeting-badge text-foreground break-words max-w-[min(100%,42ch)]";
