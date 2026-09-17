@@ -107,6 +107,9 @@ export function EmployeeTipPayoutModeCard({
                   <span className="block text-sm leading-snug text-muted-foreground">
                     {t(`business.stripe.tipRouting.mode.${option}.body`)}
                   </span>
+                  <span className="block text-sm leading-snug text-muted-foreground">
+                    {t(`business.stripe.tipRouting.mode.${option}.note`)}
+                  </span>
                 </span>
               </label>
             );

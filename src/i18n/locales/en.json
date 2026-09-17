@@ -3906,6 +3906,10 @@
         "kpiPending": "Pending",
         "kpiPendingHint": "These funds are still settling with Stripe and are not available for payout yet.",
         "kpiUnavailable": "This Stripe balance could not be loaded.",
+        "setupTitle": "Stripe payouts",
+        "setupBody": "Connect your Stripe payout account to receive your CareTip earnings directly.",
+        "setupAfter": "After you connect, balances and bank payouts appear here.",
+        "setupUseAccountCard": "Use Connect Stripe below to get started.",
         "viewHistory": "View statements",
         "payoutAccount": "Payout account",
         "changeAccount": "Change",
@@ -4062,8 +4066,10 @@
       "fixPhotoDesc": "Add a photo guests will recognize.",
       "fixPhotoAction": "Upload photo",
       "fixConnectTitle": "Connect your Stripe account to receive tips",
-      "fixConnectDesc": "Guests cannot send you tips until your Stripe account is connected.",
+      "fixConnectDesc": "Connect Stripe to receive eligible tips. Guests can tip before you finish setup.",
+      "fixConnectDescIncomplete": "Stripe needs more information before this account can receive transfers. Guests can still tip in the meantime.",
       "fixConnectAction": "Connect Stripe",
+      "fixConnectActionComplete": "Complete Stripe setup",
       "statTotalTips": "Total tips",
       "statAvgRating": "Avg rating",
       "statRatings": "Ratings",
@@ -4186,7 +4192,10 @@
     "fixConnect": {
       "title": "Connect your Stripe account to enable tipping",
       "description": "Guests cannot send tips until this venue’s Stripe account is connected.",
-      "action": "Connect Stripe"
+      "descriptionDirect": "Guests cannot tip until this venue’s Stripe account is connected. Eligible tips then go to each employee’s Stripe account, or are held until they connect.",
+      "descriptionBusiness": "Guests cannot send tips until this venue’s Stripe account is connected. Tips go to your business Stripe account for you to distribute.",
+      "action": "Connect Stripe",
+      "actionComplete": "Complete Stripe setup"
     },
     "shell": {
       "sidebarAria": "Business dashboard navigation",
@@ -6267,7 +6276,7 @@
           "direct_to_employee": {
             "label": "Pay employees through CareTip",
             "body": "Eligible tips go to each employee’s connected Stripe account.",
-            "note": "Unconnected employees’ shares are held until they connect."
+            "note": "Unconnected employees’ shares are held until they connect. Guests can still tip."
           },
           "business_distribution": {
             "label": "Business distributes employee tips",
@@ -6374,6 +6383,9 @@
           "metricAvailableHint": "Stripe available balance on the connected account",
           "balanceUnavailable": "Unable to retrieve balance",
           "balanceNotConnected": "Connect Stripe to see balance",
+          "setupTitle": "Business Stripe payouts",
+          "setupBody": "Connect your business Stripe account to view balances and payout history.",
+          "setupAfter": "After you connect, Stripe balances and bank payouts appear here.",
           "summaryError": "Could not load payout totals.",
           "retrySummary": "Retry totals",
           "mixedCurrency": "Totals use the primary payout currency."

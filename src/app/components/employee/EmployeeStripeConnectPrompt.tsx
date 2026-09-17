@@ -61,8 +61,18 @@ export function EmployeeStripeConnectPrompt({ density, className }: EmployeeStri
       tone="info"
       density={density}
       title={t("employee.dashboard.fixConnectTitle")}
-      description={t("employee.dashboard.fixConnectDesc")}
-      actionLabel={t("employee.dashboard.fixConnectAction")}
+      description={t(
+        data?.connectionState === "setup_required" ||
+          data?.connectionState === "action_required" ||
+          data?.connectionState === "restricted"
+          ? "employee.dashboard.fixConnectDescIncomplete"
+          : "employee.dashboard.fixConnectDesc",
+      )}
+      actionLabel={t(
+        data?.hasAccount && data.connectionState !== "not_connected"
+          ? "employee.dashboard.fixConnectActionComplete"
+          : "employee.dashboard.fixConnectAction",
+      )}
       actionTo={EMPLOYEE_PAYMENTS_CONNECT_HREF}
       className={className}
     />

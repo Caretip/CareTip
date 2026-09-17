@@ -1,8 +1,13 @@
 import { CalendarDays, Landmark, Wallet } from "lucide-react";
+import { Link } from "react-router";
 import { useTranslation } from "react-i18next";
 import type { EmployeeInstantPayoutEligibility } from "../../lib/api";
 import { formatEur } from "../../lib/formatEur";
 import { cn } from "@/lib/utils";
+import { Button } from "../ui/button";
+import { caretipBtnPrimary } from "@/lib/caretipButtonSystem";
+import { EMPLOYEE_PAYMENTS_CONNECT_HREF } from "./employeeDashboardNav";
+import { employeePayoutMetricsMode } from "./employeePayoutMetricsPresentation";
 
 const panel =
   "rounded-2xl border border-border/70 bg-card p-4 shadow-none sm:p-5";
@@ -18,11 +23,64 @@ const INSTANT_KPI_HIDDEN_REASONS = new Set([
 export function EmployeePayoutDashboardMetrics({
   eligibility,
   loading,
+  businessDistribution = false,
+  /** When true, Connect CTA is on this page’s account card — avoid duplicate primary CTA. */
+  connectCtaOnPage = true,
 }: {
   eligibility: EmployeeInstantPayoutEligibility | null;
   loading: boolean;
+  businessDistribution?: boolean;
+  connectCtaOnPage?: boolean;
 }) {
   const { t } = useTranslation();
+  const connected = eligibility == null ? null : eligibility.connected === true;
+  const mode = employeePayoutMetricsMode({
+    loading,
+    businessDistribution,
+    connected: connected === true ? true : connected === false ? false : null,
+  });
+
+  if (mode === "hidden") return null;
+
+  if (mode === "loading") {
+    return (
+      <div className="grid grid-cols-1 gap-3 md:grid-cols-3 md:gap-3.5" aria-busy="true">
+        {[0, 1, 2].map((i) => (
+          <section key={i} className={cn(panel, "min-h-0 md:min-h-[8.25rem]")}>
+            <div className="h-4 w-28 animate-pulse rounded-md bg-muted" />
+            <div className="mt-4 h-8 w-24 animate-pulse rounded-md bg-muted" />
+            <div className="mt-2 h-3 w-40 animate-pulse rounded-md bg-muted" />
+          </section>
+        ))}
+      </div>
+    );
+  }
+
+  if (mode === "setup") {
+    return (
+      <section className={cn(panel, "p-5 sm:p-6")} aria-labelledby="employee-payout-balance-setup-heading">
+        <h2 id="employee-payout-balance-setup-heading" className="text-base font-semibold tracking-tight">
+          {t("employee.payouts.dashboard.setupTitle")}
+        </h2>
+        <p className="mt-2 max-w-2xl text-sm leading-snug text-muted-foreground">
+          {t("employee.payouts.dashboard.setupBody")}
+        </p>
+        <p className="mt-2 max-w-2xl text-sm leading-snug text-muted-foreground">
+          {t("employee.payouts.dashboard.setupAfter")}
+        </p>
+        {!connectCtaOnPage ? (
+          <Button asChild className={cn(caretipBtnPrimary, "mt-5 h-auto min-h-11 w-full whitespace-normal sm:w-auto")}>
+            <Link to={EMPLOYEE_PAYMENTS_CONNECT_HREF}>{t("employee.payouts.connectCta")}</Link>
+          </Button>
+        ) : (
+          <p className="mt-4 text-sm font-medium text-foreground">
+            {t("employee.payouts.dashboard.setupUseAccountCard")}
+          </p>
+        )}
+      </section>
+    );
+  }
+
   const unavailable = !loading && !eligibility;
   const balancesOk = Boolean(eligibility?.connected && eligibility.balancesRetrieved === true);
   const instantOk =

@@ -18,6 +18,8 @@ import {
   employeePayoutUiPhase,
 } from "./employeePayoutAccountPresentation";
 import { employeeInstantUiMode, employeeInstantVisibleForTipRouting } from "./employeeInstantPayoutPresentation";
+import { employeePayoutMetricsMode } from "./employeePayoutMetricsPresentation";
+import { businessPayoutMetricsMode } from "../business/settings/billing/businessPayoutMetricsPresentation";
 
 assert.equal(employeePayoutActivityKind({ status: "held_business", disputedOpenCents: 0 }), "held_venue");
 assert.equal(
@@ -143,5 +145,16 @@ assert.equal(employeeInstantVisibleForTipRouting(true, "ready"), true);
 assert.equal(employeeInstantVisibleForTipRouting(true, "threshold"), false);
 assert.equal(employeeInstantVisibleForTipRouting(true, "hidden"), false);
 assert.equal(employeeInstantUiMode({ eligible: false, reason: "not_connected" }), "hidden");
+
+assert.equal(employeePayoutMetricsMode({ loading: true, businessDistribution: false, connected: false }), "loading");
+assert.equal(employeePayoutMetricsMode({ loading: false, businessDistribution: false, connected: false }), "setup");
+assert.equal(employeePayoutMetricsMode({ loading: false, businessDistribution: true, connected: false }), "hidden");
+assert.equal(employeePayoutMetricsMode({ loading: false, businessDistribution: false, connected: true }), "metrics");
+assert.equal(employeePayoutMetricsMode({ loading: false, businessDistribution: true, connected: true }), "metrics");
+
+assert.equal(businessPayoutMetricsMode({ loading: true, eligibility: null }), "loading");
+assert.equal(businessPayoutMetricsMode({ loading: false, eligibility: null }), "unavailable");
+assert.equal(businessPayoutMetricsMode({ loading: false, eligibility: { connected: false } }), "setup");
+assert.equal(businessPayoutMetricsMode({ loading: false, eligibility: { connected: true } }), "metrics");
 
 console.log("employee-payout-activity-presentation: ok");

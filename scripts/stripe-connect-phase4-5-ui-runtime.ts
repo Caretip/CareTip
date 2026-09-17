@@ -580,7 +580,60 @@ function testConnectPagePayoutOwnership(): boolean {
     fail("Payouts page must remain the owner of payout history");
     ok = false;
   }
+  if (!panel.includes("businessPayoutMetricsMode") || !panel.includes("setupTitle")) {
+    fail("Business payouts must use setup state when Stripe is unconnected");
+    ok = false;
+  }
   if (ok) pass("Connect owns business Stripe + routing; CareTip Payouts owns employee connections");
+  return ok;
+}
+
+function testStripeConnectionMessaging(): boolean {
+  let ok = true;
+  const en = JSON.parse(read("src/i18n/locales/en.json")) as {
+    employee: { dashboard: Record<string, string>; payouts: { dashboard: Record<string, string> } };
+    business: {
+      fixConnect: Record<string, string>;
+      stripe: { payoutsWorkspace: { business: Record<string, string> } };
+    };
+  };
+  const de = JSON.parse(read("src/i18n/locales/de.json")) as typeof en;
+  if (/cannot send you tips/i.test(en.employee.dashboard.fixConnectDesc ?? "")) {
+    fail("Employee dashboard must not claim guests cannot tip when Stripe is unconnected");
+    ok = false;
+  }
+  if (!/Guests can tip/i.test(en.employee.dashboard.fixConnectDesc ?? "")) {
+    fail("Employee dashboard must state guests can tip before employee Stripe setup");
+    ok = false;
+  }
+  if (!en.business.fixConnect.descriptionDirect || !en.business.fixConnect.descriptionBusiness) {
+    fail("Business fixConnect must have Mode A/B aware descriptions");
+    ok = false;
+  }
+  if (!de.business.fixConnect.descriptionDirect || !de.employee.dashboard.fixConnectDescIncomplete) {
+    fail("DE Stripe connection messaging keys missing");
+    ok = false;
+  }
+  if (!en.employee.payouts.dashboard.setupTitle || !en.business.stripe.payoutsWorkspace.business.setupTitle) {
+    fail("Unconnected payout setup titles missing");
+    ok = false;
+  }
+  const employeeMetrics = read("src/app/components/employee/EmployeePayoutDashboardMetrics.tsx");
+  if (!employeeMetrics.includes("employeePayoutMetricsMode") || !employeeMetrics.includes("setupTitle")) {
+    fail("Employee payout metrics must use setup state when unconnected");
+    ok = false;
+  }
+  const employeePrompt = read("src/app/components/employee/EmployeeStripeConnectPrompt.tsx");
+  if (!employeePrompt.includes("employeeConnectIsBusinessDistribution")) {
+    fail("Employee Stripe prompt must remain Mode B aware");
+    ok = false;
+  }
+  const businessPrompt = read("src/app/components/business/BusinessStripeConnectPrompt.tsx");
+  if (!businessPrompt.includes("getEmployeeTipPayoutMode") || !businessPrompt.includes("descriptionDirect")) {
+    fail("Business Stripe prompt must load payout mode for contextual copy");
+    ok = false;
+  }
+  if (ok) pass("Stripe connection messaging matches Mode A/B + unconnected payout setup");
   return ok;
 }
 
@@ -598,6 +651,7 @@ failed += testConnectRedirectAllowlist() ? 0 : 1;
 failed += testDashboardPresentationAndCopy() ? 0 : 1;
 failed += testPayoutHistoryUx() ? 0 : 1;
 failed += testConnectPagePayoutOwnership() ? 0 : 1;
+failed += testStripeConnectionMessaging() ? 0 : 1;
 
 for (const line of results) console.log(line);
 console.log(failed === 0 ? `\nOK: ${results.length} checks` : `\nFAILED: ${failed} check group(s)`);

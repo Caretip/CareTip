@@ -3906,6 +3906,10 @@
         "kpiPending": "Ausstehend",
         "kpiPendingHint": "Diese Beträge sind bei Stripe noch in der Abwicklung und daher noch nicht für eine Auszahlung verfügbar.",
         "kpiUnavailable": "Dieses Stripe-Guthaben konnte nicht geladen werden.",
+        "setupTitle": "Stripe-Auszahlungen",
+        "setupBody": "Verbinden Sie Ihr Stripe-Auszahlungskonto, um Ihre CareTip-Einnahmen direkt zu erhalten.",
+        "setupAfter": "Nach der Verbindung erscheinen hier Guthaben und Bankauszahlungen.",
+        "setupUseAccountCard": "Nutzen Sie unten „Stripe verbinden“, um zu starten.",
         "viewHistory": "Auszüge anzeigen",
         "payoutAccount": "Auszahlungskonto",
         "changeAccount": "Ändern",
@@ -4062,8 +4066,10 @@
       "fixPhotoDesc": "Foto hinzufügen, damit Gäste Sie erkennen.",
       "fixPhotoAction": "Foto hochladen",
       "fixConnectTitle": "Stripe-Konto verbinden, um Trinkgeld zu erhalten",
-      "fixConnectDesc": "Gäste können Ihnen erst Trinkgeld senden, wenn Ihr Stripe-Konto verbunden ist.",
+      "fixConnectDesc": "Verbinden Sie Stripe, um berechtigte Trinkgelder zu erhalten. Gäste können Trinkgeld geben, bevor die Einrichtung fertig ist.",
+      "fixConnectDescIncomplete": "Stripe benötigt weitere Angaben, bevor dieses Konto Überweisungen erhalten kann. Gäste können in der Zwischenzeit trotzdem Trinkgeld geben.",
       "fixConnectAction": "Stripe verbinden",
+      "fixConnectActionComplete": "Stripe-Einrichtung abschließen",
       "statTotalTips": "Trinkgeld gesamt",
       "statAvgRating": "Ø Bewertung",
       "statRatings": "Bewertungen",
@@ -4186,7 +4192,10 @@
     "fixConnect": {
       "title": "Stripe-Konto verbinden, um Trinkgeld zu aktivieren",
       "description": "Gäste können kein Trinkgeld senden, bis das Stripe-Konto dieses Standorts verbunden ist.",
-      "action": "Stripe verbinden"
+      "descriptionDirect": "Gäste können erst Trinkgeld geben, wenn das Stripe-Konto dieses Standorts verbunden ist. Berechtigte Trinkgelder gehen dann auf das Stripe-Konto der Mitarbeitenden oder werden gehalten, bis sie verbinden.",
+      "descriptionBusiness": "Gäste können kein Trinkgeld senden, bis das Stripe-Konto dieses Standorts verbunden ist. Trinkgelder gehen auf Ihr betriebliches Stripe-Konto zur eigenen Verteilung.",
+      "action": "Stripe verbinden",
+      "actionComplete": "Stripe-Einrichtung abschließen"
     },
     "shell": {
       "sidebarAria": "Unternehmens-Dashboard-Navigation",
@@ -6264,7 +6273,7 @@
           "direct_to_employee": {
             "label": "Mitarbeiter über CareTip auszahlen",
             "body": "Berechtigte Trinkgelder gehen auf das verbundene Stripe-Konto jeder Person.",
-            "note": "Ohne Stripe-Verbindung wird der Anteil gehalten, bis die Person verbindet."
+            "note": "Ohne Stripe-Verbindung wird der Anteil gehalten, bis die Person verbindet. Gäste können trotzdem Trinkgeld geben."
           },
           "business_distribution": {
             "label": "Betrieb verteilt Mitarbeiter-Trinkgelder",
@@ -6371,6 +6380,9 @@
           "metricAvailableHint": "Verfügbares Stripe-Guthaben auf dem verbundenen Konto",
           "balanceUnavailable": "Guthaben konnte nicht abgerufen werden",
           "balanceNotConnected": "Stripe verbinden, um das Guthaben zu sehen",
+          "setupTitle": "Betriebliche Stripe-Auszahlungen",
+          "setupBody": "Verbinden Sie Ihr betriebliches Stripe-Konto, um Guthaben und Auszahlungshistorie zu sehen.",
+          "setupAfter": "Nach der Verbindung erscheinen hier Stripe-Guthaben und Bankauszahlungen.",
           "summaryError": "Auszahlungssummen konnten nicht geladen werden.",
           "retrySummary": "Summen erneut laden",
           "mixedCurrency": "Summen gelten für die primäre Auszahlungswährung."

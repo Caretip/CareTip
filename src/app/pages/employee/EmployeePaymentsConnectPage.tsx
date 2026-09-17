@@ -86,7 +86,12 @@ export function EmployeePaymentsConnectPage() {
         />
         <EmployeeReceivingPausedBanner receivingPaused={receivingPaused} onReactivated={load} />
         {businessDistribution ? <EmployeeTipDistributionNotice businessName={businessName} /> : null}
-        <EmployeePayoutDashboardMetrics eligibility={eligibility} loading={metricsLoading} />
+        <EmployeePayoutDashboardMetrics
+          eligibility={eligibility}
+          loading={metricsLoading || !routingReady}
+          businessDistribution={businessDistribution}
+          connectCtaOnPage
+        />
         <div className="grid min-w-0 items-start gap-4 xl:grid-cols-[minmax(0,1fr)_21rem]">
           <div className="order-1 min-w-0 space-y-4 xl:order-2">
             <EmployeeInstantPayoutCard

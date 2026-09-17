@@ -11,6 +11,7 @@ import {
   type ConnectPayout,
   type InstantPayoutEligibility,
 } from "../../../../lib/api";
+import { businessPayoutMetricsMode } from "./businessPayoutMetricsPresentation";
 import {
   formatConnectPayoutAmount,
   formatConnectPayoutDate,
@@ -193,6 +194,11 @@ export function ConnectPayoutsPanel({ loading: bootLoading }: { loading?: boolea
   }, [loadEligibility]);
 
   const locale = i18n.language;
+  const showConnectedRails =
+    Boolean(bootLoading) ||
+    eligibilityLoading ||
+    eligibility == null ||
+    eligibility.connected === true;
 
   return (
     <div className="space-y-6">
@@ -379,23 +385,27 @@ export function ConnectPayoutsPanel({ loading: bootLoading }: { loading?: boolea
       </section>
 
       <div className="order-1 min-w-0 space-y-4 xl:order-2">
-        <InstantBalanceSection
-          bootLoading={Boolean(bootLoading)}
-          eligibility={eligibility}
-          loading={eligibilityLoading}
-          locale={locale}
-          dashboardBusy={dashboardBusy}
-          payoutBusy={payoutBusy}
-          termsAccepted={termsAccepted}
-          onTermsAcceptedChange={setTermsAccepted}
-          onRetryEligibility={() => void loadEligibility()}
-          onOpenDashboard={() => void openStripeDashboard()}
-          onRequestPayout={openInstantConfirm}
-        />
-        <BusinessPayoutMethodCard
-          last4={eligibility?.destinationLast4 ?? null}
-          kind={eligibility?.destinationKind ?? null}
-        />
+        {showConnectedRails ? (
+          <InstantBalanceSection
+            bootLoading={Boolean(bootLoading)}
+            eligibility={eligibility}
+            loading={eligibilityLoading}
+            locale={locale}
+            dashboardBusy={dashboardBusy}
+            payoutBusy={payoutBusy}
+            termsAccepted={termsAccepted}
+            onTermsAcceptedChange={setTermsAccepted}
+            onRetryEligibility={() => void loadEligibility()}
+            onOpenDashboard={() => void openStripeDashboard()}
+            onRequestPayout={openInstantConfirm}
+          />
+        ) : null}
+        {showConnectedRails ? (
+          <BusinessPayoutMethodCard
+            last4={eligibility?.destinationLast4 ?? null}
+            kind={eligibility?.destinationKind ?? null}
+          />
+        ) : null}
       </div>
       </div>
 
@@ -831,6 +841,56 @@ function BusinessPayoutMetrics({
   locale: string;
 }) {
   const { t } = useTranslation();
+  const mode = businessPayoutMetricsMode({
+    loading: eligibilityLoading,
+    eligibility,
+  });
+
+  if (mode === "loading") {
+    return (
+      <div className="grid grid-cols-1 gap-3 md:grid-cols-3 md:gap-3.5" aria-busy="true">
+        {[0, 1, 2].map((i) => (
+          <section
+            key={i}
+            className="min-h-0 rounded-2xl border border-border/70 bg-card p-4 shadow-none md:min-h-[8.25rem] sm:p-5"
+          >
+            <div className="h-4 w-28 animate-pulse rounded-md bg-muted" />
+            <div className="mt-4 h-8 w-24 animate-pulse rounded-md bg-muted" />
+            <div className="mt-2 h-3 w-40 animate-pulse rounded-md bg-muted" />
+          </section>
+        ))}
+      </div>
+    );
+  }
+
+  if (mode === "setup") {
+    return (
+      <section
+        className="rounded-2xl border border-border/70 bg-card p-5 sm:p-6"
+        aria-labelledby="business-payout-balance-setup-heading"
+      >
+        <h2 id="business-payout-balance-setup-heading" className="text-base font-semibold tracking-tight">
+          {t("business.stripe.payoutsWorkspace.business.setupTitle")}
+        </h2>
+        <p className="mt-2 max-w-2xl text-sm leading-snug text-muted-foreground">
+          {t("business.stripe.payoutsWorkspace.business.setupBody")}
+        </p>
+        <p className="mt-2 max-w-2xl text-sm leading-snug text-muted-foreground">
+          {t("business.stripe.payoutsWorkspace.business.setupAfter")}
+        </p>
+        <Link
+          to="/dashboard/stripe/connect"
+          className={cn(
+            caretipBtnPrimaryCompact,
+            "mt-5 inline-flex h-auto min-h-11 w-full items-center justify-center whitespace-normal sm:w-auto",
+          )}
+        >
+          {t("business.billing.payouts.instant.connectCta")}
+        </Link>
+      </section>
+    );
+  }
+
   const currency = eligibility?.currency || "eur";
   const money = (cents: number) => formatConnectPayoutAmount(cents, currency, locale);
   const instantHidden = new Set([
@@ -842,16 +902,12 @@ function BusinessPayoutMetrics({
   ]);
   const balancesOk = Boolean(eligibility?.connected && eligibility.balancesRetrieved === true);
   const formatStandard = (cents: number | undefined) => {
-    if (eligibilityLoading) return "—";
     if (!eligibility) return t("business.stripe.payoutsWorkspace.business.balanceUnavailable");
-    if (!eligibility.connected) return t("business.stripe.payoutsWorkspace.business.balanceNotConnected");
     if (!balancesOk) return t("business.stripe.payoutsWorkspace.business.balanceUnavailable");
     return money(cents ?? 0);
   };
   const formatInstant = (cents: number | undefined) => {
-    if (eligibilityLoading) return "—";
     if (!eligibility) return t("business.stripe.payoutsWorkspace.business.balanceUnavailable");
-    if (!eligibility.connected) return t("business.stripe.payoutsWorkspace.business.balanceNotConnected");
     if (!balancesOk || instantHidden.has(eligibility.reason)) return "—";
     return money(cents ?? 0);
   };
