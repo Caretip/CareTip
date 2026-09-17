@@ -2277,6 +2277,10 @@
     }
   },
   "dashboard": {
+    "formalGreeting": {
+      "helloNamed": "Hallo {{name}}",
+      "hello": "Hallo"
+    },
     "refresh": {
       "updating": "Aktualisierung…",
       "justNow": "Gerade aktualisiert"

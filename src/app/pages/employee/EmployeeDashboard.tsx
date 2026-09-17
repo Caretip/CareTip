@@ -58,6 +58,10 @@ import {
 import { CountUpMetric } from "../../components/dashboard/CountUpMetric";
 import { computeEmployeeTipStreakDays } from "../../lib/employeeFormat";
 import { employeeUi } from "../../components/employee/employeeDashboardUi";
+import {
+  dashboardFormalGreetingBadgeClassName,
+  formatDashboardFormalGreeting,
+} from "../../lib/dashboardFormalGreeting";
 import { EmployeeReceivingPausedBanner } from "../../components/employee/EmployeeReceivingPausedBanner";
 import {
   devMockEmployeeAccountSummary,
@@ -411,15 +415,14 @@ export const EmployeeDashboard = memo(function EmployeeDashboard() {
           mobileAlign="left"
           className="!mb-0"
           cardClassName="employee-hero-shell border-0 bg-transparent shadow-none lg:rounded-none lg:border-0 lg:bg-transparent lg:shadow-none"
-          badgeClassName="normal-case border-transparent bg-transparent px-0 py-0 text-[11px] max-lg:text-[12px] font-medium tracking-normal text-muted-foreground shadow-none"
+          badgeClassName={cn(
+            "normal-case border-transparent bg-transparent px-0 py-0 text-[11px] max-lg:text-[12px] font-medium tracking-normal shadow-none",
+            dashboardFormalGreetingBadgeClassName,
+          )}
           titleClassName="max-lg:!leading-[1.08] lg:!leading-[1.1] tracking-tight max-lg:mx-0 max-lg:max-w-[22ch] max-lg:!text-[1.5625rem] max-lg:text-left lg:max-w-[18ch] lg:!text-[2rem] lg:text-left xl:!text-[2.125rem]"
           descriptionClassName="!line-clamp-2 max-w-[34ch] leading-relaxed text-muted-foreground/90 max-lg:mx-0 max-lg:text-left lg:max-w-sm"
           textColumnClassName="lg:py-2 xl:pr-6"
-          badge={
-            user.name
-              ? t("employee.hero.welcomeBackNamed", { name: user.name.split(" ")[0] })
-              : t("employee.hero.welcomeBack")
-          }
+          badge={formatDashboardFormalGreeting(t, user.name)}
           title={
             <>
               {t("employee.hero.headlineLine1")}

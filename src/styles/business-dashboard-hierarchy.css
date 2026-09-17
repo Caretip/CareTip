@@ -55,7 +55,11 @@
 .caretip-dashboard-shell.business-dashboard .business-dashboard-hero .dashboard-hero-container .min-h-0.space-y-4 {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem !important;
+  gap: 0.125rem !important;
+}
+
+.caretip-dashboard-shell.business-dashboard .business-dashboard-hero .dashboard-hero-container .min-h-0.space-y-4 > :not([hidden]) ~ :not([hidden]) {
+  margin-top: 0 !important;
 }
 
 .caretip-dashboard-shell.business-dashboard .business-dashboard-hero .business-hero-title,
@@ -70,7 +74,7 @@
 }
 
 .caretip-dashboard-shell.business-dashboard .business-dashboard-hero .business-hero-badge {
-  margin-bottom: 0.125rem;
+  margin-bottom: 0;
   padding-block: 0.1875rem !important;
   font-size: 0.6875rem !important;
 }
@@ -164,6 +168,10 @@
     flex-direction: column;
     align-items: stretch;
     gap: 0.5rem !important;
+  }
+
+  .caretip-dashboard-shell.business-dashboard .business-dashboard-mobile-hero__badge {
+    margin-bottom: -0.25rem;
   }
 
   .caretip-dashboard-shell.business-dashboard .business-dashboard-mobile-hero__title {

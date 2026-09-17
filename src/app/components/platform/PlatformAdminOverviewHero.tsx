@@ -8,6 +8,10 @@ import type { PlatformHealthResponse } from "../../lib/api";
 import { platformUi } from "./platformDashboardUi";
 import { PLATFORM_SYSTEM_BASE } from "./platformAdminNav";
 import { cn } from "@/lib/utils";
+import {
+  dashboardFormalGreetingBadgeClassName,
+  formatDashboardFormalGreeting,
+} from "../../lib/dashboardFormalGreeting";
 
 type PlatformAdminOverviewHeroProps = {
   health: PlatformHealthResponse | null;
@@ -26,6 +30,7 @@ export function PlatformAdminOverviewHero({ health, adminName, locale }: Platfor
   const status = resolvePlatformStatus(health);
   const dateLocale = (locale ?? i18n.language)?.toLowerCase().startsWith("de") ? de : enUS;
   const nowLabel = format(new Date(), "EEEE, MMMM d · h:mm a", { locale: dateLocale });
+  const formalGreeting = formatDashboardFormalGreeting(t, adminName);
 
   const statusBadge = useMemo(() => {
     if (status === "operational") {
@@ -57,11 +62,14 @@ export function PlatformAdminOverviewHero({ health, adminName, locale }: Platfor
       <div className="platform-admin-overview-hero__inner">
         <div className="platform-admin-overview-hero__grid">
           <div className="platform-admin-overview-hero__copy">
-            {adminName ? (
-              <p className="platform-admin-overview-hero__welcome">
-                {t("admin.overview.hero.welcomeNamed", { name: adminName })}
-              </p>
-            ) : null}
+            <p
+              className={cn(
+                "platform-admin-overview-hero__welcome",
+                dashboardFormalGreetingBadgeClassName,
+              )}
+            >
+              {formalGreeting}
+            </p>
             <h1 id="platform-overview-hero-title" className="platform-admin-overview-hero__title">
               {t("admin.overview.title")}
             </h1>

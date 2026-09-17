@@ -73,6 +73,10 @@ import bizzyHeroWebp from "../../../../images/finalbizzy-hero.webp";
 import bizzyHeroAvif from "../../../../images/finalbizzy-hero.avif";
 import { BusinessDashboardMobileHero } from "../../components/business/BusinessDashboardMobileHero";
 import { BusinessDashboardHeroActions } from "../../components/business/BusinessDashboardHeroActions";
+import {
+  dashboardFormalGreetingBadgeClassName,
+  formatDashboardFormalGreeting,
+} from "../../lib/dashboardFormalGreeting";
 
 function goalStatusClass(s: EmployeeGoalProgressStatus): string {
   if (s === "achieved") return "text-emerald-600 dark:text-emerald-400";
@@ -312,7 +316,7 @@ export const BusinessDashboard = memo(function BusinessDashboard() {
     return <Navigate to="/onboarding" replace />;
   }
 
-  const venueLabel = (user.businessName ?? user.name)?.trim() || "";
+  const formalGreeting = formatDashboardFormalGreeting(t, user.name);
 
   return (
     <div className={cn(businessUi.page, "business-dashboard-overview overflow-x-hidden")}>
@@ -353,7 +357,7 @@ export const BusinessDashboard = memo(function BusinessDashboard() {
 
       {!isLargeScreen ? (
         <BusinessDashboardMobileHero
-          venueLabel={venueLabel || undefined}
+          greetingBadge={formalGreeting}
           isPreviewMode={isPreviewMode}
           heroPulseLoading={heroPulseLoading}
           operationalPulse={operationalPulse ?? null}
@@ -371,16 +375,14 @@ export const BusinessDashboard = memo(function BusinessDashboard() {
           mobileAlign="left"
           className="business-hero-dashboard-root !mb-0"
           cardClassName="border-0 bg-transparent shadow-none max-lg:border-0 max-lg:bg-transparent max-lg:shadow-none lg:rounded-none lg:border-0 lg:bg-transparent lg:shadow-none"
-          badgeClassName="business-hero-badge normal-case border-transparent bg-transparent px-0 py-0 text-[11px] max-lg:text-[12px] font-medium tracking-normal text-muted-foreground shadow-none"
+          badgeClassName={cn(
+            "business-hero-badge normal-case border-transparent bg-transparent px-0 py-0 text-[11px] max-lg:text-[12px] font-medium tracking-normal shadow-none",
+            dashboardFormalGreetingBadgeClassName,
+          )}
           titleClassName="business-hero-title max-lg:!leading-[1.08] lg:!leading-[1.1] tracking-tight max-lg:mx-0 max-lg:max-w-[22ch] max-lg:!text-[1.5625rem] max-lg:text-left lg:max-w-[18ch] lg:!text-[2rem] lg:text-left xl:!text-[2.125rem]"
           descriptionClassName="business-hero-description !line-clamp-2 max-w-[32ch] leading-snug max-lg:mb-0 max-lg:text-left lg:max-w-sm"
           textColumnClassName="lg:py-1 xl:pr-1"
-          badge={
-            venueLabel ||
-            (user.name
-              ? t("business.hero.welcomeBackNamed", { name: user.name.split(" ")[0] })
-              : t("business.hero.welcomeBack"))
-          }
+          badge={formalGreeting}
           title={
             <>
               {t("business.hero.headlineLine1")}

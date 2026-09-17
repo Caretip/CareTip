@@ -500,12 +500,17 @@
 }
 
 .caretip-dashboard-shell .platform-admin-overview-hero__welcome {
-  margin: 0 0 1.125rem; /* 18px → heading */
+  margin: 0 0 0.375rem; /* tight to overview title */
   font-size: 0.8125rem;
   font-weight: 500;
   line-height: 1.4;
   letter-spacing: 0.01em;
   color: hsl(var(--muted-foreground) / 0.82);
+}
+
+.caretip-dashboard-shell .platform-admin-overview-hero__welcome.dashboard-formal-greeting-badge {
+  color: hsl(var(--primary));
+  margin-bottom: 0.375rem;
 }
 
 .caretip-dashboard-shell .platform-admin-overview-hero__title {

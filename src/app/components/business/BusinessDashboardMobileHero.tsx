@@ -10,9 +10,10 @@ import {
   type BusinessHeroOperationalPulse,
 } from "./BusinessHeroPulseMetrics";
 import { BusinessDashboardHeroActions } from "./BusinessDashboardHeroActions";
+import { dashboardFormalGreetingBadgeClassName } from "../../lib/dashboardFormalGreeting";
 
 type BusinessDashboardMobileHeroProps = {
-  venueLabel?: string;
+  greetingBadge: string;
   isPreviewMode: boolean;
   heroPulseLoading: boolean;
   operationalPulse: BusinessHeroOperationalPulse | null;
@@ -21,7 +22,7 @@ type BusinessDashboardMobileHeroProps = {
 };
 
 export const BusinessDashboardMobileHero = memo(function BusinessDashboardMobileHero({
-  venueLabel,
+  greetingBadge,
   isPreviewMode,
   heroPulseLoading,
   operationalPulse,
@@ -36,12 +37,13 @@ export const BusinessDashboardMobileHero = memo(function BusinessDashboardMobile
       aria-labelledby="business-mobile-hero-title"
     >
       <div className="business-dashboard-mobile-hero__content">
-        <div className="business-dashboard-mobile-hero__badge">
-          <span>
-            {venueLabel
-              ? venueLabel
-              : t("business.hero.welcomeBack")}
-          </span>
+        <div
+          className={cn(
+            "business-dashboard-mobile-hero__badge",
+            dashboardFormalGreetingBadgeClassName,
+          )}
+        >
+          <span>{greetingBadge}</span>
         </div>
 
         <h1 id="business-mobile-hero-title" className="business-dashboard-mobile-hero__title">

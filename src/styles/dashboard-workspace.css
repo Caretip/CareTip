@@ -162,6 +162,41 @@
   backdrop-filter: none !important;
 }
 
+/* Formal Hello greeting on hero eyebrow/badge — CareTip brand orange */
+.caretip-dashboard-shell .dashboard-formal-greeting-badge,
+.caretip-dashboard-shell .business-dashboard-hero .business-hero-badge.dashboard-formal-greeting-badge,
+.caretip-dashboard-shell .employee-dashboard-hero .dashboard-formal-greeting-badge,
+.caretip-dashboard-shell .business-dashboard-mobile-hero__badge.dashboard-formal-greeting-badge,
+.caretip-dashboard-shell .platform-admin-overview-hero__welcome.dashboard-formal-greeting-badge {
+  color: hsl(var(--primary)) !important;
+}
+
+/* Tighten badge → headline spacing (formal greeting eyebrows) */
+.caretip-dashboard-shell .business-dashboard-hero .business-hero-badge.dashboard-formal-greeting-badge,
+.caretip-dashboard-shell .employee-dashboard-hero .dashboard-formal-greeting-badge {
+  margin-bottom: 0 !important;
+}
+
+.caretip-dashboard-shell .business-dashboard-hero .dashboard-hero-container .min-h-0.space-y-4:has(.dashboard-formal-greeting-badge),
+.caretip-dashboard-shell .employee-dashboard-hero .dashboard-hero-container .min-h-0.space-y-4:has(.dashboard-formal-greeting-badge) {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem !important;
+}
+
+.caretip-dashboard-shell .business-dashboard-hero .dashboard-hero-container .min-h-0.space-y-4:has(.dashboard-formal-greeting-badge) > :not([hidden]) ~ :not([hidden]),
+.caretip-dashboard-shell .employee-dashboard-hero .dashboard-hero-container .min-h-0.space-y-4:has(.dashboard-formal-greeting-badge) > :not([hidden]) ~ :not([hidden]) {
+  margin-top: 0 !important;
+}
+
+.caretip-dashboard-shell .business-dashboard-mobile-hero__badge.dashboard-formal-greeting-badge {
+  margin-bottom: -0.25rem;
+}
+
+.caretip-dashboard-shell .platform-admin-overview-hero__welcome.dashboard-formal-greeting-badge {
+  margin-bottom: 0.375rem;
+}
+
 .caretip-dashboard-shell .employee-dashboard-hero .employee-hero-shell {
   background: transparent !important;
   border: none !important;
