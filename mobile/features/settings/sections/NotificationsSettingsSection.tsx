@@ -33,7 +33,6 @@ export function BusinessNotificationsSettingsScreen() {
 
   const toggles = [
     ["tipReceivedNotifications", "settings.tipReceived"],
-    ["summaryEmails", "settings.summaryEmails"],
     ["systemAlerts", "settings.systemAlerts"],
     ["notifyNewLogin", "settings.newLogin"],
   ] as const;
@@ -46,7 +45,7 @@ export function BusinessNotificationsSettingsScreen() {
     >
       <Section title={t("settings.notificationsBusiness")}>
         {accountQuery.isLoading && !account ? (
-          <SkeletonListRows count={4} />
+          <SkeletonListRows count={3} />
         ) : account ? (
           <GroupedList>
             {toggles.map(([key, labelKey], index) => (
@@ -94,18 +93,9 @@ export function EmployeeNotificationsSettingsScreen() {
     >
       <Section title={t("settings.notificationsEmployee")}>
         {employeeQuery.isLoading && !employee ? (
-          <SkeletonListRows count={2} />
+          <SkeletonListRows count={1} />
         ) : employee ? (
           <GroupedList>
-            <GroupedRow>
-              <View style={styles.row}>
-                <Text style={styles.body}>{t("settings.emailNotifications")}</Text>
-                <Switch
-                  value={employee.emailNotifications}
-                  onValueChange={(v) => void patchEmployee.mutateAsync({ emailNotifications: v })}
-                />
-              </View>
-            </GroupedRow>
             <GroupedRow showDivider={false}>
               <View style={styles.row}>
                 <Text style={styles.body}>{t("settings.pushNotifications")}</Text>

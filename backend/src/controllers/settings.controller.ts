@@ -2,13 +2,10 @@ import type { Request, Response } from "express";
 import { prisma } from "../prisma.js";
 import { CLIENT_FALLBACK, clientSafeMessage, logServerError } from "../utils/httpErrors.js";
 import { isPrismaPoolTimeout } from "../utils/prismaErrors.js";
-
-const DEFAULT_SETTINGS = {
-  tipReceivedNotifications: true,
-  summaryEmails: false,
-  systemAlerts: true,
-  notifyNewLogin: true,
-} as const;
+import {
+  DEFAULT_USER_NOTIFICATION_SETTINGS,
+  effectiveUserNotificationSettings,
+} from "../services/notifications/userNotificationSettingsDefaults.js";
 
 function getUserId(req: Request): string | null {
   const uid = req.user?.userId ?? req.user?.id;
@@ -24,12 +21,18 @@ export async function getMySettings(req: Request, res: Response) {
       where: { id: userId },
       select: {
         preferredLocale: true,
-        settings: true,
+        settings: {
+          select: {
+            tipReceivedNotifications: true,
+            summaryEmails: true,
+            systemAlerts: true,
+            notifyNewLogin: true,
+          },
+        },
       },
     });
-    const row = user?.settings;
     return res.json({
-      ...(row ?? DEFAULT_SETTINGS),
+      ...effectiveUserNotificationSettings(user?.settings),
       preferredLocale: user?.preferredLocale ?? null,
     });
   } catch (err) {
@@ -60,7 +63,7 @@ export async function patchMySettings(req: Request, res: Response) {
 
     const updated = await prisma.userSettings.upsert({
       where: { userId },
-      create: { userId, ...data },
+      create: { userId, ...DEFAULT_USER_NOTIFICATION_SETTINGS, ...data },
       update: data,
     });
 

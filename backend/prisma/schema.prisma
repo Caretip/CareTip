@@ -442,9 +442,11 @@ model UserSettings {
   id     String @id @default(cuid())
   userId String @unique @map("user_id")
 
-  /**
-   * Email / in-app preferences
-   */
+/**
+ * Push preferences for managers: tipReceivedNotifications, systemAlerts, notifyNewLogin.
+ * In-app Notification inbox remains an activity record and is not gated by these prefs.
+ * summaryEmails is stored for compatibility but has no digest producer — do not expose in UI.
+ */
   tipReceivedNotifications Boolean @default(true) @map("tip_received_notifications")
   summaryEmails            Boolean @default(false) @map("summary_emails")
   systemAlerts             Boolean @default(true) @map("system_alerts")

@@ -14,7 +14,6 @@ type Props = Pick<
   | "loading"
   | "tipReceivedNotifications"
   | "setTipReceivedNotifications"
-  | "summaryEmails"
   | "setSummaryEmails"
   | "systemAlerts"
   | "setSystemAlerts"
@@ -71,7 +70,6 @@ export function BusinessSettingsNotificationsPanel({
   loading,
   tipReceivedNotifications,
   setTipReceivedNotifications,
-  summaryEmails,
   setSummaryEmails,
   systemAlerts,
   setSystemAlerts,
@@ -122,18 +120,6 @@ export function BusinessSettingsNotificationsPanel({
               const next = !tipReceivedNotifications;
               setTipReceivedNotifications(next);
               void savePrefs({ tipReceivedNotifications: next });
-            }}
-          />
-          <ToggleRow
-            title={t("business.accountSettings.summaryTitle")}
-            description={t("business.accountSettings.summaryDesc")}
-            checked={summaryEmails}
-            disabled={saving}
-            ariaLabel={t("business.accountSettings.ariaSummary")}
-            onToggle={() => {
-              const next = !summaryEmails;
-              setSummaryEmails(next);
-              void savePrefs({ summaryEmails: next });
             }}
           />
           <ToggleRow

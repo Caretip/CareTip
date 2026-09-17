@@ -138,7 +138,6 @@ export function EmployeeSettingsPage() {
         name: name.trim(),
         bio: bio.trim() || null,
         monthlyGoal: mg,
-        emailNotifications: emailNotif,
         pushNotifications: pushNotif,
       });
       invalidateEmployeeGoalClientCaches();
@@ -425,11 +424,10 @@ export function EmployeeSettingsPage() {
             {t("employee.settings.prefsSection")}
           </h3>
           <div className="flex items-center justify-between">
-            <Label htmlFor="email-n">{t("employee.settings.emailNotif")}</Label>
-            <Switch id="email-n" checked={emailNotif} onCheckedChange={setEmailNotif} />
-          </div>
-          <div className="flex items-center justify-between">
-            <Label htmlFor="push-n">{t("employee.settings.pushNotif")}</Label>
+            <div className="min-w-0 pr-4">
+              <Label htmlFor="push-n">{t("employee.settings.pushNotif")}</Label>
+              <p className="mt-0.5 text-xs text-muted-foreground">{t("employee.settings.pushNotifHint")}</p>
+            </div>
             <Switch id="push-n" checked={pushNotif} onCheckedChange={setPushNotif} />
           </div>
           <p className="text-xs text-muted-foreground">{t("employee.settings.prefsHint")}</p>

@@ -5,6 +5,7 @@ import { resolveUserPreferredLocale, type EmailLocale } from "../emails/i18nEmai
 import { sendNewLoginAlertEmail } from "./loginAlertEmail.service.js";
 import { onLoginSecurityAlert } from "./push/notification.triggers.js";
 import { LOGIN_NOTIFICATION_DEDUPE_MS } from "./notifications/notificationInbox.service.js";
+import { effectiveNotifyNewLogin } from "./notifications/userNotificationSettingsDefaults.js";
 
 const recentLoginNotifications = new Map<string, number>();
 
@@ -82,13 +83,14 @@ export type PostLoginNotificationInput = {
 /**
  * Single login → at most one email + one inbox record (5-minute idempotency per user/device).
  * Normal login: "New sign in" email. New device: "Sign-in activity" security alert email.
+ * Missing UserSettings row uses schema defaults (notifyNewLogin = true).
  */
 export async function handlePostLoginNotifications(input: PostLoginNotificationInput): Promise<void> {
   const settings = await prisma.userSettings.findUnique({
     where: { userId: input.userId },
     select: { notifyNewLogin: true },
   });
-  if (!settings?.notifyNewLogin) return;
+  if (!effectiveNotifyNewLogin(settings)) return;
 
   const deviceFingerprint = buildLoginDeviceFingerprint(input.ip, input.userAgent);
   if (shouldSkipDuplicateLoginNotification(input.userId, deviceFingerprint)) {
