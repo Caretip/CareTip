@@ -1317,12 +1317,15 @@ html.dark .caretip-pricing-trust--subtle .caretip-pricing-trust__icon {
   gap: 1.25rem;
   align-items: stretch;
   overflow: visible;
+  /* Room under scaled featured card before the grid legal footnote */
+  padding-bottom: 0.5rem;
 }
 
 @media (min-width: 768px) {
   .caretip-pricing-tiers__grid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 1.125rem;
+    padding-bottom: 1.25rem;
   }
 }
 
@@ -1605,11 +1608,20 @@ html.dark .caretip-pricing-tier-card__fee {
 }
 
 .caretip-pricing-grid-legal-note {
-  margin: 1.25rem 0 0;
+  /* Clear featured Pro card scale(1.06) overhang so the footnote is not covered */
+  margin: clamp(2.25rem, 4vw, 3.25rem) 0 0;
   max-width: 52rem;
+  position: relative;
+  z-index: 0;
   font-size: 0.8125rem;
   line-height: 1.5;
   color: rgb(115 115 115);
+}
+
+@media (min-width: 768px) {
+  .caretip-pricing-grid-legal-note {
+    margin-top: clamp(3rem, 5vw, 4rem);
+  }
 }
 
 .caretip-pricing-grid-legal-note__link {
@@ -1624,7 +1636,7 @@ html.dark .caretip-pricing-tier-card__fee {
 }
 
 .caretip-pricing-tiers--billing .caretip-pricing-grid-legal-note {
-  margin-top: 1rem;
+  margin-top: clamp(2rem, 3.5vw, 3rem);
   max-width: none;
 }
 
