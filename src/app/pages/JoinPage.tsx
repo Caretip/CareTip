@@ -52,7 +52,8 @@ export function JoinPage() {
       <AuthSplitLayout
         authLane="employee"
         marketingScene="invite"
-        topSlot={<AuthBackToHomeNav className="lg:hidden" showLogo={false} />}
+        hideBackToHome
+        topSlot={<AuthBackToHomeNav showLogo={false} />}
       >
         <div className="caretip-auth-card-wrap">
           <div className="caretip-auth-card caretip-auth-card--stable caretip-auth-card--recovery">

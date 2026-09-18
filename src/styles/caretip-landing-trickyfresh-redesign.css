@@ -101,13 +101,21 @@
 }
 
 .caretip-landing .caretip-public-nav-link,
-.caretip-landing .caretip-public-nav a:not([class*="caretipBtn"]):not([href="/join"]) {
+.caretip-landing .caretip-public-nav a:not([class*="caretip-btn"]):not([href="/join"]) {
   color: var(--care-ink, #1f2a35);
 }
 
-.caretip-landing .caretip-public-nav a[href="/join"],
-.caretip-landing .caretip-public-nav a[class*="caretipBtn"] {
-  color: #fff8f1 !important;
+/* Filled brand-orange CTAs in the landing nav (e.g. Join Team) */
+.caretip-landing .caretip-public-nav a[class*="caretip-btn-primary"] {
+  color: #fff !important;
+  -webkit-text-fill-color: #fff !important;
+}
+
+/* Text-only /join links: solid brand orange (never cream-on-light) */
+.caretip-landing .caretip-public-nav a[href="/join"]:not([class*="caretip-btn"]) {
+  color: var(--care-orange, #e9781c) !important;
+  -webkit-text-fill-color: var(--care-orange, #e9781c) !important;
+  font-weight: 700;
 }
 
 /* —— Full-bleed hero with white overlay + crossfading story frames —— */

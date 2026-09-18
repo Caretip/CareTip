@@ -329,6 +329,17 @@ export const Navigation = memo(function Navigation({ variant: _variant = "defaul
             <div className="relative z-[2] flex shrink-0 items-center justify-end gap-2.5 xl:gap-3.5">
               <ThemeQuickToggle />
               <LanguageSwitcher />
+              {isLandingHome ? (
+                <PrefetchLink
+                  to="/join"
+                  className={cn(
+                    landingUi.navCtaPrimary,
+                    "whitespace-nowrap px-3.5 py-2 text-sm",
+                  )}
+                >
+                  {t("nav.staffPortal")}
+                </PrefetchLink>
+              ) : null}
               <PrefetchLink
                 to="/login"
                 className={cn(
