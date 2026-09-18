@@ -1706,7 +1706,7 @@
       "platformLogin": "Plattform-Admin-Anmeldung"
     },
     "merchantLegalAcceptance": {
-      "label": "Ich akzeptiere die <terms>Allgemeinen Geschäftsbedingungen</terms>, die <dpa>Vereinbarung zur Auftragsverarbeitung (AVV)</dpa> und das <plv>Preis- und Leistungsverzeichnis</plv>. Ich habe die <privacy>Datenschutzerklärung</privacy> gelesen und zur Kenntnis genommen.",
+      "label": "Ich akzeptiere die <terms>AGB</terms>, die <dpa>AVV</dpa> und das <plv>Preis- und Leistungsverzeichnis</plv> und bestätige die <privacy>Datenschutzerklärung</privacy>.",
       "requiredHint": "Erforderlich zur Erstellung eines Geschäftskontos.",
       "requiredError": "Bitte akzeptieren Sie die AGB, die AVV und das Preis- und Leistungsverzeichnis und bestätigen Sie die Datenschutzerklärung, um fortzufahren."
     }
@@ -8728,7 +8728,7 @@
     "dpaTitle": "Vereinbarung zur Auftragsverarbeitung (AVV / DPA)",
     "plvTitle": "Preis- und Leistungsverzeichnis (PLV)",
     "dpaBlurb": "CareTip-Auftragsverarbeitungsvertrag für Unternehmen (Art. 28 DSGVO). Offizielles PDF ansehen oder herunterladen.",
-    "plvBlurb": "Offizielles CareTip Preis- und Leistungsverzeichnis für Unternehmen. Offizielles PDF ansehen oder herunterladen.",
+    "plvBlurb": "Offizielles CareTip Preis und Leistungsverzeichnis für Unternehmen. Offizielles PDF ansehen oder herunterladen.",
     "viewPdf": "PDF ansehen",
     "downloadPdf": "PDF herunterladen"
   }

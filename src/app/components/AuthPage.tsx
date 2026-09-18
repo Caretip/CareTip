@@ -887,6 +887,7 @@ export function AuthPage() {
                 formBusy={isSubmitting}
                 name={name}
                 inviteCode={resolvedInviteCode}
+                merchantLegalAccepted={merchantLegalAccepted}
                 onSocialCredential={(provider, token) => void runSocialOAuth(provider, token)}
               />
             </div>
@@ -1080,7 +1081,8 @@ export function AuthPage() {
               <MerchantLegalAcceptanceCheckbox
                 checked={merchantLegalAccepted}
                 onCheckedChange={setMerchantLegalAccepted}
-                className="pt-1"
+                dense
+                className="caretip-auth-legal-acceptance"
               />
             ) : null}
 

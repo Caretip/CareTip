@@ -1504,6 +1504,23 @@ html.dark .caretip-pricing-tier-card--enterprise {
   color: var(--caretip-brand-orange, #e9781c);
 }
 
+.caretip-pricing-tier-card__transaction-fee-notice-link {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 0.15em;
+  text-decoration-thickness: from-font;
+}
+
+.caretip-pricing-tier-card__transaction-fee-notice-link:hover {
+  opacity: 0.88;
+}
+
+.caretip-pricing-tier-card__transaction-fee-notice-link:focus-visible {
+  outline: 2px solid hsl(var(--primary) / 0.55);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
 .caretip-pricing-tier-card--enterprise .caretip-pricing-tier-card__transaction-fee-notice {
   color: var(--caretip-brand-orange, #e9781c);
 }

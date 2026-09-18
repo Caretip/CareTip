@@ -96,8 +96,8 @@ export function MobileWebAuthShell({
   const legalGateOk = isLogin || isEmployee || merchantLegalAccepted;
   const allowSocialSignUp =
     isLogin ||
-    !isEmployee ||
-    (inviteCode.trim().length > 0 && name.trim().length > 0);
+    (!isEmployee && merchantLegalAccepted) ||
+    (isEmployee && inviteCode.trim().length > 0 && name.trim().length > 0);
   const activeLang: AppLanguage = i18n.resolvedLanguage?.toLowerCase().startsWith("de")
     ? "de"
     : "en";
@@ -346,6 +346,11 @@ export function MobileWebAuthShell({
               disabled={busy}
               isLogin={isLogin}
               allowSocialSignUp={allowSocialSignUp}
+              blockedTitle={
+                !isLogin && !isEmployee && !merchantLegalAccepted
+                  ? t("auth.merchantLegalAcceptance.requiredError")
+                  : undefined
+              }
               onSocialCredential={onSocialCredential}
             />
           </form>

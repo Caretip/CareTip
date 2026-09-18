@@ -1706,7 +1706,7 @@
       "platformLogin": "Platform admin login"
     },
     "merchantLegalAcceptance": {
-      "label": "I accept the <terms>Terms of Service</terms>, the <dpa>Data Processing Agreement (DPA)</dpa>, and the <plv>Price & Services List</plv>. I have read and acknowledged the <privacy>Privacy Policy</privacy>.",
+      "label": "I accept the <terms>Terms of Service</terms>, <dpa>DPA</dpa>, and <plv>Price & Services List</plv>, and acknowledge the <privacy>Privacy Policy</privacy>.",
       "requiredHint": "Required to create a business account.",
       "requiredError": "Please accept the Terms of Service, DPA, Price & Services List, and acknowledge the Privacy Policy to continue."
     }

@@ -41,9 +41,8 @@ export function SignInCard2({
   const isEmployee = authLane === "employee";
   const showModeTabs = !sessionActive && modeScope === "both";
 
-  const isBusinessSignup = !sessionActive && !isLogin && !isEmployee;
-  /** Session-resume uses the cross-session notice as the card body — no duplicate title block. */
-  const showFormHeadline = !isBusinessSignup && !sessionActive;
+  /** Business login/signup: tabs + logo carry hierarchy; employee keeps a title. */
+  const showFormHeadline = !sessionActive && isEmployee;
 
   const title = isLogin
     ? isEmployee
@@ -79,11 +78,12 @@ export function SignInCard2({
 
   return (
     <AuthSplitLayout topSlot={topSlot} signUpMode={!sessionActive && !isLogin} authLane={authLane}>
-      <div className={cn("caretip-auth-card-wrap", className)}>
+      <div className={cn("caretip-auth-card-wrap", !isLogin && "caretip-auth-card-wrap--signup", className)}>
         <div
           className={cn(
             "caretip-auth-card caretip-auth-card--stable",
             !isLogin && "caretip-auth-card--signup",
+            isLogin && "caretip-auth-card--signin",
             sessionActive && "caretip-auth-card--session-resume",
           )}
         >

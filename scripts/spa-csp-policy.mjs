@@ -16,6 +16,7 @@
  * | Directive | Value | Reason |
  * |-----------|-------|--------|
  * | style-src | 'unsafe-inline' | Tailwind, Radix, Vite inline styles, animations |
+ * | style-src | https://accounts.google.com | Google Identity Services (gsi/style) for GIS button |
  * | img-src | https: | Marketing/onboarding images (Unsplash, Stockcake, Supabase logos, etc.) |
  */
 
@@ -46,7 +47,7 @@ export const SPA_IMG_SRC = ["'self'", "data:", "blob:", "https:"];
 export const SPA_CONTENT_SECURITY_POLICY = [
   "default-src 'self'",
   "script-src 'self' https://accounts.google.com https://www.gstatic.com",
-  "style-src 'self' 'unsafe-inline'",
+  "style-src 'self' 'unsafe-inline' https://accounts.google.com",
   `img-src ${SPA_IMG_SRC.join(" ")}`,
   "font-src 'self'",
   `connect-src ${SPA_CONNECT_SRC.join(" ")}`,

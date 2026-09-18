@@ -556,7 +556,7 @@
 
   .caretip-auth-page .caretip-auth-field + .caretip-auth-field,
   .caretip-auth-split-layout .caretip-auth-field + .caretip-auth-field {
-    margin-top: 1rem;
+    margin-top: 0;
   }
 
   .caretip-auth-page .caretip-auth-submit.caretip-btn-primary,
