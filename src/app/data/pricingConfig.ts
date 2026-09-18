@@ -1,6 +1,7 @@
 import type { TFunction } from "i18next";
 import { Store, Building2, Crown } from "lucide-react";
 import type { ComponentType } from "react";
+import { PRO_NET_MONTHLY_DISPLAY_EN } from "@/app/data/proSubscriptionNetPricing";
 
 export type PricingTierKey = "starter" | "business" | "enterprise";
 
@@ -21,7 +22,7 @@ export const PRICING_TIER_DEFINITIONS: readonly PricingTierDefinition[] = [
   },
   {
     tierKey: "business",
-    feeLine: "€29/month",
+    feeLine: `${PRO_NET_MONTHLY_DISPLAY_EN} / month`,
     icon: Building2,
     isPopular: true,
   },

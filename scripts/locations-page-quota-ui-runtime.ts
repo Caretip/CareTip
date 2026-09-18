@@ -24,8 +24,8 @@ function read(rel: string): string {
 const basicLimits = getPlanLimitsForTier("basic");
 const proLimits = getPlanLimitsForTier("premium");
 
-if (basicLimits.maxLocations === 1 && basicLimits.maxTables === 1) {
-  pass("Basic limits remain 1 location / 1 table");
+if (basicLimits.maxLocations === 1 && basicLimits.maxTables === null) {
+  pass("Basic limits: 1 location / unlimited tables");
 } else {
   fail(`Basic limits drifted: ${JSON.stringify(basicLimits)}`);
 }

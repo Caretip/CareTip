@@ -62,7 +62,8 @@ export type PlanLimits = {
 };
 
 const PLAN_LIMITS: Record<BusinessSubscriptionTier, PlanLimits> = {
-  basic: { maxLocations: 1, maxTables: 1 },
+  /** Basic: single location; unlimited tables/QR codes per that location (business-wide table quota). */
+  basic: { maxLocations: 1, maxTables: null },
   premium: { maxLocations: null, maxTables: null },
   enterprise: { maxLocations: null, maxTables: null },
 };

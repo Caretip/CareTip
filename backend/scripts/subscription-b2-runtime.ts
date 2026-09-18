@@ -280,38 +280,13 @@ async function testMultiLocationPremiumUnlimited(): Promise<boolean> {
   return true;
 }
 
-async function testTablesBasicCap(): Promise<boolean> {
+async function testTablesBasicUnlimited(): Promise<boolean> {
   const { userId } = await createTestBusiness(BusinessSubscriptionTier.basic);
   const loc = await createLocationForBusinessUser(userId, "Dining room");
   await createTableForBusinessUser(userId, { name: "Table 1", locationId: loc.id });
-  try {
-    await createTableForBusinessUser(userId, { name: "Table 2", locationId: loc.id });
-    fail("basic tier should not create a second table");
-    return false;
-  } catch (err) {
-    if (!isEntitlementDeniedError(err)) {
-      const msg = err instanceof Error ? err.message : String(err);
-      fail(`basic second table: expected quota entitlement error, got: ${msg}`);
-      return false;
-    }
-    if (err.payload.code !== PLAN_LIMIT_EXCEEDED_CODE) {
-      fail(`basic second table: expected PLAN_LIMIT_EXCEEDED, got ${err.payload.code}`);
-      return false;
-    }
-    if (!err.payload.message.includes("one table")) {
-      fail(`basic second table: unexpected message: ${err.payload.message}`);
-      return false;
-    }
-    if (/active subscription is required/i.test(err.payload.message)) {
-      fail("basic second table must not use subscription-required copy");
-      return false;
-    }
-    if (/multi-location/i.test(err.payload.message)) {
-      fail("basic second table must not use multi-location copy");
-      return false;
-    }
-  }
-  pass("tables: basic first table allowed, second blocked as quota");
+  await createTableForBusinessUser(userId, { name: "Table 2", locationId: loc.id });
+  await createTableForBusinessUser(userId, { name: "Table 3", locationId: loc.id });
+  pass("tables: basic may create multiple tables/QR codes on the single location");
   return true;
 }
 
@@ -395,7 +370,7 @@ async function main() {
   ok = (await testHasFeatureDbTiers()) && ok;
   ok = (await testMultiLocationBasicCap()) && ok;
   ok = (await testMultiLocationPremiumUnlimited()) && ok;
-  ok = (await testTablesBasicCap()) && ok;
+  ok = (await testTablesBasicUnlimited()) && ok;
   ok = (await testOperationalAccessWithoutEntitlement()) && ok;
   ok = (await testBasicProfileAndLocationLifecycle()) && ok;
 

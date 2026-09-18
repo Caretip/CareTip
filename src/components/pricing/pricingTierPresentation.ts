@@ -8,7 +8,7 @@ export function resolveTierPricing(
   billingCycle: BillingCycle,
   t: TFunction,
 ): { feeLine: string; feeNote: string } {
-  if (!tier.tierKey || tier.tierKey === "enterprise") {
+  if (!tier.tierKey) {
     return { feeLine: tier.feeLine, feeNote: tier.feeNote };
   }
 

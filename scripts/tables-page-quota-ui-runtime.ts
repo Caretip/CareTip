@@ -26,8 +26,8 @@ function read(rel: string): string {
 const basicLimits = getPlanLimitsForTier("basic");
 const proLimits = getPlanLimitsForTier("premium");
 
-if (basicLimits.maxLocations === 1 && basicLimits.maxTables === 1) {
-  pass("Basic limits remain 1 location / 1 table");
+if (basicLimits.maxLocations === 1 && basicLimits.maxTables === null) {
+  pass("Basic limits: 1 location / unlimited tables");
 } else {
   fail(`Basic limits drifted: ${JSON.stringify(basicLimits)}`);
 }
@@ -44,14 +44,14 @@ if (proLimits.maxTables == null && hasFeature("premium", "tableQr")) {
   fail("Pro table limits drifted");
 }
 
-const basicZero = {
+const basicUnlimited = {
   ready: true,
   tableQrEnabled: true,
-  maxTables: 1 as number | null,
+  maxTables: null as number | null,
   tableCount: 0,
 };
 if (
-  !isAtTableCap(basicZero) &&
+  !isAtTableCap(basicUnlimited) &&
   !isTablesCreateDisabled({ isBusiness: true, ready: true, tableQrEnabled: true, atTableCap: false }) &&
   resolveTablesPageMainSurface({
     ready: true,
@@ -67,28 +67,28 @@ if (
   fail("Basic 0 tables surface/create/quota");
 }
 
-const basicOneAtCap = isAtTableCap({
+const basicManyUnlimited = isAtTableCap({
   ready: true,
   tableQrEnabled: true,
-  maxTables: 1,
-  tableCount: 1,
+  maxTables: null,
+  tableCount: 5,
 });
-const basicOneSurface = resolveTablesPageMainSurface({
+const basicManySurface = resolveTablesPageMainSurface({
   ready: true,
   tableQrEnabled: true,
   showInitialSkeleton: false,
   locationCount: 1,
-  tableCount: 1,
+  tableCount: 5,
 });
 if (
-  basicOneAtCap &&
-  basicOneSurface === "list" &&
-  shouldShowTableQuotaNotice({ tableQrEnabled: true, atTableCap: true }) &&
-  isTablesCreateDisabled({ isBusiness: true, ready: true, tableQrEnabled: true, atTableCap: true })
+  !basicManyUnlimited &&
+  basicManySurface === "list" &&
+  !shouldShowTableQuotaNotice({ tableQrEnabled: true, atTableCap: false }) &&
+  !isTablesCreateDisabled({ isBusiness: true, ready: true, tableQrEnabled: true, atTableCap: false })
 ) {
-  pass("Basic 1 table: list still shown, quota notice, Create disabled");
+  pass("Basic many tables (unlimited): list shown, Create enabled, no quota notice");
 } else {
-  fail("Basic 1 table must keep list + quota + disabled Create");
+  fail("Basic unlimited tables must keep Create enabled without quota notice");
 }
 
 const proMany = {

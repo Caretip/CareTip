@@ -480,19 +480,24 @@ async function runScenarios(): Promise<void> {
     const loc = await prisma.location.findFirst({ where: { businessId } });
     if (!loc) throw new Error("location missing");
     await createTableForBusinessUser(userId, { name: "T1", locationId: loc.id });
-    let secondTableBlocked = false;
+    let secondTableAllowed = false;
     try {
       await createTableForBusinessUser(userId, { name: "T2", locationId: loc.id });
+      secondTableAllowed = true;
     } catch {
-      secondTableBlocked = true;
+      secondTableAllowed = false;
     }
     const limits = getPlanLimitsForTier("basic");
-    const ok = secondLocBlocked && secondTableBlocked && limits.maxLocations === 1 && limits.maxTables === 1;
+    const ok =
+      secondLocBlocked &&
+      secondTableAllowed &&
+      limits.maxLocations === 1 &&
+      limits.maxTables === null;
     record(
       "S14",
-      "Table and Location limits are enforced per plan",
+      "Location capped at 1 on Basic; tables unlimited",
       ok,
-      `2ndLocBlocked=${secondLocBlocked} 2ndTableBlocked=${secondTableBlocked}`,
+      `2ndLocBlocked=${secondLocBlocked} 2ndTableAllowed=${secondTableAllowed}`,
     );
   } catch (e) {
     record("S14", "Table and Location limits are enforced per plan", false, String(e));

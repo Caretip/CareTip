@@ -523,7 +523,7 @@
       "plansBullet1": "Keine versteckten Gebühren",
       "plansBullet2": "Transparente Preise pro Trinkgeld",
       "plansBullet3": "Skalierbar mit Ihrem Wachstum",
-      "popular": "Am beliebtesten",
+      "popular": "AM BELIEBTESTEN",
       "ctaTitle": "Bereit für digitales Trinkgeld in Ihrem Team?",
       "ctaBody": "Ob Salon oder Hotelgruppe: unser Team hilft beim Start mit QR-Trinkgeld, beim Onboarding Ihrer Mitarbeitenden und bei der Tarifwahl.",
       "ctaTrust": {
@@ -638,57 +638,70 @@
       },
       "trialCta": {
         "title": "CareTip risikofrei testen",
-        "body": "Starten Sie mit einer kostenlosen 30-Tage-Pro-Testphase. Nach Ablauf wird automatisch ein kostenpflichtiges Abo aktiviert, sofern Sie nicht kündigen.",
+        "body": "Starten Sie mit einer kostenlosen 30-Tage-Pro-Testphase. Nach Ablauf wird automatisch ein kostenpflichtiges Abo aktiviert, sofern Sie nicht kündigen. Pro-Gebühren sind Netto; anfallende MwSt./Steuern berechnet Stripe im Checkout.",
         "button": "30 Tage kostenlos testen",
-        "paymentNote": "Zahlungsdaten werden vor Beginn der Testphase benötigt. Die erste Zahlung erfolgt am Ende der 30-Tage-Testphase.",
+        "paymentNote": "Zahlungsdaten werden vor Beginn der Testphase benötigt. Die erste Zahlung erfolgt am Ende der 30-Tage-Testphase. Anfallende MwSt./Steuern berechnet Stripe im Checkout.",
         "conversionNote": "Nach der Testphase verlängert sich Ihr Plan automatisch im gewählten Abrechnungsrhythmus, bis Sie kündigen."
       },
-      "transactionFeeNotice": "zzgl. Transaktionsgebühr",
+      "transactionFeeNotice": "zzgl. Transaktionsgebühr*",
+      "feeDetailNetExclVat": "netto zzgl. ges. MwSt.",
+      "feeDetailPlusTransactionFees": "zzgl. Transaktionsgebühr*",
+      "proPlatformFeeTaxNote": "Pro-Gebühren sind Netto (zzgl. MwSt./Steuern). Die anfallende Steuer berechnet Stripe im Checkout anhand Ihrer Rechnungsdaten und ggf. USt-IdNr.",
+      "gridLegalNote": "* Alle Preise sind Nettopreise für Geschäftskunden (B2B) und verstehen sich zzgl. der gesetzlichen Mehrwertsteuer. Es gelten Transaktions- und Auszahlungsgebühren gemäß unserem <plv>Preis- und Leistungsverzeichnis (PLV)</plv>. Standard-Auszahlungen sind kostenlos.",
+      "gridLegalNoteAria": "Rechtlicher Preis-Hinweis: Nettopreise für B2B, MwSt. und Transaktionsgebühren gemäß PLV.",
       "tiers": {
         "starter": {
           "name": "Basic",
           "tagline": "Für den Einstieg",
-          "feeMonthly": "0 € im Monat",
-          "feeYearly": "0 € im Jahr",
+          "feeMonthly": "0 € / Monat",
+          "feeYearly": "0 € / Jahr",
           "feeNoteMonthly": "",
           "feeNoteYearly": "",
           "feeNote": "",
-          "description": "Ideal für einen Standort mit einem Tisch.",
-          "f0": "1 Standort",
-          "f1": "1 Tisch",
-          "f2": "Tisch-QR",
-          "f3": "Trinkgeldverwaltung",
-          "f4": "Teamverwaltung",
-          "button": "Basic wählen"
+          "description": "Digitale Trinkgeld-Abwicklung für einen Standort ohne monatliche Fixkosten.",
+          "f0": "1 Standort / Filiale",
+          "f1": "Unbegrenzte Tische / QR-Codes",
+          "f2": "Standard QR-Code-Design",
+          "f3": "Basis-Dashboard & Trinkgeldverwaltung",
+          "f4": "Team- & Mitarbeiterverwaltung",
+          "f5": "Google- & TripAdvisor-Bewertungsintegration",
+          "f6": "Standard-Support",
+          "button": "Jetzt kostenfrei starten"
         },
         "business": {
           "name": "Pro",
           "tagline": "Für wachsende Betriebe",
-          "feeMonthly": "29 € im Monat",
-          "feeYearly": "278,40 € im Jahr",
-          "feeNoteMonthly": "oder 278,40 €/Jahr",
+          "feeMonthly": "29 € / Monat",
+          "feeYearly": "278,40 € / Jahr",
+          "feeNoteMonthly": "bei jährlicher Zahlung (278,40 €/Jahr)",
           "feeNoteYearly": "oder 29 €/Monat",
-          "feeNote": "oder 278,40 €/Jahr",
-          "description": "Ideal für Teams mit mehreren Standorten und Pro-Funktionen.",
-          "f0": "Mehrere Standorte",
-          "f1": "Mehrere Tische",
-          "f2": "Mitarbeiterziele",
-          "f3": "Erweiterte Analysen",
-          "f4": "Berichte und CSV-Export",
+          "feeNote": "bei jährlicher Zahlung (278,40 €/Jahr)",
+          "description": "Mehrstandort-Übersicht und kostenlose Hardware.",
+          "f0": "Alle Basic-Funktionen enthalten",
+          "f1": "1 Hardware-Set inkl. (4 Holzaufsteller inkl. Standardversand)",
+          "f2": "Mehrere Standorte & Filialübersicht",
+          "f3": "Erweiterte Statistiken & CSV-Export",
+          "f4": "Mitarbeiterziele & Performance-Analysen",
+          "f5": "Persönlicher Ansprechpartner",
           "button": "Auf Pro upgraden",
           "trialButton": "30 Tage kostenlos testen",
           "subscribeButton": "30 Tage kostenlos testen"
         },
         "enterprise": {
           "name": "Premium",
-          "tagline": "Für größere Betriebe",
+          "tagline": "Für größere Betriebe & Ketten",
           "feeMonthly": "Auf Anfrage",
-          "feeNote": "Kontaktieren Sie unser Vertriebsteam für ein individuelles Angebot",
-          "description": "Ideal, wenn individuelle Konditionen benötigt werden.",
-          "f0": "Alle Pro-Funktionen",
-          "f1": "Mehrere Standorte und Tische",
-          "f2": "Individuelle Konditionen",
-          "f3": "Einrichtung mit Vertrieb",
+          "feeYearly": "Auf Anfrage",
+          "feeNoteMonthly": "Individuelle Vertragskonditionen",
+          "feeNoteYearly": "Individuelle Vertragskonditionen",
+          "feeNote": "Individuelle Vertragskonditionen",
+          "description": "Maßgeschneiderte Anbindungen, Multi-Account-Strukturen und dedizierter API-Support für Hotelketten und Filialnetze.",
+          "f0": "Alle Pro-Funktionen enthalten",
+          "f1": "Unbegrenzte Standorte & Enterprise-Netzwerk",
+          "f2": "Vollständiges Custom Design",
+          "f3": "Schnittstellen-Anbindung (API, POS/Kassensysteme, PMS)",
+          "f4": "Individuelle Reportings & Exporte",
+          "f5": "Dedizierter Key Account Manager & Onboarding",
           "button": "Vertrieb kontaktieren"
         }
       },
@@ -2476,7 +2489,7 @@
         "f0": "QR-Codes pro Tisch",
         "f1": "Tischzuweisung für Mitarbeitende",
         "f2": "Druckfertige Tisch-Assets",
-        "f3": "Basic enthält einen Tisch"
+        "f3": "Unbegrenzte Tische auf Basic"
       },
       "employeeQr": {
         "title": "Mitarbeiter-QR-Codes",
@@ -4733,8 +4746,8 @@
       "goToLocations": "Zu Standorten",
       "emptyNoTables": "Noch keine Tische. Legen Sie einen an, um einen Gäste-Link zu erhalten.",
       "quotaTitle": "Tischlimit erreicht",
-      "quotaBody": "Ihr Tarif umfasst einen Tisch. Für mehrere Tische auf Business upgraden.",
-      "createDisabledAtCapAria": "Tisch anlegen nicht verfügbar. Ihr Tarif umfasst einen Tisch.",
+      "quotaBody": "Das Tisch-Limit Ihres Tarifs wurde erreicht. Wechseln Sie für höhere Limits.",
+      "createDisabledAtCapAria": "Tisch anlegen nicht verfügbar. Das Tisch-Limit Ihres Tarifs wurde erreicht.",
       "thTable": "Tisch",
       "thLocation": "Standort",
       "thGuestLink": "Gäste-Link",
@@ -6652,7 +6665,7 @@
         "includedTitle": "Enthalten",
         "included": {
           "basic": {
-            "f0": "1 Standort und 1 Tisch",
+            "f0": "1 Standort und unbegrenzte Tische",
             "f1": "Tisch-QR und Trinkgeldverwaltung"
           },
           "premium": {
@@ -6678,7 +6691,7 @@
       "planComparison": {
         "basic": {
           "f0": "1 Standort",
-          "f1": "1 Tisch",
+          "f1": "Unbegrenzte Tische",
           "f2": "Tisch-QR",
           "f3": "Trinkgeldverwaltung",
           "f4": "Teamverwaltung"
@@ -6736,7 +6749,7 @@
         "chooseTitle": "Pro-Testphase starten",
         "chooseDesc": "Ihre kostenlose 30-Tage-Testphase upgraded Basic auf Pro. Nach Ablauf wird automatisch ein kostenpflichtiges Abo aktiviert, sofern Sie nicht vorher kündigen.",
         "confirmCta": "30 Tage kostenlos testen",
-        "firstChargeNote": "Erste Zahlung: am Ende der 30-Tage-Testphase ({{price}}).",
+        "firstChargeNote": "Erste Zahlung: am Ende der 30-Tage-Testphase ({{price}}). Anfallende MwSt./Steuern berechnet Stripe im Checkout.",
         "enterpriseNote": "Vertrieb kontaktieren",
         "alreadyUsed": "Ihre Pro-Testphase wurde bereits genutzt. Abonnieren Sie Pro unten für erweiterte Funktionen.",
         "expiredTitle": "Ihre Pro-Testphase ist beendet",
@@ -6750,7 +6763,7 @@
           "enterprise": "Individuelle Einführung für Ihre Organisation. Vertrieb kontaktieren."
         }
       },
-      "trialPaymentNote": "Zahlungsdaten werden vor Beginn der Testphase benötigt. Die erste Zahlung erfolgt am Ende der 30-Tage-Testphase, sofern Sie nicht kündigen.",
+      "trialPaymentNote": "Zahlungsdaten werden vor Beginn der Testphase benötigt. Die erste Zahlung erfolgt am Ende der 30-Tage-Testphase, sofern Sie nicht kündigen. Anfallende MwSt./Steuern berechnet Stripe im Checkout.",
       "lifecycle": {
         "title": "Abo & Kündigung",
         "subtitle": "Verlängerungs- und Kündigungstermine auf einen Blick.",

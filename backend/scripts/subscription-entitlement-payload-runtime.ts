@@ -94,12 +94,13 @@ if (
 const tableQuota = planLimitExceededPayload("tables", BusinessSubscriptionTier.basic);
 if (
   tableQuota.code === PLAN_LIMIT_EXCEEDED_CODE &&
-  /one table/i.test(tableQuota.message) &&
+  tableQuota.limit === null &&
+  /table limit/i.test(tableQuota.message) &&
   !/active subscription is required/i.test(tableQuota.message) &&
   !/multi-location/i.test(tableQuota.message) &&
   assertFriendlyMessage("table quota", tableQuota.message)
 ) {
-  pass("table quota → PLAN_LIMIT_EXCEEDED, distinct from subscription-required");
+  pass("table quota payload remains PLAN_LIMIT_EXCEEDED (Basic maxTables null; defensive message)");
 } else {
   fail(`table quota payload: ${JSON.stringify(tableQuota)}`);
   ok = false;
@@ -120,8 +121,8 @@ if (
 
 const basicLimits = getPlanLimitsForTier(BusinessSubscriptionTier.basic);
 const proLimits = getPlanLimitsForTier(BusinessSubscriptionTier.premium);
-if (basicLimits.maxLocations === 1 && basicLimits.maxTables === 1) {
-  pass("Basic limits remain 1 location / 1 table");
+if (basicLimits.maxLocations === 1 && basicLimits.maxTables === null) {
+  pass("Basic limits: 1 location / unlimited tables");
 } else {
   fail(`Basic limits drifted: ${JSON.stringify(basicLimits)}`);
   ok = false;

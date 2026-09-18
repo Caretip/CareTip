@@ -36,6 +36,8 @@ assert(!/: 28/.test(trialCfg), "subscriptionTrial must not default to 28");
 const billing = read("backend/src/services/stripeBilling.service.ts");
 assert(billing.includes("trial_period_days: SUBSCRIPTION_TRIAL_PERIOD_DAYS"), "checkout still uses trial_period_days");
 assert(billing.includes('payment_method_collection: "always"'), "PM collection always preserved");
+assert(billing.includes("automatic_tax: { enabled: true }"), "Stripe Tax remains enabled with trial checkout");
+assert(billing.includes("tax_id_collection: { enabled: true }"), "tax ID collection preserved with trial");
 assert(billing.includes("custom_text"), "trial checkout adds Stripe custom_text.submit");
 assert(billing.includes("30-day free Pro trial"), "Stripe submit text mentions 30-day trial");
 assert(billing.includes('params.planKey === "premium"'), "trial remains Pro-only");

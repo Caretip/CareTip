@@ -156,8 +156,8 @@ async function testQuota() {
     seqTableDenied = quotaDenied(e);
   }
   const tableCountSeq = await prisma.table.count({ where: { location: { businessId: basic.business!.id } } });
-  if (seqTableDenied && tableCountSeq === 1) {
-    pass("D-basic-table-sequential", "Second table rejected; count=1");
+  if (!seqTableDenied && tableCountSeq === 2) {
+    pass("D-basic-table-sequential", "Basic unlimited tables: second table allowed; count=2");
   } else {
     fail("D-basic-table-sequential", `denied=${seqTableDenied} count=${tableCountSeq}`);
   }
@@ -168,13 +168,11 @@ async function testQuota() {
     tablesService.createTableForBusinessUser(basic.id, { name: `R race T2 ${tag}`, locationId: locForTables.id }),
   ]);
   const tOk = tablePair.filter((p) => p.status === "fulfilled").length;
-  const tFail = tablePair.filter((p) => p.status === "rejected");
   const tCount = await prisma.table.count({ where: { location: { businessId: basic.business!.id } } });
-  const tLoser = tFail.some((p) => p.status === "rejected" && quotaDenied(p.reason));
-  if (tOk === 1 && tCount === 1 && tLoser) {
-    pass("E-basic-table-concurrent", "successes=1 count=1 loser PLAN_LIMIT_EXCEEDED");
+  if (tOk === 2 && tCount === 2) {
+    pass("E-basic-table-concurrent", "Basic unlimited tables: concurrent creates both succeed");
   } else {
-    fail("E-basic-table-concurrent", `ok=${tOk} count=${tCount} loserQuota=${tLoser}`);
+    fail("E-basic-table-concurrent", `ok=${tOk} count=${tCount}`);
   }
 
   await prisma.table.deleteMany({ where: { location: { businessId: basic.business!.id } } });
@@ -185,8 +183,8 @@ async function testQuota() {
   );
   const stressTOk = stressT.filter((p) => p.status === "fulfilled").length;
   const stressTCount = await prisma.table.count({ where: { location: { businessId: basic.business!.id } } });
-  if (stressTOk === 1 && stressTCount === 1) {
-    pass("F-basic-table-stress", "8 concurrent creates → exactly 1 row");
+  if (stressTOk === 8 && stressTCount === 8) {
+    pass("F-basic-table-stress", "8 concurrent creates → 8 rows (unlimited tables)");
   } else {
     fail("F-basic-table-stress", `ok=${stressTOk} count=${stressTCount}`);
   }

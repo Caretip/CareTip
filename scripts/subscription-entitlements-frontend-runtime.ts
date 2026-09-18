@@ -240,10 +240,10 @@ function testFrontendBackendMatrixAlignment(): boolean {
     fail(`PRO_CAPABILITIES drifted FE=${feProExtra.join(",")} BE=${beProExtra.join(",")}`);
     ok = false;
   }
-  const feHasBasicLimits = /basic:\s*\{\s*maxLocations:\s*1,\s*maxTables:\s*1\s*\}/.test(fe);
-  const beHasBasicLimits = /basic:\s*\{\s*maxLocations:\s*1,\s*maxTables:\s*1\s*\}/.test(be);
+  const feHasBasicLimits = /basic:\s*\{\s*maxLocations:\s*1,\s*maxTables:\s*null\s*\}/.test(fe);
+  const beHasBasicLimits = /basic:\s*\{\s*maxLocations:\s*1,\s*maxTables:\s*null\s*\}/.test(be);
   if (!feHasBasicLimits || !beHasBasicLimits) {
-    fail("PLAN_LIMITS basic 1/1 drifted");
+    fail("PLAN_LIMITS basic 1 location / unlimited tables drifted");
     ok = false;
   }
   if (ok) pass("frontend/backend capability matrices remain aligned (backend authoritative)");
@@ -258,7 +258,7 @@ function testErrorCodeSemantics(): boolean {
   );
   const cap = new ApiRequestError("This feature is available on Pro.", 403, PLAN_CAPABILITY_REQUIRED_CODE);
   const quota = new ApiRequestError(
-    "Your plan supports one table. Upgrade to Business for multiple tables.",
+    "Your plan's table limit has been reached. Upgrade for higher limits.",
     403,
     PLAN_LIMIT_EXCEEDED_CODE,
   );

@@ -259,8 +259,8 @@ export const FRIENDLY_MESSAGE_DE: Record<string, string> = {
     "Diese Funktion ist im Pro-Tarif verfügbar.",
   "Your plan supports one location. Upgrade to Business for multi-location support.":
     "Ihr Tarif unterstützt einen Standort. Wechseln Sie zu Business für mehrere Standorte.",
-  "Your plan supports one table. Upgrade to Business for multiple tables.":
-    "Ihr Tarif unterstützt einen Tisch. Wechseln Sie zu Business für mehrere Tische.",
+  "Your plan's table limit has been reached. Upgrade for higher limits.":
+    "Das Tisch-Limit Ihres Tarifs wurde erreicht. Wechseln Sie für höhere Limits.",
   "You've reached a limit on your current plan.":
     "Sie haben ein Limit Ihres aktuellen Tarifs erreicht.",
 };

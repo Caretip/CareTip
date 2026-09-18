@@ -65,9 +65,9 @@ function assertTierCopy(locale: string, tiers: Record<string, Record<string, str
   if (/unlimited earnings|unbegrenzte einnahmen/i.test(starter)) {
     fail(`${locale} Basic must not claim unlimited earnings`);
   } else pass(`${locale} Basic does not claim unlimited earnings`);
-  if (!/1 location|1 standort/i.test(starter) || !/1 table|1 tisch/i.test(starter)) {
-    fail(`${locale} Basic must list 1 location and 1 table`);
-  } else pass(`${locale} Basic lists 1 location and 1 table`);
+  if (!/1 location|1 standort/i.test(starter) || !/unlimited tables|unbegrenzte tische/i.test(starter)) {
+    fail(`${locale} Basic must list 1 location and unlimited tables`);
+  } else pass(`${locale} Basic lists 1 location and unlimited tables`);
   if (/dedicated onboarding|persönlicher ansprechpartner/i.test(business)) {
     fail(`${locale} Pro must not claim dedicated onboarding`);
   } else pass(`${locale} Pro does not claim dedicated onboarding`);

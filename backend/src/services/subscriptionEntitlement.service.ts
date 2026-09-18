@@ -287,7 +287,7 @@ export function planLimitExceededPayload(
     message:
       resource === "locations"
         ? "Your plan supports one location. Upgrade to Business for multi-location support."
-        : "Your plan supports one table. Upgrade to Business for multiple tables.",
+        : "Your plan's table limit has been reached. Upgrade for higher limits.",
   };
 }
 

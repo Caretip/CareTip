@@ -116,7 +116,7 @@ const ALLOWED_CLIENT_MESSAGES = new Set<string>([
   "An active subscription is required to manage locations.",
   "This feature is available on Pro.",
   "Your plan supports one location. Upgrade to Business for multi-location support.",
-  "Your plan supports one table. Upgrade to Business for multiple tables.",
+  "Your plan's table limit has been reached. Upgrade for higher limits.",
   "You've reached a limit on your current plan.",
   "Select a supported country code.",
   "Enter a valid phone number.",

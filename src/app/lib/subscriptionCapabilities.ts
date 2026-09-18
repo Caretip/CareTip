@@ -84,7 +84,8 @@ const TIER_CAPABILITIES: Record<BusinessSubscriptionTier, ReadonlySet<Subscripti
 };
 
 const PLAN_LIMITS: Record<BusinessSubscriptionTier, PlanLimits> = {
-  basic: { maxLocations: 1, maxTables: 1 },
+  /** Basic: single location; unlimited tables/QR codes (null = unlimited). */
+  basic: { maxLocations: 1, maxTables: null },
   premium: { maxLocations: null, maxTables: null },
   enterprise: { maxLocations: null, maxTables: null },
 };

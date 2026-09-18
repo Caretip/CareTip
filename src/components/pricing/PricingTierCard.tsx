@@ -1,11 +1,11 @@
 import { useEffect, useState, type ReactNode } from "react";
-import { Check, CheckCircle2, Sparkles } from "lucide-react";
+import { Check, CheckCircle2, Zap } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
 import type { BillingCycle } from "@/app/data/pricingTypes";
 import { scheduleIdleWork } from "@/lib/publicRouteDefer";
 import { resolveTierDescription, resolveTierPricing } from "./pricingTierPresentation";
-import { PricingTransactionFeeNotice } from "./PricingTransactionFeeNotice";
+import { PricingTierPriceDetails } from "./PricingTierPriceDetails";
 import type { PricingTierViewModel } from "@/app/data/pricingPlanCatalog";
 import type { PricingCopyScope } from "@/app/data/pricingCopy";
 
@@ -79,7 +79,7 @@ function CardBadge({ badge, inline = false }: { badge: PricingTierCardBadge; inl
   if (badge.kind === "popular") {
     return (
       <div className={className}>
-        <Sparkles className="size-2.5 shrink-0" aria-hidden />
+        <Zap className="size-2.5 shrink-0 fill-current" aria-hidden />
         {t("staticPages.pricing.popular")}
       </div>
     );
@@ -113,11 +113,13 @@ function resolveCardBadge(
 function TierPrice({
   feeLine,
   feeNote,
+  tierKey,
   billingCycle,
   animate,
 }: {
   feeLine: string;
   feeNote: string;
+  tierKey: PricingTierViewModel["tierKey"];
   billingCycle: BillingCycle;
   animate: boolean;
 }) {
@@ -132,7 +134,15 @@ function TierPrice({
       >
         {feeLine}
       </p>
-      <p className="caretip-pricing-tier-card__fee-note">{feeNote}</p>
+      {tierKey ? (
+        <PricingTierPriceDetails
+          tierKey={tierKey}
+          billingCycle={billingCycle}
+          feeNote={feeNote}
+        />
+      ) : feeNote ? (
+        <p className="caretip-pricing-tier-card__fee-note">{feeNote}</p>
+      ) : null}
     </div>
   );
 }
@@ -187,7 +197,6 @@ export function PricingTierCard({
           />
         ) : null}
       </div>
-      <PricingTransactionFeeNotice />
       {tier.tagline ? <p className="caretip-pricing-tier-card__tagline">{tier.tagline}</p> : null}
     </div>
   );
@@ -196,10 +205,15 @@ export function PricingTierCard({
     <TierPrice
       feeLine={feeLine}
       feeNote={feeNote}
+      tierKey={tier.tierKey}
       billingCycle={billingCycle}
       animate={isSubscription && !displayOnly}
     />
   );
+
+  const descriptionBlock = description ? (
+    <p className="caretip-pricing-tier-card__desc">{description}</p>
+  ) : null;
 
   const features = (
     <TierFeatureList
@@ -233,25 +247,13 @@ export function PricingTierCard({
     >
       {cardBadge && !isTrialBadge ? <CardBadge badge={cardBadge} /> : null}
 
-      {isSubscription ? (
-        <>
-          {header}
-          <div className="caretip-pricing-tier-card__divider" aria-hidden />
-          {priceBlock}
-          {showFeatures ? features : null}
-          {footerBlock}
-        </>
-      ) : (
-        <>
-          {header}
-          <div className="caretip-pricing-tier-card__divider" aria-hidden />
-          {priceBlock}
-          <div className="caretip-pricing-tier-card__divider" aria-hidden />
-          <p className="caretip-pricing-tier-card__desc">{description}</p>
-          {features}
-          {footerBlock}
-        </>
-      )}
+      {header}
+      <div className="caretip-pricing-tier-card__divider" aria-hidden />
+      {priceBlock}
+      <div className="caretip-pricing-tier-card__divider" aria-hidden />
+      {descriptionBlock}
+      {showFeatures ? features : null}
+      {footerBlock}
     </article>
   );
 }

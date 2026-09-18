@@ -152,6 +152,7 @@
     "test:contact-field-validation": "tsx scripts/contact-field-validation-runtime.ts",
     "test:subscription-trial": "tsx scripts/subscription-trial-runtime.ts",
     "test:pro-trial-30-day": "tsx scripts/pro-trial-30-day-remediation-runtime.ts",
+    "test:pro-stripe-tax": "tsx scripts/pro-stripe-tax-checkout-runtime.ts",
     "verify:stripe-billing-prices": "dotenv -e ../.env -e .env -- tsx scripts/verify-stripe-billing-prices.ts",
     "investigate:billing-checkout": "dotenv -e ../.env -e .env -- tsx scripts/investigate-billing-checkout.ts",
     "investigate:billing-checkout-live": "dotenv -e ../.env -e .env -- tsx scripts/investigate-billing-checkout-live.ts",

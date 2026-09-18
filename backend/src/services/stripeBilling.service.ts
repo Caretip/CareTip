@@ -197,6 +197,14 @@ export async function createPlatformSubscriptionCheckoutSession(params: {
       customer: customerId,
       line_items: [{ price: priceId, quantity: 1 }],
       payment_method_collection: "always",
+      // Stripe Tax: net Prices + Dashboard registrations determine VAT/reverse charge — never app rates.
+      automatic_tax: { enabled: true },
+      tax_id_collection: { enabled: true },
+      billing_address_collection: "required",
+      customer_update: {
+        address: "auto",
+        name: "auto",
+      },
       success_url: successUrl,
       cancel_url: cancelUrl,
       subscription_data: subscriptionData,

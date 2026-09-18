@@ -23,6 +23,7 @@ import {
   resolveBillingPlanKey,
 } from "../../../../lib/billingDisplayState";
 import { PricingTierCard, type PricingTierCardBadge } from "@/components/pricing/PricingTierCard";
+import { PricingGridLegalNote } from "@/components/pricing/PricingGridLegalNote";
 import { PricingBillingToggle } from "@/components/pricing/PricingBillingToggle";
 import { pricingPageUi } from "@/components/pricing/pricingPageUi";
 import { dashboardWorkspaceUi } from "@/app/components/dashboard/dashboardWorkspaceUi";
@@ -386,6 +387,7 @@ export function BillingPlanManagement({
             </div>
           ))}
         </div>
+        <PricingGridLegalNote />
       </div>
     </div>
   );

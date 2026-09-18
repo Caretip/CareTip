@@ -523,7 +523,7 @@
       "plansBullet1": "No hidden fees",
       "plansBullet2": "Transparent per-tip pricing",
       "plansBullet3": "Scale as your business grows",
-      "popular": "Most Popular",
+      "popular": "MOST POPULAR",
       "ctaTitle": "Ready to bring digital tipping to your team?",
       "ctaBody": "Whether you run a single salon or a hotel group, our team will help you launch QR tipping, onboard staff, and choose the right plan.",
       "ctaTrust": {
@@ -638,57 +638,70 @@
       },
       "trialCta": {
         "title": "Try CareTip risk-free",
-        "body": "Start with a 30-day free Pro trial. Your subscription converts to paid automatically when the trial ends unless you cancel.",
+        "body": "Start with a 30-day free Pro trial. Your subscription converts to paid automatically when the trial ends unless you cancel. Pro fees are net; applicable VAT/tax is calculated by Stripe at checkout.",
         "button": "Start 30-day free trial",
-        "paymentNote": "Payment details required before the trial begins. Your first payment is charged when the 30-day trial ends.",
+        "paymentNote": "Payment details required before the trial begins. Your first payment is charged when the 30-day trial ends. Applicable VAT/tax is calculated by Stripe at checkout.",
         "conversionNote": "After the trial, your plan renews automatically on your selected billing cycle until cancelled."
       },
-      "transactionFeeNotice": "plus transaction fee",
+      "transactionFeeNotice": "plus transaction fees*",
+      "feeDetailNetExclVat": "net excl. VAT",
+      "feeDetailPlusTransactionFees": "plus transaction fees*",
+      "proPlatformFeeTaxNote": "Pro fees are net (excl. VAT/tax). Applicable tax is calculated by Stripe at checkout from your billing details and VAT ID where provided.",
+      "gridLegalNote": "* All prices are net prices intended for business customers (B2B) and are subject to applicable statutory VAT. Transaction and payout fees apply according to our <plv>Price & Services List (PLV)</plv>. Standard payouts are free of charge.",
+      "gridLegalNoteAria": "Pricing legal note: net B2B prices, VAT, and transaction fees per the Price and Services List.",
       "tiers": {
         "starter": {
           "name": "Basic",
           "tagline": "For getting started",
-          "feeMonthly": "€0 per month",
-          "feeYearly": "€0 per year",
+          "feeMonthly": "€0 / month",
+          "feeYearly": "€0 / year",
           "feeNoteMonthly": "",
           "feeNoteYearly": "",
           "feeNote": "",
-          "description": "Best for a single location with one table.",
-          "f0": "1 location",
-          "f1": "1 table",
-          "f2": "Table QR",
-          "f3": "Core tip management",
-          "f4": "Team management",
-          "button": "Choose Basic"
+          "description": "Digital tipping solution for a single location without monthly fixed platform fees.",
+          "f0": "1 Location / Branch",
+          "f1": "Unlimited Tables / QR Codes",
+          "f2": "Standard QR Code Design",
+          "f3": "Basic Dashboard & Tip Management",
+          "f4": "Team & Employee Management",
+          "f5": "Google & TripAdvisor Reviews integration",
+          "f6": "Standard Support",
+          "button": "Get Started Free"
         },
         "business": {
           "name": "Pro",
           "tagline": "For growing businesses",
-          "feeMonthly": "€29 per month",
-          "feeYearly": "€278.40 per year",
-          "feeNoteMonthly": "or €278.40/year",
+          "feeMonthly": "€29 / month",
+          "feeYearly": "€278.40 / year",
+          "feeNoteMonthly": "billed annually (€278.40/yr)",
           "feeNoteYearly": "or €29/month",
-          "feeNote": "or €278.40/year",
-          "description": "Best for teams that need multiple locations and Pro tools.",
-          "f0": "Multiple locations",
-          "f1": "Multiple tables",
-          "f2": "Employee goals",
-          "f3": "Advanced analytics",
-          "f4": "Reports and CSV export",
+          "feeNote": "billed annually (€278.40/yr)",
+          "description": "Multi-location overview, and hardware included.",
+          "f0": "All Basic features included",
+          "f1": "1 Hardware Starter Pack included (4 wooden displays incl. standard shipping)",
+          "f2": "Multi-location & Branch Overview",
+          "f3": "Advanced Analytics & CSV Export",
+          "f4": "Staff Goals & Performance Insights",
+          "f5": "Dedicated Account Support",
           "button": "Upgrade to Pro",
-          "trialButton": "Start 30-day free trial",
-          "subscribeButton": "Start 30-day free trial"
+          "trialButton": "Start 30-Day Free Trial",
+          "subscribeButton": "Start 30-Day Free Trial"
         },
         "enterprise": {
           "name": "Premium",
-          "tagline": "For larger operations",
-          "feeMonthly": "On Request",
-          "feeNote": "Contact our sales team for a tailored quote",
-          "description": "Best for organisations that need custom commercial terms.",
-          "f0": "All Pro capabilities",
-          "f1": "Multiple locations and tables",
-          "f2": "Custom commercial terms",
-          "f3": "Sales-assisted setup",
+          "tagline": "For larger enterprises & chains",
+          "feeMonthly": "Upon Request",
+          "feeYearly": "Upon Request",
+          "feeNoteMonthly": "Custom contract terms",
+          "feeNoteYearly": "Custom contract terms",
+          "feeNote": "Custom contract terms",
+          "description": "Tailored integrations, multi-account structures, and dedicated API support for hotel groups and franchise networks.",
+          "f0": "All Pro features included",
+          "f1": "Unlimited Locations & Enterprise Network",
+          "f2": "Full Custom Design",
+          "f3": "System Integrations (API, POS, PMS)",
+          "f4": "Custom Reporting & Automated Exports",
+          "f5": "Dedicated Key Account Manager & Onboarding",
           "button": "Contact Sales"
         }
       },
@@ -2476,7 +2489,7 @@
         "f0": "Table-level QR codes",
         "f1": "Table assignment for staff",
         "f2": "Print-ready table assets",
-        "f3": "Basic includes one table"
+        "f3": "Unlimited tables on Basic"
       },
       "employeeQr": {
         "title": "Employee QR codes",
@@ -4733,8 +4746,8 @@
       "goToLocations": "Go to Locations",
       "emptyNoTables": "No tables yet. Create one to get a guest QR link.",
       "quotaTitle": "Table limit reached",
-      "quotaBody": "Your plan supports one table. Upgrade to Business for multiple tables.",
-      "createDisabledAtCapAria": "Create table is unavailable. Your plan includes one table.",
+      "quotaBody": "Your plan's table limit has been reached. Upgrade for higher limits.",
+      "createDisabledAtCapAria": "Create table is unavailable. Your plan's table limit has been reached.",
       "thTable": "Table",
       "thLocation": "Location",
       "thGuestLink": "Guest link",
@@ -6655,7 +6668,7 @@
         "includedTitle": "Included",
         "included": {
           "basic": {
-            "f0": "1 location and 1 table",
+            "f0": "1 location and unlimited tables",
             "f1": "Table QR and core tip management"
           },
           "premium": {
@@ -6681,7 +6694,7 @@
       "planComparison": {
         "basic": {
           "f0": "1 location",
-          "f1": "1 table",
+          "f1": "Unlimited tables",
           "f2": "Table QR",
           "f3": "Core tip management",
           "f4": "Team management"
@@ -6739,7 +6752,7 @@
         "chooseTitle": "Start your Pro trial",
         "chooseDesc": "Your 30-day free trial upgrades Basic to Pro. It converts to a paid subscription when the trial ends unless you cancel before then.",
         "confirmCta": "Start 30-day free trial",
-        "firstChargeNote": "First payment: charged when the 30-day trial ends ({{price}}).",
+        "firstChargeNote": "First payment: charged when the 30-day trial ends ({{price}}). Applicable VAT/tax is calculated by Stripe at checkout.",
         "enterpriseNote": "Contact sales",
         "alreadyUsed": "Your Pro trial has been used. Subscribe to Pro below to unlock advanced features.",
         "expiredTitle": "Your Pro trial has ended",
@@ -6753,7 +6766,7 @@
           "enterprise": "Custom rollout for your organization. Contact our sales team."
         }
       },
-      "trialPaymentNote": "Payment details required before the trial begins. Your first payment will be charged when the 30-day trial ends unless you cancel.",
+      "trialPaymentNote": "Payment details required before the trial begins. Your first payment will be charged when the 30-day trial ends unless you cancel. Applicable VAT/tax is calculated by Stripe at checkout.",
       "lifecycle": {
         "title": "Subscription & cancellation",
         "subtitle": "Understand your renewal dates and when billing stops.",

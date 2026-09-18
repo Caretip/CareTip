@@ -8,6 +8,7 @@ import type { PricingCopyScope } from "../data/pricingCopy";
 import { pricingPageUi } from "@/components/pricing/pricingPageUi";
 import { usePublicMountProbe } from "@/lib/publicMountProbe";
 import { PricingTierCard } from "@/components/pricing/PricingTierCard";
+import { PricingGridLegalNote } from "@/components/pricing/PricingGridLegalNote";
 import { buildPricingTierCatalog } from "../data/pricingPlanCatalog";
 import {
   buildAuthPathForCheckoutIntent,
@@ -94,6 +95,7 @@ export function PricingSection({
           );
         })}
       </div>
+      <PricingGridLegalNote />
     </div>
   );
 }

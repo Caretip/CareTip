@@ -1590,7 +1590,42 @@ html.dark .caretip-pricing-tier-card__fee {
 .caretip-pricing-tier-card__fee-note {
   margin-top: 0.375rem;
   font-size: 0.8125rem;
+  line-height: 1.45;
   color: rgb(115 115 115);
+}
+
+.caretip-pricing-tier-card__fee-note-link {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.caretip-pricing-tier-card__fee-note-link:hover {
+  color: var(--caretip-brand-orange, #e9781c);
+}
+
+.caretip-pricing-grid-legal-note {
+  margin: 1.25rem 0 0;
+  max-width: 52rem;
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  color: rgb(115 115 115);
+}
+
+.caretip-pricing-grid-legal-note__link {
+  color: inherit;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.caretip-pricing-grid-legal-note__link:hover {
+  color: var(--caretip-brand-orange, #e9781c);
+}
+
+.caretip-pricing-tiers--billing .caretip-pricing-grid-legal-note {
+  margin-top: 1rem;
+  max-width: none;
 }
 
 .caretip-pricing-tier-card--enterprise .caretip-pricing-tier-card__fee-note {
