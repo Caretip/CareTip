@@ -18,6 +18,9 @@ export const OAUTH_EMAIL_REQUIRED_CODE = "OAUTH_EMAIL_REQUIRED" as const;
 /** Returned when the provider identity token could not be verified. */
 export const OAUTH_TOKEN_VERIFICATION_FAILED_CODE = "OAUTH_TOKEN_VERIFICATION_FAILED" as const;
 
+/** Returned with 403 when a walkthrough/demo account tries to link a social provider. */
+export const OAUTH_DEMO_ACCOUNT_LINK_FORBIDDEN_CODE = "OAUTH_DEMO_ACCOUNT_LINK_FORBIDDEN" as const;
+
 /** Returned with 403 when the business has no entitled subscription. */
 export const SUBSCRIPTION_REQUIRED_CODE = "SUBSCRIPTION_REQUIRED" as const;
 

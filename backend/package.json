@@ -113,6 +113,7 @@
     "test:oauth-welcome-email": "tsx scripts/oauth-welcome-email-runtime.ts",
     "test:email-branding": "tsx scripts/email-branding-runtime.ts",
     "test:oauth-expansion": "dotenv -e ../.env -e .env -- tsx scripts/oauth-expansion-runtime.ts",
+    "test:oauth-demo-isolation": "dotenv -e ../.env -e .env -- tsx scripts/oauth-demo-isolation-runtime.ts",
     "test:apple-native-callback": "tsx scripts/apple-native-callback-runtime.ts",
     "test:it-recht-kanzlei-webhook": "dotenv -e ../.env -e .env -- tsx scripts/it-recht-kanzlei-webhook-runtime.ts",
     "test:it-recht-kanzlei-webhook-logging": "tsx scripts/it-recht-kanzlei-webhook-logging-runtime.ts",

@@ -4196,9 +4196,9 @@
     },
     "fixConnect": {
       "title": "Connect your Stripe account to enable tipping",
-      "description": "Guests cannot send tips until this venue’s Stripe account is connected.",
-      "descriptionDirect": "Guests cannot tip until this venue’s Stripe account is connected. Eligible tips then go to each employee’s Stripe account, or are held until they connect.",
-      "descriptionBusiness": "Guests cannot send tips until this venue’s Stripe account is connected. Tips go to your business Stripe account for you to distribute.",
+      "description": "Connect your business Stripe account to accept tips. Depending on your payout settings, tips go to the employee’s Stripe account or your business Stripe account. If an employee hasn’t connected Stripe, their tips are held until they do.",
+      "descriptionDirect": "Connect your business Stripe account to accept tips. Depending on your payout settings, tips go to the employee’s Stripe account or your business Stripe account. If an employee hasn’t connected Stripe, their tips are held until they do.",
+      "descriptionBusiness": "Connect your business Stripe account to accept tips. Depending on your payout settings, tips go to the employee’s Stripe account or your business Stripe account. If an employee hasn’t connected Stripe, their tips are held until they do.",
       "action": "Connect Stripe",
       "actionComplete": "Complete Stripe setup"
     },
@@ -6923,6 +6923,7 @@
       "linkedAccountsTitle": "Linked Accounts",
       "linkedAccountsDesc": "Connect Google, Apple, or Facebook to sign in faster. You must keep a password or at least one provider linked.",
       "linkedAccountsPasswordHint": "This account has no password. Keep at least one social provider linked, or set a password first.",
+      "walkthroughDemoLinkForbidden": "Walkthrough demo accounts cannot link Google, Apple, or Facebook. Use the demo password to sign in.",
       "linkedAs": "Linked as {{email}}",
       "linkedStatus": "Linked",
       "notLinkedStatus": "Not linked",

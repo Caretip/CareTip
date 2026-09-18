@@ -610,6 +610,27 @@ function testStripeConnectionMessaging(): boolean {
     fail("Business fixConnect must have Mode A/B aware descriptions");
     ok = false;
   }
+  const unifiedBizConnect =
+    "Connect your business Stripe account to accept tips. Depending on your payout settings";
+  if (
+    !(en.business.fixConnect.description ?? "").includes(unifiedBizConnect) ||
+    !(en.business.fixConnect.descriptionDirect ?? "").includes(unifiedBizConnect) ||
+    !(en.business.fixConnect.descriptionBusiness ?? "").includes(unifiedBizConnect)
+  ) {
+    fail("Business fixConnect descriptions must use current dual payout-mode architecture copy");
+    ok = false;
+  }
+  if (/Eligible tips then go to each employee/i.test(en.business.fixConnect.descriptionDirect ?? "")) {
+    fail("Business fixConnect must not use outdated direct-only tip routing wording");
+    ok = false;
+  }
+  if (
+    !(de.business.fixConnect.descriptionDirect ?? "").includes("Auszahlungseinstellung") ||
+    !(de.business.fixConnect.description ?? "").includes("betriebliches Stripe-Konto")
+  ) {
+    fail("DE business fixConnect must describe payout settings + business Stripe account");
+    ok = false;
+  }
   if (!de.business.fixConnect.descriptionDirect || !de.employee.dashboard.fixConnectDescIncomplete) {
     fail("DE Stripe connection messaging keys missing");
     ok = false;

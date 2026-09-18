@@ -22,6 +22,8 @@ import { requestFacebookAccessToken } from "../../../lib/facebookOAuthWeb";
 import { logClientError } from "../../../lib/clientLog";
 import { toUserFriendlyMessage } from "../../../lib/errorMessages";
 import { AuthGoogleOAuthScope } from "@/app/components/auth/AuthGoogleOAuthScope";
+import { useAuth } from "@/app/hooks/useAuth";
+import { isWalkthroughDemoAccount } from "@/app/lib/walkthroughDemo";
 
 const TEAL = "#e9781c";
 
@@ -38,6 +40,8 @@ function providerConfigured(provider: OAuthProviderId): boolean {
 
 export function LinkedOAuthAccountsSection({ loading }: { loading?: boolean }) {
   const { t } = useTranslation();
+  const { user } = useAuth();
+  const walkthroughDemo = isWalkthroughDemoAccount(user);
   const [accounts, setAccounts] = useState<LinkedOAuthAccount[]>([]);
   const [hasPassword, setHasPassword] = useState(true);
   const [fetching, setFetching] = useState(true);
@@ -84,6 +88,11 @@ export function LinkedOAuthAccountsSection({ loading }: { loading?: boolean }) {
   );
 
   const finishLink = async (provider: OAuthProviderId, idToken: string) => {
+    if (walkthroughDemo) {
+      toast.error(t("business.accountSettings.walkthroughDemoLinkForbidden"));
+      setLinkingGoogle(false);
+      return;
+    }
     setBusyProvider(provider);
     try {
       await linkOAuthAccountAPI(provider, idToken);
@@ -117,6 +126,10 @@ export function LinkedOAuthAccountsSection({ loading }: { loading?: boolean }) {
   };
 
   const handleLink = async (provider: OAuthProviderId) => {
+    if (walkthroughDemo) {
+      toast.error(t("business.accountSettings.walkthroughDemoLinkForbidden"));
+      return;
+    }
     if (provider === "google") {
       setLinkingGoogle(true);
       return;
@@ -140,6 +153,11 @@ export function LinkedOAuthAccountsSection({ loading }: { loading?: boolean }) {
   return (
     <AuthGoogleOAuthScope>
     <div className="space-y-4">
+      {walkthroughDemo ? (
+        <p className="text-xs text-muted-foreground">
+          {t("business.accountSettings.walkthroughDemoLinkForbidden")}
+        </p>
+      ) : null}
       {!hasPassword ? (
         <p className="text-xs text-muted-foreground">
           {t("business.accountSettings.linkedAccountsPasswordHint")}
@@ -153,6 +171,7 @@ export function LinkedOAuthAccountsSection({ loading }: { loading?: boolean }) {
             const linked = linkedMap.get(provider);
             const busy = busyProvider === provider;
             const canLink =
+              !walkthroughDemo &&
               providerConfigured(provider) &&
               !(provider === "apple" && appleReady === false);
 
@@ -182,7 +201,7 @@ export function LinkedOAuthAccountsSection({ loading }: { loading?: boolean }) {
                       <Unlink className="h-4 w-4" />
                       {t("business.accountSettings.unlinkProvider")}
                     </button>
-                  ) : provider === "google" && linkingGoogle ? (
+                  ) : provider === "google" && linkingGoogle && !walkthroughDemo ? (
                     <div className="min-w-[220px]">
                       <GoogleLogin
                         onSuccess={(cred) => {
@@ -214,11 +233,13 @@ export function LinkedOAuthAccountsSection({ loading }: { loading?: boolean }) {
                       type="button"
                       disabled={busy || !canLink}
                       title={
-                        provider === "apple" && appleReady === false
-                          ? t("auth.oauth.appleSdkUnavailable")
-                          : !canLink
-                            ? t("business.accountSettings.providerNotConfigured")
-                            : undefined
+                        walkthroughDemo
+                          ? t("business.accountSettings.walkthroughDemoLinkForbidden")
+                          : provider === "apple" && appleReady === false
+                            ? t("auth.oauth.appleSdkUnavailable")
+                            : !canLink
+                              ? t("business.accountSettings.providerNotConfigured")
+                              : undefined
                       }
                       onClick={() => void handleLink(provider)}
                       className="inline-flex min-h-[40px] items-center gap-2 rounded-lg border border-border px-3 py-2 text-sm hover:bg-muted disabled:opacity-50"

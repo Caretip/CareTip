@@ -52,6 +52,8 @@ export const FRIENDLY_MESSAGE_DE: Record<string, string> = {
     "Die soziale Anmeldung konnte nicht abgeschlossen werden. Wenn Sie bereits ein CareTip-Konto haben, melden Sie sich an oder nutzen Sie „Passwort vergessen“.",
   "We couldn't complete social sign-in. If you already have a CareTip account, please sign in or use Forgot Password to recover access.":
     "Die soziale Anmeldung konnte nicht abgeschlossen werden. Wenn Sie bereits ein CareTip-Konto haben, melden Sie sich an oder nutzen Sie „Passwort vergessen“.",
+  "Walkthrough demo accounts cannot link Google, Apple, or Facebook. Use the demo password to sign in.":
+    "Walkthrough-Demo-Konten können Google, Apple oder Facebook nicht verknüpfen. Melden Sie sich mit dem Demo-Passwort an.",
   "We couldn't create your account with these details. If you already have a CareTip account, please sign in or use Forgot Password to recover access.":
     "Konto konnte nicht erstellt werden. Wenn Sie bereits ein CareTip-Konto haben, melden Sie sich an oder nutzen Sie „Passwort vergessen“.",
   "Incorrect email or password. Please try again.":

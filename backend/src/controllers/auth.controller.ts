@@ -1138,6 +1138,12 @@ export async function linkOAuthAccount(req: Request, res: Response) {
     const result = await oauthAuthService.linkOAuthProviderForUser(userId, provider, idToken);
     return res.status(200).json(result);
   } catch (err) {
+    if (err instanceof oauthAuthService.OAuthDemoAccountLinkForbiddenError) {
+      return res.status(403).json({
+        message: err.message,
+        code: err.code,
+      });
+    }
     if (err instanceof oauthAuthService.OAuthTokenVerificationError) {
       return res.status(401).json({
         message: "Social account could not be verified.",

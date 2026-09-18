@@ -23,10 +23,13 @@ import {
   type VerifiedIdentity,
 } from "./oauth/verifyIdentity.js";
 import {
+  AUTH_OAUTH_DEMO_ACCOUNT_LINK_FORBIDDEN_CODE,
+  AUTH_OAUTH_DEMO_ACCOUNT_LINK_FORBIDDEN_MESSAGE,
   AUTH_OAUTH_GENERIC_FAILURE_MESSAGE,
   AUTH_OAUTH_LINK_FAILED_MESSAGE,
   AUTH_OAUTH_SIGN_IN_FAILED_CODE,
 } from "./authDisclosureMessages.js";
+import { isWalkthroughDemoAccount } from "../lib/walkthroughDemoAccounts.js";
 
 /** Uniform public OAuth failure (no account-existence / linking / admin oracle). */
 export const OAUTH_SIGN_IN_FAILED_CODE = AUTH_OAUTH_SIGN_IN_FAILED_CODE;
@@ -152,6 +155,21 @@ export class OAuthEmailRequiredError extends Error {
   constructor(message = OAUTH_EMAIL_REQUIRED_MESSAGE) {
     super(message);
     this.name = "OAuthEmailRequiredError";
+    Object.setPrototypeOf(this, new.target.prototype);
+  }
+}
+
+export const OAUTH_DEMO_ACCOUNT_LINK_FORBIDDEN_CODE = AUTH_OAUTH_DEMO_ACCOUNT_LINK_FORBIDDEN_CODE;
+export const OAUTH_DEMO_ACCOUNT_LINK_FORBIDDEN_MESSAGE =
+  AUTH_OAUTH_DEMO_ACCOUNT_LINK_FORBIDDEN_MESSAGE;
+
+/** Authenticated Settings: walkthrough/demo accounts must not link personal IdPs. */
+export class OAuthDemoAccountLinkForbiddenError extends Error {
+  readonly code = OAUTH_DEMO_ACCOUNT_LINK_FORBIDDEN_CODE;
+
+  constructor(message = OAUTH_DEMO_ACCOUNT_LINK_FORBIDDEN_MESSAGE) {
+    super(message);
+    this.name = "OAuthDemoAccountLinkForbiddenError";
     Object.setPrototypeOf(this, new.target.prototype);
   }
 }
@@ -466,6 +484,9 @@ export async function linkOAuthProviderForUser(
   }
   if (user.role === "SUPER_ADMIN") {
     throw new Error("Platform admin accounts cannot link social providers.");
+  }
+  if (isWalkthroughDemoAccount(user.email)) {
+    throw new OAuthDemoAccountLinkForbiddenError();
   }
 
   const verified = await verifyOAuthIdentity(provider, token);

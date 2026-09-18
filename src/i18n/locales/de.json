@@ -4196,9 +4196,9 @@
     },
     "fixConnect": {
       "title": "Stripe-Konto verbinden, um Trinkgeld zu aktivieren",
-      "description": "Gäste können kein Trinkgeld senden, bis das Stripe-Konto dieses Standorts verbunden ist.",
-      "descriptionDirect": "Gäste können erst Trinkgeld geben, wenn das Stripe-Konto dieses Standorts verbunden ist. Berechtigte Trinkgelder gehen dann auf das Stripe-Konto der Mitarbeitenden oder werden gehalten, bis sie verbinden.",
-      "descriptionBusiness": "Gäste können kein Trinkgeld senden, bis das Stripe-Konto dieses Standorts verbunden ist. Trinkgelder gehen auf Ihr betriebliches Stripe-Konto zur eigenen Verteilung.",
+      "description": "Verbinden Sie Ihr betriebliches Stripe-Konto, um Trinkgelder anzunehmen. Je nach Auszahlungseinstellung gehen Trinkgelder auf das Stripe-Konto der Mitarbeitenden oder auf Ihr betriebliches Stripe-Konto. Wenn eine Person Stripe noch nicht verbunden hat, werden deren Trinkgelder gehalten, bis sie verbindet.",
+      "descriptionDirect": "Verbinden Sie Ihr betriebliches Stripe-Konto, um Trinkgelder anzunehmen. Je nach Auszahlungseinstellung gehen Trinkgelder auf das Stripe-Konto der Mitarbeitenden oder auf Ihr betriebliches Stripe-Konto. Wenn eine Person Stripe noch nicht verbunden hat, werden deren Trinkgelder gehalten, bis sie verbindet.",
+      "descriptionBusiness": "Verbinden Sie Ihr betriebliches Stripe-Konto, um Trinkgelder anzunehmen. Je nach Auszahlungseinstellung gehen Trinkgelder auf das Stripe-Konto der Mitarbeitenden oder auf Ihr betriebliches Stripe-Konto. Wenn eine Person Stripe noch nicht verbunden hat, werden deren Trinkgelder gehalten, bis sie verbindet.",
       "action": "Stripe verbinden",
       "actionComplete": "Stripe-Einrichtung abschließen"
     },
@@ -6920,6 +6920,7 @@
       "linkedAccountsTitle": "Verknüpfte Konten",
       "linkedAccountsDesc": "Verbinden Sie Google, Apple oder Facebook für schnellere Anmeldung. Behalten Sie ein Passwort oder mindestens einen Anbieter.",
       "linkedAccountsPasswordHint": "Dieses Konto hat kein Passwort. Behalten Sie mindestens einen Social-Anbieter oder legen Sie zuerst ein Passwort fest.",
+      "walkthroughDemoLinkForbidden": "Walkthrough-Demo-Konten können Google, Apple oder Facebook nicht verknüpfen. Melden Sie sich mit dem Demo-Passwort an.",
       "linkedAs": "Verknüpft als {{email}}",
       "linkedStatus": "Verknüpft",
       "notLinkedStatus": "Nicht verknüpft",

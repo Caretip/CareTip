@@ -342,6 +342,31 @@
   box-shadow: none !important;
 }
 
+.caretip-dashboard-shell.employee-dashboard .employee-dashboard-fix-prompt.fix-prompt--compact {
+  padding-right: 2.25rem;
+}
+
+.caretip-dashboard-shell.employee-dashboard .employee-dashboard-fix-prompt .fix-prompt__text {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  flex-direction: column;
+  gap: 0.125rem;
+}
+
+.caretip-dashboard-shell.employee-dashboard .employee-dashboard-fix-prompt .fix-prompt__title,
+.caretip-dashboard-shell.employee-dashboard .employee-dashboard-fix-prompt .fix-prompt__description {
+  white-space: normal;
+  overflow: visible;
+  text-overflow: unset;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.caretip-dashboard-shell.employee-dashboard .employee-dashboard-fix-prompt .fix-prompt__description {
+  color: hsl(var(--muted-foreground));
+}
+
 /* Tip history filters/tables: open, not boxed */
 .caretip-dashboard-shell.employee-dashboard .dashboard-filter-panel,
 .caretip-dashboard-shell.employee-dashboard .dashboard-table-panel {

@@ -680,9 +680,13 @@
 @media (min-width: 640px) {
   .caretip-dashboard-shell.business-dashboard .fix-prompt--compact .fix-prompt__body {
     flex-direction: row;
-    align-items: center;
+    align-items: flex-start;
     justify-content: space-between;
     gap: 0.75rem;
+  }
+
+  .caretip-dashboard-shell.business-dashboard .fix-prompt--compact .fix-prompt__actions {
+    align-self: center;
   }
 }
 
@@ -696,28 +700,20 @@
   margin-top: 0.125rem;
   font-size: 0.75rem;
   color: hsl(var(--muted-foreground));
+  overflow: visible;
+  text-overflow: unset;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
-@media (min-width: 640px) {
-  .caretip-dashboard-shell.business-dashboard .fix-prompt--compact .fix-prompt__text {
-    display: flex;
-    min-width: 0;
-    flex: 1;
-    align-items: baseline;
-    gap: 0.375rem;
-  }
-
-  .caretip-dashboard-shell.business-dashboard .fix-prompt--compact .fix-prompt__description {
-    display: block;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    color: hsl(var(--muted-foreground));
-  }
-
-  .caretip-dashboard-shell.business-dashboard .fix-prompt--compact .fix-prompt__title {
-    flex-shrink: 0;
-  }
+.caretip-dashboard-shell.business-dashboard .fix-prompt--compact .fix-prompt__text {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.125rem;
 }
 
 .caretip-dashboard-shell.business-dashboard .fix-prompt--compact .fix-prompt__actions {

@@ -31,3 +31,10 @@ export const AUTH_RESEND_VERIFICATION_GENERIC_MESSAGE =
 
 /** Authenticated OAuth link failure (cross-user) — no “another user” disclosure. */
 export const AUTH_OAUTH_LINK_FAILED_MESSAGE = "Unable to link this social account.";
+
+/** Authenticated link blocked for primary walkthrough/demo CareTip accounts. */
+export const AUTH_OAUTH_DEMO_ACCOUNT_LINK_FORBIDDEN_MESSAGE =
+  "Walkthrough demo accounts cannot link social sign-in providers.";
+
+export const AUTH_OAUTH_DEMO_ACCOUNT_LINK_FORBIDDEN_CODE =
+  "OAUTH_DEMO_ACCOUNT_LINK_FORBIDDEN" as const;

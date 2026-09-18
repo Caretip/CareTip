@@ -534,12 +534,8 @@ export function AuthPage() {
   };
 
   const runSocialOAuth = async (provider: OAuthProviderId, idToken: string) => {
-    if (user != null && sessionValidated) {
-      setAuthFlowInProgress(true);
-      setIsSubmitting(true);
-      await redirectAfterAuth(user);
-      return;
-    }
+    // Always complete provider auth → API resolution. Do not short-circuit on an
+    // existing CareTip session (that previously redirected as the stale user).
     if (!isLogin && authLane === 'employee') {
       if (!name.trim()) {
         setError(t("auth.page.errorFullName"));

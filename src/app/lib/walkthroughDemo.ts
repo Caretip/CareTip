@@ -3,6 +3,22 @@ export const WALKTHROUGH_DEMO_MANAGER_EMAIL = "demo@caretip.de";
 export const WALKTHROUGH_DEMO_EMPLOYEE_EMAIL = "employee@caretip.de";
 export const WALKTHROUGH_DEMO_PLATFORM_ADMIN_EMAIL = "admin@caretip.de";
 
+const WALKTHROUGH_DEMO_EMAILS = new Set(
+  [
+    WALKTHROUGH_DEMO_MANAGER_EMAIL,
+    WALKTHROUGH_DEMO_EMPLOYEE_EMAIL,
+    WALKTHROUGH_DEMO_PLATFORM_ADMIN_EMAIL,
+  ].map((e) => e.toLowerCase()),
+);
+
+/** Exact-match walkthrough logins — mirrors backend `isWalkthroughDemoAccount`. */
+export function isWalkthroughDemoAccount(
+  user: { email: string } | null | undefined,
+): boolean {
+  if (!user?.email) return false;
+  return WALKTHROUGH_DEMO_EMAILS.has(user.email.trim().toLowerCase());
+}
+
 export function isWalkthroughDemoManager(
   user: { email: string; role: string } | null | undefined,
 ): boolean {

@@ -13,6 +13,7 @@ import {
   OAUTH_SIGN_IN_FAILED_CODE,
   OAUTH_EMAIL_REQUIRED_CODE,
   OAUTH_TOKEN_VERIFICATION_FAILED_CODE,
+  OAUTH_DEMO_ACCOUNT_LINK_FORBIDDEN_CODE,
   PLAN_CAPABILITY_REQUIRED_CODE,
   PLAN_LIMIT_EXCEEDED_CODE,
   SUBSCRIPTION_REQUIRED_CODE,
@@ -125,6 +126,8 @@ const ERROR_MAP: Record<string, string> = {
     "Facebook did not provide an email address. Enable email permission in Facebook Login, or use another sign-in method.",
   [OAUTH_TOKEN_VERIFICATION_FAILED_CODE]:
     "Social sign-in could not be verified. Please try again.",
+  [OAUTH_DEMO_ACCOUNT_LINK_FORBIDDEN_CODE]:
+    "Walkthrough demo accounts cannot link Google, Apple, or Facebook. Use the demo password to sign in.",
   [OAUTH_ACCOUNT_NOT_REGISTERED_CODE]:
     "We couldn't complete social sign-in. If you already have a CareTip account, please sign in or use Forgot Password to recover access.",
   [GOOGLE_ACCOUNT_NOT_REGISTERED_CODE]:

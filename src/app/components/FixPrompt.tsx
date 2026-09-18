@@ -138,23 +138,36 @@ export function FixPrompt({
           compact
             ? cn(
                 "flex flex-col gap-2",
-                hasActions && "sm:flex-row sm:items-center sm:justify-between sm:gap-3",
+                hasActions && "sm:flex-row sm:items-start sm:justify-between sm:gap-3",
               )
-            : cn("flex flex-col gap-3 sm:gap-4", hasActions && "sm:flex-row sm:items-center sm:justify-between"),
+            : cn("flex flex-col gap-3 sm:gap-4", hasActions && "sm:flex-row sm:items-start sm:justify-between"),
         )}
       >
-        <div className={cn("min-w-0 flex-1", compact && "fix-prompt__text")}>
-          <p id={panelId} className={cn(compact ? "fix-prompt__title" : "font-semibold text-foreground")}>
+        <div className={cn("flex min-w-0 flex-1 flex-col gap-0.5", compact && "fix-prompt__text")}>
+          <p
+            id={panelId}
+            className={cn(
+              "text-balance",
+              compact ? "fix-prompt__title" : "font-semibold text-foreground",
+            )}
+          >
             {title}
           </p>
           {description ? (
-            <p className={cn(compact ? "fix-prompt__description" : "mt-1 text-muted-foreground")}>{description}</p>
+            <p
+              className={cn(
+                "whitespace-normal break-words [overflow-wrap:anywhere]",
+                compact ? "fix-prompt__description" : "mt-1 text-muted-foreground",
+              )}
+            >
+              {description}
+            </p>
           ) : null}
         </div>
         {hasActions ? (
           <div
             className={cn(
-              "fix-prompt__actions flex shrink-0 flex-col gap-2 sm:flex-row sm:items-center sm:justify-end",
+              "fix-prompt__actions flex shrink-0 flex-col gap-2 sm:flex-row sm:items-center sm:justify-end sm:self-center",
               compact && "gap-1.5",
             )}
           >
