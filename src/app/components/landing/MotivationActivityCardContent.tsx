@@ -91,15 +91,6 @@ export function MotivationActivityCardMeta({
     );
   }
 
-  if (card.id === "recognition" && metric && animateMetrics) {
-    return (
-      <>
-        <CountUpMetric value={metric.value} kind={metric.kind} durationMs={750} />
-        {t(metric.afterKey!)}
-      </>
-    );
-  }
-
   return <>{meta}</>;
 }
 

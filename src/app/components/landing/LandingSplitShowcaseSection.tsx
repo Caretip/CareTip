@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { Link } from "react-router";
+import { RequestDemoCta } from "@/app/components/RequestDemoCta";
 import { LandingParallaxWrap } from "@/components/landing/LandingParallaxWrap";
 import { LandingReveal } from "@/components/landing/LandingReveal";
 import { landingStaggerDelay } from "@/lib/landingMotion";
@@ -33,6 +34,10 @@ export type LandingSplitShowcaseSectionProps = {
   visual: ReactNode;
   benefitsAriaLabel?: string;
 };
+
+function isDemoIntentPath(to: string): boolean {
+  return to.includes("intent=demo");
+}
 
 export function LandingSplitShowcaseSection({
   id,
@@ -115,14 +120,18 @@ export function LandingSplitShowcaseSection({
             {cta ? (
               <div className={landingUi.sectionCtaCluster}>
                 <div className={landingUi.sectionCtaUnit}>
-                  <Link
-                    to={cta.to}
-                    className={
-                      cta.to === "/join" ? landingUi.sectionCtaSecondary : landingUi.sectionCtaPrimary
-                    }
-                  >
-                    {cta.label}
-                  </Link>
+                  {isDemoIntentPath(cta.to) ? (
+                    <RequestDemoCta className={landingUi.sectionCtaPrimary}>{cta.label}</RequestDemoCta>
+                  ) : (
+                    <Link
+                      to={cta.to}
+                      className={
+                        cta.to === "/join" ? landingUi.sectionCtaSecondary : landingUi.sectionCtaPrimary
+                      }
+                    >
+                      {cta.label}
+                    </Link>
+                  )}
                 </div>
               </div>
             ) : null}

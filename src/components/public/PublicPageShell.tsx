@@ -6,6 +6,7 @@ import { AuthLikePageBackground } from "@/app/components/AuthLikePageBackground"
 import { cn } from "@/lib/utils";
 import { publicPageUi } from "@/components/public/publicPageUi";
 import { usePublicMountProbe } from "@/lib/publicMountProbe";
+import { usePublicHtmlBootHandoff } from "@/app/lib/usePublicHtmlBootHandoff";
 
 type PublicPageShellProps = {
   children: ReactNode;
@@ -28,8 +29,11 @@ export function PublicPageShell({
   maxWidth = "prose",
 }: PublicPageShellProps) {
   usePublicMountProbe("PublicPageShell");
+  /** Dismiss HTML cold boot only after this shell has committed (lazy marketing chunks). */
+  usePublicHtmlBootHandoff(true);
+
   return (
-    <div className={publicPageUi.page}>
+    <div className={publicPageUi.page} data-caretip-route-ready="" data-caretip-public-committed="">
       <AuthLikePageBackground animated={false} />
       <div className={publicPageUi.shell}>
         <Navigation />

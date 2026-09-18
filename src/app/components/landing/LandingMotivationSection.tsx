@@ -1,5 +1,4 @@
 import { useMemo } from "react";
-import { Link } from "react-router";
 import { useTranslation, Trans } from "react-i18next";
 import { LandingBenefitChecklist } from "@/components/landing/LandingCheckBadge";
 import { LandingSectionAccent } from "@/components/landing/LandingSectionAccent";
@@ -9,6 +8,7 @@ import { landingHeadlineComponents } from "@/components/landing/landingRichText"
 import { cn } from "@/lib/utils";
 import { LandingMotivationActivityStack } from "./LandingMotivationActivityStack";
 import { LandingCopySentences } from "@/components/landing/LandingCopySentences";
+import { RequestDemoCta } from "@/app/components/RequestDemoCta";
 import aminaWebp from "../../../../images/amina.webp";
 import aminaAvif from "../../../../images/amina.avif";
 
@@ -72,9 +72,9 @@ export function LandingMotivationSection() {
 
             <div className={cn(landingUi.sectionCtaCluster, "caretip-motivation-cta")}>
               <div className={landingUi.sectionCtaUnit}>
-                <Link to="/contact?intent=demo" className={landingUi.sectionCtaPrimary}>
+                <RequestDemoCta className={landingUi.sectionCtaPrimary}>
                   {t("nav.requestDemo")}
-                </Link>
+                </RequestDemoCta>
               </div>
             </div>
           </LandingReveal>
@@ -85,7 +85,7 @@ export function LandingMotivationSection() {
           className={cn(
             landingUi.visualColumn,
             landingUi.mobileStackVisual,
-            "caretip-motivation-visual lg:order-2 lg:justify-end",
+            "caretip-motivation-visual lg:order-2 lg:justify-start",
           )}
         >
           <div className="caretip-motivation-story-gallery caretip-motivation-story-gallery--single">
@@ -98,6 +98,18 @@ export function LandingMotivationSection() {
                 className="caretip-motivation-story-gallery__img caretip-motivation-story-gallery__img--primary"
                 loading="lazy"
                 decoding="async"
+                onError={(event) => {
+                  const img = event.currentTarget;
+                  const picture = img.parentElement;
+                  if (picture?.tagName === "PICTURE") {
+                    picture
+                      .querySelectorAll('source[type="image/avif"]')
+                      .forEach((source) => source.remove());
+                  }
+                  if (img.getAttribute("src") !== aminaWebp) {
+                    img.src = aminaWebp;
+                  }
+                }}
               />
             </picture>
             <p className="caretip-motivation-story-gallery__snippet">

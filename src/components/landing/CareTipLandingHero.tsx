@@ -7,7 +7,7 @@ import { landingCopyVisible, landingUi } from "@/components/landing/landingUi";
 import { LandingHeroAnimatedWord } from "@/components/landing/LandingHeroAnimatedWord";
 import { LandingHeroStoryShowcase } from "@/components/landing/LandingHeroStoryShowcase";
 import { LandingCopySentences } from "@/components/landing/LandingCopySentences";
-import { AnimatedHeadingLazy } from "@/components/ui/AnimatedHeading.lazy";
+import { AnimatedHeading } from "@/components/ui/AnimatedHeading";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { cn } from "@/lib/utils";
 
@@ -64,16 +64,18 @@ export function CareTipLandingHero({
       : null;
   const heroHeadlineHighlight = t("landing.showcase.heroHeadlineHighlight");
   const heroBrandTagline = t("landing.showcase.heroTagline");
-  const heroHeadlineHighlightsRaw = t("landing.showcase.heroHeadlineHighlights", {
-    returnObjects: true,
-  });
-  const heroHeadlineHighlights =
-    Array.isArray(heroHeadlineHighlightsRaw) &&
-    heroHeadlineHighlightsRaw.every((word) => typeof word === "string")
-      ? (heroHeadlineHighlightsRaw as string[])
-      : heroHeadlineHighlight
-        ? [heroHeadlineHighlight]
-        : [];
+  const heroHeadlineHighlights = useMemo(() => {
+    const heroHeadlineHighlightsRaw = t("landing.showcase.heroHeadlineHighlights", {
+      returnObjects: true,
+    });
+    if (
+      Array.isArray(heroHeadlineHighlightsRaw) &&
+      heroHeadlineHighlightsRaw.every((word) => typeof word === "string")
+    ) {
+      return heroHeadlineHighlightsRaw as string[];
+    }
+    return heroHeadlineHighlight ? [heroHeadlineHighlight] : [];
+  }, [t, i18n.language, heroHeadlineHighlight]);
   const useStaticHeadline = landingCopyVisible(heroHeadline);
   const headlineMode = useStaticHeadline ? "static" : "composed";
   const showSupportingCopy = landingCopyVisible(activeDescription);
@@ -121,17 +123,18 @@ export function CareTipLandingHero({
               activeHeadline.includes("\n") ? (
                 activeHeadline.split("\n").map((line, index) => (
                   <span
-                    key={`${index}-${line}`}
+                    key={`hero-line-${index}`}
                     className={cn(
                       landingUi.heroHeadlineLine,
                       "caretip-hero-headline-line--controlled",
                       index === 0 && "caretip-hero-headline-line--static",
                     )}
                   >
-                    <AnimatedHeadingLazy
+                    <AnimatedHeading
                       text={line}
                       highlight={heroHeadlineHighlights}
                       highlightClassName={landingUi.heroHeadlineEmphasis}
+                      playOnMount
                     />
                   </span>
                 ))
@@ -143,10 +146,11 @@ export function CareTipLandingHero({
                     "caretip-hero-headline-line--controlled",
                   )}
                 >
-                  <AnimatedHeadingLazy
+                  <AnimatedHeading
                     text={activeHeadline}
                     highlight={heroHeadlineHighlights}
                     highlightClassName={landingUi.heroHeadlineEmphasis}
+                    playOnMount
                   />
                 </span>
               )

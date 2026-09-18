@@ -48,7 +48,7 @@ import { PlatformAdminLoginPage } from './pages/platform/PlatformAdminLoginPage'
 import { AuthLogoutHandoffCover } from "./components/auth/AuthLogoutHandoffCover";
 import { RootSpaRouteHold } from "./routing/RootSpaRouteHold";
 import { isChunkLoadFailure } from "./lib/chunkLoadRecovery";
-import "@/styles/bundles/auth.css";
+// auth.css: imported by AuthPage / JoinPage / routeLazy auth helpers — not on every cold route.
 
 const LoaderDiagRuntime = import.meta.env.DEV
   ? React.lazy(() =>

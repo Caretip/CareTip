@@ -11,6 +11,7 @@ import { howItWorksPageUi } from "@/components/public/howItWorksPageUi";
 import { publicPagesBrandUi } from "@/components/public/publicPagesBrandUi";
 import { publicPageUi } from "@/components/public/publicPageUi";
 import { cn } from "@/lib/utils";
+import { RequestDemoCta } from "@/app/components/RequestDemoCta";
 
 export function HowItWorksPage() {
   const { t } = useTranslation();
@@ -88,9 +89,9 @@ export function HowItWorksPage() {
           <h3 className={publicPagesBrandUi.warmDarkCtaTitle}>{t("staticPages.howItWorks.ctaTitle")}</h3>
           <p className={publicPagesBrandUi.warmDarkCtaBody}>{t("staticPages.howItWorks.ctaBody")}</p>
           <div className={publicPagesBrandUi.warmDarkCtaActions}>
-            <Link to="/contact?intent=demo" className={publicPagesBrandUi.ctaButtonPrimary}>
+            <RequestDemoCta className={publicPagesBrandUi.ctaButtonPrimary}>
               {t("nav.requestDemo")}
-            </Link>
+            </RequestDemoCta>
             <Link to="/pricing" className={publicPagesBrandUi.ctaButtonSecondary}>
               {t("staticPages.howItWorks.ctaPricing")}
             </Link>

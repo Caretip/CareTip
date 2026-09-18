@@ -11,6 +11,31 @@ const ACTIVE_CLASS = "caretip-html-boot-active";
 const EXITING_CLASS = "caretip-html-boot--exiting";
 const TAGLINE_ID = "caretip-html-boot-tagline";
 
+/** Lazy public marketing shells that use PublicPageShell (route-ready handoff). */
+const LAZY_PUBLIC_MARKETING_SHELL_EXACT = new Set([
+  "/pricing",
+  "/features",
+  "/faq",
+  "/contact",
+  "/privacy",
+  "/terms",
+  "/avv",
+  "/dpa",
+  "/plv",
+  "/cookies",
+  "/imprint",
+  "/help",
+  "/blog",
+  "/careers",
+  "/how-it-works",
+  "/mobile-app",
+]);
+
+function isLazyPublicMarketingShellPath(pathname: string): boolean {
+  if (LAZY_PUBLIC_MARKETING_SHELL_EXACT.has(pathname)) return true;
+  return pathname.startsWith("/industries/");
+}
+
 function readPathname(): string {
   if (typeof window === "undefined") return "/";
   return window.location.pathname.split("?")[0]?.split("#")[0] ?? "/";
@@ -20,13 +45,18 @@ function readPathname(): string {
 export function shouldRetainHtmlBootUntilLandingCommit(): boolean {
   if (typeof document === "undefined") return false;
   const p = readPathname();
+  const committed = document.querySelector(
+    "[data-caretip-route-ready], [data-caretip-public-committed], .caretip-landing",
+  );
   if (p === "/") {
-    return !document.querySelector(
-      ".caretip-landing, [data-caretip-route-ready], [data-caretip-public-committed]",
-    );
+    return committed == null;
   }
   if (isCustomerJourneyPath(p)) {
     return document.querySelector("[data-caretip-route-ready]") == null;
+  }
+  // Lazy PublicPageShell marketing — same cream-gap class as former lazy `/`.
+  if (isLazyPublicMarketingShellPath(p)) {
+    return committed == null;
   }
   return false;
 }

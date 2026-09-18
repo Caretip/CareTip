@@ -7,6 +7,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { PrefetchLink } from "@/app/components/PrefetchLink";
+import { RequestDemoCta } from "@/app/components/RequestDemoCta";
 import { LandingReveal } from "@/components/landing/LandingReveal";
 import { LandingSectionAccent } from "@/components/landing/LandingSectionAccent";
 import { landingUi } from "@/components/landing/landingUi";
@@ -161,6 +162,18 @@ export function LandingAudienceBenefitsSection() {
                       loading="lazy"
                       decoding="async"
                       sizes="(min-width: 1024px) 34rem, calc(100vw - 2rem)"
+                      onError={(event) => {
+                        const img = event.currentTarget;
+                        const picture = img.parentElement;
+                        if (picture?.tagName === "PICTURE") {
+                          picture
+                            .querySelectorAll('source[type="image/avif"]')
+                            .forEach((source) => source.remove());
+                        }
+                        if (img.getAttribute("src") !== card.image) {
+                          img.src = card.image;
+                        }
+                      }}
                     />
                   </picture>
                 </div>
@@ -183,15 +196,26 @@ export function LandingAudienceBenefitsSection() {
                     </li>
                   ))}
                 </ul>
-                <PrefetchLink
-                  to={card.ctaTo}
-                  className={cn(
-                    card.id === "business" ? landingUi.cta : landingUi.sectionCtaSecondary,
-                    "caretip-audience-benefits__cta caretip-section-cta-button",
-                  )}
-                >
-                  {card.ctaLabel}
-                </PrefetchLink>
+                {card.id === "business" ? (
+                  <RequestDemoCta
+                    className={cn(
+                      landingUi.cta,
+                      "caretip-audience-benefits__cta caretip-section-cta-button",
+                    )}
+                  >
+                    {card.ctaLabel}
+                  </RequestDemoCta>
+                ) : (
+                  <PrefetchLink
+                    to={card.ctaTo}
+                    className={cn(
+                      landingUi.sectionCtaSecondary,
+                      "caretip-audience-benefits__cta caretip-section-cta-button",
+                    )}
+                  >
+                    {card.ctaLabel}
+                  </PrefetchLink>
+                )}
               </LandingReveal>
             );
           })}

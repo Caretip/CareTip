@@ -1,5 +1,4 @@
 import {
-  Award,
   BarChart3,
   Coins,
   Star,
@@ -15,8 +14,7 @@ export type ActivityCardId =
   | "review"
   | "dashboard"
   | "goal"
-  | "shift"
-  | "recognition";
+  | "shift";
 
 export type ActivityCardEmphasis = "primary" | "standard" | "compact";
 
@@ -129,24 +127,6 @@ export const MOTIVATION_ACTIVITY_CARD_SPECS: ActivityCardSpec[] = [
       kind: "percent",
       beforeKey: "landing.motivation.cards.shift.metaBefore",
       afterKey: "landing.motivation.cards.shift.metaAfter",
-    },
-    mobilePrimary: "title",
-    mobileSecondary: "meta",
-  },
-  {
-    id: "recognition",
-    Icon: Award,
-    badgeKey: "landing.motivation.cards.recognition.badge",
-    titleKey: "landing.motivation.cards.recognition.title",
-    metaKey: "landing.motivation.cards.recognition.meta",
-    timeKey: "landing.motivation.cards.recognition.time",
-    accentClass: "caretip-motivation-activity__icon--recognition",
-    emphasis: "compact",
-    titleMetric: {
-      value: 7,
-      kind: "integer",
-      beforeKey: "landing.motivation.cards.recognition.metaBefore",
-      afterKey: "landing.motivation.cards.recognition.metaAfter",
     },
     mobilePrimary: "title",
     mobileSecondary: "meta",

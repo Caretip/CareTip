@@ -64,9 +64,56 @@ html.dark .caretip-landing-motivation .caretip-motivation-ambient {
 }
 
 @media (min-width: 1024px) {
+  /* Match Live-in-Minutes phone: sit visual on the left of the right column. */
   .caretip-landing #recognition .caretip-motivation-visual {
-    justify-content: flex-end;
-    align-items: flex-end;
+    justify-content: flex-start;
+    align-items: flex-start;
+  }
+
+  /* Slightly smaller image (~12%) so heading/copy stay primary. */
+  .caretip-landing #recognition .caretip-split-section-grid {
+    grid-template-columns: minmax(0, 1.14fr) minmax(0, 0.86fr);
+    column-gap: clamp(2.75rem, 4vw, 4.75rem);
+  }
+
+  .caretip-landing #recognition .caretip-motivation-story-gallery--single {
+    width: 88%;
+    max-width: 24.5rem;
+    margin-inline-start: 0;
+    margin-left: -0.75rem;
+    transform: translateX(-0.5rem);
+  }
+
+  .caretip-landing #recognition
+    .caretip-motivation-story-gallery--single
+    .caretip-motivation-story-gallery__img {
+    height: min(365px, 45vw);
+  }
+
+  .caretip-landing #recognition .caretip-motivation-activity-wrap {
+    width: 88%;
+    max-width: 24.5rem;
+    margin-inline-start: 0;
+    margin-left: -0.75rem;
+    transform: translateX(-0.5rem);
+  }
+}
+
+/* Tablet: mild size trim without losing presence. */
+@media (min-width: 641px) and (max-width: 1023px) {
+  .caretip-landing #recognition
+    .caretip-motivation-story-gallery--single
+    .caretip-motivation-story-gallery__img {
+    height: min(375px, 48vw);
+  }
+}
+
+/* Mobile: trim only slightly so the photo stays clearly readable. */
+@media (max-width: 640px) {
+  .caretip-landing #recognition
+    .caretip-motivation-story-gallery--single
+    .caretip-motivation-story-gallery__img {
+    height: 205px;
   }
 }
 

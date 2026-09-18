@@ -1,5 +1,6 @@
 import { Link } from "react-router";
 import { useTranslation } from "react-i18next";
+import { RequestDemoCta } from "@/app/components/RequestDemoCta";
 import { LandingReveal } from "@/components/landing/LandingReveal";
 import { LandingCopySentences } from "@/components/landing/LandingCopySentences";
 import { AnimatedHeadingLazy } from "@/components/ui/AnimatedHeading.lazy";
@@ -35,16 +36,10 @@ export function LandingFinalCtaSection() {
         ) : null}
 
         <div className="caretip-features-cta-wise__actions">
-          <Link
-            to="/contact?intent=demo"
-            className={landingUi.heroCtaPrimary}
-          >
+          <RequestDemoCta className={landingUi.heroCtaPrimary}>
             {t("landing.finalCta.cta")}
-          </Link>
-          <Link
-            to="/signup"
-            className={landingUi.heroCtaSecondary}
-          >
+          </RequestDemoCta>
+          <Link to="/signup" className={landingUi.heroCtaSecondary}>
             {t("landing.finalCta.secondary")}
           </Link>
         </div>

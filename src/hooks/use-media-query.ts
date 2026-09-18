@@ -1,20 +1,17 @@
-import { useState, useEffect } from 'react';
+import { useSyncExternalStore } from "react";
 
+/**
+ * Sync `matchMedia` on the first client render (no `useState(false)` false-start).
+ * CSR-only apps still pass `getServerSnapshot` for React 18 compliance.
+ */
 export function useMediaQuery(query: string): boolean {
-  const [matches, setMatches] = useState(false);
-
-  useEffect(() => {
-    const media = window.matchMedia(query);
-    
-    if (media.matches !== matches) {
-      setMatches(media.matches);
-    }
-    
-    const listener = () => setMatches(media.matches);
-    media.addEventListener('change', listener);
-    
-    return () => media.removeEventListener('change', listener);
-  }, [matches, query]);
-
-  return matches;
+  return useSyncExternalStore(
+    (onStoreChange) => {
+      const media = window.matchMedia(query);
+      media.addEventListener("change", onStoreChange);
+      return () => media.removeEventListener("change", onStoreChange);
+    },
+    () => window.matchMedia(query).matches,
+    () => false,
+  );
 }

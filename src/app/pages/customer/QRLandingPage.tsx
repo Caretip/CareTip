@@ -175,17 +175,20 @@ export function QRLandingPage() {
           markCustomerFlowEntered();
 
           const slug = business.slug?.trim().toLowerCase();
+          // Directory is section-level: do not block tip-page shell / HTML boot handoff.
           if (slug && !employeeIdParam) {
             setPoolLoading(true);
-            try {
-              const res = await getBusinessStaffDirectory(slug);
-              setPoolEmployees(res.employees ?? []);
-            } catch (e) {
-              logClientError("QRLandingPage.directory", e);
-              setPoolEmployees([]);
-            } finally {
-              setPoolLoading(false);
-            }
+            void getBusinessStaffDirectory(slug)
+              .then((res) => {
+                setPoolEmployees(res.employees ?? []);
+              })
+              .catch((e) => {
+                logClientError("QRLandingPage.directory", e);
+                setPoolEmployees([]);
+              })
+              .finally(() => {
+                setPoolLoading(false);
+              });
           }
         }
       } catch (err) {

@@ -25,8 +25,13 @@ const main = read("src/main.tsx");
 const en = read("src/i18n/locales/en.json");
 const de = read("src/i18n/locales/de.json");
 
-if (html.includes('id="caretip-html-boot"') && html.includes("caretip-html-boot__indeterminate") && html.includes("caretip-html-boot__tagline")) {
-  pass("HTML cold-boot uses CareTip mark + indeterminate track + tagline");
+if (
+  html.includes('id="caretip-html-boot"') &&
+  html.includes("caretip-html-boot__indeterminate") &&
+  html.includes("caretip-html-boot-orbit") &&
+  html.includes("caretip-html-boot__tagline")
+) {
+  pass("HTML cold-boot uses CareTip mark + orange orbit arc + tagline");
 } else fail("HTML cold-boot mark/track/tagline missing");
 
 if (
@@ -62,10 +67,12 @@ if (
 
 if (
   polish.includes("app-branded-loader__indeterminate") &&
+  polish.includes("caretip-brand-loader-orbit") &&
+  polish.includes("conic-gradient") &&
   polish.includes("prefers-reduced-motion") &&
   !polish.includes("app-branded-loader__spinner")
 ) {
-  pass("React CSS uses indeterminate bar + reduced-motion (no legacy orbit spinner)");
+  pass("React CSS uses CareTip mark orbit arc + reduced-motion (no legacy orbit spinner)");
 } else fail("React branded loader CSS incomplete");
 
 if (globals.includes("prefers-reduced-motion") && globals.includes(".app-setup-loading--exiting")) {
@@ -81,7 +88,7 @@ if (
   !mark.includes("app-branded-loader__brand") &&
   !mark.includes("LoadingSpinner")
 ) {
-  pass("Shared CareTipBrandedLoaderMark uses app icon + bar + one getting-ready sentence");
+  pass("Shared CareTipBrandedLoaderMark uses app icon + arc + one getting-ready sentence");
 } else fail("CareTipBrandedLoaderMark contract failed");
 
 if (screen.includes("CareTipBrandedLoaderMark") && manager.includes("AppBrandedLoadingScreen")) {

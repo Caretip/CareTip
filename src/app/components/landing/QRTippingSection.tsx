@@ -1,5 +1,4 @@
 import { motion } from "motion/react";
-import { Link } from "react-router";
 import { useTranslation } from "react-i18next";
 import { Link2, Smartphone, Zap, CheckCircle } from "lucide-react";
 import { LandingBorderedCard } from "@/components/ui/landing-bordered-card";
@@ -9,6 +8,7 @@ import newly01Avif from "../../../../images/newly01.avif";
 import { MarketingPicture } from "@/lib/marketingPicture";
 import { landingUi } from "@/components/landing/landingUi";
 import { cn } from "@/lib/utils";
+import { RequestDemoCta } from "@/app/components/RequestDemoCta";
 
 /** Unsplash: people at a table paying with phone / card (original left-panel image) */
 const IMG_PEOPLE_PAYMENT = newly01Webp;
@@ -124,12 +124,9 @@ export function QRTippingSection() {
             </div>
 
             <div className="pt-4">
-              <Link
-                to="/contact?intent=demo"
-                className={cn(landingUi.sectionCtaPrimary)}
-              >
+              <RequestDemoCta className={cn(landingUi.sectionCtaPrimary)}>
                 {t("nav.requestDemo")}
-              </Link>
+              </RequestDemoCta>
             </div>
           </motion.div>
 

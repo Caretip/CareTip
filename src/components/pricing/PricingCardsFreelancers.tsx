@@ -7,6 +7,7 @@ import { buildSoloPricingPlanCatalog } from "@/app/data/pricingSoloPlanCatalog";
 import { PricingTierCard } from "@/components/pricing/PricingTierCard";
 import { pricingPageUi } from "@/components/pricing/pricingPageUi";
 import { cn } from "@/lib/utils";
+import { RequestDemoCta } from "@/app/components/RequestDemoCta";
 
 type PricingCardsFreelancersProps = {
   billingCycle: BillingCycle;
@@ -54,9 +55,7 @@ export function PricingCardsFreelancers({ billingCycle, copyScope }: PricingCard
                     {plan.buttonText}
                   </Link>
                 ) : isEnterprise ? (
-                  <Link to="/contact?intent=demo&plan=enterprise" className={ctaClass}>
-                    {plan.buttonText}
-                  </Link>
+                  <RequestDemoCta className={ctaClass}>{plan.buttonText}</RequestDemoCta>
                 ) : (
                   <button type="button" className={cn(ctaClass, "pointer-events-none opacity-60")} disabled>
                     {plan.buttonText}

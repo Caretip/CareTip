@@ -10,7 +10,8 @@
  * | *.onrender.com + wss | VITE_API_URL backend + Socket.IO | Login, dashboard, realtime |
  * | oauth2.googleapis.com, www.googleapis.com, accounts.google.com | @react-oauth/google | Google sign-in |
  * | firebase*.googleapis.com, *.googleapis.com | FCM web push + Firebase SDK | Push notifications |
- * | *.ingest.sentry.io, *.ingest.de.sentry.io | @sentry/react (when VITE_SENTRY_DSN set) | Error reporting |
+ * | assets.calendly.com (script/style/connect) | Request Demo Calendly popup widget |
+ * | calendly.com / *.calendly.com (frame/connect) | Calendly booking iframe + API |
  *
  * Intentionally permissive (accepted risk):
  * | Directive | Value | Reason |
@@ -46,12 +47,12 @@ export const SPA_IMG_SRC = ["'self'", "data:", "blob:", "https:"];
 /** Full SPA CSP header value (semicolon-separated). */
 export const SPA_CONTENT_SECURITY_POLICY = [
   "default-src 'self'",
-  "script-src 'self' https://accounts.google.com https://www.gstatic.com",
-  "style-src 'self' 'unsafe-inline' https://accounts.google.com",
+  "script-src 'self' https://accounts.google.com https://www.gstatic.com https://assets.calendly.com",
+  "style-src 'self' 'unsafe-inline' https://accounts.google.com https://assets.calendly.com",
   `img-src ${SPA_IMG_SRC.join(" ")}`,
   "font-src 'self'",
-  `connect-src ${SPA_CONNECT_SRC.join(" ")}`,
-  "frame-src https://accounts.google.com",
+  `connect-src ${SPA_CONNECT_SRC.join(" ")} https://calendly.com https://*.calendly.com https://assets.calendly.com`,
+  "frame-src https://accounts.google.com https://calendly.com https://*.calendly.com",
   "worker-src 'self' blob:",
   "object-src 'none'",
   "base-uri 'self'",

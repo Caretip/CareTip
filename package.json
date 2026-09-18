@@ -24,6 +24,7 @@
     "test:e2e:with-server": "node scripts/playwright-with-server.mjs",
     "test:xss-audit": "node scripts/xss-audit.mjs",
     "test:csp": "node scripts/csp-verify.mjs",
+    "test:request-demo-calendly": "node ./backend/node_modules/tsx/dist/cli.mjs ./scripts/request-demo-calendly-runtime.ts",
     "test:csrf-audit": "node scripts/csrf-audit.mjs",
     "test:secret-exposure": "npm --prefix backend run test:secret-exposure",
     "test:tables-page-quota-ui": "node ./backend/node_modules/tsx/dist/cli.mjs ./scripts/tables-page-quota-ui-runtime.ts",

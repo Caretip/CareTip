@@ -13,6 +13,7 @@ import {
   buildAuthPathForCheckoutIntent,
   buildCheckoutIntent,
 } from "../lib/checkoutIntent";
+import { RequestDemoCta } from "@/app/components/RequestDemoCta";
 
 interface PricingSectionProps {
   billingCycle: BillingCycle;
@@ -21,12 +22,10 @@ interface PricingSectionProps {
 }
 
 function tierSignupHref(
-  tierKey: "starter" | "business" | "enterprise" | undefined,
+  tierKey: "starter" | "business",
   billingCycle: BillingCycle,
   trial = false,
 ): string {
-  if (tierKey === "enterprise") return "/contact?intent=demo&plan=enterprise";
-  if (!tierKey) return "/contact?intent=demo";
   if (tierKey === "starter") return "/signup";
   return buildAuthPathForCheckoutIntent(
     buildCheckoutIntent({ marketingPlan: tierKey, billingCycle, trial }),
@@ -68,15 +67,15 @@ export function PricingSection({
             >
               {t("staticPages.pricing.tiers.business.subscribeButton")}
             </Link>
+          ) : isEnterprise ? (
+            <RequestDemoCta className={pricingPageUi.cardCtaEnterprise}>
+              {tier.buttonText}
+            </RequestDemoCta>
           ) : (
             <Link
-              to={tierSignupHref(tier.tierKey, billingCycle)}
+              to={tierSignupHref("starter", billingCycle)}
               className={cn(
-                isEnterprise
-                  ? pricingPageUi.cardCtaEnterprise
-                  : tier.isPopular
-                    ? pricingPageUi.cardCtaPrimary
-                    : pricingPageUi.cardCtaSecondary,
+                tier.isPopular ? pricingPageUi.cardCtaPrimary : pricingPageUi.cardCtaSecondary,
               )}
             >
               {tier.buttonText}

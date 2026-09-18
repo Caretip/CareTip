@@ -90,6 +90,34 @@ export function LandingHeroStoryShowcase({
     onLcpReadyRef.current?.();
   }, [markFrameReady]);
 
+  const handleFrameImageError = useCallback(
+    (frame: HeroStoryFrame, isLcpFrame: boolean, img: HTMLImageElement) => {
+      const fallback = frame.webp ?? frame.src;
+      if (!fallback) {
+        if (isLcpFrame) handleLcpFrameLoad();
+        else markFrameReady(frame.key);
+        return;
+      }
+
+      const picture = img.parentElement;
+      if (picture?.tagName === "PICTURE") {
+        picture
+          .querySelectorAll('source[type="image/avif"]')
+          .forEach((source) => source.remove());
+      }
+
+      const absoluteFallback = new URL(fallback, document.baseURI).href;
+      if (img.src !== absoluteFallback) {
+        img.src = fallback;
+        return;
+      }
+
+      if (isLcpFrame) handleLcpFrameLoad();
+      else markFrameReady(frame.key);
+    },
+    [handleLcpFrameLoad, markFrameReady],
+  );
+
   useEffect(() => {
     frameReadyRef.current = frameReady;
   }, [frameReady]);
@@ -287,6 +315,9 @@ export function LandingHeroStoryShowcase({
                     decoding={isLcpFrame || isDisplayed || isIncoming ? "sync" : "async"}
                     sizes={imageSizes}
                     onLoad={isLcpFrame ? handleLcpFrameLoad : () => markFrameReady(frame.key)}
+                    onError={(event) =>
+                      handleFrameImageError(frame, isLcpFrame, event.currentTarget)
+                    }
                     {...(isLcpFrame
                       ? ({ fetchpriority: "high" } as ImgHTMLAttributes<HTMLImageElement>)
                       : ({ fetchpriority: "low" } as ImgHTMLAttributes<HTMLImageElement>))}

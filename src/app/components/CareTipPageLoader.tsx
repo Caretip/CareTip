@@ -40,8 +40,8 @@ export function CareTipLoadingTitle({
 }
 
 /**
- * Shared logo + progress cue used by all branded CareTip loading surfaces.
- * App-level layout: icon → progress bar → one loading sentence.
+ * Shared CareTip branded loader mark — app icon + orange progress arc + optional tagline.
+ * App-level layout: mark → one loading sentence.
  * Never pair this sentence with a second line of copy on the same screen.
  */
 export function CareTipBrandedLoaderMark({
@@ -60,7 +60,7 @@ export function CareTipBrandedLoaderMark({
    * user-facing stage is active. One tagline only.
    */
   tagline?: string;
-  /** Hide the moving progress bar (logout cover). */
+  /** Hide the moving progress arc (logout cover). */
   calm?: boolean;
 }) {
   const { t } = useTranslation();
@@ -79,12 +79,12 @@ export function CareTipBrandedLoaderMark({
     >
       <div className="app-branded-loader__icon-wrap" aria-hidden>
         <CareTipLoadingTitle compact={compact} className="app-branded-loader__title" />
+        {calm ? null : (
+          <span className="app-branded-loader__track">
+            <span className="app-branded-loader__indeterminate" />
+          </span>
+        )}
       </div>
-      {calm ? null : (
-        <span className="app-branded-loader__track" aria-hidden>
-          <span className="app-branded-loader__indeterminate" />
-        </span>
-      )}
       {withTagline ? (
         <p className="app-branded-loader__tagline">{tagline}</p>
       ) : null}

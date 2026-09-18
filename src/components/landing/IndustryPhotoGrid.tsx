@@ -128,6 +128,18 @@ function IndustryPhotoCard({
             className="caretip-industry-photo-card__img"
             loading={index < 3 ? "eager" : "lazy"}
             decoding="async"
+            onError={(event) => {
+              const img = event.currentTarget;
+              const picture = img.parentElement;
+              if (picture?.tagName === "PICTURE") {
+                picture
+                  .querySelectorAll('source[type="image/avif"]')
+                  .forEach((source) => source.remove());
+              }
+              if (img.getAttribute("src") !== card.webp) {
+                img.src = card.webp;
+              }
+            }}
           />
         </picture>
       </div>

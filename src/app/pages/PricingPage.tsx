@@ -19,6 +19,7 @@ import { PricingHero } from "@/components/pricing/PricingHero";
 import { PricingCardsHotels } from "@/components/pricing/PricingCardsHotels";
 import { PricingYearlyNotice } from "@/components/pricing/PricingYearlyNotice";
 import { usePublicMountProbe } from "@/lib/publicMountProbe";
+import { RequestDemoCta } from "@/app/components/RequestDemoCta";
 
 const CTA_TRUST_KEYS = ["noCreditCard", "gdpr", "cancelAnytime"] as const;
 
@@ -74,9 +75,9 @@ export function PricingPage() {
             </h2>
             <p className="caretip-pricing-cta-wise__body">{t("staticPages.pricing.ctaBody")}</p>
             <div className="caretip-pricing-cta-wise__actions">
-              <Link to="/contact?intent=demo" className={publicPagesBrandUi.ctaButtonPrimary}>
+              <RequestDemoCta className={publicPagesBrandUi.ctaButtonPrimary}>
                 {t("nav.requestDemo")}
-              </Link>
+              </RequestDemoCta>
               <Link to="/signup" className={publicPagesBrandUi.ctaButtonSecondary}>
                 {t("nav.becomePartner")}
               </Link>

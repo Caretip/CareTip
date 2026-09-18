@@ -10,6 +10,7 @@ import { CareTipLogo } from "./CareTipLogo";
 import { LanguageSwitcher } from "@/components/i18n/LanguageSwitcher";
 import { ThemeQuickToggle } from "@/app/components/theme/ThemeQuickToggle";
 import { PrefetchLink } from "./PrefetchLink";
+import { RequestDemoCta } from "./RequestDemoCta";
 import { IndustriesNavDropdown } from "./IndustriesNavDropdown";
 import { prefetchLandingRoute, prefetchPrimaryNavRoutes } from "../lib/prefetchPublicRoutes";
 import { usePublicMountProbe } from "@/lib/publicMountProbe";
@@ -211,16 +212,15 @@ export const Navigation = memo(function Navigation({ variant: _variant = "defaul
                   >
                     {t("landing.showcase.primaryCta")}
                   </PrefetchLink>
-                  <PrefetchLink
-                    to="/contact"
-                    onClick={() => closeMobileMenu("navigate")}
+                  <RequestDemoCta
+                    onBeforeOpen={() => closeMobileMenu("navigate")}
                     className={cn(
                       landingUi.heroCtaSecondary,
                       "caretip-public-mobile-nav-drawer__cta-secondary mx-auto",
                     )}
                   >
                     {t("nav.requestDemo")}
-                  </PrefetchLink>
+                  </RequestDemoCta>
                 </div>
               </div>
             </aside>

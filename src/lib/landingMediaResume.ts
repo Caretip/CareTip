@@ -7,8 +7,14 @@
 export const CARETIP_DOCUMENT_HIDDEN_CLASS = "caretip-document-hidden";
 export const CARETIP_LANDING_RESUME_EVENT = "caretip-landing-media-resume";
 
-const LANDING_IMG_SELECTOR =
-  ".caretip-hero-story-frame, .caretip-industry-photo-card__img";
+/** Landing-page photo surfaces that use transform/opacity (GPU tile drop risk). */
+const LANDING_IMG_SELECTOR = [
+  ".caretip-hero-story-frame",
+  ".caretip-industry-photo-card__img",
+  ".caretip-motivation-story-gallery__img",
+  ".caretip-audience-benefits__photo img",
+  ".caretip-live-minutes-onboarding-device__img",
+].join(", ");
 
 let paintRecoveryPending = false;
 let decodeInFlight = false;
@@ -32,7 +38,10 @@ export function consumeLandingPaintRecovery(): boolean {
   return true;
 }
 
-/** Re-decode already-complete bitmaps so compositor tiles can be rebuilt without a scroll. */
+/**
+ * Re-decode already-complete bitmaps so compositor tiles can be rebuilt without a scroll.
+ * One-shot src reassign if the browser reports complete but naturalWidth is 0 (blank paint).
+ */
 export function refreshLandingDecodedImages(root: ParentNode = document): void {
   if (decodeInFlight) return;
   decodeInFlight = true;
@@ -40,7 +49,24 @@ export function refreshLandingDecodedImages(root: ParentNode = document): void {
   const imgs = root.querySelectorAll<HTMLImageElement>(LANDING_IMG_SELECTOR);
   const tasks: Promise<void>[] = [];
   for (const img of imgs) {
-    if (!img.complete || img.naturalWidth < 1) continue;
+    if (!img.complete) continue;
+
+    if (img.naturalWidth < 1) {
+      if (img.dataset.caretipPaintRetry === "1") continue;
+      const fallbackSrc = img.getAttribute("src") || img.src;
+      if (!fallbackSrc) continue;
+      img.dataset.caretipPaintRetry = "1";
+      const picture = img.parentElement;
+      if (picture?.tagName === "PICTURE") {
+        picture
+          .querySelectorAll('source[type="image/avif"]')
+          .forEach((source) => source.remove());
+      }
+      img.removeAttribute("src");
+      img.src = fallbackSrc;
+      continue;
+    }
+
     if (typeof img.decode !== "function") continue;
     tasks.push(
       img.decode().then(

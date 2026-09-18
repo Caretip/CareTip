@@ -49,12 +49,25 @@ assert(
   bridge.includes("isCustomerJourneyPath") && bridge.includes("shouldRetainHtmlBootUntilLandingCommit"),
   "HTML boot retain must cover guest tip URLs, not only /",
 );
+assert(
+  bridge.includes("isLazyPublicMarketingShellPath") ||
+    (bridge.includes("/pricing") && bridge.includes("isCustomerJourneyPath")),
+  "HTML boot retain must also cover lazy public marketing shells until route-ready",
+);
+
+const publicShell = read("src/components/public/PublicPageShell.tsx");
+assert(
+  publicShell.includes("data-caretip-route-ready") &&
+    publicShell.includes("usePublicHtmlBootHandoff(true)"),
+  "PublicPageShell must commit route-ready and hand off HTML boot",
+);
 
 const bootLocale = read("public/boot-locale.js");
 assert(
   bootLocale.includes("isCustomerBootPath") &&
+    bootLocale.includes("isLazyPublicMarketingPath") &&
     bootLocale.includes('return Boolean(doc.querySelector("[data-caretip-route-ready]"));'),
-  "boot-locale must keep HTML boot on guest paths until destination route-ready (not wait placeholders)",
+  "boot-locale must keep HTML boot on guest + lazy marketing paths until destination route-ready",
 );
 
 const shell = read("src/app/pages/customer/CustomerFlowShell.tsx");

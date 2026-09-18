@@ -199,9 +199,31 @@
 
   /**
    * Public `/` must not uncover an empty #root.
-   * Guest tip URLs keep #caretip-html-boot until `[data-caretip-route-ready]`
-   * (the destination page, not a wait placeholder). Not a timeout.
+   * Guest tip URLs and lazy marketing shells keep #caretip-html-boot until
+   * `[data-caretip-route-ready]` / public-committed markers exist. Not a timeout.
    */
+  function isLazyPublicMarketingPath(path) {
+    return (
+      path === "/pricing" ||
+      path === "/features" ||
+      path === "/faq" ||
+      path === "/contact" ||
+      path === "/privacy" ||
+      path === "/terms" ||
+      path === "/avv" ||
+      path === "/dpa" ||
+      path === "/plv" ||
+      path === "/cookies" ||
+      path === "/imprint" ||
+      path === "/help" ||
+      path === "/blog" ||
+      path === "/careers" ||
+      path === "/how-it-works" ||
+      path === "/mobile-app" ||
+      path.indexOf("/industries/") === 0
+    );
+  }
+
   function publicLandingRouteCommitted() {
     var doc = global.document;
     if (!doc) return false;
@@ -215,6 +237,11 @@
     }
     if (isCustomerBootPath(path)) {
       return Boolean(doc.querySelector("[data-caretip-route-ready]"));
+    }
+    if (isLazyPublicMarketingPath(path)) {
+      return Boolean(
+        doc.querySelector("[data-caretip-route-ready], [data-caretip-public-committed]"),
+      );
     }
     return true;
   }

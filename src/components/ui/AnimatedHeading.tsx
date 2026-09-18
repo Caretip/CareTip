@@ -24,6 +24,11 @@ export type AnimatedHeadingProps = {
   highlightClassName?: string;
   /** Play once when first entering the viewport (default true). */
   once?: boolean;
+  /**
+   * Above-the-fold headings: animate on mount without waiting for IntersectionObserver.
+   * Avoids a first paint at opacity 0 while `useInView` is still false.
+   */
+  playOnMount?: boolean;
 };
 
 const DEFAULT_VARIANTS: Variants = {
@@ -115,10 +120,12 @@ export const AnimatedHeading = memo(function AnimatedHeading({
   highlight,
   highlightClassName,
   once = true,
+  playOnMount = false,
 }: AnimatedHeadingProps) {
   const ref = useRef<HTMLSpanElement>(null);
   const reduceMotion = useReducedMotion();
   const inView = useInView(ref, { once, amount: 0.35 });
+  const shouldAnimate = playOnMount || inView;
 
   const highlightPhrases = useMemo(
     () =>
@@ -196,11 +203,11 @@ export const AnimatedHeading = memo(function AnimatedHeading({
             <motion.span
               aria-hidden
               initial="hidden"
-              animate={inView ? "visible" : "hidden"}
+              animate={shouldAnimate ? "visible" : "hidden"}
               variants={framerProps}
               transition={{
                 duration,
-                delay: inView ? delayIndex * stagger : 0,
+                delay: shouldAnimate ? delayIndex * stagger : 0,
                 ease: "easeOut",
               }}
               className={cn(

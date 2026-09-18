@@ -86,12 +86,28 @@ function scheduleHeroDisplayFont(): void {
 scheduleHeroDisplayFont();
 migrateLegacyAccessTokenFromStorage();
 
-/** Overlap landing JS with i18n JSON so `/` is not a waterfall. */
+/** Overlap high-traffic public page JS with i18n JSON (avoids cold chunk waterfalls). */
 function prefetchPublicEntryGraph(): void {
   if (typeof window === "undefined") return;
   const p = window.location.pathname.split("?")[0]?.split("#")[0] ?? "/";
   if (p === "/") {
     void import("./app/pages/LandingPage");
+    return;
+  }
+  if (p === "/pricing") {
+    void import("./app/pages/PricingPage");
+    return;
+  }
+  if (p === "/contact") {
+    void import("./app/pages/ContactPage");
+    return;
+  }
+  if (p === "/features") {
+    void import("./app/pages/FeaturesPage");
+    return;
+  }
+  if (p === "/how-it-works") {
+    void import("./app/pages/HowItWorksPage");
   }
 }
 prefetchPublicEntryGraph();

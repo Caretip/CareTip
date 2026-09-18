@@ -143,7 +143,7 @@ export default defineConfig(({ mode }) => {
       },
       workbox: {
         /** Bump when PWA shell/manifest semantics change so old precaches are abandoned. */
-        cacheId: 'caretip-pwa-v12',
+        cacheId: 'caretip-pwa-v13',
         /** Ensure old precaches are removed when SW updates. */
         cleanupOutdatedCaches: true,
         /**
@@ -176,16 +176,19 @@ export default defineConfig(({ mode }) => {
         ],
         runtimeCaching: [
           {
-            // Cache built static images at runtime (fast repeat visits, no huge update downloads).
+            // Hashed Vite assets: prefer network so deploys are not stuck on stale SWR entries.
+            // Short timeout keeps offline/repeat visits fast via cache fallback.
             urlPattern: ({ url }) => url.pathname.startsWith('/assets/') && /\.(png|jpe?g|webp|gif)$/i.test(url.pathname),
-            handler: 'StaleWhileRevalidate',
+            handler: 'NetworkFirst',
             options: {
-              cacheName: 'caretip-static-images',
+              cacheName: 'caretip-static-images-v13',
+              networkTimeoutSeconds: 4,
               expiration: {
                 maxEntries: 80,
-                maxAgeSeconds: 60 * 60 * 24 * 30,
+                maxAgeSeconds: 60 * 60 * 24 * 14,
               },
-              cacheableResponse: { statuses: [0, 200] },
+              // Never cache opaque (status 0) responses — they can paint as blank.
+              cacheableResponse: { statuses: [200] },
             },
           },
           {
