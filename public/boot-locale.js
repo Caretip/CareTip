@@ -77,20 +77,20 @@
 
   var COPY = {
     de: {
-      gettingReady: "Wird eingerichtet…",
+      gettingReady: "Einen Moment bitte…",
       settingUpWorkspace: "Ihr Bereich wird eingerichtet…",
       sessionCheck: "Ihr Konto wird vorbereitet…",
-      tipPage: "Ihre Trinkgeldseite wird geöffnet…",
-      checkout: "Sicherer Checkout wird vorbereitet…",
+      tipPage: "Ihr Trinkgeld-Erlebnis wird vorbereitet…",
+      checkout: "Ihr sicherer Checkout wird vorbereitet…",
       stripeReturn: "Ihr Trinkgeld wird bestätigt…",
       finishing: "Gleich geschafft…",
     },
     en: {
-      gettingReady: "Getting things ready…",
+      gettingReady: "Just a moment…",
       settingUpWorkspace: "Setting up your workspace…",
-      sessionCheck: "Getting your account ready…",
-      tipPage: "Opening your tip page…",
-      checkout: "Preparing secure checkout…",
+      sessionCheck: "Preparing your account…",
+      tipPage: "Preparing your tipping experience…",
+      checkout: "Preparing your secure checkout…",
       stripeReturn: "Confirming your tip…",
       finishing: "Almost there…",
     },

@@ -104,31 +104,18 @@
         flex-direction: column;
         align-items: center;
         justify-content: center;
-        gap: 1.15rem;
-        padding: 0.25rem;
+        gap: 1.35rem;
+        padding: 0.5rem 0.25rem;
         text-align: center;
       }
 
       .caretip-html-boot__icon-wrap {
-        --caretip-loader-arc: #e9781c;
+        /* Muted arc — matches React .app-branded-loader (muted-foreground at ~38%) */
+        --caretip-loader-arc: #a8a29e;
         position: relative;
         display: flex;
         align-items: center;
         justify-content: center;
-      }
-
-      .caretip-html-boot__icon-wrap::before {
-        content: "";
-        position: absolute;
-        inset: -0.7rem;
-        border-radius: 9999px;
-        background: radial-gradient(
-          ellipse at center,
-          rgba(233, 120, 28, 0.14) 0%,
-          rgba(233, 120, 28, 0.04) 52%,
-          transparent 74%
-        );
-        pointer-events: none;
       }
 
       .caretip-html-boot__mark img {
@@ -147,7 +134,7 @@
         }
       }
 
-      /* CareTip progress arc — synced with .app-branded-loader__track */
+      /* CareTip progress arc — synced with .app-branded-loader__track (thin, neutral, no glow) */
       .caretip-html-boot__track {
         position: absolute;
         inset: -0.5rem;
@@ -162,23 +149,25 @@
         border-radius: inherit;
         background: conic-gradient(
           from 210deg,
-          transparent 0deg 248deg,
-          rgba(233, 120, 28, 0.18) 248deg 292deg,
-          #e9781c 292deg 338deg,
-          rgba(233, 120, 28, 0.28) 338deg 360deg
+          transparent 0deg 268deg,
+          rgba(168, 162, 158, 0.55) 268deg 308deg,
+          #a8a29e 308deg 348deg,
+          transparent 348deg 360deg
         );
-        -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 2.5px), #000 0);
-        mask: radial-gradient(farthest-side, transparent calc(100% - 2.5px), #000 0);
-        animation: caretip-html-boot-orbit 1.2s linear infinite;
+        -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 1.5px), #000 0);
+        mask: radial-gradient(farthest-side, transparent calc(100% - 1.5px), #000 0);
+        animation: caretip-html-boot-orbit 1.6s linear infinite;
       }
 
       .caretip-html-boot__tagline {
-        margin: 0.15rem 0 0;
-        max-width: 16rem;
-        font-size: 0.875rem;
-        font-weight: 400;
-        line-height: 1.35;
+        margin: 0.2rem 0 0;
+        max-width: min(18.5rem, 88vw);
+        font-size: 0.9375rem;
+        font-weight: 500;
+        letter-spacing: -0.01em;
+        line-height: 1.4;
         color: #64748b;
+        text-wrap: balance;
       }
 
       html.dark .caretip-html-boot__tagline {
@@ -197,13 +186,9 @@
           background: conic-gradient(
             from 200deg,
             transparent 0deg 300deg,
-            #e9781c 300deg 345deg,
-            transparent 345deg 360deg
+            #a8a29e 300deg 340deg,
+            transparent 340deg 360deg
           );
-        }
-
-        .caretip-html-boot__icon-wrap::before {
-          opacity: 0.65;
         }
       }
     </style>
@@ -237,7 +222,7 @@
   </head>
 
   <body style="margin: 0">
-    <div id="caretip-html-boot" role="status" aria-busy="true" aria-label="CareTip — Wird eingerichtet…">
+    <div id="caretip-html-boot" role="status" aria-busy="true" aria-label="CareTip — Einen Moment bitte…">
       <div class="caretip-html-boot__mark">
         <div class="caretip-html-boot__icon-wrap" aria-hidden="true">
           <img
@@ -253,7 +238,7 @@
           </span>
         </div>
         <p class="caretip-html-boot__tagline" id="caretip-html-boot-tagline">
-          Wird eingerichtet…
+          Einen Moment bitte…
         </p>
       </div>
     </div>

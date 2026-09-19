@@ -157,6 +157,7 @@ type BusinessForAuthResult = {
   kycVerificationStatus?: string;
   businessType?: string | null;
   registeredAddress?: string | null;
+  contactPhone?: string | null;
 };
 
 type UserForAuthResult = User & {
@@ -173,6 +174,7 @@ const businessIncludeForAuth = {
     kycVerificationStatus: true,
     businessType: true,
     registeredAddress: true,
+    contactPhone: true,
   },
 } as const;
 
@@ -192,6 +194,7 @@ type ImpersonatedManagerBusiness = {
   kycVerificationStatus?: string;
   businessType?: string | null;
   registeredAddress?: string | null;
+  contactPhone?: string | null;
 };
 
 /**
@@ -227,6 +230,7 @@ export function impersonationAuthUserDto(
           name: business.name,
           businessType: business.businessType,
           registeredAddress: business.registeredAddress,
+          contactPhone: business.contactPhone,
         }),
     businessId: business.id,
     businessVerificationStatus: kycStatusToLegacyMirror(
@@ -270,6 +274,7 @@ function buildAuthUserDto(user: UserForAuthResult): AuthUserDto {
                 name: user.business.name,
                 businessType: user.business.businessType,
                 registeredAddress: user.business.registeredAddress,
+                contactPhone: user.business.contactPhone,
               }
             : null,
         );

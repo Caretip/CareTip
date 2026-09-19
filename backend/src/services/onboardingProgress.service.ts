@@ -9,6 +9,8 @@ export type BusinessProfileForOnboarding = {
   name: string;
   businessType?: string | null;
   registeredAddress?: string | null;
+  /** E.164 contact phone — required before finishing new onboarding. */
+  contactPhone?: string | null;
 };
 
 export function inferManagerOnboardingStep(
@@ -21,6 +23,9 @@ export function inferManagerOnboardingStep(
 
   const address = business.registeredAddress?.trim() ?? "";
   if (address.length <= 3) return 2;
+
+  const phone = business.contactPhone?.trim() ?? "";
+  if (!phone) return 2;
 
   return 3;
 }

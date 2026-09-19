@@ -9,7 +9,7 @@ export type AppBrandedLoadingScreenProps = {
   fixed?: boolean;
   /**
    * Stage-specific tagline for intentional payment/onboarding waits.
-   * Replaces the default “Getting things ready…” sentence — never a second line.
+   * Replaces the default “Just a moment…” sentence — never a second line.
    */
   message?: string;
   /** When true, keep the default getting-ready tagline (ignore `message`). */
@@ -23,7 +23,7 @@ export type AppBrandedLoadingScreenProps = {
 /**
  * Application entry / intentional overlay — CareTip icon + a single tagline.
  * Stage-specific copy (checkout, onboarding setup, …) replaces the default
- * “Getting things ready…” tagline. Never render a second loading sentence.
+ * “Just a moment…” tagline. Never render a second loading sentence.
  */
 export function AppBrandedLoadingScreen({
   className,

@@ -1401,12 +1401,13 @@ export async function patchMe(req: Request, res: Response) {
               name: profile.name,
               businessType: profile.type,
               registeredAddress: profile.registeredAddress,
+              contactPhone: profile.contactPhone,
             }
           : null,
       );
       if (!ready) {
         return res.status(400).json({
-          message: "Complete business details and venue address before finishing onboarding.",
+          message: "Complete business details, venue address, and team contact phone before finishing onboarding.",
         });
       }
     }

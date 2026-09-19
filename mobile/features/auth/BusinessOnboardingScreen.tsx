@@ -25,7 +25,7 @@ import { spacing, typography } from "@/theme";
 
 /**
  * Native business onboarding — same required fields as web
- * (`managerProfileReadyToFinish`: name + businessType + address length > 3).
+ * (`managerProfileReadyToFinish`: name + businessType + address + contact phone).
  * Completes entirely in-app; never opens the web product.
  */
 export function BusinessOnboardingScreen() {
@@ -139,13 +139,18 @@ export function BusinessOnboardingScreen() {
       setError(t("auth.onboardingAddressRequired"));
       return;
     }
+    if (!contactPhone.trim()) {
+      setError(t("auth.onboardingPhoneRequired"));
+      return;
+    }
 
     inFlightRef.current = true;
     setBusy(true);
     try {
       await patchBusinessProfile({
         registeredAddress: registeredAddress.trim(),
-        contactPhone: contactPhone.trim() || null,
+        contactPhone: contactPhone.trim(),
+        contactPhoneCountry: "DE",
         website: website.trim() || null,
       });
       const session = await authService.patchMyOnboardingStatus(true);

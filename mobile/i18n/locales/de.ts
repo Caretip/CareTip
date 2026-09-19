@@ -223,6 +223,7 @@ export const de: MobileMessages = {
     onboardingNameRequired: "Bitte geben Sie einen Betriebsnamen ein.",
     onboardingTypeRequired: "Bitte wählen Sie eine Betriebsart.",
     onboardingAddressRequired: "Bitte geben Sie eine vollständige Adresse ein.",
+    onboardingPhoneRequired: "Telefonnummer ist erforderlich.",
     onboardingSaveFailed: "Einrichtung konnte nicht gespeichert werden. Bitte erneut versuchen.",
     onboardingDetailsSaved: "Ihre Betriebsdaten wurden gespeichert.",
     onboardingReady: "Ihr CareTip-Konto ist bereit. Dashboard wird geöffnet.",

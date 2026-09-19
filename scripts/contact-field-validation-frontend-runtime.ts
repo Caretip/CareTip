@@ -9,7 +9,10 @@ import {
   INVALID_CONTACT_COUNTRY,
   INVALID_CONTACT_PHONE,
   INVALID_WEBSITE_URL,
+  REQUIRED_CONTACT_COUNTRY,
+  REQUIRED_CONTACT_PHONE,
   normalizeOptionalContactPhone,
+  normalizeRequiredContactPhone,
   normalizeOptionalWebsiteUrl,
 } from "../src/app/lib/contactFieldValidation.ts";
 
@@ -37,6 +40,25 @@ const dePhone = normalizeOptionalContactPhone("15123456789", "DE");
 if (dePhone.ok && dePhone.e164?.startsWith("+49")) pass("frontend DE phone normalizes to E.164");
 else fail("frontend DE phone should normalize");
 
+const requiredMissingCountry = normalizeRequiredContactPhone("15123456789", "");
+if (!requiredMissingCountry.ok && requiredMissingCountry.code === REQUIRED_CONTACT_COUNTRY) {
+  pass("frontend required: missing country rejected");
+} else fail("frontend required: missing country should fail");
+
+const requiredMissingPhone = normalizeRequiredContactPhone("", "DE");
+if (!requiredMissingPhone.ok && requiredMissingPhone.code === REQUIRED_CONTACT_PHONE) {
+  pass("frontend required: missing phone rejected");
+} else fail("frontend required: missing phone should fail");
+
+const requiredOk = normalizeRequiredContactPhone("15123456789", "DE");
+if (requiredOk.ok && requiredOk.e164?.startsWith("+49")) pass("frontend required: valid phone accepted");
+else fail("frontend required: valid phone should pass");
+
+const requiredIntl = normalizeRequiredContactPhone("+49 151 23456789", "");
+if (requiredIntl.ok && requiredIntl.country === "DE") {
+  pass("frontend required: international implies country");
+} else fail("frontend required: international should imply country");
+
 expectFailPhone("+49 151 23456789", "US", INVALID_CONTACT_PHONE, "frontend mismatched country/phone");
 expectFailPhone("abc", "DE", INVALID_CONTACT_PHONE, "frontend malformed phone");
 expectFailPhone("15123456789", "ZZ", INVALID_CONTACT_COUNTRY, "frontend unsupported country");
@@ -47,6 +69,25 @@ expectFailUrl("https://example", "frontend hostname without TLD");
 const root = path.dirname(fileURLToPath(new URL(".", import.meta.url)));
 const en = JSON.parse(readFileSync(path.join(root, "src/i18n/locales/en.json"), "utf8"));
 const de = JSON.parse(readFileSync(path.join(root, "src/i18n/locales/de.json"), "utf8"));
+
+if (en.business.onboarding.errors.phoneRequired === "Phone number is required.") {
+  pass("EN phoneRequired copy");
+} else fail("EN phoneRequired copy missing");
+if (en.business.onboarding.errors.countryRequired === "Please select a country code.") {
+  pass("EN countryRequired copy");
+} else fail("EN countryRequired copy missing");
+if (de.business.onboarding.errors.phoneRequired === "Telefonnummer ist erforderlich.") {
+  pass("DE phoneRequired copy");
+} else fail("DE phoneRequired copy missing");
+if (de.business.onboarding.errors.countryRequired === "Bitte wählen Sie eine Ländervorwahl.") {
+  pass("DE countryRequired copy");
+} else fail("DE countryRequired copy missing");
+if (!String(en.business.onboarding.fields.phoneHint).toLowerCase().includes("optional")) {
+  pass("EN phone hint no longer says optional");
+} else fail("EN phone hint still says optional");
+if (!String(de.business.onboarding.fields.phoneHint).toLowerCase().includes("optional")) {
+  pass("DE phone hint no longer says optional");
+} else fail("DE phone hint still says optional");
 
 function assertTierCopy(locale: string, tiers: Record<string, Record<string, string>>) {
   const starter = Object.keys(tiers.starter)

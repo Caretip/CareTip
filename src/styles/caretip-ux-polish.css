@@ -2,39 +2,25 @@
  * UX polish — branded loaders, image frames, route motion, action feedback.
  */
 
-/* —— Branded CareTip loader (icon + orange arc → one sentence) —— */
+/* —— Branded CareTip loader (quiet premium: orange mark + muted grey arc → one sentence) —— */
 .app-branded-loader__mark {
   position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 1.15rem;
-  padding: 0.25rem;
+  gap: 1.35rem;
+  padding: 0.5rem 0.25rem;
   text-align: center;
 }
 
 .app-branded-loader__icon-wrap {
-  --caretip-loader-arc: var(--caretip-brand-orange, #e9781c);
+  /* Secondary activity cue — muted token, never competes with CareTip orange logo */
+  --caretip-loader-arc: hsl(var(--muted-foreground) / 0.38);
   position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
-}
-
-/* Soft static glow — no pulse; arc provides the only motion */
-.app-branded-loader__icon-wrap::before {
-  content: "";
-  position: absolute;
-  inset: -0.7rem;
-  border-radius: 9999px;
-  background: radial-gradient(
-    ellipse at center,
-    color-mix(in srgb, var(--caretip-loader-arc) 14%, transparent) 0%,
-    color-mix(in srgb, var(--caretip-loader-arc) 4%, transparent) 52%,
-    transparent 74%
-  );
-  pointer-events: none;
 }
 
 .app-branded-loader__title {
@@ -43,8 +29,8 @@
 }
 
 /*
- * CareTip progress arc around the mark (CSS-only).
- * Presentation-only — does not gate startup timing.
+ * Thin neutral progress arc around the mark (CSS-only).
+ * Presentation-only — does not gate startup timing. No glow.
  */
 .app-branded-loader__track {
   position: absolute;
@@ -60,32 +46,34 @@
   border-radius: inherit;
   background: conic-gradient(
     from 210deg,
-    transparent 0deg 248deg,
-    color-mix(in srgb, var(--caretip-loader-arc) 18%, transparent) 248deg 292deg,
-    var(--caretip-loader-arc) 292deg 338deg,
-    color-mix(in srgb, var(--caretip-loader-arc) 28%, transparent) 338deg 360deg
+    transparent 0deg 268deg,
+    color-mix(in srgb, var(--caretip-loader-arc) 55%, transparent) 268deg 308deg,
+    var(--caretip-loader-arc) 308deg 348deg,
+    transparent 348deg 360deg
   );
-  -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 2.5px), #000 0);
-  mask: radial-gradient(farthest-side, transparent calc(100% - 2.5px), #000 0);
-  animation: caretip-brand-loader-orbit 1.2s linear infinite;
+  -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 1.5px), #000 0);
+  mask: radial-gradient(farthest-side, transparent calc(100% - 1.5px), #000 0);
+  animation: caretip-brand-loader-orbit 1.6s linear infinite;
 }
 
 .app-branded-loader__mark--compact .app-branded-loader__track {
-  inset: -0.4rem;
+  inset: -0.35rem;
 }
 
 .app-branded-loader__mark--compact .app-branded-loader__indeterminate {
-  -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 2px), #000 0);
-  mask: radial-gradient(farthest-side, transparent calc(100% - 2px), #000 0);
+  -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 1.25px), #000 0);
+  mask: radial-gradient(farthest-side, transparent calc(100% - 1.25px), #000 0);
 }
 
 .app-branded-loader__tagline {
-  margin: 0.15rem 0 0;
-  max-width: 16rem;
-  font-size: 0.875rem;
-  font-weight: 400;
-  line-height: 1.35;
+  margin: 0.2rem 0 0;
+  max-width: min(18.5rem, 88vw);
+  font-size: 0.9375rem;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  line-height: 1.4;
   color: hsl(var(--muted-foreground));
+  text-wrap: balance;
 }
 
 @keyframes caretip-brand-loader-orbit {
@@ -100,13 +88,9 @@
     background: conic-gradient(
       from 200deg,
       transparent 0deg 300deg,
-      var(--caretip-loader-arc) 300deg 345deg,
-      transparent 345deg 360deg
+      var(--caretip-loader-arc) 300deg 340deg,
+      transparent 340deg 360deg
     );
-  }
-
-  .app-branded-loader__icon-wrap::before {
-    opacity: 0.65;
   }
 }
 

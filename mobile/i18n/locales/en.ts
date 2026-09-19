@@ -214,6 +214,7 @@ export const en: MobileMessages = {
     onboardingNameRequired: "Business name is required.",
     onboardingTypeRequired: "Business type is required.",
     onboardingAddressRequired: "Please enter a full registered address.",
+    onboardingPhoneRequired: "Phone number is required.",
     onboardingSaveFailed: "Could not save setup. Please try again.",
     onboardingDetailsSaved: "Your business details have been saved.",
     onboardingReady: "Your CareTip account is ready. Opening your dashboard.",

@@ -8,11 +8,15 @@ import {
 
 export const INVALID_CONTACT_COUNTRY = "INVALID_CONTACT_COUNTRY" as const;
 export const INVALID_CONTACT_PHONE = "INVALID_CONTACT_PHONE" as const;
+export const REQUIRED_CONTACT_COUNTRY = "REQUIRED_CONTACT_COUNTRY" as const;
+export const REQUIRED_CONTACT_PHONE = "REQUIRED_CONTACT_PHONE" as const;
 export const INVALID_WEBSITE_URL = "INVALID_WEBSITE_URL" as const;
 
 export type ContactFieldErrorCode =
   | typeof INVALID_CONTACT_COUNTRY
   | typeof INVALID_CONTACT_PHONE
+  | typeof REQUIRED_CONTACT_COUNTRY
+  | typeof REQUIRED_CONTACT_PHONE
   | typeof INVALID_WEBSITE_URL;
 
 export function listSupportedCountryIsos(): CountryCode[] {
@@ -73,6 +77,47 @@ export function normalizeOptionalContactPhone(
     return { ok: false, code: INVALID_CONTACT_PHONE };
   }
   return { ok: true, e164: parsed.format("E.164"), country: parsed.country };
+}
+
+/**
+ * Required phone for new business onboarding.
+ * Both phone and country must resolve; empty phone is rejected.
+ * If country is omitted but the number is a valid international (E.164) value,
+ * the country is taken from the parsed number (mobile / pasted numbers).
+ */
+export function normalizeRequiredContactPhone(
+  raw: string | null | undefined,
+  countryRaw?: string | null,
+): { ok: true; e164: string; country: CountryCode } | { ok: false; code: ContactFieldErrorCode } {
+  const phoneTrim = raw == null ? "" : String(raw).trim();
+  const countryTrim = countryRaw == null ? "" : String(countryRaw).trim().toUpperCase();
+
+  if (!phoneTrim) {
+    return { ok: false, code: REQUIRED_CONTACT_PHONE };
+  }
+
+  if (!countryTrim) {
+    const international = parsePhoneNumberFromString(phoneTrim);
+    if (
+      international?.isValid() &&
+      international.country &&
+      isSupportedCountry(international.country)
+    ) {
+      return {
+        ok: true,
+        e164: international.format("E.164"),
+        country: international.country,
+      };
+    }
+    return { ok: false, code: REQUIRED_CONTACT_COUNTRY };
+  }
+
+  const result = normalizeOptionalContactPhone(phoneTrim, countryTrim);
+  if (!result.ok) return result;
+  if (!result.e164 || !result.country) {
+    return { ok: false, code: REQUIRED_CONTACT_PHONE };
+  }
+  return { ok: true, e164: result.e164, country: result.country };
 }
 
 const ALLOWED_WEBSITE_PROTOCOLS = new Set(["http:", "https:"]);

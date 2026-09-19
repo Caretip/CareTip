@@ -42,6 +42,8 @@ export function BusinessOnboardingTextField({
         placeholder={placeholder}
         className={onboardingInput}
         aria-invalid={error ? true : undefined}
+        aria-required={optional ? undefined : true}
+        required={!optional}
       />
       {error ? <p className="mt-1.5 text-sm text-red-600 dark:text-red-400">{error}</p> : null}
       {!error && hint ? <p className={onboardingFieldHint}>{hint}</p> : null}
@@ -84,6 +86,8 @@ export function BusinessOnboardingSelectField({
         className={onboardingSelect}
         aria-label={label}
         aria-invalid={error ? true : undefined}
+        aria-required={optional ? undefined : true}
+        required={!optional}
       >
         <option value="">{placeholder}</option>
         {children}

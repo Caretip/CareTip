@@ -29,8 +29,8 @@ const DE_TIP = de.common.loading.tipPage;
 
 function bothTipLanguagesVisible(texts: string[]): boolean {
   const joined = texts.join("\n");
-  const hasEn = joined.includes("Opening your tip page");
-  const hasDe = joined.includes("Trinkgeldseite wird geöffnet");
+  const hasEn = joined.includes("Preparing your tipping experience");
+  const hasDe = joined.includes("Trinkgeld-Erlebnis wird vorbereitet");
   return hasEn && hasDe;
 }
 
@@ -71,8 +71,8 @@ function loadBootLocale() {
 }
 
 function run() {
-  assert.equal(EN_TIP, "Opening your tip page…");
-  assert.equal(DE_TIP, "Ihre Trinkgeldseite wird geöffnet…");
+  assert.equal(EN_TIP, "Preparing your tipping experience…");
+  assert.equal(DE_TIP, "Ihr Trinkgeld-Erlebnis wird vorbereitet…");
   assert.notEqual(EN_TIP, DE_TIP);
 
   assert.equal(bothTipLanguagesVisible([EN_TIP]), false);

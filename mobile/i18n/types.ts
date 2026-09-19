@@ -203,6 +203,7 @@ export type MobileMessages = {
     onboardingNameRequired: string;
     onboardingTypeRequired: string;
     onboardingAddressRequired: string;
+    onboardingPhoneRequired: string;
     onboardingSaveFailed: string;
     onboardingDetailsSaved: string;
     onboardingReady: string;

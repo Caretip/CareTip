@@ -8,6 +8,7 @@ export function inferOnboardingStepFromProfile(profile: {
   name?: string | null;
   type?: string | null;
   registeredAddress?: string | null;
+  contactPhone?: string | null;
 } | null | undefined): OnboardingStep {
   if (!profile) return 1;
   const nameOk = (profile.name ?? "").trim().length > 1;
@@ -16,6 +17,9 @@ export function inferOnboardingStepFromProfile(profile: {
 
   const address = (profile.registeredAddress ?? "").trim();
   if (address.length <= 3) return 2;
+
+  const phone = (profile.contactPhone ?? "").trim();
+  if (!phone) return 2;
 
   return 3;
 }

@@ -42,6 +42,7 @@ import { inferManagerOnboardingStep } from "./onboardingProgress.service.js";
 import { queryEmployeeRatingAggregates } from "./feedback.service.js";
 import {
   normalizeOptionalContactPhone,
+  normalizeRequiredContactPhone,
   normalizeOptionalWebsiteUrl,
   ProfileFieldValidationError,
 } from "../lib/contactFieldValidation.js";
@@ -1351,6 +1352,7 @@ export async function getManagerBusinessProfile(userId: string) {
         name: profile.name,
         businessType: profile.type,
         registeredAddress: profile.registeredAddress,
+        contactPhone: profile.contactPhone,
       });
 
   return {
@@ -1457,6 +1459,11 @@ export async function updateManagerBusinessProfile(
     throw new Error("Business not found");
   }
 
+  const userRow = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { hasCompletedOnboarding: true, onboardingCompletedAt: true },
+  });
+
   const nameSource = data.name !== undefined ? data.name : data.legalBusinessName;
   const nextName =
     nameSource !== undefined ? String(nameSource).trim() : undefined;
@@ -1480,10 +1487,17 @@ export async function updateManagerBusinessProfile(
     data.registeredAddress !== undefined ? (data.registeredAddress?.trim() || null) : undefined;
   const nextPhone = (() => {
     if (data.contactPhone === undefined) return undefined;
-    const result = normalizeOptionalContactPhone(data.contactPhone, data.contactPhoneCountry);
+    const onboardingIncomplete = !(
+      userRow?.hasCompletedOnboarding === true && userRow.onboardingCompletedAt != null
+    );
+    const result = onboardingIncomplete
+      ? normalizeRequiredContactPhone(data.contactPhone, data.contactPhoneCountry)
+      : normalizeOptionalContactPhone(data.contactPhone, data.contactPhoneCountry);
     if (!result.ok) {
       throw new ProfileFieldValidationError(
-        result.code === "INVALID_CONTACT_COUNTRY" ? "contactPhoneCountry" : "contactPhone",
+        result.code === "INVALID_CONTACT_COUNTRY" || result.code === "REQUIRED_CONTACT_COUNTRY"
+          ? "contactPhoneCountry"
+          : "contactPhone",
         result.code,
       );
     }

@@ -6,7 +6,10 @@ import {
   INVALID_CONTACT_COUNTRY,
   INVALID_CONTACT_PHONE,
   INVALID_WEBSITE_URL,
+  REQUIRED_CONTACT_COUNTRY,
+  REQUIRED_CONTACT_PHONE,
   normalizeOptionalContactPhone,
+  normalizeRequiredContactPhone,
   normalizeOptionalWebsiteUrl,
 } from "../src/lib/contactFieldValidation.ts";
 
@@ -43,12 +46,47 @@ function expectFailUrl(raw: string | null, label: string) {
 }
 
 const emptyPhone = normalizeOptionalContactPhone("", "DE");
-if (emptyPhone.ok && emptyPhone.e164 === null) pass("empty phone allowed");
-else fail("empty phone should be allowed");
+if (emptyPhone.ok && emptyPhone.e164 === null) pass("empty phone allowed (optional)");
+else fail("empty phone should be allowed for optional path");
 
 const emptyUrl = normalizeOptionalWebsiteUrl("");
 if (emptyUrl.ok && emptyUrl.value === null) pass("empty website allowed");
 else fail("empty website should be allowed");
+
+const requiredEmptyBoth = normalizeRequiredContactPhone("", "");
+if (!requiredEmptyBoth.ok && requiredEmptyBoth.code === REQUIRED_CONTACT_PHONE) {
+  pass("required: empty phone rejected first");
+} else fail("required: empty phone should return REQUIRED_CONTACT_PHONE");
+
+const requiredEmptyPhone = normalizeRequiredContactPhone("", "DE");
+if (!requiredEmptyPhone.ok && requiredEmptyPhone.code === REQUIRED_CONTACT_PHONE) {
+  pass("required: empty phone rejected");
+} else fail("required: empty phone should return REQUIRED_CONTACT_PHONE");
+
+const requiredWhitespacePhone = normalizeRequiredContactPhone("   ", "DE");
+if (!requiredWhitespacePhone.ok && requiredWhitespacePhone.code === REQUIRED_CONTACT_PHONE) {
+  pass("required: whitespace-only phone rejected");
+} else fail("required: whitespace-only phone should be rejected");
+
+const requiredMissingCountryNational = normalizeRequiredContactPhone("15123456789", "");
+if (
+  !requiredMissingCountryNational.ok &&
+  requiredMissingCountryNational.code === REQUIRED_CONTACT_COUNTRY
+) {
+  pass("required: national number without country rejected");
+} else fail("required: national without country should return REQUIRED_CONTACT_COUNTRY");
+
+const requiredInternationalNoCountry = normalizeRequiredContactPhone("+49 151 23456789", "");
+if (
+  requiredInternationalNoCountry.ok &&
+  requiredInternationalNoCountry.e164?.startsWith("+49")
+) {
+  pass("required: international number implies country");
+} else fail("required: international number should imply country");
+
+const requiredOk = normalizeRequiredContactPhone("15123456789", "DE");
+if (requiredOk.ok && requiredOk.e164?.startsWith("+49")) pass("required: valid DE phone accepted");
+else fail("required: valid DE phone should be accepted");
 
 expectOkPhone("+49 151 23456789", "DE", "DE E.164 with DE country");
 expectOkPhone("15123456789", "DE", "DE national with DE country");
@@ -65,9 +103,9 @@ expectFailPhone("\u0000151", "DE", INVALID_CONTACT_PHONE, "control character pho
 
 const countryOnlyEmpty = normalizeOptionalContactPhone("", "XX");
 if (countryOnlyEmpty.ok && countryOnlyEmpty.e164 === null) {
-  pass("invalid country with empty phone is ignored");
+  pass("invalid country with empty phone is ignored (optional)");
 } else {
-  fail("empty phone must not require country");
+  fail("empty phone must not require country (optional)");
 }
 
 expectOkUrl("https://example.com", "https example.com");

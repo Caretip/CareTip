@@ -11,7 +11,7 @@ export function AuthBootstrapShell({
   calm = false,
 }: {
   className?: string;
-  /** Overrides the default “Getting things ready…” sentence. */
+  /** Overrides the default “Just a moment…” sentence. */
   tagline?: string;
   /** Logout/handoff: logo + sentence, no moving bar (avoids visual jitter). */
   calm?: boolean;

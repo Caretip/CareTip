@@ -60,7 +60,7 @@ import {
   callingCodeForCountry,
   inferCountryFromPhone,
   listSupportedCountryIsos,
-  normalizeOptionalContactPhone,
+  normalizeRequiredContactPhone,
   normalizeOptionalWebsiteUrl,
   type ContactFieldErrorCode,
 } from "../lib/contactFieldValidation";
@@ -91,7 +91,7 @@ export function BusinessOnboardingPage() {
   const [businessType, setBusinessType] = useState("");
   const [registeredAddress, setRegisteredAddress] = useState("");
   const [contactPhone, setContactPhone] = useState("");
-  const [contactCountry, setContactCountry] = useState<CountryCode>("DE");
+  const [contactCountry, setContactCountry] = useState<CountryCode | "">("DE");
   const [website, setWebsite] = useState("");
   const [fieldErrors, setFieldErrors] = useState<{
     contactPhone?: string;
@@ -193,6 +193,8 @@ export function BusinessOnboardingPage() {
   }, [i18n.language]);
 
   const contactErrorMessage = (code: ContactFieldErrorCode) => {
+    if (code === "REQUIRED_CONTACT_COUNTRY") return t("business.onboarding.errors.countryRequired");
+    if (code === "REQUIRED_CONTACT_PHONE") return t("business.onboarding.errors.phoneRequired");
     if (code === "INVALID_CONTACT_COUNTRY") return t("business.onboarding.errors.country");
     if (code === "INVALID_CONTACT_PHONE") return t("business.onboarding.errors.phone");
     return t("business.onboarding.errors.website");
@@ -200,17 +202,38 @@ export function BusinessOnboardingPage() {
 
   const validateContactFields = () => {
     const next: { contactPhone?: string; contactPhoneCountry?: string; website?: string } = {};
-    const phoneResult = normalizeOptionalContactPhone(contactPhone, contactCountry);
-    if (!phoneResult.ok) {
-      if (phoneResult.code === "INVALID_CONTACT_COUNTRY") next.contactPhoneCountry = contactErrorMessage(phoneResult.code);
-      else next.contactPhone = contactErrorMessage(phoneResult.code);
+    const countryBlank = !String(contactCountry ?? "").trim();
+    const phoneBlank = !String(contactPhone ?? "").trim();
+    if (countryBlank) {
+      next.contactPhoneCountry = t("business.onboarding.errors.countryRequired");
     }
+    if (phoneBlank) {
+      next.contactPhone = t("business.onboarding.errors.phoneRequired");
+    }
+
+    const phoneResult =
+      countryBlank || phoneBlank
+        ? null
+        : normalizeRequiredContactPhone(contactPhone, contactCountry);
+
+    if (phoneResult && !phoneResult.ok) {
+      if (
+        phoneResult.code === "INVALID_CONTACT_COUNTRY" ||
+        phoneResult.code === "REQUIRED_CONTACT_COUNTRY"
+      ) {
+        next.contactPhoneCountry = contactErrorMessage(phoneResult.code);
+      } else {
+        next.contactPhone = contactErrorMessage(phoneResult.code);
+      }
+    }
+
     const websiteResult = normalizeOptionalWebsiteUrl(website);
     if (!websiteResult.ok) {
       next.website = contactErrorMessage(websiteResult.code);
     }
     setFieldErrors(next);
-    return { ok: Object.keys(next).length === 0, phoneResult, websiteResult };
+    const ok = Object.keys(next).length === 0 && phoneResult != null && phoneResult.ok && websiteResult.ok;
+    return { ok, phoneResult, websiteResult };
   };
 
   const canContinue = useMemo(() => {
@@ -255,7 +278,7 @@ export function BusinessOnboardingPage() {
     }
     if (targetStep === 2) {
       const validated = validateContactFields();
-      if (!validated.ok || !validated.phoneResult.ok || !validated.websiteResult.ok) {
+      if (!validated.ok || !validated.phoneResult?.ok || !validated.websiteResult.ok) {
         throw new Error("ONBOARDING_CONTACT_INVALID");
       }
       await patchBusinessProfile({
@@ -348,10 +371,22 @@ export function BusinessOnboardingPage() {
         return;
       }
       if (isApiRequestError(err)) {
-        if (err.code === "INVALID_CONTACT_COUNTRY") {
-          setFieldErrors((prev) => ({ ...prev, contactPhoneCountry: t("business.onboarding.errors.country") }));
-        } else if (err.code === "INVALID_CONTACT_PHONE") {
-          setFieldErrors((prev) => ({ ...prev, contactPhone: t("business.onboarding.errors.phone") }));
+        if (err.code === "INVALID_CONTACT_COUNTRY" || err.code === "REQUIRED_CONTACT_COUNTRY") {
+          setFieldErrors((prev) => ({
+            ...prev,
+            contactPhoneCountry:
+              err.code === "REQUIRED_CONTACT_COUNTRY"
+                ? t("business.onboarding.errors.countryRequired")
+                : t("business.onboarding.errors.country"),
+          }));
+        } else if (err.code === "INVALID_CONTACT_PHONE" || err.code === "REQUIRED_CONTACT_PHONE") {
+          setFieldErrors((prev) => ({
+            ...prev,
+            contactPhone:
+              err.code === "REQUIRED_CONTACT_PHONE"
+                ? t("business.onboarding.errors.phoneRequired")
+                : t("business.onboarding.errors.phone"),
+          }));
         } else if (err.code === "INVALID_WEBSITE_URL") {
           setFieldErrors((prev) => ({ ...prev, website: t("business.onboarding.errors.website") }));
         } else {
@@ -561,12 +596,15 @@ export function BusinessOnboardingPage() {
                                     placeholder={t("business.onboarding.fields.countryPlaceholder")}
                                     value={contactCountry}
                                     onChange={(v) => {
-                                      setContactCountry((v || "DE") as CountryCode);
-                                      setFieldErrors((prev) => ({ ...prev, contactPhoneCountry: undefined, contactPhone: undefined }));
+                                      setContactCountry((v as CountryCode | "") || "");
+                                      setFieldErrors((prev) => ({
+                                        ...prev,
+                                        contactPhoneCountry: undefined,
+                                        contactPhone: undefined,
+                                      }));
                                     }}
                                     hint={t("business.onboarding.fields.countryHint")}
                                     error={fieldErrors.contactPhoneCountry}
-                                    optional
                                   >
                                     {countryOptions.map((opt) => (
                                       <option key={opt.iso} value={opt.iso}>
@@ -584,7 +622,6 @@ export function BusinessOnboardingPage() {
                                     }}
                                     hint={t("business.onboarding.fields.phoneHint")}
                                     error={fieldErrors.contactPhone}
-                                    optional
                                   />
                                 </div>
                                 <BusinessOnboardingTextField

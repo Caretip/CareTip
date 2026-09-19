@@ -59,7 +59,7 @@ textarea::placeholder {
 
 /* Global setup overlay (auth bootstrap, route gates) — branded mark only by default */
 .app-setup-loading {
-  animation: app-setup-fade-in 0.2s ease-out;
+  animation: app-setup-fade-in 0.28s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 /* Seamless HTML → React handoff: already covering the viewport */
@@ -69,7 +69,7 @@ textarea::placeholder {
 }
 
 .app-setup-loading--exiting {
-  animation: app-setup-fade-out 0.2s ease-in forwards;
+  animation: app-setup-fade-out 0.24s ease-in forwards;
   pointer-events: none;
 }
 

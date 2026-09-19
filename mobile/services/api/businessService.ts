@@ -15,6 +15,7 @@ export async function patchBusinessProfile(body: {
   location?: string | null;
   registeredAddress?: string | null;
   contactPhone?: string | null;
+  contactPhoneCountry?: string | null;
   website?: string | null;
 }): Promise<BusinessProfile> {
   const { data } = await apiClient.patch<BusinessProfile>(API_ENDPOINTS.business.profile, body);

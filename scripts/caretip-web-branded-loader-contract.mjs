@@ -48,7 +48,7 @@ if (
   !html.includes("caretip-html-boot-message") &&
   !html.includes("caretip-html-boot-sub") &&
   !html.includes("caretip-html-boot__brand") &&
-  html.includes("Wird eingerichtet")
+  html.includes("Einen Moment bitte")
 ) {
   pass("HTML cold-boot has a single getting-ready sentence (no brand word + extra lines)");
 } else fail("HTML cold-boot still has extra copy besides the tagline");
@@ -70,10 +70,19 @@ if (
   polish.includes("caretip-brand-loader-orbit") &&
   polish.includes("conic-gradient") &&
   polish.includes("prefers-reduced-motion") &&
-  !polish.includes("app-branded-loader__spinner")
+  polish.includes("muted-foreground") &&
+  !polish.includes("app-branded-loader__spinner") &&
+  !polish.includes("app-branded-loader__icon-wrap::before")
 ) {
-  pass("React CSS uses CareTip mark orbit arc + reduced-motion (no legacy orbit spinner)");
+  pass("React CSS uses muted grey orbit arc + reduced-motion (no glow, no legacy spinner)");
 } else fail("React branded loader CSS incomplete");
+
+if (
+  html.includes("--caretip-loader-arc: #a8a29e") &&
+  !html.includes("caretip-html-boot__icon-wrap::before")
+) {
+  pass("HTML cold-boot arc is muted neutral with no glow");
+} else fail("HTML cold-boot arc still orange or has glow");
 
 if (globals.includes("prefers-reduced-motion") && globals.includes(".app-setup-loading--exiting")) {
   pass("Overlay fade respects reduced-motion");
@@ -150,19 +159,18 @@ if (
   pass("Signup form wait copy is account creation, not workspace setup");
 } else fail("Signup still uses workspace-create copy on the auth form");
 
-if (en.includes('"gettingReady": "Getting things ready') && de.includes('"gettingReady": "Wird eingerichtet')) {
-  pass("EN/DE default loading copy is product language (not Preparing/Creating workspace)");
+if (en.includes('"gettingReady": "Just a moment') && de.includes('"gettingReady": "Einen Moment bitte')) {
+  pass("EN/DE default loading copy is calm product language");
 } else fail("Default gettingReady copy missing");
 
 if (
-  !en.includes("Preparing your workspace") &&
   !en.includes("Creating your workspace") &&
   !en.includes("Creating workspace") &&
   !de.includes("Ihr Workspace wird vorbereitet") &&
   !de.includes("Ihr Workspace wird erstellt")
 ) {
   pass("Old competing workspace sentences are gone from locale files");
-} else fail("Locale files still contain competing Preparing/Creating workspace copy");
+} else fail("Locale files still contain competing Creating workspace copy");
 
 if (bridge.includes("caretip-html-boot") && main.includes("dismissHtmlMarketingBootBridge")) {
   pass("Bootstrap failure dismisses HTML boot; bridge owns HTML fade-out");
