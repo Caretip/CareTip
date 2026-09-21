@@ -1,5 +1,5 @@
 /**
- * Phase26 E2E demo staff — display names + repo template/ avatar sources.
+ * Phase26 E2E demo staff — display names + repo images/demo-staff/ avatar sources.
  * Scoped to mgr_p26_1786691378148@caretip-test.local (Maria Testerin).
  */
 import { readFileSync } from "node:fs";
@@ -144,7 +144,7 @@ export const PHASE26_STAFF_PROFILES: Phase26StaffProfile[] = [
 const scriptsDir = dirname(fileURLToPath(import.meta.url));
 
 export function repoTemplatePath(fileName: string): string {
-  return join(scriptsDir, "..", "..", "template", fileName);
+  return join(scriptsDir, "..", "..", "images", "demo-staff", fileName);
 }
 
 export function phase26AvatarObjectKey(key: string): string {

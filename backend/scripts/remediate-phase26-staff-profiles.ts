@@ -1,6 +1,6 @@
 /**
  * In-place Phase26 staff profile refresh for Maria Testerin only.
- * Updates display names + avatars (repo template/ → Supabase). Preserves IDs, emails, slugs, tips.
+ * Updates display names + avatars (repo images/demo-staff/ → Supabase). Preserves IDs, emails, slugs, tips.
  *
  * Run from backend:
  *   npx tsx scripts/remediate-phase26-staff-profiles.ts

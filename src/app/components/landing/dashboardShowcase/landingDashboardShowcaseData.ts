@@ -3,13 +3,13 @@
  * Isolated from authenticated dashboard hooks and API — never import in business routes.
  */
 
-import lukasAvatar from "../../../../../template/professional-bartender-service-stockcake.jpg";
-import annaAvatar from "../../../../../template/welcoming-receptionist-smiling-stockcake.jpg";
-import felixAvatar from "../../../../../template/focused-bartender-working-stockcake.jpg";
-import sophieAvatar from "../../../../../template/focused-receptionist-working-stockcake.jpg";
-import jonasAvatar from "../../../../../template/StockCake-Friendly_Delivery_Man-843938-medium.jpg";
-import claraAvatar from "../../../../../template/receptionist-at-desk-stockcake.jpg";
-import marcoAvatar from "../../../../../template/delivery-person-waiting-stockcake.jpg";
+import lukasAvatar from "../../../../../images/demo-staff/professional-bartender-service-stockcake.jpg";
+import annaAvatar from "../../../../../images/demo-staff/welcoming-receptionist-smiling-stockcake.jpg";
+import felixAvatar from "../../../../../images/demo-staff/focused-bartender-working-stockcake.jpg";
+import sophieAvatar from "../../../../../images/demo-staff/focused-receptionist-working-stockcake.jpg";
+import jonasAvatar from "../../../../../images/demo-staff/StockCake-Friendly_Delivery_Man-843938-medium.jpg";
+import claraAvatar from "../../../../../images/demo-staff/receptionist-at-desk-stockcake.jpg";
+import marcoAvatar from "../../../../../images/demo-staff/delivery-person-waiting-stockcake.jpg";
 
 export type LandingDashboardShowcaseEmployeeStatus = "active" | "offShift";
 

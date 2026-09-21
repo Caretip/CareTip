@@ -1,6 +1,6 @@
 /**
  * Add login-ready staff to the Phase26 E2E business (mgr_p26_1786691378148).
- * Avatars upload from repo template/ → Supabase (deterministic keys).
+ * Avatars upload from repo images/demo-staff/ → Supabase (deterministic keys).
  *
  * Run from backend: npx tsx scripts/seed-phase26-extra-staff.ts
  */
