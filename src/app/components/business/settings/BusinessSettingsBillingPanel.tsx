@@ -1,5 +1,6 @@
-import { useEffect, useState } from "react";
-import { useLocation } from "react-router";
+import { useCallback, useEffect, useState } from "react";
+import { useStaleExternalStripeStateReset } from "../../../hooks/useStaleExternalStripeStateReset";
+import { useLocation, useSearchParams } from "react-router";
 import { useTranslation } from "react-i18next";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
@@ -22,6 +23,7 @@ import { BILLING_PLANS_SECTION_ID, scrollToBillingPlansSection } from "../../../
 export function BusinessSettingsBillingPanel() {
   const { t } = useTranslation();
   const { hash } = useLocation();
+  const [searchParams] = useSearchParams();
   const { data, loading, error, reload } = useBillingStatus();
   const isInitialBillingLoad = loading && !data;
   const { showInitialSkeleton, coveredByGlobalLoader } = useBusinessPageBoot(
@@ -30,6 +32,8 @@ export function BusinessSettingsBillingPanel() {
   );
   const [billingCycle, setBillingCycle] = useState<SubscriptionBillingCycle>("monthly");
   const [portalBusy, setPortalBusy] = useState(false);
+  const resetPortalBusy = useCallback(() => setPortalBusy(false), []);
+  useStaleExternalStripeStateReset({ onReset: resetPortalBusy, billingReturn: searchParams });
   const [trialAutoOpen, setTrialAutoOpen] = useState(false);
 
   useAppLoadingRegistration(

@@ -41,6 +41,8 @@ import { useNavigationFlashProbe } from './hooks/useNavigationFlashProbe';
 import { CookieConsentRoot } from './components/cookie/CookieConsentRoot';
 import { LandingPage } from './pages/LandingPage';
 import { TipAmountPage } from './pages/customer/TipAmountPage';
+import { RatingPage } from './pages/customer/RatingPage';
+import { SuccessPage } from './pages/customer/SuccessPage';
 import { EmployeeQrEntryPage } from './pages/customer/EmployeeQrEntryPage';
 import { AuthPage } from './components/AuthPage';
 import { JoinPage } from './pages/JoinPage';
@@ -746,12 +748,14 @@ const routes: RouteObject[] = [
   },
   {
     path: '/success',
-    lazy: routeLazy(() => import('./pages/customer/SuccessPage'), 'SuccessPage'),
+    // Eager: RR `lazy` does not suspend Outlet — Stripe return must not leave #root empty.
+    Component: SuccessPage,
     errorElement: <ErrorBoundary />,
   },
   {
     path: '/rating',
-    lazy: routeLazy(() => import('./pages/customer/RatingPage'), 'RatingPage'),
+    // Eager: primary Stripe tip return — same white-screen class as former lazy `/`.
+    Component: RatingPage,
     errorElement: <ErrorBoundary />,
   },
   {

@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useCallback, useState } from "react";
+import { useStaleExternalStripeStateReset } from "../../../../hooks/useStaleExternalStripeStateReset";
 import { useTranslation } from "react-i18next";
 import { ExternalLink, Loader2 } from "lucide-react";
 import { toast } from "sonner";
@@ -14,6 +15,8 @@ import { Button } from "@/components/ui/button";
 export function BillingInvoicesPanel() {
   const { t } = useTranslation();
   const [busy, setBusy] = useState(false);
+  const resetBusy = useCallback(() => setBusy(false), []);
+  useStaleExternalStripeStateReset({ onReset: resetBusy });
 
   useAppLoadingRegistration(
     "billing-invoices-portal",

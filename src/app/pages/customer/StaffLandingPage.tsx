@@ -193,7 +193,7 @@ export function StaffLandingPage() {
       <CareTipPageLoader
         variant="wait"
         context="tipPage"
-        registrationKey="staff-landing"
+        registrationKey="customer-tip-journey"
       />
     );
   }
@@ -214,7 +214,7 @@ export function StaffLandingPage() {
       <CareTipPageLoader
         variant="wait"
         context="tipPage"
-        registrationKey="staff-landing"
+        registrationKey="customer-tip-journey"
       />
     );
   }

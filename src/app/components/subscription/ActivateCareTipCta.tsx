@@ -1,5 +1,6 @@
-import { useState } from "react";
-import { Link, useNavigate } from "react-router";
+import { useCallback, useState } from "react";
+import { Link, useNavigate, useSearchParams } from "react-router";
+import { useStaleExternalStripeStateReset } from "@/app/hooks/useStaleExternalStripeStateReset";
 import { Loader2, Sparkles } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
@@ -9,6 +10,7 @@ import {
 } from "@/app/lib/globalAppLoading";
 import {
   activationCheckoutErrorMessage,
+  clearActivationCheckoutInFlightForStaleRestore,
   startActivationCheckout,
   type ActivationCheckoutPlan,
 } from "@/app/lib/activateCareTipCheckout";
@@ -39,7 +41,13 @@ export function ActivateCareTipCta({
 }: ActivateCareTipCtaProps) {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [busy, setBusy] = useState(false);
+  const resetActivationBusy = useCallback(() => {
+    clearActivationCheckoutInFlightForStaleRestore();
+    setBusy(false);
+  }, []);
+  useStaleExternalStripeStateReset({ onReset: resetActivationBusy, billingReturn: searchParams });
 
   useAppLoadingRegistration(
     "activate-caretip",
@@ -123,7 +131,13 @@ export function ActivationPlanButtons({
 }) {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [busy, setBusy] = useState<ActivationCheckoutPlan | null>(null);
+  const resetActivationBusy = useCallback(() => {
+    clearActivationCheckoutInFlightForStaleRestore();
+    setBusy(null);
+  }, []);
+  useStaleExternalStripeStateReset({ onReset: resetActivationBusy, billingReturn: searchParams });
 
   useAppLoadingRegistration(
     "activation-plan-checkout",

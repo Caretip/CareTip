@@ -8,11 +8,14 @@ import { cn } from "@/lib/utils";
 export function AuthBootstrapShell({
   className,
   tagline,
+  showTagline,
   calm = false,
 }: {
   className?: string;
   /** Overrides the default “Just a moment…” sentence. */
   tagline?: string;
+  /** When false, logo-only handoff (logout — no “Signing you out…” flash). */
+  showTagline?: boolean;
   /** Logout/handoff: logo + sentence, no moving bar (avoids visual jitter). */
   calm?: boolean;
 }) {
@@ -27,7 +30,12 @@ export function AuthBootstrapShell({
       aria-busy="true"
       aria-live="polite"
     >
-      <CareTipBrandedLoaderMark compact={false} tagline={tagline} calm={calm} />
+      <CareTipBrandedLoaderMark
+        compact={false}
+        tagline={tagline}
+        showTagline={showTagline}
+        calm={calm}
+      />
     </div>
   );
 }

@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
+import { useStaleExternalStripeStateReset } from "@/app/hooks/useStaleExternalStripeStateReset";
 import { Link } from "react-router";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
@@ -25,6 +26,8 @@ export function QrStudioOrdersPage() {
   const [loading, setLoading] = useState(() => !initial);
   const [error, setError] = useState<string | null>(null);
   const [payingOrderId, setPayingOrderId] = useState<string | null>(null);
+  const resetPayLaunch = useCallback(() => setPayingOrderId(null), []);
+  useStaleExternalStripeStateReset({ onReset: resetPayLaunch });
 
   const reload = useCallback(async () => {
     try {

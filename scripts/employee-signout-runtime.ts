@@ -51,6 +51,10 @@ assert(
   "employee layout prefetches /employee/login",
 );
 assert(cover.includes("useSignalLogoutDestinationReady"), "cover ends when login URL commits");
+assert(
+  useAuth.includes("endAuthLogoutTransition()") && useAuth.includes("signalLogoutAuthPageReady()"),
+  "logout ends transition synchronously after navigate",
+);
 assert(routes.includes("path: '/employee/login'"), "staff login is a dedicated route");
 assert(routes.includes("Component: AuthPage"), "staff/business login stay eager AuthPage");
 

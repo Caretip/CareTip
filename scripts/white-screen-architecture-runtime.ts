@@ -10,6 +10,10 @@ import {
   isInShellAuthenticatedNavigation,
 } from "../src/app/lib/publicRoutes";
 import {
+  isProtectedAppShellHandoffPath,
+  PROTECTED_APP_SHELL_READY_ATTR,
+} from "../src/app/lib/htmlMarketingBootBridge";
+import {
   isChunkLoadFailure,
   loadRouteModuleWithRetry,
 } from "../src/app/lib/chunkLoadRecovery";
@@ -37,8 +41,15 @@ const protectedRoute = read("src/app/components/ProtectedRoute.tsx");
 const chunkLib = read("src/app/lib/chunkLoadRecovery.ts");
 const minimalFallback = read("src/app/routing/DashboardOutletFallback.tsx");
 const publicHold = read("src/app/routing/PublicRouteChunkHold.tsx");
+const htmlBootBridge = read("src/app/lib/htmlMarketingBootBridge.ts");
+const appLoadingManager = read("src/app/context/AppLoadingManager.tsx");
+const businessLayout = read("src/app/layouts/BusinessLayout.tsx");
 
 assert(routes.includes("Component: LandingPage"), "landing must stay eager");
+assert(routes.includes("Component: RatingPage"), "rating must stay eager (Stripe tip return)");
+assert(routes.includes("Component: SuccessPage"), "success must stay eager (Stripe tip return alt)");
+assert(!/path: '\/rating',\s*lazy:/.test(routes), "/rating must not use RR lazy");
+assert(!/path: '\/success',\s*lazy:/.test(routes), "/success must not use RR lazy");
 assert(routes.includes("Component: AuthPage"), "login/auth must be eager (RR lazy does not suspend Outlet)");
 assert(routes.includes("Component: PlatformAdminLoginPage"), "admin login must be eager (admin logout destination)");
 assert(routes.includes("Component: JoinPage"), "join must be eager (landing CTA)");
@@ -54,7 +65,14 @@ assert(
 );
 
 assert(logoutCover.includes("data-testid=\"auth-logout-handoff-cover\""), "logout cover must be queryable");
-assert(logoutCover.includes("common.signingOut"), "logout cover uses signing-out copy, not an empty viewport");
+assert(
+  logoutCover.includes("showTagline={false}") || logoutCover.includes("showTagline={ false }"),
+  "logout cover must not flash Signing you out copy",
+);
+assert(
+  logoutCover.includes("isLogoutHandoffDestinationReady"),
+  "logout cover must hide once the signed-out login route commits",
+);
 assert(logoutCover.includes("useSignalLogoutDestinationReady"), "logout cover must release when the login route commits");
 assert(spaHold.includes("isInShellAuthenticatedNavigation"), "SPA hold must skip nested dashboard child swaps");
 assert(spaHold.includes("isAppShellInteractive"), "SPA hold must not restack CareTip splash on cold boot");
@@ -83,6 +101,26 @@ assert(
 );
 
 assert(isAuthenticatedAppShellPath("/dashboard/settings") === true, "dashboard is shell");
+assert(isProtectedAppShellHandoffPath("/dashboard/settings") === true, "billing return is protected handoff");
+assert(isProtectedAppShellHandoffPath("/dashboard/qr-studio/orders/abc") === true, "QR return is protected handoff");
+assert(isProtectedAppShellHandoffPath("/rating") === false, "customer tip return must not use dashboard handoff");
+assert(isProtectedAppShellHandoffPath("/onboarding") === false, "onboarding keeps existing boot rules");
+assert(
+  htmlBootBridge.includes(PROTECTED_APP_SHELL_READY_ATTR) &&
+    htmlBootBridge.includes("isProtectedAppShellHandoffPath") &&
+    htmlBootBridge.includes("isProtectedAppShellCommitted"),
+  "protected app shell HTML boot retention must exist",
+);
+assert(
+  businessLayout.includes("PROTECTED_APP_SHELL_READY_ATTR") &&
+    businessLayout.includes("caretip-dashboard-shell"),
+  "BusinessLayout must commit protected dashboard shell marker",
+);
+assert(
+  appLoadingManager.includes("data-caretip-dashboard-ready") &&
+    appLoadingManager.includes("isProtectedAppShellCommitted"),
+  "AppLoadingManager must observe dashboard shell commit before HTML boot handoff",
+);
 assert(isAuthenticatedAppShellPath("/login") === false, "login is not shell");
 assert(isAuthenticatedAppShellPath("/employee/login") === false, "employee login is not shell");
 assert(isAuthenticatedAppShellPath("/platform-admin/login") === false, "admin login is not shell");

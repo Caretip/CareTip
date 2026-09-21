@@ -55,6 +55,8 @@
     "test:landing-hero-return-lifecycle": "node ./backend/node_modules/tsx/dist/cli.mjs ./scripts/landing-hero-return-lifecycle-runtime.ts",
     "test:production-landing-blank-probe": "node ./backend/node_modules/tsx/dist/cli.mjs ./scripts/production-landing-blank-probe.ts",
     "test:white-screen-architecture": "node ./backend/node_modules/tsx/dist/cli.mjs ./scripts/white-screen-architecture-runtime.ts",
+    "test:navigation-transition-stability": "node ./backend/node_modules/tsx/dist/cli.mjs ./scripts/navigation-transition-stability-runtime.ts",
+    "test:stripe-stale-state": "node ./backend/node_modules/tsx/dist/cli.mjs ./scripts/stripe-stale-state-runtime.ts",
     "test:ux-stability-remediation": "node ./backend/node_modules/tsx/dist/cli.mjs ./scripts/ux-stability-remediation-runtime.ts",
     "test:auth-refresh-coordination": "node ./backend/node_modules/tsx/dist/cli.mjs ./scripts/auth-refresh-coordination-runtime.ts",
     "test:auth-refresh-multitab-browser": "node ./backend/node_modules/tsx/dist/cli.mjs ./scripts/auth-refresh-multitab-browser-runtime.ts",

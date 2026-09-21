@@ -26,6 +26,7 @@ import { cn } from "@/lib/utils";
 import { FinanceStatusPill } from "../../../finance/FinanceStatusPill";
 import type { FinanceStatusTone } from "../../../finance/FinanceStatusDot";
 import { useBusinessStripeHeaderActions } from "../../BusinessStripeHeaderActions";
+import { useClearStaleStripeRedirectBusy } from "../../../../hooks/useClearStaleStripeRedirectBusy";
 
 function connectTone(light: ReturnType<typeof stripeConnectTrafficLight>): FinanceStatusTone {
   if (light === "green") return "success";
@@ -59,6 +60,8 @@ export function BusinessStripeConnectCard() {
     busy != null,
     t("common.loading.checkout"),
   );
+
+  useClearStaleStripeRedirectBusy(setBusy, "connect", searchParams);
 
   const reload = useCallback(async (revalidate = false) => {
     setLoading(true);

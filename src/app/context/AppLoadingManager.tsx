@@ -26,6 +26,8 @@ import {
   dismissHtmlMarketingBootBridge,
   isHtmlBootElementPresent,
   setHtmlBootBridgeTagline,
+  isProtectedAppShellCommitted,
+  isProtectedAppShellHandoffPath,
   shouldMountReactBootOverlay,
   shouldRetainHtmlBootUntilLandingCommit,
 } from "../lib/htmlMarketingBootBridge";
@@ -57,6 +59,11 @@ import {
 } from "../lib/authPostLoginTransition";
 import { registerAuthSoftNavColdBootDismiss, shouldBlockOverlayDuringSignInHandoff } from "../lib/authSoftNavHandoff";
 import { isPublicShellPath } from "../lib/publicRoutes";
+import {
+  getExternalStripeNavigationHoldMessage,
+  isExternalStripeNavigationHoldActive,
+  subscribeExternalStripeNavigationHold,
+} from "../lib/externalStripeNavigationHold";
 /** Block APP_INIT from re-opening the overlay shortly after a full dismiss (paint-ready race). */
 const OVERLAY_REENTRY_LOCK_MS = 600;
 
@@ -208,6 +215,12 @@ export function AppLoadingManagerProvider({ children }: { children: React.ReactN
     () => null,
   );
 
+  const externalStripeHoldActive = useSyncExternalStore(
+    subscribeExternalStripeNavigationHold,
+    isExternalStripeNavigationHoldActive,
+    () => false,
+  );
+
   const register = useCallback(
     (key: string, priority: AppLoadingPriority, active: boolean, message?: string) => {
       if (!GLOBAL_OVERLAY_PRIORITIES.has(priority) && active) {
@@ -304,10 +317,17 @@ export function AppLoadingManagerProvider({ children }: { children: React.ReactN
    * the public page commits under the boot node, then fade.
    */
   const completeHtmlBootAfterPublicPaint = useCallback((): (() => void) => {
+    const pathname = readInitialPathname();
+    const protectedHandoff = isProtectedAppShellHandoffPath(pathname);
+    if (protectedHandoff && !isProtectedAppShellCommitted()) {
+      return () => undefined;
+    }
     if (!isHtmlBootElementPresent()) {
       htmlBootOwnsVisualRef.current = false;
       setHtmlBootOwnsVisual(false);
-      markAppShellInteractive();
+      if (!protectedHandoff || isProtectedAppShellCommitted()) {
+        markAppShellInteractive();
+      }
       return () => undefined;
     }
     beginHtmlBootBridgeExit();
@@ -349,7 +369,7 @@ export function AppLoadingManagerProvider({ children }: { children: React.ReactN
       subtree: true,
       childList: true,
       attributes: true,
-      attributeFilter: ["data-caretip-route-ready"],
+      attributeFilter: ["data-caretip-route-ready", "data-caretip-dashboard-ready"],
     });
     tryHandoff();
     return () => mo.disconnect();
@@ -454,11 +474,18 @@ export function AppLoadingManagerProvider({ children }: { children: React.ReactN
   );
 
   const displayOverlayMessage = useMemo(() => {
+    if (externalStripeHoldActive) {
+      const holdMessage = getExternalStripeNavigationHoldMessage();
+      if (holdMessage) return holdMessage;
+    }
     if (overlayMessage && winner?.key && !isTechnicalOverlayRegistration(winner.key)) {
       return overlayMessage;
     }
+    if (externalStripeHoldActive && lastJourneyMessageRef.current) {
+      return lastJourneyMessageRef.current;
+    }
     return lastJourneyMessageRef.current;
-  }, [overlayMessage, winner?.key]);
+  }, [overlayMessage, winner?.key, externalStripeHoldActive]);
 
   useEffect(() => {
     if (overlayMessage && winner?.key && !isTechnicalOverlayRegistration(winner.key)) {
@@ -466,8 +493,23 @@ export function AppLoadingManagerProvider({ children }: { children: React.ReactN
     }
   }, [overlayMessage, winner?.key]);
 
-  const winnerRequested = Boolean(winner);
+  const winnerRequested = Boolean(winner) || externalStripeHoldActive;
   winnerRequestedRef.current = winnerRequested;
+
+  useLayoutEffect(() => {
+    if (!externalStripeHoldActive) return;
+    if (overlayPhase === "visible") return;
+    if (showThresholdTimerRef.current !== null) {
+      window.clearTimeout(showThresholdTimerRef.current);
+      showThresholdTimerRef.current = null;
+    }
+    if (exitDebounceRef.current !== null) {
+      window.clearTimeout(exitDebounceRef.current);
+      exitDebounceRef.current = null;
+    }
+    overlayShownAtRef.current = Date.now();
+    setOverlayPhase("visible");
+  }, [externalStripeHoldActive, overlayPhase]);
 
   useEffect(() => {
     if (winner?.key) {

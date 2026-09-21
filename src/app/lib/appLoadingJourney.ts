@@ -76,6 +76,7 @@ const TRANSITION_PREFIXES = [
   "location-qr-loading",
   "qr-landing",
   "tip-amount-journey",
+  "customer-tip-journey",
   "platform-admin-route-guard",
   "business-staff-directory",
   "select-employee",

@@ -27,6 +27,7 @@ import { isAuthenticatedWithAccessToken } from "../lib/authRestore";
 import { useMinWidthMedia } from "@/lib/motionPerf";
 import { scheduleMobileDeferredWork } from "@/lib/mobilePerf";
 import { markPostLoginTrace } from "../lib/postLoginRuntimeTrace";
+import { PROTECTED_APP_SHELL_READY_ATTR } from "../lib/htmlMarketingBootBridge";
 import {
   useDashboardHeaderProfile,
   useDashboardLayoutProfile,
@@ -132,6 +133,7 @@ export function BusinessLayout() {
                 "caretip-dashboard-shell dashboard-workspace font-sans flex min-h-screen min-w-0 flex-col overflow-x-hidden lg:pl-64",
                 BUSINESS_DASHBOARD_ROOT,
               )}
+              {...{ [PROTECTED_APP_SHELL_READY_ATTR]: "" }}
             >
               <DashboardHeader onMenuClick={openMobileMenu} />
               <main className="caretip-dashboard-page-enter min-w-0 flex-1 overflow-x-clip">

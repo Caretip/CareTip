@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { Package, Truck } from "lucide-react";
 import { performExternalStripeRedirect } from "@/app/lib/externalStripeRedirect";
+import { useStaleExternalStripeStateReset } from "@/app/hooks/useStaleExternalStripeStateReset";
 import {
   PHYSICAL_QR_DEFAULT_COLOR_TOKENS,
   classifyPhysicalQrProcessingClient,
@@ -108,6 +109,15 @@ export function PhysicalBrandingStudio() {
   const [loadError, setLoadError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const printCheckoutInFlight = useRef(false);
+  const resetPayLaunch = useCallback(() => {
+    printCheckoutInFlight.current = false;
+    setSubmitting(false);
+    setPayingOrderId(null);
+  }, []);
+  useStaleExternalStripeStateReset({
+    onReset: resetPayLaunch,
+    physicalQrCheckoutReturn: searchParams,
+  });
   const [payingOrderId, setPayingOrderId] = useState<string | null>(null);
   const [confirmingOrderId, setConfirmingOrderId] = useState<string | null>(
     checkoutFlag === "success" && returningOrderId ? returningOrderId : null,
@@ -170,6 +180,9 @@ export function PhysicalBrandingStudio() {
 
   useEffect(() => {
     if (checkoutFlag !== "success" || !returningOrderId) return;
+    printCheckoutInFlight.current = false;
+    setSubmitting(false);
+    setPayingOrderId(null);
     setConfirmingOrderId(returningOrderId);
     let cancelled = false;
     let attempts = 0;

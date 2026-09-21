@@ -1,5 +1,6 @@
-import { useState } from "react";
-import { Link, useNavigate } from "react-router";
+import { useCallback, useState } from "react";
+import { Link, useNavigate, useSearchParams } from "react-router";
+import { useStaleExternalStripeStateReset } from "@/app/hooks/useStaleExternalStripeStateReset";
 import { Loader2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
@@ -41,7 +42,10 @@ export function UpgradeCta({
 }: UpgradeCtaProps) {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [busy, setBusy] = useState(false);
+  const resetBusy = useCallback(() => setBusy(false), []);
+  useStaleExternalStripeStateReset({ onReset: resetBusy, billingReturn: searchParams });
 
   useAppLoadingRegistration(
     "upgrade-cta-checkout",

@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useCallback, useState } from "react";
+import { useStaleExternalStripeStateReset } from "../../../../hooks/useStaleExternalStripeStateReset";
 import { useTranslation } from "react-i18next";
 import { CreditCard, Loader2 } from "lucide-react";
 import { toast } from "sonner";
@@ -21,6 +22,8 @@ const PAYMENT_METHOD_BULLET_KEYS = [
 export function BillingPaymentMethodsPanel() {
   const { t } = useTranslation();
   const [busy, setBusy] = useState(false);
+  const resetBusy = useCallback(() => setBusy(false), []);
+  useStaleExternalStripeStateReset({ onReset: resetBusy });
 
   useAppLoadingRegistration(
     "billing-payment-methods-portal",

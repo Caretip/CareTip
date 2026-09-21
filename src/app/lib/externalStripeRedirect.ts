@@ -1,3 +1,5 @@
+import { beginExternalStripeNavigationHold } from "./externalStripeNavigationHold";
+
 const STRIPE_CHECKOUT_HOST = "checkout.stripe.com";
 const STRIPE_BILLING_PORTAL_HOST = "billing.stripe.com";
 /** V1 Account Links (`accountLinks.create`) return this host. */
@@ -82,6 +84,7 @@ export function isAllowedStripeRedirectUrl(
 export function performExternalStripeRedirect(
   rawUrl: string | null | undefined,
   kind: StripeRedirectKind = "checkout",
+  holdMessage?: string,
 ): ExternalStripeRedirectResult {
   const trimmed = rawUrl?.trim();
   if (!trimmed) {
@@ -90,6 +93,7 @@ export function performExternalStripeRedirect(
 
   try {
     const parsed = parseStripeRedirectUrl(trimmed, kind);
+    beginExternalStripeNavigationHold(holdMessage);
     window.location.assign(parsed.href);
     return { ok: true, navigated: true };
   } catch {

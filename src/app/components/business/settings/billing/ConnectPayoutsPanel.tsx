@@ -1,5 +1,6 @@
 import { Link } from "react-router";
 import { useCallback, useEffect, useState } from "react";
+import { useStaleExternalStripeStateReset } from "../../../../hooks/useStaleExternalStripeStateReset";
 import { useTranslation } from "react-i18next";
 import { CalendarDays, Landmark, Loader2, Wallet } from "lucide-react";
 import {
@@ -79,6 +80,8 @@ export function ConnectPayoutsPanel({ loading: bootLoading }: { loading?: boolea
   const [error, setError] = useState<string | null>(null);
   const [errorKind, setErrorKind] = useState<ReturnType<typeof classifyFetchError>>("api");
   const [dashboardBusy, setDashboardBusy] = useState(false);
+  const resetDashboardBusy = useCallback(() => setDashboardBusy(false), []);
+  useStaleExternalStripeStateReset({ onReset: resetDashboardBusy });
   const [eligibility, setEligibility] = useState<InstantPayoutEligibility | null>(null);
   const [eligibilityLoading, setEligibilityLoading] = useState(true);
   const [qInput, setQInput] = useState("");

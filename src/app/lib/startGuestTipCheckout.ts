@@ -19,6 +19,11 @@ export type GuestTipCheckoutResult = "redirected" | "failed" | "busy";
 /** Sync lock — React `processing` state is too late to stop a double-tap. */
 let guestTipCheckoutInFlight = false;
 
+/** bfcache restore only — never call during active forward checkout. */
+export function clearGuestTipCheckoutInFlightForStaleRestore(): void {
+  guestTipCheckoutInFlight = false;
+}
+
 /**
  * Create a guest Checkout Session (server-owned fees/destination) and hand off to Stripe.
  * Concurrent calls return `"busy"` so only one session is created.
@@ -26,6 +31,7 @@ let guestTipCheckoutInFlight = false;
 export async function startGuestTipCheckout(
   input: GuestTipCheckoutInput,
   checkoutStartErrorMessage: string,
+  checkoutHoldMessage?: string,
 ): Promise<GuestTipCheckoutResult> {
   if (guestTipCheckoutInFlight) return "busy";
   guestTipCheckoutInFlight = true;
@@ -50,7 +56,7 @@ export async function startGuestTipCheckout(
       employeeName: input.employeeName ?? null,
       amount: input.amount,
     });
-    const redirect = performExternalStripeRedirect(url, "checkout");
+    const redirect = performExternalStripeRedirect(url, "checkout", checkoutHoldMessage);
     if (!redirect.ok) {
       toast.error(checkoutStartErrorMessage);
       guestTipCheckoutInFlight = false;

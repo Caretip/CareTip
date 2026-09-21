@@ -25,6 +25,11 @@ export type ActivationCheckoutResult =
 /** Sync lock — React `busy` is too late to stop a double-tap on billing checkout. */
 let activationCheckoutInFlight = false;
 
+/** bfcache restore only — never call during active forward checkout. */
+export function clearActivationCheckoutInFlightForStaleRestore(): void {
+  activationCheckoutInFlight = false;
+}
+
 async function closeOverlayThenTrialNavigate(
   navigate?: NavigateFunction,
   closeBeforeNavigate?: CloseBeforeNavigate,

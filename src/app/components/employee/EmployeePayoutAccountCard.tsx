@@ -12,6 +12,7 @@ import {
 import { toUserFriendlyMessage } from "../../lib/errorMessages";
 import { logClientError } from "../../lib/clientLog";
 import { performExternalStripeRedirect } from "../../lib/externalStripeRedirect";
+import { useClearStaleStripeRedirectBusy } from "../../hooks/useClearStaleStripeRedirectBusy";
 import { Button } from "../ui/button";
 import { EmployeePayoutMethodCard } from "./EmployeePayoutMethodCard";
 import { employeeUi } from "./employeeDashboardUi";
@@ -73,6 +74,8 @@ export function EmployeePayoutAccountCard(props: {
     void reload();
   }, [reload]);
 
+  useClearStaleStripeRedirectBusy(setBusy, "payoutConnect", searchParams);
+
   useEffect(() => {
     const flag = searchParams.get("payoutConnect");
     if (flag !== "return" && flag !== "refresh") return;
@@ -95,11 +98,11 @@ export function EmployeePayoutAccountCard(props: {
       const redirect = performExternalStripeRedirect(url, "connect");
       if (!redirect.ok) {
         toast.error(t("employee.payouts.redirectFailed"));
+        setBusy(null);
       }
     } catch (err) {
       logClientError("EmployeePayoutAccountCard.connect", err);
       toast.error(toUserFriendlyMessage(err) || t("employee.payouts.connectFailed"));
-    } finally {
       setBusy(null);
     }
   };
@@ -111,11 +114,11 @@ export function EmployeePayoutAccountCard(props: {
       const redirect = performExternalStripeRedirect(url, "expressDashboard");
       if (!redirect.ok) {
         toast.error(t("employee.payouts.redirectFailed"));
+        setBusy(null);
       }
     } catch (err) {
       logClientError("EmployeePayoutAccountCard.dashboard", err);
       toast.error(toUserFriendlyMessage(err) || t("employee.payouts.dashboardFailed"));
-    } finally {
       setBusy(null);
     }
   };

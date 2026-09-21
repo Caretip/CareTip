@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { ShoppingBag, Trash2, Minus, Plus, Eye, ChevronDown } from "lucide-react";
 import { performExternalStripeRedirect } from "@/app/lib/externalStripeRedirect";
+import { useStaleExternalStripeStateReset } from "@/app/hooks/useStaleExternalStripeStateReset";
 import { ApiRequestError } from "@/app/lib/apiError";
 import {
   payPhysicalQrBatch,
@@ -124,6 +125,14 @@ export function PrintQrStudio() {
   const [contactPhone, setContactPhone] = useState(initialSnapshot?.contactPhone ?? "");
   const [submitting, setSubmitting] = useState(false);
   const printCheckoutInFlight = useRef(false);
+  const resetPayLaunch = useCallback(() => {
+    printCheckoutInFlight.current = false;
+    setSubmitting(false);
+  }, []);
+  useStaleExternalStripeStateReset({
+    onReset: resetPayLaunch,
+    physicalQrCheckoutReturn: searchParams,
+  });
   const [bootLoading, setBootLoading] = useState(() => !initialSnapshot);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [previewTargetUrl, setPreviewTargetUrl] = useState(initialSnapshot?.previewTargetUrl ?? "");

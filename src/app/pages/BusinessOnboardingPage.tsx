@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import "@/styles/bundles/onboarding.css";
 import { useNavigate } from "react-router";
 import { AnimatePresence, motion } from "motion/react";
@@ -31,6 +31,7 @@ import { toUserFriendlyMessage } from "../lib/errorMessages";
 import { isApiSubscriptionRequiredError } from "../lib/apiError";
 import { logClientError } from "../lib/clientLog";
 import { performExternalStripeRedirect } from "../lib/externalStripeRedirect";
+import { useStaleExternalStripeStateReset } from "../hooks/useStaleExternalStripeStateReset";
 import { cn } from "@/lib/utils";
 import type { OnboardingStep } from "../components/business/BusinessOnboardingProgress";
 import {
@@ -102,6 +103,8 @@ export function BusinessOnboardingPage() {
   const [savedLogoPath, setSavedLogoPath] = useState<string | null>(null);
   const [employeeCount, setEmployeeCount] = useState(0);
   const [busy, setBusy] = useState(false);
+  const resetOnboardingBusy = useCallback(() => setBusy(false), []);
+  useStaleExternalStripeStateReset({ onReset: resetOnboardingBusy });
   const [logoPreviewUrl, setLogoPreviewUrl] = useState<string | null>(null);
 
   const checkoutIntent = peekCheckoutIntent();

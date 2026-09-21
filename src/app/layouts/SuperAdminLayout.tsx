@@ -22,6 +22,7 @@ import {
   useDashboardSidebarProfile,
   DashboardReactProfiler,
 } from "../hooks/useDashboardRuntimeProfile";
+import { PROTECTED_APP_SHELL_READY_ATTR } from "../lib/htmlMarketingBootBridge";
 
 /**
  * Platform / Super Admin shell only: sidebar, platform header, footer.
@@ -58,6 +59,7 @@ export function SuperAdminLayout() {
             "caretip-dashboard-shell dashboard-workspace font-sans flex min-h-screen min-w-0 flex-col overflow-x-hidden lg:pl-64",
             PLATFORM_DASHBOARD_ROOT,
           )}
+          {...{ [PROTECTED_APP_SHELL_READY_ATTR]: "" }}
         >
           <DashboardHeader onMenuClick={openMobileMenu} />
           <main className="caretip-dashboard-page-enter min-w-0 flex-1 overflow-x-clip">

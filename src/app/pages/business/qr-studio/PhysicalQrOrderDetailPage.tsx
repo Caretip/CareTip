@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
+import { useStaleExternalStripeStateReset } from "@/app/hooks/useStaleExternalStripeStateReset";
 import { Link, useParams, useSearchParams } from "react-router";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
@@ -50,6 +51,11 @@ export function PhysicalQrOrderDetailPage() {
   const [loadError, setLoadError] = useState<string | null>(null);
   const [paying, setPaying] = useState(false);
   const [confirming, setConfirming] = useState(checkoutFlag === "success");
+  const resetPayLaunch = useCallback(() => setPaying(false), []);
+  useStaleExternalStripeStateReset({
+    onReset: resetPayLaunch,
+    physicalQrCheckoutReturn: searchParams,
+  });
 
   useEffect(() => {
     setLoadError(null);
@@ -89,6 +95,7 @@ export function PhysicalQrOrderDetailPage() {
 
   useEffect(() => {
     if (checkoutFlag !== "success" || !orderId) return;
+    setPaying(false);
     setConfirming(true);
     let cancelled = false;
     let attempts = 0;

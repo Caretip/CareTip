@@ -67,12 +67,14 @@ export function CustomerFlowShell({
     loadingMessage ??
     resolveAppLoadingContextMessage(loadingContext, t, readDocumentOrStoredLanguage());
   const holdUnderHtmlBoot = isHtmlBootElementPresent();
+  const checkoutTransition =
+    loading && (loadingContext === "stripeRedirect" || loadingContext === "checkout");
   usePublicHtmlBootHandoff(!loading);
 
   useAppLoadingRegistration(
     loadingRegistrationKey,
     APP_LOADING_PRIORITY.ROUTE_GUARD,
-    loading && !softNav && !holdUnderHtmlBoot,
+    (loading && !softNav && !holdUnderHtmlBoot) || (checkoutTransition && !holdUnderHtmlBoot),
     overlayMessage,
   );
 

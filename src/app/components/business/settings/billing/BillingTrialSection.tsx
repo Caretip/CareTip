@@ -19,8 +19,9 @@ import {
 import { dashboardWorkspaceUi } from "@/app/components/dashboard/dashboardWorkspaceUi";
 import { performExternalStripeRedirect } from "@/app/lib/externalStripeRedirect";
 import { useMerchantCheckoutLegalGate } from "@/app/components/legal/useMerchantCheckoutLegalGate";
-import { useEffect, useState } from "react";
-import { Link } from "react-router";
+import { useCallback, useEffect, useState } from "react";
+import { Link, useSearchParams } from "react-router";
+import { useStaleExternalStripeStateReset } from "@/app/hooks/useStaleExternalStripeStateReset";
 import { Loader2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
@@ -39,7 +40,10 @@ export function BillingTrialPlanDialog({
   billingCycle,
 }: BillingTrialPlanDialogProps) {
   const { t } = useTranslation();
+  const [searchParams] = useSearchParams();
   const [busy, setBusy] = useState(false);
+  const resetBusy = useCallback(() => setBusy(false), []);
+  useStaleExternalStripeStateReset({ onReset: resetBusy, billingReturn: searchParams });
   const { LegalGate, canProceed, startCheckout } = useMerchantCheckoutLegalGate();
   const priceLabel =
     billingCycle === "yearly"
@@ -168,7 +172,10 @@ export function BillingTrialSection({
 
 function BillingTrialExpiredUpgrade({ billingCycle }: { billingCycle: "monthly" | "yearly" }) {
   const { t } = useTranslation();
+  const [searchParams] = useSearchParams();
   const [busy, setBusy] = useState(false);
+  const resetBusy = useCallback(() => setBusy(false), []);
+  useStaleExternalStripeStateReset({ onReset: resetBusy, billingReturn: searchParams });
   const { LegalGate, canProceed, startCheckout } = useMerchantCheckoutLegalGate();
 
   useAppLoadingRegistration(

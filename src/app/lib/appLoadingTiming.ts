@@ -36,6 +36,8 @@ export function shouldBypassOverlayShowThreshold(
     winnerKey === "onboarding-submit" ||
     winnerKey === "payment-stripe-redirect" ||
     winnerKey === "payment-page-checkout" ||
+    winnerKey === "stripe-connect-onboarding" ||
+    winnerKey === "customer-tip-journey" ||
     (typeof winnerKey === "string" &&
       (winnerKey.includes("checkout") ||
         winnerKey.endsWith("-chunk") ||

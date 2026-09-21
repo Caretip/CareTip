@@ -1,5 +1,6 @@
-import { useState } from "react";
-import { Link } from "react-router";
+import { useCallback, useState } from "react";
+import { Link, useSearchParams } from "react-router";
+import { useStaleExternalStripeStateReset } from "@/app/hooks/useStaleExternalStripeStateReset";
 import { Check, Loader2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
@@ -31,7 +32,10 @@ type ProUpgradeCardProps = {
 export function ProUpgradeCard({ className }: ProUpgradeCardProps) {
   const { t } = useTranslation();
   const { data: billing } = useBillingStatus();
+  const [searchParams] = useSearchParams();
   const [checkoutBusy, setCheckoutBusy] = useState(false);
+  const resetCheckoutBusy = useCallback(() => setCheckoutBusy(false), []);
+  useStaleExternalStripeStateReset({ onReset: resetCheckoutBusy, billingReturn: searchParams });
   const { LegalGate, canProceed, startCheckout } = useMerchantCheckoutLegalGate();
 
   useAppLoadingRegistration(

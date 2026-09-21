@@ -1,5 +1,5 @@
 import { useNavigate, useSearchParams } from "react-router";
-import { useState, useEffect, useLayoutEffect, useMemo, useRef } from "react";
+import { useCallback, useState, useEffect, useLayoutEffect, useMemo, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { useTipFlow } from "../../context/TipFlowContext";
@@ -13,7 +13,11 @@ import {
   resolveCustomerEmployeeContext,
   type ResolvedCustomerEmployee,
 } from "../../lib/resolveCustomerEmployeeContext";
-import { startGuestTipCheckout } from "../../lib/startGuestTipCheckout";
+import {
+  clearGuestTipCheckoutInFlightForStaleRestore,
+  startGuestTipCheckout,
+} from "../../lib/startGuestTipCheckout";
+import { useStaleExternalStripeStateReset } from "../../hooks/useStaleExternalStripeStateReset";
 import {
   tippingVenueFromEmployeeAssignment,
   tippingVenueFromGuestSearchParams,
@@ -23,10 +27,6 @@ import { isTipAmountInRangeEur, MIN_TIP_AMOUNT_EUR } from "../../lib/tipAmountLi
 import { customerFlowUi as cf } from "./customerFlowUi";
 import { CustomerFlowShell } from "./CustomerFlowShell";
 import { CustomerJourneyBackButton } from "./CustomerJourneyHeader";
-import {
-  APP_LOADING_PRIORITY,
-  useAppLoadingRegistration,
-} from "../../lib/globalAppLoading";
 import { resolveAppLoadingContextMessage } from "../../lib/appLoadingContexts";
 
 export function TipAmountPage() {
@@ -62,6 +62,14 @@ export function TipAmountPage() {
   const [customAmount, setCustomAmount] = useState("");
   const [showCustomInput, setShowCustomInput] = useState(false);
   const [processing, setProcessing] = useState(false);
+  const resetTipCheckoutLaunch = useCallback(() => {
+    clearGuestTipCheckoutInFlightForStaleRestore();
+    setProcessing(false);
+  }, []);
+  useStaleExternalStripeStateReset({
+    onReset: resetTipCheckoutLaunch,
+    tipCanceled: searchParams,
+  });
   const resolveLabelsRef = useRef({
     fallbackTeamMemberLabel: t("tipFlow.common.teamMember"),
     fallbackVenueLabel: t("tipFlow.common.venue"),
@@ -243,13 +251,8 @@ export function TipAmountPage() {
   };
 
   const stripeRedirectMessage = resolveAppLoadingContextMessage("stripeRedirect", t);
-
-  useAppLoadingRegistration(
-    "tip-amount-stripe-redirect",
-    APP_LOADING_PRIORITY.ROUTE_GUARD,
-    processing,
-    stripeRedirectMessage,
-  );
+  const journeyLoading = !contextReady || processing;
+  const journeyLoadingContext = processing ? "stripeRedirect" : "tipPage";
 
   const handleContinue = async () => {
     const resolvedEmployeeId = employeeId ?? employeeIdCtx;
@@ -269,6 +272,7 @@ export function TipAmountPage() {
         tableId,
       },
       t("tipFlow.payment.checkoutStartError"),
+      stripeRedirectMessage,
     );
     if (result === "failed") setProcessing(false);
   };
@@ -282,7 +286,7 @@ export function TipAmountPage() {
         employee={{ name: t("tipFlow.common.teamMember") }}
         loading
         loadingContext="tipPage"
-        loadingRegistrationKey="tip-amount-journey"
+        loadingRegistrationKey="customer-tip-journey"
       />
     );
   }
@@ -303,12 +307,12 @@ export function TipAmountPage() {
           avatar: employeeAvatar ?? null,
         }}
         stepTitle={t("tipFlow.tipAmount.choosePrompt")}
-      loading={!contextReady}
-      loadingContext="tipPage"
-      loadingRegistrationKey="tip-amount-journey"
+      loading={journeyLoading}
+      loadingContext={journeyLoadingContext}
+      loadingRegistrationKey="customer-tip-journey"
       mainClassName={cf.mainCompact}
       bottomBar={
-        selectedAmount ? (
+        selectedAmount && !processing ? (
           <div className={cf.fixedBottomBar}>
             <div className={cf.fixedBottomInner}>
               <div className={cf.journeyCtaStack}>
@@ -317,15 +321,9 @@ export function TipAmountPage() {
                   onClick={() => void handleContinue()}
                   disabled={!businessId || processing}
                   className={cf.btnPrimaryLg}
+                  aria-busy={processing}
                 >
-                  {processing ? (
-                    <>
-                      <span className="inline-block size-5 animate-spin rounded-full border-2 border-white/35 border-t-white" />
-                      {stripeRedirectMessage}
-                    </>
-                  ) : (
-                    t("tipFlow.tipAmount.continuePayment")
-                  )}
+                  {t("tipFlow.tipAmount.continuePayment")}
                 </button>
               </div>
             </div>

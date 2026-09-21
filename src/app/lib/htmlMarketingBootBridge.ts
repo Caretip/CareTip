@@ -6,6 +6,13 @@
 
 import { isCustomerJourneyPath } from "./appLoadingJourney";
 
+/** Authenticated app shells that hand off HTML boot to {@link PROTECTED_APP_SHELL_READY_ATTR}. */
+export const PROTECTED_APP_SHELL_READY_ATTR = "data-caretip-dashboard-ready";
+
+function normalizePathname(pathname: string): string {
+  return pathname.split("?")[0]?.split("#")[0] ?? "/";
+}
+
 const BOOT_ID = "caretip-html-boot";
 const ACTIVE_CLASS = "caretip-html-boot-active";
 const EXITING_CLASS = "caretip-html-boot--exiting";
@@ -38,13 +45,35 @@ function isLazyPublicMarketingShellPath(pathname: string): boolean {
 
 function readPathname(): string {
   if (typeof window === "undefined") return "/";
-  return window.location.pathname.split("?")[0]?.split("#")[0] ?? "/";
+  return normalizePathname(window.location.pathname);
+}
+
+/**
+ * Business / employee / platform dashboard shells — Stripe return and cold app boot.
+ * Excludes onboarding/subscription routes that use different first-paint surfaces.
+ */
+export function isProtectedAppShellHandoffPath(pathname?: string): boolean {
+  const p = normalizePathname(pathname ?? readPathname());
+  if (p === "/dashboard" || p.startsWith("/dashboard/")) return true;
+  if (p === "/employee" || p.startsWith("/employee/")) return true;
+  if (p === "/employee-dashboard" || p.startsWith("/employee-dashboard/")) return true;
+  if (p === "/platform-admin" || p.startsWith("/platform-admin/")) return true;
+  if (p === "/business-dashboard" || p.startsWith("/business-dashboard/")) return true;
+  return false;
+}
+
+export function isProtectedAppShellCommitted(): boolean {
+  if (typeof document === "undefined") return false;
+  return document.querySelector(`[${PROTECTED_APP_SHELL_READY_ATTR}]`) != null;
 }
 
 /** Keep first-paint boot until the public destination has real DOM (not an empty Outlet). */
 export function shouldRetainHtmlBootUntilLandingCommit(): boolean {
   if (typeof document === "undefined") return false;
   const p = readPathname();
+  if (isProtectedAppShellHandoffPath(p)) {
+    return !isProtectedAppShellCommitted();
+  }
   const committed = document.querySelector(
     "[data-caretip-route-ready], [data-caretip-public-committed], .caretip-landing",
   );

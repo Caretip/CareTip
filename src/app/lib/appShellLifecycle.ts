@@ -28,11 +28,13 @@ const SOFT_NAV_ALLOWED_KEYS = new Set([
   "billing-plan-checkout",
   "billing-trial-checkout",
   "billing-trial-expired-checkout",
+  "customer-tip-journey",
   "onboarding-init",
   "onboarding-submit",
   "activate-caretip",
   "payment-stripe-redirect",
   "payment-page-checkout",
+  "stripe-connect-onboarding",
   "upgrade-cta-checkout",
   "pro-upgrade-checkout",
 ]);

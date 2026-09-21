@@ -1,6 +1,6 @@
-import { useMemo, useState, type ReactNode } from "react";
+import { useCallback, useMemo, useState, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
-import { Link } from "react-router";
+import { Link, useSearchParams } from "react-router";
 import { CheckCircle2, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -34,6 +34,7 @@ import {
 } from "../../../../lib/globalAppLoading";
 import { formatBillingDate, resolveBillingLocale } from "./billingFormatters";
 import { performExternalStripeRedirect } from "../../../../lib/externalStripeRedirect";
+import { useStaleExternalStripeStateReset } from "../../../../hooks/useStaleExternalStripeStateReset";
 
 type Props = {
   billing: BillingStatus;
@@ -49,9 +50,12 @@ export function BillingPlanManagement({
   onChanged,
 }: Props) {
   const { t, i18n } = useTranslation();
+  const [searchParams] = useSearchParams();
   const locale = resolveBillingLocale(i18n.language);
   const emptyDate = t("business.billing.notApplicable");
   const [busyPlan, setBusyPlan] = useState<SubscriptionPlanKey | "portal" | "cancel" | null>(null);
+  const resetBusyPlan = useCallback(() => setBusyPlan(null), []);
+  useStaleExternalStripeStateReset({ onReset: resetBusyPlan, billingReturn: searchParams });
 
   const tiers = useMemo(() => buildPricingTierCatalog(t), [t]);
   const currentPlanKey = resolveBillingPlanKey(billing);

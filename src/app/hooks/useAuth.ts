@@ -48,7 +48,9 @@ import { resetAllClientSessionCaches } from "../lib/resetAllClientSessionCaches"
 import { performClientLogoutCleanup, captureLogoutSnapshot } from "../lib/clientLogout";
 import {
   beginAuthLogoutTransition,
+  endAuthLogoutTransition,
   isAuthLogoutTransitionActive,
+  signalLogoutAuthPageReady,
 } from "../lib/authLogoutTransition";
 import { isIdleLogoutInFlight } from "../lib/idleSessionStore";
 import { prefetchAuthLoginRoute } from "../routing/routeLazy";
@@ -533,9 +535,10 @@ export function useAuth() {
 
     flushSync(() => {
       navigate(snapshot.loginPath, { replace: true });
+      signalLogoutAuthPageReady();
+      endAuthLogoutTransition();
     });
 
-    // Overlay ends when the login route commits (cover destination signal / AuthPage chrome).
     authDebug("logout_navigate", {
       loginPath: snapshot.loginPath,
       clientCleanupMs: Math.round(clientCleanupMs),
