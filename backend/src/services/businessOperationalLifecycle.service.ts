@@ -144,6 +144,19 @@ export async function softDeleteBusinessForAdmin(
 ): Promise<void> {
   const eligibility = await assessSoftDeleteEligibility(businessId);
   if (!eligibility.eligible) {
+    const {
+      loadBusinessBillingLinkageSnapshot,
+      recordBusinessDeletionAudit,
+    } = await import("./billingLifecycleIntegrity.service.js");
+    const snapshot = await loadBusinessBillingLinkageSnapshot(businessId);
+    await recordBusinessDeletionAudit({
+      actorUserId: opts?.adminUserId ?? null,
+      businessId,
+      deletionType: "soft",
+      outcome: "blocked",
+      reason: eligibility.reason ?? null,
+      snapshot,
+    });
     throw new Error(eligibility.reason ?? "Business cannot be removed");
   }
 

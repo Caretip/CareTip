@@ -126,7 +126,8 @@ function IndustryPhotoCard({
             src={card.webp}
             alt=""
             className="caretip-industry-photo-card__img"
-            loading={index < 3 ? "eager" : "lazy"}
+            loading={index < 6 ? "eager" : "lazy"}
+            fetchPriority={index < 3 ? "high" : index < 6 ? "auto" : undefined}
             decoding="async"
             onError={(event) => {
               const img = event.currentTarget;

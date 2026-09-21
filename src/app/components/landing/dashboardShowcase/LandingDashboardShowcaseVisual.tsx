@@ -255,15 +255,17 @@ function ShowcaseEmployeePreview({
                 displayName={employee.name}
                 className={cn(
                   "shrink-0 caretip-landing-dashboard-showcase__leaderboard-avatar",
-                  premium ? "h-9 w-9 sm:h-10 sm:w-10" : "h-9 w-9",
+                  premium
+                    ? "h-7 w-7 sm:h-8 sm:w-8 caretip-landing-dashboard-showcase__leaderboard-avatar--marketing"
+                    : "h-7 w-7",
                 )}
                 lightbox={false}
               />
               <div className="min-w-0 flex-1">
                 <p
                   className={cn(
-                    "truncate font-medium text-foreground",
-                    premium ? "text-xs sm:text-sm" : "text-sm",
+                    "truncate text-foreground caretip-landing-dashboard-showcase__leaderboard-name",
+                    premium ? "text-sm sm:text-[0.9375rem] font-semibold" : "text-sm font-medium",
                   )}
                 >
                   {employee.name}
@@ -399,22 +401,28 @@ export const LandingDashboardShowcaseVisual = memo(function LandingDashboardShow
         ) : null}
         <div className="caretip-dashboard-shell business-dashboard caretip-landing-dashboard-showcase__shell">
           {showChrome ? (
-            <header className="caretip-landing-dashboard-showcase__header">
+            <header className="caretip-landing-dashboard-showcase__header caretip-landing-dashboard-showcase__header--marketing">
               <div className="min-w-0">
-                <p className="caretip-landing-dashboard-showcase__eyebrow">
-                  {t("landing.dashboardShowcase.preview.eyebrow")}
-                </p>
-                <h4 className="caretip-landing-dashboard-showcase__title">
+                {premium ? (
+                  <p className="caretip-landing-dashboard-showcase__eyebrow caretip-landing-dashboard-showcase__eyebrow--context">
+                    {t("landing.dashboardShowcase.preview.eyebrow")}
+                  </p>
+                ) : (
+                  <p className="caretip-landing-dashboard-showcase__eyebrow">
+                    {t("landing.dashboardShowcase.preview.eyebrow")}
+                  </p>
+                )}
+                <h4 className="caretip-landing-dashboard-showcase__title caretip-landing-dashboard-showcase__title--marketing">
                   {t("landing.dashboardShowcase.preview.title")}
                 </h4>
               </div>
               <div className="caretip-landing-dashboard-showcase__header-meta">
                 {premium ? (
-                  <span className="caretip-landing-dashboard-showcase__sample">
+                  <span className="caretip-landing-dashboard-showcase__sample caretip-landing-dashboard-showcase__sample--quiet">
                     {t("landing.dashboardShowcase.preview.sampleData")}
                   </span>
                 ) : null}
-                <span className="caretip-landing-dashboard-showcase__period">
+                <span className="caretip-landing-dashboard-showcase__period caretip-landing-dashboard-showcase__period--context">
                   {t("landing.dashboardShowcase.preview.periodWeek")}
                 </span>
               </div>

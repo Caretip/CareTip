@@ -168,6 +168,36 @@
   }
 }
 
+/* Subtle placeholder while lazy landing sections resolve — avoids empty white gaps */
+.caretip-landing-lazy-section-fallback {
+  width: 100%;
+  min-height: inherit;
+  border-radius: 0.75rem;
+  background: linear-gradient(
+    180deg,
+    hsl(var(--muted) / 0.08) 0%,
+    hsl(var(--muted) / 0.14) 48%,
+    hsl(var(--muted) / 0.08) 100%
+  );
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .caretip-landing-lazy-section-fallback {
+    animation: caretip-landing-lazy-shimmer 1.8s ease-in-out infinite;
+  }
+}
+
+@keyframes caretip-landing-lazy-shimmer {
+  0%,
+  100% {
+    opacity: 0.72;
+  }
+
+  50% {
+    opacity: 1;
+  }
+}
+
 /* —— Hero animated word reel — sequential exit → enter (one word visible) —— */
 .caretip-hero-animated-word__slide {
   opacity: 1;

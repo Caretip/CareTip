@@ -52,11 +52,13 @@ function BenefitPointsList({ points, className }: { points: BenefitPoint[]; clas
   );
 }
 
-function warmTeamsPhoneImage(src: string): void {
+function warmTeamsPhoneImage(src: string, priority: "high" | "low" = "low"): void {
   if (typeof window === "undefined") return;
   const img = new Image();
   img.decoding = "async";
-  img.setAttribute("fetchpriority", "low");
+  if (priority === "high") {
+    img.setAttribute("fetchpriority", "high");
+  }
   img.src = src;
 }
 
@@ -76,6 +78,9 @@ export function LandingAudienceBenefitsSection() {
   const phoneVisualRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    const isDe = i18n.language?.toLowerCase().startsWith("de");
+    warmTeamsPhoneImage(isDe ? teamsVisualDeAvif : teamsVisualEnAvif, "high");
+
     const dashboard = dashboardVisualRef.current;
     const phone = phoneVisualRef.current;
     if (!dashboard || !phone) return;
@@ -225,7 +230,7 @@ export function LandingAudienceBenefitsSection() {
           {cards.map((card, index) => (
             <LandingReveal
               key={card.role}
-              delay={landingStaggerDelay(index + 1)}
+              delay={index === 0 ? 0 : landingStaggerDelay(index)}
               className="caretip-audience-benefits__column"
               {...(card.id ? { id: card.id } : {})}
             >
@@ -256,8 +261,9 @@ export function LandingAudienceBenefitsSection() {
                       <img
                         src={card.image}
                         alt={card.imageAlt ?? ""}
-                        loading="lazy"
+                        loading="eager"
                         decoding="async"
+                        fetchPriority="auto"
                         sizes="(min-width: 1024px) 32rem, 100vw"
                         width={854}
                         height={1280}

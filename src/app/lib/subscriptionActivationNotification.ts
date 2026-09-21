@@ -80,12 +80,13 @@ export async function processBillingCheckoutSuccess(opts: {
   const intent = peekCheckoutIntent();
   const synced = await runBillingCheckoutSuccessSync({
     expectedPlan: intent?.planKey,
+    checkoutSessionId: sessionId,
   });
 
   let syncStatus: BillingSyncStatus | null = null;
   if (synced) {
     try {
-      syncStatus = await fetchBillingSyncStatus(intent?.planKey);
+      syncStatus = await fetchBillingSyncStatus(intent?.planKey, sessionId);
     } catch {
       syncStatus = null;
     }

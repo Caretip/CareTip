@@ -4,6 +4,7 @@ import { mapStripePriceToPlanKey } from "../lib/subscription/mapStripePriceToPla
 import type { SubscriptionPlanKey } from "@prisma/client";
 import { STRIPE_BILLING_AUDIT_TYPES, BILLING_CHECKOUT_METADATA_KEYS } from "../lib/subscription/subscriptionAuditTypes.js";
 import { checkoutSessionBoundToBusiness } from "../lib/subscription/checkoutSessionOwnership.js";
+import { verifyPaidCheckoutSessionForBusiness } from "../lib/subscription/verifyPaidCheckoutSession.js";
 import { isSubscriptionMirrorEntitled } from "../lib/subscription/subscriptionMirrorEntitlement.js";
 import { logTrialSync } from "../lib/subscription/trialSyncDebugLog.js";
 import { prisma } from "../prisma.js";
@@ -254,25 +255,7 @@ export async function tryActivateSubscriptionFromStripeForBusiness(params: {
     return "stripe_not_configured";
   }
 
-  const internalMirror = await prisma.subscription.findUnique({
-    where: { businessId: params.businessId },
-    select: {
-      planKey: true,
-      status: true,
-      stripeSubscriptionId: true,
-      isTrial: true,
-    },
-  });
-  if (internalMirror && isInternalBasicSubscription(internalMirror)) {
-    logTrialSync("activation.stop", {
-      source,
-      outcome: "ignored",
-      reason: "internal_basic_no_stripe_sync",
-      businessId: params.businessId,
-    });
-    return "ignored";
-  }
-
+  const verifiedCheckoutReturn = Boolean(params.checkoutSessionId?.trim());
   const stripe = getStripeClient();
   let sub: Stripe.Subscription | null = null;
 
@@ -291,12 +274,50 @@ export async function tryActivateSubscriptionFromStripeForBusiness(params: {
       return "ignored";
     }
     const subId = subscriptionIdFromStripeObject(session.subscription);
-    if (subId) {
-      sub =
-        typeof session.subscription === "string"
-          ? await stripe.subscriptions.retrieve(subId, { expand: ["items.data.price"] })
-          : (session.subscription as Stripe.Subscription);
+    if (!subId) {
+      logTrialSync("activation.checkout_session.skip", {
+        reason: "checkout_missing_subscription",
+        checkoutSessionId: params.checkoutSessionId,
+      });
+      return "ignored";
     }
+    sub =
+      typeof session.subscription === "string"
+        ? await stripe.subscriptions.retrieve(subId, { expand: ["items.data.price"] })
+        : (session.subscription as Stripe.Subscription);
+
+    const verification = verifyPaidCheckoutSessionForBusiness({
+      session,
+      businessId: params.businessId,
+      subscription: sub,
+    });
+    if (!verification.ok) {
+      logTrialSync("activation.checkout_session.verify_failed", {
+        reason: verification.reason,
+        checkoutSessionId: params.checkoutSessionId,
+        businessId: params.businessId,
+      });
+      return "ignored";
+    }
+  }
+
+  const internalMirror = await prisma.subscription.findUnique({
+    where: { businessId: params.businessId },
+    select: {
+      planKey: true,
+      status: true,
+      stripeSubscriptionId: true,
+      isTrial: true,
+    },
+  });
+  if (internalMirror && isInternalBasicSubscription(internalMirror) && !verifiedCheckoutReturn) {
+    logTrialSync("activation.stop", {
+      source,
+      outcome: "ignored",
+      reason: "internal_basic_no_stripe_sync",
+      businessId: params.businessId,
+    });
+    return "ignored";
   }
 
   if (!sub) {
@@ -329,7 +350,31 @@ export async function tryActivateSubscriptionFromStripeForBusiness(params: {
     return "no_stripe_subscription";
   }
 
-  const stripeEventId = `checkout_return_sync_${params.checkoutSessionId ?? sub.id}_${Date.now()}`;
+  const stripeEventId = params.checkoutSessionId
+    ? `checkout_return_sync_${params.checkoutSessionId}`
+    : `checkout_return_sync_${sub.id}_${Date.now()}`;
+
+  if (params.checkoutSessionId) {
+    const existingEvent = await prisma.subscriptionEvent.findUnique({
+      where: { stripeEventId },
+      select: { id: true },
+    });
+    if (existingEvent) {
+      const mirror = await prisma.subscription.findUnique({
+        where: { businessId: params.businessId },
+        select: { stripeSubscriptionId: true },
+      });
+      if (mirror?.stripeSubscriptionId === sub.id) {
+        logTrialSync("activation.checkout_return_sync.idempotent", {
+          businessId: params.businessId,
+          checkoutSessionId: params.checkoutSessionId,
+          stripeSubscriptionId: sub.id,
+        });
+        return "mirror_updated";
+      }
+    }
+  }
+
   return activateSubscriptionMirrorFromStripeSubscription({
     businessId: params.businessId,
     sub,

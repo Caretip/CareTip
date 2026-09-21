@@ -237,11 +237,13 @@ export async function getPlatformSubscriptionWidgets(days = 30): Promise<Platfor
 }
 
 export async function getPlatformSubscriptionMonitoringBundle(days = 30) {
-  const [overview, widgets] = await Promise.all([
+  const { detectStripeBillingOrphans } = await import("../billingLifecycleIntegrity.service.js");
+  const [overview, widgets, billingOrphans] = await Promise.all([
     getPlatformSubscriptionOverview(),
     getPlatformSubscriptionWidgets(days),
+    detectStripeBillingOrphans(25),
   ]);
-  return { overview, widgets, periodDays: days };
+  return { overview, widgets, periodDays: days, billingOrphans };
 }
 
 const SORT_FIELDS = {

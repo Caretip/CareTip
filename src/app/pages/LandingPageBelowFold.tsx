@@ -1,4 +1,7 @@
-import { LandingLazySection } from "@/components/landing/LandingLazySection";
+import {
+  LandingLazySection,
+  LANDING_NEAR_VIEWPORT_ROOT_MARGIN,
+} from "@/components/landing/LandingLazySection";
 
 /** Reversible: set true to restore #social-proof (PDF adjustment — hide testimonials & trust stats). */
 export const SHOW_LANDING_SOCIAL_PROOF = false;
@@ -83,26 +86,35 @@ export function LandingPageBelowFold() {
       <LandingLazySection
         load={loadLandingIndustriesTeaserSection}
         minHeight={LAZY_SECTION_MIN_HEIGHT.industriesTeaser}
+        rootMargin={LANDING_NEAR_VIEWPORT_ROOT_MARGIN}
+        prefetch
       />
 
       <LandingLazySection
         load={loadLandingAudienceBenefitsSection}
         minHeight={LAZY_SECTION_MIN_HEIGHT.audienceBenefits}
+        eager
+        prefetch
       />
 
       <LandingLazySection
         load={loadPaymentsSection}
         minHeight={LAZY_SECTION_MIN_HEIGHT.payments}
+        rootMargin={LANDING_NEAR_VIEWPORT_ROOT_MARGIN}
+        prefetch
       />
 
       <LandingLazySection
         load={loadSimpleSetupSection}
         minHeight={LAZY_SECTION_MIN_HEIGHT.liveMinutes}
+        rootMargin={LANDING_NEAR_VIEWPORT_ROOT_MARGIN}
+        prefetch
       />
 
       <LandingLazySection
         load={loadLandingMotivationSection}
         minHeight={LAZY_SECTION_MIN_HEIGHT.splitShowcase}
+        rootMargin={LANDING_NEAR_VIEWPORT_ROOT_MARGIN}
       />
 
       {SHOW_LANDING_SOCIAL_PROOF ? (

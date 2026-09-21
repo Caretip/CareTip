@@ -62,7 +62,12 @@ export function LandingDashboardShowcaseSidebar({
                 )}
                 aria-current={item.active ? "page" : undefined}
               >
-                <CareIcon name={item.icon} size="md" className="shrink-0 opacity-90" aria-hidden />
+                <CareIcon
+                  name={item.icon}
+                  size="md"
+                  className="shrink-0 caretip-landing-dashboard-showcase__sidebar-icon opacity-70"
+                  aria-hidden
+                />
                 <span className="caretip-landing-dashboard-showcase__sidebar-label truncate">
                   {t(item.labelKey)}
                 </span>

@@ -507,7 +507,9 @@ export async function deleteBusiness(req: Request, res: Response) {
   try {
     const { id } = req.params;
     if (!id) return res.status(400).json({ message: "id is required" });
-    await businessService.deleteBusinessCascadeUsers(id);
+    await businessService.deleteBusinessCascadeUsers(id, {
+      actorUserId: req.user?.userId ?? req.user?.id ?? null,
+    });
     return res.json({ success: true });
   } catch (err) {
     const msg = err instanceof Error ? err.message : "";

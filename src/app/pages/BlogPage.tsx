@@ -3,6 +3,7 @@ import { Calendar, Clock } from 'lucide-react';
 import { Navigation } from '../components/Navigation';
 import { Footer } from '../components/Footer';
 import DeferredShaderBackground from '../components/ui/deferred-shader-background';
+import { usePublicHtmlBootHandoff } from '../lib/usePublicHtmlBootHandoff';
 
 const blogPosts = [
   {
@@ -62,8 +63,10 @@ const blogPosts = [
 ];
 
 export function BlogPage() {
+  usePublicHtmlBootHandoff(true);
+
   return (
-    <div className="min-h-screen relative">
+    <div className="min-h-screen relative" data-caretip-route-ready="" data-caretip-public-committed="">
       <DeferredShaderBackground />
       <div className="relative z-10">
         <Navigation />

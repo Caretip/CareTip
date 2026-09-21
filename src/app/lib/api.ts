@@ -3459,8 +3459,13 @@ export type BillingSyncStatus = {
 
 export async function fetchBillingSyncStatus(
   expectedPlan?: SubscriptionPlanKey,
+  checkoutSessionId?: string | null,
 ): Promise<BillingSyncStatus> {
-  const qs = expectedPlan ? `?expectedPlan=${encodeURIComponent(expectedPlan)}` : "";
+  const params = new URLSearchParams();
+  if (expectedPlan) params.set("expectedPlan", expectedPlan);
+  const sessionId = checkoutSessionId?.trim();
+  if (sessionId) params.set("session_id", sessionId);
+  const qs = params.toString() ? `?${params.toString()}` : "";
   return apiRequest<BillingSyncStatus>(apiPath(`/api/me/billing/sync-status${qs}`), {
     method: "GET",
     headers: getHeaders(),

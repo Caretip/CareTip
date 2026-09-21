@@ -3,6 +3,7 @@ import { MapPin, Clock, Briefcase, Heart, Zap, Users, Globe } from 'lucide-react
 import { Navigation } from '../components/Navigation';
 import { Footer } from '../components/Footer';
 import DeferredShaderBackground from '../components/ui/deferred-shader-background';
+import { usePublicHtmlBootHandoff } from '../lib/usePublicHtmlBootHandoff';
 
 const openPositions = [
   {
@@ -94,8 +95,10 @@ const values = [
 ];
 
 export function CareersPage() {
+  usePublicHtmlBootHandoff(true);
+
   return (
-    <div className="min-h-screen relative">
+    <div className="min-h-screen relative" data-caretip-route-ready="" data-caretip-public-committed="">
       <DeferredShaderBackground />
       <div className="relative z-10">
         <Navigation />

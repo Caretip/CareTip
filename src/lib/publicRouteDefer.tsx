@@ -12,6 +12,8 @@ import {
 
 /** Default IO expansion — start preparing content before it enters the viewport. */
 export const PUBLIC_DEFER_ROOT_MARGIN = "400px 0px";
+/** Landing sections immediately below the hero — load before the user sees blank placeholders. */
+export const LANDING_NEAR_VIEWPORT_ROOT_MARGIN = "900px 0px";
 export const PUBLIC_FOOTER_ROOT_MARGIN = "480px 0px";
 
 function parseLeadingRootMarginPx(rootMargin: string): number {

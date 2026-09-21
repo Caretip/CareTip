@@ -843,3 +843,127 @@ html.dark .caretip-landing-dashboard-showcase__laptop-lid {
     box-shadow: 0 1px 2px hsl(var(--foreground) / 0.04);
   }
 }
+
+/* —— Marketing mockup visual polish (landing presentation only) —— */
+.caretip-landing-dashboard-showcase__header--marketing {
+  align-items: flex-end;
+}
+
+.caretip-landing-dashboard-showcase__eyebrow--context {
+  margin-bottom: 0.15rem;
+  font-size: 0.5625rem;
+  font-weight: 550;
+  letter-spacing: 0.1em;
+  color: hsl(var(--muted-foreground) / 0.72);
+}
+
+.caretip-landing-dashboard-showcase__title--marketing {
+  font-size: clamp(1.0625rem, 2.1vw, 1.3125rem);
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  line-height: 1.15;
+}
+
+.caretip-landing-dashboard-showcase__sample--quiet {
+  font-size: 0.5625rem;
+  font-weight: 550;
+  letter-spacing: 0.05em;
+  color: hsl(var(--muted-foreground) / 0.78);
+  background: hsl(var(--muted) / 0.35);
+}
+
+.caretip-landing-dashboard-showcase__period--context {
+  font-size: 0.6875rem;
+  font-weight: 500;
+  color: hsl(var(--muted-foreground));
+  border-color: hsl(var(--border) / 0.55);
+  background: hsl(var(--background) / 0.85);
+}
+
+.caretip-landing-dashboard-showcase--premium .caretip-landing-dashboard-showcase__kpi-row--premium
+  .business-period-summary__metric:not(.business-period-summary__metric--primary)
+  .business-period-summary__value {
+  font-size: clamp(0.9375rem, 1.8vw, 1.125rem);
+  font-weight: 600;
+  color: hsl(var(--foreground) / 0.88);
+}
+
+.caretip-landing-dashboard-showcase--premium .caretip-landing-dashboard-showcase__kpi-row--premium
+  .business-period-summary__metric:not(.business-period-summary__metric--primary)
+  .business-period-summary__label {
+  font-size: 0.625rem;
+  color: hsl(var(--muted-foreground) / 0.9);
+}
+
+.caretip-landing-dashboard-showcase--in-card.caretip-landing-dashboard-showcase--premium
+  .caretip-landing-dashboard-showcase__kpi-row--embedded
+  .business-period-summary__metric:not(.business-period-summary__metric--primary)
+  .business-period-summary__value {
+  font-size: clamp(0.6875rem, 1.15vw, 0.75rem);
+  font-weight: 550;
+}
+
+.caretip-landing-dashboard-showcase__leaderboard-avatar--marketing {
+  border: 1px solid hsl(var(--border) / 0.65);
+  box-shadow: 0 0 0 1px hsl(var(--background));
+  object-fit: cover;
+}
+
+.caretip-landing-dashboard-showcase__leaderboard-name {
+  letter-spacing: -0.015em;
+  line-height: 1.25;
+}
+
+.caretip-landing-dashboard-showcase--premium .caretip-landing-dashboard-showcase__leaderboard-row {
+  gap: 0.55rem;
+  padding: 0.55rem 0;
+  border-bottom-color: hsl(var(--border) / 0.4);
+}
+
+.caretip-landing-dashboard-showcase--premium .caretip-landing-dashboard-showcase__leaderboard-rank {
+  width: 0.875rem;
+  font-size: 0.625rem;
+  color: hsl(var(--muted-foreground) / 0.75);
+}
+
+.caretip-landing-dashboard-showcase--premium .caretip-landing-dashboard-showcase__leaderboard-tips-amount {
+  font-size: clamp(0.8125rem, 1.45vw, 0.9375rem);
+  font-weight: 650;
+}
+
+.caretip-landing-dashboard-showcase--in-card.caretip-landing-dashboard-showcase--premium
+  .caretip-landing-dashboard-showcase__leaderboard-tips-amount {
+  font-size: clamp(0.75rem, 1.25vw, 0.8125rem);
+}
+
+.caretip-landing-dashboard-showcase__sidebar {
+  opacity: 0.92;
+}
+
+.caretip-landing-dashboard-showcase__sidebar-icon {
+  width: 0.95rem;
+  height: 0.95rem;
+}
+
+.caretip-landing-dashboard-showcase__sidebar-link {
+  color: hsl(var(--sidebar-foreground) / 0.72);
+}
+
+.caretip-landing-dashboard-showcase__sidebar-link--active {
+  color: hsl(var(--foreground) / 0.92);
+  background: hsl(var(--sidebar-accent) / 0.65);
+}
+
+.caretip-landing-dashboard-showcase__sidebar-label {
+  font-weight: 500;
+  color: hsl(var(--sidebar-foreground) / 0.78);
+}
+
+.caretip-landing-dashboard-showcase--in-card .caretip-landing-dashboard-showcase__shell {
+  padding: clamp(0.65rem, 1.8vw, 1.125rem) clamp(0.65rem, 1.8vw, 1.25rem)
+    clamp(0.75rem, 2vw, 1.25rem);
+}
+
+.caretip-landing-dashboard-showcase--in-card .caretip-landing-dashboard-showcase__body {
+  gap: 0.85rem;
+}

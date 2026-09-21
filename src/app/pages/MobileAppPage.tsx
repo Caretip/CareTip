@@ -4,8 +4,10 @@ import { Smartphone, Bell, BarChart3, Shield, Download, Check, Star } from 'luci
 import { Navigation } from '../components/Navigation';
 import { Footer } from '../components/Footer';
 import DeferredShaderBackground from '../components/ui/deferred-shader-background';
+import { usePublicHtmlBootHandoff } from '../lib/usePublicHtmlBootHandoff';
 
 export function MobileAppPage() {
+  usePublicHtmlBootHandoff(true);
   const features = [
     "See new tips and earnings at a glance",
     "Push notifications for tips and payouts",
@@ -36,7 +38,7 @@ export function MobileAppPage() {
   ];
 
   return (
-    <div className="min-h-screen relative">
+    <div className="min-h-screen relative" data-caretip-route-ready="" data-caretip-public-committed="">
       <DeferredShaderBackground />
       <div className="relative z-10">
         <Navigation />

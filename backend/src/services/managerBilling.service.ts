@@ -247,16 +247,22 @@ export async function getCheckoutSyncStatusForBusiness(
 ): Promise<CheckoutSyncStatusDto> {
   let dto = await getBillingStatusForBusiness(businessId);
 
-  if (dto.status === "none" && dto.stripeConfigured && dto.billingEnabled) {
+  const checkoutSessionId = opts?.checkoutSessionId?.trim() || null;
+  const shouldAttemptCheckoutReturnSync =
+    dto.stripeConfigured &&
+    dto.billingEnabled &&
+    (dto.status === "none" || (checkoutSessionId && !dto.hasStripeBilling));
+
+  if (shouldAttemptCheckoutReturnSync) {
     const activation = await tryActivateSubscriptionFromStripeForBusiness({
       businessId,
-      checkoutSessionId: opts?.checkoutSessionId ?? null,
+      checkoutSessionId,
       expectedPlanKey: expectedPlanKey,
       source: "checkout_return_sync",
     });
     logTrialSync("activation.checkout_return_sync", {
       businessId,
-      checkoutSessionId: opts?.checkoutSessionId ?? null,
+      checkoutSessionId,
       outcome: activation,
       expectedPlanKey: expectedPlanKey ?? null,
     });

@@ -148,6 +148,7 @@
     "test:subscription-lifecycle-e2e": "dotenv -e ../.env -e .env -- tsx scripts/subscription-lifecycle-e2e-runtime.ts",
     "test:subscription-scenario-e2e": "dotenv -e ../.env -e .env -- tsx scripts/subscription-scenario-e2e-report.ts",
     "report:legacy-paid-basic-stripe": "dotenv -e ../.env -e .env -- tsx scripts/report-legacy-paid-basic-stripe.ts",
+    "test:billing-lifecycle-integrity": "dotenv -e ../.env -e .env -- tsx scripts/billing-lifecycle-integrity-runtime.ts",
     "test:subscription-b1": "dotenv -e ../.env -e .env -- tsx scripts/subscription-b1-runtime.ts",
     "test:subscription-b2": "dotenv -e ../.env -e .env -- tsx scripts/subscription-b2-runtime.ts",
     "test:subscription-entitlement-payload": "dotenv -e ../.env -e .env -- tsx scripts/subscription-entitlement-payload-runtime.ts",

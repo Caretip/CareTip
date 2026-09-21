@@ -144,7 +144,12 @@ export async function getBusinessByUserId(userId: string) {
   });
 }
 
-export type BusinessHardDeleteBlocker = "tips" | "refunds" | "connect_payouts" | "physical_qr_orders";
+export type BusinessHardDeleteBlocker =
+  | "tips"
+  | "refunds"
+  | "connect_payouts"
+  | "physical_qr_orders"
+  | "active_stripe_subscription";
 
 /** Preflight refused an empty-venue wipe because protected Restrict history exists. */
 export class BusinessHardDeleteBlockedError extends Error {
@@ -170,6 +175,8 @@ const HARD_DELETE_BLOCKED_MESSAGE: Record<BusinessHardDeleteBlocker, string> = {
   connect_payouts: "Cannot hard-delete business with Connect payouts; use soft-close/deactivation instead.",
   physical_qr_orders:
     "Cannot hard-delete business with physical QR orders; use soft-close/deactivation instead.",
+  active_stripe_subscription:
+    "Cannot hard-delete business while an active Stripe platform subscription exists. Cancel billing first or use soft-close instead.",
 };
 
 function prismaFkConstraintName(err: unknown): string {
@@ -193,114 +200,169 @@ function mentionsBusinessesUserIdFkey(err: unknown): boolean {
  * Never delete the owner User while Business.user_id still references them (Restrict).
  * Do not CASCADE tips, refunds, Connect payouts, or physical QR orders.
  */
-export async function deleteBusinessCascadeUsers(businessId: string): Promise<void> {
-  await prisma.$transaction(async (tx) => {
-    const business = await tx.business.findUnique({
-      where: { id: businessId },
-      select: {
-        id: true,
-        userId: true,
-        user: { select: { id: true, role: true, isPlatformAdmin: true } },
-      },
-    });
-    if (!business) {
-      throw new Error("Business not found");
-    }
-    if (business.user.isPlatformAdmin) {
-      throw new Error("Cannot delete a business owned by a platform administrator account");
-    }
-    if (business.user.role !== "MANAGER") {
-      throw new Error("Business owner user has unexpected role; delete aborted");
-    }
+export async function deleteBusinessCascadeUsers(
+  businessId: string,
+  opts?: { actorUserId?: string | null },
+): Promise<void> {
+  const {
+    assessBusinessBillingDeleteGuard,
+    recordBusinessDeletionAudit,
+  } = await import("./billingLifecycleIntegrity.service.js");
 
-    const [tipCount, refundCount, payoutCount, physicalQrOrderCount] = await Promise.all([
+  const billingGuard = await assessBusinessBillingDeleteGuard(businessId);
+  if (billingGuard.blocked) {
+    await recordBusinessDeletionAudit({
+      actorUserId: opts?.actorUserId ?? null,
+      businessId,
+      deletionType: "hard",
+      outcome: "blocked",
+      reason: billingGuard.reason ?? "active_stripe_subscription",
+      snapshot: billingGuard.snapshot,
+    });
+    throw new BusinessHardDeleteBlockedError(
+      "active_stripe_subscription",
+      billingGuard.reason ?? HARD_DELETE_BLOCKED_MESSAGE.active_stripe_subscription,
+    );
+  }
+
+  try {
+    await prisma.$transaction(async (tx) => {
+      const business = await tx.business.findUnique({
+        where: { id: businessId },
+        select: {
+          id: true,
+          userId: true,
+          user: { select: { id: true, role: true, isPlatformAdmin: true } },
+        },
+      });
+      if (!business) {
+        throw new Error("Business not found");
+      }
+      if (business.user.isPlatformAdmin) {
+        throw new Error("Cannot delete a business owned by a platform administrator account");
+      }
+      if (business.user.role !== "MANAGER") {
+        throw new Error("Business owner user has unexpected role; delete aborted");
+      }
+
+      const [tipCount, refundCount, payoutCount, physicalQrOrderCount] = await Promise.all([
       tx.transaction.count({ where: { businessId } }),
       tx.tipRefund.count({ where: { businessId } }),
       tx.stripeConnectPayout.count({ where: { businessId } }),
-      tx.physicalQrOrder.count({ where: { businessId } }),
-    ]);
-    if (tipCount > 0) {
-      throw new BusinessHardDeleteBlockedError("tips", HARD_DELETE_BLOCKED_MESSAGE.tips);
-    }
-    if (refundCount > 0) {
-      throw new BusinessHardDeleteBlockedError("refunds", HARD_DELETE_BLOCKED_MESSAGE.refunds);
-    }
-    if (payoutCount > 0) {
-      throw new BusinessHardDeleteBlockedError(
-        "connect_payouts",
-        HARD_DELETE_BLOCKED_MESSAGE.connect_payouts,
-      );
-    }
-    if (physicalQrOrderCount > 0) {
-      throw new BusinessHardDeleteBlockedError(
-        "physical_qr_orders",
-        HARD_DELETE_BLOCKED_MESSAGE.physical_qr_orders,
-      );
-    }
+        tx.physicalQrOrder.count({ where: { businessId } }),
+      ]);
+      if (tipCount > 0) {
+        throw new BusinessHardDeleteBlockedError("tips", HARD_DELETE_BLOCKED_MESSAGE.tips);
+      }
+      if (refundCount > 0) {
+        throw new BusinessHardDeleteBlockedError("refunds", HARD_DELETE_BLOCKED_MESSAGE.refunds);
+      }
+      if (payoutCount > 0) {
+        throw new BusinessHardDeleteBlockedError(
+          "connect_payouts",
+          HARD_DELETE_BLOCKED_MESSAGE.connect_payouts,
+        );
+      }
+      if (physicalQrOrderCount > 0) {
+        throw new BusinessHardDeleteBlockedError(
+          "physical_qr_orders",
+          HARD_DELETE_BLOCKED_MESSAGE.physical_qr_orders,
+        );
+      }
 
-    const employees = await tx.employee.findMany({
-      where: { businessId },
-      select: {
-        userId: true,
-        user: { select: { role: true, isPlatformAdmin: true } },
-      },
+      const employees = await tx.employee.findMany({
+        where: { businessId },
+        select: {
+          userId: true,
+          user: { select: { role: true, isPlatformAdmin: true } },
+        },
+      });
+
+      const ownerUserId = business.userId;
+      const staffUserIds: string[] = [];
+      for (const row of employees) {
+        if (!row.userId || row.userId === ownerUserId) {
+          continue;
+        }
+        if (row.user?.isPlatformAdmin) {
+          throw new Error("Cannot delete business: a staff account is marked as platform administrator");
+        }
+        if (row.user && row.user.role !== "EMPLOYEE") {
+          throw new Error("Business has a staff user with unexpected role; delete aborted");
+        }
+        staffUserIds.push(row.userId);
+      }
+
+      // 1) Business first — Restrict owner FK forbids deleting User while this row exists.
+      // CASCADE children (employees, locations, invites, …) follow. Restrict ledger stays blocked by preflight.
+      try {
+        await tx.business.delete({ where: { id: businessId } });
+      } catch (err) {
+        if (isPrismaForeignKeyError(err)) {
+          throw new Error(
+            `Cannot hard-delete business: unexpected foreign-key constraint (${prismaFkConstraintName(err) || "unknown"}). Use soft-close/deactivation instead.`,
+          );
+        }
+        throw err;
+      }
+
+      // 2) Staff Users that belonged only to this venue.
+      if (staffUserIds.length > 0) {
+        await tx.user.deleteMany({ where: { id: { in: staffUserIds } } });
+      }
+
+      // 3) Owner User only after Business is gone (businesses_user_id_fkey Restrict).
+      try {
+        await tx.user.delete({ where: { id: ownerUserId } });
+      } catch (err) {
+        if (isPrismaForeignKeyError(err) && mentionsBusinessesUserIdFkey(err)) {
+          const { logServerError } = await import("../utils/httpErrors.js");
+          logServerError("business.deleteBusinessCascadeUsers.ownerUser", err, {
+            businessId,
+            ownerUserId,
+            constraint: "businesses_user_id_fkey",
+            note: "Owner User is being deleted while Business still exists — deletion-order bug. Delete Business first.",
+          });
+          throw new BusinessHardDeleteOrderError(
+            "Deletion-order error: owner User cannot be deleted while Business still references it (businesses_user_id_fkey). Delete the Business first.",
+          );
+        }
+        throw err;
+      }
     });
 
-    const ownerUserId = business.userId;
-    const staffUserIds: string[] = [];
-    for (const row of employees) {
-      if (!row.userId || row.userId === ownerUserId) {
-        continue;
-      }
-      if (row.user?.isPlatformAdmin) {
-        throw new Error("Cannot delete business: a staff account is marked as platform administrator");
-      }
-      if (row.user && row.user.role !== "EMPLOYEE") {
-        throw new Error("Business has a staff user with unexpected role; delete aborted");
-      }
-      staffUserIds.push(row.userId);
-    }
+    await recordBusinessDeletionAudit({
+      actorUserId: opts?.actorUserId ?? null,
+      businessId,
+      deletionType: "hard",
+      outcome: "succeeded",
+      snapshot: billingGuard.snapshot,
+    });
 
-    // 1) Business first — Restrict owner FK forbids deleting User while this row exists.
-    // CASCADE children (employees, locations, invites, …) follow. Restrict ledger stays blocked by preflight.
-    try {
-      await tx.business.delete({ where: { id: businessId } });
-    } catch (err) {
-      if (isPrismaForeignKeyError(err)) {
-        throw new Error(
-          `Cannot hard-delete business: unexpected foreign-key constraint (${prismaFkConstraintName(err) || "unknown"}). Use soft-close/deactivation instead.`,
-        );
-      }
-      throw err;
+    emitBusinessDataChanged(businessId, "business_deleted");
+    emitPlatformDataUpdated("business_deleted");
+  } catch (err) {
+    if (err instanceof BusinessHardDeleteBlockedError) {
+      await recordBusinessDeletionAudit({
+        actorUserId: opts?.actorUserId ?? null,
+        businessId,
+        deletionType: "hard",
+        outcome: "blocked",
+        reason: err.blocker,
+        snapshot: billingGuard.snapshot,
+      });
+    } else {
+      await recordBusinessDeletionAudit({
+        actorUserId: opts?.actorUserId ?? null,
+        businessId,
+        deletionType: "hard",
+        outcome: "failed",
+        snapshot: billingGuard.snapshot,
+        errorMessage: err instanceof Error ? err.message : String(err),
+      });
     }
-
-    // 2) Staff Users that belonged only to this venue.
-    if (staffUserIds.length > 0) {
-      await tx.user.deleteMany({ where: { id: { in: staffUserIds } } });
-    }
-
-    // 3) Owner User only after Business is gone (businesses_user_id_fkey Restrict).
-    try {
-      await tx.user.delete({ where: { id: ownerUserId } });
-    } catch (err) {
-      if (isPrismaForeignKeyError(err) && mentionsBusinessesUserIdFkey(err)) {
-        const { logServerError } = await import("../utils/httpErrors.js");
-        logServerError("business.deleteBusinessCascadeUsers.ownerUser", err, {
-          businessId,
-          ownerUserId,
-          constraint: "businesses_user_id_fkey",
-          note: "Owner User is being deleted while Business still exists — deletion-order bug. Delete Business first.",
-        });
-        throw new BusinessHardDeleteOrderError(
-          "Deletion-order error: owner User cannot be deleted while Business still references it (businesses_user_id_fkey). Delete the Business first.",
-        );
-      }
-      throw err;
-    }
-  });
-
-  emitBusinessDataChanged(businessId, "business_deleted");
-  emitPlatformDataUpdated("business_deleted");
+    throw err;
+  }
 }
 
 /** Narrow lookup for dashboard — avoids SELECT * on `businesses` (P2022 when DB lags schema). */

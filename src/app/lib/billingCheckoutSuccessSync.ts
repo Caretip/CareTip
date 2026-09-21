@@ -40,13 +40,15 @@ async function primeEntitlementsFromProfile(): Promise<void> {
  */
 export async function runBillingCheckoutSuccessSync(opts?: {
   expectedPlan?: SubscriptionPlanKey;
+  checkoutSessionId?: string | null;
 }): Promise<boolean> {
   return withIdleSuppress("billing-checkout-sync", async () => {
     const expectedPlan = opts?.expectedPlan ?? getCheckoutSyncExpectation() ?? undefined;
+    const checkoutSessionId = opts?.checkoutSessionId?.trim() || null;
 
     for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt += 1) {
       try {
-        const result = await fetchBillingSyncStatus(expectedPlan);
+        const result = await fetchBillingSyncStatus(expectedPlan, checkoutSessionId);
         if (result.synced) {
           clearCheckoutSyncExpectation();
           clearBusinessProfileClientCache();

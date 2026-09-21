@@ -11,7 +11,11 @@ import {
   type LazyExoticComponent,
   type ReactNode,
 } from "react";
-import { isNearViewport, PUBLIC_DEFER_ROOT_MARGIN } from "@/lib/publicRouteDefer";
+import {
+  isNearViewport,
+  LANDING_NEAR_VIEWPORT_ROOT_MARGIN,
+  PUBLIC_DEFER_ROOT_MARGIN,
+} from "@/lib/publicRouteDefer";
 
 type LandingLazySectionProps<P extends object> = {
   /** Dynamic import for a below-the-fold landing section. */
@@ -21,6 +25,10 @@ type LandingLazySectionProps<P extends object> = {
   minHeight?: string;
   rootMargin?: string;
   className?: string;
+  /** Mount immediately — use for product visuals that must not wait for scroll (e.g. dashboard mockup). */
+  eager?: boolean;
+  /** Start fetching the section chunk as soon as the landing page mounts. */
+  prefetch?: boolean;
 };
 
 const lazySectionCache = new Map<
@@ -57,8 +65,18 @@ function LazySectionMountLatch({
   return children;
 }
 
+function LandingLazySectionFallback({ minHeight }: { minHeight?: string }) {
+  return (
+    <div
+      className="caretip-landing-lazy-section-fallback"
+      style={minHeight ? { minHeight } : undefined}
+      aria-hidden
+    />
+  );
+}
+
 /**
- * Mount a landing section only when it nears the viewport.
+ * Mount a landing section when it nears the viewport.
  * Combines IntersectionObserver gating with React.lazy code-splitting.
  */
 export function LandingLazySection<P extends object>({
@@ -67,9 +85,11 @@ export function LandingLazySection<P extends object>({
   minHeight,
   rootMargin = PUBLIC_DEFER_ROOT_MARGIN,
   className,
+  eager = false,
+  prefetch = true,
 }: LandingLazySectionProps<P>) {
   const hostRef = useRef<HTMLDivElement>(null);
-  const [visible, setVisible] = useState(false);
+  const [visible, setVisible] = useState(eager);
   const [resolved, setResolved] = useState(false);
   const LazyComponent = getLazySection(load);
 
@@ -78,6 +98,17 @@ export function LandingLazySection<P extends object>({
   }, []);
 
   useEffect(() => {
+    if (prefetch) {
+      void load();
+    }
+  }, [load, prefetch]);
+
+  useEffect(() => {
+    if (eager) {
+      setVisible(true);
+      return;
+    }
+
     const node = hostRef.current;
     if (!node) return;
 
@@ -103,7 +134,7 @@ export function LandingLazySection<P extends object>({
 
     observer.observe(node);
     return () => observer.disconnect();
-  }, [rootMargin]);
+  }, [eager, rootMargin]);
 
   const reserveHeight = Boolean(minHeight && !resolved);
   const heightStyle = reserveHeight ? { minHeight } : undefined;
@@ -112,12 +143,13 @@ export function LandingLazySection<P extends object>({
     <div
       ref={hostRef}
       data-landing-lazy-host=""
+      data-landing-lazy-resolved={resolved ? "" : undefined}
       className={className}
       style={heightStyle}
-      aria-hidden={!visible || !resolved ? true : undefined}
+      aria-busy={visible && !resolved ? true : undefined}
     >
       {visible ? (
-        <Suspense fallback={null}>
+        <Suspense fallback={<LandingLazySectionFallback minHeight={minHeight} />}>
           <LazySectionMountLatch onMounted={handleMounted}>
             {createElement(
               LazyComponent as unknown as ComponentType<P>,
@@ -129,3 +161,5 @@ export function LandingLazySection<P extends object>({
     </div>
   );
 }
+
+export { LANDING_NEAR_VIEWPORT_ROOT_MARGIN };

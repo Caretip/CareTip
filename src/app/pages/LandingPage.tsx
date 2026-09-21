@@ -20,8 +20,8 @@ import "@/styles/bundles/landing.css";
 /** Begin LCP warm as soon as the landing chunk evaluates (SPA + cold). */
 void warmLandingHeroLcpImage().then(() => {
   scheduleMobileDeferredWork(() => prefetchLandingBelowFoldSections(), {
-    desktopTimeoutMs: 280,
-    mobileTimeoutMs: 900,
+    desktopTimeoutMs: 120,
+    mobileTimeoutMs: 420,
   });
 });
 
