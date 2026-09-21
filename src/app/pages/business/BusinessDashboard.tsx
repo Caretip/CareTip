@@ -68,6 +68,7 @@ const BusinessDashboardAnalyticsCharts = lazy(() =>
   })),
 );
 import { getAuthSessionFlags } from "../../lib/authSessionBootstrap";
+import { isAuthenticatedWithAccessToken } from "../../lib/authRestore";
 import { isOnboardingCompleted } from "../../lib/onboardingProgress";
 import bizzyHeroWebp from "../../../../images/finalbizzy-hero.webp";
 import bizzyHeroAvif from "../../../../images/finalbizzy-hero.avif";
@@ -95,8 +96,9 @@ export const BusinessDashboard = memo(function BusinessDashboard() {
       }) satisfies Record<GoalPeriod, string>,
     [t],
   );
-  const { user, logout, isBusiness, exitImpersonation, sessionValidated, authReady } =
+  const { user, logout, isBusiness, exitImpersonation, sessionValidated, authReady, authStatus } =
     useRequireAuth();
+  const protectedApiReady = isAuthenticatedWithAccessToken(user, authStatus);
 
   const handleLogout = () => {
     if (user?.impersonation) {
@@ -148,7 +150,10 @@ export const BusinessDashboard = memo(function BusinessDashboard() {
     retryStats,
     applyLiveTip,
   } = useBusinessDashboardStats(
-    user?.role === "business" && authReady && user.hasCompletedOnboarding === true,
+    user?.role === "business" &&
+      protectedApiReady &&
+      authReady &&
+      user.hasCompletedOnboarding === true,
     sessionValidated,
     advancedAnalyticsEnabled,
   );

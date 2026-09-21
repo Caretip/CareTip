@@ -1,9 +1,10 @@
 import { useAuth } from "../hooks/useAuth";
 import { useFcmPushSync } from "../hooks/useFcmPushSync";
+import { isAuthenticatedWithAccessToken } from "../lib/authRestore";
 
 /** Headless FCM registration — respects server-side notification preferences. */
 export function PushNotificationSync() {
-  const { user, authStatus, authHydrated, sessionValidated } = useAuth();
-  useFcmPushSync(user, authStatus, authHydrated && sessionValidated);
+  const { user, authStatus } = useAuth();
+  useFcmPushSync(user, authStatus, isAuthenticatedWithAccessToken(user, authStatus));
   return null;
 }

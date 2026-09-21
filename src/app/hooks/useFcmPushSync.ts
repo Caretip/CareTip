@@ -15,6 +15,7 @@ import {
 } from "../lib/fcmPush";
 import { getMyAccountSettings, getEmployeeProfile, hasClientAccessToken } from "../lib/api";
 import { logClientError } from "../lib/clientLog";
+import { isApiAuthSessionError } from "../lib/apiError";
 import { isApiConnectivityError } from "../lib/errorMessages";
 
 function managerWantsPush(prefs: {
@@ -123,9 +124,8 @@ export function useFcmPushSync(
         if (wasPushRegistrationRateLimited()) return true;
         return ok;
       } catch (err) {
-        if (!isApiConnectivityError(err)) {
-          logClientError("useFcmPushSync", err);
-        }
+        if (isApiAuthSessionError(err) || isApiConnectivityError(err)) return false;
+        logClientError("useFcmPushSync", err);
         return false;
       }
     };

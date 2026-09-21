@@ -6,6 +6,7 @@ import { BILLING_CHECKOUT_SYNCED_EVENT } from "../lib/billingCheckoutSuccessSync
 import { primeSubscriptionEntitlementsFromSession, migrateSubscriptionEntitlementsCacheIfNeeded } from "../lib/subscriptionSessionCache";
 import { resolveSubscriptionTier } from "../lib/subscriptionCapabilities";
 import { logClientError } from "../lib/clientLog";
+import { isApiAuthSessionError } from "../lib/apiError";
 import { isApiConnectivityError } from "../lib/errorMessages";
 
 /**
@@ -45,9 +46,8 @@ export function ApprovedBusinessGate() {
         applyProfile(p);
       })
       .catch((err: unknown) => {
-        if (!isApiConnectivityError(err)) {
-          logClientError("ApprovedBusinessGate", err);
-        }
+        if (isApiAuthSessionError(err) || isApiConnectivityError(err)) return;
+        logClientError("ApprovedBusinessGate", err);
       });
     return () => {
       cancelled = true;

@@ -23,6 +23,7 @@ import { BusinessEntitlementsProvider } from "../contexts/BusinessEntitlementsCo
 import { BusinessGuidelinesProvider } from "../contexts/BusinessGuidelinesContext";
 import { BusinessFeatureInfoDrawerProvider } from "../components/business/BusinessFeatureInfoDrawerProvider";
 import { sessionHasActiveEntitlements } from "../lib/subscriptionEntitlementFastPath";
+import { isAuthenticatedWithAccessToken } from "../lib/authRestore";
 import { useMinWidthMedia } from "@/lib/motionPerf";
 import { scheduleMobileDeferredWork } from "@/lib/mobilePerf";
 import { markPostLoginTrace } from "../lib/postLoginRuntimeTrace";
@@ -40,7 +41,7 @@ import {
 export function BusinessLayout() {
   const { mobileMenuOpen, openMobileMenu, closeMobileMenu } = useMobileMenuState();
   const { user, authStatus } = useAuth();
-  const isAppReady = authStatus === "authenticated" && user?.role === "business";
+  const isAppReady = isAuthenticatedWithAccessToken(user, authStatus) && user?.role === "business";
   const isLargeScreen = useMinWidthMedia(1024);
   const globalLoaderActive = useGlobalAppLoadingActive();
   const firstRenderLogged = useRef(false);

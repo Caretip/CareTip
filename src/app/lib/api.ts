@@ -170,7 +170,9 @@ async function runRefreshAuthWithRetries(): Promise<RefreshSessionResult> {
     return { ok: false, shouldClearSession: true, status: 401 };
   }
 
-  if (Date.now() < refreshFailureCooldownUntil) {
+  // Cooldown avoids hammering refresh after transient 503s while a token still works.
+  // When memory has no JWT (HMR, new tab), always attempt restore via HttpOnly cookie.
+  if (Date.now() < refreshFailureCooldownUntil && getToken()?.trim()) {
     return { ok: false, shouldClearSession: false, status: 503 };
   }
 
@@ -397,7 +399,6 @@ async function ensureAccessTokenForProtectedRequest(url: string): Promise<void> 
   if (getToken()?.trim()) return;
   if (isClientSessionRevoked()) return;
   if (!hasClientStoredSession() && !hasClientSessionHint()) return;
-  if (Date.now() < refreshFailureCooldownUntil) return;
   await refreshAccessToken();
 }
 
@@ -460,11 +461,17 @@ async function handleRes<T>(res: Response, opts?: { silent?: boolean }): Promise
       (body.code === SUBSCRIPTION_REQUIRED_CODE ||
         body.code === PLAN_CAPABILITY_REQUIRED_CODE ||
         body.code === PLAN_LIMIT_EXCEEDED_CODE);
+    const isExpectedAuthSession =
+      res.status === 401 ||
+      body.code === "SESSION_STALE" ||
+      body.code === "TOKEN_EXPIRED" ||
+      body.code === "TOKEN_INVALID";
     if (
       !opts?.silent &&
       !(refreshPath && res.status >= 500) &&
       !isExpectedPendingVerification &&
-      !isExpectedSubscriptionRequired
+      !isExpectedSubscriptionRequired &&
+      !isExpectedAuthSession
     ) {
       const apiErr = new Error(`HTTP ${res.status}`);
       logClientError("api.handleRes", apiErr, {
@@ -638,7 +645,11 @@ async function apiRequest<T>(url: string, init?: RequestInit): Promise<T> {
     if (isAuthRefresh && isCaretipApi) {
       refreshDeemedInvalid = true;
       if (mayClearClientAuthStorage()) clearAuthStorage();
-    } else if (canAttemptRefresh && !alreadyRetried && Date.now() >= refreshFailureCooldownUntil) {
+    } else if (
+      canAttemptRefresh &&
+      !alreadyRetried &&
+      (Date.now() >= refreshFailureCooldownUntil || !tokenIsSet)
+    ) {
       const { token: nextToken, shouldClearAccessToken } = await refreshAccessToken();
       if (shouldClearAccessToken) refreshDeemedInvalid = true;
       if (nextToken) {
@@ -660,13 +671,9 @@ async function apiRequest<T>(url: string, init?: RequestInit): Promise<T> {
       }
     }
 
-    // Clear session only when the refresh flow marked tokens invalid, or no token remains.
-    // Avoids logging users out on a stray 401 while a token is still present (e.g. permission mismatch).
+    // Persistent 401 after refresh + delayed retry means the session cannot be restored.
     if (res.status === 401 && isCaretipApi && mayClearClientAuthStorage()) {
-      const t = getToken()?.trim();
-      if (!t || refreshDeemedInvalid) {
-        clearAuthStorage();
-      }
+      clearAuthStorage();
     }
   }
 

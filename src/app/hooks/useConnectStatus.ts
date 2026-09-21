@@ -3,13 +3,14 @@ import { useTranslation } from "react-i18next";
 import { getConnectStatus, type ConnectStatus } from "../lib/api";
 import { toUserFriendlyMessage } from "../lib/errorMessages";
 
-export function useConnectStatus() {
+export function useConnectStatus(enabled = true) {
   const { t } = useTranslation();
   const [data, setData] = useState<ConnectStatus | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(enabled);
   const [error, setError] = useState<string | null>(null);
 
   const reload = useCallback(async () => {
+    if (!enabled) return;
     setLoading(true);
     setError(null);
     try {
@@ -21,11 +22,17 @@ export function useConnectStatus() {
     } finally {
       setLoading(false);
     }
-  }, [t]);
+  }, [enabled, t]);
 
   useEffect(() => {
+    if (!enabled) {
+      setLoading(false);
+      setError(null);
+      setData(null);
+      return;
+    }
     void reload();
-  }, [reload]);
+  }, [enabled, reload]);
 
   return { data, loading, error, reload };
 }

@@ -3,7 +3,7 @@
  */
 
 import type { AuthStatus } from "./authSession";
-import { isClientSessionRevoked } from "./api";
+import { hasClientAccessToken, isClientSessionRevoked } from "./api";
 import { getAuthSessionFlags } from "./authSessionBootstrap";
 import { hasClientStoredSession } from "./authUserStore";
 
@@ -27,6 +27,14 @@ export function isAuthenticatedAndApiReady(
   authStatus: AuthStatus,
 ): boolean {
   return authStatus === "authenticated" && Boolean(user) && isProtectedApiReady();
+}
+
+/** Protected fetch hooks — requires bootstrap settled and an in-memory access JWT. */
+export function isAuthenticatedWithAccessToken(
+  user: unknown,
+  authStatus: AuthStatus,
+): boolean {
+  return isAuthenticatedAndApiReady(user, authStatus) && hasClientAccessToken();
 }
 
 /** Storage still has credentials but in-memory user is empty (post-validate race). */

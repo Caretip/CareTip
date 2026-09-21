@@ -2,9 +2,11 @@ import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { useAuth } from "./useAuth";
-import { fetchBusinessProfile } from "../lib/api";
+import { fetchBusinessProfile, hasClientAccessToken } from "../lib/api";
 import { useSocketInstance } from "./useSocket";
 import { logClientError } from "../lib/clientLog";
+import { isApiAuthSessionError } from "../lib/apiError";
+import { isAuthenticatedWithAccessToken } from "../lib/authRestore";
 import type { OnboardingVerificationStatus } from "../lib/api";
 import { resolveOnboardingVerificationOutcomeToast } from "../lib/onboardingVerificationOutcomeNotification";
 
@@ -17,11 +19,13 @@ import { resolveOnboardingVerificationOutcomeToast } from "../lib/onboardingVeri
  */
 export function useBusinessVerificationRealtime(enabled: boolean): void {
   const { t } = useTranslation();
-  const { user, updateUser } = useAuth();
-  const { socket } = useSocketInstance(enabled);
+  const { user, updateUser, authStatus } = useAuth();
+  const apiReady = isAuthenticatedWithAccessToken(user, authStatus);
+  const { socket } = useSocketInstance(enabled && apiReady);
 
   useEffect(() => {
-    if (!enabled || !user || user.role !== "business" || user.impersonation) return;
+    if (!enabled || !apiReady || !user || user.role !== "business" || user.impersonation) return;
+    if (!hasClientAccessToken()) return;
 
     const sync = async () => {
       try {
@@ -50,6 +54,7 @@ export function useBusinessVerificationRealtime(enabled: boolean): void {
           });
         }
       } catch (err) {
+        if (isApiAuthSessionError(err)) return;
         logClientError("useBusinessVerificationRealtime", err);
       }
     };
@@ -64,5 +69,5 @@ export function useBusinessVerificationRealtime(enabled: boolean): void {
       socket.off("verification_updated", onUpdate);
       socket.off("platform_verification_updated", onUpdate);
     };
-  }, [enabled, socket, t, updateUser, user?.businessId, user?.id, user?.impersonation, user?.role]);
+  }, [apiReady, enabled, socket, t, updateUser, user?.businessId, user?.id, user?.impersonation, user?.role]);
 }

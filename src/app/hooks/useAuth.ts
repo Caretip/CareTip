@@ -12,6 +12,7 @@ import {
   patchMyOnboardingStatus,
   clearClientSessionRevoked,
   clearClientAuthStorage,
+  hasClientAccessToken,
   isClientSessionRevoked,
   isMfaLoginChallenge,
   markLogoutPending,
@@ -51,7 +52,8 @@ import {
 } from "../lib/authLogoutTransition";
 import { isIdleLogoutInFlight } from "../lib/idleSessionStore";
 import { prefetchAuthLoginRoute } from "../routing/routeLazy";
-import { markClientSessionHint } from "../lib/authSessionHint";
+import { hasClientSessionHint, markClientSessionHint } from "../lib/authSessionHint";
+import { hasClientStoredSession } from "../lib/authUserStore";
 import { setMemoryAccessToken } from "../lib/accessTokenStore";
 import { authDebug } from "../lib/authDebugLog";
 import { logClientError } from "../lib/clientLog";
@@ -351,6 +353,32 @@ export function useAuth() {
     window.addEventListener(AUTH_STORAGE_SYNC_EVENT, onStorageSync);
     return () => window.removeEventListener(AUTH_STORAGE_SYNC_EVENT, onStorageSync);
   }, []);
+
+  /** Restore in-memory JWT after HMR / memory wipe while the user snapshot stays authenticated. */
+  useEffect(() => {
+    if (!user || !sessionValidated) return;
+    if (hasClientAccessToken()) return;
+    if (isClientSessionRevoked()) return;
+    if (!hasClientStoredSession() && !hasClientSessionHint()) return;
+    if (isIdleLogoutInFlight()) return;
+
+    let cancelled = false;
+    void (async () => {
+      try {
+        const data = await refreshSessionAPI();
+        if (cancelled || isIdleLogoutInFlight()) return;
+        bumpSessionEpoch();
+        const u = persistAuthResponse(data);
+        commitAuthUser(u);
+      } catch {
+        // Invalid refresh clears storage in the API layer; protected hooks stay gated.
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [user?.id, sessionValidated]);
 
   /** Proactively refresh shortly before access token expiry so API calls rarely see 401. */
   useEffect(() => {

@@ -3,11 +3,15 @@ import { useTranslation } from "react-i18next";
 import { FixPrompt, type FixPromptDensity } from "../FixPrompt";
 import { STRIPE_CONNECT_HREF } from "./businessDashboardNav";
 import { connectNeedsSetup, useConnectStatus } from "../../hooks/useConnectStatus";
+import { useAuth } from "../../hooks/useAuth";
 import {
   getEmployeeTipPayoutMode,
+  hasClientAccessToken,
   type EmployeeTipPayoutMode,
 } from "../../lib/api";
 import { logClientError } from "../../lib/clientLog";
+import { isApiAuthSessionError } from "../../lib/apiError";
+import { isAuthenticatedWithAccessToken } from "../../lib/authRestore";
 
 type BusinessStripeConnectPromptProps = {
   density?: FixPromptDensity;
@@ -16,25 +20,30 @@ type BusinessStripeConnectPromptProps = {
 
 export function BusinessStripeConnectPrompt({ density, className }: BusinessStripeConnectPromptProps) {
   const { t } = useTranslation();
-  const { data, loading, error } = useConnectStatus();
+  const { user, authStatus } = useAuth();
+  const apiReady = isAuthenticatedWithAccessToken(user, authStatus);
+  const { data, loading, error } = useConnectStatus(apiReady);
   const [payoutMode, setPayoutMode] = useState<EmployeeTipPayoutMode | null>(null);
   const issueActive = connectNeedsSetup(data, loading, error);
   const conditionVersion = `${data?.status ?? "not_ready"}:${payoutMode ?? "unknown"}`;
 
   useEffect(() => {
+    if (!apiReady || !hasClientAccessToken()) return undefined;
     let cancelled = false;
     void getEmployeeTipPayoutMode()
       .then((res) => {
         if (!cancelled) setPayoutMode(res.mode);
       })
       .catch((err) => {
-        logClientError("BusinessStripeConnectPrompt.mode", err);
+        if (!isApiAuthSessionError(err)) {
+          logClientError("BusinessStripeConnectPrompt.mode", err);
+        }
         if (!cancelled) setPayoutMode(null);
       });
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [apiReady]);
 
   const descriptionKey =
     payoutMode === "direct_to_employee"
