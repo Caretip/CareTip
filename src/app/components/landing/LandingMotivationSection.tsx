@@ -6,11 +6,9 @@ import { LandingReveal } from "@/components/landing/LandingReveal";
 import { landingCopyVisible, landingUi } from "@/components/landing/landingUi";
 import { landingHeadlineComponents } from "@/components/landing/landingRichText";
 import { cn } from "@/lib/utils";
-import { LandingMotivationActivityStack } from "./LandingMotivationActivityStack";
 import { LandingCopySentences } from "@/components/landing/LandingCopySentences";
 import { RequestDemoCta } from "@/app/components/RequestDemoCta";
-import aminaWebp from "../../../../images/amina.webp";
-import aminaAvif from "../../../../images/amina.avif";
+import { LandingMotivationRecognitionVisual } from "./LandingMotivationRecognitionVisual";
 
 export function LandingMotivationSection() {
   const { t, i18n } = useTranslation();
@@ -88,37 +86,7 @@ export function LandingMotivationSection() {
             "caretip-motivation-visual lg:order-2 lg:justify-start",
           )}
         >
-          <div className="caretip-motivation-story-gallery caretip-motivation-story-gallery--single">
-            <picture>
-              <source type="image/avif" srcSet={aminaAvif} />
-              <source type="image/webp" srcSet={aminaWebp} />
-              <img
-                src={aminaWebp}
-                alt=""
-                className="caretip-motivation-story-gallery__img caretip-motivation-story-gallery__img--primary"
-                loading="lazy"
-                decoding="async"
-                onError={(event) => {
-                  const img = event.currentTarget;
-                  const picture = img.parentElement;
-                  if (picture?.tagName === "PICTURE") {
-                    picture
-                      .querySelectorAll('source[type="image/avif"]')
-                      .forEach((source) => source.remove());
-                  }
-                  if (img.getAttribute("src") !== aminaWebp) {
-                    img.src = aminaWebp;
-                  }
-                }}
-              />
-            </picture>
-            <p className="caretip-motivation-story-gallery__snippet">
-              {t("landing.industriesTeaser.snippets.tipsToday")}
-            </p>
-          </div>
-          <div className="caretip-motivation-activity-wrap">
-            <LandingMotivationActivityStack />
-          </div>
+          <LandingMotivationRecognitionVisual />
         </LandingReveal>
       </div>
     </section>

@@ -68,6 +68,32 @@ export function classifyCheckoutFrontendUrl(rawInput: string | undefined | null)
   }
 }
 
+function parseFrontendUrlCandidates(raw: string): string[] {
+  return raw
+    .split(",")
+    .map((part) => part.trim().replace(/^["']|["']$/g, ""))
+    .filter(Boolean);
+}
+
+function parseHttpOrigin(candidate: string): URL | null {
+  try {
+    const parsed = new URL(candidate);
+    if (parsed.protocol !== "http:" && parsed.protocol !== "https:") return null;
+    return parsed;
+  } catch {
+    return null;
+  }
+}
+
+function assertProductionFrontendUrl(parsed: URL): void {
+  if (parsed.protocol !== "https:") {
+    throw new Error("FRONTEND_URL must use HTTPS in production");
+  }
+  if (isLocalCheckoutHostname(parsed.hostname)) {
+    throw new Error("FRONTEND_URL must not be localhost in production");
+  }
+}
+
 export function resolveCheckoutFrontendBaseUrl(env: NodeJS.ProcessEnv = process.env): string {
   const raw = env.FRONTEND_URL?.trim() ?? "";
   const isProd = env.NODE_ENV === "production";
@@ -79,27 +105,26 @@ export function resolveCheckoutFrontendBaseUrl(env: NodeJS.ProcessEnv = process.
     return "http://localhost:5173";
   }
 
-  let parsed: URL;
-  try {
-    parsed = new URL(raw);
-  } catch {
+  const candidates = parseFrontendUrlCandidates(raw);
+  const parsedCandidates = candidates
+    .map((candidate) => parseHttpOrigin(candidate))
+    .filter((parsed): parsed is URL => parsed != null);
+
+  if (parsedCandidates.length === 0) {
     throw new Error("FRONTEND_URL is not a valid URL");
   }
 
-  if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
-    throw new Error("FRONTEND_URL must be an http or https origin");
-  }
-
-  const base = `${parsed.protocol}//${parsed.host}`.replace(/\/$/, "");
+  const chosen =
+    !isProd
+      ? (parsedCandidates.find((parsed) => isLocalCheckoutHostname(parsed.hostname)) ??
+        parsedCandidates[0]!)
+      : (parsedCandidates.find(
+          (parsed) => !isLocalCheckoutHostname(parsed.hostname) && parsed.protocol === "https:",
+        ) ?? parsedCandidates[0]!);
 
   if (isProd) {
-    if (parsed.protocol !== "https:") {
-      throw new Error("FRONTEND_URL must use HTTPS in production");
-    }
-    if (isLocalCheckoutHostname(parsed.hostname)) {
-      throw new Error("FRONTEND_URL must not be localhost in production");
-    }
+    assertProductionFrontendUrl(chosen);
   }
 
-  return base;
+  return `${chosen.protocol}//${chosen.host}`.replace(/\/$/, "");
 }

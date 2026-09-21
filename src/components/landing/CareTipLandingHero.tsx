@@ -7,7 +7,7 @@ import { landingCopyVisible, landingUi } from "@/components/landing/landingUi";
 import { LandingHeroAnimatedWord } from "@/components/landing/LandingHeroAnimatedWord";
 import { LandingHeroStoryShowcase } from "@/components/landing/LandingHeroStoryShowcase";
 import { LandingCopySentences } from "@/components/landing/LandingCopySentences";
-import { AnimatedHeading } from "@/components/ui/AnimatedHeading";
+import { AnimatedHeadingLazy as AnimatedHeading } from "@/components/ui/AnimatedHeading.lazy";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { cn } from "@/lib/utils";
 

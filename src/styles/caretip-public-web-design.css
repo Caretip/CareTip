@@ -74,12 +74,6 @@
   box-shadow: none;
 }
 
-.caretip-landing .caretip-audience-benefits__card {
-  border-radius: var(--ct-public-radius-lg) !important;
-  box-shadow: none !important;
-  transform: none !important;
-}
-
 .caretip-landing .caretip-landing-cta-wise::before,
 .caretip-landing .caretip-landing-cta-wise::after {
   display: none !important;

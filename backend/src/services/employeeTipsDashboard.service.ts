@@ -96,28 +96,29 @@ async function loadEmployeeSqlBundleSlice(
 
   const label = `employee.${timeframe}`;
 
-  const summary = await logDashboardPhase(label, "summarySql", () =>
-    queryEmployeeDashboardSummaryMetrics({
-      employeeId,
-      periodStart: periodRange.startUtc,
-      periodEnd: periodRange.endUtc,
-      monthStart: monthRange.startUtc,
-      monthEnd: monthRange.endUtc,
-      scanStart,
-      scanEnd,
-    }),
-  );
-
-  const analytics = await logDashboardPhase(label, "sqlBundle", () =>
-    queryEmployeeAnalyticsBundle({
-      employeeId,
-      startUtc: periodRange.startUtc,
-      endUtc: periodRange.endUtc,
-      timezone: tz,
-      timeframe,
-      recentTake: RECENT_TIPS_TAKE,
-    }),
-  );
+  const [summary, analytics] = await Promise.all([
+    logDashboardPhase(label, "summarySql", () =>
+      queryEmployeeDashboardSummaryMetrics({
+        employeeId,
+        periodStart: periodRange.startUtc,
+        periodEnd: periodRange.endUtc,
+        monthStart: monthRange.startUtc,
+        monthEnd: monthRange.endUtc,
+        scanStart,
+        scanEnd,
+      }),
+    ),
+    logDashboardPhase(label, "sqlBundle", () =>
+      queryEmployeeAnalyticsBundle({
+        employeeId,
+        startUtc: periodRange.startUtc,
+        endUtc: periodRange.endUtc,
+        timezone: tz,
+        timeframe,
+        recentTake: RECENT_TIPS_TAKE,
+      }),
+    ),
+  ]);
 
   return {
     summary,

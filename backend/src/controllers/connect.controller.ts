@@ -1,4 +1,5 @@
 import type { Request, Response } from "express";
+import { resolveRequestUserId } from "../middleware/auth.middleware.js";
 import * as businessService from "../services/business.service.js";
 import { prisma } from "../prisma.js";
 import {
@@ -26,8 +27,7 @@ import {
 } from "../lib/instantPayoutTerms.js";
 
 function getUserId(req: Request): string | null {
-  const uid = req.user?.userId ?? req.user?.id;
-  return typeof uid === "string" && uid.trim() ? uid.trim() : null;
+  return resolveRequestUserId(req);
 }
 
 type ManagerBusinessContext =

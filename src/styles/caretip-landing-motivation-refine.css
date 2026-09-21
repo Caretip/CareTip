@@ -64,56 +64,155 @@ html.dark .caretip-landing-motivation .caretip-motivation-ambient {
 }
 
 @media (min-width: 1024px) {
-  /* Match Live-in-Minutes phone: sit visual on the left of the right column. */
   .caretip-landing #recognition .caretip-motivation-visual {
     justify-content: flex-start;
     align-items: flex-start;
   }
 
-  /* Slightly smaller image (~12%) so heading/copy stay primary. */
   .caretip-landing #recognition .caretip-split-section-grid {
     grid-template-columns: minmax(0, 1.14fr) minmax(0, 0.86fr);
     column-gap: clamp(2.75rem, 4vw, 4.75rem);
   }
 
-  .caretip-landing #recognition .caretip-motivation-story-gallery--single {
-    width: 88%;
-    max-width: 24.5rem;
+  .caretip-landing #recognition .caretip-motivation-recognition {
+    width: min(100%, 26.5rem);
     margin-inline-start: 0;
-    margin-left: -0.75rem;
-    transform: translateX(-0.5rem);
-  }
-
-  .caretip-landing #recognition
-    .caretip-motivation-story-gallery--single
-    .caretip-motivation-story-gallery__img {
-    height: min(365px, 45vw);
-  }
-
-  .caretip-landing #recognition .caretip-motivation-activity-wrap {
-    width: 88%;
-    max-width: 24.5rem;
-    margin-inline-start: 0;
-    margin-left: -0.75rem;
-    transform: translateX(-0.5rem);
   }
 }
 
-/* Tablet: mild size trim without losing presence. */
+/* —— Recognition editorial visual (#recognition) —— */
+
+.caretip-motivation-recognition {
+  position: relative;
+  width: 100%;
+  margin: 0;
+}
+
+.caretip-landing #recognition .caretip-motivation-recognition {
+  max-width: 28rem;
+}
+
+.caretip-motivation-recognition__photo {
+  position: relative;
+  overflow: hidden;
+  border-radius: 1rem;
+  isolation: isolate;
+}
+
+.caretip-motivation-recognition__img {
+  display: block;
+  width: 100%;
+  height: min(420px, 58vw);
+  object-fit: cover;
+  object-position: center 22%;
+}
+
+.caretip-motivation-recognition__scrim {
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(180deg, rgba(12, 16, 18, 0.08) 0%, transparent 38%),
+    linear-gradient(28deg, rgba(12, 16, 18, 0.72) 0%, rgba(12, 16, 18, 0.18) 42%, transparent 68%);
+}
+
+.caretip-motivation-recognition__moment {
+  position: absolute;
+  z-index: 2;
+  color: #fff8ef;
+}
+
+.caretip-motivation-recognition__moment--primary {
+  left: clamp(0.875rem, 3.5vw, 1.25rem);
+  bottom: clamp(0.875rem, 3.5vw, 1.35rem);
+  max-width: min(15.5rem, calc(100% - 2rem));
+  padding: 0.65rem 0 0.65rem 0.85rem;
+  border-left: 2px solid rgba(233, 120, 28, 0.92);
+}
+
+.caretip-motivation-recognition__amount {
+  margin: 0;
+  font-size: clamp(0.8125rem, 1.8vw, 0.9375rem);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  line-height: 1.2;
+  color: rgba(255, 248, 239, 0.88);
+}
+
+.caretip-motivation-recognition__name {
+  margin: 0.3rem 0 0;
+  font-size: clamp(1.125rem, 2.8vw, 1.375rem);
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  line-height: 1.15;
+}
+
+.caretip-motivation-recognition__quote {
+  margin: 0.35rem 0 0;
+  font-size: clamp(0.8125rem, 1.9vw, 0.9375rem);
+  font-weight: 500;
+  font-style: italic;
+  line-height: 1.4;
+  color: rgba(255, 248, 239, 0.82);
+}
+
+.caretip-motivation-recognition__moment--secondary {
+  top: clamp(0.875rem, 3vw, 1.125rem);
+  right: clamp(0.875rem, 3vw, 1.125rem);
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.35rem;
+  padding: 0.35rem 0.65rem;
+  border-radius: 999px;
+  background: rgba(12, 16, 18, 0.42);
+  backdrop-filter: blur(10px);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  line-height: 1.2;
+}
+
+.caretip-motivation-recognition__secondary-stars {
+  color: #fbbf24;
+  font-weight: 700;
+}
+
+.caretip-motivation-recognition__secondary-name {
+  color: rgba(255, 248, 239, 0.9);
+}
+
 @media (min-width: 641px) and (max-width: 1023px) {
-  .caretip-landing #recognition
-    .caretip-motivation-story-gallery--single
-    .caretip-motivation-story-gallery__img {
-    height: min(375px, 48vw);
+  .caretip-motivation-recognition__img {
+    height: min(390px, 50vw);
+    object-position: center 20%;
   }
 }
 
-/* Mobile: trim only slightly so the photo stays clearly readable. */
 @media (max-width: 640px) {
-  .caretip-landing #recognition
-    .caretip-motivation-story-gallery--single
-    .caretip-motivation-story-gallery__img {
-    height: 205px;
+  .caretip-landing #recognition .caretip-motivation-recognition {
+    max-width: none;
+  }
+
+  .caretip-motivation-recognition__img {
+    height: min(280px, 72vw);
+    object-position: center 18%;
+  }
+
+  .caretip-motivation-recognition__moment--primary {
+    max-width: min(13.5rem, calc(100% - 1.75rem));
+  }
+
+  .caretip-motivation-recognition__moment--secondary {
+    top: clamp(0.75rem, 2.5vw, 1rem);
+    right: clamp(0.75rem, 2.5vw, 1rem);
+    font-size: 0.6875rem;
+    padding: 0.3rem 0.55rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .caretip-motivation-recognition__moment {
+    transform: none !important;
   }
 }
 

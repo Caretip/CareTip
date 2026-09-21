@@ -3017,6 +3017,84 @@
       "phoneCelebrate": "Tip received",
       "phoneCelebrateSub": "Gratitude, delivered instantly"
     },
+    "dashboardShowcase": {
+      "pill": "BUSINESS DASHBOARD",
+      "title": "Everything your team earns,<brm/>in one <hl>clear view</hl>.",
+      "subtitle": "Track tips, spot standout performance, and read guest appreciation — without spreadsheets or end-of-shift guesswork.",
+      "caption": "Illustrative dashboard preview with sample data. Your live workspace updates in real time.",
+      "ariaLabel": "Illustrative CareTip business manager dashboard preview with sample tip analytics and team performance",
+      "preview": {
+        "eyebrow": "Manager workspace",
+        "title": "Business overview",
+        "periodWeek": "This week",
+        "liveOverview": "Live overview"
+      },
+      "sidebar": {
+        "ariaLabel": "CareTip dashboard navigation preview"
+      },
+      "kpis": {
+        "totalTips": "Total tips (week)",
+        "tipCountHint": "{{count}} tips recorded",
+        "activeEmployees": "Active employees",
+        "activeEmployeesHint": "7 on shift today",
+        "averageRating": "Average rating",
+        "averageRatingHint": "From guest feedback",
+        "avgTip": "Average tip",
+        "avgTipHint": "Per recorded tip"
+      },
+      "chart": {
+        "title": "Tip volume",
+        "tooltipLabel": "Tips",
+        "trendUp": "+12% vs last week",
+        "days": {
+          "mon": "Mon",
+          "tue": "Tue",
+          "wed": "Wed",
+          "thu": "Thu",
+          "fri": "Fri",
+          "sat": "Sat",
+          "sun": "Sun"
+        }
+      },
+      "activity": {
+        "title": "Recent tips",
+        "forEmployee": "For {{name}}",
+        "time2m": "2 min ago",
+        "time8m": "8 min ago",
+        "time14m": "14 min ago",
+        "time22m": "22 min ago",
+        "time31m": "31 min ago"
+      },
+      "qr": {
+        "ariaLabel": "Sample table QR code for guest tipping",
+        "label": "Table QR",
+        "caption": "Print ready"
+      },
+      "employees": {
+        "title": "Team",
+        "subtitle": "Tips, ratings, and shift status for your team this week.",
+        "colEmployee": "Employee",
+        "colTotalTips": "Total tips",
+        "colTipCount": "Tips",
+        "colAverageTip": "Avg. tip",
+        "colRating": "Rating",
+        "colStatus": "Status",
+        "tipsShort": "tips",
+        "status": {
+          "active": "On shift",
+          "offShift": "Off shift"
+        }
+      },
+      "recognition": {
+        "title": "Guest recognition",
+        "forEmployee": "For {{name}}",
+        "reviews": {
+          "quote1": "\"Outstanding service tonight — attentive, warm, and professional.\"",
+          "quote2": "\"Lukas made us feel welcome from the first minute.\"",
+          "quote3": "\"Clara handled a busy reception with calm confidence.\""
+        }
+      }
+    },
     "liveDemo": {
       "slideNavAria": "Product preview steps",
       "slideSignup": "Sign up",
@@ -3151,8 +3229,13 @@
       }
     },
     "audienceBenefits": {
-      "eyebrow": "BENEFITS AT A GLANCE",
+      "eyebrow": "THE OWNER VIEW",
       "headline": "Full control for owners.<br/><hl>More motivation</hl> for teams.",
+      "subheadline": "",
+      "subtitle": "",
+      "ownerViewLabel": "Owner view",
+      "employeeViewLabel": "Employee view",
+      "perspectiveBridgeAria": "Transition from business owner overview to employee experience",
       "businessRole": "For business owners",
       "businessTitle": "Full transparency over your team",
       "businessBody": "Manage locations, QR codes, and Instant Payouts from a single dashboard.",
@@ -3163,7 +3246,13 @@
       "businessP3Title": "1-Click Tax Exports",
       "businessP3Body": "Ready for payroll & audits.",
       "businessCta": "Request Demo",
-      "teamsRole": "For service teams",
+      "teamsRole": "FOR SERVICE TEAMS",
+      "calloutVolumeKicker": "+12%",
+      "calloutVolumeValue": "Tip volume this week",
+      "calloutRatingKicker": "4.8 ★",
+      "calloutRatingValue": "Guest rating",
+      "phoneCalloutAmount": "+€18.50 tip",
+      "phoneCalloutTime": "Just now",
       "teamsTitle": "Track your success. Every day.",
       "teamsBody": "See your hard work pay off live and make your strong performance visible.",
       "teamsP1Title": "Live Earnings Tracking",
@@ -3507,6 +3596,14 @@
       "point1": "Guest thanks reach the people who earned them while the effort is still fresh.",
       "point2": "Leaders spot standout performance without end of shift spreadsheet chaos.",
       "point3": "Visible appreciation strengthens pride from one shift to the next.",
+      "recognitionVisual": {
+        "caption": "Illustrative example of a tip and guest feedback reaching a team member.",
+        "primaryAmount": "€18.00",
+        "primaryName": "Maria",
+        "primaryQuote": "Outstanding service tonight.",
+        "secondaryStars": "★ 5",
+        "secondaryName": "James"
+      },
       "cards": {
         "tip": {
           "badge": "Tip received",

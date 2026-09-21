@@ -3017,6 +3017,84 @@
       "phoneCelebrate": "Trinkgeld erhalten",
       "phoneCelebrateSub": "Dankbarkeit, sofort da"
     },
+    "dashboardShowcase": {
+      "pill": "BUSINESS-DASHBOARD",
+      "title": "Alles, was Ihr Team verdient,<brm/>in einer <hl>klaren Übersicht</hl>.",
+      "subtitle": "Trinkgelder verfolgen, Leistung erkennen und Gäste-Feedback lesen — ohne Tabellenkalkulation oder Schicht-Ende-Rätselraten.",
+      "caption": "Illustrative Dashboard-Vorschau mit Beispieldaten. Ihr Live-Workspace aktualisiert sich in Echtzeit.",
+      "ariaLabel": "Illustrative CareTip-Manager-Dashboard-Vorschau mit Beispiel-Analysen und Teamleistung",
+      "preview": {
+        "eyebrow": "Manager",
+        "title": "Betriebsübersicht",
+        "periodWeek": "Diese Woche",
+        "liveOverview": "Live"
+      },
+      "sidebar": {
+        "ariaLabel": "CareTip-Dashboard-Navigation (Vorschau)"
+      },
+      "kpis": {
+        "totalTips": "Trinkgeld",
+        "tipCountHint": "{{count}} erfasst",
+        "activeEmployees": "Aktiv",
+        "activeEmployeesHint": "7 im Einsatz",
+        "averageRating": "Ø Bewertung",
+        "averageRatingHint": "Gäste-Feedback",
+        "avgTip": "Ø Trinkgeld",
+        "avgTipHint": "Pro erfasstem Trinkgeld"
+      },
+      "chart": {
+        "title": "Trinkgeldvolumen",
+        "tooltipLabel": "Trinkgeld",
+        "trendUp": "+12 % vs. letzte Woche",
+        "days": {
+          "mon": "Mo",
+          "tue": "Di",
+          "wed": "Mi",
+          "thu": "Do",
+          "fri": "Fr",
+          "sat": "Sa",
+          "sun": "So"
+        }
+      },
+      "activity": {
+        "title": "Neuestes Trinkgeld",
+        "forEmployee": "Für {{name}}",
+        "time2m": "vor 2 Min.",
+        "time8m": "vor 8 Min.",
+        "time14m": "vor 14 Min.",
+        "time22m": "vor 22 Min.",
+        "time31m": "vor 31 Min."
+      },
+      "qr": {
+        "ariaLabel": "Beispiel-QR-Code für Tisch-Trinkgeld",
+        "label": "Tisch-QR",
+        "caption": "Druckfertig"
+      },
+      "employees": {
+        "title": "Team",
+        "subtitle": "Trinkgeld, Bewertungen und Schichtstatus diese Woche.",
+        "colEmployee": "Mitarbeitende",
+        "colTotalTips": "Trinkgeld gesamt",
+        "colTipCount": "Trinkgeld",
+        "colAverageTip": "Ø Betrag",
+        "colRating": "Bewertung",
+        "colStatus": "Status",
+        "tipsShort": "Trinkgeld",
+        "status": {
+          "active": "Im Einsatz",
+          "offShift": "Frei"
+        }
+      },
+      "recognition": {
+        "title": "Gäste-Anerkennung",
+        "forEmployee": "Für {{name}}",
+        "reviews": {
+          "quote1": "„Hervorragender Service heute Abend — aufmerksam, warm und professionell.“",
+          "quote2": "„Lukas hat uns vom ersten Moment an willkommen geheißen.“",
+          "quote3": "„Clara hat eine volle Rezeption mit ruhiger Souveränität gemeistert.“"
+        }
+      }
+    },
     "liveDemo": {
       "slideNavAria": "Produktvorschau-Schritte",
       "slideSignup": "Registrieren",
@@ -3151,8 +3229,13 @@
       }
     },
     "audienceBenefits": {
-      "eyebrow": "VORTEILE AUF EINEN BLICK",
+      "eyebrow": "DIE INHABER-ANSICHT",
       "headline": "Volle Kontrolle für Inhaber.<br/><hl>Mehr Motivation</hl> für Teams.",
+      "subheadline": "",
+      "subtitle": "",
+      "ownerViewLabel": "Inhaber-Ansicht",
+      "employeeViewLabel": "Mitarbeiter-Ansicht",
+      "perspectiveBridgeAria": "Übergang von der Betriebsübersicht zur Mitarbeiter-Erfahrung",
       "businessRole": "Für Betriebsinhaber",
       "businessTitle": "Volle Transparenz über Ihr Team",
       "businessBody": "Standorte, QR-Codes und Sofortauszahlungen aus einem einzigen Dashboard steuern.",
@@ -3163,7 +3246,13 @@
       "businessP3Title": "Steuer-Exporte mit einem Klick",
       "businessP3Body": "Bereit für Lohnabrechnung & Prüfungen.",
       "businessCta": "Demo anfragen",
-      "teamsRole": "Für Service-Teams",
+      "teamsRole": "FÜR SERVICE-TEAMS",
+      "calloutVolumeKicker": "+12 %",
+      "calloutVolumeValue": "Trinkgeld-Volumen diese Woche",
+      "calloutRatingKicker": "4,8 ★",
+      "calloutRatingValue": "Gästebewertung",
+      "phoneCalloutAmount": "+18,50 € Trinkgeld",
+      "phoneCalloutTime": "Gerade eben",
       "teamsTitle": "Verfolge deinen Erfolg. Jeden Tag.",
       "teamsBody": "Sieh live, wie sich dein Einsatz auszahlt, und mach deine starke Performance sichtbar.",
       "teamsP1Title": "Live-Einnahmen",
@@ -3507,6 +3596,14 @@
       "point1": "Gast-Dank erreicht die Menschen, die ihn verdient haben, solange der Einsatz noch spürbar ist.",
       "point2": "Führung würdigt Spitzenleistung ohne Tabellen-Chaos am Schichtende.",
       "point3": "Sichtbare Wertschätzung stärkt den Stolz von Schicht zu Schicht.",
+      "recognitionVisual": {
+        "caption": "Illustratives Beispiel: Trinkgeld und Gästefeedback erreichen ein Teammitglied.",
+        "primaryAmount": "18,00 €",
+        "primaryName": "Maria",
+        "primaryQuote": "Hervorragender Service heute Abend.",
+        "secondaryStars": "★ 5",
+        "secondaryName": "James"
+      },
       "cards": {
         "tip": {
           "badge": "Trinkgeld erhalten",

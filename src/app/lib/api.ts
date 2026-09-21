@@ -21,6 +21,8 @@ import {
   PLAN_CAPABILITY_REQUIRED_CODE,
   PLAN_LIMIT_EXCEEDED_CODE,
 } from "./apiError";
+import { hasClientStoredSession } from "./authUserStore";
+import { hasClientSessionHint } from "./authSessionHint";
 import { resolveApiBaseUrl } from "./apiOrigin";
 import { logClientError } from "./clientLog";
 import type { OAuthProviderId } from "./oauthProviderIds";
@@ -383,7 +385,20 @@ function attachLatestBearer(init?: RequestInit): RequestInit {
   }
   if (token) headers.set("Authorization", `Bearer ${token}`);
   next.headers = headers;
+  if (!next.credentials && typeof window !== "undefined") {
+    next.credentials = "include";
+  }
   return next;
+}
+
+/** Restore access JWT from HttpOnly refresh cookie when memory was cleared (HMR, new tab, etc.). */
+async function ensureAccessTokenForProtectedRequest(url: string): Promise<void> {
+  if (isAuthRefreshRequestUrl(url) || !requestUsesCaretipProtectedApi(url)) return;
+  if (getToken()?.trim()) return;
+  if (isClientSessionRevoked()) return;
+  if (!hasClientStoredSession() && !hasClientSessionHint()) return;
+  if (Date.now() < refreshFailureCooldownUntil) return;
+  await refreshAccessToken();
 }
 
 /** Valid empty JSON object for POST routes that have no fields (refresh, logout, etc.). */
@@ -576,6 +591,10 @@ async function apiRequest<T>(url: string, init?: RequestInit): Promise<T> {
     isSessionBootstrapInProgress()
   ) {
     await whenSessionBootstrapSettled();
+  }
+
+  if (!isPublicGuestTipApiPath(requestUrlPathname(url))) {
+    await ensureAccessTokenForProtectedRequest(url);
   }
 
   try {

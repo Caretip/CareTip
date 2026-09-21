@@ -13,18 +13,15 @@ import {
   isSubscriptionTrialEnabled,
   SUBSCRIPTION_TRIAL_PERIOD_DAYS,
 } from "../config/subscriptionTrial.js";
-
-function frontendBaseUrl(): string {
-  return (process.env.FRONTEND_URL ?? "http://localhost:5173").replace(/\/$/, "");
-}
+import { resolveCheckoutFrontendBaseUrl } from "../config/frontendUrl.js";
 
 export type SubscriptionCheckoutFlow = "billing" | "onboarding";
 
-function checkoutReturnUrls(flow: SubscriptionCheckoutFlow): {
+export function checkoutReturnUrls(flow: SubscriptionCheckoutFlow): {
   successUrl: string;
   cancelUrl: string;
 } {
-  const base = frontendBaseUrl();
+  const base = resolveCheckoutFrontendBaseUrl();
   if (flow === "onboarding") {
     return {
       successUrl: `${base}/subscription/success?session_id={CHECKOUT_SESSION_ID}`,
@@ -256,7 +253,7 @@ export async function createBillingPortalSession(params: {
   const flow = params.flow ?? "default";
   const session = await stripe.billingPortal.sessions.create({
     customer: params.stripeCustomerId,
-    return_url: params.returnUrl ?? `${frontendBaseUrl()}/dashboard/billing/subscription`,
+    return_url: params.returnUrl ?? `${resolveCheckoutFrontendBaseUrl()}/dashboard/billing/subscription`,
     ...(flow === "payment_methods"
       ? { flow_data: { type: "payment_method_update" as const } }
       : {}),

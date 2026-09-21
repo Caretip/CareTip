@@ -53,6 +53,8 @@ const EXPLICIT_TARGETS = [
   { inPath: "images/Hotels.png", maxWidth: 960 },
   { inPath: "images/cafe-employee.png", maxWidth: 960 },
   { inPath: "images/logistics.png", maxWidth: 960 },
+  { inPath: "images/Logistik.png", maxWidth: 960 },
+  { inPath: "images/mid001.png", maxWidth: 960 },
   { inPath: "images/salon and spa.png", maxWidth: 960 },
   { inPath: "images/healthcare and nursing.png", maxWidth: 960 },
   { inPath: "images/petcare and services.png", maxWidth: 960 },

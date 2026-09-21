@@ -60,6 +60,13 @@ export function isApiRequestError(e: unknown): e is ApiRequestError {
   return e instanceof ApiRequestError;
 }
 
+/** Expected when the access token is missing/expired and refresh could not restore the session. */
+export function isApiAuthSessionError(e: unknown): boolean {
+  if (!isApiRequestError(e)) return false;
+  if (e.status === 401) return true;
+  return e.code === "SESSION_STALE" || e.code === "TOKEN_EXPIRED" || e.code === "TOKEN_INVALID";
+}
+
 export function isApiSubscriptionRequiredError(e: unknown): boolean {
   return isApiRequestError(e) && e.code === SUBSCRIPTION_REQUIRED_CODE;
 }

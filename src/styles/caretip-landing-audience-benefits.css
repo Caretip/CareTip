@@ -1,11 +1,28 @@
 /**
- * Combined business + employee audience benefits — premium SaaS card polish.
- * Layout/grid/content unchanged; elevation, radius, spacing, icons, checks only.
+ * Combined business + employee audience benefits — flat surface layout (no card chrome).
  */
 
 .caretip-landing .caretip-audience-benefits {
   padding-block: clamp(3rem, 7vw, 5.75rem);
   overflow-x: clip;
+}
+
+.caretip-landing #business-section.caretip-audience-benefits {
+  background: #ffffff !important;
+}
+
+html:not(.dark) .caretip-landing #business-section.caretip-audience-benefits::before {
+  display: none !important;
+  content: none !important;
+}
+
+html.dark .caretip-landing #business-section.caretip-audience-benefits {
+  background: hsl(var(--background)) !important;
+}
+
+html.dark .caretip-landing #business-section.caretip-audience-benefits::before {
+  display: none !important;
+  content: none !important;
 }
 
 .caretip-landing .caretip-audience-benefits__inner {
@@ -16,17 +33,27 @@
   max-width: 100%;
 }
 
+.caretip-landing .caretip-audience-benefits__headline {
+  font-size: clamp(1.375rem, 5.2vw, 2.75rem);
+  line-height: 1.12;
+  text-wrap: balance;
+  padding-inline: clamp(0, 2vw, 0.5rem);
+}
+
 .caretip-landing .caretip-audience-benefits__grid {
   display: grid;
   grid-template-columns: 1fr;
-  gap: 1.25rem;
+  align-items: start;
+  gap: clamp(2rem, 5vw, 3.5rem);
   width: 100%;
-  max-width: min(100%, 68rem);
+  max-width: min(100%, 72rem);
   margin-inline: auto;
   min-width: 0;
 }
 
 .caretip-landing .caretip-audience-benefits__grid > * {
+  display: flex;
+  flex-direction: column;
   min-width: 0;
   max-width: 100%;
 }
@@ -34,59 +61,149 @@
 @media (min-width: 1024px) {
   .caretip-landing .caretip-audience-benefits__grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 1.5rem;
+    grid-template-rows: auto auto;
+    gap: clamp(2rem, 4vw, 3rem);
+  }
+
+  /* Equal visual height across both columns */
+  .caretip-landing .caretip-audience-benefits__grid > .caretip-audience-benefits__column {
+    display: grid;
+    grid-template-rows: subgrid;
+    grid-row: span 2;
   }
 }
 
-.caretip-landing .caretip-audience-benefits__card {
-  --ab-pad-x: 1.5rem;
-  --ab-pad-top: 1.625rem;
+@supports not (grid-template-rows: subgrid) {
+  @media (min-width: 1024px) {
+    .caretip-landing .caretip-audience-benefits__visual--matched {
+      aspect-ratio: 5 / 4;
+      height: auto;
+    }
+  }
+}
+
+/* Flat column — visual + copy directly on section surface */
+.caretip-landing .caretip-audience-benefits__column {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: clamp(1.25rem, 2.5vw, 1.75rem);
+  min-width: 0;
+  max-width: 100%;
+}
+
+.caretip-landing .caretip-audience-benefits__visual {
+  width: 100%;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: visible;
+}
+
+/* Matched frame — same width × height for business dashboard and employee phone */
+.caretip-landing .caretip-audience-benefits__visual--matched {
+  aspect-ratio: 4 / 3;
+  max-height: clamp(14rem, 52vw, 20rem);
+  min-height: 0;
+  margin-top: 0;
+  overflow: hidden;
+}
+
+@media (min-width: 640px) {
+  .caretip-landing .caretip-audience-benefits__visual--matched {
+    aspect-ratio: 5 / 4;
+    max-height: clamp(13rem, 34vw, 18rem);
+    margin-top: clamp(-0.5rem, -1.5vw, 0);
+  }
+}
+
+@media (min-width: 1024px) {
+  .caretip-landing .caretip-audience-benefits__visual--matched {
+    aspect-ratio: auto;
+    width: 100%;
+    height: auto;
+    max-height: none;
+    min-height: 0;
+    align-self: start;
+  }
+}
+
+.caretip-landing .caretip-audience-benefits__visual picture {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  max-width: 100%;
+  max-height: 100%;
+}
+
+.caretip-landing .caretip-audience-benefits__visual img {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+}
+
+.caretip-landing .caretip-audience-benefits__visual--phone {
+  overflow: hidden;
+  align-items: stretch;
+  justify-content: stretch;
+}
+
+@media (max-width: 639px) {
+  .caretip-landing .caretip-audience-benefits__visual--phone.caretip-audience-benefits__visual--matched {
+    /* Match new-imo portrait (~854×1280) — full width, taller frame for hand at bottom */
+    aspect-ratio: 854 / 1280;
+    width: 100%;
+    max-height: none;
+    height: auto;
+    overflow: hidden;
+  }
+
+  .caretip-landing .caretip-audience-benefits__visual--phone picture {
+    display: block;
+    width: 100%;
+    height: 100%;
+    min-width: 100%;
+  }
+
+  .caretip-landing .caretip-audience-benefits__visual--phone img {
+    display: block;
+    width: 100%;
+    min-width: 100%;
+    height: 100%;
+    max-width: none;
+    object-fit: cover;
+    object-position: center top;
+  }
+}
+
+@media (min-width: 640px) {
+  .caretip-landing .caretip-audience-benefits__visual--phone picture {
+    display: block;
+    width: 100%;
+    height: 100%;
+    min-width: 100%;
+  }
+
+  .caretip-landing .caretip-audience-benefits__visual--phone img {
+    display: block;
+    width: 100%;
+    min-width: 100%;
+    height: 100%;
+    max-width: none;
+    object-fit: cover;
+    object-position: center top;
+  }
+}
+
+.caretip-landing .caretip-audience-benefits__copy {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 0;
-  height: 100%;
   min-width: 0;
-  max-width: 100%;
-  padding: var(--ab-pad-top) var(--ab-pad-x) 1.625rem;
-  border-radius: var(--caretip-saas-card-radius, 1.25rem);
-  border: 1px solid rgba(0, 0, 0, 0.06);
-  background: #ffffff;
-  box-shadow:
-    0 1px 2px rgba(0, 0, 0, 0.04),
-    0 10px 30px rgba(0, 0, 0, 0.06);
-  transition:
-    transform 250ms ease,
-    box-shadow 250ms ease,
-    border-color 250ms ease;
-}
-
-html.dark .caretip-landing .caretip-audience-benefits__card {
-  border-color: hsl(var(--border) / 0.85);
-  background: hsl(var(--card));
-  box-shadow:
-    0 1px 2px rgba(0, 0, 0, 0.2),
-    0 12px 28px rgba(0, 0, 0, 0.28);
-}
-
-@media (hover: hover) {
-  .caretip-landing
-    .caretip-landing-scroll-reveal--visible.caretip-audience-benefits__card:hover {
-    transform: translateY(-2px);
-    border-color: rgba(233, 120, 28, 0.18);
-    box-shadow:
-      0 2px 4px rgba(0, 0, 0, 0.04),
-      0 16px 40px rgba(0, 0, 0, 0.09);
-  }
-
-  html.dark
-    .caretip-landing
-    .caretip-landing-scroll-reveal--visible.caretip-audience-benefits__card:hover {
-    border-color: rgba(233, 120, 28, 0.32);
-    box-shadow:
-      0 2px 6px rgba(0, 0, 0, 0.25),
-      0 18px 44px rgba(0, 0, 0, 0.4);
-  }
+  width: 100%;
 }
 
 .caretip-landing .caretip-audience-benefits__role {
@@ -121,11 +238,12 @@ html.dark .caretip-landing .caretip-audience-benefits__card {
 
 .caretip-landing .caretip-audience-benefits__title {
   margin: 0 0 0.75rem;
-  font-size: clamp(1.25rem, 2.2vw, 1.5rem);
+  font-size: clamp(1.125rem, 2.2vw, 1.5rem);
   font-weight: 700;
   letter-spacing: -0.025em;
-  line-height: 1.2;
+  line-height: 1.25;
   color: hsl(var(--foreground));
+  text-wrap: balance;
 }
 
 .caretip-landing .caretip-audience-benefits__body {
@@ -143,13 +261,12 @@ html.dark .caretip-landing .caretip-audience-benefits__card {
   margin: 1.5rem 0 0;
   padding: 0;
   list-style: none;
-  flex: 1 1 auto;
 }
 
 .caretip-landing .caretip-audience-benefits__point {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr);
-  column-gap: 0.625rem; /* ~10px */
+  column-gap: 0.625rem;
   align-items: start;
 }
 
@@ -173,37 +290,199 @@ html.dark .caretip-landing .caretip-audience-benefits__card {
   color: hsl(var(--muted-foreground));
 }
 
-.caretip-landing .caretip-audience-benefits__cta {
-  margin-top: 1.75rem; /* ~28px breathing room */
-  width: 100%;
-  max-width: 100%;
-  justify-content: center;
+@media (max-width: 639px) {
+  .caretip-landing .caretip-audience-benefits__column {
+    gap: 1rem;
+  }
+
+  .caretip-landing .caretip-audience-benefits__points {
+    gap: 0.875rem;
+    margin-top: 1.25rem;
+  }
+
+  .caretip-landing .caretip-audience-benefits__icon {
+    width: 2.625rem;
+    height: 2.625rem;
+    margin-bottom: 0.75rem;
+  }
 }
 
-@media (min-width: 640px) {
-  .caretip-landing .caretip-audience-benefits__cta {
-    width: auto;
-    min-width: 11.5rem;
-  }
+/* Match Live Recognition (#recognition) section CTA sizing on mobile */
+.caretip-landing .caretip-audience-benefits__cta-cluster {
+  margin-top: 1.75rem;
 }
 
 @media (min-width: 1024px) {
-  .caretip-landing .caretip-audience-benefits__card {
-    --ab-pad-x: 1.875rem;
-    --ab-pad-top: 2rem;
-    padding: var(--ab-pad-top) var(--ab-pad-x) 1.875rem;
+  .caretip-landing .caretip-audience-benefits__cta-cluster {
+    margin-top: 2rem;
+    justify-content: flex-start;
   }
 
-  .caretip-landing .caretip-audience-benefits__cta {
-    margin-top: 2rem;
+  .caretip-landing .caretip-audience-benefits__cta-cluster .caretip-landing-cta-unit--section {
+    margin-inline: 0;
   }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .caretip-landing .caretip-audience-benefits__card,
-  .caretip-landing
-    .caretip-landing-scroll-reveal--visible.caretip-audience-benefits__card:hover {
-    transition: none;
-    transform: none;
+@media (max-width: 1023px) {
+  .caretip-landing #business-section .caretip-audience-benefits__cta-cluster {
+    justify-content: center;
   }
+
+  .caretip-landing #business-section .caretip-audience-benefits__cta-cluster .caretip-landing-cta-unit--section {
+    margin-inline: auto;
+    width: min(100%, 18.5rem);
+  }
+}
+
+.caretip-landing .caretip-audience-benefits__subheadline {
+  margin-top: 0.85rem;
+}
+
+.caretip-landing .caretip-audience-benefits__subtitle {
+  margin-top: 0.65rem;
+}
+
+/* Premium dashboard — natural height; phone column syncs via ResizeObserver */
+.caretip-landing .caretip-audience-benefits__visual--dashboard {
+  align-items: stretch;
+  justify-content: flex-start;
+}
+
+.caretip-landing .caretip-audience-benefits__visual--dashboard.caretip-audience-benefits__visual--matched {
+  aspect-ratio: auto;
+  max-height: none;
+  height: auto;
+  overflow: visible;
+}
+
+.caretip-landing .caretip-audience-benefits__visual--dashboard .caretip-landing-dashboard-showcase {
+  width: 100%;
+  height: auto;
+  max-width: none;
+  margin: 0;
+}
+
+.caretip-landing .caretip-audience-benefits__visual--dashboard .caretip-landing-dashboard-showcase__frame {
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+
+.caretip-landing
+  .caretip-audience-benefits__visual--dashboard
+  .caretip-landing-dashboard-showcase__insight-card--chart,
+.caretip-landing
+  .caretip-audience-benefits__visual--dashboard
+  .caretip-landing-dashboard-showcase__chart-wrap {
+  overflow: visible;
+}
+
+.caretip-landing .caretip-audience-benefits__visual--dashboard .caretip-landing-dashboard-showcase__shell {
+  height: auto;
+  overflow: visible;
+}
+
+.caretip-landing .caretip-audience-benefits__visual--dashboard .caretip-landing-dashboard-showcase__body {
+  height: auto;
+  overflow: visible;
+}
+
+/* Scaled to fit matched frame without cropping */
+.caretip-landing
+  .caretip-audience-benefits__visual--dashboard
+  .caretip-landing-dashboard-showcase--in-card.caretip-landing-dashboard-showcase--premium {
+  font-size: clamp(0.58rem, 2.8vw, 0.75rem);
+}
+
+html:lang(de)
+  .caretip-landing
+  .caretip-audience-benefits__visual--dashboard
+  .caretip-landing-dashboard-showcase--in-card.caretip-landing-dashboard-showcase--premium {
+  font-size: clamp(0.625rem, 0.88vw, 0.7rem);
+}
+
+.caretip-landing
+  .caretip-audience-benefits__visual--dashboard
+  .caretip-landing-dashboard-showcase--in-card.caretip-landing-dashboard-showcase--premium
+  .caretip-landing-dashboard-showcase__shell {
+  padding: clamp(0.45rem, 1vw, 0.65rem) clamp(0.65rem, 1.4vw, 0.875rem)
+    clamp(0.4rem, 0.85vw, 0.55rem);
+}
+
+.caretip-landing
+  .caretip-audience-benefits__visual--dashboard
+  .caretip-landing-dashboard-showcase--in-card.caretip-landing-dashboard-showcase--premium
+  .caretip-landing-dashboard-showcase__header {
+  margin-bottom: 0.5rem;
+  padding-bottom: 0.45rem;
+}
+
+.caretip-landing
+  .caretip-audience-benefits__visual--dashboard
+  .caretip-landing-dashboard-showcase--in-card.caretip-landing-dashboard-showcase--premium
+  .caretip-landing-dashboard-showcase__panel-sub {
+  display: none;
+}
+
+.caretip-landing
+  .caretip-audience-benefits__visual--dashboard
+  .caretip-landing-dashboard-showcase--in-card.caretip-landing-dashboard-showcase--premium
+  .caretip-landing-dashboard-showcase__leaderboard-row {
+  padding: 0.22rem 0;
+  gap: 0.35rem;
+}
+
+.caretip-landing
+  .caretip-audience-benefits__visual--dashboard
+  .caretip-landing-dashboard-showcase--in-card.caretip-landing-dashboard-showcase--premium
+  .caretip-landing-dashboard-showcase__leaderboard-row:last-child {
+  padding-bottom: 0;
+}
+
+.caretip-landing
+  .caretip-audience-benefits__visual--dashboard
+  .caretip-landing-dashboard-showcase--in-card.caretip-landing-dashboard-showcase--premium
+  .caretip-landing-dashboard-showcase__leaderboard--premium {
+  padding-bottom: 0;
+  margin-bottom: 0;
+}
+
+.caretip-landing
+  .caretip-audience-benefits__visual--dashboard
+  .caretip-landing-dashboard-showcase--in-card.caretip-landing-dashboard-showcase--premium
+  .caretip-landing-dashboard-showcase__leaderboard-avatar {
+  width: clamp(1.75rem, 3.2vw, 2.25rem);
+  height: clamp(1.75rem, 3.2vw, 2.25rem);
+}
+
+.caretip-landing
+  .caretip-audience-benefits__visual--dashboard
+  .caretip-landing-dashboard-showcase--in-card
+  .caretip-landing-dashboard-showcase__insight-card {
+  padding: 0.45rem 0.55rem;
+}
+
+.caretip-landing
+  .caretip-audience-benefits__visual--dashboard
+  .caretip-landing-dashboard-showcase--in-card
+  .caretip-landing-dashboard-showcase__body {
+  gap: 0.65rem;
+}
+
+/* #for-employees is the employee column anchor — not a standalone section band */
+.caretip-landing #business-section #for-employees.caretip-audience-benefits__column {
+  position: static;
+  padding: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+.caretip-landing #business-section #for-employees.caretip-audience-benefits__column::before {
+  display: none !important;
+  content: none !important;
+}
+
+.caretip-landing #business-section #for-employees .caretip-audience-benefits__copy {
+  background: transparent;
+  box-shadow: none;
 }

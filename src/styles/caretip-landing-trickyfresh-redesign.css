@@ -594,18 +594,6 @@
   border-radius: 0.5rem !important;
 }
 
-.caretip-landing .caretip-audience-benefits__card {
-  border-radius: 14px;
-  background: #fffaf4;
-  border: 1px solid rgba(31, 42, 53, 0.08);
-  box-shadow: 0 18px 40px rgba(63, 46, 29, 0.08);
-}
-
-.dark .caretip-landing .caretip-audience-benefits__card {
-  background: rgba(255, 255, 255, 0.04);
-  border-color: rgba(255, 255, 255, 0.08);
-}
-
 .caretip-landing .caretip-audience-benefits__title {
   font-family: var(--font-hero-display);
   font-weight: 500;
@@ -961,7 +949,8 @@ html:not(.dark) .caretip-landing #final-cta .caretip-trust-strip__check,
     margin-inline: auto !important;
   }
 
-  .caretip-landing .caretip-audience-benefits__card {
+  .caretip-landing .caretip-audience-benefits__column,
+  .caretip-landing .caretip-audience-benefits__copy {
     align-items: center;
     text-align: center;
   }
@@ -1018,101 +1007,7 @@ html:not(.dark) .caretip-landing #final-cta .caretip-trust-strip__check,
   overflow: visible;
 }
 
-/* —— Audience photo cards —— */
-.caretip-landing .caretip-audience-benefits__photo {
-  box-sizing: border-box;
-  width: calc(100% + (2 * var(--ab-pad-x, 1.5rem)));
-  max-width: none;
-  min-width: 0;
-  margin: calc(-1 * var(--ab-pad-top, 1.625rem)) calc(-1 * var(--ab-pad-x, 1.5rem)) 1.25rem;
-  height: auto;
-  aspect-ratio: 16 / 10;
-  max-height: min(22rem, 52vw);
-  min-height: 11.5rem;
-  overflow: hidden;
-  border-radius: var(--caretip-saas-card-radius, 1.25rem) var(--caretip-saas-card-radius, 1.25rem) 0 0;
-  background: #f4f1ec;
-  display: flex;
-  align-items: stretch;
-  justify-content: center;
-}
-
-.caretip-landing .caretip-audience-benefits__photo picture {
-  display: block;
-  width: 100%;
-  height: 100%;
-  min-width: 0;
-  min-height: 0;
-}
-
-.caretip-landing .caretip-audience-benefits__photo img {
-  display: block;
-  width: 100%;
-  max-width: 100%;
-  height: 100%;
-  object-fit: cover;
-  object-position: center center;
-  transition: transform 0.55s cubic-bezier(0.2, 0.7, 0.2, 1);
-}
-
-/* Legacy laptop mockup helper (unused when photo is a lifestyle/product scene) */
-.caretip-landing .caretip-audience-benefits__photo--mockup {
-  height: clamp(320px, 38vw, 400px);
-  background: #f4f1ec;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0;
-}
-
-.caretip-landing .caretip-audience-benefits__photo--mockup img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  object-position: center center;
-}
-
-.caretip-landing .caretip-audience-benefits__photo--business img {
-  object-fit: cover;
-  object-position: center top;
-}
-
-.caretip-landing .caretip-audience-benefits__photo--phone img {
-  object-fit: cover;
-  object-position: 50% 32%;
-}
-
-@media (max-width: 640px) {
-  .caretip-landing .caretip-audience-benefits__photo {
-    aspect-ratio: 4 / 3;
-    min-height: 10rem;
-    max-height: min(16.5rem, 58vw);
-  }
-
-  .caretip-landing .caretip-audience-benefits__photo--phone img {
-    object-position: 50% 22%;
-  }
-
-  .caretip-landing .caretip-audience-benefits__photo--business img {
-    object-position: center 18%;
-  }
-}
-
-.caretip-landing .caretip-audience-benefits__card:hover .caretip-audience-benefits__photo img {
-  transform: scale(1.045);
-}
-
-.caretip-landing .caretip-audience-benefits__card:hover .caretip-audience-benefits__photo--mockup img {
-  transform: scale(1.02);
-}
-
-.caretip-landing .caretip-audience-benefits__card:hover .caretip-audience-benefits__photo--phone img {
-  transform: scale(1.02);
-}
-
-.caretip-landing .caretip-audience-benefits__card {
-  overflow: hidden;
-}
+/* —— Audience benefits (flat surface — visuals in caretip-landing-audience-benefits.css) —— */
 
 .caretip-landing .caretip-audience-benefits__title {
   font-size: clamp(1.55rem, 2.4vw, 2rem) !important;

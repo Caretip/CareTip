@@ -289,14 +289,8 @@
   }
 }
 
-/* —— Adjacent audience cards (recent landing change): mobile density —— */
+/* —— Audience benefits: mobile density —— */
 @media (max-width: 767px) {
-  .caretip-landing .caretip-audience-benefits__card {
-    --ab-pad-x: 1.2rem;
-    --ab-pad-top: 1.35rem;
-    padding: var(--ab-pad-top) var(--ab-pad-x) 1.4rem;
-  }
-
   .caretip-landing .caretip-audience-benefits__title {
     font-size: clamp(1.15rem, 4.5vw, 1.35rem);
   }

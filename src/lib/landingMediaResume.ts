@@ -12,7 +12,7 @@ const LANDING_IMG_SELECTOR = [
   ".caretip-hero-story-frame",
   ".caretip-industry-photo-card__img",
   ".caretip-motivation-story-gallery__img",
-  ".caretip-audience-benefits__photo img",
+  ".caretip-audience-benefits__visual img",
   ".caretip-live-minutes-onboarding-device__img",
 ].join(", ");
 

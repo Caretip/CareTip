@@ -116,7 +116,6 @@
     "dompurify": "^3.4.12",
     "embla-carousel-react": "8.6.0",
     "firebase": "^11.10.0",
-    "framer-motion": "^12.42.2",
     "i18next": "^26.0.10",
     "input-otp": "1.4.2",
     "jspdf": "^4.2.1",

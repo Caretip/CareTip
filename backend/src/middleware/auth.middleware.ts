@@ -31,12 +31,45 @@ export interface JwtPayload {
   impersonatedBy?: string;
 }
 
+/** DB row loaded once per authenticated request — reused by downstream middleware. */
+export type AuthenticatedUserRow = {
+  id: string;
+  authTokenVersion: number;
+  isActive: boolean;
+  accountStatus: string;
+  role: PrismaRole;
+  emailVerified: boolean;
+  isPlatformAdmin: boolean;
+  hasCompletedOnboarding: boolean;
+  onboardingCompletedAt: Date | null;
+};
+
+const AUTH_USER_SELECT = {
+  id: true,
+  authTokenVersion: true,
+  isActive: true,
+  accountStatus: true,
+  role: true,
+  emailVerified: true,
+  isPlatformAdmin: true,
+  hasCompletedOnboarding: true,
+  onboardingCompletedAt: true,
+} as const;
+
 declare global {
   namespace Express {
     interface Request {
       user?: JwtPayload;
+      /** Populated by authMiddleware after JWT + session validation. */
+      authUser?: AuthenticatedUserRow;
     }
   }
+}
+
+/** Canonical user id from JWT claims attached by authMiddleware. */
+export function resolveRequestUserId(req: Request): string | null {
+  const uid = req.user?.sub ?? req.user?.userId ?? req.user?.id;
+  return typeof uid === "string" && uid.trim() ? uid.trim() : null;
 }
 
 export function normalizeJwtPayload(decoded: DecodedAccessClaims): JwtPayload | null {
@@ -55,20 +88,28 @@ export function normalizeJwtPayload(decoded: DecodedAccessClaims): JwtPayload | 
   };
 }
 
-export async function assertAccessJwtStillValid(payload: JwtPayload): Promise<string | null> {
+async function loadAuthenticatedUser(uid: string): Promise<AuthenticatedUserRow | null> {
+  return prisma.user.findUnique({
+    where: { id: uid },
+    select: AUTH_USER_SELECT,
+  });
+}
+
+/** Validates JWT session bind against a loaded user row (no extra user query). */
+export async function assertAccessJwtStillValid(
+  payload: JwtPayload,
+  userRow?: AuthenticatedUserRow | null,
+): Promise<string | null> {
   if (accessTokenMissingRequiredSessionBind(payload)) {
     return "SESSION_STALE";
   }
-  const uid = payload.sub;
-  const userRow = await prisma.user.findUnique({
-    where: { id: uid },
-    select: { authTokenVersion: true, isActive: true, accountStatus: true },
-  });
-  if (!userRow || userRow.isActive !== true || userRow.accountStatus !== "active") {
+
+  const row = userRow ?? (await loadAuthenticatedUser(payload.sub));
+  if (!row || row.isActive !== true || row.accountStatus !== "active") {
     return "Authentication required";
   }
 
-  if (typeof payload.tv === "number" && payload.tv !== userRow.authTokenVersion) {
+  if (typeof payload.tv === "number" && payload.tv !== row.authTokenVersion) {
     return "SESSION_STALE";
   }
 
@@ -80,7 +121,7 @@ export async function assertAccessJwtStillValid(payload: JwtPayload): Promise<st
     });
     if (
       !session ||
-      session.userId !== uid ||
+      session.userId !== payload.sub ||
       session.revokedAt != null ||
       session.expiresAt.getTime() <= Date.now()
     ) {
@@ -89,6 +130,20 @@ export async function assertAccessJwtStillValid(payload: JwtPayload): Promise<st
   }
 
   return null;
+}
+
+async function resolveAuthUserForRequest(
+  req: Request,
+  uid: string,
+): Promise<AuthenticatedUserRow | null> {
+  if (req.authUser?.id === uid) {
+    return req.authUser;
+  }
+  const row = await loadAuthenticatedUser(uid);
+  if (row) {
+    req.authUser = row;
+  }
+  return row;
 }
 
 function invalidTokenResponse(res: Response, err: unknown) {
@@ -111,10 +166,12 @@ export function optionalAuthMiddleware(req: Request, res: Response, next: NextFu
       if (isPendingMfaLoginJwt(decoded) || !isAllowedAccessJwtType(decoded.type)) return next();
       const payload = normalizeJwtPayload(decoded);
       if (!payload) return next();
-      // Even for optional-auth endpoints, never trust a stale/revoked/disabled session.
-      const staleCode = await assertAccessJwtStillValid(payload);
+
+      const userRow = await loadAuthenticatedUser(payload.sub);
+      const staleCode = await assertAccessJwtStillValid(payload, userRow);
       if (staleCode) return next();
 
+      req.authUser = userRow ?? undefined;
       req.user = payload;
     } catch {
       // ignore invalid optional token
@@ -142,7 +199,8 @@ export function authMiddleware(req: Request, res: Response, next: NextFunction) 
         return res.status(401).json({ message: "Invalid or expired token", code: "TOKEN_INVALID" });
       }
 
-      const staleCode = await assertAccessJwtStillValid(payload);
+      const userRow = await loadAuthenticatedUser(payload.sub);
+      const staleCode = await assertAccessJwtStillValid(payload, userRow);
       if (staleCode) {
         return res.status(401).json({
           message: "Authentication required",
@@ -150,6 +208,11 @@ export function authMiddleware(req: Request, res: Response, next: NextFunction) 
         });
       }
 
+      if (!userRow) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+
+      req.authUser = userRow;
       req.user = payload;
       next();
     } catch (err) {
@@ -165,10 +228,7 @@ export function requireRole(...roles: PrismaRole[]) {
       return res.status(401).json({ message: "Authentication required" });
     }
     try {
-      const row = await prisma.user.findUnique({
-        where: { id: uid },
-        select: { role: true, isActive: true },
-      });
+      const row = await resolveAuthUserForRequest(req, uid);
       if (!row || row.isActive !== true) {
         return res.status(401).json({ message: "Authentication required" });
       }
@@ -224,10 +284,7 @@ export async function requireVerifiedEmail(req: Request, res: Response, next: Ne
     return res.status(401).json({ message: "Authentication required" });
   }
   try {
-    const row = await prisma.user.findUnique({
-      where: { id: uid },
-      select: { emailVerified: true, isActive: true, role: true, isPlatformAdmin: true },
-    });
+    const row = await resolveAuthUserForRequest(req, uid);
     if (!row || row.isActive !== true) {
       return res.status(401).json({ message: "Authentication required" });
     }
@@ -257,10 +314,7 @@ export async function requirePlatformAdmin(req: Request, res: Response, next: Ne
     return res.status(401).json({ message: "Authentication required" });
   }
   try {
-    const row = await prisma.user.findUnique({
-      where: { id: uid },
-      select: { id: true, role: true, isPlatformAdmin: true, isActive: true, emailVerified: true },
-    });
+    const row = await resolveAuthUserForRequest(req, uid);
     if (
       !row ||
       row.role !== Role.SUPER_ADMIN ||

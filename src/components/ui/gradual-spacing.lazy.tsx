@@ -64,7 +64,7 @@ function GradualSpacingFallback({
   );
 }
 
-/** Lazy-loads framer-motion GradualSpacing; shows static text until ready. */
+/** Lazy-loads motion GradualSpacing; shows static text until ready. */
 export function GradualSpacingLazy(props: GradualSpacingLazyProps) {
   return (
     <Suspense fallback={<GradualSpacingFallback {...props} />}>

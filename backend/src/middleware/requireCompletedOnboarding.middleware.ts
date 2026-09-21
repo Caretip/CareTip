@@ -1,6 +1,7 @@
 import type { Request, Response, NextFunction } from "express";
 import { Role } from "@prisma/client";
 import { prisma } from "../prisma.js";
+import { resolveRequestUserId } from "./auth.middleware.js";
 import { managerHasCompletedOnboarding } from "../services/auth.service.js";
 
 /**
@@ -20,25 +21,38 @@ export async function requireCompletedOnboarding(
     return;
   }
 
-  const userId = req.user?.userId ?? req.user?.id;
+  const userId = resolveRequestUserId(req);
   if (!userId) {
     res.status(401).json({ message: "Authentication required" });
     return;
   }
 
-  if (req.user?.role !== Role.MANAGER) {
+  const role = req.authUser?.role ?? req.user?.role;
+  if (role !== Role.MANAGER) {
     next();
     return;
   }
 
-  const user = await prisma.user.findUnique({
-    where: { id: userId },
-    select: {
-      role: true,
-      hasCompletedOnboarding: true,
-      onboardingCompletedAt: true,
-    },
-  });
+  let user = req.authUser?.id === userId ? req.authUser : null;
+  if (!user) {
+    user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        id: true,
+        authTokenVersion: true,
+        isActive: true,
+        accountStatus: true,
+        role: true,
+        emailVerified: true,
+        isPlatformAdmin: true,
+        hasCompletedOnboarding: true,
+        onboardingCompletedAt: true,
+      },
+    });
+    if (user) {
+      req.authUser = user;
+    }
+  }
 
   if (!user) {
     res.status(401).json({ message: "Authentication required" });

@@ -3,6 +3,7 @@ import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
 import { fetchMyUnreadNotificationCount } from "../lib/api";
 import { isProtectedApiReady } from "../lib/authRestore";
+import { isApiAuthSessionError } from "../lib/apiError";
 import { isApiConnectivityError } from "../lib/errorMessages";
 import { logClientError } from "../lib/clientLog";
 import { localizeInboxNotification } from "../lib/localizeInboxNotification";
@@ -47,9 +48,8 @@ export function NotificationInboxSync() {
       const { unreadCount } = await fetchMyUnreadNotificationCount();
       requestNotificationInboxSync(unreadCount);
     } catch (err) {
-      if (!isApiConnectivityError(err)) {
-        logClientError("NotificationInboxSync.catchUp", err);
-      }
+      if (isApiAuthSessionError(err) || isApiConnectivityError(err)) return;
+      logClientError("NotificationInboxSync.catchUp", err);
     }
   }, [enabled]);
 

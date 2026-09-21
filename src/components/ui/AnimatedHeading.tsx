@@ -4,7 +4,7 @@ import {
   useInView,
   useReducedMotion,
   type Variants,
-} from "framer-motion";
+} from "motion/react";
 
 import { HeadlineMobileBreak } from "@/components/ui/HeadlineMobileBreak";
 import { cn } from "@/lib/utils";

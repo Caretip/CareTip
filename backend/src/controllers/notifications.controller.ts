@@ -1,4 +1,5 @@
 import type { Request, Response } from "express";
+import { resolveRequestUserId } from "../middleware/auth.middleware.js";
 import { prisma } from "../prisma.js";
 import {
   deleteUserNotification,
@@ -12,7 +13,7 @@ import { emitNotificationUnreadCount } from "../socket/socketEmitters.js";
 import { clientSafeMessage, logServerError } from "../utils/httpErrors.js";
 
 function userIdFromReq(req: Request): string | null {
-  return req.user?.userId ?? req.user?.id ?? null;
+  return resolveRequestUserId(req);
 }
 
 async function localeForRequest(req: Request, userId: string) {

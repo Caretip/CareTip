@@ -134,14 +134,16 @@ export async function getByEmployee(req: Request, res: Response) {
         { employeeId: employee.id, timeframe, scope },
         () =>
           runSerializedByKey(`emp-stats-summary:${employee.id}:${timeframe}`, async () => {
-            const summaryResult = await loadEmployeeDashboardSummaryBundle({
-              employeeId: employee.id,
-              userId,
-              businessTimezone: employee.businessTimezone,
-              timeframe,
-              activeGoal: employee.activeGoal,
-            });
-            const accountResult = await loadEmployeeAccountSummary(employee.id);
+            const [summaryResult, accountResult] = await Promise.all([
+              loadEmployeeDashboardSummaryBundle({
+                employeeId: employee.id,
+                userId,
+                businessTimezone: employee.businessTimezone,
+                timeframe,
+                activeGoal: employee.activeGoal,
+              }),
+              loadEmployeeAccountSummary(employee.id),
+            ]);
             return { summary: summaryResult, accountSummary: accountResult };
           }),
       );

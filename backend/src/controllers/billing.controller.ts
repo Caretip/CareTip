@@ -19,6 +19,8 @@ import {
   getCheckoutSyncStatusForBusiness,
   scheduleManagerCancelAtPeriodEnd,
 } from "../services/managerBilling.service.js";
+import { resolveCheckoutFrontendBaseUrl } from "../config/frontendUrl.js";
+import { checkoutReturnUrls } from "../services/stripeBilling.service.js";
 import { isStripeConfigured } from "../services/stripe.service.js";
 import { resolveSubscriptionEntitlements } from "../services/subscriptionEntitlement.service.js";
 import { CLIENT_FALLBACK, clientSafeMessage, logServerError } from "../utils/httpErrors.js";
@@ -283,16 +285,7 @@ export async function postMyBillingCheckout(req: Request, res: Response) {
           successUrl: requestBody.successUrl ?? null,
           cancelUrl: requestBody.cancelUrl ?? null,
         },
-        serverUrls: {
-          successUrl:
-            checkoutFlow === "onboarding"
-              ? `${(process.env.FRONTEND_URL ?? "http://localhost:5173").replace(/\/$/, "")}/subscription/success?session_id={CHECKOUT_SESSION_ID}`
-              : `${(process.env.FRONTEND_URL ?? "http://localhost:5173").replace(/\/$/, "")}/dashboard/settings?billing=success&session_id={CHECKOUT_SESSION_ID}`,
-          cancelUrl:
-            checkoutFlow === "onboarding"
-              ? `${(process.env.FRONTEND_URL ?? "http://localhost:5173").replace(/\/$/, "")}/subscription/canceled`
-              : `${(process.env.FRONTEND_URL ?? "http://localhost:5173").replace(/\/$/, "")}/dashboard/settings?billing=canceled`,
-        },
+        serverUrls: checkoutReturnUrls(checkoutFlow ?? "billing"),
       }),
     );
 
@@ -345,7 +338,7 @@ function parsePortalFlow(raw: unknown): "default" | "payment_methods" {
 }
 
 function portalReturnUrl(flow: "default" | "payment_methods"): string {
-  const base = (process.env.FRONTEND_URL ?? "http://localhost:5173").replace(/\/$/, "");
+  const base = resolveCheckoutFrontendBaseUrl();
   const path =
     flow === "payment_methods"
       ? "/dashboard/billing/payment-methods"

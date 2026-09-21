@@ -24,6 +24,7 @@ import {
 } from "../../../connect/ConnectPayoutDetailDialog";
 import { ListFilterLoadError } from "../../../shared/ListFilterLoadError";
 import { classifyFetchError } from "../../../../lib/listFilterUx";
+import { isApiAuthSessionError } from "../../../../lib/apiError";
 import { logClientError } from "../../../../lib/clientLog";
 import { toUserFriendlyMessage } from "../../../../lib/errorMessages";
 import { performExternalStripeRedirect } from "../../../../lib/externalStripeRedirect";
@@ -173,7 +174,9 @@ export function ConnectPayoutsPanel({ loading: bootLoading }: { loading?: boolea
       toast.success(t("business.billing.payouts.instant.success"));
       await loadHistory(0);
     } catch (err) {
-      logClientError("ConnectPayoutsPanel.instantCreate", err);
+      if (!isApiAuthSessionError(err)) {
+        logClientError("ConnectPayoutsPanel.instantCreate", err);
+      }
       toast.error(toUserFriendlyMessage(err) || t("business.billing.payouts.instant.createError"));
     } finally {
       setPayoutBusy(false);
