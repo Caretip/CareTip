@@ -374,8 +374,80 @@ export const LandingDashboardShowcaseVisual = memo(function LandingDashboardShow
   const premium = variant === "premium";
   const showChrome = !compact;
   const showWindowChrome = showChrome && !premium;
+  const laptopFrame = embeddedInCard && premium;
   const limit = Math.max(1, Math.min(employeeLimit, LANDING_DASHBOARD_SHOWCASE_EMPLOYEES.length));
   const captionVisible = showCaption ?? !(editorial || premium);
+
+  const screen = (
+    <div className="caretip-landing-dashboard-showcase__frame">
+      {showWindowChrome ? (
+        <div className="caretip-landing-dashboard-showcase__window-chrome" aria-hidden>
+          <span />
+          <span />
+          <span />
+        </div>
+      ) : null}
+      <div
+        className={cn(
+          "caretip-landing-dashboard-showcase__app-layout",
+          premium && "caretip-landing-dashboard-showcase__app-layout--premium",
+          embeddedInCard && "caretip-landing-dashboard-showcase__app-layout--embedded",
+        )}
+      >
+        {premium ? (
+          <LandingDashboardShowcaseSidebar compact={embeddedInCard} />
+        ) : null}
+        <div className="caretip-dashboard-shell business-dashboard caretip-landing-dashboard-showcase__shell">
+          {showChrome ? (
+            <header className="caretip-landing-dashboard-showcase__header">
+              <div className="min-w-0">
+                <p className="caretip-landing-dashboard-showcase__eyebrow">
+                  {t("landing.dashboardShowcase.preview.eyebrow")}
+                </p>
+                <h4 className="caretip-landing-dashboard-showcase__title">
+                  {t("landing.dashboardShowcase.preview.title")}
+                </h4>
+              </div>
+              <div className="caretip-landing-dashboard-showcase__header-meta">
+                {premium ? (
+                  <span className="caretip-landing-dashboard-showcase__sample">
+                    {t("landing.dashboardShowcase.preview.sampleData")}
+                  </span>
+                ) : null}
+                <span className="caretip-landing-dashboard-showcase__period">
+                  {t("landing.dashboardShowcase.preview.periodWeek")}
+                </span>
+              </div>
+            </header>
+          ) : (
+            <div className="caretip-landing-dashboard-showcase__compact-bar">
+              <span className="caretip-landing-dashboard-showcase__compact-title">
+                {t("landing.dashboardShowcase.preview.title")}
+              </span>
+              <span className="caretip-landing-dashboard-showcase__period">
+                {t("landing.dashboardShowcase.preview.periodWeek")}
+              </span>
+            </div>
+          )}
+
+          <div className="caretip-landing-dashboard-showcase__body business-dashboard-overview">
+            <ShowcaseKpiRow
+              compact={compact && !editorial && !premium}
+              premium={premium}
+              embeddedInCard={embeddedInCard}
+            />
+            <ShowcaseEmployeePreview
+              compact={compact && !premium}
+              premium={premium}
+              employeeLimit={limit}
+              embeddedInCard={embeddedInCard}
+            />
+          </div>
+        </div>
+      </div>
+      {editorial ? <div className="caretip-landing-dashboard-showcase__editorial-fade" aria-hidden /> : null}
+    </div>
+  );
 
   return (
     <div
@@ -385,77 +457,22 @@ export const LandingDashboardShowcaseVisual = memo(function LandingDashboardShow
         editorial && "caretip-landing-dashboard-showcase--editorial",
         premium && "caretip-landing-dashboard-showcase--premium",
         embeddedInCard && "caretip-landing-dashboard-showcase--in-card",
+        laptopFrame && "caretip-landing-dashboard-showcase--laptop",
       )}
       aria-label={t("landing.dashboardShowcase.ariaLabel")}
     >
-      <div className="caretip-landing-dashboard-showcase__frame">
-        {showWindowChrome ? (
-          <div className="caretip-landing-dashboard-showcase__window-chrome" aria-hidden>
-            <span />
-            <span />
-            <span />
-          </div>
-        ) : null}
-        <div
-          className={cn(
-            "caretip-landing-dashboard-showcase__app-layout",
-            premium && "caretip-landing-dashboard-showcase__app-layout--premium",
-            embeddedInCard && "caretip-landing-dashboard-showcase__app-layout--embedded",
-          )}
-        >
-          {premium ? (
-            <LandingDashboardShowcaseSidebar compact={embeddedInCard} />
-          ) : null}
-          <div className="caretip-dashboard-shell business-dashboard caretip-landing-dashboard-showcase__shell">
-            {showChrome ? (
-              <header className="caretip-landing-dashboard-showcase__header">
-                <div className="min-w-0">
-                  <p className="caretip-landing-dashboard-showcase__eyebrow">
-                    {t("landing.dashboardShowcase.preview.eyebrow")}
-                  </p>
-                  <h4 className="caretip-landing-dashboard-showcase__title">
-                    {t("landing.dashboardShowcase.preview.title")}
-                  </h4>
-                </div>
-                <div className="caretip-landing-dashboard-showcase__header-meta">
-                  {premium ? (
-                    <span className="caretip-landing-dashboard-showcase__sample">
-                      {t("landing.dashboardShowcase.preview.sampleData")}
-                    </span>
-                  ) : null}
-                  <span className="caretip-landing-dashboard-showcase__period">
-                    {t("landing.dashboardShowcase.preview.periodWeek")}
-                  </span>
-                </div>
-              </header>
-            ) : (
-              <div className="caretip-landing-dashboard-showcase__compact-bar">
-                <span className="caretip-landing-dashboard-showcase__compact-title">
-                  {t("landing.dashboardShowcase.preview.title")}
-                </span>
-                <span className="caretip-landing-dashboard-showcase__period">
-                  {t("landing.dashboardShowcase.preview.periodWeek")}
-                </span>
-              </div>
-            )}
-
-            <div className="caretip-landing-dashboard-showcase__body business-dashboard-overview">
-              <ShowcaseKpiRow
-                compact={compact && !editorial && !premium}
-                premium={premium}
-                embeddedInCard={embeddedInCard}
-              />
-              <ShowcaseEmployeePreview
-                compact={compact && !premium}
-                premium={premium}
-                employeeLimit={limit}
-                embeddedInCard={embeddedInCard}
-              />
+      {laptopFrame ? (
+        <div className="caretip-landing-dashboard-showcase__laptop">
+          <div className="caretip-landing-dashboard-showcase__laptop-lid">
+            <div className="caretip-landing-dashboard-showcase__laptop-bezel" aria-hidden>
+              <span className="caretip-landing-dashboard-showcase__laptop-camera" />
             </div>
+            <div className="caretip-landing-dashboard-showcase__laptop-screen">{screen}</div>
           </div>
         </div>
-        {editorial ? <div className="caretip-landing-dashboard-showcase__editorial-fade" aria-hidden /> : null}
-      </div>
+      ) : (
+        screen
+      )}
 
       {captionVisible ? (
         <p className="caretip-landing-dashboard-showcase__caption">

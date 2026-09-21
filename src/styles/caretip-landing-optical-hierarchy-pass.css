@@ -82,9 +82,9 @@
 
 /* Showcase height owned by industry-showcase.css (Firefox reference) — do not shrink here */
 
-/* —— Setup: step numerals shouldn’t overpower H2 —— */
-.caretip-landing.caretip-landing--premium .caretip-process-step-number {
-  font-size: clamp(2.25rem, 3.8vw, 2.875rem);
+/* —— Setup: compact editorial step numerals —— */
+.caretip-landing.caretip-landing--premium #how-it-works .caretip-process-step-number {
+  font-size: 0.6875rem;
 }
 
 /* —— Setup mobile lead: less pinched measure —— */

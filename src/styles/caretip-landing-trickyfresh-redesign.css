@@ -783,8 +783,7 @@ html:not(.dark) .caretip-landing #final-cta .caretip-trust-strip__check,
 
 .caretip-landing .caretip-live-minutes-section .caretip-process-step-number {
   font-family: var(--font-hero-display);
-  font-weight: 500;
-  color: var(--care-orange);
+  font-weight: 600;
 }
 
 .caretip-landing .caretip-motivation-section,

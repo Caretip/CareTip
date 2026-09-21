@@ -169,7 +169,7 @@
   }
 
   .caretip-landing #how-it-works .caretip-process-step--active {
-    transform: translateX(1px);
+    transform: none;
   }
 }
 

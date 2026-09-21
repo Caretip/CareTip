@@ -2982,6 +2982,7 @@
       "step4Title": "Receive appreciation",
       "step4Desc": "Track incoming tips live in your dashboard.",
       "stepsAria": "Setup steps",
+      "currentStep": "Current step",
       "floatSetupLabel": "Setup status",
       "floatSetupValue": "Ready to collect tips",
       "floatTimeLabel": "Typical time",

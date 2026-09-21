@@ -243,30 +243,32 @@ export function LandingAudienceBenefitsSection() {
                     card.photoClass,
                   )}
                 >
-                  <picture>
-                    {card.imageAvif ? <source type="image/avif" srcSet={card.imageAvif} /> : null}
-                    <img
-                      src={card.image}
-                      alt={card.imageAlt ?? ""}
-                      loading="lazy"
-                      decoding="async"
-                      sizes="(min-width: 1024px) 32rem, 100vw"
-                      width={854}
-                      height={1280}
-                      onError={(event) => {
-                        const img = event.currentTarget;
-                        const picture = img.parentElement;
-                        if (picture?.tagName === "PICTURE") {
-                          picture
-                            .querySelectorAll('source[type="image/avif"]')
-                            .forEach((source) => source.remove());
-                        }
-                        if (card.image && img.getAttribute("src") !== card.image) {
-                          img.src = card.image;
-                        }
-                      }}
-                    />
-                  </picture>
+                  <div className="caretip-audience-benefits__visual-card">
+                    <picture>
+                      {card.imageAvif ? <source type="image/avif" srcSet={card.imageAvif} /> : null}
+                      <img
+                        src={card.image}
+                        alt={card.imageAlt ?? ""}
+                        loading="lazy"
+                        decoding="async"
+                        sizes="(min-width: 1024px) 32rem, 100vw"
+                        width={854}
+                        height={1280}
+                        onError={(event) => {
+                          const img = event.currentTarget;
+                          const picture = img.parentElement;
+                          if (picture?.tagName === "PICTURE") {
+                            picture
+                              .querySelectorAll('source[type="image/avif"]')
+                              .forEach((source) => source.remove());
+                          }
+                          if (card.image && img.getAttribute("src") !== card.image) {
+                            img.src = card.image;
+                          }
+                        }}
+                      />
+                    </picture>
+                  </div>
                 </div>
               ) : null}
 

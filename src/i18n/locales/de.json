@@ -2982,6 +2982,7 @@
       "step4Title": "Wertschätzung empfangen",
       "step4Desc": "Eingehende Trinkgelder live im Dashboard mitverfolgen.",
       "stepsAria": "Einrichtungsschritte",
+      "currentStep": "Aktueller Schritt",
       "floatSetupLabel": "Setupstatus",
       "floatSetupValue": "Bereit für Trinkgelder",
       "floatTimeLabel": "Typische Dauer",
