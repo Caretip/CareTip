@@ -3021,13 +3021,13 @@
       "pill": "BUSINESS DASHBOARD",
       "title": "Everything your team earns,<brm/>in one <hl>clear view</hl>.",
       "subtitle": "Track tips, spot standout performance, and read guest appreciation — without spreadsheets or end-of-shift guesswork.",
-      "caption": "Illustrative dashboard preview with sample data. Your live workspace updates in real time.",
+      "caption": "Illustrative dashboard preview with fixed sample data.",
       "ariaLabel": "Illustrative CareTip business manager dashboard preview with sample tip analytics and team performance",
       "preview": {
         "eyebrow": "Manager workspace",
         "title": "Business overview",
-        "periodWeek": "This week",
-        "liveOverview": "Live overview"
+        "periodWeek": "Sample week",
+        "sampleData": "Sample data"
       },
       "sidebar": {
         "ariaLabel": "CareTip dashboard navigation preview"
@@ -3036,7 +3036,7 @@
         "totalTips": "Total tips (week)",
         "tipCountHint": "{{count}} tips recorded",
         "activeEmployees": "Active employees",
-        "activeEmployeesHint": "7 on shift today",
+        "activeEmployeesHint": "Illustrative team roster",
         "averageRating": "Average rating",
         "averageRatingHint": "From guest feedback",
         "avgTip": "Average tip",
@@ -3229,7 +3229,7 @@
       }
     },
     "audienceBenefits": {
-      "eyebrow": "THE OWNER VIEW",
+      "eyebrow": "Benefits at a Glance",
       "headline": "Full control for owners.<br/><hl>More motivation</hl> for teams.",
       "subheadline": "",
       "subtitle": "",

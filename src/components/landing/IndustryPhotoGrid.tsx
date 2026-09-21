@@ -153,7 +153,7 @@ function IndustryPhotoCard({
         <strong>{card.teaser}</strong>
         <PrefetchLink to={card.href} className="caretip-industry-photo-card__cta no-underline">
           {ctaLabel}
-          <ArrowUpRight size={15} strokeWidth={2.3} aria-hidden />
+          <ArrowUpRight size={14} strokeWidth={2.2} aria-hidden />
         </PrefetchLink>
       </div>
     </article>

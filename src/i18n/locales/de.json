@@ -3021,13 +3021,13 @@
       "pill": "BUSINESS-DASHBOARD",
       "title": "Alles, was Ihr Team verdient,<brm/>in einer <hl>klaren Übersicht</hl>.",
       "subtitle": "Trinkgelder verfolgen, Leistung erkennen und Gäste-Feedback lesen — ohne Tabellenkalkulation oder Schicht-Ende-Rätselraten.",
-      "caption": "Illustrative Dashboard-Vorschau mit Beispieldaten. Ihr Live-Workspace aktualisiert sich in Echtzeit.",
+      "caption": "Illustrative Dashboard-Vorschau mit festen Beispieldaten.",
       "ariaLabel": "Illustrative CareTip-Manager-Dashboard-Vorschau mit Beispiel-Analysen und Teamleistung",
       "preview": {
         "eyebrow": "Manager",
         "title": "Betriebsübersicht",
-        "periodWeek": "Diese Woche",
-        "liveOverview": "Live"
+        "periodWeek": "Beispielwoche",
+        "sampleData": "Beispieldaten"
       },
       "sidebar": {
         "ariaLabel": "CareTip-Dashboard-Navigation (Vorschau)"
@@ -3036,7 +3036,7 @@
         "totalTips": "Trinkgeld",
         "tipCountHint": "{{count}} erfasst",
         "activeEmployees": "Aktiv",
-        "activeEmployeesHint": "7 im Einsatz",
+        "activeEmployeesHint": "Beispiel-Teamübersicht",
         "averageRating": "Ø Bewertung",
         "averageRatingHint": "Gäste-Feedback",
         "avgTip": "Ø Trinkgeld",
@@ -3229,7 +3229,7 @@
       }
     },
     "audienceBenefits": {
-      "eyebrow": "DIE INHABER-ANSICHT",
+      "eyebrow": "Vorteile auf einen Blick",
       "headline": "Volle Kontrolle für Inhaber.<br/><hl>Mehr Motivation</hl> für Teams.",
       "subheadline": "",
       "subtitle": "",

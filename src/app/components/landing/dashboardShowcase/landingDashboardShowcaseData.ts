@@ -24,12 +24,16 @@ export type LandingDashboardShowcaseEmployee = {
   status: LandingDashboardShowcaseEmployeeStatus;
 };
 
+/** Fixed marketing KPIs — never wired to authenticated dashboard or live tip feeds. */
 export const LANDING_DASHBOARD_SHOWCASE_KPIS = {
   totalTips: 3230.3,
   tipCount: 167,
   activeEmployees: 7,
   averageRating: 3.9,
 } as const;
+
+/** Hard cap for landing preview rows — independent of any real team size. */
+export const LANDING_DASHBOARD_SHOWCASE_EMPLOYEE_LIMIT = 7;
 
 export type LandingDashboardShowcaseChartDay = {
   key: "mon" | "tue" | "wed" | "thu" | "fri" | "sat" | "sun";

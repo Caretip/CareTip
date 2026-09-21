@@ -419,9 +419,8 @@ export const LandingDashboardShowcaseVisual = memo(function LandingDashboardShow
                 </div>
                 <div className="caretip-landing-dashboard-showcase__header-meta">
                   {premium ? (
-                    <span className="caretip-landing-dashboard-showcase__live caretip-landing-dashboard-showcase__live--pulse">
-                      <span className="caretip-landing-dashboard-showcase__live-dot" aria-hidden />
-                      {t("landing.dashboardShowcase.preview.liveOverview")}
+                    <span className="caretip-landing-dashboard-showcase__sample">
+                      {t("landing.dashboardShowcase.preview.sampleData")}
                     </span>
                   ) : null}
                   <span className="caretip-landing-dashboard-showcase__period">

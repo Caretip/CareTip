@@ -10,6 +10,7 @@ import { landingCopyVisible, landingUi } from "@/components/landing/landingUi";
 import { landingHeadlineComponents } from "@/components/landing/landingRichText";
 import { landingStaggerDelay } from "@/lib/landingMotion";
 import { cn } from "@/lib/utils";
+import { LANDING_DASHBOARD_SHOWCASE_EMPLOYEE_LIMIT } from "./dashboardShowcase/landingDashboardShowcaseData";
 import { LandingDashboardShowcaseVisual } from "./dashboardShowcase/LandingDashboardShowcaseVisual";
 import teamsVisual from "../../../../images/new-imo.webp";
 import teamsVisualAvif from "../../../../images/new-imo.avif";
@@ -126,7 +127,7 @@ export function LandingAudienceBenefitsSection() {
         cardVisual: (
           <LandingDashboardShowcaseVisual
             variant="premium"
-            employeeLimit={7}
+            employeeLimit={LANDING_DASHBOARD_SHOWCASE_EMPLOYEE_LIMIT}
             showCaption={false}
             embeddedInCard
           />
@@ -182,17 +183,17 @@ export function LandingAudienceBenefitsSection() {
               "caretip-audience-benefits__header mb-0",
             )}
           >
-            <div className={cn(landingUi.sectionAccentRow, "justify-center")}>
+            <div className="caretip-audience-benefits__headline-stack">
               <LandingSectionAccent variant="spark" className="mx-auto">
                 {t(`${prefix}.eyebrow`)}
               </LandingSectionAccent>
+              <h2
+                id="audience-benefits-heading"
+                className={cn(landingUi.sectionTitle, "caretip-audience-benefits__headline")}
+              >
+                <Trans i18nKey={`${prefix}.headline`} components={landingHeadlineComponents} />
+              </h2>
             </div>
-            <h2
-              id="audience-benefits-heading"
-              className={cn(landingUi.sectionTitle, "caretip-audience-benefits__headline")}
-            >
-              <Trans i18nKey={`${prefix}.headline`} components={landingHeadlineComponents} />
-            </h2>
             {landingCopyVisible(t(`${prefix}.subheadline`)) ? (
               <p
                 className={cn(

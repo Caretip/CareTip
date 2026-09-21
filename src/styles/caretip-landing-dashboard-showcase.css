@@ -379,6 +379,24 @@ html.dark .caretip-landing-dashboard-showcase--premium .caretip-landing-dashboar
   gap: 0.45rem;
 }
 
+.caretip-landing-dashboard-showcase--premium .caretip-landing-dashboard-showcase__sample {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.15rem 0.45rem;
+  border-radius: 999px;
+  font-size: 0.625rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: hsl(var(--muted-foreground));
+  background: hsl(var(--muted) / 0.55);
+  white-space: nowrap;
+}
+
+html.dark .caretip-landing-dashboard-showcase--premium .caretip-landing-dashboard-showcase__sample {
+  background: hsl(var(--muted) / 0.35);
+}
+
 .caretip-landing-dashboard-showcase--premium .caretip-landing-dashboard-showcase__live {
   display: inline-flex;
   align-items: center;

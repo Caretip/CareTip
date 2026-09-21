@@ -33,6 +33,18 @@ html.dark .caretip-landing #business-section.caretip-audience-benefits::before {
   max-width: 100%;
 }
 
+.caretip-landing .caretip-audience-benefits__headline-stack {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: clamp(0.5rem, 1.6vw, 0.75rem);
+  width: 100%;
+}
+
+.caretip-landing .caretip-audience-benefits__headline-stack > h2 {
+  margin-top: 0;
+}
+
 .caretip-landing .caretip-audience-benefits__headline {
   font-size: clamp(1.375rem, 5.2vw, 2.75rem);
   line-height: 1.12;

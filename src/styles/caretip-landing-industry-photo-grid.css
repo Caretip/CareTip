@@ -131,24 +131,30 @@ html.caretip-document-hidden .caretip-landing .caretip-industry-photo-card--anim
 .caretip-landing .caretip-industry-photo-card__cta {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  margin-top: 8px;
-  min-height: 36px;
-  padding: 0 14px;
-  border: 1px solid rgba(255, 248, 239, 0.45);
-  border-radius: 100px;
-  background: rgba(39, 54, 64, 0.55);
-  color: #fff8ef !important;
-  font-size: 12px;
-  font-weight: 700;
-  backdrop-filter: blur(8px);
-  transition: background-color 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+  gap: 4px;
+  margin-top: 4px;
+  min-height: 0;
+  padding: 0;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  color: rgba(255, 248, 239, 0.92) !important;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  text-decoration: none;
+  backdrop-filter: none;
+  transition: color 0.2s ease, text-decoration-color 0.2s ease;
 }
 
 .caretip-landing .caretip-industry-photo-card__cta:hover {
-  background: var(--care-orange, #e9781c);
-  border-color: var(--care-orange, #e9781c);
-  transform: translateY(-1px);
+  background: transparent;
+  border-color: transparent;
+  transform: none;
+  color: #fac18f !important;
+  text-decoration: underline;
+  text-decoration-color: rgba(250, 193, 143, 0.85);
+  text-underline-offset: 3px;
 }
 
 @keyframes caretip-industry-kenburns {
