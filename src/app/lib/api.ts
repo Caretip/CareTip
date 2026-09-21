@@ -56,6 +56,13 @@ import {
 } from "./accessTokenStore";
 import { guestQrScanHeaders, getOrCreateQrScanSessionId } from "./qrScanSession";
 import { coerceLocationReviewLinkFields, sanitizeGuestExternalReviews } from "./externalReviewLinks";
+import {
+  coordinateCrossTabRefresh,
+  hasRecentPeerRefreshSuccess,
+  RefreshCoordinationTimeoutError,
+} from "./authRefreshCoordination";
+import { markSessionExpiredNotice } from "./sessionExpiredNotice";
+import { clearSessionConnectivityDegraded } from "./authSessionBootstrap";
 
 const AUTH_REFRESH_PATHNAME = "/api/auth/refresh";
 
@@ -234,7 +241,7 @@ async function runRefreshAuthWithRetries(): Promise<RefreshSessionResult> {
   }
 
   refreshFailureCooldownUntil = Date.now() + REFRESH_FAILURE_COOLDOWN_MS;
-  return { ok: false, shouldClearSession: true, status: 0 };
+  return { ok: false, shouldClearSession: false, status: 0 };
 }
 
 function mayClearClientAuthStorage(): boolean {
@@ -250,14 +257,27 @@ async function ensureRefreshedSession(): Promise<RefreshSessionResult> {
   devTrackStart("auth:refresh", "auth:refresh");
   refreshSingleton = (async (): Promise<RefreshSessionResult> => {
     try {
-      const out = await runRefreshAuthWithRetries();
+      let out = await coordinateCrossTabRefresh(() => runRefreshAuthWithRetries());
+      if (
+        !out.ok &&
+        out.shouldClearSession &&
+        out.status === 401 &&
+        hasRecentPeerRefreshSuccess()
+      ) {
+        out = await coordinateCrossTabRefresh(() => runRefreshAuthWithRetries());
+      }
       if (!out.ok && out.shouldClearSession && mayClearClientAuthStorage()) {
-        clearAuthStorage();
+        clearAuthStorageForDefinitiveFailure(out.status);
+      } else if (out.ok) {
+        clearSessionConnectivityDegraded();
       }
       devTrackEnd("auth:refresh", "auth:refresh", "completed");
       return out;
     } catch (err) {
       devTrackEnd("auth:refresh", "auth:refresh", "error", err);
+      if (err instanceof RefreshCoordinationTimeoutError) {
+        return { ok: false, shouldClearSession: false, status: 504 };
+      }
       throw err;
     } finally {
       refreshSingleton = null;
@@ -311,8 +331,19 @@ export function clearClientAuthStorage(options?: { notifySync?: boolean }): void
   }
 }
 
-function clearAuthStorage(): void {
+function clearAuthStorage(options?: { sessionExpired?: boolean }): void {
+  if (options?.sessionExpired) {
+    markSessionExpiredNotice();
+  }
   clearClientAuthStorage();
+}
+
+function clearAuthStorageForDefinitiveFailure(status: number): void {
+  if (status === 401 || status === 403) {
+    clearAuthStorage({ sessionExpired: true });
+    return;
+  }
+  clearAuthStorage();
 }
 
 /** Pathname for CareTip API URLs whether `url` is relative or absolute (e.g. `VITE_API_URL` + `/api/...`). */
@@ -644,7 +675,7 @@ async function apiRequest<T>(url: string, init?: RequestInit): Promise<T> {
 
     if (isAuthRefresh && isCaretipApi) {
       refreshDeemedInvalid = true;
-      if (mayClearClientAuthStorage()) clearAuthStorage();
+      if (mayClearClientAuthStorage()) clearAuthStorageForDefinitiveFailure(401);
     } else if (
       canAttemptRefresh &&
       !alreadyRetried &&
@@ -656,7 +687,7 @@ async function apiRequest<T>(url: string, init?: RequestInit): Promise<T> {
         const retriedInit: CaretipRequestInit = { ...(init ?? {}), __caretipRetried: true };
         res = await fetchWithNetworkRetry(url, attachLatestBearer(retriedInit));
       } else if (shouldClearAccessToken && mayClearClientAuthStorage()) {
-        clearAuthStorage();
+        clearAuthStorageForDefinitiveFailure(401);
       }
     }
 
@@ -673,7 +704,7 @@ async function apiRequest<T>(url: string, init?: RequestInit): Promise<T> {
 
     // Persistent 401 after refresh + delayed retry means the session cannot be restored.
     if (res.status === 401 && isCaretipApi && mayClearClientAuthStorage()) {
-      clearAuthStorage();
+      clearAuthStorageForDefinitiveFailure(401);
     }
   }
 
@@ -714,14 +745,14 @@ export async function fetchAuthedObjectUrl(inputUrl: string): Promise<string> {
     if (nextToken) {
       res = await fetch(url, attachLatestBearer(baseGet));
     } else if (shouldClearAccessToken && mayClearClientAuthStorage()) {
-      clearAuthStorage();
+      clearAuthStorageForDefinitiveFailure(401);
     }
   }
 
   if (res.status === 401 && requestUsesCaretipProtectedApi(url) && mayClearClientAuthStorage()) {
     const t = getToken()?.trim();
     if (!t || refreshDeemedInvalid) {
-      clearAuthStorage();
+      clearAuthStorageForDefinitiveFailure(401);
     }
   }
 

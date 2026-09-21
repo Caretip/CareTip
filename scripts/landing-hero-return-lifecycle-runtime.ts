@@ -26,6 +26,7 @@ const showcase = read("src/components/landing/LandingHeroStoryShowcase.tsx");
 const assets = read("src/lib/landingHeroStoryAssets.ts");
 const routes = read("src/app/routes.tsx");
 const landingPage = read("src/app/pages/LandingPage.tsx");
+const heroPersistence = read("src/app/components/landing/LandingHeroPersistenceLayer.tsx");
 const shellReady = read("src/app/lib/useLandingShellReady.ts");
 
 assert(
@@ -149,8 +150,8 @@ assert(
   "React overlay exit must not dismiss HTML boot while / landing is still loading",
 );
 assert(
-  read("src/app/context/AppLoadingManager.tsx").includes("requestAnimationFrame"),
-  "HTML boot fade must wait for a landing paint frame, not an arbitrary timeout",
+  read("src/app/context/AppLoadingManager.tsx").includes('attributeFilter: ["data-caretip-route-ready"]'),
+  "HTML boot fade must wait for landing route commit (MutationObserver), not an arbitrary timeout",
 );
 assert(
   read("public/_headers").includes("max-age=31536000, immutable"),
@@ -173,6 +174,19 @@ assert(
 assert(
   showcase.includes("isLcpFrame") && showcase.includes('fetchpriority: "high"') && showcase.includes('fetchpriority: "low"'),
   "only the LCP hero frame may use fetchpriority high; the second frame stays low",
+);
+assert(
+  routes.includes("LandingHeroPersistenceLayer"),
+  "RootLayout must mount hero persistence layer for warm Home return",
+);
+assert(
+  heroPersistence.includes("landing-hero-persistence-layer") &&
+    heroPersistence.includes("createPortal"),
+  "hero must stay mounted off-screen and portal into home slot",
+);
+assert(
+  landingPage.includes("LANDING_HERO_SLOT_ID"),
+  "landing page must expose hero portal slot",
 );
 
 console.log("landing-hero-return-lifecycle: ok");

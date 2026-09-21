@@ -25,7 +25,7 @@ export function SuccessPage() {
   const isDevMockSession = DEV_BYPASS_ENABLED && sessionId === DEV_MOCK.sessionId;
   const effectiveSessionId = isDevMockSession ? DEV_MOCK.sessionId : sessionId;
 
-  const verification = useVerifiedTipSession(effectiveSessionId, {
+  const [verification, retryVerification] = useVerifiedTipSession(effectiveSessionId, {
     enabled: Boolean(effectiveSessionId.trim()),
     allowDevMock: isDevMockSession,
   });
@@ -111,6 +111,8 @@ export function SuccessPage() {
         employeeName={employeeName ?? undefined}
         title={t("tipFlow.completion.confirmDelayedTitle")}
         subtitle={t("tipFlow.completion.confirmDelayedDesc")}
+        onRetry={retryVerification}
+        onReturnHome={leavePage}
       />
     );
   }

@@ -17,6 +17,8 @@ const listeners = new Set<() => void>();
 
 let authHydrated = false;
 let sessionValidated = false;
+/** Transient API/network failures — session may still be valid; UI unlocked in degraded mode. */
+let sessionConnectivityDegraded = false;
 /** True after login/refresh/bootstrap returned onboarding status from the API (not stale cache). */
 let onboardingStatusFromServer = false;
 let bootstrapPromise: Promise<SessionBootstrapResult> | null = null;
@@ -58,9 +60,24 @@ function notify() {
 export function getAuthSessionFlags(): {
   authHydrated: boolean;
   sessionValidated: boolean;
+  sessionConnectivityDegraded: boolean;
   onboardingStatusFromServer: boolean;
 } {
-  return { authHydrated, sessionValidated, onboardingStatusFromServer };
+  return { authHydrated, sessionValidated, sessionConnectivityDegraded, onboardingStatusFromServer };
+}
+
+/** Unblock the shell after repeated transient refresh failures without clearing the session. */
+export function markSessionBootstrapDegraded(): void {
+  authHydrated = true;
+  sessionValidated = true;
+  sessionConnectivityDegraded = true;
+  notify();
+}
+
+export function clearSessionConnectivityDegraded(): void {
+  if (!sessionConnectivityDegraded) return;
+  sessionConnectivityDegraded = false;
+  notify();
 }
 
 /** Onboarding guards may redirect only after the server confirmed completion status. */
@@ -78,6 +95,7 @@ export function subscribeAuthSessionFlags(listener: () => void): () => void {
 export function markSessionBootstrapSettled(): void {
   authHydrated = true;
   sessionValidated = true;
+  sessionConnectivityDegraded = false;
   notify();
 }
 
@@ -89,6 +107,7 @@ export function resetSessionBootstrap(): void {
   lastBootstrapEpoch = -1;
   authHydrated = false;
   sessionValidated = false;
+  sessionConnectivityDegraded = false;
   onboardingStatusFromServer = false;
   notify();
 }

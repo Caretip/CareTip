@@ -13,6 +13,7 @@ import { CareTipPageLoader } from "../../components/CareTipPageLoader";
 import { customerFlowUi as cf } from "./customerFlowUi";
 import { useVerifiedTipSession, isVerifiedTipSessionReady } from "../../hooks/useVerifiedTipSession";
 import { CustomerFlowShell } from "./CustomerFlowShell";
+import { TipPaymentProcessingView } from "./TipPaymentProcessingView";
 import { useCustomerVenueBrand } from "./customerJourneyBrand";
 import { ProfileAvatar } from "../../components/ui/profile-avatar";
 import { GuestExternalReviewLinks } from "./GuestExternalReviewLinks";
@@ -38,7 +39,7 @@ export function RatingPage() {
   const isDevMockSession = DEV_BYPASS_ENABLED && (!sessionId || sessionId === DEV_MOCK.sessionId);
   const effectiveSessionId = isDevMockSession ? DEV_MOCK.sessionId : sessionId;
 
-  const verification = useVerifiedTipSession(effectiveSessionId, {
+  const [verification, retryVerification] = useVerifiedTipSession(effectiveSessionId, {
     enabled: Boolean(effectiveSessionId.trim()),
     allowDevMock: isDevMockSession,
   });
@@ -177,11 +178,14 @@ export function RatingPage() {
 
   if (sessionId && verification.phase === "timeout") {
     return (
-      <CustomerFlowShell venue={venueBrand} stepTitle={t("tipFlow.completion.confirmDelayedTitle")}>
-        <p className="text-center text-sm leading-relaxed text-muted-foreground">
-          {t("tipFlow.completion.confirmDelayedDesc")}
-        </p>
-      </CustomerFlowShell>
+      <TipPaymentProcessingView
+        venue={venueBrand}
+        employeeName={employeeName ?? undefined}
+        title={t("tipFlow.completion.confirmDelayedTitle")}
+        subtitle={t("tipFlow.completion.confirmDelayedDesc")}
+        onRetry={retryVerification}
+        onReturnHome={() => navigate("/", { replace: true })}
+      />
     );
   }
 

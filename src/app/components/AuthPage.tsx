@@ -71,6 +71,7 @@ import {
   useAppLoadingRegistration,
 } from "../lib/globalAppLoading";
 import { isAppShellInteractive } from "../lib/appShellLifecycle";
+import { consumeSessionExpiredNotice } from "../lib/sessionExpiredNotice";
 import { MobileWebAuthShell } from "./auth/mobileWeb";
 
 function subscribeMobileWebAuth(onChange: () => void) {
@@ -118,6 +119,11 @@ export function AuthPage() {
     if (authLane !== 'business') return;
     persistCheckoutIntentFromSearchParams(new URLSearchParams(location.search));
   }, [authLane, location.search]);
+
+  useEffect(() => {
+    if (!consumeSessionExpiredNotice()) return;
+    toast.message(t("business.onboarding.toastSessionExpired"), { id: "caretip-session-expired" });
+  }, [t]);
 
   const [isLogin, setIsLogin] = useState(() => {
     const sp = new URLSearchParams(location.search);

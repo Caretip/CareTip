@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   getTipSessionContext,
   type TipSessionPendingContext,
@@ -66,7 +66,7 @@ function logTipReconcile(event: string, payload: Record<string, unknown>): void 
 export function useVerifiedTipSession(
   sessionId: string,
   options?: UseVerifiedTipSessionOptions,
-): VerifiedTipSessionState {
+): readonly [VerifiedTipSessionState, () => void] {
   const enabled = options?.enabled !== false;
   const maxPollAttempts = options?.maxPollAttempts ?? DEFAULT_MAX_POLLS;
   const pollIntervalMs = options?.pollIntervalMs ?? DEFAULT_POLL_MS;
@@ -74,6 +74,11 @@ export function useVerifiedTipSession(
   const allowDevMock = options?.allowDevMock !== false;
   const isDevMockSession =
     allowDevMock && DEV_BYPASS_ENABLED && sessionId === DEV_MOCK.sessionId;
+
+  const [retryGeneration, setRetryGeneration] = useState(0);
+  const retryVerification = useCallback(() => {
+    setRetryGeneration((g) => g + 1);
+  }, []);
 
   const [state, setState] = useState<VerifiedTipSessionState>(() => {
     const trimmed = sessionId.trim();
@@ -233,9 +238,10 @@ export function useVerifiedTipSession(
     pollIntervalMs,
     timeoutMs,
     sessionId,
+    retryGeneration,
   ]);
 
-  return state;
+  return [state, retryVerification] as const;
 }
 
 export function isVerifiedTipSessionReady(

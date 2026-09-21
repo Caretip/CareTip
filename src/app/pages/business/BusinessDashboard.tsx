@@ -270,11 +270,10 @@ export const BusinessDashboard = memo(function BusinessDashboard() {
     (displayStats?.employees ?? []).length > 0 &&
     (displayStats?.employees ?? []).some((e) => e.slug == null || e.slug === "");
 
-  const metricsBootBlocking = isMetricsInitialLoad;
   const {
     showInitialSkeleton: showMetricsSkeleton,
     coveredByGlobalLoader: globalLoaderCoversBoot,
-  } = useBusinessPageBoot("overview", metricsBootBlocking);
+  } = useBusinessPageBoot("overview", false);
 
   const periodMetricsLoading = showMetricsSkeleton;
   const heroPulseLoading = !isMetricsSettled && !operationalPulse;

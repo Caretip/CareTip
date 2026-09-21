@@ -1,6 +1,5 @@
-import { isAppShellInteractive } from "../lib/appShellLifecycle";
 import { isAuthLogoutTransitionActive } from "../lib/authLogoutTransition";
-import { isAuthPostLoginTransitionActive } from "../lib/authPostLoginTransition";
+import { PublicRouteChunkHold } from "./PublicRouteChunkHold";
 
 /**
  * In-layout lazy-route hold — background only; login/refresh use the global overlay spinner.
@@ -17,7 +16,7 @@ export function DashboardOutletFallback() {
 /**
  * Top-level public route chunk hold.
  * Cold entry: full-viewport surface under the branded loader.
- * Soft SPA nav: invisible — never flash a blank full page over the live shell.
+ * Soft SPA nav: branded hold — never flash a blank #root over the live shell.
  * Sign In handoff: null — Login cover owns the viewport (never blank white under it).
  * Logout: opaque hold while the login route mounts (no branded CareTip overlay).
  */
@@ -28,8 +27,5 @@ export function MinimalRouteFallback() {
   if (isAuthLogoutTransitionActive()) {
     return <div className="min-h-[100dvh] w-full bg-background" aria-hidden />;
   }
-  if (isAuthPostLoginTransitionActive() || isAppShellInteractive()) {
-    return null;
-  }
-  return <div className="min-h-[100dvh] w-full bg-background" aria-hidden />;
+  return <PublicRouteChunkHold />;
 }

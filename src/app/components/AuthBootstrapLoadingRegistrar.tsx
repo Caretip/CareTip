@@ -13,6 +13,7 @@ import {
 } from "../context/AppLoadingManager";
 import { isPublicShellPath } from "../lib/publicRoutes";
 import { resolveRouteLoadingMessage } from "../lib/appLoadingContexts";
+import { markSessionBootstrapDegraded } from "../lib/authSessionBootstrap";
 import {
   GLOBAL_LOADER_STUCK_WARN_MS,
   traceAuthLoadingCompleted,
@@ -88,6 +89,8 @@ export function AuthBootstrapLoadingRegistrar({ children }: { children: ReactNod
         authHydrated: authBootstrapBlocking,
       });
       traceLoaderSnapshot("auth-bootstrap-timeout", { pathname, authStatus });
+      // Unblock the shell in degraded mode — never infinite bootstrap loading.
+      markSessionBootstrapDegraded();
     }, GLOBAL_LOADER_STUCK_WARN_MS);
     return () => window.clearTimeout(id);
   }, [authBootstrapBlocking, authStatus, pathname]);

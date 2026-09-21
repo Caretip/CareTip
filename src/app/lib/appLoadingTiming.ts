@@ -31,10 +31,15 @@ export function shouldBypassOverlayShowThreshold(
   if (initialColdBootPending) return true;
   return (
     winnerKey === "app-boot" ||
+    winnerKey === "app-auth-bootstrap" ||
     winnerKey === "onboarding-init" ||
     winnerKey === "onboarding-submit" ||
     winnerKey === "payment-stripe-redirect" ||
     winnerKey === "payment-page-checkout" ||
-    (typeof winnerKey === "string" && winnerKey.includes("checkout"))
+    (typeof winnerKey === "string" &&
+      (winnerKey.includes("checkout") ||
+        winnerKey.endsWith("-chunk") ||
+        winnerKey.includes("route-chunk") ||
+        winnerKey.includes("route-gate")))
   );
 }

@@ -35,6 +35,8 @@ const success = read("src/app/pages/customer/SuccessPage.tsx");
 const approvedGate = read("src/app/components/ApprovedBusinessGate.tsx");
 const protectedRoute = read("src/app/components/ProtectedRoute.tsx");
 const chunkLib = read("src/app/lib/chunkLoadRecovery.ts");
+const minimalFallback = read("src/app/routing/DashboardOutletFallback.tsx");
+const publicHold = read("src/app/routing/PublicRouteChunkHold.tsx");
 
 assert(routes.includes("Component: LandingPage"), "landing must stay eager");
 assert(routes.includes("Component: AuthPage"), "login/auth must be eager (RR lazy does not suspend Outlet)");
@@ -45,6 +47,11 @@ assert(!/path: '\/platform-admin\/login',\s*lazy:/.test(routes), "admin login mu
 assert(routes.includes("<AuthLogoutHandoffCover />"), "RootLayout must mount logout cover");
 assert(routes.includes("<RootSpaRouteHold />"), "RootLayout must mount SPA root hold");
 assert(routes.includes("<SignInHandoffCover />"), "Sign In cover must remain");
+assert(
+  minimalFallback.includes("PublicRouteChunkHold") &&
+    publicHold.includes('data-testid="public-route-chunk-hold"'),
+  "lazy public routes must render branded chunk hold, never blank #root",
+);
 
 assert(logoutCover.includes("data-testid=\"auth-logout-handoff-cover\""), "logout cover must be queryable");
 assert(logoutCover.includes("common.signingOut"), "logout cover uses signing-out copy, not an empty viewport");

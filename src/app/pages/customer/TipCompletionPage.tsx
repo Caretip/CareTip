@@ -19,7 +19,7 @@ export function TipCompletionPage() {
 
   const sessionId = searchParams.get("session_id")?.trim() ?? "";
 
-  const verification = useVerifiedTipSession(sessionId);
+  const [verification, retryVerification] = useVerifiedTipSession(sessionId);
   const ready = isVerifiedTipSessionReady(verification);
   const context = ready ? verification.context : null;
 
@@ -88,6 +88,8 @@ export function TipCompletionPage() {
         employeeName={tipFlowEmployeeName ?? undefined}
         title={t("tipFlow.completion.confirmDelayedTitle")}
         subtitle={t("tipFlow.completion.confirmDelayedDesc")}
+        onRetry={retryVerification}
+        onReturnHome={() => navigate("/", { replace: true })}
       />
     );
   }

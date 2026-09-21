@@ -47,6 +47,7 @@ import { JoinPage } from './pages/JoinPage';
 import { PlatformAdminLoginPage } from './pages/platform/PlatformAdminLoginPage';
 import { AuthLogoutHandoffCover } from "./components/auth/AuthLogoutHandoffCover";
 import { RootSpaRouteHold } from "./routing/RootSpaRouteHold";
+import { LandingHeroPersistenceLayer } from "./components/landing/LandingHeroPersistenceLayer";
 import { isChunkLoadFailure } from "./lib/chunkLoadRecovery";
 // auth.css: imported by AuthPage / JoinPage / routeLazy auth helpers — not on every cold route.
 
@@ -156,6 +157,7 @@ function RootLayout() {
       <SignInHandoffCover />
       <AuthLogoutHandoffCover />
       <RootSpaRouteHold />
+      <LandingHeroPersistenceLayer />
       <DashboardProfilerRoot />
       <RouteNavigationLoadingRegistrar>
         <AuthBootstrapLoadingRegistrar>

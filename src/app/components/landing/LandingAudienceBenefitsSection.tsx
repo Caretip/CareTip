@@ -12,8 +12,10 @@ import { landingStaggerDelay } from "@/lib/landingMotion";
 import { cn } from "@/lib/utils";
 import { LANDING_DASHBOARD_SHOWCASE_EMPLOYEE_LIMIT } from "./dashboardShowcase/landingDashboardShowcaseData";
 import { LandingDashboardShowcaseVisual } from "./dashboardShowcase/LandingDashboardShowcaseVisual";
-import teamsVisual from "../../../../images/new-imo.webp";
-import teamsVisualAvif from "../../../../images/new-imo.avif";
+import teamsVisualDeWebp from "../../../../images/emp.webp";
+import teamsVisualDeAvif from "../../../../images/emp.avif";
+import teamsVisualEnWebp from "../../../../images/new-imo.webp";
+import teamsVisualEnAvif from "../../../../images/new-imo.avif";
 
 type BenefitPoint = { title: string; body: string };
 
@@ -50,16 +52,17 @@ function BenefitPointsList({ points, className }: { points: BenefitPoint[]; clas
   );
 }
 
-function warmTeamsPhoneImage(): void {
+function warmTeamsPhoneImage(src: string): void {
   if (typeof window === "undefined") return;
   const img = new Image();
   img.decoding = "async";
   img.setAttribute("fetchpriority", "low");
-  img.src = teamsVisualAvif;
+  img.src = src;
 }
 
 if (typeof window !== "undefined") {
-  warmTeamsPhoneImage();
+  warmTeamsPhoneImage(teamsVisualDeAvif);
+  warmTeamsPhoneImage(teamsVisualEnAvif);
 }
 
 /**
@@ -105,6 +108,10 @@ export function LandingAudienceBenefitsSection() {
   }, [i18n.language]);
 
   const cards = useMemo((): AudienceCardConfig[] => {
+    const isDe = i18n.language?.toLowerCase().startsWith("de");
+    const teamsVisual = isDe ? teamsVisualDeWebp : teamsVisualEnWebp;
+    const teamsVisualAvif = isDe ? teamsVisualDeAvif : teamsVisualEnAvif;
+
     const businessPoints = [
       { title: t(`${prefix}.businessP1Title`), body: t(`${prefix}.businessP1Body`) },
       { title: t(`${prefix}.businessP2Title`), body: t(`${prefix}.businessP2Body`) },

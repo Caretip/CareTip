@@ -235,7 +235,7 @@ export const EmployeeDashboard = memo(function EmployeeDashboard() {
 
   const globalLoaderCoversBoot = useExtendGlobalLoaderUntilReady(
     "employee-dashboard-metrics-boot",
-    showHeroMetricsLoading,
+    false,
     resolveAppLoadingContextMessage("dashboard", t),
   );
   const showHeroMetricsSkeleton = showHeroMetricsLoading && !globalLoaderCoversBoot;
