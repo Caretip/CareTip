@@ -31,6 +31,11 @@ export function resolveMediaUrl(url: string | null | undefined): string | undefi
 
   const base = resolveApiBaseUrl().replace(/\/$/, "");
   if (s.startsWith("/")) {
+    // Vite-built assets (/assets/*) and other frontend static paths must stay on the SPA origin.
+    // Only `/uploads/*` is served by the API and needs the cross-origin base in production.
+    if (!s.startsWith("/uploads/")) {
+      return s;
+    }
     return base ? `${base}${s}` : s;
   }
   if (/^uploads\//i.test(s)) {
