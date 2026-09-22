@@ -433,8 +433,11 @@ export const en: MobileMessages = {
     successfulTipsHint: "{{count}} successful tips",
   },
   employeePayouts: {
-    title: "Stripe Payment",
+    title: "Payouts",
     subtitle: "Manage your earnings and payouts.",
+    heroAvailableTitle: "Available to withdraw",
+    heroAvailableSubtitle: "Withdraw to your account now",
+    pendingShortHint: "Still processing through Stripe",
     distributionKicker: "Tip distribution",
     distributionTitle: "Your business manages tip distribution",
     distributionTitleNamed: "{{name}} manages tip distribution.",

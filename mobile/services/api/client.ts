@@ -20,6 +20,7 @@ import { isIdleLogoutInFlight } from "@/lib/idleSession/idleSessionStore";
 import { isAuthLogoutTransitionActive } from "@/lib/authLogoutTransition";
 import { logAuthEvent, logOutgoingAuthHeader } from "@/utils/authDebug";
 import { normalizeApiError } from "@/types/api";
+import type { CaretipAxiosRequestConfig } from "@/utils/apiClientConfig";
 import type { AuthResponse } from "@/types/auth";
 import {
   bumpAuthSessionEpoch,
@@ -27,9 +28,7 @@ import {
 } from "@/services/auth/authSessionEpoch";
 import { useAuthStore } from "@/store/authStore";
 
-type RetriableConfig = InternalAxiosRequestConfig & {
-  __caretipRetried?: boolean;
-};
+type RetriableConfig = InternalAxiosRequestConfig & CaretipAxiosRequestConfig;
 
 let memoryAccessToken: string | null = null;
 let refreshPromise: Promise<string | null> | null = null;
@@ -286,8 +285,13 @@ apiClient.interceptors.response.use(
       return Promise.reject(error);
     }
 
-    // Screen-level ErrorStates handle HTTP failures — only surface transport issues globally.
-    if (!status && !isPublicApiPath(original?.url)) {
+    // Screen-level ErrorStates handle HTTP failures — only surface transport issues globally
+    // when the request did not opt out (background / screen-scoped queries).
+    if (
+      !status &&
+      !isPublicApiPath(original?.url) &&
+      !original?.__caretipSuppressGlobalError
+    ) {
       reportGlobalError(error);
     } else if (!status && __DEV__) {
       const normalized = normalizeApiError(error);

@@ -184,6 +184,12 @@
     "copied": "Copied",
     "unableToCopy": "Unable to copy"
   },
+  "mobileWebHandoff": {
+    "errorTitle": "Couldn't open Billing",
+    "errorMissingToken": "This sign-in link is missing or incomplete. Return to the CareTip app and open Billing again.",
+    "errorInvalid": "This sign-in link is invalid or has expired. Return to the CareTip app and open Billing again.",
+    "signInWeb": "Sign in on the web"
+  },
   "pwaInstall": {
     "regionAria": "Install CareTip",
     "iosRegionAria": "Add CareTip to Home Screen",

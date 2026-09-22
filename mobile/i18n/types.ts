@@ -397,6 +397,9 @@ export type MobileMessages = {
   employeePayouts: {
     title: string;
     subtitle: string;
+    heroAvailableTitle: string;
+    heroAvailableSubtitle: string;
+    pendingShortHint: string;
     distributionKicker: string;
     distributionTitle: string;
     distributionTitleNamed: string;

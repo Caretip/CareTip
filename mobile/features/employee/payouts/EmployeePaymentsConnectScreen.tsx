@@ -209,6 +209,9 @@ export function EmployeePaymentsConnectScreen() {
       : mode === "threshold"
         ? t("employeePayouts.availableNow")
         : t("employeePayouts.readyWithdraw");
+  const useConsolidatedPayoutLayout =
+    showInstantBlock && (mode === "ready" || mode === "threshold") && connectionState !== "not_connected";
+  const heroAmountCents = mode === "ready" ? net : availableCents;
 
   return (
     <Screen
@@ -269,7 +272,7 @@ export function EmployeePaymentsConnectScreen() {
         />
       ) : (
         <>
-          {showAvailableBalance ? (
+          {showAvailableBalance && !useConsolidatedPayoutLayout ? (
             <View
               style={styles.balanceBlock}
               accessible
@@ -287,7 +290,7 @@ export function EmployeePaymentsConnectScreen() {
             </View>
           ) : null}
 
-          {showAvailableBalance && eligibility?.balancesRetrieved === true ? (
+          {showAvailableBalance && !useConsolidatedPayoutLayout && eligibility?.balancesRetrieved === true ? (
             <View
               style={styles.balanceBlock}
               accessible
@@ -368,15 +371,11 @@ export function EmployeePaymentsConnectScreen() {
             </View>
           ) : showInstantBlock ? (
             <View style={styles.compactCard}>
-              <Text style={styles.cardTitle} {...textA11y}>
-                {t("employeePayouts.instantTitle")}
-              </Text>
-              <Text style={styles.muted} {...textA11y}>
-                {t("employeePayouts.instantLead")}
-              </Text>
-
               {mode === "blocked" ? (
                 <>
+                  <Text style={styles.cardTitle} {...textA11y}>
+                    {t("employeePayouts.instantTitle")}
+                  </Text>
                   <Text style={styles.body} {...textA11y}>
                     {blockedReason}
                   </Text>
@@ -391,8 +390,30 @@ export function EmployeePaymentsConnectScreen() {
                     />
                   ) : null}
                 </>
-              ) : (
+              ) : useConsolidatedPayoutLayout ? (
                 <>
+                  <View
+                    style={styles.heroBlock}
+                    accessible
+                    accessibilityLabel={`${t("employeePayouts.heroAvailableTitle")}. ${formatCentsEur(heroAmountCents)}. ${
+                      mode === "ready"
+                        ? t("employeePayouts.heroAvailableSubtitle")
+                        : hint
+                    }`}
+                  >
+                    <Text style={styles.sectionLabel} {...textA11y}>
+                      {t("employeePayouts.heroAvailableTitle")}
+                    </Text>
+                    <Text style={styles.heroAmount} {...metricTextA11y}>
+                      {formatCentsEur(heroAmountCents)}
+                    </Text>
+                    <Text style={styles.muted} {...textA11y}>
+                      {mode === "ready"
+                        ? t("employeePayouts.heroAvailableSubtitle")
+                        : hint}
+                    </Text>
+                  </View>
+
                   {mode === "threshold" ? (
                     <View style={styles.kv}>
                       <View style={styles.kvItem}>
@@ -404,26 +425,6 @@ export function EmployeePaymentsConnectScreen() {
                         <Text style={styles.kvValue}>{formatCentsEur(minCents)}</Text>
                       </View>
                     </View>
-                  ) : (
-                    <>
-                      <Text style={styles.kvLabel}>{t("employeePayouts.youllReceive")}</Text>
-                      <Text style={styles.receiveAmount} {...metricTextA11y}>
-                        {formatCentsEur(net)}
-                      </Text>
-                    </>
-                  )}
-
-                  {last4 ? (
-                    <Text style={styles.muted} {...textA11y}>
-                      {t("employeePayouts.toLabel")} {last4}
-                    </Text>
-                  ) : null}
-
-                  {eligibility?.feeConfigured && feeCents > 0 ? (
-                    <Text style={styles.muted} {...textA11y}>
-                      {t("employeePayouts.feeLabel")} {formatCentsEur(feeCents)}
-                      {feePercent ? ` · ${feePercent}` : ""}
-                    </Text>
                   ) : null}
 
                   {showInstantCta ? (
@@ -478,15 +479,64 @@ export function EmployeePaymentsConnectScreen() {
                     />
                   ) : null}
 
+                  {last4 ? (
+                    <View style={styles.infoSection}>
+                      <Text style={styles.sectionLabel} {...textA11y}>
+                        {t("employeePayouts.payoutAccount")}
+                      </Text>
+                      <Text style={styles.body} {...textA11y}>
+                        {last4}
+                      </Text>
+                    </View>
+                  ) : null}
+
+                  {mode === "ready" && eligibility?.feeConfigured && feeCents > 0 ? (
+                    <View style={styles.feeSection}>
+                      <View style={styles.feeRow}>
+                        <Text style={styles.kvLabel}>{t("employeePayouts.feeLabel")}</Text>
+                        <Text style={styles.kvValue}>
+                          {formatCentsEur(feeCents)}
+                          {feePercent ? ` · ${feePercent}` : ""}
+                        </Text>
+                      </View>
+                      <View style={styles.feeRow}>
+                        <Text style={styles.kvLabel}>{t("employeePayouts.youllReceive")}</Text>
+                        <Text style={styles.kvValue}>{formatCentsEur(net)}</Text>
+                      </View>
+                    </View>
+                  ) : null}
+
+                  {eligibility?.balancesRetrieved === true && eligibility.pendingCents > 0 ? (
+                    <View style={styles.pendingSection}>
+                      <Text style={styles.sectionLabel} {...textA11y}>
+                        {t("employeePayouts.pendingLabel")}
+                      </Text>
+                      <Text style={styles.pendingAmount} {...metricTextA11y}>
+                        {formatCentsEur(eligibility.pendingCents)}
+                      </Text>
+                      <Text style={styles.muted} {...textA11y}>
+                        {t("employeePayouts.pendingShortHint")}
+                      </Text>
+                    </View>
+                  ) : null}
+
                   {mode === "threshold" ? (
                     <Text style={styles.helper} {...textA11y}>
                       {t("employeePayouts.instantMinHelper", { amount: formatCentsEur(minCents) })}
                     </Text>
-                  ) : (
-                    <Text style={styles.helper} {...textA11y}>
-                      {t("employeePayouts.stripeProcessed")}
-                    </Text>
-                  )}
+                  ) : null}
+                </>
+              ) : (
+                <>
+                  <Text style={styles.cardTitle} {...textA11y}>
+                    {t("employeePayouts.instantTitle")}
+                  </Text>
+                  <Text style={styles.muted} {...textA11y}>
+                    {t("employeePayouts.instantLead")}
+                  </Text>
+                  <Text style={styles.body} {...textA11y}>
+                    {t("employeePayouts.readyWithdraw")}
+                  </Text>
                 </>
               )}
 
@@ -512,7 +562,7 @@ export function EmployeePaymentsConnectScreen() {
                         ? t("employeePayouts.restrictedTitle")
                         : t("employeePayouts.setupTitle")}
                   </Text>
-                  {last4 ? (
+                  {last4 && !useConsolidatedPayoutLayout ? (
                     <Text style={styles.muted} {...textA11y}>
                       {last4}
                     </Text>
@@ -562,7 +612,36 @@ export function EmployeePaymentsConnectScreen() {
 function createStyles(colors: ColorPalette) {
   return StyleSheet.create({
     skel: { gap: spacing.md, marginTop: spacing.sm },
+    heroBlock: { gap: spacing.xs, paddingTop: spacing.sm },
     balanceBlock: { gap: spacing.xs, paddingTop: spacing.sm },
+    infoSection: {
+      gap: spacing.xs,
+      paddingTop: spacing.lg,
+      borderTopWidth: StyleSheet.hairlineWidth,
+      borderTopColor: colors.border,
+    },
+    feeSection: {
+      gap: spacing.sm,
+      paddingTop: spacing.md,
+    },
+    feeRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      gap: spacing.md,
+    },
+    pendingSection: {
+      gap: spacing.xs,
+      paddingTop: spacing.lg,
+      marginTop: spacing.sm,
+      borderTopWidth: StyleSheet.hairlineWidth,
+      borderTopColor: colors.border,
+    },
+    pendingAmount: {
+      ...typography.h2,
+      color: colors.mutedForeground,
+      fontWeight: "700",
+    },
     sectionLabel: {
       ...typography.caption,
       color: colors.mutedForeground,

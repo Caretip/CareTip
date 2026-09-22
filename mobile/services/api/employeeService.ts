@@ -1,5 +1,6 @@
 import { apiClient } from "@/services/api/client";
 import { API_ENDPOINTS } from "@/constants/endpoints";
+import { withSuppressGlobalApiError } from "@/utils/apiClientConfig";
 import { writeEmployeeDataExportPdf } from "@/services/export/writeEmployeeDataExportPdf";
 import type { EmployeeDataExportPdfLocale } from "@/services/export/buildEmployeeDataExportHtml";
 import { sharePdf, cleanupShareTempFiles, type ShareOutcome } from "@/services/share";
@@ -7,7 +8,10 @@ import type { EmployeeProfile, EmployeeTimeframe, EmployeeTipsStats } from "@/ty
 import { asFiniteNumber } from "@/types/employee";
 
 export async function fetchEmployeeProfile(): Promise<EmployeeProfile> {
-  const { data } = await apiClient.get<EmployeeProfile>(API_ENDPOINTS.employees.me);
+  const { data } = await apiClient.get<EmployeeProfile>(
+    API_ENDPOINTS.employees.me,
+    withSuppressGlobalApiError(),
+  );
   return data;
 }
 

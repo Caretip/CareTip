@@ -1,18 +1,22 @@
 import { apiClient } from "@/services/api/client";
 import { API_ENDPOINTS } from "@/constants/endpoints";
+import { withSuppressGlobalApiError } from "@/utils/apiClientConfig";
 import type { NotificationListParams, NotificationsListResult } from "@/types/notifications";
 
 export async function fetchNotifications(
   params: NotificationListParams = {},
 ): Promise<NotificationsListResult> {
-  const { data } = await apiClient.get<NotificationsListResult>(API_ENDPOINTS.notifications.list, {
-    params: {
-      limit: params.limit ?? 30,
-      ...(params.cursor ? { cursor: params.cursor } : {}),
-      ...(params.unreadOnly ? { unreadOnly: "true" } : {}),
-      ...(params.q?.trim() ? { q: params.q.trim() } : {}),
-    },
-  });
+  const { data } = await apiClient.get<NotificationsListResult>(
+    API_ENDPOINTS.notifications.list,
+    withSuppressGlobalApiError({
+      params: {
+        limit: params.limit ?? 30,
+        ...(params.cursor ? { cursor: params.cursor } : {}),
+        ...(params.unreadOnly ? { unreadOnly: "true" } : {}),
+        ...(params.q?.trim() ? { q: params.q.trim() } : {}),
+      },
+    }),
+  );
   return {
     items: Array.isArray(data.items) ? data.items : [],
     nextCursor: data.nextCursor ?? null,
@@ -23,6 +27,7 @@ export async function fetchNotifications(
 export async function fetchUnreadNotificationCount(): Promise<number> {
   const { data } = await apiClient.get<{ unreadCount: number }>(
     API_ENDPOINTS.notifications.unreadCount,
+    withSuppressGlobalApiError(),
   );
   return data.unreadCount ?? 0;
 }

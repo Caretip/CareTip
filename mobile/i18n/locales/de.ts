@@ -443,8 +443,11 @@ export const de: MobileMessages = {
     successfulTipsHint: "{{count}} erfolgreiche Trinkgelder",
   },
   employeePayouts: {
-    title: "Stripe Payment",
-    subtitle: "Verwalten Sie Guthaben und Auszahlungen.",
+    title: "Auszahlung",
+    subtitle: "Guthaben und Auszahlungen verwalten.",
+    heroAvailableTitle: "Verfügbar für Auszahlung",
+    heroAvailableSubtitle: "Jetzt auf Ihr Konto auszahlen",
+    pendingShortHint: "Noch bei Stripe in Abwicklung",
     distributionKicker: "Trinkgeldverteilung",
     distributionTitle: "Ihr Betrieb verteilt die Trinkgelder",
     distributionTitleNamed: "{{name}} verteilt die Trinkgelder.",

@@ -1,6 +1,7 @@
 import { Platform, Alert } from "react-native";
 import * as WebBrowser from "expo-web-browser";
-import { t } from "@/i18n";
+import { t, useI18nStore } from "@/i18n";
+import { appendMobileWebHandoffLangParam } from "@/utils/mobileWebHandoffLocale";
 import { createBillingHandoffSession } from "@/services/api/billingHandoffService";
 import { fetchBillingSyncStatus } from "@/services/api/billingSyncService";
 import { fetchBusinessProfile } from "@/services/api/businessService";
@@ -165,7 +166,9 @@ export async function openAuthenticatedBillingWeb(
       }
 
       const session = await createBillingHandoffSession();
-      await WebBrowser.openBrowserAsync(session.url, {
+      const handoffLanguage = useI18nStore.getState().language;
+      const handoffUrl = appendMobileWebHandoffLangParam(session.url, handoffLanguage);
+      await WebBrowser.openBrowserAsync(handoffUrl, {
         dismissButtonStyle: "close",
         showTitle: true,
         enableDefaultShareMenuItem: false,

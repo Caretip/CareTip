@@ -122,6 +122,10 @@ export function resolveRouteLoadingMessage(pathname: string, t: TFunction): stri
     return resolveAppLoadingContextMessage("sessionCheck", t);
   }
 
+  if (p === "/mobile-auth") {
+    return resolveAppLoadingContextMessage("sessionCheck", t);
+  }
+
   if (
     p === "/dashboard" ||
     p.startsWith("/dashboard/") ||
@@ -217,6 +221,9 @@ export function resolveInitialBootLoadingMessage(pathname: string, t: TFunction)
     return resolveAppLoadingContextMessage("landing", t);
   }
   if (isPublicAuthenticationPath(p)) {
+    return resolveAppLoadingContextMessage("sessionCheck", t);
+  }
+  if (p === "/mobile-auth") {
     return resolveAppLoadingContextMessage("sessionCheck", t);
   }
   if (p.startsWith("/platform-admin")) {

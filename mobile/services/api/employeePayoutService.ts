@@ -1,5 +1,6 @@
 import { apiClient } from "@/services/api/client";
 import { API_ENDPOINTS } from "@/constants/endpoints";
+import { withSuppressGlobalApiError } from "@/utils/apiClientConfig";
 import type { InstantPayoutReason } from "@/features/employee/payouts/employeeInstantPayoutPresentation";
 
 export type EmployeePayoutConnectionState =
@@ -108,12 +109,18 @@ export function isEmployeeInstantPayoutInFlight(): boolean {
 }
 
 export async function fetchEmployeeConnectStatus(): Promise<EmployeeConnectStatus> {
-  const { data } = await apiClient.get<EmployeeConnectStatus>(API_ENDPOINTS.employees.connectStatus);
+  const { data } = await apiClient.get<EmployeeConnectStatus>(
+    API_ENDPOINTS.employees.connectStatus,
+    withSuppressGlobalApiError(),
+  );
   return data;
 }
 
 export async function fetchEmployeeInstantPayoutEligibility(): Promise<EmployeeInstantEligibility> {
-  const { data } = await apiClient.get<EmployeeInstantEligibility>(API_ENDPOINTS.employees.instantPayout);
+  const { data } = await apiClient.get<EmployeeInstantEligibility>(
+    API_ENDPOINTS.employees.instantPayout,
+    withSuppressGlobalApiError(),
+  );
   return data;
 }
 
@@ -145,7 +152,7 @@ export async function fetchEmployeeStripeBankPayouts(): Promise<{
 }> {
   const { data } = await apiClient.get<{ items: EmployeeStripeBankPayoutItem[]; stripeReadable: boolean }>(
     API_ENDPOINTS.employees.stripePayouts,
-    { params: { take: 50 } },
+    withSuppressGlobalApiError({ params: { take: 50 } }),
   );
   return data;
 }
@@ -156,7 +163,7 @@ export async function fetchEmployeePayableActivity(): Promise<{
 }> {
   const { data } = await apiClient.get<{ items: EmployeePayableActivityItem[]; total: number }>(
     API_ENDPOINTS.employees.payables,
-    { params: { take: 50, skip: 0 } },
+    withSuppressGlobalApiError({ params: { take: 50, skip: 0 } }),
   );
   return data;
 }

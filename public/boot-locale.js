@@ -64,8 +64,29 @@
     "verify-email": 1,
   };
 
+  function readLangQueryParam() {
+    try {
+      var search = global.location && global.location.search;
+      if (!search) return null;
+      var match = /[?&]lang=(de|en)\b/i.exec(search);
+      if (match) return match[1].toLowerCase();
+    } catch {
+      /* ignore */
+    }
+    return null;
+  }
+
   /** Default for the German product surface when no preference is stored. */
   function readBootLanguage() {
+    var fromQuery = readLangQueryParam();
+    if (fromQuery === "en" || fromQuery === "de") {
+      try {
+        global.localStorage.setItem(STORAGE_KEY, fromQuery);
+      } catch {
+        /* ignore */
+      }
+      return fromQuery;
+    }
     try {
       var v = global.localStorage.getItem(STORAGE_KEY);
       if (v === "en" || v === "de") return v;
@@ -114,6 +135,7 @@
     if (path === "/payment") return copy.checkout;
     if (path === "/success" || path === "/rating") return copy.stripeReturn;
     if (path === "/tip-complete") return copy.finishing;
+    if (path === "/mobile-auth") return copy.sessionCheck;
     if (path.indexOf("/onboarding") === 0) return copy.settingUpWorkspace;
     if (
       path === "/tip-amount" ||

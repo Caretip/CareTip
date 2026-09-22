@@ -184,6 +184,12 @@
     "copied": "Kopiert",
     "unableToCopy": "Kopieren nicht möglich"
   },
+  "mobileWebHandoff": {
+    "errorTitle": "Abrechnung konnte nicht geöffnet werden",
+    "errorMissingToken": "Dieser Anmeldelink ist unvollständig. Kehren Sie zur CareTip-App zurück und öffnen Sie Abrechnung erneut.",
+    "errorInvalid": "Dieser Anmeldelink ist ungültig oder abgelaufen. Kehren Sie zur CareTip-App zurück und öffnen Sie Abrechnung erneut.",
+    "signInWeb": "Im Web anmelden"
+  },
   "pwaInstall": {
     "regionAria": "CareTip installieren",
     "iosRegionAria": "CareTip zum Home-Bildschirm hinzufügen",
