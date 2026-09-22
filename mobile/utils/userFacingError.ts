@@ -56,7 +56,7 @@ const CODE_TO_I18N: Record<string, string> = {
   CONFLICT: "errors.conflict",
   SERVICE_UNAVAILABLE: "errors.unavailable",
   INTERNAL_ERROR: "errors.server",
-  BILLING_SESSION_MISSING: "billingHandoff.openFailed",
+  BILLING_SESSION_MISSING: "billingWebInfo.openFailed",
   OAUTH_ACCOUNT_NOT_REGISTERED: "auth.oauthAccountNotRegistered",
   GOOGLE_ACCOUNT_NOT_REGISTERED: "auth.oauthAccountNotRegistered",
   OAUTH_LINKING_REQUIRED: "auth.oauthLinkingRequired",

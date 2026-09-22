@@ -1,6 +1,6 @@
 import { config } from "@/constants/config";
 
-function getAppPublicBaseUrl(): string {
+export function getAppPublicBaseUrl(): string {
   if (config.appUrl) return config.appUrl.replace(/\/+$/, "");
   return "https://caretip.de";
 }

@@ -851,17 +851,12 @@ export type MobileMessages = {
     mfaCodeTooLong: string;
     nameRequired: string;
   };
-  billingHandoff: {
-    confirmTitle: string;
-    confirmBody: string;
-    cancel: string;
-    continue: string;
-    updatingPlan: string;
-    planUpdated: string;
-    planUnchangedHint: string;
-    syncFailed: string;
+  billingWebInfo: {
+    title: string;
+    bodyIntro: string;
+    bodyAfterLink: string;
+    dismiss: string;
     openFailed: string;
-    sessionExpired: string;
   };
   emptyState: {
     chartTitle: string;

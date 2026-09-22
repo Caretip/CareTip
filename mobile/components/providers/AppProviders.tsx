@@ -17,6 +17,7 @@ import { ThemeBridge } from "@/components/providers/ThemeBridge";
 import { StartupBridge } from "@/components/providers/StartupBridge";
 import { DeepLinkBridge } from "@/components/providers/DeepLinkBridge";
 import { BillingReturnSyncOverlay } from "@/components/billing/BillingReturnSyncOverlay";
+import { BillingWebInfoModal } from "@/components/billing/BillingWebInfoModal";
 
 bindReactQueryOnlineManager();
 
@@ -48,6 +49,7 @@ export function AppProviders({ children }: { children: ReactNode }) {
                       <RealtimeQueryBridge />
                       <DeepLinkBridge />
                       <BillingReturnSyncOverlay />
+                      <BillingWebInfoModal />
                       {children}
                     </IdleSessionBridge>
                   </SocketProvider>

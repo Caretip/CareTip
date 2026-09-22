@@ -920,20 +920,13 @@ export const de: MobileMessages = {
     shared: "Geteilt.",
     paymentReceived: "Zahlung erhalten.",
   },
-  billingHandoff: {
-    confirmTitle: "Weiter auf CareTip Web",
-    confirmBody:
-      "Sie werden zu CareTip Web weitergeleitet, um das Abonnement für denselben Workspace zu verwalten. Sie können dort abschließen, weiter im Web arbeiten oder zur mobilen App zurückkehren. Wir aktualisieren Ihren Plan, wenn Sie zurückkommen.",
-    cancel: "Abbrechen",
-    continue: "Weiter zu CareTip Web",
-    updatingPlan: "Ihr Workspace wird aktualisiert…",
-    planUpdated: "Ihr CareTip-Workspace ist aktuell.",
-    planUnchangedHint:
-      "Noch keine Planänderung bestätigt. Wenn Sie im Web bezahlt haben, warten Sie kurz und öffnen Sie „Plan verwalten“ erneut, oder ziehen Sie zum Aktualisieren.",
-    syncFailed:
-      "Wir konnten Ihren Plan nicht aktualisieren. Prüfen Sie die Verbindung und versuchen Sie „Plan verwalten“ erneut.",
+  billingWebInfo: {
+    title: "Abo auf CareTip Web verwalten",
+    bodyIntro: "Um Ihr Abonnement zu verwalten oder zu upgraden, besuchen Sie bitte:",
+    bodyAfterLink:
+      "Melden Sie sich mit Ihren CareTip-Zugangsdaten an. Nach der Anmeldung gehen Sie zu Abrechnung → Abonnement, um Ihren Plan zu verwalten.",
+    dismiss: "Verstanden",
     openFailed: "Abrechnung konnte nicht geöffnet werden. Bitte Verbindung prüfen und erneut versuchen.",
-    sessionExpired: "Ihre Sitzung ist abgelaufen. Bitte erneut anmelden und „Plan verwalten“ versuchen.",
   },
   emptyState: {
     chartTitle: "Noch keine Diagrammdaten",

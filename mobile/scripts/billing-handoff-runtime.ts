@@ -1,5 +1,5 @@
 /**
- * Billing return sync policy regression.
+ * Billing web info + return sync policy regression.
  *
  *   npm run test:billing-handoff
  */
@@ -38,14 +38,14 @@ function run() {
   assert.ok(BILLING_RETURN_SYNC_MAX_ATTEMPTS >= 3);
   assert.ok(BILLING_RETURN_SYNC_MAX_ATTEMPTS * BILLING_RETURN_SYNC_INTERVAL_MS <= 30_000);
 
-  // Boost helper: default false until set — import is side-effect free for the check API.
   assert.equal(shouldBypassForegroundSyncCooldown(0), false);
 
-  // Handoff copy must explain same-workspace web continue + return to mobile (EN).
-  assert.match(en.billingHandoff.confirmTitle, /CareTip Web/i);
-  assert.match(en.billingHandoff.confirmBody, /same workspace/i);
-  assert.match(en.billingHandoff.confirmBody, /return to the mobile app/i);
-  assert.match(en.billingHandoff.updatingPlan, /Refreshing|workspace/i);
+  assert.match(en.billingWebInfo.title, /CareTip Web/i);
+  assert.match(en.billingWebInfo.bodyIntro, /visit/i);
+  assert.match(en.billingWebInfo.bodyAfterLink, /Billing/i);
+  assert.match(en.billingWebInfo.bodyAfterLink, /Subscription/i);
+  assert.match(en.billingWebInfo.dismiss, /Got it/i);
+  assert.doesNotMatch(en.billingWebInfo.title, /Continue/i);
 
   console.log("billing-handoff-runtime: OK");
 }
