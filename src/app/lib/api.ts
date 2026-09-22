@@ -331,8 +331,16 @@ export function clearClientAuthStorage(options?: { notifySync?: boolean }): void
   }
 }
 
+/**
+ * Session-expired toast is for unrecoverable auth invalidation — never intentional logout.
+ * {@link markClientSessionRevoked} / {@link markLogoutPending} are set before trailing API work can finish.
+ */
+export function shouldMarkSessionExpiredNotice(): boolean {
+  return !isClientSessionRevoked() && !isLogoutPending();
+}
+
 function clearAuthStorage(options?: { sessionExpired?: boolean }): void {
-  if (options?.sessionExpired) {
+  if (options?.sessionExpired && shouldMarkSessionExpiredNotice()) {
     markSessionExpiredNotice();
   }
   clearClientAuthStorage();

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, type ImgHTMLAttributes, type ReactNode } from "react";
 import { useTranslation, Trans } from "react-i18next";
 import { Check, LayoutDashboard, Smartphone } from "lucide-react";
 import { PrefetchLink } from "@/app/components/PrefetchLink";
@@ -263,7 +263,7 @@ export function LandingAudienceBenefitsSection() {
                         alt={card.imageAlt ?? ""}
                         loading="eager"
                         decoding="async"
-                        fetchPriority="auto"
+                        {...({ fetchpriority: "auto" } as ImgHTMLAttributes<HTMLImageElement>)}
                         sizes="(min-width: 1024px) 32rem, 100vw"
                         width={854}
                         height={1280}

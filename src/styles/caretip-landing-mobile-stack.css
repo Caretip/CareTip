@@ -33,15 +33,25 @@
   .caretip-landing .caretip-mobile-stack-visual {
     order: 2;
     width: 100%;
-    margin-top: clamp(1.125rem, 4vw, 1.5rem);
+    margin-top: clamp(1rem, 3.5vw, 1.375rem);
     margin-bottom: 0;
   }
 
   .caretip-landing .caretip-mobile-stack-after {
     order: 3;
     width: 100%;
-    margin-top: clamp(1.25rem, 4.5vw, 1.75rem);
+    margin-top: clamp(1.125rem, 4vw, 1.5rem);
     margin-bottom: 0;
+  }
+
+  .caretip-landing .caretip-mobile-stack-visual img,
+  .caretip-landing .caretip-mobile-stack-visual picture img {
+    display: block;
+    width: 100%;
+    height: auto;
+    max-height: min(48svh, 20rem);
+    object-fit: contain;
+    object-position: center top;
   }
 
   /* Flatten wrappers so intro / visual / after participate in parent grid */

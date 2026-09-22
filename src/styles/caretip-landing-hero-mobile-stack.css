@@ -48,14 +48,14 @@
    */
   .caretip-landing .caretip-hero-section--full-bg {
     --caretip-hero-mobile-gutter: 1.25rem;
-    --caretip-hero-fullbg-min-h: clamp(24rem, 84vh, 90vh);
-    --caretip-hero-fullbg-content-max: min(100%, 21rem);
-    --caretip-hero-fullbg-headline-size: clamp(2.1875rem, 7.4vw, 2.75rem);
+    --caretip-hero-fullbg-min-h: clamp(22rem, 78svh, 88svh);
+    --caretip-hero-fullbg-content-max: min(100%, 20.5rem);
+    --caretip-hero-fullbg-headline-size: clamp(2rem, 7.2vw, 2.625rem);
     --caretip-hero-body-size: clamp(1rem, 2.8vw, 1.0625rem);
     --caretip-hero-body-lh: 1.55;
-    --caretip-hero-gap-tagline: 0.875rem;
-    --caretip-hero-gap-headline-body: 0.75rem;
-    --caretip-hero-gap-body-cta: 0.75rem;
+    --caretip-hero-gap-tagline: 0.75rem;
+    --caretip-hero-gap-headline-body: 0.875rem;
+    --caretip-hero-gap-body-cta: 0.875rem;
     --caretip-hero-gap-cta-trust: 0.875rem;
     --caretip-hero-gap-trust-benefits: 1.125rem;
     --caretip-hero-subtitle-measure: min(100%, 18rem);
@@ -136,11 +136,11 @@
   }
 
   .caretip-landing .caretip-hero-section--full-bg .caretip-hero-headline {
-    --caretip-hero-headline-lh: 1.15;
+    --caretip-hero-headline-lh: 1.12;
     --caretip-hero-headline-track: -0.028em;
-    --caretip-hero-headline-measure: min(100%, 13.5ch);
+    --caretip-hero-headline-measure: min(100%, 12.5ch);
     font-size: var(--caretip-hero-fullbg-headline-size);
-    line-height: 1.15;
+    line-height: 1.12;
     margin-top: 0.25rem;
     color: rgb(12 12 14);
     text-shadow:

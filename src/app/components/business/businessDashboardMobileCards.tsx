@@ -36,40 +36,32 @@ export function TipActivityMobileCard({
       ? `${t("business.tipsActivity.csvLocationPrefix")} ${tip.locationName}`
       : t("business.tipsActivity.noLocationDetail");
 
+  const staffLine =
+    showStaffColumn
+      ? tip.staffName ?? (userRole === "employee" ? youLabel : unknownStaffLabel)
+      : null;
+  const whenLine = formatVenueDateTime(
+    tip.createdAt,
+    resolveBusinessTimezone(dataTimezone),
+    dateLocale,
+  );
+
   return (
     <article className={businessUi.mobileCard}>
       <div className="flex items-start justify-between gap-3">
-        <p className="text-lg font-semibold tabular-nums text-foreground">{formatEur(tip.amount)}</p>
+        <p className="business-mobile-card__primary tabular-nums text-foreground">{formatEur(tip.amount)}</p>
         <span className="inline-flex shrink-0 items-center rounded-full border border-border bg-muted/40 px-2.5 py-1 text-xs font-semibold">
           {statusLabel(tip.status)}
         </span>
       </div>
-      <dl className="mt-3 grid grid-cols-1 gap-2 text-xs">
-        {showStaffColumn ? (
-          <div>
-            <dt className="font-medium text-muted-foreground">
-              {t("business.tipsActivity.thStaff")}
-            </dt>
-            <dd className="mt-0.5 text-sm text-foreground">
-              {tip.staffName ?? (userRole === "employee" ? youLabel : unknownStaffLabel)}
-            </dd>
-          </div>
-        ) : null}
-        <div>
-          <dt className="font-medium text-muted-foreground">
-            {t("business.tipsActivity.thLocationTable")}
-          </dt>
-          <dd className="mt-0.5 text-sm text-muted-foreground">{locationDetail}</dd>
-        </div>
-        <div>
-          <dt className="font-medium text-muted-foreground">
-            {t("business.tipsActivity.thDateTime")}
-          </dt>
-          <dd className="mt-0.5 text-sm text-muted-foreground">
-            {formatVenueDateTime(tip.createdAt, resolveBusinessTimezone(dataTimezone), dateLocale)}
-          </dd>
-        </div>
-      </dl>
+      {staffLine ? (
+        <p className="business-mobile-card__secondary">{staffLine}</p>
+      ) : null}
+      <p className="business-mobile-card__meta">
+        {locationDetail}
+        <span aria-hidden="true"> · </span>
+        {whenLine}
+      </p>
     </article>
   );
 }

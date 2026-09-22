@@ -62,6 +62,7 @@
     "test:auth-refresh-coordination": "node ./backend/node_modules/tsx/dist/cli.mjs ./scripts/auth-refresh-coordination-runtime.ts",
     "test:auth-refresh-multitab-browser": "node ./backend/node_modules/tsx/dist/cli.mjs ./scripts/auth-refresh-multitab-browser-runtime.ts",
     "test:auth-refresh-security": "node ./backend/node_modules/tsx/dist/cli.mjs ./scripts/auth-refresh-security-regression-runtime.ts",
+    "test:auth-logout-session-expired": "node ./backend/node_modules/tsx/dist/cli.mjs ./scripts/auth-logout-session-expired-runtime.ts",
     "test:employee-signout": "node ./backend/node_modules/tsx/dist/cli.mjs ./scripts/employee-signout-runtime.ts",
     "test:dashboard-header-identity": "node ./backend/node_modules/tsx/dist/cli.mjs ./scripts/dashboard-header-identity-runtime.ts",
     "test:app-performance-architecture": "node ./backend/node_modules/tsx/dist/cli.mjs ./scripts/app-performance-architecture-runtime.ts",

@@ -109,13 +109,12 @@ export function CookieConsentSettingsModal() {
         <DialogPrimitive.Overlay className={cc.backdrop} />
         <DialogPrimitive.Content
           className={cn(cc.panel, "max-w-lg")}
-          aria-labelledby="cookie-settings-title"
           aria-describedby="cookie-settings-intro"
         >
+          <DialogPrimitive.Title id="cookie-settings-title" className={cc.title}>
+            {t("cookieConsent.settings.title")}
+          </DialogPrimitive.Title>
           <div className={cc.scroll}>
-            <DialogPrimitive.Title id="cookie-settings-title" className={cc.title}>
-              {t("cookieConsent.settings.title")}
-            </DialogPrimitive.Title>
             <DialogPrimitive.Description id="cookie-settings-intro" className={cn(cc.body, "mt-4")}>
               {t("cookieConsent.settings.intro")}
             </DialogPrimitive.Description>

@@ -20,13 +20,13 @@ export function BusinessStripeLayout() {
       return {
         title: t("business.stripe.nav.payouts"),
         subtitle: t("business.stripe.payoutsSubtitle"),
-        hideSubtitleOnMobile: false,
+        hideSubtitleOnMobile: true,
       };
     }
     return {
       title: t("business.stripe.nav.connect"),
       subtitle: t("business.stripe.moduleSubtitle"),
-      hideSubtitleOnMobile: false,
+      hideSubtitleOnMobile: true,
     };
   }, [isPayouts, t]);
 

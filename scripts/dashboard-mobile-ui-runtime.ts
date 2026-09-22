@@ -63,6 +63,11 @@ if (
   pass("mobile theme surface-first rules extended");
 } else fail("mobile theme surface-first extension incomplete");
 
+const dashboardBundle = read("src/styles/bundles/dashboard.css");
+if (dashboardBundle.includes("caretip-dashboard-mobile-composition.css")) {
+  pass("dashboard bundle imports mobile composition CSS");
+} else fail("dashboard bundle missing mobile composition import");
+
 const mobileCss = read("src/styles/caretip-dashboard-mobile.css");
 if (
   mobileCss.includes(".print-qr-studio") &&
@@ -151,7 +156,7 @@ if (
 } else fail("Stripe connect panel still repeats title/readiness stack");
 
 const stripeLayout = read("src/app/pages/business/stripe/BusinessStripeLayout.tsx");
-if (stripeLayout.includes("hideSubtitleOnMobile")) {
+if (stripeLayout.includes("hideSubtitleOnMobile: true")) {
   pass("Stripe module hides duplicate subtitle on mobile");
 } else fail("Stripe layout mobile subtitle hide missing");
 
@@ -241,6 +246,23 @@ const teamScreen = read("mobile/features/business/TeamManagementScreen.tsx");
 if (teamScreen.includes("inviteBlock") && !teamScreen.includes("inviteCard")) {
   pass("Mobile team invite uses flat block (no decorative card)");
 } else fail("Mobile team invite still wrapped in decorative card");
+
+const mobileComposition = read("src/styles/caretip-dashboard-mobile-composition.css");
+if (
+  mobileComposition.includes("--dash-mobile-gutter") &&
+  mobileComposition.includes("dashboard-metric-stat-card__label-text") &&
+  mobileComposition.includes("business-mobile-card__meta")
+) {
+  pass("dashboard mobile composition CSS present");
+} else fail("dashboard mobile composition CSS missing");
+
+const tipMobileCard = read("src/app/components/business/businessDashboardMobileCards.tsx");
+if (
+  tipMobileCard.includes("business-mobile-card__primary") &&
+  tipMobileCard.includes("business-mobile-card__meta")
+) {
+  pass("tip activity mobile card uses hierarchy classes");
+} else fail("tip activity mobile card hierarchy missing");
 
 for (const rel of [
   "e2e/employee-dashboard-mobile-overflow.spec.ts",

@@ -1,0 +1,152 @@
+/**
+ * Dashboard mobile composition — gutters, KPI hierarchy, card breathing room.
+ * Scoped to .caretip-dashboard-shell below lg. Desktop unchanged.
+ */
+
+@media (max-width: 1023px) {
+  .caretip-dashboard-shell {
+    --dash-mobile-gutter: max(1.125rem, env(safe-area-inset-left, 0px));
+    --dash-mobile-card-pad-x: 1.125rem;
+    --dash-mobile-card-pad-y: 1rem;
+    --dash-mobile-section-gap: 1.5rem;
+  }
+
+  .caretip-dashboard-shell .business-page__inner,
+  .caretip-dashboard-shell .dashboard-page-inner,
+  .caretip-dashboard-shell .business-module-page,
+  .caretip-dashboard-shell .dashboard-page-contained,
+  .caretip-dashboard-shell .dashboard-subpage-top,
+  .caretip-dashboard-shell .dashboard-subpage-after-metrics {
+    padding-inline: var(--dash-mobile-gutter);
+  }
+
+  .caretip-dashboard-shell .business-module-page .dashboard-page-contained {
+    padding-inline: 0;
+  }
+
+  .caretip-dashboard-shell .dashboard-page-contained > * + *,
+  .caretip-dashboard-shell .business-module-page .dashboard-page-contained > * + * {
+    margin-top: var(--dash-mobile-section-gap);
+  }
+
+  /* KPI cards — label identifies, value dominates, change supports */
+  .caretip-dashboard-shell .dashboard-metric-stat-card {
+    padding: var(--dash-mobile-card-pad-y) var(--dash-mobile-card-pad-x) !important;
+    gap: 0.3125rem;
+    grid-template-rows: auto auto auto;
+  }
+
+  .caretip-dashboard-shell .dashboard-metric-stat-card__label-text {
+    font-size: 0.6875rem;
+    font-weight: 600;
+    letter-spacing: 0.03em;
+    line-height: 1.35;
+    color: hsl(var(--muted-foreground));
+  }
+
+  .caretip-dashboard-shell .dashboard-metric-stat-card__value,
+  .caretip-dashboard-shell .dashboard-metric-stat-card__value-inner {
+    min-height: 0 !important;
+    line-height: 1.12;
+  }
+
+  .caretip-dashboard-shell .dashboard-metric-stat-card__change,
+  .caretip-dashboard-shell .dashboard-metric-stat-card__change-inner {
+    min-height: 0 !important;
+    margin-top: 0.125rem;
+    font-size: 0.75rem;
+    line-height: 1.4;
+    color: hsl(var(--muted-foreground));
+  }
+
+  .caretip-dashboard-shell .business-dashboard-stats-grid > .business-stat-card,
+  .caretip-dashboard-shell .employee-dashboard-stats-grid > .employee-stat-card,
+  .caretip-dashboard-shell .platform-admin-stat-grid .dashboard-metric-stat-card {
+    min-height: 0 !important;
+  }
+
+  .caretip-dashboard-shell .business-dashboard-stats-grid,
+  .caretip-dashboard-shell .employee-dashboard-stats-grid {
+    gap: 0.75rem;
+  }
+
+  /* shadcn Card slots — consistent inset unless flattened by mobile theme */
+  .caretip-dashboard-shell [data-slot="card"]:not(.dashboard-mobile-flat-surface) > [data-slot="card-header"],
+  .caretip-dashboard-shell [data-slot="card"]:not(.dashboard-mobile-flat-surface) > [data-slot="card-content"],
+  .caretip-dashboard-shell [data-slot="card"]:not(.dashboard-mobile-flat-surface) > [data-slot="card-footer"] {
+    padding-inline: var(--dash-mobile-card-pad-x) !important;
+  }
+
+  .caretip-dashboard-shell .dashboard-filter-panel:not(.dashboard-mobile-flat-surface) {
+    padding: var(--dash-mobile-card-pad-y) var(--dash-mobile-card-pad-x);
+  }
+
+  .caretip-dashboard-shell .business-mobile-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    padding-top: 0.25rem;
+  }
+
+  .caretip-dashboard-shell .business-mobile-card {
+    padding: var(--dash-mobile-card-pad-y) var(--dash-mobile-card-pad-x) !important;
+    border-bottom: none !important;
+  }
+
+  .caretip-dashboard-shell .business-mobile-card .business-mobile-card__primary {
+    font-size: 1.125rem;
+    font-weight: 700;
+    line-height: 1.2;
+    letter-spacing: -0.01em;
+  }
+
+  .caretip-dashboard-shell .business-mobile-card .business-mobile-card__meta {
+    margin-top: 0.375rem;
+    font-size: 0.75rem;
+    line-height: 1.45;
+    color: hsl(var(--muted-foreground));
+  }
+
+  .caretip-dashboard-shell .business-mobile-card .business-mobile-card__secondary {
+    margin-top: 0.5rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    line-height: 1.35;
+    color: hsl(var(--foreground));
+  }
+
+  /* Stripe / billing explanatory copy — secondary to titles and status */
+  .caretip-dashboard-shell .business-settings-section > p.text-sm,
+  .caretip-dashboard-shell .dashboard-settings-panel p.max-w-xl.text-sm,
+  .caretip-dashboard-shell .business-stripe-connect-card p.text-sm.text-muted-foreground {
+    max-width: 100%;
+    font-size: 0.8125rem;
+    line-height: 1.55;
+  }
+
+  .caretip-dashboard-shell .business-module-workspace-header--hide-mobile-desc + * {
+    margin-top: 0.75rem;
+  }
+
+  .caretip-dashboard-shell .premium-workspace-header,
+  .caretip-dashboard-shell .dashboard-workspace-module-header {
+    margin-bottom: 0.875rem !important;
+  }
+}
+
+@media (max-width: 767px) {
+  .caretip-dashboard-shell .business-dashboard-chart-card.business-dashboard-panel-card {
+    min-height: 15rem;
+  }
+
+  .caretip-dashboard-shell .business-dashboard-chart-card .business-dashboard-chart-frame {
+    min-height: 11rem;
+  }
+}
+
+@media (max-width: 359px) {
+  .caretip-dashboard-shell {
+    --dash-mobile-gutter: 1rem;
+    --dash-mobile-card-pad-x: 1rem;
+  }
+}

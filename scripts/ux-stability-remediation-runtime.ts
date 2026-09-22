@@ -47,6 +47,7 @@ assert(coordination.includes("caretip-auth-refresh-v1"), "Web Locks use CareTip-
 assert(!coordination.includes("if (peerDone?.ok)"), "peer success must not bypass coordination mutex");
 assert(coordination.includes("RefreshCoordinationTimeoutError"), "refresh coordination timeout is classified");
 assert(api.includes("clearAuthStorageForDefinitiveFailure"), "only definitive failures clear session");
+assert(api.includes("shouldMarkSessionExpiredNotice"), "session-expired notice suppressed on intentional logout");
 assert(!authInit.includes("forceUnsettledBootstrapToAnonymous"), "bootstrap must not force-logout on transient settle");
 assert(authInit.includes("settleTransientBootstrapDegraded"), "transient failures settle degraded, not logged out");
 assert(authInit.includes("isDefinitiveRefreshFailure"), "bootstrap distinguishes auth vs transient errors");

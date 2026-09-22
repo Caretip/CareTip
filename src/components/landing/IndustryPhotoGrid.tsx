@@ -7,6 +7,7 @@ import {
 } from "@/app/data/industryPages";
 import { INDUSTRY_MEDIA } from "@/app/data/industryMedia";
 import { warmIndustryHero } from "@/lib/industryHeroAssets";
+import type { ImgHTMLAttributes } from "react";
 import { cn } from "@/lib/utils";
 import { useEffect, useMemo } from "react";
 import { useTranslation } from "react-i18next";
@@ -127,7 +128,11 @@ function IndustryPhotoCard({
             alt=""
             className="caretip-industry-photo-card__img"
             loading={index < 6 ? "eager" : "lazy"}
-            fetchPriority={index < 3 ? "high" : index < 6 ? "auto" : undefined}
+            {...(index < 3
+              ? ({ fetchpriority: "high" } as ImgHTMLAttributes<HTMLImageElement>)
+              : index < 6
+                ? ({ fetchpriority: "auto" } as ImgHTMLAttributes<HTMLImageElement>)
+                : {})}
             decoding="async"
             onError={(event) => {
               const img = event.currentTarget;

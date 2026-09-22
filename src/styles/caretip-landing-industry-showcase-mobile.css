@@ -48,7 +48,7 @@
 /* —— Stage proportions: less empty air, still immersive —— */
 @media (max-width: 1023px) {
   .caretip-landing .caretip-industry-showcase {
-    min-height: min(62svh, 34rem) !important;
+    min-height: min(54svh, 30rem) !important;
     border-radius: 1.25rem;
     /* Lighter compositor cost on mobile GPUs */
     -webkit-mask-image: none;
@@ -138,7 +138,7 @@
 /* Large phones ~430–480 */
 @media (min-width: 430px) and (max-width: 639px) {
   .caretip-landing .caretip-industry-showcase {
-    min-height: min(62svh, 34rem) !important;
+    min-height: min(54svh, 30rem) !important;
   }
 
   .caretip-landing .caretip-industry-showcase__card-slot {

@@ -12,6 +12,7 @@ export const cookieConsentClasses = {
   privacy: "cookie-consent-panel__privacy",
   privacyLink: "cookie-consent-panel__privacy-link",
   actions: "cookie-consent-panel__actions",
+  actionsRow: "cookie-consent-panel__actions-row",
   action: "cookie-consent-panel__action",
   actionPrimary: "cookie-consent-panel__action cookie-consent-panel__action--primary",
 } as const;
