@@ -1,4 +1,4 @@
-import React, { useEffect, useLayoutEffect } from 'react';
+import React, { lazy, Suspense, useEffect, useLayoutEffect } from 'react';
 import {
   createBrowserRouter,
   RouteObject,
@@ -39,6 +39,10 @@ import { SignInHandoffCover } from "./components/auth/SignInHandoffCover";
 import { DashboardProfilerRoot } from "./hooks/useDashboardRuntimeProfile";
 import { useNavigationFlashProbe } from './hooks/useNavigationFlashProbe';
 import { CookieConsentRoot } from './components/cookie/CookieConsentRoot';
+
+const PwaInstallPrompt = lazy(() =>
+  import('./components/PwaInstallPrompt').then((m) => ({ default: m.PwaInstallPrompt })),
+);
 import { LandingPage } from './pages/LandingPage';
 import { TipAmountPage } from './pages/customer/TipAmountPage';
 import { RatingPage } from './pages/customer/RatingPage';
@@ -175,6 +179,9 @@ function RootLayout() {
         </AuthBootstrapLoadingRegistrar>
       </RouteNavigationLoadingRegistrar>
       <CookieConsentRoot />
+      <Suspense fallback={null}>
+        <PwaInstallPrompt />
+      </Suspense>
     </>
   );
 }

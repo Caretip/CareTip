@@ -1,4 +1,3 @@
-import { lazy, Suspense } from 'react';
 import { RouterProvider } from 'react-router';
 import { Toaster } from 'sonner';
 import { router } from './routes';
@@ -9,10 +8,6 @@ import { ThemeProvider, useTheme } from "./context/ThemeContext";
 import { AuthProvider } from "./components/AuthProvider";
 import { SocketProvider } from "./context/SocketProvider";
 import { CookieConsentProvider } from "./context/CookieConsentContext";
-
-const PwaInstallPrompt = lazy(() =>
-  import('./components/PwaInstallPrompt').then((m) => ({ default: m.PwaInstallPrompt })),
-);
 
 function ThemedToaster() {
   const { resolvedTheme } = useTheme();
@@ -32,9 +27,6 @@ function AppTree() {
             </AppLoadingManagerProvider>
           </AuthProvider>
           <ThemedToaster />
-          <Suspense fallback={null}>
-            <PwaInstallPrompt />
-          </Suspense>
         </AppLoadingSplashProvider>
       </TipFlowProvider>
     </CookieConsentProvider>

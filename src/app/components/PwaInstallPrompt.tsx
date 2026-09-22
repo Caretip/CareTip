@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { Trans, useTranslation } from "react-i18next";
 import { Download, X } from "lucide-react";
+import { usePwaInstallPromptEligibility } from "@/app/hooks/usePwaInstallPromptEligibility";
 import {
   getPwaInstallDeferred,
   subscribePwaInstallDeferred,
@@ -35,6 +36,7 @@ function readDismissed(): boolean {
  */
 export function PwaInstallPrompt() {
   const { t } = useTranslation();
+  const pwaEligible = usePwaInstallPromptEligibility();
   const [deferred, setDeferred] = useState<PwaBeforeInstallPromptEvent | null>(() =>
     readDismissed() || isStandalone() ? null : getPwaInstallDeferred()
   );
@@ -83,7 +85,7 @@ export function PwaInstallPrompt() {
     setDeferred(null);
   }, [deferred]);
 
-  if (isStandalone() || dismissed) return null;
+  if (isStandalone() || dismissed || !pwaEligible) return null;
 
   if (deferred) {
     return (

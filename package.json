@@ -54,6 +54,7 @@
     "test:notification-intelligence": "npm --prefix backend run test:notification-intelligence",
     "test:landing-hero-return-lifecycle": "node ./backend/node_modules/tsx/dist/cli.mjs ./scripts/landing-hero-return-lifecycle-runtime.ts",
     "test:production-landing-blank-probe": "node ./backend/node_modules/tsx/dist/cli.mjs ./scripts/production-landing-blank-probe.ts",
+    "test:pwa-cookie-prompt-stacking": "node ./backend/node_modules/tsx/dist/cli.mjs ./scripts/pwa-cookie-prompt-stacking-runtime.ts",
     "test:white-screen-architecture": "node ./backend/node_modules/tsx/dist/cli.mjs ./scripts/white-screen-architecture-runtime.ts",
     "test:navigation-transition-stability": "node ./backend/node_modules/tsx/dist/cli.mjs ./scripts/navigation-transition-stability-runtime.ts",
     "test:stripe-stale-state": "node ./backend/node_modules/tsx/dist/cli.mjs ./scripts/stripe-stale-state-runtime.ts",
