@@ -12,6 +12,7 @@ import { toUserFriendlyMessage } from "../../lib/errorMessages";
 import { employeeUi } from "./employeeDashboardUi";
 import { FinanceStatusPill } from "../finance/FinanceStatusPill";
 import {
+  employeePayoutActivityDisplayAt,
   employeePayoutActivityKind,
   employeePayoutActivityKindKey,
   employeePayoutActivityShowsStatusPill,
@@ -109,7 +110,7 @@ export function EmployeePayoutActivityList() {
                   return (
                     <tr key={row.id} className="border-b border-border/70 last:border-0">
                       <td className="whitespace-nowrap py-2.5 pr-3 text-muted-foreground">
-                        {formatBerlinDateTime(row.createdAt, i18n.language)}
+                        {formatBerlinDateTime(employeePayoutActivityDisplayAt(row), i18n.language)}
                       </td>
                       <td className="max-w-[18rem] py-2.5 pr-3">{t(employeePayoutActivityKindKey(kind))}</td>
                       <td className="whitespace-nowrap py-2.5 pr-3 text-right font-medium tabular-nums">
@@ -167,7 +168,9 @@ function ActivityMobileRow({ row, locale }: { row: EmployeePayableActivityItem; 
     <li className="flex items-start justify-between gap-3 py-3">
       <div className="min-w-0">
         <p className="text-sm font-medium">{t(employeePayoutActivityKindKey(kind))}</p>
-        <p className="mt-0.5 text-xs text-muted-foreground">{formatBerlinDateTime(row.createdAt, locale)}</p>
+        <p className="mt-0.5 text-xs text-muted-foreground">
+          {formatBerlinDateTime(employeePayoutActivityDisplayAt(row), locale)}
+        </p>
         <div className="mt-1">
           {employeePayoutActivityShowsStatusPill(kind) ? (
             <FinanceStatusPill

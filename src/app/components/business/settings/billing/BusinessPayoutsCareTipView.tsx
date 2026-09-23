@@ -2,8 +2,10 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router";
 import { useTranslation } from "react-i18next";
 import {
+  getBusinessDistributionObligations,
   getEmployeeStripeConnections,
   getEmployeeTipRoutingOverview,
+  type BusinessDistributionObligationRow,
   type EmployeePayoutConnectionState,
   type EmployeeTipPayoutMode,
   type EmployeeTipRoutingOverview,
@@ -31,21 +33,28 @@ const READY_STATES: EmployeePayoutConnectionState[] = ["connected"];
 export function BusinessPayoutsCareTipView() {
   const { t } = useTranslation();
   const [overview, setOverview] = useState<EmployeeTipRoutingOverview | null>(null);
+  const [obligations, setObligations] = useState<BusinessDistributionObligationRow[] | null>(null);
   const [rows, setRows] = useState<ManagerEmployeeStripeConnection[] | null>(null);
   const [truncated, setTruncated] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const load = useCallback(() => {
     setError(null);
-    void Promise.all([getEmployeeTipRoutingOverview(), getEmployeeStripeConnections()])
-      .then(([nextOverview, connections]) => {
+    void Promise.all([
+      getEmployeeTipRoutingOverview(),
+      getEmployeeStripeConnections(),
+      getBusinessDistributionObligations({ take: 20 }),
+    ])
+      .then(([nextOverview, connections, obligationRows]) => {
         setOverview(nextOverview);
+        setObligations(obligationRows.items);
         setRows(connections.employees);
         setTruncated(connections.truncated);
       })
       .catch((err) => {
         logClientError("BusinessPayoutsCareTipView", err);
         setOverview(null);
+        setObligations(null);
         setRows(null);
         setError(toUserFriendlyMessage(err) || t("business.stripe.payoutsWorkspace.caretip.loadError"));
       });
@@ -86,7 +95,7 @@ export function BusinessPayoutsCareTipView() {
     );
   }
 
-  if (!overview || rows == null) {
+  if (!overview || rows == null || obligations == null) {
     return (
       <div className="space-y-4" aria-busy="true">
         <div className="h-24 animate-pulse rounded-xl bg-muted" />
@@ -154,6 +163,58 @@ export function BusinessPayoutsCareTipView() {
           <p className="mt-1 text-xs text-muted-foreground">
             {t("business.stripe.payoutsWorkspace.caretip.holdsCount", { count: overview.heldRowCount })}
           </p>
+        </section>
+      ) : null}
+
+      {isBusinessDistribution && (overview.heldBusinessRowCount ?? 0) > 0 ? (
+        <section
+          className="rounded-xl border border-border bg-card p-4 sm:p-5"
+          aria-labelledby="payouts-caretip-distribution-heading"
+        >
+          <h2 id="payouts-caretip-distribution-heading" className="text-base font-semibold tracking-tight">
+            {t("business.stripe.payoutsWorkspace.caretip.distributionTitle")}
+          </h2>
+          <p className="mt-2 text-sm text-muted-foreground">
+            {t("business.stripe.payoutsWorkspace.caretip.distributionBody")}
+          </p>
+          <p className="mt-3 text-2xl font-semibold tabular-nums tracking-tight">
+            {formatEur((overview.heldBusinessCents ?? 0) / 100)}
+          </p>
+          <p className="mt-1 text-xs text-muted-foreground">
+            {t("business.stripe.payoutsWorkspace.caretip.distributionCount", {
+              count: overview.heldBusinessRowCount ?? 0,
+            })}
+          </p>
+          {(overview.agedHeldBusinessRowCount ?? 0) > 0 ? (
+            <p className="mt-2 text-xs text-amber-700 dark:text-amber-300">
+              {t("business.stripe.payoutsWorkspace.caretip.distributionAgedWarning", {
+                count: overview.agedHeldBusinessRowCount ?? 0,
+                amount: formatEur((overview.agedHeldBusinessCents ?? 0) / 100),
+              })}
+            </p>
+          ) : null}
+          <div className="mt-4 space-y-3">
+            {obligations.map((row) => (
+              <div key={row.id} className="rounded-lg border border-border/80 bg-muted/20 p-3">
+                <div className="flex flex-wrap items-baseline justify-between gap-2">
+                  <p className="text-sm font-medium">{row.employeeName ?? t("business.stripe.payoutsWorkspace.caretip.unknownEmployee")}</p>
+                  <p className="text-sm font-semibold tabular-nums">{formatEur(row.remainingPayableCents / 100)}</p>
+                </div>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  {t("business.stripe.payoutsWorkspace.caretip.distributionRowMeta", {
+                    date: new Date(row.createdAt).toLocaleString(),
+                    gross: formatEur(row.grossCents / 100),
+                    fee: formatEur(row.platformFeeCents / 100),
+                  })}
+                </p>
+                {row.isAged ? (
+                  <p className="mt-1 text-xs text-amber-700 dark:text-amber-300">
+                    {t("business.stripe.payoutsWorkspace.caretip.distributionRowAged")}
+                  </p>
+                ) : null}
+              </div>
+            ))}
+          </div>
         </section>
       ) : null}
 

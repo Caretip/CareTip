@@ -7,9 +7,16 @@ import {
   useAppLoadingRegistration,
   useReleaseAppBootOverlay,
 } from "../context/AppLoadingManager";
-import { resolveRouteLoadingMessage } from "../lib/appLoadingContexts";
+import {
+  resolveLegalDocumentLoadingMessage,
+  resolveRouteLoadingMessage,
+} from "../lib/appLoadingContexts";
 import { shouldRegisterBrandedRouteNavigation } from "../lib/appLoadingJourney";
 import { isAppShellInteractive } from "../lib/appShellLifecycle";
+import {
+  isHtmlBootElementPresent,
+  setHtmlBootBridgeTagline,
+} from "../lib/htmlMarketingBootBridge";
 import { isPublicMarketingPath } from "../lib/publicRoutes";
 
 function isStandaloneDisplayMode(): boolean {
@@ -42,6 +49,12 @@ export function RouteNavigationLoadingRegistrar({ children }: { children: ReactN
     brandedRouteNavigation,
     resolveRouteLoadingMessage(pathname, t),
   );
+
+  useEffect(() => {
+    const legalMessage = resolveLegalDocumentLoadingMessage(pathOnly, t);
+    if (!legalMessage || !isHtmlBootElementPresent()) return;
+    setHtmlBootBridgeTagline(legalMessage);
+  }, [pathOnly, t]);
 
   useEffect(() => {
     const shouldReleaseBoot =

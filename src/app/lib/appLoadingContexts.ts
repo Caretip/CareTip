@@ -1,4 +1,5 @@
 import type { TFunction } from "i18next";
+import type { LegalDocumentId } from "@/app/data/legalDocumentsNav";
 import { isPublicAuthenticationPath } from "./authSession";
 import { isPublicBusinessSlugPath, isPublicMarketingPath } from "./publicRoutes";
 import type { AppLanguage } from "@/i18n/i18n";
@@ -59,6 +60,33 @@ function normalizePath(pathname: string): string {
   return pathname.split("?")[0]?.split("#")[0] ?? "/";
 }
 
+const LEGAL_DOCUMENT_LOADING_I18N_KEY: Record<LegalDocumentId, string> = {
+  privacy: "common.loading.legal.privacy",
+  terms: "common.loading.legal.terms",
+  cookies: "common.loading.legal.cookies",
+  imprint: "common.loading.legal.imprint",
+  dpa: "common.loading.legal.dpa",
+  plv: "common.loading.legal.plv",
+};
+
+/** Public legal-document routes — keep in sync with `LEGAL_DOCUMENT_ROUTES` and boot-locale.js. */
+export function resolveLegalDocumentLoadingKind(pathname: string): LegalDocumentId | null {
+  const p = normalizePath(pathname);
+  if (p === "/privacy") return "privacy";
+  if (p === "/terms") return "terms";
+  if (p === "/cookies") return "cookies";
+  if (p === "/imprint") return "imprint";
+  if (p === "/avv" || p === "/dpa") return "dpa";
+  if (p === "/plv") return "plv";
+  return null;
+}
+
+export function resolveLegalDocumentLoadingMessage(pathname: string, t: TFunction): string | null {
+  const kind = resolveLegalDocumentLoadingKind(pathname);
+  if (!kind) return null;
+  return t(LEGAL_DOCUMENT_LOADING_I18N_KEY[kind]);
+}
+
 /**
  * Customer deep-link cold boot — journey-specific copy (never generic marketing landing).
  * Keep in sync with public/boot-locale.js resolveBootTagline.
@@ -97,6 +125,9 @@ export function resolveCustomerJourneyBootContext(pathname: string): AppLoadingC
  */
 export function resolveRouteLoadingMessage(pathname: string, t: TFunction): string {
   const p = normalizePath(pathname);
+
+  const legalMessage = resolveLegalDocumentLoadingMessage(p, t);
+  if (legalMessage) return legalMessage;
 
   if (p === "/") {
     return resolveAppLoadingContextMessage("landing", t);
@@ -209,6 +240,8 @@ export function resolveInitialBootLoadingMessage(pathname: string, t: TFunction)
   if (customerContext) {
     return resolveAppLoadingContextMessage(customerContext, t);
   }
+  const legalMessage = resolveLegalDocumentLoadingMessage(p, t);
+  if (legalMessage) return legalMessage;
   if (typeof window !== "undefined") {
     const standalone =
       window.matchMedia?.("(display-mode: standalone)")?.matches === true ||

@@ -20,6 +20,8 @@ import { UpgradeCta } from "@/app/components/subscription/UpgradeCta";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
+import { RequiredFieldLabel } from "@/app/components/ui/RequiredFieldLabel";
+import { MerchantLegalAcceptanceCheckbox } from "@/app/components/legal/MerchantLegalAcceptanceCheckbox";
 import { Textarea } from "@/app/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/app/components/ui/select";
 import {
@@ -102,6 +104,7 @@ export function PhysicalBrandingStudio() {
   const [city, setCity] = useState("");
   const [contactEmail, setContactEmail] = useState("");
   const [contactPhone, setContactPhone] = useState("");
+  const [legalAccepted, setLegalAccepted] = useState(false);
   const [useRegisteredShipping, setUseRegisteredShipping] = useState(false);
   const [registeredAddressBlob, setRegisteredAddressBlob] = useState("");
   const [locationPrefill, setLocationPrefill] = useState("");
@@ -262,6 +265,7 @@ export function PhysicalBrandingStudio() {
     !missingQr &&
     !missingAddress &&
     !missingDelivery &&
+    legalAccepted &&
     !submitting;
   const setQty = (next: number) => setQuantity(Math.min(QTY_MAX, Math.max(QTY_MIN, next)));
 
@@ -467,7 +471,7 @@ export function PhysicalBrandingStudio() {
 
         {supportsAddress ? (
           <StudioField
-            title={t("business.qrStudio.physical.printedAddress")}
+            title={`${t("business.qrStudio.physical.printedAddress")} *`}
             hint={t("business.qrStudio.physical.printedAddressHint")}
           >
             <Textarea
@@ -503,7 +507,9 @@ export function PhysicalBrandingStudio() {
               <span>{t("business.qrStudio.physical.useRegisteredAddress")}</span>
             </label>
             <div className="space-y-1">
-              <Label htmlFor="physical-recipient">{t("business.qrStudio.physical.recipientName")}</Label>
+              <RequiredFieldLabel htmlFor="physical-recipient" required>
+                {t("business.qrStudio.physical.recipientName")}
+              </RequiredFieldLabel>
               <Input
                 id="physical-recipient"
                 value={recipientName}
@@ -533,7 +539,9 @@ export function PhysicalBrandingStudio() {
               />
             </div>
             <div className="space-y-1">
-              <Label htmlFor="physical-city">{t("business.qrStudio.physical.city")}</Label>
+              <RequiredFieldLabel htmlFor="physical-city" required>
+                {t("business.qrStudio.physical.city")}
+              </RequiredFieldLabel>
               <Input
                 id="physical-city"
                 value={city}
@@ -553,7 +561,9 @@ export function PhysicalBrandingStudio() {
             </div>
             <div className="grid gap-3 sm:grid-cols-2">
               <div className="space-y-1">
-                <Label htmlFor="physical-email">{t("business.qrStudio.physical.email")}</Label>
+                <RequiredFieldLabel htmlFor="physical-email" required>
+                  {t("business.qrStudio.physical.email")}
+                </RequiredFieldLabel>
                 <Input
                   id="physical-email"
                   type="email"
@@ -564,7 +574,9 @@ export function PhysicalBrandingStudio() {
                 />
               </div>
               <div className="space-y-1">
-                <Label htmlFor="physical-phone">{t("business.qrStudio.physical.phone")}</Label>
+                <RequiredFieldLabel htmlFor="physical-phone" required>
+                  {t("business.qrStudio.physical.phone")}
+                </RequiredFieldLabel>
                 <Input
                   id="physical-phone"
                   type="tel"
@@ -665,6 +677,12 @@ export function PhysicalBrandingStudio() {
               </div>
             ) : null}
 
+            <MerchantLegalAcceptanceCheckbox
+              id="physical-branding-legal"
+              checked={legalAccepted}
+              onCheckedChange={setLegalAccepted}
+              disabled={submitting}
+            />
             <Button type="button" disabled={!canSubmit} onClick={() => void placeOrder()}>
               {submitting ? t("business.qrStudio.physical.ordering") : t("business.qrStudio.physical.placeOrder")}
             </Button>

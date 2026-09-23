@@ -25,6 +25,8 @@ type AuthFieldProps = TextInputProps & {
   label: string;
   icon: keyof typeof Ionicons.glyphMap;
   error?: string;
+  /** When true, show a required-field asterisk on the label. */
+  required?: boolean;
 };
 
 const AnimatedView = Animated.createAnimatedComponent(View);
@@ -34,6 +36,7 @@ export const AuthField = forwardRef<TextInput, AuthFieldProps>(function AuthFiel
     label,
     icon,
     error,
+    required = false,
     value,
     onFocus,
     onBlur,
@@ -79,6 +82,7 @@ export const AuthField = forwardRef<TextInput, AuthFieldProps>(function AuthFiel
     <View style={styles.wrap} collapsable={false}>
       <Text style={styles.label} pointerEvents="none">
         {label}
+        {required ? <Text style={styles.requiredMark} aria-hidden="true"> *</Text> : null}
       </Text>
       <Pressable
         accessibilityRole="none"
@@ -172,6 +176,10 @@ const styles = StyleSheet.create({
     color: authBrand.fieldLabel,
     paddingHorizontal: spacing.xxs,
     letterSpacing: 0.4,
+  },
+  requiredMark: {
+    color: authBrand.fieldError,
+    fontWeight: "700",
   },
   field: {
     borderRadius: radius["2xl"],

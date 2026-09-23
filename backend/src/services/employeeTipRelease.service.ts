@@ -12,8 +12,46 @@ import { prisma } from "../prisma.js";
 import { runSerializedByKey } from "../utils/serializedByKey.js";
 import { logServerError } from "../utils/httpErrors.js";
 import { getStripeClient, isStripeConfigured } from "./stripe.service.js";
-import { remainingPayableCents } from "./employeeTipPayable.service.js";
+import {
+  employeePayableSummaryForEmployee,
+  remainingPayableCents,
+} from "./employeeTipPayable.service.js";
 import { isEmployeeRecipientReady } from "./employeeTipRouting.service.js";
+
+/**
+ * Fire-and-forget release when recoverable platform-hold payables exist and
+ * the employee Connect account is recipient-ready. Safe to call from status
+ * polls and payout-history loads — serialized per employee, idempotent keys.
+ */
+export function scheduleReleaseRecoverablePlatformPayablesForEmployee(
+  employeeId: string,
+): void {
+  if (!employeeId.trim() || !isStripeConfigured()) return;
+  void (async () => {
+    const summary = await employeePayableSummaryForEmployee(employeeId);
+    if (summary.heldPlatformCents <= 0) return;
+    const account = await prisma.employeeStripeAccount.findUnique({
+      where: { employeeId },
+      select: {
+        stripeAccountId: true,
+        stripeConnectStatus: true,
+        stripePayoutsEnabled: true,
+        employee: { select: { isDeleted: true, isActive: true, activationStatus: true } },
+      },
+    });
+    if (!account || !isEmployeeRecipientReady(account)) return;
+    if (
+      account.employee.isDeleted ||
+      !account.employee.isActive ||
+      account.employee.activationStatus !== "active"
+    ) {
+      return;
+    }
+    await releaseHeldPlatformPayablesForEmployee(employeeId);
+  })().catch((err) => {
+    logServerError("employeeTipRelease.scheduleRelease", err, { employeeId });
+  });
+}
 
 type CreateTransferFn = (
   params: Stripe.TransferCreateParams,

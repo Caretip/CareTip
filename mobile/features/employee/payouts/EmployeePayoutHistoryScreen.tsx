@@ -21,6 +21,7 @@ import {
 import {
   bankPayoutStatusTone,
   employeePayoutActivityDestinationKey,
+  employeePayoutActivityDisplayAt,
   employeePayoutActivityKind,
   employeePayoutActivityShowsStatusPill,
   employeePayoutActivityStatusKey,
@@ -76,7 +77,7 @@ export function EmployeePayoutHistoryScreen() {
       amountCents: row.activityCents,
       statusLabel: t(employeePayoutActivityStatusKey(kind)),
       statusTone: employeePayoutActivityTone(kind),
-      createdAt: row.createdAt,
+      createdAt: employeePayoutActivityDisplayAt(row),
       destination: destKey ? t(destKey) : null,
       methodLabel: null,
       reference: null,
@@ -170,7 +171,7 @@ export function EmployeePayoutHistoryScreen() {
                 t(employeePayoutActivityTitleKey(kind)),
                 formatCentsEur(row.activityCents),
                 t(employeePayoutActivityStatusKey(kind)),
-                formatPayoutDateTime(row.createdAt),
+                formatPayoutDateTime(employeePayoutActivityDisplayAt(row)),
                 destLabel,
               ]
                 .filter(Boolean)
@@ -188,7 +189,7 @@ export function EmployeePayoutHistoryScreen() {
                       {t(employeePayoutActivityTitleKey(kind))}
                     </Text>
                     <Text style={styles.rowMeta} {...textA11y}>
-                      {formatPayoutDateTime(row.createdAt)}
+                      {formatPayoutDateTime(employeePayoutActivityDisplayAt(row))}
                     </Text>
                     {destLabel ? (
                       <Text style={styles.rowMeta} {...textA11y}>

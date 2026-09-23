@@ -37,6 +37,8 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
+import { RequiredFieldLabel } from "@/app/components/ui/RequiredFieldLabel";
+import { MerchantLegalAcceptanceCheckbox } from "@/app/components/legal/MerchantLegalAcceptanceCheckbox";
 import {
   Dialog,
   DialogContent,
@@ -123,6 +125,7 @@ export function PrintQrStudio() {
   const [city, setCity] = useState(initialSnapshot?.city ?? "");
   const [contactEmail, setContactEmail] = useState(initialSnapshot?.contactEmail ?? "");
   const [contactPhone, setContactPhone] = useState(initialSnapshot?.contactPhone ?? "");
+  const [legalAccepted, setLegalAccepted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const printCheckoutInFlight = useRef(false);
   const resetPayLaunch = useCallback(() => {
@@ -536,6 +539,7 @@ export function PrintQrStudio() {
     cart.length > 0 &&
     !missingAddress &&
     !missingDelivery &&
+    legalAccepted &&
     !submitting;
 
   const placeBatchOrder = useCallback(async () => {
@@ -900,13 +904,17 @@ export function PrintQrStudio() {
             <h2 className="text-sm font-semibold">{t("business.qrStudio.physical.deliveryTitle")}</h2>
             {supportsAddress ? (
               <div className="space-y-2">
-                <Label htmlFor="print-address">{t("business.qrStudio.physical.printedAddress")}</Label>
+                <RequiredFieldLabel htmlFor="print-address" required>
+                  {t("business.qrStudio.physical.printedAddress")}
+                </RequiredFieldLabel>
                 <Input id="print-address" value={printAddress} onChange={(e) => setPrintAddress(e.target.value)} />
               </div>
             ) : null}
             <div className="grid gap-3 sm:grid-cols-2">
               <div className="space-y-2 sm:col-span-2">
-                <Label htmlFor="ship-name">{t("business.qrStudio.physical.recipientName")}</Label>
+                <RequiredFieldLabel htmlFor="ship-name" required>
+                  {t("business.qrStudio.physical.recipientName")}
+                </RequiredFieldLabel>
                 <Input id="ship-name" value={recipientName} onChange={(e) => setRecipientName(e.target.value)} />
               </div>
               <div className="space-y-2 sm:col-span-2">
@@ -914,15 +922,21 @@ export function PrintQrStudio() {
                 <Input id="ship-street" value={streetLine} onChange={(e) => setStreetLine(e.target.value)} />
               </div>
               <div className="space-y-2 sm:col-span-2">
-                <Label htmlFor="ship-city">{t("business.qrStudio.physical.city")}</Label>
+                <RequiredFieldLabel htmlFor="ship-city" required>
+                  {t("business.qrStudio.physical.city")}
+                </RequiredFieldLabel>
                 <Input id="ship-city" value={city} onChange={(e) => setCity(e.target.value)} />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="ship-email">{t("business.qrStudio.physical.email")}</Label>
+                <RequiredFieldLabel htmlFor="ship-email" required>
+                  {t("business.qrStudio.physical.email")}
+                </RequiredFieldLabel>
                 <Input id="ship-email" type="email" value={contactEmail} onChange={(e) => setContactEmail(e.target.value)} />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="ship-phone">{t("business.qrStudio.physical.phone")}</Label>
+                <RequiredFieldLabel htmlFor="ship-phone" required>
+                  {t("business.qrStudio.physical.phone")}
+                </RequiredFieldLabel>
                 <Input id="ship-phone" value={contactPhone} onChange={(e) => setContactPhone(e.target.value)} />
               </div>
             </div>
@@ -959,6 +973,12 @@ export function PrintQrStudio() {
                 : (key) => setCart((prev) => prev.filter((l) => cartLineKey(l.qrContextType, l.qrSubjectId) !== key))
             }
             t={t}
+          />
+          <MerchantLegalAcceptanceCheckbox
+            id="physical-qr-print-legal"
+            checked={legalAccepted}
+            onCheckedChange={setLegalAccepted}
+            disabled={submitting}
           />
           <div className="print-qr-studio__actions flex flex-col-reverse gap-2 sm:flex-row sm:flex-wrap">
             <Button type="button" variant="outline" className="h-auto whitespace-normal sm:w-auto" disabled={submitting} onClick={() => setStep("shipping")}>

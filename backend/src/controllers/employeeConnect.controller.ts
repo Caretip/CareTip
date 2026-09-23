@@ -92,13 +92,10 @@ export async function getMyEmployeeConnectStatus(req: Request, res: Response) {
     const status = await getEmployeeConnectStatusForUser(userId);
     if (status.connectionState === "connected" && status.heldPlatformCents > 0) {
       const actor = await resolveActiveEmployeeForConnect(userId);
-      void import("../services/employeeTipRelease.service.js")
-        .then(({ releaseHeldPlatformPayablesForEmployee }) =>
-          releaseHeldPlatformPayablesForEmployee(actor.employeeId),
-        )
-        .catch((err) => {
-          logServerError("employeeConnect.releaseOnStatus", err, { userId });
-        });
+      const { scheduleReleaseRecoverablePlatformPayablesForEmployee } = await import(
+        "../services/employeeTipRelease.service.js"
+      );
+      scheduleReleaseRecoverablePlatformPayablesForEmployee(actor.employeeId);
     }
     return res.json(status);
   } catch (err) {
@@ -117,6 +114,10 @@ export async function getMyEmployeePayableActivity(req: Request, res: Response) 
     if (rejectClientEmployeeConnectSteering(req, res)) return;
 
     const actor = await resolveActiveEmployeeForConnect(userId);
+    const { scheduleReleaseRecoverablePlatformPayablesForEmployee } = await import(
+      "../services/employeeTipRelease.service.js"
+    );
+    scheduleReleaseRecoverablePlatformPayablesForEmployee(actor.employeeId);
     const takeRaw = Number(req.query.take);
     const skipRaw = Number(req.query.skip);
     const take = Number.isInteger(takeRaw) ? takeRaw : 20;

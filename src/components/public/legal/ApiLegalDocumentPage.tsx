@@ -73,7 +73,7 @@ export function ApiLegalDocumentPage({ kind, titleKey }: ApiLegalDocumentPagePro
           </button>
         </div>
       ) : doc ? (
-        <SafeLegalHtmlContent html={doc.contentHtml} />
+        <SafeLegalHtmlContent html={doc.contentHtml} pageTitle={title} />
       ) : null}
     </PublicLegalPageShell>
   );

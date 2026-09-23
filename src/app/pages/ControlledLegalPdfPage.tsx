@@ -1,5 +1,5 @@
 import { useTranslation } from "react-i18next";
-import { Download, ExternalLink, FileText } from "lucide-react";
+import { Download, ExternalLink } from "lucide-react";
 import { PublicLegalPageShell } from "@/components/public/PublicLegalPageShell";
 import { Button } from "@/components/ui/button";
 import { careTipLegalPdfUrl, normalizeCareTipUiLanguage } from "@/app/lib/caretipLegalLinks";
@@ -19,21 +19,15 @@ function ControlledLegalPdfPage({ kind }: { kind: Kind }) {
 
   return (
     <PublicLegalPageShell title={t(titleKey)} subtitle={t(blurbKey)}>
-      <div className="mx-auto flex max-w-2xl flex-col gap-6 py-2">
-        <div className="flex items-start gap-3 text-muted-foreground">
-          <FileText className="mt-0.5 h-5 w-5 shrink-0" aria-hidden />
-          <p className="text-sm leading-relaxed">{t(blurbKey)}</p>
-        </div>
-        <div className="flex flex-wrap gap-3">
-          <Button type="button" onClick={() => openUrlInNewTab(viewUrl)}>
-            <ExternalLink className="mr-2 h-4 w-4" aria-hidden />
-            {t("legal.viewPdf")}
-          </Button>
-          <Button type="button" variant="outline" onClick={() => openUrlInNewTab(downloadUrl)}>
-            <Download className="mr-2 h-4 w-4" aria-hidden />
-            {t("legal.downloadPdf")}
-          </Button>
-        </div>
+      <div className="flex flex-wrap gap-3">
+        <Button type="button" onClick={() => openUrlInNewTab(viewUrl)}>
+          <ExternalLink className="mr-2 h-4 w-4" aria-hidden />
+          {t("legal.viewPdf")}
+        </Button>
+        <Button type="button" variant="outline" onClick={() => openUrlInNewTab(downloadUrl)}>
+          <Download className="mr-2 h-4 w-4" aria-hidden />
+          {t("legal.downloadPdf")}
+        </Button>
       </div>
     </PublicLegalPageShell>
   );

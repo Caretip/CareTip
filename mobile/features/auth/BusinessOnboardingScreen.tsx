@@ -188,6 +188,7 @@ export function BusinessOnboardingScreen() {
               value={legalBusinessName}
               onChangeText={setLegalBusinessName}
               editable={!busy && !needsSignIn}
+              required
             />
             <AuthField
               label={t("auth.onboardingBusinessType")}
@@ -195,6 +196,7 @@ export function BusinessOnboardingScreen() {
               value={businessType}
               onChangeText={setBusinessType}
               editable={!busy && !needsSignIn}
+              required
             />
           </View>
         ) : (
@@ -205,6 +207,7 @@ export function BusinessOnboardingScreen() {
               value={registeredAddress}
               onChangeText={setRegisteredAddress}
               editable={!busy && !needsSignIn}
+              required
             />
             <AuthField
               label={t("auth.onboardingPhone")}
@@ -213,6 +216,7 @@ export function BusinessOnboardingScreen() {
               onChangeText={setContactPhone}
               keyboardType="phone-pad"
               editable={!busy && !needsSignIn}
+              required
             />
             <AuthField
               label={t("auth.onboardingWebsite")}

@@ -107,6 +107,19 @@ export function employeePayoutActivityKind(row: {
   return "held";
 }
 
+export function employeePayoutActivityDisplayAt(row: {
+  createdAt: string;
+  updatedAt?: string;
+  activityAt?: string;
+  status: string;
+}): string {
+  if (row.activityAt) return row.activityAt;
+  if (row.status === "transfer_failed" || row.status === "transferring") {
+    return row.updatedAt ?? row.createdAt;
+  }
+  return row.createdAt;
+}
+
 export function employeePayoutActivityTone(
   kind: EmployeePayoutActivityKind,
 ): "success" | "warning" | "danger" | "neutral" {

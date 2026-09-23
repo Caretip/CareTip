@@ -72,11 +72,8 @@
   },
   "payouts": {
     "instantTerms": {
-      "acceptPrefix": "Ich bestätige, dass ich die",
-      "link": "Allgemeinen Geschäftsbedingungen",
-      "acceptSuffix": "für Sofortauszahlungen gelesen habe und akzeptiere.",
-      "required": "Bitte akzeptieren Sie die Allgemeinen Geschäftsbedingungen, um fortzufahren.",
-      "accepted": "AGB für Sofortauszahlungen akzeptiert."
+      "required": "Bitte bestätigen Sie, dass Sie die Allgemeinen Geschäftsbedingungen, die Datenschutzerklärung, den Auftragsverarbeitungsvertrag (AVV) sowie das Preis- und Leistungsverzeichnis gelesen haben und akzeptieren.",
+      "accepted": "Rechtliche Dokumente akzeptiert."
     }
   },
   "format": {
@@ -165,7 +162,15 @@
       "stripeReturn": "Ihr Trinkgeld wird bestätigt…",
       "finishing": "Gleich geschafft…",
       "receipt": "Ihre Quittung wird vorbereitet…",
-      "language": "Ihre Sprache wird aktualisiert…"
+      "language": "Ihre Sprache wird aktualisiert…",
+      "legal": {
+        "privacy": "Datenschutzerklärung wird geöffnet…",
+        "terms": "Allgemeine Geschäftsbedingungen werden geöffnet…",
+        "cookies": "Cookie-Richtlinie wird geöffnet…",
+        "imprint": "Impressum wird geöffnet…",
+        "dpa": "Auftragsverarbeitungsvertrag wird geöffnet…",
+        "plv": "Preis- und Leistungsverzeichnis wird geöffnet…"
+      }
     },
     "syncingAccountStatus": "Abrechnung wird vorbereitet…",
     "loadingTeamMembers": "Ihr Team wird geladen…",
@@ -347,7 +352,9 @@
           "51-200": "51–200 Personen",
           "200plus": "200+ Personen"
         },
-        "submit": "Demo anfordern"
+        "submit": "Demo anfordern",
+        "calendlyTitle": "CareTip-Demo vereinbaren",
+        "calendlyBody": "Wählen Sie einen passenden Termin. Unser Team führt Sie live durch CareTip in einem kurzen Video-Call."
       },
       "support": {
         "title": "Support",
@@ -1725,9 +1732,9 @@
       "platformLogin": "Plattform-Admin-Anmeldung"
     },
     "merchantLegalAcceptance": {
-      "label": "Ich akzeptiere die <terms>AGB</terms>, die <dpa>AVV</dpa> und das <plv>Preis- und Leistungsverzeichnis</plv> und bestätige die <privacy>Datenschutzerklärung</privacy>.",
-      "requiredHint": "Erforderlich zur Erstellung eines Geschäftskontos.",
-      "requiredError": "Bitte akzeptieren Sie die AGB, die AVV und das Preis- und Leistungsverzeichnis und bestätigen Sie die Datenschutzerklärung, um fortzufahren."
+      "label": "Ich bestätige, dass ich die <terms>Allgemeinen Geschäftsbedingungen</terms>, die <privacy>Datenschutzerklärung</privacy>, den <dpa>Auftragsverarbeitungsvertrag (AVV)</dpa> sowie das <plv>Preis- und Leistungsverzeichnis</plv> gelesen habe und akzeptiere.",
+      "requiredHint": "Erforderlich, um fortzufahren.",
+      "requiredError": "Bitte bestätigen Sie, dass Sie die Allgemeinen Geschäftsbedingungen, die Datenschutzerklärung, den Auftragsverarbeitungsvertrag (AVV) sowie das Preis- und Leistungsverzeichnis gelesen haben und akzeptieren."
     }
   },
   "notifications": {
@@ -6461,6 +6468,14 @@
           "holdsBody": "Gehalten für Mitarbeiter ohne Stripe-Verbindung.",
           "holdsCount_one": "{{count}} gehaltener Trinkgeldanteil",
           "holdsCount_other": "{{count}} gehaltene Trinkgeldanteile",
+          "distributionTitle": "Mitarbeiter-Trinkgelder warten auf Auszahlung durch das Unternehmen",
+          "distributionBody": "Diese Beträge wurden auf Ihr Business-Stripe-Konto empfangen. CareTip erfasst, wer welches Trinkgeld verdient hat. Sie zahlen Mitarbeiteranteile selbst außerhalb von CareTip aus.",
+          "distributionCount_one": "{{count}} Mitarbeiteranteil wartet auf Auszahlung",
+          "distributionCount_other": "{{count}} Mitarbeiteranteile warten auf Auszahlung",
+          "distributionAgedWarning": "{{count}} Anteile ({{amount}}) sind älter als 30 Tage und warten noch auf Auszahlung.",
+          "distributionRowMeta": "{{date}} · Brutto {{gross}} · CareTip-Gebühr {{fee}}",
+          "distributionRowAged": "Älter als 30 Tage — wartet noch auf Auszahlung durch das Unternehmen.",
+          "unknownEmployee": "Mitarbeiter",
           "accountsTitle": "Auszahlungskonten der Mitarbeiter",
           "accountsHint": "Wer weitergeleitete Trinkgelder erhalten kann, und wer noch verbinden muss.",
           "accountsTitleBusiness": "Stripe-Konten der Mitarbeiter",
@@ -8847,8 +8862,8 @@
     "versionLine": "Version {{version}} · Aktualisiert {{date}}",
     "dpaTitle": "Vereinbarung zur Auftragsverarbeitung (AVV / DPA)",
     "plvTitle": "Preis- und Leistungsverzeichnis (PLV)",
-    "dpaBlurb": "CareTip-Auftragsverarbeitungsvertrag für Unternehmen (Art. 28 DSGVO). Offizielles PDF ansehen oder herunterladen.",
-    "plvBlurb": "Offizielles CareTip Preis und Leistungsverzeichnis für Unternehmen. Offizielles PDF ansehen oder herunterladen.",
+    "dpaBlurb": "CareTip-Auftragsverarbeitungsvertrag für Unternehmen (Art. 28 DSGVO).",
+    "plvBlurb": "Offizielles CareTip Preis- und Leistungsverzeichnis für Unternehmen.",
     "viewPdf": "PDF ansehen",
     "downloadPdf": "PDF herunterladen"
   }

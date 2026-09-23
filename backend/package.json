@@ -102,6 +102,8 @@
     "test:employee-stripe-inactivity": "dotenv -e ../.env -e .env -- tsx scripts/employee-stripe-inactivity-runtime.ts",
     "test:employee-stripe-connect-foundation": "dotenv -e ../.env -e .env -- tsx scripts/employee-stripe-connect-foundation-runtime.ts",
     "test:employee-tip-direct-routing": "dotenv -e ../.env -e .env -- tsx scripts/employee-tip-direct-routing-runtime.ts",
+    "test:employee-transfer-failed-recovery": "dotenv -e ../.env -e .env -- tsx scripts/employee-transfer-failed-recovery-runtime.ts",
+    "test:business-distribution-integrity": "dotenv -e ../.env -e .env -- tsx scripts/business-distribution-integrity-runtime.ts",
     "test:employee-payable-activity-presentation": "tsx scripts/employee-payable-activity-presentation-runtime.ts",
     "test:employee-goal-sync": "tsx scripts/employee-goal-sync-runtime.ts",
     "test:auth-middleware-dedup": "tsx scripts/auth-middleware-dedup-runtime.ts",

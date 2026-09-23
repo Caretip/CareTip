@@ -6,8 +6,22 @@ import {
   onboardingInput,
   onboardingLabel,
   onboardingOptionalBadge,
+  onboardingRequiredMark,
   onboardingSelect,
 } from "./businessOnboardingUi";
+
+function OnboardingFieldLabel({ label, optional }: { label: string; optional?: boolean }) {
+  const { t } = useTranslation();
+  return (
+    <span className={onboardingLabel}>
+      {label}
+      {!optional ? <span className={onboardingRequiredMark} aria-hidden="true"> *</span> : null}
+      {optional ? (
+        <span className={onboardingOptionalBadge}>{t("business.onboarding.fields.optional")}</span>
+      ) : null}
+    </span>
+  );
+}
 
 type TextFieldProps = {
   label: string;
@@ -28,14 +42,9 @@ export function BusinessOnboardingTextField({
   error,
   optional,
 }: TextFieldProps) {
-  const { t } = useTranslation();
-
   return (
     <label className="business-onboarding-field block min-w-0">
-      <span className={onboardingLabel}>
-        {label}
-        {optional ? <span className={onboardingOptionalBadge}>{t("business.onboarding.fields.optional")}</span> : null}
-      </span>
+      <OnboardingFieldLabel label={label} optional={optional} />
       <input
         value={value}
         onChange={(e) => onChange(e.target.value)}
@@ -72,14 +81,9 @@ export function BusinessOnboardingSelectField({
   optional,
   children,
 }: SelectFieldProps) {
-  const { t } = useTranslation();
-
   return (
     <label className="business-onboarding-field block min-w-0">
-      <span className={onboardingLabel}>
-        {label}
-        {optional ? <span className={onboardingOptionalBadge}>{t("business.onboarding.fields.optional")}</span> : null}
-      </span>
+      <OnboardingFieldLabel label={label} optional={optional} />
       <select
         value={value}
         onChange={(e) => onChange(e.target.value)}
@@ -102,14 +106,16 @@ export function BusinessOnboardingFileField({
   label,
   hint,
   onFile,
+  optional,
 }: {
   label: string;
   hint: string;
   onFile: (file: File | null) => void;
+  optional?: boolean;
 }) {
   return (
     <label className="business-onboarding-field block min-w-0">
-      <span className={onboardingLabel}>{label}</span>
+      <OnboardingFieldLabel label={label} optional={optional} />
       <input
         type="file"
         accept="image/*"

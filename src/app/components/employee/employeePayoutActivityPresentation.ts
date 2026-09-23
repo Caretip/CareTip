@@ -59,6 +59,16 @@ export function isEmployeeBusinessDistributionMode(mode: string | null | undefin
   return mode === "business_distribution";
 }
 
+export function employeePayoutActivityDisplayAt(
+  row: Pick<EmployeePayableActivityItem, "createdAt" | "updatedAt" | "activityAt" | "status">,
+): string {
+  if (row.activityAt) return row.activityAt;
+  if (row.status === "transfer_failed" || row.status === "transferring") {
+    return row.updatedAt ?? row.createdAt;
+  }
+  return row.createdAt;
+}
+
 export function employeePayoutActivityKindKey(kind: EmployeePayoutActivityKind): string {
   return `employee.payouts.activityKind.${kind}`;
 }

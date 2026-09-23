@@ -3049,6 +3049,9 @@ export type EmployeePayablePresentationKind =
 export interface EmployeePayableActivityItem {
   id: string;
   createdAt: string;
+  updatedAt?: string;
+  /** Preferred display timestamp from API (failure/transfer rows use updatedAt). */
+  activityAt?: string;
   status: EmployeePayableActivityStatus;
   routingMode?: "direct_to_employee" | "business_distribution";
   chargeModel?: "destination_employee" | "destination_business" | "platform_hold";
@@ -3350,7 +3353,44 @@ export type EmployeeTipRoutingOverview = {
   mode: EmployeeTipPayoutMode;
   heldPlatformCents: number;
   heldRowCount: number;
+  heldBusinessCents?: number;
+  heldBusinessRowCount?: number;
+  agedHeldBusinessRowCount?: number;
+  agedHeldBusinessCents?: number;
+  anomalyPlatformHoldRowCount?: number;
 };
+
+export type BusinessDistributionObligationRow = {
+  id: string;
+  employeeId: string | null;
+  employeeName: string | null;
+  createdAt: string;
+  grossCents: number;
+  platformFeeCents: number;
+  payableCents: number;
+  refundedCents: number;
+  disputedOpenCents: number;
+  disputedLostCents: number;
+  remainingPayableCents: number;
+  status: string;
+  chargeModel: string;
+  isAged: boolean;
+};
+
+export async function getBusinessDistributionObligations(params?: {
+  take?: number;
+  skip?: number;
+}): Promise<{ items: BusinessDistributionObligationRow[]; total: number }> {
+  const qs = new URLSearchParams();
+  if (params?.take != null) qs.set("take", String(params.take));
+  if (params?.skip != null) qs.set("skip", String(params.skip));
+  const suffix = qs.toString() ? `?${qs.toString()}` : "";
+  return apiRequest(apiPath(`/api/me/connect/business-distribution-obligations${suffix}`), {
+    method: "GET",
+    headers: getHeaders(),
+    credentials: "include",
+  });
+}
 
 export async function getEmployeeTipRoutingOverview(): Promise<EmployeeTipRoutingOverview> {
   return apiRequest<EmployeeTipRoutingOverview>(apiPath("/api/me/connect/employee-tip-routing-overview"), {

@@ -32,6 +32,8 @@ export const onboardingOptionalBadge = cn(
   "ml-2 inline-flex rounded-md bg-muted px-1.5 py-0.5 text-[10px] font-semibold text-muted-foreground",
 );
 
+export const onboardingRequiredMark = "text-destructive";
+
 export const onboardingFieldHint = cn(
   "mt-2 text-xs leading-relaxed text-muted-foreground",
 );

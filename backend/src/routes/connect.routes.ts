@@ -33,6 +33,16 @@ router.get(
   ...managerConnect,
   employeeTipPayoutModeController.getMyEmployeeTipRoutingOverview,
 );
+router.get(
+  "/connect/business-distribution-obligations",
+  ...managerConnect,
+  employeeTipPayoutModeController.getMyBusinessDistributionObligations,
+);
+router.get(
+  "/connect/business-distribution-integrity",
+  ...managerConnect,
+  employeeTipPayoutModeController.getMyBusinessDistributionIntegrity,
+);
 router.patch(
   "/connect/employee-tip-payout-mode",
   ...managerConnect,

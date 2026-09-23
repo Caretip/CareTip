@@ -38,6 +38,30 @@ function lostCents(row: EmployeePayableMoneyRow): number {
   return row.disputedLostCents ?? 0;
 }
 
+/** Platform-hold rows still owed from CareTip (including failed release attempts). */
+export function isRecoverablePlatformHoldPayableStatus(status: EmployeeTipPayableStatus): boolean {
+  return (
+    status === EmployeeTipPayableStatus.held_platform ||
+    status === EmployeeTipPayableStatus.transfer_failed
+  );
+}
+
+/** UI/history timestamp — failure and transfer completion use last ledger update. */
+export function employeePayableActivityTimestamp(row: {
+  status: EmployeeTipPayableStatus;
+  createdAt: Date;
+  updatedAt: Date;
+}): Date {
+  if (
+    row.status === EmployeeTipPayableStatus.transfer_failed ||
+    row.status === EmployeeTipPayableStatus.transferring ||
+    row.status === EmployeeTipPayableStatus.transferred
+  ) {
+    return row.updatedAt;
+  }
+  return row.createdAt;
+}
+
 /** Remaining amount eligible for a platform-hold Transfer. */
 export function remainingPayableCents(row: EmployeePayableMoneyRow): number {
   const remaining =
@@ -381,7 +405,7 @@ export async function employeePayableSummaryForEmployee(employeeId: string): Pro
     refundedCents += row.refundedCents;
     disputedOpenCents += row.disputedOpenCents;
     disputedLostCents += row.disputedLostCents;
-    if (row.status === EmployeeTipPayableStatus.held_platform) {
+    if (isRecoverablePlatformHoldPayableStatus(row.status)) {
       heldPlatformCents += remainingPayableCents(row);
     } else if (row.status === EmployeeTipPayableStatus.destination_settled) {
       destinationSettledCents += netTransferredCents(row);
@@ -403,6 +427,9 @@ export async function employeePayableSummaryForEmployee(employeeId: string): Pro
 export type EmployeePayableActivityItem = {
   id: string;
   createdAt: string;
+  updatedAt: string;
+  /** Display timestamp for payout history (failure/transfer rows use updatedAt). */
+  activityAt: string;
   status: EmployeeTipPayableStatus;
   routingMode: EmployeeTipPayoutMode;
   chargeModel: EmployeeTipChargeModel;
@@ -450,6 +477,7 @@ export async function listEmployeePayableActivityForEmployee(
       select: {
         id: true,
         createdAt: true,
+        updatedAt: true,
         status: true,
         routingMode: true,
         chargeModel: true,
@@ -466,9 +494,12 @@ export async function listEmployeePayableActivityForEmployee(
     total,
     items: rows.map((row) => {
       const remaining = remainingPayableCents(row);
+      const activityAt = employeePayableActivityTimestamp(row);
       return {
         id: row.id,
         createdAt: row.createdAt.toISOString(),
+        updatedAt: row.updatedAt.toISOString(),
+        activityAt: activityAt.toISOString(),
         status: row.status,
         routingMode: row.routingMode,
         chargeModel: row.chargeModel,

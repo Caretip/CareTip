@@ -72,11 +72,8 @@
   },
   "payouts": {
     "instantTerms": {
-      "acceptPrefix": "I confirm that I have read and accept the",
-      "link": "Terms and Conditions",
-      "acceptSuffix": "for Instant Payouts.",
-      "required": "Accept the Terms and Conditions to continue.",
-      "accepted": "Instant Payout Terms accepted."
+      "required": "Please confirm that you have read and agree to the Terms & Conditions, Privacy Policy, Data Processing Agreement (DPA), and Price and Services List.",
+      "accepted": "Legal documents accepted."
     }
   },
   "format": {
@@ -165,7 +162,15 @@
       "stripeReturn": "Confirming your tip…",
       "finishing": "Almost there…",
       "receipt": "Preparing your receipt…",
-      "language": "Updating your language…"
+      "language": "Updating your language…",
+      "legal": {
+        "privacy": "Opening Privacy Policy…",
+        "terms": "Opening Terms of Service…",
+        "cookies": "Opening Cookie Policy…",
+        "imprint": "Opening Legal Notice…",
+        "dpa": "Opening Data Processing Agreement…",
+        "plv": "Opening Price & Services List…"
+      }
     },
     "syncingAccountStatus": "Preparing billing…",
     "loadingTeamMembers": "Loading your team…",
@@ -347,7 +352,9 @@
           "51-200": "51–200 people",
           "200plus": "200+ people"
         },
-        "submit": "Request demo"
+        "submit": "Request demo",
+        "calendlyTitle": "Schedule your CareTip demo",
+        "calendlyBody": "Pick a time that works for you. Our team will walk you through CareTip live in a short video call."
       },
       "support": {
         "title": "Support",
@@ -1725,9 +1732,9 @@
       "platformLogin": "Platform admin login"
     },
     "merchantLegalAcceptance": {
-      "label": "I accept the <terms>Terms of Service</terms>, <dpa>DPA</dpa>, and <plv>Price & Services List</plv>, and acknowledge the <privacy>Privacy Policy</privacy>.",
-      "requiredHint": "Required to create a business account.",
-      "requiredError": "Please accept the Terms of Service, DPA, Price & Services List, and acknowledge the Privacy Policy to continue."
+      "label": "I confirm that I have read and agree to the <terms>Terms & Conditions</terms>, <privacy>Privacy Policy</privacy>, <dpa>Data Processing Agreement (DPA)</dpa>, and the <plv>Price and Services List</plv>.",
+      "requiredHint": "Required before continuing.",
+      "requiredError": "Please confirm that you have read and agree to the Terms & Conditions, Privacy Policy, Data Processing Agreement (DPA), and Price and Services List."
     }
   },
   "notifications": {
@@ -6464,6 +6471,14 @@
           "holdsBody": "Held for employees who have not connected Stripe yet.",
           "holdsCount_one": "{{count}} held tip share",
           "holdsCount_other": "{{count}} held tip shares",
+          "distributionTitle": "Employee tips awaiting business distribution",
+          "distributionBody": "These amounts were received on your business Stripe account. CareTip records who earned each tip. You distribute employee shares yourself outside CareTip.",
+          "distributionCount_one": "{{count}} employee share awaiting distribution",
+          "distributionCount_other": "{{count}} employee shares awaiting distribution",
+          "distributionAgedWarning": "{{count}} shares ({{amount}}) are older than 30 days and still awaiting distribution.",
+          "distributionRowMeta": "{{date}} · gross {{gross}} · CareTip fee {{fee}}",
+          "distributionRowAged": "Older than 30 days — still awaiting business distribution.",
+          "unknownEmployee": "Employee",
           "accountsTitle": "Employee payout accounts",
           "accountsHint": "Who can receive routed tips, and who still needs to connect.",
           "accountsTitleBusiness": "Employee Stripe accounts",
@@ -8850,8 +8865,8 @@
     "versionLine": "Version {{version}} · Updated {{date}}",
     "dpaTitle": "Data Processing Agreement (DPA / AVV)",
     "plvTitle": "Price & Services List (PLV)",
-    "dpaBlurb": "CareTip data processing agreement for merchants (Art. 28 GDPR). Open or download the official PDF.",
-    "plvBlurb": "Official CareTip price and services list for merchants. Open or download the official PDF.",
+    "dpaBlurb": "CareTip data processing agreement for merchants (Art. 28 GDPR).",
+    "plvBlurb": "Official CareTip price and services list for merchants.",
     "viewPdf": "View PDF",
     "downloadPdf": "Download PDF"
   }

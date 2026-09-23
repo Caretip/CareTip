@@ -3,6 +3,7 @@ import { Trans, useTranslation } from "react-i18next";
 import type { ContactIntent } from "@/components/contact/contactTypes";
 import { CONTACT_TRUST_KEYS } from "@/components/contact/contactTypes";
 import { contactPageUi } from "@/components/contact/contactPageUi";
+import { openCareTipCalendlyPopup } from "@/app/lib/calendly";
 import { landingHeadlineBreakComponents } from "@/components/landing/landingRichText";
 import { cn } from "@/lib/utils";
 
@@ -76,7 +77,12 @@ export function ContactIntentChooser({ onSelect, className }: ContactIntentChoos
                 <button
                   type="button"
                   className={contactPageUi.card}
-                  onClick={() => onSelect(option.id)}
+                  onClick={() => {
+                    if (option.id === "demo") {
+                      void openCareTipCalendlyPopup();
+                    }
+                    onSelect(option.id);
+                  }}
                 >
                   <span className="caretip-contact-service__icon" aria-hidden>
                     <Icon className="size-[1.125rem]" strokeWidth={1.75} />

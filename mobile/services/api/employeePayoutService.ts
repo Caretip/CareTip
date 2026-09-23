@@ -84,6 +84,8 @@ export type EmployeePayablePresentationKind =
 export type EmployeePayableActivityItem = {
   id: string;
   createdAt: string;
+  updatedAt?: string;
+  activityAt?: string;
   status: string;
   routingMode?: "direct_to_employee" | "business_distribution";
   chargeModel?: "destination_employee" | "destination_business" | "platform_hold";

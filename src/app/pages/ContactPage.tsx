@@ -4,7 +4,7 @@ import { useTranslation } from "react-i18next";
 import "@/styles/bundles/marketing-pages.css";
 import { PublicPageShell } from "@/components/public/PublicPageShell";
 import { ContactIntentChooser } from "@/components/contact/ContactIntentChooser";
-import { ContactDemoForm } from "@/components/contact/ContactDemoForm";
+import { ContactDemoCalendlyPanel } from "@/components/contact/ContactDemoCalendlyPanel";
 import { ContactSupportForm } from "@/components/contact/ContactSupportForm";
 import { ContactSalesPanel } from "@/components/contact/ContactSalesPanel";
 import type { ContactIntent } from "@/components/contact/contactTypes";
@@ -50,13 +50,7 @@ export function ContactPage() {
     <PublicPageShell maxWidth="full" contentClassName="pb-0" className="bg-background">
       <main id="contact" className={contactPageUi.page} aria-label={t("staticPages.contact.pageAria")}>
         {intent === "choose" ? <ContactIntentChooser onSelect={selectIntent} /> : null}
-        {intent === "demo" ? (
-          <ContactDemoForm
-            onBack={backToChooser}
-            onSwitchToSupport={() => selectIntent("support")}
-            pricingPlan={searchParams.get("plan")}
-          />
-        ) : null}
+        {intent === "demo" ? <ContactDemoCalendlyPanel onBack={backToChooser} /> : null}
         {intent === "support" ? (
           <ContactSupportForm
             onBack={backToChooser}

@@ -11,7 +11,7 @@ import { TEAM_LEADERBOARD_HREF } from "../businessDashboardNav";
 
 export const TOP_PERFORMERS_PAGE_PATH = TEAM_LEADERBOARD_HREF;
 
-export const DASHBOARD_EMPLOYEE_TEASER_LIMIT = 3;
+export const DASHBOARD_EMPLOYEE_TEASER_LIMIT = 5;
 
 export type TopPerformerTeaserEmployee = {
   id: string;

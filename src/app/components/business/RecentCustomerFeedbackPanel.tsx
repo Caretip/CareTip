@@ -17,7 +17,7 @@ import { useInViewActive } from "@/lib/motionPerf";
 import { useBusinessEntitlementsContext } from "@/app/contexts/BusinessEntitlementsContext";
 import { useSubscriptionEntitlements } from "@/app/hooks/useSubscriptionEntitlements";
 
-export const DASHBOARD_CUSTOMER_FEEDBACK_TEASER_LIMIT = 3;
+export const DASHBOARD_CUSTOMER_FEEDBACK_TEASER_LIMIT = 5;
 
 type RecentCustomerFeedbackPanelProps = {
   enabled?: boolean;

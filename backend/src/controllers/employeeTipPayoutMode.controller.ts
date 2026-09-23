@@ -6,6 +6,11 @@ import {
   employeeTipHoldObservabilityForBusiness,
   routingModeFromClient,
 } from "../services/employeeTipPayable.service.js";
+import {
+  businessDistributionObservabilityForBusiness,
+  listBusinessDistributionObligationsForBusiness,
+  scanBusinessDistributionLedgerIssues,
+} from "../services/businessDistributionIntegrity.service.js";
 import { writeAuditLog } from "../services/audit.service.js";
 import { clientSafeMessage, CLIENT_FALLBACK, logServerError } from "../utils/httpErrors.js";
 
@@ -64,20 +69,68 @@ export async function getMyEmployeeTipRoutingOverview(req: Request, res: Respons
     if (rejectClientRoutingSteering(req, res)) return;
     const business = await businessService.getBusinessByUserId(userId);
     if (!business) return res.status(404).json({ message: "Business not found" });
-    const [row, holds] = await Promise.all([
+    const [row, holds, businessDist] = await Promise.all([
       prisma.business.findUnique({
         where: { id: business.id },
         select: { employeeTipPayoutMode: true },
       }),
       employeeTipHoldObservabilityForBusiness(business.id),
+      businessDistributionObservabilityForBusiness(business.id),
     ]);
     return res.json({
       mode: row?.employeeTipPayoutMode ?? EmployeeTipPayoutMode.direct_to_employee,
       heldPlatformCents: holds.heldPlatformCents,
       heldRowCount: holds.heldRowCount,
+      heldBusinessCents: businessDist.heldBusinessCents,
+      heldBusinessRowCount: businessDist.heldBusinessRowCount,
+      agedHeldBusinessRowCount: businessDist.agedHeldBusinessRowCount,
+      agedHeldBusinessCents: businessDist.agedHeldBusinessCents,
+      anomalyPlatformHoldRowCount: businessDist.anomalyPlatformHoldRowCount,
     });
   } catch (err) {
     logServerError("employeeTipPayoutMode.overview", err);
+    return res.status(400).json({ message: clientSafeMessage(err, CLIENT_FALLBACK.generic) });
+  }
+}
+
+/**
+ * GET /api/me/connect/business-distribution-obligations
+ * Employee tip shares awaiting business distribution (held_business only).
+ */
+export async function getMyBusinessDistributionObligations(req: Request, res: Response) {
+  try {
+    const userId = getUserId(req);
+    if (!userId) return res.status(401).json({ message: "Authentication required" });
+    if (rejectClientRoutingSteering(req, res)) return;
+    const business = await businessService.getBusinessByUserId(userId);
+    if (!business) return res.status(404).json({ message: "Business not found" });
+    const takeRaw = Number(req.query.take);
+    const skipRaw = Number(req.query.skip);
+    const take = Number.isInteger(takeRaw) ? takeRaw : 20;
+    const skip = Number.isInteger(skipRaw) ? skipRaw : 0;
+    const result = await listBusinessDistributionObligationsForBusiness(business.id, { take, skip });
+    return res.json(result);
+  } catch (err) {
+    logServerError("employeeTipPayoutMode.businessDistributionObligations", err);
+    return res.status(400).json({ message: clientSafeMessage(err, CLIENT_FALLBACK.generic) });
+  }
+}
+
+/**
+ * GET /api/me/connect/business-distribution-integrity
+ * Read-only detection summary for the authenticated business tenant.
+ */
+export async function getMyBusinessDistributionIntegrity(req: Request, res: Response) {
+  try {
+    const userId = getUserId(req);
+    if (!userId) return res.status(401).json({ message: "Authentication required" });
+    if (rejectClientRoutingSteering(req, res)) return;
+    const business = await businessService.getBusinessByUserId(userId);
+    if (!business) return res.status(404).json({ message: "Business not found" });
+    const issues = await scanBusinessDistributionLedgerIssues({ businessId: business.id });
+    return res.json({ issueCount: issues.length, issues });
+  } catch (err) {
+    logServerError("employeeTipPayoutMode.businessDistributionIntegrity", err);
     return res.status(400).json({ message: clientSafeMessage(err, CLIENT_FALLBACK.generic) });
   }
 }

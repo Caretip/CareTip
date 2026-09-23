@@ -105,6 +105,12 @@
       checkout: "Ihr sicherer Checkout wird vorbereitet…",
       stripeReturn: "Ihr Trinkgeld wird bestätigt…",
       finishing: "Gleich geschafft…",
+      legalPrivacy: "Datenschutzerklärung wird geöffnet…",
+      legalTerms: "Allgemeine Geschäftsbedingungen werden geöffnet…",
+      legalCookies: "Cookie-Richtlinie wird geöffnet…",
+      legalImprint: "Impressum wird geöffnet…",
+      legalDpa: "Auftragsverarbeitungsvertrag wird geöffnet…",
+      legalPlv: "Preis- und Leistungsverzeichnis wird geöffnet…",
     },
     en: {
       gettingReady: "Just a moment…",
@@ -114,8 +120,24 @@
       checkout: "Preparing your secure checkout…",
       stripeReturn: "Confirming your tip…",
       finishing: "Almost there…",
+      legalPrivacy: "Opening Privacy Policy…",
+      legalTerms: "Opening Terms of Service…",
+      legalCookies: "Opening Cookie Policy…",
+      legalImprint: "Opening Legal Notice…",
+      legalDpa: "Opening Data Processing Agreement…",
+      legalPlv: "Opening Price & Services List…",
     },
   };
+
+  function resolveLegalBootTagline(copy, path) {
+    if (path === "/privacy") return copy.legalPrivacy;
+    if (path === "/terms") return copy.legalTerms;
+    if (path === "/cookies") return copy.legalCookies;
+    if (path === "/imprint") return copy.legalImprint;
+    if (path === "/avv" || path === "/dpa") return copy.legalDpa;
+    if (path === "/plv") return copy.legalPlv;
+    return null;
+  }
 
   function isGuestSlugPath(path) {
     var parts = String(path || "/")
@@ -132,6 +154,8 @@
 
   function resolveBootTagline(copy, pathname) {
     var path = String(pathname || "/").split("?")[0].split("#")[0];
+    var legalTagline = resolveLegalBootTagline(copy, path);
+    if (legalTagline) return legalTagline;
     if (path === "/payment") return copy.checkout;
     if (path === "/success" || path === "/rating") return copy.stripeReturn;
     if (path === "/tip-complete") return copy.finishing;

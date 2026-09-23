@@ -4,10 +4,12 @@ import { cn } from "@/lib/utils";
 
 type SafeLegalHtmlContentProps = {
   html: string;
+  /** When set, a leading `<h1>` matching this title is removed (shell already shows it). */
+  pageTitle?: string;
 };
 
-export function SafeLegalHtmlContent({ html }: SafeLegalHtmlContentProps) {
-  const safe = sanitizeLegalHtmlClient(html);
+export function SafeLegalHtmlContent({ html, pageTitle }: SafeLegalHtmlContentProps) {
+  const safe = sanitizeLegalHtmlClient(html, pageTitle);
 
   return (
     <div

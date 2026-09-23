@@ -181,6 +181,32 @@ router.post("/connect-payout-reconciliation-tick", async (req, res) => {
 });
 
 /**
+ * POST /api/internal/jobs/business-distribution-integrity-scan
+ * Read-only detection of business-distribution ledger gaps. No Stripe or DB mutations.
+ */
+router.post("/business-distribution-integrity-scan", async (req, res) => {
+  if (!authorizeCronRequest(req)) {
+    return res.status(401).json({ message: "Unauthorized" });
+  }
+  const { scanBusinessDistributionLedgerIssues } = await import(
+    "../services/businessDistributionIntegrity.service.js"
+  );
+  const businessId =
+    typeof req.body?.businessId === "string" && req.body.businessId.trim()
+      ? req.body.businessId.trim()
+      : undefined;
+  const issues = await scanBusinessDistributionLedgerIssues({ businessId });
+  if (issues.length > 0) {
+    console.warn("[businessDistributionIntegrity.scan]", {
+      businessId: businessId ?? "all",
+      issueCount: issues.length,
+      codes: [...new Set(issues.map((row) => row.code))],
+    });
+  }
+  return res.json({ ok: true, issueCount: issues.length, issues });
+});
+
+/**
  * POST /api/internal/jobs/employee-stripe-inactivity-tick
  * Daily review of 45-day tip inactivity. Does not disconnect Stripe accounts.
  */

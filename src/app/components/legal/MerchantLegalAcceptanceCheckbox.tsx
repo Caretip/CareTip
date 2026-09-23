@@ -7,6 +7,7 @@ type Props = {
   onCheckedChange: (next: boolean) => void;
   className?: string;
   id?: string;
+  disabled?: boolean;
   /** When true, show compact styling for mobile web / dense forms */
   dense?: boolean;
 };
@@ -20,6 +21,7 @@ export function MerchantLegalAcceptanceCheckbox({
   onCheckedChange,
   className,
   id = "merchant-legal-acceptance",
+  disabled = false,
   dense = false,
 }: Props) {
   const { t } = useTranslation();
@@ -44,6 +46,7 @@ export function MerchantLegalAcceptanceCheckbox({
           dense && "mt-1",
         )}
         checked={checked}
+        disabled={disabled}
         onChange={(e) => onCheckedChange(e.target.checked)}
       />
       <span>
