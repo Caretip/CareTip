@@ -174,6 +174,10 @@ assert(hook.includes("derivePeriodScopedSectionLoading"), "period sections skele
 
 const lifecycle = read("src/app/lib/analyticsLoadingLifecycle.ts");
 assert(lifecycle.includes("derivePeriodScopedSectionLoading"), "period-scoped loading helper exists");
+assert(lifecycle.includes("periodStatsReady"), "global refresh tracks primary period stats only");
+
+const lifecycleRuntime = read("src/app/lib/analyticsLoadingLifecycle.runtime.ts");
+assert(lifecycleRuntime.includes("deferred hydration must not keep Updating"), "lifecycle runtime covers deferred hydration");
 
 const finHook = read("src/app/hooks/useBusinessFinancialSummary.ts");
 assert(finHook.includes("periodRef.current === requestedPeriod"), "financial summary ties responses to request period");
@@ -215,7 +219,10 @@ assert(analyticsPage.includes("financialSummaryEnabled"), "analytics page enable
 
 const finSection = read("src/app/components/business/BusinessFinancialAnalyticsSection.tsx");
 assert(finSection.includes("progressive: true"), "analytics financial section uses progressive ledger/connect");
-assert(finSection.includes("reconciliationLoading"), "reconciliation off critical path for ledger/connect");
+assert(
+  finSection.includes("SHOW_BUSINESS_RECONCILIATION_UI") || finSection.includes("includeReconciliation"),
+  "business financial reconciliation presentation gated separately from ledger/connect",
+);
 
 const cards = read("src/app/components/business/insights/RevenueAnalyticsCards.tsx");
 assert(cards.includes('variant === "detail"'), "period details has dedicated IA");

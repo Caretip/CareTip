@@ -33,6 +33,8 @@ export function deriveAnalyticsLoadingLifecycle(opts: {
   isColdLoading: boolean;
   isTimeframeLoading: boolean;
   valuesMatchPeriod: boolean;
+  /** Above-fold period stats committed for the selected period. */
+  periodStatsReady: boolean;
 }): {
   isInitialAnalyticsLoading: boolean;
   isAnalyticsRefreshing: boolean;
@@ -42,15 +44,21 @@ export function deriveAnalyticsLoadingLifecycle(opts: {
     isColdLoading,
     isTimeframeLoading,
     valuesMatchPeriod,
+    periodStatsReady,
   } = opts;
 
-  const periodSwitchInFlight =
-    isTimeframeLoading || (!valuesMatchPeriod && hasVisible);
+  const bundleFetchInFlight = isColdLoading || isTimeframeLoading;
 
-  const isInitialAnalyticsLoading = !hasVisible && (isColdLoading || isTimeframeLoading);
+  const isInitialAnalyticsLoading = !hasVisible && bundleFetchInFlight;
 
+  // Global "Updating…" tracks primary period stats only — deferred QR/tips/rankings hydrate separately.
   const isAnalyticsRefreshing =
-    hasVisible && (isColdLoading || isTimeframeLoading || periodSwitchInFlight);
+    hasVisible &&
+    derivePeriodScopedSectionLoading({
+      valuesMatchPeriod,
+      sliceReady: periodStatsReady,
+      fetchInFlight: bundleFetchInFlight,
+    });
 
   return { isInitialAnalyticsLoading, isAnalyticsRefreshing };
 }

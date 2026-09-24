@@ -48,7 +48,7 @@ export function BusinessTipsAnalyticsPage() {
   }, [analyticsEnabled]);
 
   return (
-    <div className="space-y-6 pt-6">
+    <div className="space-y-5 pt-4 sm:space-y-6 sm:pt-6">
       <BusinessAnalyticsReporting
         data={{
           ...data,

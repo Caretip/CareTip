@@ -221,23 +221,34 @@ export function BusinessAnalyticsReporting({
   ];
 
   return (
-    <div className="caretip-mobile-analytics-report space-y-6 md:space-y-8">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <DashboardRefreshIndicator
-          isRefreshing={cardsRefreshing}
-          lastUpdatedAt={data.lastUpdatedAt}
-        />
-        <div className="flex flex-wrap items-center justify-end gap-2">
-          {periodToggle}
-          <Button type="button" variant="outline" size="sm" disabled={exporting} onClick={() => void handleExport()}>
+    <div className="caretip-mobile-analytics-report business-analytics-report space-y-5 md:space-y-8">
+      <div className="business-analytics-report__toolbar space-y-3">
+        <div className="flex min-w-0 items-center justify-between gap-3">
+          <DashboardRefreshIndicator
+            isRefreshing={cardsRefreshing}
+            lastUpdatedAt={data.lastUpdatedAt}
+            className="shrink-0"
+          />
+          <DashboardStatusStrip items={analyticsStatusItems} className="min-w-0 justify-end" />
+        </div>
+        <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
+          <div className="min-w-0 w-full sm:w-auto sm:max-w-full">{periodToggle}</div>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            disabled={exporting}
+            onClick={() => void handleExport()}
+            className="w-full shrink-0 sm:w-auto"
+          >
             <Download className="mr-2 h-4 w-4" aria-hidden />
             {t("business.tips.analytics.reporting.export")}
           </Button>
         </div>
       </div>
-      <DashboardStatusStrip items={analyticsStatusItems} />
 
       <DashboardWorkspaceSummaryCard
+        className="business-analytics-report__overview"
         title={t("premium.summaryBanner.title")}
         eyebrow={t("business.tips.analytics.overviewPeriodHint", { period: periodLabel })}
         periodLabel={periodLabel}

@@ -780,6 +780,8 @@ export function useBusinessAnalytics(
 
     valuesMatchPeriod,
 
+    periodStatsReady,
+
   });
 
   const bi = useMemo(
