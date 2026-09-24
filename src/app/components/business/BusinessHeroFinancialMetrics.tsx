@@ -96,6 +96,7 @@ export const BusinessHeroFinancialMetrics = memo(function BusinessHeroFinancialM
       id: "paid",
       label: t("business.hero.financial.paidOut"),
       value: connectPending ? payoutSkeleton : connectCurrencyValue(paidOutEur ?? 0),
+      hint: t("business.hero.financial.paidOutHint"),
     },
   ];
 

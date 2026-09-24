@@ -127,14 +127,28 @@
     max-width: none;
   }
 
-  /* Employee dashboard — mobile hero + metrics (route-specific; shell clip alone is insufficient). */
+  /* Dashboard heroes — mobile overflow clip (employee + business share DashboardHero). */
   .caretip-dashboard-shell.employee-dashboard .employee-dashboard-hero,
   .caretip-dashboard-shell.employee-dashboard .employee-dashboard-hero .dashboard-hero-container,
   .caretip-dashboard-shell.employee-dashboard .employee-dashboard-hero .employee-hero-visual,
-  .caretip-dashboard-shell.employee-dashboard .employee-dashboard-hero .employee-hero-chart-frame {
+  .caretip-dashboard-shell.employee-dashboard .employee-dashboard-hero .employee-hero-chart-frame,
+  .caretip-dashboard-shell.business-dashboard .business-dashboard-hero,
+  .caretip-dashboard-shell.business-dashboard .business-dashboard-hero .dashboard-hero-container,
+  .caretip-dashboard-shell.business-dashboard .business-dashboard-hero .business-hero-visual,
+  .caretip-dashboard-shell.business-dashboard .business-dashboard-hero .business-hero-illustration-card {
     max-width: 100%;
     min-width: 0;
     overflow-x: clip;
+  }
+
+  .caretip-dashboard-shell.business-dashboard
+    .business-dashboard-hero
+    .dashboard-hero-actions.dashboard-hero-actions--premium-grid
+    > .business-hero-cta-block {
+    grid-column: 1 / -1;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
   }
 
   .caretip-dashboard-shell.employee-dashboard

@@ -1,5 +1,5 @@
 import { motion } from "motion/react";
-import { dashboardBlockMotion, useMinWidthMedia } from "@/lib/motionPerf";
+import { dashboardBlockMotion } from "@/lib/motionPerf";
 import { useState, useMemo, lazy, memo, useCallback } from "react";
 import { Navigate } from "react-router";
 import { MarketingPicture } from "@/lib/marketingPicture";
@@ -73,7 +73,6 @@ import { isAuthenticatedWithAccessToken } from "../../lib/authRestore";
 import { isOnboardingCompleted } from "../../lib/onboardingProgress";
 import bizzyHeroWebp from "../../../../images/finalbizzy-hero.webp";
 import bizzyHeroAvif from "../../../../images/finalbizzy-hero.avif";
-import { BusinessDashboardMobileHero } from "../../components/business/BusinessDashboardMobileHero";
 import { BusinessDashboardHeroActions } from "../../components/business/BusinessDashboardHeroActions";
 import {
   dashboardFormalGreetingBadgeClassName,
@@ -290,8 +289,6 @@ export const BusinessDashboard = memo(function BusinessDashboard() {
   const showChartsLoading = isAnalyticsSectionLoading || chartAwaitingDistribution;
   const showGoalsLoading = isGoalsInitialLoad && !globalLoaderCoversBoot;
   const periodRefreshingLabel = t("dashboard.refresh.updating");
-  const isLargeScreen = useMinWidthMedia(1024);
-
   useDashboardRenderProbe("business:BusinessDashboard");
   useDashboardPageFullyLoaded(
     "business",
@@ -367,97 +364,87 @@ export const BusinessDashboard = memo(function BusinessDashboard() {
         </div>
       )}
 
-      {!isLargeScreen ? (
-        <BusinessDashboardMobileHero
-          greetingBadge={formalGreeting}
-          isPreviewMode={isPreviewMode}
-          financialSummary={financialSummary}
-          financialSummaryLedgerLoading={financialSummaryLedgerLoading}
-          financialSummaryConnectLoading={financialSummaryConnectLoading}
-          financialSummaryRefreshing={financialSummaryRefreshing}
-        />
-      ) : null}
-
-      {isLargeScreen ? (
       <div className={businessUi.pageInner}>
-        <PremiumPageHero personality="overview" autoHeight className="business-dashboard-hero">
-        <DashboardHero
-          stackHeroOnMobile
-          hideTabs
-          actionsPlacement="belowText"
-          mobileAlign="left"
-          className="business-hero-dashboard-root !mb-0"
-          cardClassName="border-0 bg-transparent shadow-none max-lg:border-0 max-lg:bg-transparent max-lg:shadow-none lg:rounded-none lg:border-0 lg:bg-transparent lg:shadow-none"
-          badgeClassName={cn(
-            "business-hero-badge normal-case border-transparent bg-transparent px-0 py-0 text-[11px] max-lg:text-[12px] font-medium tracking-normal shadow-none",
-            dashboardFormalGreetingBadgeClassName,
-          )}
-          titleClassName="business-hero-title max-lg:!leading-[1.08] lg:!leading-[1.1] tracking-tight max-lg:mx-0 max-lg:max-w-[22ch] max-lg:!text-[1.5625rem] max-lg:text-left lg:max-w-[18ch] lg:!text-[2rem] lg:text-left xl:!text-[2.125rem]"
-          descriptionClassName="business-hero-description !line-clamp-2 max-w-[32ch] leading-snug max-lg:mb-0 max-lg:text-left lg:max-w-sm"
-          textColumnClassName="lg:py-1 xl:pr-1"
-          badge={formalGreeting}
-          title={
-            <>
-              {t("business.hero.headlineLine1")}
-              <br />
-              <span>{t("business.hero.headlineLine2")}</span>
-            </>
-          }
-          description={t("business.hero.sub")}
-          image={
-            <motion.div
-              initial={motionReady ? { opacity: 0, y: 8 } : false}
-              animate={{ opacity: 1, y: 0 }}
-              transition={motionReady ? { duration: 0.45, ease: "easeOut" } : { duration: 0 }}
-              className="business-hero-visual relative flex w-full max-w-full flex-col items-center justify-center touch-manipulation max-lg:mx-auto lg:items-start lg:justify-start lg:justify-self-stretch"
-            >
-              <div className="business-hero-illustration-card relative w-full overflow-hidden">
-                <MarketingPicture
-                  src={bizzyHeroWebp}
-                  webpSrc={bizzyHeroWebp}
-                  avifSrc={bizzyHeroAvif}
-                  alt=""
-                  width={640}
-                  height={480}
-                  className="business-hero-illustration relative z-[1] block h-full w-full object-cover object-center"
-                  priority
-                  loading="eager"
-                  fetchPriority="high"
-                  fadeIn={false}
-                  decoding="sync"
+        <PremiumPageHero personality="overview" className="business-dashboard-hero mb-4 sm:mb-5 lg:mb-4">
+          <DashboardHero
+            stackHeroOnMobile
+            hideTabs
+            actionsPlacement="belowText"
+            mobileAlign="left"
+            className="business-hero-dashboard-root !mb-0"
+            cardClassName="business-hero-shell border-0 bg-transparent shadow-none lg:rounded-none lg:border-0 lg:bg-transparent lg:shadow-none"
+            badgeClassName={cn(
+              "business-hero-badge normal-case border-transparent bg-transparent px-0 py-0 text-[11px] max-lg:text-[12px] font-medium tracking-normal shadow-none",
+              dashboardFormalGreetingBadgeClassName,
+            )}
+            titleClassName="business-hero-title max-lg:!leading-[1.08] lg:!leading-[1.1] tracking-tight max-lg:mx-0 max-lg:max-w-[22ch] max-lg:!text-[1.5625rem] max-lg:text-left lg:max-w-[18ch] lg:!text-[2rem] lg:text-left xl:!text-[2.125rem]"
+            descriptionClassName="business-hero-description !line-clamp-2 max-w-[34ch] leading-relaxed text-muted-foreground/90 max-lg:mx-0 max-lg:mb-0 max-lg:text-left lg:max-w-sm"
+            textColumnClassName="lg:py-2 xl:pr-6"
+            badge={formalGreeting}
+            title={
+              <>
+                {t("business.hero.headlineLine1")}
+                <br />
+                <span>{t("business.hero.headlineLine2")}</span>
+              </>
+            }
+            description={t("business.hero.sub")}
+            image={
+              <motion.div
+                initial={motionReady ? { opacity: 0, y: 8 } : false}
+                animate={{ opacity: 1, y: 0 }}
+                transition={motionReady ? { duration: 0.45, ease: "easeOut" } : { duration: 0 }}
+                className="business-hero-visual relative mx-auto flex w-full max-w-full flex-col items-center justify-center touch-manipulation lg:justify-self-stretch"
+              >
+                <div className="business-hero-illustration-card relative mx-auto w-full max-w-full min-h-0 overflow-hidden">
+                  <MarketingPicture
+                    src={bizzyHeroWebp}
+                    webpSrc={bizzyHeroWebp}
+                    avifSrc={bizzyHeroAvif}
+                    alt=""
+                    width={640}
+                    height={480}
+                    className="business-hero-illustration relative z-[1] block h-full w-full object-cover object-center"
+                    priority
+                    loading="eager"
+                    fetchPriority="high"
+                    fadeIn={false}
+                    decoding="sync"
+                  />
+                </div>
+              </motion.div>
+            }
+            imageOverlay={false}
+            actions={
+              <motion.div
+                className="business-hero-cta-block"
+                initial={motionReady ? { opacity: 0, y: 6 } : false}
+                animate={{ opacity: 1, y: 0 }}
+                transition={
+                  motionReady ? { duration: 0.4, delay: 0.08, ease: "easeOut" } : { duration: 0 }
+                }
+              >
+                <BusinessHeroFinancialMetrics
+                  ledgerLoading={financialSummaryLedgerLoading}
+                  connectLoading={financialSummaryConnectLoading}
+                  summary={financialSummary}
+                  isRefreshing={financialSummaryRefreshing}
                 />
-              </div>
-            </motion.div>
-          }
-          imageOverlay={false}
-          actions={
-            <motion.div
-              className="business-hero-cta-block"
-              initial={motionReady ? { opacity: 0, y: 6 } : false}
-              animate={{ opacity: 1, y: 0 }}
-              transition={
-                motionReady ? { duration: 0.4, delay: 0.08, ease: "easeOut" } : { duration: 0 }
-              }
-            >
-              <BusinessHeroFinancialMetrics
-                ledgerLoading={financialSummaryLedgerLoading}
-                connectLoading={financialSummaryConnectLoading}
-                summary={financialSummary}
-                isRefreshing={financialSummaryRefreshing}
-              />
-              <BusinessDashboardHeroActions
-                isPreviewMode={isPreviewMode}
-                buttonClassName="min-w-0 max-lg:w-full"
-                secondaryButtonClassName="min-w-0 max-lg:w-full"
-              />
-            </motion.div>
-          }
-        />
+                <BusinessDashboardHeroActions
+                  isPreviewMode={isPreviewMode}
+                  entitlementsReady={entitlementsReady}
+                  tier={tier}
+                  className="business-hero-cta-row"
+                  buttonClassName="min-w-0"
+                  secondaryButtonClassName="min-w-0"
+                />
+              </motion.div>
+            }
+          />
         </PremiumPageHero>
       </div>
-      ) : null}
 
-      <div className={cn(businessUi.pageInner, "business-dashboard-body business-dashboard-mobile-body !pt-2 sm:!pt-3")}>
+      <div className={cn(businessUi.pageInner, "business-dashboard-body business-dashboard-mobile-body !pt-1 sm:!pt-2")}>
         <div className="business-dashboard-attention">
           <BusinessStripeConnectPrompt density="compact" />
           {!isPreviewMode ? (

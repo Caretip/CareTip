@@ -7,6 +7,7 @@ export type DashboardHeroFinancialMetric = {
   label: string;
   value: ReactNode;
   hint?: string;
+  valueClassName?: string;
 };
 
 export type DashboardHeroFinancialLayoutProps = {
@@ -85,7 +86,12 @@ export function DashboardHeroFinancialLayout({
           {payoutMetrics.map((metric) => (
             <div key={metric.id} className="dashboard-hero-financial__payout-cell">
               <p className="dashboard-hero-financial__label">{metric.label}</p>
-              <div className="dashboard-hero-financial__value dashboard-hero-financial__value--payout">
+              <div
+                className={cn(
+                  "dashboard-hero-financial__value dashboard-hero-financial__value--payout",
+                  metric.valueClassName,
+                )}
+              >
                 {metric.value}
               </div>
               {metric.hint ? (
@@ -110,7 +116,12 @@ export function DashboardHeroFinancialLayout({
             {performanceMetrics.map((metric) => (
               <div key={metric.id} className="dashboard-hero-financial__perf-cell">
                 <p className="dashboard-hero-financial__label">{metric.label}</p>
-                <div className="dashboard-hero-financial__value dashboard-hero-financial__value--support">
+                <div
+                  className={cn(
+                    "dashboard-hero-financial__value dashboard-hero-financial__value--support",
+                    metric.valueClassName,
+                  )}
+                >
                   {metric.value}
                 </div>
                 {metric.hint ? (

@@ -29,26 +29,27 @@
   margin-bottom: 0 !important;
 }
 
-.caretip-dashboard-shell.business-dashboard .business-dashboard-hero .dashboard-hero-container.hidden.lg\:grid {
+.caretip-dashboard-shell.business-dashboard .business-dashboard-hero .dashboard-hero-container {
   align-items: stretch;
-  gap: 0.875rem 1rem !important;
-  padding: 1rem 1.125rem 0.875rem !important;
 }
 
 @media (min-width: 1024px) {
-  /* Wider media column so the landscape hero can expand on both sides */
-  .caretip-dashboard-shell.business-dashboard .business-dashboard-hero .dashboard-hero-container.hidden.lg\:grid > .lg\:col-span-5 {
+  .caretip-dashboard-shell.business-dashboard .business-dashboard-hero .dashboard-hero-container {
+    gap: 1.5rem 3rem !important;
+  }
+
+  .caretip-dashboard-shell.business-dashboard .business-dashboard-hero .dashboard-hero-container > .col-span-5 {
     grid-column: 1 / span 5;
   }
 
   .caretip-dashboard-shell.business-dashboard .business-dashboard-hero .dashboard-hero-media-column {
     grid-column: 6 / span 7;
-    justify-content: flex-start !important;
+    justify-content: center !important;
     align-items: stretch !important;
   }
 }
 
-.caretip-dashboard-shell.business-dashboard .business-dashboard-hero .dashboard-hero-container .lg\:col-span-5 {
+.caretip-dashboard-shell.business-dashboard .business-dashboard-hero .dashboard-hero-container .col-span-5 {
   gap: 0.5rem !important;
 }
 
@@ -88,6 +89,50 @@
 
 .caretip-dashboard-shell.business-dashboard .business-dashboard-hero .business-hero-cta-row {
   gap: 0.5rem !important;
+}
+
+.caretip-dashboard-shell.business-dashboard .business-hero-quick-access {
+  display: flex;
+  flex-direction: row !important;
+  flex-wrap: wrap;
+  align-items: stretch;
+  width: 100%;
+  max-width: 100%;
+}
+
+.caretip-dashboard-shell.business-dashboard .business-hero-quick-access > :is(a, button) {
+  flex: 1 1 calc(50% - 0.25rem);
+  width: auto !important;
+  min-width: 0;
+  max-width: 100%;
+  min-height: 2.75rem;
+  height: auto !important;
+  padding-block: 0.5rem;
+  line-height: 1.3 !important;
+  white-space: normal !important;
+  text-wrap: balance;
+  overflow: visible;
+}
+
+.caretip-dashboard-shell.business-dashboard
+  .business-dashboard-hero
+  .dashboard-hero-actions
+  .business-hero-quick-access
+  > :is(a, button) {
+  white-space: normal !important;
+  line-height: 1.3 !important;
+  overflow: visible;
+}
+
+.caretip-dashboard-shell.business-dashboard .business-hero-quick-access__btn {
+  line-height: 1.3 !important;
+}
+
+.caretip-dashboard-shell.business-dashboard .business-hero-quick-access__btn > a,
+.caretip-dashboard-shell.business-dashboard .business-hero-quick-access__btn > a > span {
+  line-height: 1.3 !important;
+  white-space: normal !important;
+  text-wrap: balance;
 }
 
 .caretip-dashboard-shell.business-dashboard .business-dashboard-hero .dashboard-hero-container .pt-2.lg\:pt-3 {
@@ -236,13 +281,19 @@
 
   .caretip-dashboard-shell.business-dashboard .business-dashboard-mobile-hero__cta-row {
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: stretch;
     gap: 0.5rem;
     width: 100%;
+    max-width: 100%;
   }
 
   .caretip-dashboard-shell.business-dashboard .business-dashboard-mobile-hero__cta-row > :is(a, button) {
-    width: 100%;
+    flex: 1 1 calc(50% - 0.25rem);
+    width: auto;
+    min-width: 0;
+    max-width: 100%;
   }
 
   /* Pulse metrics — side-by-side, no card chrome */

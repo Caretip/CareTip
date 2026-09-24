@@ -11,6 +11,18 @@
   --dash-card-shadow: none;
 }
 
+/* Hero aligns to page container gutters (matches employee hero). */
+.caretip-dashboard-shell.business-dashboard .business-dashboard-hero > div:first-child,
+.caretip-dashboard-shell.business-dashboard .business-dashboard-hero .dashboard-hero-container {
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+}
+
+.caretip-dashboard-shell.business-dashboard .business-dashboard-hero .dashboard-hero-container {
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+}
+
 /* —— Typography —— */
 .caretip-dashboard-shell.business-dashboard .business-hero-title,
 .caretip-dashboard-shell.business-dashboard .business-dashboard-mobile-hero__title {

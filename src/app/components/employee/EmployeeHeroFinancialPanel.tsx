@@ -28,11 +28,6 @@ export const EmployeeHeroFinancialPanel = memo(function EmployeeHeroFinancialPan
 }: EmployeeHeroFinancialPanelProps) {
   const { t } = useTranslation();
 
-  const averageTip =
-    metrics && metrics.totalSupporters > 0
-      ? metrics.grossTipsEur / metrics.totalSupporters
-      : 0;
-
   const currencyValue = (value: number) =>
     loading ? (
       <DashboardHeroMetricSkeleton variant="currency" />
@@ -73,9 +68,6 @@ export const EmployeeHeroFinancialPanel = memo(function EmployeeHeroFinancialPan
           label: t("employee.hero.statPendingRelease"),
           value: currencyValue(metrics?.pendingReleaseEur ?? 0),
         },
-      ]}
-      performanceZoneLabel={t("employee.hero.financial.zonePerformance")}
-      performanceMetrics={[
         {
           id: "gross",
           label: t("employee.hero.statGrossTips"),
@@ -85,11 +77,7 @@ export const EmployeeHeroFinancialPanel = memo(function EmployeeHeroFinancialPan
           id: "tips",
           label: t("employee.hero.statTotalSupporters"),
           value: countValue(metrics?.totalSupporters ?? 0),
-        },
-        {
-          id: "average",
-          label: t("employee.hero.statAverageTip"),
-          value: currencyValue(averageTip),
+          valueClassName: "dashboard-hero-financial__value--hero-count",
         },
       ]}
       analyticsHref="/employee/analytics"

@@ -4459,6 +4459,7 @@
         "receivedInStripe": "Received in Stripe",
         "pendingStripe": "Pending in Stripe",
         "paidOut": "Paid out",
+        "paidOutHint": "Completed bank payouts from Stripe · All time",
         "toDistribute": "To distribute",
         "employeeDistribution": "Employee tips to distribute",
         "distributionHint": "Received by your business and awaiting distribution.",
@@ -4831,6 +4832,7 @@
       }
     },
     "dashboard": {
+      "quickAccessAria": "Quick access to nested pages",
       "analyticsSectionTitle": "Period analytics",
       "analyticsSectionDesc": "Metrics and charts for {{period}}.",
       "analyticsPeriodAria": "Select analytics period",

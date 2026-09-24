@@ -212,8 +212,8 @@
 
 /* —— Hero optical balance (desktop) —— */
 @media (min-width: 1024px) {
-  .business-dashboard-hero .dashboard-hero-container.hidden.lg\:grid {
-    align-items: start;
+  .business-dashboard-hero .dashboard-hero-container {
+    align-items: stretch;
   }
 
   .business-dashboard-hero .business-hero-visual {
@@ -229,7 +229,7 @@
     margin-right: 0;
   }
 
-  .business-dashboard-hero .dashboard-hero-container .lg\:col-span-5 {
+  .business-dashboard-hero .dashboard-hero-container .col-span-5 {
     display: flex;
     flex-direction: column;
     justify-content: flex-start;

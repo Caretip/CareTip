@@ -4459,6 +4459,7 @@
         "receivedInStripe": "In Stripe erhalten",
         "pendingStripe": "Ausstehend in Stripe",
         "paidOut": "Ausgezahlt",
+        "paidOutHint": "Abgeschlossene Bankauszahlungen über Stripe · Gesamtzeitraum",
         "toDistribute": "Zu verteilen",
         "employeeDistribution": "Mitarbeiter-Trinkgeld zu verteilen",
         "distributionHint": "Von Ihrem Betrieb erhalten und zur Verteilung ausstehend.",
@@ -4831,6 +4832,7 @@
       }
     },
     "dashboard": {
+      "quickAccessAria": "Schnellzugriff auf Unterseiten",
       "analyticsSectionTitle": "Zeitraum-Analysen",
       "analyticsSectionDesc": "Kennzahlen und Diagramme für {{period}}.",
       "analyticsPeriodAria": "Analysezeitraum wählen",

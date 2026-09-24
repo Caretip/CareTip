@@ -723,20 +723,27 @@ html[data-auth-sign-in-handoff] .caretip-dashboard-page-enter {
   }
 }
 
-/* Employee dashboard hero — composition, CTAs, and surface (scoped; does not affect business hero). */
+/* Dashboard hero — desktop composition (employee + business). */
 @media (min-width: 1024px) {
-  .employee-dashboard-hero .dashboard-hero-container.hidden.lg\:grid,
-  .business-dashboard-hero .dashboard-hero-container.hidden.lg\:grid {
+  .employee-dashboard-hero .dashboard-hero-container,
+  .business-dashboard-hero .dashboard-hero-container {
     column-gap: 3rem;
     row-gap: 1.5rem;
-    align-items: center;
+    align-items: stretch;
   }
 
-  .employee-dashboard-hero .employee-hero-visual,
-  .business-dashboard-hero .business-hero-visual {
+  .employee-dashboard-hero .employee-hero-visual {
     margin-left: auto;
     margin-right: auto;
     justify-self: center;
+  }
+
+  .business-dashboard-hero .business-hero-visual {
+    margin-left: 0;
+    margin-right: 0;
+    justify-self: stretch;
+    width: 100%;
+    max-width: none;
   }
 }
 

@@ -10,9 +10,13 @@ import type { BusinessFinancialSummaryBundle } from "../../lib/api";
 import { BusinessDashboardHeroActions } from "./BusinessDashboardHeroActions";
 import { dashboardFormalGreetingBadgeClassName } from "../../lib/dashboardFormalGreeting";
 
+import type { BusinessSubscriptionTier } from "@/app/lib/subscriptionCapabilities";
+
 type BusinessDashboardMobileHeroProps = {
   greetingBadge: string;
   isPreviewMode: boolean;
+  entitlementsReady?: boolean;
+  tier?: BusinessSubscriptionTier | null;
   financialSummary: BusinessFinancialSummaryBundle | null;
   financialSummaryLedgerLoading: boolean;
   financialSummaryConnectLoading: boolean;
@@ -23,6 +27,8 @@ type BusinessDashboardMobileHeroProps = {
 export const BusinessDashboardMobileHero = memo(function BusinessDashboardMobileHero({
   greetingBadge,
   isPreviewMode,
+  entitlementsReady = true,
+  tier = null,
   financialSummary,
   financialSummaryLedgerLoading,
   financialSummaryConnectLoading,
@@ -68,6 +74,8 @@ export const BusinessDashboardMobileHero = memo(function BusinessDashboardMobile
           />
           <BusinessDashboardHeroActions
             isPreviewMode={isPreviewMode}
+            entitlementsReady={entitlementsReady}
+            tier={tier}
             className="business-dashboard-mobile-hero__cta-row"
             buttonClassName="business-dashboard-mobile-hero__btn"
             secondaryButtonClassName="business-dashboard-mobile-hero__btn business-dashboard-mobile-hero__btn--secondary"

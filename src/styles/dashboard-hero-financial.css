@@ -198,6 +198,13 @@
   min-height: 1.25rem;
 }
 
+.employee-dashboard-hero .dashboard-hero-financial__value--hero-count {
+  display: flex;
+  justify-content: flex-start;
+  width: 100%;
+  text-align: left;
+}
+
 .dashboard-hero-financial__analytics-link {
   margin-top: 0.15rem;
   width: fit-content;
@@ -256,28 +263,7 @@
   }
 }
 
-/* Tablet / narrow: compact employee performance grid (2 + 1) */
 @media (max-width: 639px) {
-  .employee-dashboard-hero .dashboard-hero-financial__perf-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 0.75rem 1.25rem;
-  }
-
-  .employee-dashboard-hero .dashboard-hero-financial__perf-cell {
-    display: block;
-    padding-bottom: 0;
-    border-bottom: 0;
-  }
-
-  .employee-dashboard-hero .dashboard-hero-financial__perf-cell:nth-child(3) {
-    grid-column: 1 / -1;
-  }
-
-  .employee-dashboard-hero .dashboard-hero-financial__perf-cell .dashboard-hero-financial__value {
-    margin-top: 0.2rem;
-    text-align: left;
-  }
-
   .employee-dashboard-hero .dashboard-hero-financial__payout-cell .dashboard-hero-financial__label {
     min-height: 0;
   }
@@ -308,6 +294,22 @@
   }
 }
 
+/* Business hero: 2×2 payout grid (matches employee composition) */
+.business-dashboard-hero .dashboard-hero-financial__payout-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem 1.25rem;
+}
+
+.business-dashboard-hero .dashboard-hero-financial__payout-cell .dashboard-hero-financial__label {
+  min-height: 2.5em;
+}
+
+@container hero-payout (min-width: 32rem) {
+  .business-dashboard-hero .dashboard-hero-financial__payout-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
 /* CTA block: financial panel + actions share one composed column */
 .employee-dashboard-hero .employee-hero-cta-block .dashboard-hero-financial,
 .business-dashboard-hero .business-hero-cta-block .dashboard-hero-financial {
@@ -315,29 +317,29 @@
 }
 
 @media (min-width: 1024px) {
-  .business-dashboard-hero .dashboard-hero-container.hidden.lg\:grid,
-  .employee-dashboard-hero .dashboard-hero-container.hidden.lg\:grid {
+  .business-dashboard-hero .dashboard-hero-container,
+  .employee-dashboard-hero .dashboard-hero-container {
     align-items: stretch !important;
   }
 
-  .business-dashboard-hero .dashboard-hero-container .lg\:col-span-5,
-  .employee-dashboard-hero .dashboard-hero-container .lg\:col-span-5 {
+  .business-dashboard-hero .dashboard-hero-container .col-span-5,
+  .employee-dashboard-hero .dashboard-hero-container .col-span-5 {
     display: flex;
     flex-direction: column;
     min-height: 100%;
     align-self: stretch;
   }
 
-  .business-dashboard-hero .dashboard-hero-container .lg\:col-span-5 > .pt-2.lg\:pt-3,
-  .employee-dashboard-hero .dashboard-hero-container .lg\:col-span-5 > .pt-2.lg\:pt-3 {
+  .business-dashboard-hero .dashboard-hero-container .col-span-5 > .pt-2.lg\:pt-3,
+  .employee-dashboard-hero .dashboard-hero-container .col-span-5 > .pt-2.lg\:pt-3 {
     flex: 1 1 auto;
     display: flex;
     flex-direction: column;
     min-height: 0;
   }
 
-  .business-dashboard-hero .dashboard-hero-container .lg\:col-span-5 .dashboard-hero-actions,
-  .employee-dashboard-hero .dashboard-hero-container .lg\:col-span-5 .dashboard-hero-actions {
+  .business-dashboard-hero .dashboard-hero-container .col-span-5 .dashboard-hero-actions,
+  .employee-dashboard-hero .dashboard-hero-container .col-span-5 .dashboard-hero-actions {
     flex: 1 1 auto;
     display: flex;
     flex-direction: column;
