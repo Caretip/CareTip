@@ -165,12 +165,13 @@ export function useBusinessFinancialSummary(
         setConnectLoading(false);
         setReconciliationLoading(false);
       } finally {
-        if (!stillCurrent()) return;
-        setLoading(false);
-        setRefreshing(false);
+        if (stillCurrent()) {
+          setLoading(false);
+          setRefreshing(false);
+        }
       }
     },
-    [enabled, period, progressive, includeReconciliation],
+    [enabled, progressive, includeReconciliation],
   );
 
   useLayoutEffect(() => {
