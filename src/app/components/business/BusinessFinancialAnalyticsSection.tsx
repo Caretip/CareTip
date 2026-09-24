@@ -1,7 +1,6 @@
 import { useMemo } from "react";
 import { Link } from "react-router";
 import { useTranslation } from "react-i18next";
-import { AlertTriangle, CheckCircle2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { formatEur } from "../../lib/formatEur";
 import { useBusinessFinancialSummary } from "../../hooks/useBusinessFinancialSummary";
@@ -32,18 +31,21 @@ type BusinessFinancialAnalyticsSectionProps = {
   enabled: boolean;
 };
 
+/** Business-facing reconciliation banner is temporarily hidden; backend reconciliation stays active. */
+const SHOW_BUSINESS_RECONCILIATION_UI = false;
+
 export function BusinessFinancialAnalyticsSection({
   period,
   enabled,
 }: BusinessFinancialAnalyticsSectionProps) {
   const { t } = useTranslation();
   const financialPeriod = useMemo(() => mapAnalyticsPeriod(period), [period]);
-  const { data, ledgerLoading, connectLoading, reconciliationLoading } = useBusinessFinancialSummary(
+  const { data, ledgerLoading, connectLoading } = useBusinessFinancialSummary(
     enabled,
     financialPeriod,
     {
       progressive: true,
-      includeReconciliation: true,
+      includeReconciliation: SHOW_BUSINESS_RECONCILIATION_UI,
     },
   );
 
@@ -205,39 +207,6 @@ export function BusinessFinancialAnalyticsSection({
             </p>
           </div>
         </div>
-      </section>
-
-      <section aria-label={t("business.tips.analytics.financial.reconciliationAria")}>
-        <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-          {t("business.tips.analytics.financial.reconciliationTitle")}
-        </h2>
-        {reconciliationLoading ? (
-          <div className="mt-3 h-12 animate-pulse rounded-lg bg-muted/40" aria-busy="true" />
-        ) : data?.reconciliation?.needsAttention ? (
-          <div className="mt-3 flex items-start gap-2 rounded-lg border border-amber-500/30 bg-amber-500/5 px-4 py-3 text-sm">
-            <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" aria-hidden />
-            <p>
-              {data.reconciliation.complete === false
-                ? t("business.tips.analytics.financial.reconciliationIncomplete", {
-                    examined: data.reconciliation.examinedPayableCount ?? 0,
-                    total: data.reconciliation.totalPayableCount ?? 0,
-                  })
-                : t("business.tips.analytics.financial.reconciliationAttention")}
-            </p>
-          </div>
-        ) : data?.reconciliation ? (
-          <div className="mt-3 flex items-center gap-2 text-sm text-muted-foreground">
-            <CheckCircle2 className="h-4 w-4 text-emerald-600" aria-hidden />
-            <span>
-              {data.reconciliation.complete === false
-                ? t("business.tips.analytics.financial.reconciliationPartialOk", {
-                    examined: data.reconciliation.examinedPayableCount ?? 0,
-                    total: data.reconciliation.totalPayableCount ?? 0,
-                  })
-                : t("business.tips.analytics.financial.reconciliationOk")}
-            </span>
-          </div>
-        ) : null}
       </section>
     </div>
   );
