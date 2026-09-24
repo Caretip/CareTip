@@ -427,6 +427,7 @@ export const de: MobileMessages = {
     tipsLoadError: "Trinkgelder konnten nicht geladen werden.",
     periodEarnings: "Zeitraum-Einnahmen",
     tipsInPeriod: "Trinkgelder in diesem Zeitraum",
+    grossTips: "Brutto-Trinkgelder",
     totalEarnings: "Gesamteinnahmen",
     paidOut: "Ausgezahlt",
     successfulPayouts: "Erfolgreiche Auszahlungen",

@@ -2304,6 +2304,12 @@
   },
   "dashboard": {
     "formalGreeting": {
+      "morningNamed": "Guten Morgen, {{name}}",
+      "afternoonNamed": "Guten Tag, {{name}}",
+      "eveningNamed": "Guten Abend, {{name}}",
+      "morning": "Guten Morgen",
+      "afternoon": "Guten Tag",
+      "evening": "Guten Abend",
       "helloNamed": "Hallo {{name}}",
       "hello": "Hallo"
     },
@@ -2623,7 +2629,8 @@
     "employee": {
       "overview": "Überblick",
       "inbox": "Posteingang",
-      "tipHistory": "Trinkgeldverlauf",
+      "tipHistory": "Trinkgeldaktivität",
+      "tipActivity": "Trinkgeldaktivität",
       "analytics": "Analysen",
       "assignment": "Meine Zuweisung",
       "tipGoals": "Trinkgeldziele",
@@ -2641,6 +2648,7 @@
       "locations": "Standorte / Tische",
       "customers": "Kundenfeedback",
       "stripe": "Stripe-Auszahlungen",
+      "tipDistribution": "Trinkgeldverteilung",
       "billing": "Abrechnung",
       "settings": "Einstellungen",
       "planLabels": {
@@ -3791,6 +3799,60 @@
       "toastDeleted": "Gelöscht",
       "toastMarkedRead": "Als gelesen markiert"
     },
+    "tipActivity": {
+      "title": "Trinkgeldaktivität",
+      "subtitle": "Bleiben Sie über Ihre neuesten Trinkgelder, Zahlungen und Auszahlungsaktivitäten informiert.",
+      "backAria": "Zurück",
+      "refresh": "Aktivität aktualisieren",
+      "filtersAria": "Aktivitätsfilter",
+      "filter": {
+        "all": "Alle Aktivitäten",
+        "tips": "Trinkgelder erhalten",
+        "transfers": "Überweisungen",
+        "pending": "Ausstehend",
+        "issues": "Probleme"
+      },
+      "groupToday": "Heute",
+      "groupYesterday": "Gestern",
+      "groupOlder": "Älter",
+      "loadError": "Aktivität konnte nicht geladen werden.",
+      "loadingMore": "Lädt…",
+      "loadMore": "Mehr laden",
+      "emptyTitle": "Noch keine Trinkgeldaktivität",
+      "emptyBody": "Wenn Kunden Ihnen Trinkgeld geben, erscheinen jedes Trinkgeld und der Zahlungsstatus hier.",
+      "earningsAfterFee": "{{amount}} verdient nach CareTip-Gebühr",
+      "event": {
+        "held": "Trinkgeld erhalten",
+        "held_venue": "An Betrieb ausgezahlt",
+        "transferring": "Überweisung läuft",
+        "transferred": "An Stripe überwiesen",
+        "destination_routed": "Zahlung bestätigt",
+        "refunded": "Trinkgeld erstattet",
+        "failed": "Überweisung fehlgeschlagen",
+        "disputed": "Zahlung in Prüfung"
+      },
+      "support": {
+        "held": "Zahlung bestätigt — Auszahlung an Stripe ausstehend",
+        "held_venue": "Dieses Trinkgeld wurde über den Betrieb abgewickelt",
+        "transferring": "Ihre Einnahmen werden an Stripe überwiesen",
+        "transferred": "Erfolgreich auf Ihr Stripe-Konto überwiesen",
+        "destination_routed": "Ihre Einnahmen wurden an Stripe weitergeleitet",
+        "refunded": "Erstattung für dieses Trinkgeld verarbeitet",
+        "failed": "Einnahmen benötigen einen weiteren Überweisungsversuch",
+        "disputed": "Stripe prüft ein Zahlungsproblem für dieses Trinkgeld"
+      },
+      "detail": {
+        "amount": "Trinkgeldbetrag",
+        "location": "Standort",
+        "date": "Datum",
+        "fee": "CareTip-Gebühr",
+        "earnings": "Ihre Einnahmen",
+        "routing": "Routing",
+        "routingBusiness": "An Betrieb ausgezahlt",
+        "status": "Status",
+        "reference": "Referenz"
+      }
+    },
     "tipHistory": {
       "title": "Trinkgeldverlauf",
       "subtitle": "",
@@ -3969,6 +4031,7 @@
         "viewInStripeAria": "Auszahlungsdetails in Stripe anzeigen",
         "opening": "Stripe wird geöffnet…",
         "showing": "{{from}}–{{to}} von {{total}}",
+        "page": "Seite {{page}} von {{pages}}",
         "prev": "Zurück",
         "next": "Weiter"
       },
@@ -4156,18 +4219,18 @@
       "setTipGoal": "Trinkgeldziele",
       "statTotalEarnings": "Gesamteinnahmen",
       "statYourEarnings": "Ihre Einnahmen",
-      "statYourEarningsHint": "Ihr Anteil nach CareTip-Gebühren.",
+      "statYourEarningsHint": "Nach CareTip-Gebühren",
       "statPaidToStripe": "An Stripe überwiesen",
       "statPendingRelease": "Freigabe ausstehend",
       "statGrossTips": "Brutto-Trinkgelder",
       "statGrossTipsHint": "Gesamte Kundentrinkgelder vor CareTip-Gebühren.",
       "statMonthEarnings": "Diesen Monat",
       "statTotalSupporters": "Erfolgreiche Trinkgelde",
-      "statAverageTip": "Durchschnittliches Trinkgeld",
+      "statAverageTip": "Ø Trinkgeld",
       "accountOverviewLabel": "Kontoübersicht, gesamt",
       "financial": {
         "zonePayout": "Wo Ihr Geld liegt",
-        "zonePerformance": "Trinkgeld-Leistung",
+        "zonePerformance": "Trinkgelder",
         "viewAnalytics": "Analysen anzeigen"
       }
     },
@@ -4235,13 +4298,35 @@
       "bankPayouts": "Bankauszahlungen",
       "transferCompleted": "Abgeschlossen",
       "transferReversed": "Storniert",
-      "statusAria": "Auszahlungsstatus",
-      "statusTitle": "Abgleichstatus",
+      "statusAria": "Überweisungsstatus",
+      "statusTitle": "Überweisungsstatus",
       "statusEarnings": "CareTip-Einnahmen",
       "statusTransferred": "An Stripe überwiesen",
       "statusPending": "Ausstehende Freigabe",
-      "reconciliationAttention": "Auszahlungsabgleich erfordert Aufmerksamkeit",
-      "reconciliationAttentionHint": "CareTip- und Stripe-Daten weichen vorübergehend ab.",
+      "transferStatus": {
+        "healthyTitle": "Überweisungsstatus",
+        "healthyMessage": "Einnahmenüberweisungen sind auf dem neuesten Stand.",
+        "confirmedTitle": "Überweisung bestätigt",
+        "confirmedMessage": "Ihre Einnahmen wurden erfolgreich auf Ihr Stripe-Konto überwiesen.",
+        "confirmedAt": "Bestätigt um {{time}}",
+        "pendingTitle": "Überweisung ausstehend",
+        "pendingMessage": "Einige Einnahmen warten noch auf die Überweisung auf Ihr Stripe-Konto.",
+        "unreadableTitle": "Überweisungsstatus",
+        "unreadableMessage": "Wir konnten Ihre Stripe-Überweisungen gerade nicht prüfen. Ihre Einnahmen sind in CareTip weiterhin erfasst. Es ist keine Aktion erforderlich.",
+        "verifyingTitle": "Überweisung wird geprüft",
+        "verifyingMessage": "Wir bestätigen eine kürzliche Überweisung auf Ihr Stripe-Konto. Ihre Einnahmen sind in CareTip weiterhin erfasst. Es ist keine Aktion erforderlich, sofern diese Meldung nicht bestehen bleibt.",
+        "reviewTitle": "Wir prüfen eine Überweisung",
+        "reviewAmountMessage": "Wir überprüfen eine Ihrer Einnahmenüberweisungen mit Stripe. Ihre Einnahmen sind in CareTip weiterhin erfasst. Es ist keine Aktion von Ihnen erforderlich.",
+        "reviewDestinationMessage": "Wir prüfen, ob eine Einnahmenüberweisung das richtige Stripe-Konto erreicht hat. Es ist keine Aktion von Ihnen erforderlich.",
+        "reviewDuplicateMessage": "Wir prüfen eine Einnahmenüberweisung mit Stripe. Es ist keine Aktion von Ihnen erforderlich.",
+        "failedTitle": "Überweisung erfordert Aufmerksamkeit",
+        "failedMessage": "Eine Einnahmenüberweisung auf Ihr Stripe-Konto konnte nicht abgeschlossen werden. CareTip arbeitet daran, die Überweisung abzuschließen.",
+        "incompleteTitle": "Überweisungsstatus",
+        "incompleteMessage": "Wir haben {{examined}} von {{total}} aktuellen Einnahmendatensätzen geprüft. Ältere Datensätze werden möglicherweise noch nicht angezeigt.",
+        "lastChecked": "Zuletzt geprüft: {{time}}",
+        "refreshStatus": "Status aktualisieren",
+        "refreshing": "Prüfe…"
+      },
       "payoutStatus": {
         "transferred": "Überwiesen",
         "release_failed": "Freigabe an Stripe fehlgeschlagen",
@@ -4367,11 +4452,14 @@
       "statActiveStaff": "Aktives Team",
       "financial": {
         "sectionLabel": "Finanzübersicht",
-        "totalTips": "Gesamtes Trinkgeld",
+        "totalTips": "Trinkgeld gesamt",
+        "totalTipsPeriod": "Gesamt",
         "totalTipsHint": "Erhaltene Kundentrinkgelder seit CareTip-Start.",
+        "availableInStripe": "Verfügbar in Stripe",
         "receivedInStripe": "In Stripe erhalten",
         "pendingStripe": "Ausstehend in Stripe",
         "paidOut": "Ausgezahlt",
+        "toDistribute": "Zu verteilen",
         "employeeDistribution": "Mitarbeiter-Trinkgeld zu verteilen",
         "distributionHint": "Von Ihrem Betrieb erhalten und zur Verteilung ausstehend.",
         "stripeUnavailable": "Stripe verbinden",
@@ -5976,6 +6064,7 @@
       "analyticsHeaderSubtitle": "",
       "navAria": "Trinkgeld-Bereiche",
       "nav": {
+        "tipDistribution": "Trinkgeldverteilung",
         "live": "Live-Aktivitäten",
         "transactions": "Trinkgeld-Historie",
         "analytics": "Statistiken & Berichte"
@@ -6050,6 +6139,11 @@
           "exportSuccess": "Export gestartet. Prüfen Sie Ihre Downloads.",
           "tipEvents": "Trinkgeld-Ereignisse"
         },
+        "period": {
+          "week": "Diese Woche",
+          "month": "Dieser Monat",
+          "year": "Dieses Jahr"
+        },
         "financial": {
           "summaryAria": "Finanzübersicht",
           "summaryTitle": "Finanzübersicht",
@@ -6080,7 +6174,9 @@
           "reconciliationAria": "Abgleichstatus",
           "reconciliationTitle": "Abgleich",
           "reconciliationAttention": "Einige CareTip- und Stripe-Daten benötigen Aufmerksamkeit.",
-          "reconciliationOk": "CareTip- und Stripe-Daten sind konsistent."
+          "reconciliationOk": "CareTip- und Stripe-Daten sind konsistent.",
+          "reconciliationIncomplete": "Abgleich unvollständig ({{examined}} von {{total}} Payables geprüft). Einige Datensätze benötigen Aufmerksamkeit.",
+          "reconciliationPartialOk": "{{examined}} von {{total}} Payables geprüft — keine Probleme in diesem Batch. Weitere Datensätze ausstehend."
         }
       }
     },
@@ -6521,6 +6617,67 @@
         "decode_failed": "Eine Kamera konnte diesen QR nicht decodieren. Er scannt in Produktion möglicherweise nicht.",
         "url_mismatch": "Decodierter Inhalt stimmt nicht mit der erwarteten Trinkgeld-URL überein.",
         "composite_decode_fallback": "Karten-Extrakt fehlgeschlagen. Matrix-Fallback bestätigte die QR-Nutzlast; Compositing ist scan-sicher."
+      }
+    },
+    "tipDistribution": {
+      "eyebrow": "Mitarbeiterauszahlungen",
+      "title": "Trinkgeldverteilung",
+      "subtitle": "Mitarbeiterauszahlungen verwalten und offene Beträge nachverfolgen.",
+      "loading": "Trinkgeldverteilung wird geladen…",
+      "saving": "Speichern…",
+      "loadError": "Trinkgeldverteilung konnte nicht geladen werden.",
+      "submitError": "Auszahlung konnte nicht erfasst werden.",
+      "directToEmployeeInfo": "Mitarbeiter-Trinkgelder werden direkt über Stripe ausgezahlt. Es stehen keine betrieblichen Verteilungen zur Auszahlung an.",
+      "unassignedEmployee": "Nicht zugewiesener Mitarbeiter",
+      "summary": {
+        "toDistribute": "Zu verteilen",
+        "employeesAwaiting": "Mitarbeiter ausstehend",
+        "lastDistribution": "Letzte Verteilung",
+        "noneRecorded": "Keine erfasst"
+      },
+      "sinceLast": {
+        "title": "Seit letzter Verteilung",
+        "body": "{{count}} neue Trinkgelder · Brutto {{gross}} · CareTip-Gebühren {{fees}} · netto zu verteilen {{net}}"
+      },
+      "ready": {
+        "title": "Bereit zur Verteilung",
+        "empty": "Keine Mitarbeiterauszahlungen stehen aus."
+      },
+      "table": {
+        "employee": "Mitarbeiter",
+        "gross": "Brutto-Trinkgelder",
+        "fees": "CareTip-Gebühren",
+        "netOwed": "Netto geschuldet",
+        "distributed": "Verteilt",
+        "remaining": "Verbleibend",
+        "actions": "Aktion"
+      },
+      "actions": {
+        "viewTips": "Trinkgelder anzeigen",
+        "record": "Verteilung erfassen"
+      },
+      "modal": {
+        "title": "Verteilung an {{name}}",
+        "description": "Eine Off-Platform-Zahlung an diesen Mitarbeiter erfassen.",
+        "remainingOwed": "Verbleibend geschuldet",
+        "amountLabel": "Zu erfassender Betrag",
+        "remainingAfter": "Verbleibend nach Verteilung",
+        "confirm": "Verteilung bestätigen"
+      },
+      "history": {
+        "title": "Verteilungsverlauf",
+        "date": "Datum",
+        "total": "Gesamt",
+        "employees": "Mitarbeiter",
+        "recordedBy": "Erfasst von",
+        "reference": "Referenz",
+        "empty": "Noch keine Verteilungen erfasst.",
+        "employeeCount_one": "{{count}} Mitarbeiter",
+        "employeeCount_other": "{{count}} Mitarbeiter"
+      },
+      "detail": {
+        "title": "Verteilungsbatch",
+        "total": "Erfasster Gesamtbetrag: {{amount}}"
       }
     },
     "stripe": {

@@ -251,8 +251,66 @@ async function main() {
   );
   assert.equal(byPayable.get(payableDup.id)?.status, "DUPLICATE_TRANSFER");
   assert.equal(result.needsAttention, true);
+  assert.equal(result.complete, true);
+  assert.equal(result.examinedPayableCount, 4);
+  assert.equal(result.totalPayableCount, 4);
+  assert.equal(result.payablesTruncated, false);
+  assert.equal(result.transfersHasMore, false);
   pass("reconciliation-classifier", "matched, pending, amount mismatch, duplicate detected");
 
+  __setEmployeeStripeTransferListFnForTests(async () => {
+    throw new Error("stripe_unavailable");
+  });
+  const unreadable = await reconcileEmployeeDirectPayables(employee.id);
+  __setEmployeeStripeTransferListFnForTests(null);
+  assert.equal(unreadable.stripeReadable, false);
+  assert.equal(
+    unreadable.rows.find((r) => r.payableId === payableMatched.id)?.status,
+    "STRIPE_TRANSFER_MISSING",
+  );
+  assert.equal(unreadable.needsAttention, false, "unreadable stripe cannot confirm attention rows");
+  pass("reconciliation-unreadable-missing", "missing transfer classified but readable=false");
+
+  const suffixUnread = `recon_unread_${Date.now()}`;
+  const unreadCtx = await seedFixture(suffixUnread);
+  const tipSettled = await prisma.transaction.create({
+    data: {
+      amount: 20,
+      status: TipStatus.success,
+      stripePaymentIntentId: `pi_recon_set_${suffixUnread}`,
+      employeeId: unreadCtx.employee.id,
+      businessId: unreadCtx.business.id,
+    },
+  });
+  await prisma.employeeTipPayable.create({
+    data: {
+      transactionId: tipSettled.id,
+      employeeId: unreadCtx.employee.id,
+      businessId: unreadCtx.business.id,
+      routingMode: EmployeeTipPayoutMode.direct_to_employee,
+      chargeModel: EmployeeTipChargeModel.platform_hold,
+      status: EmployeeTipPayableStatus.destination_settled,
+      grossCents: 2000,
+      platformFeeCents: 249,
+      payableCents: 1751,
+      transferredCents: 1751,
+      stripePaymentIntentId: `pi_recon_set_${suffixUnread}`,
+    },
+  });
+  __setEmployeeStripeTransferListFnForTests(async () => {
+    throw new Error("stripe_unavailable");
+  });
+  const unreadableOnly = await reconcileEmployeeDirectPayables(unreadCtx.employee.id);
+  __setEmployeeStripeTransferListFnForTests(null);
+  assert.equal(unreadableOnly.stripeReadable, false);
+  assert.equal(unreadableOnly.needsAttention, false);
+  pass("reconciliation-unreadable-no-false-positive", "unreadable missing transfer does not need attention");
+
+  await cleanup({
+    employee: unreadCtx.employee,
+    businessId: unreadCtx.business.id,
+    managerId: unreadCtx.manager.id,
+  });
   await cleanup({ employee, businessId: business.id, managerId: manager.id });
   console.log("employee-payout-reconciliation-runtime: OK");
 }

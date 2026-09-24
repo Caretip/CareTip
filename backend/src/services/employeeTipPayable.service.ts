@@ -85,6 +85,24 @@ export function netTransferredCents(row: EmployeePayableMoneyRow): number {
   return remaining > 0 ? remaining : 0;
 }
 
+/** Gate for employee payout-completed notifications — uses payable transfer state, not Transaction.payoutStatus. */
+export function employeePayableTransferNotificationEligible(row: {
+  routingMode: EmployeeTipPayoutMode;
+  status: EmployeeTipPayableStatus;
+  payableCents: number;
+  transferredCents: number;
+  reversedCents: number;
+  refundedCents: number;
+  disputedOpenCents?: number;
+  disputedLostCents?: number;
+}): boolean {
+  if (row.routingMode === EmployeeTipPayoutMode.business_distribution) return false;
+  const transferred =
+    row.status === EmployeeTipPayableStatus.transferred ||
+    row.status === EmployeeTipPayableStatus.destination_settled;
+  return transferred && netTransferredCents(row) > 0;
+}
+
 export function employeeDisputePhaseFromStripeStatus(status: string): EmployeeDisputePhase {
   const s = String(status).toLowerCase();
   if (s === "won" || s === "warning_closed") return "won";
@@ -424,6 +442,8 @@ export async function employeePayableSummaryForEmployee(employeeId: string): Pro
   };
 }
 
+export type EmployeePayableActivityFilter = "all" | "tips" | "transfers" | "pending" | "issues";
+
 export type EmployeePayableActivityItem = {
   id: string;
   createdAt: string;
@@ -434,6 +454,8 @@ export type EmployeePayableActivityItem = {
   routingMode: EmployeeTipPayoutMode;
   chargeModel: EmployeeTipChargeModel;
   presentationKind: EmployeePayablePresentationKind;
+  grossCents: number;
+  platformFeeCents: number;
   payableCents: number;
   transferredCents: number;
   reversedCents: number;
@@ -442,7 +464,58 @@ export type EmployeePayableActivityItem = {
   disputedOpenCents: number;
   disputedLostCents: number;
   activityCents: number;
+  transactionId: string;
+  transactionCreatedAt: string;
+  receiptNumber: string | null;
+  locationName: string | null;
+  tableName: string | null;
 };
+
+function employeePayableActivityFilterWhere(
+  filter?: EmployeePayableActivityFilter,
+): Prisma.EmployeeTipPayableWhereInput {
+  if (!filter || filter === "all") return {};
+  if (filter === "transfers") {
+    return {
+      status: {
+        in: [
+          EmployeeTipPayableStatus.transferred,
+          EmployeeTipPayableStatus.destination_settled,
+          EmployeeTipPayableStatus.transferring,
+        ],
+      },
+    };
+  }
+  if (filter === "pending") {
+    return {
+      status: {
+        in: [
+          EmployeeTipPayableStatus.held_platform,
+          EmployeeTipPayableStatus.held_business,
+          EmployeeTipPayableStatus.transferring,
+        ],
+      },
+    };
+  }
+  if (filter === "issues") {
+    return {
+      OR: [
+        {
+          status: {
+            in: [EmployeeTipPayableStatus.transfer_failed, EmployeeTipPayableStatus.refunded],
+          },
+        },
+        { disputedOpenCents: { gt: 0 } },
+      ],
+    };
+  }
+  if (filter === "tips") {
+    return {
+      status: { not: EmployeeTipPayableStatus.refunded },
+    };
+  }
+  return {};
+}
 
 export function employeePayableActivityCents(row: EmployeePayableMoneyRow & {
   status: EmployeeTipPayableStatus;
@@ -462,11 +535,14 @@ export function employeePayableActivityCents(row: EmployeePayableMoneyRow & {
 /** Employee-scoped CareTip payable activity. Never Stripe bank payouts. */
 export async function listEmployeePayableActivityForEmployee(
   employeeId: string,
-  params?: { take?: number; skip?: number },
+  params?: { take?: number; skip?: number; filter?: EmployeePayableActivityFilter },
 ): Promise<{ items: EmployeePayableActivityItem[]; total: number }> {
   const take = Math.min(50, Math.max(1, params?.take ?? 20));
   const skip = Math.min(5_000, Math.max(0, params?.skip ?? 0));
-  const where = { employeeId };
+  const where: Prisma.EmployeeTipPayableWhereInput = {
+    employeeId,
+    ...employeePayableActivityFilterWhere(params?.filter),
+  };
   const [total, rows] = await prisma.$transaction([
     prisma.employeeTipPayable.count({ where }),
     prisma.employeeTipPayable.findMany({
@@ -476,17 +552,29 @@ export async function listEmployeePayableActivityForEmployee(
       skip,
       select: {
         id: true,
+        transactionId: true,
         createdAt: true,
         updatedAt: true,
         status: true,
         routingMode: true,
         chargeModel: true,
+        grossCents: true,
+        platformFeeCents: true,
         payableCents: true,
         transferredCents: true,
         reversedCents: true,
         refundedCents: true,
         disputedOpenCents: true,
         disputedLostCents: true,
+        transaction: {
+          select: {
+            id: true,
+            createdAt: true,
+            receiptNumber: true,
+            location: { select: { name: true } },
+            table: { select: { name: true } },
+          },
+        },
       },
     }),
   ]);
@@ -504,6 +592,8 @@ export async function listEmployeePayableActivityForEmployee(
         routingMode: row.routingMode,
         chargeModel: row.chargeModel,
         presentationKind: employeePayablePresentationKind(row),
+        grossCents: row.grossCents,
+        platformFeeCents: row.platformFeeCents,
         payableCents: row.payableCents,
         transferredCents: row.transferredCents,
         reversedCents: row.reversedCents,
@@ -512,6 +602,11 @@ export async function listEmployeePayableActivityForEmployee(
         disputedOpenCents: row.disputedOpenCents,
         disputedLostCents: row.disputedLostCents,
         activityCents: employeePayableActivityCents(row),
+        transactionId: row.transactionId,
+        transactionCreatedAt: row.transaction.createdAt.toISOString(),
+        receiptNumber: row.transaction.receiptNumber,
+        locationName: row.transaction.location?.name ?? null,
+        tableName: row.transaction.table?.name ?? null,
       };
     }),
   };

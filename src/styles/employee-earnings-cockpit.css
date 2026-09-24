@@ -175,12 +175,13 @@
 .caretip-dashboard-shell.employee-dashboard .employee-period-summary {
   display: flex;
   flex-direction: column;
-  gap: 0.875rem !important;
+  gap: 0.75rem !important;
   min-width: 0;
   max-width: 100%;
-  padding: 0;
-  border: 0;
-  background: transparent;
+  padding: 1rem 1.125rem;
+  border: 1px solid hsl(var(--border) / 0.55);
+  border-radius: 0.75rem;
+  background: hsl(var(--card));
   box-shadow: none;
 }
 
@@ -371,6 +372,20 @@
   min-height: 0;
 }
 
+.employee-payout-teaser-row {
+  scrollbar-width: thin;
+  scrollbar-color: hsl(var(--border)) transparent;
+}
+
+.employee-payout-teaser-row::-webkit-scrollbar {
+  height: 6px;
+}
+
+.employee-payout-teaser-row::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: hsl(var(--border) / 0.9);
+}
+
 @media (max-width: 1023px) {
   .caretip-dashboard-shell.employee-dashboard .employee-period-summary__row {
     grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
@@ -420,6 +435,7 @@
 @media (max-width: 767px) {
   .caretip-dashboard-shell.employee-dashboard .employee-period-summary {
     gap: 0 !important;
+    padding: 0.875rem 1rem;
   }
 
   .caretip-dashboard-shell.employee-dashboard .employee-period-summary__row {

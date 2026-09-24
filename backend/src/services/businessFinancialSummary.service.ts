@@ -13,7 +13,7 @@ import {
 import { reconcileBusinessPayables } from "./businessPayoutReconciliation.service.js";
 import { summarizePayoutsForBusiness } from "./stripeConnectPayout.service.js";
 import { getStripeClient, isStripeConfigured } from "./stripe.service.js";
-import { businessDistributionObservabilityForBusiness } from "./businessDistributionIntegrity.service.js";
+import { businessDistributionRemainingObligationForBusiness } from "./tipDistribution.service.js";
 import { employeeTipHoldObservabilityForBusiness } from "./employeeTipPayable.service.js";
 
 export type BusinessFinancialSummarySection = "ledger" | "connect" | "reconciliation";
@@ -147,11 +147,11 @@ export async function loadBusinessFinancialSummaryForBusiness(
 
   const ledgerSlicePromise = wantLedger
     ? logDashboardPhase("business.financialSummary", "ledgerBundle", async () => {
-        const distribution = await businessDistributionObservabilityForBusiness(businessId);
+        const obligation = await businessDistributionRemainingObligationForBusiness(businessId);
         const lifetimePromise = loadBusinessFinancialMetrics(businessId, {
           period: "all",
           businessTimezone,
-          distributionObservability: distribution,
+          distributionObligation: obligation,
         });
         const periodMetricsPromise =
           period === "all"
@@ -159,7 +159,7 @@ export async function loadBusinessFinancialSummaryForBusiness(
             : loadBusinessFinancialMetrics(businessId, {
                 period,
                 businessTimezone,
-                distributionObservability: distribution,
+                distributionObligation: obligation,
               });
         const [lifetime, periodMetrics, holds] = await Promise.all([
           lifetimePromise,
@@ -173,8 +173,8 @@ export async function loadBusinessFinancialSummaryForBusiness(
             mode: payoutMode,
             heldPlatformCents: holds.heldPlatformCents,
             heldPlatformRowCount: holds.heldRowCount,
-            heldBusinessCents: distribution.heldBusinessCents,
-            heldBusinessRowCount: distribution.heldBusinessRowCount,
+            heldBusinessCents: obligation.remainingDistributableCents,
+            heldBusinessRowCount: obligation.payableRowCount,
           },
         };
       })

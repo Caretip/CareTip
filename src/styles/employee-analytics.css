@@ -1,5 +1,7 @@
-.caretip-dashboard-shell.employee-dashboard .employee-analytics-page {
-  overflow-x: hidden;
+.employee-analytics-page {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
 }
 
 .employee-analytics-summary__grid {
@@ -54,7 +56,7 @@
   font-variant-numeric: tabular-nums;
   letter-spacing: -0.02em;
   line-height: 1.15;
-  overflow-wrap: anywhere;
+  white-space: nowrap;
 }
 
 .employee-analytics-summary__hint {
@@ -119,9 +121,95 @@
 }
 
 .employee-analytics-table-wrap {
+  max-width: 100%;
+  min-width: 0;
   border: 1px solid hsl(var(--border) / 0.6);
   border-radius: 0.75rem;
   background: hsl(var(--card));
+  -webkit-overflow-scrolling: touch;
+}
+
+.employee-analytics-period-toggle {
+  max-width: 100%;
+  min-width: 0;
+}
+
+.employee-analytics-mobile-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  max-width: 100%;
+  min-width: 0;
+  border: 1px solid hsl(var(--border) / 0.6);
+  border-radius: 0.75rem;
+  background: hsl(var(--card));
+  overflow: hidden;
+}
+
+.employee-analytics-mobile-card {
+  padding: 0.85rem 1rem;
+  border-bottom: 1px solid hsl(var(--border) / 0.45);
+}
+
+.employee-analytics-mobile-card:last-child {
+  border-bottom: 0;
+}
+
+.employee-analytics-mobile-card__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+  min-width: 0;
+}
+
+.employee-analytics-mobile-card__date {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: hsl(var(--foreground));
+}
+
+.employee-analytics-mobile-card__ref {
+  flex-shrink: 0;
+  font-size: 0.75rem;
+  color: hsl(var(--muted-foreground));
+}
+
+.employee-analytics-mobile-card__grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.65rem 1rem;
+  margin: 0.65rem 0 0;
+}
+
+.employee-analytics-mobile-card__grid--two {
+  margin-top: 0.5rem;
+}
+
+.employee-analytics-mobile-card__grid > div {
+  min-width: 0;
+}
+
+.employee-analytics-mobile-card__grid dt {
+  margin: 0;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: hsl(var(--muted-foreground));
+  line-height: 1.3;
+}
+
+.employee-analytics-mobile-card__grid dd {
+  margin: 0.2rem 0 0;
+  font-size: 0.875rem;
+  font-weight: 600;
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+}
+
+.employee-analytics-mobile-card__grid-span {
+  grid-column: 1 / -1;
 }
 
 .employee-analytics-table th,
@@ -175,6 +263,30 @@
   }
 
   .employee-analytics-flow__split {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .employee-analytics-summary__card {
+    padding: 0.85rem 0.9rem;
+  }
+
+  .employee-analytics-summary__label {
+    font-size: 0.625rem;
+    line-height: 1.35;
+    text-wrap: balance;
+  }
+
+  .employee-analytics-summary__value {
+    font-size: clamp(1.05rem, 4.2vw, 1.25rem);
+  }
+
+  .employee-analytics-summary__card--primary .employee-analytics-summary__value {
+    font-size: clamp(1.2rem, 5vw, 1.5rem);
+  }
+}
+
+@media (max-width: 359px) {
+  .employee-analytics-summary__grid {
     grid-template-columns: minmax(0, 1fr);
   }
 }

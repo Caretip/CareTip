@@ -78,12 +78,19 @@ export const BusinessHeroFinancialMetrics = memo(function BusinessHeroFinancialM
   const payoutMetrics: DashboardHeroFinancialMetric[] = [
     {
       id: "stripe",
-      label: t("business.hero.financial.receivedInStripe"),
+      label: t("business.hero.financial.availableInStripe"),
       value: connectPending
         ? payoutSkeleton
         : receivedInStripeEur != null
           ? connectCurrencyValue(receivedInStripeEur)
           : t("business.hero.financial.stripeUnavailable"),
+    },
+    {
+      id: "pending",
+      label: t("business.hero.financial.pendingStripe"),
+      value: connectPending
+        ? payoutSkeleton
+        : connectCurrencyValue(pendingStripeEur ?? 0),
     },
     {
       id: "paid",
@@ -92,18 +99,10 @@ export const BusinessHeroFinancialMetrics = memo(function BusinessHeroFinancialM
     },
   ];
 
-  if (!connectPending && pendingStripeEur != null && pendingStripeEur > 0) {
-    payoutMetrics.push({
-      id: "pending",
-      label: t("business.hero.financial.pendingStripe"),
-      value: connectCurrencyValue(pendingStripeEur),
-    });
-  }
-
   if (showDistribution) {
     payoutMetrics.push({
       id: "distribution",
-      label: t("business.hero.financial.employeeDistribution"),
+      label: t("business.hero.financial.toDistribute"),
       value: ledgerCurrencyValue(distributionEur),
       hint: t("business.hero.financial.distributionHint"),
     });
@@ -117,10 +116,10 @@ export const BusinessHeroFinancialMetrics = memo(function BusinessHeroFinancialM
       refreshing={isRefreshing}
       primary={{
         label: t("business.hero.financial.totalTips"),
+        meta: t("business.hero.financial.totalTipsPeriod"),
         value: ledgerCurrencyValue(metrics?.totalCustomerTipsEur ?? 0),
         hint: t("business.hero.financial.totalTipsHint"),
       }}
-      payoutZoneLabel={t("business.hero.financial.zonePayout")}
       payoutMetrics={payoutMetrics}
     />
   );

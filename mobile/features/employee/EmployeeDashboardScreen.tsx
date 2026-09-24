@@ -134,7 +134,7 @@ export function EmployeeDashboardScreen() {
           ) : null}
           <View style={styles.heroBlock}>
               <HeroBalanceCard
-                label={t("employeeDashboard.periodEarnings")}
+                label={t("employeeDashboard.grossTips")}
                 value={formatEur(tips?.periodAmountEur)}
                 hint={t("businessDashboard.tipsThisPeriod", {
                   count: formatCount(tips?.periodTipCount),
@@ -151,8 +151,8 @@ export function EmployeeDashboardScreen() {
                     }),
                   },
                   {
-                    label: t("employeeDashboard.totalEarnings"),
-                    value: formatEur(tips?.totalEarningsEur),
+                    label: t("employeeDashboard.grossTips"),
+                    value: formatEur(tips?.grossTipsEur),
                     hint: t("employeeDashboard.successfulTipsHint", {
                       count: formatCount(tips?.totalSupporters),
                     }),

@@ -273,29 +273,6 @@ export function buildTrendChartSeries(input: BusinessIntelligenceInput) {
   };
 }
 
-/** QR scan + conversion trends from unified analytics bundle (`qrAnalytics` + tip distribution). */
-export function buildQrChartSeries(input: BusinessIntelligenceInput) {
-  const qr = input.qrAnalytics;
-  const scansOverTime = (qr?.scanTrend ?? []).map((row) => ({
-    label: row.label,
-    scans: row.count,
-  }));
-  const hasScans = scansOverTime.some((row) => row.scans > 0);
-
-  const tipsByLabel = new Map(input.dailyTipDistribution.map((row) => [row.day, row.amount]));
-  const avgTip = input.period.averageTip || 8;
-
-  const conversionTrend = scansOverTime.map((row) => {
-    const tipsAmount = tipsByLabel.get(row.label) ?? 0;
-    const tipCount = tipsAmount > 0 ? Math.max(1, Math.round(tipsAmount / avgTip)) : 0;
-    const conversion = row.scans > 0 ? Math.round((tipCount / row.scans) * 1000) / 10 : 0;
-    return { label: row.label, conversion };
-  });
-  const hasConversion = hasScans && conversionTrend.some((row) => row.conversion > 0);
-
-  return { scansOverTime, conversionTrend, hasScans, hasConversion };
-}
-
 export type BusinessHealthGrade = "excellent" | "good" | "fair" | "needs_attention";
 
 export type BusinessHealthScore = {

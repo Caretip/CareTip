@@ -126,7 +126,19 @@ export async function getMyEmployeePayableActivity(req: Request, res: Response) 
     const skipRaw = Number(req.query.skip);
     const take = Number.isInteger(takeRaw) ? takeRaw : 20;
     const skip = Number.isInteger(skipRaw) ? skipRaw : 0;
-    const result = await listEmployeePayableActivityForEmployee(actor.employeeId, { take, skip });
+    const filterRaw = typeof req.query.filter === "string" ? req.query.filter.trim() : "";
+    const filter =
+      filterRaw === "tips" ||
+      filterRaw === "transfers" ||
+      filterRaw === "pending" ||
+      filterRaw === "issues"
+        ? filterRaw
+        : "all";
+    const result = await listEmployeePayableActivityForEmployee(actor.employeeId, {
+      take,
+      skip,
+      filter,
+    });
     return res.json(result);
   } catch (err) {
     logServerError("employeeConnect.getMyEmployeePayableActivity", err);

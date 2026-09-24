@@ -9,7 +9,6 @@ import {
 import {
   CARETIP_FEE_FIXED_CENTS_EUR,
   CARETIP_FEE_PERCENT,
-  calculateTipPlatformFeeCents,
 } from "../config/fees.js";
 import { impersonationAuthUserDto, issueImpersonationAccessToken } from "./auth.service.js";
 import {
@@ -192,6 +191,13 @@ export async function listGlobalTransactions(params: {
       include: {
         business: { select: { id: true, name: true } },
         employee: { select: { id: true, name: true } },
+        employeeTipPayable: {
+          select: {
+            platformFeeCents: true,
+            payableCents: true,
+            status: true,
+          },
+        },
       },
     }),
     prisma.transaction.count({ where }),
@@ -199,22 +205,18 @@ export async function listGlobalTransactions(params: {
 
   const items = rows.map((t) => {
     const gross = Number(t.amount);
-    const amountCents = Math.round(gross * 100);
-    let feeCents: number | null = null;
-    try {
-      feeCents = calculateTipPlatformFeeCents(amountCents);
-    } catch {
-      // Legacy tips below the current €1.00 minimum cannot satisfy fee < tip.
-      feeCents = null;
-    }
+    const payable = t.employeeTipPayable;
+    const feeCents = payable?.platformFeeCents ?? null;
+    const netToStaffCents = payable?.payableCents ?? null;
+    const payoutStatus = payable?.status ?? "no_payable";
     return {
       id: t.id,
       amountEur: gross,
       caretipFeePercent: CARETIP_FEE_PERCENT,
       caretipFeeFixedCents: CARETIP_FEE_FIXED_CENTS_EUR,
       caretipFeeEur: feeCents == null ? null : feeCents / 100,
-      netToStaffEur: feeCents == null ? null : (amountCents - feeCents) / 100,
-      payoutStatus: t.payoutStatus,
+      netToStaffEur: netToStaffCents == null ? null : netToStaffCents / 100,
+      payoutStatus,
       tipStatus: t.status,
       stripePaymentIntentId: t.stripePaymentIntentId,
       createdAt: t.createdAt.toISOString(),

@@ -4,9 +4,9 @@
 import { EmployeeTipChargeModel, EmployeeTipPayoutMode, EmployeeTipPayableStatus, Prisma } from "@prisma/client";
 import { prisma } from "../prisma.js";
 import {
-  businessDistributionObservabilityForBusiness,
-  type BusinessDistributionObservability,
-} from "./businessDistributionIntegrity.service.js";
+  businessDistributionRemainingObligationForBusiness,
+  type BusinessDistributionObligationSnapshot,
+} from "./tipDistribution.service.js";
 import { remainingPayableCents } from "./employeeTipPayable.service.js";
 import type { BusinessTimeframe } from "../utils/businessTime.js";
 import { businessUtcRangeForTimeframe, sanitizeIanaTimezone } from "../utils/businessTime.js";
@@ -36,8 +36,8 @@ export async function loadBusinessFinancialMetrics(
   opts?: {
     period?: BusinessTimeframe;
     businessTimezone?: string;
-    /** Reuse distribution observability when the caller already loaded it. */
-    distributionObservability?: BusinessDistributionObservability;
+    /** Reuse allocation-aware obligation when the caller already loaded it. */
+    distributionObligation?: BusinessDistributionObligationSnapshot;
   },
 ): Promise<BusinessFinancialMetrics> {
   const period = opts?.period ?? "all";
@@ -46,12 +46,12 @@ export async function loadBusinessFinancialMetrics(
   const periodStart = range?.startUtc;
   const periodEnd = range?.endUtc;
 
-  const distributionPromise =
-    opts?.distributionObservability != null
-      ? Promise.resolve(opts.distributionObservability)
-      : businessDistributionObservabilityForBusiness(businessId);
+  const obligationPromise =
+    opts?.distributionObligation != null
+      ? Promise.resolve(opts.distributionObligation)
+      : businessDistributionRemainingObligationForBusiness(businessId);
 
-  const [tipRows, payables, distribution] = await Promise.all([
+  const [tipRows, payables, obligation] = await Promise.all([
     prisma.$queryRaw<Array<{ gross: number; tip_count: number }>>(Prisma.sql`
       SELECT
         COALESCE(SUM(amount), 0)::float AS gross,
@@ -65,7 +65,7 @@ export async function loadBusinessFinancialMetrics(
       where: {
         businessId,
         ...(period !== "all" && periodStart && periodEnd
-          ? { createdAt: { gte: periodStart, lte: periodEnd } }
+          ? { transaction: { createdAt: { gte: periodStart, lte: periodEnd } } }
           : {}),
       },
       select: {
@@ -76,7 +76,7 @@ export async function loadBusinessFinancialMetrics(
         transactionId: true,
       },
     }),
-    distributionPromise,
+    obligationPromise,
   ]);
 
   let directGrossCents = 0;
@@ -97,13 +97,14 @@ export async function loadBusinessFinancialMetrics(
   }
 
   const tipCount = Number(tipRows[0]?.tip_count ?? 0);
-  const feesExact = tipCount > 0 && feeRows === tipCount;
+  /** Exact when every successful tip in scope has a payable with frozen platformFeeCents. */
+  const feesExact = tipCount > 0 && feeRows === tipCount && payableTxIds.size === tipCount;
 
   return {
     totalCustomerTipsEur: Number(tipRows[0]?.gross ?? 0),
     tipCount,
-    employeeDistributionObligationEur: centsToEur(distribution.heldBusinessCents),
-    employeeDistributionObligationRowCount: distribution.heldBusinessRowCount,
+    employeeDistributionObligationEur: centsToEur(obligation.remainingDistributableCents),
+    employeeDistributionObligationRowCount: obligation.payableRowCount,
     directToEmployeeGrossTipsEur: centsToEur(directGrossCents),
     businessDistributionGrossTipsEur: centsToEur(bizDistGrossCents),
     caretipFeesEur: feesExact ? centsToEur(feeCents) : null,

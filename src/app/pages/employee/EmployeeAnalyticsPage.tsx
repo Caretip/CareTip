@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
   Area,
@@ -9,7 +9,8 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { AlertTriangle, CheckCircle2, TrendingUp } from "lucide-react";
+import { CheckCircle2, TrendingUp } from "lucide-react";
+import { EmployeeTransferStatusCard } from "../../components/employee/EmployeeTransferStatusCard";
 import { EmployeePageHeader } from "../../components/employee/EmployeePageHeader";
 import { EmployeeViewInStripeButton } from "../../components/employee/EmployeeViewInStripeButton";
 import { EmployeeEmptyState } from "../../components/employee/EmployeeEmptyState";
@@ -28,6 +29,9 @@ import {
   getDashboardChartTooltipStyle,
 } from "../../components/dashboard/dashboardChartTheme";
 import { LIGHTWEIGHT_AREA } from "../../lib/lightweightChartProps";
+import { Button } from "../../components/ui/button";
+
+const RECORDS_PAGE_SIZE = 10;
 
 function formatStripeCents(cents: number | null | undefined, currency: string | null): string {
   if (cents == null) return "—";
@@ -42,12 +46,53 @@ function payoutStatusLabel(t: (k: string) => string, label: string): string {
   return translated === key ? label : translated;
 }
 
+function formatAnalyticsDate(
+  iso: string,
+  timeZone: string | undefined,
+  locale: string,
+): string {
+  const tz = timeZone?.trim() || "UTC";
+  return new Intl.DateTimeFormat(locale, { dateStyle: "medium", timeZone: tz }).format(
+    new Date(iso),
+  );
+}
+
+function formatEarningsCell(
+  t: (k: string) => string,
+  row: { employeeEarningsEur: number | null; routingMode: string | null },
+): string {
+  if (row.routingMode === "business_distribution") {
+    return t("employee.analytics.routingBusiness");
+  }
+  if (row.employeeEarningsEur != null) {
+    return formatEur(row.employeeEarningsEur);
+  }
+  return "—";
+}
+
 export function EmployeeAnalyticsPage() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { user, authReady } = useRequireAuth();
   const [period, setPeriod] = useState<EmployeeAnalyticsPeriod>("month");
+  const [recordsPage, setRecordsPage] = useState(0);
   const enabled = authReady && user?.role === "employee";
-  const { data, loading, refreshing, error, reload } = useEmployeeAnalytics(enabled, period);
+  const { data, loading, refreshing, error, reload, lastFetchedAt } = useEmployeeAnalytics(
+    enabled,
+    period,
+  );
+
+  const tipRecords = data?.tipRecords ?? [];
+  const recordsPageCount = Math.max(1, Math.ceil(tipRecords.length / RECORDS_PAGE_SIZE));
+  const recordsPageIndex = tipRecords.length === 0 ? 0 : recordsPage + 1;
+  const paginatedRecords = tipRecords.slice(
+    recordsPage * RECORDS_PAGE_SIZE,
+    recordsPage * RECORDS_PAGE_SIZE + RECORDS_PAGE_SIZE,
+  );
+  const hasMoreRecords = (recordsPage + 1) * RECORDS_PAGE_SIZE < tipRecords.length;
+
+  useEffect(() => {
+    setRecordsPage(0);
+  }, [period]);
 
   const periodOptions = useMemo(
     () =>
@@ -235,50 +280,131 @@ export function EmployeeAnalyticsPage() {
 
         <section aria-label={t("employee.analytics.recordsAria")}>
           <h2 className="employee-analytics-section-title">{t("employee.analytics.recordsTitle")}</h2>
-          <div className="employee-analytics-table-wrap overflow-x-auto">
-            <table className="employee-analytics-table w-full min-w-[640px] text-sm">
-              <thead>
-                <tr>
-                  <th>{t("employee.analytics.colDate")}</th>
-                  <th>{t("employee.analytics.colReference")}</th>
-                  <th>{t("employee.analytics.colGross")}</th>
-                  <th>{t("employee.analytics.colFee")}</th>
-                  <th>{t("employee.analytics.colEarnings")}</th>
-                  <th>{t("employee.analytics.colRouting")}</th>
-                  <th>{t("employee.analytics.colStatus")}</th>
-                </tr>
-              </thead>
-              <tbody>
-                {(data?.tipRecords ?? []).map((row) => (
-                  <tr key={row.id}>
-                    <td>{new Date(row.createdAt).toLocaleDateString()}</td>
-                    <td>{row.receiptNumber ? `#${row.receiptNumber}` : row.id.slice(0, 8)}</td>
-                    <td className="tabular-nums">{formatEur(row.grossEur)}</td>
-                    <td className="tabular-nums">
-                      {row.platformFeeEur != null ? formatEur(row.platformFeeEur) : "—"}
-                    </td>
-                    <td className="tabular-nums">
-                      {row.employeeEarningsEur != null ? formatEur(row.employeeEarningsEur) : "—"}
-                    </td>
-                    <td>
-                      {row.routingMode === "business_distribution"
-                        ? t("employee.analytics.routingBusiness")
-                        : t("employee.analytics.routingDirect")}
-                    </td>
-                    <td>{payoutStatusLabel(t, row.payoutStatusLabel)}</td>
-                  </tr>
+          {!loading && (data?.tipRecords?.length ?? 0) === 0 ? (
+            <EmployeeEmptyState
+              compact
+              icon={<TrendingUp className="h-4 w-4" aria-hidden />}
+              title={t("employee.analytics.noTipsTitle")}
+              description={t("employee.analytics.noTipsDesc")}
+            />
+          ) : (
+            <>
+              <ul className="employee-analytics-mobile-list lg:hidden" aria-label={t("employee.analytics.recordsTitle")}>
+                {paginatedRecords.map((row) => (
+                  <li key={row.id} className="employee-analytics-mobile-card">
+                    <div className="employee-analytics-mobile-card__head">
+                      <span className="employee-analytics-mobile-card__date">
+                        {formatAnalyticsDate(
+                          row.createdAt,
+                          data?.businessTimezone,
+                          i18n.language || "en",
+                        )}
+                      </span>
+                      <span className="employee-analytics-mobile-card__ref">
+                        {row.receiptNumber ? `#${row.receiptNumber}` : row.id.slice(0, 8)}
+                      </span>
+                    </div>
+                    <dl className="employee-analytics-mobile-card__grid">
+                      <div>
+                        <dt>{t("employee.analytics.colGross")}</dt>
+                        <dd className="tabular-nums">{formatEur(row.grossEur)}</dd>
+                      </div>
+                      <div>
+                        <dt>{t("employee.analytics.colFee")}</dt>
+                        <dd className="tabular-nums">
+                          {row.platformFeeEur != null ? formatEur(row.platformFeeEur) : "—"}
+                        </dd>
+                      </div>
+                      <div>
+                        <dt>{t("employee.analytics.colEarnings")}</dt>
+                        <dd className="tabular-nums">{formatEarningsCell(t, row)}</dd>
+                      </div>
+                      <div>
+                        <dt>{t("employee.analytics.colRouting")}</dt>
+                        <dd>
+                          {row.routingMode === "business_distribution"
+                            ? t("employee.analytics.routingBusiness")
+                            : t("employee.analytics.routingDirect")}
+                        </dd>
+                      </div>
+                      <div className="employee-analytics-mobile-card__grid-span">
+                        <dt>{t("employee.analytics.colStatus")}</dt>
+                        <dd>{payoutStatusLabel(t, row.payoutStatusLabel)}</dd>
+                      </div>
+                    </dl>
+                  </li>
                 ))}
-              </tbody>
-            </table>
-            {!loading && (data?.tipRecords?.length ?? 0) === 0 ? (
-              <EmployeeEmptyState
-                compact
-                icon={<TrendingUp className="h-4 w-4" aria-hidden />}
-                title={t("employee.analytics.noTipsTitle")}
-                description={t("employee.analytics.noTipsDesc")}
-              />
-            ) : null}
-          </div>
+              </ul>
+              <div className="employee-analytics-table-wrap hidden overflow-x-auto lg:block">
+                <table className="employee-analytics-table w-full min-w-[640px] text-sm">
+                  <thead>
+                    <tr>
+                      <th>{t("employee.analytics.colDate")}</th>
+                      <th>{t("employee.analytics.colReference")}</th>
+                      <th>{t("employee.analytics.colGross")}</th>
+                      <th>{t("employee.analytics.colFee")}</th>
+                      <th>{t("employee.analytics.colEarnings")}</th>
+                      <th>{t("employee.analytics.colRouting")}</th>
+                      <th>{t("employee.analytics.colStatus")}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {paginatedRecords.map((row) => (
+                      <tr key={row.id}>
+                        <td>
+                          {formatAnalyticsDate(
+                            row.createdAt,
+                            data?.businessTimezone,
+                            i18n.language || "en",
+                          )}
+                        </td>
+                        <td>{row.receiptNumber ? `#${row.receiptNumber}` : row.id.slice(0, 8)}</td>
+                        <td className="tabular-nums">{formatEur(row.grossEur)}</td>
+                        <td className="tabular-nums">
+                          {row.platformFeeEur != null ? formatEur(row.platformFeeEur) : "—"}
+                        </td>
+                        <td className="tabular-nums">{formatEarningsCell(t, row)}</td>
+                        <td>
+                          {row.routingMode === "business_distribution"
+                            ? t("employee.analytics.routingBusiness")
+                            : t("employee.analytics.routingDirect")}
+                        </td>
+                        <td>{payoutStatusLabel(t, row.payoutStatusLabel)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              {tipRecords.length > RECORDS_PAGE_SIZE ? (
+                <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
+                  <p className="text-xs text-muted-foreground">
+                    {t("employee.payouts.history.page", { page: recordsPageIndex, pages: recordsPageCount })}
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {recordsPage > 0 ? (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setRecordsPage((p) => Math.max(0, p - 1))}
+                      >
+                        {t("employee.payouts.history.prev")}
+                      </Button>
+                    ) : null}
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      disabled={!hasMoreRecords}
+                      onClick={() => setRecordsPage((p) => p + 1)}
+                    >
+                      {t("employee.payouts.history.next")}
+                    </Button>
+                  </div>
+                </div>
+              ) : null}
+            </>
+          )}
         </section>
 
         <section aria-label={t("employee.analytics.stripeAria")}>
@@ -309,34 +435,32 @@ export function EmployeeAnalyticsPage() {
             </div>
           </div>
 
-          <h3 className="mt-6 text-sm font-semibold">{t("employee.analytics.recentTransfers")}</h3>
-          <div className="employee-analytics-table-wrap mt-2 overflow-x-auto">
-            <table className="employee-analytics-table w-full min-w-[520px] text-sm">
-              <thead>
-                <tr>
-                  <th>{t("employee.analytics.colDate")}</th>
-                  <th>{t("employee.analytics.colAmount")}</th>
-                  <th>{t("employee.analytics.colStatus")}</th>
-                  <th>{t("employee.analytics.colCaretipRef")}</th>
-                </tr>
-              </thead>
-              <tbody>
-                {(data?.stripe.transfers ?? []).map((tr) => (
-                  <tr key={tr.id}>
-                    <td>{new Date(tr.createdAt).toLocaleDateString()}</td>
-                    <td className="tabular-nums">
-                      {formatStripeCents(tr.amountCents, tr.currency)}
-                    </td>
-                    <td>{tr.reversed ? t("employee.analytics.transferReversed") : t("employee.analytics.transferCompleted")}</td>
-                    <td className="font-mono text-xs">{tr.caretipPayableId?.slice(0, 10) ?? "—"}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-
           <h3 className="mt-6 text-sm font-semibold">{t("employee.analytics.bankPayouts")}</h3>
-          <div className="employee-analytics-table-wrap mt-2 overflow-x-auto">
+          <ul className="employee-analytics-mobile-list mt-2 lg:hidden" aria-label={t("employee.analytics.bankPayouts")}>
+            {(data?.stripe.bankPayouts.items ?? []).map((po, idx) => (
+              <li key={po.stripePayoutId ?? `po-${idx}`} className="employee-analytics-mobile-card">
+                <div className="employee-analytics-mobile-card__head">
+                  <span className="employee-analytics-mobile-card__date">
+                    {new Date(po.createdAt).toLocaleDateString()}
+                  </span>
+                  <span className="employee-analytics-mobile-card__ref">{po.status}</span>
+                </div>
+                <dl className="employee-analytics-mobile-card__grid employee-analytics-mobile-card__grid--two">
+                  <div>
+                    <dt>{t("employee.analytics.colAmount")}</dt>
+                    <dd className="tabular-nums">{formatStripeCents(po.amountCents, po.currency)}</dd>
+                  </div>
+                  <div>
+                    <dt>{t("employee.analytics.colArrival")}</dt>
+                    <dd>
+                      {po.arrivalDate ? new Date(po.arrivalDate).toLocaleDateString() : "—"}
+                    </dd>
+                  </div>
+                </dl>
+              </li>
+            ))}
+          </ul>
+          <div className="employee-analytics-table-wrap mt-2 hidden overflow-x-auto lg:block">
             <table className="employee-analytics-table w-full min-w-[520px] text-sm">
               <thead>
                 <tr>
@@ -364,45 +488,44 @@ export function EmployeeAnalyticsPage() {
 
         <section className="employee-analytics-status" aria-label={t("employee.analytics.statusAria")}>
           <h2 className="employee-analytics-section-title">{t("employee.analytics.statusTitle")}</h2>
-          {data?.reconciliation.needsAttention ? (
-            <div className="flex items-start gap-2 rounded-lg border border-amber-500/30 bg-amber-500/5 px-4 py-3 text-sm">
-              <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" aria-hidden />
-              <div>
-                <p className="font-medium">{t("employee.analytics.reconciliationAttention")}</p>
-                <p className="text-muted-foreground">{t("employee.analytics.reconciliationAttentionHint")}</p>
-              </div>
-            </div>
-          ) : (
-            <ul className="space-y-2 text-sm">
-              <li className="flex items-center gap-2">
-                <CheckCircle2 className="h-4 w-4 text-emerald-600" aria-hidden />
-                <span>
-                  {t("employee.analytics.statusEarnings")}{" "}
-                  <strong className="tabular-nums">
-                    {formatEur(data?.lifetimeMetrics.employeeEarningsEur ?? 0)}
-                  </strong>
-                </span>
-              </li>
-              <li className="flex items-center gap-2">
-                <CheckCircle2 className="h-4 w-4 text-emerald-600" aria-hidden />
-                <span>
-                  {t("employee.analytics.statusTransferred")}{" "}
-                  <strong className="tabular-nums">
-                    {formatEur(data?.lifetimeMetrics.paidToStripeEur ?? 0)}
-                  </strong>
-                </span>
-              </li>
-              <li className="flex items-center gap-2">
-                <CheckCircle2 className="h-4 w-4 text-emerald-600" aria-hidden />
-                <span>
-                  {t("employee.analytics.statusPending")}{" "}
-                  <strong className="tabular-nums">
-                    {formatEur(data?.lifetimeMetrics.pendingReleaseEur ?? 0)}
-                  </strong>
-                </span>
-              </li>
-            </ul>
-          )}
+          {data?.reconciliation ? (
+            <EmployeeTransferStatusCard
+              reconciliation={data.reconciliation}
+              businessTimezone={data.businessTimezone}
+              lastFetchedAt={lastFetchedAt}
+              refreshing={refreshing}
+              onRefresh={() => void reload()}
+            />
+          ) : null}
+          <ul className="mt-3 space-y-2 text-sm">
+            <li className="flex items-center gap-2">
+              <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-600" aria-hidden />
+              <span>
+                {t("employee.analytics.statusEarnings")}{" "}
+                <strong className="tabular-nums">
+                  {formatEur(data?.lifetimeMetrics.employeeEarningsEur ?? 0)}
+                </strong>
+              </span>
+            </li>
+            <li className="flex items-center gap-2">
+              <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-600" aria-hidden />
+              <span>
+                {t("employee.analytics.statusTransferred")}{" "}
+                <strong className="tabular-nums">
+                  {formatEur(data?.lifetimeMetrics.paidToStripeEur ?? 0)}
+                </strong>
+              </span>
+            </li>
+            <li className="flex items-center gap-2">
+              <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-600" aria-hidden />
+              <span>
+                {t("employee.analytics.statusPending")}{" "}
+                <strong className="tabular-nums">
+                  {formatEur(data?.lifetimeMetrics.pendingReleaseEur ?? 0)}
+                </strong>
+              </span>
+            </li>
+          </ul>
         </section>
       </div>
     </div>

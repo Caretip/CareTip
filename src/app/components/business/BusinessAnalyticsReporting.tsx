@@ -1,4 +1,4 @@
-import { lazy, useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { markAnalyticsPerformance } from "../../lib/businessAnalytics/analyticsPerformanceMarks";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router";
@@ -11,7 +11,6 @@ import { DashboardAnalyticsPeriodToggle } from "../dashboard/DashboardAnalyticsP
 import { DashboardRefreshIndicator } from "../dashboard/DashboardRefreshIndicator";
 import { DashboardStatusStrip } from "../dashboard/DashboardStatusStrip";
 import { deriveRealtimeStatusItems } from "../../lib/dashboardStatus/deriveDashboardStatus";
-import { DashboardChartsIdleMount } from "../dashboard/DashboardChartsIdleMount";
 import { CountUpMetric } from "../dashboard/CountUpMetric";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -26,12 +25,6 @@ import type { useBusinessIntelligenceData } from "../../hooks/useBusinessIntelli
 import type { TopTipSourceRow } from "../../lib/businessIntelligence";
 import type { AnalyticsTimeframe } from "../../hooks/useBusinessDashboardStats";
 import { BusinessFinancialAnalyticsSection } from "./BusinessFinancialAnalyticsSection";
-
-const BusinessIntelligenceCharts = lazy(() =>
-  import("./insights/BusinessIntelligenceCharts").then((mod) => ({
-    default: mod.BusinessIntelligenceCharts,
-  })),
-);
 
 type BiData = ReturnType<typeof useBusinessIntelligenceData>;
 
@@ -370,23 +363,6 @@ export function BusinessAnalyticsReporting({
             )}
           </CardContent>
         </Card>
-      </section>
-
-      <section className="space-y-3" aria-labelledby="business-advanced-trends-heading">
-        <h2
-          id="business-advanced-trends-heading"
-          className="text-sm font-semibold uppercase tracking-wide text-muted-foreground"
-        >
-          {t("business.tips.analytics.sections.advancedTrends")}
-        </h2>
-        <DashboardChartsIdleMount
-          whenVisible
-          fallback={
-            <div className={cn(businessUi.cardStatic, "h-[280px] animate-pulse bg-muted/30")} />
-          }
-        >
-          <BusinessIntelligenceCharts data={data.input} loading={deferredAnalyticsLoading} />
-        </DashboardChartsIdleMount>
       </section>
     </div>
   );

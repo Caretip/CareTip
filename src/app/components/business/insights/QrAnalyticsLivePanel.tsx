@@ -8,19 +8,6 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/app/components/ui/collapsible";
-import {
-  Area,
-  AreaChart,
-  CartesianGrid,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from "recharts";
-import { Card, CardContent } from "@/components/ui/card";
-import { businessUi } from "../businessDashboardUi";
-import { BUSINESS_CHART_GRID, getBusinessChartTooltipStyle } from "../businessDashboardChartTheme";
-import { LIGHTWEIGHT_AREA } from "../../../lib/lightweightChartProps";
 import { CountUpMetric } from "../../dashboard/CountUpMetric";
 import { cn } from "@/lib/utils";
 import type { BusinessQrAnalytics } from "../../../lib/api";
@@ -83,7 +70,6 @@ export function QrAnalyticsLivePanel({
 
   const topLocation = data?.scansByLocation[0] ?? null;
   const topEmployee = data?.scansByEmployee[0] ?? null;
-  const hasTrend = (data?.scanTrend.some((r) => r.count > 0) ?? false) && (!loading || refreshing);
 
   return (
     <div className={cn("space-y-4", className)}>
@@ -136,38 +122,6 @@ export function QrAnalyticsLivePanel({
           ) : null}
         </div>
       </div>
-
-      {!compact ? (
-        <Card className={businessUi.cardStatic}>
-          <CardContent className="pt-4">
-            <p className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
-              {t("business.qrAnalytics.scanTrend")}
-            </p>
-            {!hasTrend ? (
-              <p className="flex h-[160px] items-center justify-center text-sm text-muted-foreground">
-                {t("business.qrAnalytics.emptyTrend")}
-              </p>
-            ) : (
-              <div className="h-[160px] w-full">
-                <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={data!.scanTrend} margin={{ top: 4, right: 4, left: 0, bottom: 0 }}>
-                    <CartesianGrid strokeDasharray="4 6" stroke={BUSINESS_CHART_GRID} vertical={false} />
-                    <XAxis dataKey="label" tickLine={false} axisLine={false} style={{ fontSize: 9 }} />
-                    <YAxis tickLine={false} axisLine={false} width={28} style={{ fontSize: 9 }} allowDecimals={false} />
-                    <Tooltip contentStyle={getBusinessChartTooltipStyle()} />
-                    <Area
-                      dataKey="count"
-                      stroke="#197278"
-                      fill="rgba(25,114,120,0.12)"
-                      {...LIGHTWEIGHT_AREA}
-                    />
-                  </AreaChart>
-                </ResponsiveContainer>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      ) : null}
 
       {!compact && data && data.recentScans.length > 0 ? (
         <Collapsible open={recentOpen} onOpenChange={setRecentOpen}>

@@ -1,6 +1,6 @@
-import { TipsActivityPage } from "../shared/TipsActivityPage";
+import { EmployeeTipActivityPage } from "./EmployeeTipActivityPage";
 
-/** Employee earnings ledger — financial tip records, not notifications. */
+/** Employee tip activity feed — chronological tip/payment events (not financial analytics). */
 export function EmployeeTipHistoryPage() {
-  return <TipsActivityPage variant="employee-history" />;
+  return <EmployeeTipActivityPage />;
 }

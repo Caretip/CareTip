@@ -5,6 +5,7 @@ import { EmployeeTipPayoutMode, Prisma, TipStatus } from "@prisma/client";
 import type Stripe from "stripe";
 import { prisma } from "../prisma.js";
 import { businessUtcRangeForTimeframe, sanitizeIanaTimezone } from "../utils/businessTime.js";
+import { sqlNaiveUtcColumnAsLocal } from "../utils/sqlNaiveUtcToLocal.js";
 import { loadEmployeeFinancialMetrics } from "./employeeFinancialMetrics.service.js";
 import { reconcileEmployeeDirectPayables } from "./employeePayoutReconciliation.service.js";
 import { listEmployeeStripeBankPayoutsForUser } from "./employeeStripeBankPayouts.service.js";
@@ -43,13 +44,14 @@ export type EmployeeAnalyticsBundle = {
   periodStart: string;
   periodEnd: string;
   periodBasis: string;
+  /** IANA timezone used for period boundaries and chart buckets (from Business.timezone). */
+  businessTimezone: string;
   metrics: {
+    /** Period-scoped metrics only — see lifetimeMetrics for lifetime balances. */
+    scope: "period";
     grossTipsEur: number;
     employeeEarningsEur: number;
-    paidToStripeEur: number;
-    pendingReleaseEur: number;
     totalSupporters: number;
-    prePayableGrossTipsEur: number;
     caretipFeesFromPayablesEur: number | null;
     feesExact: boolean;
     tipCount: number;
@@ -88,19 +90,127 @@ function periodToTimeframe(period: EmployeeAnalyticsPeriod): "today" | "week" | 
   return period;
 }
 
+type EmployeeAnalyticsPeriodKpiRow = {
+  tip_count: number;
+  gross_eur: number;
+  largest_eur: number;
+  fee_cents: number;
+  payable_count: number;
+  earnings_cents: number;
+};
+
+const EMPTY_PERIOD_KPIS: EmployeeAnalyticsPeriodKpiRow = {
+  tip_count: 0,
+  gross_eur: 0,
+  largest_eur: 0,
+  fee_cents: 0,
+  payable_count: 0,
+  earnings_cents: 0,
+};
+
+/** Full-period KPI aggregate — never limited to recent tip rows. */
+async function queryEmployeeAnalyticsPeriodKpis(opts: {
+  employeeId: string;
+  periodStart: Date;
+  periodEnd: Date;
+}): Promise<EmployeeAnalyticsPeriodKpiRow> {
+  const [row] = await prisma.$queryRaw<EmployeeAnalyticsPeriodKpiRow[]>(Prisma.sql`
+    SELECT
+      COUNT(*)::int AS tip_count,
+      COALESCE(SUM(t.amount), 0)::float AS gross_eur,
+      COALESCE(MAX(t.amount), 0)::float AS largest_eur,
+      COALESCE(SUM(p.platform_fee_cents), 0)::int AS fee_cents,
+      COUNT(p.id)::int AS payable_count,
+      COALESCE(SUM(
+        CASE
+          WHEN p.routing_mode::text = 'direct_to_employee'
+            THEN GREATEST(0, p.payable_cents - p.refunded_cents)
+          ELSE 0
+        END
+      ), 0)::int AS earnings_cents
+    FROM tips t
+    LEFT JOIN employee_tip_payables p ON p.transaction_id = t.id
+    WHERE t.employee_id = ${opts.employeeId}
+      AND t.status = 'success'
+      AND t.created_at >= ${opts.periodStart}
+      AND t.created_at <= ${opts.periodEnd}
+  `);
+  return row ?? EMPTY_PERIOD_KPIS;
+}
+
+/** Direct employee entitlement for analytics — matches lifetime metrics semantics. */
+function directEmployeeEarningsEur(
+  payable: {
+    payableCents: number;
+    refundedCents: number;
+    routingMode: EmployeeTipPayoutMode;
+  } | null,
+): number | null {
+  if (!payable) return null;
+  if (payable.routingMode === EmployeeTipPayoutMode.business_distribution) return null;
+  return Math.max(0, payable.payableCents - payable.refundedCents) / 100;
+}
+
+function mapTipToAnalyticsRecord(tip: {
+  id: string;
+  amount: unknown;
+  createdAt: Date;
+  receiptNumber: string | null;
+  employeeTipPayable: {
+    grossCents: number;
+    platformFeeCents: number;
+    payableCents: number;
+    refundedCents: number;
+    routingMode: EmployeeTipPayoutMode;
+    chargeModel: string;
+    status: string;
+  } | null;
+}): EmployeeAnalyticsTipRecord {
+  const payable = tip.employeeTipPayable;
+  const grossCents = Math.round(Number(tip.amount) * 100);
+  return {
+    id: tip.id,
+    createdAt: tip.createdAt.toISOString(),
+    receiptNumber: tip.receiptNumber,
+    grossEur: grossCents / 100,
+    platformFeeEur: payable ? payable.platformFeeCents / 100 : null,
+    employeeEarningsEur: directEmployeeEarningsEur(payable),
+    routingMode: payable?.routingMode ?? null,
+    chargeModel: payable?.chargeModel ?? null,
+    payoutStatus: payable?.status ?? "no_payable",
+    payoutStatusLabel: payoutStatusLabel(
+      payable?.routingMode ?? null,
+      payable?.status ?? null,
+      Boolean(payable),
+    ),
+    hasPayable: Boolean(payable),
+  };
+}
+
 export async function loadEmployeeAnalyticsForUser(
   userId: string,
   opts: { period?: EmployeeAnalyticsPeriod; businessTimezone?: string },
 ): Promise<EmployeeAnalyticsBundle> {
   const actor = await resolveActiveEmployeeForConnect(userId);
   const period = opts.period ?? "month";
-  const tz = sanitizeIanaTimezone(opts.businessTimezone ?? "Europe/Berlin");
+  const businessRow = await prisma.business.findUnique({
+    where: { id: actor.businessId },
+    select: { timezone: true },
+  });
+  const tz = sanitizeIanaTimezone(opts.businessTimezone ?? businessRow?.timezone);
   const range = businessUtcRangeForTimeframe(periodToTimeframe(period), tz);
   const periodStart = range?.startUtc ?? new Date(0);
   const periodEnd = range?.endUtc ?? new Date();
 
-  const [lifetimeMetrics, tips, reconciliation] = await Promise.all([
+  const [lifetimeMetrics, periodKpis, recentTips, reconciliation] = await Promise.all([
     loadEmployeeFinancialMetrics(actor.employeeId),
+    period === "all"
+      ? Promise.resolve(null)
+      : queryEmployeeAnalyticsPeriodKpis({
+          employeeId: actor.employeeId,
+          periodStart,
+          periodEnd,
+        }),
     prisma.transaction.findMany({
       where: {
         employeeId: actor.employeeId,
@@ -119,6 +229,7 @@ export async function loadEmployeeAnalyticsForUser(
             grossCents: true,
             platformFeeCents: true,
             payableCents: true,
+            refundedCents: true,
             routingMode: true,
             chargeModel: true,
             status: true,
@@ -129,54 +240,28 @@ export async function loadEmployeeAnalyticsForUser(
     reconcileEmployeeDirectPayables(actor.employeeId),
   ]);
 
-  let grossPeriodCents = 0;
-  let earningsPeriodCents = 0;
-  let feePeriodCents = 0;
-  let feeRows = 0;
-  let tipCount = 0;
-  let largestCents = 0;
+  const tipRecords: EmployeeAnalyticsTipRecord[] = recentTips.map(mapTipToAnalyticsRecord);
 
-  const tipRecords: EmployeeAnalyticsTipRecord[] = tips.map((tip) => {
-    const payable = tip.employeeTipPayable;
-    const grossCents = Math.round(Number(tip.amount) * 100);
-    grossPeriodCents += grossCents;
-    tipCount += 1;
-    if (grossCents > largestCents) largestCents = grossCents;
-    if (payable && payable.routingMode === EmployeeTipPayoutMode.direct_to_employee) {
-      earningsPeriodCents += payable.payableCents;
-      feePeriodCents += payable.platformFeeCents;
-      feeRows += 1;
-    }
-    return {
-      id: tip.id,
-      createdAt: tip.createdAt.toISOString(),
-      receiptNumber: tip.receiptNumber,
-      grossEur: grossCents / 100,
-      platformFeeEur: payable ? payable.platformFeeCents / 100 : null,
-      employeeEarningsEur: payable ? payable.payableCents / 100 : null,
-      routingMode: payable?.routingMode ?? null,
-      chargeModel: payable?.chargeModel ?? null,
-      payoutStatus: payable?.status ?? "no_payable",
-      payoutStatusLabel: payoutStatusLabel(
-        payable?.routingMode ?? null,
-        payable?.status ?? null,
-        Boolean(payable),
-      ),
-      hasPayable: Boolean(payable),
-    };
-  });
-
-  const periodGrossEur = grossPeriodCents / 100;
-  const periodEarningsEur = earningsPeriodCents / 100;
-  const feesExact = tipCount > 0 && feeRows === tipCount;
+  const tipCount = periodKpis?.tip_count ?? 0;
+  const periodGrossEur = periodKpis?.gross_eur ?? 0;
+  const periodEarningsEur = (periodKpis?.earnings_cents ?? 0) / 100;
+  const feesExact = tipCount > 0 && (periodKpis?.payable_count ?? 0) === tipCount;
+  const feePeriodCents = periodKpis?.fee_cents ?? 0;
+  const largestTipEur = periodKpis?.largest_eur ?? 0;
 
   const chartRows = await prisma.$queryRaw<
     Array<{ day: string; gross: number; earnings: number }>
   >(Prisma.sql`
     SELECT
-      to_char(t.created_at AT TIME ZONE ${tz}, 'YYYY-MM-DD') AS day,
+      to_char(date_trunc('day', ${sqlNaiveUtcColumnAsLocal(Prisma.sql`t.created_at`, tz)}), 'YYYY-MM-DD') AS day,
       COALESCE(SUM(t.amount), 0)::float AS gross,
-      COALESCE(SUM(p.payable_cents) / 100.0, 0)::float AS earnings
+      COALESCE(SUM(
+        CASE
+          WHEN p.routing_mode::text = 'direct_to_employee'
+            THEN GREATEST(0, p.payable_cents - p.refunded_cents) / 100.0
+          ELSE 0
+        END
+      ), 0)::float AS earnings
     FROM tips t
     LEFT JOIN employee_tip_payables p ON p.transaction_id = t.id
     WHERE t.employee_id = ${actor.employeeId}
@@ -250,18 +335,17 @@ export async function loadEmployeeAnalyticsForUser(
     periodStart: periodStart.toISOString(),
     periodEnd: periodEnd.toISOString(),
     periodBasis: "tip_created_at",
+    businessTimezone: tz,
     metrics: {
+      scope: "period",
       grossTipsEur: period === "all" ? lifetimeMetrics.grossTipsEur : periodGrossEur,
       employeeEarningsEur: period === "all" ? lifetimeMetrics.employeeEarningsEur : periodEarningsEur,
-      paidToStripeEur: lifetimeMetrics.paidToStripeEur,
-      pendingReleaseEur: lifetimeMetrics.pendingReleaseEur,
       totalSupporters: period === "all" ? lifetimeMetrics.totalSupporters : tipCount,
-      prePayableGrossTipsEur: lifetimeMetrics.prePayableGrossTipsEur,
       caretipFeesFromPayablesEur: feesExact ? feePeriodCents / 100 : null,
       feesExact,
       tipCount,
       averageTipEur: tipCount > 0 ? periodGrossEur / tipCount : 0,
-      largestTipEur: largestCents / 100,
+      largestTipEur,
     },
     lifetimeMetrics,
     tipRecords,

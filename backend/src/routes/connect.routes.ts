@@ -5,6 +5,7 @@ import { requireCompletedOnboarding } from "../middleware/requireCompletedOnboar
 import * as connectController from "../controllers/connect.controller.js";
 import * as employeeTipPayoutModeController from "../controllers/employeeTipPayoutMode.controller.js";
 import * as employeeStripeConnectionsController from "../controllers/employeeStripeConnections.controller.js";
+import * as tipDistributionController from "../controllers/tipDistribution.controller.js";
 
 const router = Router();
 
@@ -53,6 +54,31 @@ router.get(
   "/connect/employee-stripe-connections",
   ...managerConnect,
   employeeStripeConnectionsController.getMyEmployeeStripeConnections,
+);
+router.get(
+  "/connect/tip-distribution/summary",
+  ...managerConnect,
+  tipDistributionController.getMyTipDistributionSummary,
+);
+router.get(
+  "/connect/tip-distribution/employees",
+  ...managerConnect,
+  tipDistributionController.getMyTipDistributionEmployees,
+);
+router.get(
+  "/connect/tip-distribution/history",
+  ...managerConnect,
+  tipDistributionController.getMyTipDistributionHistory,
+);
+router.get(
+  "/connect/tip-distribution/batches/:id",
+  ...managerConnect,
+  tipDistributionController.getMyTipDistributionBatch,
+);
+router.post(
+  "/connect/tip-distribution/batches",
+  ...managerConnect,
+  tipDistributionController.postMyTipDistributionBatch,
 );
 
 export default router;

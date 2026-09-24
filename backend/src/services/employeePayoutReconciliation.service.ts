@@ -11,10 +11,19 @@ import { remainingPayableCents } from "./employeeTipPayable.service.js";
 export type PayableReconciliationStatus =
   | "MATCHED"
   | "CARETIP_PENDING"
-  | "STRIPE_TRANSFER_FOUND"
+  | "STRIPE_TRANSFER_MISSING"
   | "AMOUNT_MISMATCH"
   | "DESTINATION_MISMATCH"
   | "DUPLICATE_TRANSFER";
+
+const RECONCILIATION_PAGE_SIZE = 100;
+
+const ATTENTION_STATUSES = new Set<PayableReconciliationStatus>([
+  "STRIPE_TRANSFER_MISSING",
+  "AMOUNT_MISMATCH",
+  "DESTINATION_MISMATCH",
+  "DUPLICATE_TRANSFER",
+]);
 
 export type PayableReconciliationRow = {
   payableId: string;
@@ -26,6 +35,8 @@ export type PayableReconciliationRow = {
   caretipStatus: string;
   stripeTransferId: string | null;
   stripeTransferAmountCents: number | null;
+  /** Stripe Transfer `created` when a transfer was linked during reconciliation. */
+  stripeTransferCreatedAt: string | null;
   stripeDestination: string | null;
   employeeStripeAccountId: string | null;
 };
@@ -40,7 +51,7 @@ export function __setEmployeeStripeTransferListFnForTests(fn: ListTransfersFn | 
   listTransfersFnForTests = fn;
 }
 
-function classifyPayableRow(
+export function classifyPayableRow(
   row: {
     id: string;
     transactionId: string;
@@ -69,6 +80,7 @@ function classifyPayableRow(
     caretipStatus: row.status,
     stripeTransferId: row.stripeTransferId,
     stripeTransferAmountCents: null,
+    stripeTransferCreatedAt: null,
     stripeDestination: null,
     employeeStripeAccountId,
   };
@@ -84,7 +96,7 @@ function classifyPayableRow(
 
   if (!linked) {
     if (row.status === "transferred" || row.transferredCents > 0) {
-      return { ...base, status: "STRIPE_TRANSFER_FOUND" };
+      return { ...base, status: "STRIPE_TRANSFER_MISSING" };
     }
     return base;
   }
@@ -93,6 +105,10 @@ function classifyPayableRow(
     typeof linked.destination === "string" ? linked.destination : linked.destination?.id ?? null;
   base.stripeTransferId = linked.id;
   base.stripeTransferAmountCents = linked.amount;
+  base.stripeTransferCreatedAt =
+    typeof linked.created === "number" && linked.created > 0
+      ? new Date(linked.created * 1000).toISOString()
+      : null;
   base.stripeDestination = dest;
 
   if (employeeStripeAccountId && dest && dest !== employeeStripeAccountId) {
@@ -110,26 +126,39 @@ function classifyPayableRow(
   return { ...base, status: "AMOUNT_MISMATCH" };
 }
 
-export async function reconcileEmployeeDirectPayables(
-  employeeId: string,
-): Promise<{
+export type EmployeeReconciliationResult = {
   rows: PayableReconciliationRow[];
   needsAttention: boolean;
   stripeReadable: boolean;
-}> {
+  complete: boolean;
+  examinedPayableCount: number;
+  totalPayableCount: number;
+  payablesTruncated: boolean;
+  transfersHasMore: boolean;
+  /** Server time when this reconciliation snapshot was produced. */
+  checkedAt: string;
+};
+
+export async function reconcileEmployeeDirectPayables(
+  employeeId: string,
+): Promise<EmployeeReconciliationResult> {
   const account = await prisma.employeeStripeAccount.findUnique({
     where: { employeeId },
     select: { stripeAccountId: true },
   });
   const employeeStripeAccountId = account?.stripeAccountId?.trim() ?? null;
 
+  const payableWhere = {
+    employeeId,
+    routingMode: EmployeeTipPayoutMode.direct_to_employee,
+  };
+
+  const totalPayableCount = await prisma.employeeTipPayable.count({ where: payableWhere });
+
   const payables = await prisma.employeeTipPayable.findMany({
-    where: {
-      employeeId,
-      routingMode: EmployeeTipPayoutMode.direct_to_employee,
-    },
+    where: payableWhere,
     orderBy: { createdAt: "desc" },
-    take: 100,
+    take: RECONCILIATION_PAGE_SIZE,
     select: {
       id: true,
       transactionId: true,
@@ -148,16 +177,21 @@ export async function reconcileEmployeeDirectPayables(
   const stripeById = new Map<string, Stripe.Transfer>();
   const stripeByPayableMeta = new Map<string, Stripe.Transfer[]>();
   let stripeReadable = false;
+  let transfersHasMore = false;
 
   if (employeeStripeAccountId?.startsWith("acct_") && (isStripeConfigured() || listTransfersFnForTests)) {
     try {
       const list = listTransfersFnForTests
-        ? await listTransfersFnForTests({ destination: employeeStripeAccountId, limit: 100 })
+        ? await listTransfersFnForTests({
+            destination: employeeStripeAccountId,
+            limit: RECONCILIATION_PAGE_SIZE,
+          })
         : await getStripeClient().transfers.list({
             destination: employeeStripeAccountId,
-            limit: 100,
+            limit: RECONCILIATION_PAGE_SIZE,
           });
       stripeReadable = true;
+      transfersHasMore = Boolean(list.has_more);
       for (const tr of list.data) {
         stripeById.set(tr.id, tr);
         const payableId = tr.metadata?.caretip_payable_id?.trim();
@@ -175,12 +209,24 @@ export async function reconcileEmployeeDirectPayables(
   const rows = payables.map((row) =>
     classifyPayableRow(row, stripeById, stripeByPayableMeta, employeeStripeAccountId),
   );
-  const needsAttention = rows.some((r) =>
-    r.status === "STRIPE_TRANSFER_FOUND" ||
-    r.status === "AMOUNT_MISMATCH" ||
-    r.status === "DESTINATION_MISMATCH" ||
-    r.status === "DUPLICATE_TRANSFER",
-  );
+  const payablesTruncated = totalPayableCount > payables.length;
+  const complete = !payablesTruncated && !transfersHasMore;
+  const needsAttention =
+    rows.some((r) => {
+      if (!ATTENTION_STATUSES.has(r.status)) return false;
+      if (!stripeReadable && r.status === "STRIPE_TRANSFER_MISSING") return false;
+      return true;
+    });
 
-  return { rows, needsAttention, stripeReadable };
+  return {
+    rows,
+    needsAttention,
+    stripeReadable,
+    complete,
+    examinedPayableCount: rows.length,
+    totalPayableCount,
+    payablesTruncated,
+    transfersHasMore,
+    checkedAt: new Date().toISOString(),
+  };
 }

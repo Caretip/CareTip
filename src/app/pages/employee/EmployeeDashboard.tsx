@@ -446,7 +446,7 @@ export const EmployeeDashboard = memo(function EmployeeDashboard() {
             void getEmployeeProfile().then((p) => setReceivingPaused(p.receivingPaused === true));
           }}
         />
-        <PremiumPageHero className="employee-dashboard-hero mb-7 sm:mb-8 lg:mb-7">
+        <PremiumPageHero className="employee-dashboard-hero mb-4 sm:mb-5 lg:mb-4">
         <DashboardHero
           stackHeroOnMobile
           hideTabs
@@ -461,7 +461,7 @@ export const EmployeeDashboard = memo(function EmployeeDashboard() {
           titleClassName="max-lg:!leading-[1.08] lg:!leading-[1.1] tracking-tight max-lg:mx-0 max-lg:max-w-[22ch] max-lg:!text-[1.5625rem] max-lg:text-left lg:max-w-[18ch] lg:!text-[2rem] lg:text-left xl:!text-[2.125rem]"
           descriptionClassName="!line-clamp-2 max-w-[34ch] leading-relaxed text-muted-foreground/90 max-lg:mx-0 max-lg:text-left lg:max-w-sm"
           textColumnClassName="lg:py-2 xl:pr-6"
-          badge={formatDashboardFormalGreeting(t, user.name)}
+          badge={formatDashboardFormalGreeting(t, user.name, undefined, { firstNameOnly: true })}
           title={
             <>
               {t("employee.hero.headlineLine1")}
@@ -569,7 +569,7 @@ export const EmployeeDashboard = memo(function EmployeeDashboard() {
         </PremiumPageHero>
       </div>
 
-      <div className={cn(employeeUi.pageInner, "employee-dashboard-body !pt-2 sm:!pt-3")}>
+      <div className={cn(employeeUi.pageInner, "employee-dashboard-body !pt-1 sm:!pt-2")}>
         <section
           className={cn(
             "employee-dashboard-analytics-intro mb-1",

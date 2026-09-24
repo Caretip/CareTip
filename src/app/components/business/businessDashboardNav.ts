@@ -77,6 +77,7 @@ export const qrStudioSubNavItems = [
 
 export const TIPS_BASE = "/dashboard/tips" as const;
 export const tipsSubNavItems = [
+  { labelKey: "business.tips.nav.tipDistribution", href: `${TIPS_BASE}/tip-distribution` },
   { labelKey: "business.tips.nav.live", href: `${TIPS_BASE}/live` },
   { labelKey: "business.tips.nav.transactions", href: `${TIPS_BASE}/transactions` },
   {

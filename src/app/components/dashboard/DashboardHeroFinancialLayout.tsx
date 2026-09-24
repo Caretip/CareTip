@@ -15,10 +15,12 @@ export type DashboardHeroFinancialLayoutProps = {
   refreshing?: boolean;
   primary: {
     label: string;
+    meta?: string;
     value: ReactNode;
     hint?: string;
   };
-  payoutZoneLabel: string;
+  /** Omit or leave empty to hide the payout zone heading (saves vertical space). */
+  payoutZoneLabel?: string;
   payoutMetrics: DashboardHeroFinancialMetric[];
   performanceZoneLabel?: string;
   performanceMetrics?: DashboardHeroFinancialMetric[];
@@ -52,7 +54,12 @@ export function DashboardHeroFinancialLayout({
       aria-busy={loading}
     >
       <div className="dashboard-hero-financial__zone dashboard-hero-financial__zone--primary">
-        <p className="dashboard-hero-financial__label">{primary.label}</p>
+        <p className="dashboard-hero-financial__label">
+          {primary.label}
+          {primary.meta ? (
+            <span className="dashboard-hero-financial__label-meta"> · {primary.meta}</span>
+          ) : null}
+        </p>
         <div className="dashboard-hero-financial__value dashboard-hero-financial__value--primary">
           {primary.value}
         </div>
@@ -71,12 +78,16 @@ export function DashboardHeroFinancialLayout({
       </div>
 
       <div className="dashboard-hero-financial__zone dashboard-hero-financial__zone--payout">
-        <p className="dashboard-hero-financial__zone-title">{payoutZoneLabel}</p>
+        {payoutZoneLabel ? (
+          <p className="dashboard-hero-financial__zone-title">{payoutZoneLabel}</p>
+        ) : null}
         <div className="dashboard-hero-financial__payout-grid">
           {payoutMetrics.map((metric) => (
             <div key={metric.id} className="dashboard-hero-financial__payout-cell">
               <p className="dashboard-hero-financial__label">{metric.label}</p>
-              <div className="dashboard-hero-financial__value">{metric.value}</div>
+              <div className="dashboard-hero-financial__value dashboard-hero-financial__value--payout">
+                {metric.value}
+              </div>
               {metric.hint ? (
                 <p className="dashboard-hero-financial__hint">{metric.hint}</p>
               ) : null}

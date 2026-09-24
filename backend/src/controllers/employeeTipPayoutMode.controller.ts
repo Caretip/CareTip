@@ -11,6 +11,7 @@ import {
   listBusinessDistributionObligationsForBusiness,
   scanBusinessDistributionLedgerIssues,
 } from "../services/businessDistributionIntegrity.service.js";
+import { businessDistributionRemainingObligationForBusiness } from "../services/tipDistribution.service.js";
 import { writeAuditLog } from "../services/audit.service.js";
 import { clientSafeMessage, CLIENT_FALLBACK, logServerError } from "../utils/httpErrors.js";
 
@@ -69,20 +70,21 @@ export async function getMyEmployeeTipRoutingOverview(req: Request, res: Respons
     if (rejectClientRoutingSteering(req, res)) return;
     const business = await businessService.getBusinessByUserId(userId);
     if (!business) return res.status(404).json({ message: "Business not found" });
-    const [row, holds, businessDist] = await Promise.all([
+    const [row, holds, businessDist, obligation] = await Promise.all([
       prisma.business.findUnique({
         where: { id: business.id },
         select: { employeeTipPayoutMode: true },
       }),
       employeeTipHoldObservabilityForBusiness(business.id),
       businessDistributionObservabilityForBusiness(business.id),
+      businessDistributionRemainingObligationForBusiness(business.id),
     ]);
     return res.json({
       mode: row?.employeeTipPayoutMode ?? EmployeeTipPayoutMode.direct_to_employee,
       heldPlatformCents: holds.heldPlatformCents,
       heldRowCount: holds.heldRowCount,
-      heldBusinessCents: businessDist.heldBusinessCents,
-      heldBusinessRowCount: businessDist.heldBusinessRowCount,
+      heldBusinessCents: obligation.remainingDistributableCents,
+      heldBusinessRowCount: obligation.payableRowCount,
       agedHeldBusinessRowCount: businessDist.agedHeldBusinessRowCount,
       agedHeldBusinessCents: businessDist.agedHeldBusinessCents,
       anomalyPlatformHoldRowCount: businessDist.anomalyPlatformHoldRowCount,

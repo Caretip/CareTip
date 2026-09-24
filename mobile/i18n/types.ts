@@ -379,6 +379,7 @@ export type MobileMessages = {
     tipsLoadError: string;
     periodEarnings: string;
     tipsInPeriod: string;
+    grossTips: string;
     totalEarnings: string;
     paidOut: string;
     successfulPayouts: string;

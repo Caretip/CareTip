@@ -385,12 +385,14 @@ const routes: RouteObject[] = [
       { path: 'settings', lazy: routeLazy(() => import('./pages/business/BusinessSettingsPage'), 'BusinessSettingsPage') },
       { path: 'profile', element: <Navigate to="/dashboard/settings?section=business" replace /> },
       { path: 'profile-settings', element: <Navigate to="/dashboard/settings?section=general" replace /> },
+      { path: 'tip-distribution', element: <Navigate to="/dashboard/tips/tip-distribution" replace /> },
       /* —— Tips module —— */
       {
         path: 'tips',
         lazy: routeLazy(() => import('./pages/business/tips/BusinessTipsLayout'), 'BusinessTipsLayout'),
         children: [
           { index: true, element: <Navigate to="/dashboard/tips/transactions" replace /> },
+          { path: 'tip-distribution', lazy: routeLazy(() => import('./pages/business/TipDistributionPage'), 'TipDistributionPage') },
           { path: 'live', lazy: routeLazy(() => import('./pages/business/tips/BusinessActivityCenterPage'), 'BusinessActivityCenterPage') },
           { path: 'transactions', lazy: routeLazy(() => import('./pages/business/tips/BusinessTipsTransactionsPage'), 'BusinessTipsTransactionsPage') },
           { path: 'analytics', lazy: routeLazy(() => import('./pages/business/tips/BusinessTipsAnalyticsPage'), 'BusinessTipsAnalyticsPage') },

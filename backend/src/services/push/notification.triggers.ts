@@ -1,4 +1,5 @@
 import { prisma } from "../../prisma.js";
+import { employeePayableTransferNotificationEligible } from "../employeeTipPayable.service.js";
 import type { NewTipPayload } from "../../socket/emitTip.js";
 import {
   normalizeTipCustomerName,
@@ -145,7 +146,7 @@ export function onPayoutCompleted(
         },
         url: payoutUrl,
         timestamp: new Date().toISOString(),
-        metadata: { entityId: transactionId, transactionId, payoutStatus: "paid" },
+        metadata: { entityId: transactionId, transactionId },
       },
       dedupeKey: `payout:${transactionId}:${userId}`,
     });
@@ -154,16 +155,28 @@ export function onPayoutCompleted(
 
 export function onPayoutCompletedForTransaction(transactionId: string): void {
   safeTrigger("onPayoutCompletedForTransaction", async () => {
-    const tx = await prisma.transaction.findUnique({
-      where: { id: transactionId },
+    const payable = await prisma.employeeTipPayable.findUnique({
+      where: { transactionId },
       select: {
-        payoutStatus: true,
-        amount: true,
-        employee: { select: { userId: true } },
+        status: true,
+        routingMode: true,
+        payableCents: true,
+        transferredCents: true,
+        reversedCents: true,
+        refundedCents: true,
+        disputedOpenCents: true,
+        disputedLostCents: true,
+        transaction: {
+          select: {
+            amount: true,
+            employee: { select: { userId: true } },
+          },
+        },
       },
     });
-    if (!tx || tx.payoutStatus !== "paid" || !tx.employee?.userId) return;
-    onPayoutCompleted(tx.employee.userId, Number(tx.amount), transactionId);
+    const userId = payable?.transaction.employee?.userId;
+    if (!payable || !userId || !employeePayableTransferNotificationEligible(payable)) return;
+    onPayoutCompleted(userId, Number(payable.transaction.amount), transactionId);
   });
 }
 

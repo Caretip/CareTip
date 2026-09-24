@@ -58,6 +58,12 @@ export function BusinessFinancialAnalyticsSection({
   };
 
   const pm = data?.periodMetrics;
+  const periodScopeLabel =
+    period === "week"
+      ? t("business.tips.analytics.period.week")
+      : period === "year"
+        ? t("business.tips.analytics.period.year")
+        : t("business.tips.analytics.period.month");
   const feesDisplay =
     !ledgerLoading && pm?.feesExact && pm.caretipFeesEur != null ? formatEur(pm.caretipFeesEur) : null;
 
@@ -78,7 +84,7 @@ export function BusinessFinancialAnalyticsSection({
     <div className="space-y-6">
       <section aria-label={t("business.tips.analytics.financial.summaryAria")}>
         <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-          {t("business.tips.analytics.financial.summaryTitle")}
+          {t("business.tips.analytics.financial.summaryTitle")} · {periodScopeLabel}
         </h2>
         <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           {[
@@ -210,12 +216,26 @@ export function BusinessFinancialAnalyticsSection({
         ) : data?.reconciliation?.needsAttention ? (
           <div className="mt-3 flex items-start gap-2 rounded-lg border border-amber-500/30 bg-amber-500/5 px-4 py-3 text-sm">
             <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" aria-hidden />
-            <p>{t("business.tips.analytics.financial.reconciliationAttention")}</p>
+            <p>
+              {data.reconciliation.complete === false
+                ? t("business.tips.analytics.financial.reconciliationIncomplete", {
+                    examined: data.reconciliation.examinedPayableCount ?? 0,
+                    total: data.reconciliation.totalPayableCount ?? 0,
+                  })
+                : t("business.tips.analytics.financial.reconciliationAttention")}
+            </p>
           </div>
         ) : data?.reconciliation ? (
           <div className="mt-3 flex items-center gap-2 text-sm text-muted-foreground">
             <CheckCircle2 className="h-4 w-4 text-emerald-600" aria-hidden />
-            <span>{t("business.tips.analytics.financial.reconciliationOk")}</span>
+            <span>
+              {data.reconciliation.complete === false
+                ? t("business.tips.analytics.financial.reconciliationPartialOk", {
+                    examined: data.reconciliation.examinedPayableCount ?? 0,
+                    total: data.reconciliation.totalPayableCount ?? 0,
+                  })
+                : t("business.tips.analytics.financial.reconciliationOk")}
+            </span>
           </div>
         ) : null}
       </section>

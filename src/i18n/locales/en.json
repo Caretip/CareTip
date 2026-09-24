@@ -2304,6 +2304,12 @@
   },
   "dashboard": {
     "formalGreeting": {
+      "morningNamed": "Good morning, {{name}}",
+      "afternoonNamed": "Good afternoon, {{name}}",
+      "eveningNamed": "Good evening, {{name}}",
+      "morning": "Good morning",
+      "afternoon": "Good afternoon",
+      "evening": "Good evening",
       "helloNamed": "Hello {{name}}",
       "hello": "Hello"
     },
@@ -2623,7 +2629,8 @@
     "employee": {
       "overview": "Overview",
       "inbox": "Inbox",
-      "tipHistory": "Tip history",
+      "tipHistory": "Tip activity",
+      "tipActivity": "Tip activity",
       "analytics": "Analytics",
       "assignment": "My assignment",
       "tipGoals": "Tip goals",
@@ -2641,6 +2648,7 @@
       "locations": "Locations / Tables",
       "customers": "Customer Feedback",
       "stripe": "Stripe Payout",
+      "tipDistribution": "Tip Distribution",
       "billing": "Billing",
       "settings": "Settings",
       "planLabels": {
@@ -3791,6 +3799,60 @@
       "toastDeleted": "Deleted",
       "toastMarkedRead": "Marked as read"
     },
+    "tipActivity": {
+      "title": "Tip activity",
+      "subtitle": "Stay up to date with your latest tips, payments and earnings activity.",
+      "backAria": "Back",
+      "refresh": "Refresh activity",
+      "filtersAria": "Activity filters",
+      "filter": {
+        "all": "All activity",
+        "tips": "Tips received",
+        "transfers": "Transfers",
+        "pending": "Pending",
+        "issues": "Issues"
+      },
+      "groupToday": "Today",
+      "groupYesterday": "Yesterday",
+      "groupOlder": "Older",
+      "loadError": "Couldn't load your activity.",
+      "loadingMore": "Loading…",
+      "loadMore": "Load more",
+      "emptyTitle": "No tip activity yet",
+      "emptyBody": "When customers tip you, each tip and its payment status will appear here.",
+      "earningsAfterFee": "{{amount}} earned after CareTip fee",
+      "event": {
+        "held": "Tip received",
+        "held_venue": "Paid to business",
+        "transferring": "Transfer in progress",
+        "transferred": "Transferred to Stripe",
+        "destination_routed": "Payment confirmed",
+        "refunded": "Tip refunded",
+        "failed": "Transfer failed",
+        "disputed": "Payment under review"
+      },
+      "support": {
+        "held": "Payment confirmed — earnings awaiting release to Stripe",
+        "held_venue": "This tip was routed through the business",
+        "transferring": "Your earnings are being transferred to Stripe",
+        "transferred": "Successfully transferred to your Stripe account",
+        "destination_routed": "Your earnings were routed to Stripe",
+        "refunded": "Refund processed for this tip",
+        "failed": "Earnings require another transfer attempt",
+        "disputed": "Stripe is reviewing a payment issue for this tip"
+      },
+      "detail": {
+        "amount": "Tip amount",
+        "location": "Location",
+        "date": "Date",
+        "fee": "CareTip fee",
+        "earnings": "Your earnings",
+        "routing": "Routing",
+        "routingBusiness": "Paid to business",
+        "status": "Status",
+        "reference": "Reference"
+      }
+    },
     "tipHistory": {
       "title": "Tip history",
       "subtitle": "",
@@ -3969,6 +4031,7 @@
         "viewInStripeAria": "View detailed payouts in Stripe",
         "opening": "Opening Stripe…",
         "showing": "Showing {{from}}–{{to}} of {{total}}",
+        "page": "Page {{page}} of {{pages}}",
         "prev": "Previous",
         "next": "Next"
       },
@@ -4156,18 +4219,18 @@
       "setTipGoal": "Tip goals",
       "statTotalEarnings": "Total earnings",
       "statYourEarnings": "Your earnings",
-      "statYourEarningsHint": "Your share after CareTip fees.",
+      "statYourEarningsHint": "After CareTip fees",
       "statPaidToStripe": "Paid to Stripe",
       "statPendingRelease": "Pending release",
       "statGrossTips": "Gross tips",
       "statGrossTipsHint": "Total customer tips before CareTip fees.",
       "statMonthEarnings": "This month",
       "statTotalSupporters": "Successful tips",
-      "statAverageTip": "Average tip",
+      "statAverageTip": "Avg tip",
       "accountOverviewLabel": "Account overview, all time",
       "financial": {
         "zonePayout": "Where your money is",
-        "zonePerformance": "Tip performance",
+        "zonePerformance": "Tips",
         "viewAnalytics": "View analytics"
       }
     },
@@ -4235,13 +4298,35 @@
       "bankPayouts": "Bank payouts",
       "transferCompleted": "Completed",
       "transferReversed": "Reversed",
-      "statusAria": "Payout status",
-      "statusTitle": "Reconciliation status",
+      "statusAria": "Transfer status",
+      "statusTitle": "Transfer status",
       "statusEarnings": "CareTip earnings",
       "statusTransferred": "Transferred to Stripe",
       "statusPending": "Pending release",
-      "reconciliationAttention": "Payout reconciliation needs attention",
-      "reconciliationAttentionHint": "CareTip records and Stripe records are temporarily different.",
+      "transferStatus": {
+        "healthyTitle": "Transfer status",
+        "healthyMessage": "Earnings transfers are up to date.",
+        "confirmedTitle": "Transfer confirmed",
+        "confirmedMessage": "Your earnings were successfully transferred to your Stripe account.",
+        "confirmedAt": "Confirmed at {{time}}",
+        "pendingTitle": "Transfer pending",
+        "pendingMessage": "Some earnings are still waiting to be transferred to your Stripe account.",
+        "unreadableTitle": "Transfer status",
+        "unreadableMessage": "We couldn't verify your Stripe transfers right now. Your earnings remain recorded in CareTip. No action is needed.",
+        "verifyingTitle": "Transfer being verified",
+        "verifyingMessage": "We're confirming a recent transfer to your Stripe account. Your earnings remain recorded in CareTip. No action is needed unless this persists.",
+        "reviewTitle": "We're reviewing a transfer",
+        "reviewAmountMessage": "We're verifying one of your earnings transfers with Stripe. Your earnings remain recorded in CareTip. No action is needed from you.",
+        "reviewDestinationMessage": "We're verifying that an earnings transfer reached the correct Stripe account. No action is needed from you.",
+        "reviewDuplicateMessage": "We're reviewing an earnings transfer with Stripe. No action is needed from you.",
+        "failedTitle": "Transfer needs attention",
+        "failedMessage": "We couldn't complete an earnings transfer to your Stripe account. CareTip is working to complete the transfer.",
+        "incompleteTitle": "Transfer status",
+        "incompleteMessage": "We verified {{examined}} of {{total}} recent earnings records. Older records may not be shown yet.",
+        "lastChecked": "Last checked: {{time}}",
+        "refreshStatus": "Refresh status",
+        "refreshing": "Checking…"
+      },
       "payoutStatus": {
         "transferred": "Transferred",
         "release_failed": "Release to Stripe failed",
@@ -4367,11 +4452,14 @@
       "statActiveStaff": "Active staff",
       "financial": {
         "sectionLabel": "Financial snapshot",
-        "totalTips": "Total tips (all time)",
+        "totalTips": "Total tips",
+        "totalTipsPeriod": "All time",
         "totalTipsHint": "Customer tips received since you joined CareTip.",
+        "availableInStripe": "Available in Stripe",
         "receivedInStripe": "Received in Stripe",
         "pendingStripe": "Pending in Stripe",
         "paidOut": "Paid out",
+        "toDistribute": "To distribute",
         "employeeDistribution": "Employee tips to distribute",
         "distributionHint": "Received by your business and awaiting distribution.",
         "stripeUnavailable": "Connect Stripe",
@@ -5939,6 +6027,7 @@
       "analyticsHeaderSubtitle": "",
       "navAria": "Tips sections",
       "nav": {
+        "tipDistribution": "Tip Distribution",
         "live": "Live Activity",
         "transactions": "Tips History",
         "analytics": "Analytics & Reports"
@@ -6013,6 +6102,11 @@
           "exportSuccess": "Export started. Check your downloads.",
           "tipEvents": "Tip events"
         },
+        "period": {
+          "week": "This week",
+          "month": "This month",
+          "year": "This year"
+        },
         "financial": {
           "summaryAria": "Financial summary",
           "summaryTitle": "Financial summary",
@@ -6043,7 +6137,9 @@
           "reconciliationAria": "Reconciliation status",
           "reconciliationTitle": "Reconciliation",
           "reconciliationAttention": "Some CareTip and Stripe records need attention.",
-          "reconciliationOk": "CareTip and Stripe records look consistent."
+          "reconciliationOk": "CareTip and Stripe records look consistent.",
+          "reconciliationIncomplete": "Reconciliation is incomplete (examined {{examined}} of {{total}} payables). Some records need attention.",
+          "reconciliationPartialOk": "Examined {{examined}} of {{total}} payables — no issues found in this batch. More records remain."
         }
       }
     },
@@ -6524,6 +6620,67 @@
         "decode_failed": "A camera could not decode this QR. It may not scan in production.",
         "url_mismatch": "Decoded payload did not match the expected tipping URL.",
         "composite_decode_fallback": "Card extract decode used matrix fallback. QR payload verified; compositing is scan-safe."
+      }
+    },
+    "tipDistribution": {
+      "eyebrow": "Employee payouts",
+      "title": "Tip Distribution",
+      "subtitle": "Manage employee distributions and track what remains to be paid.",
+      "loading": "Loading tip distribution…",
+      "saving": "Saving…",
+      "loadError": "Could not load tip distribution data.",
+      "submitError": "Could not record the distribution.",
+      "directToEmployeeInfo": "Your employee tips are paid directly through Stripe. There are no business distributions waiting for payment.",
+      "unassignedEmployee": "Unassigned employee",
+      "summary": {
+        "toDistribute": "To distribute",
+        "employeesAwaiting": "Employees awaiting",
+        "lastDistribution": "Last distribution",
+        "noneRecorded": "None recorded"
+      },
+      "sinceLast": {
+        "title": "Since last distribution",
+        "body": "{{count}} new tips · gross {{gross}} · CareTip fees {{fees}} · net to distribute {{net}}"
+      },
+      "ready": {
+        "title": "Ready to distribute",
+        "empty": "No employee distributions are waiting."
+      },
+      "table": {
+        "employee": "Employee",
+        "gross": "Gross tips",
+        "fees": "CareTip fees",
+        "netOwed": "Net owed",
+        "distributed": "Distributed",
+        "remaining": "Remaining",
+        "actions": "Action"
+      },
+      "actions": {
+        "viewTips": "View tips",
+        "record": "Record distribution"
+      },
+      "modal": {
+        "title": "Distribute to {{name}}",
+        "description": "Record an off-platform payment to this employee.",
+        "remainingOwed": "Remaining owed",
+        "amountLabel": "Amount to record",
+        "remainingAfter": "Remaining after distribution",
+        "confirm": "Confirm distribution"
+      },
+      "history": {
+        "title": "Distribution history",
+        "date": "Date",
+        "total": "Total",
+        "employees": "Employees",
+        "recordedBy": "Recorded by",
+        "reference": "Reference",
+        "empty": "No distributions recorded yet.",
+        "employeeCount_one": "{{count}} employee",
+        "employeeCount_other": "{{count}} employees"
+      },
+      "detail": {
+        "title": "Distribution batch",
+        "total": "Total recorded: {{amount}}"
       }
     },
     "stripe": {

@@ -3159,6 +3159,8 @@ export type EmployeePayablePresentationKind =
   | "failed"
   | "disputed";
 
+export type EmployeePayableActivityFilter = "all" | "tips" | "transfers" | "pending" | "issues";
+
 export interface EmployeePayableActivityItem {
   id: string;
   createdAt: string;
@@ -3169,6 +3171,8 @@ export interface EmployeePayableActivityItem {
   routingMode?: "direct_to_employee" | "business_distribution";
   chargeModel?: "destination_employee" | "destination_business" | "platform_hold";
   presentationKind?: EmployeePayablePresentationKind;
+  grossCents?: number;
+  platformFeeCents?: number;
   payableCents: number;
   transferredCents: number;
   reversedCents: number;
@@ -3177,15 +3181,22 @@ export interface EmployeePayableActivityItem {
   disputedOpenCents: number;
   disputedLostCents: number;
   activityCents: number;
+  transactionId?: string;
+  transactionCreatedAt?: string;
+  receiptNumber?: string | null;
+  locationName?: string | null;
+  tableName?: string | null;
 }
 
 export async function listEmployeePayableActivity(params?: {
   take?: number;
   skip?: number;
+  filter?: EmployeePayableActivityFilter;
 }): Promise<{ items: EmployeePayableActivityItem[]; total: number }> {
   const q = new URLSearchParams();
   if (params?.take != null) q.set("take", String(params.take));
   if (params?.skip != null) q.set("skip", String(params.skip));
+  if (params?.filter && params.filter !== "all") q.set("filter", params.filter);
   const suffix = q.toString() ? `?${q.toString()}` : "";
   return apiRequest(apiPath(`/api/me/employee-connect/payables${suffix}`), {
     method: "GET",
@@ -3284,7 +3295,7 @@ export type EmployeeAnalyticsPeriod = "today" | "week" | "month" | "year" | "all
 export type EmployeeAnalyticsReconciliationStatus =
   | "MATCHED"
   | "CARETIP_PENDING"
-  | "STRIPE_TRANSFER_FOUND"
+  | "STRIPE_TRANSFER_MISSING"
   | "AMOUNT_MISMATCH"
   | "DESTINATION_MISMATCH"
   | "DUPLICATE_TRANSFER";
@@ -3294,13 +3305,12 @@ export type EmployeeAnalyticsBundle = {
   periodStart: string;
   periodEnd: string;
   periodBasis: string;
+  businessTimezone: string;
   metrics: {
+    scope: "period";
     grossTipsEur: number;
     employeeEarningsEur: number;
-    paidToStripeEur: number;
-    pendingReleaseEur: number;
     totalSupporters: number;
-    prePayableGrossTipsEur: number;
     caretipFeesFromPayablesEur: number | null;
     feesExact: boolean;
     tipCount: number;
@@ -3340,11 +3350,18 @@ export type EmployeeAnalyticsBundle = {
       caretipStatus: string;
       stripeTransferId: string | null;
       stripeTransferAmountCents: number | null;
+      stripeTransferCreatedAt: string | null;
       stripeDestination: string | null;
       employeeStripeAccountId: string | null;
     }>;
     needsAttention: boolean;
     stripeReadable: boolean;
+    complete: boolean;
+    examinedPayableCount: number;
+    totalPayableCount: number;
+    payablesTruncated: boolean;
+    transfersHasMore: boolean;
+    checkedAt: string;
   };
   stripe: {
     readable: boolean;
@@ -3578,16 +3595,27 @@ export type BusinessFinancialSummaryBundle = {
     rows: Array<{
       payableId: string;
       transactionId: string;
-      status: "MATCHED" | "PENDING" | "MISMATCH" | "BUSINESS_DISTRIBUTION";
+      status: string;
       routingMode: string;
       caretipGrossCents: number;
       caretipRemainingCents: number;
       caretipStatus: string;
       stripeChargeId: string | null;
       stripePaymentIntentId: string | null;
+      stripeTransferId?: string | null;
     }>;
     needsAttention: boolean;
     stripeReadable: boolean;
+    complete?: boolean;
+    examinedPayableCount?: number;
+    totalPayableCount?: number;
+    payablesTruncated?: boolean;
+    stripeExamination?: {
+      chargesExamined: number;
+      chargesHasMore: boolean;
+      transferDestinationsExamined: number;
+      transfersHasMore: boolean;
+    };
   };
 };
 
@@ -3705,6 +3733,114 @@ export async function getEmployeeTipRoutingOverview(): Promise<EmployeeTipRoutin
     method: "GET",
     headers: getHeaders(),
     credentials: "include",
+  });
+}
+
+export type TipDistributionEmployeeRow = {
+  employeeId: string | null;
+  employeeName: string | null;
+  grossCents: number;
+  platformFeeCents: number;
+  netEntitlementCents: number;
+  distributedCents: number;
+  remainingCents: number;
+  tipCount: number;
+  overDistributedCents: number;
+};
+
+export type TipDistributionSummary = {
+  routingMode: EmployeeTipPayoutMode;
+  totalToDistributeCents: number;
+  employeesAwaitingCount: number;
+  lastDistributionAt: string | null;
+  lastDistributionActorName: string | null;
+  sinceLastDistribution: {
+    tipCount: number;
+    grossCents: number;
+    platformFeeCents: number;
+    netCents: number;
+  } | null;
+};
+
+export type TipDistributionBatchListRow = {
+  id: string;
+  completedAt: string;
+  totalAmountCents: number;
+  employeeCount: number;
+  paymentReference: string | null;
+  actorName: string | null;
+};
+
+export type TipDistributionBatchDetail = {
+  id: string;
+  completedAt: string;
+  totalAmountCents: number;
+  employeeCount: number;
+  paymentReference: string | null;
+  notes: string | null;
+  actorName: string | null;
+  items: Array<{
+    id: string;
+    employeeId: string | null;
+    employeeName: string | null;
+    amountCents: number;
+    paymentReference: string | null;
+    allocations: Array<{
+      payableId: string;
+      amountCents: number;
+      transactionId: string;
+    }>;
+  }>;
+};
+
+export async function getTipDistributionSummary(): Promise<TipDistributionSummary> {
+  return apiRequest<TipDistributionSummary>(apiPath("/api/me/connect/tip-distribution/summary"), {
+    method: "GET",
+    headers: getHeaders(),
+    credentials: "include",
+  });
+}
+
+export async function getTipDistributionEmployees(): Promise<{ items: TipDistributionEmployeeRow[] }> {
+  return apiRequest<{ items: TipDistributionEmployeeRow[] }>(
+    apiPath("/api/me/connect/tip-distribution/employees"),
+    { method: "GET", headers: getHeaders(), credentials: "include" },
+  );
+}
+
+export async function getTipDistributionHistory(params?: {
+  take?: number;
+  skip?: number;
+}): Promise<{ items: TipDistributionBatchListRow[]; total: number }> {
+  const qs = new URLSearchParams();
+  if (params?.take != null) qs.set("take", String(params.take));
+  if (params?.skip != null) qs.set("skip", String(params.skip));
+  const suffix = qs.toString() ? `?${qs.toString()}` : "";
+  return apiRequest(apiPath(`/api/me/connect/tip-distribution/history${suffix}`), {
+    method: "GET",
+    headers: getHeaders(),
+    credentials: "include",
+  });
+}
+
+export async function getTipDistributionBatch(id: string): Promise<TipDistributionBatchDetail> {
+  return apiRequest<TipDistributionBatchDetail>(
+    apiPath(`/api/me/connect/tip-distribution/batches/${encodeURIComponent(id)}`),
+    { method: "GET", headers: getHeaders(), credentials: "include" },
+  );
+}
+
+export async function createTipDistributionBatch(body: {
+  idempotencyKey: string;
+  paymentReference?: string;
+  notes?: string;
+  items: Array<{ employeeId: string; amountCents: number; paymentReference?: string }>;
+}): Promise<TipDistributionBatchDetail> {
+  return apiRequest<TipDistributionBatchDetail>(apiPath("/api/me/connect/tip-distribution/batches"), {
+    method: "POST",
+    headers: getHeaders(),
+    credentials: "include",
+    body: JSON.stringify(body),
   });
 }
 

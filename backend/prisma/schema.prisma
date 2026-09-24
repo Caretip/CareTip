@@ -404,6 +404,7 @@ model User {
   employeeInviteRedemptions EmployeeInviteRedemption[] @relation("EmployeeInviteRedemptions")
   sponsoredAccessGrantsApproved SponsoredAccessGrant[] @relation("SponsoredAccessGrantsApproved")
   physicalQrOrders        PhysicalQrOrder[]
+  tipDistributionBatchesActed EmployeeTipDistributionBatch[] @relation("TipDistributionBatchesActed")
 
   /**
    * Account-level security features (optional; does not change auth flow unless enforced).
@@ -951,6 +952,9 @@ model Business {
   stripeConnectInstantPayoutRequests StripeConnectInstantPayoutRequest[]
   employeeStripePayouts EmployeeStripePayout[]
   employeeTipPayables EmployeeTipPayable[]
+  tipDistributionBatches EmployeeTipDistributionBatch[]
+  tipDistributionItems EmployeeTipDistributionItem[]
+  tipDistributionAllocations EmployeeTipDistributionAllocation[]
   locations      Location[]
   supportTickets SupportTicket[]
   employeeInvites EmployeeInvite[]
@@ -1144,6 +1148,7 @@ model Employee {
   qrScanEvents      QrScanEvent[]
   stripeAccount     EmployeeStripeAccount?
   tipPayables       EmployeeTipPayable[]
+  tipDistributionItems EmployeeTipDistributionItem[]
   instantPayoutRequests EmployeeInstantPayoutRequest[]
   stripePayouts         EmployeeStripePayout[]
 
@@ -1263,6 +1268,7 @@ model EmployeeTipPayable {
   transaction Transaction @relation(fields: [transactionId], references: [id], onDelete: Restrict)
   employee    Employee?   @relation(fields: [employeeId], references: [id], onDelete: SetNull)
   business    Business    @relation(fields: [businessId], references: [id], onDelete: Restrict)
+  distributionAllocations EmployeeTipDistributionAllocation[]
 
   @@index([employeeId, status])
   @@index([businessId, routingMode, status])
@@ -1270,6 +1276,69 @@ model EmployeeTipPayable {
   @@index([stripeDisputeId])
   @@index([status, createdAt])
   @@map("employee_tip_payables")
+}
+
+/// Off-platform employee tip distribution batch recorded by a business manager.
+/// Immutable once completed — does not move money through Stripe.
+model EmployeeTipDistributionBatch {
+  id               String   @id @default(cuid())
+  businessId       String   @map("business_id")
+  actorUserId      String   @map("actor_user_id")
+  completedAt      DateTime @map("completed_at")
+  totalAmountCents Int      @map("total_amount_cents")
+  employeeCount    Int      @map("employee_count")
+  idempotencyKey   String   @map("idempotency_key") @db.VarChar(160)
+  paymentReference String?  @map("payment_reference") @db.VarChar(120)
+  notes            String?  @db.VarChar(500)
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
+
+  business Business @relation(fields: [businessId], references: [id], onDelete: Restrict)
+  actor    User     @relation("TipDistributionBatchesActed", fields: [actorUserId], references: [id], onDelete: Restrict)
+  items    EmployeeTipDistributionItem[]
+
+  @@unique([businessId, idempotencyKey])
+  @@index([businessId, completedAt(sort: Desc)])
+  @@map("employee_tip_distribution_batches")
+}
+
+/// Per-employee line in a distribution batch.
+model EmployeeTipDistributionItem {
+  id               String   @id @default(cuid())
+  batchId          String   @map("batch_id")
+  businessId       String   @map("business_id")
+  employeeId       String?  @map("employee_id")
+  amountCents      Int      @map("amount_cents")
+  paymentReference String?  @map("payment_reference") @db.VarChar(120)
+  createdAt        DateTime @default(now()) @map("created_at")
+
+  batch       EmployeeTipDistributionBatch        @relation(fields: [batchId], references: [id], onDelete: Restrict)
+  business    Business                            @relation(fields: [businessId], references: [id], onDelete: Restrict)
+  employee    Employee?                           @relation(fields: [employeeId], references: [id], onDelete: SetNull)
+  allocations EmployeeTipDistributionAllocation[]
+
+  @@index([batchId])
+  @@index([businessId, employeeId])
+  @@map("employee_tip_distribution_items")
+}
+
+/// Allocation of a distribution item back to underlying EmployeeTipPayable rows.
+model EmployeeTipDistributionAllocation {
+  id                   String   @id @default(cuid())
+  itemId               String   @map("item_id")
+  businessId           String   @map("business_id")
+  employeeTipPayableId String   @map("employee_tip_payable_id")
+  amountCents          Int      @map("amount_cents")
+  createdAt            DateTime @default(now()) @map("created_at")
+
+  item    EmployeeTipDistributionItem @relation(fields: [itemId], references: [id], onDelete: Restrict)
+  business Business                   @relation(fields: [businessId], references: [id], onDelete: Restrict)
+  payable EmployeeTipPayable          @relation(fields: [employeeTipPayableId], references: [id], onDelete: Restrict)
+
+  @@index([itemId])
+  @@index([businessId])
+  @@index([employeeTipPayableId])
+  @@map("employee_tip_distribution_allocations")
 }
 
 /// Employee-created tip goals (multiple rows per employee). Business has read-only visibility via stats API.

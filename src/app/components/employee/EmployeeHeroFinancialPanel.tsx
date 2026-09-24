@@ -62,7 +62,6 @@ export const EmployeeHeroFinancialPanel = memo(function EmployeeHeroFinancialPan
         value: currencyValue(metrics?.employeeEarningsEur ?? 0),
         hint: t("employee.hero.statYourEarningsHint"),
       }}
-      payoutZoneLabel={t("employee.hero.financial.zonePayout")}
       payoutMetrics={[
         {
           id: "paid",
@@ -81,7 +80,6 @@ export const EmployeeHeroFinancialPanel = memo(function EmployeeHeroFinancialPan
           id: "gross",
           label: t("employee.hero.statGrossTips"),
           value: currencyValue(metrics?.grossTipsEur ?? 0),
-          hint: t("employee.hero.statGrossTipsHint"),
         },
         {
           id: "tips",
