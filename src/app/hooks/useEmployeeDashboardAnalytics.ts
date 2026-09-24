@@ -67,6 +67,11 @@ type AnalyticsPayload = {
   averageRating: number | null;
   ratingCount: number;
   chartSeries: Array<{ label: string; amount: number }>;
+  grossTipsEur?: number;
+  employeeEarningsEur?: number;
+  paidToStripeEur?: number;
+  pendingReleaseEur?: number;
+  prePayableGrossTipsEur?: number;
   totalEarningsEur?: number;
   availableBalanceEur?: number;
   paidOutEur?: number;
@@ -181,6 +186,15 @@ function payloadFromResponse(data: EmployeeTipsResponse): AnalyticsPayload {
         : null,
     ratingCount: typeof data.ratingCount === "number" ? data.ratingCount : 0,
     chartSeries: Array.isArray(data.chartSeries) ? data.chartSeries : [],
+    grossTipsEur: typeof data.grossTipsEur === "number" ? data.grossTipsEur : undefined,
+    employeeEarningsEur:
+      typeof data.employeeEarningsEur === "number" ? data.employeeEarningsEur : undefined,
+    paidToStripeEur:
+      typeof data.paidToStripeEur === "number" ? data.paidToStripeEur : undefined,
+    pendingReleaseEur:
+      typeof data.pendingReleaseEur === "number" ? data.pendingReleaseEur : undefined,
+    prePayableGrossTipsEur:
+      typeof data.prePayableGrossTipsEur === "number" ? data.prePayableGrossTipsEur : undefined,
     totalEarningsEur:
       typeof data.totalEarningsEur === "number" ? data.totalEarningsEur : undefined,
     availableBalanceEur:
@@ -188,9 +202,11 @@ function payloadFromResponse(data: EmployeeTipsResponse): AnalyticsPayload {
     paidOutEur:
       typeof data.paidOutEur === "number"
         ? data.paidOutEur
-        : typeof data.availableBalanceEur === "number"
-          ? data.availableBalanceEur
-          : undefined,
+        : typeof data.paidToStripeEur === "number"
+          ? data.paidToStripeEur
+          : typeof data.availableBalanceEur === "number"
+            ? data.availableBalanceEur
+            : undefined,
     totalSupporters:
       typeof data.totalSupporters === "number" ? data.totalSupporters : undefined,
   };
@@ -268,6 +284,8 @@ export function useEmployeeDashboardAnalytics(
     markEmployeePeriodLiveSettled();
   }
   const analyticsDeferTimerRef = useRef<number | null>(null);
+  /** Chart section requested analytics — until then summary-only fetch on mount/period switch. */
+  const chartAnalyticsRequestedRef = useRef(false);
   const loadInflightByTfRef = useRef(
     new Map<EmployeeAnalyticsTimeframe, Promise<void>>(),
   );
@@ -590,6 +608,8 @@ export function useEmployeeDashboardAnalytics(
       void loadForRef.current(tf, {
         affectsUi: true,
         soft: canUsePeriodSwitchCache(hasSettledLiveUiRef.current),
+        stopAfterSummary:
+          advancedAnalyticsEnabledRef.current && !chartAnalyticsRequestedRef.current,
       });
     },
     [abortInactiveTimeframes, hydratePeriodSessionCache, isPeriodSessionReady, commitUiPayload],
@@ -928,11 +948,27 @@ export function useEmployeeDashboardAnalytics(
       };
 
       const applyBundledAnalyticsFromSummary = (summaryData: EmployeeTipsResponse) => {
-        if (typeof summaryData.totalEarningsEur === "number") {
+        if (
+          typeof summaryData.employeeEarningsEur === "number" ||
+          typeof summaryData.grossTipsEur === "number" ||
+          typeof summaryData.totalEarningsEur === "number"
+        ) {
+          const gross =
+            summaryData.grossTipsEur ?? summaryData.totalEarningsEur ?? 0;
+          const paidToStripe =
+            summaryData.paidToStripeEur ??
+            summaryData.paidOutEur ??
+            summaryData.availableBalanceEur ??
+            0;
           primeEmployeeAccountSnapshot({
-            totalEarningsEur: summaryData.totalEarningsEur,
-            availableBalanceEur: summaryData.availableBalanceEur ?? summaryData.paidOutEur ?? 0,
-            paidOutEur: summaryData.paidOutEur ?? summaryData.availableBalanceEur ?? 0,
+            grossTipsEur: gross,
+            employeeEarningsEur: summaryData.employeeEarningsEur ?? 0,
+            paidToStripeEur: paidToStripe,
+            pendingReleaseEur: summaryData.pendingReleaseEur ?? 0,
+            prePayableGrossTipsEur: summaryData.prePayableGrossTipsEur ?? 0,
+            totalEarningsEur: gross,
+            availableBalanceEur: paidToStripe,
+            paidOutEur: paidToStripe,
             totalSupporters: summaryData.totalSupporters ?? 0,
           });
         }
@@ -1248,6 +1284,8 @@ export function useEmployeeDashboardAnalytics(
       soft: !needsInitialPeriodNetwork,
       silent: !needsInitialPeriodNetwork,
       forceNetwork: needsInitialPeriodNetwork,
+      stopAfterSummary:
+        advancedAnalyticsEnabledRef.current && !chartAnalyticsRequestedRef.current,
     });
     return () => {
       abortRef.current.get(tf)?.abort();
@@ -1264,6 +1302,7 @@ export function useEmployeeDashboardAnalytics(
 
     if (!shouldRefetchOnAnalyticsCapabilityUpgrade(prev, advancedAnalyticsEnabled)) return;
 
+    chartAnalyticsRequestedRef.current = true;
     const tf = tfRef.current;
     const analyticsSlice = analyticsPartialRef.current.get(tf);
     if (hasEmployeeAnalyticsPayload(analyticsSlice)) return;
@@ -1285,7 +1324,22 @@ export function useEmployeeDashboardAnalytics(
     void loadForRef.current(tf, { affectsUi: true, soft: false, silent: false, forceNetwork: true });
   }, [advancedAnalyticsEnabled, isActive]);
 
+  const ensureChartAnalyticsLoaded = useCallback(() => {
+    if (!advancedAnalyticsEnabledRef.current) return;
+    if (chartAnalyticsRequestedRef.current) return;
+    chartAnalyticsRequestedRef.current = true;
+    const tf = tfRef.current;
+    if (isPeriodAnalyticsReady(tf)) {
+      setAnalyticsLoading(false);
+      devSetHydrationPhase("charts", "ready");
+      commitUiPayload(tf, uiRequestSeqRef.current, false);
+      return;
+    }
+    void loadForRef.current(tf, { affectsUi: true, analyticsOnly: true, silent: true });
+  }, [commitUiPayload, isPeriodAnalyticsReady]);
+
   const refetchLive = useCallback(() => {
+    chartAnalyticsRequestedRef.current = true;
     clearEmployeeTipsClientCache(tfRef.current);
     void loadFor(tfRef.current, { affectsUi: true, soft: true, silent: true });
   }, [loadFor]);
@@ -1321,7 +1375,8 @@ export function useEmployeeDashboardAnalytics(
       if (merged) syncTipsFromResponse(merged);
       if (
         summaryData.analyticsBundled !== true &&
-        advancedAnalyticsEnabledRef.current
+        advancedAnalyticsEnabledRef.current &&
+        chartAnalyticsRequestedRef.current
       ) {
         const analyticsData = await getTipsByEmployee(tf, { scope: "analytics", silent: true });
         if (!stillThisQuiet()) return;
@@ -1553,6 +1608,7 @@ export function useEmployeeDashboardAnalytics(
     error,
     refreshQuiet,
     refetchLive,
+    ensureChartAnalyticsLoaded,
     applyLiveTip,
   };
 }

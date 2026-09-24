@@ -1,6 +1,7 @@
 import { createDashboardSwrStore, DASHBOARD_SWR_METRICS_TTL_MS } from "../dashboardSwrCache";
 import { getAuthUser } from "../authUserStore";
 import { analyticsStoreKey } from "./analyticsPeriodMetrics";
+import { bundleHasAboveFoldStats, bundleHasDeferredStats } from "./businessAnalyticsService";
 import type { AnalyticsTimeframe, BusinessAnalyticsBundle } from "./types";
 
 const bundleStore = createDashboardSwrStore<BusinessAnalyticsBundle>();
@@ -51,6 +52,9 @@ export function upsertBusinessAnalyticsStatsBundle(
     qrAnalytics: existing?.qrAnalytics,
     tipsFeedFetched: existing?.tipsFeedFetched ?? false,
     qrFetched: existing?.qrFetched ?? false,
+    aboveFoldFetched: bundleHasAboveFoldStats(periodStats) || existing?.aboveFoldFetched,
+    deferredAnalyticsFetched:
+      bundleHasDeferredStats(periodStats) || existing?.deferredAnalyticsFetched,
     fetchedAt: Date.now(),
   });
 }

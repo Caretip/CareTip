@@ -5,6 +5,7 @@ import {
   clearPhysicalQrPrintClientCache,
   clearEmployeeAccountClientCache,
   clearEmployeeProfileClientCache,
+  clearEmployeeConnectStatusClientCache,
   clearEmployeeTipsClientCache,
 } from "./api";
 import { clearAllPageSessionCache } from "./pageSessionCache";
@@ -30,6 +31,7 @@ export function resetAllClientSessionCaches(): void {
   clearEmployeeTipsClientCache();
   clearEmployeeAccountClientCache();
   clearEmployeeProfileClientCache();
+  clearEmployeeConnectStatusClientCache();
   clearAllPageSessionCache();
   clearSubscriptionTierSession();
   clearBusinessDashboardSwrStore();

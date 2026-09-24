@@ -1,6 +1,6 @@
 import { motion } from "motion/react";
 import { dashboardBlockMotion, useMinWidthMedia } from "@/lib/motionPerf";
-import { useState, useMemo, lazy, memo } from "react";
+import { useState, useMemo, lazy, memo, useCallback } from "react";
 import { Navigate } from "react-router";
 import { MarketingPicture } from "@/lib/marketingPicture";
 import { CareIcon } from "@/components/icons";
@@ -39,7 +39,8 @@ import { QuickStartGuideBanner } from "../../components/business/QuickStartGuide
 import { cn } from "@/lib/utils";
 import { DashboardHero } from "@/components/ui/dashboard-hero";
 import { PremiumPageHero } from "../../components/premium/PremiumPageHero";
-import { BusinessHeroPulseMetrics } from "../../components/business/BusinessHeroPulseMetrics";
+import { BusinessHeroFinancialMetrics } from "../../components/business/BusinessHeroFinancialMetrics";
+import { useBusinessFinancialSummary } from "../../hooks/useBusinessFinancialSummary";
 import { BusinessDashboardMetricsGrid } from "../../components/business/BusinessDashboardMetricsGrid";
 import { RecentCustomerFeedbackPanel } from "../../components/business/RecentCustomerFeedbackPanel";
 import { BusinessDashboardAnalyticsEmpty } from "../../components/business/BusinessDashboardAnalyticsEmpty";
@@ -127,7 +128,6 @@ export const BusinessDashboard = memo(function BusinessDashboard() {
   const {
     analyticsTimeframe,
     setAnalyticsTimeframe,
-    heroStats,
     analyticsTimeframeLoading,
     statsLoadFailed,
     pendingVerification,
@@ -159,6 +159,15 @@ export const BusinessDashboard = memo(function BusinessDashboard() {
   );
   const showOnboardingReviewNotice = onboardingReviewRejected;
 
+  const financialSummaryEnabled =
+    user?.role === "business" && protectedApiReady && authReady && user.hasCompletedOnboarding === true;
+  const {
+    data: financialSummary,
+    ledgerLoading: financialSummaryLedgerLoading,
+    connectLoading: financialSummaryConnectLoading,
+    refreshing: financialSummaryRefreshing,
+  } = useBusinessFinancialSummary(financialSummaryEnabled, "all", { progressive: true });
+
   const [employeeGoalsExpanded, setEmployeeGoalsExpanded] = useState(true);
 
   const employees = displayStats?.employees;
@@ -169,12 +178,6 @@ export const BusinessDashboard = memo(function BusinessDashboard() {
       ).length,
     [employees],
   );
-  /** Always from GET /api/business/me/stats — never client-side financial KPI mocks. */
-  const operationalPulse =
-    analyticsTimeframe === "month"
-      ? (displayStats?.operationalPulse ?? heroStats?.operationalPulse)
-      : (heroStats?.operationalPulse ?? displayStats?.operationalPulse);
-
   const hasTipActivityInPeriod = (displayMetrics?.totalTips ?? 0) > 0;
 
   const chartPeriodStats = useMemo(
@@ -230,8 +233,6 @@ export const BusinessDashboard = memo(function BusinessDashboard() {
     [chartPeriodStats?.employees, displayStats?.employees],
   );
 
-  const showChartsLoading = isAnalyticsSectionLoading || chartAwaitingDistribution;
-
   const employeeGoalsList =
     chartPeriodStats?.employeeGoals ?? displayStats?.employeeGoals ?? [];
   const employeeGoalsTeaser = useMemo(
@@ -260,11 +261,21 @@ export const BusinessDashboard = memo(function BusinessDashboard() {
     return { total: goals.length, onTrack };
   }, [employeeGoalsList]);
 
-  const analyticsPeriodLabel = (period: "week" | "month" | "year") => {
-    if (period === "week") return t("dashboard.filter_week");
-    if (period === "year") return t("dashboard.filter_year");
-    return t("dashboard.filter_month");
-  };
+  const analyticsPeriodLabel = useCallback(
+    (period: "week" | "month" | "year") => {
+      if (period === "week") return t("dashboard.filter_week");
+      if (period === "year") return t("dashboard.filter_year");
+      return t("dashboard.filter_month");
+    },
+    [t],
+  );
+
+  const handleAnalyticsPeriodChange = useCallback(
+    (period: "week" | "month" | "year") => {
+      runWithViewportScrollPreserved(() => setAnalyticsTimeframe(period));
+    },
+    [setAnalyticsTimeframe],
+  );
 
   const brokenQrLinks =
     (displayStats?.employees ?? []).length > 0 &&
@@ -276,7 +287,7 @@ export const BusinessDashboard = memo(function BusinessDashboard() {
   } = useBusinessPageBoot("overview", false);
 
   const periodMetricsLoading = showMetricsSkeleton;
-  const heroPulseLoading = !isMetricsSettled && !operationalPulse;
+  const showChartsLoading = isAnalyticsSectionLoading || chartAwaitingDistribution;
   const showGoalsLoading = isGoalsInitialLoad && !globalLoaderCoversBoot;
   const periodRefreshingLabel = t("dashboard.refresh.updating");
   const isLargeScreen = useMinWidthMedia(1024);
@@ -302,9 +313,6 @@ export const BusinessDashboard = memo(function BusinessDashboard() {
     [kpiUsable],
   );
   const motionReady = kpiUsable;
-
-  /** Prefer API `employeeCount` (tipping-ready SSOT) — do not override with client roster filters. */
-  const dashboardMetrics = displayMetrics;
 
   // ProtectedRoute guarantees user; avoid a second full-screen hold under layout chrome.
   if (!user) {
@@ -363,9 +371,10 @@ export const BusinessDashboard = memo(function BusinessDashboard() {
         <BusinessDashboardMobileHero
           greetingBadge={formalGreeting}
           isPreviewMode={isPreviewMode}
-          heroPulseLoading={heroPulseLoading}
-          operationalPulse={operationalPulse ?? null}
-          isPeriodRefreshing={isPeriodRefreshing}
+          financialSummary={financialSummary}
+          financialSummaryLedgerLoading={financialSummaryLedgerLoading}
+          financialSummaryConnectLoading={financialSummaryConnectLoading}
+          financialSummaryRefreshing={financialSummaryRefreshing}
         />
       ) : null}
 
@@ -430,10 +439,11 @@ export const BusinessDashboard = memo(function BusinessDashboard() {
                 motionReady ? { duration: 0.4, delay: 0.08, ease: "easeOut" } : { duration: 0 }
               }
             >
-              <BusinessHeroPulseMetrics
-                loading={heroPulseLoading}
-                pulse={operationalPulse ?? null}
-                isRefreshing={isPeriodRefreshing}
+              <BusinessHeroFinancialMetrics
+                ledgerLoading={financialSummaryLedgerLoading}
+                connectLoading={financialSummaryConnectLoading}
+                summary={financialSummary}
+                isRefreshing={financialSummaryRefreshing}
               />
               <BusinessDashboardHeroActions
                 isPreviewMode={isPreviewMode}
@@ -498,13 +508,11 @@ export const BusinessDashboard = memo(function BusinessDashboard() {
             className={businessUi.periodToggle}
             ariaLabel={t("business.dashboard.analyticsPeriodAria")}
             value={analyticsTimeframe}
-            onChange={(period) => {
-              runWithViewportScrollPreserved(() => setAnalyticsTimeframe(period));
-            }}
+            onChange={handleAnalyticsPeriodChange}
             options={(["week", "month", "year"] as const).map((period) => ({
               id: period,
               label: analyticsPeriodLabel(period),
-              loading: analyticsTimeframeLoading === period,
+              loading: analyticsTimeframe === period && analyticsTimeframeLoading === period,
             }))}
           />
         </section>
@@ -522,7 +530,7 @@ export const BusinessDashboard = memo(function BusinessDashboard() {
           >
             <BusinessDashboardMetricsGrid
               analyticsTimeframe={analyticsTimeframe}
-              metrics={dashboardMetrics}
+              metrics={displayMetrics}
               loading={periodMetricsLoading}
               isPeriodRefreshing={isPeriodRefreshing}
               refreshingLabel={periodRefreshingLabel}

@@ -36,9 +36,12 @@ export {
 
 export {
   buildBusinessAnalyticsDTO,
+  bundleHasAboveFoldStats,
+  bundleHasDeferredStats,
   fetchBusinessAnalyticsBundle,
   fetchBusinessAnalyticsDTO,
   fetchBusinessPeriodStats,
+  isBusinessAnalyticsAboveFoldComplete,
   isBusinessAnalyticsBundleComplete,
 } from "./businessAnalyticsService";
 

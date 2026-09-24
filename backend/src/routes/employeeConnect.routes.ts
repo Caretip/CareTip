@@ -42,5 +42,10 @@ router.get(
   ...employeeConnect,
   employeeConnectController.getMyEmployeeStripeBankPayouts,
 );
+router.get(
+  "/employee-connect/analytics",
+  ...employeeConnect,
+  employeeConnectController.getMyEmployeeAnalytics,
+);
 
 export default router;

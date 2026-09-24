@@ -11,12 +11,18 @@ import {
 import { prisma } from "../prisma.js";
 import { runSerializedByKey } from "../utils/serializedByKey.js";
 import { logServerError } from "../utils/httpErrors.js";
+import {
+  buildEmployeeTipReleaseIdempotencyKey,
+  formatStripeTransferError,
+} from "../lib/stripeTransferError.js";
 import { getStripeClient, isStripeConfigured } from "./stripe.service.js";
 import {
   employeePayableSummaryForEmployee,
   remainingPayableCents,
 } from "./employeeTipPayable.service.js";
 import { isEmployeeRecipientReady } from "./employeeTipRouting.service.js";
+
+export { buildEmployeeTipReleaseIdempotencyKey } from "../lib/stripeTransferError.js";
 
 /**
  * Fire-and-forget release when recoverable platform-hold payables exist and
@@ -180,6 +186,8 @@ export async function releaseHeldPlatformPayablesForEmployee(employeeId: string)
         }
       }
 
+      const idempotencyKey = buildEmployeeTipReleaseIdempotencyKey(row.id, row);
+
       try {
         const transferParams: Stripe.TransferCreateParams = {
           amount,
@@ -196,7 +204,7 @@ export async function releaseHeldPlatformPayablesForEmployee(employeeId: string)
           transferParams.source_transaction = row.stripeChargeId;
         }
         const transfer = await createTransfer(transferParams, {
-          idempotencyKey: `emp_tip_release:${row.id}`,
+          idempotencyKey,
         });
         await prisma.employeeTipPayable.update({
           where: { id: row.id },
@@ -210,8 +218,24 @@ export async function releaseHeldPlatformPayablesForEmployee(employeeId: string)
         });
         released += 1;
       } catch (err) {
-        const message = err instanceof Error ? err.message.slice(0, 180) : "transfer_failed";
-        logServerError("employeeTipRelease.transfer", err, { payableId: row.id, employeeId });
+        const message = formatStripeTransferError(err);
+        const errMeta =
+          err && typeof err === "object"
+            ? {
+                stripeType: (err as { type?: string }).type,
+                stripeCode: (err as { code?: string }).code,
+                stripeParam: (err as { param?: string }).param,
+                stripeRequestId: (err as { requestId?: string }).requestId,
+              }
+            : {};
+        logServerError("employeeTipRelease.transfer", err, {
+          payableId: row.id,
+          employeeId,
+          destination: dest,
+          amount,
+          idempotencyKey,
+          ...errMeta,
+        });
         await prisma.employeeTipPayable.update({
           where: { id: row.id },
           data: {

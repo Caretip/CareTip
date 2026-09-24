@@ -1,0 +1,332 @@
+/**
+ * Dashboard hero — three-zone financial hierarchy (employee + business).
+ * Stable composition: reserved metric slots + bottom-anchored CTAs on desktop.
+ */
+
+.dashboard-hero-financial {
+  display: flex;
+  flex-direction: column;
+  gap: 0.875rem;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+}
+
+.dashboard-hero-financial__zone {
+  min-width: 0;
+}
+
+.dashboard-hero-financial__zone-title {
+  margin: 0 0 0.5rem;
+  font-size: 0.625rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  line-height: 1.35;
+  color: hsl(var(--muted-foreground) / 0.85);
+}
+
+.dashboard-hero-financial__label {
+  margin: 0;
+  font-size: 0.75rem;
+  font-weight: 500;
+  line-height: 1.35;
+  color: hsl(var(--muted-foreground));
+  text-wrap: balance;
+}
+
+.dashboard-hero-financial__hint-slot {
+  margin-top: 0.35rem;
+  min-height: 2.65em;
+}
+
+.dashboard-hero-financial__hint-skeleton {
+  display: block;
+  margin-top: 0.15rem;
+}
+
+.dashboard-hero-financial__hint {
+  margin: 0;
+  font-size: 0.75rem;
+  line-height: 1.4;
+  color: hsl(var(--muted-foreground) / 0.9);
+  text-wrap: pretty;
+}
+
+.dashboard-hero-financial__value {
+  margin-top: 0.25rem;
+  font-size: 1.125rem;
+  font-weight: 650;
+  line-height: 1.15;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+  color: hsl(var(--foreground));
+  overflow-wrap: anywhere;
+}
+
+.dashboard-hero-financial__value--primary {
+  margin-top: 0.35rem;
+  min-height: clamp(1.75rem, 4.8vw, 2.625rem);
+  font-size: clamp(1.75rem, 4.8vw, 2.625rem);
+  font-weight: 700;
+  letter-spacing: -0.04em;
+  line-height: 1.08;
+  display: flex;
+  align-items: flex-end;
+}
+
+.dashboard-hero-financial__value--primary .dashboard-hero-metric-skeleton {
+  width: 100%;
+  min-height: inherit;
+  justify-content: flex-end;
+}
+
+.dashboard-hero-financial__value--primary
+  .dashboard-hero-metric-skeleton--currency
+  .dashboard-hero-metric-skeleton__bar {
+  height: clamp(1.5rem, 4vw, 2.25rem);
+  width: min(72%, 8.5rem);
+}
+
+.dashboard-hero-financial__value--support {
+  font-size: clamp(1rem, 2.2vw, 1.1875rem);
+  font-weight: 650;
+  min-height: 1.25rem;
+}
+
+.dashboard-hero-financial__zone--primary {
+  padding-bottom: 0.125rem;
+}
+
+.dashboard-hero-financial__payout-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.625rem;
+}
+
+.dashboard-hero-financial__payout-cell {
+  min-width: 0;
+  min-height: 4.125rem;
+  padding: 0.65rem 0.75rem;
+  border: 1px solid hsl(var(--border) / 0.55);
+  border-radius: 0.625rem;
+  background: hsl(var(--muted) / 0.22);
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+}
+
+.dashboard-hero-financial__payout-cell .dashboard-hero-financial__value {
+  margin-top: 0.2rem;
+  min-height: 1.25rem;
+}
+
+.dashboard-hero-financial__payout-cell .dashboard-hero-financial__hint {
+  margin-top: 0.3rem;
+  font-size: 0.6875rem;
+  line-height: 1.35;
+}
+
+.dashboard-hero-financial__zone--performance {
+  padding-top: 0.15rem;
+  border-top: 1px solid hsl(var(--border) / 0.45);
+}
+
+.dashboard-hero-financial__zone--performance-reserved {
+  min-height: 4.75rem;
+}
+
+.dashboard-hero-financial__perf-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.625rem 0.75rem;
+}
+
+.dashboard-hero-financial__perf-cell {
+  min-width: 0;
+}
+
+.dashboard-hero-financial__perf-cell .dashboard-hero-financial__value {
+  min-height: 1.25rem;
+}
+
+.dashboard-hero-financial__analytics-link {
+  margin-top: 0.15rem;
+  width: fit-content;
+  max-width: 100%;
+  min-height: 1.35rem;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  line-height: 1.35;
+  color: hsl(var(--primary));
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  text-wrap: pretty;
+}
+
+.dashboard-hero-financial__analytics-link--reserved {
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.dashboard-hero-financial__analytics-link:hover {
+  color: hsl(var(--primary) / 0.88);
+}
+
+/* —— Desktop: composed left column, bottom-anchored actions —— */
+@media (min-width: 1024px) {
+  .employee-dashboard-hero .dashboard-hero-financial,
+  .business-dashboard-hero .dashboard-hero-financial {
+    max-width: 100%;
+    gap: 0.875rem;
+    flex: 1 1 auto;
+    min-height: 0;
+  }
+
+  .business-dashboard-hero .dashboard-hero-financial__zone--payout {
+    min-height: 4.75rem;
+  }
+
+  .business-dashboard-hero .dashboard-hero-financial--loading .dashboard-hero-financial__zone--payout {
+    min-height: 9.5rem;
+  }
+
+  .business-dashboard-hero .dashboard-hero-financial--loading .dashboard-hero-financial__payout-grid {
+    min-height: 8.75rem;
+  }
+
+  .employee-dashboard-hero .dashboard-hero-financial {
+    min-height: 12.5rem;
+  }
+
+  .employee-dashboard-hero .dashboard-hero-financial__zone--performance {
+    min-height: 4.5rem;
+  }
+
+  .dashboard-hero-financial__payout-cell {
+    padding: 0.7rem 0.8rem;
+  }
+
+  .dashboard-hero-financial__perf-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+/* Tablet / narrow: payout cells stack for long German labels */
+@media (max-width: 639px) {
+  .dashboard-hero-financial__payout-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .dashboard-hero-financial__perf-grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.625rem;
+  }
+
+  .dashboard-hero-financial__perf-cell {
+    display: grid;
+    grid-template-columns: minmax(0, 1.2fr) auto;
+    align-items: baseline;
+    column-gap: 0.75rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid hsl(var(--border) / 0.35);
+  }
+
+  .dashboard-hero-financial__perf-cell:last-child {
+    border-bottom: 0;
+    padding-bottom: 0;
+  }
+
+  .dashboard-hero-financial__perf-cell .dashboard-hero-financial__value {
+    margin-top: 0;
+    text-align: right;
+  }
+
+  .dashboard-hero-financial__perf-cell .dashboard-hero-financial__hint {
+    grid-column: 1 / -1;
+    margin-top: 0.2rem;
+  }
+
+  .dashboard-hero-financial__hint-slot {
+    min-height: 2.4em;
+  }
+}
+
+/* CTA block: financial panel + actions share one composed column */
+.employee-dashboard-hero .employee-hero-cta-block .dashboard-hero-financial,
+.business-dashboard-hero .business-hero-cta-block .dashboard-hero-financial {
+  margin-bottom: 0;
+}
+
+@media (min-width: 1024px) {
+  .business-dashboard-hero .dashboard-hero-container.hidden.lg\:grid,
+  .employee-dashboard-hero .dashboard-hero-container.hidden.lg\:grid {
+    align-items: stretch !important;
+  }
+
+  .business-dashboard-hero .dashboard-hero-container .lg\:col-span-5,
+  .employee-dashboard-hero .dashboard-hero-container .lg\:col-span-5 {
+    display: flex;
+    flex-direction: column;
+    min-height: 100%;
+    align-self: stretch;
+  }
+
+  .business-dashboard-hero .dashboard-hero-container .lg\:col-span-5 > .pt-2.lg\:pt-3,
+  .employee-dashboard-hero .dashboard-hero-container .lg\:col-span-5 > .pt-2.lg\:pt-3 {
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+  }
+
+  .business-dashboard-hero .dashboard-hero-container .lg\:col-span-5 .dashboard-hero-actions,
+  .employee-dashboard-hero .dashboard-hero-container .lg\:col-span-5 .dashboard-hero-actions {
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    width: 100%;
+  }
+
+  .business-dashboard-hero .business-hero-cta-block,
+  .employee-dashboard-hero .employee-hero-cta-block {
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    width: 100%;
+  }
+
+  .business-dashboard-hero .business-hero-cta-block .business-hero-cta-row {
+    flex: 0 0 auto;
+    margin-top: auto;
+    padding-top: 0.75rem;
+  }
+
+  .employee-dashboard-hero .employee-hero-cta-block .employee-qr-signature {
+    flex: 0 0 auto;
+    margin-top: auto;
+    padding-top: 0.75rem;
+  }
+
+  .business-dashboard-hero .dashboard-hero-media-column,
+  .employee-dashboard-hero .dashboard-hero-media-column {
+    align-self: stretch;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+}
+
+.caretip-dashboard-shell.business-dashboard .business-hero-pulse-compact {
+  margin-top: 0.25rem;
+  padding-top: 0.65rem;
+  border-top: 1px solid hsl(var(--border) / 0.4);
+}
+
+.caretip-dashboard-shell.employee-dashboard .employee-hero-pulse-compact {
+  margin-top: 0.25rem;
+  padding-top: 0.65rem;
+  border-top: 1px solid hsl(var(--border) / 0.4);
+}

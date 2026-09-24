@@ -18,6 +18,7 @@ import { clearImpersonationAdminBackup } from "./impersonationSessionBackup";
 import { clearEmployeeNotifications } from "./employeeNotificationStore";
 import { resetAllClientSessionCaches } from "./resetAllClientSessionCaches";
 import { commitAuthUser, getAuthUser } from "./authUserStore";
+import { recordAuthSessionDiagnostic } from "./authSessionDiagnostics";
 
 export type LogoutSnapshot = {
   loginPath: string;
@@ -44,6 +45,7 @@ export function performClientLogoutCleanup(
   const started = performance.now();
   const priorUser = getAuthUser();
 
+  recordAuthSessionDiagnostic("AUTH_LOGOUT_REASON", { reason: "explicit_user_logout" });
   bumpSessionEpoch();
   clearEmployeeNotifications();
   clearImpersonationAdminBackup();

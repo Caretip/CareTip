@@ -63,6 +63,7 @@ import {
 } from "./authRefreshCoordination";
 import { markSessionExpiredNotice } from "./sessionExpiredNotice";
 import { clearSessionConnectivityDegraded } from "./authSessionBootstrap";
+import { recordAuthSessionDiagnostic } from "./authSessionDiagnostics";
 
 const AUTH_REFRESH_PATHNAME = "/api/auth/refresh";
 
@@ -171,7 +172,12 @@ function parseAuthRefreshPayload(data: unknown): AuthResponse | null {
  * Stops after auth rejection (401/403) immediately.
  * After final failure: caller should clear session (handled in {@link ensureRefreshedSession}).
  */
-async function runRefreshAuthWithRetries(): Promise<RefreshSessionResult> {
+type RefreshAttemptOptions = {
+  /** When true, bypass the post-transient refresh cooldown (401 recovery must always try). */
+  bypassCooldown?: boolean;
+};
+
+async function runRefreshAuthWithRetries(options?: RefreshAttemptOptions): Promise<RefreshSessionResult> {
   if (isClientSessionRevoked()) {
     clearAuthStorage();
     return { ok: false, shouldClearSession: true, status: 401 };
@@ -179,7 +185,12 @@ async function runRefreshAuthWithRetries(): Promise<RefreshSessionResult> {
 
   // Cooldown avoids hammering refresh after transient 503s while a token still works.
   // When memory has no JWT (HMR, new tab), always attempt restore via HttpOnly cookie.
-  if (Date.now() < refreshFailureCooldownUntil && getToken()?.trim()) {
+  // 401 recovery passes bypassCooldown — a stale in-memory JWT must not block refresh.
+  if (
+    !options?.bypassCooldown &&
+    Date.now() < refreshFailureCooldownUntil &&
+    getToken()?.trim()
+  ) {
     return { ok: false, shouldClearSession: false, status: 503 };
   }
 
@@ -249,7 +260,7 @@ function mayClearClientAuthStorage(): boolean {
   return authHydrated && sessionValidated;
 }
 
-async function ensureRefreshedSession(): Promise<RefreshSessionResult> {
+async function ensureRefreshedSession(options?: RefreshAttemptOptions): Promise<RefreshSessionResult> {
   if (refreshSingleton) {
     devTrackDeduped("auth:refresh", "auth:refresh", { inflight: true });
     return refreshSingleton;
@@ -257,16 +268,21 @@ async function ensureRefreshedSession(): Promise<RefreshSessionResult> {
   devTrackStart("auth:refresh", "auth:refresh");
   refreshSingleton = (async (): Promise<RefreshSessionResult> => {
     try {
-      let out = await coordinateCrossTabRefresh(() => runRefreshAuthWithRetries());
+      let out = await coordinateCrossTabRefresh(() => runRefreshAuthWithRetries(options));
       if (
         !out.ok &&
         out.shouldClearSession &&
         out.status === 401 &&
         hasRecentPeerRefreshSuccess()
       ) {
-        out = await coordinateCrossTabRefresh(() => runRefreshAuthWithRetries());
+        out = await coordinateCrossTabRefresh(() => runRefreshAuthWithRetries(options));
       }
       if (!out.ok && out.shouldClearSession && mayClearClientAuthStorage()) {
+        recordAuthSessionDiagnostic("AUTH_REFRESH_FAILURE_CLASS", {
+          reason: "refresh_definitive_failure",
+          status: out.status,
+          bypassCooldown: Boolean(options?.bypassCooldown),
+        });
         clearAuthStorageForDefinitiveFailure(out.status);
       } else if (out.ok) {
         clearSessionConnectivityDegraded();
@@ -286,8 +302,10 @@ async function ensureRefreshedSession(): Promise<RefreshSessionResult> {
   return refreshSingleton;
 }
 
-async function refreshAccessToken(): Promise<{ token: string | null; shouldClearAccessToken: boolean }> {
-  const r = await ensureRefreshedSession();
+async function refreshAccessToken(
+  options?: RefreshAttemptOptions,
+): Promise<{ token: string | null; shouldClearAccessToken: boolean }> {
+  const r = await ensureRefreshedSession(options);
   if (r.ok) return { token: r.data.token, shouldClearAccessToken: false };
   return { token: null, shouldClearAccessToken: r.shouldClearSession };
 }
@@ -346,7 +364,8 @@ function clearAuthStorage(options?: { sessionExpired?: boolean }): void {
   clearClientAuthStorage();
 }
 
-function clearAuthStorageForDefinitiveFailure(status: number): void {
+function clearAuthStorageForDefinitiveFailure(status: number, reason = "definitive_auth_failure"): void {
+  recordAuthSessionDiagnostic("AUTH_SESSION_INVALIDATION_REASON", { reason, status });
   if (status === 401 || status === 403) {
     clearAuthStorage({ sessionExpired: true });
     return;
@@ -683,19 +702,20 @@ async function apiRequest<T>(url: string, init?: RequestInit): Promise<T> {
 
     if (isAuthRefresh && isCaretipApi) {
       refreshDeemedInvalid = true;
-      if (mayClearClientAuthStorage()) clearAuthStorageForDefinitiveFailure(401);
-    } else if (
-      canAttemptRefresh &&
-      !alreadyRetried &&
-      (Date.now() >= refreshFailureCooldownUntil || !tokenIsSet)
-    ) {
-      const { token: nextToken, shouldClearAccessToken } = await refreshAccessToken();
+      if (mayClearClientAuthStorage()) {
+        clearAuthStorageForDefinitiveFailure(401, "auth_refresh_endpoint_401");
+      }
+    } else if (canAttemptRefresh && !alreadyRetried) {
+      let { token: nextToken, shouldClearAccessToken } = await refreshAccessToken({ bypassCooldown: true });
+      if (!nextToken && !shouldClearAccessToken && hasRecentPeerRefreshSuccess()) {
+        ({ token: nextToken, shouldClearAccessToken } = await refreshAccessToken({ bypassCooldown: true }));
+      }
       if (shouldClearAccessToken) refreshDeemedInvalid = true;
       if (nextToken) {
         const retriedInit: CaretipRequestInit = { ...(init ?? {}), __caretipRetried: true };
         res = await fetchWithNetworkRetry(url, attachLatestBearer(retriedInit));
       } else if (shouldClearAccessToken && mayClearClientAuthStorage()) {
-        clearAuthStorageForDefinitiveFailure(401);
+        clearAuthStorageForDefinitiveFailure(401, "api_401_refresh_invalid");
       }
     }
 
@@ -710,9 +730,24 @@ async function apiRequest<T>(url: string, init?: RequestInit): Promise<T> {
       }
     }
 
-    // Persistent 401 after refresh + delayed retry means the session cannot be restored.
+    // Only clear when refresh proved the session is invalid — not for resource-level 401s or
+    // transient refresh failures (aligns with fetchAuthedObjectUrl).
     if (res.status === 401 && isCaretipApi && mayClearClientAuthStorage()) {
-      clearAuthStorageForDefinitiveFailure(401);
+      const hasTokenAfterRecovery = Boolean(getToken()?.trim());
+      if (refreshDeemedInvalid || !hasTokenAfterRecovery) {
+        recordAuthSessionDiagnostic("AUTH_API_401_OUTCOME", {
+          outcome: "session_cleared",
+          pathname: requestUrlPathname(url),
+          refreshDeemedInvalid,
+          hasTokenAfterRecovery,
+        });
+        clearAuthStorageForDefinitiveFailure(401, "api_401_persistent_after_recovery");
+      } else {
+        recordAuthSessionDiagnostic("AUTH_API_401_OUTCOME", {
+          outcome: "resource_denied_session_preserved",
+          pathname: requestUrlPathname(url),
+        });
+      }
     }
   }
 
@@ -748,19 +783,22 @@ export async function fetchAuthedObjectUrl(inputUrl: string): Promise<string> {
   let refreshDeemedInvalid = false;
 
   if (res.status === 401 && requestUsesCaretipProtectedApi(url)) {
-    const { token: nextToken, shouldClearAccessToken } = await refreshAccessToken();
+    let { token: nextToken, shouldClearAccessToken } = await refreshAccessToken({ bypassCooldown: true });
+    if (!nextToken && !shouldClearAccessToken && hasRecentPeerRefreshSuccess()) {
+      ({ token: nextToken, shouldClearAccessToken } = await refreshAccessToken({ bypassCooldown: true }));
+    }
     if (shouldClearAccessToken) refreshDeemedInvalid = true;
     if (nextToken) {
       res = await fetch(url, attachLatestBearer(baseGet));
     } else if (shouldClearAccessToken && mayClearClientAuthStorage()) {
-      clearAuthStorageForDefinitiveFailure(401);
+      clearAuthStorageForDefinitiveFailure(401, "authed_object_url_refresh_invalid");
     }
   }
 
   if (res.status === 401 && requestUsesCaretipProtectedApi(url) && mayClearClientAuthStorage()) {
     const t = getToken()?.trim();
     if (!t || refreshDeemedInvalid) {
-      clearAuthStorageForDefinitiveFailure(401);
+      clearAuthStorageForDefinitiveFailure(401, "authed_object_url_persistent_401");
     }
   }
 
@@ -1365,7 +1403,7 @@ const businessStatsResultCache = new Map<
 /** Align with DASHBOARD_SWR_METRICS_TTL_MS — shorter stale window, same hit rate under sockets. */
 const BUSINESS_STATS_CLIENT_RESULT_TTL_MS = 45_000;
 
-export type BusinessStatsScope = "summary" | "roster" | "analytics" | "full";
+export type BusinessStatsScope = "summary" | "roster" | "analytics" | "full" | "aboveFold";
 
 function businessStatsClientCacheKey(timeframe: string, scope: BusinessStatsScope = "full"): string {
   // Endpoint is scoped to the authenticated session (business resolved from JWT),
@@ -2374,11 +2412,21 @@ export interface EmployeeTipsResponse {
   chartSeries?: Array<{ label: string; amount: number }>;
   /** Summary scope includes chart/tips from the same SQL bundle (skip analytics round-trip). */
   analyticsBundled?: boolean;
-  /** Lifetime successful tips — hero account summary */
+  /** Gross customer tip volume before CareTip fees. */
+  grossTipsEur?: number;
+  /** Net employee entitlement (payable ledger, direct_to_employee). */
+  employeeEarningsEur?: number;
+  /** Successfully on employee Stripe Connect. */
+  paidToStripeEur?: number;
+  /** Owed but not yet transferred to Connect. */
+  pendingReleaseEur?: number;
+  /** Gross tips without payable row (pre-ledger era). */
+  prePayableGrossTipsEur?: number;
+  /** @deprecated Legacy alias — gross tip volume, not net earnings. */
   totalEarningsEur?: number;
-  /** @deprecated Prefer paidOutEur */
+  /** @deprecated Prefer paidToStripeEur */
   availableBalanceEur?: number;
-  /** Successful tips with payout_status=paid */
+  /** @deprecated Prefer paidToStripeEur */
   paidOutEur?: number;
   totalSupporters?: number;
   /** Period-scoped guest ratings (summary scope). */
@@ -2477,9 +2525,16 @@ const employeeTipsInflight = new Map<string, Promise<EmployeeTipsResponse>>();
 export type EmployeeTipsScope = "account" | "summary" | "analytics" | "full";
 
 export type EmployeeAccountSnapshot = {
+  grossTipsEur: number;
+  employeeEarningsEur: number;
+  paidToStripeEur: number;
+  pendingReleaseEur: number;
+  prePayableGrossTipsEur: number;
+  /** @deprecated Gross tip volume — not net earnings. */
   totalEarningsEur: number;
-  /** @deprecated Prefer paidOutEur */
+  /** @deprecated Prefer paidToStripeEur */
   availableBalanceEur: number;
+  /** @deprecated Prefer paidToStripeEur */
   paidOutEur: number;
   totalSupporters: number;
 };
@@ -2518,11 +2573,18 @@ export function mergeEmployeeTipsResponse(
         ? summary.ratingCount
         : (analytics?.ratingCount ?? 0),
     chartSeries: analytics?.chartSeries ?? summary?.chartSeries ?? [],
+    grossTipsEur: summary?.grossTipsEur ?? analytics?.grossTipsEur,
+    employeeEarningsEur: summary?.employeeEarningsEur ?? analytics?.employeeEarningsEur,
+    paidToStripeEur: summary?.paidToStripeEur ?? analytics?.paidToStripeEur,
+    pendingReleaseEur: summary?.pendingReleaseEur ?? analytics?.pendingReleaseEur,
+    prePayableGrossTipsEur: summary?.prePayableGrossTipsEur ?? analytics?.prePayableGrossTipsEur,
     totalEarningsEur: summary?.totalEarningsEur ?? analytics?.totalEarningsEur,
     availableBalanceEur: summary?.availableBalanceEur ?? analytics?.availableBalanceEur,
     paidOutEur:
       summary?.paidOutEur ??
       analytics?.paidOutEur ??
+      summary?.paidToStripeEur ??
+      analytics?.paidToStripeEur ??
       summary?.availableBalanceEur ??
       analytics?.availableBalanceEur,
     totalSupporters: summary?.totalSupporters ?? analytics?.totalSupporters,
@@ -2559,10 +2621,21 @@ export async function getEmployeeAccountSnapshot(
       : typeof data.availableBalanceEur === "number"
         ? data.availableBalanceEur
         : 0;
+  const gross = typeof data.grossTipsEur === "number" ? data.grossTipsEur : data.totalEarningsEur ?? 0;
+  const paidToStripe =
+    typeof data.paidToStripeEur === "number" ? data.paidToStripeEur : paid;
   return {
-    totalEarningsEur: typeof data.totalEarningsEur === "number" ? data.totalEarningsEur : 0,
-    availableBalanceEur: paid,
-    paidOutEur: paid,
+    grossTipsEur: gross,
+    employeeEarningsEur:
+      typeof data.employeeEarningsEur === "number" ? data.employeeEarningsEur : 0,
+    paidToStripeEur: paidToStripe,
+    pendingReleaseEur:
+      typeof data.pendingReleaseEur === "number" ? data.pendingReleaseEur : 0,
+    prePayableGrossTipsEur:
+      typeof data.prePayableGrossTipsEur === "number" ? data.prePayableGrossTipsEur : 0,
+    totalEarningsEur: gross,
+    availableBalanceEur: paidToStripe,
+    paidOutEur: paidToStripe,
     totalSupporters: typeof data.totalSupporters === "number" ? data.totalSupporters : 0,
   };
 }
@@ -3019,12 +3092,52 @@ export async function getEmployeeStripeConnections(): Promise<ManagerEmployeeStr
   });
 }
 
-export async function getEmployeeConnectStatus(): Promise<EmployeeConnectStatus> {
-  return apiRequest<EmployeeConnectStatus>(apiPath("/api/me/employee-connect/status"), {
+const EMPLOYEE_CONNECT_STATUS_CACHE_TTL_MS = 45_000;
+let employeeConnectStatusCache: { data: EmployeeConnectStatus; at: number } | null = null;
+let employeeConnectStatusInflight: Promise<EmployeeConnectStatus> | null = null;
+
+export function peekEmployeeConnectStatusCache(): EmployeeConnectStatus | null {
+  if (!employeeConnectStatusCache) return null;
+  if (Date.now() - employeeConnectStatusCache.at >= EMPLOYEE_CONNECT_STATUS_CACHE_TTL_MS) {
+    return null;
+  }
+  return employeeConnectStatusCache.data;
+}
+
+export function clearEmployeeConnectStatusClientCache(): void {
+  employeeConnectStatusCache = null;
+  employeeConnectStatusInflight = null;
+}
+
+export async function getEmployeeConnectStatus(opts?: {
+  forceNetwork?: boolean;
+}): Promise<EmployeeConnectStatus> {
+  if (!opts?.forceNetwork) {
+    const cached = peekEmployeeConnectStatusCache();
+    if (cached) return cached;
+    if (employeeConnectStatusInflight) return employeeConnectStatusInflight;
+  }
+
+  const run = apiRequest<EmployeeConnectStatus>(apiPath("/api/me/employee-connect/status"), {
     method: "GET",
     headers: getHeaders(),
     credentials: "include",
+  }).then((data) => {
+    employeeConnectStatusCache = { data, at: Date.now() };
+    return data;
   });
+
+  if (!opts?.forceNetwork) {
+    employeeConnectStatusInflight = run;
+  }
+
+  try {
+    return await run;
+  } finally {
+    if (employeeConnectStatusInflight === run) {
+      employeeConnectStatusInflight = null;
+    }
+  }
 }
 
 export type EmployeePayableActivityStatus =
@@ -3082,6 +3195,7 @@ export async function listEmployeePayableActivity(params?: {
 }
 
 export async function createEmployeeConnectAccountLink(): Promise<{ url: string }> {
+  clearEmployeeConnectStatusClientCache();
   return apiRequest(apiPath("/api/me/employee-connect/account-link"), {
     method: "POST",
     headers: getHeaders(),
@@ -3091,6 +3205,7 @@ export async function createEmployeeConnectAccountLink(): Promise<{ url: string 
 }
 
 export async function createEmployeeConnectLoginLink(): Promise<{ url: string }> {
+  clearEmployeeConnectStatusClientCache();
   return apiRequest(apiPath("/api/me/employee-connect/login-link"), {
     method: "POST",
     headers: getHeaders(),
@@ -3159,6 +3274,103 @@ export async function listEmployeeStripeBankPayouts(params?: {
 }): Promise<{ items: EmployeeStripeBankPayoutItem[]; stripeReadable: boolean }> {
   const q = params?.take != null ? `?take=${encodeURIComponent(String(params.take))}` : "";
   return apiRequest(apiPath(`/api/me/employee-connect/stripe-payouts${q}`), {
+    headers: getHeaders(),
+    credentials: "include",
+  });
+}
+
+export type EmployeeAnalyticsPeriod = "today" | "week" | "month" | "year" | "all";
+
+export type EmployeeAnalyticsReconciliationStatus =
+  | "MATCHED"
+  | "CARETIP_PENDING"
+  | "STRIPE_TRANSFER_FOUND"
+  | "AMOUNT_MISMATCH"
+  | "DESTINATION_MISMATCH"
+  | "DUPLICATE_TRANSFER";
+
+export type EmployeeAnalyticsBundle = {
+  period: EmployeeAnalyticsPeriod;
+  periodStart: string;
+  periodEnd: string;
+  periodBasis: string;
+  metrics: {
+    grossTipsEur: number;
+    employeeEarningsEur: number;
+    paidToStripeEur: number;
+    pendingReleaseEur: number;
+    totalSupporters: number;
+    prePayableGrossTipsEur: number;
+    caretipFeesFromPayablesEur: number | null;
+    feesExact: boolean;
+    tipCount: number;
+    averageTipEur: number;
+    largestTipEur: number;
+  };
+  lifetimeMetrics: {
+    grossTipsEur: number;
+    employeeEarningsEur: number;
+    paidToStripeEur: number;
+    pendingReleaseEur: number;
+    totalSupporters: number;
+    prePayableGrossTipsEur: number;
+  };
+  tipRecords: Array<{
+    id: string;
+    createdAt: string;
+    receiptNumber: string | null;
+    grossEur: number;
+    platformFeeEur: number | null;
+    employeeEarningsEur: number | null;
+    routingMode: string | null;
+    chargeModel: string | null;
+    payoutStatus: string;
+    payoutStatusLabel: string;
+    hasPayable: boolean;
+  }>;
+  chartSeries: Array<{ label: string; grossEur: number; earningsEur: number }>;
+  reconciliation: {
+    rows: Array<{
+      payableId: string;
+      transactionId: string;
+      status: EmployeeAnalyticsReconciliationStatus;
+      caretipPayableCents: number;
+      caretipTransferredCents: number;
+      caretipRemainingCents: number;
+      caretipStatus: string;
+      stripeTransferId: string | null;
+      stripeTransferAmountCents: number | null;
+      stripeDestination: string | null;
+      employeeStripeAccountId: string | null;
+    }>;
+    needsAttention: boolean;
+    stripeReadable: boolean;
+  };
+  stripe: {
+    readable: boolean;
+    availableCents: number | null;
+    pendingCents: number | null;
+    instantAvailableCents: number | null;
+    currency: string | null;
+    transfers: Array<{
+      id: string;
+      createdAt: string;
+      amountCents: number;
+      currency: string;
+      destination: string | null;
+      caretipPayableId: string | null;
+      reversed: boolean;
+    }>;
+    bankPayouts: { items: EmployeeStripeBankPayoutItem[]; stripeReadable: boolean };
+  };
+};
+
+export async function getEmployeeAnalytics(
+  period: EmployeeAnalyticsPeriod = "month",
+): Promise<EmployeeAnalyticsBundle> {
+  const q = new URLSearchParams({ period });
+  return apiRequest(apiPath(`/api/me/employee-connect/analytics?${q.toString()}`), {
+    method: "GET",
     headers: getHeaders(),
     credentials: "include",
   });
@@ -3324,6 +3536,102 @@ export async function listMyConnectPayouts(params?: {
     apiPath(`/api/me/connect/payouts${qs ? `?${qs}` : ""}`),
     { method: "GET", headers: getHeaders(), credentials: "include" },
   );
+}
+
+export type BusinessFinancialPeriod = "today" | "week" | "month" | "year" | "all";
+
+export type BusinessFinancialSummaryBundle = {
+  period: BusinessFinancialPeriod;
+  periodBasis: string;
+  lifetime: {
+    totalCustomerTipsEur: number;
+    tipCount: number;
+    employeeDistributionObligationEur: number;
+    employeeDistributionObligationRowCount: number;
+    directToEmployeeGrossTipsEur: number;
+    businessDistributionGrossTipsEur: number;
+    caretipFeesEur: number | null;
+    feesExact: boolean;
+  };
+  periodMetrics: BusinessFinancialSummaryBundle["lifetime"];
+  routing: {
+    mode: EmployeeTipPayoutMode;
+    heldPlatformCents: number;
+    heldPlatformRowCount: number;
+    heldBusinessCents: number;
+    heldBusinessRowCount: number;
+  };
+  stripe: {
+    readable: boolean;
+    connected: boolean;
+    availableCents: number | null;
+    pendingCents: number | null;
+    currency: string | null;
+  };
+  payouts: {
+    completedAmountCents: number;
+    pendingAmountCents: number;
+    currency: string;
+    mixedCurrency: boolean;
+  };
+  reconciliation?: {
+    rows: Array<{
+      payableId: string;
+      transactionId: string;
+      status: "MATCHED" | "PENDING" | "MISMATCH" | "BUSINESS_DISTRIBUTION";
+      routingMode: string;
+      caretipGrossCents: number;
+      caretipRemainingCents: number;
+      caretipStatus: string;
+      stripeChargeId: string | null;
+      stripePaymentIntentId: string | null;
+    }>;
+    needsAttention: boolean;
+    stripeReadable: boolean;
+  };
+};
+
+export type BusinessFinancialSummaryRequestOpts = {
+  section?: "ledger" | "connect" | "reconciliation";
+  includeReconciliation?: boolean;
+};
+
+const businessFinancialSummaryInflight = new Map<string, Promise<BusinessFinancialSummaryBundle>>();
+
+function businessFinancialSummaryCacheKey(
+  period: BusinessFinancialPeriod,
+  opts?: BusinessFinancialSummaryRequestOpts,
+): string {
+  const section = opts?.section ?? "full";
+  const recon = opts?.includeReconciliation ? "1" : "0";
+  return `business-financial-summary:${period}:${section}:${recon}`;
+}
+
+export async function getBusinessFinancialSummary(
+  period: BusinessFinancialPeriod = "all",
+  opts?: BusinessFinancialSummaryRequestOpts,
+): Promise<BusinessFinancialSummaryBundle> {
+  const q = new URLSearchParams({ period });
+  if (opts?.section) q.set("section", opts.section);
+  if (opts?.includeReconciliation) q.set("includeReconciliation", "true");
+  const cacheKey = businessFinancialSummaryCacheKey(period, opts);
+  const inflight = businessFinancialSummaryInflight.get(cacheKey);
+  if (inflight) return inflight;
+
+  const promise = apiRequest<BusinessFinancialSummaryBundle>(
+    apiPath(`/api/me/connect/financial-summary?${q.toString()}`),
+    {
+      method: "GET",
+      headers: getHeaders(),
+      credentials: "include",
+    },
+  ).finally(() => {
+    if (businessFinancialSummaryInflight.get(cacheKey) === promise) {
+      businessFinancialSummaryInflight.delete(cacheKey);
+    }
+  });
+  businessFinancialSummaryInflight.set(cacheKey, promise);
+  return promise;
 }
 
 export type BusinessConnectPayoutSummary = {

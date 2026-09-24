@@ -55,9 +55,7 @@ export function SignInCard2({
       : t("auth.signInCard.titleCreateVenue");
 
   const subtitle = isLogin
-    ? isEmployee
-      ? t("auth.employeeAuth.subtitleSignIn")
-      : null
+    ? null
     : isEmployee
       ? inviteVerified
         ? t("auth.employeeAuth.subtitleInviteVerified")

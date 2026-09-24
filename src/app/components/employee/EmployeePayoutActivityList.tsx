@@ -112,7 +112,14 @@ export function EmployeePayoutActivityList() {
                       <td className="whitespace-nowrap py-2.5 pr-3 text-muted-foreground">
                         {formatBerlinDateTime(employeePayoutActivityDisplayAt(row), i18n.language)}
                       </td>
-                      <td className="max-w-[18rem] py-2.5 pr-3">{t(employeePayoutActivityKindKey(kind))}</td>
+                      <td className="max-w-[18rem] py-2.5 pr-3">
+                        <div>{t(employeePayoutActivityKindKey(kind))}</div>
+                        {kind === "failed" ? (
+                          <div className="text-xs text-muted-foreground">
+                            {t("employee.payouts.activityKind.failedHint")}
+                          </div>
+                        ) : null}
+                      </td>
                       <td className="whitespace-nowrap py-2.5 pr-3 text-right font-medium tabular-nums">
                         {formatEur(row.activityCents / 100)}
                       </td>
@@ -168,6 +175,11 @@ function ActivityMobileRow({ row, locale }: { row: EmployeePayableActivityItem; 
     <li className="flex items-start justify-between gap-3 py-3">
       <div className="min-w-0">
         <p className="text-sm font-medium">{t(employeePayoutActivityKindKey(kind))}</p>
+        {kind === "failed" ? (
+          <p className="mt-0.5 text-xs text-muted-foreground">
+            {t("employee.payouts.activityKind.failedHint")}
+          </p>
+        ) : null}
         <p className="mt-0.5 text-xs text-muted-foreground">
           {formatBerlinDateTime(employeePayoutActivityDisplayAt(row), locale)}
         </p>

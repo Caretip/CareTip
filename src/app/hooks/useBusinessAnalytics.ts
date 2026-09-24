@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 
 import { logClientError } from "../lib/clientLog";
 
@@ -11,6 +11,8 @@ import {
   getBusinessAnalyticsBundle,
 
   invalidateBusinessAnalytics,
+
+  isBusinessAnalyticsAboveFoldComplete,
 
   isBusinessAnalyticsBundleComplete,
 
@@ -48,8 +50,11 @@ import { trackAnalyticsRefetch, trackSocketEventProcessed } from "../lib/realtim
 
 import {
   deriveAnalyticsLoadingLifecycle,
-  hasVisibleAnalyticsData as dtoHasVisibleAnalyticsData,
+  derivePeriodScopedSectionLoading,
+  hasVisiblePeriodStats as dtoHasVisiblePeriodStats,
 } from "../lib/analyticsLoadingLifecycle";
+import type { BusinessAnalyticsBundle } from "../lib/businessAnalytics";
+import { markAnalyticsPerformance } from "../lib/businessAnalytics/analyticsPerformanceMarks";
 
 
 
@@ -293,6 +298,14 @@ export function useBusinessAnalytics(
 
   const [lastUpdatedAt, setLastUpdatedAt] = useState<number | null>(null);
 
+  const [periodStatsReady, setPeriodStatsReady] = useState(false);
+
+  const [deferredAnalyticsReady, setDeferredAnalyticsReady] = useState(false);
+
+  const [tipsFeedReady, setTipsFeedReady] = useState(false);
+
+  const [qrReady, setQrReady] = useState(false);
+
 
 
   const timeframeRef = useRef(timeframe);
@@ -300,6 +313,8 @@ export function useBusinessAnalytics(
   timeframeRef.current = timeframe;
 
   const isFirstLoad = useRef(true);
+
+  const loadGenRef = useRef(0);
 
   const reconcileTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -313,6 +328,46 @@ export function useBusinessAnalytics(
 
   }, []);
 
+  const applyProgressBundle = useCallback(
+    (bundle: BusinessAnalyticsBundle) => {
+      if (bundle.timeframe !== timeframeRef.current) return;
+      applyBundle(buildBusinessAnalyticsDTO(bundle));
+      const aboveFoldOk = isBusinessAnalyticsAboveFoldComplete(bundle);
+      const deferredOk = Boolean(bundle.deferredAnalyticsFetched) || Boolean(
+        bundle.periodStats?.dailyTipDistribution?.length ||
+          bundle.periodStats?.locationRankings?.length ||
+          bundle.periodStats?.avgTipsPerShift != null,
+      );
+      if (aboveFoldOk) markAnalyticsPerformance("analytics.stats.ready");
+      if (bundle.tipsFeedFetched) markAnalyticsPerformance("analytics.tipsFeed.ready");
+      if (bundle.qrFetched) markAnalyticsPerformance("analytics.qr.ready");
+      setPeriodStatsReady(aboveFoldOk);
+      setDeferredAnalyticsReady(deferredOk);
+      setTipsFeedReady(Boolean(bundle.tipsFeedFetched));
+      setQrReady(Boolean(bundle.qrFetched));
+    },
+    [applyBundle],
+  );
+
+  const syncReadyFlagsFromCache = useCallback(
+    (tf: AnalyticsTimeframe) => {
+      const cached = getBusinessAnalyticsBundle(tf);
+      const wantsTipsFeed = includeTipsFeed && advancedAnalytics;
+      setPeriodStatsReady(isBusinessAnalyticsAboveFoldComplete(cached));
+      setDeferredAnalyticsReady(
+        Boolean(cached?.deferredAnalyticsFetched) ||
+          Boolean(
+            cached?.periodStats?.dailyTipDistribution?.length ||
+              cached?.periodStats?.locationRankings?.length ||
+              cached?.periodStats?.avgTipsPerShift != null,
+          ),
+      );
+      setTipsFeedReady(!wantsTipsFeed || Boolean(cached?.tipsFeedFetched));
+      setQrReady(!includeQrAnalytics || Boolean(cached?.qrFetched));
+    },
+    [advancedAnalytics, includeTipsFeed, includeQrAnalytics],
+  );
+
 
 
   const load = useCallback(
@@ -322,6 +377,8 @@ export function useBusinessAnalytics(
       if (!enabled) return;
 
       const tf = timeframeRef.current;
+      const gen = ++loadGenRef.current;
+      const stillCurrent = () => gen === loadGenRef.current && tf === timeframeRef.current;
 
       const fetchOpts = {
         includeTipsFeed: includeTipsFeed && advancedAnalytics,
@@ -337,7 +394,9 @@ export function useBusinessAnalytics(
 
         if (cached && isBusinessAnalyticsBundleComplete(cached, fetchOpts)) {
 
-          applyBundle(buildBusinessAnalyticsDTO(cached));
+          if (!stillCurrent()) return;
+
+          applyProgressBundle(cached);
 
           if (!opts?.quiet) setLoading(false);
 
@@ -355,9 +414,13 @@ export function useBusinessAnalytics(
 
         setTimeframeLoading(true);
 
+        syncReadyFlagsFromCache(tf);
+
       } else if (!opts?.quiet) {
 
         setLoading(true);
+
+        syncReadyFlagsFromCache(tf);
 
       }
 
@@ -366,6 +429,7 @@ export function useBusinessAnalytics(
       try {
 
         trackAnalyticsRefetch();
+        markAnalyticsPerformance("analytics.stats.request");
 
         const bundle = await fetchBusinessAnalyticsBundle(tf, {
 
@@ -375,11 +439,21 @@ export function useBusinessAnalytics(
 
           ...fetchOpts,
 
+          onProgress: (partial) => {
+
+            if (!stillCurrent() || partial.timeframe !== tf) return;
+
+            applyProgressBundle(partial);
+
+            if (!opts?.quiet && isBusinessAnalyticsAboveFoldComplete(partial)) setLoading(false);
+
+          },
+
         });
 
-        if (tf !== timeframeRef.current) return;
+        if (!stillCurrent() || bundle.timeframe !== tf) return;
 
-        applyBundle(buildBusinessAnalyticsDTO(bundle));
+        applyProgressBundle(bundle);
 
       } catch (err) {
 
@@ -387,7 +461,7 @@ export function useBusinessAnalytics(
 
       } finally {
 
-        if (tf === timeframeRef.current) {
+        if (stillCurrent()) {
 
           if (opts?.periodSwitch) setTimeframeLoading(false);
 
@@ -399,7 +473,15 @@ export function useBusinessAnalytics(
 
     },
 
-    [enabled, advancedAnalytics, includeTipsFeed, includeWeekStats, includeQrAnalytics, applyBundle],
+    [
+      enabled,
+      advancedAnalytics,
+      includeTipsFeed,
+      includeWeekStats,
+      includeQrAnalytics,
+      applyProgressBundle,
+      syncReadyFlagsFromCache,
+    ],
 
   );
 
@@ -427,6 +509,37 @@ export function useBusinessAnalytics(
 
 
 
+  useLayoutEffect(() => {
+    if (!enabled) return;
+    loadGenRef.current += 1;
+    const tf = timeframe;
+    const fetchOpts = {
+      includeTipsFeed: includeTipsFeed && advancedAnalytics,
+      includeWeekStats,
+      includeQrAnalytics,
+    };
+    const cached = getBusinessAnalyticsBundle(tf);
+    if (cached && cached.timeframe === tf && isBusinessAnalyticsAboveFoldComplete(cached)) {
+      applyProgressBundle(cached);
+      if (isBusinessAnalyticsBundleComplete(cached, fetchOpts)) {
+        setTimeframeLoading(false);
+        setLoading(false);
+        return;
+      }
+    }
+    setTimeframeLoading(true);
+    syncReadyFlagsFromCache(tf);
+  }, [
+    timeframe,
+    enabled,
+    advancedAnalytics,
+    includeTipsFeed,
+    includeWeekStats,
+    includeQrAnalytics,
+    applyProgressBundle,
+    syncReadyFlagsFromCache,
+  ]);
+
   useEffect(() => {
 
     if (!enabled) return;
@@ -447,7 +560,7 @@ export function useBusinessAnalytics(
 
     if (cached && isBusinessAnalyticsBundleComplete(cached, fetchOpts)) {
 
-      applyBundle(buildBusinessAnalyticsDTO(cached));
+      applyProgressBundle(cached);
 
       setLoading(false);
 
@@ -456,6 +569,8 @@ export function useBusinessAnalytics(
       return;
 
     }
+
+    syncReadyFlagsFromCache(tf);
 
     if (isFirstLoad.current) {
 
@@ -469,7 +584,17 @@ export function useBusinessAnalytics(
 
     void load({ quiet: true, periodSwitch: true });
 
-  }, [load, timeframe, enabled, advancedAnalytics, includeTipsFeed, includeWeekStats, includeQrAnalytics, applyBundle]);
+  }, [
+    load,
+    timeframe,
+    enabled,
+    advancedAnalytics,
+    includeTipsFeed,
+    includeWeekStats,
+    includeQrAnalytics,
+    applyProgressBundle,
+    syncReadyFlagsFromCache,
+  ]);
 
 
 
@@ -609,13 +734,45 @@ export function useBusinessAnalytics(
 
   const resolved = dto ?? EMPTY_DTO;
 
-  const visibleAnalyticsData = dtoHasVisibleAnalyticsData(dto);
+  const visiblePeriodStats = dtoHasVisiblePeriodStats(dto);
 
   const valuesMatchPeriod = dto?.timeframe === timeframe;
 
+  const wantsTipsFeed = includeTipsFeed && advancedAnalytics;
+
+  const bundleFetchInFlight = loading || timeframeLoading;
+
+  const isPeriodStatsLoading = derivePeriodScopedSectionLoading({
+    valuesMatchPeriod,
+    sliceReady: periodStatsReady,
+    fetchInFlight: bundleFetchInFlight,
+  });
+
+  const isDeferredAnalyticsLoading = derivePeriodScopedSectionLoading({
+    valuesMatchPeriod,
+    sliceReady: deferredAnalyticsReady,
+    fetchInFlight: bundleFetchInFlight,
+  });
+
+  const isTipsFeedLoading = wantsTipsFeed
+    ? derivePeriodScopedSectionLoading({
+        valuesMatchPeriod,
+        sliceReady: tipsFeedReady,
+        fetchInFlight: bundleFetchInFlight,
+      })
+    : false;
+
+  const isQrLoading = includeQrAnalytics
+    ? derivePeriodScopedSectionLoading({
+        valuesMatchPeriod,
+        sliceReady: qrReady,
+        fetchInFlight: bundleFetchInFlight,
+      })
+    : false;
+
   const { isInitialAnalyticsLoading, isAnalyticsRefreshing } = deriveAnalyticsLoadingLifecycle({
 
-    hasVisibleAnalyticsData: visibleAnalyticsData,
+    hasVisibleAnalyticsData: visiblePeriodStats,
 
     isColdLoading: loading,
 
@@ -641,7 +798,15 @@ export function useBusinessAnalytics(
 
     timeframeLoading,
 
-    hasVisibleAnalyticsData: visibleAnalyticsData,
+    hasVisibleAnalyticsData: visiblePeriodStats,
+
+    isPeriodStatsLoading,
+
+    isDeferredAnalyticsLoading,
+
+    isTipsFeedLoading,
+
+    isQrLoading,
 
     isInitialAnalyticsLoading,
 

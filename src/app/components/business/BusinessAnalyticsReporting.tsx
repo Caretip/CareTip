@@ -1,4 +1,5 @@
-import { lazy, useMemo, useState } from "react";
+import { lazy, useEffect, useMemo, useRef, useState } from "react";
+import { markAnalyticsPerformance } from "../../lib/businessAnalytics/analyticsPerformanceMarks";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router";
 import { Download } from "lucide-react";
@@ -24,6 +25,7 @@ import { shouldShowCurrentWeekContext } from "../../lib/businessAnalytics/analyt
 import type { useBusinessIntelligenceData } from "../../hooks/useBusinessIntelligenceData";
 import type { TopTipSourceRow } from "../../lib/businessIntelligence";
 import type { AnalyticsTimeframe } from "../../hooks/useBusinessDashboardStats";
+import { BusinessFinancialAnalyticsSection } from "./BusinessFinancialAnalyticsSection";
 
 const BusinessIntelligenceCharts = lazy(() =>
   import("./insights/BusinessIntelligenceCharts").then((mod) => ({
@@ -35,6 +37,7 @@ type BiData = ReturnType<typeof useBusinessIntelligenceData>;
 
 type BusinessAnalyticsReportingProps = {
   data: BiData;
+  financialSummaryEnabled: boolean;
   revenueTimeframe: AnalyticsTimeframe;
   onRevenueTimeframeChange: (timeframe: AnalyticsTimeframe) => void;
   qrTimeframe: AnalyticsTimeframe;
@@ -91,6 +94,7 @@ function ComparisonTable({
 /** Sprint 2 — sole reporting surface for business managers. */
 export function BusinessAnalyticsReporting({
   data,
+  financialSummaryEnabled,
   revenueTimeframe,
   onRevenueTimeframeChange,
   qrTimeframe,
@@ -110,38 +114,64 @@ export function BusinessAnalyticsReporting({
     }
   };
 
-  const displayTimeframe = data.displayTimeframe ?? revenueTimeframe;
+  const selectedTimeframe = revenueTimeframe;
   const periodLabel =
-    displayTimeframe === "week"
+    selectedTimeframe === "week"
       ? t("dashboard.filter_week")
-      : displayTimeframe === "year"
+      : selectedTimeframe === "year"
         ? t("dashboard.filter_year")
         : t("dashboard.filter_month");
 
   const revenueGrowth = data.bi.revenue.growthPercent;
   const growthComparable = data.bi.revenue.growthComparable;
   const showWeekContext = shouldShowCurrentWeekContext({
-    timeframe: displayTimeframe,
+    timeframe: selectedTimeframe,
     periodTotal: data.period.totalTips,
     periodCount: data.period.tipCount,
     weekTotal: data.week.totalTips,
     weekCount: data.week.tipCount,
   });
   const employeesReceivedKey =
-    displayTimeframe === "week"
+    selectedTimeframe === "week"
       ? "business.tips.analytics.cards.employeesReceivedThisWeek"
-      : displayTimeframe === "year"
+      : selectedTimeframe === "year"
         ? "business.tips.analytics.cards.employeesReceivedThisYear"
         : "business.tips.analytics.cards.employeesReceivedThisMonth";
   const growthOverviewKey =
-    displayTimeframe === "week"
+    selectedTimeframe === "week"
       ? "business.team.performance.bi.growthOverviewWeek"
-      : displayTimeframe === "year"
+      : selectedTimeframe === "year"
         ? "business.team.performance.bi.growthOverviewYear"
         : "business.team.performance.bi.growthOverviewMonth";
   const refreshingLabel = t("dashboard.refresh.updating");
-  const cardsInitialLoading = data.isInitialAnalyticsLoading;
+  const periodStatsLoading =
+    !data.valuesMatchPeriod ||
+    (data.isPeriodStatsLoading ?? data.isInitialAnalyticsLoading);
+  const deferredAnalyticsLoading =
+    !data.valuesMatchPeriod || (data.isDeferredAnalyticsLoading ?? false);
+  const tipsFeedLoading = data.isTipsFeedLoading ?? false;
+  const qrSectionLoading = data.isQrLoading ?? false;
   const cardsRefreshing = data.isAnalyticsRefreshing;
+
+  const overviewRenderedRef = useRef(false);
+  const revenueRenderedRef = useRef(false);
+  const operationalRenderedRef = useRef(false);
+
+  useEffect(() => {
+    if (periodStatsLoading || !data.valuesMatchPeriod) return;
+    if (!overviewRenderedRef.current) {
+      overviewRenderedRef.current = true;
+      markAnalyticsPerformance("analytics.overview.render");
+    }
+    if (!revenueRenderedRef.current) {
+      revenueRenderedRef.current = true;
+      markAnalyticsPerformance("analytics.revenue.render");
+    }
+    if (!operationalRenderedRef.current) {
+      operationalRenderedRef.current = true;
+      markAnalyticsPerformance("analytics.operational.render");
+    }
+  }, [periodStatsLoading, data.valuesMatchPeriod]);
 
   const analyticsStatusItems = useMemo(
     () => deriveRealtimeStatusItems(data.connectionStatus ?? "idle", t),
@@ -219,6 +249,12 @@ export function BusinessAnalyticsReporting({
         eyebrow={t("business.tips.analytics.overviewPeriodHint", { period: periodLabel })}
         periodLabel={periodLabel}
         metrics={overviewMetrics}
+        loading={periodStatsLoading}
+      />
+
+      <BusinessFinancialAnalyticsSection
+        period={selectedTimeframe}
+        enabled={financialSummaryEnabled}
       />
 
       <section className="space-y-3" aria-labelledby="business-revenue-analytics-heading">
@@ -230,9 +266,9 @@ export function BusinessAnalyticsReporting({
         </h2>
         <RevenueAnalyticsCards
           data={data.input}
-          timeframe={displayTimeframe}
+          timeframe={selectedTimeframe}
           variant="detail"
-          loading={cardsInitialLoading}
+          loading={periodStatsLoading}
           refreshing={cardsRefreshing}
           refreshingLabel={refreshingLabel}
           showHeading={false}
@@ -253,7 +289,7 @@ export function BusinessAnalyticsReporting({
           timeframe={qrTimeframe}
           showHeading={false}
           data={qrTimeframe === revenueTimeframe ? data.input.qrAnalytics : undefined}
-          dataLoading={qrTimeframe === revenueTimeframe ? cardsInitialLoading : undefined}
+          dataLoading={qrTimeframe === revenueTimeframe ? qrSectionLoading : undefined}
           dataRefreshing={qrTimeframe === revenueTimeframe ? cardsRefreshing : undefined}
         />
       </section>
@@ -264,7 +300,8 @@ export function BusinessAnalyticsReporting({
         </h2>
         <OperationalMetricsCards
           data={data.input}
-          loading={cardsInitialLoading}
+          loading={periodStatsLoading}
+          shiftMetricLoading={deferredAnalyticsLoading}
           refreshing={cardsRefreshing}
           refreshingLabel={refreshingLabel}
         />
@@ -281,16 +318,25 @@ export function BusinessAnalyticsReporting({
           {t("business.tips.analytics.sections.locations")}
         </h2>
         <div className="grid gap-4 lg:grid-cols-2">
-          <ComparisonTable
-            title={t("business.tips.analytics.locationComparison")}
-            rows={data.bi.locations}
-            emptyKey="business.tips.analytics.locationEmpty"
-          />
-          <ComparisonTable
-            title={t("business.tips.analytics.tableComparison")}
-            rows={data.bi.tables}
-            emptyKey="business.tips.analytics.tableEmpty"
-          />
+          {deferredAnalyticsLoading ? (
+            <>
+              <div className={cn(businessUi.cardStatic, "h-48 animate-pulse bg-muted/30")} />
+              <div className={cn(businessUi.cardStatic, "h-48 animate-pulse bg-muted/30")} />
+            </>
+          ) : (
+            <>
+              <ComparisonTable
+                title={t("business.tips.analytics.locationComparison")}
+                rows={data.bi.locations}
+                emptyKey="business.tips.analytics.locationEmpty"
+              />
+              <ComparisonTable
+                title={t("business.tips.analytics.tableComparison")}
+                rows={data.bi.tables}
+                emptyKey="business.tips.analytics.tableEmpty"
+              />
+            </>
+          )}
         </div>
       </section>
 
@@ -300,7 +346,13 @@ export function BusinessAnalyticsReporting({
         </h2>
         <Card className={businessUi.cardStatic}>
           <CardContent className="divide-y divide-border/60 p-0 pt-2">
-            {data.bi.topTipSources.length === 0 ? (
+            {tipsFeedLoading ? (
+              <div className="space-y-2 px-4 py-4">
+                {Array.from({ length: 4 }).map((_, i) => (
+                  <div key={i} className="h-10 animate-pulse rounded-md bg-muted/40" />
+                ))}
+              </div>
+            ) : data.bi.topTipSources.length === 0 ? (
               <p className="px-4 py-8 text-center text-sm text-muted-foreground">
                 {t("business.tips.analytics.topQrEmpty")}
               </p>
@@ -333,7 +385,7 @@ export function BusinessAnalyticsReporting({
             <div className={cn(businessUi.cardStatic, "h-[280px] animate-pulse bg-muted/30")} />
           }
         >
-          <BusinessIntelligenceCharts data={data.input} loading={cardsInitialLoading} />
+          <BusinessIntelligenceCharts data={data.input} loading={deferredAnalyticsLoading} />
         </DashboardChartsIdleMount>
       </section>
     </div>

@@ -484,39 +484,55 @@ export async function loadEmployeeCurrentMonthTotal(
 
 /** Lifetime account summary for employee dashboard hero (not period-scoped). */
 export async function loadEmployeeAccountSummary(employeeId: string): Promise<{
+  /** Gross customer tip volume before CareTip fees. */
+  grossTipsEur: number;
+  /** Net employee entitlement from payable ledger (direct_to_employee). */
+  employeeEarningsEur: number;
+  /** Successfully on employee Stripe Connect. */
+  paidToStripeEur: number;
+  /** Owed but not yet transferred to Connect. */
+  pendingReleaseEur: number;
+  /** @deprecated Legacy alias — gross customer tip volume (not net earnings). */
   totalEarningsEur: number;
-  /** @deprecated Prefer paidOutEur — same value (sum of tips with payout_status=paid). */
+  /** @deprecated Prefer paidToStripeEur. */
   availableBalanceEur: number;
-  /** Authoritative: successful tips with payout_status = paid. */
+  /** @deprecated Prefer paidToStripeEur. */
   paidOutEur: number;
   totalSupporters: number;
+  /** Gross tips without a payable row (pre-ledger era). */
+  prePayableGrossTipsEur: number;
 }> {
   return getCachedOrLoad(`emp-account:${employeeId}`, EMPLOYEE_PERIOD_CACHE_TTL_MS, async () => {
-    const rows = await logDashboardPhase("employee.account", "sql", () =>
-      prisma.$queryRaw<
-        Array<{
-          total_earnings: number;
-          paid_total: number;
-          tip_count: number;
-        }>
-      >(Prisma.sql`
-        SELECT
-          COALESCE(SUM(amount), 0)::float AS total_earnings,
-          COALESCE(SUM(amount) FILTER (WHERE payout_status = 'paid'), 0)::float AS paid_total,
-          COUNT(*)::int AS tip_count
-        FROM tips
-        WHERE employee_id = ${employeeId}
-          AND status = 'success'
-      `),
+    const { loadEmployeeFinancialMetrics } = await import("./employeeFinancialMetrics.service.js");
+    const metrics = await logDashboardPhase("employee.account", "sql", () =>
+      loadEmployeeFinancialMetrics(employeeId),
     );
-    const row = rows[0];
-    const paidOutEur = Number(row?.paid_total ?? 0);
     return {
-      totalEarningsEur: Number(row?.total_earnings ?? 0),
-      availableBalanceEur: paidOutEur,
-      paidOutEur,
-      /** Each successful tip counts as one supporter interaction (guests are anonymous). */
-      totalSupporters: Number(row?.tip_count ?? 0),
+      grossTipsEur: metrics.grossTipsEur,
+      employeeEarningsEur: metrics.employeeEarningsEur,
+      paidToStripeEur: metrics.paidToStripeEur,
+      pendingReleaseEur: metrics.pendingReleaseEur,
+      totalEarningsEur: metrics.grossTipsEur,
+      availableBalanceEur: metrics.paidToStripeEur,
+      paidOutEur: metrics.paidToStripeEur,
+      totalSupporters: metrics.totalSupporters,
+      prePayableGrossTipsEur: metrics.prePayableGrossTipsEur,
     };
   });
+}
+
+export function employeeAccountSummaryApiFields(
+  accountSummary: Awaited<ReturnType<typeof loadEmployeeAccountSummary>>,
+) {
+  return {
+    grossTipsEur: accountSummary.grossTipsEur,
+    employeeEarningsEur: accountSummary.employeeEarningsEur,
+    paidToStripeEur: accountSummary.paidToStripeEur,
+    pendingReleaseEur: accountSummary.pendingReleaseEur,
+    prePayableGrossTipsEur: accountSummary.prePayableGrossTipsEur,
+    totalEarningsEur: accountSummary.totalEarningsEur,
+    availableBalanceEur: accountSummary.availableBalanceEur,
+    paidOutEur: accountSummary.paidOutEur,
+    totalSupporters: accountSummary.totalSupporters,
+  };
 }

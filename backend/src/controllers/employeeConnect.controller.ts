@@ -15,6 +15,10 @@ import {
   getEmployeeInstantPayoutEligibilityForUser,
 } from "../services/employeeInstantPayout.service.js";
 import { listEmployeeStripeBankPayoutsForUser } from "../services/employeeStripeBankPayouts.service.js";
+import {
+  loadEmployeeAnalyticsForUser,
+  type EmployeeAnalyticsPeriod,
+} from "../services/employeeAnalytics.service.js";
 import { clientSafeMessage, CLIENT_FALLBACK, logServerError } from "../utils/httpErrors.js";
 import {
   INSTANT_PAYOUT_TERMS_CONTEXT_EMPLOYEE,
@@ -204,6 +208,30 @@ export async function postMyEmployeeInstantPayout(req: Request, res: Response) {
     return res.json(result);
   } catch (err) {
     logServerError("employeeConnect.postMyEmployeeInstantPayout", err);
+    if (err instanceof StripeConnectError) {
+      return res.status(err.httpStatus).json({ message: err.message, code: err.code });
+    }
+    return res.status(400).json({ message: connectClientMessage(err) });
+  }
+}
+
+function parseEmployeeAnalyticsPeriod(raw: unknown): EmployeeAnalyticsPeriod {
+  const p = typeof raw === "string" ? raw.trim() : "";
+  if (p === "today" || p === "week" || p === "month" || p === "year" || p === "all") return p;
+  return "month";
+}
+
+export async function getMyEmployeeAnalytics(req: Request, res: Response) {
+  try {
+    const userId = getUserId(req);
+    if (!userId) return res.status(401).json({ message: "Authentication required" });
+    if (rejectClientEmployeeConnectSteering(req, res)) return;
+
+    const period = parseEmployeeAnalyticsPeriod(req.query.period);
+    const bundle = await loadEmployeeAnalyticsForUser(userId, { period });
+    return res.json(bundle);
+  } catch (err) {
+    logServerError("employeeConnect.getMyEmployeeAnalytics", err);
     if (err instanceof StripeConnectError) {
       return res.status(err.httpStatus).json({ message: err.message, code: err.code });
     }

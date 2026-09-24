@@ -13,6 +13,8 @@ import {
 type OperationalMetricsCardsProps = {
   data: BusinessIntelligenceInput;
   loading: boolean;
+  /** When set, avg-per-shift waits for deferred analytics (shift SQL). */
+  shiftMetricLoading?: boolean;
   refreshing?: boolean;
   refreshingLabel?: string;
 };
@@ -20,12 +22,14 @@ type OperationalMetricsCardsProps = {
 export function OperationalMetricsCards({
   data,
   loading,
+  shiftMetricLoading,
   refreshing = false,
   refreshingLabel,
 }: OperationalMetricsCardsProps) {
   const { t } = useTranslation();
   const ops = useMemo(() => computeOperationalMetrics(data), [data]);
-  const showShift = ops.averageTipsPerShift != null;
+  const showShift = ops.averageTipsPerShift != null || shiftMetricLoading === true;
+  const shiftLoading = shiftMetricLoading === true || (loading && ops.averageTipsPerShift == null);
 
   return (
     <section className="space-y-3">
@@ -59,7 +63,7 @@ export function OperationalMetricsCards({
         />
         {showShift ? (
           <BusinessStatCard
-            loading={loading}
+            loading={shiftLoading}
             refreshing={refreshing}
             refreshingLabel={refreshingLabel}
             label={t("business.team.performance.bi.avgPerShift")}

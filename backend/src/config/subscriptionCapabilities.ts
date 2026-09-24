@@ -118,7 +118,7 @@ export function minimumTierForCapability(capability: SubscriptionCapability): Bu
 /** Basic tier: summary-only stats; premium+ may use analytics/full scopes. */
 export function isStatsScopeAllowedForTier(
   tier: BusinessSubscriptionTier | null,
-  scope: "summary" | "roster" | "analytics" | "full",
+  scope: "summary" | "roster" | "analytics" | "full" | "aboveFold",
 ): boolean {
   if (scope === "summary" || scope === "roster") return true;
   if (!tier) return false;

@@ -1,4 +1,3 @@
-import { Link } from "react-router";
 import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
@@ -41,13 +40,15 @@ export function PricingTierPriceDetails({
     <span key="net">{t("staticPages.pricing.feeDetailNetExclVat")}</span>,
   );
   segments.push(
-    <Link
+    <a
       key="fees"
-      to={CARETIP_LEGAL_LINKS.plv.path}
+      href={CARETIP_LEGAL_LINKS.plv.path}
+      target="_blank"
+      rel="noopener noreferrer"
       className="caretip-pricing-tier-card__fee-note-link"
     >
       {t("staticPages.pricing.feeDetailPlusTransactionFees")}
-    </Link>,
+    </a>,
   );
 
   return (

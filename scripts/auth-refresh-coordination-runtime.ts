@@ -154,10 +154,14 @@ assert(coordinationSrc.includes(WEB_LOCK_NAME), "arch", "CareTip-specific lock n
 assert(!coordinationSrc.includes("if (peerDone?.ok)"), "arch", "peer-success bypass removed");
 assert(!coordinationSrc.includes("LOCK_TTL_MS"), "arch", "20s TTL steal removed");
 assert(coordinationSrc.includes("RefreshCoordinationTimeoutError"), "arch", "coordination timeout error defined");
-assert(apiSrc.includes("coordinateCrossTabRefresh(() => runRefreshAuthWithRetries())"), "arch", "refresh uses coordination");
+assert(
+  apiSrc.includes("coordinateCrossTabRefresh(() => runRefreshAuthWithRetries("),
+  "arch",
+  "refresh uses coordination",
+);
 assert(
   !apiSrc.includes("out = await runRefreshAuthWithRetries();") ||
-    apiSrc.includes("coordinateCrossTabRefresh(() => runRefreshAuthWithRetries())"),
+    apiSrc.includes("coordinateCrossTabRefresh(() => runRefreshAuthWithRetries("),
   "arch",
   "peer retry remains coordinated",
 );

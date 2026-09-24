@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import {
+  clearEmployeeConnectStatusClientCache,
   createEmployeeConnectAccountLink,
   createEmployeeConnectLoginLink,
   getEmployeeConnectStatus,
@@ -79,6 +80,7 @@ export function EmployeePayoutAccountCard(props: {
   useEffect(() => {
     const flag = searchParams.get("payoutConnect");
     if (flag !== "return" && flag !== "refresh") return;
+    clearEmployeeConnectStatusClientCache();
     void reload().then(() => {
       if (flag === "refresh") {
         toast.message(t("employee.payouts.linkExpired"));

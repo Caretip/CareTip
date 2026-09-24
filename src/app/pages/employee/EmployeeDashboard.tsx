@@ -39,10 +39,10 @@ import { EmployeeDashboardRealtimeSync } from "../../components/employee/Employe
 import { getEmployeeProfile, ensureEmployeeSlug, peekEmployeeProfileCache, peekEmployeeProfileSession, clearEmployeeProfileClientCache, type EmployeeSelfAssignment } from "../../lib/api";
 import { writeEmployeeAssignmentSnapshot } from "../../lib/employeePageSessionCache";
 import { useEmployeeDashboardAnalytics } from "../../hooks/useEmployeeDashboardAnalytics";
+import { useEmployeeAccountSummary } from "../../hooks/useEmployeeAccountSummary";
 import { FeatureGate } from "../../components/subscription/FeatureGate";
 import { EmployeeDashboardMetricsGrid } from "../../components/employee/EmployeeDashboardMetricsGrid";
 import { DashboardAnalyticsPeriodToggle } from "../../components/dashboard/DashboardAnalyticsPeriodToggle";
-import { formatEur } from "../../lib/formatEur";
 import { EmployeeStripeConnectPrompt } from "../../components/employee/EmployeeStripeConnectPrompt";
 import { EmployeeQRCodeModal } from "../../components/employee/EmployeeQRCodeModal";
 import employeeHeroWebp from "../../../../images/foremployee.webp";
@@ -52,10 +52,7 @@ import { cn } from "@/lib/utils";
 import { DashboardHero } from "@/components/ui/dashboard-hero";
 import { PremiumPageHero } from "../../components/premium/PremiumPageHero";
 import { Button } from "@/components/ui/button";
-import {
-  DashboardHeroMetricSkeleton,
-} from "../../components/dashboard/DashboardAnalyticsLoader";
-import { CountUpMetric } from "../../components/dashboard/CountUpMetric";
+import { EmployeeHeroFinancialPanel } from "../../components/employee/EmployeeHeroFinancialPanel";
 import { computeEmployeeTipStreakDays } from "../../lib/employeeFormat";
 import { employeeUi } from "../../components/employee/employeeDashboardUi";
 import {
@@ -119,6 +116,7 @@ export const EmployeeDashboard = memo(function EmployeeDashboard() {
     hasMetricsData,
     error: analyticsError,
     refreshQuiet: refreshDashboardQuiet,
+    ensureChartAnalyticsLoaded,
     applyLiveTip,
     dataRevision,
   } = useEmployeeDashboardAnalytics(
@@ -127,6 +125,12 @@ export const EmployeeDashboard = memo(function EmployeeDashboard() {
     sessionValidated,
     advancedAnalyticsEnabled,
   );
+
+  const {
+    displayAccount: heroAccountSnapshot,
+    loading: heroAccountLoading,
+    isRevalidating: heroAccountRefreshing,
+  } = useEmployeeAccountSummary(dashboardDataReady);
 
   const showMetricsLoading = showMetricsSkeleton;
 
@@ -203,7 +207,9 @@ export const EmployeeDashboard = memo(function EmployeeDashboard() {
 
   const heroAccountReady =
     heroPayload != null &&
-    (typeof heroPayload.totalEarningsEur === "number" ||
+    (typeof heroPayload.employeeEarningsEur === "number" ||
+      typeof heroPayload.grossTipsEur === "number" ||
+      typeof heroPayload.totalEarningsEur === "number" ||
       typeof heroPayload.periodAmountEur === "number");
 
   const useDevDemo = shouldUseEmployeeDashboardDevDemo({
@@ -220,18 +226,51 @@ export const EmployeeDashboard = memo(function EmployeeDashboard() {
   const devGoalBundle = useDevDemo ? devMockEmployeeGoalBundle() : null;
   const devPeriodSummary = useDevDemo ? devMockEmployeeSummary(analyticsTimeframe) : null;
 
+  const heroAccountFromSnapshot =
+    heroAccountSnapshot != null &&
+    (typeof heroAccountSnapshot.employeeEarningsEur === "number" ||
+      typeof heroAccountSnapshot.grossTipsEur === "number" ||
+      typeof heroAccountSnapshot.totalEarningsEur === "number");
+
   const displayAccountSummary = useDevDemo
     ? { ...devMockEmployeeAccountSummary(), loaded: true }
-    : heroAccountReady && heroPayload
+    : heroAccountFromSnapshot
       ? {
-          totalEarningsEur: heroPayload.totalEarningsEur ?? heroPayload.periodAmountEur ?? 0,
-          totalSupporters: heroPayload.totalSupporters ?? 0,
+          grossTipsEur:
+            heroAccountSnapshot.grossTipsEur ?? heroAccountSnapshot.totalEarningsEur ?? 0,
+          employeeEarningsEur: heroAccountSnapshot.employeeEarningsEur ?? 0,
+          paidToStripeEur:
+            heroAccountSnapshot.paidToStripeEur ?? heroAccountSnapshot.paidOutEur ?? 0,
+          pendingReleaseEur: heroAccountSnapshot.pendingReleaseEur ?? 0,
+          totalEarningsEur:
+            heroAccountSnapshot.grossTipsEur ?? heroAccountSnapshot.totalEarningsEur ?? 0,
+          totalSupporters: heroAccountSnapshot.totalSupporters ?? 0,
           loaded: true,
         }
-      : { totalEarningsEur: 0, totalSupporters: 0, loaded: false };
+      : heroAccountReady && heroPayload
+        ? {
+            grossTipsEur:
+              heroPayload.grossTipsEur ?? heroPayload.totalEarningsEur ?? 0,
+            employeeEarningsEur: heroPayload.employeeEarningsEur ?? 0,
+            paidToStripeEur: heroPayload.paidToStripeEur ?? heroPayload.paidOutEur ?? 0,
+            pendingReleaseEur: heroPayload.pendingReleaseEur ?? 0,
+            totalEarningsEur:
+              heroPayload.grossTipsEur ?? heroPayload.totalEarningsEur ?? 0,
+            totalSupporters: heroPayload.totalSupporters ?? 0,
+            loaded: true,
+          }
+        : {
+            grossTipsEur: 0,
+            employeeEarningsEur: 0,
+            paidToStripeEur: 0,
+            pendingReleaseEur: 0,
+            totalEarningsEur: 0,
+            totalSupporters: 0,
+            loaded: false,
+          };
 
   const showHeroMetricsLoading =
-    !useDevDemo && !displayAccountSummary.loaded && isMetricsInitialLoad;
+    !useDevDemo && !displayAccountSummary.loaded && heroAccountLoading;
 
   const globalLoaderCoversBoot = useExtendGlobalLoaderUntilReady(
     "employee-dashboard-metrics-boot",
@@ -243,7 +282,7 @@ export const EmployeeDashboard = memo(function EmployeeDashboard() {
   useDashboardRenderProbe("employee:EmployeeDashboard");
   useDashboardPageFullyLoaded(
     "employee",
-    useDevDemo || (displayAccountSummary.loaded && !isMetricsInitialLoad),
+    useDevDemo || (displayAccountSummary.loaded && !heroAccountLoading),
   );
 
   const kpiUsable = useDevDemo || displayAccountSummary.loaded || !showHeroMetricsLoading;
@@ -469,49 +508,21 @@ export const EmployeeDashboard = memo(function EmployeeDashboard() {
                 motionReady ? { duration: 0.4, delay: 0.08, ease: "easeOut" } : { duration: 0 }
               }
             >
-              <dl
-                className={cn(
-                  "employee-hero-account-stats employee-hero-account-stats--open dashboard-swr-swap",
-                  showHeroMetricsSkeleton && "dashboard-hero-account-stats--loading",
-                  analyticsPeriodRefreshing && "dashboard-swr-swap--revalidating",
-                )}
-                aria-label={t("employee.hero.accountOverviewLabel")}
-                aria-busy={showHeroMetricsSkeleton}
-              >
-                <div>
-                  <dt>{t("employee.hero.statTotalEarnings")}</dt>
-                  <dd>
-                    {showHeroMetricsSkeleton ? (
-                      <DashboardHeroMetricSkeleton variant="currency" />
-                    ) : (
-                      <span className="dashboard-hero-metric-value--live">
-                        <CountUpMetric
-                          value={displayAccountSummary.totalEarningsEur}
-                          kind="eur"
-                          format={(n) =>
-                            n < 0.005 ? t("format.metricZeroTips") : formatEur(n)
-                          }
-                        />
-                      </span>
-                    )}
-                  </dd>
-                </div>
-                <div>
-                  <dt>{t("employee.hero.statTotalSupporters")}</dt>
-                  <dd>
-                    {showHeroMetricsSkeleton ? (
-                      <DashboardHeroMetricSkeleton variant="count" />
-                    ) : (
-                      <span className="dashboard-hero-metric-value--live">
-                        <CountUpMetric
-                          value={displayAccountSummary.totalSupporters}
-                          kind="integer"
-                        />
-                      </span>
-                    )}
-                  </dd>
-                </div>
-              </dl>
+              <EmployeeHeroFinancialPanel
+                loading={showHeroMetricsSkeleton}
+                refreshing={heroAccountRefreshing || analyticsPeriodRefreshing}
+                metrics={
+                  displayAccountSummary.loaded
+                    ? {
+                        employeeEarningsEur: displayAccountSummary.employeeEarningsEur,
+                        paidToStripeEur: displayAccountSummary.paidToStripeEur,
+                        pendingReleaseEur: displayAccountSummary.pendingReleaseEur,
+                        grossTipsEur: displayAccountSummary.grossTipsEur,
+                        totalSupporters: displayAccountSummary.totalSupporters,
+                      }
+                    : null
+                }
+              />
               <div className="employee-qr-signature">
                 <div className="employee-qr-signature__copy">
                   <p className="employee-qr-signature__title">{t("employee.hero.qrSignatureTitle")}</p>
@@ -642,6 +653,7 @@ export const EmployeeDashboard = memo(function EmployeeDashboard() {
           <div className="employee-dashboard-charts-band">
           <DashboardChartsIdleMount
             whenVisible
+            onReady={ensureChartAnalyticsLoaded}
             mountSignal={`${analyticsTimeframe}-${dataRevision}`}
             fallback={<EmployeeDashboardEarningsChartFallback />}
           >

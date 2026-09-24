@@ -5,28 +5,28 @@ import { cn } from "@/lib/utils";
 import { MarketingPicture } from "@/lib/marketingPicture";
 import bizzyHeroWebp from "../../../../images/finalbizzy-hero.webp";
 import bizzyHeroAvif from "../../../../images/finalbizzy-hero.avif";
-import {
-  BusinessHeroPulseMetrics,
-  type BusinessHeroOperationalPulse,
-} from "./BusinessHeroPulseMetrics";
+import { BusinessHeroFinancialMetrics } from "./BusinessHeroFinancialMetrics";
+import type { BusinessFinancialSummaryBundle } from "../../lib/api";
 import { BusinessDashboardHeroActions } from "./BusinessDashboardHeroActions";
 import { dashboardFormalGreetingBadgeClassName } from "../../lib/dashboardFormalGreeting";
 
 type BusinessDashboardMobileHeroProps = {
   greetingBadge: string;
   isPreviewMode: boolean;
-  heroPulseLoading: boolean;
-  operationalPulse: BusinessHeroOperationalPulse | null;
-  isPeriodRefreshing: boolean;
+  financialSummary: BusinessFinancialSummaryBundle | null;
+  financialSummaryLedgerLoading: boolean;
+  financialSummaryConnectLoading: boolean;
+  financialSummaryRefreshing: boolean;
   className?: string;
 };
 
 export const BusinessDashboardMobileHero = memo(function BusinessDashboardMobileHero({
   greetingBadge,
   isPreviewMode,
-  heroPulseLoading,
-  operationalPulse,
-  isPeriodRefreshing,
+  financialSummary,
+  financialSummaryLedgerLoading,
+  financialSummaryConnectLoading,
+  financialSummaryRefreshing,
   className,
 }: BusinessDashboardMobileHeroProps) {
   const { t } = useTranslation();
@@ -59,10 +59,11 @@ export const BusinessDashboardMobileHero = memo(function BusinessDashboardMobile
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.35, ease: "easeOut" }}
         >
-          <BusinessHeroPulseMetrics
-            loading={heroPulseLoading}
-            pulse={operationalPulse}
-            isRefreshing={isPeriodRefreshing}
+          <BusinessHeroFinancialMetrics
+            ledgerLoading={financialSummaryLedgerLoading}
+            connectLoading={financialSummaryConnectLoading}
+            summary={financialSummary}
+            isRefreshing={financialSummaryRefreshing}
             className="business-dashboard-mobile-hero__metrics"
           />
           <BusinessDashboardHeroActions

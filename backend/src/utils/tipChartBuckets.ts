@@ -777,7 +777,7 @@ export type BusinessDashboardSqlBundle = {
 };
 
 /** Per-employee tip totals for a business period (simple GROUP BY — pool-safe). */
-async function queryBusinessTipsByEmployee(opts: {
+export async function queryBusinessTipsByEmployee(opts: {
   businessId: string;
   startUtc: Date;
   endUtc: Date;
@@ -966,12 +966,15 @@ export async function queryBusinessDashboardSqlBundle(opts: {
     monthTotalsMs = Math.round(performance.now() - tYear0);
   }
 
+  const tRank0 = performance.now();
   const rankings = await queryTipRankingsByLocationAndTable({
     businessId: opts.businessId,
     startUtc: periodStart,
     endUtc: periodEnd,
   });
+  const locationRankingsMs = Math.round(performance.now() - tRank0);
 
+  const tPrior0 = performance.now();
   const priorPeriod =
     opts.timeframe === "all"
       ? { totalTips: 0, tipCount: 0 }
@@ -980,7 +983,9 @@ export async function queryBusinessDashboardSqlBundle(opts: {
           rangeStart: periodStart,
           rangeEnd: periodEnd,
         });
+  const priorPeriodMs = Math.round(performance.now() - tPrior0);
 
+  const tShift0 = performance.now();
   const shiftRaw = await queryBusinessTipShiftAggregates({
     businessId: opts.businessId,
     startUtc: periodStart,
@@ -992,6 +997,7 @@ export async function queryBusinessDashboardSqlBundle(opts: {
     shiftRaw.completedShifts,
     shiftRaw.tipCountByHour,
   );
+  const shiftAggregatesMs = Math.round(performance.now() - tShift0);
 
   const tSql = Math.round(performance.now() - t0);
   if (shouldLog) {
@@ -1002,6 +1008,9 @@ export async function queryBusinessDashboardSqlBundle(opts: {
         tipsByEmployeeMs,
         dailyBucketsMs,
         monthTotalsMs,
+        locationRankingsMs,
+        priorPeriodMs,
+        shiftAggregatesMs,
         sequentialQueries: 3 + (dailyBucketsMs > 0 || monthTotalsMs > 0 ? 1 : 0),
       },
     );

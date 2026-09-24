@@ -53,6 +53,8 @@ import {
   queryBusinessDashboardMetaAndSummaryMetrics,
   queryBusinessDashboardSqlBundle,
   queryBusinessDashboardSummaryMetrics,
+  queryBusinessTipsByEmployee,
+  queryPriorPeriodTipTotals,
   type BusinessDashboardSqlBundle,
 } from "../utils/tipChartBuckets.js";
 
@@ -483,7 +485,7 @@ async function monthlyTipTotalsForRange(
   return monthTotals;
 }
 
-export type BusinessStatsScope = "summary" | "roster" | "analytics" | "full";
+export type BusinessStatsScope = "summary" | "roster" | "analytics" | "full" | "aboveFold";
 
 /** Full invalidation (roster, employees, goals, all timeframes). */
 export function invalidateBusinessStatsCache(businessId: string): void {
@@ -506,6 +508,7 @@ export function invalidateBusinessStatsTipCaches(businessId: string): void {
   invalidateCacheKeyPrefix(`business-stats:${businessId}:`);
   invalidateCacheKeyPrefix(`business-stats-summary:${businessId}:`);
   invalidateCacheKeyPrefix(`business-stats-analytics:${businessId}:`);
+  invalidateCacheKeyPrefix(`business-stats-aboveFold:${businessId}:`);
 }
 
 function runBusinessDashboardDb<T>(businessId: string, fn: () => Promise<T>): Promise<T> {
@@ -522,6 +525,14 @@ export function getBusinessStats(
     return runSerializedByKey(`biz-stats-summary:${businessId}:${timeframe}`, () =>
       getCachedOrLoad(cacheKey, BUSINESS_STATS_CACHE_TTL_MS, () =>
         getBusinessStatsSummaryImpl(businessId, timeframe),
+      ),
+    ) as Promise<Awaited<ReturnType<typeof getBusinessStatsImpl>>>;
+  }
+  if (scope === "aboveFold") {
+    const cacheKey = `business-stats-aboveFold:${businessId}:${timeframe}`;
+    return runSerializedByKey(`biz-stats-aboveFold:${businessId}:${timeframe}`, () =>
+      getCachedOrLoad(cacheKey, BUSINESS_STATS_CACHE_TTL_MS, () =>
+        getBusinessStatsAboveFoldImpl(businessId, timeframe),
       ),
     ) as Promise<Awaited<ReturnType<typeof getBusinessStatsImpl>>>;
   }
@@ -1191,6 +1202,74 @@ async function getBusinessStatsSummaryImpl(
   return payload;
 }
 
+/**
+ * Above-fold analytics — summary KPIs + prior/growth + per-employee period tips + roster.
+ * Skips chart buckets, rankings, shifts, goals, and ratings (deferred via scope=analytics).
+ */
+async function getBusinessStatsAboveFoldImpl(
+  businessId: string,
+  timeframe: BusinessDashboardTimeframe = "month",
+) {
+  const aboveFoldT0 = performance.now();
+  const { business, roster, tz } = await loadBusinessDashboardContextCached(businessId);
+  const { summary: summaryMetrics } = await loadBusinessSummaryMetricsSliceCached(
+    businessId,
+    timeframe,
+  );
+
+  const now = new Date();
+  const range = businessUtcRangeForTimeframe(timeframe === "all" ? "all" : timeframe, tz);
+  const periodStart = range?.startUtc ?? new Date(0);
+  const periodEnd = range?.endUtc ?? now;
+
+  const [tipsByEmployee, prior, employees] = await Promise.all([
+    logDashboardPhase("business.myStats.aboveFold", "tipsByEmployee", () =>
+      queryBusinessTipsByEmployee({
+        businessId,
+        startUtc: periodStart,
+        endUtc: periodEnd,
+      }),
+    ),
+    timeframe === "all"
+      ? Promise.resolve({ totalTips: 0, tipCount: 0 })
+      : logDashboardPhase("business.myStats.aboveFold", "priorPeriod", () =>
+          queryPriorPeriodTipTotals({
+            businessId,
+            rangeStart: periodStart,
+            rangeEnd: periodEnd,
+          }),
+        ),
+    logDashboardPhase("business.myStats.aboveFold", "employees", () =>
+      loadBusinessAnalyticsEmployeesCached(businessId, false),
+    ),
+  ]);
+
+  const employeeStats = mapEmployeesToStats(employees, tipsByEmployee, new Map());
+  const growthPercent = comparableTipGrowthPercent(summaryMetrics.periodAmount, prior.totalTips);
+
+  const payload = {
+    ...composeBusinessStatsSummaryPayload(business, roster, timeframe, summaryMetrics),
+    employees: employeeStats,
+    priorPeriod: prior,
+    growthPercent,
+  };
+  if (process.env.NODE_ENV !== "production" || process.env.DASHBOARD_TIMING === "1") {
+    console.info(
+      `[dashboard.timing] business.myStats.${timeframe}.aboveFold ${Math.round(performance.now() - aboveFoldT0)}ms`,
+      { businessId },
+    );
+  }
+  logStatsPhase("aboveFold_ok", {
+    businessId,
+    timeframe,
+    totalTips: payload.totalTips,
+    tipCount: payload.tipCount,
+    employeeCount: payload.employeeCount,
+    path: "aboveFoldNarrow",
+  });
+  return payload;
+}
+
 async function getBusinessStatsAnalyticsImpl(
   businessId: string,
   timeframe: BusinessDashboardTimeframe = "month",
@@ -1199,11 +1278,14 @@ async function getBusinessStatsAnalyticsImpl(
   const { bundle, rangeStart, ctx } = await loadBusinessSqlBundleSliceCached(businessId, timeframe);
   logStatsPhase("analytics_start", ctx);
 
+  const deferredT0 = performance.now();
+
   // Table assignments are only needed for staff management views (timeframe=all).
   const { employees, employeeGoals } = await runSerializedByKey(
     `biz-dash-analytics-extras:${businessId}:${timeframe === "all" ? "all" : "charts"}`,
     () => loadBusinessAnalyticsExtras(businessId, { includeAssignments: timeframe === "all" }),
   );
+  const goalsMs = Math.round(performance.now() - deferredT0);
   const dailyTipDistribution = buildChartFromSqlBundle(timeframe, rangeStart, tz, bundle);
   console.info("[SSOT:13.7] business.dailyTipDistribution", {
     businessId,
@@ -1225,7 +1307,13 @@ async function getBusinessStatsAnalyticsImpl(
     todayAmount: bundle.summary.todayAmount,
     todayCount: bundle.summary.todayCount,
   });
-  const ratingsByEmployee = await queryEmployeeRatingAggregates(businessId);
+  const ratingsT0 = performance.now();
+  const ratingsByEmployee = await logDashboardPhase(
+    "business.myStats.analytics",
+    "ratingsSql",
+    () => queryEmployeeRatingAggregates(businessId),
+  );
+  const ratingsMs = Math.round(performance.now() - ratingsT0);
   const employeeStats = mapEmployeesToStats(employees, bundle.tipsByEmployee, ratingsByEmployee);
 
   const goalsTracked = employeeGoals.length;
@@ -1236,6 +1324,19 @@ async function getBusinessStatsAnalyticsImpl(
   const periodTotalTips = bundle.summary.periodAmount;
   const prior = bundle.priorPeriod;
   const growthPercent = comparableTipGrowthPercent(periodTotalTips, prior.totalTips);
+
+  const deferredAnalyticsMs = Math.round(performance.now() - deferredT0);
+  if (process.env.NODE_ENV !== "production" || process.env.DASHBOARD_TIMING === "1") {
+    console.info(
+      `[dashboard.timing] business.myStats.${timeframe}.deferredAnalytics ${deferredAnalyticsMs}ms`,
+      {
+        businessId,
+        goalsMs,
+        ratingsMs,
+        chartPoints: dailyTipDistribution.length,
+      },
+    );
+  }
 
   logStatsPhase("analytics_ok", {
     ...ctx,

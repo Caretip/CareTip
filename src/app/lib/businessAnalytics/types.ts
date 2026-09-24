@@ -24,6 +24,10 @@ export type BusinessAnalyticsBundle = {
   tipsFeedFetched?: boolean;
   /** True after QR analytics was requested for this bundle. */
   qrFetched?: boolean;
+  /** True after scope=aboveFold period stats landed (overview/revenue/ops gate). */
+  aboveFoldFetched?: boolean;
+  /** True after scope=analytics deferred slice landed (charts/rankings/shifts/goals). */
+  deferredAnalyticsFetched?: boolean;
 };
 
 /**
@@ -59,4 +63,8 @@ export type FetchBusinessAnalyticsOptions = {
   includeWeekStats?: boolean;
   /** When false, skips QR analytics fetch. */
   includeQrAnalytics?: boolean;
+  /** When false, skips deferred scope=analytics (charts, rankings, shifts, goals). */
+  includeDeferredAnalytics?: boolean;
+  /** Called as each bundle slice lands so UI can render progressively. */
+  onProgress?: (bundle: BusinessAnalyticsBundle) => void;
 };

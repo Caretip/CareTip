@@ -786,6 +786,7 @@ const routes: RouteObject[] = [
           { index: true, element: <Navigate to="/employee/dashboard" replace /> },
           { path: 'dashboard', lazy: routeLazy(() => import('./pages/employee/EmployeeDashboard'), 'EmployeeDashboard') },
           { path: 'tip-history', lazy: routeLazy(() => import('./pages/employee/EmployeeTipHistoryPage'), 'EmployeeTipHistoryPage') },
+          { path: 'analytics', lazy: routeLazy(() => import('./pages/employee/EmployeeAnalyticsPage'), 'EmployeeAnalyticsPage') },
           { path: 'notifications', element: <Navigate to="/employee/tip-history" replace /> },
           { path: 'transactions', element: <Navigate to="/employee/tip-history" replace /> },
           { path: 'inbox', lazy: routeLazy(() => import('./pages/shared/NotificationInboxPage'), 'NotificationInboxPage') },

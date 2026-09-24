@@ -64,12 +64,54 @@
 /* Open (un-carded) hero earnings + tip count */
 .caretip-dashboard-shell.employee-dashboard .employee-hero-account-stats--open {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: minmax(0, 1fr);
   column-gap: 1.25rem;
-  row-gap: 0;
+  row-gap: 0.85rem;
   margin: 0 0 1rem;
   padding: 0;
   border: 0;
+}
+
+.caretip-dashboard-shell.employee-dashboard .employee-hero-financial-primary {
+  grid-column: 1 / -1;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid hsl(var(--border) / 0.5);
+}
+
+.caretip-dashboard-shell.employee-dashboard .employee-hero-financial-primary dd {
+  font-size: clamp(1.5rem, 4vw, 1.875rem) !important;
+  font-weight: 700 !important;
+  letter-spacing: -0.035em !important;
+}
+
+.caretip-dashboard-shell.employee-dashboard .employee-hero-metrics-support {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.caretip-dashboard-shell.employee-dashboard .employee-hero-metrics-support__row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem 1.25rem;
+}
+
+@media (min-width: 1024px) {
+  .caretip-dashboard-shell.employee-dashboard .employee-hero-account-stats--open {
+    grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+    align-items: start;
+    row-gap: 0;
+  }
+
+  .caretip-dashboard-shell.employee-dashboard .employee-hero-financial-primary {
+    padding-bottom: 0;
+    border-bottom: 0;
+    padding-right: 1.25rem;
+    border-right: 1px solid hsl(var(--border) / 0.5);
+  }
+
+  .caretip-dashboard-shell.employee-dashboard .employee-hero-metrics-support {
+    padding-left: 0.25rem;
+  }
 }
 
 .caretip-dashboard-shell.employee-dashboard .employee-hero-account-stats--open > div {
@@ -590,6 +632,27 @@
   line-height: 1.15;
   font-variant-numeric: tabular-nums;
   color: hsl(var(--foreground));
+}
+
+.caretip-dashboard-shell.business-dashboard .business-hero-financial-primary {
+  grid-column: 1 / -1;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid hsl(var(--border) / 0.5);
+}
+
+.caretip-dashboard-shell.business-dashboard .business-hero-financial-primary dd {
+  font-size: clamp(1.5rem, 4vw, 1.875rem) !important;
+  font-weight: 700 !important;
+  letter-spacing: -0.035em !important;
+}
+
+.caretip-dashboard-shell.business-dashboard .business-hero-pulse-compact {
+  margin-top: 0.5rem;
+  opacity: 0.92;
+}
+
+.caretip-dashboard-shell.business-dashboard .business-hero-pulse-compact > div {
+  padding-top: 0.25rem;
 }
 
 .caretip-dashboard-shell.business-dashboard .business-hero-account-stats--open .business-hero-pulse-subline {

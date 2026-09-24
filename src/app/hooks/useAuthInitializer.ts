@@ -45,6 +45,7 @@ import {
   markClientSessionHint,
   shouldAttemptBootstrapRefresh,
 } from "../lib/authSessionHint";
+import { recordAuthSessionDiagnostic } from "../lib/authSessionDiagnostics";
 
 const USER_STORAGE_KEY = "caretip_user";
 
@@ -92,6 +93,7 @@ function settleTransientBootstrapDegraded(reason: string): SessionBootstrapResul
 
 function forceDefinitiveLogout(reason: string): SessionBootstrapResult {
   authDebug("session_bootstrap", { outcome: reason });
+  recordAuthSessionDiagnostic("AUTH_BOOTSTRAP_REDIRECT_REASON", { reason });
   clearStoredSession();
   markClientSessionRevoked();
   setAuthUser(null);
@@ -256,6 +258,9 @@ export function useAuthInitializer(): void {
 
         if (hadLocalSession) {
           authDebug("session_bootstrap", { outcome: "expired_local_session" });
+          recordAuthSessionDiagnostic("AUTH_BOOTSTRAP_REDIRECT_REASON", {
+            reason: "expired_local_session",
+          });
           clearStoredSession();
           markClientSessionRevoked();
         } else {

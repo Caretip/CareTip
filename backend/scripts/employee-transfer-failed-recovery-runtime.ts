@@ -23,6 +23,7 @@ import {
   employeePayableSummaryForEmployee,
   isRecoverablePlatformHoldPayableStatus,
 } from "../src/services/employeeTipPayable.service.js";
+import { buildEmployeeTipReleaseIdempotencyKey } from "../src/lib/stripeTransferError.js";
 import {
   __setEmployeeTipTransferCreateFnForTests,
   releaseHeldPlatformPayablesForEmployee,
@@ -108,6 +109,7 @@ async function main() {
       businessId: business.id,
     },
   });
+  const failedAt = new Date("2026-09-23T09:17:29.437Z");
   const payable = await prisma.employeeTipPayable.create({
     data: {
       transactionId: tip.id,
@@ -122,6 +124,7 @@ async function main() {
       stripePaymentIntentId: `pi_tf_rec_${suffix}`,
       stripeChargeId: `ch_tf_rec_${suffix}`,
       lastTransferError: "capability_missing",
+      updatedAt: failedAt,
     },
   });
 
@@ -133,7 +136,13 @@ async function main() {
   __setEmployeeTipTransferCreateFnForTests(async (params, options) => {
     attempts += 1;
     assert.equal(params.amount, 5351);
-    assert.equal(options.idempotencyKey, `emp_tip_release:${payable.id}`);
+    assert.equal(
+      options.idempotencyKey,
+      buildEmployeeTipReleaseIdempotencyKey(payable.id, {
+        status: EmployeeTipPayableStatus.transfer_failed,
+        updatedAt: failedAt,
+      }),
+    );
     return { id: `tr_tf_rec_${suffix}`, amount: 5351 };
   });
 
@@ -144,7 +153,7 @@ async function main() {
   assert.equal(after?.stripeTransferId, `tr_tf_rec_${suffix}`);
   assert.equal(after?.transferredCents, 5351);
   assert.equal(attempts, 1);
-  pass("retry-release", "transfer_failed payable retried once with stable idempotency key");
+  pass("retry-release", "transfer_failed payable retried with fresh idempotency key");
 
   const second = await releaseHeldPlatformPayablesForEmployee(employee.id);
   assert.equal(second.released, 0);

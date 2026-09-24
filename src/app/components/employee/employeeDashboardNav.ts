@@ -36,6 +36,7 @@ export const employeeDashboardNavEntries: readonly EmployeeDashboardNavEntry[] =
   { type: "link", labelKey: "dashboardNav.employee.overview", href: EMPLOYEE_DASHBOARD_HOME, icon: "overview" },
   { type: "link", labelKey: "dashboardNav.employee.inbox", href: "/employee/inbox", icon: "inbox" },
   { type: "link", labelKey: "dashboardNav.employee.tipHistory", href: "/employee/tip-history", icon: "transactions" },
+  { type: "link", labelKey: "dashboardNav.employee.analytics", href: "/employee/analytics", icon: "analytics" },
   { type: "link", labelKey: "dashboardNav.employee.assignment", href: "/employee/assignment", icon: "locations" },
   {
     type: "link",

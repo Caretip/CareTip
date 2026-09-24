@@ -3,6 +3,7 @@ import { TrendingDown, TrendingUp } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { caretipType } from "@/lib/typography/caretipType";
 import { dashboardWorkspaceUi } from "./dashboardWorkspaceUi";
+import { DashboardHeroMetricSkeleton } from "./DashboardAnalyticsLoader";
 
 export type DashboardWorkspaceSummaryMetric = {
   label: string;
@@ -19,6 +20,7 @@ export type DashboardWorkspaceSummaryCardProps = {
   footer?: ReactNode;
   className?: string;
   variant?: "banner" | "health";
+  loading?: boolean;
 };
 
 function TrendIcon({ direction }: { direction?: "up" | "down" | "neutral" }) {
@@ -36,6 +38,7 @@ export function DashboardWorkspaceSummaryCard({
   footer,
   className,
   variant = "banner",
+  loading = false,
 }: DashboardWorkspaceSummaryCardProps) {
   return (
     <section
@@ -64,7 +67,9 @@ export function DashboardWorkspaceSummaryCard({
             className="rounded-lg border border-border bg-muted/20 px-3 py-2.5 sm:px-3.5 sm:py-3"
           >
             <p className={cn(caretipType.kpiLabel, "line-clamp-2")}>{metric.label}</p>
-            <div className={cn(caretipType.kpiValue, "mt-1 tabular-nums")}>{metric.value}</div>
+            <div className={cn(caretipType.kpiValue, "mt-1 tabular-nums")}>
+              {loading ? <DashboardHeroMetricSkeleton variant="currency" /> : metric.value}
+            </div>
             {metric.trend ? (
               <p
                 className={cn(

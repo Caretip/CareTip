@@ -22,7 +22,13 @@ export function clearEmployeeAccountSwrStore(): void {
 
 /** Prime hero balances from summary scope (avoids a separate account round-trip). */
 export function primeEmployeeAccountSnapshot(snapshot: EmployeeAccountSnapshot): void {
-  if (typeof snapshot.totalEarningsEur !== "number") return;
+  if (
+    typeof snapshot.employeeEarningsEur !== "number" &&
+    typeof snapshot.grossTipsEur !== "number" &&
+    typeof snapshot.totalEarningsEur !== "number"
+  ) {
+    return;
+  }
   accountSwrStore.set(ACCOUNT_SWR_KEY, snapshot);
 }
 

@@ -18,6 +18,8 @@ import {
   createInstantPayoutForBusiness,
   getInstantPayoutEligibilityForBusiness,
 } from "../services/stripeConnectInstantPayout.service.js";
+import { loadBusinessFinancialSummaryForBusiness } from "../services/businessFinancialSummary.service.js";
+import type { BusinessTimeframe } from "../utils/businessTime.js";
 import { parseBoundedSkip } from "../utils/paginationLimits.js";
 import { clientSafeMessage, CLIENT_FALLBACK, logServerError } from "../utils/httpErrors.js";
 import {
@@ -198,6 +200,41 @@ export async function listMyConnectPayouts(req: Request, res: Response) {
     return res.json(result);
   } catch (err) {
     logServerError("connect.listMyConnectPayouts", err);
+    return res.status(400).json({ message: connectClientMessage(err) });
+  }
+}
+
+function parseBusinessFinancialPeriod(raw: unknown): BusinessTimeframe {
+  const p = typeof raw === "string" ? raw.trim() : "";
+  if (p === "today" || p === "week" || p === "month" || p === "year" || p === "all") return p;
+  return "all";
+}
+
+/**
+ * GET /api/me/connect/financial-summary
+ * CareTip ledger + read-only Stripe balance/payout summary for the JWT business.
+ */
+export async function getMyBusinessFinancialSummary(req: Request, res: Response) {
+  try {
+    const ctx = await resolveManagerBusiness(req);
+    if (!ctx.ok) return res.status(ctx.status).json({ message: ctx.message });
+    if (rejectClientConnectSteering(req, res)) return;
+
+    const period = parseBusinessFinancialPeriod(req.query.period);
+    const sectionRaw = typeof req.query.section === "string" ? req.query.section.trim() : "";
+    const section =
+      sectionRaw === "ledger" || sectionRaw === "connect" || sectionRaw === "reconciliation"
+        ? sectionRaw
+        : undefined;
+    const includeReconciliation = req.query.includeReconciliation === "true";
+    const bundle = await loadBusinessFinancialSummaryForBusiness(ctx.businessId, {
+      period,
+      section,
+      includeReconciliation,
+    });
+    return res.json(bundle);
+  } catch (err) {
+    logServerError("connect.getMyBusinessFinancialSummary", err);
     return res.status(400).json({ message: connectClientMessage(err) });
   }
 }

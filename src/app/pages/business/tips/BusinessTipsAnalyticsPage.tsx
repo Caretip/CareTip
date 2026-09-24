@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { markAnalyticsPerformance } from "../../../lib/businessAnalytics/analyticsPerformanceMarks";
 import { useRequireAuth } from "../../../hooks/useRequireAuth";
 import { useBusinessEntitlementsContext } from "../../../contexts/BusinessEntitlementsContext";
 import { useSubscriptionEntitlements } from "../../../hooks/useSubscriptionEntitlements";
@@ -26,15 +27,15 @@ export function BusinessTipsAnalyticsPage() {
     (ready && hasFeature("advancedAnalytics")) ||
     (isEntitlementsSessionPrimed() && sessionHasFeature("advancedAnalytics"));
 
-  const data = useBusinessIntelligenceData(
-    Boolean(sessionValidated && user?.role === "business" && analyticsAllowed),
-    true,
-    revenueTimeframe,
-  );
+  const analyticsEnabled = Boolean(sessionValidated && user?.role === "business" && analyticsAllowed);
+
+  const data = useBusinessIntelligenceData(analyticsEnabled, true, revenueTimeframe);
+
+  const financialSummaryEnabled = analyticsEnabled;
 
   const { showInitialSkeleton } = useBusinessPageBoot(
     "tips-analytics",
-    data.isInitialAnalyticsLoading,
+    data.isPeriodStatsLoading ?? data.isInitialAnalyticsLoading,
   );
 
   const handleRevenueTimeframeChange = (timeframe: AnalyticsTimeframe) => {
@@ -42,13 +43,19 @@ export function BusinessTipsAnalyticsPage() {
     setQrTimeframe(timeframe);
   };
 
+  useEffect(() => {
+    if (analyticsEnabled) markAnalyticsPerformance("analytics.route.mount");
+  }, [analyticsEnabled]);
+
   return (
     <div className="space-y-6 pt-6">
       <BusinessAnalyticsReporting
         data={{
           ...data,
           isInitialAnalyticsLoading: showInitialSkeleton,
+          isPeriodStatsLoading: showInitialSkeleton || (data.isPeriodStatsLoading ?? false),
         }}
+        financialSummaryEnabled={financialSummaryEnabled}
         revenueTimeframe={revenueTimeframe}
         onRevenueTimeframeChange={handleRevenueTimeframeChange}
         qrTimeframe={qrTimeframe}

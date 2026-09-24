@@ -1,5 +1,4 @@
 import { Trans, useTranslation } from "react-i18next";
-import { Link } from "react-router";
 import { cn } from "@/lib/utils";
 import { CARETIP_LEGAL_LINKS } from "@/app/lib/caretipLegalLinks";
 
@@ -17,8 +16,10 @@ export function PricingGridLegalNote({ className }: PricingGridLegalNoteProps) {
         i18nKey="staticPages.pricing.gridLegalNote"
         components={{
           plv: (
-            <Link
-              to={CARETIP_LEGAL_LINKS.plv.path}
+            <a
+              href={CARETIP_LEGAL_LINKS.plv.path}
+              target="_blank"
+              rel="noopener noreferrer"
               className="caretip-pricing-grid-legal-note__link"
             />
           ),

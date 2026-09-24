@@ -92,6 +92,23 @@ async function loadEmployeeStripeAccount(employeeId: string) {
   });
 }
 
+export async function getEmployeeInstantPayoutEligibilityForStripeAccount(
+  employeeId: string,
+  account: { stripeAccountId: string; stripePayoutsEnabled: boolean },
+): Promise<EmployeeInstantPayoutEligibilityDto> {
+  if (!account.stripeAccountId.startsWith("acct_")) {
+    return emptyEmployeeEligibility("not_connected");
+  }
+
+  const snap = await evaluateInstantPayoutForStripeAccount({
+    stripeAccountId: account.stripeAccountId,
+    payoutsEnabledFallback: account.stripePayoutsEnabled,
+    minNetCents: EMPLOYEE_INSTANT_PAYOUT_MIN_CENTS,
+    logContext: { employeeId },
+  });
+  return withEmployeeMin(toPublicInstantEligibility(snap), snap.currency);
+}
+
 export async function getEmployeeInstantPayoutEligibilityForUser(
   userId: string,
 ): Promise<EmployeeInstantPayoutEligibilityDto> {
@@ -101,13 +118,7 @@ export async function getEmployeeInstantPayoutEligibilityForUser(
     return emptyEmployeeEligibility("not_connected");
   }
 
-  const snap = await evaluateInstantPayoutForStripeAccount({
-    stripeAccountId: account.stripeAccountId,
-    payoutsEnabledFallback: account.stripePayoutsEnabled,
-    minNetCents: EMPLOYEE_INSTANT_PAYOUT_MIN_CENTS,
-    logContext: { employeeId: actor.employeeId },
-  });
-  return withEmployeeMin(toPublicInstantEligibility(snap), snap.currency);
+  return getEmployeeInstantPayoutEligibilityForStripeAccount(actor.employeeId, account);
 }
 
 function toDto(row: {
