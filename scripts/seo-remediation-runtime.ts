@@ -54,7 +54,7 @@ function run() {
     landing: { showcase: { platformLead: string } };
   };
   assert.match(en.seo.pages.home.title, /digital tipping platform/i);
-  assert.match(en.landing.showcase.platformLead, /digital tipping platform/i);
+  assert.match(en.landing.showcase.platformLead, /QR code tips/i);
 
   const dashboard = matchSeoRoute("/dashboard/settings");
   assert.equal(dashboard.indexable, false);

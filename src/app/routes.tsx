@@ -699,11 +699,6 @@ const routes: RouteObject[] = [
     errorElement: <ErrorBoundary />,
   },
   {
-    path: '/how-it-works',
-    lazy: routeLazy(() => import('./pages/HowItWorksPage'), 'HowItWorksPage'),
-    errorElement: <ErrorBoundary />,
-  },
-  {
     path: '/hero-demo',
     lazy: routeLazyDefault(() => import('./pages/HeroSectionDemoPage')),
     errorElement: <ErrorBoundary />,

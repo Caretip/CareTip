@@ -9,6 +9,8 @@ export const publicPageUi = {
   shell: "relative z-10 min-w-0",
   main:
     "mx-auto w-full min-w-0 max-w-[100rem] px-4 pb-16 pt-[calc(4.75rem+env(safe-area-inset-top,0px))] sm:px-6 sm:pb-20 lg:px-8 lg:pb-24 lg:pt-[calc(5.25rem+env(safe-area-inset-top,0px))]",
+  /** Full-bleed marketing pages manage their own 72rem content rails. */
+  mainFlushX: "caretip-public-main--flush-x",
   backLink:
     "caretip-public-back-link group inline-flex w-fit cursor-pointer items-center gap-2 rounded-md py-0.5 text-sm font-semibold text-muted-foreground underline-offset-[0.2em] transition-[color,transform] duration-200 ease-out hover:-translate-x-0.5 hover:text-foreground hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 focus-visible:ring-offset-2 focus-visible:ring-offset-background",
   header: "caretip-public-page-header space-y-5 sm:space-y-6",

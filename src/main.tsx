@@ -70,7 +70,6 @@ function scheduleHeroDisplayFont(): void {
     p === "/" ||
     p === "/pricing" ||
     p === "/features" ||
-    p === "/how-it-works" ||
     p === "/contact" ||
     p === "/faq" ||
     p === "/terms" ||
@@ -105,10 +104,6 @@ function prefetchPublicEntryGraph(): void {
   }
   if (p === "/features") {
     void import("./app/pages/FeaturesPage");
-    return;
-  }
-  if (p === "/how-it-works") {
-    void import("./app/pages/HowItWorksPage");
   }
 }
 prefetchPublicEntryGraph();

@@ -4,7 +4,6 @@ type RouteImporter = () => Promise<unknown>;
 
 const PUBLIC_ROUTE_IMPORTERS: Record<string, RouteImporter> = {
   "/": () => import("../pages/LandingPage"),
-  "/how-it-works": () => import("../pages/HowItWorksPage"),
   "/features": () => import("../pages/FeaturesPage"),
   "/about": () => import("../pages/AboutPage"),
   "/pricing": () => import("../pages/PricingPage"),

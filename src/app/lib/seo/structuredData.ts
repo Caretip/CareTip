@@ -1,4 +1,5 @@
 import type { TFunction } from "i18next";
+import { collectCareTipOrganizationSameAs } from "@/app/lib/caretipSocialLinks";
 import { getAppPublicBaseUrl } from "@/app/lib/appPublicUrl";
 import type { SeoRouteMatch } from "./seoRoutes";
 
@@ -16,13 +17,18 @@ function absoluteUrl(path: string): string {
 
 export function buildOrganizationJsonLd(): Record<string, unknown> {
   const origin = siteOrigin();
-  return {
+  const sameAs = collectCareTipOrganizationSameAs();
+  const org: Record<string, unknown> = {
     "@context": "https://schema.org",
     "@type": "Organization",
     name: "CareTip",
     url: origin,
     logo: absoluteUrl(ORG_LOGO),
   };
+  if (sameAs.length > 0) {
+    org.sameAs = sameAs;
+  }
+  return org;
 }
 
 export function buildSoftwareApplicationJsonLd(t: TFunction): Record<string, unknown> {

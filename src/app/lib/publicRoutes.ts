@@ -22,7 +22,6 @@ const PUBLIC_MARKETING_EXACT = new Set([
   "/help",
   "/blog",
   "/careers",
-  "/how-it-works",
   "/mobile-app",
   "/join",
   "/join/signup",

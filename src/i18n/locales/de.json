@@ -998,6 +998,9 @@
       "s7Body": "Inhaber, Stations- und Teamleiter überblicken die Trinkgelder ganz einfach nach Standort, Schicht oder Bereich. Übersichtliche Analytics-Widgets, Einblicke in besondere Team-Leistungen und Live-Aktivitäts-Feeds sorgen dafür, dass die Teams vor Ort und die Verwaltung stets optimal aufeinander abgestimmt sind.",
       "s8Title": "Auszahlungen verfolgen und steuern",
       "s8Body": "Jedes Trinkgeld wird in CareTip mit klaren Belegen erfasst. Berechtigte Betriebe können eine Sofortauszahlung aus verfügbaren Einnahmen anfordern. Die interne Trinkgeldverteilung bleibt in Ihrem Rhythmus; CareTip hält die Übersicht transparent.",
+      "s8IndustryLinksLead": "So nutzen Gastgewerbe-Teams CareTip:",
+      "linkRestaurantTipping": "Digitales Trinkgeld für Restaurants",
+      "linkHotelTipping": "Digitales Trinkgeld für Hotels",
       "s9Title": "Messbares Wachstum",
       "s9Body": "Höhere Trinkgeldbeteiligung, zufriedenere Teams und eine stärkere Kundenbindung verstärken sich im Laufe der Zeit gegenseitig. CareTip hilft Ihnen dabei, das Engagement zu messen und positive Entwicklungen an jedem einzelnen Standort oder in jedem Team zu feiern.",
       "trustTitle": "Voller Überblick und transparente Trinkgeld-Verwaltung für jedes Team",
@@ -2866,8 +2869,8 @@
     "showcase": {
       "tagline": "Verdienen. Servieren. Lächeln.",
       "title": "In Sekunden tippen. Hervorragenden Service sofort belohnen.",
-      "description": "Trinkgeld per QR-Code, schnell, kontaktlos und steuerfrei.",
-      "descriptionMobile": "Schnelle QR-Trinkgelder.\nKontaktlos. Steuerfrei.",
+      "description": "",
+      "descriptionMobile": "Trinkgeld per QR-Code, schnell, kontaktlos und steuerfrei.",
       "heroBenefits": [
         "Trinkgeld per QR-Code",
         "schnell",
@@ -2989,7 +2992,7 @@
           "Keine Einrichtungsgebühr"
         ]
       },
-      "platformLead": "CareTip ist die digitale Trinkgeld-Plattform für Service-Teams — QR-Trinkgeld, Mitarbeiter-Verwaltung und sichere Auszahlungen."
+      "platformLead": "Trinkgeld per QR-Code, schnell, kontaktlos und steuerfrei."
     },
     "simpleSetup": {
       "pill": "Einrichtung in Minuten",
@@ -3405,7 +3408,8 @@
       "i3Text": "Die Performance von Schicht, Rolle und jedem Standort auf einen Blick entschlüsselt.",
       "i3Tag": "Business-Analysen",
       "i4Title": "Exportbereit",
-      "i4Text": "Finanzamtskonforme Daten auf Knopfdruck, genau dann, wenn deine Buchhaltung sie braucht.",
+      "i4Text": "Lückenloser Nachweis jedes Trinkgelds. Sieh, wie digitale Trinkgelder erfasst werden und dein Team nach deinem festgelegten Ablauf erreichen.",
+      "howItWorksLink": "Erfahren Sie, wie digitales Trinkgeld funktioniert",
       "i4Tag": "Lückenloser Trinkgeld-Verlauf",
       "i5Title": "Sofortauszahlungen",
       "i5Text": "Berechtigte Betriebe können Sofortauszahlungen aus verfügbaren Einnahmen anfordern, wenn sie sie brauchen.",

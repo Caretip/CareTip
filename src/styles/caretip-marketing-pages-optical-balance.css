@@ -215,3 +215,198 @@
   padding-block-start: clamp(2.5rem, 5vw, 3.75rem);
   padding-block-end: clamp(3.5rem, 7vw, 5rem);
 }
+
+/* =============================================================================
+   7. Shared marketing shell — single content rail (no double horizontal pad)
+   ============================================================================= */
+
+.caretip-public-main--flush-x {
+  padding-inline: 0;
+}
+
+/* Contact is full-width without a page __inner — restore the shared rail inset */
+.caretip-contact-page {
+  padding-inline: clamp(1.25rem, 4vw, 2.5rem);
+}
+
+/* =============================================================================
+   8. Features — align hero rhythm with FAQ/Pricing; one horizontal rail
+   ============================================================================= */
+
+.caretip-features-page .caretip-landing-features-section {
+  padding-inline: 0;
+  padding-top: clamp(1rem, 2.5vw, 1.75rem);
+  padding-bottom: clamp(2.75rem, 6vw, 4.25rem);
+}
+
+.caretip-features-page .caretip-features-optical-rail {
+  padding-inline: clamp(1.25rem, 4vw, 2.5rem);
+}
+
+.caretip-features-page .caretip-section-intro {
+  margin-bottom: clamp(2rem, 4vw, 2.75rem);
+}
+
+.caretip-features-page .caretip-landing-features-grid {
+  margin-inline: auto;
+  max-width: min(100%, 64rem);
+}
+
+/* =============================================================================
+   9. Industry pages — hero + benefits optical balance
+   ============================================================================= */
+
+@media (max-width: 959px) {
+  .caretip-industry-page__hero-copy {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+
+  .caretip-industry-page__headline {
+    max-width: none;
+    text-wrap: balance;
+  }
+
+  .caretip-industry-page__subhead {
+    margin-inline: auto;
+  }
+
+  .caretip-industry-page__cta {
+    margin-inline: auto;
+  }
+
+  .caretip-industry-page__benefits-grid {
+    gap: clamp(2rem, 5vw, 2.75rem);
+  }
+
+  .caretip-industry-page__benefits-copy {
+    text-align: center;
+  }
+
+  .caretip-industry-page__benefits-list {
+    text-align: left;
+  }
+}
+
+@media (min-width: 640px) and (max-width: 959px) {
+  .caretip-industry-page__benefits-grid {
+    grid-template-columns: 1fr;
+    justify-items: center;
+  }
+
+  .caretip-industry-page__benefits-media {
+    order: -1;
+    width: min(100%, 22rem);
+  }
+}
+
+.caretip-industry-page__final-cta-actions {
+  align-items: stretch;
+}
+
+@media (min-width: 640px) {
+  .caretip-industry-page__final-cta-actions {
+    align-items: center;
+  }
+}
+
+/* =============================================================================
+   10. Wise closing CTA bands — consistent end rhythm + single-button centering
+   ============================================================================= */
+
+.caretip-features-cta-wise,
+.caretip-about-cta-wise,
+.caretip-pricing-cta-wise,
+.caretip-faq-cta-wise {
+  padding-block-end: clamp(2.5rem, 6vw, 4rem);
+}
+
+.caretip-features-cta-wise__actions:has(:only-child),
+.caretip-about-cta-wise__actions:has(:only-child),
+.caretip-pricing-cta-wise__actions:has(:only-child),
+.caretip-faq-cta-wise__actions:has(:only-child) {
+  justify-content: center;
+}
+
+.caretip-features-cta-wise__actions:has(:only-child) > a,
+.caretip-about-cta-wise__actions:has(:only-child) > a,
+.caretip-pricing-cta-wise__actions:has(:only-child) > a,
+.caretip-faq-cta-wise__actions:has(:only-child) > a {
+  width: 100%;
+  max-width: min(100%, 18rem);
+}
+
+@media (min-width: 640px) {
+  .caretip-features-cta-wise__actions:has(:only-child) > a,
+  .caretip-about-cta-wise__actions:has(:only-child) > a,
+  .caretip-pricing-cta-wise__actions:has(:only-child) > a,
+  .caretip-faq-cta-wise__actions:has(:only-child) > a {
+    width: auto;
+    max-width: none;
+  }
+}
+
+/* =============================================================================
+   11. About — calmer hero entry + story section measure
+   ============================================================================= */
+
+.caretip-about-hero-wise {
+  padding-top: clamp(0.5rem, 1.5vw, 1rem);
+}
+
+.caretip-about-split__headline {
+  text-wrap: balance;
+}
+
+.caretip-about-split__prose {
+  max-width: min(100%, 42rem);
+}
+
+/* =============================================================================
+   12. FAQ — content column alignment + search field width
+   ============================================================================= */
+
+.caretip-faq-page .caretip-faq-content__inner {
+  max-width: min(100%, 46rem);
+  margin-inline: auto;
+}
+
+.caretip-faq-page .caretip-faq-search {
+  max-width: min(100%, 36rem);
+  margin-inline: auto;
+}
+
+/* =============================================================================
+   13. Pricing — plan grid card height + hero-to-plans join
+   ============================================================================= */
+
+.caretip-pricing-tiers__grid {
+  align-items: stretch;
+}
+
+.caretip-pricing-tier-card__actions {
+  margin-top: auto;
+  padding-top: 1.25rem;
+}
+
+/* =============================================================================
+   14. Marketing section headings — shared optical measure
+   ============================================================================= */
+
+.caretip-public-marketing-section-title,
+.caretip-industry-page__section-title,
+.caretip-industry-page__benefits-title {
+  text-wrap: balance;
+}
+
+.caretip-industry-page__benefits-title {
+  text-align: center;
+}
+
+@media (min-width: 900px) {
+  .caretip-industry-page__benefits-title {
+    text-align: left;
+  }
+}

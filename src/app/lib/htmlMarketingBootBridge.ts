@@ -34,7 +34,6 @@ const LAZY_PUBLIC_MARKETING_SHELL_EXACT = new Set([
   "/help",
   "/blog",
   "/careers",
-  "/how-it-works",
   "/mobile-app",
 ]);
 

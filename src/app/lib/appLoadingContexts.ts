@@ -138,7 +138,6 @@ export function resolveRouteLoadingMessage(pathname: string, t: TFunction): stri
     p === "/features" ||
     p === "/faq" ||
     p === "/contact" ||
-    p === "/how-it-works" ||
     p === "/mobile-app" ||
     p === "/blog" ||
     p === "/careers" ||

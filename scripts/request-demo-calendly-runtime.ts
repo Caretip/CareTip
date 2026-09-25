@@ -33,7 +33,6 @@ const DEMO_CTA_FILES = [
   "src/app/components/landing/LandingSplitShowcaseSection.tsx",
   "src/app/components/landing/LandingAudienceBenefitsSection.tsx",
   "src/app/pages/PricingPage.tsx",
-  "src/app/pages/HowItWorksPage.tsx",
   "src/app/components/PricingSection.tsx",
   "src/components/pricing/PricingCardsFreelancers.tsx",
 ];
@@ -95,7 +94,6 @@ for (const file of DEMO_CTA_FILES) {
 const marketingScanRoots = [
   "src/app/components/landing",
   "src/app/pages/PricingPage.tsx",
-  "src/app/pages/HowItWorksPage.tsx",
   "src/app/components/Navigation.tsx",
   "src/app/components/PricingSection.tsx",
   "src/components/pricing/PricingCardsFreelancers.tsx",

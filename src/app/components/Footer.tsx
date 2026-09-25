@@ -35,7 +35,6 @@ export const Footer = memo(function Footer({
       product: [
         { name: t("footer.linkFeatures"), to: "/features" },
         { name: t("footer.linkPricing"), to: "/pricing" },
-        { name: t("footer.linkHowItWorks"), to: "/how-it-works" },
       ],
       industries: INDUSTRY_NAV_ITEMS.map((item) => ({
         name: t(item.labelKey),
@@ -43,6 +42,7 @@ export const Footer = memo(function Footer({
       })),
       company: [
         { name: t("footer.linkAbout"), to: "/about" },
+        { name: t("footer.linkFaq"), to: "/faq" },
         { name: t("footer.linkContact"), to: "/contact" },
       ],
       legal: [

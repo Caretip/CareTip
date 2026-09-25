@@ -998,6 +998,9 @@
       "s7Body": "Owners and managers monitor tips by location, shift, and team member. Analytics widgets, top performer cards, and activity feeds keep the floor and back office aligned.",
       "s8Title": "Track & manage payouts",
       "s8Body": "Every tip is recorded in CareTip with clear records for managers and staff. Eligible businesses can request Instant Payouts from available earnings. Internal tip distribution stays on your schedule; CareTip keeps the audit trail transparent.",
+      "s8IndustryLinksLead": "See how CareTip works in hospitality:",
+      "linkRestaurantTipping": "Digital tipping for restaurants",
+      "linkHotelTipping": "Digital tipping for hotels",
       "s9Title": "Measurable growth",
       "s9Body": "Higher tip participation, happier teams, and stronger guest experiences compound over time. CareTip helps you measure engagement and celebrate momentum across every location.",
       "trustTitle": "Trust and speed for every shift",
@@ -2866,7 +2869,7 @@
     "showcase": {
       "tagline": "Earn. Serve. Smile.",
       "title": "Tip in seconds. Reward great service instantly.",
-      "description": "QR code tips, fast, cashless, and tax free.",
+      "description": "",
       "descriptionMobile": "Fast QR code tips.\nCashless. Tax-free.",
       "heroBenefits": [
         "Tips via QR code",
@@ -2989,7 +2992,7 @@
           "No setup fees"
         ]
       },
-      "platformLead": "CareTip is the digital tipping platform for hospitality teams — QR code tipping, employee tip management, and secure payouts."
+      "platformLead": "QR code tips, fast, cashless, and tax free."
     },
     "simpleSetup": {
       "pill": "Setup in minutes",
@@ -3405,7 +3408,8 @@
       "i3Text": "Performance across shifts, roles, and every location you run.",
       "i3Tag": "Shift insights",
       "i4Title": "Tip history",
-      "i4Text": "A clear audit trail when finance needs answers fast.",
+      "i4Text": "A clear audit trail of every tip. See how digital tips are recorded and reach your team on the schedule you configure.",
+      "howItWorksLink": "See how digital tipping works",
       "i4Tag": "Export ready",
       "i5Title": "Instant Payouts",
       "i5Text": "Eligible businesses can request Instant Payouts from available earnings when they need them.",

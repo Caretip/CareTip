@@ -262,7 +262,7 @@ export function IndustryPageTemplate({ industryId }: IndustryPageTemplateProps) 
                 >
                   {t("industries.shared.finalCtaButton")}
                 </Link>
-                <Link to="/pricing" className="caretip-industry-page__final-cta-secondary">
+                <Link to="/pricing" className={publicPagesBrandUi.ctaButtonSecondary}>
                   {t("industries.shared.finalCtaSecondary")}
                 </Link>
               </div>

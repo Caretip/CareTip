@@ -14,6 +14,12 @@ export const publicPagesBrandUi = {
   warmDarkTrustStrip: "caretip-public-warm-dark-trust-strip",
   journeyBand: "caretip-how-journey-band",
   featureCardBrand: "caretip-feature-showcase-card--brand",
-  ctaButtonPrimary: cn(caretipBtnPrimary, "inline-flex w-full justify-center no-underline sm:w-auto sm:min-w-[10rem]"),
-  ctaButtonSecondary: cn(caretipBtnSecondary, "inline-flex w-full justify-center no-underline sm:w-auto sm:min-w-[10rem]"),
+  ctaButtonPrimary: cn(
+    caretipBtnPrimary,
+    "inline-flex w-full justify-center no-underline sm:w-auto sm:min-w-[11rem] lg:min-w-[12rem]",
+  ),
+  ctaButtonSecondary: cn(
+    caretipBtnSecondary,
+    "inline-flex w-full justify-center no-underline sm:w-auto sm:min-w-[11rem] lg:min-w-[12rem]",
+  ),
 } as const;
