@@ -410,3 +410,117 @@
     text-align: left;
   }
 }
+
+/* =============================================================================
+   15. Landing page — visual hierarchy, rhythm, journey + setup scroll (2025-09)
+   ============================================================================= */
+
+/* Guest journey: trust-bridge pacing (after payments, before business setup) */
+@media (max-width: 767px) {
+  .caretip-landing.caretip-landing--premium main > section#guesttippingjourney {
+    padding-top: clamp(2.25rem, 5.5vw, 2.75rem) !important;
+    padding-bottom: clamp(2rem, 4.5vw, 2.5rem) !important;
+  }
+}
+
+@media (min-width: 768px) and (max-width: 1023px) {
+  .caretip-landing.caretip-landing--premium main > section#guesttippingjourney {
+    padding-top: clamp(2.5rem, 4.5vw, 3rem) !important;
+    padding-bottom: clamp(2.25rem, 4vw, 2.75rem) !important;
+  }
+}
+
+@media (min-width: 1024px) {
+  .caretip-landing.caretip-landing--premium main > section#guesttippingjourney {
+    padding-top: clamp(2.75rem, 4vw, 3.5rem) !important;
+    padding-bottom: clamp(2.5rem, 3.5vw, 3.25rem) !important;
+  }
+}
+
+.caretip-landing.caretip-landing--premium #guesttippingjourney .caretip-customerjourney__intro.caretip-section-intro {
+  margin-bottom: clamp(1.5rem, 3vw, 2rem) !important;
+}
+
+.caretip-landing.caretip-landing--premium #guesttippingjourney .caretip-customerjourney__inner {
+  gap: clamp(1.35rem, 2.5vw, 1.85rem);
+}
+
+/* Setup in minutes — shorter chapter + less dead space above device */
+.caretip-landing.caretip-landing--premium #how-it-works.caretip-live-minutes-section {
+  padding-block: clamp(2.75rem, 6vw, 5rem) !important;
+}
+
+@media (min-width: 1024px) {
+  .caretip-landing.caretip-landing--premium #how-it-works .caretip-live-minutes-visual-wrap {
+    padding-top: clamp(1.5rem, 2.5vw, 2.5rem) !important;
+  }
+
+  .caretip-landing.caretip-landing--premium #how-it-works .caretip-live-minutes-intro {
+    margin-bottom: clamp(1.75rem, 2.5vw, 2.25rem) !important;
+  }
+}
+
+/* Audience benefits — slightly calmer vertical reserve vs. actual content */
+@media (max-width: 1023px) {
+  .caretip-landing.caretip-landing--premium main > section#business-section.caretip-audience-benefits {
+    padding-bottom: clamp(2.5rem, 5.5vw, 3.25rem) !important;
+  }
+}
+
+/* Section intro: heading + lead read as one unit (tighter h2 → p on centered sections) */
+.caretip-landing.caretip-landing--premium .caretip-section-intro > h2 + p,
+.caretip-landing.caretip-landing--premium .caretip-section-intro > h2 + ul {
+  margin-top: 0.75rem !important;
+}
+
+/* =============================================================================
+   16. Landing section eyebrows — one system (dot + label, no pill)
+   ============================================================================= */
+
+.caretip-landing .caretip-landing-headline-stack {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: clamp(0.5rem, 1.6vw, 0.75rem);
+  width: 100%;
+}
+
+.caretip-landing .caretip-landing-headline-stack > h2 {
+  margin-top: 0;
+}
+
+.caretip-landing .caretip-live-minutes-intro .caretip-landing-headline-stack,
+.caretip-landing .caretip-motivation-copy .caretip-landing-headline-stack {
+  align-items: flex-start;
+}
+
+@media (max-width: 1023px) {
+  .caretip-landing .caretip-live-minutes-intro .caretip-landing-headline-stack,
+  .caretip-landing .caretip-motivation-copy .caretip-landing-headline-stack {
+    align-items: center;
+  }
+}
+
+.caretip-landing.caretip-landing--premium [data-landing-accent-eyebrow] {
+  padding: 0 !important;
+  border: none !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  gap: 0.5rem;
+}
+
+.caretip-landing.caretip-landing--premium [data-landing-accent-eyebrow] .caretip-landing-accent-text {
+  font-size: 0.75rem;
+  font-weight: 500;
+  letter-spacing: normal;
+  line-height: 1.2;
+  color: hsl(var(--muted-foreground));
+}
+
+.caretip-landing.caretip-landing--premium [data-landing-accent-eyebrow] [data-accent-dot] {
+  width: 0.375rem;
+  height: 0.375rem;
+  background-color: #e9781c;
+  box-shadow: 0 0 0 3px rgb(233 120 28 / 0.16);
+}

@@ -72,22 +72,23 @@ export function SimpleSetupSection() {
           <div
             className={cn(landingUi.copyStack, landingUi.mobileStackIntro, "caretip-live-minutes-intro")}
           >
-            <div className={cn(landingUi.sectionAccentRow, "max-md:flex-col max-md:items-center")}>
+            <div className="caretip-landing-headline-stack max-md:items-center lg:items-start">
               <LandingSectionAccent variant="spark">{t("landing.simpleSetup.pill")}</LandingSectionAccent>
-              {landingCopyVisible(pillSub) ? (
+              <h2 className={landingUi.headline}>
+                <AnimatedHeadingLazy
+                  text={setupHeadline}
+                  highlight={setupHighlight}
+                  highlightClassName="bg-gradient-to-r from-[#ff9e2d] via-[#e9781c] to-[#d96810] bg-clip-text text-transparent"
+                />
+              </h2>
+            </div>
+            {landingCopyVisible(pillSub) ? (
+              <div className={cn(landingUi.sectionAccentRow, "max-md:flex-col max-md:items-center")}>
                 <LandingSectionAccent variant="arrow" muted>
                   {pillSub}
                 </LandingSectionAccent>
-              ) : null}
-            </div>
-
-            <h2 className={landingUi.headline}>
-              <AnimatedHeadingLazy
-                text={setupHeadline}
-                highlight={setupHighlight}
-                highlightClassName="bg-gradient-to-r from-[#ff9e2d] via-[#e9781c] to-[#d96810] bg-clip-text text-transparent"
-              />
-            </h2>
+              </div>
+            ) : null}
             {landingCopyVisible(sectionSubtitle) ? (
               <p className={cn(landingUi.subtitle, "max-md:max-w-[min(100%,34ch)]")}>{sectionSubtitle}</p>
             ) : null}

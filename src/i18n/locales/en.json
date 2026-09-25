@@ -3478,6 +3478,34 @@
       "b4Title": "Maximum data security",
       "b4Text": "Sensitive card data stays with Stripe. CareTip never stores card numbers or CVV codes."
     },
+    "customerJourney": {
+      "eyebrow": "Guest experience",
+      "title": "From scan to <hl>thank you</hl> in moments",
+      "subtitle": "No app download for guests. Just QR code tipping on the phone they already have.",
+      "stepsAria": "Guest tipping steps",
+      "steps": {
+        "scan": {
+          "title": "Scan",
+          "body": "Guests scan your CareTip QR code at the table, counter, or receipt to open the tipping flow.",
+          "imageAlt": "CareTip guest tipping screen showing team member Maria Testerin on a phone"
+        },
+        "choose": {
+          "title": "Choose",
+          "body": "They pick the team member to thank when your location uses individual tipping, or continue for a shared tip.",
+          "imageAlt": "CareTip team member selection screen on a phone"
+        },
+        "pay": {
+          "title": "Tip & pay",
+          "body": "They select a tip amount and continue to secure checkout with Stripe: card, Apple Pay, or Google Pay.",
+          "imageAlt": "CareTip tip amount selection screen before payment"
+        },
+        "team": {
+          "title": "Team receives it",
+          "body": "The tip is recorded in CareTip and allocated according to your business rules, whether direct to staff or pooled for the team.",
+          "imageAlt": "CareTip confirmation screen after a successful digital tip"
+        }
+      }
+    },
     "socialProof": {
       "title": "Trusted by teams on the floor",
       "subtitle": "Hospitality leaders who wanted less friction and more clarity at closeout.",

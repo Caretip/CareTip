@@ -136,8 +136,8 @@ export function LandingLazySection<P extends object>({
     return () => observer.disconnect();
   }, [eager, rootMargin]);
 
-  const reserveHeight = Boolean(minHeight && !resolved);
-  const heightStyle = reserveHeight ? { minHeight } : undefined;
+  /** Keep reserving space after mount when estimate differs from final height (limits CLS). */
+  const heightStyle = minHeight ? { minHeight } : undefined;
 
   return (
     <div

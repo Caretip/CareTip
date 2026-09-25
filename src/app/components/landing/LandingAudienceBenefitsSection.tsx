@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, type ImgHTMLAttributes, type ReactNode } from "react";
 import { useTranslation, Trans } from "react-i18next";
-import { Check, LayoutDashboard, Smartphone } from "lucide-react";
+import { LayoutDashboard, Smartphone } from "lucide-react";
+import { LandingBenefitCheckMark } from "@/components/landing/LandingCheckBadge";
 import { PrefetchLink } from "@/app/components/PrefetchLink";
 import { RequestDemoCta } from "@/app/components/RequestDemoCta";
 import { LandingReveal } from "@/components/landing/LandingReveal";
@@ -39,9 +40,7 @@ function BenefitPointsList({ points, className }: { points: BenefitPoint[]; clas
     <ul className={cn("caretip-audience-benefits__points", className)}>
       {points.map((point) => (
         <li key={point.title} className="caretip-audience-benefits__point">
-          <span className="caretip-audience-benefits__check caretip-feature-check" aria-hidden>
-            <Check strokeWidth={2.75} />
-          </span>
+          <LandingBenefitCheckMark className="caretip-audience-benefits__check" />
           <div className="caretip-audience-benefits__point-copy">
             <p className="caretip-audience-benefits__point-title">{point.title}</p>
             <p className="caretip-audience-benefits__point-body">{point.body}</p>
@@ -195,7 +194,7 @@ export function LandingAudienceBenefitsSection() {
               "caretip-audience-benefits__header mb-0",
             )}
           >
-            <div className="caretip-audience-benefits__headline-stack">
+            <div className="caretip-landing-headline-stack caretip-audience-benefits__headline-stack">
               <LandingSectionAccent variant="spark" className="mx-auto">
                 {t(`${prefix}.eyebrow`)}
               </LandingSectionAccent>

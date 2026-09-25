@@ -33,20 +33,18 @@ export function LandingIndustriesTeaserSection() {
       <div className={cn(INDUSTRIES_FRAME, "caretip-industries-teaser__frame")}>
         <LandingReveal>
           <header className="caretip-industries-teaser__overview-header">
-            <div className="caretip-industries-teaser__overview-top">
-              <div className={cn(landingUi.sectionAccentRow, "justify-center lg:justify-center")}>
-                <LandingSectionAccent variant="spark" className="mx-auto lg:mx-auto">
-                  {t(`${prefix}.eyebrow`)}
-                </LandingSectionAccent>
-              </div>
+            <div className="caretip-landing-headline-stack caretip-industries-teaser__headline-stack">
+              <LandingSectionAccent variant="spark" className="mx-auto">
+                {t(`${prefix}.eyebrow`)}
+              </LandingSectionAccent>
+              <h2 id="industries-overview-heading" className={landingUi.sectionTitle}>
+                <AnimatedHeadingLazy
+                  text={overviewHeadline}
+                  highlight={overviewHighlight}
+                  highlightClassName="bg-gradient-to-r from-[#ff9e2d] via-[#e9781c] to-[#d96810] bg-clip-text text-transparent"
+                />
+              </h2>
             </div>
-            <h2 id="industries-overview-heading" className={landingUi.sectionTitle}>
-              <AnimatedHeadingLazy
-                text={overviewHeadline}
-                highlight={overviewHighlight}
-                highlightClassName="bg-gradient-to-r from-[#ff9e2d] via-[#e9781c] to-[#d96810] bg-clip-text text-transparent"
-              />
-            </h2>
             <p className={cn(landingUi.sectionSubtitle, "caretip-industries-teaser__sub")}>
               {t(`${prefix}.overviewSubheadline`)}
             </p>

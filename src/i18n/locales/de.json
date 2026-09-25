@@ -3478,6 +3478,34 @@
       "b4Title": "Maximale Datensicherheit",
       "b4Text": "Sensible Daten bleiben genau da, wo sie hingehören: bei Stripe. CareTip speichert keine Kartennummern oder CVV-Codes."
     },
+    "customerJourney": {
+      "eyebrow": "Gäste Erlebnis",
+      "title": "Vom Scan bis zum <hl>Danke</hl> in wenigen Augenblicken",
+      "subtitle": "Keine App für Gäste. Trinkgeld per QR Code auf dem Smartphone, das sie bereits dabei haben.",
+      "stepsAria": "Schritte für Gäste beim Trinkgeldgeben",
+      "steps": {
+        "scan": {
+          "title": "Scannen",
+          "body": "Gäste scannen Ihren CareTip QR Code am Tisch, an der Theke oder auf dem Bon, um den Trinkgeld Flow zu starten.",
+          "imageAlt": "CareTip Trinkgeld Bildschirm mit Teammitglied Maria Testerin auf dem Smartphone"
+        },
+        "choose": {
+          "title": "Auswählen",
+          "body": "Sie wählen das Teammitglied, das sie bedanken möchten, oder fahren fort, wenn Trinkgeld für das ganze Team gedacht ist.",
+          "imageAlt": "CareTip Bildschirm zur Auswahl eines Teammitglieds auf dem Smartphone"
+        },
+        "pay": {
+          "title": "Trinkgeld & Zahlung",
+          "body": "Sie wählen einen Betrag und zahlen sicher über Stripe: Karte, Apple Pay oder Google Pay.",
+          "imageAlt": "CareTip Bildschirm zur Auswahl des Trinkgeldbetrags vor der Zahlung"
+        },
+        "team": {
+          "title": "Team erhält es",
+          "body": "Das Trinkgeld wird in CareTip erfasst und nach Ihrer Betriebslogik verteilt, direkt an Mitarbeitende oder im Team Topf.",
+          "imageAlt": "CareTip Bestätigungsbildschirm nach erfolgreichem digitalem Trinkgeld"
+        }
+      }
+    },
     "socialProof": {
       "title": "Vertraut von Teams am Gastronomie-Front",
       "subtitle": "Hospitality-Verantwortliche, die weniger Reibung und mehr Klarheit beim Abschluss wollten.",

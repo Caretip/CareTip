@@ -9,9 +9,10 @@ export const SHOW_LANDING_SOCIAL_PROOF = false;
 /** Approximate section heights — reserve space before lazy sections mount (CLS guard). */
 const LAZY_SECTION_MIN_HEIGHT = {
   industriesTeaser: "var(--caretip-lazy-industries-h, 68rem)",
-  audienceBenefits: "52rem",
-  payments: "16rem",
-  liveMinutes: "48rem",
+  audienceBenefits: "48rem",
+  payments: "14rem",
+  liveMinutes: "40rem",
+  customerJourney: "52rem",
   socialProof: "36rem",
   finalCta: "22rem",
   splitShowcase: "44rem",
@@ -31,6 +32,19 @@ const loadPaymentsSection = () =>
   import("../components/landing/PaymentsSection").then((mod) => ({
     default: mod.PaymentsSection,
   }));
+
+const loadLandingCustomerJourneySection = () =>
+  import("../components/landing/LandingCustomerJourneySection").then((mod) => ({
+    default: mod.LandingCustomerJourneySection,
+  }));
+
+function prefetchLandingCustomerJourneySection(): void {
+  void loadLandingCustomerJourneySection().then(() => {
+    void import("../components/landing/warmLandingCustomerJourneyAssets").then((mod) => {
+      mod.warmLandingCustomerJourneyImages("low");
+    });
+  });
+}
 
 const loadSimpleSetupSection = () =>
   import("../components/landing/SimpleSetupSection").then((mod) => ({
@@ -68,6 +82,7 @@ export function prefetchLandingBelowFoldSections(): void {
     });
   });
   void loadLandingAudienceBenefitsSection();
+  prefetchLandingCustomerJourneySection();
   void loadPaymentsSection();
   void loadSimpleSetupSection();
   void loadLandingMotivationSection();
@@ -94,6 +109,13 @@ export function LandingPageBelowFold() {
         load={loadLandingAudienceBenefitsSection}
         minHeight={LAZY_SECTION_MIN_HEIGHT.audienceBenefits}
         eager
+        prefetch
+      />
+
+      <LandingLazySection
+        load={loadLandingCustomerJourneySection}
+        minHeight={LAZY_SECTION_MIN_HEIGHT.customerJourney}
+        rootMargin={LANDING_NEAR_VIEWPORT_ROOT_MARGIN}
         prefetch
       />
 

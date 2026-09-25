@@ -38,18 +38,17 @@ export function LandingMotivationSection() {
               "caretip-motivation-copy",
             )}
           >
-            {landingCopyVisible(t("landing.motivation.pill")) ? (
-              <div className={cn(landingUi.sectionAccentRow, "caretip-motivation-accent-row")}>
+            <div className="caretip-landing-headline-stack max-md:items-center lg:items-start">
+              {landingCopyVisible(t("landing.motivation.pill")) ? (
                 <LandingSectionAccent variant="spark">{t("landing.motivation.pill")}</LandingSectionAccent>
-              </div>
-            ) : null}
-
-            <h2 className={landingUi.headline}>
-              <Trans
-                i18nKey="landing.motivation.title"
-                components={landingHeadlineComponents}
-              />
-            </h2>
+              ) : null}
+              <h2 className={landingUi.headline}>
+                <Trans
+                  i18nKey="landing.motivation.title"
+                  components={landingHeadlineComponents}
+                />
+              </h2>
+            </div>
 
             {landingCopyVisible(subtitle) ? (
               <LandingCopySentences

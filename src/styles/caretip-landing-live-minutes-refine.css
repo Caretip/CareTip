@@ -878,3 +878,45 @@ html.dark .caretip-landing #how-it-works .caretip-live-minutes-step--active {
     --caretip-onboarding-slot-h: clamp(48rem, 80vh, 56rem);
   }
 }
+
+/* Easier page scroll past step buttons + shorter mobile stack */
+.caretip-landing #how-it-works .caretip-process-steps,
+.caretip-landing #how-it-works .caretip-process-step {
+  touch-action: pan-y;
+}
+
+@media (max-width: 1023px) {
+  .caretip-landing #how-it-works.caretip-live-minutes-section {
+    padding-block: clamp(3rem, 7.5vw, 4.25rem);
+  }
+
+  .caretip-landing #how-it-works .caretip-live-minutes-intro {
+    margin-bottom: 1.5rem;
+  }
+
+  .caretip-landing #how-it-works .caretip-mobile-stack-visual {
+    margin-top: 0.25rem;
+  }
+
+  .caretip-landing #how-it-works .caretip-mobile-stack-after {
+    margin-top: 0.5rem;
+  }
+
+  .caretip-landing #how-it-works .caretip-process-step,
+  .caretip-landing.caretip-landing--premium #how-it-works .caretip-process-step {
+    padding-bottom: 0.65rem;
+  }
+
+  .caretip-landing #how-it-works .caretip-process-step__content {
+    padding-top: 0.35rem;
+    padding-bottom: 0.4rem;
+  }
+
+  .caretip-landing #how-it-works .caretip-live-minutes-stage {
+    max-width: min(100%, 16.5rem);
+  }
+
+  .caretip-landing #how-it-works .caretip-live-minutes-journey {
+    max-height: min(38vh, 15.5rem);
+  }
+}
