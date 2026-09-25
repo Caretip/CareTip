@@ -10,6 +10,7 @@ import { wakeRemoteApi, migrateLegacyAccessTokenFromStorage } from "./app/lib/ap
 import { recoverStaleChunkOnce } from "./app/lib/chunkLoadRecovery";
 import { scheduleMobileDeferredWork } from "./lib/mobilePerf";
 import { ensureI18nReady } from "./i18n/i18n";
+import { removeStaticCrawlerSummary } from "./app/lib/seo/documentSeo";
 import "./styles/index.css";
 
 if (typeof window !== "undefined") {
@@ -132,6 +133,7 @@ if (import.meta.env.PROD) {
 
 void ensureI18nReady()
   .then(() => {
+    removeStaticCrawlerSummary();
     createRoot(document.getElementById("root")!).render(
       <GlobalErrorBoundary>
         <App />

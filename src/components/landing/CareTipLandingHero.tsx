@@ -40,6 +40,7 @@ export function CareTipLandingHero({
 
   const heroDescription = t("landing.showcase.description");
   const heroDescriptionMobile = t("landing.showcase.descriptionMobile");
+  const platformLead = t("landing.showcase.platformLead");
   const heroHeadline = t("landing.showcase.heroHeadline");
   const heroHeadlineMobile = t("landing.showcase.heroHeadlineMobile");
   const isMobileHeadline = useMediaQuery("(max-width: 767px)");
@@ -199,6 +200,17 @@ export function CareTipLandingHero({
               </>
             )}
           </h1>
+
+          {landingCopyVisible(platformLead) ? (
+            <p
+              className={cn(
+                landingUi.heroSubtitle,
+                "caretip-hero-platform-lead caretip-hero-split-reveal caretip-hero-split-reveal--2 m-0 max-w-2xl text-pretty",
+              )}
+            >
+              {platformLead}
+            </p>
+          ) : null}
 
           {showSupportingCopy ? (
             mobileDescriptionLines ? (

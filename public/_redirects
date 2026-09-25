@@ -1,2 +1,5 @@
 # Netlify (and similar static hosts): SPA fallback so deep links like /qr/table/:id load index.html.
+# Serve crawler files before the SPA catch-all.
+/robots.txt   /robots.txt   200
+/sitemap.xml  /sitemap.xml  200
 /*    /index.html   200

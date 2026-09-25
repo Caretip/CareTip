@@ -1,0 +1,42 @@
+# CareTip — public marketing crawl rules
+# https://caretip.de
+
+User-agent: *
+Allow: /
+
+# Private application surfaces (also protected via noindex meta)
+Disallow: /dashboard/
+Disallow: /employee/
+Disallow: /platform-admin/
+Disallow: /admin/
+Disallow: /login
+Disallow: /auth
+Disallow: /signup
+Disallow: /join/
+Disallow: /employee/login
+Disallow: /forgot-password
+Disallow: /reset-password/
+Disallow: /activate
+Disallow: /verify
+Disallow: /verify-email
+Disallow: /check-email
+Disallow: /mobile-auth
+Disallow: /onboarding
+Disallow: /awaiting-approval
+Disallow: /verification-pending
+Disallow: /subscription/
+Disallow: /payment
+Disallow: /tip-amount
+Disallow: /success
+Disallow: /rating
+Disallow: /tip-complete
+Disallow: /qr/
+Disallow: /qr-landing/
+Disallow: /table/
+Disallow: /staff/
+Disallow: /hero-demo
+Disallow: /hero-animation-demo
+Disallow: /saas-3d-hero
+Disallow: /unauthorized
+
+Sitemap: https://caretip.de/sitemap.xml

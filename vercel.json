@@ -55,7 +55,7 @@
   ],
   "rewrites": [
     {
-      "source": "/((?!assets/)(?!api/)(?!uploads/)(?!.*\\.(?:ico|png|jpe?g|gif|svg|webp|woff2?|ttf|js|mjs|css|json|webmanifest|map|txt)$).*)",
+      "source": "/((?!assets/)(?!api/)(?!uploads/)(?!.*\\.(?:ico|png|jpe?g|gif|svg|webp|woff2?|ttf|js|mjs|css|json|webmanifest|map|txt|xml)$).*)",
       "destination": "/index.html"
     }
   ],

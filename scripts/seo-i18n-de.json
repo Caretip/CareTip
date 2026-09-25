@@ -1,0 +1,112 @@
+{
+  "seo": {
+    "siteName": "CareTip",
+    "breadcrumb": {
+      "home": "Startseite"
+    },
+    "pages": {
+      "fallback": {
+        "title": "CareTip",
+        "description": "CareTip ist die digitale Trinkgeld-Plattform für Service-Teams."
+      },
+      "home": {
+        "title": "CareTip — Digitale Trinkgeld-Plattform für Gastgewerbe",
+        "description": "CareTip ist die digitale Trinkgeld-Plattform für Restaurants, Hotels und Service-Teams. QR-Trinkgeld, Mitarbeiter-Verwaltung und sichere Auszahlungen."
+      },
+      "features": {
+        "title": "Funktionen — CareTip Trinkgeld-Plattform",
+        "description": "Funktionen der CareTip Plattform: QR-Trinkgeld, Mitarbeiter-Dashboards, Analysen und sichere Stripe-Auszahlungen."
+      },
+      "pricing": {
+        "title": "Preise — CareTip",
+        "description": "Transparente Preise für die digitale Trinkgeld-Plattform CareTip."
+      },
+      "howItWorks": {
+        "title": "So funktioniert CareTip — Digitales Trinkgeld per QR",
+        "description": "So funktioniert digitales Trinkgeld mit CareTip für Gäste, Mitarbeitende und Betriebe."
+      },
+      "about": {
+        "title": "Über CareTip",
+        "description": "Erfahren Sie mehr über CareTip, die digitale Trinkgeld-Plattform für moderne Teams."
+      },
+      "contact": {
+        "title": "Kontakt — CareTip",
+        "description": "Demo anfragen oder das CareTip-Team zu digitalem Trinkgeld kontaktieren."
+      },
+      "faq": {
+        "title": "FAQ — Digitales Trinkgeld mit CareTip",
+        "description": "Antworten zu CareTip, digitalem Trinkgeld, QR-Codes und Auszahlungen."
+      },
+      "privacy": {
+        "title": "Datenschutz — CareTip",
+        "description": "Datenschutzerklärung für die CareTip Trinkgeld-Plattform."
+      },
+      "terms": {
+        "title": "AGB — CareTip",
+        "description": "Nutzungsbedingungen für die CareTip Trinkgeld-Plattform."
+      },
+      "cookies": {
+        "title": "Cookies — CareTip",
+        "description": "Cookie-Richtlinie der CareTip Website."
+      },
+      "imprint": {
+        "title": "Impressum — CareTip",
+        "description": "Impressum und Anbieterinformationen für CareTip."
+      },
+      "avv": {
+        "title": "AVV — CareTip",
+        "description": "Auftragsverarbeitungsvertrag (AVV) für CareTip Geschäftskunden."
+      },
+      "plv": {
+        "title": "Preis- und Leistungsverzeichnis — CareTip",
+        "description": "Preis- und Leistungsverzeichnis von CareTip."
+      },
+      "blog": {
+        "title": "Blog — CareTip",
+        "description": "CareTip Produkt-Updates und Einblicke zum digitalen Trinkgeld."
+      },
+      "careers": {
+        "title": "Karriere — CareTip",
+        "description": "Arbeiten bei CareTip."
+      },
+      "mobileApp": {
+        "title": "CareTip Mobile App",
+        "description": "Mobile CareTip-Erfahrung für digitales Trinkgeld."
+      },
+      "notFound": {
+        "title": "Seite nicht gefunden — CareTip",
+        "description": "Diese CareTip-Seite wurde nicht gefunden."
+      },
+      "private": {
+        "title": "CareTip",
+        "description": "CareTip digitale Trinkgeld-Plattform."
+      }
+    },
+    "industries": {
+      "gastronomy": {
+        "title": "Digitales Trinkgeld für Restaurants — CareTip",
+        "description": "QR-Trinkgeld für Restaurants und Gastronomie mit CareTip."
+      },
+      "hotels": {
+        "title": "Digitales Trinkgeld für Hotels — CareTip",
+        "description": "Bargeldloses QR-Trinkgeld für Hotels und Housekeeping."
+      },
+      "logistics": {
+        "title": "Trinkgeld in Logistik — CareTip",
+        "description": "Digitales Trinkgeld für Liefer- und Logistik-Teams."
+      },
+      "midwives": {
+        "title": "Digitales Trinkgeld für Hebammen — CareTip",
+        "description": "Diskretes QR-Trinkgeld für Hebammen und Pflege-Teams."
+      },
+      "fairs": {
+        "title": "Trinkgeld bei Events — CareTip",
+        "description": "Digitales Trinkgeld für Events, Messen und temporäre Teams."
+      },
+      "field-service": {
+        "title": "Trinkgeld im Außendienst — CareTip",
+        "description": "QR-Trinkgeld für Außendienst- und mobile Service-Teams."
+      }
+    }
+  }
+}

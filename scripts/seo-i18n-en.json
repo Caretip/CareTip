@@ -1,0 +1,112 @@
+{
+  "seo": {
+    "siteName": "CareTip",
+    "breadcrumb": {
+      "home": "Home"
+    },
+    "pages": {
+      "fallback": {
+        "title": "CareTip",
+        "description": "CareTip is the digital tipping platform for hospitality teams."
+      },
+      "home": {
+        "title": "CareTip — Digital tipping platform for hospitality",
+        "description": "CareTip is the digital tipping platform for restaurants, hotels, and service teams. QR code tipping, employee tip management, and secure payouts."
+      },
+      "features": {
+        "title": "Features — CareTip digital tipping platform",
+        "description": "Explore CareTip's digital tipping platform: QR tipping pages, employee dashboards, business analytics, and secure Stripe payouts."
+      },
+      "pricing": {
+        "title": "Pricing — CareTip",
+        "description": "Transparent pricing for CareTip's digital tipping platform. Start with QR tipping for your hospitality team."
+      },
+      "howItWorks": {
+        "title": "How CareTip works — QR digital tipping",
+        "description": "See how CareTip's digital tipping platform works for guests, employees, and hospitality businesses."
+      },
+      "about": {
+        "title": "About CareTip",
+        "description": "Learn about CareTip, the digital tipping platform built for modern hospitality and service teams."
+      },
+      "contact": {
+        "title": "Contact CareTip",
+        "description": "Request a demo or contact the CareTip team about digital tipping for your business."
+      },
+      "faq": {
+        "title": "FAQ — CareTip digital tipping",
+        "description": "Answers about CareTip, digital tipping, QR codes, employee payouts, and hospitality tip management."
+      },
+      "privacy": {
+        "title": "Privacy Policy — CareTip",
+        "description": "How CareTip handles personal data on its digital tipping platform."
+      },
+      "terms": {
+        "title": "Terms of Service — CareTip",
+        "description": "Terms for using CareTip's digital tipping platform."
+      },
+      "cookies": {
+        "title": "Cookie Policy — CareTip",
+        "description": "How CareTip uses cookies on the public website and tipping platform."
+      },
+      "imprint": {
+        "title": "Imprint — CareTip",
+        "description": "Legal imprint and company information for CareTip."
+      },
+      "avv": {
+        "title": "Data Processing Agreement — CareTip",
+        "description": "CareTip data processing agreement (AVV) for business customers."
+      },
+      "plv": {
+        "title": "Price and Services — CareTip",
+        "description": "CareTip price and services list."
+      },
+      "blog": {
+        "title": "Blog — CareTip",
+        "description": "CareTip product updates and hospitality tipping insights."
+      },
+      "careers": {
+        "title": "Careers — CareTip",
+        "description": "Work at CareTip."
+      },
+      "mobileApp": {
+        "title": "CareTip mobile app",
+        "description": "CareTip mobile experience for hospitality tipping."
+      },
+      "notFound": {
+        "title": "Page not found — CareTip",
+        "description": "This CareTip page could not be found."
+      },
+      "private": {
+        "title": "CareTip",
+        "description": "CareTip digital tipping platform."
+      }
+    },
+    "industries": {
+      "gastronomy": {
+        "title": "Restaurant digital tipping — CareTip",
+        "description": "QR code digital tipping for restaurants and gastronomy teams with CareTip."
+      },
+      "hotels": {
+        "title": "Hotel digital tipping — CareTip",
+        "description": "Cashless QR tipping for hotels, front desk, and housekeeping teams."
+      },
+      "logistics": {
+        "title": "Logistics tipping — CareTip",
+        "description": "Digital tipping for delivery and logistics teams with CareTip."
+      },
+      "midwives": {
+        "title": "Midwife digital tipping — CareTip",
+        "description": "Discreet QR tipping for independent midwives and care teams."
+      },
+      "fairs": {
+        "title": "Events & fairs tipping — CareTip",
+        "description": "Digital tipping for events, fairs, and temporary hospitality teams."
+      },
+      "field-service": {
+        "title": "Field service tipping — CareTip",
+        "description": "QR tipping for field service and mobile service teams."
+      }
+    }
+  }
+}

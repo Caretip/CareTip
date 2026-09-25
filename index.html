@@ -17,13 +17,23 @@
     <meta name="msapplication-TileColor" content="#FAF9F6" />
     <meta
       name="description"
-      content="CareTip: digital tipping for hospitality. Scan, tip, and support your team."
+      content="CareTip ist die digitale Trinkgeld-Plattform für Gastgewerbe: QR-Trinkgeld, Mitarbeiter-Verwaltung und sichere Auszahlungen."
     />
+    <meta name="robots" content="index,follow" />
+    <link rel="canonical" href="https://caretip.de/" />
+    <meta property="og:title" content="CareTip — Digitale Trinkgeld-Plattform" />
+    <meta
+      property="og:description"
+      content="CareTip ist die digitale Trinkgeld-Plattform für Restaurants, Hotels und Service-Teams."
+    />
+    <meta property="og:url" content="https://caretip.de/" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="CareTip" />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <meta name="apple-mobile-web-app-title" content="CareTip" />
-    <title>CareTip</title>
+    <title>CareTip — Digitale Trinkgeld-Plattform für Gastgewerbe</title>
     <style>
       /* Minimal first-paint mirror of AppBrandedLoadingScreen (web app cold start). */
       #root {
@@ -216,8 +226,14 @@
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
     <link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png" />
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
-    <meta property="og:image" content="/brand/caretip-logo-tagline.png" />
-    <meta name="twitter:image" content="/brand/caretip-logo-tagline.png" />
+    <meta property="og:image" content="https://caretip.de/brand/caretip-logo-tagline.png" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="CareTip — Digitale Trinkgeld-Plattform" />
+    <meta
+      name="twitter:description"
+      content="CareTip ist die digitale Trinkgeld-Plattform für Restaurants, Hotels und Service-Teams."
+    />
+    <meta name="twitter:image" content="https://caretip.de/brand/caretip-logo-tagline.png" />
     <script src="/theme-init.js"></script>
   </head>
 
@@ -243,6 +259,34 @@
       </div>
     </div>
     <script src="/boot-locale.js"></script>
+    <main id="caretip-static-summary" hidden lang="de">
+      <h1>CareTip — Digitale Trinkgeld-Plattform</h1>
+      <p>
+        CareTip ist die digitale Trinkgeld-Plattform für Gastgewerbe und Service-Teams. Gäste geben per
+        QR-Code Trinkgeld, Mitarbeitende behalten den Überblick, Betriebe verwalten Auszahlungen sicher.
+      </p>
+      <p lang="en">
+        CareTip is the digital tipping platform for hospitality teams — QR code tipping, employee tip
+        management, and secure payouts for restaurants and hotels.
+      </p>
+      <nav aria-label="CareTip">
+        <a href="/features">Funktionen</a> ·
+        <a href="/pricing">Preise</a> ·
+        <a href="/how-it-works">So funktioniert es</a> ·
+        <a href="/faq">FAQ</a> ·
+        <a href="/contact">Kontakt</a>
+      </nav>
+    </main>
+    <noscript>
+      <style>
+        #caretip-html-boot {
+          display: none !important;
+        }
+        html.caretip-html-boot-active #caretip-html-boot {
+          display: none !important;
+        }
+      </style>
+    </noscript>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

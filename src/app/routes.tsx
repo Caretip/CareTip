@@ -7,6 +7,7 @@ import {
   Navigate,
   Outlet,
   useParams,
+  useLocation,
 } from "react-router";
 import { ScrollToTop } from "./components/ScrollToTop";
 import { AuthBootstrapLoadingRegistrar } from "./components/AuthBootstrapLoadingRegistrar";
@@ -39,6 +40,10 @@ import { SignInHandoffCover } from "./components/auth/SignInHandoffCover";
 import { DashboardProfilerRoot } from "./hooks/useDashboardRuntimeProfile";
 import { useNavigationFlashProbe } from './hooks/useNavigationFlashProbe';
 import { CookieConsentRoot } from './components/cookie/CookieConsentRoot';
+import { CareTipRouteSeo } from './components/seo/CareTipRouteSeo';
+import { applyDocumentSeo } from './lib/seo/documentSeo';
+import { resolveForcedNoindexSeo } from './lib/seo/resolveRouteSeo';
+import { useTranslation } from 'react-i18next';
 
 const PwaInstallPrompt = lazy(() =>
   import('./components/PwaInstallPrompt').then((m) => ({ default: m.PwaInstallPrompt })),
@@ -95,9 +100,17 @@ function ErrorBoundary() {
     return completeHtmlBootAfterPublicPaint();
   }, [markShellReady, completeHtmlBootAfterPublicPaint]);
 
+  const { t } = useTranslation();
+  const location = useLocation();
+
   useEffect(() => {
     logClientError('RouteErrorBoundary', error);
   }, [error]);
+
+  useEffect(() => {
+    applyDocumentSeo(resolveForcedNoindexSeo(location.pathname, location.search, t));
+  }, [location.pathname, location.search, t]);
+
   const is404 = isRouteErrorResponse(error) && error.status === 404;
   const chunkFailed =
     !is404 &&
@@ -160,6 +173,7 @@ function RootLayout() {
       ) : null}
       <IdleSessionController />
       <ScrollToTop />
+      <CareTipRouteSeo />
       <SignInHandoffCover />
       <AuthLogoutHandoffCover />
       <RootSpaRouteHold />
