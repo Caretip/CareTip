@@ -3,17 +3,38 @@ import type { ResolvedRouteSeo } from "./resolveRouteSeo";
 const MANAGED = "data-caretip-seo";
 const JSON_LD_ID = "caretip-seo-jsonld";
 
-function upsertMeta(
+function removeDuplicateHeadNodes(selector: string, keep: Element): void {
+  document.head.querySelectorAll(selector).forEach((node) => {
+    if (node !== keep) node.remove();
+  });
+}
+
+function adoptUnmanagedMeta(
   key: string,
-  content: string,
   kind: "name" | "property",
-): void {
-  if (typeof document === "undefined") return;
+): HTMLMetaElement | null {
   const selector =
+    kind === "name"
+      ? `meta[name="${key}"]:not([${MANAGED}])`
+      : `meta[property="${key}"]:not([${MANAGED}])`;
+  const el = document.head.querySelector<HTMLMetaElement>(selector);
+  if (!el) return null;
+  el.setAttribute(MANAGED, "1");
+  return el;
+}
+
+function findOrCreateManagedMeta(
+  key: string,
+  kind: "name" | "property",
+): HTMLMetaElement {
+  const managedSelector =
     kind === "name"
       ? `meta[${MANAGED}][name="${key}"]`
       : `meta[${MANAGED}][property="${key}"]`;
-  let el = document.head.querySelector<HTMLMetaElement>(selector);
+  let el = document.head.querySelector<HTMLMetaElement>(managedSelector);
+  if (!el) {
+    el = adoptUnmanagedMeta(key, kind);
+  }
   if (!el) {
     el = document.createElement("meta");
     el.setAttribute(MANAGED, "1");
@@ -21,19 +42,42 @@ function upsertMeta(
     else el.setAttribute("property", key);
     document.head.appendChild(el);
   }
-  el.setAttribute("content", content);
+  return el;
 }
 
-function upsertLink(rel: string, href: string): void {
+function upsertMeta(
+  key: string,
+  content: string,
+  kind: "name" | "property",
+): void {
   if (typeof document === "undefined") return;
+  const el = findOrCreateManagedMeta(key, kind);
+  el.setAttribute("content", content);
+  const allSelector =
+    kind === "name" ? `meta[name="${key}"]` : `meta[property="${key}"]`;
+  removeDuplicateHeadNodes(allSelector, el);
+}
+
+function findOrCreateManagedLink(rel: string): HTMLLinkElement {
   let el = document.head.querySelector<HTMLLinkElement>(`link[${MANAGED}][rel="${rel}"]`);
+  if (!el) {
+    el = document.head.querySelector<HTMLLinkElement>(`link[rel="${rel}"]:not([${MANAGED}])`);
+    if (el) el.setAttribute(MANAGED, "1");
+  }
   if (!el) {
     el = document.createElement("link");
     el.setAttribute(MANAGED, "1");
     el.setAttribute("rel", rel);
     document.head.appendChild(el);
   }
+  return el;
+}
+
+function upsertLink(rel: string, href: string): void {
+  if (typeof document === "undefined") return;
+  const el = findOrCreateManagedLink(rel);
   el.setAttribute("href", href);
+  removeDuplicateHeadNodes(`link[rel="${rel}"]`, el);
 }
 
 function removeManagedJsonLd(): void {
