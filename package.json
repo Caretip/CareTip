@@ -63,6 +63,7 @@
     "test:seo-remediation": "node ./backend/node_modules/tsx/dist/cli.mjs ./scripts/seo-remediation-runtime.ts",
     "test:seo-head-reconciliation": "node ./backend/node_modules/tsx/dist/cli.mjs ./scripts/seo-head-reconciliation-runtime.ts",
     "test:seo-category-p1": "node ./backend/node_modules/tsx/dist/cli.mjs ./scripts/seo-category-p1-runtime.ts",
+    "test:seo-homepage-crawler": "node ./backend/node_modules/tsx/dist/cli.mjs ./scripts/seo-homepage-crawler-runtime.ts",
     "test:mobile-web-handoff-locale-web": "node ./backend/node_modules/tsx/dist/cli.mjs ./scripts/mobile-web-handoff-locale-web-runtime.ts",
     "test:stripe-stale-state": "node ./backend/node_modules/tsx/dist/cli.mjs ./scripts/stripe-stale-state-runtime.ts",
     "test:ux-stability-remediation": "node ./backend/node_modules/tsx/dist/cli.mjs ./scripts/ux-stability-remediation-runtime.ts",

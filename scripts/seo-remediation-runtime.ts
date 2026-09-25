@@ -46,7 +46,14 @@ function run() {
 
   const indexHtml = read("index.html");
   assert.match(indexHtml, /id="caretip-static-summary"/);
+  assert.doesNotMatch(
+    indexHtml,
+    /<main[^>]*id="caretip-static-summary"[^>]*\bhidden\b/,
+    "homepage static summary must be crawlable without hidden",
+  );
   assert.match(indexHtml, /digitale Trinkgeld-Plattform|digital tipping platform/i);
+  assert.match(indexHtml, /href="\/features"/);
+  assert.match(indexHtml, /href="\/industries\/gastronomy"/);
   assert.match(indexHtml, /https:\/\/caretip\.de\/brand\/caretip-logo-tagline\.png/);
 
   const en = JSON.parse(read("src/i18n/locales/en.json")) as {

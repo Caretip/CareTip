@@ -121,6 +121,7 @@ export function applyDocumentSeo(seo: ResolvedRouteSeo): void {
   applyJsonLd(seo.jsonLd);
 }
 
+/** Removes pre-hydration HTML summary once React is ready (see index.html #caretip-static-summary). */
 export function removeStaticCrawlerSummary(): void {
   document.getElementById("caretip-static-summary")?.remove();
 }

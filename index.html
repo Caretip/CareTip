@@ -201,6 +201,61 @@
           );
         }
       }
+
+      /*
+       * Pre-hydration crawler summary — present in raw HTML for search/AI parsers.
+       * Not `hidden`: crawlers must read body copy. Fixed boot overlay covers the viewport
+       * until React removes this node (see removeStaticCrawlerSummary in main.tsx).
+       */
+      #caretip-static-summary {
+        position: relative;
+        z-index: 1;
+        max-width: 72rem;
+        margin: 0 auto;
+        padding: 1.5rem clamp(1.25rem, 4vw, 2.5rem) 2.5rem;
+        color: #0a0a0a;
+        background-color: #fcfbf8;
+        font-family: Inter, "Inter Fallback", ui-sans-serif, system-ui, sans-serif;
+        font-size: 1rem;
+        line-height: 1.65;
+      }
+
+      html.dark #caretip-static-summary {
+        color: #fafafa;
+        background-color: #0a0a0a;
+      }
+
+      #caretip-static-summary h1 {
+        margin: 0 0 0.75rem;
+        font-size: clamp(1.5rem, 4vw, 2rem);
+        font-weight: 800;
+        line-height: 1.15;
+        letter-spacing: -0.025em;
+        text-wrap: balance;
+      }
+
+      #caretip-static-summary p {
+        margin: 0 0 0.85rem;
+        max-width: 42rem;
+        text-wrap: pretty;
+      }
+
+      #caretip-static-summary nav {
+        margin-top: 1rem;
+        font-size: 0.9375rem;
+        font-weight: 600;
+      }
+
+      #caretip-static-summary a {
+        color: #c45c26;
+        text-decoration: underline;
+        text-underline-offset: 0.15em;
+      }
+
+      html.caretip-html-boot-active #caretip-static-summary {
+        pointer-events: none;
+        user-select: none;
+      }
     </style>
     <link rel="preload" href="/fonts/inter/inter-latin-400-normal.woff" as="font" type="font/woff" crossorigin />
     <!-- Manrope display weights load after first paint (`scheduleHeroDisplayFont`). -->
@@ -259,22 +314,23 @@
       </div>
     </div>
     <script src="/boot-locale.js"></script>
-    <main id="caretip-static-summary" hidden lang="de">
+    <main id="caretip-static-summary" lang="de">
       <h1>CareTip — Digitale Trinkgeld-Plattform</h1>
       <p>
         Trinkgeld per QR-Code, schnell, kontaktlos und steuerfrei. CareTip ist die digitale
-        Trinkgeld-Plattform für Gastgewerbe und Service-Teams. Mitarbeitende behalten den Überblick,
-        Betriebe verwalten Auszahlungen sicher.
+        Trinkgeld-Plattform für Gastgewerbe und Service-Teams. Gäste geben per QR-Code Trinkgeld,
+        Mitarbeitende behalten den Überblick, Betriebe verwalten Auszahlungen und Verteilung sicher.
       </p>
       <p lang="en">
-        CareTip helps hospitality teams earn more tips and simplify tipping for their business.
-        Empower your team with digital QR tipping, employee tip management, and secure payouts.
+        CareTip is a digital tipping platform for hospitality and service teams. Guests tip via QR
+        code, employees track earnings, and businesses manage tip distribution and secure payouts.
       </p>
       <nav aria-label="CareTip">
         <a href="/features">Funktionen</a> ·
-        <a href="/pricing">Preise</a> ·
-        <a href="/how-it-works">So funktioniert es</a> ·
         <a href="/faq">FAQ</a> ·
+        <a href="/industries/gastronomy">Gastronomie</a> ·
+        <a href="/industries/hotels">Hotels</a> ·
+        <a href="/pricing">Preise</a> ·
         <a href="/contact">Kontakt</a>
       </nav>
     </main>
