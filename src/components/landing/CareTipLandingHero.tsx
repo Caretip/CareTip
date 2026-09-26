@@ -79,7 +79,13 @@ export function CareTipLandingHero({
   }, [t, i18n.language, heroHeadlineHighlight]);
   const useStaticHeadline = landingCopyVisible(heroHeadline);
   const headlineMode = useStaticHeadline ? "static" : "composed";
-  const showSupportingCopy = landingCopyVisible(activeDescription);
+  const normalizeHeroSupportingCopy = (text: string) => text.replace(/\s+/g, " ").trim();
+  const supportingCopyDuplicatesPlatformLead =
+    landingCopyVisible(platformLead) &&
+    landingCopyVisible(activeDescription) &&
+    normalizeHeroSupportingCopy(activeDescription) === normalizeHeroSupportingCopy(platformLead);
+  const showSupportingCopy =
+    landingCopyVisible(activeDescription) && !supportingCopyDuplicatesPlatformLead;
 
   return (
     <section
