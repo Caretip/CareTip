@@ -46,10 +46,10 @@ export const BusinessHeroFinancialMetrics = memo(function BusinessHeroFinancialM
     : null;
   const paidOutEur = summary && !connectPending ? summary.payouts.completedAmountCents / 100 : null;
   const distributionEur = metrics?.employeeDistributionObligationEur ?? 0;
-  const showDistribution =
-    !ledgerPending &&
-    (summary?.routing.mode === "business_distribution" || distributionEur > 0) &&
-    distributionEur > 0;
+  const distributionMode =
+    summary?.routing.mode === "business_distribution" || distributionEur > 0;
+  const showDistribution = !ledgerPending && distributionMode;
+  const distributionAllDistributed = showDistribution && distributionEur < 0.005;
 
   const ledgerCurrencyValue = (value: number) =>
     ledgerPending ? (
@@ -105,7 +105,9 @@ export const BusinessHeroFinancialMetrics = memo(function BusinessHeroFinancialM
       id: "distribution",
       label: t("business.hero.financial.toDistribute"),
       value: ledgerCurrencyValue(distributionEur),
-      hint: t("business.hero.financial.distributionHint"),
+      hint: distributionAllDistributed
+        ? t("business.hero.financial.allDistributedHint")
+        : t("business.hero.financial.distributionHint"),
     });
   }
 

@@ -42,6 +42,20 @@
   line-height: 1.15;
 }
 
+.tip-distribution-kpi__hint {
+  margin-top: 0.35rem;
+  font-size: 0.75rem;
+  line-height: 1.35;
+  font-weight: 500;
+  color: hsl(var(--muted-foreground));
+}
+
+.tip-distribution-ready-empty {
+  border-top: 1px solid hsl(var(--border) / 0.45);
+  min-width: 0;
+  max-width: 100%;
+}
+
 .tip-distribution-kpi--primary .tip-distribution-kpi__value {
   font-size: clamp(1.5rem, 4vw, 1.875rem);
   color: hsl(var(--primary));

@@ -548,8 +548,16 @@ function testConnectPagePayoutOwnership(): boolean {
     fail("Connect page must not render EmployeeStripeConnectionsCard");
     ok = false;
   }
-  if (!pages.includes("ConnectPayoutsPanel") || !pages.includes("BusinessPayoutsCareTipView")) {
-    fail("Payouts must keep ConnectPayoutsPanel and CareTip employee-connection view");
+  if (!pages.includes("ConnectPayoutsPanel")) {
+    fail("Payouts page must render ConnectPayoutsPanel for Stripe payout history");
+    ok = false;
+  }
+  if (pages.includes("BusinessPayoutsCareTipView")) {
+    fail("Payout page must not embed duplicate tip distribution / CareTip tab UI");
+    ok = false;
+  }
+  if (!pages.includes("/dashboard/tips/tip-distribution")) {
+    fail("Legacy ?view=caretip must redirect to canonical tip distribution route");
     ok = false;
   }
   const caretip = read(

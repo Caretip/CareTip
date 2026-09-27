@@ -34,10 +34,9 @@ export function EmployeeTipActivityDetailDialog({
   const tz = resolveBusinessTimezone(timezone);
   const grossEur = (row.grossCents ?? 0) / 100;
   const feeEur = (row.platformFeeCents ?? 0) / 100;
+  const directEarningsEur = Math.max(0, row.payableCents - row.refundedCents) / 100;
   const earningsEur =
-    row.routingMode === "business_distribution"
-      ? null
-      : Math.max(0, row.payableCents - row.refundedCents) / 100;
+    row.routingMode === "business_distribution" ? 0 : directEarningsEur;
   const venue = employeeTipActivityVenueLabel(row);
   const ref = employeeTipActivityReference(row);
 
@@ -70,7 +69,7 @@ export function EmployeeTipActivityDetailDialog({
               {formatVenueDateTime(row.transactionCreatedAt ?? row.createdAt, tz, locale)}
             </dd>
           </div>
-          {row.platformFeeCents != null && row.routingMode !== "business_distribution" ? (
+          {row.platformFeeCents != null ? (
             <div>
               <dt className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
                 {t("employee.tipActivity.detail.fee")}
@@ -78,21 +77,22 @@ export function EmployeeTipActivityDetailDialog({
               <dd className="mt-0.5 tabular-nums">{formatEur(feeEur)}</dd>
             </div>
           ) : null}
-          {earningsEur != null ? (
-            <div>
-              <dt className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                {t("employee.tipActivity.detail.earnings")}
-              </dt>
-              <dd className="mt-0.5 tabular-nums font-medium">{formatEur(earningsEur)}</dd>
-            </div>
-          ) : row.routingMode === "business_distribution" ? (
-            <div>
-              <dt className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                {t("employee.tipActivity.detail.routing")}
-              </dt>
-              <dd className="mt-0.5">{t("employee.tipActivity.detail.routingBusiness")}</dd>
-            </div>
-          ) : null}
+          <div>
+            <dt className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+              {t("employee.tipActivity.detail.earnings")}
+            </dt>
+            <dd className="mt-0.5 tabular-nums font-medium">{formatEur(earningsEur)}</dd>
+          </div>
+          <div>
+            <dt className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+              {t("employee.tipActivity.detail.routing")}
+            </dt>
+            <dd className="mt-0.5">
+              {row.routingMode === "business_distribution"
+                ? t("employee.tipActivity.detail.routingBusiness")
+                : t("employee.tipActivity.detail.routingStripe")}
+            </dd>
+          </div>
           <div>
             <dt className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
               {t("employee.tipActivity.detail.status")}

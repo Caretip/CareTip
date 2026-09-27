@@ -157,7 +157,7 @@ export function BusinessFinancialAnalyticsSection({
               })}
             </p>
             <Link
-              to="/dashboard/stripe/payouts?view=caretip"
+              to="/dashboard/tips/tip-distribution"
               className="mt-2 inline-flex text-xs font-medium text-primary underline-offset-2 hover:underline"
             >
               {t("business.tips.analytics.financial.viewObligations")}

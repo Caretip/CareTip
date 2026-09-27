@@ -3887,7 +3887,8 @@
         "fee": "CareTip-Gebühr",
         "earnings": "Ihre Einnahmen",
         "routing": "Routing",
-        "routingBusiness": "An Betrieb ausgezahlt",
+        "routingBusiness": "Betrieb",
+        "routingStripe": "Ihr Stripe-Konto",
         "status": "Status",
         "reference": "Referenz"
       }
@@ -4324,6 +4325,11 @@
       "colCaretipRef": "CareTip-Ref.",
       "routingDirect": "Direkt an Stripe",
       "routingBusiness": "An Unternehmen gezahlt",
+      "routingDestination": {
+        "business": "Betrieb",
+        "stripe": "Ihr Stripe-Konto",
+        "unknown": "—"
+      },
       "noTipsTitle": "Keine Trinkgelder in diesem Zeitraum",
       "noTipsDesc": "Trinkgelder erscheinen hier, sobald Gäste Sie unterstützen.",
       "stripeAria": "Stripe-Auszahlungen",
@@ -4370,7 +4376,11 @@
         "transferred": "Überwiesen",
         "release_failed": "Freigabe an Stripe fehlgeschlagen",
         "pending_release": "Ausstehende Freigabe",
-        "paid_to_business": "An Unternehmen gezahlt",
+        "paid_to_business": "Abgeschlossen",
+        "destination_settled": "Abgeschlossen",
+        "transferring": "Übertragung läuft",
+        "held_platform": "Auszahlung ausstehend",
+        "transfer_failed": "Übertragung fehlgeschlagen",
         "legacy_no_payable": "Legacy-Trinkgeld",
         "unknown": "Unbekannt"
       }
@@ -4502,6 +4512,7 @@
         "toDistribute": "Zu verteilen",
         "employeeDistribution": "Mitarbeiter-Trinkgeld zu verteilen",
         "distributionHint": "Von Ihrem Betrieb erhalten und zur Verteilung ausstehend.",
+        "allDistributedHint": "Alle Trinkgelder wurden verteilt.",
         "stripeUnavailable": "Stripe verbinden",
         "zonePayout": "Wo das Geld liegt",
         "zonePerformance": "Betriebsleistung",
@@ -6686,6 +6697,7 @@
       "unassignedEmployee": "Nicht zugewiesener Mitarbeiter",
       "summary": {
         "toDistribute": "Zu verteilen",
+        "allDistributed": "Alle Trinkgelder wurden verteilt.",
         "employeesAwaiting": "Mitarbeiter ausstehend",
         "lastDistribution": "Letzte Verteilung",
         "noneRecorded": "Keine erfasst"
@@ -6701,7 +6713,9 @@
       },
       "ready": {
         "title": "Bereit zur Verteilung",
-        "empty": "Keine Mitarbeiterauszahlungen stehen aus."
+        "empty": "Keine Mitarbeiterauszahlungen stehen aus.",
+        "emptyTitle": "Alles erledigt",
+        "emptyDescription": "Derzeit stehen keine Trinkgelder zur Verteilung aus."
       },
       "table": {
         "employee": "Mitarbeiter",

@@ -61,7 +61,7 @@ const ANALYTICS_MOCK = {
       routingMode: "business_distribution",
       chargeModel: "destination",
       payoutStatus: "pending",
-      payoutStatusLabel: "pending",
+      payoutStatusLabel: "paid_to_business",
       hasPayable: true,
     },
   ],

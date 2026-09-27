@@ -30,6 +30,13 @@ import {
 } from "../../components/dashboard/dashboardChartTheme";
 import { LIGHTWEIGHT_AREA } from "../../lib/lightweightChartProps";
 import { Button } from "../../components/ui/button";
+import { FinanceStatusPill } from "../../components/finance/FinanceStatusPill";
+import {
+  employeeAnalyticsTipRecordEarningsEur,
+  employeeAnalyticsTipRecordPayoutStatusTone,
+  employeeAnalyticsTipRecordRoutingI18nKey,
+  type EmployeeAnalyticsTipRecordView,
+} from "../../lib/employeeAnalyticsTipRecordPresentation";
 
 const RECORDS_PAGE_SIZE = 10;
 
@@ -57,17 +64,22 @@ function formatAnalyticsDate(
   );
 }
 
-function formatEarningsCell(
-  t: (k: string) => string,
-  row: { employeeEarningsEur: number | null; routingMode: string | null },
-): string {
-  if (row.routingMode === "business_distribution") {
-    return t("employee.analytics.routingBusiness");
-  }
-  if (row.employeeEarningsEur != null) {
-    return formatEur(row.employeeEarningsEur);
-  }
-  return "—";
+function tipRecordRoutingLabel(t: (k: string) => string, routingMode: string | null): string {
+  const key = employeeAnalyticsTipRecordRoutingI18nKey(routingMode);
+  const translated = t(key);
+  return translated === key ? t("employee.analytics.routingDestination.unknown") : translated;
+}
+
+function TipRecordStatusPill({
+  t,
+  row,
+}: {
+  t: (k: string) => string;
+  row: EmployeeAnalyticsTipRecordView;
+}) {
+  const label = payoutStatusLabel(t, row.payoutStatusLabel);
+  const tone = employeeAnalyticsTipRecordPayoutStatusTone(row.payoutStatusLabel);
+  return <FinanceStatusPill tone={tone} label={label} />;
 }
 
 export function EmployeeAnalyticsPage() {
@@ -317,19 +329,19 @@ export function EmployeeAnalyticsPage() {
                       </div>
                       <div>
                         <dt>{t("employee.analytics.colEarnings")}</dt>
-                        <dd className="tabular-nums">{formatEarningsCell(t, row)}</dd>
+                        <dd className="tabular-nums font-medium text-foreground">
+                          {formatEur(employeeAnalyticsTipRecordEarningsEur(row.employeeEarningsEur))}
+                        </dd>
                       </div>
                       <div>
                         <dt>{t("employee.analytics.colRouting")}</dt>
-                        <dd>
-                          {row.routingMode === "business_distribution"
-                            ? t("employee.analytics.routingBusiness")
-                            : t("employee.analytics.routingDirect")}
-                        </dd>
+                        <dd>{tipRecordRoutingLabel(t, row.routingMode)}</dd>
                       </div>
-                      <div className="employee-analytics-mobile-card__grid-span">
+                      <div className="employee-analytics-mobile-card__grid-span employee-analytics-mobile-card__status">
                         <dt>{t("employee.analytics.colStatus")}</dt>
-                        <dd>{payoutStatusLabel(t, row.payoutStatusLabel)}</dd>
+                        <dd>
+                          <TipRecordStatusPill t={t} row={row} />
+                        </dd>
                       </div>
                     </dl>
                   </li>
@@ -363,13 +375,13 @@ export function EmployeeAnalyticsPage() {
                         <td className="tabular-nums">
                           {row.platformFeeEur != null ? formatEur(row.platformFeeEur) : "—"}
                         </td>
-                        <td className="tabular-nums">{formatEarningsCell(t, row)}</td>
-                        <td>
-                          {row.routingMode === "business_distribution"
-                            ? t("employee.analytics.routingBusiness")
-                            : t("employee.analytics.routingDirect")}
+                        <td className="tabular-nums font-medium">
+                          {formatEur(employeeAnalyticsTipRecordEarningsEur(row.employeeEarningsEur))}
                         </td>
-                        <td>{payoutStatusLabel(t, row.payoutStatusLabel)}</td>
+                        <td>{tipRecordRoutingLabel(t, row.routingMode)}</td>
+                        <td>
+                          <TipRecordStatusPill t={t} row={row} />
+                        </td>
                       </tr>
                     ))}
                   </tbody>

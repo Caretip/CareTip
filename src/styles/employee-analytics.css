@@ -212,6 +212,10 @@
   grid-column: 1 / -1;
 }
 
+.employee-analytics-mobile-card__status dd {
+  margin-top: 0.125rem;
+}
+
 .employee-analytics-table th,
 .employee-analytics-table td {
   padding: 0.65rem 0.85rem;

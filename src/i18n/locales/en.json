@@ -3887,7 +3887,8 @@
         "fee": "CareTip fee",
         "earnings": "Your earnings",
         "routing": "Routing",
-        "routingBusiness": "Paid to business",
+        "routingBusiness": "Business",
+        "routingStripe": "Your Stripe",
         "status": "Status",
         "reference": "Reference"
       }
@@ -4324,6 +4325,11 @@
       "colCaretipRef": "CareTip ref",
       "routingDirect": "Direct to Stripe",
       "routingBusiness": "Paid to business",
+      "routingDestination": {
+        "business": "Business",
+        "stripe": "Your Stripe",
+        "unknown": "—"
+      },
       "noTipsTitle": "No tips in this period",
       "noTipsDesc": "Tips will appear here once guests tip you.",
       "stripeAria": "Stripe payouts",
@@ -4370,7 +4376,11 @@
         "transferred": "Transferred",
         "release_failed": "Release to Stripe failed",
         "pending_release": "Pending release",
-        "paid_to_business": "Paid to business",
+        "paid_to_business": "Completed",
+        "destination_settled": "Completed",
+        "transferring": "Transfer in progress",
+        "held_platform": "Pending release",
+        "transfer_failed": "Transfer failed",
         "legacy_no_payable": "Legacy tip",
         "unknown": "Unknown"
       }
@@ -4502,6 +4512,7 @@
         "toDistribute": "To distribute",
         "employeeDistribution": "Employee tips to distribute",
         "distributionHint": "Received by your business and awaiting distribution.",
+        "allDistributedHint": "All employee tips have been distributed.",
         "stripeUnavailable": "Connect Stripe",
         "zonePayout": "Where the money is",
         "zonePerformance": "Business performance",
@@ -6689,6 +6700,7 @@
       "unassignedEmployee": "Unassigned employee",
       "summary": {
         "toDistribute": "To distribute",
+        "allDistributed": "All employee tips have been distributed.",
         "employeesAwaiting": "Employees awaiting",
         "lastDistribution": "Last distribution",
         "noneRecorded": "None recorded"
@@ -6704,7 +6716,9 @@
       },
       "ready": {
         "title": "Ready to distribute",
-        "empty": "No employee distributions are waiting."
+        "empty": "No employee distributions are waiting.",
+        "emptyTitle": "You're all caught up",
+        "emptyDescription": "There are no employee tips waiting to be distributed."
       },
       "table": {
         "employee": "Employee",

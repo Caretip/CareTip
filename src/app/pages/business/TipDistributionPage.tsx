@@ -17,6 +17,7 @@ import { toUserFriendlyMessage } from "../../lib/errorMessages";
 import { logClientError } from "../../lib/clientLog";
 import { formatEur } from "../../lib/formatEur";
 import { BusinessModuleWorkspaceHeader } from "../../components/business/BusinessModuleWorkspaceHeader";
+import { TipDistributionReadyEmpty } from "../../components/business/TipDistributionReadyEmpty";
 import { businessUi } from "../../components/business/businessDashboardUi";
 import { Button } from "../../components/ui/button";
 import {
@@ -188,6 +189,9 @@ export function TipDistributionPage() {
               <div className="tip-distribution-kpi tip-distribution-kpi--primary">
                 <p className="tip-distribution-kpi__label">{t("business.tipDistribution.summary.toDistribute")}</p>
                 <p className="tip-distribution-kpi__value">{centsToEur(summary?.totalToDistributeCents ?? 0)}</p>
+                {(summary?.totalToDistributeCents ?? 0) === 0 ? (
+                  <p className="tip-distribution-kpi__hint">{t("business.tipDistribution.summary.allDistributed")}</p>
+                ) : null}
               </div>
               <div className="tip-distribution-kpi">
                 <p className="tip-distribution-kpi__label">{t("business.tipDistribution.summary.employeesAwaiting")}</p>
@@ -250,6 +254,10 @@ export function TipDistributionPage() {
             <section>
               <h2 className="tip-distribution-section-title">{t("business.tipDistribution.ready.title")}</h2>
 
+              {awaitingEmployees.length === 0 ? (
+                <TipDistributionReadyEmpty />
+              ) : (
+                <>
               <div className="tip-distribution-table-wrap hidden lg:block">
                 <table className="tip-distribution-table">
                   <thead>
@@ -264,14 +272,7 @@ export function TipDistributionPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {awaitingEmployees.length === 0 ? (
-                      <tr>
-                        <td colSpan={7} className="py-6 text-muted-foreground">
-                          {t("business.tipDistribution.ready.empty")}
-                        </td>
-                      </tr>
-                    ) : (
-                      awaitingEmployees.map((row) => (
+                      {awaitingEmployees.map((row) => (
                         <tr key={row.employeeId ?? "unknown"}>
                           <td className="tip-distribution-table__employee">
                             {row.employeeName ?? t("business.tipDistribution.unassignedEmployee")}
@@ -296,19 +297,13 @@ export function TipDistributionPage() {
                             </div>
                           </td>
                         </tr>
-                      ))
-                    )}
+                      ))}
                   </tbody>
                 </table>
               </div>
 
               <div className={cn(businessUi.mobileList, "lg:hidden")}>
-                {awaitingEmployees.length === 0 ? (
-                  <p className="px-1 py-4 text-sm text-muted-foreground">
-                    {t("business.tipDistribution.ready.empty")}
-                  </p>
-                ) : (
-                  awaitingEmployees.map((row) => (
+                  {awaitingEmployees.map((row) => (
                     <div key={row.employeeId ?? "unknown"} className={businessUi.mobileCard}>
                       <p className="font-medium">
                         {row.employeeName ?? t("business.tipDistribution.unassignedEmployee")}
@@ -348,9 +343,10 @@ export function TipDistributionPage() {
                         </Button>
                       </div>
                     </div>
-                  ))
-                )}
+                  ))}
               </div>
+                </>
+              )}
             </section>
 
             <section>
