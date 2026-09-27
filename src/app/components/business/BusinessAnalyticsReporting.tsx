@@ -1,30 +1,34 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { markAnalyticsPerformance } from "../../lib/businessAnalytics/analyticsPerformanceMarks";
 import { useTranslation } from "react-i18next";
-import { Link } from "react-router";
 import { Download } from "lucide-react";
 import { toast } from "sonner";
-import { RevenueAnalyticsCards } from "./insights/RevenueAnalyticsCards";
 import { QrAnalyticsSection } from "./insights/QrAnalyticsSection";
-import { OperationalMetricsCards } from "./insights/OperationalMetricsCards";
 import { DashboardAnalyticsPeriodToggle } from "../dashboard/DashboardAnalyticsPeriodToggle";
 import { DashboardRefreshIndicator } from "../dashboard/DashboardRefreshIndicator";
 import { DashboardStatusStrip } from "../dashboard/DashboardStatusStrip";
 import { deriveRealtimeStatusItems } from "../../lib/dashboardStatus/deriveDashboardStatus";
 import { CountUpMetric } from "../dashboard/CountUpMetric";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { DashboardWorkspaceSummaryCard, type DashboardWorkspaceSummaryMetric } from "../dashboard/DashboardWorkspaceSummaryCard";
-import { businessUi } from "./businessDashboardUi";
-import { cn } from "@/lib/utils";
 import { formatEur } from "../../lib/formatEur";
 import { downloadBusinessTransactionsExport } from "../../lib/api";
 import { toUserFriendlyMessage } from "../../lib/errorMessages";
 import { shouldShowCurrentWeekContext } from "../../lib/businessAnalytics/analyticsPeriodMetrics";
+import { computeRevenueAnalytics } from "../../lib/businessIntelligence";
 import type { useBusinessIntelligenceData } from "../../hooks/useBusinessIntelligenceData";
-import type { TopTipSourceRow } from "../../lib/businessIntelligence";
 import type { AnalyticsTimeframe } from "../../hooks/useBusinessDashboardStats";
 import { BusinessFinancialAnalyticsSection } from "./BusinessFinancialAnalyticsSection";
+import { AnalyticsKpiStrip, type AnalyticsKpiItem } from "./analytics/reporting/AnalyticsKpiStrip";
+import { TipVolumeTrendChart } from "./analytics/reporting/TipVolumeTrendChart";
+import { PeriodInsightMetrics } from "./analytics/reporting/PeriodInsightMetrics";
+import { EmployeePerformanceRanking } from "./analytics/reporting/EmployeePerformanceRanking";
+import { OperationalMetricsStrip } from "./analytics/reporting/OperationalMetricsStrip";
+import { LocationComparisonChart } from "./analytics/reporting/LocationComparisonChart";
+import { TopQrPerformanceList } from "./analytics/reporting/TopQrPerformanceList";
+import {
+  AnalyticsDonutChart,
+  qrDeviceDonutSlices,
+} from "./analytics/reporting/AnalyticsDonutChart";
 
 type BiData = ReturnType<typeof useBusinessIntelligenceData>;
 
@@ -36,53 +40,6 @@ type BusinessAnalyticsReportingProps = {
   qrTimeframe: AnalyticsTimeframe;
   onQrTimeframeChange: (timeframe: AnalyticsTimeframe) => void;
 };
-
-function ComparisonTable({
-  title,
-  rows,
-  emptyKey,
-}: {
-  title: string;
-  rows: Array<{ label: string; tips: number; count: number; share: number }>;
-  emptyKey: string;
-}) {
-  const { t } = useTranslation();
-  return (
-    <Card className={businessUi.cardStatic}>
-      <CardHeader className="border-b border-neutral-100/90 pb-3">
-        <CardTitle className="text-base">{title}</CardTitle>
-      </CardHeader>
-      <CardContent className="p-0">
-        {rows.length === 0 ? (
-          <p className="px-4 py-8 text-center text-sm text-muted-foreground">{t(emptyKey)}</p>
-        ) : (
-          <div className="caretip-mobile-table-scroll overflow-x-auto">
-            <table className="w-full min-w-[20rem] text-sm">
-            <thead>
-              <tr className="border-b border-border/60 text-left text-xs text-muted-foreground">
-                <th className="px-4 py-2 font-medium">{t("business.tips.analytics.reporting.name")}</th>
-                <th className="px-4 py-2 font-medium">{t("business.tips.analytics.reporting.tips")}</th>
-                <th className="px-4 py-2 font-medium">{t("business.tips.analytics.reporting.count")}</th>
-                <th className="px-4 py-2 font-medium">{t("business.tips.analytics.reporting.share")}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map((row) => (
-                <tr key={row.label} className="border-b border-border/40 last:border-0">
-                  <td className="px-4 py-2.5 font-medium">{row.label}</td>
-                  <td className="px-4 py-2.5 tabular-nums">{formatEur(row.tips)}</td>
-                  <td className="px-4 py-2.5 tabular-nums">{row.count}</td>
-                  <td className="px-4 py-2.5 tabular-nums">{row.share}%</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-          </div>
-        )}
-      </CardContent>
-    </Card>
-  );
-}
 
 /** Sprint 2 — sole reporting surface for business managers. */
 export function BusinessAnalyticsReporting({
@@ -115,6 +72,7 @@ export function BusinessAnalyticsReporting({
         ? t("dashboard.filter_year")
         : t("dashboard.filter_month");
 
+  const revenue = useMemo(() => computeRevenueAnalytics(data.input), [data.input]);
   const revenueGrowth = data.bi.revenue.growthPercent;
   const growthComparable = data.bi.revenue.growthComparable;
   const showWeekContext = shouldShowCurrentWeekContext({
@@ -136,7 +94,6 @@ export function BusinessAnalyticsReporting({
       : selectedTimeframe === "year"
         ? "business.team.performance.bi.growthOverviewYear"
         : "business.team.performance.bi.growthOverviewMonth";
-  const refreshingLabel = t("dashboard.refresh.updating");
   const periodStatsLoading =
     !data.valuesMatchPeriod ||
     (data.isPeriodStatsLoading ?? data.isInitialAnalyticsLoading);
@@ -193,35 +150,56 @@ export function BusinessAnalyticsReporting({
     />
   );
 
-  const overviewMetrics: DashboardWorkspaceSummaryMetric[] = [
+  const kpiItems: AnalyticsKpiItem[] = [
     {
+      id: "volume",
       label: t("business.tips.analytics.cards.tipVolume"),
-      value: <CountUpMetric value={data.period.totalTips} kind="eur" format={formatEur} />,
+      value: (
+        <CountUpMetric value={data.period.totalTips} kind="eur" format={formatEur} />
+      ),
       trend: growthComparable
         ? t(growthOverviewKey, { percent: revenueGrowth })
         : t("business.team.performance.bi.noPriorPeriod"),
       trendDirection: !growthComparable ? "neutral" : revenueGrowth >= 0 ? "up" : "down",
     },
     {
+      id: "count",
       label: t("business.tips.analytics.cards.totalTips"),
       value: <CountUpMetric value={data.period.tipCount} kind="integer" />,
-      trend: showWeekContext
+      hint: showWeekContext
         ? t("business.tips.analytics.cards.tipsThisWeek", { count: data.week.tipCount })
         : undefined,
       trendDirection: "neutral" as const,
     },
     {
+      id: "employees",
       label: t("business.tips.analytics.cards.activeEmployees"),
       value: <CountUpMetric value={data.bi.operational.activeEmployees} kind="integer" />,
-      trend: t(employeesReceivedKey, {
+      hint: t(employeesReceivedKey, {
         count: data.bi.operational.employeesReceivingTips,
       }),
       trendDirection: "neutral" as const,
     },
+    {
+      id: "avg",
+      label: t("business.team.performance.bi.avgTip"),
+      value: <CountUpMetric value={revenue.averageTip} kind="eur" />,
+      trendDirection: "neutral" as const,
+    },
   ];
 
+  const qrAnalytics =
+    qrTimeframe === revenueTimeframe ? data.input.qrAnalytics : undefined;
+  const qrDeviceSlices = useMemo(
+    () =>
+      qrDeviceDonutSlices(qrAnalytics?.scansByDevice, (device) =>
+        t(`business.qrAnalytics.device.${device}`, { defaultValue: device }),
+      ),
+    [qrAnalytics?.scansByDevice, t],
+  );
+
   return (
-    <div className="caretip-mobile-analytics-report business-analytics-report space-y-5 md:space-y-8">
+    <div className="caretip-mobile-analytics-report business-analytics-report space-y-5 md:space-y-6">
       <div className="business-analytics-report__toolbar space-y-3">
         <div className="flex min-w-0 items-center justify-between gap-3">
           <DashboardRefreshIndicator
@@ -245,39 +223,50 @@ export function BusinessAnalyticsReporting({
             {t("business.tips.analytics.reporting.export")}
           </Button>
         </div>
+        <p className="text-xs text-muted-foreground">
+          {t("business.tips.analytics.overviewPeriodHint", { period: periodLabel })}
+        </p>
       </div>
 
-      <DashboardWorkspaceSummaryCard
+      <AnalyticsKpiStrip
         className="business-analytics-report__overview"
-        title={t("premium.summaryBanner.title")}
-        eyebrow={t("business.tips.analytics.overviewPeriodHint", { period: periodLabel })}
-        periodLabel={periodLabel}
-        metrics={overviewMetrics}
+        ariaLabel={t("premium.summaryBanner.title")}
+        items={kpiItems}
         loading={periodStatsLoading}
+      />
+
+      <TipVolumeTrendChart
+        title={t("business.tips.analytics.sections.trends")}
+        rows={data.dailyTipDistribution}
+        timeframe={selectedTimeframe}
+        periodTotalTips={data.period.totalTips}
+        loading={periodStatsLoading}
+      />
+
+      <div className="grid gap-4 lg:grid-cols-2">
+        <PeriodInsightMetrics
+          data={data.input}
+          timeframe={selectedTimeframe}
+          loading={periodStatsLoading}
+          refreshing={cardsRefreshing}
+        />
+        <EmployeePerformanceRanking
+          data={data.input}
+          loading={periodStatsLoading}
+        />
+      </div>
+
+      <OperationalMetricsStrip
+        data={data.input}
+        loading={periodStatsLoading}
+        shiftMetricLoading={deferredAnalyticsLoading}
+        refreshing={cardsRefreshing}
       />
 
       <BusinessFinancialAnalyticsSection
         period={selectedTimeframe}
         enabled={financialSummaryEnabled}
       />
-
-      <section className="space-y-3" aria-labelledby="business-revenue-analytics-heading">
-        <h2
-          id="business-revenue-analytics-heading"
-          className="text-sm font-semibold uppercase tracking-wide text-muted-foreground"
-        >
-          {t("business.tips.analytics.sections.periodDetail")}
-        </h2>
-        <RevenueAnalyticsCards
-          data={data.input}
-          timeframe={selectedTimeframe}
-          variant="detail"
-          loading={periodStatsLoading}
-          refreshing={cardsRefreshing}
-          refreshingLabel={refreshingLabel}
-          showHeading={false}
-        />
-      </section>
 
       <section className="space-y-3" aria-labelledby="business-qr-analytics-heading">
         <h2
@@ -289,92 +278,49 @@ export function BusinessAnalyticsReporting({
             ({periodLabel})
           </span>
         </h2>
-        <QrAnalyticsSection
-          timeframe={qrTimeframe}
-          showHeading={false}
-          data={qrTimeframe === revenueTimeframe ? data.input.qrAnalytics : undefined}
-          dataLoading={qrTimeframe === revenueTimeframe ? qrSectionLoading : undefined}
-          dataRefreshing={qrTimeframe === revenueTimeframe ? cardsRefreshing : undefined}
-        />
-      </section>
-
-      <section className="space-y-3">
-        <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-          {t("business.tips.analytics.sections.employees")}
-        </h2>
-        <OperationalMetricsCards
-          data={data.input}
-          loading={periodStatsLoading}
-          shiftMetricLoading={deferredAnalyticsLoading}
-          refreshing={cardsRefreshing}
-          refreshingLabel={refreshingLabel}
-        />
-        <p className="text-sm text-muted-foreground">
-          {t("business.tips.analytics.rankingsHint")}{" "}
-          <Link to="/dashboard/team/performance?tab=leaderboard" className="font-medium text-primary underline-offset-2 hover:underline">
-            {t("business.team.nav.topPerformers")}
-          </Link>
-        </p>
-      </section>
-
-      <section className="space-y-3">
-        <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-          {t("business.tips.analytics.sections.locations")}
-        </h2>
         <div className="grid gap-4 lg:grid-cols-2">
-          {deferredAnalyticsLoading ? (
-            <>
-              <div className={cn(businessUi.cardStatic, "h-48 animate-pulse bg-muted/30")} />
-              <div className={cn(businessUi.cardStatic, "h-48 animate-pulse bg-muted/30")} />
-            </>
-          ) : (
-            <>
-              <ComparisonTable
-                title={t("business.tips.analytics.locationComparison")}
-                rows={data.bi.locations}
-                emptyKey="business.tips.analytics.locationEmpty"
-              />
-              <ComparisonTable
-                title={t("business.tips.analytics.tableComparison")}
-                rows={data.bi.tables}
-                emptyKey="business.tips.analytics.tableEmpty"
-              />
-            </>
-          )}
+          <AnalyticsDonutChart
+            title={t("business.qrAnalytics.scansByDevice")}
+            slices={qrDeviceSlices}
+            emptyLabel={t("format.noDataYet")}
+            loading={qrTimeframe === revenueTimeframe ? qrSectionLoading : false}
+            centerLabel={t("business.qrAnalytics.totalScans")}
+            valueFormatter={(v) => String(v)}
+          />
+          <QrAnalyticsSection
+            timeframe={qrTimeframe}
+            showHeading={false}
+            data={qrAnalytics}
+            dataLoading={qrTimeframe === revenueTimeframe ? qrSectionLoading : undefined}
+            dataRefreshing={qrTimeframe === revenueTimeframe ? cardsRefreshing : undefined}
+          />
         </div>
       </section>
 
-      <section className="space-y-3">
-        <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-          {t("business.tips.analytics.sections.topQr")}
+      <section className="space-y-3" aria-labelledby="business-locations-heading">
+        <h2
+          id="business-locations-heading"
+          className="text-sm font-semibold uppercase tracking-wide text-muted-foreground"
+        >
+          {t("business.tips.analytics.sections.locations")}
         </h2>
-        <Card className={businessUi.cardStatic}>
-          <CardContent className="divide-y divide-border/60 p-0 pt-2">
-            {tipsFeedLoading ? (
-              <div className="space-y-2 px-4 py-4">
-                {Array.from({ length: 4 }).map((_, i) => (
-                  <div key={i} className="h-10 animate-pulse rounded-md bg-muted/40" />
-                ))}
-              </div>
-            ) : data.bi.topTipSources.length === 0 ? (
-              <p className="px-4 py-8 text-center text-sm text-muted-foreground">
-                {t("business.tips.analytics.topQrEmpty")}
-              </p>
-            ) : (
-              data.bi.topTipSources.map((row: TopTipSourceRow, i: number) => (
-                <div key={row.label} className="flex items-center gap-3 px-4 py-3">
-                  <span className="w-5 text-xs font-bold text-muted-foreground">{i + 1}</span>
-                  <span className="min-w-0 flex-1 truncate text-sm font-medium">{row.label}</span>
-                  <span className="text-xs tabular-nums text-muted-foreground">
-                    {t("business.tips.analytics.employeeTipCount", { count: row.tipCount })}
-                  </span>
-                  <span className="text-sm font-semibold tabular-nums">{formatEur(row.tips)}</span>
-                </div>
-              ))
-            )}
-          </CardContent>
-        </Card>
+        <div className="grid gap-4 lg:grid-cols-2">
+          <LocationComparisonChart
+            title={t("business.tips.analytics.locationComparison")}
+            rows={data.bi.locations}
+            emptyKey="business.tips.analytics.locationEmpty"
+            loading={deferredAnalyticsLoading}
+          />
+          <LocationComparisonChart
+            title={t("business.tips.analytics.tableComparison")}
+            rows={data.bi.tables}
+            emptyKey="business.tips.analytics.tableEmpty"
+            loading={deferredAnalyticsLoading}
+          />
+        </div>
       </section>
+
+      <TopQrPerformanceList rows={data.bi.topTipSources} loading={tipsFeedLoading} />
     </div>
   );
 }

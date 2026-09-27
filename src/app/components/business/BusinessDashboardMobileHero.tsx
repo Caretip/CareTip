@@ -70,7 +70,7 @@ export const BusinessDashboardMobileHero = memo(function BusinessDashboardMobile
             connectLoading={financialSummaryConnectLoading}
             summary={financialSummary}
             isRefreshing={financialSummaryRefreshing}
-            className="business-dashboard-mobile-hero__metrics"
+            className="business-dashboard-mobile-hero__metrics dashboard-hero-financial-panel"
           />
           <BusinessDashboardHeroActions
             isPreviewMode={isPreviewMode}

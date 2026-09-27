@@ -30,7 +30,6 @@ import { formatEur } from "../../../lib/formatEur";
 import { formatTimeAgo } from "../../../lib/formatTimeAgo";
 import { formatActivityVenueTimeParts } from "../../../lib/businessVenueTime";
 import { translateActivitySource } from "../../../lib/activitySourceTranslator";
-import { DashboardWorkspacePanel } from "../../dashboard/DashboardWorkspacePanel";
 import { cn } from "@/lib/utils";
 
 const FILTER_CHIPS: { id: ActivityCenterFilter; labelKey: string }[] = [
@@ -160,28 +159,14 @@ export function ActivityCenterFeed({
   const locale = i18n.language?.startsWith("de") ? "de-DE" : "en-GB";
 
   return (
-    <DashboardWorkspacePanel
-      title={t("business.activityCenter.centerTitle")}
-      headerExtra={
-        refreshing ? (
-          <span className="text-xs font-medium text-muted-foreground">{t("dashboard.refresh.updating")}</span>
-        ) : (
-          t("business.activityCenter.streamLabel")
-        )
-      }
-    >
-      <div className="border-b border-border px-4 py-3 sm:px-5">
-        {t("business.activityCenter.ssotHelper").trim() ? (
-          <p className="mb-3 hidden text-xs leading-relaxed text-muted-foreground lg:block">
-            {t("business.activityCenter.ssotHelper")}
-          </p>
-        ) : null}
+    <div className="business-activity-center-feed space-y-4">
+      <div className="flex flex-wrap items-center justify-between gap-2">
         <p id={filterLabelId} className="sr-only">
           {t("business.activityCenter.filterLabel")}
         </p>
         <div
-          className="flex flex-wrap gap-2"
-          role="group"
+          className="employee-tip-activity-filters min-w-0 flex-1"
+          role="tablist"
           aria-labelledby={filterLabelId}
         >
           {FILTER_CHIPS.map((chip) => {
@@ -190,49 +175,55 @@ export function ActivityCenterFeed({
               <button
                 key={chip.id}
                 type="button"
+                role="tab"
                 onClick={() => onFilterChange(chip.id)}
+                aria-selected={active}
                 aria-pressed={active}
-                className={cn(
-                  "rounded-full border px-3 py-1 text-xs font-medium transition-colors",
-                  active
-                    ? "border-primary/40 bg-primary/10 text-foreground"
-                    : "border-border bg-muted/20 text-muted-foreground hover:bg-muted/40 hover:text-foreground",
-                )}
+                className="employee-tip-activity-filter"
               >
                 {t(chip.labelKey)}
               </button>
             );
           })}
         </div>
+        {refreshing ? (
+          <span className="business-activity-center-feed__status shrink-0">
+            {t("dashboard.refresh.updating")}
+          </span>
+        ) : (
+          <span className="business-activity-live-pill shrink-0">
+            <span className="business-activity-live-pill__dot" aria-hidden />
+            {t("business.activityCenter.streamLabel")}
+          </span>
+        )}
       </div>
 
       {error ? (
-        <p className="px-4 py-4 text-center text-sm text-destructive sm:px-5" role="alert">
+        <div
+          className="rounded-lg border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm text-destructive"
+          role="alert"
+        >
           {error}
-        </p>
+        </div>
       ) : null}
 
       {showSkeleton ? (
-        <div className="divide-y divide-border" aria-busy="true" aria-live="polite">
-          {Array.from({ length: 8 }).map((_, i) => (
-            <div key={i} className="flex animate-pulse items-center gap-3 px-4 py-4 sm:px-5">
-              <div className="h-9 w-9 rounded-full bg-muted" />
-              <div className="flex-1 space-y-2">
-                <div className="h-3 w-40 rounded bg-muted" />
-                <div className="h-2.5 w-28 rounded bg-muted" />
-              </div>
-            </div>
+        <div className="business-activity-center-skeleton" aria-busy="true" aria-live="polite">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <div key={i} className="business-activity-center-skeleton__row" />
           ))}
         </div>
       ) : items.length === 0 ? (
-        <p className="px-4 py-10 text-center text-sm text-muted-foreground sm:px-5">
-          {filter === "today"
-            ? t("business.activityCenter.emptyToday")
-            : t("business.activityCenter.empty")}
-        </p>
+        <div className="py-12 text-left">
+          <p className="text-sm font-medium text-foreground">
+            {filter === "today"
+              ? t("business.activityCenter.emptyToday")
+              : t("business.activityCenter.empty")}
+          </p>
+        </div>
       ) : (
         <>
-          <ul className="divide-y divide-border" aria-live="polite">
+          <ul className="employee-tip-activity-timeline m-0 list-none p-0" aria-live="polite">
             {items.map((item) => {
               const Icon = iconForType(item.type);
               const isLive = liveIds.has(item.id);
@@ -262,77 +253,84 @@ export function ActivityCenterFeed({
                     ? t("business.activityCenter.time.yesterday")
                     : (venueTime.dateText ?? "—");
 
+              const rowClass = cn(
+                "business-activity-center-item",
+                item.priority === "HIGH" && "business-activity-center-item--high",
+                priorityClass(item.priority),
+                isLive && "bg-primary/[0.03]",
+              );
+
+              const amountLabel = amount != null ? formatEur(amount) : null;
+
               const body = (
                 <>
-                  <div
-                    className={cn(
-                      "mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-border bg-muted/40 text-muted-foreground",
-                      item.priority === "HIGH" && "border-amber-500/40 text-amber-700 dark:text-amber-400",
-                    )}
-                  >
+                  <div className="business-activity-center-item__icon">
                     <Icon className="h-4 w-4" aria-hidden />
                   </div>
-                  <div className="min-w-0 flex-1">
-                    <div className="flex flex-wrap items-baseline justify-between gap-2">
-                      <p className="truncate font-medium text-foreground">{title}</p>
-                      {amount != null ? (
-                        <p className="shrink-0 font-semibold tabular-nums text-primary">
-                          {formatEur(amount)}
+                  <div className="business-activity-center-item__main min-w-0">
+                    <div className="flex items-start justify-between gap-3">
+                      <p className="min-w-0 text-sm font-semibold leading-snug text-foreground line-clamp-2">{title}</p>
+                      {amountLabel ? (
+                        <p className="business-activity-center-item__amount-inline shrink-0 sm:hidden">
+                          {amountLabel}
                         </p>
                       ) : null}
                     </div>
-                    <div className="mt-0.5 text-xs text-muted-foreground">
-                      {subtitle ? <p className="truncate">{subtitle}</p> : null}
-                      <p className="tabular-nums">
-                        <span className="font-medium text-foreground/80">{dayHeading}</span>
+                    {subtitle ? (
+                      <p className="mt-0.5 text-xs leading-snug text-muted-foreground line-clamp-2">{subtitle}</p>
+                    ) : null}
+                    <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-muted-foreground tabular-nums">
+                      <span>
+                        <span className="font-medium text-foreground/85">{dayHeading}</span>
                         <span className="mx-1.5 text-muted-foreground/70">·</span>
                         <span>{venueTime.timeText}</span>
-                      </p>
+                      </span>
                       {filter !== "today" ? (
-                        <p className="mt-0.5">
+                        <>
+                          <span className="text-muted-foreground/50" aria-hidden>·</span>
                           <span>{formatTimeAgo(item.occurredAt)}</span>
-                          {isLive ? (
-                            <span className="ml-2 font-medium uppercase tracking-wide text-primary">
-                              {t("status.live")}
-                            </span>
-                          ) : null}
-                        </p>
+                        </>
+                      ) : null}
+                      {isLive ? (
+                        <span className="font-medium uppercase tracking-wide text-primary">
+                          {t("status.live")}
+                        </span>
                       ) : null}
                     </div>
                   </div>
+                  {amountLabel ? (
+                    <p className="business-activity-center-item__amount business-activity-center-item__amount--desktop">
+                      {amountLabel}
+                    </p>
+                  ) : (
+                    <span className="hidden sm:block" aria-hidden />
+                  )}
                 </>
               );
 
               return (
-                <li
-                  key={item.id}
-                  className={cn(
-                    "px-4 py-3.5 sm:px-5",
-                    priorityClass(item.priority),
-                    isLive && "bg-primary/[0.04]",
-                  )}
-                >
+                <li key={item.id} className={rowClass}>
                   {href ? (
                     <Link
                       to={href}
-                      className="flex items-start gap-3 rounded-sm outline-none transition-colors hover:opacity-90 focus-visible:ring-2 focus-visible:ring-ring"
+                      className="contents rounded-sm outline-none transition-colors hover:opacity-90 focus-visible:ring-2 focus-visible:ring-ring"
                     >
                       {body}
                     </Link>
                   ) : (
-                    <div className="flex items-start gap-3">{body}</div>
+                    body
                   )}
                 </li>
               );
             })}
           </ul>
           {hasMore ? (
-            <div className="border-t border-border px-4 py-3 sm:px-5">
+            <div className="pt-2">
               <button
                 type="button"
                 onClick={onLoadOlder}
                 disabled={isLoadingOlder}
-                className="w-full rounded-md border border-border bg-muted/30 px-3 py-2 text-sm font-medium text-foreground hover:bg-muted disabled:opacity-60"
+                className="min-h-11 w-full rounded-md border border-border bg-muted/30 px-3 py-2 text-sm font-medium text-foreground hover:bg-muted disabled:opacity-60 sm:w-auto sm:min-w-[12rem]"
               >
                 {isLoadingOlder
                   ? t("business.activityCenter.loadingOlder")
@@ -342,6 +340,6 @@ export function ActivityCenterFeed({
           ) : null}
         </>
       )}
-    </DashboardWorkspacePanel>
+    </div>
   );
 }

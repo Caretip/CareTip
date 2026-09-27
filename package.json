@@ -87,6 +87,7 @@
     "test:notifications-realtime-deep": "node ./backend/node_modules/tsx/dist/cli.mjs ./scripts/notifications-realtime-deep-runtime.ts",
     "test:google-signin-gsi": "node ./backend/node_modules/tsx/dist/cli.mjs ./scripts/google-signin-gsi-lifecycle-runtime.ts",
     "test:business-analytics-integrity": "node ./backend/node_modules/tsx/dist/cli.mjs ./scripts/business-analytics-integrity-runtime.ts",
+    "test:performance-insights-remediation": "node ./backend/node_modules/tsx/dist/cli.mjs ./scripts/performance-insights-remediation-runtime.ts",
     "test:business-analytics-performance-browser": "node ./backend/node_modules/tsx/dist/cli.mjs ./scripts/business-analytics-performance-browser-validation-runtime.ts",
     "test:stripe-connect-phase4-5-ui": "node ./backend/node_modules/tsx/dist/cli.mjs ./scripts/stripe-connect-phase4-5-ui-runtime.ts",
     "test:stripe-payments-responsive": "node ./backend/node_modules/tsx/dist/cli.mjs ./scripts/stripe-payments-responsive-runtime.ts"

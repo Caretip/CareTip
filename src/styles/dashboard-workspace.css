@@ -330,11 +330,13 @@
   }
 
   .caretip-dashboard-shell .employee-dashboard-hero .employee-hero-chart-frame--photo {
-    border: none;
-    background: transparent;
-    border-radius: 0;
-    overflow: visible;
-    box-shadow: none;
+    border: 1px solid hsl(var(--border) / 0.5);
+    background: hsl(var(--muted) / 0.12);
+    border-radius: 0.625rem;
+    overflow: hidden;
+    box-shadow:
+      0 1px 2px hsl(var(--foreground) / 0.04),
+      0 8px 22px hsl(var(--foreground) / 0.05);
   }
 
   .caretip-dashboard-shell .business-hero-pulse-card__value {

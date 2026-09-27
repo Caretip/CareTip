@@ -37,10 +37,10 @@ export function BusinessStripePayoutsPage() {
             else params.delete("view");
             setSearchParams(params, { replace: true });
           }}
-          className="gap-6"
+          className="caretip-stripe-payouts-tabs min-w-0 gap-6"
         >
           <TabsList
-            className="h-10 w-full max-w-full sm:w-fit"
+            className="h-auto min-h-10 w-full max-w-full flex-wrap gap-1 sm:h-10 sm:w-fit sm:flex-nowrap"
             aria-label={t("business.stripe.payoutsWorkspace.toggleAria")}
           >
             <TabsTrigger value="caretip" className="min-w-0 flex-1 whitespace-normal px-3 py-1.5 sm:flex-none sm:min-w-[7.5rem] sm:whitespace-nowrap sm:px-5">

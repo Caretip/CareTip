@@ -2,7 +2,7 @@ import { Link } from "react-router";
 import { useCallback, useEffect, useState } from "react";
 import { useStaleExternalStripeStateReset } from "../../../../hooks/useStaleExternalStripeStateReset";
 import { useTranslation } from "react-i18next";
-import { CalendarDays, Landmark, Loader2, Wallet } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import {
   createConnectLoginLink,
   createInstantPayout,
@@ -44,6 +44,14 @@ import {
 } from "../../../ui/dialog";
 import { Button } from "@/components/ui/button";
 import { InstantPayoutTermsCheckbox } from "../../../finance/InstantPayoutTermsCheckbox";
+import {
+  PayoutFinancialMetric,
+  PayoutFinancialMetricStrip,
+} from "../../../finance/payout/PayoutFinancialMetric";
+import { PayoutDestinationCard } from "../../../finance/payout/PayoutDestinationCard";
+import { PayoutInstantBreakdown } from "../../../finance/payout/PayoutInstantBreakdown";
+import { PayoutWorkspacePanel } from "../../../finance/payout/PayoutWorkspacePanel";
+import { payoutWorkspaceLedgerToolbar, payoutWorkspaceRoot } from "../../../finance/payout/payoutWorkspaceClasses";
 
 const PAGE_SIZE = 20;
 
@@ -207,20 +215,20 @@ export function ConnectPayoutsPanel({ loading: bootLoading }: { loading?: boolea
     eligibility.connected === true;
 
   return (
-    <div className="space-y-6">
+    <div className={cn(payoutWorkspaceRoot, "space-y-5 sm:space-y-6")}>
       <BusinessPayoutMetrics
         eligibility={eligibility}
         eligibilityLoading={eligibilityLoading || Boolean(bootLoading)}
         locale={locale}
       />
 
-      <div className="grid min-w-0 items-start gap-4 xl:grid-cols-[minmax(0,1fr)_21rem]">
-      <section
-        className="order-2 min-w-0 rounded-2xl border border-border/70 bg-card p-5 xl:order-1"
+      <div className="caretip-payout-layout min-w-0 gap-4">
+      <PayoutWorkspacePanel
+        className="min-w-0"
         aria-labelledby="caretip-payout-history-heading"
       >
         <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-          <h2 id="caretip-payout-history-heading" className="min-w-0 text-base font-semibold tracking-tight">
+          <h2 id="caretip-payout-history-heading" className="min-w-0 text-sm font-semibold tracking-tight sm:text-base">
             {t("business.billing.payouts.activityTitle")}
           </h2>
           <button
@@ -238,7 +246,7 @@ export function ConnectPayoutsPanel({ loading: bootLoading }: { loading?: boolea
           </button>
         </div>
 
-        <div className="mb-4 flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+        <div className={cn("mb-4 flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between", payoutWorkspaceLedgerToolbar())}>
           <label className="min-w-0 flex-1">
             <span className="sr-only">{t("business.stripe.payoutsWorkspace.business.search")}</span>
             <input
@@ -299,7 +307,7 @@ export function ConnectPayoutsPanel({ loading: bootLoading }: { loading?: boolea
               ))}
             </div>
 
-            <div className={businessUi.tableWrap}>
+            <div className={cn(businessUi.tableWrap, "caretip-payout-ledger")}>
               <table className="w-full min-w-[720px] text-left text-sm">
                 <caption className="sr-only">{t("business.billing.payouts.tableCaption")}</caption>
                 <thead>
@@ -388,9 +396,9 @@ export function ConnectPayoutsPanel({ loading: bootLoading }: { loading?: boolea
             ) : null}
           </>
         )}
-      </section>
+      </PayoutWorkspacePanel>
 
-      <div className="order-1 min-w-0 space-y-4 xl:order-2">
+      <div className="caretip-payout-rail min-w-0 space-y-4">
         {showConnectedRails ? (
           <InstantBalanceSection
             bootLoading={Boolean(bootLoading)}
@@ -407,9 +415,10 @@ export function ConnectPayoutsPanel({ loading: bootLoading }: { loading?: boolea
           />
         ) : null}
         {showConnectedRails ? (
-          <BusinessPayoutMethodCard
-            last4={eligibility?.destinationLast4 ?? null}
-            kind={eligibility?.destinationKind ?? null}
+          <BusinessPayoutDestinationSection
+            eligibility={eligibility}
+            dashboardBusy={dashboardBusy}
+            onOpenDashboard={() => void openStripeDashboard()}
           />
         ) : null}
       </div>
@@ -485,20 +494,20 @@ function InstantBalanceSection({
 
   if (bootLoading || loading) {
     return (
-      <section className="rounded-2xl border border-border/70 bg-card p-5" aria-busy="true">
+      <PayoutWorkspacePanel aria-busy={true} aria-labelledby="caretip-payout-balance-heading">
         <h2 id="caretip-payout-balance-heading" className="sr-only">
           {t("business.billing.payouts.instant.balanceEyebrow")}
         </h2>
-        <div className="h-8 w-32 animate-pulse rounded-md bg-muted" />
+        <div className="h-7 w-28 animate-pulse rounded-md bg-muted" />
         <div className="mt-3 h-4 w-24 animate-pulse rounded-md bg-muted" />
         <span className="sr-only">{t("business.billing.payouts.instant.checking")}</span>
-      </section>
+      </PayoutWorkspacePanel>
     );
   }
 
   if (!eligibility) {
     return (
-      <section className="rounded-2xl border border-border/70 bg-card p-5 space-y-3">
+      <PayoutWorkspacePanel className="space-y-3" aria-labelledby="caretip-payout-balance-heading">
         <h2 id="caretip-payout-balance-heading" className="sr-only">
           {t("business.billing.payouts.instant.balanceEyebrow")}
         </h2>
@@ -506,20 +515,24 @@ function InstantBalanceSection({
         <button type="button" onClick={onRetryEligibility} className={cn(dashboardWorkspaceUi.btnGhost, "h-10 min-h-10 px-4 text-sm")}>
           {t("business.billing.payouts.instant.retry")}
         </button>
-      </section>
+      </PayoutWorkspacePanel>
     );
   }
 
   const thresholdBlocked =
     eligibility.reason === "below_minimum" || eligibility.reason === "zero_balance";
 
+  const receiveFormatted = formatConnectPayoutAmount(receiveCents, currency, locale);
+  const grossFormatted = formatConnectPayoutAmount(grossCents, currency, locale);
+  const feeFormatted = formatConnectPayoutAmount(feeCents, currency, locale);
+
   return (
-    <section className="min-w-0 rounded-2xl border border-border/70 bg-card p-5" aria-labelledby="caretip-payout-balance-heading">
+    <PayoutWorkspacePanel className="min-w-0" aria-labelledby="caretip-payout-balance-heading">
       <h2 id="caretip-payout-balance-heading" className="text-sm font-medium text-foreground">
         {t("business.billing.payouts.instant.sectionTitle")}
       </h2>
-      <p className="mt-2 text-[1.75rem] font-semibold tabular-nums tracking-tight sm:text-[1.875rem]">
-        {formatConnectPayoutAmount(receiveCents, currency, locale)}
+      <p className="caretip-payout-instant-amount mt-2 text-foreground">
+        {receiveFormatted}
       </p>
       <p className="mt-1 text-sm text-muted-foreground">
         {eligibility.eligible
@@ -528,24 +541,15 @@ function InstantBalanceSection({
       </p>
       {eligibility.eligible ? (
         <>
-          <div className="mt-4 space-y-2.5 border-t border-border/70 pt-4 text-sm">
-            <div className="flex items-start justify-between gap-3">
-              <span className="min-w-0 text-muted-foreground">{t("business.stripe.payoutsWorkspace.business.gross")}</span>
-              <span className="shrink-0 tabular-nums">{formatConnectPayoutAmount(grossCents, currency, locale)}</span>
-            </div>
-            {showFee ? (
-              <div className="flex items-start justify-between gap-3">
-                <span className="min-w-0 text-muted-foreground">{t("business.billing.payouts.instant.fee")}</span>
-                <span className="shrink-0 tabular-nums text-red-700 dark:text-red-300">
-                  −{formatConnectPayoutAmount(feeCents, currency, locale)}
-                </span>
-              </div>
-            ) : null}
-            <div className="flex items-start justify-between gap-3 border-t border-border/70 pt-2.5 font-medium">
-              <span className="min-w-0">{t("business.stripe.payoutsWorkspace.business.net")}</span>
-              <span className="shrink-0 tabular-nums">{formatConnectPayoutAmount(receiveCents, currency, locale)}</span>
-            </div>
-          </div>
+          <PayoutInstantBreakdown
+            grossLabel={t("business.stripe.payoutsWorkspace.business.gross")}
+            grossValue={grossFormatted}
+            feeLabel={t("business.billing.payouts.instant.fee")}
+            feeValue={feeFormatted}
+            netLabel={t("business.stripe.payoutsWorkspace.business.net")}
+            netValue={receiveFormatted}
+            showFee={showFee}
+          />
           {last4 ? <p className="mt-3 text-sm text-muted-foreground">•••• {last4}</p> : null}
           {eligibility.canOpenExpressDashboard ? (
             <button
@@ -557,7 +561,7 @@ function InstantBalanceSection({
               {t("business.billing.payouts.instant.changeMethod")}
             </button>
           ) : null}
-          <div className="mt-5">
+          <div className="mt-4">
             <InstantPayoutTermsCheckbox
               checked={termsAccepted}
               onCheckedChange={onTermsAcceptedChange}
@@ -609,7 +613,7 @@ function InstantBalanceSection({
           />
         </div>
       )}
-    </section>
+    </PayoutWorkspacePanel>
   );
 }
 
@@ -768,28 +772,44 @@ function PayoutMobileRow({
   const { t } = useTranslation();
   const issue = payoutIssueText(payout, t);
   return (
-    <button type="button" onClick={onOpen} className={cn(businessUi.mobileCard, "w-full min-w-0 text-left")}>
+    <button type="button" onClick={onOpen} className="caretip-payout-mobile-record w-full min-w-0 text-left">
       <div className="flex items-start justify-between gap-3">
+        <p className="min-w-0 text-base font-semibold tabular-nums text-foreground">
+          {formatConnectPayoutAmount(payout.amountCents, payout.currency, locale)}
+        </p>
+        <ConnectPayoutStatusBadge className="max-w-[52%] shrink-0 text-right leading-snug" status={payout.status} />
+      </div>
+      <dl className="mt-2 grid grid-cols-2 gap-x-3 gap-y-1.5 text-xs text-muted-foreground">
         <div className="min-w-0">
-          <p className="truncate font-mono text-xs text-muted-foreground" title={payout.id}>
-            {payoutRefLabel(payout.id)}
-          </p>
-          <div className="mt-0.5 font-medium tabular-nums">
-            {formatConnectPayoutAmount(payout.amountCents, payout.currency, locale)}
-          </div>
+          <dt className="sr-only">{t("business.billing.payouts.colCreated")}</dt>
+          <dd>{formatConnectPayoutDate(payout.stripeCreatedAt, locale)}</dd>
         </div>
-        <ConnectPayoutStatusBadge className="max-w-[48%] shrink-0 text-right leading-snug" status={payout.status} />
-      </div>
-      <div className="mt-1.5 text-xs text-muted-foreground">
-        {payout.method === "instant"
-          ? t("business.billing.payouts.methodInstant")
-          : payout.method === "standard"
-            ? t("business.billing.payouts.methodStandard")
-            : t("business.billing.payouts.methodUnknown")}
-        {" · "}
-        {t("business.billing.payouts.colArrival")}: {formatConnectPayoutDate(payout.arrivalDate, locale)}
-      </div>
-      {issue ? <p className="mt-1.5 text-xs text-destructive">{issue}</p> : null}
+        <div className="min-w-0 text-right sm:text-left">
+          <dt className="sr-only">{t("business.billing.payouts.colMethod")}</dt>
+          <dd>
+            {payout.method === "instant"
+              ? t("business.billing.payouts.methodInstant")
+              : payout.method === "standard"
+                ? t("business.billing.payouts.methodStandard")
+                : t("business.billing.payouts.methodUnknown")}
+          </dd>
+        </div>
+        <div className="col-span-2 min-w-0">
+          <dt className="inline font-medium text-foreground/80 after:content-[':']">
+            {t("business.stripe.payoutsWorkspace.business.colPayout")}
+          </dt>
+          <dd className="mt-0.5 inline font-mono text-[0.6875rem] text-muted-foreground" title={payout.id}>
+            {payoutRefLabel(payout.id)}
+          </dd>
+        </div>
+        <div className="col-span-2 min-w-0">
+          <dt className="inline font-medium text-foreground/80 after:content-[':']">
+            {t("business.billing.payouts.colArrival")}
+          </dt>
+          <dd className="mt-0.5 inline tabular-nums">{formatConnectPayoutDate(payout.arrivalDate, locale)}</dd>
+        </div>
+      </dl>
+      {issue ? <p className="mt-2 text-xs text-destructive">{issue}</p> : null}
     </button>
   );
 }
@@ -804,36 +824,54 @@ function HistorySkeleton() {
   );
 }
 
-function BusinessPayoutMethodCard({
-  last4,
-  kind,
+function BusinessPayoutDestinationSection({
+  eligibility,
+  dashboardBusy,
+  onOpenDashboard,
 }: {
-  last4: string | null;
-  kind: "card" | "bank_account" | null;
+  eligibility: InstantPayoutEligibility | null;
+  dashboardBusy: boolean;
+  onOpenDashboard: () => void;
 }) {
   const { t } = useTranslation();
+  const last4 = eligibility?.destinationLast4 ?? null;
+  const kind = eligibility?.destinationKind ?? null;
   const label =
     kind === "card"
       ? t("business.stripe.payoutsWorkspace.business.methodCard")
       : t("business.stripe.payoutsWorkspace.business.methodBank");
+  const masked = last4
+    ? `•••• ${last4}`
+    : t("business.stripe.payoutsWorkspace.business.methodMasked");
 
   return (
-    <div
-      className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#8b7cff] via-[#7b61ff] to-[#5b4ae0] p-5 text-white shadow-sm"
-      aria-label={t("business.stripe.payoutsWorkspace.business.methodCardAria")}
-    >
-      <div className="pointer-events-none absolute -right-8 -top-10 size-32 rounded-full bg-white/15" />
-      <div className="pointer-events-none absolute -bottom-12 right-10 size-28 rounded-full bg-white/10" />
-      <div className="relative flex min-w-0 flex-wrap items-start justify-between gap-3">
-        <p className="min-w-0 text-sm font-semibold tracking-tight">{label}</p>
-        <span className="shrink-0 rounded-full bg-white/20 px-2 py-0.5 text-[0.625rem] font-semibold uppercase tracking-wide">
-          {t("business.stripe.payoutsWorkspace.business.methodDefault")}
-        </span>
+    <PayoutWorkspacePanel aria-labelledby="business-payout-destination-heading">
+      <h2 id="business-payout-destination-heading" className="text-sm font-medium text-foreground">
+        {t("business.stripe.payoutsWorkspace.business.methodCardAria")}
+      </h2>
+      <div className="mt-3">
+        <PayoutDestinationCard
+          methodLabel={label}
+          defaultBadgeLabel={t("business.stripe.payoutsWorkspace.business.methodDefault")}
+          maskedDisplay={masked}
+          ariaLabel={t("business.stripe.payoutsWorkspace.business.methodCardAria")}
+          changeAction={
+            eligibility?.canOpenExpressDashboard
+              ? (
+                  <button
+                    type="button"
+                    disabled={dashboardBusy}
+                    onClick={onOpenDashboard}
+                    className="text-sm font-medium text-primary underline-offset-2 hover:underline disabled:opacity-50"
+                  >
+                    {t("business.billing.payouts.instant.changeMethod")}
+                  </button>
+                )
+              : undefined
+          }
+        />
       </div>
-      <p className="relative mt-8 break-all font-mono text-lg tracking-[0.2em] sm:tracking-[0.28em]">
-        {last4 ? `···· ···· ${last4}` : t("business.stripe.payoutsWorkspace.business.methodMasked")}
-      </p>
-    </div>
+    </PayoutWorkspacePanel>
   );
 }
 
@@ -854,25 +892,22 @@ function BusinessPayoutMetrics({
 
   if (mode === "loading") {
     return (
-      <div className="grid grid-cols-1 gap-3 md:grid-cols-3 md:gap-3.5" aria-busy="true">
+      <PayoutFinancialMetricStrip aria-busy={true}>
         {[0, 1, 2].map((i) => (
-          <section
-            key={i}
-            className="min-h-0 rounded-2xl border border-border/70 bg-card p-4 shadow-none md:min-h-[8.25rem] sm:p-5"
-          >
-            <div className="h-4 w-28 animate-pulse rounded-md bg-muted" />
-            <div className="mt-4 h-8 w-24 animate-pulse rounded-md bg-muted" />
-            <div className="mt-2 h-3 w-40 animate-pulse rounded-md bg-muted" />
-          </section>
+          <div key={i} className="caretip-payout-metric">
+            <div className="h-3 w-24 animate-pulse rounded-md bg-muted" />
+            <div className="mt-3 h-7 w-20 animate-pulse rounded-md bg-muted" />
+            <div className="mt-2 h-3 w-32 animate-pulse rounded-md bg-muted" />
+          </div>
         ))}
-      </div>
+      </PayoutFinancialMetricStrip>
     );
   }
 
   if (mode === "setup") {
     return (
-      <section
-        className="rounded-2xl border border-border/70 bg-card p-5 sm:p-6"
+      <PayoutWorkspacePanel
+        paddingClassName="sm:p-6"
         aria-labelledby="business-payout-balance-setup-heading"
       >
         <h2 id="business-payout-balance-setup-heading" className="text-base font-semibold tracking-tight">
@@ -893,7 +928,7 @@ function BusinessPayoutMetrics({
         >
           {t("business.billing.payouts.instant.connectCta")}
         </Link>
-      </section>
+      </PayoutWorkspacePanel>
     );
   }
 
@@ -918,45 +953,34 @@ function BusinessPayoutMetrics({
     return money(cents ?? 0);
   };
 
-  const cards = [
+  const metrics = [
     {
-      icon: CalendarDays,
-      label: t("business.stripe.payoutsWorkspace.business.kpiInstant"),
-      hint: t("business.stripe.payoutsWorkspace.business.kpiInstantHint"),
-      value: formatInstant(eligibility?.instantAvailableNetCents),
-    },
-    {
-      icon: Wallet,
       label: t("business.stripe.payoutsWorkspace.business.kpiAvailable"),
       hint: t("business.stripe.payoutsWorkspace.business.kpiAvailableHint"),
       value: formatStandard(eligibility?.availableCents),
     },
     {
-      icon: Landmark,
       label: t("business.stripe.payoutsWorkspace.business.kpiPending"),
       hint: t("business.stripe.payoutsWorkspace.business.kpiPendingHint"),
       value: formatStandard(eligibility?.pendingCents),
     },
+    {
+      label: t("business.stripe.payoutsWorkspace.business.kpiInstant"),
+      hint: t("business.stripe.payoutsWorkspace.business.kpiInstantHint"),
+      value: formatInstant(eligibility?.instantAvailableNetCents),
+    },
   ] as const;
 
   return (
-    <div className="grid grid-cols-1 gap-3 md:grid-cols-3 md:gap-3.5">
-      {cards.map((card) => (
-        <section key={card.label} className="min-h-0 rounded-2xl border border-border/70 bg-card p-4 shadow-none md:min-h-[8.25rem] sm:p-5">
-          <div className="flex items-start gap-3">
-            <span className="inline-flex size-9 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground">
-              <card.icon className="size-4" aria-hidden />
-            </span>
-            <div className="min-w-0">
-              <h2 className="text-sm font-medium text-foreground">{card.label}</h2>
-              <p className="mt-3 break-words text-[1.75rem] font-semibold tabular-nums tracking-tight text-foreground sm:text-[1.875rem]">
-                {card.value}
-              </p>
-              <p className="mt-1 text-xs leading-snug text-muted-foreground">{card.hint}</p>
-            </div>
-          </div>
-        </section>
+    <PayoutFinancialMetricStrip>
+      {metrics.map((metric) => (
+        <PayoutFinancialMetric
+          key={metric.label}
+          label={metric.label}
+          value={metric.value}
+          hint={metric.hint}
+        />
       ))}
-    </div>
+    </PayoutFinancialMetricStrip>
   );
 }

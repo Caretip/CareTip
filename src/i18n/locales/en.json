@@ -4212,7 +4212,7 @@
         }
       },
       "activityTitle": "CareTip payout activity",
-      "activityHint": "Transfers, holds, and venue-managed shares — not bank payouts.",
+      "activityHint": "Transfers, holds, and venue-managed shares. Not bank payouts.",
       "activityLoading": "Loading payout activity…",
       "activityLoadError": "Could not load payout activity.",
       "emptyActivityTitle": "No payout activity yet",
@@ -5484,6 +5484,13 @@
       "comingSoon": "Soon"
     },
     "qrAnalytics": {
+      "scansByDevice": "Scans by device",
+      "device": {
+        "mobile": "Mobile",
+        "desktop": "Desktop",
+        "tablet": "Tablet",
+        "unknown": "Unknown"
+      },
       "totalScans": "Total scans",
       "uniqueVisitors": "Unique visitors",
       "uniqueVisitorsHint": "Distinct scan sessions in this period",
@@ -5992,6 +5999,7 @@
       }
     },
     "activityCenter": {
+      "pageSubtitle": "Real-time tips, QR scans, payments, and team events for your venue.",
       "centerTitle": "Activity Center",
       "streamLabel": "Live",
       "ssotHelper": "",
@@ -6282,12 +6290,18 @@
         },
         "executive": {
           "summaryTitle": "Executive summary",
+          "growthComparisonHint": "Compared with the previous equal-length period.",
+          "healthIndexHint": "Composite index from growth, participation, goals, ratings, and tip activity. Not a single KPI.",
+          "tipVolumeTrendTitle": "Daily tip volume",
+          "risksEmpty": "No significant risks detected from the available data.",
+          "recommendationsEmpty": "No specific recommendation based on the current data.",
           "healthExplain": "Health score is a weighted sum of revenue growth, participation, goals, ratings, and tip activity, each from your live data.",
           "summary": {
             "composite": "Period overview",
             "collectingData": "Collecting enough activity to summarize this period.",
-            "revenueHealthy": "Revenue is up {{percent}}% compared to the period average.",
-            "revenueDeclining": "Revenue declined {{percent}}% compared to the period average.",
+            "noTipActivity": "No successful tips recorded this period despite active staff.",
+            "revenueHealthy": "Tips are up {{percent}}% compared with the previous equal-length period.",
+            "revenueDeclining": "Tips declined {{percent}}% compared with the previous equal-length period.",
             "revenueStable": "Revenue is stable this period.",
             "qrGrowing": "QR scan activity grew {{percent}}% in the second half of the period.",
             "qrDeclining": "QR scan activity declined in the second half of the period.",
@@ -6681,7 +6695,12 @@
       },
       "sinceLast": {
         "title": "Since last distribution",
-        "body": "{{count}} new tips · gross {{gross}} · CareTip fees {{fees}} · net to distribute {{net}}"
+        "body": "{{count}} new tips · gross {{gross}} · CareTip fees {{fees}} · net to distribute {{net}}",
+        "newTips": "{{count}} new tips",
+        "tipsLabel": "New tips",
+        "grossLabel": "Gross",
+        "feesLabel": "Fees",
+        "netLabel": "Net"
       },
       "ready": {
         "title": "Ready to distribute",
@@ -6778,7 +6797,7 @@
         "hintAction": "Stripe needs more information",
         "hintRestricted": "Stripe has restricted this account",
         "hintConnected": "Stripe payout account connected",
-        "hintConnectedBusiness": "Connected — not required for current routing",
+        "hintConnectedBusiness": "Connected. Not required for current routing.",
         "viewEmployees": "View employees",
         "hideEmployees": "Hide employee list",
         "showMore": "Show all employees ({{count}})",
@@ -6818,7 +6837,7 @@
           "distributionCount_other": "{{count}} employee shares awaiting distribution",
           "distributionAgedWarning": "{{count}} shares ({{amount}}) are older than 30 days and still awaiting distribution.",
           "distributionRowMeta": "{{date}} · gross {{gross}} · CareTip fee {{fee}}",
-          "distributionRowAged": "Older than 30 days — still awaiting business distribution.",
+          "distributionRowAged": "Older than 30 days and still awaiting business distribution.",
           "unknownEmployee": "Employee",
           "accountsTitle": "Employee payout accounts",
           "accountsHint": "Who can receive routed tips, and who still needs to connect.",

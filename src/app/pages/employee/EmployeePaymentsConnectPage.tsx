@@ -12,6 +12,7 @@ import { isEmployeeBusinessDistributionMode } from "../../components/employee/em
 import { EMPLOYEE_PAYMENTS_HISTORY_HREF } from "../../components/employee/employeeDashboardNav";
 import { employeeUi } from "../../components/employee/employeeDashboardUi";
 import { cn } from "@/lib/utils";
+import { payoutWorkspaceRoot } from "../../components/finance/payout/payoutWorkspaceClasses";
 import {
   getEmployeeConnectStatus,
   getEmployeeInstantPayoutEligibility,
@@ -69,7 +70,7 @@ export function EmployeePaymentsConnectPage() {
 
   return (
     <div className={cn(employeeUi.page, "employee-payments-connect-page")}>
-      <div className={cn(employeeUi.pageInner, "mx-auto max-w-6xl space-y-6")}>
+      <div className={cn(employeeUi.pageInner, payoutWorkspaceRoot, "mx-auto max-w-6xl space-y-5 sm:space-y-6")}>
         <EmployeePageHeader
           kicker={t("dashboardNav.employee.payments")}
           title={t("employee.payouts.title")}
@@ -92,8 +93,11 @@ export function EmployeePaymentsConnectPage() {
           businessDistribution={businessDistribution}
           connectCtaOnPage
         />
-        <div className="grid min-w-0 items-start gap-4 xl:grid-cols-[minmax(0,1fr)_21rem]">
-          <div className="order-1 min-w-0 space-y-4 xl:order-2">
+        <div className="caretip-payout-layout min-w-0 gap-4">
+          <div className="min-w-0">
+            <EmployeeStripeBankPayoutList variant="panel" take={8} />
+          </div>
+          <div className="caretip-payout-rail min-w-0 space-y-4">
             <EmployeeInstantPayoutCard
               businessDistribution={businessDistribution}
               routingReady={routingReady}
@@ -110,9 +114,6 @@ export function EmployeePaymentsConnectPage() {
               destinationKind={eligibility?.destinationKind ?? null}
               layout="rail"
             />
-          </div>
-          <div className="order-2 min-w-0 xl:order-1">
-            <EmployeeStripeBankPayoutList variant="panel" take={8} />
           </div>
         </div>
       </div>

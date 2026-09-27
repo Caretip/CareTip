@@ -16,6 +16,8 @@ import { employeeUi } from "./employeeDashboardUi";
 import { caretipBtnPrimary } from "@/lib/caretipButtonSystem";
 import { cn } from "@/lib/utils";
 import { FinanceStatusPill } from "../finance/FinanceStatusPill";
+import { PayoutInstantBreakdown } from "../finance/payout/PayoutInstantBreakdown";
+import { PayoutWorkspacePanel } from "../finance/payout/PayoutWorkspacePanel";
 import {
   employeeInstantBlockedReasonKey,
   employeeInstantCtaEnabled,
@@ -159,45 +161,49 @@ export function EmployeeInstantPayoutCard(props: {
   const rail = props.layout === "rail";
   const thresholdId = "employee-instant-threshold";
 
+  const grossLabel = formatEur((gross > 0 ? gross : net) / 100);
+  const showFeeRow =
+    (mode === "ready" || mode === "threshold") &&
+    eligibility.feeConfigured &&
+    eligibility.platformFeeCents > 0;
+  const feeLabel = percent
+    ? t("employee.payouts.dashboard.feeWithPercent", { percent })
+    : t("employee.payouts.dashboard.fee");
+
   if (rail) {
     return (
-      <section
-        className="rounded-2xl border border-border/70 bg-card p-5"
-        aria-labelledby="employee-instant-heading"
-      >
+      <PayoutWorkspacePanel aria-labelledby="employee-instant-heading">
         <h2 id="employee-instant-heading" className="text-sm font-medium text-foreground">
           {t("employee.payouts.instant.title")}
         </h2>
-        <p className="mt-2 text-[1.75rem] font-semibold tabular-nums tracking-tight sm:text-[1.875rem]">
-          {receiveLabel}
-        </p>
+        <p className="caretip-payout-instant-amount mt-2 text-foreground">{receiveLabel}</p>
         <p className="mt-1 text-sm text-muted-foreground">{t("employee.payouts.instant.youReceive")}</p>
-        <div className="mt-4 space-y-2.5 border-t border-border/70 pt-4 text-sm">
-          <div className="flex items-start justify-between gap-3">
-            <span className="min-w-0 text-muted-foreground">{t("employee.payouts.dashboard.gross")}</span>
-            <span className="shrink-0 tabular-nums">{formatEur((gross > 0 ? gross : net) / 100)}</span>
-          </div>
-          {mode === "ready" || mode === "threshold" ? (
-            eligibility.feeConfigured && eligibility.platformFeeCents > 0 ? (
-              <div className="flex items-start justify-between gap-3">
-                <span className="text-muted-foreground">
-                  {percent
-                    ? t("employee.payouts.dashboard.feeWithPercent", { percent })
-                    : t("employee.payouts.dashboard.fee")}
-                </span>
-                <span className="tabular-nums text-red-700 dark:text-red-300">
-                  −{formatEur(eligibility.platformFeeCents / 100)}
-                </span>
-              </div>
-            ) : (
-              <p className="text-xs text-muted-foreground">{t("employee.payouts.instant.feeUnknown")}</p>
-            )
-          ) : null}
-          <div className="flex items-start justify-between gap-3 border-t border-border/70 pt-2.5 font-medium">
-            <span className="min-w-0">{t("employee.payouts.dashboard.net")}</span>
-            <span className="shrink-0 tabular-nums">{receiveLabel}</span>
-          </div>
-        </div>
+        {mode === "ready" || mode === "threshold" ? (
+          showFeeRow ? (
+            <PayoutInstantBreakdown
+              grossLabel={t("employee.payouts.dashboard.gross")}
+              grossValue={grossLabel}
+              feeLabel={feeLabel}
+              feeValue={formatEur(eligibility.platformFeeCents / 100)}
+              netLabel={t("employee.payouts.dashboard.net")}
+              netValue={receiveLabel}
+              showFee={true}
+            />
+          ) : (
+            <>
+              <PayoutInstantBreakdown
+                grossLabel={t("employee.payouts.dashboard.gross")}
+                grossValue={grossLabel}
+                feeLabel={feeLabel}
+                feeValue=""
+                netLabel={t("employee.payouts.dashboard.net")}
+                netValue={receiveLabel}
+                showFee={false}
+              />
+              <p className="mt-2 text-xs text-muted-foreground">{t("employee.payouts.instant.feeUnknown")}</p>
+            </>
+          )
+        ) : null}
         {last4 ? <p className="mt-3 text-sm text-muted-foreground">•••• {last4}</p> : null}
         {employeeInstantShowEligiblePill(mode) ? (
           <div className="mt-2">
@@ -247,7 +253,7 @@ export function EmployeeInstantPayoutCard(props: {
             {t("employee.payouts.instant.success")}
           </p>
         ) : null}
-      </section>
+      </PayoutWorkspacePanel>
     );
   }
 

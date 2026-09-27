@@ -1,14 +1,11 @@
 import { lazy, Suspense, useMemo } from "react";
 import { useTranslation } from "react-i18next";
-import { AlertTriangle, Lightbulb, Sparkles } from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
-import { DashboardWorkspaceSummaryCard } from "../dashboard/DashboardWorkspaceSummaryCard";
-import { dashboardWorkspaceUi } from "../dashboard/dashboardWorkspaceUi";
+import { AlertTriangle, ArrowRight, Sparkles } from "lucide-react";
 import { CountUpMetric } from "../dashboard/CountUpMetric";
 import { businessUi } from "./businessDashboardUi";
 import { cn } from "@/lib/utils";
 import type { useBusinessIntelligenceData } from "../../hooks/useBusinessIntelligenceData";
-import type { ExecutiveOpportunity, ExecutiveInsight, ExecutiveSummary } from "../../lib/businessIntelligence";
+import type { ExecutiveInsight, ExecutiveOpportunity } from "../../lib/businessIntelligence";
 
 const ExecutiveHealthTrends = lazy(() =>
   import("./insights/ExecutiveHealthTrends").then((mod) => ({
@@ -18,143 +15,186 @@ const ExecutiveHealthTrends = lazy(() =>
 
 type BiData = ReturnType<typeof useBusinessIntelligenceData>;
 
-function IntelligenceItem({
-  item,
+function CompactInsightRows({
+  items,
   icon: Icon,
-  borderClass,
   iconClass,
+  titleId,
+  title,
+  emptyMessageKey,
 }: {
-  item: ExecutiveOpportunity;
+  items: ExecutiveOpportunity[];
   icon: typeof AlertTriangle;
-  borderClass: string;
   iconClass: string;
+  titleId: string;
+  title: string;
+  emptyMessageKey?: string;
 }) {
   const { t } = useTranslation();
+  if (items.length === 0) {
+    if (!emptyMessageKey) return null;
+    return (
+      <section aria-labelledby={titleId}>
+        <h2 id={titleId} className="business-performance-section-label">{title}</h2>
+        <p className="text-sm text-muted-foreground">{t(emptyMessageKey)}</p>
+      </section>
+    );
+  }
   return (
-    <div className={cn("flex gap-3 rounded-xl border px-3.5 py-3 sm:px-4 sm:py-3.5", borderClass)}>
-      <Icon className={cn("mt-0.5 h-4 w-4 shrink-0", iconClass)} aria-hidden />
-      <div className="min-w-0 space-y-1">
-        <p className="text-sm text-foreground">{t(item.messageKey, item.params)}</p>
-        <p className="text-xs text-muted-foreground">
-          {t(item.evidenceKey, item.evidenceParams)}
-        </p>
-      </div>
-    </div>
+    <section aria-labelledby={titleId}>
+      <h2 id={titleId} className="business-performance-section-label">{title}</h2>
+      <ul className="business-performance-insight-list">
+        {items.map((item) => (
+          <li key={item.id} className="business-performance-insight-row">
+            <Icon className={cn("mt-0.5 h-4 w-4 shrink-0", iconClass)} aria-hidden />
+            <div className="min-w-0">
+              <p className="business-performance-insight-row__title">{t(item.messageKey, item.params)}</p>
+              <p className="business-performance-insight-row__detail">{t(item.evidenceKey, item.evidenceParams)}</p>
+            </div>
+          </li>
+        ))}
+      </ul>
+    </section>
   );
 }
 
-function ExecutiveSummaryCard({ data }: { data: BiData }) {
+function ExecutiveSummaryStrip({ data }: { data: BiData }) {
   const { t } = useTranslation();
   const summary = data.bi.executiveSummary;
-  const text = summary.clauses
-    .map((c: ExecutiveSummary["clauses"][number]) => String(t(c.key, c.params)))
-    .join(" ");
+  const snap = data.bi.snapshot;
+  const growth = data.bi.revenue.growthComparable ? snap.growthRate : null;
+
+  const collectingKey = "business.team.performance.executive.summary.collectingData";
+  const firstClause = summary.clauses[0];
+  const interpretation =
+    firstClause && firstClause.key !== collectingKey
+      ? String(t(firstClause.key, firstClause.params))
+      : firstClause
+        ? String(t(firstClause.key, firstClause.params))
+        : null;
 
   return (
-    <Card className={cn(businessUi.cardStatic, dashboardWorkspaceUi.cardPad)}>
-      <CardContent className="space-y-2 p-4">
-        <h2 className={dashboardWorkspaceUi.eyebrow}>
-          {t("business.team.performance.executive.summaryTitle")}
-        </h2>
-        <p className="text-base leading-relaxed text-foreground">{text}</p>
-      </CardContent>
-    </Card>
+    <section aria-labelledby="exec-summary-heading">
+      <h2 id="exec-summary-heading" className="business-performance-section-label">
+        {t("business.team.performance.executive.summaryTitle")}
+      </h2>
+      <div className="business-performance-metric-grid">
+        <div className="business-performance-metric">
+          <p className="business-performance-metric__label">
+            {t("business.team.performance.executive.snapshot.growth")}
+          </p>
+          <p className="business-performance-metric__value">
+            {growth != null ? <CountUpMetric value={growth} kind="percent" /> : "—"}
+          </p>
+          {growth != null ? (
+            <p className="mt-1 text-xs text-muted-foreground">
+              {t("business.team.performance.executive.growthComparisonHint")}
+            </p>
+          ) : null}
+        </div>
+        <div className="business-performance-metric">
+          <p className="business-performance-metric__label">
+            {t("business.team.performance.executive.snapshot.participation")}
+          </p>
+          <p className="business-performance-metric__value">
+            <CountUpMetric value={snap.employeeParticipation} kind="integer" />%
+          </p>
+        </div>
+        <div className="business-performance-metric">
+          <p className="business-performance-metric__label">
+            {t("business.team.performance.executive.snapshot.goalCompletion")}
+          </p>
+          <p className="business-performance-metric__value">
+            <CountUpMetric value={snap.goalCompletion} kind="integer" />%
+          </p>
+        </div>
+        <div className="business-performance-metric">
+          <p className="business-performance-metric__label">
+            {t("business.tips.analytics.cards.totalTips")}
+          </p>
+          <p className="business-performance-metric__value">
+            <CountUpMetric value={snap.periodTipCount} kind="integer" />
+          </p>
+        </div>
+      </div>
+      {interpretation ? <p className="business-performance-summary-line">{interpretation}</p> : null}
+    </section>
   );
 }
 
-function BusinessHealthCard({ data }: { data: BiData }) {
+function BusinessHealthStrip({ data }: { data: BiData }) {
   const { t } = useTranslation();
-  const { score, grade } = data.bi.health;
-  const growth = data.bi.snapshot.growthRate;
+  const { score } = data.bi.health;
+  const fillPct = Math.min(100, Math.max(0, score));
 
   return (
-    <DashboardWorkspaceSummaryCard
-      variant="health"
-      title={t("business.team.performance.executive.healthTitle")}
-      eyebrow={t(`business.team.performance.executive.healthGrades.${grade}`)}
-      metrics={[
-        {
-          label: t("business.team.performance.executive.snapshot.health"),
-          value: (
-            <>
-              <CountUpMetric value={score} kind="integer" />
-              <span className="text-base font-medium text-muted-foreground"> / 100</span>
-            </>
-          ),
-          trend: t(`business.team.performance.executive.healthGrades.${grade}`),
-          trendDirection:
-            grade === "excellent" || grade === "good"
-              ? "up"
-              : grade === "needs_attention"
-                ? "down"
-                : "neutral",
-        },
-        {
-          label: t("business.team.performance.executive.snapshot.growth"),
-          value: <CountUpMetric value={growth} kind="percent" />,
-          trend: t("premium.summaryBanner.growthValue", { percent: growth }),
-          trendDirection: growth >= 0 ? "up" : "down",
-        },
-        {
-          label: t("premium.health.status"),
-          value: t(`business.team.performance.executive.healthGrades.${grade}`),
-        },
-      ]}
-      footer={<p>{t("business.team.performance.executive.healthExplain")}</p>}
-    />
+    <section aria-labelledby="exec-health-heading">
+      <h2 id="exec-health-heading" className="business-performance-section-label">
+        {t("business.team.performance.executive.healthTitle")}
+      </h2>
+      <div className="business-performance-metric-grid">
+        <div className="business-performance-metric sm:col-span-2">
+          <p className="business-performance-metric__label">
+            {t("business.team.performance.executive.snapshot.health")}
+          </p>
+          <p className="business-performance-metric__value">
+            <CountUpMetric value={score} kind="integer" />
+            <span className="text-base font-medium text-muted-foreground"> / 100</span>
+          </p>
+          <div
+            className="business-performance-health-bar"
+            role="progressbar"
+            aria-valuenow={score}
+            aria-valuemin={0}
+            aria-valuemax={100}
+            aria-label={t("business.team.performance.executive.snapshot.health")}
+          >
+            <div className="business-performance-health-bar__fill" style={{ width: `${fillPct}%` }} />
+          </div>
+          <p className="mt-1 text-xs text-muted-foreground">
+            {t("business.team.performance.executive.healthIndexHint")}
+          </p>
+        </div>
+      </div>
+      <p className="sr-only">{t("business.team.performance.executive.healthExplain")}</p>
+    </section>
   );
 }
 
-function InsightList({ insights }: { insights: BiData["bi"]["executiveInsights"] }) {
+function KeyInsightsStrip({ data }: { data: BiData }) {
+  const { t } = useTranslation();
+  const insights = data.bi.insights;
+  const peak = insights.peakPeriod !== "—" ? insights.peakPeriod : null;
+
+  if (!peak) return null;
+
+  return (
+    <section aria-labelledby="exec-key-insights">
+      <h2 id="exec-key-insights" className="business-performance-section-label">
+        {t("business.team.performance.executive.insightsTitle")}
+      </h2>
+      <div className="business-performance-key-insights">
+        <div className="business-performance-key-insight">
+          <p className="business-performance-key-insight__value">{peak}</p>
+          <p className="business-performance-key-insight__label">{t("business.team.performance.bi.peakPeriod")}</p>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function ExecutiveInsightLines({ insights }: { insights: BiData["bi"]["executiveInsights"] }) {
   const { t } = useTranslation();
   if (insights.length === 0) return null;
   return (
-    <section className="space-y-3">
-      <h2 className={dashboardWorkspaceUi.eyebrow}>
-        {t("business.team.performance.executive.insightsTitle")}
-      </h2>
-      <div className="grid gap-3 grid-cols-1 sm:grid-cols-2">
-        {insights.map((item: ExecutiveInsight) => (
-          <Card key={item.id} className={businessUi.cardStatic}>
-            <CardContent className="flex gap-3 p-4">
-              <Sparkles className="mt-0.5 h-5 w-5 shrink-0 text-primary" aria-hidden />
-              <p className="text-sm leading-relaxed text-foreground">
-                {String(t(item.messageKey, item.params))}
-              </p>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-    </section>
-  );
-}
-
-function OpportunityList({ items }: { items: ExecutiveOpportunity[] }) {
-  const { t } = useTranslation();
-  if (items.length === 0) return null;
-  return (
-    <section className="space-y-3">
-      <h2 className={dashboardWorkspaceUi.eyebrow}>
-        {t("business.team.performance.executive.opportunitiesTitle")}
-      </h2>
-      <div className="space-y-2">
-        {items.map((item) => (
-          <IntelligenceItem
-            key={item.id}
-            item={item}
-            icon={Lightbulb}
-            borderClass={
-              item.tone === "success"
-                ? "border-emerald-500/30 bg-emerald-500/5"
-                : item.tone === "warning"
-                  ? "border-amber-500/30 bg-amber-500/5"
-                  : "border-border/70 bg-muted/20"
-            }
-            iconClass="text-primary"
-          />
-        ))}
-      </div>
-    </section>
+    <ul className="business-performance-insight-list">
+      {insights.map((item: ExecutiveInsight) => (
+        <li key={item.id} className="business-performance-insight-row">
+          <Sparkles className="mt-0.5 h-4 w-4 shrink-0 text-primary" aria-hidden />
+          <p className="business-performance-insight-row__title">{String(t(item.messageKey, item.params))}</p>
+        </li>
+      ))}
+    </ul>
   );
 }
 
@@ -162,82 +202,60 @@ type BusinessExecutivePerformanceProps = {
   data: BiData;
 };
 
-function RiskList({ items }: { items: ExecutiveOpportunity[] }) {
-  const { t } = useTranslation();
-  if (items.length === 0) return null;
-  return (
-    <section className="space-y-3">
-      <h2 className={dashboardWorkspaceUi.eyebrow}>
-        {t("business.team.performance.executive.risksTitle")}
-      </h2>
-      <div className="space-y-2">
-        {items.map((item) => (
-          <IntelligenceItem
-            key={item.id}
-            item={item}
-            icon={AlertTriangle}
-            borderClass="border-amber-500/30 bg-amber-500/5"
-            iconClass="text-amber-700"
-          />
-        ))}
-      </div>
-    </section>
-  );
-}
-
-function RecommendationList({ items }: { items: ExecutiveOpportunity[] }) {
-  const { t } = useTranslation();
-  if (items.length === 0) return null;
-  return (
-    <section className="space-y-3">
-      <h2 className={dashboardWorkspaceUi.eyebrow}>
-        {t("business.team.performance.executive.recommendationsTitle")}
-      </h2>
-      <div className="space-y-2">
-        {items.map((item) => (
-          <IntelligenceItem
-            key={item.id}
-            item={item}
-            icon={Lightbulb}
-            borderClass="border-primary/20 bg-primary/5"
-            iconClass="text-primary"
-          />
-        ))}
-      </div>
-    </section>
-  );
-}
-
 /** Sprint 6G — Performance owns intelligence; reporting stays in Analytics. */
 export function BusinessExecutivePerformance({ data }: BusinessExecutivePerformanceProps) {
   const { t } = useTranslation();
-  const participationTrend = useMemo(
-    () => data.bi.trends.participationTrend,
-    [data.bi.trends.participationTrend],
+  const tipVolumeTrend = useMemo(
+    () => data.bi.trends.tipVolumeTrend,
+    [data.bi.trends.tipVolumeTrend],
   );
+  const showTrendsSection = data.bi.executiveInsights.length > 0;
 
   return (
-    <div className="caretip-mobile-performance-report space-y-4 sm:space-y-5">
-      <ExecutiveSummaryCard data={data} />
-      <BusinessHealthCard data={data} />
+    <div className="business-performance-workspace caretip-mobile-performance-report">
+      <ExecutiveSummaryStrip data={data} />
+      <BusinessHealthStrip data={data} />
 
-      <section className="space-y-3">
-        <h2 className={dashboardWorkspaceUi.eyebrow}>
-          {t("business.team.performance.executive.healthTrendsTitle")}
+      <section className="business-performance-chart-panel" aria-labelledby="exec-health-trends">
+        <h2 id="exec-health-trends" className="business-performance-section-label">
+          {t("business.team.performance.executive.tipVolumeTrendTitle")}
         </h2>
         <Suspense
           fallback={
-            <div className={cn(businessUi.cardStatic, "h-[220px] animate-pulse bg-muted/30")} />
+            <div className={cn(businessUi.cardStatic, "h-[240px] animate-pulse bg-muted/20")} />
           }
         >
-          <ExecutiveHealthTrends participation={participationTrend} loading={data.loading} />
+          <ExecutiveHealthTrends tipVolume={tipVolumeTrend} loading={data.loading} />
         </Suspense>
       </section>
 
-      <RiskList items={data.bi.risks} />
-      <OpportunityList items={data.bi.opportunities} />
-      <RecommendationList items={data.bi.recommendations} />
-      <InsightList insights={data.bi.executiveInsights} />
+      <KeyInsightsStrip data={data} />
+
+      <CompactInsightRows
+        titleId="exec-risks"
+        title={t("business.team.performance.executive.risksTitle")}
+        items={data.bi.risks}
+        icon={AlertTriangle}
+        iconClass="text-amber-700 dark:text-amber-400"
+        emptyMessageKey="business.team.performance.executive.risksEmpty"
+      />
+      <CompactInsightRows
+        titleId="exec-recommendations"
+        title={t("business.team.performance.executive.recommendationsTitle")}
+        items={data.bi.recommendations}
+        icon={ArrowRight}
+        iconClass="text-muted-foreground"
+        emptyMessageKey="business.team.performance.executive.recommendationsEmpty"
+      />
+
+      {showTrendsSection ? (
+        <section aria-labelledby="exec-more-insights">
+          <h2 id="exec-more-insights" className="business-performance-section-label">
+            {t("business.team.performance.executive.trendsTitle")}
+          </h2>
+          <ExecutiveInsightLines insights={data.bi.executiveInsights} />
+        </section>
+      ) : null}
     </div>
   );
 }

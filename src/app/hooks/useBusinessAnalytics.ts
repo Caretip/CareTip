@@ -179,7 +179,7 @@ const EMPTY_DTO: BusinessAnalyticsDTO = {
 
     },
 
-    trends: { tipsOverTime: [], revenueTrend: [], participationTrend: [] },
+    trends: { tipsOverTime: [], revenueTrend: [], tipVolumeTrend: [] },
 
     health: {
 

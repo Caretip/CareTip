@@ -14,6 +14,7 @@ import { FinanceStatusPill } from "../finance/FinanceStatusPill";
 import type { FinanceStatusTone } from "../finance/FinanceStatusDot";
 import { EMPLOYEE_PAYMENTS_HISTORY_HREF } from "./employeeDashboardNav";
 import { cn } from "@/lib/utils";
+import { PayoutWorkspacePanel } from "../finance/payout/PayoutWorkspacePanel";
 
 function bankStatusTone(status: string): FinanceStatusTone {
   const s = status.toLowerCase();
@@ -104,9 +105,9 @@ export function EmployeeStripeBankPayoutList({
     </div>
   ) : (
     <>
-      <ul className="divide-y divide-border/80 lg:hidden">
+      <ul className="lg:hidden">
         {items.map((row, index) => (
-          <li key={`${row.createdAt}-${row.amountCents}-${index}`} className="flex items-start justify-between gap-3 py-3">
+          <li key={`${row.createdAt}-${row.amountCents}-${index}`} className="caretip-payout-mobile-record flex items-start justify-between gap-3">
             <div className="min-w-0 space-y-1">
               <p className="text-sm font-medium">{t(`employee.payouts.bankHistory.method.${row.method}`)}</p>
               <p className="text-xs text-muted-foreground">{formatPayoutDate(bankDisplayDateIso(row), i18n.language)}</p>
@@ -125,7 +126,7 @@ export function EmployeeStripeBankPayoutList({
           </li>
         ))}
       </ul>
-      <div className="hidden overflow-x-auto lg:block">
+      <div className="caretip-payout-ledger hidden overflow-x-auto lg:block">
         <table className="w-full text-left text-sm">
           <caption className="sr-only">{t("employee.payouts.history.bankTab")}</caption>
           <thead>
@@ -179,30 +180,31 @@ export function EmployeeStripeBankPayoutList({
     </>
   );
 
+  if (!panel) {
+    return (
+      <section className="space-y-3" aria-labelledby="employee-bank-payouts-heading">
+        <h2 id="employee-bank-payouts-heading" className="sr-only">
+          {t("employee.payouts.history.bankTab")}
+        </h2>
+        {body}
+      </section>
+    );
+  }
+
   return (
-    <section
-      className={cn(panel ? "rounded-2xl border border-border/70 bg-card p-5" : "space-y-3")}
-      aria-labelledby="employee-bank-payouts-heading"
-    >
-      <div className={cn("flex items-start justify-between gap-3", panel ? "mb-4" : "space-y-1")}>
-        <div className="min-w-0">
-          <h2
-            id="employee-bank-payouts-heading"
-            className={panel ? "text-base font-semibold tracking-tight" : "sr-only"}
-          >
-            {t("employee.payouts.history.bankTab")}
-          </h2>
-        </div>
-        {panel ? (
-          <Link
-            to={EMPLOYEE_PAYMENTS_HISTORY_HREF}
-            className="shrink-0 text-sm font-medium text-primary underline-offset-2 hover:underline"
-          >
-            {t("employee.payouts.dashboard.viewHistory")}
-          </Link>
-        ) : null}
+    <PayoutWorkspacePanel aria-labelledby="employee-bank-payouts-heading">
+      <div className="mb-4 flex items-start justify-between gap-3">
+        <h2 id="employee-bank-payouts-heading" className="min-w-0 text-sm font-semibold tracking-tight sm:text-base">
+          {t("employee.payouts.history.bankTab")}
+        </h2>
+        <Link
+          to={EMPLOYEE_PAYMENTS_HISTORY_HREF}
+          className="shrink-0 text-sm font-medium text-primary underline-offset-2 hover:underline"
+        >
+          {t("employee.payouts.dashboard.viewHistory")}
+        </Link>
       </div>
       {body}
-    </section>
+    </PayoutWorkspacePanel>
   );
 }

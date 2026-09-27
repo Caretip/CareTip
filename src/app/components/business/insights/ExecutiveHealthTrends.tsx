@@ -8,59 +8,81 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { businessUi } from "../businessDashboardUi";
-import { BUSINESS_CHART_GRID, getBusinessChartTooltipStyle } from "../businessDashboardChartTheme";
+import {
+  BUSINESS_CHART_AXIS,
+  BUSINESS_CHART_GRID,
+  getBusinessChartTooltipStyle,
+} from "../businessDashboardChartTheme";
+import { DASHBOARD_CHART_AREA_STROKE } from "../../dashboard/dashboardChartTheme";
 import { LIGHTWEIGHT_AREA } from "../../../lib/lightweightChartProps";
+import { BusinessDashboardAnalyticsEmpty } from "../BusinessDashboardAnalyticsEmpty";
+import { DashboardChartSkeleton } from "../../dashboard/DashboardAnalyticsLoader";
+import { CareIcon } from "@/components/icons";
 
 type ExecutiveHealthTrendsProps = {
-  participation: Array<{ label: string; participation: number }>;
+  tipVolume: Array<{ label: string; tips: number }>;
   loading: boolean;
 };
 
 /**
- * Executive health trend — participation only (Sprint 2: no revenue/analytics duplicate charts).
- * Source: daily tip distribution via buildTrendChartSeries (tips table).
+ * Daily tip volume (€) from `dailyTipDistribution` — not employee participation %.
  */
-export function ExecutiveHealthTrends({ participation, loading }: ExecutiveHealthTrendsProps) {
+export function ExecutiveHealthTrends({ tipVolume, loading }: ExecutiveHealthTrendsProps) {
   const { t } = useTranslation();
-  const hasData = participation.some((r) => r.participation > 0);
+  const hasData = tipVolume.some((r) => r.tips > 0);
 
   if (loading && !hasData) {
-    return null;
+    return (
+      <DashboardChartSkeleton variant="trend" minHeightClass="h-[220px] sm:h-[260px]" className="w-full" />
+    );
+  }
+
+  if (!hasData) {
+    return (
+      <BusinessDashboardAnalyticsEmpty
+        icon={<CareIcon name="analytics" size="lg" className="text-muted-foreground" />}
+        title={t("emptyState.chart.title")}
+        description={t("emptyState.chart.description")}
+      />
+    );
   }
 
   return (
-    <Card className={businessUi.cardStatic}>
-      <CardHeader className="border-b border-neutral-100/90 pb-3">
-        <CardTitle className="text-sm font-medium">
-          {t("business.team.performance.executive.healthTrendsTitle")}
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="pt-4">
-        {!hasData ? (
-          <p className="flex h-[180px] items-center justify-center text-sm text-muted-foreground">
-            {t("emptyState.chart.description")}
-          </p>
-        ) : (
-          <div className="h-[180px] w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={participation} margin={{ top: 4, right: 4, left: 0, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="4 6" stroke={BUSINESS_CHART_GRID} vertical={false} />
-                <XAxis dataKey="label" tickLine={false} axisLine={false} style={{ fontSize: 9 }} />
-                <YAxis tickLine={false} axisLine={false} width={40} style={{ fontSize: 9 }} />
-                <Tooltip contentStyle={getBusinessChartTooltipStyle()} />
-                <Area
-                  dataKey="participation"
-                  stroke="#a78bfa"
-                  fill="rgba(167,139,250,0.12)"
-                  {...LIGHTWEIGHT_AREA}
-                />
-              </AreaChart>
-            </ResponsiveContainer>
-          </div>
-        )}
-      </CardContent>
-    </Card>
+    <div
+      className="business-dashboard-chart-frame flex h-[220px] w-full min-w-0 items-center justify-center sm:h-[260px]"
+      role="img"
+      aria-label={t("business.team.performance.executive.tipVolumeTrendTitle")}
+    >
+      <ResponsiveContainer width="100%" height="100%" minWidth={0}>
+        <AreaChart data={tipVolume} margin={{ top: 12, right: 12, left: 4, bottom: 8 }}>
+          <CartesianGrid strokeDasharray="4 6" stroke={BUSINESS_CHART_GRID} vertical={false} />
+          <XAxis
+            dataKey="label"
+            stroke={BUSINESS_CHART_AXIS}
+            tickLine={false}
+            axisLine={{ stroke: BUSINESS_CHART_GRID }}
+            tick={{ fontSize: 11 }}
+            tickMargin={8}
+            interval="preserveStartEnd"
+            minTickGap={16}
+          />
+          <YAxis
+            stroke={BUSINESS_CHART_AXIS}
+            tickLine={false}
+            axisLine={false}
+            tick={{ fontSize: 11 }}
+            width={40}
+          />
+          <Tooltip contentStyle={getBusinessChartTooltipStyle()} />
+          <Area
+            dataKey="tips"
+            stroke={DASHBOARD_CHART_AREA_STROKE}
+            fill={DASHBOARD_CHART_AREA_STROKE}
+            fillOpacity={0.12}
+            {...LIGHTWEIGHT_AREA}
+          />
+        </AreaChart>
+      </ResponsiveContainer>
+    </div>
   );
 }

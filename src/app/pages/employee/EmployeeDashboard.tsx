@@ -458,9 +458,9 @@ export const EmployeeDashboard = memo(function EmployeeDashboard() {
             "normal-case border-transparent bg-transparent px-0 py-0 text-[11px] max-lg:text-[12px] font-medium tracking-normal shadow-none",
             dashboardFormalGreetingBadgeClassName,
           )}
-          titleClassName="max-lg:!leading-[1.08] lg:!leading-[1.1] tracking-tight max-lg:mx-0 max-lg:max-w-[22ch] max-lg:!text-[1.5625rem] max-lg:text-left lg:max-w-[18ch] lg:!text-[2rem] lg:text-left xl:!text-[2.125rem]"
-          descriptionClassName="!line-clamp-2 max-w-[34ch] leading-relaxed text-muted-foreground/90 max-lg:mx-0 max-lg:text-left lg:max-w-sm"
-          textColumnClassName="lg:py-2 xl:pr-6"
+          titleClassName="employee-hero-title max-lg:!leading-[1.08] lg:!leading-[1.12] tracking-tight max-lg:mx-0 max-lg:max-w-[22ch] max-lg:!text-[1.5625rem] max-lg:text-left lg:max-w-[22ch] lg:!text-[2rem] lg:text-left xl:!text-[2.125rem]"
+          descriptionClassName="employee-hero-description !line-clamp-2 max-w-[34ch] leading-relaxed text-muted-foreground/85 max-lg:mx-0 max-lg:text-left lg:max-w-md"
+          textColumnClassName="employee-hero-text-column lg:py-1 xl:pr-8"
           badge={formatDashboardFormalGreeting(t, user.name, undefined, { firstNameOnly: true })}
           title={
             <>
@@ -509,6 +509,7 @@ export const EmployeeDashboard = memo(function EmployeeDashboard() {
               }
             >
               <EmployeeHeroFinancialPanel
+                className="dashboard-hero-financial-panel"
                 loading={showHeroMetricsSkeleton}
                 refreshing={heroAccountRefreshing || analyticsPeriodRefreshing}
                 metrics={

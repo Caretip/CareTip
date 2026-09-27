@@ -183,19 +183,19 @@ export function TipDistributionPage() {
             <p className="text-sm text-muted-foreground">{t("business.tipDistribution.directToEmployeeInfo")}</p>
           </section>
         ) : (
-          <>
-            <section className="mb-6 grid grid-cols-1 gap-3 min-[400px]:grid-cols-2 lg:grid-cols-3">
-              <div className={cn(businessUi.statCard, "p-4")}>
-                <p className="text-xs font-medium text-muted-foreground">{t("business.tipDistribution.summary.toDistribute")}</p>
-                <p className="mt-1 text-2xl font-semibold tabular-nums">{centsToEur(summary?.totalToDistributeCents ?? 0)}</p>
+          <div className="tip-distribution-workspace">
+            <section className="tip-distribution-kpi-strip" aria-label={t("business.tipDistribution.title")}>
+              <div className="tip-distribution-kpi tip-distribution-kpi--primary">
+                <p className="tip-distribution-kpi__label">{t("business.tipDistribution.summary.toDistribute")}</p>
+                <p className="tip-distribution-kpi__value">{centsToEur(summary?.totalToDistributeCents ?? 0)}</p>
               </div>
-              <div className={cn(businessUi.statCard, "p-4")}>
-                <p className="text-xs font-medium text-muted-foreground">{t("business.tipDistribution.summary.employeesAwaiting")}</p>
-                <p className="mt-1 text-2xl font-semibold tabular-nums">{summary?.employeesAwaitingCount ?? 0}</p>
+              <div className="tip-distribution-kpi">
+                <p className="tip-distribution-kpi__label">{t("business.tipDistribution.summary.employeesAwaiting")}</p>
+                <p className="tip-distribution-kpi__value">{summary?.employeesAwaitingCount ?? 0}</p>
               </div>
-              <div className={cn(businessUi.statCard, "p-4")}>
-                <p className="text-xs font-medium text-muted-foreground">{t("business.tipDistribution.summary.lastDistribution")}</p>
-                <p className="mt-1 text-2xl font-semibold tabular-nums">
+              <div className="tip-distribution-kpi">
+                <p className="tip-distribution-kpi__label">{t("business.tipDistribution.summary.lastDistribution")}</p>
+                <p className="tip-distribution-kpi__value text-base sm:text-lg">
                   {summary?.lastDistributionAt
                     ? formatDistributionDate(summary.lastDistributionAt, locale)
                     : t("business.tipDistribution.summary.noneRecorded")}
@@ -204,9 +204,39 @@ export function TipDistributionPage() {
             </section>
 
             {summary?.sinceLastDistribution ? (
-              <section className="mb-6 rounded-xl border border-border/70 bg-muted/20 p-4 sm:p-5">
-                <h2 className="text-sm font-semibold">{t("business.tipDistribution.sinceLast.title")}</h2>
-                <p className="mt-1 text-sm text-muted-foreground">
+              <section className="tip-distribution-since-last" aria-labelledby="tip-dist-since-last">
+                <h2 id="tip-dist-since-last" className="tip-distribution-since-last__title">
+                  {t("business.tipDistribution.sinceLast.title")}
+                </h2>
+                <div className="tip-distribution-since-last__grid">
+                  <div>
+                    <p className="tip-distribution-since-last__cell-label">{t("business.tipDistribution.sinceLast.tipsLabel")}</p>
+                    <p className="tip-distribution-since-last__cell-value">
+                      {t("business.tipDistribution.sinceLast.newTips", {
+                        count: summary.sinceLastDistribution.tipCount,
+                      })}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="tip-distribution-since-last__cell-label">{t("business.tipDistribution.sinceLast.grossLabel")}</p>
+                    <p className="tip-distribution-since-last__cell-value">
+                      {centsToEur(summary.sinceLastDistribution.grossCents)}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="tip-distribution-since-last__cell-label">{t("business.tipDistribution.sinceLast.feesLabel")}</p>
+                    <p className="tip-distribution-since-last__cell-value">
+                      {centsToEur(summary.sinceLastDistribution.platformFeeCents)}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="tip-distribution-since-last__cell-label">{t("business.tipDistribution.sinceLast.netLabel")}</p>
+                    <p className="tip-distribution-since-last__cell-value">
+                      {centsToEur(summary.sinceLastDistribution.netCents)}
+                    </p>
+                  </div>
+                </div>
+                <p className="sr-only">
                   {t("business.tipDistribution.sinceLast.body", {
                     count: summary.sinceLastDistribution.tipCount,
                     gross: centsToEur(summary.sinceLastDistribution.grossCents),
@@ -217,48 +247,50 @@ export function TipDistributionPage() {
               </section>
             ) : null}
 
-            <section className="mb-8">
-              <div className="mb-3 flex items-center justify-between gap-3">
-                <h2 className="text-base font-semibold">{t("business.tipDistribution.ready.title")}</h2>
-              </div>
+            <section>
+              <h2 className="tip-distribution-section-title">{t("business.tipDistribution.ready.title")}</h2>
 
-              <div className={businessUi.tableWrap}>
-                <table className="w-full min-w-[760px] text-sm">
+              <div className="tip-distribution-table-wrap hidden lg:block">
+                <table className="tip-distribution-table">
                   <thead>
-                    <tr className="border-b border-border/70 text-left text-xs text-muted-foreground">
-                      <th className="px-3 py-2 font-medium">{t("business.tipDistribution.table.employee")}</th>
-                      <th className="px-3 py-2 font-medium">{t("business.tipDistribution.table.gross")}</th>
-                      <th className="px-3 py-2 font-medium">{t("business.tipDistribution.table.fees")}</th>
-                      <th className="px-3 py-2 font-medium">{t("business.tipDistribution.table.netOwed")}</th>
-                      <th className="px-3 py-2 font-medium">{t("business.tipDistribution.table.distributed")}</th>
-                      <th className="px-3 py-2 font-medium">{t("business.tipDistribution.table.remaining")}</th>
-                      <th className="px-3 py-2 font-medium">{t("business.tipDistribution.table.actions")}</th>
+                    <tr>
+                      <th>{t("business.tipDistribution.table.employee")}</th>
+                      <th className="tip-distribution-table__num">{t("business.tipDistribution.table.gross")}</th>
+                      <th className="tip-distribution-table__num">{t("business.tipDistribution.table.fees")}</th>
+                      <th className="tip-distribution-table__num">{t("business.tipDistribution.table.netOwed")}</th>
+                      <th className="tip-distribution-table__num">{t("business.tipDistribution.table.distributed")}</th>
+                      <th className="tip-distribution-table__num">{t("business.tipDistribution.table.remaining")}</th>
+                      <th className="tip-distribution-table__actions">{t("business.tipDistribution.table.actions")}</th>
                     </tr>
                   </thead>
                   <tbody>
                     {awaitingEmployees.length === 0 ? (
                       <tr>
-                        <td colSpan={7} className="px-3 py-6 text-muted-foreground">
+                        <td colSpan={7} className="py-6 text-muted-foreground">
                           {t("business.tipDistribution.ready.empty")}
                         </td>
                       </tr>
                     ) : (
                       awaitingEmployees.map((row) => (
-                        <tr key={row.employeeId ?? "unknown"} className="border-b border-border/50">
-                          <td className="px-3 py-3 font-medium">{row.employeeName ?? t("business.tipDistribution.unassignedEmployee")}</td>
-                          <td className="px-3 py-3 tabular-nums">{centsToEur(row.grossCents)}</td>
-                          <td className="px-3 py-3 tabular-nums">{centsToEur(row.platformFeeCents)}</td>
-                          <td className="px-3 py-3 tabular-nums">{centsToEur(row.netEntitlementCents)}</td>
-                          <td className="px-3 py-3 tabular-nums">{centsToEur(row.distributedCents)}</td>
-                          <td className="px-3 py-3 tabular-nums font-medium">{centsToEur(row.remainingCents)}</td>
-                          <td className="px-3 py-3">
-                            <div className="flex flex-wrap gap-2">
-                              <Button variant="ghost" size="sm" asChild>
+                        <tr key={row.employeeId ?? "unknown"}>
+                          <td className="tip-distribution-table__employee">
+                            {row.employeeName ?? t("business.tipDistribution.unassignedEmployee")}
+                          </td>
+                          <td className="tip-distribution-table__num">{centsToEur(row.grossCents)}</td>
+                          <td className="tip-distribution-table__num">{centsToEur(row.platformFeeCents)}</td>
+                          <td className="tip-distribution-table__num">{centsToEur(row.netEntitlementCents)}</td>
+                          <td className="tip-distribution-table__num">{centsToEur(row.distributedCents)}</td>
+                          <td className="tip-distribution-table__num tip-distribution-table__remaining">
+                            {centsToEur(row.remainingCents)}
+                          </td>
+                          <td className="tip-distribution-table__actions">
+                            <div className="flex flex-wrap items-center justify-end gap-2">
+                              <Button variant="ghost" size="sm" className="h-8 px-2 text-xs" asChild>
                                 <Link to={`/dashboard/tips/transactions?employeeId=${encodeURIComponent(row.employeeId ?? "")}`}>
                                   {t("business.tipDistribution.actions.viewTips")}
                                 </Link>
                               </Button>
-                              <Button variant="secondary" size="sm" onClick={() => openDistribution(row)}>
+                              <Button size="sm" className="h-8" onClick={() => openDistribution(row)}>
                                 {t("business.tipDistribution.actions.record")}
                               </Button>
                             </div>
@@ -270,7 +302,7 @@ export function TipDistributionPage() {
                 </table>
               </div>
 
-              <div className={businessUi.mobileList}>
+              <div className={cn(businessUi.mobileList, "lg:hidden")}>
                 {awaitingEmployees.length === 0 ? (
                   <p className="px-1 py-4 text-sm text-muted-foreground">
                     {t("business.tipDistribution.ready.empty")}
@@ -305,19 +337,14 @@ export function TipDistributionPage() {
                           <dd className="mt-0.5 text-base font-semibold tabular-nums">{centsToEur(row.remainingCents)}</dd>
                         </div>
                       </dl>
-                      <div className="mt-3 flex flex-col gap-2 sm:flex-row">
-                        <Button variant="ghost" size="sm" className="min-h-11 w-full sm:w-auto" asChild>
+                      <div className="mt-3 flex flex-col gap-2">
+                        <Button size="sm" className="min-h-11 w-full" onClick={() => openDistribution(row)}>
+                          {t("business.tipDistribution.actions.record")}
+                        </Button>
+                        <Button variant="ghost" size="sm" className="min-h-11 w-full" asChild>
                           <Link to={`/dashboard/tips/transactions?employeeId=${encodeURIComponent(row.employeeId ?? "")}`}>
                             {t("business.tipDistribution.actions.viewTips")}
                           </Link>
-                        </Button>
-                        <Button
-                          variant="secondary"
-                          size="sm"
-                          className="min-h-11 w-full sm:w-auto"
-                          onClick={() => openDistribution(row)}
-                        >
-                          {t("business.tipDistribution.actions.record")}
                         </Button>
                       </div>
                     </div>
@@ -327,50 +354,46 @@ export function TipDistributionPage() {
             </section>
 
             <section>
-              <h2 className="mb-3 text-base font-semibold">{t("business.tipDistribution.history.title")}</h2>
-              <div className={businessUi.mobileList}>
+              <h2 className="tip-distribution-section-title">{t("business.tipDistribution.history.title")}</h2>
+              <div className="lg:hidden">
                 {history.length === 0 ? (
-                  <p className="px-1 py-4 text-sm text-muted-foreground">
-                    {t("business.tipDistribution.history.empty")}
-                  </p>
+                  <p className="py-4 text-sm text-muted-foreground">{t("business.tipDistribution.history.empty")}</p>
                 ) : (
                   history.map((row) => (
                     <button
                       key={row.id}
                       type="button"
-                      className={cn(businessUi.mobileCard, "w-full text-left")}
+                      className="tip-distribution-ledger-row"
                       onClick={() => void openBatchDetail(row.id)}
                     >
-                      <div className="flex items-start justify-between gap-3">
-                        <span className="font-medium">{formatDistributionDate(row.completedAt, locale)}</span>
-                        <span className="shrink-0 font-semibold tabular-nums">{centsToEur(row.totalAmountCents)}</span>
+                      <div className="min-w-0">
+                        <p className="font-medium">{formatDistributionDate(row.completedAt, locale)}</p>
+                        <p className="mt-0.5 text-xs text-muted-foreground">
+                          {t("business.tipDistribution.history.employeeCount", { count: row.employeeCount })}
+                          {row.actorName ? ` · ${row.actorName}` : ""}
+                          {row.paymentReference ? ` · ${row.paymentReference}` : ""}
+                        </p>
                       </div>
-                      <p className="mt-1 text-sm text-muted-foreground">
-                        {t("business.tipDistribution.history.employeeCount", { count: row.employeeCount })}
-                        {row.actorName ? ` · ${row.actorName}` : ""}
-                      </p>
-                      {row.paymentReference ? (
-                        <p className="mt-1 text-xs text-muted-foreground">{row.paymentReference}</p>
-                      ) : null}
+                      <span className="shrink-0 font-semibold tabular-nums">{centsToEur(row.totalAmountCents)}</span>
                     </button>
                   ))
                 )}
               </div>
-              <div className={businessUi.tableWrap}>
-                <table className="w-full min-w-[640px] text-sm">
+              <div className="tip-distribution-table-wrap hidden lg:block">
+                <table className="tip-distribution-table">
                   <thead>
-                    <tr className="border-b border-border/70 text-left text-xs text-muted-foreground">
-                      <th className="px-3 py-2 font-medium">{t("business.tipDistribution.history.date")}</th>
-                      <th className="px-3 py-2 font-medium">{t("business.tipDistribution.history.total")}</th>
-                      <th className="px-3 py-2 font-medium">{t("business.tipDistribution.history.employees")}</th>
-                      <th className="px-3 py-2 font-medium">{t("business.tipDistribution.history.recordedBy")}</th>
-                      <th className="px-3 py-2 font-medium">{t("business.tipDistribution.history.reference")}</th>
+                    <tr>
+                      <th>{t("business.tipDistribution.history.date")}</th>
+                      <th className="tip-distribution-table__num">{t("business.tipDistribution.history.total")}</th>
+                      <th>{t("business.tipDistribution.history.employees")}</th>
+                      <th>{t("business.tipDistribution.history.recordedBy")}</th>
+                      <th>{t("business.tipDistribution.history.reference")}</th>
                     </tr>
                   </thead>
                   <tbody>
                     {history.length === 0 ? (
                       <tr>
-                        <td colSpan={5} className="px-3 py-6 text-muted-foreground">
+                        <td colSpan={5} className="py-6 text-muted-foreground">
                           {t("business.tipDistribution.history.empty")}
                         </td>
                       </tr>
@@ -378,14 +401,14 @@ export function TipDistributionPage() {
                       history.map((row) => (
                         <tr
                           key={row.id}
-                          className="cursor-pointer border-b border-border/50 hover:bg-muted/30"
+                          className="cursor-pointer"
                           onClick={() => void openBatchDetail(row.id)}
                         >
-                          <td className="px-3 py-3">{formatDistributionDate(row.completedAt, locale)}</td>
-                          <td className="px-3 py-3 tabular-nums">{centsToEur(row.totalAmountCents)}</td>
-                          <td className="px-3 py-3">{t("business.tipDistribution.history.employeeCount", { count: row.employeeCount })}</td>
-                          <td className="px-3 py-3">{row.actorName ?? "—"}</td>
-                          <td className="px-3 py-3">{row.paymentReference ?? "—"}</td>
+                          <td>{formatDistributionDate(row.completedAt, locale)}</td>
+                          <td className="tip-distribution-table__num">{centsToEur(row.totalAmountCents)}</td>
+                          <td>{t("business.tipDistribution.history.employeeCount", { count: row.employeeCount })}</td>
+                          <td>{row.actorName ?? "—"}</td>
+                          <td>{row.paymentReference ?? "—"}</td>
                         </tr>
                       ))
                     )}
@@ -393,7 +416,7 @@ export function TipDistributionPage() {
                 </table>
               </div>
             </section>
-          </>
+          </div>
         )}
       </div>
 

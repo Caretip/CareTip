@@ -1,0 +1,176 @@
+/**
+ * CareTip payout / Connect financial workspace — shared business + employee presentation.
+ * Scoped under `.caretip-payout-workspace` inside dashboard shells.
+ */
+
+.caretip-payout-workspace {
+  --payout-panel-radius: 0.5rem;
+  --payout-metric-value-size: 1.375rem;
+}
+
+.caretip-payout-panel {
+  border-radius: var(--payout-panel-radius);
+  border: 1px solid hsl(var(--border) / 0.85);
+  background: hsl(var(--card));
+}
+
+.caretip-payout-metric-strip {
+  display: grid;
+  grid-template-columns: 1fr;
+  border-radius: var(--payout-panel-radius);
+  border: 1px solid hsl(var(--border) / 0.85);
+  background: hsl(var(--card));
+  overflow: hidden;
+}
+
+@media (min-width: 640px) {
+  .caretip-payout-metric-strip {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.caretip-payout-metric {
+  min-width: 0;
+  padding: 0.875rem 1rem;
+}
+
+@media (min-width: 640px) {
+  .caretip-payout-metric:not(:last-child) {
+    border-right: 1px solid hsl(var(--border) / 0.75);
+  }
+}
+
+@media (max-width: 639px) {
+  .caretip-payout-metric:not(:last-child) {
+    border-bottom: 1px solid hsl(var(--border) / 0.75);
+  }
+}
+
+.caretip-payout-metric__label {
+  font-size: 0.75rem;
+  font-weight: 500;
+  line-height: 1.25;
+  color: hsl(var(--muted-foreground));
+}
+
+.caretip-payout-metric__value {
+  margin-top: 0.375rem;
+  font-size: var(--payout-metric-value-size);
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+  word-break: break-word;
+}
+
+.caretip-payout-metric__hint {
+  margin-top: 0.25rem;
+  font-size: 0.6875rem;
+  line-height: 1.35;
+  color: hsl(var(--muted-foreground));
+}
+
+.caretip-payout-destination {
+  border-radius: var(--payout-panel-radius);
+  border: 1px solid hsl(var(--border) / 0.85);
+  background: hsl(var(--muted) / 0.35);
+  padding: 0.875rem 1rem;
+}
+
+.caretip-payout-destination__masked {
+  margin-top: 0.5rem;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 0.9375rem;
+  letter-spacing: 0.12em;
+  font-variant-numeric: tabular-nums;
+}
+
+.caretip-payout-ledger-toolbar input,
+.caretip-payout-ledger-toolbar select {
+  min-height: 2.5rem;
+}
+
+.caretip-payout-ledger table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.caretip-payout-ledger thead tr {
+  border-bottom: 1px solid hsl(var(--border));
+}
+
+.caretip-payout-ledger tbody tr {
+  border-bottom: 1px solid hsl(var(--border) / 0.65);
+}
+
+.caretip-payout-ledger tbody tr:last-child {
+  border-bottom: none;
+}
+
+.caretip-payout-ledger tbody tr:hover {
+  background: hsl(var(--muted) / 0.25);
+}
+
+.caretip-payout-mobile-record {
+  width: 100%;
+  min-width: 0;
+  padding: 0.75rem 0;
+  text-align: left;
+  border-bottom: 1px solid hsl(var(--border) / 0.7);
+}
+
+.caretip-payout-mobile-record:last-child {
+  border-bottom: none;
+}
+
+.caretip-payout-instant-amount {
+  font-size: 1.5rem;
+  font-weight: 600;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+}
+
+@media (min-width: 640px) {
+  .caretip-payout-instant-amount {
+    font-size: 1.625rem;
+  }
+}
+
+.caretip-payout-breakdown {
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid hsl(var(--border) / 0.75);
+  font-size: 0.875rem;
+}
+
+.caretip-payout-breakdown__row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.caretip-payout-breakdown__row + .caretip-payout-breakdown__row {
+  margin-top: 0.5rem;
+}
+
+.caretip-payout-breakdown__net {
+  margin-top: 0.5rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid hsl(var(--border) / 0.75);
+  font-weight: 500;
+}
+
+.caretip-payout-rail {
+  min-width: 0;
+}
+
+@media (min-width: 1280px) {
+  .caretip-payout-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(16rem, 20rem);
+    gap: 1rem;
+    align-items: start;
+  }
+}

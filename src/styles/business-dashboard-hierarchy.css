@@ -35,7 +35,7 @@
 
 @media (min-width: 1024px) {
   .caretip-dashboard-shell.business-dashboard .business-dashboard-hero .dashboard-hero-container {
-    gap: 1.5rem 3rem !important;
+    gap: 1.75rem 3.25rem !important;
   }
 
   .caretip-dashboard-shell.business-dashboard .business-dashboard-hero .dashboard-hero-container > .col-span-5 {
@@ -65,30 +65,46 @@
 
 .caretip-dashboard-shell.business-dashboard .business-dashboard-hero .business-hero-title,
 .caretip-dashboard-shell.business-dashboard .business-dashboard-hero .premium-page-hero__content :is(h1, h2, h3) {
-  line-height: 1.08 !important;
+  line-height: 1.1 !important;
+  letter-spacing: -0.02em;
 }
 
 .caretip-dashboard-shell.business-dashboard .business-dashboard-hero .business-hero-description {
-  margin-top: 0 !important;
+  margin-top: 0.25rem !important;
   font-size: 0.875rem !important;
-  line-height: 1.5 !important;
+  line-height: 1.55 !important;
 }
 
 .caretip-dashboard-shell.business-dashboard .business-dashboard-hero .business-hero-badge {
-  margin-bottom: 0;
-  padding-block: 0.1875rem !important;
+  margin-bottom: 0.125rem;
+  padding-block: 0.125rem !important;
   font-size: 0.6875rem !important;
+  color: hsl(var(--muted-foreground) / 0.95);
+}
+
+.caretip-dashboard-shell.business-dashboard .business-dashboard-hero .business-hero-text-column {
+  max-width: 36rem;
 }
 
 .caretip-dashboard-shell.business-dashboard .business-dashboard-hero .business-hero-cta-block {
   max-width: none;
   width: 100%;
-  margin-top: 0.125rem;
-  gap: 0.75rem;
+  margin-top: 0.25rem;
+  gap: 0;
 }
 
 .caretip-dashboard-shell.business-dashboard .business-dashboard-hero .business-hero-cta-row {
   gap: 0.5rem !important;
+  margin-top: 0.875rem;
+  padding-top: 0.875rem;
+  border-top: 1px solid hsl(var(--border) / 0.42);
+}
+
+@media (min-width: 1024px) {
+  .caretip-dashboard-shell.business-dashboard .business-dashboard-hero .business-hero-cta-block .business-hero-cta-row {
+    margin-top: 1rem;
+    padding-top: 1rem;
+  }
 }
 
 .caretip-dashboard-shell.business-dashboard .business-hero-quick-access {
@@ -105,9 +121,9 @@
   width: auto !important;
   min-width: 0;
   max-width: 100%;
-  min-height: 2.75rem;
+  min-height: 2.8125rem;
   height: auto !important;
-  padding-block: 0.5rem;
+  padding-block: 0.5625rem;
   line-height: 1.3 !important;
   white-space: normal !important;
   text-wrap: balance;
@@ -161,6 +177,11 @@
   min-height: 0;
   margin-inline: 0;
   overflow: hidden;
+  border-radius: 0.625rem;
+  border: 1px solid hsl(var(--border) / 0.5);
+  box-shadow:
+    0 1px 2px hsl(var(--foreground) / 0.04),
+    0 10px 28px hsl(var(--foreground) / 0.06);
 }
 
 .caretip-dashboard-shell.business-dashboard .business-hero-illustration-card > picture {
@@ -778,4 +799,71 @@
   height: 1.75rem;
   padding-inline: 0.625rem;
   font-size: 0.6875rem;
+}
+
+/* —— Employee overview hero (aligned with business hero light polish) —— */
+@media (min-width: 1024px) {
+  .caretip-dashboard-shell.employee-dashboard .employee-dashboard-hero .dashboard-hero-container {
+    gap: 1.75rem 3.25rem !important;
+  }
+}
+
+.caretip-dashboard-shell.employee-dashboard .employee-dashboard-hero .employee-hero-title,
+.caretip-dashboard-shell.employee-dashboard .employee-dashboard-hero .premium-page-hero__content :is(h1, h2, h3) {
+  line-height: 1.1 !important;
+  letter-spacing: -0.02em;
+}
+
+.caretip-dashboard-shell.employee-dashboard .employee-dashboard-hero .employee-hero-description {
+  margin-top: 0.25rem !important;
+  font-size: 0.875rem !important;
+  line-height: 1.55 !important;
+}
+
+.caretip-dashboard-shell.employee-dashboard .employee-dashboard-hero .dashboard-formal-greeting-badge {
+  margin-bottom: 0.125rem;
+  padding-block: 0.125rem !important;
+  font-size: 0.6875rem !important;
+  color: hsl(var(--muted-foreground) / 0.95);
+}
+
+.caretip-dashboard-shell.employee-dashboard .employee-dashboard-hero .employee-hero-text-column {
+  max-width: 36rem;
+}
+
+.caretip-dashboard-shell.employee-dashboard .employee-dashboard-hero .employee-hero-cta-block {
+  width: 100%;
+  max-width: none;
+  margin-top: 0.25rem;
+  gap: 0;
+}
+
+.caretip-dashboard-shell.employee-dashboard .employee-dashboard-hero .employee-qr-signature {
+  margin-top: 0.875rem;
+  padding-top: 0.875rem;
+  border-top: 1px solid hsl(var(--border) / 0.42);
+}
+
+@media (min-width: 1024px) {
+  .caretip-dashboard-shell.employee-dashboard .employee-dashboard-hero .employee-qr-signature {
+    margin-top: 1rem;
+    padding-top: 1rem;
+  }
+}
+
+.caretip-dashboard-shell.employee-dashboard .employee-dashboard-hero .employee-qr-signature .employee-hero-cta-row > :is(a, button) {
+  min-height: 2.8125rem;
+  padding-block: 0.5625rem;
+}
+
+@media (min-width: 1024px) {
+  .caretip-dashboard-shell.employee-dashboard .employee-hero-chart-frame--photo {
+    border-radius: 0.625rem;
+    border: 1px solid hsl(var(--border) / 0.5);
+    box-shadow:
+      0 1px 2px hsl(var(--foreground) / 0.04),
+      0 10px 28px hsl(var(--foreground) / 0.06);
+    overflow: hidden;
+    background: hsl(var(--muted) / 0.12);
+  }
 }

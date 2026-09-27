@@ -23,7 +23,7 @@ export function InstantPayoutTermsCheckbox(props: {
         className={cn(props.disabled && "pointer-events-none opacity-50")}
       />
       {!props.checked ? (
-        <p id={`${id}-hint`} className="pl-6 text-xs text-muted-foreground">
+        <p id={`${id}-hint`} className="min-w-0 pl-6 pr-0.5 text-xs leading-snug text-muted-foreground">
           {t("payouts.instantTerms.required")}
         </p>
       ) : (

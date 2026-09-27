@@ -4212,7 +4212,7 @@
         }
       },
       "activityTitle": "CareTip-Auszahlungsaktivität",
-      "activityHint": "Überweisungen, Haltungen und vom Betrieb verwaltete Anteile — keine Bankauszahlungen.",
+      "activityHint": "Überweisungen, Haltungen und vom Betrieb verwaltete Anteile. Keine Bankauszahlungen.",
       "activityLoading": "Aktivität wird geladen…",
       "activityLoadError": "Aktivität konnte nicht geladen werden.",
       "emptyActivityTitle": "Noch keine Auszahlungsaktivität",
@@ -5524,6 +5524,13 @@
       "comingSoon": "Bald"
     },
     "qrAnalytics": {
+      "scansByDevice": "Scans nach Gerät",
+      "device": {
+        "mobile": "Mobil",
+        "desktop": "Desktop",
+        "tablet": "Tablet",
+        "unknown": "Unbekannt"
+      },
       "totalScans": "Scans gesamt",
       "uniqueVisitors": "Eindeutige Besucher",
       "uniqueVisitorsHint": "Unterschiedliche Scan-Sitzungen in diesem Zeitraum",
@@ -6029,6 +6036,7 @@
       }
     },
     "activityCenter": {
+      "pageSubtitle": "Echtzeit-Trinkgelder, QR-Scans, Zahlungen und Team-Events für Ihr Lokal.",
       "centerTitle": "Aktivitätscenter",
       "streamLabel": "Live",
       "ssotHelper": "",
@@ -6319,12 +6327,18 @@
         },
         "executive": {
           "summaryTitle": "Executive Summary",
+          "growthComparisonHint": "Verglichen mit dem vorherigen gleich langen Zeitraum.",
+          "healthIndexHint": "Zusammengesetzter Index aus Wachstum, Beteiligung, Zielen, Bewertungen und Trinkgeldaktivität. Kein einzelner KPI.",
+          "tipVolumeTrendTitle": "Trinkgeldvolumen pro Tag",
+          "risksEmpty": "Keine wesentlichen Risiken erkannt.",
+          "recommendationsEmpty": "Keine spezifische Empfehlung auf Basis der aktuellen Daten.",
           "healthExplain": "Der Gesundheitswert setzt sich aus Wachstum, Beteiligung, Zielen, Bewertungen und Trinkgeldaktivität zusammen, jeweils aus Live-Daten.",
           "summary": {
             "composite": "Periodenüberblick",
             "collectingData": "Es werden noch ausreichend Daten für eine Zusammenfassung gesammelt.",
-            "revenueHealthy": "Umsatz stieg um {{percent}} % gegenüber dem Periodendurchschnitt.",
-            "revenueDeclining": "Umsatz sank um {{percent}} % gegenüber dem Periodendurchschnitt.",
+            "noTipActivity": "Keine erfolgreichen Trinkgeld in diesem Zeitraum trotz aktivem Personal.",
+            "revenueHealthy": "Trinkgeld stiegen um {{percent}} % gegenüber dem vorherigen gleich langen Zeitraum.",
+            "revenueDeclining": "Trinkgeld sanken um {{percent}} % gegenüber dem vorherigen gleich langen Zeitraum.",
             "revenueStable": "Umsatz ist in diesem Zeitraum stabil.",
             "qrGrowing": "QR-Scans stiegen in der zweiten Periodenhälfte um {{percent}} %.",
             "qrDeclining": "QR-Scans sanken in der zweiten Periodenhälfte.",
@@ -6678,7 +6692,12 @@
       },
       "sinceLast": {
         "title": "Seit letzter Verteilung",
-        "body": "{{count}} neue Trinkgelder · Brutto {{gross}} · CareTip-Gebühren {{fees}} · netto zu verteilen {{net}}"
+        "body": "{{count}} neue Trinkgelder · Brutto {{gross}} · CareTip-Gebühren {{fees}} · netto zu verteilen {{net}}",
+        "newTips": "{{count}} neue Trinkgelder",
+        "tipsLabel": "Neue Trinkgelder",
+        "grossLabel": "Brutto",
+        "feesLabel": "Gebühren",
+        "netLabel": "Netto"
       },
       "ready": {
         "title": "Bereit zur Verteilung",
@@ -6775,7 +6794,7 @@
         "hintAction": "Stripe benötigt weitere Angaben",
         "hintRestricted": "Stripe hat dieses Konto eingeschränkt",
         "hintConnected": "Stripe-Auszahlungskonto verbunden",
-        "hintConnectedBusiness": "Verbunden — für die aktuelle Weiterleitung nicht erforderlich",
+        "hintConnectedBusiness": "Verbunden. Für die aktuelle Weiterleitung nicht erforderlich.",
         "viewEmployees": "Mitarbeiter anzeigen",
         "hideEmployees": "Mitarbeiterliste ausblenden",
         "showMore": "Alle Mitarbeiter anzeigen ({{count}})",
@@ -6815,7 +6834,7 @@
           "distributionCount_other": "{{count}} Mitarbeiteranteile warten auf Auszahlung",
           "distributionAgedWarning": "{{count}} Anteile ({{amount}}) sind älter als 30 Tage und warten noch auf Auszahlung.",
           "distributionRowMeta": "{{date}} · Brutto {{gross}} · CareTip-Gebühr {{fee}}",
-          "distributionRowAged": "Älter als 30 Tage — wartet noch auf Auszahlung durch das Unternehmen.",
+          "distributionRowAged": "Älter als 30 Tage und wartet noch auf Auszahlung durch das Unternehmen.",
           "unknownEmployee": "Mitarbeiter",
           "accountsTitle": "Auszahlungskonten der Mitarbeiter",
           "accountsHint": "Wer weitergeleitete Trinkgelder erhalten kann, und wer noch verbinden muss.",

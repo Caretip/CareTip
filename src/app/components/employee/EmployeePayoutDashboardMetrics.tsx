@@ -1,4 +1,3 @@
-import { CalendarDays, Landmark, Wallet } from "lucide-react";
 import { Link } from "react-router";
 import { useTranslation } from "react-i18next";
 import type { EmployeeInstantPayoutEligibility } from "../../lib/api";
@@ -8,9 +7,11 @@ import { Button } from "../ui/button";
 import { caretipBtnPrimary } from "@/lib/caretipButtonSystem";
 import { EMPLOYEE_PAYMENTS_CONNECT_HREF } from "./employeeDashboardNav";
 import { employeePayoutMetricsMode } from "./employeePayoutMetricsPresentation";
-
-const panel =
-  "rounded-2xl border border-border/70 bg-card p-4 shadow-none sm:p-5";
+import {
+  PayoutFinancialMetric,
+  PayoutFinancialMetricStrip,
+} from "../finance/payout/PayoutFinancialMetric";
+import { PayoutWorkspacePanel } from "../finance/payout/PayoutWorkspacePanel";
 
 const INSTANT_KPI_HIDDEN_REASONS = new Set([
   "not_connected",
@@ -44,21 +45,21 @@ export function EmployeePayoutDashboardMetrics({
 
   if (mode === "loading") {
     return (
-      <div className="grid grid-cols-1 gap-3 md:grid-cols-3 md:gap-3.5" aria-busy="true">
+      <PayoutFinancialMetricStrip aria-busy={true}>
         {[0, 1, 2].map((i) => (
-          <section key={i} className={cn(panel, "min-h-0 md:min-h-[8.25rem]")}>
-            <div className="h-4 w-28 animate-pulse rounded-md bg-muted" />
-            <div className="mt-4 h-8 w-24 animate-pulse rounded-md bg-muted" />
-            <div className="mt-2 h-3 w-40 animate-pulse rounded-md bg-muted" />
-          </section>
+          <div key={i} className="caretip-payout-metric">
+            <div className="h-3 w-24 animate-pulse rounded-md bg-muted" />
+            <div className="mt-3 h-7 w-20 animate-pulse rounded-md bg-muted" />
+            <div className="mt-2 h-3 w-32 animate-pulse rounded-md bg-muted" />
+          </div>
         ))}
-      </div>
+      </PayoutFinancialMetricStrip>
     );
   }
 
   if (mode === "setup") {
     return (
-      <section className={cn(panel, "p-5 sm:p-6")} aria-labelledby="employee-payout-balance-setup-heading">
+      <PayoutWorkspacePanel paddingClassName="sm:p-6" aria-labelledby="employee-payout-balance-setup-heading">
         <h2 id="employee-payout-balance-setup-heading" className="text-base font-semibold tracking-tight">
           {t("employee.payouts.dashboard.setupTitle")}
         </h2>
@@ -77,7 +78,7 @@ export function EmployeePayoutDashboardMetrics({
             {t("employee.payouts.dashboard.setupUseAccountCard")}
           </p>
         )}
-      </section>
+      </PayoutWorkspacePanel>
     );
   }
 
@@ -93,67 +94,40 @@ export function EmployeePayoutDashboardMetrics({
     return money(cents);
   };
 
-  return (
-    <div className="grid grid-cols-1 gap-3 md:grid-cols-3 md:gap-3.5">
-      <MetricCard
-        icon={CalendarDays}
-        label={t("employee.payouts.dashboard.kpiInstant")}
-        value={dash(instantOk, eligibility?.instantAvailableNetCents ?? 0)}
-        hint={
-          unavailable
-            ? t("employee.payouts.dashboard.kpiUnavailable")
-            : t("employee.payouts.dashboard.kpiInstantHint")
-        }
-      />
-      <MetricCard
-        icon={Wallet}
-        label={t("employee.payouts.dashboard.kpiAvailable")}
-        value={dash(balancesOk, eligibility?.availableCents ?? 0)}
-        hint={
-          unavailable
-            ? t("employee.payouts.dashboard.kpiUnavailable")
-            : t("employee.payouts.dashboard.kpiAvailableHint")
-        }
-      />
-      <MetricCard
-        icon={Landmark}
-        label={t("employee.payouts.dashboard.kpiPending")}
-        value={dash(balancesOk, eligibility?.pendingCents ?? 0)}
-        hint={
-          unavailable
-            ? t("employee.payouts.dashboard.kpiUnavailable")
-            : t("employee.payouts.dashboard.kpiPendingHint")
-        }
-      />
-    </div>
-  );
-}
+  const metrics = [
+    {
+      label: t("employee.payouts.dashboard.kpiAvailable"),
+      value: dash(balancesOk, eligibility?.availableCents ?? 0),
+      hint: unavailable
+        ? t("employee.payouts.dashboard.kpiUnavailable")
+        : t("employee.payouts.dashboard.kpiAvailableHint"),
+    },
+    {
+      label: t("employee.payouts.dashboard.kpiPending"),
+      value: dash(balancesOk, eligibility?.pendingCents ?? 0),
+      hint: unavailable
+        ? t("employee.payouts.dashboard.kpiUnavailable")
+        : t("employee.payouts.dashboard.kpiPendingHint"),
+    },
+    {
+      label: t("employee.payouts.dashboard.kpiInstant"),
+      value: dash(instantOk, eligibility?.instantAvailableNetCents ?? 0),
+      hint: unavailable
+        ? t("employee.payouts.dashboard.kpiUnavailable")
+        : t("employee.payouts.dashboard.kpiInstantHint"),
+    },
+  ];
 
-function MetricCard({
-  icon: Icon,
-  label,
-  value,
-  hint,
-}: {
-  icon: typeof CalendarDays;
-  label: string;
-  value: string;
-  hint: string;
-}) {
   return (
-    <section className={cn(panel, "min-h-0 md:min-h-[8.25rem]")}>
-      <div className="flex items-start gap-3">
-        <span className="inline-flex size-9 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground">
-          <Icon className="size-4" aria-hidden />
-        </span>
-        <div className="min-w-0">
-          <h2 className="text-sm font-medium text-foreground">{label}</h2>
-          <p className="mt-3 break-words text-[1.75rem] font-semibold tabular-nums tracking-tight text-foreground sm:text-[1.875rem]">
-            {value}
-          </p>
-          <p className="mt-1 text-xs leading-snug text-muted-foreground">{hint}</p>
-        </div>
-      </div>
-    </section>
+    <PayoutFinancialMetricStrip>
+      {metrics.map((metric) => (
+        <PayoutFinancialMetric
+          key={metric.label}
+          label={metric.label}
+          value={metric.value}
+          hint={metric.hint}
+        />
+      ))}
+    </PayoutFinancialMetricStrip>
   );
 }

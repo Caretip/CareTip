@@ -49,7 +49,7 @@ export function MerchantLegalAcceptanceCheckbox({
         disabled={disabled}
         onChange={(e) => onCheckedChange(e.target.checked)}
       />
-      <span>
+      <span className="merchant-legal-acceptance-label min-w-0 flex-1">
         <Trans
           i18nKey="auth.merchantLegalAcceptance.label"
           components={{

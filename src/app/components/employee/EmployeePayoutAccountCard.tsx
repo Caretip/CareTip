@@ -16,6 +16,7 @@ import { performExternalStripeRedirect } from "../../lib/externalStripeRedirect"
 import { useClearStaleStripeRedirectBusy } from "../../hooks/useClearStaleStripeRedirectBusy";
 import { Button } from "../ui/button";
 import { EmployeePayoutMethodCard } from "./EmployeePayoutMethodCard";
+import { PayoutWorkspacePanel } from "../finance/payout/PayoutWorkspacePanel";
 import { employeeUi } from "./employeeDashboardUi";
 import { caretipBtnPrimary } from "@/lib/caretipButtonSystem";
 import { cn } from "@/lib/utils";
@@ -159,14 +160,13 @@ export function EmployeePayoutAccountCard(props: {
           </Button>
         </div>
       ) : (
-        <section
-          className={cn(
-            props.layout === "rail" ? "rounded-2xl border border-border/70 bg-card p-5" : "space-y-4",
-          )}
+        <PayoutWorkspacePanel
+          className={props.layout === "rail" ? undefined : "border-0 bg-transparent p-0 shadow-none"}
+          paddingClassName={props.layout === "rail" ? undefined : "p-0"}
           aria-labelledby="employee-payout-account-heading"
         >
           <div className="flex min-w-0 flex-wrap items-start justify-between gap-3">
-            <h2 id="employee-payout-account-heading" className="min-w-0 text-base font-semibold tracking-tight">
+            <h2 id="employee-payout-account-heading" className="min-w-0 text-sm font-semibold tracking-tight sm:text-base">
               {t(
                 businessDistribution
                   ? "employee.payouts.accountTitleCompact"
@@ -175,24 +175,11 @@ export function EmployeePayoutAccountCard(props: {
                     : "employee.payouts.accountTitle",
               )}
             </h2>
-            {props.layout === "rail" && ready && data?.canOpenDashboard ? (
-              <button
-                type="button"
-                className="max-w-full text-left text-sm font-medium text-primary underline-offset-2 hover:underline disabled:opacity-50"
-                onClick={() => void onDashboard()}
-                disabled={busy != null}
-                data-payout-cta="dashboard"
-              >
-                {t("employee.payouts.dashboard.changeAccount")}
-              </button>
-            ) : null}
           </div>
-          {props.layout === "rail" && (props.last4 || ready) ? (
-            <div className="mt-4">
-              <EmployeePayoutMethodCard last4={props.last4 ?? null} kind={props.destinationKind ?? null} />
-            </div>
-          ) : null}
-          <div className={cn("space-y-3", props.layout === "rail" ? "mt-4" : "mt-2")}>
+          <div className={cn("space-y-3", props.layout === "rail" ? "mt-3" : "mt-2")}>
+            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+              {t("employee.payouts.colStatus")}
+            </p>
             <FinanceStatusPill
               tone={phaseTone(phase)}
               label={ready ? t("employee.payouts.connectedReady") : t(`employee.payouts.state.${state}`)}
@@ -203,6 +190,25 @@ export function EmployeePayoutAccountCard(props: {
               </p>
             ) : bodyKey ? (
               <p className="max-w-xl text-sm leading-snug text-muted-foreground">{t(bodyKey)}</p>
+            ) : null}
+            {props.layout === "rail" && (props.last4 || ready) ? (
+              <div className="pt-1">
+                <p className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                  {t("employee.payouts.dashboard.methodCardAria")}
+                </p>
+                <EmployeePayoutMethodCard last4={props.last4 ?? null} kind={props.destinationKind ?? null} />
+                {ready && data?.canOpenDashboard ? (
+                  <button
+                    type="button"
+                    className="mt-3 max-w-full text-left text-sm font-medium text-primary underline-offset-2 hover:underline disabled:opacity-50"
+                    onClick={() => void onDashboard()}
+                    disabled={busy != null}
+                    data-payout-cta="dashboard"
+                  >
+                    {t("employee.payouts.dashboard.changeAccount")}
+                  </button>
+                ) : null}
+              </div>
             ) : null}
             <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:flex-wrap">
               {props.layout === "rail" && ready && data?.canOpenDashboard ? null : ready && data?.canOpenDashboard ? (
@@ -248,7 +254,7 @@ export function EmployeePayoutAccountCard(props: {
           {data?.stripeConfigured === false ? (
             <p className="mt-3 text-xs text-muted-foreground">{t("employee.payouts.notConfigured")}</p>
           ) : null}
-        </section>
+        </PayoutWorkspacePanel>
       )}
     </div>
   );
