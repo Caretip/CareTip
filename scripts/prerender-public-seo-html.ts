@@ -1,7 +1,7 @@
 /**
  * Post-build: emit route-specific index.html for every sitemap / indexable public URL.
  *
- *   node ./backend/node_modules/tsx/dist/cli.mjs ./scripts/prerender-public-seo-html.ts
+ *   node ./node_modules/tsx/dist/cli.mjs ./scripts/prerender-public-seo-html.ts
  *
  * Invoked from npm run build after vite build.
  */
