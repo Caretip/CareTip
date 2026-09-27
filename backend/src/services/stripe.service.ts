@@ -41,6 +41,11 @@ import { recordCheckoutFunnelEvent } from "./checkoutFunnelMetrics.service.js";
 import { QR_FUNNEL_EVENT_TYPES, recordQrFunnelEvent } from "./qr/qrFunnelEvent.service.js";
 import { allocateTipReceiptNumber } from "./tipReceipt.service.js";
 import {
+  normalizeGuestEmail,
+  scheduleTipGuestConfirmationEmailForCheckoutSession,
+  scheduleTipGuestConfirmationEmailForPaymentIntent,
+} from "./tipGuestConfirmationEmail.service.js";
+import {
   schedulePaymentFailedAfterPendingUpdate,
   schedulePaymentRefundedProjection,
 } from "./activity/paymentActivity.projection.js";
@@ -372,6 +377,8 @@ export interface CreateTipCheckoutSessionInput {
   tableId?: string | null;
   customerName?: string | null;
   feedback?: string | null;
+  /** Guest email for confirmation receipt (Stripe customer_email + PI receipt_email). */
+  guestEmail?: string | null;
   /** Guest scan session from QR flow — links funnel to qr_scan_events. */
   qrScanSessionId?: string | null;
 }
@@ -626,12 +633,14 @@ export async function createTipCheckoutSession(
   if (name) metadata.customerName = name;
   const fb = input.feedback?.trim();
   if (fb) metadata.feedback = fb.slice(0, 2000);
+  const guestEmail = normalizeGuestEmail(input.guestEmail ?? null);
 
   let session: Stripe.Checkout.Session;
   try {
     session = await createCheckoutSession({
       mode: "payment",
       payment_method_types: ["card"],
+      ...(guestEmail ? { customer_email: guestEmail } : {}),
       line_items: [
         {
           price_data: {
@@ -654,6 +663,7 @@ export async function createTipCheckoutSession(
           ...(locId ? { locationId: locId } : {}),
           ...(tblId ? { tableId: tblId } : {}),
         },
+        ...(guestEmail ? { receipt_email: guestEmail } : {}),
         ...(routing.destinationAccountId
           ? {
               application_fee_amount: platformFeeCents,
@@ -1034,6 +1044,10 @@ export async function handlePaymentSuccess(paymentIntentId: string): Promise<voi
   }
 
   await emitTipSocketWithSnapshot({ ...tip, customerName: customerNameFromPi }, emitSnapshot);
+
+  if (piForPayable) {
+    void scheduleTipGuestConfirmationEmailForPaymentIntent(tip.id, piForPayable);
+  }
 }
 
 export async function handlePaymentFailed(paymentIntentId: string): Promise<void> {
@@ -1281,6 +1295,8 @@ export async function handleSuccessfulTipPayment(session: Stripe.Checkout.Sessio
     });
 
     console.log("TIP CREATED", tip.id);
+
+    void scheduleTipGuestConfirmationEmailForCheckoutSession(tip.id, session, paymentIntent);
 
     try {
       const { applyExistingStripeDisputeAfterSuccessfulTip } = await import(

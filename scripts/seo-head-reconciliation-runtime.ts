@@ -351,11 +351,6 @@ function testMarketingRoutesCanonical(): void {
       description: en.seo.pages.pricing.description,
     },
     {
-      path: "/how-it-works",
-      title: en.seo.pages.howItWorks.title,
-      description: en.seo.pages.howItWorks.description,
-    },
-    {
       path: "/about",
       title: en.seo.pages.about.title,
       description: en.seo.pages.about.description,

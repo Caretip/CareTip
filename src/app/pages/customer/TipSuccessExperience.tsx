@@ -113,7 +113,7 @@ export function TipSuccessExperience({
   onSecondary,
   primaryIcon,
   extraActions,
-  showReceipt = true,
+  showReceipt = false,
   embedded = false,
   showAttribution = true,
 }: TipSuccessExperienceProps) {
@@ -170,6 +170,11 @@ export function TipSuccessExperience({
               {displayHeadline}
             </h1>
             <p className="customer-flow-success-surface__thankyou">{thankYouMessage}</p>
+            {!embedded && !showReceipt ? (
+              <p className="customer-flow-success-surface__email-note mt-2 text-sm text-muted-foreground">
+                {t("tipFlow.success.emailReceipt")}
+              </p>
+            ) : null}
           </motion.section>
 
           <motion.section

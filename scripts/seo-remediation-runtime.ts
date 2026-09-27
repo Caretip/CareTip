@@ -88,6 +88,10 @@ function run() {
   assert.equal(resolveCanonicalPathname("/faq", "?q=tips&lang=en"), "/faq");
   assert.equal(resolveCanonicalPathname("/contact", "?intent=demo&lang=de"), "/contact");
 
+  const legacyHowItWorks = matchSeoRoute("/how-it-works");
+  assert.equal(legacyHowItWorks.indexable, false);
+  assert.doesNotMatch(sitemap, /how-it-works/);
+
   console.log("seo-remediation-runtime: ok");
 }
 

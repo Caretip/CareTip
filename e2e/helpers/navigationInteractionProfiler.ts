@@ -27,7 +27,7 @@ export const NAV_INTERACTION_PROFILER_INIT = `
     "/pricing": "main h1",
     "/contact": "main h1, #name",
     "/login": ".caretip-auth-card, .caretip-auth-form",
-    "/how-it-works": "main h1",
+    "/#how-it-works": "main h1",
   };
 
   function paintSelectorForPending() {

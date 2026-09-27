@@ -32,8 +32,16 @@ export function GuestExternalReviewLinks({ reviews, className }: Props) {
             href={safe.googleWriteReviewUrl}
             target="_blank"
             rel="noopener noreferrer"
+            aria-describedby="guest-external-reviews-heading"
           >
-            <span>{t("tipFlow.success.reviewOnGoogle")}</span>
+            <span className="customer-flow-external-review-btn__label">
+              <span className="customer-flow-external-review-btn__title">
+                {t("tipFlow.success.reviewOnGoogle")}
+              </span>
+              <span className="customer-flow-external-review-btn__hint">
+                {t("tipFlow.success.reviewOnGoogleHint")}
+              </span>
+            </span>
             <ExternalLink className="size-4 shrink-0" aria-hidden />
             <span className="sr-only">{t("tipFlow.success.opensExternal")}</span>
           </a>
@@ -44,8 +52,16 @@ export function GuestExternalReviewLinks({ reviews, className }: Props) {
             href={safe.tripadvisorReviewUrl}
             target="_blank"
             rel="noopener noreferrer"
+            aria-describedby="guest-external-reviews-heading"
           >
-            <span>{t("tipFlow.success.reviewOnTripadvisor")}</span>
+            <span className="customer-flow-external-review-btn__label">
+              <span className="customer-flow-external-review-btn__title">
+                {t("tipFlow.success.reviewOnTripadvisor")}
+              </span>
+              <span className="customer-flow-external-review-btn__hint">
+                {t("tipFlow.success.reviewOnTripadvisorHint")}
+              </span>
+            </span>
             <ExternalLink className="size-4 shrink-0" aria-hidden />
             <span className="sr-only">{t("tipFlow.success.opensExternal")}</span>
           </a>

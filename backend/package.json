@@ -134,6 +134,7 @@
     "test:it-recht-kanzlei-webhook": "dotenv -e ../.env -e .env -- tsx scripts/it-recht-kanzlei-webhook-runtime.ts",
     "test:it-recht-kanzlei-webhook-logging": "tsx scripts/it-recht-kanzlei-webhook-logging-runtime.ts",
     "test:tip-receipt-format": "dotenv -e ../.env -e .env -- tsx scripts/tip-receipt-format-runtime.ts",
+    "test:tip-guest-confirmation-email": "tsx scripts/tip-guest-confirmation-email-runtime.ts",
     "test:supabase-security": "tsx scripts/supabase-security-pentest.ts",
     "test:supabase-object-auth": "tsx scripts/supabase-object-auth.ts",
     "test:phase-01-09-session": "tsx scripts/phase-01-09-session-bind.ts",

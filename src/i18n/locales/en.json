@@ -2132,6 +2132,10 @@
       "enterCustom": "Enter custom amount",
       "tipAmountLabel": "Tip amount",
       "amountPlaceholder": "0.00",
+      "emailLabel": "Email for confirmation",
+      "emailHint": "Optional. We send a tip confirmation to this address.",
+      "emailPlaceholder": "you@example.com",
+      "invalidEmail": "Please enter a valid email address or leave the field empty.",
       "continuePayment": "Continue to Payment"
     },
     "payment": {
@@ -2217,11 +2221,13 @@
       "leaveFeedback": "Leave optional feedback",
       "leavePage": "Leave page",
       "backHome": "Back to home",
-      "emailReceipt": "A receipt has been sent to your email",
+      "emailReceipt": "If you provided your email before payment, we will send you a confirmation shortly.",
       "externalReviewsHeading": "Leave a public review",
-      "externalReviewsHint": "Your feedback helps support our team. These buttons open Google or TripAdvisor in a new tab.",
-      "reviewOnGoogle": "Review us on Google",
-      "reviewOnTripadvisor": "Review us on TripAdvisor",
+      "externalReviewsHint": "You are leaving CareTip to post a public review on an external site. Choose where you would like to go:",
+      "reviewOnGoogle": "Continue to Google",
+      "reviewOnGoogleHint": "Opens Google’s public review page in a new tab.",
+      "reviewOnTripadvisor": "Continue to TripAdvisor",
+      "reviewOnTripadvisorHint": "Opens TripAdvisor’s public review page in a new tab.",
       "opensExternal": "(opens in a new tab)"
     },
     "rating": {

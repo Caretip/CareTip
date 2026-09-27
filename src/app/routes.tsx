@@ -688,6 +688,12 @@ const routes: RouteObject[] = [
     lazy: routeLazy(() => import('./pages/FeaturesPage'), 'FeaturesPage'),
     errorElement: <ErrorBoundary />,
   },
+  /** Legacy standalone URL — how-it-works content lives on `/` (#how-it-works) and industry pages. */
+  {
+    path: '/how-it-works',
+    element: <Navigate to="/#how-it-works" replace />,
+    errorElement: <ErrorBoundary />,
+  },
   {
     path: '/industries/events',
     element: <Navigate to="/industries/fairs" replace />,

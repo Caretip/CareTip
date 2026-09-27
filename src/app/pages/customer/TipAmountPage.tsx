@@ -61,6 +61,7 @@ export function TipAmountPage() {
   const [selectedAmount, setSelectedAmount] = useState<number | null>(null);
   const [customAmount, setCustomAmount] = useState("");
   const [showCustomInput, setShowCustomInput] = useState(false);
+  const [guestEmail, setGuestEmail] = useState("");
   const [processing, setProcessing] = useState(false);
   const resetTipCheckoutLaunch = useCallback(() => {
     clearGuestTipCheckoutInFlightForStaleRestore();
@@ -254,12 +255,22 @@ export function TipAmountPage() {
   const journeyLoading = !contextReady || processing;
   const journeyLoadingContext = processing ? "stripeRedirect" : "tipPage";
 
+  const isOptionalEmailValid = (value: string): boolean => {
+    const trimmed = value.trim();
+    if (!trimmed) return true;
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed);
+  };
+
   const handleContinue = async () => {
     const resolvedEmployeeId = employeeId ?? employeeIdCtx;
     if (!selectedAmount || !resolvedEmployeeId) return;
     if (!isTipAmountInRangeEur(selectedAmount)) return;
     if (!businessId) return;
     if (processing) return;
+    if (!isOptionalEmailValid(guestEmail)) {
+      toast.error(t("tipFlow.tipAmount.invalidEmail"));
+      return;
+    }
     setAmount(selectedAmount);
     setProcessing(true);
     const result = await startGuestTipCheckout(
@@ -270,6 +281,7 @@ export function TipAmountPage() {
         employeeName,
         locationId,
         tableId,
+        guestEmail: guestEmail.trim() ? guestEmail.trim() : null,
       },
       t("tipFlow.payment.checkoutStartError"),
       stripeRedirectMessage,
@@ -383,6 +395,28 @@ export function TipAmountPage() {
             />
           </div>
         ) : null}
+      </section>
+
+      <section className="pt-2" aria-labelledby="tip-guest-email-label">
+        <label
+          id="tip-guest-email-label"
+          htmlFor="tip-guest-email"
+          className="mb-1.5 block text-sm font-medium text-foreground"
+        >
+          {t("tipFlow.tipAmount.emailLabel")}
+        </label>
+        <p className="mb-2 text-xs text-muted-foreground">{t("tipFlow.tipAmount.emailHint")}</p>
+        <input
+          id="tip-guest-email"
+          type="email"
+          inputMode="email"
+          autoComplete="email"
+          value={guestEmail}
+          onChange={(e) => setGuestEmail(e.target.value)}
+          placeholder={t("tipFlow.tipAmount.emailPlaceholder")}
+          className={`${cf.inputAmount} text-base sm:text-lg`}
+          disabled={processing}
+        />
       </section>
     </CustomerFlowShell>
   );

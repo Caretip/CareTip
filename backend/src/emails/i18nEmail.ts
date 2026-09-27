@@ -696,3 +696,62 @@ export function buildGenericNotificationContent(input: {
 
   return { subject, html, text };
 }
+
+function formatTipAmountEur(locale: EmailLocale, amountEur: number): string {
+  const value = Number(amountEur);
+  if (!Number.isFinite(value) || value <= 0) return "";
+  return new Intl.NumberFormat(locale === "de" ? "de-DE" : "en-GB", {
+    style: "currency",
+    currency: "EUR",
+  }).format(value);
+}
+
+/** Guest-facing tip payment confirmation (body only — no PDF attachment). */
+export function buildTipGuestConfirmationContent(input: {
+  locale: EmailLocale;
+  amountEur: number;
+  employeeName: string;
+  businessName: string;
+  receiptNumber: string;
+  recipientName?: string | null;
+}): { subject: string; html: string; text: string } {
+  const loc = input.locale === "de" ? "de" : "en";
+  const greeting = formatEmailGreeting(loc, { recipientName: input.recipientName });
+  const amount = formatTipAmountEur(loc, input.amountEur);
+  const employee = input.employeeName.trim() || (loc === "de" ? "das Teammitglied" : "the team member");
+  const business = input.businessName.trim() || "CareTip";
+  const receipt = input.receiptNumber.trim();
+
+  const copy =
+    loc === "de"
+      ? {
+          subject: "Ihr Trinkgeld wurde gesendet",
+          preheader: `Bestätigung Ihres Trinkgelds an ${employee}.`,
+          headline: "Vielen Dank für Ihr Trinkgeld",
+          line1: `Ihr Trinkgeld von ${amount} wurde erfolgreich an ${employee} (${business}) gesendet.`,
+          line2: receipt
+            ? `Referenz für Ihre Unterlagen: ${receipt}.`
+            : "Diese E-Mail dient als Bestätigung für Ihre Unterlagen.",
+          fine: "Wenn Sie diese Zahlung nicht vorgenommen haben, wenden Sie sich bitte an den Betrieb oder an unseren Support.",
+        }
+      : {
+          subject: "Your tip was sent",
+          preheader: `Confirmation of your tip to ${employee}.`,
+          headline: "Thank you for your tip",
+          line1: `Your tip of ${amount} was sent successfully to ${employee} at ${business}.`,
+          line2: receipt
+            ? `Reference for your records: ${receipt}.`
+            : "This email is your confirmation for your records.",
+          fine: "If you did not make this payment, please contact the venue or our support team.",
+        };
+
+  return renderStandardEmail({
+    locale: loc,
+    subject: copy.subject,
+    preheader: copy.preheader,
+    headline: copy.headline,
+    greeting,
+    lines: [copy.line1, copy.line2],
+    finePrint: [copy.fine],
+  });
+}

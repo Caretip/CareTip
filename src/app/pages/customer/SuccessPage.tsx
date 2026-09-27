@@ -152,7 +152,7 @@ export function SuccessPage() {
       )}
       headline={t("tipFlow.success.celebrationHeadline")}
       tipAmount={tipAmount}
-      receiptNumber={verification.context.receiptNumber}
+      showReceipt={false}
       primaryLabel={t("tipFlow.success.leaveFeedback")}
       secondaryLabel={t("tipFlow.success.backHome")}
       onPrimary={goToRating}

@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useLayoutEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { useLocation } from "react-router";
 import { applyDocumentSeo } from "@/app/lib/seo/documentSeo";
@@ -14,7 +14,7 @@ export function CareTipRouteSeo() {
   const { t, i18n } = useTranslation();
   const language = resolveAppLanguageFromCode(i18n.language || i18n.resolvedLanguage);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     document.documentElement.lang = language;
     const seo = resolveRouteSeo(pathname, search, t);
     applyDocumentSeo(seo);

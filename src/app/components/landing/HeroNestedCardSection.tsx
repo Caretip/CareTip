@@ -19,7 +19,7 @@ type HeroNestedCardSectionProps = {
 
 const NAV_LINKS = [
   { name: "Products", to: "/features" },
-  { name: "Solutions", to: "/how-it-works" },
+  { name: "Solutions", to: "/#how-it-works" },
   { name: "Price", to: "/pricing" },
   { name: "Resources", to: "/contact" },
 ] as const;

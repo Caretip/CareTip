@@ -12,6 +12,7 @@ export type GuestTipCheckoutInput = {
   employeeName?: string | null;
   locationId?: string | null;
   tableId?: string | null;
+  guestEmail?: string | null;
 };
 
 export type GuestTipCheckoutResult = "redirected" | "failed" | "busy";
@@ -43,6 +44,7 @@ export async function startGuestTipCheckout(
       tipAmount: input.amount,
       locationId: input.locationId ?? null,
       tableId: input.tableId ?? null,
+      guestEmail: input.guestEmail?.trim() ? input.guestEmail.trim() : null,
     });
     if (!url) {
       toast.error(checkoutStartErrorMessage);

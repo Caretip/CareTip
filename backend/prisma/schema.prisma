@@ -1369,6 +1369,8 @@ model Transaction {
   stripePaymentIntentId String?      @unique @map("stripe_payment_intent_id")
   /** Customer-facing receipt reference (e.g. CT-26-A8K4P9X2). Assigned when status becomes success. */
   receiptNumber         String?      @unique @map("receipt_number")
+  /// Set when a guest tip confirmation email was sent (idempotent send guard).
+  guestConfirmationEmailSentAt DateTime? @map("guest_confirmation_email_sent_at")
   payoutStatus          PayoutStatus @default(not_applicable) @map("payout_status")
   /// Nullable after staff detach/erasure (Slice D) — tip financial row must survive.
   employeeId            String?      @map("employee_id")

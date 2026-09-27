@@ -15,7 +15,6 @@ export const CARETIP_SITEMAP_PATHS = [
   "/",
   "/features",
   "/pricing",
-  "/how-it-works",
   "/about",
   "/contact",
   "/faq",

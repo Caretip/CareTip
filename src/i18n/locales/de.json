@@ -2132,6 +2132,10 @@
       "enterCustom": "Eigenen Betrag eingeben",
       "tipAmountLabel": "Trinkgeldbetrag",
       "amountPlaceholder": "0,00",
+      "emailLabel": "E-Mail für Bestätigung",
+      "emailHint": "Optional. Wir senden eine Trinkgeld-Bestätigung an diese Adresse.",
+      "emailPlaceholder": "sie@beispiel.de",
+      "invalidEmail": "Bitte geben Sie eine gültige E-Mail-Adresse ein oder lassen Sie das Feld leer.",
       "continuePayment": "Weiter zur Zahlung"
     },
     "payment": {
@@ -2217,11 +2221,13 @@
       "leaveFeedback": "Optionales Feedback hinterlassen",
       "leavePage": "Seite verlassen",
       "backHome": "Zur Startseite",
-      "emailReceipt": "Eine Quittung wurde an Ihre E-Mail gesendet",
+      "emailReceipt": "Wenn Sie vor der Zahlung eine E-Mail angegeben haben, senden wir Ihnen in Kürze eine Bestätigung.",
       "externalReviewsHeading": "Öffentliche Bewertung hinterlassen",
-      "externalReviewsHint": "Ihr Feedback unterstützt unser Team. Die Schaltflächen öffnen Google oder TripAdvisor in einem neuen Tab.",
-      "reviewOnGoogle": "Bei Google bewerten",
-      "reviewOnTripadvisor": "Bei TripAdvisor bewerten",
+      "externalReviewsHint": "Sie verlassen CareTip, um eine öffentliche Bewertung auf einer externen Seite zu veröffentlichen. Wählen Sie, wohin Sie möchten:",
+      "reviewOnGoogle": "Weiter zu Google",
+      "reviewOnGoogleHint": "Öffnet die öffentliche Google-Bewertungsseite in einem neuen Tab.",
+      "reviewOnTripadvisor": "Weiter zu TripAdvisor",
+      "reviewOnTripadvisorHint": "Öffnet die öffentliche TripAdvisor-Bewertungsseite in einem neuen Tab.",
       "opensExternal": "(öffnet in einem neuen Tab)"
     },
     "rating": {

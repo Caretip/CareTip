@@ -65,13 +65,26 @@ function envRawToPublicOrigin(raw: string): string {
   }
 }
 
+function nodeProcessEnv(key: string): string | undefined {
+  if (typeof process === "undefined" || !process.env) return undefined;
+  return process.env[key];
+}
+
 function readEnvBase(): string {
+  const metaEnv =
+    typeof import.meta !== "undefined" && import.meta.env
+      ? (import.meta.env as Record<string, string | undefined>)
+      : {};
   const candidates = [
-    import.meta.env.VITE_CARETIP_APP_ORIGIN,
-    import.meta.env.VITE_BASE_URL,
-    import.meta.env.NEXT_PUBLIC_BASE_URL,
-    import.meta.env.NEXT_PUBLIC_APP_URL,
-    import.meta.env.VITE_APP_URL,
+    metaEnv.VITE_CARETIP_APP_ORIGIN,
+    metaEnv.VITE_BASE_URL,
+    metaEnv.NEXT_PUBLIC_BASE_URL,
+    metaEnv.NEXT_PUBLIC_APP_URL,
+    metaEnv.VITE_APP_URL,
+    nodeProcessEnv("VITE_CARETIP_APP_ORIGIN"),
+    nodeProcessEnv("BASE_URL"),
+    nodeProcessEnv("VITE_BASE_URL"),
+    nodeProcessEnv("NEXT_PUBLIC_APP_URL"),
   ];
   for (const raw of candidates) {
     const origin = envRawToPublicOrigin(typeof raw === "string" ? raw : "");

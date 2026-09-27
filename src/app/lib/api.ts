@@ -5389,6 +5389,7 @@ export async function createTipCheckoutSession(params: {
   locationId?: string | null;
   tableId?: string | null;
   customerName?: string | null;
+  guestEmail?: string | null;
   feedback?: string | null;
 }): Promise<{ sessionId: string; url: string | null }> {
   return apiRequest(apiPath("/api/payments/create-tip-session"), {

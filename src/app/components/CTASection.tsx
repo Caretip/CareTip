@@ -51,7 +51,7 @@ export function CTASection() {
                     </button>
                   </Link>
                   <Link
-                    to="/how-it-works"
+                    to="/#how-it-works"
                     className="px-6 sm:px-8 py-3 sm:py-4 bg-white/10 text-white rounded-xl hover:bg-white/20 transition-all backdrop-blur-sm border border-white/20 text-sm sm:text-base font-semibold inline-flex items-center justify-center"
                   >
                     See How It Works

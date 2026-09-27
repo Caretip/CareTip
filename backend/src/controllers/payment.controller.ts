@@ -11,6 +11,7 @@ import { absolutizePublicMediaPath } from "../utils/publicMediaUrl.js";
 import { resolveScanSessionId } from "../services/qr/qrScanRequestContext.js";
 import { QR_FUNNEL_EVENT_TYPES, recordQrFunnelEvent } from "../services/qr/qrFunnelEvent.service.js";
 import { ensureTransactionReceiptNumber } from "../services/tipReceipt.service.js";
+import { normalizeGuestEmail } from "../services/tipGuestConfirmationEmail.service.js";
 import { toPublicGuestExternalReviews } from "../lib/externalReviewLinks.js";
 
 /** Client must never steer Connect destination or platform fee. */
@@ -115,6 +116,12 @@ export async function createTipSession(req: Request, res: Response) {
     const tableId = typeof body.tableId === "string" ? body.tableId : undefined;
     const customerName =
       typeof body.customerName === "string" ? body.customerName : undefined;
+    const guestEmailRaw =
+      typeof body.guestEmail === "string" ? body.guestEmail.trim() : "";
+    const guestEmail = guestEmailRaw ? normalizeGuestEmail(guestEmailRaw) : null;
+    if (guestEmailRaw && !guestEmail) {
+      return res.status(400).json({ message: "Invalid email address" });
+    }
     const feedback = typeof body.feedback === "string" ? body.feedback : undefined;
     const qrScanSessionId =
       typeof body.qrScanSessionId === "string" && body.qrScanSessionId.trim()
@@ -146,6 +153,7 @@ export async function createTipSession(req: Request, res: Response) {
       locationId: locationId ?? null,
       tableId: tableId ?? null,
       customerName: customerName ?? null,
+      guestEmail,
       feedback: feedback ?? null,
       qrScanSessionId,
     });

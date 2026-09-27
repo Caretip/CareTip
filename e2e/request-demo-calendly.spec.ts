@@ -76,9 +76,9 @@ test.describe("Request Demo → Calendly", () => {
     await expect(page).toHaveURL(/\/pricing/);
   });
 
-  test("how-it-works Request Demo opens Calendly", async ({ page }) => {
+  test("landing how-it-works section Request Demo opens Calendly", async ({ page }) => {
     await page.setViewportSize({ width: 1280, height: 800 });
-    await gotoPublic(page, "/how-it-works");
+    await gotoPublic(page, "/#how-it-works");
     await dismissPwaIfPresent(page);
 
     const cta = page.locator(DEMO_SELECTOR).first();

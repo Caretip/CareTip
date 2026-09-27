@@ -129,7 +129,7 @@ export function TipCompletionPage() {
       thankYouMessage={thankYouMessage}
       headline={t("tipFlow.success.celebrationHeadline")}
       tipAmount={tipAmount}
-      receiptNumber={context.receiptNumber}
+      showReceipt={false}
       primaryLabel={t("tipFlow.completion.tipSomeoneElse")}
       secondaryLabel={t("tipFlow.completion.exit")}
       onPrimary={tipAnother}
