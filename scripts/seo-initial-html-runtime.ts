@@ -12,6 +12,8 @@ import { getBuildTimeSeoT } from "./lib/buildSeoI18n.ts";
 import { resolveRouteSeo } from "../src/app/lib/seo/resolveRouteSeo.ts";
 import { matchSeoRoute, SITEMAP_PATHS } from "../src/app/lib/seo/seoRoutes.ts";
 import { injectRouteSeoIntoHtml } from "../src/app/lib/seo/injectRouteSeoIntoHtml.ts";
+import { parseStaticFaqItems } from "../src/app/lib/seo/faqStaticContent.ts";
+import { staticSummaryHasSubstantiveContent } from "../src/app/lib/seo/publicSeoStaticContent.ts";
 
 process.env.BASE_URL = process.env.BASE_URL || "https://caretip.de";
 
@@ -72,6 +74,49 @@ function h1Text(html: string): string | undefined {
   return h1?.[1];
 }
 
+function testPublicBodyContentNotMetadataOnly(): void {
+  const template = read("index.html");
+  const t = getBuildTimeSeoT();
+  const faqItems = parseStaticFaqItems(t);
+  assert.ok(faqItems.length >= 3, "FAQ i18n must expose multiple public Q&A items");
+
+  const contentHeavyPaths = [
+    "/faq",
+    "/features",
+    "/pricing",
+    "/about",
+    "/contact",
+    "/industries/hotels",
+  ] as const;
+
+  for (const pathname of contentHeavyPaths) {
+    const match = matchSeoRoute(pathname);
+    const seo = resolveRouteSeo(pathname, "", t);
+    const html = injectRouteSeoIntoHtml(template, seo, match, t);
+    assert.ok(
+      staticSummaryHasSubstantiveContent(html),
+      `${pathname} initial HTML must include substantive public body content, not metadata only`,
+    );
+  }
+
+  const faqHtml = injectRouteSeoIntoHtml(
+    template,
+    resolveRouteSeo("/faq", "", t),
+    matchSeoRoute("/faq"),
+    t,
+  );
+  assert.match(
+    faqHtml,
+    new RegExp(escapeRegExp(faqItems[0]!.question.slice(0, 24))),
+    "/faq must include first FAQ question in static summary",
+  );
+  assert.match(faqHtml, /<script[^>]*type="application\/ld\+json"/i, "/faq JSON-LD");
+}
+
+function escapeRegExp(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
 function testInjectionForAllSitemapPaths(): void {
   const template = read("index.html");
   const t = getBuildTimeSeoT();
@@ -80,7 +125,7 @@ function testInjectionForAllSitemapPaths(): void {
     const match = matchSeoRoute(pathname);
     assert.equal(match.indexable, true, `${pathname} must be indexable`);
     const seo = resolveRouteSeo(pathname, "", t);
-    const html = injectRouteSeoIntoHtml(template, seo, match);
+    const html = injectRouteSeoIntoHtml(template, seo, match, t);
     const expectedCanonical =
       pathname === "/" ? `${origin}/` : `${origin}${pathname}`;
 
@@ -122,7 +167,7 @@ function testPrivateRoutesNoindexInInjection(): void {
     const match = matchSeoRoute(pathname);
     assert.equal(match.indexable, false);
     const seo = resolveRouteSeo(pathname, "", t);
-    const html = injectRouteSeoIntoHtml(template, seo, match);
+    const html = injectRouteSeoIntoHtml(template, seo, match, t);
     assert.equal(robotsMeta(html), "noindex,nofollow", pathname);
   }
 }
@@ -151,11 +196,24 @@ function testDistOutputWhenPresent(): void {
   }
 }
 
+function testDistFaqContentWhenPresent(): void {
+  const faqFile = path.join(root, "dist", "faq", "index.html");
+  if (!existsSync(faqFile)) return;
+  const t = getBuildTimeSeoT();
+  const firstQ = parseStaticFaqItems(t)[0]?.question;
+  assert.ok(firstQ, "FAQ items");
+  const html = readFileSync(faqFile, "utf8");
+  assert.match(html, new RegExp(escapeRegExp(firstQ.slice(0, 20))));
+  assert.ok(staticSummaryHasSubstantiveContent(html), "dist /faq substantive body");
+}
+
 function run(): void {
   testHowItWorksDelisted();
   testInjectionForAllSitemapPaths();
+  testPublicBodyContentNotMetadataOnly();
   testPrivateRoutesNoindexInInjection();
   testDistOutputWhenPresent();
+  testDistFaqContentWhenPresent();
   console.log("seo-initial-html-runtime: ok");
 }
 

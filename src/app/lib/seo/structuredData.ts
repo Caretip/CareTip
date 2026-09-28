@@ -2,6 +2,7 @@ import type { TFunction } from "i18next";
 import { collectCareTipOrganizationSameAs } from "@/app/lib/caretipSocialLinks";
 import { getAppPublicBaseUrl } from "@/app/lib/appPublicUrl";
 import type { SeoRouteMatch } from "./seoRoutes";
+import { parseStaticFaqItems } from "./faqStaticContent";
 
 const ORG_LOGO = "/brand/caretip-logo-tagline.png";
 
@@ -45,27 +46,15 @@ export function buildSoftwareApplicationJsonLd(t: TFunction): Record<string, unk
 }
 
 export function buildFaqPageJsonLd(t: TFunction): Record<string, unknown> | null {
-  const raw = t("staticPages.faq.items", { returnObjects: true });
-  if (!Array.isArray(raw)) return null;
-  const entities = raw
-    .filter((item): item is { q: string; a?: string; aLead?: string; aBody?: string } => {
-      return typeof item === "object" && item !== null && "q" in item && typeof item.q === "string";
-    })
-    .map((item) => {
-      const answer =
-        item.a ??
-        (item.aLead && item.aBody ? `${item.aLead} ${item.aBody}` : "");
-      if (!answer.trim()) return null;
-      return {
-        "@type": "Question",
-        name: item.q,
-        acceptedAnswer: {
-          "@type": "Answer",
-          text: answer,
-        },
-      };
-    })
-    .filter(Boolean);
+  const entities = parseStaticFaqItems(t)
+    .map((item) => ({
+      "@type": "Question",
+      name: item.question,
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: item.answer,
+      },
+    }));
 
   if (entities.length === 0) return null;
 

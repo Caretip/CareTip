@@ -1,5 +1,6 @@
 import type { ResolvedRouteSeo } from "./resolveRouteSeo";
 import type { SeoRouteMatch } from "./seoRoutes";
+import { buildPublicSeoStaticMainHtml } from "./publicSeoStaticContent";
 
 function escapeHtml(text: string): string {
   return text
@@ -77,41 +78,21 @@ function buildJsonLdScripts(blocks: Record<string, unknown>[]): string {
     .join("\n");
 }
 
-/** Route-specific static crawler summary (German default — matches index.html lang). */
+/** @deprecated Use buildPublicSeoStaticMainHtml — kept for tests importing this symbol. */
 export function buildStaticCrawlerSummaryHtml(
   seo: ResolvedRouteSeo,
   match: SeoRouteMatch,
+  t?: import("i18next").TFunction,
 ): string {
-  const title = escapeHtml(seo.title);
-  const description = escapeHtml(seo.description);
-
-  if (match.pageKey === "home") {
+  if (!t) {
+    const title = escapeHtml(seo.title);
+    const description = escapeHtml(seo.description);
     return `<main id="caretip-static-summary" lang="de">
-      <h1>CareTip — Digitale Trinkgeld-Plattform</h1>
-      <p>
-        Trinkgeld per QR-Code, schnell, kontaktlos und steuerfrei. CareTip ist die digitale
-        Trinkgeld-Plattform für Gastgewerbe und Service-Teams. Gäste geben per QR-Code Trinkgeld,
-        Mitarbeitende behalten den Überblick, Betriebe verwalten Auszahlungen und Verteilung sicher.
-      </p>
-      <p lang="en">
-        CareTip is a digital tipping platform for hospitality and service teams. Guests tip via QR
-        code, employees track earnings, and businesses manage tip distribution and secure payouts.
-      </p>
-      <nav aria-label="CareTip">
-        <a href="/features">Funktionen</a> ·
-        <a href="/faq">FAQ</a> ·
-        <a href="/industries/gastronomy">Gastronomie</a> ·
-        <a href="/industries/hotels">Hotels</a> ·
-        <a href="/pricing">Preise</a> ·
-        <a href="/contact">Kontakt</a>
-      </nav>
-    </main>`;
-  }
-
-  return `<main id="caretip-static-summary" lang="de">
       <h1>${title}</h1>
       <p>${description}</p>
     </main>`;
+  }
+  return buildPublicSeoStaticMainHtml(seo, match, t);
 }
 
 /**
@@ -122,6 +103,7 @@ export function injectRouteSeoIntoHtml(
   html: string,
   seo: ResolvedRouteSeo,
   match: SeoRouteMatch,
+  t?: import("i18next").TFunction,
 ): string {
   let out = html;
   out = upsertTitle(out, seo.title);
@@ -147,7 +129,9 @@ export function injectRouteSeoIntoHtml(
     out = out.replace(/<\/head>/i, `${scripts}\n  </head>`);
   }
 
-  const summary = buildStaticCrawlerSummaryHtml(seo, match);
+  const summary = t
+    ? buildPublicSeoStaticMainHtml(seo, match, t)
+    : buildStaticCrawlerSummaryHtml(seo, match);
   out = out.replace(
     /<main id="caretip-static-summary"[\s\S]*?<\/main>/i,
     summary,

@@ -37,7 +37,7 @@ function run(): void {
       continue;
     }
     const seo = resolveRouteSeo(pathname, "", t);
-    const html = injectRouteSeoIntoHtml(template, seo, match);
+    const html = injectRouteSeoIntoHtml(template, seo, match, t);
 
     if (pathname === "/") {
       writeFileSync(templatePath, html, "utf8");
