@@ -209,6 +209,23 @@ enum StripeConnectInstantPayoutRequestStatus {
   failed
 }
 
+/// Manager-selected bank payout cadence for the business Connect account (not Instant Payout).
+enum BusinessBankPayoutSchedule {
+  daily
+  every_3_days
+  weekly
+  monthly
+  manual
+}
+
+/// Idempotency ledger for CareTip-initiated standard bank payouts (every_3_days cadence).
+enum StripeConnectScheduledPayoutRequestStatus {
+  pending
+  submitted
+  skipped_zero_balance
+  failed
+}
+
 /// Frozen on each new tip. Changing the Business setting never rewrites historical payables.
 enum EmployeeTipPayoutMode {
   direct_to_employee
@@ -817,6 +834,28 @@ model StripeConnectInstantPayoutRequest {
   @@map("stripe_connect_instant_payout_requests")
 }
 
+/// CareTip-scheduled standard bank payouts (every_3_days). Stripe-native schedules do not use this table.
+model StripeConnectScheduledPayoutRequest {
+  id                String                                   @id @default(cuid())
+  businessId        String                                   @map("business_id")
+  scheduleWindowKey String                                   @map("schedule_window_key") @db.VarChar(64)
+  idempotencyKey    String                                   @unique @map("idempotency_key") @db.VarChar(160)
+  amountCents       Int                                      @map("amount_cents")
+  currency          String                                   @db.VarChar(8)
+  stripePayoutId    String?                                  @map("stripe_payout_id") @db.VarChar(128)
+  status            StripeConnectScheduledPayoutRequestStatus
+  failureCode       String?                                  @map("failure_code") @db.VarChar(64)
+  createdAt         DateTime                                 @default(now()) @map("created_at")
+  updatedAt         DateTime                                 @updatedAt @map("updated_at")
+
+  business Business @relation(fields: [businessId], references: [id], onDelete: Restrict)
+
+  @@unique([businessId, scheduleWindowKey])
+  @@index([businessId, createdAt(sort: Desc)])
+  @@index([stripePayoutId])
+  @@map("stripe_connect_scheduled_payout_requests")
+}
+
 model Business {
   id                  String    @id @default(cuid())
   name                String
@@ -840,6 +879,10 @@ model Business {
   stripeConnectUpdatedAt DateTime? @map("stripe_connect_updated_at")
   /// Server-authoritative routing for NEW tips only. Default: pay connected employees directly.
   employeeTipPayoutMode EmployeeTipPayoutMode @default(direct_to_employee) @map("employee_tip_payout_mode")
+  /// Bank payout cadence for available Connect balance (distinct from Instant Payout).
+  bankPayoutSchedule BusinessBankPayoutSchedule @default(daily) @map("bank_payout_schedule")
+  /// Next CareTip-initiated standard payout (every_3_days only). UTC instant; cadence uses Business.timezone.
+  bankPayoutNextScheduledAt DateTime? @map("bank_payout_next_scheduled_at")
   /// Platform Stripe Customer for checkout reuse before a Subscription row exists (Option A).
   stripeCustomerId    String?   @unique @map("stripe_customer_id")
   userId              String    @unique @map("user_id")
@@ -950,6 +993,7 @@ model Business {
   tipRefunds     TipRefund[]
   stripeConnectPayouts StripeConnectPayout[]
   stripeConnectInstantPayoutRequests StripeConnectInstantPayoutRequest[]
+  stripeConnectScheduledPayoutRequests StripeConnectScheduledPayoutRequest[]
   employeeStripePayouts EmployeeStripePayout[]
   employeeTipPayables EmployeeTipPayable[]
   tipDistributionBatches EmployeeTipDistributionBatch[]
@@ -1170,13 +1214,41 @@ model EmployeeStripeAccount {
   stripeConnectDisabledReason  String?             @map("stripe_connect_disabled_reason") @db.VarChar(128)
   stripeConnectRequirementsDue Int                 @default(0) @map("stripe_connect_requirements_due")
   stripeConnectUpdatedAt       DateTime?           @map("stripe_connect_updated_at")
+  /// Bank payout cadence for available Connect balance (distinct from Instant Payout).
+  bankPayoutSchedule           BusinessBankPayoutSchedule @default(daily) @map("bank_payout_schedule")
+  /// Next CareTip-initiated standard payout (every_3_days only). UTC; cadence uses employer Business.timezone.
+  bankPayoutNextScheduledAt    DateTime?           @map("bank_payout_next_scheduled_at")
   createdAt                    DateTime            @default(now()) @map("created_at")
   updatedAt                    DateTime            @updatedAt @map("updated_at")
 
   employee Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  scheduledPayoutRequests EmployeeStripeScheduledPayoutRequest[]
 
   @@index([stripeConnectStatus])
+  @@index([bankPayoutSchedule, bankPayoutNextScheduledAt])
   @@map("employee_stripe_accounts")
+}
+
+/// CareTip-scheduled standard bank payouts for employees (every_3_days). Not CareTip tip transfers.
+model EmployeeStripeScheduledPayoutRequest {
+  id                String                                   @id @default(cuid())
+  employeeId        String                                   @map("employee_id")
+  scheduleWindowKey String                                   @map("schedule_window_key") @db.VarChar(64)
+  idempotencyKey    String                                   @unique @map("idempotency_key") @db.VarChar(160)
+  amountCents       Int                                      @map("amount_cents")
+  currency          String                                   @db.VarChar(8)
+  stripePayoutId    String?                                  @map("stripe_payout_id") @db.VarChar(128)
+  status            StripeConnectScheduledPayoutRequestStatus
+  failureCode       String?                                  @map("failure_code") @db.VarChar(64)
+  createdAt         DateTime                                 @default(now()) @map("created_at")
+  updatedAt         DateTime                                 @updatedAt @map("updated_at")
+
+  employeeStripeAccount EmployeeStripeAccount @relation(fields: [employeeId], references: [employeeId], onDelete: Cascade)
+
+  @@unique([employeeId, scheduleWindowKey])
+  @@index([employeeId, createdAt(sort: Desc)])
+  @@index([stripePayoutId])
+  @@map("employee_stripe_scheduled_payout_requests")
 }
 
 /// Stripe → employee bank/card payout observation. Not StripeConnectPayout (business-only).

@@ -251,6 +251,45 @@ export async function getMyEmployeeAnalytics(req: Request, res: Response) {
   }
 }
 
+export async function getMyEmployeeBankPayoutSchedule(req: Request, res: Response) {
+  try {
+    const userId = getUserId(req);
+    if (!userId) return res.status(401).json({ message: "Authentication required" });
+    const { getEmployeeBankPayoutScheduleForUser } = await import(
+      "../services/employeeBankPayoutSchedule.service.js"
+    );
+    const dto = await getEmployeeBankPayoutScheduleForUser(userId);
+    return res.json(dto);
+  } catch (err) {
+    logServerError("employeeConnect.getMyEmployeeBankPayoutSchedule", err);
+    if (err instanceof StripeConnectError) {
+      return res.status(err.httpStatus).json({ message: err.message, code: err.code });
+    }
+    return res.status(400).json({ message: connectClientMessage(err) });
+  }
+}
+
+export async function patchMyEmployeeBankPayoutSchedule(req: Request, res: Response) {
+  try {
+    const userId = getUserId(req);
+    if (!userId) return res.status(401).json({ message: "Authentication required" });
+    if (rejectClientEmployeeConnectSteering(req, res)) return;
+    const body = (req.body ?? {}) as { schedule?: unknown };
+    const { parseEmployeeBankPayoutSchedule, setEmployeeBankPayoutScheduleForUser } = await import(
+      "../services/employeeBankPayoutSchedule.service.js"
+    );
+    const schedule = parseEmployeeBankPayoutSchedule(body.schedule);
+    const dto = await setEmployeeBankPayoutScheduleForUser({ userId, schedule });
+    return res.json(dto);
+  } catch (err) {
+    logServerError("employeeConnect.patchMyEmployeeBankPayoutSchedule", err);
+    if (err instanceof StripeConnectError) {
+      return res.status(err.httpStatus).json({ message: err.message, code: err.code });
+    }
+    return res.status(400).json({ message: connectClientMessage(err) });
+  }
+}
+
 export async function getMyEmployeeStripeBankPayouts(req: Request, res: Response) {
   try {
     const userId = getUserId(req);

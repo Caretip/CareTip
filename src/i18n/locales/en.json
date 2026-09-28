@@ -4160,6 +4160,23 @@
         "methodCardAria": "Payout destination"
       },
       "bankPayoutsNote": "CareTip records transfers to Stripe, not bank payouts.",
+      "schedule": {
+        "title": "Payout schedule",
+        "lead": "Choose how often your available earnings are paid to your bank account.",
+        "speedNote": "This controls payout frequency, not how quickly card payments become available in Stripe.",
+        "transferNote": "CareTip transfers tips to your Stripe account first; this schedule applies to bank payouts from Stripe.",
+        "loading": "Loading payout schedule…",
+        "saved": "Payout schedule updated.",
+        "saveError": "Could not update payout schedule.",
+        "nextPayout": "Next scheduled payout: {{date}}",
+        "options": {
+          "daily": "Daily",
+          "every_3_days": "Every 3 days",
+          "weekly": "Weekly",
+          "monthly": "Monthly",
+          "manual": "Manual"
+        }
+      },
       "instant": {
         "eyebrow": "Instant payout",
         "title": "Get paid instantly",
@@ -6988,6 +7005,22 @@
         "methodInstant": "Instant",
         "methodStandard": "Standard",
         "methodUnknown": "Unknown",
+        "schedule": {
+          "title": "Payout schedule",
+          "lead": "Choose how often available funds are sent to your bank account.",
+          "speedNote": "This controls payout frequency, not how quickly card payments become available in Stripe.",
+          "loading": "Loading payout schedule…",
+          "saved": "Payout schedule updated.",
+          "saveError": "Could not update payout schedule.",
+          "nextPayout": "Next scheduled payout: {{date}}",
+          "options": {
+            "daily": "Daily",
+            "every_3_days": "Every 3 days",
+            "weekly": "Weekly",
+            "monthly": "Monthly",
+            "manual": "Manual"
+          }
+        },
         "activityTitle": "Recent payouts",
         "activityHint": "Payouts from your business Stripe account to your bank.",
         "lastPayoutLabel": "Last payout",

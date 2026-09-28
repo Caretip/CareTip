@@ -43,6 +43,16 @@ router.get(
   employeeConnectController.getMyEmployeeStripeBankPayouts,
 );
 router.get(
+  "/employee-connect/bank-payout-schedule",
+  ...employeeConnect,
+  employeeConnectController.getMyEmployeeBankPayoutSchedule,
+);
+router.patch(
+  "/employee-connect/bank-payout-schedule",
+  ...employeeConnect,
+  employeeConnectController.patchMyEmployeeBankPayoutSchedule,
+);
+router.get(
   "/employee-connect/analytics",
   ...employeeConnect,
   employeeConnectController.getMyEmployeeAnalytics,

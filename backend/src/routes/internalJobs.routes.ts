@@ -169,6 +169,19 @@ router.post("/business-tombstone-tick", async (req, res) => {
  * Resume incomplete Stripe Connect payout balance-transaction sync.
  * Observation only — does not create or cancel payouts.
  */
+/**
+ * POST /api/internal/jobs/scheduled-bank-payout-tick
+ * CareTip-initiated standard payouts for businesses on every_3_days (Stripe manual schedule).
+ */
+router.post("/scheduled-bank-payout-tick", async (req, res) => {
+  if (!authorizeCronRequest(req)) {
+    return res.status(401).json({ message: "Unauthorized" });
+  }
+  const { tickScheduledBankPayouts } = await import("../services/businessScheduledBankPayout.service.js");
+  const result = await tickScheduledBankPayouts();
+  return res.json({ ok: true, ...result });
+});
+
 router.post("/connect-payout-reconciliation-tick", async (req, res) => {
   if (!authorizeCronRequest(req)) {
     return res.status(401).json({ message: "Unauthorized" });

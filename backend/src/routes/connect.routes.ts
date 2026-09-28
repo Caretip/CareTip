@@ -25,6 +25,8 @@ router.get("/connect/payouts", ...managerConnect, connectController.listMyConnec
 router.get("/connect/payouts/:id", ...managerConnect, connectController.getMyConnectPayout);
 router.get("/connect/instant-payout", ...managerConnect, connectController.getMyInstantPayoutEligibility);
 router.post("/connect/instant-payout", ...managerConnect, connectController.postMyInstantPayout);
+router.get("/connect/bank-payout-schedule", ...managerConnect, connectController.getMyBankPayoutSchedule);
+router.patch("/connect/bank-payout-schedule", ...managerConnect, connectController.patchMyBankPayoutSchedule);
 router.get(
   "/connect/employee-tip-payout-mode",
   ...managerConnect,

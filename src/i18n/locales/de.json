@@ -4160,6 +4160,23 @@
         "methodCardAria": "Auszahlungsziel"
       },
       "bankPayoutsNote": "CareTip erfasst Überweisungen an Stripe, keine Bankauszahlungen.",
+      "schedule": {
+        "title": "Auszahlungsrhythmus",
+        "lead": "Legen Sie fest, wie oft verfügbare Einnahmen auf Ihr Bankkonto ausgezahlt werden.",
+        "speedNote": "Dies steuert die Auszahlungsfrequenz, nicht wie schnell Kartenzahlungen in Stripe verfügbar werden.",
+        "transferNote": "CareTip überweist Trinkgelder zuerst auf Ihr Stripe-Konto; dieser Rhythmus gilt für Bankauszahlungen von Stripe.",
+        "loading": "Auszahlungsrhythmus wird geladen…",
+        "saved": "Auszahlungsrhythmus aktualisiert.",
+        "saveError": "Auszahlungsrhythmus konnte nicht aktualisiert werden.",
+        "nextPayout": "Nächste geplante Auszahlung: {{date}}",
+        "options": {
+          "daily": "Täglich",
+          "every_3_days": "Alle 3 Tage",
+          "weekly": "Wöchentlich",
+          "monthly": "Monatlich",
+          "manual": "Manuell"
+        }
+      },
       "instant": {
         "eyebrow": "Sofortauszahlung",
         "title": "Sofort auszahlen lassen",
@@ -6985,6 +7002,22 @@
         "methodInstant": "Sofort",
         "methodStandard": "Standard",
         "methodUnknown": "Unbekannt",
+        "schedule": {
+          "title": "Auszahlungsrhythmus",
+          "lead": "Legen Sie fest, wie oft verfügbares Guthaben auf Ihr Bankkonto überwiesen wird.",
+          "speedNote": "Dies betrifft die Häufigkeit der Auszahlung, nicht wie schnell Kartenzahlungen in Stripe verfügbar werden.",
+          "loading": "Auszahlungsrhythmus wird geladen…",
+          "saved": "Auszahlungsrhythmus aktualisiert.",
+          "saveError": "Auszahlungsrhythmus konnte nicht gespeichert werden.",
+          "nextPayout": "Nächste geplante Auszahlung: {{date}}",
+          "options": {
+            "daily": "Täglich",
+            "every_3_days": "Alle 3 Tage",
+            "weekly": "Wöchentlich",
+            "monthly": "Monatlich",
+            "manual": "Manuell"
+          }
+        },
         "activityTitle": "Aktuelle Auszahlungen",
         "activityHint": "Auszahlungen von Ihrem Business-Stripe-Konto auf Ihr Bankkonto.",
         "lastPayoutLabel": "Letzte Auszahlung",

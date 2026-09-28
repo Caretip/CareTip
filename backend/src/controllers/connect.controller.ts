@@ -18,6 +18,11 @@ import {
   createInstantPayoutForBusiness,
   getInstantPayoutEligibilityForBusiness,
 } from "../services/stripeConnectInstantPayout.service.js";
+import {
+  getBusinessBankPayoutScheduleForBusiness,
+  parseBusinessBankPayoutSchedule,
+  setBusinessBankPayoutScheduleForBusiness,
+} from "../services/businessBankPayoutSchedule.service.js";
 import { loadBusinessFinancialSummaryForBusiness } from "../services/businessFinancialSummary.service.js";
 import type { BusinessTimeframe } from "../utils/businessTime.js";
 import { parseBoundedSkip } from "../utils/paginationLimits.js";
@@ -326,6 +331,42 @@ export async function getMyInstantPayoutEligibility(req: Request, res: Response)
  * POST /api/me/connect/instant-payout
  * Creates an Instant Payout for the JWT business. Amount/destination from Stripe only.
  */
+export async function getMyBankPayoutSchedule(req: Request, res: Response) {
+  try {
+    const ctx = await resolveManagerBusiness(req);
+    if (!ctx.ok) return res.status(ctx.status).json({ message: ctx.message });
+    const dto = await getBusinessBankPayoutScheduleForBusiness(ctx.businessId);
+    return res.json(dto);
+  } catch (err) {
+    logServerError("connect.getMyBankPayoutSchedule", err);
+    if (err instanceof StripeConnectError) {
+      return res.status(err.httpStatus).json({ message: err.message, code: err.code });
+    }
+    return res.status(400).json({ message: connectClientMessage(err) });
+  }
+}
+
+export async function patchMyBankPayoutSchedule(req: Request, res: Response) {
+  try {
+    const ctx = await resolveManagerBusiness(req);
+    if (!ctx.ok) return res.status(ctx.status).json({ message: ctx.message });
+    if (rejectClientConnectSteering(req, res)) return;
+    const body = (req.body ?? {}) as { schedule?: unknown };
+    const schedule = parseBusinessBankPayoutSchedule(body.schedule);
+    const dto = await setBusinessBankPayoutScheduleForBusiness({
+      businessId: ctx.businessId,
+      schedule,
+    });
+    return res.json(dto);
+  } catch (err) {
+    logServerError("connect.patchMyBankPayoutSchedule", err);
+    if (err instanceof StripeConnectError) {
+      return res.status(err.httpStatus).json({ message: err.message, code: err.code });
+    }
+    return res.status(400).json({ message: connectClientMessage(err) });
+  }
+}
+
 export async function postMyInstantPayout(req: Request, res: Response) {
   try {
     const ctx = await resolveManagerBusiness(req);

@@ -3434,6 +3434,60 @@ export type InstantPayoutEligibility = {
   terms?: InstantPayoutTermsRequirement;
 };
 
+export type BusinessBankPayoutSchedule =
+  | "daily"
+  | "every_3_days"
+  | "weekly"
+  | "monthly"
+  | "manual";
+
+export type BusinessBankPayoutScheduleResponse = {
+  schedule: BusinessBankPayoutSchedule;
+  nextScheduledPayoutAt: string | null;
+  careTipControlled: boolean;
+  stripeScheduleInterval: string | null;
+};
+
+export async function getBusinessBankPayoutSchedule(): Promise<BusinessBankPayoutScheduleResponse> {
+  return apiRequest(apiPath("/api/me/connect/bank-payout-schedule"), {
+    headers: getHeaders(),
+    credentials: "include",
+  });
+}
+
+export async function patchBusinessBankPayoutSchedule(
+  schedule: BusinessBankPayoutSchedule,
+): Promise<BusinessBankPayoutScheduleResponse> {
+  return apiRequest(apiPath("/api/me/connect/bank-payout-schedule"), {
+    method: "PATCH",
+    headers: getHeaders(),
+    credentials: "include",
+    body: JSON.stringify({ schedule }),
+  });
+}
+
+export type EmployeeBankPayoutSchedule = BusinessBankPayoutSchedule;
+
+export type EmployeeBankPayoutScheduleResponse = BusinessBankPayoutScheduleResponse;
+
+export async function getEmployeeBankPayoutSchedule(): Promise<EmployeeBankPayoutScheduleResponse> {
+  return apiRequest(apiPath("/api/me/employee-connect/bank-payout-schedule"), {
+    headers: getHeaders(),
+    credentials: "include",
+  });
+}
+
+export async function patchEmployeeBankPayoutSchedule(
+  schedule: EmployeeBankPayoutSchedule,
+): Promise<EmployeeBankPayoutScheduleResponse> {
+  return apiRequest(apiPath("/api/me/employee-connect/bank-payout-schedule"), {
+    method: "PATCH",
+    headers: getHeaders(),
+    credentials: "include",
+    body: JSON.stringify({ schedule }),
+  });
+}
+
 export async function getInstantPayoutEligibility(): Promise<InstantPayoutEligibility> {
   return apiRequest(apiPath("/api/me/connect/instant-payout"), {
     headers: getHeaders(),

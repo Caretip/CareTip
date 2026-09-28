@@ -80,3 +80,21 @@ services:
         value: https://caretip.onrender.com
       - key: CARE_TIP_INTERNAL_JOB_PATH
         value: /api/internal/jobs/employee-stripe-inactivity-tick
+
+  - type: cron
+    name: caretip-scheduled-bank-payout-tick
+    runtime: node
+    rootDir: backend
+    plan: starter
+    buildCommand: "true"
+    startCommand: node scripts/render-category-retention-http.mjs
+    # Every 5 minutes UTC — poll for every_3_days businesses whose bankPayoutNextScheduledAt has passed (09:00 local).
+    # Not the 3-day payout interval; the scheduler decides who is due.
+    schedule: "*/5 * * * *"
+    envVars:
+      - key: CRON_SECRET
+        sync: false
+      - key: CARE_TIP_API_ORIGIN
+        value: https://caretip.onrender.com
+      - key: CARE_TIP_INTERNAL_JOB_PATH
+        value: /api/internal/jobs/scheduled-bank-payout-tick

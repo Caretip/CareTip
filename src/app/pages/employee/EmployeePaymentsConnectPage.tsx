@@ -7,6 +7,7 @@ import { EmployeeInstantPayoutCard } from "../../components/employee/EmployeeIns
 import { EmployeePayoutDashboardMetrics } from "../../components/employee/EmployeePayoutDashboardMetrics";
 import { EmployeeReceivingPausedBanner } from "../../components/employee/EmployeeReceivingPausedBanner";
 import { EmployeeStripeBankPayoutList } from "../../components/employee/EmployeeStripeBankPayoutList";
+import { EmployeeBankPayoutScheduleCard } from "../../components/employee/EmployeeBankPayoutScheduleCard";
 import { EmployeeTipDistributionNotice } from "../../components/employee/EmployeeTipDistributionNotice";
 import { isEmployeeBusinessDistributionMode } from "../../components/employee/employeePayoutActivityPresentation";
 import { EMPLOYEE_PAYMENTS_HISTORY_HREF } from "../../components/employee/employeeDashboardNav";
@@ -98,6 +99,7 @@ export function EmployeePaymentsConnectPage() {
             <EmployeeStripeBankPayoutList variant="panel" take={8} />
           </div>
           <div className="caretip-payout-rail min-w-0 space-y-4">
+            {!businessDistribution ? <EmployeeBankPayoutScheduleCard /> : null}
             <EmployeeInstantPayoutCard
               businessDistribution={businessDistribution}
               routingReady={routingReady}
