@@ -3859,6 +3859,11 @@
       "loadMore": "Load more",
       "emptyTitle": "No tip activity yet",
       "emptyBody": "When customers tip you, each tip and its payment status will appear here.",
+      "payoutScheduleNav": {
+        "title": "Payout schedule",
+        "body": "Choose how often Stripe sends your available earnings to your bank.",
+        "link": "Open Stripe Connect"
+      },
       "earningsAfterFee": "{{amount}} earned after CareTip fee",
       "event": {
         "held": "Tip received",
@@ -6772,6 +6777,11 @@
       "detail": {
         "title": "Distribution batch",
         "total": "Total recorded: {{amount}}"
+      },
+      "payoutScheduleNav": {
+        "title": "Payout schedule",
+        "body": "Set how often Stripe pays your available balance to your bank account.",
+        "link": "Open Stripe Connect"
       }
     },
     "stripe": {

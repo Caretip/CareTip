@@ -161,7 +161,6 @@ function SidebarChildNavItem({
     <li className={child.dividerBefore ? "mt-2 border-t border-sidebar-border/80 pt-2" : undefined}>
       <Link
         to={child.href}
-        onClick={onNavigate}
         className={itemClass}
         aria-current={childActive ? "page" : undefined}
       >
@@ -203,7 +202,6 @@ function SidebarGroup({
     onToggle();
     if (!groupActive) {
       navigate(entry.defaultHref);
-      onNavigate?.();
     }
   }
 

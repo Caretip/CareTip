@@ -138,7 +138,6 @@ function EmployeeSidebarGroup({
           setExpanded(true);
           if (!groupActive) {
             navigate(entry.defaultHref);
-            onNavigate?.();
           }
         }}
       >
@@ -160,7 +159,6 @@ function EmployeeSidebarGroup({
               <li key={child.href}>
                 <Link
                   to={child.href}
-                  onClick={onNavigate}
                   className={cn(
                     "employee-sidebar-child-link flex w-full items-center py-2 pl-11 pr-3 text-left text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring",
                     childActive

@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Activity, RefreshCw } from "lucide-react";
+import { EMPLOYEE_PAYMENTS_CONNECT_HREF } from "../../components/employee/employeeDashboardNav";
 import { EmployeePageHeader } from "../../components/employee/EmployeePageHeader";
+import { PayoutScheduleConnectNavCard } from "../../components/finance/payout/PayoutScheduleConnectNavCard";
 import { EmployeeTipActivityDetailDialog } from "../../components/employee/EmployeeTipActivityDetailDialog";
 import { employeeUi } from "../../components/employee/employeeDashboardUi";
 import { Button } from "../../components/ui/button";
@@ -171,6 +173,13 @@ export function EmployeeTipActivityPage() {
               <RefreshCw className={cn("h-4 w-4", loading && "animate-spin")} aria-hidden />
             </Button>
           }
+        />
+
+        <PayoutScheduleConnectNavCard
+          to={EMPLOYEE_PAYMENTS_CONNECT_HREF}
+          titleKey="employee.tipActivity.payoutScheduleNav.title"
+          bodyKey="employee.tipActivity.payoutScheduleNav.body"
+          linkKey="employee.tipActivity.payoutScheduleNav.link"
         />
 
         <div

@@ -51,7 +51,6 @@ import {
 import { PayoutDestinationCard } from "../../../finance/payout/PayoutDestinationCard";
 import { PayoutInstantBreakdown } from "../../../finance/payout/PayoutInstantBreakdown";
 import { PayoutWorkspacePanel } from "../../../finance/payout/PayoutWorkspacePanel";
-import { BusinessBankPayoutScheduleCard } from "./BusinessBankPayoutScheduleCard";
 import { payoutWorkspaceLedgerToolbar, payoutWorkspaceRoot } from "../../../finance/payout/payoutWorkspaceClasses";
 
 const PAGE_SIZE = 20;
@@ -222,10 +221,6 @@ export function ConnectPayoutsPanel({ loading: bootLoading }: { loading?: boolea
         eligibilityLoading={eligibilityLoading || Boolean(bootLoading)}
         locale={locale}
       />
-
-      {showConnectedRails ? (
-        <BusinessBankPayoutScheduleCard disabled={Boolean(bootLoading) || eligibilityLoading} />
-      ) : null}
 
       <div className="caretip-payout-layout min-w-0 gap-4">
       <PayoutWorkspacePanel

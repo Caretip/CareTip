@@ -16,7 +16,9 @@ import {
 import { toUserFriendlyMessage } from "../../lib/errorMessages";
 import { logClientError } from "../../lib/clientLog";
 import { formatEur } from "../../lib/formatEur";
+import { STRIPE_CONNECT_HREF } from "../../components/business/businessDashboardNav";
 import { BusinessModuleWorkspaceHeader } from "../../components/business/BusinessModuleWorkspaceHeader";
+import { PayoutScheduleConnectNavCard } from "../../components/finance/payout/PayoutScheduleConnectNavCard";
 import { TipDistributionReadyEmpty } from "../../components/business/TipDistributionReadyEmpty";
 import { businessUi } from "../../components/business/businessDashboardUi";
 import { Button } from "../../components/ui/button";
@@ -169,6 +171,14 @@ export function TipDistributionPage() {
           title={t("business.tipDistribution.title")}
           subtitle={t("business.tipDistribution.subtitle")}
           hideSubtitleOnMobile
+        />
+
+        <PayoutScheduleConnectNavCard
+          to={STRIPE_CONNECT_HREF}
+          titleKey="business.tipDistribution.payoutScheduleNav.title"
+          bodyKey="business.tipDistribution.payoutScheduleNav.body"
+          linkKey="business.tipDistribution.payoutScheduleNav.link"
+          className="mb-4"
         />
 
         {error ? (

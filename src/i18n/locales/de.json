@@ -3859,6 +3859,11 @@
       "loadMore": "Mehr laden",
       "emptyTitle": "Noch keine Trinkgeldaktivität",
       "emptyBody": "Wenn Kunden Ihnen Trinkgeld geben, erscheinen jedes Trinkgeld und der Zahlungsstatus hier.",
+      "payoutScheduleNav": {
+        "title": "Auszahlungsrhythmus",
+        "body": "Wählen Sie, wie oft Stripe Ihre verfügbaren Einnahmen auf Ihr Bankkonto überweist.",
+        "link": "Stripe Connect öffnen"
+      },
       "earningsAfterFee": "{{amount}} verdient nach CareTip-Gebühr",
       "event": {
         "held": "Trinkgeld erhalten",
@@ -6769,6 +6774,11 @@
       "detail": {
         "title": "Verteilungsbatch",
         "total": "Erfasster Gesamtbetrag: {{amount}}"
+      },
+      "payoutScheduleNav": {
+        "title": "Auszahlungsrhythmus",
+        "body": "Legen Sie fest, wie oft Stripe Ihr verfügbares Guthaben auf Ihr Bankkonto auszahlt.",
+        "link": "Stripe Connect öffnen"
       }
     },
     "stripe": {

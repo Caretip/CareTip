@@ -1,4 +1,5 @@
 import { Navigate, useSearchParams } from "react-router";
+import { BusinessConnectBankPayoutScheduleSection } from "../../../components/business/settings/billing/BusinessConnectBankPayoutScheduleSection";
 import { BusinessStripeConnectCard } from "../../../components/business/settings/billing/BusinessStripeConnectCard";
 import { EmployeeTipPayoutModeCard } from "../../../components/business/settings/billing/EmployeeTipPayoutModeCard";
 import { ConnectPayoutsPanel } from "../../../components/business/settings/billing/ConnectPayoutsPanel";
@@ -9,10 +10,13 @@ import { cn } from "@/lib/utils";
 const TIP_DISTRIBUTION_HREF = "/dashboard/tips/tip-distribution";
 
 export function BusinessStripeConnectPage() {
+  const { showInitialSkeleton } = useBusinessPageBoot("stripe-connect", false);
+
   return (
     <BusinessSettingsPanelShell embedded>
-      <div className="space-y-10">
+      <div className="mx-auto max-w-6xl space-y-10">
         <BusinessStripeConnectCard />
+        <BusinessConnectBankPayoutScheduleSection bootLoading={showInitialSkeleton} />
         <EmployeeTipPayoutModeCard />
       </div>
     </BusinessSettingsPanelShell>
