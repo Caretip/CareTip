@@ -6,6 +6,7 @@ import {
   endAppLanguageChange,
 } from "../app/lib/appLanguageLoading";
 import { registerI18nIntegrityDev } from "./i18nIntegrityDev";
+import { markLandingColdLoad } from "../app/lib/landingColdLoadMarks";
 
 export type AppLanguage = "de" | "en";
 
@@ -44,6 +45,12 @@ export function resolveAppLanguageFromCode(lng: string | undefined): AppLanguage
 }
 
 let initPromise: Promise<typeof i18n> | null = null;
+let alternateLocalePrefetch: Promise<void> | null = null;
+
+export function getAlternateAppLanguage(lng?: string): AppLanguage {
+  const current = resolveAppLanguageFromCode(lng ?? i18n.language);
+  return current === "en" ? "de" : "en";
+}
 
 async function loadLocaleBundle(lng: AppLanguage): Promise<TranslationBundle> {
   const mod =
@@ -62,6 +69,24 @@ export async function ensureLocaleBundle(lng: AppLanguage): Promise<void> {
 }
 
 /**
+ * Idle prefetch of the non-active locale (~350KB JSON chunk) so DE↔EN switches
+ * do not wait on network. Does not change the active language or block first paint.
+ */
+export function prefetchAlternateLocaleBundle(): Promise<void> {
+  if (typeof window === "undefined") return Promise.resolve();
+  return ensureI18nReady().then(() => {
+    const alternate = getAlternateAppLanguage();
+    if (i18n.hasResourceBundle(alternate, "translation")) return;
+    if (!alternateLocalePrefetch) {
+      alternateLocalePrefetch = loadLocaleBundle(alternate).then((bundle) => {
+        i18n.addResourceBundle(alternate, "translation", bundle, true, true);
+      });
+    }
+    return alternateLocalePrefetch;
+  });
+}
+
+/**
  * Switch UI language after the target locale bundle is loaded (avoids missing keys).
  */
 export async function changeAppLanguage(lng: AppLanguage): Promise<void> {
@@ -69,8 +94,10 @@ export async function changeAppLanguage(lng: AppLanguage): Promise<void> {
   if (current === lng) return;
   beginAppLanguageChange();
   try {
+    markLandingColdLoad("lang-switch-start");
     await ensureLocaleBundle(lng);
     await i18n.changeLanguage(lng);
+    markLandingColdLoad("lang-switch-complete");
   } finally {
     endAppLanguageChange();
   }

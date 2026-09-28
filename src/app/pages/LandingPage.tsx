@@ -7,6 +7,8 @@ import { useLandingShellReady } from "@/app/lib/useLandingShellReady";
 import { Footer } from "../components/Footer";
 import { LandingPageBelowFold, prefetchLandingBelowFoldSections } from "./LandingPageBelowFold";
 import { warmLandingHeroLcpImage } from "@/lib/landingHeroStoryAssets";
+import { prefetchAlternateLocaleBundle } from "@/i18n/i18n";
+import { preloadLiveMinutesOnboardingScreens } from "@/app/components/landing/liveInMinutesOnboardingScreens";
 import { scheduleMobileDeferredWork } from "@/lib/mobilePerf";
 import {
   consumeLandingPaintRecovery,
@@ -24,6 +26,13 @@ void warmLandingHeroLcpImage().then(() => {
     desktopTimeoutMs: 120,
     mobileTimeoutMs: 420,
   });
+  scheduleMobileDeferredWork(
+    () => {
+      void prefetchAlternateLocaleBundle();
+      void preloadLiveMinutesOnboardingScreens(["en", "de"]);
+    },
+    { desktopTimeoutMs: 2_500, mobileTimeoutMs: 5_500 },
+  );
 });
 
 /** Landing has no email/password forms; autofill mitigations live on `AuthPage` (login/signup). */

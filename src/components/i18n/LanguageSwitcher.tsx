@@ -4,7 +4,12 @@ import { Check, Globe } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Popover, PopoverContent, PopoverTrigger } from "@/app/components/ui/popover";
 import { patchMyAccountSettings, hasClientAccessToken } from "@/app/lib/api";
-import { changeAppLanguage, resolveAppLanguageFromCode, type AppLanguage } from "@/i18n/i18n";
+import {
+  changeAppLanguage,
+  prefetchAlternateLocaleBundle,
+  resolveAppLanguageFromCode,
+  type AppLanguage,
+} from "@/i18n/i18n";
 
 type LanguageSwitcherProps = {
   className?: string;
@@ -77,6 +82,10 @@ export const LanguageSwitcher = memo(function LanguageSwitcher({
   }, []);
 
   const closeMenu = useCallback(() => setOpen(false), []);
+
+  useEffect(() => {
+    if (open) void prefetchAlternateLocaleBundle();
+  }, [open]);
   const drawerRootRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {

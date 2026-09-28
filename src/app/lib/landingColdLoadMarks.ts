@@ -13,7 +13,9 @@ export type LandingColdLoadMark =
   | "hero-ready"
   | "boot-exit-start"
   | "boot-removed"
-  | "landing-interactive";
+  | "landing-interactive"
+  | "lang-switch-start"
+  | "lang-switch-complete";
 
 function marksEnabled(): boolean {
   if (typeof window === "undefined") return false;

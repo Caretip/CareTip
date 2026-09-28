@@ -11,6 +11,7 @@ import {
   LCP_HERO_STORY_FRAME,
   loadDeferredHeroStoryFrame,
   preloadHeroFrame,
+  getWarmLandingHeroImage,
   warmLandingHeroLcpImage,
   type HeroStoryFrame,
 } from "@/lib/landingHeroStoryAssets";
@@ -138,6 +139,12 @@ export function LandingHeroStoryShowcase({
 
   useLayoutEffect(() => {
     if (lcpComplete) return;
+
+    const warm = getWarmLandingHeroImage();
+    if (warm?.complete && warm.naturalWidth > 0) {
+      handleLcpFrameLoad();
+      return;
+    }
 
     const lcpPicture = lcpImgRef.current ?? document.querySelector('[data-hero-frame="wyc"] img');
     if (

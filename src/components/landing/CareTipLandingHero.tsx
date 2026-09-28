@@ -1,5 +1,5 @@
 import { Link } from "react-router";
-import { useMemo, useRef, useState } from "react";
+import { memo, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { UserPlus } from "lucide-react";
 
@@ -21,7 +21,7 @@ export type CareTipLandingHeroProps = {
 };
 
 /** Full-bleed hospitality hero — crossfading images, dark overlay, layered copy. */
-export function CareTipLandingHero({
+export const CareTipLandingHero = memo(function CareTipLandingHero({
   id,
   imageAlt,
   isDe = false,
@@ -276,4 +276,4 @@ export function CareTipLandingHero({
       </div>
     </section>
   );
-}
+});
