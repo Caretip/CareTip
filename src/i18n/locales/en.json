@@ -3449,7 +3449,7 @@
       "s4Detail": "Share your QR code easily after your care session or print it directly on business cards and info brochures. Exhausted new parents can say thank you right from their smartphones, no searching for cash or envelopes needed. Every token of appreciation and digital tip gathers automatically in your personal CareTip dashboard, so you keep a perfect, transparent overview of your freelance earnings while focusing fully on the families.",
       "s4Alt": "Independent midwife after postpartum home visit with digital tipping via QR code",
       "s5Headline": "Right On Site with Customers",
-      "s5Tag": "Field & Mobile Services",
+      "s5Tag": "FOR Field SERVICE & TRADES",
       "s5Text": "Tip from anywhere via link or QR code, the direct solution for home care, trades, and mobile services.",
       "s5Detail": "Share a personal link via SMS or WhatsApp after the visit, or show the QR code on your business card. Customers reward great service right in their mobile browser via card, Apple Pay, or Google Pay. Appreciation lands in the same system as your in-venue team while your dashboard updates in real time, so your entire field crew feels direct recognition for the work they deliver on site.",
       "s5Alt": "Field and mobile service tipping via link or QR code on site"
@@ -3493,7 +3493,7 @@
         "scan": {
           "title": "Scan",
           "body": "Guests scan your CareTip QR code at the table, counter, or receipt to open the tipping flow.",
-          "imageAlt": "CareTip guest tipping screen showing team member Maria Testerin on a phone"
+          "imageAlt": "CareTip guest tipping screen for Akona Hotel on a phone"
         },
         "choose": {
           "title": "Choose",
@@ -3754,7 +3754,7 @@
           "teaser": "Appreciation that keeps pace on site."
         },
         "field-service": {
-          "title": "Field Service & Care",
+          "title": "FOR Field SERVICE & TRADES",
           "body": "The mobile solution for crews out in the field.",
           "teaser": "More gratitude, no cash needed."
         }

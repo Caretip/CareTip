@@ -7,14 +7,14 @@ import { landingCopyVisible, landingUi } from "@/components/landing/landingUi";
 import { parseLandingHeadline } from "@/components/landing/landingRichText";
 import { AnimatedHeadingLazy } from "@/components/ui/AnimatedHeading.lazy";
 import { cn } from "@/lib/utils";
-import mariatesterinImg from "@/assets/landing/customerjourney/mariatesterin.webp";
+import akonaHotelImg from "@/assets/landing/customerjourney/akona-hotel.webp";
 import teamselectionImg from "@/assets/landing/customerjourney/teamselection.webp";
 import tipamountImg from "@/assets/landing/customerjourney/tipamount.webp";
 import tipsuccessImg from "@/assets/landing/customerjourney/tipsuccess.webp";
 import { warmLandingCustomerJourneyImages } from "@/app/components/landing/warmLandingCustomerJourneyAssets";
 
 const JOURNEY_STEPS = [
-  { id: "scan", image: mariatesterinImg, visualClass: "caretip-customerjourney__visual_mariatesterin" },
+  { id: "scan", image: akonaHotelImg, visualClass: "caretip-customerjourney__visual_akona-hotel" },
   { id: "choose", image: teamselectionImg, visualClass: undefined },
   { id: "pay", image: tipamountImg, visualClass: undefined },
   { id: "team", image: tipsuccessImg, visualClass: undefined },

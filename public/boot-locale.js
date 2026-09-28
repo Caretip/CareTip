@@ -205,6 +205,22 @@
         el.setAttribute("aria-label", "CareTip — " + tagline);
         el.removeAttribute("hidden");
       }
+      markBootLocalePerf();
+    } catch (_) {
+      /* ignore */
+    }
+  }
+
+  function markBootLocalePerf() {
+    try {
+      var perf = global.performance;
+      if (!perf || typeof perf.mark !== "function") return;
+      var host = global.location && global.location.hostname;
+      var dev = host === "localhost" || host === "127.0.0.1";
+      var qs =
+        global.location &&
+        String(global.location.search || "").indexOf("caretipPerfMarks=1") !== -1;
+      if (dev || qs) perf.mark("caretip:boot-locale-ready");
     } catch (_) {
       /* ignore */
     }
@@ -278,7 +294,9 @@
       .split("#")[0];
     if (path === "/") {
       return Boolean(
-        doc.querySelector(".caretip-landing, [data-caretip-route-ready], [data-caretip-public-committed]"),
+        doc.querySelector(
+          ".caretip-landing #about-section.caretip-hero-section, .caretip-landing [data-caretip-hero-ready]",
+        ),
       );
     }
     if (isCustomerBootPath(path)) {

@@ -293,7 +293,7 @@
   </head>
 
   <body style="margin: 0">
-    <div id="caretip-html-boot" role="status" aria-busy="true" aria-label="CareTip — Einen Moment bitte…">
+    <div id="caretip-html-boot" role="status" aria-busy="true" aria-label="CareTip">
       <div class="caretip-html-boot__mark">
         <div class="caretip-html-boot__icon-wrap" aria-hidden="true">
           <img
@@ -308,9 +308,7 @@
             <span class="caretip-html-boot__indeterminate"></span>
           </span>
         </div>
-        <p class="caretip-html-boot__tagline" id="caretip-html-boot-tagline">
-          Einen Moment bitte…
-        </p>
+        <p class="caretip-html-boot__tagline" id="caretip-html-boot-tagline"></p>
       </div>
     </div>
     <script src="/boot-locale.js"></script>
@@ -345,6 +343,7 @@
       </style>
     </noscript>
     <div id="root"></div>
+    <script type="module" src="/src/i18n/preloadLocale.ts"></script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

@@ -116,7 +116,9 @@ export function ExpandableInfoCard({
         >
           {title}
         </h3>
-        <p className="mt-2 text-sm leading-relaxed text-muted-foreground text-pretty">{summary}</p>
+        <p className="caretip-expandable-info-card__summary mt-2 text-sm leading-relaxed text-muted-foreground text-pretty">
+          {summary}
+        </p>
 
         <div
           id={detailId}
@@ -159,7 +161,7 @@ export function ExpandableInfoCard({
           type="button"
           variant={expanded ? "outline" : "default"}
           className={cn(
-            "caretip-expandable-info-card__cta mt-4 w-full sm:mt-4 sm:w-auto",
+            "caretip-expandable-info-card__cta mt-5 w-full sm:mt-6 sm:w-auto",
             expanded ? caretipBtnSecondary : caretipBtnPrimary,
           )}
           aria-expanded={expanded}

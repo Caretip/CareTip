@@ -129,7 +129,8 @@ const routes = read("src/app/routes.tsx");
 const landingPage = read("src/app/pages/LandingPage.tsx");
 assert(routes.includes("LandingHeroPersistenceLayer"), "RootLayout mounts hero persistence layer");
 assert(heroLayer.includes("landing-hero-persistence-layer"), "hero stays mounted off-screen on warm nav");
-assert(landingPage.includes("LANDING_HERO_SLOT_ID"), "landing page exposes hero portal slot");
+assert(landingPage.includes("CareTipLandingHero"), "landing page renders hero inline on cold /");
+assert(heroLayer.includes("return null") && heroLayer.includes("isHome"), "hero persistence skips home (no portal delay)");
 
 // --- Phase 8: stripe return retry ---
 const sessionHook = read("src/app/hooks/useVerifiedTipSession.ts");

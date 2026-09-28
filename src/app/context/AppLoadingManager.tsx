@@ -369,7 +369,11 @@ export function AppLoadingManagerProvider({ children }: { children: React.ReactN
       subtree: true,
       childList: true,
       attributes: true,
-      attributeFilter: ["data-caretip-route-ready", "data-caretip-dashboard-ready"],
+      attributeFilter: [
+        "data-caretip-route-ready",
+        "data-caretip-dashboard-ready",
+        "data-caretip-hero-ready",
+      ],
     });
     tryHandoff();
     return () => mo.disconnect();

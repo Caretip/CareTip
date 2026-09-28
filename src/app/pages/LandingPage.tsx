@@ -2,7 +2,8 @@ import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { isAiAssistantEnabled } from "../lib/featureFlags";
 import { Navigation } from "../components/Navigation";
-import { LANDING_HERO_SLOT_ID } from "@/app/components/landing/LandingHeroPersistenceLayer";
+import { CareTipLandingHero } from "@/components/landing/CareTipLandingHero";
+import { useLandingShellReady } from "@/app/lib/useLandingShellReady";
 import { Footer } from "../components/Footer";
 import { LandingPageBelowFold, prefetchLandingBelowFoldSections } from "./LandingPageBelowFold";
 import { warmLandingHeroLcpImage } from "@/lib/landingHeroStoryAssets";
@@ -27,8 +28,11 @@ void warmLandingHeroLcpImage().then(() => {
 
 /** Landing has no email/password forms; autofill mitigations live on `AuthPage` (login/signup). */
 export function LandingPage() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const isDe = i18n.language?.toLowerCase().startsWith("de");
   const [landingRoot, setLandingRoot] = useState<HTMLDivElement | null>(null);
+
+  useLandingShellReady();
 
   useEffect(() => {
     syncDocumentHiddenClass();
@@ -76,7 +80,11 @@ export function LandingPage() {
           <Navigation />
         </div>
         <main className="caretip-landing-main w-full min-w-0 overflow-x-hidden">
-          <div id={LANDING_HERO_SLOT_ID} />
+          <CareTipLandingHero
+            id="about-section"
+            imageAlt={t("landing.showcase.tabQrAlt")}
+            isDe={isDe}
+          />
           <LandingPageBelowFold />
         </main>
         <Footer className="caretip-landing-footer" />

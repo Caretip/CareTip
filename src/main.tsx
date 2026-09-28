@@ -9,7 +9,8 @@ import { dismissHtmlMarketingBootBridge } from "./app/lib/htmlMarketingBootBridg
 import { wakeRemoteApi, migrateLegacyAccessTokenFromStorage } from "./app/lib/api";
 import { recoverStaleChunkOnce } from "./app/lib/chunkLoadRecovery";
 import { scheduleMobileDeferredWork } from "./lib/mobilePerf";
-import { ensureI18nReady } from "./i18n/i18n";
+import { landingI18nPreload } from "./i18n/preloadLocale";
+import { markLandingColdLoad } from "./app/lib/landingColdLoadMarks";
 import { removeStaticCrawlerSummary } from "./app/lib/seo/documentSeo";
 import "./styles/index.css";
 
@@ -126,8 +127,11 @@ if (import.meta.env.PROD) {
   );
 }
 
-void ensureI18nReady()
+markLandingColdLoad("react-start");
+
+void landingI18nPreload
   .then(() => {
+    markLandingColdLoad("i18n-ready");
     removeStaticCrawlerSummary();
     createRoot(document.getElementById("root")!).render(
       <GlobalErrorBoundary>

@@ -1,5 +1,5 @@
 import { Link } from "react-router";
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { UserPlus } from "lucide-react";
 
@@ -7,7 +7,8 @@ import { landingCopyVisible, landingUi } from "@/components/landing/landingUi";
 import { LandingHeroAnimatedWord } from "@/components/landing/LandingHeroAnimatedWord";
 import { LandingHeroStoryShowcase } from "@/components/landing/LandingHeroStoryShowcase";
 import { LandingCopySentences } from "@/components/landing/LandingCopySentences";
-import { AnimatedHeadingLazy as AnimatedHeading } from "@/components/ui/AnimatedHeading.lazy";
+import { AnimatedHeading } from "@/components/ui/AnimatedHeading";
+import { useLandingHeroBootHandoff } from "@/app/lib/landingHeroBootHandoff";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { cn } from "@/lib/utils";
 
@@ -27,7 +28,10 @@ export function CareTipLandingHero({
   className,
 }: CareTipLandingHeroProps) {
   const { t, i18n } = useTranslation();
+  const sectionRef = useRef<HTMLElement>(null);
   const [activeFrameKey, setActiveFrameKey] = useState("wyc");
+
+  useLandingHeroBootHandoff(sectionRef);
 
   const heroRotatingWords = useMemo(() => {
     const raw = t("landing.showcase.heroRotatingWords", { returnObjects: true });
@@ -89,6 +93,7 @@ export function CareTipLandingHero({
 
   return (
     <section
+      ref={sectionRef}
       id={id}
       data-hero-art={isDe ? "de" : "en"}
       className={cn(

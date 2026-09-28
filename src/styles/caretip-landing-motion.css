@@ -275,6 +275,7 @@
 }
 
 .caretip-expandable-info-card__detail--open {
+  margin-bottom: 0.5rem;
   grid-template-rows: 1fr;
   opacity: 1;
 }

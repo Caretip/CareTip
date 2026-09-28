@@ -28,6 +28,7 @@ const routes = read("src/app/routes.tsx");
 const landingPage = read("src/app/pages/LandingPage.tsx");
 const heroPersistence = read("src/app/components/landing/LandingHeroPersistenceLayer.tsx");
 const shellReady = read("src/app/lib/useLandingShellReady.ts");
+const heroBootHandoff = read("src/app/lib/landingHeroBootHandoff.ts");
 
 assert(
   storyCss.includes(".caretip-hero-media-clip:not(.caretip-hero-media-clip--background) .caretip-hero-story-frame"),
@@ -132,8 +133,13 @@ assert(
   "HTML boot fade must wait for public route commit, not React mount",
 );
 assert(
-  shellReady.includes("completeHtmlBootAfterPublicPaint"),
-  "landing must fade HTML boot only after LandingPage commits",
+  !shellReady.includes("completeHtmlBootAfterPublicPaint") &&
+    heroBootHandoff.includes("completeHtmlBootAfterPublicPaint"),
+  "landing must fade HTML boot only after the home hero commits, not shell-only",
+);
+assert(
+  read("src/app/lib/htmlMarketingBootBridge.ts").includes("isLandingHeroCommitted"),
+  "HTML boot retain on / must wait for hero DOM, not shell-only",
 );
 assert(
   read("src/app/lib/htmlMarketingBootBridge.ts").includes("isCustomerJourneyPath"),
@@ -150,8 +156,8 @@ assert(
   "React overlay exit must not dismiss HTML boot while / landing is still loading",
 );
 assert(
-  read("src/app/context/AppLoadingManager.tsx").includes('attributeFilter: ["data-caretip-route-ready"]'),
-  "HTML boot fade must wait for landing route commit (MutationObserver), not an arbitrary timeout",
+  read("src/app/context/AppLoadingManager.tsx").includes("data-caretip-hero-ready"),
+  "HTML boot fade must wait for hero readiness (MutationObserver), not an arbitrary timeout",
 );
 assert(
   read("public/_headers").includes("max-age=31536000, immutable"),
@@ -180,13 +186,12 @@ assert(
   "RootLayout must mount hero persistence layer for warm Home return",
 );
 assert(
-  heroPersistence.includes("landing-hero-persistence-layer") &&
-    heroPersistence.includes("createPortal"),
-  "hero must stay mounted off-screen and portal into home slot",
+  heroPersistence.includes("landing-hero-persistence-layer") && heroPersistence.includes("hidden"),
+  "hero must stay mounted off-screen after first home visit",
 );
 assert(
-  landingPage.includes("LANDING_HERO_SLOT_ID"),
-  "landing page must expose hero portal slot",
+  landingPage.includes("CareTipLandingHero") && landingPage.includes('id="about-section"'),
+  "landing page must render the authoritative home hero inline",
 );
 
 console.log("landing-hero-return-lifecycle: ok");

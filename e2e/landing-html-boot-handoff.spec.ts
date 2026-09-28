@@ -24,9 +24,17 @@ test.describe("Landing HTML boot handoff", () => {
         __caretipUncoveredEmpty?: boolean;
         __caretipBootGoneAt?: number;
         __caretipLandingAt?: number;
+        __caretipHeroMissingAtBootExit?: boolean;
       };
       w.__caretipUncoveredEmpty = false;
+      w.__caretipHeroMissingAtBootExit = false;
       let seenBoot = false;
+      const heroReady = () =>
+        Boolean(
+          document.querySelector(
+            ".caretip-landing #about-section.caretip-hero-section, .caretip-landing [data-caretip-hero-ready]",
+          ),
+        );
       const check = () => {
         const boot = document.getElementById("caretip-html-boot");
         const landing = document.querySelector(".caretip-landing, [data-caretip-route-ready]");
@@ -44,6 +52,9 @@ test.describe("Landing HTML boot handoff", () => {
         }
         if (seenBoot && !bootShows && !landing) {
           w.__caretipUncoveredEmpty = true;
+        }
+        if (seenBoot && !bootShows && !heroReady()) {
+          w.__caretipHeroMissingAtBootExit = true;
         }
       };
       const startObserver = () => {
@@ -69,15 +80,21 @@ test.describe("Landing HTML boot handoff", () => {
         __caretipUncoveredEmpty?: boolean;
         __caretipBootGoneAt?: number;
         __caretipLandingAt?: number;
+        __caretipHeroMissingAtBootExit?: boolean;
       };
       return {
         uncovered: w.__caretipUncoveredEmpty === true,
+        heroMissingAtBootExit: w.__caretipHeroMissingAtBootExit === true,
         bootGoneAt: w.__caretipBootGoneAt ?? null,
         landingAt: w.__caretipLandingAt ?? null,
         rootChildCount: document.getElementById("root")?.childElementCount ?? 0,
       };
     });
     expect(probe.uncovered, "HTML boot disappeared while landing was not in the DOM").toBe(false);
+    expect(
+      probe.heroMissingAtBootExit,
+      "HTML boot exited before the landing hero was committed",
+    ).toBe(false);
     expect(probe.rootChildCount).toBeGreaterThan(0);
     expect(failedCritical, failedCritical.join("\n")).toEqual([]);
     if (probe.bootGoneAt != null && probe.landingAt != null) {
@@ -91,8 +108,13 @@ test.describe("Landing HTML boot handoff", () => {
     await page.waitForFunction(() => {
       const boot = document.getElementById("caretip-html-boot");
       const landing = Boolean(document.querySelector(".caretip-landing"));
-      if (!boot) return landing;
-      if (boot.classList.contains("caretip-html-boot--exiting")) return landing;
+      const hero = Boolean(
+        document.querySelector(
+          ".caretip-landing #about-section.caretip-hero-section, .caretip-landing [data-caretip-hero-ready]",
+        ),
+      );
+      if (!boot) return landing && hero;
+      if (boot.classList.contains("caretip-html-boot--exiting")) return landing && hero;
       return landing;
     }, { timeout: 20_000 });
 

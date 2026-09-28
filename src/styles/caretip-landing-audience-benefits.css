@@ -341,14 +341,21 @@ html.dark .caretip-landing .caretip-audience-benefits__visual--phone .caretip-au
   }
 }
 
-/* Breathing room between benefit copy/points and section CTAs */
+/* Space between benefit bullets and column CTAs (business vs employee) */
 .caretip-landing .caretip-audience-benefits__cta-cluster {
-  margin-top: clamp(2.125rem, 5vw, 2.5rem);
+  margin-top: clamp(1.125rem, 2.5vw, 1.5rem);
 }
 
 @media (min-width: 1024px) {
+  /* Fill subgrid copy row so employee CTA aligns with business CTA baseline */
+  .caretip-landing .caretip-audience-benefits__copy {
+    min-height: 100%;
+    align-self: stretch;
+  }
+
   .caretip-landing .caretip-audience-benefits__cta-cluster {
-    margin-top: clamp(2.25rem, 3.5vw, 2.75rem);
+    margin-top: auto;
+    padding-top: clamp(1.25rem, 2vw, 1.625rem);
     justify-content: flex-start;
   }
 

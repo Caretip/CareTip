@@ -93,7 +93,7 @@ html.dark .caretip-customerjourney__stepbadge {
   max-height: var(--caretip-journeymockup-h);
 }
 
-.caretip-customerjourney__visual_mariatesterin {
+.caretip-customerjourney__visual_akona-hotel {
   align-items: center;
 }
 
@@ -107,7 +107,7 @@ html.dark .caretip-customerjourney__stepbadge {
   object-position: center bottom;
 }
 
-.caretip-customerjourney__visual_mariatesterin .caretip-customerjourney__mockup {
+.caretip-customerjourney__visual_akona-hotel .caretip-customerjourney__mockup {
   max-width: min(100%, 20rem);
   max-height: var(--caretip-journeymockup-h);
   object-position: center center;

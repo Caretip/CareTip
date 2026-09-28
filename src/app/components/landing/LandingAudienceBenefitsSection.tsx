@@ -27,7 +27,6 @@ type AudienceCardConfig = {
   title: string;
   body: string;
   points: BenefitPoint[];
-  cta: ReactNode;
   image?: string;
   imageAvif?: string;
   imageAlt?: string;
@@ -143,15 +142,6 @@ export function LandingAudienceBenefitsSection() {
             embeddedInCard
           />
         ),
-        cta: (
-          <div className={cn(landingUi.sectionCtaCluster, "caretip-audience-benefits__cta-cluster")}>
-            <div className={landingUi.sectionCtaUnit}>
-              <RequestDemoCta className={landingUi.sectionCtaPrimary}>
-                {t(`${prefix}.businessCta`)}
-              </RequestDemoCta>
-            </div>
-          </div>
-        ),
       },
       {
         id: "for-employees",
@@ -164,15 +154,6 @@ export function LandingAudienceBenefitsSection() {
         imageAvif: teamsVisualAvif,
         imageAlt: t("landing.employeeSection.imageAlt"),
         photoClass: "caretip-audience-benefits__visual--phone",
-        cta: (
-          <div className={cn(landingUi.sectionCtaCluster, "caretip-audience-benefits__cta-cluster")}>
-            <div className={landingUi.sectionCtaUnit}>
-              <PrefetchLink to="/join" className={landingUi.sectionCtaSecondary}>
-                {t(`${prefix}.teamsCta`)}
-              </PrefetchLink>
-            </div>
-          </div>
-        ),
       },
     ];
   }, [t, i18n.language]);
@@ -290,7 +271,21 @@ export function LandingAudienceBenefitsSection() {
                 <h3 className="caretip-audience-benefits__title">{card.title}</h3>
                 <p className="caretip-audience-benefits__body">{card.body}</p>
                 <BenefitPointsList points={card.points} />
-                {card.cta}
+                <div
+                  className={cn(landingUi.sectionCtaCluster, "caretip-audience-benefits__cta-cluster")}
+                >
+                  <div className={landingUi.sectionCtaUnit}>
+                    {index === 0 ? (
+                      <RequestDemoCta className={landingUi.sectionCtaPrimary}>
+                        {t(`${prefix}.businessCta`)}
+                      </RequestDemoCta>
+                    ) : (
+                      <PrefetchLink to="/join" className={landingUi.sectionCtaSecondary}>
+                        {t(`${prefix}.teamsCta`)}
+                      </PrefetchLink>
+                    )}
+                  </div>
+                </div>
               </div>
             </LandingReveal>
           ))}

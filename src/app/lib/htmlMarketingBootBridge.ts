@@ -5,6 +5,8 @@
  */
 
 import { isCustomerJourneyPath } from "./appLoadingJourney";
+import { isLandingHeroCommitted } from "./landingHeroReadyDom";
+import { markLandingColdLoad } from "./landingColdLoadMarks";
 
 /** Authenticated app shells that hand off HTML boot to {@link PROTECTED_APP_SHELL_READY_ATTR}. */
 export const PROTECTED_APP_SHELL_READY_ATTR = "data-caretip-dashboard-ready";
@@ -73,12 +75,12 @@ export function shouldRetainHtmlBootUntilLandingCommit(): boolean {
   if (isProtectedAppShellHandoffPath(p)) {
     return !isProtectedAppShellCommitted();
   }
+  if (p === "/") {
+    return !isLandingHeroCommitted();
+  }
   const committed = document.querySelector(
     "[data-caretip-route-ready], [data-caretip-public-committed], .caretip-landing",
   );
-  if (p === "/") {
-    return committed == null;
-  }
   if (isCustomerJourneyPath(p)) {
     return document.querySelector("[data-caretip-route-ready]") == null;
   }
@@ -141,6 +143,7 @@ export function beginHtmlBootBridgeExit(): void {
   if (boot.classList.contains(EXITING_CLASS) && boot.getAttribute("aria-busy") === "false") {
     return;
   }
+  markLandingColdLoad("boot-exit-start");
   boot.classList.add(EXITING_CLASS);
   boot.setAttribute("aria-busy", "false");
 }
@@ -149,4 +152,5 @@ export function dismissHtmlMarketingBootBridge(): void {
   if (typeof document === "undefined") return;
   document.documentElement.classList.remove(ACTIVE_CLASS);
   document.getElementById(BOOT_ID)?.remove();
+  markLandingColdLoad("boot-removed");
 }

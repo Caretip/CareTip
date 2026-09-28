@@ -34,21 +34,25 @@ if (
   pass("HTML cold-boot uses CareTip mark + orange orbit arc + tagline");
 } else fail("HTML cold-boot mark/track/tagline missing");
 
+const htmlWithoutNoscript = html.replace(/<noscript>[\s\S]*?<\/noscript>/gi, "");
 if (
   html.includes("caretip-html-boot-active") &&
   /#caretip-html-boot\s*\{[^}]*display:\s*flex/.test(html) &&
-  !/#caretip-html-boot\s*\{[^}]*display:\s*none/.test(html) &&
+  !/#caretip-html-boot\s*\{[^}]*display:\s*none/.test(htmlWithoutNoscript) &&
   !/<div id="caretip-html-boot"[^>]*\shidden[\s>]/.test(html) &&
   !/<script>\s*\(function \(\)/.test(html)
 ) {
   pass("HTML cold-boot is CSS-visible without inline JS (CSP script-src 'self')");
 } else fail("HTML cold-boot still hidden until inline script");
 
+const taglineFilledByBootLocale =
+  html.includes('id="caretip-html-boot-tagline"></p>') ||
+  html.includes('id="caretip-html-boot-tagline">\n        </p>');
 if (
   !html.includes("caretip-html-boot-message") &&
   !html.includes("caretip-html-boot-sub") &&
   !html.includes("caretip-html-boot__brand") &&
-  html.includes("Einen Moment bitte")
+  (html.includes("Einen Moment bitte") || taglineFilledByBootLocale)
 ) {
   pass("HTML cold-boot has a single getting-ready sentence (no brand word + extra lines)");
 } else fail("HTML cold-boot still has extra copy besides the tagline");

@@ -1,9 +1,9 @@
-import mariatesterinImg from "@/assets/landing/customerjourney/mariatesterin.webp";
+import akonaHotelImg from "@/assets/landing/customerjourney/akona-hotel.webp";
 import teamselectionImg from "@/assets/landing/customerjourney/teamselection.webp";
 import tipamountImg from "@/assets/landing/customerjourney/tipamount.webp";
 import tipsuccessImg from "@/assets/landing/customerjourney/tipsuccess.webp";
 
-const JOURNEY_IMAGE_SRCS = [mariatesterinImg, teamselectionImg, tipamountImg, tipsuccessImg] as const;
+const JOURNEY_IMAGE_SRCS = [akonaHotelImg, teamselectionImg, tipamountImg, tipsuccessImg] as const;
 
 /** Decode journey WebPs early so the row does not populate one mockup at a time. */
 export function warmLandingCustomerJourneyImages(priority: "high" | "low" = "low"): void {

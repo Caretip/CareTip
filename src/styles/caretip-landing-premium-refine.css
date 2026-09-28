@@ -261,13 +261,13 @@ html:not(.dark) .caretip-landing .caretip-showcase-float-card {
   }
 }
 
-.caretip-landing #business-section .caretip-landing-section-cta,
+.caretip-landing #business-section .caretip-landing-section-cta:not(.caretip-audience-benefits__cta-cluster),
 .caretip-landing #business-section .caretip-split-showcase-cta {
   margin-top: 0;
 }
 
 @media (min-width: 1024px) {
-  .caretip-landing #business-section .caretip-landing-section-cta,
+  .caretip-landing #business-section .caretip-landing-section-cta:not(.caretip-audience-benefits__cta-cluster),
   .caretip-landing #business-section .caretip-split-showcase-cta {
     margin-top: 0;
   }

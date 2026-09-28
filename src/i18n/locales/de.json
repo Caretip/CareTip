@@ -3449,7 +3449,7 @@
       "s4Detail": "QR-Codes ganz unkompliziert nach dem Besuch zeigen oder fest auf Visitenkarten und Informationsbroschüren integrieren. Erschöpfte junge Familien bedanken sich per Smartphone vom Sofa aus, ohne Stress oder die Suche nach Bargeld und Umschlägen. Alle digitalen Aufmerksamkeiten laufen übersichtlich in deinem persönlichen CareTip-Dashboard zusammen, sodass du den perfekten und fairen Überblick über deine zusätzlichen Einnahmen und die Wertschätzung der Familien behältst.",
       "s4Alt": "Hebamme nach Wochenbett-Hausbesuch mit digitalem Trinkgeld per QR-Code",
       "s5Headline": "Direkt beim Kunden vor Ort",
-      "s5Tag": "Außendienst & Hausbesuche",
+      "s5Tag": "FÜR AUßENDIENST & HANDWERK",
       "s5Text": "Trinkgeld von überall per Link oder QR-Code, die perfekte, direkte Lösung für Pflegekräfte, Handwerk und mobile Dienstleistungen.",
       "s5Detail": "Nach dem Termin einfach einen persönlichen Link per SMS/WhatsApp teilen oder den QR-Code auf der Visitenkarte zeigen. Kunden belohnen erstklassigen Service direkt im Smartphone-Browser via Karte, Apple Pay oder Google Pay. Die Wertschätzung landet im selben System wie bei den Kollegen im Betrieb, während sich dein Dashboard in Echtzeit aktualisiert, sodass dein gesamtes Team im Außendienst die direkte Anerkennung für die geleistete Arbeit vor Ort spürt.",
       "s5Alt": "Trinkgeld per Link oder QR-Code bei mobilem Außendienst und Hausbesuchen"
@@ -3493,7 +3493,7 @@
         "scan": {
           "title": "Scannen",
           "body": "Gäste scannen Ihren CareTip QR Code am Tisch, an der Theke oder auf dem Bon, um den Trinkgeld Flow zu starten.",
-          "imageAlt": "CareTip Trinkgeld Bildschirm mit Teammitglied Maria Testerin auf dem Smartphone"
+          "imageAlt": "CareTip Trinkgeld Bildschirm für Akona Hotel auf dem Smartphone"
         },
         "choose": {
           "title": "Auswählen",
@@ -3754,7 +3754,7 @@
           "teaser": "Wertschätzung, die mit dem Event mithält."
         },
         "field-service": {
-          "title": "Außendienst & Pflege",
+          "title": "FÜR AUßENDIENST & HANDWERK",
           "body": "Die mobile Lösung für Kräfte im Einsatz.",
           "teaser": "Mehr Wertschätzung ohne Bargeld."
         }

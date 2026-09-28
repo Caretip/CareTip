@@ -178,7 +178,7 @@ const teaserEn = {
       body: "Perfect for on-site service teams.",
     },
     "field-service": {
-      title: "Field Service & Care",
+      title: "FOR Field SERVICE & TRADES",
       body: "The mobile solution for crews out in the field.",
     },
   },
@@ -213,7 +213,7 @@ const teaserDe = {
       body: "Perfekt für temporäre Service-Teams vor Ort.",
     },
     "field-service": {
-      title: "Außendienst & Pflege",
+      title: "FÜR AUßENDIENST & HANDWERK",
       body: "Die mobile Lösung für Kräfte im Einsatz.",
     },
   },

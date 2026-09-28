@@ -160,8 +160,14 @@
 }
 
 .caretip-landing.caretip-landing--premium #real-life .caretip-expandable-info-card__cta {
-  margin-top: auto;
-  padding-top: 0.75rem;
+  margin-top: 1.25rem;
+  padding-top: 0;
+}
+
+@media (min-width: 640px) {
+  .caretip-landing.caretip-landing--premium #real-life .caretip-expandable-info-card__cta {
+    margin-top: 1.5rem;
+  }
 }
 
 .caretip-landing.caretip-landing--premium .caretip-landing-feature-card .caretip-landing-feature-icon {

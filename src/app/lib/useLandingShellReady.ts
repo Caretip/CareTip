@@ -2,9 +2,9 @@ import { useLayoutEffect } from "react";
 import {
   APP_LOADING_PRIORITY,
   useAppLoadingRegistration,
-  useCompleteHtmlBootAfterPublicPaint,
   useReleaseAppBootOverlay,
 } from "../context/AppLoadingManager";
+import { markLandingColdLoad } from "./landingColdLoadMarks";
 import { isAppShellInteractive } from "./appShellLifecycle";
 import { warmLandingHeroLcpImage } from "@/lib/landingHeroStoryAssets";
 
@@ -17,7 +17,6 @@ export const LANDING_SHELL_READY_KEY = "landing-shell-ready";
 export function useLandingShellReady(_heroId = "about-section"): void {
   const softNav = isAppShellInteractive();
   const releaseAppBootOverlay = useReleaseAppBootOverlay();
-  const completeHtmlBootAfterPublicPaint = useCompleteHtmlBootAfterPublicPaint();
 
   useAppLoadingRegistration(
     LANDING_SHELL_READY_KEY,
@@ -27,8 +26,8 @@ export function useLandingShellReady(_heroId = "about-section"): void {
 
   useLayoutEffect(() => {
     releaseAppBootOverlay();
+    markLandingColdLoad("landing-commit");
     if (softNav) return;
     void warmLandingHeroLcpImage();
-    return completeHtmlBootAfterPublicPaint();
-  }, [releaseAppBootOverlay, completeHtmlBootAfterPublicPaint, softNav]);
+  }, [releaseAppBootOverlay, softNav]);
 }
