@@ -90,6 +90,9 @@ export const CareTipLandingHero = memo(function CareTipLandingHero({
     normalizeHeroSupportingCopy(activeDescription) === normalizeHeroSupportingCopy(platformLead);
   const showSupportingCopy =
     landingCopyVisible(activeDescription) && !supportingCopyDuplicatesPlatformLead;
+  const usesMobileDescription =
+    isMobileHeadline && landingCopyVisible(heroDescriptionMobile);
+  const showPlatformLead = landingCopyVisible(platformLead) && !usesMobileDescription;
 
   return (
     <section
@@ -212,7 +215,7 @@ export const CareTipLandingHero = memo(function CareTipLandingHero({
             )}
           </h1>
 
-          {landingCopyVisible(platformLead) ? (
+          {showPlatformLead ? (
             <p
               className={cn(
                 landingUi.heroSubtitle,
