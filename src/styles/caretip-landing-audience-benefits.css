@@ -341,9 +341,10 @@ html.dark .caretip-landing .caretip-audience-benefits__visual--phone .caretip-au
   }
 }
 
-/* Space between benefit bullets and column CTAs (business vs employee) */
-.caretip-landing .caretip-audience-benefits__cta-cluster {
-  margin-top: clamp(1.125rem, 2.5vw, 1.5rem);
+/* Space between benefit bullets and column CTAs (beats global section-cta + #for-employees margin resets) */
+.caretip-landing #business-section .caretip-audience-benefits__cta-cluster.caretip-landing-section-cta,
+.caretip-landing #business-section #for-employees .caretip-audience-benefits__cta-cluster.caretip-landing-section-cta {
+  margin-top: clamp(2.125rem, 5vw, 2.5rem) !important;
 }
 
 @media (min-width: 1024px) {
@@ -353,8 +354,9 @@ html.dark .caretip-landing .caretip-audience-benefits__visual--phone .caretip-au
     align-self: stretch;
   }
 
-  .caretip-landing .caretip-audience-benefits__cta-cluster {
-    margin-top: auto;
+  .caretip-landing #business-section .caretip-audience-benefits__cta-cluster.caretip-landing-section-cta,
+  .caretip-landing #business-section #for-employees .caretip-audience-benefits__cta-cluster.caretip-landing-section-cta {
+    margin-top: auto !important;
     padding-top: clamp(1.25rem, 2vw, 1.625rem);
     justify-content: flex-start;
   }

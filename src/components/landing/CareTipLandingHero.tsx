@@ -88,10 +88,11 @@ export const CareTipLandingHero = memo(function CareTipLandingHero({
     landingCopyVisible(platformLead) &&
     landingCopyVisible(activeDescription) &&
     normalizeHeroSupportingCopy(activeDescription) === normalizeHeroSupportingCopy(platformLead);
-  const showSupportingCopy =
-    landingCopyVisible(activeDescription) && !supportingCopyDuplicatesPlatformLead;
   const usesMobileDescription =
     isMobileHeadline && landingCopyVisible(heroDescriptionMobile);
+  const showSupportingCopy =
+    landingCopyVisible(activeDescription) &&
+    (!supportingCopyDuplicatesPlatformLead || usesMobileDescription);
   const showPlatformLead = landingCopyVisible(platformLead) && !usesMobileDescription;
 
   return (
