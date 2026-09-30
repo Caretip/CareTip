@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { BusinessDashboardStats } from "../lib/api";
 import {
   clearBusinessStatsClientCache,
+  getBusinessStats,
   mergeBusinessDashboardStats,
 } from "../lib/api";
 import { createDashboardSwrStore, DASHBOARD_SWR_METRICS_TTL_MS } from "../lib/dashboardSwrCache";
@@ -530,22 +531,57 @@ export function useBusinessDashboardStats(
             return;
           }
 
-          /** Sprint 8.1 — single scope=full fetch via unified analytics pipeline. */
+          /**
+           * Progressive stats: above-fold KPIs first, then scope=analytics for charts/goals.
+           * Avoids blocking period KPIs on deferred SQL/chart work (same model as Analytics page).
+           */
           const needsPeriodNetwork = !summarySettled || (!analyticsSettled && advancedAnalyticsEnabledRef.current);
 
           if (needsPeriodNetwork && (!summaryFromMemory || !analyticsSettled)) {
-            const periodStats = await fetchBusinessPeriodStats(tf, {
-              silent,
-              signal: controller.signal,
-              revalidate,
-              scope: advancedAnalyticsEnabledRef.current ? "full" : "summary",
-            });
-            if (!stillActive()) return;
-            summaryPartialRef.current.set(tf, periodStats);
-            networkSettledTfsRef.current.add(tf);
-            summarySettled = true;
-            if (advancedAnalyticsEnabledRef.current) {
-              analyticsPartialRef.current.set(tf, periodStats);
+            if (!summarySettled) {
+              const aboveFoldStats = await fetchBusinessPeriodStats(tf, {
+                silent,
+                signal: controller.signal,
+                revalidate,
+                scope: advancedAnalyticsEnabledRef.current ? "aboveFold" : "summary",
+              });
+              if (!stillActive()) return;
+              summaryPartialRef.current.set(tf, aboveFoldStats);
+              networkSettledTfsRef.current.add(tf);
+              summarySettled = true;
+              const partialMerged = mergeBusinessDashboardStats(
+                aboveFoldStats,
+                analyticsPartialRef.current.get(tf),
+              );
+              if (partialMerged) upsertBusinessAnalyticsStatsBundle(tf, partialMerged);
+              if (affectsUi && stillActive()) {
+                setSummaryLoading(false);
+                devSetHydrationPhase("metrics", "ready");
+                commitUiStats(tf, seq, true);
+                if (advancedAnalyticsEnabledRef.current && !analyticsSettled) {
+                  setAnalyticsLoadingUi(true);
+                  devSetHydrationPhase("charts", "loading");
+                  devSetHydrationPhase("goals", "loading");
+                }
+              }
+            }
+
+            if (!analyticsSettled && advancedAnalyticsEnabledRef.current) {
+              const deferredStats = await getBusinessStats(tf, {
+                scope: "analytics",
+                signal: controller.signal,
+                silent,
+                revalidate,
+              });
+              if (!stillActive()) return;
+              analyticsPartialRef.current.set(tf, deferredStats);
+              analyticsSettled = true;
+              const merged = mergeBusinessDashboardStats(
+                summaryPartialRef.current.get(tf),
+                deferredStats,
+              );
+              if (merged) upsertBusinessAnalyticsStatsBundle(tf, merged);
+            } else if (!analyticsSettled) {
               analyticsSettled = true;
             }
           }
@@ -700,7 +736,7 @@ export function useBusinessDashboardStats(
       const summaryData = await fetchBusinessPeriodStats("month", {
         silent: true,
         signal: controller.signal,
-        scope: advancedAnalyticsEnabledRef.current ? "full" : "summary",
+        scope: advancedAnalyticsEnabledRef.current ? "aboveFold" : "summary",
         revalidate: !networkSettledTfsRef.current.has("month"),
       });
       if (controller.signal.aborted || tfRef.current !== activeAtStart) return;

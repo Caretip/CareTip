@@ -60,6 +60,17 @@ if (
   fail("Employee analytics still defer the first period fetch behind a toggle");
 }
 
+const businessDashStats = read("src/app/hooks/useBusinessDashboardStats.ts");
+if (
+  businessDashStats.includes('scope: advancedAnalyticsEnabledRef.current ? "aboveFold" : "summary"') &&
+  businessDashStats.includes('scope: "analytics"') &&
+  !businessDashStats.includes('scope: advancedAnalyticsEnabledRef.current ? "full"')
+) {
+  pass("Business overview stats split aboveFold KPIs from deferred analytics scope");
+} else {
+  fail("useBusinessDashboardStats must not block KPIs on scope=full");
+}
+
 const feedback = read("src/app/components/business/RecentCustomerFeedbackPanel.tsx");
 if (
   feedback.includes("useBusinessEntitlementsContext") &&
@@ -68,6 +79,12 @@ if (
   pass("Customer feedback teaser reuses business entitlements context");
 } else {
   fail("RecentCustomerFeedbackPanel must not fetch entitlements independently when context exists");
+}
+
+if (!feedback.includes("useInViewActive") && !feedback.includes("panelVisible")) {
+  pass("Customer feedback teaser does not gate API on viewport scroll");
+} else {
+  fail("RecentCustomerFeedbackPanel must not require scroll to start feedback fetch");
 }
 
 const featureGate = read("src/app/components/subscription/FeatureGate.tsx");

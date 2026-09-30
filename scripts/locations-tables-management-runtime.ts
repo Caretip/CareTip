@@ -64,7 +64,7 @@ if (
   management.includes("updateLocationAPI") &&
   management.includes("deleteLocationAPI") &&
   management.includes("createTableAPI") &&
-  management.includes("tablesHeading") &&
+  management.includes("BusinessLocationVenueCard") &&
   management.includes("openCreateTable")
 ) {
   pass("Combined page renders location CRUD and table creation");

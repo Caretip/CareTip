@@ -19,6 +19,7 @@ function read(rel: string): string {
 }
 
 const row = read("src/app/components/auth/OAuthProviderRow.tsx");
+const googleCircle = read("src/app/components/auth/AuthGoogleLoginCircle.tsx");
 const css = read("src/styles/caretip-oauth-circles.css");
 const authCss = read("src/styles/caretip-auth.css");
 const app = read("src/app/App.tsx");
@@ -33,7 +34,8 @@ if (!row.includes("gsiMounted") && !row.includes("setGsiMounted")) {
 
 if (
   /\{showGoogle \? \(/.test(row) &&
-  row.includes("<GoogleLogin") &&
+  row.includes("AuthGoogleLoginCircle") &&
+  googleCircle.includes("<GoogleLogin") &&
   !row.includes("gsiMounted && showGoogle && !disabled")
 ) {
   pass("GoogleLogin stays mounted while the Google circle is configured (not torn down on disabled)");
@@ -53,10 +55,20 @@ if (row.includes("onSuccess={onGoogleSuccess}") && row.includes("useCallback")) 
   fail("GIS onSuccess must be wrapped in useCallback");
 }
 
-if (row.includes("containerProps") && row.includes("width: 44") && row.includes("height: 44")) {
+if (
+  googleCircle.includes("containerProps") &&
+  googleCircle.includes("width: 44") &&
+  googleCircle.includes("height: 44")
+) {
   pass("GIS host is sized to the 44px visible circle");
 } else {
   fail("GoogleLogin containerProps must match the 44px circle");
+}
+
+if (googleCircle.includes('type="icon"') && !googleCircle.includes("text=")) {
+  pass("GIS icon button does not pass invalid text= with type=icon");
+} else {
+  fail("GIS icon button must not combine type=icon with text=");
 }
 
 if (css.includes("opacity: 0.02") || css.includes("opacity: 0.011") || /opacity:\s*0\s*;/.test(css)) {
@@ -104,7 +116,7 @@ if (app.includes("GoogleOAuthProvider")) {
 if (
   oauthScope.includes("GoogleOAuthProvider") &&
   row.includes("AuthGoogleOAuthScope") &&
-  row.includes("GoogleLogin") &&
+  row.includes("AuthGoogleLoginCircle") &&
   row.includes("onSocialCredential")
 ) {
   pass("GIS still flows Provider → GoogleLogin → onSocialCredential (no custom fake button)");

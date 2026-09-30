@@ -11,6 +11,8 @@ const PREVIEW_MAX_CHARS = 160;
 type CustomerFeedbackListItemProps = {
   item: CustomerFeedbackRow;
   className?: string;
+  /** Tighter layout for dashboard teaser list */
+  compact?: boolean;
 };
 
 function StarRating({ rating, className }: { rating: number | null; className?: string }) {
@@ -39,7 +41,11 @@ function StarRating({ rating, className }: { rating: number | null; className?: 
   );
 }
 
-export function CustomerFeedbackListItem({ item, className }: CustomerFeedbackListItemProps) {
+export function CustomerFeedbackListItem({
+  item,
+  className,
+  compact = false,
+}: CustomerFeedbackListItemProps) {
   const { t, i18n } = useTranslation();
   const [expanded, setExpanded] = useState(false);
 
@@ -64,33 +70,18 @@ export function CustomerFeedbackListItem({ item, className }: CustomerFeedbackLi
   return (
     <article
       className={cn(
-        "business-dashboard-feedback-item group rounded-xl border border-border/70 bg-card p-4 shadow-sm transition-[border-color,box-shadow,transform] duration-200 hover:-translate-y-0.5 hover:border-border hover:shadow-md sm:p-5",
+        "business-dashboard-feedback-item rounded-lg border border-border/80 bg-card",
+        compact ? "p-3" : "p-4 sm:p-4",
         className,
       )}
     >
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-        <div className="min-w-0 flex-1 space-y-1.5">
-          <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
-            <h3 className="business-dashboard-feedback-item__guest">{customerLabel}</h3>
-            <p className="business-dashboard-feedback-item__staff">
-              <span className="text-muted-foreground/70">
-                {t("business.customerFeedback.servedBy")}{" "}
-              </span>
-              {item.employeeName}
-            </p>
-          </div>
-          <StarRating rating={item.rating} />
-        </div>
-        <time
-          className="business-dashboard-feedback-item__time shrink-0"
-          dateTime={item.createdAt}
-        >
-          {t("business.customerFeedback.visitDate", { date: visitDate })}
-        </time>
+      <div className="space-y-2">
+        <h3 className="business-dashboard-feedback-item__guest">{customerLabel}</h3>
+        <StarRating rating={item.rating} />
       </div>
 
       {comment ? (
-        <div className="mt-3 space-y-2">
+        <div className={cn("space-y-2", compact ? "mt-2" : "mt-2.5")}>
           <p className="business-dashboard-feedback-item__comment whitespace-pre-wrap">
             {displayComment}
           </p>
@@ -110,7 +101,7 @@ export function CustomerFeedbackListItem({ item, className }: CustomerFeedbackLi
 
       {item.tags.length > 0 ? (
         <ul
-          className="mt-3 flex flex-wrap gap-1.5"
+          className={cn("flex flex-wrap gap-1.5", compact ? "mt-2" : "mt-2.5")}
           aria-label={t("business.customerFeedback.tagsAria")}
         >
           {item.tags.map((tag) => (
@@ -123,6 +114,18 @@ export function CustomerFeedbackListItem({ item, className }: CustomerFeedbackLi
           ))}
         </ul>
       ) : null}
+
+      <footer className="mt-2.5 flex flex-wrap items-center justify-between gap-x-3 gap-y-1 text-xs text-muted-foreground">
+        <p className="business-dashboard-feedback-item__staff min-w-0">
+          <span className="text-muted-foreground/80">
+            {t("business.customerFeedback.servedBy")}{" "}
+          </span>
+          {item.employeeName}
+        </p>
+        <time className="business-dashboard-feedback-item__time shrink-0" dateTime={item.createdAt}>
+          {t("business.customerFeedback.visitDate", { date: visitDate })}
+        </time>
+      </footer>
     </article>
   );
 }

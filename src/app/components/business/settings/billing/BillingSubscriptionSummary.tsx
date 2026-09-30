@@ -21,6 +21,7 @@ import {
   scrollToBillingPlansSection,
 } from "../../../../lib/activateCareTipNavigation";
 import { dashboardWorkspaceUi } from "@/app/components/dashboard/dashboardWorkspaceUi";
+import { caretipBtnPrimary, caretipBtnSecondary } from "@/lib/caretipButtonSystem";
 import { cn } from "@/lib/utils";
 
 function sponsoredProgrammeLabel(
@@ -113,7 +114,7 @@ export function BillingSubscriptionSummary({
             </h2>
           </div>
           <ManagePlanScrollLink
-            className={cn(dashboardWorkspaceUi.btnSecondary, "inline-flex shrink-0")}
+            className={cn(caretipBtnSecondary, "inline-flex shrink-0")}
           />
         </div>
         <p className="billing-subscription-summary__inline-meta">
@@ -154,25 +155,35 @@ export function BillingSubscriptionSummary({
       className={cn("billing-subscription-summary", className)}
       aria-labelledby="billing-summary-heading"
     >
-      <div className="billing-subscription-summary__header">
-        <div className="min-w-0">
+      <div className="billing-subscription-summary__main">
+        <div className="min-w-0 flex-1">
           <p className="billing-subscription-summary__eyebrow">
             {t("business.billing.subscriptionSummary.currentPlanLabel")}
           </p>
           <h2 id="billing-summary-heading" className="billing-subscription-summary__plan">
             {isTrialing ? subscriptionTrialStatusLabel(effectivePlanKey, t) : planName}
           </h2>
+          {detailRows.length > 0 ? (
+            <dl className="billing-subscription-summary__details mt-4 space-y-2">
+              {detailRows.map((row) => (
+                <div
+                  key={row.label}
+                  className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-0.5 text-sm"
+                >
+                  <dt className="text-muted-foreground">{row.label}</dt>
+                  <dd className="font-medium text-foreground">{row.value}</dd>
+                </div>
+              ))}
+            </dl>
+          ) : null}
         </div>
-        <div className="flex shrink-0 flex-wrap items-center justify-end gap-2">
+        <div className="flex shrink-0 flex-wrap items-center gap-2">
           {openPortal ? (
             <button
               type="button"
               onClick={onOpenStripePortal}
               disabled={managePlanBusy}
-              className={cn(
-                dashboardWorkspaceUi.btnPrimary,
-                "inline-flex gap-2 disabled:opacity-60",
-              )}
+              className={cn(caretipBtnPrimary, "inline-flex gap-2 disabled:opacity-60")}
               aria-busy={managePlanBusy || undefined}
             >
               {managePlanBusy ? (
@@ -183,7 +194,7 @@ export function BillingSubscriptionSummary({
               {t("business.billing.managePlan")}
             </button>
           ) : (
-            <ManagePlanScrollLink className={cn(dashboardWorkspaceUi.btnPrimary, "inline-flex")} />
+            <ManagePlanScrollLink className={cn(caretipBtnPrimary, "inline-flex")} />
           )}
         </div>
       </div>
@@ -201,20 +212,6 @@ export function BillingSubscriptionSummary({
           </span>
         ) : null}
       </div>
-
-      {detailRows.length > 0 ? (
-        <dl className="billing-subscription-summary__details mt-4 space-y-2">
-          {detailRows.map((row) => (
-            <div
-              key={row.label}
-              className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-0.5 text-sm"
-            >
-              <dt className="text-muted-foreground">{row.label}</dt>
-              <dd className="font-medium text-foreground">{row.value}</dd>
-            </div>
-          ))}
-        </dl>
-      ) : null}
     </section>
   );
 }

@@ -44,7 +44,7 @@ export function BusinessBillingLayout() {
       <div className={businessUi.modulePageContained}>
         <BusinessModuleWorkspaceHeader
           personality="billing"
-          badge={t("business.billing.moduleEyebrow")}
+          badge={t("business.billing.moduleTitle")}
           icon={CreditCard}
           title={t("business.settings.panels.billingTitle")}
           subtitle={t("business.billing.moduleSubtitle")}

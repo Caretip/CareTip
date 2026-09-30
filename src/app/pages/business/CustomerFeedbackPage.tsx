@@ -21,10 +21,10 @@ import { BusinessSubPageShellSkeleton } from "@/app/components/dashboard/Busines
 import { DashboardListSkeleton } from "@/app/components/dashboard/DashboardSectionLoading";
 import { useBusinessPageBoot } from "@/app/lib/useBusinessPageBoot";
 import { CustomerFeedbackListItem } from "@/app/components/business/CustomerFeedbackListItem";
-import { localizeFeedbackTag } from "@/app/lib/feedbackTagLabels";
-import { BusinessStatCard } from "@/app/components/business/BusinessStatCard";
 import { CountUpMetric } from "@/app/components/dashboard/CountUpMetric";
-import { businessUi } from "@/app/components/business/businessDashboardUi";
+import { CustomerFeedbackMetricsStrip } from "@/app/components/business/feedback/CustomerFeedbackMetricsStrip";
+import { CustomerFeedbackRatingDisplay } from "@/app/components/business/feedback/CustomerFeedbackRatingDisplay";
+import { FeedbackTagRankList } from "@/app/components/business/feedback/FeedbackTagRankList";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -34,7 +34,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/app/components/ui/select";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { logClientError } from "@/app/lib/clientLog";
 import { isApiSubscriptionRequiredError } from "@/app/lib/apiError";
 import { useSubscriptionEntitlements } from "@/app/hooks/useSubscriptionEntitlements";
@@ -43,7 +42,6 @@ import {
   setPageSessionCache,
   PAGE_CACHE_TTL_HIGH_MS,
 } from "@/app/lib/pageSessionCache";
-import { cn } from "@/lib/utils";
 import {
   resolveBusinessTimezone,
   venueLocalDayKey,
@@ -295,51 +293,47 @@ export function CustomerFeedbackPage() {
     return <BusinessSubPageShellSkeleton />;
   }
 
-  return (
-    <div className="space-y-6 pt-2 sm:space-y-7 sm:pt-4">
-      <div className={cn(businessUi.statsGrid, "sm:grid-cols-3 lg:grid-cols-5")}>
-        <BusinessStatCard
-          featured
-          loading={loading}
-          label={t("business.customers.reviews.avgRating")}
-          value={
-            summary?.averageRating != null ? (
-              <CountUpMetric value={summary.averageRating} kind="decimal" decimalPlaces={1} />
-            ) : (
-              "—"
-            )
-          }
-          change={
-            summary
-              ? t("business.customers.reviews.ratingCount", { count: summary.ratingCount })
-              : undefined
-          }
-          icon={<Star className="h-5 w-5" aria-hidden />}
+  const metricItems = [
+    {
+      id: "avg",
+      label: t("business.customers.reviews.avgRating"),
+      featured: true,
+      value: (
+        <CustomerFeedbackRatingDisplay
+          averageRating={summary?.averageRating}
+          ratingCount={summary?.ratingCount}
+          size="md"
         />
-        <BusinessStatCard
-          loading={loading}
-          label={t("business.customers.reviews.totalReviews")}
-          value={<CountUpMetric value={summary?.feedbackCount ?? 0} kind="integer" />}
-        />
-        <BusinessStatCard
-          loading={loading}
-          label={t("business.customers.reviews.fiveStar")}
-          value={<CountUpMetric value={fiveStarCount} kind="integer" />}
-        />
-        <BusinessStatCard
-          loading={loading}
-          label={t("business.customerFeedback.responseRate")}
-          value={responseRate != null ? `${responseRate}%` : "—"}
-          change={t("business.customerFeedback.responseRateHint")}
-        />
-        <BusinessStatCard
-          loading={loading}
-          label={t("business.customerFeedback.reviewsThisMonth")}
-          value={<CountUpMetric value={reviewsThisMonth} kind="integer" />}
-        />
-      </div>
+      ),
+    },
+    {
+      id: "total",
+      label: t("business.customers.reviews.totalReviews"),
+      value: <CountUpMetric value={summary?.feedbackCount ?? 0} kind="integer" />,
+    },
+    {
+      id: "five",
+      label: t("business.customers.reviews.fiveStar"),
+      value: <CountUpMetric value={fiveStarCount} kind="integer" />,
+    },
+    {
+      id: "response",
+      label: t("business.customerFeedback.responseRate"),
+      value: responseRate != null ? `${responseRate}%` : "—",
+      hint: t("business.customerFeedback.responseRateHint"),
+    },
+    {
+      id: "month",
+      label: t("business.customerFeedback.reviewsThisMonth"),
+      value: <CountUpMetric value={reviewsThisMonth} kind="integer" />,
+    },
+  ];
 
-      <div className="flex flex-col gap-3 rounded-xl border border-border/80 bg-card p-3 sm:p-4">
+  return (
+    <div className="space-y-5 pt-2 sm:space-y-6 sm:pt-4">
+      <CustomerFeedbackMetricsStrip items={metricItems} loading={loading} />
+
+      <div className="caretip-feedback-filter-toolbar flex flex-col gap-3">
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
           <div className="relative lg:col-span-2">
             <Search
@@ -479,7 +473,7 @@ export function CustomerFeedbackPage() {
       ) : null}
 
       {!loading && analyticsItems.length > 0 ? (
-        <section className="space-y-4" aria-labelledby="feedback-insights-heading">
+        <section className="space-y-3" aria-labelledby="feedback-insights-heading">
           <div>
             <h2 id="feedback-insights-heading" className="text-base font-semibold text-foreground">
               {t("business.customerFeedback.insightsTitle")}
@@ -488,114 +482,73 @@ export function CustomerFeedbackPage() {
               {t("business.customerFeedback.insightsDesc")}
             </p>
           </div>
-          <div className="grid gap-4 lg:grid-cols-2">
-            <Card className={businessUi.cardStatic}>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-semibold">
-                  {t("business.customerFeedback.commonCompliments")}
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                {insights.compliments.length === 0 ? (
-                  <p className="text-sm text-muted-foreground">
-                    {t("business.customerFeedback.insightsEmpty")}
-                  </p>
-                ) : (
-                  <ul className="space-y-2">
-                    {insights.compliments.map(([tag, count]) => (
-                      <li
-                        key={tag}
-                        className="flex items-center justify-between gap-2 text-sm"
-                      >
-                        <span className="truncate font-medium text-foreground">{localizeFeedbackTag(tag, t)}</span>
-                        <span className="tabular-nums text-muted-foreground">{count}</span>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </CardContent>
-            </Card>
-            <Card className={businessUi.cardStatic}>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-semibold">
-                  {t("business.customerFeedback.commonComplaints")}
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                {insights.complaints.length === 0 ? (
-                  <p className="text-sm text-muted-foreground">
-                    {t("business.customerFeedback.insightsEmpty")}
-                  </p>
-                ) : (
-                  <ul className="space-y-2">
-                    {insights.complaints.map(([tag, count]) => (
-                      <li
-                        key={tag}
-                        className="flex items-center justify-between gap-2 text-sm"
-                      >
-                        <span className="truncate font-medium text-foreground">{localizeFeedbackTag(tag, t)}</span>
-                        <span className="tabular-nums text-muted-foreground">{count}</span>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </CardContent>
-            </Card>
-            <Card className={businessUi.cardStatic}>
-              <CardHeader className="pb-2">
-                <CardTitle className="flex items-center gap-2 text-sm font-semibold">
-                  <TrendingUp className="h-4 w-4 text-muted-foreground" aria-hidden />
-                  {t("business.customerFeedback.ratingTrend")}
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="flex h-28 items-end gap-2">
-                  {insights.ratingBuckets.map((count, index) => (
-                    <div key={index} className="flex flex-1 flex-col items-center gap-1.5">
+          <div className="caretip-feedback-insights-grid">
+            <div className="caretip-feedback-insight-card">
+              <h3 className="caretip-feedback-insight-card__title">
+                {t("business.customerFeedback.commonCompliments")}
+              </h3>
+              <div className="mt-3">
+                <FeedbackTagRankList
+                  entries={insights.compliments}
+                  emptyLabel={t("business.customerFeedback.insightsEmpty")}
+                />
+              </div>
+            </div>
+            <div className="caretip-feedback-insight-card">
+              <h3 className="caretip-feedback-insight-card__title">
+                {t("business.customerFeedback.commonComplaints")}
+              </h3>
+              <div className="mt-3">
+                <FeedbackTagRankList
+                  entries={insights.complaints}
+                  emptyLabel={t("business.customerFeedback.insightsEmpty")}
+                />
+              </div>
+            </div>
+            <div className="caretip-feedback-insight-card">
+              <h3 className="caretip-feedback-insight-card__title flex items-center gap-2">
+                <TrendingUp className="h-4 w-4 text-muted-foreground" aria-hidden />
+                {t("business.customerFeedback.ratingTrend")}
+              </h3>
+              <div className="caretip-feedback-distribution mt-3">
+                {insights.ratingBuckets.map((count, index) => (
+                  <div key={index} className="caretip-feedback-distribution__row">
+                    <span className="caretip-feedback-distribution__label">{index + 1}★</span>
+                    <div className="caretip-feedback-distribution__track">
                       <div
-                        className="w-full rounded-t-md bg-primary/80 transition-[height]"
-                        style={{ height: `${Math.max(8, (count / maxBucket) * 100)}%` }}
-                        title={`${count}`}
+                        className="caretip-feedback-distribution__bar"
+                        style={{ width: `${Math.round((count / maxBucket) * 100)}%` }}
                       />
-                      <span className="text-[10px] font-medium text-muted-foreground">
-                        {index + 1}★
-                      </span>
                     </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-            <Card className={businessUi.cardStatic}>
-              <CardHeader className="pb-2">
-                <CardTitle className="flex items-center gap-2 text-sm font-semibold">
-                  <Users className="h-4 w-4 text-muted-foreground" aria-hidden />
-                  {t("business.customerFeedback.employeeComparison")}
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                {insights.employees.length === 0 ? (
+                    <span className="caretip-feedback-distribution__count">{count}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div className="caretip-feedback-insight-card">
+              <h3 className="caretip-feedback-insight-card__title flex items-center gap-2">
+                <Users className="h-4 w-4 text-muted-foreground" aria-hidden />
+                {t("business.customerFeedback.employeeComparison")}
+              </h3>
+              {insights.employees.length === 0 ? (
+                <div className="caretip-feedback-insight-empty mt-3">
                   <p className="text-sm text-muted-foreground">
                     {t("business.customerFeedback.insightsEmpty")}
                   </p>
-                ) : (
-                  <ul className="space-y-2.5">
-                    {insights.employees.map((emp) => (
-                      <li
-                        key={emp.name}
-                        className="flex items-center justify-between gap-2 text-sm"
-                      >
-                        <span className="min-w-0 truncate font-medium text-foreground">
-                          {emp.name}
-                        </span>
-                        <span className="shrink-0 tabular-nums text-muted-foreground">
-                          {emp.avg.toFixed(1)} ★ · {emp.count}
-                        </span>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </CardContent>
-            </Card>
+                </div>
+              ) : (
+                <ul className="caretip-feedback-employee-rank mt-3">
+                  {insights.employees.map((emp) => (
+                    <li key={emp.name} className="caretip-feedback-employee-rank__row">
+                      <span className="caretip-feedback-employee-rank__name">{emp.name}</span>
+                      <span className="caretip-feedback-employee-rank__stats">
+                        {emp.avg.toFixed(1)} ★ · {emp.count}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
           </div>
         </section>
       ) : null}

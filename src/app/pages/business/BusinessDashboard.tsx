@@ -74,6 +74,8 @@ import { isOnboardingCompleted } from "../../lib/onboardingProgress";
 import bizzyHeroWebp from "../../../../images/finalbizzy-hero.webp";
 import bizzyHeroAvif from "../../../../images/finalbizzy-hero.avif";
 import { BusinessDashboardHeroActions } from "../../components/business/BusinessDashboardHeroActions";
+import { BusinessDashboardOverviewSection } from "../../components/business/BusinessDashboardOverviewSection";
+import { dashboardWorkspaceUi } from "../../components/dashboard/dashboardWorkspaceUi";
 import {
   dashboardFormalGreetingBadgeClassName,
   formatDashboardFormalGreeting,
@@ -328,7 +330,7 @@ export const BusinessDashboard = memo(function BusinessDashboard() {
   const formalGreeting = formatDashboardFormalGreeting(t, user.name);
 
   return (
-    <div className={cn(businessUi.page, "business-dashboard-overview overflow-x-hidden")}>
+    <div className={cn(businessUi.page, "business-dashboard-overview")}>
       <BusinessDashboardRealtimeSync
         enabled={authReady && user?.role === "business"}
         businessId={user?.businessId}
@@ -461,129 +463,135 @@ export const BusinessDashboard = memo(function BusinessDashboard() {
           ) : null}
         </div>
 
-        <section
+        <BusinessDashboardOverviewSection
+          id="business-overview-period"
+          eyebrow={t("business.dashboard.analyticsSectionEyebrow")}
+          title={t("business.dashboard.analyticsSectionTitle")}
+          description={t("business.dashboard.analyticsSectionDesc", {
+            period: analyticsPeriodLabel(analyticsTimeframe).toLowerCase(),
+          })}
           className={cn(
-            "business-dashboard-analytics-intro mb-1",
+            "business-overview-period mb-2",
             isPeriodRefreshing && !showMetricsSkeleton && "business-dashboard-analytics-intro--refreshing",
           )}
-          aria-labelledby="business-analytics-period-heading"
-        >
-          <div className="business-dashboard-analytics-intro__head">
-            <div className="min-w-0 space-y-1">
-              <h2
-                id="business-analytics-period-heading"
-                className="text-base font-semibold tracking-tight text-foreground"
-              >
-                {t("business.dashboard.analyticsSectionTitle")}
-              </h2>
+          actions={
+            <>
               <DashboardRefreshIndicator
                 isRefreshing={isPeriodSyncing}
                 lastUpdatedAt={lastUpdatedAt}
                 refreshFailed={Boolean(statsLoadFailed && hasVisibleMetrics)}
               />
-            </div>
-            <DashboardRealtimeStatusStrip
-              role="business"
-              isPeriodSyncing={isPeriodSyncing}
-              isMetricsSettled={isMetricsSettled}
-              hasPeriodActivity={hasPeriodActivity}
-              hasVisibleMetrics={hasVisibleMetrics}
-              pendingVerification={showOnboardingReviewNotice}
-              statsLoadFailed={statsLoadFailed}
+              <DashboardRealtimeStatusStrip
+                role="business"
+                isPeriodSyncing={isPeriodSyncing}
+                isMetricsSettled={isMetricsSettled}
+                hasPeriodActivity={hasPeriodActivity}
+                hasVisibleMetrics={hasVisibleMetrics}
+                pendingVerification={showOnboardingReviewNotice}
+                statsLoadFailed={statsLoadFailed}
+              />
+            </>
+          }
+        >
+          <div className="business-overview-period__toolbar">
+            <DashboardAnalyticsPeriodToggle
+              className={businessUi.periodToggle}
+              ariaLabel={t("business.dashboard.analyticsPeriodAria")}
+              value={analyticsTimeframe}
+              onChange={handleAnalyticsPeriodChange}
+              options={(["week", "month", "year"] as const).map((period) => ({
+                id: period,
+                label: analyticsPeriodLabel(period),
+                loading: analyticsTimeframe === period && analyticsTimeframeLoading === period,
+              }))}
             />
           </div>
-          <DashboardAnalyticsPeriodToggle
-            className={businessUi.periodToggle}
-            ariaLabel={t("business.dashboard.analyticsPeriodAria")}
-            value={analyticsTimeframe}
-            onChange={handleAnalyticsPeriodChange}
-            options={(["week", "month", "year"] as const).map((period) => ({
-              id: period,
-              label: analyticsPeriodLabel(period),
-              loading: analyticsTimeframe === period && analyticsTimeframeLoading === period,
-            }))}
-          />
-        </section>
 
-        <div className={cn(businessUi.section, "pt-1")}>
-          <motion.div
-            {...blockMotion}
-            className={cn(
-              "business-dashboard-block business-dashboard-block--primary dashboard-swr-swap",
-              isPeriodRefreshing && "dashboard-swr-swap--revalidating",
-            )}
-            initial={false}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.22, ease: "easeOut" }}
-          >
-            <BusinessDashboardMetricsGrid
-              analyticsTimeframe={analyticsTimeframe}
-              metrics={displayMetrics}
-              loading={periodMetricsLoading}
-              isPeriodRefreshing={isPeriodRefreshing}
-              refreshingLabel={periodRefreshingLabel}
-              hasTipActivityInPeriod={hasTipActivityInPeriod}
-              topPerformersCount={employeePerformance.length}
-              kpiReady={kpiUsable}
-            />
-          </motion.div>
-
-          {showProUpgradePromo ? (
+          <div className="business-overview-period__content">
             <motion.div
               {...blockMotion}
-              transition={{ delay: 0.3 }}
+              className={cn(
+                "business-dashboard-block business-dashboard-block--primary dashboard-swr-swap",
+                isPeriodRefreshing && "dashboard-swr-swap--revalidating",
+              )}
+              initial={false}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.22, ease: "easeOut" }}
+            >
+              <BusinessDashboardMetricsGrid
+                analyticsTimeframe={analyticsTimeframe}
+                metrics={displayMetrics}
+                loading={periodMetricsLoading}
+                isPeriodRefreshing={isPeriodRefreshing}
+                refreshingLabel={periodRefreshingLabel}
+                hasTipActivityInPeriod={hasTipActivityInPeriod}
+                topPerformersCount={employeePerformance.length}
+                kpiReady={kpiUsable}
+              />
+            </motion.div>
+
+            {showProUpgradePromo ? (
+              <motion.div
+                {...blockMotion}
+                transition={{ delay: 0.3 }}
+                className="business-dashboard-block business-dashboard-block--primary"
+              >
+                <div className="dashboard-upgrade-stack">
+                  <BasicPlanStatusCard className="business-dashboard-panel-card w-full" />
+                  <ProUpgradeCard className="business-dashboard-panel-card w-full" />
+                </div>
+              </motion.div>
+            ) : null}
+
+            <motion.div
+              {...blockMotion}
+              transition={{ delay: 0.32 }}
               className="business-dashboard-block business-dashboard-block--primary"
             >
-              <div className="dashboard-upgrade-stack">
-                <BasicPlanStatusCard className="business-dashboard-panel-card w-full" />
-                <ProUpgradeCard className="business-dashboard-panel-card w-full" />
-              </div>
+              <FeatureGate featureKey="advancedAnalytics" role="business" enabled={isBusiness}>
+                <DashboardChartsIdleMount
+                  whenVisible
+                  mountSignal={`${analyticsTimeframe}-${dataRevision}`}
+                  fallback={<BusinessDashboardChartsFallback />}
+                >
+                  <BusinessDashboardAnalyticsCharts
+                    showChartsLoading={showChartsLoading}
+                    hasTipActivityInPeriod={hasChartTipActivity}
+                    tipDistributionChartData={tipDistributionChartData}
+                    tipDistributionTotal={tipDistributionTotal}
+                    employeePerformance={employeePerformance}
+                    employeeCount={activeRosterCount}
+                    analyticsTimeframe={analyticsTimeframe}
+                    chartRenderKey={`${analyticsTimeframe}-${dataRevision}-${tipDistributionChartData.length}`}
+                  />
+                </DashboardChartsIdleMount>
+              </FeatureGate>
             </motion.div>
-          ) : null}
+          </div>
+        </BusinessDashboardOverviewSection>
 
-          <motion.div
-            {...blockMotion}
-            transition={{ delay: 0.32 }}
-            className="business-dashboard-block business-dashboard-block--primary"
-          >
-            <FeatureGate featureKey="advancedAnalytics" role="business" enabled={isBusiness}>
-              <DashboardChartsIdleMount
-                whenVisible
-                mountSignal={`${analyticsTimeframe}-${dataRevision}`}
-                fallback={<BusinessDashboardChartsFallback />}
-              >
-                <BusinessDashboardAnalyticsCharts
-                  showChartsLoading={showChartsLoading}
-                  hasTipActivityInPeriod={hasChartTipActivity}
-                  tipDistributionChartData={tipDistributionChartData}
-                  tipDistributionTotal={tipDistributionTotal}
-                  employeePerformance={employeePerformance}
-                  employeeCount={activeRosterCount}
-                  analyticsTimeframe={analyticsTimeframe}
-                  chartRenderKey={`${analyticsTimeframe}-${dataRevision}-${tipDistributionChartData.length}`}
-                />
-              </DashboardChartsIdleMount>
-            </FeatureGate>
-          </motion.div>
-
+        <div className={cn(businessUi.section, "pt-1")}>
           <motion.div
             {...blockMotion}
             transition={{ delay: 0.35 }}
             className="business-dashboard-block business-dashboard-block--secondary"
           >
             <FeatureGate featureKey="employeeGoals" role="business" enabled={isBusiness}>
-            <section className="business-dashboard-goals w-full" aria-labelledby="business-dashboard-goals-heading">
-              <header className="space-y-2.5 py-3">
+            <section className="business-overview-goals-panel w-full" aria-labelledby="business-dashboard-goals-heading">
+              <header className="business-overview-goals-panel__head">
                 <div className="flex w-full min-w-0 items-start justify-between gap-3">
                   <button
                     type="button"
                     onClick={() => setEmployeeGoalsExpanded((v) => !v)}
-                    className="flex min-w-0 flex-1 items-start rounded-md text-left outline-none ring-offset-background focus-visible:ring-2 focus-visible:ring-ring"
+                    className="flex min-w-0 flex-1 flex-col items-start gap-1 rounded-md text-left outline-none ring-offset-background focus-visible:ring-2 focus-visible:ring-ring"
                     aria-expanded={employeeGoalsExpanded}
                   >
-                    <h2 id="business-dashboard-goals-heading" className="text-base font-semibold leading-snug tracking-tight">
+                    <h2 id="business-dashboard-goals-heading" className={dashboardWorkspaceUi.sectionTitle}>
                       {t("business.dashboard.employeeGoalsTitle")}
                     </h2>
+                    <p className={dashboardWorkspaceUi.helperText}>
+                      {t("business.dashboard.employeeGoalsDescShort")}
+                    </p>
                   </button>
                   {employeeGoalsList.length > 0 ? (
                     <DashboardViewAllLink to="/dashboard/team/employees">
@@ -592,7 +600,7 @@ export const BusinessDashboard = memo(function BusinessDashboard() {
                   ) : null}
                 </div>
                 {employeeGoalsSummary ? (
-                  <div className="business-dashboard-goals-summary" aria-label={t("business.dashboard.goalsSummaryAria")}>
+                  <div className="business-dashboard-goals-summary mt-2.5" aria-label={t("business.dashboard.goalsSummaryAria")}>
                     <span className="business-dashboard-goals-pill">
                       {t("business.dashboard.goalsOnTrack", { count: employeeGoalsSummary.onTrack })}
                     </span>
@@ -603,7 +611,7 @@ export const BusinessDashboard = memo(function BusinessDashboard() {
                 ) : null}
               </header>
               {employeeGoalsExpanded ? (
-                <div className="min-w-0 transition-opacity duration-300">
+                <div className="business-overview-goals-panel__body min-w-0 transition-opacity duration-300">
                   <DashboardStableChartSlot
                     loading={showGoalsLoading}
                     minHeightClass="min-h-[280px]"
@@ -688,7 +696,6 @@ export const BusinessDashboard = memo(function BusinessDashboard() {
             </FeatureGate>
           </motion.div>
 
-          {/* Recent customer feedback */}
           <motion.div {...blockMotion} transition={{ delay: 0.55 }} className="business-dashboard-block business-dashboard-block--secondary">
             <FeatureGate featureKey="customerFeedback" role="business" enabled={isBusiness}>
               <RecentCustomerFeedbackPanel enabled={isBusiness && sessionValidated} />

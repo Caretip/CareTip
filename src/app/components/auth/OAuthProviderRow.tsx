@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState, type ReactNode } from "react";
-import { GoogleLogin, type CredentialResponse } from "@react-oauth/google";
+import type { CredentialResponse } from "@react-oauth/google";
+import { AuthGoogleLoginCircle } from "@/app/components/auth/AuthGoogleLoginCircle";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -243,20 +244,7 @@ export function OAuthProviderRow({
               )}
               {showGoogle ? (
                 <div className="caretip-oauth-circle__gsi" aria-hidden>
-                  <GoogleLogin
-                    onSuccess={onGoogleSuccess}
-                    onError={onGoogleError}
-                    useOneTap={false}
-                    type="icon"
-                    shape="circle"
-                    theme="outline"
-                    size="large"
-                    text="continue_with"
-                    containerProps={{
-                      className: "caretip-oauth-gsi-host",
-                      style: { width: 44, height: 44 },
-                    }}
-                  />
+                  <AuthGoogleLoginCircle onSuccess={onGoogleSuccess} onError={onGoogleError} />
                 </div>
               ) : null}
             </div>

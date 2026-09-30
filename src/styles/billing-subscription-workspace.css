@@ -1,0 +1,158 @@
+/**
+ * Business billing → Subscription workspace (dashboard shell)
+ */
+
+.caretip-dashboard-shell .billing-settings-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+@media (min-width: 640px) {
+  .caretip-dashboard-shell .billing-settings-panel {
+    gap: 1.5rem;
+  }
+}
+
+.caretip-dashboard-shell .billing-subscription-summary {
+  border-radius: 0.5rem !important;
+  border: 1px solid hsl(var(--border) / 0.85) !important;
+  box-shadow: none !important;
+  padding: 1rem 1.125rem !important;
+}
+
+@media (min-width: 640px) {
+  .caretip-dashboard-shell .billing-subscription-summary {
+    padding: 1.125rem 1.25rem !important;
+  }
+}
+
+.caretip-dashboard-shell .billing-subscription-summary__plan {
+  font-size: 1.25rem !important;
+  font-weight: 600 !important;
+}
+
+.caretip-dashboard-shell .billing-subscription-summary__main {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+@media (min-width: 768px) {
+  .caretip-dashboard-shell .billing-subscription-summary__main {
+    flex-direction: row;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem 1.5rem;
+  }
+}
+
+.caretip-dashboard-shell .billing-subscription-summary__facts {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 0.75rem;
+  margin-top: 0.5rem;
+}
+
+.caretip-dashboard-shell .billing-subscription-summary__fact {
+  font-size: 0.8125rem;
+  line-height: 1.4;
+  color: hsl(var(--muted-foreground));
+}
+
+.caretip-dashboard-shell .billing-subscription-lifecycle {
+  border-radius: 0.5rem;
+  border: 1px solid hsl(var(--border) / 0.85);
+  background: hsl(var(--muted) / 0.22);
+  padding: 0.875rem 1rem;
+}
+
+.caretip-dashboard-shell .billing-plan-management__toolbar {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  border-radius: 0.5rem;
+  border: 1px solid hsl(var(--border) / 0.85);
+  background: hsl(var(--card));
+  padding: 0.875rem 1rem;
+}
+
+@media (min-width: 640px) {
+  .caretip-dashboard-shell .billing-plan-management__toolbar {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem 1rem;
+  }
+}
+
+.caretip-dashboard-shell .billing-plan-management__toolbar-title {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: hsl(var(--foreground));
+}
+
+.caretip-dashboard-shell .billing-plan-management__toolbar-save {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: hsl(var(--primary));
+}
+
+.caretip-dashboard-shell .billing-plan-management__toolbar-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  width: 100%;
+  min-width: 0;
+}
+
+@media (min-width: 640px) {
+  .caretip-dashboard-shell .billing-plan-management__toolbar-actions {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: flex-end;
+    width: auto;
+    max-width: 100%;
+  }
+}
+
+.caretip-dashboard-shell .caretip-pricing-tiers--billing {
+  --caretip-pricing-card-min-h: 0;
+}
+
+.caretip-dashboard-shell .caretip-pricing-tiers--billing .caretip-pricing-tier-card--subscription {
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+}
+
+.caretip-dashboard-shell .caretip-pricing-tiers--billing .caretip-pricing-tier-card--subscription .caretip-pricing-tier-card__footer {
+  margin-top: auto;
+}
+
+.caretip-dashboard-shell .caretip-pricing-tiers--billing .caretip-pricing-tier-card--current {
+  border-color: hsl(var(--primary) / 0.35) !important;
+  box-shadow: none !important;
+}
+
+.caretip-dashboard-shell .caretip-pricing-tiers--billing .caretip-pricing-tier-card--current.caretip-pricing-tier-card--featured {
+  background: hsl(var(--card)) !important;
+}
+
+.caretip-dashboard-shell .caretip-pricing-tiers--billing .caretip-pricing-tier-card__badge--current {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: none;
+  border: 1px solid hsl(var(--border) / 0.85);
+  background: hsl(var(--muted) / 0.45);
+  color: hsl(var(--foreground) / 0.88);
+}
+
+.caretip-dashboard-shell .caretip-pricing-billing-toggle--in-panel {
+  border-radius: 0.375rem;
+}

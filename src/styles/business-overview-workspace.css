@@ -1,0 +1,158 @@
+/**
+ * Business Overview / Dashboard — formal workspace rhythm (hero → period → goals → feedback).
+ */
+
+.caretip-dashboard-shell.business-dashboard .business-dashboard-overview {
+  min-width: 0;
+}
+
+.caretip-dashboard-shell.business-dashboard .business-overview-section {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  min-width: 0;
+}
+
+.caretip-dashboard-shell.business-dashboard .business-overview-section__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem 1.25rem;
+  min-width: 0;
+}
+
+.caretip-dashboard-shell.business-dashboard .business-overview-section__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  max-width: 100%;
+}
+
+.caretip-dashboard-shell.business-dashboard .business-overview-section__body {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  min-width: 0;
+}
+
+.caretip-dashboard-shell.business-dashboard .business-overview-period {
+  padding-bottom: 0.25rem;
+  border-bottom: 1px solid hsl(var(--border) / 0.55);
+}
+
+.caretip-dashboard-shell.business-dashboard .business-overview-period__toolbar {
+  display: flex;
+  flex-direction: column;
+  gap: 0.875rem;
+  min-width: 0;
+}
+
+.caretip-dashboard-shell.business-dashboard .business-overview-period__content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--business-dash-block-gap, 2rem);
+  min-width: 0;
+}
+
+.caretip-dashboard-shell.business-dashboard .business-overview-section--secondary {
+  padding-top: 0.25rem;
+}
+
+.caretip-dashboard-shell.business-dashboard .business-overview-goals-panel {
+  border-radius: 0.5rem;
+  border: 1px solid hsl(var(--border) / 0.85);
+  background: hsl(var(--card));
+  overflow: hidden;
+}
+
+.caretip-dashboard-shell.business-dashboard .business-overview-goals-panel__head {
+  padding: 1rem 1rem 0.75rem;
+  border-bottom: 1px solid hsl(var(--border) / 0.65);
+}
+
+.caretip-dashboard-shell.business-dashboard .business-overview-goals-panel__body {
+  padding: 0.75rem 1rem 1rem;
+  min-width: 0;
+}
+
+@media (min-width: 640px) {
+  .caretip-dashboard-shell.business-dashboard .business-overview-section {
+    gap: 1.125rem;
+  }
+
+  .caretip-dashboard-shell.business-dashboard .business-overview-period__toolbar {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+  }
+}
+
+.caretip-dashboard-shell.business-dashboard .business-period-chart.business-dashboard-chart-card {
+  border-radius: 0.5rem;
+  border: 1px solid hsl(var(--border) / 0.85);
+  background: hsl(var(--card));
+  padding: 1rem 1rem 0.875rem;
+  min-width: 0;
+}
+
+.caretip-dashboard-shell.business-dashboard .business-period-chart__title {
+  font-size: 0.875rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: hsl(var(--foreground));
+  margin-bottom: 0.75rem;
+}
+
+.caretip-feedback-dashboard-snapshot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 0.75rem;
+  padding: 0.625rem 1rem;
+  border-bottom: 1px solid hsl(var(--border) / 0.65);
+  background: hsl(var(--muted) / 0.18);
+  font-size: 0.8125rem;
+  line-height: 1.35;
+  min-width: 0;
+}
+
+.caretip-feedback-dashboard-snapshot__item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  min-width: 0;
+}
+
+.caretip-feedback-dashboard-snapshot__value {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: hsl(var(--foreground));
+}
+
+.caretip-feedback-dashboard-snapshot__meta {
+  margin: 0;
+  color: hsl(var(--muted-foreground));
+}
+
+.caretip-feedback-dashboard-snapshot__sep {
+  width: 1px;
+  height: 1rem;
+  background: hsl(var(--border) / 0.9);
+  flex-shrink: 0;
+}
+
+@media (max-width: 380px) {
+  .caretip-feedback-dashboard-snapshot__sep {
+    display: none;
+  }
+
+  .caretip-feedback-dashboard-snapshot {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.375rem;
+  }
+}

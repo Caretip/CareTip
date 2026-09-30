@@ -7,13 +7,12 @@ import { listBusinessCustomerFeedback, type CustomerFeedbackSummary } from "@/ap
 import { BusinessDashboardAnalyticsEmpty } from "@/app/components/business/BusinessDashboardAnalyticsEmpty";
 import { DashboardListSkeleton } from "@/app/components/dashboard/DashboardSectionLoading";
 import { CustomerFeedbackListItem } from "@/app/components/business/CustomerFeedbackListItem";
-import { businessUi } from "@/app/components/business/businessDashboardUi";
+import { CustomerFeedbackDashboardSnapshot } from "@/app/components/business/feedback/CustomerFeedbackDashboardSnapshot";
 import { CUSTOMERS_BASE } from "@/app/components/business/businessDashboardNav";
 import { cn } from "@/lib/utils";
 import { logClientError } from "@/app/lib/clientLog";
 import { isApiPendingVerificationError, isApiSubscriptionRequiredError } from "@/app/lib/apiError";
 import { scheduleIdleWork } from "@/lib/publicRouteDefer";
-import { useInViewActive } from "@/lib/motionPerf";
 import { useBusinessEntitlementsContext } from "@/app/contexts/BusinessEntitlementsContext";
 import { useSubscriptionEntitlements } from "@/app/hooks/useSubscriptionEntitlements";
 
@@ -29,9 +28,6 @@ export function RecentCustomerFeedbackPanel({
   className,
 }: RecentCustomerFeedbackPanelProps) {
   const { t } = useTranslation();
-  const { ref: panelRef, active: panelVisible } = useInViewActive<HTMLElement>({
-    rootMargin: "160px 0px",
-  });
   const businessEntitlements = useBusinessEntitlementsContext();
   const fallbackEntitlements = useSubscriptionEntitlements({
     enabled: enabled && businessEntitlements == null,
@@ -83,36 +79,37 @@ export function RecentCustomerFeedbackPanel({
       setSummary(null);
       return;
     }
-    if (!panelVisible) return;
     scheduleIdleWork(() => {
       void load();
     }, 0);
-  }, [enabled, entitled, load, panelVisible, ready]);
+  }, [enabled, entitled, load, ready]);
+
+  const hasReviews = (summary?.feedbackCount ?? 0) > 0;
 
   return (
     <section
-      ref={panelRef}
-      className={cn("business-dashboard-feedback w-full", className)}
+      className={cn("business-dashboard-feedback w-full caretip-feedback-dashboard-panel", className)}
       aria-labelledby="business-dashboard-feedback-heading"
     >
-      <header className="flex flex-row items-start justify-between gap-4 py-3">
-        <div className="min-w-0 space-y-1">
+      <header className="caretip-feedback-dashboard-panel__head">
+        <div className="min-w-0">
           <h2 id="business-dashboard-feedback-heading" className="text-base font-semibold tracking-tight">
-            {t("business.customerFeedback.recentTitle")}
+            {t("business.customerFeedback.dashboardSummaryTitle")}
           </h2>
-          <p className={businessUi.cardDesc}>
-            {summary && summary.feedbackCount > 0
-              ? t("business.customerFeedback.recentDescWithStats", {
-                  count: summary.feedbackCount,
-                  average:
-                    summary.averageRating != null ? summary.averageRating.toFixed(1) : "—",
-                })
-              : t("business.customerFeedback.recentDesc")}
+          <p className="mt-1 text-sm text-muted-foreground">
+            {t("business.customerFeedback.dashboardSummaryDesc")}
           </p>
         </div>
-        <DashboardViewAllLink to={CUSTOMERS_BASE}>{t("dashboard.viewAll")}</DashboardViewAllLink>
+        <DashboardViewAllLink to={CUSTOMERS_BASE}>
+          {t("business.customerFeedback.dashboardViewAll")}
+        </DashboardViewAllLink>
       </header>
-      <div>
+
+      {!loading && hasReviews && summary ? (
+        <CustomerFeedbackDashboardSnapshot summary={summary} items={items} />
+      ) : null}
+
+      <div className="caretip-feedback-dashboard-panel__list">
         {loading ? (
           <DashboardListSkeleton minHeightClass="min-h-[200px]" />
         ) : error ? (
@@ -131,13 +128,18 @@ export function RecentCustomerFeedbackPanel({
           <BusinessDashboardAnalyticsEmpty
             variant="panel"
             icon={<Star className="h-6 w-6 text-muted-foreground" aria-hidden />}
-            title={t("emptyState.ratings.title")}
-            description={t("emptyState.ratings.description")}
+            title={t("business.customerFeedback.dashboardEmptyTitle")}
+            description={t("business.customerFeedback.dashboardEmptyDesc")}
           />
         ) : (
-          <div className="business-dashboard-feedback-list">
+          <div className="business-dashboard-feedback-list space-y-2.5">
             {items.map((item) => (
-              <CustomerFeedbackListItem key={item.id} item={item} className="business-dashboard-feedback-item" />
+              <CustomerFeedbackListItem
+                key={item.id}
+                item={item}
+                className="business-dashboard-feedback-item"
+                compact
+              />
             ))}
           </div>
         )}

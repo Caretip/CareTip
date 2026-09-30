@@ -15,7 +15,7 @@ export function BusinessCustomersLayout() {
           badge={t("business.customers.eyebrow")}
           icon={MessageSquareHeart}
           title={t("business.customers.title")}
-          subtitle={t("business.customers.mergedSubtitle")}
+          subtitle={t("business.customers.feedbackPageDesc")}
           hideSubtitleOnMobile
         />
         <Outlet />

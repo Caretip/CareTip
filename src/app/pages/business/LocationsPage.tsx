@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router";
 import { useTranslation } from "react-i18next";
-import { LayoutGrid, MapPin, Pencil, QrCode, Trash2 } from "lucide-react";
+import { MapPin } from "lucide-react";
+import { BusinessLocationVenueCard } from "../../components/business/locations/BusinessLocationVenueCard";
 import { toast } from "sonner";
 import { useRequireAuth } from "../../hooks/useRequireAuth";
 import { useSubscriptionEntitlements } from "../../hooks/useSubscriptionEntitlements";
@@ -422,112 +423,21 @@ export function LocationsPage() {
             <p>{t("business.locationsPage.empty")}</p>
           </div>
         ) : (
-          <ul>
+          <ul className="business-venue-list overflow-visible">
             {locations.map((loc) => {
               const locTables = tablesByLocation.get(loc.id) ?? [];
               return (
-                <li key={loc.id} className="business-location-row overflow-visible py-4 sm:py-5">
-                  <div className="flex gap-3 items-start">
-                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-muted/50 text-muted-foreground">
-                      <MapPin className="h-5 w-5" aria-hidden />
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <p className="font-semibold text-foreground">{loc.name}</p>
-                      <p className="mt-1 text-xs text-muted-foreground">
-                        {t("business.locationsPage.googleStatus", {
-                          status: loc.googlePlaceId
-                            ? t("business.locationsPage.reviewConfigured")
-                            : t("business.locationsPage.reviewNotConfigured"),
-                        })}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        {t("business.locationsPage.tripadvisorStatus", {
-                          status: loc.tripadvisorReviewUrl
-                            ? t("business.locationsPage.reviewConfigured")
-                            : t("business.locationsPage.reviewNotConfigured"),
-                        })}
-                      </p>
-                      {loc.description ? (
-                        <p className="text-sm text-muted-foreground mt-1 line-clamp-3">{loc.description}</p>
-                      ) : null}
-                    </div>
-                    <div className="flex shrink-0 items-center gap-1">
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        className="h-9 w-9"
-                        aria-label={t("business.locationsPage.editAria", { name: loc.name })}
-                        onClick={() => openEdit(loc)}
-                      >
-                        <Pencil className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        className="h-9 w-9 text-destructive hover:text-destructive"
-                        aria-label={t("business.locationsPage.deleteAria", { name: loc.name })}
-                        onClick={() => setDeleteTarget(loc)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </div>
-
-                  <div className="mt-4 border-t border-border/80 pt-4">
-                    <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                      <h2 className="text-sm font-semibold text-foreground">
-                        {t("business.locationsPage.tablesHeading")}
-                        <span className="ms-2 font-normal text-muted-foreground tabular-nums">
-                          {t("business.locationsPage.tableCount", { count: locTables.length })}
-                        </span>
-                      </h2>
-                      <Button
-                        type="button"
-                        size="sm"
-                        variant="outline"
-                        onClick={() => openCreateTable(loc)}
-                        disabled={createTableDisabled}
-                        aria-disabled={createTableDisabled}
-                        aria-describedby={showTableQuotaNotice ? "tables-quota-notice" : undefined}
-                        title={
-                          showTableQuotaNotice
-                            ? t("business.tablesPage.createDisabledAtCapAria")
-                            : undefined
-                        }
-                        className="w-full sm:w-auto"
-                      >
-                        {t("business.tablesPage.create")}
-                      </Button>
-                    </div>
-                    {locTables.length === 0 ? (
-                      <p className="text-sm text-muted-foreground">
-                        {t("business.locationsPage.emptyTables")}
-                      </p>
-                    ) : (
-                      <ul className="divide-y divide-border/80 rounded-lg border border-border/80">
-                        {locTables.map((row) => (
-                          <li
-                            key={row.id}
-                            className="flex flex-col gap-2 px-3 py-3 sm:flex-row sm:items-center sm:justify-between"
-                          >
-                            <div className="flex min-w-0 items-center gap-2">
-                              <LayoutGrid className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden />
-                              <span className="truncate font-medium text-foreground">{row.name}</span>
-                            </div>
-                            <Link
-                              to={TABLES_QR_HREF}
-                              className="inline-flex items-center gap-1.5 text-sm font-medium text-foreground underline-offset-2 hover:underline"
-                            >
-                              <QrCode className="h-3.5 w-3.5" aria-hidden />
-                              {t("business.locationsPage.viewTableQr")}
-                            </Link>
-                          </li>
-                        ))}
-                      </ul>
-                    )}
-                  </div>
+                <li key={loc.id}>
+                  <BusinessLocationVenueCard
+                    location={loc}
+                    tables={locTables}
+                    tablesQrHref={TABLES_QR_HREF}
+                    createTableDisabled={createTableDisabled}
+                    showTableQuotaNotice={showTableQuotaNotice}
+                    onEdit={() => openEdit(loc)}
+                    onDelete={() => setDeleteTarget(loc)}
+                    onCreateTable={() => openCreateTable(loc)}
+                  />
                 </li>
               );
             })}

@@ -324,24 +324,26 @@ export function BillingPlanManagement({
   }
 
   return (
-    <div className="billing-plan-management space-y-6">
-      <div className="billing-plan-management__controls flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+    <div className="billing-plan-management space-y-4">
+      <div className="billing-plan-management__toolbar">
         <div className="min-w-0">
-          <h3 id="choose-plan-heading" className={dashboardWorkspaceUi.subsectionTitle}>
+          <h3 id="choose-plan-heading" className="billing-plan-management__toolbar-title">
             {t("business.billing.choosePlan")}
           </h3>
           {billingCycle === "yearly" ? (
-            <p className="mt-1 text-sm font-medium text-primary">
+            <p className="billing-plan-management__toolbar-save mt-1">
               {t("staticPages.pricing.billing.saveBadge")}
             </p>
           ) : null}
         </div>
 
-        <div className="flex flex-col gap-2.5 sm:flex-row sm:flex-wrap sm:items-center sm:justify-end">
+        <div className="billing-plan-management__toolbar-actions">
           <PricingBillingToggle
             value={billingCycle}
             onChange={onBillingCycleChange}
-            className={cn("caretip-pricing-billing-toggle--in-panel w-full sm:w-auto sm:max-w-[16.5rem]")}
+            className={cn(
+              "caretip-pricing-billing-toggle--in-panel w-full min-w-0 sm:w-auto sm:max-w-[16.5rem]",
+            )}
             aria-labelledby="choose-plan-heading"
           />
 
@@ -352,7 +354,7 @@ export function BillingPlanManagement({
               onClick={() => void handleCancel()}
               className={cn(
                 dashboardWorkspaceUi.btnGhost,
-                "justify-center border border-red-200 text-red-700 hover:bg-red-50 disabled:opacity-60 dark:border-red-900/40 dark:text-red-300 dark:hover:bg-red-950/30",
+                "min-h-10 justify-center border border-red-200/90 text-red-700 hover:bg-red-50 disabled:opacity-60 dark:border-red-900/40 dark:text-red-300 dark:hover:bg-red-950/30",
               )}
               aria-busy={busyPlan === "cancel" || undefined}
             >
@@ -384,6 +386,7 @@ export function BillingPlanManagement({
               <PricingTierCard
                 tier={tier}
                 billingCycle={billingCycle}
+                variant="subscription"
                 badge={resolveBadge(tier.tierKey)}
                 footer={renderTierFooter(tier.tierKey, tier.name)}
                 subscriptionInfo={renderSubscriptionInfo(tier.tierKey)}

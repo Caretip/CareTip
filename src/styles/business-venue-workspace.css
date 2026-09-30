@@ -1,0 +1,141 @@
+/**
+ * Business Locations / Tables workspace cards
+ */
+.caretip-dashboard-shell.business-dashboard .business-venue-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.caretip-dashboard-shell.business-dashboard .business-venue-card {
+  border-radius: 0.5rem;
+  border: 1px solid hsl(var(--border) / 0.85);
+  background: hsl(var(--card));
+  padding: 1rem 1rem 0.875rem;
+}
+
+@media (min-width: 640px) {
+  .caretip-dashboard-shell.business-dashboard .business-venue-card {
+    padding: 1.125rem 1.25rem 1rem;
+  }
+}
+
+.caretip-dashboard-shell.business-dashboard .business-venue-card__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.caretip-dashboard-shell.business-dashboard .business-venue-card__identity {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  gap: 0.75rem;
+}
+
+.caretip-dashboard-shell.business-dashboard .business-venue-card__title {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  line-height: 1.35;
+  color: hsl(var(--foreground));
+  word-break: break-word;
+}
+
+.caretip-dashboard-shell.business-dashboard .business-venue-card__desc {
+  margin-top: 0.25rem;
+  font-size: 0.8125rem;
+  line-height: 1.45;
+  color: hsl(var(--muted-foreground));
+}
+
+.caretip-dashboard-shell.business-dashboard .business-venue-card__integrations {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+  margin-top: 0.625rem;
+}
+
+.caretip-dashboard-shell.business-dashboard .business-venue-card__integration {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.375rem;
+}
+
+.caretip-dashboard-shell.business-dashboard .business-venue-card__integration-label {
+  font-size: 0.6875rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: hsl(var(--muted-foreground));
+}
+
+.caretip-dashboard-shell.business-dashboard .business-venue-card__tables {
+  margin-top: 0.875rem;
+  padding-top: 0.875rem;
+  border-top: 1px solid hsl(var(--border) / 0.75);
+}
+
+.caretip-dashboard-shell.business-dashboard .business-venue-card__tables-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.5rem 0.75rem;
+  margin-bottom: 0.625rem;
+}
+
+.caretip-dashboard-shell.business-dashboard .business-venue-card__tables-title {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: hsl(var(--foreground));
+}
+
+.caretip-dashboard-shell.business-dashboard .business-venue-card__tables-count {
+  font-size: 0.75rem;
+  color: hsl(var(--muted-foreground));
+}
+
+.caretip-dashboard-shell.business-dashboard .business-venue-card__tables-empty {
+  border-radius: 0.375rem;
+  border: 1px dashed hsl(var(--border) / 0.9);
+  background: hsl(var(--muted) / 0.25);
+  padding: 0.875rem 1rem;
+}
+
+.caretip-dashboard-shell.business-dashboard .business-venue-card__table-list {
+  display: flex;
+  flex-direction: column;
+  border-radius: 0.375rem;
+  border: 1px solid hsl(var(--border) / 0.75);
+  overflow: hidden;
+}
+
+.caretip-dashboard-shell.business-dashboard .business-venue-card__table-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem 0.75rem;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.875rem;
+}
+
+.caretip-dashboard-shell.business-dashboard .business-venue-card__table-row:not(:last-child) {
+  border-bottom: 1px solid hsl(var(--border) / 0.65);
+}
+
+.caretip-dashboard-shell.business-dashboard .business-venue-card__table-qr {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: hsl(var(--foreground));
+  text-underline-offset: 2px;
+}
+
+.caretip-dashboard-shell.business-dashboard .business-venue-card__table-qr:hover {
+  text-decoration: underline;
+}

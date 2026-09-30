@@ -37,7 +37,7 @@ export function BillingSubscriptionLifecycle({ billing }: Props) {
 
   return (
     <section
-      className="rounded-lg border border-border bg-muted/20 px-4 py-3"
+      className="billing-subscription-lifecycle"
       aria-labelledby="billing-lifecycle-heading"
     >
       <h3 id="billing-lifecycle-heading" className={dashboardWorkspaceUi.subsectionTitle}>
