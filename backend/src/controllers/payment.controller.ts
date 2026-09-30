@@ -12,6 +12,7 @@ import { resolveScanSessionId } from "../services/qr/qrScanRequestContext.js";
 import { QR_FUNNEL_EVENT_TYPES, recordQrFunnelEvent } from "../services/qr/qrFunnelEvent.service.js";
 import { ensureTransactionReceiptNumber } from "../services/tipReceipt.service.js";
 import { normalizeGuestEmail } from "../services/tipGuestConfirmationEmail.service.js";
+import { parseTipGuestPresentationLocale } from "../emails/i18nEmail.js";
 import { toPublicGuestExternalReviews } from "../lib/externalReviewLinks.js";
 
 /** Client must never steer Connect destination or platform fee. */
@@ -127,6 +128,7 @@ export async function createTipSession(req: Request, res: Response) {
       typeof body.qrScanSessionId === "string" && body.qrScanSessionId.trim()
         ? body.qrScanSessionId.trim().slice(0, 64)
         : resolveScanSessionId(req);
+    const guestPresentationLocale = parseTipGuestPresentationLocale(body.locale);
 
     if (!employeeId || !businessId) {
       return res.status(400).json({ message: "employeeId and businessId are required" });
@@ -156,6 +158,7 @@ export async function createTipSession(req: Request, res: Response) {
       guestEmail,
       feedback: feedback ?? null,
       qrScanSessionId,
+      locale: guestPresentationLocale,
     });
 
     recordQrFunnelEvent({

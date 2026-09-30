@@ -24,4 +24,7 @@ export function prefetchCustomerFlowRoutes(): void {
   for (const path of Object.keys(CUSTOMER_FLOW_IMPORTERS)) {
     prefetchCustomerFlowRoute(path);
   }
+  void import("@/i18n/i18n").then(({ prefetchCustomerJourneyLocaleBundles }) =>
+    prefetchCustomerJourneyLocaleBundles(),
+  );
 }

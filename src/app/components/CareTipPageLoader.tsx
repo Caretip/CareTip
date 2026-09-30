@@ -151,8 +151,11 @@ export function CareTipPageLoader({
         ? "flex flex-col items-center justify-center py-16 px-4"
         : "flex flex-col items-center justify-center";
 
-  /* Cold entry under HTML boot, or cold overlay: no second loading sentence. */
-  if (holdUnderHtmlBoot || (isFullScreen && !softNav)) {
+  /* HTML boot owns the viewport — do not paint an empty bg-background layer beneath it. */
+  if (holdUnderHtmlBoot) {
+    return null;
+  }
+  if (isFullScreen && !softNav) {
     return <GlobalAppLoadingHold className={className} />;
   }
 

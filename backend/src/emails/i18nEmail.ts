@@ -43,6 +43,12 @@ function normalizeExplicit(raw: string | null | undefined): EmailLocale | null {
   return null;
 }
 
+/** Guest QR tip journey — only `en` | `de`; rejects arbitrary strings. */
+export function parseTipGuestPresentationLocale(raw: unknown): EmailLocale | null {
+  if (typeof raw !== "string") return null;
+  return normalizeExplicit(raw);
+}
+
 export function localeFromAcceptLanguage(
   header: string | null | undefined,
 ): EmailLocale | null {

@@ -53,6 +53,7 @@ import { TipAmountPage } from './pages/customer/TipAmountPage';
 import { RatingPage } from './pages/customer/RatingPage';
 import { SuccessPage } from './pages/customer/SuccessPage';
 import { EmployeeQrEntryPage } from './pages/customer/EmployeeQrEntryPage';
+import { QRLandingPage } from './pages/customer/QRLandingPage';
 import { AuthPage } from './components/AuthPage';
 import { JoinPage } from './pages/JoinPage';
 import { PlatformAdminLoginPage } from './pages/platform/PlatformAdminLoginPage';
@@ -747,12 +748,13 @@ const routes: RouteObject[] = [
   },
   {
     path: '/qr-landing/:businessId?',
-    lazy: routeLazy(() => import('./pages/customer/QRLandingPage'), 'QRLandingPage'),
+    // Eager: primary business/table QR team picker — cold scan must not suspend Outlet under HTML boot.
+    Component: QRLandingPage,
     errorElement: <ErrorBoundary />,
   },
   {
     path: '/table/:qrSlug',
-    lazy: routeLazy(() => import('./pages/customer/QRLandingPage'), 'QRLandingPage'),
+    Component: QRLandingPage,
     errorElement: <ErrorBoundary />,
   },
   {

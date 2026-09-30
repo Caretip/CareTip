@@ -2,7 +2,7 @@ import type Stripe from "stripe";
 import { prisma } from "../prisma.js";
 import {
   buildTipGuestConfirmationContent,
-  localeFromAcceptLanguage,
+  parseTipGuestPresentationLocale,
   resolveEmailLocale,
   type EmailLocale,
 } from "../emails/i18nEmail.js";
@@ -30,8 +30,10 @@ export function resolveGuestEmailFromCheckoutSession(
 export function resolveEmailLocaleFromCheckoutSession(
   session: Stripe.Checkout.Session,
 ): EmailLocale {
-  const fromLocale = localeFromAcceptLanguage(session.locale ?? null);
-  if (fromLocale) return fromLocale;
+  const fromMeta = parseTipGuestPresentationLocale(session.metadata?.locale ?? null);
+  if (fromMeta) return fromMeta;
+  const fromStripeCheckout = parseTipGuestPresentationLocale(session.locale ?? null);
+  if (fromStripeCheckout) return fromStripeCheckout;
   return resolveEmailLocale({});
 }
 
@@ -162,9 +164,9 @@ export async function scheduleTipGuestConfirmationEmailForPaymentIntent(
     return;
   }
 
-  const locale = resolveEmailLocale({
-    explicitLocale: typeof paymentIntent.metadata?.locale === "string" ? paymentIntent.metadata.locale : null,
-  });
+  const locale =
+    parseTipGuestPresentationLocale(paymentIntent.metadata?.locale ?? null) ??
+    resolveEmailLocale({});
   const customerName =
     typeof paymentIntent.metadata?.customerName === "string"
       ? paymentIntent.metadata.customerName.trim()

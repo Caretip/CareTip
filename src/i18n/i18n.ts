@@ -86,21 +86,49 @@ export function prefetchAlternateLocaleBundle(): Promise<void> {
   });
 }
 
+/** Prefetch EN + DE once the guest tipping journey starts (instant DE↔EN toggles). */
+export async function prefetchCustomerJourneyLocaleBundles(): Promise<void> {
+  if (typeof window === "undefined") return;
+  await ensureI18nReady();
+  await Promise.all([ensureLocaleBundle("en"), ensureLocaleBundle("de")]);
+}
+
+export type ChangeAppLanguageOptions = {
+  /**
+   * Guest QR / in-journey switches: keep the current page painted; do not signal
+   * global language-change loading (avoids blank chrome / overlay flash).
+   */
+  keepPageVisible?: boolean;
+};
+
 /**
  * Switch UI language after the target locale bundle is loaded (avoids missing keys).
  */
-export async function changeAppLanguage(lng: AppLanguage): Promise<void> {
+export async function changeAppLanguage(
+  lng: AppLanguage,
+  options?: ChangeAppLanguageOptions,
+): Promise<void> {
   const current = resolveAppLanguageFromCode(i18n.language);
   if (current === lng) return;
-  beginAppLanguageChange();
+  const keepPageVisible = options?.keepPageVisible === true;
+  if (!keepPageVisible) {
+    beginAppLanguageChange();
+  }
   try {
     markLandingColdLoad("lang-switch-start");
     await ensureLocaleBundle(lng);
     await i18n.changeLanguage(lng);
     markLandingColdLoad("lang-switch-complete");
   } finally {
-    endAppLanguageChange();
+    if (!keepPageVisible) {
+      endAppLanguageChange();
+    }
   }
+}
+
+/** Customer QR tipping — same persistence as {@link changeAppLanguage}, no global loader signal. */
+export async function changeCustomerJourneyLanguage(lng: AppLanguage): Promise<void> {
+  await changeAppLanguage(lng, { keepPageVisible: true });
 }
 
 /**

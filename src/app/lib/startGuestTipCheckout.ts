@@ -4,6 +4,7 @@ import { logClientError } from "./clientLog";
 import { toUserFriendlyMessage } from "./errorMessages";
 import { setPendingTipFromCheckout } from "./repeatTip";
 import { performExternalStripeRedirect } from "./safeCheckoutRedirect";
+import { getGuestTipPresentationLocale } from "./guestTipPresentationLocale";
 
 export type GuestTipCheckoutInput = {
   amount: number;
@@ -45,6 +46,7 @@ export async function startGuestTipCheckout(
       locationId: input.locationId ?? null,
       tableId: input.tableId ?? null,
       guestEmail: input.guestEmail?.trim() ? input.guestEmail.trim() : null,
+      locale: getGuestTipPresentationLocale(),
     });
     if (!url) {
       toast.error(checkoutStartErrorMessage);

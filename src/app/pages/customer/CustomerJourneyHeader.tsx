@@ -5,6 +5,7 @@ import { BusinessLogoMark } from "../../components/business/BusinessLogoMark";
 import { ProfileAvatar } from "../../components/ui/profile-avatar";
 import { customerFlowUi as cf } from "./customerFlowUi";
 import type { CustomerJourneyEmployeeIdentity, CustomerJourneyVenueBrand } from "./customerJourneyBrand";
+import { CustomerJourneyLanguageSwitcher } from "./CustomerJourneyLanguageSwitcher";
 
 export type CustomerJourneyHeaderProps = {
   leading?: ReactNode;
@@ -132,12 +133,13 @@ export function CustomerJourneyHeader({
       }
     >
       <div className={cn(cf.customerJourneyHeader, className)}>
-        {(leading || trailing) && (
-          <div className={cf.customerJourneyToolbar}>
-            <div className={cn(cf.customerJourneyToolbarSide, "justify-start")}>{leading ?? null}</div>
-            <div className={cn(cf.customerJourneyToolbarSide, "justify-end")}>{trailing ?? null}</div>
+        <div className={cf.customerJourneyToolbar}>
+          <div className={cn(cf.customerJourneyToolbarSide, "justify-start")}>{leading ?? null}</div>
+          <div className={cn(cf.customerJourneyToolbarSide, "justify-end gap-2")}>
+            {trailing ?? null}
+            <CustomerJourneyLanguageSwitcher />
           </div>
-        )}
+        </div>
 
         {variant === "employee" && employee ? (
           <div className={cf.customerJourneyEmployeeFocus}>

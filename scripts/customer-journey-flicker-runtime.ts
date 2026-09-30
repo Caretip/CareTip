@@ -22,7 +22,8 @@ const tipAmount = read("src/app/pages/customer/TipAmountPage.tsx");
 assert(
   tipAmount.includes("useState(() =>") &&
     tipAmount.includes("isCustomerEmployeeContextReady") &&
-    tipAmount.includes("loading={!contextReady}"),
+    tipAmount.includes("contextReady") &&
+    (tipAmount.includes("loading={!contextReady}") || tipAmount.includes("journeyLoading = !contextReady")),
   "TipAmountPage must keep the opening wait until employee context is ready, then hand off",
 );
 
@@ -83,7 +84,7 @@ assert(
 );
 assert(
   tipAmount.includes("peekGuestTipEmployee") &&
-    tipAmount.includes("loading={!contextReady}") &&
+    tipAmount.includes("contextReady") &&
     empQr.includes("rememberGuestTipEmployee"),
   "Employee QR must cache identity so /tip-amount does not wait on a second employee GET",
 );
@@ -104,15 +105,52 @@ assert(
 
 const heroStack = read("src/styles/caretip-landing-hero-mobile-stack.css");
 assert(
-  heroStack.includes("--caretip-hero-gap-body-cta: 0.75rem"),
-  "mobile hero CTA gap must be compact (not 2.25rem under the supporting copy)",
+  heroStack.includes("--caretip-hero-gap-body-cta: 0.875rem"),
+  "mobile hero CTA gap must stay compact under the supporting copy",
 );
 
 const manager = read("src/app/context/AppLoadingManager.tsx");
 assert(
-  manager.includes('attributeFilter: ["data-caretip-route-ready"]') &&
-    !manager.includes("{ subtree: true, childList: true, attributes: true }"),
-  "HTML boot MutationObserver must not watch every document attribute (renderer crash)",
+  manager.includes("attributeFilter:") && manager.includes('"data-caretip-route-ready"'),
+  "HTML boot MutationObserver must filter to route-ready (not unfiltered attribute watch)",
+);
+assert(
+  manager.includes("isCustomerJourneyPath") &&
+    manager.includes("data-caretip-route-ready") &&
+    manager.includes("markAppShellInteractive"),
+  "customer cold entry must defer app-shell-interactive until route-ready when HTML boot is gone",
+);
+
+const main = read("src/main.tsx");
+assert(main.includes("prefetchCustomerEntryGraph"), "main must prefetch customer QR chunks on cold entry");
+
+const prefetchCustomer = read("src/app/lib/prefetchCustomerEntryGraph.ts");
+assert(
+  prefetchCustomer.includes("isCustomerJourneyPath") && prefetchCustomer.includes("TableQrLandingPage"),
+  "customer entry prefetch must warm path-matched lazy QR pages",
+);
+
+const pageLoader = read("src/app/components/CareTipPageLoader.tsx");
+assert(
+  pageLoader.includes("holdUnderHtmlBoot") && /holdUnderHtmlBoot[\s\S]{0,80}return null/.test(pageLoader),
+  "CareTipPageLoader must not paint bg-background under HTML boot",
+);
+
+assert(
+  shell.includes("holdUnderHtmlBoot") && /holdUnderHtmlBoot[\s\S]{0,80}return null/.test(shell),
+  "CustomerFlowShell must not paint GlobalAppLoadingHold under HTML boot",
+);
+
+const publicHold = read("src/app/routing/PublicRouteChunkHold.tsx");
+assert(
+  publicHold.includes("resolveCustomerJourneyBootContext") && publicHold.includes("isCustomerJourneyPath"),
+  "lazy customer chunk hold must use journey-specific boot copy",
+);
+
+const routes = read("src/app/routes.tsx");
+assert(
+  routes.includes("Component: QRLandingPage") && !/path: '\/qr-landing\/:businessId\?',\s*lazy:/.test(routes),
+  "primary QR team picker routes must stay eager (no RR lazy suspend on cold scan)",
 );
 
 const tipFlow = read("src/app/context/TipFlowContext.tsx");

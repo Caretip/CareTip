@@ -7,6 +7,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import assert from "node:assert/strict";
 import { buildTipGuestConfirmationContent } from "../src/emails/i18nEmail.js";
+import { resolveEmailLocaleFromCheckoutSession } from "../src/services/tipGuestConfirmationEmail.service.js";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "../..");
 
@@ -52,6 +53,30 @@ if (emailSvc.includes("claimGuestConfirmationSend") && emailSvc.includes("releas
 } else {
   fail("Email service idempotency incomplete");
 }
+
+if (
+  emailSvc.includes("parseTipGuestPresentationLocale") &&
+  emailSvc.includes("session.metadata?.locale")
+) {
+  pass("Guest confirmation email prefers checkout metadata.locale");
+} else {
+  fail("Guest confirmation email missing metadata.locale resolution");
+}
+
+const stripeLocale = read("backend/src/services/stripe.service.ts");
+if (stripeLocale.includes("metadata.locale = guestLocale")) {
+  pass("Tip checkout stores guest locale on Stripe session metadata");
+} else {
+  fail("Tip checkout missing locale metadata");
+}
+
+const enFromMeta = resolveEmailLocaleFromCheckoutSession({
+  id: "cs_test",
+  metadata: { locale: "en" },
+  locale: "de",
+} as Parameters<typeof resolveEmailLocaleFromCheckoutSession>[0]);
+assert.equal(enFromMeta, "en");
+pass("resolveEmailLocaleFromCheckoutSession honors metadata.locale");
 
 const successUi = read("src/app/pages/customer/TipSuccessExperience.tsx");
 if (successUi.includes("showReceipt = false") && !successUi.match(/showReceipt\s*=\s*true/)) {

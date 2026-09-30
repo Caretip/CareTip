@@ -51,6 +51,12 @@ export function RouteNavigationLoadingRegistrar({ children }: { children: ReactN
   );
 
   useEffect(() => {
+    if (
+      typeof document !== "undefined" &&
+      document.querySelector("[data-caretip-route-ready], [data-caretip-public-committed]")
+    ) {
+      return;
+    }
     const legalMessage = resolveLegalDocumentLoadingMessage(pathOnly, t);
     if (!legalMessage || !isHtmlBootElementPresent()) return;
     setHtmlBootBridgeTagline(legalMessage);

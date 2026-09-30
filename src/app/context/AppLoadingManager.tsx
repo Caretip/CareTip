@@ -43,6 +43,10 @@ import {
   shouldBypassOverlayShowThreshold,
 } from "../lib/appLoadingTiming";
 import {
+  isAppLanguageChangeActive,
+  subscribeAppLanguageChange,
+} from "../lib/appLanguageLoading";
+import {
   pickOverlayMessage,
   pickOverlayWinner,
   isTechnicalOverlayRegistration,
@@ -59,6 +63,7 @@ import {
 } from "../lib/authPostLoginTransition";
 import { registerAuthSoftNavColdBootDismiss, shouldBlockOverlayDuringSignInHandoff } from "../lib/authSoftNavHandoff";
 import { isPublicShellPath } from "../lib/publicRoutes";
+import { isCustomerJourneyPath } from "../lib/appLoadingJourney";
 import {
   getExternalStripeNavigationHoldMessage,
   isExternalStripeNavigationHoldActive,
@@ -181,6 +186,11 @@ function resolveAuthIntentOverlayMessage(
 }
 
 export function AppLoadingManagerProvider({ children }: { children: React.ReactNode }) {
+  const languageChangeActive = useSyncExternalStore(
+    subscribeAppLanguageChange,
+    isAppLanguageChangeActive,
+    () => false,
+  );
   const initialColdBootPending = createInitialOverlayPhase() === "visible";
   const [registrations, setRegistrations] = useState<Map<string, Registration>>(createInitialRegistrations);
   const [overlayPhase, setOverlayPhase] = useState<OverlayPhase>(createInitialOverlayPhase);
@@ -430,6 +440,14 @@ export function AppLoadingManagerProvider({ children }: { children: React.ReactN
   useLayoutEffect(() => {
     if (shouldRegisterInitialAppBoot(readInitialPathname())) return;
     if (!isHtmlBootElementPresent()) {
+      const p = readInitialPathname();
+      if (
+        isCustomerJourneyPath(p) &&
+        typeof document !== "undefined" &&
+        !document.querySelector("[data-caretip-route-ready]")
+      ) {
+        return;
+      }
       markAppShellInteractive();
     }
     /* Public cold start: keep #caretip-html-boot until completeHtmlBootAfterPublicPaint(). */
@@ -497,7 +515,8 @@ export function AppLoadingManagerProvider({ children }: { children: React.ReactN
     }
   }, [overlayMessage, winner?.key]);
 
-  const winnerRequested = Boolean(winner) || externalStripeHoldActive;
+  const winnerRequested =
+    (Boolean(winner) || externalStripeHoldActive) && !languageChangeActive;
   winnerRequestedRef.current = winnerRequested;
 
   useLayoutEffect(() => {

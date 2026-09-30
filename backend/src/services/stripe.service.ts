@@ -381,6 +381,8 @@ export interface CreateTipCheckoutSessionInput {
   guestEmail?: string | null;
   /** Guest scan session from QR flow — links funnel to qr_scan_events. */
   qrScanSessionId?: string | null;
+  /** Customer-selected UI locale for Stripe Checkout + confirmation email (`en` | `de`). */
+  locale?: "en" | "de" | null;
 }
 
 export interface CreateTipCheckoutSessionResult {
@@ -616,6 +618,8 @@ export async function createTipCheckoutSession(
   const platformFeeCents = calculateTipPlatformFeeCents(totalCents);
 
   const base = frontendBaseUrl();
+  const guestEmail = normalizeGuestEmail(input.guestEmail ?? null);
+  const guestLocale = input.locale === "en" || input.locale === "de" ? input.locale : null;
   const metadata: Record<string, string> = {
     employeeId,
     businessId,
@@ -629,17 +633,18 @@ export async function createTipCheckoutSession(
   if (tblId) metadata.tableId = tblId;
   const scanSession = input.qrScanSessionId?.trim();
   if (scanSession) metadata.qrScanSessionId = scanSession.slice(0, 64);
+  if (guestLocale) metadata.locale = guestLocale;
   const name = input.customerName?.trim();
   if (name) metadata.customerName = name;
   const fb = input.feedback?.trim();
   if (fb) metadata.feedback = fb.slice(0, 2000);
-  const guestEmail = normalizeGuestEmail(input.guestEmail ?? null);
 
   let session: Stripe.Checkout.Session;
   try {
     session = await createCheckoutSession({
       mode: "payment",
       payment_method_types: ["card"],
+      ...(guestLocale ? { locale: guestLocale } : {}),
       ...(guestEmail ? { customer_email: guestEmail } : {}),
       line_items: [
         {
@@ -662,6 +667,7 @@ export async function createTipCheckoutSession(
           caretipRoutingMode: routing.routingMode,
           ...(locId ? { locationId: locId } : {}),
           ...(tblId ? { tableId: tblId } : {}),
+          ...(guestLocale ? { locale: guestLocale } : {}),
         },
         ...(guestEmail ? { receipt_email: guestEmail } : {}),
         ...(routing.destinationAccountId

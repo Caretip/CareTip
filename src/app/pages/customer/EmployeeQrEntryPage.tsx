@@ -1,6 +1,7 @@
 import { useNavigate, useParams, Link } from "react-router";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { cn } from "@/lib/utils";
 import { useTipFlow } from "../../context/TipFlowContext";
 import { getEmployeeById, recordGuestQrScanOnce } from "../../lib/api";
 import { toUserFriendlyMessage } from "../../lib/errorMessages";
@@ -11,6 +12,7 @@ import { markCustomerFlowEntered } from "../../lib/customerFlowGuard";
 import { formatEur } from "../../lib/formatEur";
 import { startGuestTipCheckout } from "../../lib/startGuestTipCheckout";
 import { customerFlowUi as cf } from "./customerFlowUi";
+import { CustomerJourneyLanguageSwitcher } from "./CustomerJourneyLanguageSwitcher";
 import { CustomerRepeatTipPrompt } from "./CustomerRepeatTipPrompt";
 import {
   type CustomerEntryPhase,
@@ -138,6 +140,9 @@ export function EmployeeQrEntryPage() {
   return (
     <div className={cf.page} data-caretip-route-ready="">
       <div className={cf.frame}>
+      <div className={cn(cf.stickyHeader, "flex justify-end px-4 py-2 sm:px-6")}>
+        <CustomerJourneyLanguageSwitcher />
+      </div>
       <div className={`${cf.main} pb-16 sm:pb-20`}>
         <CustomerRepeatTipPrompt
           employeeName={emp.name ?? t("tipFlow.common.teamMember")}

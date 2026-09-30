@@ -10,6 +10,7 @@ import { wakeRemoteApi, migrateLegacyAccessTokenFromStorage } from "./app/lib/ap
 import { recoverStaleChunkOnce } from "./app/lib/chunkLoadRecovery";
 import { scheduleMobileDeferredWork } from "./lib/mobilePerf";
 import { landingI18nPreload } from "./i18n/preloadLocale";
+import { prefetchCustomerEntryGraph } from "./app/lib/prefetchCustomerEntryGraph";
 import { markLandingColdLoad } from "./app/lib/landingColdLoadMarks";
 import { removeStaticCrawlerSummary } from "./app/lib/seo/documentSeo";
 import "./styles/index.css";
@@ -108,6 +109,7 @@ function prefetchPublicEntryGraph(): void {
   }
 }
 prefetchPublicEntryGraph();
+prefetchCustomerEntryGraph();
 
 scheduleMobileDeferredWork(() => wakeRemoteApi(), { mobileTimeoutMs: 3500, desktopTimeoutMs: 900 });
 

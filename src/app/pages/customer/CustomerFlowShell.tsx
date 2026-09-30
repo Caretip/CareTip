@@ -89,7 +89,10 @@ export function CustomerFlowShell({
       : cf.page;
 
   if (loading) {
-    if (holdUnderHtmlBoot || !softNav) {
+    if (holdUnderHtmlBoot) {
+      return null;
+    }
+    if (!softNav) {
       return <GlobalAppLoadingHold className={className} />;
     }
     return (
