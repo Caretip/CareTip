@@ -24,3 +24,12 @@ export class BrandedQrRenderFailedError extends Error {
     this.name = "BrandedQrRenderFailedError";
   }
 }
+
+export class BrandedQrInvalidTargetUrlError extends Error {
+  readonly code = "BRANDED_QR_TARGET_URL_FORBIDDEN" as const;
+
+  constructor(message = "Invalid target URL") {
+    super(message);
+    this.name = "BrandedQrInvalidTargetUrlError";
+  }
+}

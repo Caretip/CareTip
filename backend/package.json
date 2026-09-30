@@ -77,6 +77,7 @@
     "test:admin-failed-transactions-clarity": "dotenv -e ../.env -e .env -- tsx scripts/admin-failed-transactions-clarity-runtime.ts",
     "test:sql-injection": "npm run test:sql-injection-audit && npm run test:sql-injection-smoke",
     "test:file-upload-pentest": "tsx scripts/file-upload-pentest.ts",
+    "test:security-remediation": "tsx scripts/security-remediation-runtime.ts",
     "test:kyc-disk-path-jail": "tsx scripts/kyc-disk-path-jail.ts",
     "test:physical-qr": "tsx scripts/physical-qr-runtime.ts",
     "test:physical-qr-notify": "dotenv -e ../.env -e .env -- tsx scripts/physical-qr-notify-runtime.ts",

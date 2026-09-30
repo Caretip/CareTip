@@ -14,6 +14,7 @@ import * as qrController from "../controllers/qr.controller.js";
 import * as goalController from "../controllers/goal.controller.js";
 import { isAllowedImageMimetype } from "../services/upload.service.js";
 import { MULTER_SAFE_LIMITS } from "../lib/multerUploadLimits.js";
+import { uploadImageRateLimit } from "../middleware/securityRateLimit.middleware.js";
 
 const router = Router();
 const goalsPremium = requireFeature("employeeGoals");
@@ -78,6 +79,7 @@ router.post(
   authMiddleware,
   requireVerifiedEmail,
   requireRole(Role.EMPLOYEE),
+  uploadImageRateLimit,
   upload.single("avatar"),
   employeeController.uploadMyAvatar,
 );

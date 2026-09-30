@@ -4,6 +4,7 @@ import { clientSafeMessage, logServerError } from "../utils/httpErrors.js";
 import { buildBrandedQrImageDto } from "../services/qr/brandedQrRender.service.js";
 import { resolveEmployeePublicTipUrl } from "../services/qr/employeeQrUrl.service.js";
 import {
+  BrandedQrInvalidTargetUrlError,
   BrandedQrNotFoundError,
   BrandedQrRenderUnavailableError,
 } from "../services/qr/brandedQr.errors.js";
@@ -54,6 +55,10 @@ export async function getBusinessBrandedQr(req: Request, res: Response): Promise
     res.setHeader("X-CareTip-Qr-Branding-Version", `"${payload.brandingVersion}"`);
     res.json(payload);
   } catch (err) {
+    if (err instanceof BrandedQrInvalidTargetUrlError) {
+      sendBrandedQrError(res, 400, err.message, err.code);
+      return;
+    }
     if (err instanceof BrandedQrNotFoundError) {
       sendBrandedQrError(res, 404, err.message, err.code);
       return;

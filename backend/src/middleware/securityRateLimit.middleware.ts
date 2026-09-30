@@ -79,6 +79,8 @@ const MFA_MSG = "Too many verification attempts. Please try again later.";
 const FEEDBACK_MSG = "Too many feedback submissions. Please try again later.";
 const SOCKET_TOKEN_MSG = "Too many requests. Please try again later.";
 const API_MSG = "Too many requests. Please slow down.";
+const UPLOAD_IMAGE_MSG = "Too many uploads. Please wait a moment and try again.";
+const UPLOAD_KYC_MSG = "Too many document uploads. Please try again later.";
 
 export const changePasswordRateLimit = createAuthUserLimiter(
   "change-password",
@@ -135,6 +137,18 @@ export const publicSocketTokenRateLimit: RequestHandler = (req, res, next) => {
 };
 
 /** Broad per-IP (+ per-user when Bearer present) cap for authenticated API traffic. */
+export const uploadImageRateLimit = createAuthUserLimiter(
+  "upload-image",
+  securityRateLimits.uploadImage,
+  UPLOAD_IMAGE_MSG,
+);
+
+export const uploadKycRateLimit = createAuthUserLimiter(
+  "upload-kyc",
+  securityRateLimits.uploadKyc,
+  UPLOAD_KYC_MSG,
+);
+
 export const authenticatedApiRateLimit: RequestHandler = (req, res, next) => {
   const ip = clientIp(req);
   const uid = userIdFromReq(req);

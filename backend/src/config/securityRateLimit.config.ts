@@ -32,4 +32,14 @@ export const securityRateLimits = {
     ip: { max: envInt("SEC_API_IP_MAX_PER_15M", 400), windowMs: AUTH_WINDOW_15M_MS },
     user: { max: envInt("SEC_API_USER_MAX_PER_15M", 200), windowMs: AUTH_WINDOW_15M_MS },
   },
+  /** Logo, banner, avatar — per authenticated user (+ IP cap). */
+  uploadImage: {
+    ip: { max: envInt("SEC_UPLOAD_IMAGE_IP_MAX_PER_15M", 60), windowMs: AUTH_WINDOW_15M_MS },
+    user: { max: envInt("SEC_UPLOAD_IMAGE_USER_MAX_PER_15M", 25), windowMs: AUTH_WINDOW_15M_MS },
+  },
+  /** KYC / verification documents — stricter per user. */
+  uploadKyc: {
+    ip: { max: envInt("SEC_UPLOAD_KYC_IP_MAX_PER_15M", 30), windowMs: AUTH_WINDOW_15M_MS },
+    user: { max: envInt("SEC_UPLOAD_KYC_USER_MAX_PER_15M", 12), windowMs: AUTH_WINDOW_15M_MS },
+  },
 } as const;

@@ -13,6 +13,7 @@ import { requireFeature } from "../services/subscriptionEntitlement.service.js";
 const requireBrandingCustomization = requireFeature("brandingCustomization");
 import { clientSafeMessage } from "../utils/httpErrors.js";
 import { validateInviteCodeRateLimit } from "../middleware/authRateLimit.middleware.js";
+import { uploadImageRateLimit, uploadKycRateLimit } from "../middleware/securityRateLimit.middleware.js";
 
 const router = Router();
 
@@ -33,6 +34,7 @@ router.post(
   authMiddleware,
   requireVerifiedEmail,
   requireRole(Role.MANAGER),
+  uploadKycRateLimit,
   (req, res, next) =>
     businessUploadVerification(req, res, (err: unknown) => {
       if (err) {
@@ -73,6 +75,7 @@ router.post(
   authMiddleware,
   requireVerifiedEmail,
   requireRole(Role.MANAGER),
+  uploadImageRateLimit,
   (req, res, next) =>
     businessUploadLogo(req, res, (err: unknown) => {
       if (err) {
@@ -123,6 +126,7 @@ router.post(
   authMiddleware,
   requireVerifiedEmail,
   requireRole(Role.MANAGER),
+  uploadImageRateLimit,
   (req, res, next) =>
     businessUploadBanner(req, res, (err: unknown) => {
       if (err) {

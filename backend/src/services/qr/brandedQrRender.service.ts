@@ -8,6 +8,7 @@ import {
 } from "./brandedQr.errors.js";
 import type { BrandedQrImageDto } from "./brandedQr.dto.js";
 import { logServerError } from "../../utils/httpErrors.js";
+import { assertCareTipBrandedQrTargetUrl } from "../../lib/brandedQrTargetUrl.js";
 
 export function brandedQrCacheKey(businessId: string, targetUrl: string, fingerprint: string): string {
   const urlHash = createHash("sha256").update(targetUrl.trim()).digest("hex").slice(0, 16);
@@ -31,7 +32,8 @@ export async function renderBrandedQrPngBuffer(
   targetUrl: string,
   mode: "manager" | "employee",
 ): Promise<{ buffer: Buffer; etag: string; fingerprint: string; fallback?: "standard" }> {
-  const trimmedUrl = targetUrl.trim();
+  const trimmedUrl =
+    mode === "manager" ? assertCareTipBrandedQrTargetUrl(targetUrl) : targetUrl.trim();
   if (!trimmedUrl) throw new BrandedQrNotFoundError("targetUrl is required");
 
   const business = await prisma.business.findUnique({

@@ -10,6 +10,7 @@ import * as platformController from "../controllers/platform.controller.js";
 import * as supportTicketController from "../controllers/supportTicket.controller.js";
 import { supportTicketReplyLimiter } from "../middleware/supportTicketRateLimit.middleware.js";
 import { clientSafeMessage } from "../utils/httpErrors.js";
+import { uploadImageRateLimit, uploadKycRateLimit } from "../middleware/securityRateLimit.middleware.js";
 
 const router = Router();
 
@@ -113,11 +114,13 @@ router.patch(
 router.patch("/businesses/:id", platformController.updateBusiness);
 router.post(
   "/businesses/:id/logo",
+  uploadImageRateLimit,
   multerHandler(platformUploadLogo),
   platformController.uploadBusinessLogo,
 );
 router.post(
   "/businesses/:id/verification-document",
+  uploadKycRateLimit,
   multerHandler(platformUploadVerification),
   platformController.uploadVerificationDocument,
 );

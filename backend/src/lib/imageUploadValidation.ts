@@ -1,3 +1,5 @@
+import { assertImageDimensionsWithinLimits } from "./imageDimensionValidation.js";
+
 /** Shared rules for profile / logo image uploads (multer + Supabase Storage / disk path). */
 
 export const AVATAR_MAX_BYTES = 5 * 1024 * 1024;
@@ -70,6 +72,9 @@ export function validateImageBufferForUpload(buffer: Buffer, claimedMimetype: st
     (kind === "avif" && /^image\/(jpeg|jpg)$/i.test(mt));
   if (!mimeOk) {
     throw new Error("Unsupported image type. Use JPEG, PNG, GIF, WebP, HEIC, or AVIF.");
+  }
+  if (kind !== "heic" && kind !== "avif") {
+    assertImageDimensionsWithinLimits(buffer, kind);
   }
 }
 
