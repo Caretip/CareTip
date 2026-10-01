@@ -1,0 +1,118 @@
+/**
+ * Platform admin workspace — open sections, tables, filters (not card grids).
+ * Scoped to `.caretip-dashboard-shell.platform-dashboard`.
+ */
+
+.caretip-dashboard-shell.platform-dashboard .platform-admin-workspace-header {
+  margin-bottom: 1.5rem;
+  padding-bottom: 1.25rem;
+  border-bottom: 1px solid hsl(var(--border) / 0.75);
+}
+
+.caretip-dashboard-shell.platform-dashboard .platform-admin-section {
+  padding-top: 0.25rem;
+}
+
+.caretip-dashboard-shell.platform-dashboard .platform-admin-section + .platform-admin-section,
+.caretip-dashboard-shell.platform-dashboard .platform-admin-data-section--open + .platform-admin-section {
+  margin-top: 0.5rem;
+  padding-top: 1.75rem;
+  border-top: 1px solid hsl(var(--border) / 0.65);
+}
+
+.caretip-dashboard-shell.platform-dashboard .platform-admin-metric-strip {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0;
+  border-top: 1px solid hsl(var(--border) / 0.75);
+  border-bottom: 1px solid hsl(var(--border) / 0.75);
+  padding: 0.75rem 0;
+}
+
+@media (min-width: 640px) {
+  .caretip-dashboard-shell.platform-dashboard .platform-admin-metric-strip {
+    grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+  }
+
+  .caretip-dashboard-shell.platform-dashboard .platform-admin-metric-strip > * {
+    padding: 0.35rem 1rem;
+    border-right: 1px solid hsl(var(--border) / 0.55);
+  }
+
+  .caretip-dashboard-shell.platform-dashboard .platform-admin-metric-strip > *:last-child {
+    border-right: 0;
+  }
+}
+
+.caretip-dashboard-shell.platform-dashboard .platform-admin-filter-bar {
+  margin-bottom: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+@media (min-width: 768px) {
+  .caretip-dashboard-shell.platform-dashboard .platform-admin-filter-bar {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    justify-content: space-between;
+  }
+}
+
+/* Open data surface — table lives on page, not inside a heavy card */
+.caretip-dashboard-shell.platform-dashboard .platform-admin-data-section--open {
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+.caretip-dashboard-shell.platform-dashboard .platform-admin-data-section--open .platform-admin-data-section__body {
+  padding: 0;
+}
+
+.caretip-dashboard-shell.platform-dashboard .platform-admin-data-section--open .platform-admin-mobile-list {
+  padding: 0;
+}
+
+.caretip-dashboard-shell.platform-dashboard .platform-admin-data-section--open table {
+  border-collapse: collapse;
+}
+
+.caretip-dashboard-shell.platform-dashboard .platform-admin-data-section--open thead {
+  border-bottom: 1px solid hsl(var(--border) / 0.85);
+}
+
+.caretip-dashboard-shell.platform-dashboard .platform-admin-data-section--open tbody tr {
+  border-bottom: 1px solid hsl(var(--border) / 0.45);
+}
+
+.caretip-dashboard-shell.platform-dashboard .platform-admin-data-section--open tbody tr:hover {
+  background: hsl(var(--muted) / 0.22);
+}
+
+.caretip-dashboard-shell.platform-dashboard .platform-admin-empty-block {
+  padding: 2rem 0;
+  text-align: center;
+  max-width: 28rem;
+  margin-inline: auto;
+}
+
+.caretip-dashboard-shell.platform-dashboard .platform-admin-page-header__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.caretip-dashboard-shell.platform-dashboard .admin-dash-nav-link--pending,
+.caretip-mobile-drawer-panel .admin-dash-nav-link--pending {
+  outline: 2px solid color-mix(in oklab, var(--primary) 35%, transparent);
+  outline-offset: -2px;
+}
+
+.caretip-dashboard-shell.platform-dashboard .admin-sidebar-child-link--pending,
+.caretip-mobile-drawer-panel .admin-sidebar-child-link--pending {
+  font-weight: 600;
+}

@@ -5,7 +5,8 @@ import { useLocation, useNavigation } from "react-router";
  * While React Router is loading a lazy route, `useLocation()` can lag;
  * `navigation.location` reflects the destination immediately after click.
  */
-export function useBusinessSidebarNavigationPath(): { pathname: string; search: string; pending: boolean } {
+/** Business + employee dashboard sidebars (pending destination during lazy route load). */
+export function useSidebarNavigationPath(): { pathname: string; search: string; pending: boolean } {
   const location = useLocation();
   const navigation = useNavigation();
   const pending = navigation.state === "loading" && navigation.location != null;
@@ -17,3 +18,6 @@ export function useBusinessSidebarNavigationPath(): { pathname: string; search: 
     pending,
   };
 }
+
+/** @deprecated Use {@link useSidebarNavigationPath} */
+export const useBusinessSidebarNavigationPath = useSidebarNavigationPath;

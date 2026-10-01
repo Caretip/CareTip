@@ -13,6 +13,7 @@ import { cn } from "@/lib/utils";
 import { useDashboardLayoutPaintReady, useGlobalAppLoadingActive } from "../lib/globalAppLoading";
 import { useWarmPrefetchAuthLoginRoute } from "../lib/useWarmPrefetchAuthLoginRoute";
 import { useWarmPrefetchLandingRoute } from "../lib/useWarmPrefetchLandingRoute";
+import { useWarmPrefetchPlatformAdminSidebarRoutes } from "../lib/useWarmPrefetchPlatformAdminSidebarRoutes";
 import { useMobileMenuState } from "../hooks/useMobileMenuState";
 import { useMinWidthMedia } from "@/lib/motionPerf";
 import {
@@ -38,6 +39,7 @@ export function SuperAdminLayout() {
   useDashboardLayoutPaintReady("platform-admin-layout-paint", isAppReady);
   useWarmPrefetchAuthLoginRoute("/platform-admin/login", isAppReady);
   useWarmPrefetchLandingRoute(isAppReady);
+  useWarmPrefetchPlatformAdminSidebarRoutes(isAppReady);
   useDashboardLayoutProfile("platform_admin");
   useDashboardSidebarProfile("platform_admin", Boolean(isAppReady && isLargeScreen));
   useDashboardHeaderProfile("platform_admin");

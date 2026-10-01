@@ -5,6 +5,8 @@
 
 import { markPostLoginDashboardWarm } from "./authPostLoginTransition";
 import { prefetchBusinessDashboardRoute } from "./businessDashboardRoutePrefetch";
+import { prefetchEmployeeDashboardRoute } from "./employeeDashboardRoutePrefetch";
+import { prefetchPlatformAdminRoute } from "./platformAdminRoutePrefetch";
 
 type RouteImporter = () => Promise<unknown>;
 
@@ -86,6 +88,14 @@ export function prefetchAuthenticatedRoute(path: string): Promise<void> {
 
   if (normalized.startsWith("/dashboard/")) {
     return prefetchBusinessDashboardRoute(normalized);
+  }
+
+  if (normalized.startsWith("/employee/") && normalized !== "/employee/login") {
+    return prefetchEmployeeDashboardRoute(normalized);
+  }
+
+  if (normalized.startsWith("/platform-admin/")) {
+    return prefetchPlatformAdminRoute(normalized);
   }
 
   if (prefetched.has(normalized)) return Promise.resolve();

@@ -7609,6 +7609,9 @@
     }
   },
   "admin": {
+    "workspace": {
+      "eyebrow": "Platform admin"
+    },
     "loadingDashboard": "Loading platform dashboard…",
     "loadErrorTitle": "We’re having trouble loading platform data.",
     "retry": "Retry",

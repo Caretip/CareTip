@@ -7605,6 +7605,9 @@
     }
   },
   "admin": {
+    "workspace": {
+      "eyebrow": "Plattform-Admin"
+    },
     "loadingDashboard": "Plattformdashboard wird geladen…",
     "loadErrorTitle": "Plattformdaten konnten nicht geladen werden.",
     "retry": "Erneut versuchen",

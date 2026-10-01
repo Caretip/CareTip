@@ -16,6 +16,7 @@ import { RouteChunkBoundary } from "../routing/RouteChunkBoundary";
 import { useDashboardLayoutPaintReady, useGlobalAppLoadingActive } from "../lib/globalAppLoading";
 import { useWarmPrefetchAuthLoginRoute } from "../lib/useWarmPrefetchAuthLoginRoute";
 import { useWarmPrefetchLandingRoute } from "../lib/useWarmPrefetchLandingRoute";
+import { useWarmPrefetchEmployeeSidebarRoutes } from "../lib/useWarmPrefetchEmployeeSidebarRoutes";
 import { EmployeeEntitlementsProvider } from "../contexts/EmployeeEntitlementsContext";
 import { useMinWidthMedia } from "@/lib/motionPerf";
 import {
@@ -79,6 +80,7 @@ export function EmployeeLayout() {
   useDashboardLayoutPaintReady("employee-layout-paint", isAppReady);
   useWarmPrefetchAuthLoginRoute("/employee/login", isAppReady);
   useWarmPrefetchLandingRoute(isAppReady);
+  useWarmPrefetchEmployeeSidebarRoutes(isAppReady);
 
   return (
     <EmployeeEntitlementsProvider>

@@ -14,13 +14,17 @@ export const platformUi = {
   pageInner:
     "caretip-container platform-page__inner w-full min-w-0 px-4 pt-3 max-lg:pt-3 sm:px-6 sm:pt-4",
 
-  pageHeader: "platform-admin-page-header mb-5 max-lg:mb-6",
-  pageTitleRow: "flex items-start gap-3",
-  pageTitleIcon: "mt-0.5 h-6 w-6 shrink-0 text-muted-foreground sm:h-7 sm:w-7",
-  pageTitle:
-    "platform-admin-page-title text-xl font-semibold tracking-tight text-foreground sm:text-[1.375rem] lg:text-[1.5rem]",
-  pageSubtitle:
-    "platform-admin-page-subtitle mt-1.5 max-w-2xl text-pretty text-sm leading-relaxed text-muted-foreground",
+  pageHeader: "platform-admin-page-header platform-admin-workspace-header",
+  pageTitleRow: "flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between sm:gap-6",
+  pageTitleIcon: "hidden",
+  pageTitle: "platform-admin-page-title premium-workspace-header__title",
+  pageSubtitle: "platform-admin-page-subtitle premium-workspace-header__purpose mt-1 max-w-prose",
+  pageEyebrow: "platform-admin-page-eyebrow",
+  pageHeaderActions: "platform-admin-page-header__actions",
+
+  metricStrip: "platform-admin-metric-strip",
+  filterBar: "platform-admin-filter-bar",
+  emptyBlock: "platform-admin-empty-block",
 
   searchSection: "mb-5 max-lg:mb-6",
   searchWrap: "relative w-full max-w-xl",

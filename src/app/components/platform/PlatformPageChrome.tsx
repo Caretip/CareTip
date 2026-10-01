@@ -1,8 +1,16 @@
 import type { ElementType, ReactNode } from "react";
-import { motion } from "motion/react";
+import { useTranslation } from "react-i18next";
 import { Search } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { dashboardWorkspaceUi } from "@/app/components/dashboard/dashboardWorkspaceUi";
 import { platformUi } from "./platformDashboardUi";
+
+export {
+  PlatformAdminSection,
+  PlatformAdminMetricStrip,
+  PlatformAdminFilterBar,
+  PlatformAdminEmptyBlock,
+} from "./PlatformAdminWorkspace";
 
 export function PlatformPage({
   children,
@@ -13,48 +21,50 @@ export function PlatformPage({
 }) {
   return (
     <div className={cn(platformUi.page, className)}>
-      <motion.div
-        initial={{ opacity: 0, y: 6 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
-        className={platformUi.pageInner}
-      >
-        {children}
-      </motion.div>
+      <div className={platformUi.pageInner}>{children}</div>
     </div>
   );
 }
 
 export function PlatformPageHeader({
   icon: Icon,
+  eyebrow,
   title,
   subtitle,
   className,
   children,
+  actions,
+  hideDefaultEyebrow = false,
 }: {
-  icon: ElementType;
+  icon?: ElementType;
+  /** Module kicker above the title — defaults to admin.workspace.eyebrow when omitted. */
+  eyebrow?: string;
   title: string;
   subtitle?: string;
   className?: string;
   children?: ReactNode;
+  actions?: ReactNode;
+  hideDefaultEyebrow?: boolean;
 }) {
+  const { t } = useTranslation();
+  const kicker = eyebrow ?? (hideDefaultEyebrow ? null : t("admin.workspace.eyebrow"));
+
   return (
     <header className={cn(platformUi.pageHeader, className)}>
-      <motion.div
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
-        className="space-y-4"
-      >
-        <div className={platformUi.pageTitleRow}>
-          <Icon className={platformUi.pageTitleIcon} aria-hidden />
-          <div className="min-w-0 flex-1">
-            <h1 className={platformUi.pageTitle}>{title}</h1>
-            {subtitle ? <p className={platformUi.pageSubtitle}>{subtitle}</p> : null}
+      <div className={platformUi.pageTitleRow}>
+        <div className="min-w-0 flex-1">
+          {kicker ? <p className={cn(dashboardWorkspaceUi.eyebrow, platformUi.pageEyebrow)}>{kicker}</p> : null}
+          <div className="mt-1 flex items-start gap-2.5">
+            {Icon ? <Icon className="mt-0.5 h-5 w-5 shrink-0 text-muted-foreground sm:h-[1.35rem] sm:w-[1.35rem]" aria-hidden /> : null}
+            <div className="min-w-0">
+              <h1 className={platformUi.pageTitle}>{title}</h1>
+              {subtitle ? <p className={platformUi.pageSubtitle}>{subtitle}</p> : null}
+            </div>
           </div>
         </div>
-        {children}
-      </motion.div>
+        {actions ? <div className={platformUi.pageHeaderActions}>{actions}</div> : null}
+      </div>
+      {children}
     </header>
   );
 }
@@ -93,25 +103,30 @@ export function PlatformSearchField({
   );
 }
 
+export type PlatformDataPanelSurface = "panel" | "open";
+
 export function PlatformDataPanel({
   children,
   footer,
   className,
+  surface = "open",
 }: {
   children: ReactNode;
   footer?: ReactNode;
   className?: string;
+  surface?: PlatformDataPanelSurface;
 }) {
   return (
-    <motion.section
-      initial={{ opacity: 0, y: 8 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.4, delay: 0.05 }}
-      className={cn(platformUi.dataPanel, className)}
+    <section
+      className={cn(
+        surface === "open" ? "platform-admin-data-section--open" : platformUi.dataPanel,
+        "platform-admin-data-section",
+        className,
+      )}
     >
-      {children}
+      <div className="platform-admin-data-section__body">{children}</div>
       {footer ? <div className={platformUi.panelFooter}>{footer}</div> : null}
-    </motion.section>
+    </section>
   );
 }
 
@@ -119,14 +134,16 @@ export function PlatformResponsiveData({
   mobile,
   desktop,
   footer,
+  surface = "open",
 }: {
   mobile: ReactNode;
   desktop: ReactNode;
   footer?: ReactNode;
+  surface?: PlatformDataPanelSurface;
 }) {
   return (
-    <PlatformDataPanel footer={footer}>
-      <div className={platformUi.mobileList}>{mobile}</div>
+    <PlatformDataPanel footer={footer} surface={surface}>
+      <div className={cn(platformUi.mobileList, "platform-admin-mobile-list")}>{mobile}</div>
       <div className={platformUi.tableWrap}>{desktop}</div>
     </PlatformDataPanel>
   );

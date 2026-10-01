@@ -1,5 +1,8 @@
 import { useEffect, useState } from "react";
-import { Link, useLocation, useNavigate } from "react-router";
+import { useNavigate } from "react-router";
+import { PrefetchLink } from "@/app/components/PrefetchLink";
+import { prefetchEmployeeDashboardRoute } from "@/app/lib/employeeDashboardRoutePrefetch";
+import { useSidebarNavigationPath } from "@/app/hooks/useBusinessSidebarNavigationPath";
 import { Lock } from "lucide-react";
 import { CareIcon } from "@/components/icons";
 import { useTranslation } from "react-i18next";
@@ -18,6 +21,10 @@ import {
 } from "./employeeDashboardNav";
 import type { BusinessSubscriptionTier } from "@/app/lib/subscriptionCapabilities";
 
+function warmSidebarDestination(href: string): void {
+  void prefetchEmployeeDashboardRoute(href);
+}
+
 export function EmployeeSidebarNav({
   entitlementsReady,
   tier,
@@ -27,7 +34,7 @@ export function EmployeeSidebarNav({
   tier: BusinessSubscriptionTier | undefined | null;
   onNavigate?: () => void;
 }) {
-  const location = useLocation();
+  const { pathname, pending: navPending } = useSidebarNavigationPath();
 
   return (
     <ul className="space-y-0.5">
@@ -36,7 +43,8 @@ export function EmployeeSidebarNav({
           <EmployeeSidebarLink
             key={entry.href}
             entry={entry}
-            pathname={location.pathname}
+            pathname={pathname}
+            navPending={navPending}
             entitlementsReady={entitlementsReady}
             tier={tier}
             onNavigate={onNavigate}
@@ -45,7 +53,8 @@ export function EmployeeSidebarNav({
           <EmployeeSidebarGroup
             key={entry.id}
             entry={entry}
-            pathname={location.pathname}
+            pathname={pathname}
+            navPending={navPending}
             onNavigate={onNavigate}
           />
         ),
@@ -57,12 +66,14 @@ export function EmployeeSidebarNav({
 function EmployeeSidebarLink({
   entry,
   pathname,
+  navPending,
   entitlementsReady,
   tier,
   onNavigate,
 }: {
   entry: Extract<EmployeeDashboardNavEntry, { type: "link" }>;
   pathname: string;
+  navPending: boolean;
   entitlementsReady: boolean;
   tier: BusinessSubscriptionTier | undefined | null;
   onNavigate?: () => void;
@@ -73,13 +84,20 @@ function EmployeeSidebarLink({
 
   return (
     <li>
-      <Link
+      <PrefetchLink
         to={entry.href}
+        onPointerDown={() => warmSidebarDestination(entry.href)}
         onClick={onNavigate}
         className={cn(
           "employee-dash-nav-link",
           dashboardSidebarNavLinkBase,
-          isActive ? cn("employee-dash-nav-link--active", dashboardSidebarNavLinkActive) : dashboardSidebarNavLinkIdle,
+          isActive
+            ? cn(
+                "employee-dash-nav-link--active",
+                dashboardSidebarNavLinkActive,
+                navPending && "employee-dash-nav-link--pending",
+              )
+            : dashboardSidebarNavLinkIdle,
         )}
         aria-current={isActive ? "page" : undefined}
       >
@@ -93,7 +111,7 @@ function EmployeeSidebarLink({
             />
           ) : null}
         </span>
-      </Link>
+      </PrefetchLink>
     </li>
   );
 }
@@ -101,10 +119,12 @@ function EmployeeSidebarLink({
 function EmployeeSidebarGroup({
   entry,
   pathname,
+  navPending,
   onNavigate,
 }: {
   entry: Extract<EmployeeDashboardNavEntry, { type: "group" }>;
   pathname: string;
+  navPending: boolean;
   onNavigate?: () => void;
 }) {
   const { t } = useTranslation();
@@ -125,11 +145,19 @@ function EmployeeSidebarGroup({
           "employee-dash-nav-link",
           dashboardSidebarNavLinkBase,
           "w-full text-left",
-          groupActive ? cn("employee-dash-nav-link--active", dashboardSidebarNavLinkActive) : dashboardSidebarNavLinkIdle,
+          groupActive
+            ? cn(
+                "employee-dash-nav-link--active",
+                dashboardSidebarNavLinkActive,
+                navPending && "employee-dash-nav-link--pending",
+              )
+            : dashboardSidebarNavLinkIdle,
         )}
         aria-expanded={expanded}
         aria-controls={panelId}
         aria-current={groupActive ? "true" : undefined}
+        onMouseEnter={() => warmSidebarDestination(entry.defaultHref)}
+        onFocus={() => warmSidebarDestination(entry.defaultHref)}
         onClick={() => {
           if (expanded) {
             setExpanded(false);
@@ -137,6 +165,7 @@ function EmployeeSidebarGroup({
           }
           setExpanded(true);
           if (!groupActive) {
+            warmSidebarDestination(entry.defaultHref);
             navigate(entry.defaultHref);
           }
         }}
@@ -154,21 +183,23 @@ function EmployeeSidebarGroup({
       >
         <ul className="overflow-hidden" role="list">
           {entry.children.map((child) => {
-            const childActive = pathname === child.href;
+            const childActive = isEmployeeDashboardNavActive(child.href, pathname);
             return (
               <li key={child.href}>
-                <Link
+                <PrefetchLink
                   to={child.href}
+                  onPointerDown={() => warmSidebarDestination(child.href)}
+                  onClick={onNavigate}
                   className={cn(
                     "employee-sidebar-child-link flex w-full items-center py-2 pl-11 pr-3 text-left text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring",
                     childActive
-                      ? "text-primary"
+                      ? cn("text-primary", navPending && "employee-sidebar-child-link--pending")
                       : "text-sidebar-foreground/75 hover:text-sidebar-foreground",
                   )}
                   aria-current={childActive ? "page" : undefined}
                 >
                   {t(child.labelKey)}
-                </Link>
+                </PrefetchLink>
               </li>
             );
           })}

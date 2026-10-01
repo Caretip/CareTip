@@ -31,6 +31,7 @@
 @import "../physical-qr-order-ux.css";
 @import "../qr-studio-workspace.css";
 @import "../admin-web-design.css";
+@import "../platform-admin-workspace.css";
 
 /* Portaled notification popover — not inside .caretip-dashboard-shell */
 .caretip-notification-panel {

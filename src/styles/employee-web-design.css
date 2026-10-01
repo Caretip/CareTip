@@ -75,6 +75,17 @@
   background: hsl(var(--sidebar-accent) / 0.65) !important;
 }
 
+.employee-sidebar .employee-dash-nav-link--pending,
+.caretip-mobile-drawer-panel .employee-dash-nav-link--pending {
+  outline: 2px solid color-mix(in oklab, var(--primary) 35%, transparent);
+  outline-offset: -2px;
+}
+
+.employee-sidebar .employee-sidebar-child-link--pending,
+.caretip-mobile-drawer-panel .employee-sidebar-child-link--pending {
+  font-weight: 600;
+}
+
 /* —— Period selector: text tabs —— */
 .caretip-dashboard-shell.employee-dashboard .employee-period-toggle {
   display: flex;

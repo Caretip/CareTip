@@ -1,4 +1,7 @@
-import { Link, useLocation } from "react-router";
+import { useNavigate } from "react-router";
+import { PrefetchLink } from "@/app/components/PrefetchLink";
+import { prefetchPlatformAdminRoute } from "@/app/lib/platformAdminRoutePrefetch";
+import { useSidebarNavigationPath } from "@/app/hooks/useBusinessSidebarNavigationPath";
 import { useTranslation } from "react-i18next";
 import { CareIcon } from "@/components/icons";
 import { cn } from "@/lib/utils";
@@ -17,13 +20,19 @@ type PlatformSidebarNavShellProps = {
   onNavigate?: () => void;
 };
 
+function warmSidebarDestination(href: string): void {
+  void prefetchPlatformAdminRoute(href);
+}
+
 function SidebarLink({
   entry,
   pathname,
+  navPending,
   onNavigate,
 }: {
   entry: Extract<PlatformAdminNavEntry, { type: "link" }>;
   pathname: string;
+  navPending: boolean;
   onNavigate?: () => void;
 }) {
   const { t } = useTranslation();
@@ -34,20 +43,24 @@ function SidebarLink({
 
   return (
     <li>
-      <Link
+      <PrefetchLink
         to={entry.href}
+        onPointerDown={() => warmSidebarDestination(entry.href)}
         onClick={onNavigate}
         className={cn(
           "admin-dash-nav-link flex items-center gap-3 px-3 py-2.5 text-sm font-medium",
           isActive
-            ? "admin-dash-nav-link--active font-semibold text-foreground"
+            ? cn(
+                "admin-dash-nav-link--active font-semibold text-foreground",
+                navPending && "admin-dash-nav-link--pending",
+              )
             : dashboardSidebarNavLinkIdle,
         )}
         aria-current={isActive ? "page" : undefined}
       >
         <CareIcon name={entry.icon} size="nav" />
         <span className="truncate tracking-tight">{t(entry.labelKey)}</span>
-      </Link>
+      </PrefetchLink>
     </li>
   );
 }
@@ -55,10 +68,12 @@ function SidebarLink({
 function SidebarChildLink({
   child,
   pathname,
+  navPending,
   onNavigate,
 }: {
   child: PlatformAdminChildNavItem;
   pathname: string;
+  navPending: boolean;
   onNavigate?: () => void;
 }) {
   const { t } = useTranslation();
@@ -66,19 +81,20 @@ function SidebarChildLink({
 
   return (
     <li>
-      <Link
+      <PrefetchLink
         to={child.href}
+        onPointerDown={() => warmSidebarDestination(child.href)}
         onClick={onNavigate}
         className={cn(
           "admin-sidebar-child-link business-sidebar-child-link flex w-full flex-col items-stretch py-2 pl-11 pr-3 text-left text-[13px] font-medium transition-colors",
           childActive
-            ? "text-primary before:bg-primary"
+            ? cn("text-primary before:bg-primary", navPending && "admin-sidebar-child-link--pending")
             : "text-sidebar-foreground/75 hover:text-sidebar-foreground before:bg-transparent",
         )}
         aria-current={childActive ? "page" : undefined}
       >
         <span className="truncate">{t(child.labelKey)}</span>
-      </Link>
+      </PrefetchLink>
     </li>
   );
 }
@@ -86,29 +102,49 @@ function SidebarChildLink({
 function SidebarGroup({
   entry,
   pathname,
+  navPending,
   isExpanded,
   onToggle,
   onNavigate,
 }: {
   entry: Extract<PlatformAdminNavEntry, { type: "group" }>;
   pathname: string;
+  navPending: boolean;
   isExpanded: boolean;
   onToggle: () => void;
   onNavigate?: () => void;
 }) {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const groupActive = isPlatformAdminGroupActive(entry, pathname);
   const panelId = `platform-sidebar-group-${entry.id}`;
+
+  function handleGroupClick() {
+    if (isExpanded) {
+      onToggle();
+      return;
+    }
+    onToggle();
+    if (!groupActive) {
+      warmSidebarDestination(entry.defaultHref);
+      navigate(entry.defaultHref);
+    }
+  }
 
   return (
     <li className="business-sidebar-group">
       <button
         type="button"
-        onClick={onToggle}
+        onClick={handleGroupClick}
+        onMouseEnter={() => warmSidebarDestination(entry.defaultHref)}
+        onFocus={() => warmSidebarDestination(entry.defaultHref)}
         className={cn(
           "admin-dash-nav-link flex w-full items-center gap-3 px-3 py-2.5 text-left text-sm font-medium transition-colors",
           groupActive
-            ? "bg-sidebar-accent font-semibold text-sidebar-foreground"
+            ? cn(
+                "admin-dash-nav-link--active font-semibold text-sidebar-foreground",
+                navPending && "admin-dash-nav-link--pending",
+              )
             : dashboardSidebarNavLinkIdle,
         )}
         aria-expanded={isExpanded}
@@ -131,6 +167,7 @@ function SidebarGroup({
               key={child.href}
               child={child}
               pathname={pathname}
+              navPending={navPending}
               onNavigate={onNavigate}
             />
           ))}
@@ -141,7 +178,7 @@ function SidebarGroup({
 }
 
 export function PlatformSidebarNavShell({ onNavigate }: PlatformSidebarNavShellProps) {
-  const { pathname } = useLocation();
+  const { pathname, pending: navPending } = useSidebarNavigationPath();
   const { isExpanded, toggleGroup } = usePlatformAdminSidebarNavState();
 
   return (
@@ -149,7 +186,13 @@ export function PlatformSidebarNavShell({ onNavigate }: PlatformSidebarNavShellP
       {platformAdminNavEntries.map((entry) => {
         if (entry.type === "link") {
           return (
-            <SidebarLink key={entry.id} entry={entry} pathname={pathname} onNavigate={onNavigate} />
+            <SidebarLink
+              key={entry.id}
+              entry={entry}
+              pathname={pathname}
+              navPending={navPending}
+              onNavigate={onNavigate}
+            />
           );
         }
         return (
@@ -157,6 +200,7 @@ export function PlatformSidebarNavShell({ onNavigate }: PlatformSidebarNavShellP
             key={entry.id}
             entry={entry}
             pathname={pathname}
+            navPending={navPending}
             isExpanded={isExpanded(entry.id)}
             onToggle={() => toggleGroup(entry.id)}
             onNavigate={onNavigate}
