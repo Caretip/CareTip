@@ -1,33 +1,14 @@
-import { memo, useState } from "react";
-import {
-  QrCode,
-  Copy,
-  Check,
-  MapPin,
-  Printer,
-  FileDown,
-  RefreshCw,
-  Eye,
-  Download,
-  User,
-  LayoutGrid,
-  Store,
-} from "lucide-react";
+import { memo } from "react";
+import { MapPin, User, LayoutGrid, Store } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { EmployeeProfilePhoto } from "../ui/profile-avatar";
-import { LoadingSpinner } from "../ui/loading-spinner";
-import { Button } from "@/components/ui/button";
 import { formatVenueDateTime, resolveBusinessTimezone } from "../../lib/businessVenueTime";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "../ui/dialog";
 import { businessUi } from "@/app/components/business/businessDashboardUi";
 import { downloadQrDataUrlPng } from "../../lib/qrExport";
 import { cn } from "@/lib/utils";
+import { QrStudioPreviewFrame } from "./qr-studio/QrStudioPreviewFrame";
+import { QrStudioDestinationField } from "./qr-studio/QrStudioDestinationField";
+import { QrStudioAssetActions } from "./qr-studio/QrStudioAssetActions";
 
 export type QrManagementCardItem = {
   id: string;
@@ -68,7 +49,7 @@ type QrManagementCardProps = {
   ) => void;
   onRegenerateBusinessQr?: () => void;
   exportBlocked?: boolean;
-  layout?: "default" | "library";
+  layout?: "default" | "library" | "storefront";
   metadata?: QrAssetMetadata;
 };
 
@@ -78,53 +59,6 @@ function QrTypeIcon({ type }: { type: QrManagementCardProps["type"] }) {
   if (type === "table") return <LayoutGrid className={className} aria-hidden />;
   if (type === "location") return <MapPin className={className} aria-hidden />;
   return <Store className={className} aria-hidden />;
-}
-
-function QrPreviewImage({
-  dataUrl,
-  hasQrUrl,
-  onPreview,
-  library,
-}: {
-  dataUrl?: string;
-  /** When true and dataUrl is empty, show loading frame — never the Lucide placeholder. */
-  hasQrUrl?: boolean;
-  onPreview?: () => void;
-  library?: boolean;
-}) {
-  const { t } = useTranslation();
-  const frame = (
-    <div
-      className={cn(
-        "qr-preview-frame relative flex aspect-square w-full items-center justify-center rounded-xl border border-black/[0.10] bg-white p-2",
-        library ? "max-w-none" : "mx-auto max-w-[10.5rem] sm:max-w-[12rem] lg:mx-0 lg:w-44 lg:max-w-[11rem]",
-      )}
-    >
-      {dataUrl ? (
-        <img src={dataUrl} alt="" className="h-full w-full object-contain" decoding="async" />
-      ) : hasQrUrl ? (
-        <LoadingSpinner size="sm" className="text-muted-foreground" />
-      ) : (
-        <QrCode className="h-16 w-16 text-foreground sm:h-20 sm:w-20" />
-      )}
-    </div>
-  );
-
-  if (!onPreview || !dataUrl) return frame;
-
-  return (
-    <button
-      type="button"
-      onClick={onPreview}
-      className="group relative w-full rounded-xl text-left outline-none ring-offset-background focus-visible:ring-2 focus-visible:ring-ring"
-      aria-label={t("business.qrStudio.gallery.previewAssetAria")}
-    >
-      {frame}
-      <span className="pointer-events-none absolute inset-0 flex items-center justify-center rounded-xl bg-black/0 opacity-0 transition group-hover:bg-black/35 group-hover:opacity-100 group-focus-visible:bg-black/35 group-focus-visible:opacity-100">
-        <Eye className="h-6 w-6 text-white" aria-hidden />
-      </span>
-    </button>
-  );
 }
 
 function QrAssetMetadataGrid({ metadata }: { metadata: QrAssetMetadata }) {
@@ -167,9 +101,10 @@ export const QrManagementCard = memo(function QrManagementCard({
   metadata,
 }: QrManagementCardProps) {
   const { t } = useTranslation();
-  const [previewOpen, setPreviewOpen] = useState(false);
   const isLibrary = layout === "library";
+  const isManagement = layout === "storefront" || layout === "default";
   const showPreviewActions = Boolean(previewDataUrl);
+  const copied = copiedId === item.id;
 
   const handleDownloadPng = () => {
     if (!previewDataUrl) return;
@@ -179,169 +114,75 @@ export const QrManagementCard = memo(function QrManagementCard({
     });
   };
 
-  const actionButtons = (
-    <div className="flex flex-wrap gap-2">
-      {showPreviewActions ? (
-        <>
-          <Button
-            type="button"
-            size="sm"
-            variant="outline"
-            onClick={() => setPreviewOpen(true)}
-            className={cn(businessUi.btnSecondary, "h-9")}
-          >
-            <Eye className="mr-2 h-4 w-4" />
-            {t("business.qrStudio.gallery.preview")}
-          </Button>
-          <Button
-            type="button"
-            size="sm"
-            variant="outline"
-            onClick={handleDownloadPng}
-            disabled={qrLocked || exportBlocked}
-            className={cn(businessUi.btnSecondary, "h-9")}
-          >
-            <Download className="mr-2 h-4 w-4" />
-            {t("business.qrStudio.gallery.downloadPng")}
-          </Button>
-        </>
-      ) : null}
-      {type === "employee" && (
-        <>
-          <Button
-            type="button"
-            size="sm"
-            variant="outline"
-            onClick={() => onEmployeePrint?.(item, previewDataUrl)}
-            disabled={qrLocked || exportBlocked}
-            className={cn(businessUi.btnSecondary, "h-9")}
-          >
-            <Printer className="mr-2 h-4 w-4" />
-            {t("business.qrPage.print")}
-          </Button>
-          <Button
-            type="button"
-            size="sm"
-            onClick={() => onEmployeePrintPdf?.(item)}
-            disabled={qrLocked || !item.qrUrl?.trim() || exportBlocked}
-            className={cn(businessUi.btnPrimary, "h-9")}
-          >
-            <FileDown className="mr-2 h-4 w-4" />
-            {t("business.qrPage.downloadPdfLayout")}
-          </Button>
-          <Button
-            type="button"
-            size="sm"
-            variant={item.slug ? "outline" : "default"}
-            onClick={() => onEmployeeRegenerate?.(item)}
-            disabled={qrLocked || regeneratingId === item.id}
-            className={cn(item.slug ? businessUi.btnSecondary : businessUi.btnPrimary, "h-9")}
-          >
-            {regeneratingId === item.id ? (
-              <LoadingSpinner size="sm" />
-            ) : (
-              <RefreshCw className="mr-2 h-4 w-4" />
-            )}
-            {item.slug ? t("business.qrPage.regenerateEmployeeQr") : t("business.qrPage.generateProfileLink")}
-          </Button>
-        </>
-      )}
-      {(type === "storefront" || type === "table" || type === "location") && (
-        <>
-          {type === "storefront" ? (
-            <Button
-              type="button"
-              size="sm"
-              variant="outline"
-              onClick={onRegenerateBusinessQr}
-              disabled={qrLocked || regeneratingId === "storefront"}
-              className={cn(businessUi.btnSecondary, "h-9")}
-            >
-              {regeneratingId === "storefront" ? (
-                <LoadingSpinner size="sm" />
-              ) : (
-                <RefreshCw className="mr-2 h-4 w-4" />
-              )}
-              {t("business.qrPage.regenerateBusinessQr")}
-            </Button>
-          ) : null}
-          <Button
-            type="button"
-            size="sm"
-            variant="outline"
-            onClick={() => onVenuePrint?.(item, type, previewDataUrl)}
-            disabled={qrLocked || exportBlocked}
-            className={cn(businessUi.btnSecondary, "h-9")}
-          >
-            <Printer className="mr-2 h-4 w-4" />
-            {t("business.qrPage.print")}
-          </Button>
-          <Button
-            type="button"
-            size="sm"
-            onClick={() => onVenuePrintPdf?.(item, type, previewDataUrl)}
-            disabled={qrLocked || !previewDataUrl || exportBlocked}
-            className={cn(businessUi.btnPrimary, "h-9")}
-          >
-            <FileDown className="mr-2 h-4 w-4" />
-            {t("business.qrPage.downloadPdfLayout")}
-          </Button>
-        </>
-      )}
-    </div>
-  );
+  const typeEyebrowKey =
+    type === "storefront"
+      ? "business.qrStudio.typeLabel.storefront"
+      : type === "employee"
+        ? "business.qrStudio.typeLabel.employee"
+        : type === "table"
+          ? "business.qrStudio.typeLabel.table"
+          : "business.qrStudio.typeLabel.location";
 
-  const previewDialog = showPreviewActions ? (
-    <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
-      <DialogContent className="max-w-md sm:max-w-lg">
-        <DialogHeader>
-          <DialogTitle>{item.name}</DialogTitle>
-          <DialogDescription>
-            {metadata?.ownershipLabel ??
-              (type === "storefront"
-                ? t("business.qrStudio.gallery.ownershipStorefront", { name: item.name })
-                : item.role ?? item.name)}
-          </DialogDescription>
-        </DialogHeader>
-        {previewDataUrl ? (
-          <div className="flex justify-center rounded-xl border bg-white p-4">
-            <img src={previewDataUrl} alt="" className="max-h-[min(60vh,420px)] w-full object-contain" />
-          </div>
-        ) : null}
-        <div className="flex flex-wrap justify-end gap-2">
-          <Button type="button" variant="outline" size="sm" onClick={() => void onCopy(item.id, item.qrUrl)}>
-            {copiedId === item.id ? (
-              <Check className="mr-2 h-4 w-4" />
-            ) : (
-              <Copy className="mr-2 h-4 w-4" />
-            )}
-            {copiedId === item.id ? t("common.copied") : t("business.qrPage.copyUrlAria")}
-          </Button>
-          <Button
-            type="button"
-            size="sm"
-            onClick={handleDownloadPng}
-            disabled={qrLocked || exportBlocked || !previewDataUrl}
-          >
-            <Download className="mr-2 h-4 w-4" />
-            {t("business.qrStudio.gallery.downloadPng")}
-          </Button>
-        </div>
-      </DialogContent>
-    </Dialog>
-  ) : null;
+  const hintKey =
+    type === "storefront"
+      ? "business.qrStudio.storefrontPlacementHint"
+      : type === "employee"
+        ? "business.qrStudio.employeePersonalHint"
+        : type === "table"
+          ? "business.qrStudio.tableGuestHint"
+          : "business.qrStudio.locationAreaHint";
+
+  const pdfDisabled =
+    type === "employee" ? !item.qrUrl?.trim() : !previewDataUrl;
+
+  const moreActions = [];
+  if (type === "employee") {
+    moreActions.push({
+      id: "regenerate",
+      label: item.slug ? t("business.qrPage.regenerateEmployeeQr") : t("business.qrPage.generateProfileLink"),
+      onClick: () => onEmployeeRegenerate?.(item),
+      disabled: regeneratingId === item.id,
+    });
+  }
+  if (type === "storefront" && onRegenerateBusinessQr) {
+    moreActions.push({
+      id: "regenerate-business",
+      label: t("business.qrPage.regenerateBusinessQr"),
+      onClick: () => onRegenerateBusinessQr(),
+      disabled: regeneratingId === "storefront",
+    });
+  }
+
+  const actionControls = (
+    <QrStudioAssetActions
+      qrLocked={qrLocked}
+      exportBlocked={exportBlocked}
+      showPreviewActions={showPreviewActions}
+      onDownloadPdf={() => {
+        if (type === "employee") onEmployeePrintPdf?.(item);
+        else onVenuePrintPdf?.(item, type, previewDataUrl);
+      }}
+      pdfDisabled={pdfDisabled}
+      onPrint={() => {
+        if (type === "employee") onEmployeePrint?.(item, previewDataUrl);
+        else onVenuePrint?.(item, type, previewDataUrl);
+      }}
+      onDownloadPng={showPreviewActions ? handleDownloadPng : undefined}
+      moreActions={moreActions}
+    />
+  );
 
   if (isLibrary && metadata) {
     return (
       <>
-        <article className={cn(businessUi.cardStatic, "flex h-full min-w-0 flex-col overflow-hidden")}>
-          <div className="border-b border-neutral-100/90 p-4">
+        <article className={cn(businessUi.cardStatic, "qr-studio-asset-card flex h-full min-w-0 flex-col overflow-hidden p-0")}>
+          <div className="border-b border-border/80 p-4">
             <div className="mb-3 flex items-start justify-between gap-2">
               <div className="flex min-w-0 items-start gap-2.5">
                 {type === "employee" ? (
                   <EmployeeProfilePhoto src={item.avatar} displayName={item.name} className="h-9 w-9 shrink-0" />
                 ) : (
-                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-muted text-foreground">
                     <QrTypeIcon type={type} />
                   </span>
                 )}
@@ -352,135 +193,100 @@ export const QrManagementCard = memo(function QrManagementCard({
                   ) : null}
                 </div>
               </div>
-              <span className="inline-flex shrink-0 items-center gap-1 rounded-full border border-primary/20 bg-primary/[0.06] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-primary">
+              <span className="qr-studio-asset-card__eyebrow !mt-0">
                 <QrTypeIcon type={type} />
                 {metadata.typeLabel}
               </span>
             </div>
-            <QrPreviewImage
+            <QrStudioPreviewFrame
               dataUrl={previewDataUrl}
               hasQrUrl={Boolean(item.qrUrl?.trim())}
-              library
-              onPreview={showPreviewActions ? () => setPreviewOpen(true) : undefined}
+              size="default"
+              className="mx-auto max-w-[10.5rem]"
             />
           </div>
           <div className="flex flex-1 flex-col gap-3 p-4">
             <QrAssetMetadataGrid metadata={metadata} />
-            <div className="rounded-lg border border-black/[0.08] bg-muted/30 p-3">
-              <p className="mb-1 text-xs text-muted-foreground">{t("business.qrPage.labelQrUrl")}</p>
-              <div className="flex items-center gap-2">
-                <code className="flex-1 truncate font-mono text-xs text-foreground">{item.qrUrl}</code>
-                <button
-                  type="button"
-                  onClick={() => void onCopy(item.id, item.qrUrl)}
-                  className="flex-shrink-0 rounded-lg p-2 transition-colors hover:bg-background"
-                  aria-label={copiedId === item.id ? t("common.copied") : t("business.qrPage.copyUrlAria")}
-                >
-                  {copiedId === item.id ? (
-                    <Check className="h-4 w-4 text-primary" />
-                  ) : (
-                    <Copy className="h-4 w-4 opacity-60" />
-                  )}
-                </button>
-              </div>
-            </div>
+            <QrStudioDestinationField
+              url={item.qrUrl}
+              copied={copied}
+              onCopy={() => void onCopy(item.id, item.qrUrl)}
+            />
             {exportBlocked ? (
               <p className="text-[10px] font-medium text-destructive">
                 {t("business.qrReliability.exportBlockedShort")}
               </p>
             ) : null}
-            <div className="mt-auto pt-1">{actionButtons}</div>
+            <div className="mt-auto pt-1">{actionControls}</div>
           </div>
         </article>
-
-        {previewDialog}
       </>
     );
   }
 
   return (
-    <>
-    <div className={cn(businessUi.cardStatic, businessUi.cardPad, "min-w-0 text-foreground")}>
-      <div className="flex min-w-0 flex-col gap-4 sm:flex-row sm:gap-6">
-        <div className="flex w-full min-w-0 shrink-0 justify-center sm:w-auto sm:justify-start">
-          <QrPreviewImage
-            dataUrl={previewDataUrl}
-            hasQrUrl={Boolean(item.qrUrl?.trim())}
-            onPreview={showPreviewActions ? () => setPreviewOpen(true) : undefined}
-          />
-          {exportBlocked ? (
-            <p className="mt-2 text-center text-[10px] font-medium text-destructive">
-              {t("business.qrReliability.exportBlockedShort")}
-            </p>
-          ) : null}
-        </div>
+    <article
+        className={cn(
+          "qr-studio-asset-card",
+          layout === "storefront" && "qr-studio-asset-card--management",
+          isManagement && businessUi.cardStatic,
+        )}
+      >
+        <div className="qr-studio-asset-card__grid qr-studio-asset-card__grid--management">
+          <div className="qr-studio-asset-card__qr-col shrink-0">
+            <QrStudioPreviewFrame
+              dataUrl={previewDataUrl}
+              hasQrUrl={Boolean(item.qrUrl?.trim())}
+              size="default"
+            />
+            {exportBlocked ? (
+              <p className="mt-2 text-center text-[10px] font-medium text-destructive">
+                {t("business.qrReliability.exportBlockedShort")}
+              </p>
+            ) : null}
+          </div>
 
-        <div className="flex-1 space-y-4">
-          <div>
-            {type === "storefront" && (
-              <div className="mb-2">
-                <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                  {t("business.qrStudio.gallery.mainVenueTitle")}
-                </p>
-                <p className="text-sm text-muted-foreground">{t("business.qrPage.storefrontCardHint")}</p>
-              </div>
-            )}
-            {type === "employee" && (
-              <div className="mb-2 flex items-center gap-3">
-                <EmployeeProfilePhoto src={item.avatar} displayName={item.name} className="h-10 w-10" />
-                <div>
-                  <h3 className="font-semibold text-foreground">{item.name}</h3>
-                  <p className="text-sm text-muted-foreground">{item.role}</p>
+          <div className="qr-studio-asset-card__body">
+            <header className="qr-studio-asset-card__identity">
+              <p className="qr-studio-asset-card__eyebrow">
+                <QrTypeIcon type={type} />
+                {t(typeEyebrowKey)}
+              </p>
+              {type === "employee" ? (
+                <div className="mt-2 flex items-center gap-3">
+                  <EmployeeProfilePhoto src={item.avatar} displayName={item.name} className="h-10 w-10 shrink-0" />
+                  <div className="min-w-0">
+                    <h3 className="qr-studio-asset-card__title !mt-0">{item.name}</h3>
+                    {item.role ? (
+                      <p className="text-sm text-muted-foreground">{item.role}</p>
+                    ) : null}
+                  </div>
                 </div>
-              </div>
-            )}
-            {type === "table" && (
-              <div>
-                <h3 className="mb-1 font-semibold text-foreground">{item.name}</h3>
-                <p className="flex items-center gap-1 text-sm text-muted-foreground">
-                  <MapPin className="h-3 w-3" />
-                  {item.role}
-                </p>
-              </div>
-            )}
-            {type === "location" && (
-              <div>
-                <h3 className="mb-1 font-semibold text-foreground">{item.name}</h3>
-                <p className="flex items-center gap-1 text-sm text-muted-foreground">
-                  <MapPin className="h-3 w-3" />
-                  {item.role}
-                </p>
-              </div>
-            )}
-          </div>
+              ) : (
+                <>
+                  <h3 className="qr-studio-asset-card__title">{item.name}</h3>
+                  {type === "location" && item.role ? (
+                    <p className="qr-studio-asset-card__meta">
+                      <MapPin className="h-3.5 w-3.5 shrink-0" aria-hidden />
+                      <span>{item.role}</span>
+                    </p>
+                  ) : null}
+                </>
+              )}
+            </header>
 
-          <div className="rounded-lg border border-black/[0.08] bg-muted/30 p-3">
-            <p className="mb-1 text-xs text-muted-foreground">{t("business.qrPage.labelQrUrl")}</p>
-            <div className="flex items-center gap-2">
-              <code className="flex-1 truncate font-mono text-xs text-foreground">{item.qrUrl}</code>
-              <button
-                type="button"
-                onClick={() => void onCopy(item.id, item.qrUrl)}
-                className="flex-shrink-0 rounded-lg p-2 transition-colors hover:bg-background"
-                aria-label={copiedId === item.id ? t("common.copied") : t("business.qrPage.copyUrlAria")}
-              >
-                {copiedId === item.id ? (
-                  <Check className="h-4 w-4 text-primary" />
-                ) : (
-                  <Copy className="h-4 w-4 opacity-60" />
-                )}
-              </button>
-            </div>
-          </div>
+            <p className="qr-studio-asset-card__hint">{t(hintKey)}</p>
 
-          <div className="flex flex-wrap items-center justify-end gap-2">
-            <div className="flex flex-wrap gap-2">{actionButtons}</div>
+            <QrStudioDestinationField
+              url={item.qrUrl}
+              copied={copied}
+              onCopy={() => void onCopy(item.id, item.qrUrl)}
+            />
+
+            {actionControls}
           </div>
         </div>
-      </div>
-    </div>
-    {previewDialog}
-    </>
+      </article>
   );
 });
 

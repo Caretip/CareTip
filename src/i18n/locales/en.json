@@ -2138,6 +2138,40 @@
       "invalidEmail": "Please enter a valid email address or leave the field empty.",
       "continuePayment": "Continue to Payment"
     },
+    "howItWorks": {
+      "title": "How tipping works",
+      "steps": {
+        "scan": {
+          "title": "Scan",
+          "body": "Guests simply scan the CareTip QR code at the table, at the counter, or via your chosen signage to start the tipping process."
+        },
+        "select": {
+          "title": "Select",
+          "body": "They can choose a specific team member or tip the entire team directly."
+        },
+        "pay": {
+          "title": "Pay",
+          "body": "The desired amount is paid securely and within seconds via Apple Pay, Google Pay, or credit card through Stripe."
+        },
+        "receive": {
+          "title": "Receive Tip",
+          "body": "The tip is immediately captured in CareTip and distributed according to your custom business logic directly to the employee or into the team pool."
+        }
+      }
+    },
+    "privacyNotice": {
+      "text": "By using this service, you acknowledge our <policy>Privacy Policy</policy>.",
+      "openPolicyAria": "Open privacy policy"
+    },
+    "support": {
+      "helpLink": "Help & FAQ",
+      "helpTitle": "Help",
+      "faq": {
+        "refundQuestion": "Can a tip be refunded or requested back?",
+        "refundAnswerPrefix": "Tips are voluntary gratuities and are non-refundable by law. However, if you made a mistake while entering the amount (e.g., a typo), please reach out to us with your transaction details at ",
+        "refundAnswerSuffix": ". We will gladly review your request on a goodwill basis."
+      }
+    },
     "payment": {
       "preparingCheckout": "Preparing your secure checkout…",
       "canceledTitle": "Payment canceled",
@@ -3492,22 +3526,22 @@
       "steps": {
         "scan": {
           "title": "Scan",
-          "body": "Guests scan your CareTip QR code at the table, counter, or receipt to open the tipping flow.",
+          "body": "Guests simply scan the CareTip QR code at the table, at the counter, or via your chosen signage to start the tipping process.",
           "imageAlt": "CareTip guest tipping screen for Akona Hotel on a phone"
         },
         "choose": {
-          "title": "Choose",
-          "body": "They pick the team member to thank when your location uses individual tipping, or continue for a shared tip.",
+          "title": "Select",
+          "body": "They can choose a specific team member or tip the entire team directly.",
           "imageAlt": "CareTip team member selection screen on a phone"
         },
         "pay": {
-          "title": "Tip & pay",
-          "body": "They select a tip amount and continue to secure checkout with Stripe: card, Apple Pay, or Google Pay.",
+          "title": "Pay",
+          "body": "The desired amount is paid securely and within seconds via Apple Pay, Google Pay, or credit card through Stripe.",
           "imageAlt": "CareTip tip amount selection screen before payment"
         },
         "team": {
-          "title": "Team receives it",
-          "body": "The tip is recorded in CareTip and allocated according to your business rules, whether direct to staff or pooled for the team.",
+          "title": "Receive Tip",
+          "body": "The tip is immediately captured in CareTip and distributed according to your custom business logic directly to the employee or into the team pool.",
           "imageAlt": "CareTip confirmation screen after a successful digital tip"
         }
       }
@@ -5380,7 +5414,11 @@
       "badgeTeamRoster": "Team roster",
       "inviteCodeLabel": "Invite code",
       "inviteTeamTitle": "Invite team members",
-      "inviteTeamDesc": "Generate codes or add staff.",
+      "inviteTeamDesc": "Generate an invite code or add staff directly.",
+      "rosterSectionTitle": "Team members",
+      "rosterSectionMeta": "{{count}} people",
+      "searchEmpty": "No employees match your search.",
+      "noQrAssignment": "No QR assignment",
       "inviteExpires": "Expires {{date}}",
       "inviteHint": "Generate an invite code to onboard staff.",
       "copy": "Copy",
@@ -5564,6 +5602,26 @@
       "title": "QR Studio",
       "subtitle": "",
       "navAria": "QR Studio sections",
+      "destination": "Destination",
+      "more": "More",
+      "moreActionsAria": "More QR actions",
+      "secondaryActionsAria": "Additional QR actions",
+      "mobileSectionAria": "Choose QR Studio section",
+      "previewImageAlt": "QR code preview",
+      "storefrontPlacementHint": "Place at the entrance so guests can choose who to tip.",
+      "employeePersonalHint": "Personal tipping QR for this team member.",
+      "tableGuestHint": "Guests scan at the table to tip your team.",
+      "locationAreaHint": "Guests scan to tip when they arrive at this area or branch.",
+      "typeLabel": {
+        "storefront": "Main venue",
+        "employee": "Employee",
+        "location": "Location",
+        "table": "Table"
+      },
+      "empty": {
+        "employeesDesc": "Add team members to generate personal QR codes and printable tags.",
+        "locationsDesc": "Create locations to generate area QR codes for each venue space."
+      },
       "nav": {
         "gallery": "QR Gallery",
         "employees": "Employee QR Codes",
@@ -6250,7 +6308,7 @@
       "eyebrow": "People",
       "title": "Team",
       "subtitle": "Staff, performance, and goals.",
-      "employeesHeaderSubtitle": "",
+      "employeesHeaderSubtitle": "Manage your team, roles, tipping access and QR assignments.",
       "topPerformersHeaderSubtitle": "",
       "navAria": "Team sections",
       "nav": {

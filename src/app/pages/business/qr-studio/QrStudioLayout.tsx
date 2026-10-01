@@ -11,6 +11,7 @@ import { useRequireAuth } from "../../../hooks/useRequireAuth";
 import { canUseProductionQr } from "../../../lib/businessVerificationCapabilities";
 import { cn } from "@/lib/utils";
 import { businessUi } from "@/app/components/business/businessDashboardUi";
+import { QrStudioMobileSectionSelect } from "@/app/components/business/qr-studio/QrStudioMobileSectionSelect";
 
 export function QrStudioLayout() {
   const { t } = useTranslation();
@@ -36,23 +37,28 @@ export function QrStudioLayout() {
           isPrintStudio ? "max-w-none" : "max-w-6xl",
         )}
       >
-        <BusinessModuleWorkspaceHeader
-          personality="qrStudio"
-          badge={t("premium.qrStudio.badge")}
-          feature={t("premium.qrStudio.feature")}
-          icon={QrCode}
-          title={t("business.qrStudio.title")}
-          subtitle={t("business.qrStudio.subtitle")}
-          hideSubtitleOnMobile
-          className={isPrintStudio ? "mb-4 pb-3" : undefined}
-        />
+        {isPrintStudio ? (
+          <BusinessModuleWorkspaceHeader
+            personality="qrStudio"
+            badge={t("premium.qrStudio.badge")}
+            feature={t("premium.qrStudio.feature")}
+            icon={QrCode}
+            title={t("business.qrStudio.title")}
+            subtitle={t("business.qrStudio.subtitle")}
+            hideSubtitleOnMobile
+            className="mb-4 pb-3"
+          />
+        ) : null}
         {accessBlock ? (
           <div className="py-8 sm:py-12">
             <QrStudioAccessPanel reason={accessBlock} onboardingVerificationStatus={user?.onboardingVerificationStatus} />
           </div>
         ) : (
           <BusinessBrandingProvider canEdit>
-            <Outlet />
+            <div className="qr-studio-workspace min-w-0">
+              {!isPrintStudio ? <QrStudioMobileSectionSelect className="mb-5" /> : null}
+              <Outlet />
+            </div>
           </BusinessBrandingProvider>
         )}
       </div>

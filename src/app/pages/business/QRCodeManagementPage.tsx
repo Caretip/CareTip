@@ -82,7 +82,8 @@ import { DashboardHero } from "@/components/ui/dashboard-hero";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { businessUi } from "@/app/components/business/businessDashboardUi";
-import { QrStudioOrderPrintButton } from "@/app/components/business/qr-studio/QrStudioOrderPrintButton";
+import { QrStudioPageShell } from "@/app/components/business/qr-studio/QrStudioPageShell";
+import type { QrStudioCategory } from "@/app/lib/qrStudioNav";
 import {
   QrManagementCard,
   formatQrAssetUpdatedAt,
@@ -1246,6 +1247,280 @@ export function QRCodeManagementPage({
     },
   ] as const;
 
+  const embeddedShellConfig =
+    embedded && viewMode !== "gallery"
+      ? ({
+          business: {
+            sectionLabelKey: "business.qrStudio.nav.business",
+            titleKey: "business.qrStudio.gallery.mainVenueTitle",
+            descriptionKey: "business.qrStudio.storefrontPlacementHint",
+            printCategory: "business" as QrStudioCategory,
+          },
+          employees: {
+            sectionLabelKey: "business.qrStudio.nav.employees",
+            titleKey: "business.qrStudio.employees.pageTitle",
+            descriptionKey: "business.qrStudio.employees.pageDesc",
+            printCategory: "employees" as QrStudioCategory,
+          },
+          locations: {
+            sectionLabelKey: "business.qrStudio.nav.locations",
+            titleKey: "business.qrStudio.locations.pageTitle",
+            descriptionKey: "business.qrStudio.locations.pageDesc",
+            printCategory: "locations" as QrStudioCategory,
+          },
+        } satisfies Record<
+          Exclude<QrStudioViewMode, "gallery">,
+          {
+            sectionLabelKey: string;
+            titleKey: string;
+            descriptionKey: string;
+            printCategory: QrStudioCategory;
+          }
+        >)[viewMode]
+      : null;
+
+  const embeddedShellHeaderActions =
+    embedded && viewMode === "employees" ? (
+      <Button
+        type="button"
+        className={cn(businessUi.btnPrimary, "shrink-0 w-full sm:w-auto")}
+        onClick={handleGenerateAllPdf}
+        disabled={qrLocked || bulkPdfLoading || safeEmployees.length === 0}
+      >
+        {bulkPdfLoading ? (
+          <LoadingSpinner size="sm" className="mr-2 shrink-0" />
+        ) : (
+          <FileDown className="mr-2 h-4 w-4 shrink-0" />
+        )}
+        {t("business.qrPage.allPdfs")}
+      </Button>
+    ) : null;
+
+  const qrStudioViewContent = (
+    <div className="space-y-6">
+      <div className="w-full min-w-0">
+        {viewMode === "gallery" && user?.businessId ? (
+          <div className="space-y-6">
+            <div>
+              <h2 className="text-base font-semibold text-foreground">
+                {t("business.qrStudio.gallery.libraryTitle")}
+              </h2>
+              <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
+                {t("business.qrStudio.gallery.libraryDesc")}
+              </p>
+            </div>
+
+            {galleryAssets.length === 0 ? (
+              <div className={cn(businessUi.cardStatic, businessUi.chartEmpty, "py-12 text-center")}>
+                <p className="text-muted-foreground">{t("business.qrStudio.gallery.libraryEmpty")}</p>
+              </div>
+            ) : (
+              <div className="qr-studio-employee-grid grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+                {galleryAssets.map((asset) => (
+                  <QrManagementCard
+                    key={asset.key}
+                    item={asset.item}
+                    type={asset.type}
+                    layout="library"
+                    metadata={asset.metadata}
+                    previewDataUrl={asset.previewDataUrl}
+                    copiedId={copiedKey}
+                    qrLocked={qrLocked}
+                    regeneratingId={regeneratingId}
+                    onCopy={handleCopy}
+                    onEmployeePrint={(item, url) => void handleEmployeePrint(item as CardItem, url)}
+                    onEmployeePrintPdf={(item) => void handleEmployeePrintPdf(item as CardItem)}
+                    onEmployeeRegenerate={onEmployeeRegenerateCard}
+                    onVenuePrint={(item, venueType, url) =>
+                      void handleVenueQrPrint(item as CardItem, venueType, url)
+                    }
+                    onVenuePrintPdf={(item, venueType, url) =>
+                      void handleVenuePrintPdf(item as CardItem, venueType, url)
+                    }
+                    onRegenerateBusinessQr={requestRegenerateBusinessQr}
+                    exportBlocked={isQrExportBlocked(asset.exportKey)}
+                  />
+                ))}
+              </div>
+            )}
+
+            <Card className={businessUi.cardStatic}>
+              <CardContent className="space-y-3 pt-6">
+                <div>
+                  <h3 className="text-sm font-semibold text-foreground">
+                    {t("business.qrStudio.gallery.quickAccessTitle")}
+                  </h3>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    {t("business.qrStudio.gallery.quickAccessDesc")}
+                  </p>
+                </div>
+                <div className="grid gap-2 sm:grid-cols-3">
+                  {quickAccessLinks.map((link) => {
+                    const Icon = link.icon;
+                    return (
+                      <Link
+                        key={link.href}
+                        to={link.href}
+                        className={cn(
+                          businessUi.cardStatic,
+                          "flex items-center justify-between gap-2 rounded-xl border px-3.5 py-3 text-sm font-medium text-foreground transition-colors hover:border-primary/30 hover:bg-primary/[0.04]",
+                        )}
+                      >
+                        <span className="flex min-w-0 items-center gap-2">
+                          <Icon className="h-4 w-4 shrink-0 text-primary" aria-hidden />
+                          <span className="truncate">{t(link.labelKey)}</span>
+                        </span>
+                        <span className="flex shrink-0 items-center gap-1 text-muted-foreground">
+                          <span className="text-xs tabular-nums">{link.count}</span>
+                          <ChevronRight className="h-4 w-4" aria-hidden />
+                        </span>
+                      </Link>
+                    );
+                  })}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        ) : null}
+
+        {viewMode === "business" ? (
+          <div className="space-y-8">
+            {storefrontQrItem ? (
+              <div className="space-y-4">
+                {storefrontQrGenerating && !storefrontQr ? (
+                  <div
+                    className={cn(businessUi.cardStatic, businessUi.cardPad, "animate-pulse")}
+                    aria-busy="true"
+                    aria-label={t("business.qrPage.storefrontQrHeading", { name: venueName })}
+                  >
+                    <div className="flex min-w-0 flex-col gap-4 sm:flex-row sm:gap-6">
+                      <div className="mx-auto aspect-square w-full max-w-[10.5rem] rounded-xl bg-muted sm:max-w-[12rem] lg:mx-0 lg:h-44 lg:w-44" />
+                      <div className="flex-1 space-y-4">
+                        <div className="space-y-2">
+                          <div className="h-3 w-28 rounded bg-muted" />
+                          <div className="h-4 w-full max-w-md rounded bg-muted" />
+                        </div>
+                        <div className="h-16 rounded-lg bg-muted" />
+                        <div className="flex flex-wrap justify-end gap-2">
+                          <div className="h-9 w-28 rounded bg-muted" />
+                          <div className="h-9 w-24 rounded bg-muted" />
+                          <div className="h-9 w-32 rounded bg-muted" />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <QrManagementCard
+                    item={storefrontQrItem}
+                    type="storefront"
+                    layout="storefront"
+                    previewDataUrl={storefrontQr}
+                    copiedId={copiedKey}
+                    qrLocked={qrLocked}
+                    regeneratingId={regeneratingId}
+                    onCopy={handleCopy}
+                    onRegenerateBusinessQr={requestRegenerateBusinessQr}
+                    onVenuePrint={(item, venueType, url) =>
+                      void handleVenueQrPrint(item as CardItem, venueType, url)
+                    }
+                    onVenuePrintPdf={(item, venueType, url) =>
+                      void handleVenuePrintPdf(item as CardItem, venueType, url)
+                    }
+                    exportBlocked={isQrExportBlocked("storefront")}
+                  />
+                )}
+              </div>
+            ) : null}
+          </div>
+        ) : null}
+
+        {viewMode === "employees" ? (
+          <>
+            {showInitialSkeleton ? (
+              <DashboardListSkeleton rows={5} minHeightClass="min-h-[240px]" />
+            ) : safeEmployees.length === 0 ? (
+              <div className="qr-studio-empty">
+                <p className="qr-studio-empty__title">{t("business.qrPage.noEmployees")}</p>
+                <p className="qr-studio-empty__desc">{t("business.qrStudio.empty.employeesDesc")}</p>
+                <Link to="/dashboard/team/employees" className="qr-studio-empty__action">
+                  {t("business.qrPage.addStaffInManagement")}
+                </Link>
+              </div>
+            ) : (
+              <div className="qr-studio-employee-grid">
+                {safeEmployees.map((employee) => (
+                  <QrManagementCard
+                    key={employee.id}
+                    item={{
+                      id: employee.id,
+                      name: employee.name,
+                      role: employee.role,
+                      avatar: employee.avatar,
+                      qrUrl: resolveEmployeeQrUrl({
+                        employeeId: employee.id,
+                        businessSlug,
+                        employeeSlug: employee.slug,
+                      }),
+                      slug: employee.slug,
+                    }}
+                    type="employee"
+                    previewDataUrl={qrImages[employee.id]}
+                    copiedId={copiedKey}
+                    qrLocked={qrLocked}
+                    regeneratingId={regeneratingId}
+                    onCopy={handleCopy}
+                    onEmployeePrint={(item, url) => void handleEmployeePrint(item as CardItem, url)}
+                    onEmployeePrintPdf={(item) => void handleEmployeePrintPdf(item as CardItem)}
+                    onEmployeeRegenerate={onEmployeeRegenerateCard}
+                    exportBlocked={isQrExportBlocked(employee.id)}
+                  />
+                ))}
+              </div>
+            )}
+          </>
+        ) : null}
+
+        {viewMode === "locations" ? (
+          <div className="space-y-4">
+            {showInitialSkeleton || (venueLoading && locations.length === 0) ? (
+              <DashboardListSkeleton rows={5} minHeightClass="min-h-[240px]" />
+            ) : venueError ? (
+              <p className="text-sm text-destructive">{venueError}</p>
+            ) : locations.length === 0 ? (
+              <div className="qr-studio-empty">
+                <p className="qr-studio-empty__title">{t("business.qrPage.noLocations")}</p>
+                <p className="qr-studio-empty__desc">{t("business.qrStudio.empty.locationsDesc")}</p>
+                <Link to="/dashboard/locations" className="qr-studio-empty__action">
+                  {t("business.qrPage.addLocations")}
+                </Link>
+              </div>
+            ) : (
+              locations.map((location) => (
+                <QrManagementCard
+                  key={location.id}
+                  item={{ ...location, role: location.address }}
+                  type="location"
+                  previewDataUrl={venueQrPreview[`loc-${location.id}`]}
+                  copiedId={copiedKey}
+                  qrLocked={qrLocked}
+                  regeneratingId={regeneratingId}
+                  onCopy={handleCopy}
+                  onVenuePrint={(item, venueType, url) =>
+                    void handleVenueQrPrint(item as CardItem, venueType, url)
+                  }
+                  onVenuePrintPdf={(item, venueType, url) =>
+                    void handleVenuePrintPdf(item as CardItem, venueType, url)
+                  }
+                  exportBlocked={isQrExportBlocked(`loc-${location.id}`)}
+                />
+              ))
+            )}
+          </div>
+        ) : null}
+      </div>
+    </div>
+  );
+
   return (
     <div className={cn(embedded ? "text-foreground" : "min-h-screen bg-background pb-20 text-foreground")}>
       <div className={embedded ? "space-y-6" : businessUi.subPageTop}>
@@ -1305,287 +1580,19 @@ export function QRCodeManagementPage({
         </div>
       ) : null}
 
-      <div className={cn(embedded ? "mt-6" : businessUi.subPageMain, "pb-4")}>
-        <div className="space-y-6">
-          <div className="w-full min-w-0">
-            {viewMode === "gallery" && user?.businessId ? (
-              <div className="space-y-6">
-                <div>
-                  <h2 className="text-base font-semibold text-foreground">
-                    {t("business.qrStudio.gallery.libraryTitle")}
-                  </h2>
-                  <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
-                    {t("business.qrStudio.gallery.libraryDesc")}
-                  </p>
-                </div>
-
-                {galleryAssets.length === 0 ? (
-                  <div className={cn(businessUi.cardStatic, businessUi.chartEmpty, "py-12 text-center")}>
-                    <p className="text-muted-foreground">{t("business.qrStudio.gallery.libraryEmpty")}</p>
-                  </div>
-                ) : (
-                  <div className="qr-studio-employee-grid grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-                    {galleryAssets.map((asset) => (
-                      <QrManagementCard
-                        key={asset.key}
-                        item={asset.item}
-                        type={asset.type}
-                        layout="library"
-                        metadata={asset.metadata}
-                        previewDataUrl={asset.previewDataUrl}
-                        copiedId={copiedKey}
-                        qrLocked={qrLocked}
-                        regeneratingId={regeneratingId}
-                        onCopy={handleCopy}
-                        onEmployeePrint={(item, url) => void handleEmployeePrint(item as CardItem, url)}
-                        onEmployeePrintPdf={(item) => void handleEmployeePrintPdf(item as CardItem)}
-                        onEmployeeRegenerate={onEmployeeRegenerateCard}
-                        onVenuePrint={(item, venueType, url) =>
-                          void handleVenueQrPrint(item as CardItem, venueType, url)
-                        }
-                        onVenuePrintPdf={(item, venueType, url) =>
-                          void handleVenuePrintPdf(item as CardItem, venueType, url)
-                        }
-                        onRegenerateBusinessQr={requestRegenerateBusinessQr}
-                        exportBlocked={isQrExportBlocked(asset.exportKey)}
-                      />
-                    ))}
-                  </div>
-                )}
-
-                <Card className={businessUi.cardStatic}>
-                  <CardContent className="space-y-3 pt-6">
-                    <div>
-                      <h3 className="text-sm font-semibold text-foreground">
-                        {t("business.qrStudio.gallery.quickAccessTitle")}
-                      </h3>
-                      <p className="mt-1 text-xs text-muted-foreground">
-                        {t("business.qrStudio.gallery.quickAccessDesc")}
-                      </p>
-                    </div>
-                    <div className="grid gap-2 sm:grid-cols-3">
-                      {quickAccessLinks.map((link) => {
-                        const Icon = link.icon;
-                        return (
-                          <Link
-                            key={link.href}
-                            to={link.href}
-                            className={cn(
-                              businessUi.cardStatic,
-                              "flex items-center justify-between gap-2 rounded-xl border px-3.5 py-3 text-sm font-medium text-foreground transition-colors hover:border-primary/30 hover:bg-primary/[0.04]",
-                            )}
-                          >
-                            <span className="flex min-w-0 items-center gap-2">
-                              <Icon className="h-4 w-4 shrink-0 text-primary" aria-hidden />
-                              <span className="truncate">{t(link.labelKey)}</span>
-                            </span>
-                            <span className="flex shrink-0 items-center gap-1 text-muted-foreground">
-                              <span className="text-xs tabular-nums">{link.count}</span>
-                              <ChevronRight className="h-4 w-4" aria-hidden />
-                            </span>
-                          </Link>
-                        );
-                      })}
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-            ) : null}
-
-            {viewMode === "business" ? (
-              <div className="space-y-8">
-                {storefrontQrItem ? (
-                  <div className="space-y-4">
-                    <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                      <div>
-                        <h2 className="text-base font-semibold text-foreground">
-                          {t("business.qrPage.storefrontQrHeading", { name: venueName })}
-                        </h2>
-                        <p className="mt-1 text-sm text-muted-foreground">
-                          {t("business.qrPage.storefrontQrDesc")}
-                        </p>
-                      </div>
-                      {embedded ? <QrStudioOrderPrintButton category="business" /> : null}
-                    </div>
-                    {storefrontQrGenerating && !storefrontQr ? (
-                      <div
-                        className={cn(businessUi.cardStatic, businessUi.cardPad, "animate-pulse")}
-                        aria-busy="true"
-                        aria-label={t("business.qrPage.storefrontQrHeading", { name: venueName })}
-                      >
-                        <div className="flex min-w-0 flex-col gap-4 sm:flex-row sm:gap-6">
-                          <div className="mx-auto aspect-square w-full max-w-[10.5rem] rounded-xl bg-muted sm:max-w-[12rem] lg:mx-0 lg:h-44 lg:w-44" />
-                          <div className="flex-1 space-y-4">
-                            <div className="space-y-2">
-                              <div className="h-3 w-28 rounded bg-muted" />
-                              <div className="h-4 w-full max-w-md rounded bg-muted" />
-                            </div>
-                            <div className="h-16 rounded-lg bg-muted" />
-                            <div className="flex flex-wrap justify-end gap-2">
-                              <div className="h-9 w-28 rounded bg-muted" />
-                              <div className="h-9 w-24 rounded bg-muted" />
-                              <div className="h-9 w-32 rounded bg-muted" />
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    ) : (
-                      <QrManagementCard
-                        item={storefrontQrItem}
-                        type="storefront"
-                        previewDataUrl={storefrontQr}
-                        copiedId={copiedKey}
-                        qrLocked={qrLocked}
-                        regeneratingId={regeneratingId}
-                        onCopy={handleCopy}
-                        onRegenerateBusinessQr={requestRegenerateBusinessQr}
-                        onVenuePrint={(item, venueType, url) =>
-                          void handleVenueQrPrint(item as CardItem, venueType, url)
-                        }
-                        onVenuePrintPdf={(item, venueType, url) =>
-                          void handleVenuePrintPdf(item as CardItem, venueType, url)
-                        }
-                        exportBlocked={isQrExportBlocked("storefront")}
-                      />
-                    )}
-                  </div>
-                ) : null}
-              </div>
-            ) : null}
-
-            {viewMode === "employees" ? (
-                <>
-                {showInitialSkeleton ? (
-                  <DashboardListSkeleton rows={5} minHeightClass="min-h-[240px]" />
-                ) : (
-                  <div>
-                  <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                    <div>
-                      <h2 className="text-base font-semibold text-foreground">
-                        {t("business.qrStudio.employees.pageTitle")}
-                      </h2>
-                      <p className="mt-1 text-sm text-muted-foreground">
-                        {t("business.qrStudio.employees.pageDesc")}
-                      </p>
-                    </div>
-                    {embedded ? (
-                      <div className="flex shrink-0 flex-wrap gap-2">
-                        <QrStudioOrderPrintButton category="employees" />
-                        <Button
-                          type="button"
-                          className={cn(businessUi.btnPrimary, "shrink-0")}
-                          onClick={handleGenerateAllPdf}
-                          disabled={qrLocked || bulkPdfLoading || safeEmployees.length === 0}
-                        >
-                          {bulkPdfLoading ? (
-                            <LoadingSpinner size="sm" className="mr-2 shrink-0" />
-                          ) : (
-                            <FileDown className="mr-2 h-4 w-4 shrink-0" />
-                          )}
-                          {t("business.qrPage.allPdfs")}
-                        </Button>
-                      </div>
-                    ) : null}
-                  </div>
-                  {safeEmployees.length === 0 ? (
-                    <div className={cn(businessUi.cardStatic, businessUi.chartEmpty, "py-12 text-center")}>
-                      <p className="mb-2 text-muted-foreground">{t("business.qrPage.noEmployees")}</p>
-                      <Link
-                        to="/dashboard/team/employees"
-                        className="text-sm font-semibold text-foreground underline underline-offset-2"
-                      >
-                        {t("business.qrPage.addStaffInManagement")}
-                      </Link>
-                    </div>
-                  ) : (
-                    <div className="space-y-4">
-                      {safeEmployees.map((employee) => (
-                        <QrManagementCard
-                          key={employee.id}
-                          item={{
-                            id: employee.id,
-                            name: employee.name,
-                            role: employee.role,
-                            avatar: employee.avatar,
-                            qrUrl: resolveEmployeeQrUrl({
-                              employeeId: employee.id,
-                              businessSlug,
-                              employeeSlug: employee.slug,
-                            }),
-                            slug: employee.slug,
-                          }}
-                          type="employee"
-                          previewDataUrl={qrImages[employee.id]}
-                          copiedId={copiedKey}
-                          qrLocked={qrLocked}
-                          regeneratingId={regeneratingId}
-                          onCopy={handleCopy}
-                          onEmployeePrint={(item, url) => void handleEmployeePrint(item as CardItem, url)}
-                          onEmployeePrintPdf={(item) => void handleEmployeePrintPdf(item as CardItem)}
-                          onEmployeeRegenerate={onEmployeeRegenerateCard}
-                          exportBlocked={isQrExportBlocked(employee.id)}
-                        />
-                      ))}
-                    </div>
-                  )}
-                  </div>
-                )}
-                </>
-            ) : null}
-
-            {viewMode === "locations" ? (
-              <div className="space-y-4">
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                  <div>
-                    <h2 className="text-base font-semibold text-foreground">
-                      {t("business.qrStudio.locations.pageTitle")}
-                    </h2>
-                    <p className="mt-1 text-sm text-muted-foreground">
-                      {t("business.qrStudio.locations.pageDesc")}
-                    </p>
-                  </div>
-                  {embedded ? <QrStudioOrderPrintButton category="locations" /> : null}
-                </div>
-                {showInitialSkeleton || (venueLoading && locations.length === 0) ? (
-                  <DashboardListSkeleton rows={5} minHeightClass="min-h-[240px]" />
-                ) : venueError ? (
-                  <p className="text-sm text-destructive">{venueError}</p>
-                ) : locations.length === 0 ? (
-                  <div className="py-16 text-center text-muted-foreground">
-                    <p className="mb-6">{t("business.qrPage.noLocations")}</p>
-                    <Link
-                      to="/dashboard/locations"
-                      className="text-sm font-semibold text-foreground underline underline-offset-2"
-                    >
-                      {t("business.qrPage.addLocations")}
-                    </Link>
-                  </div>
-                ) : (
-                  locations.map((location) => (
-                    <QrManagementCard
-                      key={location.id}
-                      item={{ ...location, role: location.address }}
-                      type="location"
-                      previewDataUrl={venueQrPreview[`loc-${location.id}`]}
-                          copiedId={copiedKey}
-                      qrLocked={qrLocked}
-                      regeneratingId={regeneratingId}
-                      onCopy={handleCopy}
-                      onVenuePrint={(item, venueType, url) =>
-                        void handleVenueQrPrint(item as CardItem, venueType, url)
-                      }
-                      onVenuePrintPdf={(item, venueType, url) =>
-                        void handleVenuePrintPdf(item as CardItem, venueType, url)
-                      }
-                      exportBlocked={isQrExportBlocked(`loc-${location.id}`)}
-                    />
-                  ))
-                )}
-              </div>
-            ) : null}
-          </div>
-        </div>
-      </div>
+      {embeddedShellConfig ? (
+        <QrStudioPageShell
+          sectionLabelKey={embeddedShellConfig.sectionLabelKey}
+          titleKey={embeddedShellConfig.titleKey}
+          descriptionKey={embeddedShellConfig.descriptionKey}
+          printCategory={embeddedShellConfig.printCategory}
+          headerActions={embeddedShellHeaderActions}
+        >
+          {qrStudioViewContent}
+        </QrStudioPageShell>
+      ) : (
+        <div className={cn(embedded ? "mt-6" : businessUi.subPageMain, "pb-4")}>{qrStudioViewContent}</div>
+      )}
 
       <BusinessConfirmDialog
         open={pendingDestructiveAction != null}

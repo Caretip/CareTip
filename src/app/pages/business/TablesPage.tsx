@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router";
 import { useTranslation } from "react-i18next";
-import { Check, Copy, Download, Eye, LayoutGrid, Printer } from "lucide-react";
+import { Check, Copy, Download, Printer } from "lucide-react";
 import { toast } from "sonner";
 import { useRequireAuth } from "../../hooks/useRequireAuth";
 import { useCopyFeedback } from "../../hooks/useCopyFeedback";
@@ -19,19 +19,14 @@ import { canUseProductionQr } from "../../lib/businessVerificationCapabilities";
 import { LoadingSpinner } from "../../components/ui/loading-spinner";
 import { TablesListSkeleton } from "../../components/dashboard/DashboardSectionLoading";
 import { useBusinessPageBoot } from "../../lib/useBusinessPageBoot";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "../../components/ui/dialog";
 import { Button } from "../../components/ui/button";
 import { cn } from "@/lib/utils";
 import { businessUi } from "@/app/components/business/businessDashboardUi";
 import { BusinessResponsiveData } from "@/app/components/business/BusinessResponsiveData";
 import { TableItemMobileCard } from "@/app/components/business/businessDashboardMobileCards";
-import { QrStudioOrderPrintButton } from "@/app/components/business/qr-studio/QrStudioOrderPrintButton";
+import { QrStudioPageShell } from "@/app/components/business/qr-studio/QrStudioPageShell";
+import { QrStudioTableWorkspaceCard } from "@/app/components/business/qr-studio/QrStudioTableWorkspaceCard";
+import { downloadBusinessQrPrintPdf } from "../../lib/qrPrintPdf";
 import { VENUE_MANAGEMENT_HREF } from "@/app/components/business/businessDashboardNav";
 import {
   getPageSessionCache,
@@ -54,7 +49,6 @@ export function TablesPage({ embedded = false }: { embedded?: boolean } = {}) {
   const [locations, setLocations] = useState<LocationDTO[]>([]);
   const [loading, setLoading] = useState(true);
   const [qrImages, setQrImages] = useState<Record<string, string>>({});
-  const [previewTableId, setPreviewTableId] = useState<string | null>(null);
   const qrLocked = !canUseProductionQr(
     user?.onboardingVerificationStatus,
     Boolean(user?.impersonation),
@@ -146,8 +140,6 @@ export function TablesPage({ embedded = false }: { embedded?: boolean } = {}) {
   const copyButtonIcon = (tableId: string) =>
     isCopied(tableId) ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />;
 
-  const previewTable = previewTableId ? tables.find((row) => row.id === previewTableId) : null;
-
   const downloadTablePng = (row: TableDTO) => {
     if (qrLocked) return;
     const dataUrl = qrImages[row.id];
@@ -173,19 +165,27 @@ export function TablesPage({ embedded = false }: { embedded?: boolean } = {}) {
     }
   };
 
+  const downloadTablePdf = async (row: TableDTO) => {
+    if (qrLocked) return;
+    const dataUrl = qrImages[row.id];
+    if (!dataUrl) {
+      toast.error(t("business.qrPage.toastQrNotReady"));
+      return;
+    }
+    try {
+      const safe = row.name.replace(/\s+/g, "-").toLowerCase();
+      await downloadBusinessQrPrintPdf({
+        qrPngDataUrl: dataUrl,
+        fileBaseName: `CareTip_QR_Table_${safe}_${row.id.slice(0, 8)}`,
+      });
+    } catch (err) {
+      logClientError("TablesPage.printPdf", err);
+      toast.error(t("business.qrPage.toastPdfFail"));
+    }
+  };
+
   const tableQrActions = (row: TableDTO) => (
     <>
-      <Button
-        type="button"
-        size="sm"
-        variant="outline"
-        onClick={() => setPreviewTableId(row.id)}
-        disabled={!qrImages[row.id]}
-        className="h-8"
-      >
-        <Eye className="mr-1.5 h-3.5 w-3.5" />
-        {t("business.qrStudio.gallery.preview")}
-      </Button>
       <Button
         type="button"
         size="sm"
@@ -251,17 +251,7 @@ export function TablesPage({ embedded = false }: { embedded?: boolean } = {}) {
             </div>
           </div>
         </div>
-      ) : (
-        <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-          <div className="min-w-0">
-            <h2 className="text-base font-semibold text-foreground">
-              {t("business.qrStudio.tables.pageTitle")}
-            </h2>
-            <p className="mt-1 text-sm text-muted-foreground">{t("business.qrStudio.tables.pageDesc")}</p>
-          </div>
-          <QrStudioOrderPrintButton category="tables" className="w-full shrink-0 sm:w-auto" />
-        </div>
-      )}
+      ) : null}
 
       <div
         className={cn(
@@ -270,22 +260,61 @@ export function TablesPage({ embedded = false }: { embedded?: boolean } = {}) {
             : "dashboard-page-contained mx-auto w-full max-w-5xl px-4 py-8 sm:px-6",
         )}
       >
-        {mainSurface === "capability-lock" ? (
+        {embedded ? (
+          <QrStudioPageShell
+            sectionLabelKey="business.qrStudio.nav.tables"
+            titleKey="business.qrStudio.tables.pageTitle"
+            descriptionKey="business.qrStudio.tables.pageDesc"
+            printCategory="tables"
+          >
+            {mainSurface === "capability-lock" ? (
+              <LockedFeatureCard featureKey="tableQr" tier={tier} />
+            ) : mainSurface === "loading" ? (
+              <TablesListSkeleton />
+            ) : mainSurface === "need-location" ? (
+              <div className="qr-studio-empty">
+                <p className="qr-studio-empty__title">{t("business.qrStudio.tables.emptyNeedLocation")}</p>
+                {manageTablesCta}
+              </div>
+            ) : mainSurface === "empty" ? (
+              <div className="qr-studio-empty">
+                <p className="qr-studio-empty__title">{t("business.qrStudio.tables.emptyNoTables")}</p>
+                {manageTablesCta}
+              </div>
+            ) : (
+              <div className="qr-studio-table-grid">
+                {tables.map((row) => (
+                  <QrStudioTableWorkspaceCard
+                    key={row.id}
+                    tableName={row.name}
+                    locationName={row.location?.name ?? ""}
+                    guestUrl={tableUrl(row.id)}
+                    qrDataUrl={qrImages[row.id]}
+                    copied={isCopied(row.id)}
+                    qrLocked={qrLocked}
+                    onCopy={() => void copyLink(row.id)}
+                    onDownloadPdf={() => void downloadTablePdf(row)}
+                    onPrint={() => printTableQr(row)}
+                    onDownloadPng={() => downloadTablePng(row)}
+                  />
+                ))}
+              </div>
+            )}
+          </QrStudioPageShell>
+        ) : mainSurface === "capability-lock" ? (
           <LockedFeatureCard featureKey="tableQr" tier={tier} />
         ) : mainSurface === "loading" ? (
           <div className={cn(businessUi.tablePanel, "-mx-4 px-4 sm:mx-0 sm:px-0")}>
             <TablesListSkeleton />
           </div>
         ) : mainSurface === "need-location" ? (
-          <div className={cn(businessUi.cardStatic, "py-16 text-center text-muted-foreground border-dashed")}>
-            <LayoutGrid className="w-10 h-10 mx-auto mb-3 opacity-50" />
-            <p className="mb-4">{t("business.qrStudio.tables.emptyNeedLocation")}</p>
+          <div className="qr-studio-empty">
+            <p className="qr-studio-empty__title">{t("business.qrStudio.tables.emptyNeedLocation")}</p>
             {manageTablesCta}
           </div>
         ) : mainSurface === "empty" ? (
-          <div className={cn(businessUi.cardStatic, "py-16 text-center text-muted-foreground border-dashed")}>
-            <LayoutGrid className="w-10 h-10 mx-auto mb-3 opacity-50" />
-            <p className="mb-4">{t("business.qrStudio.tables.emptyNoTables")}</p>
+          <div className="qr-studio-empty">
+            <p className="qr-studio-empty__title">{t("business.qrStudio.tables.emptyNoTables")}</p>
             {manageTablesCta}
           </div>
         ) : (
@@ -315,7 +344,7 @@ export function TablesPage({ embedded = false }: { embedded?: boolean } = {}) {
                     <th className="px-4 py-3 font-medium text-foreground">{t("business.tablesPage.thTable")}</th>
                     <th className="px-4 py-3 font-medium text-foreground">{t("business.tablesPage.thLocation")}</th>
                     <th className="px-4 py-3 font-medium text-foreground">{t("business.tablesPage.thGuestLink")}</th>
-                    <th className="px-4 py-3 font-medium text-foreground">{t("business.qrStudio.gallery.preview")}</th>
+                    <th className="px-4 py-3 font-medium text-foreground">{t("business.qrStudio.previewImageAlt")}</th>
                     <th className="px-4 py-3 w-48" />
                   </tr>
                 </thead>
@@ -329,14 +358,13 @@ export function TablesPage({ embedded = false }: { embedded?: boolean } = {}) {
                       </td>
                       <td className="px-4 py-3">
                         {qrImages[row.id] ? (
-                          <button
-                            type="button"
-                            onClick={() => setPreviewTableId(row.id)}
-                            className="block rounded-lg border border-black/[0.08] bg-white p-1"
-                            aria-label={t("business.qrStudio.gallery.previewAssetAria")}
-                          >
-                            <img src={qrImages[row.id]} alt="" className="h-14 w-14 object-contain" />
-                          </button>
+                          <div className="rounded-lg border border-black/[0.08] bg-white p-1">
+                            <img
+                              src={qrImages[row.id]}
+                              alt={t("business.qrStudio.previewImageAlt")}
+                              className="h-14 w-14 object-contain"
+                            />
+                          </div>
                         ) : (
                           <LoadingSpinner size="sm" />
                         )}
@@ -362,57 +390,6 @@ export function TablesPage({ embedded = false }: { embedded?: boolean } = {}) {
           />
         )}
       </div>
-
-      <Dialog open={previewTableId != null} onOpenChange={(open) => !open && setPreviewTableId(null)}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>{previewTable?.name ?? t("business.tablesPage.title")}</DialogTitle>
-            <DialogDescription>
-              {previewTable?.location.name}
-            </DialogDescription>
-          </DialogHeader>
-          {previewTable && qrImages[previewTable.id] ? (
-            <div className="flex justify-center rounded-xl border bg-white p-4">
-              <img
-                src={qrImages[previewTable.id]}
-                alt=""
-                className="max-h-[min(60vh,360px)] w-full object-contain"
-              />
-            </div>
-          ) : null}
-          {previewTable ? (
-            <div className="flex flex-wrap justify-end gap-2">
-              <Button type="button" variant="outline" size="sm" onClick={() => void copyLink(previewTable.id)}>
-                {isCopied(previewTable.id) ? (
-                  <Check className="mr-2 h-4 w-4" />
-                ) : (
-                  <Copy className="mr-2 h-4 w-4" />
-                )}
-                {copyButtonLabel(previewTable.id)}
-              </Button>
-              <Button
-                type="button"
-                size="sm"
-                variant="outline"
-                onClick={() => downloadTablePng(previewTable)}
-                disabled={qrLocked}
-              >
-                <Download className="mr-2 h-4 w-4" />
-                {t("business.qrStudio.gallery.downloadPng")}
-              </Button>
-              <Button
-                type="button"
-                size="sm"
-                onClick={() => printTableQr(previewTable)}
-                disabled={qrLocked}
-              >
-                <Printer className="mr-2 h-4 w-4" />
-                {t("business.qrPage.print")}
-              </Button>
-            </div>
-          ) : null}
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }

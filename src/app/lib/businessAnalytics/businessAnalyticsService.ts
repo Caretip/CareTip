@@ -22,6 +22,19 @@ import type {
 import type { BusinessDashboardStats } from "../api";
 import { trackAnalyticsCacheHit, trackAnalyticsCacheMiss, trackAnalyticsRefetch } from "../realtime/realtimeMetrics";
 import { markAnalyticsPerformance } from "./analyticsPerformanceMarks";
+import { getOrCreateInFlightRequest } from "../getOrCreateInFlightRequest";
+
+function businessAnalyticsBundleInflightKey(
+  timeframe: AnalyticsTimeframe,
+  opts?: FetchBusinessAnalyticsOptions,
+): string {
+  const tips = opts?.includeTipsFeed !== false ? "1" : "0";
+  const week = opts?.includeWeekStats !== false ? "1" : "0";
+  const qr = opts?.includeQrAnalytics !== false ? "1" : "0";
+  const deferred = opts?.includeDeferredAnalytics !== false ? "1" : "0";
+  const revalidate = opts?.revalidate ? "1" : "0";
+  return `me:biz-analytics-bundle:${timeframe}:${tips}:${week}:${qr}:${deferred}:${revalidate}`;
+}
 
 /** Whether period stats include above-fold authoritative fields (KPIs, prior, employees). */
 export function bundleHasAboveFoldStats(stats: BusinessDashboardStats | undefined): boolean {
@@ -126,7 +139,6 @@ export async function fetchBusinessAnalyticsBundle(
   const includeWeekStats = opts?.includeWeekStats !== false;
   const includeQrAnalytics = opts?.includeQrAnalytics !== false;
   const includeDeferredAnalytics = opts?.includeDeferredAnalytics !== false;
-  const feedParams = tipsFeedParamsForTimeframe(timeframe);
 
   const cachedFlags = cached ? resolveBundleSliceFlags(cached) : null;
 
@@ -153,6 +165,45 @@ export async function fetchBusinessAnalyticsBundle(
     trackAnalyticsCacheHit();
     return cached;
   }
+
+  const inflightKey = businessAnalyticsBundleInflightKey(timeframe, opts);
+  return getOrCreateInFlightRequest(inflightKey, () =>
+    loadBusinessAnalyticsBundleNetwork(timeframe, opts, cached),
+  );
+}
+
+async function loadBusinessAnalyticsBundleNetwork(
+  timeframe: AnalyticsTimeframe,
+  opts: FetchBusinessAnalyticsOptions | undefined,
+  cachedSeed: BusinessAnalyticsBundle | null,
+): Promise<BusinessAnalyticsBundle> {
+  const cached = !opts?.revalidate
+    ? getBusinessAnalyticsBundle(timeframe) ?? cachedSeed
+    : cachedSeed;
+  if (cached && isBusinessAnalyticsBundleComplete(cached, opts)) {
+    trackAnalyticsCacheHit();
+    return cached;
+  }
+
+  const includeTipsFeed = opts?.includeTipsFeed !== false;
+  const includeWeekStats = opts?.includeWeekStats !== false;
+  const includeQrAnalytics = opts?.includeQrAnalytics !== false;
+  const includeDeferredAnalytics = opts?.includeDeferredAnalytics !== false;
+  const feedParams = tipsFeedParamsForTimeframe(timeframe);
+
+  const cachedFlags = cached ? resolveBundleSliceFlags(cached) : null;
+
+  const needsAboveFold =
+    !cachedFlags?.aboveFoldFetched || !cached?.periodStats || Boolean(opts?.revalidate);
+  const needsDeferred =
+    includeDeferredAnalytics &&
+    (!cachedFlags?.deferredAnalyticsFetched || Boolean(opts?.revalidate));
+  const needsWeekStats =
+    includeWeekStats && (!cached?.weekStats || Boolean(opts?.revalidate));
+  const needsTipsFeed =
+    includeTipsFeed && (!cached?.tipsFeedFetched || Boolean(opts?.revalidate));
+  const needsQrAnalytics =
+    includeQrAnalytics && (!cached?.qrFetched || Boolean(opts?.revalidate));
 
   trackAnalyticsCacheMiss();
   if (needsAboveFold || needsDeferred || needsWeekStats || needsTipsFeed || needsQrAnalytics) {

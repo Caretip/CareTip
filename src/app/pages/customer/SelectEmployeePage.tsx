@@ -15,6 +15,7 @@ import { CustomerFlowShell } from "./CustomerFlowShell";
 import { CustomerJourneyBackButton } from "./CustomerJourneyHeader";
 import { useCustomerVenueBrand } from "./customerJourneyBrand";
 import { headerSelectTeamMember } from "./customerJourneyHeaderCopy";
+import { CustomerJourneyPrivacyNotice } from "./CustomerJourneyPrivacyNotice";
 
 export function SelectEmployeePage() {
   const { t } = useTranslation();
@@ -142,6 +143,7 @@ export function SelectEmployeePage() {
                 <button type="button" onClick={handleContinue} className={cf.btnPrimaryLg}>
                   {t("tipFlow.tipAmount.continuePayment")}
                 </button>
+                <CustomerJourneyPrivacyNotice />
               </div>
             </div>
           </div>

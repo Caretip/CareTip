@@ -1,6 +1,7 @@
 import { cn } from "@/lib/utils";
 import { CareTipLogo } from "../../components/CareTipLogo";
 import { customerFlowUi as cf } from "./customerFlowUi";
+import { CustomerJourneySupportFooter } from "./CustomerJourneySupportFooter";
 
 type CustomerJourneyCareTipAttributionProps = {
   label: string;
@@ -32,11 +33,7 @@ export function CustomerJourneyCareTipAttribution({
   );
 }
 
-/** Bottom-of-page attribution wrapper for pages that do not use `CustomerFlowShell`. */
+/** Bottom-of-page support + attribution for pages that do not use `CustomerFlowShell`. */
 export function CustomerJourneyAttributionFooter({ label }: { label: string }) {
-  return (
-    <div className={cf.customerJourneyAttributionFooter}>
-      <CustomerJourneyCareTipAttribution label={label} />
-    </div>
-  );
+  return <CustomerJourneySupportFooter label={label} />;
 }

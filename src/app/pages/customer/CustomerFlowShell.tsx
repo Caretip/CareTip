@@ -3,7 +3,7 @@ import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
 import { customerFlowUi as cf } from "./customerFlowUi";
 import { CustomerJourneyHeader } from "./CustomerJourneyHeader";
-import { CustomerJourneyCareTipAttribution } from "./CustomerJourneyCareTipAttribution";
+import { CustomerJourneySupportFooter } from "./CustomerJourneySupportFooter";
 import type { CustomerJourneyEmployeeIdentity, CustomerJourneyVenueBrand } from "./customerJourneyBrand";
 import {
   APP_LOADING_PRIORITY,
@@ -131,9 +131,10 @@ export function CustomerFlowShell({
           {children}
 
           {showCareTipAttribution ? (
-            <div className="pt-4 sm:pt-6">
-              <CustomerJourneyCareTipAttribution label={t("tipFlow.common.poweredByCareTip")} />
-            </div>
+            <CustomerJourneySupportFooter
+              label={t("tipFlow.common.poweredByCareTip")}
+              className="pt-4 sm:pt-6"
+            />
           ) : null}
         </div>
       </div>

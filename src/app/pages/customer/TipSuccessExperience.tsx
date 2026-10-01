@@ -225,16 +225,12 @@ export function TipSuccessExperience({
 
           {extraActions}
 
-          <div className={cn(cf.completionActions, embedded ? "mt-5" : "mt-7")}>
+          <div className={cn(cf.journeyCtaStack, "mx-auto w-full", embedded ? "mt-5" : "mt-7")}>
             <button
               type="button"
               onClick={() => runAction("primary", onPrimary)}
               disabled={actionBusy != null || embedded}
-              className={cn(
-                "customer-flow-success-primary-btn",
-                actionBusy === "primary" && "customer-flow-success-primary-btn--busy",
-              )}
-              style={{ backgroundColor: accent, borderColor: accent }}
+              className={cn(cf.btnPrimaryLg, actionBusy === "primary" && "opacity-90")}
               tabIndex={embedded ? -1 : undefined}
               aria-disabled={embedded || actionBusy != null || undefined}
               aria-busy={actionBusy === "primary"}
@@ -250,10 +246,7 @@ export function TipSuccessExperience({
               type="button"
               onClick={() => runAction("secondary", onSecondary)}
               disabled={actionBusy != null || embedded}
-              className={cn(
-                "customer-flow-success-secondary-btn",
-                actionBusy === "secondary" && "customer-flow-success-secondary-btn--busy",
-              )}
+              className={cn(cf.btnSecondaryLg, actionBusy === "secondary" && "opacity-90")}
               tabIndex={embedded ? -1 : undefined}
               aria-disabled={embedded || actionBusy != null || undefined}
               aria-busy={actionBusy === "secondary"}

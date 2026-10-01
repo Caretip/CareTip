@@ -2138,6 +2138,40 @@
       "invalidEmail": "Bitte geben Sie eine gültige E-Mail-Adresse ein oder lassen Sie das Feld leer.",
       "continuePayment": "Weiter zur Zahlung"
     },
+    "howItWorks": {
+      "title": "So funktioniert Trinkgeld",
+      "steps": {
+        "scan": {
+          "title": "Scannen",
+          "body": "Gäste scannen einfach den CareTip QR-Code am Tisch, an der Theke oder über Ihre gewählte Ausschilderung, um den Trinkgeld-Prozess zu starten."
+        },
+        "select": {
+          "title": "Auswählen",
+          "body": "Sie wählen ein bestimmtes Teammitglied aus oder belohnen direkt das gesamte Team."
+        },
+        "pay": {
+          "title": "Zahlen",
+          "body": "Der Wunschbetrag wird sicher und sekundenschnell per Apple Pay, Google Pay oder Kreditkarte über Stripe bezahlt."
+        },
+        "receive": {
+          "title": "Trinkgeld erhalten",
+          "body": "Das Trinkgeld wird sofort in CareTip erfasst und nach Ihrer individuellen Betriebslogik verteilt direkt an den Mitarbeiter oder im Team-Topf."
+        }
+      }
+    },
+    "privacyNotice": {
+      "text": "Mit der Nutzung unseres Services nehmen Sie unsere <policy>Datenschutzerklärung</policy> zur Kenntnis.",
+      "openPolicyAria": "Datenschutzerklärung öffnen"
+    },
+    "support": {
+      "helpLink": "Hilfe & FAQ",
+      "helpTitle": "Hilfe",
+      "faq": {
+        "refundQuestion": "Kann ein gegebenes Trinkgeld zurückgefordert werden?",
+        "refundAnswerPrefix": "Trinkgelder sind freiwillige Zuwendungen und rechtlich nicht erstattungsfähig. Sollte Ihnen bei der Eingabe des Betrags ein Fehler unterlaufen sein (z. B. ein Tippfehler), wenden Sie sich bitte unter Angabe der Transaktionsdetails an ",
+        "refundAnswerSuffix": ". Wir prüfen den Fall gerne auf Kulanzbasis."
+      }
+    },
     "payment": {
       "preparingCheckout": "Ihr sicherer Checkout wird vorbereitet…",
       "canceledTitle": "Zahlung abgebrochen",
@@ -3492,22 +3526,22 @@
       "steps": {
         "scan": {
           "title": "Scannen",
-          "body": "Gäste scannen Ihren CareTip QR Code am Tisch, an der Theke oder auf dem Bon, um den Trinkgeld Flow zu starten.",
+          "body": "Gäste scannen einfach den CareTip QR-Code am Tisch, an der Theke oder über Ihre gewählte Ausschilderung, um den Trinkgeld-Prozess zu starten.",
           "imageAlt": "CareTip Trinkgeld Bildschirm für Akona Hotel auf dem Smartphone"
         },
         "choose": {
           "title": "Auswählen",
-          "body": "Sie wählen das Teammitglied, das sie bedanken möchten, oder fahren fort, wenn Trinkgeld für das ganze Team gedacht ist.",
+          "body": "Sie wählen ein bestimmtes Teammitglied aus oder belohnen direkt das gesamte Team.",
           "imageAlt": "CareTip Bildschirm zur Auswahl eines Teammitglieds auf dem Smartphone"
         },
         "pay": {
-          "title": "Trinkgeld & Zahlung",
-          "body": "Sie wählen einen Betrag und zahlen sicher über Stripe: Karte, Apple Pay oder Google Pay.",
+          "title": "Zahlen",
+          "body": "Der Wunschbetrag wird sicher und sekundenschnell per Apple Pay, Google Pay oder Kreditkarte über Stripe bezahlt.",
           "imageAlt": "CareTip Bildschirm zur Auswahl des Trinkgeldbetrags vor der Zahlung"
         },
         "team": {
-          "title": "Team erhält es",
-          "body": "Das Trinkgeld wird in CareTip erfasst und nach Ihrer Betriebslogik verteilt, direkt an Mitarbeitende oder im Team Topf.",
+          "title": "Trinkgeld erhalten",
+          "body": "Das Trinkgeld wird sofort in CareTip erfasst und nach Ihrer individuellen Betriebslogik verteilt direkt an den Mitarbeiter oder im Team-Topf.",
           "imageAlt": "CareTip Bestätigungsbildschirm nach erfolgreichem digitalem Trinkgeld"
         }
       }
@@ -5379,7 +5413,11 @@
       "badgeTeamRoster": "Teamliste",
       "inviteCodeLabel": "Einladungscode",
       "inviteTeamTitle": "Teammitglieder einladen",
-      "inviteTeamDesc": "Codes erzeugen oder Mitarbeitende hinzufügen.",
+      "inviteTeamDesc": "Einladungscode erzeugen oder Mitarbeitende direkt hinzufügen.",
+      "rosterSectionTitle": "Teammitglieder",
+      "rosterSectionMeta": "{{count}} Personen",
+      "searchEmpty": "Keine Mitarbeitenden entsprechen Ihrer Suche.",
+      "noQrAssignment": "Keine QR-Zuweisung",
       "inviteExpires": "Läuft ab {{date}}",
       "inviteHint": "Erzeugen Sie einen Einladungscode, um Mitarbeitende einzubinden.",
       "copy": "Kopieren",
@@ -5603,6 +5641,26 @@
       "title": "QR Studio",
       "subtitle": "",
       "navAria": "QR-Studio-Bereiche",
+      "destination": "Zieladresse",
+      "more": "Mehr",
+      "moreActionsAria": "Weitere QR-Aktionen",
+      "secondaryActionsAria": "Zusätzliche QR-Aktionen",
+      "mobileSectionAria": "QR-Studio-Bereich wählen",
+      "previewImageAlt": "QR-Code-Vorschau",
+      "storefrontPlacementHint": "Am Eingang platzieren, damit Gäste wählen können, wem sie Trinkgeld geben.",
+      "employeePersonalHint": "Persönlicher Trinkgeld-QR für dieses Teammitglied.",
+      "tableGuestHint": "Gäste scannen am Tisch, um Ihr Team zu unterstützen.",
+      "locationAreaHint": "Gäste scannen beim Betreten dieses Bereichs oder dieser Filiale.",
+      "typeLabel": {
+        "storefront": "Hauptstandort",
+        "employee": "Mitarbeiter",
+        "location": "Standort",
+        "table": "Tisch"
+      },
+      "empty": {
+        "employeesDesc": "Teammitglieder hinzufügen, um persönliche QR-Codes und Druckvorlagen zu erstellen.",
+        "locationsDesc": "Standorte anlegen, um Bereichs-QR-Codes für jeden Raum zu erzeugen."
+      },
       "nav": {
         "overview": "Übersicht",
         "business": "Haupt QR Code",
@@ -6286,7 +6344,7 @@
       "eyebrow": "Personal",
       "title": "Team",
       "subtitle": "Personal, Performance und Ziele.",
-      "employeesHeaderSubtitle": "",
+      "employeesHeaderSubtitle": "Team, Rollen, Trinkgeld-Zugang und QR-Zuweisungen verwalten.",
       "topPerformersHeaderSubtitle": "",
       "navAria": "Team-Bereiche",
       "nav": {

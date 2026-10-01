@@ -20,12 +20,14 @@ import { clearPhysicalQrOrdersSessionCache } from "./physicalQrOrdersSessionCach
 import { clearEmployeePageSessionCache } from "./employeePageSessionCache";
 import { clearEmployeePeriodSwrStore } from "./employeePeriodSessionCache";
 import { clearCheckoutIntent, clearCheckoutSyncExpectation } from "./checkoutIntent";
+import { clearInFlightRequest } from "./getOrCreateInFlightRequest";
 
 /**
  * Wipe in-memory session caches on logout and account switch.
  * Prevents cross-account dashboard / profile data from persisting in the SPA.
  */
 export function resetAllClientSessionCaches(): void {
+  clearInFlightRequest();
   clearBusinessStatsClientCache();
   clearBusinessProfileClientCache();
   clearEmployeeTipsClientCache();

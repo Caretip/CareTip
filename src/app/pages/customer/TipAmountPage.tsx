@@ -28,6 +28,7 @@ import { customerFlowUi as cf } from "./customerFlowUi";
 import { CustomerFlowShell } from "./CustomerFlowShell";
 import { CustomerJourneyBackButton } from "./CustomerJourneyHeader";
 import { resolveAppLoadingContextMessage } from "../../lib/appLoadingContexts";
+import { CustomerJourneyPrivacyNotice } from "./CustomerJourneyPrivacyNotice";
 
 export function TipAmountPage() {
   const { t } = useTranslation();
@@ -337,6 +338,7 @@ export function TipAmountPage() {
                 >
                   {t("tipFlow.tipAmount.continuePayment")}
                 </button>
+                <CustomerJourneyPrivacyNotice />
               </div>
             </div>
           </div>

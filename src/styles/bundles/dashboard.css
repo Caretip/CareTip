@@ -17,6 +17,7 @@
 @import "../employee-tip-activity.css";
 @import "../business-activity-center.css";
 @import "../tip-distribution.css";
+@import "../team-employees-workspace.css";
 @import "../business-performance-dashboard.css";
 @import "../dashboard-hero-financial.css";
 @import "../payout-workspace.css";
@@ -28,6 +29,7 @@
 @import "../billing-subscription-workspace.css";
 @import "../business-overview-workspace.css";
 @import "../physical-qr-order-ux.css";
+@import "../qr-studio-workspace.css";
 @import "../admin-web-design.css";
 
 /* Portaled notification popover — not inside .caretip-dashboard-shell */

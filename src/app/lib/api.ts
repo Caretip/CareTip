@@ -5589,6 +5589,27 @@ export type CustomerFeedbackSummary = {
   feedbackCount: number;
 };
 
+const businessCustomerFeedbackInflight = new Map<
+  string,
+  Promise<{
+    total: number;
+    items: CustomerFeedbackRow[];
+    summary: CustomerFeedbackSummary;
+  }>
+>();
+
+function businessCustomerFeedbackInflightKey(params: {
+  take?: number;
+  skip?: number;
+  employeeId?: string;
+}): string {
+  const sp = new URLSearchParams();
+  if (params.take != null) sp.set("take", String(params.take));
+  if (params.skip != null) sp.set("skip", String(params.skip));
+  if (params.employeeId) sp.set("employeeId", params.employeeId);
+  return `me:feedback:${sp.toString()}`;
+}
+
 export async function listBusinessCustomerFeedback(params: {
   take?: number;
   skip?: number;
@@ -5598,15 +5619,29 @@ export async function listBusinessCustomerFeedback(params: {
   items: CustomerFeedbackRow[];
   summary: CustomerFeedbackSummary;
 }> {
+  const cacheKey = businessCustomerFeedbackInflightKey(params);
+  const inflight = businessCustomerFeedbackInflight.get(cacheKey);
+  if (inflight) return inflight;
+
   const sp = new URLSearchParams();
   if (params.take != null) sp.set("take", String(params.take));
   if (params.skip != null) sp.set("skip", String(params.skip));
   if (params.employeeId) sp.set("employeeId", params.employeeId);
   const qs = sp.toString();
-  return apiRequest(apiPath(`/api/feedback/business${qs ? `?${qs}` : ""}`), {
+  const promise = apiRequest<{
+    total: number;
+    items: CustomerFeedbackRow[];
+    summary: CustomerFeedbackSummary;
+  }>(apiPath(`/api/feedback/business${qs ? `?${qs}` : ""}`), {
     headers: getHeaders(),
     credentials: "include",
+  }).finally(() => {
+    if (businessCustomerFeedbackInflight.get(cacheKey) === promise) {
+      businessCustomerFeedbackInflight.delete(cacheKey);
+    }
   });
+  businessCustomerFeedbackInflight.set(cacheKey, promise);
+  return promise;
 }
 
 // --- Platform admin (SuperAdmin) ---
