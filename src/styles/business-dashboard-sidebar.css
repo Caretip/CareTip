@@ -1,5 +1,16 @@
 /* Business dashboard collapsible sidebar navigation */
 
+.caretip-dashboard-shell.business-dashboard .business-dash-nav-link--pending,
+.caretip-mobile-drawer-panel .business-dash-nav-link--pending {
+  outline: 2px solid color-mix(in oklab, var(--primary) 35%, transparent);
+  outline-offset: -2px;
+}
+
+.caretip-dashboard-shell.business-dashboard .business-sidebar-child-link--pending,
+.caretip-mobile-drawer-panel .business-sidebar-child-link--pending {
+  font-weight: 600;
+}
+
 .caretip-dashboard-shell.business-dashboard .business-sidebar-group-panel {
   will-change: grid-template-rows;
 }

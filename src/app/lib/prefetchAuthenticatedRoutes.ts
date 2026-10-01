@@ -4,6 +4,7 @@
  */
 
 import { markPostLoginDashboardWarm } from "./authPostLoginTransition";
+import { prefetchBusinessDashboardRoute } from "./businessDashboardRoutePrefetch";
 
 type RouteImporter = () => Promise<unknown>;
 
@@ -82,6 +83,11 @@ function resolveShellKey(normalized: string): string | null {
 export function prefetchAuthenticatedRoute(path: string): Promise<void> {
   const normalized = normalizePath(path);
   if (!normalized) return Promise.resolve();
+
+  if (normalized.startsWith("/dashboard/")) {
+    return prefetchBusinessDashboardRoute(normalized);
+  }
+
   if (prefetched.has(normalized)) return Promise.resolve();
 
   const existing = inflight.get(normalized);

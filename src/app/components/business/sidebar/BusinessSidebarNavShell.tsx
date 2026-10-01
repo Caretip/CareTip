@@ -1,5 +1,8 @@
 import { useState } from "react";
-import { Link, useLocation, useNavigate } from "react-router";
+import { useNavigate } from "react-router";
+import { PrefetchLink } from "@/app/components/PrefetchLink";
+import { prefetchBusinessDashboardRoute } from "@/app/lib/businessDashboardRoutePrefetch";
+import { useBusinessSidebarNavigationPath } from "@/app/hooks/useBusinessSidebarNavigationPath";
 import { Lock } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { CareIcon } from "@/components/icons";
@@ -42,13 +45,19 @@ function useSidebarEntitlements() {
   return useBusinessSidebarEntitlements();
 }
 
+function warmSidebarDestination(href: string): void {
+  void prefetchBusinessDashboardRoute(href);
+}
+
 function SidebarLink({
   entry,
   pathname,
+  navPending,
   onNavigate,
 }: {
   entry: Extract<BusinessSidebarNavEntry, { type: "link" }>;
   pathname: string;
+  navPending: boolean;
   onNavigate?: () => void;
 }) {
   const { t } = useTranslation();
@@ -59,13 +68,17 @@ function SidebarLink({
 
   return (
     <li>
-      <Link
+      <PrefetchLink
         to={entry.href}
+        onPointerDown={() => warmSidebarDestination(entry.href)}
         onClick={onNavigate}
         className={cn(
           "business-dash-nav-link flex items-center gap-3 px-3 py-2.5 text-sm font-medium",
           isActive
-            ? "business-dash-nav-link--active font-semibold text-foreground"
+            ? cn(
+                "business-dash-nav-link--active font-semibold text-foreground",
+                navPending && "business-dash-nav-link--pending",
+              )
             : dashboardSidebarNavLinkIdle,
         )}
         aria-current={isActive ? "page" : undefined}
@@ -74,7 +87,7 @@ function SidebarLink({
           <CareIcon name={entry.icon} size="nav" />
         </span>
         <span className="truncate tracking-tight">{t(entry.labelKey)}</span>
-      </Link>
+      </PrefetchLink>
     </li>
   );
 }
@@ -84,6 +97,7 @@ function SidebarChildNavItem({
   groupId,
   pathname,
   search,
+  navPending,
   entitlements,
   onNavigate,
   onLockedClick,
@@ -92,6 +106,7 @@ function SidebarChildNavItem({
   groupId: string;
   pathname: string;
   search: string;
+  navPending: boolean;
   entitlements: ReturnType<typeof useSidebarEntitlements>;
   onNavigate?: () => void;
   onLockedClick: (state: LockedDialogState) => void;
@@ -127,7 +142,7 @@ function SidebarChildNavItem({
     lock.locked
       ? "cursor-pointer text-sidebar-foreground/55 hover:bg-sidebar-accent/60 hover:text-sidebar-foreground/75"
       : childActive
-        ? "text-primary before:bg-primary"
+        ? cn("text-primary before:bg-primary", navPending && "business-sidebar-child-link--pending")
         : "text-sidebar-foreground/75 hover:text-sidebar-foreground before:bg-transparent",
   );
 
@@ -159,13 +174,15 @@ function SidebarChildNavItem({
 
   return (
     <li className={child.dividerBefore ? "mt-2 border-t border-sidebar-border/80 pt-2" : undefined}>
-      <Link
+      <PrefetchLink
         to={child.href}
+        onPointerDown={() => warmSidebarDestination(child.href)}
+        onClick={onNavigate}
         className={itemClass}
         aria-current={childActive ? "page" : undefined}
       >
         {itemBody}
-      </Link>
+      </PrefetchLink>
     </li>
   );
 }
@@ -174,6 +191,7 @@ function SidebarGroup({
   entry,
   pathname,
   search,
+  navPending,
   isExpanded,
   onToggle,
   entitlements,
@@ -183,6 +201,7 @@ function SidebarGroup({
   entry: Extract<BusinessSidebarNavEntry, { type: "group" }>;
   pathname: string;
   search: string;
+  navPending: boolean;
   isExpanded: boolean;
   onToggle: () => void;
   entitlements: ReturnType<typeof useSidebarEntitlements>;
@@ -201,6 +220,7 @@ function SidebarGroup({
     }
     onToggle();
     if (!groupActive) {
+      warmSidebarDestination(entry.defaultHref);
       navigate(entry.defaultHref);
     }
   }
@@ -210,10 +230,15 @@ function SidebarGroup({
       <button
         type="button"
         onClick={handleGroupClick}
+        onMouseEnter={() => warmSidebarDestination(entry.defaultHref)}
+        onFocus={() => warmSidebarDestination(entry.defaultHref)}
         className={cn(
           "business-dash-nav-link flex w-full items-center gap-3 px-3 py-2.5 text-left text-sm font-medium transition-colors",
           groupActive
-            ? "business-dash-nav-link--active font-semibold text-sidebar-foreground"
+            ? cn(
+                "business-dash-nav-link--active font-semibold text-sidebar-foreground",
+                navPending && "business-dash-nav-link--pending",
+              )
             : dashboardSidebarNavLinkIdle,
         )}
         aria-expanded={isExpanded}
@@ -240,6 +265,7 @@ function SidebarGroup({
               groupId={entry.id}
               pathname={pathname}
               search={search}
+              navPending={navPending}
               entitlements={entitlements}
               onNavigate={onNavigate}
               onLockedClick={onLockedClick}
@@ -255,7 +281,7 @@ export function BusinessSidebarNavShell({
   onNavigate,
   showSubscriptionStatus = true,
 }: BusinessSidebarNavShellProps) {
-  const { pathname, search } = useLocation();
+  const { pathname, search, pending: navPending } = useBusinessSidebarNavigationPath();
   const { isExpanded, toggleGroup } = useBusinessSidebarNavState();
   const entitlements = useSidebarEntitlements();
   const [dialogState, setDialogState] = useState<LockedDialogState | null>(null);
@@ -283,6 +309,7 @@ export function BusinessSidebarNavShell({
                   key={entry.id}
                   entry={entry}
                   pathname={pathname}
+                  navPending={navPending}
                   onNavigate={onNavigate}
                 />
               );
@@ -293,6 +320,7 @@ export function BusinessSidebarNavShell({
                 entry={entry}
                 pathname={pathname}
                 search={search}
+                navPending={navPending}
                 isExpanded={isExpanded(entry.id)}
                 onToggle={() => toggleGroup(entry.id)}
                 entitlements={entitlements}

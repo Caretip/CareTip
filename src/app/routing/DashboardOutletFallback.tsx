@@ -1,11 +1,12 @@
 import { isAuthLogoutTransitionActive } from "../lib/authLogoutTransition";
+import { BusinessSubPageShellSkeleton } from "../components/dashboard/BusinessSubPageShellSkeleton";
 import { PublicRouteChunkHold } from "./PublicRouteChunkHold";
 
 /**
  * In-layout lazy-route hold — background only; login/refresh use the global overlay spinner.
  */
 export function DashboardOutletShellHold() {
-  return <div className="min-h-[min(50vh,420px)] w-full bg-background" aria-hidden />;
+  return <BusinessSubPageShellSkeleton />;
 }
 
 /** Full-page lazy hold outside dashboard shell. */

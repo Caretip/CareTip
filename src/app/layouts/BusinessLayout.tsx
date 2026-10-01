@@ -16,6 +16,7 @@ import { DashboardReactProfiler } from "../hooks/useDashboardRuntimeProfile";
 import { useDashboardLayoutPaintReady, useGlobalAppLoadingActive } from "../lib/globalAppLoading";
 import { useWarmPrefetchAuthLoginRoute } from "../lib/useWarmPrefetchAuthLoginRoute";
 import { useWarmPrefetchLandingRoute } from "../lib/useWarmPrefetchLandingRoute";
+import { useWarmPrefetchBusinessSidebarRoutes } from "../lib/useWarmPrefetchBusinessSidebarRoutes";
 import { VerificationPendingBanner } from "../components/business/VerificationPendingBanner";
 import { useMobileMenuState } from "../hooks/useMobileMenuState";
 import { useCommercialPageTracking } from "../hooks/useCommercialPageTracking";
@@ -85,6 +86,7 @@ export function BusinessLayout() {
   useDashboardLayoutPaintReady("business-layout-paint", isAppReady);
   useWarmPrefetchAuthLoginRoute("/login", isAppReady);
   useWarmPrefetchLandingRoute(isAppReady);
+  useWarmPrefetchBusinessSidebarRoutes(isAppReady && !user?.impersonation);
   useCommercialPageTracking(isAppReady && !user?.impersonation);
 
   useEffect(() => {
