@@ -4,21 +4,18 @@ import { Loader2 } from "lucide-react";
 import {
   getEmployeeBankPayoutSchedule,
   patchEmployeeBankPayoutSchedule,
-  type EmployeeBankPayoutSchedule,
   type EmployeeBankPayoutScheduleResponse,
 } from "../../lib/api";
 import { PayoutWorkspacePanel } from "../finance/payout/PayoutWorkspacePanel";
 import { toast } from "sonner";
 import { toUserFriendlyMessage } from "../../lib/errorMessages";
 import { cn } from "@/lib/utils";
+import {
+  USER_SELECTABLE_BANK_PAYOUT_SCHEDULES,
+  type UserSelectableBankPayoutSchedule,
+} from "../../lib/bankPayoutScheduleUserOptions";
 
-const OPTIONS: EmployeeBankPayoutSchedule[] = [
-  "daily",
-  "every_3_days",
-  "weekly",
-  "monthly",
-  "manual",
-];
+const OPTIONS = USER_SELECTABLE_BANK_PAYOUT_SCHEDULES;
 
 export function EmployeeBankPayoutScheduleCard({
   disabled,
@@ -45,7 +42,7 @@ export function EmployeeBankPayoutScheduleCard({
     void load();
   }, [load]);
 
-  async function selectSchedule(schedule: EmployeeBankPayoutSchedule) {
+  async function selectSchedule(schedule: UserSelectableBankPayoutSchedule) {
     if (saving || disabled || data?.schedule === schedule) return;
     setSaving(true);
     try {
@@ -91,6 +88,12 @@ export function EmployeeBankPayoutScheduleCard({
             {t("employee.payouts.schedule.loading")}
           </div>
         ) : (
+          <>
+          {data?.schedule === "manual" ? (
+            <p className="text-xs text-amber-700 dark:text-amber-400">
+              {t("employee.payouts.schedule.legacyManualNotice")}
+            </p>
+          ) : null}
           <div
             className="flex flex-col gap-2 sm:flex-row sm:flex-wrap"
             role="radiogroup"
@@ -119,6 +122,7 @@ export function EmployeeBankPayoutScheduleCard({
               );
             })}
           </div>
+          </>
         )}
 
         {nextLabel ? <p className="text-xs text-muted-foreground">{nextLabel}</p> : null}

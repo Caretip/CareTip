@@ -2,7 +2,8 @@
  * Per-business bank payout cadence (Connect standard payouts).
  *
  * Stripe-native: daily | weekly | monthly → accounts.update settings.payouts.schedule
- * CareTip-controlled: every_3_days | manual → Stripe interval manual + scheduler (every_3_days only)
+ * CareTip-controlled: every_3_days → Stripe interval manual + CareTip scheduler (every_3_days only).
+ * DB enum `manual` is legacy-only (not user-selectable); Stripe `interval: manual` is also used for every_3_days.
  *
  * Stripe does not support interval "every 3 days" — see Stripe Connect payout schedule docs.
  */
@@ -19,6 +20,7 @@ import {
   type StripePayoutScheduleUpdate,
 } from "./connectBankPayoutSchedule.core.js";
 
+/** All persisted enum values (includes legacy `manual`). */
 export const BUSINESS_BANK_PAYOUT_SCHEDULE_VALUES: readonly BusinessBankPayoutSchedule[] = [
   BusinessBankPayoutSchedule.daily,
   BusinessBankPayoutSchedule.every_3_days,
@@ -26,6 +28,15 @@ export const BUSINESS_BANK_PAYOUT_SCHEDULE_VALUES: readonly BusinessBankPayoutSc
   BusinessBankPayoutSchedule.monthly,
   BusinessBankPayoutSchedule.manual,
 ];
+
+/** Schedules end users may choose in product UI / PATCH APIs. */
+export const USER_SELECTABLE_BUSINESS_BANK_PAYOUT_SCHEDULE_VALUES: readonly BusinessBankPayoutSchedule[] =
+  [
+    BusinessBankPayoutSchedule.daily,
+    BusinessBankPayoutSchedule.every_3_days,
+    BusinessBankPayoutSchedule.weekly,
+    BusinessBankPayoutSchedule.monthly,
+  ];
 
 export type BusinessBankPayoutScheduleDto = {
   schedule: BusinessBankPayoutSchedule;
@@ -42,17 +53,21 @@ export function __setUpdateAccountScheduleFnForTests(
 
 export function parseBusinessBankPayoutSchedule(raw: unknown): BusinessBankPayoutSchedule {
   const v = typeof raw === "string" ? raw.trim() : "";
-  if ((BUSINESS_BANK_PAYOUT_SCHEDULE_VALUES as readonly string[]).includes(v)) {
+  if (v === BusinessBankPayoutSchedule.manual) {
+    throw new StripeConnectError(
+      "Manual payout schedule is not available.",
+      "BANK_PAYOUT_SCHEDULE_NOT_AVAILABLE",
+      400,
+    );
+  }
+  if ((USER_SELECTABLE_BUSINESS_BANK_PAYOUT_SCHEDULE_VALUES as readonly string[]).includes(v)) {
     return v as BusinessBankPayoutSchedule;
   }
   throw new StripeConnectError("Invalid payout schedule.", "BANK_PAYOUT_SCHEDULE_INVALID", 400);
 }
 
 export function isCareTipControlledBankSchedule(schedule: BusinessBankPayoutSchedule): boolean {
-  return (
-    schedule === BusinessBankPayoutSchedule.every_3_days ||
-    schedule === BusinessBankPayoutSchedule.manual
-  );
+  return schedule === BusinessBankPayoutSchedule.every_3_days;
 }
 
 /**

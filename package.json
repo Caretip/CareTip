@@ -39,6 +39,7 @@
     "test:locations-page-quota-ui": "node ./backend/node_modules/tsx/dist/cli.mjs ./scripts/locations-page-quota-ui-runtime.ts",
     "test:subscription-entitlements-frontend": "node ./backend/node_modules/tsx/dist/cli.mjs ./scripts/subscription-entitlements-frontend-runtime.ts",
     "test:admin-kyc-refund-semantics": "npm --prefix backend run test:admin-kyc-refund-semantics",
+    "test:bank-payout-schedule-ui": "node ./backend/node_modules/tsx/dist/cli.mjs ./scripts/bank-payout-schedule-ui-runtime.ts",
     "test:contact-field-validation-frontend": "node ./backend/node_modules/tsx/dist/cli.mjs ./scripts/contact-field-validation-frontend-runtime.ts",
     "test:subscription-billing-ux-frontend": "node ./backend/node_modules/tsx/dist/cli.mjs ./scripts/subscription-billing-ux-frontend-runtime.ts",
     "test:subscription-migration-frontend": "node ./backend/node_modules/tsx/dist/cli.mjs ./scripts/subscription-migration-frontend-runtime.ts",

@@ -4,21 +4,18 @@ import { Loader2 } from "lucide-react";
 import {
   getBusinessBankPayoutSchedule,
   patchBusinessBankPayoutSchedule,
-  type BusinessBankPayoutSchedule,
   type BusinessBankPayoutScheduleResponse,
 } from "../../../../lib/api";
 import { PayoutWorkspacePanel } from "../../../finance/payout/PayoutWorkspacePanel";
 import { toast } from "sonner";
 import { toUserFriendlyMessage } from "../../../../lib/errorMessages";
 import { cn } from "@/lib/utils";
+import {
+  USER_SELECTABLE_BANK_PAYOUT_SCHEDULES,
+  type UserSelectableBankPayoutSchedule,
+} from "../../../../lib/bankPayoutScheduleUserOptions";
 
-const OPTIONS: BusinessBankPayoutSchedule[] = [
-  "daily",
-  "every_3_days",
-  "weekly",
-  "monthly",
-  "manual",
-];
+const OPTIONS = USER_SELECTABLE_BANK_PAYOUT_SCHEDULES;
 
 export function BusinessBankPayoutScheduleCard({ disabled }: { disabled?: boolean }) {
   const { t, i18n } = useTranslation();
@@ -41,7 +38,7 @@ export function BusinessBankPayoutScheduleCard({ disabled }: { disabled?: boolea
     void load();
   }, [load]);
 
-  async function selectSchedule(schedule: BusinessBankPayoutSchedule) {
+  async function selectSchedule(schedule: UserSelectableBankPayoutSchedule) {
     if (saving || disabled || data?.schedule === schedule) return;
     setSaving(true);
     try {
@@ -86,6 +83,12 @@ export function BusinessBankPayoutScheduleCard({ disabled }: { disabled?: boolea
             {t("business.billing.payouts.schedule.loading")}
           </div>
         ) : (
+          <>
+          {data?.schedule === "manual" ? (
+            <p className="text-xs text-amber-700 dark:text-amber-400">
+              {t("business.billing.payouts.schedule.legacyManualNotice")}
+            </p>
+          ) : null}
           <div
             className="flex flex-col gap-2 sm:flex-row sm:flex-wrap"
             role="radiogroup"
@@ -114,6 +117,7 @@ export function BusinessBankPayoutScheduleCard({ disabled }: { disabled?: boolea
               );
             })}
           </div>
+          </>
         )}
 
         {nextLabel ? <p className="text-xs text-muted-foreground">{nextLabel}</p> : null}

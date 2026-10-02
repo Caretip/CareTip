@@ -118,6 +118,7 @@
     "test:business-bank-payout-schedule": "tsx scripts/business-bank-payout-schedule-runtime.ts",
     "test:business-scheduled-bank-payout": "dotenv -e ../.env -e .env -- tsx scripts/business-scheduled-bank-payout-runtime.ts",
     "test:employee-bank-payout-schedule": "tsx scripts/employee-bank-payout-schedule-runtime.ts",
+    "test:bank-payout-schedule-manual-removal": "tsx scripts/bank-payout-schedule-manual-removal-runtime.ts",
     "test:financial-pass2-period": "dotenv -e ../.env -e .env -- tsx scripts/financial-pass2-period-runtime.ts",
     "test:employee-analytics-timezone": "dotenv -e ../.env -e .env -- tsx scripts/employee-analytics-timezone-runtime.ts",
     "test:employee-analytics-period-kpi": "dotenv -e ../.env -e .env -- tsx scripts/employee-analytics-period-kpi-runtime.ts",

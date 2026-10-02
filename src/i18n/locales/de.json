@@ -4208,12 +4208,12 @@
         "saved": "Auszahlungsrhythmus aktualisiert.",
         "saveError": "Auszahlungsrhythmus konnte nicht aktualisiert werden.",
         "nextPayout": "Nächste geplante Auszahlung: {{date}}",
+        "legacyManualNotice": "Ihr Konto nutzt eine ältere manuelle Bankauszahlung. Wählen Sie unten Täglich, Alle 3 Tage, Wöchentlich oder Monatlich.",
         "options": {
           "daily": "Täglich",
           "every_3_days": "Alle 3 Tage",
           "weekly": "Wöchentlich",
-          "monthly": "Monatlich",
-          "manual": "Manuell"
+          "monthly": "Monatlich"
         }
       },
       "instant": {
@@ -7099,12 +7099,12 @@
           "saved": "Auszahlungsrhythmus aktualisiert.",
           "saveError": "Auszahlungsrhythmus konnte nicht gespeichert werden.",
           "nextPayout": "Nächste geplante Auszahlung: {{date}}",
+          "legacyManualNotice": "Ihr Konto nutzt eine ältere manuelle Bankauszahlung. Wählen Sie unten Täglich, Alle 3 Tage, Wöchentlich oder Monatlich.",
           "options": {
             "daily": "Täglich",
             "every_3_days": "Alle 3 Tage",
             "weekly": "Wöchentlich",
-            "monthly": "Monatlich",
-            "manual": "Manuell"
+            "monthly": "Monatlich"
           }
         },
         "activityTitle": "Aktuelle Auszahlungen",

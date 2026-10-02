@@ -7,9 +7,9 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { DateTime } from "luxon";
 import {
-  BUSINESS_BANK_PAYOUT_SCHEDULE_VALUES,
   computeNextEvery3DaysPayoutAt,
   isCareTipControlledBankSchedule,
+  USER_SELECTABLE_BUSINESS_BANK_PAYOUT_SCHEDULE_VALUES,
 } from "../src/services/businessBankPayoutSchedule.service.js";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
@@ -49,6 +49,8 @@ assert(instantSvc.includes('method: "instant"'), "instant payout unchanged");
 
 assert(isCareTipControlledBankSchedule("every_3_days" as never), "every_3_days caretip controlled");
 assert(!isCareTipControlledBankSchedule("daily" as never), "daily stripe native");
+assert(!isCareTipControlledBankSchedule("manual" as never), "legacy manual not caretip scheduled");
+assert(USER_SELECTABLE_BUSINESS_BANK_PAYOUT_SCHEDULE_VALUES.length === 4, "four user schedules");
 
 const first = computeNextEvery3DaysPayoutAt({ timezone: "Europe/Berlin" });
 const second = computeNextEvery3DaysPayoutAt({
