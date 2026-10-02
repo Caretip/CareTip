@@ -11,12 +11,16 @@ import {
 } from "@prisma/client";
 import { prisma } from "../prisma.js";
 import {
+  buildPlatformConnectPayoutListWhere,
   getPlatformConnectPayout,
-  listPlatformConnectPayouts,
   mapStripePayoutStatus,
   payoutCentsToEur,
   type PlatformConnectPayoutDto,
 } from "./stripeConnectPayout.service.js";
+import {
+  paginateMergedActivityRows,
+  type ActivityStreamKey,
+} from "./platformConnectActivityMerge.js";
 
 export type ConnectRecipientKind = "business" | "employee";
 export type ConnectActivityKind = "business_payout" | "employee_payout" | "caretip_transfer";
@@ -383,11 +387,7 @@ function mapPayableStatus(status: EmployeeTipPayableStatus): StripeConnectPayout
   return StripeConnectPayoutStatus.pending;
 }
 
-function sortKey(row: PlatformConnectActivityDto): number {
-  return new Date(row.stripeCreatedAt).getTime();
-}
-
-export async function listPlatformConnectActivity(opts?: {
+type ActivityListOpts = {
   take?: number;
   skip?: number;
   businessId?: string;
@@ -400,17 +400,16 @@ export async function listPlatformConnectActivity(opts?: {
   q?: string;
   recipient?: string;
   movement?: string;
-}): Promise<{ items: PlatformConnectActivityDto[]; total: number }> {
-  const take = Math.min(Math.max(opts?.take ?? 50, 1), 100);
-  const skip = Math.max(opts?.skip ?? 0, 0);
-  const window = Math.min(skip + take, 10_100);
-  const recipient = opts?.recipient?.trim().toLowerCase() ?? "all";
-  const movement = opts?.movement?.trim().toLowerCase() ?? "all";
-  const recon = opts?.reconciliationStatus?.trim().toLowerCase();
-  const reconActive = Boolean(recon && recon !== "all");
-  const methodRaw = opts?.method?.trim().toLowerCase();
-  const methodActive = Boolean(methodRaw && methodRaw !== "all");
+};
 
+function resolveActivityStreams(opts: ActivityListOpts): ActivityStreamKey[] {
+  const recipient = opts.recipient?.trim().toLowerCase() ?? "all";
+  const movement = opts.movement?.trim().toLowerCase() ?? "all";
+  const recon = opts.reconciliationStatus?.trim().toLowerCase();
+  const reconActive = Boolean(recon && recon !== "all");
+  const methodRaw = opts.method?.trim().toLowerCase();
+  const methodActive = Boolean(methodRaw && methodRaw !== "all");
+  const currencyRaw = opts.currency?.trim().toLowerCase();
   const includeBusiness =
     recipient !== "employee" &&
     movement !== "caretip_transfer" &&
@@ -422,7 +421,6 @@ export async function listPlatformConnectActivity(opts?: {
     !reconActive &&
     !(movement === "instant_payout" && methodRaw === "standard") &&
     !(movement === "bank_payout" && methodRaw === "instant");
-  const currencyRaw = opts?.currency?.trim().toLowerCase();
   const includeTransfer =
     recipient !== "business" &&
     (movement === "all" || movement === "caretip_transfer") &&
@@ -430,6 +428,16 @@ export async function listPlatformConnectActivity(opts?: {
     !methodActive &&
     (!currencyRaw || currencyRaw === "all" || currencyRaw === "eur");
 
+  const streams: ActivityStreamKey[] = [];
+  if (includeBusiness) streams.push("business");
+  if (includeEmployeePayout) streams.push("employee");
+  if (includeTransfer) streams.push("transfer");
+  return streams;
+}
+
+function businessPayoutListQuery(opts: ActivityListOpts): Parameters<typeof buildPlatformConnectPayoutListWhere>[0] {
+  const movement = opts.movement?.trim().toLowerCase();
+  const methodRaw = opts.method?.trim().toLowerCase();
   const businessMethod =
     movement === "instant_payout"
       ? "instant"
@@ -437,114 +445,168 @@ export async function listPlatformConnectActivity(opts?: {
         ? methodRaw && methodRaw !== "all"
           ? methodRaw
           : "not_instant"
-        : opts?.method;
-
-  const tasks: Array<Promise<void>> = [];
-  let businessItems: PlatformConnectPayoutDto[] = [];
-  let businessTotal = 0;
-  let employeeRows: EmployeePayoutListRow[] = [];
-  let employeeTotal = 0;
-  let transferRows: CareTipTransferListRow[] = [];
-  let transferTotal = 0;
-
-  if (includeBusiness) {
-    tasks.push(
-      (async () => {
-        const result = await listPlatformConnectPayouts({
-          take: window,
-          skip: 0,
-          businessId: opts?.businessId,
-          status: opts?.status,
-          reconciliationStatus: opts?.reconciliationStatus,
-          currency: opts?.currency,
-          method: businessMethod,
-          createdFrom: opts?.createdFrom,
-          createdTo: opts?.createdTo,
-          q: opts?.q,
-        });
-        businessItems = result.items;
-        businessTotal = result.total;
-      })(),
-    );
-  }
-
-  if (includeEmployeePayout) {
-    const where = employeePayoutWhere({
-      businessId: opts?.businessId,
-      status: opts?.status,
-      currency: opts?.currency,
-      method: movement === "instant_payout" ? "instant" : opts?.method,
-      createdFrom: opts?.createdFrom,
-      createdTo: opts?.createdTo,
-      q: opts?.q,
-      movement,
-    });
-    tasks.push(
-      (async () => {
-        const [total, rows] = await Promise.all([
-          prisma.employeeStripePayout.count({ where }),
-          prisma.employeeStripePayout.findMany({
-            where,
-            orderBy: [{ stripeCreatedAt: "desc" }, { id: "desc" }],
-            take: window,
-            skip: 0,
-            include: {
-              employee: { select: { name: true } },
-              business: { select: { name: true } },
-            },
-          }),
-        ]);
-        employeeTotal = total;
-        employeeRows = rows;
-      })(),
-    );
-  }
-
-  if (includeTransfer) {
-    const where = transferWhere({
-      businessId: opts?.businessId,
-      status: opts?.status,
-      createdFrom: opts?.createdFrom,
-      createdTo: opts?.createdTo,
-      q: opts?.q,
-    });
-    tasks.push(
-      (async () => {
-        const [total, rows] = await Promise.all([
-          prisma.employeeTipPayable.count({ where }),
-          prisma.employeeTipPayable.findMany({
-            where,
-            orderBy: [{ createdAt: "desc" }, { id: "desc" }],
-            take: window,
-            skip: 0,
-            include: {
-              employee: { select: { name: true } },
-              business: { select: { name: true } },
-            },
-          }),
-        ]);
-        transferTotal = total;
-        transferRows = rows;
-      })(),
-    );
-  }
-
-  await Promise.all(tasks);
-
-  const merged: PlatformConnectActivityDto[] = [
-    ...businessItems.map((row) => withBusinessActivity(row, null)),
-    ...employeeRows.map(employeePayoutToDto),
-    ...transferRows.map(payableToDto),
-  ].sort((a, b) => {
-    const dt = sortKey(b) - sortKey(a);
-    if (dt !== 0) return dt;
-    return b.id.localeCompare(a.id);
-  });
+        : opts.method;
 
   return {
-    items: merged.slice(skip, skip + take),
-    total: businessTotal + employeeTotal + transferTotal,
+    businessId: opts.businessId,
+    status: opts.status,
+    reconciliationStatus: opts.reconciliationStatus,
+    currency: opts.currency,
+    method: businessMethod,
+    createdFrom: opts.createdFrom,
+    createdTo: opts.createdTo,
+    q: opts.q,
   };
+}
+
+export async function listPlatformConnectActivity(
+  opts?: ActivityListOpts,
+): Promise<{ items: PlatformConnectActivityDto[]; total: number }> {
+  const take = Math.min(Math.max(opts?.take ?? 50, 1), 100);
+  const skip = Math.max(opts?.skip ?? 0, 0);
+  const listOpts = opts ?? {};
+  const streams = resolveActivityStreams(listOpts);
+
+  if (streams.length === 0) {
+    return { items: [], total: 0 };
+  }
+
+  const businessWhere = buildPlatformConnectPayoutListWhere(businessPayoutListQuery(listOpts));
+  const employeeWhere = employeePayoutWhere({
+    businessId: listOpts.businessId,
+    status: listOpts.status,
+    currency: listOpts.currency,
+    method:
+      listOpts.movement?.trim().toLowerCase() === "instant_payout" ? "instant" : listOpts.method,
+    createdFrom: listOpts.createdFrom,
+    createdTo: listOpts.createdTo,
+    q: listOpts.q,
+    movement: listOpts.movement,
+  });
+  const transferWhereInput = transferWhere({
+    businessId: listOpts.businessId,
+    status: listOpts.status,
+    createdFrom: listOpts.createdFrom,
+    createdTo: listOpts.createdTo,
+    q: listOpts.q,
+  });
+
+  const { total, page } = await paginateMergedActivityRows({
+    streams,
+    skip,
+    take,
+    countStream: async (stream) => {
+      if (stream === "business") return prisma.stripeConnectPayout.count({ where: businessWhere });
+      if (stream === "employee") return prisma.employeeStripePayout.count({ where: employeeWhere });
+      return prisma.employeeTipPayable.count({ where: transferWhereInput });
+    },
+    fetchChunk: async (stream, offset, limit) => {
+      if (stream === "business") {
+        const rows = await prisma.stripeConnectPayout.findMany({
+          where: businessWhere,
+          orderBy: [{ stripeCreatedAt: "desc" }, { id: "desc" }],
+          skip: offset,
+          take: limit,
+          select: { id: true, stripeCreatedAt: true },
+        });
+        return rows.map((r) => ({
+          stream,
+          rowId: r.id,
+          sortAt: r.stripeCreatedAt,
+          tieId: r.id,
+        }));
+      }
+      if (stream === "employee") {
+        const rows = await prisma.employeeStripePayout.findMany({
+          where: employeeWhere,
+          orderBy: [{ stripeCreatedAt: "desc" }, { id: "desc" }],
+          skip: offset,
+          take: limit,
+          select: { id: true, stripeCreatedAt: true },
+        });
+        return rows.map((r) => ({
+          stream,
+          rowId: r.id,
+          sortAt: r.stripeCreatedAt,
+          tieId: `${EMPLOYEE_PAYOUT_PREFIX}${r.id}`,
+        }));
+      }
+      const rows = await prisma.employeeTipPayable.findMany({
+        where: transferWhereInput,
+        orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+        skip: offset,
+        take: limit,
+        select: { id: true, createdAt: true },
+      });
+      return rows.map((r) => ({
+        stream,
+        rowId: r.id,
+        sortAt: r.createdAt,
+        tieId: `${CARETIP_TRANSFER_PREFIX}${r.id}`,
+      }));
+    },
+  });
+
+  const businessIds = page.filter((r) => r.stream === "business").map((r) => r.rowId);
+  const employeeIds = page.filter((r) => r.stream === "employee").map((r) => r.rowId);
+  const transferIds = page.filter((r) => r.stream === "transfer").map((r) => r.rowId);
+
+  const [businessDtos, employeeRows, transferRows] = await Promise.all([
+    businessIds.length
+      ? Promise.all(
+          businessIds.map(async (id) => {
+            const payout = await getPlatformConnectPayout(id);
+            if (!payout) return null;
+            const stored = await prisma.stripeConnectPayout.findUnique({
+              where: { id },
+              select: { stripePayoutId: true },
+            });
+            return withBusinessActivity(payout, stored?.stripePayoutId ?? null);
+          }),
+        )
+      : Promise.resolve([] as Array<PlatformConnectActivityDto | null>),
+    employeeIds.length
+      ? prisma.employeeStripePayout.findMany({
+          where: { id: { in: employeeIds } },
+          include: {
+            employee: { select: { name: true } },
+            business: { select: { name: true } },
+          },
+        })
+      : Promise.resolve([] as EmployeePayoutListRow[]),
+    transferIds.length
+      ? prisma.employeeTipPayable.findMany({
+          where: { id: { in: transferIds } },
+          include: {
+            employee: { select: { name: true } },
+            business: { select: { name: true } },
+          },
+        })
+      : Promise.resolve([] as CareTipTransferListRow[]),
+  ]);
+
+  const businessMap = new Map<string, PlatformConnectActivityDto>();
+  for (const dto of businessDtos) {
+    if (dto) businessMap.set(dto.id, dto);
+  }
+  const employeeMap = new Map(employeeRows.map((r) => [`${EMPLOYEE_PAYOUT_PREFIX}${r.id}`, employeePayoutToDto(r)]));
+  const transferMap = new Map(transferRows.map((r) => [`${CARETIP_TRANSFER_PREFIX}${r.id}`, payableToDto(r)]));
+
+  const items: PlatformConnectActivityDto[] = [];
+  for (const row of page) {
+    if (row.stream === "business") {
+      const dto = businessMap.get(row.rowId);
+      if (dto) items.push(dto);
+    } else if (row.stream === "employee") {
+      const dto = employeeMap.get(`${EMPLOYEE_PAYOUT_PREFIX}${row.rowId}`);
+      if (dto) items.push(dto);
+    } else {
+      const dto = transferMap.get(`${CARETIP_TRANSFER_PREFIX}${row.rowId}`);
+      if (dto) items.push(dto);
+    }
+  }
+
+  return { items, total };
 }
 
 export async function getPlatformConnectActivity(id: string): Promise<PlatformConnectActivityDto | null> {

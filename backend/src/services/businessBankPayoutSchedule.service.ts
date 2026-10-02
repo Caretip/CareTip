@@ -122,6 +122,7 @@ export async function getBusinessBankPayoutScheduleForBusiness(
 export async function setBusinessBankPayoutScheduleForBusiness(args: {
   businessId: string;
   schedule: BusinessBankPayoutSchedule;
+  actorUserId?: string | null;
 }): Promise<BusinessBankPayoutScheduleDto> {
   const business = await prisma.business.findUnique({
     where: { id: args.businessId },
@@ -160,7 +161,14 @@ export async function setBusinessBankPayoutScheduleForBusiness(args: {
     nextScheduledAt = computeNextEvery3DaysPayoutAt({ timezone: business.timezone });
   }
 
-  await syncStripePayoutSchedule(stripeAccountId, args.schedule);
+  const previousSchedule = business.bankPayoutSchedule;
+  let stripeSync: "ok" | "failed" = "ok";
+  try {
+    await syncStripePayoutSchedule(stripeAccountId, args.schedule);
+  } catch (err) {
+    stripeSync = "failed";
+    throw err;
+  }
 
   await prisma.business.update({
     where: { id: args.businessId },
@@ -168,6 +176,20 @@ export async function setBusinessBankPayoutScheduleForBusiness(args: {
       bankPayoutSchedule: args.schedule,
       bankPayoutNextScheduledAt: nextScheduledAt,
     },
+  });
+
+  const { writeAuditLog } = await import("./audit.service.js");
+  await writeAuditLog({
+    userId: args.actorUserId ?? null,
+    action: "business_bank_payout_schedule_changed",
+    metadata: JSON.stringify({
+      businessId: args.businessId,
+      previousSchedule,
+      newSchedule: args.schedule,
+      nextScheduledPayoutAt: nextScheduledAt?.toISOString() ?? null,
+      timezone: business.timezone,
+      stripeSync,
+    }).slice(0, 4000),
   });
 
   return getBusinessBankPayoutScheduleForBusiness(args.businessId);

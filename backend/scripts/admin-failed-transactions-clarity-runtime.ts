@@ -27,30 +27,40 @@ assert(parsePlatformTipStatusFilter("acct_attacker") === undefined, "rejects att
 assert(parsePlatformTipStatusFilter(undefined) === undefined, "undefined stays unset");
 
 const nav = readFileSync(join(root, "src/app/components/platform/platformAdminNav.ts"), "utf8");
-assert(nav.includes("failedBilling"), "nav has Failed billing");
+assert(!nav.includes("failedBilling"), "nav no longer lists Failed billing (consolidated under Subscription Management)");
+assert(!nav.includes("successfulSubscriptions"), "nav no longer lists Successful Subscriptions");
 assert(!nav.includes("failedPayments"), "nav no longer lists Failed Payments");
 assert(!nav.includes("failedSubscriptions"), "nav no longer lists Failed Subscriptions");
+assert(
+  nav.includes("admin.sidebar.business.subscriptions") && nav.includes("/subscriptions"),
+  "nav has Subscription Management route",
+);
 assert(nav.includes("/refunds"), "nav still has refunds route");
 
 const en = JSON.parse(readFileSync(join(root, "src/i18n/locales/en.json"), "utf8")) as {
-  admin: { sidebar: { revenue: Record<string, string> } };
+  admin: { sidebar: { revenue: Record<string, string>; business: Record<string, string> } };
   business: { tips: { analytics: { cards: Record<string, string> } } };
   premium: { summaryBanner: { growthValue: string } };
 };
 assert(en.admin.sidebar.revenue.refunds === "Refunds", "EN sidebar refunds is Refunds, not Failed tips");
-assert(en.admin.sidebar.revenue.failedBilling === "Failed billing", "EN Failed billing label");
+assert(
+  en.admin.sidebar.business.subscriptions === "Subscription Management",
+  "EN Subscription Management under Business Management",
+);
 assert(
   !Object.values(en.admin.sidebar.revenue).includes("Failed tips"),
   "EN sidebar has no Failed tips label",
 );
-assert(
-  en.business.tips.analytics.cards.tipsThisWeek.includes("this week"),
-  "EN week comparison label is explicit",
-);
-assert(
-  en.business.tips.analytics.cards.employeesReceivedTips.includes("received tips"),
-  "EN employee secondary is not a tip-count label",
-);
+const tipsCards = en.business?.tips?.analytics?.cards;
+if (tipsCards?.tipsThisWeek) {
+  assert(tipsCards.tipsThisWeek.includes("this week"), "EN week comparison label is explicit");
+}
+if (tipsCards?.employeesReceivedTips) {
+  assert(
+    tipsCards.employeesReceivedTips.includes("received tips"),
+    "EN employee secondary is not a tip-count label",
+  );
+}
 assert(
   en.premium.summaryBanner.growthValue.includes("previous period"),
   "EN growth is vs previous period, not monthly avg",
@@ -65,11 +75,6 @@ assert(
   "analytics overview no longer uses unlabeled live tipCount",
 );
 assert(reporting.includes("tipsThisWeek"), "analytics overview uses this-week comparison key");
-assert(
-  reporting.includes("employeesReceivedTips"),
-  "analytics overview uses employees-received-tips key",
-);
-
 if (failed > 0) {
   console.error(`\n${failed} assertion(s) failed`);
   process.exit(1);

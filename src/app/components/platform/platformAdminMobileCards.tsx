@@ -2,29 +2,32 @@ import { Link } from "react-router";
 import { UserCog } from "lucide-react";
 import { OnboardingVerificationStatusChip } from "../verification/VerificationWorkflowStatusChip";
 import { useTranslation } from "react-i18next";
-import type { TFunction } from "i18next";
 import type { GlobalTransactionRow, PlatformAuditLogRow, PlatformBusinessRow } from "../../lib/api";
 import type { RefundRecord } from "../../lib/platformRefunds";
+import {
+  ledgerEventTypeLabel,
+  ledgerEventTypeTone,
+  ledgerReasonLabel,
+  ledgerStatusLabel,
+  ledgerStatusTone,
+} from "../../lib/platformRefundSemantics";
+import { PlatformAdminStatusBadge } from "./PlatformAdminDesignPrimitives";
 import { formatEur, formatOptionalEur } from "../../lib/formatEur";
+import {
+  adminPayableStatusBadgeClass,
+  adminPayableStatusLabel,
+} from "../../lib/adminPayableStatus";
+import { ADMIN_FINANCIAL_TIMEZONE } from "../../lib/adminFinancialTimezone";
 import { BusinessLogoMark } from "../business/BusinessLogoMark";
 import { cn } from "@/lib/utils";
 import { platformUi } from "./platformDashboardUi";
-
-function payoutStatusLabel(status: string, t: TFunction) {
-  const key = `admin.globalTransactionsPage.payoutStatus.${status}`;
-  const label = t(key);
-  return label === key ? status.replace(/_/g, " ") : label;
-}
-
-/** Align with platform analytics day buckets (cross-business list has no per-row TZ). */
-const PLATFORM_TX_TIMEZONE = "Europe/Berlin";
 
 function formatTransactionAt(iso: string, locale: string): string {
   try {
     return new Date(iso).toLocaleString(locale, {
       dateStyle: "medium",
       timeStyle: "short",
-      timeZone: PLATFORM_TX_TIMEZONE,
+      timeZone: ADMIN_FINANCIAL_TIMEZONE,
     });
   } catch {
     return iso;
@@ -39,21 +42,18 @@ function tipStatusClass(status: string): string {
 
 export function PlatformTransactionMobileCard({ row }: { row: GlobalTransactionRow }) {
   const { t, i18n } = useTranslation();
-  const payoutClass =
-    row.payoutStatus === "paid"
-      ? "bg-success text-success-foreground"
-      : row.payoutStatus === "failed"
-        ? "bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-200"
-        : row.payoutStatus === "not_applicable"
-          ? "bg-muted text-muted-foreground"
-          : "bg-amber-100 text-amber-900 dark:bg-amber-900/40 dark:text-amber-100";
+  const payable = row.payableStatus ?? row.payoutStatus;
+  const payoutClass = adminPayableStatusBadgeClass(payable);
 
   return (
     <article className={platformUi.mobileCard}>
       <div className="flex items-start justify-between gap-2">
         <p className="min-w-0 font-mono text-xs text-muted-foreground">{row.id}</p>
-        <span className={cn("inline-flex shrink-0 rounded px-2 py-0.5 text-[11px] font-medium", payoutClass)}>
-          {payoutStatusLabel(row.payoutStatus, t)}
+        <span
+          className={cn("inline-flex shrink-0 rounded px-2 py-0.5 text-[11px] font-medium", payoutClass)}
+          title={t("admin.globalTransactionsPage.payableStatusHint")}
+        >
+          {adminPayableStatusLabel(payable, t)}
         </span>
       </div>
       {row.stripePaymentIntentId ? (
@@ -86,22 +86,18 @@ export function PlatformTransactionMobileCard({ row }: { row: GlobalTransactionR
             {t("admin.globalTransactionsPage.colCaretipFee")}
           </dt>
           <dd className="mt-0.5 text-sm tabular-nums text-muted-foreground">
-            {t("admin.globalTransactionsPage.feeCell", {
-              percent: row.caretipFeePercent,
-              fixed: (row.caretipFeeFixedCents / 100).toFixed(2),
-              amount: formatOptionalEur(row.caretipFeeEur),
-            })}
+            {row.caretipFeeEur == null
+              ? t("admin.globalTransactionsPage.feeUnavailable")
+              : t("admin.globalTransactionsPage.feeCell", {
+                  percent: row.caretipFeePercent,
+                  fixed: (row.caretipFeeFixedCents / 100).toFixed(2),
+                  amount: formatEur(row.caretipFeeEur),
+                })}
           </dd>
         </div>
       </dl>
     </article>
   );
-}
-
-function refundStatusLabel(status: string, t: TFunction): string {
-  const key = `admin.refundsPage.status.${status}`;
-  const label = t(key);
-  return label === key ? status.replace(/_/g, " ") : label;
 }
 
 export function PlatformRefundMobileCard({
@@ -112,20 +108,23 @@ export function PlatformRefundMobileCard({
   onView: () => void;
 }) {
   const { t } = useTranslation();
-  const statusClass =
-    row.status === "processed" || row.status === "succeeded" || row.status === "won"
-      ? "bg-success/15 text-success"
-      : row.status === "failed" || row.status === "lost" || row.status === "canceled"
-        ? "bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-200"
-        : "bg-amber-100 text-amber-900 dark:bg-amber-900/40 dark:text-amber-100";
 
   return (
     <article className={platformUi.mobileCard}>
       <div className="flex items-start justify-between gap-2">
         <p className="font-mono text-xs font-semibold text-foreground">{row.refundId}</p>
-        <span className={cn("inline-flex shrink-0 rounded px-2 py-0.5 text-[11px] font-medium", statusClass)}>
-          {refundStatusLabel(row.status, t)}
-        </span>
+        <PlatformAdminStatusBadge
+          label={ledgerStatusLabel(row.status, row.kind, t)}
+          tone={ledgerStatusTone(row.status, row.kind)}
+          className="shrink-0"
+        />
+      </div>
+      <div className="mt-2 flex flex-wrap gap-1.5">
+        <PlatformAdminStatusBadge
+          label={ledgerEventTypeLabel(row.kind, t)}
+          tone={ledgerEventTypeTone(row.kind)}
+        />
+        <PlatformAdminStatusBadge label={ledgerReasonLabel(row.reason, t)} tone="neutral" />
       </div>
       <p className="mt-2 text-sm font-semibold text-foreground">{row.businessName}</p>
       <p className="mt-1 text-xs text-muted-foreground">{row.employeeName}</p>
@@ -135,12 +134,6 @@ export function PlatformRefundMobileCard({
             {t("admin.refundsPage.colRefundAmount")}
           </dt>
           <dd className="mt-0.5 text-sm font-semibold tabular-nums">{formatEur(row.refundAmountEur)}</dd>
-        </div>
-        <div>
-          <dt className="font-medium text-muted-foreground">
-            {t("admin.refundsPage.colReason")}
-          </dt>
-          <dd className="mt-0.5 text-sm">{t(`admin.refundsPage.reason.${row.reason}`, { defaultValue: row.reason })}</dd>
         </div>
       </dl>
       <button

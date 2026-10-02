@@ -1073,9 +1073,7 @@ export async function getPayoutForBusiness(
   return dto;
 }
 
-export async function listPlatformConnectPayouts(opts?: {
-  take?: number;
-  skip?: number;
+export type PlatformConnectPayoutListQuery = {
   businessId?: string;
   status?: string;
   reconciliationStatus?: string;
@@ -1084,10 +1082,11 @@ export async function listPlatformConnectPayouts(opts?: {
   createdFrom?: string;
   createdTo?: string;
   q?: string;
-}): Promise<{ items: PlatformConnectPayoutDto[]; total: number }> {
-  const take = Math.min(Math.max(opts?.take ?? 50, 1), 100);
-  const skip = Math.max(opts?.skip ?? 0, 0);
+};
 
+export function buildPlatformConnectPayoutListWhere(
+  opts?: PlatformConnectPayoutListQuery,
+): Prisma.StripeConnectPayoutWhereInput {
   const and: Prisma.StripeConnectPayoutWhereInput[] = [];
   if (opts?.businessId?.trim()) {
     and.push({ businessId: opts.businessId.trim() });
@@ -1136,7 +1135,17 @@ export async function listPlatformConnectPayouts(opts?: {
     and.push({ OR: idOr });
   }
 
-  const where: Prisma.StripeConnectPayoutWhereInput = and.length ? { AND: and } : {};
+  return and.length ? { AND: and } : {};
+}
+
+export async function listPlatformConnectPayouts(opts?: PlatformConnectPayoutListQuery & {
+  take?: number;
+  skip?: number;
+}): Promise<{ items: PlatformConnectPayoutDto[]; total: number }> {
+  const take = Math.min(Math.max(opts?.take ?? 50, 1), 100);
+  const skip = Math.max(opts?.skip ?? 0, 0);
+
+  const where = buildPlatformConnectPayoutListWhere(opts);
 
   const [total, rows] = await Promise.all([
     prisma.stripeConnectPayout.count({ where }),

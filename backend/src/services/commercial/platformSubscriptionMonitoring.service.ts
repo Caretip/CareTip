@@ -1,5 +1,6 @@
 import { Prisma, SubscriptionStatus } from "@prisma/client";
 import { prisma } from "../../prisma.js";
+import { getCachedOrLoad } from "../../utils/shortLivedCache.js";
 import { STRIPE_BILLING_AUDIT_TYPES } from "../../lib/subscription/subscriptionAuditTypes.js";
 import { getSubscriptionIntelligence } from "./subscriptionIntelligence.service.js";
 import { sanitizeLikeContainsSearch } from "../../utils/likeSearch.js";
@@ -236,7 +237,9 @@ export async function getPlatformSubscriptionWidgets(days = 30): Promise<Platfor
   };
 }
 
-export async function getPlatformSubscriptionMonitoringBundle(days = 30) {
+const PLATFORM_SUB_MONITORING_CACHE_TTL_MS = 60_000;
+
+async function getPlatformSubscriptionMonitoringBundleImpl(days: number) {
   const { detectStripeBillingOrphans } = await import("../billingLifecycleIntegrity.service.js");
   const [overview, widgets, billingOrphans] = await Promise.all([
     getPlatformSubscriptionOverview(),
@@ -244,6 +247,15 @@ export async function getPlatformSubscriptionMonitoringBundle(days = 30) {
     detectStripeBillingOrphans(25),
   ]);
   return { overview, widgets, periodDays: days, billingOrphans };
+}
+
+export async function getPlatformSubscriptionMonitoringBundle(days = 30) {
+  const safeDays = Number.isFinite(days) && days > 0 ? Math.min(90, Math.floor(days)) : 30;
+  return getCachedOrLoad(
+    `platform:sub-monitoring:${safeDays}`,
+    PLATFORM_SUB_MONITORING_CACHE_TTL_MS,
+    () => getPlatformSubscriptionMonitoringBundleImpl(safeDays),
+  );
 }
 
 const SORT_FIELDS = {

@@ -9,7 +9,7 @@ export function NotificationInboxPage() {
   const isPlatformAdmin = user?.role === "platform_admin" || user?.role === "admin";
   const isEmployee = user?.role === "employee";
   const isBusiness = user?.role === "business";
-  const flushSurface = isEmployee || isBusiness;
+  const flushSurface = isEmployee || isBusiness || isPlatformAdmin;
   const notificationsEnabled =
     authReady && authStatus === "authenticated" && Boolean(user);
 
@@ -27,6 +27,7 @@ export function NotificationInboxPage() {
         "dashboard-inbox-page w-full min-w-0 px-4 py-5 sm:px-6 sm:py-6",
         flushSurface && "dashboard-inbox-page--flush",
         isEmployee && "employee-inbox-page",
+        isPlatformAdmin && "platform-admin-inbox-page",
       )}
     >
       <NotificationInboxFeed

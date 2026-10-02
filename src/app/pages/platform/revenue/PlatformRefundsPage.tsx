@@ -1,7 +1,6 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { useSearchParams } from "react-router";
 import { useTranslation } from "react-i18next";
-import type { TFunction } from "i18next";
 import { RotateCcw, Eye, Download } from "lucide-react";
 import { downloadPlatformRefundsCsv, fetchPlatformRefunds } from "../../../lib/api";
 import { mapLedgerRefundRow, type RefundRecord } from "../../../lib/platformRefunds";
@@ -13,11 +12,19 @@ import {
 } from "../../../components/dashboard/DashboardSectionLoading";
 import { formatEur } from "../../../lib/formatEur";
 import {
+  PlatformAdminStatusBadge,
   PlatformPage,
   PlatformPageHeader,
   PlatformResponsiveData,
   PlatformSearchField,
 } from "../../../components/platform/PlatformPageChrome";
+import {
+  ledgerEventTypeLabel,
+  ledgerEventTypeTone,
+  ledgerReasonLabel,
+  ledgerStatusLabel,
+  ledgerStatusTone,
+} from "../../../lib/platformRefundSemantics";
 import { PlatformRefundMobileCard } from "../../../components/platform/platformAdminMobileCards";
 import { platformUi } from "../../../components/platform/platformDashboardUi";
 import { EmptyState } from "../../../components/ui/EmptyState";
@@ -32,28 +39,7 @@ import {
 } from "@/app/components/ui/dialog";
 
 const PAGE_SIZE = 50;
-
-function refundStatusLabel(status: string, t: TFunction): string {
-  const key = `admin.refundsPage.status.${status}`;
-  const label = t(key);
-  return label === key ? status.replace(/_/g, " ") : label;
-}
-
-function refundReasonLabel(reason: string, t: TFunction): string {
-  const key = `admin.refundsPage.reason.${reason}`;
-  const label = t(key);
-  return label === key ? reason.replace(/_/g, " ") : label;
-}
-
-function refundStatusClass(status: string): string {
-  if (status === "processed" || status === "succeeded" || status === "won") {
-    return "bg-success/15 text-success dark:bg-success/25";
-  }
-  if (status === "failed" || status === "lost" || status === "canceled") {
-    return "bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-200";
-  }
-  return "bg-amber-100 text-amber-900 dark:bg-amber-900/40 dark:text-amber-100";
-}
+const TABLE_COL_COUNT = 14;
 
 function readPage(sp: URLSearchParams): number {
   const raw = Number(sp.get("page") ?? "0");
@@ -234,6 +220,8 @@ export function PlatformRefundsPage() {
         subtitle={t("admin.revenuePages.refunds.subtitle")}
       />
 
+      <p className="text-xs text-muted-foreground">{t("admin.refundsPage.statusReasonNote")}</p>
+
       <PlatformSearchField
         value={q}
         onChange={setQ}
@@ -323,8 +311,9 @@ export function PlatformRefundsPage() {
                 <th className={platformUi.tableTh}>{t("admin.refundsPage.colCustomer")}</th>
                 <th className={`${platformUi.tableTh} text-right`}>{t("admin.refundsPage.colRefundAmount")}</th>
                 <th className={`${platformUi.tableTh} text-right`}>{t("admin.refundsPage.colOriginalAmount")}</th>
-                <th className={platformUi.tableTh}>{t("admin.refundsPage.colReason")}</th>
+                <th className={platformUi.tableTh}>{t("admin.refundsPage.colType")}</th>
                 <th className={platformUi.tableTh}>{t("admin.refundsPage.colStatus")}</th>
+                <th className={platformUi.tableTh}>{t("admin.refundsPage.colReason")}</th>
                 <th className={platformUi.tableTh}>{t("admin.refundsPage.colRequested")}</th>
                 <th className={platformUi.tableTh}>{t("admin.refundsPage.colProcessed")}</th>
                 <th className={platformUi.tableTh}>{t("admin.refundsPage.colProvider")}</th>
@@ -337,7 +326,7 @@ export function PlatformRefundsPage() {
                 <GlobalTransactionsTableSkeleton rows={8} />
               ) : loadError ? (
                 <tr>
-                  <td colSpan={13} className="p-0">
+                  <td colSpan={TABLE_COL_COUNT} className="p-0">
                     <ListFilterLoadError
                       message={loadError}
                       kind={loadErrorKind}
@@ -348,7 +337,7 @@ export function PlatformRefundsPage() {
                 </tr>
               ) : items.length === 0 ? (
                 <tr>
-                  <td colSpan={13} className="p-0">
+                  <td colSpan={TABLE_COL_COUNT} className="p-0">
                     <EmptyState compact title={emptyCopy.title} description={emptyCopy.description} />
                   </td>
                 </tr>
@@ -367,12 +356,29 @@ export function PlatformRefundsPage() {
                     <td className={`${platformUi.tableTd} text-right tabular-nums text-muted-foreground`}>
                       {formatEur(row.originalAmountEur)}
                     </td>
-                    <td className={platformUi.tableTd}>{refundReasonLabel(row.reason, t)}</td>
+                    <td className={platformUi.tableTd}>
+                      <PlatformAdminStatusBadge
+                        label={ledgerEventTypeLabel(row.kind, t)}
+                        tone={ledgerEventTypeTone(row.kind)}
+                      />
+                    </td>
+                    <td className={platformUi.tableTd}>
+                      <span title={row.status === "lost" ? t("admin.refundsPage.statusLostHint") : undefined}>
+                        <PlatformAdminStatusBadge
+                          label={ledgerStatusLabel(row.status, row.kind, t)}
+                          tone={ledgerStatusTone(row.status, row.kind)}
+                        />
+                      </span>
+                    </td>
                     <td className={platformUi.tableTd}>
                       <span
-                        className={`inline-flex rounded px-2 py-0.5 text-xs font-medium ${refundStatusClass(row.status)}`}
+                        title={
+                          row.reason?.toLowerCase() === "fraudulent"
+                            ? t("admin.refundsPage.reason.fraudulentHint")
+                            : undefined
+                        }
                       >
-                        {refundStatusLabel(row.status, t)}
+                        <PlatformAdminStatusBadge label={ledgerReasonLabel(row.reason, t)} tone="neutral" />
                       </span>
                     </td>
                     <td className={`${platformUi.tableTd} whitespace-nowrap text-xs text-muted-foreground`}>
@@ -424,19 +430,30 @@ export function PlatformRefundsPage() {
                     <dd className="mt-0.5">{detail.employeeName}</dd>
                   </div>
                 </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <dt className="text-xs font-medium text-muted-foreground">{t("admin.refundsPage.colRefundAmount")}</dt>
-                    <dd className="mt-0.5 font-semibold tabular-nums">{formatEur(detail.refundAmountEur)}</dd>
-                  </div>
-                  <div>
-                    <dt className="text-xs font-medium text-muted-foreground">{t("admin.refundsPage.colStatus")}</dt>
-                    <dd className="mt-0.5">{refundStatusLabel(detail.status, t)}</dd>
-                  </div>
-                </div>
                 <div>
-                  <dt className="text-xs font-medium text-muted-foreground">{t("admin.refundsPage.colReason")}</dt>
-                  <dd className="mt-0.5">{refundReasonLabel(detail.reason, t)}</dd>
+                  <dt className="text-xs font-medium text-muted-foreground">{t("admin.refundsPage.colRefundAmount")}</dt>
+                  <dd className="mt-0.5 font-semibold tabular-nums">{formatEur(detail.refundAmountEur)}</dd>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <PlatformAdminStatusBadge
+                    label={ledgerEventTypeLabel(detail.kind, t)}
+                    tone={ledgerEventTypeTone(detail.kind)}
+                  />
+                  <span title={detail.status === "lost" ? t("admin.refundsPage.statusLostHint") : undefined}>
+                    <PlatformAdminStatusBadge
+                      label={ledgerStatusLabel(detail.status, detail.kind, t)}
+                      tone={ledgerStatusTone(detail.status, detail.kind)}
+                    />
+                  </span>
+                  <span
+                    title={
+                      detail.reason?.toLowerCase() === "fraudulent"
+                        ? t("admin.refundsPage.reason.fraudulentHint")
+                        : undefined
+                    }
+                  >
+                    <PlatformAdminStatusBadge label={ledgerReasonLabel(detail.reason, t)} tone="neutral" />
+                  </span>
                 </div>
                 {detail.stripePaymentIntentId ? (
                   <div>

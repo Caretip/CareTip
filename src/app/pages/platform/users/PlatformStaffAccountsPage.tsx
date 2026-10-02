@@ -1,7 +1,6 @@
 import { useTranslation } from "react-i18next";
 import { Users } from "lucide-react";
-import { PlatformPage, PlatformPageHeader } from "../../../components/platform/PlatformPageChrome";
-import { platformUi } from "../../../components/platform/platformDashboardUi";
+import { PlatformPage, PlatformPageHeader, PlatformAdminSection } from "../../../components/platform/PlatformPageChrome";
 
 export function PlatformStaffAccountsPage() {
   const { t } = useTranslation();
@@ -12,9 +11,9 @@ export function PlatformStaffAccountsPage() {
         title={t("admin.staffAccountsPage.title")}
         subtitle={t("admin.staffAccountsPage.subtitle")}
       />
-      <div className={platformUi.contentCard}>
-        <p className="text-sm text-muted-foreground">{t("admin.staffAccountsPage.body")}</p>
-      </div>
+      <PlatformAdminSection>
+        <p className="text-sm leading-relaxed text-muted-foreground">{t("admin.staffAccountsPage.body")}</p>
+      </PlatformAdminSection>
     </PlatformPage>
   );
 }

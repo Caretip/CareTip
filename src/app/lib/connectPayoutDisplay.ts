@@ -29,12 +29,17 @@ export function formatConnectPayoutAmount(
   }
 }
 
-export function formatConnectPayoutDate(iso: string | null | undefined, locale: string): string {
+export function formatConnectPayoutDate(
+  iso: string | null | undefined,
+  locale: string,
+  timeZone?: string,
+): string {
   if (!iso) return "—";
   try {
     return new Date(iso).toLocaleString(locale, {
       dateStyle: "medium",
       timeStyle: "short",
+      ...(timeZone ? { timeZone } : {}),
     });
   } catch {
     return iso;

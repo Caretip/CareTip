@@ -51,6 +51,7 @@ router.get("/subscriptions/monitoring", platformController.getSubscriptionMonito
 router.get("/subscriptions/activity", platformController.listSubscriptionActivity);
 router.get("/businesses", platformController.listBusinesses);
 router.get("/businesses/:id", platformController.getBusiness);
+router.get("/businesses/:id/payout-schedule-context", platformController.getBusinessPayoutScheduleContext);
 router.delete("/businesses/:id", platformController.deleteBusiness);
 router.post("/businesses/:id/soft-delete", platformController.softDeleteBusiness);
 router.post("/businesses/:id/ownership/transfer", async (req, res) => {

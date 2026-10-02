@@ -34,6 +34,7 @@ import { EmptyState } from "../../../components/ui/EmptyState";
 import { ListFilterLoadError } from "../../../components/shared/ListFilterLoadError";
 import { classifyFetchError } from "../../../lib/listFilterUx";
 import { platformUi } from "../../../components/platform/platformDashboardUi";
+import { ADMIN_FINANCIAL_TIMEZONE } from "../../../lib/adminFinancialTimezone";
 
 const PAGE_SIZE = 50;
 const FILTER_SELECT =
@@ -412,10 +413,10 @@ export function PlatformConnectPayoutsPage() {
                         <ConnectPayoutStatusBadge status={payout.status} />
                       </td>
                       <td className="px-4 py-3 text-muted-foreground">
-                        {formatConnectPayoutDate(payout.stripeCreatedAt, i18n.language)}
+                        {formatConnectPayoutDate(payout.stripeCreatedAt, i18n.language, ADMIN_FINANCIAL_TIMEZONE)}
                       </td>
                       <td className="px-4 py-3 text-muted-foreground">
-                        {formatConnectPayoutDate(payout.arrivalDate, i18n.language)}
+                        {formatConnectPayoutDate(payout.arrivalDate, i18n.language, ADMIN_FINANCIAL_TIMEZONE)}
                       </td>
                       <td className="px-4 py-3">
                         <ConnectPayoutReconBadge

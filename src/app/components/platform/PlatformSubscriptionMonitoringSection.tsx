@@ -24,7 +24,11 @@ import {
 } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { platformUi } from "./platformDashboardUi";
-import { PlatformStatCard } from "./PlatformStatCard";
+import {
+  PlatformAdminSection,
+  PlatformAdminMetricStrip,
+  PlatformAdminMetricCell,
+} from "./PlatformPageChrome";
 
 const ACTIVITY_FILTERS: PlatformSubscriptionActivityFilter[] = [
   "all",
@@ -292,61 +296,49 @@ export function PlatformSubscriptionMonitoringSection({
         </p>
       ) : null}
 
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
-        {kpiCards.map((card) => (
-          <PlatformStatCard
-            key={card.key}
-            label={card.label}
-            value={card.value != null ? String(card.value) : "—"}
-            numericValue={card.value}
-            loading={monitoringLoading}
-            className="min-w-0"
-          />
-        ))}
-      </div>
+      <PlatformAdminSection title={t("admin.subscriptions.overviewTitle")} className="!pt-0">
+        <PlatformAdminMetricStrip aria-label={t("admin.subscriptions.overviewTitle")}>
+          {kpiCards.map((card) => (
+            <PlatformAdminMetricCell
+              key={card.key}
+              label={card.label}
+              value={card.value != null ? String(card.value) : "—"}
+              loading={monitoringLoading}
+            />
+          ))}
+        </PlatformAdminMetricStrip>
+      </PlatformAdminSection>
 
-      <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
-        <div className="rounded-xl border border-border/60 bg-muted/20 px-3 py-2.5">
-          <p className="text-xs font-medium text-muted-foreground">
-            {t("admin.subscriptions.widgets.successRate")}
-          </p>
-          <p className="mt-1 text-lg font-semibold tabular-nums text-foreground">
-            {monitoringLoading ? "—" : `${widgets?.successRatePercent ?? 0}%`}
-          </p>
-        </div>
-        <div className="rounded-xl border border-border/60 bg-muted/20 px-3 py-2.5">
-          <p className="text-xs font-medium text-muted-foreground">
-            {t("admin.subscriptions.widgets.failedToday")}
-          </p>
-          <p className="mt-1 text-lg font-semibold tabular-nums text-foreground">
-            {monitoringLoading ? "—" : (widgets?.failedPaymentsToday ?? 0)}
-          </p>
-        </div>
-        <div className="rounded-xl border border-border/60 bg-muted/20 px-3 py-2.5">
-          <p className="text-xs font-medium text-muted-foreground">
-            {t("admin.subscriptions.widgets.failedWeek")}
-          </p>
-          <p className="mt-1 text-lg font-semibold tabular-nums text-foreground">
-            {monitoringLoading ? "—" : (widgets?.failedPaymentsThisWeek ?? 0)}
-          </p>
-        </div>
-        <div className="rounded-xl border border-border/60 bg-muted/20 px-3 py-2.5">
-          <p className="text-xs font-medium text-muted-foreground">
-            {t("admin.subscriptions.widgets.trialsEndingSoon")}
-          </p>
-          <p className="mt-1 text-lg font-semibold tabular-nums text-foreground">
-            {monitoringLoading ? "—" : (widgets?.trialsEndingSoon ?? 0)}
-          </p>
-        </div>
-        <div className="rounded-xl border border-border/60 bg-muted/20 px-3 py-2.5 sm:col-span-2 lg:col-span-1">
-          <p className="text-xs font-medium text-muted-foreground">
-            {t("admin.subscriptions.widgets.renewalsDueToday")}
-          </p>
-          <p className="mt-1 text-lg font-semibold tabular-nums text-foreground">
-            {monitoringLoading ? "—" : (widgets?.renewalsDueToday ?? 0)}
-          </p>
-        </div>
-      </div>
+      <PlatformAdminSection title={t("admin.subscriptions.healthTitle")} className="mt-6">
+        <PlatformAdminMetricStrip aria-label={t("admin.subscriptions.healthTitle")}>
+          <PlatformAdminMetricCell
+            label={t("admin.subscriptions.widgets.successRate")}
+            value={monitoringLoading ? "—" : `${widgets?.successRatePercent ?? 0}%`}
+            loading={monitoringLoading}
+          />
+          <PlatformAdminMetricCell
+            label={t("admin.subscriptions.widgets.failedToday")}
+            value={monitoringLoading ? "—" : String(widgets?.failedPaymentsToday ?? 0)}
+            loading={monitoringLoading}
+            featured={(widgets?.failedPaymentsToday ?? 0) > 0}
+          />
+          <PlatformAdminMetricCell
+            label={t("admin.subscriptions.widgets.failedWeek")}
+            value={monitoringLoading ? "—" : String(widgets?.failedPaymentsThisWeek ?? 0)}
+            loading={monitoringLoading}
+          />
+          <PlatformAdminMetricCell
+            label={t("admin.subscriptions.widgets.trialsEndingSoon")}
+            value={monitoringLoading ? "—" : String(widgets?.trialsEndingSoon ?? 0)}
+            loading={monitoringLoading}
+          />
+          <PlatformAdminMetricCell
+            label={t("admin.subscriptions.widgets.renewalsDueToday")}
+            value={monitoringLoading ? "—" : String(widgets?.renewalsDueToday ?? 0)}
+            loading={monitoringLoading}
+          />
+        </PlatformAdminMetricStrip>
+      </PlatformAdminSection>
     </>
   ) : null;
 
@@ -511,9 +503,12 @@ export function PlatformSubscriptionMonitoringSection({
       {overviewBody}
       {part === "full" && showOverview && showActivity ? <div className="my-6 border-t border-border" /> : null}
       {part === "full" && showActivity ? (
-        <h3 className="mb-4 text-sm font-semibold text-foreground">{t("admin.subscriptions.activityTitle")}</h3>
-      ) : null}
-      {activityBody}
+        <PlatformAdminSection title={t("admin.subscriptions.activityTitle")} className="mt-2">
+          {activityBody}
+        </PlatformAdminSection>
+      ) : (
+        activityBody
+      )}
     </>
   );
 

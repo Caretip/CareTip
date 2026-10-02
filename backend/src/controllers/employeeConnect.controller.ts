@@ -279,7 +279,11 @@ export async function patchMyEmployeeBankPayoutSchedule(req: Request, res: Respo
       "../services/employeeBankPayoutSchedule.service.js"
     );
     const schedule = parseEmployeeBankPayoutSchedule(body.schedule);
-    const dto = await setEmployeeBankPayoutScheduleForUser({ userId, schedule });
+    const dto = await setEmployeeBankPayoutScheduleForUser({
+      userId,
+      schedule,
+      actorUserId: userId,
+    });
     return res.json(dto);
   } catch (err) {
     logServerError("employeeConnect.patchMyEmployeeBankPayoutSchedule", err);

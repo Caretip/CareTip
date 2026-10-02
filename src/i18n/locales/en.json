@@ -7676,6 +7676,8 @@
       "activityLoadFailed": "Could not load subscription activity.",
       "activityLoading": "Loading subscription activity…",
       "activityEmpty": "No subscriptions match your filters.",
+      "overviewTitle": "Subscription counts",
+      "healthTitle": "Billing health",
       "activityTitle": "Recent subscription activity",
       "searchPlaceholder": "Search by business name or email…",
       "pagination": "{{from}}–{{to}} of {{total}}",
@@ -7781,7 +7783,14 @@
     "analyticsSubtitle": "Last {{days}} days ({{tz}}), live aggregates",
     "timezoneAria": "Analytics timezone",
     "timezonePlaceholder": "Timezone",
-    "tipStatusNote": "Tip status uses all-time totals",
+    "tipStatusNote": "Tip status counts use the selected chart period. User roles use all-time totals.",
+    "statsDataAsOf": "KPI data as of {{time}} (Europe/Berlin). Stats cache refreshes about every 45 seconds.",
+    "statsFreshnessLine": "Data as of {{time}} ({{tz}}) · {{relative}}",
+    "statsFreshnessJustNow": "Updated moments ago",
+    "statsFreshnessMinutes": "Updated {{count}} min ago",
+    "statsFreshnessHours": "Updated {{count}} h ago",
+    "statsFreshnessDays": "Updated {{count}} d ago",
+    "statsFreshnessCacheHint": "Cached snapshot; refreshes about every {{seconds}} seconds.",
     "chartUserDist": "User distribution",
     "chartUserDistDesc": "Accounts by role",
     "chartTipStatus": "Tip status distribution",
@@ -7971,11 +7980,13 @@
         "systemHealth": "One or more core services are offline.",
         "pendingOnboarding": "{{count}} onboarding review(s) pending.",
         "failedPaymentsToday": "{{count}} failed payment(s) today.",
-        "atRiskSubscriptions": "{{count}} at-risk subscription(s)."
+        "atRiskSubscriptions": "{{count}} at-risk subscription(s).",
+        "pendingKyc": "{{count}} KYC review(s) pending."
       },
       "kpi": {
         "totalBusinesses": "Total businesses",
-        "activeBusinesses": "Active businesses",
+        "activeBusinesses": "Onboarding approved",
+        "activeBusinessesHelp": "Venues with onboarding verification approved (not necessarily KYC-verified or receiving tips).",
         "activeUsers": "Active users",
         "pendingVerifications": "Pending verifications",
         "pendingOnboarding": "Awaiting onboarding approval",
@@ -8210,7 +8221,39 @@
       "subscriptions": "Subscriptions",
       "tierBasic": "Basic",
       "tierPremium": "Premium",
-      "tierEnterprise": "Enterprise"
+      "tierEnterprise": "Enterprise",
+      "payoutAnalyticsTitle": "Stripe bank payouts",
+      "payoutAnalyticsDesc": "Last {{days}} days ({{tz}}). Money sent from connected Stripe accounts to bank accounts — separate from guest tip volume.",
+      "payoutBusinessVolume": "Business payout volume",
+      "payoutEmployeeVolume": "Employee payout volume",
+      "payoutPaidCount": "Paid payouts",
+      "payoutPendingCount": "Pending / in transit",
+      "payoutFailedCount": "Failed / canceled",
+      "payoutTotalVolume": "Total Stripe payout volume",
+      "payoutStripeVolumeHint": "Bank payouts from Connect — not guest tip GMV.",
+      "payoutCountLabel": "payouts",
+      "payoutVolumeOverTime": "Payout volume over time",
+      "payoutVolumeOverTimeDesc": "Stacked business vs employee Stripe bank payout volume by day."
+    },
+    "payoutSchedulePanel": {
+      "title": "Payout schedules (read-only)",
+      "subtitle": "CareTip preference, Stripe interval, and next CareTip-scheduled run where applicable.",
+      "careTipSchedule": "CareTip schedule",
+      "stripeInterval": "Stripe interval",
+      "execution": "Execution",
+      "executionStripeAutomatic": "Stripe automatic payout",
+      "executionCareTipScheduled": "CareTip scheduled payout",
+      "executionManual": "Manual — no CareTip scheduled payout",
+      "nextRun": "Next CareTip run",
+      "timezone": "Timezone",
+      "lastPayout": "Last Stripe payout",
+      "notConnected": "Stripe Connect not linked",
+      "employees": "Employees",
+      "scheduleDaily": "Daily",
+      "scheduleWeekly": "Weekly",
+      "scheduleMonthly": "Monthly",
+      "scheduleEvery3Days": "Every 3 days",
+      "scheduleManual": "Manual"
     },
     "usageReportsPage": {
       "title": "Usage reports",
@@ -8541,8 +8584,13 @@
       "colCustomer": "Customer",
       "colRefundAmount": "Refund amount",
       "colOriginalAmount": "Original amount",
+      "colType": "Type",
       "colReason": "Reason",
       "colStatus": "Status",
+      "eventType": {
+        "refund": "Refund",
+        "dispute": "Dispute"
+      },
       "colRequested": "Occurred",
       "colProcessed": "Updated",
       "colProvider": "Payment provider",
@@ -8574,8 +8622,10 @@
         "canceled": "Canceled",
         "needs_response": "Needs response",
         "won": "Won",
-        "lost": "Lost"
+        "lost": "Lost (dispute)"
       },
+      "statusLostHint": "Merchant lost the Stripe dispute — not a failed refund.",
+      "statusReasonNote": "Type is refund vs dispute. Status is outcome (e.g. succeeded, lost). Reason is Stripe’s category (e.g. fraudulent) — not CareTip’s fraud verdict and not the outcome.",
       "reason": {
         "payout_failed": "Payout failed",
         "payment_reversed": "Payment reversed",
@@ -8583,13 +8633,16 @@
         "eligibility_failure": "Eligibility failure",
         "requested_by_customer": "Requested by customer",
         "duplicate": "Duplicate",
-        "fraudulent": "Fraudulent"
+        "fraudulent": "Fraudulent",
+        "unspecified": "Not specified",
+        "fraudulentHint": "Stripe dispute or refund reason category — not a CareTip determination that the payment was fraudulent."
       }
     },
     "globalTransactionsPage": {
       "title": "Global transactions",
-      "subtitle": "All guest tips platform-wide. Amounts in EUR, CareTip fee {{feePercent}}% + €{{feeFixed}}, net to staff, and tip-ledger status (not Stripe Connect payouts).",
+      "subtitle": "All guest tips platform-wide. Amounts in EUR, CareTip fee when recorded on the employee payable, net to staff, and employee payable status (not Stripe bank payouts).",
       "feeCell": "{{percent}}% + €{{fixed}} ({{amount}})",
+      "feeUnavailable": "—",
       "searchPlaceholder": "Transaction ID, Stripe ID, business name, or staff name…",
       "searchAria": "Search transactions",
       "hintLiveSearch": "Results update as you type.",
@@ -8599,7 +8652,9 @@
       "colAmountEur": "Amount (EUR)",
       "colCaretipFee": "CareTip fee",
       "colNetToStaff": "Net to staff",
-      "colPayout": "Tip ledger",
+      "colPayable": "Employee payable",
+      "colPayout": "Employee payable",
+      "payableStatusHint": "Employee payable status from the CareTip ledger. Not the employee's Stripe bank payout status.",
       "colTipStatus": "Tip status",
       "filterTipStatus": "Tip status",
       "tipStatusFilter": {
@@ -8626,6 +8681,16 @@
         "failed": "Failed",
         "not_applicable": "Not applicable",
         "pending": "Pending"
+      },
+      "payableStatus": {
+        "held_platform": "Platform hold — awaiting release",
+        "held_business": "Business pool",
+        "destination_settled": "Destination charge — employee Connect",
+        "transferring": "Transfer in progress",
+        "transferred": "Transferred to employee Connect",
+        "transfer_failed": "Transfer failed",
+        "refunded": "Refunded",
+        "no_payable": "No employee payable"
       }
     },
     "platformSettingsPage": {
@@ -8986,6 +9051,7 @@
       "backLink": "Back to businesses",
       "title": "Business profile",
       "subtitle": "Manage platform onboarding approval and KYC compliance as separate workflows.",
+      "sectionIdentity": "Business identity & access",
       "sectionOnboarding": "Business onboarding",
       "sectionOnboardingDesc": "Controls whether this business can access the CareTip dashboard.",
       "sectionKyc": "KYC verification",

@@ -19,8 +19,13 @@ import {
 } from "../lib/api";
 import { useAuth } from "../hooks/useAuth";
 import { logClientError } from "../lib/clientLog";
-import { PlatformStatCard } from "./platform/PlatformStatCard";
 import { PlatformOverviewTeaserCard } from "./platform/PlatformOverviewTeaserCard";
+import {
+  PlatformAdminSection,
+  PlatformAdminMetricStrip,
+  PlatformAdminMetricCell,
+  PlatformAdminFreshnessIndicator,
+} from "./platform/PlatformPageChrome";
 import { PlatformBusinessMobileCard } from "./platform/PlatformBusinessMobileCard";
 import { PlatformAdminOverviewHero } from "./platform/PlatformAdminOverviewHero";
 import { DashboardChartsIdleMount } from "./dashboard/DashboardChartsIdleMount";
@@ -36,6 +41,7 @@ import {
   PLATFORM_REPORTS_BASE,
   PLATFORM_SYSTEM_BASE,
 } from "./platform/platformAdminNav";
+import { formatEur } from "../lib/formatEur";
 import { cn } from "@/lib/utils";
 import {
   useDashboardKpiProfile,
@@ -102,13 +108,14 @@ export const AdminDashboard = memo(function AdminDashboard() {
 
     const loadCritical = async () => {
       setCriticalLoading(true);
+      void fetchPlatformHealth()
+        .then((healthRes) => {
+          if (!cancelled && healthRes) setHealth(healthRes);
+        })
+        .catch((e) => logClientError("AdminDashboard.loadHealth", e));
       try {
-        const [healthRes, statsRes] = await Promise.all([
-          fetchPlatformHealth().catch(() => null),
-          fetchPlatformStats().catch(() => null),
-        ]);
+        const statsRes = await fetchPlatformStats().catch(() => null);
         if (cancelled) return;
-        if (healthRes) setHealth(healthRes);
         if (statsRes) setStats(statsRes);
       } catch (e) {
         logClientError("AdminDashboard.loadCritical", e);
@@ -245,7 +252,7 @@ export const AdminDashboard = memo(function AdminDashboard() {
         message: t("admin.overview.alerts.failedPaymentsToday", {
           count: failedPaymentsToday,
         }),
-        href: `${PLATFORM_REVENUE_BASE}/failed-billing?filter=failed`,
+        href: `${PLATFORM_BUSINESS_BASE}/subscriptions?filter=failed`,
         severity: "warning",
       });
     }
@@ -282,40 +289,51 @@ export const AdminDashboard = memo(function AdminDashboard() {
 
         <PlatformAdminAttentionAlerts alerts={attentionAlerts} />
 
-        <section aria-labelledby="platform-kpis-heading" className="platform-overview-kpis">
-          <div className="mb-5 flex items-end justify-between gap-3">
-            <h2 id="platform-kpis-heading" className="text-xs font-medium tracking-normal text-muted-foreground">
-              {t("admin.overview.kpisTitle")}
-            </h2>
-          </div>
-          <div className={cn(platformUi.overviewKpiGrid, kpiGridBusy && "platform-admin-stat-grid--loading")}>
-            <PlatformStatCard
+        <PlatformAdminSection
+          id="platform-kpis"
+          title={t("admin.overview.kpisTitle")}
+          className={cn("platform-overview-kpis", kpiGridBusy && "platform-admin-stat-grid--loading")}
+        >
+          <PlatformAdminMetricStrip aria-label={t("admin.overview.kpisTitle")}>
+            <PlatformAdminMetricCell
               label={t("admin.overview.kpi.activeBusinesses")}
+              hint={t("admin.overview.kpi.activeBusinessesHelp")}
               value={String(activeBusinessesCount)}
-              numericValue={activeBusinessesCount}
               loading={secondaryLoading}
             />
-            <PlatformStatCard
+            <PlatformAdminMetricCell
+              label={t("admin.overview.kpi.totalBusinesses")}
+              value={String(stats?.businessesCount ?? 0)}
+              loading={criticalLoading}
+            />
+            <PlatformAdminMetricCell
               label={t("admin.overview.kpi.staff")}
               value={String(stats?.employeesCount ?? 0)}
-              numericValue={stats?.employeesCount ?? 0}
               loading={criticalLoading}
             />
-            <PlatformStatCard
+            <PlatformAdminMetricCell
               label={t("admin.overview.kpi.transactions")}
               value={String(stats?.successTransactionCount ?? 0)}
-              numericValue={stats?.successTransactionCount ?? 0}
               loading={criticalLoading}
             />
-            <PlatformStatCard
+            <PlatformAdminMetricCell
+              label={t("admin.overview.kpi.tipVolume")}
+              value={stats?.totalVolumeEurFormatted ?? formatEur(stats?.totalVolumeEur ?? 0)}
+              loading={criticalLoading}
+            />
+            <PlatformAdminMetricCell
               label={t("admin.overview.kpi.pendingOnboarding")}
               value={String(pendingOnboardingCount)}
-              numericValue={pendingOnboardingCount}
               loading={secondaryLoading}
               featured={pendingOnboardingCount > 0}
             />
-          </div>
-        </section>
+          </PlatformAdminMetricStrip>
+          <PlatformAdminFreshnessIndicator
+            generatedAt={stats?.generatedAt}
+            cacheTtlSeconds={stats?.cacheTtlSeconds}
+            locale={i18n.language}
+          />
+        </PlatformAdminSection>
 
         <DashboardChartsIdleMount
           whenVisible

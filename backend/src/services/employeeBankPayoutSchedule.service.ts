@@ -65,6 +65,7 @@ export async function getEmployeeBankPayoutScheduleForUser(
 export async function setEmployeeBankPayoutScheduleForUser(args: {
   userId: string;
   schedule: BusinessBankPayoutSchedule;
+  actorUserId?: string | null;
 }): Promise<EmployeeBankPayoutScheduleDto> {
   const actor = await resolveActiveEmployeeForConnect(args.userId);
   const account = await prisma.employeeStripeAccount.findUnique({
@@ -104,7 +105,14 @@ export async function setEmployeeBankPayoutScheduleForUser(args: {
     });
   }
 
-  await syncStripeConnectAccountPayoutSchedule(stripeAccountId, args.schedule);
+  const previousSchedule = account.bankPayoutSchedule;
+  let stripeSync: "ok" | "failed" = "ok";
+  try {
+    await syncStripeConnectAccountPayoutSchedule(stripeAccountId, args.schedule);
+  } catch (err) {
+    stripeSync = "failed";
+    throw err;
+  }
 
   await prisma.employeeStripeAccount.update({
     where: { employeeId: actor.employeeId },
@@ -112,6 +120,20 @@ export async function setEmployeeBankPayoutScheduleForUser(args: {
       bankPayoutSchedule: args.schedule,
       bankPayoutNextScheduledAt: nextScheduledAt,
     },
+  });
+
+  const { writeAuditLog } = await import("./audit.service.js");
+  await writeAuditLog({
+    userId: args.actorUserId ?? args.userId,
+    action: "employee_bank_payout_schedule_changed",
+    metadata: JSON.stringify({
+      employeeId: actor.employeeId,
+      previousSchedule,
+      newSchedule: args.schedule,
+      nextScheduledPayoutAt: nextScheduledAt?.toISOString() ?? null,
+      timezone: account.employee.business.timezone,
+      stripeSync,
+    }).slice(0, 4000),
   });
 
   return getEmployeeBankPayoutScheduleForUser(args.userId);

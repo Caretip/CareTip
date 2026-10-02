@@ -5671,17 +5671,45 @@ export interface PlatformGlobalStats {
   businessesWithSuccessfulTips?: number;
   /** Sum of successful tips when grouped by businessId (sanity-check vs totalVolumeEur) */
   platformTotalTipsFromBusinessRollupEur?: number;
-  platformTotalsConsistent?: boolean;
+  platformTotalsConsistent?: boolean | null;
+  platformTotalsConsistencyNote?: string;
+  generatedAt?: string;
+  cacheTtlSeconds?: number;
 }
+
+export type PlatformPayoutAnalytics = {
+  summary: {
+    businessPayoutCount: number;
+    employeePayoutCount: number;
+    businessVolumeEur: number;
+    employeeVolumeEur: number;
+    paidCount: number;
+    pendingCount: number;
+    failedCount: number;
+  };
+  volumeByDay: Array<{
+    date: string;
+    businessPayoutsEur: number;
+    employeePayoutsEur: number;
+    businessCount: number;
+    employeeCount: number;
+  }>;
+  statusBreakdown: Array<{ status: string; count: number }>;
+};
 
 export type PlatformAnalytics = {
   timezone?: string;
   rangeDays: number;
+  generatedAt?: string;
+  cacheTtlSeconds?: number;
+  userDistributionScope?: "all_time";
+  tipStatusScope?: "range";
   userDistribution: Array<{ role: "business" | "employee" | "platform_admin"; count: number }>;
   tipStatus: Array<{ status: "success" | "pending" | "failed"; count: number }>;
   growth: Array<{ date: string; newUsers: number; newBusinesses: number; newTips: number }>;
   tipVolume: Array<{ date: string; tipsEur: number; tipCount: number }>;
   topBusinessesByTips: Array<{ businessId: string; businessName: string; tipsEur: number }>;
+  payoutAnalytics?: PlatformPayoutAnalytics;
   /** Present when the API returned a safe empty fallback after an error. */
   warning?: string;
 };
@@ -5776,6 +5804,8 @@ export interface GlobalTransactionRow {
   caretipFeeFixedCents: number;
   caretipFeeEur: number | null;
   netToStaffEur: number | null;
+  payableStatus: string;
+  /** @deprecated Use payableStatus */
   payoutStatus: string;
   tipStatus: string;
   stripePaymentIntentId: string | null;
@@ -6019,6 +6049,37 @@ export async function fetchOnboardingQueueMetrics(): Promise<OnboardingQueueMetr
     headers: getHeaders(),
     credentials: "include",
   });
+}
+
+export type PlatformAdminPayoutScheduleContext = {
+  businessId: string;
+  businessName: string;
+  timezone: string;
+  business: {
+    subjectKind: "business" | "employee";
+    subjectId: string;
+    subjectName: string;
+    stripeAccountId: string | null;
+    careTipSchedule: string;
+    stripeScheduleInterval: string | null;
+    careTipControlled: boolean;
+    executionLabel: "stripe_automatic" | "caretip_scheduled" | "manual_no_caretip_run";
+    nextScheduledPayoutAt: string | null;
+    timezone: string;
+    lastPayoutCreatedAt: string | null;
+    lastPayoutStatus: string | null;
+    lastPayoutAmountCents: number | null;
+  };
+  employees: PlatformAdminPayoutScheduleContext["business"][];
+};
+
+export async function fetchPlatformBusinessPayoutScheduleContext(
+  businessId: string,
+): Promise<PlatformAdminPayoutScheduleContext> {
+  return apiRequest<PlatformAdminPayoutScheduleContext>(
+    apiPath(`/api/platform/businesses/${encodeURIComponent(businessId)}/payout-schedule-context`),
+    { headers: getHeaders(), credentials: "include" },
+  );
 }
 
 export async function updatePlatformBusinessKycReviewNotes(

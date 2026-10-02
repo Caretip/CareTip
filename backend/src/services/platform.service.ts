@@ -101,6 +101,15 @@ export async function checkStripeHealth(): Promise<"online" | "offline"> {
   }
 }
 
+/** Cached Stripe reachability — avoids balance.retrieve on every admin dashboard health poll. */
+const PLATFORM_STRIPE_HEALTH_CACHE_TTL_MS = 45_000;
+
+export async function checkStripeHealthCached(): Promise<"online" | "offline"> {
+  return getCachedOrLoad("platform:stripe-health", PLATFORM_STRIPE_HEALTH_CACHE_TTL_MS, () =>
+    checkStripeHealth(),
+  );
+}
+
 type PlatformTxAggRow = {
   transaction_count: bigint;
   success_count: bigint;
@@ -132,6 +141,7 @@ async function getGlobalPlatformStatsImpl() {
   const totalVolumeEur = Number(txAgg?.total_volume ?? 0);
   const businessesWithSuccessfulTips = Number(txAgg?.businesses_with_success ?? 0);
 
+  const generatedAt = new Date().toISOString();
   return {
     totalVolumeEur,
     totalVolumeEurFormatted: totalVolumeEur.toLocaleString("de-DE", {
@@ -146,7 +156,12 @@ async function getGlobalPlatformStatsImpl() {
     activeUsersCount: usersActive,
     businessesWithSuccessfulTips,
     platformTotalTipsFromBusinessRollupEur: totalVolumeEur,
-    platformTotalsConsistent: true,
+    /** Single SQL aggregate on tips — not cross-validated against Stripe in this response. */
+    platformTotalsConsistent: null,
+    platformTotalsConsistencyNote:
+      "Tip volume and counts come from one tips-table aggregate; Stripe is not reconciled in this payload.",
+    generatedAt,
+    cacheTtlSeconds: 45,
   };
 }
 
@@ -208,7 +223,7 @@ export async function listGlobalTransactions(params: {
     const payable = t.employeeTipPayable;
     const feeCents = payable?.platformFeeCents ?? null;
     const netToStaffCents = payable?.payableCents ?? null;
-    const payoutStatus = payable?.status ?? "no_payable";
+    const payableStatus = payable?.status ?? "no_payable";
     return {
       id: t.id,
       amountEur: gross,
@@ -216,7 +231,9 @@ export async function listGlobalTransactions(params: {
       caretipFeeFixedCents: CARETIP_FEE_FIXED_CENTS_EUR,
       caretipFeeEur: feeCents == null ? null : feeCents / 100,
       netToStaffEur: netToStaffCents == null ? null : netToStaffCents / 100,
-      payoutStatus,
+      payableStatus,
+      /** @deprecated Use payableStatus — this is EmployeeTipPayable.status, not Stripe payout status. */
+      payoutStatus: payableStatus,
       tipStatus: t.status,
       stripePaymentIntentId: t.stripePaymentIntentId,
       createdAt: t.createdAt.toISOString(),

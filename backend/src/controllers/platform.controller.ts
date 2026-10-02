@@ -39,11 +39,8 @@ export async function getOnboardingQueueMetrics(_req: Request, res: Response) {
     const { getOnboardingQueueMetrics, getFullyVerifiedBusinessCount } = await import(
       "../services/platformBusinessList.service.js"
     );
-    const [metrics, fullyVerified] = await Promise.all([
-      getOnboardingQueueMetrics(),
-      getFullyVerifiedBusinessCount(),
-    ]);
-    return res.json({ ...metrics, fullyVerified });
+    const metrics = await getOnboardingQueueMetrics();
+    return res.json(metrics);
   } catch (err) {
     logServerError("platform.getOnboardingQueueMetrics", err);
     return res.status(500).json({
@@ -142,7 +139,7 @@ export async function getHealth(_req: Request, res: Response) {
   try {
     const [database, stripe] = await Promise.all([
       platformService.checkDatabaseHealth(),
-      platformService.checkStripeHealth(),
+      platformService.checkStripeHealthCached(),
     ]);
     return res.json({
       database,
@@ -356,6 +353,10 @@ export async function getAnalytics(req: Request, res: Response) {
     return res.json({
       timezone,
       rangeDays,
+      generatedAt: new Date().toISOString(),
+      cacheTtlSeconds: 60,
+      userDistributionScope: "all_time",
+      tipStatusScope: "range",
       userDistribution: [
         { role: "business", count: 0 },
         { role: "employee", count: 0 },
@@ -369,6 +370,19 @@ export async function getAnalytics(req: Request, res: Response) {
       growth,
       tipVolume,
       topBusinessesByTips: [],
+      payoutAnalytics: {
+        summary: {
+          businessPayoutCount: 0,
+          employeePayoutCount: 0,
+          businessVolumeEur: 0,
+          employeeVolumeEur: 0,
+          paidCount: 0,
+          pendingCount: 0,
+          failedCount: 0,
+        },
+        volumeByDay: [],
+        statusBreakdown: [],
+      },
       warning: clientSafeMessage(err, "We couldn't load analytics right now. Try again."),
     });
   }
@@ -498,6 +512,24 @@ export async function getBusiness(req: Request, res: Response) {
     logServerError("platform.getBusiness", err);
     return res.status(500).json({
       message: clientSafeMessage(err, "We couldn't load that business. Try again."),
+    });
+  }
+}
+
+export async function getBusinessPayoutScheduleContext(req: Request, res: Response) {
+  try {
+    const { id } = req.params;
+    if (!id?.trim()) return res.status(400).json({ message: "id is required" });
+    const { getPlatformAdminBusinessPayoutScheduleContext } = await import(
+      "../services/platformAdminPayoutSchedule.service.js"
+    );
+    const ctx = await getPlatformAdminBusinessPayoutScheduleContext(id.trim());
+    if (!ctx) return res.status(404).json({ message: "Business not found" });
+    return res.json(ctx);
+  } catch (err) {
+    logServerError("platform.getBusinessPayoutScheduleContext", err);
+    return res.status(500).json({
+      message: clientSafeMessage(err, "We couldn't load payout schedule details. Try again."),
     });
   }
 }

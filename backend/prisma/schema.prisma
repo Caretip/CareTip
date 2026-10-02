@@ -746,7 +746,8 @@ model StripeWebhookEvent {
 }
 
 /// Stripe Connect Express payout to a connected account's external bank/card.
-/// Observation-only — CareTip does not initiate Stripe payouts. Not Transaction.payoutStatus.
+/// Primarily Stripe-driven (webhooks + reconciliation). CareTip may initiate standard payouts
+/// for every_3_days schedules via scheduled-bank-payout jobs. Not Transaction.payoutStatus.
 model StripeConnectPayout {
   id                     String                    @id @default(cuid())
   businessId             String                    @map("business_id")

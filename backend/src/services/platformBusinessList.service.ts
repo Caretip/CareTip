@@ -1,5 +1,6 @@
 import { Prisma } from "@prisma/client";
 import { prisma } from "../prisma.js";
+import { getCachedOrLoad } from "../utils/shortLivedCache.js";
 import { sanitizeLikeContainsSearch } from "../utils/likeSearch.js";
 import { parseBoundedSkip } from "../utils/paginationLimits.js";
 import { parseKycDocuments, type KycDocuments } from "./kyc.service.js";
@@ -495,6 +496,8 @@ export type OnboardingQueueMetrics = {
   submitted: number;
   approved: number;
   rejected: number;
+  /** Onboarding approved + KYC verified (fully operational). */
+  fullyVerified: number;
 };
 
 const ONBOARDING_KPI_STATUSES: Array<{
@@ -511,13 +514,19 @@ const ONBOARDING_KPI_STATUSES: Array<{
  * Onboarding KPI counts — uses the same FROM/WHERE clauses as {@link listPlatformBusinesses}
  * so summary cards always match status-filtered table totals.
  */
-export async function getOnboardingQueueMetrics(): Promise<OnboardingQueueMetrics> {
+const ONBOARDING_METRICS_CACHE_TTL_MS = 45_000;
+
+async function getOnboardingQueueMetricsImpl(): Promise<OnboardingQueueMetrics> {
   const counts: OnboardingQueueMetrics = {
     draft: 0,
     submitted: 0,
     approved: 0,
     rejected: 0,
+    fullyVerified: 0,
   };
+
+  const fullyVerified = await getFullyVerifiedBusinessCount();
+  counts.fullyVerified = fullyVerified;
 
   await Promise.all(
     ONBOARDING_KPI_STATUSES.map(async ({ status, key }) => {
@@ -537,6 +546,14 @@ export async function getOnboardingQueueMetrics(): Promise<OnboardingQueueMetric
   );
 
   return counts;
+}
+
+export async function getOnboardingQueueMetrics(): Promise<OnboardingQueueMetrics> {
+  return getCachedOrLoad(
+    "platform:onboarding-metrics",
+    ONBOARDING_METRICS_CACHE_TTL_MS,
+    getOnboardingQueueMetricsImpl,
+  );
 }
 
 export type KycQueueMetrics = {

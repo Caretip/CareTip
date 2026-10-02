@@ -17,6 +17,7 @@ import {
 } from "../../components/platform/PlatformPageChrome";
 import { PlatformAuditLogMobileCard } from "../../components/platform/platformAdminMobileCards";
 import { platformUi } from "../../components/platform/platformDashboardUi";
+import { cn } from "@/lib/utils";
 import {
   getPageSessionCache,
   setPageSessionCache,
@@ -125,7 +126,13 @@ export function AuditLogsPage() {
           )
         }
         desktop={
-          <table className={platformUi.table}>
+          <table className={cn(platformUi.table, "platform-admin-audit-table w-full table-fixed")}>
+            <colgroup>
+              <col className="w-[11rem]" />
+              <col className="w-[28%]" />
+              <col className="w-[14rem]" />
+              <col />
+            </colgroup>
             <thead>
               <tr className={platformUi.tableHeadRow}>
                 <th className={platformUi.tableTh}>{t("admin.auditLogsPage.colTime")}</th>
@@ -155,13 +162,22 @@ export function AuditLogsPage() {
                     <td className={`${platformUi.tableTd} whitespace-nowrap text-xs text-muted-foreground`}>
                       {formatTime(r.createdAt)}
                     </td>
-                    <td className={`${platformUi.tableTd} font-mono text-xs`}>{r.action}</td>
-                    <td className={`${platformUi.tableTd} break-all text-xs`}>{r.userEmail}</td>
+                    <td className={cn(platformUi.tableTd, "font-mono text-xs")}>
+                      <span className="block truncate" title={r.action}>{r.action}</span>
+                    </td>
+                    <td className={cn(platformUi.tableTd, "text-xs")}>
+                      <span
+                        className="block max-w-full truncate whitespace-nowrap"
+                        title={r.userEmail}
+                      >
+                        {r.userEmail}
+                      </span>
+                    </td>
                     <td
-                      className={`${platformUi.tableTd} max-w-md truncate text-xs text-muted-foreground`}
+                      className={cn(platformUi.tableTd, "truncate text-xs text-muted-foreground")}
                       title={r.metadata ?? ""}
                     >
-                      {r.metadata ?? t("format.notAvailable")}
+                      <span className="block truncate">{r.metadata ?? t("format.notAvailable")}</span>
                     </td>
                   </tr>
                 ))

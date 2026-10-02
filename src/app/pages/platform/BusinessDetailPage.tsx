@@ -22,9 +22,10 @@ import { logClientError } from "../../lib/clientLog";
 import { EmployeeSettingsFormSkeleton } from "../../components/dashboard/DashboardSectionLoading";
 import { formatEur } from "../../lib/formatEur";
 import { BusinessLogoMark } from "../../components/business/BusinessLogoMark";
-import { PlatformPage, PlatformPageHeader } from "../../components/platform/PlatformPageChrome";
+import { PlatformPage, PlatformPageHeader, PlatformAdminSection } from "../../components/platform/PlatformPageChrome";
 import { PlatformSponsoredAccessSection } from "../../components/platform/PlatformSponsoredAccessSection";
 import { PlatformLegalHoldPanel } from "../../components/platform/PlatformLegalHoldPanel";
+import { PlatformBusinessPayoutSchedulePanel } from "../../components/platform/PlatformBusinessPayoutSchedulePanel";
 import { BusinessWorkflowVerificationPanels } from "../../components/platform/BusinessWorkflowVerificationPanels";
 import { platformUi } from "../../components/platform/platformDashboardUi";
 import { cn } from "@/lib/utils";
@@ -193,8 +194,9 @@ export function BusinessDetailPage() {
         <motion.div
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
-          className={cn(platformUi.contentCard, "dashboard-page-narrow w-full max-w-2xl space-y-6")}
+          className="platform-admin-business-detail dashboard-page-narrow w-full max-w-3xl space-y-8"
         >
+          <PlatformAdminSection title={t("admin.businessDetailPage.sectionIdentity")}>
             <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
               <div className="flex items-start gap-3">
                 <BusinessLogoMark logoPathOrUrl={row.logoPath ?? null} businessName={row.name} size="xl" />
@@ -250,6 +252,8 @@ export function BusinessDetailPage() {
                 </button>
               </div>
             </div>
+
+            {id ? <PlatformBusinessPayoutSchedulePanel businessId={id} /> : null}
 
             <PlatformSponsoredAccessSection businessId={row.id} />
 
@@ -394,7 +398,8 @@ export function BusinessDetailPage() {
                 {t("admin.businessDetailPage.editDetails")}
               </button>
             </div>
-          </motion.div>
+          </PlatformAdminSection>
+        </motion.div>
         )}
 
       {editing && row ? (

@@ -7672,6 +7672,8 @@
       "activityLoadFailed": "Abo-Aktivität konnte nicht geladen werden.",
       "activityLoading": "Abo-Aktivität wird geladen…",
       "activityEmpty": "Keine Abos entsprechen Ihren Filtern.",
+      "overviewTitle": "Abo-Zahlen",
+      "healthTitle": "Abrechnungsstatus",
       "activityTitle": "Aktuelle Abo-Aktivität",
       "searchPlaceholder": "Nach Betriebsname oder E-Mail suchen…",
       "pagination": "{{from}}–{{to}} von {{total}}",
@@ -7777,7 +7779,14 @@
     "analyticsSubtitle": "Letzte {{days}} Tage ({{tz}}), Kennzahlen in Echtzeit",
     "timezoneAria": "Zeitzone für Analysen",
     "timezonePlaceholder": "Zeitzone",
-    "tipStatusNote": "Trinkgeldstatus nutzt Gesamtwerte",
+    "tipStatusNote": "Trinkgeldstatus zählt den gewählten Diagrammzeitraum. Benutzerrollen sind Gesamtwerte.",
+    "statsDataAsOf": "KPI-Datenstand: {{time}} (Europe/Berlin). Statistik-Cache ca. alle 45 Sekunden.",
+    "statsFreshnessLine": "Datenstand {{time}} ({{tz}}) · {{relative}}",
+    "statsFreshnessJustNow": "Gerade aktualisiert",
+    "statsFreshnessMinutes": "Vor {{count}} Min. aktualisiert",
+    "statsFreshnessHours": "Vor {{count}} Std. aktualisiert",
+    "statsFreshnessDays": "Vor {{count}} T. aktualisiert",
+    "statsFreshnessCacheHint": "Zwischengespeichert; Aktualisierung ca. alle {{seconds}} Sekunden.",
     "chartUserDist": "Nutzerverteilung",
     "chartUserDistDesc": "Konten nach Rolle",
     "chartTipStatus": "Verteilung Trinkgeldstatus",
@@ -7967,11 +7976,13 @@
         "systemHealth": "Ein oder mehrere Kernservices sind offline.",
         "pendingOnboarding": "{{count}} Onboarding-Prüfung(en) warten auf Freigabe.",
         "failedPaymentsToday": "{{count}} fehlgeschlagene Abo-Zahlung(en) heute.",
-        "atRiskSubscriptions": "{{count}} Abonnement(s) als gefährdet markiert."
+        "atRiskSubscriptions": "{{count}} Abonnement(s) als gefährdet markiert.",
+        "pendingKyc": "{{count}} KYC-Prüfung(en) ausstehend."
       },
       "kpi": {
         "totalBusinesses": "Unternehmen gesamt",
-        "activeBusinesses": "Aktive Unternehmen",
+        "activeBusinesses": "Onboarding freigegeben",
+        "activeBusinessesHelp": "Betriebe mit freigegebenem Onboarding (nicht zwingend KYC-verifiziert oder mit Trinkgeldern).",
         "activeUsers": "Aktive Benutzer",
         "pendingVerifications": "Ausstehende Verifizierungen",
         "pendingOnboarding": "Onboarding-Freigabe ausstehend",
@@ -8206,7 +8217,39 @@
       "subscriptions": "Abonnements",
       "tierBasic": "Basic",
       "tierPremium": "Premium",
-      "tierEnterprise": "Enterprise"
+      "tierEnterprise": "Enterprise",
+      "payoutAnalyticsTitle": "Stripe-Bankauszahlungen",
+      "payoutAnalyticsDesc": "Letzte {{days}} Tage ({{tz}}). Geld von verbundenen Stripe-Konten auf Bankkonten — getrennt vom Trinkgeldvolumen.",
+      "payoutBusinessVolume": "Auszahlungsvolumen Unternehmen",
+      "payoutEmployeeVolume": "Auszahlungsvolumen Mitarbeitende",
+      "payoutPaidCount": "Ausgezahlte Payouts",
+      "payoutPendingCount": "Ausstehend / unterwegs",
+      "payoutFailedCount": "Fehlgeschlagen / storniert",
+      "payoutTotalVolume": "Gesamtes Stripe-Auszahlungsvolumen",
+      "payoutStripeVolumeHint": "Bankauszahlungen über Connect — nicht das Trinkgeld-GMV der Gäste.",
+      "payoutCountLabel": "Auszahlungen",
+      "payoutVolumeOverTime": "Auszahlungsvolumen im Zeitverlauf",
+      "payoutVolumeOverTimeDesc": "Gestapeltes Geschäfts- vs. Mitarbeiter-Bankauszahlungsvolumen pro Tag."
+    },
+    "payoutSchedulePanel": {
+      "title": "Auszahlungspläne (nur Lesen)",
+      "subtitle": "CareTip-Präferenz, Stripe-Intervall und nächster CareTip-Lauf falls zutreffend.",
+      "careTipSchedule": "CareTip-Plan",
+      "stripeInterval": "Stripe-Intervall",
+      "execution": "Ausführung",
+      "executionStripeAutomatic": "Automatische Stripe-Auszahlung",
+      "executionCareTipScheduled": "CareTip-geplanter Payout",
+      "executionManual": "Manuell — kein CareTip-Planlauf",
+      "nextRun": "Nächster CareTip-Lauf",
+      "timezone": "Zeitzone",
+      "lastPayout": "Letzte Stripe-Auszahlung",
+      "notConnected": "Stripe Connect nicht verbunden",
+      "employees": "Mitarbeitende",
+      "scheduleDaily": "Täglich",
+      "scheduleWeekly": "Wöchentlich",
+      "scheduleMonthly": "Monatlich",
+      "scheduleEvery3Days": "Alle 3 Tage",
+      "scheduleManual": "Manuell"
     },
     "usageReportsPage": {
       "title": "Nutzungsberichte",
@@ -8537,8 +8580,13 @@
       "colCustomer": "Kunde",
       "colRefundAmount": "Erstattungsbetrag",
       "colOriginalAmount": "Ursprünglicher Betrag",
+      "colType": "Typ",
       "colReason": "Grund",
       "colStatus": "Status",
+      "eventType": {
+        "refund": "Erstattung",
+        "dispute": "Streitfall"
+      },
       "colRequested": "Aufgetreten",
       "colProcessed": "Aktualisiert",
       "colProvider": "Zahlungsanbieter",
@@ -8570,8 +8618,10 @@
         "canceled": "Storniert",
         "needs_response": "Antwort erforderlich",
         "won": "Gewonnen",
-        "lost": "Verloren"
+        "lost": "Verloren (Streitfall)"
       },
+      "statusLostHint": "Streitfall verloren — kein fehlgeschlagener Refund.",
+      "statusReasonNote": "Typ = Erstattung oder Streitfall. Status = Ergebnis (z. B. erfolgreich, verloren). Grund = Stripe-Kategorie (z. B. betrügerisch) — kein CareTip-Betrugsurteil und kein Ergebnis.",
       "reason": {
         "payout_failed": "Auszahlung fehlgeschlagen",
         "payment_reversed": "Zahlung storniert",
@@ -8579,13 +8629,16 @@
         "eligibility_failure": "Eligibilitätsfehler",
         "requested_by_customer": "Vom Kunden angefordert",
         "duplicate": "Duplikat",
-        "fraudulent": "Betrug"
+        "fraudulent": "Als betrügerisch (Kategorie)",
+        "unspecified": "Nicht angegeben",
+        "fraudulentHint": "Stripe-Kategorie für Erstattung/Streitfall — kein CareTip-Urteil über Betrug."
       }
     },
     "globalTransactionsPage": {
       "title": "Globale Transaktionen",
-      "subtitle": "Alle Gäste-Tips plattformweit. Beträge in EUR, CareTip-Gebühr {{feePercent}}% + {{feeFixed}} €, Netto an Team, und Tip-Ledger-Status (keine Stripe-Connect-Auszahlungen).",
+      "subtitle": "Alle Gäste-Tips plattformweit. Beträge in EUR, CareTip-Gebühr wenn im Mitarbeiter-Payable erfasst, Netto an Team, und Payable-Status (keine Stripe-Bankauszahlungen).",
       "feeCell": "{{percent}}% + {{fixed}} € ({{amount}})",
+      "feeUnavailable": "—",
       "searchPlaceholder": "Transaktions-ID, Stripe-ID, Unternehmens- oder Teamname…",
       "searchAria": "Transaktionen durchsuchen",
       "hintLiveSearch": "Ergebnisse aktualisieren sich während der Eingabe.",
@@ -8595,7 +8648,9 @@
       "colAmountEur": "Betrag (EUR)",
       "colCaretipFee": "CareTip-Gebühr",
       "colNetToStaff": "Netto an Team",
-      "colPayout": "Tip-Ledger",
+      "colPayable": "Mitarbeiter-Payable",
+      "colPayout": "Mitarbeiter-Payable",
+      "payableStatusHint": "Payable-Status im CareTip-Ledger. Kein Stripe-Bankauszahlungsstatus.",
       "colTipStatus": "Tip-Status",
       "filterTipStatus": "Tip-Status",
       "tipStatusFilter": {
@@ -8622,6 +8677,16 @@
         "failed": "Fehlgeschlagen",
         "not_applicable": "Nicht zutreffend",
         "pending": "Ausstehend"
+      },
+      "payableStatus": {
+        "held_platform": "Plattform-Hold — Freigabe ausstehend",
+        "held_business": "Unternehmens-Pool",
+        "destination_settled": "Destination Charge — Mitarbeiter-Connect",
+        "transferring": "Transfer läuft",
+        "transferred": "An Mitarbeiter-Connect überwiesen",
+        "transfer_failed": "Transfer fehlgeschlagen",
+        "refunded": "Erstattet",
+        "no_payable": "Kein Mitarbeiter-Payable"
       }
     },
     "platformSettingsPage": {
@@ -8981,6 +9046,7 @@
     "businessDetailPage": {
       "backLink": "Zurück zu den Unternehmen",
       "title": "Unternehmensprofil",
+      "sectionIdentity": "Unternehmensidentität & Zugang",
       "subtitle": "Onboarding-Freigabe und KYC-Compliance als getrennte Workflows verwalten.",
       "sectionOnboarding": "Business-Onboarding",
       "sectionOnboardingDesc": "Steuert, ob dieses Unternehmen auf das CareTip-Dashboard zugreifen darf.",

@@ -12,6 +12,13 @@ export {
   PlatformAdminEmptyBlock,
 } from "./PlatformAdminWorkspace";
 
+export {
+  PlatformAdminMetricCell,
+  PlatformAdminFreshnessIndicator,
+  PlatformAdminStatusBadge,
+} from "./PlatformAdminDesignPrimitives";
+export type { PlatformAdminStatusTone } from "./PlatformAdminDesignPrimitives";
+
 export function PlatformPage({
   children,
   className,

@@ -4,6 +4,7 @@ import { DateTime } from "luxon";
 import { sanitizeIanaTimezone, DEFAULT_BUSINESS_TIMEZONE } from "../utils/businessTime.js";
 import { sqlCreatedAtLocal } from "../utils/sqlNaiveUtcToLocal.js";
 import { getCachedOrLoad, invalidateCacheKeyPrefix } from "../utils/shortLivedCache.js";
+import { getPlatformPayoutAnalytics, type PlatformPayoutAnalytics } from "./platformPayoutAnalytics.service.js";
 
 const PLATFORM_ANALYTICS_CACHE_TTL_MS = 60_000;
 
@@ -14,8 +15,14 @@ export function invalidatePlatformAnalyticsCache(): void {
 export type PlatformAnalyticsResponse = {
   timezone: string;
   rangeDays: number;
+  generatedAt: string;
+  cacheTtlSeconds: number;
+  /** User role counts are lifetime (not limited to rangeDays). */
+  userDistributionScope: "all_time";
+  tipStatusScope: "range";
   userDistribution: Array<{ role: "business" | "employee" | "platform_admin"; count: number }>;
   tipStatus: Array<{ status: "success" | "pending" | "failed"; count: number }>;
+  payoutAnalytics: PlatformPayoutAnalytics;
   /** Daily growth series for the last N days (inclusive). */
   growth: Array<{
     date: string; // YYYY-MM-DD
@@ -144,8 +151,10 @@ async function getPlatformAnalyticsImpl(input?: {
   const roleCountRows = await prisma.user.groupBy({ by: ["role"], _count: { _all: true } });
   const tipStatusRows = await prisma.transaction.groupBy({
     by: ["status"],
+    where: { createdAt: { gte: start, lte: end } },
     _count: { _all: true },
   });
+  const payoutAnalytics = await getPlatformPayoutAnalytics({ startUtc: start, endUtc: end, timezone });
   const topBusinesses = await prisma.transaction.groupBy({
     by: ["businessId"],
     where: { status: "success", createdAt: { gte: start, lte: end } },
@@ -224,6 +233,10 @@ async function getPlatformAnalyticsImpl(input?: {
   const result: PlatformAnalyticsResponse = {
     timezone,
     rangeDays,
+    generatedAt: new Date().toISOString(),
+    cacheTtlSeconds: PLATFORM_ANALYTICS_CACHE_TTL_MS / 1000,
+    userDistributionScope: "all_time",
+    tipStatusScope: "range",
     userDistribution: [
       { role: "business", count: managerCount },
       { role: "employee", count: employeeCount },
@@ -242,6 +255,7 @@ async function getPlatformAnalyticsImpl(input?: {
       tipCount: mapTipVol.get(d)?.tipCount ?? 0,
     })),
     topBusinessesByTips,
+    payoutAnalytics,
   };
 
   if (

@@ -80,12 +80,28 @@ function AnalyticsCard({
   description,
   children,
   descriptionClassName,
+  surface = "panel",
 }: {
   title: string;
   description: string;
   children: React.ReactNode;
   descriptionClassName?: string;
+  surface?: "panel" | "open";
 }) {
+  if (surface === "open") {
+    return (
+      <div className={platformUi.overviewAnalyticsCard}>
+        <div className={platformUi.overviewAnalyticsCardHeader}>
+          <h4 className={platformUi.overviewAnalyticsCardTitle}>{title}</h4>
+          <p className={cn(platformUi.overviewAnalyticsCardDesc, descriptionClassName)}>{description}</p>
+        </div>
+        <div className={platformUi.overviewAnalyticsCardBody}>
+          <div className={platformUi.analyticsChartWrap}>{children}</div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <Card className={platformUi.analyticsCard}>
       <CardHeader className={platformUi.analyticsCardHeader}>
@@ -328,6 +344,7 @@ export const AdminDashboardAnalyticsCharts = memo(function AdminDashboardAnalyti
   const showTipVolume = true;
   const growthMode = variant === "usage" ? "users" : "business";
   const preferTopBusinesses = variant === "business";
+  const chartSurface = variant === "business" ? "open" : "panel";
 
   const userDistTitle =
     variant === "usage" ? t("admin.usageReportsPage.chartUserRoles") : t("admin.chartUserDist");
@@ -447,7 +464,7 @@ export const AdminDashboardAnalyticsCharts = memo(function AdminDashboardAnalyti
       ) : null}
       <div className={platformUi.analyticsChartsGrid}>
         {showUserDist ? (
-        <AnalyticsCard title={userDistTitle} description={userDistDesc}>
+        <AnalyticsCard title={userDistTitle} description={userDistDesc} surface={chartSurface}>
           <DashboardStableChartSlot loading={showChartSkeletons} skeleton={<DashboardChartSkeleton />}>
             {chartAnalytics ? (
               <UserDistributionChart data={chartAnalytics.userDistribution} />
@@ -459,7 +476,7 @@ export const AdminDashboardAnalyticsCharts = memo(function AdminDashboardAnalyti
         ) : null}
 
         {showGrowth ? (
-        <AnalyticsCard title={growthTitle} description={growthDesc}>
+        <AnalyticsCard title={growthTitle} description={growthDesc} surface={chartSurface}>
           <DashboardStableChartSlot
             loading={showChartSkeletons}
             skeleton={<DashboardChartSkeleton barHeights={[38, 62, 44, 78, 52, 66, 40, 84, 58, 46]} />}
@@ -474,7 +491,7 @@ export const AdminDashboardAnalyticsCharts = memo(function AdminDashboardAnalyti
         ) : null}
 
         {showTipVolume ? (
-        <AnalyticsCard title={tipVolTitle} description={tipVolDesc}>
+        <AnalyticsCard title={tipVolTitle} description={tipVolDesc} surface={chartSurface}>
           <DashboardStableChartSlot
             loading={showChartSkeletons}
             skeleton={<DashboardChartSkeleton barHeights={[55, 72, 48, 88, 60, 76, 42, 80, 64, 50]} />}

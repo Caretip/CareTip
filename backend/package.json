@@ -75,6 +75,8 @@
     "test:sql-injection-audit": "tsx scripts/sql-injection-audit.ts",
     "test:sql-injection-smoke": "dotenv -e ../.env -e .env -- tsx scripts/sql-injection-smoke-runtime.ts",
     "test:admin-failed-transactions-clarity": "dotenv -e ../.env -e .env -- tsx scripts/admin-failed-transactions-clarity-runtime.ts",
+    "test:admin-kyc-refund-semantics": "tsx scripts/admin-kyc-refund-semantics-runtime.ts",
+    "test:admin-dashboard-performance": "tsx scripts/admin-dashboard-performance-runtime.ts",
     "test:sql-injection": "npm run test:sql-injection-audit && npm run test:sql-injection-smoke",
     "test:file-upload-pentest": "tsx scripts/file-upload-pentest.ts",
     "test:security-remediation": "tsx scripts/security-remediation-runtime.ts",

@@ -276,7 +276,8 @@ async function testP03PlatformAdminFee(suffix: string) {
   assert.ok(row, "platform transaction row exists");
   assert.equal(row.caretipFeeEur, historicalFeeCents / 100, "fee from persisted platformFeeCents");
   assert.notEqual(row.caretipFeeEur, recalculated / 100, "fee must not follow current fee config");
-  assert.equal(row.payoutStatus, EmployeeTipPayableStatus.held_business, "tip ledger status from payable");
+  assert.equal(row.payableStatus, EmployeeTipPayableStatus.held_business, "payable status from ledger");
+  assert.equal(row.payoutStatus, EmployeeTipPayableStatus.held_business, "deprecated payoutStatus alias");
 
   const legacyTip = await prisma.transaction.create({
     data: {
@@ -297,7 +298,7 @@ async function testP03PlatformAdminFee(suffix: string) {
   assert.ok(legacyRow);
   assert.equal(legacyRow.caretipFeeEur, null, "missing payable must not fabricate fee");
   assert.equal(legacyRow.netToStaffEur, null, "missing payable must not fabricate net");
-  assert.equal(legacyRow.payoutStatus, "no_payable", "missing payable identified explicitly");
+  assert.equal(legacyRow.payableStatus, "no_payable", "missing payable identified explicitly");
   pass("P0-3-platform-fee", "Platform admin uses persisted platformFeeCents");
 
   await prisma.employeeTipPayable.deleteMany({ where: { businessId: business.id } });

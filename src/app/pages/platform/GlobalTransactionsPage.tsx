@@ -12,6 +12,12 @@ import {
 } from "../../components/dashboard/DashboardSectionLoading";
 import { formatEur, formatOptionalEur } from "../../lib/formatEur";
 import {
+  adminPayableStatusLabel,
+  adminPayableStatusTone,
+} from "../../lib/adminPayableStatus";
+import { PlatformAdminStatusBadge } from "../../components/platform/PlatformPageChrome";
+import { ADMIN_FINANCIAL_TIMEZONE } from "../../lib/adminFinancialTimezone";
+import {
   PlatformPage,
   PlatformPageHeader,
   PlatformResponsiveData,
@@ -19,6 +25,7 @@ import {
 } from "../../components/platform/PlatformPageChrome";
 import { PlatformTransactionMobileCard } from "../../components/platform/platformAdminMobileCards";
 import { platformUi } from "../../components/platform/platformDashboardUi";
+import { cn } from "@/lib/utils";
 import { EmptyState } from "../../components/ui/EmptyState";
 import { ListFilterLoadError } from "../../components/shared/ListFilterLoadError";
 import { classifyFetchError } from "../../lib/listFilterUx";
@@ -26,39 +33,28 @@ import { setPageSessionCache } from "../../lib/pageSessionCache";
 
 const PAGE_SIZE = 50;
 
-/** Align with platform analytics day buckets (cross-business list has no per-row TZ). */
-const PLATFORM_TX_TIMEZONE = "Europe/Berlin";
-
-/** Locale-aware date+time — same options as PlatformRefundsPage, with platform TZ. */
+/** Locale-aware date+time — fixed admin financial timezone (see adminFinancialTimezone.ts). */
 function formatTransactionAt(iso: string, locale: string): string {
   try {
     return new Date(iso).toLocaleString(locale, {
       dateStyle: "medium",
       timeStyle: "short",
-      timeZone: PLATFORM_TX_TIMEZONE,
+      timeZone: ADMIN_FINANCIAL_TIMEZONE,
     });
   } catch {
     return iso;
   }
 }
 
-function payoutStatusLabel(status: string, t: TFunction) {
-  const key = `admin.globalTransactionsPage.payoutStatus.${status}`;
-  const label = t(key);
-  return label === key ? status.replace(/_/g, " ") : label;
-}
-
-function payoutBadgeClass(status: string): string {
-  if (status === "paid") {
-    return "bg-success text-success-foreground dark:bg-success/80 dark:text-success-foreground";
+function formatCaretipFeeCell(row: GlobalTransactionRow, t: TFunction): string {
+  if (row.caretipFeeEur == null) {
+    return t("admin.globalTransactionsPage.feeUnavailable");
   }
-  if (status === "failed") {
-    return "bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-200";
-  }
-  if (status === "not_applicable") {
-    return "bg-muted text-muted-foreground";
-  }
-  return "bg-amber-100 text-amber-900 dark:bg-amber-900/40 dark:text-amber-100";
+  return t("admin.globalTransactionsPage.feeCell", {
+    percent: row.caretipFeePercent,
+    fixed: (row.caretipFeeFixedCents / 100).toFixed(2),
+    amount: formatEur(row.caretipFeeEur),
+  });
 }
 
 function tipStatusLabel(status: string, t: TFunction) {
@@ -280,17 +276,36 @@ export function GlobalTransactionsPage() {
           )
         }
         desktop={
-          <table className={platformUi.table}>
+          <table className={cn(platformUi.table, "platform-admin-ledger-table min-w-[72rem]")}>
             <thead>
               <tr className={platformUi.tableHeadRow}>
-                <th className={platformUi.tableTh}>{t("admin.globalTransactionsPage.colTransaction")}</th>
-                <th className={platformUi.tableTh}>{t("admin.globalTransactionsPage.colBusiness")}</th>
-                <th className={platformUi.tableTh}>{t("admin.globalTransactionsPage.colDateTime")}</th>
-                <th className={platformUi.tableTh}>{t("admin.globalTransactionsPage.colTipStatus")}</th>
-                <th className={`${platformUi.tableTh} text-right`}>{t("admin.globalTransactionsPage.colAmountEur")}</th>
-                <th className={`${platformUi.tableTh} text-right`}>{t("admin.globalTransactionsPage.colCaretipFee")}</th>
-                <th className={`${platformUi.tableTh} text-right`}>{t("admin.globalTransactionsPage.colNetToStaff")}</th>
-                <th className={platformUi.tableTh}>{t("admin.globalTransactionsPage.colPayout")}</th>
+                <th className={cn(platformUi.tableTh, "min-w-[11rem] max-w-[14rem]")}>
+                  {t("admin.globalTransactionsPage.colTransaction")}
+                </th>
+                <th className={cn(platformUi.tableTh, "min-w-[8rem] max-w-[12rem]")}>
+                  {t("admin.globalTransactionsPage.colBusiness")}
+                </th>
+                <th className={cn(platformUi.tableTh, "min-w-[9rem] whitespace-nowrap")}>
+                  {t("admin.globalTransactionsPage.colDateTime")}
+                </th>
+                <th className={cn(platformUi.tableTh, "min-w-[6.5rem]")}>
+                  {t("admin.globalTransactionsPage.colTipStatus")}
+                </th>
+                <th className={cn(platformUi.tableTh, "min-w-[5.5rem] text-right whitespace-nowrap")}>
+                  {t("admin.globalTransactionsPage.colAmountEur")}
+                </th>
+                <th className={cn(platformUi.tableTh, "min-w-[7.5rem] text-right whitespace-nowrap")}>
+                  {t("admin.globalTransactionsPage.colCaretipFee")}
+                </th>
+                <th className={cn(platformUi.tableTh, "min-w-[5.5rem] text-right whitespace-nowrap")}>
+                  {t("admin.globalTransactionsPage.colNetToStaff")}
+                </th>
+                <th
+                  className={cn(platformUi.tableTh, "min-w-[11rem]")}
+                  title={t("admin.globalTransactionsPage.payableStatusHint")}
+                >
+                  {t("admin.globalTransactionsPage.colPayable")}
+                </th>
               </tr>
             </thead>
             <tbody>
@@ -316,15 +331,17 @@ export function GlobalTransactionsPage() {
               ) : (
                 items.map((row) => (
                   <tr key={row.id} className={platformUi.tableRow}>
-                    <td className={`${platformUi.tableTd} max-w-[200px] font-mono text-xs`} title={row.id}>
-                      {row.id}
+                    <td className={cn(platformUi.tableTd, "max-w-[14rem] font-mono text-xs")} title={row.id}>
+                      <span className="block truncate">{row.id}</span>
                       {row.stripePaymentIntentId ? (
-                        <span className="block truncate text-[10px] text-muted-foreground">
+                        <span className="block truncate text-[10px] text-muted-foreground" title={row.stripePaymentIntentId}>
                           {row.stripePaymentIntentId}
                         </span>
                       ) : null}
                     </td>
-                    <td className={platformUi.tableTd}>{row.businessName}</td>
+                    <td className={cn(platformUi.tableTd, "max-w-[12rem]")} title={row.businessName}>
+                      <span className="block truncate">{row.businessName}</span>
+                    </td>
                     <td
                       className={`${platformUi.tableTd} whitespace-nowrap text-xs tabular-nums text-muted-foreground`}
                       title={row.createdAt}
@@ -338,23 +355,24 @@ export function GlobalTransactionsPage() {
                         {tipStatusLabel(row.tipStatus, t)}
                       </span>
                     </td>
-                    <td className={`${platformUi.tableTd} text-right tabular-nums`}>{formatEur(row.amountEur)}</td>
-                    <td className={`${platformUi.tableTd} text-right tabular-nums text-muted-foreground`}>
-                      {t("admin.globalTransactionsPage.feeCell", {
-                        percent: row.caretipFeePercent,
-                        fixed: (row.caretipFeeFixedCents / 100).toFixed(2),
-                        amount: formatOptionalEur(row.caretipFeeEur),
-                      })}
+                    <td className={cn(platformUi.tableTd, "text-right tabular-nums whitespace-nowrap")}>
+                      {formatEur(row.amountEur)}
                     </td>
-                    <td className={`${platformUi.tableTd} text-right font-medium tabular-nums`}>
+                    <td
+                      className={cn(platformUi.tableTd, "text-right text-xs tabular-nums text-muted-foreground whitespace-nowrap")}
+                      title={formatCaretipFeeCell(row, t)}
+                    >
+                      {formatCaretipFeeCell(row, t)}
+                    </td>
+                    <td className={cn(platformUi.tableTd, "text-right font-medium tabular-nums whitespace-nowrap")}>
                       {formatOptionalEur(row.netToStaffEur)}
                     </td>
-                    <td className={platformUi.tableTd}>
-                      <span
-                        className={`inline-flex rounded px-2 py-0.5 text-xs font-medium ${payoutBadgeClass(row.payoutStatus)}`}
-                      >
-                        {payoutStatusLabel(row.payoutStatus, t)}
-                      </span>
+                    <td className={cn(platformUi.tableTd, "min-w-[11rem]")}>
+                      <PlatformAdminStatusBadge
+                        tone={adminPayableStatusTone(row.payableStatus ?? row.payoutStatus ?? "no_payable")}
+                        label={adminPayableStatusLabel(row.payableStatus ?? row.payoutStatus, t)}
+                        className="max-w-full whitespace-normal text-left leading-snug"
+                      />
                     </td>
                   </tr>
                 ))

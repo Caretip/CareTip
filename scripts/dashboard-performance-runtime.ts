@@ -104,11 +104,27 @@ if (
   admin.includes("requestIdleCallback") &&
   admin.includes("loadHeavy") &&
   admin.includes("take: VERIFICATION_TEASER_LIMIT") &&
-  admin.includes("take: RECENT_ACTIVITY_LIMIT")
+  admin.includes("take: RECENT_ACTIVITY_LIMIT") &&
+  admin.includes("fetchPlatformStats") &&
+  admin.includes("loadHealth")
 ) {
-  pass("Admin overview waits for auth, defers heavy APIs, and bounds teaser lists");
+  pass("Admin overview waits for auth, stats-first KPIs, defers heavy APIs, bounded lists");
 } else {
   fail("AdminDashboard staging/auth/bounded lists drifted");
+}
+
+const platformSvc = read("backend/src/services/platform.service.ts");
+if (platformSvc.includes("checkStripeHealthCached") && platformSvc.includes("platform:stripe-health")) {
+  pass("Platform Stripe health uses short-lived cache for admin dashboard");
+} else {
+  fail("checkStripeHealthCached missing");
+}
+
+const onboardingList = read("backend/src/services/platformBusinessList.service.ts");
+if (onboardingList.includes("platform:onboarding-metrics") && onboardingList.includes("getCachedOrLoad")) {
+  pass("Onboarding queue metrics cached for dashboard secondary stage");
+} else {
+  fail("Onboarding metrics cache missing");
 }
 
 if (admin.includes("fetchPlatformCommercialIntelligence") && admin.includes("loadHeavy")) {

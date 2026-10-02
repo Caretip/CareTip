@@ -30,7 +30,7 @@ export function mapLedgerRefundRow(row: PlatformRefundLedgerRow): RefundRecord {
     employeeName: "—",
     refundAmountEur: row.amountEur,
     originalAmountEur: row.originalAmountEur ?? row.amountEur,
-    reason: row.reason ?? row.kind,
+    reason: row.reason ?? "",
     status: row.status,
     kind: row.kind,
     requestedAt: row.occurredAt,

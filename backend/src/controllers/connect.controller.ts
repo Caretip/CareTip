@@ -356,6 +356,7 @@ export async function patchMyBankPayoutSchedule(req: Request, res: Response) {
     const dto = await setBusinessBankPayoutScheduleForBusiness({
       businessId: ctx.businessId,
       schedule,
+      actorUserId: req.user?.sub ?? req.user?.userId ?? null,
     });
     return res.json(dto);
   } catch (err) {
