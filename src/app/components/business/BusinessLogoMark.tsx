@@ -64,6 +64,7 @@ export function BusinessLogoMark({
   className,
   rounded = "rounded-xl",
   fallbackTone = "brand",
+  imageLoading = "lazy",
 }: {
   logoPathOrUrl?: string | null;
   businessName: string;
@@ -72,6 +73,8 @@ export function BusinessLogoMark({
   /** Applied to initials fallback only. */
   rounded?: string;
   fallbackTone?: "brand" | "muted";
+  /** Header marks benefit from eager load to avoid identity flicker. */
+  imageLoading?: "lazy" | "eager";
 }) {
   const src = resolveMediaUrl(logoPathOrUrl ?? undefined);
   const label = businessName.trim() || "Business";
@@ -94,7 +97,7 @@ export function BusinessLogoMark({
           bounds.frame,
           className,
         )}
-        loading="lazy"
+        loading={imageLoading}
         decoding="async"
         referrerPolicy="no-referrer"
         onError={() => setImgFailed(true)}

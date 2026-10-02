@@ -2777,6 +2777,7 @@
       "notificationsAria": "Benachrichtigungen",
       "notificationsUnreadAria": "{{count}} ungelesene Benachrichtigungen",
       "menuButtonAria": "Menü öffnen",
+      "businessLogoSettingsAria": "Betriebseinstellungen für {{name}}",
       "adminFallback": "Admin",
       "platformAdminEmail": "Plattformadministration",
       "loadingAria": "Wird geladen",
@@ -4469,8 +4470,9 @@
       "trendHint": "Trinkgeld im gewählten Zeitraum"
     },
     "dashboard": {
-      "analyticsSectionTitle": "Zeitraum-Analysen",
-      "analyticsSectionDesc": "Diagramme, Kennzahlen und letzte Trinkgeld für {{period}}.",
+      "analyticsSectionTitle": "Zeitraumleistung",
+      "analyticsSectionEyebrow": "Leistung",
+      "analyticsSectionDesc": "Trinkgeldvolumen, Teamaktivität und Diagramme für {{period}}.",
       "analyticsPeriodAria": "Zeitraum für die Analysen unten wählen",
       "toastNewTip": "Sie haben gerade ein Trinkgeld erhalten!",
       "toastLinkReady": "Ihr Trinkgeld-Link ist bereit",

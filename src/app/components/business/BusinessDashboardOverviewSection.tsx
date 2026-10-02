@@ -36,16 +36,20 @@ export function BusinessDashboardOverviewSection({
       aria-labelledby={id ? `${id}-heading` : undefined}
     >
       <header className="business-overview-section__head">
-        <div className="min-w-0 flex-1 space-y-1">
+        <div className="business-overview-section__lead min-w-0">
           {eyebrow ? <p className={dashboardWorkspaceUi.eyebrow}>{eyebrow}</p> : null}
           <h2 id={id ? `${id}-heading` : undefined} className={dashboardWorkspaceUi.sectionTitle}>
             {title}
           </h2>
           {description ? (
-            <p className={cn(dashboardWorkspaceUi.pageDescription, "!mt-1")}>{description}</p>
+            <p className={cn(dashboardWorkspaceUi.pageDescription, "business-overview-section__desc !mt-1")}>
+              {description}
+            </p>
+          ) : null}
+          {actions ? (
+            <div className="business-overview-section__meta">{actions}</div>
           ) : null}
         </div>
-        {actions ? <div className="business-overview-section__actions shrink-0">{actions}</div> : null}
       </header>
       <div className="business-overview-section__body">{children}</div>
     </section>

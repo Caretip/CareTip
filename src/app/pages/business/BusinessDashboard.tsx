@@ -61,6 +61,11 @@ import {
   venueLocalTodayKey,
 } from "../../lib/businessVenueTime";
 import { DASHBOARD_EMPLOYEE_TEASER_LIMIT } from "../../components/business/insights/TopPerformersTeaser";
+import {
+  DASHBOARD_MOBILE_TEASER_LIMIT,
+  DASHBOARD_MOBILE_TEASER_MEDIA_QUERY,
+} from "../../lib/dashboardTeaserLimits";
+import { useMediaQuery } from "@/hooks/use-media-query";
 import { BusinessDashboardChartsFallback } from "./BusinessDashboardChartsFallback";
 
 const BusinessDashboardAnalyticsCharts = lazy(() =>
@@ -234,16 +239,21 @@ export const BusinessDashboard = memo(function BusinessDashboard() {
     [chartPeriodStats?.employees, displayStats?.employees],
   );
 
+  const isMobileDashboardTeaser = useMediaQuery(DASHBOARD_MOBILE_TEASER_MEDIA_QUERY);
+  const goalsTeaserLimit = isMobileDashboardTeaser
+    ? DASHBOARD_MOBILE_TEASER_LIMIT
+    : DASHBOARD_EMPLOYEE_TEASER_LIMIT;
+
   const employeeGoalsList =
     chartPeriodStats?.employeeGoals ?? displayStats?.employeeGoals ?? [];
   const employeeGoalsTeaser = useMemo(
     () =>
       [...employeeGoalsList]
         .sort((a, b) => b.percent - a.percent)
-        .slice(0, DASHBOARD_EMPLOYEE_TEASER_LIMIT),
-    [employeeGoalsList],
+        .slice(0, goalsTeaserLimit),
+    [employeeGoalsList, goalsTeaserLimit],
   );
-  const hasMoreGoals = employeeGoalsList.length > DASHBOARD_EMPLOYEE_TEASER_LIMIT;
+  const hasMoreGoals = employeeGoalsList.length > goalsTeaserLimit;
   const goalsTableColumns = useMemo(
     () => [
       t("business.dashboard.tableTeamMember"),

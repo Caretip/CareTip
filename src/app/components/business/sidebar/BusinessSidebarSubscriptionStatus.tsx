@@ -8,8 +8,15 @@ export function BusinessSidebarSubscriptionStatus({ className }: { className?: s
   if (!businessName) return null;
 
   return (
-    <div className={cn("border-b border-sidebar-border px-4 py-3", className)}>
-      <p className="truncate text-sm font-semibold text-sidebar-foreground">{businessName}</p>
+    <div
+      className={cn(
+        "business-sidebar-venue-name border-b border-sidebar-border px-4 lg:px-5",
+        className,
+      )}
+    >
+      <p className="business-sidebar-venue-name__label truncate text-sm font-semibold text-sidebar-foreground">
+        {businessName}
+      </p>
     </div>
   );
 }

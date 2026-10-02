@@ -2777,6 +2777,7 @@
       "notificationsAria": "Notifications",
       "notificationsUnreadAria": "{{count}} unread notifications",
       "menuButtonAria": "Open menu",
+      "businessLogoSettingsAria": "Business settings for {{name}}",
       "adminFallback": "Admin",
       "platformAdminEmail": "Platform admin",
       "loadingAria": "Loading",

@@ -144,8 +144,11 @@ function DashboardHeaderBar({
           {isBusinessManager ? (
             <Link
               to="/dashboard/settings?section=business"
-              className={cn(headerIconBtn, "max-w-[2.75rem] p-0.5 sm:max-w-none lg:max-w-none")}
-              aria-label={t("shell.nav.settings")}
+              className={cn(
+                headerIconBtn,
+                "caretip-dashboard-header-business-identity",
+              )}
+              aria-label={t("shell.header.businessLogoSettingsAria", { name: venueName })}
             >
               <BusinessLogoMark
                 key={`${businessLogo ?? "no-logo"}-${venueName}`}
@@ -153,6 +156,8 @@ function DashboardHeaderBar({
                 businessName={venueName}
                 size="dashboardHeader"
                 fallbackTone="muted"
+                imageLoading="eager"
+                rounded="rounded-lg"
               />
             </Link>
           ) : showProfileCluster ? (

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { MessageSquare, Star } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
@@ -15,8 +15,14 @@ import { isApiPendingVerificationError, isApiSubscriptionRequiredError } from "@
 import { scheduleIdleWork } from "@/lib/publicRouteDefer";
 import { useBusinessEntitlementsContext } from "@/app/contexts/BusinessEntitlementsContext";
 import { useSubscriptionEntitlements } from "@/app/hooks/useSubscriptionEntitlements";
+import {
+  DASHBOARD_DESKTOP_TEASER_LIMIT,
+  DASHBOARD_MOBILE_TEASER_LIMIT,
+  DASHBOARD_MOBILE_TEASER_MEDIA_QUERY,
+} from "@/app/lib/dashboardTeaserLimits";
+import { useMediaQuery } from "@/hooks/use-media-query";
 
-export const DASHBOARD_CUSTOMER_FEEDBACK_TEASER_LIMIT = 5;
+export const DASHBOARD_CUSTOMER_FEEDBACK_TEASER_LIMIT = DASHBOARD_DESKTOP_TEASER_LIMIT;
 
 type RecentCustomerFeedbackPanelProps = {
   enabled?: boolean;
@@ -35,6 +41,10 @@ export function RecentCustomerFeedbackPanel({
   });
   const { ready, hasFeature, hasActiveEntitlements } = businessEntitlements ?? fallbackEntitlements;
   const entitled = ready && hasActiveEntitlements && hasFeature("customerFeedback");
+  const isMobileTeaser = useMediaQuery(DASHBOARD_MOBILE_TEASER_MEDIA_QUERY);
+  const feedbackFetchLimit = isMobileTeaser
+    ? DASHBOARD_MOBILE_TEASER_LIMIT
+    : DASHBOARD_CUSTOMER_FEEDBACK_TEASER_LIMIT;
   const [loading, setLoading] = useState(true);
   const [summary, setSummary] = useState<CustomerFeedbackSummary | null>(null);
   const [items, setItems] = useState<Awaited<ReturnType<typeof listBusinessCustomerFeedback>>["items"]>(
@@ -48,7 +58,7 @@ export function RecentCustomerFeedbackPanel({
     setError(null);
     try {
       const res = await listBusinessCustomerFeedback({
-        take: DASHBOARD_CUSTOMER_FEEDBACK_TEASER_LIMIT,
+        take: feedbackFetchLimit,
         skip: 0,
       });
       setItems(res.items);
@@ -67,7 +77,7 @@ export function RecentCustomerFeedbackPanel({
     } finally {
       setLoading(false);
     }
-  }, [enabled, entitled, t]);
+  }, [enabled, entitled, feedbackFetchLimit, t]);
 
   useEffect(() => {
     if (!enabled) return;
@@ -82,7 +92,12 @@ export function RecentCustomerFeedbackPanel({
     scheduleIdleWork(() => {
       void load();
     }, 0);
-  }, [enabled, entitled, load, ready]);
+  }, [enabled, entitled, load, ready, feedbackFetchLimit]);
+
+  const visibleFeedbackItems = useMemo(
+    () => items.slice(0, feedbackFetchLimit),
+    [feedbackFetchLimit, items],
+  );
 
   const hasReviews = (summary?.feedbackCount ?? 0) > 0;
 
@@ -124,7 +139,7 @@ export function RecentCustomerFeedbackPanel({
               </Button>
             }
           />
-        ) : items.length === 0 ? (
+        ) : visibleFeedbackItems.length === 0 ? (
           <BusinessDashboardAnalyticsEmpty
             variant="panel"
             icon={<Star className="h-6 w-6 text-muted-foreground" aria-hidden />}
@@ -133,7 +148,7 @@ export function RecentCustomerFeedbackPanel({
           />
         ) : (
           <div className="business-dashboard-feedback-list space-y-2.5">
-            {items.map((item) => (
+            {visibleFeedbackItems.map((item) => (
               <CustomerFeedbackListItem
                 key={item.id}
                 item={item}

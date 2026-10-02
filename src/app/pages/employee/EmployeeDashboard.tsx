@@ -43,6 +43,7 @@ import { useEmployeeAccountSummary } from "../../hooks/useEmployeeAccountSummary
 import { FeatureGate } from "../../components/subscription/FeatureGate";
 import { EmployeeDashboardMetricsGrid } from "../../components/employee/EmployeeDashboardMetricsGrid";
 import { DashboardAnalyticsPeriodToggle } from "../../components/dashboard/DashboardAnalyticsPeriodToggle";
+import { dashboardWorkspaceUi } from "../../components/dashboard/dashboardWorkspaceUi";
 import { EmployeeStripeConnectPrompt } from "../../components/employee/EmployeeStripeConnectPrompt";
 import { EmployeeQRCodeModal } from "../../components/employee/EmployeeQRCodeModal";
 import employeeHeroWebp from "../../../../images/foremployee.webp";
@@ -581,28 +582,41 @@ export const EmployeeDashboard = memo(function EmployeeDashboard() {
           aria-busy={periodMetricsLoading || analyticsPeriodRefreshing || undefined}
         >
           <div className="employee-dashboard-analytics-intro__head">
-            <div className="employee-dashboard-analytics-intro__titles min-w-0">
+            <div className="employee-dashboard-analytics-intro__lead min-w-0">
+              <p className={dashboardWorkspaceUi.eyebrow}>{t("employee.dashboard.analyticsSectionEyebrow")}</p>
               <h2
                 id="employee-analytics-period-heading"
-                className="text-[1.0625rem] font-semibold tracking-tight text-foreground sm:text-lg"
+                className={cn(dashboardWorkspaceUi.sectionTitle, "text-[1.0625rem] sm:text-lg")}
               >
                 {t("employee.dashboard.analyticsSectionTitle")}
               </h2>
-              <DashboardRefreshIndicator
-                className="employee-analytics-freshness"
-                isRefreshing={isPeriodSyncing}
-                lastUpdatedAt={metricsRefreshLastUpdatedAt}
-                refreshFailed={Boolean(analyticsError && hasVisibleMetrics)}
-              />
+              <p className={cn(dashboardWorkspaceUi.pageDescription, "employee-dashboard-analytics-intro__desc !mt-1")}>
+                {t("employee.dashboard.analyticsSectionDesc", {
+                  period:
+                    analyticsTimeframe === "today"
+                      ? t("employee.earnings_today").toLowerCase()
+                      : analyticsTimeframe === "week"
+                        ? t("employee.earnings_week").toLowerCase()
+                        : t("employee.earnings_month").toLowerCase(),
+                })}
+              </p>
+              <div className="employee-dashboard-analytics-intro__meta">
+                <DashboardRefreshIndicator
+                  className="employee-analytics-freshness"
+                  isRefreshing={isPeriodSyncing}
+                  lastUpdatedAt={metricsRefreshLastUpdatedAt}
+                  refreshFailed={Boolean(analyticsError && hasVisibleMetrics)}
+                />
+                <DashboardRealtimeStatusStrip
+                  role="employee"
+                  isPeriodSyncing={isPeriodSyncing}
+                  isMetricsSettled={isMetricsSettled}
+                  hasPeriodActivity={hasPeriodActivity}
+                  hasVisibleMetrics={hasVisibleMetrics}
+                  statsLoadFailed={analyticsError}
+                />
+              </div>
             </div>
-            <DashboardRealtimeStatusStrip
-              role="employee"
-              isPeriodSyncing={isPeriodSyncing}
-              isMetricsSettled={isMetricsSettled}
-              hasPeriodActivity={hasPeriodActivity}
-              hasVisibleMetrics={hasVisibleMetrics}
-              statsLoadFailed={analyticsError}
-            />
           </div>
           <DashboardAnalyticsPeriodToggle
             className={employeeUi.periodToggle}
