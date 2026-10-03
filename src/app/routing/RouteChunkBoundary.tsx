@@ -8,6 +8,7 @@ import {
   DashboardOutletShellHold,
   MinimalRouteFallback,
 } from "./DashboardOutletFallback";
+import { MarketingOutletFallback } from "./MarketingOutletFallback";
 
 type RouteChunkBoundaryProps = {
   children: ReactNode;
@@ -16,7 +17,7 @@ type RouteChunkBoundaryProps = {
    * dashboard = full metric skeleton (standalone / non-shell routes)
    * minimal = public route transition
    */
-  variant?: "shell" | "dashboard" | "minimal";
+  variant?: "shell" | "dashboard" | "minimal" | "marketing";
   /** Dev trace key for lazy chunk loading under the global overlay. */
   registrationKey?: string;
 };
@@ -25,13 +26,14 @@ function RouteChunkSuspenseFallback({
   variant,
   registrationKey,
 }: {
-  variant: "shell" | "dashboard" | "minimal";
+  variant: "shell" | "dashboard" | "minimal" | "marketing";
   registrationKey: string;
 }) {
   const { pathname } = useLocation();
   const brandedChunk =
     !isAppShellInteractive() &&
     variant !== "shell" &&
+    variant !== "marketing" &&
     shouldRegisterBrandedRouteNavigation(pathname);
 
   useRegisterGlobalAppInit(`${registrationKey}-chunk`, brandedChunk);
@@ -41,6 +43,9 @@ function RouteChunkSuspenseFallback({
   }
   if (variant === "shell") {
     return <DashboardOutletShellHold />;
+  }
+  if (variant === "marketing") {
+    return <MarketingOutletFallback />;
   }
   return <DashboardOutletFallback />;
 }

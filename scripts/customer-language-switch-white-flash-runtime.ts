@@ -69,6 +69,20 @@ if (prefetch.includes("prefetchCustomerJourneyLocaleBundles")) {
   fail("prefetchCustomerFlowRoutes missing locale warmup");
 }
 
+const entryGraph = read("src/app/lib/prefetchCustomerEntryGraph.ts");
+if (entryGraph.includes("prefetchCustomerJourneyLocaleBundles")) {
+  pass("Cold customer entry graph prefetches EN+DE locale bundles");
+} else {
+  fail("prefetchCustomerEntryGraph missing locale warmup");
+}
+
+const switcherLayout = read("src/app/pages/customer/CustomerJourneyLanguageSwitcher.tsx");
+if (switcherLayout.includes("useLayoutEffect") && switcherLayout.includes("prefetchCustomerJourneyLocaleBundles")) {
+  pass("Customer language switcher prefetches locales before paint");
+} else {
+  fail("CustomerJourneyLanguageSwitcher should useLayoutEffect locale prefetch");
+}
+
 const manager = read("src/app/context/AppLoadingManager.tsx");
 if (manager.includes("languageChangeActive") && manager.includes("!languageChangeActive")) {
   pass("Global overlay suppressed while marketing language change is active");

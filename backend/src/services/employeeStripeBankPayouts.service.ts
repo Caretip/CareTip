@@ -8,6 +8,8 @@ import { logServerError } from "../utils/httpErrors.js";
 import { getStripeClient, isStripeConfigured } from "./stripe.service.js";
 import { StripeConnectError } from "./stripeConnect.service.js";
 import { resolveActiveEmployeeForConnect } from "./employeeStripeConnect.service.js";
+import { sanitizePayoutFailureMessage } from "./stripeConnectPayout.service.js";
+import { resolveEmployeePayoutInitiationKinds } from "./connectPayoutDisplayEnrichment.service.js";
 
 export type EmployeeStripeBankPayoutItem = {
   /** Stripe payout id (`po_…`) when Stripe returns one. Never invented. */
@@ -21,6 +23,10 @@ export type EmployeeStripeBankPayoutItem = {
   method: "instant" | "standard" | "unknown";
   /** Last four of the payout destination when Stripe expands it. Never a full account number. */
   destinationLast4: string | null;
+  payoutType: string | null;
+  failureCode: string | null;
+  failureMessage: string | null;
+  initiationKind: "caretip_scheduled" | "caretip_instant" | null;
 };
 
 type ListPayoutsFn = (stripeAccountId: string, limit: number) => Promise<Stripe.ApiList<Stripe.Payout>>;
@@ -60,18 +66,22 @@ function arrivalDateOf(payout: Stripe.Payout): string | null {
 export async function listEmployeeStripeBankPayoutsForUser(
   userId: string,
   opts?: { take?: number },
-): Promise<{ items: EmployeeStripeBankPayoutItem[]; stripeReadable: boolean }> {
+): Promise<{
+  items: EmployeeStripeBankPayoutItem[];
+  stripeReadable: boolean;
+  bankPayoutSchedule: string | null;
+}> {
   const actor = await resolveActiveEmployeeForConnect(userId);
   const account = await prisma.employeeStripeAccount.findUnique({
     where: { employeeId: actor.employeeId },
-    select: { stripeAccountId: true },
+    select: { stripeAccountId: true, bankPayoutSchedule: true },
   });
   const stripeAccountId = account?.stripeAccountId?.trim() ?? "";
   if (!stripeAccountId.startsWith("acct_")) {
-    return { items: [], stripeReadable: false };
+    return { items: [], stripeReadable: false, bankPayoutSchedule: null };
   }
   if (!isStripeConfigured() && !listPayoutsFn) {
-    return { items: [], stripeReadable: false };
+    return { items: [], stripeReadable: false, bankPayoutSchedule: account?.bankPayoutSchedule ?? null };
   }
 
   const take = Number.isInteger(opts?.take) ? Math.min(50, Math.max(1, opts!.take!)) : 20;
@@ -82,18 +92,33 @@ export async function listEmployeeStripeBankPayoutsForUser(
           { limit: take, expand: ["data.destination"] },
           { stripeAccount: stripeAccountId },
         );
-    const items: EmployeeStripeBankPayoutItem[] = (list.data ?? []).map((payout) => ({
-      stripePayoutId: stripePayoutIdOf(payout),
-      createdAt: new Date((payout.created ?? 0) * 1000).toISOString(),
-      arrivalDate: arrivalDateOf(payout),
-      amountCents: Number.isInteger(payout.amount) ? payout.amount : 0,
-      currency: String(payout.currency ?? "eur").toLowerCase(),
-      status: String(payout.status ?? "unknown"),
-      method: methodOf(payout),
-      destinationLast4: destinationLast4Of(payout),
-    }));
+    const initiationByPo = await resolveEmployeePayoutInitiationKinds(
+      actor.employeeId,
+      (list.data ?? []).map((p) => stripePayoutIdOf(p) ?? ""),
+    );
+    const items: EmployeeStripeBankPayoutItem[] = (list.data ?? []).map((payout) => {
+      const poId = stripePayoutIdOf(payout);
+      return {
+        stripePayoutId: poId,
+        createdAt: new Date((payout.created ?? 0) * 1000).toISOString(),
+        arrivalDate: arrivalDateOf(payout),
+        amountCents: Number.isInteger(payout.amount) ? payout.amount : 0,
+        currency: String(payout.currency ?? "eur").toLowerCase(),
+        status: String(payout.status ?? "unknown"),
+        method: methodOf(payout),
+        destinationLast4: destinationLast4Of(payout),
+        payoutType: typeof payout.type === "string" ? payout.type : null,
+        failureCode: typeof payout.failure_code === "string" ? payout.failure_code : null,
+        failureMessage: sanitizePayoutFailureMessage(payout.failure_message),
+        initiationKind: poId ? (initiationByPo.get(poId) ?? null) : null,
+      };
+    });
     void persistObservedEmployeePayouts(actor.employeeId, stripeAccountId, list.data ?? []);
-    return { items, stripeReadable: true };
+    return {
+      items,
+      stripeReadable: true,
+      bankPayoutSchedule: account?.bankPayoutSchedule ?? null,
+    };
   } catch (err) {
     logServerError("employeeStripeBankPayouts.list", err, { userId });
     throw new StripeConnectError(

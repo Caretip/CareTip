@@ -2970,11 +2970,12 @@ export type BillingStatus = {
   events: BillingTimelineEvent[];
 };
 
-export async function fetchBillingStatus(): Promise<BillingStatus> {
+export async function fetchBillingStatus(opts?: { signal?: AbortSignal }): Promise<BillingStatus> {
   return apiRequest<BillingStatus>(apiPath("/api/me/billing"), {
     method: "GET",
     headers: getHeaders(),
     credentials: "include",
+    signal: opts?.signal,
   });
 }
 
@@ -3278,11 +3279,19 @@ export type EmployeeStripeBankPayoutItem = {
   status: string;
   method: "instant" | "standard" | "unknown";
   destinationLast4?: string | null;
+  payoutType?: string | null;
+  failureCode?: string | null;
+  failureMessage?: string | null;
+  initiationKind?: "caretip_scheduled" | "caretip_instant" | null;
 };
 
 export async function listEmployeeStripeBankPayouts(params?: {
   take?: number;
-}): Promise<{ items: EmployeeStripeBankPayoutItem[]; stripeReadable: boolean }> {
+}): Promise<{
+  items: EmployeeStripeBankPayoutItem[];
+  stripeReadable: boolean;
+  bankPayoutSchedule: string | null;
+}> {
   const q = params?.take != null ? `?take=${encodeURIComponent(String(params.take))}` : "";
   return apiRequest(apiPath(`/api/me/employee-connect/stripe-payouts${q}`), {
     headers: getHeaders(),
@@ -3540,6 +3549,7 @@ export type ConnectPayoutBalanceLine = {
 
 export type ConnectPayout = {
   id: string;
+  stripePayoutId: string;
   amountCents: number;
   amountEur: number;
   currency: string;
@@ -3562,6 +3572,9 @@ export type ConnectPayout = {
   applicationFeeAmountCents?: number | null;
   stripeApplicationFeeId?: string | null;
   instantRequestAmountCents?: number | null;
+  destinationLast4?: string | null;
+  initiationKind?: "caretip_scheduled" | "caretip_instant" | null;
+  bankPayoutSchedule?: string | null;
 };
 
 export type PlatformConnectPayout = ConnectPayout & {

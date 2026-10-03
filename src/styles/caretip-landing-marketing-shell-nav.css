@@ -1,0 +1,97 @@
+/**
+ * Landing hero depends on a fixed floating nav pill scoped under `.caretip-landing`.
+ * MarketingShellLayout keeps Navigation mounted outside the landing outlet — restore
+ * the same presentation via `.caretip-marketing-shell--landing` (no route/arch change).
+ */
+
+.caretip-marketing-shell--landing {
+  --care-orange: #e9781c;
+  --care-ink: #1f2a35;
+  --care-cream: #f8f4ed;
+  background: var(--care-cream);
+  color: var(--care-ink);
+  overflow-x: hidden;
+}
+
+.dark .caretip-marketing-shell--landing {
+  --care-cream: #1a2228;
+  --care-ink: #f3ebe0;
+  background: var(--care-cream);
+  color: var(--care-ink);
+}
+
+.caretip-marketing-shell--landing .caretip-landing-nav-shell {
+  position: fixed;
+  z-index: 50;
+  top: 14px;
+  left: 50%;
+  width: min(1180px, calc(100% - 32px));
+  transform: translateX(-50%);
+  max-width: none;
+  overflow: visible;
+  pointer-events: none;
+}
+
+.caretip-marketing-shell--landing .caretip-landing-nav-shell > * {
+  pointer-events: auto;
+}
+
+.caretip-marketing-shell--landing .caretip-public-nav {
+  border: 1px solid rgba(31, 42, 53, 0.1);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.94);
+  backdrop-filter: blur(14px);
+  box-shadow: 0 10px 28px rgba(72, 52, 31, 0.08);
+}
+
+.dark .caretip-marketing-shell--landing .caretip-public-nav {
+  background: rgba(26, 34, 40, 0.88);
+  border-color: rgba(255, 255, 255, 0.08);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.35);
+}
+
+.caretip-marketing-shell--landing .caretip-public-nav nav {
+  max-width: none;
+  padding-top: 0.35rem;
+  padding-bottom: 0.35rem;
+}
+
+.caretip-marketing-shell--landing .caretip-public-nav-link:hover {
+  color: var(--care-orange, #e9781c);
+  background: transparent;
+}
+
+.caretip-marketing-shell--landing .caretip-public-nav-link,
+.caretip-marketing-shell--landing .caretip-public-nav a:not([class*="caretip-btn"]):not([href="/join"]) {
+  color: var(--care-ink, #1f2a35);
+}
+
+.caretip-marketing-shell--landing .caretip-public-nav a[class*="caretip-btn-primary"] {
+  color: #fff !important;
+  -webkit-text-fill-color: #fff !important;
+}
+
+.caretip-marketing-shell--landing .caretip-public-nav a[href="/join"]:not([class*="caretip-btn"]) {
+  color: var(--care-orange, #e9781c) !important;
+  -webkit-text-fill-color: var(--care-orange, #e9781c) !important;
+  font-weight: 700;
+}
+
+@media (max-width: 1023px) {
+  .caretip-marketing-shell--landing .caretip-landing-nav-shell {
+    top: 10px;
+    width: min(100% - 20px, 1180px);
+  }
+
+  .caretip-marketing-shell--landing .caretip-public-nav {
+    border-radius: 16px;
+    padding-inline: 0.15rem;
+  }
+}
+
+@media (max-width: 640px) {
+  .caretip-marketing-shell--landing .caretip-landing-nav-shell {
+    top: 9px;
+    width: calc(100% - 20px);
+  }
+}

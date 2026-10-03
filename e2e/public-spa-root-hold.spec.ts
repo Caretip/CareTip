@@ -14,7 +14,7 @@ function rootHoldProbeScript(): void {
       getComputedStyle(boot).opacity !== "0";
     const hold = Boolean(
       document.querySelector(
-        '[data-testid="root-spa-route-hold"], [data-testid="public-route-chunk-hold"], [data-testid="auth-logout-handoff-cover"], [data-testid="sign-in-handoff-cover"]',
+        '[data-testid="root-spa-route-hold"], [data-testid="public-route-chunk-hold"], [data-testid="public-route-chunk-hold-soft"], [data-testid="auth-logout-handoff-cover"], [data-testid="sign-in-handoff-cover"]',
       ),
     );
     const pageUi = Boolean(

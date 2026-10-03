@@ -21,6 +21,11 @@ const PUBLIC_ROUTE_IMPORTERS: Record<string, RouteImporter> = {
   "/industries/midwives": () => import("../pages/IndustryPage"),
   "/industries/fairs": () => import("../pages/IndustryPage"),
   "/industries/field-service": () => import("../pages/IndustryPage"),
+  "/blog": () => import("../pages/BlogPage"),
+  "/careers": () => import("../pages/CareersPage"),
+  "/mobile-app": () => import("../pages/MobileAppPage"),
+  "/avv": () => import("../pages/AvvPage"),
+  "/plv": () => import("../pages/PlvPage"),
 };
 
 const prefetched = new Set<string>();
@@ -62,12 +67,18 @@ export function prefetchLandingRoute(): void {
   warmLandingHeroAssets();
 }
 
-/** Warm high-traffic nav targets after landing is idle. */
-export function prefetchPrimaryNavRoutes() {
-  for (const path of ["/features", "/pricing", "/faq", "/contact", "/login", "/signup"]) {
+/** Core header nav — safe on mobile after landing is interactive. */
+export function prefetchCoreMarketingNavRoutes() {
+  for (const path of ["/features", "/pricing", "/faq"]) {
     prefetchPublicRoute(path);
   }
-  // Industry page chunk + heroes — hover then feels instant.
+}
+
+/** Desktop / generous idle — secondary marketing targets + industry heroes. */
+export function prefetchExtendedMarketingNavRoutes() {
+  for (const path of ["/contact", "/about", "/login", "/signup"]) {
+    prefetchPublicRoute(path);
+  }
   for (const path of [
     "/industries/gastronomy",
     "/industries/hotels",
@@ -79,4 +90,10 @@ export function prefetchPrimaryNavRoutes() {
   void import("@/lib/industryHeroAssets").then((mod) => {
     mod.warmAllIndustryHeroesIdle();
   });
+}
+
+/** Warm high-traffic nav targets after landing is idle. */
+export function prefetchPrimaryNavRoutes() {
+  prefetchCoreMarketingNavRoutes();
+  prefetchExtendedMarketingNavRoutes();
 }

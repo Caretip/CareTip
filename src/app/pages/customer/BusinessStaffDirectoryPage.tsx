@@ -19,6 +19,7 @@ import { CustomerJourneyAttributionFooter } from "./CustomerJourneyCareTipAttrib
 import { venueBrandFromBusiness } from "./customerJourneyBrand";
 import { headerSelectTeamMember } from "./customerJourneyHeaderCopy";
 import { CustomerTeamPicker } from "./CustomerTeamPicker";
+import { usePublicHtmlBootHandoff } from "../../lib/usePublicHtmlBootHandoff";
 
 /**
  * Path B: `/{businessSlug}` (legacy redirect from `/business/:businessSlug`) — Business QR (staff directory).
@@ -30,17 +31,24 @@ export function BusinessStaffDirectoryPage() {
   const { businessSlug } = useParams<{ businessSlug: string }>();
   const { setBusinessId, setEmployee, setStaffProfileSlug, setStaffTipReturnPath } = useTipFlow();
   const [loading, setLoading] = useState(true);
+  /** Semantic invalid URL — translated at render so locale switches do not refetch. */
+  const [invalidLink, setInvalidLink] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [data, setData] = useState<BusinessDirectoryResponse | null>(null);
   const [query, setQuery] = useState("");
 
+  usePublicHtmlBootHandoff(!loading && !invalidLink && !error && Boolean(data));
+
   useEffect(() => {
     const raw = businessSlug?.trim().toLowerCase();
     if (!raw) {
-      setError(t("tipFlow.errors.invalidLink"));
+      setInvalidLink(true);
+      setError(null);
+      setData(null);
       setLoading(false);
       return;
     }
+    setInvalidLink(false);
     let cancelled = false;
     (async () => {
       setLoading(true);
@@ -68,7 +76,7 @@ export function BusinessStaffDirectoryPage() {
     return () => {
       cancelled = true;
     };
-  }, [businessSlug, setBusinessId, t]);
+  }, [businessSlug, setBusinessId]);
 
   const filtered = useMemo(() => {
     const list = data?.employees ?? [];
@@ -137,10 +145,13 @@ export function BusinessStaffDirectoryPage() {
     );
   }
 
-  if (error || !data) {
+  if (invalidLink || error || !data) {
+    const message = invalidLink
+      ? t("tipFlow.errors.invalidLink")
+      : (error ?? t("tipFlow.common.notFound"));
     return (
       <div className={cf.stateCenter}>
-        <p className={cf.stateError}>{error ?? t("tipFlow.common.notFound")}</p>
+        <p className={cf.stateError}>{message}</p>
         <Link to="/" className="mt-4 text-sm font-semibold text-primary underline-offset-2 hover:underline">
           {t("tipFlow.common.goHomeLink")}
         </Link>
@@ -151,7 +162,7 @@ export function BusinessStaffDirectoryPage() {
   const teamHeader = headerSelectTeamMember(t);
 
   return (
-    <div className={`${cf.pageTeam} pb-10 sm:pb-12`}>
+    <div className={`${cf.pageTeam} pb-10 sm:pb-12`} data-caretip-route-ready="">
       <div className={cf.frame}>
       <CustomerJourneyHeader
         leading={

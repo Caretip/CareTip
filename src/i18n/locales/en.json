@@ -4267,7 +4267,10 @@
           "in_transit": "In transit",
           "canceled": "Canceled",
           "failed": "Failed"
-        }
+        },
+        "detailTitle": "Bank payout details",
+        "detailLead": "Timeline and destination from Stripe.",
+        "openDetail": "View payout details"
       },
       "activityTitle": "CareTip payout activity",
       "activityHint": "Transfers, holds, and venue-managed shares. Not bank payouts.",
@@ -6799,7 +6802,10 @@
       "saving": "Saving…",
       "loadError": "Could not load tip distribution data.",
       "submitError": "Could not record the distribution.",
-      "directToEmployeeInfo": "Your employee tips are paid directly through Stripe. There are no business distributions waiting for payment.",
+      "directToEmployee": {
+        "title": "No distributions require action",
+        "description": "Employee tips are paid directly through Stripe. There are currently no business distributions waiting for payment."
+      },
       "unassignedEmployee": "Unassigned employee",
       "summary": {
         "toDistribute": "To distribute",
@@ -7096,6 +7102,27 @@
         "methodInstant": "Instant",
         "methodStandard": "Standard",
         "methodUnknown": "Unknown",
+        "timeline": {
+          "aria": "Payout timeline",
+          "statusLead": "Stripe has sent or is sending this payout to your bank.",
+          "to": "To",
+          "type": "Type",
+          "payoutId": "Payout ID",
+          "destinationMasked": "Stripe-connected bank ••••{{last4}}",
+          "bankProcessingNote": "After Stripe sends the payout, your bank may take additional business days to make the funds available. Timing depends on your bank, not CareTip.",
+          "scheduledByCareTip": "Scheduled by CareTip · {{schedule}}",
+          "instantCareTip": "Instant payout requested in CareTip",
+          "typeBankAccount": "Bank account",
+          "typeCard": "Debit card",
+          "step": {
+            "initiated": "Payout initiated",
+            "in_transit": "Payout in transit",
+            "expected_arrival": "Expected bank arrival",
+            "completed": "Payout completed",
+            "failed": "Payout failed",
+            "canceled": "Payout canceled"
+          }
+        },
         "schedule": {
           "title": "Payout schedule",
           "lead": "Choose how often available funds are sent to your bank account.",

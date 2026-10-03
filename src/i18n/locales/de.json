@@ -4267,7 +4267,10 @@
           "in_transit": "Unterwegs",
           "canceled": "Storniert",
           "failed": "Fehlgeschlagen"
-        }
+        },
+        "detailTitle": "Details zur Bankauszahlung",
+        "detailLead": "Zeitverlauf und Zielkonto von Stripe.",
+        "openDetail": "Auszahlungsdetails anzeigen"
       },
       "activityTitle": "CareTip-Auszahlungsaktivität",
       "activityHint": "Überweisungen, Haltungen und vom Betrieb verwaltete Anteile. Keine Bankauszahlungen.",
@@ -6796,7 +6799,10 @@
       "saving": "Speichern…",
       "loadError": "Trinkgeldverteilung konnte nicht geladen werden.",
       "submitError": "Auszahlung konnte nicht erfasst werden.",
-      "directToEmployeeInfo": "Mitarbeiter-Trinkgelder werden direkt über Stripe ausgezahlt. Es stehen keine betrieblichen Verteilungen zur Auszahlung an.",
+      "directToEmployee": {
+        "title": "Keine Verteilungen erfordern eine Aktion",
+        "description": "Mitarbeiter-Trinkgelder werden direkt über Stripe ausgezahlt. Derzeit stehen keine betrieblichen Verteilungen zur Auszahlung aus."
+      },
       "unassignedEmployee": "Nicht zugewiesener Mitarbeiter",
       "summary": {
         "toDistribute": "Zu verteilen",
@@ -7093,6 +7099,27 @@
         "methodInstant": "Sofort",
         "methodStandard": "Standard",
         "methodUnknown": "Unbekannt",
+        "timeline": {
+          "aria": "Auszahlungs-Zeitverlauf",
+          "statusLead": "Stripe hat diese Auszahlung an Ihre Bank gesendet oder sendet sie gerade.",
+          "to": "An",
+          "type": "Typ",
+          "payoutId": "Auszahlungs-ID",
+          "destinationMasked": "Stripe-Bankkonto ••••{{last4}}",
+          "bankProcessingNote": "Nachdem Stripe die Auszahlung sendet, kann Ihre Bank zusätzliche Werktage benötigen, bis das Guthaben verfügbar ist. Das hängt von Ihrer Bank ab, nicht von CareTip.",
+          "scheduledByCareTip": "Von CareTip geplant · {{schedule}}",
+          "instantCareTip": "Sofortauszahlung in CareTip angefordert",
+          "typeBankAccount": "Bankkonto",
+          "typeCard": "Debitkarte",
+          "step": {
+            "initiated": "Auszahlung gestartet",
+            "in_transit": "Auszahlung unterwegs",
+            "expected_arrival": "Voraussichtliche Bankankunft",
+            "completed": "Auszahlung abgeschlossen",
+            "failed": "Auszahlung fehlgeschlagen",
+            "canceled": "Auszahlung storniert"
+          }
+        },
         "schedule": {
           "title": "Auszahlungsrhythmus",
           "lead": "Legen Sie fest, wie oft verfügbares Guthaben auf Ihr Bankkonto überwiesen wird.",

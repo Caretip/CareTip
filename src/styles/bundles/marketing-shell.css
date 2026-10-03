@@ -1,4 +1,5 @@
 /* Marketing shell — Navigation, Footer, shared public page chrome. */
+@import "../caretip-landing-marketing-shell-nav.css";
 @import "../caretip-public-motion.css";
 /*
  * Hero story visibility lives here so leaving `/` does not drop the rules.

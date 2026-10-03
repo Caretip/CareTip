@@ -12,9 +12,13 @@ import { ThemeQuickToggle } from "@/app/components/theme/ThemeQuickToggle";
 import { PrefetchLink } from "./PrefetchLink";
 import { RequestDemoCta } from "./RequestDemoCta";
 import { IndustriesNavDropdown } from "./IndustriesNavDropdown";
-import { prefetchLandingRoute, prefetchPrimaryNavRoutes } from "../lib/prefetchPublicRoutes";
+import {
+  prefetchCoreMarketingNavRoutes,
+  prefetchExtendedMarketingNavRoutes,
+  prefetchLandingRoute,
+} from "../lib/prefetchPublicRoutes";
 import { usePublicMountProbe } from "@/lib/publicMountProbe";
-import { scheduleMobileDeferredWork } from "@/lib/mobilePerf";
+import { isMobileViewport, scheduleMobileDeferredWork } from "@/lib/mobilePerf";
 
 let primaryNavPrefetchScheduled = false;
 
@@ -41,7 +45,10 @@ export const Navigation = memo(function Navigation({ variant: _variant = "defaul
     if (primaryNavPrefetchScheduled) return;
     primaryNavPrefetchScheduled = true;
     scheduleMobileDeferredWork(() => {
-      prefetchPrimaryNavRoutes();
+      prefetchCoreMarketingNavRoutes();
+      if (!isMobileViewport()) {
+        prefetchExtendedMarketingNavRoutes();
+      }
     });
   }, []);
 

@@ -111,6 +111,36 @@
   background: hsl(var(--muted) / 0.25);
 }
 
+.caretip-payout-timeline__step::before {
+  content: "";
+  position: absolute;
+  left: 0.4375rem;
+  top: 0.5rem;
+  bottom: 0;
+  width: 1px;
+  background: hsl(var(--border) / 0.85);
+}
+
+.caretip-payout-timeline__step:last-child::before {
+  display: none;
+}
+
+.caretip-payout-timeline__marker {
+  position: absolute;
+  left: 0;
+  top: 0.35rem;
+  width: 0.625rem;
+  height: 0.625rem;
+  border-radius: 9999px;
+  border: 2px solid hsl(var(--border));
+  background: hsl(var(--background));
+}
+
+.caretip-payout-timeline__step--current .caretip-payout-timeline__marker {
+  border-color: hsl(var(--primary));
+  background: hsl(var(--primary) / 0.15);
+}
+
 .caretip-payout-mobile-record {
   width: 100%;
   min-width: 0;

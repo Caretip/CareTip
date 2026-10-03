@@ -15,6 +15,7 @@ import type { FinanceStatusTone } from "../finance/FinanceStatusDot";
 import { EMPLOYEE_PAYMENTS_HISTORY_HREF } from "./employeeDashboardNav";
 import { cn } from "@/lib/utils";
 import { PayoutWorkspacePanel } from "../finance/payout/PayoutWorkspacePanel";
+import { EmployeeBankPayoutDetailDialog } from "./EmployeeBankPayoutDetailDialog";
 
 function bankStatusTone(status: string): FinanceStatusTone {
   const s = status.toLowerCase();
@@ -67,6 +68,9 @@ export function EmployeeStripeBankPayoutList({
   const [items, setItems] = useState<EmployeeStripeBankPayoutItem[] | null>(null);
   const [readable, setReadable] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [bankPayoutSchedule, setBankPayoutSchedule] = useState<string | null>(null);
+  const [detailPayout, setDetailPayout] = useState<EmployeeStripeBankPayoutItem | null>(null);
+  const [detailOpen, setDetailOpen] = useState(false);
   const panel = variant === "panel";
 
   useEffect(() => {
@@ -76,6 +80,7 @@ export function EmployeeStripeBankPayoutList({
         if (!cancelled) {
           setItems(res.items);
           setReadable(res.stripeReadable);
+          setBankPayoutSchedule(res.bankPayoutSchedule ?? null);
           setError(null);
         }
       })
@@ -90,6 +95,11 @@ export function EmployeeStripeBankPayoutList({
       cancelled = true;
     };
   }, [t, take]);
+
+  const openDetail = (row: EmployeeStripeBankPayoutItem) => {
+    setDetailPayout(row);
+    setDetailOpen(true);
+  };
 
   const body = error ? (
     <p className="text-sm text-destructive" role="alert">
@@ -107,22 +117,25 @@ export function EmployeeStripeBankPayoutList({
     <>
       <ul className="lg:hidden">
         {items.map((row, index) => (
-          <li key={`${row.createdAt}-${row.amountCents}-${index}`} className="caretip-payout-mobile-record flex items-start justify-between gap-3">
-            <div className="min-w-0 space-y-1">
-              <p className="text-sm font-medium">{t(`employee.payouts.bankHistory.method.${row.method}`)}</p>
-              <p className="text-xs text-muted-foreground">{formatPayoutDate(bankDisplayDateIso(row), i18n.language)}</p>
-              {row.stripePayoutId ? (
-                <p className="truncate font-mono text-[0.6875rem] text-muted-foreground" title={row.stripePayoutId}>
-                  {payoutRef(row)}
+          <li key={`${row.createdAt}-${row.amountCents}-${index}`}>
+            <button
+              type="button"
+              onClick={() => openDetail(row)}
+              className="caretip-payout-mobile-record flex w-full min-w-0 items-start justify-between gap-3 text-left"
+            >
+              <div className="min-w-0 space-y-1">
+                <p className="text-sm font-medium">{t(`employee.payouts.bankHistory.method.${row.method}`)}</p>
+                <p className="text-xs text-muted-foreground tabular-nums">
+                  {formatPayoutDate(bankDisplayDateIso(row), i18n.language)}
                 </p>
-              ) : null}
-              <FinanceStatusPill
-                tone={bankStatusTone(row.status)}
-                label={bankStatusLabel(row.status, t)}
-                className={cn("max-w-full whitespace-normal", bankStatusPillClass(row.status))}
-              />
-            </div>
-            <p className="shrink-0 text-sm font-semibold tabular-nums">{formatEur(row.amountCents / 100)}</p>
+                <FinanceStatusPill
+                  tone={bankStatusTone(row.status)}
+                  label={bankStatusLabel(row.status, t)}
+                  className={cn("max-w-full whitespace-normal", bankStatusPillClass(row.status))}
+                />
+              </div>
+              <p className="shrink-0 text-sm font-semibold tabular-nums">{formatEur(row.amountCents / 100)}</p>
+            </button>
           </li>
         ))}
       </ul>
@@ -169,8 +182,15 @@ export function EmployeeStripeBankPayoutList({
                     className={bankStatusPillClass(row.status)}
                   />
                 </td>
-                <td className="py-3.5 text-muted-foreground">
-                  <ChevronRight className="size-4" aria-hidden />
+                <td className="py-3.5">
+                  <button
+                    type="button"
+                    onClick={() => openDetail(row)}
+                    className="inline-flex min-h-9 min-w-9 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground"
+                    aria-label={t("employee.payouts.bankHistory.openDetail")}
+                  >
+                    <ChevronRight className="size-4" aria-hidden />
+                  </button>
                 </td>
               </tr>
             ))}
@@ -180,6 +200,15 @@ export function EmployeeStripeBankPayoutList({
     </>
   );
 
+  const detailDialog = (
+    <EmployeeBankPayoutDetailDialog
+      open={detailOpen}
+      onOpenChange={setDetailOpen}
+      payout={detailPayout}
+      bankPayoutSchedule={bankPayoutSchedule}
+    />
+  );
+
   if (!panel) {
     return (
       <section className="space-y-3" aria-labelledby="employee-bank-payouts-heading">
@@ -187,6 +216,7 @@ export function EmployeeStripeBankPayoutList({
           {t("employee.payouts.history.bankTab")}
         </h2>
         {body}
+        {detailDialog}
       </section>
     );
   }
@@ -205,6 +235,7 @@ export function EmployeeStripeBankPayoutList({
         </Link>
       </div>
       {body}
+      {detailDialog}
     </PayoutWorkspacePanel>
   );
 }

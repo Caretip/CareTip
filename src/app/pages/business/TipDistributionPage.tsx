@@ -20,6 +20,7 @@ import { STRIPE_CONNECT_HREF } from "../../components/business/businessDashboard
 import { BusinessModuleWorkspaceHeader } from "../../components/business/BusinessModuleWorkspaceHeader";
 import { PayoutScheduleConnectNavCard } from "../../components/finance/payout/PayoutScheduleConnectNavCard";
 import { TipDistributionReadyEmpty } from "../../components/business/TipDistributionReadyEmpty";
+import { TipDistributionDirectToEmployeeStatus } from "../../components/business/TipDistributionDirectToEmployeeStatus";
 import { businessUi } from "../../components/business/businessDashboardUi";
 import { Button } from "../../components/ui/button";
 import {
@@ -190,9 +191,7 @@ export function TipDistributionPage() {
         {loading ? (
           <p className="text-sm text-muted-foreground">{t("business.tipDistribution.loading")}</p>
         ) : isDirectToEmployee ? (
-          <section className="rounded-xl border border-border/70 bg-card p-4 sm:p-5">
-            <p className="text-sm text-muted-foreground">{t("business.tipDistribution.directToEmployeeInfo")}</p>
-          </section>
+          <TipDistributionDirectToEmployeeStatus />
         ) : (
           <div className="tip-distribution-workspace">
             <section className="tip-distribution-kpi-strip" aria-label={t("business.tipDistribution.title")}>

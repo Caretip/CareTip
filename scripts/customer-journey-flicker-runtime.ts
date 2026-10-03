@@ -77,6 +77,14 @@ assert(
   "customer shell marks destination-ready and hands off HTML boot only when not loading",
 );
 
+const businessDirectory = read("src/app/pages/customer/BusinessStaffDirectoryPage.tsx");
+assert(
+  businessDirectory.includes("data-caretip-route-ready") &&
+    businessDirectory.includes("usePublicHtmlBootHandoff") &&
+    !businessDirectory.includes("}, [businessSlug, setBusinessId, t]"),
+  "Business main QR must hand off HTML boot when directory is ready and must not refetch on locale",
+);
+
 const empQr = read("src/app/pages/customer/EmployeeQrEntryPage.tsx");
 assert(
   empQr.includes('usePublicHtmlBootHandoff(phase === "ready" && Boolean(emp))'),
@@ -128,6 +136,17 @@ const prefetchCustomer = read("src/app/lib/prefetchCustomerEntryGraph.ts");
 assert(
   prefetchCustomer.includes("isCustomerJourneyPath") && prefetchCustomer.includes("TableQrLandingPage"),
   "customer entry prefetch must warm path-matched lazy QR pages",
+);
+assert(
+  prefetchCustomer.includes("prefetchCustomerJourneyLocaleBundles"),
+  "customer entry prefetch must warm EN+DE locale bundles on cold QR entry",
+);
+
+const heroPersistence = read("src/app/components/landing/LandingHeroPersistenceLayer.tsx");
+assert(
+  heroPersistence.includes("PersistedHeroOffHome") &&
+    !/export function LandingHeroPersistenceLayer[\s\S]{0,400}useTranslation/.test(heroPersistence),
+  "off-home persisted hero must not subscribe to i18n (guest language switch)",
 );
 
 const pageLoader = read("src/app/components/CareTipPageLoader.tsx");

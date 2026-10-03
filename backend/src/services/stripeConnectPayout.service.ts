@@ -231,6 +231,7 @@ export type ConnectPayoutBalanceLineDto = {
 
 export type ConnectPayoutDto = {
   id: string;
+  stripePayoutId: string;
   amountCents: number;
   amountEur: number;
   currency: string;
@@ -253,6 +254,10 @@ export type ConnectPayoutDto = {
   applicationFeeAmountCents: number | null;
   stripeApplicationFeeId: string | null;
   instantRequestAmountCents: number | null;
+  /** Detail enrichment — last four of payout destination when Stripe returns it. */
+  destinationLast4?: string | null;
+  initiationKind?: "caretip_scheduled" | "caretip_instant" | null;
+  bankPayoutSchedule?: string | null;
 };
 
 export type PlatformConnectPayoutDto = ConnectPayoutDto & {
@@ -265,6 +270,7 @@ export type PlatformConnectPayoutDto = ConnectPayoutDto & {
 
 type PayoutRow = {
   id: string;
+  stripePayoutId: string;
   businessId: string;
   stripeAccountId: string;
   amountCents: number;
@@ -322,6 +328,7 @@ function toPayoutDto(row: PayoutRow, includeLines: boolean): ConnectPayoutDto {
   const lineCount = row._count?.balanceLines ?? row.balanceLines?.length ?? 0;
   return {
     id: row.id,
+    stripePayoutId: row.stripePayoutId,
     amountCents: row.amountCents,
     amountEur: payoutCentsToEur(row.amountCents),
     currency: row.currency,
@@ -866,6 +873,7 @@ async function maybeTickPayoutReconciliationForBusiness(businessId: string): Pro
 
 const payoutListSelect = {
   id: true,
+  stripePayoutId: true,
   businessId: true,
   stripeAccountId: true,
   amountCents: true,
@@ -1070,7 +1078,12 @@ export async function getPayoutForBusiness(
     true,
   );
   assertSafeDto(dto);
-  return dto;
+  const { enrichBusinessConnectPayoutDto } = await import("./connectPayoutDisplayEnrichment.service.js");
+  return enrichBusinessConnectPayoutDto(dto, {
+    businessId: row.businessId,
+    stripeAccountId: row.stripeAccountId,
+    stripePayoutId: row.stripePayoutId,
+  });
 }
 
 export type PlatformConnectPayoutListQuery = {

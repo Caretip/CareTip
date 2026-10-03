@@ -48,7 +48,8 @@ import { useTranslation } from 'react-i18next';
 const PwaInstallPrompt = lazy(() =>
   import('./components/PwaInstallPrompt').then((m) => ({ default: m.PwaInstallPrompt })),
 );
-import { LandingPage } from './pages/LandingPage';
+import { MarketingShellLayout } from './layouts/MarketingShellLayout';
+import { marketingChildRoutes } from './routing/marketingChildRoutes';
 import { TipAmountPage } from './pages/customer/TipAmountPage';
 import { RatingPage } from './pages/customer/RatingPage';
 import { SuccessPage } from './pages/customer/SuccessPage';
@@ -208,10 +209,10 @@ const routes: RouteObject[] = [
     children: [
   {
     path: '/',
-    // Eager: React Router `lazy` does not suspend Outlet. A lazy `/` leaves #root empty
-    // (MinimalRouteFallback / #fcfbf8) after the HTML boot is dismissed — the production white screen.
-    Component: LandingPage,
+    // Eager marketing shell + eager index landing — lazy siblings suspend inside the outlet only.
+    Component: MarketingShellLayout,
     errorElement: <ErrorBoundary />,
+    children: marketingChildRoutes,
   },
   {
     path: '/create-rule',
@@ -362,11 +363,6 @@ const routes: RouteObject[] = [
   {
     path: '/verify',
     lazy: verifyEmailPageLazy,
-    errorElement: <ErrorBoundary />,
-  },
-  {
-    path: '/pricing',
-    lazy: routeLazy(() => import('./pages/PricingPage'), 'PricingPage'),
     errorElement: <ErrorBoundary />,
   },
   {
@@ -613,60 +609,9 @@ const routes: RouteObject[] = [
     element: <Navigate to="/platform-admin/reports/audit-logs" replace />,
     errorElement: <ErrorBoundary />,
   },
-  // Legal & Company Pages
-  {
-    path: '/privacy',
-    lazy: routeLazy(() => import('./pages/PrivacyPage'), 'PrivacyPage'),
-    errorElement: <ErrorBoundary />,
-  },
-  {
-    path: '/terms',
-    lazy: routeLazy(() => import('./pages/TermsPage'), 'TermsPage'),
-    errorElement: <ErrorBoundary />,
-  },
-  {
-    path: '/cookies',
-    lazy: routeLazy(() => import('./pages/CookiesPage'), 'CookiesPage'),
-    errorElement: <ErrorBoundary />,
-  },
-  {
-    path: '/imprint',
-    lazy: routeLazy(() => import('./pages/ImprintPage'), 'ImprintPage'),
-    errorElement: <ErrorBoundary />,
-  },
-  {
-    path: '/avv',
-    lazy: routeLazy(() => import('./pages/AvvPage'), 'AvvPage'),
-    errorElement: <ErrorBoundary />,
-  },
   {
     path: '/dpa',
     element: <Navigate to="/avv" replace />,
-    errorElement: <ErrorBoundary />,
-  },
-  {
-    path: '/plv',
-    lazy: routeLazy(() => import('./pages/PlvPage'), 'PriceServicesListPage'),
-    errorElement: <ErrorBoundary />,
-  },
-  {
-    path: '/about',
-    lazy: routeLazy(() => import('./pages/AboutPage'), 'AboutPage'),
-    errorElement: <ErrorBoundary />,
-  },
-  {
-    path: '/contact',
-    lazy: routeLazy(() => import('./pages/ContactPage'), 'ContactPage'),
-    errorElement: <ErrorBoundary />,
-  },
-  {
-    path: '/careers',
-    lazy: routeLazy(() => import('./pages/CareersPage'), 'CareersPage'),
-    errorElement: <ErrorBoundary />,
-  },
-  {
-    path: '/blog',
-    lazy: routeLazy(() => import('./pages/BlogPage'), 'BlogPage'),
     errorElement: <ErrorBoundary />,
   },
   {
@@ -674,35 +619,10 @@ const routes: RouteObject[] = [
     element: <Navigate to="/contact?intent=support" replace />,
     errorElement: <ErrorBoundary />,
   },
-  {
-    path: '/faq',
-    lazy: routeLazy(() => import('./pages/FAQPage'), 'FAQPage'),
-    errorElement: <ErrorBoundary />,
-  },
-  {
-    path: '/mobile-app',
-    lazy: routeLazy(() => import('./pages/MobileAppPage'), 'MobileAppPage'),
-    errorElement: <ErrorBoundary />,
-  },
-  {
-    path: '/features',
-    lazy: routeLazy(() => import('./pages/FeaturesPage'), 'FeaturesPage'),
-    errorElement: <ErrorBoundary />,
-  },
   /** Legacy standalone URL — how-it-works content lives on `/` (#how-it-works) and industry pages. */
   {
     path: '/how-it-works',
     element: <Navigate to="/#how-it-works" replace />,
-    errorElement: <ErrorBoundary />,
-  },
-  {
-    path: '/industries/events',
-    element: <Navigate to="/industries/fairs" replace />,
-    errorElement: <ErrorBoundary />,
-  },
-  {
-    path: '/industries/:industryId',
-    lazy: routeLazy(() => import('./pages/IndustryPage'), 'IndustryPage'),
     errorElement: <ErrorBoundary />,
   },
   {

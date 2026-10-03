@@ -1,6 +1,8 @@
 import { isAuthLogoutTransitionActive } from "../lib/authLogoutTransition";
+import { isAppShellInteractive } from "../lib/appShellLifecycle";
 import { BusinessSubPageShellSkeleton } from "../components/dashboard/BusinessSubPageShellSkeleton";
 import { PublicRouteChunkHold } from "./PublicRouteChunkHold";
+import { SoftSpaRouteHold } from "./SoftSpaRouteHold";
 
 /**
  * In-layout lazy-route hold — background only; login/refresh use the global overlay spinner.
@@ -27,6 +29,9 @@ export function MinimalRouteFallback() {
   }
   if (isAuthLogoutTransitionActive()) {
     return <div className="min-h-[100dvh] w-full bg-background" aria-hidden />;
+  }
+  if (isAppShellInteractive()) {
+    return <SoftSpaRouteHold testId="public-route-chunk-hold-soft" />;
   }
   return <PublicRouteChunkHold />;
 }

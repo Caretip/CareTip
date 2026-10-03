@@ -12,7 +12,6 @@ import {
   useAppLoadingRegistration,
 } from "../../../lib/globalAppLoading";
 import { useBusinessPageBoot } from "../../../lib/useBusinessPageBoot";
-import { GlobalAppLoadingHold } from "../../../components/GlobalAppLoadingHold";
 import { performExternalStripeRedirect } from "../../../lib/externalStripeRedirect";
 import { BillingPlanManagement } from "./billing/BillingPlanManagement";
 import { BillingTrialSection, BILLING_START_TRIAL_HASH } from "./billing/BillingTrialSection";
@@ -26,7 +25,7 @@ export function BusinessSettingsBillingPanel() {
   const [searchParams] = useSearchParams();
   const { data, loading, error, reload } = useBillingStatus();
   const isInitialBillingLoad = loading && !data;
-  const { showInitialSkeleton, coveredByGlobalLoader } = useBusinessPageBoot(
+  const { showInitialSkeleton } = useBusinessPageBoot(
     "billing-subscription",
     isInitialBillingLoad,
   );
@@ -80,10 +79,7 @@ export function BusinessSettingsBillingPanel() {
   const canOpenPortal =
     Boolean(data?.billingEnabled && data.stripeConfigured && data.stripeCustomerId);
 
-  if (isInitialBillingLoad) {
-    if (coveredByGlobalLoader || !showInitialSkeleton) {
-      return <GlobalAppLoadingHold />;
-    }
+  if (isInitialBillingLoad && showInitialSkeleton) {
     return (
       <div className="flex min-h-[200px] items-center justify-center text-muted-foreground">
         <Loader2 className="h-6 w-6 animate-spin" aria-hidden />

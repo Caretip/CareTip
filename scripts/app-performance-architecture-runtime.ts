@@ -60,7 +60,15 @@ assert(resolveMinOverlayVisibleMs("payment-page-checkout") === 0, "checkout over
 assert(resolveMinOverlayVisibleMs("app-boot") === 0, "boot overlay must not pad duration");
 
 const routes = read("src/app/routes.tsx");
-assert(routes.includes("Component: LandingPage"), "landing stays eager");
+assert(routes.includes("MarketingShellLayout"), "marketing shell layout stays eager");
+assert(
+  read("src/app/routing/marketingChildRoutes.tsx").includes("Component: LandingPage"),
+  "landing index route stays eager under marketing shell",
+);
+assert(
+  read("src/app/layouts/MarketingShellLayout.tsx").includes('data-caretip-marketing-shell'),
+  "persistent marketing shell marker",
+);
 assert(routes.includes("Component: AuthPage"), "login stays eager");
 
 const businessDrawer = read("src/app/components/business/BusinessMobileSidebar.tsx");
@@ -90,5 +98,33 @@ assert(
 
 const nativeSignOut = read("mobile/hooks/useSignOutAction.ts");
 assert(!nativeSignOut.includes("hapticWarning"), "native sign-out must not fire warning haptics on tap");
+
+const softHold = read("src/app/routing/SoftSpaRouteHold.tsx");
+const rootHold = read("src/app/routing/RootSpaRouteHold.tsx");
+const publicHold = read("src/app/routing/PublicRouteChunkHold.tsx");
+const minimalFallback = read("src/app/routing/DashboardOutletFallback.tsx");
+assert(softHold.includes("SoftSpaRouteHold"), "soft SPA hold component exists");
+assert(
+  rootHold.includes("SoftSpaRouteHold") && !rootHold.includes("AuthBootstrapShell"),
+  "root SPA hold must not reopen AuthBootstrapShell after shell is interactive",
+);
+assert(
+  rootHold.includes("isInShellMarketingNavigation"),
+  "root SPA hold must skip in-shell marketing navigations",
+);
+assert(
+  publicHold.includes("isAppShellInteractive()") && publicHold.includes("SoftSpaRouteHold"),
+  "public chunk hold must downgrade after shell is interactive",
+);
+assert(
+  minimalFallback.includes("isAppShellInteractive()") && minimalFallback.includes("SoftSpaRouteHold"),
+  "minimal route fallback must downgrade after shell is interactive",
+);
+
+const journey = read("src/app/lib/appLoadingJourney.ts");
+assert(
+  journey.includes("isAppShellInteractive()") && journey.includes("shouldRegisterBrandedRouteNavigation"),
+  "branded route navigation gated on shell lifecycle",
+);
 
 console.log("app-performance-architecture-runtime: ok");

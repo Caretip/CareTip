@@ -760,6 +760,18 @@ function InstantPayoutConfirmDialog({
   );
 }
 
+function payoutListDateIso(payout: ConnectPayout): string {
+  return payout.arrivalDate ?? payout.stripeCreatedAt;
+}
+
+function formatPayoutListDate(iso: string, locale: string): string {
+  try {
+    return new Date(iso).toLocaleDateString(locale, { dateStyle: "medium" });
+  } catch {
+    return iso;
+  }
+}
+
 function PayoutMobileRow({
   payout,
   locale,
@@ -771,44 +783,28 @@ function PayoutMobileRow({
 }) {
   const { t } = useTranslation();
   const issue = payoutIssueText(payout, t);
+  const methodLabel =
+    payout.method === "instant"
+      ? t("business.billing.payouts.methodInstant")
+      : payout.method === "standard"
+        ? t("business.billing.payouts.methodStandard")
+        : t("business.billing.payouts.methodUnknown");
   return (
     <button type="button" onClick={onOpen} className="caretip-payout-mobile-record w-full min-w-0 text-left">
       <div className="flex items-start justify-between gap-3">
-        <p className="min-w-0 text-base font-semibold tabular-nums text-foreground">
-          {formatConnectPayoutAmount(payout.amountCents, payout.currency, locale)}
-        </p>
-        <ConnectPayoutStatusBadge className="max-w-[52%] shrink-0 text-right leading-snug" status={payout.status} />
+        <div className="min-w-0 space-y-0.5">
+          <p className="text-sm font-medium text-foreground">{methodLabel}</p>
+          <p className="text-xs text-muted-foreground tabular-nums">
+            {formatPayoutListDate(payoutListDateIso(payout), locale)}
+          </p>
+        </div>
+        <div className="shrink-0 text-right">
+          <p className="text-base font-semibold tabular-nums text-foreground">
+            {formatConnectPayoutAmount(payout.amountCents, payout.currency, locale)}
+          </p>
+          <ConnectPayoutStatusBadge className="mt-1 max-w-[8rem] justify-end leading-snug" status={payout.status} />
+        </div>
       </div>
-      <dl className="mt-2 grid grid-cols-2 gap-x-3 gap-y-1.5 text-xs text-muted-foreground">
-        <div className="min-w-0">
-          <dt className="sr-only">{t("business.billing.payouts.colCreated")}</dt>
-          <dd>{formatConnectPayoutDate(payout.stripeCreatedAt, locale)}</dd>
-        </div>
-        <div className="min-w-0 text-right sm:text-left">
-          <dt className="sr-only">{t("business.billing.payouts.colMethod")}</dt>
-          <dd>
-            {payout.method === "instant"
-              ? t("business.billing.payouts.methodInstant")
-              : payout.method === "standard"
-                ? t("business.billing.payouts.methodStandard")
-                : t("business.billing.payouts.methodUnknown")}
-          </dd>
-        </div>
-        <div className="col-span-2 min-w-0">
-          <dt className="inline font-medium text-foreground/80 after:content-[':']">
-            {t("business.stripe.payoutsWorkspace.business.colPayout")}
-          </dt>
-          <dd className="mt-0.5 inline font-mono text-[0.6875rem] text-muted-foreground" title={payout.id}>
-            {payoutRefLabel(payout.id)}
-          </dd>
-        </div>
-        <div className="col-span-2 min-w-0">
-          <dt className="inline font-medium text-foreground/80 after:content-[':']">
-            {t("business.billing.payouts.colArrival")}
-          </dt>
-          <dd className="mt-0.5 inline tabular-nums">{formatConnectPayoutDate(payout.arrivalDate, locale)}</dd>
-        </div>
-      </dl>
       {issue ? <p className="mt-2 text-xs text-destructive">{issue}</p> : null}
     </button>
   );

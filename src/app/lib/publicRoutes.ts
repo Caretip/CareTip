@@ -163,3 +163,35 @@ export function isAuthenticatedAppShellPath(pathname: string): boolean {
 export function isInShellAuthenticatedNavigation(fromPath: string, toPath: string): boolean {
   return isAuthenticatedAppShellPath(fromPath) && isAuthenticatedAppShellPath(toPath);
 }
+
+const MARKETING_SHELL_EXACT = new Set([
+  "/",
+  "/pricing",
+  "/features",
+  "/faq",
+  "/contact",
+  "/privacy",
+  "/terms",
+  "/avv",
+  "/dpa",
+  "/plv",
+  "/cookies",
+  "/imprint",
+  "/help",
+  "/blog",
+  "/careers",
+  "/mobile-app",
+  "/about",
+]);
+
+function isMarketingShellPath(pathname: string): boolean {
+  const p = normalizePathname(pathname);
+  if (MARKETING_SHELL_EXACT.has(p)) return true;
+  if (p.startsWith("/industries/")) return true;
+  return false;
+}
+
+/** Marketing layout child swap — Navigation stays; skip full-viewport root SPA hold. */
+export function isInShellMarketingNavigation(fromPath: string, toPath: string): boolean {
+  return isMarketingShellPath(fromPath) && isMarketingShellPath(toPath);
+}

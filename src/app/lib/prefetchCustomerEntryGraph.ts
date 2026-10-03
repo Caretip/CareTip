@@ -9,6 +9,10 @@ export function prefetchCustomerEntryGraph(): void {
   const p = window.location.pathname.split("?")[0]?.split("#")[0] ?? "/";
   if (!isCustomerJourneyPath(p)) return;
 
+  void import("@/i18n/i18n").then(({ prefetchCustomerJourneyLocaleBundles }) =>
+    prefetchCustomerJourneyLocaleBundles(),
+  );
+
   if (p.startsWith("/qr/table/")) {
     void import("../pages/customer/TableQrLandingPage");
     return;

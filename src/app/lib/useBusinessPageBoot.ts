@@ -1,23 +1,20 @@
 import { useRegisterPagePaintReady } from "./globalAppLoading";
-import { useExtendGlobalLoaderUntilReady } from "./useExtendGlobalLoaderUntilReady";
 
 /**
- * Shared business-dashboard page boot: paint latch + keep cold-entry overlay up
- * through first data load. Soft SPA nav uses local skeletons only (no brand text).
+ * Shared business-dashboard page boot: one-frame paint latch only.
+ * Optional page data must not register `business-*-boot` on the global overlay —
+ * use local skeletons / inline loading after the shell is ready.
  */
 export function useBusinessPageBoot(pageKey: string, isInitialLoad: boolean): {
-  /** True when local skeletons should render (soft nav only). */
+  /** True while first paint data is pending — render page skeleton/spinner. */
   showInitialSkeleton: boolean;
+  /** @deprecated Always false — page data no longer extends the global branded loader. */
   coveredByGlobalLoader: boolean;
 } {
   useRegisterPagePaintReady(`business-${pageKey}-paint`);
-  const coveredByGlobalLoader = useExtendGlobalLoaderUntilReady(
-    `business-${pageKey}-boot`,
-    isInitialLoad,
-  );
 
   return {
-    showInitialSkeleton: isInitialLoad && !coveredByGlobalLoader,
-    coveredByGlobalLoader,
+    showInitialSkeleton: isInitialLoad,
+    coveredByGlobalLoader: false,
   };
 }

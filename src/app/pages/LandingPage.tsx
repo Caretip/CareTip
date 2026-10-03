@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { isAiAssistantEnabled } from "../lib/featureFlags";
-import { Navigation } from "../components/Navigation";
 import { CareTipLandingHero } from "@/components/landing/CareTipLandingHero";
 import { useLandingShellReady } from "@/app/lib/useLandingShellReady";
 import { Footer } from "../components/Footer";
@@ -85,9 +84,6 @@ export function LandingPage() {
         className="pointer-events-none fixed inset-x-0 top-0 bottom-0 z-0 min-h-[100dvh]"
       />
       <div className="relative z-10 w-full min-w-0">
-        <div className="caretip-landing-nav-shell">
-          <Navigation />
-        </div>
         <main className="caretip-landing-main w-full min-w-0 overflow-x-hidden">
           <CareTipLandingHero
             id="about-section"

@@ -1,4 +1,4 @@
-import { memo, useCallback, useEffect, useState } from "react";
+import { memo, useCallback, useLayoutEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
 import {
@@ -25,7 +25,7 @@ export const CustomerJourneyLanguageSwitcher = memo(function CustomerJourneyLang
   const [pending, setPending] = useState<AppLanguage | null>(null);
   const display = pending ?? active;
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     void prefetchCustomerJourneyLocaleBundles();
   }, []);
 
