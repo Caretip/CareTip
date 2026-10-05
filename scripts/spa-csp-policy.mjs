@@ -12,6 +12,9 @@
  * | firebase*.googleapis.com, *.googleapis.com | FCM web push + Firebase SDK | Push notifications |
  * | assets.calendly.com (script/style/connect) | Request Demo Calendly popup widget |
  * | calendly.com / *.calendly.com (frame/connect) | Calendly booking iframe + API |
+ * | connect.facebook.net | Facebook JS SDK (facebookOAuthWeb.ts) |
+ * | graph.facebook.com, www.facebook.com | FB.login dialog + SDK Graph calls from browser |
+ * | www.facebook.com / facebook.com (frame-src) | Facebook Login dialog iframe |
  *
  * Intentionally permissive (accepted risk):
  * | Directive | Value | Reason |
@@ -41,18 +44,25 @@ export const SPA_CONNECT_SRC = [
   "https://*.ingest.de.sentry.io",
 ];
 
+/** Facebook Login (JS SDK) — see src/app/lib/facebookOAuthWeb.ts */
+export const SPA_FACEBOOK_CONNECT_SRC = [
+  "https://connect.facebook.net",
+  "https://graph.facebook.com",
+  "https://www.facebook.com",
+];
+
 /** @type {readonly string[]} */
 export const SPA_IMG_SRC = ["'self'", "data:", "blob:", "https:"];
 
 /** Full SPA CSP header value (semicolon-separated). */
 export const SPA_CONTENT_SECURITY_POLICY = [
   "default-src 'self'",
-  "script-src 'self' https://accounts.google.com https://www.gstatic.com https://assets.calendly.com",
+  "script-src 'self' https://accounts.google.com https://www.gstatic.com https://assets.calendly.com https://connect.facebook.net",
   "style-src 'self' 'unsafe-inline' https://accounts.google.com https://assets.calendly.com",
   `img-src ${SPA_IMG_SRC.join(" ")}`,
   "font-src 'self'",
-  `connect-src ${SPA_CONNECT_SRC.join(" ")} https://calendly.com https://*.calendly.com https://assets.calendly.com`,
-  "frame-src https://accounts.google.com https://calendly.com https://*.calendly.com",
+  `connect-src ${SPA_CONNECT_SRC.join(" ")} https://calendly.com https://*.calendly.com https://assets.calendly.com ${SPA_FACEBOOK_CONNECT_SRC.join(" ")}`,
+  "frame-src https://accounts.google.com https://calendly.com https://*.calendly.com https://www.facebook.com https://facebook.com",
   "worker-src 'self' blob:",
   "object-src 'none'",
   "base-uri 'self'",
