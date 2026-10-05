@@ -253,6 +253,7 @@ function employeePayoutToDto(row: {
   const issue = row.status === StripeConnectPayoutStatus.failed || row.status === StripeConnectPayoutStatus.canceled;
   return {
     id: `${EMPLOYEE_PAYOUT_PREFIX}${row.id}`,
+    stripePayoutId: row.stripePayoutId,
     amountCents: row.amountCents,
     amountEur: payoutCentsToEur(row.amountCents),
     currency: row.currency,
@@ -327,6 +328,7 @@ function payableToDto(row: {
     Boolean(row.lastTransferError);
   return {
     id: `${CARETIP_TRANSFER_PREFIX}${row.id}`,
+    stripePayoutId: "",
     amountCents,
     amountEur: payoutCentsToEur(amountCents),
     currency: "eur",
