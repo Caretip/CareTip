@@ -13,6 +13,7 @@ import {
 import { OAUTH_LOGO_SRC } from "@/app/lib/oauthLogos";
 import { requestAppleIdToken, isAppleSdkAvailable } from "@/app/lib/appleOAuthWeb";
 import { requestFacebookAccessToken } from "@/app/lib/facebookOAuthWeb";
+import { logFacebookOAuthDiagnostic } from "@/app/lib/facebookOAuthDiagnostic";
 import { logClientError } from "@/app/lib/clientLog";
 import { toUserFriendlyMessage } from "@/app/lib/errorMessages";
 import { AuthGoogleOAuthScope } from "@/app/components/auth/AuthGoogleOAuthScope";
@@ -162,6 +163,13 @@ export function OAuthProviderRow({
         provider === "apple" ? await requestAppleIdToken() : await requestFacebookAccessToken();
       onSocialCredential(provider, idToken);
     } catch (e) {
+      if (provider === "facebook") {
+        logFacebookOAuthDiagnostic("oauth_provider_row_aborted", {
+          provider: "facebook",
+          apiOAuthWillBeCalled: false,
+          errorClass: e instanceof Error ? e.name : "Error",
+        });
+      }
       logClientError(`OAuthProviderRow.${provider}`, e);
       toast.error(toUserFriendlyMessage(e) || t("auth.oauth.providerFailed", { provider }));
     } finally {

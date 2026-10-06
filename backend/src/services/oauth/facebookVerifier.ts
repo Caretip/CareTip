@@ -1,10 +1,19 @@
 import * as jose from "jose";
 import type { VerifiedIdentity } from "./types.js";
 import { OAuthTokenVerificationError } from "./googleVerifier.js";
+import {
+  jsonFieldNames,
+  logFacebookOAuthDiagnostic,
+  type FacebookOAuthDiagnosticCase,
+} from "./facebookOAuthDiagnostic.js";
 
 const FACEBOOK_JWKS = jose.createRemoteJWKSet(
   new URL("https://www.facebook.com/.well-known/oauth/openid/jwks/"),
 );
+
+export type FacebookVerifyDiagnosticContext = {
+  correlationId: string;
+};
 
 function resolveFacebookAppId(): string {
   const id =
@@ -26,14 +35,49 @@ function looksLikeJwt(token: string): boolean {
   return parts.length === 3 && parts.every((p) => p.length > 0);
 }
 
-async function verifyFacebookLimitedLoginJwt(idToken: string): Promise<VerifiedIdentity> {
+function diagFail(
+  diag: FacebookVerifyDiagnosticContext | undefined,
+  caseCode: FacebookOAuthDiagnosticCase,
+  stage: "failure",
+  fields: Record<string, unknown>,
+): void {
+  if (!diag) return;
+  logFacebookOAuthDiagnostic(diag.correlationId, stage, {
+    case: caseCode,
+    ...fields,
+  });
+}
+
+async function verifyFacebookLimitedLoginJwt(
+  idToken: string,
+  diag?: FacebookVerifyDiagnosticContext,
+): Promise<VerifiedIdentity> {
   const appId = resolveFacebookAppId();
+  if (diag) {
+    logFacebookOAuthDiagnostic(diag.correlationId, "identity_verify_jwt", {
+      facebookAppId: appId,
+    });
+  }
   const { payload } = await jose.jwtVerify(idToken, FACEBOOK_JWKS, {
     audience: appId,
   });
 
+  if (diag) {
+    logFacebookOAuthDiagnostic(diag.correlationId, "identity_verify_jwt", {
+      facebookAppId: appId,
+      jwtPayloadFieldNames: jsonFieldNames(payload),
+      hasId: typeof payload.sub === "string" && payload.sub.trim().length > 0,
+      hasName: typeof payload.name === "string" && payload.name.trim().length > 0,
+      hasEmail: typeof payload.email === "string" && payload.email.trim().length > 0,
+    });
+  }
+
   const subject = typeof payload.sub === "string" ? payload.sub.trim() : "";
   if (!subject) {
+    diagFail(diag, "B", "failure", {
+      errorClass: "OAuthTokenVerificationError",
+      reason: "jwt_missing_subject",
+    });
     throw new OAuthTokenVerificationError("facebook");
   }
 
@@ -50,11 +94,20 @@ async function verifyFacebookLimitedLoginJwt(idToken: string): Promise<VerifiedI
   };
 }
 
-async function verifyFacebookAccessToken(accessToken: string): Promise<VerifiedIdentity> {
+async function verifyFacebookAccessToken(
+  accessToken: string,
+  diag?: FacebookVerifyDiagnosticContext,
+): Promise<VerifiedIdentity> {
   const appId = resolveFacebookAppId();
   const appSecret = resolveFacebookAppSecret();
   if (!appSecret) {
     throw new Error("FACEBOOK_APP_SECRET is not configured");
+  }
+
+  if (diag) {
+    logFacebookOAuthDiagnostic(diag.correlationId, "identity_verify_access_token", {
+      facebookAppId: appId,
+    });
   }
 
   const appToken = `${appId}|${appSecret}`;
@@ -63,14 +116,35 @@ async function verifyFacebookAccessToken(accessToken: string): Promise<VerifiedI
   debugUrl.searchParams.set("access_token", appToken);
 
   const debugRes = await fetch(debugUrl);
-  if (!debugRes.ok) {
-    throw new OAuthTokenVerificationError("facebook");
-  }
   const debugJson = (await debugRes.json()) as {
     data?: { app_id?: string; is_valid?: boolean; user_id?: string };
   };
+  if (diag) {
+    logFacebookOAuthDiagnostic(diag.correlationId, "debug_token_response", {
+      graphHttpStatus: debugRes.status,
+      responseFieldNames: jsonFieldNames(debugJson),
+      debugDataFieldNames: jsonFieldNames(debugJson.data),
+      tokenValidationSucceeded: Boolean(debugJson.data?.is_valid),
+      facebookAppId: appId,
+      debugAppIdMatches: debugJson.data?.app_id === appId,
+      facebookUserId: debugJson.data?.user_id?.trim() || null,
+    });
+  }
+  if (!debugRes.ok) {
+    diagFail(diag, "C", "failure", {
+      errorClass: "OAuthTokenVerificationError",
+      graphHttpStatus: debugRes.status,
+      reason: "debug_token_http_error",
+    });
+    throw new OAuthTokenVerificationError("facebook");
+  }
   const data = debugJson.data;
   if (!data?.is_valid || data.app_id !== appId || !data.user_id) {
+    diagFail(diag, "B", "failure", {
+      errorClass: "OAuthTokenVerificationError",
+      reason: "debug_token_invalid",
+      tokenValidationSucceeded: false,
+    });
     throw new OAuthTokenVerificationError("facebook");
   }
 
@@ -78,12 +152,31 @@ async function verifyFacebookAccessToken(accessToken: string): Promise<VerifiedI
   meUrl.searchParams.set("fields", "id,name,email");
   meUrl.searchParams.set("access_token", accessToken);
   const meRes = await fetch(meUrl);
+  const me = (await meRes.json()) as { id?: string; name?: string; email?: string };
+  if (diag) {
+    logFacebookOAuthDiagnostic(diag.correlationId, "graph_me_response", {
+      graphHttpStatus: meRes.status,
+      responseFieldNames: jsonFieldNames(me),
+      hasId: Boolean(me.id?.trim()),
+      hasName: Boolean(me.name?.trim()),
+      hasEmail: Boolean(me.email?.trim()),
+      facebookUserId: me.id?.trim() || data.user_id.trim(),
+    });
+  }
   if (!meRes.ok) {
+    diagFail(diag, "C", "failure", {
+      errorClass: "OAuthTokenVerificationError",
+      graphHttpStatus: meRes.status,
+      reason: "graph_me_http_error",
+    });
     throw new OAuthTokenVerificationError("facebook");
   }
-  const me = (await meRes.json()) as { id?: string; name?: string; email?: string };
   const subject = me.id?.trim() || data.user_id.trim();
   if (!subject) {
+    diagFail(diag, "B", "failure", {
+      errorClass: "OAuthTokenVerificationError",
+      reason: "graph_me_missing_subject",
+    });
     throw new OAuthTokenVerificationError("facebook");
   }
 
@@ -102,15 +195,22 @@ async function verifyFacebookAccessToken(accessToken: string): Promise<VerifiedI
  * Verify Facebook Limited Login JWT or classic Graph access token.
  * Email may be missing — callers must reject account creation without email.
  */
-export async function verifyFacebookIdentity(idToken: string): Promise<VerifiedIdentity> {
+export async function verifyFacebookIdentity(
+  idToken: string,
+  diag?: FacebookVerifyDiagnosticContext,
+): Promise<VerifiedIdentity> {
   try {
     if (looksLikeJwt(idToken)) {
-      return await verifyFacebookLimitedLoginJwt(idToken);
+      return await verifyFacebookLimitedLoginJwt(idToken, diag);
     }
-    return await verifyFacebookAccessToken(idToken);
+    return await verifyFacebookAccessToken(idToken, diag);
   } catch (err) {
     if (err instanceof OAuthTokenVerificationError) throw err;
     if (err instanceof Error && err.message.includes("not configured")) throw err;
+    diagFail(diag, "B", "failure", {
+      errorClass: err instanceof Error ? err.name : "Error",
+      reason: "verify_unexpected",
+    });
     throw new OAuthTokenVerificationError("facebook");
   }
 }

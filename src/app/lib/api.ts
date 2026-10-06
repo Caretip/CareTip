@@ -16,6 +16,8 @@ import {
   ApiRequestError,
   EMAIL_NOT_VERIFIED_CODE,
   GOOGLE_ACCOUNT_NOT_REGISTERED_CODE,
+  OAUTH_EMAIL_REQUIRED_CODE,
+  OAUTH_SIGN_IN_FAILED_CODE,
   PENDING_VERIFICATION_CODE,
   SUBSCRIPTION_REQUIRED_CODE,
   PLAN_CAPABILITY_REQUIRED_CODE,
@@ -46,6 +48,12 @@ import {
   whenSessionBootstrapSettled,
 } from "./authSessionBootstrap";
 import { logDashboardTenantRequest } from "./dashboardTenantLog";
+import {
+  clearFacebookOAuthDiagnostic,
+  facebookOAuthDiagnosticHeaderName,
+  getFacebookOAuthDiagnosticId,
+  logFacebookOAuthDiagnostic,
+} from "./facebookOAuthDiagnostic";
 import { clearClientSessionHint } from "./authSessionHint";
 import { notifyAuthStorageSync } from "./authStorageSync";
 import {
@@ -1176,9 +1184,25 @@ export async function oauthAPI(payload: {
   merchantLegalAccepted?: boolean;
 }): Promise<LoginApiResult> {
   const timeZone = getBrowserTimeZone();
-  const raw = await apiRequest<unknown>(apiPath("/api/auth/oauth"), {
+  const isFacebook = payload.provider === "facebook";
+  const facebookDiagnosticId = isFacebook ? getFacebookOAuthDiagnosticId() : null;
+  if (isFacebook) {
+    logFacebookOAuthDiagnostic("api_oauth_request", {
+      correlationId: facebookDiagnosticId ?? undefined,
+      provider: "facebook",
+      isLogin: payload.isLogin,
+      hasIdToken: Boolean(payload.idToken?.trim()),
+    });
+  }
+  try {
+    const raw = await apiRequest<unknown>(apiPath("/api/auth/oauth"), {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+      ...(facebookDiagnosticId
+        ? { [facebookOAuthDiagnosticHeaderName()]: facebookDiagnosticId }
+        : {}),
+    },
     body: toJsonRequestBody({
       provider: payload.provider,
       idToken: payload.idToken,
@@ -1195,22 +1219,50 @@ export async function oauthAPI(payload: {
       ...(payload.merchantLegalAccepted === true ? { merchantLegalAccepted: true } : {}),
       ...(timeZone ? { timeZone } : {}),
     }),
-    credentials: "include",
-  });
-  if (isMfaLoginChallenge(raw)) {
-    return raw;
-  }
-  const parsed = parseAuthResponsePayload(raw);
-  if (!parsed) {
-    logClientError("api.oauthAPI", new Error("Incomplete OAuth auth response"), {
-      body: raw,
-      bodyKeys: raw && typeof raw === "object" ? Object.keys(raw as object) : [],
+      credentials: "include",
     });
-    throw new Error(
-      "Social sign-in returned an incomplete response. Please try again. If this continues, refresh the page or use email sign-in.",
-    );
+    if (isMfaLoginChallenge(raw)) {
+      if (isFacebook) {
+        logFacebookOAuthDiagnostic("api_oauth_mfa_challenge", {
+          correlationId: facebookDiagnosticId ?? undefined,
+        });
+      }
+      return raw;
+    }
+    const parsed = parseAuthResponsePayload(raw);
+    if (!parsed) {
+      logClientError("api.oauthAPI", new Error("Incomplete OAuth auth response"), {
+        body: raw,
+        bodyKeys: raw && typeof raw === "object" ? Object.keys(raw as object) : [],
+      });
+      throw new Error(
+        "Social sign-in returned an incomplete response. Please try again. If this continues, refresh the page or use email sign-in.",
+      );
+    }
+    if (isFacebook) {
+      logFacebookOAuthDiagnostic("api_oauth_success", {
+        correlationId: facebookDiagnosticId ?? undefined,
+      });
+    }
+    return parsed;
+  } catch (err) {
+    if (isFacebook) {
+      const apiCode =
+        err instanceof ApiRequestError && typeof err.code === "string" ? err.code : undefined;
+      logFacebookOAuthDiagnostic("api_oauth_error", {
+        correlationId: facebookDiagnosticId ?? undefined,
+        errorClass: err instanceof Error ? err.name : "Error",
+        ...(apiCode ? { errorCode: apiCode } : {}),
+        ...(apiCode === OAUTH_EMAIL_REQUIRED_CODE ? { case: "D" as const } : {}),
+        ...(apiCode === OAUTH_SIGN_IN_FAILED_CODE ? { case: "F" as const } : {}),
+      });
+    }
+    throw err;
+  } finally {
+    if (isFacebook) {
+      clearFacebookOAuthDiagnostic();
+    }
   }
-  return parsed;
 }
 
 export type LinkedOAuthAccount = {

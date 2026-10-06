@@ -22,6 +22,7 @@ import {
   type OAuthProviderId,
   type VerifiedIdentity,
 } from "./oauth/verifyIdentity.js";
+import { logFacebookOAuthDiagnostic } from "./oauth/facebookOAuthDiagnostic.js";
 import {
   AUTH_OAUTH_DEMO_ACCOUNT_LINK_FORBIDDEN_CODE,
   AUTH_OAUTH_DEMO_ACCOUNT_LINK_FORBIDDEN_MESSAGE,
@@ -218,22 +219,54 @@ function providerLabel(provider: OAuthProviderId): string {
 export async function authenticateWithOAuth(
   providerRaw: string,
   body: OAuthBody,
-  opts?: { acceptLanguage?: string | null },
+  opts?: { acceptLanguage?: string | null; facebookDiagnosticId?: string },
 ): Promise<OAuthAuthOutcome> {
   if (!isOAuthProviderId(providerRaw)) {
     throw new Error("Unsupported OAuth provider. Use google, apple, or facebook.");
   }
   const provider = providerRaw;
+  const facebookDiagnosticId =
+    provider === "facebook" ? opts?.facebookDiagnosticId?.trim() || undefined : undefined;
 
   const idToken = body.idToken?.trim();
   if (!idToken) {
     throw new Error("idToken is required");
   }
 
-  const verified = await verifyOAuthIdentity(provider, idToken);
+  if (facebookDiagnosticId) {
+    logFacebookOAuthDiagnostic(facebookDiagnosticId, "authenticate_entered", {
+      provider: "facebook",
+      isLogin: body.isLogin,
+      hasIdToken: true,
+    });
+    logFacebookOAuthDiagnostic(facebookDiagnosticId, "identity_verify_start", {
+      provider: "facebook",
+    });
+  }
+
+  const verified = await verifyOAuthIdentity(provider, idToken, {
+    facebookDiagnosticId,
+  });
+
+  if (facebookDiagnosticId) {
+    logFacebookOAuthDiagnostic(facebookDiagnosticId, "identity_verified", {
+      facebookUserId: verified.subject,
+      hasId: Boolean(verified.subject),
+      hasName: Boolean(verified.displayName),
+      hasEmail: Boolean(verified.email),
+    });
+  }
 
   // Facebook signup/login account creation requires email; login by subject alone is OK if already linked.
   if (provider === "facebook" && !verified.email && body.isLogin === false) {
+    if (facebookDiagnosticId) {
+      logFacebookOAuthDiagnostic(facebookDiagnosticId, "email_required", {
+        case: "D",
+        channel: "signup_precheck",
+        errorClass: "OAuthEmailRequiredError",
+        errorCode: OAUTH_EMAIL_REQUIRED_CODE,
+      });
+    }
     throw new OAuthEmailRequiredError();
   }
   if (provider === "google" && !verified.emailVerified) {
@@ -248,18 +281,46 @@ export async function authenticateWithOAuth(
     : null;
 
   if (body.isLogin) {
+    if (facebookDiagnosticId) {
+      logFacebookOAuthDiagnostic(facebookDiagnosticId, "oauth_subject_lookup", {
+        facebookUserId: verified.subject,
+      });
+    }
     let sessionUser = await findUserByOAuthSubject(provider, verified.subject);
 
     if (!sessionUser) {
       // No linked OAuthAccount — never auto-link by email. Same failure for
       // missing account, email-owned account, and admin routing (anti-enumeration).
+      if (facebookDiagnosticId) {
+        logFacebookOAuthDiagnostic(facebookDiagnosticId, "oauth_subject_missing", {
+          case: "F",
+          errorClass: "OAuthSignInFailedError",
+          errorCode: OAUTH_SIGN_IN_FAILED_CODE,
+        });
+      }
       throw new OAuthSignInFailedError();
     }
 
     if (sessionUser.isActive !== true) {
+      if (facebookDiagnosticId) {
+        logFacebookOAuthDiagnostic(facebookDiagnosticId, "login_blocked", {
+          case: "G",
+          reason: "inactive_user",
+          errorClass: "OAuthSignInFailedError",
+          errorCode: OAUTH_SIGN_IN_FAILED_CODE,
+        });
+      }
       throw new OAuthSignInFailedError();
     }
     if (sessionUser.role === "SUPER_ADMIN") {
+      if (facebookDiagnosticId) {
+        logFacebookOAuthDiagnostic(facebookDiagnosticId, "login_blocked", {
+          case: "G",
+          reason: "super_admin",
+          errorClass: "OAuthSignInFailedError",
+          errorCode: OAUTH_SIGN_IN_FAILED_CODE,
+        });
+      }
       throw new OAuthSignInFailedError();
     }
 
@@ -282,14 +343,33 @@ export async function authenticateWithOAuth(
     if (sessionUser.emailVerified !== true) {
       const bypassed = await applyEmailVerificationBypassIfEligible(sessionUser);
       if (!bypassed) {
+        if (facebookDiagnosticId) {
+          logFacebookOAuthDiagnostic(facebookDiagnosticId, "login_blocked", {
+            case: "G",
+            reason: "email_not_verified",
+            errorClass: "EmailNotVerifiedLoginError",
+          });
+        }
         throw new EmailNotVerifiedLoginError();
       }
       sessionUser = await loadOAuthSessionUser(sessionUser.id);
       if (sessionUser.emailVerified !== true) {
+        if (facebookDiagnosticId) {
+          logFacebookOAuthDiagnostic(facebookDiagnosticId, "login_blocked", {
+            case: "G",
+            reason: "email_not_verified",
+            errorClass: "EmailNotVerifiedLoginError",
+          });
+        }
         throw new EmailNotVerifiedLoginError();
       }
     }
 
+    if (facebookDiagnosticId) {
+      logFacebookOAuthDiagnostic(facebookDiagnosticId, "session_complete", {
+        channel: "login",
+      });
+    }
     return completeOAuthSession(sessionUser, sessionUser, {
       role: sessionUser.role,
       provider,
@@ -300,6 +380,14 @@ export async function authenticateWithOAuth(
   /** Sign up — requires email for all providers (Apple first auth usually includes it). */
   if (!verified.email) {
     if (provider === "facebook") {
+      if (facebookDiagnosticId) {
+        logFacebookOAuthDiagnostic(facebookDiagnosticId, "email_required", {
+          case: "D",
+          channel: "signup",
+          errorClass: "OAuthEmailRequiredError",
+          errorCode: OAUTH_EMAIL_REQUIRED_CODE,
+        });
+      }
       throw new OAuthEmailRequiredError();
     }
     throw new OAuthTokenVerificationError(
@@ -315,6 +403,14 @@ export async function authenticateWithOAuth(
     select: { id: true },
   });
   if (existing) {
+    if (facebookDiagnosticId) {
+      logFacebookOAuthDiagnostic(facebookDiagnosticId, "signup_blocked", {
+        case: "E",
+        reason: "email_already_registered",
+        errorClass: "OAuthSignInFailedError",
+        errorCode: OAUTH_SIGN_IN_FAILED_CODE,
+      });
+    }
     throw new OAuthSignInFailedError();
   }
 
@@ -323,6 +419,14 @@ export async function authenticateWithOAuth(
     select: { id: true },
   });
   if (subjectTaken) {
+    if (facebookDiagnosticId) {
+      logFacebookOAuthDiagnostic(facebookDiagnosticId, "signup_blocked", {
+        case: "E",
+        reason: "oauth_subject_taken",
+        errorClass: "OAuthSignInFailedError",
+        errorCode: OAUTH_SIGN_IN_FAILED_CODE,
+      });
+    }
     throw new OAuthSignInFailedError();
   }
 

@@ -3,9 +3,14 @@ import { verifyGoogleIdentity } from "./googleVerifier.js";
 import { verifyAppleIdentity } from "./appleVerifier.js";
 import { verifyFacebookIdentity } from "./facebookVerifier.js";
 
+export type OAuthIdentityVerifyOptions = {
+  facebookDiagnosticId?: string;
+};
+
 export async function verifyOAuthIdentity(
   provider: OAuthProviderId,
   idToken: string,
+  opts?: OAuthIdentityVerifyOptions,
 ): Promise<VerifiedIdentity> {
   switch (provider) {
     case "google":
@@ -13,7 +18,12 @@ export async function verifyOAuthIdentity(
     case "apple":
       return verifyAppleIdentity(idToken);
     case "facebook":
-      return verifyFacebookIdentity(idToken);
+      return verifyFacebookIdentity(
+        idToken,
+        opts?.facebookDiagnosticId
+          ? { correlationId: opts.facebookDiagnosticId }
+          : undefined,
+      );
     default: {
       const _exhaustive: never = provider;
       throw new Error(`Unsupported OAuth provider: ${String(_exhaustive)}`);

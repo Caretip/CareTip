@@ -33,6 +33,10 @@ import {
   EmailNotVerifiedLoginError,
 } from "../utils/httpErrors.js";
 import {
+  logFacebookOAuthDiagnostic,
+  resolveFacebookOAuthDiagnosticId,
+} from "../services/oauth/facebookOAuthDiagnostic.js";
+import {
   AUTH_INVALID_CREDENTIALS_MESSAGE,
   AUTH_OAUTH_GENERIC_FAILURE_MESSAGE,
   AUTH_OAUTH_SIGN_IN_FAILED_CODE,
@@ -853,6 +857,7 @@ export async function resendVerificationEmailForSession(req: Request, res: Respo
 }
 
 export async function oauth(req: Request, res: Response) {
+  let facebookDiagnosticId: string | undefined;
   try {
     const body = req.body as Record<string, unknown>;
     const provider = body.provider;
@@ -868,6 +873,14 @@ export async function oauth(req: Request, res: Response) {
     if (provider !== "google" && provider !== "apple" && provider !== "facebook") {
       return res.status(400).json({
         message: "provider must be 'google', 'apple', or 'facebook'",
+      });
+    }
+    if (provider === "facebook") {
+      facebookDiagnosticId = resolveFacebookOAuthDiagnosticId(req);
+      logFacebookOAuthDiagnostic(facebookDiagnosticId, "request_received", {
+        provider: "facebook",
+        isLogin,
+        hasIdToken: Boolean(idToken.trim()),
       });
     }
     if (!idToken.trim()) {
@@ -908,7 +921,10 @@ export async function oauth(req: Request, res: Response) {
         location,
         locale,
       },
-      { acceptLanguage: req.get("accept-language") ?? undefined },
+      {
+        acceptLanguage: req.get("accept-language") ?? undefined,
+        facebookDiagnosticId,
+      },
     );
     if (oauthAuthService.isOAuthMfaPending(result)) {
       const oauthMfaUser = await prisma.user.findUnique({
@@ -977,6 +993,13 @@ export async function oauth(req: Request, res: Response) {
           isLogin,
         }),
       );
+      if (facebookDiagnosticId) {
+        logFacebookOAuthDiagnostic(facebookDiagnosticId, "session_complete", {
+          provider: "facebook",
+          isLogin,
+          httpStatus: isLogin ? 200 : 201,
+        });
+      }
       if (!isLogin && session.user.role === "MANAGER") {
         try {
           await assertAndRecordMerchantLegalAcceptance({
@@ -996,6 +1019,22 @@ export async function oauth(req: Request, res: Response) {
       return res.status(503).json({ message: CLIENT_FALLBACK.loginUnexpected });
     }
   } catch (err) {
+    if (facebookDiagnosticId) {
+      const errorCode =
+        err instanceof oauthAuthService.OAuthEmailRequiredError
+          ? err.code
+          : err instanceof oauthAuthService.OAuthSignInFailedError
+            ? err.code
+            : err instanceof oauthAuthService.OAuthTokenVerificationError
+              ? err.code
+              : err instanceof EmailNotVerifiedLoginError
+                ? err.code
+                : undefined;
+      logFacebookOAuthDiagnostic(facebookDiagnosticId, "failure", {
+        errorClass: err instanceof Error ? err.name : "Error",
+        ...(errorCode ? { errorCode } : {}),
+      });
+    }
     if (err instanceof EmailNotVerifiedLoginError) {
       return res.status(403).json({
         message:
