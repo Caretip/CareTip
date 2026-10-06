@@ -104,7 +104,7 @@ const ERROR_MAP: Record<string, string> = {
   "Unable to load stats": "We couldn't load dashboard stats. Please try again in a moment.",
   "STATS_FETCH_ERROR": "We couldn't load dashboard stats. Please try again in a moment.",
   "We couldn't save your venue or team data. Please try again.":
-    "We couldn't load dashboard data. Please try again in a moment.",
+    "We couldn't save your venue or team data. Please try again.",
   "Registration failed": "We couldn't create your account. Please try again.",
   "Login failed": "We couldn't sign you in. Please check your email and password.",
   "We couldn't create your account. Please try again.":

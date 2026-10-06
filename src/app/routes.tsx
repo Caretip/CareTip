@@ -557,6 +557,7 @@ const routes: RouteObject[] = [
       { path: 'reports/security', lazy: routeLazy(() => import('./pages/platform/reports/PlatformSecurityReportsPage'), 'PlatformSecurityReportsPage') },
       { path: 'reports/usage', lazy: routeLazy(() => import('./pages/platform/reports/PlatformUsageReportsPage'), 'PlatformUsageReportsPage') },
       { path: 'reports/commercial', lazy: routeLazy(() => import('./pages/platform/reports/PlatformCommercialIntelligencePage'), 'PlatformCommercialIntelligencePage') },
+      { path: 'reports/product-feedback', lazy: routeLazy(() => import('./pages/platform/reports/PlatformProductReviewsPage'), 'PlatformProductReviewsPage') },
       { path: 'system/health', lazy: routeLazy(() => import('./pages/platform/PlatformSystemHealthPage'), 'PlatformSystemHealthPage') },
       { path: 'system/settings', lazy: routeLazy(() => import('./pages/platform/PlatformSettingsPage'), 'PlatformSettingsPage') },
       { path: 'system/legal-hold', lazy: routeLazy(() => import('./pages/platform/PlatformLegalHoldPage'), 'PlatformLegalHoldPage') },

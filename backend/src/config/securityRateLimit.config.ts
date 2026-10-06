@@ -25,6 +25,11 @@ export const securityRateLimits = {
   feedbackTip: {
     ip: { max: envInt("SEC_FEEDBACK_TIP_IP_MAX_PER_15M", 25), windowMs: AUTH_WINDOW_15M_MS },
   },
+  /** Authenticated CareTip product review upsert — separate from guest tip feedback. */
+  productReviewMe: {
+    ip: { max: envInt("SEC_PRODUCT_REVIEW_IP_MAX_PER_15M", 40), windowMs: AUTH_WINDOW_15M_MS },
+    user: { max: envInt("SEC_PRODUCT_REVIEW_USER_MAX_PER_15M", 15), windowMs: AUTH_WINDOW_15M_MS },
+  },
   publicSocketToken: {
     ip: { max: envInt("SEC_PUBLIC_SOCKET_TOKEN_IP_MAX_PER_15M", 60), windowMs: AUTH_WINDOW_15M_MS },
   },

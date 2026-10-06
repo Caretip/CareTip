@@ -21,8 +21,8 @@ import { VerificationPendingBanner } from "../components/business/VerificationPe
 import { useMobileMenuState } from "../hooks/useMobileMenuState";
 import { useCommercialPageTracking } from "../hooks/useCommercialPageTracking";
 import { BusinessEntitlementsProvider } from "../contexts/BusinessEntitlementsContext";
-import { BusinessGuidelinesProvider } from "../contexts/BusinessGuidelinesContext";
 import { BusinessFeatureInfoDrawerProvider } from "../components/business/BusinessFeatureInfoDrawerProvider";
+import { ProductFeedbackModalHost } from "../components/product-feedback/ProductFeedbackModalHost";
 import { sessionHasActiveEntitlements } from "../lib/subscriptionEntitlementFastPath";
 import { isAuthenticatedWithAccessToken } from "../lib/authRestore";
 import { useMinWidthMedia } from "@/lib/motionPerf";
@@ -115,8 +115,8 @@ export function BusinessLayout() {
   }
 
   return (
-    <BusinessGuidelinesProvider>
       <BusinessEntitlementsProvider>
+        <ProductFeedbackModalHost>
         <div className="relative min-h-screen bg-background">
           <PushNotificationSync />
           <NotificationInboxSync />
@@ -151,7 +151,7 @@ export function BusinessLayout() {
             </div>
           </div>
         </div>
+        </ProductFeedbackModalHost>
       </BusinessEntitlementsProvider>
-    </BusinessGuidelinesProvider>
   );
 }

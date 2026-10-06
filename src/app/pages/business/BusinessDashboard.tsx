@@ -389,9 +389,9 @@ export const BusinessDashboard = memo(function BusinessDashboard() {
               "business-hero-badge normal-case border-transparent bg-transparent px-0 py-0 text-[11px] max-lg:text-[12px] font-medium tracking-normal shadow-none",
               dashboardFormalGreetingBadgeClassName,
             )}
-            titleClassName="business-hero-title max-lg:!leading-[1.08] lg:!leading-[1.12] tracking-tight max-lg:mx-0 max-lg:max-w-[22ch] max-lg:!text-[1.5625rem] max-lg:text-left lg:max-w-[22ch] lg:!text-[2rem] lg:text-left xl:!text-[2.125rem]"
-            descriptionClassName="business-hero-description !line-clamp-2 max-w-[34ch] leading-relaxed text-muted-foreground/85 max-lg:mx-0 max-lg:mb-0 max-lg:text-left lg:max-w-md"
-            textColumnClassName="business-hero-text-column lg:py-1 xl:pr-8"
+            titleClassName="business-hero-title max-lg:!leading-[1.08] lg:!leading-[1.12] tracking-tight max-lg:mx-0 max-lg:max-w-[22ch] max-lg:!text-[1.5625rem] max-lg:text-left lg:max-w-[30ch] lg:!text-[2rem] lg:text-left xl:max-w-[34ch] xl:!text-[2.125rem]"
+            descriptionClassName="business-hero-description !line-clamp-2 max-w-[34ch] leading-relaxed text-muted-foreground/85 max-lg:mx-0 max-lg:mb-0 max-lg:text-left lg:max-w-[38ch] xl:max-w-[42ch]"
+            textColumnClassName="business-hero-text-column lg:py-0.5 xl:pr-4"
             badge={formalGreeting}
             title={
               <>
@@ -711,6 +711,7 @@ export const BusinessDashboard = memo(function BusinessDashboard() {
               <RecentCustomerFeedbackPanel enabled={isBusiness && sessionValidated} />
             </FeatureGate>
           </motion.div>
+
         </div>
       </div>
     </div>

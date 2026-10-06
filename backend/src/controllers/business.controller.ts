@@ -36,7 +36,13 @@ function statsErrorHttpStatus(err: unknown): number {
   }
   return 500;
 }
-import { uploadManagerBusinessLogoImage, uploadManagerVerificationDocument, removeStoredUploadReferenceIfPossible, uploadManagerBusinessBannerImage } from "../services/upload.service.js";
+import {
+  uploadManagerBusinessLogoImage,
+  uploadManagerVerificationDocument,
+  removeStoredUploadReferenceIfPossible,
+  uploadManagerBusinessBannerImage,
+  isSupabaseStorageConfiguredForUpload,
+} from "../services/upload.service.js";
 import { removeUploadedObjectByPublicUrlIfPossible } from "../lib/supabaseStorageClient.js";
 import * as kycService from "../services/kyc.service.js";
 import * as brandingService from "../services/businessBranding.service.js";
@@ -334,9 +340,13 @@ export async function uploadMyLogo(req: Request, res: Response) {
     }
     return res.json({ success: true, path: logoPathToStore });
   } catch (err) {
-    logServerError("business.uploadMyLogo", err);
+    logServerError("business.uploadMyLogo", err, {
+      stage: "logo_upload",
+      storage: isSupabaseStorageConfiguredForUpload() ? "supabase" : "disk",
+    });
     return res.status(400).json({
-      message: clientSafeMessage(err, CLIENT_FALLBACK.business),
+      message: clientSafeMessage(err, "We couldn't save your logo. Please try again."),
+      code: "LOGO_UPLOAD_FAILED",
     });
   }
 }

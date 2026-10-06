@@ -34,6 +34,14 @@ export type BusinessSidebarNavEntry =
       icon: CareIconName;
     }
   | {
+      type: "action";
+      id: string;
+      labelKey: string;
+      action: "productFeedback";
+      /** Visual break from main nav (e.g. away from Customer Feedback). */
+      separated?: boolean;
+    }
+  | {
       type: "group";
       id: string;
       labelKey: string;
@@ -202,6 +210,13 @@ export const businessSidebarNavEntries: readonly BusinessSidebarNavEntry[] = [
     icon: "settings",
     defaultHref: "/dashboard/settings?section=general",
     children: settingsSidebarChildren,
+  },
+  {
+    type: "action",
+    id: "caretip-product-feedback",
+    labelKey: "dashboardNav.business.caretipFeedback",
+    action: "productFeedback",
+    separated: true,
   },
 ] as const;
 

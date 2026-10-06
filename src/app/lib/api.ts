@@ -29,7 +29,7 @@ import { resolveApiBaseUrl } from "./apiOrigin";
 import { logClientError } from "./clientLog";
 import type { OAuthProviderId } from "./oauthProviderIds";
 import { captureClientException } from "./sentry";
-import { validateImageFileForUpload } from "./imageClientUpload";
+import { prepareLogoFileForUpload, validateImageFileForUpload } from "./imageClientUpload";
 import {
   primeSubscriptionEntitlementsFromSession,
   primeSubscriptionTierFromSession,
@@ -1970,12 +1970,9 @@ export async function putBusinessProfile(body: {
 }
 
 export async function uploadMyBusinessLogo(file: File): Promise<{ success: boolean; path: string }> {
-  const check = validateImageFileForUpload(file);
-  if (!check.ok) {
-    throw new Error(toUserFriendlyMessage(new Error(check.message)));
-  }
+  const prepared = await prepareLogoFileForUpload(file);
   const form = new FormData();
-  form.append("file", file);
+  form.append("file", prepared);
   return apiRequest(apiPath("/api/business/profile/logo"), {
     method: "POST",
     headers: getAuthHeadersOnly(),
@@ -5707,6 +5704,116 @@ export async function listBusinessCustomerFeedback(params: {
   });
   businessCustomerFeedbackInflight.set(cacheKey, promise);
   return promise;
+}
+
+// --- CareTip product review (manager/employee → platform; not guest tip feedback) ---
+
+export const PLATFORM_PRODUCT_FEEDBACK_COMMENT_MAX = 2000;
+
+export type PlatformProductFeedbackAdminStatus = "new" | "read" | "archived";
+
+export type PlatformProductFeedback = {
+  id: string;
+  rating: number;
+  comment: string | null;
+  submitterRole: "MANAGER" | "EMPLOYEE";
+  businessId: string | null;
+  employeeId: string | null;
+  adminStatus: PlatformProductFeedbackAdminStatus;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type PlatformProductFeedbackAdminItem = PlatformProductFeedback & {
+  businessName: string | null;
+  employeeName: string | null;
+  userEmail: string | null;
+  commentExcerpt: string | null;
+};
+
+export type PlatformProductFeedbackSummary = {
+  totalCount: number;
+  averageRating: number | null;
+  ratingDistribution: Record<"1" | "2" | "3" | "4" | "5", number>;
+  countBySubmitterRole: { MANAGER: number; EMPLOYEE: number };
+  recentCount30d: number;
+};
+
+export type MyPlatformProductFeedbackResponse = {
+  latest: PlatformProductFeedback | null;
+};
+
+export async function fetchMyProductReview(): Promise<MyPlatformProductFeedbackResponse> {
+  return apiRequest(apiPath("/api/product-reviews/me"), {
+    headers: getHeaders(),
+    credentials: "include",
+  });
+}
+
+export async function submitMyProductReview(payload: {
+  rating: number;
+  comment?: string | null;
+}): Promise<{ feedback: PlatformProductFeedback }> {
+  return apiRequest(apiPath("/api/product-reviews/me"), {
+    method: "POST",
+    headers: getHeaders(),
+    credentials: "include",
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function fetchPlatformProductReviews(params?: {
+  take?: number;
+  skip?: number;
+  rating?: number;
+  submitterRole?: "MANAGER" | "EMPLOYEE";
+  adminStatus?: PlatformProductFeedbackAdminStatus;
+  createdFrom?: string;
+  createdTo?: string;
+}): Promise<{ total: number; items: PlatformProductFeedbackAdminItem[] }> {
+  const sp = new URLSearchParams();
+  if (params?.take != null) sp.set("take", String(params.take));
+  if (params?.skip != null) sp.set("skip", String(params.skip));
+  if (params?.rating != null) sp.set("rating", String(params.rating));
+  if (params?.submitterRole) sp.set("submitterRole", params.submitterRole);
+  if (params?.adminStatus) sp.set("adminStatus", params.adminStatus);
+  if (params?.createdFrom) sp.set("createdFrom", params.createdFrom);
+  if (params?.createdTo) sp.set("createdTo", params.createdTo);
+  const qs = sp.toString();
+  return apiRequest(apiPath(`/api/platform/product-reviews${qs ? `?${qs}` : ""}`), {
+    headers: getHeaders(),
+    credentials: "include",
+  });
+}
+
+export async function fetchPlatformProductReviewSummary(): Promise<{
+  summary: PlatformProductFeedbackSummary;
+}> {
+  return apiRequest(apiPath("/api/platform/product-reviews/summary"), {
+    headers: getHeaders(),
+    credentials: "include",
+  });
+}
+
+export async function fetchPlatformProductReviewById(
+  id: string,
+): Promise<{ feedback: PlatformProductFeedbackAdminItem }> {
+  return apiRequest(apiPath(`/api/platform/product-reviews/${id}`), {
+    headers: getHeaders(),
+    credentials: "include",
+  });
+}
+
+export async function patchPlatformProductReviewStatus(
+  id: string,
+  adminStatus: PlatformProductFeedbackAdminStatus,
+): Promise<{ feedback: PlatformProductFeedbackAdminItem }> {
+  return apiRequest(apiPath(`/api/platform/product-reviews/${id}`), {
+    method: "PATCH",
+    headers: getHeaders(),
+    credentials: "include",
+    body: JSON.stringify({ adminStatus }),
+  });
 }
 
 // --- Platform admin (SuperAdmin) ---

@@ -1,0 +1,397 @@
+/**
+ * Order Print Materials — premium visual layer (scoped).
+ * Loaded only from QrStudioPrintPage. Targets `.print-qr-studio--premium` descendants.
+ */
+
+.caretip-dashboard-shell.business-dashboard .print-qr-studio-module-header {
+  margin-bottom: 1.25rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid hsl(var(--border) / 0.65);
+}
+
+.caretip-dashboard-shell.business-dashboard .print-qr-studio-module-header h1 {
+  font-size: clamp(1.375rem, 2vw, 1.625rem);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+.caretip-dashboard-shell.business-dashboard .print-qr-studio-module-header p {
+  margin-top: 0.375rem;
+  max-width: 42rem;
+  font-size: 0.875rem;
+  line-height: 1.55;
+  color: hsl(var(--muted-foreground));
+}
+
+.caretip-dashboard-shell.business-dashboard .print-qr-studio--premium {
+  --print-studio-radius: 1rem;
+  --print-studio-shadow: 0 1px 2px rgb(28 25 23 / 0.04), 0 4px 14px rgb(28 25 23 / 0.05);
+  --print-studio-shadow-hover: 0 2px 6px rgb(28 25 23 / 0.06), 0 8px 22px rgb(28 25 23 / 0.07);
+}
+
+.caretip-dashboard-shell.business-dashboard .print-qr-studio--premium .print-qr-studio__topbar {
+  display: flex;
+  justify-content: flex-end;
+  min-height: 1.75rem;
+  margin-bottom: 0.25rem;
+}
+
+.caretip-dashboard-shell.business-dashboard .print-qr-studio--premium .print-qr-studio__stripe-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin: 0;
+  padding: 0.25rem 0.65rem;
+  border-radius: 9999px;
+  border: 1px solid hsl(142 45% 88% / 0.9);
+  background: hsl(142 40% 97% / 0.95);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  color: hsl(152 45% 28%);
+  transition: border-color 180ms ease, background-color 180ms ease;
+}
+
+.dark .caretip-dashboard-shell.business-dashboard .print-qr-studio--premium .print-qr-studio__stripe-badge--green {
+  border-color: hsl(152 35% 28% / 0.55);
+  background: hsl(152 30% 14% / 0.65);
+  color: hsl(152 45% 72%);
+}
+
+.caretip-dashboard-shell.business-dashboard .print-qr-studio--premium .print-qr-studio__stripe-badge--yellow {
+  border-color: hsl(38 70% 85%);
+  background: hsl(45 90% 96%);
+  color: hsl(32 55% 32%);
+}
+
+.caretip-dashboard-shell.business-dashboard .print-qr-studio--premium .print-qr-studio__stripe-badge--red {
+  border-color: hsl(0 60% 90%);
+  background: hsl(0 70% 98%);
+  color: hsl(0 45% 38%);
+}
+
+.caretip-dashboard-shell.business-dashboard .print-qr-studio--premium .print-qr-studio__stripe-dot {
+  width: 0.4rem;
+  height: 0.4rem;
+  border-radius: 9999px;
+  background: currentColor;
+  flex-shrink: 0;
+}
+
+.caretip-dashboard-shell.business-dashboard .print-qr-studio--premium .print-qr-studio__workspace {
+  gap: 1.75rem;
+}
+
+@media (min-width: 1024px) {
+  .caretip-dashboard-shell.business-dashboard .print-qr-studio--premium .print-qr-studio__workspace {
+    column-gap: 0;
+    row-gap: 0;
+  }
+
+  .caretip-dashboard-shell.business-dashboard .print-qr-studio--premium .print-qr-studio__workspace > * {
+    padding-inline: 1.25rem;
+  }
+}
+
+.caretip-dashboard-shell.business-dashboard .print-qr-studio--premium .print-qr-studio__col-title {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: hsl(var(--muted-foreground));
+}
+
+.caretip-dashboard-shell.business-dashboard .print-qr-studio--premium .print-qr-studio__section-hint {
+  margin: 0;
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  color: hsl(var(--muted-foreground));
+}
+
+.caretip-dashboard-shell.business-dashboard .print-qr-studio--premium .print-qr-studio__design-filter button {
+  height: 1.75rem;
+  padding-inline: 0.65rem;
+  border-radius: 0.5rem;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  transition:
+    border-color 180ms ease,
+    background-color 180ms ease,
+    color 180ms ease;
+}
+
+.caretip-dashboard-shell.business-dashboard .print-qr-studio--premium .print-qr-studio__design-filter button[aria-pressed="true"] {
+  border-color: hsl(var(--primary));
+  background: hsl(var(--primary));
+  color: hsl(var(--primary-foreground));
+}
+
+.caretip-dashboard-shell.business-dashboard .print-qr-studio--premium .print-qr-product-card {
+  position: relative;
+  gap: 0.25rem;
+  padding: 1rem 1rem 0.875rem;
+  border-radius: var(--print-studio-radius);
+  border: 1px solid hsl(var(--border) / 0.85);
+  background: hsl(var(--card));
+  box-shadow: var(--print-studio-shadow);
+  transition:
+    border-color 200ms ease,
+    box-shadow 200ms ease,
+    transform 200ms ease;
+}
+
+.caretip-dashboard-shell.business-dashboard .print-qr-studio--premium .print-qr-product-card:hover {
+  border-color: hsl(var(--border));
+  box-shadow: var(--print-studio-shadow-hover);
+}
+
+.caretip-dashboard-shell.business-dashboard .print-qr-studio--premium .print-qr-product-card.is-selected {
+  border-color: hsl(var(--primary) / 0.55);
+  background: linear-gradient(
+    180deg,
+    hsl(var(--primary) / 0.06) 0%,
+    hsl(var(--card)) 42%
+  );
+  box-shadow:
+    0 0 0 1px hsl(var(--primary) / 0.2),
+    var(--print-studio-shadow-hover);
+}
+
+.caretip-dashboard-shell.business-dashboard .print-qr-studio--premium .print-qr-product-card__check {
+  position: absolute;
+  top: 0.65rem;
+  right: 0.65rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.35rem;
+  height: 1.35rem;
+  border-radius: 9999px;
+  background: hsl(var(--primary));
+  color: hsl(var(--primary-foreground));
+  box-shadow: 0 1px 3px hsl(var(--primary) / 0.35);
+}
+
+.caretip-dashboard-shell.business-dashboard .print-qr-studio--premium .print-qr-product-card__preview {
+  display: flex;
+  justify-content: center;
+  padding: 0.35rem 0.5rem 0.15rem;
+  border-radius: 0.75rem;
+  background: hsl(var(--muted) / 0.35);
+}
+
+.caretip-dashboard-shell.business-dashboard .print-qr-studio--premium .print-qr-product-card__preview img,
+.caretip-dashboard-shell.business-dashboard .print-qr-studio--premium .print-qr-product-card__preview .physical-qr-preview-root {
+  max-width: 10.5rem;
+}
+
+.caretip-dashboard-shell.business-dashboard .print-qr-studio--premium .print-qr-product-card__title {
+  margin-top: 0.75rem;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.caretip-dashboard-shell.business-dashboard .print-qr-studio--premium .print-qr-product-card__desc {
+  margin-top: 0.25rem;
+  font-size: 0.75rem;
+  line-height: 1.45;
+  color: hsl(var(--muted-foreground));
+}
+
+.caretip-dashboard-shell.business-dashboard .print-qr-studio--premium .print-qr-product-card__actions {
+  margin-top: 0.75rem;
+  padding-top: 0.65rem;
+  border-top: 1px solid hsl(var(--border) / 0.6);
+}
+
+.caretip-dashboard-shell.business-dashboard .print-qr-studio--premium .print-qr-product-card__preview-btn {
+  display: inline-flex;
+  min-height: 2rem;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: hsl(var(--muted-foreground));
+  transition: color 180ms ease;
+}
+
+.caretip-dashboard-shell.business-dashboard .print-qr-studio--premium .print-qr-product-card__preview-btn:hover {
+  color: hsl(var(--foreground));
+}
+
+.caretip-dashboard-shell.business-dashboard .print-qr-studio--premium .print-qr-studio__assign-group {
+  overflow: hidden;
+  border-radius: var(--print-studio-radius);
+  border: 1px solid hsl(var(--border) / 0.85);
+  background: hsl(var(--card));
+  box-shadow: var(--print-studio-shadow);
+}
+
+.caretip-dashboard-shell.business-dashboard .print-qr-studio--premium .print-qr-studio__assign-group.is-focused {
+  border-color: hsl(var(--primary) / 0.35);
+  box-shadow: 0 0 0 1px hsl(var(--primary) / 0.12), var(--print-studio-shadow);
+}
+
+.caretip-dashboard-shell.business-dashboard .print-qr-studio--premium .print-qr-studio__assign-trigger {
+  min-height: 3.25rem;
+  padding: 0.65rem 0.85rem;
+  transition: background-color 180ms ease;
+}
+
+.caretip-dashboard-shell.business-dashboard .print-qr-studio--premium .print-qr-studio__assign-trigger:hover {
+  background: hsl(var(--muted) / 0.35);
+}
+
+.caretip-dashboard-shell.business-dashboard .print-qr-studio--premium .print-qr-studio__assign-trigger-title {
+  display: block;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: hsl(var(--foreground));
+}
+
+.caretip-dashboard-shell.business-dashboard .print-qr-studio--premium .print-qr-studio__assign-trigger-meta {
+  display: block;
+  margin-top: 0.15rem;
+  font-size: 0.75rem;
+  color: hsl(var(--muted-foreground));
+}
+
+.caretip-dashboard-shell.business-dashboard .print-qr-studio--premium .print-qr-studio__assign-chevron {
+  color: hsl(var(--muted-foreground));
+  transition: transform 200ms ease;
+}
+
+.caretip-dashboard-shell.business-dashboard .print-qr-studio--premium .print-qr-studio__assign-row label {
+  min-height: 3rem;
+  padding: 0.55rem 0.85rem;
+  transition: background-color 180ms ease;
+}
+
+.caretip-dashboard-shell.business-dashboard .print-qr-studio--premium .print-qr-studio__assign-row label:hover {
+  background: hsl(var(--muted) / 0.28);
+}
+
+.caretip-dashboard-shell.business-dashboard .print-qr-studio--premium .print-qr-studio__assign-row.is-selected label {
+  background: hsl(var(--primary) / 0.06);
+}
+
+.caretip-dashboard-shell.business-dashboard .print-qr-studio--premium .print-qr-studio__checkbox {
+  width: 1.05rem;
+  height: 1.05rem;
+  border-radius: 0.3rem;
+  accent-color: hsl(var(--primary));
+  cursor: pointer;
+}
+
+.caretip-dashboard-shell.business-dashboard .print-qr-studio--premium .print-qr-studio__assign-label {
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.caretip-dashboard-shell.business-dashboard .print-qr-studio--premium .print-qr-studio__assign-sublabel {
+  display: block;
+  margin-top: 0.1rem;
+  font-size: 0.75rem;
+  font-weight: 400;
+  color: hsl(var(--muted-foreground));
+}
+
+.caretip-dashboard-shell.business-dashboard .print-qr-studio--premium .print-qr-studio__summary-card {
+  padding: 1rem 1rem 1.1rem;
+  border-radius: var(--print-studio-radius);
+  border: 1px solid hsl(var(--border) / 0.85);
+  background: hsl(var(--card));
+  box-shadow: var(--print-studio-shadow);
+}
+
+.caretip-dashboard-shell.business-dashboard .print-qr-studio--premium .print-qr-studio__summary-heading {
+  margin: 0;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: hsl(var(--muted-foreground));
+}
+
+.caretip-dashboard-shell.business-dashboard .print-qr-studio--premium .print-qr-studio__summary-count {
+  margin: 0.25rem 0 0;
+  font-size: 1.125rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: hsl(var(--foreground));
+}
+
+.caretip-dashboard-shell.business-dashboard .print-qr-studio--premium .print-qr-studio__cart-empty {
+  margin-top: 0.85rem;
+  padding: 1rem 0.85rem;
+  border-radius: 0.75rem;
+  border: 1px dashed hsl(var(--border));
+  background: hsl(var(--muted) / 0.22);
+  text-align: center;
+}
+
+.caretip-dashboard-shell.business-dashboard .print-qr-studio--premium .print-qr-studio__cart-empty-icon {
+  margin: 0 auto 0.5rem;
+  display: flex;
+  width: 2.25rem;
+  height: 2.25rem;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9999px;
+  background: hsl(var(--background));
+  color: hsl(var(--muted-foreground));
+}
+
+.caretip-dashboard-shell.business-dashboard .print-qr-studio--premium .print-qr-studio__cart-empty-title {
+  margin: 0;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: hsl(var(--foreground));
+}
+
+.caretip-dashboard-shell.business-dashboard .print-qr-studio--premium .print-qr-studio__cart-empty-hint {
+  margin: 0.35rem 0 0;
+  font-size: 0.75rem;
+  line-height: 1.5;
+  color: hsl(var(--muted-foreground));
+}
+
+.caretip-dashboard-shell.business-dashboard .print-qr-studio--premium .print-qr-studio__cart-totals {
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid hsl(var(--border) / 0.75);
+}
+
+.caretip-dashboard-shell.business-dashboard .print-qr-studio--premium .print-qr-studio__cta {
+  margin-top: 0.85rem;
+  min-height: 2.75rem;
+  width: 100%;
+  border-radius: 0.65rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  transition:
+    background-color 180ms ease,
+    transform 180ms ease,
+    opacity 180ms ease;
+}
+
+.caretip-dashboard-shell.business-dashboard .print-qr-studio--premium .print-qr-studio__cta:not(:disabled):hover {
+  transform: translateY(-1px);
+}
+
+.caretip-dashboard-shell.business-dashboard .print-qr-studio--premium .print-qr-studio__cta:disabled {
+  opacity: 0.55;
+}
+
+@media (max-width: 1023px) {
+  .caretip-dashboard-shell.business-dashboard .print-qr-studio--premium .print-qr-studio__workspace > * + * {
+    padding-top: 1.5rem;
+  }
+
+  .caretip-dashboard-shell.business-dashboard .print-qr-studio--premium .print-qr-studio__summary-card {
+    margin-top: 0.25rem;
+  }
+}

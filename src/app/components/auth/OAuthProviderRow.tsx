@@ -12,7 +12,12 @@ import {
 } from "@/app/lib/oauthProviderIds";
 import { OAUTH_LOGO_SRC } from "@/app/lib/oauthLogos";
 import { requestAppleIdToken, isAppleSdkAvailable } from "@/app/lib/appleOAuthWeb";
-import { requestFacebookAccessToken } from "@/app/lib/facebookOAuthWeb";
+import {
+  isFacebookSdkReady,
+  requestFacebookAccessToken,
+  warmFacebookSdk,
+} from "@/app/lib/facebookOAuthWeb";
+import { isFacebookLoginError } from "@/app/lib/facebookLoginError";
 import { logFacebookOAuthDiagnostic } from "@/app/lib/facebookOAuthDiagnostic";
 import { logClientError } from "@/app/lib/clientLog";
 import { toUserFriendlyMessage } from "@/app/lib/errorMessages";
@@ -101,7 +106,36 @@ export function OAuthProviderRow({
   const facebookAppId = facebookOAuthWebAppId();
   const [gsiOriginError, setGsiOriginError] = useState(false);
   const [appleReady, setAppleReady] = useState<boolean | null>(null);
+  const [facebookWarmState, setFacebookWarmState] = useState<"loading" | "ready" | "failed">(() =>
+    isFacebookSdkReady() ? "ready" : "loading",
+  );
   const [providerBusy, setProviderBusy] = useState<OAuthProviderId | null>(null);
+
+  useEffect(() => {
+    if (!facebookAppId) {
+      setFacebookWarmState("failed");
+      return;
+    }
+    if (isFacebookSdkReady()) {
+      setFacebookWarmState("ready");
+      return;
+    }
+    setFacebookWarmState("loading");
+    let cancelled = false;
+    logFacebookOAuthDiagnostic("sdk_warm_started", { source: "OAuthProviderRow" });
+    void warmFacebookSdk()
+      .then(() => {
+        if (!cancelled) setFacebookWarmState("ready");
+        logFacebookOAuthDiagnostic("sdk_warm_completed", { source: "OAuthProviderRow" });
+      })
+      .catch(() => {
+        if (!cancelled) setFacebookWarmState("failed");
+        logFacebookOAuthDiagnostic("sdk_warm_failed", { source: "OAuthProviderRow" });
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [facebookAppId]);
 
   useEffect(() => {
     if (!appleClientId) {
@@ -147,6 +181,74 @@ export function OAuthProviderRow({
     toast.error(t("auth.oauth.providerNotConfigured"));
   };
 
+  const toastFacebookLoginError = useCallback(
+    (e: unknown) => {
+      if (isFacebookLoginError(e)) {
+        if (e.kind === "cancelled") {
+          return;
+        }
+        if (e.kind === "popup_likely_blocked") {
+          toast.error(t("auth.oauth.facebookPopupBlocked"), { id: "caretip-fb-popup" });
+          return;
+        }
+        if (e.kind === "sdk_not_ready") {
+          toast.message(t("auth.oauth.facebookSdkLoading"), { id: "caretip-fb-warm" });
+          void warmFacebookSdk().then(() => setFacebookWarmState("ready"));
+          return;
+        }
+        if (e.kind === "concurrent") {
+          return;
+        }
+        if (e.kind === "not_configured") {
+          toastNotConfigured();
+          return;
+        }
+        if (e.kind === "sdk_load_failed") {
+          toast.error(t("auth.oauth.facebookSdkLoadFailed"), { id: "caretip-fb-load" });
+          return;
+        }
+        if (e.kind === "incomplete") {
+          toast.error(t("auth.oauth.facebookIncomplete"), { id: "caretip-fb-incomplete" });
+          return;
+        }
+      }
+      logClientError("OAuthProviderRow.facebook", e);
+      toast.error(toUserFriendlyMessage(e) || t("auth.oauth.providerFailed", { provider: "Facebook" }));
+    },
+    [t],
+  );
+
+  const runFacebookLogin = useCallback(() => {
+    if (busy) return;
+    if (!showFacebook) {
+      toastNotConfigured();
+      return;
+    }
+    setProviderBusy("facebook");
+    try {
+      const tokenPromise = requestFacebookAccessToken();
+      void tokenPromise
+        .then((idToken) => {
+          onSocialCredential("facebook", idToken);
+        })
+        .catch((e) => {
+          logFacebookOAuthDiagnostic("oauth_provider_row_aborted", {
+            provider: "facebook",
+            apiOAuthWillBeCalled: false,
+            errorClass: e instanceof Error ? e.name : "Error",
+            ...(isFacebookLoginError(e) ? { failureKind: e.kind } : {}),
+          });
+          toastFacebookLoginError(e);
+        })
+        .finally(() => {
+          setProviderBusy(null);
+        });
+    } catch (e) {
+      setProviderBusy(null);
+      toastFacebookLoginError(e);
+    }
+  }, [busy, onSocialCredential, showFacebook, toastFacebookLoginError]);
+
   const runProvider = async (provider: "apple" | "facebook") => {
     if (busy) return;
     if (provider === "apple" && !showApple) {
@@ -157,19 +259,15 @@ export function OAuthProviderRow({
       toastNotConfigured();
       return;
     }
+    if (provider === "facebook") {
+      runFacebookLogin();
+      return;
+    }
     setProviderBusy(provider);
     try {
-      const idToken =
-        provider === "apple" ? await requestAppleIdToken() : await requestFacebookAccessToken();
+      const idToken = await requestAppleIdToken();
       onSocialCredential(provider, idToken);
     } catch (e) {
-      if (provider === "facebook") {
-        logFacebookOAuthDiagnostic("oauth_provider_row_aborted", {
-          provider: "facebook",
-          apiOAuthWillBeCalled: false,
-          errorClass: e instanceof Error ? e.name : "Error",
-        });
-      }
       logClientError(`OAuthProviderRow.${provider}`, e);
       toast.error(toUserFriendlyMessage(e) || t("auth.oauth.providerFailed", { provider }));
     } finally {
@@ -284,14 +382,16 @@ export function OAuthProviderRow({
             key={provider}
             provider="facebook"
             label={t("auth.oauth.continueWithFacebook")}
-            disabled={busy}
-            loading={providerBusy === "facebook"}
+            disabled={busy || (showFacebook && facebookWarmState === "loading")}
+            loading={providerBusy === "facebook" || (showFacebook && facebookWarmState === "loading")}
             title={
               !showFacebook
                 ? t("auth.oauth.providerNotConfigured")
-                : t("auth.oauth.continueWithFacebook")
+                : facebookWarmState === "loading"
+                  ? t("auth.oauth.facebookSdkLoading")
+                  : t("auth.oauth.continueWithFacebook")
             }
-            onClick={() => void runProvider("facebook")}
+            onClick={runFacebookLogin}
           />
         );
       })}

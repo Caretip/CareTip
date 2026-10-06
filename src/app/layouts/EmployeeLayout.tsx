@@ -27,6 +27,7 @@ import {
   DashboardReactProfiler,
 } from "../hooks/useDashboardRuntimeProfile";
 import { PROTECTED_APP_SHELL_READY_ATTR } from "../lib/htmlMarketingBootBridge";
+import { ProductFeedbackModalHost } from "../components/product-feedback/ProductFeedbackModalHost";
 
 type EmployeeBusinessBranding = {
   businessLogo: string | null;
@@ -84,6 +85,7 @@ export function EmployeeLayout() {
 
   return (
     <EmployeeEntitlementsProvider>
+      <ProductFeedbackModalHost>
       <div className="relative min-h-screen bg-background">
         <PushNotificationSync />
         <NotificationInboxSync />
@@ -118,6 +120,7 @@ export function EmployeeLayout() {
           </div>
         </div>
       </div>
+      </ProductFeedbackModalHost>
     </EmployeeEntitlementsProvider>
   );
 }

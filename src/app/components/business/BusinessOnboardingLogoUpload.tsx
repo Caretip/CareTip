@@ -5,7 +5,7 @@ import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
 import { onboardingFieldHint, onboardingLabel, onboardingOptionalBadge } from "./businessOnboardingUi";
 
-const ACCEPT = "image/png,image/jpeg,image/jpg,image/svg+xml";
+const ACCEPT = "image/png,image/jpeg,image/jpg,image/webp,image/gif,image/heic,image/heif,image/avif";
 
 type BusinessOnboardingLogoUploadProps = {
   file: File | null;

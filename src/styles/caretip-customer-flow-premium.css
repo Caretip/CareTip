@@ -29,14 +29,7 @@
 }
 
 .customer-journey-lang-switch {
-  display: inline-flex;
-  align-items: stretch;
-  gap: 0.125rem;
-  padding: 0.125rem;
-  border-radius: 0.75rem;
-  border: 1px solid hsl(var(--border) / 0.85);
-  background: hsl(var(--muted) / 0.35);
-  max-width: min(100%, 8.5rem);
+  max-width: min(100%, 11rem);
 }
 
 .customer-flow .caretip-btn-primary,

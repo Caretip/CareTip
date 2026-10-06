@@ -318,6 +318,13 @@ enum SupportTicketCategory {
   general
 }
 
+/// Platform-admin workflow for in-app CareTip product reviews (not guest tip feedback).
+enum PlatformProductFeedbackAdminStatus {
+  new
+  read
+  archived
+}
+
 model User {
   id                     String    @id @default(cuid())
   email                  String    @unique
@@ -422,6 +429,7 @@ model User {
   sponsoredAccessGrantsApproved SponsoredAccessGrant[] @relation("SponsoredAccessGrantsApproved")
   physicalQrOrders        PhysicalQrOrder[]
   tipDistributionBatchesActed EmployeeTipDistributionBatch[] @relation("TipDistributionBatchesActed")
+  platformProductFeedback     PlatformProductFeedback[]
 
   /**
    * Account-level security features (optional; does not change auth flow unless enforced).
@@ -619,6 +627,31 @@ model SupportTicketMessage {
 
   @@index([ticketId, createdAt])
   @@map("support_ticket_messages")
+}
+
+/// Authenticated manager/employee feedback about the CareTip product (not guest tip feedback).
+model PlatformProductFeedback {
+  id             String                           @id @default(cuid())
+  userId         String                           @map("user_id")
+  submitterRole  Role                             @map("submitter_role")
+  businessId     String?                          @map("business_id")
+  employeeId     String?                          @map("employee_id")
+  rating         Int                              @db.SmallInt
+  comment        String?                          @db.Text
+  adminStatus    PlatformProductFeedbackAdminStatus @default(new) @map("admin_status")
+  createdAt      DateTime                         @default(now()) @map("created_at")
+  updatedAt      DateTime                         @updatedAt @map("updated_at")
+
+  user     User      @relation(fields: [userId], references: [id], onDelete: Restrict)
+  business Business? @relation(fields: [businessId], references: [id], onDelete: SetNull)
+  employee Employee? @relation(fields: [employeeId], references: [id], onDelete: SetNull)
+
+  @@index([userId, createdAt(sort: Desc)])
+  @@index([adminStatus, createdAt(sort: Desc)])
+  @@index([businessId])
+  @@index([createdAt(sort: Desc)])
+  @@index([submitterRole])
+  @@map("platform_product_feedback")
 }
 
 /// Long-lived refresh tokens for session continuity (hashed at rest; rotated on every use).
@@ -1002,6 +1035,7 @@ model Business {
   tipDistributionAllocations EmployeeTipDistributionAllocation[]
   locations      Location[]
   supportTickets SupportTicket[]
+  platformProductFeedback PlatformProductFeedback[]
   employeeInvites EmployeeInvite[]
   subscription   Subscription?
   sponsoredAccessGrants SponsoredAccessGrant[]
@@ -1196,6 +1230,7 @@ model Employee {
   tipDistributionItems EmployeeTipDistributionItem[]
   instantPayoutRequests EmployeeInstantPayoutRequest[]
   stripePayouts         EmployeeStripePayout[]
+  platformProductFeedback PlatformProductFeedback[]
 
   @@index([businessId, locationId])
   @@index([businessId, isActive, name])

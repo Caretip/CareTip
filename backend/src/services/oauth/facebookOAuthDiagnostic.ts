@@ -16,10 +16,13 @@ export type FacebookOAuthDiagnosticStage =
   | "identity_verified"
   | "email_required"
   | "oauth_subject_lookup"
+  | "oauth_subject_lookup_result"
   | "oauth_subject_missing"
   | "signup_blocked"
   | "login_blocked"
   | "session_complete"
+  | "identity_verify_route"
+  | "http_response"
   | "failure";
 
 export function resolveFacebookOAuthDiagnosticId(req: Request): string {
@@ -51,4 +54,18 @@ export function logFacebookOAuthDiagnostic(
     ...fields,
   };
   console.info(FACEBOOK_OAUTH_LOG_PREFIX, JSON.stringify(payload));
+}
+
+/** Log outbound OAuth HTTP result for Facebook (safe metadata only). */
+export function logFacebookOAuthHttpResponse(
+  correlationId: string | undefined,
+  fields: {
+    httpStatus: number;
+    responseBranch: string;
+    responseCode?: string;
+    errorClass?: string;
+  },
+): void {
+  if (!correlationId?.trim()) return;
+  logFacebookOAuthDiagnostic(correlationId.trim(), "http_response", fields);
 }

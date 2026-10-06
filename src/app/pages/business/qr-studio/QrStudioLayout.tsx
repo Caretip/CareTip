@@ -44,9 +44,9 @@ export function QrStudioLayout() {
             feature={t("premium.qrStudio.feature")}
             icon={QrCode}
             title={t("business.qrStudio.title")}
-            subtitle={t("business.qrStudio.subtitle")}
-            hideSubtitleOnMobile
-            className="mb-4 pb-3"
+            subtitle={t("business.qrStudio.print.intro")}
+            hideSubtitleOnMobile={false}
+            className="print-qr-studio-module-header mb-4 pb-3"
           />
         ) : null}
         {accessBlock ? (

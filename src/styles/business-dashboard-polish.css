@@ -216,12 +216,12 @@
     align-items: stretch;
   }
 
-  .business-dashboard-hero .business-hero-visual {
-    margin-left: 0;
-    margin-right: 0;
-    justify-self: stretch;
+  .caretip-dashboard-shell.business-dashboard .business-dashboard-hero .business-hero-visual {
+    margin-left: auto;
+    margin-right: auto;
+    justify-self: center;
     width: 100%;
-    max-width: none;
+    max-width: min(100%, 26rem);
   }
 
   .business-dashboard-hero .business-hero-chart-frame {

@@ -447,21 +447,21 @@ export const EmployeeDashboard = memo(function EmployeeDashboard() {
             void getEmployeeProfile().then((p) => setReceivingPaused(p.receivingPaused === true));
           }}
         />
-        <PremiumPageHero className="employee-dashboard-hero mb-4 sm:mb-5 lg:mb-4">
+        <PremiumPageHero personality="overview" className="employee-dashboard-hero mb-4 sm:mb-5 lg:mb-4">
         <DashboardHero
           stackHeroOnMobile
           hideTabs
           actionsPlacement="belowText"
           mobileAlign="left"
-          className="!mb-0"
+          className="employee-hero-dashboard-root !mb-0"
           cardClassName="employee-hero-shell border-0 bg-transparent shadow-none lg:rounded-none lg:border-0 lg:bg-transparent lg:shadow-none"
           badgeClassName={cn(
-            "normal-case border-transparent bg-transparent px-0 py-0 text-[11px] max-lg:text-[12px] font-medium tracking-normal shadow-none",
+            "employee-hero-badge normal-case border-transparent bg-transparent px-0 py-0 text-[11px] max-lg:text-[12px] font-medium tracking-normal shadow-none",
             dashboardFormalGreetingBadgeClassName,
           )}
-          titleClassName="employee-hero-title max-lg:!leading-[1.08] lg:!leading-[1.12] tracking-tight max-lg:mx-0 max-lg:max-w-[22ch] max-lg:!text-[1.5625rem] max-lg:text-left lg:max-w-[22ch] lg:!text-[2rem] lg:text-left xl:!text-[2.125rem]"
-          descriptionClassName="employee-hero-description !line-clamp-2 max-w-[34ch] leading-relaxed text-muted-foreground/85 max-lg:mx-0 max-lg:text-left lg:max-w-md"
-          textColumnClassName="employee-hero-text-column lg:py-1 xl:pr-8"
+          titleClassName="employee-hero-title max-lg:!leading-[1.08] lg:!leading-[1.12] tracking-tight max-lg:mx-0 max-lg:max-w-[22ch] max-lg:!text-[1.5625rem] max-lg:text-left lg:max-w-[30ch] lg:!text-[2rem] lg:text-left xl:max-w-[34ch] xl:!text-[2.125rem]"
+          descriptionClassName="employee-hero-description !line-clamp-2 max-w-[34ch] leading-relaxed text-muted-foreground/85 max-lg:mx-0 max-lg:mb-0 max-lg:text-left lg:max-w-[38ch] xl:max-w-[42ch]"
+          textColumnClassName="employee-hero-text-column lg:py-0.5 xl:pr-4"
           badge={formatDashboardFormalGreeting(t, user.name, undefined, { firstNameOnly: true })}
           title={
             <>
@@ -476,25 +476,22 @@ export const EmployeeDashboard = memo(function EmployeeDashboard() {
               initial={motionReady ? { opacity: 0, y: 8 } : false}
               animate={{ opacity: 1, y: 0 }}
               transition={motionReady ? { duration: 0.45, ease: "easeOut" } : { duration: 0 }}
-              className="employee-hero-visual relative mx-auto flex w-full max-w-full flex-col items-center justify-center touch-manipulation lg:justify-self-center"
+              className="employee-hero-visual relative mx-auto flex w-full max-w-full flex-col items-center justify-center touch-manipulation lg:justify-self-stretch"
             >
-              <div
-                className={cn(
-                  "employee-hero-chart-frame employee-hero-chart-frame--photo",
-                  "relative mx-auto w-full max-w-full min-h-0 overflow-visible",
-                )}
-              >
+              <div className="employee-hero-illustration-card relative mx-auto w-full max-w-full min-h-0 overflow-hidden">
                 <MarketingPicture
                   src={employeeHeroWebp}
                   webpSrc={employeeHeroWebp}
                   avifSrc={employeeHeroAvif}
                   alt=""
-                  width={480}
-                  height={360}
-                  className="employee-hero-chart-frame__img block h-auto max-h-[min(48svh,360px)] w-full max-w-full object-contain object-center"
+                  width={640}
+                  height={480}
+                  className="employee-hero-illustration relative z-[1] block h-full w-full object-cover object-center"
                   priority
+                  loading="eager"
+                  fetchPriority="high"
                   fadeIn={false}
-                  decoding="async"
+                  decoding="sync"
                 />
               </div>
             </motion.div>
@@ -681,6 +678,7 @@ export const EmployeeDashboard = memo(function EmployeeDashboard() {
           </DashboardChartsIdleMount>
           </div>
           </FeatureGate>
+
         </div>
       </div>
 

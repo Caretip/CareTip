@@ -24,7 +24,7 @@
 
 @media (min-width: 1024px) {
   .caretip-landing .caretip-hero-grid {
-    --caretip-hero-frame-width: min(100%, 29rem);
+    --caretip-hero-frame-width: min(100%, 30.5rem);
     --caretip-hero-focal-x: 58%;
     --caretip-hero-focal-y: 45%;
   }
@@ -32,13 +32,13 @@
 
 @media (min-width: 1280px) {
   .caretip-landing .caretip-hero-grid {
-    --caretip-hero-frame-width: min(100%, 31rem);
+    --caretip-hero-frame-width: min(100%, 32.25rem);
   }
 }
 
 @media (min-width: 1440px) {
   .caretip-landing .caretip-hero-grid {
-    --caretip-hero-frame-width: min(100%, 32.5rem);
+    --caretip-hero-frame-width: min(100%, 33.75rem);
   }
 }
 

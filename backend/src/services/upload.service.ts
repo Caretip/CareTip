@@ -30,6 +30,7 @@ import {
   parseSupabasePublicStorageUrl,
 } from "../lib/supabaseStorageClient.js";
 import { buildUniqueStorageObjectNameFromExtension } from "../utils/storageObjectName.js";
+import { normalizeManagerLogoBuffer } from "../lib/logoImageNormalize.js";
 
 const UPLOAD_CONFIG_ERROR = "File upload isn't available right now. Please try again later.";
 
@@ -162,15 +163,18 @@ export async function uploadManagerBusinessLogoImage(
   businessId: string,
 ): Promise<string> {
   logStorageBackendOnce();
-  validateImageBufferForUpload(buffer, mimetype);
+  const normalized = await normalizeManagerLogoBuffer(buffer, mimetype);
+  validateImageBufferForUpload(normalized.buffer, normalized.mimetype);
+  const uploadBuffer = normalized.buffer;
+  const uploadMimetype = normalized.mimetype;
   const safeBizId = businessId.replace(/[^a-zA-Z0-9-_]/g, "");
-  const ext = extensionForImageBuffer(buffer);
+  const ext = extensionForImageBuffer(uploadBuffer);
   const name = buildUniqueStorageObjectNameFromExtension(ext);
 
   if (isSupabaseStorageConfiguredForUpload()) {
     try {
       const objectKey = `business-logos/${name}`;
-      const publicUrl = await uploadBufferToSupabaseWithTimeout(objectKey, buffer, mimetype);
+      const publicUrl = await uploadBufferToSupabaseWithTimeout(objectKey, uploadBuffer, uploadMimetype);
       await assertUploadedObjectReadableInBucket(publicUrl);
       return publicUrl;
     } catch (e) {
@@ -191,7 +195,7 @@ export async function uploadManagerBusinessLogoImage(
   const dir = path.join(process.cwd(), relDir);
   const fp = path.join(dir, name);
   mkdirSync(dir, { recursive: true });
-  writeFileSync(fp, buffer);
+  writeFileSync(fp, uploadBuffer);
   assertDiskFileExists(fp);
   const baseNorm = base.replace(/\/$/, "");
   const relUrl = `${relDir.replace(/\\/g, "/")}/${name}`;

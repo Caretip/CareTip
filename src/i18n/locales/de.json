@@ -1655,6 +1655,10 @@
       "signUpWithFacebook": "Mit Facebook registrieren",
       "appleSdkUnavailable": "Apple-Anmeldung ist konfiguriert, aber das Apple-JS-SDK konnte nicht geladen werden. Netzwerk und Services-ID prüfen.",
       "providerFailed": "{{provider}}-Anmeldung fehlgeschlagen. Bitte erneut versuchen.",
+      "facebookSdkLoading": "Facebook-Anmeldung wird geladen…",
+      "facebookSdkLoadFailed": "Facebook-Anmeldung konnte nicht geladen werden. Verbindung prüfen und erneut versuchen.",
+      "facebookPopupBlocked": "Facebook-Anmeldung konnte nicht geöffnet werden. Pop-ups für diese Website erlauben und erneut versuchen.",
+      "facebookIncomplete": "Facebook-Anmeldung wurde nicht abgeschlossen. Bitte erneut versuchen.",
       "linkingRequiredToast": "Die soziale Anmeldung konnte nicht abgeschlossen werden. Wenn Sie bereits ein CareTip-Konto haben, melden Sie sich an oder nutzen Sie „Passwort vergessen“."
     },
     "recovery": {
@@ -1747,6 +1751,9 @@
       "title": "Benachrichtigungen",
       "markAllRead": "Alle als gelesen markieren",
       "empty": "Alles erledigt",
+      "emptyHint": "Derzeit keine neuen Benachrichtigungen.",
+      "unreadCountLine": "{{count}} ungelesene Benachrichtigung",
+      "unreadCountLine_plural": "{{count}} ungelesene Benachrichtigungen",
       "viewAll": "Alle Benachrichtigungen anzeigen",
       "close": "Schließen",
       "read": "Gelesen",
@@ -2681,7 +2688,8 @@
       "payments": "Stripe-Auszahlungen",
       "paymentsConnect": "Connect",
       "paymentsHistory": "Auszahlungsverlauf",
-      "settings": "Einstellungen"
+      "settings": "Einstellungen",
+      "caretipFeedback": "CareTip-Feedback"
     },
     "business": {
       "overview": "Dashboard",
@@ -2690,6 +2698,7 @@
       "qrStudio": "QR Studio",
       "locations": "Standorte / Tische",
       "customers": "Kundenfeedback",
+      "caretipFeedback": "CareTip-Feedback",
       "stripe": "Stripe-Auszahlungen",
       "tipDistribution": "Trinkgeldverteilung",
       "billing": "Abrechnung",
@@ -2736,6 +2745,136 @@
         "availableOnPlan": "Verfügbar mit {{plan}}",
         "upgradeHint": "Upgrade zum Freischalten dieser Funktion",
         "maybeLater": "Vielleicht später"
+      }
+    }
+  },
+  "productReview": {
+    "modal": {
+      "title": "Feedback teilen",
+      "headline": "Gestalten Sie die Zukunft von CareTip mit",
+      "lead": "Ihre Erfahrung mit CareTip hilft uns, besser zu werden.",
+      "composerHeadline": "Gestalten Sie die Zukunft von CareTip mit",
+      "composerLead": "Ihr Feedback hilft uns, ein besseres CareTip-Erlebnis zu schaffen.",
+      "loading": "Feedback wird geladen",
+      "close": "Schließen",
+      "done": "Fertig",
+      "retry": "Erneut versuchen"
+    },
+    "sidebar": {
+      "hint": "Helfen Sie uns, das CareTip-Produkt zu verbessern."
+    },
+    "entry": {
+      "title": "CareTip verbessern",
+      "subtitle": "Helfen Sie uns, das CareTip-Produkt zu verbessern – nicht Gästebewertungen zum Trinkgeld.",
+      "cta": "Feedback teilen",
+      "ctaSubmitted": "Ihr Feedback ansehen"
+    },
+    "hero": {
+      "eyebrow": "Produktfeedback",
+      "title": "Gestalten Sie die Zukunft von CareTip mit",
+      "subtitle": "Ihre Erfahrung mit CareTip hilft uns, das Produkt für Unternehmen, Teams und Gäste zu verbessern. Dieses Feedback geht direkt an das CareTip-Produktteam—nicht an Ihre Kundenbewertungen."
+    },
+    "empty": {
+      "hint": "Geben Sie eine ehrliche Bewertung und optional Anmerkungen ab. Sie können Ihr Feedback jederzeit aktualisieren."
+    },
+    "form": {
+      "ratingHeading": "Wie bewerten Sie Ihr CareTip-Erlebnis?",
+      "ratingHint": "Wählen Sie die Note, die Ihre Gesamterfahrung mit der Plattform am besten beschreibt.",
+      "ratingGroupAria": "CareTip-Erfahrung mit 1 bis 5 Sternen bewerten",
+      "ratingRequired": "Bitte wählen Sie eine Sternebewertung.",
+      "commentHeading": "Mehr erzählen",
+      "commentOptional": "Optional",
+      "commentHint": "Konkrete Beispiele helfen uns, Prioritäten zu setzen.",
+      "commentLabel": "Ihr Feedback",
+      "commentPlaceholder": "Was könnten wir verbessern?",
+      "privacyNote": "Bitte keine personenbezogenen Gäste- oder Teamdaten einfügen. Name und Konto sind für CareTip-Administratoren sichtbar.",
+      "submit": "Feedback absenden",
+      "submitting": "Wird gesendet…",
+      "cancelEdit": "Abbrechen"
+    },
+    "rating": {
+      "scale": {
+        "1": "Verbesserungswürdig",
+        "2": "Könnte besser sein",
+        "3": "Geht in Ordnung",
+        "4": "Sehr gut",
+        "5": "Ausgezeichnet"
+      }
+    },
+    "latest": {
+      "title": "Ihr letztes Feedback",
+      "hint": "Frühere Eingaben bleiben gespeichert. Sie können jederzeit ein neues senden.",
+      "shareNew": "Neues Feedback teilen"
+    },
+    "submitted": {
+      "title": "Ihr Feedback",
+      "lead": "Vielen Dank, dass Sie uns helfen, CareTip zu verbessern.",
+      "update": "Feedback aktualisieren",
+      "sentOn": "Eingereicht am {{date}}",
+      "noComment": "Kein schriftliches Feedback.",
+      "acknowledgement": "Vielen Dank, dass Sie CareTip verbessern helfen. Unser Produktteam meldet sich bei Bedarf."
+    },
+    "success": {
+      "title": "Vielen Dank für Ihr Feedback!",
+      "body": "Ihr Feedback wurde an das CareTip-Team gesendet.",
+      "toast": "Feedback gesendet",
+      "viewSubmission": "Eingabe ansehen"
+    },
+    "admin": {
+      "title": "Produktfeedback",
+      "subtitle": "So erleben Unternehmen und Mitarbeitende CareTip.",
+      "loading": "Feedback wird geladen…",
+      "statusUpdated": "Status aktualisiert",
+      "empty": {
+        "title": "Noch kein Produktfeedback",
+        "description": "Feedback von CareTip-Unternehmen und Mitarbeitenden erscheint hier, sobald sie ihre Erfahrung teilen."
+      },
+      "kpi": {
+        "aria": "Produktfeedback-Zusammenfassung",
+        "total": "Feedback gesamt",
+        "average": "Durchschnittsnote",
+        "recent30d": "Letzte 30 Tage",
+        "needsAttention": "Neu (diese Seite)"
+      },
+      "filters": {
+        "status": "Nach Status filtern",
+        "role": "Nach Rolle filtern",
+        "rating": "Nach Bewertung filtern",
+        "allStatuses": "Alle Status",
+        "allRoles": "Alle Rollen",
+        "allRatings": "Alle Bewertungen"
+      },
+      "status": {
+        "new": "Neu",
+        "read": "Geprüft",
+        "archived": "Archiviert"
+      },
+      "role": {
+        "MANAGER": "Unternehmen",
+        "EMPLOYEE": "Mitarbeitende"
+      },
+      "table": {
+        "user": "Nutzer",
+        "role": "Rolle",
+        "rating": "Bewertung",
+        "preview": "Feedback",
+        "status": "Status",
+        "date": "Datum"
+      },
+      "detail": {
+        "title": "Feedback-Details",
+        "subtitle": "CareTip-Produktfeedback",
+        "authenticatedUser": "Von einem authentifizierten Nutzer",
+        "email": "Konto",
+        "role": "Rolle",
+        "business": "Betrieb",
+        "employee": "Mitarbeiter",
+        "rating": "Bewertung",
+        "ratingAria": "Bewertung {{rating}} von 5",
+        "ratingOutOf": "{{rating}} von 5",
+        "comment": "Feedback",
+        "submissionDetails": "Einreichungsdetails",
+        "statusField": "Admin-Status"
       }
     }
   },
@@ -5715,7 +5854,11 @@
         "stripeAction": "Stripe: Handlung erforderlich",
         "stripeDisconnected": "Stripe nicht verbunden",
         "groupBusiness": "Unternehmen",
+        "cartHeading": "Ihre Druckbestellung",
+        "cartItemCount": "{{count}} Artikel",
         "cartEmpty": "Wählen Sie QR-Codes für Ihre Druckbestellung.",
+        "cartEmptyTitle": "Noch keine QR-Codes ausgewählt",
+        "cartEmptyHint": "Wählen Sie QR-Codes im Zuweisungsbereich, um sie zur Druckbestellung hinzuzufügen.",
         "cartTitle": "Ihre Druckbestellung · {{count}} Artikel",
         "printing": "Druck",
         "total": "Gesamt",
@@ -7930,7 +8073,8 @@
         "auditLogs": "Audit-Protokolle",
         "security": "Sicherheit",
         "usage": "Nutzungsberichte",
-        "commercial": "Commercial Intelligence"
+        "commercial": "Commercial Intelligence",
+        "productFeedback": "Produktfeedback"
       },
       "system": {
         "health": "Systemstatus",

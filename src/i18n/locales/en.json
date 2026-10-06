@@ -1655,6 +1655,10 @@
       "signUpWithFacebook": "Sign up with Facebook",
       "appleSdkUnavailable": "Apple Sign In is configured but the Apple JS SDK could not load. Check network access and Services ID settings.",
       "providerFailed": "{{provider}} sign-in failed. Please try again.",
+      "facebookSdkLoading": "Loading Facebook sign-in…",
+      "facebookSdkLoadFailed": "Facebook sign-in could not load. Check your connection and try again.",
+      "facebookPopupBlocked": "Facebook sign-in could not open. Allow pop-ups for this site and try again.",
+      "facebookIncomplete": "Facebook sign-in did not finish. Please try again.",
       "linkingRequiredToast": "We couldn't complete social sign-in. If you already have a CareTip account, please sign in or use Forgot Password to recover access."
     },
     "recovery": {
@@ -1747,6 +1751,9 @@
       "title": "Notifications",
       "markAllRead": "Mark all read",
       "empty": "You're all caught up",
+      "emptyHint": "No new notifications right now.",
+      "unreadCountLine": "{{count}} unread notification",
+      "unreadCountLine_plural": "{{count}} unread notifications",
       "viewAll": "View all notifications",
       "close": "Close",
       "read": "Read",
@@ -2681,7 +2688,8 @@
       "payments": "Stripe Payout",
       "paymentsConnect": "Connect",
       "paymentsHistory": "Payout History",
-      "settings": "Settings"
+      "settings": "Settings",
+      "caretipFeedback": "CareTip Feedback"
     },
     "business": {
       "overview": "Dashboard",
@@ -2690,6 +2698,7 @@
       "qrStudio": "QR Studio",
       "locations": "Locations / Tables",
       "customers": "Customer Feedback",
+      "caretipFeedback": "CareTip Feedback",
       "stripe": "Stripe Payout",
       "tipDistribution": "Tip Distribution",
       "billing": "Billing",
@@ -2736,6 +2745,136 @@
         "availableOnPlan": "Available on {{plan}}",
         "upgradeHint": "Upgrade to unlock this feature",
         "maybeLater": "Maybe later"
+      }
+    }
+  },
+  "productReview": {
+    "modal": {
+      "title": "Share your feedback",
+      "headline": "Help shape the future of CareTip",
+      "lead": "Your experience using CareTip helps us improve.",
+      "composerHeadline": "Help Shape the Future of CareTip",
+      "composerLead": "Your feedback helps us build a better CareTip experience.",
+      "loading": "Loading your feedback",
+      "close": "Close",
+      "done": "Done",
+      "retry": "Try again"
+    },
+    "sidebar": {
+      "hint": "Help us improve the CareTip product."
+    },
+    "entry": {
+      "title": "Help improve CareTip",
+      "subtitle": "Help us improve the CareTip product—not guest reviews about tipping.",
+      "cta": "Share your feedback",
+      "ctaSubmitted": "View your feedback"
+    },
+    "hero": {
+      "eyebrow": "Product feedback",
+      "title": "Help shape the future of CareTip",
+      "subtitle": "Your experience using CareTip helps us improve the product for businesses, teams, and guests. This goes directly to the CareTip product team—not your customer reviews."
+    },
+    "empty": {
+      "hint": "Share an honest rating and optional notes. You can update your feedback anytime."
+    },
+    "form": {
+      "ratingHeading": "How would you rate your CareTip experience?",
+      "ratingHint": "Choose the score that best reflects your overall experience with the platform.",
+      "ratingGroupAria": "Rate your CareTip experience from 1 to 5 stars",
+      "ratingRequired": "Please select a star rating.",
+      "commentHeading": "Tell us more",
+      "commentOptional": "Optional",
+      "commentHint": "Specific examples help us prioritize improvements.",
+      "commentLabel": "Your feedback",
+      "commentPlaceholder": "What could we improve?",
+      "privacyNote": "Do not include guest or staff personal data. Your name and account are visible to CareTip administrators.",
+      "submit": "Submit feedback",
+      "submitting": "Submitting…",
+      "cancelEdit": "Cancel"
+    },
+    "rating": {
+      "scale": {
+        "1": "Needs improvement",
+        "2": "Could be better",
+        "3": "It's okay",
+        "4": "Very good",
+        "5": "Excellent"
+      }
+    },
+    "latest": {
+      "title": "Your latest feedback",
+      "hint": "Previous submissions are kept. You can send us another anytime.",
+      "shareNew": "Share new feedback"
+    },
+    "submitted": {
+      "title": "Your feedback",
+      "lead": "Thanks for helping us improve CareTip.",
+      "update": "Update feedback",
+      "sentOn": "Submitted {{date}}",
+      "noComment": "No written feedback provided.",
+      "acknowledgement": "Thank you for helping us improve CareTip. Our product team may follow up if we need clarification."
+    },
+    "success": {
+      "title": "Thanks for your feedback!",
+      "body": "Your feedback has been sent to the CareTip team.",
+      "toast": "Feedback sent",
+      "viewSubmission": "View your submission"
+    },
+    "admin": {
+      "title": "Product feedback",
+      "subtitle": "Understand how businesses and employees experience CareTip.",
+      "loading": "Loading feedback…",
+      "statusUpdated": "Status updated",
+      "empty": {
+        "title": "No product feedback yet",
+        "description": "Feedback from CareTip businesses and employees will appear here as they share their experience."
+      },
+      "kpi": {
+        "aria": "Product feedback summary",
+        "total": "Total feedback",
+        "average": "Average rating",
+        "recent30d": "Last 30 days",
+        "needsAttention": "New (this page)"
+      },
+      "filters": {
+        "status": "Filter by status",
+        "role": "Filter by role",
+        "rating": "Filter by rating",
+        "allStatuses": "All statuses",
+        "allRoles": "All roles",
+        "allRatings": "All ratings"
+      },
+      "status": {
+        "new": "New",
+        "read": "Reviewed",
+        "archived": "Archived"
+      },
+      "role": {
+        "MANAGER": "Business",
+        "EMPLOYEE": "Employee"
+      },
+      "table": {
+        "user": "User",
+        "role": "Role",
+        "rating": "Rating",
+        "preview": "Feedback",
+        "status": "Status",
+        "date": "Date"
+      },
+      "detail": {
+        "title": "Feedback detail",
+        "subtitle": "CareTip product feedback",
+        "authenticatedUser": "From an authenticated user",
+        "email": "Account",
+        "role": "Role",
+        "business": "Business",
+        "employee": "Employee",
+        "rating": "Rating",
+        "ratingAria": "Rating {{rating}} out of 5",
+        "ratingOutOf": "{{rating}} out of 5",
+        "comment": "Feedback",
+        "submissionDetails": "Submission details",
+        "statusField": "Admin status"
       }
     }
   },
@@ -6083,7 +6222,11 @@
         "stripeAction": "Stripe action required",
         "stripeDisconnected": "Stripe not connected",
         "groupBusiness": "Business",
+        "cartHeading": "Your print order",
+        "cartItemCount": "{{count}} items",
         "cartEmpty": "Select QR codes to add them to your print order.",
+        "cartEmptyTitle": "No QR codes selected yet",
+        "cartEmptyHint": "Select QR codes from the assignment panel to add them to your print order.",
         "cartTitle": "Your print order · {{count}} items",
         "printing": "Printing",
         "total": "Total",
@@ -7933,7 +8076,8 @@
         "auditLogs": "Audit Logs",
         "security": "Security",
         "usage": "Usage Reports",
-        "commercial": "Commercial Intelligence"
+        "commercial": "Commercial Intelligence",
+        "productFeedback": "Product feedback"
       },
       "system": {
         "health": "System Health",

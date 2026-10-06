@@ -54,6 +54,8 @@ export default defineConfig(({ mode }) => {
       /** Pre-bundle subscription gating — avoids flaky lazy-route fetch of raw .ts in dev. */
       'src/app/lib/subscriptionCapabilities.ts',
       'src/app/lib/subscriptionFeatureCatalog.ts',
+      /** Single React context instance for business guidelines (lazy dashboard chunks). */
+      'src/app/contexts/businessGuidelinesContextRef.ts',
     ],
     esbuildOptions: {
       target: 'es2022',
@@ -222,6 +224,8 @@ export default defineConfig(({ mode }) => {
 
   server: {
     host: true,
+    /** Optional: `npm run dev:https` for Facebook Login without HTTP-page warnings (self-signed cert). */
+    https: loaded.CARETIP_DEV_HTTPS === 'true' ? {} : undefined,
     watch: {
       ignored: ['**/_reference/**', '**/TrickyFreshString.zip'],
     },

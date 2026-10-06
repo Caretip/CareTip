@@ -1,4 +1,4 @@
-import { BellRing, Check, Clock } from "lucide-react";
+import { Bell, Check } from "lucide-react";
 import { memo, useCallback, type ReactNode } from "react";
 
 import { Button } from "@/components/ui/button";
@@ -7,6 +7,8 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/app/components/ui/popover";
+import { getNotificationCategoryStyle } from "@/app/lib/notificationInboxUi";
+import type { NotificationCategory } from "@/app/lib/notificationNavigation";
 import { cn } from "@/lib/utils";
 
 export type NotificationAlertItem = {
@@ -15,7 +17,9 @@ export type NotificationAlertItem = {
   message: string;
   time: string;
   read: boolean;
+  /** @deprecated Bell dropdown uses category icons instead of initials. */
   initials?: string;
+  category?: NotificationCategory;
 };
 
 export type NotificationAlertDialogLabels = {
@@ -26,6 +30,7 @@ export type NotificationAlertDialogLabels = {
   close: string;
   viewAll: string;
   empty: string;
+  emptyHint?: string;
   loadError?: string;
   retry?: string;
   readLabel: string;
@@ -49,13 +54,6 @@ export type NotificationAlertDialogProps = {
   onRetryList?: () => void;
 };
 
-function initialsFromTitle(title: string): string {
-  const parts = title.trim().split(/\s+/).filter(Boolean);
-  if (parts.length === 0) return "?";
-  if (parts.length === 1) return parts[0]!.slice(0, 2).toUpperCase();
-  return `${parts[0]![0] ?? ""}${parts[1]![0] ?? ""}`.toUpperCase();
-}
-
 const NotificationRow = memo(function NotificationRow({
   notification,
   onSelect,
@@ -65,7 +63,9 @@ const NotificationRow = memo(function NotificationRow({
   onSelect: () => void;
   readLabel: string;
 }) {
-  const initials = notification.initials ?? initialsFromTitle(notification.title);
+  const category = notification.category ?? "system";
+  const style = getNotificationCategoryStyle(category);
+  const Icon = style.icon;
 
   return (
     <div
@@ -78,43 +78,27 @@ const NotificationRow = memo(function NotificationRow({
         }
       }}
       className={cn(
-        "flex w-full min-w-0 cursor-pointer gap-3 overflow-hidden px-1 py-3 transition-colors duration-150",
-        "rounded-none hover:bg-muted/40",
-        notification.read ? "bg-transparent" : "bg-muted/25 shadow-[inset_2px_0_0_hsl(var(--primary))]",
+        "caretip-notification-panel__row",
+        notification.read ? "caretip-notification-panel__row--read" : "caretip-notification-panel__row--unread",
       )}
       onClick={onSelect}
     >
-      <div
-        className={cn(
-          "flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-xs font-medium",
-          notification.read
-            ? "bg-muted text-muted-foreground"
-            : "bg-muted text-foreground",
-        )}
-      >
-        {initials}
+      <div className={cn("caretip-notification-panel__icon", style.bgClass)} aria-hidden>
+        <Icon className={cn("h-4 w-4", style.iconClass)} />
       </div>
-      <div className="min-w-0 flex-1 overflow-hidden">
-        <div className="flex min-w-0 flex-col gap-0.5 sm:flex-row sm:items-start sm:justify-between sm:gap-2">
-          <p
-            className={cn(
-              "min-w-0 truncate text-sm font-medium",
-              notification.read ? "text-muted-foreground" : "text-foreground",
-            )}
-          >
-            {notification.title}
-          </p>
-          <div className="flex shrink-0 items-center whitespace-nowrap text-xs text-muted-foreground">
-            <Clock className="mr-1 h-3 w-3 shrink-0" aria-hidden />
-            <span className="truncate">{notification.time}</span>
-          </div>
+      <div className="caretip-notification-panel__body">
+        <div className="caretip-notification-panel__row-top">
+          <p className="caretip-notification-panel__row-title">{notification.title}</p>
+          <time className="caretip-notification-panel__time" dateTime={notification.time}>
+            {notification.time}
+          </time>
         </div>
-        <p className="line-clamp-2 break-words text-xs text-muted-foreground">{notification.message}</p>
+        <p className="caretip-notification-panel__message">{notification.message}</p>
         {notification.read ? (
-          <div className="mt-1.5 flex items-center text-xs text-muted-foreground">
-            <Check className="mr-1 h-3 w-3" aria-hidden />
+          <span className="caretip-notification-panel__read-meta">
+            <Check className="h-3 w-3 shrink-0" aria-hidden />
             {readLabel}
-          </div>
+          </span>
         ) : null}
       </div>
     </div>
@@ -160,6 +144,7 @@ export function NotificationAlertDialog({
   );
 
   const previewItems = items.slice(0, previewCount);
+  const summaryLine = labels.unreadSummary(unreadCount);
 
   return (
     <Popover open={open} onOpenChange={onOpenChange}>
@@ -172,7 +157,7 @@ export function NotificationAlertDialog({
               className,
             )}
           >
-            <BellRing className="mr-1 h-5 w-5" aria-hidden />
+            <Bell className="mr-1 h-5 w-5" aria-hidden />
             {labels.trigger ?? "Notifications"}
             {unreadCount > 0 ? (
               <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-destructive text-xs text-destructive-foreground">
@@ -189,91 +174,84 @@ export function NotificationAlertDialog({
         collisionPadding={12}
         onOpenAutoFocus={(e) => e.preventDefault()}
         className={cn(
-          "caretip-notification-panel flex max-h-[min(92dvh,32rem)] w-[min(100vw-2rem,28rem)] flex-col gap-0 overflow-hidden",
-          "rounded-lg border border-border bg-popover p-0 shadow-none",
+          "caretip-notification-panel caretip-notification-panel--premium flex max-h-[min(92dvh,34rem)] w-[min(100vw-2rem,28rem)] flex-col gap-0 overflow-hidden p-0",
           "data-[state=open]:animate-in data-[state=closed]:animate-out",
           "data-[state=open]:fade-in-0 data-[state=closed]:fade-out-0",
+          "data-[state=open]:slide-in-from-top-1 data-[state=closed]:slide-out-to-top-1",
           "duration-150 origin-[var(--radix-popover-content-transform-origin)]",
         )}
       >
-        <div className="flex min-h-0 flex-1 flex-col overflow-hidden px-4 pt-4">
-          <div className="shrink-0 space-y-2 text-left">
-            <div className="flex flex-wrap items-start justify-between gap-x-2 gap-y-1">
-              <div className="flex min-w-0 items-center gap-2">
-                <h2 className="truncate text-base font-semibold leading-snug tracking-tight text-foreground">
-                  {labels.title}
-                </h2>
-              </div>
-              {unreadCount > 0 ? (
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  onClick={handleMarkAllRead}
-                  className="h-auto max-w-full shrink-0 px-2 py-1 text-xs font-medium text-muted-foreground hover:bg-transparent hover:text-foreground"
-                >
-                  <span className="truncate">{labels.markAllRead}</span>
+        <header className="caretip-notification-panel__header shrink-0">
+          <div className="flex items-start justify-between gap-3">
+            <h2 className="caretip-notification-panel__title">{labels.title}</h2>
+            <button
+              type="button"
+              className="caretip-notification-panel__mark-all shrink-0 rounded-md px-1 py-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              onClick={handleMarkAllRead}
+              disabled={unreadCount === 0}
+            >
+              {labels.markAllRead}
+            </button>
+          </div>
+          <p className="caretip-notification-panel__summary">{summaryLine}</p>
+        </header>
+
+        <div className="caretip-notification-panel__scroll min-h-0 flex-1" aria-live="polite">
+          {loading ? (
+            <div aria-busy="true">
+              {[0, 1, 2].map((i) => (
+                <div key={i} className="caretip-notification-panel__skeleton" />
+              ))}
+            </div>
+          ) : previewItems.length === 0 && (listError || unreadCount > 0) ? (
+            <div className="caretip-notification-panel__empty">
+              <p className="caretip-notification-panel__empty-hint">
+                {labels.loadError ?? listError ?? labels.empty}
+              </p>
+              {onRetryList ? (
+                <Button type="button" variant="outline" size="sm" className="mt-3" onClick={onRetryList}>
+                  {labels.retry ?? "Retry"}
                 </Button>
               ) : null}
             </div>
-            <p className="break-words text-sm text-muted-foreground">
-              {labels.unreadSummary(unreadCount)}
-            </p>
-          </div>
-          <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain py-3">
-            <div className="divide-y divide-border/70">
-              {loading ? (
-                <div className="space-y-2" aria-busy aria-live="polite">
-                  {[0, 1, 2].map((i) => (
-                    <div
-                      key={i}
-                      className="h-[72px] animate-pulse rounded-lg bg-muted/80"
-                    />
-                  ))}
-                </div>
-              ) : previewItems.length === 0 && (listError || unreadCount > 0) ? (
-                <div className="space-y-3 py-4 text-center">
-                  <p className="text-sm text-muted-foreground">
-                    {labels.loadError ?? listError ?? labels.empty}
-                  </p>
-                  {onRetryList ? (
-                    <Button type="button" variant="outline" size="sm" onClick={onRetryList}>
-                      {labels.retry ?? "Retry"}
-                    </Button>
-                  ) : null}
-                </div>
-              ) : previewItems.length === 0 ? (
-                <p className="py-6 text-center text-sm text-muted-foreground">{labels.empty}</p>
-              ) : (
-                previewItems.map((notification) => (
-                  <NotificationRow
-                    key={notification.id}
-                    notification={notification}
-                    readLabel={labels.readLabel}
-                    onSelect={() => handleSelect(notification.id)}
-                  />
-                ))
-              )}
+          ) : previewItems.length === 0 ? (
+            <div className="caretip-notification-panel__empty">
+              <div className="caretip-notification-panel__empty-icon" aria-hidden>
+                <Bell className="h-4 w-4" />
+              </div>
+              <p className="caretip-notification-panel__empty-title">{labels.empty}</p>
+              {labels.emptyHint ? (
+                <p className="caretip-notification-panel__empty-hint">{labels.emptyHint}</p>
+              ) : null}
             </div>
-          </div>
+          ) : (
+            previewItems.map((notification) => (
+              <NotificationRow
+                key={notification.id}
+                notification={notification}
+                readLabel={labels.readLabel}
+                onSelect={() => handleSelect(notification.id)}
+              />
+            ))
+          )}
         </div>
-        <div className="flex shrink-0 flex-col-reverse gap-2 border-t border-border/70 p-4 sm:flex-row sm:justify-stretch">
-          <Button
+
+        <footer className="caretip-notification-panel__footer shrink-0">
+          <button
             type="button"
-            variant="outline"
-            className="mt-0 w-full min-w-0 rounded-lg sm:flex-1"
+            className="caretip-notification-panel__close rounded-md px-1 py-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             onClick={() => onOpenChange(false)}
           >
-            <span className="truncate">{labels.close}</span>
-          </Button>
+            {labels.close}
+          </button>
           <Button
             type="button"
-            className="w-full min-w-0 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 sm:flex-1"
+            className="caretip-notification-panel__view-all bg-primary text-primary-foreground hover:bg-primary/90"
             onClick={handleViewAll}
           >
-            <span className="truncate">{labels.viewAll}</span>
+            {labels.viewAll}
           </Button>
-        </div>
+        </footer>
       </PopoverContent>
     </Popover>
   );

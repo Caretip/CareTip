@@ -24,6 +24,13 @@ export type EmployeeDashboardNavChild = {
 export type EmployeeDashboardNavEntry =
   | ({ type: "link" } & EmployeeDashboardNavItem)
   | {
+      type: "action";
+      id: string;
+      labelKey: string;
+      action: "productFeedback";
+      separated?: boolean;
+    }
+  | {
       type: "group";
       id: string;
       labelKey: string;
@@ -57,6 +64,13 @@ export const employeeDashboardNavEntries: readonly EmployeeDashboardNavEntry[] =
     ],
   },
   { type: "link", labelKey: "dashboardNav.employee.settings", href: "/employee/settings", icon: "settings" },
+  {
+    type: "action",
+    id: "caretip-product-feedback",
+    labelKey: "dashboardNav.employee.caretipFeedback",
+    action: "productFeedback",
+    separated: true,
+  },
 ] as const;
 
 /** Flat links for lock checks (excludes group parents). */

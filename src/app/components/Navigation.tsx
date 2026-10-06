@@ -139,7 +139,7 @@ export const Navigation = memo(function Navigation({ variant: _variant = "defaul
                   className="caretip-public-mobile-nav-drawer__toolbar relative z-30 flex shrink-0 items-center gap-2"
                   onClick={(e) => e.stopPropagation()}
                 >
-                  <ThemeQuickToggle variant="drawer" />
+                  <ThemeQuickToggle variant="drawer" className="caretip-theme-toggle--utility" />
                   <button
                     type="button"
                     onClick={() => closeMobileMenu("toggle")}
@@ -283,7 +283,7 @@ export const Navigation = memo(function Navigation({ variant: _variant = "defaul
             </PrefetchLink>
 
             <div className="caretip-public-nav__mobile-lang relative z-[2] flex shrink-0 items-center justify-end">
-              <LanguageSwitcher className="caretip-public-nav__lang-compact" />
+              <LanguageSwitcher className="caretip-lang-select--utility" />
             </div>
           </div>
 
@@ -333,15 +333,17 @@ export const Navigation = memo(function Navigation({ variant: _variant = "defaul
               ))}
             </div>
 
-            <div className="relative z-[2] flex shrink-0 items-center justify-end gap-2.5 xl:gap-3.5">
-              <ThemeQuickToggle />
-              <LanguageSwitcher />
+            <div className="caretip-public-nav__actions relative z-[2] shrink-0">
+              <div className="caretip-public-nav__utilities">
+                <LanguageSwitcher className="caretip-lang-select--utility" />
+                <ThemeQuickToggle className="caretip-theme-toggle--utility" />
+              </div>
               {isLandingHome ? (
                 <PrefetchLink
                   to="/join"
                   className={cn(
-                    landingUi.navCtaPrimary,
-                    "whitespace-nowrap px-3.5 py-2 text-sm",
+                    "caretip-public-nav-join whitespace-nowrap",
+                    location.pathname === "/join" && "text-primary",
                   )}
                 >
                   {t("nav.staffPortal")}
@@ -350,9 +352,9 @@ export const Navigation = memo(function Navigation({ variant: _variant = "defaul
               <PrefetchLink
                 to="/login"
                 className={cn(
-                  linkClass,
-                  "whitespace-nowrap",
-                  location.pathname === "/login" && "text-primary bg-primary/[0.06] dark:bg-primary/[0.1]",
+                  landingUi.navCtaPrimary,
+                  "caretip-public-nav__cta-primary whitespace-nowrap px-3.5 py-2 text-sm",
+                  location.pathname === "/login" && "ring-2 ring-primary/30",
                 )}
               >
                 {t("nav.logIn")}

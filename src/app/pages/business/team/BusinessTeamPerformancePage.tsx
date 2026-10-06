@@ -19,6 +19,9 @@ import { useBusinessPageBoot } from "../../../lib/useBusinessPageBoot";
 const tabTriggerClass =
   "rounded-none border-b-2 border-transparent bg-transparent px-3 py-2 shadow-none data-[state=active]:border-foreground data-[state=active]:bg-transparent data-[state=active]:shadow-none";
 
+const leaderboardTabTriggerClass =
+  "rounded-none border-b-2 border-transparent bg-transparent px-3 py-2 text-primary shadow-none data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:text-primary data-[state=active]:shadow-none";
+
 /** Team → Performance: executive insights + leaderboard workspace. Gated at layout level. */
 export function BusinessTeamPerformancePage() {
   const { t } = useTranslation();
@@ -63,7 +66,7 @@ export function BusinessTeamPerformancePage() {
             <TabsTrigger value="overview" className={tabTriggerClass}>
               {t("business.team.performance.tabOverview")}
             </TabsTrigger>
-            <TabsTrigger value="leaderboard" className={tabTriggerClass}>
+            <TabsTrigger value="leaderboard" className={leaderboardTabTriggerClass}>
               {t("business.team.performance.tabLeaderboard")}
             </TabsTrigger>
           </TabsList>

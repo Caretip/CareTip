@@ -108,6 +108,7 @@ export const platformAdminNavEntries: readonly PlatformAdminNavEntry[] = [
       { labelKey: "admin.sidebar.reports.security", href: `${PLATFORM_REPORTS_BASE}/security` },
       { labelKey: "admin.sidebar.reports.usage", href: `${PLATFORM_REPORTS_BASE}/usage` },
       { labelKey: "admin.sidebar.reports.commercial", href: `${PLATFORM_REPORTS_BASE}/commercial` },
+      { labelKey: "admin.sidebar.reports.productFeedback", href: `${PLATFORM_REPORTS_BASE}/product-feedback` },
     ],
   },
   {

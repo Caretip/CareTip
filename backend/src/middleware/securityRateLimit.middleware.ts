@@ -123,6 +123,19 @@ export const feedbackTipRateLimit: RequestHandler = (req, res, next) => {
   );
 };
 
+export const productReviewMeRateLimit: RequestHandler = (req, res, next) => {
+  const ip = clientIp(req);
+  const uid = req.user?.sub ?? req.user?.userId ?? req.user?.id;
+  const { productReviewMe: lim } = securityRateLimits;
+  const layers: RateLimitLayer[] = [
+    { name: "ip", key: `sec:product-review:ip:${ip}`, ...lim.ip },
+  ];
+  if (uid) {
+    layers.push({ name: "user", key: `sec:product-review:user:${uid}`, ...lim.user });
+  }
+  runLayers(req, res, next, layers, FEEDBACK_MSG, "product-review-me");
+};
+
 export const publicSocketTokenRateLimit: RequestHandler = (req, res, next) => {
   const ip = clientIp(req);
   const { publicSocketToken: lim } = securityRateLimits;

@@ -34,6 +34,7 @@ import {
 } from "../utils/httpErrors.js";
 import {
   logFacebookOAuthDiagnostic,
+  logFacebookOAuthHttpResponse,
   resolveFacebookOAuthDiagnosticId,
 } from "../services/oauth/facebookOAuthDiagnostic.js";
 import {
@@ -937,6 +938,11 @@ export async function oauth(req: Request, res: Response) {
         },
       });
       if (!oauthMfaUser || !mfaLoginService.needsMfaLoginChallenge(oauthMfaUser)) {
+        logFacebookOAuthHttpResponse(facebookDiagnosticId, {
+          httpStatus: 401,
+          responseBranch: "oauth_mfa_invalid",
+          responseCode: "AUTH_INVALID_CREDENTIALS",
+        });
         return res.status(401).json({ message: AUTH_INVALID_CREDENTIALS_MESSAGE });
       }
       return jsonMfaLoginChallenge(req, res, oauthMfaUser);
@@ -1047,12 +1053,24 @@ export async function oauth(req: Request, res: Response) {
       err instanceof oauthAuthService.OAuthSignInFailedError ||
       err instanceof oauthAuthService.OAuthLinkingRequiredError
     ) {
+      logFacebookOAuthHttpResponse(facebookDiagnosticId, {
+        httpStatus: 401,
+        responseBranch: "oauth_sign_in_failed",
+        responseCode: AUTH_OAUTH_SIGN_IN_FAILED_CODE,
+        errorClass: err.constructor.name,
+      });
       return res.status(401).json({
         message: AUTH_OAUTH_GENERIC_FAILURE_MESSAGE,
         code: AUTH_OAUTH_SIGN_IN_FAILED_CODE,
       });
     }
     if (err instanceof oauthAuthService.OAuthEmailRequiredError) {
+      logFacebookOAuthHttpResponse(facebookDiagnosticId, {
+        httpStatus: 400,
+        responseBranch: "oauth_email_required",
+        responseCode: err.code,
+        errorClass: err.constructor.name,
+      });
       return res.status(400).json({
         message: err.message,
         code: err.code,
@@ -1061,6 +1079,12 @@ export async function oauth(req: Request, res: Response) {
     const message = err instanceof Error ? err.message : "OAuth sign-in failed";
     if (err instanceof oauthAuthService.OAuthTokenVerificationError) {
       logServerError("auth.oauth.verifyIdToken", err);
+      logFacebookOAuthHttpResponse(facebookDiagnosticId, {
+        httpStatus: 401,
+        responseBranch: "oauth_token_verification_failed",
+        responseCode: oauthAuthService.OAUTH_TOKEN_VERIFICATION_FAILED_CODE,
+        errorClass: err.constructor.name,
+      });
       return res.status(401).json({
         message: `${err.provider[0]!.toUpperCase()}${err.provider.slice(1)} sign-in could not be verified.`,
         code: oauthAuthService.OAUTH_TOKEN_VERIFICATION_FAILED_CODE,

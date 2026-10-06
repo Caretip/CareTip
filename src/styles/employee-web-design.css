@@ -207,10 +207,8 @@
   padding-bottom: 0 !important;
 }
 
-.caretip-dashboard-shell.employee-dashboard .employee-hero-chart-frame--photo,
-.caretip-dashboard-shell.employee-dashboard .employee-hero-chart-frame--photo .employee-hero-chart-frame__img {
-  border-radius: 0.75rem !important;
-  overflow: hidden;
+.caretip-dashboard-shell.employee-dashboard .employee-hero-illustration-card {
+  border-radius: 0.625rem !important;
 }
 
 /* Buttons: moderately rounded, not capsules */

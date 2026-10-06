@@ -729,6 +729,10 @@ export async function anonymizeUser(
       where: { authorUserId: id },
       data: { authorUserId: null },
     });
+    await tx.platformProductFeedback.updateMany({
+      where: { userId: id },
+      data: { comment: null },
+    });
 
     await writeDurableLifecycleAudit(tx, {
       actorId,

@@ -17,8 +17,9 @@ const OPTIONS: { value: ThemePreference; labelKey: string; Icon: typeof Sun }[] 
   { value: "system", labelKey: "theme.appearance.system", Icon: Monitor },
 ];
 
+/** Flat icon control — matches dashboard header (no circular card). */
 const triggerPillClass =
-  "touch-manipulation inline-flex min-h-10 min-w-10 shrink-0 items-center justify-center rounded-full border border-border bg-card px-3 py-2 text-foreground shadow-sm transition-[colors,opacity,transform] outline-none hover:bg-muted/60 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background active:scale-[0.97] active:opacity-90 lg:min-h-9";
+  "caretip-theme-quick-toggle touch-manipulation inline-flex shrink-0 items-center justify-center rounded-lg border-0 bg-transparent p-2 text-foreground shadow-none transition-colors outline-none hover:bg-muted/80 active:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background min-h-9 min-w-9 lg:min-h-11 lg:min-w-11";
 
 const drawerMenuClass =
   "absolute right-0 top-[calc(100%+0.5rem)] z-20 flex min-w-[12.5rem] flex-col gap-0.5 rounded-xl border border-border bg-popover p-1.5 text-popover-foreground shadow-xl";
@@ -72,7 +73,7 @@ export const ThemeQuickToggle = memo(function ThemeQuickToggle({
       >
         <button
           type="button"
-          className={triggerPillClass}
+          className={cn(triggerPillClass, className)}
           aria-label={t("theme.appearance.toggleAria")}
           aria-expanded={open}
           aria-haspopup="listbox"

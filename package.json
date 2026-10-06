@@ -11,6 +11,7 @@
     "predev": "node scripts/sync-brand-public-assets.mjs && node scripts/sync-font-assets.mjs && node scripts/generate-fcm-sw.mjs",
     "build": "vite build && node ./node_modules/tsx/dist/cli.mjs ./scripts/prerender-public-seo-html.ts",
     "dev": "vite",
+    "dev:https": "vite --https",
     "dev:api": "npm --prefix backend run dev",
     "db:migrate:resolve": "npm --prefix backend run db:migrate:resolve --",
     "typecheck": "tsc --noEmit",
@@ -106,7 +107,8 @@
     "test:performance-insights-remediation": "node ./backend/node_modules/tsx/dist/cli.mjs ./scripts/performance-insights-remediation-runtime.ts",
     "test:business-analytics-performance-browser": "node ./backend/node_modules/tsx/dist/cli.mjs ./scripts/business-analytics-performance-browser-validation-runtime.ts",
     "test:stripe-connect-phase4-5-ui": "node ./backend/node_modules/tsx/dist/cli.mjs ./scripts/stripe-connect-phase4-5-ui-runtime.ts",
-    "test:stripe-payments-responsive": "node ./backend/node_modules/tsx/dist/cli.mjs ./scripts/stripe-payments-responsive-runtime.ts"
+    "test:stripe-payments-responsive": "node ./backend/node_modules/tsx/dist/cli.mjs ./scripts/stripe-payments-responsive-runtime.ts",
+    "test:product-feedback-composer": "node ./backend/node_modules/tsx/dist/cli.mjs ./scripts/product-feedback-composer-runtime.ts"
   },
   "dependencies": {
     "@fontsource/inter": "^5.2.8",

@@ -9,7 +9,11 @@ import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router";
 import { useNotifications } from "@/app/hooks/useNotifications";
 import { useDashboardRenderProbe } from "@/app/hooks/useDashboardRuntimeProfile";
-import { resolveInboxNotificationDestination } from "@/app/lib/notificationNavigation";
+import {
+  getNotificationCategory,
+  resolveInboxNotificationDestination,
+} from "@/app/lib/notificationNavigation";
+import "@/styles/notification-bell-dropdown-premium.css";
 import { getAuthUser, subscribeAuthUser } from "@/app/lib/authUserStore";
 import { getAuthSessionFlags, subscribeAuthSessionFlags } from "@/app/lib/authSessionBootstrap";
 import { resolveAuthStatus } from "@/app/lib/authSession";
@@ -37,8 +41,8 @@ function inboxPathForRole(role: string | undefined): string {
 }
 
 function unreadSummaryText(count: number, t: TFunction): string {
-  if (count === 0) return t("notifications.bell.empty");
-  return t("notifications.bell.unreadSummary", { count });
+  if (count === 0) return t("notifications.bell.emptyHint");
+  return t("notifications.bell.unreadCountLine", { count });
 }
 
 type BellAuthGate = {
@@ -118,6 +122,7 @@ export const NotificationBell = memo(function NotificationBell({ className }: No
       message: n.message,
       time: formatGroupTime(n.createdAt, i18n.language, t),
       read: n.read,
+      category: getNotificationCategory(n),
     }));
   }, [list, i18n.language, t]);
 
@@ -132,6 +137,7 @@ export const NotificationBell = memo(function NotificationBell({ className }: No
       loadError: t("notifications.inbox.loadError"),
       retry: t("notifications.inbox.retry"),
       readLabel: t("notifications.bell.read"),
+      emptyHint: t("notifications.bell.emptyHint"),
     }),
     [t],
   );

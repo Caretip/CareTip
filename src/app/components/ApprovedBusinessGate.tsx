@@ -8,6 +8,7 @@ import { resolveSubscriptionTier } from "../lib/subscriptionCapabilities";
 import { logClientError } from "../lib/clientLog";
 import { isApiAuthSessionError } from "../lib/apiError";
 import { isApiConnectivityError } from "../lib/errorMessages";
+import { BusinessGuidelinesProvider } from "@/app/contexts/BusinessGuidelinesContext";
 
 /**
  * Keeps manager subscription entitlements and split verification fields fresh.
@@ -70,5 +71,9 @@ export function ApprovedBusinessGate() {
     };
   }, [canSyncProfile, updateUser]);
 
-  return <Outlet />;
+  return (
+    <BusinessGuidelinesProvider>
+      <Outlet />
+    </BusinessGuidelinesProvider>
+  );
 }

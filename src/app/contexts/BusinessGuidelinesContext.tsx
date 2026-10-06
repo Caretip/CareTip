@@ -1,5 +1,4 @@
 import {
-  createContext,
   useCallback,
   useContext,
   useMemo,
@@ -7,13 +6,10 @@ import {
   type ReactNode,
 } from "react";
 import { CareTipUsageGuidelinesDialog } from "@/app/components/business/CareTipUsageGuidelinesDialog";
-
-type BusinessGuidelinesContextValue = {
-  openGuidelines: () => void;
-  closeGuidelines: () => void;
-};
-
-const BusinessGuidelinesContext = createContext<BusinessGuidelinesContextValue | null>(null);
+import {
+  BusinessGuidelinesReactContext,
+  type BusinessGuidelinesContextValue,
+} from "@/app/contexts/businessGuidelinesContextRef";
 
 export function BusinessGuidelinesProvider({ children }: { children: ReactNode }) {
   const [open, setOpen] = useState(false);
@@ -21,21 +17,21 @@ export function BusinessGuidelinesProvider({ children }: { children: ReactNode }
   const openGuidelines = useCallback(() => setOpen(true), []);
   const closeGuidelines = useCallback(() => setOpen(false), []);
 
-  const value = useMemo(
+  const value = useMemo<BusinessGuidelinesContextValue>(
     () => ({ openGuidelines, closeGuidelines }),
     [openGuidelines, closeGuidelines],
   );
 
   return (
-    <BusinessGuidelinesContext.Provider value={value}>
+    <BusinessGuidelinesReactContext.Provider value={value}>
       {children}
       <CareTipUsageGuidelinesDialog open={open} onOpenChange={setOpen} />
-    </BusinessGuidelinesContext.Provider>
+    </BusinessGuidelinesReactContext.Provider>
   );
 }
 
 export function useBusinessGuidelines() {
-  const ctx = useContext(BusinessGuidelinesContext);
+  const ctx = useContext(BusinessGuidelinesReactContext);
   if (!ctx) {
     throw new Error("useBusinessGuidelines must be used within BusinessGuidelinesProvider");
   }

@@ -175,6 +175,7 @@
     "test:subscription-b2": "dotenv -e ../.env -e .env -- tsx scripts/subscription-b2-runtime.ts",
     "test:subscription-entitlement-payload": "dotenv -e ../.env -e .env -- tsx scripts/subscription-entitlement-payload-runtime.ts",
     "test:contact-field-validation": "tsx scripts/contact-field-validation-runtime.ts",
+    "test:platform-product-review": "dotenv -e ../.env -e .env -- tsx scripts/platform-product-review-runtime.ts",
     "test:subscription-trial": "tsx scripts/subscription-trial-runtime.ts",
     "test:pro-trial-30-day": "tsx scripts/pro-trial-30-day-remediation-runtime.ts",
     "test:pro-stripe-tax": "tsx scripts/pro-stripe-tax-checkout-runtime.ts",

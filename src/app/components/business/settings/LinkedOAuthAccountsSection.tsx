@@ -18,7 +18,12 @@ import {
   providerDisplayName,
 } from "../../../lib/oauthProviderIds";
 import { requestAppleIdToken, isAppleSdkAvailable } from "../../../lib/appleOAuthWeb";
-import { requestFacebookAccessToken } from "../../../lib/facebookOAuthWeb";
+import {
+  isFacebookSdkReady,
+  requestFacebookAccessToken,
+  warmFacebookSdk,
+} from "../../../lib/facebookOAuthWeb";
+import { isFacebookLoginError } from "../../../lib/facebookLoginError";
 import { logClientError } from "../../../lib/clientLog";
 import { toUserFriendlyMessage } from "../../../lib/errorMessages";
 import { AuthGoogleOAuthScope } from "@/app/components/auth/AuthGoogleOAuthScope";
@@ -81,6 +86,13 @@ export function LinkedOAuthAccountsSection({ loading }: { loading?: boolean }) {
     };
   }, []);
 
+  useEffect(() => {
+    if (!facebookOAuthWebAppId() || isFacebookSdkReady()) return;
+    void warmFacebookSdk().catch(() => {
+      // Link UI surfaces errors on click; warm is best-effort.
+    });
+  }, []);
+
   const linkedMap = new Map(accounts.map((a) => [a.provider, a]));
 
   const visibleProviders = OAUTH_PROVIDER_ORDER.filter(
@@ -141,7 +153,26 @@ export function LinkedOAuthAccountsSection({ loading }: { loading?: boolean }) {
       await finishLink(provider, idToken);
     } catch (e) {
       logClientError("LinkedOAuthAccountsSection.linkStart", e);
-      toast.error(toUserFriendlyMessage(e));
+      if (isFacebookLoginError(e)) {
+        if (e.kind === "cancelled" || e.kind === "concurrent") {
+          setBusyProvider(null);
+          return;
+        }
+        if (e.kind === "popup_likely_blocked") {
+          toast.error(t("auth.oauth.facebookPopupBlocked"));
+        } else if (e.kind === "sdk_not_ready") {
+          toast.message(t("auth.oauth.facebookSdkLoading"));
+          void warmFacebookSdk();
+        } else if (e.kind === "incomplete") {
+          toast.error(t("auth.oauth.facebookIncomplete"));
+        } else if (e.kind === "sdk_load_failed") {
+          toast.error(t("auth.oauth.facebookSdkLoadFailed"));
+        } else {
+          toast.error(toUserFriendlyMessage(e));
+        }
+      } else {
+        toast.error(toUserFriendlyMessage(e));
+      }
       setBusyProvider(null);
     }
   };

@@ -57,6 +57,8 @@ Desktop.ini
 # --- Markdown: README only; all other *.md stay local / untracked ---
 *.md
 !/README.md
+!CARETIP_PRODUCT_REVIEW_SYSTEM_AUDIT.md
+!CARETIP_PRODUCT_REVIEW_PHASE1_IMPLEMENTATION_REPORT.md
 
 # --- Local restore / accidental paste dumps ---
 .restore_*.txt

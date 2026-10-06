@@ -118,16 +118,20 @@ async function verifyFacebookAccessToken(
   const debugRes = await fetch(debugUrl);
   const debugJson = (await debugRes.json()) as {
     data?: { app_id?: string; is_valid?: boolean; user_id?: string };
+    error?: { message?: string; type?: string; code?: number };
   };
   if (diag) {
     logFacebookOAuthDiagnostic(diag.correlationId, "debug_token_response", {
       graphHttpStatus: debugRes.status,
       responseFieldNames: jsonFieldNames(debugJson),
       debugDataFieldNames: jsonFieldNames(debugJson.data),
+      graphErrorFieldNames: jsonFieldNames(debugJson.error),
       tokenValidationSucceeded: Boolean(debugJson.data?.is_valid),
-      facebookAppId: appId,
+      configuredFacebookAppId: appId,
+      metaReportedAppId: debugJson.data?.app_id?.trim() || null,
       debugAppIdMatches: debugJson.data?.app_id === appId,
       facebookUserId: debugJson.data?.user_id?.trim() || null,
+      hasAppSecretConfigured: Boolean(appSecret),
     });
   }
   if (!debugRes.ok) {
@@ -152,11 +156,17 @@ async function verifyFacebookAccessToken(
   meUrl.searchParams.set("fields", "id,name,email");
   meUrl.searchParams.set("access_token", accessToken);
   const meRes = await fetch(meUrl);
-  const me = (await meRes.json()) as { id?: string; name?: string; email?: string };
+  const me = (await meRes.json()) as {
+    id?: string;
+    name?: string;
+    email?: string;
+    error?: { message?: string; type?: string; code?: number };
+  };
   if (diag) {
     logFacebookOAuthDiagnostic(diag.correlationId, "graph_me_response", {
       graphHttpStatus: meRes.status,
       responseFieldNames: jsonFieldNames(me),
+      graphErrorFieldNames: jsonFieldNames(me.error),
       hasId: Boolean(me.id?.trim()),
       hasName: Boolean(me.name?.trim()),
       hasEmail: Boolean(me.email?.trim()),
@@ -199,6 +209,13 @@ export async function verifyFacebookIdentity(
   idToken: string,
   diag?: FacebookVerifyDiagnosticContext,
 ): Promise<VerifiedIdentity> {
+  if (diag) {
+    logFacebookOAuthDiagnostic(diag.correlationId, "identity_verify_route", {
+      tokenLooksLikeJwt: looksLikeJwt(idToken),
+      hasAppSecretConfigured: Boolean(resolveFacebookAppSecret()),
+      configuredFacebookAppId: resolveFacebookAppId(),
+    });
+  }
   try {
     if (looksLikeJwt(idToken)) {
       return await verifyFacebookLimitedLoginJwt(idToken, diag);

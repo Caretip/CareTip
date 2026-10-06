@@ -28,8 +28,9 @@ import {
 } from "../lib/checkoutIntent";
 import { isOnboardingCompleted, resolveResumeOnboardingStep } from "../lib/onboardingProgress";
 import { toUserFriendlyMessage } from "../lib/errorMessages";
-import { isApiSubscriptionRequiredError } from "../lib/apiError";
+import { isApiRequestError, isApiSubscriptionRequiredError } from "../lib/apiError";
 import { logClientError } from "../lib/clientLog";
+import { logOnboardingDiagnostic } from "../lib/onboardingDiagnostic";
 import { performExternalStripeRedirect } from "../lib/externalStripeRedirect";
 import { useStaleExternalStripeStateReset } from "../hooks/useStaleExternalStripeStateReset";
 import { cn } from "@/lib/utils";
@@ -65,7 +66,6 @@ import {
   normalizeOptionalWebsiteUrl,
   type ContactFieldErrorCode,
 } from "../lib/contactFieldValidation";
-import { isApiRequestError } from "../lib/apiError";
 import type { CountryCode } from "libphonenumber-js";
 import { parsePhoneNumberFromString } from "libphonenumber-js";
 
@@ -296,6 +296,16 @@ export function BusinessOnboardingPage() {
           setSavedLogoPath(uploaded.path ?? null);
         } catch (err) {
           setLogoFile(null);
+          logOnboardingDiagnostic(
+            {
+              operation: "POST /api/business/profile/logo",
+              step: targetStep,
+              ...(isApiRequestError(err)
+                ? { httpStatus: err.status, errorCode: err.code, errorMessage: err.message }
+                : {}),
+            },
+            err,
+          );
           if (isApiSubscriptionRequiredError(err)) {
             toast.info(t("business.onboarding.toastLogoDeferred"));
           } else {
@@ -356,6 +366,16 @@ export function BusinessOnboardingPage() {
           }
           toast.error(t("business.billing.checkoutNoUrl"));
         } catch (err) {
+          logOnboardingDiagnostic(
+            {
+              operation: "POST /api/billing/checkout-session (onboarding)",
+              step: 3,
+              ...(isApiRequestError(err)
+                ? { httpStatus: err.status, errorCode: err.code, errorMessage: err.message }
+                : {}),
+            },
+            err,
+          );
           toast.error(toUserFriendlyMessage(err) || t("business.billing.checkoutError"));
         }
       }
@@ -363,6 +383,22 @@ export function BusinessOnboardingPage() {
       navigate(getPostAuthRedirect(refreshed), { replace: true });
       setBusy(false);
     } catch (err) {
+      const operation =
+        step === 3
+          ? "PATCH /api/auth/me (hasCompletedOnboarding)"
+          : step === 2
+            ? "PATCH /api/business/profile (step 2)"
+            : "PATCH /api/business/profile (step 1)";
+      logOnboardingDiagnostic(
+        {
+          operation,
+          step,
+          ...(isApiRequestError(err)
+            ? { httpStatus: err.status, errorCode: err.code, errorMessage: err.message }
+            : {}),
+        },
+        err,
+      );
       const msg = err instanceof Error ? err.message : String(err);
       if (msg === "ONBOARDING_CONTACT_INVALID") {
         setBusy(false);

@@ -8,6 +8,7 @@ import {
 } from "../middleware/platformUpload.middleware.js";
 import * as platformController from "../controllers/platform.controller.js";
 import * as supportTicketController from "../controllers/supportTicket.controller.js";
+import * as platformProductFeedbackController from "../controllers/platformProductFeedback.controller.js";
 import { supportTicketReplyLimiter } from "../middleware/supportTicketRateLimit.middleware.js";
 import { clientSafeMessage } from "../utils/httpErrors.js";
 import { uploadImageRateLimit, uploadKycRateLimit } from "../middleware/securityRateLimit.middleware.js";
@@ -180,5 +181,10 @@ router.patch(
   "/support/tickets/:ticketId/status",
   supportTicketController.patchPlatformTicketStatus,
 );
+
+router.get("/product-reviews/summary", platformProductFeedbackController.getPlatformProductReviewSummary);
+router.get("/product-reviews", platformProductFeedbackController.listPlatformProductReviews);
+router.get("/product-reviews/:id", platformProductFeedbackController.getPlatformProductReviewById);
+router.patch("/product-reviews/:id", platformProductFeedbackController.patchPlatformProductReviewStatus);
 
 export default router;

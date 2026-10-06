@@ -30,6 +30,7 @@ import {
 import { PremiumAccessDialog } from "./PremiumAccessDialog";
 import { BusinessSidebarSubscriptionStatus } from "./BusinessSidebarSubscriptionStatus";
 import { ACTIVATION_DIALOG_CLOSE_MS } from "@/app/lib/activateCareTipNavigation";
+import { ProductFeedbackSidebarNavItem } from "@/app/components/product-feedback/ProductFeedbackSidebarNavItem";
 
 type BusinessSidebarNavShellProps = {
   onNavigate?: () => void;
@@ -303,6 +304,17 @@ export function BusinessSidebarNavShell({
       <TooltipProvider delayDuration={350}>
         <ul className="space-y-0.5">
           {businessSidebarNavEntries.map((entry) => {
+            if (entry.type === "action" && entry.action === "productFeedback") {
+              return (
+                <ProductFeedbackSidebarNavItem
+                  key={entry.id}
+                  labelKey={entry.labelKey}
+                  onNavigate={onNavigate}
+                  variant="business"
+                  separated={entry.separated}
+                />
+              );
+            }
             if (entry.type === "link") {
               return (
                 <SidebarLink
@@ -314,6 +326,7 @@ export function BusinessSidebarNavShell({
                 />
               );
             }
+            if (entry.type !== "group") return null;
             return (
               <SidebarGroup
                 key={entry.id}

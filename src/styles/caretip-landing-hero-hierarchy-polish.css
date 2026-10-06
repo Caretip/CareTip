@@ -1,0 +1,112 @@
+/**
+ * Landing hero — premium hierarchy polish (proportions only).
+ * Loads after trickyfresh; scoped to .caretip-landing.
+ */
+
+/* Full-bleed hero — narrower copy column, more visible photography */
+@media (min-width: 1024px) {
+  .caretip-landing .caretip-hero-section--full-bg {
+    --caretip-hero-fullbg-content-max: min(36%, 31.5rem);
+    --caretip-hero-veil-p4: 62%;
+    --caretip-hero-veil-p5: 74%;
+    --caretip-hero-bg-focal: 72% 50%;
+  }
+
+  .caretip-landing .caretip-hero-section--full-bg .caretip-hero-headline,
+  .caretip-landing .caretip-hero-section--full-bg .caretip-hero-headline-line--controlled,
+  .caretip-landing .caretip-hero-section--full-bg .caretip-hero-headline-line--static,
+  .caretip-landing .caretip-hero-section--full-bg .caretip-hero-headline-rotating-stack {
+    max-width: min(100%, 31.5rem);
+  }
+
+  .caretip-landing .caretip-hero-section--full-bg .caretip-hero-subtitle,
+  .caretip-landing .caretip-hero-section--full-bg .caretip-hero-description-block,
+  .caretip-landing .caretip-hero-section--full-bg .caretip-hero-benefits,
+  .caretip-landing .caretip-hero-section--full-bg .caretip-hero-trust {
+    max-width: min(100%, 30rem);
+  }
+
+  .caretip-landing .caretip-hero-bg-layer picture[data-hero-frame="wyc"] img {
+    object-position: 74% 50%;
+  }
+
+  .caretip-landing .caretip-hero-bg-layer picture[data-hero-frame="wyo"] img {
+    object-position: 60% 42%;
+  }
+}
+
+@media (min-width: 1280px) {
+  .caretip-landing .caretip-hero-section--full-bg {
+    --caretip-hero-fullbg-content-max: min(35%, 31.5rem);
+  }
+}
+
+/* TrickyFresh full-bleed shell — align copy measure with polish tokens */
+@media (min-width: 1024px) {
+  .caretip-landing .caretip-hero-section--fullbleed-dark .caretip-hero-full-bg-content,
+  .caretip-landing .caretip-hero-section--fullbleed-light .caretip-hero-full-bg-content {
+    max-width: min(100%, 31.5rem);
+  }
+
+  .caretip-landing .caretip-hero-section--fullbleed-dark .caretip-hero-subtitle,
+  .caretip-landing .caretip-hero-section--fullbleed-dark .caretip-hero-description-block,
+  .caretip-landing .caretip-hero-section--fullbleed-dark .caretip-hero-description-line,
+  .caretip-landing .caretip-hero-section--fullbleed-light .caretip-hero-subtitle,
+  .caretip-landing .caretip-hero-section--fullbleed-light .caretip-hero-description-block,
+  .caretip-landing .caretip-hero-section--fullbleed-light .caretip-hero-description-line {
+    max-width: min(100%, 26.875rem);
+  }
+}
+
+/* Split grid hero — message column measure */
+@media (min-width: 1024px) {
+  .caretip-landing .caretip-hero-grid {
+    --caretip-hero-headline-measure: min(100%, 28ch);
+    --caretip-hero-body-measure: min(100%, 32rem);
+  }
+}
+
+.caretip-landing.caretip-landing--premium .caretip-hero-grid {
+  --caretip-hero-body-measure: min(100%, 32rem);
+}
+
+@media (min-width: 1024px) {
+  .caretip-landing.caretip-landing--premium .caretip-hero-grid {
+    --caretip-hero-body-measure: min(100%, 33rem);
+  }
+}
+
+/* Social proof metrics — tighter band, clearer primary/supporting hierarchy */
+.caretip-landing #social-proof .caretip-trust-metrics-grid {
+  max-width: min(100%, 58rem);
+  margin-inline: auto;
+}
+
+@media (min-width: 1024px) {
+  .caretip-landing #social-proof .caretip-trust-metric-item {
+    padding-inline: 0.875rem;
+  }
+
+  .caretip-landing #social-proof .caretip-trust-metric-item:first-child {
+    padding-inline-start: 0.5rem;
+  }
+
+  .caretip-landing #social-proof .caretip-trust-metric-item:last-child {
+    padding-inline-end: 0.5rem;
+  }
+
+  .caretip-landing #social-proof .caretip-trust-metric-item:first-child .caretip-trust-metric-value {
+    font-size: clamp(1.875rem, 2.8vw, 2.875rem);
+  }
+
+  .caretip-landing #social-proof .caretip-trust-metric-item:not(:first-child) .caretip-trust-metric-value {
+    font-size: clamp(1.5rem, 2.2vw, 2.35rem);
+    font-weight: 650;
+  }
+
+  .caretip-landing #social-proof .caretip-trust-metric-item:not(:first-child) .caretip-trust-metric-label {
+    font-size: 0.75rem;
+    max-width: 10.5rem;
+    color: rgba(115, 115, 115, 0.82);
+  }
+}

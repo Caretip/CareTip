@@ -288,6 +288,14 @@ export async function authenticateWithOAuth(
     }
     let sessionUser = await findUserByOAuthSubject(provider, verified.subject);
 
+    if (facebookDiagnosticId) {
+      logFacebookOAuthDiagnostic(facebookDiagnosticId, "oauth_subject_lookup_result", {
+        facebookUserId: verified.subject,
+        linkedAccountFound: Boolean(sessionUser),
+        isLogin: true,
+      });
+    }
+
     if (!sessionUser) {
       // No linked OAuthAccount — never auto-link by email. Same failure for
       // missing account, email-owned account, and admin routing (anti-enumeration).

@@ -20,6 +20,7 @@ import {
   type EmployeeDashboardNavEntry,
 } from "./employeeDashboardNav";
 import type { BusinessSubscriptionTier } from "@/app/lib/subscriptionCapabilities";
+import { ProductFeedbackSidebarNavItem } from "@/app/components/product-feedback/ProductFeedbackSidebarNavItem";
 
 function warmSidebarDestination(href: string): void {
   void prefetchEmployeeDashboardRoute(href);
@@ -38,18 +39,33 @@ export function EmployeeSidebarNav({
 
   return (
     <ul className="space-y-0.5">
-      {employeeDashboardNavEntries.map((entry) =>
-        entry.type === "link" ? (
-          <EmployeeSidebarLink
-            key={entry.href}
-            entry={entry}
-            pathname={pathname}
-            navPending={navPending}
-            entitlementsReady={entitlementsReady}
-            tier={tier}
-            onNavigate={onNavigate}
-          />
-        ) : (
+      {employeeDashboardNavEntries.map((entry) => {
+        if (entry.type === "action" && entry.action === "productFeedback") {
+          return (
+            <ProductFeedbackSidebarNavItem
+              key={entry.id}
+              labelKey={entry.labelKey}
+              onNavigate={onNavigate}
+              variant="employee"
+              separated={entry.separated}
+            />
+          );
+        }
+        if (entry.type === "link") {
+          return (
+            <EmployeeSidebarLink
+              key={entry.href}
+              entry={entry}
+              pathname={pathname}
+              navPending={navPending}
+              entitlementsReady={entitlementsReady}
+              tier={tier}
+              onNavigate={onNavigate}
+            />
+          );
+        }
+        if (entry.type !== "group") return null;
+        return (
           <EmployeeSidebarGroup
             key={entry.id}
             entry={entry}
@@ -57,8 +73,8 @@ export function EmployeeSidebarNav({
             navPending={navPending}
             onNavigate={onNavigate}
           />
-        ),
-      )}
+        );
+      })}
     </ul>
   );
 }

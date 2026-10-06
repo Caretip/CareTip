@@ -4,6 +4,7 @@ import {
   clearFacebookOAuthDiagnostic,
   logFacebookOAuthDiagnostic,
 } from "./facebookOAuthDiagnostic";
+import { FacebookLoginError, type FacebookLoginFailureKind } from "./facebookLoginError";
 
 type FbAuthResponse = {
   accessToken?: string;
@@ -295,45 +296,81 @@ function loadFacebookSdk(appId: string, correlationId?: string): Promise<FbSdk> 
   return fbSdkPromise;
 }
 
-/** Best-effort Facebook user access token (sent to CareTip as idToken). */
-export async function requestFacebookAccessToken(): Promise<string> {
-  const correlationId = beginFacebookOAuthDiagnostic();
-  logFacebookOAuthDiagnostic("requestFacebookAccessToken_started", { correlationId });
+function configuredFacebookAppId(): string | null {
+  const appId = facebookOAuthWebAppId()?.trim();
+  return appId || null;
+}
 
-  const appId = facebookOAuthWebAppId();
+function getReadyFacebookSdk(): FbSdk | null {
+  const appId = configuredFacebookAppId();
+  if (!appId || !window.FB?.login) return null;
+  if (fbInitCompletedForAppId !== appId) return null;
+  return window.FB;
+}
+
+/**
+ * Start loading/initializing the Facebook SDK (idempotent). Call when auth UI mounts so
+ * `FB.login()` can run in the same turn as the user's click.
+ */
+export function warmFacebookSdk(): Promise<void> {
+  const appId = configuredFacebookAppId();
   if (!appId) {
-    logFacebookOAuthDiagnostic("requestFacebookAccessToken_rejected", {
-      correlationId,
-      reason: "app_id_not_configured",
-    });
-    clearFacebookOAuthDiagnostic();
-    throw new Error("Facebook Login is not configured (VITE_FACEBOOK_APP_ID).");
+    return Promise.resolve();
   }
-
-  let FB: FbSdk;
-  try {
-    FB = await loadFacebookSdk(appId, correlationId);
-  } catch (e) {
-    logFacebookOAuthDiagnostic("requestFacebookAccessToken_rejected", {
-      correlationId,
-      reason: "sdk_load_or_init_failed",
-      errorClass: e instanceof Error ? e.name : "Error",
-      apiOAuthWillBeCalled: false,
-    });
-    clearFacebookOAuthDiagnostic();
-    throw e;
+  if (getReadyFacebookSdk()) {
+    return Promise.resolve();
   }
+  return loadFacebookSdk(appId).then(
+    () => undefined,
+    (err) => {
+      throw err;
+    },
+  );
+}
 
-  if (!FB?.login) {
-    logFacebookOAuthDiagnostic("requestFacebookAccessToken_rejected", {
-      correlationId,
-      reason: "fb_login_unavailable",
-      apiOAuthWillBeCalled: false,
-    });
-    clearFacebookOAuthDiagnostic();
-    throw new Error("Facebook Login is not available.");
+export function isFacebookSdkReady(): boolean {
+  return getReadyFacebookSdk() != null;
+}
+
+function classifySdkLoginFailure(
+  diagnostics: ReturnType<typeof safeLoginResponseDiagnostics>,
+): FacebookLoginFailureKind {
+  if (diagnostics.outcome === "not_authorized") {
+    return "cancelled";
   }
+  if (diagnostics.outcome === "unknown" && !diagnostics.hasAuthResponse) {
+    return "popup_likely_blocked";
+  }
+  return "incomplete";
+}
 
+function facebookLoginErrorForFailure(
+  kind: FacebookLoginFailureKind,
+  diagnostics: ReturnType<typeof safeLoginResponseDiagnostics>,
+): FacebookLoginError {
+  const fbStatus = diagnostics.status;
+  const fbOutcome = diagnostics.outcome;
+  switch (kind) {
+    case "cancelled":
+      return new FacebookLoginError(kind, "Facebook login was cancelled.", { fbStatus, fbOutcome });
+    case "popup_likely_blocked":
+      return new FacebookLoginError(
+        kind,
+        "Facebook login could not open. Allow pop-ups for this site and try again.",
+        { fbStatus, fbOutcome },
+      );
+    case "incomplete":
+      return new FacebookLoginError(
+        kind,
+        "Facebook sign-in did not complete. Please try again.",
+        { fbStatus, fbOutcome },
+      );
+    default:
+      return new FacebookLoginError("generic", "Facebook login failed.", { fbStatus, fbOutcome });
+  }
+}
+
+function invokeFacebookLogin(FB: FbSdk, correlationId: string): Promise<string> {
   fbLoginInvocationCount += 1;
   const loginInvocation = fbLoginInvocationCount;
   const previousLoginCorrelationId = activeFbLoginCorrelationId;
@@ -344,22 +381,13 @@ export async function requestFacebookAccessToken(): Promise<string> {
     correlationId,
     loginInvocation,
     concurrentLogin,
+    sdkReadyBeforeLogin: true,
     ...(previousLoginCorrelationId ? { previousLoginCorrelationId } : {}),
   });
 
   return new Promise<string>((resolve, reject) => {
     let callbackReceived = false;
-    const watchdog = window.setTimeout(() => {
-      if (!callbackReceived) {
-        logFacebookOAuthDiagnostic("sdk_login_callback_never_fired", {
-          correlationId,
-          loginInvocation,
-          elapsedMs: FB_LOGIN_CALLBACK_WATCHDOG_MS,
-          case: "A",
-          apiOAuthWillBeCalled: false,
-        });
-      }
-    }, FB_LOGIN_CALLBACK_WATCHDOG_MS);
+    let watchdog = 0;
 
     const finish = (outcome: "resolved" | "rejected", extra: Record<string, unknown>) => {
       window.clearTimeout(watchdog);
@@ -373,6 +401,26 @@ export async function requestFacebookAccessToken(): Promise<string> {
         ...extra,
       });
     };
+
+    watchdog = window.setTimeout(() => {
+      if (!callbackReceived) {
+        logFacebookOAuthDiagnostic("sdk_login_callback_never_fired", {
+          correlationId,
+          loginInvocation,
+          elapsedMs: FB_LOGIN_CALLBACK_WATCHDOG_MS,
+          case: "A",
+          apiOAuthWillBeCalled: false,
+        });
+        finish("rejected", { reason: "watchdog_timeout", outcome: "watchdog_timeout" });
+        clearFacebookOAuthDiagnostic();
+        reject(
+          new FacebookLoginError(
+            "incomplete",
+            "Facebook sign-in did not complete. If a pop-up was blocked, allow pop-ups and try again.",
+          ),
+        );
+      }
+    }, FB_LOGIN_CALLBACK_WATCHDOG_MS);
 
     try {
       FB.login(
@@ -399,16 +447,18 @@ export async function requestFacebookAccessToken(): Promise<string> {
             return;
           }
 
+          const failureKind = classifySdkLoginFailure(diagnostics);
           logFacebookOAuthDiagnostic("sdk_login_no_token", {
             correlationId,
             loginInvocation,
             case: "A",
+            failureKind,
             ...diagnostics,
             apiOAuthWillBeCalled: false,
           });
-          finish("rejected", { outcome: diagnostics.outcome, reason: "no_token_from_sdk" });
+          finish("rejected", { outcome: diagnostics.outcome, reason: "no_token_from_sdk", failureKind });
           clearFacebookOAuthDiagnostic();
-          reject(new Error("Facebook Login was cancelled or did not return a token."));
+          reject(facebookLoginErrorForFailure(failureKind, diagnostics));
         },
         { scope: "email,public_profile", return_scopes: true },
       );
@@ -428,7 +478,65 @@ export async function requestFacebookAccessToken(): Promise<string> {
       });
       finish("rejected", { reason: "fb_login_exception" });
       clearFacebookOAuthDiagnostic();
-      reject(e instanceof Error ? e : new Error("Facebook Login failed."));
+      reject(
+        new FacebookLoginError(
+          "generic",
+          "Facebook login failed.",
+          { cause: e instanceof Error ? e : undefined },
+        ),
+      );
     }
   });
 }
+
+/**
+ * Facebook user access token for CareTip OAuth (sent as idToken).
+ * Requires a warmed SDK — call {@link warmFacebookSdk} before the user clicks so `FB.login` runs on the gesture.
+ */
+export function requestFacebookAccessToken(): Promise<string> {
+  const correlationId = beginFacebookOAuthDiagnostic();
+  logFacebookOAuthDiagnostic("requestFacebookAccessToken_started", { correlationId });
+
+  const appId = configuredFacebookAppId();
+  if (!appId) {
+    logFacebookOAuthDiagnostic("requestFacebookAccessToken_rejected", {
+      correlationId,
+      reason: "app_id_not_configured",
+    });
+    clearFacebookOAuthDiagnostic();
+    throw new FacebookLoginError(
+      "not_configured",
+      "Facebook Login is not configured (VITE_FACEBOOK_APP_ID).",
+    );
+  }
+
+  if (activeFbLoginCorrelationId != null) {
+    logFacebookOAuthDiagnostic("requestFacebookAccessToken_rejected", {
+      correlationId,
+      reason: "concurrent_login",
+      activeLoginCorrelationId: activeFbLoginCorrelationId,
+      apiOAuthWillBeCalled: false,
+    });
+    clearFacebookOAuthDiagnostic();
+    throw new FacebookLoginError("concurrent", "Facebook login is already in progress.");
+  }
+
+  const FB = getReadyFacebookSdk();
+  if (!FB) {
+    logFacebookOAuthDiagnostic("requestFacebookAccessToken_rejected", {
+      correlationId,
+      reason: "sdk_not_ready_on_click",
+      apiOAuthWillBeCalled: false,
+      windowFbPresent: Boolean(window.FB),
+      initCompletedForAppId: fbInitCompletedForAppId,
+    });
+    clearFacebookOAuthDiagnostic();
+    throw new FacebookLoginError(
+      "sdk_not_ready",
+      "Facebook is still loading. Wait a moment and try again.",
+    );
+  }
+
+  return invokeFacebookLogin(FB, correlationId);
+}
+
