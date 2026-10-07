@@ -221,7 +221,16 @@ export function OAuthProviderRow({
   );
 
   const runFacebookLogin = useCallback(() => {
-    if (busy) return;
+    if (busy) {
+      logFacebookOAuthDiagnostic("oauth_row_click_ignored", {
+        provider: "facebook",
+        interactionBlocked,
+        disabled,
+        providerBusy: providerBusy ?? null,
+        facebookWarmState,
+      });
+      return;
+    }
     if (!showFacebook) {
       toastNotConfigured();
       return;

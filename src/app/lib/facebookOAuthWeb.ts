@@ -554,7 +554,16 @@ function invokeFacebookLogin(FB: FbSdk, correlationId: string, appId: string): P
 
   return new Promise<string>((resolve, reject) => {
     let callbackReceived = false;
+    let settled = false;
     let watchdog = 0;
+    let postCallbackWatchdog = 0;
+
+    const settle = (fn: () => void) => {
+      if (settled) return;
+      settled = true;
+      window.clearTimeout(postCallbackWatchdog);
+      fn();
+    };
 
     const finish = (outcome: "resolved" | "rejected", extra: Record<string, unknown>) => {
       window.clearTimeout(watchdog);
@@ -587,7 +596,7 @@ function invokeFacebookLogin(FB: FbSdk, correlationId: string, appId: string): P
       });
       finish("rejected", { outcome: diagnostics.outcome, reason, failureKind, source });
       clearFacebookOAuthDiagnostic();
-      reject(facebookLoginErrorForFailure(failureKind, diagnostics));
+      settle(() => reject(facebookLoginErrorForFailure(failureKind, diagnostics)));
     };
 
     const succeedWithToken = (
@@ -605,11 +614,46 @@ function invokeFacebookLogin(FB: FbSdk, correlationId: string, appId: string): P
         ...(diagnostics.facebookUserId ? { facebookUserId: diagnostics.facebookUserId } : {}),
       });
       finish("resolved", { outcome: diagnostics.outcome, tokenSource });
-      resolve(token);
+      settle(() => resolve(token));
+    };
+
+    const rejectLoginFlow = (
+      kind: FacebookLoginFailureKind,
+      reason: string,
+      diagnostics?: ReturnType<typeof safeLoginResponseDiagnostics>,
+    ) => {
+      logFacebookOAuthDiagnostic("sdk_login_flow_aborted", {
+        correlationId,
+        loginInvocation,
+        reason,
+        failureKind: kind,
+        case: diagnostics ? sdkOutcomeCase(diagnostics) : "B",
+      });
+      finish("rejected", { reason, failureKind: kind });
+      clearFacebookOAuthDiagnostic();
+      settle(() =>
+        reject(
+          diagnostics
+            ? facebookLoginErrorForFailure(kind, diagnostics)
+            : new FacebookLoginError(kind, "Facebook sign-in did not complete. Please try again."),
+        ),
+      );
     };
 
     const handleLoginResponse = async (response: FbLoginStatus, source: "login_callback") => {
       callbackReceived = true;
+      postCallbackWatchdog = window.setTimeout(() => {
+        if (!settled) {
+          logFacebookOAuthDiagnostic("sdk_login_post_callback_timeout", {
+            correlationId,
+            loginInvocation,
+            elapsedMs: FB_GET_LOGIN_STATUS_RECOVERY_MS + 5_000,
+            case: "F",
+            apiOAuthWillBeCalled: false,
+          });
+          rejectLoginFlow("incomplete", "post_callback_processing_timeout");
+        }
+      }, FB_GET_LOGIN_STATUS_RECOVERY_MS + 5_000);
       const diagnostics = safeLoginResponseDiagnostics(response);
       logFacebookOAuthDiagnostic("sdk_login_callback_received", {
         correlationId,
@@ -653,10 +697,12 @@ function invokeFacebookLogin(FB: FbSdk, correlationId: string, appId: string): P
         });
         finish("rejected", { reason: "watchdog_timeout", outcome: "watchdog_timeout" });
         clearFacebookOAuthDiagnostic();
-        reject(
-          new FacebookLoginError(
-            "incomplete",
-            "Facebook sign-in did not complete. Please try again.",
+        settle(() =>
+          reject(
+            new FacebookLoginError(
+              "incomplete",
+              "Facebook sign-in did not complete. Please try again.",
+            ),
           ),
         );
       }
@@ -665,7 +711,15 @@ function invokeFacebookLogin(FB: FbSdk, correlationId: string, appId: string): P
     try {
       FB.login(
         (response) => {
-          void handleLoginResponse(response, "login_callback");
+          void handleLoginResponse(response, "login_callback").catch((e) => {
+            logFacebookOAuthDiagnostic("sdk_login_callback_handler_error", {
+              correlationId,
+              loginInvocation,
+              errorClass: e instanceof Error ? e.name : "Error",
+              case: "B",
+            });
+            rejectLoginFlow("generic", "login_callback_handler_error");
+          });
         },
         { scope: "email,public_profile", return_scopes: true },
       );
@@ -685,11 +739,13 @@ function invokeFacebookLogin(FB: FbSdk, correlationId: string, appId: string): P
       });
       finish("rejected", { reason: "fb_login_exception" });
       clearFacebookOAuthDiagnostic();
-      reject(
-        new FacebookLoginError(
-          "generic",
-          "Facebook login failed.",
-          { cause: e instanceof Error ? e : undefined },
+      settle(() =>
+        reject(
+          new FacebookLoginError(
+            "generic",
+            "Facebook login failed.",
+            { cause: e instanceof Error ? e : undefined },
+          ),
         ),
       );
     }
