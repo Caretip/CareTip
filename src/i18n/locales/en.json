@@ -1657,7 +1657,7 @@
       "providerFailed": "{{provider}} sign-in failed. Please try again.",
       "facebookSdkLoading": "Loading Facebook sign-in…",
       "facebookSdkLoadFailed": "Facebook sign-in could not load. Check your connection and try again.",
-      "facebookPopupBlocked": "Facebook sign-in could not open. Allow pop-ups for this site and try again.",
+      "facebookCallbackMissingAuth": "Facebook sign-in could not be completed because Facebook did not return the required sign-in information. Please try again or use another sign-in method.",
       "facebookIncomplete": "Facebook sign-in did not finish. Please try again.",
       "linkingRequiredToast": "We couldn't complete social sign-in. If you already have a CareTip account, please sign in or use Forgot Password to recover access."
     },

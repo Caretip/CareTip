@@ -158,8 +158,8 @@ export function LinkedOAuthAccountsSection({ loading }: { loading?: boolean }) {
           setBusyProvider(null);
           return;
         }
-        if (e.kind === "popup_likely_blocked") {
-          toast.error(t("auth.oauth.facebookPopupBlocked"));
+        if (e.kind === "callback_missing_auth") {
+          toast.error(t("auth.oauth.facebookCallbackMissingAuth"));
         } else if (e.kind === "sdk_not_ready") {
           toast.message(t("auth.oauth.facebookSdkLoading"));
           void warmFacebookSdk();

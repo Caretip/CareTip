@@ -187,8 +187,10 @@ export function OAuthProviderRow({
         if (e.kind === "cancelled") {
           return;
         }
-        if (e.kind === "popup_likely_blocked") {
-          toast.error(t("auth.oauth.facebookPopupBlocked"), { id: "caretip-fb-popup" });
+        if (e.kind === "callback_missing_auth") {
+          toast.error(t("auth.oauth.facebookCallbackMissingAuth"), {
+            id: "caretip-fb-callback-missing-auth",
+          });
           return;
         }
         if (e.kind === "sdk_not_ready") {
