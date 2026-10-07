@@ -886,7 +886,7 @@ export function AuthPage() {
               <AuthOAuthButtons
                 isLogin={isLogin}
                 role={role}
-                formBusy={isSubmitting}
+                formBusy={isSubmitting || authFlowInProgress}
                 name={name}
                 inviteCode={resolvedInviteCode}
                 merchantLegalAccepted={merchantLegalAccepted}

@@ -16,13 +16,26 @@ export type FacebookOAuthDiagnosticCase =
   | "F"
   | "G";
 
+function newFacebookOAuthDiagnosticId(): string {
+  return typeof crypto !== "undefined" && "randomUUID" in crypto
+    ? `fb_web_${crypto.randomUUID()}`
+    : `fb_web_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
+}
+
 export function beginFacebookOAuthDiagnostic(): string {
-  const id =
-    typeof crypto !== "undefined" && "randomUUID" in crypto
-      ? `fb_web_${crypto.randomUUID()}`
-      : `fb_web_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
+  const id = newFacebookOAuthDiagnosticId();
   activeDiagnosticId = id;
   return id;
+}
+
+/** Bind an existing attempt id (e.g. created at button click) for API header continuity. */
+export function setActiveFacebookOAuthDiagnosticId(correlationId: string): void {
+  activeDiagnosticId = correlationId;
+}
+
+/** Restore diagnostic id for a late orphan token delivery after a rejected attempt. */
+export function restoreFacebookOAuthDiagnosticId(correlationId: string): void {
+  activeDiagnosticId = correlationId;
 }
 
 export function getFacebookOAuthDiagnosticId(): string | null {

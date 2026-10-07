@@ -1,11 +1,23 @@
 import { facebookOAuthWebAppId } from "./oauthProviderIds";
 import {
+  attachFacebookAttemptLifecycle,
+  msSinceClick,
+  msSinceFbInvoke,
+  type FacebookAttemptLifecycle,
+} from "./facebookOAuthAttemptLifecycle";
+import { classifySdkLoginFailure } from "./facebookOAuthClassification";
+import {
   beginFacebookOAuthDiagnostic,
   clearFacebookOAuthDiagnostic,
   logFacebookOAuthDiagnostic,
+  restoreFacebookOAuthDiagnosticId,
+  setActiveFacebookOAuthDiagnosticId,
   type FacebookOAuthDiagnosticCase,
 } from "./facebookOAuthDiagnostic";
 import { FacebookLoginError, type FacebookLoginFailureKind } from "./facebookLoginError";
+import type { FbLoginOutcome } from "./facebookOAuthWeb.types";
+
+export type { FbLoginOutcome } from "./facebookOAuthWeb.types";
 
 type FbAuthResponse = {
   accessToken?: string;
@@ -103,13 +115,25 @@ let sdkInitInvocationCount = 0;
 let fbLoginInvocationCount = 0;
 let fbInitCompletedForAppId: string | null = null;
 let activeFbLoginCorrelationId: string | null = null;
+/** After reject, only this attempt may deliver an orphan token (not a newer click). */
+let orphanEligibleCorrelationId: string | null = null;
 
-export type FbLoginOutcome =
-  | "connected_with_token"
-  | "connected_without_token"
-  | "not_authorized"
-  | "unknown"
-  | "other_status";
+/** Test-only: mark SDK initialized without loading script. */
+export function markFacebookSdkReadyForTesting(appId: string): void {
+  fbInitCompletedForAppId = appId;
+}
+
+export function resetFacebookOAuthWebStateForTesting(): void {
+  fbSdkPromise = null;
+  sdkLoadInvocationCount = 0;
+  sdkInitInvocationCount = 0;
+  fbLoginInvocationCount = 0;
+  fbInitCompletedForAppId = null;
+  activeFbLoginCorrelationId = null;
+  orphanEligibleCorrelationId = null;
+  orphanedFacebookTokenHandler = null;
+  clearFacebookOAuthDiagnostic();
+}
 
 function safeAuthResponseFieldNames(authResponse: FbAuthResponse | null | undefined): string[] {
   if (!authResponse || typeof authResponse !== "object") return [];
@@ -402,6 +426,9 @@ function loadFacebookSdk(appId: string, correlationId?: string): Promise<FbSdk> 
 }
 
 function configuredFacebookAppId(): string | null {
+  if (fbInitCompletedForAppId) {
+    return fbInitCompletedForAppId;
+  }
   const appId = facebookOAuthWebAppId()?.trim();
   return appId || null;
 }
@@ -445,28 +472,6 @@ function extractAccessToken(response: FbLoginStatus): string | null {
   return token;
 }
 
-function classifySdkLoginFailure(
-  diagnostics: ReturnType<typeof safeLoginResponseDiagnostics>,
-  opts?: { msSinceUserClick?: number | null },
-): FacebookLoginFailureKind {
-  if (diagnostics.outcome === "not_authorized") {
-    return "cancelled";
-  }
-  if (diagnostics.outcome === "unknown" && !diagnostics.hasAuthResponse) {
-    if (opts?.msSinceUserClick != null && opts.msSinceUserClick < 6_000) {
-      return "popup_blocked";
-    }
-    return "callback_missing_auth";
-  }
-  if (diagnostics.outcome === "connected_without_token") {
-    return "callback_missing_auth";
-  }
-  if (diagnostics.status === "connected" && !diagnostics.hasAuthResponse) {
-    return "callback_missing_auth";
-  }
-  return "incomplete";
-}
-
 function facebookLoginErrorForFailure(
   kind: FacebookLoginFailureKind,
   diagnostics: ReturnType<typeof safeLoginResponseDiagnostics>,
@@ -477,6 +482,13 @@ function facebookLoginErrorForFailure(
     case "cancelled":
       return new FacebookLoginError(kind, "Facebook login was cancelled.", { fbStatus, fbOutcome });
     case "callback_missing_auth":
+    case "session_bridge_unverified":
+      return new FacebookLoginError(
+        kind,
+        "Facebook sign-in could not be completed because Facebook did not return the required sign-in information.",
+        { fbStatus, fbOutcome },
+      );
+    case "popup_unverified":
       return new FacebookLoginError(
         kind,
         "Facebook sign-in could not be completed because Facebook did not return the required sign-in information.",
@@ -499,24 +511,57 @@ function facebookLoginErrorForFailure(
   }
 }
 
-function logStorageAccessHint(correlationId: string): void {
+function startStorageAccessHint(correlationId: string): Promise<boolean | null> {
   if (typeof document === "undefined" || typeof document.hasStorageAccess !== "function") {
-    return;
+    return Promise.resolve(null);
   }
-  void document
+  return document
     .hasStorageAccess()
     .then((hasAccess) => {
       logFacebookOAuthDiagnostic("sdk_storage_access_hint", {
         correlationId,
         hasStorageAccess: hasAccess,
       });
+      return hasAccess;
     })
     .catch(() => {
       logFacebookOAuthDiagnostic("sdk_storage_access_hint", {
         correlationId,
         hasStorageAccess: null,
       });
+      return null;
     });
+}
+
+function callbackForensicFields(
+  clickContext: FacebookOAuthClickContext | undefined,
+  attemptLifecycle: FacebookAttemptLifecycle | null,
+  storageAccess: boolean | null,
+): Record<string, unknown> {
+  const lifecycle = attemptLifecycle?.snapshot();
+  const clickPerf = clickContext?.perfNow;
+  const invokePerf = attemptLifecycle?.fbLoginInvokePerfNow ?? null;
+  return {
+    msSinceUserClick: clickPerf != null ? msSinceClick(clickPerf) : null,
+    msSinceFbLoginInvoke:
+      clickPerf != null ? msSinceFbInvoke(clickPerf, invokePerf) : null,
+    documentVisibilityState:
+      typeof document !== "undefined" ? document.visibilityState : "unknown",
+    documentHasFocus: typeof document !== "undefined" ? document.hasFocus() : null,
+    navigatorCookieEnabled:
+      typeof navigator !== "undefined" ? Boolean(navigator.cookieEnabled) : null,
+    hasStorageAccess: storageAccess,
+    ...(lifecycle
+      ? {
+          attemptLifecycle: lifecycle,
+          popupObserved: lifecycle.popupLifecycleObserved !== "unknown",
+          popupLifecycleUnknown: lifecycle.popupLifecycleObserved === "unknown",
+        }
+      : {
+          popupObserved: false,
+          popupLifecycleUnknown: true,
+        }),
+  };
 }
 
 type LoginStatusRecoveryResult =
@@ -599,12 +644,17 @@ function invokeFacebookLogin(
   correlationId: string,
   appId: string,
   clickContext?: FacebookOAuthClickContext,
+  attemptLifecycle?: FacebookAttemptLifecycle | null,
+  readStorageAccessHint: () => boolean | null = () => null,
 ): Promise<string> {
   fbLoginInvocationCount += 1;
   const loginInvocation = fbLoginInvocationCount;
   const previousLoginCorrelationId = activeFbLoginCorrelationId;
   const concurrentLogin = previousLoginCorrelationId != null && previousLoginCorrelationId !== correlationId;
   activeFbLoginCorrelationId = correlationId;
+  if (orphanEligibleCorrelationId !== correlationId) {
+    orphanEligibleCorrelationId = null;
+  }
 
   logFacebookOAuthDiagnostic("sdk_login_started", {
     correlationId,
@@ -614,7 +664,10 @@ function invokeFacebookLogin(
     ...loginEnvironmentSnapshot(appId),
     ...(previousLoginCorrelationId ? { previousLoginCorrelationId } : {}),
   });
-  logStorageAccessHint(correlationId);
+
+  const disposeLifecycle = () => {
+    attemptLifecycle?.dispose();
+  };
 
   return new Promise<string>((resolve, reject) => {
     let callbackReceived = false;
@@ -666,18 +719,25 @@ function invokeFacebookLogin(
           case: "E",
           apiOAuthWillBeCalled: false,
         });
-        if (orphanedFacebookTokenHandler) {
+        if (
+          orphanedFacebookTokenHandler &&
+          orphanEligibleCorrelationId === correlationId &&
+          activeFbLoginCorrelationId === null
+        ) {
           logFacebookOAuthDiagnostic("sdk_login_orphan_token_delivery", {
             correlationId,
             loginInvocation,
             tokenSource,
             case: "E",
           });
+          restoreFacebookOAuthDiagnosticId(correlationId);
+          orphanEligibleCorrelationId = null;
           orphanedFacebookTokenHandler(token, { correlationId, loginInvocation });
         }
         return;
       }
       clearAllTimers();
+      disposeLifecycle();
       if (recoveredAfterPendingReject || watchdogRejectScheduled) {
         logFacebookOAuthDiagnostic("sdk_login_late_token_recovery", {
           correlationId,
@@ -689,6 +749,7 @@ function invokeFacebookLogin(
         });
       }
       deliveryState = "fulfilled";
+      orphanEligibleCorrelationId = null;
       releaseActiveLogin();
       logFacebookOAuthDiagnostic("sdk_login_token_ready", {
         correlationId,
@@ -711,9 +772,10 @@ function invokeFacebookLogin(
       if (deliveryState === "rejected") return;
       deliveryState = "rejected";
       clearAllTimers();
+      disposeLifecycle();
       releaseActiveLogin();
+      orphanEligibleCorrelationId = correlationId;
       finish("rejected", extra);
-      clearFacebookOAuthDiagnostic();
       reject(err);
     };
 
@@ -757,10 +819,15 @@ function invokeFacebookLogin(
       reason: string,
       source: "login_callback" | "get_login_status_recovery",
     ) => {
-      const msSinceUserClick = clickContext
-        ? performance.now() - clickContext.perfNow
-        : null;
-      const failureKind = classifySdkLoginFailure(diagnostics, { msSinceUserClick });
+      const lifecycleSnap = attemptLifecycle?.snapshot();
+      const failureKind = classifySdkLoginFailure(diagnostics, {
+        lifecycle: lifecycleSnap
+          ? {
+              popupLifecycleObserved: lifecycleSnap.popupLifecycleObserved,
+              sawVisibleAfterHidden: lifecycleSnap.sawVisibleAfterHidden,
+            }
+          : undefined,
+      });
       logFacebookOAuthDiagnostic("sdk_login_no_token", {
         correlationId,
         loginInvocation,
@@ -769,6 +836,7 @@ function invokeFacebookLogin(
         source,
         reason,
         ...diagnostics,
+        ...callbackForensicFields(clickContext, attemptLifecycle ?? null, readStorageAccessHint()),
         apiOAuthWillBeCalled: false,
       });
       scheduleFailure(
@@ -827,6 +895,7 @@ function invokeFacebookLogin(
         loginInvocation,
         case: sdkOutcomeCase(diagnostics),
         ...diagnostics,
+        ...callbackForensicFields(clickContext, attemptLifecycle ?? null, readStorageAccessHint()),
       });
 
       const token = extractAccessToken(response);
@@ -888,8 +957,11 @@ function invokeFacebookLogin(
         correlationId,
         loginInvocation,
         elapsedMs: FB_LOGIN_POPUP_PROBE_MS,
+        probeKind: "heuristic_no_callback_yet",
         popupProbeNoCallback: true,
+        notProofOfPopupBlocked: true,
         ...(clickContext ? { clickUserActivationIsActive: clickContext.userActivationIsActive } : {}),
+        ...callbackForensicFields(clickContext, attemptLifecycle ?? null, readStorageAccessHint()),
       });
     }, FB_LOGIN_POPUP_PROBE_MS);
 
@@ -905,6 +977,7 @@ function invokeFacebookLogin(
             }
           : {}),
       });
+      attemptLifecycle?.markFbLoginInvoked();
       FB.login(
         (response) => {
           void handleLoginResponse(response, "login_callback").catch((e) => {
@@ -955,8 +1028,24 @@ function invokeFacebookLogin(
  */
 export function requestFacebookAccessToken(
   clickContext?: FacebookOAuthClickContext,
+  existingCorrelationId?: string,
 ): Promise<string> {
-  const correlationId = beginFacebookOAuthDiagnostic();
+  const correlationId = existingCorrelationId ?? beginFacebookOAuthDiagnostic();
+  if (existingCorrelationId) {
+    setActiveFacebookOAuthDiagnosticId(existingCorrelationId);
+  }
+  const storageAccessRef: { hint: boolean | null } = { hint: null };
+  void startStorageAccessHint(correlationId).then((hint) => {
+    storageAccessRef.hint = hint;
+  });
+  let attemptLifecycle: FacebookAttemptLifecycle | null = null;
+  if (clickContext) {
+    attemptLifecycle = attachFacebookAttemptLifecycle(correlationId, clickContext.perfNow);
+  }
+  const disposeAttemptLifecycle = () => {
+    attemptLifecycle?.dispose();
+    attemptLifecycle = null;
+  };
   userActivationCheckpoint("requestFacebookAccessToken_started", {
     correlationId,
     ...(clickContext
@@ -970,6 +1059,7 @@ export function requestFacebookAccessToken(
 
   const appId = configuredFacebookAppId();
   if (!appId) {
+    disposeAttemptLifecycle();
     logFacebookOAuthDiagnostic("requestFacebookAccessToken_rejected", {
       correlationId,
       reason: "app_id_not_configured",
@@ -982,6 +1072,7 @@ export function requestFacebookAccessToken(
   }
 
   if (activeFbLoginCorrelationId != null) {
+    disposeAttemptLifecycle();
     logFacebookOAuthDiagnostic("requestFacebookAccessToken_rejected", {
       correlationId,
       reason: "concurrent_login",
@@ -995,6 +1086,7 @@ export function requestFacebookAccessToken(
 
   const FB = getReadyFacebookSdk();
   if (!FB) {
+    disposeAttemptLifecycle();
     logFacebookOAuthDiagnostic("requestFacebookAccessToken_rejected", {
       correlationId,
       reason: "sdk_not_ready_on_click",
@@ -1009,5 +1101,12 @@ export function requestFacebookAccessToken(
     );
   }
 
-  return invokeFacebookLogin(FB, correlationId, appId, clickContext);
+  return invokeFacebookLogin(
+    FB,
+    correlationId,
+    appId,
+    clickContext,
+    attemptLifecycle,
+    () => storageAccessRef.hint,
+  );
 }

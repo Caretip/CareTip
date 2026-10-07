@@ -1,7 +1,12 @@
 export type FacebookLoginFailureKind =
   | "cancelled"
   | "callback_missing_auth"
+  /** Legacy — no longer assigned by timing heuristics; kept for presenters. */
   | "popup_blocked"
+  /** SDK returned unknown without auth; no observable popup-block evidence. */
+  | "session_bridge_unverified"
+  /** Reserved when popup lifecycle cannot be verified (not user-facing in Phase Two). */
+  | "popup_unverified"
   | "incomplete"
   | "sdk_not_ready"
   | "concurrent"

@@ -15,6 +15,7 @@
     "dev:api": "npm --prefix backend run dev",
     "db:migrate:resolve": "npm --prefix backend run db:migrate:resolve --",
     "typecheck": "tsc --noEmit",
+    "test:facebook-oauth-web": "node ./backend/node_modules/tsx/dist/cli.mjs ./src/app/lib/facebookOAuthWeb.runtime.ts",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix --report-unused-disable-directives",
     "format": "prettier --write \"src/**/*.{ts,tsx,css}\" \"*.{ts,json}\" \"vite.config.ts\"",

@@ -13,7 +13,7 @@ export function appleOAuthWebClientId(): string {
 }
 
 export function facebookOAuthWebAppId(): string {
-  return import.meta.env.VITE_FACEBOOK_APP_ID?.trim() ?? "";
+  return import.meta.env?.VITE_FACEBOOK_APP_ID?.trim() ?? "";
 }
 
 export function providerDisplayName(provider: OAuthProviderId): string {

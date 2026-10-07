@@ -138,6 +138,19 @@ async function runScenario(name, contextOptions) {
       ),
     ],
     correlationIds,
+    correlationIdContinuity: (() => {
+      const click = fbEvents.find((e) => e.stage === "oauth_facebook_button_click");
+      const invoke = fbEvents.find((e) => e.stage === "sdk_login_invoke");
+      const id = click?.correlationId;
+      if (!id) return { ok: false, reason: "missing_click_correlation" };
+      const sameIdStages = fbEvents.filter((e) => e.correlationId === id).map((e) => e.stage);
+      return {
+        ok: Boolean(click?.correlationId && invoke?.correlationId === id),
+        clickCorrelationId: id,
+        invokeCorrelationId: invoke?.correlationId ?? null,
+        stagesForAttempt: sameIdStages,
+      };
+    })(),
     facebookDiagStages: fbEvents.map((e) => ({
       stage: e.stage,
       correlationId: e.correlationId,
@@ -148,6 +161,9 @@ async function runScenario(name, contextOptions) {
       failureKind: e.failureKind,
       recoverySucceeded: e.recoverySucceeded,
       tokenSource: e.tokenSource,
+      msSinceUserClick: e.msSinceUserClick,
+      attemptLifecycle: e.attemptLifecycle,
+      popupObserved: e.popupObserved,
     })),
     providerAccountsEmpty: consoleLines.some((c) =>
       /Provider's accounts list is empty/i.test(c.text),

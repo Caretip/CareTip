@@ -19,11 +19,15 @@ import {
 } from "../../../lib/oauthProviderIds";
 import { requestAppleIdToken, isAppleSdkAvailable } from "../../../lib/appleOAuthWeb";
 import {
+  captureFacebookOAuthClickContext,
   isFacebookSdkReady,
+  registerFacebookOrphanedTokenHandler,
   requestFacebookAccessToken,
   warmFacebookSdk,
 } from "../../../lib/facebookOAuthWeb";
+import { beginFacebookOAuthDiagnostic } from "../../../lib/facebookOAuthDiagnostic";
 import { isFacebookLoginError } from "../../../lib/facebookLoginError";
+import { presentFacebookLoginError } from "../../../lib/facebookOAuthPresent";
 import { logClientError } from "../../../lib/clientLog";
 import { toUserFriendlyMessage } from "../../../lib/errorMessages";
 import { AuthGoogleOAuthScope } from "@/app/components/auth/AuthGoogleOAuthScope";
@@ -99,7 +103,7 @@ export function LinkedOAuthAccountsSection({ loading }: { loading?: boolean }) {
     (p) => providerConfigured(p) || linkedMap.has(p),
   );
 
-  const finishLink = async (provider: OAuthProviderId, idToken: string) => {
+  const finishLink = useCallback(async (provider: OAuthProviderId, idToken: string) => {
     if (walkthroughDemo) {
       toast.error(t("business.accountSettings.walkthroughDemoLinkForbidden"));
       setLinkingGoogle(false);
@@ -119,7 +123,23 @@ export function LinkedOAuthAccountsSection({ loading }: { loading?: boolean }) {
     } finally {
       setBusyProvider(null);
     }
-  };
+  }, [refresh, t, walkthroughDemo]);
+
+  useEffect(() => {
+    registerFacebookOrphanedTokenHandler((token) => {
+      void finishLink("facebook", token);
+    });
+    return () => registerFacebookOrphanedTokenHandler(null);
+  }, [finishLink]);
+
+  useEffect(() => {
+    if (busyProvider !== "facebook") return;
+    const safetyMs = 150_000;
+    const timer = window.setTimeout(() => {
+      setBusyProvider(null);
+    }, safetyMs);
+    return () => window.clearTimeout(timer);
+  }, [busyProvider]);
 
   const handleUnlink = async (provider: OAuthProviderId) => {
     setBusyProvider(provider);
@@ -148,8 +168,14 @@ export function LinkedOAuthAccountsSection({ loading }: { loading?: boolean }) {
     }
     setBusyProvider(provider);
     try {
-      const idToken =
-        provider === "apple" ? await requestAppleIdToken() : await requestFacebookAccessToken();
+      let idToken: string;
+      if (provider === "apple") {
+        idToken = await requestAppleIdToken();
+      } else {
+        const clickContext = captureFacebookOAuthClickContext();
+        const correlationId = beginFacebookOAuthDiagnostic();
+        idToken = await requestFacebookAccessToken(clickContext, correlationId);
+      }
       await finishLink(provider, idToken);
     } catch (e) {
       logClientError("LinkedOAuthAccountsSection.linkStart", e);
@@ -158,20 +184,10 @@ export function LinkedOAuthAccountsSection({ loading }: { loading?: boolean }) {
           setBusyProvider(null);
           return;
         }
-        if (e.kind === "callback_missing_auth") {
-          toast.error(t("auth.oauth.facebookCallbackMissingAuth"));
-        } else if (e.kind === "popup_blocked") {
-          toast.error(t("auth.oauth.facebookPopupBlocked"));
-        } else if (e.kind === "sdk_not_ready") {
-          toast.message(t("auth.oauth.facebookSdkLoading"));
-          void warmFacebookSdk();
-        } else if (e.kind === "incomplete") {
-          toast.error(t("auth.oauth.facebookIncomplete"));
-        } else if (e.kind === "sdk_load_failed") {
-          toast.error(t("auth.oauth.facebookSdkLoadFailed"));
-        } else {
-          toast.error(toUserFriendlyMessage(e));
-        }
+        presentFacebookLoginError(e, t, {
+          onNotConfigured: () => toast.error(t("auth.oauth.providerNotConfigured")),
+          onGeneric: (message) => toast.error(message),
+        });
       } else {
         toast.error(toUserFriendlyMessage(e));
       }

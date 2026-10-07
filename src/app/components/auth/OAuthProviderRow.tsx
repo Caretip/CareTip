@@ -19,7 +19,9 @@ import {
   requestFacebookAccessToken,
   warmFacebookSdk,
 } from "@/app/lib/facebookOAuthWeb";
+import { beginFacebookOAuthDiagnostic } from "@/app/lib/facebookOAuthDiagnostic";
 import { isFacebookLoginError } from "@/app/lib/facebookLoginError";
+import { presentFacebookLoginError } from "@/app/lib/facebookOAuthPresent";
 import { logFacebookOAuthDiagnostic } from "@/app/lib/facebookOAuthDiagnostic";
 import { logClientError } from "@/app/lib/clientLog";
 import { toUserFriendlyMessage } from "@/app/lib/errorMessages";
@@ -211,50 +213,25 @@ export function OAuthProviderRow({
 
   const toastFacebookLoginError = useCallback(
     (e: unknown) => {
-      if (isFacebookLoginError(e)) {
-        if (e.kind === "cancelled") {
-          return;
-        }
-        if (e.kind === "callback_missing_auth") {
-          toast.error(t("auth.oauth.facebookCallbackMissingAuth"), {
-            id: "caretip-fb-callback-missing-auth",
-          });
-          return;
-        }
-        if (e.kind === "popup_blocked") {
-          toast.error(t("auth.oauth.facebookPopupBlocked"), { id: "caretip-fb-popup-blocked" });
-          return;
-        }
-        if (e.kind === "sdk_not_ready") {
-          toast.message(t("auth.oauth.facebookSdkLoading"), { id: "caretip-fb-warm" });
-          void warmFacebookSdk().then(() => setFacebookWarmState("ready"));
-          return;
-        }
-        if (e.kind === "concurrent") {
-          return;
-        }
-        if (e.kind === "not_configured") {
-          toastNotConfigured();
-          return;
-        }
-        if (e.kind === "sdk_load_failed") {
-          toast.error(t("auth.oauth.facebookSdkLoadFailed"), { id: "caretip-fb-load" });
-          return;
-        }
-        if (e.kind === "incomplete") {
-          toast.error(t("auth.oauth.facebookIncomplete"), { id: "caretip-fb-incomplete" });
-          return;
-        }
+      if (!isFacebookLoginError(e)) {
+        logClientError("OAuthProviderRow.facebook", e);
+        toast.error(toUserFriendlyMessage(e) || t("auth.oauth.providerFailed", { provider: "Facebook" }));
+        return;
       }
-      logClientError("OAuthProviderRow.facebook", e);
-      toast.error(toUserFriendlyMessage(e) || t("auth.oauth.providerFailed", { provider: "Facebook" }));
+      presentFacebookLoginError(e, t, {
+        onSdkWarmRetry: () => setFacebookWarmState("ready"),
+        onNotConfigured: toastNotConfigured,
+        onGeneric: (message) => toast.error(message),
+      });
     },
     [t],
   );
 
   const runFacebookLogin = useCallback(() => {
     const clickContext = captureFacebookOAuthClickContext();
+    const correlationId = beginFacebookOAuthDiagnostic();
     logFacebookOAuthDiagnostic("oauth_facebook_button_click", {
+      correlationId,
       provider: "facebook",
       interactionBlocked,
       disabled,
@@ -290,21 +267,25 @@ export function OAuthProviderRow({
     }
     if (!isFacebookSdkReady()) {
       logFacebookOAuthDiagnostic("oauth_facebook_click_sdk_not_ready", {
+        correlationId,
         facebookWarmState,
       });
       toast.message(t("auth.oauth.facebookSdkLoading"), { id: "caretip-fb-warm" });
-      void warmFacebookSdk().then(() => setFacebookWarmState("ready"));
+      void warmFacebookSdk()
+        .then(() => setFacebookWarmState("ready"))
+        .catch(() => setFacebookWarmState("failed"));
       return;
     }
     setProviderBusy("facebook");
     try {
-      const tokenPromise = requestFacebookAccessToken(clickContext);
+      const tokenPromise = requestFacebookAccessToken(clickContext, correlationId);
       void tokenPromise
         .then((idToken) => {
           onSocialCredential("facebook", idToken);
         })
         .catch((e) => {
           logFacebookOAuthDiagnostic("oauth_provider_row_aborted", {
+            correlationId,
             provider: "facebook",
             apiOAuthWillBeCalled: false,
             errorClass: e instanceof Error ? e.name : "Error",
@@ -466,7 +447,10 @@ export function OAuthProviderRow({
             disabled={disabled || providerBusy != null || interactionBlocked}
             loading={
               providerBusy === "facebook" ||
-              (showFacebook && facebookWarmState === "loading" && providerBusy == null)
+              (showFacebook &&
+                facebookWarmState === "loading" &&
+                providerBusy == null &&
+                isFacebookSdkReady())
             }
             title={
               !showFacebook
