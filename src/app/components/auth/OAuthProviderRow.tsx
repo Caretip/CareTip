@@ -19,6 +19,11 @@ import {
   requestFacebookAccessToken,
   warmFacebookSdk,
 } from "@/app/lib/facebookOAuthWeb";
+import {
+  isFacebookOAuthRedirectEnabled,
+  submitFacebookOAuthRedirectStart,
+  type FacebookRedirectStartContext,
+} from "@/app/lib/facebookOAuthRedirectWeb";
 import { beginFacebookOAuthDiagnostic } from "@/app/lib/facebookOAuthDiagnostic";
 import { isFacebookLoginError } from "@/app/lib/facebookLoginError";
 import { presentFacebookLoginError } from "@/app/lib/facebookOAuthPresent";
@@ -91,6 +96,8 @@ export type OAuthProviderRowProps = {
   className?: string;
   onSocialCredential: (provider: OAuthProviderId, idToken: string) => void;
   ariaLabel?: string;
+  /** When set and redirect mode is on, Facebook uses server OAuth instead of FB.login(). */
+  facebookRedirectContext?: FacebookRedirectStartContext | null;
 };
 
 /**
@@ -103,6 +110,7 @@ export function OAuthProviderRow({
   className,
   onSocialCredential,
   ariaLabel,
+  facebookRedirectContext = null,
 }: OAuthProviderRowProps) {
   const { t } = useTranslation();
   const googleClientId = googleOAuthWebClientId();
@@ -265,6 +273,18 @@ export function OAuthProviderRow({
       toastNotConfigured();
       return;
     }
+    if (isFacebookOAuthRedirectEnabled() && facebookRedirectContext) {
+      logFacebookOAuthDiagnostic("oauth_facebook_redirect_start", {
+        correlationId,
+        isLogin: facebookRedirectContext.isLogin,
+      });
+      setProviderBusy("facebook");
+      submitFacebookOAuthRedirectStart(
+        { ...facebookRedirectContext, correlationId },
+        "/api/auth/facebook/start",
+      );
+      return;
+    }
     if (!isFacebookSdkReady()) {
       logFacebookOAuthDiagnostic("oauth_facebook_click_sdk_not_ready", {
         correlationId,
@@ -308,6 +328,7 @@ export function OAuthProviderRow({
     showFacebook,
     toastFacebookLoginError,
     facebookWarmState,
+    facebookRedirectContext,
     t,
   ]);
 

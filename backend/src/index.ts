@@ -154,6 +154,7 @@ app.use(
     },
   }),
 );
+app.use(express.urlencoded({ extended: false, limit: "32kb" }));
 app.use(jsonParseErrorHandler);
 
 /** Public probes — no auth; mounted before broad /api rate limit. */

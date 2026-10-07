@@ -345,6 +345,10 @@ export function MobileWebAuthShell({
             <SocialLoginRow
               disabled={busy}
               isLogin={isLogin}
+              role={_role}
+              name={name}
+              inviteCode={inviteCode}
+              merchantLegalAccepted={merchantLegalAccepted}
               allowSocialSignUp={allowSocialSignUp}
               blockedTitle={
                 !isLogin && !isEmployee && !merchantLegalAccepted

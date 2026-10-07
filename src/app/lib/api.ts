@@ -326,6 +326,11 @@ function apiPath(path: string): string {
   return base ? `${base}${p}` : p;
 }
 
+/** Absolute API URL for full-page OAuth form posts (Facebook redirect). */
+export function getApiAbsoluteUrl(path: string): string {
+  return apiPath(path);
+}
+
 function getToken(): string | null {
   return getMemoryAccessToken();
 }
@@ -4112,6 +4117,23 @@ export async function consumeMobileWebHandoff(
       credentials: "include",
     },
   );
+}
+
+export type FacebookOAuthMfaHandoffResponse = {
+  mfaRequired: true;
+  mfaSetupRequired?: boolean;
+  pendingMfaToken: string;
+};
+
+export async function consumeFacebookOAuthMfaHandoff(
+  token: string,
+): Promise<FacebookOAuthMfaHandoffResponse> {
+  return apiRequest<FacebookOAuthMfaHandoffResponse>(apiPath("/api/auth/facebook/complete"), {
+    method: "POST",
+    headers: getHeaders(),
+    credentials: "include",
+    body: JSON.stringify({ token: token.trim() }),
+  });
 }
 
 export async function scheduleBillingCancelAtPeriodEnd(): Promise<{

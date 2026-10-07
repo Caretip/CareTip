@@ -23,7 +23,18 @@ export type FacebookOAuthDiagnosticStage =
   | "session_complete"
   | "identity_verify_route"
   | "http_response"
-  | "failure";
+  | "failure"
+  | "facebook_redirect_started"
+  | "facebook_callback_received"
+  | "facebook_state_validated"
+  | "facebook_code_exchange_started"
+  | "facebook_code_exchange_finished"
+  | "facebook_identity_verify_start"
+  | "facebook_identity_verified"
+  | "facebook_account_resolved"
+  | "facebook_session_created"
+  | "facebook_redirect_completed"
+  | "facebook_oauth_failed";
 
 export function resolveFacebookOAuthDiagnosticId(req: Request): string {
   const fromHeader = req.get(FACEBOOK_OAUTH_DIAGNOSTIC_HEADER)?.trim();

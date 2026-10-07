@@ -25,6 +25,10 @@ import {
   requestFacebookAccessToken,
   warmFacebookSdk,
 } from "../../../lib/facebookOAuthWeb";
+import {
+  isFacebookOAuthRedirectEnabled,
+  submitFacebookOAuthRedirectStart,
+} from "../../../lib/facebookOAuthRedirectWeb";
 import { beginFacebookOAuthDiagnostic } from "../../../lib/facebookOAuthDiagnostic";
 import { isFacebookLoginError } from "../../../lib/facebookLoginError";
 import { presentFacebookLoginError } from "../../../lib/facebookOAuthPresent";
@@ -171,6 +175,18 @@ export function LinkedOAuthAccountsSection({ loading }: { loading?: boolean }) {
       let idToken: string;
       if (provider === "apple") {
         idToken = await requestAppleIdToken();
+      } else if (isFacebookOAuthRedirectEnabled()) {
+        const correlationId = beginFacebookOAuthDiagnostic();
+        submitFacebookOAuthRedirectStart(
+          {
+            isLogin: true,
+            returnPath:
+              typeof window !== "undefined" ? window.location.pathname : "/dashboard/settings",
+            correlationId,
+          },
+          "/api/auth/facebook/start/link",
+        );
+        return;
       } else {
         const clickContext = captureFacebookOAuthClickContext();
         const correlationId = beginFacebookOAuthDiagnostic();

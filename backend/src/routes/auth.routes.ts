@@ -21,6 +21,7 @@ import { requireTrustedOrigin } from "../middleware/requireTrustedOrigin.middlew
 import { requireCaretipClientHeader } from "../middleware/requireCaretipClientHeader.middleware.js";
 import * as authController from "../controllers/auth.controller.js";
 import * as mobileWebHandoffController from "../controllers/mobileWebHandoff.controller.js";
+import * as facebookOAuthRedirectController from "../controllers/facebookOAuthRedirect.controller.js";
 
 const router = Router();
 
@@ -49,6 +50,27 @@ router.post(
   authController.resendVerificationEmailForSession
 );
 router.post("/oauth", oauthRateLimit, authController.oauth);
+router.post(
+  "/facebook/start",
+  oauthRateLimit,
+  requireTrustedOrigin,
+  facebookOAuthRedirectController.startFacebookOAuthRedirect,
+);
+router.post(
+  "/facebook/start/link",
+  authMiddleware,
+  oauthRateLimit,
+  requireTrustedOrigin,
+  facebookOAuthRedirectController.startFacebookOAuthRedirect,
+);
+router.get("/facebook/callback", oauthRateLimit, facebookOAuthRedirectController.facebookOAuthCallback);
+router.post(
+  "/facebook/complete",
+  oauthRateLimit,
+  requireTrustedOrigin,
+  requireCaretipClientHeader,
+  facebookOAuthRedirectController.consumeFacebookOAuthComplete,
+);
 /**
  * Apple HTTPS Return URL for Android web OAuth (form_post bounce → caretip://).
  * Not a session/login endpoint — identity verification stays on POST /oauth.
