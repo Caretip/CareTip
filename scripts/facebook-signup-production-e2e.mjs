@@ -164,7 +164,12 @@ async function runScenario(name, contextOptions) {
       msSinceUserClick: e.msSinceUserClick,
       attemptLifecycle: e.attemptLifecycle,
       popupObserved: e.popupObserved,
+      canTerminate: e.canTerminate,
     })),
+    noInteractionEarlyTerminate: fbEvents.some((e) =>
+      e.stage === "sdk_login_flow_aborted" &&
+      e.failureKind === "oauth_interaction_not_observed",
+    ),
     providerAccountsEmpty: consoleLines.some((c) =>
       /Provider's accounts list is empty/i.test(c.text),
     ),

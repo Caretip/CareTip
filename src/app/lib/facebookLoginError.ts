@@ -7,6 +7,8 @@ export type FacebookLoginFailureKind =
   | "session_bridge_unverified"
   /** Reserved when popup lifecycle cannot be verified (not user-facing in Phase Two). */
   | "popup_unverified"
+  /** No FB.login callback and no observable popup/focus interaction (not proof of block). */
+  | "oauth_interaction_not_observed"
   | "incomplete"
   | "sdk_not_ready"
   | "concurrent"

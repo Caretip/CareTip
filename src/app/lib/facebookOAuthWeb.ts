@@ -7,6 +7,11 @@ import {
 } from "./facebookOAuthAttemptLifecycle";
 import { classifySdkLoginFailure } from "./facebookOAuthClassification";
 import {
+  noCallbackNoPopupGraceAfterProbeMs,
+  noObservablePopupInteraction,
+  shouldEarlyTerminateNoCallbackAttempt,
+} from "./facebookOAuthNoInteraction";
+import {
   beginFacebookOAuthDiagnostic,
   clearFacebookOAuthDiagnostic,
   logFacebookOAuthDiagnostic,
@@ -500,6 +505,12 @@ function facebookLoginErrorForFailure(
         "Facebook could not open because your browser blocked the sign-in window.",
         { fbStatus, fbOutcome },
       );
+    case "oauth_interaction_not_observed":
+      return new FacebookLoginError(
+        kind,
+        "Facebook sign-in could not open or complete. Allow pop-ups for CareTip and try again.",
+        { fbStatus, fbOutcome },
+      );
     case "incomplete":
       return new FacebookLoginError(
         kind,
@@ -678,6 +689,7 @@ function invokeFacebookLogin(
     let pendingRejectTimer = 0;
     let watchdogRejectScheduled = false;
     let popupProbeTimer = 0;
+    let noInteractionTerminateTimer = 0;
     let popupProbeNoCallback = false;
 
     const clearAllTimers = () => {
@@ -685,8 +697,48 @@ function invokeFacebookLogin(
       window.clearTimeout(postCallbackWatchdog);
       window.clearTimeout(pendingRejectTimer);
       window.clearTimeout(popupProbeTimer);
+      window.clearTimeout(noInteractionTerminateTimer);
       pendingRejectTimer = 0;
       popupProbeTimer = 0;
+      noInteractionTerminateTimer = 0;
+    };
+
+    const scheduleNoInteractionTerminationCheck = (source: "popup_probe" | "grace_timer") => {
+      const lifecycleSnap = attemptLifecycle?.snapshot();
+      const popupObserved = lifecycleSnap
+        ? lifecycleSnap.popupLifecycleObserved !== "unknown"
+        : false;
+      const canTerminate = shouldEarlyTerminateNoCallbackAttempt({
+        callbackReceived,
+        deliveryPending: deliveryState === "pending",
+        lifecycle: lifecycleSnap,
+      });
+      logFacebookOAuthDiagnostic("sdk_login_no_interaction_check", {
+        correlationId,
+        loginInvocation,
+        source,
+        callbackReceived,
+        popupProbeNoCallback,
+        popupObserved,
+        popupLifecycleUnknown: !popupObserved,
+        canTerminate,
+        notProofOfPopupBlocked: true,
+        graceAfterProbeMs: noCallbackNoPopupGraceAfterProbeMs(),
+        ...callbackForensicFields(clickContext, attemptLifecycle ?? null, readStorageAccessHint()),
+      });
+      if (!canTerminate) {
+        return;
+      }
+      const err = new FacebookLoginError(
+        "oauth_interaction_not_observed",
+        "Facebook sign-in could not open or complete. Allow pop-ups for CareTip and try again.",
+      );
+      scheduleFailure(err, "no_callback_no_observable_popup", 0, {
+        failureKind: "oauth_interaction_not_observed",
+        outcome: "no_callback_no_observable_popup",
+        popupProbeNoCallback,
+        popupObserved,
+      });
     };
 
     const releaseActiveLogin = () => {
@@ -877,6 +929,8 @@ function invokeFacebookLogin(
     const handleLoginResponse = async (response: FbLoginStatus, source: "login_callback") => {
       callbackReceived = true;
       window.clearTimeout(pendingRejectTimer);
+      window.clearTimeout(noInteractionTerminateTimer);
+      noInteractionTerminateTimer = 0;
       watchdogRejectScheduled = false;
       postCallbackWatchdog = window.setTimeout(() => {
         if (deliveryState !== "pending") return;
@@ -963,6 +1017,23 @@ function invokeFacebookLogin(
         ...(clickContext ? { clickUserActivationIsActive: clickContext.userActivationIsActive } : {}),
         ...callbackForensicFields(clickContext, attemptLifecycle ?? null, readStorageAccessHint()),
       });
+      if (
+        !callbackReceived &&
+        deliveryState === "pending" &&
+        noObservablePopupInteraction(attemptLifecycle?.snapshot())
+      ) {
+        noInteractionTerminateTimer = window.setTimeout(() => {
+          if (callbackReceived || deliveryState !== "pending") return;
+          scheduleNoInteractionTerminationCheck("grace_timer");
+        }, noCallbackNoPopupGraceAfterProbeMs());
+      } else {
+        logFacebookOAuthDiagnostic("sdk_login_no_interaction_grace_skipped", {
+          correlationId,
+          loginInvocation,
+          reason: "popup_or_focus_activity_observed",
+          notProofOfPopupBlocked: true,
+        });
+      }
     }, FB_LOGIN_POPUP_PROBE_MS);
 
     try {

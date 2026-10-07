@@ -1659,6 +1659,7 @@
       "facebookSdkLoadFailed": "Facebook sign-in could not load. Check your connection and try again.",
       "facebookCallbackMissingAuth": "Facebook sign-in could not be completed because Facebook did not return the required sign-in information. Please try again or use another sign-in method.",
       "facebookPopupBlocked": "Facebook could not open because your browser blocked the sign-in window. Allow pop-ups for CareTip and try again.",
+      "facebookInteractionNotObserved": "Facebook sign-in could not open or complete. Allow pop-ups for CareTip and try again.",
       "facebookIncomplete": "Facebook sign-in did not finish. Please try again.",
       "linkingRequiredToast": "We couldn't complete social sign-in. If you already have a CareTip account, please sign in or use Forgot Password to recover access."
     },

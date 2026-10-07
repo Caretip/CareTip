@@ -1659,6 +1659,7 @@
       "facebookSdkLoadFailed": "Facebook-Anmeldung konnte nicht geladen werden. Verbindung prüfen und erneut versuchen.",
       "facebookCallbackMissingAuth": "Die Facebook-Anmeldung konnte nicht abgeschlossen werden, weil Facebook die erforderlichen Anmeldedaten nicht zurückgegeben hat. Bitte erneut versuchen oder eine andere Anmeldemethode nutzen.",
       "facebookPopupBlocked": "Facebook konnte nicht geöffnet werden, weil Ihr Browser das Anmeldefenster blockiert hat. Pop-ups für CareTip erlauben und erneut versuchen.",
+      "facebookInteractionNotObserved": "Die Facebook-Anmeldung konnte nicht geöffnet oder abgeschlossen werden. Pop-ups für CareTip erlauben und erneut versuchen.",
       "facebookIncomplete": "Facebook-Anmeldung wurde nicht abgeschlossen. Bitte erneut versuchen.",
       "linkingRequiredToast": "Die soziale Anmeldung konnte nicht abgeschlossen werden. Wenn Sie bereits ein CareTip-Konto haben, melden Sie sich an oder nutzen Sie „Passwort vergessen“."
     },

@@ -25,6 +25,12 @@ export function facebookLoginErrorToastAction(
         messageKey: "auth.oauth.facebookCallbackMissingAuth",
         toastId: "caretip-fb-callback-missing-auth",
       };
+    case "oauth_interaction_not_observed":
+      return {
+        type: "toast_error",
+        messageKey: "auth.oauth.facebookInteractionNotObserved",
+        toastId: "caretip-fb-interaction-not-observed",
+      };
     case "popup_blocked":
     case "popup_unverified":
       return {

@@ -13,6 +13,11 @@ importMetaEnv.env = { ...importMetaEnv.env, VITE_FACEBOOK_APP_ID: TEST_APP_ID };
 const {
   classifySdkLoginFailure,
 } = await import("./facebookOAuthClassification");
+const {
+  noObservablePopupInteraction,
+  setNoCallbackNoPopupGraceAfterProbeMsForTesting,
+  shouldEarlyTerminateNoCallbackAttempt,
+} = await import("./facebookOAuthNoInteraction");
 const { facebookLoginErrorToastAction } = await import("./facebookOAuthPresent");
 const { getFacebookOAuthDiagnosticId } = await import("./facebookOAuthDiagnostic");
 const {
@@ -231,6 +236,73 @@ async function main() {
       assert.equal((e as { kind?: string }).kind, "concurrent");
     }
     await first;
+  });
+
+  await run("focus shift prevents early no-interaction terminate", () => {
+    assert.equal(
+      shouldEarlyTerminateNoCallbackAttempt({
+        callbackReceived: false,
+        deliveryPending: true,
+        lifecycle: {
+          visibilityChangeCount: 1,
+          focusEventCount: 0,
+          blurEventCount: 1,
+          pagehideCount: 0,
+          pageshowCount: 0,
+          sawHiddenWhileAttemptActive: false,
+          sawVisibleAfterHidden: false,
+          sawBlurWhileAttemptActive: true,
+          sawFocusAfterBlur: false,
+          lastVisibilityState: "visible",
+          lastDocumentHasFocus: false,
+          sawBlurAfterFbLoginInvoke: true,
+          popupLifecycleObserved: "focus_shift_after_invoke",
+        },
+      }),
+      false,
+    );
+  });
+
+  await run("no callback + no popup observation -> early oauth_interaction_not_observed", async () => {
+    resetFacebookOAuthWebStateForTesting();
+    setNoCallbackNoPopupGraceAfterProbeMsForTesting(20);
+    installMockFb({
+      login: () => {
+        /* never calls callback */
+      },
+    });
+    const start = Date.now();
+    await assert.rejects(
+      () => requestFacebookAccessToken(captureFacebookOAuthClickContext(), "fb_web_no_interaction"),
+      (e: unknown) => {
+        assert.equal((e as { kind?: string }).kind, "oauth_interaction_not_observed");
+        return true;
+      },
+    );
+    const elapsed = Date.now() - start;
+    assert.ok(elapsed < 15_000, `expected early terminate, took ${elapsed}ms`);
+    setNoCallbackNoPopupGraceAfterProbeMsForTesting(null);
+  });
+
+  await run("callback after probe still succeeds", async () => {
+    resetFacebookOAuthWebStateForTesting();
+    setNoCallbackNoPopupGraceAfterProbeMsForTesting(3_000);
+    installMockFb({
+      login: (cb) => {
+        setTimeout(() => {
+          cb({
+            status: "connected",
+            authResponse: { accessToken: "late_ok", userID: "3" },
+          });
+        }, 5_500);
+      },
+    });
+    const token = await requestFacebookAccessToken(
+      captureFacebookOAuthClickContext(),
+      "fb_web_late_cb",
+    );
+    assert.equal(token, "late_ok");
+    setNoCallbackNoPopupGraceAfterProbeMsForTesting(null);
   });
 
   await run("FB.login throw -> generic", async () => {
