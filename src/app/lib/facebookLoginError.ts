@@ -1,6 +1,7 @@
 export type FacebookLoginFailureKind =
   | "cancelled"
   | "callback_missing_auth"
+  | "popup_blocked"
   | "incomplete"
   | "sdk_not_ready"
   | "concurrent"

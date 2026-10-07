@@ -13,7 +13,9 @@ import {
 import { OAUTH_LOGO_SRC } from "@/app/lib/oauthLogos";
 import { requestAppleIdToken, isAppleSdkAvailable } from "@/app/lib/appleOAuthWeb";
 import {
+  captureFacebookOAuthClickContext,
   isFacebookSdkReady,
+  registerFacebookOrphanedTokenHandler,
   requestFacebookAccessToken,
   warmFacebookSdk,
 } from "@/app/lib/facebookOAuthWeb";
@@ -112,6 +114,32 @@ export function OAuthProviderRow({
   const [providerBusy, setProviderBusy] = useState<OAuthProviderId | null>(null);
 
   useEffect(() => {
+    registerFacebookOrphanedTokenHandler((token, meta) => {
+      logFacebookOAuthDiagnostic("oauth_orphan_token_recovery", {
+        provider: "facebook",
+        correlationId: meta.correlationId,
+        loginInvocation: meta.loginInvocation,
+        apiOAuthWillBeCalled: true,
+      });
+      onSocialCredential("facebook", token);
+    });
+    return () => registerFacebookOrphanedTokenHandler(null);
+  }, [onSocialCredential]);
+
+  useEffect(() => {
+    if (providerBusy !== "facebook") return;
+    const safetyMs = 150_000;
+    const timer = window.setTimeout(() => {
+      logFacebookOAuthDiagnostic("oauth_provider_busy_safety_reset", {
+        provider: "facebook",
+        elapsedMs: safetyMs,
+      });
+      setProviderBusy(null);
+    }, safetyMs);
+    return () => window.clearTimeout(timer);
+  }, [providerBusy]);
+
+  useEffect(() => {
     if (!facebookAppId) {
       setFacebookWarmState("failed");
       return;
@@ -193,6 +221,10 @@ export function OAuthProviderRow({
           });
           return;
         }
+        if (e.kind === "popup_blocked") {
+          toast.error(t("auth.oauth.facebookPopupBlocked"), { id: "caretip-fb-popup-blocked" });
+          return;
+        }
         if (e.kind === "sdk_not_ready") {
           toast.message(t("auth.oauth.facebookSdkLoading"), { id: "caretip-fb-warm" });
           void warmFacebookSdk().then(() => setFacebookWarmState("ready"));
@@ -221,7 +253,19 @@ export function OAuthProviderRow({
   );
 
   const runFacebookLogin = useCallback(() => {
-    if (busy) {
+    const clickContext = captureFacebookOAuthClickContext();
+    logFacebookOAuthDiagnostic("oauth_facebook_button_click", {
+      provider: "facebook",
+      interactionBlocked,
+      disabled,
+      providerBusy: providerBusy ?? null,
+      facebookWarmState,
+      sdkReadyOnClick: isFacebookSdkReady(),
+      clickPerfNow: clickContext.perfNow,
+      clickUserActivationIsActive: clickContext.userActivationIsActive,
+      clickUserActivationHasBeenActive: clickContext.userActivationHasBeenActive,
+    });
+    if (interactionBlocked || disabled) {
       logFacebookOAuthDiagnostic("oauth_row_click_ignored", {
         provider: "facebook",
         interactionBlocked,
@@ -231,13 +275,30 @@ export function OAuthProviderRow({
       });
       return;
     }
+    if (providerBusy != null) {
+      logFacebookOAuthDiagnostic("oauth_row_click_ignored", {
+        provider: "facebook",
+        reason: "provider_busy",
+        providerBusy,
+        facebookWarmState,
+      });
+      return;
+    }
     if (!showFacebook) {
       toastNotConfigured();
       return;
     }
+    if (!isFacebookSdkReady()) {
+      logFacebookOAuthDiagnostic("oauth_facebook_click_sdk_not_ready", {
+        facebookWarmState,
+      });
+      toast.message(t("auth.oauth.facebookSdkLoading"), { id: "caretip-fb-warm" });
+      void warmFacebookSdk().then(() => setFacebookWarmState("ready"));
+      return;
+    }
     setProviderBusy("facebook");
     try {
-      const tokenPromise = requestFacebookAccessToken();
+      const tokenPromise = requestFacebookAccessToken(clickContext);
       void tokenPromise
         .then((idToken) => {
           onSocialCredential("facebook", idToken);
@@ -258,7 +319,16 @@ export function OAuthProviderRow({
       setProviderBusy(null);
       toastFacebookLoginError(e);
     }
-  }, [busy, onSocialCredential, showFacebook, toastFacebookLoginError]);
+  }, [
+    disabled,
+    interactionBlocked,
+    onSocialCredential,
+    providerBusy,
+    showFacebook,
+    toastFacebookLoginError,
+    facebookWarmState,
+    t,
+  ]);
 
   const runProvider = async (provider: "apple" | "facebook") => {
     if (busy) return;
@@ -393,8 +463,11 @@ export function OAuthProviderRow({
             key={provider}
             provider="facebook"
             label={t("auth.oauth.continueWithFacebook")}
-            disabled={busy || (showFacebook && facebookWarmState === "loading")}
-            loading={providerBusy === "facebook" || (showFacebook && facebookWarmState === "loading")}
+            disabled={disabled || providerBusy != null || interactionBlocked}
+            loading={
+              providerBusy === "facebook" ||
+              (showFacebook && facebookWarmState === "loading" && providerBusy == null)
+            }
             title={
               !showFacebook
                 ? t("auth.oauth.providerNotConfigured")
