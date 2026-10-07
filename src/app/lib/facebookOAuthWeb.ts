@@ -47,6 +47,8 @@ const FB_SDK_SRC = "https://connect.facebook.net/en_US/sdk.js";
 const FB_SDK_VERSION = "v21.0";
 const FB_LOGIN_CALLBACK_WATCHDOG_MS = 120_000;
 const FB_GET_LOGIN_STATUS_RECOVERY_MS = 15_000;
+/** After the no-callback watchdog fires, wait for a late FB.login callback before rejecting. */
+const FB_WATCHDOG_REJECT_GRACE_MS = 30_000;
 
 let fbSdkPromise: Promise<FbSdk> | null = null;
 let sdkLoadInvocationCount = 0;
@@ -554,28 +556,125 @@ function invokeFacebookLogin(FB: FbSdk, correlationId: string, appId: string): P
 
   return new Promise<string>((resolve, reject) => {
     let callbackReceived = false;
-    let settled = false;
+    type DeliveryState = "pending" | "fulfilled" | "rejected";
+    let deliveryState: DeliveryState = "pending";
     let watchdog = 0;
     let postCallbackWatchdog = 0;
+    let pendingRejectTimer = 0;
+    let watchdogRejectScheduled = false;
 
-    const settle = (fn: () => void) => {
-      if (settled) return;
-      settled = true;
+    const clearAllTimers = () => {
+      window.clearTimeout(watchdog);
       window.clearTimeout(postCallbackWatchdog);
-      fn();
+      window.clearTimeout(pendingRejectTimer);
+      pendingRejectTimer = 0;
     };
 
-    const finish = (outcome: "resolved" | "rejected", extra: Record<string, unknown>) => {
-      window.clearTimeout(watchdog);
+    const releaseActiveLogin = () => {
       if (activeFbLoginCorrelationId === correlationId) {
         activeFbLoginCorrelationId = null;
       }
+    };
+
+    const finish = (outcome: "resolved" | "rejected", extra: Record<string, unknown>) => {
       logFacebookOAuthDiagnostic(`requestFacebookAccessToken_${outcome}`, {
         correlationId,
         loginInvocation,
         apiOAuthWillBeCalled: outcome === "resolved",
         ...extra,
       });
+    };
+
+    const deliverToken = (
+      token: string,
+      diagnostics: ReturnType<typeof safeLoginResponseDiagnostics>,
+      tokenSource: "login_callback" | "get_login_status_recovery",
+      recoveredAfterPendingReject = false,
+    ) => {
+      if (deliveryState === "fulfilled") return;
+      if (deliveryState === "rejected") {
+        logFacebookOAuthDiagnostic("sdk_login_token_after_promise_rejected", {
+          correlationId,
+          loginInvocation,
+          tokenSource,
+          case: "E",
+          apiOAuthWillBeCalled: false,
+        });
+        return;
+      }
+      clearAllTimers();
+      if (recoveredAfterPendingReject || watchdogRejectScheduled) {
+        logFacebookOAuthDiagnostic("sdk_login_late_token_recovery", {
+          correlationId,
+          loginInvocation,
+          tokenSource,
+          case: "E",
+          recoveredAfterWatchdog: watchdogRejectScheduled,
+          priorDeliveryState: deliveryState,
+        });
+      }
+      deliveryState = "fulfilled";
+      releaseActiveLogin();
+      logFacebookOAuthDiagnostic("sdk_login_token_ready", {
+        correlationId,
+        loginInvocation,
+        status: diagnostics.status,
+        hasAccessToken: true,
+        tokenSource,
+        case: "E",
+        ...(diagnostics.facebookUserId ? { facebookUserId: diagnostics.facebookUserId } : {}),
+      });
+      finish("resolved", { outcome: diagnostics.outcome, tokenSource });
+      resolve(token);
+    };
+
+    const commitFailure = (
+      err: FacebookLoginError,
+      extra: Record<string, unknown>,
+    ) => {
+      if (deliveryState === "fulfilled") return;
+      if (deliveryState === "rejected") return;
+      deliveryState = "rejected";
+      clearAllTimers();
+      releaseActiveLogin();
+      finish("rejected", extra);
+      clearFacebookOAuthDiagnostic();
+      reject(err);
+    };
+
+    const scheduleFailure = (
+      err: FacebookLoginError,
+      reason: string,
+      graceMs: number,
+      extra: Record<string, unknown> = {},
+    ) => {
+      if (deliveryState !== "pending") return;
+      window.clearTimeout(pendingRejectTimer);
+      if (reason === "watchdog_timeout") {
+        watchdogRejectScheduled = true;
+      }
+      logFacebookOAuthDiagnostic("sdk_login_failure_scheduled", {
+        correlationId,
+        loginInvocation,
+        reason,
+        graceMs,
+        callbackReceived,
+        ...extra,
+      });
+      pendingRejectTimer = window.setTimeout(() => {
+        if (deliveryState !== "pending") return;
+        if (reason === "watchdog_timeout" && callbackReceived) {
+          return;
+        }
+        logFacebookOAuthDiagnostic("sdk_login_flow_aborted", {
+          correlationId,
+          loginInvocation,
+          reason,
+          failureKind: err.kind,
+          case: reason === "watchdog_timeout" ? "F" : "B",
+        });
+        commitFailure(err, { reason, failureKind: err.kind, ...extra });
+      }, graceMs);
     };
 
     const failFromDiagnostics = (
@@ -594,9 +693,12 @@ function invokeFacebookLogin(FB: FbSdk, correlationId: string, appId: string): P
         ...diagnostics,
         apiOAuthWillBeCalled: false,
       });
-      finish("rejected", { outcome: diagnostics.outcome, reason, failureKind, source });
-      clearFacebookOAuthDiagnostic();
-      settle(() => reject(facebookLoginErrorForFailure(failureKind, diagnostics)));
+      scheduleFailure(
+        facebookLoginErrorForFailure(failureKind, diagnostics),
+        reason,
+        0,
+        { outcome: diagnostics.outcome, failureKind, source },
+      );
     };
 
     const succeedWithToken = (
@@ -604,17 +706,12 @@ function invokeFacebookLogin(FB: FbSdk, correlationId: string, appId: string): P
       diagnostics: ReturnType<typeof safeLoginResponseDiagnostics>,
       tokenSource: "login_callback" | "get_login_status_recovery",
     ) => {
-      logFacebookOAuthDiagnostic("sdk_login_token_ready", {
-        correlationId,
-        loginInvocation,
-        status: diagnostics.status,
-        hasAccessToken: true,
+      deliverToken(
+        token,
+        diagnostics,
         tokenSource,
-        case: "E",
-        ...(diagnostics.facebookUserId ? { facebookUserId: diagnostics.facebookUserId } : {}),
-      });
-      finish("resolved", { outcome: diagnostics.outcome, tokenSource });
-      settle(() => resolve(token));
+        watchdogRejectScheduled || deliveryState === "rejected",
+      );
     };
 
     const rejectLoginFlow = (
@@ -622,28 +719,21 @@ function invokeFacebookLogin(FB: FbSdk, correlationId: string, appId: string): P
       reason: string,
       diagnostics?: ReturnType<typeof safeLoginResponseDiagnostics>,
     ) => {
-      logFacebookOAuthDiagnostic("sdk_login_flow_aborted", {
-        correlationId,
-        loginInvocation,
-        reason,
+      const err = diagnostics
+        ? facebookLoginErrorForFailure(kind, diagnostics)
+        : new FacebookLoginError(kind, "Facebook sign-in did not complete. Please try again.");
+      scheduleFailure(err, reason, 0, {
         failureKind: kind,
         case: diagnostics ? sdkOutcomeCase(diagnostics) : "B",
       });
-      finish("rejected", { reason, failureKind: kind });
-      clearFacebookOAuthDiagnostic();
-      settle(() =>
-        reject(
-          diagnostics
-            ? facebookLoginErrorForFailure(kind, diagnostics)
-            : new FacebookLoginError(kind, "Facebook sign-in did not complete. Please try again."),
-        ),
-      );
     };
 
     const handleLoginResponse = async (response: FbLoginStatus, source: "login_callback") => {
       callbackReceived = true;
+      window.clearTimeout(pendingRejectTimer);
+      watchdogRejectScheduled = false;
       postCallbackWatchdog = window.setTimeout(() => {
-        if (!settled) {
+        if (deliveryState !== "pending") return;
           logFacebookOAuthDiagnostic("sdk_login_post_callback_timeout", {
             correlationId,
             loginInvocation,
@@ -652,7 +742,6 @@ function invokeFacebookLogin(FB: FbSdk, correlationId: string, appId: string): P
             apiOAuthWillBeCalled: false,
           });
           rejectLoginFlow("incomplete", "post_callback_processing_timeout");
-        }
       }, FB_GET_LOGIN_STATUS_RECOVERY_MS + 5_000);
       const diagnostics = safeLoginResponseDiagnostics(response);
       logFacebookOAuthDiagnostic("sdk_login_callback_received", {
@@ -687,25 +776,28 @@ function invokeFacebookLogin(FB: FbSdk, correlationId: string, appId: string): P
     };
 
     watchdog = window.setTimeout(() => {
-      if (!callbackReceived) {
-        logFacebookOAuthDiagnostic("sdk_login_callback_never_fired", {
-          correlationId,
-          loginInvocation,
-          elapsedMs: FB_LOGIN_CALLBACK_WATCHDOG_MS,
-          case: "F",
-          apiOAuthWillBeCalled: false,
-        });
-        finish("rejected", { reason: "watchdog_timeout", outcome: "watchdog_timeout" });
-        clearFacebookOAuthDiagnostic();
-        settle(() =>
-          reject(
-            new FacebookLoginError(
-              "incomplete",
-              "Facebook sign-in did not complete. Please try again.",
-            ),
+      if (callbackReceived || deliveryState !== "pending") return;
+      logFacebookOAuthDiagnostic("sdk_login_callback_never_fired", {
+        correlationId,
+        loginInvocation,
+        elapsedMs: FB_LOGIN_CALLBACK_WATCHDOG_MS,
+        case: "F",
+        apiOAuthWillBeCalled: false,
+        rejectGraceMs: FB_WATCHDOG_REJECT_GRACE_MS,
+      });
+      // Defer one macrotask so an FB.login callback in the same tick wins the race.
+      window.setTimeout(() => {
+        if (callbackReceived || deliveryState !== "pending") return;
+        scheduleFailure(
+          new FacebookLoginError(
+            "incomplete",
+            "Facebook sign-in did not complete. Please try again.",
           ),
+          "watchdog_timeout",
+          FB_WATCHDOG_REJECT_GRACE_MS,
+          { outcome: "watchdog_timeout" },
         );
-      }
+      }, 0);
     }, FB_LOGIN_CALLBACK_WATCHDOG_MS);
 
     try {
@@ -737,16 +829,13 @@ function invokeFacebookLogin(FB: FbSdk, correlationId: string, appId: string): P
         apiOAuthWillBeCalled: false,
         case: "A",
       });
-      finish("rejected", { reason: "fb_login_exception" });
-      clearFacebookOAuthDiagnostic();
-      settle(() =>
-        reject(
-          new FacebookLoginError(
-            "generic",
-            "Facebook login failed.",
-            { cause: e instanceof Error ? e : undefined },
-          ),
+      commitFailure(
+        new FacebookLoginError(
+          "generic",
+          "Facebook login failed.",
+          { cause: e instanceof Error ? e : undefined },
         ),
+        { reason: "fb_login_exception" },
       );
     }
   });
