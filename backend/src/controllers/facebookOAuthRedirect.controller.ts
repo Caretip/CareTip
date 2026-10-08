@@ -17,6 +17,10 @@ import {
 } from "../services/oauth/facebookOAuthRedirect.service.js";
 import { logFacebookOAuthDiagnostic } from "../services/oauth/facebookOAuthDiagnostic.js";
 import {
+  logFacebookOAuthStartServer,
+  sanitizeFacebookRedirectTargetForLog,
+} from "../services/oauth/facebookOAuthStartLog.js";
+import {
   issueRefreshToken,
   refreshCookieMaxAgeMs,
   setRefreshCookie,
@@ -60,6 +64,25 @@ function redirectComplete(res: Response, params: Record<string, string>): void {
   res.redirect(302, buildFrontendCompleteUrl(params));
 }
 
+function startFailureJson(
+  res: Response,
+  requestId: string,
+  status: number,
+  fields: { reason: string; message: string; code?: string },
+): void {
+  logFacebookOAuthStartServer("START_FAILURE", {
+    requestId,
+    status,
+    reason: fields.reason,
+    ...(fields.code ? { code: fields.code } : {}),
+  });
+  res.status(status).json({
+    message: fields.message,
+    requestId,
+    ...(fields.code ? { code: fields.code } : {}),
+  });
+}
+
 function failRedirect(
   res: Response,
   correlationId: string | undefined,
@@ -80,8 +103,14 @@ function failRedirect(
  * Body mirrors POST /api/auth/oauth signup/login context (no idToken).
  */
 export async function startFacebookOAuthRedirect(req: Request, res: Response): Promise<void> {
+  const body = (req.body ?? {}) as Record<string, unknown>;
+  const correlationId =
+    (typeof body.correlationId === "string" && body.correlationId.trim()) ||
+    newFacebookOAuthCorrelationId();
+  const requestId = correlationId;
+  const startedAt = Date.now();
+
   try {
-    const body = (req.body ?? {}) as Record<string, unknown>;
     const path = req.originalUrl ?? req.url ?? "";
     const flowRaw =
       path.includes("/facebook/start/link") ? "link" : typeof body.flow === "string" ? body.flow.trim() : "";
@@ -89,9 +118,27 @@ export async function startFacebookOAuthRedirect(req: Request, res: Response): P
     const flow: FacebookOAuthRedirectFlow =
       flowRaw === "link" ? "link" : isLoginFlag ? "login" : "signup";
 
-    const correlationId =
-      (typeof body.correlationId === "string" && body.correlationId.trim()) ||
-      newFacebookOAuthCorrelationId();
+    const origin = req.get("origin")?.trim() || undefined;
+    const refererOrigin = (() => {
+      const ref = req.get("referer")?.trim();
+      if (!ref) return undefined;
+      try {
+        return new URL(ref).origin;
+      } catch {
+        return undefined;
+      }
+    })();
+
+    logFacebookOAuthStartServer("START_REQUEST_RECEIVED", {
+      requestId,
+      flow,
+      origin: origin ?? refererOrigin ?? null,
+      userAgent: req.get("user-agent")?.slice(0, 256) ?? null,
+      method: req.method,
+      path,
+      hasOriginHeader: Boolean(origin),
+      hasReferer: Boolean(req.get("referer")),
+    });
 
     const returnPath = resolveAllowlistedReturnPath(
       typeof body.returnPath === "string" ? body.returnPath : undefined,
@@ -102,7 +149,10 @@ export async function startFacebookOAuthRedirect(req: Request, res: Response): P
     if (flow === "link") {
       const uid = getUserId(req);
       if (!uid) {
-        res.status(401).json({ message: "Authentication required" });
+        startFailureJson(res, requestId, 401, {
+          reason: "authentication_required",
+          message: "Authentication required",
+        });
         return;
       }
       linkUserId = uid;
@@ -112,7 +162,8 @@ export async function startFacebookOAuthRedirect(req: Request, res: Response): P
     const intendedRole = authService.parseLoginIntendedRole(body.intendedRole);
 
     if (flow === "signup" && !isLogin && !intendedRole) {
-      res.status(400).json({
+      startFailureJson(res, requestId, 400, {
+        reason: "intended_role_required",
         message: "intendedRole is required and must be 'MANAGER', 'EMPLOYEE', or 'SUPER_ADMIN'",
       });
       return;
@@ -126,7 +177,8 @@ export async function startFacebookOAuthRedirect(req: Request, res: Response): P
         body.merchantLegalAccepted ?? body.legalAccepted ?? body.acceptMerchantLegal,
       )
     ) {
-      res.status(400).json({
+      startFailureJson(res, requestId, 400, {
+        reason: "merchant_legal_acceptance_required",
         message: MERCHANT_LEGAL_ACCEPTANCE_REQUIRED_MSG,
         code: "MERCHANT_LEGAL_ACCEPTANCE_REQUIRED",
       });
@@ -163,10 +215,44 @@ export async function startFacebookOAuthRedirect(req: Request, res: Response): P
       createdUserAgent: userAgent,
     });
 
+    logFacebookOAuthStartServer("START_STATE_CREATED", {
+      requestId,
+      flow,
+      elapsedMs: Date.now() - startedAt,
+    });
+
+    const redirectTargetForLog = sanitizeFacebookRedirectTargetForLog(authorizationUrl);
+    logFacebookOAuthStartServer("START_REDIRECT_CREATED", {
+      requestId,
+      flow,
+      redirectTarget: redirectTargetForLog,
+      elapsedMs: Date.now() - startedAt,
+    });
+
+    logFacebookOAuthStartServer("START_RESPONSE", {
+      requestId,
+      status: 302,
+      redirected: true,
+      redirectTarget: redirectTargetForLog,
+      elapsedMs: Date.now() - startedAt,
+    });
+
     res.redirect(302, authorizationUrl);
   } catch (err) {
+    const error = err instanceof Error ? err : new Error(String(err));
+    logFacebookOAuthStartServer("START_EXCEPTION", {
+      requestId,
+      errorName: error.name,
+      errorMessage: error.message,
+      stack: error.stack,
+      stage: "startFacebookOAuthRedirect",
+      elapsedMs: Date.now() - startedAt,
+    });
     logServerError("facebookOAuthRedirect.start", err);
-    res.status(503).json({ message: CLIENT_FALLBACK.loginUnexpected });
+    res.status(503).json({
+      message: CLIENT_FALLBACK.loginUnexpected,
+      requestId,
+    });
   }
 }
 

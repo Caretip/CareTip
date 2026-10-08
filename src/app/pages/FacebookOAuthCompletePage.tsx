@@ -22,6 +22,11 @@ import { beginAuthPostLoginTransition } from "@/app/lib/authPostLoginTransition"
 import { preparePostAuthDestination } from "@/app/lib/prefetchAuthenticatedRoutes";
 import { REFRESH_COORD_TIMEOUT_MS } from "@/app/lib/authRefreshCoordination";
 import { FACEBOOK_OAUTH_START_FAILED_ERROR } from "@/app/lib/facebookOAuthRedirectWeb";
+import {
+  consumeFacebookOAuthStartFailure,
+  logFacebookOAuthStart,
+  redactSearchParams,
+} from "@/app/lib/facebookOAuthStartObservability";
 import { useReleaseAppBootOverlay } from "@/app/context/AppLoadingManager";
 
 const ALLOWED_LINK_RETURN = new Set(["/dashboard/settings", "/employee/settings"]);
@@ -110,6 +115,15 @@ export function FacebookOAuthCompletePage() {
 
     const err = params.get("error");
     if (err) {
+      const priorFailure =
+        err === FACEBOOK_OAUTH_START_FAILED_ERROR ? consumeFacebookOAuthStartFailure() : null;
+      logFacebookOAuthStart("COMPLETION_ERROR", {
+        error: err,
+        timestamp: new Date().toISOString(),
+        pathname: window.location.pathname,
+        search: redactSearchParams(window.location.search),
+        ...(priorFailure ? { priorStartFailure: priorFailure } : {}),
+      });
       setQueryErrorCode(err);
       setErrorKind(err === FACEBOOK_OAUTH_START_FAILED_ERROR ? "start" : "query");
       setError(t(errorMessageKey(err)));

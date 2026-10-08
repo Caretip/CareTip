@@ -1,4 +1,11 @@
 import { beginFacebookOAuthDiagnostic } from "@/app/lib/facebookOAuthDiagnostic";
+import {
+  baseFacebookOAuthStartFields,
+  logFacebookOAuthStart,
+  resolveFacebookOAuthStartFlow,
+  storeFacebookOAuthStartFailure,
+  type FacebookOAuthStartFailureType,
+} from "@/app/lib/facebookOAuthStartObservability";
 
 export type FacebookRedirectStartContext = {
   isLogin: boolean;
@@ -17,6 +24,25 @@ export type FacebookRedirectStartContext = {
 /** Query param on /auth/facebook/complete when the browser cannot submit Facebook start. */
 export const FACEBOOK_OAUTH_START_FAILED_ERROR = "start_failed";
 
+/** Keep aligned with scripts/spa-csp-policy.mjs SPA_FACEBOOK_FORM_ACTION_SRC (minus 'self'). */
+const FACEBOOK_OAUTH_FORM_ACTION_ORIGINS = new Set([
+  "https://www.facebook.com",
+  "https://m.facebook.com",
+  "https://web.facebook.com",
+  "https://facebook.com",
+]);
+
+/** Wait for redirect-chain CSP violations before treating submit as committed. */
+const FACEBOOK_START_CSP_WINDOW_MS = 5_000;
+
+const FACEBOOK_START_FORM_MARKER = "data-caretip-fb-oauth-start";
+
+/** Tear down any prior attempt's document listener (no navigation). */
+let releasePriorFacebookStartViolationHook: (() => void) | null = null;
+
+/** Monotonic id so late CSP events cannot fail a newer or already-committed attempt. */
+let facebookOAuthStartAttemptSeq = 0;
+
 /** Default: redirect. Set VITE_FACEBOOK_OAUTH_MODE=sdk to keep JS SDK popup flow. */
 export function isFacebookOAuthRedirectEnabled(): boolean {
   const mode = import.meta.env.VITE_FACEBOOK_OAUTH_MODE?.trim().toLowerCase();
@@ -32,7 +58,17 @@ function appendHidden(form: HTMLFormElement, name: string, value: string | undef
   form.appendChild(input);
 }
 
-function navigateToFacebookStartFailure(): void {
+function sanitizeBlockedOrigin(blockedURI: string): string {
+  try {
+    return new URL(blockedURI.trim(), window.location.origin).origin;
+  } catch {
+    return "[invalid]";
+  }
+}
+
+function navigateToFacebookStartFailure(diag: Record<string, unknown>): void {
+  logFacebookOAuthStart("NAVIGATING_TO_START_FAILURE", diag);
+  storeFacebookOAuthStartFailure(diag);
   const path = `/auth/facebook/complete?error=${FACEBOOK_OAUTH_START_FAILED_ERROR}`;
   window.location.assign(path);
 }
@@ -44,6 +80,43 @@ function facebookOAuthStartFormAction(
   return endpoint;
 }
 
+function resolveExpectedFormActionPath(
+  endpoint: "/api/auth/facebook/start" | "/api/auth/facebook/start/link",
+): string {
+  return endpoint;
+}
+
+/** Same-origin POST target blocked before leaving CareTip. */
+function blockedUriMatchesFacebookStartForm(
+  blockedURI: string,
+  expectedPath: string,
+): boolean {
+  const trimmed = blockedURI.trim();
+  if (!trimmed) return false;
+  try {
+    const blocked = new URL(trimmed, window.location.origin);
+    const expected = new URL(expectedPath, window.location.origin);
+    return blocked.origin === expected.origin && blocked.pathname === expected.pathname;
+  } catch {
+    return false;
+  }
+}
+
+/** 302 redirect chain blocked (e.g. form-action 'self' only in Chromium). */
+function blockedUriMatchesFacebookOAuthRedirect(blockedURI: string): boolean {
+  return FACEBOOK_OAUTH_FORM_ACTION_ORIGINS.has(sanitizeBlockedOrigin(blockedURI));
+}
+
+function blockedUriMatchesCurrentFacebookStartAttempt(
+  blockedURI: string,
+  expectedFormPath: string,
+): boolean {
+  return (
+    blockedUriMatchesFacebookStartForm(blockedURI, expectedFormPath) ||
+    blockedUriMatchesFacebookOAuthRedirect(blockedURI)
+  );
+}
+
 /**
  * Full-page POST navigation to the API start endpoint (preserves signup/login body, no popup).
  * The browser follows the server's 302 redirect to Facebook — do not use fetch + manual redirect.
@@ -53,11 +126,33 @@ export function submitFacebookOAuthRedirectStart(
   endpoint: "/api/auth/facebook/start" | "/api/auth/facebook/start/link",
   onSubmitFailed?: () => void,
 ): void {
+  releasePriorFacebookStartViolationHook?.();
+  releasePriorFacebookStartViolationHook = null;
+
+  const attemptId = ++facebookOAuthStartAttemptSeq;
+  const startedAt = typeof performance !== "undefined" ? performance.now() : Date.now();
   const correlationId = context.correlationId ?? beginFacebookOAuthDiagnostic();
+  const flow = resolveFacebookOAuthStartFlow(context, endpoint);
+  const requestUrl = endpoint;
+  const expectedFormPath = resolveExpectedFormActionPath(endpoint);
+  const base = baseFacebookOAuthStartFields(correlationId, flow, requestUrl);
+
+  logFacebookOAuthStart("START_CLICKED", {
+    ...base,
+    attemptId,
+    isLogin: context.isLogin,
+    returnPath: context.returnPath,
+    intendedRole: context.intendedRole ?? null,
+    merchantLegalAccepted: context.merchantLegalAccepted ?? false,
+    hasInviteCode: Boolean(context.inviteCode?.trim()),
+    hasSignupName: Boolean(context.name?.trim()),
+  });
+
   const form = document.createElement("form");
   form.method = "POST";
   form.action = facebookOAuthStartFormAction(endpoint);
   form.style.display = "none";
+  form.setAttribute(FACEBOOK_START_FORM_MARKER, correlationId);
 
   appendHidden(form, "correlationId", correlationId);
   appendHidden(form, "isLogin", context.isLogin ? "true" : "false");
@@ -76,6 +171,48 @@ export function submitFacebookOAuthRedirectStart(
     appendHidden(form, "flow", "link");
   }
 
+  const elapsedMs = () =>
+    Math.round((typeof performance !== "undefined" ? performance.now() : Date.now()) - startedAt);
+
+  let submitCommitted = false;
+  let failureHandled = false;
+  let attemptWindowTimer: ReturnType<typeof setTimeout> | undefined;
+  let onPageHide: (() => void) | undefined;
+
+  const failStart = (
+    failureType: FacebookOAuthStartFailureType,
+    reason: string,
+    extra: Record<string, unknown> = {},
+  ) => {
+    if (attemptId !== facebookOAuthStartAttemptSeq || submitCommitted || failureHandled) {
+      logFacebookOAuthStart("START_FAILURE_IGNORED", {
+        ...base,
+        attemptId,
+        currentAttemptId: facebookOAuthStartAttemptSeq,
+        submitCommitted,
+        failureHandled,
+        failureType,
+        reason,
+        ...extra,
+      });
+      return;
+    }
+    failureHandled = true;
+    const diag = {
+      ...base,
+      attemptId,
+      failureType,
+      reason,
+      elapsedMs: elapsedMs(),
+      ...extra,
+    };
+    logFacebookOAuthStart("START_FAILURE", diag);
+    teardownAttemptHooks();
+    form.remove();
+    navigateToFacebookStartFailure(diag);
+    onSubmitFailed?.();
+  };
+
   let violationListener: ((event: SecurityPolicyViolationEvent) => void) | undefined;
   const releaseSubmitFailureHook = () => {
     if (violationListener) {
@@ -83,26 +220,86 @@ export function submitFacebookOAuthRedirectStart(
       violationListener = undefined;
     }
   };
-  const notifySubmitFailed = () => {
+
+  const teardownAttemptHooks = () => {
+    if (attemptWindowTimer !== undefined) {
+      clearTimeout(attemptWindowTimer);
+      attemptWindowTimer = undefined;
+    }
+    if (onPageHide) {
+      window.removeEventListener("pagehide", onPageHide);
+      onPageHide = undefined;
+    }
     releaseSubmitFailureHook();
-    form.remove();
-    navigateToFacebookStartFailure();
-    onSubmitFailed?.();
   };
 
-  if (onSubmitFailed) {
-    violationListener = (event: SecurityPolicyViolationEvent) => {
-      if (event.effectiveDirective !== "form-action") return;
-      if (!event.blockedURI.includes("/api/auth/facebook/start")) return;
-      notifySubmitFailed();
-    };
-    document.addEventListener("securitypolicyviolation", violationListener);
-  }
+  const markAttemptCommitted = () => {
+    if (attemptId !== facebookOAuthStartAttemptSeq || failureHandled) return;
+    submitCommitted = true;
+    teardownAttemptHooks();
+  };
+
+  violationListener = (event: SecurityPolicyViolationEvent) => {
+    if (attemptId !== facebookOAuthStartAttemptSeq || submitCommitted || failureHandled) return;
+    if (event.effectiveDirective !== "form-action") return;
+    if (!blockedUriMatchesCurrentFacebookStartAttempt(event.blockedURI, expectedFormPath)) return;
+
+    const blockedOrigin = sanitizeBlockedOrigin(event.blockedURI);
+    const isFacebookRedirect = blockedUriMatchesFacebookOAuthRedirect(event.blockedURI);
+    failStart(
+      "csp_form_action_blocked",
+      isFacebookRedirect ? "csp_blocked_facebook_redirect" : "csp_blocked_form_action",
+      {
+        blockedOrigin,
+        expectedFormPath,
+        violatedDirective: event.violatedDirective,
+        effectiveDirective: event.effectiveDirective,
+        disposition: event.disposition,
+      },
+    );
+  };
+  document.addEventListener("securitypolicyviolation", violationListener);
+  releasePriorFacebookStartViolationHook = teardownAttemptHooks;
+
+  onPageHide = () => markAttemptCommitted();
+  window.addEventListener("pagehide", onPageHide);
+  attemptWindowTimer = setTimeout(() => markAttemptCommitted(), FACEBOOK_START_CSP_WINDOW_MS);
+
+  logFacebookOAuthStart("START_REQUEST", {
+    ...base,
+    attemptId,
+    formAction: form.action,
+    expectedFormPath,
+    elapsedMs: elapsedMs(),
+    note:
+      "Full-page form POST; HTTP status and Location are not available in JS. Inspect Network tab for POST response.",
+  });
 
   document.body.appendChild(form);
   try {
     form.submit();
-  } catch {
-    notifySubmitFailed();
+    form.remove();
+    logFacebookOAuthStart("START_SUBMIT_INVOKED", {
+      ...base,
+      attemptId,
+      elapsedMs: elapsedMs(),
+      note: "If start succeeds, the document navigates away (expect 302 to Facebook in Network).",
+    });
+  } catch (err) {
+    const error = err instanceof Error ? err : new Error(String(err));
+    logFacebookOAuthStart("START_EXCEPTION", {
+      ...base,
+      attemptId,
+      failureType: "form_submit_exception",
+      reason: "form_submit_threw",
+      elapsedMs: elapsedMs(),
+      errorName: error.name,
+      errorMessage: error.message,
+      threw: true,
+    });
+    failStart("form_submit_exception", "form_submit_threw", {
+      errorName: error.name,
+      errorMessage: error.message,
+    });
   }
 }

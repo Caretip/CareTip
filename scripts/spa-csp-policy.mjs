@@ -15,6 +15,7 @@
  * | connect.facebook.net | Facebook JS SDK (facebookOAuthWeb.ts) |
  * | graph.facebook.com, www.facebook.com | FB.login dialog + SDK Graph calls from browser |
  * | www.facebook.com / facebook.com (frame-src) | Facebook Login dialog iframe |
+ * | www.facebook.com / m / web / facebook.com (form-action) | Redirect OAuth: POST /api/auth/facebook/start → 302 → Facebook |
  *
  * Intentionally permissive (accepted risk):
  * | Directive | Value | Reason |
@@ -51,6 +52,15 @@ export const SPA_FACEBOOK_CONNECT_SRC = [
   "https://www.facebook.com",
 ];
 
+/** Facebook OAuth redirect (form POST → 302 → dialog/oauth). Keep in sync with violation handler. */
+export const SPA_FACEBOOK_FORM_ACTION_SRC = [
+  "'self'",
+  "https://www.facebook.com",
+  "https://m.facebook.com",
+  "https://web.facebook.com",
+  "https://facebook.com",
+];
+
 /** @type {readonly string[]} */
 export const SPA_IMG_SRC = ["'self'", "data:", "blob:", "https:"];
 
@@ -67,5 +77,5 @@ export const SPA_CONTENT_SECURITY_POLICY = [
   "object-src 'none'",
   "base-uri 'self'",
   "frame-ancestors 'none'",
-  "form-action 'self'",
+  `form-action ${SPA_FACEBOOK_FORM_ACTION_SRC.join(" ")}`,
 ].join("; ");
