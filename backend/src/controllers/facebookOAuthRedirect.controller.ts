@@ -10,10 +10,14 @@ import {
   exchangeFacebookAuthorizationCode,
   FacebookOAuthCompletionError,
   FacebookOAuthStateError,
+  hashFacebookOAuthStateIdForLog,
   logFacebookOAuthStateRejection,
   newFacebookOAuthCorrelationId,
   resolveAllowlistedReturnPath,
   resolveFacebookOAuthStateCompleteError,
+  applyFacebookOAuthCallbackCacheHeaders,
+  recordFacebookOAuthRedirectSuccess,
+  resolveFacebookOAuthConsumedStateReplay,
   type FacebookOAuthRedirectFlow,
   type FacebookOAuthStatePayload,
 } from "../services/oauth/facebookOAuthRedirect.service.js";
@@ -61,6 +65,7 @@ async function issueRefreshSessionForUser(
 }
 
 function redirectComplete(res: Response, params: Record<string, string>): void {
+  applyFacebookOAuthCallbackCacheHeaders(res);
   res.redirect(302, buildFrontendCompleteUrl(params));
 }
 
@@ -299,6 +304,18 @@ export async function facebookOAuthCallback(req: Request, res: Response): Promis
         } catch {
           /* logging only */
         }
+        if (e.code === "consumed") {
+          const replayParams = await resolveFacebookOAuthConsumedStateReplay(stateId);
+          if (replayParams) {
+            logFacebookOAuthDiagnostic(
+              stateFailCorrelationId ?? `fb_state_${hashFacebookOAuthStateIdForLog(stateId)}`,
+              "facebook_oauth_replay_recovered",
+              { stateIdHash: hashFacebookOAuthStateIdForLog(stateId) },
+            );
+            redirectComplete(res, replayParams);
+            return;
+          }
+        }
         logFacebookOAuthStateRejection(stateId, e.code, stateFailCorrelationId);
         const completeError = resolveFacebookOAuthStateCompleteError(e.code);
         failRedirect(res, stateFailCorrelationId, completeError);
@@ -326,6 +343,16 @@ export async function facebookOAuthCallback(req: Request, res: Response): Promis
       logFacebookOAuthDiagnostic(correlationId, "facebook_redirect_completed", {
         channel: "link",
       });
+      try {
+        await recordFacebookOAuthRedirectSuccess({
+          kind: "link_ok",
+          correlationId,
+          stateId,
+          returnPath: state.returnPath,
+        });
+      } catch (recordErr) {
+        logServerError("facebookOAuthRedirect.recordLinkCompletion", recordErr);
+      }
       redirectComplete(res, {
         link: "ok",
         return: state.returnPath,
@@ -430,6 +457,17 @@ export async function facebookOAuthCallback(req: Request, res: Response): Promis
     logFacebookOAuthDiagnostic(correlationId, "facebook_redirect_completed", {
       channel: state.isLogin ? "login" : "signup",
     });
+
+    try {
+      await recordFacebookOAuthRedirectSuccess({
+        kind: "session",
+        correlationId,
+        stateId,
+        userId: result.user.id,
+      });
+    } catch (recordErr) {
+      logServerError("facebookOAuthRedirect.recordSessionCompletion", recordErr);
+    }
 
     redirectComplete(res, { success: "1" });
   } catch (err) {

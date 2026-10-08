@@ -340,6 +340,95 @@ export function buildFrontendCompleteUrl(params: Record<string, string>): string
   return url.toString();
 }
 
+/** Sensitive OAuth callback responses must not be stored or restored (see Apple native bounce). */
+export function applyFacebookOAuthCallbackCacheHeaders(res: {
+  setHeader(name: string, value: string): void;
+}): void {
+  res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate");
+  res.setHeader("Pragma", "no-cache");
+}
+
+const FACEBOOK_OAUTH_COMPLETION_PAYLOAD_VERSION = 1;
+
+/**
+ * Records a successful redirect callback for idempotent replay when the same callback URL is
+ * requested again after state consumption. Does not issue session cookies or create accounts.
+ */
+export async function recordFacebookOAuthRedirectSuccess(input: {
+  kind: "session" | "link_ok";
+  correlationId: string;
+  stateId: string;
+  userId?: string;
+  returnPath?: string;
+}): Promise<void> {
+  const plainToken = newCompletionPlainToken();
+  const expiresAt = new Date(Date.now() + FACEBOOK_OAUTH_COMPLETION_TTL_MS);
+  await prisma.facebookOAuthCompletion.create({
+    data: {
+      tokenHash: hashToken(plainToken),
+      kind: input.kind,
+      correlationId: input.correlationId.slice(0, 128),
+      expiresAt,
+      payload: {
+        version: FACEBOOK_OAUTH_COMPLETION_PAYLOAD_VERSION,
+        stateIdHash: hashFacebookOAuthStateIdForLog(input.stateId),
+        ...(input.userId ? { userId: input.userId } : {}),
+        ...(input.returnPath ? { returnPath: input.returnPath } : {}),
+      } as Prisma.InputJsonValue,
+    },
+  });
+}
+
+/**
+ * When OAuth state was already consumed, return SPA redirect params only if a matching success
+ * completion record exists for the same transaction (correlation + state hash).
+ */
+export async function resolveFacebookOAuthConsumedStateReplay(
+  stateId: string,
+): Promise<Record<string, string> | null> {
+  const id = stateId?.trim();
+  if (!id) return null;
+
+  const stateRow = await prisma.facebookOAuthState.findUnique({
+    where: { id },
+    select: { consumedAt: true, payload: true },
+  });
+  if (!stateRow?.consumedAt) return null;
+
+  const statePayload = stateRow.payload as FacebookOAuthStatePayload | undefined;
+  const correlationId = statePayload?.correlationId?.trim();
+  if (!correlationId) return null;
+
+  const stateIdHash = hashFacebookOAuthStateIdForLog(id);
+  const now = new Date();
+
+  const completion = await prisma.facebookOAuthCompletion.findFirst({
+    where: {
+      correlationId,
+      kind: { in: ["session", "link_ok"] },
+      expiresAt: { gt: now },
+    },
+    orderBy: { createdAt: "desc" },
+  });
+  if (!completion) return null;
+
+  const compPayload = completion.payload as Record<string, unknown> | null;
+  if (compPayload?.version !== FACEBOOK_OAUTH_COMPLETION_PAYLOAD_VERSION) return null;
+  if (compPayload.stateIdHash !== stateIdHash) return null;
+
+  if (completion.kind === "session") {
+    return { success: "1" };
+  }
+  if (completion.kind === "link_ok") {
+    const returnPath =
+      typeof compPayload.returnPath === "string" && compPayload.returnPath.trim()
+        ? compPayload.returnPath.trim()
+        : "/dashboard/settings";
+    return { link: "ok", return: returnPath };
+  }
+  return null;
+}
+
 export function newFacebookOAuthCorrelationId(): string {
   return `fb_redirect_${randomBytes(12).toString("hex")}`;
 }

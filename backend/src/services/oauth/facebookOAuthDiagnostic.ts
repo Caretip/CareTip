@@ -35,7 +35,8 @@ export type FacebookOAuthDiagnosticStage =
   | "facebook_session_created"
   | "facebook_redirect_completed"
   | "facebook_oauth_failed"
-  | "facebook_oauth_state_failed";
+  | "facebook_oauth_state_failed"
+  | "facebook_oauth_replay_recovered";
 
 export function resolveFacebookOAuthDiagnosticId(req: Request): string {
   const fromHeader = req.get(FACEBOOK_OAUTH_DIAGNOSTIC_HEADER)?.trim();
