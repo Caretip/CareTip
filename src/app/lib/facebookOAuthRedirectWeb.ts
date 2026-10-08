@@ -1,4 +1,3 @@
-import { getApiAbsoluteUrl } from "@/app/lib/api";
 import { beginFacebookOAuthDiagnostic } from "@/app/lib/facebookOAuthDiagnostic";
 
 export type FacebookRedirectStartContext = {
@@ -38,6 +37,13 @@ function navigateToFacebookStartFailure(): void {
   window.location.assign(path);
 }
 
+/** Same-origin path only — Vite/Netlify proxy /api; must not use VITE_API_URL (CSP form-action 'self'). */
+function facebookOAuthStartFormAction(
+  endpoint: "/api/auth/facebook/start" | "/api/auth/facebook/start/link",
+): string {
+  return endpoint;
+}
+
 /**
  * Full-page POST navigation to the API start endpoint (preserves signup/login body, no popup).
  * The browser follows the server's 302 redirect to Facebook — do not use fetch + manual redirect.
@@ -50,8 +56,7 @@ export function submitFacebookOAuthRedirectStart(
   const correlationId = context.correlationId ?? beginFacebookOAuthDiagnostic();
   const form = document.createElement("form");
   form.method = "POST";
-  // Same-origin path; Netlify/Vite proxies /api/* to the API host (CSP form-action 'self').
-  form.action = getApiAbsoluteUrl(endpoint);
+  form.action = facebookOAuthStartFormAction(endpoint);
   form.style.display = "none";
 
   appendHidden(form, "correlationId", correlationId);
