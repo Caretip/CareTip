@@ -211,7 +211,3 @@ export function preloadHeroFrame(frame: HeroStoryFrame, onReady?: () => void): v
   img.src = heroFramePreloadSrc(frame);
 }
 
-/** Start warming as soon as this module evaluates (LandingPage / prefetch import). */
-if (typeof window !== "undefined") {
-  void warmLandingHeroLcpImage();
-}

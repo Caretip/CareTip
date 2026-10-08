@@ -64,6 +64,14 @@ assert(getLoginPathFromAppPath("/employee/dashboard") === "/employee/login", "em
 assert(getLoginPathFromAppPath("/employee/payouts") === "/employee/login", "payouts path → staff login");
 assert(getLoginPathFromAppPath("/employee/payments/connect") === "/employee/login", "connect path → staff login");
 assert(isPublicShellPath("/employee/login") === true, "employee login is a public shell path");
+assert(isPublicShellPath("/faq/") === true, "trailing-slash FAQ is the same public shell as /faq");
+assert(isPublicShellPath("/features/") === true, "trailing-slash features stays a public shell");
+assert(isPublicShellPath("/pricing/") === true, "trailing-slash pricing stays a public shell");
+assert(isPublicShellPath("/industries/hotels/") === true, "trailing-slash industry page stays public");
+assert(isPublicShellPath("/dashboard/") === false, "trailing slash must not make the business dashboard public");
+assert(isPublicShellPath("/employee/") === false, "trailing slash must not make the employee app public");
+assert(isPublicShellPath("/platform-admin/") === false, "trailing slash must not make platform admin public");
+assert(isAuthenticatedAppShellPath("/dashboard/") === true, "slashed dashboard stays an authenticated shell");
 assert(isAuthenticatedAppShellPath("/employee/login") === false, "employee login is not the staff app shell");
 assert(isAuthenticatedAppShellPath("/employee/dashboard") === true, "employee dashboard is app shell");
 assert(

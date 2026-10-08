@@ -19,21 +19,6 @@ import {
 import "@/styles/bundles/marketing-shell.css";
 import "@/styles/bundles/landing.css";
 
-/** Begin LCP warm as soon as the landing chunk evaluates (SPA + cold). */
-void warmLandingHeroLcpImage().then(() => {
-  scheduleMobileDeferredWork(() => prefetchLandingBelowFoldSections(), {
-    desktopTimeoutMs: 120,
-    mobileTimeoutMs: 420,
-  });
-  scheduleMobileDeferredWork(
-    () => {
-      void prefetchAlternateLocaleBundle();
-      void preloadLiveMinutesOnboardingScreens(["en", "de"]);
-    },
-    { desktopTimeoutMs: 2_500, mobileTimeoutMs: 5_500 },
-  );
-});
-
 /** Landing has no email/password forms; autofill mitigations live on `AuthPage` (login/signup). */
 export function LandingPage() {
   const { t, i18n } = useTranslation();
@@ -41,6 +26,27 @@ export function LandingPage() {
   const [landingRoot, setLandingRoot] = useState<HTMLDivElement | null>(null);
 
   useLandingShellReady();
+
+  useEffect(() => {
+    let cancelled = false;
+    void warmLandingHeroLcpImage().then(() => {
+      if (cancelled) return;
+      scheduleMobileDeferredWork(() => prefetchLandingBelowFoldSections(), {
+        desktopTimeoutMs: 120,
+        mobileTimeoutMs: 420,
+      });
+      scheduleMobileDeferredWork(
+        () => {
+          void prefetchAlternateLocaleBundle();
+          void preloadLiveMinutesOnboardingScreens(["en", "de"]);
+        },
+        { desktopTimeoutMs: 2_500, mobileTimeoutMs: 5_500 },
+      );
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   useEffect(() => {
     syncDocumentHiddenClass();

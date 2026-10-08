@@ -120,7 +120,7 @@ export function isPublicBusinessSlugPath(pathname: string): boolean {
 
 /** Guest tipping / marketing surfaces — no dashboard or onboarding init required. */
 export function isPublicMarketingPath(pathname: string): boolean {
-  const p = pathname.split("?")[0]?.split("#")[0] ?? "/";
+  const p = normalizePublicPathname(pathname);
   if (PUBLIC_MARKETING_EXACT.has(p)) return true;
   if (PUBLIC_MARKETING_PREFIXES.some((prefix) => p === prefix || p.startsWith(prefix))) {
     return true;
@@ -133,12 +133,19 @@ export function isPublicMarketingPath(pathname: string): boolean {
  * Used to skip the global bootstrap overlay and auth-init blocking.
  */
 export function isPublicShellPath(pathname: string): boolean {
-  const p = pathname.split("?")[0]?.split("#")[0] ?? "/";
+  const p = normalizePublicPathname(pathname);
   return isPublicMarketingPath(p) || isPublicAuthenticationPath(p);
 }
 
+/** Drop a trailing slash so `/faq` and `/faq/` match the same public route. Root stays `/`. */
+export function normalizePublicPathname(pathname: string): string {
+  const bare = pathname.split("?")[0]?.split("#")[0] ?? "/";
+  if (bare.length > 1 && bare.endsWith("/")) return bare.slice(0, -1);
+  return bare || "/";
+}
+
 function normalizePathname(pathname: string): string {
-  return pathname.split("?")[0]?.split("#")[0] ?? "/";
+  return normalizePublicPathname(pathname);
 }
 
 /**

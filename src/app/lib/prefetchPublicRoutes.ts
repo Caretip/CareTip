@@ -42,12 +42,13 @@ function warmIndustryHeroAssets(path: string): void {
   });
 }
 
-export function prefetchPublicRoute(path: string) {
+export function prefetchPublicRoute(path: string, options?: { warmImages?: boolean }) {
   const normalized = path.split("#")[0].split("?")[0];
   if (!normalized) return;
+  const warmImages = options?.warmImages !== false;
 
-  // Industry heroes must re-warm on every hover — chunk prefetch alone is a no-op after first visit.
-  if (normalized.startsWith("/industries/")) {
+  // Hover/focus may warm one industry hero. Idle route warming must not.
+  if (warmImages && normalized.startsWith("/industries/")) {
     warmIndustryHeroAssets(normalized);
   }
 
@@ -56,7 +57,7 @@ export function prefetchPublicRoute(path: string) {
   if (!factory) return;
   prefetched.add(normalized);
   void factory();
-  if (normalized === "/") {
+  if (warmImages && normalized === "/") {
     warmLandingHeroAssets();
   }
 }
@@ -74,10 +75,10 @@ export function prefetchCoreMarketingNavRoutes() {
   }
 }
 
-/** Desktop / generous idle — secondary marketing targets + industry heroes. */
+/** Desktop idle — secondary route chunks only. Images wait for hover or the homepage. */
 export function prefetchExtendedMarketingNavRoutes() {
   for (const path of ["/contact", "/about", "/login", "/signup"]) {
-    prefetchPublicRoute(path);
+    prefetchPublicRoute(path, { warmImages: false });
   }
   for (const path of [
     "/industries/gastronomy",
@@ -85,11 +86,8 @@ export function prefetchExtendedMarketingNavRoutes() {
     "/industries/midwives",
     "/industries/field-service",
   ]) {
-    prefetchPublicRoute(path);
+    prefetchPublicRoute(path, { warmImages: false });
   }
-  void import("@/lib/industryHeroAssets").then((mod) => {
-    mod.warmAllIndustryHeroesIdle();
-  });
 }
 
 /** Warm high-traffic nav targets after landing is idle. */

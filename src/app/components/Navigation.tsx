@@ -15,7 +15,6 @@ import { IndustriesNavDropdown } from "./IndustriesNavDropdown";
 import {
   prefetchCoreMarketingNavRoutes,
   prefetchExtendedMarketingNavRoutes,
-  prefetchLandingRoute,
 } from "../lib/prefetchPublicRoutes";
 import { usePublicMountProbe } from "@/lib/publicMountProbe";
 import { isMobileViewport, scheduleMobileDeferredWork } from "@/lib/mobilePerf";
@@ -51,16 +50,6 @@ export const Navigation = memo(function Navigation({ variant: _variant = "defaul
       }
     });
   }, []);
-
-  useEffect(() => {
-    if (location.pathname === "/") return;
-    scheduleMobileDeferredWork(
-      () => {
-        prefetchLandingRoute();
-      },
-      { desktopTimeoutMs: 1200, mobileTimeoutMs: 2200 },
-    );
-  }, [location.pathname]);
 
   useEffect(() => {
     if (!mobileMenuOpen) return;

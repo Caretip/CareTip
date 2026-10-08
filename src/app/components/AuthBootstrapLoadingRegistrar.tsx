@@ -4,6 +4,7 @@ import { useLocation } from "react-router";
 import { useAuth } from "../hooks/useAuth";
 import { hasPendingStoredSessionWithoutUser, isAuthRestorePending } from "../lib/authRestore";
 import { isPublicAuthenticationPath } from "../lib/authSession";
+import { requiresAuthBootstrapBeforeLoginPaint } from "../lib/authBootstrapUi";
 import { shouldSuppressSessionBootstrapOverlay } from "../lib/authTransitionIntent";
 import { useTranslation } from "react-i18next";
 import {
@@ -30,7 +31,11 @@ function shouldBlockGlobalAuthLoader(
   const restorePending = isAuthRestorePending();
   const initializing = authStatus === "initializing";
 
-  if (initializing && isPublicAuthenticationPath(pathname)) return true;
+  // Anonymous login can paint under the HTML boot. A stored session still holds
+  // one overlay until restore finishes, so the form does not flash before redirect.
+  if (initializing && isPublicAuthenticationPath(pathname)) {
+    return requiresAuthBootstrapBeforeLoginPaint();
+  }
 
   if (isPublicShellPath(pathname)) return false;
 

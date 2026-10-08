@@ -204,12 +204,15 @@
 
       /*
        * Pre-hydration crawler summary — present in raw HTML for search/AI parsers.
-       * Not `hidden`: crawlers must read body copy. Fixed boot overlay covers the viewport
-       * until React removes this node (see removeStaticCrawlerSummary in main.tsx).
+       * Not `hidden` and not display:none: crawlers must read body copy.
+       * Absolute so it does not push #root; React still removes it before paint.
        */
       #caretip-static-summary {
-        position: relative;
-        z-index: 1;
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        z-index: 0;
         max-width: 72rem;
         margin: 0 auto;
         padding: 1.5rem clamp(1.25rem, 4vw, 2.5rem) 2.5rem;
@@ -259,23 +262,26 @@
     </style>
     <link rel="preload" href="/fonts/inter/inter-latin-400-normal.woff" as="font" type="font/woff" crossorigin />
     <!-- Manrope display weights load after first paint (`scheduleHeroDisplayFont`). -->
-    <!-- LCP hero — responsive preload; Vite rewrites to hashed asset URLs matching the hero <picture>. -->
-    <link
-      rel="preload"
-      href="./images/wyc.avif"
-      as="image"
-      type="image/avif"
-      media="(min-width: 768px)"
-      fetchpriority="high"
-    />
-    <link
-      rel="preload"
-      href="./images/formemobile01.avif"
-      as="image"
-      type="image/avif"
-      media="(max-width: 767px)"
-      fetchpriority="high"
-    />
+    <!-- Homepage LCP only. The same HTML is served for every route, so this must not preload the hero elsewhere. -->
+    <script type="module">
+      const homePath = location.pathname.length > 1 && location.pathname.endsWith("/")
+        ? location.pathname.slice(0, -1)
+        : location.pathname;
+      if (homePath === "/") {
+        const desktop = matchMedia("(min-width: 768px)").matches;
+        const href = desktop
+          ? new URL("./images/wyc.avif", import.meta.url).href
+          : new URL("./images/formemobile01.avif", import.meta.url).href;
+        const link = document.createElement("link");
+        link.rel = "preload";
+        link.as = "image";
+        link.type = "image/avif";
+        link.href = href;
+        link.setAttribute("fetchpriority", "high");
+        link.setAttribute("data-caretip-home-lcp-preload", "1");
+        document.head.appendChild(link);
+      }
+    </script>
     <link rel="stylesheet" href="/caretip-font-faces.css" />
     <link rel="icon" type="image/svg+xml" href="/brand/caretip-app-icon.svg" />
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />

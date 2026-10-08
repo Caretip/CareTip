@@ -1617,6 +1617,7 @@
       "signIn": "Anmelden",
       "createAccount": "Konto erstellen",
       "creatingAccountWait": "Ihr Konto wird vorbereitet…",
+      "navigationRecovery": "Die nächste Seite konnte nicht geöffnet werden. Bitte versuchen Sie es erneut.",
       "dividerOr": "oder",
       "footerNoAccount": "Noch kein Konto? ",
       "footerHasAccount": "Bereits ein Konto? ",

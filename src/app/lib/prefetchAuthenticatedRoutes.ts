@@ -173,11 +173,11 @@ function warmBusinessDashboardDataInBackground(): void {
 }
 
 /**
- * Auth-critical prepare only: shell chunks (layout + CSS).
- * Does not await metrics, charts, profile refresh, or page widget chunks.
- * Page chunks + stats warm start in parallel (fire-and-forget) for progressive fill.
+ * Best-effort destination warm. Never awaited by navigation.
+ * Shell, page, and stats chunks start in the background; the destination route
+ * still loads itself if the prefetch has not finished.
  */
-export async function preparePostAuthDestination(path: string): Promise<void> {
+export function preparePostAuthDestination(path: string): Promise<void> {
   const normalized = normalizePath(path);
   const shellKey = resolveShellKey(normalized);
   const t0 = performance.now();
@@ -187,16 +187,17 @@ export async function preparePostAuthDestination(path: string): Promise<void> {
     });
   }
 
-  await prefetchAuthenticatedShell(normalized);
-
-  if (import.meta.env.DEV) {
-    void import("./postLoginRuntimeTrace").then(({ markPostLoginTrace }) => {
-      markPostLoginTrace("preparePostAuthDestination_shell_done", {
-        path: normalized,
-        shellPrefetchMs: Math.round(performance.now() - t0),
+  // Best-effort only. A pending import() must not delay navigate().
+  void prefetchAuthenticatedShell(normalized).then(() => {
+    if (import.meta.env.DEV) {
+      void import("./postLoginRuntimeTrace").then(({ markPostLoginTrace }) => {
+        markPostLoginTrace("preparePostAuthDestination_shell_done", {
+          path: normalized,
+          shellPrefetchMs: Math.round(performance.now() - t0),
+        });
       });
-    });
-  }
+    }
+  });
 
   // Dashboard-critical / background: start page chunk + optional stats warm without blocking navigate.
   if (shellKey === "/dashboard") {
@@ -209,4 +210,6 @@ export async function preparePostAuthDestination(path: string): Promise<void> {
   } else if (shellKey) {
     void prefetchAuthenticatedRoute(shellKey);
   }
+
+  return Promise.resolve();
 }

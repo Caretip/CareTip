@@ -77,13 +77,20 @@ export default defineConfig(({ mode }) => {
     rollupOptions: {
       output: {
         manualChunks(id) {
+          // Keep Vite's dynamic-import helper in its own file. Otherwise Rollup
+          // parks it inside a heavy manual chunk and every route downloads that chunk.
+          if (id.includes('preload-helper')) return 'vendor-preload';
           if (!id.includes('node_modules')) return;
+          const normalized = id.replaceAll('\\', '/');
+          const inPackage = (name: string) => normalized.includes(`/node_modules/${name}/`);
           if (id.includes('clsx') || id.includes('tailwind-merge') || id.includes('class-variance-authority')) {
             return 'vendor-utils';
           }
-          if (id.includes('recharts') || id.includes('d3-')) return 'vendor-recharts';
+          if (inPackage('recharts') || /\/node_modules\/d3-[^/]+\//.test(normalized)) return 'vendor-recharts';
           if (id.includes('/qrcode/') || id.includes('node_modules/qrcode')) return 'vendor-qrcode';
-          if (id.includes('three') && id.includes('node_modules')) return 'vendor-three';
+          // Leave three, @react-three, and troika in the lazy 3D route graph.
+          // A vendor-three chunk also captured shared helpers and made the shader
+          // download Recharts.
           if (id.includes('jspdf')) return 'vendor-jspdf';
           if (id.includes('i18next') || id.includes('react-i18next')) return 'vendor-i18n';
           if (id.includes('socket.io-client') || id.includes('engine.io-client')) return 'vendor-socket';

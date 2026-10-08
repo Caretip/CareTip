@@ -1617,6 +1617,7 @@
       "signIn": "Sign in",
       "createAccount": "Create business account",
       "creatingAccountWait": "Preparing your account…",
+      "navigationRecovery": "We couldn't open the next page. Please try again.",
       "dividerOr": "or",
       "footerNoAccount": "Don't have an account? ",
       "footerHasAccount": "Already have an account? ",

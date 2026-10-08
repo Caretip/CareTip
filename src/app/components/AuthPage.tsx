@@ -16,8 +16,10 @@ import {
   subscribeAuthSignInHandoff,
   endAuthSignInHandoff,
   formatSignInHandoffTimingReport,
+  getSignInHandoffMaxMs,
   getSignInHandoffTimingSnapshot,
 } from '../lib/authSignInHandoff';
+import { scheduleAuthNavigationRecovery } from '../lib/authCredentialExchangeDeadline';
 import { useSignalLogoutAuthPageReady } from '../lib/useSignalLogoutAuthPageReady';
 import { AuthOAuthButtons } from './AuthOAuthButtons';
 import { MerchantLegalAcceptanceCheckbox } from './legal/MerchantLegalAcceptanceCheckbox';
@@ -155,6 +157,7 @@ export function AuthPage() {
   const { login, register, loginWithOAuth, logout, user, sessionValidated, authStatus, completeAuthLogin } = useAuth();
   const authInFlightRef = useRef(false);
   const postAuthRedirectRef = useRef<string | null>(null);
+  const navigationRecoveryCancelRef = useRef<(() => void) | null>(null);
   /** Suppresses session-resume UI during fresh sign-in before navigation completes. */
   const [authFlowInProgress, setAuthFlowInProgress] = useState(false);
   const isMobileWebAuth = useSyncExternalStore(
@@ -171,12 +174,35 @@ export function AuthPage() {
     t("common.loading.sessionCheck"),
   );
 
+  const clearNavigationRecovery = useCallback(() => {
+    navigationRecoveryCancelRef.current?.();
+    navigationRecoveryCancelRef.current = null;
+  }, []);
+
+  const armNavigationRecovery = useCallback(() => {
+    clearNavigationRecovery();
+    navigationRecoveryCancelRef.current = scheduleAuthNavigationRecovery({
+      delayMs: getSignInHandoffMaxMs(),
+      isRedirectPending: () => postAuthRedirectRef.current != null,
+      onRecover: () => {
+        navigationRecoveryCancelRef.current = null;
+        postAuthRedirectRef.current = null;
+        setIsSubmitting(false);
+        setAuthFlowInProgress(false);
+        endAuthSignInHandoff("auth_navigation_recovery");
+        setError(t("auth.page.navigationRecovery"));
+      },
+    });
+  }, [clearNavigationRecovery, t]);
+
+  useEffect(() => clearNavigationRecovery, [clearNavigationRecovery]);
+
   /** Single post-auth navigation — cover stays until dashboard shell paints (not widgets). */
   const redirectAfterAuth = useCallback(
-    async (sessionUser: User) => {
+    async (sessionUser: User): Promise<boolean> => {
       const target = getPostAuthRedirect(sessionUser);
-      if (location.pathname === target) return;
-      if (postAuthRedirectRef.current === target) return;
+      if (location.pathname === target) return false;
+      if (postAuthRedirectRef.current === target) return false;
       postAuthRedirectRef.current = target;
       if (!isAuthSignInHandoffActive()) {
         beginAuthSignInHandoff();
@@ -184,23 +210,21 @@ export function AuthPage() {
       setAuthFlowInProgress(true);
       setIsSubmitting(true);
       markSignInHandoffAuthCompleted();
-      try {
-        await preparePostAuthDestination(target);
-      } catch {
-        /* Still navigate — cover stays until layout shell commits. */
-      }
+      void preparePostAuthDestination(target);
       // Cover mounts at root before AuthPage unmounts; soft-nav clears branded overlays.
       flushSync(() => {
         markSignInHandoffNavigating(target);
         beginAuthPostLoginTransition(target);
       });
       navigate(target, { replace: true });
+      armNavigationRecovery();
       if (import.meta.env.DEV) {
         // Snapshot mid-flight; final report logs when handoff ends.
         console.info("[AuthHandoff] navigate issued\n" + formatSignInHandoffTimingReport(getSignInHandoffTimingSnapshot()));
       }
+      return true;
     },
-    [location.pathname, navigate],
+    [armNavigationRecovery, location.pathname, navigate],
   );
 
   const resolvedInviteCode =
@@ -247,11 +271,6 @@ export function AuthPage() {
 
   useEffect(() => {
     scheduleIdleWork(() => prefetchDashboardRoutes(), 1500);
-    scheduleIdleWork(() => {
-      void import("../lib/prefetchPublicRoutes").then(({ prefetchLandingRoute }) => {
-        prefetchLandingRoute();
-      });
-    }, 1800);
   }, []);
 
   /** Business signup must not accept employee invite params — send to /join. */
@@ -333,7 +352,11 @@ export function AuthPage() {
     if (user != null && sessionValidated) {
       setAuthFlowInProgress(true);
       setIsSubmitting(true);
-      await redirectAfterAuth(user);
+      const navigated = await redirectAfterAuth(user);
+      if (!navigated && !postAuthRedirectRef.current) {
+        setIsSubmitting(false);
+        setAuthFlowInProgress(false);
+      }
       return;
     }
 
@@ -409,11 +432,7 @@ export function AuthPage() {
         const verifyTarget = '/verify-email';
         postAuthRedirectRef.current = verifyTarget;
         markSignInHandoffAuthCompleted();
-        try {
-          await preparePostAuthDestination(verifyTarget);
-        } catch {
-          /* cover until page paints */
-        }
+        void preparePostAuthDestination(verifyTarget);
         flushSync(() => {
           markSignInHandoffNavigating(verifyTarget);
           beginAuthPostLoginTransition(verifyTarget);
@@ -422,6 +441,7 @@ export function AuthPage() {
           replace: true,
           state: { pendingEmail: created.email, pendingRole: created.role },
         });
+        armNavigationRecovery();
         return;
       }
     } catch (err) {
@@ -676,6 +696,7 @@ export function AuthPage() {
       !shouldShowAuthBootstrapShell({
         authStatus,
         authTransitionPending,
+        allowImmediateLoginPaint: true,
       }));
   useSignalLogoutAuthPageReady(loginChromeReady);
 

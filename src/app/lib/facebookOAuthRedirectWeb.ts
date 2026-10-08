@@ -1,3 +1,7 @@
+import {
+  getAuthCredentialExchangeTimeoutMs,
+  shouldFailFacebookStartForStall,
+} from "@/app/lib/authCredentialExchangeDeadline";
 import { beginFacebookOAuthDiagnostic } from "@/app/lib/facebookOAuthDiagnostic";
 import {
   baseFacebookOAuthStartFields,
@@ -176,8 +180,11 @@ export function submitFacebookOAuthRedirectStart(
 
   let submitCommitted = false;
   let failureHandled = false;
+  let navigationLeft = false;
   let attemptWindowTimer: ReturnType<typeof setTimeout> | undefined;
+  let stallTimer: ReturnType<typeof setTimeout> | undefined;
   let onPageHide: (() => void) | undefined;
+  let onVisibility: (() => void) | undefined;
 
   const failStart = (
     failureType: FacebookOAuthStartFailureType,
@@ -226,9 +233,17 @@ export function submitFacebookOAuthRedirectStart(
       clearTimeout(attemptWindowTimer);
       attemptWindowTimer = undefined;
     }
+    if (stallTimer !== undefined) {
+      clearTimeout(stallTimer);
+      stallTimer = undefined;
+    }
     if (onPageHide) {
       window.removeEventListener("pagehide", onPageHide);
       onPageHide = undefined;
+    }
+    if (onVisibility) {
+      document.removeEventListener("visibilitychange", onVisibility);
+      onVisibility = undefined;
     }
     releaseSubmitFailureHook();
   };
@@ -261,9 +276,38 @@ export function submitFacebookOAuthRedirectStart(
   document.addEventListener("securitypolicyviolation", violationListener);
   releasePriorFacebookStartViolationHook = teardownAttemptHooks;
 
-  onPageHide = () => markAttemptCommitted();
+  onPageHide = () => {
+    navigationLeft = true;
+    markAttemptCommitted();
+  };
   window.addEventListener("pagehide", onPageHide);
-  attemptWindowTimer = setTimeout(() => markAttemptCommitted(), FACEBOOK_START_CSP_WINDOW_MS);
+  attemptWindowTimer = setTimeout(() => {
+    if (navigationLeft) markAttemptCommitted();
+  }, FACEBOOK_START_CSP_WINDOW_MS);
+  stallTimer = setTimeout(() => {
+    const failIfStillHere = () => {
+      if (
+        !shouldFailFacebookStartForStall({
+          navigationLeft,
+          failureHandled,
+        })
+      ) {
+        return;
+      }
+      failStart("client_start_aborted", "redirect_navigation_stalled", {
+        elapsedMs: elapsedMs(),
+      });
+    };
+    if (document.visibilityState === "hidden") {
+      onVisibility = () => {
+        if (document.visibilityState !== "visible") return;
+        failIfStillHere();
+      };
+      document.addEventListener("visibilitychange", onVisibility);
+      return;
+    }
+    failIfStillHere();
+  }, getAuthCredentialExchangeTimeoutMs());
 
   logFacebookOAuthStart("START_REQUEST", {
     ...base,

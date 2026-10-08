@@ -41,7 +41,6 @@ import { IndustryHeroMedia } from "@/components/industries/IndustryHeroMedia";
 import { FaqAccordionItem } from "@/components/public/faq/FaqAccordionItem";
 import { PublicPageShell } from "@/components/public/PublicPageShell";
 import { publicPagesBrandUi } from "@/components/public/publicPagesBrandUi";
-import { warmAllIndustryHeroesIdle } from "@/lib/industryHeroAssets";
 import { cn } from "@/lib/utils";
 
 /** Process-step icons matched to each industry’s three flow points. */
@@ -82,10 +81,6 @@ export function IndustryPageTemplate({ industryId }: IndustryPageTemplateProps) 
 
   useEffect(() => {
     setOpenFaq(0);
-  }, [industryId]);
-
-  useEffect(() => {
-    warmAllIndustryHeroesIdle(industryId);
   }, [industryId]);
 
   const steps = useMemo(

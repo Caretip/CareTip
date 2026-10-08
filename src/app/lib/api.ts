@@ -26,6 +26,7 @@ import {
 import { hasClientStoredSession } from "./authUserStore";
 import { hasClientSessionHint } from "./authSessionHint";
 import { resolveApiBaseUrl } from "./apiOrigin";
+import { withAuthCredentialExchangeDeadline } from "./authCredentialExchangeDeadline";
 import { logClientError } from "./clientLog";
 import type { OAuthProviderId } from "./oauthProviderIds";
 import { captureClientException } from "./sentry";
@@ -899,12 +900,15 @@ export async function registerAPI(payload: {
   /** Required for business (merchant) registration. */
   merchantLegalAccepted?: boolean;
 }): Promise<RegisterPendingResponse> {
-  return apiRequest<RegisterPendingResponse>(apiPath("/api/auth/register"), {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: toJsonRequestBody(payload),
-    credentials: "include",
-  });
+  return withAuthCredentialExchangeDeadline((signal) =>
+    apiRequest<RegisterPendingResponse>(apiPath("/api/auth/register"), {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: toJsonRequestBody(payload),
+      credentials: "include",
+      signal,
+    }),
+  );
 }
 
 /** Backend Prisma enum; API sign-in rejects frontend labels (business / employee / platform_admin). */
@@ -930,26 +934,32 @@ export async function loginAPI(
 ): Promise<LoginApiResult> {
   clearPageOriginAuthRefresh();
   const timeZone = getBrowserTimeZone();
-  return apiRequest<LoginApiResult>(apiPath("/api/auth/signin"), {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: toJsonRequestBody({
-      email,
-      password,
-      ...(locale ? { locale } : {}),
-      ...(timeZone ? { timeZone } : {}),
+  return withAuthCredentialExchangeDeadline((signal) =>
+    apiRequest<LoginApiResult>(apiPath("/api/auth/signin"), {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: toJsonRequestBody({
+        email,
+        password,
+        ...(locale ? { locale } : {}),
+        ...(timeZone ? { timeZone } : {}),
+      }),
+      credentials: "include",
+      signal,
     }),
-    credentials: "include",
-  });
+  );
 }
 
 export async function loginMfaSetupAPI(pendingMfaToken: string): Promise<{ otpauthUrl: string; qrDataUrl: string }> {
-  return apiRequest(apiPath("/api/auth/login/mfa/setup"), {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: toJsonRequestBody({ pendingMfaToken }),
-    credentials: "include",
-  });
+  return withAuthCredentialExchangeDeadline((signal) =>
+    apiRequest(apiPath("/api/auth/login/mfa/setup"), {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: toJsonRequestBody({ pendingMfaToken }),
+      credentials: "include",
+      signal,
+    }),
+  );
 }
 
 export async function loginMfaEnableAPI(
@@ -957,12 +967,15 @@ export async function loginMfaEnableAPI(
   code: string,
 ): Promise<AuthResponse> {
   clearPageOriginAuthRefresh();
-  return apiRequest<AuthResponse>(apiPath("/api/auth/login/mfa/enable"), {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: toJsonRequestBody({ pendingMfaToken, code }),
-    credentials: "include",
-  });
+  return withAuthCredentialExchangeDeadline((signal) =>
+    apiRequest<AuthResponse>(apiPath("/api/auth/login/mfa/enable"), {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: toJsonRequestBody({ pendingMfaToken, code }),
+      credentials: "include",
+      signal,
+    }),
+  );
 }
 
 export async function loginMfaVerifyAPI(
@@ -970,12 +983,15 @@ export async function loginMfaVerifyAPI(
   code: string,
 ): Promise<AuthResponse> {
   clearPageOriginAuthRefresh();
-  return apiRequest<AuthResponse>(apiPath("/api/auth/login/mfa/verify"), {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: toJsonRequestBody({ pendingMfaToken, code }),
-    credentials: "include",
-  });
+  return withAuthCredentialExchangeDeadline((signal) =>
+    apiRequest<AuthResponse>(apiPath("/api/auth/login/mfa/verify"), {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: toJsonRequestBody({ pendingMfaToken, code }),
+      credentials: "include",
+      signal,
+    }),
+  );
 }
 
 export async function logoutAPI(): Promise<void> {
@@ -1210,7 +1226,8 @@ export async function oauthAPI(payload: {
     });
   }
   try {
-    const raw = await apiRequest<unknown>(apiPath("/api/auth/oauth"), {
+    const raw = await withAuthCredentialExchangeDeadline((signal) =>
+      apiRequest<unknown>(apiPath("/api/auth/oauth"), {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -1218,6 +1235,7 @@ export async function oauthAPI(payload: {
         ? { [facebookOAuthDiagnosticHeaderName()]: facebookDiagnosticId }
         : {}),
     },
+    signal,
     body: toJsonRequestBody({
       provider: payload.provider,
       idToken: payload.idToken,
@@ -1235,7 +1253,8 @@ export async function oauthAPI(payload: {
       ...(timeZone ? { timeZone } : {}),
     }),
       credentials: "include",
-    });
+    }),
+    );
     if (isMfaLoginChallenge(raw)) {
       if (isFacebook) {
         logFacebookOAuthDiagnostic("api_oauth_mfa_challenge", {

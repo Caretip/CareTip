@@ -7,12 +7,13 @@
 import { isCustomerJourneyPath } from "./appLoadingJourney";
 import { isLandingHeroCommitted } from "./landingHeroReadyDom";
 import { markLandingColdLoad } from "./landingColdLoadMarks";
+import { normalizePublicPathname } from "./publicRoutes";
 
 /** Authenticated app shells that hand off HTML boot to {@link PROTECTED_APP_SHELL_READY_ATTR}. */
 export const PROTECTED_APP_SHELL_READY_ATTR = "data-caretip-dashboard-ready";
 
 function normalizePathname(pathname: string): string {
-  return pathname.split("?")[0]?.split("#")[0] ?? "/";
+  return normalizePublicPathname(pathname);
 }
 
 const BOOT_ID = "caretip-html-boot";

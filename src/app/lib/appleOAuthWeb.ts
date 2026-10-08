@@ -1,3 +1,4 @@
+import { withAuthCredentialExchangeDeadline } from "./authCredentialExchangeDeadline";
 import { appleOAuthWebClientId } from "./oauthProviderIds";
 
 type AppleAuthSuccess = {
@@ -80,7 +81,27 @@ export async function requestAppleIdToken(): Promise<string> {
     usePopup: true,
   });
 
-  const result = await auth.signIn();
+  const result = await withAuthCredentialExchangeDeadline(
+    (signal) =>
+      new Promise<AppleAuthSuccess>((resolve, reject) => {
+        const onAbort = () => reject(new DOMException("Aborted", "AbortError"));
+        if (signal.aborted) {
+          onAbort();
+          return;
+        }
+        signal.addEventListener("abort", onAbort, { once: true });
+        auth.signIn().then(
+          (value) => {
+            signal.removeEventListener("abort", onAbort);
+            resolve(value);
+          },
+          (err: unknown) => {
+            signal.removeEventListener("abort", onAbort);
+            reject(err);
+          },
+        );
+      }),
+  );
   const idToken = result.authorization?.id_token?.trim();
   if (!idToken) {
     throw new Error("Apple Sign In did not return an identity token.");
