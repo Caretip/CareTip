@@ -59,6 +59,9 @@ export function setRefreshCookie(
   res.cookie(COOKIE_NAME, value, {
     httpOnly: true,
     secure: isProd,
+    // None stays for password/Google/Apple sessions that still Set-Cookie on the API host.
+    // Facebook redirect now stores this same cookie on the SPA origin; None is still sent
+    // on that same-origin refresh. Domain is intentionally unset (host-only).
     sameSite: isProd ? "none" : "lax",
     path: "/",
     maxAge,

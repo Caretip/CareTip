@@ -33,6 +33,7 @@ import {
   redactSearchParams,
 } from "@/app/lib/facebookOAuthStartObservability";
 import { useReleaseAppBootOverlay } from "@/app/context/AppLoadingManager";
+import { preferPageOriginAuthRefresh } from "@/app/lib/pageOriginAuthRefresh";
 
 const ALLOWED_LINK_RETURN = new Set(["/dashboard/settings", "/employee/settings"]);
 
@@ -66,7 +67,16 @@ export function FacebookOAuthCompletePage() {
   /** /auth/facebook/complete is not a public-shell path — drop orphan app-boot so error/success UI is visible. */
   useLayoutEffect(() => {
     releaseAppBootOverlay();
-  }, [releaseAppBootOverlay]);
+    // Before app-boot refresh: the callback cookie is host-only on this origin.
+    if (
+      !params.get("error") &&
+      params.get("success") === "1" &&
+      !params.get("completion")?.trim() &&
+      params.get("link") !== "ok"
+    ) {
+      preferPageOriginAuthRefresh();
+    }
+  }, [params, releaseAppBootOverlay]);
   const [error, setError] = useState<string | null>(null);
   const [errorKind, setErrorKind] = useState<FacebookOAuthCompletionErrorKind>("query");
   const [queryErrorCode, setQueryErrorCode] = useState<string | null>(null);

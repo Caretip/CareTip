@@ -70,22 +70,62 @@ function newCompletionPlainToken(): string {
   return randomBytes(32).toString("base64url");
 }
 
+function facebookCallbackOnOrigin(origin: string): string {
+  return `${origin.replace(/\/$/, "")}/api/auth/facebook/callback`;
+}
+
+/**
+ * Browser-facing Facebook redirect URI.
+ *
+ * The host-only refresh cookie is stored for whichever host the browser sees on this response.
+ * Development uses the Vite origin. Production uses the public frontend origin (Netlify proxies
+ * `/api/*` to Render). The Render hostname is not a browser-facing callback.
+ *
+ * `FACEBOOK_OAUTH_REDIRECT_URI` still overrides, except a production value pinned to the API host
+ * is ignored so a stale Render URL cannot put the cookie back on the API host.
+ */
 export function resolveFacebookOAuthRedirectUri(): string {
-  const override = process.env.FACEBOOK_OAUTH_REDIRECT_URI?.trim();
-  if (override) return override.replace(/\/$/, "");
-  // Local dev: Facebook must redirect through the Vite origin so Set-Cookie matches SPA /api refresh.
-  if (process.env.NODE_ENV !== "production") {
+  const override = process.env.FACEBOOK_OAUTH_REDIRECT_URI?.trim().replace(/\/$/, "") ?? "";
+  const isProd = process.env.NODE_ENV === "production";
+
+  let frontend = "";
+  try {
+    frontend = resolveCheckoutFrontendBaseUrl().replace(/\/$/, "");
+  } catch {
+    frontend = "";
+  }
+
+  if (override && !isProd) return override;
+
+  if (override && isProd) {
     try {
-      const frontend = resolveCheckoutFrontendBaseUrl();
-      const { hostname } = new URL(frontend);
-      if (isLocalCheckoutHostname(hostname)) {
-        return `${frontend.replace(/\/$/, "")}/api/auth/facebook/callback`;
-      }
+      const overrideHost = new URL(override).host;
+      const apiHost = new URL(resolvePublicApiBaseUrl()).host;
+      if (overrideHost !== apiHost) return override;
     } catch {
-      /* fall through to API public base */
+      return override;
     }
   }
-  return `${resolvePublicApiBaseUrl()}/api/auth/facebook/callback`;
+
+  if (frontend) {
+    try {
+      const { hostname, protocol } = new URL(frontend);
+      if (isProd) {
+        if (protocol === "https:" && !isLocalCheckoutHostname(hostname)) {
+          return facebookCallbackOnOrigin(frontend);
+        }
+      } else if (isLocalCheckoutHostname(hostname)) {
+        return facebookCallbackOnOrigin(frontend);
+      }
+    } catch {
+      /* fall through */
+    }
+  }
+
+  if (isProd) {
+    throw new Error("Facebook OAuth production redirect URI requires a public https FRONTEND_URL");
+  }
+  return facebookCallbackOnOrigin(resolvePublicApiBaseUrl());
 }
 
 function resolveFacebookAppId(): string {

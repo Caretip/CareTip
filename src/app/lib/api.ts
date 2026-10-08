@@ -72,8 +72,13 @@ import {
 import { markSessionExpiredNotice } from "./sessionExpiredNotice";
 import { clearSessionConnectivityDegraded } from "./authSessionBootstrap";
 import { recordAuthSessionDiagnostic } from "./authSessionDiagnostics";
+import {
+  AUTH_REFRESH_PATHNAME,
+  clearPageOriginAuthRefresh,
+  resolveBrowserAuthRefreshUrl,
+} from "./pageOriginAuthRefresh";
 
-const AUTH_REFRESH_PATHNAME = "/api/auth/refresh";
+export { preferPageOriginAuthRefresh, clearPageOriginAuthRefresh } from "./pageOriginAuthRefresh";
 
 export { migrateLegacyAccessTokenFromStorage } from "./accessTokenStore";
 
@@ -214,7 +219,7 @@ async function runRefreshAuthWithRetries(options?: RefreshAttemptOptions): Promi
         "Content-Type": "application/json",
         "X-CareTip-Client": "1",
       };
-      res = await fetchWithNetworkRetry(apiPath(AUTH_REFRESH_PATHNAME), {
+      res = await fetchWithNetworkRetry(resolveBrowserAuthRefreshUrl(resolveApiBaseUrl()), {
         method: "POST",
         headers: refreshHeaders,
         body: EMPTY_JSON_BODY,
@@ -348,6 +353,7 @@ function setToken(token: string | null): void {
 export function clearClientAuthStorage(options?: { notifySync?: boolean }): void {
   cancelPendingSessionRefresh();
   refreshFailureCooldownUntil = 0;
+  clearPageOriginAuthRefresh();
   clearEmployeeProfileClientCache();
   try {
     clearMemoryAccessToken();
@@ -922,6 +928,7 @@ export async function loginAPI(
   password: string,
   locale?: "en" | "de"
 ): Promise<LoginApiResult> {
+  clearPageOriginAuthRefresh();
   const timeZone = getBrowserTimeZone();
   return apiRequest<LoginApiResult>(apiPath("/api/auth/signin"), {
     method: "POST",
@@ -949,6 +956,7 @@ export async function loginMfaEnableAPI(
   pendingMfaToken: string,
   code: string,
 ): Promise<AuthResponse> {
+  clearPageOriginAuthRefresh();
   return apiRequest<AuthResponse>(apiPath("/api/auth/login/mfa/enable"), {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -961,6 +969,7 @@ export async function loginMfaVerifyAPI(
   pendingMfaToken: string,
   code: string,
 ): Promise<AuthResponse> {
+  clearPageOriginAuthRefresh();
   return apiRequest<AuthResponse>(apiPath("/api/auth/login/mfa/verify"), {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -1188,6 +1197,7 @@ export async function oauthAPI(payload: {
   locale?: "en" | "de";
   merchantLegalAccepted?: boolean;
 }): Promise<LoginApiResult> {
+  clearPageOriginAuthRefresh();
   const timeZone = getBrowserTimeZone();
   const isFacebook = payload.provider === "facebook";
   const facebookDiagnosticId = isFacebook ? getFacebookOAuthDiagnosticId() : null;
