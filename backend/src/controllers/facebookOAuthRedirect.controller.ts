@@ -10,8 +10,10 @@ import {
   exchangeFacebookAuthorizationCode,
   FacebookOAuthCompletionError,
   FacebookOAuthStateError,
+  logFacebookOAuthStateRejection,
   newFacebookOAuthCorrelationId,
   resolveAllowlistedReturnPath,
+  resolveFacebookOAuthStateCompleteError,
   type FacebookOAuthRedirectFlow,
   type FacebookOAuthStatePayload,
 } from "../services/oauth/facebookOAuthRedirect.service.js";
@@ -25,7 +27,7 @@ import {
   refreshCookieMaxAgeMs,
   setRefreshCookie,
 } from "../services/refreshToken.service.js";
-import { CLIENT_FALLBACK, EmailNotVerifiedLoginError, logServerError } from "../utils/httpErrors.js";
+import { CLIENT_FALLBACK, logServerError } from "../utils/httpErrors.js";
 import {
   MERCHANT_LEGAL_ACCEPTANCE_CONTEXT,
   MERCHANT_LEGAL_ACCEPTANCE_REQUIRED_MSG,
@@ -35,10 +37,8 @@ import {
 import * as mfaLoginService from "../services/mfaLogin.service.js";
 import { prisma } from "../prisma.js";
 import { extractLoginRequestContext, handlePostLoginNotifications } from "../services/loginNotification.service.js";
-import {
-  OAuthEmailRequiredError,
-  OAUTH_EMAIL_REQUIRED_CODE,
-} from "../services/oauthAuth.service.js";
+import { resolveFacebookOAuthAuthCompleteError } from "../lib/facebookOAuthRedirectCompleteErrors.js";
+import { OAuthEmailRequiredError } from "../services/oauthAuth.service.js";
 
 function getUserId(req: Request): string | null {
   const uid = req.user?.sub ?? req.user?.userId ?? req.user?.id;
@@ -285,7 +285,23 @@ export async function facebookOAuthCallback(req: Request, res: Response): Promis
       state = await consumeFacebookOAuthState(stateId);
     } catch (e) {
       if (e instanceof FacebookOAuthStateError) {
-        failRedirect(res, correlationId, "state_invalid");
+        let stateFailCorrelationId: string | undefined;
+        try {
+          const id = stateId.trim();
+          if (id) {
+            const row = await prisma.facebookOAuthState.findUnique({
+              where: { id },
+              select: { payload: true },
+            });
+            const payload = row?.payload as FacebookOAuthStatePayload | undefined;
+            stateFailCorrelationId = payload?.correlationId;
+          }
+        } catch {
+          /* logging only */
+        }
+        logFacebookOAuthStateRejection(stateId, e.code, stateFailCorrelationId);
+        const completeError = resolveFacebookOAuthStateCompleteError(e.code);
+        failRedirect(res, stateFailCorrelationId, completeError);
         return;
       }
       throw e;
@@ -418,19 +434,12 @@ export async function facebookOAuthCallback(req: Request, res: Response): Promis
     redirectComplete(res, { success: "1" });
   } catch (err) {
     if (correlationId) {
-      const code =
-        err instanceof OAuthEmailRequiredError
-          ? OAUTH_EMAIL_REQUIRED_CODE
-          : err instanceof oauthAuthService.OAuthSignInFailedError
-            ? "sign_in_failed"
-            : err instanceof EmailNotVerifiedLoginError
-              ? "email_not_verified"
-              : "generic";
-      if (code === OAUTH_EMAIL_REQUIRED_CODE) {
+      const code = resolveFacebookOAuthAuthCompleteError(err);
+      if (err instanceof OAuthEmailRequiredError) {
         failRedirect(res, correlationId, "email_required");
         return;
       }
-      failRedirect(res, correlationId, code === "generic" ? "sign_in_failed" : code);
+      failRedirect(res, correlationId, code);
       return;
     }
     logServerError("facebookOAuthRedirect.callback", err);

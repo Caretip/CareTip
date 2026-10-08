@@ -158,8 +158,36 @@ export async function createFacebookOAuthState(input: {
   };
 }
 
+export type FacebookOAuthStateFailureReason = "invalid" | "expired" | "consumed" | "missing";
+
+export function hashFacebookOAuthStateIdForLog(stateId: string): string {
+  const trimmed = stateId?.trim() ?? "";
+  if (!trimmed) return "00000000";
+  return createHash("sha256").update(trimmed, "utf8").digest("hex").slice(0, 8);
+}
+
+/** Maps persisted OAuth state validation failures to SPA complete-page query params. */
+export function resolveFacebookOAuthStateCompleteError(
+  reason: FacebookOAuthStateFailureReason,
+): "already_processed" | "state_invalid" {
+  return reason === "consumed" ? "already_processed" : "state_invalid";
+}
+
+export function logFacebookOAuthStateRejection(
+  stateId: string,
+  reason: FacebookOAuthStateFailureReason,
+  correlationId?: string,
+): void {
+  const stateIdHash = hashFacebookOAuthStateIdForLog(stateId);
+  logFacebookOAuthDiagnostic(
+    correlationId?.trim() || `fb_state_${stateIdHash}`,
+    "facebook_oauth_state_failed",
+    { reason, stateIdHash },
+  );
+}
+
 export class FacebookOAuthStateError extends Error {
-  readonly code: "invalid" | "expired" | "consumed" | "missing";
+  readonly code: FacebookOAuthStateFailureReason;
 
   constructor(code: FacebookOAuthStateError["code"], message = "Invalid OAuth state") {
     super(message);

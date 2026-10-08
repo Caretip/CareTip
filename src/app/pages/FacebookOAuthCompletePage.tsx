@@ -21,6 +21,11 @@ import {
 import { beginAuthPostLoginTransition } from "@/app/lib/authPostLoginTransition";
 import { preparePostAuthDestination } from "@/app/lib/prefetchAuthenticatedRoutes";
 import { REFRESH_COORD_TIMEOUT_MS } from "@/app/lib/authRefreshCoordination";
+import {
+  facebookOAuthCompleteErrorMessageKey,
+  facebookOAuthCompleteErrorTitleKey,
+  type FacebookOAuthCompletionErrorKind,
+} from "@/app/lib/facebookOAuthCompleteErrors";
 import { FACEBOOK_OAUTH_START_FAILED_ERROR } from "@/app/lib/facebookOAuthRedirectWeb";
 import {
   consumeFacebookOAuthStartFailure,
@@ -31,42 +36,10 @@ import { useReleaseAppBootOverlay } from "@/app/context/AppLoadingManager";
 
 const ALLOWED_LINK_RETURN = new Set(["/dashboard/settings", "/employee/settings"]);
 
-type CompletionErrorKind = "query" | "session" | "start";
-
 function resolveLinkReturn(path: string | undefined): string {
   const p = (path ?? "").trim().split("?")[0] ?? "";
   if (ALLOWED_LINK_RETURN.has(p)) return p;
   return "/dashboard/settings";
-}
-
-function errorMessageKey(code: string | null): string {
-  switch (code) {
-    case "cancelled":
-      return "auth.oauth.facebookRedirectCancelled";
-    case "denied":
-      return "auth.oauth.facebookRedirectDenied";
-    case "email_required":
-      return "auth.oauth.facebookEmailRequired";
-    case "email_not_verified":
-      return "auth.oauth.facebookEmailNotVerified";
-    case "state_invalid":
-    case "invalid_callback":
-      return "auth.oauth.facebookRedirectStateInvalid";
-    case "session_failed":
-      return "auth.oauth.facebookRedirectSessionFailed";
-    case FACEBOOK_OAUTH_START_FAILED_ERROR:
-      return "auth.oauth.facebookRedirectStartFailed";
-    default:
-      return "auth.oauth.facebookRedirectFailed";
-  }
-}
-
-function errorTitleKey(kind: CompletionErrorKind, queryCode: string | null): string {
-  if (kind === "session") return "auth.oauth.facebookRedirectSessionErrorTitle";
-  if (queryCode === FACEBOOK_OAUTH_START_FAILED_ERROR) {
-    return "auth.oauth.facebookRedirectStartErrorTitle";
-  }
-  return "auth.oauth.facebookRedirectErrorTitle";
 }
 
 async function refreshSessionWithTimeout(): Promise<Awaited<ReturnType<typeof refreshSessionAPI>>> {
@@ -95,7 +68,7 @@ export function FacebookOAuthCompletePage() {
     releaseAppBootOverlay();
   }, [releaseAppBootOverlay]);
   const [error, setError] = useState<string | null>(null);
-  const [errorKind, setErrorKind] = useState<CompletionErrorKind>("query");
+  const [errorKind, setErrorKind] = useState<FacebookOAuthCompletionErrorKind>("query");
   const [queryErrorCode, setQueryErrorCode] = useState<string | null>(null);
   const started = useRef(false);
   const errorHeadingRef = useRef<HTMLHeadingElement>(null);
@@ -126,7 +99,7 @@ export function FacebookOAuthCompletePage() {
       });
       setQueryErrorCode(err);
       setErrorKind(err === FACEBOOK_OAUTH_START_FAILED_ERROR ? "start" : "query");
-      setError(t(errorMessageKey(err)));
+      setError(t(facebookOAuthCompleteErrorMessageKey(err)));
       return;
     }
 
@@ -225,7 +198,7 @@ export function FacebookOAuthCompletePage() {
             tabIndex={-1}
             className="text-2xl font-semibold text-foreground outline-none"
           >
-            {t(errorTitleKey(errorKind, queryErrorCode))}
+            {t(facebookOAuthCompleteErrorTitleKey(errorKind, queryErrorCode))}
           </h1>
           <p className="text-muted-foreground" role="alert" aria-live="assertive">
             {error}

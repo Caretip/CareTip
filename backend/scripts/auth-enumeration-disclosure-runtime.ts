@@ -147,11 +147,14 @@ async function main() {
     // --- OAuth error uniformity ---
     const linkErr = new oauthAuthService.OAuthLinkingRequiredError(existingEmail, "google");
     const failErr = new oauthAuthService.OAuthSignInFailedError();
+    const existsErr = new oauthAuthService.OAuthAccountExistsError();
     if (
       linkErr.code === AUTH_OAUTH_SIGN_IN_FAILED_CODE &&
       failErr.code === AUTH_OAUTH_SIGN_IN_FAILED_CODE &&
+      existsErr.code === AUTH_OAUTH_SIGN_IN_FAILED_CODE &&
       linkErr.message === AUTH_OAUTH_GENERIC_FAILURE_MESSAGE &&
-      failErr.message === AUTH_OAUTH_GENERIC_FAILURE_MESSAGE
+      failErr.message === AUTH_OAUTH_GENERIC_FAILURE_MESSAGE &&
+      existsErr instanceof oauthAuthService.OAuthSignInFailedError
     ) {
       pass("OAuth linking and generic failure share code+message");
     } else {

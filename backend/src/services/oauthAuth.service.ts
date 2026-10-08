@@ -132,6 +132,15 @@ export class OAuthSignInFailedError extends Error {
   }
 }
 
+/** Facebook redirect signup: email already belongs to an existing CareTip user. */
+export class OAuthAccountExistsError extends OAuthSignInFailedError {
+  constructor(message = OAUTH_SIGN_IN_FAILED_MESSAGE) {
+    super(message);
+    this.name = "OAuthAccountExistsError";
+    Object.setPrototypeOf(this, new.target.prototype);
+  }
+}
+
 /**
  * @deprecated Prefer {@link OAuthSignInFailedError}. Kept for call-site compatibility;
  * no longer exposes email/provider on the wire.
@@ -415,11 +424,11 @@ export async function authenticateWithOAuth(
       logFacebookOAuthDiagnostic(facebookDiagnosticId, "signup_blocked", {
         case: "E",
         reason: "email_already_registered",
-        errorClass: "OAuthSignInFailedError",
+        errorClass: "OAuthAccountExistsError",
         errorCode: OAUTH_SIGN_IN_FAILED_CODE,
       });
     }
-    throw new OAuthSignInFailedError();
+    throw new OAuthAccountExistsError();
   }
 
   const subjectTaken = await prisma.oAuthAccount.findUnique({
