@@ -282,6 +282,7 @@ export function OAuthProviderRow({
       submitFacebookOAuthRedirectStart(
         { ...facebookRedirectContext, correlationId },
         "/api/auth/facebook/start",
+        () => setProviderBusy(null),
       );
       return;
     }

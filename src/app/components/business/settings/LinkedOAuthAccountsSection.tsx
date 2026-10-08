@@ -101,6 +101,15 @@ export function LinkedOAuthAccountsSection({ loading }: { loading?: boolean }) {
     });
   }, []);
 
+  useEffect(() => {
+    if (busyProvider !== "facebook") return;
+    const safetyMs = 150_000;
+    const timer = window.setTimeout(() => {
+      setBusyProvider(null);
+    }, safetyMs);
+    return () => window.clearTimeout(timer);
+  }, [busyProvider]);
+
   const linkedMap = new Map(accounts.map((a) => [a.provider, a]));
 
   const visibleProviders = OAUTH_PROVIDER_ORDER.filter(
@@ -185,6 +194,7 @@ export function LinkedOAuthAccountsSection({ loading }: { loading?: boolean }) {
             correlationId,
           },
           "/api/auth/facebook/start/link",
+          () => setBusyProvider(null),
         );
         return;
       } else {

@@ -50,12 +50,15 @@ export function useBillingStatus() {
       if (abortRef.current !== controller) return;
       setError(toUserFriendlyMessage(err) || t("business.billing.loadError"));
     } finally {
-      if (abortRef.current !== controller && abortRef.current !== null) return;
       window.clearTimeout(timeoutId);
-      if (abortRef.current === controller) {
-        abortRef.current = null;
+      const staleRequest =
+        abortRef.current !== controller && abortRef.current !== null;
+      if (!staleRequest) {
+        if (abortRef.current === controller) {
+          abortRef.current = null;
+        }
+        setLoading(false);
       }
-      setLoading(false);
     }
   }, [t]);
 

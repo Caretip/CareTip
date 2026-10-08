@@ -1,12 +1,5 @@
 import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
-import {
-  Building2,
-  Palette,
-  Phone,
-  Sparkles,
-  Store,
-} from "lucide-react";
 import { BusinessLogoMark } from "./BusinessLogoMark";
 import { cn } from "@/lib/utils";
 import { BUSINESS_TYPE_I18N } from "../../lib/businessVenueOptions";
@@ -21,46 +14,20 @@ type BusinessOnboardingReviewSummaryProps = {
   className?: string;
 };
 
-function ReviewSection({
-  icon,
-  title,
-  children,
-}: {
-  icon: ReactNode;
-  title: string;
-  children: ReactNode;
-}) {
+function ReviewBlock({ title, children }: { title: string; children: ReactNode }) {
   return (
-    <section className="business-onboarding-review-section">
-      <div className="business-onboarding-review-section__header">
-        <span className="business-onboarding-review-section__icon" aria-hidden>
-          {icon}
-        </span>
-        <h3 className="business-onboarding-review-section__title">{title}</h3>
-      </div>
-      <div className="business-onboarding-review-section__body">{children}</div>
+    <section className="business-onboarding-review-block">
+      <h3 className="business-onboarding-review-block__title">{title}</h3>
+      <div className="business-onboarding-review-block__body">{children}</div>
     </section>
   );
 }
 
-function ReviewRow({
-  label,
-  value,
-  empty,
-}: {
-  label: string;
-  value: string;
-  empty?: boolean;
-}) {
+function ReviewLine({ label, value, muted }: { label: string; value: string; muted?: boolean }) {
   return (
-    <div className="business-onboarding-review-row">
-      <p className="business-onboarding-review-row__label">{label}</p>
-      <p
-        className={cn(
-          "business-onboarding-review-row__value",
-          empty && "business-onboarding-review-row__value--empty",
-        )}
-      >
+    <div className="business-onboarding-review-line">
+      <p className="business-onboarding-review-line__label">{label}</p>
+      <p className={cn("business-onboarding-review-line__value", muted && "business-onboarding-review-line__value--muted")}>
         {value}
       </p>
     </div>
@@ -88,73 +55,38 @@ export function BusinessOnboardingReviewSummary({
   const displayName = legalBusinessName.trim() || t("business.onboarding.preview.placeholderVenueName");
 
   return (
-    <div className={cn("business-onboarding-review-card", className)}>
-      <div className="business-onboarding-review-card__hero">
-        <BusinessLogoMark logoPathOrUrl={logoPreviewUrl} businessName={displayName} size="md" />
-        <div className="min-w-0 flex-1">
-          <p className="business-onboarding-review-card__eyebrow">
-            {t("business.onboarding.review.summaryEyebrow")}
-          </p>
-          <h2 className="business-onboarding-review-card__title">{displayName}</h2>
-          <p className="business-onboarding-review-card__subtitle">{typeLabel}</p>
-        </div>
-      </div>
-
-      <ReviewSection
-        icon={<Store className="h-4 w-4" />}
-        title={t("business.onboarding.review.sections.businessInfo")}
-      >
-        <ReviewRow label={t("business.onboarding.fields.legalName")} value={displayName} empty={!legalBusinessName.trim()} />
-        <ReviewRow label={t("business.onboarding.fields.businessType")} value={typeLabel} empty={!businessType.trim()} />
-      </ReviewSection>
-
-      <ReviewSection
-        icon={<Phone className="h-4 w-4" />}
-        title={t("business.onboarding.review.sections.contactInfo")}
-      >
-        <ReviewRow
+    <div className={cn("business-onboarding-review-summary", className)}>
+      <ReviewBlock title={t("business.onboarding.review.sections.businessInfo")}>
+        <p className="business-onboarding-review-summary__lead">{displayName}</p>
+        <p className="business-onboarding-review-summary__sub">{typeLabel}</p>
+        <ReviewLine
           label={t("business.onboarding.fields.address")}
           value={registeredAddress.trim() || optional}
-          empty={!registeredAddress.trim()}
+          muted={!registeredAddress.trim()}
         />
-        <ReviewRow
+        <ReviewLine
           label={t("business.onboarding.fields.phone")}
           value={contactPhone.trim() || optional}
-          empty={!contactPhone.trim()}
+          muted={!contactPhone.trim()}
         />
-        <ReviewRow
-          label={t("business.onboarding.fields.website")}
-          value={website.trim() || optional}
-          empty={!website.trim()}
-        />
-      </ReviewSection>
+        {website.trim() ? (
+          <ReviewLine label={t("business.onboarding.fields.website")} value={website.trim()} />
+        ) : null}
+      </ReviewBlock>
 
-      <ReviewSection
-        icon={<Palette className="h-4 w-4" />}
-        title={t("business.onboarding.review.sections.branding")}
-      >
-        <ReviewRow
-          label={t("business.onboarding.review.brandingLabel")}
-          value={
-            logoPreviewUrl
-              ? t("business.onboarding.review.logoAdded")
-              : t("business.onboarding.review.logoSkipped")
-          }
-          empty={!logoPreviewUrl}
-        />
-      </ReviewSection>
-
-      <ReviewSection
-        icon={<Sparkles className="h-4 w-4" />}
-        title={t("business.onboarding.review.sections.publicPage")}
-      >
-        <div className="business-onboarding-review-public">
-          <Building2 className="h-4 w-4 shrink-0 text-orange-600 dark:text-orange-400" aria-hidden />
-          <p className="text-sm leading-relaxed text-zinc-600 dark:text-zinc-300">
-            {t("business.onboarding.review.publicPageReady")}
-          </p>
+      <ReviewBlock title={t("business.onboarding.review.sections.branding")}>
+        <div className="flex items-center gap-3">
+          <BusinessLogoMark logoPathOrUrl={logoPreviewUrl} businessName={displayName} size="sm" />
+          <div className="min-w-0">
+            <p className="business-onboarding-review-line__label">{t("business.onboarding.review.brandingLabel")}</p>
+            <p className="business-onboarding-review-line__value">
+              {logoPreviewUrl
+                ? t("business.onboarding.review.logoAdded")
+                : t("business.onboarding.review.logoSkipped")}
+            </p>
+          </div>
         </div>
-      </ReviewSection>
+      </ReviewBlock>
     </div>
   );
 }

@@ -27,7 +27,10 @@ export function VerificationPendingBanner({ className }: { className?: string })
     enabled: conditionShow,
   });
 
-  if (!conditionShow || shouldSuppressLayoutVerificationBanner(pathname)) {
+  if (
+    !conditionShow ||
+    shouldSuppressLayoutVerificationBanner(pathname, { pending, rejected })
+  ) {
     return null;
   }
   if (loading || !show) return null;

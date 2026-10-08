@@ -35,9 +35,22 @@ export function resolveBusinessVerificationNoticeState(
   };
 }
 
-/** Routes that already own the verification UX — suppress the layout banner. */
-export function shouldSuppressLayoutVerificationBanner(pathname: string): boolean {
-  return pathname === "/awaiting-approval" || pathname.startsWith("/awaiting-approval/");
+/**
+ * Routes that already own the verification UX — suppress the layout banner.
+ * Dashboard overview: pending review is communicated on onboarding step 3; keep rejected visible elsewhere.
+ */
+export function shouldSuppressLayoutVerificationBanner(
+  pathname: string,
+  opts?: { pending?: boolean; rejected?: boolean },
+): boolean {
+  if (pathname === "/awaiting-approval" || pathname.startsWith("/awaiting-approval/")) {
+    return true;
+  }
+  const onDashboardHome = pathname === "/dashboard" || pathname === "/dashboard/";
+  if (onDashboardHome && opts?.pending && !opts.rejected) {
+    return true;
+  }
+  return false;
 }
 
 export function getBusinessVerificationNoticeLabels(t: TFunction, rejected: boolean) {

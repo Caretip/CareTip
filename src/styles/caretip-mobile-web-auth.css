@@ -286,8 +286,7 @@
 }
 
 .mw-auth-country__flag {
-  font-size: 1.05rem;
-  line-height: 1;
+  width: 1.125rem;
 }
 
 .mw-auth-country__chevron {

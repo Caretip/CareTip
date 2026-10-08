@@ -1661,11 +1661,15 @@
       "facebookPopupBlocked": "Facebook could not open because your browser blocked the sign-in window. Allow pop-ups for CareTip and try again.",
       "facebookInteractionNotObserved": "Facebook sign-in could not open or complete. Allow pop-ups for CareTip and try again.",
       "facebookRedirectErrorTitle": "Facebook sign-in could not be completed",
+      "facebookRedirectStartErrorTitle": "Facebook sign-in could not be started",
+      "facebookRedirectSessionErrorTitle": "We couldn't complete your sign-in",
       "facebookRedirectFailed": "Facebook sign-in could not be completed. Please try again or use another sign-in method.",
+      "facebookRedirectStartFailed": "Facebook sign-in couldn't be started. Please try again or use another sign-in method.",
+      "facebookRedirectTryAgain": "Try again",
       "facebookRedirectCancelled": "Facebook sign-in was cancelled.",
       "facebookRedirectDenied": "Facebook sign-in was not approved. Please try again or use another sign-in method.",
       "facebookRedirectStateInvalid": "This Facebook sign-in session expired or was invalid. Please start again from CareTip.",
-      "facebookRedirectSessionFailed": "We could not start your CareTip session after Facebook sign-in. Please try again.",
+      "facebookRedirectSessionFailed": "Your Facebook authorization was successful, but we couldn't establish your CareTip session. Please try again or use another sign-in method.",
       "facebookRedirectBackToSignIn": "Back to sign in",
       "facebookEmailRequired": "Facebook did not provide an email address. Enable email permission in Facebook, or use another sign-in method.",
       "facebookEmailNotVerified": "Please verify your CareTip email before signing in.",
@@ -4803,12 +4807,17 @@
       "setupTime": "Setup time: {{minutes}} min",
       "finalStep": {
         "badge": "Final step",
-        "headline": "Review & publish",
-        "description": "Confirm your details and preview the guest tipping experience before you go live.",
+        "headline": "Ready to go.",
+        "description": "Everything looks good.",
         "readyTitle": "Ready to go live",
         "readyMessage": "Everything looks good? Publish your venue and open your dashboard.",
-        "publishHint": "You can update branding and contact details anytime in settings.",
+        "guestPageReady": "Guest tipping page set up",
+        "publishHint": "You can update branding and contact anytime in settings.",
         "stripeNextHint": "Next: connect Stripe in your dashboard so guests can tip this venue."
+      },
+      "stepKicker": {
+        "businessDetails": "Your business details",
+        "brandingSetup": "Make CareTip yours."
       },
       "sections": {
         "branding": "Branding",
@@ -4824,8 +4833,9 @@
       },
       "preview": {
         "panelAria": "Guest tipping page preview (not interactive)",
-        "liveLabel": "Live preview",
+        "liveLabel": "Guest preview",
         "reviewLabel": "Guest preview",
+        "caption": "Your guests see this page.",
         "previewOnlyBadge": "Preview only",
         "helperText": "Updates as you fill in your business details below.",
         "helperTextNamed": "Guests will see {{name}} on your tipping page.",
@@ -4921,7 +4931,17 @@
       "steps": {
         "businessDetails": "Business Details",
         "brandingSetup": "Branding & Setup",
-        "reviewPublish": "Review & Publish"
+        "reviewPublish": "Review & Publish",
+        "setupComplete": "Setup complete"
+      },
+      "completeStep": {
+        "eyebrow": "Setup complete",
+        "headline": "You're all set.",
+        "subhead": "Your CareTip business setup is complete.",
+        "reviewBadge": "Under review",
+        "reviewTitle": "Your business is being reviewed by CareTip.",
+        "reviewBody": "You can continue to your dashboard while verification is in progress.",
+        "qrNotice": "QR codes stay disabled until verification is complete. They cannot be used to receive tips until your business is verified."
       },
       "stepTitle": {
         "businessDetails": "Business details",
@@ -4929,9 +4949,9 @@
         "reviewPublish": "Review & publish"
       },
       "stepHint": {
-        "businessDetails": "Legal name and business type for your CareTip workspace.",
-        "brandingSetup": "Logo, address, and contact details guests see on your tipping page.",
-        "reviewPublish": "Verify everything below, then publish when you are ready."
+        "businessDetails": "The essentials for your CareTip workspace.",
+        "brandingSetup": "Logo, location, and how guests reach you.",
+        "reviewPublish": "Everything looks good."
       },
       "review": {
         "summaryEyebrow": "Review summary",
@@ -4998,7 +5018,9 @@
       "actions": {
         "back": "Back",
         "continue": "Continue",
-        "finish": "Publish & finish setup",
+        "finish": "Publish & finish",
+        "goToDashboard": "Go to dashboard",
+        "openingDashboard": "Opening dashboard…",
         "saving": "Saving…",
         "publishing": "Publishing…"
       }

@@ -15,6 +15,9 @@ export type FacebookRedirectStartContext = {
   correlationId?: string;
 };
 
+/** Query param on /auth/facebook/complete when the browser cannot submit Facebook start. */
+export const FACEBOOK_OAUTH_START_FAILED_ERROR = "start_failed";
+
 /** Default: redirect. Set VITE_FACEBOOK_OAUTH_MODE=sdk to keep JS SDK popup flow. */
 export function isFacebookOAuthRedirectEnabled(): boolean {
   const mode = import.meta.env.VITE_FACEBOOK_OAUTH_MODE?.trim().toLowerCase();
@@ -30,16 +33,24 @@ function appendHidden(form: HTMLFormElement, name: string, value: string | undef
   form.appendChild(input);
 }
 
+function navigateToFacebookStartFailure(): void {
+  const path = `/auth/facebook/complete?error=${FACEBOOK_OAUTH_START_FAILED_ERROR}`;
+  window.location.assign(path);
+}
+
 /**
  * Full-page POST navigation to the API start endpoint (preserves signup/login body, no popup).
+ * The browser follows the server's 302 redirect to Facebook — do not use fetch + manual redirect.
  */
 export function submitFacebookOAuthRedirectStart(
   context: FacebookRedirectStartContext,
   endpoint: "/api/auth/facebook/start" | "/api/auth/facebook/start/link",
+  onSubmitFailed?: () => void,
 ): void {
   const correlationId = context.correlationId ?? beginFacebookOAuthDiagnostic();
   const form = document.createElement("form");
   form.method = "POST";
+  // Same-origin path; Netlify/Vite proxies /api/* to the API host (CSP form-action 'self').
   form.action = getApiAbsoluteUrl(endpoint);
   form.style.display = "none";
 
@@ -60,6 +71,33 @@ export function submitFacebookOAuthRedirectStart(
     appendHidden(form, "flow", "link");
   }
 
+  let violationListener: ((event: SecurityPolicyViolationEvent) => void) | undefined;
+  const releaseSubmitFailureHook = () => {
+    if (violationListener) {
+      document.removeEventListener("securitypolicyviolation", violationListener);
+      violationListener = undefined;
+    }
+  };
+  const notifySubmitFailed = () => {
+    releaseSubmitFailureHook();
+    form.remove();
+    navigateToFacebookStartFailure();
+    onSubmitFailed?.();
+  };
+
+  if (onSubmitFailed) {
+    violationListener = (event: SecurityPolicyViolationEvent) => {
+      if (event.effectiveDirective !== "form-action") return;
+      if (!event.blockedURI.includes("/api/auth/facebook/start")) return;
+      notifySubmitFailed();
+    };
+    document.addEventListener("securitypolicyviolation", violationListener);
+  }
+
   document.body.appendChild(form);
-  form.submit();
+  try {
+    form.submit();
+  } catch {
+    notifySubmitFailed();
+  }
 }

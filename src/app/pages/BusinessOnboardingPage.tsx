@@ -3,7 +3,7 @@ import "@/styles/bundles/onboarding.css";
 import { useNavigate } from "react-router";
 import { AnimatePresence, motion } from "motion/react";
 import { useTranslation } from "react-i18next";
-import { Loader2, MapPin, Palette } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { useAuth, getPostAuthRedirect } from "../hooks/useAuth";
 import { getAuthSessionFlags } from "../lib/authSessionBootstrap";
 import { useRegisterGlobalAppInit, useAppLoadingRegistration, useGlobalAppLoadingActive, APP_LOADING_PRIORITY } from "../lib/globalAppLoading";
@@ -42,19 +42,16 @@ import {
 } from "../components/business/BusinessOnboardingShell";
 import { BusinessOnboardingGuestPreview } from "../components/business/BusinessOnboardingGuestPreview";
 import { BusinessOnboardingLogoUpload } from "../components/business/BusinessOnboardingLogoUpload";
-import { BusinessOnboardingFinishCta } from "../components/business/BusinessOnboardingFinishCta";
+import { BusinessOnboardingCompleteStep } from "../components/business/BusinessOnboardingCompleteStep";
 import { BusinessOnboardingNavFooter } from "../components/business/BusinessOnboardingNavFooter";
-import { BusinessOnboardingReviewSummary } from "../components/business/BusinessOnboardingReviewSummary";
 import {
   BusinessOnboardingSelectField,
   BusinessOnboardingTextField,
 } from "../components/business/BusinessOnboardingFormField";
 import {
   onboardingDisplayFont,
-  onboardingFormCard,
   onboardingHeadline,
-  onboardingSectionCard,
-  onboardingSectionTitle,
+  onboardingSectionKicker,
   onboardingSubhead,
 } from "../components/business/businessOnboardingUi";
 import { BUSINESS_TYPE_OPTIONS } from "../lib/businessVenueOptions";
@@ -72,13 +69,11 @@ import { parsePhoneNumberFromString } from "libphonenumber-js";
 const PAGE_HEADLINE_KEYS = [
   "business.onboarding.stepTitle.businessDetails",
   "business.onboarding.stepTitle.brandingSetup",
-  "business.onboarding.finalStep.headline",
 ] as const;
 
 const PAGE_DESC_KEYS = [
   "business.onboarding.stepHint.businessDetails",
   "business.onboarding.stepHint.brandingSetup",
-  "business.onboarding.finalStep.description",
 ] as const;
 
 export function BusinessOnboardingPage() {
@@ -105,8 +100,6 @@ export function BusinessOnboardingPage() {
   const [busy, setBusy] = useState(false);
   const resetOnboardingBusy = useCallback(() => setBusy(false), []);
   useStaleExternalStripeStateReset({ onReset: resetOnboardingBusy });
-  const [logoPreviewUrl, setLogoPreviewUrl] = useState<string | null>(null);
-
   const checkoutIntent = peekCheckoutIntent();
   const onboardingBusyMessage =
     step === 3 &&
@@ -123,16 +116,6 @@ export function BusinessOnboardingPage() {
     busy && step === 3,
     onboardingBusyMessage,
   );
-
-  useEffect(() => {
-    if (!logoFile) {
-      setLogoPreviewUrl(savedLogoPath);
-      return;
-    }
-    const url = URL.createObjectURL(logoFile);
-    setLogoPreviewUrl(url);
-    return () => URL.revokeObjectURL(url);
-  }, [logoFile, savedLogoPath]);
 
   useEffect(() => {
     if (!sessionValidated || !user) return;
@@ -501,77 +484,49 @@ export function BusinessOnboardingPage() {
     return <AuthBootstrapShell tagline={onboardingTagline} />;
   }
 
-  const isReviewStep = step === 3;
+  const isCompleteStep = step === 3;
   const skipEntranceMotion = skipEntranceMotionRef.current;
 
   return (
     <div className="business-onboarding-page flex min-h-screen flex-col">
-      <BusinessOnboardingHeader />
+      <BusinessOnboardingHeader step={step} />
 
       <main className="business-onboarding-main flex-1">
         <motion.div
           initial={skipEntranceMotion ? false : { opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
-          className="business-onboarding-shell mx-auto w-full max-w-6xl px-4 sm:px-6 lg:px-8"
+          className="business-onboarding-shell mx-auto w-full max-w-[72rem] px-4 sm:px-6 lg:px-8"
         >
           <div className="space-y-8 lg:space-y-10">
             <BusinessOnboardingProgressHeader step={step} />
 
-            {isReviewStep ? (
-              <div className="business-onboarding-final-layout space-y-8">
-                <header className="space-y-3 text-center lg:text-left">
-                  <h1
-                    id="onboarding-page-title"
-                    className={onboardingHeadline}
-                    style={{ fontFamily: onboardingDisplayFont }}
-                  >
-                    {t(PAGE_HEADLINE_KEYS[step - 1])}
-                  </h1>
-                  <p className={cn(onboardingSubhead, "mx-auto lg:mx-0")}>{t(PAGE_DESC_KEYS[step - 1])}</p>
-                </header>
-
-                <div className="business-onboarding-final-grid">
-                  <aside
-                    className="business-onboarding-preview-aside min-w-0"
-                    aria-label={t("business.onboarding.preview.panelAria")}
-                  >
-                    <BusinessOnboardingGuestPreview {...previewData} variant="final" />
-                  </aside>
-
-                  <div className="business-onboarding-final-content min-w-0 space-y-6">
-                    <BusinessOnboardingReviewSummary
-                      legalBusinessName={legalBusinessName}
-                      businessType={businessType}
-                      registeredAddress={registeredAddress}
-                      contactPhone={contactPhone}
-                      website={website}
-                      logoPreviewUrl={logoPreviewUrl}
-                    />
-                    <BusinessOnboardingFinishCta
-                      busy={busy}
-                      disabled={!canContinue}
-                      onFinish={() => void goForward()}
-                      onBack={goBack}
-                    />
-                  </div>
-                </div>
-              </div>
+            {isCompleteStep ? (
+              <BusinessOnboardingCompleteStep
+                busy={busy}
+                onGoToDashboard={() => void goForward()}
+              />
             ) : (
-              <div className="business-onboarding-split business-onboarding-split--entry">
-                <div className={cn(onboardingFormCard, "business-onboarding-workspace min-w-0")}>
-                  <header className="mb-8 space-y-3 border-b border-zinc-200/70 pb-8 dark:border-zinc-800/70">
+              <div
+                className={cn(
+                  "business-onboarding-split",
+                  step === 2 && "business-onboarding-split--with-preview",
+                )}
+              >
+                <div className="business-onboarding-workspace min-w-0">
+                  <header className="mb-8 space-y-2 sm:mb-10">
+                    <p className={onboardingSectionKicker}>{t(PAGE_HEADLINE_KEYS[step - 1])}</p>
                     <h1
                       id="onboarding-page-title"
-                      className={onboardingHeadline}
+                      className={cn(onboardingHeadline, "!text-[clamp(1.625rem,4vw,2.25rem)]")}
                       style={{ fontFamily: onboardingDisplayFont }}
                     >
-                      {t(PAGE_HEADLINE_KEYS[step - 1])}
+                      {t(`business.onboarding.stepKicker.${step === 1 ? "businessDetails" : "brandingSetup"}`)}
                     </h1>
                     <p className={onboardingSubhead}>{t(PAGE_DESC_KEYS[step - 1])}</p>
                   </header>
 
-                  <section className="space-y-8" aria-labelledby="onboarding-page-title">
+                  <section className="space-y-10" aria-labelledby="onboarding-page-title">
                     <AnimatePresence mode="wait">
                       <motion.div
                         key={step}
@@ -579,23 +534,21 @@ export function BusinessOnboardingPage() {
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: -6 }}
                         transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
-                        className="space-y-8"
+                        className="space-y-10"
                       >
                         {step === 1 ? (
-                          <div className="space-y-6">
+                          <div className="space-y-7">
                             <BusinessOnboardingTextField
                               label={t("business.onboarding.fields.legalName")}
                               placeholder={t("business.onboarding.fields.legalNamePlaceholder")}
                               value={legalBusinessName}
                               onChange={setLegalBusinessName}
-                              hint={t("business.onboarding.fields.legalNameHint")}
                             />
                             <BusinessOnboardingSelectField
                               label={t("business.onboarding.fields.businessType")}
                               value={businessType}
                               onChange={setBusinessType}
                               placeholder={t("business.onboarding.fields.businessTypePlaceholder")}
-                              hint={t("business.onboarding.fields.businessTypeHint")}
                             >
                               {BUSINESS_TYPE_OPTIONS.map((opt) => (
                                 <option key={opt.value} value={opt.value}>
@@ -607,75 +560,64 @@ export function BusinessOnboardingPage() {
                         ) : null}
 
                         {step === 2 ? (
-                          <div className="space-y-6">
-                            <div className={onboardingSectionCard}>
-                              <h2 className={onboardingSectionTitle}>
-                                <Palette className="h-4 w-4 text-orange-600 dark:text-orange-400" aria-hidden />
-                                {t("business.onboarding.sections.branding")}
-                              </h2>
+                          <div className="space-y-10">
+                            <div className="space-y-5">
                               <BusinessOnboardingLogoUpload file={logoFile} onFile={setLogoFile} />
                             </div>
 
-                            <div className={onboardingSectionCard}>
-                              <h2 className={onboardingSectionTitle}>
-                                <MapPin className="h-4 w-4 text-orange-600 dark:text-orange-400" aria-hidden />
-                                {t("business.onboarding.sections.locationContact")}
-                              </h2>
-                              <div className="space-y-6">
-                                <BusinessOnboardingTextField
-                                  label={t("business.onboarding.fields.address")}
-                                  placeholder={t("business.onboarding.fields.addressPlaceholder")}
-                                  value={registeredAddress}
-                                  onChange={setRegisteredAddress}
-                                  hint={t("business.onboarding.fields.addressHint")}
-                                />
-                                <div className="grid gap-6 sm:grid-cols-[minmax(0,14rem)_minmax(0,1fr)]">
-                                  <BusinessOnboardingSelectField
-                                    label={t("business.onboarding.fields.country")}
-                                    placeholder={t("business.onboarding.fields.countryPlaceholder")}
-                                    value={contactCountry}
-                                    onChange={(v) => {
-                                      setContactCountry((v as CountryCode | "") || "");
-                                      setFieldErrors((prev) => ({
-                                        ...prev,
-                                        contactPhoneCountry: undefined,
-                                        contactPhone: undefined,
-                                      }));
-                                    }}
-                                    hint={t("business.onboarding.fields.countryHint")}
-                                    error={fieldErrors.contactPhoneCountry}
-                                  >
-                                    {countryOptions.map((opt) => (
-                                      <option key={opt.iso} value={opt.iso}>
-                                        {opt.label}
-                                      </option>
-                                    ))}
-                                  </BusinessOnboardingSelectField>
-                                  <BusinessOnboardingTextField
-                                    label={t("business.onboarding.fields.phone")}
-                                    placeholder={t("business.onboarding.fields.phonePlaceholder")}
-                                    value={contactPhone}
-                                    onChange={(v) => {
-                                      setContactPhone(v);
-                                      setFieldErrors((prev) => ({ ...prev, contactPhone: undefined }));
-                                    }}
-                                    hint={t("business.onboarding.fields.phoneHint")}
-                                    error={fieldErrors.contactPhone}
-                                  />
-                                </div>
-                                <BusinessOnboardingTextField
-                                  label={t("business.onboarding.fields.website")}
-                                  placeholder={t("business.onboarding.fields.websitePlaceholder")}
-                                  value={website}
+                            <div className="space-y-7 border-t border-border/60 pt-10">
+                              <div>
+                                <p className={onboardingSectionKicker}>{t("business.onboarding.sections.locationContact")}</p>
+                              </div>
+                              <BusinessOnboardingTextField
+                                label={t("business.onboarding.fields.address")}
+                                placeholder={t("business.onboarding.fields.addressPlaceholder")}
+                                value={registeredAddress}
+                                onChange={setRegisteredAddress}
+                              />
+                              <div className="grid gap-7 sm:grid-cols-[minmax(0,14rem)_minmax(0,1fr)]">
+                                <BusinessOnboardingSelectField
+                                  label={t("business.onboarding.fields.country")}
+                                  placeholder={t("business.onboarding.fields.countryPlaceholder")}
+                                  value={contactCountry}
                                   onChange={(v) => {
-                                    setWebsite(v);
-                                    setFieldErrors((prev) => ({ ...prev, website: undefined }));
+                                    setContactCountry((v as CountryCode | "") || "");
+                                    setFieldErrors((prev) => ({
+                                      ...prev,
+                                      contactPhoneCountry: undefined,
+                                      contactPhone: undefined,
+                                    }));
                                   }}
-                                  hint={t("business.onboarding.fields.websiteHint")}
-                                  error={fieldErrors.website}
-                                  optional
+                                  error={fieldErrors.contactPhoneCountry}
+                                >
+                                  {countryOptions.map((opt) => (
+                                    <option key={opt.iso} value={opt.iso}>
+                                      {opt.label}
+                                    </option>
+                                  ))}
+                                </BusinessOnboardingSelectField>
+                                <BusinessOnboardingTextField
+                                  label={t("business.onboarding.fields.phone")}
+                                  placeholder={t("business.onboarding.fields.phonePlaceholder")}
+                                  value={contactPhone}
+                                  onChange={(v) => {
+                                    setContactPhone(v);
+                                    setFieldErrors((prev) => ({ ...prev, contactPhone: undefined }));
+                                  }}
+                                  error={fieldErrors.contactPhone}
                                 />
                               </div>
+                              <BusinessOnboardingTextField
+                                label={t("business.onboarding.fields.website")}
+                                placeholder={t("business.onboarding.fields.websitePlaceholder")}
+                                value={website}
+                                onChange={(v) => {
+                                  setWebsite(v);
+                                  setFieldErrors((prev) => ({ ...prev, website: undefined }));
+                                }}
+                                error={fieldErrors.website}
+                                optional
+                              />
                             </div>
                           </div>
                         ) : null}
@@ -702,6 +644,15 @@ export function BusinessOnboardingPage() {
                     />
                   </section>
                 </div>
+
+                {step === 2 ? (
+                  <aside
+                    className="business-onboarding-preview-aside business-onboarding-preview-aside--setup min-w-0"
+                    aria-label={t("business.onboarding.preview.panelAria")}
+                  >
+                    <BusinessOnboardingGuestPreview {...previewData} />
+                  </aside>
+                ) : null}
               </div>
             )}
 

@@ -2,7 +2,10 @@ import { createHash, randomBytes } from "node:crypto";
 import { Prisma } from "@prisma/client";
 import { prisma } from "../../prisma.js";
 import { resolvePublicApiBaseUrl } from "../../config/publicApiBaseUrl.js";
-import { resolveCheckoutFrontendBaseUrl } from "../../config/frontendUrl.js";
+import {
+  isLocalCheckoutHostname,
+  resolveCheckoutFrontendBaseUrl,
+} from "../../config/frontendUrl.js";
 import { logFacebookOAuthDiagnostic } from "./facebookOAuthDiagnostic.js";
 import { verifyFacebookIdentity } from "./facebookVerifier.js";
 
@@ -70,6 +73,18 @@ function newCompletionPlainToken(): string {
 export function resolveFacebookOAuthRedirectUri(): string {
   const override = process.env.FACEBOOK_OAUTH_REDIRECT_URI?.trim();
   if (override) return override.replace(/\/$/, "");
+  // Local dev: Facebook must redirect through the Vite origin so Set-Cookie matches SPA /api refresh.
+  if (process.env.NODE_ENV !== "production") {
+    try {
+      const frontend = resolveCheckoutFrontendBaseUrl();
+      const { hostname } = new URL(frontend);
+      if (isLocalCheckoutHostname(hostname)) {
+        return `${frontend.replace(/\/$/, "")}/api/auth/facebook/callback`;
+      }
+    } catch {
+      /* fall through to API public base */
+    }
+  }
   return `${resolvePublicApiBaseUrl()}/api/auth/facebook/callback`;
 }
 

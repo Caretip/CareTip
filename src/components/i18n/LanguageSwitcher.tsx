@@ -10,6 +10,7 @@ import {
   type AppLanguage,
 } from "@/i18n/i18n";
 import "@/styles/caretip-language-select.css";
+import { LanguageFlag } from "./LanguageFlag";
 
 type LanguageSwitcherProps = {
   className?: string;
@@ -19,11 +20,10 @@ type LanguageSwitcherProps = {
 
 const LANGUAGE_OPTIONS: {
   code: AppLanguage;
-  flag: string;
   labelKey: "nav.languageEnglish" | "nav.languageGerman";
 }[] = [
-  { code: "en", flag: "🇬🇧", labelKey: "nav.languageEnglish" },
-  { code: "de", flag: "🇩🇪", labelKey: "nav.languageGerman" },
+  { code: "en", labelKey: "nav.languageEnglish" },
+  { code: "de", labelKey: "nav.languageGerman" },
 ];
 
 function optionFor(code: AppLanguage) {
@@ -101,7 +101,7 @@ export const LanguageSelectDropdown = memo(function LanguageSelectDropdown({
         aria-haspopup="listbox"
         onClick={() => onOpenChange(!open)}
       >
-        <span className="caretip-lang-select__flag" aria-hidden>{active.flag}</span>
+        <LanguageFlag language={active.code} className="caretip-lang-select__flag" />
         <span className="caretip-lang-select__label truncate">{t(active.labelKey)}</span>
         {open ? (
           <ChevronUp className="caretip-lang-select__chevron" aria-hidden strokeWidth={2.5} />
@@ -120,7 +120,7 @@ export const LanguageSelectDropdown = memo(function LanguageSelectDropdown({
               className="caretip-lang-select__row"
               onClick={() => onSelect(opt.code)}
             >
-              <span className="caretip-lang-select__flag" aria-hidden>{opt.flag}</span>
+              <LanguageFlag language={opt.code} className="caretip-lang-select__flag" />
               <span className="caretip-lang-select__label">{t(opt.labelKey)}</span>
             </button>
           ))}

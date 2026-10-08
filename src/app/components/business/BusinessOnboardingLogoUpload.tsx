@@ -3,7 +3,7 @@ import { AnimatePresence, motion } from "motion/react";
 import { ImagePlus, RefreshCw, Trash2, Upload } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
-import { onboardingFieldHint, onboardingLabel, onboardingOptionalBadge } from "./businessOnboardingUi";
+import { onboardingLabel, onboardingOptionalBadge } from "./businessOnboardingUi";
 
 const ACCEPT = "image/png,image/jpeg,image/jpg,image/webp,image/gif,image/heic,image/heif,image/avif";
 
@@ -68,7 +68,6 @@ export function BusinessOnboardingLogoUpload({ file, onFile }: BusinessOnboardin
         {t("business.onboarding.fields.logo")}
         <span className={onboardingOptionalBadge}>{t("business.onboarding.fields.optional")}</span>
       </span>
-      <p className={cn(onboardingFieldHint, "-mt-1 mb-3")}>{t("business.onboarding.fields.logoHint")}</p>
 
       <motion.div
         role="button"
@@ -88,16 +87,15 @@ export function BusinessOnboardingLogoUpload({ file, onFile }: BusinessOnboardin
         onDragLeave={() => setDragging(false)}
         onDrop={onDrop}
         animate={{
-          scale: dragging ? 1.01 : 1,
-          borderColor: dragging ? "rgba(249, 115, 22, 0.55)" : undefined,
+          borderColor: dragging ? "rgba(249, 115, 22, 0.45)" : undefined,
         }}
         transition={{ duration: 0.2 }}
         className={cn(
-          "business-onboarding-logo-drop relative flex cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed px-6 py-8 text-center transition-colors duration-200",
+          "business-onboarding-logo-drop relative flex cursor-pointer items-center gap-4 rounded-md border border-dashed px-4 py-4 transition-colors duration-200 sm:px-5",
           dragging
-            ? "border-orange-500 bg-orange-500/5 ring-4 ring-orange-500/10"
-            : "border-zinc-200/90 bg-gradient-to-b from-zinc-50/90 to-white hover:border-zinc-300 hover:shadow-[0_4px_20px_-12px_rgba(0,0,0,0.12)] dark:border-zinc-700 dark:from-zinc-900/40 dark:to-zinc-950/60 dark:hover:border-zinc-600",
-          previewUrl && "cursor-default py-6",
+            ? "border-primary bg-primary/5"
+            : "border-border/80 bg-muted/20 hover:border-foreground/20 hover:bg-muted/30",
+          previewUrl && "cursor-default",
         )}
       >
         <input
@@ -113,28 +111,26 @@ export function BusinessOnboardingLogoUpload({ file, onFile }: BusinessOnboardin
           {previewUrl ? (
             <motion.div
               key="preview"
-              initial={{ opacity: 0, scale: 0.96 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.96 }}
-              transition={{ duration: 0.25 }}
-              className="flex w-full flex-col items-center gap-4"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="flex w-full min-w-0 flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"
             >
-              <div className="flex h-28 w-28 items-center justify-center rounded-2xl border border-zinc-200/80 bg-white p-3 shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
-                <img src={previewUrl} alt="" className="max-h-full max-w-full object-contain" />
+              <div className="flex min-w-0 items-center gap-3">
+                <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-md border border-border/70 bg-background p-2">
+                  <img src={previewUrl} alt="" className="max-h-full max-w-full object-contain" />
+                </div>
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-medium text-foreground">{file?.name}</p>
+                  <p className="text-xs text-muted-foreground">{t("business.onboarding.upload.previewReady")}</p>
+                </div>
               </div>
-              <div className="min-w-0 text-center">
-                <p className="max-w-full truncate text-sm font-medium text-zinc-800 dark:text-zinc-100">
-                  {file?.name}
-                </p>
-                <p className="mt-0.5 text-xs text-zinc-500 dark:text-zinc-400">
-                  {t("business.onboarding.upload.previewReady")}
-                </p>
-              </div>
-              <div className="flex flex-wrap items-center justify-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
                 <button
                   type="button"
                   onClick={replace}
-                  className="inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-3 py-1.5 text-xs font-medium text-zinc-700 transition-colors hover:border-orange-300 hover:text-orange-700 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200 dark:hover:border-orange-500/40 dark:hover:text-orange-300"
+                  className="inline-flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-medium text-foreground transition-colors hover:bg-muted"
                 >
                   <RefreshCw className="h-3.5 w-3.5" aria-hidden />
                   {t("business.onboarding.upload.replace")}
@@ -142,7 +138,7 @@ export function BusinessOnboardingLogoUpload({ file, onFile }: BusinessOnboardin
                 <button
                   type="button"
                   onClick={clear}
-                  className="inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-3 py-1.5 text-xs font-medium text-zinc-600 transition-colors hover:border-red-200 hover:text-red-600 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:border-red-500/30 dark:hover:text-red-400"
+                  className="inline-flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
                 >
                   <Trash2 className="h-3.5 w-3.5" aria-hidden />
                   {t("business.onboarding.upload.remove")}
@@ -152,25 +148,26 @@ export function BusinessOnboardingLogoUpload({ file, onFile }: BusinessOnboardin
           ) : (
             <motion.div
               key="empty"
-              initial={{ opacity: 0, y: 4 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -4 }}
-              transition={{ duration: 0.25 }}
-              className="flex flex-col items-center"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="flex w-full items-center gap-4"
             >
-              <span className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-orange-500/10 to-orange-500/5 shadow-sm ring-1 ring-orange-500/15 dark:from-orange-500/15 dark:to-orange-500/5">
-                <Upload className="h-6 w-6 text-orange-600 dark:text-orange-400" aria-hidden />
+              <span
+                className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-border/70 bg-background"
+                aria-hidden
+              >
+                <Upload className="h-5 w-5 text-primary" />
               </span>
-              <p className="text-sm font-semibold text-zinc-800 dark:text-zinc-100">
-                {t("business.onboarding.upload.cta")}
-              </p>
-              <p className="mt-1.5 text-xs leading-relaxed text-zinc-500 dark:text-zinc-400">
-                {t("business.onboarding.upload.formats")}
-              </p>
-              <span className="mt-4 inline-flex items-center gap-1.5 rounded-full bg-zinc-100 px-3 py-1 text-xs font-medium text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300">
-                <ImagePlus className="h-3.5 w-3.5 text-orange-500" aria-hidden />
-                {t("business.onboarding.upload.dragHint")}
-              </span>
+              <div className="min-w-0 flex-1 text-left">
+                <p className="text-sm font-semibold text-foreground">{t("business.onboarding.upload.cta")}</p>
+                <p className="mt-0.5 text-xs text-muted-foreground">{t("business.onboarding.upload.formats")}</p>
+                <p className="mt-1.5 inline-flex items-center gap-1 text-xs font-medium text-muted-foreground">
+                  <ImagePlus className="h-3.5 w-3.5 text-primary" aria-hidden />
+                  {t("business.onboarding.upload.dragHint")}
+                </p>
+              </div>
             </motion.div>
           )}
         </AnimatePresence>

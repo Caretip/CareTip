@@ -1661,11 +1661,15 @@
       "facebookPopupBlocked": "Facebook konnte nicht geöffnet werden, weil Ihr Browser das Anmeldefenster blockiert hat. Pop-ups für CareTip erlauben und erneut versuchen.",
       "facebookInteractionNotObserved": "Die Facebook-Anmeldung konnte nicht geöffnet oder abgeschlossen werden. Pop-ups für CareTip erlauben und erneut versuchen.",
       "facebookRedirectErrorTitle": "Facebook-Anmeldung konnte nicht abgeschlossen werden",
+      "facebookRedirectStartErrorTitle": "Facebook-Anmeldung konnte nicht gestartet werden",
+      "facebookRedirectSessionErrorTitle": "Anmeldung konnte nicht abgeschlossen werden",
       "facebookRedirectFailed": "Die Facebook-Anmeldung konnte nicht abgeschlossen werden. Bitte erneut versuchen oder eine andere Anmeldemethode nutzen.",
+      "facebookRedirectStartFailed": "Die Facebook-Anmeldung konnte nicht gestartet werden. Bitte erneut versuchen oder eine andere Anmeldemethode nutzen.",
+      "facebookRedirectTryAgain": "Erneut versuchen",
       "facebookRedirectCancelled": "Die Facebook-Anmeldung wurde abgebrochen.",
       "facebookRedirectDenied": "Die Facebook-Anmeldung wurde nicht bestätigt. Bitte erneut versuchen oder eine andere Anmeldemethode nutzen.",
       "facebookRedirectStateInvalid": "Diese Facebook-Anmeldung ist abgelaufen oder ungültig. Bitte starten Sie erneut von CareTip.",
-      "facebookRedirectSessionFailed": "Ihre CareTip-Sitzung konnte nach der Facebook-Anmeldung nicht gestartet werden. Bitte erneut versuchen.",
+      "facebookRedirectSessionFailed": "Die Facebook-Anmeldung war erfolgreich, aber Ihre CareTip-Anmeldung konnte nicht abgeschlossen werden. Bitte erneut versuchen oder eine andere Anmeldemethode nutzen.",
       "facebookRedirectBackToSignIn": "Zur Anmeldung",
       "facebookEmailRequired": "Facebook hat keine E-Mail-Adresse bereitgestellt. Aktivieren Sie die E-Mail-Berechtigung bei Facebook oder nutzen Sie eine andere Anmeldemethode.",
       "facebookEmailNotVerified": "Bitte bestätigen Sie Ihre CareTip-E-Mail, bevor Sie sich anmelden.",
@@ -4803,12 +4807,17 @@
       "setupTime": "Dauer: {{minutes}} Min.",
       "finalStep": {
         "badge": "Letzter Schritt",
-        "headline": "Prüfen & veröffentlichen",
-        "description": "Angaben bestätigen und die mobile Gastvorschau prüfen, bevor Sie live gehen.",
+        "headline": "Bereit für den Start.",
+        "description": "Alles sieht gut aus.",
         "readyTitle": "Bereit für den Start",
         "readyMessage": "Alles in Ordnung? Veröffentlichen Sie Ihren Betrieb und öffnen Sie Ihr Dashboard.",
-        "publishHint": "Branding und Kontaktdaten können Sie jederzeit in den Einstellungen ändern.",
+        "guestPageReady": "Gast-Trinkgeldseite eingerichtet",
+        "publishHint": "Branding und Kontakt können Sie jederzeit in den Einstellungen ändern.",
         "stripeNextHint": "Als Nächstes: Verbinden Sie Stripe im Dashboard, damit Gäste in dieser Location Trinkgeld geben können."
+      },
+      "stepKicker": {
+        "businessDetails": "Deine Geschäftsdaten",
+        "brandingSetup": "Mach CareTip zu deinem."
       },
       "sections": {
         "branding": "Branding",
@@ -4824,8 +4833,9 @@
       },
       "preview": {
         "panelAria": "Vorschau der Gast-Trinkgeldseite (nicht interaktiv)",
-        "liveLabel": "Live-Vorschau",
+        "liveLabel": "Gastvorschau",
         "reviewLabel": "Gastvorschau",
+        "caption": "Deine Gäste sehen diese Seite.",
         "previewOnlyBadge": "Nur Vorschau",
         "helperText": "Aktualisiert sich, während Sie Ihre Betriebsdaten ausfüllen.",
         "helperTextNamed": "Gäste sehen {{name}} auf Ihrer Trinkgeldseite.",
@@ -4921,7 +4931,17 @@
       "steps": {
         "businessDetails": "Betriebsdaten",
         "brandingSetup": "Branding & Einrichtung",
-        "reviewPublish": "Prüfen & Veröffentlichen"
+        "reviewPublish": "Prüfen & Veröffentlichen",
+        "setupComplete": "Einrichtung abgeschlossen"
+      },
+      "completeStep": {
+        "eyebrow": "Einrichtung abgeschlossen",
+        "headline": "Alles erledigt.",
+        "subhead": "Deine CareTip-Einrichtung ist abgeschlossen.",
+        "reviewBadge": "In Prüfung",
+        "reviewTitle": "Dein Betrieb wird von CareTip geprüft.",
+        "reviewBody": "Du kannst schon jetzt zum Dashboard wechseln, während die Prüfung läuft.",
+        "qrNotice": "QR-Codes bleiben bis zur Freigabe deaktiviert. Trinkgeld per QR ist erst nach der Verifizierung möglich."
       },
       "stepTitle": {
         "businessDetails": "Betriebsdaten",
@@ -4929,9 +4949,9 @@
         "reviewPublish": "Prüfen & veröffentlichen"
       },
       "stepHint": {
-        "businessDetails": "Rechtlicher Name und Betriebstyp für Ihren CareTip-Workspace.",
-        "brandingSetup": "Logo, Adresse und Kontaktdaten für Ihre Gast-Trinkgeldseite.",
-        "reviewPublish": "Alles prüfen und veröffentlichen, wenn Sie bereit sind."
+        "businessDetails": "Die wichtigsten Angaben für deinen CareTip-Workspace.",
+        "brandingSetup": "Logo, Standort und Kontakt für deine Gäste.",
+        "reviewPublish": "Alles sieht gut aus."
       },
       "review": {
         "summaryEyebrow": "Zusammenfassung",
@@ -4999,6 +5019,8 @@
         "back": "Zurück",
         "continue": "Weiter",
         "finish": "Veröffentlichen & abschließen",
+        "goToDashboard": "Zum Dashboard",
+        "openingDashboard": "Dashboard wird geöffnet…",
         "saving": "Speichern…",
         "publishing": "Veröffentlichen…"
       }

@@ -5,6 +5,7 @@ import { ArrowLeft, ChevronDown, ShieldCheck } from "lucide-react";
 import { CareTipLogo } from "@/app/components/CareTipLogo";
 import type { AuthRole } from "@/components/ui/sign-in-card-2";
 import { changeAppLanguage, type AppLanguage } from "@/i18n/i18n";
+import { LanguageFlag } from "@/components/i18n/LanguageFlag";
 import { AuthButton } from "./AuthButton";
 import { AuthCard } from "./AuthCard";
 import { AuthHeader } from "./AuthHeader";
@@ -240,9 +241,7 @@ export function MobileWebAuthShell({
                     disabled={busy}
                     aria-label={t("nav.language")}
                   >
-                    <span className="mw-auth-country__flag" aria-hidden>
-                      {activeLang === "de" ? "🇩🇪" : "🇬🇧"}
-                    </span>
+                    <LanguageFlag language={activeLang} className="mw-auth-country__flag" />
                     <span>{activeLang === "de" ? "DE" : "EN"}</span>
                     <ChevronDown className="mw-auth-country__chevron h-4 w-4" aria-hidden />
                   </button>

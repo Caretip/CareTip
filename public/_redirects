@@ -2,4 +2,5 @@
 # Serve crawler files before the SPA catch-all.
 /robots.txt   /robots.txt   200
 /sitemap.xml  /sitemap.xml  200
+/api/*  https://caretip.onrender.com/api/:splat  200
 /*    /index.html   200

@@ -25,7 +25,15 @@ export const onboardingStepHint = cn(
 );
 
 export const onboardingLabel = cn(
-  "mb-2.5 block text-sm font-medium leading-snug text-foreground",
+  "mb-2 block text-[0.6875rem] font-semibold uppercase tracking-[0.07em] text-muted-foreground",
+);
+
+export const onboardingSectionKicker = cn(
+  "text-[0.6875rem] font-semibold uppercase tracking-[0.07em] text-muted-foreground",
+);
+
+export const onboardingSectionHeading = cn(
+  "mt-1 text-lg font-semibold tracking-tight text-foreground sm:text-xl",
 );
 
 export const onboardingOptionalBadge = cn(
@@ -39,7 +47,7 @@ export const onboardingFieldHint = cn(
 );
 
 export const onboardingInput = cn(
-  "h-12 w-full rounded-lg border border-border bg-background px-4",
+  "h-[3.125rem] w-full rounded-md border border-border/80 bg-background px-4",
   "text-[15px] font-normal text-foreground placeholder:text-muted-foreground",
   "transition-colors duration-150",
   "hover:border-foreground/25",
@@ -58,18 +66,14 @@ export const onboardingFileInput = cn(
   "file:bg-muted file:px-3 file:py-1.5 file:text-xs file:font-semibold file:text-foreground",
 );
 
-export const onboardingFormCard = cn(
-  "rounded-lg border border-border/70 bg-card p-6",
-  "sm:p-8",
-);
+/** @deprecated Prefer flat page layout — kept for any legacy imports */
+export const onboardingFormCard = "min-w-0";
 
-export const onboardingSectionCard = cn(
-  "rounded-lg border border-border/60 bg-muted/30 p-5",
-);
+/** @deprecated Use spacing + onboardingSectionKicker instead */
+export const onboardingSectionCard = "space-y-5";
 
-export const onboardingSectionTitle = cn(
-  "mb-4 flex items-center gap-2 text-sm font-semibold tracking-tight text-foreground",
-);
+/** @deprecated */
+export const onboardingSectionTitle = onboardingSectionKicker;
 
 export const onboardingBackBtn = cn(
   "inline-flex min-h-11 items-center justify-center gap-2 rounded-lg px-4",

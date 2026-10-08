@@ -224,6 +224,27 @@ export function AuthPage() {
     }
   }, [location.pathname, location.search]);
 
+  /** Facebook redirect OAuth → MFA handoff (state only; never in URL). */
+  useEffect(() => {
+    const state = location.state as {
+      mfaChallenge?: {
+        mfaRequired?: boolean;
+        mfaSetupRequired?: boolean;
+        pendingMfaToken?: string;
+      };
+    } | null;
+    const challenge = state?.mfaChallenge;
+    const token = challenge?.pendingMfaToken?.trim() ?? "";
+    if (!token || challenge?.mfaRequired !== true) return;
+
+    setPendingMfaToken(token);
+    setMfaSetupRequired(Boolean(challenge.mfaSetupRequired));
+    setOtpCode("");
+    setError("");
+    setIsLogin(true);
+    navigate(`${location.pathname}${location.search}`, { replace: true, state: null });
+  }, [location.state, location.pathname, location.search, navigate]);
+
   useEffect(() => {
     scheduleIdleWork(() => prefetchDashboardRoutes(), 1500);
     scheduleIdleWork(() => {
