@@ -210,8 +210,32 @@ assert.ok(scheduledDelays.includes(5_000));
 flushTimers();
 assert.equal((windowListeners.get("visibilitychange") ?? []).length, 0);
 assert.equal((documentListeners.get("visibilitychange") ?? []).length, 0);
+assert.equal((windowListeners.get("blur") ?? []).length, 0);
 assertNavigationNotCancelled();
 console.log("test A stall timer: passed");
+
+resetObservations();
+submitFacebookOAuthRedirectStart(
+  { ...loginContext, correlationId: "fb_test_pageshow" },
+  "/api/auth/facebook/start",
+  () => {
+    failedCallbacks += 1;
+  },
+);
+dispatch(windowListeners, "visibilitychange");
+dispatch(windowListeners, "blur");
+dispatch(windowListeners, "pageshow", { persisted: false });
+assert.equal(failedCallbacks, 0);
+assert.deepEqual(assigns, []);
+dispatch(windowListeners, "pageshow", { persisted: true });
+assert.equal(failedCallbacks, 1);
+assert.equal(submitSnapshots.length, 1);
+assert.deepEqual(assigns, []);
+assert.deepEqual(replaces, []);
+assert.equal(hrefWrites, 0);
+assert.deepEqual(fetchCalls, []);
+assert.equal(storedFailure(), null);
+console.log("test pageshow restore: passed");
 
 resetObservations();
 submitFacebookOAuthRedirectStart(
@@ -353,7 +377,9 @@ assert.ok(desktop.includes('role === "employee" ? ("EMPLOYEE" as const) : ("MANA
 assert.ok(desktop.includes("!isLogin && role === \"business\" && !merchantLegalAccepted"));
 assert.ok(row.includes('setProviderBusy("facebook")'));
 assert.ok(row.includes("() => setProviderBusy(null)"));
-assert.equal((read("src/app/lib/facebookOAuthRedirectWeb.ts").match(/onSubmitFailed\?\.\(\)/g) ?? []).length, 1);
+assert.equal((read("src/app/lib/facebookOAuthRedirectWeb.ts").match(/onSubmitFailed\?\.\(\)/g) ?? []).length, 2);
+const providerRow = read("src/app/components/auth/OAuthProviderRow.tsx");
+assert.ok(providerRow.includes("if (isFacebookOAuthRedirectEnabled() && facebookRedirectContext) return;"));
 console.log("test E login and signup gates: passed");
 
 restoreTimers();

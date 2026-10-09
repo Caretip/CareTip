@@ -138,6 +138,7 @@ export function OAuthProviderRow({
 
   useEffect(() => {
     if (providerBusy !== "facebook") return;
+    if (isFacebookOAuthRedirectEnabled() && facebookRedirectContext) return;
     const safetyMs = 150_000;
     const timer = window.setTimeout(() => {
       logFacebookOAuthDiagnostic("oauth_provider_busy_safety_reset", {
@@ -147,7 +148,7 @@ export function OAuthProviderRow({
       setProviderBusy(null);
     }, safetyMs);
     return () => window.clearTimeout(timer);
-  }, [providerBusy]);
+  }, [providerBusy, facebookRedirectContext]);
 
   useEffect(() => {
     if (!facebookAppId) {

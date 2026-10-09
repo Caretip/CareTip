@@ -103,6 +103,7 @@ export function LinkedOAuthAccountsSection({ loading }: { loading?: boolean }) {
 
   useEffect(() => {
     if (busyProvider !== "facebook") return;
+    if (isFacebookOAuthRedirectEnabled()) return;
     const safetyMs = 150_000;
     const timer = window.setTimeout(() => {
       setBusyProvider(null);
@@ -147,6 +148,7 @@ export function LinkedOAuthAccountsSection({ loading }: { loading?: boolean }) {
 
   useEffect(() => {
     if (busyProvider !== "facebook") return;
+    if (isFacebookOAuthRedirectEnabled()) return;
     const safetyMs = 150_000;
     const timer = window.setTimeout(() => {
       setBusyProvider(null);

@@ -40,6 +40,9 @@ const FACEBOOK_START_FORM_MARKER = "data-caretip-fb-oauth-start";
 /** Tear down any prior attempt's document listener (no navigation). */
 let releasePriorFacebookStartViolationHook: (() => void) | null = null;
 
+/** Prior bfcache listener. Not removed on pagehide, so a restored page can clear its spinner. */
+let releasePriorFacebookStartPageShow: (() => void) | null = null;
+
 /** Monotonic id so late CSP events cannot fail a newer or already-committed attempt. */
 let facebookOAuthStartAttemptSeq = 0;
 
@@ -128,6 +131,8 @@ export function submitFacebookOAuthRedirectStart(
 ): void {
   releasePriorFacebookStartViolationHook?.();
   releasePriorFacebookStartViolationHook = null;
+  releasePriorFacebookStartPageShow?.();
+  releasePriorFacebookStartPageShow = null;
 
   const attemptId = ++facebookOAuthStartAttemptSeq;
   const startedAt = typeof performance !== "undefined" ? performance.now() : Date.now();
@@ -267,6 +272,17 @@ export function submitFacebookOAuthRedirectStart(
     markAttemptCommitted();
   };
   window.addEventListener("pagehide", onPageHide);
+  const onPageShow = (event: PageTransitionEvent) => {
+    if (!event.persisted) return;
+    if (attemptId !== facebookOAuthStartAttemptSeq) return;
+    window.removeEventListener("pageshow", onPageShow);
+    releasePriorFacebookStartPageShow = null;
+    onSubmitFailed?.();
+  };
+  window.addEventListener("pageshow", onPageShow);
+  releasePriorFacebookStartPageShow = () => {
+    window.removeEventListener("pageshow", onPageShow);
+  };
   attemptWindowTimer = setTimeout(() => {
     if (navigationLeft) markAttemptCommitted();
   }, FACEBOOK_START_CSP_WINDOW_MS);
