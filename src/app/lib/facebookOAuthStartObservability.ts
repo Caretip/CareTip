@@ -16,7 +16,7 @@ export type FacebookOAuthStartFailureType =
 export type FacebookOAuthStartEnvironment = "development" | "production";
 
 export function facebookOAuthStartEnvironment(): FacebookOAuthStartEnvironment {
-  return import.meta.env.PROD ? "production" : "development";
+  return import.meta.env?.PROD ? "production" : "development";
 }
 
 export function resolveFacebookOAuthStartFlow(

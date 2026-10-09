@@ -19,6 +19,7 @@
     "test:facebook-oauth-redirect": "node ./backend/node_modules/tsx/dist/cli.mjs ./backend/scripts/facebook-oauth-redirect-runtime.ts",
     "test:facebook-oauth-error-handling": "npm --prefix backend run test:facebook-oauth-error-handling",
     "test:facebook-oauth-complete-errors": "node ./backend/node_modules/tsx/dist/cli.mjs ./src/app/lib/facebookOAuthCompleteErrors.runtime.ts",
+    "test:facebook-oauth-start-stall": "node ./backend/node_modules/tsx/dist/cli.mjs ./src/app/lib/facebookOAuthRedirectStart.runtime.ts",
     "test:facebook-oauth-session-handoff": "node ./backend/node_modules/tsx/dist/cli.mjs ./src/app/lib/pageOriginAuthRefresh.runtime.ts",
     "test:auth-loading-recovery": "node ./backend/node_modules/tsx/dist/cli.mjs ./src/app/lib/authCredentialExchangeDeadline.runtime.ts",
     "lint": "eslint .",

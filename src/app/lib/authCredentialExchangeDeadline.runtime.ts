@@ -6,7 +6,6 @@ import { API_WAKEUP_NETWORK_MESSAGE } from "./errorMessages";
 import {
   getAuthCredentialExchangeTimeoutMs,
   scheduleAuthNavigationRecovery,
-  shouldFailFacebookStartForStall,
   withAuthCredentialExchangeDeadline,
 } from "./authCredentialExchangeDeadline";
 
@@ -43,18 +42,18 @@ assert.ok(authPage.includes("if (!postAuthRedirectRef.current)"));
 assert.ok(authPage.includes('t("auth.page.navigationRecovery")'));
 
 const facebook = read("src/app/lib/facebookOAuthRedirectWeb.ts");
-assert.ok(facebook.includes("shouldFailFacebookStartForStall"));
-assert.ok(facebook.includes('failStart("client_start_aborted", "redirect_navigation_stalled"'));
+assert.equal(facebook.includes("shouldFailFacebookStartForStall"), false);
+assert.equal(facebook.includes("redirect_navigation_stalled"), false);
+assert.equal(facebook.includes("getAuthCredentialExchangeTimeoutMs"), false);
+assert.ok(facebook.includes('failStart(\n      "csp_form_action_blocked"'));
+assert.ok(facebook.includes('failStart("form_submit_exception", "form_submit_threw"'));
 assert.equal((facebook.match(/form\.submit\(\)/g) ?? []).length, 1);
+assert.equal((facebook.match(/window\.location\.assign/g) ?? []).length, 1);
 assert.ok(facebook.includes("navigationLeft = true"));
 
 const apple = read("src/app/lib/appleOAuthWeb.ts");
 assert.ok(apple.includes("withAuthCredentialExchangeDeadline"));
 assert.ok(apple.includes("usePopup: true"));
-
-assert.equal(shouldFailFacebookStartForStall({ navigationLeft: false, failureHandled: false }), true);
-assert.equal(shouldFailFacebookStartForStall({ navigationLeft: true, failureHandled: false }), false);
-assert.equal(shouldFailFacebookStartForStall({ navigationLeft: false, failureHandled: true }), false);
 
 let aborted = false;
 try {

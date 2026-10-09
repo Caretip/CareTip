@@ -57,11 +57,3 @@ export function scheduleAuthNavigationRecovery(options: {
   }, options.delayMs);
   return () => clearTimeout(timer);
 }
-
-/** Facebook start: fail only when the document never left this page. */
-export function shouldFailFacebookStartForStall(input: {
-  navigationLeft: boolean;
-  failureHandled: boolean;
-}): boolean {
-  return !input.navigationLeft && !input.failureHandled;
-}
