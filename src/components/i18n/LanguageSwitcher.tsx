@@ -30,6 +30,10 @@ function optionFor(code: AppLanguage) {
   return LANGUAGE_OPTIONS.find((o) => o.code === code) ?? LANGUAGE_OPTIONS[0]!;
 }
 
+function languageInitial(code: AppLanguage): "DE" | "EN" {
+  return code === "de" ? "DE" : "EN";
+}
+
 type LanguageSelectDropdownProps = {
   displayLang: AppLanguage;
   open: boolean;
@@ -96,13 +100,18 @@ export const LanguageSelectDropdown = memo(function LanguageSelectDropdown({
       <button
         type="button"
         className="caretip-lang-select__trigger touch-manipulation"
-        aria-label={ariaLabel}
+        aria-label={`${ariaLabel}, ${t(active.labelKey)}`}
         aria-expanded={open}
         aria-haspopup="listbox"
         onClick={() => onOpenChange(!open)}
       >
         <LanguageFlag language={active.code} className="caretip-lang-select__flag" />
-        <span className="caretip-lang-select__label truncate">{t(active.labelKey)}</span>
+        <span className="caretip-lang-select__label caretip-lang-select__label--name truncate">
+          {t(active.labelKey)}
+        </span>
+        <span className="caretip-lang-select__label caretip-lang-select__label--code">
+          {languageInitial(active.code)}
+        </span>
         {open ? (
           <ChevronUp className="caretip-lang-select__chevron" aria-hidden strokeWidth={2.5} />
         ) : (
@@ -118,10 +127,16 @@ export const LanguageSelectDropdown = memo(function LanguageSelectDropdown({
               role="option"
               aria-selected={false}
               className="caretip-lang-select__row"
+              aria-label={t(opt.labelKey)}
               onClick={() => onSelect(opt.code)}
             >
               <LanguageFlag language={opt.code} className="caretip-lang-select__flag" />
-              <span className="caretip-lang-select__label">{t(opt.labelKey)}</span>
+              <span className="caretip-lang-select__label caretip-lang-select__label--name">
+                {t(opt.labelKey)}
+              </span>
+              <span className="caretip-lang-select__label caretip-lang-select__label--code">
+                {languageInitial(opt.code)}
+              </span>
             </button>
           ))}
         </div>

@@ -65,6 +65,22 @@
   letter-spacing: -0.01em;
 }
 
+.caretip-lang-select__label--code {
+  display: none;
+  flex: 0 0 auto;
+  letter-spacing: 0.04em;
+}
+
+@media (max-width: 1023px) {
+  .caretip-lang-select__label--name {
+    display: none;
+  }
+
+  .caretip-lang-select__label--code {
+    display: block;
+  }
+}
+
 .caretip-lang-select__chevron {
   flex-shrink: 0;
   width: 0.65rem;
