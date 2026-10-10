@@ -3682,6 +3682,7 @@
       "title": "From scan to <hl>thank you</hl> in moments",
       "subtitle": "No app download for guests. Just QR code tipping on the phone they already have.",
       "stepsAria": "Guest tipping steps",
+      "next": "Next step",
       "steps": {
         "scan": {
           "title": "Scan",

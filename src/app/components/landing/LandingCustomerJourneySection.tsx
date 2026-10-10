@@ -1,5 +1,6 @@
-import { useEffect, useMemo, type ImgHTMLAttributes } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type ImgHTMLAttributes } from "react";
 import { useTranslation } from "react-i18next";
+import { ChevronRight } from "lucide-react";
 import { LandingReveal } from "@/components/landing/LandingReveal";
 import { LandingSectionAccent } from "@/components/landing/LandingSectionAccent";
 import { LandingCopySentences } from "@/components/landing/LandingCopySentences";
@@ -11,6 +12,7 @@ import akonaHotelImg from "@/assets/landing/customerjourney/akona-hotel.webp";
 import teamselectionImg from "@/assets/landing/customerjourney/teamselection.webp";
 import tipamountImg from "@/assets/landing/customerjourney/tipamount.webp";
 import tipsuccessImg from "@/assets/landing/customerjourney/tipsuccess.webp";
+import { usePrefersReducedMotion } from "@/lib/usePrefersReducedMotion";
 import { warmLandingCustomerJourneyImages } from "@/app/components/landing/warmLandingCustomerJourneyAssets";
 
 const JOURNEY_STEPS = [
@@ -29,6 +31,9 @@ const HIGHLIGHT_CLASS =
  */
 export function LandingCustomerJourneySection() {
   const { t, i18n } = useTranslation();
+  const reduceMotion = usePrefersReducedMotion();
+  const trackRef = useRef<HTMLOListElement>(null);
+  const [activeIndex, setActiveIndex] = useState(0);
 
   const { text: journeyHeadline, highlight: journeyHighlight } = parseLandingHeadline(
     t("landing.customerJourney.title"),
@@ -52,6 +57,26 @@ export function LandingCustomerJourneySection() {
   useEffect(() => {
     warmLandingCustomerJourneyImages("high");
   }, []);
+
+  const syncActiveIndex = useCallback(() => {
+    const track = trackRef.current;
+    if (!track || track.clientWidth <= 0) return;
+    const next = Math.round(track.scrollLeft / track.clientWidth);
+    setActiveIndex(Math.min(Math.max(next, 0), steps.length - 1));
+  }, [steps.length]);
+
+  const scrollToStep = useCallback(
+    (index: number) => {
+      const track = trackRef.current;
+      if (!track) return;
+      const wrapped = (index + steps.length) % steps.length;
+      track.scrollTo({
+        left: wrapped * track.clientWidth,
+        behavior: reduceMotion ? "auto" : "smooth",
+      });
+    },
+    [reduceMotion, steps.length],
+  );
 
   return (
     <section
@@ -88,7 +113,12 @@ export function LandingCustomerJourneySection() {
           ) : null}
         </LandingReveal>
 
-        <ol className="caretip-customerjourney__track" aria-label={t("landing.customerJourney.stepsAria")}>
+        <ol
+          ref={trackRef}
+          className="caretip-customerjourney__track"
+          aria-label={t("landing.customerJourney.stepsAria")}
+          onScroll={syncActiveIndex}
+        >
           {steps.map((step, index) => (
             <li key={step.id} className="caretip-customerjourney__step">
               <LandingReveal delay={index * 0.06} className="caretip-customerjourney__stepinner">
@@ -119,6 +149,25 @@ export function LandingCustomerJourneySection() {
             </li>
           ))}
         </ol>
+
+        <div className="caretip-customerjourney__controls">
+          <div className="caretip-customerjourney__dots">
+            {steps.map((step, index) => (
+              <button
+                key={step.id}
+                type="button"
+                className="caretip-customerjourney__dot"
+                aria-label={step.title}
+                aria-current={index === activeIndex ? "step" : undefined}
+                onClick={() => scrollToStep(index)}
+              />
+            ))}
+          </div>
+          <button type="button" className="caretip-customerjourney__next" onClick={() => scrollToStep(activeIndex + 1)}>
+            {t("landing.customerJourney.next")}
+            <ChevronRight className="caretip-customerjourney__nexticon" aria-hidden />
+          </button>
+        </div>
       </div>
     </section>
   );

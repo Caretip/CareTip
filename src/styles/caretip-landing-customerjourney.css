@@ -186,12 +186,95 @@ html.dark .caretip-customerjourney__stepbadge {
   }
 }
 
+.caretip-customerjourney__controls {
+  display: none;
+}
+
 @media (max-width: 639px) {
   .caretip-customerjourney__track {
-    gap: 1.75rem;
+    display: flex;
+    gap: 0;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    scroll-behavior: smooth;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-x: contain;
+  }
+
+  .caretip-customerjourney__track::-webkit-scrollbar {
+    display: none;
+  }
+
+  .caretip-customerjourney__step {
+    flex: 0 0 100%;
+    min-width: 100%;
+    scroll-snap-align: start;
+    scroll-snap-stop: always;
   }
 
   .caretip-customerjourney__mockup {
     max-width: min(72vw, 15.5rem);
+  }
+
+  .caretip-customerjourney__controls {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    width: min(100%, 20rem);
+    margin-inline: auto;
+  }
+
+  .caretip-customerjourney__dots {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+  }
+
+  .caretip-customerjourney__dot {
+    position: relative;
+    width: 0.5rem;
+    height: 0.5rem;
+    padding: 0;
+    border: 0;
+    border-radius: 9999px;
+    background: hsl(var(--foreground) / 0.22);
+  }
+
+  .caretip-customerjourney__dot::before {
+    content: "";
+    position: absolute;
+    inset: -0.7rem;
+  }
+
+  .caretip-customerjourney__dot[aria-current="step"] {
+    width: 1.25rem;
+    background: #e9781c;
+  }
+
+  .caretip-customerjourney__next {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.2rem;
+    min-height: 2.75rem;
+    padding: 0.4rem 0.15rem 0.4rem 0.35rem;
+    border: 0;
+    background: transparent;
+    color: hsl(var(--foreground));
+    font-size: 0.9375rem;
+    font-weight: 650;
+    letter-spacing: -0.015em;
+  }
+
+  .caretip-customerjourney__nexticon {
+    width: 1.05rem;
+    height: 1.05rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .caretip-customerjourney__track {
+    scroll-behavior: auto;
   }
 }
