@@ -12,6 +12,7 @@
     "android:direct": "expo run:android",
     "android:win": "powershell -ExecutionPolicy Bypass -File ./scripts/run-android-windows.ps1",
     "prebuild:android": "expo prebuild --platform android",
+    "eas-build-post-install": "node ./scripts/eas-android-facebook-prebuild.mjs",
     "web": "expo start --web",
     "typecheck": "tsc --noEmit",
     "test:share": "npx tsx scripts/share-service-runtime.ts",
