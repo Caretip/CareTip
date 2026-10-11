@@ -11,7 +11,12 @@ import * as supportTicketController from "../controllers/supportTicket.controlle
 import * as platformProductFeedbackController from "../controllers/platformProductFeedback.controller.js";
 import { supportTicketReplyLimiter } from "../middleware/supportTicketRateLimit.middleware.js";
 import { clientSafeMessage } from "../utils/httpErrors.js";
-import { uploadImageRateLimit, uploadKycRateLimit } from "../middleware/securityRateLimit.middleware.js";
+import {
+  platformScheduledPayoutOpsMutationRateLimit,
+  uploadImageRateLimit,
+  uploadKycRateLimit,
+} from "../middleware/securityRateLimit.middleware.js";
+import * as platformScheduledPayoutOpsController from "../controllers/platformScheduledPayoutOps.controller.js";
 
 const router = Router();
 
@@ -53,6 +58,34 @@ router.get("/subscriptions/activity", platformController.listSubscriptionActivit
 router.get("/businesses", platformController.listBusinesses);
 router.get("/businesses/:id", platformController.getBusiness);
 router.get("/businesses/:id/payout-schedule-context", platformController.getBusinessPayoutScheduleContext);
+
+router.get(
+  "/scheduled-payout-operations/summary",
+  platformScheduledPayoutOpsController.getScheduledPayoutOperationsSummary,
+);
+router.get(
+  "/scheduled-payout-operations",
+  platformScheduledPayoutOpsController.listScheduledPayoutOperations,
+);
+router.get(
+  "/scheduled-payout-operations/:payoutType/:ledgerId",
+  platformScheduledPayoutOpsController.getScheduledPayoutOperationDetail,
+);
+router.post(
+  "/scheduled-payout-operations/:payoutType/:ledgerId/reconcile",
+  platformScheduledPayoutOpsMutationRateLimit,
+  platformScheduledPayoutOpsController.postScheduledPayoutReconcile,
+);
+router.post(
+  "/scheduled-payout-operations/:payoutType/:ledgerId/run-recovery",
+  platformScheduledPayoutOpsMutationRateLimit,
+  platformScheduledPayoutOpsController.postScheduledPayoutRunRecovery,
+);
+router.post(
+  "/scheduled-payout-operations/:payoutType/:ledgerId/manual-attachment",
+  platformScheduledPayoutOpsMutationRateLimit,
+  platformScheduledPayoutOpsController.postScheduledPayoutManualAttachment,
+);
 router.delete("/businesses/:id", platformController.deleteBusiness);
 router.post("/businesses/:id/soft-delete", platformController.softDeleteBusiness);
 router.post("/businesses/:id/ownership/transfer", async (req, res) => {

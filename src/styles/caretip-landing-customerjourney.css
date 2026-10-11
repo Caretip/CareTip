@@ -62,25 +62,27 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: var(--caretip-feature-check-size, 1.125rem);
-  height: var(--caretip-feature-check-size, 1.125rem);
+  width: 1.375rem;
+  height: 1.375rem;
   flex-shrink: 0;
   border-radius: 9999px;
-  color: var(--caretip-feature-check-fg, rgb(217 119 6));
-  background: var(--caretip-feature-check-bg, rgb(233 120 28 / 0.12));
-  box-shadow: none;
+  color: #c45e0a;
+  background: transparent;
+  box-shadow: inset 0 0 0 1px rgb(233 120 28 / 0.42);
 }
 
 html.dark .caretip-customerjourney__stepbadge {
-  color: var(--caretip-feature-check-fg-dark, rgb(251 191 36));
-  background: var(--caretip-feature-check-bg-dark, rgb(233 120 28 / 0.2));
+  color: rgb(251 191 36);
+  background: transparent;
+  box-shadow: inset 0 0 0 1px rgb(251 191 36 / 0.45);
 }
 
 .caretip-customerjourney__stepbadge {
   font-family: var(--font-hero-display, ui-sans-serif, system-ui, sans-serif);
-  font-size: 0.625rem;
-  font-weight: 700;
+  font-size: 0.75rem;
+  font-weight: 600;
   font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
   line-height: 1;
 }
 
@@ -195,10 +197,13 @@ html.dark .caretip-customerjourney__stepbadge {
     display: flex;
     gap: 0;
     overflow-x: auto;
+    overflow-y: hidden;
+    /* Let the browser lock the gesture to one axis: vertical swipes scroll the page,
+       horizontal swipes move this track. */
+    touch-action: pan-x pan-y pinch-zoom;
     scroll-snap-type: x mandatory;
     scroll-behavior: smooth;
     scrollbar-width: none;
-    -webkit-overflow-scrolling: touch;
     overscroll-behavior-x: contain;
   }
 
@@ -210,11 +215,85 @@ html.dark .caretip-customerjourney__stepbadge {
     flex: 0 0 100%;
     min-width: 100%;
     scroll-snap-align: start;
-    scroll-snap-stop: always;
   }
 
-  .caretip-customerjourney__mockup {
-    max-width: min(72vw, 15.5rem);
+  .caretip-landing #guesttippingjourney .caretip-customerjourney__headline-stack {
+    gap: 0.4rem;
+  }
+
+  .caretip-landing #guesttippingjourney #guesttippingjourneytitle {
+    font-size: clamp(1.625rem, 6.4vw, 1.95rem) !important;
+    line-height: 1.16 !important;
+    letter-spacing: -0.03em !important;
+    max-width: min(100%, 16.75rem) !important;
+  }
+
+  .caretip-landing #guesttippingjourney .caretip-customerjourney__subtitle,
+  .caretip-landing #guesttippingjourney .caretip-customerjourney__subtitle.caretip-landing-copy-paragraphs {
+    max-width: min(100%, 22rem);
+    margin-top: 0.55rem;
+    font-size: 0.9375rem;
+    line-height: 1.5;
+  }
+
+  .caretip-customerjourney {
+    --caretip-journeymockup-w: clamp(10.25rem, 46vw, 12.75rem);
+  }
+
+  .caretip-customerjourney__stepinner {
+    gap: 0.8rem;
+    max-width: 22rem;
+    margin-inline: auto;
+  }
+
+  .caretip-customerjourney__visual,
+  .caretip-customerjourney__visual_akona-hotel {
+    align-items: center;
+    min-height: 0;
+    max-height: none;
+    height: auto;
+  }
+
+  .caretip-customerjourney__mockup,
+  .caretip-customerjourney__visual_akona-hotel .caretip-customerjourney__mockup {
+    width: var(--caretip-journeymockup-w);
+    max-width: 100%;
+    height: auto;
+    max-height: none;
+    object-fit: contain;
+    object-position: center;
+    touch-action: pan-x pan-y pinch-zoom;
+    -webkit-user-drag: none;
+  }
+
+  .caretip-customerjourney__copy {
+    max-width: min(100%, 20.5rem);
+  }
+
+  .caretip-customerjourney__textblock {
+    gap: 0.4rem;
+  }
+
+  .caretip-customerjourney__titlerow {
+    gap: 0.55rem;
+    align-items: center;
+  }
+
+  .caretip-customerjourney__stepbadge {
+    width: 1.625rem;
+    height: 1.625rem;
+    font-size: 0.8125rem;
+  }
+
+  .caretip-customerjourney__steptitle {
+    font-size: 1.0625rem;
+    line-height: 1.25;
+  }
+
+  .caretip-customerjourney__stepbody {
+    font-size: 0.9375rem;
+    line-height: 1.5;
+    overflow-wrap: break-word;
   }
 
   .caretip-customerjourney__controls {

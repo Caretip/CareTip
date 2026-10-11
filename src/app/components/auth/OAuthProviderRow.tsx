@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import type { CredentialResponse } from "@react-oauth/google";
 import { AuthGoogleLoginCircle } from "@/app/components/auth/AuthGoogleLoginCircle";
 import { useTranslation } from "react-i18next";
@@ -31,6 +31,13 @@ import { logFacebookOAuthDiagnostic } from "@/app/lib/facebookOAuthDiagnostic";
 import { logClientError } from "@/app/lib/clientLog";
 import { toUserFriendlyMessage } from "@/app/lib/errorMessages";
 import { AuthGoogleOAuthScope } from "@/app/components/auth/AuthGoogleOAuthScope";
+import { FacebookOAuthRecoveryNotice } from "@/app/components/auth/FacebookOAuthRecoveryNotice";
+import {
+  focusCurrentAuthEmailField,
+  isFacebookOAuthRecoveryClient,
+  watchFacebookOAuthRedirectRecovery,
+  type FacebookOAuthRecoveryWatch,
+} from "@/app/lib/facebookOAuthRedirectRecovery";
 import "@/styles/caretip-oauth-circles.css";
 
 /** Desktop / mobile-web order: Google → Facebook → Apple. */
@@ -122,6 +129,10 @@ export function OAuthProviderRow({
     isFacebookSdkReady() ? "ready" : "loading",
   );
   const [providerBusy, setProviderBusy] = useState<OAuthProviderId | null>(null);
+  const [facebookRecoveryOpen, setFacebookRecoveryOpen] = useState(false);
+  const [facebookTroubleshootOpen, setFacebookTroubleshootOpen] = useState(false);
+  const facebookRecoveryWatchRef = useRef<FacebookOAuthRecoveryWatch | null>(null);
+  const authModeRef = useRef(facebookRedirectContext?.isLogin);
 
   useEffect(() => {
     registerFacebookOrphanedTokenHandler((token, meta) => {
@@ -216,6 +227,23 @@ export function OAuthProviderRow({
   const interactionBlocked = !allowInteraction;
   const busy = disabled || providerBusy != null || interactionBlocked;
 
+  const releaseFacebookRedirectAttempt = useCallback(() => {
+    facebookRecoveryWatchRef.current?.dispose();
+    facebookRecoveryWatchRef.current = null;
+    setFacebookRecoveryOpen(false);
+    setFacebookTroubleshootOpen(false);
+    setProviderBusy((current) => (current === "facebook" ? null : current));
+  }, []);
+
+  useEffect(() => () => facebookRecoveryWatchRef.current?.dispose(), []);
+
+  useEffect(() => {
+    const isLogin = facebookRedirectContext?.isLogin;
+    if (authModeRef.current === isLogin) return;
+    authModeRef.current = isLogin;
+    releaseFacebookRedirectAttempt();
+  }, [facebookRedirectContext?.isLogin, releaseFacebookRedirectAttempt]);
+
   const toastNotConfigured = () => {
     toast.error(t("auth.oauth.providerNotConfigured"));
   };
@@ -280,10 +308,20 @@ export function OAuthProviderRow({
         isLogin: facebookRedirectContext.isLogin,
       });
       setProviderBusy("facebook");
+      setFacebookRecoveryOpen(false);
+      setFacebookTroubleshootOpen(false);
+      facebookRecoveryWatchRef.current?.dispose();
+      facebookRecoveryWatchRef.current = watchFacebookOAuthRedirectRecovery({
+        isRecoveryClient: isFacebookOAuthRecoveryClient(
+          typeof navigator === "undefined" ? "" : navigator.userAgent,
+        ),
+        onRecover: () => setFacebookRecoveryOpen(true),
+        onLeave: () => releaseFacebookRedirectAttempt(),
+      });
       submitFacebookOAuthRedirectStart(
         { ...facebookRedirectContext, correlationId },
         "/api/auth/facebook/start",
-        () => setProviderBusy(null),
+        () => releaseFacebookRedirectAttempt(),
       );
       return;
     }
@@ -331,6 +369,7 @@ export function OAuthProviderRow({
     toastFacebookLoginError,
     facebookWarmState,
     facebookRedirectContext,
+    releaseFacebookRedirectAttempt,
     t,
   ]);
 
@@ -374,6 +413,7 @@ export function OAuthProviderRow({
 
   return (
     <AuthGoogleOAuthScope>
+    <>
     <div
       className={cn(
         "caretip-oauth-circles",
@@ -487,6 +527,16 @@ export function OAuthProviderRow({
         );
       })}
     </div>
+    <FacebookOAuthRecoveryNotice
+      open={facebookRecoveryOpen}
+      troubleshooting={facebookTroubleshootOpen}
+      onContinueWithEmail={() => {
+        releaseFacebookRedirectAttempt();
+        focusCurrentAuthEmailField();
+      }}
+      onTroubleshootingChange={setFacebookTroubleshootOpen}
+    />
+    </>
     </AuthGoogleOAuthScope>
   );
 }

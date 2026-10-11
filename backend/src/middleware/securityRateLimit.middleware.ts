@@ -162,6 +162,14 @@ export const uploadKycRateLimit = createAuthUserLimiter(
   UPLOAD_KYC_MSG,
 );
 
+const SCHED_PAYOUT_OPS_MSG = "Too many scheduled payout operations. Please try again later.";
+
+export const platformScheduledPayoutOpsMutationRateLimit = createAuthUserLimiter(
+  "platform-scheduled-payout-ops",
+  securityRateLimits.platformScheduledPayoutOps,
+  SCHED_PAYOUT_OPS_MSG,
+);
+
 export const authenticatedApiRateLimit: RequestHandler = (req, res, next) => {
   const ip = clientIp(req);
   const uid = userIdFromReq(req);

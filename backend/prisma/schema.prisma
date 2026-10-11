@@ -226,6 +226,24 @@ enum StripeConnectScheduledPayoutRequestStatus {
   failed
 }
 
+/// Phase A — how a scheduled payout create failure should be handled.
+enum ScheduledPayoutFailureClassification {
+  retryable
+  permanent
+  outcome_uncertain
+  account_blocked
+  unknown
+}
+
+/// Phase A — reconciliation of uncertain Stripe outcomes before another create.
+enum ScheduledPayoutReconciliationStatus {
+  none
+  required
+  in_progress
+  resolved
+  inconclusive
+}
+
 /// Frozen on each new tip. Changing the Business setting never rewrites historical payables.
 enum EmployeeTipPayoutMode {
   direct_to_employee
@@ -908,6 +926,19 @@ model StripeConnectScheduledPayoutRequest {
   stripePayoutId    String?                                  @map("stripe_payout_id") @db.VarChar(128)
   status            StripeConnectScheduledPayoutRequestStatus
   failureCode       String?                                  @map("failure_code") @db.VarChar(64)
+  attemptCount      Int                                      @default(0) @map("attempt_count")
+  nextRetryAt       DateTime?                                @map("next_retry_at")
+  failureClassification ScheduledPayoutFailureClassification? @map("failure_classification")
+  stripeErrorCode   String?                                  @map("stripe_error_code") @db.VarChar(64)
+  stripeErrorType   String?                                  @map("stripe_error_type") @db.VarChar(64)
+  stripeHttpStatus  Int?                                     @map("stripe_http_status")
+  stripeRequestId   String?                                  @map("stripe_request_id") @db.VarChar(128)
+  failureMessage    String?                                  @map("failure_message") @db.VarChar(255)
+  reconciliationStatus ScheduledPayoutReconciliationStatus @default(none) @map("reconciliation_status")
+  correlationId     String?                                  @map("correlation_id") @db.VarChar(64)
+  blockedReason     String?                                  @map("blocked_reason") @db.VarChar(64)
+  processingClaimedAt DateTime?                              @map("processing_claimed_at")
+  processingClaimToken String?                             @map("processing_claim_token") @db.VarChar(64)
   createdAt         DateTime                                 @default(now()) @map("created_at")
   updatedAt         DateTime                                 @updatedAt @map("updated_at")
 
@@ -916,6 +947,7 @@ model StripeConnectScheduledPayoutRequest {
   @@unique([businessId, scheduleWindowKey])
   @@index([businessId, createdAt(sort: Desc)])
   @@index([stripePayoutId])
+  @@index([nextRetryAt, status])
   @@map("stripe_connect_scheduled_payout_requests")
 }
 
@@ -1081,6 +1113,7 @@ model Business {
   @@index([operationalStatus], map: "businesses_operational_status_idx")
   @@index([deletedAt], map: "businesses_deleted_at_idx")
   @@index([createdAt(sort: Desc)], map: "businesses_created_at_idx")
+  @@index([bankPayoutSchedule, bankPayoutNextScheduledAt], map: "businesses_bank_payout_due_idx")
   @@map("businesses")
 }
 
@@ -1305,6 +1338,19 @@ model EmployeeStripeScheduledPayoutRequest {
   stripePayoutId    String?                                  @map("stripe_payout_id") @db.VarChar(128)
   status            StripeConnectScheduledPayoutRequestStatus
   failureCode       String?                                  @map("failure_code") @db.VarChar(64)
+  attemptCount      Int                                      @default(0) @map("attempt_count")
+  nextRetryAt       DateTime?                                @map("next_retry_at")
+  failureClassification ScheduledPayoutFailureClassification? @map("failure_classification")
+  stripeErrorCode   String?                                  @map("stripe_error_code") @db.VarChar(64)
+  stripeErrorType   String?                                  @map("stripe_error_type") @db.VarChar(64)
+  stripeHttpStatus  Int?                                     @map("stripe_http_status")
+  stripeRequestId   String?                                  @map("stripe_request_id") @db.VarChar(128)
+  failureMessage    String?                                  @map("failure_message") @db.VarChar(255)
+  reconciliationStatus ScheduledPayoutReconciliationStatus @default(none) @map("reconciliation_status")
+  correlationId     String?                                  @map("correlation_id") @db.VarChar(64)
+  blockedReason     String?                                  @map("blocked_reason") @db.VarChar(64)
+  processingClaimedAt DateTime?                              @map("processing_claimed_at")
+  processingClaimToken String?                             @map("processing_claim_token") @db.VarChar(64)
   createdAt         DateTime                                 @default(now()) @map("created_at")
   updatedAt         DateTime                                 @updatedAt @map("updated_at")
 
@@ -1313,7 +1359,104 @@ model EmployeeStripeScheduledPayoutRequest {
   @@unique([employeeId, scheduleWindowKey])
   @@index([employeeId, createdAt(sort: Desc)])
   @@index([stripePayoutId])
+  @@index([nextRetryAt, status])
   @@map("employee_stripe_scheduled_payout_requests")
+}
+
+/// Phase D2 — durable keyset cursor for fair every_3_days payout tick rotation (`business` | `employee`).
+model ScheduledPayoutTickFairnessCursor {
+  stream          String   @id @db.VarChar(16)
+  anchorDueAt     DateTime @map("anchor_due_at")
+  anchorAccountId String   @map("anchor_account_id") @db.VarChar(64)
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  @@map("scheduled_payout_tick_fairness_cursors")
+}
+
+/// Phase C — operational incidents for scheduled bank payout ledgers (platform-admin alerts).
+enum ScheduledPayoutOpsIncidentPayoutType {
+  employee
+  business
+}
+
+enum ScheduledPayoutOpsIncidentCategory {
+  retry_exhausted
+  reconciliation_required
+  reconciliation_inconclusive
+  outcome_uncertain
+  stale_pending_blocked
+  manual_intervention_required
+  payout_overdue
+}
+
+enum ScheduledPayoutOpsIncidentStatus {
+  open
+  resolved
+}
+
+model ScheduledPayoutOpsIncident {
+  id                     String                             @id @default(cuid())
+  payoutType             ScheduledPayoutOpsIncidentPayoutType @map("payout_type")
+  ledgerId               String                             @map("ledger_id") @db.VarChar(64)
+  category               ScheduledPayoutOpsIncidentCategory
+  status                 ScheduledPayoutOpsIncidentStatus   @default(open)
+  severity               NotificationPriority               @default(normal)
+  stateFingerprint       String                             @map("state_fingerprint") @db.VarChar(64)
+  resolvedFingerprint    String?                            @map("resolved_fingerprint") @db.VarChar(64)
+  scheduleWindowKey      String?                            @map("schedule_window_key") @db.VarChar(64)
+  subjectLabel           String?                            @map("subject_label") @db.VarChar(128)
+  metadata               Json                               @default("{}")
+  notifyGeneration       Int                                @default(1) @map("notify_generation")
+  lastNotifiedGeneration Int                                @default(0) @map("last_notified_generation")
+  notifyingGeneration    Int?                               @map("notifying_generation")
+  firstDetectedAt        DateTime                           @map("first_detected_at")
+  lastObservedAt         DateTime                           @map("last_observed_at")
+  resolvedAt             DateTime?                          @map("resolved_at")
+  lastNotifiedAt         DateTime?                          @map("last_notified_at")
+  createdAt              DateTime                           @default(now()) @map("created_at")
+  updatedAt              DateTime                           @updatedAt @map("updated_at")
+
+  deliveries ScheduledPayoutOpsIncidentDelivery[]
+
+  @@unique([payoutType, ledgerId, category], map: "scheduled_payout_ops_incidents_unique")
+  @@index([status, lastObservedAt(sort: Desc)], map: "scheduled_payout_ops_incidents_status_observed_idx")
+  @@map("scheduled_payout_ops_incidents")
+}
+
+enum ScheduledPayoutOpsIncidentDeliveryChannel {
+  in_app
+}
+
+enum ScheduledPayoutOpsIncidentDeliveryStatus {
+  pending
+  claimed
+  delivered
+  failed
+}
+
+/// Per-recipient delivery proof for scheduled payout ops incidents (authoritative: in_app).
+model ScheduledPayoutOpsIncidentDelivery {
+  id                   String                                    @id @default(cuid())
+  incidentId           String                                    @map("incident_id")
+  notifyGeneration     Int                                       @map("notify_generation")
+  userId               String                                    @map("user_id") @db.VarChar(64)
+  channel              ScheduledPayoutOpsIncidentDeliveryChannel @default(in_app)
+  dedupeKey            String                                    @map("dedupe_key") @db.VarChar(191)
+  status               ScheduledPayoutOpsIncidentDeliveryStatus    @default(pending)
+  claimToken           String?                                   @map("claim_token") @db.VarChar(64)
+  claimExpiresAt       DateTime?                                 @map("claim_expires_at")
+  attemptCount         Int                                       @default(0) @map("attempt_count")
+  nextAttemptAt        DateTime?                                 @map("next_attempt_at")
+  inboxNotificationId  String?                                   @map("inbox_notification_id") @db.VarChar(64)
+  lastErrorCode        String?                                   @map("last_error_code") @db.VarChar(64)
+  createdAt            DateTime                                  @default(now()) @map("created_at")
+  updatedAt            DateTime                                  @updatedAt @map("updated_at")
+
+  incident ScheduledPayoutOpsIncident @relation(fields: [incidentId], references: [id], onDelete: Cascade)
+
+  @@unique([incidentId, notifyGeneration, userId, channel], map: "scheduled_payout_ops_incident_deliveries_unique")
+  @@index([status, nextAttemptAt, createdAt], map: "scheduled_payout_ops_incident_deliveries_work_queue_idx")
+  @@map("scheduled_payout_ops_incident_deliveries")
 }
 
 /// Stripe → employee bank/card payout observation. Not StripeConnectPayout (business-only).

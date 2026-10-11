@@ -551,6 +551,7 @@ const routes: RouteObject[] = [
       { path: 'revenue/failed-subscriptions', lazy: routeLazy(() => import('./pages/platform/revenue/PlatformFailedSubscriptionsPage'), 'PlatformFailedSubscriptionsPage') },
       { path: 'revenue/refunds', lazy: routeLazy(() => import('./pages/platform/revenue/PlatformRefundsPage'), 'PlatformRefundsPage') },
       { path: 'revenue/connect-payouts', lazy: routeLazy(() => import('./pages/platform/revenue/PlatformConnectPayoutsPage'), 'PlatformConnectPayoutsPage') },
+      { path: 'revenue/scheduled-payout-operations', lazy: routeLazy(() => import('./pages/platform/revenue/PlatformScheduledPayoutOperationsPage'), 'PlatformScheduledPayoutOperationsPage') },
       { path: 'users/management', lazy: routeLazy(() => import('./pages/platform/PlatformUserManagementPage'), 'PlatformUserManagementPage') },
       { path: 'users/staff', lazy: routeLazy(() => import('./pages/platform/users/PlatformStaffAccountsPage'), 'PlatformStaffAccountsPage') },
       { path: 'users/admins', lazy: routeLazy(() => import('./pages/platform/users/PlatformAdminsPage'), 'PlatformAdminsPage') },

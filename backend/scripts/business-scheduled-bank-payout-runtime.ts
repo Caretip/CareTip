@@ -219,6 +219,30 @@ async function runDbTests(): Promise<void> {
 
   stripeCreateCalls = 0;
 
+  await withFixture(async ({ businessId }) => {
+    installStripeMocks({
+      retrieveBalance: async () => ({
+        object: "balance",
+        available: [{ amount: 5000, currency: "eur" }],
+        pending: [],
+        livemode: false,
+      }),
+      listPendingPayouts: async () => true,
+      createStandardPayout: async () => {
+        stripeCreateCalls += 1;
+        throw new Error("must not create while stripe payout pending");
+      },
+    });
+    const result = await runScheduledBankPayoutForBusiness(businessId);
+    assert(result.outcome === "blocked", "pending stripe blocks run");
+    assert(result.blockedReason === "pending_stripe_payout", "pending_stripe_payout reason");
+    assert(stripeCreateCalls === 0, "no create when pending stripe payout");
+    const ledger = await prisma.stripeConnectScheduledPayoutRequest.findFirst({ where: { businessId } });
+    assert(!ledger, "no ledger row before safe create path");
+  });
+
+  stripeCreateCalls = 0;
+
   await withFixture(async ({ businessId, dueAt: due }) => {
     installStripeMocks({
       retrieveBalance: async () => ({
@@ -239,6 +263,7 @@ async function runDbTests(): Promise<void> {
     });
     const result = await runScheduledBankPayoutForBusiness(businessId);
     assert(result.outcome === "blocked", "failed stripe → blocked");
+    assert(result.blockedReason !== undefined, "blocked reason surfaced");
     assert(stripeCreateCalls === 1, "attempted stripe once");
     const after = await prisma.business.findUnique({
       where: { id: businessId },
@@ -252,6 +277,7 @@ async function runDbTests(): Promise<void> {
       where: { businessId, scheduleWindowKey: scheduleWindowKeyFromDate(due) },
     });
     assert(ledger?.status === StripeConnectScheduledPayoutRequestStatus.failed, "ledger failed");
+    assert((ledger?.attemptCount ?? 0) >= 1, "attempt count persisted");
   });
 
   const tag = Date.now();

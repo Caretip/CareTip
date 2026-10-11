@@ -177,9 +177,45 @@ router.post("/scheduled-bank-payout-tick", async (req, res) => {
   if (!authorizeCronRequest(req)) {
     return res.status(401).json({ message: "Unauthorized" });
   }
-  const { tickScheduledBankPayouts } = await import("../services/businessScheduledBankPayout.service.js");
-  const result = await tickScheduledBankPayouts();
-  return res.json({ ok: true, ...result });
+  try {
+    const { tickScheduledBankPayouts } = await import(
+      "../services/businessScheduledBankPayout.service.js"
+    );
+    const result = await tickScheduledBankPayouts();
+    return res.json({ ok: true, ...result });
+  } catch (err) {
+    const { logServerError } = await import("../utils/httpErrors.js");
+    logServerError("internalJobs.scheduled-bank-payout-tick", err);
+    return res.status(500).json({
+      ok: false,
+      message: "Scheduled bank payout tick failed",
+    });
+  }
+});
+
+/**
+ * POST /api/internal/jobs/scheduled-payout-incident-sync
+ * Phase C — bounded incident discovery + in-app delivery retries (no Stripe payout mutations).
+ * Optional cron: same auth as scheduled-bank-payout-tick; not wired in render.yaml by default.
+ */
+router.post("/scheduled-payout-incident-sync", async (req, res) => {
+  if (!authorizeCronRequest(req)) {
+    return res.status(401).json({ message: "Unauthorized" });
+  }
+  try {
+    const { runScheduledPayoutIncidentSync } = await import(
+      "../services/scheduledBankPayoutIncident.service.js"
+    );
+    const result = await runScheduledPayoutIncidentSync(new Date(), { syncTrigger: "standalone_job" });
+    return res.json({ ok: true, ...result });
+  } catch (err) {
+    const { logServerError } = await import("../utils/httpErrors.js");
+    logServerError("internalJobs.scheduled-payout-incident-sync", err);
+    return res.status(500).json({
+      ok: false,
+      message: "Scheduled payout incident sync failed",
+    });
+  }
 });
 
 router.post("/connect-payout-reconciliation-tick", async (req, res) => {

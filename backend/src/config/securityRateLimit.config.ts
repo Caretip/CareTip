@@ -47,4 +47,8 @@ export const securityRateLimits = {
     ip: { max: envInt("SEC_UPLOAD_KYC_IP_MAX_PER_15M", 30), windowMs: AUTH_WINDOW_15M_MS },
     user: { max: envInt("SEC_UPLOAD_KYC_USER_MAX_PER_15M", 12), windowMs: AUTH_WINDOW_15M_MS },
   },
+  platformScheduledPayoutOps: {
+    ip: { max: envInt("SEC_PLATFORM_SCHED_PAYOUT_OPS_IP_MAX_PER_15M", 40), windowMs: AUTH_WINDOW_15M_MS },
+    user: { max: envInt("SEC_PLATFORM_SCHED_PAYOUT_OPS_USER_MAX_PER_15M", 20), windowMs: AUTH_WINDOW_15M_MS },
+  },
 } as const;

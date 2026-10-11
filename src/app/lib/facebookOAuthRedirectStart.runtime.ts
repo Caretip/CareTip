@@ -376,7 +376,8 @@ assert.ok(social.includes("const allowInteraction = isLogin || allowSocialSignUp
 assert.ok(desktop.includes('role === "employee" ? ("EMPLOYEE" as const) : ("MANAGER" as const)'));
 assert.ok(desktop.includes("!isLogin && role === \"business\" && !merchantLegalAccepted"));
 assert.ok(row.includes('setProviderBusy("facebook")'));
-assert.ok(row.includes("() => setProviderBusy(null)"));
+assert.ok(row.includes("releaseFacebookRedirectAttempt"));
+assert.ok(row.includes('setProviderBusy((current) => (current === "facebook" ? null : current))'));
 assert.equal((read("src/app/lib/facebookOAuthRedirectWeb.ts").match(/onSubmitFailed\?\.\(\)/g) ?? []).length, 2);
 const providerRow = read("src/app/components/auth/OAuthProviderRow.tsx");
 assert.ok(providerRow.includes("if (isFacebookOAuthRedirectEnabled() && facebookRedirectContext) return;"));

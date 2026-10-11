@@ -131,6 +131,7 @@ export function LandingCustomerJourneySection() {
                     loading="eager"
                     decoding="async"
                     {...({ fetchpriority: "low" } as ImgHTMLAttributes<HTMLImageElement>)}
+                    draggable={false}
                     className="caretip-customerjourney__mockup"
                   />
                 </div>

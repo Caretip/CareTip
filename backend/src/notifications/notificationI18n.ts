@@ -3,6 +3,13 @@ import { resolveUserPreferredLocale } from "../emails/i18nEmail.js";
 import type { SupportTicketCategory } from "@prisma/client";
 import { categoryLabelLocalized } from "../services/supportTicketFormat.js";
 import { resolveTipCustomerDisplayName } from "./tipCustomerName.js";
+import {
+  scheduledPayoutIncidentCategoryLabelDe,
+  scheduledPayoutIncidentCategoryLabelEn,
+  scheduledPayoutIncidentNextActionDe,
+  scheduledPayoutIncidentNextActionEn,
+} from "../services/scheduledBankPayoutIncident.notify.js";
+import type { ScheduledPayoutOpsIncidentCategory } from "@prisma/client";
 
 export function formatNotificationAmount(amount: number, locale: EmailLocale): string {
   return new Intl.NumberFormat(locale === "de" ? "de-DE" : "en-GB", {
@@ -85,7 +92,17 @@ export type NotificationTemplate =
   | { id: "physical_qr_shipped"; params: { trackingNumber: string | null } }
   | { id: "physical_qr_delivered" }
   | { id: "employee_inactivity_warning" }
-  | { id: "employee_inactivity_admin"; params: { employeeName: string } };
+  | { id: "employee_inactivity_admin"; params: { employeeName: string } }
+  | {
+      id: "scheduled_payout_ops_incident";
+      params: {
+        payoutType: "employee" | "business";
+        category: string;
+        subjectLabel: string;
+        ledgerRef: string;
+        detectedAtIso: string;
+      };
+    };
 
 export function renderNotificationTemplate(
   locale: EmailLocale,
@@ -456,6 +473,32 @@ export function renderNotificationTemplate(
             title: "A team member was set inactive due to inactivity",
             body: `${template.params.employeeName} was set inactive in CareTip after 45 days without an eligible tip. Their Stripe account was not disconnected.`,
           };
+    case "scheduled_payout_ops_incident": {
+      const category = template.params.category as ScheduledPayoutOpsIncidentCategory;
+      const payoutLabel = de
+        ? template.params.payoutType === "employee"
+          ? "Mitarbeiter"
+          : "Unternehmen"
+        : template.params.payoutType === "employee"
+          ? "Employee"
+          : "Business";
+      const categoryLabel = de
+        ? scheduledPayoutIncidentCategoryLabelDe(category)
+        : scheduledPayoutIncidentCategoryLabelEn(category);
+      const detected = formatNotificationDateTime(template.params.detectedAtIso, locale);
+      const nextAction = de
+        ? scheduledPayoutIncidentNextActionDe(category)
+        : scheduledPayoutIncidentNextActionEn(category);
+      return de
+        ? {
+            title: `Geplante Bankauszahlung: ${categoryLabel}`,
+            body: `${payoutLabel} · ${template.params.subjectLabel} · Ledger ${template.params.ledgerRef} · erkannt ${detected}. ${nextAction}`,
+          }
+        : {
+            title: `Scheduled bank payout: ${categoryLabel}`,
+            body: `${payoutLabel} · ${template.params.subjectLabel} · ledger ${template.params.ledgerRef} · detected ${detected}. ${nextAction}`,
+          };
+    }
     default:
       return { title: "", body: "" };
   }

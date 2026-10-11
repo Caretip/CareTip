@@ -5,6 +5,7 @@
 import {
   BusinessBankPayoutSchedule,
   type StripeConnectScheduledPayoutRequest,
+  ScheduledPayoutReconciliationStatus,
   StripeConnectScheduledPayoutRequestStatus,
 } from "@prisma/client";
 import type Stripe from "stripe";
@@ -21,6 +22,24 @@ import {
   ingestStripePayoutObjectForBusiness,
   invalidateConnectPayoutListSyncThrottle,
 } from "./stripeConnectPayout.service.js";
+import {
+  SCHEDULED_PAYOUT_TICK_BATCH_SIZE,
+  SCHEDULED_PAYOUT_TICK_MAX_ACCOUNTS_PER_RUN,
+  checkPendingStandardStripePayout,
+  diagnosticsToLedgerUpdate,
+  extractStripePayoutCreateDiagnostics,
+  gateScheduledLedgerBeforeCreate,
+  logScheduledPayoutCreateFailure,
+  newScheduledPayoutCorrelationId,
+  resolveScheduledPayoutCreateAmount,
+} from "./scheduledBankPayoutRecovery.service.js";
+import { buildScheduledPayoutStripeMetadata } from "../config/scheduledPayoutStripeMetadata.js";
+import { businessScheduledLedgerSnapshot } from "./scheduledBankPayoutLedger.util.js";
+import {
+  persistBusinessScheduledPayoutLedgerIfClaimOwner,
+  runWithBusinessScheduledPayoutClaimHeartbeat,
+} from "./scheduledBankPayoutProcessingClaim.service.js";
+import type { ScheduledBankPayoutRunResult } from "./scheduledBankPayoutRecovery.service.js";
 
 const EUR_STANDARD_MIN_CENTS = 100;
 
@@ -29,6 +48,8 @@ type CreateStandardPayoutFn = (args: {
   amountCents: number;
   currency: string;
   idempotencyKey: string;
+  correlationId: string;
+  scheduleWindowKey: string;
 }) => Promise<Stripe.Payout>;
 
 type RetrieveBalanceFn = (stripeAccountId: string) => Promise<Stripe.Balance>;
@@ -84,10 +105,19 @@ async function createStandardPayout(args: {
   amountCents: number;
   currency: string;
   idempotencyKey: string;
+  correlationId: string;
+  scheduleWindowKey: string;
 }): Promise<Stripe.Payout> {
   if (createStandardPayoutFn) return createStandardPayoutFn(args);
   return getStripeClient().payouts.create(
-    { amount: args.amountCents, currency: args.currency },
+    {
+      amount: args.amountCents,
+      currency: args.currency,
+      metadata: buildScheduledPayoutStripeMetadata({
+        correlationId: args.correlationId,
+        scheduleWindowKey: args.scheduleWindowKey,
+      }),
+    },
     { stripeAccount: args.stripeAccountId, idempotencyKey: args.idempotencyKey },
   );
 }
@@ -161,10 +191,9 @@ async function advanceEvery3DaysWindow(businessId: string, previousAnchorUtc: Da
   });
 }
 
-export async function runScheduledBankPayoutForBusiness(businessId: string): Promise<{
-  outcome: "skipped" | "created" | "zero" | "not_due" | "blocked";
-  stripePayoutId?: string;
-}> {
+export async function runScheduledBankPayoutForBusiness(
+  businessId: string,
+): Promise<ScheduledBankPayoutRunResult> {
   if (!isStripeConfigured() && !createStandardPayoutFn) {
     return { outcome: "skipped" };
   }
@@ -207,8 +236,12 @@ export async function runScheduledBankPayoutForBusiness(businessId: string): Pro
       return { outcome: "zero" };
     }
 
-    if (await hasPendingStandardPayout(stripeAccountId)) {
-      return { outcome: "blocked" };
+    const pendingCheck = await checkPendingStandardStripePayout(stripeAccountId, hasPendingStandardPayout);
+    if (pendingCheck.kind === "blocked") {
+      return { outcome: "blocked", blockedReason: pendingCheck.blockedReason };
+    }
+    if (pendingCheck.kind === "lookup_failed") {
+      return { outcome: "blocked", blockedReason: pendingCheck.blockedReason };
     }
 
     const balance = await retrieveBalance(stripeAccountId);
@@ -254,95 +287,229 @@ export async function runScheduledBankPayoutForBusiness(businessId: string): Pro
       await advanceEvery3DaysWindow(businessId, dueAt);
       return { outcome: "zero" };
     }
-    if (request.status === StripeConnectScheduledPayoutRequestStatus.failed) {
-      return { outcome: "blocked" };
-    }
-    if (!ledgerCreated && request.status === StripeConnectScheduledPayoutRequestStatus.pending) {
-      return { outcome: "blocked" };
-    }
-
-    let stripePayout: Stripe.Payout;
-    try {
-      stripePayout = await createStandardPayout({
-        stripeAccountId,
-        amountCents: availableCents,
-        currency,
-        idempotencyKey,
-      });
-    } catch (err) {
-      logServerError("businessScheduledBankPayout.create", err, { businessId, windowKey });
+    const gate = await gateScheduledLedgerBeforeCreate({
+      stripeAccountId,
+      ledger: businessScheduledLedgerSnapshot(request),
+      ledgerCreated,
+      listPendingFn: hasPendingStandardPayout,
+    });
+    if (gate.action === "reconciled") {
       await prisma.stripeConnectScheduledPayoutRequest.update({
         where: { id: request.id },
         data: {
-          status: StripeConnectScheduledPayoutRequestStatus.failed,
-          failureCode: "stripe_create_failed",
+          status: StripeConnectScheduledPayoutRequestStatus.submitted,
+          stripePayoutId: gate.stripePayoutId,
+          reconciliationStatus: ScheduledPayoutReconciliationStatus.resolved,
+          blockedReason: null,
         },
       });
-      return { outcome: "blocked" };
+      await ingestStripePayoutObjectForBusiness({
+        businessId,
+        stripeAccountId,
+        payout: gate.stripePayout,
+        eventType: "payout.scheduled_reconcile",
+        eventId: `scheduled_reconcile:${idempotencyKey}`,
+      });
+      invalidateConnectPayoutListSyncThrottle(businessId);
+      await advanceEvery3DaysWindow(businessId, dueAt);
+      return { outcome: "created", stripePayoutId: gate.stripePayoutId };
+    }
+    if (gate.action === "block" || gate.action === "wait_retry") {
+      return { outcome: "blocked", blockedReason: gate.blockedReason };
     }
 
-    await prisma.stripeConnectScheduledPayoutRequest.update({
-      where: { id: request.id },
-      data: {
-        status: StripeConnectScheduledPayoutRequestStatus.submitted,
-        stripePayoutId: stripePayout.id,
-        amountCents: availableCents,
-      },
+    const amountResolved = resolveScheduledPayoutCreateAmount({
+      ledgerAmountCents: request.amountCents,
+      ledgerCurrency: request.currency,
+      ledgerCreated,
+      availableCents,
+      balanceCurrency: currency,
     });
+    if (!amountResolved.ok) {
+      return { outcome: "blocked", blockedReason: amountResolved.blockedReason };
+    }
+    const payoutAmountCents = amountResolved.amountCents;
 
-    await ingestStripePayoutObjectForBusiness({
-      businessId,
-      stripeAccountId,
-      payout: stripePayout,
-      eventType: "payout.scheduled_create",
-      eventId: `scheduled:${idempotencyKey}`,
-    });
-    invalidateConnectPayoutListSyncThrottle(businessId);
+    const correlationId = request.correlationId ?? newScheduledPayoutCorrelationId();
+    const claimRun = await runWithBusinessScheduledPayoutClaimHeartbeat(
+      request.id,
+      correlationId,
+      async (handle) => {
+        if (!(await handle.renew())) {
+          return { kind: "claim_lost" as const };
+        }
+        const nextAttemptCount = request.attemptCount + 1;
+        try {
+          const stripePayout = await createStandardPayout({
+            stripeAccountId,
+            amountCents: payoutAmountCents,
+            currency: amountResolved.currency,
+            idempotencyKey,
+            correlationId,
+            scheduleWindowKey: windowKey,
+          });
+          if (!(await handle.renew())) {
+            return { kind: "claim_lost_after_stripe" as const, stripePayoutId: stripePayout.id };
+          }
+          const submitted = await persistBusinessScheduledPayoutLedgerIfClaimOwner({
+            ledgerId: request.id,
+            claimToken: handle.claimToken,
+            data: {
+              status: StripeConnectScheduledPayoutRequestStatus.submitted,
+              stripePayoutId: stripePayout.id,
+              amountCents: payoutAmountCents,
+              reconciliationStatus: ScheduledPayoutReconciliationStatus.resolved,
+              processingClaimedAt: null,
+              processingClaimToken: null,
+              blockedReason: null,
+              failureClassification: null,
+              nextRetryAt: null,
+            },
+          });
+          if (!submitted) {
+            return { kind: "claim_lost_after_stripe" as const, stripePayoutId: stripePayout.id };
+          }
+          return { kind: "created" as const, stripePayout };
+        } catch (err) {
+          const diagnostics = extractStripePayoutCreateDiagnostics(err);
+          logScheduledPayoutCreateFailure("businessScheduledBankPayout.create", err, {
+            businessId,
+            windowKey,
+            idempotencyKey,
+            correlationId,
+          }, diagnostics);
+          const ledgerUpdate = diagnosticsToLedgerUpdate(diagnostics, nextAttemptCount);
+          await persistBusinessScheduledPayoutLedgerIfClaimOwner({
+            ledgerId: request.id,
+            claimToken: handle.claimToken,
+            data: {
+              ...ledgerUpdate,
+              correlationId,
+              processingClaimedAt: null,
+              processingClaimToken: null,
+            },
+          });
+          return {
+            kind: "stripe_failed" as const,
+            blockedReason: ledgerUpdate.blockedReason ?? "stripe_create_failed",
+          };
+        }
+      },
+    );
+
+    if (claimRun.kind === "not_acquired") {
+      return { outcome: "blocked", blockedReason: "processing_claim_held" };
+    }
+    if (claimRun.kind === "heartbeat_lost") {
+      return { outcome: "blocked", blockedReason: "processing_claim_heartbeat_lost" };
+    }
+    const inner = claimRun.value;
+    if (inner.kind === "claim_lost") {
+      return { outcome: "blocked", blockedReason: "processing_claim_heartbeat_lost" };
+    }
+    if (inner.kind === "stripe_failed") {
+      return { outcome: "blocked", blockedReason: inner.blockedReason };
+    }
+    if (inner.kind === "claim_lost_after_stripe") {
+      await prisma.stripeConnectScheduledPayoutRequest.updateMany({
+        where: { id: request.id, stripePayoutId: null },
+        data: {
+          stripePayoutId: inner.stripePayoutId,
+          reconciliationStatus: ScheduledPayoutReconciliationStatus.required,
+          blockedReason: "reconciliation_required",
+        },
+      });
+      return { outcome: "blocked", blockedReason: "reconciliation_required" };
+    }
+    const stripePayout = inner.stripePayout;
+
+    try {
+      await ingestStripePayoutObjectForBusiness({
+        businessId,
+        stripeAccountId,
+        payout: stripePayout,
+        eventType: "payout.scheduled_create",
+        eventId: `scheduled:${idempotencyKey}`,
+      });
+      invalidateConnectPayoutListSyncThrottle(businessId);
+    } catch (observeErr) {
+      logServerError("businessScheduledBankPayout.observePayout", observeErr, {
+        businessId,
+        stripePayoutId: stripePayout.id,
+      });
+    }
     await advanceEvery3DaysWindow(businessId, dueAt);
     return { outcome: "created", stripePayoutId: stripePayout.id };
   });
 }
 
-export async function tickBusinessScheduledBankPayouts(): Promise<{
-  scanned: number;
-  created: number;
-  zero: number;
-  blocked: number;
-  notDue: number;
-}> {
+/** Ops recovery for a specific ledger — only when it matches the business current due window. */
+export async function runScheduledBankPayoutRecoveryForBusinessLedger(
+  ledgerId: string,
+): Promise<import("./scheduledBankPayoutRecovery.service.js").ScheduledBankPayoutRunResult> {
+  const request = await prisma.stripeConnectScheduledPayoutRequest.findUnique({
+    where: { id: ledgerId },
+  });
+  if (!request) return { outcome: "blocked", blockedReason: "ledger_not_found" };
+  if (
+    request.status === StripeConnectScheduledPayoutRequestStatus.submitted &&
+    request.stripePayoutId?.startsWith("po_")
+  ) {
+    return { outcome: "blocked", blockedReason: "already_submitted" };
+  }
+  const business = await prisma.business.findUnique({
+    where: { id: request.businessId },
+    select: { bankPayoutNextScheduledAt: true },
+  });
+  const dueAt = business?.bankPayoutNextScheduledAt;
+  if (!dueAt) return { outcome: "blocked", blockedReason: "no_scheduled_due" };
+  const windowKey = scheduleWindowKeyFromDate(dueAt);
+  if (windowKey !== request.scheduleWindowKey) {
+    return { outcome: "blocked", blockedReason: "ledger_window_not_current" };
+  }
+  return runScheduledBankPayoutForBusiness(request.businessId);
+}
+
+export async function tickBusinessScheduledBankPayouts(): Promise<
+  import("./employeeScheduledBankPayout.service.js").ScheduledBankPayoutTickCounts
+> {
   const now = new Date();
-  const dueBusinesses = await prisma.business.findMany({
-    where: {
-      bankPayoutSchedule: BusinessBankPayoutSchedule.every_3_days,
-      bankPayoutNextScheduledAt: { lte: now },
-      deletedAt: null,
-      legalHold: false,
-      stripeAccountId: { not: null },
-      stripePayoutsEnabled: true,
+  const { countDueBusinessScheduledBankPayoutAccounts } = await import(
+    "./scheduledBankPayoutDueBacklog.service.js"
+  );
+  const {
+    fetchDueBusinessScheduledBankPayoutBatch,
+    runFairScheduledBankPayoutStreamTick,
+  } = await import("./scheduledBankPayoutDueSelection.service.js");
+  const dueBacklogBefore = await countDueBusinessScheduledBankPayoutAccounts(now);
+
+  const fair = await runFairScheduledBankPayoutStreamTick({
+    stream: "business",
+    now,
+    fetchBatch: (after, limit) => fetchDueBusinessScheduledBankPayoutBatch({ now, after, limit }),
+    processAccount: (businessId) => runScheduledBankPayoutForBusiness(businessId),
+    onProcessError: (businessId, err) => {
+      logServerError("businessScheduledBankPayout.tick.business", err, { businessId });
     },
-    select: { id: true },
-    take: 50,
   });
 
-  let created = 0;
-  let zero = 0;
-  let blocked = 0;
-  let notDue = 0;
-
-  for (const row of dueBusinesses) {
-    try {
-      const result = await runScheduledBankPayoutForBusiness(row.id);
-      if (result.outcome === "created") created += 1;
-      else if (result.outcome === "zero") zero += 1;
-      else if (result.outcome === "blocked") blocked += 1;
-      else if (result.outcome === "not_due") notDue += 1;
-    } catch (err) {
-      logServerError("businessScheduledBankPayout.tick.business", err, { businessId: row.id });
-      blocked += 1;
-    }
-  }
-
-  return { scanned: dueBusinesses.length, created, zero, blocked, notDue };
+  const dueBacklogAfter = await countDueBusinessScheduledBankPayoutAccounts(new Date());
+  return {
+    scanned: fair.scanned,
+    processed: fair.processed,
+    created: fair.created,
+    zero: fair.zero,
+    blocked: fair.blocked,
+    notDue: fair.notDue,
+    skipped: fair.skipped,
+    retryScheduled: fair.retryScheduled,
+    blockedReasons: fair.blockedReasons,
+    capReached: fair.capReached,
+    dueBacklogBefore,
+    dueBacklogAfter,
+    fairnessWraps: fair.fairnessWraps,
+    cursorSave: fair.cursorSave,
+  };
 }
 
 export async function tickScheduledBankPayouts(): Promise<{
@@ -353,10 +520,67 @@ export async function tickScheduledBankPayouts(): Promise<{
   notDue: number;
   business: Awaited<ReturnType<typeof tickBusinessScheduledBankPayouts>>;
   employee: import("./employeeScheduledBankPayout.service.js").ScheduledBankPayoutTickCounts;
+  observability: import("./scheduledBankPayoutTickObservability.service.js").ScheduledPayoutTickObservabilitySummary;
 }> {
+  const startedAtMs = Date.now();
+  const {
+    buildStreamTickMetrics,
+    finalizeScheduledPayoutTickObservability,
+    safeFinalizeScheduledPayoutTickOnError,
+  } = await import("./scheduledBankPayoutTickObservability.service.js");
   const { tickEmployeeScheduledBankPayouts } = await import("./employeeScheduledBankPayout.service.js");
-  const business = await tickBusinessScheduledBankPayouts();
-  const employee = await tickEmployeeScheduledBankPayouts();
+
+  const streamMetrics: import("./scheduledBankPayoutTickObservability.service.js").ScheduledPayoutTickStreamMetrics[] =
+    [];
+
+  let tickError: unknown = null;
+  let business!: Awaited<ReturnType<typeof tickBusinessScheduledBankPayouts>>;
+  let employee!: import("./employeeScheduledBankPayout.service.js").ScheduledBankPayoutTickCounts;
+  let observability!: import("./scheduledBankPayoutTickObservability.service.js").ScheduledPayoutTickObservabilitySummary;
+
+  try {
+    const businessStarted = Date.now();
+    business = await tickBusinessScheduledBankPayouts();
+    streamMetrics.push(
+      buildStreamTickMetrics({
+        stream: "business",
+        durationMs: Date.now() - businessStarted,
+        counts: business,
+        dueBacklogBefore: business.dueBacklogBefore,
+        dueBacklogAfter: business.dueBacklogAfter,
+      }),
+    );
+
+    const employeeStarted = Date.now();
+    employee = await tickEmployeeScheduledBankPayouts();
+    streamMetrics.push(
+      buildStreamTickMetrics({
+        stream: "employee",
+        durationMs: Date.now() - employeeStarted,
+        counts: employee,
+        dueBacklogBefore: employee.dueBacklogBefore,
+        dueBacklogAfter: employee.dueBacklogAfter,
+      }),
+    );
+
+    observability = finalizeScheduledPayoutTickObservability({
+      startedAtMs,
+      success: true,
+      errorClass: null,
+      streams: streamMetrics,
+    });
+  } catch (err) {
+    tickError = err;
+    safeFinalizeScheduledPayoutTickOnError(startedAtMs, err, streamMetrics);
+  } finally {
+    const { scheduleScheduledPayoutIncidentSyncAfterPayoutTickAttempt } = await import(
+      "./scheduledBankPayoutIncident.service.js"
+    );
+    scheduleScheduledPayoutIncidentSyncAfterPayoutTickAttempt(tickError != null);
+  }
+
+  if (tickError) throw tickError;
+
   return {
     scanned: business.scanned + employee.scanned,
     created: business.created + employee.created,
@@ -365,5 +589,6 @@ export async function tickScheduledBankPayouts(): Promise<{
     notDue: business.notDue + employee.notDue,
     business,
     employee,
+    observability,
   };
 }

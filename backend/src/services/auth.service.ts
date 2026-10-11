@@ -56,6 +56,8 @@ export interface AuthUserDto {
   kycVerificationStatus?: "not_started" | "awaiting_upload" | "pending_review" | "verified" | "rejected";
   /** UI + email language (`en` / `de`). */
   preferredLocale?: string | null;
+  /** True only for platform operators (SUPER_ADMIN + DB flag). */
+  isPlatformAdmin?: boolean;
 }
 
 export interface AuthResult {
@@ -261,6 +263,7 @@ function buildAuthUserDto(user: UserForAuthResult): AuthUserDto {
     name: displayNameForUser(user),
     emailVerified: user.emailVerified === true,
     preferredLocale: user.preferredLocale ?? null,
+    isPlatformAdmin: user.role === "SUPER_ADMIN" && user.isPlatformAdmin === true,
   };
 
   if (user.role === "MANAGER") {

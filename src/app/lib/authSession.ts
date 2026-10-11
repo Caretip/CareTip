@@ -130,6 +130,18 @@ export function isPlatformAdminSessionRole(sessionRole: SessionUserRole): boolea
   return sessionRole === "platform_admin" || sessionRole === "admin";
 }
 
+/** Client guard aligned with backend requirePlatformAdmin (role + DB flag). */
+export function canAccessPlatformAdminWorkspace(user: {
+  role: SessionUserRole;
+  isPlatformAdmin?: boolean;
+  emailVerified?: boolean;
+}): boolean {
+  if (!isPlatformAdminSessionRole(user.role)) return false;
+  if (user.isPlatformAdmin !== true) return false;
+  if (user.emailVerified === false) return false;
+  return true;
+}
+
 export function deriveAuthSession(user: SessionUserLike | null): AuthSession {
   if (!user) {
     return {

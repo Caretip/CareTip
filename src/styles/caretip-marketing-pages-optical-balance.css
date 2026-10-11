@@ -445,6 +445,16 @@
   gap: clamp(1.35rem, 2.5vw, 1.85rem);
 }
 
+@media (max-width: 639px) {
+  .caretip-landing.caretip-landing--premium #guesttippingjourney .caretip-customerjourney__intro.caretip-section-intro {
+    margin-bottom: 0.7rem !important;
+  }
+
+  .caretip-landing.caretip-landing--premium #guesttippingjourney .caretip-customerjourney__inner {
+    gap: 0.85rem;
+  }
+}
+
 /* Setup in minutes — shorter chapter + less dead space above device */
 .caretip-landing.caretip-landing--premium #how-it-works.caretip-live-minutes-section {
   padding-block: clamp(2.75rem, 6vw, 5rem) !important;

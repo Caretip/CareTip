@@ -872,6 +872,7 @@ export interface AuthResponse {
     kycVerificationStatus?: KycVerificationStatus;
     /** `en` | `de` — UI + transactional email language. */
     preferredLocale?: string | null;
+    isPlatformAdmin?: boolean;
   };
 }
 
@@ -6302,6 +6303,144 @@ export async function fetchPlatformBusinessPayoutScheduleContext(
   return apiRequest<PlatformAdminPayoutScheduleContext>(
     apiPath(`/api/platform/businesses/${encodeURIComponent(businessId)}/payout-schedule-context`),
     { headers: getHeaders(), credentials: "include" },
+  );
+}
+
+export type ScheduledPayoutOpsType = "employee" | "business";
+
+export type ScheduledPayoutOpsListItem = {
+  id: string;
+  payoutType: ScheduledPayoutOpsType;
+  businessId: string;
+  businessName: string;
+  employeeId: string | null;
+  employeeName: string | null;
+  scheduleWindowKey: string;
+  amountCents: number;
+  currency: string;
+  status: string;
+  failureClassification: string | null;
+  blockedReason: string | null;
+  reconciliationStatus: string;
+  attemptCount: number;
+  maxAttempts: number;
+  nextRetryAt: string | null;
+  stripePayoutIdMasked: string | null;
+  stripeAccountSuffix: string | null;
+  claimActive: boolean;
+  claimStale: boolean;
+  manualInterventionRequired: boolean;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type ScheduledPayoutOpsDetail = ScheduledPayoutOpsListItem & {
+  correlationId: string | null;
+  failureCode: string | null;
+  failureMessageSanitized: string | null;
+  stripeErrorCode: string | null;
+  stripeErrorType: string | null;
+  stripeHttpStatus: number | null;
+  stripeRequestId: string | null;
+  claimClaimedAt: string | null;
+  relatedConnectPayoutAdminPath: string | null;
+  allowedActions: Array<"reconcile" | "run_recovery" | "manual_attachment" | "view_runbook" | "view_connect_payout">;
+  auditTrail: Array<{ at: string; action: string; actorUserId: string | null }>;
+};
+
+export type ScheduledPayoutOpsSummary = {
+  asOf: string;
+  counts: {
+    awaitingProcessing: number;
+    failedOrBlocked: number;
+    reconciliationOpen: number;
+    retryScheduled: number;
+    retryExhausted: number;
+    submittedToStripe: number;
+    skippedZeroBalance: number;
+    claimActive: number;
+    manualInterventionRequired: number;
+  };
+};
+
+export type ScheduledPayoutOpsMutationResult = {
+  status: "completed" | "blocked" | "inconclusive" | "failed";
+  outcome?: string;
+  stripePayoutId?: string;
+  blockedReason?: string;
+  reason?: string;
+  message?: string;
+  code?: string;
+  ledgerMutationMayHaveOccurred?: boolean;
+  auditRecorded?: boolean;
+};
+
+export async function fetchScheduledPayoutOpsSummary(): Promise<ScheduledPayoutOpsSummary> {
+  return apiRequest<ScheduledPayoutOpsSummary>(
+    apiPath("/api/platform/scheduled-payout-operations/summary"),
+    { headers: getHeaders(), credentials: "include" },
+  );
+}
+
+export async function fetchScheduledPayoutOpsList(params: {
+  take?: number;
+  skip?: number;
+  q?: string;
+  payoutType?: ScheduledPayoutOpsType;
+  businessId?: string;
+  status?: string;
+  reconciliationStatus?: string;
+  manualOnly?: boolean;
+}): Promise<{ total: number; items: ScheduledPayoutOpsListItem[] }> {
+  const sp = new URLSearchParams();
+  if (params.take != null) sp.set("take", String(params.take));
+  if (params.skip != null) sp.set("skip", String(params.skip));
+  if (params.q) sp.set("q", params.q);
+  if (params.payoutType) sp.set("payoutType", params.payoutType);
+  if (params.businessId) sp.set("businessId", params.businessId);
+  if (params.status) sp.set("status", params.status);
+  if (params.reconciliationStatus) sp.set("reconciliationStatus", params.reconciliationStatus);
+  if (params.manualOnly) sp.set("manualOnly", "true");
+  const qs = sp.toString();
+  return apiRequest(apiPath(`/api/platform/scheduled-payout-operations${qs ? `?${qs}` : ""}`), {
+    headers: getHeaders(),
+    credentials: "include",
+  });
+}
+
+export async function fetchScheduledPayoutOpsDetail(
+  payoutType: ScheduledPayoutOpsType,
+  ledgerId: string,
+): Promise<ScheduledPayoutOpsDetail> {
+  return apiRequest<ScheduledPayoutOpsDetail>(
+    apiPath(
+      `/api/platform/scheduled-payout-operations/${encodeURIComponent(payoutType)}/${encodeURIComponent(ledgerId)}`,
+    ),
+    { headers: getHeaders(), credentials: "include" },
+  );
+}
+
+export async function postScheduledPayoutOpsReconcile(
+  payoutType: ScheduledPayoutOpsType,
+  ledgerId: string,
+): Promise<ScheduledPayoutOpsMutationResult> {
+  return apiRequest(
+    apiPath(
+      `/api/platform/scheduled-payout-operations/${encodeURIComponent(payoutType)}/${encodeURIComponent(ledgerId)}/reconcile`,
+    ),
+    { method: "POST", headers: getHeaders(), credentials: "include", body: JSON.stringify({}) },
+  );
+}
+
+export async function postScheduledPayoutOpsRunRecovery(
+  payoutType: ScheduledPayoutOpsType,
+  ledgerId: string,
+): Promise<ScheduledPayoutOpsMutationResult> {
+  return apiRequest(
+    apiPath(
+      `/api/platform/scheduled-payout-operations/${encodeURIComponent(payoutType)}/${encodeURIComponent(ledgerId)}/run-recovery`,
+    ),
+    { method: "POST", headers: getHeaders(), credentials: "include", body: JSON.stringify({}) },
   );
 }
 

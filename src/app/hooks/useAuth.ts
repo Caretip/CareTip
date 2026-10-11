@@ -160,6 +160,8 @@ export interface User {
   impersonation?: boolean;
   impersonatedBy?: string;
   preferredLocale?: string | null;
+  /** Mirrors backend platform-admin flag (SUPER_ADMIN + isPlatformAdmin). */
+  isPlatformAdmin?: boolean;
 }
 
 export interface RegisterPayload {
@@ -252,6 +254,7 @@ export function parseUser(data: AuthResponse["user"]): User {
     preferredLocale: typeof ext.preferredLocale === "string" ? ext.preferredLocale : null,
     onboardingVerificationStatus: ext.onboardingVerificationStatus,
     kycVerificationStatus: ext.kycVerificationStatus,
+    isPlatformAdmin: ext.isPlatformAdmin === true,
   };
   // Super admins must not carry business/employee scope in client state (API maps SUPER_ADMIN → platform_admin).
   if (role === "platform_admin" && !ext.impersonation) {

@@ -2076,7 +2076,7 @@ select.caretip-auth-field {
   width: 100%;
 }
 
-.caretip-auth-oauth > div {
+.caretip-auth-oauth > .caretip-oauth-circles {
   display: flex !important;
   width: 100% !important;
   justify-content: center !important;
