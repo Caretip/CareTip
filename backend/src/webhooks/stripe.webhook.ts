@@ -6,6 +6,7 @@ import {
   handlePaymentSuccess,
   handlePaymentFailed,
 } from "../services/stripe.service.js";
+import { BillingWebhookConcurrentDeliveryError } from "../services/billingWebhookIdempotency.service.js";
 import {
   handleStripeBillingWebhookEvent,
   isStripeBillingEventType,
@@ -93,14 +94,36 @@ router.post("/stripe", async (req: Request, res: Response) => {
           sessionId: session.id,
           mode: session.mode,
         });
-        const billingResult = await handleStripeBillingWebhookEvent(event);
-        return res.json(billingResult);
+        try {
+          const billingResult = await handleStripeBillingWebhookEvent(event);
+          return res.json(billingResult);
+        } catch (billingErr) {
+          if (billingErr instanceof BillingWebhookConcurrentDeliveryError) {
+            return res.status(503).json({ received: false, retryable: true });
+          }
+          logServerError("stripe.webhook.billing", billingErr, {
+            eventId: event.id,
+            eventType: event.type,
+          });
+          return res.status(500).json({ received: false });
+        }
       }
     }
 
     if (isStripeBillingEventType(event.type)) {
-      const billingResult = await handleStripeBillingWebhookEvent(event);
-      return res.json(billingResult);
+      try {
+        const billingResult = await handleStripeBillingWebhookEvent(event);
+        return res.json(billingResult);
+      } catch (billingErr) {
+        if (billingErr instanceof BillingWebhookConcurrentDeliveryError) {
+          return res.status(503).json({ received: false, retryable: true });
+        }
+        logServerError("stripe.webhook.billing", billingErr, {
+          eventId: event.id,
+          eventType: event.type,
+        });
+        return res.status(500).json({ received: false });
+      }
     }
 
     if (await isStripeWebhookEventProcessed(event.id)) {

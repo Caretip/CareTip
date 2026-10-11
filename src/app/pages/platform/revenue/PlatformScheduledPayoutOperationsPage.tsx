@@ -14,7 +14,7 @@ import {
   type ScheduledPayoutOpsMutationResult,
   type ScheduledPayoutOpsType,
 } from "../../../lib/api";
-import { formatConnectPayoutAmount } from "../../../lib/connectPayoutDisplay";
+import { formatConnectPayoutAmount, payoutMethodI18nKey } from "../../../lib/connectPayoutDisplay";
 import { formatAdminFinancialDateTime } from "../../../lib/adminFinancialTimezone";
 import { logClientError } from "../../../lib/clientLog";
 import { toUserFriendlyMessage } from "../../../lib/errorMessages";
@@ -80,6 +80,7 @@ export function PlatformScheduledPayoutOperationsPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const q = searchParams.get("q") ?? "";
   const payoutType = searchParams.get("payoutType") ?? "all";
+  const method = searchParams.get("method") ?? "all";
   const manualOnly = searchParams.get("manualOnly") === "1";
   const page = Math.max(0, Number(searchParams.get("page") ?? "0") || 0);
   const detailType = searchParams.get("detailType") as ScheduledPayoutOpsType | null;
@@ -119,6 +120,8 @@ export function PlatformScheduledPayoutOperationsPage() {
           q: q.trim() || undefined,
           payoutType: payoutType === "employee" || payoutType === "business" ? payoutType : undefined,
           manualOnly: manualOnly || undefined,
+          method:
+            method === "instant" || method === "standard" || method === "unknown" ? method : undefined,
         }),
       ]);
       if (gen !== loadGen.current) return;
@@ -133,7 +136,7 @@ export function PlatformScheduledPayoutOperationsPage() {
     } finally {
       if (gen === loadGen.current) setLoading(false);
     }
-  }, [page, q, payoutType, manualOnly]);
+  }, [page, q, payoutType, method, manualOnly]);
 
   useEffect(() => {
     void load();
@@ -276,6 +279,24 @@ export function PlatformScheduledPayoutOperationsPage() {
           <option value="employee">{t("admin.scheduledPayoutOps.typeEmployee")}</option>
           <option value="business">{t("admin.scheduledPayoutOps.typeBusiness")}</option>
         </select>
+        <select
+          className={FILTER_SELECT}
+          value={method}
+          onChange={(e) =>
+            patchParams((sp) => {
+              const v = e.target.value;
+              if (v === "all") sp.delete("method");
+              else sp.set("method", v);
+              sp.delete("page");
+            })
+          }
+          aria-label={t("admin.scheduledPayoutOps.filterMethod")}
+        >
+          <option value="all">{t("admin.scheduledPayoutOps.filterAllMethods")}</option>
+          <option value="instant">{t("business.billing.payouts.methodInstant")}</option>
+          <option value="standard">{t("business.billing.payouts.methodStandard")}</option>
+          <option value="unknown">{t("business.billing.payouts.methodUnknown")}</option>
+        </select>
         <label className="flex items-center gap-2 text-sm text-foreground">
           <input
             type="checkbox"
@@ -319,6 +340,7 @@ export function PlatformScheduledPayoutOperationsPage() {
                     {formatConnectPayoutAmount(row.amountCents, row.currency, i18n.language)} · {row.status}
                   </p>
                   <p className="text-xs text-muted-foreground">
+                    {t(payoutMethodI18nKey(row.payoutMethod))} ·{" "}
                     {t(`admin.scheduledPayoutOps.type${row.payoutType === "employee" ? "Employee" : "Business"}`)} ·{" "}
                     {row.attemptCount}/{row.maxAttempts} · {formatAdminFinancialDateTime(row.updatedAt, i18n.language)}
                   </p>
@@ -340,7 +362,7 @@ export function PlatformScheduledPayoutOperationsPage() {
                     <th>{t("admin.scheduledPayoutOps.colRecipient")}</th>
                     <th>{t("admin.scheduledPayoutOps.colBusiness")}</th>
                     <th>{t("admin.scheduledPayoutOps.colAmount")}</th>
-                    <th>{t("admin.scheduledPayoutOps.colType")}</th>
+                    <th>{t("admin.scheduledPayoutOps.colMethod")}</th>
                     <th>{t("admin.scheduledPayoutOps.colStatus")}</th>
                     <th>{t("admin.scheduledPayoutOps.colAttempts")}</th>
                     <th>{t("admin.scheduledPayoutOps.colUpdated")}</th>
@@ -363,7 +385,7 @@ export function PlatformScheduledPayoutOperationsPage() {
                       <td className="tabular-nums">
                         {formatConnectPayoutAmount(row.amountCents, row.currency, i18n.language)}
                       </td>
-                      <td>{t(`admin.scheduledPayoutOps.type${row.payoutType === "employee" ? "Employee" : "Business"}`)}</td>
+                      <td className="text-muted-foreground">{t(payoutMethodI18nKey(row.payoutMethod))}</td>
                       <td>{row.status}</td>
                       <td className="tabular-nums">{row.attemptCount}/{row.maxAttempts}</td>
                       <td className="text-muted-foreground">
@@ -427,6 +449,9 @@ export function PlatformScheduledPayoutOperationsPage() {
               <p className="text-muted-foreground">{detail.scheduleWindowKey}</p>
               <p>
                 {formatConnectPayoutAmount(detail.amountCents, detail.currency, i18n.language)} · {detail.status}
+              </p>
+              <p className="text-muted-foreground">
+                {t("admin.scheduledPayoutOps.colMethod")}: {t(payoutMethodI18nKey(detail.payoutMethod))}
               </p>
               {detail.blockedReason ? (
                 <p className="rounded-md bg-muted px-3 py-2 text-foreground">

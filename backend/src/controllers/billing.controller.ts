@@ -32,6 +32,10 @@ import {
   MerchantLegalAcceptanceError,
   requireMerchantLegalAcceptanceForCheckout,
 } from "../lib/merchantLegalAcceptance.js";
+import {
+  BillingCheckoutBlockedError,
+  BillingCheckoutVerificationError,
+} from "../services/billingCheckoutGuard.service.js";
 
 function getUserId(req: Request): string | null {
   const uid = req.user?.sub ?? req.user?.userId ?? req.user?.id;
@@ -309,6 +313,20 @@ export async function postMyBillingCheckout(req: Request, res: Response) {
     const message = err instanceof Error ? err.message : String(err);
     if (err instanceof BillingCheckoutNotAllowedError) {
       return res.status(400).json({ message: err.message, code: err.code });
+    }
+    if (err instanceof BillingCheckoutBlockedError) {
+      return res.status(409).json({
+        message: err.message,
+        code: err.code,
+        useBillingPortal: err.useBillingPortal,
+      });
+    }
+    if (err instanceof BillingCheckoutVerificationError) {
+      return res.status(503).json({
+        message: err.message,
+        code: err.code,
+        retryable: err.retryable,
+      });
     }
     if (message.includes("not enabled") || message.includes("not configured")) {
       return res.status(503).json({ message });

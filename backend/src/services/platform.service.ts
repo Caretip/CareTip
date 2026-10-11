@@ -21,6 +21,8 @@ import { toEmployeePayoutConnectionState } from "../lib/employeePayoutConnectSta
 import { stripeAccountSuffix } from "./connectAccountOwnership.service.js";
 import { sanitizeLikeContainsSearch } from "../utils/likeSearch.js";
 import { updateSubscriptionMirrorPlanTransactional } from "./subscription.service.js";
+import { assertAdminSubscriptionTierChangeAllowed } from "../lib/subscription/adminSubscriptionPolicy.js";
+import { loadBusinessBillingLinkageSnapshot } from "./billingLifecycleIntegrity.service.js";
 import {
   normalizeOptionalContactPhone,
   ProfileFieldValidationError,
@@ -393,6 +395,9 @@ export async function updateBusinessSubscriptionTier(
   if (!existing) {
     throw new Error("Business not found");
   }
+
+  const billingSnapshot = await loadBusinessBillingLinkageSnapshot(businessId);
+  assertAdminSubscriptionTierChangeAllowed(billingSnapshot, tier);
 
   if (existing.subscriptionTier !== tier) {
     await updateSubscriptionMirrorPlanTransactional({

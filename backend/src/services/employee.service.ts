@@ -17,7 +17,11 @@ import {
 import { resolveUserPreferredLocale } from "../emails/i18nEmail.js";
 import { logServerError } from "../utils/httpErrors.js";
 import { absolutizePublicMediaPath } from "../utils/publicMediaUrl.js";
-import { getSubscriptionTierForBusinessId, resolveSubscriptionEntitlements } from "./subscriptionEntitlement.service.js";
+import {
+  getSubscriptionTierForBusinessId,
+  resolveSubscriptionEntitlements,
+  type SubscriptionLifecycleStatus,
+} from "./subscriptionEntitlement.service.js";
 import { isPresetStaffRole } from "../config/staffRolePresets.js";
 import { readCareTipReceivingPaused } from "./employeeReceivingPause.lookup.js";
 import { applyEmployeeMonthlyGoalFromColumn } from "./goal.service.js";
@@ -720,7 +724,7 @@ export interface EmployeeSelfProfile {
   slug: string | null;
   /** Venue SaaS tier for entitlement UI (server remains source of truth). */
   subscriptionTier?: "basic" | "premium" | "enterprise" | null;
-  subscriptionStatus?: "none" | "trialing" | "active" | "past_due" | "canceled" | "unpaid" | "incomplete";
+  subscriptionStatus?: SubscriptionLifecycleStatus;
   hasActiveSubscription?: boolean;
   accessSource?: "none" | "subscription" | "sponsored";
   sponsoredProgrammeKey?: string | null;

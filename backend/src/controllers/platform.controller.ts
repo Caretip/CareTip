@@ -667,6 +667,12 @@ export async function updateBusinessSubscriptionTier(req: Request, res: Response
     return res.json({ success: true, business });
   } catch (err) {
     logServerError("platform.updateBusinessSubscriptionTier", err);
+    const { AdminSubscriptionStripeConflictError } = await import(
+      "../lib/subscription/adminSubscriptionPolicy.js"
+    );
+    if (err instanceof AdminSubscriptionStripeConflictError) {
+      return res.status(409).json({ message: err.message, code: err.code });
+    }
     return res.status(400).json({
       message: clientSafeMessage(err, "We couldn't update the subscription tier. Try again."),
     });

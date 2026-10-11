@@ -30,59 +30,25 @@ function VerificationAccessPanel({
 
   if (phase === "in_review") {
     return (
-      <section
+      <div
         className={cn(
-          "relative mx-auto w-full max-w-2xl overflow-hidden rounded-[1.75rem] border border-amber-200/80 bg-gradient-to-br from-amber-50/90 via-card to-orange-50/40 p-8 text-center shadow-[0_10px_36px_-14px_rgba(217,119,6,0.18)] sm:p-10 dark:border-amber-800/40 dark:from-amber-950/35 dark:to-stone-950/20",
+          "flex w-full min-w-0 flex-col gap-2 rounded-lg border border-amber-200/70 bg-amber-50/50 px-3 py-2.5 text-sm sm:flex-row sm:items-start sm:gap-2.5 dark:border-amber-800/40 dark:bg-amber-950/25",
           className,
         )}
-        aria-labelledby="qr-studio-access-verification-title"
+        role="status"
+        aria-live="polite"
       >
-        <div className="relative mx-auto flex h-16 w-16 items-center justify-center" aria-hidden>
-          <span className="absolute inset-0 animate-pulse rounded-full bg-amber-400/15" />
-          <span className="absolute inset-2 rounded-full border border-amber-300/40 bg-amber-100/50 dark:border-amber-700/40 dark:bg-amber-950/40" />
-          <Clock className="relative h-8 w-8 text-amber-600 dark:text-amber-400" />
-        </div>
-
-        <span className="mt-5 inline-flex items-center gap-2 rounded-full border border-amber-300/60 bg-amber-100/80 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-amber-900 dark:border-amber-700/50 dark:bg-amber-950/50 dark:text-amber-100">
-          <span className="h-2 w-2 shrink-0 rounded-full bg-amber-500" aria-hidden />
-          {t("business.qrStudio.access.verificationInReviewBadge")}
-        </span>
-
-        <h2
-          id="qr-studio-access-verification-title"
-          className="mt-4 text-xl font-semibold tracking-tight text-foreground sm:text-2xl"
-        >
-          {t("business.qrStudio.access.verificationInReviewTitle")}
-        </h2>
-        <p className="mx-auto mt-3 max-w-lg text-sm leading-relaxed text-muted-foreground">
+        <Clock className="mt-0.5 h-4 w-4 shrink-0 text-amber-700 dark:text-amber-400" aria-hidden />
+        <p className="min-w-0 flex-1 leading-snug text-foreground/90">
           {t("business.qrStudio.access.verificationInReviewBody")}
         </p>
-        <p className="mx-auto mt-2 max-w-lg text-sm leading-relaxed text-muted-foreground/90">
-          {t("business.qrStudio.access.verificationInReviewLimitedAccess")}
-        </p>
-
-        <div className="mt-6">
-          <Button
-            asChild
-            className="min-h-11 border-amber-600/20 bg-amber-600 px-6 text-white hover:bg-amber-600/90"
-          >
-            <Link to={ONBOARDING_STATUS_PATH}>
-              {t("business.qrStudio.access.viewVerificationStatus")}
-            </Link>
-          </Button>
-        </div>
-
-        <p className="mx-auto mt-4 max-w-md text-xs leading-relaxed text-muted-foreground">
-          {t("business.qrStudio.access.verificationInReviewSupportBefore")}{" "}
-          <Link
-            to="/dashboard/support"
-            className="font-medium text-foreground underline underline-offset-2 hover:text-amber-800 dark:hover:text-amber-200"
-          >
-            {t("business.qrStudio.access.verificationInReviewSupportLink")}
-          </Link>{" "}
-          {t("business.qrStudio.access.verificationInReviewSupportAfter")}
-        </p>
-      </section>
+        <Link
+          to={ONBOARDING_STATUS_PATH}
+          className="shrink-0 text-xs font-semibold text-amber-900 underline underline-offset-2 hover:text-amber-950 dark:text-amber-200 dark:hover:text-amber-100"
+        >
+          {t("business.qrStudio.access.viewVerificationStatus")}
+        </Link>
+      </div>
     );
   }
 

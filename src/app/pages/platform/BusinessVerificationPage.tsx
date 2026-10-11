@@ -606,19 +606,31 @@ function BusinessVerificationQueuePage({ workflow }: { workflow: BusinessVerific
           )
         }
         desktop={
-          <table className={platformUi.table}>
-            <thead>
-              <tr className={platformUi.tableHeadRow}>
-                <th className={platformUi.tableTh}>{t("admin.businessVerificationPage.colBusiness")}</th>
-                <th className={platformUi.tableTh}>{t("admin.businessVerificationPage.colOwner")}</th>
-                <th className={platformUi.tableTh}>{t("admin.businessVerificationPage.colContact")}</th>
-                <th className={platformUi.tableTh}>{t("admin.businessVerificationPage.colLiveTips")}</th>
-                <th className={platformUi.tableTh}>{t("admin.businessVerificationPage.colStatus")}</th>
-                {isKyc ? <th className={platformUi.tableTh}>{t("admin.businessVerificationPage.colFiles")}</th> : null}
-                <th className={`${platformUi.tableTh} text-right`}>{t("admin.businessVerificationPage.colActions")}</th>
-              </tr>
-            </thead>
-            <tbody>
+          <div className="min-w-0 w-full overflow-x-auto">
+            <table className={`${platformUi.table} min-w-[56rem] table-fixed`}>
+              <colgroup>
+                <col className="w-[19%]" />
+                <col className="w-[17%]" />
+                <col className="w-[17%]" />
+                <col className="w-[13%]" />
+                <col className="w-[13%]" />
+                {isKyc ? <col className="w-[11%]" /> : null}
+                <col className={isKyc ? "w-[10%]" : "w-[21%]"} />
+              </colgroup>
+              <thead>
+                <tr className={platformUi.tableHeadRow}>
+                  <th className={platformUi.tableTh}>{t("admin.businessVerificationPage.colBusiness")}</th>
+                  <th className={platformUi.tableTh}>{t("admin.businessVerificationPage.colOwner")}</th>
+                  <th className={platformUi.tableTh}>{t("admin.businessVerificationPage.colContact")}</th>
+                  <th className={platformUi.tableTh}>{t("admin.businessVerificationPage.colLiveTips")}</th>
+                  <th className={platformUi.tableTh}>{t("admin.businessVerificationPage.colStatus")}</th>
+                  {isKyc ? <th className={platformUi.tableTh}>{t("admin.businessVerificationPage.colFiles")}</th> : null}
+                  <th className={`${platformUi.tableTh} text-right`}>
+                    {t("admin.businessVerificationPage.colActions")}
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
               {showTableLoading ? (
                 <PlatformAdminTableSkeleton rows={8} cols={tableColCount} />
               ) : loadError ? (
@@ -657,32 +669,44 @@ function BusinessVerificationQueuePage({ workflow }: { workflow: BusinessVerific
               ) : (
                 rows.map((b) => (
                   <tr key={b.id} className={platformUi.tableRow}>
-                    <td className={platformUi.tableTd}>
-                      <div className="flex items-center gap-2">
-                        <Building2 className="h-4 w-4 shrink-0 text-muted-foreground" />
-                        <div>
-                          <div className="font-medium text-foreground">{b.name}</div>
-                          <div className="font-mono text-xs text-muted-foreground">{b.slug}</div>
+                    <td className={`${platformUi.tableTd} align-top py-3`}>
+                      <div className="flex min-w-0 items-start gap-2">
+                        <Building2 className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
+                        <div className="min-w-0">
+                          <div className="break-words font-medium text-foreground">{b.name}</div>
+                          <div className="mt-0.5 break-all font-mono text-xs text-muted-foreground" title={b.slug}>
+                            {b.slug}
+                          </div>
                         </div>
                       </div>
                     </td>
-                    <td className={`${platformUi.tableTd} text-xs`}>{b.ownerEmail}</td>
-                    <td className={`${platformUi.tableTd} max-w-[160px] text-xs`}>
-                      <div>{b.contactEmail ?? t("format.notAvailable")}</div>
-                      <div className="text-muted-foreground">{b.contactPhone ?? ""}</div>
+                    <td className={`${platformUi.tableTd} align-top py-3 text-xs`}>
+                      <span className="block min-w-0 break-all text-foreground" title={b.ownerEmail ?? undefined}>
+                        {b.ownerEmail}
+                      </span>
                     </td>
-                    <td className={`${platformUi.tableTd} whitespace-nowrap text-xs`}>
-                      <div className="font-medium">{formatEur(b.totalTipsEur ?? 0)}</div>
-                      <div className="text-muted-foreground">
+                    <td className={`${platformUi.tableTd} align-top py-3 text-xs`}>
+                      <div className="min-w-0 break-all text-foreground" title={b.contactEmail ?? undefined}>
+                        {b.contactEmail ?? t("format.notAvailable")}
+                      </div>
+                      {b.contactPhone ? (
+                        <div className="mt-0.5 break-all text-muted-foreground" title={b.contactPhone}>
+                          {b.contactPhone}
+                        </div>
+                      ) : null}
+                    </td>
+                    <td className={`${platformUi.tableTd} align-top py-3 text-xs`}>
+                      <div className="font-medium tabular-nums">{formatEur(b.totalTipsEur ?? 0)}</div>
+                      <div className="mt-0.5 text-muted-foreground">
                         {t("admin.businessVerificationPage.tipsStaffSummary", {
                           tips: b.successTipCount ?? 0,
                           staff: b.staffCount ?? 0,
                         })}
                       </div>
                     </td>
-                    <td className={platformUi.tableTd}>{renderWorkflowStatus(b)}</td>
+                    <td className={`${platformUi.tableTd} align-top py-3`}>{renderWorkflowStatus(b)}</td>
                     {isKyc ? (
-                    <td className={`${platformUi.tableTd} space-y-1 text-xs`}>
+                    <td className={`${platformUi.tableTd} space-y-1 py-3 text-xs align-top`}>
                       {b.logoPath ? (
                         <button
                           type="button"
@@ -725,8 +749,8 @@ function BusinessVerificationQueuePage({ workflow }: { workflow: BusinessVerific
                       ))}
                     </td>
                     ) : null}
-                    <td className={`${platformUi.tableTd} text-right`}>
-                      <div className="flex flex-wrap items-center justify-end gap-2">
+                    <td className={`${platformUi.tableTd} align-top py-3 text-right`}>
+                      <div className="flex min-w-[10.5rem] flex-col items-stretch gap-1.5 sm:items-end lg:min-w-0 lg:flex-row lg:flex-wrap lg:justify-end lg:gap-2">
                         <Link
                           to={`/platform-admin/businesses/${b.id}`}
                           className="text-xs text-accent hover:underline"
@@ -779,8 +803,9 @@ function BusinessVerificationQueuePage({ workflow }: { workflow: BusinessVerific
                   </tr>
                 ))
               )}
-            </tbody>
-          </table>
+              </tbody>
+            </table>
+          </div>
         }
       />
 

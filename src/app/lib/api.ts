@@ -1736,7 +1736,7 @@ export interface BusinessInfo {
   kycVerificationStatus?: KycVerificationStatus;
   /** SaaS tier for entitlement UI; manager profile only. Null when no subscription. */
   subscriptionTier?: "basic" | "premium" | "enterprise" | null;
-  subscriptionStatus?: "none" | "trialing" | "active" | "past_due" | "canceled" | "unpaid" | "incomplete";
+  subscriptionStatus?: "none" | "trialing" | "active" | "past_due" | "canceled" | "unpaid" | "incomplete" | "paused";
   hasActiveSubscription?: boolean;
   accessSource?: "none" | "subscription" | "sponsored";
   sponsoredProgrammeKey?: string | null;
@@ -2804,7 +2804,7 @@ export interface EmployeeSelfProfile {
   businessTimezone?: string;
   /** Venue SaaS tier for entitlement UI. Null when no subscription. */
   subscriptionTier?: "basic" | "premium" | "enterprise" | null;
-  subscriptionStatus?: "none" | "trialing" | "active" | "past_due" | "canceled" | "unpaid" | "incomplete";
+  subscriptionStatus?: "none" | "trialing" | "active" | "past_due" | "canceled" | "unpaid" | "incomplete" | "paused";
   hasActiveSubscription?: boolean;
   accessSource?: "none" | "subscription" | "sponsored";
   sponsoredProgrammeKey?: string | null;
@@ -6330,6 +6330,7 @@ export type ScheduledPayoutOpsListItem = {
   claimActive: boolean;
   claimStale: boolean;
   manualInterventionRequired: boolean;
+  payoutMethod: "instant" | "standard" | "unknown";
   createdAt: string;
   updatedAt: string;
 };
@@ -6391,6 +6392,7 @@ export async function fetchScheduledPayoutOpsList(params: {
   status?: string;
   reconciliationStatus?: string;
   manualOnly?: boolean;
+  method?: "instant" | "standard" | "unknown";
 }): Promise<{ total: number; items: ScheduledPayoutOpsListItem[] }> {
   const sp = new URLSearchParams();
   if (params.take != null) sp.set("take", String(params.take));
@@ -6401,6 +6403,7 @@ export async function fetchScheduledPayoutOpsList(params: {
   if (params.status) sp.set("status", params.status);
   if (params.reconciliationStatus) sp.set("reconciliationStatus", params.reconciliationStatus);
   if (params.manualOnly) sp.set("manualOnly", "true");
+  if (params.method) sp.set("method", params.method);
   const qs = sp.toString();
   return apiRequest(apiPath(`/api/platform/scheduled-payout-operations${qs ? `?${qs}` : ""}`), {
     headers: getHeaders(),

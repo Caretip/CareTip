@@ -122,8 +122,11 @@ function testNavigationBoundaries(): boolean {
     fail("legacy /dashboard/billing/payouts must redirect to Stripe payouts");
     ok = false;
   }
-  if (!routes.includes("revenue/connect-payouts") || !routes.includes("PlatformConnectPayoutsPage")) {
-    fail("admin connect-payouts route missing");
+  if (
+    !routes.includes("revenue/connect-payouts") ||
+    !routes.includes('Navigate to="/platform-admin/revenue/scheduled-payout-operations"')
+  ) {
+    fail("admin connect-payouts must redirect to scheduled payout operations");
     ok = false;
   }
   const billingPanel = read("src/app/components/business/settings/BusinessSettingsBillingPanel.tsx");

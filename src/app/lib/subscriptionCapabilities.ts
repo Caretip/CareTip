@@ -9,7 +9,8 @@ export type SubscriptionLifecycleStatus =
   | "past_due"
   | "canceled"
   | "unpaid"
-  | "incomplete";
+  | "incomplete"
+  | "paused";
 
 export type SubscriptionCapability =
   | "employeeQr"

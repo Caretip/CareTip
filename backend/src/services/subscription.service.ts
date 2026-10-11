@@ -22,6 +22,7 @@ import {
 import { prisma } from "../prisma.js";
 import { isSubscriptionMirrorEntitled } from "../lib/subscription/subscriptionMirrorEntitlement.js";
 import { logTrialSync } from "../lib/subscription/trialSyncDebugLog.js";
+import { isPrismaUniqueViolationOnStripeEventId } from "../lib/prismaUniqueViolation.js";
 
 type DbClient = Prisma.TransactionClient | typeof prisma;
 
@@ -265,6 +266,7 @@ export type DowngradeToInternalBasicParams = {
   auditPayload?: Record<string, unknown>;
   reason?: string;
   tx?: Prisma.TransactionClient;
+  billingWebhookClaimToken?: string | null;
 };
 
 /**
@@ -332,12 +334,36 @@ export async function downgradeToInternalBasic(
         trialSource: existing.trialSource,
       }),
     });
-    await tx.subscriptionEvent.create({
-      data: {
-        subscriptionId: params.subscriptionRowId,
-        ...eventData,
-      },
-    });
+    if (params.billingWebhookClaimToken && params.stripeEventId) {
+      const finalized = await tx.subscriptionEvent.updateMany({
+        where: {
+          stripeEventId: params.stripeEventId,
+          processingClaimToken: params.billingWebhookClaimToken,
+          processingResult: SubscriptionEventProcessingResult.processing,
+        },
+        data: {
+          subscriptionId: params.subscriptionRowId,
+          auditType: eventData.auditType,
+          type: eventData.type,
+          processingResult: SubscriptionEventProcessingResult.processed,
+          processingClaimToken: null,
+          processingClaimExpiresAt: null,
+          processingError: null,
+          payload: eventData.payload as Prisma.InputJsonValue,
+          processedAt: now,
+        },
+      });
+      if (finalized.count !== 1) {
+        throw new Error("Billing webhook claim was not finalized during downgrade");
+      }
+    } else {
+      await tx.subscriptionEvent.create({
+        data: {
+          subscriptionId: params.subscriptionRowId,
+          ...eventData,
+        },
+      });
+    }
   };
 
   if (params.tx) {
@@ -571,6 +597,8 @@ export async function applyStripeMirrorTransactional(params: {
   auditType: SubscriptionAuditType;
   stripeEventId: string;
   auditPayload: Record<string, unknown>;
+  /** When set, finalizes the in-flight billing webhook claim row instead of creating a new event. */
+  billingWebhookClaimToken?: string | null;
 }): Promise<void> {
   const tierUpdate = resolveBusinessTierDualWrite(params.snapshot);
 
@@ -607,6 +635,32 @@ export async function applyStripeMirrorTransactional(params: {
 
   const isTrial = params.snapshot.status === SubscriptionStatus.trialing;
 
+  const eventWrite: Prisma.PrismaPromise<unknown> = params.billingWebhookClaimToken
+    ? prisma.subscriptionEvent.updateMany({
+        where: {
+          stripeEventId: params.stripeEventId,
+          processingClaimToken: params.billingWebhookClaimToken,
+          processingResult: SubscriptionEventProcessingResult.processing,
+        },
+        data: {
+          subscriptionId: params.subscriptionRowId,
+          auditType: params.auditType,
+          type: params.auditType,
+          processingResult: SubscriptionEventProcessingResult.processed,
+          processingClaimToken: null,
+          processingClaimExpiresAt: null,
+          processingError: null,
+          payload: eventData.payload as Prisma.InputJsonValue,
+          processedAt: new Date(),
+        },
+      })
+    : prisma.subscriptionEvent.create({
+        data: {
+          subscriptionId: params.subscriptionRowId,
+          ...eventData,
+        },
+      });
+
   const updates: Prisma.PrismaPromise<unknown>[] = [
     prisma.subscription.update({
       where: { id: params.subscriptionRowId },
@@ -630,12 +684,7 @@ export async function applyStripeMirrorTransactional(params: {
         trialExpiredAt,
       },
     }),
-    prisma.subscriptionEvent.create({
-      data: {
-        subscriptionId: params.subscriptionRowId,
-        ...eventData,
-      },
-    }),
+    eventWrite,
   ];
 
   if (tierUpdate !== undefined) {
@@ -659,7 +708,31 @@ export async function applyStripeMirrorTransactional(params: {
     );
   }
 
-  await prisma.$transaction(updates);
+  try {
+    await prisma.$transaction(updates);
+  } catch (err) {
+    if (!params.billingWebhookClaimToken && isPrismaUniqueViolationOnStripeEventId(err)) {
+      logTrialSync("mirror.apply_transaction.duplicate_stripe_event", {
+        businessId: params.businessId,
+        subscriptionRowId: params.subscriptionRowId,
+        stripeEventId: params.stripeEventId,
+      });
+      return;
+    }
+    throw err;
+  }
+
+  if (params.billingWebhookClaimToken) {
+    const owned = await prisma.subscriptionEvent.count({
+      where: {
+        stripeEventId: params.stripeEventId,
+        processingResult: SubscriptionEventProcessingResult.processed,
+      },
+    });
+    if (owned !== 1) {
+      throw new Error("Billing webhook claim was not finalized to processed");
+    }
+  }
 
   logTrialSync("mirror.apply_transaction.done", {
     businessId: params.businessId,
@@ -745,6 +818,7 @@ export async function createInitialSubscriptionMirrorFromStripe(params: {
   auditType: SubscriptionAuditType;
   stripeEventId: string;
   auditPayload: Record<string, unknown>;
+  billingWebhookClaimToken?: string | null;
 }): Promise<{ id: string; businessId: string }> {
   const tierUpdate = resolveBusinessTierDualWrite(params.snapshot);
   const eventData = createSubscriptionAuditEventData({
@@ -794,12 +868,36 @@ export async function createInitialSubscriptionMirrorFromStripe(params: {
       select: { id: true },
     });
 
-    await tx.subscriptionEvent.create({
-      data: {
-        subscriptionId: row.id,
-        ...eventData,
-      },
-    });
+    if (params.billingWebhookClaimToken) {
+      const finalized = await tx.subscriptionEvent.updateMany({
+        where: {
+          stripeEventId: params.stripeEventId,
+          processingClaimToken: params.billingWebhookClaimToken,
+          processingResult: SubscriptionEventProcessingResult.processing,
+        },
+        data: {
+          subscriptionId: row.id,
+          auditType: params.auditType,
+          type: params.auditType,
+          processingResult: SubscriptionEventProcessingResult.processed,
+          processingClaimToken: null,
+          processingClaimExpiresAt: null,
+          processingError: null,
+          payload: eventData.payload as Prisma.InputJsonValue,
+          processedAt: new Date(),
+        },
+      });
+      if (finalized.count !== 1) {
+        throw new Error("Billing webhook claim was not finalized on initial mirror create");
+      }
+    } else {
+      await tx.subscriptionEvent.create({
+        data: {
+          subscriptionId: row.id,
+          ...eventData,
+        },
+      });
+    }
 
     if (tierUpdate !== undefined) {
       await tx.business.update({
@@ -832,6 +930,7 @@ export async function ensureInitialSubscriptionMirrorFromStripe(params: {
   auditType: SubscriptionAuditType;
   stripeEventId: string;
   auditPayload: Record<string, unknown>;
+  billingWebhookClaimToken?: string | null;
 }): Promise<{ id: string; businessId: string; created: boolean }> {
   const byBusiness = await prisma.subscription.findUnique({
     where: { businessId: params.businessId },

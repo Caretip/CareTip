@@ -270,4 +270,40 @@ router.post("/employee-stripe-inactivity-tick", async (req, res) => {
   return res.json({ ok: true, ...result });
 });
 
+/**
+ * POST /api/internal/jobs/subscription-billing-reconciliation
+ * SUB-008 — Stripe ↔ mirror drift detection + bounded safe repair (no Stripe mutations).
+ */
+router.post("/subscription-billing-reconciliation", async (req, res) => {
+  if (!authorizeCronRequest(req)) {
+    return res.status(401).json({ message: "Unauthorized" });
+  }
+  try {
+    const { runSubscriptionBillingReconciliation } = await import(
+      "../services/subscriptionBillingReconciliation.service.js"
+    );
+    const result = await runSubscriptionBillingReconciliation();
+    return res.json({ ok: true, ...result });
+  } catch (err) {
+    const { logServerError } = await import("../utils/httpErrors.js");
+    logServerError("internalJobs.subscription-billing-reconciliation", err);
+    return res.status(500).json({ ok: false, message: "Subscription billing reconciliation failed" });
+  }
+});
+
+/**
+ * POST /api/internal/jobs/subscription-billing-notification-retry
+ * SUB-004 — retry pending/failed payment-failure emails (mocked in tests).
+ */
+router.post("/subscription-billing-notification-retry", async (req, res) => {
+  if (!authorizeCronRequest(req)) {
+    return res.status(401).json({ message: "Unauthorized" });
+  }
+  const { retrySubscriptionBillingNotifications } = await import(
+    "../services/subscriptionPaymentFailedNotification.service.js"
+  );
+  const result = await retrySubscriptionBillingNotifications();
+  return res.json({ ok: true, ...result });
+});
+
 export default router;

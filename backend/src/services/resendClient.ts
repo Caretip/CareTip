@@ -118,7 +118,22 @@ function normalizeReplyToAddresses(replyTo: string | string[] | undefined): stri
  * Sends one message via Resend. Does not throw on failure — logs and returns success flag.
  * Callers keep token logic separate; this only posts to Resend.
  */
+let sendResendEmailFnForTests:
+  | ((logTag: string, payload: ResendMailPayload) => Promise<boolean>)
+  | null = null;
+
+/** Test seam — mocked Resend delivery (Sprint 2 billing notifications). */
+export function __setSendResendEmailFnForTests(
+  fn: ((logTag: string, payload: ResendMailPayload) => Promise<boolean>) | null,
+): void {
+  sendResendEmailFnForTests = fn;
+}
+
 export async function sendResendEmail(logTag: string, payload: ResendMailPayload): Promise<boolean> {
+  if (sendResendEmailFnForTests) {
+    return sendResendEmailFnForTests(logTag, payload);
+  }
+
   const resendKey = getResendApiKey();
   const from = payload.from || getResendFromAddress();
 

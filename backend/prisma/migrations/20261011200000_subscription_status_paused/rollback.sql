@@ -1,0 +1,3 @@
+-- PostgreSQL cannot remove enum values safely in-place.
+-- Rollback: restore prior mapStripeSubscriptionStatus behavior and omit `paused` from application code.
+-- Existing rows with status `paused` must be migrated to another status before downgrade.

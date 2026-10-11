@@ -42,8 +42,13 @@ import { getStripeClient, isStripeConfigured } from "./stripe.service.js";
 import { paginateMergedActivityRows } from "./platformConnectActivityMerge.js";
 import { scheduledPayoutRuntimeTestHooksEnabled } from "../lib/scheduledPayoutRuntimeTestHooks.js";
 import { writeAuditLog, writeAuditLogStrict } from "./audit.service.js";
+import {
+  normalizeConnectPayoutMethod,
+  type ConnectPayoutMethodKind,
+} from "../lib/connectPayoutMethod.util.js";
 
 export type ScheduledPayoutOpsType = "employee" | "business";
+export type ScheduledPayoutOpsPayoutMethod = ConnectPayoutMethodKind;
 
 export type ScheduledPayoutOpsAction =
   | "reconcile"
@@ -74,6 +79,8 @@ export type ScheduledPayoutOpsListItemDto = {
   claimActive: boolean;
   claimStale: boolean;
   manualInterventionRequired: boolean;
+  /** Stripe payout speed from mirrored Connect payout (`instant` | `standard`), else `unknown`. */
+  payoutMethod: ScheduledPayoutOpsPayoutMethod;
   createdAt: string;
   updatedAt: string;
 };
@@ -364,6 +371,95 @@ async function loadContextMaps(ids: { employeeIds: string[]; businessIds: string
   return { empMap, bizMap, acctMap };
 }
 
+export async function loadConnectPayoutMethodsByStripePayoutIds(
+  stripePayoutIds: string[],
+): Promise<Map<string, ConnectPayoutMethodKind>> {
+  const ids = [...new Set(stripePayoutIds.map((id) => id.trim()).filter((id) => id.startsWith("po_")))];
+  const out = new Map<string, ConnectPayoutMethodKind>();
+  if (!ids.length) return out;
+  const [businessRows, employeeRows] = await Promise.all([
+    prisma.stripeConnectPayout.findMany({
+      where: { stripePayoutId: { in: ids } },
+      select: { stripePayoutId: true, method: true },
+    }),
+    prisma.employeeStripePayout.findMany({
+      where: { stripePayoutId: { in: ids } },
+      select: { stripePayoutId: true, method: true },
+    }),
+  ]);
+  for (const row of [...businessRows, ...employeeRows]) {
+    out.set(row.stripePayoutId, normalizeConnectPayoutMethod(row.method));
+  }
+  return out;
+}
+
+function payoutMethodForLedgerRow(
+  stripePayoutId: string | null | undefined,
+  methodByStripeId: Map<string, ConnectPayoutMethodKind>,
+): ConnectPayoutMethodKind {
+  const id = stripePayoutId?.trim();
+  if (!id?.startsWith("po_")) return "unknown";
+  return methodByStripeId.get(id) ?? "unknown";
+}
+
+type MethodListFilter = {
+  restrictToStripePayoutIds?: string[];
+  unknownOr?: Array<
+    { stripePayoutId: null } | { stripePayoutId: { in: string[] } }
+  >;
+};
+
+async function buildMethodListFilter(
+  method?: ConnectPayoutMethodKind,
+): Promise<MethodListFilter | undefined> {
+  if (!method) return undefined;
+  if (method === "instant" || method === "standard") {
+    const [businessRows, employeeRows] = await Promise.all([
+      prisma.stripeConnectPayout.findMany({
+        where: { method },
+        select: { stripePayoutId: true },
+      }),
+      prisma.employeeStripePayout.findMany({
+        where: { method },
+        select: { stripePayoutId: true },
+      }),
+    ]);
+    const restrictToStripePayoutIds = [
+      ...new Set([...businessRows, ...employeeRows].map((r) => r.stripePayoutId)),
+    ];
+    return { restrictToStripePayoutIds };
+  }
+  const [businessRows, employeeRows] = await Promise.all([
+    prisma.stripeConnectPayout.findMany({
+      where: { OR: [{ method: null }, { method: "" }] },
+      select: { stripePayoutId: true },
+    }),
+    prisma.employeeStripePayout.findMany({
+      where: { OR: [{ method: null }, { method: "" }] },
+      select: { stripePayoutId: true },
+    }),
+  ]);
+  const nullMethodIds = [...new Set([...businessRows, ...employeeRows].map((r) => r.stripePayoutId))];
+  const unknownOr: MethodListFilter["unknownOr"] = [{ stripePayoutId: null }];
+  if (nullMethodIds.length) {
+    unknownOr.push({ stripePayoutId: { in: nullMethodIds } });
+  }
+  return { unknownOr };
+}
+
+function appendWhereAnd<T extends { AND?: Prisma.EmployeeStripeScheduledPayoutRequestWhereInput | Prisma.EmployeeStripeScheduledPayoutRequestWhereInput[] }>(
+  where: T,
+  clause: Prisma.EmployeeStripeScheduledPayoutRequestWhereInput | undefined,
+): T {
+  if (!clause) return where;
+  const existing = where.AND
+    ? Array.isArray(where.AND)
+      ? where.AND
+      : [where.AND]
+    : [];
+  return { ...where, AND: [...existing, clause] };
+}
+
 function mapListItem(
   payoutType: ScheduledPayoutOpsType,
   row: {
@@ -391,6 +487,7 @@ function mapListItem(
     businessName: string;
     employeeName: string | null;
     stripeAccountId: string | null;
+    payoutMethod: ConnectPayoutMethodKind;
   },
 ): ScheduledPayoutOpsListItemDto {
   const snapshot = ledgerSnapshotForRow(payoutType, row as never);
@@ -417,13 +514,14 @@ function mapListItem(
     claimActive: claim.claimActive,
     claimStale: claim.claimStale,
     manualInterventionRequired: deriveManualInterventionRequired(row, snapshot),
+    payoutMethod: ctx.payoutMethod,
     createdAt: row.createdAt.toISOString(),
     updatedAt: row.updatedAt.toISOString(),
   };
 }
 
 function buildEmployeeWhere(args: ListArgs): Prisma.EmployeeStripeScheduledPayoutRequestWhereInput {
-  const where: Prisma.EmployeeStripeScheduledPayoutRequestWhereInput = {};
+  let where: Prisma.EmployeeStripeScheduledPayoutRequestWhereInput = {};
   if (args.businessId) {
     where.employeeStripeAccount = { employee: { businessId: args.businessId } };
   }
@@ -464,11 +562,17 @@ function buildEmployeeWhere(args: ListArgs): Prisma.EmployeeStripeScheduledPayou
       },
     ];
   }
+  if (args.methodFilter?.restrictToStripePayoutIds) {
+    where.stripePayoutId = { in: args.methodFilter.restrictToStripePayoutIds };
+  }
+  if (args.methodFilter?.unknownOr?.length) {
+    where = appendWhereAnd(where, { OR: args.methodFilter.unknownOr });
+  }
   return where;
 }
 
 function buildBusinessWhere(args: ListArgs): Prisma.StripeConnectScheduledPayoutRequestWhereInput {
-  const where: Prisma.StripeConnectScheduledPayoutRequestWhereInput = {};
+  let where: Prisma.StripeConnectScheduledPayoutRequestWhereInput = {};
   if (args.businessId) where.businessId = args.businessId;
   if (args.status) where.status = args.status;
   if (args.reconciliationStatus) where.reconciliationStatus = args.reconciliationStatus;
@@ -498,6 +602,17 @@ function buildBusinessWhere(args: ListArgs): Prisma.StripeConnectScheduledPayout
       { business: { name: { contains: q, mode: "insensitive" } } },
     ];
   }
+  if (args.methodFilter?.restrictToStripePayoutIds) {
+    where.stripePayoutId = { in: args.methodFilter.restrictToStripePayoutIds };
+  }
+  if (args.methodFilter?.unknownOr?.length) {
+    const existing = where.AND
+      ? Array.isArray(where.AND)
+        ? where.AND
+        : [where.AND]
+      : [];
+    where = { ...where, AND: [...existing, { OR: args.methodFilter.unknownOr }] };
+  }
   return where;
 }
 
@@ -514,6 +629,8 @@ type ListArgs = {
   manualOnly?: boolean;
   updatedFrom?: Date;
   updatedTo?: Date;
+  method?: ConnectPayoutMethodKind;
+  methodFilter?: MethodListFilter;
 };
 
 export async function getScheduledPayoutOpsSummary(): Promise<ScheduledPayoutOpsSummaryDto> {
@@ -673,21 +790,24 @@ export async function getScheduledPayoutOpsSummary(): Promise<ScheduledPayoutOps
 export async function listScheduledPayoutOps(
   args: ListArgs,
 ): Promise<{ total: number; items: ScheduledPayoutOpsListItemDto[] }> {
+  const methodFilter = args.method ? await buildMethodListFilter(args.method) : undefined;
+  const listArgs: ListArgs = methodFilter ? { ...args, methodFilter } : args;
+
   const streams: ScheduledPayoutOpsType[] =
-    args.payoutType === "employee"
+    listArgs.payoutType === "employee"
       ? ["employee"]
-      : args.payoutType === "business"
+      : listArgs.payoutType === "business"
         ? ["business"]
         : ["employee", "business"];
 
   const { total, page } = await paginateMergedActivityRows({
     streams: streams as ("business" | "employee" | "transfer")[],
-    skip: args.skip,
-    take: args.take,
+    skip: listArgs.skip,
+    take: listArgs.take,
     fetchChunk: async (stream, offset, limit) => {
       if (stream === "employee") {
         const rows = await prisma.employeeStripeScheduledPayoutRequest.findMany({
-          where: buildEmployeeWhere(args),
+          where: buildEmployeeWhere(listArgs),
           orderBy: [{ updatedAt: "desc" }, { id: "desc" }],
           skip: offset,
           take: limit,
@@ -702,7 +822,7 @@ export async function listScheduledPayoutOps(
       }
       if (stream === "business") {
         const rows = await prisma.stripeConnectScheduledPayoutRequest.findMany({
-          where: buildBusinessWhere(args),
+          where: buildBusinessWhere(listArgs),
           orderBy: [{ updatedAt: "desc" }, { id: "desc" }],
           skip: offset,
           take: limit,
@@ -719,10 +839,10 @@ export async function listScheduledPayoutOps(
     },
     countStream: async (stream) => {
       if (stream === "employee") {
-        return prisma.employeeStripeScheduledPayoutRequest.count({ where: buildEmployeeWhere(args) });
+        return prisma.employeeStripeScheduledPayoutRequest.count({ where: buildEmployeeWhere(listArgs) });
       }
       if (stream === "business") {
-        return prisma.stripeConnectScheduledPayoutRequest.count({ where: buildBusinessWhere(args) });
+        return prisma.stripeConnectScheduledPayoutRequest.count({ where: buildBusinessWhere(listArgs) });
       }
       return 0;
     },
@@ -755,6 +875,11 @@ export async function listScheduledPayoutOps(
     businessIds: [...new Set([...bizRows.map((r) => r.businessId), ...businessIdsFromEmp])],
   });
 
+  const methodByStripeId = await loadConnectPayoutMethodsByStripePayoutIds([
+    ...empRows.map((r) => r.stripePayoutId ?? ""),
+    ...bizRows.map((r) => r.stripePayoutId ?? ""),
+  ]);
+
   const items: ScheduledPayoutOpsListItemDto[] = [];
   for (const slot of page) {
     if (slot.stream === "employee") {
@@ -767,6 +892,7 @@ export async function listScheduledPayoutOps(
           businessName: biz?.name ?? emp?.business?.name ?? "—",
           employeeName: emp?.name ?? null,
           stripeAccountId: ctxMaps.acctMap.get(row.employeeId) ?? null,
+          payoutMethod: payoutMethodForLedgerRow(row.stripePayoutId, methodByStripeId),
         }),
       );
     } else if (slot.stream === "business") {
@@ -778,6 +904,7 @@ export async function listScheduledPayoutOps(
           businessName: biz?.name ?? "—",
           employeeName: null,
           stripeAccountId: biz?.stripeAccountId ?? null,
+          payoutMethod: payoutMethodForLedgerRow(row.stripePayoutId, methodByStripeId),
         }),
       );
     }
@@ -865,15 +992,20 @@ export async function getScheduledPayoutOpsDetail(
     processingClaimToken: string | null;
   } & Record<string, unknown>;
   const snapshot = ledgerSnapshotForRow(payoutType, row as never);
+  const stripePayoutId = typeof row.stripePayoutId === "string" ? row.stripePayoutId : null;
+  const methodByStripeId = stripePayoutId
+    ? await loadConnectPayoutMethodsByStripePayoutIds([stripePayoutId])
+    : new Map<string, ConnectPayoutMethodKind>();
   const listBase = mapListItem(payoutType, row as never, {
     businessName: loaded.businessName,
     employeeName: loaded.employeeName,
     stripeAccountId: loaded.stripeAccountId,
+    payoutMethod: payoutMethodForLedgerRow(stripePayoutId, methodByStripeId),
   });
   const claim = claimState(row as never);
   const relatedConnectPayoutAdminPath =
-    row.stripePayoutId?.startsWith("po_")
-      ? `/platform-admin/revenue/connect-payouts?q=${encodeURIComponent(row.stripePayoutId)}`
+    stripePayoutId?.startsWith("po_")
+      ? `/platform-admin/revenue/scheduled-payout-operations?q=${encodeURIComponent(stripePayoutId)}`
       : null;
 
   return {

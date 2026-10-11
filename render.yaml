@@ -28,6 +28,23 @@ services:
         value: /api/internal/jobs/trial-reminders
 
   - type: cron
+    name: caretip-subscription-billing-reconciliation
+    runtime: node
+    rootDir: backend
+    plan: starter
+    buildCommand: "true"
+    startCommand: node scripts/render-category-retention-http.mjs
+    # Daily 05:30 UTC — Stripe ↔ CareTip subscription mirror reconciliation (detection + bounded repair).
+    schedule: "30 5 * * *"
+    envVars:
+      - key: CRON_SECRET
+        sync: false
+      - key: CARE_TIP_API_ORIGIN
+        value: https://caretip.onrender.com
+      - key: CARE_TIP_INTERNAL_JOB_PATH
+        value: /api/internal/jobs/subscription-billing-reconciliation
+
+  - type: cron
     name: caretip-category-retention-sweep
     runtime: node
     rootDir: backend

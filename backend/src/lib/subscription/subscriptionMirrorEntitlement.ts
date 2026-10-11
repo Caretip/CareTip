@@ -10,6 +10,10 @@ export function isSubscriptionMirrorEntitled(sub: {
 }): boolean {
   const now = new Date();
 
+  if (sub.status === SubscriptionStatus.paused) {
+    return false;
+  }
+
   if (
     sub.status === SubscriptionStatus.trialing ||
     sub.status === SubscriptionStatus.active ||

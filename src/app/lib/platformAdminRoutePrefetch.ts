@@ -17,7 +17,10 @@ const SPECS: readonly { prefix: string; loaders: readonly RouteImporter[] }[] = 
   { prefix: "/platform-admin/revenue/successful-subscriptions", loaders: [() => import("../pages/platform/PlatformBusinessSubscriptionsPage")] },
   { prefix: "/platform-admin/revenue/failed-subscriptions", loaders: [() => import("../pages/platform/revenue/PlatformFailedSubscriptionsPage")] },
   { prefix: "/platform-admin/revenue/refunds", loaders: [() => import("../pages/platform/revenue/PlatformRefundsPage")] },
-  { prefix: "/platform-admin/revenue/connect-payouts", loaders: [() => import("../pages/platform/revenue/PlatformConnectPayoutsPage")] },
+  {
+    prefix: "/platform-admin/revenue/scheduled-payout-operations",
+    loaders: [() => import("../pages/platform/revenue/PlatformScheduledPayoutOperationsPage")],
+  },
   { prefix: "/platform-admin/users/management", loaders: [() => import("../pages/platform/PlatformUserManagementPage")] },
   { prefix: "/platform-admin/users/staff", loaders: [() => import("../pages/platform/users/PlatformStaffAccountsPage")] },
   { prefix: "/platform-admin/users/admins", loaders: [() => import("../pages/platform/users/PlatformAdminsPage")] },

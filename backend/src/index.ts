@@ -3,8 +3,10 @@ import "dotenv/config";
 import "./loadEnv.js";
 import { initSentry } from "./instrument/sentry.js";
 import { startShortLivedCacheMaintenance } from "./utils/shortLivedCache.js";
+import { logBillingConfigurationDiagnostics } from "./config/billingConfigurationDiagnostics.js";
 
 initSentry();
+logBillingConfigurationDiagnostics();
 startShortLivedCacheMaintenance();
 
 import { createServer } from "http";

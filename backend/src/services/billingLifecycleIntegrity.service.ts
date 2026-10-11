@@ -8,7 +8,25 @@ import { getStripeClient, isStripeConfigured } from "./stripe.service.js";
 import { isInternalBasicSubscription } from "./subscription.service.js";
 import { logTrialSync } from "../lib/subscription/trialSyncDebugLog.js";
 
-export const STRIPE_BILLING_BLOCK_STATUSES = new Set<string>(["active", "trialing", "past_due"]);
+/** Stripe API `subscription.status` values that mean a live subscription object still exists (checkout/delete guards). */
+export const STRIPE_BILLING_BLOCK_STATUSES = new Set<string>([
+  "active",
+  "trialing",
+  "past_due",
+  "incomplete",
+  "unpaid",
+  "paused",
+]);
+
+/** CareTip mirror statuses that block starting a second self-serve checkout (includes non-entitled `paused`). */
+export const MIRROR_SUBSCRIPTION_CHECKOUT_BLOCK_STATUSES = new Set<SubscriptionStatus>([
+  SubscriptionStatus.active,
+  SubscriptionStatus.trialing,
+  SubscriptionStatus.past_due,
+  SubscriptionStatus.incomplete,
+  SubscriptionStatus.unpaid,
+  SubscriptionStatus.paused,
+]);
 
 export type BillingLinkageSnapshot = {
   businessId: string;
@@ -97,6 +115,102 @@ export async function loadBusinessBillingLinkageSnapshot(
   };
 }
 
+export type OwnedStripeSubscriptionListOutcome =
+  | { kind: "skipped_no_customer" }
+  | { kind: "skipped_stripe_unavailable" }
+  | { kind: "verified_empty" }
+  | { kind: "verified"; subscriptions: ActiveStripeSubscriptionSummary[] }
+  | { kind: "verification_failed" };
+
+type ListStripeSubscriptionsFn = (params: {
+  businessId: string;
+  stripeCustomerId: string;
+}) => Promise<Stripe.Subscription[]>;
+
+let listStripeSubscriptionsForCustomerFn: ListStripeSubscriptionsFn | null = null;
+
+export function __setListStripeSubscriptionsForCustomerForTests(
+  fn: ListStripeSubscriptionsFn | null,
+): void {
+  listStripeSubscriptionsForCustomerFn = fn;
+}
+
+export function __resetListStripeSubscriptionsForCustomerForTests(): void {
+  listStripeSubscriptionsForCustomerFn = null;
+}
+
+function filterOwnedEntitledSubscriptions(
+  businessId: string,
+  listData: Stripe.Subscription[],
+): ActiveStripeSubscriptionSummary[] {
+  return listData
+    .filter((sub) => {
+      const owner = metadataBusinessId(sub.metadata);
+      return !owner || owner === businessId;
+    })
+    .filter((sub) => STRIPE_BILLING_BLOCK_STATUSES.has(sub.status))
+    .map(summarizeStripeSub);
+}
+
+async function fetchStripeSubscriptionsForCustomer(params: {
+  businessId: string;
+  stripeCustomerId: string;
+}): Promise<Stripe.Subscription[]> {
+  if (listStripeSubscriptionsForCustomerFn) {
+    return listStripeSubscriptionsForCustomerFn(params);
+  }
+  const stripe = getStripeClient();
+  const list = await stripe.subscriptions.list({
+    customer: params.stripeCustomerId,
+    status: "all",
+    limit: 20,
+  });
+  return list.data;
+}
+
+/** Checkout guard — fail closed when Stripe cannot be queried. */
+export async function resolveOwnedEntitledStripeSubscriptionsForBusiness(
+  businessId: string,
+  stripeCustomerId: string | null,
+): Promise<OwnedStripeSubscriptionListOutcome> {
+  if (!isSubscriptionBillingEnabled() || !isStripeConfigured()) {
+    return { kind: "skipped_stripe_unavailable" };
+  }
+  if (!stripeCustomerId) {
+    return { kind: "skipped_no_customer" };
+  }
+
+  try {
+    const listData = await fetchStripeSubscriptionsForCustomer({
+      businessId,
+      stripeCustomerId,
+    });
+    const entitled = filterOwnedEntitledSubscriptions(businessId, listData);
+    if (entitled.length === 0) {
+      return { kind: "verified_empty" };
+    }
+    return { kind: "verified", subscriptions: entitled };
+  } catch (err) {
+    logTrialSync("billing_checkout_guard.stripe_list_failed", {
+      businessId,
+      error: err instanceof Error ? err.message : String(err),
+    });
+    return { kind: "verification_failed" };
+  }
+}
+
+/** Delete guard — best-effort list; empty on Stripe errors (conservative block elsewhere). */
+export async function listOwnedEntitledStripeSubscriptionsForBusiness(
+  businessId: string,
+): Promise<ActiveStripeSubscriptionSummary[]> {
+  const snapshot = await loadBusinessBillingLinkageSnapshot(businessId);
+  if (!snapshot) return [];
+  return listOwnedEntitledStripeSubscriptions({
+    businessId,
+    stripeCustomerId: snapshot.stripeCustomerId,
+  });
+}
+
 async function listOwnedEntitledStripeSubscriptions(params: {
   businessId: string;
   stripeCustomerId: string | null;
@@ -108,15 +222,12 @@ async function listOwnedEntitledStripeSubscriptions(params: {
     return [];
   }
 
-  const stripe = getStripeClient();
-  let listData: Stripe.Subscription[] = [];
   try {
-    const list = await stripe.subscriptions.list({
-      customer: params.stripeCustomerId,
-      status: "all",
-      limit: 20,
+    const listData = await fetchStripeSubscriptionsForCustomer({
+      businessId: params.businessId,
+      stripeCustomerId: params.stripeCustomerId,
     });
-    listData = list.data;
+    return filterOwnedEntitledSubscriptions(params.businessId, listData);
   } catch (err) {
     logTrialSync("billing_delete_guard.stripe_list_failed", {
       businessId: params.businessId,
@@ -125,15 +236,24 @@ async function listOwnedEntitledStripeSubscriptions(params: {
     });
     return [];
   }
-
-  return listData
-    .filter((sub) => {
-      const owner = metadataBusinessId(sub.metadata);
-      return !owner || owner === params.businessId;
-    })
-    .filter((sub) => STRIPE_BILLING_BLOCK_STATUSES.has(sub.status))
-    .map(summarizeStripeSub);
 }
+
+/**
+ * Business deletion vs Stripe subscription mirror (Sprint 1.2 policy):
+ * - Mirror with stripeSubscriptionId + entitled status blocks delete (active/trialing/past_due/incomplete/unpaid).
+ * - Internal complimentary Basic (no live Stripe link) does not block via mirror alone.
+ * - canceled / incomplete_expired mirror with stale stripeSubscriptionId: not locally entitled; Stripe list confirms.
+ * - Missing stripeSubscriptionId but stripeCustomerId: Stripe list must succeed (fail closed on verification_failed).
+ * - Stripe `paused` blocks delete (subscription still exists) but does not grant product entitlements.
+ */
+const MIRROR_DELETE_BLOCK_STATUSES = new Set<SubscriptionStatus>([
+  SubscriptionStatus.active,
+  SubscriptionStatus.trialing,
+  SubscriptionStatus.past_due,
+  SubscriptionStatus.incomplete,
+  SubscriptionStatus.unpaid,
+  SubscriptionStatus.paused,
+]);
 
 export async function assessBusinessBillingDeleteGuard(
   businessId: string,
@@ -156,20 +276,40 @@ export async function assessBusinessBillingDeleteGuard(
   }
 
   const localBlocks =
+    Boolean(snapshot.stripeSubscriptionId) &&
+    !snapshot.isInternalBasic &&
     snapshot.status != null &&
-    (snapshot.status === SubscriptionStatus.active ||
-      snapshot.status === SubscriptionStatus.trialing ||
-      snapshot.status === SubscriptionStatus.past_due) &&
-    Boolean(snapshot.stripeSubscriptionId);
+    MIRROR_DELETE_BLOCK_STATUSES.has(snapshot.status);
 
-  const activeStripeSubscriptions = localBlocks
-    ? []
-    : await listOwnedEntitledStripeSubscriptions({
-        businessId,
-        stripeCustomerId: snapshot.stripeCustomerId,
-      });
+  if (localBlocks) {
+    return {
+      blocked: true,
+      reason:
+        "Cannot delete a business while an active Stripe platform subscription exists. Cancel the subscription in billing or use soft-close instead.",
+      snapshot,
+      activeStripeSubscriptions: [],
+    };
+  }
 
-  if (localBlocks || activeStripeSubscriptions.length > 0) {
+  const stripeOutcome = await resolveOwnedEntitledStripeSubscriptionsForBusiness(
+    businessId,
+    snapshot.stripeCustomerId,
+  );
+
+  if (stripeOutcome.kind === "verification_failed") {
+    return {
+      blocked: true,
+      reason:
+        "Cannot delete this business because Stripe subscription status could not be verified. Try again later or contact support.",
+      snapshot,
+      activeStripeSubscriptions: [],
+    };
+  }
+
+  const activeStripeSubscriptions =
+    stripeOutcome.kind === "verified" ? stripeOutcome.subscriptions : [];
+
+  if (activeStripeSubscriptions.length > 0) {
     return {
       blocked: true,
       reason:

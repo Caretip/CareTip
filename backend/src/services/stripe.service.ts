@@ -75,6 +75,7 @@ function getStripe(): Stripe {
 
 type CheckoutSessionsCreateFn = (
   params: Stripe.Checkout.SessionCreateParams,
+  options?: Stripe.RequestOptions,
 ) => Promise<Stripe.Checkout.Session>;
 
 let checkoutSessionsCreateFnForTests: CheckoutSessionsCreateFn | null = null;
@@ -119,11 +120,20 @@ export function __setConnectedAccountRetrieveFnForTests(fn: ConnectedAccountRetr
 
 async function createCheckoutSession(
   params: Stripe.Checkout.SessionCreateParams,
+  options?: Stripe.RequestOptions,
 ): Promise<Stripe.Checkout.Session> {
   if (checkoutSessionsCreateFnForTests) {
-    return checkoutSessionsCreateFnForTests(params);
+    return checkoutSessionsCreateFnForTests(params, options);
   }
-  return getStripe().checkout.sessions.create(params);
+  return getStripe().checkout.sessions.create(params, options);
+}
+
+/** Platform billing checkout — honors __setCheckoutSessionsCreateFnForTests in integration tests. */
+export async function createStripeBillingCheckoutSession(
+  params: Stripe.Checkout.SessionCreateParams,
+  options?: Stripe.RequestOptions,
+): Promise<Stripe.Checkout.Session> {
+  return createCheckoutSession(params, options);
 }
 
 async function retrievePaymentIntentForWebhook(

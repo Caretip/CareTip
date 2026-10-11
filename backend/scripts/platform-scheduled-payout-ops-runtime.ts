@@ -3,6 +3,7 @@
  * Isolated mocks only — no database or live Stripe.
  */
 import { Role } from "@prisma/client";
+import { normalizeConnectPayoutMethod } from "../src/lib/connectPayoutMethod.util.js";
 import { isPlatformAdminPrincipal } from "../src/lib/platformAdminAccess.js";
 import {
   SCHEDULED_PAYOUT_STRIPE_METADATA_CORRELATION_ID,
@@ -49,6 +50,11 @@ function canAccessPlatformAdminWorkspace(user: {
 function assert(condition: unknown, message: string): void {
   if (!condition) throw new Error(message);
 }
+
+assert(normalizeConnectPayoutMethod("instant") === "instant", "method instant");
+assert(normalizeConnectPayoutMethod("STANDARD") === "standard", "method standard case");
+assert(normalizeConnectPayoutMethod(null) === "unknown", "method missing");
+assert(normalizeConnectPayoutMethod("wire") === "unknown", "method unsupported");
 
 assert(
   isPlatformAdminPrincipal({

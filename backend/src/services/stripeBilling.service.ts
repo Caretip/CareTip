@@ -1,6 +1,10 @@
 import Stripe from "stripe";
 import { isSubscriptionBillingEnabled } from "../config/featureFlags.js";
-import { getStripeClient, isStripeConfigured } from "./stripe.service.js";
+import {
+  createStripeBillingCheckoutSession,
+  getStripeClient,
+  isStripeConfigured,
+} from "./stripe.service.js";
 import {
   assertSelfServeCheckoutPlanKey,
 } from "../lib/subscription/billingCheckoutPolicy.js";
@@ -14,6 +18,7 @@ import {
   SUBSCRIPTION_TRIAL_PERIOD_DAYS,
 } from "../config/subscriptionTrial.js";
 import { resolveCheckoutFrontendBaseUrl } from "../config/frontendUrl.js";
+import { assertSelfServeBillingCheckoutAllowed } from "./billingCheckoutGuard.service.js";
 
 export type SubscriptionCheckoutFlow = "billing" | "onboarding";
 
@@ -149,6 +154,8 @@ export async function createPlatformSubscriptionCheckoutSession(params: {
 
   assertSelfServeCheckoutPlanKey(params.planKey);
 
+  await assertSelfServeBillingCheckoutAllowed(params.businessId);
+
   const billingCycle = params.billingCycle ?? "monthly";
   const priceId = resolveCheckoutPriceId(params.planKey, billingCycle);
   const customerId = await ensureStripeCustomerForBusiness({
@@ -167,7 +174,6 @@ export async function createPlatformSubscriptionCheckoutSession(params: {
     )?.id ??
     null;
 
-  const stripe = getStripeClient();
   const trialEligible =
     params.includeTrial === true &&
     isSubscriptionTrialEnabled() &&
@@ -189,7 +195,8 @@ export async function createPlatformSubscriptionCheckoutSession(params: {
 
   let session: Stripe.Checkout.Session;
   try {
-    session = await stripe.checkout.sessions.create({
+    session = await createStripeBillingCheckoutSession(
+      {
       mode: "subscription",
       customer: customerId,
       line_items: [{ price: priceId, quantity: 1 }],
@@ -224,7 +231,11 @@ export async function createPlatformSubscriptionCheckoutSession(params: {
         [BILLING_CHECKOUT_METADATA_KEYS.planKey]: params.planKey,
         [BILLING_CHECKOUT_METADATA_KEYS.source]: "platform_checkout",
       },
-    });
+    },
+      {
+        idempotencyKey: `caretip_billing_checkout_${params.businessId}`,
+      },
+    );
   } catch (err) {
     logStripeCheckoutFailure({
       planKey: params.planKey,

@@ -1,5 +1,14 @@
 import { SubscriptionStatus } from "@prisma/client";
 
+/**
+ * Stripe `paused` means collection is paused on an existing subscription.
+ * It is not `canceled`, not `past_due`, and must not grant CareTip product entitlements.
+ * See backend/docs/SUBSCRIPTION_PAUSED_ENTITLEMENT_POLICY.md
+ */
+export function isStripeSubscriptionStatusPaused(stripeStatus: string): boolean {
+  return stripeStatus.trim().toLowerCase() === "paused";
+}
+
 /** Normalize Stripe subscription.status → contract SubscriptionStatus. */
 export function mapStripeSubscriptionStatus(
   stripeStatus: string,
@@ -21,7 +30,7 @@ export function mapStripeSubscriptionStatus(
     case "incomplete_expired":
       return { status: SubscriptionStatus.canceled, rawStripeStatus: raw };
     case "paused":
-      return { status: SubscriptionStatus.active, rawStripeStatus: raw };
+      return { status: SubscriptionStatus.paused, rawStripeStatus: raw };
     default:
       return { status: SubscriptionStatus.incomplete, rawStripeStatus: raw };
   }

@@ -50,7 +50,15 @@ export function QrStudioLayout() {
           />
         ) : null}
         {accessBlock ? (
-          <div className="py-8 sm:py-12">
+          <div
+            className={cn(
+              "min-w-0",
+              accessBlock === "verification" &&
+                user?.onboardingVerificationStatus === "submitted"
+                ? "py-4 sm:py-5"
+                : "py-8 sm:py-12",
+            )}
+          >
             <QrStudioAccessPanel reason={accessBlock} onboardingVerificationStatus={user?.onboardingVerificationStatus} />
           </div>
         ) : (

@@ -70,7 +70,6 @@ export const platformAdminNavEntries: readonly PlatformAdminNavEntry[] = [
     children: [
       { labelKey: "admin.sidebar.revenue.transactions", href: `${PLATFORM_REVENUE_BASE}/transactions` },
       { labelKey: "admin.sidebar.revenue.refunds", href: `${PLATFORM_REVENUE_BASE}/refunds` },
-      { labelKey: "admin.sidebar.revenue.connectPayouts", href: `${PLATFORM_REVENUE_BASE}/connect-payouts` },
       {
         labelKey: "admin.sidebar.revenue.scheduledPayoutOps",
         href: `${PLATFORM_REVENUE_BASE}/scheduled-payout-operations`,

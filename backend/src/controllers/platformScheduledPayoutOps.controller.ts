@@ -6,6 +6,7 @@ import {
 } from "@prisma/client";
 import { parseBoundedSkip } from "../utils/paginationLimits.js";
 import { clientSafeMessage, logServerError } from "../utils/httpErrors.js";
+import { normalizeConnectPayoutMethod } from "../lib/connectPayoutMethod.util.js";
 import {
   getScheduledPayoutOpsDetail,
   getScheduledPayoutOpsSummary,
@@ -95,6 +96,21 @@ export async function listScheduledPayoutOperations(req: Request, res: Response)
     const updatedTo = parseIsoDate(
       typeof req.query.updatedTo === "string" ? req.query.updatedTo : undefined,
     );
+    const methodRaw =
+      typeof req.query.method === "string" ? req.query.method.trim().toLowerCase() : undefined;
+    const method =
+      methodRaw === "instant" || methodRaw === "standard" || methodRaw === "unknown"
+        ? normalizeConnectPayoutMethod(methodRaw)
+        : undefined;
+    if (
+      typeof req.query.method === "string" &&
+      methodRaw &&
+      methodRaw !== "instant" &&
+      methodRaw !== "standard" &&
+      methodRaw !== "unknown"
+    ) {
+      return res.status(400).json({ message: "Invalid method." });
+    }
 
     if (typeof req.query.payoutType === "string" && !payoutType) {
       return res.status(400).json({ message: "Invalid payoutType." });
@@ -116,6 +132,7 @@ export async function listScheduledPayoutOperations(req: Request, res: Response)
       manualOnly,
       updatedFrom,
       updatedTo,
+      method,
     });
     return res.json(result);
   } catch (err) {

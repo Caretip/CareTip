@@ -137,6 +137,8 @@ enum SubscriptionStatus {
   canceled
   unpaid
   incomplete
+  /// Stripe `subscription.status === paused` — billing collection paused; not product-entitled.
+  paused
 }
 
 enum TrialSource {
@@ -148,6 +150,8 @@ enum SubscriptionEventProcessingResult {
   processed
   ignored
   failed
+  /// In-flight Stripe billing webhook delivery (claim held until finalize or expiry).
+  processing
 }
 
 /// Approval-based sponsored programme access (independent of Stripe Subscription mirror).
@@ -1099,6 +1103,7 @@ model Business {
   platformProductFeedback PlatformProductFeedback[]
   employeeInvites EmployeeInvite[]
   subscription   Subscription?
+  subscriptionBillingNotifications SubscriptionBillingNotification[]
   sponsoredAccessGrants SponsoredAccessGrant[]
   qrScanEvents   QrScanEvent[]
   qrGuestVisits  QrGuestVisit[]
@@ -1751,6 +1756,7 @@ model Subscription {
   updatedAt             DateTime             @updatedAt @map("updated_at")
 
   events                SubscriptionEvent[]
+  billingNotifications  SubscriptionBillingNotification[]
 
   @@index([status])
   @@index([renewalDate])
@@ -1769,13 +1775,113 @@ model SubscriptionEvent {
 
   processingResult  SubscriptionEventProcessingResult @map("processing_result")
   processingError   String?                           @map("processing_error")
+  processingClaimToken      String?                   @map("processing_claim_token") @db.VarChar(64)
+  processingClaimExpiresAt  DateTime?                 @map("processing_claim_expires_at")
   payload           Json?
   occurredAt        DateTime                          @default(now()) @map("occurred_at")
   processedAt       DateTime?                         @map("processed_at")
 
   @@index([subscriptionId, occurredAt])
   @@index([auditType, occurredAt])
+  @@index([processingClaimExpiresAt])
   @@map("subscription_events")
+}
+
+/// SUB-004 — idempotent customer email for subscription invoice payment failures.
+enum SubscriptionBillingNotificationType {
+  invoice_payment_failed
+}
+
+enum SubscriptionBillingNotificationStatus {
+  pending
+  sending
+  delivered
+  failed
+  superseded
+  skipped_no_recipient
+}
+
+model SubscriptionBillingNotification {
+  id                   String                              @id @default(cuid())
+  businessId           String                              @map("business_id")
+  business             Business                            @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  subscriptionId       String?                             @map("subscription_id")
+  subscription         Subscription?                       @relation(fields: [subscriptionId], references: [id], onDelete: SetNull)
+  notificationType     SubscriptionBillingNotificationType @map("notification_type")
+  stripeInvoiceId      String                              @map("stripe_invoice_id")
+  stripeEventId        String?                             @map("stripe_event_id")
+  stripeSubscriptionId String?                             @map("stripe_subscription_id")
+  invoiceAttemptCount  Int?                                @map("invoice_attempt_count")
+  status               SubscriptionBillingNotificationStatus @default(pending)
+  lastError            String?                             @map("last_error")
+  deliveredAt          DateTime?                           @map("delivered_at")
+  supersededAt         DateTime?                           @map("superseded_at")
+  createdAt            DateTime                            @default(now()) @map("created_at")
+  updatedAt            DateTime                            @updatedAt @map("updated_at")
+
+  @@unique([stripeInvoiceId, notificationType])
+  @@index([businessId, status])
+  @@index([status, updatedAt])
+  @@map("subscription_billing_notifications")
+}
+
+/// SUB-008 — scheduled billing reconciliation runs (detection + bounded repair).
+enum SubscriptionBillingDriftKind {
+  missing_stripe_subscription
+  missing_mirror
+  mirror_drift
+  status_mismatch
+  tier_mismatch
+  orphaned_stripe_subscription
+  missing_business
+  ambiguous_mapping
+  stripe_customer_list_failed
+}
+
+enum SubscriptionBillingDriftStatus {
+  open
+  auto_repaired
+  suppressed
+}
+
+model SubscriptionBillingReconciliationRun {
+  id              String    @id @default(cuid())
+  startedAt       DateTime  @map("started_at")
+  finishedAt      DateTime? @map("finished_at")
+  examined        Int       @default(0)
+  matched         Int       @default(0)
+  repaired        Int       @default(0)
+  skipped         Int       @default(0)
+  failed          Int       @default(0)
+  incidentsOpened Int       @default(0) @map("incidents_opened")
+  summary         Json?
+  createdAt       DateTime  @default(now()) @map("created_at")
+
+  driftFindings SubscriptionBillingDriftFinding[]
+
+  @@map("subscription_billing_reconciliation_runs")
+}
+
+model SubscriptionBillingDriftFinding {
+  id                   String                         @id @default(cuid())
+  fingerprint          String                         @unique
+  runId                String                         @map("run_id")
+  run                  SubscriptionBillingReconciliationRun @relation(fields: [runId], references: [id], onDelete: Cascade)
+  kind                 SubscriptionBillingDriftKind
+  status               SubscriptionBillingDriftStatus @default(open)
+  businessId           String?                        @map("business_id")
+  stripeCustomerId     String?                        @map("stripe_customer_id")
+  stripeSubscriptionId String?                        @map("stripe_subscription_id")
+  mirrorSubscriptionId String?                        @map("mirror_subscription_id")
+  details              Json?
+  firstSeenAt          DateTime                       @map("first_seen_at")
+  lastSeenAt           DateTime                       @map("last_seen_at")
+  createdAt            DateTime                       @default(now()) @map("created_at")
+  updatedAt            DateTime                       @updatedAt @map("updated_at")
+
+  @@index([status, kind])
+  @@index([businessId])
+  @@map("subscription_billing_drift_findings")
 }
 
 /// Phase 3 — guest visit lifecycle (one visit → one scan).

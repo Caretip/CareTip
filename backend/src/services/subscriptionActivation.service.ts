@@ -129,6 +129,7 @@ export async function activateSubscriptionMirrorFromStripeSubscription(params: {
   auditType: SubscriptionAuditType;
   stripeEventId: string;
   source: SubscriptionActivationSource;
+  billingWebhookClaimToken?: string | null;
 }): Promise<SubscriptionActivationOutcome> {
   const { sub, auditType, stripeEventId, source } = params;
 
@@ -185,6 +186,7 @@ export async function activateSubscriptionMirrorFromStripeSubscription(params: {
       auditType,
       stripeEventId,
       auditPayload,
+      billingWebhookClaimToken: params.billingWebhookClaimToken,
     });
     row = { id: ensured.id, businessId: ensured.businessId };
 
@@ -208,6 +210,7 @@ export async function activateSubscriptionMirrorFromStripeSubscription(params: {
       stripeEventId,
       auditPayload,
       reason: "stripe_subscription_ended",
+      billingWebhookClaimToken: params.billingWebhookClaimToken,
     });
     logTrialSync("activation.mirror_downgraded_to_basic", {
       source,
@@ -224,6 +227,7 @@ export async function activateSubscriptionMirrorFromStripeSubscription(params: {
     auditType,
     stripeEventId,
     auditPayload,
+    billingWebhookClaimToken: params.billingWebhookClaimToken,
   });
 
   logTrialSync("activation.mirror_updated", {
