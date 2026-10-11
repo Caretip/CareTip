@@ -44,7 +44,7 @@ __setSendResendEmailFnForTests(null);
 const paused = mapStripeSubscriptionStatus("paused");
 assert(paused.status === "paused", "paused maps to non-entitled mirror paused");
 
-assert(BILLING_RECONCILIATION_BATCH_SIZE === 25, "reconciliation batch bounded");
+assert(BILLING_RECONCILIATION_BATCH_SIZE === 100, "reconciliation batch default 100");
 
 assert(BILLING_NOTIFICATION_SENDING_STALE_MS === 10 * 60 * 1000, "sending stale TTL 10m");
 const staleAt = new Date(Date.now() - BILLING_NOTIFICATION_SENDING_STALE_MS - 1_000);

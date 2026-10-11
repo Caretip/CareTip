@@ -21,8 +21,18 @@ import {
 import { getStripeClient, isStripeConfigured } from "./stripe.service.js";
 import { STRIPE_BILLING_BLOCK_STATUSES } from "./billingLifecycleIntegrity.service.js";
 import { logTrialSync } from "../lib/subscription/trialSyncDebugLog.js";
+import { resolveBillingReconciliationBatchSize } from "../config/billingReconciliationConfig.js";
+import {
+  buildEligibleBusinessesWhere,
+  resolveNextReconciliationCursor,
+} from "../lib/subscription/billingReconciliationKeyset.js";
+import {
+  compareAndSwapBillingReconciliationCursor,
+  loadBillingReconciliationCursorWithExpected,
+  logBillingReconciliationCursorCasStale,
+} from "./subscriptionBillingReconciliationCursor.service.js";
 
-export const BILLING_RECONCILIATION_BATCH_SIZE = 25;
+export const BILLING_RECONCILIATION_BATCH_SIZE = resolveBillingReconciliationBatchSize();
 export const BILLING_RECONCILIATION_MAX_SUBS_PER_CUSTOMER = 10;
 
 const RECON_LOCK_KEY = "caretip_billing_reconciliation";
@@ -256,11 +266,16 @@ export async function runSubscriptionBillingReconciliation(): Promise<BillingRec
     };
   }
 
+  const batchSize = resolveBillingReconciliationBatchSize();
+  const { cursor: loadedCursor, expected: cursorExpected } =
+    await loadBillingReconciliationCursorWithExpected();
+
   try {
     const businesses = await prisma.business.findMany({
-      where: { stripeCustomerId: { not: null } },
+      where: buildEligibleBusinessesWhere(loadedCursor),
       select: {
         id: true,
+        createdAt: true,
         stripeCustomerId: true,
         subscriptionTier: true,
         subscription: {
@@ -272,8 +287,8 @@ export async function runSubscriptionBillingReconciliation(): Promise<BillingRec
           },
         },
       },
-      take: BILLING_RECONCILIATION_BATCH_SIZE,
-      orderBy: { createdAt: "asc" },
+      take: batchSize,
+      orderBy: [{ createdAt: "asc" }, { id: "asc" }],
     });
 
     for (const business of businesses) {
@@ -495,6 +510,15 @@ export async function runSubscriptionBillingReconciliation(): Promise<BillingRec
         }
       }
     }
+
+    const nextCursor = resolveNextReconciliationCursor(
+      businesses.map((b) => ({ id: b.id, createdAt: b.createdAt })),
+      batchSize,
+    );
+    const cas = await compareAndSwapBillingReconciliationCursor(cursorExpected, nextCursor);
+    if (cas.status === "stale_rejected") {
+      logBillingReconciliationCursorCasStale();
+    }
   } finally {
     await prisma.$executeRaw`SELECT pg_advisory_unlock(hashtext(${RECON_LOCK_KEY}))`;
   }
@@ -510,7 +534,8 @@ export async function runSubscriptionBillingReconciliation(): Promise<BillingRec
       failed,
       incidentsOpened,
       summary: {
-        batchSize: BILLING_RECONCILIATION_BATCH_SIZE,
+        batchSize: resolveBillingReconciliationBatchSize(),
+        cursorAdvanced: true,
       },
     },
   });

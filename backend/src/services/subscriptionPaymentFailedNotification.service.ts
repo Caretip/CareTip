@@ -7,6 +7,7 @@
  * - invoice.payment_succeeded supersedes pending/failed rows for that invoice.
  * - Status `delivered` means Resend accepted the message (HTTP 2xx), not inbox delivery.
  * - Stale `sending` rows (worker crash) are reclaimed after BILLING_NOTIFICATION_SENDING_STALE_MS.
+ * - At most BILLING_NOTIFICATION_MAX_SEND_ATTEMPTS total send attempts with persisted backoff.
  */
 export const BILLING_NOTIFICATION_SENDING_STALE_MS = 10 * 60 * 1000;
 import {
@@ -17,12 +18,22 @@ import {
 import { prisma } from "../prisma.js";
 import { resolveCheckoutFrontendBaseUrl } from "../config/frontendUrl.js";
 import { isSubscriptionBillingEnabled } from "../config/featureFlags.js";
+import {
+  computeBillingNotificationNextAttemptAt,
+  isBillingNotificationSendEligible,
+  resolveBillingNotificationMaxSendAttempts,
+  resolveBillingNotificationRetryBackoffMs,
+} from "../config/billingNotificationRetryPolicy.js";
 import { resolveEmailPersonalizationForUser } from "../emails/emailPersonalization.js";
 import {
   buildGenericNotificationContent,
   resolveUserPreferredLocale,
 } from "../emails/i18nEmail.js";
-import { getResendFromAddress, sendResendEmail } from "./resendClient.js";
+import {
+  getResendFromAddress,
+  sendResendEmailWithOutcome,
+  type ResendSendOutcome,
+} from "./resendClient.js";
 import { logTrialSync } from "../lib/subscription/trialSyncDebugLog.js";
 
 export type SubscriptionPaymentFailedNotificationInput = {
@@ -111,19 +122,126 @@ export function isSendingNotificationReclaimable(
   return updatedAt.getTime() <= sendingStaleCutoff(now).getTime();
 }
 
+function retryEligibilityFilter(now: Date, maxAttempts: number) {
+  return {
+    sendAttemptCount: { lt: maxAttempts },
+    OR: [{ nextAttemptAt: null }, { nextAttemptAt: { lte: now } }],
+  };
+}
+
+/** @internal tests */
+export function classifyNotificationSendFailure(outcome: ResendSendOutcome): "permanent" | "retryable" {
+  if (outcome.kind === "sent") {
+    return "retryable";
+  }
+  if (outcome.kind === "permanent" || outcome.kind === "not_configured") {
+    return "permanent";
+  }
+  return "retryable";
+}
+
+/** @internal tests */
+export async function applyNotificationSendFailureState(params: {
+  notificationId: string;
+  sendAttemptCount: number;
+  outcome: ResendSendOutcome;
+  now?: Date;
+}): Promise<void> {
+  const now = params.now ?? new Date();
+  const maxAttempts = resolveBillingNotificationMaxSendAttempts();
+  const backoffMs = resolveBillingNotificationRetryBackoffMs();
+  const classification = classifyNotificationSendFailure(params.outcome);
+  const retryAfterMs =
+    params.outcome.kind === "retryable" ? params.outcome.retryAfterMs : undefined;
+
+  if (classification === "permanent") {
+    await prisma.subscriptionBillingNotification.update({
+      where: { id: params.notificationId },
+      data: {
+        status: SubscriptionBillingNotificationStatus.exhausted,
+        lastError:
+          params.outcome.kind === "not_configured"
+            ? "resend_not_configured"
+            : `permanent_${params.outcome.kind === "permanent" ? params.outcome.errorCode ?? "provider_error" : "unknown"}`,
+        nextAttemptAt: null,
+      },
+    });
+    return;
+  }
+
+  if (params.sendAttemptCount >= maxAttempts) {
+    await prisma.subscriptionBillingNotification.update({
+      where: { id: params.notificationId },
+      data: {
+        status: SubscriptionBillingNotificationStatus.exhausted,
+        lastError: "retry_exhausted",
+        nextAttemptAt: null,
+      },
+    });
+    return;
+  }
+
+  const nextAttemptAt = computeBillingNotificationNextAttemptAt({
+    sendAttemptCount: params.sendAttemptCount,
+    maxAttempts,
+    backoffMs,
+    now,
+    retryAfterMs,
+  });
+
+  await prisma.subscriptionBillingNotification.update({
+    where: { id: params.notificationId },
+    data: {
+      status: SubscriptionBillingNotificationStatus.failed,
+      lastError:
+        params.outcome.kind === "retryable"
+          ? `retryable_${params.outcome.httpStatus ?? "network"}`
+          : "retryable_unknown",
+      nextAttemptAt,
+    },
+  });
+}
+
 async function reclaimStaleSendingNotifications(limit = 50): Promise<number> {
   const cutoff = sendingStaleCutoff();
-  const result = await prisma.subscriptionBillingNotification.updateMany({
+  const now = new Date();
+  const maxAttempts = resolveBillingNotificationMaxSendAttempts();
+  const backoffMs = resolveBillingNotificationRetryBackoffMs();
+  const staleRows = await prisma.subscriptionBillingNotification.findMany({
     where: {
       status: SubscriptionBillingNotificationStatus.sending,
       updatedAt: { lt: cutoff },
     },
-    data: {
-      status: SubscriptionBillingNotificationStatus.failed,
-      lastError: "sending_lease_expired",
-    },
+    take: limit,
+    select: { id: true, sendAttemptCount: true },
   });
-  return result.count;
+
+  let reclaimed = 0;
+  for (const row of staleRows) {
+    const nextAttemptAt =
+      row.sendAttemptCount >= maxAttempts
+        ? null
+        : computeBillingNotificationNextAttemptAt({
+            sendAttemptCount: row.sendAttemptCount,
+            maxAttempts,
+            backoffMs,
+            now,
+          });
+    const status =
+      row.sendAttemptCount >= maxAttempts
+        ? SubscriptionBillingNotificationStatus.exhausted
+        : SubscriptionBillingNotificationStatus.failed;
+    await prisma.subscriptionBillingNotification.update({
+      where: { id: row.id },
+      data: {
+        status,
+        lastError: "sending_lease_expired",
+        nextAttemptAt,
+      },
+    });
+    reclaimed += 1;
+  }
+  return reclaimed;
 }
 
 async function deliverNotificationRow(notificationId: string): Promise<boolean> {
@@ -134,33 +252,65 @@ async function deliverNotificationRow(notificationId: string): Promise<boolean> 
   if (
     row.status === SubscriptionBillingNotificationStatus.delivered ||
     row.status === SubscriptionBillingNotificationStatus.superseded ||
-    row.status === SubscriptionBillingNotificationStatus.skipped_no_recipient
+    row.status === SubscriptionBillingNotificationStatus.skipped_no_recipient ||
+    row.status === SubscriptionBillingNotificationStatus.exhausted
   ) {
     return row.status === SubscriptionBillingNotificationStatus.delivered;
+  }
+
+  const now = new Date();
+  const maxAttempts = resolveBillingNotificationMaxSendAttempts();
+  if (
+    !isBillingNotificationSendEligible({
+      status: row.status,
+      sendAttemptCount: row.sendAttemptCount,
+      maxAttempts,
+      nextAttemptAt: row.nextAttemptAt,
+      now,
+    })
+  ) {
+    return false;
   }
 
   const staleCutoff = sendingStaleCutoff();
   const claimed = await prisma.subscriptionBillingNotification.updateMany({
     where: {
-      id: notificationId,
-      OR: [
+      AND: [
+        { id: notificationId },
+        { sendAttemptCount: { lt: maxAttempts } },
+        retryEligibilityFilter(now, maxAttempts),
         {
-          status: {
-            in: [
-              SubscriptionBillingNotificationStatus.pending,
-              SubscriptionBillingNotificationStatus.failed,
-            ],
-          },
-        },
-        {
-          status: SubscriptionBillingNotificationStatus.sending,
-          updatedAt: { lt: staleCutoff },
+          OR: [
+            {
+              status: {
+                in: [
+                  SubscriptionBillingNotificationStatus.pending,
+                  SubscriptionBillingNotificationStatus.failed,
+                ],
+              },
+            },
+            {
+              status: SubscriptionBillingNotificationStatus.sending,
+              updatedAt: { lt: staleCutoff },
+            },
+          ],
         },
       ],
     },
-    data: { status: SubscriptionBillingNotificationStatus.sending },
+    data: {
+      status: SubscriptionBillingNotificationStatus.sending,
+      sendAttemptCount: { increment: 1 },
+      lastAttemptAt: now,
+    },
   });
   if (claimed.count !== 1) {
+    return false;
+  }
+
+  const afterClaim = await prisma.subscriptionBillingNotification.findUnique({
+    where: { id: notificationId },
+  });
+  if (!afterClaim) {
     return false;
   }
 
@@ -171,6 +321,7 @@ async function deliverNotificationRow(notificationId: string): Promise<boolean> 
       data: {
         status: SubscriptionBillingNotificationStatus.skipped_no_recipient,
         lastError: "no_manager_email",
+        nextAttemptAt: null,
       },
     });
     logTrialSync("billing.payment_failed_notification.skipped", {
@@ -193,13 +344,13 @@ async function deliverNotificationRow(notificationId: string): Promise<boolean> 
   const actionUrl = billingManagementUrl();
 
   try {
-    const locale = resolveUserPreferredLocale(recipient.preferredLocale);
+    const localeResolved = resolveUserPreferredLocale(recipient.preferredLocale);
     const personalization =
       recipient.userId != null
         ? await resolveEmailPersonalizationForUser(recipient.userId)
         : { recipientName: null, businessName: recipient.businessName, accountKind: "other" as const };
     const { subject, html, text } = buildGenericNotificationContent({
-      locale,
+      locale: localeResolved,
       title: copy.title,
       bodyText: copy.body,
       actionUrl,
@@ -207,20 +358,20 @@ async function deliverNotificationRow(notificationId: string): Promise<boolean> 
       recipientName: personalization.recipientName,
       businessName: personalization.businessName ?? recipient.businessName,
     });
-    const ok = await sendResendEmail("subscription-payment-failed", {
+    const outcome = await sendResendEmailWithOutcome("subscription-payment-failed", {
       from: getResendFromAddress(),
       to: [recipient.email],
       subject,
       html,
       text,
     });
-    if (!ok) {
-      await prisma.subscriptionBillingNotification.update({
-        where: { id: notificationId },
-        data: {
-          status: SubscriptionBillingNotificationStatus.failed,
-          lastError: "resend_not_accepted",
-        },
+
+    if (outcome.kind !== "sent") {
+      await applyNotificationSendFailureState({
+        notificationId,
+        sendAttemptCount: afterClaim.sendAttemptCount,
+        outcome,
+        now,
       });
       return false;
     }
@@ -239,17 +390,21 @@ async function deliverNotificationRow(notificationId: string): Promise<boolean> 
         status: SubscriptionBillingNotificationStatus.delivered,
         deliveredAt: new Date(),
         lastError: null,
+        nextAttemptAt: null,
       },
     });
     return true;
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
+    await applyNotificationSendFailureState({
+      notificationId,
+      sendAttemptCount: afterClaim.sendAttemptCount,
+      outcome: { kind: "retryable" },
+      now,
+    });
     await prisma.subscriptionBillingNotification.update({
       where: { id: notificationId },
-      data: {
-        status: SubscriptionBillingNotificationStatus.failed,
-        lastError: message.slice(0, 500),
-      },
+      data: { lastError: message.slice(0, 500) },
     });
     return false;
   }
@@ -292,6 +447,8 @@ export async function handleSubscriptionInvoicePaymentFailedNotification(
             stripeSubscriptionId: input.stripeSubscriptionId,
             invoiceAttemptCount: input.invoiceAttemptCount,
             status: SubscriptionBillingNotificationStatus.pending,
+            sendAttemptCount: 0,
+            nextAttemptAt: null,
           },
         });
         notificationId = created.id;
@@ -343,12 +500,14 @@ export async function supersedeSubscriptionPaymentFailedNotificationsForInvoice(
           SubscriptionBillingNotificationStatus.pending,
           SubscriptionBillingNotificationStatus.failed,
           SubscriptionBillingNotificationStatus.sending,
+          SubscriptionBillingNotificationStatus.exhausted,
         ],
       },
     },
     data: {
       status: SubscriptionBillingNotificationStatus.superseded,
       supersededAt: now,
+      nextAttemptAt: null,
     },
   });
 }
@@ -370,6 +529,9 @@ export async function retrySubscriptionBillingNotifications(
 
   await reclaimStaleSendingNotifications(limit);
 
+  const now = new Date();
+  const maxAttempts = resolveBillingNotificationMaxSendAttempts();
+
   const rows = await prisma.subscriptionBillingNotification.findMany({
     where: {
       notificationType: SubscriptionBillingNotificationType.invoice_payment_failed,
@@ -379,8 +541,9 @@ export async function retrySubscriptionBillingNotifications(
           SubscriptionBillingNotificationStatus.failed,
         ],
       },
+      ...retryEligibilityFilter(now, maxAttempts),
     },
-    orderBy: { updatedAt: "asc" },
+    orderBy: [{ nextAttemptAt: "asc" }, { updatedAt: "asc" }],
     take: limit,
     select: { id: true },
   });
@@ -399,7 +562,10 @@ export async function retrySubscriptionBillingNotifications(
       });
       if (after?.status === SubscriptionBillingNotificationStatus.skipped_no_recipient) {
         skipped += 1;
-      } else if (after?.status === SubscriptionBillingNotificationStatus.failed) {
+      } else if (
+        after?.status === SubscriptionBillingNotificationStatus.failed ||
+        after?.status === SubscriptionBillingNotificationStatus.exhausted
+      ) {
         failed += 1;
       }
     }

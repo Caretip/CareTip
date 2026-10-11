@@ -1799,6 +1799,7 @@ enum SubscriptionBillingNotificationStatus {
   failed
   superseded
   skipped_no_recipient
+  exhausted
 }
 
 model SubscriptionBillingNotification {
@@ -1813,6 +1814,9 @@ model SubscriptionBillingNotification {
   stripeSubscriptionId String?                             @map("stripe_subscription_id")
   invoiceAttemptCount  Int?                                @map("invoice_attempt_count")
   status               SubscriptionBillingNotificationStatus @default(pending)
+  sendAttemptCount     Int                                 @default(0) @map("send_attempt_count")
+  lastAttemptAt        DateTime?                           @map("last_attempt_at")
+  nextAttemptAt        DateTime?                           @map("next_attempt_at")
   lastError            String?                             @map("last_error")
   deliveredAt          DateTime?                           @map("delivered_at")
   supersededAt         DateTime?                           @map("superseded_at")
@@ -1822,7 +1826,18 @@ model SubscriptionBillingNotification {
   @@unique([stripeInvoiceId, notificationType])
   @@index([businessId, status])
   @@index([status, updatedAt])
+  @@index([status, nextAttemptAt])
   @@map("subscription_billing_notifications")
+}
+
+/// Fair keyset cursor for scheduled billing reconciliation (`createdAt`, business id).
+model SubscriptionBillingReconciliationCursor {
+  stream            String   @id @db.VarChar(32)
+  anchorCreatedAt   DateTime @map("anchor_created_at")
+  anchorBusinessId  String   @map("anchor_business_id") @db.VarChar(64)
+  updatedAt         DateTime @updatedAt @map("updated_at")
+
+  @@map("subscription_billing_reconciliation_cursors")
 }
 
 /// SUB-008 — scheduled billing reconciliation runs (detection + bounded repair).

@@ -118,8 +118,18 @@ function normalizeReplyToAddresses(replyTo: string | string[] | undefined): stri
  * Sends one message via Resend. Does not throw on failure — logs and returns success flag.
  * Callers keep token logic separate; this only posts to Resend.
  */
+export type ResendSendOutcome =
+  | { kind: "sent" }
+  | { kind: "retryable"; httpStatus?: number; retryAfterMs?: number; errorCode?: string }
+  | { kind: "permanent"; httpStatus?: number; errorCode?: string }
+  | { kind: "not_configured" };
+
 let sendResendEmailFnForTests:
   | ((logTag: string, payload: ResendMailPayload) => Promise<boolean>)
+  | null = null;
+
+let sendResendEmailOutcomeFnForTests:
+  | ((logTag: string, payload: ResendMailPayload) => Promise<ResendSendOutcome>)
   | null = null;
 
 /** Test seam — mocked Resend delivery (Sprint 2 billing notifications). */
@@ -129,9 +139,60 @@ export function __setSendResendEmailFnForTests(
   sendResendEmailFnForTests = fn;
 }
 
-export async function sendResendEmail(logTag: string, payload: ResendMailPayload): Promise<boolean> {
+export function __setSendResendEmailOutcomeFnForTests(
+  fn: ((logTag: string, payload: ResendMailPayload) => Promise<ResendSendOutcome>) | null,
+): void {
+  sendResendEmailOutcomeFnForTests = fn;
+}
+
+function parseRetryAfterMs(header: string | null): number | undefined {
+  if (!header?.trim()) return undefined;
+  const seconds = Number.parseInt(header.trim(), 10);
+  if (Number.isFinite(seconds) && seconds > 0) {
+    return seconds * 1000;
+  }
+  const dateMs = Date.parse(header);
+  if (Number.isFinite(dateMs)) {
+    const delta = dateMs - Date.now();
+    return delta > 0 ? delta : undefined;
+  }
+  return undefined;
+}
+
+export function classifyResendHttpFailure(httpStatus: number, responseBody: string): ResendSendOutcome {
+  let errorCode: string | undefined;
+  try {
+    const parsed = JSON.parse(responseBody) as { name?: string; message?: string };
+    if (parsed?.name) errorCode = String(parsed.name);
+  } catch {
+    // non-JSON body
+  }
+
+  if (httpStatus === 429) {
+    return { kind: "retryable", httpStatus, errorCode };
+  }
+  if (httpStatus >= 500) {
+    return { kind: "retryable", httpStatus, errorCode };
+  }
+  if (httpStatus === 422 || errorCode === "validation_error") {
+    return { kind: "permanent", httpStatus, errorCode };
+  }
+  if (httpStatus >= 400 && httpStatus < 500) {
+    return { kind: "permanent", httpStatus, errorCode };
+  }
+  return { kind: "retryable", httpStatus, errorCode };
+}
+
+export async function sendResendEmailWithOutcome(
+  logTag: string,
+  payload: ResendMailPayload,
+): Promise<ResendSendOutcome> {
+  if (sendResendEmailOutcomeFnForTests) {
+    return sendResendEmailOutcomeFnForTests(logTag, payload);
+  }
   if (sendResendEmailFnForTests) {
-    return sendResendEmailFnForTests(logTag, payload);
+    const ok = await sendResendEmailFnForTests(logTag, payload);
+    return ok ? { kind: "sent" } : { kind: "retryable" };
   }
 
   const resendKey = getResendApiKey();
@@ -143,7 +204,7 @@ export async function sendResendEmail(logTag: string, payload: ResendMailPayload
     } else {
       console.warn(`[resend][${logTag}] RESEND_API_KEY not set; email was not sent.`);
     }
-    return false;
+    return { kind: "not_configured" };
   }
 
   const replyToAddresses = normalizeReplyToAddresses(
@@ -174,8 +235,6 @@ export async function sendResendEmail(logTag: string, payload: ResendMailPayload
   if (attachments.length > 0) {
     body.attachments = attachments;
   }
-  // Resend accepts string | string[]. Prefer a single string when one address
-  // so the dashboard/request log never shows an empty replyTo array.
   if (replyToAddresses) {
     body.reply_to = replyToAddresses.length === 1 ? replyToAddresses[0] : replyToAddresses;
   }
@@ -192,15 +251,27 @@ export async function sendResendEmail(logTag: string, payload: ResendMailPayload
     if (!r.ok) {
       const t = await r.text();
       console.error("[resend] Email sending failed:", { tag: logTag, status: r.status, body: t.slice(0, 800) });
-      return false;
+      const classified = classifyResendHttpFailure(r.status, t);
+      if (classified.kind === "retryable" && r.status === 429) {
+        return {
+          ...classified,
+          retryAfterMs: parseRetryAfterMs(r.headers.get("retry-after")),
+        };
+      }
+      return classified;
     }
     console.info(`[resend][${logTag}] Email sent`, {
       to: payload.to[0],
       hasReplyTo: Boolean(replyToAddresses),
     });
-    return true;
+    return { kind: "sent" };
   } catch (error) {
     console.error("[resend] Email sending failed:", { tag: logTag, error });
-    return false;
+    return { kind: "retryable" };
   }
+}
+
+export async function sendResendEmail(logTag: string, payload: ResendMailPayload): Promise<boolean> {
+  const outcome = await sendResendEmailWithOutcome(logTag, payload);
+  return outcome.kind === "sent";
 }

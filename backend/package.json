@@ -190,6 +190,7 @@
     "test:subscription-reliability-sprint1_1": "tsx scripts/subscription-reliability-sprint1-runtime.ts",
     "test:subscription-reliability-sprint1_2-integration": "tsx scripts/subscription-reliability-sprint1_2-integration-runtime.ts",
     "test:subscription-reliability-sprint2": "tsx scripts/subscription-reliability-sprint2-runtime.ts",
+    "test:subscription-billing-reliability-phase3": "tsx scripts/subscription-billing-reliability-phase3-runtime.ts",
     "test:subscription-paused-entitlement": "tsx scripts/subscription-paused-entitlement-runtime.ts",
     "test:subscription-b2": "dotenv -e ../.env -e .env -- tsx scripts/subscription-b2-runtime.ts",
     "test:subscription-entitlement-payload": "dotenv -e ../.env -e .env -- tsx scripts/subscription-entitlement-payload-runtime.ts",
