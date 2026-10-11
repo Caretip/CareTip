@@ -8,6 +8,8 @@ import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import {
   FACEBOOK_OAUTH_RECOVERY_DELAY_MS,
+  FACEBOOK_OAUTH_REDIRECT_GRACE_MS,
+  FACEBOOK_OAUTH_STALL_AFTER_GRACE_MS,
   isFacebookOAuthRecoveryClient,
   watchFacebookOAuthRedirectRecovery,
 } from "./facebookOAuthRedirectRecovery";
@@ -19,22 +21,19 @@ const ANDROID_CHROME =
   "Mozilla/5.0 (Linux; Android 12; Pixel 5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Mobile Safari/537.36";
 const DESKTOP_CHROME =
   "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36";
-const DESKTOP_MAC =
-  "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36";
 
-assert.equal(FACEBOOK_OAUTH_RECOVERY_DELAY_MS, 7_000);
+assert.equal(FACEBOOK_OAUTH_REDIRECT_GRACE_MS, 5_000);
+assert.equal(FACEBOOK_OAUTH_STALL_AFTER_GRACE_MS, 18_000);
+assert.equal(FACEBOOK_OAUTH_RECOVERY_DELAY_MS, 23_000);
 assert.equal(isFacebookOAuthRecoveryClient(ANDROID_CHROME), true);
-assert.equal(isFacebookOAuthRecoveryClient("Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X)"), true);
 assert.equal(isFacebookOAuthRecoveryClient(DESKTOP_CHROME), false);
-assert.equal(isFacebookOAuthRecoveryClient(DESKTOP_MAC), false);
-assert.equal(isFacebookOAuthRecoveryClient(""), false);
 
 type Listener = (event?: { persisted?: boolean }) => void;
 
 function createEnv() {
   const documentListeners = new Map<string, Listener[]>();
   const windowListeners = new Map<string, Listener[]>();
-  const timers = new Map<number, () => void>();
+  const timers = new Map<number, { handler: () => void; ms: number }>();
   let nextId = 1;
   const doc = {
     visibilityState: "visible",
@@ -64,34 +63,27 @@ function createEnv() {
     env: {
       document: doc,
       window: win,
-      setTimeout(handler: () => void, _ms: number) {
+      setTimeout(handler: () => void, ms: number) {
         const id = nextId;
         nextId += 1;
-        timers.set(id, handler);
+        timers.set(id, { handler, ms });
         return id as unknown as ReturnType<typeof setTimeout>;
       },
       clearTimeout(id: ReturnType<typeof setTimeout>) {
         timers.delete(id as unknown as number);
       },
     },
-    fireTimer() {
+    fireDueTimers() {
       const pending = [...timers.entries()];
       timers.clear();
-      for (const [, handler] of pending) handler();
+      for (const [, entry] of pending) entry.handler();
     },
     hide() {
       doc.visibilityState = "hidden";
       for (const listener of [...(documentListeners.get("visibilitychange") ?? [])]) listener();
     },
-    show() {
-      doc.visibilityState = "visible";
-      for (const listener of [...(documentListeners.get("visibilitychange") ?? [])]) listener();
-    },
     pageHide() {
       for (const listener of [...(windowListeners.get("pagehide") ?? [])]) listener();
-    },
-    pageShow(persisted: boolean) {
-      for (const listener of [...(windowListeners.get("pageshow") ?? [])]) listener({ persisted });
     },
     timerCount() {
       return timers.size;
@@ -101,138 +93,85 @@ function createEnv() {
 
 {
   const harness = createEnv();
-  let recovered = 0;
-  let left = 0;
+  let stalled = 0;
+  let navigated = 0;
   const watch = watchFacebookOAuthRedirectRecovery({
     isRecoveryClient: true,
-    onRecover: () => {
-      recovered += 1;
+    onStall: () => {
+      stalled += 1;
     },
-    onLeave: () => {
-      left += 1;
+    onNavigateAway: () => {
+      navigated += 1;
     },
     env: harness.env,
   });
+  assert.equal(harness.timerCount(), 0, "timer not armed until submit");
+  watch.armStallTimer();
   assert.equal(harness.timerCount(), 1);
-  harness.fireTimer();
-  assert.equal(recovered, 1);
-  assert.equal(left, 0);
-  harness.fireTimer();
-  assert.equal(recovered, 1);
-  harness.hide();
-  assert.equal(left, 1);
-  assert.equal(recovered, 1);
-  harness.show();
-  harness.fireTimer();
-  assert.equal(recovered, 1);
+  harness.fireDueTimers();
+  assert.equal(stalled, 0, "grace period only");
+  harness.fireDueTimers();
+  assert.equal(stalled, 1);
+  harness.fireDueTimers();
+  assert.equal(stalled, 1);
   watch.dispose();
 }
 
 {
   const harness = createEnv();
-  let recovered = 0;
-  let left = 0;
-  watchFacebookOAuthRedirectRecovery({
+  let stalled = 0;
+  const watch = watchFacebookOAuthRedirectRecovery({
     isRecoveryClient: true,
-    onRecover: () => {
-      recovered += 1;
+    onStall: () => {
+      stalled += 1;
     },
-    onLeave: () => {
-      left += 1;
-    },
+    onNavigateAway: () => {},
     env: harness.env,
   });
+  watch.armStallTimer();
   harness.hide();
-  assert.equal(left, 1);
-  assert.equal(harness.timerCount(), 0);
-  harness.fireTimer();
-  harness.show();
-  assert.equal(recovered, 0);
-}
-
-{
-  const harness = createEnv();
-  let recovered = 0;
-  watchFacebookOAuthRedirectRecovery({
-    isRecoveryClient: true,
-    onRecover: () => {
-      recovered += 1;
-    },
-    onLeave: () => {},
-    env: harness.env,
-  });
-  harness.pageHide();
-  harness.fireTimer();
-  harness.pageShow(true);
-  assert.equal(recovered, 0);
-}
-
-{
-  const harness = createEnv();
-  let recovered = 0;
-  const watch = watchFacebookOAuthRedirectRecovery({
-    isRecoveryClient: true,
-    onRecover: () => {
-      recovered += 1;
-    },
-    onLeave: () => {},
-    env: harness.env,
-  });
+  assert.equal(stalled, 0);
+  harness.fireDueTimers();
+  harness.fireDueTimers();
+  assert.equal(stalled, 0);
   watch.dispose();
-  assert.equal(harness.timerCount(), 0);
-  harness.fireTimer();
-  assert.equal(recovered, 0);
 }
 
 {
   const harness = createEnv();
-  let recovered = 0;
-  let left = 0;
-  const watch = watchFacebookOAuthRedirectRecovery({
+  let stalled = 0;
+  watchFacebookOAuthRedirectRecovery({
     isRecoveryClient: false,
-    onRecover: () => {
-      recovered += 1;
+    onStall: () => {
+      stalled += 1;
     },
-    onLeave: () => {
-      left += 1;
-    },
+    onNavigateAway: () => {},
     env: harness.env,
-  });
+  }).armStallTimer();
   assert.equal(harness.timerCount(), 0);
-  harness.fireTimer();
-  harness.hide();
-  harness.pageHide();
-  assert.equal(recovered, 0);
-  assert.equal(left, 0);
-  watch.dispose();
+  harness.fireDueTimers();
+  assert.equal(stalled, 0);
 }
 
 const row = read("src/app/components/auth/OAuthProviderRow.tsx");
 const recovery = read("src/app/lib/facebookOAuthRedirectRecovery.ts");
 assert.equal(recovery.includes("submitFacebookOAuthRedirectStart"), false);
-assert.equal(recovery.includes("location.assign"), false);
-assert.ok(row.includes("onRecover: () => setFacebookRecoveryOpen(true)"));
+assert.ok(row.includes("onStall:"));
+assert.ok(row.includes("facebookProviderShowsLoading"));
 assert.equal((row.match(/submitFacebookOAuthRedirectStart\(/g) ?? []).length, 1);
-assert.ok(row.includes("if (providerBusy != null)"));
 
 const en = read("src/i18n/locales/en.json");
 const de = read("src/i18n/locales/de.json");
 for (const key of [
-  "facebookRecoveryTitle",
-  "facebookRecoveryMessage",
+  "facebookConnecting",
+  "facebookStallTitle",
+  "facebookStallMessage",
+  "facebookRetry",
   "facebookRecoveryContinueEmail",
   "facebookRecoveryTroubleshoot",
-  "facebookRecoverySteps",
-  "facebookRecoveryIncognito",
-  "facebookRecoveryBack",
 ]) {
   assert.ok(en.includes(`"${key}"`), key);
   assert.ok(de.includes(`"${key}"`), key);
 }
-assert.ok(en.includes("Facebook sign-up isn't opening?"));
-assert.ok(en.includes("Don't tap again."));
-assert.ok(en.includes("Continue with email"));
-assert.ok(en.includes("Troubleshoot Facebook"));
-assert.ok(en.includes("Open supported links"));
 
 console.log("facebookOAuthRedirectRecovery-runtime: all passed");

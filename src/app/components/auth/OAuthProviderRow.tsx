@@ -31,7 +31,14 @@ import { logFacebookOAuthDiagnostic } from "@/app/lib/facebookOAuthDiagnostic";
 import { logClientError } from "@/app/lib/clientLog";
 import { toUserFriendlyMessage } from "@/app/lib/errorMessages";
 import { AuthGoogleOAuthScope } from "@/app/components/auth/AuthGoogleOAuthScope";
-import { FacebookOAuthRecoveryNotice } from "@/app/components/auth/FacebookOAuthRecoveryNotice";
+import { FacebookOAuthInlineStatus } from "@/app/components/auth/FacebookOAuthInlineStatus";
+import {
+  applyFacebookPhaseIfCurrent,
+  beginFacebookAttempt,
+  FACEBOOK_OAUTH_IDLE,
+  facebookProviderShowsLoading,
+  type FacebookOAuthAttemptState,
+} from "@/app/lib/facebookProviderAttempt";
 import {
   focusCurrentAuthEmailField,
   isFacebookOAuthRecoveryClient,
@@ -129,37 +136,27 @@ export function OAuthProviderRow({
     isFacebookSdkReady() ? "ready" : "loading",
   );
   const [providerBusy, setProviderBusy] = useState<OAuthProviderId | null>(null);
-  const [facebookRecoveryOpen, setFacebookRecoveryOpen] = useState(false);
-  const [facebookTroubleshootOpen, setFacebookTroubleshootOpen] = useState(false);
+  const [facebookAttempt, setFacebookAttempt] = useState<FacebookOAuthAttemptState>(FACEBOOK_OAUTH_IDLE);
   const facebookRecoveryWatchRef = useRef<FacebookOAuthRecoveryWatch | null>(null);
   const authModeRef = useRef(facebookRedirectContext?.isLogin);
 
   useEffect(() => {
-    registerFacebookOrphanedTokenHandler((token, meta) => {
-      logFacebookOAuthDiagnostic("oauth_orphan_token_recovery", {
-        provider: "facebook",
-        correlationId: meta.correlationId,
-        loginInvocation: meta.loginInvocation,
-        apiOAuthWillBeCalled: true,
-      });
-      onSocialCredential("facebook", token);
-    });
-    return () => registerFacebookOrphanedTokenHandler(null);
-  }, [onSocialCredential]);
-
-  useEffect(() => {
-    if (providerBusy !== "facebook") return;
+    if (!facebookProviderShowsLoading(facebookAttempt)) return;
     if (isFacebookOAuthRedirectEnabled() && facebookRedirectContext) return;
     const safetyMs = 150_000;
+    const attemptId = facebookAttempt.attemptId;
     const timer = window.setTimeout(() => {
       logFacebookOAuthDiagnostic("oauth_provider_busy_safety_reset", {
         provider: "facebook",
         elapsedMs: safetyMs,
+        attemptId,
       });
-      setProviderBusy(null);
+      setFacebookAttempt((current) =>
+        applyFacebookPhaseIfCurrent(current, attemptId, "timeout", "timeout"),
+      );
     }, safetyMs);
     return () => window.clearTimeout(timer);
-  }, [providerBusy, facebookRedirectContext]);
+  }, [facebookAttempt, facebookRedirectContext]);
 
   useEffect(() => {
     if (!facebookAppId) {
@@ -201,12 +198,32 @@ export function OAuthProviderRow({
     };
   }, [appleClientId]);
 
+  const resetFacebookAttempt = useCallback(() => {
+    facebookRecoveryWatchRef.current?.dispose();
+    facebookRecoveryWatchRef.current = null;
+    setFacebookAttempt(FACEBOOK_OAUTH_IDLE);
+  }, []);
+
+  const releaseFacebookRedirectAttempt = useCallback(() => {
+    resetFacebookAttempt();
+  }, [resetFacebookAttempt]);
+
+  const handleSocialCredential = useCallback(
+    (provider: OAuthProviderId, idToken: string) => {
+      if (provider === "facebook") {
+        resetFacebookAttempt();
+      }
+      onSocialCredential(provider, idToken);
+    },
+    [onSocialCredential, resetFacebookAttempt],
+  );
+
   const onGoogleSuccess = useCallback(
     (cred: CredentialResponse) => {
       setGsiOriginError(false);
-      if (cred.credential) onSocialCredential("google", cred.credential);
+      if (cred.credential) handleSocialCredential("google", cred.credential);
     },
-    [onSocialCredential],
+    [handleSocialCredential],
   );
 
   const onGoogleError = useCallback(() => {
@@ -225,15 +242,22 @@ export function OAuthProviderRow({
   const anyProvider = showGoogle || showApple || showFacebook;
 
   const interactionBlocked = !allowInteraction;
-  const busy = disabled || providerBusy != null || interactionBlocked;
+  const facebookLoading = facebookProviderShowsLoading(facebookAttempt);
+  const busy =
+    disabled || interactionBlocked || providerBusy != null || facebookLoading;
 
-  const releaseFacebookRedirectAttempt = useCallback(() => {
-    facebookRecoveryWatchRef.current?.dispose();
-    facebookRecoveryWatchRef.current = null;
-    setFacebookRecoveryOpen(false);
-    setFacebookTroubleshootOpen(false);
-    setProviderBusy((current) => (current === "facebook" ? null : current));
-  }, []);
+  useEffect(() => {
+    registerFacebookOrphanedTokenHandler((token, meta) => {
+      logFacebookOAuthDiagnostic("oauth_orphan_token_recovery", {
+        provider: "facebook",
+        correlationId: meta.correlationId,
+        loginInvocation: meta.loginInvocation,
+        apiOAuthWillBeCalled: true,
+      });
+      handleSocialCredential("facebook", token);
+    });
+    return () => registerFacebookOrphanedTokenHandler(null);
+  }, [handleSocialCredential]);
 
   useEffect(() => () => facebookRecoveryWatchRef.current?.dispose(), []);
 
@@ -289,11 +313,12 @@ export function OAuthProviderRow({
       });
       return;
     }
-    if (providerBusy != null) {
+    if (providerBusy != null || facebookProviderShowsLoading(facebookAttempt)) {
       logFacebookOAuthDiagnostic("oauth_row_click_ignored", {
         provider: "facebook",
         reason: "provider_busy",
         providerBusy,
+        facebookPhase: facebookAttempt.phase,
         facebookWarmState,
       });
       return;
@@ -307,22 +332,37 @@ export function OAuthProviderRow({
         correlationId,
         isLogin: facebookRedirectContext.isLogin,
       });
-      setProviderBusy("facebook");
-      setFacebookRecoveryOpen(false);
-      setFacebookTroubleshootOpen(false);
+      const next = beginFacebookAttempt(facebookAttempt);
+      const attemptId = next.attemptId;
+      setFacebookAttempt({ attemptId, phase: "redirecting" });
       facebookRecoveryWatchRef.current?.dispose();
       facebookRecoveryWatchRef.current = watchFacebookOAuthRedirectRecovery({
         isRecoveryClient: isFacebookOAuthRecoveryClient(
           typeof navigator === "undefined" ? "" : navigator.userAgent,
         ),
-        onRecover: () => setFacebookRecoveryOpen(true),
-        onLeave: () => releaseFacebookRedirectAttempt(),
+        onStall: () => {
+          setFacebookAttempt((current) =>
+            applyFacebookPhaseIfCurrent(current, attemptId, "timeout", "timeout"),
+          );
+        },
+        onNavigateAway: () => {
+          setFacebookAttempt((current) =>
+            applyFacebookPhaseIfCurrent(current, attemptId, "awaiting_callback"),
+          );
+        },
       });
       submitFacebookOAuthRedirectStart(
         { ...facebookRedirectContext, correlationId },
         "/api/auth/facebook/start",
-        () => releaseFacebookRedirectAttempt(),
+        () => {
+          setFacebookAttempt((current) =>
+            applyFacebookPhaseIfCurrent(current, attemptId, "error", "start_failed"),
+          );
+          facebookRecoveryWatchRef.current?.dispose();
+          facebookRecoveryWatchRef.current = null;
+        },
       );
+      facebookRecoveryWatchRef.current?.armStallTimer();
       return;
     }
     if (!isFacebookSdkReady()) {
@@ -336,12 +376,17 @@ export function OAuthProviderRow({
         .catch(() => setFacebookWarmState("failed"));
       return;
     }
-    setProviderBusy("facebook");
+    const next = beginFacebookAttempt(facebookAttempt);
+    const attemptId = next.attemptId;
+    setFacebookAttempt({ attemptId, phase: "loading" });
     try {
       const tokenPromise = requestFacebookAccessToken(clickContext, correlationId);
       void tokenPromise
         .then((idToken) => {
-          onSocialCredential("facebook", idToken);
+          setFacebookAttempt((current) =>
+            applyFacebookPhaseIfCurrent(current, attemptId, "success"),
+          );
+          handleSocialCredential("facebook", idToken);
         })
         .catch((e) => {
           logFacebookOAuthDiagnostic("oauth_provider_row_aborted", {
@@ -351,25 +396,44 @@ export function OAuthProviderRow({
             errorClass: e instanceof Error ? e.name : "Error",
             ...(isFacebookLoginError(e) ? { failureKind: e.kind } : {}),
           });
+          if (isFacebookLoginError(e) && e.kind === "cancelled") {
+            setFacebookAttempt((current) =>
+              applyFacebookPhaseIfCurrent(current, attemptId, "cancelled"),
+            );
+            return;
+          }
+          setFacebookAttempt((current) =>
+            applyFacebookPhaseIfCurrent(current, attemptId, "error", "provider_error"),
+          );
           toastFacebookLoginError(e);
         })
         .finally(() => {
-          setProviderBusy(null);
+          setFacebookAttempt((current) => {
+            if (current.attemptId !== attemptId) return current;
+            if (current.phase === "loading") {
+              return applyFacebookPhaseIfCurrent(current, attemptId, "idle");
+            }
+            if (current.phase === "success") return FACEBOOK_OAUTH_IDLE;
+            if (current.phase === "cancelled") return FACEBOOK_OAUTH_IDLE;
+            return current;
+          });
         });
     } catch (e) {
-      setProviderBusy(null);
+      setFacebookAttempt((current) =>
+        applyFacebookPhaseIfCurrent(current, attemptId, "error", "provider_error"),
+      );
       toastFacebookLoginError(e);
     }
   }, [
     disabled,
     interactionBlocked,
-    onSocialCredential,
+    handleSocialCredential,
     providerBusy,
+    facebookAttempt,
     showFacebook,
     toastFacebookLoginError,
     facebookWarmState,
     facebookRedirectContext,
-    releaseFacebookRedirectAttempt,
     t,
   ]);
 
@@ -390,7 +454,7 @@ export function OAuthProviderRow({
     setProviderBusy(provider);
     try {
       const idToken = await requestAppleIdToken();
-      onSocialCredential(provider, idToken);
+      handleSocialCredential(provider, idToken);
     } catch (e) {
       logClientError(`OAuthProviderRow.${provider}`, e);
       toast.error(toUserFriendlyMessage(e) || t("auth.oauth.providerFailed", { provider }));
@@ -414,12 +478,12 @@ export function OAuthProviderRow({
   return (
     <AuthGoogleOAuthScope>
     <>
+    <div className={cn("caretip-oauth-circles-wrap", className)}>
     <div
       className={cn(
         "caretip-oauth-circles",
         (busy || interactionBlocked) && "caretip-oauth-circles--disabled",
         interactionBlocked && "pointer-events-none opacity-40",
-        className,
       )}
       role="group"
       aria-label={ariaLabel ?? t("auth.mobileWebAuth.socialAria")}
@@ -507,18 +571,12 @@ export function OAuthProviderRow({
             key={provider}
             provider="facebook"
             label={t("auth.oauth.continueWithFacebook")}
-            disabled={disabled || providerBusy != null || interactionBlocked}
-            loading={
-              providerBusy === "facebook" ||
-              (showFacebook &&
-                facebookWarmState === "loading" &&
-                providerBusy == null &&
-                isFacebookSdkReady())
-            }
+            disabled={disabled || providerBusy != null || interactionBlocked || facebookLoading}
+            loading={facebookLoading}
             title={
               !showFacebook
                 ? t("auth.oauth.providerNotConfigured")
-                : facebookWarmState === "loading"
+                : facebookWarmState === "loading" && !isFacebookSdkReady()
                   ? t("auth.oauth.facebookSdkLoading")
                   : t("auth.oauth.continueWithFacebook")
             }
@@ -527,15 +585,18 @@ export function OAuthProviderRow({
         );
       })}
     </div>
-    <FacebookOAuthRecoveryNotice
-      open={facebookRecoveryOpen}
-      troubleshooting={facebookTroubleshootOpen}
+    <FacebookOAuthInlineStatus
+      state={facebookAttempt}
+      onRetry={() => {
+        resetFacebookAttempt();
+        runFacebookLogin();
+      }}
       onContinueWithEmail={() => {
-        releaseFacebookRedirectAttempt();
+        resetFacebookAttempt();
         focusCurrentAuthEmailField();
       }}
-      onTroubleshootingChange={setFacebookTroubleshootOpen}
     />
+    </div>
     </>
     </AuthGoogleOAuthScope>
   );

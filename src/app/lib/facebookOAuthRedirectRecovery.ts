@@ -1,9 +1,18 @@
 /**
- * Mobile-only notice when a Facebook redirect start is still on the CareTip
- * login/signup page. Does not retry OAuth or change the start request.
+ * Mobile redirect stall detection when the user remains on CareTip after starting
+ * Facebook OAuth. Does not retry OAuth or change the start request.
  */
 
-export const FACEBOOK_OAUTH_RECOVERY_DELAY_MS = 7_000;
+import { FACEBOOK_START_CSP_WINDOW_MS } from "@/app/lib/facebookOAuthRedirectWeb";
+
+/** Grace after form submit before treating a visible page as stalled (aligns with CSP window). */
+export const FACEBOOK_OAUTH_REDIRECT_GRACE_MS = FACEBOOK_START_CSP_WINDOW_MS;
+
+/** Additional wait while still visible and never navigated away. */
+export const FACEBOOK_OAUTH_STALL_AFTER_GRACE_MS = 18_000;
+
+export const FACEBOOK_OAUTH_RECOVERY_DELAY_MS =
+  FACEBOOK_OAUTH_REDIRECT_GRACE_MS + FACEBOOK_OAUTH_STALL_AFTER_GRACE_MS;
 
 type RecoveryListener = (event?: { persisted?: boolean }) => void;
 
@@ -23,6 +32,8 @@ type RecoveryEnv = {
 
 export type FacebookOAuthRecoveryWatch = {
   dispose: () => void;
+  /** Call after redirect form submit so stall timer does not fire during normal navigation startup. */
+  armStallTimer: () => void;
 };
 
 /** Phone and tablet browsers. Desktop Chrome/Safari/Firefox stay on the existing flow. */
@@ -41,23 +52,24 @@ function defaultEnv(): RecoveryEnv {
 
 /**
  * Arms a single wait for one redirect attempt.
- * A hidden page or pagehide cancels the notice so a later return cannot show a stale message.
+ * Navigation away (hidden / pagehide) cancels the stall notice — user is progressing.
  */
 export function watchFacebookOAuthRedirectRecovery(options: {
   isRecoveryClient: boolean;
   delayMs?: number;
-  onRecover: () => void;
-  onLeave: () => void;
+  onStall: () => void;
+  onNavigateAway: () => void;
   env?: RecoveryEnv;
 }): FacebookOAuthRecoveryWatch {
   if (!options.isRecoveryClient) {
-    return { dispose() {} };
+    return { dispose() {}, armStallTimer() {} };
   }
 
   const env = options.env ?? defaultEnv();
   let disposed = false;
-  let left = false;
+  let navigatedAway = false;
   let timer: ReturnType<typeof setTimeout> | undefined;
+  let timerArmed = false;
 
   const clearTimer = () => {
     if (timer === undefined) return;
@@ -67,19 +79,15 @@ export function watchFacebookOAuthRedirectRecovery(options: {
 
   const leave = () => {
     if (disposed) return;
-    left = true;
+    navigatedAway = true;
     clearTimer();
-    options.onLeave();
+    options.onNavigateAway();
   };
 
   const onVisibility: RecoveryListener = () => {
     if (disposed) return;
     if (env.document.visibilityState === "hidden") {
       leave();
-      return;
-    }
-    if (left && env.document.visibilityState === "visible") {
-      options.onLeave();
     }
   };
 
@@ -96,17 +104,25 @@ export function watchFacebookOAuthRedirectRecovery(options: {
   env.window.addEventListener("pagehide", onPageHide);
   env.window.addEventListener("pageshow", onPageShow);
 
-  timer = env.setTimeout(() => {
-    timer = undefined;
-    if (disposed || left) return;
-    if (env.document.visibilityState === "hidden") {
-      leave();
-      return;
-    }
-    options.onRecover();
-  }, options.delayMs ?? FACEBOOK_OAUTH_RECOVERY_DELAY_MS);
+  const armStallTimer = () => {
+    if (disposed || navigatedAway || timerArmed) return;
+    timerArmed = true;
+    timer = env.setTimeout(() => {
+      if (disposed || navigatedAway) return;
+      timer = env.setTimeout(() => {
+        timer = undefined;
+        if (disposed || navigatedAway) return;
+        if (env.document.visibilityState === "hidden") {
+          leave();
+          return;
+        }
+        options.onStall();
+      }, options.delayMs ?? FACEBOOK_OAUTH_STALL_AFTER_GRACE_MS);
+    }, FACEBOOK_OAUTH_REDIRECT_GRACE_MS);
+  };
 
   return {
+    armStallTimer,
     dispose() {
       if (disposed) return;
       disposed = true;
@@ -119,7 +135,9 @@ export function watchFacebookOAuthRedirectRecovery(options: {
 }
 
 /** Focus the email field on the screen the user is actually looking at. */
-export function focusCurrentAuthEmailField(doc: Pick<Document, "getElementById" | "querySelectorAll"> = document): void {
+export function focusCurrentAuthEmailField(
+  doc: Pick<Document, "getElementById" | "querySelectorAll"> = document,
+): void {
   const nodes = [
     doc.getElementById("mw-auth-email"),
     ...Array.from(doc.querySelectorAll('input[name="email"]')),

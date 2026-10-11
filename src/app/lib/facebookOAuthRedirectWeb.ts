@@ -33,7 +33,7 @@ const FACEBOOK_OAUTH_FORM_ACTION_ORIGINS = new Set([
 ]);
 
 /** Wait for redirect-chain CSP violations before treating submit as committed. */
-const FACEBOOK_START_CSP_WINDOW_MS = 5_000;
+export const FACEBOOK_START_CSP_WINDOW_MS = 5_000;
 
 const FACEBOOK_START_FORM_MARKER = "data-caretip-fb-oauth-start";
 
