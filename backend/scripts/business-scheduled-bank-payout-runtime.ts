@@ -18,6 +18,10 @@ import {
   tickBusinessScheduledBankPayouts,
 } from "../src/services/businessScheduledBankPayout.service.js";
 import { scheduleWindowKeyFromDate } from "../src/services/businessBankPayoutSchedule.service.js";
+import {
+  __resetScheduledBankPayoutDestinationStripeFnsForTests,
+  __setScheduledBankPayoutDestinationStripeFnsForTests,
+} from "../src/services/scheduledBankPayoutDestination.service.js";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 
@@ -47,6 +51,25 @@ assert(
   "idempotency key format",
 );
 
+function installCompatibleDestinationMock(): void {
+  __setScheduledBankPayoutDestinationStripeFnsForTests({
+    listExternalAccounts: async () => ({
+      object: "list",
+      data: [
+        {
+          id: "ba_fixture_standard",
+          object: "bank_account",
+          currency: "eur",
+          default_for_currency: true,
+          available_payout_methods: ["standard"],
+        },
+      ],
+      has_more: false,
+      url: "/v1/external_accounts",
+    }),
+  });
+}
+
 function installStripeMocks(mocks: {
   retrieveBalance: () => Promise<unknown>;
   listPendingPayouts: () => Promise<boolean>;
@@ -57,6 +80,7 @@ function installStripeMocks(mocks: {
     idempotencyKey: string;
   }) => Promise<unknown>;
 }): void {
+  installCompatibleDestinationMock();
   __setScheduledBankPayoutStripeFnsForTests({
     retrieveBalance: mocks.retrieveBalance as never,
     listPendingPayouts: mocks.listPendingPayouts,
@@ -103,6 +127,7 @@ async function withFixture(
     await prisma.business.delete({ where: { id: businessId } });
     await prisma.user.delete({ where: { id: user.id } });
     __resetScheduledBankPayoutStripeFnsForTests();
+    __resetScheduledBankPayoutDestinationStripeFnsForTests();
   }
 }
 
@@ -364,6 +389,7 @@ async function runDbTests(): Promise<void> {
     await prisma.business.deleteMany({ where: { id: { in: [idA, idB] } } });
     await prisma.user.deleteMany({ where: { id: { in: [user1.id, user2.id] } } });
     __resetScheduledBankPayoutStripeFnsForTests();
+    __resetScheduledBankPayoutDestinationStripeFnsForTests();
   }
 }
 

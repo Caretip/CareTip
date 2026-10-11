@@ -123,6 +123,17 @@ assert(
   "balance permanent",
 );
 
+const debitCardDiag = extractStripePayoutCreateDiagnostics(
+  Object.assign(new Error("Method 'standard' is not supported for payouts to debit cards."), {
+    statusCode: 400,
+    code: "invalid_request_error",
+    type: "StripeInvalidRequestError",
+  }),
+);
+assert(debitCardDiag.failureCode === "payout_destination_incompatible", "debit card stripe failure code");
+const debitLedger = diagnosticsToLedgerUpdate(debitCardDiag, 1);
+assert(debitLedger.nextRetryAt === null && debitLedger.blockedReason === "permanent_failure", "debit incompatible no retry");
+
 const next = computeScheduledPayoutNextRetryAt(1);
 assert(next.getTime() > Date.now(), "next retry in future");
 

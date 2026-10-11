@@ -21,6 +21,10 @@ import {
   SCHEDULED_PAYOUT_PROCESSING_CLAIM_TTL_MS,
   tryAcquireEmployeeScheduledPayoutProcessingClaim,
 } from "../src/services/scheduledBankPayoutProcessingClaim.service.js";
+import {
+  __resetScheduledBankPayoutDestinationStripeFnsForTests,
+  __setScheduledBankPayoutDestinationStripeFnsForTests,
+} from "../src/services/scheduledBankPayoutDestination.service.js";
 
 function assert(condition: unknown, message: string): void {
   if (!condition) throw new Error(message);
@@ -28,6 +32,25 @@ function assert(condition: unknown, message: string): void {
 
 const CHARLINE_WINDOW = new Date("2026-10-08T07:00:00.000Z");
 const CHARLINE_AMOUNT_CENTS = 9802;
+
+function installCompatibleDestinationMock(): void {
+  __setScheduledBankPayoutDestinationStripeFnsForTests({
+    listExternalAccounts: async () => ({
+      object: "list",
+      data: [
+        {
+          id: "ba_fixture_standard",
+          object: "bank_account",
+          currency: "eur",
+          default_for_currency: true,
+          available_payout_methods: ["standard"],
+        },
+      ],
+      has_more: false,
+      url: "/v1/external_accounts",
+    }),
+  });
+}
 
 function installStripeMocks(mocks: {
   retrieveBalance: () => Promise<unknown>;
@@ -41,6 +64,7 @@ function installStripeMocks(mocks: {
     scheduleWindowKey: string;
   }) => Promise<{ id: string }>;
 }): void {
+  installCompatibleDestinationMock();
   __setEmployeeScheduledBankPayoutStripeFnsForTests({
     retrieveBalance: mocks.retrieveBalance as never,
     listPendingPayouts: mocks.listPendingPayouts,
@@ -112,6 +136,7 @@ async function withEmployeeFixture(
     await prisma.business.deleteMany({ where: { id: businessId } });
     await prisma.user.deleteMany({ where: { id: { in: [user.id, manager.id] } } });
     __resetEmployeeScheduledBankPayoutStripeFnsForTests();
+    __resetScheduledBankPayoutDestinationStripeFnsForTests();
   }
 }
 

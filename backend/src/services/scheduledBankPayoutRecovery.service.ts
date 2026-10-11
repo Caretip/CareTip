@@ -123,7 +123,11 @@ function extractDuckTypedStripeDiagnostics(err: unknown): StripePayoutCreateDiag
   const message = sanitizeScheduledPayoutFailureMessage(
     err instanceof Error ? err.message : "Stripe error",
   );
-  const failureClassification = classifyStripePayoutError({ code, type, status });
+  const failureClassification = classifyStripePayoutError({ code, type, status }, message);
+  let failureCode = (code ?? type ?? "stripe_create_failed").slice(0, 64);
+  if (/not supported for payouts to debit cards/i.test(message)) {
+    failureCode = "payout_destination_incompatible";
+  }
   return {
     stripeErrorCode: code,
     stripeErrorType: type,
@@ -131,7 +135,7 @@ function extractDuckTypedStripeDiagnostics(err: unknown): StripePayoutCreateDiag
     stripeRequestId: typeof record.requestId === "string" ? record.requestId : null,
     failureMessage: message,
     failureClassification,
-    failureCode: (code ?? type ?? "stripe_create_failed").slice(0, 64),
+    failureCode,
   };
 }
 
@@ -142,8 +146,11 @@ export function extractStripePayoutCreateDiagnostics(err: unknown): StripePayout
     const status = typeof err.statusCode === "number" ? err.statusCode : null;
     const requestId = err.requestId ?? null;
     const failureMessage = sanitizeScheduledPayoutFailureMessage(err.message ?? "Stripe error");
-    const failureClassification = classifyStripePayoutError({ code, type, status });
-    const failureCode = code ?? type ?? "stripe_create_failed";
+    const failureClassification = classifyStripePayoutError({ code, type, status }, failureMessage);
+    let failureCode = code ?? type ?? "stripe_create_failed";
+    if (/not supported for payouts to debit cards/i.test(failureMessage)) {
+      failureCode = "payout_destination_incompatible";
+    }
     return {
       stripeErrorCode: code,
       stripeErrorType: type,
@@ -178,12 +185,25 @@ export function extractStripePayoutCreateDiagnostics(err: unknown): StripePayout
   };
 }
 
-export function classifyStripePayoutError(args: {
-  code: string | null;
-  type: string | null;
-  status: number | null;
-}): ScheduledPayoutFailureClassification {
+export function classifyStripePayoutError(
+  args: {
+    code: string | null;
+    type: string | null;
+    status: number | null;
+  },
+  message?: string | null,
+): ScheduledPayoutFailureClassification {
   const code = args.code ?? "";
+  if (
+    code === "payout_destination_incompatible" ||
+    code === "payout_destination_ambiguous" ||
+    code === "payout_destination_missing"
+  ) {
+    return ScheduledPayoutFailureClassification.permanent;
+  }
+  if (message && /not supported for payouts to debit cards/i.test(message)) {
+    return ScheduledPayoutFailureClassification.permanent;
+  }
   if (
     code === "balance_insufficient" ||
     code === "payouts_not_allowed" ||

@@ -119,6 +119,7 @@
     "test:business-scheduled-bank-payout": "dotenv -e ../.env -e .env -- tsx scripts/business-scheduled-bank-payout-runtime.ts",
     "test:employee-scheduled-bank-payout": "dotenv -e ../.env -e .env -- tsx scripts/employee-scheduled-bank-payout-runtime.ts",
     "test:scheduled-bank-payout-recovery": "tsx scripts/scheduled-bank-payout-recovery-runtime.ts",
+    "test:scheduled-bank-payout-destination": "tsx scripts/scheduled-bank-payout-destination-runtime.ts",
     "test:scheduled-bank-payout-phase-a-closure": "tsx scripts/scheduled-bank-payout-phase-a-closure-runtime.ts",
     "test:platform-scheduled-payout-ops": "tsx scripts/platform-scheduled-payout-ops-runtime.ts",
     "test:scheduled-bank-payout-tick-observability": "tsx scripts/scheduled-bank-payout-tick-observability-runtime.ts",

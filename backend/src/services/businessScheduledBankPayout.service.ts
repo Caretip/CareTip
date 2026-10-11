@@ -39,6 +39,7 @@ import {
   persistBusinessScheduledPayoutLedgerIfClaimOwner,
   runWithBusinessScheduledPayoutClaimHeartbeat,
 } from "./scheduledBankPayoutProcessingClaim.service.js";
+import { validateScheduledStandardPayoutDestination } from "./scheduledBankPayoutDestination.service.js";
 import type { ScheduledBankPayoutRunResult } from "./scheduledBankPayoutRecovery.service.js";
 
 const EUR_STANDARD_MIN_CENTS = 100;
@@ -340,6 +341,41 @@ export async function runScheduledBankPayoutForBusiness(
         }
         const nextAttemptCount = request.attemptCount + 1;
         try {
+          const destinationCheck = await validateScheduledStandardPayoutDestination({
+            stripeAccountId,
+            currency: amountResolved.currency,
+          });
+          if (!destinationCheck.ok) {
+            const diagnostics = destinationCheck.diagnostics;
+            logScheduledPayoutCreateFailure(
+              "businessScheduledBankPayout.create",
+              new Error(diagnostics.failureMessage ?? "Payout destination blocked"),
+              {
+                businessId,
+                windowKey,
+                idempotencyKey,
+                correlationId,
+                destinationBlocked: true,
+                failureCode: diagnostics.failureCode,
+              },
+              diagnostics,
+            );
+            const ledgerUpdate = diagnosticsToLedgerUpdate(diagnostics, nextAttemptCount);
+            await persistBusinessScheduledPayoutLedgerIfClaimOwner({
+              ledgerId: request.id,
+              claimToken: handle.claimToken,
+              data: {
+                ...ledgerUpdate,
+                correlationId,
+                processingClaimedAt: null,
+                processingClaimToken: null,
+              },
+            });
+            return {
+              kind: "stripe_failed" as const,
+              blockedReason: ledgerUpdate.blockedReason ?? "permanent_failure",
+            };
+          }
           const stripePayout = await createStandardPayout({
             stripeAccountId,
             amountCents: payoutAmountCents,
