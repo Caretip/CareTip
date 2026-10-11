@@ -154,7 +154,12 @@ function auditFrontendClientHeader() {
   }
 
   const checks = [
-    { label: "POST /api/auth/refresh", ok: hasClientHeaderNear("apiPath(AUTH_REFRESH_PATHNAME)") },
+    {
+      label: "POST /api/auth/refresh",
+      ok:
+        hasClientHeaderNear("resolveBrowserAuthRefreshUrl(resolveApiBaseUrl())") ||
+        hasClientHeaderNear("apiPath(AUTH_REFRESH_PATHNAME)"),
+    },
     { label: "POST /api/auth/logout", ok: hasClientHeaderNear('apiPath("/api/auth/logout")') },
   ];
 

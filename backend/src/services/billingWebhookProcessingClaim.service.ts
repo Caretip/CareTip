@@ -34,9 +34,10 @@ export async function acquireBillingWebhookProcessingClaim(
   const now = new Date();
   const claimToken = randomUUID();
   const claimExpiresAt = new Date(now.getTime() + BILLING_WEBHOOK_PROCESSING_CLAIM_TTL_MS);
+  const webhookLockKey = `${WEBHOOK_LOCK_PREFIX}${stripeEventId}`;
 
   return prisma.$transaction(async (tx) => {
-    await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${WEBHOOK_LOCK_PREFIX + stripeEventId}))`;
+    await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${webhookLockKey}))`;
 
     const row = await tx.subscriptionEvent.findUnique({
       where: { stripeEventId },

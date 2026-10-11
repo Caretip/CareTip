@@ -45,6 +45,23 @@ services:
         value: /api/internal/jobs/subscription-billing-reconciliation
 
   - type: cron
+    name: caretip-subscription-billing-notification-retry
+    runtime: node
+    rootDir: backend
+    plan: starter
+    buildCommand: "true"
+    startCommand: node scripts/render-category-retention-http.mjs
+    # Every 15 minutes UTC — retry pending/failed subscription payment-failure emails (SUB-004).
+    schedule: "*/15 * * * *"
+    envVars:
+      - key: CRON_SECRET
+        sync: false
+      - key: CARE_TIP_API_ORIGIN
+        value: https://caretip.onrender.com
+      - key: CARE_TIP_INTERNAL_JOB_PATH
+        value: /api/internal/jobs/subscription-billing-notification-retry
+
+  - type: cron
     name: caretip-category-retention-sweep
     runtime: node
     rootDir: backend
