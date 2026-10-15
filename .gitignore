@@ -54,15 +54,19 @@ Desktop.ini
 *.njsproj
 *.sln
 
-# --- Markdown: README + project audits/docs; other *.md stay local unless force-added ---
+# --- Markdown: public README only; internal audits/reports stay local ---
 *.md
 !/README.md
-!CARETIP_PRODUCT_REVIEW_SYSTEM_AUDIT.md
-!CARETIP_PRODUCT_REVIEW_PHASE1_IMPLEMENTATION_REPORT.md
-!CARETIP-*.md
-!CARETIP_*.md
-!BUSINESS_*.md
-!backend/docs/**/*.md
+/CARETIP*.md
+/CARETIP-*.md
+/BUSINESS_*.md
+/*_REPORT.md
+/*_AUDIT.md
+docs/audits/
+backend/docs/
+security-audit/
+security/pentest-preparation/
+backend/scripts/experiment-*.ts
 
 # --- Local restore / accidental paste dumps ---
 .restore_*.txt

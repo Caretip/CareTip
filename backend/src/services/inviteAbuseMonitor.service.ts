@@ -1,6 +1,6 @@
 /**
  * In-process invite abuse monitoring (structured logs + threshold alerts).
- * See backend/docs/INVITE_ABUSE_MONITORING.md for thresholds and response actions.
+ * Thresholds and response actions are defined in platform ops configuration.
  */
 import { captureServerException } from "../instrument/sentry.js";
 

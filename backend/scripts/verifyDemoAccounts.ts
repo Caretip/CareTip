@@ -1,20 +1,43 @@
 import "../src/loadEnv.js";
 import { prisma } from "../src/prisma.js";
 import { login } from "../src/services/auth.service.js";
-import { PLATFORM_ADMIN_TEAM } from "../prisma/seedPlatformAdminTeam.js";
+import {
+  getPlatformAdminTeamMembers,
+  requireSeedAdminPassword,
+} from "../prisma/seedPlatformAdminTeam.js";
 
-const ACCOUNTS: Array<{ email: string; role: "MANAGER" | "EMPLOYEE" | "SUPER_ADMIN"; password: string }> = [
-  { email: "demo@caretip.de", role: "MANAGER", password: "Demo1234!" },
-  { email: "employee@caretip.de", role: "EMPLOYEE", password: "Demo1234!" },
-  { email: "admin@caretip.de", role: "SUPER_ADMIN", password: "Demo1234!" },
-  ...PLATFORM_ADMIN_TEAM.map((m) => ({
-    email: m.email,
-    role: "SUPER_ADMIN" as const,
-    password: m.tempPassword,
-  })),
-];
+function buildAccounts(): Array<{
+  email: string;
+  role: "MANAGER" | "EMPLOYEE" | "SUPER_ADMIN";
+  password: string;
+}> {
+  const demoPassword = process.env.SEED_PASSWORD?.trim();
+  if (!demoPassword) {
+    throw new Error("Set SEED_PASSWORD to verify demo accounts.");
+  }
+  const demoManager = process.env.SEED_DEMO_MANAGER_EMAIL?.trim().toLowerCase();
+  const demoEmployee = process.env.SEED_DEMO_EMPLOYEE_EMAIL?.trim().toLowerCase();
+  const platformAdmin = process.env.SEED_PLATFORM_ADMIN_EMAIL?.trim().toLowerCase();
+  if (!demoManager || !demoEmployee || !platformAdmin) {
+    throw new Error(
+      "Set SEED_DEMO_MANAGER_EMAIL, SEED_DEMO_EMPLOYEE_EMAIL, and SEED_PLATFORM_ADMIN_EMAIL.",
+    );
+  }
+  const teamPassword = requireSeedAdminPassword();
+  return [
+    { email: demoManager, role: "MANAGER", password: demoPassword },
+    { email: demoEmployee, role: "EMPLOYEE", password: demoPassword },
+    { email: platformAdmin, role: "SUPER_ADMIN", password: demoPassword },
+    ...getPlatformAdminTeamMembers().map((m) => ({
+      email: m.email,
+      role: "SUPER_ADMIN" as const,
+      password: teamPassword,
+    })),
+  ];
+}
 
 async function main() {
+  const ACCOUNTS = buildAccounts();
   const raw = process.env.DATABASE_URL ?? "";
   const ref = raw.match(/postgres\.([^:]+)@/)?.[1];
   const host = raw.match(/@([^:/]+)/)?.[1];

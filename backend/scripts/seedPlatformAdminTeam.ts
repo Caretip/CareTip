@@ -1,12 +1,10 @@
 /**
  * Idempotent seed for additional platform admin accounts (shared platform, separate logins).
  *
- * Creates or updates:
- *   albertina@caretip.de
- *   fanny@caretip.de
+ * Creates or updates accounts listed in SEED_ADMIN_EMAILS (comma-separated).
  *
  * Requirements:
- *   ADMIN_SEED_SECRET (≥ 8 chars) in environment
+ *   SEED_ADMIN_EMAILS, SEED_ADMIN_PASSWORD (≥ 12 chars), ADMIN_SEED_SECRET (≥ 8 chars)
  *   Production: ALLOW_ADMIN_SEED_IN_PRODUCTION=true
  *
  * Usage (from backend/):
@@ -17,8 +15,9 @@ import "dotenv/config";
 import "../src/loadEnv.js";
 import { prisma } from "../src/prisma.js";
 import {
+  getPlatformAdminTeamMembers,
   listPlatformAdminAccounts,
-  PLATFORM_ADMIN_TEAM,
+  requireSeedAdminPassword,
   seedPlatformAdminTeam,
 } from "../prisma/seedPlatformAdminTeam.js";
 
@@ -39,13 +38,22 @@ if (process.env.NODE_ENV === "production" && process.env.ALLOW_ADMIN_SEED_IN_PRO
 
 const resetPasswords = process.argv.includes("--reset-passwords");
 
+try {
+  requireSeedAdminPassword();
+  getPlatformAdminTeamMembers();
+} catch (e) {
+  console.error(e instanceof Error ? e.message : e);
+  process.exit(1);
+}
+
 async function main() {
   console.log("Seeding platform admin team (idempotent)…\n");
 
   const result = await seedPlatformAdminTeam(prisma, { resetPasswords });
+  const teamMembers = getPlatformAdminTeamMembers();
 
   console.log("Accounts configured:");
-  for (const member of PLATFORM_ADMIN_TEAM) {
+  for (const member of teamMembers) {
     const pwNote = result.passwordReset.includes(member.email)
       ? "(password set — see README or env override)"
       : "(password unchanged)";
@@ -74,7 +82,7 @@ async function main() {
   console.log("  1. Sign in at /platform-admin/login with each account.");
   console.log("  2. Complete Google Authenticator setup on first login (required per account).");
   console.log("  3. Change temporary passwords after first sign-in.");
-  console.log("  4. Verify: npm run admin:verify -- albertina@caretip.de \"<password>\"");
+  console.log("  4. Verify sign-in with SEED_ADMIN_PASSWORD for each SEED_ADMIN_EMAILS entry.");
 }
 
 main()

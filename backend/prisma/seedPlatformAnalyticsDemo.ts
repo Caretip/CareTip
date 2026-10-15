@@ -36,7 +36,26 @@ async function main() {
   const days = clampInt(Number(process.env.SEED_DAYS ?? 45), 14, 120);
   /** Default 0 — `npm run db:seed` already provisions 5 curated demo businesses. */
   const businessesCount = clampInt(Number(process.env.SEED_BUSINESSES ?? 0), 0, 15);
-  const defaultPassword = process.env.SEED_PASSWORD ?? "Demo1234!";
+  const defaultPassword = process.env.SEED_PASSWORD?.trim();
+  if (!defaultPassword) {
+    throw new Error(
+      "Set SEED_PASSWORD before running the platform analytics demo seed. No default password is allowed.",
+    );
+  }
+  if (defaultPassword.length < 12) {
+    throw new Error("SEED_PASSWORD must be at least 12 characters.");
+  }
+  const platformAdminEmail = process.env.SEED_PLATFORM_ADMIN_EMAIL?.trim().toLowerCase();
+  if (!platformAdminEmail) {
+    throw new Error("Set SEED_PLATFORM_ADMIN_EMAIL before running the platform analytics demo seed.");
+  }
+  const demoManagerEmail = process.env.SEED_DEMO_MANAGER_EMAIL?.trim().toLowerCase();
+  const demoEmployeeEmail = process.env.SEED_DEMO_EMPLOYEE_EMAIL?.trim().toLowerCase();
+  if (!demoManagerEmail || !demoEmployeeEmail) {
+    throw new Error(
+      "Set SEED_DEMO_MANAGER_EMAIL and SEED_DEMO_EMPLOYEE_EMAIL (must match your main demo seed accounts).",
+    );
+  }
   const passwordHash = await bcrypt.hash(defaultPassword, 10);
 
   console.log(
@@ -47,12 +66,12 @@ async function main() {
     console.log("SEED_BUSINESSES=0 — skipping synthetic business creation; adding platform-wide tip volume only.");
   }
 
-  // Ensure the real platform admin exists and is active.
+  // Ensure the platform admin exists and is active.
   await prisma.user.upsert({
-    where: { email: "admin@caretip.de" },
+    where: { email: platformAdminEmail },
     update: { role: "SUPER_ADMIN", isPlatformAdmin: true, isActive: true, emailVerified: true },
     create: {
-      email: "admin@caretip.de",
+      email: platformAdminEmail,
       passwordHash,
       role: "SUPER_ADMIN",
       isPlatformAdmin: true,
@@ -62,8 +81,6 @@ async function main() {
   });
 
   // Do not overwrite the curated Brasserie demo — only ensure accounts exist if main seed was skipped.
-  const demoManagerEmail = "demo@caretip.de";
-  const demoEmployeeEmail = "employee@caretip.de";
 
   const demoManager = await prisma.user.findUnique({ where: { email: demoManagerEmail } });
   const demoBusiness = demoManager
@@ -356,7 +373,7 @@ async function main() {
   }
 
   console.log("Platform analytics demo seed completed.");
-  console.log(`- Admin ensured: admin@caretip.de (password: ${defaultPassword})`);
+  console.log(`- Platform admin ensured: ${platformAdminEmail}`);
   console.log(`- Demo manager ensured: ${demoManagerEmail}`);
   console.log(`- Demo employee ensured: ${demoEmployeeEmail}`);
   console.log(`- Businesses created/updated: ${createdBusinesses.length}`);

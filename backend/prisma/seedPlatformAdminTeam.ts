@@ -1,24 +1,47 @@
 import type { PrismaClient } from "@prisma/client";
 import bcrypt from "bcrypt";
 
+export type PlatformAdminTeamMember = {
+  email: string;
+  displayName: string;
+};
+
 /**
  * Additional platform operators — same dashboard & data, separate logins and MFA.
  * DB role is SUPER_ADMIN + isPlatformAdmin (API label: platform_admin).
  */
-export const PLATFORM_ADMIN_TEAM = [
-  {
-    email: "albertina@caretip.de",
-    displayName: "Albertina",
-    /** Change after first login. Override with ALBERTINA_ADMIN_TEMP_PASSWORD. */
-    tempPassword: "caretip@2026!",
-  },
-  {
-    email: "fanny@caretip.de",
-    displayName: "Fanny",
-    /** Change after first login. Override with FANNY_ADMIN_TEMP_PASSWORD. */
-    tempPassword: "caretip@2026!",
-  },
-] as const;
+export function getPlatformAdminTeamMembers(): PlatformAdminTeamMember[] {
+  const raw = process.env.SEED_ADMIN_EMAILS?.trim();
+  if (!raw) {
+    throw new Error(
+      "Set SEED_ADMIN_EMAILS (comma-separated platform admin emails) before seeding the admin team.",
+    );
+  }
+  const emails = raw
+    .split(",")
+    .map((e) => e.trim().toLowerCase())
+    .filter(Boolean);
+  if (emails.length === 0) {
+    throw new Error("SEED_ADMIN_EMAILS must contain at least one email address.");
+  }
+  return emails.map((email) => ({
+    email,
+    displayName: email.split("@")[0] ?? email,
+  }));
+}
+
+export function requireSeedAdminPassword(): string {
+  const password = process.env.SEED_ADMIN_PASSWORD?.trim();
+  if (!password) {
+    throw new Error(
+      "Set SEED_ADMIN_PASSWORD before seeding platform admins. No default password is allowed.",
+    );
+  }
+  if (password.length < 12) {
+    throw new Error("SEED_ADMIN_PASSWORD must be at least 12 characters.");
+  }
+  return password;
+}
 
 export type SeedPlatformAdminTeamResult = {
   created: string[];
@@ -26,16 +49,6 @@ export type SeedPlatformAdminTeamResult = {
   passwordReset: string[];
   passwordPreserved: string[];
 };
-
-function resolveTempPassword(
-  member: (typeof PLATFORM_ADMIN_TEAM)[number],
-): string {
-  const envKey =
-    member.email === "albertina@caretip.de"
-      ? process.env.ALBERTINA_ADMIN_TEMP_PASSWORD?.trim()
-      : process.env.FANNY_ADMIN_TEMP_PASSWORD?.trim();
-  return envKey && envKey.length >= 12 ? envKey : member.tempPassword;
-}
 
 /**
  * Idempotent: upserts team admins by email. Never creates tenants or duplicated platform data.
@@ -46,6 +59,8 @@ export async function seedPlatformAdminTeam(
   options: { resetPasswords?: boolean } = {},
 ): Promise<SeedPlatformAdminTeamResult> {
   const resetPasswords = options.resetPasswords === true;
+  const teamPassword = requireSeedAdminPassword();
+  const members = getPlatformAdminTeamMembers();
   const result: SeedPlatformAdminTeamResult = {
     created: [],
     updated: [],
@@ -53,7 +68,7 @@ export async function seedPlatformAdminTeam(
     passwordPreserved: [],
   };
 
-  for (const member of PLATFORM_ADMIN_TEAM) {
+  for (const member of members) {
     const email = member.email.toLowerCase();
     const existing = await prisma.user.findUnique({
       where: { email },
@@ -66,7 +81,7 @@ export async function seedPlatformAdminTeam(
 
     const shouldSetPassword = !existing || resetPasswords;
     const passwordHash = shouldSetPassword
-      ? await bcrypt.hash(resolveTempPassword(member), 10)
+      ? await bcrypt.hash(teamPassword, 10)
       : undefined;
 
     const user = await prisma.user.upsert({
