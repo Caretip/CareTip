@@ -47,11 +47,10 @@ import {
 } from "@/app/lib/facebookOAuthRedirectRecovery";
 import "@/styles/caretip-oauth-circles.css";
 
-/** Desktop / mobile-web order: Google → Facebook → Apple. */
+/** Desktop / mobile-web order: Google → Facebook. Apple sign-in is hidden from the UI. */
 export const WEB_OAUTH_PROVIDER_ORDER: readonly OAuthProviderId[] = [
   "google",
   "facebook",
-  "apple",
 ] as const;
 
 function OAuthLogoButton({
@@ -239,7 +238,7 @@ export function OAuthProviderRow({
   const showGoogle = Boolean(googleClientId?.trim());
   const showApple = Boolean(appleClientId);
   const showFacebook = Boolean(facebookAppId);
-  const anyProvider = showGoogle || showApple || showFacebook;
+  const anyProvider = showGoogle || showFacebook;
 
   const interactionBlocked = !allowInteraction;
   const facebookLoading = facebookProviderShowsLoading(facebookAttempt);

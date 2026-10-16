@@ -113,8 +113,9 @@ export function LinkedOAuthAccountsSection({ loading }: { loading?: boolean }) {
 
   const linkedMap = new Map(accounts.map((a) => [a.provider, a]));
 
-  const visibleProviders = OAUTH_PROVIDER_ORDER.filter(
-    (p) => providerConfigured(p) || linkedMap.has(p),
+  // Apple is hidden unless already linked, so existing links can still be removed.
+  const visibleProviders = OAUTH_PROVIDER_ORDER.filter((p) =>
+    p === "apple" ? linkedMap.has(p) : providerConfigured(p) || linkedMap.has(p),
   );
 
   const finishLink = useCallback(async (provider: OAuthProviderId, idToken: string) => {
