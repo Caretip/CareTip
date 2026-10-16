@@ -7,6 +7,7 @@ import { randomBytes } from "node:crypto";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { join } from "node:path";
+import { loopbackPostgresUrl } from "./ephemeralIsolatedPostgres.js";
 
 export const PHASE2_LOCAL_PORT = 5434;
 export const PHASE2_LOCAL_DB = "caretip_phase2_copy";
@@ -54,11 +55,10 @@ export async function startPhase2LocalCluster(): Promise<Phase2LocalCluster> {
   });
   if (!existsSync(join(databaseDir, "PG_VERSION"))) await pg.initialise();
   await pg.start();
-  const base = `postgresql://${USER}:${encodeURIComponent(state.password)}@127.0.0.1:${PHASE2_LOCAL_PORT}`;
   return {
     databaseDir,
-    connectionUrl: `${base}/${PHASE2_LOCAL_DB}`,
-    adminUrl: `${base}/postgres`,
+    connectionUrl: loopbackPostgresUrl(USER, state.password, PHASE2_LOCAL_PORT, PHASE2_LOCAL_DB),
+    adminUrl: loopbackPostgresUrl(USER, state.password, PHASE2_LOCAL_PORT, "postgres"),
     stop: () => pg.stop(),
   };
 }

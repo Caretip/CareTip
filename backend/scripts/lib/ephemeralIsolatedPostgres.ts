@@ -40,10 +40,8 @@ export async function startEphemeralIsolatedPostgres(): Promise<EphemeralIsolate
   await pg.initialise();
   await pg.start();
 
-  const connectionUrl = `postgresql://${EPHEMERAL_USER}:${encodeURIComponent(password)}@127.0.0.1:${EPHEMERAL_PORT}/postgres`;
-
   return {
-    connectionUrl,
+    connectionUrl: loopbackPostgresUrl(EPHEMERAL_USER, password, EPHEMERAL_PORT, "postgres"),
     port: EPHEMERAL_PORT,
     databaseDir,
     stop: async () => {
@@ -54,6 +52,14 @@ export async function startEphemeralIsolatedPostgres(): Promise<EphemeralIsolate
       }
     },
   };
+}
+
+/** Loopback connection URL for a disposable local cluster; the password is generated per run. */
+export function loopbackPostgresUrl(user: string, password: string, port: number, database: string): string {
+  const url = new URL(`postgresql://127.0.0.1:${port}/${database}`);
+  url.username = user;
+  url.password = password;
+  return url.toString();
 }
 
 function randomToken(): string {

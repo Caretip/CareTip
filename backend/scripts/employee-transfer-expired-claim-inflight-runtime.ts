@@ -863,8 +863,8 @@ async function main() {
   // --- Fix F3: legacy ops_uncertain post_reclaim blocks across attempts ---
   {
     const { manager, business, employee, payable } = await seedHeldPayable(`${suffix}_f3`);
-    const legacyToken = "legacytok12345678";
-    const legacyMarker = `ops_uncertain:${legacyToken}:post_reclaim_empty_lookup:pre_upgrade`;
+    const legacyClaim = "legacytok12345678";
+    const legacyMarker = `ops_uncertain:${legacyClaim}:post_reclaim_empty_lookup:pre_upgrade`;
     await prisma.employeeTipPayable.update({
       where: { id: payable.id },
       data: {

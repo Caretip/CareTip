@@ -139,7 +139,7 @@ async function main() {
       fail("T-F01-c detachment invariants failed");
     }
 
-    const amountsOk = detached.every((t, i) => Number(t.amount) === 10 + i);
+    const amountsOk = detached.every((t) => Number(t.amount) === 10 + tipIds.indexOf(t.id));
     if (amountsOk) pass("financial amounts unchanged after detach");
     else fail("financial amounts changed");
 

@@ -255,11 +255,11 @@ async function main() {
 
   // Legacy upgrade preserves claim tail (unit)
   {
-    const token = "abc123456789abcd";
-    const legacy = `ops_uncertain:${token}:post_reclaim_empty_lookup:tail`;
+    const opsClaim = "abc123456789abcd";
+    const legacy = `ops_uncertain:${opsClaim}:post_reclaim_empty_lookup:tail`;
     const upgraded = mergeLegacyPostReclaimToDurableMarker(legacy);
     assert.ok(upgraded?.startsWith(DURABLE_RELEASE_BLOCK_PREFIX));
-    assert.ok(upgraded?.includes(token), "legacy ops token preserved in compound marker");
+    assert.ok(upgraded?.includes(opsClaim), "legacy ops token preserved in compound marker");
     assert.ok(releaseCreateBlockedByStoredMarker(upgraded));
     pass("legacy-merge-ops", "Legacy upgrade keeps durable + ops_uncertain tail");
   }
