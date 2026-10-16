@@ -212,6 +212,34 @@ async function main() {
     },
   });
 
+  const tipDestSettled = await prisma.transaction.create({
+    data: {
+      amount: 30,
+      status: TipStatus.success,
+      stripePaymentIntentId: `pi_biz_recon_dest_${suffix}`,
+      employeeId: employee.id,
+      businessId: business.id,
+    },
+  });
+  const destChargeId = `ch_biz_recon_dest_${suffix}`;
+  const payableDestSettled = await prisma.employeeTipPayable.create({
+    data: {
+      transactionId: tipDestSettled.id,
+      employeeId: employee.id,
+      businessId: business.id,
+      routingMode: EmployeeTipPayoutMode.direct_to_employee,
+      chargeModel: EmployeeTipChargeModel.destination_employee,
+      status: EmployeeTipPayableStatus.destination_settled,
+      grossCents: 3000,
+      platformFeeCents: 349,
+      payableCents: 2651,
+      transferredCents: 2651,
+      stripeChargeId: destChargeId,
+      stripeDestinationAccountId: stripeAccountId,
+      stripePaymentIntentId: `pi_biz_recon_dest_${suffix}`,
+    },
+  });
+
   __setBusinessStripeTransferListFnForTests(async () => ({
     object: "list",
     data: [
@@ -221,7 +249,15 @@ async function main() {
         amount: 4451,
         destination: stripeAccountId,
         metadata: { caretip_payable_id: payableMatched.id },
-      } as Stripe.Transfer,
+      } as unknown as Stripe.Transfer,
+      {
+        id: `tr_biz_recon_dest_${suffix}`,
+        object: "transfer",
+        amount: 3000,
+        destination: stripeAccountId,
+        source_transaction: destChargeId,
+        metadata: {},
+      } as unknown as Stripe.Transfer,
     ],
     has_more: false,
     url: "/v1/transfers",
@@ -251,9 +287,29 @@ async function main() {
     result.rows.find((r) => r.transactionId === tipBiz.id)?.status,
     "BUSINESS_DISTRIBUTION",
   );
+  assert.equal(byPayable.get(payableDestSettled.id)?.status, "MATCHED");
   assert.equal(result.complete, true);
   assert.equal(result.needsAttention, true);
   pass("biz-recon-direct", "Direct-to-employee requires Stripe transfer confirmation");
+  pass("biz-recon-destination-settled", "destination charge verified by platform transfer source_transaction at gross");
+
+  __setBusinessStripeTransferListFnForTests(async () => {
+    throw new Error("stripe_unavailable");
+  });
+  __setBusinessStripeChargeListFnForTests(async () => ({
+    object: "list",
+    data: [],
+    has_more: false,
+    url: "/v1/charges",
+  }));
+  const unreadableDest = await reconcileBusinessPayables(business.id);
+  __setBusinessStripeTransferListFnForTests(null);
+  __setBusinessStripeChargeListFnForTests(null);
+  const unreadableById = new Map(unreadableDest.rows.map((r) => [r.payableId, r]));
+  assert.equal(unreadableById.get(payableDestSettled.id)?.status, "INSUFFICIENT_VERIFICATION");
+  assert.equal(unreadableById.get(payableMissing.id)?.status, "INSUFFICIENT_VERIFICATION");
+  assert.equal(unreadableById.get(payableMatched.id)?.status, "INSUFFICIENT_VERIFICATION");
+  pass("biz-recon-unreadable-destination", "failed transfer listing for a destination is never reported as missing");
 
   await cleanup({ employeeId: employee.id, businessId: business.id, managerId: manager.id });
 

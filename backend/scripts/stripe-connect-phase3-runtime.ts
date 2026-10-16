@@ -36,6 +36,7 @@ import {
   __setPayoutHandlerAfterUpsertHookForTests,
 } from "../src/services/stripeConnectPayout.service.js";
 import * as connectController from "../src/controllers/connect.controller.js";
+import { checkConnectPayoutDtoRedaction } from "./lib/connectPayoutDtoRedaction.js";
 
 type Result = { id: string; pass: boolean; detail: string };
 const results: Result[] = [];
@@ -234,7 +235,7 @@ function runStatic() {
   ) {
     fail("W-no-payouts-create", "payouts.create call found");
   } else {
-    pass("W-no-payouts-create", "payouts.create not implemented");
+    pass("W-no-payouts-create", "no payouts.create in payout observation, stripe or connect services");
   }
 
   if (connectRoutes.includes("router.post") && /payouts/.test(connectRoutes) && connectRoutes.includes('router.post("/connect/payouts"')) {
@@ -266,12 +267,16 @@ function runStatic() {
     fail("admin-read-only", "Platform payout visibility wiring incomplete");
   }
 
-  const payoutHandleIdx = webhook.indexOf("handleConnectPayoutEvent");
-  const payoutBlock = webhook.slice(payoutHandleIdx, payoutHandleIdx + 600);
+  // Events are dispatched inside a processing claim that is finalized as processed only after the
+  // handler resolves (finalized failed on throw), so payout handler errors stay retryable.
+  const claimRunner = webhook.slice(0, webhook.indexOf("async function dispatchNonBillingStripeEvent"));
+  const dispatchBlock = webhook.slice(webhook.indexOf("async function dispatchNonBillingStripeEvent"));
   if (
-    payoutHandleIdx >= 0 &&
-    payoutBlock.includes("markStripeWebhookEventProcessed") &&
-    payoutBlock.indexOf("handleConnectPayoutEvent") < payoutBlock.indexOf("markStripeWebhookEventProcessed")
+    dispatchBlock.includes("await handleConnectPayoutEvent(event)") &&
+    !dispatchBlock.includes("markStripeWebhookEventProcessed") &&
+    claimRunner.indexOf("await handler()") >= 0 &&
+    claimRunner.indexOf("await handler()") < claimRunner.indexOf("finalizeStripeWebhookClaimProcessed(") &&
+    claimRunner.includes("finalizeStripeWebhookClaimFailed(")
   ) {
     pass("U-static-mark-after-handler", "Payout events marked processed only after handler");
   } else {
@@ -684,21 +689,11 @@ async function runRuntime() {
     }
 
     const dto = await getPayoutForBusiness(venueA.businessId, paidRows[0]!.id);
-    const dtoJson = JSON.stringify(dto);
-    if (
-      dto &&
-      !dtoJson.includes("iban") &&
-      !dtoJson.includes("routing") &&
-      !dtoJson.includes("account_number") &&
-      !dtoJson.includes("sk_test") &&
-      !dtoJson.includes("sk_live") &&
-      !dtoJson.includes("destination") &&
-      !("stripeAccountId" in dto) &&
-      !("stripePayoutId" in dto)
-    ) {
-      pass("V-no-secrets-in-dto", "manager DTO omits bank details and Stripe account/payout ids");
+    const redaction = checkConnectPayoutDtoRedaction(dto);
+    if (redaction.ok) {
+      pass("V-no-secrets-in-dto", "manager DTO omits bank details, destination and account id (po_ id only)");
     } else {
-      fail("V-no-secrets-in-dto", dtoJson.slice(0, 240));
+      fail("V-no-secrets-in-dto", redaction.problems.join("; "));
     }
 
     if (CARETIP_FEE_PERCENT === 10 && CARETIP_FEE_FIXED_CENTS_EUR === 49) pass("Y-runtime-fee", "10% + €0.49");

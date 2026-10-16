@@ -10,12 +10,15 @@ import { StripeConnectInstantPayoutRequestStatus } from "@prisma/client";
 import { EMPLOYEE_INSTANT_PAYOUT_MIN_CENTS } from "../config/employeeInstantPayout.js";
 import { prisma } from "../prisma.js";
 import { runSerializedByKey } from "../utils/serializedByKey.js";
+import { isPrismaUniqueViolation } from "../utils/prismaErrors.js";
 import { StripeConnectError } from "./stripeConnect.service.js";
 import {
   CARETIP_INSTANT_PAYOUT_TARGET_TOTAL_FEE_BPS,
   createInstantPayoutOnConnectedAccount,
   evaluateInstantPayoutForStripeAccount,
+  instantPayoutInFlightError,
   instantPayoutMaxCents,
+  isStripeIdempotencyKeyInUse,
   mapInstantPayoutCreateError,
   normalizeInstantPayoutIdempotencyKey,
   stripeInstantPayoutMinCents,
@@ -216,9 +219,10 @@ export async function createEmployeeInstantPayoutForUser(args: {
       idempotencyKey: ledgerKey,
     });
 
-    const request = existing
-      ? existing
-      : await prisma.employeeInstantPayoutRequest.create({
+    const request =
+      existing ??
+      (await prisma.employeeInstantPayoutRequest
+        .create({
           data: {
             employeeId: actor.employeeId,
             idempotencyKey: ledgerKey,
@@ -226,12 +230,19 @@ export async function createEmployeeInstantPayoutForUser(args: {
             currency: snap.currency,
             status: StripeConnectInstantPayoutRequestStatus.pending,
           },
-        });
+        })
+        .catch(async (err: unknown) => {
+          if (!isPrismaUniqueViolation(err)) throw err;
+          return prisma.employeeInstantPayoutRequest.findUniqueOrThrow({
+            where: { idempotencyKey: ledgerKey },
+          });
+        }));
 
     if (request.status === StripeConnectInstantPayoutRequestStatus.submitted) {
       return { payout: toDto(request), eligibility };
     }
 
+    let stripePayoutId: string;
     try {
       const stripePayout = await createInstantPayoutOnConnectedAccount({
         stripeAccountId: snap.stripeAccountId,
@@ -240,20 +251,11 @@ export async function createEmployeeInstantPayoutForUser(args: {
         destination: snap.destinationId,
         idempotencyKey: ledgerKey,
       });
-      const updated = await prisma.employeeInstantPayoutRequest.update({
-        where: { id: request.id },
-        data: {
-          status: StripeConnectInstantPayoutRequestStatus.submitted,
-          stripePayoutId: stripePayout.id,
-          amountCents,
-          currency: snap.currency,
-        },
-      });
-      const nextEligibility = await getEmployeeInstantPayoutEligibilityForUser(args.userId);
-      return { payout: toDto(updated), eligibility: nextEligibility };
+      stripePayoutId = stripePayout.id;
     } catch (err) {
-      await prisma.employeeInstantPayoutRequest.update({
-        where: { id: request.id },
+      if (isStripeIdempotencyKeyInUse(err)) throw instantPayoutInFlightError();
+      await prisma.employeeInstantPayoutRequest.updateMany({
+        where: { id: request.id, status: StripeConnectInstantPayoutRequestStatus.pending },
         data: {
           status: StripeConnectInstantPayoutRequestStatus.failed,
           failureCode: "stripe_create_failed",
@@ -261,5 +263,16 @@ export async function createEmployeeInstantPayoutForUser(args: {
       });
       throw mapInstantPayoutCreateError(err);
     }
+    const updated = await prisma.employeeInstantPayoutRequest.update({
+      where: { id: request.id },
+      data: {
+        status: StripeConnectInstantPayoutRequestStatus.submitted,
+        stripePayoutId,
+        amountCents,
+        currency: snap.currency,
+      },
+    });
+    const nextEligibility = await getEmployeeInstantPayoutEligibilityForUser(args.userId);
+    return { payout: toDto(updated), eligibility: nextEligibility };
   });
 }

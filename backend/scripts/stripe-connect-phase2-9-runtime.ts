@@ -357,8 +357,8 @@ function runStaticAudit() {
     pass("L-static-pi-unique", "Transaction.stripePaymentIntentId is unique");
   } else fail("L-static-pi-unique", "Unique constraint missing");
 
-  if (webhook.includes("isStripeWebhookEventProcessed") && webhook.includes("markStripeWebhookEventProcessed")) {
-    pass("K-static-event-idempotency", "Event-id idempotency remains; mark after handler");
+  if (webhook.includes("acquireStripeWebhookProcessingClaim") && webhook.includes("finalizeStripeWebhookClaimProcessed")) {
+    pass("K-static-event-idempotency", "Event-id idempotency remains; claim finalized after handler");
   } else fail("K-static-event-idempotency", "Idempotency wiring missing");
 
   if (webhook.includes("status(500)") || webhook.includes("status(500)")) {

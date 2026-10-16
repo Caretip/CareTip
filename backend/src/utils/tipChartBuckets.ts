@@ -580,22 +580,23 @@ export async function queryBusinessDashboardMetaAndSummaryMetrics(opts: {
       WHERE b.id = ${opts.businessId}
     ),
     bounds AS (
+      -- Bounds are naive UTC like tips.created_at, so comparisons never depend on the session TimeZone.
       SELECT
-        CASE
-          WHEN ${opts.timeframe} = 'all' THEN TIMESTAMPTZ '1970-01-01'
+        (CASE
+          WHEN ${opts.timeframe} = 'all' THEN TIMESTAMPTZ '1970-01-01 00:00:00+00'
           WHEN ${opts.timeframe} = 'year' THEN (date_trunc('year', now() AT TIME ZONE biz.tz) AT TIME ZONE biz.tz)
           WHEN ${opts.timeframe} = 'month' THEN (date_trunc('month', now() AT TIME ZONE biz.tz) AT TIME ZONE biz.tz)
           WHEN ${opts.timeframe} = 'week' THEN (date_trunc('week', now() AT TIME ZONE biz.tz) AT TIME ZONE biz.tz)
           ELSE (date_trunc('day', now() AT TIME ZONE biz.tz) AT TIME ZONE biz.tz)
-        END AS range_start,
-        CASE
-          WHEN ${opts.timeframe} = 'all' THEN ${opts.todayEnd}
+        END) AT TIME ZONE 'UTC' AS range_start,
+        (CASE
+          WHEN ${opts.timeframe} = 'all' THEN ${opts.todayEnd}::timestamptz
           WHEN ${opts.timeframe} = 'year' THEN ((date_trunc('year', now() AT TIME ZONE biz.tz) + INTERVAL '1 year' - INTERVAL '1 microsecond') AT TIME ZONE biz.tz)
           WHEN ${opts.timeframe} = 'month' THEN ((date_trunc('month', now() AT TIME ZONE biz.tz) + INTERVAL '1 month' - INTERVAL '1 microsecond') AT TIME ZONE biz.tz)
           WHEN ${opts.timeframe} = 'week' THEN ((date_trunc('week', now() AT TIME ZONE biz.tz) + INTERVAL '7 days' - INTERVAL '1 microsecond') AT TIME ZONE biz.tz)
           ELSE ((date_trunc('day', now() AT TIME ZONE biz.tz) + INTERVAL '1 day' - INTERVAL '1 microsecond') AT TIME ZONE biz.tz)
-        END AS range_end,
-        (date_trunc('day', now() AT TIME ZONE biz.tz) AT TIME ZONE biz.tz) AS today_start,
+        END) AT TIME ZONE 'UTC' AS range_end,
+        ((date_trunc('day', now() AT TIME ZONE biz.tz) AT TIME ZONE biz.tz) AT TIME ZONE 'UTC') AS today_start,
         biz.tz
       FROM biz
     ),

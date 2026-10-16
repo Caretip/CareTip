@@ -237,22 +237,23 @@ router.post("/business-distribution-integrity-scan", async (req, res) => {
   if (!authorizeCronRequest(req)) {
     return res.status(401).json({ message: "Unauthorized" });
   }
-  const { scanBusinessDistributionLedgerIssues } = await import(
+  const { scanBusinessDistributionLedgerWithCoverage } = await import(
     "../services/businessDistributionIntegrity.service.js"
   );
   const businessId =
     typeof req.body?.businessId === "string" && req.body.businessId.trim()
       ? req.body.businessId.trim()
       : undefined;
-  const issues = await scanBusinessDistributionLedgerIssues({ businessId });
-  if (issues.length > 0) {
+  const { issues, coverage } = await scanBusinessDistributionLedgerWithCoverage({ businessId });
+  if (issues.length > 0 || !coverage.complete) {
     console.warn("[businessDistributionIntegrity.scan]", {
       businessId: businessId ?? "all",
       issueCount: issues.length,
       codes: [...new Set(issues.map((row) => row.code))],
+      complete: coverage.complete,
     });
   }
-  return res.json({ ok: true, issueCount: issues.length, issues });
+  return res.json({ ok: true, issueCount: issues.length, issues, coverage });
 });
 
 /**
@@ -268,6 +269,33 @@ router.post("/employee-stripe-inactivity-tick", async (req, res) => {
   );
   const result = await tickEmployeeStripeInactivity();
   return res.json({ ok: true, ...result });
+});
+
+/**
+ * POST /api/internal/jobs/employee-tip-release-reconciliation-tick
+ * Stripe transfer list + reconcile for uncertain platform-hold payables (no transfers.create).
+ * Cadence: Render cron caretip-employee-tip-release-reconciliation (see render.yaml).
+ * Env: EMPLOYEE_TIP_RELEASE_RECONCILE_BATCH_SIZE (default 25),
+ *      EMPLOYEE_TIP_RELEASE_RECONCILE_STALE_MINUTES (default 60).
+ */
+router.post("/employee-tip-release-reconciliation-tick", async (req, res) => {
+  if (!authorizeCronRequest(req)) {
+    return res.status(401).json({ message: "Unauthorized" });
+  }
+  try {
+    const { tickEmployeeTipReleaseReconciliation } = await import(
+      "../services/employeeTipReleaseReconciliation.service.js"
+    );
+    const result = await tickEmployeeTipReleaseReconciliation();
+    return res.json({ ok: true, ...result });
+  } catch (err) {
+    const { logServerError } = await import("../utils/httpErrors.js");
+    logServerError("internalJobs.employee-tip-release-reconciliation-tick", err);
+    return res.status(500).json({
+      ok: false,
+      message: "Employee tip release reconciliation tick failed",
+    });
+  }
 });
 
 /**

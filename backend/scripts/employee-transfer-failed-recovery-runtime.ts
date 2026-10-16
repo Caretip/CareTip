@@ -23,11 +23,14 @@ import {
   employeePayableSummaryForEmployee,
   isRecoverablePlatformHoldPayableStatus,
 } from "../src/services/employeeTipPayable.service.js";
-import { buildEmployeeTipReleaseIdempotencyKey } from "../src/lib/stripeTransferError.js";
 import {
   __setEmployeeTipTransferCreateFnForTests,
   releaseHeldPlatformPayablesForEmployee,
 } from "../src/services/employeeTipRelease.service.js";
+import {
+  clearMockEmployeeTipStripeTransferList,
+  installMockEmptyEmployeeTipTransferList,
+} from "./lib/mockEmployeeTipStripeTransferList.js";
 
 const backendRoot = process.cwd();
 
@@ -132,32 +135,30 @@ async function main() {
   assert.equal(summary.heldPlatformCents, 5351, "transfer_failed must count toward heldPlatformCents");
   pass("held-platform-cents", "transfer_failed included in heldPlatformCents");
 
-  let attempts = 0;
+  installMockEmptyEmployeeTipTransferList();
+  const keys: string[] = [];
   __setEmployeeTipTransferCreateFnForTests(async (params, options) => {
-    attempts += 1;
+    keys.push(options.idempotencyKey);
     assert.equal(params.amount, 5351);
-    assert.equal(
-      options.idempotencyKey,
-      buildEmployeeTipReleaseIdempotencyKey(payable.id, {
-        status: EmployeeTipPayableStatus.transfer_failed,
-        updatedAt: failedAt,
-      }),
-    );
-    return { id: `tr_tf_rec_${suffix}`, amount: 5351 };
+    if (keys.length === 1) {
+      return { id: `tr_tf_rec_${suffix}`, amount: 5351 };
+    }
+    throw new Error("unexpected second Stripe call");
   });
 
   const released = await releaseHeldPlatformPayablesForEmployee(employee.id);
   assert.equal(released.released, 1);
+  assert.equal(keys.length, 1);
+  assert.equal(keys[0], `emp_tip_release:${payable.id}`);
   const after = await prisma.employeeTipPayable.findUnique({ where: { id: payable.id } });
   assert.equal(after?.status, EmployeeTipPayableStatus.transferred);
   assert.equal(after?.stripeTransferId, `tr_tf_rec_${suffix}`);
   assert.equal(after?.transferredCents, 5351);
-  assert.equal(attempts, 1);
-  pass("retry-release", "transfer_failed payable retried with fresh idempotency key");
+  pass("retry-release", "transfer_failed payable reconciled via base idempotency key when Stripe accepts");
 
   const second = await releaseHeldPlatformPayablesForEmployee(employee.id);
   assert.equal(second.released, 0);
-  assert.equal(attempts, 1, "no second Stripe call after transferred");
+  assert.equal(keys.length, 1, "no second Stripe call after transferred");
   pass("no-double-transfer", "already transferred payable not released again");
 
   await prisma.employeeTipPayable.deleteMany({ where: { employeeId: employee.id } });
@@ -167,6 +168,7 @@ async function main() {
   await prisma.business.delete({ where: { id: business.id } });
   await prisma.user.delete({ where: { id: manager.id } });
   __setEmployeeTipTransferCreateFnForTests(null);
+  clearMockEmployeeTipStripeTransferList();
 
   console.log("employee-transfer-failed-recovery-runtime: OK");
 }

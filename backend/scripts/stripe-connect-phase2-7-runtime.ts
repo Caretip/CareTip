@@ -206,7 +206,7 @@ function runStaticAudit() {
     pass("N-static-webhook-raw-sig", "Raw body + signature verification wired");
   } else fail("N-static-webhook-raw-sig", "Webhook mount/signature missing");
 
-  if (webhook.includes("isStripeWebhookEventProcessed") && stripeSvc.includes("stripePaymentIntentId")) {
+  if (webhook.includes("acquireStripeWebhookProcessingClaim") && stripeSvc.includes("stripePaymentIntentId")) {
     pass("O-static-idempotency", "Event-id idempotency + PI uniqueness remain");
   } else fail("O-static-idempotency", "Idempotency wiring missing");
 

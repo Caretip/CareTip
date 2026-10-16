@@ -62,5 +62,7 @@ assert(diffDays >= 2.9 && diffDays <= 3.1, `expected ~3 day step, got ${diffDays
 
 assert(read("src/routes/internalJobs.routes.ts").includes("scheduled-bank-payout-tick"), "cron route");
 assert(read("src/routes/connect.routes.ts").includes("bank-payout-schedule"), "manager API");
+assert(read("src/services/connectPayoutConfiguration.service.ts").includes("applyConnectPayoutPolicy"), "payout policy orchestration");
+assert(read("src/config/stripeBalanceSettings.ts").includes("STRIPE_BALANCE_SETTINGS_PATH"), "balance settings path");
 
 console.log("business-bank-payout-schedule-runtime: ok");

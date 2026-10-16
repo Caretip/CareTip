@@ -6,6 +6,7 @@ import {
   EmployeeTipChargeModel,
   EmployeeTipPayableStatus,
   EmployeeTipPayoutMode,
+  Prisma,
   TipStatus,
 } from "@prisma/client";
 import type Stripe from "stripe";
@@ -23,7 +24,23 @@ export type BusinessDistributionIntegrityIssueCode =
   | "payable_destination_mismatch"
   | "employee_business_mismatch"
   | "anomalous_platform_hold_business_distribution"
-  | "aged_held_business";
+  | "aged_held_business"
+  | "distribution_allocation_exceeds_payable"
+  | "distribution_allocation_tenant_mismatch";
+
+export type BusinessDistributionScanCoverage = {
+  successWithoutPayableExamined: number;
+  successWithoutPayableTruncated: boolean;
+  businessDistributionPayablesExamined: number;
+  businessDistributionPayablesTruncated: boolean;
+  allocationAnomaliesTruncated: boolean;
+  /** False when any capped query hit its limit — absence of issues is then not proof of health. */
+  complete: boolean;
+};
+
+const SCAN_LIMIT_SUCCESS_WITHOUT_PAYABLE = 500;
+const SCAN_LIMIT_BUSINESS_DISTRIBUTION_PAYABLES = 2_000;
+const SCAN_LIMIT_ALLOCATION_ANOMALIES = 500;
 
 export type BusinessDistributionIntegrityIssue = {
   code: BusinessDistributionIntegrityIssueCode;
@@ -382,17 +399,38 @@ export async function listBusinessDistributionObligationsForBusiness(
   };
 }
 
-/** DB-only integrity scan — detection/alerting; never mutates money or ledger. */
-export async function scanBusinessDistributionLedgerIssues(options?: {
+type ScanOptions = {
   businessId?: string;
   agedDays?: number;
-}): Promise<BusinessDistributionIntegrityIssue[]> {
+  limits?: {
+    successWithoutPayable?: number;
+    businessDistributionPayables?: number;
+    allocationAnomalies?: number;
+  };
+};
+
+/** DB-only integrity scan — detection/alerting; never mutates money or ledger. */
+export async function scanBusinessDistributionLedgerIssues(
+  options?: ScanOptions,
+): Promise<BusinessDistributionIntegrityIssue[]> {
+  return (await scanBusinessDistributionLedgerWithCoverage(options)).issues;
+}
+
+/** Same scan as {@link scanBusinessDistributionLedgerIssues}, plus whether capped queries were truncated. */
+export async function scanBusinessDistributionLedgerWithCoverage(options?: ScanOptions): Promise<{
+  issues: BusinessDistributionIntegrityIssue[];
+  coverage: BusinessDistributionScanCoverage;
+}> {
   const businessId = options?.businessId?.trim() || undefined;
   const agedDays = options?.agedDays ?? AGED_HELD_BUSINESS_DAYS_DEFAULT;
   const cutoff = new Date(Date.now() - agedDays * 24 * 60 * 60 * 1000);
+  const limitMissing = options?.limits?.successWithoutPayable ?? SCAN_LIMIT_SUCCESS_WITHOUT_PAYABLE;
+  const limitPayables =
+    options?.limits?.businessDistributionPayables ?? SCAN_LIMIT_BUSINESS_DISTRIBUTION_PAYABLES;
+  const limitAllocations = options?.limits?.allocationAnomalies ?? SCAN_LIMIT_ALLOCATION_ANOMALIES;
   const issues: BusinessDistributionIntegrityIssue[] = [];
 
-  const successWithoutPayable = await prisma.transaction.findMany({
+  const successWithoutPayableRaw = await prisma.transaction.findMany({
     where: {
       status: TipStatus.success,
       employeeId: { not: null },
@@ -405,8 +443,11 @@ export async function scanBusinessDistributionLedgerIssues(options?: {
       employeeId: true,
       stripePaymentIntentId: true,
     },
-    take: 500,
+    orderBy: { createdAt: "asc" },
+    take: limitMissing + 1,
   });
+  const successWithoutPayableTruncated = successWithoutPayableRaw.length > limitMissing;
+  const successWithoutPayable = successWithoutPayableRaw.slice(0, limitMissing);
   for (const row of successWithoutPayable) {
     issues.push({
       code: "success_transaction_missing_payable",
@@ -419,7 +460,7 @@ export async function scanBusinessDistributionLedgerIssues(options?: {
     });
   }
 
-  const bizDistPayables = await prisma.employeeTipPayable.findMany({
+  const bizDistPayablesRaw = await prisma.employeeTipPayable.findMany({
     where: {
       routingMode: EmployeeTipPayoutMode.business_distribution,
       ...(businessId ? { businessId } : {}),
@@ -444,8 +485,11 @@ export async function scanBusinessDistributionLedgerIssues(options?: {
       business: { select: { stripeAccountId: true } },
       employee: { select: { businessId: true } },
     },
-    take: 2_000,
+    orderBy: { createdAt: "asc" },
+    take: limitPayables + 1,
   });
+  const businessDistributionPayablesTruncated = bizDistPayablesRaw.length > limitPayables;
+  const bizDistPayables = bizDistPayablesRaw.slice(0, limitPayables);
 
   for (const row of bizDistPayables) {
     if (row.employee?.businessId && row.employee.businessId !== row.businessId) {
@@ -507,5 +551,76 @@ export async function scanBusinessDistributionLedgerIssues(options?: {
     }
   }
 
-  return dedupeIssues(issues);
+  // Allocations above remainingPayableCents are expected after a post-distribution refund/dispute
+  // (surfaced as overDistributedCents in tip distribution); only gross payableCents is a hard ceiling.
+  const businessFilter = businessId ? Prisma.sql`AND p.business_id = ${businessId}` : Prisma.empty;
+  const allocationAnomaliesRaw = await prisma.$queryRaw<
+    Array<{
+      payable_id: string;
+      business_id: string;
+      employee_id: string | null;
+      transaction_id: string;
+      stripe_payment_intent_id: string;
+      payable_cents: number;
+      allocated_cents: number;
+      foreign_allocation_rows: number;
+    }>
+  >(Prisma.sql`
+    SELECT
+      p.id AS payable_id,
+      p.business_id,
+      p.employee_id,
+      p.transaction_id,
+      p.stripe_payment_intent_id,
+      p.payable_cents,
+      SUM(a.amount_cents)::int AS allocated_cents,
+      COUNT(*) FILTER (WHERE a.business_id <> p.business_id)::int AS foreign_allocation_rows
+    FROM employee_tip_distribution_allocations a
+    JOIN employee_tip_payables p ON p.id = a.employee_tip_payable_id
+    WHERE TRUE ${businessFilter}
+    GROUP BY p.id
+    HAVING SUM(a.amount_cents) > p.payable_cents
+        OR COUNT(*) FILTER (WHERE a.business_id <> p.business_id) > 0
+    ORDER BY p.id
+    LIMIT ${limitAllocations + 1}
+  `);
+  const allocationAnomaliesTruncated = allocationAnomaliesRaw.length > limitAllocations;
+  for (const row of allocationAnomaliesRaw.slice(0, limitAllocations)) {
+    const base = {
+      businessId: row.business_id,
+      employeeId: row.employee_id,
+      paymentIntentId: row.stripe_payment_intent_id,
+      transactionId: row.transaction_id,
+      payableId: row.payable_id,
+    };
+    if (row.allocated_cents > row.payable_cents) {
+      issues.push({
+        ...base,
+        code: "distribution_allocation_exceeds_payable",
+        message: `Distribution allocations (${row.allocated_cents}¢) exceed payableCents (${row.payable_cents}¢).`,
+      });
+    }
+    if (row.foreign_allocation_rows > 0) {
+      issues.push({
+        ...base,
+        code: "distribution_allocation_tenant_mismatch",
+        message: "Distribution allocation business differs from the payable business.",
+      });
+    }
+  }
+
+  return {
+    issues: dedupeIssues(issues),
+    coverage: {
+      successWithoutPayableExamined: successWithoutPayable.length,
+      successWithoutPayableTruncated,
+      businessDistributionPayablesExamined: bizDistPayables.length,
+      businessDistributionPayablesTruncated,
+      allocationAnomaliesTruncated,
+      complete:
+        !successWithoutPayableTruncated &&
+        !businessDistributionPayablesTruncated &&
+        !allocationAnomaliesTruncated,
+    },
+  };
 }

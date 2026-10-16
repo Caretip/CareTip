@@ -69,7 +69,7 @@ export function printIsolatedPostgresSetupHelp(): void {
 These scripts never use DATABASE_URL from .env. Configure a disposable PostgreSQL instance, then:
 
   PowerShell:
-    $env:${ISOLATED_ENV} = "postgresql://USER:PASSWORD@127.0.0.1:5433/caretip_s12_test"
+    $env:${ISOLATED_ENV} = "postgresql://postgres:PASSWORD@127.0.0.1:5433/caretip_s12_test"
     npm run db:migrate:isolated-test
     npm run test:subscription-reliability-sprint1_2-integration
     npm run test:subscription-b1
@@ -111,6 +111,10 @@ export async function completeIsolatedPostgresBootstrap(): Promise<string> {
   const host = parsePostgresHostname(isolated);
   if (!LOCAL_HOSTS.has(host) && process.env[DISPOSABLE_ACK] !== "1") {
     assertDisposablePostgresTarget(isolated);
+  }
+
+  if (LOCAL_HOSTS.has(host)) {
+    process.env.DATABASE_ALLOW_LOCALHOST = "true";
   }
 
   return isolated;

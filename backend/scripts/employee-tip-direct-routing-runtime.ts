@@ -80,10 +80,11 @@ function runStatic() {
     fail("gate5-checkout-metadata", "checkout metadata missing");
   }
   const release = read("src/services/employeeTipRelease.service.ts");
+  const releaseIdempotency = read("src/lib/stripeTransferError.ts");
   if (
     release.includes("chargeModel: EmployeeTipChargeModel.platform_hold") &&
     release.includes("routingMode: EmployeeTipPayoutMode.direct_to_employee") &&
-    release.includes("emp_tip_release:")
+    releaseIdempotency.includes("emp_tip_release:")
   ) {
     pass("release-platform-hold-only", "Release Transfers are limited to DIRECT_TO_EMPLOYEE platform_hold payables");
   } else {

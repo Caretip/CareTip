@@ -217,7 +217,7 @@ async function insertHandoff(
       ${row.userId},
       ${row.purpose},
       ${row.expiresAt},
-      NOW(),
+      (NOW() AT TIME ZONE 'UTC'),
       NULL,
       ${row.createdIp},
       ${row.createdUserAgent}
@@ -234,7 +234,7 @@ async function deleteHandoffById(db: DbClient, id: string): Promise<void> {
 async function claimHandoffById(db: DbClient, id: string): Promise<number> {
   return db.$executeRaw(Prisma.sql`
     UPDATE mobile_web_handoff_tokens
-    SET consumed_at = NOW()
+    SET consumed_at = (NOW() AT TIME ZONE 'UTC')
     WHERE id = ${id}
       AND consumed_at IS NULL
   `);

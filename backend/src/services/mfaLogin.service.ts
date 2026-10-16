@@ -79,11 +79,11 @@ export async function consumeMfaChallengeJti(jti: string): Promise<MfaChallengeC
   const expiresAt = new Date(Date.now() + MFA_CHALLENGE_TTL_MS);
   try {
     if (Math.random() < 0.02) {
-      await prisma.$executeRaw`DELETE FROM "consumed_mfa_challenges" WHERE "expires_at" < CURRENT_TIMESTAMP`;
+      await prisma.$executeRaw`DELETE FROM "consumed_mfa_challenges" WHERE "expires_at" < (CURRENT_TIMESTAMP AT TIME ZONE 'UTC')`;
     }
     const inserted = await prisma.$queryRaw<Array<{ jti: string }>>`
       INSERT INTO "consumed_mfa_challenges" ("jti", "expires_at", "created_at")
-      VALUES (${id}, ${expiresAt}, CURRENT_TIMESTAMP)
+      VALUES (${id}, ${expiresAt}, (CURRENT_TIMESTAMP AT TIME ZONE 'UTC'))
       ON CONFLICT ("jti") DO NOTHING
       RETURNING "jti"
     `;

@@ -77,6 +77,38 @@ export function EmployeeBankPayoutScheduleCard({
           <p className="mt-1 text-xs text-muted-foreground">
             {t("employee.payouts.schedule.speedNote")}
           </p>
+          {data?.settlement?.source === "unavailable" ? (
+            <p className="mt-1 text-xs text-muted-foreground">
+              {t("employee.payouts.schedule.settlementUnavailable")}
+            </p>
+          ) : typeof data?.settlement?.effectiveDelayDays === "number" ? (
+            <p className="mt-1 text-xs text-muted-foreground">
+              {t(
+                data.settlement.source === "accounts_v1_fallback"
+                  ? "employee.payouts.schedule.settlementNoteFallback"
+                  : "employee.payouts.schedule.settlementNote",
+                { days: data.settlement.effectiveDelayDays },
+              )}
+            </p>
+          ) : null}
+          {data?.lastPolicyApply && !data.lastPolicyApply.policyComplete ? (
+            <p className="mt-1 text-xs text-amber-700 dark:text-amber-400">
+              {t("employee.payouts.schedule.policyPartialSuccess", {
+                schedule: data.lastPolicyApply.schedule.status,
+                settlement: data.lastPolicyApply.settlement?.status ?? "n/a",
+              })}
+            </p>
+          ) : null}
+          {data?.lastPolicyApply?.settlement?.stripeSupportMayBeRequired ? (
+            <p className="mt-1 text-xs text-muted-foreground">
+              {t("employee.payouts.schedule.settlementStripeSupport")}
+            </p>
+          ) : null}
+          {data?.scheduleDrift ? (
+            <p className="mt-1 text-xs text-amber-700 dark:text-amber-400">
+              {t("employee.payouts.schedule.scheduleDriftNotice")}
+            </p>
+          ) : null}
           <p className="mt-1 text-xs text-muted-foreground">
             {t("employee.payouts.schedule.transferNote")}
           </p>

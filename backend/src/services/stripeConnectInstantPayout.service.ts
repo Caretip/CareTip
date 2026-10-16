@@ -11,6 +11,7 @@ import { StripeConnectInstantPayoutRequestStatus } from "@prisma/client";
 import { prisma } from "../prisma.js";
 import { logServerError } from "../utils/httpErrors.js";
 import { runSerializedByKey } from "../utils/serializedByKey.js";
+import { isPrismaUniqueViolation } from "../utils/prismaErrors.js";
 import { getStripeClient, isStripeConfigured } from "./stripe.service.js";
 import { StripeConnectError } from "./stripeConnect.service.js";
 import {
@@ -470,6 +471,24 @@ export function normalizeInstantPayoutIdempotencyKey(raw: unknown): string {
   return key;
 }
 
+/** Another instance holds this Stripe idempotency key mid-request; its outcome is still unknown. */
+export function isStripeIdempotencyKeyInUse(err: unknown): boolean {
+  return (
+    !!err &&
+    typeof err === "object" &&
+    "code" in err &&
+    (err as { code?: unknown }).code === "idempotency_key_in_use"
+  );
+}
+
+export function instantPayoutInFlightError(): StripeConnectError {
+  return new StripeConnectError(
+    "This Instant Payout is already being processed. Please refresh in a moment.",
+    "INSTANT_PAYOUT_IN_PROGRESS",
+    409,
+  );
+}
+
 export function mapInstantPayoutCreateError(err: unknown): StripeConnectError {
   const code =
     err && typeof err === "object" && "code" in err ? String((err as { code?: string }).code ?? "") : "";
@@ -548,9 +567,10 @@ export async function createInstantPayoutForBusiness(args: {
       idempotencyKey: ledgerKey,
     });
 
-    const request = existing
-      ? existing
-      : await prisma.stripeConnectInstantPayoutRequest.create({
+    const request =
+      existing ??
+      (await prisma.stripeConnectInstantPayoutRequest
+        .create({
           data: {
             businessId: args.businessId,
             idempotencyKey: ledgerKey,
@@ -558,7 +578,13 @@ export async function createInstantPayoutForBusiness(args: {
             currency: snap.currency,
             status: StripeConnectInstantPayoutRequestStatus.pending,
           },
-        });
+        })
+        .catch(async (err: unknown) => {
+          if (!isPrismaUniqueViolation(err)) throw err;
+          return prisma.stripeConnectInstantPayoutRequest.findUniqueOrThrow({
+            where: { idempotencyKey: ledgerKey },
+          });
+        }));
 
     if (
       request.status === StripeConnectInstantPayoutRequestStatus.submitted &&
@@ -586,8 +612,9 @@ export async function createInstantPayoutForBusiness(args: {
         idempotencyKey: ledgerKey,
       });
     } catch (err) {
-      await prisma.stripeConnectInstantPayoutRequest.update({
-        where: { id: request.id },
+      if (isStripeIdempotencyKeyInUse(err)) throw instantPayoutInFlightError();
+      await prisma.stripeConnectInstantPayoutRequest.updateMany({
+        where: { id: request.id, status: StripeConnectInstantPayoutRequestStatus.pending },
         data: {
           status: StripeConnectInstantPayoutRequestStatus.failed,
           failureCode: "stripe_create_failed",

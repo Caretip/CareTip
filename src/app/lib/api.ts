@@ -3389,6 +3389,7 @@ export type EmployeeAnalyticsReconciliationStatus =
   | "MATCHED"
   | "CARETIP_PENDING"
   | "STRIPE_TRANSFER_MISSING"
+  | "STRIPE_VERIFICATION_INCOMPLETE"
   | "AMOUNT_MISMATCH"
   | "DESTINATION_MISMATCH"
   | "DUPLICATE_TRANSFER";
@@ -3534,11 +3535,42 @@ export type BusinessBankPayoutSchedule =
   | "monthly"
   | "manual";
 
+export type SettlementDelayReadSource = "balance_settings" | "accounts_v1_fallback" | "unavailable";
+
+export type SettlementDelayRead = {
+  source: SettlementDelayReadSource;
+  delayDays: number | null;
+  delayDaysOverride: number | null;
+  effectiveDelayDays: number | null;
+};
+
+export type ConnectPayoutPolicyApplyResponse = {
+  schedule: {
+    status: string;
+    message: string;
+    expectedStripeInterval: string;
+    verifiedStripeInterval: string | null;
+    scheduleDrift: boolean;
+  };
+  settlement: {
+    status: string;
+    message: string;
+    stripeSupportMayBeRequired: boolean;
+  } | null;
+  policyComplete: boolean;
+};
+
 export type BusinessBankPayoutScheduleResponse = {
   schedule: BusinessBankPayoutSchedule;
   nextScheduledPayoutAt: string | null;
   careTipControlled: boolean;
   stripeScheduleInterval: string | null;
+  scheduleDrift: boolean;
+  settlement: SettlementDelayRead;
+  /** Present after PATCH; null on GET. */
+  lastPolicyApply: ConnectPayoutPolicyApplyResponse | null;
+  /** @deprecated Use settlement.effectiveDelayDays */
+  effectiveSettlementDelayDays: number | null;
 };
 
 export async function getBusinessBankPayoutSchedule(): Promise<BusinessBankPayoutScheduleResponse> {

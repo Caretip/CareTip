@@ -419,6 +419,39 @@ export async function ensureEmployeeStripeAccount(
       throw err;
     }
 
+    try {
+      const { applyConnectPayoutPolicy, connectPayoutPolicyDiagnostics } = await import(
+        "./connectPayoutConfiguration.service.js"
+      );
+      const row = await prisma.employeeStripeAccount.findUnique({
+        where: { employeeId: actor.employeeId },
+        select: { bankPayoutSchedule: true },
+      });
+      if (row?.bankPayoutSchedule) {
+        const policy = await applyConnectPayoutPolicy({
+          stripeAccountId: accountId,
+          careTipSchedule: row.bankPayoutSchedule,
+          context: "account_create",
+        });
+        if (!policy.policyComplete) {
+          logServerError(
+            "employeeStripeConnect.applyPayoutPolicy.incomplete",
+            new Error("CONNECT_PAYOUT_POLICY_INCOMPLETE"),
+            {
+              employeeId: actor.employeeId,
+              accountSuffix: accountId.slice(-8),
+              ...connectPayoutPolicyDiagnostics(policy),
+            },
+          );
+        }
+      }
+    } catch (err) {
+      logServerError("employeeStripeConnect.applyPayoutPolicy.afterCreate", err, {
+        employeeId: actor.employeeId,
+        accountSuffix: accountId.slice(-8),
+      });
+    }
+
     return { accountId, created: true };
   };
 

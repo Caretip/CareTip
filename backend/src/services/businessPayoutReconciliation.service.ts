@@ -13,7 +13,12 @@ import { getStripeClient, isStripeConfigured } from "./stripe.service.js";
 import { remainingPayableCents } from "./employeeTipPayable.service.js";
 import {
   classifyPayableRow,
+  indexTransfersForDestination,
+  newStripeTransferIndex,
+  transferListCreatedGte,
+  type ListTransfersFn,
   type PayableReconciliationStatus,
+  type StripeTransferIndex,
 } from "./employeePayoutReconciliation.service.js";
 
 const RECONCILIATION_PAGE_SIZE = 100;
@@ -63,10 +68,6 @@ export type BusinessReconciliationResult = {
   };
 };
 
-type ListTransfersFn = (
-  params: Stripe.TransferListParams,
-) => Promise<Stripe.ApiList<Stripe.Transfer>>;
-
 type ListChargesFn = (
   params: Stripe.ChargeListParams,
   opts?: { stripeAccount?: string },
@@ -91,6 +92,8 @@ function mapDirectTransferStatus(status: PayableReconciliationStatus): BusinessR
       return "CARETIP_EXPECTED_PENDING";
     case "STRIPE_TRANSFER_MISSING":
       return "STRIPE_TRANSFER_MISSING";
+    case "STRIPE_VERIFICATION_INCOMPLETE":
+      return "INSUFFICIENT_VERIFICATION";
     case "AMOUNT_MISMATCH":
       return "STRIPE_AMOUNT_MISMATCH";
     case "DESTINATION_MISMATCH":
@@ -119,11 +122,10 @@ function classifyDirectToEmployeePayableRow(
     grossCents: number;
     chargeModel: string;
   },
-  stripeById: Map<string, Stripe.Transfer>,
-  stripeByPayableMeta: Map<string, Stripe.Transfer[]>,
+  index: StripeTransferIndex,
   employeeStripeAccountId: string | null,
-  employeeChargeIds: Set<string>,
   stripeReadable: boolean,
+  lookupComplete: boolean,
 ): BusinessReconciliationRow {
   const remaining = remainingPayableCents(row);
   const base: BusinessReconciliationRow = {
@@ -149,16 +151,7 @@ function classifyDirectToEmployeePayableRow(
     return { ...base, status: "CARETIP_EXPECTED_PENDING" };
   }
 
-  if (row.status === EmployeeTipPayableStatus.destination_settled) {
-    if (!stripeReadable) {
-      return { ...base, status: "INSUFFICIENT_VERIFICATION" };
-    }
-    if (row.stripeChargeId && employeeChargeIds.has(row.stripeChargeId)) {
-      return { ...base, status: "MATCHED" };
-    }
-    if (row.stripeChargeId) {
-      return { ...base, status: "STRIPE_TRANSFER_MISSING" };
-    }
+  if (row.status === EmployeeTipPayableStatus.destination_settled && !stripeReadable) {
     return { ...base, status: "INSUFFICIENT_VERIFICATION" };
   }
 
@@ -169,15 +162,11 @@ function classifyDirectToEmployeePayableRow(
     return { ...base, status: "CARETIP_EXPECTED_PENDING" };
   }
 
-  const transferStatus = mapDirectTransferStatus(
-    classifyPayableRow(
-      row,
-      stripeById,
-      stripeByPayableMeta,
-      employeeStripeAccountId,
-    ).status,
-  );
-  return { ...base, status: transferStatus };
+  const linked = classifyPayableRow(row, index.byId, index.byPayableMeta, employeeStripeAccountId, {
+    stripeBySourceCharge: index.bySourceCharge,
+    lookupComplete,
+  });
+  return { ...base, status: mapDirectTransferStatus(linked.status) };
 }
 
 function classifyBusinessPayableRow(
@@ -203,10 +192,10 @@ function classifyBusinessPayableRow(
   ctx: {
     businessChargeIds: Set<string>;
     employeeStripeById: Map<string, string>;
-    stripeById: Map<string, Stripe.Transfer>;
-    stripeByPayableMeta: Map<string, Stripe.Transfer[]>;
-    employeeChargeIdsByAccount: Map<string, Set<string>>;
-    stripeReadable: boolean;
+    transferIndex: StripeTransferIndex;
+    /** Destination accounts whose transfer listing succeeded / hit the page bound. */
+    readableDestinations: Set<string>;
+    truncatedDestinations: Set<string>;
   },
 ): BusinessReconciliationRow {
   if (row.routingMode === EmployeeTipPayoutMode.business_distribution) {
@@ -229,17 +218,13 @@ function classifyBusinessPayableRow(
     const employeeStripeAccountId =
       (row.employeeId ? ctx.employeeStripeById.get(row.employeeId) : null) ??
       row.stripeDestinationAccountId;
-    const employeeChargeIds =
-      employeeStripeAccountId
-        ? ctx.employeeChargeIdsByAccount.get(employeeStripeAccountId) ?? new Set<string>()
-        : new Set<string>();
+    const readable = Boolean(employeeStripeAccountId && ctx.readableDestinations.has(employeeStripeAccountId));
     return classifyDirectToEmployeePayableRow(
       row,
-      ctx.stripeById,
-      ctx.stripeByPayableMeta,
+      ctx.transferIndex,
       employeeStripeAccountId,
-      employeeChargeIds,
-      ctx.stripeReadable,
+      readable,
+      readable && !ctx.truncatedDestinations.has(employeeStripeAccountId as string),
     );
   }
 
@@ -315,6 +300,7 @@ export async function reconcileBusinessPayables(
     stripePaymentIntentId: true,
     stripeTransferId: true,
     stripeDestinationAccountId: true,
+    createdAt: true,
   } as const;
 
   const totalPayableCount = await prisma.employeeTipPayable.count({ where: { businessId } });
@@ -336,6 +322,7 @@ export async function reconcileBusinessPayables(
     stripePaymentIntentId: string | null;
     stripeTransferId: string | null;
     stripeDestinationAccountId: string | null;
+    createdAt: Date;
   }> = [];
 
   for (let skip = 0; skip < totalPayableCount; skip += RECONCILIATION_PAGE_SIZE) {
@@ -370,9 +357,9 @@ export async function reconcileBusinessPayables(
   );
 
   const businessChargeIds = new Set<string>();
-  const employeeChargeIdsByAccount = new Map<string, Set<string>>();
-  const stripeById = new Map<string, Stripe.Transfer>();
-  const stripeByPayableMeta = new Map<string, Stripe.Transfer[]>();
+  const transferIndex = newStripeTransferIndex();
+  const readableDestinations = new Set<string>();
+  const truncatedDestinations = new Set<string>();
   let stripeReadable = false;
   let chargesExamined = 0;
   let chargesHasMore = false;
@@ -412,44 +399,25 @@ export async function reconcileBusinessPayables(
     ),
   ];
 
-  if (stripeConfigured) {
-    try {
-      const stripe = getStripeClient();
-      for (const destination of uniqueDestinations) {
-        transferDestinationsExamined += 1;
-        const list = listTransfersFnForTests
-          ? await listTransfersFnForTests({ destination, limit: RECONCILIATION_PAGE_SIZE })
-          : await stripe.transfers.list({ destination, limit: RECONCILIATION_PAGE_SIZE });
-        if (list.has_more) transfersHasMore = true;
+  if (stripeConfigured && uniqueDestinations.length > 0) {
+    const list: ListTransfersFn =
+      listTransfersFnForTests ?? ((params) => getStripeClient().transfers.list(params));
+    const createdGte = transferListCreatedGte(
+      payables.reduce<Date | null>((min, p) => (!min || p.createdAt < min ? p.createdAt : min), null),
+    );
+    for (const destination of uniqueDestinations) {
+      transferDestinationsExamined += 1;
+      try {
+        const page = await indexTransfersForDestination(transferIndex, list, destination, createdGte);
+        readableDestinations.add(destination);
         stripeReadable = true;
-        for (const tr of list.data) {
-          stripeById.set(tr.id, tr);
-          const payableId = tr.metadata?.caretip_payable_id?.trim();
-          if (payableId) {
-            const arr = stripeByPayableMeta.get(payableId) ?? [];
-            arr.push(tr);
-            stripeByPayableMeta.set(payableId, arr);
-          }
+        if (page.hasMore) {
+          truncatedDestinations.add(destination);
+          transfersHasMore = true;
         }
-
-        if (!listChargesFnForTests) {
-          try {
-            const empCharges = await stripe.charges.list(
-              { limit: RECONCILIATION_PAGE_SIZE },
-              { stripeAccount: destination },
-            );
-            const chargeSet = new Set<string>();
-            for (const ch of empCharges.data) {
-              if (ch.id) chargeSet.add(ch.id);
-            }
-            employeeChargeIdsByAccount.set(destination, chargeSet);
-          } catch {
-            // Employee connect charges optional for destination_settled verification.
-          }
-        }
+      } catch {
+        // Rows for this destination stay INSUFFICIENT_VERIFICATION rather than "missing".
       }
-    } catch {
-      if (!stripeReadable) stripeReadable = false;
     }
   }
 
@@ -457,10 +425,9 @@ export async function reconcileBusinessPayables(
     classifyBusinessPayableRow(row, {
       businessChargeIds,
       employeeStripeById,
-      stripeById,
-      stripeByPayableMeta,
-      employeeChargeIdsByAccount,
-      stripeReadable,
+      transferIndex,
+      readableDestinations,
+      truncatedDestinations,
     }),
   );
 

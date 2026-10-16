@@ -273,20 +273,33 @@ function runStatic() {
     dePending.employee.payouts.dashboard.kpiPendingHint,
     dePending.business.stripe.payoutsWorkspace.business.kpiPendingHint,
   ];
+  const enExplainsStripeSettlement = (h: string) => /\bsettling\b/i.test(h) && /\bStripe\b/.test(h) && /not (yet )?available/i.test(h);
+  const deExplainsStripeSettlement = (h: string) => /abgewickelt|Abwicklung/.test(h) && /\bStripe\b/.test(h) && /nicht für eine Auszahlung verfügbar/.test(h);
   if (
-    pendingHints[0].includes("settling with Stripe") &&
-    pendingHints[2].includes("Abwicklung") &&
-    pendingHints.every((h) => !h.includes("7-day") && !h.includes("7-Tage"))
+    enExplainsStripeSettlement(pendingHints[0]) &&
+    enExplainsStripeSettlement(pendingHints[1]) &&
+    deExplainsStripeSettlement(pendingHints[2]) &&
+    deExplainsStripeSettlement(pendingHints[3]) &&
+    pendingHints.every((h) => !/7[- ]?(day|Tage)/i.test(h) && !/CareTip hold|CareTip-Sperr/i.test(h))
   ) {
     pass("ui-pending-explain", "Pending KPI explains Stripe settlement without a CareTip 7-day hold");
   } else {
     fail("ui-pending-explain", pendingHints.join(" | "));
   }
   const dash = readFileSync(join(backendRoot, "../mobile/features/employee/EmployeeDashboardScreen.tsx"), "utf8");
-  if (dash.includes("tips?.totalEarningsEur") && !dash.includes("tips?.paidOutEur")) {
-    pass("mobile-earnings-parity", "Mobile dashboard KPI uses totalEarningsEur like web hero");
+  const tipsDashboardSvc = readFileSync(join(backendRoot, "src/services/employeeTipsDashboard.service.ts"), "utf8");
+  const mobileUsesLifetimeGross = /tips\?\.(grossTipsEur|totalEarningsEur)\b/.test(dash);
+  const mobileUsesPaidOut = /tips\?\.(paidOutEur|paidToStripeEur)\b/.test(dash);
+  const summaryTotalsAreGross =
+    tipsDashboardSvc.includes("grossTipsEur: metrics.grossTipsEur") &&
+    tipsDashboardSvc.includes("totalEarningsEur: metrics.grossTipsEur");
+  if (mobileUsesLifetimeGross && !mobileUsesPaidOut && summaryTotalsAreGross) {
+    pass("mobile-earnings-parity", "Mobile lifetime KPI uses gross tips (== totalEarningsEur) like web hero, not paid-out");
   } else {
-    fail("mobile-earnings-parity", "Mobile still maps paidOutEur for the comparable web total");
+    fail(
+      "mobile-earnings-parity",
+      `mobileGross=${mobileUsesLifetimeGross} mobilePaidOut=${mobileUsesPaidOut} summaryGross=${summaryTotalsAreGross}`,
+    );
   }
   const feedbackItem = readFileSync(
     join(backendRoot, "../src/app/components/business/CustomerFeedbackListItem.tsx"),

@@ -820,12 +820,23 @@ model AuditLog {
   @@map("audit_logs")
 }
 
+enum StripeWebhookEventProcessingResult {
+  processing
+  processed
+  failed
+}
+
 model StripeWebhookEvent {
-  id          String   @id
-  eventType   String   @map("event_type")
-  processedAt DateTime @default(now()) @map("processed_at")
+  id                       String                             @id
+  eventType                String                             @map("event_type")
+  processedAt              DateTime?                          @map("processed_at")
+  processingResult         StripeWebhookEventProcessingResult @default(processed) @map("processing_result")
+  processingClaimToken     String?                            @map("processing_claim_token") @db.VarChar(64)
+  processingClaimExpiresAt DateTime?                          @map("processing_claim_expires_at")
+  processingError          String?                            @map("processing_error") @db.VarChar(500)
 
   @@index([processedAt])
+  @@index([processingClaimExpiresAt])
   @@map("stripe_webhook_events")
 }
 
@@ -1558,6 +1569,7 @@ model EmployeeTipPayable {
   @@index([employeeId, status])
   @@index([businessId, routingMode, status])
   @@index([stripePaymentIntentId])
+  @@index([stripeChargeId])
   @@index([stripeDisputeId])
   @@index([status, createdAt])
   @@map("employee_tip_payables")
@@ -1640,6 +1652,8 @@ model EmployeeGoal {
 
   employee Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
 
+  // Never recreate "employee_goals_employee_id_key" as UNIQUE: production has employees with
+  // several goals, so the rollback comment in 20261015160000 fails. Use a plain index if needed.
   @@index([employeeId])
   @@index([employeeId, status, updatedAt(sort: Desc)])
   @@map("employee_goals")
@@ -1673,10 +1687,8 @@ model Transaction {
   tipRefunds TipRefund[]
   employeeTipPayable EmployeeTipPayable?
 
-  @@index([businessId])
   @@index([employeeId, status, createdAt(sort: Desc)])
   @@index([businessId, status, createdAt(sort: Desc)])
-  @@index([employeeId, status, payoutStatus])
   @@map("tips")
 }
 

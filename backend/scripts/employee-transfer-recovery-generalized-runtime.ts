@@ -21,6 +21,7 @@ import {
   __setEmployeeTipTransferCreateFnForTests,
   releaseHeldPlatformPayablesForEmployee,
 } from "../src/services/employeeTipRelease.service.js";
+import { installMockEmptyEmployeeTipTransferList } from "./lib/mockEmployeeTipStripeTransferList.js";
 
 type TransferCall = {
   params: { amount: number; destination: string; metadata?: Record<string, string> };
@@ -144,6 +145,7 @@ async function cleanup(ctx: {
 
 async function main() {
   const suffix = `gen_${Date.now()}`;
+  installMockEmptyEmployeeTipTransferList();
 
   // CASE A — first fail, later ready, retry succeeds (one transfer)
   {
@@ -164,13 +166,7 @@ async function main() {
     const result = await releaseHeldPlatformPayablesForEmployee(employee.id);
     assert.equal(result.released, 1);
     assert.equal(calls.length, 1);
-    assert.equal(
-      calls[0].options.idempotencyKey,
-      buildEmployeeTipReleaseIdempotencyKey(payable.id, {
-        status: EmployeeTipPayableStatus.transfer_failed,
-        updatedAt: payable.updatedAt,
-      }),
-    );
+    assert.equal(calls[0].options.idempotencyKey, `emp_tip_release:${payable.id}`);
     proof.retryScenarios += 1;
     proof.finalTransferCounts += 1;
     pass("case-a", "destination later ready → one successful transfer");
@@ -199,16 +195,18 @@ async function main() {
     let calls = 0;
     __setEmployeeTipTransferCreateFnForTests(async (_params, options) => {
       calls += 1;
-      if (options.idempotencyKey === oldKey) {
-        const err = new Error("Keys for idempotent requests can only be used with the same parameters");
-        (err as { type: string }).type = "StripeIdempotencyError";
+      if (calls === 1) {
+        assert.equal(options.idempotencyKey, oldKey);
+        const err = new Error("Insufficient permissions");
+        (err as { type: string }).type = "StripeInvalidRequestError";
         throw err;
       }
+      assert.equal(options.idempotencyKey, newKey);
       return { id: `tr_gen_b_${suffix}`, amount: 3731 };
     });
     const result = await releaseHeldPlatformPayablesForEmployee(employee.id);
     assert.equal(result.released, 1);
-    assert.equal(calls, 1);
+    assert.equal(calls, 2);
     proof.idempotencyConflictScenarios += 1;
     proof.retryScenarios += 1;
     proof.finalTransferCounts += 1;
@@ -239,7 +237,7 @@ async function main() {
     });
     assert.equal(after?.status, EmployeeTipPayableStatus.transfer_failed);
     assert.equal(after?.transferredCents, 0);
-    assert.equal(calls, 1);
+    assert.equal(calls, 2, "base reconcile attempt then fresh-key retry both fail");
     proof.retryScenarios += 1;
     pass("case-c", "retry failure leaves payable owed, no transfer created");
     __setEmployeeTipTransferCreateFnForTests(null);
@@ -347,14 +345,11 @@ async function main() {
       EmployeeTipPayableStatus.transfer_failed,
       { updatedAt: failedAt },
     );
-    const retryKey = buildEmployeeTipReleaseIdempotencyKey(payable.id, {
-      status: EmployeeTipPayableStatus.transfer_failed,
-      updatedAt: failedAt,
-    });
+    const baseKey = `emp_tip_release:${payable.id}`;
     let calls = 0;
     __setEmployeeTipTransferCreateFnForTests(async (_params, options) => {
       calls += 1;
-      assert.equal(options.idempotencyKey, retryKey);
+      assert.equal(options.idempotencyKey, baseKey);
       return { id: `tr_gen_g_${suffix}`, amount: 3731 };
     });
     const first = await releaseHeldPlatformPayablesForEmployee(employee.id);

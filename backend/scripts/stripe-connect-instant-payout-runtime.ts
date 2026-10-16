@@ -6,7 +6,7 @@
  */
 import "dotenv/config";
 import "../src/loadEnv.js";
-import { readFileSync, readdirSync, statSync } from "node:fs";
+import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import type { Request, Response } from "express";
 import type Stripe from "stripe";
@@ -34,6 +34,7 @@ import {
   isConnectPayoutEventType,
   __setListPayoutBalanceTransactionsFnForTests,
 } from "../src/services/stripeConnectPayout.service.js";
+import { auditPayoutCreateCallSites } from "./lib/payoutCreateCallSiteAudit.js";
 
 type Result = { id: string; pass: boolean; detail: string };
 const results: Result[] = [];
@@ -48,16 +49,6 @@ function fail(id: string, detail: string) {
 function read(rel: string): string {
   return readFileSync(join(backendRoot, rel), "utf8");
 }
-function walkSrcTs(dir: string, acc: string[] = []): string[] {
-  for (const name of readdirSync(dir)) {
-    const p = join(dir, name);
-    const st = statSync(p);
-    if (st.isDirectory()) walkSrcTs(p, acc);
-    else if (name.endsWith(".ts")) acc.push(p);
-  }
-  return acc;
-}
-
 type Venue = {
   managerId: string;
   employeeUserId: string;
@@ -196,11 +187,6 @@ function eligibleStripeFns(opts?: { net?: number; gross?: number; destination?: 
 
 function runStatic() {
   const srcRoot = join(backendRoot, "src");
-  const srcFiles = walkSrcTs(srcRoot);
-  const observationBlob = srcFiles
-    .filter((p) => !p.replace(/\\/g, "/").endsWith("services/stripeConnectInstantPayout.service.ts"))
-    .map((p) => readFileSync(p, "utf8"))
-    .join("\n");
   const instantSvc = read("src/services/stripeConnectInstantPayout.service.ts");
   const routes = read("src/routes/connect.routes.ts");
   const controller = read("src/controllers/connect.controller.ts");
@@ -211,12 +197,14 @@ function runStatic() {
   const schema = read("prisma/schema.prisma");
   const mobilePkg = read(join("..", "mobile/package.json"));
 
-  if (observationBlob.includes(".payouts.create(") || /\.payouts\.create\s*\(/.test(observationBlob)) {
-    fail("static-create-isolated", "payouts.create leaked outside Instant service");
-  } else if (instantSvc.includes('method: "instant"') && instantSvc.includes("payouts.create")) {
-    pass("static-create-isolated", "payouts.create is Instant-only with method=instant");
+  const payoutAudit = auditPayoutCreateCallSites(srcRoot);
+  const instantSites = payoutAudit.createSites.filter((s) => s.kind === "instant");
+  if (!payoutAudit.ok) {
+    fail("static-create-isolated", payoutAudit.problems.join("; "));
+  } else if (instantSites.length === 1 && instantSites[0]!.file === "services/stripeConnectInstantPayout.service.ts") {
+    pass("static-create-isolated", "Instant create only in Instant service (method=instant); other creates are allowlisted scheduled payouts");
   } else {
-    fail("static-create-isolated", "Instant service missing payouts.create method=instant");
+    fail("static-create-isolated", "Instant payout create outside Instant service");
   }
 
   if (

@@ -116,6 +116,23 @@ services:
         value: /api/internal/jobs/employee-stripe-inactivity-tick
 
   - type: cron
+    name: caretip-employee-tip-release-reconciliation
+    runtime: node
+    rootDir: backend
+    plan: starter
+    buildCommand: "true"
+    startCommand: node scripts/render-category-retention-http.mjs
+    # Every 10 minutes UTC — Stripe transfer lookup/reconcile for uncertain employee platform-hold payables (no create).
+    schedule: "*/10 * * * *"
+    envVars:
+      - key: CRON_SECRET
+        sync: false
+      - key: CARE_TIP_API_ORIGIN
+        value: https://caretip.onrender.com
+      - key: CARE_TIP_INTERNAL_JOB_PATH
+        value: /api/internal/jobs/employee-tip-release-reconciliation-tick
+
+  - type: cron
     name: caretip-scheduled-bank-payout-tick
     runtime: node
     rootDir: backend

@@ -262,7 +262,7 @@ async function main() {
   pass("direct-routing-untouched", "employee release path unchanged");
 
   const webhook = read("src/webhooks/stripe.webhook.ts");
-  assert.match(webhook, /markStripeWebhookEventProcessed/);
+  assert.match(webhook, /acquireStripeWebhookProcessingClaim/);
   pass("webhook-idempotency-present", "webhook idempotency unchanged");
 
   assert.ok(AGED_HELD_BUSINESS_DAYS_DEFAULT >= 7);

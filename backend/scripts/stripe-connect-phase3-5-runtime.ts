@@ -10,7 +10,7 @@
  */
 import "dotenv/config";
 import "../src/loadEnv.js";
-import { readFileSync, readdirSync, statSync } from "node:fs";
+import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import type { Request, Response } from "express";
 import Stripe from "stripe";
@@ -40,9 +40,12 @@ import {
   __setListPayoutBalanceTransactionsFnForTests,
 } from "../src/services/stripeConnectPayout.service.js";
 import * as connectController from "../src/controllers/connect.controller.js";
+import { auditPayoutCreateCallSites } from "./lib/payoutCreateCallSiteAudit.js";
+import { checkConnectPayoutDtoRedaction } from "./lib/connectPayoutDtoRedaction.js";
+import { isIsolatedPlaceholderStripeKey } from "./lib/isolatedStripeKey.js";
 
 type Bucket = "REAL_STRIPE_E2E" | "MOCKED_SECURITY_TESTS" | "STATIC_ANALYSIS" | "DATABASE_TESTS";
-type Result = { id: string; pass: boolean; detail: string; bucket: Bucket; blocked?: boolean };
+type Result = { id: string; pass: boolean; detail: string; bucket: Bucket; blocked?: boolean; skipped?: boolean };
 const results: Result[] = [];
 const backendRoot = process.cwd();
 
@@ -60,6 +63,9 @@ function fail(id: string, detail: string, bucket: Bucket) {
 function blocked(id: string, detail: string, bucket: Bucket) {
   results.push({ id, pass: true, detail: `BLOCKED: ${detail}`, bucket, blocked: true });
 }
+function skipped(id: string, detail: string, bucket: Bucket) {
+  results.push({ id, pass: true, detail: `SKIPPED: ${detail}`, bucket, skipped: true });
+}
 function read(rel: string): string {
   return readFileSync(join(backendRoot, rel), "utf8");
 }
@@ -75,16 +81,6 @@ function keyMode(): "missing" | "test" | "live" | "unknown" {
   if (k.startsWith("sk_test_")) return "test";
   if (k.startsWith("sk_live_")) return "live";
   return "unknown";
-}
-
-function walkSrcTs(dir: string, acc: string[] = []): string[] {
-  for (const name of readdirSync(dir)) {
-    const p = join(dir, name);
-    const st = statSync(p);
-    if (st.isDirectory()) walkSrcTs(p, acc);
-    else if (name.endsWith(".ts")) acc.push(p);
-  }
-  return acc;
 }
 
 type Venue = {
@@ -296,12 +292,6 @@ async function testOnlyCreateConnectedPayout(
 
 function runStatic() {
   const srcRoot = join(backendRoot, "src");
-  const srcFiles = walkSrcTs(srcRoot);
-  const srcBlob = srcFiles.map((p) => readFileSync(p, "utf8")).join("\n");
-  const observationBlob = srcFiles
-    .filter((p) => !p.replace(/\\/g, "/").endsWith("services/stripeConnectInstantPayout.service.ts"))
-    .map((p) => readFileSync(p, "utf8"))
-    .join("\n");
   const instantSvc = read("src/services/stripeConnectInstantPayout.service.ts");
   const routesConnect = read("src/routes/connect.routes.ts");
   const routesPlatform = read("src/routes/platform.routes.ts");
@@ -309,20 +299,19 @@ function runStatic() {
   const fees = read("src/config/fees.ts");
   const ui = read(join("..", "src/app/components/business/settings/billing/ConnectPayoutsPanel.tsx"));
 
-  const forbiddenOutsideInstant = [
-    /\.payouts\.cancel\s*\(/,
-    /\.externalAccounts\.create\s*\(/,
-    /\.externalAccounts\.update\s*\(/,
-  ];
-  const observationHasCreate = /\.payouts\.create\s*\(/.test(observationBlob);
+  const payoutAudit = auditPayoutCreateCallSites(srcRoot);
+  const observationSvc = read("src/services/stripeConnectPayout.service.ts");
+  const observationHasCreate = /\.payouts\.create\s*\(/.test(observationSvc);
   const instantHasCreate = /\.payouts\.create\s*\(/.test(instantSvc) && instantSvc.includes('method: "instant"');
-  const hits = forbiddenOutsideInstant.filter((re) => re.test(srcBlob));
-  if (hits.length === 0 && !observationHasCreate && instantHasCreate) {
-    pass("V-no-manual-payout-creation", "payouts.create only in Instant Payout service; no cancel/externalAccounts mutate", "STATIC_ANALYSIS");
-    pass("W-no-payouts-create", "observation path has no payouts.create; Instant create is isolated", "STATIC_ANALYSIS");
+  if (payoutAudit.forbiddenHits.length === 0 && payoutAudit.ok) {
+    pass("V-no-manual-payout-creation", "payouts.create only in allowlisted Instant/scheduled services (account-scoped + idempotent); no cancel/externalAccounts mutate", "STATIC_ANALYSIS");
   } else {
-    fail("V-no-manual-payout-creation", "forbidden Stripe mutate API in backend/src", "STATIC_ANALYSIS");
-    fail("W-no-payouts-create", "payouts.create missing from Instant service or leaked into observation", "STATIC_ANALYSIS");
+    fail("V-no-manual-payout-creation", payoutAudit.problems.join("; "), "STATIC_ANALYSIS");
+  }
+  if (!observationHasCreate && instantHasCreate && payoutAudit.ok) {
+    pass("W-no-payouts-create", "payout observation service has no payouts.create; Instant create uses method=instant", "STATIC_ANALYSIS");
+  } else {
+    fail("W-no-payouts-create", "payouts.create missing from Instant service or present in observation service", "STATIC_ANALYSIS");
   }
 
   if (
@@ -617,19 +606,10 @@ async function runMockedAndDb() {
     else fail("N-employee-blocked", `status=${resEmp.statusCode}`, "MOCKED_SECURITY_TESTS");
 
     const dto = payoutA ? await getPayoutForBusiness(venueA.businessId, payoutA.id) : null;
-    const dtoJson = JSON.stringify(dto);
-    if (
-      dto &&
-      !dtoJson.includes("iban") &&
-      !dtoJson.includes("routing") &&
-      !dtoJson.includes("account_number") &&
-      !dtoJson.includes("sk_test") &&
-      !dtoJson.includes("destination") &&
-      !("stripeAccountId" in dto) &&
-      !("stripePayoutId" in dto)
-    ) {
-      pass("R-dto-redaction", "manager DTO omits bank details and Stripe ids", "MOCKED_SECURITY_TESTS");
-    } else fail("R-dto-redaction", (dtoJson ?? "null").slice(0, 200), "MOCKED_SECURITY_TESTS");
+    const redaction = checkConnectPayoutDtoRedaction(dto);
+    if (redaction.ok) {
+      pass("R-dto-redaction", "manager DTO omits bank details, destination and account id (po_ id only)", "MOCKED_SECURITY_TESTS");
+    } else fail("R-dto-redaction", redaction.problems.join("; "), "MOCKED_SECURITY_TESTS");
 
     const adminList = await listPlatformConnectPayouts({ businessId: venueA.businessId, take: 10, skip: 0 });
     if (adminList.total >= 1 && adminList.items.every((i) => i.businessId === venueA.businessId)) {
@@ -764,6 +744,14 @@ async function runRealStripeE2e() {
     blocked("C-real-payout-object", "skipped", "REAL_STRIPE_E2E");
     blocked("D-webhook-delivery", "skipped", "REAL_STRIPE_E2E");
     blocked("M-real-reconciliation", "skipped", "REAL_STRIPE_E2E");
+    return;
+  }
+  if (isIsolatedPlaceholderStripeKey()) {
+    realE2eStatus = "NOT_VERIFIED";
+    realE2eDetail = "isolated run uses placeholder Stripe key; live test-mode credentials required";
+    for (const id of ["A-test-mode", "B-payout-discovery", "C-real-payout-object", "D-webhook-delivery", "M-real-reconciliation"]) {
+      skipped(id, realE2eDetail, "REAL_STRIPE_E2E");
+    }
     return;
   }
   pass("A-test-mode", "STRIPE_SECRET_KEY classified TEST (value not printed)", "REAL_STRIPE_E2E");
@@ -1041,7 +1029,7 @@ async function main() {
     const rows = results.filter((r) => r.bucket === bucket);
     console.log(`\n--- ${bucket} ---`);
     for (const r of rows) {
-      const mark = r.blocked ? "BLOCKED" : r.pass ? "PASS" : "FAIL";
+      const mark = r.skipped ? "SKIPPED" : r.blocked ? "BLOCKED" : r.pass ? "PASS" : "FAIL";
       console.log(`${mark}  ${r.id}  ${r.detail}`);
     }
   }
@@ -1050,8 +1038,10 @@ async function main() {
   console.log(`REAL_STRIPE_E2E_DETAIL=${realE2eDetail}`);
   console.log(`PAYOUT_WEBHOOK_DELIVERY=${webhookDelivery}`);
   console.log(`PAYOUT_RECONCILIATION=${reconciliation}`);
-  console.log(`PAYOUTS_CREATE=NOT IMPLEMENTED (production)`);
-  console.log(`\n${results.filter((r) => r.pass).length}/${results.length} recorded (${failed.length} failed, ${results.filter((r) => r.blocked).length} blocked)`);
+  console.log(`PAYOUTS_CREATE=ALLOWLISTED (instant + scheduled bank payout services only)`);
+  console.log(
+    `\n${results.filter((r) => r.pass && !r.blocked && !r.skipped).length}/${results.length} passed (${failed.length} failed, ${results.filter((r) => r.blocked).length} blocked, ${results.filter((r) => r.skipped).length} skipped)`,
+  );
   if (failed.length) process.exit(1);
 }
 

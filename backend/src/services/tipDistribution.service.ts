@@ -13,6 +13,7 @@ import { prisma } from "../prisma.js";
 import { remainingPayableCents, type EmployeePayableMoneyRow } from "./employeeTipPayable.service.js";
 import { businessDistributionObservabilityForBusiness } from "./businessDistributionIntegrity.service.js";
 import { runSerializedByKey } from "../utils/serializedByKey.js";
+import { isPrismaUniqueViolation } from "../utils/prismaErrors.js";
 
 export type TipDistributionEmployeeRow = {
   employeeId: string | null;
@@ -425,18 +426,22 @@ export async function createTipDistributionBatch(
     throw new TipDistributionError("EMPTY_DISTRIBUTION", "At least one employee distribution is required.");
   }
 
-  return runSerializedByKey(`tip-distribution:${businessId}`, async () => {
+  const replayExisting = async (): Promise<TipDistributionBatchDetail | null> => {
     const existing = await prisma.employeeTipDistributionBatch.findUnique({
       where: { businessId_idempotencyKey: { businessId, idempotencyKey } },
       select: { id: true },
     });
-    if (existing) {
-      const detail = await getTipDistributionBatchForBusiness(businessId, existing.id);
-      if (!detail) {
-        throw new TipDistributionError("IDEMPOTENCY_REPLAY_FAILED", "Unable to load existing distribution batch.");
-      }
-      return detail;
+    if (!existing) return null;
+    const detail = await getTipDistributionBatchForBusiness(businessId, existing.id);
+    if (!detail) {
+      throw new TipDistributionError("IDEMPOTENCY_REPLAY_FAILED", "Unable to load existing distribution batch.");
     }
+    return detail;
+  };
+
+  return runSerializedByKey(`tip-distribution:${businessId}`, async () => {
+    const replayed = await replayExisting();
+    if (replayed) return replayed;
 
     const normalizedItems = input.items.map((item) => {
       const employeeId = item.employeeId.trim();
@@ -454,7 +459,8 @@ export async function createTipDistributionBatch(
       };
     });
 
-    const employeeIds = [...new Set(normalizedItems.map((item) => item.employeeId))];
+    // Sorted so concurrent batches lock employees' payables in the same order (no deadlock).
+    const employeeIds = [...new Set(normalizedItems.map((item) => item.employeeId))].sort();
     const employees = await prisma.employee.findMany({
       where: { businessId, id: { in: employeeIds } },
       select: { id: true },
@@ -534,6 +540,12 @@ export async function createTipDistributionBatch(
         );
       }
 
+      const committedWhileLocking = await tx.employeeTipDistributionBatch.findUnique({
+        where: { businessId_idempotencyKey: { businessId, idempotencyKey } },
+        select: { id: true },
+      });
+      if (committedWhileLocking) return committedWhileLocking.id;
+
       const plannedItems: Array<{
         employeeId: string;
         amountCents: number;
@@ -594,7 +606,13 @@ export async function createTipDistributionBatch(
       }
 
       return batch.id;
+    }).catch(async (err: unknown) => {
+      if (!isPrismaUniqueViolation(err)) throw err;
+      const replayedAfterRace = await replayExisting();
+      if (!replayedAfterRace) throw err;
+      return replayedAfterRace;
     });
+    if (typeof batchId !== "string") return batchId;
 
     const detail = await getTipDistributionBatchForBusiness(businessId, batchId);
     if (!detail) {

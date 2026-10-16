@@ -79,47 +79,50 @@ export async function upsertStripeRefundEvent(input: {
     cancelled: TipRefundStatus.canceled,
   };
   const status = statusMap[String(input.status).toLowerCase()] ?? TipRefundStatus.pending;
-  const alreadyApplied =
-    (
-      await prisma.tipRefund.findUnique({
-        where: { stripeRefundId: input.stripeRefundId },
-        select: { status: true },
-      })
-    )?.status === TipRefundStatus.succeeded;
   const amountEur = Number((input.amountCents / 100).toFixed(2));
 
-  await prisma.tipRefund.upsert({
-    where: { stripeRefundId: input.stripeRefundId },
-    create: {
-      businessId: linked.businessId,
-      tipId: linked.tipId ?? input.tipId ?? null,
-      stripeRefundId: input.stripeRefundId,
-      stripePaymentIntentId: input.stripePaymentIntentId ?? null,
-      stripeChargeId: input.stripeChargeId ?? null,
-      kind: TipRefundKind.refund,
-      status,
-      amountEur,
-      currency: (input.currency ?? "eur").toLowerCase(),
-      reason: input.reason?.slice(0, 120) ?? null,
-      originalAmountEur: linked.amountEur ?? null,
-      occurredAt: input.occurredAt,
-    },
-    update: {
-      status,
-      amountEur,
-      reason: input.reason?.slice(0, 120) ?? undefined,
-      stripeChargeId: input.stripeChargeId ?? undefined,
-      tipId: linked.tipId ?? undefined,
-    },
-  });
-  const tipId = linked.tipId ?? input.tipId ?? null;
-  if (status === TipRefundStatus.succeeded && !alreadyApplied && tipId) {
-    const { applyRefundToEmployeePayable } = await import("../employeeTipPayable.service.js");
-    await applyRefundToEmployeePayable({
-      transactionId: tipId,
-      refundedCents: input.amountCents,
+  /** Returns true only for the first write that moves this refund to succeeded. */
+  const recordRefund = async (db: Prisma.TransactionClient): Promise<boolean> => {
+    const previous = await db.tipRefund.findUnique({
+      where: { stripeRefundId: input.stripeRefundId },
+      select: { status: true },
     });
-  }
+    await db.tipRefund.upsert({
+      where: { stripeRefundId: input.stripeRefundId },
+      create: {
+        businessId: linked.businessId,
+        tipId: linked.tipId ?? input.tipId ?? null,
+        stripeRefundId: input.stripeRefundId,
+        stripePaymentIntentId: input.stripePaymentIntentId ?? null,
+        stripeChargeId: input.stripeChargeId ?? null,
+        kind: TipRefundKind.refund,
+        status,
+        amountEur,
+        currency: (input.currency ?? "eur").toLowerCase(),
+        reason: input.reason?.slice(0, 120) ?? null,
+        originalAmountEur: linked.amountEur ?? null,
+        occurredAt: input.occurredAt,
+      },
+      update: {
+        status,
+        amountEur,
+        reason: input.reason?.slice(0, 120) ?? undefined,
+        stripeChargeId: input.stripeChargeId ?? undefined,
+        tipId: linked.tipId ?? undefined,
+      },
+    });
+    return status === TipRefundStatus.succeeded && previous?.status !== TipRefundStatus.succeeded;
+  };
+
+  // With a payable, the refund row is written under the payable row lock together with the
+  // ledger change, so concurrent events for the same refund (charge.refunded / refund.updated)
+  // on different instances apply it once.
+  const tipId = linked.tipId ?? input.tipId ?? null;
+  const { applyRefundToEmployeePayable } = await import("../employeeTipPayable.service.js");
+  const handled = tipId
+    ? await applyRefundToEmployeePayable({ transactionId: tipId, refundedCents: input.amountCents, recordRefund })
+    : false;
+  if (!handled) await recordRefund(prisma);
 }
 
 function mapStripeDisputeStatus(statusRaw: string): TipRefundStatus {
@@ -178,54 +181,60 @@ export async function upsertStripeDisputeEvent(input: {
   }
 
   const incomingStatus = mapStripeDisputeStatus(input.status);
-  const existing = await prisma.tipRefund.findUnique({
-    where: { stripeDisputeId: input.stripeDisputeId },
-    select: { status: true },
-  });
-  const status = mergeDisputeLedgerStatus(existing?.status, incomingStatus);
   const amountEur = Number((input.amountCents / 100).toFixed(2));
 
-  await prisma.tipRefund.upsert({
-    where: { stripeDisputeId: input.stripeDisputeId },
-    create: {
-      businessId: linked.businessId,
-      tipId: linked.tipId,
-      stripeDisputeId: input.stripeDisputeId,
-      stripePaymentIntentId: input.stripePaymentIntentId ?? null,
-      stripeChargeId: input.stripeChargeId ?? null,
-      kind: TipRefundKind.dispute,
-      status,
-      amountEur,
-      currency: (input.currency ?? "eur").toLowerCase(),
-      reason: input.reason?.slice(0, 120) ?? null,
-      originalAmountEur: linked.amountEur,
-      occurredAt: input.occurredAt,
-    },
-    update: {
-      status,
-      amountEur,
-      reason: input.reason?.slice(0, 120) ?? undefined,
-      stripeChargeId: input.stripeChargeId ?? undefined,
-      tipId: linked.tipId ?? undefined,
-    },
-  });
-
-  if (linked.tipId) {
-    const { applyDisputeToEmployeePayable } = await import("../employeeTipPayable.service.js");
-    const phaseStatus =
-      status === TipRefundStatus.won ? "won" : status === TipRefundStatus.lost ? "lost" : input.status;
-    const result = await applyDisputeToEmployeePayable({
-      transactionId: linked.tipId,
-      stripeDisputeId: input.stripeDisputeId,
-      disputeAmountCents: input.amountCents,
-      stripeStatus: phaseStatus,
-      stripeEventAccount: input.stripeEventAccount,
+  /** Merges with the stored status and returns the phase status for the payable ledger. */
+  const recordDispute = async (db: Prisma.TransactionClient): Promise<string> => {
+    const existing = await db.tipRefund.findUnique({
+      where: { stripeDisputeId: input.stripeDisputeId },
+      select: { status: true },
     });
-    if (result === "skipped_mismatch") {
-      console.warn("[tipRefunds] dispute payable skipped — connected account mismatch", {
+    const status = mergeDisputeLedgerStatus(existing?.status, incomingStatus);
+    await db.tipRefund.upsert({
+      where: { stripeDisputeId: input.stripeDisputeId },
+      create: {
+        businessId: linked.businessId,
+        tipId: linked.tipId,
         stripeDisputeId: input.stripeDisputeId,
-      });
-    }
+        stripePaymentIntentId: input.stripePaymentIntentId ?? null,
+        stripeChargeId: input.stripeChargeId ?? null,
+        kind: TipRefundKind.dispute,
+        status,
+        amountEur,
+        currency: (input.currency ?? "eur").toLowerCase(),
+        reason: input.reason?.slice(0, 120) ?? null,
+        originalAmountEur: linked.amountEur,
+        occurredAt: input.occurredAt,
+      },
+      update: {
+        status,
+        amountEur,
+        reason: input.reason?.slice(0, 120) ?? undefined,
+        stripeChargeId: input.stripeChargeId ?? undefined,
+        tipId: linked.tipId ?? undefined,
+      },
+    });
+    return status === TipRefundStatus.won ? "won" : status === TipRefundStatus.lost ? "lost" : input.status;
+  };
+
+  // With a payable, the dispute row is merged under the payable row lock so concurrent dispute
+  // events cannot regress a terminal status or interleave ledger writes across instances.
+  const { applyDisputeToEmployeePayable } = await import("../employeeTipPayable.service.js");
+  const result = linked.tipId
+    ? await applyDisputeToEmployeePayable({
+        transactionId: linked.tipId,
+        stripeDisputeId: input.stripeDisputeId,
+        disputeAmountCents: input.amountCents,
+        stripeStatus: input.status,
+        stripeEventAccount: input.stripeEventAccount,
+        recordDispute,
+      })
+    : "missing";
+  if (result !== "applied") await recordDispute(prisma);
+  if (result === "skipped_mismatch") {
+    console.warn("[tipRefunds] dispute payable skipped — connected account mismatch", {
+      stripeDisputeId: input.stripeDisputeId,
+    });
   }
 }
 

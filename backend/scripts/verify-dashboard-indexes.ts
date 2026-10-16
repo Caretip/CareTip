@@ -8,7 +8,6 @@ import { prisma } from "../src/prisma.js";
 const REQUIRED_INDEXES: Array<{ table: string; index: string }> = [
   { table: "tips", index: "tips_employee_id_status_created_at_idx" },
   { table: "tips", index: "tips_business_id_status_created_at_idx" },
-  { table: "tips", index: "tips_employee_id_status_payout_status_idx" },
   { table: "refresh_tokens", index: "refresh_tokens_user_id_revoked_at_idx" },
   { table: "notifications", index: "notifications_user_id_unread_idx" },
   { table: "employees", index: "employees_business_id_active_name_idx" },

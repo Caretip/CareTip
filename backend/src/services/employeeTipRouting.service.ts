@@ -137,8 +137,12 @@ export function stripeChargeIdFromPaymentIntent(paymentIntent: Stripe.PaymentInt
 }
 
 export function destinationTransferIdFromPaymentIntent(paymentIntent: Stripe.PaymentIntent): string | null {
-  const transfer = (paymentIntent as Stripe.PaymentIntent & { transfer?: string | Stripe.Transfer | null })
-    .transfer;
+  // Stripe exposes the destination-charge Transfer on the Charge (`latest_charge.transfer`), not on the
+  // PaymentIntent; the top-level field is kept for callers that attach it explicitly.
+  const latest = paymentIntent.latest_charge;
+  const transfer =
+    (paymentIntent as Stripe.PaymentIntent & { transfer?: string | Stripe.Transfer | null }).transfer ??
+    (latest && typeof latest === "object" ? latest.transfer : null);
   if (typeof transfer === "string" && transfer.startsWith("tr_")) return transfer;
   if (transfer && typeof transfer === "object" && typeof transfer.id === "string" && transfer.id.startsWith("tr_")) {
     return transfer.id;

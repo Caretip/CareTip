@@ -7,9 +7,14 @@ import {
   EmployeeTipPayableStatus,
   EmployeeTipPayoutMode,
   Prisma,
+  type EmployeeTipPayable,
 } from "@prisma/client";
 import { prisma } from "../prisma.js";
 import { calculateTipPlatformFeeCents } from "../config/fees.js";
+import {
+  preserveDurableReleaseMarker,
+  releaseCreateBlockedByStoredMarker,
+} from "../lib/employeeTipReleaseClaim.js";
 import { runSerializedByKey } from "../utils/serializedByKey.js";
 import type { PaidTipConnectSnapshot } from "./employeeTipRouting.service.js";
 import {
@@ -19,6 +24,17 @@ import {
 
 export type { EmployeePayablePresentationKind };
 export { employeePayablePresentationKind };
+
+/** Avoid read/modify/write races that could clear rel_durable on concurrent refund/dispute. */
+function mergePayableLastTransferErrorUpdate(
+  currentMarker: string | null,
+  proposed: string | null,
+): { lastTransferError?: string | null } {
+  if (releaseCreateBlockedByStoredMarker(currentMarker)) {
+    return {};
+  }
+  return { lastTransferError: preserveDurableReleaseMarker(currentMarker, proposed) };
+}
 
 export type EmployeePayableMoneyRow = {
   payableCents: number;
@@ -238,23 +254,48 @@ async function maybeReversePlatformHoldTransfer(params: {
   }
 }
 
+/**
+ * Refund/dispute ledger writes hold a row lock for the whole read → Stripe reversal → write, so
+ * concurrent events on other instances cannot interleave. The reversal runs inside the
+ * transaction: if the write is lost, the retry recomputes the same cumulative reversal and
+ * `reverseReleasedEmployeeTransfer` skips what Stripe already reversed.
+ */
+async function withLockedPayable(
+  payableId: string,
+  fn: (tx: Prisma.TransactionClient, row: EmployeeTipPayable) => Promise<void>,
+): Promise<boolean> {
+  return prisma.$transaction(
+    async (tx) => {
+      await tx.$queryRaw`SELECT id FROM employee_tip_payables WHERE id = ${payableId} FOR UPDATE`;
+      const row = await tx.employeeTipPayable.findUnique({ where: { id: payableId } });
+      if (!row) return false;
+      await fn(tx, row);
+      return true;
+    },
+    { timeout: 30_000, maxWait: 10_000 },
+  );
+}
+
+/**
+ * Returns false when there is no payable (or no positive amount) and nothing ran.
+ * `recordRefund` runs under the payable lock and returns whether this call is the first to see the
+ * refund succeed, so the TipRefund write and the ledger change commit (or roll back) together.
+ */
 export async function applyRefundToEmployeePayable(params: {
   transactionId: string;
   refundedCents: number;
-}): Promise<void> {
-  if (!Number.isInteger(params.refundedCents) || params.refundedCents <= 0) return;
+  recordRefund?: (tx: Prisma.TransactionClient) => Promise<boolean>;
+}): Promise<boolean> {
+  if (!Number.isInteger(params.refundedCents) || params.refundedCents <= 0) return false;
 
   const head = await prisma.employeeTipPayable.findUnique({
     where: { transactionId: params.transactionId },
     select: { id: true, employeeId: true },
   });
-  if (!head) return;
+  if (!head) return false;
 
-  await runSerializedByKey(payableLockKey(head), async () => {
-    const row = await prisma.employeeTipPayable.findUnique({
-      where: { id: head.id },
-    });
-    if (!row) return;
+  return runSerializedByKey(payableLockKey(head), () => withLockedPayable(head.id, async (tx, row) => {
+    if (params.recordRefund && !(await params.recordRefund(tx))) return;
 
     const refundCap = Math.max(0, row.payableCents - row.disputedLostCents);
     const nextRefunded = Math.min(refundCap, row.refundedCents + params.refundedCents);
@@ -267,10 +308,10 @@ export async function applyRefundToEmployeePayable(params: {
     });
 
     if (reversalFailed) {
-      await prisma.employeeTipPayable.update({
+      await tx.employeeTipPayable.update({
         where: { id: row.id },
         data: {
-          lastTransferError: "transfer_reversal_failed",
+          ...mergePayableLastTransferErrorUpdate(row.lastTransferError, "transfer_reversal_failed"),
           refundedCents: nextRefunded,
           status:
             nextRefunded >= row.payableCents ? EmployeeTipPayableStatus.refunded : row.status,
@@ -286,16 +327,16 @@ export async function applyRefundToEmployeePayable(params: {
           ? EmployeeTipPayableStatus.refunded
           : row.status;
 
-    await prisma.employeeTipPayable.update({
+    await tx.employeeTipPayable.update({
       where: { id: row.id },
       data: {
         refundedCents: nextRefunded,
         reversedCents: nextReversed,
         status,
-        lastTransferError: null,
+        ...mergePayableLastTransferErrorUpdate(row.lastTransferError, null),
       },
     });
-  });
+  }));
 }
 
 export async function applyDisputeToEmployeePayable(params: {
@@ -304,6 +345,8 @@ export async function applyDisputeToEmployeePayable(params: {
   disputeAmountCents: number;
   stripeStatus: string;
   stripeEventAccount?: string | null;
+  /** Runs under the payable lock; returns the stripe status to apply (after ledger merge). */
+  recordDispute?: (tx: Prisma.TransactionClient) => Promise<string>;
 }): Promise<"applied" | "skipped_mismatch" | "missing"> {
   const disputeId = params.stripeDisputeId.trim();
   if (!disputeId) return "missing";
@@ -322,13 +365,9 @@ export async function applyDisputeToEmployeePayable(params: {
     return "skipped_mismatch";
   }
 
-  await runSerializedByKey(payableLockKey(head), async () => {
-    const row = await prisma.employeeTipPayable.findUnique({
-      where: { id: head.id },
-    });
-    if (!row) return;
-
-    const incoming = employeeDisputePhaseFromStripeStatus(params.stripeStatus);
+  const ran = await runSerializedByKey(payableLockKey(head), () => withLockedPayable(head.id, async (tx, row) => {
+    const stripeStatus = params.recordDispute ? await params.recordDispute(tx) : params.stripeStatus;
+    const incoming = employeeDisputePhaseFromStripeStatus(stripeStatus);
     const sameDispute = row.stripeDisputeId === disputeId;
     const existingPhase: EmployeeDisputePhase | null = !row.stripeDisputeId
       ? null
@@ -372,23 +411,24 @@ export async function applyDisputeToEmployeePayable(params: {
           incrementCents: reverseIncrement,
         });
         nextReversed = reversedAfter;
-        lastTransferError = reversalFailed ? "transfer_reversal_failed" : null;
+        const proposed = reversalFailed ? "transfer_reversal_failed" : null;
+        lastTransferError = preserveDurableReleaseMarker(row.lastTransferError, proposed);
       }
     }
 
-    await prisma.employeeTipPayable.update({
+    await tx.employeeTipPayable.update({
       where: { id: row.id },
       data: {
         disputedOpenCents: nextOpen,
         disputedLostCents: nextLost,
         stripeDisputeId: disputeId,
         reversedCents: nextReversed,
-        lastTransferError,
+        ...mergePayableLastTransferErrorUpdate(row.lastTransferError, lastTransferError),
       },
     });
-  });
+  }));
 
-  return "applied";
+  return ran ? "applied" : "missing";
 }
 
 export async function employeePayableSummaryForEmployee(employeeId: string): Promise<{

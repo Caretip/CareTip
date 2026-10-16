@@ -281,7 +281,7 @@ function runStaticAudit() {
 
   if (
     webhook.includes("verifyWebhookSignature") &&
-    webhook.includes("isStripeWebhookEventProcessed") &&
+    webhook.includes("acquireStripeWebhookProcessingClaim") &&
     stripeSvc.includes('status: "pending"') &&
     stripeSvc.includes("refund_application_fee: true")
   ) {

@@ -340,6 +340,10 @@ const ERROR_MAP: Record<string, string> = {
   INSTANT_PAYOUT_UNSUPPORTED: "Instant Payout isn’t available for this account.",
   INSTANT_PAYOUT_STRIPE_ERROR: "We couldn’t start this Instant Payout. Please try again.",
   INSTANT_PAYOUT_IDEMPOTENCY_REQUIRED: "We couldn’t start this Instant Payout. Please try again.",
+  BANK_PAYOUT_SCHEDULE_TRANSITION_BLOCKED:
+    "A scheduled payout is still in progress. Wait until it finishes, then change your payout schedule again.",
+  "A scheduled payout is still in progress. Try again after it completes.":
+    "A scheduled payout is still in progress. Wait until it finishes, then change your payout schedule again.",
 };
 
 const EMPLOYEE_QR_BUSINESS_KYC_HINT =

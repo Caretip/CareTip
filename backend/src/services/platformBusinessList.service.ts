@@ -312,7 +312,7 @@ function buildWhereClause(params: ListPlatformBusinessesParams): Prisma.Sql {
     parts.push(Prisma.sql`
       b.kyc_verification_status = 'pending_review'
       AND b.kyc_submitted_at IS NOT NULL
-      AND b.kyc_submitted_at < NOW() - (48::int * INTERVAL '1 hour')
+      AND b.kyc_submitted_at < ${new Date(Date.now() - 48 * 60 * 60 * 1000)}
     `);
   } else if (status === "suspended") {
     parts.push(Prisma.sql`b.operational_status = 'suspended'`);

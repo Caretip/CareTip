@@ -36,6 +36,28 @@ export const BILLING_RECONCILIATION_BATCH_SIZE = resolveBillingReconciliationBat
 export const BILLING_RECONCILIATION_MAX_SUBS_PER_CUSTOMER = 10;
 
 const RECON_LOCK_KEY = "caretip_billing_reconciliation";
+/** An unfinished run older than this is treated as crashed and no longer blocks new runs. */
+export const BILLING_RECONCILIATION_RUN_LEASE_MS = 15 * 60_000;
+
+/**
+ * Starts a run unless another instance holds an unfinished, unexpired run. Session advisory locks
+ * do not survive the transaction pooler, so the open run row is the lease and the check+insert is
+ * serialized with a transaction-scoped advisory lock.
+ */
+export async function acquireBillingReconciliationRun(startedAt: Date): Promise<{ id: string } | null> {
+  return prisma.$transaction(async (tx) => {
+    await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${RECON_LOCK_KEY}))`;
+    const active = await tx.subscriptionBillingReconciliationRun.findFirst({
+      where: {
+        finishedAt: null,
+        startedAt: { gt: new Date(startedAt.getTime() - BILLING_RECONCILIATION_RUN_LEASE_MS) },
+      },
+      select: { id: true },
+    });
+    if (active) return null;
+    return tx.subscriptionBillingReconciliationRun.create({ data: { startedAt }, select: { id: true } });
+  });
+}
 
 type ListSubscriptionsFn = (params: {
   stripeCustomerId: string;
@@ -228,9 +250,7 @@ export async function runSubscriptionBillingReconciliation(): Promise<BillingRec
   }
 
   const startedAt = new Date();
-  const run = await prisma.subscriptionBillingReconciliationRun.create({
-    data: { startedAt },
-  });
+  const run = await acquireBillingReconciliationRun(startedAt);
 
   let examined = 0;
   let matched = 0;
@@ -239,24 +259,17 @@ export async function runSubscriptionBillingReconciliation(): Promise<BillingRec
   let failed = 0;
   let incidentsOpened = 0;
 
-  const acquired = await prisma.$transaction(async (tx) => {
-    const rows = await tx.$queryRaw<Array<{ locked: boolean }>>`
-      SELECT pg_try_advisory_lock(hashtext(${RECON_LOCK_KEY})) AS locked
-    `;
-    return rows[0]?.locked === true;
-  });
-
-  if (!acquired) {
-    await prisma.subscriptionBillingReconciliationRun.update({
-      where: { id: run.id },
+  if (!run) {
+    const skippedRun = await prisma.subscriptionBillingReconciliationRun.create({
       data: {
+        startedAt,
         finishedAt: new Date(),
         skipped: 1,
         summary: { reason: "concurrent_run_in_progress" },
       },
     });
     return {
-      runId: run.id,
+      runId: skippedRun.id,
       examined: 0,
       matched: 0,
       repaired: 0,
@@ -519,8 +532,14 @@ export async function runSubscriptionBillingReconciliation(): Promise<BillingRec
     if (cas.status === "stale_rejected") {
       logBillingReconciliationCursorCasStale();
     }
-  } finally {
-    await prisma.$executeRaw`SELECT pg_advisory_unlock(hashtext(${RECON_LOCK_KEY}))`;
+  } catch (err) {
+    await prisma.subscriptionBillingReconciliationRun
+      .update({
+        where: { id: run.id },
+        data: { finishedAt: new Date(), failed: failed + 1, summary: { reason: "run_failed" } },
+      })
+      .catch(() => undefined);
+    throw err;
   }
 
   await prisma.subscriptionBillingReconciliationRun.update({

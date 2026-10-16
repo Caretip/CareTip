@@ -270,7 +270,7 @@ function runStaticSecurity() {
 
   if (
     webhook.includes("verifyWebhookSignature") &&
-    webhook.includes("isStripeWebhookEventProcessed") &&
+    webhook.includes("acquireStripeWebhookProcessingClaim") &&
     schema.includes("stripePaymentIntentId") &&
     schema.includes("@unique")
   ) {

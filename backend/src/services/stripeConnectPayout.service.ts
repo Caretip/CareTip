@@ -466,7 +466,7 @@ async function persistAttributedConnectPayout(args: {
     runReconciliation,
   } = args;
 
-  return runSerializedByKey(`connect-payout:${parsed.stripePayoutId}`, async () => {
+  const persistOnce = async (): Promise<HandleConnectPayoutResult | null> => {
     const now = new Date();
     const existing = await prisma.stripeConnectPayout.findUnique({
       where: { stripePayoutId: parsed.stripePayoutId },
@@ -524,8 +524,12 @@ async function persistAttributedConnectPayout(args: {
           ? (existing.canceledAt ?? now)
           : existing.canceledAt;
 
-      await prisma.stripeConnectPayout.update({
-        where: { id: existing.id },
+      const applied = await prisma.stripeConnectPayout.updateMany({
+        where: {
+          id: existing.id,
+          status: existing.status,
+          lastStripeEventCreated: existing.lastStripeEventCreated,
+        },
         data: {
           amountCents: parsed.amountCents,
           currency: parsed.currency,
@@ -553,6 +557,7 @@ async function persistAttributedConnectPayout(args: {
           canceledAt,
         },
       });
+      if (applied.count === 0) return null;
 
       if (afterUpsertHook) await afterUpsertHook();
 
@@ -607,7 +612,11 @@ async function persistAttributedConnectPayout(args: {
         failedAt: parsed.status === StripeConnectPayoutStatus.failed ? now : null,
         canceledAt: parsed.status === StripeConnectPayoutStatus.canceled ? now : null,
       },
+    }).catch((err: unknown) => {
+      if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === "P2002") return null;
+      throw err;
     });
+    if (!created) return null;
 
     if (afterUpsertHook) await afterUpsertHook();
 
@@ -636,7 +645,30 @@ async function persistAttributedConnectPayout(args: {
     }
 
     return { matched: true, payoutRowId: created.id, businessId, reason: "created" };
-  });
+  };
+
+  return runSerializedByKey(`connect-payout:${parsed.stripePayoutId}`, () =>
+    retryPayoutWriteOnConflict(persistOnce, parsed.stripePayoutId),
+  );
+}
+
+const PAYOUT_WRITE_CONFLICT_ATTEMPTS = 5;
+
+/**
+ * Another instance changed (or created) the payout row between our read and write; re-read and
+ * re-decide so an older event can never overwrite a newer snapshot.
+ */
+export async function retryPayoutWriteOnConflict<T>(
+  persistOnce: () => Promise<T | null>,
+  stripePayoutId: string,
+): Promise<T> {
+  for (let attempt = 1; ; attempt++) {
+    const result = await persistOnce();
+    if (result !== null) return result;
+    if (attempt >= PAYOUT_WRITE_CONFLICT_ATTEMPTS) {
+      throw new Error(`payout write conflict persisted for payout ...${stripePayoutId.slice(-8)}`);
+    }
+  }
 }
 
 /** Persist a Stripe payout object after Instant create (same table as webhooks). */

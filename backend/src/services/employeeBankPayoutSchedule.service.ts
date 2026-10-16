@@ -4,22 +4,20 @@
 import { BusinessBankPayoutSchedule } from "@prisma/client";
 import { prisma } from "../prisma.js";
 import { logServerError } from "../utils/httpErrors.js";
-import { getStripeClient, isStripeConfigured } from "./stripe.service.js";
+import { isStripeConfigured } from "./stripe.service.js";
 import { StripeConnectError } from "./stripeConnect.service.js";
-import { syncStripeConnectAccountPayoutSchedule } from "./connectBankPayoutSchedule.core.js";
 import {
   computeNextEvery3DaysPayoutAt,
   isCareTipControlledBankSchedule,
   parseBusinessBankPayoutSchedule,
+  type BusinessBankPayoutScheduleDto,
 } from "./businessBankPayoutSchedule.service.js";
+import type { ConnectPayoutPolicyApplyDto, SettlementDelayReadDto } from "./connectPayoutPolicy.types.js";
+import { settlementReadUnavailable } from "./connectSettlementRead.service.js";
+import { assertEmployeeScheduleTransitionSafe } from "./connectPayoutScheduleTransition.service.js";
 import { resolveActiveEmployeeForConnect } from "./employeeStripeConnect.service.js";
 
-export type EmployeeBankPayoutScheduleDto = {
-  schedule: BusinessBankPayoutSchedule;
-  nextScheduledPayoutAt: string | null;
-  careTipControlled: boolean;
-  stripeScheduleInterval: string | null;
-};
+export type EmployeeBankPayoutScheduleDto = BusinessBankPayoutScheduleDto;
 
 export async function getEmployeeBankPayoutScheduleForUser(
   userId: string,
@@ -42,11 +40,21 @@ export async function getEmployeeBankPayoutScheduleForUser(
   }
 
   let stripeScheduleInterval: string | null = null;
+  let scheduleDrift = false;
+  let settlement: SettlementDelayReadDto = settlementReadUnavailable();
   const stripeAccountId = row.stripeAccountId?.trim();
   if (stripeAccountId && isStripeConfigured()) {
     try {
-      const acct = await getStripeClient().accounts.retrieve(stripeAccountId);
-      stripeScheduleInterval = acct.settings?.payouts?.schedule?.interval ?? null;
+      const { readConnectPayoutConfigurationStatus } = await import(
+        "./connectPayoutConfiguration.service.js"
+      );
+      const status = await readConnectPayoutConfigurationStatus(
+        stripeAccountId,
+        row.bankPayoutSchedule,
+      );
+      stripeScheduleInterval = status.stripeScheduleInterval;
+      scheduleDrift = status.scheduleDrift;
+      settlement = status.settlement;
     } catch (err) {
       logServerError("employeeBankPayoutSchedule.retrieveAccount", err, {
         employeeId: actor.employeeId,
@@ -59,6 +67,10 @@ export async function getEmployeeBankPayoutScheduleForUser(
     nextScheduledPayoutAt: row.bankPayoutNextScheduledAt?.toISOString() ?? null,
     careTipControlled: isCareTipControlledBankSchedule(row.bankPayoutSchedule),
     stripeScheduleInterval,
+    scheduleDrift,
+    settlement,
+    lastPolicyApply: null,
+    effectiveSettlementDelayDays: settlement.effectiveDelayDays,
   };
 }
 
@@ -106,9 +118,31 @@ export async function setEmployeeBankPayoutScheduleForUser(args: {
   }
 
   const previousSchedule = account.bankPayoutSchedule;
+  await assertEmployeeScheduleTransitionSafe({
+    employeeId: actor.employeeId,
+    previousSchedule,
+    nextSchedule: args.schedule,
+  });
+
+  let policyApply: ConnectPayoutPolicyApplyDto | null = null;
   let stripeSync: "ok" | "failed" = "ok";
   try {
-    await syncStripeConnectAccountPayoutSchedule(stripeAccountId, args.schedule);
+    const { applyConnectPayoutPolicy } = await import("./connectPayoutConfiguration.service.js");
+    policyApply = await applyConnectPayoutPolicy({
+      stripeAccountId,
+      careTipSchedule: args.schedule,
+      context: "schedule_change",
+    });
+    const scheduleOk =
+      policyApply.schedule.status === "schedule_synced" ||
+      policyApply.schedule.status === "schedule_unchanged";
+    if (!scheduleOk) {
+      throw new StripeConnectError(
+        "Could not update Stripe payout schedule.",
+        "STRIPE_PAYOUT_SCHEDULE_SYNC_FAILED",
+        502,
+      );
+    }
   } catch (err) {
     stripeSync = "failed";
     throw err;
@@ -136,7 +170,8 @@ export async function setEmployeeBankPayoutScheduleForUser(args: {
     }).slice(0, 4000),
   });
 
-  return getEmployeeBankPayoutScheduleForUser(args.userId);
+  const dto = await getEmployeeBankPayoutScheduleForUser(args.userId);
+  return { ...dto, lastPolicyApply: policyApply };
 }
 
 export { parseBusinessBankPayoutSchedule as parseEmployeeBankPayoutSchedule };

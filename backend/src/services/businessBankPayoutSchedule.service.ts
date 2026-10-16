@@ -12,13 +12,19 @@ import { DateTime } from "luxon";
 import { prisma } from "../prisma.js";
 import { sanitizeIanaTimezone } from "../utils/businessTime.js";
 import { logServerError } from "../utils/httpErrors.js";
-import { getStripeClient, isStripeConfigured } from "./stripe.service.js";
+import { isStripeConfigured } from "./stripe.service.js";
 import { StripeConnectError } from "./stripeConnect.service.js";
 import {
   __setUpdateConnectAccountPayoutScheduleFnForTests,
-  syncStripeConnectAccountPayoutSchedule,
   type StripePayoutScheduleUpdate,
 } from "./connectBankPayoutSchedule.core.js";
+import type {
+  BankPayoutScheduleResponseDto,
+  ConnectPayoutPolicyApplyDto,
+  SettlementDelayReadDto,
+} from "./connectPayoutPolicy.types.js";
+import { settlementReadUnavailable } from "./connectSettlementRead.service.js";
+import { assertBusinessScheduleTransitionSafe } from "./connectPayoutScheduleTransition.service.js";
 
 /** All persisted enum values (includes legacy `manual`). */
 export const BUSINESS_BANK_PAYOUT_SCHEDULE_VALUES: readonly BusinessBankPayoutSchedule[] = [
@@ -38,11 +44,9 @@ export const USER_SELECTABLE_BUSINESS_BANK_PAYOUT_SCHEDULE_VALUES: readonly Busi
     BusinessBankPayoutSchedule.monthly,
   ];
 
-export type BusinessBankPayoutScheduleDto = {
-  schedule: BusinessBankPayoutSchedule;
-  nextScheduledPayoutAt: string | null;
-  careTipControlled: boolean;
-  stripeScheduleInterval: string | null;
+export type BusinessBankPayoutScheduleDto = BankPayoutScheduleResponseDto & {
+  /** @deprecated Prefer settlement.effectiveDelayDays */
+  effectiveSettlementDelayDays: number | null;
 };
 
 export function __setUpdateAccountScheduleFnForTests(
@@ -94,13 +98,6 @@ export function scheduleWindowKeyFromDate(d: Date): string {
   return d.toISOString();
 }
 
-async function syncStripePayoutSchedule(
-  stripeAccountId: string,
-  schedule: BusinessBankPayoutSchedule,
-): Promise<void> {
-  await syncStripeConnectAccountPayoutSchedule(stripeAccountId, schedule);
-}
-
 export async function getBusinessBankPayoutScheduleForBusiness(
   businessId: string,
 ): Promise<BusinessBankPayoutScheduleDto> {
@@ -117,10 +114,21 @@ export async function getBusinessBankPayoutScheduleForBusiness(
   }
 
   let stripeScheduleInterval: string | null = null;
-  if (business.stripeAccountId?.trim() && isStripeConfigured()) {
+  let scheduleDrift = false;
+  let settlement: SettlementDelayReadDto = settlementReadUnavailable();
+  const stripeAccountId = business.stripeAccountId?.trim();
+  if (stripeAccountId && isStripeConfigured()) {
     try {
-      const acct = await getStripeClient().accounts.retrieve(business.stripeAccountId);
-      stripeScheduleInterval = acct.settings?.payouts?.schedule?.interval ?? null;
+      const { readConnectPayoutConfigurationStatus } = await import(
+        "./connectPayoutConfiguration.service.js"
+      );
+      const status = await readConnectPayoutConfigurationStatus(
+        stripeAccountId,
+        business.bankPayoutSchedule,
+      );
+      stripeScheduleInterval = status.stripeScheduleInterval;
+      scheduleDrift = status.scheduleDrift;
+      settlement = status.settlement;
     } catch (err) {
       logServerError("businessBankPayoutSchedule.retrieveAccount", err, { businessId });
     }
@@ -131,6 +139,10 @@ export async function getBusinessBankPayoutScheduleForBusiness(
     nextScheduledPayoutAt: business.bankPayoutNextScheduledAt?.toISOString() ?? null,
     careTipControlled: isCareTipControlledBankSchedule(business.bankPayoutSchedule),
     stripeScheduleInterval,
+    scheduleDrift,
+    settlement,
+    lastPolicyApply: null,
+    effectiveSettlementDelayDays: settlement.effectiveDelayDays,
   };
 }
 
@@ -177,11 +189,34 @@ export async function setBusinessBankPayoutScheduleForBusiness(args: {
   }
 
   const previousSchedule = business.bankPayoutSchedule;
+  await assertBusinessScheduleTransitionSafe({
+    businessId: args.businessId,
+    previousSchedule,
+    nextSchedule: args.schedule,
+  });
+
+  let policyApply: ConnectPayoutPolicyApplyDto | null = null;
   let stripeSync: "ok" | "failed" = "ok";
   try {
-    await syncStripePayoutSchedule(stripeAccountId, args.schedule);
+    const { applyConnectPayoutPolicy } = await import("./connectPayoutConfiguration.service.js");
+    policyApply = await applyConnectPayoutPolicy({
+      stripeAccountId,
+      careTipSchedule: args.schedule,
+      context: "schedule_change",
+    });
+    const scheduleOk =
+      policyApply.schedule.status === "schedule_synced" ||
+      policyApply.schedule.status === "schedule_unchanged";
+    if (!scheduleOk) {
+      throw new StripeConnectError(
+        "Could not update Stripe payout schedule.",
+        "STRIPE_PAYOUT_SCHEDULE_SYNC_FAILED",
+        502,
+      );
+    }
   } catch (err) {
     stripeSync = "failed";
+    if (err instanceof StripeConnectError) throw err;
     throw err;
   }
 
@@ -207,5 +242,6 @@ export async function setBusinessBankPayoutScheduleForBusiness(args: {
     }).slice(0, 4000),
   });
 
-  return getBusinessBankPayoutScheduleForBusiness(args.businessId);
+  const dto = await getBusinessBankPayoutScheduleForBusiness(args.businessId);
+  return { ...dto, lastPolicyApply: policyApply };
 }

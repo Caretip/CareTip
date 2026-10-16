@@ -1,13 +1,11 @@
 /**
  * Sprint 3 guest journey static + runtime checks.
  * Run: npm run test:sprint3-guest-flow (from backend/)
+ * When CARETIP_ISOLATED_POSTGRES_URL is set, uses disposable Postgres only (no .env DATABASE_URL).
  */
-import "dotenv/config";
-import "../src/loadEnv.js";
 import { readFileSync, existsSync } from "node:fs";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
-import { prisma } from "../src/prisma.js";
 import {
   assertEmployeeEligibleForTipPayment,
   TipPaymentEligibilityError,
@@ -30,6 +28,21 @@ const pass = (m: string) => results.push(`PASS: ${m}`);
 const fail = (m: string) => results.push(`FAIL: ${m}`);
 const skip = (m: string) => results.push(`SKIP: ${m}`);
 
+async function bootstrapDatabase(): Promise<typeof import("../src/prisma.js").prisma> {
+  const isolated = process.env.CARETIP_ISOLATED_POSTGRES_URL?.trim();
+  if (isolated) {
+    const { completeIsolatedPostgresBootstrap } = await import("./lib/isolatedPostgresTestGate.js");
+    await completeIsolatedPostgresBootstrap();
+    await import("../src/loadEnv.js");
+    process.env.DATABASE_URL = isolated;
+  } else {
+    await import("dotenv/config");
+    await import("../src/loadEnv.js");
+  }
+  const { prisma } = await import("../src/prisma.js");
+  return prisma;
+}
+
 function read(rel: string): string {
   const p = join(root, rel);
   if (!existsSync(p)) return "";
@@ -37,6 +50,8 @@ function read(rel: string): string {
 }
 
 async function main() {
+  const prisma = await bootstrapDatabase();
+
   // --- Static: guest UI route chain ---
   const routes = read("src/app/routes.tsx");
   const guestRoutes: Array<{ path: string; alt?: string }> = [
@@ -91,10 +106,13 @@ async function main() {
   }
 
   const webhook = read("backend/src/webhooks/stripe.webhook.ts");
-  if (webhook.includes("verifyWebhookSignature") && webhook.includes("isStripeWebhookEventProcessed")) {
-    pass("webhook signature + event idempotency");
+  const webhookClaim =
+    webhook.includes("runWithStripeWebhookClaim") &&
+    webhook.includes("acquireStripeWebhookProcessingClaim");
+  if (webhook.includes("verifyWebhookSignature") && webhookClaim) {
+    pass("webhook signature + durable event claim");
   } else {
-    fail("webhook missing signature or idempotency");
+    fail("webhook missing signature or durable processing claim");
   }
 
   // --- KYC UI status derivation ---
@@ -169,6 +187,7 @@ async function main() {
   // --- Runtime: webhook idempotency table ---
   const testEventId = `evt_sprint3_test_${Date.now()}`;
   try {
+    await prisma.$queryRaw`SELECT processing_result FROM stripe_webhook_events LIMIT 0`;
     const first = await isStripeWebhookEventProcessed(testEventId);
     if (!first) pass("webhook idempotency: new event not processed");
     else fail("webhook idempotency: false positive");
@@ -180,8 +199,15 @@ async function main() {
 
     await prisma.stripeWebhookEvent.delete({ where: { id: testEventId } }).catch(() => {});
   } catch (e) {
-    skip(`webhook idempotency DB: ${e instanceof Error ? e.message : String(e)}`);
+    const msg = e instanceof Error ? e.message : String(e);
+    if (process.env.CARETIP_ISOLATED_POSTGRES_URL?.trim()) {
+      fail(`webhook idempotency DB (isolated): ${msg}`);
+    } else {
+      skip(`webhook idempotency DB: ${msg}`);
+    }
   }
+
+  await prisma.$disconnect().catch(() => undefined);
 
   const failed = results.filter((r) => r.startsWith("FAIL:"));
   console.log(results.join("\n"));

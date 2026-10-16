@@ -992,6 +992,34 @@ export async function ensureExpressConnectedAccountForBusiness(params: {
     }
 
     if (boundCount === 1) {
+      try {
+        const { applyConnectPayoutPolicy, connectPayoutPolicyDiagnostics } = await import(
+          "./connectPayoutConfiguration.service.js"
+        );
+        const pref = await prisma.business.findUnique({
+          where: { id: business.id },
+          select: { bankPayoutSchedule: true },
+        });
+        if (pref?.bankPayoutSchedule) {
+          const policy = await applyConnectPayoutPolicy({
+            stripeAccountId: account.id,
+            careTipSchedule: pref.bankPayoutSchedule,
+            context: "account_create",
+          });
+          if (!policy.policyComplete) {
+            logServerError("stripeConnect.applyPayoutPolicy.incomplete", new Error("CONNECT_PAYOUT_POLICY_INCOMPLETE"), {
+              businessId: business.id,
+              accountSuffix: account.id.slice(-8),
+              ...connectPayoutPolicyDiagnostics(policy),
+            });
+          }
+        }
+      } catch (err) {
+        logServerError("stripeConnect.applyPayoutPolicy.afterCreate", err, {
+          businessId: business.id,
+          accountSuffix: account.id.slice(-8),
+        });
+      }
       return { accountId: account.id, created: true };
     }
 

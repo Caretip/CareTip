@@ -24,14 +24,10 @@ WHERE employee_id = :'employee_id'
 ORDER BY created_at DESC
 LIMIT 500;
 
-\echo '=== Employee account hero (lifetime + paid) ==='
+\echo '=== Employee account hero (lifetime) ==='
 EXPLAIN (ANALYZE, BUFFERS)
 SELECT SUM(amount) FROM tips
 WHERE employee_id = :'employee_id' AND status = 'success';
-
-EXPLAIN (ANALYZE, BUFFERS)
-SELECT SUM(amount) FROM tips
-WHERE employee_id = :'employee_id' AND status = 'success' AND payout_status = 'paid';
 
 \echo '=== Business period aggregate ==='
 EXPLAIN (ANALYZE, BUFFERS)

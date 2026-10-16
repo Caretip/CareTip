@@ -5,8 +5,10 @@
 import { StripeConnectPayoutStatus } from "@prisma/client";
 import { prisma } from "../prisma.js";
 import { runSerializedByKey } from "../utils/serializedByKey.js";
+import { isPrismaUniqueViolation } from "../utils/prismaErrors.js";
 import {
   parsePayoutObject,
+  retryPayoutWriteOnConflict,
   shouldApplyPayoutEvent,
   type HandleConnectPayoutResult,
 } from "./stripeConnectPayout.service.js";
@@ -34,7 +36,7 @@ export async function persistEmployeeConnectPayout(args: {
     return { matched: false, reason: "unknown_employee" };
   }
 
-  return runSerializedByKey(`employee-connect-payout:${parsed.stripePayoutId}`, async () => {
+  const persistOnce = async (): Promise<HandleConnectPayoutResult | null> => {
     const now = new Date();
     const existing = await prisma.employeeStripePayout.findUnique({
       where: { stripePayoutId: parsed.stripePayoutId },
@@ -74,8 +76,12 @@ export async function persistEmployeeConnectPayout(args: {
           ? (existing.canceledAt ?? now)
           : existing.canceledAt;
 
-      await prisma.employeeStripePayout.update({
-        where: { id: existing.id },
+      const applied = await prisma.employeeStripePayout.updateMany({
+        where: {
+          id: existing.id,
+          status: existing.status,
+          lastStripeEventCreated: existing.lastStripeEventCreated,
+        },
         data: {
           amountCents: parsed.amountCents,
           currency: parsed.currency,
@@ -103,6 +109,7 @@ export async function persistEmployeeConnectPayout(args: {
           canceledAt,
         },
       });
+      if (applied.count === 0) return null;
       console.info("[stripe.employeePayout] payout_persisted", {
         employeeId,
         payoutSuffix: parsed.stripePayoutId.slice(-8),
@@ -143,7 +150,11 @@ export async function persistEmployeeConnectPayout(args: {
         failedAt: parsed.status === StripeConnectPayoutStatus.failed ? now : null,
         canceledAt: parsed.status === StripeConnectPayoutStatus.canceled ? now : null,
       },
+    }).catch((err: unknown) => {
+      if (isPrismaUniqueViolation(err)) return null;
+      throw err;
     });
+    if (!created) return null;
     console.info("[stripe.employeePayout] payout_persisted", {
       employeeId,
       payoutSuffix: parsed.stripePayoutId.slice(-8),
@@ -157,7 +168,11 @@ export async function persistEmployeeConnectPayout(args: {
       employeeId,
       reason: "employee_payout",
     };
-  });
+  };
+
+  return runSerializedByKey(`employee-connect-payout:${parsed.stripePayoutId}`, () =>
+    retryPayoutWriteOnConflict(persistOnce, parsed.stripePayoutId),
+  );
 }
 
 export async function persistEmployeePayoutFromStripeObject(args: {
