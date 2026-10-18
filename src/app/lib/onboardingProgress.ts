@@ -36,6 +36,17 @@ export function resolveResumeOnboardingStep(
   return Math.max(inferred, fromApi) as OnboardingStep;
 }
 
+/** Step 2 may continue only with a chosen file or a logo already stored for this business. */
+export function onboardingLogoReady(input: {
+  logoFile: unknown;
+  savedLogoPath?: string | null;
+  logoDismissed?: boolean;
+}): boolean {
+  if (input.logoFile) return true;
+  if (input.logoDismissed) return false;
+  return Boolean(input.savedLogoPath?.trim());
+}
+
 /** Clear onboarding completion flag alias for guards. */
 export function isOnboardingCompleted(user: {
   role?: string;

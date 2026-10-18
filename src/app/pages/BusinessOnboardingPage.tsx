@@ -26,7 +26,7 @@ import {
   primeCheckoutSyncExpectation,
   shouldIncludeTrialForIntent,
 } from "../lib/checkoutIntent";
-import { isOnboardingCompleted, resolveResumeOnboardingStep } from "../lib/onboardingProgress";
+import { isOnboardingCompleted, onboardingLogoReady, resolveResumeOnboardingStep } from "../lib/onboardingProgress";
 import { toUserFriendlyMessage } from "../lib/errorMessages";
 import { isApiRequestError, isApiSubscriptionRequiredError } from "../lib/apiError";
 import { logClientError } from "../lib/clientLog";
@@ -96,6 +96,8 @@ export function BusinessOnboardingPage() {
   }>({});
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [savedLogoPath, setSavedLogoPath] = useState<string | null>(null);
+  const [logoDismissed, setLogoDismissed] = useState(false);
+  const [logoError, setLogoError] = useState<string | null>(null);
   const [employeeCount, setEmployeeCount] = useState(0);
   const [busy, setBusy] = useState(false);
   const resetOnboardingBusy = useCallback(() => setBusy(false), []);
@@ -153,8 +155,10 @@ export function BusinessOnboardingPage() {
           );
           setWebsite(profile.website ?? "");
           setSavedLogoPath(profile.logo ?? null);
+          setLogoDismissed(false);
           setEmployeeCount(profile.employeeCount ?? 0);
-          setStep(resolveResumeOnboardingStep(profile, profile.onboardingStep ?? fresh?.onboardingStep));
+          const resumed = resolveResumeOnboardingStep(profile, profile.onboardingStep ?? fresh?.onboardingStep);
+          setStep(profile.logo?.trim() || resumed === 1 ? resumed : 2);
         } else if (fresh?.onboardingStep) {
           setStep(fresh.onboardingStep);
         }
@@ -222,11 +226,13 @@ export function BusinessOnboardingPage() {
     return { ok, phoneResult, websiteResult };
   };
 
+  const logoReady = onboardingLogoReady({ logoFile, savedLogoPath, logoDismissed });
+
   const canContinue = useMemo(() => {
     if (step === 1) return legalBusinessName.trim().length > 1 && businessType.trim().length > 0;
-    if (step === 2) return registeredAddress.trim().length > 3;
-    return true;
-  }, [step, legalBusinessName, businessType, registeredAddress]);
+    if (step === 2) return registeredAddress.trim().length > 3 && logoReady;
+    return logoReady;
+  }, [step, legalBusinessName, businessType, registeredAddress, logoReady]);
 
   const previewData = useMemo(
     () => ({
@@ -273,12 +279,19 @@ export function BusinessOnboardingPage() {
         contactPhoneCountry: validated.phoneResult.country,
         website: validated.websiteResult.value,
       });
+      if (!onboardingLogoReady({ logoFile, savedLogoPath, logoDismissed })) {
+        setLogoError(t("business.onboarding.errors.logoRequired"));
+        throw new Error("ONBOARDING_LOGO_REQUIRED");
+      }
       if (logoFile) {
         try {
           const uploaded = await uploadMyBusinessLogo(logoFile);
-          setSavedLogoPath(uploaded.path ?? null);
-        } catch (err) {
+          if (!uploaded.path?.trim()) throw new Error("ONBOARDING_LOGO_REQUIRED");
+          setSavedLogoPath(uploaded.path);
           setLogoFile(null);
+          setLogoDismissed(false);
+          setLogoError(null);
+        } catch (err) {
           logOnboardingDiagnostic(
             {
               operation: "POST /api/business/profile/logo",
@@ -294,6 +307,7 @@ export function BusinessOnboardingPage() {
           } else {
             toast.error(toUserFriendlyMessage(err));
           }
+          throw err instanceof Error ? err : new Error("ONBOARDING_LOGO_REQUIRED");
         }
       }
       return;
@@ -383,7 +397,13 @@ export function BusinessOnboardingPage() {
         err,
       );
       const msg = err instanceof Error ? err.message : String(err);
-      if (msg === "ONBOARDING_CONTACT_INVALID") {
+      if (msg === "ONBOARDING_CONTACT_INVALID" || msg === "ONBOARDING_LOGO_REQUIRED") {
+        setBusy(false);
+        return;
+      }
+      if (isApiRequestError(err) && err.code === "ONBOARDING_LOGO_REQUIRED") {
+        setLogoError(t("business.onboarding.errors.logoRequired"));
+        setStep(2);
         setBusy(false);
         return;
       }
@@ -504,6 +524,7 @@ export function BusinessOnboardingPage() {
             {isCompleteStep ? (
               <BusinessOnboardingCompleteStep
                 busy={busy}
+                disabled={!logoReady}
                 onGoToDashboard={() => void goForward()}
               />
             ) : (
@@ -562,7 +583,22 @@ export function BusinessOnboardingPage() {
                         {step === 2 ? (
                           <div className="space-y-10">
                             <div className="space-y-5">
-                              <BusinessOnboardingLogoUpload file={logoFile} onFile={setLogoFile} />
+                              <BusinessOnboardingLogoUpload
+                                file={logoFile}
+                                savedLogoUrl={logoDismissed ? null : savedLogoPath}
+                                error={logoError ?? undefined}
+                                onFile={(file) => {
+                                  setLogoFile(file);
+                                  if (file) {
+                                    setLogoDismissed(false);
+                                    setLogoError(null);
+                                  }
+                                }}
+                                onDismissSaved={() => {
+                                  setLogoDismissed(true);
+                                  setLogoError(t("business.onboarding.errors.logoRequired"));
+                                }}
+                              />
                             </div>
 
                             <div className="space-y-7 border-t border-border/60 pt-10">

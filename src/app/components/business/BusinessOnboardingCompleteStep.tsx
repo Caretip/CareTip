@@ -11,10 +11,11 @@ import {
 
 type BusinessOnboardingCompleteStepProps = {
   busy: boolean;
+  disabled?: boolean;
   onGoToDashboard: () => void;
 };
 
-export function BusinessOnboardingCompleteStep({ busy, onGoToDashboard }: BusinessOnboardingCompleteStepProps) {
+export function BusinessOnboardingCompleteStep({ busy, disabled = false, onGoToDashboard }: BusinessOnboardingCompleteStepProps) {
   const { t } = useTranslation();
 
   return (
@@ -68,7 +69,7 @@ export function BusinessOnboardingCompleteStep({ busy, onGoToDashboard }: Busine
         <button
           type="button"
           onClick={onGoToDashboard}
-          disabled={busy}
+          disabled={busy || disabled}
           aria-busy={busy}
           className={cn(onboardingContinueBtn, "w-full sm:min-w-[14rem] sm:w-auto")}
         >

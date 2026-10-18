@@ -4852,7 +4852,8 @@
         "dragHint": "oder per Drag & Drop",
         "remove": "Entfernen",
         "replace": "Ersetzen",
-        "previewReady": "Logo bereit für Ihre Gastseite"
+        "previewReady": "Logo bereit für Ihre Gastseite",
+        "savedLogo": "Gespeichertes Logo"
       },
       "preview": {
         "panelAria": "Vorschau der Gast-Trinkgeldseite (nicht interaktiv)",
@@ -5009,7 +5010,8 @@
         "websitePlaceholder": "https://ihr-betrieb.de",
         "websiteHint": "Optional. Vollständige https://-Adresse verwenden.",
         "logo": "Logo",
-        "logoHint": "Optional. PNG oder JPEG, quadratisch ideal.",
+        "logoHint": "Erforderlich. Laden Sie ein PNG-, JPEG-, WebP-, GIF-, HEIC- oder AVIF-Logo hoch, bevor Sie fortfahren.",
+        "required": "Erforderlich",
         "optional": "Optional"
       },
       "errors": {
@@ -5017,7 +5019,8 @@
         "countryRequired": "Bitte wählen Sie eine Ländervorwahl.",
         "phone": "Bitte eine gültige Telefonnummer eingeben.",
         "phoneRequired": "Telefonnummer ist erforderlich.",
-        "website": "Bitte eine gültige Website-URL mit https:// eingeben."
+        "website": "Bitte eine gültige Website-URL mit https:// eingeben.",
+        "logoRequired": "Bitte laden Sie ein Betriebslogo hoch, bevor Sie fortfahren."
       },
       "businessTypes": {
         "restaurant": "Restaurant",

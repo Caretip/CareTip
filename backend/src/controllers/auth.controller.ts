@@ -4,7 +4,10 @@ import * as authService from "../services/auth.service.js";
 import * as businessService from "../services/business.service.js";
 import * as oauthAuthService from "../services/oauthAuth.service.js";
 import { buildAppleNativeCallbackHtml } from "../services/oauth/appleNativeCallbackBounce.js";
-import { managerProfileReadyToFinish } from "../services/onboardingProgress.service.js";
+import {
+  inferManagerOnboardingStep,
+  managerProfileReadyToFinish,
+} from "../services/onboardingProgress.service.js";
 import * as emailVerificationService from "../services/emailVerification.service.js";
 import * as passwordResetService from "../services/passwordReset.service.js";
 import * as employeeActivationService from "../services/employeeActivation.service.js";
@@ -1458,19 +1461,24 @@ export async function patchMe(req: Request, res: Response) {
 
     if (body.hasCompletedOnboarding === true) {
       const profile = await businessService.getManagerBusinessProfile(userId);
-      const ready = managerProfileReadyToFinish(
-        profile
-          ? {
-              name: profile.name,
-              businessType: profile.type,
-              registeredAddress: profile.registeredAddress,
-              contactPhone: profile.contactPhone,
-            }
-          : null,
-      );
-      if (!ready) {
+      const onboardingProfile = profile
+        ? {
+            name: profile.name,
+            businessType: profile.type,
+            registeredAddress: profile.registeredAddress,
+            contactPhone: profile.contactPhone,
+            logoPath: profile.logo,
+          }
+        : null;
+      if (!managerProfileReadyToFinish(onboardingProfile)) {
+        if (inferManagerOnboardingStep(onboardingProfile) < 3) {
+          return res.status(400).json({
+            message: "Complete business details, venue address, and team contact phone before finishing onboarding.",
+          });
+        }
         return res.status(400).json({
-          message: "Complete business details, venue address, and team contact phone before finishing onboarding.",
+          message: "Upload a business logo before finishing onboarding.",
+          code: "ONBOARDING_LOGO_REQUIRED",
         });
       }
     }

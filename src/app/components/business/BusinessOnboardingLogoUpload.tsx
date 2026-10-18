@@ -3,16 +3,26 @@ import { AnimatePresence, motion } from "motion/react";
 import { ImagePlus, RefreshCw, Trash2, Upload } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
-import { onboardingLabel, onboardingOptionalBadge } from "./businessOnboardingUi";
+import { onboardingLabel } from "./businessOnboardingUi";
 
 const ACCEPT = "image/png,image/jpeg,image/jpg,image/webp,image/gif,image/heic,image/heif,image/avif";
 
 type BusinessOnboardingLogoUploadProps = {
   file: File | null;
   onFile: (file: File | null) => void;
+  /** Logo already stored for this business. Shown until the user picks a replacement or removes it. */
+  savedLogoUrl?: string | null;
+  onDismissSaved?: () => void;
+  error?: string;
 };
 
-export function BusinessOnboardingLogoUpload({ file, onFile }: BusinessOnboardingLogoUploadProps) {
+export function BusinessOnboardingLogoUpload({
+  file,
+  onFile,
+  savedLogoUrl = null,
+  onDismissSaved,
+  error,
+}: BusinessOnboardingLogoUploadProps) {
   const { t } = useTranslation();
   const inputId = useId();
   const inputRef = useRef<HTMLInputElement>(null);
@@ -54,6 +64,7 @@ export function BusinessOnboardingLogoUpload({ file, onFile }: BusinessOnboardin
   const clear = (e: React.MouseEvent) => {
     e.stopPropagation();
     onFile(null);
+    if (!file) onDismissSaved?.();
     if (inputRef.current) inputRef.current.value = "";
   };
 
@@ -66,8 +77,10 @@ export function BusinessOnboardingLogoUpload({ file, onFile }: BusinessOnboardin
     <div className="min-w-0">
       <span className={onboardingLabel} id={`${inputId}-label`}>
         {t("business.onboarding.fields.logo")}
-        <span className={onboardingOptionalBadge}>{t("business.onboarding.fields.optional")}</span>
+        <span className="text-destructive" aria-hidden> *</span>
+        <span className="sr-only">{t("business.onboarding.fields.required")}</span>
       </span>
+      <p className="mb-2 text-xs text-muted-foreground">{t("business.onboarding.fields.logoHint")}</p>
 
       <motion.div
         role="button"
@@ -79,7 +92,7 @@ export function BusinessOnboardingLogoUpload({ file, onFile }: BusinessOnboardin
             inputRef.current?.click();
           }
         }}
-        onClick={() => !previewUrl && inputRef.current?.click()}
+        onClick={() => !previewUrl && !savedLogoUrl && inputRef.current?.click()}
         onDragOver={(e) => {
           e.preventDefault();
           setDragging(true);
@@ -108,7 +121,7 @@ export function BusinessOnboardingLogoUpload({ file, onFile }: BusinessOnboardin
         />
 
         <AnimatePresence mode="wait">
-          {previewUrl ? (
+          {previewUrl || savedLogoUrl ? (
             <motion.div
               key="preview"
               initial={{ opacity: 0 }}
@@ -119,10 +132,12 @@ export function BusinessOnboardingLogoUpload({ file, onFile }: BusinessOnboardin
             >
               <div className="flex min-w-0 items-center gap-3">
                 <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-md border border-border/70 bg-background p-2">
-                  <img src={previewUrl} alt="" className="max-h-full max-w-full object-contain" />
+                  <img src={previewUrl ?? savedLogoUrl ?? ""} alt="" className="max-h-full max-w-full object-contain" />
                 </div>
                 <div className="min-w-0">
-                  <p className="truncate text-sm font-medium text-foreground">{file?.name}</p>
+                  <p className="truncate text-sm font-medium text-foreground">
+                    {file?.name ?? t("business.onboarding.upload.savedLogo")}
+                  </p>
                   <p className="text-xs text-muted-foreground">{t("business.onboarding.upload.previewReady")}</p>
                 </div>
               </div>
@@ -172,6 +187,7 @@ export function BusinessOnboardingLogoUpload({ file, onFile }: BusinessOnboardin
           )}
         </AnimatePresence>
       </motion.div>
+      {error ? <p className="mt-2 text-xs text-destructive">{error}</p> : null}
     </div>
   );
 }

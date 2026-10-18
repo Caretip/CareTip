@@ -4852,7 +4852,8 @@
         "dragHint": "or drag and drop",
         "remove": "Remove",
         "replace": "Replace",
-        "previewReady": "Logo ready for your guest page"
+        "previewReady": "Logo ready for your guest page",
+        "savedLogo": "Saved logo"
       },
       "preview": {
         "panelAria": "Guest tipping page preview (not interactive)",
@@ -5009,7 +5010,8 @@
         "websitePlaceholder": "https://yourvenue.com",
         "websiteHint": "Optional. Use a full https:// website address.",
         "logo": "Logo",
-        "logoHint": "Optional. PNG or JPEG, square works best.",
+        "logoHint": "Required. Upload a PNG, JPEG, WebP, GIF, HEIC, or AVIF logo before continuing.",
+        "required": "Required",
         "optional": "Optional"
       },
       "errors": {
@@ -5017,7 +5019,8 @@
         "countryRequired": "Please select a country code.",
         "phone": "Enter a valid phone number.",
         "phoneRequired": "Phone number is required.",
-        "website": "Enter a valid website URL, including https://."
+        "website": "Enter a valid website URL, including https://.",
+        "logoRequired": "Upload a business logo before continuing."
       },
       "businessTypes": {
         "restaurant": "Restaurant",

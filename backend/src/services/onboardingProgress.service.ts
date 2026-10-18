@@ -11,7 +11,28 @@ export type BusinessProfileForOnboarding = {
   registeredAddress?: string | null;
   /** E.164 contact phone — required before finishing new onboarding. */
   contactPhone?: string | null;
+  /**
+   * Stored logo reference. Required only by {@link managerProfileReadyToFinish}.
+   * Omitted from step inference so businesses that already finished onboarding
+   * without a logo are not sent back through the wizard.
+   */
+  logoPath?: string | null;
 };
+
+/**
+ * True when `logoPath` is a reference this app persisted (manager upload or platform upload),
+ * not an arbitrary client string.
+ */
+export function isPersistedBusinessLogoReference(logoPath: string | null | undefined): boolean {
+  const value = logoPath?.trim() ?? "";
+  if (!value || value.length > 2000) return false;
+  if (/^(javascript|data|blob):/i.test(value)) return false;
+  return (
+    value.includes("/business-logos/") ||
+    value.includes("/uploads/businesses/") ||
+    value.includes("/platform-logos/")
+  );
+}
 
 export function inferManagerOnboardingStep(
   business: BusinessProfileForOnboarding | null | undefined,
@@ -31,7 +52,7 @@ export function inferManagerOnboardingStep(
 }
 
 export function managerProfileReadyToFinish(business: BusinessProfileForOnboarding | null | undefined): boolean {
-  return inferManagerOnboardingStep(business) >= 3;
+  return inferManagerOnboardingStep(business) >= 3 && isPersistedBusinessLogoReference(business?.logoPath);
 }
 
 /** Profile no longer satisfies step 3 — user should not keep a completion flag from legacy auto-sync. */
