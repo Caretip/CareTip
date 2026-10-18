@@ -7,6 +7,11 @@ import {
   type EmployeeBankPayoutScheduleResponse,
 } from "../../lib/api";
 import { PayoutWorkspacePanel } from "../finance/payout/PayoutWorkspacePanel";
+import {
+  payoutScheduleOptionButton,
+  payoutScheduleOptionGrid,
+  payoutScheduleOptionState,
+} from "../finance/payout/payoutWorkspaceClasses";
 import { toast } from "sonner";
 import { toUserFriendlyMessage } from "../../lib/errorMessages";
 import { cn } from "@/lib/utils";
@@ -127,7 +132,7 @@ export function EmployeeBankPayoutScheduleCard({
             </p>
           ) : null}
           <div
-            className="flex flex-col gap-2 sm:flex-row sm:flex-wrap"
+            className={payoutScheduleOptionGrid}
             role="radiogroup"
             aria-label={t("employee.payouts.schedule.title")}
           >
@@ -142,10 +147,8 @@ export function EmployeeBankPayoutScheduleCard({
                   disabled={disabled || saving || !data}
                   onClick={() => void selectSchedule(option)}
                   className={cn(
-                    "min-h-10 rounded-full border px-4 py-2 text-sm font-semibold transition-colors",
-                    selected
-                      ? "border-primary bg-primary/10 text-foreground"
-                      : "border-border bg-background text-muted-foreground hover:border-primary/40 hover:text-foreground",
+                    payoutScheduleOptionButton,
+                    payoutScheduleOptionState(selected),
                     "disabled:cursor-not-allowed disabled:opacity-50",
                   )}
                 >
@@ -157,7 +160,9 @@ export function EmployeeBankPayoutScheduleCard({
           </>
         )}
 
-        {nextLabel ? <p className="text-xs text-muted-foreground">{nextLabel}</p> : null}
+        {nextLabel ? (
+          <p className="border-t border-border/70 pt-2 text-xs font-medium text-foreground">{nextLabel}</p>
+        ) : null}
       </div>
     </PayoutWorkspacePanel>
   );

@@ -58,7 +58,7 @@ export const EmployeeDashboardEarningsChart = memo(function EmployeeDashboardEar
         </h3>
         <DashboardStableChartSlot
           loading={showChartLoading}
-          minHeightClass="min-h-[200px] sm:min-h-[236px] lg:min-h-[248px]"
+          minHeightClass="min-h-[168px] sm:min-h-[220px] lg:min-h-[248px]"
           skeleton={
             <DashboardChartSkeleton variant="trend" minHeightClass="h-full min-h-0" className="h-full" />
           }
@@ -76,7 +76,7 @@ export const EmployeeDashboardEarningsChart = memo(function EmployeeDashboardEar
           ) : (
             <div
               className={cn(
-                "flex h-[200px] w-full min-w-0 items-center justify-center sm:h-[236px] lg:h-[248px]",
+                "flex h-[168px] w-full min-w-0 items-center justify-center sm:h-[220px] lg:h-[248px]",
               )}
             >
               <ResponsiveContainer width="100%" height="100%" minWidth={0} key={chartRenderKey}>

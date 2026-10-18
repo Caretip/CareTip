@@ -65,7 +65,7 @@ function EmployeeDashboardMetricsGridInner({
   return (
     <div
       className={cn(
-        "employee-dashboard-stats-grid employee-period-summary relative w-full min-w-0 transition-opacity duration-300",
+        "employee-period-summary relative w-full min-w-0 transition-opacity duration-300",
         isPeriodRefreshing && "opacity-[0.94]",
       )}
       aria-busy={cardsLoading || isPeriodRefreshing || undefined}
@@ -74,7 +74,7 @@ function EmployeeDashboardMetricsGridInner({
         <p className="sr-only">{refreshingLabel}</p>
       ) : null}
 
-      <div className="employee-period-summary__row">
+      <div className="employee-period-summary__lead">
         <div className="employee-period-summary__metric employee-period-summary__metric--primary">
           <p className="employee-period-summary__label">{t("employee.dashboard.statTotalTips")}</p>
           <p className="employee-period-summary__value">
@@ -89,7 +89,8 @@ function EmployeeDashboardMetricsGridInner({
           </p>
         </div>
 
-        <div className="employee-period-summary__secondary">
+      </div>
+      <div className="employee-period-summary__tiles">
           <div className="employee-period-summary__metric employee-period-summary__metric--ratings">
             <p className="employee-period-summary__label">{t("employee.dashboard.statRatings")}</p>
             <div className="employee-period-summary__metric-aside">
@@ -156,7 +157,6 @@ function EmployeeDashboardMetricsGridInner({
               </div>
             ) : null}
           </div>
-        </div>
       </div>
 
       {cardsSettled ? (

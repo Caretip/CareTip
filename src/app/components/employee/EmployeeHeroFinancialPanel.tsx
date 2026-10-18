@@ -80,8 +80,6 @@ export const EmployeeHeroFinancialPanel = memo(function EmployeeHeroFinancialPan
           valueClassName: "dashboard-hero-financial__value--hero-count",
         },
       ]}
-      analyticsHref="/employee/analytics"
-      analyticsLabel={t("employee.hero.financial.viewAnalytics")}
     />
   );
 });
