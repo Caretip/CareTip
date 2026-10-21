@@ -34,86 +34,77 @@ export const BusinessHeroFinancialMetrics = memo(function BusinessHeroFinancialM
   className,
 }: BusinessHeroFinancialMetricsProps) {
   const { t } = useTranslation();
-  const metrics = summary?.lifetime;
   const ledgerPending = ledgerLoading ?? loading;
   const connectPending = connectLoading ?? loading;
-
-  const receivedInStripeEur = summary?.stripe.readable
-    ? stripeCentsToEur(summary.stripe.availableCents)
-    : null;
-  const pendingStripeEur = summary?.stripe.readable
-    ? stripeCentsToEur(summary.stripe.pendingCents)
-    : null;
-  const paidOutEur = summary && !connectPending ? summary.payouts.completedAmountCents / 100 : null;
-  const distributionEur = metrics?.employeeDistributionObligationEur ?? 0;
+  const metrics = summary?.lifetime;
+  const distributionEur = metrics?.employeeDistributionObligationEur;
   const isBusinessDistribution = summary?.routing.mode === "business_distribution";
-  const distributionZero = distributionEur < 0.005;
-
-  const ledgerCurrencyValue = (value: number) =>
-    ledgerPending ? (
-      <DashboardHeroMetricSkeleton variant="currency" />
-    ) : (
-      <CountUpMetric
-        value={value}
-        kind="eur"
-        format={(n) => (n < 0.005 ? t("format.metricZeroTips") : formatEur(n))}
-      />
-    );
-
-  const connectCurrencyValue = (value: number) =>
-    connectPending ? (
-      <DashboardHeroMetricSkeleton variant="currency" />
-    ) : (
-      <CountUpMetric
-        value={value}
-        kind="eur"
-        format={(n) => (n < 0.005 ? t("format.metricZeroTips") : formatEur(n))}
-      />
-    );
+  const distributionZero = distributionEur != null && distributionEur < 0.005;
 
   const payoutSkeleton = <DashboardHeroMetricSkeleton variant="currency" />;
+  const stripeUnavailable = (
+    <span className="dashboard-hero-financial__unavailable">
+      {t("business.hero.financial.stripeUnavailable")}
+    </span>
+  );
+  const metricUnavailable = (
+    <span className="dashboard-hero-financial__unavailable">
+      {t("business.hero.financial.metricUnavailable")}
+    </span>
+  );
 
-  const payoutMetrics: DashboardHeroFinancialMetric[] = [
-    {
-      id: "stripe",
-      label: t("business.hero.financial.availableInStripe"),
-      value: connectPending
-        ? payoutSkeleton
-        : receivedInStripeEur != null
-          ? connectCurrencyValue(receivedInStripeEur)
-          : t("business.hero.financial.stripeUnavailable"),
-    },
-    {
-      id: "pending",
-      label: t("business.hero.financial.pendingStripe"),
-      value: connectPending
-        ? payoutSkeleton
-        : connectCurrencyValue(pendingStripeEur ?? 0),
-    },
-    {
-      id: "paid",
-      label: t("business.hero.financial.paidOut"),
-      value: connectPending ? payoutSkeleton : connectCurrencyValue(paidOutEur ?? 0),
-      hint: t("business.hero.financial.paidOutHint"),
-    },
-  ];
+  const money = (value: number) => (
+    <CountUpMetric value={value} kind="eur" format={(n) => formatEur(n)} />
+  );
 
-  if (!ledgerPending) {
-    const distributionHint = !isBusinessDistribution
+  const ledgerCurrencyValue = (value: number | null | undefined) => {
+    if (ledgerPending) return payoutSkeleton;
+    if (value == null || !Number.isFinite(value)) return metricUnavailable;
+    return money(value);
+  };
+
+  const stripeCurrencyValue = (cents: number | null | undefined) => {
+    if (connectPending) return payoutSkeleton;
+    if (!summary?.stripe.readable || cents == null || !Number.isFinite(cents)) return stripeUnavailable;
+    return money(stripeCentsToEur(cents));
+  };
+
+  const distributionHint = !summary
+    ? undefined
+    : !isBusinessDistribution
       ? t("business.hero.financial.distributionDirectModeHint")
       : distributionZero
         ? t("business.hero.financial.distributionZeroHint")
         : t("business.hero.financial.distributionHint");
 
-    payoutMetrics.push({
+  const payoutMetrics: DashboardHeroFinancialMetric[] = [
+    {
+      id: "stripe",
+      label: t("business.hero.financial.availableInStripe"),
+      value: stripeCurrencyValue(summary?.stripe.availableCents),
+    },
+    {
+      id: "pending",
+      label: t("business.hero.financial.pendingStripe"),
+      value: stripeCurrencyValue(summary?.stripe.pendingCents),
+    },
+    {
+      id: "paid",
+      label: t("business.hero.financial.paidOut"),
+      value: connectPending
+        ? payoutSkeleton
+        : summary
+          ? money(summary.payouts.completedAmountCents / 100)
+          : metricUnavailable,
+      hint: t("business.hero.financial.paidOutHint"),
+    },
+    {
       id: "distribution",
       label: t("business.hero.financial.toDistribute"),
-      value: (
-        <CountUpMetric value={distributionEur} kind="eur" format={(n) => formatEur(n)} />
-      ),
-      hint: distributionHint,
-    });
-  }
+      value: ledgerCurrencyValue(distributionEur),
+      hint: ledgerPending ? undefined : distributionHint,
+    },
+  ];
 
   return (
     <DashboardHeroFinancialLayout
@@ -124,7 +115,7 @@ export const BusinessHeroFinancialMetrics = memo(function BusinessHeroFinancialM
       primary={{
         label: t("business.hero.financial.totalTips"),
         meta: t("business.hero.financial.totalTipsPeriod"),
-        value: ledgerCurrencyValue(metrics?.totalCustomerTipsEur ?? 0),
+        value: ledgerCurrencyValue(metrics?.totalCustomerTipsEur),
         hint: t("business.hero.financial.totalTipsHint"),
       }}
       payoutMetrics={payoutMetrics}

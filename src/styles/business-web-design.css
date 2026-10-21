@@ -365,7 +365,15 @@
 }
 
 /* —— Hero image: editorial —— */
-.caretip-dashboard-shell.business-dashboard .business-hero-illustration-card,
+.caretip-dashboard-shell.business-dashboard .business-hero-illustration-card {
+  aspect-ratio: 4 / 3;
+  border: 1px solid hsl(var(--border) / 0.55) !important;
+  border-radius: 0.625rem !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  overflow: hidden;
+}
+
 .caretip-dashboard-shell.business-dashboard .business-dashboard-mobile-hero__visual-frame {
   border: 1px solid hsl(var(--border) / 0.5) !important;
   border-radius: 0.625rem !important;
@@ -376,7 +384,15 @@
   overflow: hidden;
 }
 
-.caretip-dashboard-shell.business-dashboard .business-hero-illustration,
+.caretip-dashboard-shell.business-dashboard .business-hero-illustration {
+  border-radius: 0.75rem !important;
+  width: 100% !important;
+  height: 100% !important;
+  max-height: none !important;
+  object-fit: cover !important;
+  object-position: center 12% !important;
+}
+
 .caretip-dashboard-shell.business-dashboard .business-dashboard-mobile-hero__visual-img {
   border-radius: 0.75rem !important;
   width: 100% !important;
@@ -543,5 +559,185 @@
 .caretip-dashboard-shell.business-dashboard .print-qr-product-card.is-selected {
   border-color: hsl(var(--foreground) / 0.55);
   box-shadow: inset 0 0 0 1px hsl(var(--foreground) / 0.35);
+}
+
+/* Business dashboard hero — same card layout as the employee hero. */
+.caretip-dashboard-shell.business-dashboard .business-dashboard-hero .business-hero-cta-block {
+  border: 1px solid hsl(var(--border) / 0.65);
+  border-radius: 0.375rem;
+  background: #fff;
+  box-shadow: none;
+  padding: 0.75rem 0.85rem 0.7rem;
+  box-sizing: border-box;
+}
+
+.caretip-dashboard-shell.business-dashboard .business-dashboard-hero .dashboard-hero-financial-panel .dashboard-hero-financial__value--primary {
+  margin-top: 0.05rem;
+  font-size: clamp(1.5rem, 2.4vw, 1.875rem);
+  letter-spacing: -0.03em;
+  line-height: 1.05;
+}
+
+.caretip-dashboard-shell.business-dashboard .business-dashboard-hero .dashboard-hero-financial-panel.dashboard-hero-financial {
+  gap: 0.15rem;
+}
+
+.caretip-dashboard-shell.business-dashboard .business-dashboard-hero .dashboard-hero-financial-panel .dashboard-hero-financial__zone--payout {
+  margin-top: 0.45rem;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0;
+  background: transparent !important;
+}
+
+.caretip-dashboard-shell.business-dashboard .business-dashboard-hero .dashboard-hero-financial-panel .dashboard-hero-financial__payout-cell {
+  padding: 0 !important;
+  border: 0 !important;
+  border-inline-end: 0 !important;
+  border-bottom: 0 !important;
+}
+
+.caretip-dashboard-shell.business-dashboard .business-dashboard-hero .dashboard-hero-financial-panel .dashboard-hero-financial__payout-cell .dashboard-hero-financial__label {
+  min-height: 0;
+}
+
+.caretip-dashboard-shell.business-dashboard .business-dashboard-hero .business-hero-cta-row {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: stretch;
+  justify-content: stretch;
+  gap: 0.5rem !important;
+  width: 100%;
+  max-width: 100%;
+  margin-top: 0.65rem !important;
+  padding-top: 0.65rem;
+  border-top: 1px solid hsl(var(--border) / 0.55);
+}
+
+@media (min-width: 1024px) {
+  .caretip-dashboard-shell.business-dashboard .business-dashboard-hero .business-hero-illustration-card {
+    max-height: 22rem;
+    max-width: 26rem;
+  }
+}
+
+@media (max-width: 1023px) {
+  .caretip-dashboard-shell.business-dashboard .business-dashboard-hero,
+  .caretip-dashboard-shell.business-dashboard .business-dashboard-hero .business-hero-dashboard-root,
+  .caretip-dashboard-shell.business-dashboard .business-dashboard-hero .dashboard-hero-container,
+  .caretip-dashboard-shell.business-dashboard .business-dashboard-hero .dashboard-hero-media-column,
+  .caretip-dashboard-shell.business-dashboard .business-dashboard-hero .business-hero-visual,
+  .caretip-dashboard-shell.business-dashboard .business-dashboard-hero .business-hero-illustration-card,
+  .caretip-dashboard-shell.business-dashboard .business-dashboard-hero .business-hero-cta-block {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+  }
+
+  .caretip-dashboard-shell.business-dashboard .business-dashboard-hero .dashboard-hero-container {
+    display: flex !important;
+    flex-direction: column;
+    gap: 0.85rem;
+  }
+
+  .caretip-dashboard-shell.business-dashboard .business-dashboard-hero .dashboard-hero-container > * {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+  }
+
+  .caretip-dashboard-shell.business-dashboard .business-dashboard-hero .business-hero-title {
+    max-width: none !important;
+    font-size: clamp(1.375rem, 6.4vw, 1.75rem) !important;
+    line-height: 1.15 !important;
+    overflow-wrap: anywhere;
+  }
+
+  .caretip-dashboard-shell.business-dashboard .business-dashboard-hero .business-hero-description {
+    max-width: none !important;
+  }
+
+  .caretip-dashboard-shell.business-dashboard .business-dashboard-hero .dashboard-hero-media-column {
+    min-height: 0 !important;
+    padding: 0;
+  }
+
+  .caretip-dashboard-shell.business-dashboard .business-hero-visual {
+    margin-inline: 0;
+  }
+
+  .caretip-dashboard-shell.business-dashboard .business-hero-illustration-card {
+    position: relative;
+    aspect-ratio: 4 / 3 !important;
+    height: auto !important;
+    max-height: none !important;
+    min-height: 0;
+  }
+
+  .caretip-dashboard-shell.business-dashboard .business-hero-illustration {
+    object-fit: cover !important;
+    object-position: center 10% !important;
+  }
+
+  .caretip-dashboard-shell.business-dashboard .business-dashboard-hero .business-hero-cta-block {
+    padding: 0.7rem 0.75rem 0.65rem;
+  }
+
+  .caretip-dashboard-shell.business-dashboard .business-dashboard-hero .dashboard-hero-financial-panel {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .caretip-dashboard-shell.business-dashboard .business-dashboard-hero .dashboard-hero-financial-panel .dashboard-hero-financial__value--primary {
+    font-size: clamp(1.375rem, 6.5vw, 1.625rem) !important;
+    overflow-wrap: anywhere;
+  }
+
+  .caretip-dashboard-shell.business-dashboard .business-dashboard-hero .dashboard-hero-financial-panel .dashboard-hero-financial__payout-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.75rem 0.65rem;
+    width: 100%;
+  }
+
+  .caretip-dashboard-shell.business-dashboard .business-dashboard-hero .dashboard-hero-financial-panel .dashboard-hero-financial__payout-cell {
+    min-width: 0;
+  }
+
+  .caretip-dashboard-shell.business-dashboard .business-dashboard-hero .dashboard-hero-financial-panel .dashboard-hero-financial__payout-cell .dashboard-hero-financial__label {
+    min-height: 0;
+    font-size: 0.6875rem;
+    line-height: 1.25;
+    overflow-wrap: break-word;
+  }
+
+  .caretip-dashboard-shell.business-dashboard .business-dashboard-hero .dashboard-hero-financial-panel .dashboard-hero-financial__value--payout {
+    font-size: clamp(0.9375rem, 4.4vw, 1.0625rem);
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+}
+
+@media (max-width: 640px) {
+  .caretip-dashboard-shell.business-dashboard .business-dashboard-hero .business-hero-cta-row {
+    flex-direction: column !important;
+    flex-wrap: nowrap;
+    align-items: stretch;
+    width: 100%;
+  }
+
+  .caretip-dashboard-shell.business-dashboard .business-dashboard-hero .business-hero-cta-row > .dashboard-hero-action {
+    flex: 1 1 auto !important;
+    width: 100% !important;
+    max-width: 100%;
+    height: 3rem !important;
+    min-height: 3rem !important;
+    border-radius: 0.375rem !important;
+  }
+}
+
+.dark .caretip-dashboard-shell.business-dashboard .business-dashboard-hero .business-hero-cta-block {
+  background: hsl(var(--card));
 }
 

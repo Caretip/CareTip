@@ -34,10 +34,11 @@
 .caretip-dashboard-shell.employee-dashboard .employee-qr-signature .employee-hero-cta-row {
   display: flex;
   flex-direction: row;
-  flex-wrap: nowrap;
-  align-items: stretch;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-start;
   gap: 0.5rem;
-  width: 100%;
+  width: auto;
   max-width: 100%;
 }
 
@@ -45,14 +46,8 @@
   flex: 1 1 0%;
   width: auto;
   min-width: 0;
-  min-height: 2.75rem;
-  height: auto !important;
   justify-content: center;
-  white-space: normal;
   text-align: center;
-  line-height: 1.25;
-  padding-block: 0.5rem;
-  padding-inline: 0.875rem;
 }
 
 @media (max-width: 360px) {
@@ -464,16 +459,8 @@
   .caretip-dashboard-shell.employee-dashboard .employee-qr-signature .employee-hero-cta-row > :is(a, button),
   .caretip-dashboard-shell.employee-dashboard .employee-hero-cta-row > :is(a, button),
   .caretip-dashboard-shell.employee-dashboard .dashboard-hero-actions .employee-hero-cta-row > * {
-    min-height: 2.25rem !important;
-    height: 2.25rem !important;
-    max-height: 2.25rem;
-    padding-block: 0 !important;
-    padding-inline: 0.5rem !important;
-    font-size: 0.75rem !important;
-    line-height: 1.1 !important;
-    white-space: nowrap !important;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    overflow: visible;
+    text-overflow: clip;
   }
 
   .caretip-dashboard-shell.employee-dashboard .employee-qr-signature .employee-hero-cta-row svg {
@@ -567,4 +554,160 @@
 .caretip-dashboard-shell.business-dashboard .business-hero-account-stats--open .business-hero-pulse-subline {
   font-size: 0.8125rem;
   font-weight: 500;
+}
+
+/* Employee dashboard hero — match the uploaded template card. */
+.caretip-dashboard-shell.employee-dashboard .employee-hero-cta-block {
+  border: 1px solid hsl(var(--border) / 0.7);
+  border-radius: 0.75rem;
+  background: #fff;
+  padding: 1rem 1.05rem 0.95rem;
+}
+
+.caretip-dashboard-shell.employee-dashboard .employee-dashboard-hero .dashboard-hero-financial-panel.dashboard-hero-financial {
+  gap: 0.15rem;
+}
+
+.caretip-dashboard-shell.employee-dashboard .employee-dashboard-hero .dashboard-hero-financial-panel .dashboard-hero-financial__zone--payout {
+  margin-top: 0.65rem;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+.caretip-dashboard-shell.employee-dashboard .employee-dashboard-hero .dashboard-hero-financial-panel .dashboard-hero-financial__payout-cell {
+  padding: 0;
+  border: 0 !important;
+}
+
+.caretip-dashboard-shell.employee-dashboard .employee-dashboard-hero .dashboard-hero-financial-panel .dashboard-hero-financial__payout-cell .dashboard-hero-financial__label {
+  min-height: 0;
+}
+
+.caretip-dashboard-shell.employee-dashboard .employee-qr-signature {
+  margin-top: 0.9rem !important;
+  padding-top: 0.85rem;
+  border-top: 1px solid hsl(var(--border) / 0.55);
+}
+
+.caretip-dashboard-shell.employee-dashboard .employee-hero-cta-row > .dashboard-hero-action {
+  flex: 0 0 auto !important;
+  width: auto !important;
+  height: 2.5rem !important;
+  min-height: 2.5rem !important;
+  padding-inline: 0.9rem !important;
+  border-radius: 999px;
+}
+
+@media (min-width: 1024px) {
+  .caretip-dashboard-shell.employee-dashboard .employee-hero-cta-row > .dashboard-hero-action {
+    height: 2.625rem !important;
+    min-height: 2.625rem !important;
+  }
+}
+
+@media (max-width: 1023px) {
+  .caretip-dashboard-shell.employee-dashboard .employee-dashboard-hero .dashboard-hero-container {
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+  }
+
+  .caretip-dashboard-shell.employee-dashboard .employee-dashboard-hero .dashboard-hero-container > * {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+  }
+
+  .caretip-dashboard-shell.employee-dashboard .employee-dashboard-hero .employee-hero-title {
+    max-width: none !important;
+    font-size: clamp(1.375rem, 6.4vw, 1.75rem) !important;
+    line-height: 1.15 !important;
+    overflow-wrap: anywhere;
+  }
+
+  .caretip-dashboard-shell.employee-dashboard .employee-hero-visual {
+    width: 100%;
+    max-width: 100%;
+    margin-inline: 0;
+  }
+
+  .caretip-dashboard-shell.employee-dashboard .employee-hero-illustration-card {
+    width: 100%;
+    aspect-ratio: 4 / 3;
+    max-height: none;
+  }
+
+  .caretip-dashboard-shell.employee-dashboard .employee-hero-illustration {
+    object-position: center 10%;
+  }
+
+  .caretip-dashboard-shell.employee-dashboard .employee-hero-cta-block {
+    width: 100%;
+    max-width: 100%;
+    padding: 0.85rem 0.8rem 0.85rem;
+    box-sizing: border-box;
+  }
+
+  .caretip-dashboard-shell.employee-dashboard .employee-dashboard-hero .dashboard-hero-financial-panel .dashboard-hero-financial__value--primary {
+    font-size: clamp(1.5rem, 8vw, 1.875rem) !important;
+    overflow-wrap: anywhere;
+  }
+
+  .caretip-dashboard-shell.employee-dashboard .employee-dashboard-hero .dashboard-hero-financial-panel .dashboard-hero-financial__payout-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.75rem 0.65rem;
+    width: 100%;
+  }
+
+  .caretip-dashboard-shell.employee-dashboard .employee-dashboard-hero .dashboard-hero-financial-panel .dashboard-hero-financial__payout-cell {
+    min-width: 0;
+  }
+
+  .caretip-dashboard-shell.employee-dashboard .employee-dashboard-hero .dashboard-hero-financial-panel .dashboard-hero-financial__payout-cell .dashboard-hero-financial__label {
+    min-height: 0;
+    font-size: 0.6875rem;
+    line-height: 1.25;
+    overflow-wrap: break-word;
+  }
+
+  .caretip-dashboard-shell.employee-dashboard .employee-dashboard-hero .dashboard-hero-financial-panel .dashboard-hero-financial__value--payout {
+    font-size: clamp(0.9375rem, 4.4vw, 1.0625rem);
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+
+  .caretip-dashboard-shell.employee-dashboard .employee-hero-cta-row {
+    flex-wrap: wrap;
+    justify-content: flex-start;
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .caretip-dashboard-shell.employee-dashboard .employee-hero-cta-row > .dashboard-hero-action {
+    min-height: 2.75rem !important;
+    height: auto !important;
+    max-width: 100%;
+    white-space: normal !important;
+  }
+}
+
+@media (max-width: 420px) {
+  .caretip-dashboard-shell.employee-dashboard .employee-hero-cta-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .caretip-dashboard-shell.employee-dashboard .employee-hero-cta-row > .dashboard-hero-action {
+    width: 100% !important;
+    flex: 1 1 auto !important;
+  }
+}
+
+.dark .caretip-dashboard-shell.employee-dashboard .employee-hero-cta-block {
+  background: hsl(var(--card));
 }

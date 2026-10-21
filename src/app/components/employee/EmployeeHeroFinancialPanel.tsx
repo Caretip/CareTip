@@ -28,23 +28,23 @@ export const EmployeeHeroFinancialPanel = memo(function EmployeeHeroFinancialPan
 }: EmployeeHeroFinancialPanelProps) {
   const { t } = useTranslation();
 
-  const currencyValue = (value: number) =>
-    loading ? (
-      <DashboardHeroMetricSkeleton variant="currency" />
-    ) : (
-      <CountUpMetric
-        value={value}
-        kind="eur"
-        format={(n) => (n < 0.005 ? t("format.metricZeroTips") : formatEur(n))}
-      />
-    );
+  const unavailable = (
+    <span className="dashboard-hero-financial__unavailable">
+      {t("employee.hero.metricsUnavailable")}
+    </span>
+  );
 
-  const countValue = (value: number) =>
-    loading ? (
-      <DashboardHeroMetricSkeleton variant="count" />
-    ) : (
-      <CountUpMetric value={value} kind="integer" />
-    );
+  const currencyValue = (value: number | null | undefined) => {
+    if (loading) return <DashboardHeroMetricSkeleton variant="currency" />;
+    if (metrics == null || value == null || !Number.isFinite(value)) return unavailable;
+    return <CountUpMetric value={value} kind="eur" format={(n) => formatEur(n)} />;
+  };
+
+  const countValue = (value: number | null | undefined) => {
+    if (loading) return <DashboardHeroMetricSkeleton variant="count" />;
+    if (metrics == null || value == null || !Number.isFinite(value)) return unavailable;
+    return <CountUpMetric value={value} kind="integer" />;
+  };
 
   return (
     <DashboardHeroFinancialLayout
@@ -54,29 +54,29 @@ export const EmployeeHeroFinancialPanel = memo(function EmployeeHeroFinancialPan
       refreshing={refreshing}
       primary={{
         label: t("employee.hero.statYourEarnings"),
-        value: currencyValue(metrics?.employeeEarningsEur ?? 0),
+        value: currencyValue(metrics?.employeeEarningsEur),
         hint: t("employee.hero.statYourEarningsHint"),
       }}
       payoutMetrics={[
         {
           id: "paid",
           label: t("employee.hero.statPaidToStripe"),
-          value: currencyValue(metrics?.paidToStripeEur ?? 0),
+          value: currencyValue(metrics?.paidToStripeEur),
         },
         {
           id: "pending",
           label: t("employee.hero.statPendingRelease"),
-          value: currencyValue(metrics?.pendingReleaseEur ?? 0),
+          value: currencyValue(metrics?.pendingReleaseEur),
         },
         {
           id: "gross",
           label: t("employee.hero.statGrossTips"),
-          value: currencyValue(metrics?.grossTipsEur ?? 0),
+          value: currencyValue(metrics?.grossTipsEur),
         },
         {
           id: "tips",
           label: t("employee.hero.statTotalSupporters"),
-          value: countValue(metrics?.totalSupporters ?? 0),
+          value: countValue(metrics?.totalSupporters),
           valueClassName: "dashboard-hero-financial__value--hero-count",
         },
       ]}

@@ -34,8 +34,8 @@ function BusinessDashboardHeroActions({
   if (isPreviewMode) {
     return (
       <div className={cn("business-hero-cta-row business-hero-quick-access", className)}>
-        <Button type="button" className={cn(businessUi.btnPrimary, buttonClassName)} asChild>
-          <Link to="/dashboard/billing/subscription" className={businessUi.heroCtaLink}>
+        <Button type="button" className={cn(businessUi.btnPrimary, "dashboard-hero-action", buttonClassName)} asChild>
+          <Link to="/dashboard/billing/subscription" className={cn(businessUi.heroCtaLink, "dashboard-hero-action__link")}>
             <Sparkles className="h-4 w-4 shrink-0" aria-hidden />
             {t("business.dashboard.preview.viewPlans")}
           </Link>
@@ -43,10 +43,10 @@ function BusinessDashboardHeroActions({
         <Button
           type="button"
           variant="outline"
-          className={cn(businessUi.btnSecondary, secondaryButtonClassName)}
+          className={cn(businessUi.btnSecondary, "dashboard-hero-action", secondaryButtonClassName)}
           asChild
         >
-          <Link to="#dashboard-premium-features" className={businessUi.heroCtaLink}>
+          <Link to="#dashboard-premium-features" className={cn(businessUi.heroCtaLink, "dashboard-hero-action__link")}>
             {t("business.dashboard.preview.exploreFeatures")}
           </Link>
         </Button>
@@ -76,12 +76,12 @@ function BusinessDashboardHeroActions({
             variant={isPrimary ? "default" : "outline"}
             className={cn(
               isPrimary ? businessUi.btnPrimary : businessUi.btnSecondary,
-              "business-hero-quick-access__btn !leading-snug",
+              "dashboard-hero-action business-hero-quick-access__btn",
               isPrimary ? buttonClassName : secondaryButtonClassName,
             )}
             asChild
           >
-            <Link to={item.href} className={businessUi.heroCtaLink}>
+            <Link to={item.href} className={cn(businessUi.heroCtaLink, "dashboard-hero-action__link")}>
               <CareIcon name={item.icon} size="sm" className="shrink-0" aria-hidden />
               <span className="min-w-0 text-center">{t(item.labelKey)}</span>
               {locked ? <Lock className="h-3.5 w-3.5 shrink-0 opacity-70" aria-hidden /> : null}

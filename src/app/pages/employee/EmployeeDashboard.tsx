@@ -46,8 +46,7 @@ import { DashboardAnalyticsPeriodToggle } from "../../components/dashboard/Dashb
 import { dashboardWorkspaceUi } from "../../components/dashboard/dashboardWorkspaceUi";
 import { EmployeeStripeConnectPrompt } from "../../components/employee/EmployeeStripeConnectPrompt";
 import { EmployeeQRCodeModal } from "../../components/employee/EmployeeQRCodeModal";
-import employeeHeroWebp from "../../../../images/foremployee.webp";
-import employeeHeroAvif from "../../../../images/foremployee.avif";
+import employeeHeroImage from "../../../../images/employee-hero.webp";
 import { MarketingPicture } from "@/lib/marketingPicture";
 import { cn } from "@/lib/utils";
 import { DashboardHero } from "@/components/ui/dashboard-hero";
@@ -463,13 +462,7 @@ export const EmployeeDashboard = memo(function EmployeeDashboard() {
           descriptionClassName="employee-hero-description !line-clamp-2 max-w-[34ch] leading-relaxed text-muted-foreground/85 max-lg:mx-0 max-lg:mb-0 max-lg:text-left lg:max-w-[38ch] xl:max-w-[42ch]"
           textColumnClassName="employee-hero-text-column lg:py-0.5 xl:pr-4"
           badge={formatDashboardFormalGreeting(t, user.name, undefined, { firstNameOnly: true })}
-          title={
-            <>
-              {t("employee.hero.headlineLine1")}
-              <br />
-              <span>{t("employee.hero.headlineLine2")}</span>
-            </>
-          }
+          title={`${t("employee.hero.headlineLine1")} ${t("employee.hero.headlineLine2")}`}
           description={t("employee.hero.sub")}
           image={
             <motion.div
@@ -480,9 +473,7 @@ export const EmployeeDashboard = memo(function EmployeeDashboard() {
             >
               <div className="employee-hero-illustration-card relative mx-auto w-full max-w-full min-h-0 overflow-hidden">
                 <MarketingPicture
-                  src={employeeHeroWebp}
-                  webpSrc={employeeHeroWebp}
-                  avifSrc={employeeHeroAvif}
+                  src={employeeHeroImage}
                   alt=""
                   width={640}
                   height={480}
@@ -532,7 +523,7 @@ export const EmployeeDashboard = memo(function EmployeeDashboard() {
                   type="button"
                   onClick={() => void handleQrQuickAction()}
                   disabled={slugLoading || generatingSlug}
-                  className={cn(employeeUi.btnPrimary, employeeUi.heroCtaBtn, "employee-hero-cta-btn")}
+                  className={cn(employeeUi.btnPrimary, employeeUi.heroCtaBtn, "dashboard-hero-action employee-hero-cta-btn")}
                 >
                   {generatingSlug ? (
                     <>
@@ -549,10 +540,10 @@ export const EmployeeDashboard = memo(function EmployeeDashboard() {
                 <Button
                   type="button"
                   variant="outline"
-                  className={cn(employeeUi.btnSecondary, employeeUi.heroCtaBtn, "employee-hero-cta-btn")}
+                  className={cn(employeeUi.btnSecondary, employeeUi.heroCtaBtn, "dashboard-hero-action employee-hero-cta-btn")}
                   asChild
                 >
-                  <Link to="/employee/tip-goals" className={employeeUi.heroCtaLink}>
+                  <Link to="/employee/tip-goals" className={cn(employeeUi.heroCtaLink, "dashboard-hero-action__link")}>
                     <Target className="h-4 w-4 shrink-0" />
                     {t("employee.hero.setTipGoal")}
                     {entitlementsReady && !hasFeature("employeeGoals") ? (

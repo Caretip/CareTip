@@ -863,13 +863,8 @@ html[data-auth-sign-in-handoff] .caretip-dashboard-page-enter {
   flex: 1 1 0%;
   width: auto;
   min-width: 0;
-  min-height: 2.75rem;
-  height: auto !important;
   justify-content: center;
-  white-space: normal;
   text-align: center;
-  line-height: 1.25;
-  padding-block: 0.5rem;
 }
 
 /* Dashboard SWR — soft opacity while background revalidation runs */
@@ -1433,14 +1428,10 @@ html[data-auth-sign-in-handoff] .caretip-dashboard-page-enter {
   .caretip-dashboard-shell .employee-dashboard-hero .dashboard-hero-actions .employee-hero-cta-row > *,
   .caretip-dashboard-shell .business-dashboard-hero .dashboard-hero-actions .business-hero-cta-row > * {
     min-width: 0;
-    min-height: 2.75rem;
-    height: auto !important;
     width: auto !important;
     flex: 1 1 0%;
     max-width: none !important;
-    white-space: normal;
     text-align: center;
-    line-height: 1.25;
   }
 }
 

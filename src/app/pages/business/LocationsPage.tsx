@@ -365,7 +365,7 @@ export function LocationsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background pb-20">
+    <div className="locations-workspace min-h-screen bg-background pb-20">
       <div className={businessUi.subPageTop}>
         <div className="dashboard-page-contained mx-auto w-full max-w-5xl space-y-2.5">
           <div className={businessUi.subPageBreadcrumb}>
@@ -419,7 +419,7 @@ export function LocationsPage() {
           <LocationTablesWorkspaceSkeleton />
         ) : locations.length === 0 ? (
           <div className={cn(businessUi.cardStatic, "py-16 text-center text-muted-foreground border-dashed")}>
-            <MapPin className="w-10 h-10 mx-auto mb-3 opacity-50" />
+            <MapPin className="locations-workspace__empty-icon mx-auto mb-3 h-10 w-10" />
             <p>{t("business.locationsPage.empty")}</p>
           </div>
         ) : (

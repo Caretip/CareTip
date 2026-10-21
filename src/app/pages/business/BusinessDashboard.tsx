@@ -393,13 +393,7 @@ export const BusinessDashboard = memo(function BusinessDashboard() {
             descriptionClassName="business-hero-description !line-clamp-2 max-w-[34ch] leading-relaxed text-muted-foreground/85 max-lg:mx-0 max-lg:mb-0 max-lg:text-left lg:max-w-[38ch] xl:max-w-[42ch]"
             textColumnClassName="business-hero-text-column lg:py-0.5 xl:pr-4"
             badge={formalGreeting}
-            title={
-              <>
-                {t("business.hero.headlineLine1")}
-                <br />
-                <span>{t("business.hero.headlineLine2")}</span>
-              </>
-            }
+            title={`${t("business.hero.headlineLine1")} ${t("business.hero.headlineLine2")}`}
             description={t("business.hero.sub")}
             image={
               <motion.div
@@ -416,7 +410,7 @@ export const BusinessDashboard = memo(function BusinessDashboard() {
                     alt=""
                     width={640}
                     height={480}
-                    className="business-hero-illustration relative z-[1] block h-full w-full object-cover object-center"
+                    className="business-hero-illustration relative z-[1] block h-full w-full object-cover"
                     priority
                     loading="eager"
                     fetchPriority="high"
