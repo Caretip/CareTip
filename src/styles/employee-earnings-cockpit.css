@@ -17,20 +17,6 @@
   box-shadow: none;
 }
 
-.caretip-dashboard-shell.employee-dashboard .employee-qr-signature__title {
-  margin: 0;
-  font-size: 0.9375rem;
-  font-weight: 650;
-  color: hsl(var(--foreground));
-}
-
-.caretip-dashboard-shell.employee-dashboard .employee-qr-signature__body {
-  margin: 0.25rem 0 0;
-  font-size: 0.8125rem;
-  line-height: 1.45;
-  color: hsl(var(--muted-foreground));
-}
-
 .caretip-dashboard-shell.employee-dashboard .employee-qr-signature .employee-hero-cta-row {
   display: flex;
   flex-direction: row;
@@ -183,7 +169,7 @@
 
 .caretip-dashboard-shell.employee-dashboard .employee-period-summary__lead {
   padding: 1rem 1.125rem 0.9rem;
-  background: linear-gradient(180deg, hsl(var(--primary) / 0.07), transparent 72%);
+  background: transparent;
 }
 
 .caretip-dashboard-shell.employee-dashboard .employee-period-summary__tiles {
@@ -258,7 +244,7 @@
 .caretip-dashboard-shell.employee-dashboard .employee-period-summary__bar-fill {
   height: 100%;
   border-radius: inherit;
-  background: hsl(var(--primary));
+  background: hsl(var(--foreground));
 }
 
 .caretip-dashboard-shell.employee-dashboard .employee-period-summary__streak {
@@ -285,7 +271,7 @@
   height: 0.875rem;
   flex-shrink: 0;
   translate: 0 0.1rem;
-  color: hsl(var(--primary));
+  color: hsl(var(--foreground));
 }
 
 .caretip-dashboard-shell.employee-dashboard .employee-period-summary__streak-label {
@@ -430,24 +416,6 @@
   .caretip-dashboard-shell.employee-dashboard .employee-qr-signature {
     gap: 0.3rem;
     padding: 0;
-  }
-
-  .caretip-dashboard-shell.employee-dashboard .employee-qr-signature__copy {
-    display: block;
-    min-width: 0;
-  }
-
-  .caretip-dashboard-shell.employee-dashboard .employee-qr-signature__title {
-    font-size: 0.875rem;
-    font-weight: 600;
-    line-height: 1.3;
-  }
-
-  .caretip-dashboard-shell.employee-dashboard .employee-qr-signature__body {
-    margin-top: 0.125rem;
-    font-size: 0.75rem;
-    line-height: 1.4;
-    text-wrap: pretty;
   }
 
   .caretip-dashboard-shell.employee-dashboard .employee-qr-signature .employee-hero-cta-row,

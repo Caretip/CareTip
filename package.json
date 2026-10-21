@@ -213,7 +213,7 @@
     "tsx": "^4.23.15",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.57.2",
-    "vite": "^6.4.3",
+    "vite": "^6.4.5",
     "vite-plugin-pwa": "^1.2.0"
   },
   "overrides": {
@@ -236,7 +236,7 @@
   },
   "pnpm": {
     "overrides": {
-      "vite": "6.4.3",
+      "vite": "6.4.5",
       "serialize-javascript": "7.0.5",
       "ws": "8.21.0",
       "esbuild": "0.28.1",

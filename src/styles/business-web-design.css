@@ -741,3 +741,19 @@
   background: hsl(var(--card));
 }
 
+/* Empty chart cards — the status icon is brand orange. */
+.caretip-dashboard-shell :is(
+  .dashboard-chart-empty,
+  .business-dashboard-chart-empty,
+  .employee-period-chart__empty,
+  .employee-analytics-mini-chart
+) .dashboard-workspace-empty > div:first-child,
+.caretip-dashboard-shell :is(
+  .dashboard-chart-empty,
+  .business-dashboard-chart-empty,
+  .employee-period-chart__empty,
+  .employee-analytics-mini-chart
+) .dashboard-workspace-empty svg {
+  color: var(--caretip-brand-orange, #e9781c) !important;
+}
+

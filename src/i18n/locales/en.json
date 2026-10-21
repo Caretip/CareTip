@@ -4492,8 +4492,6 @@
       "welcomeBack": "Welcome back",
       "welcomeBackNamed": "Welcome back, {{name}}",
       "myQr": "My QR",
-      "qrSignatureTitle": "Your QR code",
-      "qrSignatureBody": "Guests can send you a tip directly.",
       "generating": "Generating…",
       "setTipGoal": "Tip goals",
       "metricsUnavailable": "Unavailable",

@@ -514,10 +514,6 @@ export const EmployeeDashboard = memo(function EmployeeDashboard() {
                 }
               />
               <div className="employee-qr-signature">
-                <div className="employee-qr-signature__copy">
-                  <p className="employee-qr-signature__title">{t("employee.hero.qrSignatureTitle")}</p>
-                  <p className="employee-qr-signature__body">{t("employee.hero.qrSignatureBody")}</p>
-                </div>
                 <div className="employee-hero-cta-row employee-qr-signature__row flex flex-row flex-nowrap items-stretch gap-2">
                 <Button
                   type="button"

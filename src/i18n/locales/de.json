@@ -4492,8 +4492,6 @@
       "welcomeBack": "Willkommen zurück",
       "welcomeBackNamed": "Willkommen zurück, {{name}}",
       "myQr": "Mein QR-Code",
-      "qrSignatureTitle": "Ihr QR-Code",
-      "qrSignatureBody": "Gäste können Ihnen direkt Trinkgeld geben.",
       "generating": "Wird erstellt…",
       "setTipGoal": "Trinkgeldziele",
       "metricsUnavailable": "Nicht verfügbar",
