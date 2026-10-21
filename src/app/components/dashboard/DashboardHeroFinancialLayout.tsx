@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { Link } from "react-router";
+import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
 
 export type DashboardHeroFinancialMetric = {
@@ -43,6 +44,14 @@ export function DashboardHeroFinancialLayout({
   analyticsLabel,
   className,
 }: DashboardHeroFinancialLayoutProps) {
+  const { t } = useTranslation();
+  const detailItems = [
+    primary.hint ? { id: "primary", label: primary.label, hint: primary.hint } : null,
+    ...payoutMetrics
+      .filter((metric) => metric.hint)
+      .map((metric) => ({ id: metric.id, label: metric.label, hint: metric.hint as string })),
+  ].filter((item): item is { id: string; label: string; hint: string } => item != null);
+
   return (
     <section
       className={cn(
@@ -101,6 +110,20 @@ export function DashboardHeroFinancialLayout({
           ))}
         </div>
       </div>
+
+      {detailItems.length > 0 ? (
+        <details className="dashboard-hero-financial__details">
+          <summary>{t("dashboardHero.financialDetails")}</summary>
+          <dl>
+            {detailItems.map((item) => (
+              <div key={item.id}>
+                <dt>{item.label}</dt>
+                <dd>{item.hint}</dd>
+              </div>
+            ))}
+          </dl>
+        </details>
+      ) : null}
 
       {performanceMetrics && performanceMetrics.length > 0 ? (
         <div

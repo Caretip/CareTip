@@ -68,7 +68,8 @@
   },
   "dashboardHero": {
     "overview": "Überblick",
-    "shortcuts": "Verknüpfungen"
+    "shortcuts": "Verknüpfungen",
+    "financialDetails": "Was diese Beträge bedeuten"
   },
   "payouts": {
     "instantTerms": {
@@ -4503,7 +4504,7 @@
       "statGrossTips": "Brutto-Trinkgelder",
       "statGrossTipsHint": "Gesamte Kundentrinkgelder vor CareTip-Gebühren.",
       "statMonthEarnings": "Diesen Monat",
-      "statTotalSupporters": "Erfolgreiche Trinkgelde",
+      "statTotalSupporters": "Erfolgreiche Trinkgelder",
       "statAverageTip": "Ø Trinkgeld",
       "accountOverviewLabel": "Kontoübersicht, gesamt",
       "financial": {

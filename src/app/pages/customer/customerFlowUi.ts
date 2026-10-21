@@ -136,7 +136,10 @@ export const customerFlowUi = {
     "w-full rounded-lg border border-border bg-background px-4 py-3.5 text-foreground placeholder:text-muted-foreground focus-visible:border-primary/45 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/20",
 
   inputAmount:
-    "w-full rounded-lg border border-border bg-background py-4 pl-11 pr-4 text-3xl font-bold tabular-nums text-foreground placeholder:text-muted-foreground focus-visible:border-primary/45 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/20",
+    "w-full rounded-lg border border-border bg-background py-2 pl-11 pr-4 text-xl font-bold tabular-nums text-foreground placeholder:text-muted-foreground focus-visible:border-primary/45 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/20 sm:py-2.5 sm:text-2xl",
+
+  inputEmail:
+    "w-full rounded-lg border border-border bg-background px-3.5 py-2 text-base text-foreground placeholder:text-muted-foreground focus-visible:border-primary/45 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/20 sm:py-2.5",
 
   dashedCustomTrigger:
     "w-full rounded-lg border border-dashed border-border bg-muted/20 py-6 hover:border-primary/35",

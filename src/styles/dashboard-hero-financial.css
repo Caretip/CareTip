@@ -581,3 +581,65 @@
   letter-spacing: 0;
   white-space: normal;
 }
+
+.dashboard-hero-financial__details {
+  display: none;
+  margin-top: 0.35rem;
+}
+
+.dashboard-hero-financial__details summary {
+  cursor: pointer;
+  width: fit-content;
+  font-size: 0.75rem;
+  font-weight: 650;
+  line-height: 1.3;
+  color: hsl(var(--foreground));
+}
+
+.dashboard-hero-financial__details summary:focus-visible {
+  outline: 2px solid hsl(var(--primary));
+  outline-offset: 2px;
+}
+
+.dashboard-hero-financial__details dl {
+  display: grid;
+  gap: 0.45rem;
+  margin: 0.45rem 0 0;
+}
+
+.dashboard-hero-financial__details dt {
+  font-size: 0.6875rem;
+  font-weight: 650;
+  line-height: 1.3;
+  color: hsl(var(--foreground));
+}
+
+.dashboard-hero-financial__details dd {
+  margin: 0.1rem 0 0;
+  font-size: 0.6875rem;
+  line-height: 1.35;
+  color: hsl(var(--muted-foreground));
+}
+
+@media (max-width: 1023px) {
+  .business-dashboard-hero .dashboard-hero-financial__hint-slot,
+  .business-dashboard-hero .dashboard-hero-financial__payout-cell .dashboard-hero-financial__hint {
+    display: none;
+  }
+
+  .business-dashboard-hero .dashboard-hero-financial__details {
+    display: block;
+  }
+
+  :is(.business-dashboard-hero, .employee-dashboard-hero) .dashboard-hero-financial__hint-slot {
+    min-height: 0;
+    margin-top: 0.15rem;
+  }
+
+  :is(.business-dashboard-hero, .employee-dashboard-hero) .dashboard-hero-financial__payout-cell .dashboard-hero-financial__label {
+    min-height: 0;
+    text-wrap: pretty;
+    overflow-wrap: break-word;
+    hyphens: manual;
+  }
+}

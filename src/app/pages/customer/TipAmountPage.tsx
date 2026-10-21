@@ -381,7 +381,7 @@ export function TipAmountPage() {
             <label className="sr-only" htmlFor="tip-custom-amount">
               {t("tipFlow.tipAmount.customTip")}
             </label>
-            <div className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-2xl font-bold text-muted-foreground">
+            <div className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-xl font-bold text-muted-foreground sm:text-2xl">
               €
             </div>
             <input
@@ -390,7 +390,7 @@ export function TipAmountPage() {
               placeholder={t("tipFlow.tipAmount.amountPlaceholder")}
               value={customAmount}
               onChange={(e) => handleCustomInput(e.target.value)}
-              className={`${cf.inputAmount} pl-11 text-2xl sm:text-3xl`}
+              className={cf.inputAmount}
               autoFocus
               step="0.01"
               min={MIN_TIP_AMOUNT_EUR}
@@ -416,7 +416,7 @@ export function TipAmountPage() {
           value={guestEmail}
           onChange={(e) => setGuestEmail(e.target.value)}
           placeholder={t("tipFlow.tipAmount.emailPlaceholder")}
-          className={`${cf.inputAmount} text-base sm:text-lg`}
+          className={cf.inputEmail}
           disabled={processing}
         />
       </section>

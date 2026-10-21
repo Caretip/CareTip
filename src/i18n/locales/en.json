@@ -68,7 +68,8 @@
   },
   "dashboardHero": {
     "overview": "Overview",
-    "shortcuts": "Shortcuts"
+    "shortcuts": "Shortcuts",
+    "financialDetails": "What these amounts mean"
   },
   "payouts": {
     "instantTerms": {
