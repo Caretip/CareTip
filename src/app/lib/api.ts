@@ -3593,7 +3593,10 @@ export async function patchBusinessBankPayoutSchedule(
 
 export type EmployeeBankPayoutSchedule = BusinessBankPayoutSchedule;
 
-export type EmployeeBankPayoutScheduleResponse = BusinessBankPayoutScheduleResponse;
+export type EmployeeBankPayoutScheduleResponse = BusinessBankPayoutScheduleResponse & {
+  /** Employer business IANA timezone for the stored next-payout instant. */
+  businessTimezone: string | null;
+};
 
 export async function getEmployeeBankPayoutSchedule(): Promise<EmployeeBankPayoutScheduleResponse> {
   return apiRequest(apiPath("/api/me/employee-connect/bank-payout-schedule"), {

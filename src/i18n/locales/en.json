@@ -4385,7 +4385,9 @@
         "loading": "Loading payout schedule…",
         "saved": "Payout schedule updated.",
         "saveError": "Could not update payout schedule.",
-        "nextPayout": "Next scheduled payout: {{date}}",
+        "nextPayoutLabel": "Next scheduled payout",
+        "nextPayoutZone": "{{place}} time ({{zone}})",
+        "nextPayoutZoneUnavailable": "UTC (business timezone unavailable)",
         "legacyManualNotice": "Your account uses a legacy manual bank payout setting. Choose Daily, Every 3 days, Weekly, or Monthly below.",
         "options": {
           "daily": "Daily",

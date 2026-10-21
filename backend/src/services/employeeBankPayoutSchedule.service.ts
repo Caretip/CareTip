@@ -17,7 +17,10 @@ import { settlementReadUnavailable } from "./connectSettlementRead.service.js";
 import { assertEmployeeScheduleTransitionSafe } from "./connectPayoutScheduleTransition.service.js";
 import { resolveActiveEmployeeForConnect } from "./employeeStripeConnect.service.js";
 
-export type EmployeeBankPayoutScheduleDto = BusinessBankPayoutScheduleDto;
+export type EmployeeBankPayoutScheduleDto = BusinessBankPayoutScheduleDto & {
+  /** Stored employer IANA timezone. Display only; schedule math stays on the server. */
+  businessTimezone: string | null;
+};
 
 export async function getEmployeeBankPayoutScheduleForUser(
   userId: string,
@@ -29,6 +32,7 @@ export async function getEmployeeBankPayoutScheduleForUser(
       bankPayoutSchedule: true,
       bankPayoutNextScheduledAt: true,
       stripeAccountId: true,
+      employee: { select: { business: { select: { timezone: true } } } },
     },
   });
   if (!row) {
@@ -65,6 +69,7 @@ export async function getEmployeeBankPayoutScheduleForUser(
   return {
     schedule: row.bankPayoutSchedule,
     nextScheduledPayoutAt: row.bankPayoutNextScheduledAt?.toISOString() ?? null,
+    businessTimezone: row.employee.business.timezone,
     careTipControlled: isCareTipControlledBankSchedule(row.bankPayoutSchedule),
     stripeScheduleInterval,
     scheduleDrift,

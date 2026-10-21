@@ -4385,7 +4385,9 @@
         "loading": "Auszahlungsrhythmus wird geladen…",
         "saved": "Auszahlungsrhythmus aktualisiert.",
         "saveError": "Auszahlungsrhythmus konnte nicht aktualisiert werden.",
-        "nextPayout": "Nächste geplante Auszahlung: {{date}}",
+        "nextPayoutLabel": "Nächste geplante Auszahlung",
+        "nextPayoutZone": "{{place}}-Zeit ({{zone}})",
+        "nextPayoutZoneUnavailable": "UTC (Zeitzone des Betriebs nicht verfügbar)",
         "legacyManualNotice": "Ihr Konto nutzt eine ältere manuelle Bankauszahlung. Wählen Sie unten Täglich, Alle 3 Tage, Wöchentlich oder Monatlich.",
         "options": {
           "daily": "Täglich",

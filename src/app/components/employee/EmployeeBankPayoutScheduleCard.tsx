@@ -19,6 +19,7 @@ import {
   USER_SELECTABLE_BANK_PAYOUT_SCHEDULES,
   type UserSelectableBankPayoutSchedule,
 } from "../../lib/bankPayoutScheduleUserOptions";
+import { formatScheduledPayoutBusinessTime } from "../../lib/scheduledPayoutBusinessTime";
 
 const OPTIONS = USER_SELECTABLE_BANK_PAYOUT_SCHEDULES;
 
@@ -61,15 +62,22 @@ export function EmployeeBankPayoutScheduleCard({
     }
   }
 
-  const nextLabel =
+  const nextPayout =
     data?.schedule === "every_3_days" && data.nextScheduledPayoutAt
-      ? t("employee.payouts.schedule.nextPayout", {
-          date: new Date(data.nextScheduledPayoutAt).toLocaleString(i18n.language, {
-            dateStyle: "medium",
-            timeStyle: "short",
-          }),
-        })
+      ? formatScheduledPayoutBusinessTime(
+          data.nextScheduledPayoutAt,
+          data.businessTimezone,
+          i18n.language,
+        )
       : null;
+  const nextZoneLabel = nextPayout
+    ? nextPayout.usesBusinessTimezone
+      ? t("employee.payouts.schedule.nextPayoutZone", {
+          place: nextPayout.placeName,
+          zone: nextPayout.formattedTimeZone,
+        })
+      : t("employee.payouts.schedule.nextPayoutZoneUnavailable")
+    : null;
 
   return (
     <PayoutWorkspacePanel className="min-w-0">
@@ -160,8 +168,20 @@ export function EmployeeBankPayoutScheduleCard({
           </>
         )}
 
-        {nextLabel ? (
-          <p className="border-t border-border/70 pt-2 text-xs font-medium text-foreground">{nextLabel}</p>
+        {nextPayout && nextZoneLabel ? (
+          <div className="border-t border-border/70 pt-2">
+            <p className="text-xs font-medium text-muted-foreground">
+              {t("employee.payouts.schedule.nextPayoutLabel")}
+            </p>
+            <p className="mt-0.5 text-sm font-semibold tracking-tight text-foreground">
+              {nextPayout.dateText}
+              <span className="px-1.5 font-normal text-muted-foreground" aria-hidden>
+                ·
+              </span>
+              {nextPayout.timeText}
+            </p>
+            <p className="mt-0.5 text-xs text-muted-foreground">{nextZoneLabel}</p>
+          </div>
         ) : null}
       </div>
     </PayoutWorkspacePanel>
