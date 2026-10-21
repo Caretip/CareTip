@@ -655,29 +655,39 @@
   }
 
   .caretip-dashboard-shell.employee-dashboard .employee-hero-cta-row {
-    flex-direction: row !important;
-    flex-wrap: wrap;
-    justify-content: flex-start;
     width: 100%;
     max-width: 100%;
+    min-width: 0;
   }
 
   .caretip-dashboard-shell.employee-dashboard .employee-hero-cta-row > .dashboard-hero-action {
-    min-height: 3rem !important;
-    height: 3rem !important;
+    box-sizing: border-box;
     max-width: 100%;
+    min-width: 0;
   }
 }
 
-@media (max-width: 340px) {
-  .caretip-dashboard-shell.employee-dashboard .employee-hero-cta-row {
+@media (max-width: 639px) {
+  .caretip-dashboard-shell.employee-dashboard .employee-dashboard-hero .employee-hero-cta-row {
+    display: flex;
     flex-direction: column !important;
+    flex-wrap: nowrap;
     align-items: stretch;
+    justify-content: flex-start;
+    gap: 0.5rem;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
   }
 
-  .caretip-dashboard-shell.employee-dashboard .employee-hero-cta-row > .dashboard-hero-action {
-    width: 100% !important;
+  .caretip-dashboard-shell.employee-dashboard .employee-dashboard-hero .dashboard-hero-actions .employee-hero-cta-row > .dashboard-hero-action {
+    box-sizing: border-box;
     flex: 1 1 auto !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0;
+    height: 3.125rem !important;
+    min-height: 3rem !important;
   }
 }
 

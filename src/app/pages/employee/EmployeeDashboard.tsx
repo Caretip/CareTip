@@ -514,7 +514,7 @@ export const EmployeeDashboard = memo(function EmployeeDashboard() {
                 }
               />
               <div className="employee-qr-signature">
-                <div className="employee-hero-cta-row employee-qr-signature__row flex flex-row flex-nowrap items-stretch gap-2">
+                <div className="employee-hero-cta-row employee-qr-signature__row">
                 <Button
                   type="button"
                   onClick={() => void handleQrQuickAction()}
