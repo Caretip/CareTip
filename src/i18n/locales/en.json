@@ -2713,7 +2713,7 @@
       "tipHistory": "Tip activity",
       "tipActivity": "Tip activity",
       "analytics": "Analytics",
-      "assignment": "My assignment",
+      "assignment": "My Work Location",
       "tipGoals": "Tip goals",
       "payouts": "Payouts",
       "payments": "Stripe Payout",
@@ -4177,8 +4177,17 @@
       "toastMarkedAchieved": "Marked as achieved",
       "confirmRemove": "Remove your tip goal?"
     },
+    "workLocation": {
+      "title": "My Work Location",
+      "hint": "This location is used for your CareTip tips.",
+      "loading": "Loading your work location…",
+      "loadError": "Your work location could not be loaded.",
+      "emptyTitle": "No work location yet",
+      "emptyHint": "Your manager assigns the location used for your CareTip tips.",
+      "tables": "Tables: {{names}}"
+    },
     "assignment": {
-      "title": "My assignment",
+      "title": "My Work Location",
       "subtitle": "",
       "backAria": "Back",
       "locationLabel": "Assigned location",

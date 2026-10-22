@@ -563,8 +563,8 @@ export const de: MobileMessages = {
     activityKindDisputed: "In Streitprüfung",
   },
   employeeAssignment: {
-    eyebrow: "ZUWEISUNG",
-    title: "Meine Zuweisung",
+    eyebrow: "EINSATZORT",
+    title: "Mein Einsatzort",
     subtitle: "",
     loadError: "Zuweisung konnte nicht geladen werden.",
     locationLabel: "Zugewiesener Standort",

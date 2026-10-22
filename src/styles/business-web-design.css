@@ -132,11 +132,12 @@
   background: transparent !important;
 }
 
-/* —— Period metrics: open row —— */
+/* —— Period metrics: flat cards, same column lengths —— */
 .caretip-dashboard-shell.business-dashboard .business-period-summary {
   display: flex;
   flex-direction: column;
   min-width: 0;
+  max-width: 100%;
   padding: 0;
   border: 0;
   background: transparent;
@@ -146,57 +147,71 @@
 .caretip-dashboard-shell.business-dashboard .business-period-summary__row {
   display: grid;
   grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr) minmax(0, 1fr);
-  align-items: start;
+  gap: 0.5rem;
+  align-items: stretch;
   min-width: 0;
 }
 
 .caretip-dashboard-shell.business-dashboard .business-period-summary__metric {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: flex-start;
   min-width: 0;
-  padding: 0.15rem 1.25rem 0.15rem 0;
-  border: 0;
-  border-right: 1px solid var(--biz-hairline);
-  background: transparent !important;
-  box-shadow: none !important;
+  min-height: 0;
+  padding: 0.65rem 0.75rem 0.7rem;
+  border: 1px solid hsl(var(--border) / 0.7);
+  border-radius: 0.25rem;
+  background: #fff;
+  box-shadow: none;
 }
 
-.caretip-dashboard-shell.business-dashboard .business-period-summary__metric:last-child {
-  padding-right: 0;
-  border-right: 0;
-}
-
-.caretip-dashboard-shell.business-dashboard .business-period-summary__metric:not(:first-child) {
-  padding-left: 1.25rem;
+.dark .caretip-dashboard-shell.business-dashboard .business-period-summary__metric {
+  background: hsl(var(--card));
 }
 
 .caretip-dashboard-shell.business-dashboard .business-period-summary__label {
-  margin: 0 0 0.35rem;
-  font-size: 0.75rem;
-  font-weight: 500;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.35rem;
+  margin: 0;
+  min-width: 0;
+  max-width: 100%;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  line-height: 1.3;
   letter-spacing: 0.01em;
   color: hsl(var(--muted-foreground));
+  overflow-wrap: break-word;
+}
+
+.caretip-dashboard-shell.business-dashboard .business-period-summary__icon {
+  width: 0.875rem;
+  height: 0.875rem;
+  margin-top: 0.05rem;
+  flex: 0 0 auto;
+  color: var(--caretip-brand-orange, #e9781c);
 }
 
 .caretip-dashboard-shell.business-dashboard .business-period-summary__value {
-  margin: 0;
-  font-size: clamp(1.125rem, 2.2vw, 1.375rem);
-  font-weight: 650;
-  letter-spacing: -0.025em;
+  margin: 0.2rem 0 0;
+  max-width: 100%;
+  font-size: 1.125rem;
+  font-weight: 700;
+  letter-spacing: -0.03em;
   line-height: 1.15;
   font-variant-numeric: tabular-nums;
   color: hsl(var(--foreground));
-}
-
-.caretip-dashboard-shell.business-dashboard .business-period-summary__metric--primary .business-period-summary__value {
-  font-size: clamp(1.5rem, 3vw, 1.875rem);
-  font-weight: 700;
-  letter-spacing: -0.035em;
+  overflow-wrap: break-word;
 }
 
 .caretip-dashboard-shell.business-dashboard .business-period-summary__hint {
-  margin: 0.3rem 0 0;
-  font-size: 0.8125rem;
+  margin: 0.2rem 0 0;
+  max-width: 100%;
+  font-size: 0.6875rem;
   line-height: 1.35;
   color: hsl(var(--muted-foreground));
+  overflow-wrap: break-word;
 }
 
 .caretip-dashboard-shell.business-dashboard .business-period-summary__hint:empty {
@@ -206,25 +221,6 @@
 @media (max-width: 639px) {
   .caretip-dashboard-shell.business-dashboard .business-period-summary__row {
     grid-template-columns: minmax(0, 1fr);
-  }
-
-  .caretip-dashboard-shell.business-dashboard .business-period-summary__metric {
-    padding: 0.85rem 0;
-    border-right: 0;
-    border-bottom: 1px solid var(--biz-hairline);
-  }
-
-  .caretip-dashboard-shell.business-dashboard .business-period-summary__metric:not(:first-child) {
-    padding-left: 0;
-  }
-
-  .caretip-dashboard-shell.business-dashboard .business-period-summary__metric:first-child {
-    padding-top: 0.15rem;
-  }
-
-  .caretip-dashboard-shell.business-dashboard .business-period-summary__metric:last-child {
-    padding-bottom: 0.15rem;
-    border-bottom: 0;
   }
 }
 

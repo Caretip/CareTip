@@ -2713,7 +2713,7 @@
       "tipHistory": "Trinkgeldaktivität",
       "tipActivity": "Trinkgeldaktivität",
       "analytics": "Analysen",
-      "assignment": "Meine Zuweisung",
+      "assignment": "Mein Einsatzort",
       "tipGoals": "Trinkgeldziele",
       "payouts": "Auszahlungen",
       "payments": "Stripe-Auszahlungen",
@@ -4177,8 +4177,17 @@
       "toastMarkedAchieved": "Als erreicht markiert",
       "confirmRemove": "Ihr Trinkgeldziel entfernen?"
     },
+    "workLocation": {
+      "title": "Mein Einsatzort",
+      "hint": "Dieser Standort ist Ihrer CareTip-Trinkgeldaktivität zugeordnet.",
+      "loading": "Einsatzort wird geladen…",
+      "loadError": "Ihr Einsatzort konnte nicht geladen werden.",
+      "emptyTitle": "Noch kein Einsatzort",
+      "emptyHint": "Ihr Manager legt den Standort für Ihre CareTip-Trinkgelder fest.",
+      "tables": "Tische: {{names}}"
+    },
     "assignment": {
-      "title": "Meine Zuweisung",
+      "title": "Mein Einsatzort",
       "subtitle": "",
       "backAria": "Zurück",
       "locationLabel": "Zugewiesener Standort",

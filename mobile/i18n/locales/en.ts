@@ -553,8 +553,8 @@ export const en: MobileMessages = {
     activityKindDisputed: "Under dispute review",
   },
   employeeAssignment: {
-    eyebrow: "ASSIGNMENT",
-    title: "My assignment",
+    eyebrow: "WORK LOCATION",
+    title: "My Work Location",
     subtitle: "",
     loadError: "Could not load assignment.",
     locationLabel: "Assigned location",

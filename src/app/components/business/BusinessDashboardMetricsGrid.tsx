@@ -1,4 +1,5 @@
 import { memo, type ReactNode } from "react";
+import { Coins, Users, Wallet } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { CountUpMetric } from "../dashboard/CountUpMetric";
 import { DashboardHeroMetricSkeleton } from "../dashboard/DashboardAnalyticsLoader";
@@ -62,8 +63,11 @@ function BusinessDashboardMetricsGridInner({
       ) : null}
 
       <div className="business-period-summary__row">
-        <div className="business-period-summary__metric business-period-summary__metric--primary">
-          <p className="business-period-summary__label">{totalLabel}</p>
+        <article className="business-period-summary__metric business-period-summary__metric--primary">
+          <p className="business-period-summary__label">
+            <Coins className="business-period-summary__icon" aria-hidden />
+            {totalLabel}
+          </p>
           <p className="business-period-summary__value">
             {cardsLoading ? (
               <DashboardHeroMetricSkeleton variant="currency" />
@@ -78,10 +82,13 @@ function BusinessDashboardMetricsGridInner({
                 ? t("business.dashboard.statsLiveTotals", { count: tipCount })
                 : t("format.metricZeroTips")}
           </p>
-        </div>
+        </article>
 
-        <div className="business-period-summary__metric">
-          <p className="business-period-summary__label">{t("business.dashboard.activeEmployees")}</p>
+        <article className="business-period-summary__metric">
+          <p className="business-period-summary__label">
+            <Users className="business-period-summary__icon" aria-hidden />
+            {t("business.dashboard.activeEmployees")}
+          </p>
           <p className="business-period-summary__value">
             {cardsLoading ? (
               <DashboardHeroMetricSkeleton variant="count" />
@@ -96,10 +103,13 @@ function BusinessDashboardMetricsGridInner({
                 ? t("business.dashboard.activeEmployeesTopHint", { count: topPerformersCount })
                 : null}
           </p>
-        </div>
+        </article>
 
-        <div className="business-period-summary__metric">
-          <p className="business-period-summary__label">{t("business.dashboard.avgTipPerEmployee")}</p>
+        <article className="business-period-summary__metric">
+          <p className="business-period-summary__label">
+            <Wallet className="business-period-summary__icon" aria-hidden />
+            {t("business.dashboard.avgTipPerEmployee")}
+          </p>
           <p className="business-period-summary__value">
             {cardsLoading ? (
               <DashboardHeroMetricSkeleton variant="currency" />
@@ -115,7 +125,7 @@ function BusinessDashboardMetricsGridInner({
               ? null
               : t("format.metricZeroTips")}
           </p>
-        </div>
+        </article>
       </div>
     </div>
   );

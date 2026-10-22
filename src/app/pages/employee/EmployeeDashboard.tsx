@@ -2,7 +2,7 @@ import { motion } from "motion/react";
 import { dashboardBlockMotion } from "@/lib/motionPerf";
 import { lazy, useState, useEffect, useMemo, useCallback, memo } from "react";
 import type { ImgHTMLAttributes } from "react";
-import { Link, useLocation, useNavigate } from "react-router";
+import { useLocation, useNavigate } from "react-router";
 import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
 import { translateChartWeekdayLabel } from "@/lib/chartAxisLabels";
@@ -16,12 +16,7 @@ import { resolveAppLoadingContextMessage } from "../../lib/appLoadingContexts";
 import { runWithViewportScrollPreserved } from "../../lib/dashboardScrollStability";
 import { toUserFriendlyMessage } from "../../lib/errorMessages";
 import { logClientError } from "../../lib/clientLog";
-import {
-  QrCode,
-  Loader2,
-  Target,
-  Lock,
-} from "lucide-react";
+import { QrCode, Loader2 } from "lucide-react";
 import { DashboardChartsIdleMount } from "../../components/dashboard/DashboardChartsIdleMount";
 import { EmployeeDashboardEarningsChartFallback } from "./EmployeeDashboardEarningsChartFallback";
 
@@ -38,6 +33,7 @@ import { DashboardRefreshIndicator } from "../../components/dashboard/DashboardR
 import { EmployeeDashboardRealtimeSync } from "../../components/employee/EmployeeDashboardRealtimeSync";
 import { getEmployeeProfile, ensureEmployeeSlug, peekEmployeeProfileCache, peekEmployeeProfileSession, clearEmployeeProfileClientCache, type EmployeeSelfAssignment } from "../../lib/api";
 import { writeEmployeeAssignmentSnapshot } from "../../lib/employeePageSessionCache";
+import { EmployeeWorkLocationCard } from "../../components/employee/EmployeeWorkLocationCard";
 import { useEmployeeDashboardAnalytics } from "../../hooks/useEmployeeDashboardAnalytics";
 import { useEmployeeAccountSummary } from "../../hooks/useEmployeeAccountSummary";
 import { FeatureGate } from "../../components/subscription/FeatureGate";
@@ -87,7 +83,7 @@ export const EmployeeDashboard = memo(function EmployeeDashboard() {
     enabled: dashboardEnabled && employeeEntitlements == null,
     role: dashboardEnabled ? "employee" : null,
   });
-  const { advancedAnalyticsEnabled, hasFeature, ready: entitlementsReady } =
+  const { advancedAnalyticsEnabled, ready: entitlementsReady } =
     employeeEntitlements ?? fallbackEntitlements;
 
   const dashboardDataReady =
@@ -152,6 +148,12 @@ export const EmployeeDashboard = memo(function EmployeeDashboard() {
   const [receivingPaused, setReceivingPaused] = useState(
     () => peekEmployeeProfileSession()?.receivingPaused === true || peekEmployeeProfileCache()?.receivingPaused === true,
   );
+  const [workLocation, setWorkLocation] = useState<EmployeeSelfAssignment | undefined>(
+    () => peekEmployeeProfileSession()?.assignment ?? peekEmployeeProfileCache()?.assignment,
+  );
+  const [workLocationStatus, setWorkLocationStatus] = useState<"loading" | "ready" | "error">(() =>
+    peekEmployeeProfileSession() || peekEmployeeProfileCache() ? "ready" : "loading",
+  );
 
   useEffect(() => {
     if (!authHydrated || !sessionValidated || !user || user.role !== "employee") return;
@@ -169,8 +171,10 @@ export const EmployeeDashboard = memo(function EmployeeDashboard() {
       setEmployeeRecordId(p.id);
       setReceivingPaused(p.receivingPaused === true);
       updateUser({ avatar: p.avatar ?? undefined, name: p.name });
-      if (user.id && p.assignment) {
-        writeEmployeeAssignmentSnapshot(user.id, p.assignment);
+      if (p.assignment) {
+        setWorkLocation(p.assignment);
+        setWorkLocationStatus("ready");
+        if (user.id) writeEmployeeAssignmentSnapshot(user.id, p.assignment);
       }
     };
     const cached = peekEmployeeProfileSession() ?? peekEmployeeProfileCache();
@@ -189,6 +193,7 @@ export const EmployeeDashboard = memo(function EmployeeDashboard() {
           setStaffSlug(null);
           setEmployeeBusinessSlug(null);
           setEmployeeRecordId(null);
+          setWorkLocationStatus("error");
         }
       }
     };
@@ -443,7 +448,14 @@ export const EmployeeDashboard = memo(function EmployeeDashboard() {
           receivingPaused={receivingPaused}
           onReactivated={() => {
             clearEmployeeProfileClientCache();
-            void getEmployeeProfile().then((p) => setReceivingPaused(p.receivingPaused === true));
+            void getEmployeeProfile().then((p) => {
+              setReceivingPaused(p.receivingPaused === true);
+              if (p.assignment) {
+                setWorkLocation(p.assignment);
+                setWorkLocationStatus("ready");
+                if (user?.id) writeEmployeeAssignmentSnapshot(user.id, p.assignment);
+              }
+            });
           }}
         />
         <PremiumPageHero personality="overview" className="employee-dashboard-hero mb-4 sm:mb-5 lg:mb-4">
@@ -533,20 +545,6 @@ export const EmployeeDashboard = memo(function EmployeeDashboard() {
                     </>
                   )}
                 </Button>
-                <Button
-                  type="button"
-                  variant="outline"
-                  className={cn(employeeUi.btnSecondary, employeeUi.heroCtaBtn, "dashboard-hero-action employee-hero-cta-btn")}
-                  asChild
-                >
-                  <Link to="/employee/tip-goals" className={cn(employeeUi.heroCtaLink, "dashboard-hero-action__link")}>
-                    <Target className="h-4 w-4 shrink-0" />
-                    {t("employee.hero.setTipGoal")}
-                    {entitlementsReady && !hasFeature("employeeGoals") ? (
-                      <Lock className="h-3.5 w-3.5 shrink-0 opacity-70" aria-hidden />
-                    ) : null}
-                  </Link>
-                </Button>
                 </div>
               </div>
             </motion.div>
@@ -622,7 +620,7 @@ export const EmployeeDashboard = memo(function EmployeeDashboard() {
           />
         </section>
 
-        <div className={cn(employeeUi.section, "employee-dashboard-section pb-6 pt-1")}>
+        <div className={cn(employeeUi.section, "employee-dashboard-section employee-period-performance pb-6 pt-1")}>
           <EmployeeStripeConnectPrompt
             density="compact"
             className="employee-dashboard-fix-prompt"
@@ -665,6 +663,12 @@ export const EmployeeDashboard = memo(function EmployeeDashboard() {
           </DashboardChartsIdleMount>
           </div>
           </FeatureGate>
+
+          <EmployeeWorkLocationCard
+            assignment={workLocation}
+            loading={workLocationStatus === "loading"}
+            loadFailed={workLocationStatus === "error"}
+          />
 
         </div>
       </div>

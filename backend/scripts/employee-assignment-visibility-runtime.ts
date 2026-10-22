@@ -421,10 +421,10 @@ async function main() {
     if (
       webAssignmentPage.includes("EmployeeAssignmentCard") &&
       webAssignmentPage.includes("readEmployeeAssignmentSnapshot") &&
-      webNav.includes("/employee/assignment") &&
-      !webDashboard.includes("EmployeeAssignmentCard")
+      webDashboard.includes("EmployeeWorkLocationCard") &&
+      !webNav.includes('href: "/employee/assignment"')
     ) {
-      pass("web assignment is a dedicated page with sidebar nav (not overview)");
+      pass("web tip location is on the employee overview; assignment route remains without a sidebar link");
     } else {
       fail("web employee assignment page/nav integration missing");
     }
