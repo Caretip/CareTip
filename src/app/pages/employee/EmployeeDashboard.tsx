@@ -563,61 +563,48 @@ export const EmployeeDashboard = memo(function EmployeeDashboard() {
           aria-labelledby="employee-analytics-period-heading"
           aria-busy={periodMetricsLoading || analyticsPeriodRefreshing || undefined}
         >
-          <div className="employee-dashboard-analytics-intro__head">
-            <div className="employee-dashboard-analytics-intro__lead min-w-0">
-              <p className={dashboardWorkspaceUi.eyebrow}>{t("employee.dashboard.analyticsSectionEyebrow")}</p>
-              <h2
-                id="employee-analytics-period-heading"
-                className={cn(dashboardWorkspaceUi.sectionTitle, "text-[1.0625rem] sm:text-lg")}
-              >
-                {t("employee.dashboard.analyticsSectionTitle")}
-              </h2>
-              <p className={cn(dashboardWorkspaceUi.pageDescription, "employee-dashboard-analytics-intro__desc !mt-1")}>
-                {t("employee.dashboard.analyticsSectionDesc", {
-                  period:
-                    analyticsTimeframe === "today"
-                      ? t("employee.earnings_today").toLowerCase()
-                      : analyticsTimeframe === "week"
-                        ? t("employee.earnings_week").toLowerCase()
-                        : t("employee.earnings_month").toLowerCase(),
-                })}
-              </p>
-              <div className="employee-dashboard-analytics-intro__meta">
-                <DashboardRefreshIndicator
-                  className="employee-analytics-freshness"
-                  isRefreshing={isPeriodSyncing}
-                  lastUpdatedAt={metricsRefreshLastUpdatedAt}
-                  refreshFailed={Boolean(analyticsError && hasVisibleMetrics)}
-                />
-                <DashboardRealtimeStatusStrip
-                  role="employee"
-                  isPeriodSyncing={isPeriodSyncing}
-                  isMetricsSettled={isMetricsSettled}
-                  hasPeriodActivity={hasPeriodActivity}
-                  hasVisibleMetrics={hasVisibleMetrics}
-                  statsLoadFailed={analyticsError}
-                />
-              </div>
+          <h2
+            id="employee-analytics-period-heading"
+            className={dashboardWorkspaceUi.sectionTitle}
+          >
+            {t("employee.dashboard.analyticsSectionTitle")}
+          </h2>
+          <div className="employee-dashboard-analytics-intro__toolbar">
+            <DashboardAnalyticsPeriodToggle
+              className={employeeUi.periodToggle}
+              ariaLabel={t("employee.dashboard.analyticsPeriodAria")}
+              value={analyticsTimeframe}
+              onChange={(period) => {
+                runWithViewportScrollPreserved(() => setAnalyticsTimeframe(period));
+              }}
+              options={(["today", "week", "month"] as const).map((period) => ({
+                id: period,
+                label:
+                  period === "today"
+                    ? t("employee.earnings_today")
+                    : period === "week"
+                      ? t("employee.earnings_week")
+                      : t("employee.earnings_month"),
+                loading: analyticsTimeframeLoading === period,
+              }))}
+            />
+            <div className="employee-dashboard-analytics-intro__meta">
+              <DashboardRefreshIndicator
+                className="employee-analytics-freshness"
+                isRefreshing={isPeriodSyncing}
+                lastUpdatedAt={metricsRefreshLastUpdatedAt}
+                refreshFailed={Boolean(analyticsError && hasVisibleMetrics)}
+              />
+              <DashboardRealtimeStatusStrip
+                role="employee"
+                isPeriodSyncing={isPeriodSyncing}
+                isMetricsSettled={isMetricsSettled}
+                hasPeriodActivity={hasPeriodActivity}
+                hasVisibleMetrics={hasVisibleMetrics}
+                statsLoadFailed={analyticsError}
+              />
             </div>
           </div>
-          <DashboardAnalyticsPeriodToggle
-            className={employeeUi.periodToggle}
-            ariaLabel={t("employee.dashboard.analyticsPeriodAria")}
-            value={analyticsTimeframe}
-            onChange={(period) => {
-              runWithViewportScrollPreserved(() => setAnalyticsTimeframe(period));
-            }}
-            options={(["today", "week", "month"] as const).map((period) => ({
-              id: period,
-              label:
-                period === "today"
-                  ? t("employee.earnings_today")
-                  : period === "week"
-                    ? t("employee.earnings_week")
-                    : t("employee.earnings_month"),
-              loading: analyticsTimeframeLoading === period,
-            }))}
-          />
         </section>
 
         <div className={cn(employeeUi.section, "employee-dashboard-section employee-period-performance pb-6 pt-1")}>

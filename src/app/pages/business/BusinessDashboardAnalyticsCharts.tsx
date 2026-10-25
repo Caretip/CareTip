@@ -1,21 +1,9 @@
 import { memo } from "react";
 import { motion } from "motion/react";
 import { useTranslation } from "react-i18next";
-import { Users, TrendingUp } from "lucide-react";
 import { DashboardViewAllLink } from "../../components/dashboard/DashboardViewAllLink";
 import { TOP_PERFORMERS_PAGE_PATH } from "../../components/business/insights/TopPerformersTeaser";
-import {
-  Area,
-  AreaChart,
-  Bar,
-  BarChart,
-  CartesianGrid,
-  Cell,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from "recharts";
+import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { CareIcon } from "@/components/icons";
 import { useDashboardBlockMotion } from "@/lib/motionPerf";
 import { formatEur } from "../../lib/formatEur";
@@ -30,70 +18,64 @@ import { businessUi } from "../../components/business/businessDashboardUi";
 import {
   BUSINESS_CHART_AXIS,
   BUSINESS_CHART_GRID,
-  businessChartBarFill,
   getBusinessChartTooltipStyle,
 } from "../../components/business/businessDashboardChartTheme";
 import { DASHBOARD_CHART_AREA_STROKE } from "../../components/dashboard/dashboardChartTheme";
-import { CHART_ANIMATION_OFF, LIGHTWEIGHT_AREA, LIGHTWEIGHT_BAR } from "../../lib/lightweightChartProps";
-import type {
-  EmployeePerformanceChartRow,
-  TipPerformanceChartRow,
-} from "../../lib/businessDashboardChartData";
+import { LIGHTWEIGHT_AREA } from "../../lib/lightweightChartProps";
+import { EmployeeProfilePhoto } from "../../components/ui/profile-avatar";
+import type { OverviewLeaderboardPreviewRow, TipPerformanceChartRow } from "../../lib/businessDashboardChartData";
 
 export type BusinessDashboardAnalyticsChartsProps = {
   showChartsLoading: boolean;
   hasTipActivityInPeriod: boolean;
   tipDistributionChartData: TipPerformanceChartRow[];
   tipDistributionTotal: number;
-  employeePerformance: EmployeePerformanceChartRow[];
-  employeeCount: number;
+  leaderboardPreview: OverviewLeaderboardPreviewRow[];
   analyticsTimeframe: "week" | "month" | "year";
   chartRenderKey?: string | number;
 };
 
-const CHART_SLOT_MIN_HEIGHT = "min-h-[260px] sm:min-h-[290px]";
+const CHART_SLOT_MIN_HEIGHT = "min-h-0";
 const CHART_SLOT_EMPTY_MIN_HEIGHT = "min-h-0";
 
 export const BusinessDashboardAnalyticsCharts = memo(function BusinessDashboardAnalyticsCharts({
   showChartsLoading,
   hasTipActivityInPeriod,
   tipDistributionChartData,
-  tipDistributionTotal,
-  employeePerformance,
-  employeeCount,
+  leaderboardPreview,
   analyticsTimeframe,
   chartRenderKey = "business-analytics",
 }: BusinessDashboardAnalyticsChartsProps) {
   const { t } = useTranslation();
   const tipsChartMotion = useDashboardBlockMotion(0.12);
-  const employeeChartMotion = useDashboardBlockMotion(0.18);
+  const leaderboardMotion = useDashboardBlockMotion(0.18);
 
   /** Let Recharts drop overlapping ticks by width (year months / dense month days). */
   const tipAxisMinTickGap =
     analyticsTimeframe === "year" ? 36 : analyticsTimeframe === "month" ? 24 : 16;
 
+  const periodLabel =
+    analyticsTimeframe === "week"
+      ? t("dashboard.filter_week")
+      : analyticsTimeframe === "year"
+        ? t("dashboard.filter_year")
+        : t("dashboard.filter_month");
+
   const tipsChartEmpty = !hasTipActivityInPeriod;
-  const employeeChartEmpty =
-    employeeCount === 0 || !hasTipActivityInPeriod || employeePerformance.length === 0;
+  const leaderboardEmpty = leaderboardPreview.length === 0;
 
   return (
     <div className={businessUi.analyticsChartsGrid}>
-      <motion.div
-        {...tipsChartMotion}
-        className="flex h-full min-h-0 w-full"
-      >
+      <motion.div {...tipsChartMotion} className="flex h-auto min-h-0 w-full min-w-0 self-start">
         <section className="business-period-chart business-dashboard-chart-card w-full min-w-0">
           <h2 className="business-period-chart__title">{t("business.dashboard.tipsPerformanceTitle")}</h2>
-          <div
-            className={cn(
-              "min-w-0 flex-1 overflow-x-auto overflow-y-visible transition-opacity duration-300",
-            )}
-          >
+          <div className="min-w-0 flex-1 overflow-hidden transition-opacity duration-300">
             <DashboardStableChartSlot
+              className="!h-auto"
               loading={showChartsLoading}
               minHeightClass={CHART_SLOT_MIN_HEIGHT}
               contentMinHeightClass={tipsChartEmpty ? CHART_SLOT_EMPTY_MIN_HEIGHT : CHART_SLOT_MIN_HEIGHT}
-              skeleton={<DashboardChartSkeleton minHeightClass="h-full min-h-0" className="h-full" />}
+              skeleton={<DashboardChartSkeleton variant="trend" minHeightClass="business-overview-analytics__plot" className="h-auto" />}
             >
               {tipsChartEmpty ? (
                 <BusinessDashboardAnalyticsEmpty
@@ -103,19 +85,16 @@ export const BusinessDashboardAnalyticsCharts = memo(function BusinessDashboardA
                 />
               ) : (
                 <DeferredContentFade show={!showChartsLoading}>
-                  <div className="business-dashboard-chart-frame flex h-[260px] w-full min-w-0 items-center justify-center sm:h-[290px]">
+                  <div className="business-dashboard-chart-frame business-overview-analytics__plot flex w-full min-w-0 items-center justify-center">
                     <ResponsiveContainer width="100%" height="100%" minWidth={0} key={`${chartRenderKey}-tips`}>
-                      <AreaChart
-                        data={tipDistributionChartData}
-                        margin={{ top: 12, right: 12, left: 4, bottom: 8 }}
-                      >
+                      <AreaChart data={tipDistributionChartData} margin={{ top: 12, right: 8, left: 0, bottom: 4 }}>
                         <CartesianGrid strokeDasharray="4 6" stroke={BUSINESS_CHART_GRID} vertical={false} />
                         <XAxis
                           dataKey="dayLabel"
                           stroke={BUSINESS_CHART_AXIS}
                           tickLine={false}
                           axisLine={{ stroke: BUSINESS_CHART_GRID }}
-                          tick={{ fontSize: 11 }}
+                          tick={{ fontSize: 11, fill: BUSINESS_CHART_AXIS }}
                           tickMargin={8}
                           interval="preserveStartEnd"
                           minTickGap={tipAxisMinTickGap}
@@ -125,8 +104,8 @@ export const BusinessDashboardAnalyticsCharts = memo(function BusinessDashboardA
                           stroke={BUSINESS_CHART_AXIS}
                           tickLine={false}
                           axisLine={false}
-                          style={{ fontSize: "11px" }}
-                          tickMargin={8}
+                          tick={{ fontSize: 11, fill: BUSINESS_CHART_AXIS }}
+                          tickMargin={4}
                           width={48}
                         />
                         <Tooltip
@@ -151,105 +130,82 @@ export const BusinessDashboardAnalyticsCharts = memo(function BusinessDashboardA
         </section>
       </motion.div>
 
-      <motion.div
-        {...employeeChartMotion}
-        className="flex h-full min-h-0 w-full"
-      >
-        <section className="business-period-chart business-dashboard-chart-card w-full min-w-0">
-          <div className="mb-3 flex w-full min-w-0 items-start justify-between gap-3">
-            <h2 className="business-period-chart__title mb-0">{t("business.dashboard.employeePerformanceTitle")}</h2>
-              {!employeeChartEmpty ? (
-                <DashboardViewAllLink to={TOP_PERFORMERS_PAGE_PATH}>
-                  {t("business.dashboard.viewAllTopPerformers")}
-                </DashboardViewAllLink>
-              ) : null}
+      <motion.div {...leaderboardMotion} className="flex h-auto min-h-0 w-full min-w-0 self-start">
+        <section
+          className="business-period-chart business-dashboard-chart-card business-overview-leaderboard w-full min-w-0"
+          aria-label={t("business.dashboard.overviewLeaderboardAria", { period: periodLabel })}
+        >
+          <div className="business-overview-leaderboard__head">
+            <div className="min-w-0">
+              <h2 className="business-period-chart__title business-overview-leaderboard__title">
+                {t("business.dashboard.overviewLeaderboardTitle")}
+              </h2>
+              <p className="business-overview-leaderboard__period">{periodLabel}</p>
+            </div>
+            <DashboardViewAllLink to={TOP_PERFORMERS_PAGE_PATH} className="business-overview-leaderboard__link">
+              {t("business.dashboard.overviewLeaderboardView")}
+            </DashboardViewAllLink>
           </div>
-          <div
-            className={cn(
-              "min-w-0 flex-1 overflow-x-auto overflow-y-visible transition-opacity duration-300",
-            )}
+          <DashboardStableChartSlot
+            className="!h-auto"
+            loading={showChartsLoading}
+            minHeightClass="min-h-0"
+            contentMinHeightClass="min-h-0"
+            skeleton={<OverviewLeaderboardSkeleton />}
           >
-            <DashboardStableChartSlot
-              loading={showChartsLoading}
-              minHeightClass={CHART_SLOT_MIN_HEIGHT}
-              contentMinHeightClass={employeeChartEmpty ? CHART_SLOT_EMPTY_MIN_HEIGHT : CHART_SLOT_MIN_HEIGHT}
-              skeleton={<DashboardChartSkeleton minHeightClass="h-full min-h-0" className="h-full" />}
-            >
-              {employeeCount === 0 ? (
-                <BusinessDashboardAnalyticsEmpty
-                  icon={<Users className="h-6 w-6 text-muted-foreground" aria-hidden />}
-                  title={t("business.dashboard.noEmployees")}
-                  description={t("business.dashboard.noEmployeesChartHint")}
-                />
-              ) : !hasTipActivityInPeriod ? (
-                <BusinessDashboardAnalyticsEmpty
-                  icon={<TrendingUp className="h-6 w-6 text-muted-foreground" aria-hidden />}
-                  title={t("emptyState.chart.title")}
-                  description={t("emptyState.chart.description")}
-                />
-              ) : employeePerformance.length === 0 ? (
-                <BusinessDashboardAnalyticsEmpty
-                  icon={<TrendingUp className="h-6 w-6 text-muted-foreground" aria-hidden />}
-                  title={t("emptyState.chart.title")}
-                  description={t("emptyState.chart.description")}
-                />
-              ) : (
-                <DeferredContentFade show={!showChartsLoading}>
-                  <div className="business-dashboard-chart-frame flex h-[260px] w-full min-w-0 items-center justify-center sm:h-[290px]">
-                    <ResponsiveContainer width="100%" height="100%" minWidth={0} key={`${chartRenderKey}-team`}>
-                      <BarChart
-                        data={employeePerformance}
-                        layout="vertical"
-                        margin={{ top: 12, right: 16, left: 4, bottom: 4 }}
-                        barCategoryGap="16%"
+            {leaderboardEmpty ? (
+              <p className="business-overview-leaderboard__empty">{t("business.dashboard.overviewLeaderboardEmpty")}</p>
+            ) : (
+              <DeferredContentFade show={!showChartsLoading}>
+                <ol className="business-overview-leaderboard__list">
+                  {leaderboardPreview.map((row, index) => {
+                    const rank = index + 1;
+                    const amount = formatEur(row.tips);
+                    return (
+                      <li
+                        key={row.id}
+                        className={cn(
+                          "business-overview-leaderboard__row",
+                          rank === 1 && "business-overview-leaderboard__row--lead",
+                        )}
                       >
-                        <CartesianGrid strokeDasharray="4 6" stroke={BUSINESS_CHART_GRID} horizontal={false} />
-                        <XAxis
-                          type="number"
-                          stroke={BUSINESS_CHART_AXIS}
-                          tickLine={false}
-                          axisLine={{ stroke: BUSINESS_CHART_GRID }}
-                          style={{ fontSize: "11px" }}
-                          tickMargin={8}
-                        />
-                        <YAxis
-                          dataKey="name"
-                          type="category"
-                          stroke={BUSINESS_CHART_AXIS}
-                          tickLine={false}
-                          axisLine={false}
-                          style={{ fontSize: "11px" }}
-                          width={100}
-                          tickMargin={6}
-                        />
-                        <Tooltip
-                          formatter={(value: number) => [formatEur(Number(value)), t("charts.tooltip.tips")]}
-                          contentStyle={getBusinessChartTooltipStyle()}
-                          cursor={{ fill: "rgba(25, 114, 120, 0.05)" }}
-                        />
-                        <Bar dataKey="tips" radius={[0, 6, 6, 0]} maxBarSize={22} minPointSize={4} {...LIGHTWEIGHT_BAR}>
-                          {employeePerformance.map((entry, index) => (
-                            <Cell
-                              key={`cell-${entry.name}`}
-                              fill={businessChartBarFill(index, employeePerformance.length)}
-                            />
-                          ))}
-                        </Bar>
-                      </BarChart>
-                    </ResponsiveContainer>
-                  </div>
-                  <p className="business-dashboard-chart-insight">
-                    {t("business.dashboard.chartPerformanceLeader", {
-                      name: employeePerformance[0]?.name ?? "—",
-                      amount: formatEur(employeePerformance[0]?.tips ?? 0),
-                    })}
-                  </p>
-                </DeferredContentFade>
-              )}
-            </DashboardStableChartSlot>
-          </div>
+                        <span className="business-overview-leaderboard__rank" aria-hidden>
+                          {rank}
+                        </span>
+                        <EmployeeProfilePhoto src={row.avatar} displayName={row.name} className="h-8 w-8" />
+                        <span className="business-overview-leaderboard__name">{row.name}</span>
+                        <span className="business-overview-leaderboard__amount">{amount}</span>
+                        <span className="sr-only">
+                          {t("business.dashboard.overviewLeaderboardRank", {
+                            name: row.name,
+                            rank,
+                            amount,
+                          })}
+                        </span>
+                      </li>
+                    );
+                  })}
+                </ol>
+              </DeferredContentFade>
+            )}
+          </DashboardStableChartSlot>
         </section>
       </motion.div>
     </div>
   );
 });
+
+function OverviewLeaderboardSkeleton() {
+  return (
+    <div className="business-overview-leaderboard__list" aria-hidden>
+      {[0, 1, 2].map((row) => (
+        <div key={row} className="business-overview-leaderboard__row">
+          <span className="h-3 w-3 rounded-sm bg-muted/70" />
+          <span className="h-8 w-8 rounded-md bg-muted/70" />
+          <span className="h-3 w-24 max-w-full rounded-sm bg-muted/70" />
+          <span className="h-3 w-12 rounded-sm bg-muted/70" />
+        </div>
+      ))}
+    </div>
+  );
+}

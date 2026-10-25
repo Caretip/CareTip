@@ -29,9 +29,11 @@ assert(overview.includes("business-overview-section__meta"), "period hero meta r
 assert(!overview.includes("business-overview-section__actions"), "removed side-by-side actions column");
 assert(overviewCss.includes("business-overview-section__desc"), "description width styling");
 
-assert(employeeDash.includes("employee-dashboard-analytics-intro__meta"), "employee meta below copy");
-assert(employeeDash.includes("analyticsSectionEyebrow"), "employee eyebrow");
-assert(employeeCss.includes("employee-dashboard-analytics-intro__desc"), "employee description styling");
+assert(employeeDash.includes("employee-dashboard-analytics-intro__toolbar"), "employee period selector under heading");
+assert(employeeDash.includes("analyticsSectionTitle"), "employee performance heading");
+assert(!employeeDash.includes("analyticsSectionEyebrow"), "employee eyebrow removed");
+assert(read("src/i18n/locales/en.json").includes('"analyticsSectionTitle": "My performance"'), "EN heading");
+assert(read("src/i18n/locales/de.json").includes('"analyticsSectionTitle": "Meine Leistung"'), "DE heading");
 
 assert(limits.includes("DASHBOARD_MOBILE_TEASER_LIMIT = 2"), "mobile teaser limit");
 assert(businessDash.includes("DASHBOARD_MOBILE_TEASER_LIMIT"), "business goals mobile limit");

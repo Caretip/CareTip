@@ -57,13 +57,28 @@
 .caretip-dashboard-shell.business-dashboard .business-overview-period {
   padding-bottom: 0.25rem;
   border-bottom: 1px solid hsl(var(--border) / 0.55);
+  gap: 0.625rem;
+}
+
+.caretip-dashboard-shell.business-dashboard .business-overview-period .business-overview-section__body {
+  gap: 0.875rem;
 }
 
 .caretip-dashboard-shell.business-dashboard .business-overview-period__toolbar {
   display: flex;
   flex-direction: column;
-  gap: 0.875rem;
+  align-items: flex-start;
+  gap: 0.5rem;
   min-width: 0;
+}
+
+.caretip-dashboard-shell.business-dashboard .business-overview-period__status {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 0.75rem;
+  min-width: 0;
+  max-width: 100%;
 }
 
 .caretip-dashboard-shell.business-dashboard .business-overview-period__content {
@@ -97,6 +112,10 @@
 @media (min-width: 640px) {
   .caretip-dashboard-shell.business-dashboard .business-overview-section {
     gap: 1.125rem;
+  }
+
+  .caretip-dashboard-shell.business-dashboard .business-overview-period.business-overview-section {
+    gap: 0.75rem;
   }
 
   .caretip-dashboard-shell.business-dashboard .business-overview-period__toolbar {
@@ -159,6 +178,160 @@
   height: 1rem;
   background: hsl(var(--border) / 0.9);
   flex-shrink: 0;
+}
+
+.caretip-dashboard-shell.business-dashboard .business-overview-period__content {
+  container-type: inline-size;
+  container-name: overview-analytics;
+}
+
+.caretip-dashboard-shell.business-dashboard .business-dashboard-analytics-grid {
+  align-items: start;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0.875rem;
+  min-height: 0;
+}
+
+@container overview-analytics (min-width: 42rem) {
+  .caretip-dashboard-shell.business-dashboard .business-dashboard-analytics-grid {
+    grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+    gap: 1rem;
+  }
+}
+
+.caretip-dashboard-shell.business-dashboard .business-overview-period .dashboard-period-toggle__btn {
+  min-height: 2.75rem;
+}
+
+@media (min-width: 1024px) {
+  .caretip-dashboard-shell.business-dashboard .business-overview-period .dashboard-period-toggle__btn {
+    min-height: 2.5rem;
+  }
+}
+
+.caretip-dashboard-shell.business-dashboard .business-dashboard-chart-card .business-overview-analytics__plot {
+  flex: 0 0 auto;
+  width: 100%;
+  height: 14.75rem;
+  min-height: 14.75rem;
+  max-height: 14.75rem;
+}
+
+@container overview-analytics (min-width: 40rem) {
+  .caretip-dashboard-shell.business-dashboard .business-dashboard-chart-card .business-overview-analytics__plot {
+    height: 16.75rem;
+    min-height: 16.75rem;
+    max-height: 16.75rem;
+  }
+}
+
+.caretip-dashboard-shell.business-dashboard .business-dashboard-analytics-grid > * {
+  min-height: 0;
+  height: auto;
+  align-self: start;
+}
+
+.caretip-dashboard-shell.business-dashboard .business-overview-leaderboard__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.5rem;
+}
+
+.caretip-dashboard-shell.business-dashboard .business-overview-leaderboard__title {
+  margin: 0;
+}
+
+.caretip-dashboard-shell.business-dashboard .business-overview-leaderboard__period {
+  margin: 0.15rem 0 0;
+  font-size: 0.75rem;
+  line-height: 1.35;
+  color: hsl(var(--muted-foreground));
+}
+
+.caretip-dashboard-shell.business-dashboard .business-overview-leaderboard__link {
+  flex: 0 0 auto;
+  align-self: flex-start;
+  margin-top: 0.05rem;
+}
+
+@container overview-analytics (max-width: 24rem) {
+  .caretip-dashboard-shell.business-dashboard .business-overview-leaderboard__head {
+    flex-wrap: wrap;
+  }
+
+  .caretip-dashboard-shell.business-dashboard .business-overview-leaderboard__link {
+    min-height: 2.75rem;
+    align-items: center;
+  }
+}
+
+.caretip-dashboard-shell.business-dashboard .business-overview-leaderboard__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  min-width: 0;
+}
+
+.caretip-dashboard-shell.business-dashboard .business-overview-leaderboard__row {
+  display: grid;
+  grid-template-columns: 1.125rem 2rem minmax(0, 1fr) auto;
+  align-items: center;
+  column-gap: 0.5rem;
+  min-height: 2.5rem;
+  padding: 0.25rem 0;
+  border-top: 1px solid hsl(var(--border) / 0.65);
+  min-width: 0;
+}
+
+.caretip-dashboard-shell.business-dashboard .business-overview-leaderboard__row:first-child {
+  border-top: 0;
+}
+
+.caretip-dashboard-shell.business-dashboard .business-overview-leaderboard__row--lead {
+  box-shadow: inset 2px 0 0 hsl(var(--primary));
+  background: hsl(var(--primary) / 0.06);
+  border-radius: 0.25rem;
+  padding-left: 0.4rem;
+  padding-right: 0.35rem;
+}
+
+.caretip-dashboard-shell.business-dashboard .business-overview-leaderboard__rank {
+  font-size: 0.75rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: hsl(var(--muted-foreground));
+}
+
+.caretip-dashboard-shell.business-dashboard .business-overview-leaderboard__row--lead .business-overview-leaderboard__rank {
+  color: hsl(var(--primary));
+}
+
+.caretip-dashboard-shell.business-dashboard .business-overview-leaderboard__name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: hsl(var(--foreground));
+}
+
+.caretip-dashboard-shell.business-dashboard .business-overview-leaderboard__amount {
+  font-size: 0.875rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: hsl(var(--foreground));
+  white-space: nowrap;
+}
+
+.caretip-dashboard-shell.business-dashboard .business-overview-leaderboard__empty {
+  margin: 0.25rem 0 0.15rem;
+  font-size: 0.8125rem;
+  line-height: 1.45;
+  color: hsl(var(--muted-foreground));
 }
 
 @media (max-width: 380px) {

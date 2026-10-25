@@ -1,5 +1,6 @@
 import { memo } from "react";
 import { useTranslation } from "react-i18next";
+import { CircleCheck, Clock, Users, Wallet } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   DashboardHeroFinancialLayout,
@@ -77,20 +78,25 @@ export const BusinessHeroFinancialMetrics = memo(function BusinessHeroFinancialM
         ? t("business.hero.financial.distributionZeroHint")
         : t("business.hero.financial.distributionHint");
 
+  const payoutIcon = "dashboard-hero-financial__metric-glyph";
+
   const payoutMetrics: DashboardHeroFinancialMetric[] = [
     {
       id: "stripe",
       label: t("business.hero.financial.availableInStripe"),
+      icon: <Wallet className={payoutIcon} strokeWidth={2} aria-hidden />,
       value: stripeCurrencyValue(summary?.stripe.availableCents),
     },
     {
       id: "pending",
       label: t("business.hero.financial.pendingStripe"),
+      icon: <Clock className={payoutIcon} strokeWidth={2} aria-hidden />,
       value: stripeCurrencyValue(summary?.stripe.pendingCents),
     },
     {
       id: "paid",
       label: t("business.hero.financial.paidOut"),
+      icon: <CircleCheck className={payoutIcon} strokeWidth={2} aria-hidden />,
       value: connectPending
         ? payoutSkeleton
         : summary
@@ -101,6 +107,7 @@ export const BusinessHeroFinancialMetrics = memo(function BusinessHeroFinancialM
     {
       id: "distribution",
       label: t("business.hero.financial.toDistribute"),
+      icon: <Users className={payoutIcon} strokeWidth={2} aria-hidden />,
       value: ledgerCurrencyValue(distributionEur),
       hint: ledgerPending ? undefined : distributionHint,
     },

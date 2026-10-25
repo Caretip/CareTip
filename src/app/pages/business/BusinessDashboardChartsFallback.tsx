@@ -1,23 +1,36 @@
-import { Card, CardContent, CardHeader } from "../../components/ui/card";
-import { DashboardChartSkeleton } from "../../components/dashboard/DashboardAnalyticsLoader";
 import { businessUi } from "../../components/business/businessDashboardUi";
-import { cn } from "@/lib/utils";
+import { DashboardChartSkeleton } from "../../components/dashboard/DashboardAnalyticsLoader";
 
 export function BusinessDashboardChartsFallback() {
   return (
     <div className={businessUi.analyticsChartsGrid} aria-hidden>
-      {[0, 1].map((key) => (
-        <div key={key} className="flex h-full min-h-0 w-full">
-          <Card className={cn(businessUi.cardStatic, "business-dashboard-chart-card business-dashboard-panel-card w-full")}>
-            <CardHeader className="business-dashboard-panel-card__header">
-              <div className="h-6 w-40 rounded-md bg-muted/60" />
-            </CardHeader>
-            <CardContent className="business-dashboard-panel-card__content min-h-[260px] sm:min-h-[290px]">
-              <DashboardChartSkeleton minHeightClass="h-full min-h-0" className="h-full" />
-            </CardContent>
-          </Card>
-        </div>
-      ))}
+      <div className="flex min-h-0 w-full min-w-0">
+        <section className="business-period-chart business-dashboard-chart-card w-full min-w-0">
+          <div className="mb-3 h-4 w-36 rounded-sm bg-muted/60" />
+          <DashboardChartSkeleton variant="trend" minHeightClass="business-overview-analytics__plot" className="h-auto" />
+        </section>
+      </div>
+      <div className="flex min-h-0 w-full min-w-0">
+        <section className="business-period-chart business-dashboard-chart-card business-overview-leaderboard w-full min-w-0">
+          <div className="business-overview-leaderboard__head">
+            <div>
+              <div className="h-4 w-32 rounded-sm bg-muted/60" />
+              <div className="mt-2 h-3 w-20 rounded-sm bg-muted/50" />
+            </div>
+            <div className="h-3 w-24 rounded-sm bg-muted/50" />
+          </div>
+          <div className="business-overview-leaderboard__list">
+            {[0, 1, 2].map((row) => (
+              <div key={row} className="business-overview-leaderboard__row">
+                <span className="h-3 w-3 rounded-sm bg-muted/70" />
+                <span className="h-8 w-8 rounded-md bg-muted/70" />
+                <span className="h-3 w-24 max-w-full rounded-sm bg-muted/70" />
+                <span className="h-3 w-12 rounded-sm bg-muted/70" />
+              </div>
+            ))}
+          </div>
+        </section>
+      </div>
     </div>
   );
 }

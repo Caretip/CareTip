@@ -9,6 +9,8 @@ export type DashboardHeroFinancialMetric = {
   value: ReactNode;
   hint?: string;
   valueClassName?: string;
+  /** Small icon beside the label. The amount stays plain. */
+  icon?: ReactNode;
 };
 
 export type DashboardHeroFinancialLayoutProps = {
@@ -73,16 +75,9 @@ export function DashboardHeroFinancialLayout({
         <div className="dashboard-hero-financial__value dashboard-hero-financial__value--primary">
           {primary.value}
         </div>
-        {primary.hint || loading ? (
+        {primary.hint ? (
           <div className="dashboard-hero-financial__hint-slot">
-            {loading && !primary.hint ? (
-              <span
-                className="dashboard-hero-metric-skeleton__sub dashboard-hero-financial__hint-skeleton"
-                aria-hidden
-              />
-            ) : primary.hint ? (
-              <p className="dashboard-hero-financial__hint">{primary.hint}</p>
-            ) : null}
+            <p className="dashboard-hero-financial__hint">{primary.hint}</p>
           </div>
         ) : null}
       </div>
@@ -94,7 +89,7 @@ export function DashboardHeroFinancialLayout({
         <div className="dashboard-hero-financial__payout-grid">
           {payoutMetrics.map((metric) => (
             <div key={metric.id} className="dashboard-hero-financial__payout-cell">
-              <p className="dashboard-hero-financial__label">{metric.label}</p>
+              <MetricLabel label={metric.label} icon={metric.icon} />
               <div
                 className={cn(
                   "dashboard-hero-financial__value dashboard-hero-financial__value--payout",
@@ -138,7 +133,7 @@ export function DashboardHeroFinancialLayout({
           <div className="dashboard-hero-financial__perf-grid">
             {performanceMetrics.map((metric) => (
               <div key={metric.id} className="dashboard-hero-financial__perf-cell">
-                <p className="dashboard-hero-financial__label">{metric.label}</p>
+                <MetricLabel label={metric.label} icon={metric.icon} />
                 <div
                   className={cn(
                     "dashboard-hero-financial__value dashboard-hero-financial__value--support",
@@ -168,5 +163,18 @@ export function DashboardHeroFinancialLayout({
         </Link>
       ) : null}
     </section>
+  );
+}
+
+function MetricLabel({ label, icon }: { label: string; icon?: ReactNode }) {
+  return (
+    <p className="dashboard-hero-financial__label">
+      {icon ? (
+        <span className="dashboard-hero-financial__metric-icon" aria-hidden>
+          {icon}
+        </span>
+      ) : null}
+      <span className="dashboard-hero-financial__label-text">{label}</span>
+    </p>
   );
 }

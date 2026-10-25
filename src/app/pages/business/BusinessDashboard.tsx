@@ -50,7 +50,7 @@ import { DashboardViewAllLink } from "../../components/dashboard/DashboardViewAl
 import { EmployeeGoalMobileCard } from "../../components/business/businessDashboardMobileCards";
 
 import {
-  buildEmployeePerformanceChartRows,
+  buildOverviewLeaderboardPreview,
   hasTipPerformanceChartActivity,
   resolveBusinessDashboardChartStats,
   resolveTipPerformanceChartRows,
@@ -176,14 +176,6 @@ export const BusinessDashboard = memo(function BusinessDashboard() {
 
   const [employeeGoalsExpanded, setEmployeeGoalsExpanded] = useState(true);
 
-  const employees = displayStats?.employees;
-  const activeRosterCount = useMemo(
-    () =>
-      (employees ?? []).filter(
-        (e) => e.isActive === true && e.activationStatus === "active" && e.emailVerified === true,
-      ).length,
-    [employees],
-  );
   const hasTipActivityInPeriod = (displayMetrics?.totalTips ?? 0) > 0;
 
   const chartPeriodStats = useMemo(
@@ -234,8 +226,9 @@ export const BusinessDashboard = memo(function BusinessDashboard() {
     chartPeriodStats?.totalTips ?? displayMetrics?.totalTips,
   );
 
-  const employeePerformance = useMemo(
-    () => buildEmployeePerformanceChartRows(chartPeriodStats?.employees ?? displayStats?.employees, 3),
+  const leaderboardPreview = useMemo(
+    () =>
+      buildOverviewLeaderboardPreview(chartPeriodStats?.employees ?? displayStats?.employees, 3),
     [chartPeriodStats?.employees, displayStats?.employees],
   );
 
@@ -390,11 +383,9 @@ export const BusinessDashboard = memo(function BusinessDashboard() {
               dashboardFormalGreetingBadgeClassName,
             )}
             titleClassName="business-hero-title max-lg:!leading-[1.08] lg:!leading-[1.12] tracking-tight max-lg:mx-0 max-lg:max-w-[22ch] max-lg:!text-[1.5625rem] max-lg:text-left lg:max-w-[30ch] lg:!text-[2rem] lg:text-left xl:max-w-[34ch] xl:!text-[2.125rem]"
-            descriptionClassName="business-hero-description !line-clamp-2 max-w-[34ch] leading-relaxed text-muted-foreground/85 max-lg:mx-0 max-lg:mb-0 max-lg:text-left lg:max-w-[38ch] xl:max-w-[42ch]"
             textColumnClassName="business-hero-text-column lg:py-0.5 xl:pr-4"
             badge={formalGreeting}
             title={`${t("business.hero.headlineLine1")} ${t("business.hero.headlineLine2")}`}
-            description={t("business.hero.sub")}
             image={
               <motion.div
                 initial={motionReady ? { opacity: 0, y: 8 } : false}
@@ -469,17 +460,25 @@ export const BusinessDashboard = memo(function BusinessDashboard() {
 
         <BusinessDashboardOverviewSection
           id="business-overview-period"
-          eyebrow={t("business.dashboard.analyticsSectionEyebrow")}
           title={t("business.dashboard.analyticsSectionTitle")}
-          description={t("business.dashboard.analyticsSectionDesc", {
-            period: analyticsPeriodLabel(analyticsTimeframe).toLowerCase(),
-          })}
           className={cn(
             "business-overview-period mb-2",
             isPeriodRefreshing && !showMetricsSkeleton && "business-dashboard-analytics-intro--refreshing",
           )}
-          actions={
-            <>
+        >
+          <div className="business-overview-period__toolbar">
+            <DashboardAnalyticsPeriodToggle
+              className={businessUi.periodToggle}
+              ariaLabel={t("business.dashboard.analyticsPeriodAria")}
+              value={analyticsTimeframe}
+              onChange={handleAnalyticsPeriodChange}
+              options={(["week", "month", "year"] as const).map((period) => ({
+                id: period,
+                label: analyticsPeriodLabel(period),
+                loading: analyticsTimeframe === period && analyticsTimeframeLoading === period,
+              }))}
+            />
+            <div className="business-overview-period__status">
               <DashboardRefreshIndicator
                 isRefreshing={isPeriodSyncing}
                 lastUpdatedAt={lastUpdatedAt}
@@ -494,21 +493,7 @@ export const BusinessDashboard = memo(function BusinessDashboard() {
                 pendingVerification={showOnboardingReviewNotice}
                 statsLoadFailed={statsLoadFailed}
               />
-            </>
-          }
-        >
-          <div className="business-overview-period__toolbar">
-            <DashboardAnalyticsPeriodToggle
-              className={businessUi.periodToggle}
-              ariaLabel={t("business.dashboard.analyticsPeriodAria")}
-              value={analyticsTimeframe}
-              onChange={handleAnalyticsPeriodChange}
-              options={(["week", "month", "year"] as const).map((period) => ({
-                id: period,
-                label: analyticsPeriodLabel(period),
-                loading: analyticsTimeframe === period && analyticsTimeframeLoading === period,
-              }))}
-            />
+            </div>
           </div>
 
           <div className="business-overview-period__content">
@@ -529,7 +514,7 @@ export const BusinessDashboard = memo(function BusinessDashboard() {
                 isPeriodRefreshing={isPeriodRefreshing}
                 refreshingLabel={periodRefreshingLabel}
                 hasTipActivityInPeriod={hasTipActivityInPeriod}
-                topPerformersCount={employeePerformance.length}
+                topPerformersCount={leaderboardPreview.length}
                 kpiReady={kpiUsable}
               />
             </motion.div>
@@ -563,8 +548,7 @@ export const BusinessDashboard = memo(function BusinessDashboard() {
                     hasTipActivityInPeriod={hasChartTipActivity}
                     tipDistributionChartData={tipDistributionChartData}
                     tipDistributionTotal={tipDistributionTotal}
-                    employeePerformance={employeePerformance}
-                    employeeCount={activeRosterCount}
+                    leaderboardPreview={leaderboardPreview}
                     analyticsTimeframe={analyticsTimeframe}
                     chartRenderKey={`${analyticsTimeframe}-${dataRevision}-${tipDistributionChartData.length}`}
                   />

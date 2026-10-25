@@ -222,21 +222,51 @@ export function buildEmployeePerformanceChartRows(
   employees: DashboardEmployeeRow[] | undefined,
   limit = 8,
 ): EmployeePerformanceChartRow[] {
-  const ranked = (employees ?? [])
-    .filter(
-      (e) =>
-        e.isActive === true &&
-        e.activationStatus === "active" &&
-        e.emailVerified === true &&
-        e.tipsTotal > 0,
-    )
-    .sort((a, b) => b.tipsTotal - a.tipsTotal)
-    .slice(0, limit);
-
-  return ranked.map((e, index, arr) => ({
+  return rankOverviewTipEarners(employees, limit).map((e, index, arr) => ({
     name: e.name,
     tips: e.tipsTotal,
     rating: 0,
     color: dashboardChartBarFill(index, arr.length),
   }));
+}
+
+export type OverviewLeaderboardPreviewRow = {
+  id: string;
+  name: string;
+  avatar: string | null;
+  tips: number;
+};
+
+type OverviewLeaderboardSource = DashboardEmployeeRow & {
+  id?: string;
+  avatar?: string | null;
+};
+
+/** Same eligibility as the overview employee chart: active, verified, period tips above zero. */
+export function buildOverviewLeaderboardPreview(
+  employees: OverviewLeaderboardSource[] | undefined,
+  limit = 3,
+): OverviewLeaderboardPreviewRow[] {
+  return rankOverviewTipEarners(employees, limit).map((employee, index) => ({
+    id: employee.id ?? `${employee.name}-${index}`,
+    name: employee.name,
+    avatar: employee.avatar ?? null,
+    tips: employee.tipsTotal,
+  }));
+}
+
+function rankOverviewTipEarners<T extends DashboardEmployeeRow>(
+  employees: T[] | undefined,
+  limit: number,
+): T[] {
+  return (employees ?? [])
+    .filter(
+      (employee) =>
+        employee.isActive === true &&
+        employee.activationStatus === "active" &&
+        employee.emailVerified === true &&
+        employee.tipsTotal > 0,
+    )
+    .sort((a, b) => b.tipsTotal - a.tipsTotal)
+    .slice(0, limit);
 }

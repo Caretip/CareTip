@@ -57,8 +57,6 @@ export const BusinessDashboardMobileHero = memo(function BusinessDashboardMobile
           <span className="block">{t("business.hero.headlineLine2")}</span>
         </h1>
 
-        <p className="business-dashboard-mobile-hero__description">{t("business.hero.sub")}</p>
-
         <motion.div
           className="business-dashboard-mobile-hero__actions"
           initial={{ opacity: 0, y: 6 }}

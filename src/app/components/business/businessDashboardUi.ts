@@ -28,7 +28,7 @@ export const businessUi = {
     "business-mobile-card block border-b border-border/70 py-3.5 transition-colors active:bg-muted/20",
   tableWrap: "hidden overflow-x-auto lg:block",
   analyticsChartsGrid:
-    "business-dashboard-analytics-grid grid w-full min-w-0 items-stretch gap-8 sm:gap-8 lg:grid-cols-2 lg:gap-10",
+    "business-dashboard-analytics-grid grid w-full min-w-0 items-start gap-4",
   bottomGrid:
     "business-dashboard-bottom-grid grid items-stretch gap-8 sm:gap-8 lg:grid-cols-3 lg:gap-8",
   card: "business-card overflow-hidden",
