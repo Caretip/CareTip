@@ -31,5 +31,10 @@ assert(employee.includes('label: t("employee.hero.statYourEarnings")'), "employe
 const css = read("src/styles/dashboard-hero-financial.css");
 assert(css.includes("dashboard-hero-financial__metric-icon"), "shared icon treatment");
 assert(css.includes("hsl(var(--primary))"), "icons use the brand accent");
+assert(css.includes("stroke-width: 2"), "icon stroke stays consistent");
+
+const mobile = read("src/styles/business-web-design.css");
+assert(mobile.includes("grid-template-rows: subgrid"), "mobile metric rows share label and value tracks");
+assert(mobile.includes("grid-row: span 2"), "each supporting metric spans its row pair");
 
 console.log("hero-metric-icons: ok");

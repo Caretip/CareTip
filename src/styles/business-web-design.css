@@ -709,14 +709,15 @@
   .caretip-dashboard-shell.business-dashboard .business-dashboard-hero .dashboard-hero-financial-panel .dashboard-hero-financial__payout-cell .dashboard-hero-financial__label {
     min-height: 0;
     font-size: 0.6875rem;
-    line-height: 1.25;
+    line-height: 1.3;
     overflow-wrap: break-word;
   }
 
   .caretip-dashboard-shell.business-dashboard .business-dashboard-hero .dashboard-hero-financial-panel .dashboard-hero-financial__value--payout {
     font-size: clamp(0.9375rem, 4.4vw, 1.0625rem);
-    white-space: normal;
-    overflow-wrap: anywhere;
+    line-height: 1.2;
+    white-space: nowrap;
+    overflow-wrap: normal;
   }
 }
 
@@ -756,5 +757,75 @@
   .employee-analytics-mini-chart
 ) .dashboard-workspace-empty svg {
   color: var(--caretip-brand-orange, #e9781c) !important;
+}
+
+/* Mobile hero metrics: one shared label row and one shared value row per pair. */
+@media (max-width: 1023px) {
+  .caretip-dashboard-shell:is(.business-dashboard, .employee-dashboard)
+    :is(.business-dashboard-hero, .employee-dashboard-hero)
+    .dashboard-hero-financial-panel
+    .dashboard-hero-financial__payout-grid {
+    align-items: stretch;
+    row-gap: 0.2rem;
+  }
+
+  .caretip-dashboard-shell.business-dashboard
+    .business-dashboard-hero
+    .dashboard-hero-financial-panel
+    .dashboard-hero-financial__payout-cell:nth-child(n + 3) {
+    margin-top: 0.55rem;
+  }
+
+  .caretip-dashboard-shell.employee-dashboard
+    .employee-dashboard-hero
+    .dashboard-hero-financial-panel
+    .dashboard-hero-financial__payout-cell:nth-child(n + 3) {
+    margin-top: 0.35rem;
+  }
+
+  .caretip-dashboard-shell:is(.business-dashboard, .employee-dashboard)
+    :is(.business-dashboard-hero, .employee-dashboard-hero)
+    .dashboard-hero-financial-panel
+    .dashboard-hero-financial__payout-cell {
+    display: grid;
+    grid-template-rows: subgrid;
+    grid-row: span 2;
+    align-content: start;
+  }
+
+  .caretip-dashboard-shell:is(.business-dashboard, .employee-dashboard)
+    :is(.business-dashboard-hero, .employee-dashboard-hero)
+    .dashboard-hero-financial-panel
+    .dashboard-hero-financial__payout-cell
+    .dashboard-hero-financial__label {
+    align-items: flex-start;
+    line-height: 1.3;
+  }
+
+  .caretip-dashboard-shell:is(.business-dashboard, .employee-dashboard)
+    :is(.business-dashboard-hero, .employee-dashboard-hero)
+    .dashboard-hero-financial-panel
+    .dashboard-hero-financial__label-text {
+    display: block;
+    min-width: 0;
+    overflow-wrap: break-word;
+  }
+
+  .caretip-dashboard-shell:is(.business-dashboard, .employee-dashboard)
+    :is(.business-dashboard-hero, .employee-dashboard-hero)
+    .dashboard-hero-financial-panel
+    .dashboard-hero-financial__value--payout {
+    align-self: start;
+    line-height: 1.2;
+    white-space: nowrap;
+  }
+
+  .caretip-dashboard-shell:is(.business-dashboard, .employee-dashboard)
+    :is(.business-dashboard-hero, .employee-dashboard-hero)
+    .dashboard-hero-financial-panel
+    .dashboard-hero-financial__value--payout
+    .dashboard-hero-financial__unavailable {
+    white-space: normal;
+  }
 }
 

@@ -4510,10 +4510,10 @@
       "statYourEarningsHint": "Nach CareTip-Gebühren",
       "statPaidToStripe": "An Stripe überwiesen",
       "statPendingRelease": "Freigabe ausstehend",
-      "statGrossTips": "Brutto-Trinkgelder",
+      "statGrossTips": "Brutto-Trinkgeld",
       "statGrossTipsHint": "Gesamte Kundentrinkgelder vor CareTip-Gebühren.",
       "statMonthEarnings": "Diesen Monat",
-      "statTotalSupporters": "Erfolgreiche Trinkgelder",
+      "statTotalSupporters": "Erfolgreiche Trinkgeld",
       "statAverageTip": "Ø Trinkgeld",
       "accountOverviewLabel": "Kontoübersicht, gesamt",
       "financial": {
