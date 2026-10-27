@@ -9,10 +9,18 @@ export const STRIPE_BALANCE_SETTINGS_API_VERSION = "2025-09-30.clover" as const;
 export const STRIPE_BALANCE_SETTINGS_PATH = "/v1/balance_settings" as const;
 
 /**
- * Stripe Support–confirmed ongoing settlement override for DE Connect Express (destination charges,
- * platform loss liability). See manage payout schedule: delay_days_override up to 31.
+ * Live-mode DE accounts still receive this per-account override when it is not already set.
+ * Test-mode eligible German Express accounts use Stripe's platform T+3 default instead.
+ * See manage payout schedule: delay_days_override up to 31.
  */
 export const STRIPE_CONNECT_DE_SETTLEMENT_DELAY_DAYS_OVERRIDE = 3;
+
+/**
+ * Stripe clears an explicit settlement override when this field is an empty string.
+ * Do not send 0. Public docs describe the result as the account's lowest available delay,
+ * which is not a guarantee that delay_days stays 3.
+ */
+export const STRIPE_SETTLEMENT_DELAY_DAYS_OVERRIDE_CLEAR = "" as const;
 
 /** Target override for connected accounts in this country; null = do not POST settlement override. */
 export function connectSettlementDelayDaysOverrideTarget(

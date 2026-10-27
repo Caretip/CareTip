@@ -17,6 +17,7 @@ export type SettlementPolicyStatus =
   | "settlement_unchanged"
   | "settlement_reset"
   | "already_at_account_default"
+  | "eligibility_unknown"
   | "minimum_unavailable"
   | "skipped_ineligible"
   | "skipped_disabled"
@@ -28,11 +29,26 @@ export type SettlementPolicyStatus =
 
 export type SettlementDelayReadSource = "balance_settings" | "accounts_v1_fallback" | "unavailable";
 
+/**
+ * How a Balance Settings read relates to T+3. Country alone is not eligibility.
+ * `live_override_required` is the preserved live-mode write path, not a test-mode default.
+ */
+export type SettlementObservedState =
+  | "platform_default"
+  | "explicit_override"
+  | "delay_mismatch"
+  | "eligibility_unknown"
+  | "out_of_scope"
+  | "unverified"
+  | "live_override_required";
+
 export type SettlementDelayReadDto = {
   source: SettlementDelayReadSource;
   delayDays: number | null;
   delayDaysOverride: number | null;
   effectiveDelayDays: number | null;
+  /** False when delay_days_override was present but not a number, null, or empty string. */
+  settlementOverrideRecognized?: boolean;
 };
 
 export type SchedulePolicyResultDto = {
@@ -50,6 +66,8 @@ export type SettlementPolicyResultDto = {
   after: SettlementDelayReadDto | null;
   /** True when no supported CareTip API path remains to lower delay (Stripe Support may be required). */
   stripeSupportMayBeRequired: boolean;
+  /** Distinguishes a platform default from an explicit override. Null on older callers. */
+  settlementState?: SettlementObservedState | null;
 };
 
 export type ConnectPayoutPolicyApplyDto = {

@@ -112,12 +112,18 @@ export async function readConnectPayoutConfigurationStatus(
   settlement: SettlementDelayReadDto;
   accountsV1DelayDays: number | null;
   stripeAccountCountry: string | null;
+  stripeAccountLivemode: boolean | null;
+  stripeAccountType: string | null;
+  stripeDashboardType: string | null;
   accountRetrieveError: ConnectAccountStripeReadError | null;
   accountRetrieveErrorClass: StripeAccountReadErrorClass;
 }> {
   let stripeScheduleInterval: string | null = null;
   let accountsV1: number | null = null;
   let stripeAccountCountry: string | null = null;
+  let stripeAccountLivemode: boolean | null = null;
+  let stripeAccountType: string | null = null;
+  let stripeDashboardType: string | null = null;
   let accountRetrieveError: ConnectAccountStripeReadError | null = null;
   let stripeScheduleReadable = false;
   if (isStripeConfigured() || retrieveAccountFn) {
@@ -126,6 +132,11 @@ export async function readConnectPayoutConfigurationStatus(
       stripeScheduleInterval = acct.settings?.payouts?.schedule?.interval ?? null;
       accountsV1 = accountsV1DelayDays(acct);
       stripeAccountCountry = acct.country ?? null;
+      const liveField = (acct as unknown as { livemode?: unknown }).livemode;
+      stripeAccountLivemode = typeof liveField === "boolean" ? liveField : null;
+      stripeAccountType = typeof acct.type === "string" ? acct.type : null;
+      const dashboardType = acct.controller?.stripe_dashboard?.type;
+      stripeDashboardType = typeof dashboardType === "string" ? dashboardType : null;
       stripeScheduleReadable = true;
     } catch (err) {
       accountRetrieveError = stripeReadErrorFromUnknown(err);
@@ -151,6 +162,9 @@ export async function readConnectPayoutConfigurationStatus(
     settlement,
     accountsV1DelayDays: accountsV1,
     stripeAccountCountry,
+    stripeAccountLivemode,
+    stripeAccountType,
+    stripeDashboardType,
     accountRetrieveError,
     accountRetrieveErrorClass: classifyConnectAccountRetrieveError(accountRetrieveError),
   };
@@ -172,6 +186,7 @@ function mapSettlementResult(r: SettlementMinimumApplyResult): SettlementPolicyR
     before: r.before,
     after: r.after,
     stripeSupportMayBeRequired: r.stripeSupportMayBeRequired,
+    settlementState: r.settlementState,
   };
 }
 
@@ -181,6 +196,7 @@ function isSettlementOutcomeAcceptable(status: SettlementPolicyResultDto["status
     status === "settlement_unchanged" ||
     status === "settlement_reset" ||
     status === "already_at_account_default" ||
+    status === "eligibility_unknown" ||
     status === "skipped_ineligible" ||
     status === "skipped_disabled"
   );
@@ -281,6 +297,7 @@ export async function applyConnectPayoutPolicy(args: {
             before: null,
             after: null,
             stripeSupportMayBeRequired: false,
+            settlementState: null,
           }
         : null,
       policyComplete: false,
@@ -357,6 +374,7 @@ export async function applyConnectPayoutPolicy(args: {
       before: null,
       after: null,
       stripeSupportMayBeRequired: false,
+      settlementState: null,
     };
   }
 

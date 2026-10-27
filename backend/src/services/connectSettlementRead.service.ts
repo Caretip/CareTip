@@ -18,6 +18,7 @@ export function settlementReadFromBalanceSettings(
     delayDays: snap.delayDays,
     delayDaysOverride: snap.delayDaysOverride,
     effectiveDelayDays: snap.effectiveSettlementDelayDays,
+    settlementOverrideRecognized: snap.settlementOverrideRecognized,
   };
 }
 

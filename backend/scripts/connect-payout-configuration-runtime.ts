@@ -117,9 +117,10 @@ __setConnectBalanceSettingsRawRequestForTests(async (method, _path, data) => {
 
 void (async () => {
   const needsApply = await applyConnectSettlementMinimumDelay("acct_test_7day", 7);
-  assert(needsApply.status === "settlement_configured", "POST override 3 for DE 7-day default");
-  assert(needsApply.after?.delayDaysOverride === 3, "verified override");
-  assert(needsApply.stripeSupportMayBeRequired === false, "success no support flag");
+  assert(settlementOverridePosted === false, "test mode does not POST when Express eligibility is unconfirmed");
+  assert(needsApply.status === "eligibility_unknown", "delay other than 3 is not overwritten from country alone");
+  assert(needsApply.settlementState === "eligibility_unknown", "unconfirmed account type stays unknown");
+  assert(needsApply.stripeSupportMayBeRequired === false, "unknown eligibility is not a Stripe support failure");
 
   __setConnectBalanceSettingsRawRequestForTests(async (method) => {
     if (method === "GET") {

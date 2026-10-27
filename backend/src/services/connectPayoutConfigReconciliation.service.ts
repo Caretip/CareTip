@@ -21,9 +21,7 @@ import {
   employeeHasPendingScheduledPayoutLedger,
 } from "./connectPayoutScheduleTransition.service.js";
 import { isStripeConfigured } from "./stripe.service.js";
-import {
-  connectSettlementNeedsConfirmedTargetApply,
-} from "./stripeConnectBalanceSettings.service.js";
+import { decideConnectSettlement } from "./stripeConnectBalanceSettings.service.js";
 
 export type ReconciliationMode = "dry_run" | "apply";
 
@@ -35,6 +33,7 @@ export type ReconciliationAccountDisposition =
   | "blocked_unverified_account"
   | "skipped_pending_ledger"
   | "skipped_not_eligible"
+  | "needs_investigation"
   | "failed";
 
 export type ReconciliationAccountRow = {
@@ -72,6 +71,7 @@ export type ReconciliationReport = {
   blockedUnverified: number;
   skippedPendingLedger: number;
   skippedNotEligible: number;
+  needsInvestigation: number;
   failed: number;
   rows: ReconciliationAccountRow[];
   enumerationSkippedRows: SkippedConnectAccount[];
@@ -83,6 +83,7 @@ function suffix(id: string): string {
 
 function proposedActionsForAccount(args: {
   confirmedScheduleDrift: boolean;
+  settlementAction: string;
   settlementNeedsApply: boolean;
   stripeScheduleReadable: boolean;
 }): string[] {
@@ -92,7 +93,9 @@ function proposedActionsForAccount(args: {
     return actions;
   }
   if (args.confirmedScheduleDrift) actions.push("resync_stripe_payout_interval");
-  if (args.settlementNeedsApply) actions.push("apply_de_settlement_delay_days_override_3");
+  if (args.settlementNeedsApply || args.settlementAction !== "settlement_and_schedule_verified") {
+    actions.push(args.settlementAction);
+  }
   if (actions.length === 0) actions.push("settlement_and_schedule_verified");
   return actions;
 }
@@ -112,13 +115,23 @@ export async function processReconciliationAccount(
       ? `${readErr.stripeType ?? "?"}:${readErr.stripeCode ?? "?"}`
       : null;
 
-  const settlementNeedsApply = connectSettlementNeedsConfirmedTargetApply(
-    status.settlement,
-    status.stripeAccountCountry,
-  );
+  const settlementDecision = decideConnectSettlement({
+    keyMode: stripeSecretKeyMode(),
+    livemode: status.stripeAccountLivemode,
+    country: status.stripeAccountCountry,
+    accountType: status.stripeAccountType,
+    stripeDashboardType: status.stripeDashboardType,
+    settlement: status.settlement,
+  });
+  const settlementNeedsApply = settlementDecision.needsBalanceSettingsWrite;
+  const settlementInvestigation =
+    settlementDecision.state === "eligibility_unknown" ||
+    settlementDecision.state === "delay_mismatch" ||
+    settlementDecision.state === "unverified";
 
   const proposed = proposedActionsForAccount({
     confirmedScheduleDrift: status.scheduleDrift,
+    settlementAction: settlementDecision.action,
     settlementNeedsApply,
     stripeScheduleReadable: status.stripeScheduleReadable,
   });
@@ -164,6 +177,15 @@ export async function processReconciliationAccount(
       ...baseRow,
       disposition: "blocked_unverified_account",
       skipReason: stripeAccountReadError ?? "stripe_schedule_unreadable",
+      policyDiagnostics: null,
+    };
+  }
+
+  if (!needsVerifiedMutation && settlementInvestigation) {
+    return {
+      ...baseRow,
+      disposition: "needs_investigation",
+      skipReason: settlementDecision.message,
       policyDiagnostics: null,
     };
   }
@@ -251,6 +273,7 @@ export async function runConnectPayoutConfigReconciliation(
     confirmedScheduleDrift: 0,
     blockedUnverified: 0,
     skippedPendingLedger: 0,
+    needsInvestigation: 0,
     failed: 0,
   };
 
@@ -290,6 +313,7 @@ export async function runConnectPayoutConfigReconciliation(
     if (row.disposition === "confirmed_schedule_drift") counts.confirmedScheduleDrift += 1;
     if (row.disposition === "blocked_unverified_account") counts.blockedUnverified += 1;
     if (row.disposition === "skipped_pending_ledger") counts.skippedPendingLedger += 1;
+    if (row.disposition === "needs_investigation") counts.needsInvestigation += 1;
     if (row.disposition === "failed") counts.failed += 1;
   }
 
@@ -306,6 +330,7 @@ export async function runConnectPayoutConfigReconciliation(
     confirmedScheduleDrift: counts.confirmedScheduleDrift,
     blockedUnverified: counts.blockedUnverified,
     skippedPendingLedger: counts.skippedPendingLedger,
+    needsInvestigation: counts.needsInvestigation,
     skippedNotEligible: enumerationSkippedRows.length,
     failed: counts.failed,
     rows,
@@ -316,7 +341,7 @@ export async function runConnectPayoutConfigReconciliation(
 export function formatReconciliationReportForLog(report: ReconciliationReport): string {
   const lines = [
     `mode=${report.mode} keyMode=${report.stripeKeyMode} discovered=${report.discovered} eligible=${report.eligible} enumSkipped=${report.enumerationSkipped} processed=${report.processed}`,
-    `confirmedDrift=${report.confirmedScheduleDrift} wouldUpdate=${report.wouldUpdate} updated=${report.updated} alreadyCorrect=${report.alreadyCorrect} blockedUnverified=${report.blockedUnverified} skippedLedger=${report.skippedPendingLedger} failed=${report.failed}`,
+    `confirmedDrift=${report.confirmedScheduleDrift} wouldUpdate=${report.wouldUpdate} updated=${report.updated} alreadyCorrect=${report.alreadyCorrect} needsInvestigation=${report.needsInvestigation} blockedUnverified=${report.blockedUnverified} skippedLedger=${report.skippedPendingLedger} failed=${report.failed}`,
   ];
   for (const skip of report.enumerationSkippedRows) {
     lines.push(

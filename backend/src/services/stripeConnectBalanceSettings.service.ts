@@ -6,9 +6,11 @@ import type Stripe from "stripe";
 import {
   STRIPE_BALANCE_SETTINGS_API_VERSION,
   STRIPE_BALANCE_SETTINGS_PATH,
+  STRIPE_CONNECT_DE_SETTLEMENT_DELAY_DAYS_OVERRIDE,
+  STRIPE_SETTLEMENT_DELAY_DAYS_OVERRIDE_CLEAR,
   connectSettlementDelayDaysOverrideTarget,
 } from "../config/stripeBalanceSettings.js";
-import type { SettlementPolicyStatus } from "./connectPayoutPolicy.types.js";
+import type { SettlementObservedState, SettlementPolicyStatus } from "./connectPayoutPolicy.types.js";
 import {
   readSettlementDelayForConnectedAccount,
   settlementReadFromBalanceSettings,
@@ -16,13 +18,15 @@ import {
 } from "./connectSettlementRead.service.js";
 import type { SettlementDelayReadDto } from "./connectPayoutPolicy.types.js";
 import { logServerError } from "../utils/httpErrors.js";
-import { stripeKeyModeMatchesAccountLivemode } from "../utils/stripeKeyMode.js";
+import { stripeKeyModeMatchesAccountLivemode, stripeSecretKeyMode } from "../utils/stripeKeyMode.js";
 import { getStripeClient, isStripeConfigured } from "./stripe.service.js";
 
 export type ConnectBalanceSettingsSnapshot = {
   payoutInterval: string | null;
   delayDays: number | null;
   delayDaysOverride: number | null;
+  /** False when the override field was present but not null, empty, or a finite number. */
+  settlementOverrideRecognized: boolean;
   effectiveSettlementDelayDays: number | null;
   debitNegativeBalances: boolean | null;
 };
@@ -33,6 +37,7 @@ export type SettlementMinimumApplyResult = {
   before: SettlementDelayReadDto | null;
   after: SettlementDelayReadDto | null;
   stripeSupportMayBeRequired: boolean;
+  settlementState: SettlementObservedState | null;
 };
 
 type RawRequestFn = (
@@ -43,18 +48,52 @@ type RawRequestFn = (
 ) => Promise<unknown>;
 
 let rawRequestFn: RawRequestFn | null = null;
-let retrieveAccountLivemodeFn:
-  | ((id: string) => Promise<{ livemode: boolean; country?: string | null }>)
-  | null = null;
+export type ConnectAccountClassificationRead = {
+  livemode: boolean;
+  country?: string | null;
+  type?: string | null;
+  controller?: {
+    stripe_dashboard?: { type?: string | null } | null;
+  } | null;
+};
+
+let retrieveAccountLivemodeFn: ((id: string) => Promise<ConnectAccountClassificationRead>) | null = null;
 
 export function __setConnectBalanceSettingsRawRequestForTests(fn: RawRequestFn | null): void {
   rawRequestFn = fn;
 }
 
 export function __setConnectBalanceSettingsRetrieveAccountForTests(
-  fn: ((id: string) => Promise<{ livemode: boolean; country?: string | null }>) | null,
+  fn: ((id: string) => Promise<ConnectAccountClassificationRead>) | null,
 ): void {
   retrieveAccountLivemodeFn = fn;
+}
+
+/** v1 controller.stripe_dashboard.type. Accounts v2 exposes the same value as dashboard. */
+export function stripeDashboardTypeFromAccount(account: {
+  controller?: { stripe_dashboard?: { type?: string | null } | null } | null;
+}): string | null {
+  const value = account.controller?.stripe_dashboard?.type;
+  return typeof value === "string" ? value : null;
+}
+
+/**
+ * Express dashboard access is not settlement eligibility.
+ * A present dashboard value wins. Account.type is only the legacy fallback:
+ * type "none" means the controller hash does not match a standard, express, or custom preset.
+ */
+export function classifyConnectDashboard(args: {
+  accountType?: string | null;
+  stripeDashboardType?: string | null;
+}): "express" | "other" | "unknown" {
+  const dashboard = (args.stripeDashboardType ?? "").trim().toLowerCase();
+  const accountType = (args.accountType ?? "").trim().toLowerCase();
+  if (dashboard === "express") return "express";
+  if (dashboard === "full" || dashboard === "none") return "other";
+  if (dashboard) return "unknown";
+  if (accountType === "express") return "express";
+  if (accountType === "custom" || accountType === "standard") return "other";
+  return "unknown";
 }
 
 function balanceSettingsOptions(stripeAccountId: string): Stripe.RawRequestOptions {
@@ -87,6 +126,21 @@ function parseDelayDays(value: unknown): number | null {
   return null;
 }
 
+/** Absent, null, and "" mean no override. An unexpected type is not treated as an override. */
+function parseDelayDaysOverride(settlement: Record<string, unknown>): {
+  delayDaysOverride: number | null;
+  recognized: boolean;
+} {
+  if (!Object.prototype.hasOwnProperty.call(settlement, "delay_days_override")) {
+    return { delayDaysOverride: null, recognized: true };
+  }
+  const value = settlement.delay_days_override;
+  if (value == null || value === "") return { delayDaysOverride: null, recognized: true };
+  const parsed = parseDelayDays(value);
+  if (parsed == null) return { delayDaysOverride: null, recognized: false };
+  return { delayDaysOverride: parsed, recognized: true };
+}
+
 export function parseConnectBalanceSettingsPayload(payload: unknown): ConnectBalanceSettingsSnapshot {
   const root = payload && typeof payload === "object" ? (payload as Record<string, unknown>) : {};
   const payments =
@@ -107,7 +161,8 @@ export function parseConnectBalanceSettingsPayload(payload: unknown): ConnectBal
       : {};
 
   const delayDays = parseDelayDays(settlement.delay_days);
-  const delayDaysOverride = parseDelayDays(settlement.delay_days_override);
+  const override = parseDelayDaysOverride(settlement);
+  const delayDaysOverride = override.delayDaysOverride;
   const effective =
     delayDaysOverride != null ? delayDaysOverride : delayDays != null ? delayDays : null;
 
@@ -123,8 +178,45 @@ export function parseConnectBalanceSettingsPayload(payload: unknown): ConnectBal
     payoutInterval: interval,
     delayDays,
     delayDaysOverride,
+    settlementOverrideRecognized: override.recognized,
     effectiveSettlementDelayDays: effective,
     debitNegativeBalances: debit,
+  };
+}
+
+/** Posts only delay_days_override. value "" clears it; never send 0. */
+export async function postSettlementDelayDaysOverride(
+  stripeAccountId: string,
+  value: number | typeof STRIPE_SETTLEMENT_DELAY_DAYS_OVERRIDE_CLEAR,
+): Promise<void> {
+  await rawBalanceRequest("POST", stripeAccountId, {
+    "payments[settlement_timing][delay_days_override]": value,
+  });
+}
+
+export async function readConnectedAccountSettlementContext(stripeAccountId: string): Promise<{
+  livemode: boolean;
+  country: string | null;
+  type: string | null;
+  stripeDashboardType: string | null;
+  settlement: SettlementDelayReadDto;
+}> {
+  const acct = retrieveAccountLivemodeFn
+    ? await retrieveAccountLivemodeFn(stripeAccountId)
+    : await getStripeClient().accounts.retrieve(stripeAccountId);
+  const livemode =
+    typeof (acct as unknown as { livemode?: unknown }).livemode === "boolean"
+      ? (acct as unknown as { livemode: boolean }).livemode
+      : false;
+  const countryField = (acct as Stripe.Account).country;
+  const typeField = (acct as Stripe.Account).type;
+  const snap = await retrieveConnectBalanceSettings(stripeAccountId);
+  return {
+    livemode,
+    country: typeof countryField === "string" ? countryField : null,
+    type: typeof typeField === "string" ? typeField : null,
+    stripeDashboardType: stripeDashboardTypeFromAccount(acct),
+    settlement: settlementReadFromBalanceSettings(snap),
   };
 }
 
@@ -135,7 +227,7 @@ export async function retrieveConnectBalanceSettings(
   return parseConnectBalanceSettingsPayload(payload);
 }
 
-/** Whether Balance Settings read-back matches the Stripe-confirmed DE settlement override target. */
+/** Explicit per-account override equals the live-mode DE target. A null override is not a match. */
 export function connectSettlementMatchesConfirmedTarget(
   settlement: SettlementDelayReadDto,
   country: string | null | undefined,
@@ -145,6 +237,10 @@ export function connectSettlementMatchesConfirmedTarget(
   return settlement.delayDaysOverride === target && settlement.effectiveDelayDays === target;
 }
 
+/**
+ * Live-mode reconciliation still proposes a DE override write when the explicit override is absent.
+ * Test mode must use decideConnectSettlement, which does not treat country as eligibility.
+ */
 export function connectSettlementNeedsConfirmedTargetApply(
   settlement: SettlementDelayReadDto,
   country: string | null | undefined,
@@ -152,6 +248,157 @@ export function connectSettlementNeedsConfirmedTargetApply(
   const target = connectSettlementDelayDaysOverrideTarget(country);
   if (target == null) return false;
   return !connectSettlementMatchesConfirmedTarget(settlement, country);
+}
+
+export type ConnectSettlementDecision = {
+  state: SettlementObservedState;
+  needsBalanceSettingsWrite: boolean;
+  action: string;
+  status: SettlementPolicyStatus;
+  message: string;
+};
+
+function isGermanCountry(country: string | null | undefined): boolean {
+  return (country ?? "").trim().toLowerCase() === "de";
+}
+
+function expressDashboardClass(args: {
+  accountType: string | null;
+  stripeDashboardType?: string | null;
+}): "express" | "other" | "unknown" {
+  return classifyConnectDashboard(args);
+}
+
+function explicitT3Override(settlement: SettlementDelayReadDto): boolean {
+  const target = STRIPE_CONNECT_DE_SETTLEMENT_DELAY_DAYS_OVERRIDE;
+  return (
+    settlement.source === "balance_settings" &&
+    settlement.settlementOverrideRecognized !== false &&
+    settlement.delayDaysOverride === target &&
+    settlement.effectiveDelayDays === target
+  );
+}
+
+function platformDefaultT3(settlement: SettlementDelayReadDto): boolean {
+  const target = STRIPE_CONNECT_DE_SETTLEMENT_DELAY_DAYS_OVERRIDE;
+  return (
+    settlement.source === "balance_settings" &&
+    settlement.settlementOverrideRecognized !== false &&
+    settlement.delayDaysOverride == null &&
+    settlement.delayDays === target &&
+    settlement.effectiveDelayDays === target
+  );
+}
+
+/**
+ * Test mode never writes delay_days_override. A German Express test account whose Balance
+ * Settings already show delay_days 3 and no override is the platform default.
+ * Live mode keeps the previous DE override write when that explicit override is absent.
+ */
+export function decideConnectSettlement(args: {
+  keyMode: ReturnType<typeof stripeSecretKeyMode>;
+  livemode: boolean | null;
+  country: string | null;
+  accountType: string | null;
+  stripeDashboardType?: string | null;
+  settlement: SettlementDelayReadDto;
+}): ConnectSettlementDecision {
+  const german = isGermanCountry(args.country);
+  const express = expressDashboardClass(args);
+  const testAccount = args.keyMode === "test" && args.livemode === false;
+  const liveAccount = args.keyMode === "live" && args.livemode === true;
+
+  if (!german) {
+    return {
+      state: "out_of_scope",
+      needsBalanceSettingsWrite: false,
+      action: "settlement_outside_confirmed_scope",
+      status: "skipped_ineligible",
+      message: "settlement_override_target_not_configured_for_country",
+    };
+  }
+
+  if (testAccount) {
+    if (args.settlement.source !== "balance_settings" || args.settlement.settlementOverrideRecognized === false) {
+      return {
+        state: "unverified",
+        needsBalanceSettingsWrite: false,
+        action: "review_settlement_read",
+        status: "failed",
+        message: "balance_settings_unverified",
+      };
+    }
+    if (explicitT3Override(args.settlement)) {
+      return {
+        state: "explicit_override",
+        needsBalanceSettingsWrite: false,
+        action: "settlement_explicit_override_verified",
+        status: "settlement_unchanged",
+        message: "settlement_explicit_override_verified",
+      };
+    }
+    if (express === "other") {
+      return {
+        state: "out_of_scope",
+        needsBalanceSettingsWrite: false,
+        action: "settlement_outside_confirmed_scope",
+        status: "skipped_ineligible",
+        message: "settlement_account_not_express",
+      };
+    }
+    if (express === "unknown") {
+      return {
+        state: "eligibility_unknown",
+        needsBalanceSettingsWrite: false,
+        action: "review_settlement_eligibility",
+        status: "eligibility_unknown",
+        message: "settlement_eligibility_unconfirmed_no_write",
+      };
+    }
+    if (platformDefaultT3(args.settlement)) {
+      return {
+        state: "platform_default",
+        needsBalanceSettingsWrite: false,
+        action: "settlement_platform_default_verified",
+        status: "already_at_account_default",
+        message: "settlement_platform_default_t3",
+      };
+    }
+    return {
+      state: "delay_mismatch",
+      needsBalanceSettingsWrite: false,
+      action: "review_settlement_eligibility",
+      status: "eligibility_unknown",
+      message: "settlement_delay_not_platform_default_no_write",
+    };
+  }
+
+  if (liveAccount) {
+    if (explicitT3Override(args.settlement)) {
+      return {
+        state: "explicit_override",
+        needsBalanceSettingsWrite: false,
+        action: "settlement_explicit_override_verified",
+        status: "settlement_unchanged",
+        message: "settlement_already_at_confirmed_override",
+      };
+    }
+    return {
+      state: "live_override_required",
+      needsBalanceSettingsWrite: true,
+      action: "apply_de_settlement_delay_days_override_3",
+      status: "settlement_configured",
+      message: "live_de_settlement_override_required",
+    };
+  }
+
+  return {
+    state: "unverified",
+    needsBalanceSettingsWrite: false,
+    action: "review_stripe_key_mode",
+    status: "skipped_key_mode_mismatch",
+    message: "stripe_secret_key_mode_mismatch",
+  };
 }
 
 function settlementMinimumSyncEnabled(): boolean {
@@ -198,18 +445,16 @@ async function readBefore(
 
 function settlementReadBackMatchesTarget(
   after: SettlementDelayReadDto,
-  snapshot: ConnectBalanceSettingsSnapshot | null,
   targetOverride: number,
 ): boolean {
   if (after.delayDaysOverride !== targetOverride) return false;
   if (after.effectiveDelayDays !== targetOverride) return false;
-  if (snapshot?.payoutInterval != null && snapshot.payoutInterval !== "daily") return false;
   return true;
 }
 
 /**
- * Apply Stripe Support–confirmed DE settlement timing: delay_days_override = 3 (business days).
- * Verifies read-back; never reports success without Stripe confirming override and effective delay.
+ * Test mode does not write delay_days_override. Live DE accounts still get the explicit override
+ * when it is not already 3. Payout interval is not part of this settlement result.
  */
 export async function applyConnectSettlementMinimumDelay(
   stripeAccountId: string,
@@ -222,15 +467,14 @@ export async function applyConnectSettlementMinimumDelay(
       before: null,
       after: null,
       stripeSupportMayBeRequired: false,
+      settlementState: null,
     };
   }
 
   let before: SettlementDelayReadDto;
-  let beforeSnap: ConnectBalanceSettingsSnapshot | null;
   try {
     const read = await readBefore(stripeAccountId, accountsV1DelayDays);
     before = read.settlement;
-    beforeSnap = read.snapshot;
   } catch (err) {
     logServerError("stripeConnectBalanceSettings.retrieve.before", err, {
       accountSuffix: stripeAccountId.slice(-8),
@@ -241,20 +485,27 @@ export async function applyConnectSettlementMinimumDelay(
       before: settlementReadUnavailable(),
       after: null,
       stripeSupportMayBeRequired: false,
+      settlementState: "unverified",
     };
   }
 
   let accountCountry: string | null = null;
+  let accountType: string | null = null;
+  let stripeDashboardType: string | null = null;
+  let accountLive = false;
   try {
     const acct = retrieveAccountLivemodeFn
       ? await retrieveAccountLivemodeFn(stripeAccountId)
       : await getStripeClient().accounts.retrieve(stripeAccountId);
-    const accountLive =
+    accountLive =
       typeof (acct as unknown as { livemode?: unknown }).livemode === "boolean"
         ? (acct as unknown as { livemode: boolean }).livemode
         : false;
     const countryField = (acct as Stripe.Account).country;
     accountCountry = typeof countryField === "string" ? countryField : null;
+    const typeField = (acct as Stripe.Account).type;
+    accountType = typeof typeField === "string" ? typeField : null;
+    stripeDashboardType = stripeDashboardTypeFromAccount(acct);
     if (!stripeKeyModeMatchesAccountLivemode(accountLive)) {
       return {
         status: "skipped_key_mode_mismatch",
@@ -262,6 +513,7 @@ export async function applyConnectSettlementMinimumDelay(
         before,
         after: null,
         stripeSupportMayBeRequired: false,
+        settlementState: "unverified",
       };
     }
   } catch (err) {
@@ -274,38 +526,30 @@ export async function applyConnectSettlementMinimumDelay(
       before,
       after: null,
       stripeSupportMayBeRequired: false,
+      settlementState: "unverified",
     };
   }
 
-  const targetOverride = connectSettlementDelayDaysOverrideTarget(accountCountry);
-  if (targetOverride == null) {
+  const decision = decideConnectSettlement({
+    keyMode: stripeSecretKeyMode(),
+    livemode: accountLive,
+    country: accountCountry,
+    accountType,
+    stripeDashboardType,
+    settlement: before,
+  });
+  if (!decision.needsBalanceSettingsWrite) {
     return {
-      status: "skipped_ineligible",
-      message: "settlement_override_target_not_configured_for_country",
+      status: decision.status,
+      message: decision.message,
       before,
       after: before,
       stripeSupportMayBeRequired: false,
+      settlementState: decision.state,
     };
   }
 
-  if (connectSettlementMatchesConfirmedTarget(before, accountCountry)) {
-    if (beforeSnap?.payoutInterval != null && beforeSnap.payoutInterval !== "daily") {
-      return {
-        status: "readback_mismatch",
-        message: "settlement_ok_but_balance_payout_interval_not_daily",
-        before,
-        after: before,
-        stripeSupportMayBeRequired: true,
-      };
-    }
-    return {
-      status: "settlement_unchanged",
-      message: "settlement_already_at_confirmed_override",
-      before,
-      after: before,
-      stripeSupportMayBeRequired: false,
-    };
-  }
+  const targetOverride = STRIPE_CONNECT_DE_SETTLEMENT_DELAY_DAYS_OVERRIDE;
 
   try {
     await rawBalanceRequest("POST", stripeAccountId, {
@@ -325,6 +569,7 @@ export async function applyConnectSettlementMinimumDelay(
         before,
         after: null,
         stripeSupportMayBeRequired: true,
+        settlementState: "delay_mismatch",
       };
     }
     logServerError("stripeConnectBalanceSettings.update", err, {
@@ -336,21 +581,22 @@ export async function applyConnectSettlementMinimumDelay(
       before,
       after: null,
       stripeSupportMayBeRequired: false,
+      settlementState: "unverified",
     };
   }
 
   try {
     const readAfter = await readBefore(stripeAccountId, accountsV1DelayDays);
     const after = readAfter.settlement;
-    const afterSnap = readAfter.snapshot;
 
-    if (!settlementReadBackMatchesTarget(after, afterSnap, targetOverride)) {
+    if (!settlementReadBackMatchesTarget(after, targetOverride)) {
       return {
         status: "readback_mismatch",
         message: "settlement_override_readback_mismatch",
         before,
         after,
         stripeSupportMayBeRequired: true,
+        settlementState: "unverified",
       };
     }
 
@@ -362,6 +608,7 @@ export async function applyConnectSettlementMinimumDelay(
       before,
       after,
       stripeSupportMayBeRequired: false,
+      settlementState: "explicit_override",
     };
   } catch (err) {
     logServerError("stripeConnectBalanceSettings.retrieve.after", err, {
@@ -373,6 +620,7 @@ export async function applyConnectSettlementMinimumDelay(
       before,
       after: null,
       stripeSupportMayBeRequired: false,
+      settlementState: "unverified",
     };
   }
 }
