@@ -19,7 +19,7 @@ function read(rel: string): string {
 }
 
 const row = read("src/app/components/auth/OAuthProviderRow.tsx");
-const googleCircle = read("src/app/components/auth/AuthGoogleLoginCircle.tsx");
+const googleButton = read("src/app/components/auth/AuthGoogleLoginButton.tsx");
 const css = read("src/styles/caretip-oauth-circles.css");
 const authCss = read("src/styles/caretip-auth.css");
 const app = read("src/app/App.tsx");
@@ -33,12 +33,12 @@ if (!row.includes("gsiMounted") && !row.includes("setGsiMounted")) {
 }
 
 if (
-  /\{showGoogle \? \(/.test(row) &&
-  row.includes("AuthGoogleLoginCircle") &&
-  googleCircle.includes("<GoogleLogin") &&
+  row.includes("if (!showGoogle) return null;") &&
+  row.includes("<AuthGoogleLoginButton") &&
+  googleButton.includes("<GoogleLogin") &&
   !row.includes("gsiMounted && showGoogle && !disabled")
 ) {
-  pass("GoogleLogin stays mounted while the Google circle is configured (not torn down on disabled)");
+  pass("GoogleLogin stays mounted while Google is configured (not torn down on disabled)");
 } else {
   fail("GoogleLogin must remain mounted whenever Google is configured");
 }
@@ -56,46 +56,46 @@ if (row.includes("onSuccess={onGoogleSuccess}") && row.includes("useCallback")) 
 }
 
 if (
-  googleCircle.includes("containerProps") &&
-  googleCircle.includes("width: 44") &&
-  googleCircle.includes("height: 44")
+  googleButton.includes('type="standard"') &&
+  googleButton.includes('text="continue_with"') &&
+  googleButton.includes('shape="rectangular"') &&
+  googleButton.includes("containerProps") &&
+  /Math\.min\(GSI_MAX_WIDTH, Math\.max\(GSI_MIN_WIDTH/.test(googleButton)
 ) {
-  pass("GIS host is sized to the 44px visible circle");
+  pass("GIS renders the standard Continue with Google button within its 200–400px width limits");
 } else {
-  fail("GoogleLogin containerProps must match the 44px circle");
+  fail("GoogleLogin must be the standard rectangular button with a clamped pixel width");
 }
 
-if (googleCircle.includes('type="icon"') && !googleCircle.includes("text=")) {
-  pass("GIS icon button does not pass invalid text= with type=icon");
+if (!row.includes("caretip-oauth-circle__gsi") && !row.includes("OAUTH_LOGO_SRC.google")) {
+  pass("No branded logo overlay sits on top of the GIS iframe");
 } else {
-  fail("GIS icon button must not combine type=icon with text=");
+  fail("The Google button must not be covered by a logo overlay");
 }
 
 if (css.includes("opacity: 0.02") || css.includes("opacity: 0.011") || /opacity:\s*0\s*;/.test(css)) {
-  fail("GIS overlay must not use near-zero opacity (Firefox treats it as inactive)");
-} else if (css.includes(".caretip-oauth-circle__gsi") && css.includes("opacity: 1")) {
-  pass("GIS overlay is fully opaque for hit-testing; branded logo covers it visually");
+  fail("GIS button must not use near-zero opacity (Firefox treats it as inactive)");
 } else {
-  fail("caretip-oauth-circle__gsi must be opacity: 1");
+  pass("GIS button is not hidden behind near-zero opacity");
 }
 
+const googleSlotCss = css.slice(css.indexOf(".caretip-oauth-google-slot {"));
 if (
-  /:active[^{]*caretip-oauth-circle--google/.test(css) &&
-  /@media\s*\(\s*hover:\s*hover/.test(css) &&
-  css.includes("transform: none")
+  /\.caretip-oauth-google-slot \{[^}]*transform: none/.test(css) &&
+  !/\.caretip-oauth-google[^{]*:(hover|active)/.test(googleSlotCss)
 ) {
-  pass("Google circle is excluded from :hover/:active transforms that shift the GIS iframe");
+  pass("Google button is excluded from :hover/:active transforms that shift the GIS iframe");
 } else {
-  fail("Google circle must not apply :active/:hover transforms over the GIS iframe");
+  fail("Google button must not apply :active/:hover transforms over the GIS iframe");
 }
 
 if (css.includes("touch-action: manipulation") && css.includes("margin: 0 !important")) {
-  pass("GIS iframe is clipped to 44px with no auto-margin and touch-action: manipulation");
+  pass("GIS iframe has no auto-margin and keeps touch-action: manipulation");
 } else {
-  fail("GIS iframe layout must reset auth.css iframe margin and keep a 44px hit target");
+  fail("GIS iframe layout must reset auth.css iframe margin");
 }
 
-if (css.includes(".caretip-auth-oauth .caretip-oauth-circle__gsi iframe")) {
+if (css.includes(".caretip-auth-oauth .caretip-oauth-google-button iframe")) {
   pass("GIS iframe rules beat .caretip-auth-oauth iframe min-height/margin");
 } else {
   fail("Need a more-specific GIS iframe override than caretip-auth.css");
@@ -116,7 +116,7 @@ if (app.includes("GoogleOAuthProvider")) {
 if (
   oauthScope.includes("GoogleOAuthProvider") &&
   row.includes("AuthGoogleOAuthScope") &&
-  row.includes("AuthGoogleLoginCircle") &&
+  row.includes("AuthGoogleLoginButton") &&
   row.includes("onSocialCredential")
 ) {
   pass("GIS still flows Provider → GoogleLogin → onSocialCredential (no custom fake button)");

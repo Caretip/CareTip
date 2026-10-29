@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import type { CredentialResponse } from "@react-oauth/google";
-import { AuthGoogleLoginCircle } from "@/app/components/auth/AuthGoogleLoginCircle";
+import { AuthGoogleLoginButton } from "@/app/components/auth/AuthGoogleLoginButton";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -487,57 +487,17 @@ export function OAuthProviderRow({
     >
       {WEB_OAUTH_PROVIDER_ORDER.map((provider) => {
         if (provider === "google") {
-          const label = t("auth.oauth.continueWithGoogle");
+          if (!showGoogle) return null;
           return (
             <div
               key={provider}
               className={cn(
-                "caretip-oauth-circle caretip-oauth-circle--asset caretip-oauth-circle--google",
+                "caretip-oauth-google-slot",
                 gsiOriginError && "opacity-60",
-                (disabled || interactionBlocked) && "caretip-oauth-circle--disabled",
-                !showGoogle && "caretip-oauth-circle--unconfigured",
+                (disabled || interactionBlocked) && "caretip-oauth-google-slot--disabled",
               )}
-              aria-label={label}
-              title={label}
-              role={showGoogle ? undefined : "button"}
-              tabIndex={showGoogle ? undefined : 0}
-              onClick={
-                showGoogle
-                  ? undefined
-                  : () => {
-                      if (!busy) toastNotConfigured();
-                    }
-              }
-              onKeyDown={
-                showGoogle
-                  ? undefined
-                  : (e) => {
-                      if (e.key === "Enter" || e.key === " ") {
-                        e.preventDefault();
-                        if (!busy) toastNotConfigured();
-                      }
-                    }
-              }
             >
-              {providerBusy === "google" ? (
-                <span className="caretip-oauth-circle__spinner" aria-hidden />
-              ) : (
-                <img
-                  src={OAUTH_LOGO_SRC.google}
-                  alt=""
-                  aria-hidden
-                  width={44}
-                  height={44}
-                  decoding="async"
-                  className="caretip-oauth-circle__logo"
-                  draggable={false}
-                />
-              )}
-              {showGoogle ? (
-                <div className="caretip-oauth-circle__gsi" aria-hidden>
-                  <AuthGoogleLoginCircle onSuccess={onGoogleSuccess} onError={onGoogleError} />
-                </div>
-              ) : null}
+              <AuthGoogleLoginButton onSuccess={onGoogleSuccess} onError={onGoogleError} />
             </div>
           );
         }
