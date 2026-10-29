@@ -5,7 +5,14 @@ import {
   resolveUserPreferredLocale,
   type EmailLocale,
 } from "../emails/i18nEmail.js";
-import { getResendFromAddress, sendResendEmail } from "./resendClient.js";
+import { getResendFromAddress, sendResendEmailWithOutcome } from "./resendClient.js";
+
+export type LocalizedNotificationEmailResult = {
+  /** Resend accepted the request. Not proof the message reached the inbox. */
+  accepted: boolean;
+  messageId?: string;
+  outcome: "sent" | "retryable" | "permanent" | "not_configured" | "skipped";
+};
 
 /**
  * Sends a generic transactional notification email using User.preferredLocale only.
@@ -18,9 +25,9 @@ export async function sendLocalizedUserNotificationEmail(input: {
   bodyText: string;
   actionUrl?: string | null;
   actionLabel?: string | null;
-}): Promise<void> {
+}): Promise<LocalizedNotificationEmailResult> {
   const to = input.to.trim().toLowerCase();
-  if (!to) return;
+  if (!to) return { accepted: false, outcome: "skipped" };
 
   let stored = input.preferredLocale ?? null;
   if (stored == null && input.userId) {
@@ -59,8 +66,11 @@ export async function sendLocalizedUserNotificationEmail(input: {
     ({ subject, html, text } = buildPayload("en"));
   }
 
-  const ok = await sendResendEmail("notification", { from, to: [to], subject, html, text });
-  if (!ok && process.env.NODE_ENV !== "production") {
+  const sent = await sendResendEmailWithOutcome("notification", { from, to: [to], subject, html, text });
+  if (sent.kind !== "sent" && process.env.NODE_ENV !== "production") {
     console.info("[notification] (dev) Would send to:", to, subject);
   }
+  return sent.kind === "sent"
+    ? { accepted: true, messageId: sent.messageId, outcome: "sent" }
+    : { accepted: false, outcome: sent.kind };
 }

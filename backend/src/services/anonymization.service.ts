@@ -14,6 +14,7 @@
 import { createHmac } from "node:crypto";
 import type { AccountStatus, DataLifecycleJob, Prisma } from "@prisma/client";
 import { prisma } from "../prisma.js";
+import { clearedEmployeeTipChannelData } from "./notifications/employeeTipChannelColumns.js";
 import { removeUploadedObjectByPublicUrlIfPossible } from "../lib/supabaseStorageClient.js";
 import { userMayAuthenticate } from "./accountAccess.service.js";
 import { deriveErasureLifecycleState, resolveAnonymizeEligibleAt } from "./lifecycleStatus.helpers.js";
@@ -357,6 +358,7 @@ export async function anonymizeEmployee(
         slug: null,
         emailNotifications: false,
         pushNotifications: false,
+        ...(await clearedEmployeeTipChannelData()),
         isDeleted: true,
         isActive: false,
         deletedAt: row.anonymizedAt ? undefined : now,
@@ -808,6 +810,7 @@ export async function anonymizeUser(
           slug: null,
           emailNotifications: false,
           pushNotifications: false,
+          ...(await clearedEmployeeTipChannelData()),
           isDeleted: true,
           isActive: false,
           deletedAt: now,

@@ -17,6 +17,7 @@ const ALLOWED_CLIENT_MESSAGES = new Set<string>([
   "Invalid role. Use 'business' or 'employee'",
   "intendedRole is required and must be 'business' or 'employee'",
   "Monthly goal must be a non-negative number",
+  "Tip notification settings are unavailable until the database update is applied.",
   "Image file is required (field name: avatar)",
   "Image file is empty.",
   "Image is too large (max 5 MB).",

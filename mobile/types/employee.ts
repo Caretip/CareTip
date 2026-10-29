@@ -32,6 +32,9 @@ export type EmployeeProfile = {
   monthlyGoal: number | null;
   emailNotifications?: boolean;
   pushNotifications?: boolean;
+  tipInAppNotifications?: boolean;
+  tipPushNotifications?: boolean;
+  tipEmailNotifications?: boolean;
   bio?: string | null;
   subscriptionTier?: "basic" | "premium" | "enterprise" | null;
   hasActiveSubscription?: boolean;

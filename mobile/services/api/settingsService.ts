@@ -43,7 +43,14 @@ export async function patchEmployeeProfile(
   patch: Partial<
     Pick<
       EmployeeProfile,
-      "name" | "bio" | "emailNotifications" | "pushNotifications" | "monthlyGoal"
+      | "name"
+      | "bio"
+      | "emailNotifications"
+      | "pushNotifications"
+      | "tipInAppNotifications"
+      | "tipPushNotifications"
+      | "tipEmailNotifications"
+      | "monthlyGoal"
     >
   >,
 ): Promise<EmployeeProfile> {

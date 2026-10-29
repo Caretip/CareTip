@@ -1,4 +1,5 @@
 import { prisma } from "../../prisma.js";
+import { employeeTipChannelColumnsReady } from "../notifications/employeeTipChannelColumns.js";
 import { isFcmConfigured } from "./fcmAdmin.js";
 import { listPushTokensForUser } from "./deviceTokens.service.js";
 import { logPush, sendWebPushMulticast, stringifyPushData } from "./pushSend.js";
@@ -60,6 +61,7 @@ async function userWantsNotification(
   userId: string,
   type: NotificationType,
 ): Promise<boolean> {
+  const tipColumnsReady = await employeeTipChannelColumnsReady();
   const user = await prisma.user.findUnique({
     where: { id: userId },
     select: {
@@ -72,13 +74,26 @@ async function userWantsNotification(
           notifyNewLogin: true,
         },
       },
-      employee: { select: { pushNotifications: true } },
+      employee: {
+        select: tipColumnsReady
+          ? { pushNotifications: true, tipPushNotifications: true }
+          : { pushNotifications: true },
+      },
     },
   });
   if (!user?.isActive) return false;
 
   const settings = user.settings;
-  const employeePush = user.employee?.pushNotifications ?? true;
+  const employeeRecord = user.employee as
+    | { pushNotifications?: unknown; tipPushNotifications?: unknown }
+    | null;
+  const employeePush =
+    typeof employeeRecord?.pushNotifications === "boolean" ? employeeRecord.pushNotifications : true;
+  const employeeTipPush = tipColumnsReady
+    ? typeof employeeRecord?.tipPushNotifications === "boolean"
+      ? employeeRecord.tipPushNotifications
+      : true
+    : employeePush;
 
   if (user.role === "SUPER_ADMIN") {
     switch (type) {
@@ -102,8 +117,11 @@ async function userWantsNotification(
       if (user.role === "MANAGER") return settings?.systemAlerts ?? true;
       return false;
     case "tip_received":
+      if (user.role === "EMPLOYEE") return employeeTipPush;
+      if (user.role === "MANAGER") return settings?.tipReceivedNotifications ?? true;
+      return false;
     case "qr_payment_success":
-      if (user.role === "EMPLOYEE") return employeePush;
+      if (user.role === "EMPLOYEE") return employeeTipPush;
       if (user.role === "MANAGER") return settings?.tipReceivedNotifications ?? true;
       return false;
     case "payout_paid":

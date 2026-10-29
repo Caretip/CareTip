@@ -656,6 +656,9 @@ export type MobileMessages = {
     newLogin: string;
     emailNotifications: string;
     pushNotifications: string;
+    tipInAppNotifications: string;
+    tipPushNotifications: string;
+    tipEmailNotifications: string;
     passwordSecurity: string;
     passwordSecuritySub: string;
     currentPassword: string;

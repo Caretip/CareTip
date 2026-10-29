@@ -20,7 +20,7 @@ import {
 } from "../../lib/passwordValidation";
 import { toUserFriendlyMessage } from "../../lib/errorMessages";
 import { logClientError } from "../../lib/clientLog";
-import { registerFcmDeviceToken, unregisterFcmDeviceToken } from "../../lib/fcmPush";
+import { getFcmDiagnostics, registerFcmDeviceToken, unregisterFcmDeviceToken } from "../../lib/fcmPush";
 import { ThemeAppearanceControl } from "@/app/components/theme/ThemeAppearanceControl";
 import { LinkedOAuthAccountsSection } from "@/app/components/business/settings/LinkedOAuthAccountsSection";
 import { changeAppLanguage, type AppLanguage } from "@/i18n/i18n";
@@ -68,8 +68,11 @@ export function EmployeeSettingsPage() {
   const [bio, setBio] = useState(() => boot?.bio ?? "");
   const [businessName, setBusinessName] = useState<string>(() => boot?.businessName ?? "");
   const [monthlyGoal, setMonthlyGoal] = useState(() => boot?.monthlyGoal ?? "");
-  const [emailNotif, setEmailNotif] = useState(() => boot?.emailNotif ?? true);
   const [pushNotif, setPushNotif] = useState(() => boot?.pushNotif ?? true);
+  const [tipInApp, setTipInApp] = useState(() => boot?.tipInApp ?? true);
+  const [tipPush, setTipPush] = useState(() => boot?.tipPush ?? true);
+  const [tipEmail, setTipEmail] = useState(() => boot?.tipEmail ?? false);
+  const [notifSaving, setNotifSaving] = useState(false);
   const [currentPw, setCurrentPw] = useState("");
   const [newPw, setNewPw] = useState("");
   const [showCur, setShowCur] = useState(false);
@@ -85,8 +88,10 @@ export function EmployeeSettingsPage() {
       setBio(cached.bio);
       setBusinessName(cached.businessName);
       setMonthlyGoal(cached.monthlyGoal);
-      setEmailNotif(cached.emailNotif);
       setPushNotif(cached.pushNotif);
+      setTipInApp(cached.tipInApp ?? true);
+      setTipPush(cached.tipPush ?? true);
+      setTipEmail(cached.tipEmail ?? false);
       setLoading(false);
     } else {
       setLoading(true);
@@ -102,13 +107,18 @@ export function EmployeeSettingsPage() {
           monthlyGoal: p.monthlyGoal != null ? String(p.monthlyGoal) : "",
           emailNotif: p.emailNotifications,
           pushNotif: p.pushNotifications,
+          tipInApp: p.tipInAppNotifications ?? true,
+          tipPush: p.tipPushNotifications ?? true,
+          tipEmail: p.tipEmailNotifications ?? false,
         };
         setName(snapshot.name);
         setBio(snapshot.bio);
         setBusinessName(snapshot.businessName);
         setMonthlyGoal(snapshot.monthlyGoal);
-        setEmailNotif(snapshot.emailNotif);
         setPushNotif(snapshot.pushNotif);
+        setTipInApp(snapshot.tipInApp);
+        setTipPush(snapshot.tipPush);
+        setTipEmail(snapshot.tipEmail);
         writeEmployeeSettingsSnapshot(user.id, snapshot);
         writeEmployeeAssignmentSnapshot(user.id, p.assignment);
         updateUser({ avatar: p.avatar ?? undefined, name: p.name });
@@ -138,20 +148,83 @@ export function EmployeeSettingsPage() {
         name: name.trim(),
         bio: bio.trim() || null,
         monthlyGoal: mg,
-        pushNotifications: pushNotif,
       });
       invalidateEmployeeGoalClientCaches();
-      if (pushNotif) {
-        await registerFcmDeviceToken({ requestPermission: true, dedupe: false });
-      } else {
-        await unregisterFcmDeviceToken();
-      }
       updateUser({ name: updated.name, avatar: updated.avatar ?? undefined });
     } catch (e) {
       logClientError("EmployeeSettingsPage", e);
       toast.error(toUserFriendlyMessage(e, { audience: "employee" }));
     } finally {
       setSaving(false);
+    }
+  };
+
+  const rememberNotifSnapshot = (
+    next: EmployeeSettingsCache,
+  ) => {
+    if (!user?.id) return;
+    writeEmployeeSettingsSnapshot(user.id, next);
+  };
+
+  const persistNotification = async (
+    patch: {
+      tipInAppNotifications?: boolean;
+      tipPushNotifications?: boolean;
+      tipEmailNotifications?: boolean;
+      pushNotifications?: boolean;
+    },
+    apply: (next: boolean) => void,
+    previous: boolean,
+    next: boolean,
+  ) => {
+    apply(next);
+    setNotifSaving(true);
+    try {
+      const updated = await patchEmployeeProfile(patch);
+      const snapshot: EmployeeSettingsCache = {
+        name,
+        bio,
+        businessName,
+        monthlyGoal,
+        emailNotif: updated.emailNotifications,
+        pushNotif: updated.pushNotifications,
+        tipInApp: updated.tipInAppNotifications,
+        tipPush: updated.tipPushNotifications,
+        tipEmail: updated.tipEmailNotifications,
+      };
+      setPushNotif(snapshot.pushNotif);
+      setTipInApp(snapshot.tipInApp);
+      setTipPush(snapshot.tipPush);
+      setTipEmail(snapshot.tipEmail);
+      rememberNotifSnapshot(snapshot);
+      toast.success(t("employee.settings.toastNotifSaved"));
+      const wantsDevicePush = snapshot.tipPush || snapshot.pushNotif;
+      const turnedPushOn =
+        patch.tipPushNotifications === true || patch.pushNotifications === true;
+      if (turnedPushOn) {
+        const before = await getFcmDiagnostics();
+        if (!before.supported) {
+          toast.message(t("employee.settings.pushUnsupported"));
+        } else {
+          const registered = await registerFcmDeviceToken({ requestPermission: true, dedupe: false });
+          if (!registered) {
+            const after = await getFcmDiagnostics();
+            toast.message(
+              after.permission === "denied"
+                ? t("employee.settings.pushPermissionDenied")
+                : t("employee.settings.pushRegisterFailed"),
+            );
+          }
+        }
+      } else if (!wantsDevicePush) {
+        await unregisterFcmDeviceToken();
+      }
+    } catch (err) {
+      apply(previous);
+      logClientError("EmployeeSettingsPage.notifications", err);
+      toast.error(toUserFriendlyMessage(err, { audience: "employee" }));
+    } finally {
+      setNotifSaving(false);
     }
   };
 
@@ -419,18 +492,91 @@ export function EmployeeSettingsPage() {
           </div>
         </section>
 
-        <section className={employeeUi.settingsSection}>
+        <section className={employeeUi.settingsSection} aria-busy={notifSaving}>
           <h3 className={employeeUi.settingsHeading}>
             {t("employee.settings.prefsSection")}
           </h3>
-          <div className="flex items-center justify-between">
+          <p className="text-xs text-muted-foreground">{t("employee.settings.prefsHint")}</p>
+          <div className="flex items-center justify-between gap-4">
+            <div className="min-w-0 pr-4">
+              <Label htmlFor="tip-inapp-n">{t("employee.settings.tipInAppTitle")}</Label>
+              <p className="mt-0.5 text-xs text-muted-foreground">{t("employee.settings.tipInAppDesc")}</p>
+            </div>
+            <Switch
+              id="tip-inapp-n"
+              checked={tipInApp}
+              disabled={notifSaving}
+              aria-label={t("employee.settings.ariaTipInApp")}
+              onCheckedChange={(next) => {
+                void persistNotification(
+                  { tipInAppNotifications: next },
+                  setTipInApp,
+                  tipInApp,
+                  next,
+                );
+              }}
+            />
+          </div>
+          <div className="flex items-center justify-between gap-4">
+            <div className="min-w-0 pr-4">
+              <Label htmlFor="tip-push-n">{t("employee.settings.tipPushTitle")}</Label>
+              <p className="mt-0.5 text-xs text-muted-foreground">{t("employee.settings.tipPushDesc")}</p>
+            </div>
+            <Switch
+              id="tip-push-n"
+              checked={tipPush}
+              disabled={notifSaving}
+              aria-label={t("employee.settings.ariaTipPush")}
+              onCheckedChange={(next) => {
+                void persistNotification(
+                  { tipPushNotifications: next },
+                  setTipPush,
+                  tipPush,
+                  next,
+                );
+              }}
+            />
+          </div>
+          <div className="flex items-center justify-between gap-4">
+            <div className="min-w-0 pr-4">
+              <Label htmlFor="tip-mail-n">{t("employee.settings.tipEmailTitle")}</Label>
+              <p className="mt-0.5 text-xs text-muted-foreground">{t("employee.settings.tipEmailDesc")}</p>
+            </div>
+            <Switch
+              id="tip-mail-n"
+              checked={tipEmail}
+              disabled={notifSaving}
+              aria-label={t("employee.settings.ariaTipEmail")}
+              onCheckedChange={(next) => {
+                void persistNotification(
+                  { tipEmailNotifications: next },
+                  setTipEmail,
+                  tipEmail,
+                  next,
+                );
+              }}
+            />
+          </div>
+          <div className="flex items-center justify-between gap-4">
             <div className="min-w-0 pr-4">
               <Label htmlFor="push-n">{t("employee.settings.pushNotif")}</Label>
               <p className="mt-0.5 text-xs text-muted-foreground">{t("employee.settings.pushNotifHint")}</p>
             </div>
-            <Switch id="push-n" checked={pushNotif} onCheckedChange={setPushNotif} />
+            <Switch
+              id="push-n"
+              checked={pushNotif}
+              disabled={notifSaving}
+              aria-label={t("employee.settings.ariaAccountPush")}
+              onCheckedChange={(next) => {
+                void persistNotification(
+                  { pushNotifications: next },
+                  setPushNotif,
+                  pushNotif,
+                  next,
+                );
+              }}
+            />
           </div>
-          <p className="text-xs text-muted-foreground">{t("employee.settings.prefsHint")}</p>
         </section>
 
         <section className={employeeUi.settingsSection}>

@@ -1,4 +1,6 @@
 import { Prisma } from "@prisma/client";
+import { employeeTipChannelColumnsReady } from "./notifications/employeeTipChannelColumns.js";
+import { employeeTipPrefsBeforeChannelColumns } from "./notifications/employeeTipNotificationPrefs.js";
 import { prisma } from "../prisma.js";
 import { generateSlug, ensureUniqueSlug } from "../utils/slug.js";
 import { kycStatusToLegacyMirror } from "../lib/verificationWorkflow.js";
@@ -711,6 +713,9 @@ export interface EmployeeSelfProfile {
   monthlyGoal: number | null;
   emailNotifications: boolean;
   pushNotifications: boolean;
+  tipInAppNotifications: boolean;
+  tipPushNotifications: boolean;
+  tipEmailNotifications: boolean;
   businessId: string;
   /** Public `Business.slug` for `/{businessSlug}/{employeeSlug}` URLs. */
   businessSlug: string | null;
@@ -796,6 +801,7 @@ const employeeSelfAssignmentSelect = {
 
 export async function getEmployeeProfileForUser(userId: string): Promise<EmployeeSelfProfile | null> {
   const userEmail = { select: { email: true } } as const;
+  const tipColumnsReady = await employeeTipChannelColumnsReady();
   const fullSelect = {
     id: true,
     name: true,
@@ -805,6 +811,13 @@ export async function getEmployeeProfileForUser(userId: string): Promise<Employe
     monthlyGoal: true,
     emailNotifications: true,
     pushNotifications: true,
+    ...(tipColumnsReady
+      ? {
+          tipInAppNotifications: true,
+          tipPushNotifications: true,
+          tipEmailNotifications: true,
+        }
+      : {}),
     businessId: true,
     slug: true,
     business: { select: { slug: true, timezone: true, name: true, logoPath: true, subscriptionTier: true } },
@@ -830,6 +843,13 @@ export async function getEmployeeProfileForUser(userId: string): Promise<Employe
       monthlyGoal: emp.monthlyGoal != null ? Number(emp.monthlyGoal) : null,
       emailNotifications: emp.emailNotifications,
       pushNotifications: emp.pushNotifications,
+      ...(tipColumnsReady
+        ? {
+            tipInAppNotifications: emp.tipInAppNotifications,
+            tipPushNotifications: emp.tipPushNotifications,
+            tipEmailNotifications: emp.tipEmailNotifications,
+          }
+        : employeeTipPrefsBeforeChannelColumns(emp.pushNotifications)),
       businessId: emp.businessId,
       businessSlug: emp.business.slug ?? null,
       businessLogo: absolutizePublicMediaPath(emp.business.logoPath ?? null),
@@ -881,6 +901,9 @@ export async function getEmployeeProfileForUser(userId: string): Promise<Employe
         monthlyGoal: null,
         emailNotifications: true,
         pushNotifications: true,
+        tipInAppNotifications: true,
+        tipPushNotifications: true,
+        tipEmailNotifications: false,
         businessId: emp.businessId,
         businessSlug: emp.business.slug ?? null,
         businessLogo: absolutizePublicMediaPath(emp.business.logoPath ?? null),
@@ -953,6 +976,9 @@ export async function updateEmployeeSelf(
     monthlyGoal?: number | null;
     emailNotifications?: boolean;
     pushNotifications?: boolean;
+    tipInAppNotifications?: boolean;
+    tipPushNotifications?: boolean;
+    tipEmailNotifications?: boolean;
   }
 ): Promise<EmployeeSelfProfile> {
   const emp = await prisma.employee.findUnique({
@@ -963,6 +989,16 @@ export async function updateEmployeeSelf(
     throw new Error("Employee not found");
   }
 
+  const tipColumnsReady = await employeeTipChannelColumnsReady();
+  if (
+    !tipColumnsReady &&
+    (input.tipInAppNotifications !== undefined ||
+      input.tipPushNotifications !== undefined ||
+      input.tipEmailNotifications !== undefined)
+  ) {
+    throw new Error("Tip notification settings are unavailable until the database update is applied.");
+  }
+
   await prisma.employee.update({
     where: { id: emp.id },
     data: {
@@ -971,6 +1007,15 @@ export async function updateEmployeeSelf(
       ...(input.phone !== undefined ? { phone: input.phone?.trim() || null } : {}),
       ...(input.emailNotifications !== undefined ? { emailNotifications: input.emailNotifications } : {}),
       ...(input.pushNotifications !== undefined ? { pushNotifications: input.pushNotifications } : {}),
+      ...(tipColumnsReady && input.tipInAppNotifications !== undefined
+        ? { tipInAppNotifications: input.tipInAppNotifications }
+        : {}),
+      ...(tipColumnsReady && input.tipPushNotifications !== undefined
+        ? { tipPushNotifications: input.tipPushNotifications }
+        : {}),
+      ...(tipColumnsReady && input.tipEmailNotifications !== undefined
+        ? { tipEmailNotifications: input.tipEmailNotifications }
+        : {}),
     },
   });
 

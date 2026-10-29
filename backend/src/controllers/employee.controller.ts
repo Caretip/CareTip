@@ -22,6 +22,12 @@ import {
 
 const VERIFICATION_REQUIRED_MSG = "QR code will be available after business verification.";
 
+/** Accept only JSON booleans so the string "false" cannot enable a channel. */
+function strictBoolean(value: unknown): boolean | undefined {
+  if (value === true || value === false) return value;
+  return undefined;
+}
+
 /** JSON body may send "" for cleared selects — treat as null for FK fields. */
 function parseLocationIdFromBody(body: { locationId?: unknown }): string | null | undefined {
   if (body.locationId === undefined) return undefined;
@@ -127,6 +133,9 @@ export async function patchMyProfile(req: Request, res: Response) {
       return res.status(401).json({ message: "Authentication required" });
     }
     const { name, bio, monthlyGoal, emailNotifications, pushNotifications, phone } = req.body;
+    const tipInAppNotifications = strictBoolean(req.body.tipInAppNotifications);
+    const tipPushNotifications = strictBoolean(req.body.tipPushNotifications);
+    const tipEmailNotifications = strictBoolean(req.body.tipEmailNotifications);
     if (!(await enforceEmployeeGoalsIfSettingMonthlyGoal(req, res, monthlyGoal))) {
       return;
     }
@@ -139,8 +148,12 @@ export async function patchMyProfile(req: Request, res: Response) {
       ...(phone !== undefined ? { phone: String(phone).trim() || null } : {}),
       ...(emailNotifications !== undefined ? { emailNotifications: Boolean(emailNotifications) } : {}),
       ...(pushNotifications !== undefined ? { pushNotifications: Boolean(pushNotifications) } : {}),
+      ...(tipInAppNotifications !== undefined ? { tipInAppNotifications } : {}),
+      ...(tipPushNotifications !== undefined ? { tipPushNotifications } : {}),
+      ...(tipEmailNotifications !== undefined ? { tipEmailNotifications } : {}),
     });
-    if (pushNotifications === false) {
+    const pushPrefTouched = pushNotifications !== undefined || tipPushNotifications !== undefined;
+    if (pushPrefTouched && !updated.pushNotifications && !updated.tipPushNotifications) {
       const { removeAllPushDeviceTokensForUser } = await import(
         "../services/push/pushNotification.service.js"
       );

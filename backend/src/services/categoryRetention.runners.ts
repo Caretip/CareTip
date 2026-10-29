@@ -15,6 +15,7 @@ import {
   type RetentionCategory,
 } from "./retentionPolicy.helpers.js";
 import { FORMER_TEAM_MEMBER_NAME } from "./anonymization.service.js";
+import { clearedEmployeeTipChannelData } from "./notifications/employeeTipChannelColumns.js";
 import { calendarYearRetentionEligibleAt, daysCutoff, hoursCutoff } from "./retentionCalendar.js";
 import { QR_ANONYMIZED_SESSION_ID } from "./retentionPolicy.constants.js";
 import { logDryRunRecord, type RetentionDryRunRecord } from "./retentionDryRun.js";
@@ -960,6 +961,7 @@ export async function runStaffPiiScrub(opts?: {
         slug: null,
         emailNotifications: false,
         pushNotifications: false,
+        ...(await clearedEmployeeTipChannelData()),
         anonymizedAt: now,
       },
     });

@@ -1,7 +1,9 @@
 import type { NotificationPriority } from "@prisma/client";
 import { localizeNotificationPayload } from "../../notifications/notificationI18n.js";
+import { resolveUserPreferredLocale } from "../../emails/i18nEmail.js";
 import { prisma } from "../../prisma.js";
 import { sendLocalizedUserNotificationEmail } from "../localizedNotificationEmail.service.js";
+import { employeeTipEmailCopy } from "./employeeTipNotificationPrefs.js";
 import { sendNotification } from "../push/notification.service.js";
 import type { NotificationPayload, NotificationType } from "../push/notification.types.js";
 import {
@@ -24,6 +26,13 @@ export type DeliverNotificationInput = {
   priority?: NotificationPriority;
   dedupeKey?: string;
   bypassPreferences?: boolean;
+  /**
+   * Tip email uses a short private message. In-app and push keep the normal template.
+   * Only the employee tip path sets this.
+   */
+  emailPrivacy?: "employee_tip";
+  /** Browser push for an employee tip omits guest name and amount. */
+  pushPrivacy?: "employee_tip";
 };
 
 const DEFAULT_CHANNELS: Record<DeliveryChannel, boolean> = {
@@ -31,6 +40,21 @@ const DEFAULT_CHANNELS: Record<DeliveryChannel, boolean> = {
   push: true,
   email: false,
 };
+
+/** Hidden dedupe rows must not keep guest identity or payment amounts. */
+function metadataForHiddenEmployeeTip(metadata: Record<string, unknown>): Record<string, unknown> {
+  const next: Record<string, unknown> = { ...metadata, inboxHidden: true };
+  delete next.customerName;
+  delete next.amount;
+  delete next.templateParams;
+  const template = next.localeTemplate;
+  if (template && typeof template === "object") {
+    const copy = { ...(template as Record<string, unknown>) };
+    delete copy.params;
+    next.localeTemplate = copy;
+  }
+  return next;
+}
 
 function resolveChannels(
   type: NotificationType,
@@ -82,20 +106,33 @@ export async function deliverUserNotification(
   };
 
   let notification: InboxNotificationDto | null = null;
+  const wantsInbox = channels.includes("in_app");
+  const wantsSideChannel = channels.includes("push") || channels.includes("email");
+  if (!wantsInbox && !wantsSideChannel) {
+    return { notification: null, skipped: true };
+  }
 
-  if (channels.includes("in_app")) {
-    notification = await createInboxNotification({
-      userId: input.userId,
-      type: deliveryPayload.type,
-      title: deliveryPayload.title,
-      message: deliveryPayload.body,
-      metadata,
-      priority: input.priority ?? "normal",
-      channels,
-      dedupeKey,
-    });
-    if (!notification) return { notification: null, skipped: true };
+  // A hidden anchor keeps the existing userId+dedupeKey uniqueness when the
+  // employee turned the inbox off but still wants push or email. Duplicate
+  // webhooks then skip every channel. The anchor is not an inbox item.
+  notification = await createInboxNotification({
+    userId: input.userId,
+    type: wantsInbox ? deliveryPayload.type : "delivery_anchor",
+    title: wantsInbox ? deliveryPayload.title : "CareTip",
+    message: wantsInbox ? deliveryPayload.body : "Delivery recorded.",
+    metadata: wantsInbox
+      ? metadata
+      : input.emailPrivacy === "employee_tip" || input.pushPrivacy === "employee_tip"
+        ? metadataForHiddenEmployeeTip(metadata)
+        : { ...metadata, inboxHidden: true },
+    priority: input.priority ?? "normal",
+    channels,
+    dedupeKey,
+    visibleInInbox: wantsInbox,
+  });
+  if (!notification) return { notification: null, skipped: true };
 
+  if (wantsInbox) {
     const unread = await getUnreadNotificationCount(input.userId);
     const businessId =
       metadata && typeof metadata === "object" && "businessId" in metadata
@@ -117,16 +154,25 @@ export async function deliverUserNotification(
   }
 
   if (channels.includes("push")) {
-    const pushPayload =
-      notification?.id
-        ? {
-            ...deliveryPayload,
-            metadata: {
-              ...(deliveryPayload.metadata ?? {}),
-              notificationId: notification.id,
-            },
-          }
-        : deliveryPayload;
+    const privatePush =
+      input.pushPrivacy === "employee_tip"
+        ? employeeTipEmailCopy(resolveUserPreferredLocale(user?.preferredLocale) === "de" ? "de" : "en")
+        : null;
+    const pushMeta: Record<string, string> = {};
+    for (const [key, value] of Object.entries(deliveryPayload.metadata ?? {})) {
+      if (typeof value === "string") pushMeta[key] = value;
+    }
+    if (privatePush) {
+      delete pushMeta.customerName;
+      delete pushMeta.amount;
+    }
+    if (notification?.id) pushMeta.notificationId = notification.id;
+    const pushPayload = {
+      ...(privatePush
+        ? { ...deliveryPayload, title: privatePush.title, body: privatePush.bodyText }
+        : deliveryPayload),
+      metadata: pushMeta,
+    };
     void sendNotification(input.userId, pushPayload, {
       bypassPreferences: input.bypassPreferences,
       dedupeKey: `push:${dedupeKey}`,
@@ -137,18 +183,35 @@ export async function deliverUserNotification(
 
   if (channels.includes("email")) {
     if (user?.email) {
+      const privateEmail =
+        input.emailPrivacy === "employee_tip"
+          ? employeeTipEmailCopy(resolveUserPreferredLocale(user.preferredLocale) === "de" ? "de" : "en")
+          : null;
       void sendLocalizedUserNotificationEmail({
         to: user.email,
         userId: input.userId,
         preferredLocale: user.preferredLocale,
-        title: deliveryPayload.title,
-        bodyText: deliveryPayload.body,
+        title: privateEmail?.title ?? deliveryPayload.title,
+        bodyText: privateEmail?.bodyText ?? deliveryPayload.body,
         actionUrl: deliveryPayload.url ?? null,
-      }).catch(() => undefined);
+      })
+        .then((result) => {
+          console.info("[notifications] email", {
+            notificationId: notification?.id ?? null,
+            type: deliveryPayload.type,
+            userId: input.userId,
+            accepted: result.accepted,
+            outcome: result.outcome,
+            messageId: result.messageId ?? null,
+          });
+        })
+        .catch((err) => {
+          logServerError("notifications.deliverUserNotification.email", err);
+        });
     }
   }
 
-  return { notification, skipped: false };
+  return { notification: wantsInbox ? notification : null, skipped: false };
 }
 
 export async function deliverNotificationToUsers(

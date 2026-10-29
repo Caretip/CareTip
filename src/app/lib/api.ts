@@ -2791,6 +2791,9 @@ export interface EmployeeSelfProfile {
   monthlyGoal: number | null;
   emailNotifications: boolean;
   pushNotifications: boolean;
+  tipInAppNotifications: boolean;
+  tipPushNotifications: boolean;
+  tipEmailNotifications: boolean;
   businessId: string;
   /** Public `Business.slug` for `/{businessSlug}/{employeeSlug}` URLs */
   businessSlug: string | null;
@@ -2891,6 +2894,9 @@ export async function patchEmployeeProfile(payload: {
   monthlyGoal?: number | null;
   emailNotifications?: boolean;
   pushNotifications?: boolean;
+  tipInAppNotifications?: boolean;
+  tipPushNotifications?: boolean;
+  tipEmailNotifications?: boolean;
 }): Promise<EmployeeSelfProfile> {
   return apiRequest(apiPath("/api/employees/me"), {
     method: "PATCH",

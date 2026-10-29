@@ -11,6 +11,12 @@ import {
   deliverUserNotification,
   type DeliveryChannel,
 } from "../notifications/notificationOrchestrator.service.js";
+import {
+  effectiveEmployeeTipNotificationPrefs,
+  employeeTipPrefsBeforeChannelColumns,
+  resolveEmployeeTipDeliveryChannels,
+} from "../notifications/employeeTipNotificationPrefs.js";
+import { employeeTipChannelColumnsReady } from "../notifications/employeeTipChannelColumns.js";
 
 function safeTrigger(label: string, fn: () => Promise<void>): void {
   void fn().catch((err) => {
@@ -31,17 +37,45 @@ export async function listPlatformAdminUserIds(): Promise<string[]> {
 /** 1. New tip received — employee + business manager. */
 export function onTipReceived(payload: NewTipPayload): void {
   safeTrigger("onTipReceived", async () => {
+    if (payload.tip.status !== "success") return;
+
     let employeeUserId = payload.employeeUserId;
     let employeeName = payload.employeeName;
 
-    if (!employeeUserId && payload.employeeId) {
+    let tipPrefs = effectiveEmployeeTipNotificationPrefs(null);
+    if (payload.employeeId) {
+      const tipColumnsReady = await employeeTipChannelColumnsReady();
       const employee = await prisma.employee.findUnique({
         where: { id: payload.employeeId },
-        select: { userId: true, name: true },
+        select: {
+          userId: true,
+          name: true,
+          businessId: true,
+          ...(tipColumnsReady
+            ? {
+                tipInAppNotifications: true,
+                tipPushNotifications: true,
+                tipEmailNotifications: true,
+              }
+            : { pushNotifications: true }),
+        },
       });
-      if (employee) {
-        employeeUserId = employee.userId ?? undefined;
-        employeeName = employee.name;
+      if (employee && employee.businessId === payload.businessId) {
+        if (!employeeUserId) employeeUserId = employee.userId ?? undefined;
+        if (!payload.employeeUserId) employeeName = employee.name;
+        const row = employee as {
+          pushNotifications?: unknown;
+          tipInAppNotifications?: boolean;
+          tipPushNotifications?: boolean;
+          tipEmailNotifications?: boolean;
+        };
+        tipPrefs = tipColumnsReady
+          ? effectiveEmployeeTipNotificationPrefs(row)
+          : employeeTipPrefsBeforeChannelColumns(
+              typeof row.pushNotifications === "boolean" ? row.pushNotifications : true,
+            );
+      } else if (employee && employee.businessId !== payload.businessId) {
+        employeeUserId = undefined;
       }
     }
 
@@ -76,6 +110,9 @@ export function onTipReceived(payload: NewTipPayload): void {
             ...(customerName ? { customerName } : {}),
           },
         },
+        channels: resolveEmployeeTipDeliveryChannels(tipPrefs),
+        emailPrivacy: "employee_tip",
+        pushPrivacy: "employee_tip",
         dedupeKey: `tip:${payload.tip.id}:employee:${employeeUserId}`,
       });
     }

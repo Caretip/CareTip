@@ -68,6 +68,15 @@ assert.match(en.business.accountSettings.systemDesc, /push/i);
 assert.match(en.business.accountSettings.loginDesc, /sign in/i);
 assert.doesNotMatch(en.business.accountSettings.loginDesc, /new device signs in/i);
 assert.match(en.employee.settings.pushNotifHint, /inbox/i);
+assert.match(empPage, /tipInAppNotifications/);
+assert.match(empPage, /tipPushNotifications/);
+assert.match(empPage, /tipEmailNotifications/);
+assert.match(empPage, /id="tip-inapp-n"/);
+assert.match(empPage, /id="tip-push-n"/);
+assert.match(empPage, /id="tip-mail-n"/);
+assert.match(empPage, /id="push-n"/);
+assert.match(en.employee.settings.tipEmailDesc, /guest/i);
+assert.match(en.employee.settings.tipInAppDesc, /inbox/i);
 assert.match(en.admin.platformSettings.notifications.desc, /sign-in email/i);
 
 const trial = read("backend/src/services/trialReminderEmail.service.ts");

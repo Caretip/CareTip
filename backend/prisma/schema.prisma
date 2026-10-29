@@ -1260,6 +1260,21 @@ model Employee {
   monthlyGoal        Decimal?                 @map("monthly_goal") @db.Decimal(10, 2)
   emailNotifications Boolean                  @default(true) @map("email_notifications")
   pushNotifications  Boolean                  @default(true) @map("push_notifications")
+  /**
+   * Tip inbox for this employee. Default on — matches historical inbox delivery.
+   * Independent of push and email.
+   */
+  tipInAppNotifications Boolean               @default(true) @map("tip_in_app_notifications")
+  /**
+   * Browser/device push for a newly recorded tip. Backfilled from push_notifications
+   * so employees who already turned push off do not start receiving tip push.
+   */
+  tipPushNotifications Boolean                @default(true) @map("tip_push_notifications")
+  /**
+   * Email for a newly recorded tip. Default off — this channel did not exist before,
+   * so existing employees are not enrolled automatically.
+   */
+  tipEmailNotifications Boolean               @default(false) @map("tip_email_notifications")
   isActive           Boolean                  @default(true) @map("is_active")
   /**
    * Soft delete — membership_removed. Tips must survive (do not hard-delete User for Art. 17).

@@ -119,7 +119,7 @@ function normalizeReplyToAddresses(replyTo: string | string[] | undefined): stri
  * Callers keep token logic separate; this only posts to Resend.
  */
 export type ResendSendOutcome =
-  | { kind: "sent" }
+  | { kind: "sent"; messageId?: string }
   | { kind: "retryable"; httpStatus?: number; retryAfterMs?: number; errorCode?: string }
   | { kind: "permanent"; httpStatus?: number; errorCode?: string }
   | { kind: "not_configured" };
@@ -260,11 +260,18 @@ export async function sendResendEmailWithOutcome(
       }
       return classified;
     }
+    let messageId: string | undefined;
+    try {
+      const parsed = (await r.json()) as { id?: unknown };
+      if (typeof parsed?.id === "string" && parsed.id) messageId = parsed.id;
+    } catch {
+      // Resend accepted the request; a missing body only loses the id.
+    }
     console.info(`[resend][${logTag}] Email sent`, {
       to: payload.to[0],
       hasReplyTo: Boolean(replyToAddresses),
     });
-    return { kind: "sent" };
+    return messageId ? { kind: "sent", messageId } : { kind: "sent" };
   } catch (error) {
     console.error("[resend] Email sending failed:", { tag: logTag, error });
     return { kind: "retryable" };

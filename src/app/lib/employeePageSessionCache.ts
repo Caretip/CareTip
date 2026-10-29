@@ -22,6 +22,9 @@ export type EmployeeSettingsSnapshot = {
   monthlyGoal: string;
   emailNotif: boolean;
   pushNotif: boolean;
+  tipInApp: boolean;
+  tipPush: boolean;
+  tipEmail: boolean;
 };
 
 export type EmployeeTipsActivitySnapshot = {

@@ -93,18 +93,27 @@ export function EmployeeNotificationsSettingsScreen() {
     >
       <Section title={t("settings.notificationsEmployee")}>
         {employeeQuery.isLoading && !employee ? (
-          <SkeletonListRows count={1} />
+          <SkeletonListRows count={4} />
         ) : employee ? (
           <GroupedList>
-            <GroupedRow showDivider={false}>
-              <View style={styles.row}>
-                <Text style={styles.body}>{t("settings.pushNotifications")}</Text>
-                <Switch
-                  value={employee.pushNotifications}
-                  onValueChange={(v) => void patchEmployee.mutateAsync({ pushNotifications: v })}
-                />
-              </View>
-            </GroupedRow>
+            {(
+              [
+                ["tipInAppNotifications", "settings.tipInAppNotifications", employee.tipInAppNotifications !== false],
+                ["tipPushNotifications", "settings.tipPushNotifications", employee.tipPushNotifications !== false],
+                ["tipEmailNotifications", "settings.tipEmailNotifications", employee.tipEmailNotifications === true],
+                ["pushNotifications", "settings.pushNotifications", employee.pushNotifications !== false],
+              ] as const
+            ).map(([key, labelKey, value], index, rows) => (
+              <GroupedRow key={key} showDivider={index < rows.length - 1}>
+                <View style={styles.row}>
+                  <Text style={styles.body}>{t(labelKey)}</Text>
+                  <Switch
+                    value={value}
+                    onValueChange={(next) => void patchEmployee.mutateAsync({ [key]: next })}
+                  />
+                </View>
+              </GroupedRow>
+            ))}
           </GroupedList>
         ) : null}
       </Section>

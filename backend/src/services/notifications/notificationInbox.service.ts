@@ -158,6 +158,8 @@ export async function createInboxNotification(input: {
   priority?: NotificationPriority;
   channels: string[];
   dedupeKey?: string;
+  /** False stores a dedupe anchor that list and unread queries skip. */
+  visibleInInbox?: boolean;
 }): Promise<InboxNotificationDto | null> {
   const title = input.title.trim();
   const message = input.message.trim();
@@ -170,7 +172,11 @@ export async function createInboxNotification(input: {
     if (dup) return null;
   }
 
-  const metadata = (input.metadata ?? {}) as Prisma.InputJsonValue;
+  const visibleInInbox = input.visibleInInbox !== false;
+  const metadata = {
+    ...(input.metadata ?? {}),
+    ...(visibleInInbox ? {} : { inboxHidden: true }),
+  } as Prisma.InputJsonValue;
 
   try {
     const row = await prisma.notification.create({
@@ -183,6 +189,7 @@ export async function createInboxNotification(input: {
         priority: input.priority ?? "normal",
         channels: input.channels,
         dedupeKey: input.dedupeKey ?? null,
+        ...(visibleInInbox ? {} : { readAt: new Date() }),
       },
     });
     return toInboxDto(row);
@@ -222,12 +229,15 @@ export async function listUserNotifications(
   const rows = await prisma.notification.findMany({
     where: {
       userId,
+      AND: [
+        { type: { not: "delivery_anchor" } },
+        ...(options?.kind === "support"
+          ? [{ type: { in: [...SUPPORT_TYPES] } }]
+          : options?.kind === "other"
+            ? [{ type: { notIn: [...SUPPORT_TYPES] } }]
+            : []),
+      ],
       ...(options?.unreadOnly ? { readAt: null } : {}),
-      ...(options?.kind === "support"
-        ? { type: { in: [...SUPPORT_TYPES] } }
-        : options?.kind === "other"
-          ? { type: { notIn: [...SUPPORT_TYPES] } }
-          : {}),
       ...(search
         ? {
             OR: [
@@ -264,7 +274,9 @@ export async function listUserNotifications(
 }
 
 export async function getUnreadNotificationCount(userId: string): Promise<number> {
-  return prisma.notification.count({ where: { userId, readAt: null } });
+  return prisma.notification.count({
+    where: { userId, readAt: null, type: { not: "delivery_anchor" } },
+  });
 }
 
 export async function markNotificationRead(
