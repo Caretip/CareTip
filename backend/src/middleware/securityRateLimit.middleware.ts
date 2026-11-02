@@ -4,10 +4,10 @@ import { securityRateLimits } from "../config/securityRateLimit.config.js";
 import type { RateLimitLayer } from "../utils/layeredRateLimit.js";
 import { enforceRateLimitLayersDistributed } from "../utils/rateLimitStore.js";
 import { userIdFromPendingMfaLoginToken } from "../services/mfaLogin.service.js";
+import { trustedClientIp } from "../lib/clientIp.js";
 
 function clientIp(req: Request): string {
-  const ip = req.ip?.trim();
-  return ip && ip.length > 0 ? ip : "unknown";
+  return trustedClientIp(req) ?? "unknown";
 }
 
 function userIdFromReq(req: Request): string {

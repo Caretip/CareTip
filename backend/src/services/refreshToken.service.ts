@@ -46,6 +46,50 @@ export function parseCookie(header: string | undefined, name: string): string | 
   return null;
 }
 
+/** API hostnames that share the site (registrable domain) of the CareTip web app. */
+const DEFAULT_FIRST_PARTY_API_HOSTS = ["api.caretip.de"] as const;
+
+function firstPartyApiHosts(): Set<string> {
+  const hosts = new Set<string>(DEFAULT_FIRST_PARTY_API_HOSTS);
+  for (const part of process.env.FIRST_PARTY_API_HOSTS?.split(",") ?? []) {
+    const h = part.trim().toLowerCase();
+    if (h) hosts.add(h);
+  }
+  return hosts;
+}
+
+/** Host the request was addressed to (`Host` header, port stripped, lowercased). */
+function requestHostOf(res: unknown): string {
+  const req = (res as { req?: { get?: (name: string) => string | undefined } }).req;
+  const raw = typeof req?.get === "function" ? req.get("host") : undefined;
+  if (!raw) return "";
+  return raw.trim().toLowerCase().replace(/:\d+$/, "");
+}
+
+/**
+ * SameSite for the refresh cookie on this response.
+ * - Production on a first-party API host (same site as caretip.de): `lax` — every browser call
+ *   from the SPA is same-site, so the cookie is first-party and survives third-party-cookie blocking.
+ * - Production on any other host (e.g. caretip.onrender.com during migration): `none`, which is
+ *   required for the cross-site SPA → API calls that host still serves.
+ * - Development: `lax` (Vite proxy keeps API calls same-origin).
+ * The value depends only on the host, so set and clear on one host always use matching attributes.
+ */
+export function refreshCookieSameSite(requestHost: string): "lax" | "none" {
+  if (process.env.NODE_ENV !== "production") return "lax";
+  return firstPartyApiHosts().has(requestHost) ? "lax" : "none";
+}
+
+function refreshCookieBaseOptions(res: unknown): Record<string, unknown> {
+  return {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: refreshCookieSameSite(requestHostOf(res)),
+    // Host-only (no Domain): the cookie is never sent to caretip.de or other subdomains.
+    path: "/",
+  };
+}
+
 export function setRefreshCookie(
   res: {
     cookie: (name: string, value: string, opts: Record<string, unknown>) => void;
@@ -54,18 +98,8 @@ export function setRefreshCookie(
   value: string,
   opts?: { maxAgeMs?: number }
 ): void {
-  const isProd = process.env.NODE_ENV === "production";
   const maxAge = typeof opts?.maxAgeMs === "number" ? opts.maxAgeMs : defaultRefreshCookieMaxAgeMs();
-  res.cookie(COOKIE_NAME, value, {
-    httpOnly: true,
-    secure: isProd,
-    // None stays for password/Google/Apple sessions that still Set-Cookie on the API host.
-    // Facebook redirect now stores this same cookie on the SPA origin; None is still sent
-    // on that same-origin refresh. Domain is intentionally unset (host-only).
-    sameSite: isProd ? "none" : "lax",
-    path: "/",
-    maxAge,
-  });
+  res.cookie(COOKIE_NAME, value, { ...refreshCookieBaseOptions(res), maxAge });
   // Expo / React Native cannot reliably read Set-Cookie; mirror the same refresh token.
   res.setHeader?.(CARETIP_REFRESH_HEADER, value);
 }
@@ -76,12 +110,8 @@ export function clearRefreshCookie(
     setHeader?: (name: string, value: string) => void;
   },
 ): void {
-  const isProd = process.env.NODE_ENV === "production";
   res.cookie(COOKIE_NAME, "", {
-    httpOnly: true,
-    secure: isProd,
-    sameSite: isProd ? "none" : "lax",
-    path: "/",
+    ...refreshCookieBaseOptions(res),
     expires: new Date(0),
     maxAge: 0,
   });
@@ -471,6 +501,116 @@ export async function rotateRefreshToken(
     console.warn("[refreshToken.rotate]", e instanceof Error ? e.name : "error");
     return null;
   }
+}
+
+export type SessionHostMigrationOutcome =
+  | { kind: "migrated"; newId: string; newToken: string; newExpiresAt: Date }
+  | { kind: "rejected"; reason: "not_found" | "revoked" | "expired" }
+  | { kind: "conflict" };
+
+/**
+ * Moves an active session onto a fresh refresh token issued by the current API host (used once
+ * per browser when the API hostname changes). Same commit protocol as a rotation: insert-first,
+ * then the conditional revoke (which links the old row to the new one) is the single commit point,
+ * so concurrent migrations of one session yield exactly one new chain and a failure before the
+ * commit leaves the old session usable. The link lets a migrate response lost in transit recover
+ * through the old host's refresh grace window; a later replay is treated like any rotated token.
+ */
+export async function migrateSessionToNewRefreshToken(
+  sessionId: string,
+  userId: string,
+): Promise<SessionHostMigrationOutcome> {
+  const db = rotationDb();
+  const now = rotationNow();
+  let current: RotationRow | null;
+  try {
+    current = await db.refreshToken.findUnique({ where: { id: sessionId }, select: ROTATION_ROW_SELECT });
+  } catch (e) {
+    throw new RefreshTokenStoreUnavailableError(false, e);
+  }
+  if (!current || current.userId !== userId) return { kind: "rejected", reason: "not_found" };
+  if (current.revokedAt != null) return { kind: "rejected", reason: "revoked" };
+  if (current.expiresAt.getTime() <= now) return { kind: "rejected", reason: "expired" };
+
+  const newPlain = crypto.randomBytes(48).toString("base64url");
+  const newExpiresAt = new Date(now + refreshTokenTtlDays() * 24 * 60 * 60 * 1000);
+  let created: { id: string };
+  try {
+    created = await db.refreshToken.create({
+      data: {
+        tokenHash: sha256Hex(newPlain),
+        userId,
+        expiresAt: newExpiresAt,
+        revokedAt: null,
+        replacedByTokenId: null,
+      },
+      select: { id: true },
+    });
+  } catch (e) {
+    throw new RefreshTokenStoreUnavailableError(false, e);
+  }
+
+  let updated: { count: number };
+  try {
+    updated = await db.refreshToken.updateMany({
+      where: { id: current.id, revokedAt: null },
+      data: { revokedAt: new Date(now), replacedByTokenId: created.id },
+    });
+  } catch (e) {
+    throw new RefreshTokenStoreUnavailableError(true, e);
+  }
+  if (updated.count !== 1) {
+    await db.refreshToken.deleteMany({ where: { id: created.id } }).catch(() => undefined);
+    return { kind: "conflict" };
+  }
+  return { kind: "migrated", newId: created.id, newToken: newPlain, newExpiresAt };
+}
+
+/** Rotations/migrations that can happen while one logout is in flight are few; bound the walk. */
+const LOGOUT_CHAIN_MAX_HOPS = 8;
+
+/**
+ * Logout: revoke the presented session and whatever its replacement chain now points to.
+ * A refresh or host migration that committed while the logout was in flight has replaced the
+ * presented session; its successor is revoked too, so no session survives the logout.
+ * `expectedUserId` (from a verified access token) must own the starting row.
+ */
+export async function revokeRefreshSessionChain(
+  start: { tokenHash: string } | { id: string },
+  expectedUserId?: string,
+): Promise<{ userId: string | null; revoked: number }> {
+  const db = rotationDb();
+  const now = rotationNow();
+  let row = await db.refreshToken.findUnique({ where: start, select: ROTATION_ROW_SELECT });
+  if (!row || (expectedUserId && row.userId !== expectedUserId)) return { userId: null, revoked: 0 };
+  const userId = row.userId;
+  let revoked = 0;
+  for (let hop = 0; hop < LOGOUT_CHAIN_MAX_HOPS; hop++) {
+    if (row.revokedAt == null) {
+      const r = await db.refreshToken.updateMany({
+        where: { id: row.id, revokedAt: null },
+        data: { revokedAt: new Date(now) },
+      });
+      if (r.count === 1) {
+        revoked += 1;
+        break;
+      }
+      // Replaced between our read and our revoke: re-read to follow the new link.
+      const fresh = await db.refreshToken.findUnique({ where: { id: row.id }, select: ROTATION_ROW_SELECT });
+      if (!fresh) break;
+      row = fresh;
+      continue;
+    }
+    if (!row.replacedByTokenId) break;
+    const next = await db.refreshToken.findUnique({ where: { id: row.replacedByTokenId }, select: ROTATION_ROW_SELECT });
+    if (!next || next.userId !== userId) break;
+    row = next;
+  }
+  return { userId, revoked };
+}
+
+export function refreshTokenHash(token: string): string {
+  return sha256Hex(String(token ?? "").trim());
 }
 
 export async function revokeRefreshToken(token: string): Promise<void> {

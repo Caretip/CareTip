@@ -19,6 +19,8 @@ interface ImportMetaEnv {
   /** Optional URL (e.g. `/videos/how-it-works.webm`) for the Live in minutes laptop demo; when unset, an in-browser slideshow is used. */
   readonly VITE_LIVE_IN_MINUTES_DEMO_VIDEO?: string;
   readonly VITE_API_URL?: string;
+  /** Previous API origin while moving browser sessions to a new API hostname (temporary). */
+  readonly VITE_LEGACY_API_URL?: string;
   /**
    * Injected at build/dev from `BASE_URL` / `VITE_BASE_URL` / `NEXT_PUBLIC_APP_URL` / `VITE_APP_URL`
    * (see `vite.config.ts`). Prefer setting **`BASE_URL`** in CI/host env for production QR links.

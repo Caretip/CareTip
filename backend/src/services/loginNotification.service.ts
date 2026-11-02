@@ -1,5 +1,6 @@
 import { createHash } from "node:crypto";
 import type { Request } from "express";
+import { trustedClientIp } from "../lib/clientIp.js";
 import { prisma } from "../prisma.js";
 import { resolveUserPreferredLocale, type EmailLocale } from "../emails/i18nEmail.js";
 import { sendNewLoginAlertEmail } from "./loginAlertEmail.service.js";
@@ -63,10 +64,7 @@ export function extractLoginRequestContext(req: Request): {
   ip: string | null;
   userAgent: string;
 } {
-  const ip =
-    (req.headers["x-forwarded-for"] as string | undefined)?.split(",")[0]?.trim() ??
-    req.socket.remoteAddress ??
-    null;
+  const ip = trustedClientIp(req);
   const userAgent = String(req.headers["user-agent"] ?? "");
   return { ip, userAgent };
 }

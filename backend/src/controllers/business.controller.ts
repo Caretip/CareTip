@@ -1,5 +1,6 @@
 import type { Request, Response } from "express";
 import { Prisma } from "@prisma/client";
+import { trustedClientIp } from "../lib/clientIp.js";
 import * as businessService from "../services/business.service.js";
 import { prisma } from "../prisma.js";
 import {
@@ -103,11 +104,7 @@ export async function getMyProfile(req: Request, res: Response) {
 export async function validateInvite(req: Request, res: Response) {
   try {
     const code = typeof req.query?.code === "string" ? req.query.code : "";
-    const clientKey =
-      (typeof req.ip === "string" && req.ip) ||
-      (typeof req.headers["x-forwarded-for"] === "string"
-        ? req.headers["x-forwarded-for"].split(",")[0]?.trim()
-        : "unknown");
+    const clientKey = trustedClientIp(req) ?? "unknown";
     const r = await businessService.validateInviteCode(code, {
       clientKey: `validate:${clientKey}`,
       ipKey: clientKey,

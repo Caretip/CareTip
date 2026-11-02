@@ -25,7 +25,7 @@ import {
 } from "./apiError";
 import { hasClientStoredSession } from "./authUserStore";
 import { hasClientSessionHint } from "./authSessionHint";
-import { resolveApiBaseUrl } from "./apiOrigin";
+import { resolveApiBaseUrl, resolveLegacyApiBaseUrl } from "./apiOrigin";
 import { withAuthCredentialExchangeDeadline } from "./authCredentialExchangeDeadline";
 import { logClientError } from "./clientLog";
 import type { OAuthProviderId } from "./oauthProviderIds";
@@ -78,6 +78,13 @@ import {
   clearPageOriginAuthRefresh,
   resolveBrowserAuthRefreshUrl,
 } from "./pageOriginAuthRefresh";
+import {
+  type LegacySessionMigrationResult,
+  isLegacySessionMigrationDone,
+  migrateLegacySession,
+  noteCurrentHostSessionEstablished,
+  shouldAttemptLegacySessionMigration,
+} from "./legacySessionMigration";
 
 export { preferPageOriginAuthRefresh, clearPageOriginAuthRefresh } from "./pageOriginAuthRefresh";
 
@@ -252,12 +259,20 @@ async function runRefreshAuthWithRetries(
       if (parsed) {
         setToken(parsed.token);
         refreshFailureCooldownUntil = 0;
+        noteCurrentHostSessionEstablished();
         return { ok: true, data: parsed };
       }
       return { ok: false, shouldClearSession: true, status: res.status };
     }
 
-    if (res.status === 401 || res.status === 403) {
+    if (res.status === 401) {
+      const body = (await res.json().catch(() => null)) as { code?: unknown } | null;
+      if (body?.code === "REFRESH_COOKIE_MISSING" && shouldAttemptLegacySessionMigration()) {
+        return completeLegacySessionMigration(await migrateLegacySession(signal));
+      }
+      return { ok: false, shouldClearSession: true, status: res.status };
+    }
+    if (res.status === 403) {
       return { ok: false, shouldClearSession: true, status: res.status };
     }
 
@@ -285,6 +300,24 @@ async function runRefreshAuthWithRetries(
 
   refreshFailureCooldownUntil = Date.now() + REFRESH_FAILURE_COOLDOWN_MS;
   return { ok: false, shouldClearSession: false, status: 0 };
+}
+
+function completeLegacySessionMigration(result: LegacySessionMigrationResult): RefreshSessionResult {
+  if (result.kind === "migrated" || result.kind === "legacy_only") {
+    const parsed = parseAuthRefreshPayload(result.data);
+    if (parsed) {
+      setToken(parsed.token);
+      refreshFailureCooldownUntil = 0;
+      recordAuthSessionDiagnostic("AUTH_REFRESH_FAILURE_CLASS", { reason: `api_host_${result.kind}` });
+      return { ok: true, data: parsed };
+    }
+    return { ok: false, shouldClearSession: false, status: 502 };
+  }
+  if (result.kind === "transient") {
+    refreshFailureCooldownUntil = Date.now() + REFRESH_FAILURE_COOLDOWN_MS;
+    return { ok: false, shouldClearSession: false, status: result.status };
+  }
+  return { ok: false, shouldClearSession: true, status: 401 };
 }
 
 function mayClearClientAuthStorage(): boolean {
@@ -613,7 +646,7 @@ function apiConfigHintForFailedFetch(url: string): string {
   if (import.meta.env.DEV) {
     return " In local dev, relative /api URLs are proxied by Vite to the backend (see vite.config.ts). Start the API on port 3001 (e.g. from the backend folder: npm run dev). If .env sets VITE_API_URL, it must be a reachable http(s) URL or omit it to use the proxy.";
   }
-  return " For this deployed build, set VITE_API_URL in your host (e.g. Netlify: Site configuration → Environment variables) to your backend origin, e.g. https://your-api.onrender.com. Then trigger a new deploy.";
+  return " For this deployed build, set VITE_API_URL in your host (e.g. Netlify: Site configuration → Environment variables) to your backend origin, e.g. https://api.caretip.de. Then trigger a new deploy.";
 }
 
 const NETWORK_RETRY_DELAY_MS = 2500;
@@ -1024,10 +1057,13 @@ export async function logoutAPI(): Promise<void> {
 }
 
 export type LogoutAPIResult = {
+  /** The API confirmed the logout (and the previous API host too, while a migration is pending). */
   ok: boolean;
   timedOut: boolean;
   durationMs: number;
   apiStartMs: number;
+  /** Previous API host logout outcome; undefined when it was not needed. */
+  legacyConfirmed?: boolean;
 };
 
 const LOGOUT_API_TIMEOUT_MS = 8_000;
@@ -1050,6 +1086,8 @@ export async function logoutAPIWithTimeout(options?: {
   const token = options?.capturedToken?.trim() || getToken()?.trim();
 
   let timedOut = false;
+  let serverConfirmed = false;
+  let legacyConfirmed: boolean | undefined;
   authDebug("logout_api_start", {
     timeoutMs,
     hasBearer: Boolean(token),
@@ -1073,6 +1111,22 @@ export async function logoutAPIWithTimeout(options?: {
         logoutHeaders.Authorization = `Bearer ${token.trim()}`;
       }
 
+      const legacyBase = resolveLegacyApiBaseUrl();
+      // Session may still live on the previous API host's cookie (host-only, so only that host
+      // can revoke and clear it).
+      const legacyLogout =
+        legacyBase && !isLegacySessionMigrationDone()
+          ? fetch(`${legacyBase}/api/auth/logout`, {
+              method: "POST",
+              headers: logoutHeaders,
+              body: EMPTY_JSON_BODY,
+              credentials: "include",
+              signal: controller.signal,
+            }).then(
+              (r) => r.ok,
+              () => false,
+            )
+          : null;
       const response = await fetch(apiPath("/api/auth/logout"), {
         method: "POST",
         headers: logoutHeaders,
@@ -1080,8 +1134,15 @@ export async function logoutAPIWithTimeout(options?: {
         credentials: "include",
         signal: controller.signal,
       });
+      serverConfirmed = response.ok;
       if (!response.ok) {
         logClientError("api.logoutAPI.status", new Error(`logout HTTP ${response.status}`));
+      }
+      if (legacyLogout) {
+        legacyConfirmed = await legacyLogout;
+        if (!legacyConfirmed) {
+          logClientError("api.logoutAPI.legacy", new Error("previous API host logout not confirmed"));
+        }
       }
     } finally {
       window.clearTimeout(timeoutId);
@@ -1100,9 +1161,11 @@ export async function logoutAPIWithTimeout(options?: {
   }
 
   const durationMs = performance.now() - apiStartMs;
-  const ok = !timedOut;
+  // Only a confirmed server response counts; network errors and 5xx are not reported as revoked.
+  const ok = !timedOut && serverConfirmed && legacyConfirmed !== false;
   authDebug("logout_api_complete", {
     ok,
+    legacyConfirmed,
     timedOut,
     durationMs: Math.round(durationMs),
     msSinceClick:
@@ -1111,7 +1174,7 @@ export async function logoutAPIWithTimeout(options?: {
         : undefined,
   });
 
-  return { ok, timedOut, durationMs, apiStartMs };
+  return { ok, timedOut, durationMs, apiStartMs, legacyConfirmed };
 }
 
 export async function resendVerificationEmailAPI(

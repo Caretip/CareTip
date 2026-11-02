@@ -23,10 +23,12 @@ import {
   refreshCookieName,
   refreshSessionIdFromRawToken,
   rotateRefreshTokenWithOutcome,
+  migrateSessionToNewRefreshToken,
   RefreshTokenStoreUnavailableError,
   REFRESH_ROTATION_GRACE_MS,
   type RefreshRotationOutcome,
-  revokeRefreshTokenAndGetUserId,
+  refreshTokenHash,
+  revokeRefreshSessionChain,
   revokeAllRefreshTokensForUser,
   revokeOtherRefreshTokensForUser,
   setRefreshCookie,
@@ -57,6 +59,12 @@ import {
   parseMerchantLegalAcceptedFlag,
 } from "../lib/merchantLegalAcceptance.js";
 import * as mfaLoginService from "../services/mfaLogin.service.js";
+import {
+  isAllowedAccessJwtType,
+  resolveJwtSubject,
+  verifyJwt,
+  type DecodedAccessClaims,
+} from "../lib/jwtConfig.js";
 import {
   MFA_CHALLENGE_EXPIRED,
   MFA_CHALLENGE_EXPIRED_MESSAGE,
@@ -1399,7 +1407,10 @@ export async function refresh(req: Request, res: Response) {
       }
     }
 
-    if (!rtCookie) logRefreshOutcome({ reason: "missing_cookie", status: 401 });
+    if (!rtCookie) {
+      logRefreshOutcome({ reason: "missing_cookie", status: 401 });
+      return res.status(401).json({ message: "Authentication required", code: "REFRESH_COOKIE_MISSING" });
+    }
     return res.status(401).json({ message: "Authentication required" });
   } catch (err) {
     if (isDatabaseInfrastructureError(err)) {
@@ -1424,19 +1435,123 @@ export async function refresh(req: Request, res: Response) {
   }
 }
 
+export const SESSION_MIGRATE_MAX_ACCESS_TOKEN_AGE_MS = 2 * 60_000;
+
+function bearerToken(req: Request): string {
+  const h = req.headers.authorization;
+  return typeof h === "string" && h.startsWith("Bearer ") ? h.slice(7).trim() : "";
+}
+
+/** `iat` of the (already verified) Bearer token is recent. */
+function bearerIssuedWithin(req: Request, maxAgeMs: number): boolean {
+  try {
+    const decoded = verifyJwt<DecodedAccessClaims>(bearerToken(req));
+    if (typeof decoded.iat !== "number") return false;
+    const ageMs = Date.now() - decoded.iat * 1000;
+    return ageMs >= -5_000 && ageMs <= maxAgeMs;
+  } catch {
+    return false;
+  }
+}
+
+/** Session bound to a valid (signature + expiry) access token, for logout only. */
+function logoutSessionFromBearer(req: Request): { userId: string; sid: string } | null {
+  const token = bearerToken(req);
+  if (!token) return null;
+  try {
+    const decoded = verifyJwt<DecodedAccessClaims>(token);
+    if (mfaLoginService.isPendingMfaLoginJwt(decoded) || !isAllowedAccessJwtType(decoded.type)) return null;
+    if (typeof decoded.impersonatedBy === "string" && decoded.impersonatedBy) return null;
+    const userId = resolveJwtSubject(decoded);
+    const sid = typeof decoded.sid === "string" ? decoded.sid.trim() : "";
+    return userId && sid ? { userId, sid } : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * One-time move of a browser session to a refresh cookie issued by this API host (API hostname
+ * migration). Requires a fully validated access token (authMiddleware: signature, tv, sid,
+ * active account) carrying a session id; the old session is revoked as part of the move.
+ */
+export async function migrateSessionHost(req: Request, res: Response) {
+  const userId = req.user?.sub ?? req.user?.userId;
+  const sid = req.user?.sid?.trim();
+  if (!userId || !sid || req.user?.impersonatedBy) {
+    return res.status(401).json({ message: "Authentication required" });
+  }
+  // The client calls this right after refreshing on the previous host. An older access token
+  // (e.g. one leaked from memory) cannot be turned into a long-lived refresh cookie.
+  if (!bearerIssuedWithin(req, SESSION_MIGRATE_MAX_ACCESS_TOKEN_AGE_MS)) {
+    return res.status(401).json({ message: "Authentication required", code: "SESSION_MIGRATE_STALE_TOKEN" });
+  }
+  try {
+    const outcome = await migrateSessionToNewRefreshToken(sid, userId);
+    if (outcome.kind === "conflict") {
+      logRefreshOutcome({ reason: "rotation_conflict", status: 409, userId, sessionId: sid });
+      return res.status(409).json({ message: "Session refresh already in progress", code: "REFRESH_CONFLICT" });
+    }
+    if (outcome.kind === "rejected") {
+      logRefreshOutcome({
+        reason: outcome.reason === "expired" ? "expired" : outcome.reason === "revoked" ? "revoked_logout" : "not_found",
+        status: 401,
+        userId,
+        sessionId: sid,
+      });
+      return res.status(401).json({ message: "Authentication required" });
+    }
+    const result = await refreshAuthResultForUserId(userId, { refreshSessionId: outcome.newId });
+    setRefreshCookie(res, outcome.newToken, { maxAgeMs: refreshCookieMaxAgeMs(outcome.newExpiresAt) });
+    logRefreshOutcome({ reason: "ok", status: 200, userId, sessionId: outcome.newId, recovered: false });
+    return res.json(result);
+  } catch (err) {
+    if (err instanceof RefreshTokenStoreUnavailableError) {
+      logRefreshOutcome({
+        reason: "db_error",
+        status: 503,
+        userId,
+        committed: err.committed,
+        errorCode: storeErrorCode(err.storeError),
+      });
+      return refreshUnavailable(res, !err.committed);
+    }
+    if (isDatabaseInfrastructureError(err)) {
+      logRefreshOutcome({ reason: "db_error", status: 503, userId, errorCode: storeErrorCode(err) });
+      return refreshUnavailable(res, false);
+    }
+    if (err instanceof EmailNotVerifiedLoginError) {
+      return res.status(403).json({ message: err.message, code: err.code, canResend: err.canResend });
+    }
+    logServerError("auth.migrateSessionHost", err);
+    return res.status(401).json({ message: "Authentication required" });
+  }
+}
+
 /** Logs out by revoking the current refresh session and clearing the cookie. */
 export async function logout(req: Request, res: Response) {
   try {
     const cookieHeader = req.headers.cookie;
     const refreshCookie = parseCookie(cookieHeader, refreshCookieName());
     let logoutUserId: string | null = null;
+    let revoked = 0;
 
     if (refreshCookie) {
-      logoutUserId = await revokeRefreshTokenAndGetUserId(refreshCookie);
+      const r = await revokeRefreshSessionChain({ tokenHash: refreshTokenHash(refreshCookie) });
+      logoutUserId = r.userId;
+      revoked += r.revoked;
+    }
+    // The browser's access token names its session even when this host holds no cookie (API host
+    // migration, logout racing a refresh). Revoking it here keeps logout complete on either host.
+    const bearerSession = logoutSessionFromBearer(req);
+    if (bearerSession) {
+      const r = await revokeRefreshSessionChain({ id: bearerSession.sid }, bearerSession.userId);
+      logoutUserId = logoutUserId ?? r.userId;
+      revoked += r.revoked;
     }
 
     clearRefreshCookie(res);
-    res.json({ ok: true });
+    res.json({ ok: true, revoked });
 
     if (logoutUserId) {
       void import("../socket/socketServer.js")

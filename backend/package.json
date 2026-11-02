@@ -170,6 +170,7 @@
     "test:oauth-welcome-email": "tsx scripts/oauth-welcome-email-runtime.ts",
     "test:email-branding": "tsx scripts/email-branding-runtime.ts",
     "test:auth-refresh-reliability": "tsx scripts/auth-refresh-reliability-runtime.ts",
+    "test:first-party-api-domain": "tsx scripts/first-party-api-domain-runtime.ts",
     "test:auth-refresh-reuse-detection": "dotenv -e ../.env -e .env -- tsx scripts/auth-refresh-reuse-detection-runtime.ts",
     "test:oauth-expansion": "dotenv -e ../.env -e .env -- tsx scripts/oauth-expansion-runtime.ts",
     "test:facebook-oauth-error-handling": "dotenv -e ../.env -e .env -- tsx scripts/facebook-oauth-error-handling-runtime.ts",
