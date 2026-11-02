@@ -132,15 +132,13 @@ export async function runTrialReminderEmails(): Promise<TrialReminderRunResult> 
 
       const locale = resolveLocale(manager.preferredLocale);
       const copy = reminderCopy(dueDay, locale);
-      const billingUrl = `${(process.env.FRONTEND_URL ?? "http://localhost:5173").replace(/\/$/, "")}/dashboard/settings`;
-
       await sendLocalizedUserNotificationEmail({
         to: manager.email,
         userId: manager.id,
         preferredLocale: manager.preferredLocale,
         title: copy.title,
         bodyText: copy.body,
-        actionUrl: billingUrl,
+        actionUrl: "/dashboard/settings",
         actionLabel: locale === "de" ? "Abrechnung öffnen" : "Open billing",
       });
 

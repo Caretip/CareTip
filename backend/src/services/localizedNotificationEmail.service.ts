@@ -6,17 +6,22 @@ import {
   type EmailLocale,
 } from "../emails/i18nEmail.js";
 import { getResendFromAddress, sendResendEmailWithOutcome } from "./resendClient.js";
-import { resolveCheckoutFrontendBaseUrl } from "../config/frontendUrl.js";
+import { buildTrustedAppUrl } from "../config/frontendUrl.js";
 
-/** Email clients cannot open app-relative paths; turn `/employee/...` into a full link. */
+/**
+ * Email clients cannot open app-relative paths (Gmail turns `/x` into `http:///x`).
+ * Returns an absolute link on the trusted FRONTEND_URL origin, or null so the email
+ * is sent without a button instead of with a broken one.
+ */
 export function absoluteEmailActionUrl(raw: string | null | undefined): string | null {
   const value = raw?.trim();
   if (!value) return null;
-  if (/^https?:\/\//i.test(value)) return value;
-  if (!value.startsWith("/") || value.startsWith("//")) return null;
   try {
-    return `${resolveCheckoutFrontendBaseUrl()}${value}`;
-  } catch {
+    return buildTrustedAppUrl(value);
+  } catch (err) {
+    console.error("[email] Notification button omitted: set FRONTEND_URL to the public https:// CareTip origin.", {
+      reason: err instanceof Error ? err.message : String(err),
+    });
     return null;
   }
 }

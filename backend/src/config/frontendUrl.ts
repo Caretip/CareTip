@@ -128,3 +128,23 @@ export function resolveCheckoutFrontendBaseUrl(env: NodeJS.ProcessEnv = process.
 
   return `${chosen.protocol}//${chosen.host}`.replace(/\/$/, "");
 }
+
+/**
+ * Absolute link to a CareTip SPA route on the trusted FRONTEND_URL origin.
+ * Accepts an app path (`/employee/tip-history`) or an absolute URL already on that origin.
+ * Throws when FRONTEND_URL is missing/invalid or the target leaves the trusted origin.
+ */
+export function buildTrustedAppUrl(target: string, env: NodeJS.ProcessEnv = process.env): string {
+  const raw = target.trim();
+  if (!raw) throw new Error("App link target is empty");
+  const base = resolveCheckoutFrontendBaseUrl(env);
+  const isAppPath = raw.startsWith("/") && !raw.startsWith("//") && !raw.includes("\\");
+  if (!isAppPath && !/^https?:\/\//i.test(raw)) {
+    throw new Error("App link target must be an app path or an absolute URL on FRONTEND_URL");
+  }
+  const url = new URL(raw, `${base}/`);
+  if (url.origin !== new URL(base).origin) {
+    throw new Error("App link target is not on the FRONTEND_URL origin");
+  }
+  return url.toString();
+}

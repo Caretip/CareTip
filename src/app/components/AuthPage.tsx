@@ -49,7 +49,7 @@ import {
 } from '@/lib/caretipButtonSystem';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
-import { getPostAuthRedirect } from '../hooks/useAuth';
+import { resolvePostAuthTarget } from '../lib/authRedirects';
 import { persistCheckoutIntentFromSearchParams } from '../lib/checkoutIntent';
 import { commitAuthUser } from '../lib/authUserStore';
 import {
@@ -200,7 +200,10 @@ export function AuthPage() {
   /** Single post-auth navigation — cover stays until dashboard shell paints (not widgets). */
   const redirectAfterAuth = useCallback(
     async (sessionUser: User): Promise<boolean> => {
-      const target = getPostAuthRedirect(sessionUser);
+      const target = resolvePostAuthTarget(
+        sessionUser,
+        (location.state as { from?: unknown } | null)?.from,
+      );
       if (location.pathname === target) return false;
       if (postAuthRedirectRef.current === target) return false;
       postAuthRedirectRef.current = target;
@@ -224,7 +227,7 @@ export function AuthPage() {
       }
       return true;
     },
-    [armNavigationRecovery, location.pathname, navigate],
+    [armNavigationRecovery, location.pathname, location.state, navigate],
   );
 
   const resolvedInviteCode =
