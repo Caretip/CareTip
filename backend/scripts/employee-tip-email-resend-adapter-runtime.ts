@@ -34,7 +34,9 @@ const savedEnv = {
   from: process.env.RESEND_FROM,
   fromEmail: process.env.RESEND_FROM_EMAIL,
   nodeEnv: process.env.NODE_ENV,
+  frontendUrl: process.env.FRONTEND_URL,
 };
+process.env.FRONTEND_URL = "https://caretip.example";
 process.env.RESEND_API_KEY = "re_test_not_a_real_key";
 process.env.RESEND_FROM = "CareTip <noreply@mail.caretip.de>";
 delete process.env.RESEND_FROM_EMAIL;
@@ -68,6 +70,9 @@ try {
   assert.match(String(sent.body.subject), /tip/i);
   const rendered = `${sent.body.subject} ${sent.body.html} ${sent.body.text}`;
   assert.doesNotMatch(rendered, /€|pi_|cs_|stripe/i, "no amount or payment reference");
+  assert.match(String(sent.body.html), /href="https:\/\/caretip\.example\/employee\/tip-history"/);
+  assert.doesNotMatch(String(sent.body.html), /href="\/employee/, "Open in app is never a relative link");
+  assert.match(String(sent.body.text), /https:\/\/caretip\.example\/employee\/tip-history/);
 
   calls.length = 0;
   await sendEmployeeTip("de");
@@ -133,6 +138,7 @@ try {
     ["RESEND_FROM", savedEnv.from],
     ["RESEND_FROM_EMAIL", savedEnv.fromEmail],
     ["NODE_ENV", savedEnv.nodeEnv],
+    ["FRONTEND_URL", savedEnv.frontendUrl],
   ] as const) {
     if (value === undefined) delete process.env[name];
     else process.env[name] = value;

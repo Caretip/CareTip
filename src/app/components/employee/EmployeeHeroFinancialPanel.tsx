@@ -1,6 +1,5 @@
 import { memo } from "react";
 import { useTranslation } from "react-i18next";
-import { CircleCheck, Clock, Coins, Receipt } from "lucide-react";
 import { DashboardHeroFinancialLayout } from "../dashboard/DashboardHeroFinancialLayout";
 import { DashboardHeroMetricSkeleton } from "../dashboard/DashboardAnalyticsLoader";
 import { CountUpMetric } from "../dashboard/CountUpMetric";
@@ -47,8 +46,6 @@ export const EmployeeHeroFinancialPanel = memo(function EmployeeHeroFinancialPan
     return <CountUpMetric value={value} kind="integer" />;
   };
 
-  const metricIcon = "dashboard-hero-financial__metric-glyph";
-
   return (
     <DashboardHeroFinancialLayout
       className={className}
@@ -57,31 +54,28 @@ export const EmployeeHeroFinancialPanel = memo(function EmployeeHeroFinancialPan
       refreshing={refreshing}
       primary={{
         label: t("employee.hero.statYourEarnings"),
+        hint: t("employee.hero.statYourEarningsHint"),
         value: currencyValue(metrics?.employeeEarningsEur),
       }}
       payoutMetrics={[
         {
           id: "paid",
           label: t("employee.hero.statPaidToStripe"),
-          icon: <CircleCheck className={metricIcon} strokeWidth={2} aria-hidden />,
           value: currencyValue(metrics?.paidToStripeEur),
         },
         {
           id: "pending",
           label: t("employee.hero.statPendingRelease"),
-          icon: <Clock className={metricIcon} strokeWidth={2} aria-hidden />,
           value: currencyValue(metrics?.pendingReleaseEur),
         },
         {
           id: "gross",
           label: t("employee.hero.statGrossTips"),
-          icon: <Coins className={metricIcon} strokeWidth={2} aria-hidden />,
           value: currencyValue(metrics?.grossTipsEur),
         },
         {
           id: "tips",
           label: t("employee.hero.statTotalSupporters"),
-          icon: <Receipt className={metricIcon} strokeWidth={2} aria-hidden />,
           value: countValue(metrics?.totalSupporters),
           valueClassName: "dashboard-hero-financial__value--hero-count",
         },

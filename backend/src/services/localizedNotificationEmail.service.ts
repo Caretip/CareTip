@@ -6,6 +6,20 @@ import {
   type EmailLocale,
 } from "../emails/i18nEmail.js";
 import { getResendFromAddress, sendResendEmailWithOutcome } from "./resendClient.js";
+import { resolveCheckoutFrontendBaseUrl } from "../config/frontendUrl.js";
+
+/** Email clients cannot open app-relative paths; turn `/employee/...` into a full link. */
+export function absoluteEmailActionUrl(raw: string | null | undefined): string | null {
+  const value = raw?.trim();
+  if (!value) return null;
+  if (/^https?:\/\//i.test(value)) return value;
+  if (!value.startsWith("/") || value.startsWith("//")) return null;
+  try {
+    return `${resolveCheckoutFrontendBaseUrl()}${value}`;
+  } catch {
+    return null;
+  }
+}
 
 export type LocalizedNotificationEmailResult = {
   /** Resend accepted the request. Not proof the message reached the inbox. */
@@ -49,12 +63,13 @@ export async function sendLocalizedUserNotificationEmail(input: {
   let subject: string;
   let html: string;
   let text: string;
+  const actionUrl = absoluteEmailActionUrl(input.actionUrl);
   const buildPayload = (loc: EmailLocale) =>
     buildGenericNotificationContent({
       locale: loc,
       title: input.title,
       bodyText: input.bodyText,
-      actionUrl: input.actionUrl,
+      actionUrl,
       actionLabel: input.actionLabel,
       recipientName: personalization.recipientName,
       businessName: personalization.businessName,

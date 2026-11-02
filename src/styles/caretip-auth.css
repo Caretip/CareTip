@@ -1464,6 +1464,18 @@
   }
 }
 
+/* Desktop sign-in: sit near the top and use the full height so the submit button is visible without scrolling. */
+@media (min-width: 1024px) {
+  .caretip-auth-curved-container > .caretip-auth-split-layout__panel {
+    align-items: flex-start;
+    padding-top: clamp(0.75rem, 4dvh, 2.5rem);
+  }
+
+  .caretip-auth-card--stable.caretip-auth-card--signin {
+    max-height: calc(100dvh - 1.5rem);
+  }
+}
+
 .caretip-auth-card--stable.caretip-auth-card--signup,
 .caretip-auth-card--signup {
   min-height: 0;
