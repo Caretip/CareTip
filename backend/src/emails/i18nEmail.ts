@@ -680,11 +680,15 @@ export function buildGenericNotificationContent(input: {
     businessName: input.businessName,
   });
 
+  const paragraphs = body.split(/\n\s*\n/).map((p) => p.trim()).filter(Boolean);
+  const lastParagraph = paragraphs.pop() ?? "";
+
   const inner = [
     emailFrameOpen(b.brand),
     emailHeadline(subject),
     emailGreeting(greeting),
-    emailBodyTextLast(body),
+    ...paragraphs.map((p) => emailBodyText(p)),
+    emailBodyTextLast(lastParagraph),
     ...(url && url.length > 0 ? [emailHairline(), emailCta(url, actionLabel)] : []),
     emailFrameClose(),
     emailFooterBlock(null, b.footer, footerExtras(loc)),
