@@ -181,8 +181,11 @@ function parseAuthRefreshPayload(data: unknown): AuthResponse | null {
 }
 
 /**
- * POST /api/auth/refresh with bounded retries.
- * UX goal: keep startup fast — at most one retry for transient failures.
+ * POST /api/auth/refresh.
+ * A refresh POST rotates the cookie server-side, so it is only re-sent when the server confirmed
+ * this attempt changed nothing (409 conflict, or 503 with `retryable: true`). Network failures and
+ * other 5xx are ambiguous — the rotation may have committed — and are handed back as transient
+ * failures; later recovery relies on the server's bounded rotation grace window.
  * Stops after auth rejection (401/403) immediately.
  * After final failure: caller should clear session (handled in {@link ensureRefreshedSession}).
  */
@@ -191,7 +194,17 @@ type RefreshAttemptOptions = {
   bypassCooldown?: boolean;
 };
 
-async function runRefreshAuthWithRetries(options?: RefreshAttemptOptions): Promise<RefreshSessionResult> {
+const REFRESH_CONFLICT_RETRY_DELAY_MS = 400;
+
+async function readRefreshRetryable(res: Response): Promise<boolean> {
+  const body = (await res.json().catch(() => null)) as { retryable?: unknown } | null;
+  return body?.retryable === true;
+}
+
+async function runRefreshAuthWithRetries(
+  options?: RefreshAttemptOptions,
+  signal?: AbortSignal,
+): Promise<RefreshSessionResult> {
   if (isClientSessionRevoked()) {
     clearAuthStorage();
     return { ok: false, shouldClearSession: true, status: 401 };
@@ -209,29 +222,28 @@ async function runRefreshAuthWithRetries(options?: RefreshAttemptOptions): Promi
   }
 
   for (let attempt = 0; attempt < 2; attempt++) {
-    if (attempt > 0) {
-      const backoffMs = resolveApiBaseUrl() ? 2000 : 500;
-      await new Promise((r) => setTimeout(r, backoffMs));
-    }
-
     let res: Response;
     try {
       const refreshHeaders: Record<string, string> = {
         "Content-Type": "application/json",
         "X-CareTip-Client": "1",
       };
-      res = await fetchWithNetworkRetry(resolveBrowserAuthRefreshUrl(resolveApiBaseUrl()), {
+      res = await fetch(resolveBrowserAuthRefreshUrl(resolveApiBaseUrl()), {
         method: "POST",
         headers: refreshHeaders,
         body: EMPTY_JSON_BODY,
         credentials: "include",
+        signal,
       });
     } catch (err) {
-      logClientError("api.runRefreshAuthWithRetries.fetch", err, { attempt });
-      if (attempt === 1) {
-        return { ok: false, shouldClearSession: false, status: 0 };
+      refreshFailureCooldownUntil = Date.now() + REFRESH_FAILURE_COOLDOWN_MS;
+      if (isAbortError(err) || signal?.aborted) {
+        recordAuthSessionDiagnostic("AUTH_REFRESH_FAILURE_CLASS", { reason: "refresh_aborted_deadline" });
+        return { ok: false, shouldClearSession: false, status: 504 };
       }
-      continue;
+      logClientError("api.runRefreshAuthWithRetries.fetch", err, { attempt });
+      recordAuthSessionDiagnostic("AUTH_REFRESH_FAILURE_CLASS", { reason: "refresh_network_ambiguous" });
+      return { ok: false, shouldClearSession: false, status: 0 };
     }
 
     if (res.ok) {
@@ -249,15 +261,21 @@ async function runRefreshAuthWithRetries(options?: RefreshAttemptOptions): Promi
       return { ok: false, shouldClearSession: true, status: res.status };
     }
 
-    const transient =
-      res.status === 503 ||
-      res.status === 502 ||
-      res.status === 504 ||
-      res.status === 429 ||
-      res.status >= 500;
+    const confirmedNoCommit =
+      res.status === 409 || (res.status === 503 && (await readRefreshRetryable(res)));
+    if (confirmedNoCommit && attempt === 0) {
+      try {
+        await abortableDelay(
+          res.status === 409 ? REFRESH_CONFLICT_RETRY_DELAY_MS : resolveApiBaseUrl() ? 2000 : 500,
+          signal,
+        );
+      } catch {
+        return { ok: false, shouldClearSession: false, status: 504 };
+      }
+      continue;
+    }
 
-    if (transient) {
-      if (attempt < 1) continue;
+    if (res.status === 409 || res.status === 429 || res.status >= 500) {
       refreshFailureCooldownUntil = Date.now() + REFRESH_FAILURE_COOLDOWN_MS;
       return { ok: false, shouldClearSession: false, status: res.status };
     }
@@ -282,14 +300,14 @@ async function ensureRefreshedSession(options?: RefreshAttemptOptions): Promise<
   devTrackStart("auth:refresh", "auth:refresh");
   refreshSingleton = (async (): Promise<RefreshSessionResult> => {
     try {
-      let out = await coordinateCrossTabRefresh(() => runRefreshAuthWithRetries(options));
+      let out = await coordinateCrossTabRefresh((signal) => runRefreshAuthWithRetries(options, signal));
       if (
         !out.ok &&
         out.shouldClearSession &&
         out.status === 401 &&
         hasRecentPeerRefreshSuccess()
       ) {
-        out = await coordinateCrossTabRefresh(() => runRefreshAuthWithRetries(options));
+        out = await coordinateCrossTabRefresh((signal) => runRefreshAuthWithRetries(options, signal));
       }
       if (!out.ok && out.shouldClearSession && mayClearClientAuthStorage()) {
         recordAuthSessionDiagnostic("AUTH_REFRESH_FAILURE_CLASS", {
@@ -648,6 +666,8 @@ async function fetchWithNetworkRetry(url: string, init?: RequestInit): Promise<R
     }
     const pathname = requestUrlPathname(url);
     if (!pathname.startsWith("/api/")) throw err;
+    // Replaying a refresh POST with an unknown outcome would present an already-rotated cookie.
+    if (pathname === AUTH_REFRESH_PATHNAME) throw err;
 
     await abortableDelay(NETWORK_RETRY_DELAY_MS, init?.signal ?? undefined);
     const retried: CaretipRequestInit = { ...(init ?? {}), __caretipNetworkRetried: true };
@@ -711,6 +731,7 @@ async function apiRequest<T>(url: string, init?: RequestInit): Promise<T> {
     const canAttemptRefresh = isCaretipApi && !isAuthRefresh;
     const alreadyRetried = initFlags?.__caretipRetried === true;
     let refreshDeemedInvalid = false;
+    let refreshTemporarilyUnavailable = false;
 
     authDebug("apiRequest 401", {
       url,
@@ -731,6 +752,7 @@ async function apiRequest<T>(url: string, init?: RequestInit): Promise<T> {
         ({ token: nextToken, shouldClearAccessToken } = await refreshAccessToken({ bypassCooldown: true }));
       }
       if (shouldClearAccessToken) refreshDeemedInvalid = true;
+      else if (!nextToken) refreshTemporarilyUnavailable = true;
       if (nextToken) {
         const retriedInit: CaretipRequestInit = { ...(init ?? {}), __caretipRetried: true };
         res = await fetchWithNetworkRetry(url, attachLatestBearer(retriedInit));
@@ -754,7 +776,7 @@ async function apiRequest<T>(url: string, init?: RequestInit): Promise<T> {
     // transient refresh failures (aligns with fetchAuthedObjectUrl).
     if (res.status === 401 && isCaretipApi && mayClearClientAuthStorage()) {
       const hasTokenAfterRecovery = Boolean(getToken()?.trim());
-      if (refreshDeemedInvalid || !hasTokenAfterRecovery) {
+      if (refreshDeemedInvalid || (!hasTokenAfterRecovery && !refreshTemporarilyUnavailable)) {
         recordAuthSessionDiagnostic("AUTH_API_401_OUTCOME", {
           outcome: "session_cleared",
           pathname: requestUrlPathname(url),
@@ -801,6 +823,7 @@ export async function fetchAuthedObjectUrl(inputUrl: string): Promise<string> {
   const baseGet: RequestInit = { method: "GET", credentials: "include" };
   let res = await fetch(url, attachLatestBearer(baseGet));
   let refreshDeemedInvalid = false;
+  let refreshTemporarilyUnavailable = false;
 
   if (res.status === 401 && requestUsesCaretipProtectedApi(url)) {
     let { token: nextToken, shouldClearAccessToken } = await refreshAccessToken({ bypassCooldown: true });
@@ -808,6 +831,7 @@ export async function fetchAuthedObjectUrl(inputUrl: string): Promise<string> {
       ({ token: nextToken, shouldClearAccessToken } = await refreshAccessToken({ bypassCooldown: true }));
     }
     if (shouldClearAccessToken) refreshDeemedInvalid = true;
+    else if (!nextToken) refreshTemporarilyUnavailable = true;
     if (nextToken) {
       res = await fetch(url, attachLatestBearer(baseGet));
     } else if (shouldClearAccessToken && mayClearClientAuthStorage()) {
@@ -817,7 +841,7 @@ export async function fetchAuthedObjectUrl(inputUrl: string): Promise<string> {
 
   if (res.status === 401 && requestUsesCaretipProtectedApi(url) && mayClearClientAuthStorage()) {
     const t = getToken()?.trim();
-    if (!t || refreshDeemedInvalid) {
+    if (refreshDeemedInvalid || (!t && !refreshTemporarilyUnavailable)) {
       clearAuthStorageForDefinitiveFailure(401, "authed_object_url_persistent_401");
     }
   }
@@ -1359,6 +1383,10 @@ export async function refreshSessionAPI(): Promise<AuthResponse> {
   if (r.status === 0) {
     throw new Error(fallbackMessageForHttpStatus(503) ?? SERVICE_UNAVAILABLE_CLIENT_MESSAGE);
   }
+  if (!r.shouldClearSession) {
+    // Conflict, deadline abort, 429, 5xx: the session may be fine — never phrase it as expiry.
+    throw new Error(SERVICE_UNAVAILABLE_CLIENT_MESSAGE);
+  }
   const fallback = fallbackMessageForHttpStatus(r.status);
   throw new Error(fallback ?? "Your session has expired. Please sign in again.");
 }
@@ -1376,6 +1404,7 @@ export async function bootstrapRefreshSession(): Promise<BootstrapRefreshResult>
   const r = await ensureRefreshedSession();
   if (r.ok) return { kind: "authenticated", data: r.data };
   if (
+    !r.shouldClearSession ||
     r.status === 0 ||
     r.status === 503 ||
     r.status === 502 ||

@@ -88,8 +88,33 @@ export function normalizeJwtPayload(decoded: DecodedAccessClaims): JwtPayload | 
   };
 }
 
+type AuthLookupDb = {
+  user: {
+    findUnique(args: { where: { id: string }; select: typeof AUTH_USER_SELECT }): Promise<AuthenticatedUserRow | null>;
+  };
+  refreshToken: {
+    findUnique(args: {
+      where: { id: string };
+      select: { userId: true; revokedAt: true; expiresAt: true };
+    }): Promise<{ userId: string; revokedAt: Date | null; expiresAt: Date } | null>;
+  };
+};
+
+let authLookupDbOverride: AuthLookupDb | null = null;
+
+function authLookupDb(): AuthLookupDb {
+  return authLookupDbOverride ?? (prisma as unknown as AuthLookupDb);
+}
+
+/** Isolated tests only — swaps the store used for session validation. */
+export const authMiddlewareTestHooks = {
+  setDb(db: AuthLookupDb | null): void {
+    authLookupDbOverride = db;
+  },
+};
+
 async function loadAuthenticatedUser(uid: string): Promise<AuthenticatedUserRow | null> {
-  return prisma.user.findUnique({
+  return authLookupDb().user.findUnique({
     where: { id: uid },
     select: AUTH_USER_SELECT,
   });
@@ -115,7 +140,7 @@ export async function assertAccessJwtStillValid(
 
   const sid = payload.sid?.trim();
   if (sid) {
-    const session = await prisma.refreshToken.findUnique({
+    const session = await authLookupDb().refreshToken.findUnique({
       where: { id: sid },
       select: { userId: true, revokedAt: true, expiresAt: true },
     });
@@ -189,8 +214,13 @@ export function authMiddleware(req: Request, res: Response, next: NextFunction) 
   }
 
   void (async () => {
+    let decoded: DecodedAccessClaims;
     try {
-      const decoded = verifyJwt<DecodedAccessClaims>(token);
+      decoded = verifyJwt<DecodedAccessClaims>(token);
+    } catch (err) {
+      return invalidTokenResponse(res, err);
+    }
+    try {
       if (isPendingMfaLoginJwt(decoded) || !isAllowedAccessJwtType(decoded.type)) {
         return res.status(401).json({ message: "Invalid or expired token", code: "TOKEN_INVALID" });
       }
@@ -199,8 +229,15 @@ export function authMiddleware(req: Request, res: Response, next: NextFunction) 
         return res.status(401).json({ message: "Invalid or expired token", code: "TOKEN_INVALID" });
       }
 
-      const userRow = await loadAuthenticatedUser(payload.sub);
-      const staleCode = await assertAccessJwtStillValid(payload, userRow);
+      let userRow: AuthenticatedUserRow | null;
+      let staleCode: string | null;
+      try {
+        userRow = await loadAuthenticatedUser(payload.sub);
+        staleCode = await assertAccessJwtStillValid(payload, userRow);
+      } catch {
+        // Session store unreachable — not evidence the token is invalid.
+        return res.status(503).json({ message: "Service temporarily unavailable", code: "AUTH_UNAVAILABLE" });
+      }
       if (staleCode) {
         return res.status(401).json({
           message: "Authentication required",

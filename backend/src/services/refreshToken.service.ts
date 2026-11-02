@@ -174,69 +174,301 @@ export async function refreshSessionIdFromRawToken(token: string): Promise<strin
 }
 
 /**
- * Rotates a refresh token inside a transaction (race-safe).
- * Reuse of a revoked refresh token revokes all refresh sessions for that user.
+ * Window in which the previous token of a rotation may still be exchanged — once — for the
+ * current head of its own replacement chain. Covers refresh responses lost after the rotation
+ * committed (reload mid-refresh, dropped mobile connection, proxy timeout).
  */
-export async function rotateRefreshToken(
-  token: string
-): Promise<{ userId: string; newId: string; newToken: string; newExpiresAt: Date } | null> {
-  const raw = String(token ?? "").trim();
-  if (!raw) return null;
-  const tokenHash = sha256Hex(raw);
+export const REFRESH_ROTATION_GRACE_MS = 60_000;
 
-  try {
-    // Avoid interactive transactions (Prisma $transaction callback) because with
-    // Supabase transaction pooler + connection_limit=1 they can intermittently fail
-    // to start under dashboard load (P2028). This stays race-resistant via a
-    // conditional update; worst case is an extra created token that we immediately revoke.
-    const existing = await prisma.refreshToken.findUnique({
-      where: { tokenHash },
-      select: { id: true, userId: true, expiresAt: true, revokedAt: true, replacedByTokenId: true },
-    });
-    if (!existing) return null;
+/** Bounded walk along `replacedByTokenId` while recovering within the grace window. */
+const GRACE_CHAIN_MAX_HOPS = 5;
 
-    if (existing.revokedAt) {
-      // If the token was explicitly revoked (e.g. via logout), do not revoke other devices' sessions.
-      // If the token was revoked due to rotation/reuse, `replacedByTokenId` is set and we treat it as reuse.
-      if (existing.replacedByTokenId == null) return null;
-      await prisma.refreshToken.updateMany({
-        where: { userId: existing.userId, revokedAt: null },
-        data: { revokedAt: new Date() },
-      });
-      return null;
+export type RefreshRejectReason = "not_found" | "expired" | "revoked_logout" | "reuse_detected";
+
+export type RefreshRotationOutcome =
+  | {
+      kind: "rotated";
+      userId: string;
+      newId: string;
+      newToken: string;
+      newExpiresAt: Date;
+      /** Set when a recently replaced token recovered its chain inside the grace window. */
+      recoveredFromSessionId?: string;
+      msSinceRotation?: number;
     }
-    if (existing.expiresAt.getTime() <= Date.now()) return null;
+  | {
+      kind: "rejected";
+      reason: RefreshRejectReason;
+      userId?: string;
+      revokedSessions?: number;
+      msSinceRotation?: number;
+    }
+  /** Another request rotated the same token first. Nothing was changed by this request. */
+  | { kind: "conflict"; userId: string };
 
-    const newPlain = crypto.randomBytes(48).toString("base64url");
-    const newHash = sha256Hex(newPlain);
-    const newExpiresAt = nowPlusDays(refreshTokenTtlDays());
+/**
+ * The refresh-token store could not be read or written. Not evidence the session is invalid.
+ * `committed: false` — this request changed nothing durable, so a retry is safe.
+ */
+export class RefreshTokenStoreUnavailableError extends Error {
+  readonly name = "RefreshTokenStoreUnavailableError";
+  constructor(
+    readonly committed: boolean,
+    readonly storeError: unknown,
+  ) {
+    super("Refresh token store unavailable");
+  }
+}
 
-    const created = await prisma.refreshToken.create({
+type RotationRow = {
+  id: string;
+  userId: string;
+  expiresAt: Date;
+  revokedAt: Date | null;
+  replacedByTokenId: string | null;
+};
+
+const ROTATION_ROW_SELECT = {
+  id: true,
+  userId: true,
+  expiresAt: true,
+  revokedAt: true,
+  replacedByTokenId: true,
+} as const;
+
+export type RefreshRotationDb = {
+  refreshToken: {
+    findUnique(args: {
+      where: { tokenHash: string } | { id: string };
+      select: typeof ROTATION_ROW_SELECT;
+    }): Promise<RotationRow | null>;
+    create(args: {
       data: {
-        tokenHash: newHash,
-        userId: existing.userId,
+        tokenHash: string;
+        userId: string;
+        expiresAt: Date;
+        revokedAt: null;
+        replacedByTokenId: null;
+      };
+      select: { id: true };
+    }): Promise<{ id: string }>;
+    updateMany(args: {
+      where: { id: string; revokedAt: null } | { userId: string; revokedAt: null };
+      data: { revokedAt: Date; replacedByTokenId?: string };
+    }): Promise<{ count: number }>;
+    deleteMany(args: { where: { id: string } }): Promise<{ count: number }>;
+  };
+};
+
+let rotationDbOverride: RefreshRotationDb | null = null;
+let rotationClockOverride: (() => number) | null = null;
+
+function rotationDb(): RefreshRotationDb {
+  return rotationDbOverride ?? (prisma as unknown as RefreshRotationDb);
+}
+
+function rotationNow(): number {
+  return rotationClockOverride ? rotationClockOverride() : Date.now();
+}
+
+/** Isolated tests only — swaps the store/clock used by rotation. */
+export const refreshTokenServiceTestHooks = {
+  setDb(db: RefreshRotationDb | null): void {
+    rotationDbOverride = db;
+  },
+  setClock(clock: (() => number) | null): void {
+    rotationClockOverride = clock;
+  },
+};
+
+/**
+ * Create a replacement for `current` and revoke `current` only if it is still active.
+ * Insert-first ordering: a failure before the conditional update leaves `current` usable.
+ */
+async function replaceActiveSession(
+  db: RefreshRotationDb,
+  current: RotationRow,
+  now: number,
+): Promise<{ kind: "replaced"; newId: string; newToken: string; newExpiresAt: Date } | { kind: "conflict" }> {
+  const newPlain = crypto.randomBytes(48).toString("base64url");
+  const newExpiresAt = new Date(now + refreshTokenTtlDays() * 24 * 60 * 60 * 1000);
+
+  let created: { id: string };
+  try {
+    created = await db.refreshToken.create({
+      data: {
+        tokenHash: sha256Hex(newPlain),
+        userId: current.userId,
         expiresAt: newExpiresAt,
         revokedAt: null,
         replacedByTokenId: null,
       },
       select: { id: true },
     });
-
-    const updated = await prisma.refreshToken.updateMany({
-      where: { id: existing.id, revokedAt: null },
-      data: { revokedAt: new Date(), replacedByTokenId: created.id },
-    });
-    if (updated.count !== 1) {
-      await prisma.refreshToken.update({
-        where: { id: created.id },
-        data: { revokedAt: new Date() },
-      });
-      return null;
-    }
-
-    return { userId: existing.userId, newId: created.id, newToken: newPlain, newExpiresAt };
   } catch (e) {
-    console.warn("[refreshToken.rotate]", e);
+    throw new RefreshTokenStoreUnavailableError(false, e);
+  }
+
+  let updated: { count: number };
+  try {
+    updated = await db.refreshToken.updateMany({
+      where: { id: current.id, revokedAt: null },
+      data: { revokedAt: new Date(now), replacedByTokenId: created.id },
+    });
+  } catch (e) {
+    // The revoke may or may not have committed; the grace window covers a retry with the old token.
+    throw new RefreshTokenStoreUnavailableError(true, e);
+  }
+
+  if (updated.count !== 1) {
+    // Lost the race: drop our never-issued row so the winner's chain stays the only active one.
+    await db.refreshToken.deleteMany({ where: { id: created.id } }).catch(() => undefined);
+    return { kind: "conflict" };
+  }
+  return { kind: "replaced", newId: created.id, newToken: newPlain, newExpiresAt };
+}
+
+/** Follow the replacement chain from a rotated token to its current head. */
+async function findChainHead(db: RefreshRotationDb, start: RotationRow): Promise<RotationRow | null> {
+  let row = start;
+  for (let hop = 0; hop < GRACE_CHAIN_MAX_HOPS; hop++) {
+    if (!row.replacedByTokenId) return row;
+    const next = await db.refreshToken.findUnique({
+      where: { id: row.replacedByTokenId },
+      select: ROTATION_ROW_SELECT,
+    });
+    if (!next || next.userId !== start.userId) return null;
+    if (next.revokedAt == null) return next;
+    if (next.replacedByTokenId == null) return next;
+    row = next;
+  }
+  return null;
+}
+
+/**
+ * Rotate a refresh token and report exactly why it was or was not rotated.
+ *
+ * - Active token: replaced (insert new, conditionally revoke old). Losing a concurrent race → `conflict`.
+ * - Token revoked by logout/password change (no replacement link): rejected, never recovered.
+ * - Token rotated within `graceMs` whose chain head is still active: the head is replaced and the
+ *   caller receives the new head (one active session per chain). Outside the window: reuse cascade.
+ * - Store failures throw {@link RefreshTokenStoreUnavailableError}; they never look like an invalid token.
+ *
+ * Avoids interactive transactions (Supabase transaction pooler P2028); the conditional update is the
+ * single commit point.
+ */
+export async function rotateRefreshTokenWithOutcome(
+  token: string,
+  opts?: { graceMs?: number },
+): Promise<RefreshRotationOutcome> {
+  const raw = String(token ?? "").trim();
+  if (!raw) return { kind: "rejected", reason: "not_found" };
+  const graceMs = Math.max(0, opts?.graceMs ?? 0);
+  const db = rotationDb();
+  const now = rotationNow();
+
+  let existing: RotationRow | null;
+  try {
+    existing = await db.refreshToken.findUnique({
+      where: { tokenHash: sha256Hex(raw) },
+      select: ROTATION_ROW_SELECT,
+    });
+  } catch (e) {
+    throw new RefreshTokenStoreUnavailableError(false, e);
+  }
+  if (!existing) return { kind: "rejected", reason: "not_found" };
+
+  if (existing.revokedAt == null) {
+    if (existing.expiresAt.getTime() <= now) {
+      return { kind: "rejected", reason: "expired", userId: existing.userId };
+    }
+    const result = await replaceActiveSession(db, existing, now);
+    if (result.kind === "conflict") return { kind: "conflict", userId: existing.userId };
+    return {
+      kind: "rotated",
+      userId: existing.userId,
+      newId: result.newId,
+      newToken: result.newToken,
+      newExpiresAt: result.newExpiresAt,
+    };
+  }
+
+  // Explicit logout / password change / prior reuse cascade: revoked without a replacement.
+  if (existing.replacedByTokenId == null) {
+    return { kind: "rejected", reason: "revoked_logout", userId: existing.userId };
+  }
+
+  const msSinceRotation = now - existing.revokedAt.getTime();
+  const withinGrace =
+    graceMs > 0 &&
+    msSinceRotation >= 0 &&
+    msSinceRotation <= graceMs &&
+    existing.expiresAt.getTime() > now;
+
+  if (withinGrace) {
+    let head: RotationRow | null;
+    try {
+      head = await findChainHead(db, existing);
+    } catch (e) {
+      throw new RefreshTokenStoreUnavailableError(false, e);
+    }
+    if (!head || head.revokedAt != null) {
+      // Chain ended in a logout/revocation — nothing to recover, nothing left to revoke.
+      return { kind: "rejected", reason: "revoked_logout", userId: existing.userId, msSinceRotation };
+    }
+    if (head.expiresAt.getTime() <= now) {
+      return { kind: "rejected", reason: "expired", userId: existing.userId, msSinceRotation };
+    }
+    const result = await replaceActiveSession(db, head, now);
+    if (result.kind === "conflict") return { kind: "conflict", userId: existing.userId };
+    return {
+      kind: "rotated",
+      userId: existing.userId,
+      newId: result.newId,
+      newToken: result.newToken,
+      newExpiresAt: result.newExpiresAt,
+      recoveredFromSessionId: existing.id,
+      msSinceRotation,
+    };
+  }
+
+  // Replay of a replaced token outside the grace window: treat as theft.
+  let revoked: { count: number };
+  try {
+    revoked = await db.refreshToken.updateMany({
+      where: { userId: existing.userId, revokedAt: null },
+      data: { revokedAt: new Date(now) },
+    });
+  } catch (e) {
+    throw new RefreshTokenStoreUnavailableError(true, e);
+  }
+  return {
+    kind: "rejected",
+    reason: "reuse_detected",
+    userId: existing.userId,
+    revokedSessions: revoked.count,
+    msSinceRotation,
+  };
+}
+
+/**
+ * Strict rotation (no grace window): any replay of a replaced token revokes every session.
+ * Returns null for every non-rotated outcome, including store failures.
+ */
+export async function rotateRefreshToken(
+  token: string
+): Promise<{ userId: string; newId: string; newToken: string; newExpiresAt: Date } | null> {
+  try {
+    const outcome = await rotateRefreshTokenWithOutcome(token);
+    if (outcome.kind !== "rotated") return null;
+    return {
+      userId: outcome.userId,
+      newId: outcome.newId,
+      newToken: outcome.newToken,
+      newExpiresAt: outcome.newExpiresAt,
+    };
+  } catch (e) {
+    console.warn("[refreshToken.rotate]", e instanceof Error ? e.name : "error");
     return null;
   }
 }

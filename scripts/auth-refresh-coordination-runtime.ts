@@ -13,6 +13,7 @@ import {
   isRefreshBlockedByPeerLock,
   isWebLocksAvailable,
   RefreshCoordinationTimeoutError,
+  REFRESH_ABORT_SETTLE_MAX_MS,
   REFRESH_COORD_TIMEOUT_MS,
   WEB_LOCK_NAME,
 } from "../src/app/lib/authRefreshCoordination";
@@ -154,14 +155,11 @@ assert(coordinationSrc.includes(WEB_LOCK_NAME), "arch", "CareTip-specific lock n
 assert(!coordinationSrc.includes("if (peerDone?.ok)"), "arch", "peer-success bypass removed");
 assert(!coordinationSrc.includes("LOCK_TTL_MS"), "arch", "20s TTL steal removed");
 assert(coordinationSrc.includes("RefreshCoordinationTimeoutError"), "arch", "coordination timeout error defined");
+const COORDINATED_REFRESH = "coordinateCrossTabRefresh((signal) => runRefreshAuthWithRetries(options, signal))";
+assert(apiSrc.includes(COORDINATED_REFRESH), "arch", "refresh uses coordination (with abort signal)");
 assert(
-  apiSrc.includes("coordinateCrossTabRefresh(() => runRefreshAuthWithRetries("),
-  "arch",
-  "refresh uses coordination",
-);
-assert(
-  !apiSrc.includes("out = await runRefreshAuthWithRetries();") ||
-    apiSrc.includes("coordinateCrossTabRefresh(() => runRefreshAuthWithRetries("),
+  !apiSrc.includes("out = await runRefreshAuthWithRetries(") &&
+    apiSrc.split(COORDINATED_REFRESH).length - 1 === 2,
   "arch",
   "peer retry remains coordinated",
 );
@@ -278,7 +276,7 @@ async function testD(): Promise<void> {
   assert(maxConcurrent === 1, "D", "localStorage fallback serializes under normal timing");
 }
 
-// --- Test E: refresh >20s with Web Locks — no TTL steal ---
+// --- Test E: slow (250ms) refresh with Web Locks — no TTL steal; real timeouts are F/F2/F3 ---
 async function testE(): Promise<void> {
   resetCoordinationEnv();
   const { locks, getMaxConcurrent, resetMetrics } = createSerializingWebLocks();
@@ -302,8 +300,8 @@ async function testE(): Promise<void> {
   const fast = coordinateCrossTabRefresh(async () => ({ ok: true, status: 200 }));
 
   await Promise.all([slow, fast]);
-  assert(maxConcurrent === 1, "E", ">20s refresh: no TTL-based concurrent refresh with Web Locks");
-  assert(getMaxConcurrent() === 1, "E", ">20s refresh: Web Lock held until slow refresh completes");
+  assert(maxConcurrent === 1, "E", "slow refresh: no TTL-based concurrent refresh with Web Locks");
+  assert(getMaxConcurrent() === 1, "E", "slow refresh: Web Lock held until slow refresh completes");
 }
 
 // --- Test F: refresh timeout ---
@@ -328,6 +326,91 @@ async function testF(): Promise<void> {
   authRefreshCoordinationTestHooks.setTabIdForTests("recovery-tab");
   const recovered = await coordinateCrossTabRefresh(async () => ({ ok: true, status: 200 }));
   assert(recovered.ok, "F", "after timeout, another tab can refresh (lock released)");
+}
+
+// --- Test F2: real 12s timeout aborts the request; next tab waits until it has settled ---
+async function testF2(): Promise<void> {
+  resetCoordinationEnv();
+  const { locks, resetMetrics } = createSerializingWebLocks();
+  authRefreshCoordinationTestHooks.setWebLocksOverride(locks);
+  resetMetrics();
+
+  const t0 = Date.now();
+  let firstSettledAt = 0;
+  let firstSawAbort = false;
+  let secondStartedAt = 0;
+
+  authRefreshCoordinationTestHooks.setTabIdForTests("slow-tab");
+  const first = coordinateCrossTabRefresh(
+    (signal) =>
+      new Promise<{ ok: boolean; shouldClearSession: boolean; status: number }>((resolve) => {
+        signal.addEventListener("abort", () => {
+          firstSawAbort = true;
+          // Abort takes a moment to unwind (like fetch rejecting with AbortError).
+          setTimeout(() => {
+            firstSettledAt = Date.now();
+            resolve({ ok: false, shouldClearSession: false, status: 504 });
+          }, 400);
+        });
+      }),
+  ).then(
+    () => "resolved",
+    (err) => (err instanceof RefreshCoordinationTimeoutError ? "timeout" : "other"),
+  );
+
+  await sleep(50);
+  authRefreshCoordinationTestHooks.setTabIdForTests("queued-tab");
+  const second = coordinateCrossTabRefresh(async () => {
+    secondStartedAt = Date.now();
+    return { ok: true, shouldClearSession: false, status: 200 };
+  });
+
+  const [firstOutcome, secondOut] = await Promise.all([first, second]);
+  const abortedAfterMs = firstSettledAt - 400 - t0;
+  assert(firstOutcome === "timeout", "F2", "timed-out refresh rejects with RefreshCoordinationTimeoutError");
+  assert(firstSawAbort, "F2", "the in-flight request receives an abort signal at the deadline");
+  assert(
+    abortedAfterMs >= REFRESH_COORD_TIMEOUT_MS - 50 && abortedAfterMs < REFRESH_COORD_TIMEOUT_MS + 1_000,
+    "F2",
+    `abort fires at the real ${REFRESH_COORD_TIMEOUT_MS}ms deadline (observed ${abortedAfterMs}ms)`,
+  );
+  assert(
+    secondStartedAt >= firstSettledAt,
+    "F2",
+    "queued tab cannot POST until the aborted request has settled (no overlap)",
+  );
+  assert(secondOut.ok, "F2", "queued tab refreshes normally afterwards");
+}
+
+// --- Test F3: request ignoring abort cannot hold the lock forever ---
+async function testF3(): Promise<void> {
+  resetCoordinationEnv();
+  const { locks, resetMetrics } = createSerializingWebLocks();
+  authRefreshCoordinationTestHooks.setWebLocksOverride(locks);
+  resetMetrics();
+
+  const t0 = Date.now();
+  authRefreshCoordinationTestHooks.setTabIdForTests("stuck-tab");
+  const stuck = coordinateCrossTabRefresh(async () => {
+    await sleep(REFRESH_COORD_TIMEOUT_MS + REFRESH_ABORT_SETTLE_MAX_MS + 3_000);
+    return { ok: true, status: 200 };
+  }).catch((err) => err);
+
+  await sleep(50);
+  let nextStartedAt = 0;
+  authRefreshCoordinationTestHooks.setTabIdForTests("next-tab");
+  const next = coordinateCrossTabRefresh(async () => {
+    nextStartedAt = Date.now() - t0;
+    return { ok: true, status: 200 };
+  });
+  const [stuckErr] = await Promise.all([stuck, next]);
+  const bound = REFRESH_COORD_TIMEOUT_MS + REFRESH_ABORT_SETTLE_MAX_MS;
+  assert(stuckErr instanceof RefreshCoordinationTimeoutError, "F3", "stuck refresh times out");
+  assert(
+    nextStartedAt >= bound - 50 && nextStartedAt < bound + 1_000,
+    "F3",
+    `lock released after deadline + settle cap (${bound}ms), not earlier (observed ${nextStartedAt}ms)`,
+  );
 }
 
 // --- Test G: refresh 503 ---
@@ -414,6 +497,8 @@ await testC();
 await testD();
 await testE();
 await testF();
+await testF2();
+await testF3();
 await testG();
 await testH();
 await testI();

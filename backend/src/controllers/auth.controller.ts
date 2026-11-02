@@ -22,7 +22,10 @@ import {
   refreshCookieMaxAgeMs,
   refreshCookieName,
   refreshSessionIdFromRawToken,
-  rotateRefreshToken,
+  rotateRefreshTokenWithOutcome,
+  RefreshTokenStoreUnavailableError,
+  REFRESH_ROTATION_GRACE_MS,
+  type RefreshRotationOutcome,
   revokeRefreshTokenAndGetUserId,
   revokeAllRefreshTokensForUser,
   revokeOtherRefreshTokensForUser,
@@ -46,6 +49,7 @@ import {
   AUTH_OAUTH_SIGN_IN_FAILED_CODE,
 } from "../services/authDisclosureMessages.js";
 import * as auditService from "../services/audit.service.js";
+import { logRefreshOutcome, storeErrorCode } from "../lib/authRefreshDiagnostics.js";
 import {
   MERCHANT_LEGAL_ACCEPTANCE_CONTEXT,
   MERCHANT_LEGAL_ACCEPTANCE_REQUIRED_MSG,
@@ -1252,6 +1256,32 @@ export async function unlinkOAuthAccount(req: Request, res: Response) {
   }
 }
 
+let refreshAuthResultForUserId = authService.authResultForUserId;
+
+/** Isolated tests only — replaces the user lookup that follows a successful rotation. */
+export const authRefreshTestHooks = {
+  setAuthResultForUserId(fn: typeof authService.authResultForUserId | null): void {
+    refreshAuthResultForUserId = fn ?? authService.authResultForUserId;
+  },
+};
+
+function isDatabaseInfrastructureError(err: unknown): boolean {
+  return (
+    err instanceof Prisma.PrismaClientKnownRequestError ||
+    err instanceof Prisma.PrismaClientUnknownRequestError ||
+    err instanceof Prisma.PrismaClientInitializationError ||
+    err instanceof Prisma.PrismaClientRustPanicError
+  );
+}
+
+function refreshUnavailable(res: Response, retryable: boolean) {
+  return res.status(503).json({
+    message: CLIENT_FALLBACK.loginUnexpected,
+    code: "REFRESH_UNAVAILABLE",
+    retryable,
+  });
+}
+
 /** Issues a new access token when the short-lived JWT expires (refresh token rotated each use). */
 export async function refresh(req: Request, res: Response) {
   try {
@@ -1259,26 +1289,87 @@ export async function refresh(req: Request, res: Response) {
     const rtCookie = parseCookie(cookieHeader, refreshCookieName());
 
     if (rtCookie) {
-      const rotated = await rotateRefreshToken(rtCookie);
-      if (rotated) {
-        try {
-          const result = await authService.authResultForUserId(rotated.userId, {
-            refreshSessionId: rotated.newId,
+      let outcome: RefreshRotationOutcome;
+      try {
+        outcome = await rotateRefreshTokenWithOutcome(rtCookie, { graceMs: REFRESH_ROTATION_GRACE_MS });
+      } catch (err) {
+        if (err instanceof RefreshTokenStoreUnavailableError) {
+          // Infrastructure failure: keep the cookie, the session may be perfectly valid.
+          logRefreshOutcome({
+            reason: "db_error",
+            status: 503,
+            committed: err.committed,
+            errorCode: storeErrorCode(err.storeError),
           });
-          setRefreshCookie(res, rotated.newToken, { maxAgeMs: refreshCookieMaxAgeMs(rotated.newExpiresAt) });
+          return refreshUnavailable(res, !err.committed);
+        }
+        throw err;
+      }
+
+      if (outcome.kind === "conflict") {
+        // A concurrent request already rotated this token; its response carries the new cookie.
+        logRefreshOutcome({ reason: "rotation_conflict", status: 409, userId: outcome.userId });
+        return res.status(409).json({ message: "Session refresh already in progress", code: "REFRESH_CONFLICT" });
+      }
+
+      if (outcome.kind === "rotated") {
+        const cookieOpts = { maxAgeMs: refreshCookieMaxAgeMs(outcome.newExpiresAt) };
+        try {
+          const result = await refreshAuthResultForUserId(outcome.userId, {
+            refreshSessionId: outcome.newId,
+          });
+          setRefreshCookie(res, outcome.newToken, cookieOpts);
+          logRefreshOutcome({
+            reason: "ok",
+            status: 200,
+            userId: outcome.userId,
+            sessionId: outcome.newId,
+            recovered: outcome.recoveredFromSessionId != null,
+            msSinceRotation: outcome.msSinceRotation,
+          });
           return res.json(result);
         } catch (inner) {
           if (inner instanceof EmailNotVerifiedLoginError) {
             clearRefreshCookie(res);
+            logRefreshOutcome({ reason: "email_not_verified", status: 403, userId: outcome.userId });
             return res.status(403).json({
               message: inner.message,
               code: inner.code,
               canResend: inner.canResend,
             });
           }
-          throw inner;
+          if (isDatabaseInfrastructureError(inner)) {
+            // Rotation already committed: hand over the new token so a retry is not a replay.
+            setRefreshCookie(res, outcome.newToken, cookieOpts);
+            logRefreshOutcome({
+              reason: "db_error",
+              status: 503,
+              userId: outcome.userId,
+              sessionId: outcome.newId,
+              committed: true,
+              errorCode: storeErrorCode(inner),
+            });
+            return refreshUnavailable(res, true);
+          }
+          const msg = inner instanceof Error ? inner.message : "";
+          if (msg === "Authentication required" || msg.toLowerCase().includes("not found")) {
+            clearRefreshCookie(res);
+            logRefreshOutcome({ reason: "account_unavailable", status: 401, userId: outcome.userId });
+            return res.status(401).json({ message: "Authentication required" });
+          }
+          logServerError("auth.refresh.session", inner);
+          logRefreshOutcome({ reason: "account_unavailable", status: 503, userId: outcome.userId });
+          return res.status(503).json({ message: CLIENT_FALLBACK.loginUnexpected });
         }
       }
+
+      logRefreshOutcome({
+        reason: outcome.reason,
+        status: 401,
+        userId: outcome.userId,
+        revokedSessions: outcome.revokedSessions,
+        msSinceRotation: outcome.msSinceRotation,
+      });
       clearRefreshCookie(res);
     }
 
@@ -1290,8 +1381,9 @@ export async function refresh(req: Request, res: Response) {
       if (userId) {
         try {
           const rt = await issueRefreshToken(userId);
-          const result = await authService.authResultForUserId(userId, { refreshSessionId: rt.id });
+          const result = await refreshAuthResultForUserId(userId, { refreshSessionId: rt.id });
           setRefreshCookie(res, rt.token, { maxAgeMs: refreshCookieMaxAgeMs(rt.expiresAt) });
+          logRefreshOutcome({ reason: "bearer_fallback_ok", status: 200, userId, sessionId: rt.id });
           return res.json(result);
         } catch (inner) {
           if (inner instanceof EmailNotVerifiedLoginError) {
@@ -1307,8 +1399,13 @@ export async function refresh(req: Request, res: Response) {
       }
     }
 
+    if (!rtCookie) logRefreshOutcome({ reason: "missing_cookie", status: 401 });
     return res.status(401).json({ message: "Authentication required" });
   } catch (err) {
+    if (isDatabaseInfrastructureError(err)) {
+      logRefreshOutcome({ reason: "db_error", status: 503, errorCode: storeErrorCode(err) });
+      return refreshUnavailable(res, true);
+    }
     logServerError("auth.refresh", err);
     const msg = err instanceof Error ? err.message : "";
     if (err instanceof EmailNotVerifiedLoginError) {

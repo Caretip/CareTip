@@ -22,6 +22,11 @@ const DONE_STORAGE_KEY = "caretip_auth_refresh_done";
 /** Aligns with {@link BOOTSTRAP_REFRESH_TIMEOUT_MS} in useAuthInitializer. */
 export const REFRESH_COORD_TIMEOUT_MS = 12_000;
 
+/** After aborting a timed-out refresh, keep the mutex at most this long waiting for it to settle. */
+export const REFRESH_ABORT_SETTLE_MAX_MS = 5_000;
+
+export type RefreshRunner<T> = (signal: AbortSignal) => Promise<T>;
+
 /** Peer completion signal window for hasRecentPeerRefreshSuccess. */
 const DONE_SIGNAL_TTL_MS = 4_000;
 
@@ -233,22 +238,44 @@ async function waitForPeerRefreshDone(maxWaitMs: number): Promise<RefreshDonePay
   });
 }
 
-async function withRefreshCoordTimeout<T>(fn: () => Promise<T>, ms: number): Promise<T> {
+type RunnerSettlement<T> = { settled: true; value: T } | { settled: true; error: unknown } | { settled: false };
+
+/**
+ * Runs the refresh with a deadline. On timeout the runner's request is aborted and the critical
+ * section stays held until it settles (bounded by {@link REFRESH_ABORT_SETTLE_MAX_MS}), so no
+ * other tab can POST the same refresh cookie while the abandoned request is still in flight.
+ */
+async function runWithRefreshDeadline<T>(runner: RefreshRunner<T>): Promise<T> {
+  const controller = new AbortController();
+  const running = runner(controller.signal).then(
+    (value): RunnerSettlement<T> => ({ settled: true, value }),
+    (error: unknown): RunnerSettlement<T> => ({ settled: true, error }),
+  );
   let timeoutId: ReturnType<typeof setTimeout> | undefined;
-  try {
-    return await Promise.race([
-      fn(),
-      new Promise<T>((_, reject) => {
-        timeoutId = setTimeout(() => reject(new RefreshCoordinationTimeoutError()), ms);
+  const deadline = new Promise<RunnerSettlement<T>>((resolve) => {
+    timeoutId = setTimeout(() => resolve({ settled: false }), REFRESH_COORD_TIMEOUT_MS);
+  });
+  const first = await Promise.race([running, deadline]);
+  if (timeoutId !== undefined) clearTimeout(timeoutId);
+
+  if (!first.settled) {
+    controller.abort();
+    let settleTimer: ReturnType<typeof setTimeout> | undefined;
+    await Promise.race([
+      running,
+      new Promise<void>((resolve) => {
+        settleTimer = setTimeout(resolve, REFRESH_ABORT_SETTLE_MAX_MS);
       }),
     ]);
-  } finally {
-    if (timeoutId !== undefined) clearTimeout(timeoutId);
+    if (settleTimer !== undefined) clearTimeout(settleTimer);
+    throw new RefreshCoordinationTimeoutError();
   }
+  if ("error" in first) throw first.error;
+  return first.value;
 }
 
 async function executeRefreshCriticalSection<T>(
-  runner: () => Promise<T>,
+  runner: RefreshRunner<T>,
   mechanism: LockMechanism,
   attemptId: string,
 ): Promise<T> {
@@ -256,7 +283,7 @@ async function executeRefreshCriticalSection<T>(
   authDebug("refresh_coord.critical.start", { tabId, attemptId, mechanism });
 
   try {
-    const result = await withRefreshCoordTimeout(runner, REFRESH_COORD_TIMEOUT_MS);
+    const result = await runWithRefreshDeadline(runner);
     publishFromRunnerResult(result);
     authDebug("refresh_coord.critical.done", {
       tabId,
@@ -289,7 +316,7 @@ async function executeRefreshCriticalSection<T>(
   }
 }
 
-async function coordinateWithWebLocks<T>(runner: () => Promise<T>): Promise<T> {
+async function coordinateWithWebLocks<T>(runner: RefreshRunner<T>): Promise<T> {
   const attemptId =
     typeof crypto !== "undefined" && "randomUUID" in crypto ? crypto.randomUUID() : String(Date.now());
   authDebug("refresh_coord.web_lock.queue", { tabId, attemptId });
@@ -308,7 +335,7 @@ async function coordinateWithWebLocks<T>(runner: () => Promise<T>): Promise<T> {
   });
 }
 
-async function coordinateWithLocalStorageFallback<T>(runner: () => Promise<T>): Promise<T> {
+async function coordinateWithLocalStorageFallback<T>(runner: RefreshRunner<T>): Promise<T> {
   const attemptId =
     typeof crypto !== "undefined" && "randomUUID" in crypto ? crypto.randomUUID() : String(Date.now());
   const waitStart = Date.now();
@@ -354,8 +381,9 @@ async function coordinateWithLocalStorageFallback<T>(runner: () => Promise<T>): 
 /**
  * Ensures at most one tab POSTs /api/auth/refresh at a time.
  * Followers still run their own refresh after acquiring the mutex — JWTs are never transferred between tabs.
+ * The runner receives an AbortSignal that fires when the coordination deadline passes.
  */
-export async function coordinateCrossTabRefresh<T>(runner: () => Promise<T>): Promise<T> {
+export async function coordinateCrossTabRefresh<T>(runner: RefreshRunner<T>): Promise<T> {
   if (isWebLocksAvailable()) {
     return coordinateWithWebLocks(runner);
   }

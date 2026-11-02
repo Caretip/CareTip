@@ -46,9 +46,9 @@ must(
 
 must(
   apiSrc.includes('outcome: "resource_denied_session_preserved"') &&
-    apiSrc.includes("refreshDeemedInvalid || !hasTokenAfterRecovery"),
+    apiSrc.includes("refreshDeemedInvalid || (!hasTokenAfterRecovery && !refreshTemporarilyUnavailable)"),
   "AUTH-16-no-false-clear-on-resource-401",
-  "persistent 401 clears session only when refresh invalid or no token after recovery",
+  "persistent 401 clears session only when refresh invalid, or no token after recovery and refresh was not transiently unavailable",
 );
 
 must(
