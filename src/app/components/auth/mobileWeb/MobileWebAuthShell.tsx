@@ -1,11 +1,9 @@
 import { type FormEvent, type ReactNode } from "react";
 import { Link } from "react-router";
 import { useTranslation } from "react-i18next";
-import { ArrowLeft, ChevronDown, ShieldCheck } from "lucide-react";
+import { ArrowLeft, ShieldCheck } from "lucide-react";
 import { CareTipLogo } from "@/app/components/CareTipLogo";
 import type { AuthRole } from "@/components/ui/sign-in-card-2";
-import { changeAppLanguage, type AppLanguage } from "@/i18n/i18n";
-import { LanguageFlag } from "@/components/i18n/LanguageFlag";
 import { AuthButton } from "./AuthButton";
 import { AuthCard } from "./AuthCard";
 import { AuthHeader } from "./AuthHeader";
@@ -91,7 +89,7 @@ export function MobileWebAuthShell({
   merchantLegalAccepted = false,
   onMerchantLegalAcceptedChange,
 }: MobileWebAuthShellProps) {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const isEmployee = authLane === "employee";
   const isLogin = mode === "login";
   const legalGateOk = isLogin || isEmployee || merchantLegalAccepted;
@@ -99,13 +97,6 @@ export function MobileWebAuthShell({
     isLogin ||
     (!isEmployee && merchantLegalAccepted) ||
     (isEmployee && inviteCode.trim().length > 0 && name.trim().length > 0);
-  const activeLang: AppLanguage = i18n.resolvedLanguage?.toLowerCase().startsWith("de")
-    ? "de"
-    : "en";
-
-  const toggleLocale = () => {
-    void changeAppLanguage(activeLang === "de" ? "en" : "de");
-  };
 
   if (sessionBanner) {
     return (
@@ -228,50 +219,18 @@ export function MobileWebAuthShell({
               />
             ) : null}
 
-            {isLogin ? (
-              <div className="mw-auth-field">
-                <label className="mw-auth-field__label" htmlFor="mw-auth-email">
-                  {t("auth.page.labelEmail")}
-                </label>
-                <div className="mw-auth-phone-row">
-                  <button
-                    type="button"
-                    className="mw-auth-country"
-                    onClick={toggleLocale}
-                    disabled={busy}
-                    aria-label={t("nav.language")}
-                  >
-                    <LanguageFlag language={activeLang} className="mw-auth-country__flag" />
-                    <span>{activeLang === "de" ? "DE" : "EN"}</span>
-                    <ChevronDown className="mw-auth-country__chevron h-4 w-4" aria-hidden />
-                  </button>
-                  <input
-                    id="mw-auth-email"
-                    name="email"
-                    type="email"
-                    inputMode="email"
-                    autoComplete="email"
-                    placeholder={t("auth.mobileWebAuth.placeholderEmail")}
-                    value={email}
-                    onChange={(e) => onEmailChange(e.target.value)}
-                    disabled={busy}
-                    className="mw-auth-input"
-                  />
-                </div>
-              </div>
-            ) : (
-              <AuthInput
-                label={t("auth.page.labelEmail")}
-                name="email"
-                type="email"
-                inputMode="email"
-                autoComplete="email"
-                placeholder={t("auth.mobileWebAuth.placeholderEmail")}
-                value={email}
-                onChange={(e) => onEmailChange(e.target.value)}
-                disabled={busy}
-              />
-            )}
+            <AuthInput
+              label={t("auth.page.labelEmail")}
+              id={isLogin ? "mw-auth-email" : undefined}
+              name="email"
+              type="email"
+              inputMode="email"
+              autoComplete="email"
+              placeholder={t("auth.mobileWebAuth.placeholderEmail")}
+              value={email}
+              onChange={(e) => onEmailChange(e.target.value)}
+              disabled={busy}
+            />
 
             <AuthInput
               label={t("auth.page.labelPassword")}
