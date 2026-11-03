@@ -4,9 +4,9 @@
  * module loads, so an accidental query fails instead of touching shared data.
  * Run: npm run test:first-party-api-domain
  */
-process.env.DATABASE_URL = "postgresql://isolated:isolated@db.invalid:6543/postgres";
+process.env.DATABASE_URL = "postgresql://placeholder:placeholder@db.invalid:6543/postgres";
 process.env.REDIS_URL = "";
-process.env.JWT_SECRET = "first-party-api-domain-test-secret-not-used-anywhere-else";
+process.env.JWT_SECRET = "first-party-api-domain-placeholder-secret-not-used-anywhere-else";
 process.env.AUTH_LOGIN_IP_MAX_PER_15M = "3";
 delete process.env.FRONTEND_URL;
 delete process.env.CORS_ORIGINS;

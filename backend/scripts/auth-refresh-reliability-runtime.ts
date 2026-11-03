@@ -10,7 +10,7 @@ import { Prisma } from "@prisma/client";
 import type { Request, Response } from "express";
 
 process.env.NODE_ENV = "test";
-process.env.JWT_SECRET = "reliability-test-secret-not-used-anywhere-else";
+process.env.JWT_SECRET = "reliability-test-placeholder-secret-not-used-anywhere-else";
 
 const { refresh, authRefreshTestHooks } = await import("../src/controllers/auth.controller.ts");
 const {
