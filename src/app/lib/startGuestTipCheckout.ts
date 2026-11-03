@@ -5,6 +5,7 @@ import { toUserFriendlyMessage } from "./errorMessages";
 import { setPendingTipFromCheckout } from "./repeatTip";
 import { performExternalStripeRedirect } from "./safeCheckoutRedirect";
 import { getGuestTipPresentationLocale } from "./guestTipPresentationLocale";
+import { acquireUpdateBlocker } from "./deployUpdate/updateBlockers";
 
 export type GuestTipCheckoutInput = {
   amount: number;
@@ -37,6 +38,8 @@ export async function startGuestTipCheckout(
 ): Promise<GuestTipCheckoutResult> {
   if (guestTipCheckoutInFlight) return "busy";
   guestTipCheckoutInFlight = true;
+  // Held through the Stripe hand-off; the navigation hold then covers the page until `pagehide`.
+  const releaseUpdateBlocker = acquireUpdateBlocker("payment:guest-tip-checkout", { ttlMs: 2 * 60_000 });
   try {
     const { sessionId, url } = await createTipCheckoutSession({
       amount: input.amount,
@@ -72,5 +75,7 @@ export async function startGuestTipCheckout(
     logClientError("startGuestTipCheckout", err);
     toast.error(toUserFriendlyMessage(err));
     return "failed";
+  } finally {
+    releaseUpdateBlocker();
   }
 }

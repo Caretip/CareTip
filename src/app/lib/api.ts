@@ -171,6 +171,11 @@ let refreshSingleton: Promise<RefreshSessionResult> | null = null;
 let refreshFailureCooldownUntil = 0;
 const REFRESH_FAILURE_COOLDOWN_MS = 15_000;
 
+/** Read-only: a refresh (including legacy-host session migration) is in flight in this tab. */
+export function isSessionRefreshInFlight(): boolean {
+  return refreshSingleton !== null;
+}
+
 /** Validates `{ token, user }` auth payloads from login, OAuth, refresh, and MFA completion. */
 export function parseAuthResponsePayload(data: unknown): AuthResponse | null {
   if (!data || typeof data !== "object") return null;

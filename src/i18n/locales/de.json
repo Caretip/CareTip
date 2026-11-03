@@ -2939,6 +2939,12 @@
     }
   },
   "shell": {
+    "deployUpdate": {
+      "title": "CareTip wurde aktualisiert.",
+      "description": "Wir laden die Seite automatisch neu, sobald es sicher ist.",
+      "manualDescription": "Bitte die Seite neu laden, um die neueste Version zu nutzen. Ungespeicherte Änderungen vorher sichern.",
+      "refreshNow": "Jetzt aktualisieren"
+    },
     "header": {
       "searchPlaceholder": "FAQ durchsuchen…",
       "searchAria": "FAQ durchsuchen",

@@ -2939,6 +2939,12 @@
     }
   },
   "shell": {
+    "deployUpdate": {
+      "title": "CareTip has been updated.",
+      "description": "We'll refresh automatically when it's safe.",
+      "manualDescription": "Refresh to load the latest version. Save any unsaved changes first.",
+      "refreshNow": "Refresh now"
+    },
     "header": {
       "searchPlaceholder": "Search FAQs…",
       "searchAria": "Search FAQs",

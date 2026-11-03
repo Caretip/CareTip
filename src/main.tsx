@@ -7,7 +7,8 @@ import App from "./app/App";
 import { GlobalErrorBoundary } from "./app/components/GlobalErrorBoundary";
 import { dismissHtmlMarketingBootBridge } from "./app/lib/htmlMarketingBootBridge";
 import { wakeRemoteApi, migrateLegacyAccessTokenFromStorage } from "./app/lib/api";
-import { recoverStaleChunkOnce } from "./app/lib/chunkLoadRecovery";
+import { handleVitePreloadError, startDeployUpdateRuntime } from "./app/lib/deployUpdate/runtime";
+import { registerCaretipServiceWorker } from "./app/lib/deployUpdate/serviceWorkerRegistration";
 import { scheduleMobileDeferredWork } from "./lib/mobilePerf";
 import { landingI18nPreload } from "./i18n/preloadLocale";
 import { prefetchCustomerEntryGraph } from "./app/lib/prefetchCustomerEntryGraph";
@@ -16,10 +17,7 @@ import { removeStaticCrawlerSummary } from "./app/lib/seo/documentSeo";
 import "./styles/index.css";
 
 if (typeof window !== "undefined") {
-  window.addEventListener("vite:preloadError", (event) => {
-    event.preventDefault();
-    recoverStaleChunkOnce();
-  });
+  window.addEventListener("vite:preloadError", handleVitePreloadError);
 }
 
 function paintBootstrapFailure(): void {
@@ -116,14 +114,8 @@ scheduleMobileDeferredWork(() => wakeRemoteApi(), { mobileTimeoutMs: 3500, deskt
 if (import.meta.env.PROD) {
   scheduleMobileDeferredWork(
     () => {
-      void import("virtual:pwa-register").then(({ registerSW }) => {
-        const updateSW = registerSW({
-          immediate: true,
-          onNeedRefresh() {
-            updateSW(true);
-          },
-        });
-      });
+      registerCaretipServiceWorker();
+      startDeployUpdateRuntime();
     },
     { mobileTimeoutMs: 4500, desktopTimeoutMs: 2000 },
   );

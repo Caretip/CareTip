@@ -22,7 +22,8 @@ export function isChunkLoadFailure(error: unknown): boolean {
     /Failed to fetch dynamically imported module/i.test(message) ||
     /Importing a module script failed/i.test(message) ||
     /Loading chunk [\w.-]+ failed/i.test(message) ||
-    /error loading dynamically imported module/i.test(message)
+    /error loading dynamically imported module/i.test(message) ||
+    /Unable to preload CSS/i.test(message)
   );
 }
 

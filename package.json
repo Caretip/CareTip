@@ -84,6 +84,8 @@
     "test:landing-hero-return-lifecycle": "node ./backend/node_modules/tsx/dist/cli.mjs ./scripts/landing-hero-return-lifecycle-runtime.ts",
     "test:production-landing-blank-probe": "node ./backend/node_modules/tsx/dist/cli.mjs ./scripts/production-landing-blank-probe.ts",
     "test:pwa-cookie-prompt-stacking": "node ./backend/node_modules/tsx/dist/cli.mjs ./scripts/pwa-cookie-prompt-stacking-runtime.ts",
+    "test:deploy-update-reliability": "node ./backend/node_modules/tsx/dist/cli.mjs ./scripts/deploy-update-reliability-runtime.ts",
+    "test:deploy-build-artifacts": "node ./scripts/deploy-build-artifacts-check.mjs",
     "test:white-screen-architecture": "node ./backend/node_modules/tsx/dist/cli.mjs ./scripts/white-screen-architecture-runtime.ts",
     "test:navigation-transition-stability": "node ./backend/node_modules/tsx/dist/cli.mjs ./scripts/navigation-transition-stability-runtime.ts",
     "test:legal-document-loading": "node ./backend/node_modules/tsx/dist/cli.mjs ./scripts/legal-document-loading-runtime.ts",

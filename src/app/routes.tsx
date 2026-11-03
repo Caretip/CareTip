@@ -16,6 +16,7 @@ import { AuthLogoutTransitionRegistrar } from "./components/AuthLogoutTransition
 import { LanguageChangeLoadingRegistrar } from "./components/LanguageChangeLoadingRegistrar";
 import { RouteNavigationLoadingRegistrar } from "./components/RouteNavigationLoadingRegistrar";
 import { IdleSessionController } from "./components/IdleSessionController";
+import { DeployUpdateRouteObserver } from "./components/DeployUpdateRouteObserver";
 import { useMarkAppShellReadyOptional } from "./context/AppLoadingSplashContext";
 import { useCompleteHtmlBootAfterPublicPaint } from "./context/AppLoadingManager";
 import { RouteChunkBoundary } from "./routing/RouteChunkBoundary";
@@ -62,6 +63,7 @@ import { AuthLogoutHandoffCover } from "./components/auth/AuthLogoutHandoffCover
 import { RootSpaRouteHold } from "./routing/RootSpaRouteHold";
 import { LandingHeroPersistenceLayer } from "./components/landing/LandingHeroPersistenceLayer";
 import { isChunkLoadFailure } from "./lib/chunkLoadRecovery";
+import { handleChunkLoadFailure } from "./lib/deployUpdate/runtime";
 // auth.css: imported by AuthPage / JoinPage / routeLazy auth helpers — not on every cold route.
 
 const LoaderDiagRuntime = import.meta.env.DEV
@@ -118,6 +120,11 @@ function ErrorBoundary() {
     !is404 &&
     (isChunkLoadFailure(error) ||
       (isRouteErrorResponse(error) && isChunkLoadFailure(error.data)));
+  const chunkError = chunkFailed ? (isRouteErrorResponse(error) ? error.data : error) : null;
+  useEffect(() => {
+    if (chunkError) handleChunkLoadFailure(chunkError);
+  }, [chunkError]);
+
   const title = is404
     ? "Page not found"
     : chunkFailed
@@ -174,6 +181,7 @@ function RootLayout() {
         </React.Suspense>
       ) : null}
       <IdleSessionController />
+      <DeployUpdateRouteObserver />
       <ScrollToTop />
       <CareTipRouteSeo />
       <SignInHandoffCover />

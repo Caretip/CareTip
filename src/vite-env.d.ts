@@ -39,3 +39,8 @@ interface ImportMetaEnv {
 interface ImportMeta {
   readonly env: ImportMetaEnv;
 }
+
+/** Deployment id baked in by `vite build` (see `scripts/deploy-build-version.mjs`); `"dev"` under `vite`. */
+declare const __CARETIP_BUILD_VERSION__: string;
+/** ISO-8601 build time; empty under `vite` dev. */
+declare const __CARETIP_BUILD_TIME__: string;
