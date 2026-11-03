@@ -25,6 +25,12 @@
     },
     {
       "method": "POST",
+      "path": "/session/migrate",
+      "requiresTrustedOrigin": true,
+      "requiresClientHeader": true
+    },
+    {
+      "method": "POST",
       "path": "/logout",
       "requiresTrustedOrigin": true,
       "requiresClientHeader": true
@@ -54,6 +60,10 @@
     {
       "handler": "logout",
       "note": "Cookie-authenticated revocation; Origin + X-CareTip-Client required."
+    },
+    {
+      "handler": "migrateSessionHost",
+      "note": "API-hostname migration; re-issues the refresh cookie for this host. Bearer (authMiddleware) + Origin + X-CareTip-Client required."
     },
     {
       "handler": "patchMe",
