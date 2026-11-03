@@ -49,8 +49,12 @@ export type DeployUpdateEvent =
 /**
  * `deferred`: this tab will reload on its own at a safe moment.
  * `manual`: it will not (loop guard spent or no sessionStorage); only the user can refresh.
+ * `reloading`: the user clicked "Refresh now"; no action is offered until the refresh lands or fails.
  */
-export type DeployUpdateNotice = { kind: "deferred" | "manual"; version: string } | { kind: "cleared" };
+export type DeployUpdateNotice =
+  | { kind: "deferred" | "manual"; version: string }
+  | { kind: "reloading"; version: string | null }
+  | { kind: "cleared" };
 
 export type ReloadTrigger =
   | "startup"
@@ -116,11 +120,13 @@ export type DeployUpdateDeps = {
   sharedCheckFreshMs?: number;
   maxReloadsPerVersion?: number;
   chunkMarkerTtlMs?: number;
+  manualReloadGraceMs?: number;
 };
 
 export const SHARED_CHECK_KEY = "caretip-deploy-version-check";
 export const RELOAD_BUDGET_KEY = "caretip-deploy-reload";
 export const CHUNK_RECOVERY_KEY = "caretip-deploy-chunk-recovery";
+export const MANUAL_RELOAD_KEY = "caretip-deploy-manual-reload";
 
 const DEFAULTS = {
   pollIntervalMs: 60_000,
@@ -133,6 +139,11 @@ const DEFAULTS = {
   /** Per deployed version for the whole tab session: a stuck SW or CDN can never cause periodic reloads. */
   maxReloadsPerVersion: 2,
   chunkMarkerTtlMs: 10 * 60_000,
+  /**
+   * After "Refresh now", a page that still boots the old bundle (the new service worker was not
+   * ready yet) keeps showing "updating" this long and reloads once more when the worker activates.
+   */
+  manualReloadGraceMs: 30_000,
 };
 
 function readJson<T>(store: StorageLike | null, key: string): T | null {
@@ -190,11 +201,29 @@ export function createDeployUpdateCoordinator(deps: DeployUpdateDeps) {
   let lastDeferLog = "";
   let lastCheckAt = 0;
   let pollHandle: unknown = null;
+  let manualGraceHandle: unknown = null;
   const cleanups: Array<() => void> = [];
+
+  /** Version a "Refresh now" on the previous page was aiming for, while still within the grace window. */
+  function activeManualReloadTarget(): string | null {
+    const marker = readJson<{ version: string; at: number }>(deps.sessionStore, MANUAL_RELOAD_KEY);
+    if (!marker || typeof marker.version !== "string" || typeof marker.at !== "number") return null;
+    if (marker.version === running || deps.now() - marker.at >= cfg.manualReloadGraceMs) return null;
+    return marker.version;
+  }
+
+  function clearManualReloadMarker(): void {
+    try {
+      deps.sessionStore?.removeItem(MANUAL_RELOAD_KEY);
+    } catch {
+      /* storage unavailable */
+    }
+  }
   let chunkRecovery: Promise<ChunkRecoveryOutcome> | null = null;
 
   function setPending(version: string, source: string): void {
     if (version === running) {
+      clearManualReloadMarker();
       if (pendingVersion) {
         deps.log("update_cleared", { version });
         pendingVersion = null;
@@ -214,7 +243,23 @@ export function createDeployUpdateCoordinator(deps: DeployUpdateDeps) {
   }
 
   function showNotice(): void {
-    if (!pendingVersion || deps.isQuietRoute()) return;
+    if (!pendingVersion || deps.isQuietRoute() || manualReloadRequested) return;
+    const resumeTarget = activeManualReloadTarget();
+    if (resumeTarget === pendingVersion) {
+      const resumeKey = `${pendingVersion}:reloading`;
+      if (noticeKey === resumeKey) return;
+      noticeKey = resumeKey;
+      deps.notify({ kind: "reloading", version: pendingVersion });
+      if (manualGraceHandle === null) {
+        manualGraceHandle = deps.timers.setTimeout(() => {
+          manualGraceHandle = null;
+          clearManualReloadMarker();
+          noticeKey = null;
+          showNotice();
+        }, cfg.manualReloadGraceMs);
+      }
+      return;
+    }
     const kind = reloadBudgetAvailable(pendingVersion) ? "deferred" : "manual";
     const key = `${pendingVersion}:${kind}`;
     if (noticeKey === key) return;
@@ -323,6 +368,7 @@ export function createDeployUpdateCoordinator(deps: DeployUpdateDeps) {
       showNotice();
       return;
     }
+    if (manual && target) writeJson(deps.sessionStore, MANUAL_RELOAD_KEY, { version: target, at: deps.now() });
     deps.reload();
   }
 
@@ -429,6 +475,8 @@ export function createDeployUpdateCoordinator(deps: DeployUpdateDeps) {
     stopped = true;
     if (pollHandle !== null) deps.timers.clearInterval(pollHandle);
     pollHandle = null;
+    if (manualGraceHandle !== null) deps.timers.clearTimeout(manualGraceHandle);
+    manualGraceHandle = null;
     cleanups.splice(0).forEach((cleanup) => cleanup());
     deps.channel?.close();
   }
@@ -447,12 +495,20 @@ export function createDeployUpdateCoordinator(deps: DeployUpdateDeps) {
 
   /** The service worker activated a new release (vite-plugin-pwa `onNeedReload`). */
   function onServiceWorkerUpdated(): void {
-    void checkNow("service-worker", { bypassShared: true });
+    void checkNow("service-worker", { bypassShared: true }).then(() => {
+      const resumeTarget = activeManualReloadTarget();
+      if (!resumeTarget || resumeTarget !== pendingVersion || stopped || reloading) return;
+      clearManualReloadMarker();
+      manualReloadRequested = true;
+      void performReload("manual", true);
+    });
   }
 
   /** User clicked "Refresh now". Waits for active blockers; retried on each blocker release or poll. */
   function reloadNow(): void {
     manualReloadRequested = true;
+    noticeKey = `${pendingVersion}:reloading`;
+    deps.notify({ kind: "reloading", version: pendingVersion });
     void performReload("manual", true);
   }
 

@@ -98,6 +98,15 @@ function showNotice(notice: DeployUpdateNotice): void {
     toast.dismiss(NOTICE_TOAST_ID);
     return;
   }
+  if (notice.kind === "reloading") {
+    toast.loading(i18n.t("shell.deployUpdate.reloading"), {
+      id: NOTICE_TOAST_ID,
+      description: undefined,
+      action: undefined,
+      duration: Number.POSITIVE_INFINITY,
+    });
+    return;
+  }
   toast(i18n.t("shell.deployUpdate.title"), {
     id: NOTICE_TOAST_ID,
     description: i18n.t(
@@ -106,7 +115,11 @@ function showNotice(notice: DeployUpdateNotice): void {
     duration: Number.POSITIVE_INFINITY,
     action: {
       label: i18n.t("shell.deployUpdate.refreshNow"),
-      onClick: () => coordinator?.reloadNow(),
+      onClick: (event) => {
+        // Keep the toast mounted: it turns into the "updating" state instead of vanishing and reappearing.
+        event.preventDefault();
+        coordinator?.reloadNow();
+      },
     },
   });
 }

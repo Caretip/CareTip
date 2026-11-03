@@ -2943,6 +2943,7 @@
       "title": "CareTip has been updated.",
       "description": "We'll refresh automatically when it's safe.",
       "manualDescription": "Refresh to load the latest version. Save any unsaved changes first.",
+      "reloading": "Updating CareTip…",
       "refreshNow": "Refresh now"
     },
     "header": {

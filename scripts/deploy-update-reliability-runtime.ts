@@ -36,6 +36,7 @@ import { deployUpdateRouteDeferReason, isGuestTipFlowRoute } from "../src/app/li
 import {
   CHUNK_RECOVERY_KEY,
   createDeployUpdateCoordinator,
+  MANUAL_RELOAD_KEY,
   parseCrossTabMessage,
   RELOAD_BUDGET_KEY,
   SHARED_CHECK_KEY,
@@ -134,6 +135,7 @@ function createTab(options: TabOptions = {}) {
   };
   const listeners = new Map<string, Set<(event: Event) => void>>();
   const intervals = new Map<number, () => void>();
+  const timeouts: Array<() => void> = [];
   let nextHandle = 1;
   const reloads: string[] = [];
   const notices: DeployUpdateNotice[] = [];
@@ -152,7 +154,10 @@ function createTab(options: TabOptions = {}) {
     },
     now: () => clock.now,
     timers: {
-      setTimeout: () => 0,
+      setTimeout(handler) {
+        timeouts.push(handler);
+        return 0;
+      },
       clearTimeout: () => {},
       setInterval(handler) {
         const handle = nextHandle++;
@@ -196,6 +201,7 @@ function createTab(options: TabOptions = {}) {
     reloads,
     notices,
     logs,
+    timeouts,
     get fetchCalls() {
       return fetchCalls;
     },
@@ -1172,6 +1178,89 @@ await test("G7 cross-tab: duplicate and echoed messages cannot exceed the per-ta
   for (let i = 0; i < 20; i += 1) peer.post({ type: "version", version: "v2-build2", at: i });
   await flush();
   assert.equal(next.reloads.length + third.reloads.length, 1, "budget of two per version holds across messages");
+});
+
+// ---------------------------------------------------------------- H. "Refresh now" notice continuity
+await test("H1 'Refresh now' turns the notice into 'updating' and never re-offers it while the refresh is pending", async () => {
+  const session = new MemoryStorage();
+  const tab = createTab({ deployed: "v2-build2", sessionStore: session });
+  tab.coordinator.start();
+  await flush();
+  assert.deepEqual(tab.notices, [{ kind: "deferred", version: "v2-build2" }]);
+  tab.state.blockReason = "request:mutation";
+  tab.coordinator.reloadNow();
+  await flush();
+  assert.deepEqual(tab.notices.at(-1), { kind: "reloading", version: "v2-build2" });
+  tab.coordinator.onRouteChange();
+  await tab.tick();
+  tab.coordinator.reevaluate();
+  await flush();
+  assert.equal(tab.reloads.length, 0);
+  assert.ok(
+    tab.notices.slice(1).every((n) => n.kind === "reloading"),
+    "no actionable notice reappears while the manual refresh waits",
+  );
+  tab.state.blockReason = null;
+  tab.coordinator.reevaluate();
+  await flush();
+  assert.equal(tab.reloads.length, 1);
+  assert.equal(JSON.parse(session.getItem(MANUAL_RELOAD_KEY)!).version, "v2-build2");
+});
+
+await test("H2 a page that still boots the old bundle after 'Refresh now' keeps 'updating' and reloads once on SW activation", async () => {
+  const session = new MemoryStorage();
+  const clock = { now: 1_700_000_000_000 };
+  session.setItem(MANUAL_RELOAD_KEY, JSON.stringify({ version: "v2-build2", at: clock.now - 2_000 }));
+  const stale = createTab({ deployed: "v2-build2", sessionStore: session, clock });
+  stale.coordinator.start();
+  await flush();
+  assert.deepEqual(stale.notices, [{ kind: "reloading", version: "v2-build2" }], "no 'new version' notice again");
+  assert.equal(stale.reloads.length, 0);
+  stale.coordinator.onServiceWorkerUpdated();
+  await flush();
+  assert.equal(stale.reloads.length, 1, "resumes the user's refresh once the new worker is active");
+  stale.coordinator.onServiceWorkerUpdated();
+  await flush();
+  assert.equal(stale.reloads.length, 1, "bounded: one resumed reload");
+});
+
+await test("H3 the 'updating' state expires: an actionable notice returns if the new version never arrives", async () => {
+  const session = new MemoryStorage();
+  const clock = { now: 1_700_000_000_000 };
+  session.setItem(MANUAL_RELOAD_KEY, JSON.stringify({ version: "v2-build2", at: clock.now - 1_000 }));
+  const tab = createTab({ deployed: "v2-build2", sessionStore: session, clock });
+  tab.coordinator.start();
+  await flush();
+  assert.equal(tab.notices.at(-1)!.kind, "reloading");
+  assert.equal(tab.timeouts.length, 1);
+  clock.now += 30_000;
+  tab.timeouts[0]!();
+  assert.deepEqual(tab.notices.at(-1), { kind: "deferred", version: "v2-build2" });
+  assert.equal(session.getItem(MANUAL_RELOAD_KEY), null);
+
+  const old = new MemoryStorage();
+  old.setItem(MANUAL_RELOAD_KEY, JSON.stringify({ version: "v2-build2", at: clock.now - 31_000 }));
+  const expired = createTab({ deployed: "v2-build2", sessionStore: old, clock });
+  expired.coordinator.start();
+  await flush();
+  assert.deepEqual(expired.notices, [{ kind: "deferred", version: "v2-build2" }]);
+});
+
+await test("H4 a refresh that landed on the new version shows nothing and clears the marker", async () => {
+  const session = new MemoryStorage();
+  session.setItem(MANUAL_RELOAD_KEY, JSON.stringify({ version: "v2-build2", at: 1_700_000_000_000 - 1_000 }));
+  const tab = createTab({ running: "v2-build2", deployed: "v2-build2", sessionStore: session });
+  tab.coordinator.start();
+  await flush();
+  assert.equal(tab.notices.length, 0);
+  assert.equal(session.getItem(MANUAL_RELOAD_KEY), null);
+
+  const runtime = read("src/app/lib/deployUpdate/runtime.ts");
+  assert.match(runtime, /event\.preventDefault\(\);\s*coordinator\?\.reloadNow\(\);/, "toast stays mounted on click");
+  assert.match(runtime, /toast\.loading\(i18n\.t\("shell\.deployUpdate\.reloading"\)/);
+  const en = JSON.parse(read("src/i18n/locales/en.json")).shell.deployUpdate;
+  const de = JSON.parse(read("src/i18n/locales/de.json")).shell.deployUpdate;
+  assert.ok(en.reloading && de.reloading);
 });
 
 console.log(`deploy-update-reliability-runtime: ${passed} passed`);
