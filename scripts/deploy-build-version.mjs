@@ -6,6 +6,8 @@
 import { execFileSync } from "node:child_process";
 
 export const DEPLOY_VERSION_FILE = "version.json";
+/** `<meta name>` carrying the build id in `index.html`; lets the app verify which shell a service worker precached. */
+export const DEPLOY_VERSION_META = "caretip-build-version";
 
 const SAFE_SEGMENT = /[^A-Za-z0-9._-]/g;
 
@@ -51,13 +53,22 @@ export function deployVersionJson(info) {
 }
 
 /**
- * Emits `version.json` into the build output. Build only; dev servers report version "dev".
+ * Emits `version.json` and stamps the build id into `index.html`. Build only; dev servers report "dev".
  * @param {{ version: string, buildTime: string }} info
  */
 export function deployVersionPlugin(info) {
   return {
     name: "caretip-deploy-version",
     apply: /** @type {const} */ ("build"),
+    transformIndexHtml() {
+      return [
+        {
+          tag: "meta",
+          attrs: { name: DEPLOY_VERSION_META, content: info.version },
+          injectTo: /** @type {const} */ ("head"),
+        },
+      ];
+    },
     generateBundle() {
       this.emitFile({ type: "asset", fileName: DEPLOY_VERSION_FILE, source: deployVersionJson(info) });
     },

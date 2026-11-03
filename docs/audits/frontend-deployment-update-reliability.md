@@ -425,3 +425,100 @@ Additional coverage: G7 (20 duplicate/echoed cross-tab messages → one reload; 
 ### Not fixed (see section 13)
 - Cached 404s under `/assets/*` (requires an Edge Function or CDN rule — production infrastructure, not authorized).
 - Real Safari/iOS/installed-PWA/Netlify verification.
+
+## 17. Update UX refinement (2026-11-03) — supersedes the notice, "Refresh now" and superseded-TTL parts of 11–16
+
+### Root causes addressed
+- **Two-reload experience:** "Refresh now" reloaded before the new service worker had installed, so the first
+  reload could boot the old precached shell; a second reload was needed once the worker activated.
+- **Reappearing notice:** completion was tracked by a 10-minute "superseded" window; stale `/version.json`,
+  cross-tab or shared-cache signals after the window (or before it was written) could resurrect the notice.
+- **Flicker:** the busy notice was shown for every short save (mutation + 5 s settle grace), not only when the user
+  had asked to refresh.
+
+### Lifecycle (single source of truth: `updateCoordinator.ts`)
+`idle → preparing (detected → installing) → ready → reloading → [new page] verified → idle`, plus `failed`.
+- Detection immediately starts `prepareUpdate(target)`. A fast preparation goes straight to *ready*; the
+  *preparing* notice appears only after 1.5 s (no flash), or immediately when another notice is already visible.
+- Preparation is bounded (90 s). Timeout or failure → *failed* with "Try again"; nothing reloads, the app keeps
+  working. A late result of a timed-out attempt is ignored (attempt id). A service-worker activation retries
+  silently; the notice stays *failed* until a retry succeeds (no flicker, no repeated error).
+- The user's click (*requested*) is remembered. Blockers only produce the *busy* notice when requested; otherwise
+  *ready* stays calm. When the last blocker clears, a requested reload runs immediately (synchronously).
+- Offline: *offline* notice while preparing/failed, or when ready via network; preparation restarts on `online`.
+  No checks and no reloads while offline (a precached build may still reload offline on click).
+- Automatic reloads (hidden tab, idle, navigation, chunk recovery) keep the existing policy, but only once *ready*.
+  The 5 s mutation settle grace is kept (it protects the checkout-response → Stripe hand-off); it no longer causes
+  visible flicker.
+- Copy (EN/DE exactly as specified): detected, preparing, ready + "Refresh to update" / "Jetzt aktualisieren",
+  busy, offline, failed + "Try again" / "Erneut versuchen", refreshing. Completion shows no toast.
+
+### Service-worker readiness guarantee (`runtime.ts` → `prepareServiceWorkerUpdate`)
+- The build stamps `<meta name="caretip-build-version" content="<id>">` into `index.html`
+  (`deployVersionPlugin.transformIndexHtml`); the artifact check asserts it matches `version.json`.
+- Ready via *service-worker* only when: `registration.update()` ran, an installing/waiting worker reached
+  `activated` (redundant → `install-failed`; Workbox install fetches every precache entry first), the active worker
+  controls the page, and the precached `/index.html` (`caches.match`, read-only) carries the target id
+  (different id → `stale-shell`). A shell without a stamp (rollback to a pre-stamp build) is accepted only after a
+  fresh worker/update check.
+- Ready via *network* when no service worker controls the page (the reload is served by the network).
+- `registerType: 'autoUpdate'` is kept deliberately: switching to a prompt/SKIP_WAITING flow would strand pages
+  running the current production bundle, which cannot send SKIP_WAITING, and a waiting worker never activates
+  while old tabs stay open.
+
+### Reload behaviour
+One click → one synchronous `window.location.reload()` (path, query and history preserved) — no await, poll or
+timer. Duplicate clicks and later triggers are ignored while *reloading*. A 15 s watchdog returns to *ready* if the
+page did not unload (not counted as completed); a bfcache restore does the same. If the old bundle still boots after
+a click (cache race), the page resumes the refresh once ready, at most once (marker `manual: false`), within 2 min.
+
+### Transition tracking (replaces the 10-minute window)
+- `sessionStorage` marker `{from, to, at, manual}` before every reload. On boot, `to === running` → transition
+  `{from, to, verifiedAt}` appended to `localStorage` `caretip-deploy-transitions` (max 10) and kept in memory.
+  The marker alone is never completion.
+- Every signal carries `observedAt` (network = now, shared cache = its `at`, cross-tab = message `at`). Ignored:
+  signals older than the pending observation (cannot overwrite newer state); relayed signals older than the last
+  network confirmation of the running build; signals for a version with a verified `V → running` transition when
+  observed before `verifiedAt` or relayed (cross-tab / shared cache / storage fallback).
+- A real rollback to `V` is accepted only from network checks at least 2 min apart with no confirmation of the
+  running build in between. Newer deployments are always accepted; a newer target replaces a pending one in place.
+- Corrupted or unavailable storage is ignored (parsed defensively); without `sessionStorage` there are no automatic
+  reloads, the manual refresh still works once.
+
+### Cross-tab
+Unchanged transports (BroadcastChannel, `storage` fallback, 45 s shared cache); no new messaging. Each tab prepares,
+decides and verifies its own transition; blockers are per tab; a finished tab ignores stale peers; a tab still on the
+old build keeps its notice. SW activation only triggers a check / silent retry — never a reload.
+
+### Tests (2026-11-03)
+| Suite | Result |
+| --- | --- |
+| `test:deploy-update-reliability` | 76 passed (new H1–H7 lifecycle, I1–I14 transitions/copy/wiring; C/F/G updated to the new states without weakening safety assertions) |
+| auth-refresh-coordination / -reliability-frontend / -security | 38 / 31 / 23 checks ok |
+| auth-logout-session-expired, auth-post-login-return, auth-loading-recovery, idle-session-auth-gate | ok |
+| navigation-transition-stability, auth-navigation-session-preservation (13/13) | ok |
+| stripe-stale-state, pwa-cookie-prompt-stacking, csp | ok |
+| white-screen-architecture, landing-hero-return-lifecycle, stripe-payments-responsive (6/10) | fail — pre-existing at base, unrelated (eager landing page, Payments UI classes) |
+| qr-guest-tip-locale | not run (needs `DATABASE_URL`; backend email modules) |
+| `tsc --noEmit -p .` / ESLint on changed source files | 0 errors |
+| `npm run build` + `deploy-build-artifacts-check --expect-version=79486ecf0000-localverify1` | ok; meta present in `index.html` |
+
+**Real browser (Cursor's embedded Chromium, `vite preview`, local — not Netlify):** build 1 served and SW-controlled
+on `/login?probe=1`; build 2 built into `dist/` while the tab stayed open. The tab first showed *failed* (detection
+raced the non-atomic local rebuild — a real exercise of the failure path); "Erneut versuchen" → *preparing
+(installing)* → *ready* ("Jetzt aktualisieren"); the new worker controlled the page and the precached shell was
+build 2. Clicking "Jetzt aktualisieren" produced exactly one reload (`navigation.type === "reload"`, same tab) onto
+build 2 at `/login?probe=1` (route and query preserved); the reload marker was consumed, transition
+`localverify1 → localverify2` was recorded, and no notice was shown. Over the following ~22 minutes there was no
+further reload or notice, including after injecting a stale shared-cache entry and a stale BroadcastChannel message
+for build 1 and letting the 60 s poll run.
+
+### Limitations / unverified
+- Multi-tab, offline, blocker and rollback behaviour verified only in simulated tests, not in a real browser.
+  Safari, iOS, installed PWA and Netlify were not tested.
+- With `clientsClaim`, an old page's lazy chunks can fail after the new worker claims it; existing chunk recovery
+  handles this (waits ≤ 10 s for readiness, respects blockers).
+- A CDN persistently serving an old `version.json` for > 2 min is indistinguishable from a rollback; the readiness
+  check (shell id must match) still prevents reloading onto a mismatched build.
+- The meta stamp exists only from this build on; the first transition away from the current production bundle runs
+  the old (pre-refinement) code in those pages.

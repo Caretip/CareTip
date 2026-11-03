@@ -11,6 +11,7 @@ import {
 import { createAgeLimitedSignal } from "./ageLimitedSignal";
 import { isVersionedBuild, runningDeployBuild } from "./buildInfo";
 import { createDeployUpdateChannel } from "./crossTabChannel";
+import { deployUpdateActionLabel, deployUpdateNoticeCopy } from "./noticeCopy";
 import {
   inFlightMutationRequestCount,
   installMutationRequestTracker,
@@ -24,12 +25,14 @@ import {
   type DeployUpdateCoordinator,
   type DeployUpdateEvent,
   type DeployUpdateNotice,
+  type PrepareProgress,
+  type PrepareResult,
   type StorageLike,
 } from "./updateCoordinator";
 import { fetchDeployedVersion } from "./versionCheck";
 
 const NOTICE_TOAST_ID = "caretip-deploy-update";
-const SW_PREPARE_TIMEOUT_MS = 8_000;
+const PROGRESS_TOAST_ID = "caretip-deploy-update-progress";
 /** A Stripe hand-off normally ends in `pagehide` within seconds; a cancelled one must not block forever. */
 const STRIPE_HOLD_BLOCK_MAX_MS = 5 * 60_000;
 
@@ -94,73 +97,112 @@ function hasFocusedEditable(): boolean {
 }
 
 function showNotice(notice: DeployUpdateNotice): void {
-  if (notice.kind === "cleared") {
+  const copy = deployUpdateNoticeCopy(notice);
+  if (!copy) {
     toast.dismiss(NOTICE_TOAST_ID);
+    toast.dismiss(PROGRESS_TOAST_ID);
     return;
   }
-  if (notice.kind === "reloading") {
-    toast.loading(i18n.t("shell.deployUpdate.reloading"), {
-      id: NOTICE_TOAST_ID,
-      description: undefined,
-      action: undefined,
-      duration: Number.POSITIVE_INFINITY,
-    });
+  // Sonner keeps a toast's type across updates, so the spinner states use their own id.
+  if (copy.loading) {
+    toast.dismiss(NOTICE_TOAST_ID);
+    toast.loading(i18n.t(copy.message), { id: PROGRESS_TOAST_ID, duration: Number.POSITIVE_INFINITY });
     return;
   }
-  toast(i18n.t("shell.deployUpdate.title"), {
+  toast.dismiss(PROGRESS_TOAST_ID);
+  const action = copy.action;
+  toast(i18n.t(copy.message), {
     id: NOTICE_TOAST_ID,
-    description: i18n.t(
-      notice.kind === "manual" ? "shell.deployUpdate.manualDescription" : "shell.deployUpdate.description",
-    ),
     duration: Number.POSITIVE_INFINITY,
-    action: {
-      label: i18n.t("shell.deployUpdate.refreshNow"),
-      onClick: (event) => {
-        // Keep the toast mounted: it turns into the "updating" state instead of vanishing and reappearing.
-        event.preventDefault();
-        coordinator?.reloadNow();
-      },
-    },
-  });
-}
-
-function waitFor(promise: Promise<unknown>, ms: number): Promise<void> {
-  return new Promise((resolve) => {
-    const timer = setTimeout(resolve, ms);
-    promise.then(
-      () => {
-        clearTimeout(timer);
-        resolve();
-      },
-      () => {
-        clearTimeout(timer);
-        resolve();
-      },
-    );
-  });
-}
-
-/** Ask the controlling SW to fetch the new `sw.js` so the reload is not served the old precache. */
-async function prepareServiceWorkerForReload(): Promise<void> {
-  if (!("serviceWorker" in navigator) || !navigator.serviceWorker.controller) return;
-  const registration = await navigator.serviceWorker.getRegistration().catch(() => undefined);
-  if (!registration) return;
-  await waitFor(registration.update(), SW_PREPARE_TIMEOUT_MS);
-  const incoming = registration.installing ?? registration.waiting;
-  if (!incoming) return;
-  await waitFor(
-    new Promise<void>((resolve) => {
-      const check = () => {
-        if (incoming.state === "activated" || incoming.state === "redundant") {
-          incoming.removeEventListener("statechange", check);
-          resolve();
+    action: action
+      ? {
+          label: i18n.t(deployUpdateActionLabel(action)),
+          onClick: (event) => {
+            // Sonner would dismiss the toast; the coordinator replaces it with the next state instead.
+            event.preventDefault();
+            if (action === "retry") coordinator?.retryPreparation();
+            else coordinator?.reloadNow();
+          },
         }
-      };
-      incoming.addEventListener("statechange", check);
-      check();
-    }),
-    SW_PREPARE_TIMEOUT_MS,
-  );
+      : undefined,
+  });
+}
+
+/** Resolves with the worker's final install outcome. */
+function installOutcome(worker: ServiceWorker): Promise<"activated" | "redundant"> {
+  return new Promise((resolve) => {
+    const check = () => {
+      if (worker.state === "activated" || worker.state === "redundant") {
+        worker.removeEventListener("statechange", check);
+        resolve(worker.state);
+      }
+    };
+    worker.addEventListener("statechange", check);
+    check();
+  });
+}
+
+/** Resolves once the registration's active worker controls this page (autoUpdate claims clients). */
+function controlledBy(registration: ServiceWorkerRegistration): Promise<void> {
+  const container = navigator.serviceWorker;
+  return new Promise((resolve) => {
+    const check = () => {
+      if (registration.active && container.controller === registration.active) {
+        container.removeEventListener("controllerchange", check);
+        resolve();
+      }
+    };
+    container.addEventListener("controllerchange", check);
+    check();
+  });
+}
+
+/** Build id stamped into the precached `index.html`, or null when it cannot be read. */
+async function precachedShellVersion(): Promise<string | null> {
+  if (typeof caches === "undefined") return null;
+  try {
+    const response = await caches.match("/index.html", { ignoreSearch: true });
+    if (!response) return null;
+    const html = await response.text();
+    const meta = html.match(/<meta name="caretip-build-version" content="([^"]*)"/);
+    return meta ? meta[1]! : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Downloads the new release through the service worker and verifies that a reload will boot
+ * `target`: the new worker installed (all precache entries fetched), activated, controls the page,
+ * and its precached shell carries the target build id. Without a controlling worker the reload is
+ * served by the network, which is ready by definition. The coordinator bounds the duration.
+ */
+async function prepareServiceWorkerUpdate(
+  target: string,
+  onProgress: (progress: PrepareProgress) => void,
+): Promise<PrepareResult> {
+  if (!("serviceWorker" in navigator) || !navigator.serviceWorker.controller) return { ok: true, via: "network" };
+  const registration = await navigator.serviceWorker.getRegistration().catch(() => undefined);
+  if (!registration) return { ok: true, via: "network" };
+  let updateChecked = true;
+  try {
+    await registration.update();
+  } catch {
+    updateChecked = false;
+  }
+  let activatedNow = false;
+  const incoming = registration.installing ?? registration.waiting;
+  if (incoming) {
+    onProgress("installing");
+    if ((await installOutcome(incoming)) === "redundant") return { ok: false, reason: "install-failed" };
+    activatedNow = true;
+  }
+  await controlledBy(registration);
+  const shell = await precachedShellVersion();
+  if (shell === target) return { ok: true, via: "service-worker" };
+  // A shell without the stamp predates it (rollback to an older build): trust a fresh worker only.
+  if (shell === null && (activatedNow || updateChecked)) return { ok: true, via: "service-worker" };
+  return { ok: false, reason: shell === null ? "install-failed" : "stale-shell" };
 }
 
 function ensureCoordinator(): DeployUpdateCoordinator {
@@ -197,7 +239,7 @@ function ensureCoordinator(): DeployUpdateCoordinator {
     getBlockReason: currentBlockReason,
     getRouteDeferReason: () => deployUpdateRouteDeferReason(window.location.pathname, window.location.search),
     isQuietRoute: () => isGuestTipFlowRoute(window.location.pathname),
-    prepareReload: prepareServiceWorkerForReload,
+    prepareUpdate: prepareServiceWorkerUpdate,
     notify: showNotice,
     log: logDeployEvent,
   });

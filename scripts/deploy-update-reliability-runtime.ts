@@ -9,7 +9,9 @@ import { readFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import {
+  DEPLOY_VERSION_META,
   deployVersionJson,
+  deployVersionPlugin,
   resolveDeployBuildInfo,
 } from "./deploy-build-version.mjs";
 import { isChunkLoadFailure } from "../src/app/lib/chunkLoadRecovery";
@@ -32,17 +34,21 @@ import {
   subscribeMutationRequests,
 } from "../src/app/lib/deployUpdate/mutationRequestTracker";
 import { createAgeLimitedSignal } from "../src/app/lib/deployUpdate/ageLimitedSignal";
+import { deployUpdateActionLabel, deployUpdateNoticeCopy } from "../src/app/lib/deployUpdate/noticeCopy";
 import { deployUpdateRouteDeferReason, isGuestTipFlowRoute } from "../src/app/lib/deployUpdate/routePolicy";
 import {
   CHUNK_RECOVERY_KEY,
   createDeployUpdateCoordinator,
-  MANUAL_RELOAD_KEY,
   parseCrossTabMessage,
   RELOAD_BUDGET_KEY,
+  RELOAD_MARKER_KEY,
   SHARED_CHECK_KEY,
+  TRANSITIONS_KEY,
   type CrossTabChannel,
   type CrossTabMessage,
   type DeployUpdateNotice,
+  type PrepareProgress,
+  type PrepareResult,
   type StorageLike,
 } from "../src/app/lib/deployUpdate/updateCoordinator";
 import { createDeployUpdateChannel, DEPLOY_UPDATE_FALLBACK_KEY } from "../src/app/lib/deployUpdate/crossTabChannel";
@@ -65,6 +71,14 @@ async function test(name: string, fn: () => void | Promise<void>): Promise<void>
 const flush = async (rounds = 5) => {
   for (let i = 0; i < rounds; i += 1) await new Promise((resolve) => setImmediate(resolve));
 };
+
+const T0 = 1_700_000_000_000;
+
+function deferred<T>() {
+  let resolve!: (value: T) => void;
+  const promise = new Promise<T>((r) => (resolve = r));
+  return { promise, resolve };
+}
 
 class MemoryStorage implements StorageLike {
   map = new Map<string, string>();
@@ -117,7 +131,10 @@ type TabOptions = {
   channel?: CrossTabChannel | null;
   clock?: { now: number };
   visible?: boolean;
+  /** Runs inside the default `prepareUpdate` fake (which then reports ready via the service worker). */
   onPrepare?: () => void;
+  /** Replaces the default `prepareUpdate` fake. */
+  prepare?: (target: string, onProgress: (progress: PrepareProgress) => void) => Promise<PrepareResult>;
   /** Replaces `state.blockReason` (e.g. to drive the real mutation tracker). */
   blockReason?: () => string | null;
 };
@@ -135,7 +152,7 @@ function createTab(options: TabOptions = {}) {
   };
   const listeners = new Map<string, Set<(event: Event) => void>>();
   const intervals = new Map<number, () => void>();
-  const timeouts: Array<() => void> = [];
+  const timeouts: Array<{ fn: () => void; ms: number; cleared: boolean; fired: boolean }> = [];
   let nextHandle = 1;
   const reloads: string[] = [];
   const notices: DeployUpdateNotice[] = [];
@@ -154,11 +171,14 @@ function createTab(options: TabOptions = {}) {
     },
     now: () => clock.now,
     timers: {
-      setTimeout(handler) {
-        timeouts.push(handler);
-        return 0;
+      setTimeout(handler, ms) {
+        timeouts.push({ fn: handler, ms, cleared: false, fired: false });
+        return timeouts.length;
       },
-      clearTimeout: () => {},
+      clearTimeout(handle) {
+        const entry = timeouts[(handle as number) - 1];
+        if (entry) entry.cleared = true;
+      },
       setInterval(handler) {
         const handle = nextHandle++;
         intervals.set(handle, handler);
@@ -186,9 +206,11 @@ function createTab(options: TabOptions = {}) {
     getBlockReason: () => options.blockReason?.() ?? state.blockReason,
     getRouteDeferReason: () => state.routeReason,
     isQuietRoute: () => state.quiet,
-    async prepareReload() {
+    prepareUpdate(target, onProgress) {
       prepareCalls += 1;
+      if (options.prepare) return options.prepare(target, onProgress);
       options.onPrepare?.();
+      return Promise.resolve({ ok: true, via: "service-worker" });
     },
     notify: (notice) => notices.push(notice),
     log: (event, fields) => logs.push({ event, fields }),
@@ -208,6 +230,15 @@ function createTab(options: TabOptions = {}) {
     get prepareCalls() {
       return prepareCalls;
     },
+    /** Runs pending (not cleared, not yet run) timeouts registered with `ms`; returns how many ran. */
+    fire(ms: number) {
+      const due = timeouts.filter((t) => t.ms === ms && !t.cleared && !t.fired);
+      due.forEach((t) => {
+        t.fired = true;
+        t.fn();
+      });
+      return due.length;
+    },
     hold() {
       let release!: () => void;
       gate = new Promise<void>((resolve) => {
@@ -218,8 +249,8 @@ function createTab(options: TabOptions = {}) {
       });
       return release;
     },
-    dispatch(target: "window" | "document", type: string, event: Partial<Event> & Record<string, unknown> = {}) {
-      listeners.get(`${target}:${type}`)?.forEach((handler) => handler(event as Event));
+    dispatch(target: "window" | "document", type: string, event: Record<string, unknown> = {}) {
+      listeners.get(`${target}:${type}`)?.forEach((handler) => handler(event as unknown as Event));
     },
     listenerCount() {
       let count = 0;
@@ -431,7 +462,7 @@ await test("C1 safe idle application reloads (hidden tab)", async () => {
   tab.coordinator.start();
   await flush();
   assert.equal(tab.reloads.length, 1);
-  assert.equal(tab.prepareCalls, 1, "service worker asked to update first");
+  assert.equal(tab.prepareCalls, 1, "new release prepared before reloading");
   assert.equal(tab.notices.length, 0);
 });
 
@@ -440,7 +471,7 @@ await test("C2 active visible user: deferred with a single notice; idle or navig
   tab.coordinator.start();
   await flush();
   assert.equal(tab.reloads.length, 0);
-  assert.deepEqual(tab.notices, [{ kind: "deferred", version: "v2-build2" }]);
+  assert.deepEqual(tab.notices, [{ kind: "ready", version: "v2-build2" }]);
   await tab.tick();
   await tab.tick();
   assert.equal(tab.notices.length, 1, "notice not repeated");
@@ -542,7 +573,7 @@ await test("C6 payment, auth and critical-form system blockers prevent reload; m
   }
 });
 
-await test("C7 blocker that appears while the SW prepares aborts the reload", async () => {
+await test("C7 blocker that appears while the SW prepares defers the reload", async () => {
   const tab = createTab({
     deployed: "v2-build2",
     visible: false,
@@ -555,7 +586,7 @@ await test("C7 blocker that appears while the SW prepares aborts the reload", as
   assert.equal(tab.prepareCalls, 1);
   assert.equal(tab.reloads.length, 0);
   assert.equal(tab.coordinator.getState().reloading, false);
-  assert.ok(tab.logs.some((l) => l.event === "reload_aborted"));
+  assert.ok(tab.logs.some((l) => l.event === "update_deferred" && l.fields?.reason === "request:mutation"));
   tab.state.blockReason = null;
   tab.coordinator.reevaluate();
   await flush();
@@ -962,46 +993,49 @@ await test("F7 guest tip checkout holds a payment blocker released in finally", 
 await test("F8 notice copy exists in English and German", () => {
   const en = JSON.parse(read("src/i18n/locales/en.json")).shell.deployUpdate;
   const de = JSON.parse(read("src/i18n/locales/de.json")).shell.deployUpdate;
-  assert.equal(en.title, "CareTip has been updated.");
-  assert.equal(en.description, "We'll refresh automatically when it's safe.");
   assert.deepEqual(Object.keys(de).sort(), Object.keys(en).sort());
-  assert.ok(de.title && de.description && de.refreshNow && de.manualDescription);
-  assert.doesNotMatch(en.manualDescription, /automatic/i, "manual notice must not promise an automatic refresh");
-  assert.doesNotMatch(de.manualDescription, /automatisch/i, "manual notice must not promise an automatic refresh");
+  for (const key of ["detected", "preparing", "ready", "busy", "offline", "failed", "refreshing", "refreshNow", "retry"]) {
+    assert.ok(en[key] && de[key], key);
+  }
+  for (const key of Object.keys(en)) {
+    assert.doesNotMatch(en[key], /automatic/i, `${key} must not promise an automatic refresh`);
+    assert.doesNotMatch(de[key], /automatisch/i, `${key} must not promise an automatic refresh`);
+  }
 });
 
 // ---------------------------------------------------------------- G. independent review fixes
-await test("G1 notice says 'automatic' only while an automatic reload is still possible", async () => {
-  const deferred = createTab({ deployed: "v2-build2" });
-  deferred.coordinator.start();
+await test("G1 one notice per state; the ready notice is identical with or without a working loop guard", async () => {
+  const withGuard = createTab({ deployed: "v2-build2" });
+  withGuard.coordinator.start();
   await flush();
-  assert.deepEqual(deferred.notices, [{ kind: "deferred", version: "v2-build2" }]);
+  assert.deepEqual(withGuard.notices, [{ kind: "ready", version: "v2-build2" }]);
 
   const noSession = createTab({ deployed: "v2-build2", sessionStore: null });
   noSession.coordinator.start();
   await flush();
-  assert.deepEqual(noSession.notices, [{ kind: "manual", version: "v2-build2" }]);
+  assert.deepEqual(noSession.notices, [{ kind: "ready", version: "v2-build2" }]);
 
-  // Deferred notice upgrades to manual once the loop guard is spent (same toast id → replaced, not stacked).
+  // Loop guard spent: still the same single notice, never stacked or repeated.
   const session = new MemoryStorage();
   session.setItem(RELOAD_BUDGET_KEY, JSON.stringify({ version: "v2-build2", count: 1, at: 0 }));
   const tab = createTab({ deployed: "v2-build2", sessionStore: session });
   tab.coordinator.start();
   await flush();
-  assert.equal(tab.notices.at(-1)!.kind, "deferred");
+  assert.equal(tab.notices.at(-1)!.kind, "ready");
   tab.coordinator.onRouteChange();
   await flush();
   assert.equal(tab.reloads.length, 1);
   const afterReload = createTab({ deployed: "v2-build2", sessionStore: session });
   afterReload.coordinator.start();
   await flush();
-  assert.deepEqual(afterReload.notices, [{ kind: "manual", version: "v2-build2" }]);
+  assert.deepEqual(afterReload.notices, [{ kind: "ready", version: "v2-build2" }]);
   afterReload.coordinator.onRouteChange();
   await afterReload.tick();
   assert.equal(afterReload.notices.length, 1, "no duplicate notices");
+  assert.equal(afterReload.reloads.length, 0, "loop guard spent: only the user can refresh");
 
   const runtime = read("src/app/lib/deployUpdate/runtime.ts");
-  assert.match(runtime, /notice\.kind === "manual" \? "shell\.deployUpdate\.manualDescription" : "shell\.deployUpdate\.description"/);
+  assert.match(runtime, /deployUpdateNoticeCopy\(notice\)/, "runtime renders through the copy mapping");
 });
 
 await test("G2 loop guard does not reset with time: no periodic reloads when the new shell never arrives", async () => {
@@ -1040,23 +1074,17 @@ await test("G3 'Refresh now' bypasses route, idle and loop-guard rules but not b
   tab.coordinator.reevaluate();
   await flush();
   assert.equal(tab.reloads.length, 1, "exactly one reload after release");
-  assert.equal(tab.prepareCalls, 1);
+  assert.equal(tab.prepareCalls, 1, "prepared once in the background; the click itself does not wait for anything");
 
-  const prepareBlocked = createTab({
-    deployed: "v2-build2",
-    onPrepare: () => {
-      if (prepareBlocked.prepareCalls === 1) prepareBlocked.state.blockReason = "request:mutation";
-    },
-  });
-  prepareBlocked.coordinator.start();
+  const lateBlocker = createTab({ deployed: "v2-build2" });
+  lateBlocker.coordinator.start();
   await flush();
-  prepareBlocked.coordinator.reloadNow();
-  await flush();
-  assert.equal(prepareBlocked.reloads.length, 0, "manual reload re-checks blockers after SW preparation");
-  prepareBlocked.state.blockReason = null;
-  prepareBlocked.coordinator.reevaluate();
-  await flush();
-  assert.equal(prepareBlocked.reloads.length, 1);
+  lateBlocker.state.blockReason = "request:mutation";
+  lateBlocker.coordinator.reloadNow();
+  assert.equal(lateBlocker.reloads.length, 0, "blockers are checked in the click itself, right before reloading");
+  lateBlocker.state.blockReason = null;
+  lateBlocker.coordinator.reevaluate();
+  assert.equal(lateBlocker.reloads.length, 1);
 });
 
 await test("G4 mutation settle grace: no reload between a checkout response and the Stripe hand-off", async () => {
@@ -1162,7 +1190,7 @@ await test("G7 cross-tab: duplicate and echoed messages cannot exceed the per-ta
   await flush();
   const peer = bus.channel();
   for (let i = 0; i < 20; i += 1) {
-    peer.post({ type: i % 2 ? "reloading" : "version", version: "v2-build2", at: i });
+    peer.post({ type: i % 2 ? "reloading" : "version", version: "v2-build2", at: T0 + i });
   }
   await flush();
   assert.equal(tab.reloads.length, 1, "one reload despite 20 messages");
@@ -1170,97 +1198,617 @@ await test("G7 cross-tab: duplicate and echoed messages cannot exceed the per-ta
   const next = createTab({ deployed: "v1-build1", visible: false, localStore: null, sessionStore: session, channel: bus.channel() });
   next.coordinator.start();
   await flush();
-  for (let i = 0; i < 20; i += 1) peer.post({ type: "version", version: "v2-build2", at: i });
+  for (let i = 0; i < 20; i += 1) peer.post({ type: "version", version: "v2-build2", at: T0 + i });
   await flush();
   const third = createTab({ deployed: "v1-build1", visible: false, localStore: null, sessionStore: session, channel: bus.channel() });
   third.coordinator.start();
   await flush();
-  for (let i = 0; i < 20; i += 1) peer.post({ type: "version", version: "v2-build2", at: i });
+  for (let i = 0; i < 20; i += 1) peer.post({ type: "version", version: "v2-build2", at: T0 + i });
   await flush();
   assert.equal(next.reloads.length + third.reloads.length, 1, "budget of two per version holds across messages");
 });
 
-// ---------------------------------------------------------------- H. "Refresh now" notice continuity
-await test("H1 'Refresh now' turns the notice into 'updating' and never re-offers it while the refresh is pending", async () => {
+// ---------------------------------------------------------------- H. background preparation → ready → one reload
+class ThrowingStorage implements StorageLike {
+  getItem(): string | null {
+    throw new Error("SecurityError");
+  }
+  setItem(): void {
+    throw new Error("QuotaExceededError");
+  }
+  removeItem(): void {
+    throw new Error("SecurityError");
+  }
+}
+
+await test("H1 detection starts preparation at once; a fast preparation goes straight to 'ready' (no preparing flash)", async () => {
+  const tab = createTab({ deployed: "v2-build2" });
+  tab.coordinator.start();
+  await flush();
+  assert.equal(tab.prepareCalls, 1, "preparation starts on detection, before any click");
+  assert.equal(tab.coordinator.getState().stage, "ready");
+  assert.deepEqual(tab.notices, [{ kind: "ready", version: "v2-build2" }]);
+  assert.ok(tab.logs.some((l) => l.event === "update_ready" && l.fields?.via === "service-worker"));
+  assert.equal(tab.fire(1_500), 0, "the delayed 'preparing' notice was cancelled");
+  assert.equal(deployUpdateNoticeCopy(tab.notices[0]!)!.action, "refresh");
+});
+
+await test("H2 slow preparation: detected → installing notices, no button, nothing reloads before verified ready", async () => {
+  const pending = deferred<PrepareResult>();
+  let progress!: (p: PrepareProgress) => void;
+  const tab = createTab({
+    deployed: "v2-build2",
+    visible: false,
+    prepare: (_target, onProgress) => {
+      progress = onProgress;
+      return pending.promise;
+    },
+  });
+  tab.coordinator.start();
+  await flush();
+  assert.equal(tab.coordinator.getState().stage, "preparing");
+  assert.equal(tab.notices.length, 0, "no notice during the first moments");
+  assert.equal(tab.fire(1_500), 1);
+  assert.deepEqual(tab.notices, [{ kind: "preparing", version: "v2-build2", step: "detected" }]);
+  progress("installing");
+  assert.deepEqual(tab.notices.at(-1), { kind: "preparing", version: "v2-build2", step: "installing" });
+  assert.equal(deployUpdateNoticeCopy(tab.notices.at(-1)!)!.action, null, "no button before ready");
+  assert.equal(deployUpdateNoticeCopy(tab.notices.at(-1)!)!.loading, true, "spinner, no fake percentage");
+  tab.coordinator.onRouteChange();
+  tab.idle();
+  await tab.tick();
+  tab.coordinator.reevaluate();
+  tab.coordinator.onServiceWorkerUpdated();
+  await flush();
+  assert.equal(tab.reloads.length, 0, "hidden tab, navigation, idle, SW event: no reload onto an unprepared build");
+  assert.ok(!tab.logs.some((l) => l.event === "update_ready"), "no premature ready");
+  pending.resolve({ ok: true, via: "service-worker" });
+  await flush();
+  assert.equal(tab.reloads.length, 1, "hidden tab applies it once verified");
+});
+
+await test("H3 'Refresh to update': exactly one synchronous reload in the click; duplicates and later triggers ignored", async () => {
+  const session = new MemoryStorage();
+  const tab = createTab({ deployed: "v2-build2", sessionStore: session });
+  tab.state.routeReason = "route:payment-return";
+  tab.coordinator.start();
+  await flush();
+  const fetchesBefore = tab.fetchCalls;
+  const preparesBefore = tab.prepareCalls;
+  tab.coordinator.reloadNow();
+  // No await, no tick, no route change: the reload already happened inside reloadNow().
+  assert.equal(tab.reloads.length, 1);
+  assert.equal(tab.fetchCalls, fetchesBefore, "no version re-check in the click");
+  assert.equal(tab.prepareCalls, preparesBefore, "no preparation in the click");
+  assert.deepEqual(tab.notices.at(-1), { kind: "reloading", version: "v2-build2" });
+  const marker = JSON.parse(session.getItem(RELOAD_MARKER_KEY)!);
+  assert.deepEqual([marker.from, marker.to, marker.manual], ["v1-build1", "v2-build2", true]);
+  for (let i = 0; i < 5; i += 1) tab.coordinator.reloadNow();
+  tab.coordinator.reevaluate();
+  tab.coordinator.onRouteChange();
+  tab.dispatch("window", "online");
+  await tab.tick();
+  assert.equal(tab.reloads.length, 1, "duplicate clicks and later triggers cannot reload again");
+  assert.match(read("src/app/lib/deployUpdate/runtime.ts"), /reload: \(\) => window\.location\.reload\(\)/, "route and query preserved");
+});
+
+await test("H4 bounded preparation: timeout → 'Try again'; app untouched; late result ignored; retry recovers", async () => {
+  const attempts: Array<{ promise: Promise<PrepareResult>; resolve: (r: PrepareResult) => void }> = [];
+  const tab = createTab({
+    deployed: "v2-build2",
+    visible: false,
+    prepare: () => {
+      const d = deferred<PrepareResult>();
+      attempts.push(d);
+      return d.promise;
+    },
+  });
+  tab.coordinator.start();
+  await flush();
+  assert.equal(tab.fire(90_000), 1, "timeout armed");
+  assert.equal(tab.coordinator.getState().stage, "failed");
+  assert.deepEqual(tab.notices.at(-1), { kind: "failed", version: "v2-build2" });
+  assert.equal(deployUpdateNoticeCopy(tab.notices.at(-1)!)!.action, "retry");
+  assert.equal(tab.reloads.length, 0, "never forced onto a possibly old build");
+  attempts[0]!.resolve({ ok: true, via: "service-worker" });
+  await flush();
+  assert.equal(tab.coordinator.getState().stage, "failed", "a late result of a timed-out attempt is ignored");
+  tab.coordinator.retryPreparation();
+  assert.equal(attempts.length, 2);
+  assert.deepEqual(tab.notices.at(-1), { kind: "preparing", version: "v2-build2", step: "detected" });
+  attempts[1]!.resolve({ ok: true, via: "service-worker" });
+  await flush();
+  assert.equal(tab.reloads.length, 1);
+  assert.equal(tab.logs.filter((l) => l.event === "update_prepare_failed").length, 1, "one failure, reported once");
+});
+
+await test("H5 failed install: 'Try again' stays put while SW activations retry silently; success → ready", async () => {
+  const results: PrepareResult[] = [
+    { ok: false, reason: "install-failed" },
+    { ok: false, reason: "stale-shell" },
+    { ok: true, via: "service-worker" },
+  ];
+  const tab = createTab({ deployed: "v2-build2", prepare: async () => results.shift()! });
+  tab.coordinator.start();
+  await flush();
+  assert.deepEqual(tab.notices, [{ kind: "failed", version: "v2-build2" }]);
+  tab.coordinator.onServiceWorkerUpdated();
+  await flush();
+  assert.deepEqual(tab.notices, [{ kind: "failed", version: "v2-build2" }], "a failing silent retry changes nothing visible");
+  tab.coordinator.onServiceWorkerUpdated();
+  await flush();
+  assert.deepEqual(tab.notices.at(-1), { kind: "ready", version: "v2-build2" });
+  assert.equal(tab.reloads.length, 0, "visible active user: ready, not reloaded");
+  assert.equal(tab.logs.filter((l) => l.event === "update_prepare_failed").length, 1, "no repeated error reports");
+});
+
+await test("H6 blockers: 'ready' stays calm during short saves; a click explains, waits, and reloads the moment they clear", async () => {
+  for (const reason of [
+    "payment:stripe-redirect",
+    "blocker:payment:guest-tip-checkout",
+    "auth:refresh",
+    "auth:post-login",
+    "auth:logout",
+    "request:mutation",
+    "request:mutation-settling",
+  ]) {
+    const tab = createTab({ deployed: "v2-build2" });
+    tab.state.blockReason = reason;
+    tab.coordinator.start();
+    await flush();
+    assert.deepEqual(tab.notices, [{ kind: "ready", version: "v2-build2" }], `${reason}: no busy message unless the user asked`);
+    tab.state.blockReason = null;
+    tab.coordinator.reevaluate();
+    tab.state.blockReason = reason;
+    tab.coordinator.reevaluate();
+    assert.equal(tab.notices.length, 1, `${reason}: blockers coming and going do not flicker the notice`);
+    tab.coordinator.reloadNow();
+    tab.coordinator.reloadNow();
+    await flush();
+    assert.equal(tab.reloads.length, 0, `${reason}: never reloads through the blocker`);
+    assert.deepEqual(tab.notices.at(-1), { kind: "busy", version: "v2-build2" });
+    assert.equal(deployUpdateNoticeCopy(tab.notices.at(-1)!)!.action, null, `${reason}: no button while busy`);
+    tab.state.blockReason = null;
+    tab.coordinator.reevaluate();
+    assert.equal(tab.reloads.length, 1, `${reason}: the remembered request runs as soon as it is safe`);
+    tab.coordinator.reevaluate();
+    assert.equal(tab.reloads.length, 1);
+  }
+});
+
+await test("H7 offline: preparation pauses with one offline notice, resumes on reconnect; no reloads while offline", async () => {
+  const attempts: Array<{ promise: Promise<PrepareResult>; resolve: (r: PrepareResult) => void }> = [];
+  const tab = createTab({
+    deployed: "v2-build2",
+    prepare: () => {
+      const d = deferred<PrepareResult>();
+      attempts.push(d);
+      return d.promise;
+    },
+  });
+  tab.coordinator.start();
+  await flush();
+  tab.state.online = false;
+  tab.dispatch("window", "offline");
+  assert.deepEqual(tab.notices, [{ kind: "offline", version: "v2-build2" }]);
+  attempts[0]!.resolve({ ok: false, reason: "install-failed" });
+  await flush();
+  assert.equal(tab.notices.length, 1, "a failure caused by the lost connection is not a second error notice");
+  await tab.tick();
+  assert.equal(tab.fetchCalls, 1, "no checks while offline");
+  tab.state.online = true;
+  tab.dispatch("window", "online");
+  await flush();
+  assert.equal(attempts.length, 2, "preparation resumes on reconnect");
+  assert.deepEqual(tab.notices.at(-1), { kind: "preparing", version: "v2-build2", step: "detected" });
+  attempts[1]!.resolve({ ok: true, via: "service-worker" });
+  await flush();
+  assert.deepEqual(tab.notices.at(-1), { kind: "ready", version: "v2-build2" });
+  assert.equal(tab.reloads.length, 0);
+
+  // Ready without a service worker (the reload needs the network) while offline: explain, then run once online.
+  const net = createTab({ deployed: "v2-build2", prepare: async () => ({ ok: true, via: "network" }) });
+  net.coordinator.start();
+  await flush();
+  net.state.online = false;
+  net.coordinator.reloadNow();
+  net.coordinator.reloadNow();
+  assert.equal(net.reloads.length, 0);
+  assert.deepEqual(net.notices.at(-1), { kind: "offline", version: "v2-build2" });
+  net.state.online = true;
+  net.dispatch("window", "online");
+  assert.equal(net.reloads.length, 1, "requested refresh runs once the connection returns");
+
+  // Precached build: the reload works offline, so the click is honoured.
+  const sw = createTab({ deployed: "v2-build2" });
+  sw.coordinator.start();
+  await flush();
+  sw.state.online = false;
+  sw.coordinator.reloadNow();
+  assert.equal(sw.reloads.length, 1);
+});
+
+// ---------------------------------------------------------------- I. transition tracking (replaces the 10-minute window)
+/** Page that just booted v2 after reloading from v1. */
+function completedTab(extra: TabOptions = {}) {
+  const session = extra.sessionStore === undefined ? new MemoryStorage() : extra.sessionStore;
+  session?.setItem(RELOAD_MARKER_KEY, JSON.stringify({ from: "v1-build1", to: "v2-build2", at: T0 - 1_000, manual: true }));
+  return createTab({ running: "v2-build2", deployed: "v2-build2", ...extra, sessionStore: session });
+}
+
+await test("I1 completion is verified on the new build: transition recorded, no notice; a marker alone is not completion", async () => {
+  const session = new MemoryStorage();
+  const local = new MemoryStorage();
+  const tab = completedTab({ sessionStore: session, localStore: local });
+  tab.coordinator.start();
+  await flush();
+  assert.equal(tab.notices.length, 0, "notice gone, no success toast");
+  assert.equal(session.getItem(RELOAD_MARKER_KEY), null);
+  assert.ok(tab.logs.some((l) => l.event === "update_applied" && l.fields?.from === "v1-build1"));
+  assert.deepEqual(JSON.parse(local.getItem(TRANSITIONS_KEY)!), [{ from: "v1-build1", to: "v2-build2", verifiedAt: T0 }]);
+  assert.equal(tab.coordinator.getState().stage, "idle");
+
+  const oldBoot = new MemoryStorage();
+  const oldLocal = new MemoryStorage();
+  oldBoot.setItem(RELOAD_MARKER_KEY, JSON.stringify({ from: "v1-build1", to: "v2-build2", at: T0 - 1_000, manual: false }));
+  const stale = createTab({ deployed: "v2-build2", sessionStore: oldBoot, localStore: oldLocal });
+  stale.coordinator.start();
+  await flush();
+  assert.equal(oldLocal.getItem(TRANSITIONS_KEY), null, "old bundle booted: nothing recorded");
+  assert.ok(!stale.logs.some((l) => l.event === "update_applied"));
+  assert.equal(stale.notices.at(-1)!.kind, "ready", "update still offered");
+});
+
+await test("I2 no resurrection via stale /version.json, polling, visibility, route or bfcache — no time window involved", async () => {
+  const clock = { now: T0 };
+  const tab = completedTab({ clock });
+  tab.coordinator.start();
+  await flush();
+  // A flapping CDN edge answers with the replaced build now and then, for hours.
+  for (let i = 0; i < 10; i += 1) {
+    tab.state.deployed = i % 2 ? "v2-build2" : "v1-build1";
+    clock.now += 60 * 60_000;
+    await tab.coordinator.checkNow("interval", { bypassShared: true });
+  }
+  // A burst of stale answers shorter than the rollback confirmation window.
+  tab.state.deployed = "v1-build1";
+  for (let i = 0; i < 3; i += 1) {
+    clock.now += 30_000;
+    await tab.tick();
+  }
+  tab.dispatch("document", "visibilitychange");
+  await flush();
+  tab.coordinator.onRouteChange();
+  tab.dispatch("window", "pageshow", { persisted: true });
+  await flush();
+  assert.equal(tab.notices.length, 0, "no notice resurrected");
+  assert.equal(tab.reloads.length, 0);
+  assert.equal(tab.coordinator.getState().pendingVersion, null);
+  assert.ok(tab.logs.some((l) => l.event === "update_signal_ignored" && l.fields?.reason === "rollback-unconfirmed"));
+});
+
+await test("I3 no resurrection via old tabs, BroadcastChannel, the localStorage fallback or the shared cache", async () => {
+  const bus = createBus();
+  const local = new MemoryStorage();
+  const clock = { now: T0 };
+  const tab = completedTab({ localStore: local, channel: bus.channel(), clock });
+  tab.coordinator.start();
+  await flush();
+  clock.now += 10_000;
+  const peer = bus.channel();
+  peer.post({ type: "version", version: "v1-build1", at: T0 - 60_000 });
+  peer.post({ type: "reloading", version: "v1-build1", at: T0 - 1 });
+  // Even when stamped after completion, a relayed signal cannot establish a rollback; only network checks can.
+  peer.post({ type: "version", version: "v1-build1", at: clock.now });
+  local.setItem(SHARED_CHECK_KEY, JSON.stringify({ version: "v1-build1", at: clock.now }));
+  await tab.coordinator.checkNow("interval");
+  await flush();
+  assert.equal(tab.notices.length, 0);
+  assert.equal(tab.coordinator.getState().pendingVersion, null);
+
+  const handlers = new Set<(event: StorageEvent) => void>();
+  const storageEvents = {
+    addEventListener: (_t: "storage", h: (event: StorageEvent) => void) => handlers.add(h),
+    removeEventListener: (_t: "storage", h: (event: StorageEvent) => void) => handlers.delete(h),
+  };
+  const fallbackStore = new MemoryStorage();
+  fallbackStore.setItem(TRANSITIONS_KEY, local.getItem(TRANSITIONS_KEY)!);
+  const viaStorage = createTab({
+    running: "v2-build2",
+    deployed: "v2-build2",
+    localStore: fallbackStore,
+    channel: createDeployUpdateChannel({ BroadcastChannel: undefined, localStore: fallbackStore, storageEvents }),
+  });
+  viaStorage.coordinator.start();
+  await flush();
+  const oldTab = createDeployUpdateChannel({
+    BroadcastChannel: undefined,
+    localStore: fallbackStore,
+    storageEvents: { addEventListener: () => {}, removeEventListener: () => {} },
+  })!;
+  oldTab.post({ type: "version", version: "v1-build1", at: T0 - 5_000 });
+  const raw = fallbackStore.getItem(DEPLOY_UPDATE_FALLBACK_KEY)!;
+  handlers.forEach((h) => h({ key: DEPLOY_UPDATE_FALLBACK_KEY, newValue: raw } as StorageEvent));
+  await flush();
+  assert.equal(viaStorage.notices.length, 0, "fallback transport: same rules");
+});
+
+await test("I4 service-worker activation events never resurrect the notice or reload by themselves", async () => {
+  const tab = completedTab();
+  tab.coordinator.start();
+  await flush();
+  tab.state.deployed = "v1-build1";
+  for (let i = 0; i < 3; i += 1) {
+    tab.coordinator.onServiceWorkerUpdated();
+    await flush();
+  }
+  assert.equal(tab.notices.length, 0);
+
+  const old = createTab({ deployed: "v2-build2" });
+  old.coordinator.start();
+  await flush();
+  for (let i = 0; i < 3; i += 1) {
+    old.coordinator.onServiceWorkerUpdated();
+    await flush();
+  }
+  assert.equal(old.reloads.length, 0, "SW activation cannot bypass the coordinator's reload policy");
+  assert.equal(old.notices.length, 1);
+});
+
+await test("I5 a genuinely newer deployment notifies again; a newer one replaces a pending one without stacking", async () => {
+  const clock = { now: T0 };
+  const tab = completedTab({ clock });
+  tab.coordinator.start();
+  await flush();
+  tab.state.deployed = "v3-build3";
+  clock.now += 60_000;
+  await tab.coordinator.checkNow("visible", { bypassShared: true });
+  await flush();
+  assert.deepEqual(tab.notices.at(-1), { kind: "ready", version: "v3-build3" });
+  tab.state.deployed = "v4-build4";
+  clock.now += 60_000;
+  await tab.coordinator.checkNow("visible", { bypassShared: true });
+  await flush();
+  assert.equal(tab.coordinator.getState().pendingVersion, "v4-build4");
+  assert.deepEqual(tab.notices.at(-1), { kind: "ready", version: "v4-build4" });
+  assert.ok(!tab.notices.some((n) => n.kind === "cleared"), "replaced in place, never dismissed and re-shown");
+});
+
+await test("I6 a real rollback to the replaced build is detected once checks two minutes apart confirm it", async () => {
+  const clock = { now: T0 };
+  const tab = completedTab({ clock });
+  tab.coordinator.start();
+  await flush();
+  tab.state.deployed = "v1-build1";
+  clock.now += 10_000;
+  await tab.coordinator.checkNow("interval", { bypassShared: true });
+  clock.now += 60_000;
+  await tab.coordinator.checkNow("interval", { bypassShared: true });
+  assert.equal(tab.coordinator.getState().pendingVersion, null, "not yet confirmed");
+  clock.now += 60_000;
+  await tab.coordinator.checkNow("interval", { bypassShared: true });
+  await flush();
+  assert.equal(tab.coordinator.getState().pendingVersion, "v1-build1");
+  assert.deepEqual(tab.notices.at(-1), { kind: "ready", version: "v1-build1" });
+});
+
+await test("I7 old signals cannot overwrite a newer pending state", async () => {
+  const bus = createBus();
+  const local = new MemoryStorage();
+  const clock = { now: T0 };
+  const tab = createTab({ deployed: "v3-build3", localStore: local, channel: bus.channel(), clock });
+  tab.coordinator.start();
+  await flush();
+  const peer = bus.channel();
+  peer.post({ type: "version", version: "v2-build2", at: T0 - 30_000 });
+  peer.post({ type: "version", version: "v1-build1", at: T0 - 1 });
+  local.setItem(SHARED_CHECK_KEY, JSON.stringify({ version: "v2-build2", at: T0 - 1_000 }));
+  await tab.coordinator.checkNow("interval");
+  await flush();
+  assert.equal(tab.coordinator.getState().pendingVersion, "v3-build3");
+  assert.deepEqual(tab.notices, [{ kind: "ready", version: "v3-build3" }]);
+  assert.ok(tab.logs.some((l) => l.event === "update_signal_ignored" && l.fields?.reason === "older-than-pending"));
+  clock.now += 1_000;
+  tab.state.deployed = "v4-build4";
+  await tab.coordinator.checkNow("visible", { bypassShared: true });
+  assert.equal(tab.coordinator.getState().pendingVersion, "v4-build4", "a newer observation still wins");
+});
+
+await test("I8 multi-tab: each tab completes its own transition; finished tabs ignore stale peers; blockers stay per tab", async () => {
+  const bus = createBus();
+  const local = new MemoryStorage();
+  const sessionA = new MemoryStorage();
+  const a = createTab({ deployed: "v2-build2", visible: false, localStore: local, sessionStore: sessionA, channel: bus.channel() });
+  const b = createTab({ deployed: "v2-build2", localStore: local, channel: bus.channel() });
+  b.state.blockReason = "blocker:upload:kyc-document";
+  a.coordinator.start();
+  b.coordinator.start();
+  await flush();
+  assert.equal(a.reloads.length, 1, "B's upload does not hold back A");
+  assert.equal(b.reloads.length, 0);
+  const a2 = createTab({ running: "v2-build2", deployed: "v2-build2", localStore: local, sessionStore: sessionA, channel: bus.channel() });
+  a2.coordinator.start();
+  await flush();
+  assert.equal(a2.notices.length, 0);
+  assert.equal(b.coordinator.getState().pendingVersion, "v2-build2", "B is still on v1: its notice stays");
+  bus.channel().post({ type: "version", version: "v1-build1", at: T0 - 1 });
+  await flush();
+  assert.equal(a2.notices.length, 0, "a stale peer cannot reach the finished tab");
+  b.state.blockReason = null;
+  b.coordinator.reloadNow();
+  assert.equal(b.reloads.length, 1);
+});
+
+await test("I9 a failed reload does not count as completed and offers the refresh again", async () => {
   const session = new MemoryStorage();
   const tab = createTab({ deployed: "v2-build2", sessionStore: session });
   tab.coordinator.start();
   await flush();
-  assert.deepEqual(tab.notices, [{ kind: "deferred", version: "v2-build2" }]);
-  tab.state.blockReason = "request:mutation";
   tab.coordinator.reloadNow();
-  await flush();
-  assert.deepEqual(tab.notices.at(-1), { kind: "reloading", version: "v2-build2" });
-  tab.coordinator.onRouteChange();
-  await tab.tick();
-  tab.coordinator.reevaluate();
-  await flush();
-  assert.equal(tab.reloads.length, 0);
-  assert.ok(
-    tab.notices.slice(1).every((n) => n.kind === "reloading"),
-    "no actionable notice reappears while the manual refresh waits",
-  );
-  tab.state.blockReason = null;
-  tab.coordinator.reevaluate();
-  await flush();
   assert.equal(tab.reloads.length, 1);
-  assert.equal(JSON.parse(session.getItem(MANUAL_RELOAD_KEY)!).version, "v2-build2");
-});
+  const watchdog = tab.timeouts.find((t) => t.ms === 15_000);
+  assert.ok(watchdog, "watchdog armed");
+  watchdog!.fn(); // page still alive: the navigation failed or was cancelled
+  assert.ok(tab.logs.some((l) => l.event === "reload_failed"));
+  assert.equal(session.getItem(RELOAD_MARKER_KEY), null, "not recorded as applied");
+  assert.equal(tab.coordinator.getState().pendingVersion, "v2-build2", "update still pending");
+  assert.deepEqual(tab.notices.at(-1), { kind: "ready", version: "v2-build2" });
+  tab.coordinator.reloadNow();
+  assert.equal(tab.reloads.length, 2, "user can retry");
 
-await test("H2 a page that still boots the old bundle after 'Refresh now' keeps 'updating' and reloads once on SW activation", async () => {
-  const session = new MemoryStorage();
-  const clock = { now: 1_700_000_000_000 };
-  session.setItem(MANUAL_RELOAD_KEY, JSON.stringify({ version: "v2-build2", at: clock.now - 2_000 }));
-  const stale = createTab({ deployed: "v2-build2", sessionStore: session, clock });
+  // Reload "succeeded" but the old bundle came back (no SW, no marker): not applied, notice stays.
+  const stale = createTab({ deployed: "v2-build2", sessionStore: new MemoryStorage() });
   stale.coordinator.start();
   await flush();
-  assert.deepEqual(stale.notices, [{ kind: "reloading", version: "v2-build2" }], "no 'new version' notice again");
-  assert.equal(stale.reloads.length, 0);
-  stale.coordinator.onServiceWorkerUpdated();
-  await flush();
-  assert.equal(stale.reloads.length, 1, "resumes the user's refresh once the new worker is active");
-  stale.coordinator.onServiceWorkerUpdated();
-  await flush();
-  assert.equal(stale.reloads.length, 1, "bounded: one resumed reload");
+  assert.ok(!stale.logs.some((l) => l.event === "update_applied"));
+  assert.equal(stale.notices.at(-1)!.kind, "ready");
 });
 
-await test("H3 the 'updating' state expires: an actionable notice returns if the new version never arrives", async () => {
-  const session = new MemoryStorage();
-  const clock = { now: 1_700_000_000_000 };
-  session.setItem(MANUAL_RELOAD_KEY, JSON.stringify({ version: "v2-build2", at: clock.now - 1_000 }));
-  const tab = createTab({ deployed: "v2-build2", sessionStore: session, clock });
+await test("I10 storage unavailable or corrupted: no loops, no crash, manual refresh still works once", async () => {
+  let reloads = 0;
+  for (let page = 0; page < 6; page += 1) {
+    const tab = createTab({
+      deployed: "v2-build2",
+      visible: false,
+      sessionStore: new ThrowingStorage(),
+      localStore: new ThrowingStorage(),
+    });
+    tab.coordinator.start();
+    await flush();
+    tab.coordinator.onRouteChange();
+    tab.coordinator.onServiceWorkerUpdated();
+    await tab.tick();
+    reloads += tab.reloads.length;
+    assert.equal(tab.notices.at(-1)!.kind, "ready");
+  }
+  assert.equal(reloads, 0, "no automatic reloads without sessionStorage");
+  const tab = createTab({ deployed: "v2-build2", sessionStore: new ThrowingStorage(), localStore: new ThrowingStorage() });
   tab.coordinator.start();
   await flush();
-  assert.equal(tab.notices.at(-1)!.kind, "reloading");
-  assert.equal(tab.timeouts.length, 1);
-  clock.now += 30_000;
-  tab.timeouts[0]!();
-  assert.deepEqual(tab.notices.at(-1), { kind: "deferred", version: "v2-build2" });
-  assert.equal(session.getItem(MANUAL_RELOAD_KEY), null);
+  tab.coordinator.reloadNow();
+  tab.coordinator.reloadNow();
+  assert.equal(tab.reloads.length, 1, "manual refresh still works, once");
 
-  const old = new MemoryStorage();
-  old.setItem(MANUAL_RELOAD_KEY, JSON.stringify({ version: "v2-build2", at: clock.now - 31_000 }));
-  const expired = createTab({ deployed: "v2-build2", sessionStore: old, clock });
+  const local = new MemoryStorage();
+  const session = new MemoryStorage();
+  local.setItem(TRANSITIONS_KEY, "{not json");
+  local.setItem(SHARED_CHECK_KEY, "[]");
+  session.setItem(RELOAD_MARKER_KEY, '{"from":1}');
+  session.setItem(RELOAD_BUDGET_KEY, "garbage");
+  const corrupt = createTab({ deployed: "v2-build2", visible: false, localStore: local, sessionStore: session });
+  corrupt.coordinator.start();
+  await flush();
+  assert.equal(corrupt.reloads.length, 1, "corrupted entries are ignored; the update proceeds normally");
+  local.setItem(TRANSITIONS_KEY, JSON.stringify([{ from: "<bad>", to: "v1-build1", verifiedAt: "x" }, null, 5]));
+  const corrupt2 = createTab({ deployed: "v2-build2", localStore: local });
+  corrupt2.coordinator.start();
+  await flush();
+  assert.equal(corrupt2.coordinator.getState().pendingVersion, "v2-build2");
+});
+
+await test("I11 old bundle booted after the click (cache race): the refresh completes once the target is ready, exactly once", async () => {
+  const session = new MemoryStorage();
+  session.setItem(RELOAD_MARKER_KEY, JSON.stringify({ from: "v1-build1", to: "v2-build2", at: T0 - 2_000, manual: true }));
+  const pending = deferred<PrepareResult>();
+  const stale = createTab({ deployed: "v2-build2", sessionStore: session, prepare: () => pending.promise });
+  stale.coordinator.start();
+  await flush();
+  assert.deepEqual(stale.notices, [{ kind: "preparing", version: "v2-build2", step: "detected" }], "no second 'update available' prompt");
+  assert.equal(stale.reloads.length, 0, "does not reload into the same old shell");
+  pending.resolve({ ok: true, via: "service-worker" });
+  await flush();
+  assert.equal(stale.reloads.length, 1, "the user's earlier click is honoured once the target is ready");
+  assert.equal(JSON.parse(session.getItem(RELOAD_MARKER_KEY)!).manual, false, "resumed reload cannot resume again");
+
+  const again = createTab({ deployed: "v2-build2", sessionStore: session });
+  again.coordinator.start();
+  await flush();
+  assert.equal(again.reloads.length, 0, "bounded: one resumed reload");
+  assert.deepEqual(again.notices, [{ kind: "ready", version: "v2-build2" }]);
+
+  const expiredSession = new MemoryStorage();
+  expiredSession.setItem(RELOAD_MARKER_KEY, JSON.stringify({ from: "v1-build1", to: "v2-build2", at: T0 - 3 * 60_000, manual: true }));
+  const expired = createTab({ deployed: "v2-build2", sessionStore: expiredSession });
   expired.coordinator.start();
   await flush();
-  assert.deepEqual(expired.notices, [{ kind: "deferred", version: "v2-build2" }]);
+  assert.equal(expired.reloads.length, 0, "an old click does not reload a page the user is now using");
+  assert.deepEqual(expired.notices, [{ kind: "ready", version: "v2-build2" }]);
 });
 
-await test("H4 a refresh that landed on the new version shows nothing and clears the marker", async () => {
-  const session = new MemoryStorage();
-  session.setItem(MANUAL_RELOAD_KEY, JSON.stringify({ version: "v2-build2", at: 1_700_000_000_000 - 1_000 }));
-  const tab = createTab({ running: "v2-build2", deployed: "v2-build2", sessionStore: session });
+await test("I12 page restored from bfcache mid-reload returns to 'ready' without stacking notices", async () => {
+  const tab = createTab({ deployed: "v2-build2" });
   tab.coordinator.start();
   await flush();
-  assert.equal(tab.notices.length, 0);
-  assert.equal(session.getItem(MANUAL_RELOAD_KEY), null);
+  tab.coordinator.reloadNow();
+  assert.equal(tab.reloads.length, 1);
+  tab.dispatch("window", "pageshow", { persisted: true });
+  await flush();
+  assert.equal(tab.coordinator.getState().stage, "ready");
+  assert.deepEqual(tab.notices.at(-1), { kind: "ready", version: "v2-build2" });
+  assert.equal(tab.fire(15_000), 0, "stale watchdog disarmed");
+  tab.coordinator.reloadNow();
+  assert.equal(tab.reloads.length, 2);
+});
 
-  const runtime = read("src/app/lib/deployUpdate/runtime.ts");
-  assert.match(runtime, /event\.preventDefault\(\);\s*coordinator\?\.reloadNow\(\);/, "toast stays mounted on click");
-  assert.match(runtime, /toast\.loading\(i18n\.t\("shell\.deployUpdate\.reloading"\)/);
+await test("I13 EN/DE copy matches the specification for every state", () => {
   const en = JSON.parse(read("src/i18n/locales/en.json")).shell.deployUpdate;
   const de = JSON.parse(read("src/i18n/locales/de.json")).shell.deployUpdate;
-  assert.ok(en.reloading && de.reloading);
+  assert.deepEqual(Object.keys(de).sort(), Object.keys(en).sort());
+  assert.equal(en.detected, "CareTip has a new update. We're preparing it in the background.");
+  assert.equal(en.preparing, "Preparing the latest version. You can continue working.");
+  assert.equal(en.ready, "The latest version is ready. Refresh when convenient.");
+  assert.equal(en.refreshNow, "Refresh to update");
+  assert.equal(en.busy, "Your current action is still in progress. CareTip will update when it's safe.");
+  assert.equal(en.offline, "You're offline. The update will resume when your connection returns.");
+  assert.equal(en.failed, "We couldn't prepare the update. You can try again.");
+  assert.equal(de.detected, "Für CareTip ist ein Update verfügbar. Wir bereiten es im Hintergrund vor.");
+  assert.equal(de.preparing, "Die neueste Version wird vorbereitet. Sie können weiterarbeiten.");
+  assert.equal(de.ready, "Die neueste Version ist bereit. Aktualisieren Sie die Seite, wenn es Ihnen passt.");
+  assert.equal(de.refreshNow, "Jetzt aktualisieren");
+  assert.equal(de.busy, "Ihre aktuelle Aktion läuft noch. CareTip wird aktualisiert, sobald es sicher ist.");
+  assert.equal(de.offline, "Sie sind offline. Das Update wird fortgesetzt, sobald die Verbindung wiederhergestellt ist.");
+  assert.equal(de.failed, "Das Update konnte nicht vorbereitet werden. Sie können es erneut versuchen.");
+
+  const cases: Array<[DeployUpdateNotice, string, string | null, boolean]> = [
+    [{ kind: "preparing", version: "v", step: "detected" }, "detected", null, true],
+    [{ kind: "preparing", version: "v", step: "installing" }, "preparing", null, true],
+    [{ kind: "ready", version: "v" }, "ready", "refresh", false],
+    [{ kind: "busy", version: "v" }, "busy", null, false],
+    [{ kind: "offline", version: "v" }, "offline", null, false],
+    [{ kind: "failed", version: "v" }, "failed", "retry", false],
+    [{ kind: "reloading", version: "v" }, "refreshing", null, true],
+  ];
+  for (const [notice, key, action, loading] of cases) {
+    const copy = deployUpdateNoticeCopy(notice)!;
+    assert.equal(copy.message, `shell.deployUpdate.${key}`, notice.kind);
+    assert.equal(copy.action, action, notice.kind);
+    assert.equal(copy.loading, loading, notice.kind);
+  }
+  assert.equal(deployUpdateNoticeCopy({ kind: "cleared" }), null, "complete: the notice disappears, no success toast");
+  assert.equal(deployUpdateActionLabel("refresh"), "shell.deployUpdate.refreshNow");
+  assert.equal(deployUpdateActionLabel("retry"), "shell.deployUpdate.retry");
+});
+
+await test("I14 runtime and build wiring: real SW readiness check, build stamp, toast stays mounted on click", () => {
+  const runtime = read("src/app/lib/deployUpdate/runtime.ts");
+  assert.match(runtime, /prepareUpdate: prepareServiceWorkerUpdate/);
+  assert.match(runtime, /\(await installOutcome\(incoming\)\) === "redundant"\) return \{ ok: false, reason: "install-failed" \}/);
+  assert.match(runtime, /container\.controller === registration\.active/, "ready only once the new worker controls the page");
+  assert.match(runtime, /caches\.match\("\/index\.html", \{ ignoreSearch: true \}\)/, "reads the precached shell");
+  assert.match(runtime, /<meta name="caretip-build-version" content=/);
+  assert.match(runtime, /if \(shell === target\) return \{ ok: true, via: "service-worker" \}/);
+  assert.match(
+    runtime,
+    /event\.preventDefault\(\);\s*if \(action === "retry"\) coordinator\?\.retryPreparation\(\);\s*else coordinator\?\.reloadNow\(\);/,
+    "toast stays mounted on click",
+  );
+  assert.match(runtime, /toast\.loading\(i18n\.t\(copy\.message\), \{ id: PROGRESS_TOAST_ID/);
+  const plugin = deployVersionPlugin({ version: "abc123-1", buildTime: "2026-11-03T00:00:00.000Z" });
+  assert.deepEqual(plugin.transformIndexHtml(), [
+    { tag: "meta", attrs: { name: DEPLOY_VERSION_META, content: "abc123-1" }, injectTo: "head" },
+  ]);
+  assert.equal(DEPLOY_VERSION_META, "caretip-build-version");
+  assert.match(read("scripts/deploy-build-artifacts-check.mjs"), /caretip-build-version/);
 });
 
 console.log(`deploy-update-reliability-runtime: ${passed} passed`);

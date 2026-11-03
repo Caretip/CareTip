@@ -2940,11 +2940,15 @@
   },
   "shell": {
     "deployUpdate": {
-      "title": "CareTip has been updated.",
-      "description": "We'll refresh automatically when it's safe.",
-      "manualDescription": "Refresh to load the latest version. Save any unsaved changes first.",
-      "reloading": "Updating CareTip…",
-      "refreshNow": "Refresh now"
+      "detected": "CareTip has a new update. We're preparing it in the background.",
+      "preparing": "Preparing the latest version. You can continue working.",
+      "ready": "The latest version is ready. Refresh when convenient.",
+      "busy": "Your current action is still in progress. CareTip will update when it's safe.",
+      "offline": "You're offline. The update will resume when your connection returns.",
+      "failed": "We couldn't prepare the update. You can try again.",
+      "refreshing": "Updating CareTip…",
+      "refreshNow": "Refresh to update",
+      "retry": "Try again"
     },
     "header": {
       "searchPlaceholder": "Search FAQs…",

@@ -2940,11 +2940,15 @@
   },
   "shell": {
     "deployUpdate": {
-      "title": "CareTip wurde aktualisiert.",
-      "description": "Wir laden die Seite automatisch neu, sobald es sicher ist.",
-      "manualDescription": "Bitte die Seite neu laden, um die neueste Version zu nutzen. Ungespeicherte Änderungen vorher sichern.",
-      "reloading": "CareTip wird aktualisiert…",
-      "refreshNow": "Jetzt aktualisieren"
+      "detected": "Für CareTip ist ein Update verfügbar. Wir bereiten es im Hintergrund vor.",
+      "preparing": "Die neueste Version wird vorbereitet. Sie können weiterarbeiten.",
+      "ready": "Die neueste Version ist bereit. Aktualisieren Sie die Seite, wenn es Ihnen passt.",
+      "busy": "Ihre aktuelle Aktion läuft noch. CareTip wird aktualisiert, sobald es sicher ist.",
+      "offline": "Sie sind offline. Das Update wird fortgesetzt, sobald die Verbindung wiederhergestellt ist.",
+      "failed": "Das Update konnte nicht vorbereitet werden. Sie können es erneut versuchen.",
+      "refreshing": "CareTip wird aktualisiert…",
+      "refreshNow": "Jetzt aktualisieren",
+      "retry": "Erneut versuchen"
     },
     "header": {
       "searchPlaceholder": "FAQ durchsuchen…",

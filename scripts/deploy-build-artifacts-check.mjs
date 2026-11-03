@@ -29,6 +29,11 @@ const jsFiles = readdirSync(assetsDir).filter((f) => f.endsWith(".js"));
 const embedded = jsFiles.filter((f) => read(path.join(assetsDir, f)).includes(JSON.stringify(info.version)));
 assert.ok(embedded.length > 0, "running version is embedded in the bundle");
 
+const shell = read(path.join(dist, "index.html"));
+const stamped = shell.match(/<meta name="caretip-build-version" content="([^"]*)"/);
+assert.ok(stamped, "index.html carries the build id meta (service-worker readiness check)");
+assert.equal(stamped[1], info.version, "index.html build id matches version.json");
+
 for (const file of ["_headers", "_redirects", "404.html"]) {
   assert.ok(existsSync(path.join(dist, file)), `dist/${file} missing`);
 }
