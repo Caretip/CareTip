@@ -45,8 +45,14 @@ import { applyDocumentSeo } from './lib/seo/documentSeo';
 import { resolveForcedNoindexSeo } from './lib/seo/resolveRouteSeo';
 import { useTranslation } from 'react-i18next';
 
+/** Optional prompt at the app root: if its code cannot load, the page must still work. */
 const PwaInstallPrompt = lazy(() =>
-  import('./components/PwaInstallPrompt').then((m) => ({ default: m.PwaInstallPrompt })),
+  import('./components/PwaInstallPrompt')
+    .then((m) => ({ default: m.PwaInstallPrompt }))
+    .catch((err: unknown) => {
+      logClientError('routes.PwaInstallPrompt', err);
+      return { default: () => null };
+    }),
 );
 import { MarketingShellLayout } from './layouts/MarketingShellLayout';
 import { marketingChildRoutes } from './routing/marketingChildRoutes';

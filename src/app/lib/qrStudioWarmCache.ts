@@ -4,9 +4,15 @@ import { fetchVenueCatalog } from "./businessVenueCatalog";
 
 let warmed = false;
 
+/** A refresh has no navigation intent, so warming would only spend the user's API budget. */
+function isDocumentReload(): boolean {
+  const [navigation] = performance.getEntriesByType("navigation") as PerformanceNavigationTiming[];
+  return navigation?.type === "reload";
+}
+
 /** Idle prefetch for QR Studio routes — venue catalog + branding settings. */
 export function preloadQrStudioDashboardData(): void {
-  if (warmed || typeof window === "undefined") return;
+  if (warmed || typeof window === "undefined" || isDocumentReload()) return;
   warmed = true;
   scheduleIdleWork(() => {
     void fetchVenueCatalog().catch(() => {});

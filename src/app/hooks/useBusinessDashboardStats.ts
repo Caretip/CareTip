@@ -45,6 +45,7 @@ import {
 import { trackSocketPatchApplied } from "../lib/realtime/realtimeMetrics";
 import type { LiveNewTipPayload } from "../lib/realtime/realtimeContracts";
 import { consumePostLoginDashboardWarm } from "../lib/authPostLoginTransition";
+import { reportDashboardLoadFailure } from "../lib/dashboardLoadDiagnostics";
 
 export type { AnalyticsTimeframe };
 
@@ -639,6 +640,10 @@ export function useBusinessDashboardStats(
         const msg = toUserFriendlyMessage(err);
         if (handlePendingVerification(msg)) return;
         if (affectsUi && uiRequestSeqRef.current === seq) {
+          reportDashboardLoadFailure("stats", err, {
+            timeframe: tf,
+            phase: summarySettled ? "analytics" : "summary",
+          });
           if (!summarySettled) {
             setSummaryLoading(false);
             devSetHydrationPhase("metrics", "error");
@@ -647,7 +652,8 @@ export function useBusinessDashboardStats(
             setAnalyticsLoading(false);
             devSetHydrationPhase("charts", "error");
             devSetHydrationPhase("goals", "error");
-            if (!hasMetricValues(statsRef.current)) setStatsLoadFailed(msg);
+            // KPIs may be fine while this slice failed; without charts on screen, say so.
+            if (!chartsVisibleOnScreen()) setStatsLoadFailed(msg);
           }
         }
       } finally {
@@ -1238,6 +1244,8 @@ export function useBusinessDashboardStats(
     analyticsLoading: isAnalyticsSectionLoading,
     analyticsTimeframeLoading: isPeriodRefreshing ? analyticsTimeframe : null,
     statsLoadFailed,
+    /** Charts and goals could not load: show that, not their empty or loading states. */
+    analyticsUnavailable: Boolean(statsLoadFailed) && !hasBusinessSecondaryContent(displayStats),
     pendingVerification,
     isInitialLoad: showMetricsSkeleton,
     isMetricsInitialLoad: showMetricsSkeleton,

@@ -17,6 +17,8 @@ type EmployeeHeroFinancialPanelProps = {
   loading: boolean;
   refreshing?: boolean;
   metrics: EmployeeHeroFinancialSnapshot | null;
+  /** Shown only when values could not be loaded. */
+  onRetry?: () => void;
   className?: string;
 };
 
@@ -24,6 +26,7 @@ export const EmployeeHeroFinancialPanel = memo(function EmployeeHeroFinancialPan
   loading,
   refreshing,
   metrics,
+  onRetry,
   className,
 }: EmployeeHeroFinancialPanelProps) {
   const { t } = useTranslation();
@@ -47,6 +50,7 @@ export const EmployeeHeroFinancialPanel = memo(function EmployeeHeroFinancialPan
   };
 
   return (
+    <>
     <DashboardHeroFinancialLayout
       className={className}
       ariaLabel={t("employee.hero.accountOverviewLabel")}
@@ -81,5 +85,15 @@ export const EmployeeHeroFinancialPanel = memo(function EmployeeHeroFinancialPan
         },
       ]}
     />
+    {onRetry ? (
+      <button
+        type="button"
+        onClick={onRetry}
+        className="mt-2 text-sm font-medium text-primary underline underline-offset-2"
+      >
+        {t("dashboard.tryAgain")}
+      </button>
+    ) : null}
+    </>
   );
 });

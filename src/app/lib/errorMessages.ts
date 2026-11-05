@@ -21,7 +21,7 @@ import {
   MFA_CHALLENGE_EXPIRED,
   MFA_CHALLENGE_INVALID,
 } from "./apiError";
-import { translateFriendlyMessageToDe } from "./friendlyMessageDe";
+import { isFriendlyMessageDe, translateFriendlyMessageToDe } from "./friendlyMessageDe";
 
 function localizeFriendlyMessageCopy(english: string): string {
   try {
@@ -374,6 +374,18 @@ const STATUS_MESSAGES: Record<number, string> = {
 
 const STATUS_MESSAGE_VALUES = new Set(Object.values(STATUS_MESSAGES));
 
+/**
+ * Statuses whose meaning does not depend on the response text. An API error with one of these
+ * must never collapse to {@link GENERIC_UNKNOWN_ERROR}: e.g. the global limiter's 429 body is not
+ * in {@link ERROR_MAP}, and "Something went wrong" hid that from users and testers.
+ */
+function statusMessageForUnmappedApiError(status: number): string | undefined {
+  if (status === 401 || status === 408 || status === 429 || status >= 500) {
+    return STATUS_MESSAGES[status] ?? (status >= 500 ? STATUS_MESSAGES[500] : undefined);
+  }
+  return undefined;
+}
+
 /** Used by the API client when building an error string before a single pass through {@link toUserFriendlyMessage}. */
 export function fallbackMessageForHttpStatus(status: number): string | undefined {
   return STATUS_MESSAGES[status];
@@ -430,6 +442,9 @@ export function toUserFriendlyMessage(error: unknown, options?: ToUserFriendlyMe
 
     const normalized = message.trim();
     if (!normalized) return GENERIC_UNKNOWN_ERROR;
+
+    // apiRequest re-throws already-localized copy; mapping it again would turn it into the generic.
+    if (isFriendlyMessageDe(normalized)) return normalized;
 
     // Never leak ORM/database internals to the UI.
     // Examples: "Could not save (P2010). Try again or run migrations in the backend."
@@ -516,7 +531,12 @@ export function toUserFriendlyMessage(error: unknown, options?: ToUserFriendlyMe
       return ERROR_MAP["Failed to fetch"]!;
     }
 
-    if (/network request failed|fetch failed|the network connection was lost|timeout/i.test(normalized)) {
+    // Includes the wording WebKit can surface for failed loads, which differs from Chromium/Firefox.
+    if (
+      /network request failed|fetch failed|the network connection was lost|timeout|the request timed out|appears to be offline|could not connect to the server|hostname could not be found|^cancelled$/i.test(
+        normalized,
+      )
+    ) {
       return ERROR_MAP["Failed to fetch"]!;
     }
 
@@ -530,6 +550,11 @@ export function toUserFriendlyMessage(error: unknown, options?: ToUserFriendlyMe
 
     return GENERIC_UNKNOWN_ERROR;
   })();
+
+  if (resolved === GENERIC_UNKNOWN_ERROR && isApiRequestError(error)) {
+    const byStatus = statusMessageForUnmappedApiError(error.status);
+    if (byStatus) return localizeFriendlyMessageCopy(byStatus);
+  }
 
   return localizeFriendlyMessageCopy(resolved);
 }

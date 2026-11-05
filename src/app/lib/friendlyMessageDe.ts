@@ -265,6 +265,13 @@ export const FRIENDLY_MESSAGE_DE: Record<string, string> = {
     "Sie haben ein Limit Ihres aktuellen Tarifs erreicht.",
 };
 
+const FRIENDLY_MESSAGE_DE_VALUES = new Set(Object.values(FRIENDLY_MESSAGE_DE));
+
+/** True when `text` is already German product copy, so it must not be mapped a second time. */
+export function isFriendlyMessageDe(text: string): boolean {
+  return FRIENDLY_MESSAGE_DE_VALUES.has(text);
+}
+
 export function translateFriendlyMessageToDe(english: string): string {
   return FRIENDLY_MESSAGE_DE[english] ?? english;
 }

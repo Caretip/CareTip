@@ -27,8 +27,17 @@ export function BusinessStripeConnectPrompt({ density, className }: BusinessStri
   const issueActive = connectNeedsSetup(data, loading, error);
   const conditionVersion = `${data?.status ?? "not_ready"}:${payoutMode ?? "unknown"}`;
 
+  /**
+   * Evaluating is a write: reporting "not active" before status has loaded resolves the prompt, and
+   * the real report then counts as a new occurrence, which clears the user's dismissal. Only
+   * evaluate on known inputs. Payout mode is part of the fingerprint, so it must be known too.
+   */
+  const evaluationReady =
+    !loading && !error && data != null && (!issueActive || payoutMode != null);
+
   useEffect(() => {
-    if (!apiReady || !hasClientAccessToken()) return undefined;
+    // Only the setup prompt's copy and fingerprint use the mode.
+    if (!issueActive || !apiReady || !hasClientAccessToken()) return undefined;
     let cancelled = false;
     void getEmployeeTipPayoutMode()
       .then((res) => {
@@ -43,7 +52,7 @@ export function BusinessStripeConnectPrompt({ density, className }: BusinessStri
     return () => {
       cancelled = true;
     };
-  }, [apiReady]);
+  }, [apiReady, issueActive]);
 
   const descriptionKey =
     payoutMode === "direct_to_employee"
@@ -55,6 +64,7 @@ export function BusinessStripeConnectPrompt({ density, className }: BusinessStri
   return (
     <FixPrompt
       id="stripeConnect"
+      enabled={evaluationReady}
       issueActive={issueActive}
       conditionVersion={conditionVersion}
       tone="info"

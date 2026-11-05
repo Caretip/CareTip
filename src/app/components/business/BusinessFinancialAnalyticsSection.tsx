@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, type ReactNode } from "react";
 import { Link } from "react-router";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
@@ -40,14 +40,25 @@ export function BusinessFinancialAnalyticsSection({
 }: BusinessFinancialAnalyticsSectionProps) {
   const { t } = useTranslation();
   const financialPeriod = useMemo(() => mapAnalyticsPeriod(period), [period]);
-  const { data, ledgerLoading, connectLoading } = useBusinessFinancialSummary(
-    enabled,
-    financialPeriod,
-    {
-      progressive: true,
-      includeReconciliation: SHOW_BUSINESS_RECONCILIATION_UI,
-    },
-  );
+  const {
+    data,
+    ledgerLoading: ledgerPending,
+    connectLoading: connectPending,
+    ledgerFailed,
+    connectFailed,
+    retry,
+  } = useBusinessFinancialSummary(enabled, financialPeriod, {
+    progressive: true,
+    includeReconciliation: SHOW_BUSINESS_RECONCILIATION_UI,
+  });
+  // A failed slice keeps the "—" placeholder: its fields in `data` are zero-filled, not real.
+  const ledgerLoading = ledgerPending || ledgerFailed;
+  const connectLoading = connectPending || connectFailed;
+  const unavailable = t("business.hero.financial.metricUnavailable");
+  const connectMetric = (value: ReactNode) => {
+    if (connectFailed) return unavailable;
+    return connectPending ? <DashboardHeroMetricSkeleton variant="currency" /> : value;
+  };
 
   const openStripe = async () => {
     try {
@@ -69,18 +80,23 @@ export function BusinessFinancialAnalyticsSection({
   const feesDisplay =
     !ledgerLoading && pm?.feesExact && pm.caretipFeesEur != null ? formatEur(pm.caretipFeesEur) : null;
 
-  const ledgerValue = (eur: number | null | undefined) =>
-    ledgerLoading ? "—" : formatEur(eur ?? 0);
+  const ledgerValue = (eur: number | null | undefined) => {
+    if (ledgerFailed) return unavailable;
+    return ledgerLoading ? "—" : formatEur(eur ?? 0);
+  };
 
   const connectCurrency = (cents: number | null | undefined) => {
+    if (connectFailed) return unavailable;
     if (connectLoading) return "—";
     if (!data?.stripe.readable) return t("business.tips.analytics.financial.stripeUnavailable");
     return stripeCents(cents, data.stripe.currency);
   };
 
-  const paidOutValue = connectLoading
-    ? "—"
-    : formatEur((data?.payouts.completedAmountCents ?? 0) / 100);
+  const paidOutValue = connectFailed
+    ? unavailable
+    : connectLoading
+      ? "—"
+      : formatEur((data?.payouts.completedAmountCents ?? 0) / 100);
 
   return (
     <div className="space-y-6">
@@ -97,8 +113,9 @@ export function BusinessFinancialAnalyticsSection({
             },
             {
               label: t("business.tips.analytics.financial.caretipFees"),
-              value:
-                ledgerLoading
+              value: ledgerFailed
+                ? unavailable
+                : ledgerLoading
                   ? "—"
                   : feesDisplay ?? t("business.tips.analytics.financial.feesUnavailable"),
               hint: t("business.tips.analytics.financial.caretipFeesHint"),
@@ -179,35 +196,37 @@ export function BusinessFinancialAnalyticsSection({
           <div className={cn(businessUi.cardStatic, "p-4")}>
             <p className="text-xs text-muted-foreground">{t("business.tips.analytics.financial.stripeAvailable")}</p>
             <p className="mt-1 font-semibold tabular-nums">
-              {connectLoading ? (
-                <DashboardHeroMetricSkeleton variant="currency" />
-              ) : data?.stripe.readable ? (
-                stripeCents(data.stripe.availableCents, data.stripe.currency)
-              ) : (
-                "—"
+              {connectMetric(
+                data?.stripe.readable
+                  ? stripeCents(data.stripe.availableCents, data.stripe.currency)
+                  : "—",
               )}
             </p>
           </div>
           <div className={cn(businessUi.cardStatic, "p-4")}>
             <p className="text-xs text-muted-foreground">{t("business.tips.analytics.financial.stripePending")}</p>
             <p className="mt-1 font-semibold tabular-nums">
-              {connectLoading ? (
-                <DashboardHeroMetricSkeleton variant="currency" />
-              ) : data?.stripe.readable ? (
-                stripeCents(data.stripe.pendingCents, data.stripe.currency)
-              ) : (
-                "—"
+              {connectMetric(
+                data?.stripe.readable
+                  ? stripeCents(data.stripe.pendingCents, data.stripe.currency)
+                  : "—",
               )}
             </p>
           </div>
           <div className={cn(businessUi.cardStatic, "p-4")}>
             <p className="text-xs text-muted-foreground">{t("business.tips.analytics.financial.bankPaidOut")}</p>
             <p className="mt-1 font-semibold tabular-nums">
-              {connectLoading ? <DashboardHeroMetricSkeleton variant="currency" /> : paidOutValue}
+              {connectMetric(paidOutValue)}
             </p>
           </div>
         </div>
       </section>
+
+      {ledgerFailed || connectFailed ? (
+        <Button type="button" variant="outline" size="sm" onClick={() => void retry()}>
+          {t("dashboard.tryAgain")}
+        </Button>
+      ) : null}
     </div>
   );
 }

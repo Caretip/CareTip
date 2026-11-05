@@ -136,6 +136,7 @@ export const BusinessDashboard = memo(function BusinessDashboard() {
     setAnalyticsTimeframe,
     analyticsTimeframeLoading,
     statsLoadFailed,
+    analyticsUnavailable,
     pendingVerification,
     displayStats,
     displayMetrics,
@@ -156,10 +157,13 @@ export const BusinessDashboard = memo(function BusinessDashboard() {
     retryStats,
     applyLiveTip,
   } = useBusinessDashboardStats(
+    // Wait for entitlements: starting earlier fetches scope=summary and then repeats the work as
+    // scope=aboveFold once the plan is known. `ready` also settles when entitlements fail.
     user?.role === "business" &&
       protectedApiReady &&
       authReady &&
-      user.hasCompletedOnboarding === true,
+      user.hasCompletedOnboarding === true &&
+      entitlementsReady,
     sessionValidated,
     advancedAnalyticsEnabled,
   );
@@ -172,7 +176,17 @@ export const BusinessDashboard = memo(function BusinessDashboard() {
     ledgerLoading: financialSummaryLedgerLoading,
     connectLoading: financialSummaryConnectLoading,
     refreshing: financialSummaryRefreshing,
+    ledgerFailed: financialSummaryLedgerFailed,
+    connectFailed: financialSummaryConnectFailed,
+    retry: retryFinancialSummary,
   } = useBusinessFinancialSummary(financialSummaryEnabled, "all", { progressive: true });
+
+  const handleRetryDashboard = () => {
+    retryStats();
+    if (financialSummaryLedgerFailed || financialSummaryConnectFailed) {
+      void retryFinancialSummary();
+    }
+  };
 
   const [employeeGoalsExpanded, setEmployeeGoalsExpanded] = useState(true);
 
@@ -217,9 +231,9 @@ export const BusinessDashboard = memo(function BusinessDashboard() {
   );
 
   const chartAwaitingDistribution =
-    (Number(chartPeriodStats?.totalTips ?? displayMetrics?.totalTips ?? 0) > 0 &&
-      tipDistributionTotal === 0) ||
-    false;
+    !analyticsUnavailable &&
+    Number(chartPeriodStats?.totalTips ?? displayMetrics?.totalTips ?? 0) > 0 &&
+    tipDistributionTotal === 0;
 
   const hasChartTipActivity = hasTipPerformanceChartActivity(
     dailyTipRows,
@@ -341,18 +355,6 @@ export const BusinessDashboard = memo(function BusinessDashboard() {
         applyLiveTip={applyLiveTip}
       />
       <QuickStartGuideBanner className="mb-4" />
-      {statsLoadFailed && !isMetricsInitialLoad && !showStatsSkeleton && (
-        <div className="mb-4 rounded-lg border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm text-destructive">
-          <p className="font-medium">{statsLoadFailed}</p>
-          <button
-            type="button"
-            onClick={retryStats}
-            className="mt-2 text-primary hover:underline text-sm font-medium"
-          >
-            {t("dashboard.tryAgain")}
-          </button>
-        </div>
-      )}
       {user?.impersonation && (
         <div
           className="business-dashboard-overview__impersonation sticky top-0 z-20 flex flex-wrap items-center justify-between gap-2 border-b border-border px-4 py-2.5 text-sm text-foreground"
@@ -370,6 +372,18 @@ export const BusinessDashboard = memo(function BusinessDashboard() {
       )}
 
       <div className={businessUi.pageInner}>
+        {statsLoadFailed && !isMetricsInitialLoad && !showStatsSkeleton && (
+          <div className="mb-4 rounded-lg border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm text-destructive">
+            <p className="font-medium">{statsLoadFailed}</p>
+            <button
+              type="button"
+              onClick={handleRetryDashboard}
+              className="mt-2 text-sm font-medium text-primary underline underline-offset-2"
+            >
+              {t("dashboard.tryAgain")}
+            </button>
+          </div>
+        )}
         <PremiumPageHero personality="overview" className="business-dashboard-hero mb-4 sm:mb-5 lg:mb-4">
           <DashboardHero
             stackHeroOnMobile
@@ -424,6 +438,9 @@ export const BusinessDashboard = memo(function BusinessDashboard() {
                 <BusinessHeroFinancialMetrics
                   ledgerLoading={financialSummaryLedgerLoading}
                   connectLoading={financialSummaryConnectLoading}
+                  ledgerFailed={financialSummaryLedgerFailed}
+                  connectFailed={financialSummaryConnectFailed}
+                  onRetry={statsLoadFailed ? undefined : () => void retryFinancialSummary()}
                   summary={financialSummary}
                   isRefreshing={financialSummaryRefreshing}
                   className="dashboard-hero-financial-panel"
@@ -448,6 +465,8 @@ export const BusinessDashboard = memo(function BusinessDashboard() {
           {!isPreviewMode ? (
             <FixPrompt
               id="missingQR"
+              // Evaluating is a write: "not active" resolves the prompt, so wait for the roster.
+              enabled={displayStats?.employees != null}
               issueActive={brokenQrLinks}
               conditionVersion={brokenQrLinks ? "employees_missing_qr" : "ok"}
               title={t("business.fixQr.title")}
@@ -545,6 +564,7 @@ export const BusinessDashboard = memo(function BusinessDashboard() {
                 >
                   <BusinessDashboardAnalyticsCharts
                     showChartsLoading={showChartsLoading}
+                    unavailable={analyticsUnavailable}
                     hasTipActivityInPeriod={hasChartTipActivity}
                     tipDistributionChartData={tipDistributionChartData}
                     tipDistributionTotal={tipDistributionTotal}
@@ -613,7 +633,13 @@ export const BusinessDashboard = memo(function BusinessDashboard() {
                       />
                     }
                   >
-                    {showGoalsLoading ? null : employeeGoalsList.length === 0 ? (
+                    {showGoalsLoading ? null : analyticsUnavailable ? (
+                      <BusinessDashboardAnalyticsEmpty
+                        variant="panel"
+                        icon={<CareIcon name="goals" size="lg" className="text-muted-foreground" />}
+                        title={t("business.hero.financial.metricUnavailable")}
+                      />
+                    ) : employeeGoalsList.length === 0 ? (
                       <BusinessDashboardAnalyticsEmpty
                         variant="panel"
                         icon={<CareIcon name="goals" size="lg" className="text-muted-foreground" />}

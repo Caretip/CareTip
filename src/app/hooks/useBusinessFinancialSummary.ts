@@ -6,6 +6,7 @@ import {
 } from "../lib/api";
 import { toUserFriendlyMessage } from "../lib/errorMessages";
 import { markAnalyticsPerformance } from "../lib/businessAnalytics/analyticsPerformanceMarks";
+import { reportDashboardLoadFailure } from "../lib/dashboardLoadDiagnostics";
 
 export type UseBusinessFinancialSummaryOpts = {
   /** Fetch ledger and connect slices in parallel for progressive hero rendering. */
@@ -76,6 +77,12 @@ export function useBusinessFinancialSummary(
   const [loading, setLoading] = useState(enabled);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  /**
+   * Each section response zero-fills the other section's fields, so `data` alone cannot say which
+   * values are real. A failed slice must render as unavailable, never as its placeholder zeros.
+   */
+  const [ledgerFailed, setLedgerFailed] = useState(false);
+  const [connectFailed, setConnectFailed] = useState(false);
   const loadGenRef = useRef(0);
   const periodRef = useRef(period);
 
@@ -95,6 +102,8 @@ export function useBusinessFinancialSummary(
           setConnectLoading(true);
           if (includeReconciliation) setReconciliationLoading(true);
         }
+        setLedgerFailed(false);
+        setConnectFailed(false);
       }
       setError(null);
 
@@ -106,10 +115,14 @@ export function useBusinessFinancialSummary(
               if (!stillCurrent() || ledgerPart.period !== requestedPeriod) return;
               setData((prev) => mergeLedgerSlice(prev, ledgerPart, requestedPeriod));
               setLedgerLoading(false);
+              setLedgerFailed(false);
               markAnalyticsPerformance("analytics.financial.ledger.ready");
             })
             .catch((err) => {
               if (!stillCurrent()) return;
+              setLedgerFailed(true);
+              setLedgerLoading(false);
+              reportDashboardLoadFailure("financialSummary", err, { section: "ledger" });
               throw err;
             });
 
@@ -118,10 +131,14 @@ export function useBusinessFinancialSummary(
               if (!stillCurrent()) return;
               setData((prev) => mergeConnectSlice(prev, connectPart, requestedPeriod));
               setConnectLoading(false);
+              setConnectFailed(false);
               markAnalyticsPerformance("analytics.financial.connect.ready");
             })
             .catch((err) => {
               if (!stillCurrent()) return;
+              setConnectFailed(true);
+              setConnectLoading(false);
+              reportDashboardLoadFailure("financialSummary", err, { section: "connect" });
               throw err;
             });
 
@@ -144,11 +161,14 @@ export function useBusinessFinancialSummary(
                   })
               : Promise.resolve();
 
-          await Promise.all([ledgerPromise, connectPromise]);
           void reconciliationPromise.catch(() => {
             if (!stillCurrent()) return;
             setReconciliationLoading(false);
           });
+          // allSettled: a failed slice must not end the other slice's loading state early.
+          const settled = await Promise.allSettled([ledgerPromise, connectPromise]);
+          const rejected = settled.find((r) => r.status === "rejected");
+          if (rejected) throw rejected.reason;
         } else {
           const bundle = await getBusinessFinancialSummary(requestedPeriod, {
             includeReconciliation,
@@ -157,10 +177,17 @@ export function useBusinessFinancialSummary(
           setData(bundle);
           setLedgerLoading(false);
           setConnectLoading(false);
+          setLedgerFailed(false);
+          setConnectFailed(false);
         }
       } catch (err) {
         if (!stillCurrent()) return;
         setError(toUserFriendlyMessage(err));
+        if (!progressive) {
+          setLedgerFailed(true);
+          setConnectFailed(true);
+          reportDashboardLoadFailure("financialSummary", err, { section: "bundle" });
+        }
         setLedgerLoading(false);
         setConnectLoading(false);
         setReconciliationLoading(false);
@@ -188,6 +215,8 @@ export function useBusinessFinancialSummary(
       setReconciliationLoading(false);
       setLoading(false);
       setRefreshing(false);
+      setLedgerFailed(false);
+      setConnectFailed(false);
       return;
     }
     void load();
@@ -199,8 +228,12 @@ export function useBusinessFinancialSummary(
     data,
     valuesMatchPeriod,
     loading: progressive ? ledgerLoading || connectLoading : loading,
-    ledgerLoading: progressive ? ledgerLoading || !valuesMatchPeriod : loading || !valuesMatchPeriod,
-    connectLoading: progressive ? connectLoading || !valuesMatchPeriod : loading || !valuesMatchPeriod,
+    ledgerLoading:
+      (progressive ? ledgerLoading : loading) || (!valuesMatchPeriod && !ledgerFailed),
+    connectLoading:
+      (progressive ? connectLoading : loading) || (!valuesMatchPeriod && !connectFailed),
+    ledgerFailed,
+    connectFailed,
     reconciliationLoading:
       progressive && includeReconciliation
         ? reconciliationLoading || !valuesMatchPeriod
@@ -208,5 +241,7 @@ export function useBusinessFinancialSummary(
     refreshing,
     error,
     reload: () => load({ quiet: true }),
+    /** User-initiated retry after a failure: shows loading again rather than the failed state. */
+    retry: () => load(),
   };
 }
