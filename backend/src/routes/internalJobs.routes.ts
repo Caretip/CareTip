@@ -1,15 +1,29 @@
 import { Router } from "express";
+import { safeSecretEqual } from "../lib/safeCompare.js";
+import { writeAuditLog } from "../services/audit.service.js";
 import { runTrialReminderEmails } from "../services/trialReminderEmail.service.js";
 import { purgeStaleMobileWebHandoffTokens } from "../services/mobileWebHandoff.service.js";
 
 const router = Router();
 
+/** Every job run leaves a record of what ran, when, and whether it worked. */
+router.use((req, res, next) => {
+  const startedAt = Date.now();
+  res.once("finish", () => {
+    void writeAuditLog({
+      userId: null,
+      action: "internal_job.run",
+      metadata: JSON.stringify({ path: req.path, status: res.statusCode, durationMs: Date.now() - startedAt }),
+    });
+    if (res.statusCode >= 500) console.error("[internal-job] failed", { path: req.path, status: res.statusCode });
+  });
+  next();
+});
+
 function authorizeCronRequest(req: import("express").Request): boolean {
-  const secret =
-    process.env.CRON_SECRET?.trim() ||
-    process.env.HEALTH_CHECK_SECRET?.trim();
+  const secret = process.env.CRON_SECRET?.trim();
   if (!secret) return false;
-  return req.get("x-cron-secret") === secret;
+  return safeSecretEqual(req.get("x-cron-secret"), secret);
 }
 
 /** POST /api/internal/jobs/trial-reminders — idempotent trial ending reminders (7 / 3 / 1 days). */

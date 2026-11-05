@@ -8,12 +8,12 @@ function envInt(name: string, fallback: number): number {
 const API_TRAFFIC_BURST_WINDOW_MS = 10_000;
 
 /**
- * Per-class API limits. Inactive unless SEC_API_TRAFFIC_CLASSES_ENABLED=true; until then the single
- * `authenticatedApi` limit below applies, exactly as before. Every figure is a starting value to
- * compare against production traffic before enabling; each can be overridden by its env var.
+ * Per-class API limits, on by default. SEC_API_TRAFFIC_CLASSES_ENABLED=false is the kill switch and
+ * returns to the single `authenticatedApi` limit below. Every figure is a starting value to compare
+ * against production traffic; each can be overridden by its env var.
  */
 export const apiTrafficRateLimits = {
-  enabled: () => process.env.SEC_API_TRAFFIC_CLASSES_ENABLED === "true",
+  enabled: () => process.env.SEC_API_TRAFFIC_CLASSES_ENABLED !== "false",
   auth: {
     ip: { max: envInt("SEC_API_AUTH_IP_MAX_PER_15M", 600), windowMs: AUTH_WINDOW_15M_MS },
   },

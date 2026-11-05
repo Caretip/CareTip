@@ -7,11 +7,9 @@ import { parseCookie, refreshCookieName } from "../services/refreshToken.service
 import type { RateLimitLayer } from "../utils/layeredRateLimit.js";
 import { enforceRateLimitLayersDistributed } from "../utils/rateLimitStore.js";
 import { userIdFromPendingMfaLoginToken } from "../services/mfaLogin.service.js";
+import { forwardedChainDepth, ipPrefixForLog, resolveClientIp } from "../lib/clientIp.js";
 
-function clientIp(req: Request): string {
-  const ip = req.ip?.trim();
-  return ip && ip.length > 0 ? ip : "unknown";
-}
+const clientIp = resolveClientIp;
 
 function userIdFromReq(req: Request): string {
   if (req.user?.sub) return req.user.sub;
@@ -47,7 +45,8 @@ function runLayers(
     .then((outcome) => {
       if (!outcome.ok) {
         console.info(`[security.rateLimit] blocked scope=${logScope} layer=${outcome.layer}`, {
-          ip: clientIp(req),
+          ipPrefix: ipPrefixForLog(clientIp(req)),
+          xffDepth: forwardedChainDepth(req),
         });
         respondRateLimited(res, message, outcome.resetAtMs);
         return;
@@ -179,11 +178,21 @@ const API_FINANCIAL_MSG = "Too many payment or payout requests. Please try again
 /** Money must not move on per-process counts, so these refuse when shared storage is unreachable. */
 const FAIL_CLOSED_CLASSES = new Set<ApiTrafficClass>(["instantPayout", "financialWrite"]);
 
+/**
+ * A signed-in user's reads count against that user alone. Whole venues and every user behind one
+ * proxy can share an address, and one of them must not block the others.
+ */
+const USER_ONLY_WHEN_AUTHENTICATED = new Set<ApiTrafficClass>(["dashboardRead", "analyticsRead", "ordinary"]);
+
 function apiTrafficLayers(trafficClass: ApiTrafficClass, req: Request): RateLimitLayer[] {
   const ip = clientIp(req);
   const prefix = `sec:api:${trafficClass}`;
   const limits = apiTrafficRateLimits[trafficClass];
-  const layers: RateLimitLayer[] = [{ name: "ip", key: `${prefix}:ip:${ip}`, ...limits.ip }];
+  const uidForClass = trafficClass === "sessionRefresh" ? "" : userIdFromReq(req);
+  const skipIpLayer = Boolean(uidForClass) && USER_ONLY_WHEN_AUTHENTICATED.has(trafficClass);
+  const layers: RateLimitLayer[] = skipIpLayer
+    ? []
+    : [{ name: "ip", key: `${prefix}:ip:${ip}`, ...limits.ip }];
 
   if (trafficClass === "sessionRefresh") {
     const cookie = parseCookie(req.headers.cookie, refreshCookieName());
@@ -198,7 +207,7 @@ function apiTrafficLayers(trafficClass: ApiTrafficClass, req: Request): RateLimi
     return layers;
   }
 
-  const uid = userIdFromReq(req);
+  const uid = uidForClass;
   if (uid && "user" in limits) {
     layers.push({ name: "user", key: `${prefix}:user:${uid}`, ...limits.user });
   }

@@ -18,6 +18,30 @@ export function refreshTokenTtlDays(): number {
   return 7;
 }
 
+/** Hard limit on one login, however often it refreshes. `REFRESH_ABSOLUTE_LIFETIME_DAYS` (1-365). */
+export function refreshAbsoluteLifetimeMs(): number {
+  const raw = process.env.REFRESH_ABSOLUTE_LIFETIME_DAYS?.trim();
+  const n = raw ? Number(raw) : NaN;
+  const days = Number.isFinite(n) && n > 0 && n <= 365 ? Math.floor(n) : 90;
+  return days * 24 * 60 * 60 * 1000;
+}
+
+/**
+ * The login's start time travels inside the token. It cannot be forged, because a token is only
+ * accepted if its full hash is on file, and it needs no extra column.
+ */
+function buildSessionToken(startedAtMs: number): string {
+  return `${startedAtMs.toString(36)}.${crypto.randomBytes(48).toString("base64url")}`;
+}
+
+/** Tokens from before this format have no start time: their limit counts from their next rotation. */
+function sessionStartFromToken(token: string, fallbackMs: number): number {
+  const match = /^([0-9a-z]{6,12})\.[A-Za-z0-9_-]{40,}$/.exec(token);
+  if (!match) return fallbackMs;
+  const started = Number.parseInt(match[1], 36);
+  return Number.isFinite(started) && started > 0 && started <= fallbackMs ? started : fallbackMs;
+}
+
 function nowPlusDays(days: number): Date {
   return new Date(Date.now() + days * 24 * 60 * 60 * 1000);
 }
@@ -50,6 +74,7 @@ export function setRefreshCookie(
   res: {
     cookie: (name: string, value: string, opts: Record<string, unknown>) => void;
     setHeader?: (name: string, value: string) => void;
+    req?: { headers?: { origin?: string } };
   },
   value: string,
   opts?: { maxAgeMs?: number }
@@ -66,8 +91,12 @@ export function setRefreshCookie(
     path: "/",
     maxAge,
   });
-  // Expo / React Native cannot reliably read Set-Cookie; mirror the same refresh token.
-  res.setHeader?.(CARETIP_REFRESH_HEADER, value);
+  // Expo / React Native cannot reliably read Set-Cookie; mirror the same refresh token. Browsers
+  // always send Origin on these POSTs and must not get it: on same-origin /api, script could read
+  // the header, which would undo HttpOnly.
+  if (!res.req?.headers?.origin) {
+    res.setHeader?.(CARETIP_REFRESH_HEADER, value);
+  }
 }
 
 export function clearRefreshCookie(
@@ -108,7 +137,7 @@ export async function issueRefreshTokenWithClient(
   db: RefreshTokenDb,
   userId: string,
 ): Promise<{ id: string; token: string; expiresAt: Date }> {
-  const token = crypto.randomBytes(48).toString("base64url");
+  const token = buildSessionToken(Date.now());
   const tokenHash = sha256Hex(token);
   const expiresAt = nowPlusDays(refreshTokenTtlDays());
   const row = await db.refreshToken.create({
@@ -137,6 +166,9 @@ export async function revokeAllRefreshTokensForUser(userId: string): Promise<voi
     data: { revokedAt: new Date() },
   });
   await bumpAuthTokenVersion(userId);
+  // Live sockets were authorised at connect time, so they must end with the sessions.
+  const { disconnectUserSockets } = await import("../socket/socketServer.js");
+  disconnectUserSockets(userId);
 }
 
 /**
@@ -289,9 +321,15 @@ async function replaceActiveSession(
   db: RefreshRotationDb,
   current: RotationRow,
   now: number,
+  sessionStartedAtMs: number,
 ): Promise<{ kind: "replaced"; newId: string; newToken: string; newExpiresAt: Date } | { kind: "conflict" }> {
-  const newPlain = crypto.randomBytes(48).toString("base64url");
-  const newExpiresAt = new Date(now + refreshTokenTtlDays() * 24 * 60 * 60 * 1000);
+  const newPlain = buildSessionToken(sessionStartedAtMs);
+  const newExpiresAt = new Date(
+    Math.min(
+      now + refreshTokenTtlDays() * 24 * 60 * 60 * 1000,
+      sessionStartedAtMs + refreshAbsoluteLifetimeMs(),
+    ),
+  );
 
   let created: { id: string };
   try {
@@ -378,11 +416,16 @@ export async function rotateRefreshTokenWithOutcome(
   }
   if (!existing) return { kind: "rejected", reason: "not_found" };
 
+  const sessionStartedAtMs = sessionStartFromToken(raw, now);
+  if (now - sessionStartedAtMs >= refreshAbsoluteLifetimeMs()) {
+    return { kind: "rejected", reason: "expired", userId: existing.userId };
+  }
+
   if (existing.revokedAt == null) {
     if (existing.expiresAt.getTime() <= now) {
       return { kind: "rejected", reason: "expired", userId: existing.userId };
     }
-    const result = await replaceActiveSession(db, existing, now);
+    const result = await replaceActiveSession(db, existing, now, sessionStartedAtMs);
     if (result.kind === "conflict") return { kind: "conflict", userId: existing.userId };
     return {
       kind: "rotated",
@@ -419,7 +462,7 @@ export async function rotateRefreshTokenWithOutcome(
     if (head.expiresAt.getTime() <= now) {
       return { kind: "rejected", reason: "expired", userId: existing.userId, msSinceRotation };
     }
-    const result = await replaceActiveSession(db, head, now);
+    const result = await replaceActiveSession(db, head, now, sessionStartedAtMs);
     if (result.kind === "conflict") return { kind: "conflict", userId: existing.userId };
     return {
       kind: "rotated",

@@ -1,4 +1,5 @@
 import type { Request, Response, NextFunction, RequestHandler } from "express";
+import { resolveClientIp } from "../lib/clientIp.js";
 import crypto from "crypto";
 import { authRateLimits } from "../config/authRateLimit.config.js";
 import type { RateLimitLayer } from "../utils/layeredRateLimit.js";
@@ -7,10 +8,7 @@ import { normalizeLoginEmail } from "../services/auth.service.js";
 import * as employeeActivationService from "../services/employeeActivation.service.js";
 import { auditMobileWebHandoff } from "../services/mobileWebHandoff.service.js";
 
-function clientIp(req: Request): string {
-  const ip = req.ip?.trim();
-  return ip && ip.length > 0 ? ip : "unknown";
-}
+const clientIp = resolveClientIp;
 
 function bodyEmail(req: Request): string {
   const body = req.body as Record<string, unknown> | undefined;

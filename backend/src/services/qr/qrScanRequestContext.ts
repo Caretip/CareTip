@@ -1,4 +1,5 @@
 import { createHash, randomUUID } from "node:crypto";
+import { resolveClientIp } from "../../lib/clientIp.js";
 import type { Request } from "express";
 
 const SCAN_SESSION_HEADER = "x-caretip-scan-session";
@@ -23,11 +24,7 @@ export function resolveScanSessionId(req: Request): string {
   if (typeof header === "string" && header.trim()) {
     return header.trim().slice(0, 64);
   }
-  const forwarded = req.headers["x-forwarded-for"];
-  const ip =
-    typeof forwarded === "string"
-      ? forwarded.split(",")[0]?.trim() ?? "unknown"
-      : req.ip ?? "unknown";
+  const ip = resolveClientIp(req);
   const ua = req.headers["user-agent"] ?? "";
   return createHash("sha256").update(`${ip}|${ua}`).digest("hex").slice(0, 32);
 }

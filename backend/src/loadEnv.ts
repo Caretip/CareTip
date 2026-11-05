@@ -15,6 +15,8 @@ const backendEnv = join(__dirname, "../.env");
 const rootEnv = join(__dirname, "../../.env");
 
 export function applyEnvFiles(): void {
+  // scripts/safe-test.mjs: `override` below would otherwise replace the isolated values with real ones.
+  if (process.env.CARETIP_TEST_ISOLATION === "1") return;
   if (existsSync(rootEnv)) {
     config({ path: rootEnv, quiet: true });
   }

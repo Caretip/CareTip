@@ -11,6 +11,10 @@ import {
   CARETIP_FEE_PERCENT,
 } from "../config/fees.js";
 import { impersonationAuthUserDto, issueImpersonationAccessToken } from "./auth.service.js";
+import { writeAuditLogStrict } from "./audit.service.js";
+import { verifyAndConsumeTotp } from "./mfaLogin.service.js";
+import { terminateUserSessions } from "./accountAccess.service.js";
+import { notifySecurityChange } from "./accountEmailChange.service.js";
 import {
   getCachedOrLoad,
   invalidateCacheKey,
@@ -630,6 +634,46 @@ export async function listAnnouncementsForAdmin(params: { take: number; skip: nu
   };
 }
 
+/**
+ * Recovery for someone who lost their authenticator. It needs a different platform admin proving
+ * their own factor. The target is signed out everywhere and must enrol again at next login.
+ */
+export async function resetUserMfaAsPlatformAdmin(input: {
+  adminUserId: string;
+  adminCode: string;
+  targetUserId: string;
+  reason: string;
+}): Promise<void> {
+  if (input.adminUserId === input.targetUserId) throw new Error("Forbidden");
+  const admin = await prisma.user.findUnique({
+    where: { id: input.adminUserId },
+    select: { role: true, isPlatformAdmin: true, twoFactorEnabled: true, twoFactorSecret: true },
+  });
+  if (!admin || admin.role !== "SUPER_ADMIN" || !admin.isPlatformAdmin || !admin.twoFactorEnabled || !admin.twoFactorSecret) {
+    throw new Error("Forbidden");
+  }
+  const check = await verifyAndConsumeTotp(input.adminUserId, admin.twoFactorSecret, input.adminCode);
+  if (check !== "ok") throw new Error("Forbidden");
+
+  const target = await prisma.user.findUnique({
+    where: { id: input.targetUserId },
+    select: { id: true, email: true, preferredLocale: true },
+  });
+  if (!target) throw new Error("User not found");
+
+  await writeAuditLogStrict({
+    userId: input.adminUserId,
+    action: "mfa.reset_by_admin",
+    metadata: JSON.stringify({ targetUserId: target.id, reason: input.reason.slice(0, 500) }),
+  });
+  await prisma.user.update({
+    where: { id: target.id },
+    data: { twoFactorEnabled: false, twoFactorSecret: null, twoFactorTempSecret: null },
+  });
+  await terminateUserSessions(target.id);
+  await notifySecurityChange("mfa_reset_by_admin", target.email, target.preferredLocale);
+}
+
 export async function impersonateBusinessManager(
   platformAdminUserId: string,
   businessId: string
@@ -646,6 +690,13 @@ export async function impersonateBusinessManager(
   if (!business) {
     throw new Error("Business not found");
   }
+
+  // Fails closed: support access that cannot be recorded must not happen.
+  await writeAuditLogStrict({
+    userId: platformAdminUserId,
+    action: "platform.impersonation.started",
+    metadata: JSON.stringify({ businessId: business.id, targetUserId: business.userId }),
+  });
 
   const token = await issueImpersonationAccessToken(
     business.userId,

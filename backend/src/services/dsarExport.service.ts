@@ -339,6 +339,39 @@ export async function buildDsarExportPackage(userId: string): Promise<Record<str
     })),
   };
 
+  // The subject's own request and its outcome. Reviewer identities, evidence references and review
+  // notes are staff records and stay out until legal review says otherwise.
+  const recoveryRequests = await prisma.accountRecoveryRequest.findMany({
+    where: { userId },
+    orderBy: { createdAt: "desc" },
+    select: {
+      status: true,
+      loginEmailAtRequest: true,
+      replacementEmail: true,
+      statement: true,
+      requesterIpPrefix: true,
+      createdAt: true,
+      replacementVerifiedAt: true,
+      expiresAt: true,
+      approvedAt: true,
+      rejectedAt: true,
+      cancelledAt: true,
+    },
+  });
+  pkg.accountRecoveryRequests = recoveryRequests.map((r) => ({
+    status: r.status,
+    loginEmailAtRequest: r.loginEmailAtRequest,
+    replacementEmail: r.replacementEmail,
+    statement: r.statement,
+    requesterIpPrefix: r.requesterIpPrefix,
+    createdAt: r.createdAt.toISOString(),
+    replacementVerifiedAt: r.replacementVerifiedAt?.toISOString() ?? null,
+    expiresAt: r.expiresAt.toISOString(),
+    approvedAt: r.approvedAt?.toISOString() ?? null,
+    rejectedAt: r.rejectedAt?.toISOString() ?? null,
+    cancelledAt: r.cancelledAt?.toISOString() ?? null,
+  }));
+
   if (user.role === "MANAGER" && user.business) {
     pkg.business = {
       id: user.business.id,

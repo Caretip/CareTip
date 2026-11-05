@@ -15,10 +15,13 @@ export async function getApiHealth(_req: Request, res: Response): Promise<void> 
   const database = await probeDatabase();
   const ok = database === "connected";
 
+  const detail =
+    process.env.NODE_ENV === "production"
+      ? {}
+      : { uptime: process.uptime(), environment: process.env.NODE_ENV ?? "development" };
   res.status(ok ? 200 : 503).json({
     status: ok ? "ok" : "degraded",
-    uptime: process.uptime(),
-    environment: process.env.NODE_ENV ?? "development",
+    ...detail,
     database,
   });
 }

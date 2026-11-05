@@ -155,6 +155,7 @@ async function deleteAuthSatellites(tx: Tx, userId: string): Promise<void> {
   await tx.passwordResetToken.deleteMany({ where: { userId } });
   await tx.emailVerificationToken.deleteMany({ where: { userId } });
   await tx.mobileWebHandoffToken.deleteMany({ where: { userId } });
+  await tx.accountRecoveryRequest.deleteMany({ where: { userId } });
   await tx.pushDeviceToken.deleteMany({ where: { userId } });
   await tx.userSettings.deleteMany({ where: { userId } });
   await tx.notification.deleteMany({ where: { userId } });

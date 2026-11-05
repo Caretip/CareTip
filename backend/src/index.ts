@@ -68,22 +68,40 @@ import {
 import { getObservabilityHealthDiagnostics } from "./config/observabilityEnv.js";
 import { securityHeadersMiddleware } from "./middleware/securityHeaders.middleware.js";
 import { authenticatedApiRateLimit } from "./middleware/securityRateLimit.middleware.js";
+import { configureTrustProxy, noteForwardedChain } from "./lib/clientIp.js";
+import { closeSocketServer } from "./socket/socketServer.js";
+import { safeSecretEqual } from "./lib/safeCompare.js";
+import { mfaKeyFingerprint } from "./lib/mfaSecretCrypto.js";
+import { reviewProductionConfig } from "./config/productionConfig.js";
 import socketRoutes from "./routes/socket.routes.js";
 import internalJobsRoutes from "./routes/internalJobs.routes.js";
 import * as healthController from "./controllers/health.controller.js";
+
+/** Optional so a checkout that has not reinstalled yet still starts. */
+async function enableResponseCompression(target: express.Express): Promise<void> {
+  const moduleName: string = "compression";
+  const loaded = (await import(moduleName).catch(() => null)) as { default: (o?: { threshold?: number }) => express.RequestHandler } | null;
+  if (loaded) target.use(loaded.default({ threshold: 1024 }));
+}
 
 const app = express();
 const PORT = process.env.PORT ?? 3001;
 
 app.disable("x-powered-by");
 
-if (process.env.NODE_ENV === "production") {
-  app.set("trust proxy", 1);
-}
+configureTrustProxy(app);
 
 app.use(securityHeadersMiddleware);
 
 async function assertEnvForAuth(): Promise<void> {
+  const configReview = reviewProductionConfig();
+  for (const warning of configReview.warnings) console.warn(`[config] ${warning}`);
+  const mfaKeyId = mfaKeyFingerprint();
+  if (mfaKeyId) console.info(`[config] MFA key fingerprint ${mfaKeyId}`);
+  if (configReview.fatal.length > 0) {
+    for (const problem of configReview.fatal) console.error(`FATAL: ${problem}`);
+    process.exit(1);
+  }
   const jwt = process.env.JWT_SECRET?.trim();
   if (!jwt) {
     console.error(
@@ -147,6 +165,7 @@ app.use("/api/webhook", express.raw({ type: "application/json" }), stripeWebhook
 app.use("/api/webhooks", express.raw({ type: "application/json" }), stripeWebhookRoutes);
 
 app.use(cors(corsMiddlewareOptions));
+await enableResponseCompression(app);
 app.use(
   express.json({
     verify(req, _res, buf) {
@@ -176,6 +195,10 @@ app.get("/.well-known/apple-developer-domain-association.txt", (_req, res) => {
   res.send(content);
 });
 
+app.use("/api", (req, _res, next) => {
+  noteForwardedChain(req);
+  next();
+});
 app.use("/api", authenticatedApiRateLimit);
 
 app.use(blockSensitiveStaticUploadPaths);
@@ -192,7 +215,7 @@ app.use(
   }),
 );
 
-if (process.env.NODE_ENV !== "production") {
+if (process.env.NODE_ENV !== "production" && !process.env.RENDER) {
   app.use("/api/test", testRoutes);
 }
 app.use("/api/auth", authRoutes);
@@ -251,7 +274,7 @@ app.get("/health", (req, res) => {
   const secret = process.env.HEALTH_CHECK_SECRET?.trim();
   const detailed =
     !isProd ||
-    (Boolean(secret) && req.get("x-health-secret") === secret);
+    (Boolean(secret) && safeSecretEqual(req.get("x-health-secret"), secret));
 
   if (!detailed) {
     return res.json({ status: "ok" });
@@ -289,6 +312,31 @@ app.use(errorHandler);
 
 const httpServer = createServer(app);
 initSocketServer(httpServer);
+
+const SHUTDOWN_DRAIN_MS = 10_000;
+let shuttingDown = false;
+
+/** Stop taking work, let requests in progress finish, then release the database. */
+function shutdownGracefully(signal: string): void {
+  if (shuttingDown) return;
+  shuttingDown = true;
+  console.info(`[server] ${signal}: draining`);
+  const finish = () => {
+    void prisma.$disconnect().catch(() => undefined).finally(() => process.exit(0));
+  };
+  const forced = setTimeout(finish, SHUTDOWN_DRAIN_MS);
+  forced.unref();
+  void closeSocketServer()
+    .catch(() => undefined)
+    .finally(() => {
+      httpServer.close(() => {
+        clearTimeout(forced);
+        finish();
+      });
+    });
+}
+process.once("SIGTERM", () => shutdownGracefully("SIGTERM"));
+process.once("SIGINT", () => shutdownGracefully("SIGINT"));
 
 void assertEnvForAuth().then(() => {
   httpServer.listen(PORT, () => {

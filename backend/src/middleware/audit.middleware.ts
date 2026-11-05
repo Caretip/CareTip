@@ -19,17 +19,27 @@ export function auditAdminAction(action: string) {
   };
 }
 
-/** Generic audit entry for any authenticated platform route segment. */
+/**
+ * Audit entry for any authenticated platform route, written once the outcome is known, so the
+ * trail shows what happened rather than what was attempted. Bodies are never logged: they can hold
+ * personal data and secrets.
+ */
 export function auditPlatformAccess(req: Request, res: Response, next: NextFunction) {
   const uid = req.user?.userId ?? req.user?.id;
   if (uid) {
-    void auditService.writeAuditLog({
-      userId: uid,
-      action: "platform.api",
-      metadata: JSON.stringify({
-        method: req.method,
-        path: req.originalUrl ?? req.url,
-      }),
+    const startedAt = Date.now();
+    res.once("finish", () => {
+      void auditService.writeAuditLog({
+        userId: uid,
+        action: "platform.api",
+        metadata: JSON.stringify({
+          method: req.method,
+          path: req.originalUrl ?? req.url,
+          target: req.params,
+          status: res.statusCode,
+          durationMs: Date.now() - startedAt,
+        }),
+      });
     });
   }
   next();

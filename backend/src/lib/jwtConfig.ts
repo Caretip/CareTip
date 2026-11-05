@@ -1,3 +1,4 @@
+import { createHmac } from "node:crypto";
 import jwt, { type SignOptions, type VerifyOptions } from "jsonwebtoken";
 
 /** Only HS256 is permitted — blocks algorithm confusion / downgrade attacks. */
@@ -32,14 +33,47 @@ export function verifyJwt<T extends jwt.JwtPayload>(
   token: string,
   extra?: Pick<VerifyOptions, "ignoreExpiration">,
 ): T {
-  return jwt.verify(token, getJwtSecret(), jwtVerifyOptions(extra)) as T;
+  const decoded = jwt.verify(token, getJwtSecret(), jwtVerifyOptions(extra)) as T;
+  const production = process.env.NODE_ENV === "production";
+  if (decoded.iss === undefined ? production : decoded.iss !== JWT_ISSUER) {
+    throw new jwt.JsonWebTokenError("jwt issuer invalid");
+  }
+  const audience = decoded.aud;
+  if (audience === undefined ? production : audience !== JWT_ACCESS_AUDIENCE) {
+    throw new jwt.JsonWebTokenError("jwt audience invalid");
+  }
+  return decoded;
 }
+
+export const JWT_ISSUER = "caretip-api";
+export const JWT_ACCESS_AUDIENCE = "caretip-client";
 
 export function signJwt(
   payload: Record<string, unknown>,
   expiresIn: SignOptions["expiresIn"],
 ): string {
-  return jwt.sign(payload, getJwtSecret(), jwtSignOptions(expiresIn));
+  return jwt.sign({ iss: JWT_ISSUER, aud: JWT_ACCESS_AUDIENCE, ...payload }, getJwtSecret(), jwtSignOptions(expiresIn));
+}
+
+/** Each non-session token type has its own key, so none can ever verify as an access token. */
+function purposeSecret(purpose: string): string {
+  return createHmac("sha256", getJwtSecret()).update(`caretip-token:${purpose}`).digest("hex");
+}
+
+export function signPurposeJwt(
+  purpose: string,
+  payload: Record<string, unknown>,
+  expiresIn: SignOptions["expiresIn"],
+): string {
+  return jwt.sign({ iss: JWT_ISSUER, aud: purpose, ...payload }, purposeSecret(purpose), jwtSignOptions(expiresIn));
+}
+
+export function verifyPurposeJwt<T extends jwt.JwtPayload>(purpose: string, token: string): T {
+  return jwt.verify(token, purposeSecret(purpose), {
+    ...jwtVerifyOptions(),
+    issuer: JWT_ISSUER,
+    audience: purpose,
+  }) as T;
 }
 
 export type DecodedAccessClaims = jwt.JwtPayload & {
@@ -64,9 +98,9 @@ export function resolveJwtSubject(decoded: DecodedAccessClaims): string | null {
 
 /** Access middleware accepts legacy tokens (no `type`) and explicit access / impersonation types. */
 export function isAllowedAccessJwtType(type: unknown): boolean {
-  if (type == null || type === "") return true;
   if (type === ACCESS_JWT_TYPE || type === IMPERSONATION_JWT_TYPE) return true;
-  return false;
+  if (process.env.NODE_ENV === "production") return false;
+  return type == null || type === "";
 }
 
 /**

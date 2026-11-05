@@ -73,11 +73,15 @@ export async function seedPlatformAdminTeam(
     const existing = await prisma.user.findUnique({
       where: { email },
       select: {
+        role: true,
         id: true,
         twoFactorEnabled: true,
         twoFactorSecret: true,
       },
     });
+    if (existing && existing.role !== "SUPER_ADMIN") {
+      throw new Error("Refusing to seed: this email belongs to a non-admin account. Admins must be separate accounts.");
+    }
 
     const shouldSetPassword = !existing || resetPasswords;
     const passwordHash = shouldSetPassword

@@ -1487,10 +1487,17 @@ export async function getTipsForExport(
       where.createdAt = { gte: bounds.startUtc, lte: bounds.endUtc };
     }
   }
+  // Complete by design: a capped financial export would silently drop rows.
   return prisma.transaction.findMany({
     where,
     orderBy: { createdAt: "desc" },
-    include: {
+    select: {
+      id: true,
+      amount: true,
+      status: true,
+      createdAt: true,
+      employeeId: true,
+      stripePaymentIntentId: true,
       employee: { select: { id: true, name: true, jobTitle: true } },
     },
   });

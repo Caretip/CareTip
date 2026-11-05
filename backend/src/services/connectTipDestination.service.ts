@@ -8,7 +8,6 @@ import type Stripe from "stripe";
 import { StripeConnectStatus } from "@prisma/client";
 import { prisma } from "../prisma.js";
 import { TipPaymentEligibilityError } from "./tipPaymentEligibility.service.js";
-import { refreshConnectStatusFromStripe } from "./stripeConnect.service.js";
 
 /** Guest-safe — never include acct ids, requirements, or internal Connect status. */
 export const CONNECT_TIP_UNAVAILABLE_MSG = "This venue cannot accept tips right now.";
@@ -96,6 +95,8 @@ export async function assertBusinessReadyForConnectTipDestination(
     business.stripePayoutsEnabled !== true
   ) {
     try {
+      // Loaded here: a static import would close a cycle through stripe.service.
+      const { refreshConnectStatusFromStripe } = await import("./stripeConnect.service.js");
       await refreshConnectStatusFromStripe(business.id);
     } catch {
       // Fail closed on the re-read below — never treat a Stripe error as connected.

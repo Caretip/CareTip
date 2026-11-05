@@ -27,6 +27,8 @@ export async function resolveLoginLocationLabel(
   const raw = ip?.trim();
   if (!raw) return unknownLocationLabel(locale);
   if (isPrivateOrLocalIp(raw)) return localNetworkLabel(locale);
+  // Sends the address to a third party, so it needs a deliberate decision and a processor agreement.
+  if (process.env.LOGIN_GEO_LOOKUP_ENABLED !== "true") return unknownLocationLabel(locale);
 
   const cached = cache.get(raw);
   if (cached && cached.expiresAt > Date.now()) return cached.label;

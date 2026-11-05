@@ -290,6 +290,8 @@ export async function getEmployeeById(employeeId: string): Promise<EmployeeDetai
 }
 
 export interface UpdateEmployeeInput {
+  /** Who is asking, for the audit trail of a login email change. */
+  actorUserId?: string;
   name?: string;
   jobTitle?: string;
   monthlyGoal?: number | null;
@@ -339,23 +341,20 @@ export async function updateEmployeeForBusiness(
     await assertJobTitleAllowedForBusiness(businessId, jobTitle, emp.jobTitle);
   }
 
+  let emailChangePending = false;
   if (email !== undefined && email.trim()) {
     const trimmed = email.trim().toLowerCase();
     // Only update email if employee has been activated (has a user)
     if (emp.user && trimmed !== emp.user.email) {
-      const taken = await prisma.user.findFirst({
-        where: {
-          email: trimmed,
-          ...(emp.userId ? { NOT: { id: emp.userId } } : {}),
-        },
+      // The manager can only ask. The login email is the employee's recovery channel and it guards
+      // their payouts, so the change needs the employee's own consent plus proof of the new address.
+      const { requestEmailChangeForOwnerApproval } = await import("./accountEmailChange.service.js");
+      const pending = await requestEmailChangeForOwnerApproval({
+        userId: emp.userId!,
+        newEmail: trimmed,
+        requestedByUserId: input.actorUserId ?? emp.userId!,
       });
-      if (taken) {
-        throw new Error("Email already in use");
-      }
-      await prisma.user.update({
-        where: { id: emp.userId! },
-        data: { email: trimmed },
-      });
+      emailChangePending = pending.pending;
     } else if (!emp.user) {
       throw new Error("Cannot update email for pending activation employees");
     }
@@ -441,6 +440,7 @@ export async function updateEmployeeForBusiness(
     email: updated.user?.email ?? "",
     locationId: updated.locationId,
     assignedTableIds: updated.tableAssignments.map((ta) => ta.table.id),
+    emailChangePending,
   };
 }
 

@@ -529,7 +529,7 @@ export async function authenticateWithOAuth(
 
         console.info(
           "[oauth] USER_CREATED",
-          JSON.stringify({ userId: user.id, email: user.email, provider }),
+          JSON.stringify({ userId: user.id, provider }),
         );
 
         const businessId = user.business?.id;

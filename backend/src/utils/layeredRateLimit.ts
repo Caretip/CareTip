@@ -6,6 +6,26 @@ type Bucket = {
 /** Process-local sliding windows — suitable for single-instance; use Redis for multi-node parity. */
 const buckets = new Map<string, Bucket>();
 
+/** Hard ceiling: attackers can mint unlimited distinct keys, and memory must not follow them. */
+export const MAX_MEMORY_BUCKETS = 50_000;
+
+function makeRoomForNewBucket(nowMs: number): void {
+  if (buckets.size < MAX_MEMORY_BUCKETS) return;
+  for (const [key, bucket] of buckets) {
+    if (bucket.resetAtMs <= nowMs) buckets.delete(key);
+  }
+  // Still full of live buckets: drop the oldest entries (Map keeps insertion order).
+  let excess = buckets.size - MAX_MEMORY_BUCKETS + 1;
+  for (const key of buckets.keys()) {
+    if (excess-- <= 0) break;
+    buckets.delete(key);
+  }
+}
+
+export function memoryBucketCount(): number {
+  return buckets.size;
+}
+
 export type LayeredRateLimitResult = {
   allowed: boolean;
   count: number;
@@ -27,18 +47,12 @@ export function checkAndIncrementLimit(params: {
   const cur = buckets.get(k);
   if (!cur || cur.resetAtMs <= nowMs) {
     const next: Bucket = { count: 1, resetAtMs: nowMs + params.windowMs };
+    if (!cur) makeRoomForNewBucket(nowMs);
     buckets.set(k, next);
     return { allowed: 1 <= params.maxPerWindow, count: 1, resetAtMs: next.resetAtMs };
   }
 
   cur.count += 1;
-  buckets.set(k, cur);
-
-  if (buckets.size > 10_000 && Math.random() < 0.02) {
-    for (const [kk, vv] of buckets) {
-      if (vv.resetAtMs <= nowMs) buckets.delete(kk);
-    }
-  }
 
   return { allowed: cur.count <= params.maxPerWindow, count: cur.count, resetAtMs: cur.resetAtMs };
 }

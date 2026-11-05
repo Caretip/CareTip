@@ -24,6 +24,63 @@ interface JwtLike extends DecodedAccessClaims {
   role: Role;
 }
 
+const REDIS_ADAPTER_MODULE: string = "@socket.io/redis-adapter";
+const SOCKET_SESSION_SWEEP_MS = 5 * 60 * 1000;
+let socketSweepTimer: ReturnType<typeof setInterval> | null = null;
+
+/** Sockets outlive their access token, so sessions revoked elsewhere are re-checked here. */
+export async function sweepRevokedSockets(): Promise<number> {
+  if (!io) return 0;
+  let dropped = 0;
+  for (const socket of io.sockets.sockets.values()) {
+    const claims = socket.data.sessionClaims as Parameters<typeof assertAccessJwtStillValid>[0] | undefined;
+    if (!claims) continue;
+    const stale = await assertAccessJwtStillValid(claims).catch(() => null);
+    if (stale) {
+      socket.disconnect(true);
+      dropped += 1;
+    }
+  }
+  return dropped;
+}
+
+function startSocketSessionSweep(): void {
+  if (socketSweepTimer) return;
+  socketSweepTimer = setInterval(() => void sweepRevokedSockets().catch(() => undefined), SOCKET_SESSION_SWEEP_MS);
+  socketSweepTimer.unref?.();
+}
+
+/**
+ * Without this, an event raised on one API instance only reaches sockets on that instance.
+ * Opt-in, so a single instance keeps working with no Redis at all.
+ */
+async function attachRedisAdapter(): Promise<void> {
+  const url = process.env.REDIS_URL?.trim();
+  if (!url || process.env.SOCKET_REDIS_ADAPTER_ENABLED !== "true" || !io) return;
+  try {
+    const [{ createAdapter }, RedisModule] = await Promise.all([
+      import(/* optional, see package.json */ REDIS_ADAPTER_MODULE) as Promise<{ createAdapter: (pub: unknown, sub: unknown) => Parameters<Server["adapter"]>[0] }>,
+      import("ioredis"),
+    ]);
+    const Redis = RedisModule.default as unknown as new (u: string) => { duplicate(): unknown; on(e: string, f: () => void): void };
+    const pub = new Redis(url);
+    const sub = pub.duplicate() as typeof pub;
+    pub.on("error", () => undefined);
+    sub.on("error", () => undefined);
+    io.adapter(createAdapter(pub, sub));
+    console.info("[socket] Redis adapter attached");
+  } catch (err) {
+    console.error("[socket] Redis adapter unavailable: events stay on this instance", err instanceof Error ? err.message : err);
+  }
+}
+
+/** Stop accepting and close open sockets. Used during shutdown. */
+export async function closeSocketServer(): Promise<void> {
+  if (socketSweepTimer) clearInterval(socketSweepTimer);
+  socketSweepTimer = null;
+  await io?.close();
+}
+
 export function getSocketIO(): Server | null {
   return io;
 }
@@ -103,6 +160,7 @@ export function initSocketServer(httpServer: HttpServer): Server {
 
       socket.data.userId = userId;
       socket.data.role = userRow.role;
+      socket.data.sessionClaims = sessionPayload;
 
       if (userRow.role === "EMPLOYEE") {
         const emp = await prisma.employee.findUnique({
@@ -145,6 +203,9 @@ export function initSocketServer(httpServer: HttpServer): Server {
       next(new Error("Unauthorized"));
     }
   });
+
+  startSocketSessionSweep();
+  void attachRedisAdapter();
 
   io.on("connection", (socket) => {
     if (socket.data.isPublic) {

@@ -195,6 +195,13 @@ export async function sendResendEmailWithOutcome(
     return ok ? { kind: "sent" } : { kind: "retryable" };
   }
 
+  // A test process never sends real mail, whatever credentials reach it. Test seams run above this.
+  const testProcess = process.env.NODE_ENV === "test" || process.env.CARETIP_TEST_ISOLATION === "1";
+  if (testProcess && process.env.CARETIP_RESEND_FETCH_IS_MOCKED !== "1") {
+    console.info(`[resend][${logTag}] test environment: email not sent.`);
+    return { kind: "not_configured" };
+  }
+
   const resendKey = getResendApiKey();
   const from = payload.from || getResendFromAddress();
 
