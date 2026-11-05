@@ -209,6 +209,8 @@
     "test:subscription-scenario-e2e": "dotenv -e ../.env -e .env -- tsx scripts/subscription-scenario-e2e-report.ts",
     "report:legacy-paid-basic-stripe": "dotenv -e ../.env -e .env -- tsx scripts/report-legacy-paid-basic-stripe.ts",
     "test:billing-lifecycle-integrity": "dotenv -e ../.env -e .env -- tsx scripts/billing-lifecycle-integrity-runtime.ts",
+    "test:subscription-cancellation-entitlement": "tsx scripts/subscription-cancellation-entitlement-runtime.ts",
+    "test:rate-limit-traffic-classes": "tsx scripts/rate-limit-traffic-classes-runtime.ts",
     "test:subscription-b1": "tsx scripts/subscription-b1-runtime.ts",
     "db:migrate:isolated-test": "tsx scripts/isolated-postgres-migrate.ts",
     "test:subscription-reliability-sprint1": "tsx scripts/subscription-reliability-sprint1-runtime.ts",

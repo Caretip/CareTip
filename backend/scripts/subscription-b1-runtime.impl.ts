@@ -85,11 +85,11 @@ function testResolveBusinessTierCancelAtPeriodEnd(): boolean {
     currentPeriodEnd: futureDate(14),
   });
   const tier = resolveBusinessTierDualWrite(snapshot);
-  if (tier !== null) {
-    fail("cancel_at_period_end (future): expected null tier update (preserve premium)");
+  if (tier !== BusinessSubscriptionTier.premium) {
+    fail(`cancel_at_period_end (future): expected premium preserved, got ${String(tier)}`);
     return false;
   }
-  pass("cancel_at_period_end (future): tier dual-write skipped — premium preserved");
+  pass("cancel_at_period_end (future): premium preserved through the paid period");
   return true;
 }
 
@@ -101,11 +101,12 @@ function testResolveBusinessTierAfterPeriodEnd(): boolean {
     status: SubscriptionStatus.canceled,
   });
   const tier = resolveBusinessTierDualWrite(snapshot);
-  if (tier !== BusinessSubscriptionTier.basic) {
-    fail(`after period end: expected basic, got ${String(tier)}`);
+  // null clears the mirrored tier: access has ended (contract in resolveBusinessTierDualWrite).
+  if (tier !== null) {
+    fail(`after period end: expected tier cleared (null), got ${String(tier)}`);
     return false;
   }
-  pass("cancel_at_period_end (past): tier downgrades to basic");
+  pass("cancel_at_period_end (past): paid tier cleared");
   return true;
 }
 

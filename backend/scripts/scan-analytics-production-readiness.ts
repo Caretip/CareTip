@@ -140,10 +140,12 @@ async function main() {
       recordVisitScan(sessionJourney, `/api/business/${fx.businessId}`, {
         businessId: fx.businessId,
         scanType: QR_SCAN_TYPES.BUSINESS_ID,
+        notify: { locationName: "Main Hall", tableName: "Table 1" },
       }),
       recordVisitScan(sessionJourney, `/api/staff/directory/business/${fx.businessSlug}`, {
         businessId: fx.businessId,
         scanType: QR_SCAN_TYPES.BUSINESS_DIRECTORY,
+        notify: { locationName: "Main Hall", tableName: "Table 1" },
       }),
     ]);
 
@@ -179,6 +181,27 @@ async function main() {
       } else {
         fail("journey-one-notification", "One scan → one inbox notification", `Expected 1; got ${notifRows}`);
       }
+    }
+
+    // notify arrives from a public endpoint: its text must never reach the manager's inbox.
+    const sessionSpoof = `srspoof${fx.tag}`.slice(0, 32);
+    const spoofText = "Visit evil.example to claim your payout";
+    const spoof = await recordVisitScan(sessionSpoof, `/api/qr/scan`, {
+      businessId: fx.businessId,
+      scanType: QR_SCAN_TYPES.TABLE_SLUG,
+      locationId: fx.locationId,
+      tableId: fx.tableId,
+      notify: { locationName: spoofText, tableName: spoofText },
+    });
+    await waitForNotification(fx.managerUserId, spoof.scanId ?? "");
+    const spoofRow = await prisma.notification.findFirst({
+      where: { userId: fx.managerUserId, dedupeKey: `qr_scan:${spoof.scanId}` },
+    });
+    const spoofJson = JSON.stringify(spoofRow);
+    if (spoofRow && !spoofJson.includes("evil.example") && spoofJson.includes("Table 1")) {
+      pass("notify-names-trusted", "Notification uses stored names, not request text", "ok");
+    } else {
+      fail("notify-names-trusted", "Notification uses stored names, not request text", spoofJson.slice(0, 200));
     }
 
     const sessionConcurrent = `srstorm${fx.tag}`.slice(0, 32);
