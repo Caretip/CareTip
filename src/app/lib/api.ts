@@ -57,6 +57,7 @@ import {
 } from "./facebookOAuthDiagnostic";
 import { clearClientSessionHint } from "./authSessionHint";
 import { notifyAuthStorageSync } from "./authStorageSync";
+import { publishSessionEnded } from "./authSessionBroadcast";
 import {
   clearMemoryAccessToken,
   getMemoryAccessToken,
@@ -406,6 +407,7 @@ function clearAuthStorageForDefinitiveFailure(status: number, reason = "definiti
   recordAuthSessionDiagnostic("AUTH_SESSION_INVALIDATION_REASON", { reason, status });
   if (status === 401 || status === 403) {
     clearAuthStorage({ sessionExpired: true });
+    publishSessionEnded("expired");
     return;
   }
   clearAuthStorage();
@@ -654,6 +656,18 @@ type CaretipRequestInit = RequestInit & {
   caretipSilentErrors?: boolean;
 };
 
+/**
+ * A network failure does not say whether the server acted, so a write that moves money or starts a
+ * payment must never be replayed automatically. The user decides whether to try again.
+ */
+export function isUnsafeToReplay(pathname: string, method: string | undefined): boolean {
+  const verb = (method ?? "GET").toUpperCase();
+  if (verb === "GET" || verb === "HEAD") return false;
+  return /\/(instant-payout|bank-payout-schedule|employee-tip-payout-mode|tip-distribution|billing|checkout|create-tip-session|create-billing-session)(\/|$)/.test(
+    pathname,
+  );
+}
+
 /** One delayed retry for cross-origin /api calls when the host is cold-starting (e.g. Render free tier). */
 async function fetchWithNetworkRetry(url: string, init?: RequestInit): Promise<Response> {
   const flags = init as CaretipRequestInit | undefined;
@@ -668,6 +682,7 @@ async function fetchWithNetworkRetry(url: string, init?: RequestInit): Promise<R
     if (!pathname.startsWith("/api/")) throw err;
     // Replaying a refresh POST with an unknown outcome would present an already-rotated cookie.
     if (pathname === AUTH_REFRESH_PATHNAME) throw err;
+    if (isUnsafeToReplay(pathname, init?.method)) throw err;
 
     await abortableDelay(NETWORK_RETRY_DELAY_MS, init?.signal ?? undefined);
     const retried: CaretipRequestInit = { ...(init ?? {}), __caretipNetworkRetried: true };
