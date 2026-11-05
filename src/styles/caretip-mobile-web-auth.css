@@ -264,36 +264,6 @@
   color: var(--mw-ink);
 }
 
-.mw-auth-phone-row {
-  display: grid;
-  grid-template-columns: minmax(7.5rem, 0.9fr) 1.4fr;
-  gap: 0.65rem;
-}
-
-.mw-auth-country {
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-  min-height: var(--mw-field-h);
-  padding: 0 0.75rem;
-  border-radius: var(--mw-radius-input);
-  border: 1px solid var(--mw-border);
-  background: var(--mw-input);
-  color: var(--mw-ink);
-  font-size: 0.875rem;
-  font-weight: 600;
-  white-space: nowrap;
-}
-
-.mw-auth-country__flag {
-  width: 1.125rem;
-}
-
-.mw-auth-country__chevron {
-  margin-left: auto;
-  color: var(--mw-placeholder);
-}
-
 .mw-auth-checkbox {
   display: flex;
   align-items: flex-start;

@@ -81,6 +81,21 @@ export function resolveApiBaseUrl(): string {
   return configured;
 }
 
+/**
+ * Previous API origin during an API-hostname migration (`VITE_LEGACY_API_URL`), used only to move
+ * existing browser sessions to the current API host once. Empty when unset, invalid, or equal to
+ * the current API base.
+ */
+export function resolveLegacyApiBaseUrl(): string {
+  const raw = import.meta.env.VITE_LEGACY_API_URL;
+  if (typeof raw !== "string" || raw.trim() === "") return "";
+  const legacy = requireHttpBase(sanitizeApiBaseInput(raw));
+  if (!legacy) return "";
+  const current = resolveApiBaseUrl();
+  if (!current || current === legacy) return "";
+  return legacy;
+}
+
 /** True when API calls are cross-origin (production API URL); enables cold-start retry. */
 export function isCrossOriginCaretipApi(): boolean {
   return Boolean(resolveApiBaseUrl());

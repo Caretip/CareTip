@@ -72,6 +72,11 @@ try {
     }
     assert.doesNotMatch(email.html, /href="\/|http:\/\/\/|localhost|caretip\.de\/\/employee/);
     assert.match(email.text, /https:\/\/caretip\.de\/employee\/tip-history/);
+    if (locale === "de") {
+      assert.match(email.html, /Hallo,<\/p>/);
+      assert.match(email.html, />auf CareTip ist ein neues Trinkgeld für dich eingegangen\.<\/p>/);
+      assert.match(email.html, />Öffne die App, um die Details zu sehen\.<\/p>/);
+    }
   }
 
   // Production with comma-separated origins picks the public https one.

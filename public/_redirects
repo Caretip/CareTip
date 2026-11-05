@@ -3,4 +3,6 @@
 /robots.txt   /robots.txt   200
 /sitemap.xml  /sitemap.xml  200
 /api/*  https://caretip.onrender.com/api/:splat  200
+# Hashed build assets that no longer exist (old deploy) must 404, not return index.html as JS.
+/assets/*  /404.html  404
 /*    /index.html   200

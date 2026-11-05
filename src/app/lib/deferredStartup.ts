@@ -1,5 +1,5 @@
-import { registerSW } from "virtual:pwa-register";
 import { migrateLegacyAccessTokenFromStorage } from "./accessTokenStore";
+import { registerCaretipServiceWorker } from "./deployUpdate/serviceWorkerRegistration";
 import { initSentry } from "./sentry";
 import { readCookieConsent } from "./cookieConsent";
 import { wakeRemoteApi } from "./wakeRemoteApi";
@@ -18,12 +18,6 @@ export function scheduleDeferredStartup(): void {
     }
     migrateLegacyAccessTokenFromStorage();
     wakeRemoteApi();
-
-    const updateSW = registerSW({
-      immediate: true,
-      onNeedRefresh() {
-        updateSW(true);
-      },
-    });
+    registerCaretipServiceWorker();
   });
 }

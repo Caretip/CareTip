@@ -153,6 +153,16 @@ function auditFrontendClientHeader() {
     return clientHeaderPattern.test(slice);
   }
 
+  /** The fetch at `anchor` passes `headers: <name>`, and `const <name> = { ... }` sets the client header. */
+  function usesSharedHeadersWithClientHeader(anchor, name) {
+    const idx = content.indexOf(anchor);
+    if (idx < 0) return false;
+    const callEnd = content.indexOf("});", idx);
+    if (callEnd < 0 || !new RegExp(`headers:\\s*${name}\\b`).test(content.slice(idx, callEnd))) return false;
+    const decl = content.match(new RegExp(`const\\s+${name}\\b[^=]*=\\s*\\{([^}]*)\\}`));
+    return Boolean(decl) && clientHeaderPattern.test(decl[1]);
+  }
+
   const checks = [
     {
       label: "POST /api/auth/refresh",
@@ -160,7 +170,12 @@ function auditFrontendClientHeader() {
         hasClientHeaderNear("resolveBrowserAuthRefreshUrl(resolveApiBaseUrl())") ||
         hasClientHeaderNear("apiPath(AUTH_REFRESH_PATHNAME)"),
     },
-    { label: "POST /api/auth/logout", ok: hasClientHeaderNear('apiPath("/api/auth/logout")') },
+    {
+      label: "POST /api/auth/logout",
+      ok:
+        hasClientHeaderNear('apiPath("/api/auth/logout")') ||
+        usesSharedHeadersWithClientHeader('apiPath("/api/auth/logout")', "logoutHeaders"),
+    },
   ];
 
   for (const check of checks) {

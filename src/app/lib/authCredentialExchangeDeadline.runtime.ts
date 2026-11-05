@@ -10,7 +10,12 @@ import {
 } from "./authCredentialExchangeDeadline";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "../../..");
-const read = (rel: string) => readFileSync(resolve(root, rel), "utf8");
+/** Source checks compare text, so normalise checkout line endings (core.autocrlf on Windows). */
+const normalizeEol = (text: string) => text.replace(/\r\n?/g, "\n");
+const read = (rel: string) => normalizeEol(readFileSync(resolve(root, rel), "utf8"));
+
+assert.equal(normalizeEol("a\r\nb\rc\nd"), "a\nb\nc\nd");
+assert.ok(normalizeEol('failStart(\r\n      "csp_form_action_blocked"').includes('failStart(\n      "csp_form_action_blocked"'));
 
 assert.equal(getAuthCredentialExchangeTimeoutMs(), 20_000);
 
