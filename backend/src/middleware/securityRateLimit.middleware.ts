@@ -1,6 +1,9 @@
+import { createHash } from "node:crypto";
 import type { Request, Response, NextFunction, RequestHandler } from "express";
 import { resolveJwtSubject, verifyJwt, type DecodedAccessClaims } from "../lib/jwtConfig.js";
-import { securityRateLimits } from "../config/securityRateLimit.config.js";
+import { classifyApiTraffic, type ApiTrafficClass } from "../lib/apiTrafficClass.js";
+import { apiTrafficRateLimits, securityRateLimits } from "../config/securityRateLimit.config.js";
+import { parseCookie, refreshCookieName } from "../services/refreshToken.service.js";
 import type { RateLimitLayer } from "../utils/layeredRateLimit.js";
 import { enforceRateLimitLayersDistributed } from "../utils/rateLimitStore.js";
 import { userIdFromPendingMfaLoginToken } from "../services/mfaLogin.service.js";
@@ -38,8 +41,9 @@ function runLayers(
   layers: RateLimitLayer[],
   message: string,
   logScope: string,
+  opts?: { failClosed?: boolean },
 ): void {
-  void enforceRateLimitLayersDistributed(layers)
+  void enforceRateLimitLayersDistributed(layers, opts)
     .then((outcome) => {
       if (!outcome.ok) {
         console.info(`[security.rateLimit] blocked scope=${logScope} layer=${outcome.layer}`, {
@@ -170,7 +174,63 @@ export const platformScheduledPayoutOpsMutationRateLimit = createAuthUserLimiter
   SCHED_PAYOUT_OPS_MSG,
 );
 
+const API_FINANCIAL_MSG = "Too many payment or payout requests. Please try again later.";
+
+/** Money must not move on per-process counts, so these refuse when shared storage is unreachable. */
+const FAIL_CLOSED_CLASSES = new Set<ApiTrafficClass>(["instantPayout", "financialWrite"]);
+
+function apiTrafficLayers(trafficClass: ApiTrafficClass, req: Request): RateLimitLayer[] {
+  const ip = clientIp(req);
+  const prefix = `sec:api:${trafficClass}`;
+  const limits = apiTrafficRateLimits[trafficClass];
+  const layers: RateLimitLayer[] = [{ name: "ip", key: `${prefix}:ip:${ip}`, ...limits.ip }];
+
+  if (trafficClass === "sessionRefresh") {
+    const cookie = parseCookie(req.headers.cookie, refreshCookieName());
+    if (cookie) {
+      const session = createHash("sha256").update(cookie).digest("hex").slice(0, 32);
+      layers.push({
+        name: "session",
+        key: `${prefix}:session:${session}`,
+        ...apiTrafficRateLimits.sessionRefresh.session,
+      });
+    }
+    return layers;
+  }
+
+  const uid = userIdFromReq(req);
+  if (uid && "user" in limits) {
+    layers.push({ name: "user", key: `${prefix}:user:${uid}`, ...limits.user });
+  }
+  if (uid && "burst" in limits) {
+    layers.push({ name: "user_burst", key: `${prefix}:burst:${uid}`, ...limits.burst });
+  }
+  return layers;
+}
+
+function classifiedApiRateLimit(req: Request, res: Response, next: NextFunction): void {
+  const trafficClass = classifyApiTraffic({
+    method: req.method,
+    path: req.baseUrl + req.path,
+    query: req.query,
+  });
+  const failClosed = FAIL_CLOSED_CLASSES.has(trafficClass);
+  runLayers(
+    req,
+    res,
+    next,
+    apiTrafficLayers(trafficClass, req),
+    failClosed ? API_FINANCIAL_MSG : API_MSG,
+    `api:${trafficClass}`,
+    { failClosed },
+  );
+}
+
 export const authenticatedApiRateLimit: RequestHandler = (req, res, next) => {
+  if (apiTrafficRateLimits.enabled()) {
+    classifiedApiRateLimit(req, res, next);
+    return;
+  }
   const ip = clientIp(req);
   const uid = userIdFromReq(req);
   const { authenticatedApi: lim } = securityRateLimits;

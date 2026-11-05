@@ -5,6 +5,50 @@ function envInt(name: string, fallback: number): number {
   return Number.isFinite(n) && n > 0 ? Math.floor(n) : fallback;
 }
 
+const API_TRAFFIC_BURST_WINDOW_MS = 10_000;
+
+/**
+ * Per-class API limits. Inactive unless SEC_API_TRAFFIC_CLASSES_ENABLED=true; until then the single
+ * `authenticatedApi` limit below applies, exactly as before. Every figure is a starting value to
+ * compare against production traffic before enabling; each can be overridden by its env var.
+ */
+export const apiTrafficRateLimits = {
+  enabled: () => process.env.SEC_API_TRAFFIC_CLASSES_ENABLED === "true",
+  auth: {
+    ip: { max: envInt("SEC_API_AUTH_IP_MAX_PER_15M", 600), windowMs: AUTH_WINDOW_15M_MS },
+  },
+  sessionRefresh: {
+    ip: { max: envInt("SEC_API_REFRESH_IP_MAX_PER_15M", 300), windowMs: AUTH_WINDOW_15M_MS },
+    session: { max: envInt("SEC_API_REFRESH_SESSION_MAX_PER_15M", 30), windowMs: AUTH_WINDOW_15M_MS },
+  },
+  instantPayout: {
+    ip: { max: envInt("SEC_API_INSTANT_PAYOUT_IP_MAX_PER_15M", 30), windowMs: AUTH_WINDOW_15M_MS },
+    user: { max: envInt("SEC_API_INSTANT_PAYOUT_USER_MAX_PER_15M", 5), windowMs: AUTH_WINDOW_15M_MS },
+  },
+  financialWrite: {
+    ip: { max: envInt("SEC_API_FINANCIAL_IP_MAX_PER_15M", 60), windowMs: AUTH_WINDOW_15M_MS },
+    user: { max: envInt("SEC_API_FINANCIAL_USER_MAX_PER_15M", 10), windowMs: AUTH_WINDOW_15M_MS },
+  },
+  dashboardRead: {
+    ip: { max: envInt("SEC_API_DASHBOARD_IP_MAX_PER_15M", 3000), windowMs: AUTH_WINDOW_15M_MS },
+    user: { max: envInt("SEC_API_DASHBOARD_USER_MAX_PER_15M", 900), windowMs: AUTH_WINDOW_15M_MS },
+    burst: { max: envInt("SEC_API_DASHBOARD_USER_BURST_PER_10S", 60), windowMs: API_TRAFFIC_BURST_WINDOW_MS },
+  },
+  analyticsRead: {
+    ip: { max: envInt("SEC_API_ANALYTICS_IP_MAX_PER_15M", 1000), windowMs: AUTH_WINDOW_15M_MS },
+    user: { max: envInt("SEC_API_ANALYTICS_USER_MAX_PER_15M", 300), windowMs: AUTH_WINDOW_15M_MS },
+    burst: { max: envInt("SEC_API_ANALYTICS_USER_BURST_PER_10S", 20), windowMs: API_TRAFFIC_BURST_WINDOW_MS },
+  },
+  publicTipping: {
+    ip: { max: envInt("SEC_API_PUBLIC_TIPPING_IP_MAX_PER_15M", 300), windowMs: AUTH_WINDOW_15M_MS },
+  },
+  ordinary: {
+    ip: { max: envInt("SEC_API_ORDINARY_IP_MAX_PER_15M", 1500), windowMs: AUTH_WINDOW_15M_MS },
+    user: { max: envInt("SEC_API_ORDINARY_USER_MAX_PER_15M", 400), windowMs: AUTH_WINDOW_15M_MS },
+    burst: { max: envInt("SEC_API_ORDINARY_USER_BURST_PER_10S", 40), windowMs: API_TRAFFIC_BURST_WINDOW_MS },
+  },
+} as const;
+
 export const securityRateLimits = {
   changePassword: {
     ip: { max: envInt("SEC_CHANGE_PASSWORD_IP_MAX_PER_15M", 15), windowMs: AUTH_WINDOW_15M_MS },
