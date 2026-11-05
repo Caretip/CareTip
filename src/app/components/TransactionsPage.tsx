@@ -203,6 +203,7 @@ export function TransactionsPage() {
                   {/* Status Filter */}
                   <div className="relative">
                     <select
+                      aria-label="All Status"
                       value={selectedStatus}
                       onChange={(e) => setSelectedStatus(e.target.value)}
                       className="appearance-none pl-4 pr-10 py-3 bg-input-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent transition-all cursor-pointer text-sm"
@@ -218,6 +219,7 @@ export function TransactionsPage() {
                   {/* Type Filter */}
                   <div className="relative">
                     <select
+                      aria-label="All Types"
                       value={selectedType}
                       onChange={(e) => setSelectedType(e.target.value)}
                       className="appearance-none pl-4 pr-10 py-3 bg-input-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent transition-all cursor-pointer text-sm"
@@ -233,6 +235,7 @@ export function TransactionsPage() {
                   {/* Date Range Filter */}
                   <div className="relative">
                     <select
+                      aria-label="All Time"
                       value={selectedDateRange}
                       onChange={(e) => setSelectedDateRange(e.target.value)}
                       className="appearance-none pl-4 pr-10 py-3 bg-input-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent transition-all cursor-pointer text-sm"
@@ -249,6 +252,7 @@ export function TransactionsPage() {
                   {/* Export Button */}
                   <button
                     type="button"
+                    aria-label="Export"
                     className="flex touch-manipulation items-center gap-2 rounded-lg bg-accent px-4 py-3 text-sm font-medium text-white transition-[colors,opacity,box-shadow] hover:bg-accent/90 active:opacity-90"
                   >
                     <Download className="w-4 h-4" />

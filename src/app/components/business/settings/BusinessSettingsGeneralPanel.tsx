@@ -68,6 +68,7 @@ export function BusinessSettingsGeneralPanel({
               <User className="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
               <input
                 type="text"
+                aria-label={t("business.settings.panels.managerName")}
                 value={managerName}
                 disabled
                 className="w-full cursor-not-allowed rounded-lg border border-border bg-input-background py-3 pl-11 pr-4 text-sm opacity-70"
@@ -83,6 +84,7 @@ export function BusinessSettingsGeneralPanel({
               <Mail className="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
               <input
                 type="email"
+                aria-label={t("business.accountSettings.labelEmailReadonly")}
                 value={email}
                 disabled
                 className="w-full cursor-not-allowed rounded-lg border border-border bg-input-background py-3 pl-11 pr-4 text-sm opacity-70"

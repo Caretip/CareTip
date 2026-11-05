@@ -5,8 +5,8 @@
  */
 
 .mw-auth {
-  --mw-orange: #e9781c;
-  --mw-orange-hover: #d96810;
+  --mw-orange: #eb992c;
+  --mw-orange-hover: #eb992c;
   --mw-orange-soft: #fff4e8;
   --mw-ink: #111827;
   --mw-muted: #4b5563;
@@ -44,7 +44,7 @@
 }
 
 .dark .mw-auth {
-  --mw-orange-soft: rgba(233, 120, 28, 0.16);
+  --mw-orange-soft: rgba(235, 153, 44, 0.16);
   --mw-ink: hsl(var(--foreground));
   --mw-muted: hsl(var(--muted-foreground));
   --mw-border: hsl(var(--border));
@@ -186,7 +186,7 @@
 }
 
 .dark .mw-auth-header__icon-badge {
-  background: rgba(233, 120, 28, 0.16);
+  background: rgba(235, 153, 44, 0.16);
   box-shadow: none;
 }
 
@@ -235,8 +235,8 @@
 }
 
 .mw-auth-input:focus {
-  border-color: rgba(233, 120, 28, 0.55);
-  box-shadow: 0 0 0 3px rgba(233, 120, 28, 0.12);
+  border-color: rgba(235, 153, 44, 0.55);
+  box-shadow: 0 0 0 3px rgba(235, 153, 44, 0.12);
 }
 
 .mw-auth-input--password {
@@ -338,8 +338,8 @@
   min-height: var(--mw-btn-h);
   border: none;
   border-radius: var(--mw-radius-btn);
-  background: var(--mw-orange);
-  color: #fff;
+  background: hsl(var(--primary));
+  color: #000;
   font-size: 1rem;
   font-weight: 700;
   letter-spacing: -0.01em;
@@ -348,13 +348,13 @@
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  box-shadow: 0 4px 14px -8px rgba(233, 120, 28, 0.45);
+  box-shadow: none;
   transition: background-color 0.15s ease, transform 0.12s ease, opacity 0.15s ease;
   margin-top: 0.25rem;
 }
 
 .mw-auth-btn:hover:not(:disabled) {
-  background: var(--mw-orange-hover);
+  background: hsl(var(--primary-hover));
 }
 
 .mw-auth-btn:active:not(:disabled) {
@@ -577,7 +577,7 @@
 }
 
 .mw-auth-otp__cell:focus {
-  box-shadow: 0 0 0 3px rgba(233, 120, 28, 0.28);
+  box-shadow: 0 0 0 3px rgba(235, 153, 44, 0.28);
   background: var(--mw-orange);
   color: #fff;
 }

@@ -37,7 +37,7 @@ function AnimatedHeadingFallback({
 
   let cursor = 0;
   return (
-    <span className={cn(containerClassName)} aria-label={flatText}>
+    <span className={cn(containerClassName)} role="img" aria-label={flatText}>
       {lines.map((line, lineIndex) => {
         if (lineIndex > 0) cursor += 1;
         const words = line.split(" ");

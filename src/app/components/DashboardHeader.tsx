@@ -4,7 +4,7 @@ import { memo } from "react";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "../hooks/useAuth";
 import { CareTipLogo } from "./CareTipLogo";
-import { BusinessLogoMark } from "./business/BusinessLogoMark";
+import { BusinessLogoMark, initialsFromName } from "./business/BusinessLogoMark";
 import { EmployeeProfilePhoto, ProfileAvatar } from "./ui/profile-avatar";
 import { useBusinessVenueBrand } from "../hooks/useBusinessVenueBrand";
 import { NotificationBell } from "@/app/components/notifications/NotificationBell";
@@ -148,7 +148,7 @@ function DashboardHeaderBar({
                 headerIconBtn,
                 "caretip-dashboard-header-business-identity",
               )}
-              aria-label={t("shell.header.businessLogoSettingsAria", { name: venueName })}
+              aria-label={`${t("shell.header.businessLogoSettingsAria", { name: venueName })}${businessLogo ? "" : ` (${initialsFromName(venueName)})`}`}
             >
               <BusinessLogoMark
                 key={`${businessLogo ?? "no-logo"}-${venueName}`}

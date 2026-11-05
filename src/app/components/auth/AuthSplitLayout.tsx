@@ -15,6 +15,7 @@ type AuthSplitLayoutProps = {
   compactMarketing?: boolean;
   /** Hide back-to-home row (rare — default shows on all auth flows). */
   hideBackToHome?: boolean;
+  marketingHeadlineAs?: "h1" | "h2";
 };
 
 export function AuthSplitLayout({
@@ -25,6 +26,7 @@ export function AuthSplitLayout({
   marketingScene,
   compactMarketing = false,
   hideBackToHome = false,
+  marketingHeadlineAs,
 }: AuthSplitLayoutProps) {
   return (
     <AuthCurvedBlobShell
@@ -37,6 +39,7 @@ export function AuthSplitLayout({
           marketingScene={marketingScene}
           compact={compactMarketing}
           showBackToHome={!hideBackToHome}
+          headlineAs={marketingHeadlineAs}
         />
       }
       authPanel={

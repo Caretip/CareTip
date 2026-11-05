@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useId, useMemo, useState } from "react";
+import { dashboardWorkspaceUi } from "../../components/dashboard/dashboardWorkspaceUi";
 import { useTranslation } from "react-i18next";
 import { Building2, Check, Loader2, MapPin, Save, Tag, Upload, X } from "lucide-react";
 import { toast } from "sonner";
@@ -240,7 +241,7 @@ export function BusinessProfilePage({ embedded = false }: { embedded?: boolean }
             <Building2 className="h-5 w-5 shrink-0" aria-hidden />
             <span className="text-xs font-semibold uppercase tracking-wide">{t("business.profilePage.venuePill")}</span>
           </div>
-          <h1 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">{t("business.profilePage.pageTitle")}</h1>
+          <h1 className={dashboardWorkspaceUi.pageTitle}>{t("business.profilePage.pageTitle")}</h1>
           <p className="mt-2 max-w-xl text-sm text-muted-foreground">{t("business.profilePage.pageDesc")}</p>
         </header>
       ) : (

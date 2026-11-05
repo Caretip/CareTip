@@ -146,7 +146,7 @@ html.dark .caretip-landing .caretip-final-cta-card {
     transform: translateY(-2px);
     box-shadow:
       0 1px 0 rgba(255, 255, 255, 0.32) inset,
-      0 16px 36px -6px rgba(233, 120, 28, 0.52),
+      0 16px 36px -6px rgba(235, 153, 44, 0.52),
       0 0 40px -6px rgba(255, 158, 45, 0.26) !important;
   }
 }
@@ -162,10 +162,7 @@ html.dark .caretip-landing .caretip-final-cta-card {
 }
 
 html.dark .caretip-landing .caretip-final-cta-button {
-  box-shadow:
-    0 1px 0 rgba(255, 255, 255, 0.18) inset,
-    0 12px 28px -6px rgba(233, 120, 28, 0.48),
-    0 0 32px -8px rgba(233, 120, 28, 0.22) !important;
+  box-shadow: none !important;
 }
 
 /* —— Final CTA → footer breathing room —— */
@@ -201,7 +198,7 @@ html.dark .caretip-landing .caretip-final-cta-button {
   position: absolute;
   inset: 0;
   pointer-events: none;
-  background: radial-gradient(ellipse 70% 45% at 50% 0%, rgba(233, 120, 28, 0.05) 0%, transparent 52%);
+  background: radial-gradient(ellipse 70% 45% at 50% 0%, rgba(235, 153, 44, 0.05) 0%, transparent 52%);
   opacity: 0.8;
 }
 

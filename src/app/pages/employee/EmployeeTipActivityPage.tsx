@@ -193,7 +193,6 @@ export function EmployeeTipActivityPage() {
               type="button"
               role="tab"
               aria-selected={filter === id}
-              aria-pressed={filter === id}
               className="employee-tip-activity-filter"
               onClick={() => setFilter(id)}
             >

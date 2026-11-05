@@ -375,14 +375,15 @@ export function BillingPlanManagement({
       ) : null}
 
       <div
+        id="pricing-plans-panel"
         className="caretip-pricing-tiers caretip-pricing-tiers--billing"
         data-billing-cycle={billingCycle}
-        role="list"
+        role="group"
         aria-label={t("business.billing.planManagement")}
       >
         <div className="caretip-pricing-tiers__grid">
           {tiers.map((tier) => (
-            <div key={tier.tierKey} role="listitem" className="flex h-full min-h-0 min-w-0">
+            <div key={tier.tierKey} className="flex h-full min-h-0 min-w-0">
               <PricingTierCard
                 tier={tier}
                 billingCycle={billingCycle}

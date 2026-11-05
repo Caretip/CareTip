@@ -24,6 +24,7 @@ function StarRating({ rating, className }: { rating: number | null; className?: 
         "business-dashboard-feedback-item__rating flex items-center gap-0.5",
         className,
       )}
+      role="img"
       aria-label={`${rating} / 5`}
     >
       {Array.from({ length: 5 }, (_, i) => (

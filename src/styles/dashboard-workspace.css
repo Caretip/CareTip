@@ -86,7 +86,8 @@
 }
 
 .caretip-dashboard-shell .premium-workspace-header__title,
-.caretip-dashboard-shell .dashboard-workspace-module-header h1 {
+.caretip-dashboard-shell .dashboard-workspace-module-header h1,
+.caretip-dashboard-shell .dashboard-page-title {
   font-size: 1.5rem;
   font-weight: 600;
   letter-spacing: -0.02em;
@@ -802,13 +803,13 @@
 
 .caretip-dashboard-shell .pro-upgrade-card__cta--primary {
   border: none;
-  background: var(--caretip-premium-cta-gradient, linear-gradient(180deg, #ff9e2d 0%, #e9781c 48%, #d96f18 100%));
-  color: #fff;
-  box-shadow: var(--caretip-premium-cta-shadow, 0 1px 0 rgba(255, 255, 255, 0.28) inset, 0 8px 20px -6px rgba(233, 120, 28, 0.4));
+  background: hsl(var(--primary));
+  color: #000;
+  box-shadow: none;
 }
 
 .caretip-dashboard-shell .pro-upgrade-card__cta--primary:hover {
-  filter: brightness(1.04);
+  background: hsl(var(--primary-hover));
 }
 
 .caretip-dashboard-shell .pro-upgrade-card__cta--primary:active {

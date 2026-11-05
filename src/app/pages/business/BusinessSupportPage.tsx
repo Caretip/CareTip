@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
+import { dashboardWorkspaceUi } from "../../components/dashboard/dashboardWorkspaceUi";
 import { Loader2, MessageSquarePlus } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Link, useNavigate } from "react-router";
@@ -131,7 +132,7 @@ export function BusinessSupportPage() {
               {t("support.business.eyebrow")}
             </span>
           </div>
-          <h1 className="text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
+          <h1 className={dashboardWorkspaceUi.pageTitle}>
             {t("support.business.title")}
           </h1>
           <p className={cn("mt-2 max-w-2xl", businessUi.cardDesc)}>{t("support.business.subtitle")}</p>
@@ -204,7 +205,7 @@ export function BusinessSupportPage() {
                 value={statusFilter || "all"}
                 onValueChange={(v) => setStatusFilter(v === "all" ? "" : (v as SupportTicketStatus))}
               >
-                <SelectTrigger className="h-9 w-[130px]">
+                <SelectTrigger className="h-9 w-[130px]" aria-label={t("support.filters.allStatuses")}>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>

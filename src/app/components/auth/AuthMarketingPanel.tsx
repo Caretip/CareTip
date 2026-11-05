@@ -16,6 +16,8 @@ type AuthMarketingPanelProps = {
   /** Scales down marketing copy (~30% tighter). */
   compact?: boolean;
   showBackToHome?: boolean;
+  /** h1 where the page form has no heading of its own. */
+  headlineAs?: "h1" | "h2";
 };
 
 /** Curved brand panel — logo, headline, and one supporting line (business vs staff). */
@@ -25,6 +27,7 @@ export function AuthMarketingPanel({
   marketingScene,
   compact = false,
   showBackToHome = false,
+  headlineAs: Headline = "h2",
 }: AuthMarketingPanelProps) {
   const { t } = useTranslation();
   const scene = marketingScene ?? resolveMarketingSceneFromSignUpMode(signUpMode);
@@ -41,7 +44,7 @@ export function AuthMarketingPanel({
       <div className="caretip-auth-marketing__inner">
         {showBackToHome ? <AuthBackToHomeNav variant="marketing" showLogo={false} /> : null}
         <div className="caretip-auth-marketing__content">
-          <h2 className="caretip-auth-marketing__headline">{t(`${prefix}.headline`)}</h2>
+          <Headline className="caretip-auth-marketing__headline">{t(`${prefix}.headline`)}</Headline>
           <p className="caretip-auth-marketing__body">{t(`${prefix}.body`)}</p>
         </div>
       </div>

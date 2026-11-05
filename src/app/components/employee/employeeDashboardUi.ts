@@ -4,6 +4,7 @@
  */
 
 import { dashboardSharedUi } from "../dashboard/dashboardSharedUi";
+import { caretipType } from "@/lib/typography/caretipType";
 import { dashboardPeriodUi } from "../dashboard/dashboardPeriodUi";
 import {
   DASHBOARD_METRIC_STAT_CARD_SHELL,
@@ -37,7 +38,7 @@ export const employeeUi = {
 
   pageHeader: "employee-page-header mb-5 border-b border-border/70 pb-4 sm:pb-5",
   pageHeaderInner: "flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between sm:gap-6",
-  pageTitle: "employee-page-title text-xl font-semibold tracking-tight text-foreground sm:text-[1.625rem]",
+  pageTitle: `dashboard-page-title employee-page-title ${caretipType.appTitle}`,
   pageDesc: "employee-page-desc mt-1.5 max-w-prose text-sm leading-relaxed text-muted-foreground",
 
   btnPrimary: caretipBtnPrimary,

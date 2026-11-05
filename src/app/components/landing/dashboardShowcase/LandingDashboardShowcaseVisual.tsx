@@ -44,6 +44,7 @@ function ShowcaseStarRating({
         secondary ? "gap-px" : "gap-0.5",
         className,
       )}
+      role="img"
       aria-label={`${rating.toLocaleString("de-DE", { minimumFractionDigits: 1, maximumFractionDigits: 1 })} / 5`}
     >
       {Array.from({ length: 5 }, (_, i) => (

@@ -58,3 +58,25 @@
     animation-play-state: paused !important;
   }
 }
+
+/* The mobile menu is modal: the install banner must not cover its controls, such as Sign out. */
+html[data-caretip-mobile-drawer-open] .caretip-pwa-install-banner {
+  display: none;
+}
+
+/* Touch targets: controls used with a finger reach 44px on phones and tablets. */
+@media (max-width: 1023px) {
+  .caretip-dashboard-header-icon-btn,
+  .caretip-dashboard-shell .dashboard-period-toggle__btn,
+  .caretip-lang-select__trigger,
+  .caretip-pricing-billing-toggle__option {
+    min-height: 2.75rem;
+    min-width: 2.75rem;
+  }
+
+  /* Inline links keep their look but meet the 24px minimum target. */
+  .caretip-site-footer-link,
+  .caretip-industry-photo-card__cta {
+    padding-block: 0.25rem;
+  }
+}

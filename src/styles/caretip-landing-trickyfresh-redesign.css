@@ -7,7 +7,7 @@
  */
 
 .caretip-landing {
-  --care-orange: #e9781c;
+  --care-orange: #eb992c;
   --care-ink: #1f2a35;
   --care-cream: #f8f4ed;
   --care-sand: #eee6d8;
@@ -107,14 +107,14 @@
 
 /* Filled brand-orange CTAs in the landing nav (e.g. Join Team) */
 .caretip-landing .caretip-public-nav a[class*="caretip-btn-primary"] {
-  color: #fff !important;
-  -webkit-text-fill-color: #fff !important;
+  color: #000 !important;
+  -webkit-text-fill-color: #000 !important;
 }
 
 /* Text-only /join links: solid brand orange (never cream-on-light) */
 .caretip-landing .caretip-public-nav a[href="/join"]:not([class*="caretip-btn"]) {
-  color: var(--care-orange, #e9781c) !important;
-  -webkit-text-fill-color: var(--care-orange, #e9781c) !important;
+  color: var(--care-orange, #eb992c) !important;
+  -webkit-text-fill-color: var(--care-orange, #eb992c) !important;
   font-weight: 700;
 }
 
@@ -227,7 +227,7 @@
 
 .caretip-landing .caretip-hero-section--fullbleed-light .caretip-hero-brand-tagline__text,
 .caretip-landing .caretip-hero-section--fullbleed-dark .caretip-hero-brand-tagline__text {
-  color: var(--care-orange, #e9781c) !important;
+  color: var(--care-orange, #eb992c) !important;
   font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.14em;
@@ -236,8 +236,8 @@
 
 .caretip-landing .caretip-hero-section--fullbleed-light .caretip-hero-brand-tagline__accent,
 .caretip-landing .caretip-hero-section--fullbleed-dark .caretip-hero-brand-tagline__accent {
-  background: var(--care-orange, #e9781c) !important;
-  box-shadow: 0 0 0 3px rgba(233, 120, 28, 0.18);
+  background: var(--care-orange, #eb992c) !important;
+  box-shadow: 0 0 0 3px rgba(235, 153, 44, 0.18);
 }
 
 /* TrickyFreshString type scale — hero (EN + DE match German optical size) */
@@ -300,8 +300,8 @@
 .caretip-landing .caretip-hero-section--fullbleed-light h1 .bg-clip-text,
 .caretip-landing .caretip-hero-section--fullbleed-dark .caretip-hero-headline-accent,
 .caretip-landing .caretip-hero-section--fullbleed-dark h1 .bg-clip-text {
-  color: var(--care-orange, #e9781c) !important;
-  -webkit-text-fill-color: var(--care-orange, #e9781c) !important;
+  color: var(--care-orange, #eb992c) !important;
+  -webkit-text-fill-color: var(--care-orange, #eb992c) !important;
   background: none !important;
 }
 
@@ -393,7 +393,7 @@
 }
 
 .dark .caretip-landing .caretip-hero-section--split::before {
-  background: radial-gradient(circle at 70% 30%, rgba(233, 120, 28, 0.18), transparent 56%);
+  background: radial-gradient(circle at 70% 30%, rgba(235, 153, 44, 0.18), transparent 56%);
 }
 
 .caretip-landing .caretip-hero-split-grid {
@@ -471,7 +471,7 @@
   bottom: -4%;
   width: 74%;
   height: 76%;
-  border: 1px solid rgba(233, 120, 28, 0.22);
+  border: 1px solid rgba(235, 153, 44, 0.22);
   border-radius: 52% 48% 45% 55%;
   content: "";
   transform: rotate(-8deg);
@@ -745,8 +745,8 @@ html:not(.dark) .caretip-landing .caretip-landing-cta-wise .caretip-trust-strip_
 .caretip-landing #final-cta .caretip-trust-strip svg,
 html:not(.dark) .caretip-landing #final-cta .caretip-trust-strip__check,
 .caretip-landing.caretip-landing--premium #final-cta .caretip-trust-strip__check {
-  color: #e9781c !important;
-  stroke: #e9781c !important;
+  color: #eb992c !important;
+  stroke: #eb992c !important;
 }
 
 .caretip-landing .caretip-industry-photo-card__cta {
@@ -814,8 +814,8 @@ html:not(.dark) .caretip-landing #final-cta .caretip-trust-strip__check,
 .caretip-features-page.caretip-landing h2 .bg-clip-text,
 .caretip-features-page.caretip-landing .text-transparent.bg-clip-text {
   background-image: none !important;
-  color: var(--care-orange, #e9781c) !important;
-  -webkit-text-fill-color: var(--care-orange, #e9781c) !important;
+  color: var(--care-orange, #eb992c) !important;
+  -webkit-text-fill-color: var(--care-orange, #eb992c) !important;
 }
 
 .dark .caretip-features-page.caretip-landing,
@@ -897,7 +897,7 @@ html:not(.dark) .caretip-landing #final-cta .caretip-trust-strip__check,
 }
 
 .caretip-landing .caretip-industry-view-all-nav:hover {
-  color: var(--care-orange, #e9781c);
+  color: var(--care-orange, #eb992c);
 }
 
 /* Mobile default: directly above industry images */

@@ -75,7 +75,7 @@ export function SignInCard2({
   };
 
   return (
-    <AuthSplitLayout topSlot={topSlot} signUpMode={!sessionActive && !isLogin} authLane={authLane}>
+    <AuthSplitLayout marketingHeadlineAs="h1" topSlot={topSlot} signUpMode={!sessionActive && !isLogin} authLane={authLane}>
       <div className={cn("caretip-auth-card-wrap", !isLogin && "caretip-auth-card-wrap--signup", className)}>
         <div
           className={cn(

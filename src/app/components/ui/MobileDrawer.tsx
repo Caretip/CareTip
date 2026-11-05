@@ -54,9 +54,12 @@ export function MobileDrawer({
     const prevBodyOverflow = body.style.overflow;
     html.style.overflow = "hidden";
     body.style.overflow = "hidden";
+    // The drawer cannot outrank root-level banners from its stacking context; see caretip-mobile-perf.css.
+    html.dataset.caretipMobileDrawerOpen = "";
     return () => {
       html.style.overflow = prevHtmlOverflow;
       body.style.overflow = prevBodyOverflow;
+      delete html.dataset.caretipMobileDrawerOpen;
     };
   }, [isOpen]);
 

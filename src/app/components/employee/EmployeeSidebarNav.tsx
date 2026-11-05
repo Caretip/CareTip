@@ -196,6 +196,7 @@ function EmployeeSidebarGroup({
           expanded ? "grid-rows-[1fr]" : "grid-rows-[0fr]",
         )}
         aria-hidden={!expanded}
+        {...(expanded ? {} : { inert: "" })}
       >
         <ul className="overflow-hidden" role="list">
           {entry.children.map((child) => {

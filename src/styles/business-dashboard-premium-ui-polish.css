@@ -528,18 +528,14 @@
 /* —— Buttons —— */
 .caretip-dashboard-shell:is(.business-dashboard, .employee-dashboard, .platform-dashboard)
   :is(.caretip-btn-primary, .dashboard-workspace-btn.caretip-btn-primary) {
-  box-shadow: 0 1px 2px rgb(233 120 28 / 0.18) !important;
-  transition:
-    background 0.18s ease,
-    box-shadow 0.18s ease,
-    filter 0.18s ease;
+  box-shadow: none !important;
+  transition: background 0.18s ease;
 }
 
 .caretip-dashboard-shell:is(.business-dashboard, .employee-dashboard, .platform-dashboard)
   :is(.caretip-btn-primary, .dashboard-workspace-btn.caretip-btn-primary):hover {
-  box-shadow: 0 2px 8px -2px rgb(233 120 28 / 0.28) !important;
+  box-shadow: none !important;
   transform: none !important;
-  filter: brightness(1.02);
 }
 
 .caretip-dashboard-shell:is(.business-dashboard, .employee-dashboard, .platform-dashboard)

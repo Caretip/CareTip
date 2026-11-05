@@ -69,7 +69,7 @@ export function QuickStartGuideBanner({ className }: { className?: string }) {
             <Button
               type="button"
               size="sm"
-              className="h-8 rounded-lg bg-[#e9781c] px-3 text-xs font-semibold text-white hover:bg-[#d96a14]"
+              className="h-8 rounded-lg bg-primary px-3 text-xs font-semibold text-black hover:bg-primary-hover"
               onClick={openGuidelines}
             >
               {t("business.dashboard.quickStartBannerCta")}
