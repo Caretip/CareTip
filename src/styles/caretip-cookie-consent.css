@@ -359,3 +359,9 @@
     0 8px 28px rgb(0 0 0 / 0.45),
     0 0 0 1px rgb(255 255 255 / 0.06);
 }
+
+/* An open mobile menu is modal: the banner must not cover its links. It returns on close. */
+html[data-caretip-mobile-drawer-open] .cookie-consent-panel--banner,
+html[data-caretip-mobile-drawer-open] .cookie-consent-backdrop--passive {
+  display: none;
+}

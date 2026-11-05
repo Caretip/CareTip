@@ -26,6 +26,8 @@ import {
   employeeLayoutLazy,
   forgotPasswordPageLazy,
   resetPasswordPageLazy,
+  emailChangePageLazy,
+  accountRecoveryPageLazy,
   activateEmployeePageLazy,
   verifyEmailPageLazy,
   checkEmailPageLazy,
@@ -362,6 +364,16 @@ const routes: RouteObject[] = [
     errorElement: <ErrorBoundary />,
   },
   {
+    path: '/account/recovery/:step?',
+    lazy: accountRecoveryPageLazy,
+    errorElement: <ErrorBoundary />,
+  },
+  {
+    path: '/account/email-change/:step',
+    lazy: emailChangePageLazy,
+    errorElement: <ErrorBoundary />,
+  },
+  {
     path: '/verify-email',
     lazy: checkEmailPageLazy,
     errorElement: <ErrorBoundary />,
@@ -535,6 +547,7 @@ const routes: RouteObject[] = [
     errorElement: <ErrorBoundary />,
     children: [
       { path: 'dashboard', lazy: routeLazy(() => import('./components/AdminDashboard'), 'AdminDashboard') },
+      { path: 'account-recovery', lazy: routeLazy(() => import('./pages/platform/AccountRecoveryQueuePage'), 'AccountRecoveryQueuePage') },
       { path: 'businesses/all', lazy: routeLazy(() => import('./pages/platform/PlatformAllBusinessesPage'), 'PlatformAllBusinessesPage') },
       { path: 'businesses/onboarding-verification', lazy: routeLazy(() => import('./pages/platform/BusinessVerificationPage'), 'BusinessOnboardingVerificationPage') },
       { path: 'businesses/kyc-verification', lazy: routeLazy(() => import('./pages/platform/BusinessVerificationPage'), 'BusinessKycVerificationPage') },

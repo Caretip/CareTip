@@ -159,14 +159,13 @@ export default defineConfig(({ mode }) => {
          * Keep precache small so refreshes don't "re-download the world".
          * Large marketing/dashboard images live in `dist/assets/*` and should be runtime-cached instead.
          */
-        globPatterns: ['**/*.{js,css,html,ico,svg,woff2,json,webmanifest}'],
-        globIgnores: [
-          '**/assets/*.{png,jpg,jpeg,webp,gif}',
-          '**/vendor-three-*.js',
-          '**/vendor-jspdf-*.js',
-          '**/*HeroAnimation*',
-          '**/*SaasDashboard3D*',
+        globPatterns: [
+          'index.html',
+          '*.{ico,svg,webmanifest}',
+          'assets/index-*.{js,css}',
+          'assets/vendor-react-*.js',
         ],
+        globIgnores: ['**/assets/*.{png,jpg,jpeg,webp,gif}'],
         navigateFallback: 'index.html',
         navigateFallbackDenylist: [
           /^\/api(\/|$)/,
@@ -184,6 +183,16 @@ export default defineConfig(({ mode }) => {
           '/fcm-sw-handler.js',
         ],
         runtimeCaching: [
+          {
+            // Hashed filenames never change, so a stored copy is always correct.
+            urlPattern: ({ url }) => url.pathname.startsWith('/assets/') && /\.(js|css|woff2)$/i.test(url.pathname),
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'caretip-route-chunks-v1',
+              expiration: { maxEntries: 200, maxAgeSeconds: 60 * 60 * 24 * 30 },
+              cacheableResponse: { statuses: [200] },
+            },
+          },
           {
             // Hashed Vite assets: prefer network so deploys are not stuck on stale SWR entries.
             // Short timeout keeps offline/repeat visits fast via cache fallback.

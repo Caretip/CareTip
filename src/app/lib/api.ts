@@ -1191,6 +1191,66 @@ export async function resetPasswordWithToken(
   });
 }
 
+const postPublicToken = (path: string, body: unknown) =>
+  apiRequest<{ ok: boolean }>(apiPath(path), {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+    credentials: "include",
+  });
+
+export const requestAccountRecovery = (body: { loginEmail: string; replacementEmail: string; statement: string }) =>
+  postPublicToken("/api/auth/account-recovery/request", body);
+export const confirmAccountRecovery = (token: string) => postPublicToken("/api/auth/account-recovery/confirm", { token });
+export const cancelAccountRecovery = (token: string) => postPublicToken("/api/auth/account-recovery/cancel", { token });
+
+export type AccountRecoveryRequestRow = {
+  id: string;
+  status: string;
+  loginEmailAtRequest: string;
+  replacementEmail: string;
+  statement: string;
+  eligibleAt: string | null;
+};
+
+const postRecoveryReview = (id: string, action: string, body: unknown) =>
+  apiRequest<{ ok: boolean }>(apiPath(`/api/platform/account-recovery/${encodeURIComponent(id)}/${action}`), {
+    method: "POST",
+    headers: getHeaders(),
+    body: JSON.stringify(body),
+    credentials: "include",
+  });
+
+export const fetchAccountRecoveryRequests = () =>
+  apiRequest<{ requests: AccountRecoveryRequestRow[] }>(apiPath("/api/platform/account-recovery"), {
+    headers: getHeaders(),
+    credentials: "include",
+  });
+export const verifyAccountRecoveryIdentity = (id: string, body: { code: string; method: string; evidenceRef: string }) =>
+  postRecoveryReview(id, "verify-identity", body);
+export const approveAccountRecoveryRequest = (id: string, body: { code: string; reason: string }) =>
+  postRecoveryReview(id, "approve", body);
+export const rejectAccountRecoveryRequest = (id: string, body: { reason: string }) =>
+  postRecoveryReview(id, "reject", body);
+
+export async function approveEmailChange(token: string): Promise<{ ok: boolean }> {
+  return apiRequest<{ ok: boolean }>(apiPath("/api/auth/email-change/approve"), {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ token }),
+    credentials: "include",
+  });
+}
+
+export async function confirmEmailChange(token: string): Promise<{ ok: boolean }> {
+  return apiRequest<{ ok: boolean }>(apiPath("/api/auth/email-change/confirm"), {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ token }),
+    credentials: "include",
+  });
+}
+
 export async function activateEmployeeWithToken(
   token: string,
   password: string
@@ -2334,6 +2394,8 @@ export async function updateEmployee(
   email: string;
   locationId?: string | null;
   assignedTableIds?: string[];
+  /** The employee must approve from their current address, so `email` has not changed yet. */
+  emailChangePending?: boolean;
 }> {
   return apiRequest(apiPath(`/api/employees/${encodeURIComponent(employeeId)}`), {
     method: "PATCH",
@@ -5834,11 +5896,14 @@ export async function listBusinessCustomerFeedback(params: {
   }>(apiPath(`/api/feedback/business${qs ? `?${qs}` : ""}`), {
     headers: getHeaders(),
     credentials: "include",
-  }).finally(() => {
-    if (businessCustomerFeedbackInflight.get(cacheKey) === promise) {
-      businessCustomerFeedbackInflight.delete(cacheKey);
-    }
-  });
+  })
+    // A malformed reply must not take down the page that embeds this list.
+    .then((res) => ({ ...res, items: Array.isArray(res?.items) ? res.items : [] }))
+    .finally(() => {
+      if (businessCustomerFeedbackInflight.get(cacheKey) === promise) {
+        businessCustomerFeedbackInflight.delete(cacheKey);
+      }
+    });
   businessCustomerFeedbackInflight.set(cacheKey, promise);
   return promise;
 }

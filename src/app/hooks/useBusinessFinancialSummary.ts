@@ -15,6 +15,20 @@ export type UseBusinessFinancialSummaryOpts = {
   includeReconciliation?: boolean;
 };
 
+/**
+ * A response missing a section is a failed load, not an empty one. Screens read these sections
+ * directly, and showing zeros would misstate someone's money.
+ */
+async function loadCompleteSummary(
+  ...args: Parameters<typeof getBusinessFinancialSummary>
+): Promise<BusinessFinancialSummaryBundle> {
+  const bundle = await getBusinessFinancialSummary(...args);
+  if (!bundle?.lifetime || !bundle.periodMetrics || !bundle.routing || !bundle.stripe || !bundle.payouts) {
+    throw new Error("Incomplete financial summary response");
+  }
+  return bundle;
+}
+
 function mergeLedgerSlice(
   base: BusinessFinancialSummaryBundle | null,
   partial: BusinessFinancialSummaryBundle,
@@ -110,7 +124,7 @@ export function useBusinessFinancialSummary(
       try {
         if (progressive) {
           markAnalyticsPerformance("analytics.financial.request");
-          const ledgerPromise = getBusinessFinancialSummary(requestedPeriod, { section: "ledger" })
+          const ledgerPromise = loadCompleteSummary(requestedPeriod, { section: "ledger" })
             .then((ledgerPart) => {
               if (!stillCurrent() || ledgerPart.period !== requestedPeriod) return;
               setData((prev) => mergeLedgerSlice(prev, ledgerPart, requestedPeriod));
@@ -126,7 +140,7 @@ export function useBusinessFinancialSummary(
               throw err;
             });
 
-          const connectPromise = getBusinessFinancialSummary(requestedPeriod, { section: "connect" })
+          const connectPromise = loadCompleteSummary(requestedPeriod, { section: "connect" })
             .then((connectPart) => {
               if (!stillCurrent()) return;
               setData((prev) => mergeConnectSlice(prev, connectPart, requestedPeriod));
@@ -147,7 +161,7 @@ export function useBusinessFinancialSummary(
               ? Promise.all([ledgerPromise, connectPromise])
                   .then(() => {
                     if (!stillCurrent()) return;
-                    return getBusinessFinancialSummary(requestedPeriod, { section: "reconciliation" });
+                    return loadCompleteSummary(requestedPeriod, { section: "reconciliation" });
                   })
                   .then((reconciliationPart) => {
                     if (!reconciliationPart || !stillCurrent()) return;
@@ -170,7 +184,7 @@ export function useBusinessFinancialSummary(
           const rejected = settled.find((r) => r.status === "rejected");
           if (rejected) throw rejected.reason;
         } else {
-          const bundle = await getBusinessFinancialSummary(requestedPeriod, {
+          const bundle = await loadCompleteSummary(requestedPeriod, {
             includeReconciliation,
           });
           if (!stillCurrent() || bundle.period !== requestedPeriod) return;

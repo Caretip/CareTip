@@ -53,6 +53,15 @@ export const Navigation = memo(function Navigation({ variant: _variant = "defaul
 
   useEffect(() => {
     if (!mobileMenuOpen) return;
+    const root = document.documentElement;
+    root.dataset.caretipMobileDrawerOpen = "";
+    return () => {
+      delete root.dataset.caretipMobileDrawerOpen;
+    };
+  }, [mobileMenuOpen]);
+
+  useEffect(() => {
+    if (!mobileMenuOpen) return;
     const prevOverflow = document.body.style.overflow;
     const prevPaddingRight = document.body.style.paddingRight;
     const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;

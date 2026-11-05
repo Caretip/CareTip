@@ -1,4 +1,27 @@
 {
+  "platformAccountRecovery": {
+    "title": "Account recovery",
+    "intro": "Each request needs one admin to record the identity check and a different admin to approve it.",
+    "yourCode": "Your authenticator code",
+    "method": "Identity check used",
+    "note": "Evidence reference or reason",
+    "empty": "No open requests.",
+    "eligible": "Can be approved after {{when}}",
+    "verify": "Record identity check",
+    "approve": "Approve",
+    "reject": "Reject",
+    "status": {
+      "awaiting_email_proof": "Waiting for the new address",
+      "awaiting_identity_review": "Needs identity check",
+      "awaiting_approval": "Needs a second admin to approve"
+    },
+    "methods": {
+      "video_call": "Video call",
+      "government_id_check": "Government ID check",
+      "employer_confirmation": "Employer confirmation",
+      "other_documented": "Other documented check"
+    }
+  },
   "nav": {
     "howItWorks": "How CareTip works",
     "features": "Features",
@@ -1706,6 +1729,40 @@
       "sendResetLink": "Send reset link",
       "sending": "Sending…",
       "errorInvalidEmail": "Please enter a valid email address."
+    },
+    "accountRecovery": {
+      "forgotLink": "No longer have access to your email?",
+      "requestTitle": "Recover your account",
+      "requestBody": "For employees who can no longer reach their login email. Support checks your identity before anything changes.",
+      "loginEmail": "Your current login email",
+      "replacementEmail": "New email address",
+      "statement": "What happened?",
+      "requestAction": "Send request",
+      "requestDone": "If this matches an account, we sent a link to the new address. Open it to continue.",
+      "confirmTitle": "Confirm your new address",
+      "confirmBody": "Confirm this address so support can review your request.",
+      "confirmAction": "Confirm address",
+      "confirmDone": "Thank you. Support will review your request and contact you at this address.",
+      "cancelTitle": "Cancel recovery request",
+      "cancelBody": "Stop this request. Your account stays as it is.",
+      "cancelAction": "Cancel request",
+      "cancelDone": "The request was cancelled. Nothing changed.",
+      "toSignIn": "Go to sign in",
+      "invalidLink": "This link is invalid or has expired.",
+      "working": "Working"
+    },
+    "emailChange": {
+      "approveTitle": "Review email change",
+      "approveBody": "A change to your login email was requested. Approve it only if you expected this.",
+      "approveAction": "Approve change",
+      "approveDone": "Approved. We sent a confirmation link to the new address.",
+      "confirmTitle": "Confirm your new email",
+      "confirmBody": "Confirm this address to use it for signing in.",
+      "confirmAction": "Confirm email",
+      "confirmDone": "Your login email was changed. Please sign in again.",
+      "toSignIn": "Go to sign in",
+      "invalidLink": "This link is invalid or has expired.",
+      "working": "Working"
     },
     "reset": {
       "invalidToken": "This reset link is invalid.",
@@ -5581,6 +5638,7 @@
       "toastNameEmailRequired": "Name and email are required.",
       "toastMonthlyGoalInvalid": "Monthly goal must be a valid number.",
       "toastStaffUpdated": "Staff updated successfully.",
+      "toastEmailChangePending": "Email change requested. The employee must approve it from their current email.",
       "toastStaffRemoved": "Staff member removed.",
       "toastActiveOn": "Staff profile is now active.",
       "toastActiveOff": "Staff profile deactivated. QR links are disabled.",

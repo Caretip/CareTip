@@ -24,7 +24,7 @@ export function CookieConsentBanner() {
           onPointerDownOutside={(event) => event.preventDefault()}
           onInteractOutside={(event) => event.preventDefault()}
         >
-          <DialogPrimitive.Title id="cookie-consent-title" className={cc.title}>
+          <DialogPrimitive.Title className={cc.title}>
             {t("cookieConsent.banner.title")}
           </DialogPrimitive.Title>
           <div className={cc.scroll}>

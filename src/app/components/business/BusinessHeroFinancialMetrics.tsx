@@ -46,7 +46,7 @@ export const BusinessHeroFinancialMetrics = memo(function BusinessHeroFinancialM
   const connectPending = (connectLoading ?? loading) && !connectFailed;
   const metrics = summary?.lifetime;
   const distributionEur = metrics?.employeeDistributionObligationEur;
-  const isBusinessDistribution = summary?.routing.mode === "business_distribution";
+  const isBusinessDistribution = summary?.routing?.mode === "business_distribution";
   const distributionZero = distributionEur != null && distributionEur < 0.005;
 
   const payoutSkeleton = <DashboardHeroMetricSkeleton variant="currency" />;

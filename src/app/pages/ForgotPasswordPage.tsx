@@ -90,6 +90,11 @@ export function ForgotPasswordPage() {
         >
           {t("auth.forgot.sendResetLink")}
         </AuthStableSubmitButton>
+        <p className="caretip-auth-form-status-slot text-center">
+          <Link to="/account/recovery" className="caretip-auth-inline-link">
+            {t("auth.accountRecovery.forgotLink")}
+          </Link>
+        </p>
         <AuthTrustStrip />
       </form>
     </AuthRecoveryLayout>
