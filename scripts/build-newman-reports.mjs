@@ -230,7 +230,7 @@ const fixedSummary = categorized
   });
 
 const at = new Date().toISOString();
-const baseUrl = "http://localhost:3001";
+const baseUrl = process.env.RUNTIME_API_BASE ?? (process.env.CI ? "http://localhost:3001" : "http://127.0.0.1:9");
 const stats = run.stats ?? {};
 const totalAssertions = stats.assertions?.total ?? 0;
 const failedAssertions = stats.assertions?.failed ?? 0;

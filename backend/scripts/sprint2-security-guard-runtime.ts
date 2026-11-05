@@ -168,7 +168,7 @@ async function main() {
         pass("registerEmployee sets requiresEmailVerification=true");
       }
 
-      const apiBase = process.env.RUNTIME_API_BASE?.trim() || "http://localhost:3001";
+      const apiBase = process.env.RUNTIME_API_BASE?.trim() || (process.env.CI ? "http://localhost:3001" : "http://127.0.0.1:9");
 
       // Forge a JWT as if register had issued one — API must still 403 via requireVerifiedEmail
       const forgedToken = signAuthJwt({

@@ -407,6 +407,28 @@ test.describe("Business dashboard refresh resilience", () => {
     expect(new URL(other.url()).pathname).toBe("/dashboard");
   });
 
+  test("a financial summary with missing sections shows unavailable, never a crash or zeros", async ({ page }) => {
+    await installMockApi(page);
+    await page.route("**/api/me/connect/financial-summary**", (route) =>
+      route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ period: "all" }) }),
+    );
+    await openDashboard(page);
+    await expect(page.locator(".business-hero-badge").first()).toContainText("Brasserie");
+    await expect(hero(page)).toContainText("Unavailable");
+    await expect(hero(page)).not.toContainText("€0,00");
+    await expect(page.getByRole("heading", { name: /couldn.t load/i })).toHaveCount(0);
+  });
+
+  test("a feedback reply without items leaves the dashboard working", async ({ page }) => {
+    await installMockApi(page);
+    await page.route("**/api/feedback/business**", (route) =>
+      route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ ok: true }) }),
+    );
+    await openDashboard(page);
+    await expect(hero(page)).toBeVisible();
+    await expect(page.getByRole("heading", { name: /couldn.t load/i })).toHaveCount(0);
+  });
+
   test("a failed optional chunk during reload recovery does not crash the page", async ({ page }) => {
     await installMockApi(page);
     await page.addInitScript(() => {

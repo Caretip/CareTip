@@ -18,7 +18,7 @@ import { userIdFromPendingMfaLoginToken, signPendingMfaLoginToken } from "../src
 type Result = { id: string; pass: boolean; detail: string };
 const results: Result[] = [];
 const backendRoot = process.cwd();
-const API = (process.env.RUNTIME_API_BASE ?? "http://localhost:3001").replace(/\/$/, "");
+const API = (process.env.RUNTIME_API_BASE ?? (process.env.CI ? "http://localhost:3001" : "http://127.0.0.1:9")).replace(/\/$/, "");
 const TRUSTED_ORIGIN = (process.env.ABUSE_TEST_ORIGIN ?? "http://localhost:5173").replace(/\/$/, "");
 
 const pass = (id: string, detail: string) => results.push({ id, pass: true, detail });
@@ -74,7 +74,8 @@ function runStaticInventory() {
   const authRoutes = read("src/routes/auth.routes.ts");
   const store = read("src/utils/rateLimitStore.ts");
 
-  if (index.includes('app.set("trust proxy", 1)') && index.includes('NODE_ENV === "production"')) {
+  const clientIp = read("src/lib/clientIp.ts");
+  if (index.includes("configureTrustProxy(app)") && clientIp.includes('env.NODE_ENV !== "production") return false') && clientIp.includes("DEFAULT_TRUST_PROXY_HOPS = 1")) {
     pass("trust-proxy-prod-only", "trust proxy 1 is production-only (XFF not spoofable in local NODE_ENV)");
   } else {
     fail("trust-proxy-prod-only", "trust proxy configuration missing or not production-gated");

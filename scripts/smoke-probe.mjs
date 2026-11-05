@@ -4,7 +4,7 @@
  */
 import { setTimeout as delay } from "node:timers/promises";
 
-const API = (process.env.SMOKE_API_URL ?? "http://localhost:3001").replace(/\/$/, "");
+const API = (process.env.SMOKE_API_URL ?? (process.env.CI ? "http://localhost:3001" : "http://127.0.0.1:9")).replace(/\/$/, "");
 const WEB = (process.env.SMOKE_WEB_URL ?? "http://localhost:5173").replace(/\/$/, "");
 
 /** Credentials must come from env — never commit real passwords. */

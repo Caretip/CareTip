@@ -225,7 +225,7 @@ test.describe("Performance change stability validation", () => {
     await page.goto("/dashboard");
     await expect(page.locator(".business-dashboard-body").first()).toBeVisible({ timeout: 15_000 });
 
-    await expect.poll(() => statsCalls.some((call) => call.scope === "full"), { timeout: 20_000 }).toBe(true);
+    await expect.poll(() => statsCalls.some((call) => call.scope === "analytics"), { timeout: 20_000 }).toBe(true);
 
     await page.evaluate(() => {
       document.querySelector(".business-dashboard-chart-card")?.scrollIntoView({ block: "center" });

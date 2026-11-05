@@ -22,7 +22,7 @@ import {
   emitActivityCreatedCanonical,
 } from "../src/socket/realtimeContracts.js";
 
-const API = (process.env.RUNTIME_API_BASE ?? "http://localhost:3001").replace(/\/$/, "");
+const API = (process.env.RUNTIME_API_BASE ?? (process.env.CI ? "http://localhost:3001" : "http://127.0.0.1:9")).replace(/\/$/, "");
 const results: string[] = [];
 const pass = (m: string) => results.push(`PASS: ${m}`);
 const fail = (m: string) => results.push(`FAIL: ${m}`);

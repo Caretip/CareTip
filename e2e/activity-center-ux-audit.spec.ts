@@ -35,11 +35,12 @@ test.describe("Activity Center UX audit (Phase 13.9)", () => {
       localStorage.setItem("caretip_i18n_language", "en");
     });
 
+    // Default blanket stub so other dashboard requests don't crash the shell. Registered first:
+    // Playwright tries the newest route first, so anything later would be hidden by this one.
+    await page.route("**/api/**", json({ ok: true }, 20));
+
     await installMockAuthRefresh(page, manager);
     await primeE2ESessionToken(page);
-
-    // Default blanket stub so other dashboard requests don't crash the shell.
-    await page.route("**/api/**", json({ ok: true }, 20));
 
     // Required by ApprovedBusinessGate / timezone cache.
     await page.route("**/api/business/profile**", json({

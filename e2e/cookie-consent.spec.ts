@@ -3,6 +3,9 @@ import { test, expect } from "@playwright/test";
 test.describe("GDPR cookie consent (Phase 13.10)", () => {
   test.beforeEach(async ({ page }) => {
     await page.addInitScript(() => {
+      // First load of the test only: the spec reloads to prove consent is remembered.
+      if (sessionStorage.getItem("e2e-consent-reset")) return;
+      sessionStorage.setItem("e2e-consent-reset", "1");
       localStorage.removeItem("caretip_cookie_consent");
     });
   });

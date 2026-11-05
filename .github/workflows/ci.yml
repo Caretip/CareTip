@@ -306,6 +306,24 @@ jobs:
       - name: Migrate database
         working-directory: backend
         run: npx prisma migrate deploy --schema=prisma/schema.prisma
+      - name: Security hardening
+        working-directory: backend
+        run: npm run test:security-hardening-unit
+      - name: Account security remediation
+        working-directory: backend
+        run: npm run test:account-security-remediation
+      - name: Account recovery
+        working-directory: backend
+        run: npm run test:account-recovery
+      - name: MFA key compatibility
+        working-directory: backend
+        run: npm run test:mfa-key-compatibility
+      - name: Cross-tenant isolation
+        working-directory: backend
+        run: npm run test:cross-tenant-isolation
+      - name: Scheduled job safety
+        working-directory: backend
+        run: npm run test:scheduled-job-safety
       - name: Sprint 2 security regression
         working-directory: backend
         run: npm run test:sprint2-security

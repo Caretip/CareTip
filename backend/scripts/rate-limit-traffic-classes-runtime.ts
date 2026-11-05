@@ -302,5 +302,21 @@ function fakeRedis(shared: Map<string, Entry>, clock: { now: number }) {
   store.setRateLimitRedisClientForTests(null);
 }
 
+// --- Users sharing a proxy address ---
+{
+  const shared = await serve("198.51.100.77");
+  const first = signJwt({ sub: "shared-user-1", role: "MANAGER", type: "access" }, "5m");
+  const second = signJwt({ sub: "shared-user-2", role: "MANAGER", type: "access" }, "5m");
+  const blockedAt = await hitUntilBlocked(shared.url, { path: "/api/business/me/stats", bearer: first }, apiTrafficRateLimits.dashboardRead.burst.max + 5);
+  assert.ok(blockedAt > 0, "one user reaches their own limit");
+  const other = await hit(shared.url, { path: "/api/business/me/stats", bearer: second });
+  assert.notEqual(other.status, 429, "two signed-in users behind one proxy stay independent");
+  const refreshAfter = await hit(shared.url, { method: "POST", path: "/api/auth/refresh", cookie: `${refreshCookieName()}=abc` });
+  assert.notEqual(refreshAfter.status, 429, "refresh still works while dashboard reads are limited");
+  const tip = await hit(shared.url, { method: "POST", path: "/api/payments/create-tip-session" });
+  assert.notEqual(tip.status, 429, "public tipping has its own budget");
+  await shared.close();
+}
+
 console.log("rate-limit-traffic-classes: ok");
 process.exit(0);

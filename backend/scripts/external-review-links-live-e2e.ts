@@ -16,7 +16,7 @@ import {
 } from "../src/services/locations.service.js";
 import { googleWriteReviewUrlFromPlaceId } from "../src/lib/externalReviewLinks.js";
 
-const API = "http://127.0.0.1:3001";
+const API = process.env.RUNTIME_API_BASE ?? (process.env.CI ? "http://localhost:3001" : "http://127.0.0.1:9");
 const APP = "http://localhost:5173";
 
 const VENUE = {

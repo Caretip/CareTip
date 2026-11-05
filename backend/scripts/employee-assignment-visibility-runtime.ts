@@ -12,7 +12,7 @@ import { prisma } from "../src/prisma.js";
 import { signAuthJwt } from "../src/services/auth.service.js";
 import * as employeeService from "../src/services/employee.service.js";
 
-const API = (process.env.RUNTIME_API_BASE ?? "http://localhost:3001").replace(/\/$/, "");
+const API = (process.env.RUNTIME_API_BASE ?? (process.env.CI ? "http://localhost:3001" : "http://127.0.0.1:9")).replace(/\/$/, "");
 const scriptFile = fileURLToPath(import.meta.url);
 const scriptDir = path.dirname(scriptFile);
 

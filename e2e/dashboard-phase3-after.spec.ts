@@ -32,6 +32,7 @@ const admin = {
     id: "e2e-phase3-admin",
     email: "phase3-admin@e2e.local",
     role: "platform_admin",
+    isPlatformAdmin: true,
     name: "Phase3 Admin",
     emailVerified: true,
     hasCompletedOnboarding: true,
