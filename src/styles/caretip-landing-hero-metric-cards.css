@@ -88,7 +88,7 @@
   display: inline-flex;
   align-items: center;
   gap: 0.1rem;
-  color: rgb(233 120 28);
+  color: rgb(235 153 44);
 }
 
 .caretip-landing .caretip-hero-tip-panel__star {
@@ -127,12 +127,12 @@
 }
 
 .caretip-landing .caretip-hero-tip-panel__amount--selected {
-  border-color: rgb(233 120 28 / 0.85);
-  background: rgb(233 120 28 / 0.12);
+  border-color: rgb(235 153 44 / 0.85);
+  background: rgb(235 153 44 / 0.12);
   color: rgb(154 52 18);
   box-shadow:
     inset 0 1px 0 rgb(255 255 255 / 0.45),
-    0 0 0 1px rgb(233 120 28 / 0.18);
+    0 0 0 1px rgb(235 153 44 / 0.18);
   font-weight: 700;
 }
 
@@ -162,9 +162,9 @@ html.dark .caretip-landing .caretip-hero-tip-panel__amount {
 
 html.dark .caretip-landing .caretip-hero-tip-panel__amount--selected {
   border-color: rgb(251 191 36 / 0.9);
-  background: rgb(233 120 28 / 0.22);
+  background: rgb(235 153 44 / 0.22);
   color: rgb(254 243 199);
-  box-shadow: 0 0 0 1px rgb(233 120 28 / 0.22);
+  box-shadow: 0 0 0 1px rgb(235 153 44 / 0.22);
 }
 
 /*

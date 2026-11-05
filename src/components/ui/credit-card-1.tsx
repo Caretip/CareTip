@@ -131,14 +131,14 @@ export function InteractiveCreditCard({
     dark: "bg-gradient-to-br from-gray-800 via-gray-700 to-gray-900",
     glass: "border border-white/20 bg-white/15 backdrop-blur-xl dark:bg-white/10",
     caretip:
-      "border border-white/20 bg-gradient-to-br from-[#c2410c] via-[#e9781c] to-[#f59e0b] shadow-[0_24px_56px_-18px_rgba(0,0,0,0.32),0_20px_48px_-20px_rgba(233,120,28,0.4),inset_0_1px_0_rgba(255,255,255,0.26),inset_0_-12px_24px_-8px_rgba(0,0,0,0.18)]",
+      "border border-white/20 bg-gradient-to-br from-[#c2410c] via-[#eb992c] to-[#f59e0b] shadow-[0_24px_56px_-18px_rgba(0,0,0,0.32),0_20px_48px_-20px_rgba(235,153,44,0.4),inset_0_1px_0_rgba(255,255,255,0.26),inset_0_-12px_24px_-8px_rgba(0,0,0,0.18)]",
   };
 
   const caretipCardBackdrop = (
     <div className="pointer-events-none absolute inset-0 overflow-hidden rounded-2xl">
       <div
         aria-hidden
-        className="absolute inset-0 bg-gradient-to-br from-[#c2410c] via-[#e9781c] to-[#f59e0b]"
+        className="absolute inset-0 bg-gradient-to-br from-[#c2410c] via-[#eb992c] to-[#f59e0b]"
       />
       <div
         aria-hidden

@@ -11,7 +11,7 @@ import { caretipBtnPrimary } from "@/lib/caretipButtonSystem";
 // BRAND COLORS (PRIMARY)
 // ============================================
 export const BRAND_COLORS = {
-  PRIMARY_ORANGE: "#e9781c",
+  PRIMARY_ORANGE: "#eb992c",
   WHITE: "#FFFFFF",
   BLACK: "#000000",
 } as const;
@@ -28,7 +28,7 @@ export const PREMIUM_GRADIENTS = {
   PREMIUM_WARM_DARK_DARK: "var(--caretip-premium-gradient-dark)",
   PREMIUM_CTA: "var(--caretip-premium-cta-gradient)",
   /** Light tint for upgrade / locked feature cards (Tier 3 subtle) */
-  ORANGE_SUBTLE: "linear-gradient(135deg, rgba(233, 120, 28, 0.10) 0%, rgba(233, 120, 28, 0.00) 100%)",
+  ORANGE_SUBTLE: "linear-gradient(135deg, rgba(235, 153, 44, 0.10) 0%, rgba(235, 153, 44, 0.00) 100%)",
   SOFT_LIGHT: "linear-gradient(135deg, #F9FAFB 0%, #FFFFFF 100%)",
   DARK_WARM: "linear-gradient(135deg, #111827 0%, #111827 100%)",
 } as const;
@@ -39,10 +39,10 @@ export const PREMIUM_GRADIENTS = {
 export const SUPPORT_COLORS = {
   SOFT_GRAY: "#F9FAFB",
   CHARCOAL: "#111827",
-  WARM_GOLD: "#e9781c",
-  SUCCESS_GREEN: "#e9781c",
+  WARM_GOLD: "#eb992c",
+  SUCCESS_GREEN: "#eb992c",
   ERROR_RED: "#111827",
-  WARNING_AMBER: "#e9781c",
+  WARNING_AMBER: "#eb992c",
 } as const;
 
 // ============================================
@@ -53,8 +53,8 @@ export const SHADOWS = {
   SOFT: "0 4px 6px rgba(0, 0, 0, 0.07)",
   MEDIUM: "0 10px 15px rgba(0, 0, 0, 0.1)",
   ELEVATED: "0 20px 25px rgba(0, 0, 0, 0.15)",
-  HOVER: "0 25px 35px rgba(233, 120, 28, 0.15)",
-  GLOW_ORANGE: "0 0 20px rgba(233, 120, 28, 0.25)",
+  HOVER: "0 25px 35px rgba(235, 153, 44, 0.15)",
+  GLOW_ORANGE: "0 0 20px rgba(235, 153, 44, 0.25)",
 } as const;
 
 // ============================================

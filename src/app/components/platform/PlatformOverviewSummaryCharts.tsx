@@ -83,7 +83,7 @@ export function PlatformOverviewSummaryCharts({
   }, [subscriptionMonitoring?.overview, t]);
 
   const tipsConfig: ChartConfig = {
-    tipsEur: { label: t("admin.overview.charts.tipsVolume"), color: "#e9781c" },
+    tipsEur: { label: t("admin.overview.charts.tipsVolume"), color: "#eb992c" },
   };
 
   const subsConfig: ChartConfig = {

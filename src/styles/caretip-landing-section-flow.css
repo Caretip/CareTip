@@ -63,7 +63,7 @@ html:not(.dark) .caretip-landing #for-employees::before {
   pointer-events: none;
   background: radial-gradient(
     ellipse 68% 48% at 28% 42%,
-    rgba(233, 120, 28, 0.045) 0%,
+    rgba(235, 153, 44, 0.045) 0%,
     transparent 62%
   );
 }
@@ -84,7 +84,7 @@ html:not(.dark) .caretip-landing #business-section::before {
   pointer-events: none;
   background: radial-gradient(
     ellipse 70% 50% at 72% 38%,
-    rgba(233, 120, 28, 0.04) 0%,
+    rgba(235, 153, 44, 0.04) 0%,
     transparent 60%
   );
 }

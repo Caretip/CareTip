@@ -18,7 +18,7 @@ const mobileRoot = path.join(__dirname, "..");
 
 /** Traced from src/styles/caretip-brand.css / src/lib/caretipBrand.ts */
 const WEB_ORANGE_LIGHT = "#ff9e2d";
-const WEB_ORANGE_BASE = "#e9781c";
+const WEB_ORANGE_BASE = "#eb992c";
 /** Legacy splash plate that must not return in native splash logos. */
 const LEGACY_SPLASH_PLATE = { r: 235, g: 153, b: 44 };
 

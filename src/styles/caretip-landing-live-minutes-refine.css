@@ -47,7 +47,7 @@ html.dark .caretip-landing #how-it-works.caretip-live-minutes-section {
     ellipse 74% 62% at 50% 46%,
     rgba(255, 210, 122, 0.34) 0%,
     rgba(245, 176, 65, 0.16) 28%,
-    rgba(233, 120, 28, 0.1) 46%,
+    rgba(235, 153, 44, 0.1) 46%,
     transparent 72%
   );
   opacity: 0.88;
@@ -57,7 +57,7 @@ html.dark .caretip-landing #how-it-works .caretip-live-minutes-visual-wrap::befo
   background: radial-gradient(
     ellipse 74% 62% at 50% 46%,
     rgba(245, 176, 65, 0.14) 0%,
-    rgba(233, 120, 28, 0.08) 34%,
+    rgba(235, 153, 44, 0.08) 34%,
     transparent 72%
   );
   opacity: 0.62;
@@ -76,8 +76,8 @@ html.dark .caretip-landing #how-it-works .caretip-live-minutes-visual-wrap::befo
   border-radius: 50%;
   background: radial-gradient(
     ellipse 68% 58% at 50% 48%,
-    rgba(233, 120, 28, 0.16) 0%,
-    rgba(233, 120, 28, 0.06) 42%,
+    rgba(235, 153, 44, 0.16) 0%,
+    rgba(235, 153, 44, 0.06) 42%,
     transparent 70%
   );
   filter: blur(10px);
@@ -263,7 +263,7 @@ html.dark .caretip-landing #how-it-works .caretip-process-steps--editorial::befo
   z-index: 1;
   bottom: auto;
   height: var(--caretip-live-minutes-progress);
-  background: #e9781c;
+  background: #eb992c;
   opacity: 0.55;
   transition: height 0.38s cubic-bezier(0.22, 1, 0.36, 1);
 }
@@ -341,16 +341,16 @@ html.dark .caretip-landing #how-it-works .caretip-process-step__dot {
 }
 
 .caretip-landing #how-it-works .caretip-process-step--active .caretip-process-step__dot {
-  background: #e9781c;
+  background: #eb992c;
   box-shadow:
     0 0 0 2px var(--care-sand, #f7f3ed),
-    0 0 0 3px rgba(233, 120, 28, 0.18);
+    0 0 0 3px rgba(235, 153, 44, 0.18);
 }
 
 html.dark .caretip-landing #how-it-works .caretip-process-step--active .caretip-process-step__dot {
   box-shadow:
     0 0 0 2px hsl(var(--background)),
-    0 0 0 3px rgba(233, 120, 28, 0.22);
+    0 0 0 3px rgba(235, 153, 44, 0.22);
 }
 
 .caretip-landing #how-it-works .caretip-process-step__line {
@@ -385,12 +385,12 @@ html.dark .caretip-landing #how-it-works .caretip-process-step--active .caretip-
 
 .caretip-landing #how-it-works .caretip-process-step--active .caretip-process-step__content {
   background: rgba(255, 251, 245, 0.94);
-  border-left-color: #e9781c;
+  border-left-color: #eb992c;
 }
 
 html.dark .caretip-landing #how-it-works .caretip-process-step--active .caretip-process-step__content {
   background: rgba(42, 38, 34, 0.55);
-  border-left-color: #e9781c;
+  border-left-color: #eb992c;
 }
 
 .caretip-landing #how-it-works .caretip-process-step__head {
@@ -415,7 +415,7 @@ html.dark .caretip-landing #how-it-works .caretip-process-step-number {
 }
 
 .caretip-landing #how-it-works .caretip-process-step--active .caretip-process-step-number {
-  color: #e9781c;
+  color: #eb992c;
 }
 
 .caretip-landing #how-it-works .caretip-process-step__sep {
@@ -488,7 +488,7 @@ html.dark .caretip-landing #how-it-works .caretip-process-step-desc--active {
   font-weight: 600;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: #e9781c;
+  color: #eb992c;
 }
 
 .caretip-landing #how-it-works .caretip-process-step:not(.caretip-process-step--active) {
@@ -562,12 +562,12 @@ html.dark .caretip-landing #how-it-works .caretip-process-step-desc--active {
 }
 
 .caretip-landing #how-it-works .caretip-live-minutes-step--active {
-  border-color: rgba(233, 120, 28, 0.24);
+  border-color: rgba(235, 153, 44, 0.24);
   background: linear-gradient(180deg, #fffdfb 0%, #fffaf5 100%);
   box-shadow:
     0 1px 2px rgba(17, 17, 17, 0.04),
-    0 0 0 1px rgba(233, 120, 28, 0.07),
-    0 10px 26px -8px rgba(233, 120, 28, 0.1),
+    0 0 0 1px rgba(235, 153, 44, 0.07),
+    0 10px 26px -8px rgba(235, 153, 44, 0.1),
     0 18px 40px -14px rgba(17, 17, 17, 0.06);
 }
 
@@ -590,12 +590,12 @@ html.dark .caretip-landing #how-it-works .caretip-live-minutes-step {
 }
 
 html.dark .caretip-landing #how-it-works .caretip-live-minutes-step--active {
-  border-color: rgba(233, 120, 28, 0.32);
+  border-color: rgba(235, 153, 44, 0.32);
   background: linear-gradient(180deg, rgba(28, 24, 20, 0.95) 0%, rgba(20, 18, 16, 0.98) 100%);
   box-shadow:
     0 1px 2px rgba(0, 0, 0, 0.2),
-    0 0 0 1px rgba(233, 120, 28, 0.12),
-    0 12px 28px -10px rgba(233, 120, 28, 0.15);
+    0 0 0 1px rgba(235, 153, 44, 0.12),
+    0 12px 28px -10px rgba(235, 153, 44, 0.15);
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -39,7 +39,7 @@ export function guestPrimaryButtonStyle(branding?: PublicGuestBranding | null): 
 export function guestSuccessPrimaryButtonStyle(branding?: PublicGuestBranding | null): CSSProperties {
   const accent = guestBrandAccentColor(branding);
   return {
-    background: `linear-gradient(135deg, #ff9e2d 0%, ${accent} 52%, #d96810 100%)`,
+    background: `linear-gradient(135deg, #ff9e2d 0%, ${accent} 52%, #eb992c 100%)`,
     borderColor: "transparent",
     boxShadow: `0 8px 24px color-mix(in srgb, ${accent} 38%, transparent)`,
   };

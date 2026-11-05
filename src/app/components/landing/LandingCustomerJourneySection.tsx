@@ -23,7 +23,7 @@ const JOURNEY_STEPS = [
 ] as const;
 
 const HIGHLIGHT_CLASS =
-  "bg-gradient-to-r from-[#ff9e2d] via-[#e9781c] to-[#d96810] bg-clip-text text-transparent";
+  "bg-gradient-to-r from-[#ff9e2d] via-[#eb992c] to-[#eb992c] bg-clip-text text-transparent";
 
 /**
  * Guest tipping flow on mobile — scan → choose recipient → tip amount → confirmation.

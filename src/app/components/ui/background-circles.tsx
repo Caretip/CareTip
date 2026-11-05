@@ -24,7 +24,7 @@ const COLOR_VARIANTS = {
       "border-gray-200/25 dark:border-neutral-800/25",
     ],
     gradient: "from-primary/20",
-    glow: "bg-[radial-gradient(ellipse_at_center,rgba(233,120,28,0.25),transparent_70%)]",
+    glow: "bg-[radial-gradient(ellipse_at_center,rgba(235,153,44,0.25),transparent_70%)]",
   },
   secondary: {
     border: [
@@ -33,7 +33,7 @@ const COLOR_VARIANTS = {
       "border-gray-200/25 dark:border-neutral-800/25",
     ],
     gradient: "from-primary/20",
-    glow: "bg-[radial-gradient(ellipse_at_center,rgba(233,120,28,0.25),transparent_70%)]",
+    glow: "bg-[radial-gradient(ellipse_at_center,rgba(235,153,44,0.25),transparent_70%)]",
   },
   tertiary: {
     border: [
@@ -42,7 +42,7 @@ const COLOR_VARIANTS = {
       "border-gray-200/25 dark:border-neutral-800/25",
     ],
     gradient: "from-primary/20",
-    glow: "bg-[radial-gradient(ellipse_at_center,rgba(233,120,28,0.25),transparent_70%)]",
+    glow: "bg-[radial-gradient(ellipse_at_center,rgba(235,153,44,0.25),transparent_70%)]",
   },
   quaternary: {
     border: [
@@ -51,7 +51,7 @@ const COLOR_VARIANTS = {
       "border-gray-200/25 dark:border-neutral-800/25",
     ],
     gradient: "from-primary/20",
-    glow: "bg-[radial-gradient(ellipse_at_center,rgba(233,120,28,0.25),transparent_70%)]",
+    glow: "bg-[radial-gradient(ellipse_at_center,rgba(235,153,44,0.25),transparent_70%)]",
   },
   quinary: {
     border: [
@@ -60,7 +60,7 @@ const COLOR_VARIANTS = {
       "border-gray-200/25 dark:border-neutral-800/25",
     ],
     gradient: "from-primary/20",
-    glow: "bg-[radial-gradient(ellipse_at_center,rgba(233,120,28,0.25),transparent_70%)]",
+    glow: "bg-[radial-gradient(ellipse_at_center,rgba(235,153,44,0.25),transparent_70%)]",
   },
   senary: {
     border: [
@@ -69,7 +69,7 @@ const COLOR_VARIANTS = {
       "border-gray-200/25 dark:border-neutral-800/25",
     ],
     gradient: "from-primary/20",
-    glow: "bg-[radial-gradient(ellipse_at_center,rgba(233,120,28,0.25),transparent_70%)]",
+    glow: "bg-[radial-gradient(ellipse_at_center,rgba(235,153,44,0.25),transparent_70%)]",
   },
   septenary: {
     border: [
@@ -78,7 +78,7 @@ const COLOR_VARIANTS = {
       "border-gray-200/25 dark:border-neutral-800/25",
     ],
     gradient: "from-primary/20",
-    glow: "bg-[radial-gradient(ellipse_at_center,rgba(233,120,28,0.25),transparent_70%)]",
+    glow: "bg-[radial-gradient(ellipse_at_center,rgba(235,153,44,0.25),transparent_70%)]",
   },
   octonary: {
     border: [
@@ -87,7 +87,7 @@ const COLOR_VARIANTS = {
       "border-gray-200/25 dark:border-neutral-800/25",
     ],
     gradient: "from-primary/20",
-    glow: "bg-[radial-gradient(ellipse_at_center,rgba(233,120,28,0.25),transparent_70%)]",
+    glow: "bg-[radial-gradient(ellipse_at_center,rgba(235,153,44,0.25),transparent_70%)]",
   },
   caretip: {
     border: [
@@ -96,7 +96,7 @@ const COLOR_VARIANTS = {
       "border-gray-200/25 dark:border-neutral-800/25",
     ],
     gradient: "from-primary/20",
-    glow: "bg-[radial-gradient(ellipse_at_center,rgba(233,120,28,0.25),transparent_70%)]",
+    glow: "bg-[radial-gradient(ellipse_at_center,rgba(235,153,44,0.25),transparent_70%)]",
   },
 } as const;
 
@@ -239,7 +239,7 @@ export function BackgroundCircles({
             COLOR_VARIANTS.caretip.glow
           )}
         />
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(233,120,28,0.18),transparent)] blur-[80px]" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(235,153,44,0.18),transparent)] blur-[80px]" />
       </div>
     </div>
   );

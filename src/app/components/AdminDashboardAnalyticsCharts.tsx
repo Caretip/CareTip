@@ -44,7 +44,7 @@ import {
 } from "recharts";
 
 const ADMIN_CHART_COLORS = {
-  primary: "#e9781c",
+  primary: "#eb992c",
   cyan: "#22d3ee",
   purple: "#a78bfa",
   emerald: "#34d399",

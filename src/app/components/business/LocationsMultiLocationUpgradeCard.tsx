@@ -25,7 +25,7 @@ export function LocationsMultiLocationUpgradeCard({
       )}
       aria-labelledby="locations-upgrade-title"
     >
-      <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-[#e9781c]">
+      <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-[#eb992c]">
         {t("subscription.features.multiLocation.upgradeRequired")}
       </p>
       <h2

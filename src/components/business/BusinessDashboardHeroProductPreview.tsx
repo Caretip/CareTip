@@ -38,7 +38,7 @@ export function BusinessDashboardHeroProductPreview({ className }: Props) {
         className="pointer-events-none absolute inset-0 z-[1]"
         style={{
           background:
-            "radial-gradient(700px circle at 18% 28%, rgba(233,120,28,0.18), transparent 56%), radial-gradient(900px circle at 78% 62%, rgba(233,120,28,0.10), transparent 62%), linear-gradient(to top, rgba(0,0,0,0.62), rgba(0,0,0,0.0) 60%)",
+            "radial-gradient(700px circle at 18% 28%, rgba(235,153,44,0.18), transparent 56%), radial-gradient(900px circle at 78% 62%, rgba(235,153,44,0.10), transparent 62%), linear-gradient(to top, rgba(0,0,0,0.62), rgba(0,0,0,0.0) 60%)",
         }}
         aria-hidden
       />
@@ -78,7 +78,7 @@ export function BusinessDashboardHeroProductPreview({ className }: Props) {
                           <div className="caretip-qr-glow absolute inset-0" aria-hidden />
                           <svg viewBox="0 0 64 64" className="absolute inset-0 h-full w-full p-2">
                             <rect width="64" height="64" fill="none" />
-                            <g fill="rgba(233,120,28,0.92)">
+                            <g fill="rgba(235,153,44,0.92)">
                               <rect x="6" y="6" width="16" height="16" rx="3" />
                               <rect x="42" y="6" width="16" height="16" rx="3" />
                               <rect x="6" y="42" width="16" height="16" rx="3" />

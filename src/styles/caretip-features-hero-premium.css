@@ -3,8 +3,8 @@
  */
 
 .caretip-features-page {
-  --caretip-features-hero-accent: #e9781c;
-  --caretip-features-hero-accent-rgb: 233 120 28;
+  --caretip-features-hero-accent: #eb992c;
+  --caretip-features-hero-accent-rgb: 235 153 44;
   --caretip-features-hero-copy-max: min(100%, 48rem);
   --caretip-features-hero-visual-max: min(100%, 58rem);
   --caretip-features-hero-stack-gap: clamp(1.125rem, 2.5vw, 1.625rem);
@@ -49,7 +49,7 @@ html.dark .caretip-features-hero-v2__shell {
 
 html.dark .caretip-features-hero-v2__backdrop {
   background:
-    radial-gradient(ellipse 70% 50% at 12% 0%, rgb(233 120 28 / 0.12) 0%, transparent 58%),
+    radial-gradient(ellipse 70% 50% at 12% 0%, rgb(235 153 44 / 0.12) 0%, transparent 58%),
     linear-gradient(180deg, rgb(23 23 23 / 0.5) 0%, transparent 45%);
 }
 
@@ -65,7 +65,7 @@ html.dark .caretip-features-hero-v2__backdrop {
   border-radius: 9999px;
   background: radial-gradient(
     ellipse at center,
-    rgb(233 120 28 / 0.14) 0%,
+    rgb(235 153 44 / 0.14) 0%,
     rgb(255 237 213 / 0.28) 40%,
     transparent 72%
   );
@@ -275,10 +275,10 @@ html.dark .caretip-features-hero-v2__quick-start-label {
 
 .caretip-features-hero-v2__chip:hover {
   transform: translateY(-2px);
-  border-color: rgb(233 120 28 / 0.28);
+  border-color: rgb(235 153 44 / 0.28);
   box-shadow:
     0 4px 12px rgb(15 23 42 / 0.06),
-    0 14px 32px -10px rgb(233 120 28 / 0.16);
+    0 14px 32px -10px rgb(235 153 44 / 0.16);
 }
 
 html.dark .caretip-features-hero-v2__chip {
@@ -455,7 +455,7 @@ html.dark .caretip-features-hero-v2__visual-main-wrap {
   position: absolute;
   inset: 0;
   border-radius: 1.25rem;
-  border: 1px solid rgb(233 120 28 / 0.08);
+  border: 1px solid rgb(235 153 44 / 0.08);
   background:
     linear-gradient(rgba(120, 113, 105, 0.05) 1px, transparent 1px),
     linear-gradient(90deg, rgba(120, 113, 105, 0.05) 1px, transparent 1px);
@@ -675,14 +675,14 @@ html.dark .caretip-features-hero-v2__visual-card-value {
   box-shadow:
     inset 0 1px 0 rgb(255 255 255 / 0.04),
     0 24px 56px -24px rgb(14 13 11 / 0.55),
-    0 0 0 1px rgb(233 120 28 / 0.12);
+    0 0 0 1px rgb(235 153 44 / 0.12);
 }
 
 .caretip-features-final-cta__button {
   width: 100%;
   box-shadow:
     0 1px 2px rgb(0 0 0 / 0.12),
-    0 10px 28px -8px rgb(233 120 28 / 0.55);
+    0 10px 28px -8px rgb(235 153 44 / 0.55);
 }
 
 @media (min-width: 640px) {

@@ -6,9 +6,9 @@
 :root {
   --caretip-feature-check-size: 1.125rem;
   --caretip-feature-check-glyph: 0.75rem;
-  --caretip-feature-check-bg: rgb(233 120 28 / 0.12);
+  --caretip-feature-check-bg: rgb(235 153 44 / 0.12);
   --caretip-feature-check-fg: rgb(217 119 6);
-  --caretip-feature-check-bg-dark: rgb(233 120 28 / 0.2);
+  --caretip-feature-check-bg-dark: rgb(235 153 44 / 0.2);
   --caretip-feature-check-fg-dark: rgb(251 191 36);
 }
 

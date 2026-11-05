@@ -27,7 +27,7 @@ export function BusinessDashboardHeroIllustration({ className, title = "CareTip 
         className="pointer-events-none absolute inset-0 z-[1]"
         style={{
           background:
-            "radial-gradient(700px circle at 20% 25%, rgba(233,120,28,0.20), transparent 55%), radial-gradient(900px circle at 70% 65%, rgba(233,120,28,0.14), transparent 60%), radial-gradient(1100px circle at 50% 120%, rgba(255,255,255,0.05), transparent 55%)",
+            "radial-gradient(700px circle at 20% 25%, rgba(235,153,44,0.20), transparent 55%), radial-gradient(900px circle at 70% 65%, rgba(235,153,44,0.14), transparent 60%), radial-gradient(1100px circle at 50% 120%, rgba(255,255,255,0.05), transparent 55%)",
         }}
         aria-hidden
       />
@@ -40,7 +40,7 @@ export function BusinessDashboardHeroIllustration({ className, title = "CareTip 
       >
         <defs>
           <linearGradient id="ct_orange" x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0%" stopColor="#e9781c" stopOpacity="1" />
+            <stop offset="0%" stopColor="#eb992c" stopOpacity="1" />
             <stop offset="100%" stopColor="#F59E0B" stopOpacity="0.9" />
           </linearGradient>
           <linearGradient id="ct_panel" x1="0" y1="0" x2="0" y2="1">
@@ -81,7 +81,7 @@ export function BusinessDashboardHeroIllustration({ className, title = "CareTip 
 
         {/* Header */}
         <g transform="translate(120 112)">
-          <rect x="0" y="0" width="210" height="36" rx="18" fill="rgba(233,120,28,0.18)" stroke="rgba(233,120,28,0.35)" />
+          <rect x="0" y="0" width="210" height="36" rx="18" fill="rgba(235,153,44,0.18)" stroke="rgba(235,153,44,0.35)" />
           <circle cx="20" cy="18" r="7" fill="url(#ct_orange)" />
           <rect x="38" y="13" width="140" height="10" rx="5" fill="rgba(255,255,255,0.75)" />
 
@@ -92,10 +92,10 @@ export function BusinessDashboardHeroIllustration({ className, title = "CareTip 
         {/* QR block */}
         <g transform="translate(140 184)">
           <rect x="0" y="0" width="186" height="186" rx="22" fill="rgba(255,255,255,0.04)" stroke="rgba(255,255,255,0.10)" />
-          <rect x="18" y="18" width="150" height="150" rx="18" fill="rgba(0,0,0,0.55)" stroke="rgba(233,120,28,0.35)" filter="url(#softGlow)" />
+          <rect x="18" y="18" width="150" height="150" rx="18" fill="rgba(0,0,0,0.55)" stroke="rgba(235,153,44,0.35)" filter="url(#softGlow)" />
 
           {/* Simple QR pattern */}
-          <g fill="rgba(233,120,28,0.92)">
+          <g fill="rgba(235,153,44,0.92)">
             <rect x="34" y="34" width="34" height="34" rx="6" />
             <rect x="118" y="34" width="34" height="34" rx="6" />
             <rect x="34" y="118" width="34" height="34" rx="6" />
@@ -118,7 +118,7 @@ export function BusinessDashboardHeroIllustration({ className, title = "CareTip 
           </g>
 
           {/* Caption pill */}
-          <rect x="0" y="204" width="186" height="38" rx="19" fill="rgba(233,120,28,0.16)" stroke="rgba(233,120,28,0.30)" />
+          <rect x="0" y="204" width="186" height="38" rx="19" fill="rgba(235,153,44,0.16)" stroke="rgba(235,153,44,0.30)" />
           <rect x="18" y="216" width="120" height="12" rx="6" fill="rgba(255,255,255,0.78)" />
           <rect x="146" y="214" width="22" height="16" rx="8" fill="url(#ct_orange)" />
         </g>
@@ -157,8 +157,8 @@ export function BusinessDashboardHeroIllustration({ className, title = "CareTip 
               width="18"
               height={b.h}
               rx="7"
-              fill="rgba(233,120,28,0.22)"
-              stroke="rgba(233,120,28,0.18)"
+              fill="rgba(235,153,44,0.22)"
+              stroke="rgba(235,153,44,0.18)"
             />
           ))}
         </g>
@@ -166,7 +166,7 @@ export function BusinessDashboardHeroIllustration({ className, title = "CareTip 
         {/* Tip / payment cards */}
         <g transform="translate(370 372)">
           <rect x="0" y="0" width="198" height="86" rx="22" fill="rgba(255,255,255,0.04)" stroke="rgba(255,255,255,0.10)" />
-          <circle cx="34" cy="43" r="18" fill="rgba(233,120,28,0.18)" stroke="rgba(233,120,28,0.35)" />
+          <circle cx="34" cy="43" r="18" fill="rgba(235,153,44,0.18)" stroke="rgba(235,153,44,0.35)" />
           <path d="M28 43h12" stroke="url(#ct_orange)" strokeWidth="3.5" strokeLinecap="round" />
           <path d="M34 36v14" stroke="url(#ct_orange)" strokeWidth="3.5" strokeLinecap="round" />
           <rect x="64" y="26" width="96" height="10" rx="5" fill="rgba(255,255,255,0.75)" />

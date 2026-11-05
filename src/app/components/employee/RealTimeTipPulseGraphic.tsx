@@ -2,7 +2,7 @@ import { motion } from "motion/react";
 import { QrCode } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-const ACCENT = "#e9781c";
+const ACCENT = "#eb992c";
 
 const PARTICLE_COUNT = 14;
 
@@ -72,7 +72,7 @@ export function RealTimeTipPulseGraphic({
     >
       <QrCode
         className={cn(
-          "drop-shadow-[0_0_28px_rgba(233,120,28,0.45)]",
+          "drop-shadow-[0_0_28px_rgba(235,153,44,0.45)]",
           embedded
             ? "h-[min(9rem,42%)] w-[min(9rem,42%)] min-h-[6.5rem] min-w-[6.5rem] sm:h-[38%] sm:w-[38%] sm:min-h-[7rem] sm:min-w-[7rem]"
             : "h-[clamp(3.75rem,46%,7rem)] w-[clamp(3.75rem,46%,7rem)] sm:h-[clamp(4.25rem,44%,8rem)] sm:w-[clamp(4.25rem,44%,8rem)] lg:h-36 lg:w-36",
@@ -116,7 +116,7 @@ export function RealTimeTipPulseGraphic({
           {qrRotate}
         </div>
       </div>
-      <p className="pointer-events-none mt-2 text-center text-[10px] font-semibold uppercase tracking-[0.18em] text-[#e9781c]/90 sm:mt-2.5 sm:text-[11px]">
+      <p className="pointer-events-none mt-2 text-center text-[10px] font-semibold uppercase tracking-[0.18em] text-[#eb992c]/90 sm:mt-2.5 sm:text-[11px]">
         Real-time tip pulse
       </p>
     </div>

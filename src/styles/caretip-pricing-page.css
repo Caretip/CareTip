@@ -3,8 +3,8 @@
  */
 
 .caretip-pricing-page--wise {
-  --caretip-pricing-accent: #e9781c;
-  --caretip-pricing-accent-rgb: 233 120 28;
+  --caretip-pricing-accent: #eb992c;
+  --caretip-pricing-accent-rgb: 235 153 44;
   --caretip-pricing-accent-muted: #f5d9b3;
   --caretip-pricing-dark: #161412;
   --caretip-pricing-dark-rgb: 22 20 18;
@@ -292,7 +292,7 @@ html.dark .caretip-pricing-cta-wise__trust-item {
   width: 0.4rem;
   height: 0.4rem;
   border-radius: 9999px;
-  background: rgb(233 120 28);
-  box-shadow: 0 0 0 3px rgb(233 120 28 / 0.18);
+  background: rgb(235 153 44);
+  box-shadow: 0 0 0 3px rgb(235 153 44 / 0.18);
   flex-shrink: 0;
 }

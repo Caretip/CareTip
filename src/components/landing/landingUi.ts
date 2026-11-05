@@ -14,7 +14,7 @@ export function landingCopyVisible(text: string | undefined): boolean {
 
 /** Company CTA orange gradient — hero keyword + section headline emphasis. */
 const brandAccentGradient =
-  "caretip-hero-headline-accent bg-gradient-to-r from-[#ff9e2d] via-[#e9781c] to-[#d96810] bg-clip-text text-transparent dark:from-[#ffb04a] dark:via-[#e9781c] dark:to-[#ff9e2d]";
+  "caretip-hero-headline-accent bg-gradient-to-r from-[#ff9e2d] via-[#eb992c] to-[#eb992c] bg-clip-text text-transparent dark:from-[#ffb04a] dark:via-[#eb992c] dark:to-[#ff9e2d]";
 
 /**
  * Landing page design system — layout, spacing, typography (TipJar-inspired rhythm).
@@ -148,7 +148,7 @@ export const landingUi = {
   sectionAccentMuted:
     "relative inline-flex w-fit items-center gap-2 max-lg:mx-auto lg:mx-0",
   sectionAccentDot:
-    "h-1.5 w-1.5 shrink-0 rounded-full bg-[#e9781c] shadow-[0_0_0_3px_rgba(233,120,28,0.16)]",
+    "h-1.5 w-1.5 shrink-0 rounded-full bg-[#eb992c] shadow-[0_0_0_3px_rgba(235,153,44,0.16)]",
   sectionAccentText:
     "text-xs font-medium tracking-normal text-muted-foreground",
   sectionAccentTextMuted:
@@ -249,7 +249,7 @@ export const landingUi = {
   heroTaglineText:
     "caretip-hero-brand-tagline__text font-sans font-medium text-[0.8125rem] leading-snug tracking-normal text-primary dark:text-primary sm:text-[0.875rem]",
   heroTaglineAccent:
-    "caretip-hero-brand-tagline__accent size-1.5 shrink-0 rounded-full bg-primary shadow-[0_0_0_3px_rgba(233,120,28,0.16)]",
+    "caretip-hero-brand-tagline__accent size-1.5 shrink-0 rounded-full bg-primary shadow-[0_0_0_3px_rgba(235,153,44,0.16)]",
   heroHeadline: cnHeroHeadline(
     "caretip-hero-headline caretip-hero-headline-anchor w-full antialiased text-left max-lg:mx-0",
   ),

@@ -45,14 +45,14 @@ html.dark .caretip-how-hero-v2__shell {
   position: absolute;
   inset: 0;
   background:
-    radial-gradient(ellipse 70% 50% at 12% 0%, rgb(233 120 28 / 0.1) 0%, transparent 58%),
+    radial-gradient(ellipse 70% 50% at 12% 0%, rgb(235 153 44 / 0.1) 0%, transparent 58%),
     radial-gradient(ellipse 55% 45% at 88% 18%, rgb(255 237 213 / 0.45) 0%, transparent 62%),
     linear-gradient(180deg, rgb(255 251 245 / 0.7) 0%, transparent 42%);
 }
 
 html.dark .caretip-how-hero-v2__backdrop {
   background:
-    radial-gradient(ellipse 70% 50% at 12% 0%, rgb(233 120 28 / 0.12) 0%, transparent 58%),
+    radial-gradient(ellipse 70% 50% at 12% 0%, rgb(235 153 44 / 0.12) 0%, transparent 58%),
     linear-gradient(180deg, rgb(23 23 23 / 0.5) 0%, transparent 45%);
 }
 
@@ -68,7 +68,7 @@ html.dark .caretip-how-hero-v2__backdrop {
   border-radius: 9999px;
   background: radial-gradient(
     ellipse at center,
-    rgb(233 120 28 / 0.14) 0%,
+    rgb(235 153 44 / 0.14) 0%,
     rgb(255 237 213 / 0.28) 40%,
     transparent 72%
   );
@@ -117,7 +117,7 @@ html.dark .caretip-how-hero-v2__backdrop {
   gap: 0.375rem;
   margin-bottom: 1rem;
   border-radius: 9999px;
-  border: 1px solid rgb(233 120 28 / 0.22);
+  border: 1px solid rgb(235 153 44 / 0.22);
   background: linear-gradient(135deg, rgb(255 248 240) 0%, rgb(255 237 213 / 0.95) 100%);
   padding: 0.4375rem 0.9375rem;
   font-size: 0.6875rem;
@@ -126,12 +126,12 @@ html.dark .caretip-how-hero-v2__backdrop {
   text-transform: uppercase;
   color: rgb(180 83 9);
   box-shadow:
-    0 1px 2px rgb(233 120 28 / 0.08),
-    0 6px 18px -8px rgb(233 120 28 / 0.35);
+    0 1px 2px rgb(235 153 44 / 0.08),
+    0 6px 18px -8px rgb(235 153 44 / 0.35);
 }
 
 html.dark .caretip-how-hero-v2__badge {
-  border-color: rgb(233 120 28 / 0.35);
+  border-color: rgb(235 153 44 / 0.35);
   background: linear-gradient(135deg, rgb(69 26 3 / 0.85) 0%, rgb(120 53 15 / 0.55) 100%);
   color: rgb(253 186 116);
 }
@@ -226,7 +226,7 @@ html.dark .caretip-how-hero-v2__trust-item {
   position: absolute;
   inset: 5% 0;
   border-radius: 9999px;
-  background: radial-gradient(ellipse at center, rgb(233 120 28 / 0.14) 0%, transparent 68%);
+  background: radial-gradient(ellipse at center, rgb(235 153 44 / 0.14) 0%, transparent 68%);
   filter: blur(20px);
 }
 
@@ -294,7 +294,7 @@ html.dark .caretip-how-hero-v2__visual-node {
 .caretip-how-hero-v2__visual-arrow {
   flex-shrink: 0;
   width: 1rem;
-  color: rgb(233 120 28 / 0.75);
+  color: rgb(235 153 44 / 0.75);
 }
 
 .caretip-how-hero-v2__visual-float {
@@ -418,7 +418,7 @@ html.dark .caretip-how-hero-v2__visual-float-value {
 
 .caretip-how-hero-v2__timeline-card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 10px 28px -10px rgb(233 120 28 / 0.16);
+  box-shadow: 0 10px 28px -10px rgb(235 153 44 / 0.16);
 }
 
 html.dark .caretip-how-hero-v2__timeline-card {
@@ -478,7 +478,7 @@ html.dark .caretip-how-hero-v2__timeline-desc {
     width: 0.75rem;
     height: 2px;
     translate: 50% -50%;
-    background: linear-gradient(90deg, rgb(233 120 28 / 0.35), rgb(233 120 28 / 0.12));
+    background: linear-gradient(90deg, rgb(235 153 44 / 0.35), rgb(235 153 44 / 0.12));
   }
 }
 
@@ -530,10 +530,10 @@ html.dark .caretip-how-hero-v2__timeline-desc {
 
 .caretip-how-hero-v2__feature:hover {
   transform: translateY(-2px);
-  border-color: rgb(233 120 28 / 0.28);
+  border-color: rgb(235 153 44 / 0.28);
   box-shadow:
     0 4px 12px rgb(15 23 42 / 0.06),
-    0 14px 32px -10px rgb(233 120 28 / 0.16);
+    0 14px 32px -10px rgb(235 153 44 / 0.16);
 }
 
 html.dark .caretip-how-hero-v2__feature {

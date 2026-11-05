@@ -28,7 +28,7 @@
   background:
     radial-gradient(
       ellipse 68% 52% at 50% 8%,
-      rgb(233 120 28 / 0.028) 0%,
+      rgb(235 153 44 / 0.028) 0%,
       transparent 62%
     ),
     radial-gradient(
@@ -42,7 +42,7 @@ html.dark .caretip-contact-page::before {
   background:
     radial-gradient(
       ellipse 68% 52% at 50% 8%,
-      rgb(233 120 28 / 0.045) 0%,
+      rgb(235 153 44 / 0.045) 0%,
       transparent 62%
     ),
     radial-gradient(
@@ -141,7 +141,7 @@ html.dark .caretip-contact-page::before {
   font-weight: 700;
   letter-spacing: 0.2em;
   text-transform: uppercase;
-  color: var(--caretip-brand-orange, #e9781c);
+  color: var(--caretip-brand-orange, #eb992c);
 }
 
 .caretip-contact-headline {
@@ -205,7 +205,7 @@ html.dark .caretip-contact-hero-trust__item {
   width: 0.875rem;
   height: 0.875rem;
   flex-shrink: 0;
-  color: rgb(233 120 28 / 0.78);
+  color: rgb(235 153 44 / 0.78);
 }
 
 /* —— Service rows (not cards) —— */
@@ -262,17 +262,17 @@ html.dark .caretip-contact-intent-card {
 
 .caretip-contact-intent-card:hover {
   background: transparent;
-  border-bottom-color: rgb(233 120 28 / 0.28);
+  border-bottom-color: rgb(235 153 44 / 0.28);
 }
 
 html.dark .caretip-contact-intent-card:hover {
   background: transparent;
-  border-bottom-color: rgb(233 120 28 / 0.35);
+  border-bottom-color: rgb(235 153 44 / 0.35);
 }
 
 .caretip-contact-intent-card:focus-visible {
   outline: none;
-  box-shadow: inset 0 0 0 2px rgb(233 120 28 / 0.3);
+  box-shadow: inset 0 0 0 2px rgb(235 153 44 / 0.3);
 }
 
 .caretip-contact-service__icon {
@@ -290,7 +290,7 @@ html.dark .caretip-contact-service__icon {
 }
 
 .caretip-contact-intent-card:hover .caretip-contact-service__icon {
-  color: var(--caretip-brand-orange, #e9781c);
+  color: var(--caretip-brand-orange, #eb992c);
 }
 
 .caretip-contact-service__copy {
@@ -340,7 +340,7 @@ html.dark .caretip-contact-intent-card__body {
 }
 
 .caretip-contact-intent-card:hover .caretip-contact-service__arrow {
-  color: var(--caretip-brand-orange, #e9781c);
+  color: var(--caretip-brand-orange, #eb992c);
   transform: translateX(4px);
 }
 
@@ -407,7 +407,7 @@ html.dark .caretip-contact-intent-card__body {
 }
 
 .caretip-contact-back:hover {
-  color: var(--caretip-brand-orange, #e9781c);
+  color: var(--caretip-brand-orange, #eb992c);
 }
 
 /* Slim editorial info column */
@@ -460,7 +460,7 @@ html.dark .caretip-contact-flow__list li {
 
 .caretip-contact-flow__list li svg {
   margin-top: 0.15rem;
-  color: var(--caretip-brand-orange, #e9781c);
+  color: var(--caretip-brand-orange, #eb992c);
 }
 
 .caretip-contact-flow__alt {
@@ -480,7 +480,7 @@ html.dark .caretip-contact-flow__list li {
   padding: 0;
   font: inherit;
   font-weight: 600;
-  color: var(--caretip-brand-orange, #e9781c);
+  color: var(--caretip-brand-orange, #eb992c);
   text-decoration: none;
   cursor: pointer;
   transition: color 0.2s ease;
@@ -536,7 +536,7 @@ html.dark .caretip-contact-trust__item {
   width: 0.8125rem;
   height: 0.8125rem;
   flex-shrink: 0;
-  color: var(--caretip-brand-orange, #e9781c);
+  color: var(--caretip-brand-orange, #eb992c);
 }
 
 .caretip-contact-flow__form {
@@ -577,8 +577,8 @@ html.dark .caretip-contact-label {
 
 .caretip-contact-input:focus-visible,
 .caretip-contact-textarea:focus-visible {
-  border-color: rgb(233 120 28 / 0.45);
-  box-shadow: 0 0 0 3px rgb(233 120 28 / 0.12);
+  border-color: rgb(235 153 44 / 0.45);
+  box-shadow: 0 0 0 3px rgb(235 153 44 / 0.12);
 }
 
 .caretip-contact-textarea {
@@ -600,8 +600,8 @@ html.dark .caretip-contact-label {
 }
 
 .caretip-contact-select-trigger:focus-visible {
-  border-color: rgb(233 120 28 / 0.45);
-  box-shadow: 0 0 0 3px rgb(233 120 28 / 0.12);
+  border-color: rgb(235 153 44 / 0.45);
+  box-shadow: 0 0 0 3px rgb(235 153 44 / 0.12);
 }
 
 html.dark .caretip-contact-select-trigger {
@@ -654,7 +654,7 @@ html.dark .caretip-contact-sales-panel__body {
   margin-top: 0.5rem;
   font-size: 1rem;
   font-weight: 600;
-  color: var(--caretip-brand-orange, #e9781c);
+  color: var(--caretip-brand-orange, #eb992c);
   text-decoration: none;
   transition: color 0.2s ease;
 }
@@ -724,7 +724,7 @@ html.dark .caretip-contact-reassurance__team {
   margin-top: 0;
   font-size: 0.875rem;
   font-weight: 600;
-  color: var(--caretip-brand-orange, #e9781c);
+  color: var(--caretip-brand-orange, #eb992c);
   text-decoration: none;
 }
 

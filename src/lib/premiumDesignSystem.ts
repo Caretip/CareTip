@@ -22,7 +22,7 @@ export const OFFWHITE_COLORS = {
  * Brand colors (canonical)
  */
 export const BRAND_COLORS = {
-  PRIMARY_ORANGE: '#e9781c',
+  PRIMARY_ORANGE: '#eb992c',
   WHITE: '#FFFFFF',
   BLACK: '#000000',
 } as const;
@@ -53,7 +53,7 @@ export const CARD_ELEVATION_BASE = 'rounded-2xl border border-gray-200 shadow-sm
  * Premium-styled call-to-action buttons
  */
 export const CTA_BUTTON_BASE =
-  'inline-flex items-center gap-2 rounded-xl font-semibold shadow-[0_8px_22px_rgba(233,120,28,0.28)] transition-[box-shadow,colors,opacity] hover:shadow-[0_10px_28px_rgba(233,120,28,0.32)] active:opacity-90';
+  'inline-flex items-center gap-2 rounded-xl font-semibold shadow-[0_8px_22px_rgba(235,153,44,0.28)] transition-[box-shadow,colors,opacity] hover:shadow-[0_10px_28px_rgba(235,153,44,0.32)] active:opacity-90';
 
 export default {
   OFFWHITE_COLORS,

@@ -192,8 +192,8 @@ html.dark .caretip-landing .caretip-hero-section--full-bg .caretip-hero-brand-ta
   border-radius: 0.5rem;
   background: linear-gradient(
     105deg,
-    rgba(233, 120, 28, 0.1) 0%,
-    rgba(233, 120, 28, 0.04) 55%,
+    rgba(235, 153, 44, 0.1) 0%,
+    rgba(235, 153, 44, 0.04) 55%,
     transparent 100%
   );
 }
@@ -205,8 +205,8 @@ html.dark .caretip-landing .caretip-hero-section--full-bg .caretip-hero-brand-ta
 html.dark .caretip-landing .caretip-hero-section[data-hero-art="en"] .caretip-hero-message__tagline [data-landing-accent] {
   background: linear-gradient(
     105deg,
-    rgba(233, 120, 28, 0.16) 0%,
-    rgba(233, 120, 28, 0.07) 55%,
+    rgba(235, 153, 44, 0.16) 0%,
+    rgba(235, 153, 44, 0.07) 55%,
     transparent 100%
   );
 }

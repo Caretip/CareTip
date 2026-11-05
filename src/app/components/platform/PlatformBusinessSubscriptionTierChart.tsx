@@ -35,7 +35,7 @@ export function PlatformBusinessSubscriptionTierChart({ byTier }: SubscriptionTi
   ];
 
   const config: ChartConfig = {
-    count: { label: t("admin.businessAnalyticsPage.subscriptions"), color: "#e9781c" },
+    count: { label: t("admin.businessAnalyticsPage.subscriptions"), color: "#eb992c" },
   };
 
   return (

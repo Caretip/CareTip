@@ -41,7 +41,7 @@ export function LandingIndustriesTeaserSection() {
                 <AnimatedHeadingLazy
                   text={overviewHeadline}
                   highlight={overviewHighlight}
-                  highlightClassName="bg-gradient-to-r from-[#ff9e2d] via-[#e9781c] to-[#d96810] bg-clip-text text-transparent"
+                  highlightClassName="bg-gradient-to-r from-[#ff9e2d] via-[#eb992c] to-[#eb992c] bg-clip-text text-transparent"
                 />
               </h2>
             </div>

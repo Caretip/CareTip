@@ -171,7 +171,7 @@
 }
 
 .caretip-dashboard-shell.business-dashboard .locations-workspace .locations-workspace__empty-icon {
-  color: var(--caretip-brand-orange, #e9781c);
+  color: var(--caretip-brand-orange, #eb992c);
   opacity: 0.85;
 }
 
@@ -184,8 +184,8 @@
 
 .caretip-dashboard-shell.business-dashboard .locations-workspace .business-venue-card__icon {
   border-radius: 0.25rem;
-  background: color-mix(in srgb, var(--caretip-brand-orange, #e9781c) 16%, transparent);
-  color: var(--caretip-brand-orange, #e9781c);
+  background: color-mix(in srgb, var(--caretip-brand-orange, #eb992c) 16%, transparent);
+  color: var(--caretip-brand-orange, #eb992c);
 }
 
 .caretip-dashboard-shell.business-dashboard .locations-workspace .business-venue-card__tables {
@@ -194,14 +194,14 @@
 
 .caretip-dashboard-shell.business-dashboard .locations-workspace .business-venue-card__add-table {
   border-radius: 0.25rem;
-  border-color: color-mix(in srgb, var(--caretip-brand-orange, #e9781c) 28%, hsl(var(--border)));
-  background: color-mix(in srgb, var(--caretip-brand-orange, #e9781c) 8%, transparent);
-  color: var(--caretip-brand-orange, #e9781c);
+  border-color: color-mix(in srgb, var(--caretip-brand-orange, #eb992c) 28%, hsl(var(--border)));
+  background: color-mix(in srgb, var(--caretip-brand-orange, #eb992c) 8%, transparent);
+  color: var(--caretip-brand-orange, #eb992c);
 }
 
 .caretip-dashboard-shell.business-dashboard .locations-workspace .business-venue-card__add-table:hover:not(:disabled) {
-  background: color-mix(in srgb, var(--caretip-brand-orange, #e9781c) 16%, transparent);
-  color: var(--caretip-brand-orange, #e9781c);
+  background: color-mix(in srgb, var(--caretip-brand-orange, #eb992c) 16%, transparent);
+  color: var(--caretip-brand-orange, #eb992c);
 }
 
 .caretip-dashboard-shell.business-dashboard .locations-workspace .business-venue-card__tables-empty,
@@ -216,7 +216,7 @@
 
 .caretip-dashboard-shell.business-dashboard .locations-workspace .business-venue-card__table-icon,
 .caretip-dashboard-shell.business-dashboard .locations-workspace .business-venue-card__table-qr {
-  color: var(--caretip-brand-orange, #e9781c);
+  color: var(--caretip-brand-orange, #eb992c);
 }
 
 .caretip-dashboard-shell.business-dashboard .locations-workspace .business-venue-card__table-qr-icon {

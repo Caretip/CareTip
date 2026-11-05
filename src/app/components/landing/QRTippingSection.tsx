@@ -30,7 +30,7 @@ function InstantTipSplitIllustration() {
         decoding="async"
       />
       <div className="absolute bottom-3 left-1/2 -translate-x-1/2 sm:left-4 sm:translate-x-0">
-        <span className="inline-flex items-center rounded-lg bg-accent px-4 py-2 text-sm font-bold text-accent-foreground shadow-[0_6px_18px_rgba(233,120,28,0.22)]">
+        <span className="inline-flex items-center rounded-lg bg-accent px-4 py-2 text-sm font-bold text-accent-foreground shadow-[0_6px_18px_rgba(235,153,44,0.22)]">
           Pay
         </span>
       </div>
